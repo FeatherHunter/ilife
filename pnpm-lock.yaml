@@ -35,6 +35,10 @@ importers:
   packages/hunter-skills: {}
 
   packages/skill-calorie:
+    dependencies:
+      '@feather_wch/base-render':
+        specifier: workspace:^0.1.0
+        version: link:../base-render
     devDependencies:
       '@feather_wch/base-link-core':
         specifier: workspace:^0.1.0
