@@ -15,7 +15,7 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "node scripts/gen-present.mjs && tsc -b && node scripts/build-help.mjs",
     "test": "node --test ../../test/scaffold.test.mjs"
   }
 }
