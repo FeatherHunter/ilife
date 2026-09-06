@@ -1,6 +1,6 @@
-/** T8 #27 · 主视图渲染错误：缺失阻断不返空，坏输入与精度泄漏一律抛。
+/** T8 #27 + T9 #28 · 渲染错误：缺失阻断不返空，坏输入与精度泄漏一律抛。
  *
- * 缺席/空窗/无目标即 missing-data（调用方走 fallback，不静默空页）。
+ * 缺席/空窗/无目标/无结果即 missing-data（调用方走 fallback，不静默空页）。
  */
 export type CalorieRenderErrorCode = 'missing-data' | 'bad-input' | 'precision-leak';
 

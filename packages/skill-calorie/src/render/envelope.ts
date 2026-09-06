@@ -1,8 +1,8 @@
-/** T8 #27 · 主视图 envelope 键表（T11 出口复用同一命名；仅 type-only 消费 link-core）。
+/** T8 #27 + T9 #28 · 视图 envelope 键表（T11 出口复用同一命名；仅 type-only 消费 link-core）。
  *
- * 四主视图 key 挂在 T4 补齐的 KEYS 命名下？不：视图 key 另立 view 域，避免与取数 key 混淆：
- * calorie.view_home / calorie.view_diet / calorie.view_exercise / calorie.view_goal。
- * 形状：总览/饮食/运动/目标一律 stat（metrics 全 number，envelope 全字段校验可过）。
+ * T8 四主视图：calorie.view_home / calorie.view_diet / calorie.view_exercise / calorie.view_goal；
+ * T9 目标分析盘：calorie.view_goal_* / combined / deficit / diet_review / health / ranking / library / search。
+ * 视图 key 另立 view 域，避免与取数 key 混淆；形状一律 stat（metrics 全 number，envelope 全字段校验可过）。
  */
 import type { EnvelopeShape } from '@feather_wch/base-link-core';
 import { calorieKey } from '../fetch/shapes.js';
@@ -13,6 +13,18 @@ export const VIEW_KEYS = {
   diet: calorieKey('view', 'diet'),
   exercise: calorieKey('view', 'exercise'),
   goal: calorieKey('view', 'goal'),
+  goalConfig: calorieKey('view', 'goal_config'),
+  goalRecommend: calorieKey('view', 'goal_recommend'),
+  goalWeight: calorieKey('view', 'goal_weight'),
+  goalProgress: calorieKey('view', 'goal_progress'),
+  goalStatus: calorieKey('view', 'goal_status'),
+  combined: calorieKey('view', 'combined'),
+  deficit: calorieKey('view', 'deficit'),
+  dietReview: calorieKey('view', 'diet_review'),
+  health: calorieKey('view', 'health'),
+  ranking: calorieKey('view', 'ranking'),
+  library: calorieKey('view', 'library'),
+  search: calorieKey('view', 'search'),
 } as const;
 export type ViewName = keyof typeof VIEW_KEYS;
 
@@ -21,6 +33,18 @@ export const VIEW_SHAPES: Record<ViewName, EnvelopeShape> = {
   diet: 'stat',
   exercise: 'stat',
   goal: 'stat',
+  goalConfig: 'stat',
+  goalRecommend: 'stat',
+  goalWeight: 'stat',
+  goalProgress: 'stat',
+  goalStatus: 'stat',
+  combined: 'stat',
+  deficit: 'stat',
+  dietReview: 'stat',
+  health: 'stat',
+  ranking: 'stat',
+  library: 'stat',
+  search: 'stat',
 };
 
 export function viewShapeFor(key: string): EnvelopeShape {
