@@ -13,11 +13,14 @@
   "devDependencies": {
     "@feather_wch/base-link-core": "workspace:^0.1.0"
   },
+  "bin": {
+    "skill-calorie-fetch": "./dist/fetch/cli.js"
+  },
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc -b",
-    "test": "node --test ../../test/scaffold.test.mjs ../../test/calorie-triggers.test.mjs"
+    "test": "node --test ../../test/scaffold.test.mjs ../../test/calorie-triggers.test.mjs test/fetch-t6.test.mjs"
   }
 }
