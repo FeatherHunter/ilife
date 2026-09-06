@@ -28,7 +28,7 @@ export function fetchPayload<S extends EnvelopeShape>(
 }
 
 // 域常用 key（T8-T10 渲染与 T11 出口复用同一命名）：
-// T4 #23 落子时只定了 T3 四域；T4 五域（目标/计划/食品库/照片）key 在 T8 #27 内补（死规矩 2）。
+// T4 #23 落子时只定了 T3 四域；T4 五域（目标/计划/食品库/照片）key 在 T8 #27 内补，T9 #28 复用同值。
 export const KEYS = {
   dietList: calorieKey('diet', 'list'),
   dietDetail: calorieKey('diet', 'detail'),
