@@ -1,2 +1,7 @@
-# 唯一真相源：语义条目（示例骨架，二期补 36 组）
-combos: []
+# 唯一真相源：语义条目（P9 冻结读表格式；36 组全量由 P8 补）
+# 格式冻结：每条 {key, skill, shape, title}；key=skill.combo 命名空间；shape 取 link-core 6 形状。
+combos:
+  - key: calorie.today
+    skill: calorie
+    shape: list
+    title: 今日饮食
