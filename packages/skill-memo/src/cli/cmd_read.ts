@@ -12,7 +12,7 @@ import type { MemoDb, MemoNote } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
-function fail(code, msg) { console.error('ERR ' + code + ': ' + msg); process.exit(code); }
+function fail(code: number, msg: string): never { console.error('ERR ' + code + ': ' + msg); process.exit(code); }
 function toast(msg) { console.error('TOAST: ' + msg); }
 
 function preflight() {
@@ -23,7 +23,7 @@ function preflight() {
   return p;
 }
 
-function needStr(params, name) {
+function needStr(params: Record<string, unknown>, name: string): string {
   const v = params[name];
   if (typeof v !== 'string' || v.length === 0) fail(2, '缺参数 ' + name);
   return v;

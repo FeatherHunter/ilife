@@ -33,10 +33,13 @@ function parseNoteFile(path: string, name: string): MemoNote {
   try { raw = JSON.parse(readFileSync(path, 'utf8')); }
   catch (e) { throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记解析失败：' + name, { cause: e }); }
   const n = raw as Record<string, unknown>;
-  for (const f of ['id', 'title', 'body', 'category', 'createdAt', 'updatedAt']) {
+  for (const f of ['id', 'category', 'createdAt', 'updatedAt']) {
     if (typeof n[f] !== 'string' || (n[f] as string).length === 0) {
       throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记缺字段 ' + f + '：' + name);
     }
+  }
+  if (typeof n.title !== 'string' || typeof n.body !== 'string' || (!n.title && !n.body)) {
+    throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记题文至少其一非空：' + name);
   }
   return n as unknown as MemoNote;
 }
