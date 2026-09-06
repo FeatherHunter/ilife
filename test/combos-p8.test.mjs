@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,7 +57,10 @@ function makeFakeCli(dir) {
     writeFileSync(cmd, '@node "' + mjs + '" %*\r\n');
     return cmd;
   }
-  return mjs;
+  const sh = join(dir, 'fakelark');
+  writeFileSync(sh, '#!/usr/bin/env node\n' + logic);
+  try { chmodSync(sh, 0o755); } catch { /* win 无 exec 位 */ }
+  return sh;
 }
 
 before(() => {
