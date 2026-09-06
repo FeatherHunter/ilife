@@ -5,5 +5,5 @@ export type { RemindOp, RemindRoute } from './reminder.js';
 export { routeWish, WISH_SYNC_OPS } from './wish.js';
 export type { WishOp, WishSyncOp } from './wish.js';
 export { crudCreate, crudUpdate, crudRemove } from './crud.js';
-export { routeWakeword } from './wakewords.js';
-export type { MemoKey, WakeRoute } from './wakewords.js';
+export { routeWakeword, WAKE_TABLE } from './wakewords.js';
+export type { MemoKey, WakeRoute, WakeEntry } from './wakewords.js';

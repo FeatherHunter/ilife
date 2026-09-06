@@ -22,7 +22,7 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && node scripts/build-help.mjs",
     "test": "node --test ../../test/scaffold.test.mjs"
   }
 }
