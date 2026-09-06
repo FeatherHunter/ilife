@@ -1,0 +1,21 @@
+{
+  "name": "@feather_wch/base-combos",
+  "version": "0.1.0",
+  "description": "语义包：combos.yaml 唯一真相源，36 组语义条目",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "dependencies": {
+    "@feather_wch/base-link-core": "workspace:^0.1.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test ../../test/scaffold.test.mjs"
+  }
+}
