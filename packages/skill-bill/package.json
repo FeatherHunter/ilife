@@ -1,0 +1,28 @@
+{
+  "name": "@feather_wch/skill-bill",
+  "version": "0.1.0",
+  "description": "饼干记账SKILL一期：取数+口径+渲染+出口（16 联动 key+cmd_read+SKILL+HELP+parity），依 link-core",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./fetch": "./dist/fetch/index.js",
+    "./policy": "./dist/policy/index.js",
+    "./render": "./dist/render/index.js",
+    "./cli": "./dist/cli/cmd_read.js"
+  },
+  "bin": {
+    "bill-cmd-read": "./dist/cli/cmd_read.js"
+  },
+  "dependencies": {
+    "@feather_wch/base-link-core": "workspace:^0.1.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b && node scripts/build-help.mjs",
+    "test": "node --test ../../test/scaffold.test.mjs"
+  }
+}
