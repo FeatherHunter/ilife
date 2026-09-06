@@ -11,7 +11,8 @@
     { "path": "./packages/skill-calorie" },
     { "path": "./packages/skill-memo" },
     { "path": "./packages/skill-schedule" },
-    { "path": "./packages/skill-home" }
+    { "path": "./packages/skill-home" },
+    { "path": "./packages/skill-bill" }
   ],
   "include": []
 }
