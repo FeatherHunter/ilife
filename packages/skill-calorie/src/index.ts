@@ -7,3 +7,11 @@ export {
 } from './kcal.js';
 export type { SourceChoice, ActivityLevel } from './kcal.js';
 export * from './fetch/index.js';
+export { KCAL_PER_KG, WEEKDAY_NAMES, weekdayName, buildDeficitData } from './analysis/deficit.js';
+export type { DeficitDay, DeficitSummary, DeficitData } from './analysis/deficit.js';
+export { buildTrendData } from './analysis/trend.js';
+export type { TrendDay, TrendSummary, TrendData } from './analysis/trend.js';
+export { buildExerciseReview } from './analysis/exerciseReview.js';
+export type { ExerciseTypeStat, ExerciseReview } from './analysis/exerciseReview.js';
+export { PRECISION_SUMMARY_FIELDS, PRECISION_SERIES_KEYS, findLeaks, assertNoLeak } from './analysis/precision.js';
+export type { LeakReport } from './analysis/precision.js';
