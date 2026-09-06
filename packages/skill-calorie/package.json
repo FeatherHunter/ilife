@@ -1,0 +1,18 @@
+{
+  "name": "@feather_wch/skill-calorie",
+  "version": "0.1.0",
+  "description": "卡路里 SKILL 一期：唤醒词路由 10 场景（T2 #21，零依赖）",
+  "type": "module",
+  "main": "./dist/triggers/index.js",
+  "types": "./dist/triggers/index.d.ts",
+  "exports": {
+    ".": "./dist/triggers/index.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test ../../test/calorie-triggers.test.mjs"
+  }
+}
