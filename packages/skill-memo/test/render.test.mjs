@@ -40,15 +40,14 @@ describe('memo 渲染层', () => {
     assert.match(renderEnvelopeHtml(env), /已记一条/);
     assert.throws(() => assertHtmlSize('x'.repeat(MEMO_HTML_MAX_BYTES + 1), MEMO_HTML_MAX_BYTES), (e) => e.code === 'MEMO_HTML_TOO_LARGE');
   });
-  it('模板：5 渲染随包，标记各恰 1，init 归 M6', () => {
-    assert.equal(MEMO_TEMPLATES.length, 5);
+  it('模板：6 随包（含 init_report，M6 落定），标记各恰 1', () => {
+    assert.equal(MEMO_TEMPLATES.length, 6);
     for (const n of MEMO_TEMPLATES) {
       const t = loadTemplate(n);
       assert.ok(t.includes(SHARED_CSS_MARKER) && t.includes(SHARED_HELPERS_MARKER));
       const filled = fillSharedMarkers(t, '/*css*/', '/*js*/');
       assert.ok(!filled.includes(SHARED_CSS_MARKER));
     }
-    assert.throws(() => loadTemplate('init_report'), (e) => e.code === 'MEMO_TEMPLATE_MISSING');
     assert.throws(() => fillSharedMarkers('无标记', '', ''), (e) => e.code === 'MEMO_MARKER_INVALID');
   });
 });

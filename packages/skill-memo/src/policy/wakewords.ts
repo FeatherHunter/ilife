@@ -7,9 +7,10 @@ export type MemoKey =
   | 'memo.remind' | 'memo.wish' | 'memo.sync' | 'memo.batch' | 'memo.stats';
 
 export interface WakeRoute { key: MemoKey; params: Record<string, unknown>; }
-interface Entry { phrase: string; key: MemoKey; needs?: string[]; preset?: Record<string, unknown>; }
+export interface WakeEntry { phrase: string; key: MemoKey; needs?: string[]; preset?: Record<string, unknown>; }
 
-const TABLE: Entry[] = [
+// 全量唤醒词表（HELP 速查唯一上游；改这里，HELP 构建期跟进）。
+export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '按时间搜备忘', key: 'memo.search', needs: ['timeRange'] },
   { phrase: '查已提醒备忘', key: 'memo.remind', preset: { done: false } },
   { phrase: '批量改分类', key: 'memo.batch' },
@@ -30,13 +31,13 @@ const TABLE: Entry[] = [
 
 for (const [p, top] of Object.entries(WAKE_TOPS)) {
   const verb = p[0];
-  if (verb === '记') TABLE.push({ phrase: p, key: 'memo.create', preset: { category: top } });
-  else if (verb === '查') TABLE.push({ phrase: p, key: p === '查心愿' ? 'memo.wish' : 'memo.search', preset: { category: top } });
-  else TABLE.push({ phrase: p, key: 'memo.update', needs: ['id'], preset: { category: top } });
+  if (verb === '记') WAKE_TABLE.push({ phrase: p, key: 'memo.create', preset: { category: top } });
+  else if (verb === '查') WAKE_TABLE.push({ phrase: p, key: p === '查心愿' ? 'memo.wish' : 'memo.search', preset: { category: top } });
+  else WAKE_TABLE.push({ phrase: p, key: 'memo.update', needs: ['id'], preset: { category: top } });
 }
 
 // 最长匹配优先，保证“批量改分类”不落入“改子分类”。
-const SORTED = [...TABLE].sort((a, b) => b.phrase.length - a.phrase.length);
+const SORTED = [...WAKE_TABLE].sort((a, b) => b.phrase.length - a.phrase.length);
 
 export function routeWakeword(text: string, ctx: Record<string, unknown> = {}): WakeRoute {
   if (typeof text !== 'string' || text.length === 0) throw new MemoPolicyError('POLICY_NO_MATCH', '唤醒词为空');
