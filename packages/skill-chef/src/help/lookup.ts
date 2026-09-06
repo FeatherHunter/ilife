@@ -15,7 +15,7 @@ function exampleParams(e: { needs?: string[]; preset?: Record<string, unknown> }
 
 const DESCS: Record<string, string> = {
   'chef.recipe.view': '看单菜全貌（基本+食材+步骤+历史统计，须 nameOrId）',
-  'chef.recipe.search': '搜菜/按条件筛菜/看全部（q 或 cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime）',
+  'chef.recipe.search': '搜菜/按条件筛菜/看全部（q 或 cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter，filter=菜系别名）',
   'chef.recipe.write': '新增/改菜/废弃/加食材/加步骤（op 分流，写走回执）',
   'chef.cooking.run': '开做（步骤内联食材+份数放大说明，须 nameOrId）',
   'chef.shopping.query': '跨菜合并采购清单（names 数组+servings+excludeOptional）',
@@ -24,7 +24,7 @@ const DESCS: Record<string, string> = {
   'chef.help.lookup': '能力速查 HELP 现找',
 };
 
-// 全量速查表（WAKE_TABLE 35 短语：help.lookup4 + recipe.view6 + recipe.search7 + recipe.write4 + cooking.run4 + shopping.query4 + history.record3 + history.query3）。
+// 全量速查表（WAKE_TABLE 35 短语：help.lookup4 + recipe.view5 + recipe.search8 + recipe.write4 + cooking.run4 + shopping.query4 + history.record3 + history.query3）。
 export function buildHelpLookup(): HelpHit[] {
   return WAKE_TABLE.map((e) => ({
     phrase: e.phrase,

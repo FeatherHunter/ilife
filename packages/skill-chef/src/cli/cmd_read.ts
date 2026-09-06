@@ -2,21 +2,21 @@
 // 私家大厨唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通即真相）。
-// 取数（fetch/db.ts 已落盘，以其签名为准）：openChefDb/closeChefDb/listRecipes/searchRecipes/getRecipeDetail/addRecipe/addIngredient(h,recipeId,input)/addStep(h,recipeId,input)/deprecateRecipe/recordHistory/queryHistory(h,recipeId)/historyStats/buildShoppingList/healthCheck。
-// 已知缺口（回包注明，不碰他人文件）：fetch 无 filterRecipes/updateRecipe；policy WriteOp 仅 add/update/deprecate（无 discard/add-ingredient/add-step 命名）；queryHistory 须 recipeId（无全量）。
+// 取数（fetch/db.ts 已落盘，以其签名为准）：openChefDb/closeChefDb/listRecipes/filterRecipes/searchRecipes/getRecipeDetail/addRecipe/updateRecipe/addIngredient(h,recipeId,input)/addStep(h,recipeId,input)/deprecateRecipe/recordHistory/queryHistory(h,recipeId?)/historyStats/buildShoppingList/healthCheck。
+// 口径：policy WriteOp（add/update/deprecate）+ RecipeOp（add/update/discard/add-ingredient/add-step，CLI 兼容 discard=deprecate）；queryHistory 无参返全量；buildShoppingList 合并行含 optional/category 标记。
 import { writeFileSync } from 'node:fs';
 import {
   ChefFetchError, ChefPolicyError,
   openChefDb, closeChefDb,
-  listRecipes, searchRecipes, getRecipeDetail,
-  addRecipe, deprecateRecipe,
+  listRecipes, filterRecipes, searchRecipes, getRecipeDetail,
+  addRecipe, updateRecipe, deprecateRecipe,
   addIngredient, addStep,
   recordHistory, queryHistory, historyStats,
   buildShoppingList, healthCheck,
 } from '../fetch/index.js';
 import { resolveDbPath } from '../fetch/paths.js';
 import type { RecipeRow, ChefDb } from '../fetch/db.js';
-import { needName, needNames, validateRating } from '../policy/index.js';
+import { needName, needNames, validateCategory, validateRating } from '../policy/index.js';
 import {
   chefShapeFor, buildChefEnvelope, renderEnvelopeHtml, assertHtmlSize,
   toRecipeItem, recipeDetail, buildRecipeSearch, buildRecipeReceipt,
@@ -113,14 +113,20 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           rows = listRecipes(handle);
           kind = 'all';
         } else {
-          const present = FILTER_KEYS.filter((k) => params[k] !== undefined);
-          if (!present.length) fail(2, 'search 须给 q、kind=all、difficulty，或过滤条件（cuisine/season/method/flavor/tag/meal/cookware/status/maxTime/filter）');
-          if (present.length === 1 && present[0] === 'difficulty' && typeof params.difficulty === 'string') {
-            rows = listRecipes(handle, { difficulty: (params.difficulty as string).trim() });
-            kind = 'filter:difficulty';
-          } else {
-            throw new ChefPolicyError('POLICY_BAD_INPUT', '按条件筛选暂无取数接口（待 fetch 补 filterRecipes）：可用 q 搜索或 kind=all 看全部');
+          const present = FILTER_KEYS.filter((k) => params[k] !== undefined && params[k] !== '');
+          if (!present.length) fail(2, 'search 须给 q、kind=all，或过滤条件（cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter）');
+          const f: Record<string, unknown> = {};
+          for (const k of ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime'] as const) {
+            const v = params[k];
+            if (v !== undefined && v !== '') f[k] = typeof v === 'string' ? v.trim() : v;
           }
+          // 别名：filter=通用筛选（川菜类示例按菜系走，与 HELP 示例对齐）；time_max/time=最大用时别名。
+          if (f.cuisine === undefined && typeof params.filter === 'string' && params.filter.trim()) f.cuisine = params.filter.trim();
+          if (f.maxTime === undefined && params.time_max !== undefined && params.time_max !== '') f.maxTime = params.time_max;
+          if (f.maxTime === undefined && params.time !== undefined && params.time !== '') f.maxTime = params.time;
+          if (!Object.keys(f).length) fail(2, 'search 过滤条件为空（须给 cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter 之一）');
+          rows = filterRecipes(handle, f);
+          kind = 'filter:' + Object.keys(f).sort().join(',');
         }
         if (!rows.length) throw new ChefFetchError('CHEF_EMPTY_RESULT', '搜菜无结果（缺失阻断，不返空冒充）');
         return buildRecipeSearch(kind, rows.map(toRecipeItem));
@@ -139,10 +145,14 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
             if (n !== undefined) (input as Record<string, unknown>)[k] = n;
           }
           const r = addRecipe(handle, input);
-          // 兼容测试内嵌写法：params.ingredients/params.steps 数组随菜同存（与 add-ingredient/add-step 同语义）。
+          // 兼容测试内嵌写法：params.ingredients/params.steps 数组随菜同存（与 add-ingredient/add-step 同语义，category 走 validateCategory 归一）。
           if (Array.isArray(params.ingredients)) {
             for (const g of params.ingredients as Record<string, unknown>[]) {
-              if (g && typeof g === 'object') addIngredient(handle, r.id, g as never);
+              if (g && typeof g === 'object') {
+                const gg = { ...(g as Record<string, unknown>) };
+                if (typeof gg.category === 'string' && gg.category.trim()) gg.category = validateCategory(gg.category);
+                addIngredient(handle, r.id, gg as never);
+              }
             }
           }
           if (Array.isArray(params.steps)) {
@@ -153,7 +163,26 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           return buildRecipeReceipt('已新增菜谱：' + r.name + '（id=' + r.id + '）');
         }
         if (op === 'update') {
-          throw new ChefPolicyError('POLICY_BAD_INPUT', 'update 暂无取数接口（待 fetch 补 updateRecipe）：可先 discard 废弃再 add 重建');
+          const hasId = typeof params.id === 'string' && (params.id as string).trim() ? true : false;
+          const rid = hasId
+            ? (params.id as string).trim()
+            : getRecipeDetail(handle, resolveNameOrId(params)).recipe.id;
+          const patch: Record<string, unknown> = {};
+          // name 为标识符时不计入补丁（仅 id 定位时 name 视为改名）；其余直给字段即补丁。
+          for (const k of ['description', 'difficulty', 'servings', 'total_time_minutes', 'status', 'photo_url', 'source', 'source_url'] as const) {
+            if (params[k] !== undefined) patch[k] = params[k];
+          }
+          if (hasId && typeof params.name === 'string' && (params.name as string).trim()) patch.name = (params.name as string).trim();
+          if (patch.total_time_minutes === undefined && params.total_time !== undefined) patch.total_time_minutes = params.total_time;
+          if (params.patch !== undefined && typeof params.patch === 'object' && params.patch !== null && !Array.isArray(params.patch)) {
+            for (const [k, v] of Object.entries(params.patch as Record<string, unknown>)) {
+              if (k === 'total_time' && patch.total_time_minutes === undefined) patch.total_time_minutes = v;
+              else if (['name', 'description', 'difficulty', 'servings', 'total_time_minutes', 'status', 'photo_url', 'source', 'source_url'].includes(k)) patch[k] = v;
+            }
+          }
+          if (!Object.keys(patch).length) fail(2, 'update 至少改一个字段（name/description/difficulty/servings/total_time_minutes/status/photo_url/source/source_url/patch）');
+          const r = updateRecipe(handle, rid, patch);
+          return buildRecipeReceipt('已更新菜谱：' + r.name + '（id=' + r.id + '）');
         }
         if (op === 'discard' || op === 'deprecate') {
           const id = params.id;
@@ -166,7 +195,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           const name = needName(params);
           const input: { name: string; category?: string; quantity?: number | null; unit?: string; quantity_text?: string; is_optional?: number | boolean; substitute?: string } = { name };
           const cat = pickStr(params, 'category');
-          if (cat !== undefined) input.category = cat;
+          if (cat !== undefined) input.category = validateCategory(cat);
           if (params.quantity !== undefined) {
             const n = pickNum(params, 'quantity');
             input.quantity = n === undefined ? null : n;
@@ -222,9 +251,10 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         const names = needNames(params);
         const servings = needServings(params);
         const excludeOptional = params.excludeOptional === true;
-        const items = buildShoppingList(handle, names);
+        let items = buildShoppingList(handle, names);
         if (!items.length) throw new ChefFetchError('CHEF_EMPTY_RESULT', '采购清单为空（缺失阻断）');
-        if (excludeOptional) note('excludeOptional 暂无取数支持（合并行缺 optional 标记，待 fetch 扩展）：先返回全量');
+        // fetch 合并行自带 optional 标记（db.ts buildShoppingList）：excludeOptional 在此过滤。
+        if (excludeOptional) items = items.filter((x) => !x.optional);
         // 库存核对不直调居家管家：只给清单，核对请复制 prompt 走居家管家技能。
         note('库存核对请复制 prompt 走「居家管家」技能，不直调');
         return buildShopping({ items, recipes: names, servings, excludeOptional });

@@ -23,6 +23,6 @@
   },
   "scripts": {
     "build": "tsc -b && node scripts/build-help.mjs",
-    "test": "node --test ../../test/scaffold.test.mjs"
+    "test": "node --test test/*.test.mjs"
   }
 }

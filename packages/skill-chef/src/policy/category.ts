@@ -33,8 +33,8 @@ export function validateCategory(raw: unknown): string {
     throw new ChefPolicyError('POLICY_BAD_CATEGORY', '食材分类非法（期望 肉类/海鲜/蛋类/蔬菜/葱姜蒜/香草/调料/豆制品/主食/干货/其他）：' + JSON.stringify(raw));
   }
   const t = (raw as string).trim();
-  // 别名认可：水产=海鲜（口语别名），统一归一到水产；水产输入恒等返回。
-  if (t === '水产' || t === '海鲜') return '水产';
+  // 别名归一：水产为海鲜口语别名，统一归一到海鲜（enum 以海鲜为准，遗产 references/enums.py 原文）。
+  if (t === '水产' || t === '海鲜') return '海鲜';
   if (!(INGREDIENT_CATEGORIES as readonly string[]).includes(t)) {
     throw new ChefPolicyError('POLICY_BAD_CATEGORY', '食材分类非法（期望 肉类/海鲜/蛋类/蔬菜/葱姜蒜/香草/调料/豆制品/主食/干货/其他）：' + JSON.stringify(raw));
   }

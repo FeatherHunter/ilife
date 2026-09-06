@@ -16,7 +16,8 @@ describe('私家大厨口径 policy', () => {
   });
   it('食材 11 类 + 评分 0-5', () => {
     assert.equal(WAKE_TABLE.length, 35);
-    assert.equal(validateCategory('海鲜'), '水产');
+    assert.equal(validateCategory('海鲜'), '海鲜');
+    assert.equal(validateCategory('水产'), '海鲜');
     assert.throws(() => validateCategory('外星菜'), /分类/);
     assert.equal(validateRating(5), 5);
     assert.equal(validateRating(0), 0);

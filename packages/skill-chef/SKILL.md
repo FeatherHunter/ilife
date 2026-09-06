@@ -16,7 +16,7 @@ chef-cmd-read chef.help.lookup --params '{"q":"搜菜"}'
 - 状态 4 种：未做/已做/熟练/已废弃（validateStatus；废弃= status 置已废弃，只增不删，无物理删除，列表默认过滤已废弃）。
 - 火候 5 档：微火/小火/中火/大火/猛火（validateHeat，步骤 heat_level 必落此表）。
 - 食材 11 类：肉类/海鲜/蛋类/蔬菜/葱姜蒜/香草/调料/豆制品/主食/干货/其他（validateCategory，未知类阻断）。
-- 评分 0-5（含 0/5 端点，步长 0.5，超界/非数字阻断；history.record 必带 name，rating 可选）。
+- 评分 0-5（含 0/5 端点，允许小数，超界/非数字阻断；history.record 必带 name，rating 可选）。
 - 空查询与空结果阻断不返空：search 空 q 抛 exit 2；查无对条/区间无记录抛 exit 4，不返空数组冒充正常。
 - 真实数据禁迁，测试 tmp 隔离（SKILLS_DB_PATH 指向 mkdtemp，见 test/fetch.test.mjs）。
 - 跨技能只复制 prompt 不直调：shopping/recipe 跨技能按钮仅复制 `chef-cmd-read ...` 文本，AI 调目标技能，不直写他库。
@@ -35,7 +35,7 @@ chef-cmd-read chef.help.lookup --params '{"q":"搜菜"}'
 | 查看步骤 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
 | 查看营养 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
 | 查看背景 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
-| 查看全部 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view` |
+| 查看全部 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"kind":"all"}'` |
 | 搜索食谱 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |
 | 搜菜 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |
 | 查食材 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |
@@ -53,14 +53,14 @@ chef-cmd-read chef.help.lookup --params '{"q":"搜菜"}'
 | 完成做菜 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"宫保虾球"}'` |
 | 生成清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
 | 排除可选 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
-| 查清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query` |
-| 清空清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query` |
+| 查清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
+| 清空清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
 | 记录做菜 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"宫保虾球"}'` |
 | 补录做菜 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"宫保虾球"}'` |
 | 改评分 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"宫保虾球"}'` |
 | 查看历史 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"name":"宫保虾球"}'` |
-| 查看统计 | chef.history.query | list | `chef-cmd-read chef.history.query` |
-| 体检 | chef.history.query | list | `chef-cmd-read chef.history.query` |
+| 查看统计 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"kind":"stats"}'` |
+| 体检 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"kind":"quality"}'` |
 
 相关场景：chef.cooking.run、chef.help.lookup、chef.history.query、chef.history.record、chef.recipe.search、chef.recipe.view、chef.recipe.write、chef.shopping.query（8 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->

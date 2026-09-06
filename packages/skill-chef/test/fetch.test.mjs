@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { openChefDb, closeChefDb, addRecipe, addIngredient, addStep, listRecipes, searchRecipes, getRecipeDetail, deprecateRecipe, recordHistory, queryHistory, historyStats, buildShoppingList, healthCheck, ChefFetchError } from '../dist/index.js';
+import { openChefDb, closeChefDb, addRecipe, updateRecipe, filterRecipes, addIngredient, addStep, listRecipes, searchRecipes, getRecipeDetail, deprecateRecipe, recordHistory, queryHistory, historyStats, buildShoppingList, healthCheck, ChefFetchError } from '../dist/index.js';
 import { resolveDbPath } from '../dist/index.js';
 
 let DB = '';
@@ -68,6 +68,34 @@ describe('私家大厨取数 fetch', () => {
     assert.ok(Array.isArray(issues));
     const levels = issues.map((x) => x.level);
     assert.deepEqual([...levels].sort(), levels);
+  });
+  it('filter 多维筛选 + update 闭环', () => {
+    // update：改份数与描述，读回验证。
+    const u = updateRecipe(H, gongbaoId, { servings: 4, description: '改后酸甜' });
+    assert.equal(u.servings, 4);
+    assert.equal(u.description, '改后酸甜');
+    assert.equal(getRecipeDetail(H, gongbaoId).recipe.servings, 4);
+    assert.throws(() => updateRecipe(H, gongbaoId, {}), /至少改一个字段/);
+    // filter 维度落子表（addRecipe 一期只写主表，维度经子表直插，只读不迁真相）。
+    H.db.prepare('INSERT INTO recipe_categories (id, recipe_id, cuisine_type) VALUES (?, ?, ?)').run('fc1', gongbaoId, '川菜');
+    H.db.prepare('INSERT INTO recipe_seasons (id, recipe_id, season) VALUES (?, ?, ?)').run('fs1', gongbaoId, '夏季');
+    H.db.prepare('INSERT INTO recipe_cooking_methods (id, recipe_id, method) VALUES (?, ?, ?)').run('fm1', gongbaoId, '炒');
+    H.db.prepare('INSERT INTO recipe_flavors (id, recipe_id, flavor) VALUES (?, ?, ?)').run('ff1', gongbaoId, '麻辣');
+    H.db.prepare('INSERT INTO recipe_diet_tags (id, recipe_id, tag) VALUES (?, ?, ?)').run('ft1', gongbaoId, '高蛋白');
+    H.db.prepare('INSERT INTO recipe_meal_types (id, recipe_id, meal_type) VALUES (?, ?, ?)').run('fe1', gongbaoId, '晚餐');
+    H.db.prepare('INSERT INTO cookware (id, recipe_id, name) VALUES (?, ?, ?)').run('fw1', gongbaoId, '炒锅');
+    assert.ok(filterRecipes(H, { cuisine: '川菜' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { season: '夏季' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { method: '炒' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { flavor: '麻辣' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { tag: '高蛋白' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { meal: '晚餐' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { cookware: '炒锅' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { difficulty: '中等' }).some((r) => r.name === '宫保虾球'));
+    assert.ok(filterRecipes(H, { maxTime: 30 }).some((r) => r.name === '宫保虾球'));
+    assert.equal(filterRecipes(H, { maxTime: 10 }).filter((r) => r.name === '宫保虾球').length, 0);
+    assert.ok(filterRecipes(H, { cuisine: '川菜', difficulty: '中等' }).some((r) => r.name === '宫保虾球'));
+    assert.equal(filterRecipes(H, { cuisine: '粤菜' }).length, 0);
   });
   it('SKILLS_DB_PATH 缺失阻断', () => {
     const old = process.env.SKILLS_DB_PATH;
