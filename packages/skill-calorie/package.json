@@ -8,7 +8,11 @@
   "exports": {
     ".": "./dist/index.js",
     "./triggers": "./dist/triggers/index.js",
-    "./fetch": "./dist/fetch/index.js"
+    "./fetch": "./dist/fetch/index.js",
+    "./render": "./dist/render/index.js"
+  },
+  "dependencies": {
+    "@feather_wch/base-render": "workspace:^0.1.0"
   },
   "devDependencies": {
     "@feather_wch/base-link-core": "workspace:^0.1.0"
