@@ -1,0 +1,18 @@
+{
+  "name": "@feather_wch/skill-calorie",
+  "version": "0.1.0",
+  "description": "卡路里SKILL一期：DB schema与迁移收敛（T1 #20），零依赖",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test ../../test/scaffold.test.mjs"
+  }
+}
