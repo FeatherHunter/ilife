@@ -97,7 +97,7 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): unk
 }
 
 function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
-  const o = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS };
+  const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS };
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i];
