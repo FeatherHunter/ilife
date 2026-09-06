@@ -13,7 +13,7 @@ import type { MemoDb, MemoNote } from '../fetch/db.js';
 const DEFAULT_TIMEOUT_MS = 30000;
 
 function fail(code: number, msg: string): never { console.error('ERR ' + code + ': ' + msg); process.exit(code); }
-function toast(msg) { console.error('TOAST: ' + msg); }
+function toast(msg: string): void { console.error('TOAST: ' + msg); }
 
 function preflight() {
   const v = process.versions.node.split('.').map(Number);
@@ -88,7 +88,7 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): unk
     case 'memo.batch': return { ok: true, message: '批量改分类向导须交互确认（M5 只登记意图）' };
     case 'memo.stats': {
       const all = listNotes(db);
-      const metrics = { count: all.length };
+      const metrics: Record<string, number> = { count: all.length };
       for (const n of all) metrics['cat.' + n.category] = (metrics['cat.' + n.category] || 0) + 1;
       return { metrics };
     }
@@ -96,7 +96,7 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): unk
   }
 }
 
-function parseArgs(a) {
+function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
   const o = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS };
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
@@ -120,7 +120,7 @@ async function main() {
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
   let shape = null;
-  try { shape = memoShapeFor(o.key); } catch (e) { fail(3, e.message); }
+  try { shape = memoShapeFor(o.key); } catch (e) { fail(3, (e as Error).message); }
   void shape;
   const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
   timer.unref();
@@ -139,7 +139,7 @@ async function main() {
     if (e instanceof MemoFetchError) fail(4, '取数失败：' + e.message);
     if (e instanceof MemoPolicyError) fail(2, '口径失败：' + e.message);
     if (e instanceof MemoRenderError) fail(5, '渲染失败：' + e.message);
-    fail(4, '未知失败：' + (e && e.message ? e.message : e));
+    fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally { clearTimeout(timer); }
   process.stdout.write(JSON.stringify(env) + '\n');
 }
