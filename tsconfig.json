@@ -12,7 +12,14 @@
     { "path": "./packages/skill-memo" },
     { "path": "./packages/skill-schedule" },
     { "path": "./packages/skill-home" },
-    { "path": "./packages/skill-bill" }
+    { "path": "./packages/skill-bill" },
+    { "path": "./packages/plugin-manager" },
+    { "path": "./packages/plugin-calorie" },
+    { "path": "./packages/plugin-memo" },
+    { "path": "./packages/plugin-schedule" },
+    { "path": "./packages/plugin-home" },
+    { "path": "./packages/plugin-chef" },
+    { "path": "./packages/plugin-bill" }
   ],
   "include": []
 }

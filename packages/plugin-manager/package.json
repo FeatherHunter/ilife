@@ -1,0 +1,40 @@
+{
+  "name": "dsh-life-pack",
+  "version": "0.1.0",
+  "description": "爱生活总管插件 P10 脚手架：6 tab 只导航+推荐安装，不依赖单品、不 import 单品页",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./client": "./dist/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "cordis.patch.yml"
+  ],
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "ilife"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test test/smoke.test.mjs"
+  }
+}
