@@ -16,3 +16,4 @@ export type { ExerciseTypeStat, ExerciseReview } from './analysis/exerciseReview
 export { PRECISION_SUMMARY_FIELDS, PRECISION_SERIES_KEYS, findLeaks, assertNoLeak } from './analysis/precision.js';
 export type { LeakReport } from './analysis/precision.js';
 export * from './render/index.js';
+export * from './migrate/migrate.js';
