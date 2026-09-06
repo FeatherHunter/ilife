@@ -15,6 +15,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # changeset status 需与 master 求 merge-base，浅克隆无基线必挂
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: 11.8.0
