@@ -32,6 +32,9 @@ jobs:
       - run: pnpm boundaries
       # Q92-①：构建忘写快照致误导 → CI 重 resolve 后 diff，不等 fail
       - run: pnpm snapshot:check
+      # changeset status 按字面 merge-base master HEAD：显式建本地 master 基线
+      - name: 取 master 基线
+        run: git fetch origin master:master
       - run: pnpm changeset:status
 
   # Q92-②：手改快照 → 快照只许构建写，git 校验拦截
