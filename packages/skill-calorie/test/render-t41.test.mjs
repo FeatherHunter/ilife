@@ -1,8 +1,8 @@
 /** #41 · 读链补齐测试：tmp 隔离，真实 DB 零触碰。
  * 覆盖 18 新读键 render 数据 + HTML 字段断言 + 缺失阻断 + 分发直调 stat。
  * 取数层复用既有（fetch/body/plan/volatility/anomaly/contraindications），本票只验 render 出口与键。
- * 说明：CLI spawn 烟囱不在并行套件内做（Windows 并行 spawn 配额抖动，见 #41 调查）；
- * CLI 唯一出口验证改走同 dispatch 直调 + 隔离手动 smoke（见分支报告），套件内零 spawn 保 CI 全绿。
+ * 说明：真 CLI spawn 覆盖见 test/cli-smoke-t41.test.mjs（18 新键串行 spawn：Windows 并行
+ * spawn 配额抖动，故严格串行；B 已验证串行 20/20 可行）；本文件保留同 dispatch 直调断言。
  */
 import { strict as assert } from 'node:assert';
 import { mkdtempSync } from 'node:fs';
@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
+import { DIAGNOSE_KINDS } from '../dist/analysis/anomaly/index.js';
 import { CALORIE_COMBOS, calorieShapeFor } from '../dist/cli/keys.js';
 import { dispatch as dispatchRead } from '../dist/cli/cmd_read.js';
 import {
@@ -241,6 +242,19 @@ test('#41 缺失阻断：空库 18 键一律 missing-data（wizard 走 bad-input
   assert.throws(() => buildContraView(db), /无训练计划/);
   assert.throws(() => buildDedupeView(db), /食品库空/);
   assert.throws(() => buildProfileView(db), /未设档案/);
+  db.close();
+});
+
+test('#41 M1：空库全部有效诊断 kind 一律 missing-data 阻断（零观测 series，不返假健康）', () => {
+  const db = tmpDb();
+  assert.equal(DIAGNOSE_KINDS.length, 23);
+  for (const kind of DIAGNOSE_KINDS) {
+    assert.throws(
+      () => buildAnomalyView(db, kind, '2026-09-01', '2026-09-07'),
+      (e) => e instanceof CalorieRenderError && e.code === 'missing-data',
+      '空库未阻断 ' + kind,
+    );
+  }
   db.close();
 });
 

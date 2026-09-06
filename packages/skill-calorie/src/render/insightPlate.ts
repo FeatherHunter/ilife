@@ -10,7 +10,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { buildSeries } from '../analysis/series.js';
 import { weightForecast } from '../analysis/simulate.js';
 import { DIAGNOSE_KINDS, diagnose } from '../analysis/anomaly/index.js';
-import type { Diagnosis } from '../analysis/anomaly/index.js';
+import type { DaySeries, Diagnosis } from '../analysis/anomaly/index.js';
 import { scanPlan } from '../analysis/contraindications.js';
 import type { PlanScan } from '../analysis/contraindications.js';
 import { dedupeReport } from '../fetch/batch.js';
@@ -73,6 +73,16 @@ export interface AnomalyView {
   findingCount: number;
 }
 
+/** M1 · 零观测判定：buildSeries 按窗口逐日铺行（空库亦有日期行，仅 tdee/目标为默认值），
+ * 故“空 series”判零实质观测而非零长度；纯饮水（waterMl）不算证据（无饮食/体重/运动/身体
+ * 数据的诊断一律按缺失阻断铁律走 missing-data，不返 findings 冒充健康）。 */
+function hasObservations(series: DaySeries[]): boolean {
+  return series.some((s) =>
+    s.calories != null || s.protein != null || s.carbs != null || s.fat != null ||
+    s.sodiumMg != null || s.sugarG != null || s.fiberG != null ||
+    s.exerciseKcal != null || s.weightKg != null || s.bodyFatPct != null || s.waistCm != null);
+}
+
 export function buildAnomalyView(db: DatabaseSync, kind: string, start: string, end: string): AnomalyView {
   if (!(DIAGNOSE_KINDS as string[]).includes(kind)) {
     throw new CalorieRenderError('bad-input', '未知诊断 ' + String(kind) + '，可选: ' + DIAGNOSE_KINDS.join(', '));
@@ -81,6 +91,9 @@ export function buildAnomalyView(db: DatabaseSync, kind: string, start: string, 
   assertDate(end);
   if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
   const series = buildSeries(db, start, end);
+  if (!hasObservations(series)) {
+    throw new CalorieRenderError('missing-data', '空库/空窗：窗口 ' + start + '~' + end + ' 内无饮食/体重/运动/身体记录，无法诊断 ' + kind);
+  }
   let d: Diagnosis;
   try {
     d = diagnose(kind, series, db);

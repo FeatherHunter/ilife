@@ -25,7 +25,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 - 版本 `0.1.0`（与 link-core/render 同值，漂移单测钉死）；形状 6 种全字段校验，缺字段即抛，不返空数组冒充正常。
 - `list` 须 `items[]`（`total?`）；`detail` 须 `item{}`；`stat` 须 `metrics{number}` 全有限 number；`receipt` 须 `ok/message`；`analysis` 须非空 `summary`；`fallback` 须 `reason/degraded:true`。
-- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等读 24 键 + 写 35 键共 59 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
+- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等读 42 键 + 写 35 键共 77 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
 
 ## 口径（T7 + 精度 + 餐别）
 
