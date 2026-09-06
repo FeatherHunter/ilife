@@ -1,4 +1,4 @@
-/** T8 #27 + T9 #28 + T10 #29 · 主视图 + 目标分析盘 + 身体照片 envelope 键表（T11 出口复用同一命名；仅 type-only 消费 link-core）。
+/** T8 #27 + T9 #28 + T10 #29 + #41 · 主视图 + 目标分析盘 + 身体照片 + 读链补齐 envelope 键表（T11 出口复用同一命名；仅 type-only 消费 link-core）。
  *
  * T8 四主视图 key 另立 view 域：calorie.view_home / calorie.view_diet / calorie.view_exercise / calorie.view_goal（一律 stat）。
  * T9 目标分析盘：goal_config / goal_recommend / goal_weight / goal_progress / goal_status / combined / deficit / diet_review / health / ranking / library / search（一律 stat）。
@@ -25,6 +25,24 @@ export const VIEW_KEYS = {
   ranking: calorieKey('view', 'ranking'),
   library: calorieKey('view', 'library'),
   search: calorieKey('view', 'search'),
+  weight: calorieKey('view', 'weight'),
+  weightHistory: calorieKey('view', 'weight_history'),
+  weightCompare: calorieKey('view', 'weight_compare'),
+  weightReview: calorieKey('view', 'weight_review'),
+  volatility: calorieKey('view', 'volatility'),
+  bodyComposition: calorieKey('view', 'body_composition'),
+  bodyMeasure: calorieKey('view', 'body_measure'),
+  plan: calorieKey('view', 'plan'),
+  planWizard: calorieKey('view', 'plan_wizard'),
+  exerciseGoal: calorieKey('view', 'exercise_goal'),
+  goalExpiring: calorieKey('view', 'goal_expiring'),
+  goalPredict: calorieKey('view', 'goal_predict'),
+  goalVsActual: calorieKey('view', 'goal_vs_actual'),
+  predict: calorieKey('view', 'predict'),
+  anomaly: calorieKey('view', 'anomaly'),
+  contraindication: calorieKey('view', 'contraindication'),
+  dedupe: calorieKey('view', 'dedupe'),
+  profile: calorieKey('view', 'profile'),
 } as const;
 export type ViewName = keyof typeof VIEW_KEYS;
 
@@ -45,6 +63,24 @@ export const VIEW_SHAPES: Record<ViewName, EnvelopeShape> = {
   ranking: 'stat',
   library: 'stat',
   search: 'stat',
+  weight: 'stat',
+  weightHistory: 'stat',
+  weightCompare: 'stat',
+  weightReview: 'stat',
+  volatility: 'stat',
+  bodyComposition: 'stat',
+  bodyMeasure: 'stat',
+  plan: 'stat',
+  planWizard: 'stat',
+  exerciseGoal: 'stat',
+  goalExpiring: 'stat',
+  goalPredict: 'stat',
+  goalVsActual: 'stat',
+  predict: 'stat',
+  anomaly: 'stat',
+  contraindication: 'stat',
+  dedupe: 'stat',
+  profile: 'stat',
 };
 
 export function viewShapeFor(key: string): EnvelopeShape {

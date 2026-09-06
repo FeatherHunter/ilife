@@ -21,6 +21,12 @@ import { GIF_PASSTHROUGH_NOTE } from './photo.js';
 import type { CrudReceipt, ErrorReceipt } from './receipt.js';
 import type { PhotoHelpHit } from './help.js';
 import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
+import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from './weightPlate.js';
+import type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
+import type { ExerciseGoalView, PlanView, PlanWizardView } from './planPlate.js';
+import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from './goalExtra.js';
+import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';
+import type { ProfileView } from './profilePlate.js';
 import type { CombinedAnalysis, DietReview } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { FoodRanking } from '../analysis/diet.js';
@@ -404,3 +410,209 @@ export function renderProductStatsHtml(s: ProductStats): string {
     '<div class="' + cx('grid') + '">' + items + '</div>';
   return pageShell('calorie', 'ilife:calorie:library-stats', '库统计', body);
 }
+export function renderWeightHtml(w: WeightDashboard): string {
+  const t = w.trend;
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('体重盘', t.firstWeight + ' → ' + t.lastWeight + ' kg', t.firstDate + ' ~ ' + t.lastDate) +
+    kpi('均值', t.avgWeight + ' kg', '共 ' + t.recordCount + ' 条') +
+    kpi('变化', (t.changeKg >= 0 ? '+' : '') + t.changeKg + ' kg', '趋势' + t.trendCn) +
+    kpi('目标体重', fmt(w.weightGoal, ' kg'), w.deadline ? '截止 ' + w.deadline : '无截止') +
+    kpi('距目标', w.gapKg === null ? '—' : (w.gapKg >= 0 ? '+' : '') + w.gapKg + ' kg') +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:weight', '体重盘 ' + w.start + ' ~ ' + w.end, body);
+}
+
+export function renderWeightHistoryHtml(h: WeightHistoryView): string {
+  const rows = h.rows.slice(0, 10).map((r) => kpi(r.date, r.weight_kg + ' kg', (r.note ?? '') + ' BMI ' + (r.bmi ?? '—'))).join('');
+  const ch = h.change ? '变化 ' + (h.change.delta >= 0 ? '+' : '') + h.change.delta + ' kg（' + h.change.spanDays + '天）' : '单点无变化';
+  const body =
+    '<div class="' + cx('grid') + '">' + kpi('体重历史', h.range, ch) + '</div>' +
+    '<div class="' + cx('grid') + '">' + rows + '</div>';
+  return pageShell('calorie', 'ilife:calorie:weight-history', '体重历史 ' + h.range, body);
+}
+
+export function renderWeightCompareHtml(v: WeightCompareView): string {
+  const c = v.compare;
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('体重对比', (c.avgDiff >= 0 ? '+' : '') + c.avgDiff + ' kg', c.direction) +
+    kpi('本期', c.currentPeriod.avgWeight + ' kg', v.start + ' ~ ' + v.end) +
+    kpi('对比期', c.comparePeriod.avgWeight + ' kg', v.compareStart + ' ~ ' + v.compareEnd) +
+    kpi('节奏', c.speedLabel) +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:weight-compare', '体重对比', body);
+}
+
+export function renderWeightReviewHtml(v: WeightReviewView): string {
+  const m = v.milestone;
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('体重复核', m.currentWeight + ' kg', m.currentDate) +
+    kpi('目标体重', m.weightGoal + ' kg', m.deadline ? '截止 ' + m.deadline : '无截止') +
+    kpi('差距', (m.gapKg >= 0 ? '+' : '') + m.gapKg + ' kg') +
+    kpi('状态', m.status) +
+    kpi('预计达成', m.estDate ?? '—', m.estDays === null || m.estDays === undefined ? '' : m.estDays + '天') +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:weight-review', '体重复核 ' + v.today, body);
+}
+
+export function renderVolatilityHtml(v: VolatilityView): string {
+  const o = v.volatility;
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('波动分析', '基线 ' + o.baselineValue + ' kg', o.baselineToggleLabel) +
+    kpi('阈值', '黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + ' kg', 'σ=' + o.baselineSigma + 'kg') +
+    kpi('预警', o.earlyWarning.message, o.earlyWarning.date + ' ' + o.earlyWarning.kg + 'kg') +
+    kpi('近期异常', o.recentAnomalies.length + ' 个', '共 ' + o.points.length + ' 点') +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:volatility', '波动分析 ' + v.start + ' ~ ' + v.end, body);
+}
+
+export function renderBodyCompositionHtml(v: BodyCompositionView): string {
+  const items = v.items.slice(0, 8).map((r) => {
+    const d = r as { date?: unknown; body_fat_pct?: unknown; source?: unknown };
+    return kpi(String(d.date ?? ''), String(d.body_fat_pct ?? '—') + '%', String(d.source ?? ''));
+  }).join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('体成分看', v.source ?? '全部来源', '共 ' + v.total + ' 条') +
+    kpi('最新体脂', v.latestPct === null ? '—' : v.latestPct + '%') +
+    kpi('趋势点', v.trend.length + ' 天') +
+    '</div><div class="' + cx('grid') + '">' + items + '</div>';
+  return pageShell('calorie', 'ilife:calorie:body-composition', '体成分看', body);
+}
+
+export function renderBodyMeasureHtml(v: BodyMeasureView): string {
+  const items = v.items.slice(0, 8).map((r) => {
+    const d = r as Record<string, unknown>;
+    return kpi(String(d['date'] ?? ''), v.metric ? String(d[v.metric] ?? '—') + 'cm' : '有记录', String(d['note'] ?? ''));
+  }).join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('围度看', v.metric ?? '全部围度', '共 ' + v.total + ' 条') +
+    kpi('最新', v.latestVal === null ? '—' : v.latestVal + 'cm', v.metric ?? '') +
+    kpi('趋势点', v.trend.length + ' 天') +
+    '</div><div class="' + cx('grid') + '">' + items + '</div>';
+  return pageShell('calorie', 'ilife:calorie:body-measure', '围度看', body);
+}
+
+export function renderPlanHtml(v: PlanView): string {
+  const sessions = v.sessions.slice(0, 8).map((s) => kpi('W' + s.week_number + 'D' + s.day_of_week + '#' + s.session_index, s.session_label || (s.is_rest_day ? '休息' : '训练'), (Array.isArray(s.movements) ? s.movements.length : 0) + '动作')).join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('训练计划看', v.title ?? '未命名', v.totalWeeks === null ? '' : '共 ' + v.totalWeeks + ' 周') +
+    kpi('会话', v.totalSessions + ' 个', '动作 ' + v.totalMovements + ' 个') +
+    '</div><div class="' + cx('grid') + '">' + sessions + '</div>';
+  return pageShell('calorie', 'ilife:calorie:plan', '训练计划看', body);
+}
+
+export function renderPlanWizardHtml(v: PlanWizardView): string {
+  const errs = v.errors.slice(0, 5).map((e) => '<div>' + escapeHtml(e) + '</div>').join('');
+  const warns = v.warnings.slice(0, 5).map((e) => '<div>' + escapeHtml(e) + '</div>').join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('构建向导', v.errorCount === 0 ? '可落地' : '有硬止', '错误 ' + v.errorCount + ' 警告 ' + v.warningCount) +
+    kpi('dryRun', '不写库', '预览插入 ' + v.insertedCount) +
+    '</div><div>' + errs + warns + '</div>';
+  return pageShell('calorie', 'ilife:calorie:plan-wizard', '构建向导', body);
+}
+
+export function renderExerciseGoalHtml(v: ExerciseGoalView): string {
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('运动目标视图', v.start + ' ~ ' + v.end, v.days + '天') +
+    kpi('目标', v.goalTotal + ' 卡', '日均 ' + v.dailyGoal + ' 卡') +
+    kpi('实际', v.actual + ' 卡', v.achieved ? '已达成' : '未达成') +
+    kpi('完成度', v.pct === null ? '—' : v.pct + '%', '差 ' + v.gap + ' 卡') +
+    '</div>' + bar('运动完成率', v.pct);
+  return pageShell('calorie', 'ilife:calorie:exercise-goal', '运动目标视图', body);
+}
+
+export function renderGoalExpiringHtml(v: GoalExpiringView): string {
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('即将到期目标', v.deadline, v.expiring ? '即将到期' : '未到期') +
+    kpi('剩余', v.daysLeft + ' 天', '窗口 ' + v.withinDays + ' 天') +
+    kpi('体重目标', fmt(v.weightGoal, ' kg')) +
+    kpi('热量目标', v.calorieGoal === null ? '—' : v.calorieGoal + ' 卡') +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:goal-expiring', '即将到期目标', body);
+}
+
+export function renderGoalPredictHtml(v: GoalPredictView): string {
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('目标预测达成', '目标 ' + v.targetKg + ' kg', v.start + ' ~ ' + v.end) +
+    kpi('当前', v.current + ' kg') +
+    kpi('预计达成', v.eta, '剩余 ' + v.daysLeft + ' 天') +
+    kpi('速率', v.ratePerWeek + ' kg/周', v.feasible ? '健康' : '超范围') +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:goal-predict', '目标预测达成', body);
+}
+
+export function renderGoalVsActualHtml(v: GoalVsActualView): string {
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('目标对比实际', v.start + ' ~ ' + v.end, '完成 ' + v.completedCount + '/' + (v.completedCount + v.incompleteCount)) +
+    kpi('热量目标', v.calorieGoal === null ? '—' : v.calorieGoal + ' 卡') +
+    kpi('完成率', v.completionPct === null ? '—' : v.completionPct + '%') +
+    kpi('摄入均值', v.trendAvg + ' 卡') +
+    '</div>' + bar('目标完成率', v.completionPct);
+  return pageShell('calorie', 'ilife:calorie:goal-vs-actual', '目标对比实际', body);
+}
+
+export function renderPredictHtml(v: PredictView): string {
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('体重预测', v.current + ' → ' + v.forecastValue + ' kg', v.horizonDays + '天') +
+    kpi('速率', v.ratePerWeek + ' kg/周') +
+    kpi('区间', (v.forecastLo ?? '—') + ' ~ ' + (v.forecastHi ?? '—') + ' kg') +
+    '</div><div style="color:' + token('muted') + '">' + escapeHtml(v.insight) + '</div>';
+  return pageShell('calorie', 'ilife:calorie:predict', '体重预测', body);
+}
+
+export function renderAnomalyHtml(v: AnomalyView): string {
+  const findings = v.diagnosis.findings.slice(0, 5).map((f) => '<div><b>' + escapeHtml(f.cause) + '</b><div>' + escapeHtml(f.evidence) + '</div><div>' + escapeHtml(f.action) + '</div></div>').join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('异常诊断', v.kind, v.start + ' ~ ' + v.end) +
+    kpi('发现', v.findingCount + ' 条', v.diagnosis.title) +
+    '</div><div>' + findings + '</div><div style="color:' + token('muted') + '">' + escapeHtml(v.diagnosis.insight) + '</div>';
+  return pageShell('calorie', 'ilife:calorie:anomaly', '异常诊断 ' + v.kind, body);
+}
+
+export function renderContraHtml(v: ContraView): string {
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('禁忌扫描', v.summaryStatus, '部位 ' + v.part) +
+    kpi('会话', v.scannedSessions + ' 个', '动作 ' + v.scannedMovements + ' 个') +
+    kpi('error', v.errorCount + ' 个') +
+    kpi('warn', v.warnCount + ' 个') +
+    kpi('info', v.infoCount + ' 个') +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:contraindication', '禁忌扫描', body);
+}
+
+export function renderDedupeHtml(v: DedupeView): string {
+  const groups = v.groups.slice(0, 8).map((g) => kpi(escapeHtml(g.productName), g.ids.join(',') , (g.brand ?? '') + ' ' + g.ids.length + '条')).join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('去重报告', v.groupCount + ' 组', '重复 ' + v.rowCount + ' 条/库 ' + v.totalProducts + ' 条') +
+    '</div><div class="' + cx('grid') + '">' + groups + '</div>';
+  return pageShell('calorie', 'ilife:calorie:dedupe', '去重报告', body);
+}
+
+export function renderProfileHtml(v: ProfileView): string {
+  const p = v.profile;
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('档案视图', (p.gender ?? '—') + ' ' + (p.age ?? '—') + '岁', '身高 ' + (p.height_cm ?? '—') + 'cm') +
+    kpi('活动量', p.activity_level ?? '—') +
+    kpi('备注', p.note ?? '') +
+    kpi('目标', v.hasGoal ? '已设' : '未设', v.nutrition ? v.nutrition.calorie_goal + ' 卡' : '') +
+    kpi('最新体重', v.latestWeightKg === null ? '—' : v.latestWeightKg + ' kg') +
+    '</div>';
+  return pageShell('calorie', 'ilife:calorie:profile', '档案视图', body);
+}
+

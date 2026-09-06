@@ -1,4 +1,4 @@
-/** T11 #30 · cmd_read 组合键表（registry 合法命名，点式分隔；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
+/** T11 #30 + #41 · cmd_read 组合键表（registry 合法命名，点式分隔；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
  * #40 追加 35 写键（CALORIE_WRITE_COMBOS，一律 receipt 形）：单条 CRUD 可执行入口，命名对照旧 CLI；
  * CALORIE_COMBOS 为读 24 + 写 35 全量注册表（skilllink 登记与 HELP 注入的上游）。
  *
@@ -87,6 +87,24 @@ export const CALORIE_COMBOS = {
   'calorie.help.center': { shape: 'list' as EnvelopeShape, title: '身材照HELP' },
   'calorie.help.lookup': { shape: 'list' as EnvelopeShape, title: '唤醒词HELP' },
   'calorie.history': { shape: 'list' as EnvelopeShape, title: '热量历史' },
+  'calorie.view.weight': { shape: 'stat' as EnvelopeShape, title: '体重盘' },
+  'calorie.view.weight-history': { shape: 'stat' as EnvelopeShape, title: '体重历史' },
+  'calorie.view.weight-compare': { shape: 'stat' as EnvelopeShape, title: '体重对比' },
+  'calorie.view.weight-review': { shape: 'stat' as EnvelopeShape, title: '体重复核' },
+  'calorie.view.volatility': { shape: 'stat' as EnvelopeShape, title: '波动分析' },
+  'calorie.view.body-composition': { shape: 'stat' as EnvelopeShape, title: '体成分看' },
+  'calorie.view.body-measure': { shape: 'stat' as EnvelopeShape, title: '围度看' },
+  'calorie.view.plan': { shape: 'stat' as EnvelopeShape, title: '训练计划看' },
+  'calorie.view.plan-wizard': { shape: 'stat' as EnvelopeShape, title: '构建向导' },
+  'calorie.view.exercise-goal': { shape: 'stat' as EnvelopeShape, title: '运动目标视图' },
+  'calorie.view.goal-expiring': { shape: 'stat' as EnvelopeShape, title: '即将到期目标' },
+  'calorie.view.goal-predict': { shape: 'stat' as EnvelopeShape, title: '目标预测达成' },
+  'calorie.view.goal-vs-actual': { shape: 'stat' as EnvelopeShape, title: '目标对比实际' },
+  'calorie.view.predict': { shape: 'stat' as EnvelopeShape, title: '体重预测' },
+  'calorie.view.anomaly': { shape: 'stat' as EnvelopeShape, title: '异常诊断' },
+  'calorie.view.contraindication': { shape: 'stat' as EnvelopeShape, title: '禁忌扫描' },
+  'calorie.view.dedupe': { shape: 'stat' as EnvelopeShape, title: '去重报告' },
+  'calorie.view.profile': { shape: 'stat' as EnvelopeShape, title: '档案视图' },
 } as const;
 
 export type CalorieComboKey = keyof typeof CALORIE_COMBOS;

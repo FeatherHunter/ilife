@@ -25,10 +25,10 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
     assert.ok(skill.includes(START) && skill.includes(END));
     assert.ok(skill.split('\n').length >= 70);
   });
-  it('互联区新鲜（构建期注入可复现，59 键全对齐 combos）', () => {
+  it('互联区新鲜（构建期注入可复现，77 键全对齐 combos）', () => {
     const si = skill.indexOf(START), ei = skill.indexOf(END);
     assert.equal(skill.slice(si + START.length + 1, ei - 1), buildHelpBlock());
-    assert.equal(Object.keys(CALORIE_COMBOS).length, 59);
+    assert.equal(Object.keys(CALORIE_COMBOS).length, 77);
     for (const k of Object.keys(CALORIE_COMBOS)) assert.ok(skill.includes(k), '缺键 ' + k);
   });
   it('模板 6 件齐 + SHARED 双标记各恰一次', () => {

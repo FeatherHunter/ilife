@@ -22,6 +22,12 @@ import { buildDietOverview, buildMealDistribution } from '../render/diet.js';
 import { buildExerciseView } from '../render/exercise.js';
 import { buildGoalView } from '../render/goal.js';
 import { buildGoalConfig, buildGoalRecommend, buildGoalWeight, buildGoalProgress, buildGoalStatus } from '../render/goalPlate.js';
+import { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from '../render/weightPlate.js';
+import { buildBodyCompositionView, buildBodyMeasureView } from '../render/bodyPlate.js';
+import { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from '../render/planPlate.js';
+import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
+import { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from '../render/insightPlate.js';
+import { buildProfileView } from '../render/profilePlate.js';
 import { buildCombinedAnalysis, buildDeficitPlate, buildDietReview } from '../render/analysisPlate.js';
 import { buildHealthPlate } from '../render/health.js';
 import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
@@ -34,6 +40,11 @@ import {
   renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
   renderGoalStatusHtml, renderGoalHtml, renderHealthHtml, renderHomeHtml, renderProductLibraryHtml,
   renderProductSearchHtml, renderRankingHtml, renderAllRankingsHtml,
+  renderWeightHtml, renderWeightHistoryHtml, renderWeightCompareHtml, renderWeightReviewHtml,
+  renderVolatilityHtml, renderBodyCompositionHtml, renderBodyMeasureHtml, renderPlanHtml,
+  renderPlanWizardHtml, renderExerciseGoalHtml, renderGoalExpiringHtml, renderGoalPredictHtml,
+  renderGoalVsActualHtml, renderPredictHtml, renderAnomalyHtml, renderContraHtml,
+  renderDedupeHtml, renderProfileHtml,
 } from '../render/html.js';
 import { assertStatMetrics } from '../render/envelope.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -191,7 +202,8 @@ function photosDirOf(params: Record<string, unknown>): string | undefined {
 }
 
 // 全键分发：读走 render/fetch 读，HELP 走触发词现找；未知键上游已拦，此处再拦一道。
-function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): { data: Record<string, unknown>; html: string } {
+/** #41 · 测试直调出口（纯 CLI 同逻辑，不经过 argv/spawn；CLI 唯一出口仍为 main）。 */
+export function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): { data: Record<string, unknown>; html: string } {
   switch (key) {
     case 'calorie.today': {
       const date = optStr(params, 'date') ?? latestFoodDate(db) ?? todayISO();
@@ -441,6 +453,163 @@ function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync
         items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' 卡 · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
       return { data: { items, total: items.length }, html };
     }
+    case 'calorie.view.weight': {
+      const { start, end } = defaultRange(db, params);
+      const w = buildWeightDashboard(db, start, end);
+      const metrics = nums({
+        recordCount: w.trend.recordCount, avgWeight: w.trend.avgWeight,
+        maxWeight: w.trend.maxWeight, minWeight: w.trend.minWeight,
+        firstWeight: w.trend.firstWeight, lastWeight: w.trend.lastWeight,
+        changeKg: w.trend.changeKg, dailyChangeG: w.trend.dailyChangeG,
+        weightGoal: w.weightGoal, gapKg: w.gapKg,
+      });
+      return { data: { metrics }, html: renderWeightHtml(w) };
+    }
+    case 'calorie.view.weight-history': {
+      const startDate = optStr(params, 'startDate') ?? optStr(params, 'start');
+      const endDate = optStr(params, 'endDate') ?? optStr(params, 'end');
+      const days = optNum(params, 'days');
+      let h;
+      if (startDate && endDate) h = buildWeightHistoryView(db, { startDate, endDate });
+      else if (startDate && !endDate) h = buildWeightHistoryView(db, { startDate });
+      else if (days !== undefined) h = buildWeightHistoryView(db, { days });
+      else h = buildWeightHistoryView(db, {});
+      const metrics = nums({
+        rows: h.rows.length,
+        spanDays: h.change?.spanDays, first: h.change?.first, last: h.change?.last,
+        delta: h.change?.delta, dailyAvg: h.change?.dailyAvg,
+      });
+      return { data: { metrics }, html: renderWeightHistoryHtml(h) };
+    }
+    case 'calorie.view.weight-compare': {
+      const start = needStr(params, 'start');
+      const end = needStr(params, 'end');
+      const compareStart = needStr(params, 'compareStart');
+      const compareEnd = needStr(params, 'compareEnd');
+      const v = buildWeightCompareView(db, start, end, compareStart, compareEnd);
+      const metrics = nums({
+        avgDiff: v.compare.avgDiff,
+        currentAvg: v.compare.currentPeriod.avgWeight, compareAvg: v.compare.comparePeriod.avgWeight,
+        currentChange: v.compare.currentPeriod.changeKg, compareChange: v.compare.comparePeriod.changeKg,
+      });
+      return { data: { metrics }, html: renderWeightCompareHtml(v) };
+    }
+    case 'calorie.view.weight-review': {
+      const today = optStr(params, 'today') ?? optStr(params, 'date');
+      const v = buildWeightReviewView(db, today ?? undefined);
+      const metrics = nums({
+        currentWeight: v.milestone.currentWeight, weightGoal: v.milestone.weightGoal,
+        gapKg: v.milestone.gapKg, actualDailyChangeKg: v.milestone.actualDailyChangeKg,
+        estDays: v.milestone.estDays, calorieAdjustment: v.milestone.calorieAdjustment,
+      });
+      return { data: { metrics }, html: renderWeightReviewHtml(v) };
+    }
+    case 'calorie.view.volatility': {
+      const { start, end } = defaultRange(db, params);
+      const mode = (optStr(params, 'baselineMode') ?? optStr(params, 'mode') ?? 'rolling') as 'rolling' | 'goal';
+      const v = buildVolatilityView(db, start, end, mode);
+      const metrics = nums({
+        baselineValue: v.volatility.baselineValue, baselineSigma: v.volatility.baselineSigma,
+        yellow: v.volatility.thresholds.yellow, red: v.volatility.thresholds.red,
+        points: v.volatility.points.length, anomalies: v.volatility.recentAnomalies.length,
+        deviationKg: v.volatility.earlyWarning.deviationKg,
+      });
+      return { data: { metrics }, html: renderVolatilityHtml(v) };
+    }
+    case 'calorie.view.body-composition': {
+      const days = optNum(params, 'days') ?? 90;
+      const source = optStr(params, 'source');
+      const limit = optNum(params, 'limit') ?? 20;
+      const v = buildBodyCompositionView(db, { days: days as number, source: source ?? undefined, limit: limit as number });
+      const metrics = nums({ total: v.total, latestPct: v.latestPct, trendDays: v.trend.length });
+      return { data: { metrics }, html: renderBodyCompositionHtml(v) };
+    }
+    case 'calorie.view.body-measure': {
+      const metric = optStr(params, 'metric');
+      const days = optNum(params, 'days') ?? 90;
+      const limit = optNum(params, 'limit') ?? 20;
+      const dateFrom = optStr(params, 'dateFrom');
+      const dateTo = optStr(params, 'dateTo');
+      const v = buildBodyMeasureView(db, { metric: metric ?? undefined, days: days as number, limit: limit as number, dateFrom: dateFrom ?? undefined, dateTo: dateTo ?? undefined });
+      const metrics = nums({ total: v.total, latestVal: v.latestVal, trendDays: v.trend.length });
+      return { data: { metrics }, html: renderBodyMeasureHtml(v) };
+    }
+    case 'calorie.view.plan': {
+      const v = buildPlanView(db);
+      const metrics = nums({ totalSessions: v.totalSessions, totalMovements: v.totalMovements, totalWeeks: v.totalWeeks });
+      return { data: { metrics }, html: renderPlanHtml(v) };
+    }
+    case 'calorie.view.plan-wizard': {
+      const plan = params['plan'];
+      if (typeof plan !== 'object' || plan === null || Array.isArray(plan)) fail(2, '缺参数 plan（PlanInput 对象）');
+      const catalog = params['catalog'];
+      const v = buildPlanWizardView(plan, (catalog as string[] | undefined) ?? undefined);
+      const metrics = nums({ errorCount: v.errorCount, warningCount: v.warningCount, insertedCount: v.insertedCount });
+      return { data: { metrics }, html: renderPlanWizardHtml(v) };
+    }
+    case 'calorie.view.exercise-goal': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildExerciseGoalView(db, start, end);
+      const metrics = nums({ dailyGoal: v.dailyGoal, goalTotal: v.goalTotal, actual: v.actual, pct: v.pct, gap: v.gap, achieved: v.achieved ? 1 : 0, days: v.days });
+      return { data: { metrics }, html: renderExerciseGoalHtml(v) };
+    }
+    case 'calorie.view.goal-expiring': {
+      const withinDays = optNum(params, 'withinDays') ?? optNum(params, 'days') ?? 14;
+      const today = optStr(params, 'today');
+      const v = buildGoalExpiringView(db, withinDays as number, today ?? undefined);
+      const metrics = nums({ daysLeft: v.daysLeft, withinDays: v.withinDays, expiring: v.expiring ? 1 : 0, weightGoal: v.weightGoal, calorieGoal: v.calorieGoal });
+      return { data: { metrics }, html: renderGoalExpiringHtml(v) };
+    }
+    case 'calorie.view.goal-predict': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildGoalPredictView(db, start, end);
+      const metrics = nums({ targetKg: v.targetKg, current: v.current, daysLeft: v.daysLeft, ratePerWeek: v.ratePerWeek, feasible: v.feasible ? 1 : 0 });
+      return { data: { metrics }, html: renderGoalPredictHtml(v) };
+    }
+    case 'calorie.view.goal-vs-actual': {
+      const { start, end } = defaultRange(db, params);
+      const historyDays = optNum(params, 'historyDays') ?? 30;
+      const v = buildGoalVsActualView(db, start, end, historyDays as number);
+      const metrics = nums({
+        completedCount: v.completedCount, incompleteCount: v.incompleteCount,
+        completionPct: v.completionPct, trendAvg: v.trendAvg, calorieGoal: v.calorieGoal,
+      });
+      return { data: { metrics }, html: renderGoalVsActualHtml(v) };
+    }
+    case 'calorie.view.predict': {
+      const { start, end } = defaultRange(db, params);
+      const horizonDays = optNum(params, 'horizonDays') ?? optNum(params, 'days') ?? 30;
+      const v = buildPredictView(db, start, end, horizonDays as number);
+      const metrics = nums({ current: v.current, ratePerWeek: v.ratePerWeek, forecastValue: v.forecastValue, forecastLo: v.forecastLo, forecastHi: v.forecastHi, horizonDays: v.horizonDays });
+      return { data: { metrics }, html: renderPredictHtml(v) };
+    }
+    case 'calorie.view.anomaly': {
+      const kind = needStr(params, 'kind');
+      const { start, end } = defaultRange(db, params);
+      const v = buildAnomalyView(db, kind, start, end);
+      const metrics = nums({ findingCount: v.findingCount, days: v.diagnosis.days, degraded: v.diagnosis.degraded ? 1 : 0 });
+      return { data: { metrics }, html: renderAnomalyHtml(v) };
+    }
+    case 'calorie.view.contraindication': {
+      const part = optStr(params, 'part') ?? 'all';
+      const v = buildContraView(db, part);
+      const metrics = nums({ scannedSessions: v.scannedSessions, scannedMovements: v.scannedMovements, errorCount: v.errorCount, warnCount: v.warnCount, infoCount: v.infoCount });
+      return { data: { metrics }, html: renderContraHtml(v) };
+    }
+    case 'calorie.view.dedupe': {
+      const v = buildDedupeView(db);
+      const metrics = nums({ groupCount: v.groupCount, rowCount: v.rowCount, totalProducts: v.totalProducts });
+      return { data: { metrics }, html: renderDedupeHtml(v) };
+    }
+    case 'calorie.view.profile': {
+      const v = buildProfileView(db);
+      const metrics = nums({
+        age: v.profile.age, heightCm: v.profile.height_cm,
+        hasGoal: v.hasGoal ? 1 : 0, latestWeightKg: v.latestWeightKg,
+        calorieGoal: v.nutrition?.calorie_goal,
+      });
+      return { data: { metrics }, html: renderProfileHtml(v) };
+    }
     default:
       fail(3, '未知 calorie key：' + key);
       throw new Error('unreachable');
@@ -509,4 +678,5 @@ async function main(): Promise<void> {
   process.stdout.write(JSON.stringify(env) + '\n');
 }
 
-await main();
+const invokedAsCli = (process.argv[1] ?? '').replace(/\\/g, '/').endsWith('cmd_read.js');
+if (invokedAsCli) await main();
