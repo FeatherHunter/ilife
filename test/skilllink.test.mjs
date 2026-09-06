@@ -1,10 +1,11 @@
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openDb } from '../packages/skill-calorie/dist/index.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'tooling/skilllink.mjs');
@@ -20,7 +21,17 @@ function nodeBin() {
   return process.execPath;
 }
 const NODE = nodeBin();
-function run(...a) { return spawnSync(NODE, [cli, ...a], { cwd: root, encoding: 'utf8' }); }
+let DB = '';
+before(() => {
+  DB = mkdtempSync(join(tmpdir(), 'sk-cal-'));
+  const db = openDb(join(DB, 'calorie_data.db'));
+  db.prepare("INSERT OR REPLACE INTO user_profile (id, age, gender, height_cm, activity_level) VALUES (1, 30, 'male', 175, 'moderate')").run();
+  db.prepare('INSERT OR REPLACE INTO daily_goal (id, calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal) VALUES (1, 1800, 150, 200, 50, 2000)').run();
+  db.prepare("INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat) VALUES ('2026-09-07', '08:10:00', '燕麦', 100, 389, 13, 66, 7)").run();
+  db.prepare("INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat) VALUES ('2026-09-07', '12:10:00', '鸡胸', 150, 200, 35, 2, 4)").run();
+  db.close();
+});
+function run(...a) { return spawnSync(NODE, [cli, ...a], { cwd: root, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } }); }
 
 describe('skilllink 契约冻结', () => {
   it('read calorie.today：exit 0 + stdout 纯 JSON envelope 全字段', () => {

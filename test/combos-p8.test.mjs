@@ -78,8 +78,10 @@ describe('P8 combos 真相源与 HELP 注入', () => {
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /channels 15 对/);
   });
-  it('calorie.today 取数通（skilllink pilot）', () => {
-    assert.equal(read('calorie.today').shape, 'list');
+  it('calorie.today 转正 cmd_read（空库阻断 exit 4，有数 exit 0 由 T11 覆盖）', () => {
+    const r = run([skilllink, 'read', 'calorie.today']);
+    assert.equal(r.status, 4, 'stderr=' + r.stderr);
+    assert.match(r.stderr, /缺失阻断/);
   });
   it('memo 十键取数全通（skilllink spawn 出口，tmp 隔离）', () => {
     assert.equal(read('memo.search', { q: '跑步' }).shape, 'list');

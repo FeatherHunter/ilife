@@ -7,6 +7,122 @@ combos:
     skill: calorie
     shape: list
     title: 今日饮食
+    cmd: skill-calorie
+  - key: calorie.view.home
+    skill: calorie
+    shape: stat
+    title: 今日总览
+    cmd: skill-calorie
+  - key: calorie.view.diet
+    skill: calorie
+    shape: stat
+    title: 饮食总览
+    cmd: skill-calorie
+  - key: calorie.view.exercise
+    skill: calorie
+    shape: stat
+    title: 运动总览
+    cmd: skill-calorie
+  - key: calorie.view.goal
+    skill: calorie
+    shape: stat
+    title: 目标分析
+    cmd: skill-calorie
+  - key: calorie.view.goal-config
+    skill: calorie
+    shape: stat
+    title: 目标配置
+    cmd: skill-calorie
+  - key: calorie.view.goal-recommend
+    skill: calorie
+    shape: stat
+    title: 目标推荐
+    cmd: skill-calorie
+  - key: calorie.view.goal-weight
+    skill: calorie
+    shape: stat
+    title: 体重目标
+    cmd: skill-calorie
+  - key: calorie.view.goal-progress
+    skill: calorie
+    shape: stat
+    title: 目标进度
+    cmd: skill-calorie
+  - key: calorie.view.goal-status
+    skill: calorie
+    shape: stat
+    title: 目标状态
+    cmd: skill-calorie
+  - key: calorie.view.combined
+    skill: calorie
+    shape: stat
+    title: 组合分析
+    cmd: skill-calorie
+  - key: calorie.view.deficit
+    skill: calorie
+    shape: stat
+    title: 热量缺口
+    cmd: skill-calorie
+  - key: calorie.view.diet-review
+    skill: calorie
+    shape: stat
+    title: 饮食复盘
+    cmd: skill-calorie
+  - key: calorie.view.health
+    skill: calorie
+    shape: stat
+    title: 健康盘
+    cmd: skill-calorie
+  - key: calorie.view.ranking
+    skill: calorie
+    shape: stat
+    title: 食品排行
+    cmd: skill-calorie
+  - key: calorie.view.library
+    skill: calorie
+    shape: stat
+    title: 食品库
+    cmd: skill-calorie
+  - key: calorie.view.search
+    skill: calorie
+    shape: stat
+    title: 查食品
+    cmd: skill-calorie
+  - key: calorie.photo.list
+    skill: calorie
+    shape: list
+    title: 看身材照
+    cmd: skill-calorie
+  - key: calorie.photo.detail
+    skill: calorie
+    shape: detail
+    title: 查身材照
+    cmd: skill-calorie
+  - key: calorie.photo.compare
+    skill: calorie
+    shape: list
+    title: 对比照片
+    cmd: skill-calorie
+  - key: calorie.photo.gif
+    skill: calorie
+    shape: analysis
+    title: 生成GIF
+    cmd: skill-calorie
+  - key: calorie.help.center
+    skill: calorie
+    shape: list
+    title: 身材照HELP
+    cmd: skill-calorie
+  - key: calorie.help.lookup
+    skill: calorie
+    shape: list
+    title: 唤醒词HELP
+    cmd: skill-calorie
+  - key: calorie.history
+    skill: calorie
+    shape: list
+    title: 热量历史
+    cmd: skill-calorie
   - key: memo.search
     skill: memo
     shape: list
@@ -60,8 +176,8 @@ combos:
 channels:
   - key: calorie.today
     shape: list
-    backing: skilllink-pilot
-    note: P9试点取数器直返空列表，T11 cmd_read 落包后转正
+    backing: skilllink-cmd
+    note: T11 cmd_read 转正（今日饮食 list，直返空试点已退役）
   - key: calorie.view_home
     shape: stat
     backing: render-view

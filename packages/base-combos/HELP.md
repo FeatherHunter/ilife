@@ -39,7 +39,7 @@
 
 | key | 形状 | 背书 |
 |---|---|---|
-| calorie.today | list | skilllink-pilot |
+| calorie.today | list | skilllink-cmd |
 | calorie.view_home | stat | render-view |
 | calorie.view_diet | stat | render-view |
 | calorie.view_exercise | stat | render-view |

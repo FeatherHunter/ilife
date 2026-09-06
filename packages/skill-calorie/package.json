@@ -9,7 +9,8 @@
     ".": "./dist/index.js",
     "./triggers": "./dist/triggers/index.js",
     "./fetch": "./dist/fetch/index.js",
-    "./render": "./dist/render/index.js"
+    "./render": "./dist/render/index.js",
+    "./cli": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
     "@feather_wch/base-render": "workspace:^0.1.0"
@@ -18,13 +19,14 @@
     "@feather_wch/base-link-core": "workspace:^0.1.0"
   },
   "bin": {
-    "skill-calorie-fetch": "./dist/fetch/cli.js"
+    "skill-calorie-fetch": "./dist/fetch/cli.js",
+    "calorie-cmd-read": "./dist/cli/cmd_read.js"
   },
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && node scripts/build-help.mjs",
     "test": "node --test ../../test/scaffold.test.mjs ../../test/calorie-triggers.test.mjs test/fetch-t6.test.mjs"
   }
 }
