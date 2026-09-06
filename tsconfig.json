@@ -13,6 +13,7 @@
     { "path": "./packages/skill-schedule" },
     { "path": "./packages/skill-home" },
     { "path": "./packages/skill-bill" },
+    { "path": "./packages/skill-chef" },
     { "path": "./packages/plugin-manager" },
     { "path": "./packages/plugin-calorie" },
     { "path": "./packages/plugin-memo" },
