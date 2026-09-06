@@ -1,0 +1,21 @@
+{
+  "name": "@feather_wch/base-render",
+  "version": "0.1.0",
+  "description": "渲染包：ui+style+injector+渲染契约，装配唯一 owner",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "devDependencies": {
+    "@feather_wch/base-link-core": "workspace:^0.1.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test ../../test/scaffold.test.mjs"
+  }
+}

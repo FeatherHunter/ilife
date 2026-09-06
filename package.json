@@ -1,0 +1,23 @@
+{
+  "name": "ilife",
+  "private": true,
+  "version": "0.0.0",
+  "description": "爱生活全 TS 重构（一期框架）monorepo",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test test/scaffold.test.mjs",
+    "doctor": "node tooling/skilllink.mjs doctor",
+    "snapshot": "node tooling/write-snapshot.mjs",
+    "snapshot:check": "node tooling/write-snapshot.mjs --check",
+    "boundaries": "node tooling/check-boundaries.mjs",
+    "changeset:status": "changeset status"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.4",
+    "typescript": "^5.9.2"
+  }
+}
