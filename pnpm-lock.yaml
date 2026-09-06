@@ -10,7 +10,10 @@ importers:
     devDependencies:
       '@changesets/cli':
         specifier: ^2.29.4
-        version: 2.31.1
+        version: 2.31.1(@types/node@26.4.1)
+      '@types/node':
+        specifier: ^26.4.1
+        version: 26.4.1
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -30,6 +33,8 @@ importers:
         version: link:../base-link-core
 
   packages/hunter-skills: {}
+
+  packages/skill-calorie: {}
 
 packages:
 
@@ -121,6 +126,9 @@ packages:
 
   '@types/node@12.7.1':
     resolution: {integrity: sha512-aK9jxMypeSrhiYofWWBf/T7O+KwaiAHzM4sveCdWPn71lzUSMimRnKzhXDKfKwV1kWoBo2P1aGgaIYGLf9/ljw==}
+
+  '@types/node@26.4.1':
+    resolution: {integrity: sha512-k97ENvZWtvA6yqz5/FS6a7duDgOPEeOQOc2iKS/nY6mX6qJUKtLnWzQS+Xj6tXweyj6ZcTAK2Qecetnvi9nCLA==}
 
   ansi-colors@4.1.3:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
@@ -397,6 +405,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  undici-types@8.3.0:
+    resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
+
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
     engines: {node: '>= 4.0.0'}
@@ -439,7 +450,7 @@ snapshots:
     dependencies:
       '@changesets/types': 6.1.0
 
-  '@changesets/cli@2.31.1':
+  '@changesets/cli@2.31.1(@types/node@26.4.1)':
     dependencies:
       '@changesets/apply-release-plan': 7.1.1
       '@changesets/assemble-release-plan': 6.0.10
@@ -455,7 +466,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.2
       '@changesets/types': 6.1.0
       '@changesets/write': 0.4.0
-      '@inquirer/external-editor': 1.0.2
+      '@inquirer/external-editor': 1.0.2(@types/node@26.4.1)
       '@manypkg/get-packages': 1.1.3
       ansi-colors: 4.1.3
       enquirer: 2.4.1
@@ -553,10 +564,12 @@ snapshots:
       human-id: 4.2.1
       prettier: 2.7.1
 
-  '@inquirer/external-editor@1.0.2':
+  '@inquirer/external-editor@1.0.2(@types/node@26.4.1)':
     dependencies:
       chardet: 2.2.0
       iconv-lite: 0.7.3
+    optionalDependencies:
+      '@types/node': 26.4.1
 
   '@manypkg/find-root@1.1.0':
     dependencies:
@@ -587,6 +600,10 @@ snapshots:
       fastq: 1.20.3
 
   '@types/node@12.7.1': {}
+
+  '@types/node@26.4.1':
+    dependencies:
+      undici-types: 8.3.0
 
   ansi-colors@4.1.3: {}
 
@@ -816,6 +833,8 @@ snapshots:
       is-number: 7.0.0
 
   typescript@5.9.2: {}
+
+  undici-types@8.3.0: {}
 
   universalify@0.1.2: {}
 

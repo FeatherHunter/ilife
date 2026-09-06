@@ -7,7 +7,8 @@
   "references": [
     { "path": "./packages/base-link-core" },
     { "path": "./packages/base-render" },
-    { "path": "./packages/base-combos" }
+    { "path": "./packages/base-combos" },
+    { "path": "./packages/skill-calorie" }
   ],
   "include": []
 }
