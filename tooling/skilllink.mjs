@@ -59,17 +59,25 @@ function checkLark() {
   }
 }
 
-// STEP 1 读表：只认 P9 冻结子集，其余行大声失败。
+// STEP 1 读表：combos 段只认 P9 冻结子集（其余行大声失败）；P8 声明段
+// （channels/scenarios/fallbacks/l6_slots）读路径跳过，归 tooling/check-combos.mjs 校验；未知顶层段仍大声失败。
+const COMBOS_SECTIONS = ['combos', 'channels', 'scenarios', 'fallbacks', 'l6_slots'];
 function loadCombosTable() {
   const p = join(root, 'packages/base-combos/combos.yaml');
   let text = '';
   try { text = readFileSync(p, 'utf8'); } catch (e) { fail(3, '读表失败：' + p); }
   const rows = [];
   let cur = null;
+  let sec = '';
   for (const ln of text.replace(/\r\n/g, '\n').split('\n')) {
     if (/^\s*#/.test(ln) || /^\s*$/.test(ln)) continue;
-    if (/^combos:\s*$/.test(ln)) continue;
-    let m = ln.match(/^  - key: (\S+)\s*$/);
+    let m = ln.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*$/);
+    if (m) {
+      if (!COMBOS_SECTIONS.includes(m[1])) fail(3, 'combos.yaml 未知顶层段：' + m[1]);
+      sec = m[1]; cur = null; continue;
+    }
+    if (sec !== 'combos') continue;
+    m = ln.match(/^  - key: (\S+)\s*$/);
     if (m) { cur = { key: m[1] }; rows.push(cur); continue; }
     m = ln.match(/^    (skill|shape|title|cmd): (.+?)\s*$/);
     if (m && cur) { cur[m[1]] = m[2]; continue; }
