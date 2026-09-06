@@ -1,0 +1,9 @@
+Blocked by: #3, #5
+
+## Question
+
+搭 monorepo 一次到位：pnpm workspace、根 packageManager+scripts、tsconfig composite+各包 references、changeset、tooling skilllink、CI 三端矩阵+Win 细验、SKILL latest+snapshot 跟包。
+
+Q92 两校验：构建写 resolvedVersion+sha，CI 重 resolve 后 diff，不等 fail；快照只许构建写，git diff 拦手改。
+
+验收：install frozen、build、skilllink doctor、test、changeset status 全绿。
