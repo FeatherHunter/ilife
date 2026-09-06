@@ -61,6 +61,49 @@ export function pauseAllGoals(db: DatabaseSync): PauseResult {
   };
 }
 
+export interface SetWeightGoalInput {
+  kg: unknown;
+  deadline?: unknown;
+  startKg?: unknown;
+  startDate?: unknown;
+}
+
+export interface SetWeightGoalResult {
+  weightGoal: number;
+  deadline: string | null;
+  startKg: number | null;
+  startDate: string | null;
+  updatedAt: string | null;
+  rowsAffected: number;
+}
+
+/** 定体重目标（对照老家 render_goal_weight --live：目标 kg 必填，截止/起点可选；ISO 日期校验）。 */
+export function setWeightGoal(db: DatabaseSync, input: SetWeightGoalInput): SetWeightGoalResult {
+  const kg = typeof input.kg === 'number' ? input.kg : Number(String(input.kg ?? '').trim());
+  if (!Number.isFinite(kg) || kg <= 0 || kg > 500) throw new FetchError('体重目标非法：' + JSON.stringify(input.kg) + '（须 0..500 正数 kg）');
+  const iso = (v: unknown, field: string): string | null => {
+    if (v === undefined || v === null || v === '') return null;
+    const s = String(v);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new FetchError(field + ' 非法（须 YYYY-MM-DD）：' + s);
+    return s;
+  };
+  const deadline = iso(input.deadline, 'deadline');
+  const startDate = iso(input.startDate, 'startDate');
+  let startKg: number | null = null;
+  if (input.startKg !== undefined && input.startKg !== null && input.startKg !== '') {
+    startKg = typeof input.startKg === 'number' ? input.startKg : Number(String(input.startKg).trim());
+    if (!Number.isFinite(startKg) || startKg <= 0 || startKg > 500) throw new FetchError('起点体重非法：' + JSON.stringify(input.startKg));
+  }
+  ensureGoalRow(db);
+  const upd = db
+    .prepare('UPDATE daily_goal SET weight_goal = ?, goal_deadline = ?, start_weight = ?, start_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1')
+    .run(kg, deadline, startKg, startDate);
+  const row = db.prepare('SELECT updated_at FROM daily_goal WHERE id = 1').get() as
+    | { updated_at: string | null }
+    | undefined;
+  return { weightGoal: kg, deadline, startKg, startDate, updatedAt: row?.updated_at ?? null, rowsAffected: Number(upd.changes) };
+}
+
 export function resumeAllGoals(db: DatabaseSync): ResumeResult {
   ensureGoalRow(db);
   const upd = db

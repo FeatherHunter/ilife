@@ -123,6 +123,181 @@ combos:
     shape: list
     title: 热量历史
     cmd: skill-calorie
+  - key: calorie.diet.add
+    skill: calorie
+    shape: receipt
+    title: 记一餐
+    cmd: skill-calorie
+  - key: calorie.diet.update
+    skill: calorie
+    shape: receipt
+    title: 改饮食
+    cmd: skill-calorie
+  - key: calorie.diet.remove
+    skill: calorie
+    shape: receipt
+    title: 删饮食
+    cmd: skill-calorie
+  - key: calorie.diet.batch
+    skill: calorie
+    shape: receipt
+    title: 批量记饮食
+    cmd: skill-calorie
+  - key: calorie.diet.copy
+    skill: calorie
+    shape: receipt
+    title: 复制饮食
+    cmd: skill-calorie
+  - key: calorie.diet.update-by-date
+    skill: calorie
+    shape: receipt
+    title: 按日改饮食
+    cmd: skill-calorie
+  - key: calorie.diet.remove-by-date
+    skill: calorie
+    shape: receipt
+    title: 按日删饮食
+    cmd: skill-calorie
+  - key: calorie.diet.remove-by-range
+    skill: calorie
+    shape: receipt
+    title: 按范围删饮食
+    cmd: skill-calorie
+  - key: calorie.diet.remove-by-type
+    skill: calorie
+    shape: receipt
+    title: 按餐别删饮食
+    cmd: skill-calorie
+  - key: calorie.water.log
+    skill: calorie
+    shape: receipt
+    title: 记喝水
+    cmd: skill-calorie
+  - key: calorie.weight.log
+    skill: calorie
+    shape: receipt
+    title: 记体重
+    cmd: skill-calorie
+  - key: calorie.weight.update
+    skill: calorie
+    shape: receipt
+    title: 改体重
+    cmd: skill-calorie
+  - key: calorie.weight.remove
+    skill: calorie
+    shape: receipt
+    title: 删体重
+    cmd: skill-calorie
+  - key: calorie.weight.batch
+    skill: calorie
+    shape: receipt
+    title: 批量记体重
+    cmd: skill-calorie
+  - key: calorie.exercise.add
+    skill: calorie
+    shape: receipt
+    title: 记运动
+    cmd: skill-calorie
+  - key: calorie.exercise.update
+    skill: calorie
+    shape: receipt
+    title: 改运动
+    cmd: skill-calorie
+  - key: calorie.exercise.remove
+    skill: calorie
+    shape: receipt
+    title: 删运动
+    cmd: skill-calorie
+  - key: calorie.photo.add
+    skill: calorie
+    shape: receipt
+    title: 记身材照
+    cmd: skill-calorie
+  - key: calorie.photo.remove
+    skill: calorie
+    shape: receipt
+    title: 删身材照
+    cmd: skill-calorie
+  - key: calorie.photo.tag
+    skill: calorie
+    shape: receipt
+    title: 改照片标签
+    cmd: skill-calorie
+  - key: calorie.product.add
+    skill: calorie
+    shape: receipt
+    title: 存食品
+    cmd: skill-calorie
+  - key: calorie.product.update
+    skill: calorie
+    shape: receipt
+    title: 改食品
+    cmd: skill-calorie
+  - key: calorie.product.deprecate
+    skill: calorie
+    shape: receipt
+    title: 下架食品
+    cmd: skill-calorie
+  - key: calorie.profile.set
+    skill: calorie
+    shape: receipt
+    title: 设置档案
+    cmd: skill-calorie
+  - key: calorie.profile.activity
+    skill: calorie
+    shape: receipt
+    title: 设活动量
+    cmd: skill-calorie
+  - key: calorie.profile.update
+    skill: calorie
+    shape: receipt
+    title: 改档案
+    cmd: skill-calorie
+  - key: calorie.goal.set
+    skill: calorie
+    shape: receipt
+    title: 定营养目标
+    cmd: skill-calorie
+  - key: calorie.goal.water
+    skill: calorie
+    shape: receipt
+    title: 定饮水目标
+    cmd: skill-calorie
+  - key: calorie.goal.weight
+    skill: calorie
+    shape: receipt
+    title: 定体重目标
+    cmd: skill-calorie
+  - key: calorie.goal.pause
+    skill: calorie
+    shape: receipt
+    title: 暂停目标
+    cmd: skill-calorie
+  - key: calorie.goal.resume
+    skill: calorie
+    shape: receipt
+    title: 重启目标
+    cmd: skill-calorie
+  - key: calorie.body.composition-add
+    skill: calorie
+    shape: receipt
+    title: 记体脂
+    cmd: skill-calorie
+  - key: calorie.body.composition-remove
+    skill: calorie
+    shape: receipt
+    title: 删体脂
+    cmd: skill-calorie
+  - key: calorie.body.measure-add
+    skill: calorie
+    shape: receipt
+    title: 记围度
+    cmd: skill-calorie
+  - key: calorie.body.measure-remove
+    skill: calorie
+    shape: receipt
+    title: 删围度
+    cmd: skill-calorie
   - key: memo.search
     skill: memo
     shape: list
