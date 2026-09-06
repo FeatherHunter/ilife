@@ -34,6 +34,44 @@ importers:
 
   packages/hunter-skills: {}
 
+  packages/plugin-bill:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
+  packages/plugin-calorie:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
+  packages/plugin-chef:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
+  packages/plugin-home:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
+  packages/plugin-manager: {}
+
+  packages/plugin-memo:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
+  packages/plugin-schedule:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
   packages/skill-bill:
     dependencies:
       '@feather_wch/base-link-core':
