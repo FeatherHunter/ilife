@@ -1,4 +1,4 @@
-/** T8 #27 + T9 #28 + T10 #29 · 渲染出口：四主视图 + 目标分析盘 + 身体照片（收据/画廊/对比/单图/动图规划/HELP/失败回执）。 */
+/** T8 #27 + T9 #28 + T10 #29 + #41 · 渲染出口：四主视图 + 目标分析盘 + 身体照片 + 读链补齐（体重/身体/计划/目标扩展/分析长尾/档案）。 */
 export { CalorieRenderError } from './errors.js';
 export type { CalorieRenderErrorCode } from './errors.js';
 export { buildHomeData } from './home.js';
@@ -20,6 +20,18 @@ export type { AllRankings, RankCategory } from './ranking.js';
 export { buildProductLibrary, buildProductSearch, buildProductStats } from './library.js';
 export type { ProductLibrary, ProductSearch, ProductStats } from './library.js';
 export { renderHomeHtml, renderDietHtml, renderExerciseHtml, renderGoalHtml } from './html.js';
+export { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from './weightPlate.js';
+export type { WeightDashboard, WeightHistoryView, WeightCompareView, WeightReviewView, VolatilityView } from './weightPlate.js';
+export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasureView, buildBodyMeasureCompare } from './bodyPlate.js';
+export type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
+export { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from './planPlate.js';
+export type { PlanView, PlanWizardView, ExerciseGoalView } from './planPlate.js';
+export { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from './goalExtra.js';
+export type { GoalExpiringView, GoalPredictView, GoalVsActualView } from './goalExtra.js';
+export { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from './insightPlate.js';
+export type { PredictView, AnomalyView, ContraView, DedupeView } from './insightPlate.js';
+export { buildProfileView } from './profilePlate.js';
+export type { ProfileView } from './profilePlate.js';
 export {
   renderAllRankingsHtml,
   renderCombinedHtml,
@@ -35,6 +47,24 @@ export {
   renderProductSearchHtml,
   renderProductStatsHtml,
   renderRankingHtml,
+  renderWeightHtml,
+  renderWeightHistoryHtml,
+  renderWeightCompareHtml,
+  renderWeightReviewHtml,
+  renderVolatilityHtml,
+  renderBodyCompositionHtml,
+  renderBodyMeasureHtml,
+  renderPlanHtml,
+  renderPlanWizardHtml,
+  renderExerciseGoalHtml,
+  renderGoalExpiringHtml,
+  renderGoalPredictHtml,
+  renderGoalVsActualHtml,
+  renderPredictHtml,
+  renderAnomalyHtml,
+  renderContraHtml,
+  renderDedupeHtml,
+  renderProfileHtml,
 } from './html.js';
 export { VIEW_KEYS, VIEW_SHAPES, viewShapeFor, assertStatMetrics } from './envelope.js';
 export type { ViewName } from './envelope.js';
