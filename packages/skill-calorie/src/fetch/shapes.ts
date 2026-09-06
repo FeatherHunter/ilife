@@ -28,6 +28,7 @@ export function fetchPayload<S extends EnvelopeShape>(
 }
 
 // 域常用 key（T8-T10 渲染与 T11 出口复用同一命名）：
+// T4 #23 落子时只定了 T3 四域；T4 五域（目标/计划/食品库/照片）key 在 T8 #27 内补（死规矩 2）。
 export const KEYS = {
   dietList: calorieKey('diet', 'list'),
   dietDetail: calorieKey('diet', 'detail'),
@@ -43,4 +44,13 @@ export const KEYS = {
   bodyList: calorieKey('body', 'list'),
   bodyStat: calorieKey('body', 'stat'),
   bodyReceipt: calorieKey('body', 'receipt'),
+  goalStatus: calorieKey('goal', 'status'),
+  goalHistory: calorieKey('goal', 'history'),
+  nutritionGoal: calorieKey('nutrition', 'goal'),
+  nutritionRecommend: calorieKey('nutrition', 'recommend'),
+  planDetail: calorieKey('plan', 'detail'),
+  planList: calorieKey('plan', 'list'),
+  productList: calorieKey('product', 'list'),
+  productDetail: calorieKey('product', 'detail'),
+  photoList: calorieKey('photo', 'list'),
 } as const;
