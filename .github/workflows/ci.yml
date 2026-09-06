@@ -33,8 +33,9 @@ jobs:
       # Q92-①：构建忘写快照致误导 → CI 重 resolve 后 diff，不等 fail
       - run: pnpm snapshot:check
       # changeset status 按字面 merge-base master HEAD：显式建本地 master 基线
+      # 主仓签出 master 时冒号写法被拒，回退普通 fetch（本地 master 本来就在）
       - name: 取 master 基线
-        run: git fetch origin master:master
+        run: git fetch origin master:master || git fetch origin master
       - run: pnpm changeset:status
 
   # Q92-②：手改快照 → 快照只许构建写，git 校验拦截
