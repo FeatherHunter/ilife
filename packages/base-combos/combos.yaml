@@ -123,6 +123,96 @@ combos:
     shape: list
     title: 热量历史
     cmd: skill-calorie
+  - key: calorie.view.weight
+    skill: calorie
+    shape: stat
+    title: 体重盘
+    cmd: skill-calorie
+  - key: calorie.view.weight-history
+    skill: calorie
+    shape: stat
+    title: 体重历史
+    cmd: skill-calorie
+  - key: calorie.view.weight-compare
+    skill: calorie
+    shape: stat
+    title: 体重对比
+    cmd: skill-calorie
+  - key: calorie.view.weight-review
+    skill: calorie
+    shape: stat
+    title: 体重复核
+    cmd: skill-calorie
+  - key: calorie.view.volatility
+    skill: calorie
+    shape: stat
+    title: 波动分析
+    cmd: skill-calorie
+  - key: calorie.view.body-composition
+    skill: calorie
+    shape: stat
+    title: 体成分看
+    cmd: skill-calorie
+  - key: calorie.view.body-measure
+    skill: calorie
+    shape: stat
+    title: 围度看
+    cmd: skill-calorie
+  - key: calorie.view.plan
+    skill: calorie
+    shape: stat
+    title: 训练计划看
+    cmd: skill-calorie
+  - key: calorie.view.plan-wizard
+    skill: calorie
+    shape: stat
+    title: 构建向导
+    cmd: skill-calorie
+  - key: calorie.view.exercise-goal
+    skill: calorie
+    shape: stat
+    title: 运动目标视图
+    cmd: skill-calorie
+  - key: calorie.view.goal-expiring
+    skill: calorie
+    shape: stat
+    title: 即将到期目标
+    cmd: skill-calorie
+  - key: calorie.view.goal-predict
+    skill: calorie
+    shape: stat
+    title: 目标预测达成
+    cmd: skill-calorie
+  - key: calorie.view.goal-vs-actual
+    skill: calorie
+    shape: stat
+    title: 目标对比实际
+    cmd: skill-calorie
+  - key: calorie.view.predict
+    skill: calorie
+    shape: stat
+    title: 体重预测
+    cmd: skill-calorie
+  - key: calorie.view.anomaly
+    skill: calorie
+    shape: stat
+    title: 异常诊断
+    cmd: skill-calorie
+  - key: calorie.view.contraindication
+    skill: calorie
+    shape: stat
+    title: 禁忌扫描
+    cmd: skill-calorie
+  - key: calorie.view.dedupe
+    skill: calorie
+    shape: stat
+    title: 去重报告
+    cmd: skill-calorie
+  - key: calorie.view.profile
+    skill: calorie
+    shape: stat
+    title: 档案视图
+    cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt
