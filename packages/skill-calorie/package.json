@@ -7,7 +7,11 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
-    "./triggers": "./dist/triggers/index.js"
+    "./triggers": "./dist/triggers/index.js",
+    "./fetch": "./dist/fetch/index.js"
+  },
+  "devDependencies": {
+    "@feather_wch/base-link-core": "workspace:^0.1.0"
   },
   "engines": {
     "node": ">=22.13"

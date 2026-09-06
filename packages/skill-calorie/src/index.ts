@@ -6,3 +6,4 @@ export {
   SOURCE_CHOICES, SOURCE_LABELS, ACTIVITY_LEVELS, EXERCISE_CATEGORIES, EXERCISE_DIFFICULTIES,
 } from './kcal.js';
 export type { SourceChoice, ActivityLevel } from './kcal.js';
+export * from './fetch/index.js';
