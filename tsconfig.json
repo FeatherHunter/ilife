@@ -10,7 +10,8 @@
     { "path": "./packages/base-combos" },
     { "path": "./packages/skill-calorie" },
     { "path": "./packages/skill-memo" },
-    { "path": "./packages/skill-schedule" }
+    { "path": "./packages/skill-schedule" },
+    { "path": "./packages/skill-home" }
   ],
   "include": []
 }
