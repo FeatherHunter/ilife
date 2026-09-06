@@ -1,7 +1,7 @@
 {
   "name": "@feather_wch/skill-memo",
   "version": "0.1.0",
-  "description": "备忘录SKILL一期：取数+口径+渲染（M2/M3/M4），依 link-core",
+  "description": "备忘录SKILL一期：取数+口径+渲染+出口（M2/M3/M4/M5），依 link-core",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,7 +9,11 @@
     ".": "./dist/index.js",
     "./fetch": "./dist/fetch/index.js",
     "./policy": "./dist/policy/index.js",
-    "./render": "./dist/render/index.js"
+    "./render": "./dist/render/index.js",
+    "./cli": "./dist/cli/cmd_read.js"
+  },
+  "bin": {
+    "memo-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
     "@feather_wch/base-link-core": "workspace:^0.1.0"

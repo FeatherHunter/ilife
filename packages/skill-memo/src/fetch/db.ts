@@ -1,5 +1,5 @@
 // 取数层·文件 DB（M2）：SKILLS_DB_PATH 下 memo 目录 *.json 笔记；缺失/损坏大声失败，不返空。
-import { accessSync, constants, readdirSync, readFileSync, statSync } from 'node:fs';
+import { accessSync, constants, readdirSync, readFileSync, statSync, writeFileSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { MemoFetchError } from './errors.js';
 
@@ -33,10 +33,13 @@ function parseNoteFile(path: string, name: string): MemoNote {
   try { raw = JSON.parse(readFileSync(path, 'utf8')); }
   catch (e) { throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记解析失败：' + name, { cause: e }); }
   const n = raw as Record<string, unknown>;
-  for (const f of ['id', 'title', 'body', 'category', 'createdAt', 'updatedAt']) {
+  for (const f of ['id', 'category', 'createdAt', 'updatedAt']) {
     if (typeof n[f] !== 'string' || (n[f] as string).length === 0) {
       throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记缺字段 ' + f + '：' + name);
     }
+  }
+  if (typeof n.title !== 'string' || typeof n.body !== 'string' || (!n.title && !n.body)) {
+    throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记题文至少其一非空：' + name);
   }
   return n as unknown as MemoNote;
 }
@@ -45,6 +48,38 @@ function parseNoteFile(path: string, name: string): MemoNote {
 export function listNotes(db: MemoDb): MemoNote[] {
   const names = readdirSync(db.dir).filter((f) => f.endsWith('.json')).sort();
   return names.map((n) => parseNoteFile(join(db.dir, n), n));
+}
+
+function stamp(): string { return new Date().toISOString(); }
+
+// 新增：id 唯一（m+36进制时间+随机），写盘即读回校验；失败 throw 不谎报回执。
+export function addNote(db: MemoDb, input: { title: string; body: string; category: string; sub?: string | null; remindAt?: string | null }): MemoNote {
+  const id = 'm' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+  const now = stamp();
+  const note: MemoNote = { id, title: input.title, body: input.body, category: input.category, sub: input.sub ?? null, createdAt: now, updatedAt: now, remindAt: input.remindAt ?? null, done: false };
+  const p = join(db.dir, id + '.json');
+  try { writeFileSync(p, JSON.stringify(note, null, 2), 'utf8'); }
+  catch (e) { throw new MemoFetchError('MEMO_DB_UNREADABLE', '笔记写盘失败：' + id); }
+  return getNote(db, id);
+}
+
+// 更新：只合已知字段；对不上 throw。
+export function updateNote(db: MemoDb, id: string, patch: Partial<MemoNote>): MemoNote {
+  const cur = getNote(db, id);
+  const next: MemoNote = { ...cur, ...patch, id: cur.id, createdAt: cur.createdAt, updatedAt: stamp() };
+  const p = join(db.dir, id + '.json');
+  try { writeFileSync(p, JSON.stringify(next, null, 2), 'utf8'); }
+  catch (e) { throw new MemoFetchError('MEMO_DB_UNREADABLE', '笔记更新失败：' + id); }
+  return next;
+}
+
+// 删除：须 confirm:true（废弃提醒走 abandon 语义，见 policy）；删后读回确认。
+export function removeNote(db: MemoDb, id: string, confirm: boolean): void {
+  getNote(db, id);
+  if (confirm !== true) throw new MemoFetchError('MEMO_DB_UNREADABLE', '删除须 confirm:true：' + id);
+  const p = join(db.dir, id + '.json');
+  try { unlinkSync(p); }
+  catch (e) { throw new MemoFetchError('MEMO_DB_UNREADABLE', '笔记删除失败：' + id); }
 }
 
 // 取一条：对不上即 throw，不返空对象。
