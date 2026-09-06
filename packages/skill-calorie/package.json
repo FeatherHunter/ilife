@@ -6,13 +6,14 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/index.js",
+    "./triggers": "./dist/triggers/index.js"
   },
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc -b",
-    "test": "node --test ../../test/scaffold.test.mjs"
+    "test": "node --test ../../test/scaffold.test.mjs ../../test/calorie-triggers.test.mjs"
   }
 }
