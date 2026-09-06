@@ -9,7 +9,8 @@
     { "path": "./packages/base-render" },
     { "path": "./packages/base-combos" },
     { "path": "./packages/skill-calorie" },
-    { "path": "./packages/skill-memo" }
+    { "path": "./packages/skill-memo" },
+    { "path": "./packages/skill-schedule" }
   ],
   "include": []
 }
