@@ -5,6 +5,8 @@
 ## 快速开始
 
 ```sh
+calorie-cmd-read calorie.diet.add --params '{"foodName":"鸡胸","calories":200,"protein":35}'
+calorie-cmd-read calorie.weight.log --params '{"kg":70.5}'
 calorie-cmd-read calorie.view.home --params '{"date":"2026-09-07"}'
 calorie-cmd-read calorie.view.search --params '{"keyword":"鸡胸"}'
 calorie-cmd-read calorie.photo.list --params '{"tag":"正面"}'
@@ -17,12 +19,13 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 契约：P9 冻结 argv+JSON+exit；缺 key exit 2、未知 key exit 3、取数/缺失 exit 4、envelope/渲染/落盘 exit 5、预检 exit 1。
 - stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；`--html` 显式落盘 utf8。
 - 预检：engines>=22.13 + SKILLS_DB_PATH 必设（无默认值）；照片存在位需 CALORIE_PHOTOS_DIR，否则记 null 不断言。
+- 写链（#40）：35 写键（diet/water/weight/exercise/photo/product/profile/goal/body）同出口可执行，一律 `receipt` 形（`ok/message` + T10 `receipt` 回执）；缺参 exit 2、缺失阻断 exit 4；训练计划/训记同步与 mmx vision 两步向导无独立写键（二期，见 triggers 旧链）。
 
 ## envelope 全字段
 
 - 版本 `0.1.0`（与 link-core/render 同值，漂移单测钉死）；形状 6 种全字段校验，缺字段即抛，不返空数组冒充正常。
 - `list` 须 `items[]`（`total?`）；`detail` 须 `item{}`；`stat` 须 `metrics{number}` 全有限 number；`receipt` 须 `ok/message`；`analysis` 须非空 `summary`；`fallback` 须 `reason/degraded:true`。
-- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等 24 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
+- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等读 24 键 + 写 35 键共 59 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
 
 ## 口径（T7 + 精度 + 餐别）
 
@@ -36,13 +39,43 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 <!-- HELP-AUTO-START -->
 | 唤醒词 | key | shape | 例 |
 |---|---|---|---|
+| 记体脂 | calorie.body.composition-add | receipt | `calorie-cmd-read calorie.body.composition-add --params '{"source":"gym","bodyFatPct":18.5}'` |
+| 删体脂 | calorie.body.composition-remove | receipt | `calorie-cmd-read calorie.body.composition-remove --params '{"id":1}'` |
+| 记围度 | calorie.body.measure-add | receipt | `calorie-cmd-read calorie.body.measure-add --params '{"waistCm":85}'` |
+| 删围度 | calorie.body.measure-remove | receipt | `calorie-cmd-read calorie.body.measure-remove --params '{"id":1}'` |
+| 记一餐 | calorie.diet.add | receipt | `calorie-cmd-read calorie.diet.add --params '{"foodName":"鸡胸","calories":200,"protein":35}'` |
+| 批量补记饮食 | calorie.diet.batch | receipt | `calorie-cmd-read calorie.diet.batch --params '{"items":[{"foodName":"粥","calories":150,"protein":3}]}'` |
+| 复制昨日饮食 | calorie.diet.copy | receipt | `calorie-cmd-read calorie.diet.copy --params '{"from":"2026-09-06"}'` |
+| 删饮食记录 | calorie.diet.remove | receipt | `calorie-cmd-read calorie.diet.remove --params '{"id":1}'` |
+| 删某日饮食 | calorie.diet.remove-by-date | receipt | `calorie-cmd-read calorie.diet.remove-by-date --params '{"date":"2026-09-06"}'` |
+| 批量删饮食 | calorie.diet.remove-by-range | receipt | `calorie-cmd-read calorie.diet.remove-by-range --params '{"start":"2026-09-01","end":"2026-09-02"}'` |
+| 删一餐 | calorie.diet.remove-by-type | receipt | `calorie-cmd-read calorie.diet.remove-by-type --params '{"date":"2026-09-06","mealType":"早餐"}'` |
+| 改饮食记录 | calorie.diet.update | receipt | `calorie-cmd-read calorie.diet.update --params '{"id":1,"grams":150}'` |
+| 改某日饮食 | calorie.diet.update-by-date | receipt | `calorie-cmd-read calorie.diet.update-by-date --params '{"date":"2026-09-06","note":"食堂"}'` |
+| 记运动 | calorie.exercise.add | receipt | `calorie-cmd-read calorie.exercise.add --params '{"type":"慢跑","calories":320,"minutes":30}'` |
+| 删运动记录 | calorie.exercise.remove | receipt | `calorie-cmd-read calorie.exercise.remove --params '{"id":1}'` |
+| 改运动记录 | calorie.exercise.update | receipt | `calorie-cmd-read calorie.exercise.update --params '{"id":1,"minutes":40}'` |
+| 暂停所有目标 | calorie.goal.pause | receipt | `calorie-cmd-read calorie.goal.pause` |
+| 重启所有目标 | calorie.goal.resume | receipt | `calorie-cmd-read calorie.goal.resume` |
+| 定营养目标 | calorie.goal.set | receipt | `calorie-cmd-read calorie.goal.set --params '{"calorie":1800,"protein":150,"carbs":200,"fat":50}'` |
+| 定饮水目标 | calorie.goal.water | receipt | `calorie-cmd-read calorie.goal.water --params '{"water":2000}'` |
+| 定体重目标 | calorie.goal.weight | receipt | `calorie-cmd-read calorie.goal.weight --params '{"kg":68}'` |
 | 记身材照 | calorie.help.center | list | `calorie-cmd-read calorie.help.center --params '{"q":"记身材照"}'` |
 | 看今日主页 | calorie.help.lookup | list | `calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'` |
 | 查热量历史 | calorie.history | list | `calorie-cmd-read calorie.history --params '{"days":7}'` |
+| 记身材照 | calorie.photo.add | receipt | `calorie-cmd-read calorie.photo.add --params '{"srcPaths":["<照片路径>"],"tag":"正面"}'` |
 | 对比两张照片 | calorie.photo.compare | list | `calorie-cmd-read calorie.photo.compare --params '{"id1":1,"id2":2}'` |
 | 查身材照 | calorie.photo.detail | detail | `calorie-cmd-read calorie.photo.detail --params '{"id":1}'` |
 | 做身材照GIF | calorie.photo.gif | analysis | `calorie-cmd-read calorie.photo.gif --params '{"tag":"正面"}'` |
 | 看身材照 | calorie.photo.list | list | `calorie-cmd-read calorie.photo.list --params '{"tag":"正面"}'` |
+| 删身材照 | calorie.photo.remove | receipt | `calorie-cmd-read calorie.photo.remove --params '{"id":1}'` |
+| 改照片标签 | calorie.photo.tag | receipt | `calorie-cmd-read calorie.photo.tag --params '{"id":1,"op":"add","tag":"晨起"}'` |
+| 存食品 | calorie.product.add | receipt | `calorie-cmd-read calorie.product.add --params '{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}'` |
+| 下架食品 | calorie.product.deprecate | receipt | `calorie-cmd-read calorie.product.deprecate --params '{"id":1}'` |
+| 改食品 | calorie.product.update | receipt | `calorie-cmd-read calorie.product.update --params '{"id":1,"note":"新版"}'` |
+| 设活动量 | calorie.profile.activity | receipt | `calorie-cmd-read calorie.profile.activity --params '{"activityLevel":"active"}'` |
+| 设置档案 | calorie.profile.set | receipt | `calorie-cmd-read calorie.profile.set --params '{"heightCm":175,"activityLevel":"moderate"}'` |
+| 改档案 | calorie.profile.update | receipt | `calorie-cmd-read calorie.profile.update --params '{"field":"heightCm","value":176}'` |
 | 看今日饮食概览 | calorie.today | list | `calorie-cmd-read calorie.today --params '{"date":"2026-09-07"}'` |
 | 看体重 vs 摄入(最近 7 天) | calorie.view.combined | stat | `calorie-cmd-read calorie.view.combined --params '{"pair":"weight_calorie","window":"7d"}'` |
 | 看热量缺口 | calorie.view.deficit | stat | `calorie-cmd-read calorie.view.deficit --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
@@ -60,8 +93,13 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 查食品库 | calorie.view.library | stat | `calorie-cmd-read calorie.view.library` |
 | 查高热量排行 | calorie.view.ranking | stat | `calorie-cmd-read calorie.view.ranking --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
 | 查食品 | calorie.view.search | stat | `calorie-cmd-read calorie.view.search --params '{"keyword":"鸡胸"}'` |
+| 记喝水 | calorie.water.log | receipt | `calorie-cmd-read calorie.water.log --params '{"ml":300}'` |
+| 批量补录体重 | calorie.weight.batch | receipt | `calorie-cmd-read calorie.weight.batch --params '{"items":[{"date":"2026-09-06","kg":70.5}]}'` |
+| 记体重 | calorie.weight.log | receipt | `calorie-cmd-read calorie.weight.log --params '{"kg":70.5}'` |
+| 删体重记录 | calorie.weight.remove | receipt | `calorie-cmd-read calorie.weight.remove --params '{"id":1}'` |
+| 改体重记录 | calorie.weight.update | receipt | `calorie-cmd-read calorie.weight.update --params '{"id":1,"kg":70.2}'` |
 
-相关场景：calorie.help.center、calorie.help.lookup、calorie.history、calorie.photo.compare、calorie.photo.detail、calorie.photo.gif、calorie.photo.list、calorie.today、calorie.view.combined、calorie.view.deficit、calorie.view.diet、calorie.view.diet-review、calorie.view.exercise、calorie.view.goal、calorie.view.goal-config、calorie.view.goal-progress、calorie.view.goal-recommend、calorie.view.goal-status、calorie.view.goal-weight、calorie.view.health、calorie.view.home、calorie.view.library、calorie.view.ranking、calorie.view.search（24 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。
+相关场景：calorie.body.composition-add、calorie.body.composition-remove、calorie.body.measure-add、calorie.body.measure-remove、calorie.diet.add、calorie.diet.batch、calorie.diet.copy、calorie.diet.remove、calorie.diet.remove-by-date、calorie.diet.remove-by-range、calorie.diet.remove-by-type、calorie.diet.update、calorie.diet.update-by-date、calorie.exercise.add、calorie.exercise.remove、calorie.exercise.update、calorie.goal.pause、calorie.goal.resume、calorie.goal.set、calorie.goal.water、calorie.goal.weight、calorie.help.center、calorie.help.lookup、calorie.history、calorie.photo.add、calorie.photo.compare、calorie.photo.detail、calorie.photo.gif、calorie.photo.list、calorie.photo.remove、calorie.photo.tag、calorie.product.add、calorie.product.deprecate、calorie.product.update、calorie.profile.activity、calorie.profile.set、calorie.profile.update、calorie.today、calorie.view.combined、calorie.view.deficit、calorie.view.diet、calorie.view.diet-review、calorie.view.exercise、calorie.view.goal、calorie.view.goal-config、calorie.view.goal-progress、calorie.view.goal-recommend、calorie.view.goal-status、calorie.view.goal-weight、calorie.view.health、calorie.view.home、calorie.view.library、calorie.view.ranking、calorie.view.search、calorie.water.log、calorie.weight.batch、calorie.weight.log、calorie.weight.remove、calorie.weight.update（59 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。
 身材照片 HELP 模块：@feather_wch/skill-calorie/dist/render/photo.js（gallery/compare/viewer/gif + buildPhotoHelp/lookupPhotoHelp，现找直达可执行 exec）。
 <!-- HELP-AUTO-END -->
 

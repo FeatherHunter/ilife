@@ -23,6 +23,8 @@ export { getCalorieHistory, weightSeries } from './history.js';
 export type { DayIntake, CalorieHistory } from './history.js';
 export { readSkill, requireOk } from './cross-skill.js';
 export type { SkillEnvelope, ReadSkillOptions } from './cross-skill.js';
+export { getProfile, setProfile, setActivityLevel, updateProfile, normalizeActivityLevel, normalizeGender, PROFILE_UPDATABLE, ACTIVITY_ALIASES } from './profile.js';
+export type { ProfileRow, SetProfileInput } from './profile.js';
 export { DEFAULT_CATALOG_PATH, loadCatalog, suggestSimilar, verifyMovementName, verifyMany } from './xunji-catalog.js';
 export type { VerifyResult } from './xunji-catalog.js';
 export { collectPlanNames, auditPlanNames } from './audit.js';

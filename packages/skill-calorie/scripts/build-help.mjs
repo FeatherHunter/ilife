@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// HELP 构建期注入（T11，照 M6 范式）：CALORIE_COMBOS 24 键 + 代表唤醒词→速查表→SKILL.md 互联区；只重写标记块，其余不动。无标记即大声失败。
+// HELP 构建期注入（T11，照 M6 范式；#40 追加 35 写键）：CALORIE_COMBOS 全量键 + 代表唤醒词→速查表→SKILL.md 互联区；只重写标记块，其余不动。无标记即大声失败。
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +34,41 @@ const REPR = {
   'calorie.help.center': '记身材照',
   'calorie.help.lookup': '看今日主页',
   'calorie.history': '查热量历史',
+  'calorie.diet.add': '记一餐',
+  'calorie.diet.update': '改饮食记录',
+  'calorie.diet.remove': '删饮食记录',
+  'calorie.diet.batch': '批量补记饮食',
+  'calorie.diet.copy': '复制昨日饮食',
+  'calorie.diet.update-by-date': '改某日饮食',
+  'calorie.diet.remove-by-date': '删某日饮食',
+  'calorie.diet.remove-by-range': '批量删饮食',
+  'calorie.diet.remove-by-type': '删一餐',
+  'calorie.water.log': '记喝水',
+  'calorie.weight.log': '记体重',
+  'calorie.weight.update': '改体重记录',
+  'calorie.weight.remove': '删体重记录',
+  'calorie.weight.batch': '批量补录体重',
+  'calorie.exercise.add': '记运动',
+  'calorie.exercise.update': '改运动记录',
+  'calorie.exercise.remove': '删运动记录',
+  'calorie.photo.add': '记身材照',
+  'calorie.photo.remove': '删身材照',
+  'calorie.photo.tag': '改照片标签',
+  'calorie.product.add': '存食品',
+  'calorie.product.update': '改食品',
+  'calorie.product.deprecate': '下架食品',
+  'calorie.profile.set': '设置档案',
+  'calorie.profile.activity': '设活动量',
+  'calorie.profile.update': '改档案',
+  'calorie.goal.set': '定营养目标',
+  'calorie.goal.water': '定饮水目标',
+  'calorie.goal.weight': '定体重目标',
+  'calorie.goal.pause': '暂停所有目标',
+  'calorie.goal.resume': '重启所有目标',
+  'calorie.body.composition-add': '记体脂',
+  'calorie.body.composition-remove': '删体脂',
+  'calorie.body.measure-add': '记围度',
+  'calorie.body.measure-remove': '删围度',
 };
 
 function exampleFor(key) {
@@ -62,6 +97,42 @@ function exampleFor(key) {
     case 'calorie.help.center': return 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'';
     case 'calorie.help.lookup': return 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'';
     case 'calorie.history': return 'calorie-cmd-read calorie.history --params \'{"days":7}\'';
+    case 'calorie.diet.add': return 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35}\'';
+    case 'calorie.diet.update': return 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'';
+    case 'calorie.diet.remove': return 'calorie-cmd-read calorie.diet.remove --params \'{"id":1}\'';
+    case 'calorie.diet.batch': return 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'';
+    case 'calorie.diet.copy': return 'calorie-cmd-read calorie.diet.copy --params \'{"from":"2026-09-06"}\'';
+    case 'calorie.diet.update-by-date': return 'calorie-cmd-read calorie.diet.update-by-date --params \'{"date":"2026-09-06","note":"食堂"}\'';
+    case 'calorie.diet.remove-by-date': return 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"2026-09-06"}\'';
+    case 'calorie.diet.remove-by-range': return 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"2026-09-01","end":"2026-09-02"}\'';
+    case 'calorie.diet.remove-by-type': return 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"date":"2026-09-06","mealType":"早餐"}\'';
+    case 'calorie.water.log': return 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'';
+    case 'calorie.weight.log': return 'calorie-cmd-read calorie.weight.log --params \'{"kg":70.5}\'';
+    case 'calorie.weight.update': return 'calorie-cmd-read calorie.weight.update --params \'{"id":1,"kg":70.2}\'';
+    case 'calorie.weight.remove': return 'calorie-cmd-read calorie.weight.remove --params \'{"id":1}\'';
+    case 'calorie.weight.batch': return 'calorie-cmd-read calorie.weight.batch --params \'{"items":[{"date":"2026-09-06","kg":70.5}]}\'';
+    case 'calorie.exercise.add': return 'calorie-cmd-read calorie.exercise.add --params \'{"type":"慢跑","calories":320,"minutes":30}\'';
+    case 'calorie.exercise.update': return 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":40}\'';
+    case 'calorie.exercise.remove': return 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'';
+    case 'calorie.photo.add': return 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'';
+    case 'calorie.photo.remove': return 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'';
+    case 'calorie.photo.tag': return 'calorie-cmd-read calorie.photo.tag --params \'{"id":1,"op":"add","tag":"晨起"}\'';
+    case 'calorie.product.add': return 'calorie-cmd-read calorie.product.add --params \'{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}\'';
+    case 'calorie.product.update': return 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'';
+    case 'calorie.product.deprecate': return 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'';
+    case 'calorie.profile.set': return 'calorie-cmd-read calorie.profile.set --params \'{"heightCm":175,"activityLevel":"moderate"}\'';
+    case 'calorie.profile.activity': return 'calorie-cmd-read calorie.profile.activity --params \'{"activityLevel":"active"}\'';
+    case 'calorie.profile.update': return 'calorie-cmd-read calorie.profile.update --params \'{"field":"heightCm","value":176}\'';
+    case 'calorie.goal.set': return 'calorie-cmd-read calorie.goal.set --params \'{"calorie":1800,"protein":150,"carbs":200,"fat":50}\'';
+    case 'calorie.goal.water': return 'calorie-cmd-read calorie.goal.water --params \'{"water":2000}\'';
+    case 'calorie.goal.weight': return 'calorie-cmd-read calorie.goal.weight --params \'{"kg":68}\'';
+    case 'calorie.goal.pause': return 'calorie-cmd-read calorie.goal.pause';
+    case 'calorie.goal.resume': return 'calorie-cmd-read calorie.goal.resume';
+    case 'calorie.body.composition-add': return 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5}\'';
+    case 'calorie.body.composition-remove': return 'calorie-cmd-read calorie.body.composition-remove --params \'{"id":1}\'';
+    case 'calorie.body.measure-add': return 'calorie-cmd-read calorie.body.measure-add --params \'{"waistCm":85}\'';
+    case 'calorie.body.measure-remove': return 'calorie-cmd-read calorie.body.measure-remove --params \'{"id":1}\'';
+
     default: return 'calorie-cmd-read ' + key;
   }
 }
@@ -75,7 +146,7 @@ export function buildHelpBlock() {
     lines.push('| ' + wake + ' | ' + k + ' | ' + shape + ' | \u0060' + exampleFor(k) + '\u0060 |');
   }
   lines.push('');
-  lines.push('相关场景：' + keys.join('、') + '（24 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。');
+  lines.push('相关场景：' + keys.join('、') + '（' + keys.length + ' 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。');
   lines.push('身材照片 HELP 模块：@feather_wch/skill-calorie/dist/render/photo.js（gallery/compare/viewer/gif + buildPhotoHelp/lookupPhotoHelp，现找直达可执行 exec）。');
   return lines.join('\n');
 }

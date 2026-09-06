@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 /** T11 #30 · 卡路里唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
+ * #40 · 写键同出口：35 写键（diet/water/weight/exercise/photo/product/profile/goal/body 各域，一律 receipt）
+ * 走 cli/write.ts 分发（memo.create/update/remove 范式：先调 fetch 库函数写库，再用 T10 receipt 组装回执）。
  * 退出码对齐 skilllink 冻结（P9）：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
  * stdout 纯净：成功只打 envelope JSON 一行（version/skill/shape/key/data 全字段，对齐 link-core 0.1.0）。
  * 组合键为 registry 合法点式（见 cli/keys.ts；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
@@ -37,8 +39,9 @@ import { assertStatMetrics } from '../render/envelope.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { TRIGGERS } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
-import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor } from './keys.js';
+import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 import type { CalorieComboKey } from './keys.js';
+import { dispatchWrite } from './write.js';
 import type { EnvelopeShape } from '@feather_wch/base-link-core';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -478,7 +481,10 @@ async function main(): Promise<void> {
   try {
     const db = openDb(join(dbPath as string, DB_FILENAME));
     try {
-      const out = dispatch(o.key as string, params, db);
+      // #40 · 唯一出口：写键走 write.ts 分发（memo.create/update/remove 范式），读键走既有 dispatch。
+      const out = isCalorieWriteKey(o.key as string)
+        ? dispatchWrite(o.key as string, params, db)
+        : dispatch(o.key as string, params, db);
       env = buildEnvelope(o.key as string, shape as EnvelopeShape, out.data);
       if (o.html) {
         try {
