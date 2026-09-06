@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HELP 速查</title>
+<style><!--SHARED-CSS--></style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.65}
+.wrap{max-width:1120px;margin:0 auto;padding:48px 22px 90px}
+.hero{border-radius:28px;padding:34px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.stat,.panel,.item{border-radius:20px;padding:18px}.panel{margin:14px 0}
+pre{white-space:pre-wrap;border-radius:16px;padding:16px;overflow:auto;font-size:13px}
+@media(max-width:800px){.wrap{padding:28px 14px 70px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>HELP 速查</h1>
+<p class="lead">calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'</p>
+<p class="meta">slot ilife:calorie:help · 卡路里一期 T11 · 纯 CLI 单轨（面板/定时/外联动 out of scope）</p>
+</header>
+<section class="panel">
+<strong>取数</strong>
+<pre>calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'</pre>
+</section>
+<section class="panel"><strong>身材照片 HELP 模块</strong><pre>@feather_wch/skill-calorie/dist/render/photo.js · buildPhotoHelp/lookupPhotoHelp · 每条命中自带 exec（node 一行式）+ legacyCli</pre></section>
+<section class="panel">
+<strong>数据与日志</strong>
+<p class="small">点复制数据保存当前结果 · 日志不含隐私内容</p>
+<div class="hm-actions"><button class="copy ghost" onclick="copyData()">复制数据</button></div>
+<pre id="data" style="display:none"></pre>
+</section>
+</div>
+<!--SHARED-HELPERS-->
+<script>function copyData(){var t=document.getElementById('data');if(t) navigator.clipboard.writeText(t.textContent||'');}</script>
+</body>
+</html>
