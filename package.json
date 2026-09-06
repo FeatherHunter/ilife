@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "test": "node --test \"test/*.test.mjs\"",
+    "test": "node --test \"test/*.test.mjs\" \"packages/base-render/test/*.test.mjs\"",
     "doctor": "node tooling/skilllink.mjs doctor",
     "snapshot": "node tooling/write-snapshot.mjs",
     "snapshot:check": "node tooling/write-snapshot.mjs --check",
