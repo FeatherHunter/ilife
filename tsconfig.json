@@ -8,7 +8,8 @@
     { "path": "./packages/base-link-core" },
     { "path": "./packages/base-render" },
     { "path": "./packages/base-combos" },
-    { "path": "./packages/skill-calorie" }
+    { "path": "./packages/skill-calorie" },
+    { "path": "./packages/skill-memo" }
   ],
   "include": []
 }

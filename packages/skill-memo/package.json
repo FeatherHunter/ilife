@@ -1,0 +1,20 @@
+{
+  "name": "@feather_wch/skill-memo",
+  "version": "0.1.0",
+  "description": "备忘录SKILL一期：取数层+口径层（M2/M3），零依赖",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./fetch": "./dist/fetch/index.js",
+    "./policy": "./dist/policy/index.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test ../../test/scaffold.test.mjs"
+  }
+}

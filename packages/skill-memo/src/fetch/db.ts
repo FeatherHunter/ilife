@@ -1,0 +1,73 @@
+// 取数层·文件 DB（M2）：SKILLS_DB_PATH 下 memo 目录 *.json 笔记；缺失/损坏大声失败，不返空。
+import { accessSync, constants, readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { MemoFetchError } from './errors.js';
+
+export interface MemoNote {
+  id: string;
+  title: string;
+  body: string;
+  category: string;
+  sub?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  remindAt?: string | null;
+  done?: boolean;
+}
+
+export interface MemoDb { dir: string; }
+
+// 打开 DB 目录：不存在/不可读即 throw（调用方阻断取数）。
+export function openMemoDb(dir: string): MemoDb {
+  if (typeof dir !== 'string' || dir.length === 0) throw new MemoFetchError('MEMO_DB_MISSING', 'memo DB 目录未指定');
+  let st = null;
+  try { st = statSync(dir); } catch { throw new MemoFetchError('MEMO_DB_MISSING', 'memo DB 目录不存在：' + dir); }
+  if (!st.isDirectory()) throw new MemoFetchError('MEMO_DB_MISSING', 'memo DB 非目录：' + dir);
+  try { accessSync(dir, constants.R_OK); }
+  catch { throw new MemoFetchError('MEMO_DB_UNREADABLE', 'memo DB 不可读：' + dir); }
+  return { dir };
+}
+
+function parseNoteFile(path: string, name: string): MemoNote {
+  let raw: unknown = null;
+  try { raw = JSON.parse(readFileSync(path, 'utf8')); }
+  catch (e) { throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记解析失败：' + name, { cause: e }); }
+  const n = raw as Record<string, unknown>;
+  for (const f of ['id', 'title', 'body', 'category', 'createdAt', 'updatedAt']) {
+    if (typeof n[f] !== 'string' || (n[f] as string).length === 0) {
+      throw new MemoFetchError('MEMO_NOTE_CORRUPT', '笔记缺字段 ' + f + '：' + name);
+    }
+  }
+  return n as unknown as MemoNote;
+}
+
+// 列全部笔记（确定性按文件名排序；空目录返 [] 仅表示真实无记录）。
+export function listNotes(db: MemoDb): MemoNote[] {
+  const names = readdirSync(db.dir).filter((f) => f.endsWith('.json')).sort();
+  return names.map((n) => parseNoteFile(join(db.dir, n), n));
+}
+
+// 取一条：对不上即 throw，不返空对象。
+export function getNote(db: MemoDb, id: string): MemoNote {
+  if (typeof id !== 'string' || id.length === 0) throw new MemoFetchError('MEMO_NOTE_NOT_FOUND', '笔记 id 为空');
+  for (const n of listNotes(db)) {
+    if (n.id === id) return n;
+  }
+  throw new MemoFetchError('MEMO_NOTE_NOT_FOUND', '无此笔记：' + id);
+}
+
+function norm(s: string): string { return s.toLowerCase(); }
+
+// CJK 搜索：分词即按空白切 token（CJK 不切字），每 token 须为标题+正文子串；空查询 throw。
+export function searchNotes(db: MemoDb, query: string, filter?: { category?: string; sub?: string }): MemoNote[] {
+  if (typeof query !== 'string' || query.trim().length === 0) {
+    throw new MemoFetchError('MEMO_BAD_QUERY', '搜索须给关键词（空查询不返全量）');
+  }
+  const tokens = query.trim().split(/\s+/).map(norm);
+  return listNotes(db).filter((n) => {
+    if (filter?.category !== undefined && n.category !== filter.category) return false;
+    if (filter?.sub !== undefined && (n.sub || null) !== filter.sub) return false;
+    const hay = norm(n.title + '\n' + n.body);
+    return tokens.every((t) => hay.includes(t));
+  });
+}
