@@ -1,0 +1,11 @@
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const DB = mkdtempSync(join(tmpdir(), 'dbg3-'));
+mkdirSync(join(DB, 'memo'));
+writeFileSync(join(DB, 'memo', 'n1.json'), JSON.stringify({ id: 'n1', title: 't', body: 'b', category: '备忘', sub: null, createdAt: '2026-09-01', updatedAt: '2026-09-02' }));
+const r = spawnSync('node', ['tooling/skilllink.mjs', 'read', 'memo.search', '--params', JSON.stringify({ q: 't' })], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } });
+console.log('status=' + r.status);
+console.log('STDOUT=[' + r.stdout + ']');
+console.log('STDERR=[' + r.stderr + ']');

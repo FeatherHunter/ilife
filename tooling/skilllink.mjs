@@ -3,7 +3,7 @@
 // 退出码冻结：0 ok；1 doctor fail；2 用法/参数；3 读表/registry/key；4 取数；5 envelope/形状/渲染/HTML落盘；6 dist 未构建（先跑 pnpm build）。
 // stdout 纯净：read 成功只打 envelope JSON 一行；进度与错误一律 stderr。
 import { accessSync, constants, statSync, readFileSync, writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -71,12 +71,47 @@ function loadCombosTable() {
     if (/^combos:\s*$/.test(ln)) continue;
     let m = ln.match(/^  - key: (\S+)\s*$/);
     if (m) { cur = { key: m[1] }; rows.push(cur); continue; }
-    m = ln.match(/^    (skill|shape|title): (.+?)\s*$/);
+    m = ln.match(/^    (skill|shape|title|cmd): (.+?)\s*$/);
     if (m && cur) { cur[m[1]] = m[2]; continue; }
     fail(3, 'combos.yaml 含冻结格式外行：' + JSON.stringify(ln));
   }
   if (!rows.length) fail(3, 'combos.yaml 为空表');
   return rows;
+}
+
+// 技能出口取数（M7 联动）：spawn 包内 cmd_read，stdout JSON 再过 envelope 全字段；错即 fail，不返空。
+// 本机 node 定位：execPath（能跑本代码者必能自举）优先，PATH 之 node 次之，npm shim 再次之；.cmd 走引号包裹的 cmd /s /c（路径含空格必包，否则截断）。
+function spawnNode(args, opts) {
+  const cands = [];
+  if (process.execPath && !/\.cmd$/i.test(process.execPath)) cands.push({ file: process.execPath, wrap: false });
+  cands.push({ file: 'node', wrap: false });
+  const shim = process.env.npm_node_execpath;
+  if (shim) cands.push({ file: shim, wrap: process.platform === 'win32' && /\.cmd$/i.test(shim) });
+  let last = null;
+  for (const c of cands) {
+    try {
+      let r = null;
+      if (c.wrap) {
+        const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
+        r = spawnSync('cmd.exe', ['/d', '/s', '/c', q(c.file) + ' ' + args.map(q).join(' ')], opts);
+      } else {
+        r = spawnSync(c.file, args, opts);
+      }
+      if (r.error && (r.error.code === 'ENOENT' || r.error.code === 'EINVAL')) { last = r; continue; }
+      return r;
+    } catch (e) { last = { error: e, status: null }; }
+  }
+  return last;
+}
+function skillFetch(entry, params) {
+  const bin = join(root, 'packages', entry.cmd, 'dist', 'cli', 'cmd_read.js');
+  const r = spawnNode([bin, entry.key, '--params', JSON.stringify(params)], { encoding: 'utf8' });
+  if (r.error) throw new Error('出口 spawn 失败：' + r.error.message);
+  if (r.status !== 0) throw new Error('出口非 0（' + r.status + '）：' + String(r.stderr || '').trim().split('\n').pop());
+  let env = null;
+  try { env = JSON.parse(String(r.stdout)); } catch (e) { throw new Error('出口非 JSON'); }
+  if (!env || env.key !== entry.key) throw new Error('出口回执 key 不符');
+  return env.data;
 }
 
 // 试点取数器：仅 calorie.today；其余已注册 key 大声失败（待技能迁移落包，不返空）。
@@ -98,6 +133,11 @@ async function cmdRead(key, opts) {
     if (!t.skill || !t.shape || !t.title) fail(3, 'combos.yaml 条目缺字段：' + t.key);
     try { core.parseRegistryKey(t.key); } catch (e) { fail(3, 'combos.yaml 非法 key：' + e.message); }
     if (!core.ENVELOPE_SHAPES.includes(t.shape)) fail(5, 'combos.yaml 未知 shape：' + t.key + '=' + t.shape);
+    if (t.cmd !== undefined) {
+      if (!/^[a-z][a-z0-9-]*$/.test(t.cmd)) fail(3, 'combos.yaml 非法 cmd：' + t.key + '=' + t.cmd);
+      try { accessSync(join(root, 'packages', t.cmd, 'dist', 'cli', 'cmd_read.js'), constants.R_OK); }
+      catch (e) { fail(3, 'combos.yaml cmd 出口缺失（先构建对应包）：' + t.key + ' -> packages/' + t.cmd); }
+    }
   }
   step(2, 'registry 解析 + envelope 全字段');
   let entry = null;
@@ -112,9 +152,9 @@ async function cmdRead(key, opts) {
     try { params = JSON.parse(opts.params); } catch (e) { fail(2, '--params 须为 JSON：' + e.message); }
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
-  step(3, '取数（试点取数器）');
+  step(3, entry.cmd ? ('取数（技能出口 packages/' + entry.cmd + '）') : '取数（试点取数器）');
   let data = null;
-  try { data = await pilotFetch(entry, params); }
+  try { data = entry.cmd ? skillFetch(entry, params) : await pilotFetch(entry, params); }
   catch (e) { fail(4, '取数失败：' + e.message); }
   let env = null;
   try { env = core.createEnvelope({ skill: entry.skill, shape: entry.shape, key: entry.key, data }); }
