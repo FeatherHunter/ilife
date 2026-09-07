@@ -31,7 +31,10 @@ export function injectHelpBlock() {
   const text = readFileSync(skillPath, 'utf8');
   const si = text.indexOf(START), ei = text.indexOf(END);
   if (si < 0 || ei < 0 || ei < si) { console.error('ERR: SKILL.md 缺 HELP 标记块'); process.exit(1); }
-  const next = text.slice(0, si + START.length) + '\n' + buildHelpBlock() + '\n' + text.slice(ei);
+  // 换行保持：CRLF 检出仍写 CRLF（Windows CI 检出），LF 保持 LF；只重写标记块，不碰其余换行。
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const block = buildHelpBlock().split('\n').join(eol);
+  const next = text.slice(0, si + START.length) + eol + block + eol + text.slice(ei);
   writeFileSync(skillPath, next);
   console.log('HELP 已注入：' + skillPath);
 }

@@ -7,7 +7,8 @@ import { buildHelpLookup, lookupWake, routeWakeword, BILL_KEY_SHAPES, WAKE_TABLE
 import { buildHelpBlock, START, END } from '../scripts/build-help.mjs';
 
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
-const skillText = readFileSync(join(pkgDir, 'SKILL.md'), 'utf8');
+// 换行归一：CRLF 检出（Windows）与 LF 检出比对一致，真相以 WAKE_TABLE 构建块为准，不以文件字节为准。
+const skillText = readFileSync(join(pkgDir, 'SKILL.md'), 'utf8').replace(/\r\n/g, '\n');
 
 describe('饼干 SKILL 与 HELP', () => {
   it('SKILL 含出口/口径/标记块', () => {
