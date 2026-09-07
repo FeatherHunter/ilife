@@ -1,6 +1,6 @@
 ---
 name: skill-calorie
-description: "卡路里一期：饮食/体重/运动/身体/目标/照片/分析/复盘，唯一出口 calorie-cmd-read（argv+JSON+exit）"
+description: "卡路里一期饮食体重运动身体目标照片分析复盘，唯一出口 calorie-cmd-read（argv加JSON加exit）"
 ---
 
 # 卡路里（calorie）SKILL
@@ -148,3 +148,4 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
   calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
   ```
 - 成功 stdout 只有一行 envelope JSON，进度与错误走 stderr；`--html <路径>` 显式落盘 utf8。
+- 版本钉死登记：本节 `@0.1.0` 为硬编码，随 #44 发版流重发 `0.1.1` 同步改（三处联动：本文件/docs/测试，登记见 docs/public-installer-47.md「版本钉死登记」）。

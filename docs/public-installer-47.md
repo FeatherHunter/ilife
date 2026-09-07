@@ -49,7 +49,11 @@ npx skills@latest list -a opencode --json                     # 查已装
    - `calorie.diet.add {"foodName":"鸡胸","calories":200,"protein":35}` → exit 0，shape=receipt。
    - `calorie.view.home {"date":"2026-09-07"}` → exit 0，shape=stat；空库时 exit 4 缺失阻断（设计如此，不返空）。
    - 同命令加 `--html <tmp>/home.html` → exit 0，落盘 2488 字节，头为 `<section class="ilife-page" data-skill="calorie" …>`。
-5. 回归：`test/skills-export-47.test.mjs` 钉死导出头（frontmatter name=目录名、description 非空、HELP 标记块仍在、运行时小节存在）。
+5. 回归：`test/skills-export-47.test.mjs` 钉死导出头（frontmatter name=目录名、description 非空、HELP 标记块仍在、运行时小节存在；仅静态导出头，真跑/落点/端到端不在单测覆盖，见测试头注记）。
+
+## 版本钉死登记（随 0.1.1 重发同步）
+
+- 三处 `@0.1.0` 硬编码：`packages/skill-calorie/SKILL.md`（公共安装器运行时小节）、本文档（发现小节/阻塞小节）、`test/skills-export-47.test.mjs`（版本断言）；#44 发版流重发 `0.1.1` 时三处联动改，不单改一处。
 
 ## 已发布包阻塞（发版流修，不在本票硬上）
 
@@ -66,7 +70,9 @@ npx skills@latest list -a opencode --json                     # 查已装
 
 - 给 `skill-bill/skill-chef/skill-home/skill-memo-ilife/skill-schedule` 的 SKILL.md
   加同构头（`name` = 目录名 + 一句话 description）与「公共安装器运行时」小节
-  （bin 名各包不同：`bill/chef/home/memo/schedule-cmd-read`，npm 包名即目录名）。
+  （bin 名各包不同：`bill-cmd-read/chef-cmd-read/home-cmd-read/memo-cmd-read/schedule-cmd-read`，npm 包名即目录名；
+  仅 `skill-calorie` 多一个运维二进制 `skill-calorie-fetch`（import/validate/dedupe/export/history/audit/catalog-verify，不承载业务读写），其余 5 包复制时不带 fetch）。
+- 配方 description 写一句话、避冒号（中英文冒号一律不用，全角逗号代替），与正文首段同义。
 - 把 `test/skills-export-47.test.mjs` 的 `PKGS` 扩展为 6 包。
 - `skill-memo/`（无 SKILL.md 的构建残留目录）不算在内。
 - 与 #46（R2 真相）无冲突：本票只加发现头与说明，不动依赖声明、不动 base、不动布局。

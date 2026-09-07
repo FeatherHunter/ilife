@@ -2,6 +2,11 @@
  * skills-cli 从 git 仓库发现 skill 的规则（skills@1.5.24 实测）：扫描子目录找 SKILL.md
  * （跳过 node_modules/.git/dist/build），要求文件头 YAML frontmatter 含字符串 name + description，
  * 缺任一即整包跳过（No valid skills）。本测试钉死卡路里导出头，回退即红。
+ * 范围诚实注记（双审终审 must）：本测试仅静态断言 SKILL.md 导出头
+ * （frontmatter/HELP 标记块/运行时小节字符串），不覆盖 skills-cli 真跑
+ * （add -l/add/list --json）、agent 落点目录、HELP→cmd_read→envelope→HTML
+ * 端到端；真跑证据见 docs/public-installer-47.md「验证证据」手工实测，
+ * 端到端 artifact 缺失是已知缺口，不在本测试冒充覆盖。
  * 样板复制到其余 5 包时，把 PKGS 扩展为 6 包清单即可（见 #47 通后再复制）。
  * 运行：node --test test/skills-export-47.test.mjs（零构建依赖）。
  */
@@ -47,7 +52,9 @@ describe('#47 skills-cli 导出头（卡路里样板）', () => {
     it(pkg + '：公共安装器运行时小节存在', () => {
       const text = readFileSync(join(ROOT, 'packages', pkg, 'SKILL.md'), 'utf8');
       assert.ok(text.includes('## 公共安装器运行时'), '须含运行时小节（dist 不进 git，运行时走 npm）');
-      assert.ok(text.includes('@0.1.0'), '须钉死 npm 运行时版本');
+      // 版本钉死 @0.1.0 为硬编码：随 #44 发版流重发 0.1.1 同步改
+      // （SKILL.md/docs/测试三处联动，登记见 docs/public-installer-47.md「版本钉死登记」）。
+      assert.ok(text.includes('@0.1.0'), '须钉死 npm 运行时版本（随 0.1.1 重发同步改）');
     });
   }
   it('样板清单当前恰为 1 包（复制期扩展即改此断言）', () => {
