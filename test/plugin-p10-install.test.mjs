@@ -37,10 +37,13 @@ describe('P10 安装验收', () => {
     }
   });
   it('单品 dependencies 硬依赖总管（开发兜底声明仍在）', () => {
+    // #48 样板线：plugin-calorie 已转正式版号 ^0.1.0＋skill 同版本 ^ 声明；其余 5 对复制时同改。
+    const FORMAL48 = new Set(['plugin-calorie']);
     for (const [dir, single] of SINGLES) {
       const j = pkg(dir);
-      assert.equal(j.dependencies?.['dsh-life-pack'], 'workspace:*', single + ' 必须 dependencies 硬依赖总管');
+      assert.equal(j.dependencies?.['dsh-life-pack'], FORMAL48.has(dir) ? '^0.1.0' : 'workspace:*', single + ' 必须 dependencies 硬依赖总管');
       assert.ok(!(j.peerDependencies?.['dsh-life-pack']), single + ' 不许走 peer');
+      if (FORMAL48.has(dir)) assert.ok(!JSON.stringify(j.dependencies).includes('workspace:'), single + ' 依赖不许外泄 workspace:');
     }
   });
   it('装配行双含：cordis.patch.yml insert id/name 与包名一致', () => {

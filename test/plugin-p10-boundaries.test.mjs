@@ -27,9 +27,12 @@ describe('P10 依赖方向', () => {
     const m = pkg('plugin-manager');
     const depBlob = JSON.stringify({ ...m.dependencies, ...m.devDependencies, ...m.peerDependencies });
     for (const n of SINGLE_NPMS) assert.ok(!depBlob.includes(n), '总管不许依赖单品：' + n);
+    // #48 样板线：plugin-calorie 总管依赖已转正式版号 ^0.1.0（B① 全部换已发布号）；其余 5 对复制时同改（见 docs/skill-landing-r2.md）。
+    const FORMAL48 = new Set(['plugin-calorie']);
     for (const d of SINGLES) {
       const j = pkg(d);
-      assert.equal(j.dependencies?.['dsh-life-pack'], 'workspace:*');
+      assert.equal(j.dependencies?.['dsh-life-pack'], FORMAL48.has(d) ? '^0.1.0' : 'workspace:*', d + ' 总管硬依赖口径');
+      if (FORMAL48.has(d)) assert.match(j.dependencies?.['skill-calorie'] ?? '', /^\^0\.1\./, d + ' 须同版本 ^ 声明对应 skill');
     }
   });
   it('总管不 import 单品（源码级）', () => {

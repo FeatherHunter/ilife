@@ -53,6 +53,25 @@ jobs:
             echo "snapshot untouched, skip"
           fi
 
+  publish-gates:
+    # #48 发布门禁三门（R2 A+B）：G1 禁 workspace 外泄 + G2 tarball 清单 + G3 fresh-tmp 安装态双路
+    # 样板期仅卡路里线 --only；复制到其余 5 对后去掉 --only 跑全量 13 包
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm publish:pre
+      - run: pnpm publish:tarball
+      - run: pnpm publish:fresh
+
   win-detail:
     # Win 人工细验位：中文路径/换行/CRLF/doctor 强提示
     runs-on: windows-latest

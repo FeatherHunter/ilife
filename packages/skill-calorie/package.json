@@ -10,16 +10,17 @@
     "./triggers": "./dist/triggers/index.js",
     "./fetch": "./dist/fetch/index.js",
     "./render": "./dist/render/index.js",
-    "./cli": "./dist/cli/cmd_read.js"
+    "./cli": "./dist/cli/cmd_read.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
   "dependencies": {
-    "base-paint": "workspace:^0.1.0"
+    "base-paint": "^0.1.0"
   },
   "devDependencies": {
-    "base-link-core": "workspace:^0.1.0"
+    "base-link-core": "^0.1.0"
   },
   "bin": {
     "skill-calorie-fetch": "./dist/fetch/cli.js",

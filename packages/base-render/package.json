@@ -15,7 +15,7 @@
     "node": ">=22.13"
   },
   "devDependencies": {
-    "base-link-core": "workspace:^0.1.0"
+    "base-link-core": "^0.1.0"
   },
   "scripts": {
     "build": "tsc -b",

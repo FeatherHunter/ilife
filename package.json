@@ -14,6 +14,10 @@
     "snapshot": "node tooling/write-snapshot.mjs",
     "snapshot:check": "node tooling/write-snapshot.mjs --check",
     "boundaries": "node tooling/check-boundaries.mjs",
+    "publish:pre": "node tooling/check-publish.mjs --pre --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
+    "publish:tarball": "node tooling/check-publish.mjs --tarball --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
+    "publish:fresh": "node tooling/check-publish.mjs --fresh-tmp --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
+    "publish:plan": "node tooling/publish-chain.mjs --plan --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
     "changeset:status": "changeset status"
   },
   "devDependencies": {
