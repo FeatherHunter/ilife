@@ -8,7 +8,7 @@
 |---|---|---|---|
 | 取数 | src/fetch/db.ts（文件 DB+FTS CJK）、src/fetch/feishu.ts（lark-cli 四项全绿才取数） | memo_cli 取数段、feishu 两文件、test_db_fallback/test_fts_cjk/test_feishu_sync | M2 |
 | 口径 | src/policy/wakewords.ts、category.ts、reminder.ts、wish.ts、crud.ts | 唤醒词路由、顶层/子分类、提醒路由、心愿排期、批量改分类、增删改查 | M3 |
-| 渲染 | src/render/envelope.ts、html.ts、templates/16 | memo_render.py、test_render/test_html_*、HTML 交付规范 | M4 |
+| 渲染 | src/render/envelope.ts、html.ts、templates/6 | memo_render.py、test_render/test_html_*、HTML 交付规范 | M4 |
 | 出口 | src/cli/cmd_read.ts（argv+JSON+exit） | memo_cli.py 入口段 | M5 |
 | SKILL | SKILL.md 重写+HELP 互联注入 | 73KB SKILL.md、docs/、references/ | M6 |
 | 收尾 | 10 联动对表+tmp 单测+删 py | tests/ 全量、output/ 产物 | M7 |

@@ -84,6 +84,15 @@ describe('居家渲染 render（21 键全票）', () => {
     assert.throws(() => loadTemplate('nope'), HomeRenderError);
     assert.throws(() => fillTemplate('无标记', 'x'), HomeRenderError);
   });
+  it('#43 H2 analysis/fallback 直调分支（经 key 不可达，保留显式降级）', () => {
+    const a = { version: '0.1.0', skill: 'home', shape: 'analysis', key: 'home.item.search', data: { summary: '降级说明 <>&"' } };
+    assert.match(renderEnvelopeHtml(a), /降级说明/);
+    assert.match(renderEnvelopeHtml(a), /&lt;&gt;&amp;/);
+    const f = { version: '0.1.0', skill: 'home', shape: 'fallback', key: 'home.item.search', data: { reason: '超时降级', degraded: true } };
+    assert.match(renderEnvelopeHtml(f), /data-degraded="1"/);
+    assert.match(renderEnvelopeHtml(f), /超时降级/);
+    assert.throws(() => renderEnvelopeHtml({ version: '0.1.0', skill: 'home', shape: 'nope', key: 'home.item.search', data: {} }), HomeRenderError);
+  });
   it('toItemCard 装配', () => {
     const c = toItemCard({ id: 1, name: 'x', category: 'c', category_id: 1, owner: 'u', purchase_price: null, remark: null, photo: null, access_count: 0, last_accessed_at: null, fixed_location: null, created_at: '', updated_at: '' }, [{ id: 1, item_id: 1, location: '客厅/冰箱', quantity: 2, reason: null, location_status: '在家', purchase_date: null, expiration_date: null, created_at: '', updated_at: '' }], ['a']);
     assert.equal(c.quantity, 2);

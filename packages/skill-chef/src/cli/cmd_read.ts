@@ -29,6 +29,7 @@ import { buildHelpLookup } from '../help/index.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
+// #43 F2 一期限制：FILTER 维度只读（recipe.search 透传过滤），recipe.write 一期只写主表，维度表落库走二期。
 const FILTER_KEYS = ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime', 'filter'] as const;
 
 function fail(code: number, msg: string): never { console.error('ERR ' + code + ': ' + msg); process.exit(code); }

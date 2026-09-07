@@ -3,7 +3,7 @@ export { SCHEDULE_KEY_SHAPES, scheduleShapeFor, buildScheduleEnvelope, parseSche
 export {
   toRecordItem, buildRecordToday, buildRecordRange, buildRecordDetail, buildRecordReceipt,
   buildRecordCompare, buildCategoryDeep, buildAnomaly, toPlanItem, buildPlanToday,
-  buildPlanReceipt, buildHelpItems,
+  buildPlanReceipt, buildHelpItems, HELP_EMPTY_HINT,
 } from './views.js';
 export type { RecordItem, PlanItem, HelpItem } from './views.js';
 export {

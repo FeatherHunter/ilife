@@ -58,7 +58,7 @@ describe('私家大厨唯一出口 cmd_read（8 键全票）', () => {
     assert.equal(JSON.parse(h.stdout).data.total, 1);
     const all = run(['chef.help.lookup']);
     assert.equal(all.status, 0);
-    assert.equal(JSON.parse(all.stdout).data.total, 35);
+    assert.equal(JSON.parse(all.stdout).data.total, 37);
     const q = run(['chef.help.lookup', '--params', P({ q: '帮我搜个虾球菜' })]);
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'chef.recipe.search'));
   });

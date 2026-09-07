@@ -24,7 +24,7 @@ const DESCS: Record<string, string> = {
   'chef.help.lookup': '能力速查 HELP 现找',
 };
 
-// 全量速查表（WAKE_TABLE 35 短语：help.lookup4 + recipe.view5 + recipe.search8 + recipe.write4 + cooking.run4 + shopping.query4 + history.record3 + history.query3）。
+// 全量速查表（WAKE_TABLE 37 短语：help.lookup4 + recipe.view7 + recipe.search8 + recipe.write4 + cooking.run4 + shopping.query4 + history.record3 + history.query3）。
 export function buildHelpLookup(): HelpHit[] {
   return WAKE_TABLE.map((e) => ({
     phrase: e.phrase,

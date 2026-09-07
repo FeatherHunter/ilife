@@ -102,12 +102,17 @@ describe('作息唯一出口 cmd_read（8 键全票）', () => {
     assert.equal(rv.status, 0);
     assert.match(JSON.parse(rv.stdout).data.message, /已复盘/);
   });
-  it('help.lookup：全表 + 现找 + 飞书缺失阻断', () => {
+  it('help.lookup：全表 + 现找 + 空结果指引 + 飞书缺失阻断', () => {
     const h = run(['schedule.help.lookup']);
     assert.equal(h.status, 0);
     assert.ok(JSON.parse(h.stdout).data.total >= 40);
     const q = run(['schedule.help.lookup', '--params', P({ q: '帮我查作息' })]);
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'schedule.record.today'));
+    const empty = run(['schedule.help.lookup', '--params', P({ q: '不存在的词zzz' })]);
+    assert.equal(empty.status, 0);
+    const ed = JSON.parse(empty.stdout).data;
+    assert.equal(ed.total, 0);
+    assert.ok(typeof ed.hint === 'string' && ed.hint.includes('定时') && ed.hint.includes('早睡') && ed.hint.includes('以外置为准'));
     const sync = run(['schedule.plan.write', '--params', P({ op: 'sync', date: '2026-09-06' })], { LARK_CLI_PATH: join(DB, 'no-lark-cli') });
     assert.equal(sync.status, 4);
   });
