@@ -6,7 +6,7 @@ import { writeFileSync, readFileSync, copyFileSync, readdirSync, existsSync, mkd
 import { join, basename } from 'node:path';
 import {
   BillFetchError, BillPolicyError,
-  resolveDbPath, resolveGoalsPath, openBillDb, closeBillDb,
+  resolveDbPath, resolveGoalsPath, assertWritablePath, openBillDb, closeBillDb,
   fetchAll, listToday, listRange, getById, searchKeyword, listByTag,
   addBill, updateBill, undoBill, restoreBill, loadGoals, saveGoals,
 } from '../fetch/index.js';
@@ -19,6 +19,7 @@ import {
 } from '../policy/index.js';
 import {
   billShapeFor, buildBillEnvelope, renderEnvelopeHtml, assertHtmlSize,
+  templateFor, loadTemplate, fillTemplate,
   toBillItem, calcKpi, calcCategories, buildRecordToday, buildRecordRange, buildRecordSearch,
   buildRecordDetail, buildRecordReceipt, buildOverview, buildCompare, buildTrend,
   buildGoalQuery, buildAccountQuery, buildHelpItems,
@@ -66,6 +67,10 @@ function weekRange(): { start: string; end: string } {
 function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const goalsPath = resolveGoalsPath();
+  // 写键前置守卫（B6）：非 tmp 写库须 BILL_FORCE_PROD=1；读键不受影响。
+  if (key === 'bill.record.add' || key === 'bill.record.update') assertWritablePath(dbPath);
+  if (key === 'bill.goal.write') assertWritablePath(goalsPath);
+  if (key === 'bill.account.write') { assertWritablePath(dbPath); assertWritablePath(goalsPath); }
   const handle = openBillDb(dbPath);
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
@@ -349,6 +354,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
             const names = readdirSync(dir).filter((f) => f.endsWith('.db')).sort();
             return buildRecordReceipt(`备份${names.length}个${names.length ? '：' + names.slice(-5).join('、') : ''}`);
           }
+          assertWritablePath(dbPath);
           closeBillDb(handle);
           const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '').replace(/(\d{8})(\d{6})/, '$1_$2');
           const name = `biscuit_${stamp}.db`;
@@ -361,6 +367,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           const dir = join(dbPath, '..', 'backups');
           const target = typeof name === 'string' && name ? join(dir, basename(name)) : readdirSync(dir).filter((f) => f.endsWith('.db')).sort().map((f) => join(dir, f)).pop();
           if (!target || !existsSync(target as string)) throw new BillFetchError('BILL_DB_MISSING', '无可用备份（先 backup-create）');
+          assertWritablePath(dbPath);
           closeBillDb(handle);
           copyFileSync(target as string, dbPath);
           return buildRecordReceipt(`已恢复：${basename(target as string)}`);
@@ -375,6 +382,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           if (params['dry-run'] === true || params.dryRun === true) {
             return buildRecordReceipt(`导入预览：${lines.length - 1} 行（dry-run，未写入）`);
           }
+          assertWritablePath(dbPath);
           let n = 0;
           for (const line of lines.slice(1)) {
             const cells = line.split(',').map((c) => c.trim());
@@ -437,9 +445,11 @@ async function main() {
     const data = dispatch(o.key, params);
     env = buildBillEnvelope(o.key, data);
     if (o.html) {
-      const html = renderEnvelopeHtml(env);
-      assertHtmlSize(html);
-      try { writeFileSync(o.html, html, 'utf8'); }
+      // B4：--html 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
+      const section = renderEnvelopeHtml(env);
+      const full = fillTemplate(loadTemplate(templateFor(o.key)), section);
+      assertHtmlSize(full);
+      try { writeFileSync(o.html, full, 'utf8'); }
       catch (e) { fail(5, 'HTML 写盘失败：' + o.html); }
     }
   } catch (e) {
@@ -447,6 +457,7 @@ async function main() {
     if (e instanceof BillPolicyError) fail(2, '口径失败：' + e.message);
     if (e instanceof BillRenderError) fail(5, '渲染失败：' + e.message);
     if ((e as Error).message?.includes('SKILLS_DB_PATH')) fail(1, (e as Error).message);
+    if ((e as Error).message?.includes('BILL_FORCE_PROD')) fail(1, (e as Error).message);
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally { clearTimeout(timer); }
   process.stdout.write(JSON.stringify(env) + '\n');

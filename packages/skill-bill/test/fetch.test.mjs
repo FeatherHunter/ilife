@@ -4,7 +4,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openBillDb, closeBillDb, fetchAll, listToday, getById, searchKeyword, listByTag, addBill, updateBill, undoBill, restoreBill, loadGoals, saveGoals, BillFetchError } from '../dist/index.js';
-import { resolveDbPath } from '../dist/index.js';
+import { resolveDbPath, assertWritablePath } from '../dist/index.js';
 
 let DB = '';
 let H = null;
@@ -44,5 +44,15 @@ describe('饼干取数 fetch', () => {
     delete process.env.SKILLS_DB_PATH;
     assert.throws(() => resolveDbPath(), /SKILLS_DB_PATH/);
     process.env.SKILLS_DB_PATH = old;
+  });
+  it('BILL_FORCE_PROD 哨兵：非 tmp 写须 opt-in（tmp 直过）', () => {
+    const old = process.env.BILL_FORCE_PROD;
+    delete process.env.BILL_FORCE_PROD;
+    assert.throws(() => assertWritablePath(join('D:', 'prod-bill.db')), /BILL_FORCE_PROD/);
+    assertWritablePath(join(DB, 'probe.db'));
+    process.env.BILL_FORCE_PROD = '1';
+    assertWritablePath(join('D:', 'prod-bill.db'));
+    if (old === undefined) delete process.env.BILL_FORCE_PROD;
+    else process.env.BILL_FORCE_PROD = old;
   });
 });

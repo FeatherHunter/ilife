@@ -1,5 +1,5 @@
 // 口径层·唤醒词路由：自然语言 → 16 联动 key；最长匹配；无命中/缺槽位 throw。
-// HELP 速查唯一上游；改这里，HELP 构建期跟进。75 短语 = 70 功能 + 4 HELP + 1 补齐读链（查账单详情，老家无直接词）。
+// HELP 速查唯一上游；改这里，HELP 构建期跟进。77 短语 = 72 功能 + 4 HELP + 1 补齐读链（查账单详情，老家无直接词）。
 import { BillPolicyError } from '../fetch/errors.js';
 
 export type BillKey =
@@ -21,7 +21,7 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '饼干记账帮助', key: 'bill.help.lookup' },
   { phrase: '查帮助', key: 'bill.help.lookup' },
   { phrase: '能做什么', key: 'bill.help.lookup' },
-  // record.add 12（#11/#12/#13/#14/#15/#16/#17/#18/#19/#20/#21/#22：支出/收入/拍账单/批量/退款/报销/到账/借出/借入/收回/偿还/分期）。
+  // record.add 13（#11/#12/#13/#14/#15/#16/#17/#18/#19/#20/#21/#22：支出/收入/拍账单/批量/退款/报销/到账/借出/借入/收回/偿还/分期 + 记一笔通用）。
   { phrase: '记支出', key: 'bill.record.add', preset: { kind: 'expense' } },
   { phrase: '记收入', key: 'bill.record.add', preset: { kind: 'income' } },
   { phrase: '拍账单', key: 'bill.record.add', preset: { kind: 'photo' } },
@@ -34,15 +34,17 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '记收回', key: 'bill.record.add', preset: { kind: 'collect' } },
   { phrase: '记偿还', key: 'bill.record.add', preset: { kind: 'repay' } },
   { phrase: '记分期', key: 'bill.record.add', preset: { kind: 'installment' } },
+  { phrase: '记一笔', key: 'bill.record.add' },
   // record.update 3（#23/#24/#25：改/撤销/恢复）。
   { phrase: '改记录', key: 'bill.record.update', needs: ['id'] },
   { phrase: '撤销', key: 'bill.record.update', preset: { op: 'undo' }, needs: ['id'] },
   { phrase: '恢复', key: 'bill.record.update', preset: { op: 'restore' }, needs: ['id'] },
-  // record.today 4（#51~#54：今天/昨天/某天/最近）。
+  // record.today 5（#51~#54：今天/昨天/某天/最近 + 查账单通用别名；查账单详情走 detail 最长匹配）。
   { phrase: '查今天', key: 'bill.record.today' },
   { phrase: '查昨天', key: 'bill.record.today', preset: { date: 'yesterday' } },
   { phrase: '查某天', key: 'bill.record.today', needs: ['date'] },
   { phrase: '查最近', key: 'bill.record.today', preset: { recent: true } },
+  { phrase: '查账单', key: 'bill.record.today' },
   // record.range 6（#55~#58/#61/#62：周/月/区间/分类/账户/账本）。
   { phrase: '查周', key: 'bill.record.range', preset: { range: 'week' } },
   { phrase: '查月', key: 'bill.record.range', preset: { range: 'month' } },
