@@ -98,7 +98,7 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     assert.equal(run(['bill.setup.run', '--params', P({ op: 'init-status' })]).status, 0);
     const h = run(['bill.help.lookup']);
     assert.equal(h.status, 0);
-    assert.equal(JSON.parse(h.stdout).data.total, 75);
+    assert.equal(JSON.parse(h.stdout).data.total, 77);
     const q = run(['bill.help.lookup', '--params', P({ q: '帮我查今天花了多少' })]);
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'bill.record.today'));
   });
@@ -112,6 +112,9 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     const p = join(DB, 'out.html');
     const r = run(['bill.record.today', '--params', P({ date: '2026-09-06' }), '--html', p]);
     assert.equal(r.status, 0);
-    assert.match(readFileSync(p, 'utf8'), /<section/);
+    const html = readFileSync(p, 'utf8');
+    assert.match(html, /<section/);
+    assert.match(html, /<!DOCTYPE html/);
+    assert.match(html, /bill-cmd-read bill\.record\.today/);
   });
 });

@@ -10,6 +10,6 @@
 | 卡路里 | TBD | 各家 key，迁移图补 | — | — |
 | 居家 | TBD | 各家 key，迁移图补 | — | — |
 | 大厨 | TBD | 各家 key，迁移图补 | — | — |
-| 饼干 | TBD | 各家 key，迁移图补 | — | — |
+| 饼干 | SKILLS_DB_PATH、BILL_FORCE_PROD | 数据目录（无默认值，必设）；非 tmp 写库须 BILL_FORCE_PROD=1（测试隔离哨兵，opt-in） | 缺失 warn | fail |
 | 作息 | TBD | 各家 key，迁移图补 | — | — |
 | 备忘录 | TBD | 各家 key，迁移图补 | — | — |

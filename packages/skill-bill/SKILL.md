@@ -27,18 +27,19 @@ bill-cmd-read bill.help.lookup --params '{"q":"查今天"}'
 | 饼干记账帮助 | bill.help.lookup | list | `bill-cmd-read bill.help.lookup` |
 | 查帮助 | bill.help.lookup | list | `bill-cmd-read bill.help.lookup` |
 | 能做什么 | bill.help.lookup | list | `bill-cmd-read bill.help.lookup` |
-| 记支出 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"expense"}'` |
-| 记收入 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"income"}'` |
-| 拍账单 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"photo"}'` |
-| 批量录入 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"batch"}'` |
-| 记退款 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"refund"}'` |
-| 记报销 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"reimburse"}'` |
-| 报销到账 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"reimburse-done"}'` |
-| 记借出 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"lend"}'` |
-| 记借入 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"borrow"}'` |
-| 记收回 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"collect"}'` |
-| 记偿还 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"repay"}'` |
-| 记分期 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"installment"}'` |
+| 记支出 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"expense","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记收入 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"income","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 拍账单 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"photo","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 批量录入 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"batch","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记退款 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"refund","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记报销 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"reimburse","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 报销到账 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"reimburse-done","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记借出 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"lend","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记借入 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"borrow","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记收回 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"collect","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记偿还 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"repay","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记分期 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"kind":"installment","category":"餐饮","amount":-35,"note":"午饭"}'` |
+| 记一笔 | bill.record.add | receipt | `bill-cmd-read bill.record.add --params '{"category":"餐饮","amount":-35,"note":"午饭"}'` |
 | 改记录 | bill.record.update | receipt | `bill-cmd-read bill.record.update --params '{"id":1}'` |
 | 撤销 | bill.record.update | receipt | `bill-cmd-read bill.record.update --params '{"op":"undo","id":1}'` |
 | 恢复 | bill.record.update | receipt | `bill-cmd-read bill.record.update --params '{"op":"restore","id":1}'` |
@@ -46,6 +47,7 @@ bill-cmd-read bill.help.lookup --params '{"q":"查今天"}'
 | 查昨天 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"date":"yesterday"}'` |
 | 查某天 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"date":"2026-09-06"}'` |
 | 查最近 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"recent":true}'` |
+| 查账单 | bill.record.today | list | `bill-cmd-read bill.record.today` |
 | 查周 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"range":"week"}'` |
 | 查月 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"range":"month"}'` |
 | 查区间 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"start":"2026-09-01","end":"2026-09-01"}'` |
@@ -105,4 +107,5 @@ bill-cmd-read bill.help.lookup --params '{"q":"查今天"}'
 ## 环境与出 scope
 
 - SKILLS_DB_PATH（必设，无默认值）+ BILL_FORCE_PROD 哨兵（非 tmp 写库须 opt-in），见 docs/env.md。
+- --html 套模板输出完整收据页（section 片段经 CONTENT 注入对应模板，非片段直写；超体积阻断）。
 - 出 scope：定时任务（老家零定时代码）、面板（二期单 MAP）、本技能外联动登记（combos.yaml 一律不碰，走后续票；link 跨技能仅复制 prompt）；真实数据禁迁，测试 tmp 隔离；Python 老家只读对照。

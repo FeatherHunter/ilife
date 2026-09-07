@@ -27,13 +27,16 @@ describe('饼干口径 policy', () => {
     const r = validateRecord({ category: '餐饮', amount: -20, time: '2026-09-06 12:00:00' });
     assert.equal(r.ledger, '生活');
   });
-  it('唤醒词 75 全量 + 最长匹配 + 缺槽位', () => {
-    assert.equal(WAKE_TABLE.length, 75);
+  it('唤醒词 77 全量 + 最长匹配 + 缺槽位', () => {
+    assert.equal(WAKE_TABLE.length, 77);
     assert.equal(routeWakeword('看分类对比一下').key, 'bill.analysis.compare');
     assert.equal(routeWakeword('看分类').key, 'bill.analysis.overview');
     assert.equal(routeWakeword('初始化状态看看').key, 'bill.setup.run');
     assert.equal(routeWakeword('报销到账了').key, 'bill.record.add');
     assert.equal(routeWakeword('帮我查今天花了多少').key, 'bill.record.today');
+    assert.equal(routeWakeword('帮我记一笔午饭').key, 'bill.record.add');
+    assert.equal(routeWakeword('帮我查账单').key, 'bill.record.today');
+    assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail');
     assert.throws(() => routeWakeword('同步记账到云端'), /无命中/);
     assert.throws(() => routeWakeword('改记录'), /缺槽位 id/);
     assert.equal(routeWakeword('改记录', { id: 3 }).params.id, 3);
