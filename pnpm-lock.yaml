@@ -29,7 +29,7 @@ importers:
   packages/base-render:
     devDependencies:
       base-link-core:
-        specifier: workspace:^0.1.0
+        specifier: ^0.1.0
         version: link:../base-link-core
 
   packages/ilife-skills: {}
@@ -43,8 +43,11 @@ importers:
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../plugin-manager
+      skill-calorie:
+        specifier: ^0.1.0
+        version: link:../skill-calorie
 
   packages/plugin-chef:
     dependencies:
@@ -81,11 +84,11 @@ importers:
   packages/skill-calorie:
     dependencies:
       base-paint:
-        specifier: workspace:^0.1.0
+        specifier: ^0.1.0
         version: link:../base-render
     devDependencies:
       base-link-core:
-        specifier: workspace:^0.1.0
+        specifier: ^0.1.0
         version: link:../base-link-core
 
   packages/skill-chef:

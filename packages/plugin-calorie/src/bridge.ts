@@ -8,6 +8,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { accessSync, constants } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,8 +33,24 @@ function repoRoot(): string {
   return join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 }
 
+/** 包内 CLI 相对路径（相对技能包根，与 SKILL_CLI 尾段一致）。 */
+export const SKILL_CLI_REL = 'dist/cli/cmd_read.js' as const;
+
+/** 按包名解析技能出口（#48 修法①之二）：createRequire 定位技能包（SKILL_PACKAGE）
+ * 的 package.json，再拼包内 dist/cli/cmd_read.js。只读消费其 dist/CLI（spawn），
+ * 绝不 import 技能实现。包名解析失败回退单仓相对路径；两者皆无由 assertCliPresent
+ * 抛 missing-cli（缺失阻断不返空）。 */
+function resolveSkillCli(): string {
+  try {
+    const pkgJson = createRequire(import.meta.url).resolve(SKILL_PACKAGE + '/package.json');
+    return join(dirname(pkgJson), SKILL_CLI_REL);
+  } catch {
+    return join(repoRoot(), SKILL_CLI);
+  }
+}
+
 export function cliPath(): string {
-  return join(repoRoot(), SKILL_CLI);
+  return resolveSkillCli();
 }
 
 export function assertCliPresent(path?: string): void {
