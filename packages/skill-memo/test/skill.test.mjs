@@ -26,8 +26,10 @@ describe('memo SKILL 与 HELP', () => {
     }
   });
   it('互联区新鲜（构建期注入可复现）', () => {
+    // #43 H1 主守卫后 import 不写盘：此处仅比对，CRLF/首尾空白归一化后比较（Windows 检出兼容）。
     const si = skill.indexOf(START), ei = skill.indexOf(END);
-    assert.equal(skill.slice(si + START.length + 1, ei - 1), buildHelpBlock());
+    const actual = skill.slice(si + START.length, ei).replace(/\r/g, '').trim();
+    assert.equal(actual, buildHelpBlock().replace(/\r/g, '').trim());
     assert.ok(lookupWake(buildHelpLookup(), '帮我搜备忘跑步').some((h) => h.key === 'memo.search'));
   });
 });
