@@ -7,18 +7,18 @@
 
 | 目录 | npm 包 | 槽位 / order | 技能（只读消费 dist/CLI） |
 |---|---|---|---|
-| packages/plugin-memo | dsh-memo | ilife:memo / 70 | @feather_wch/skill-memo → packages/skill-memo/dist/cli/cmd_read.js |
+| packages/plugin-ilife-memo | dsh-ilife-memo | ilife:memo / 70 | @feather_wch/skill-memo → packages/skill-memo/dist/cli/cmd_read.js |
 | packages/plugin-calorie | dsh-calorie | ilife:calorie / 75 | @feather_wch/skill-calorie → packages/skill-calorie/dist/cli/cmd_read.js |
-| packages/plugin-schedule | dsh-schedule | ilife:schedule / 80 | @feather_wch/skill-schedule → packages/skill-schedule/dist/cli/cmd_read.js |
-| packages/plugin-home | dsh-home | ilife:home / 85 | @feather_wch/skill-home → packages/skill-home/dist/cli/cmd_read.js |
+| packages/plugin-ilife-schedule | dsh-ilife-schedule | ilife:schedule / 80 | @feather_wch/skill-schedule → packages/skill-schedule/dist/cli/cmd_read.js |
+| packages/plugin-ilife-home | dsh-ilife-home | ilife:home / 85 | @feather_wch/skill-home → packages/skill-home/dist/cli/cmd_read.js |
 | packages/plugin-chef | dsh-chef | ilife:chef / 90 | @feather_wch/skill-chef（#18 未到，缺席阻断，见 deferred） |
-| packages/plugin-bill | dsh-bill | ilife:cookie / 95 | @feather_wch/skill-bill → packages/skill-bill/dist/cli/cmd_read.js |
+| packages/plugin-ilife-bill | dsh-ilife-bill | ilife:cookie / 95 | @feather_wch/skill-bill → packages/skill-bill/dist/cli/cmd_read.js |
 | packages/plugin-manager | dsh-life-pack | 无自有槽位（6 tab 只导航） | 不依赖单品、不 import 单品 |
 
 依赖方向：6 单品 `dependencies: { "dsh-life-pack": "workspace:*" }`（硬依赖，非 peer）；
 总管零单品依赖。单品内保留总管依赖只作本地开发兜底（P1 #2），不作为单 add 即激活的依据。
 
-注：`dsh-bill` 供 `ilife:cookie` 槽（P3 定案 95 为 cookie，技能包沿用 bill 命名，映射在此钉死）。
+注：`dsh-ilife-bill` 供 `ilife:cookie` 槽（P3 定案 95 为 cookie，技能包沿用 bill 命名，映射在此钉死）。
 卡路里子页（`ilife:calorie:diet/exercise/goal…`）只在单品主面板内导航，不占栏，不进总管表。
 60 `deck:map` 为 matt 探针已占位，不动。
 
@@ -48,12 +48,12 @@
 任何单品落地时总管必须已在位导航。安装命令（两者皆直接依赖，由 reconcile 按序激活）：
 
 ```sh
-dsh plugin add dsh-life-pack dsh-memo
+dsh plugin add dsh-life-pack dsh-ilife-memo
 dsh plugin add dsh-life-pack dsh-calorie
-dsh plugin add dsh-life-pack dsh-schedule
-dsh plugin add dsh-life-pack dsh-home
+dsh plugin add dsh-life-pack dsh-ilife-schedule
+dsh plugin add dsh-life-pack dsh-ilife-home
 dsh plugin add dsh-life-pack dsh-chef
-dsh plugin add dsh-life-pack dsh-bill
+dsh plugin add dsh-life-pack dsh-ilife-bill
 ```
 
 反例（不许）：`dsh plugin add dsh-calorie` 单加——传递依赖落盘但 reconcile 不激活总管，

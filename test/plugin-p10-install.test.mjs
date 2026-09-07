@@ -12,11 +12,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = (dir) => JSON.parse(readFileSync(join(root, 'packages', dir, 'package.json'), 'utf8'));
 const SINGLES = [
   ['plugin-calorie', 'dsh-calorie'],
-  ['plugin-memo', 'dsh-memo'],
-  ['plugin-schedule', 'dsh-schedule'],
-  ['plugin-home', 'dsh-home'],
+  ['plugin-ilife-memo', 'dsh-ilife-memo'],
+  ['plugin-ilife-schedule', 'dsh-ilife-schedule'],
+  ['plugin-ilife-home', 'dsh-ilife-home'],
   ['plugin-chef', 'dsh-chef'],
-  ['plugin-bill', 'dsh-bill'],
+  ['plugin-ilife-bill', 'dsh-ilife-bill'],
 ];
 
 describe('P10 安装验收', () => {
