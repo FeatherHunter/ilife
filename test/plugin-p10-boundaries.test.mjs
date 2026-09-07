@@ -27,9 +27,9 @@ describe('P10 依赖方向', () => {
     const m = pkg('plugin-manager');
     const depBlob = JSON.stringify({ ...m.dependencies, ...m.devDependencies, ...m.peerDependencies });
     for (const n of SINGLE_NPMS) assert.ok(!depBlob.includes(n), '总管不许依赖单品：' + n);
-    // #48 样板线：plugin-calorie 总管依赖已转正式版号 ^0.1.0（B① 全部换已发布号）；#50 首对复制 plugin-chef、home 对 plugin-home-ilife 同改（见 docs/skill-landing-r2.md）。
-    const FORMAL48 = new Set(['plugin-calorie', 'plugin-chef', 'plugin-home-ilife']);
-    const SKILL_OF = { 'plugin-calorie': 'skill-calorie', 'plugin-chef': 'skill-chef', 'plugin-home-ilife': 'skill-home' };
+    // #48 样板线：plugin-calorie 总管依赖已转正式版号 ^0.1.0（B① 全部换已发布号）；#50 首对复制 plugin-chef、home 对 plugin-home-ilife、bill 对复制 plugin-bill-ilife 同改（见 docs/skill-landing-r2.md）。
+    const FORMAL48 = new Set(['plugin-calorie', 'plugin-chef', 'plugin-home-ilife', 'plugin-bill-ilife']);
+    const SKILL_OF = { 'plugin-calorie': 'skill-calorie', 'plugin-chef': 'skill-chef', 'plugin-home-ilife': 'skill-home', 'plugin-bill-ilife': 'skill-bill' };
     for (const d of SINGLES) {
       const j = pkg(d);
       assert.equal(j.dependencies?.['dsh-life-pack'], FORMAL48.has(d) ? '^0.1.0' : 'workspace:*', d + ' 总管硬依赖口径');
