@@ -16,11 +16,11 @@
     { "path": "./packages/skill-chef" },
     { "path": "./packages/plugin-manager" },
     { "path": "./packages/plugin-calorie" },
-    { "path": "./packages/plugin-memo" },
-    { "path": "./packages/plugin-schedule" },
-    { "path": "./packages/plugin-home" },
+    { "path": "./packages/plugin-memo-ilife" },
+    { "path": "./packages/plugin-schedule-ilife" },
+    { "path": "./packages/plugin-home-ilife" },
     { "path": "./packages/plugin-chef" },
-    { "path": "./packages/plugin-bill" }
+    { "path": "./packages/plugin-bill-ilife" }
   ],
   "include": []
 }

@@ -15,12 +15,12 @@
 export const MANAGER_PACKAGE = 'dsh-life-pack' as const;
 
 export const SINGLE_PLUGINS: readonly string[] = [
-  'dsh-memo',
+  'dsh-memo-ilife',
   'dsh-calorie',
-  'dsh-schedule',
-  'dsh-home',
+  'dsh-schedule-ilife',
+  'dsh-home-ilife',
   'dsh-chef',
-  'dsh-bill',
+  'dsh-bill-ilife',
 ];
 
 /** reconcile 语义仿真：只扫直接 dependencies，按序进 bundles（P1 定案）。 */
