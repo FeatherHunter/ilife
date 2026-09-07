@@ -1,2 +1,8 @@
 packages:
   - 'packages/*'
+# #48 R2 B①：intra-monorepo 依赖用已发布号（^0.1.0）声明，本地一律链 workspace（link:），
+# 发布出的 package.json 干净无 workspace:。pnpm v9+ 起 range 默认走 registry（.npmrc 里的
+# prefer-workspace-packages 已被移除，link-workspace-packages 亦只认 CLI flag），
+# 唯 pnpm-workspace.yaml 内 linkWorkspacePackages 才全局生效（含 CI），锁文件永保 link:。
+linkWorkspacePackages: true
+preferWorkspacePackages: true
