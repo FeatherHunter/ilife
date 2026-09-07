@@ -106,7 +106,7 @@ function gateFreshTmp() {
   ok('fresh-tmp npm install ' + tgzs.length + ' 实包成功');
   const scopedPlugs = PLUGINS.filter(inScope);
   const AL = [
-    "import { mkdtempSync } from 'node:fs';",
+    "import { mkdtempSync, mkdirSync } from 'node:fs';",
     "import { tmpdir } from 'node:os';",
     "import { join, basename, dirname } from 'node:path';",
     "import { spawnSync } from 'node:child_process';",
@@ -123,6 +123,9 @@ function gateFreshTmp() {
     "  if (basename(dirname(p)) !== 'cli' || !p.endsWith('cmd_read.js')) { console.error('FAIL: ' + plug + ' cliPath 尾段异常：' + p); bad++; continue; }",
     "  try { mod.assertCliPresent(); } catch (e) { console.error('FAIL: ' + plug + ' assertCliPresent 抛：' + e.message); bad++; continue; }",
     "  const db = mkdtempSync(join(tmpdir(), 'ilife-g3-'));",
+    "  // #50 memo 对 harness 侧 arranging（非产品语义变更）：memo 全键先 openMemoDb（缺目录 exit 4 系设计态阻断，不碰），",
+    "  // 其余五对契约键皆静态 help 键不碰 DB；仅 memo 分支预建 memo/ 空目录（对标 skill-memo-ilife 单测同款前置）。",
+    "  if (skill === 'skill-memo-ilife') mkdirSync(join(db, 'memo'), { recursive: true });",
     "  const r = spawnSync(process.execPath, [p, key, '--params', '{}'], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db } });",
     "  if (r.status !== 0) { console.error('FAIL: ' + plug + ' 契约键 ' + key + ' exit' + r.status); bad++; continue; }",
     '  let env;',
