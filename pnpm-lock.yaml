@@ -81,8 +81,11 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../plugin-manager
+      skill-schedule:
+        specifier: ^0.1.0
+        version: link:../skill-schedule
 
   packages/skill-bill:
     dependencies:
@@ -121,7 +124,7 @@ importers:
   packages/skill-schedule:
     dependencies:
       base-link-core:
-        specifier: workspace:^0.1.0
+        specifier: ^0.1.0
         version: link:../base-link-core
 
 packages:
