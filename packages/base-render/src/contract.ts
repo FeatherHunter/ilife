@@ -3,7 +3,7 @@
  * 缺失阻断不返空：data 缺席/版本不对即抛 RenderError，绝不输出静默空页。
  * link-core 只做 typeof 级消费（import type），运行时零依赖红线不断。
  */
-import type { Envelope } from '@feather_wch/base-link-core';
+import type { Envelope } from 'base-link-core';
 import type { PageDescriptor } from './ui.js';
 import { cx } from './style.js';
 

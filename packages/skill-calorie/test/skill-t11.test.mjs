@@ -47,7 +47,7 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
     for (const h of all) {
       assert.ok(h.exec.startsWith('node ') && h.exec.includes(h.fn));
       assert.ok(h.legacyCli.startsWith('python scripts/render_'));
-      const rel = h.module.replace('@feather_wch/skill-calorie/dist/', '../dist/');
+      const rel = h.module.replace('skill-calorie/dist/', '../dist/');
       const mod = await import(rel);
       assert.equal(typeof mod[h.fn], 'function', h.key + ' 缺导出 ' + h.fn);
     }

@@ -2,7 +2,7 @@
 
 老家只读对照 `D:\2Study\StudyNotes\SKILLS\饼干记账`：py 核心 79（总量 87 含 tmp_*.py 调试杂项与 .scratch，不迁）约 18.3k 行，SKILL.md 1209 行，tests/ 约 25，templates/ 7 域子目录（写入/分析/开始使用/目标/联动/账户 + query_view.html，HELP 模板已迁 Base 参数化），scenes/ 7 yaml（write 15/query 15/analysis 25/goal 4/account 4/link 2/setup 6，合计 71 场景 + HELP 4 条，老家 74 唤醒词 + TS 补齐读链 1（查账单详情，老家无直接词，沿居家改购物清单先例），共 75 短语），文件 DB（biscuit_accountant.db 单 bills 表 10 列 + goals.json 三顶层键 budgets/savings/accounts），账单为联动子功能（link form + receipt 自包含），联动 16 处（本表）。
 
-## 三层去向（包 packages/skill-bill，新建零冲突面，布局对标 skill-memo/schedule）
+## 三层去向（包 packages/skill-bill，新建零冲突面，布局对标 skill-memo-ilife/schedule）
 
 | 层 | TS 去向 | 老家对照 | 归属 |
 |---|---|---|---|

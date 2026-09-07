@@ -2,7 +2,7 @@
 
 老家只读对照 `D:\2Study\StudyNotes\SKILLS\作息管家`：py 核心 51（总量 202 含 .scratch 调试杂项，不迁）约 16.3k 行，SKILL.md 1177 行，tests/ 约 35，templates/ 19 html + 3 共享资产（css/js），scenarios/ 6 yaml，有 DB（schedule_data.db 三表 + 旧版小时表），feishu_sync.py（lark-cli 7 条子命令），联动 8 处（combos.yaml `external: 作息管家` × 8）。
 
-## 三层去向（包 packages/skill-schedule，新建零冲突面，布局对标 skill-memo）
+## 三层去向（包 packages/skill-schedule，新建零冲突面，布局对标 skill-memo-ilife）
 
 | 层 | TS 去向 | 老家对照 | 归属 |
 |---|---|---|---|

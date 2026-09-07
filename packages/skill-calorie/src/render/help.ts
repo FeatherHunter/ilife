@@ -8,7 +8,7 @@
 import { SCENE_09_PHOTO } from '../triggers/scene-09-photo.js';
 import { CalorieRenderError } from './errors.js';
 
-export const PHOTO_HELP_MODULE = '@feather_wch/skill-calorie/dist/render/photo.js' as const;
+export const PHOTO_HELP_MODULE = 'skill-calorie/dist/render/photo.js' as const;
 
 export interface PhotoHelpHit {
   wakeWord: string;
@@ -24,7 +24,7 @@ export interface PhotoHelpHit {
 }
 
 function execFor(module: string, fn: string, argsExpr: string): string {
-  return 'node --input-type=module -e "import { openDb } from \'@feather_wch/skill-calorie/dist/index.js\'; ' +
+  return 'node --input-type=module -e "import { openDb } from \'skill-calorie/dist/index.js\'; ' +
     'import { ' + fn + ' } from \'' + module + '\'; ' +
     'const db = openDb(process.env.SKILLS_DB_PATH); ' +
     'try { console.log(JSON.stringify(' + fn + '(db, ' + argsExpr + '))); } finally { db.close(); }"';
@@ -32,13 +32,13 @@ function execFor(module: string, fn: string, argsExpr: string): string {
 
 /** key → 可执行函数映射（T4 取数 + 本包渲染，无二进制操作）。 */
 const KEY_EXEC: Record<string, { module: string; fn: string; args: string }> = {
-  body_photo_add_single: { module: '@feather_wch/skill-calorie/dist/fetch/photos.js', fn: 'addPhotos', args: 'process.env.CALORIE_PHOTOS_DIR, { srcPaths: ["<照片路径>"], tag: "<标签>" }' },
-  body_photo_add_note: { module: '@feather_wch/skill-calorie/dist/fetch/photos.js', fn: 'addPhotos', args: 'process.env.CALORIE_PHOTOS_DIR, { srcPaths: ["<照片路径>"], tag: "<标签>", note: "<备注>" }' },
-  body_photo_add_batch: { module: '@feather_wch/skill-calorie/dist/fetch/photos.js', fn: 'addPhotos', args: 'process.env.CALORIE_PHOTOS_DIR, { srcPaths: ["<照片1>", "<照片2>"], tag: "<标签>" }' },
+  body_photo_add_single: { module: 'skill-calorie/dist/fetch/photos.js', fn: 'addPhotos', args: 'process.env.CALORIE_PHOTOS_DIR, { srcPaths: ["<照片路径>"], tag: "<标签>" }' },
+  body_photo_add_note: { module: 'skill-calorie/dist/fetch/photos.js', fn: 'addPhotos', args: 'process.env.CALORIE_PHOTOS_DIR, { srcPaths: ["<照片路径>"], tag: "<标签>", note: "<备注>" }' },
+  body_photo_add_batch: { module: 'skill-calorie/dist/fetch/photos.js', fn: 'addPhotos', args: 'process.env.CALORIE_PHOTOS_DIR, { srcPaths: ["<照片1>", "<照片2>"], tag: "<标签>" }' },
   body_photo_list: { module: PHOTO_HELP_MODULE, fn: 'buildGalleryData', args: '{ tag: "<标签>", days: 90 }' },
   body_photo_compare: { module: PHOTO_HELP_MODULE, fn: 'buildCompareData', args: '<ID1>, <ID2>' },
   body_photo_gif: { module: PHOTO_HELP_MODULE, fn: 'buildGifTask', args: '{ tag: "<标签>", days: 90 }' },
-  body_photo_delete: { module: '@feather_wch/skill-calorie/dist/fetch/photos.js', fn: 'deletePhoto', args: 'process.env.CALORIE_PHOTOS_DIR, <ID>' },
+  body_photo_delete: { module: 'skill-calorie/dist/fetch/photos.js', fn: 'deletePhoto', args: 'process.env.CALORIE_PHOTOS_DIR, <ID>' },
   body_photo_tag_set: { module: PHOTO_HELP_MODULE, fn: 'buildTagReceipt', args: '<ID>, <改前标签数组>, <改后标签数组>, "改照片标签"' },
   body_photo_tag_add: { module: PHOTO_HELP_MODULE, fn: 'buildTagReceipt', args: '<ID>, <改前标签数组>, <改后标签数组>, "加照片标签"' },
   body_photo_tag_remove: { module: PHOTO_HELP_MODULE, fn: 'buildTagReceipt', args: '<ID>, <改前标签数组>, <改后标签数组>, "删照片标签"' },

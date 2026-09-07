@@ -11,7 +11,7 @@ import { accessSync, constants } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const SKILL_PACKAGE = '@feather_wch/skill-bill' as const;
+export const SKILL_PACKAGE = 'skill-bill' as const;
 export const SKILL_CLI = 'packages/skill-bill/dist/cli/cmd_read.js' as const;
 export const HOST_CALL_METHOD = 'ilife.bill.read' as const;
 export const MANAGER_PACKAGE = 'dsh-life-pack' as const;

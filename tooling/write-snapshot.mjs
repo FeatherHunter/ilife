@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const pkgPath = join(root, 'packages/hunter-skills/package.json');
-const snapPath = join(root, 'packages/hunter-skills/skill.snapshot.json');
+const pkgPath = join(root, 'packages/ilife-skills/package.json');
+const snapPath = join(root, 'packages/ilife-skills/skill.snapshot.json');
 const check = process.argv.includes('--check');
 
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));

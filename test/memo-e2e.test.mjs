@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, chmodSync, statSync
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildHelpLookup, routeWakeword } from '../packages/skill-memo/dist/index.js';
+import { buildHelpLookup, routeWakeword } from '../packages/skill-memo-ilife/dist/index.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'tooling/skilllink.mjs');

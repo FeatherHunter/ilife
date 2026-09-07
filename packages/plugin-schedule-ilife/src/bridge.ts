@@ -11,7 +11,7 @@ import { accessSync, constants } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const SKILL_PACKAGE = '@feather_wch/skill-schedule' as const;
+export const SKILL_PACKAGE = 'skill-schedule' as const;
 export const SKILL_CLI = 'packages/skill-schedule/dist/cli/cmd_read.js' as const;
 export const HOST_CALL_METHOD = 'ilife.schedule.read' as const;
 export const MANAGER_PACKAGE = 'dsh-life-pack' as const;

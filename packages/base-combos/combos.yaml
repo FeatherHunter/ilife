@@ -392,52 +392,52 @@ combos:
     skill: memo
     shape: list
     title: 搜笔记
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.detail
     skill: memo
     shape: detail
     title: 看详情
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.create
     skill: memo
     shape: receipt
     title: 记一条
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.update
     skill: memo
     shape: receipt
     title: 更新笔记
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.remove
     skill: memo
     shape: receipt
     title: 删除笔记
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.remind
     skill: memo
     shape: list
     title: 查提醒
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.wish
     skill: memo
     shape: list
     title: 心愿排期
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.sync
     skill: memo
     shape: receipt
     title: 飞书同步
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.batch
     skill: memo
     shape: receipt
     title: 批量改分类
-    cmd: skill-memo
+    cmd: skill-memo-ilife
   - key: memo.stats
     skill: memo
     shape: stat
     title: 聚合统计
-    cmd: skill-memo
+    cmd: skill-memo-ilife
 channels:
   - key: calorie.today
     shape: list

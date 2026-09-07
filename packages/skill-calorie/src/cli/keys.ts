@@ -8,7 +8,7 @@
  * 仅 type-only 消费 link-core（零运行时依赖，沿 T8 前例）；envelope 手工装配，字段对齐 link-core 0.1.0。
  * 缺失阻断不返空：未知键抛，调用方 exit 3。
  */
-import type { EnvelopeShape } from '@feather_wch/base-link-core';
+import type { EnvelopeShape } from 'base-link-core';
 import { CalorieRenderError } from '../render/errors.js';
 
 export const ENVELOPE_VERSION = '0.1.0' as const;

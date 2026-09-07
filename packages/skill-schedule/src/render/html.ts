@@ -1,5 +1,5 @@
 // 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
-import type { Envelope } from '@feather_wch/base-link-core';
+import type { Envelope } from 'base-link-core';
 import { ScheduleRenderError } from './errors.js';
 
 export const SCHEDULE_HTML_MAX_BYTES = 256 * 1024;

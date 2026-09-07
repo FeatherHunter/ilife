@@ -2,7 +2,7 @@
 
 老家只读对照 `D:\2Study\StudyNotes\SKILLS\备忘录`：py 实测 42（盘点 41，差 1 为 .scratch/.trash 杂项，不迁）、SKILL.md 73KB/1174 行、tests/ 约 35、templates/ 16 html、.sql×1、feishu 两文件（script/feishu_sync.py、scripts/feishu_auth_helper.py）。
 
-## 三层去向（包 packages/skill-memo，M2 起建，布局对标 skill-calorie）
+## 三层去向（包 packages/skill-memo-ilife，M2 起建，布局对标 skill-calorie）
 
 | 层 | TS 去向 | 老家对照 | 归属 |
 |---|---|---|---|

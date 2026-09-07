@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseRegistryKey, ENVELOPE_SHAPES, createEnvelope, createRegistry } from '../packages/base-link-core/dist/index.js';
-import { MEMO_KEY_SHAPES } from '../packages/skill-memo/dist/render/index.js';
+import { MEMO_KEY_SHAPES } from '../packages/skill-memo-ilife/dist/render/index.js';
 import { VIEW_KEYS, viewShapeFor } from '../packages/skill-calorie/dist/render/index.js';
 import { PRESENT_KEYS } from '../packages/base-combos/dist/index.js';
 import { combosKeys, renderPresent } from '../packages/base-combos/scripts/gen-present.mjs';
@@ -130,8 +130,8 @@ describe('P8 combos 真相源与 HELP 注入', () => {
     const runtime = [
       join(root, 'tooling/skilllink.mjs'),
       ...readdirSync(join(root, 'packages/base-combos/dist')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/base-combos/dist', f)),
-      join(root, 'packages/skill-memo/dist/cli/cmd_read.js'),
-      ...readdirSync(join(root, 'packages/skill-memo/dist/fetch')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/skill-memo/dist/fetch', f)),
+      join(root, 'packages/skill-memo-ilife/dist/cli/cmd_read.js'),
+      ...readdirSync(join(root, 'packages/skill-memo-ilife/dist/fetch')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/skill-memo-ilife/dist/fetch', f)),
     ];
     for (const f of runtime) assert.ok(!readFileSync(f, 'utf8').includes('HELP-AUTO'), '运行时含 HELP 计算：' + f);
   });
