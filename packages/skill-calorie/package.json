@@ -16,7 +16,7 @@
     "dist"
   ],
   "dependencies": {
-    "base-render": "workspace:^0.1.0"
+    "base-paint": "workspace:^0.1.0"
   },
   "devDependencies": {
     "base-link-core": "workspace:^0.1.0"

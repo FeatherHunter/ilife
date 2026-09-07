@@ -17,7 +17,7 @@ assert(!JSON.stringify(render).includes('base-combos'), 'render 不依赖 combos
 const combos = pkg('base-combos');
 assert(combos.dependencies?.['base-link-core'] !== undefined, 'combos 强依赖 link-core');
 const present = readFileSync(join(root, 'packages/base-combos/src/present.ts'), 'utf8');
-assert(!present.includes('base-render') && !/from\s+['"].*render/.test(present), 'present 只许字符串级引用，禁 import render');
+assert(!present.includes('base-paint') && !/from\s+['"].*(?:render|paint)/.test(present), 'present 只许字符串级引用，禁 import render');
 const tsFiles = readdirSync(join(root, 'packages/base-link-core/src'));
 const coreSrc = tsFiles.map((f) => readFileSync(join(root, 'packages/base-link-core/src', f), 'utf8')).join('\n');
 assert(!/from\s+['"](?:@[A-Za-z_]+\/|base-|skill-|plugin-|ilife-skills|dsh-)/.test(coreSrc), 'link-core 源码不引用任何 workspace 包');
