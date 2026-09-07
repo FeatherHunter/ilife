@@ -7,12 +7,12 @@
 
 | 目录 | npm 包 | 槽位 / order | 技能（只读消费 dist/CLI） |
 |---|---|---|---|
-| packages/plugin-memo-ilife | dsh-memo-ilife | ilife:memo / 70 | @feather_wch/skill-memo → packages/skill-memo/dist/cli/cmd_read.js |
-| packages/plugin-calorie | dsh-calorie | ilife:calorie / 75 | @feather_wch/skill-calorie → packages/skill-calorie/dist/cli/cmd_read.js |
-| packages/plugin-schedule-ilife | dsh-schedule-ilife | ilife:schedule / 80 | @feather_wch/skill-schedule → packages/skill-schedule/dist/cli/cmd_read.js |
-| packages/plugin-home-ilife | dsh-home-ilife | ilife:home / 85 | @feather_wch/skill-home → packages/skill-home/dist/cli/cmd_read.js |
-| packages/plugin-chef | dsh-chef | ilife:chef / 90 | @feather_wch/skill-chef（#18 未到，缺席阻断，见 deferred） |
-| packages/plugin-bill-ilife | dsh-bill-ilife | ilife:cookie / 95 | @feather_wch/skill-bill → packages/skill-bill/dist/cli/cmd_read.js |
+| packages/plugin-memo-ilife | dsh-memo-ilife | ilife:memo / 70 | skill-memo-ilife → packages/skill-memo-ilife/dist/cli/cmd_read.js |
+| packages/plugin-calorie | dsh-calorie | ilife:calorie / 75 | skill-calorie → packages/skill-calorie/dist/cli/cmd_read.js |
+| packages/plugin-schedule-ilife | dsh-schedule-ilife | ilife:schedule / 80 | skill-schedule → packages/skill-schedule/dist/cli/cmd_read.js |
+| packages/plugin-home-ilife | dsh-home-ilife | ilife:home / 85 | skill-home → packages/skill-home/dist/cli/cmd_read.js |
+| packages/plugin-chef | dsh-chef | ilife:chef / 90 | skill-chef（#18 未到，缺席阻断，见 deferred） |
+| packages/plugin-bill-ilife | dsh-bill-ilife | ilife:cookie / 95 | skill-bill → packages/skill-bill/dist/cli/cmd_read.js |
 | packages/plugin-manager | dsh-life-pack | 无自有槽位（6 tab 只导航） | 不依赖单品、不 import 单品 |
 
 依赖方向：6 单品 `dependencies: { "dsh-life-pack": "workspace:*" }`（硬依赖，非 peer）；

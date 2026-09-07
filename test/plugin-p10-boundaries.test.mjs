@@ -41,8 +41,8 @@ describe('P10 依赖方向', () => {
   it('单品不 import 技能实现（只读消费 dist/CLI，纯 CLI 单轨）', () => {
     for (const d of SINGLES) {
       const t = srcText(d);
-      assert.ok(!/from\s+['"]@feather_wch\/skill-/.test(t), d + ' 禁 import 技能实现');
-      assert.ok(!/from\s+['"]@feather_wch\/base-/.test(t), d + ' 脚手架期不直连 base 包（零耦合）');
+      assert.ok(!/from\s+['"]skill-/.test(t), d + ' 禁 import 技能实现');
+      assert.ok(!/from\s+['"]base-/.test(t), d + ' 脚手架期不直连 base 包（零耦合）');
       assert.ok(t.includes('host.call'), d + ' 面板链路须经 host.call');
       assert.ok(t.includes('spawn'), d + ' 取数须经 spawn');
       assert.ok(t.includes('cmd_read'), d + ' 出口须为 cmd_read');
@@ -86,7 +86,7 @@ describe('P10 设置页与导航归属', () => {
     const t = srcText('plugin-manager');
     assert.ok(t.includes('openTab'), '总管须含 openTab 导航');
     assert.ok(!/renderPage|renderReco/.test(t), '总管禁直调内容渲染（内容单品自注册）');
-    assert.ok(!/from\s+['"]@feather_wch\/skill-/.test(t), '总管禁 import 技能实现');
+    assert.ok(!/from\s+['"]skill-/.test(t), '总管禁 import 技能实现');
   });
   it('推荐安装：缺席 tab 带补装命令与提示', async () => {
     const nav = await import('../packages/plugin-manager/dist/nav.js');
@@ -119,7 +119,7 @@ describe('P10 红线', () => {
     assert.ok(!yaml.includes('dsh-'), 'combos.yaml 只许技能真相，不进插件名');
   });
   it('技能包不动（无对插件的反向依赖）', () => {
-    for (const s of ['skill-calorie', 'skill-memo', 'skill-schedule', 'skill-home', 'skill-bill']) {
+    for (const s of ['skill-calorie', 'skill-memo-ilife', 'skill-schedule', 'skill-home', 'skill-bill']) {
       const blob = JSON.stringify(pkg(s));
       assert.ok(!blob.includes('dsh-calorie') && !blob.includes('dsh-life-pack'), s + ' 不许反向依赖插件');
     }

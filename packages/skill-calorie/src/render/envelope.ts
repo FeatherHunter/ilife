@@ -4,7 +4,7 @@
  * T9 目标分析盘：goal_config / goal_recommend / goal_weight / goal_progress / goal_status / combined / deficit / diet_review / health / ranking / library / search（一律 stat）。
  * T10 照片视图 key 挂 calorie.photo_*（gallery/compare/viewer/gif/help/receipt 六键，就近形状）。
  */
-import type { EnvelopeShape } from '@feather_wch/base-link-core';
+import type { EnvelopeShape } from 'base-link-core';
 import { calorieKey } from '../fetch/shapes.js';
 import { CalorieRenderError } from './errors.js';
 

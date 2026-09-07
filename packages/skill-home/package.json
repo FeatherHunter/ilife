@@ -1,5 +1,5 @@
 {
-  "name": "@feather_wch/skill-home",
+  "name": "skill-home",
   "version": "0.1.0",
   "description": "居家管家SKILL一期：取数+口径+渲染+出口（21 联动 key+cmd_read+SKILL+HELP+parity），依 link-core",
   "type": "module",
@@ -16,7 +16,7 @@
     "home-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "@feather_wch/base-link-core": "workspace:^0.1.0"
+    "base-link-core": "workspace:^0.1.0"
   },
   "engines": {
     "node": ">=22.13"

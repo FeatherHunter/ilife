@@ -2,7 +2,7 @@
 
 老家只读对照 `D:\2Study\StudyNotes\SKILLS\居家管家`：py 核心 96（总量 392 含 .scratch/.notes 调试杂项，不迁）约 21.6k 行，SKILL.md 801 行，tests/ 约 71（pre-commit 断言），templates/ 60+ html（含 8 域子目录），scenarios 73（9 域：items 29/receipt 18/outfit 5/space 4/stats 4/express 4/setup 4/link 3/family 2），有 DB（home.db：items/item_locations/item_tags/categories/accounts + D1 域表 purchase_records/warranties/service_events/certificates/family_members/borrow_records/shopping_items/stock_thresholds/item_events/inventory_records/location_nodes），无 lark-cli 同步口径（联动为跨技能 prompt 复制，combos 登记走后续票），联动 21 处（本表）。
 
-## 三层去向（包 packages/skill-home，新建零冲突面，布局对标 skill-memo/schedule）
+## 三层去向（包 packages/skill-home，新建零冲突面，布局对标 skill-memo-ilife/schedule）
 
 | 层 | TS 去向 | 老家对照 | 归属 |
 |---|---|---|---|

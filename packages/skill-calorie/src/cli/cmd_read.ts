@@ -53,7 +53,7 @@ import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 import type { CalorieComboKey } from './keys.js';
 import { dispatchWrite } from './write.js';
-import type { EnvelopeShape } from '@feather_wch/base-link-core';
+import type { EnvelopeShape } from 'base-link-core';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 

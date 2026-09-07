@@ -1,6 +1,6 @@
 // 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
 // 看密码 HTML 脱敏：ticket.write kind=account op=show 的 message 含明文时，HTML 快照仅占位（JSON 真相不受影响）。
-import type { Envelope } from '@feather_wch/base-link-core';
+import type { Envelope } from 'base-link-core';
 import { HomeRenderError } from './errors.js';
 
 export const HOME_HTML_MAX_BYTES = 256 * 1024;

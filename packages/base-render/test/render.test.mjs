@@ -8,7 +8,7 @@ import {
   RENDER_CONTRACT_VERSION, RENDER_ENVELOPE_VERSION, RenderError, escapeHtml, renderPage, renderReco,
   mountInjector, openPage,
 } from '../dist/index.js';
-import { ENVELOPE_VERSION, createEnvelope } from '@feather_wch/base-link-core';
+import { ENVELOPE_VERSION, createEnvelope } from 'base-link-core';
 
 const page = (skill, order) => ({ skill, slotId: 'ilife:' + skill, order, title: skill, kind: 'page' });
 

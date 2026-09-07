@@ -1,5 +1,5 @@
 // 渲染层·envelope（M4）：10 联动 key×shape 映射（M1 拆分表）；key 字符串 P8 落表时冻结，此处只做形状分配与全字段校验。
-import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from '@feather_wch/base-link-core';
+import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { MemoRenderError } from './errors.js';
 
 export const MEMO_KEY_SHAPES: Record<string, EnvelopeShape> = {

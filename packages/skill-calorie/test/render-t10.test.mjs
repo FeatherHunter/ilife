@@ -180,7 +180,7 @@ test('HELP：现找直达可执行命令（Q71）', async () => {
   assert.ok(all.every((h) => h.legacyCli.startsWith('python scripts/render_')));
   // 可执行性实证：exec 指向的模块确有该导出（包名前缀映射为相对路径同文件）
   for (const h of all) {
-    const rel = h.module.replace('@feather_wch/skill-calorie/dist/', '../dist/');
+    const rel = h.module.replace('skill-calorie/dist/', '../dist/');
     const mod = await import(rel);
     assert.equal(typeof mod[h.fn], 'function', h.key + ' 缺导出 ' + h.fn);
   }

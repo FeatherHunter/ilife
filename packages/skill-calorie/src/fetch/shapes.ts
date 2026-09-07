@@ -4,7 +4,7 @@
  * version/skill 由 T11 cmd_read 统一装配，此处只定 shape+key+data。
  * key 命名空间形如 calorie.<域>_<动作>，registry 对不上即 fail（T11 校验）。
  */
-import type { EnvelopeDataByShape, EnvelopeShape } from '@feather_wch/base-link-core';
+import type { EnvelopeDataByShape, EnvelopeShape } from 'base-link-core';
 
 export const CALORIE_SKILL = 'calorie' as const;
 

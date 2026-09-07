@@ -11,7 +11,7 @@
  * renderPhotoHelpHtml（HELP 速查）/ renderErrorHtml（失败收据）。缺失由数据层抛，本层不返空。
  * 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64。
  */
-import { cx, escapeHtml, token } from '@feather_wch/base-render';
+import { cx, escapeHtml, token } from 'base-render';
 import type { HomeData } from './home.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { ExerciseView } from './exercise.js';

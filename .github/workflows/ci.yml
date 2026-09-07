@@ -47,7 +47,7 @@ jobs:
           fetch-depth: 0
       - name: 快照文件只许由构建改（手改即 fail）
         run: |
-          if git diff --name-only origin/master...HEAD -- packages/hunter-skills/skill.snapshot.json | grep -q .; then
+          if git diff --name-only origin/master...HEAD -- packages/ilife-skills/skill.snapshot.json | grep -q .; then
             node tooling/write-snapshot.mjs --check
           else
             echo "snapshot untouched, skip"

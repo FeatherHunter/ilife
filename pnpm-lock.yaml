@@ -20,7 +20,7 @@ importers:
 
   packages/base-combos:
     dependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 
@@ -28,11 +28,11 @@ importers:
 
   packages/base-render:
     devDependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 
-  packages/hunter-skills: {}
+  packages/ilife-skills: {}
 
   packages/plugin-bill-ilife:
     dependencies:
@@ -74,41 +74,41 @@ importers:
 
   packages/skill-bill:
     dependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 
   packages/skill-calorie:
     dependencies:
-      '@feather_wch/base-render':
+      base-render:
         specifier: workspace:^0.1.0
         version: link:../base-render
     devDependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 
   packages/skill-chef:
     dependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 
   packages/skill-home:
     dependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 
-  packages/skill-memo:
+  packages/skill-memo-ilife:
     dependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 
   packages/skill-schedule:
     dependencies:
-      '@feather_wch/base-link-core':
+      base-link-core:
         specifier: workspace:^0.1.0
         version: link:../base-link-core
 

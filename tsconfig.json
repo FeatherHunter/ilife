@@ -9,7 +9,7 @@
     { "path": "./packages/base-render" },
     { "path": "./packages/base-combos" },
     { "path": "./packages/skill-calorie" },
-    { "path": "./packages/skill-memo" },
+    { "path": "./packages/skill-memo-ilife" },
     { "path": "./packages/skill-schedule" },
     { "path": "./packages/skill-home" },
     { "path": "./packages/skill-bill" },

@@ -1,5 +1,5 @@
 {
-  "name": "@feather_wch/base-link-core",
+  "name": "base-link-core",
   "version": "0.1.0",
   "description": "联动沉底包：envelope+registry+runner+校验，零依赖",
   "type": "module",

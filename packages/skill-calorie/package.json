@@ -1,5 +1,5 @@
 {
-  "name": "@feather_wch/skill-calorie",
+  "name": "skill-calorie",
   "version": "0.1.0",
   "description": "卡路里SKILL一期：DB schema与迁移收敛（T1 #20），零依赖",
   "type": "module",
@@ -13,10 +13,10 @@
     "./cli": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "@feather_wch/base-render": "workspace:^0.1.0"
+    "base-render": "workspace:^0.1.0"
   },
   "devDependencies": {
-    "@feather_wch/base-link-core": "workspace:^0.1.0"
+    "base-link-core": "workspace:^0.1.0"
   },
   "bin": {
     "skill-calorie-fetch": "./dist/fetch/cli.js",

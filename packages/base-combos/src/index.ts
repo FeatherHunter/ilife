@@ -1,4 +1,4 @@
-import { createEnvelope, createRegistry, type Envelope } from '@feather_wch/base-link-core';
+import { createEnvelope, createRegistry, type Envelope } from 'base-link-core';
 import { PRESENT_KEYS } from './present.js';
 
 export { PRESENT_KEYS };

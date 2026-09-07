@@ -1,5 +1,5 @@
 // 渲染层·envelope：16 联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
-import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from '@feather_wch/base-link-core';
+import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { BillRenderError } from './errors.js';
 
 export const BILL_KEY_SHAPES: Record<string, EnvelopeShape> = {

@@ -1,7 +1,7 @@
 /** dsh-memo-ilife 取数桥（P10 脚手架：纯 CLI 单轨）。
  *
  * 面板与跨技能只经 host.call 触发本桥，本桥只经 spawn 调技能包唯一出口
- * packages/skill-memo/dist/cli/cmd_read.js（argv+JSON+exit，stdout 纯 envelope JSON 一行）。
+ * packages/skill-memo-ilife/dist/cli/cmd_read.js（argv+JSON+exit，stdout 纯 envelope JSON 一行）。
  * 本文件不 import 任何技能实现（只读消费其 dist/CLI）；缺失阻断不返空：
  * CLI 缺席/非 0/非 JSON/回执 key 不符一律抛错，绝不返回空数组冒充正常。
  * 技能包不动（只读）；combos.yaml 不动。
@@ -11,8 +11,8 @@ import { accessSync, constants } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const SKILL_PACKAGE = '@feather_wch/skill-memo' as const;
-export const SKILL_CLI = 'packages/skill-memo/dist/cli/cmd_read.js' as const;
+export const SKILL_PACKAGE = 'skill-memo-ilife' as const;
+export const SKILL_CLI = 'packages/skill-memo-ilife/dist/cli/cmd_read.js' as const;
 export const HOST_CALL_METHOD = 'ilife.memo.read' as const;
 export const MANAGER_PACKAGE = 'dsh-life-pack' as const;
 
