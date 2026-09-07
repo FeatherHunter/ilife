@@ -25,7 +25,8 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "workspace:*"
+    "dsh-life-pack": "^0.1.0",
+    "skill-memo-ilife": "^0.1.0"
   },
   "dsh": {
     "bundle": {
