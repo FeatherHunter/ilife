@@ -11,15 +11,15 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = (dir) => JSON.parse(readFileSync(join(root, 'packages', dir, 'package.json'), 'utf8'));
 const srcFiles = (dir) => readdirSync(join(root, 'packages', dir, 'src')).filter((f) => f.endsWith('.ts'));
 const srcText = (dir) => srcFiles(dir).map((f) => readFileSync(join(root, 'packages', dir, 'src', f), 'utf8')).join('\n');
-const SINGLES = ['plugin-calorie', 'plugin-ilife-memo', 'plugin-ilife-schedule', 'plugin-ilife-home', 'plugin-chef', 'plugin-ilife-bill'];
-const SINGLE_NPMS = ['dsh-calorie', 'dsh-ilife-memo', 'dsh-ilife-schedule', 'dsh-ilife-home', 'dsh-chef', 'dsh-ilife-bill'];
+const SINGLES = ['plugin-calorie', 'plugin-memo-ilife', 'plugin-schedule-ilife', 'plugin-home-ilife', 'plugin-chef', 'plugin-bill-ilife'];
+const SINGLE_NPMS = ['dsh-calorie', 'dsh-memo-ilife', 'dsh-schedule-ilife', 'dsh-home-ilife', 'dsh-chef', 'dsh-bill-ilife'];
 const EXPECT = [
-  ['plugin-ilife-memo', 'ilife:memo', 70],
+  ['plugin-memo-ilife', 'ilife:memo', 70],
   ['plugin-calorie', 'ilife:calorie', 75],
-  ['plugin-ilife-schedule', 'ilife:schedule', 80],
-  ['plugin-ilife-home', 'ilife:home', 85],
+  ['plugin-schedule-ilife', 'ilife:schedule', 80],
+  ['plugin-home-ilife', 'ilife:home', 85],
   ['plugin-chef', 'ilife:chef', 90],
-  ['plugin-ilife-bill', 'ilife:cookie', 95],
+  ['plugin-bill-ilife', 'ilife:cookie', 95],
 ];
 
 describe('P10 依赖方向', () => {

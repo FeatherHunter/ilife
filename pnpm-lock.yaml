@@ -34,6 +34,12 @@ importers:
 
   packages/hunter-skills: {}
 
+  packages/plugin-bill-ilife:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
@@ -46,31 +52,25 @@ importers:
         specifier: workspace:*
         version: link:../plugin-manager
 
-  packages/plugin-ilife-bill:
-    dependencies:
-      dsh-life-pack:
-        specifier: workspace:*
-        version: link:../plugin-manager
-
-  packages/plugin-ilife-home:
-    dependencies:
-      dsh-life-pack:
-        specifier: workspace:*
-        version: link:../plugin-manager
-
-  packages/plugin-ilife-memo:
-    dependencies:
-      dsh-life-pack:
-        specifier: workspace:*
-        version: link:../plugin-manager
-
-  packages/plugin-ilife-schedule:
+  packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
         specifier: workspace:*
         version: link:../plugin-manager
 
   packages/plugin-manager: {}
+
+  packages/plugin-memo-ilife:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
+
+  packages/plugin-schedule-ilife:
+    dependencies:
+      dsh-life-pack:
+        specifier: workspace:*
+        version: link:../plugin-manager
 
   packages/skill-bill:
     dependencies:
