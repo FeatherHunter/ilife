@@ -37,8 +37,8 @@ describe('P10 安装验收', () => {
     }
   });
   it('单品 dependencies 硬依赖总管（开发兜底声明仍在）', () => {
-    // #48 样板线：plugin-calorie 已转正式版号 ^0.1.0＋skill 同版本 ^ 声明；#50 首对复制 plugin-chef 同改。
-    const FORMAL48 = new Set(['plugin-calorie', 'plugin-chef']);
+    // #48 样板线：plugin-calorie 已转正式版号 ^0.1.0＋skill 同版本 ^ 声明；#50 首对复制 plugin-chef、home 对 plugin-home-ilife 同改。
+    const FORMAL48 = new Set(['plugin-calorie', 'plugin-chef', 'plugin-home-ilife']);
     for (const [dir, single] of SINGLES) {
       const j = pkg(dir);
       assert.equal(j.dependencies?.['dsh-life-pack'], FORMAL48.has(dir) ? '^0.1.0' : 'workspace:*', single + ' 必须 dependencies 硬依赖总管');
