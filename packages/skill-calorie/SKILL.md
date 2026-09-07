@@ -1,3 +1,8 @@
+---
+name: skill-calorie
+description: "卡路里一期饮食体重运动身体目标照片分析复盘，唯一出口 calorie-cmd-read（argv加JSON加exit）"
+---
+
 # 卡路里（calorie）SKILL
 
 饮食/体重/运动/身体/目标/照片/分析/复盘一期全量：13 表（终态 11 张持久表）+ 10 场景 436 唤醒词 + 取数/口径/渲染全 TS。唯一出口 `calorie-cmd-read <calorie.key>`，argv+JSON(stdout)+exit，非 0 走 stderr。
@@ -133,3 +138,14 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 - SKILLS_DB_PATH（必设，无默认值）+ CALORIE_PHOTOS_DIR（照片存在位校验用，缺则记 null）；真实 DB 禁迁，测试 tmp 隔离；老家只读对照。
 - 出 scope（一期外）：面板（二期单 MAP）、定时任务、本技能外联动（router+作息/备忘/训记仅只读对照，不落本包）。
+
+## 公共安装器运行时（skills-cli 装完必读，#47）
+
+- 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；“不走 npm”的只是 skill 发现这一步，运行时走 npm（`skill-calorie@0.1.0` 已发布）。
+- 取运行时二选一：`npm install -g skill-calorie@0.1.0`（一劳永逸），或免安装 `npx -p skill-calorie@0.1.0 calorie-cmd-read …`（每次现拉）。若 npm 报 EUNSUPPORTEDPROTOCOL（workspace:），说明已发布包待重发（发版流修，见 docs/public-installer-47.md「已发布包阻塞」），先用本仓构建产物验证链路。
+- HELP 现找→cmd_read→envelope→HTML 验证（sh 先 `export SKILLS_DB_PATH="$(mktemp -d)"`；Windows PowerShell 先 `$env:SKILLS_DB_PATH = "$env:TEMP\sk-test"`；node>=22.13；完整口径见 docs/public-installer-47.md）：
+  ```sh
+  calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
+  ```
+- 成功 stdout 只有一行 envelope JSON，进度与错误走 stderr；`--html <路径>` 显式落盘 utf8。
+- 版本钉死登记：本节 `@0.1.0` 为硬编码，随 #44 发版流重发 `0.1.1` 同步改（三处联动：本文件/docs/测试，登记见 docs/public-installer-47.md「版本钉死登记」）。
