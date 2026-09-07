@@ -1,4 +1,4 @@
-/** base-render/contract：渲染契约（版本化输入 Envelope→输出 HTML）。
+/** base-paint/contract：渲染契约（版本化输入 Envelope→输出 HTML）。
  *
  * 缺失阻断不返空：data 缺席/版本不对即抛 RenderError，绝不输出静默空页。
  * link-core 只做 typeof 级消费（import type），运行时零依赖红线不断。

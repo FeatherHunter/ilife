@@ -1,4 +1,4 @@
-/** base-render/style：样式唯一真相源。
+/** base-paint/style：样式唯一真相源。
  *
  * 红线：样式只抖 render——改样式只改本文件，link-core/combos/单品包
  * 禁止自带样式常量。类名前缀统一 STYLE_PREFIX，token 表冻结。

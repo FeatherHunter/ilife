@@ -1,6 +1,6 @@
 ---
 "base-link-core": minor
-"base-render": minor
+"base-paint": minor
 "base-combos": minor
 "ilife-skills": minor
 ---

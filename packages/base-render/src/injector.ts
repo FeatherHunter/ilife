@@ -1,4 +1,4 @@
-/** base-render/injector：装配唯一 owner（归一 render）。
+/** base-paint/injector：装配唯一 owner（归一 render）。
  *
  * better-sidebar 槽位注册只许住这里：link-core/combos 禁止自装配
  *（tooling/check-boundaries.mjs 可执行断言）。host 无关设计——

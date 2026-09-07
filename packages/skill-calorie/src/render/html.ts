@@ -1,7 +1,7 @@
-/** T8 #27 + T9 #28 + T10 #29 · HTML 串模板（包内目录，不跨包；风格只引 base-render tokens）。
+/** T8 #27 + T9 #28 + T10 #29 · HTML 串模板（包内目录，不跨包；风格只引 base-paint tokens）。
  *
- * 红线：样式常量一律走 token()/cx()（base-render 唯一真相源），本包不自带颜色/圆角/字号常量；
- * 转义走 base-render escapeHtml；数值序列化前已在数据层 round2，模板不再做数学
+ * 红线：样式常量一律走 token()/cx()（base-paint 唯一真相源），本包不自带颜色/圆角/字号常量；
+ * 转义走 base-paint escapeHtml；数值序列化前已在数据层 round2，模板不再做数学
  * （bar 宽度的 0..100 钳位为纯展示裁剪；照片层数值在本层不做数学）。
  * T8 四模板：renderHomeHtml（总览）/ renderDietHtml（饮食：总览+餐别分布）/
  * renderExerciseHtml（运动）/ renderGoalHtml（目标分析）。
@@ -11,7 +11,7 @@
  * renderPhotoHelpHtml（HELP 速查）/ renderErrorHtml（失败收据）。缺失由数据层抛，本层不返空。
  * 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64。
  */
-import { cx, escapeHtml, token } from 'base-render';
+import { cx, escapeHtml, token } from 'base-paint';
 import type { HomeData } from './home.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { ExerciseView } from './exercise.js';

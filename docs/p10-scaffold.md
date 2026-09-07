@@ -26,7 +26,7 @@
 
 - `registerTab`/`openTab` 写死槽位原生组件（`TAB_COMPONENT = { kind: 'native', … }`），无动态按需加载，无外嵌页。
 - id 命名空间 `ilife:*`，order：70 memo / 75 calorie / 80 schedule / 85 home / 90 chef / 95 cookie。
-- 缺席纯条件渲染（`tabsForPresence`/`pageOrReco` 语义），无轮询（插件 src 无任何定时器；有界重试归一由 base-render 拥有）。
+- 缺席纯条件渲染（`tabsForPresence`/`pageOrReco` 语义），无轮询（插件 src 无任何定时器；有界重试归一由 base-paint 拥有）。
 - 关闭语义跟官方：菜单消失、`openTab` 拒新开、已打开保留。设置页槽位无需单独分配：一次 `registerTab`，
   边栏 + 号菜单与 DSH 设置页 side 卡片各多一项（注册表驱动）。
 
@@ -66,7 +66,7 @@ profile 解析不到它（负向断言覆盖）。亦不许单卸总管（`dsh p
 
 - 真相唯一 B、纯 CLI 单轨、engines>=22.13（7 包逐一）、缺失阻断不返空。
 - 技能包不动（只读消费其 dist/CLI，无反向依赖）；combos.yaml 不动（无 dsh 名渗入）。
-- 装配归一仍属 base-render；插件槽位描述子形状与之对齐，脚手架期零耦合（不直连 base 包）。
+- 装配归一仍属 base-paint；插件槽位描述子形状与之对齐，脚手架期零耦合（不直连 base 包）。
 - DSH 官方插件包模式照抄：`dsh.bundle.patch` + `cordis.patch.yml` insert 行 + `exports` 含 `./client` 与
   `./package.json` + `files` 含 dist 与 patch + cordis 插件 `name/inject/apply`。
 

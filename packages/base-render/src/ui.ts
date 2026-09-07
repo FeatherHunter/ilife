@@ -1,4 +1,4 @@
-/** base-render/ui：单品页自注册描述层（纯数据，无 DOM、无 host、无运行时依赖）。
+/** base-paint/ui：单品页自注册描述层（纯数据，无 DOM、无 host、无运行时依赖）。
  *
  * 归一原则：单品包调用 registerPage 自注册；总管只消费注册表，
  * 禁止 import 单品页组件（P7 #8 验收）。缺席走 pageOrReco 纯条件渲染，不轮询。

@@ -80,7 +80,7 @@ importers:
 
   packages/skill-calorie:
     dependencies:
-      base-render:
+      base-paint:
         specifier: workspace:^0.1.0
         version: link:../base-render
     devDependencies:
