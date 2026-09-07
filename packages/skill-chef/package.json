@@ -10,7 +10,8 @@
     "./fetch": "./dist/fetch/index.js",
     "./policy": "./dist/policy/index.js",
     "./render": "./dist/render/index.js",
-    "./cli": "./dist/cli/cmd_read.js"
+    "./cli": "./dist/cli/cmd_read.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -20,7 +21,7 @@
     "chef-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "base-link-core": "workspace:^0.1.0"
+    "base-link-core": "^0.1.0"
   },
   "engines": {
     "node": ">=22.13"

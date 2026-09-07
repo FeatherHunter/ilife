@@ -15,6 +15,6 @@ export { SKILL, SLOT_ID, SLOT_ORDER, SLOT_TITLE, PLUGIN, MANAGER_PLUGIN, slotDes
 export type { SlotDescriptor, TabsPort } from './slot.js';
 export { SETTINGS_OWNER, SETTINGS_SLOT, SETTING_ROWS } from './settings.js';
 export type { SettingRow } from './settings.js';
-export { SKILL_PACKAGE, SKILL_CLI, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli } from './bridge.js';
+export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli } from './bridge.js';
 export { CLIENT_COMPONENT, CLIENT_METHOD, mountSingleClient, openSingleClient, requestReadViaHost } from './client.js';
 export type { HostCaller } from './client.js';
