@@ -159,9 +159,13 @@ export function buildPlanReceipt(message: string): { ok: boolean; message: strin
 }
 
 // HELP 现找：list（短语→key/cli/一句话，构建期快照进 SKILL.md，运行时按需过滤）。
+// #43 S2：total=0 时显式 out-of-scope 指引（定时/早睡以外置为准），hint 随 envelope 透出（list 形允许多余字段）。
 export interface HelpItem { phrase: string; key: string; shape: string; cli: string; desc: string; }
 
-export function buildHelpItems(all: HelpItem[], q?: string): { items: HelpItem[]; total: number } {
+export const HELP_EMPTY_HINT = '无命中：定时任务/早睡提醒等出 scope，以外置为准（HELP q 为空看全表，或换唤醒词如“查作息/查日程”）';
+
+export function buildHelpItems(all: HelpItem[], q?: string): { items: HelpItem[]; total: number; hint?: string } {
   const items = !q || !q.trim() ? all : all.filter((h) => q.includes(h.phrase) || h.phrase.includes(q.trim()));
+  if (!items.length) return { items, total: 0, hint: HELP_EMPTY_HINT };
   return { items, total: items.length };
 }

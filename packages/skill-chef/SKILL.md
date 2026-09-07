@@ -18,6 +18,7 @@ chef-cmd-read chef.help.lookup --params '{"q":"搜菜"}'
 - 食材 11 类：肉类/海鲜/蛋类/蔬菜/葱姜蒜/香草/调料/豆制品/主食/干货/其他（validateCategory，未知类阻断）。
 - 评分 0-5（含 0/5 端点，允许小数，超界/非数字阻断；history.record 必带 name，rating 可选）。
 - 空查询与空结果阻断不返空：search 空 q 抛 exit 2；查无对条/区间无记录抛 exit 4，不返空数组冒充正常。
+- 筛选维度一期限制（#43 F2）：cuisine/season/method/flavor/tag/meal/cookware/maxTime/filter 只读（recipe.search 透传过滤），recipe.write 一期只写主表（name/difficulty/status/servings/total_time_minutes/description/photo/source 系列 + ingredients/steps 内嵌），维度表落库走二期（测试经直连落维度，见 test/cli.test.mjs）。
 - 真实数据禁迁，测试 tmp 隔离（SKILLS_DB_PATH 指向 mkdtemp，见 test/fetch.test.mjs）。
 - 跨技能只复制 prompt 不直调：shopping/recipe 跨技能按钮仅复制 `chef-cmd-read ...` 文本，AI 调目标技能，不直写他库。
 
@@ -35,6 +36,8 @@ chef-cmd-read chef.help.lookup --params '{"q":"搜菜"}'
 | 查看步骤 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
 | 查看营养 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
 | 查看背景 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
+| 看菜谱 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
+| 看菜 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
 | 查看全部 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"kind":"all"}'` |
 | 搜索食谱 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |
 | 搜菜 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |

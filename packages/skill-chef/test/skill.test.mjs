@@ -18,9 +18,9 @@ describe('私家大厨 SKILL 与 HELP', () => {
     assert.match(skillText, /11 类/);
     assert.ok(skillText.includes(START) && skillText.includes(END));
   });
-  it('速查：35 短语全可路由且 key 对得上', () => {
+  it('速查：37 短语全可路由且 key 对得上（#43 F1 看菜/看菜谱）', () => {
     const hits = buildHelpLookup();
-    assert.equal(hits.length, 35);
+    assert.equal(hits.length, 37);
     assert.equal(hits.length, WAKE_TABLE.length);
     for (const h of hits) {
       assert.ok(Object.keys(CHEF_KEY_SHAPES).includes(h.key));

@@ -1,4 +1,5 @@
-// 渲染层·HTML（M4）：memo_render.py 对应。转义仅 &<>"'（代理对原样保留）；超体积大声失败；体积上限待 P9 定稿（当前提案值）。
+// 渲染层·HTML（M4）：memo_render.py 对应。转义仅 &<>"'（代理对原样保留）；超体积/未知形状一律 throw 不返空页（#34 题面追认口径）。
+// 体积上限 P9 已冻（256k，见 docs/memo-migration-split.md），超限 throw 由调用方走 fallback 显式降级，不静默截断。
 import type { Envelope } from '@feather_wch/base-link-core';
 import { MemoRenderError } from './errors.js';
 

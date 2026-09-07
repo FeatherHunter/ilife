@@ -17,8 +17,11 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '作息管家帮助', key: 'schedule.help.lookup' },
   { phrase: '作息管家能做什么', key: 'schedule.help.lookup' },
   { phrase: '作息管家使用说明', key: 'schedule.help.lookup' },
-  // record.today（#4/#6/#8/#11/#22：单日查 + 状态 + 初始化即开库验证）。
+  // record.today（#4/#6/#8/#11/#22：单日查 + 状态 + 初始化即开库验证；#43 S1 别名今日作息/今日总结/今天作息）。
   { phrase: '今天总结', key: 'schedule.record.today' },
+  { phrase: '今日作息', key: 'schedule.record.today' },
+  { phrase: '今日总结', key: 'schedule.record.today' },
+  { phrase: '今天作息', key: 'schedule.record.today' },
   { phrase: '查作息时间轴', key: 'schedule.record.today' },
   { phrase: '查作息状态', key: 'schedule.record.today' },
   { phrase: '初始化数据库', key: 'schedule.record.today' },
@@ -78,7 +81,7 @@ export function routeWakeword(text: string, ctx: Record<string, unknown> = {}): 
   if (!hit) {
     throw new SchedulePolicyError(
       'POLICY_NO_MATCH',
-      '无命中唤醒词：' + text + '（废弃词如同步作息/作息计划表不再路由）',
+      '无命中唤醒词：' + text + '（废弃词如同步作息/作息计划表不再路由；定时任务/早睡提醒等出 scope，以外置为准，HELP q 为空看全表）',
     );
   }
   for (const s of hit.needs || []) {

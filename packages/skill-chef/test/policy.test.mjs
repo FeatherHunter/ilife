@@ -15,7 +15,7 @@ describe('私家大厨口径 policy', () => {
     assert.throws(() => validateHeat('文火'), /火候/);
   });
   it('食材 11 类 + 评分 0-5', () => {
-    assert.equal(WAKE_TABLE.length, 35);
+    assert.equal(WAKE_TABLE.length, 37);
     assert.equal(validateCategory('海鲜'), '海鲜');
     assert.equal(validateCategory('水产'), '海鲜');
     assert.throws(() => validateCategory('外星菜'), /分类/);
@@ -25,14 +25,18 @@ describe('私家大厨口径 policy', () => {
     assert.throws(() => validateRating(6), /评分/);
     assert.throws(() => validateRating('好'), /评分/);
   });
-  it('唤醒词 35 全量 + 最长匹配 + 缺槽位', () => {
-    assert.equal(WAKE_TABLE.length, 35);
+  it('唤醒词 37 全量 + 最长匹配 + 缺槽位（#43 F1 看菜/看菜谱→view）', () => {
+    assert.equal(WAKE_TABLE.length, 37);
     assert.equal(routeWakeword('查看食材宫保虾球', { name: '宫保虾球' }).key, 'chef.recipe.view');
     assert.equal(routeWakeword('查食材虾', { q: '虾' }).key, 'chef.recipe.search');
     assert.equal(routeWakeword('帮我搜菜找宫保虾球', { q: '宫保虾球' }).key, 'chef.recipe.search');
     assert.throws(() => routeWakeword('同步菜谱到云端'), /无命中/);
     assert.throws(() => routeWakeword('加菜'), /缺槽位 name/);
     assert.equal(routeWakeword('加菜', { name: '宫保虾球' }).params.name, '宫保虾球');
+    assert.equal(routeWakeword('帮我看菜宫保虾球', { name: '宫保虾球' }).key, 'chef.recipe.view');
+    assert.equal(routeWakeword('帮我看菜谱宫保虾球', { name: '宫保虾球' }).key, 'chef.recipe.view');
+    assert.throws(() => routeWakeword('看菜'), /缺槽位 name/);
+    assert.throws(() => routeWakeword('看菜谱'), /缺槽位 name/);
   });
   it('错误皆为 ChefPolicyError', () => {
     try { routeWakeword('', {}); assert.fail('应抛'); }

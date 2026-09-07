@@ -1,5 +1,5 @@
 // 口径层·唤醒词路由：自然语言 → 8 联动 key；最长匹配；无命中/缺槽位 throw。
-// HELP 速查唯一上游；改这里，HELP 构建期跟进。35 条 = help4 + view5 + search8 + write4 + cooking4 + shopping4 + record3 + query3。
+// HELP 速查唯一上游；改这里，HELP 构建期跟进。37 条 = help4 + view7 + search8 (#43 F1 看菜/看菜谱→view) + write4 + cooking4 + shopping4 + record3 + query3。
 import { ChefPolicyError } from '../fetch/errors.js';
 
 export type ChefKey =
@@ -19,6 +19,8 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '查看步骤', key: 'chef.recipe.view', needs: ['name'] },
   { phrase: '查看营养', key: 'chef.recipe.view', needs: ['name'] },
   { phrase: '查看背景', key: 'chef.recipe.view', needs: ['name'] },
+  { phrase: '看菜谱', key: 'chef.recipe.view', needs: ['name'] },
+  { phrase: '看菜', key: 'chef.recipe.view', needs: ['name'] },
   { phrase: '查看全部', key: 'chef.recipe.search', preset: { kind: 'all' } },
   { phrase: '搜索食谱', key: 'chef.recipe.search', needs: ['q'] },
   { phrase: '搜菜', key: 'chef.recipe.search', needs: ['q'] },

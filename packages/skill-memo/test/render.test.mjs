@@ -27,10 +27,11 @@ describe('memo 渲染层', () => {
       assert.match(renderEnvelopeHtml(env), /<section/);
     }
   });
-  it('坏 key/错形状 throw', () => {
+  it('坏 key/错形状 throw（#34 题面追认：未知形状/超体积一律 throw）', () => {
     assert.throws(() => memoShapeFor('memo.nope'), (e) => e instanceof MemoRenderError);
     assert.throws(() => buildMemoEnvelope('today', { items: [] }), (e) => e.code === 'MEMO_UNKNOWN_KEY');
     assert.throws(() => buildMemoEnvelope('memo.search', { noItems: 1 }), (e) => e.code === 'MEMO_SHAPE_MISMATCH');
+    assert.throws(() => renderEnvelopeHtml({ version: '0.1.0', skill: 'memo', shape: 'nope', key: 'memo.search', data: {} }), (e) => e.code === 'MEMO_SHAPE_MISMATCH');
   });
   it('转义（代理对原样保留）与超体积门', () => {
     assert.equal(escapeHtml('<a>&"'), '&lt;a&gt;&amp;&quot;');

@@ -30,6 +30,9 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 | 作息管家能做什么 | schedule.help.lookup | list | `schedule-cmd-read schedule.help.lookup` |
 | 作息管家使用说明 | schedule.help.lookup | list | `schedule-cmd-read schedule.help.lookup` |
 | 今天总结 | schedule.record.today | list | `schedule-cmd-read schedule.record.today` |
+| 今日作息 | schedule.record.today | list | `schedule-cmd-read schedule.record.today` |
+| 今日总结 | schedule.record.today | list | `schedule-cmd-read schedule.record.today` |
+| 今天作息 | schedule.record.today | list | `schedule-cmd-read schedule.record.today` |
 | 查作息时间轴 | schedule.record.today | list | `schedule-cmd-read schedule.record.today` |
 | 查作息状态 | schedule.record.today | list | `schedule-cmd-read schedule.record.today` |
 | 初始化数据库 | schedule.record.today | list | `schedule-cmd-read schedule.record.today` |
@@ -77,4 +80,4 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 ## 环境与出 scope
 
 - SKILLS_DB_PATH（必设，无默认值）+ lark-cli（同步须四门全绿），见 docs/env.md。
-- 出 scope：定时任务（老家 Cron 已删，外部定时以外置为准）、面板（二期单 MAP）、本技能外联动（combos 登记走后续票）；语录取数（daily_recorder.db）以外置为准；真实数据禁迁，测试 tmp 隔离。
+- 出 scope：定时任务/早睡提醒（老家 Cron 已删，外部定时以外置为准）、面板（二期单 MAP）、本技能外联动（combos 登记走后续票）；语录取数（daily_recorder.db）以外置为准；真实数据禁迁，测试 tmp 隔离。
