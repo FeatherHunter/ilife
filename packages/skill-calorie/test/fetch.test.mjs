@@ -108,9 +108,15 @@ test('体重：记录/BMI/历史/删除/批量/标签', () => {
   db.close();
 });
 
-test('体重：缺身高抛错（老家返None→TS抛）', () => {
+test('体重：缺身高仍记 BMI null（C5 #43 去强前置）', () => {
   const db = openDb(join(mkdtempSync(join(tmpdir(), 't22-')), 'noprofile.db'));
-  assert.throws(() => logWeight(db, 70), /身高/);
+  const r = logWeight(db, 70, '', '2026-08-10', '07:00:00');
+  assert.equal(r.bmi, null);
+  const row = db.prepare('SELECT height_cm, bmi FROM weight_log WHERE id = ?').get(r.id);
+  assert.equal(row.height_cm, null);
+  assert.equal(row.bmi, null);
+  const u = updateWeight(db, r.id, 71);
+  assert.equal(u.bmi, null);
   db.close();
 });
 

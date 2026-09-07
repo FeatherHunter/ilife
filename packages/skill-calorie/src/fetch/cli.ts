@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /** T6 #25 · 取数/导入 CLI：argv + 人读文本/JSON + exit 码（老家同行为）。
  * 用法：node dist/fetch/cli.js <import|validate|dedupe|export|history|audit|catalog-verify> ...
+ * 运维定位（C1 #43）：本 CLI 仅运维（导入/校验/去重/导出/历史/审计/目录核验），不承载业务读写；
+ * 业务唯一出口为 calorie-cmd-read（dist/cli/cmd_read.js），业务读写一律走该出口。
  */
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';

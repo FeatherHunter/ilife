@@ -18,7 +18,7 @@ import { listMeals } from '../fetch/diet.js';
 import { getCalorieHistory } from '../fetch/history.js';
 import { FetchError } from '../fetch/errors.js';
 import { buildHomeData } from '../render/home.js';
-import { buildDietOverview, buildMealDistribution } from '../render/diet.js';
+import { buildDietOverview, buildMealDistribution, zeroMealDistribution } from '../render/diet.js';
 import { buildExerciseView } from '../render/exercise.js';
 import { buildGoalView } from '../render/goal.js';
 import { buildGoalConfig, buildGoalRecommend, buildGoalWeight, buildGoalProgress, buildGoalStatus } from '../render/goalPlate.js';
@@ -48,7 +48,7 @@ import {
 } from '../render/html.js';
 import { assertStatMetrics } from '../render/envelope.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { TRIGGERS } from '../triggers/index.js';
+import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 import type { CalorieComboKey } from './keys.js';
@@ -235,7 +235,14 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const date = optStr(params, 'date') ?? end;
       assertISO(date as string, 'date');
       const o = buildDietOverview(db, start, end);
-      const dist = buildMealDistribution(db, date as string);
+      // C4 #43 · 尾日空回零（窗内有数不掀整窗 missing；窗全空由上行 overview 抛 missing-data）。
+      let dist;
+      try {
+        dist = buildMealDistribution(db, date as string);
+      } catch (e) {
+        if (e instanceof CalorieRenderError && e.code === 'missing-data') dist = zeroMealDistribution(date as string);
+        else throw e;
+      }
       const metrics = nums({
         totalCalories: o.totalCalories, avgCalories: o.avgCalories, calorieGoal: o.calorieGoal,
         loggedDays: o.loggedDays, days: o.days, distTotal: dist.totalCalories,
@@ -435,10 +442,15 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     }
     case 'calorie.help.lookup': {
       const q = needStr(params, 'q');
-      const hits = TRIGGERS.filter((t) => t.wake_word.includes(q) || t.category.includes(q) || t.desc.includes(q) || ('key' in t && typeof (t as { key?: unknown }).key === 'string' && String((t as { key?: unknown }).key).includes(q)))
-        .slice(0, 50)
-        .map((t) => ({ wake_word: t.wake_word, category: t.category, key: 'key' in t ? String((t as { key?: unknown }).key ?? '') : '', cli: t.main_prompt.cli, desc: t.desc }));
-      if (hits.length === 0) throw new CalorieRenderError('missing-data', '唤醒词无命中：' + q);
+      // C2/C3 #43 · 唯一搜索入口 searchHelp：别名感知 + 可执行排前 + 高频词合成首条（去legacy首命中）。
+      const found = searchHelp(TRIGGERS, q);
+      if (found.length === 0) throw new CalorieRenderError('missing-data', '唤醒词无命中：' + q);
+      const sceneToCategory: Record<string, string> = { '01': '主页', '02': '饮食', '03': '体重', '04': '运动', '05': '健身计划', '06': '目标管理', '07': '基础信息', '08': '身体细节', '09': '身材照片', '10': '分析' };
+      const hits = found.map((h) => {
+        const src = TRIGGERS.find((t) => t.wake_word === h.wake_word && ('key' in t ? String((t as { key?: unknown }).key ?? '') : '') === String(h.key ?? ''));
+        const category = src ? src.category : (sceneToCategory[h.scene] ?? h.scene);
+        return { wake_word: h.wake_word, category, key: String(h.key ?? ''), cli: h.cli, desc: h.desc };
+      });
       const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:help"><h1>唤醒词 HELP 速查 · ' + q.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '（' + hits.length + ' 条）</h1>' +
         hits.map((h) => '<div class="ilife-item"><b>' + String(h.wake_word).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</b> <span>' + String(h.key).replace(/&/g, '&amp;') + '</span><div>' + String(h.desc).replace(/&/g, '&amp;') + '</div><pre>' + String(h.cli).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre></div>').join('') + '</section>';
       return { data: { items: hits, total: hits.length }, html };
