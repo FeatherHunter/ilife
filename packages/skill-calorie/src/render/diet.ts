@@ -49,6 +49,17 @@ function bucketOf(time: string | null): MealBucket | '其他' {
   return '其他';
 }
 
+/** C4 #43 · 空日零分布（窗内有数但尾日无记录时回零，不掀整窗 missing）。 */
+export function zeroMealDistribution(date: string): MealDistribution {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new CalorieRenderError('bad-input', '日期非法: ' + date);
+  return {
+    date,
+    totalCalories: 0,
+    slices: MEAL_BUCKETS.map((meal) => ({ meal, count: 0, calories: 0, pct: 0 })),
+    detail: [],
+  };
+}
+
 export function buildMealDistribution(db: DatabaseSync, date: string): MealDistribution {
   assertMealWindows();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new CalorieRenderError('bad-input', '日期非法: ' + date);

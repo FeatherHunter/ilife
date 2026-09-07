@@ -12,7 +12,7 @@ import { SCENE_10_ANALYSIS } from './scene-10-analysis.js';
 import { buildHelpLookup, CATEGORY_SCENE } from './help-lookup.js';
 import type { HelpHit, Summary, Trigger } from './types.js';
 
-export { CATEGORY_SCENE, buildHelpLookup, lookupWake } from './help-lookup.js';
+export { CATEGORY_SCENE, buildHelpLookup, lookupWake, WAKE_TABLE, routeWakeword, isExecCli, HELP_EXEC_OVERRIDES, execCliFor, searchHelp } from './help-lookup.js';
 export type { HelpHit, SceneDataContractV1, SceneTrigger, LegacyTrigger, MainPrompt, Summary, Trigger, TriggerVariant, TriggerBase } from './types.js';
 
 /** CATEGORIES 原样照搬 SoT（[emoji, 展示名, key]×13，展示名与触发 category 允许不同） */

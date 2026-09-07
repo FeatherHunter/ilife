@@ -3,7 +3,7 @@ export { CalorieRenderError } from './errors.js';
 export type { CalorieRenderErrorCode } from './errors.js';
 export { buildHomeData } from './home.js';
 export type { HomeData } from './home.js';
-export { MEAL_BUCKETS, buildMealDistribution, buildDietOverview } from './diet.js';
+export { MEAL_BUCKETS, buildMealDistribution, zeroMealDistribution, buildDietOverview } from './diet.js';
 export type { MealBucket, MealSlice, MealDistribution, DietOverview } from './diet.js';
 export { buildExerciseView } from './exercise.js';
 export type { ExerciseView } from './exercise.js';

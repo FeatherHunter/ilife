@@ -129,7 +129,7 @@ test('记喝水累计', () => {
   assert.equal(run('calorie.water.log', { ml: -5 }, { SKILLS_DB_PATH: dir }).status, 2);
 });
 
-test('体重记/改/删/批量 + 无身高阻断', () => {
+test('体重记/改/删/批量 + 缺身高仍记（C5 #43）', () => {
   const dir = mkEnv();
   const l = runWrite(dir, 'calorie.weight.log', { kg: 70.2, date: '2026-09-06', time: '07:00:00' });
   assert.equal(l.data.receipt.recordId, 2);
@@ -148,7 +148,12 @@ test('体重记/改/删/批量 + 无身高阻断', () => {
   assert.equal(run('calorie.weight.update', { note: 'x' }, { SKILLS_DB_PATH: dir }).status, 2);
   assert.equal(run('calorie.weight.remove', {}, { SKILLS_DB_PATH: dir }).status, 2);
   const bare = mkEmpty();
-  assert.equal(run('calorie.weight.log', { kg: 70 }, { SKILLS_DB_PATH: bare }).status, 4);
+  // C5 #43 · 缺身高仍记：exit 0 + BMI 待补身高 + 补档案链（不再 exit 4 阻断）。
+  const noH = run('calorie.weight.log', { kg: 70 }, { SKILLS_DB_PATH: bare });
+  assert.equal(noH.status, 0);
+  const noHEnv = JSON.parse(noH.stdout);
+  assert.match(noHEnv.data.message, /BMI 待补身高/);
+  assert.match(noHEnv.data.message, /calorie\.profile\.set/);
 });
 
 test('运动记/改/删/批量/复制 + 字段白名单', () => {

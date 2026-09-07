@@ -1,6 +1,6 @@
 /** T3 #22 · 体重取数（对照老家 scripts/weight.py）。
  *
- * 身高单一来源 user_profile（老家 2026-07-20 改）；缺身高抛错（老家返 None+打印）。
+ * 身高单一来源 user_profile（老家 2026-07-20 改）；C5 #43 去身高强前置：缺身高仍记，BMI 记 null（延后算），回执给补档案链。
  * 删除为硬删除（老家语义）；失败抛 FetchError。
  */
 import type { DatabaseSync } from 'node:sqlite';
@@ -23,13 +23,12 @@ export interface WeightRow {
   bmi: number | null; note: string | null;
 }
 
-function profileHeightCm(db: DatabaseSync): number {
+function profileHeightCm(db: DatabaseSync): number | null {
   const row = db.prepare('SELECT height_cm FROM user_profile WHERE id = 1').get() as
     | { height_cm: number | null } | undefined;
   const h = row?.height_cm;
-  if (h === undefined || h === null || h <= 0) {
-    throw new FetchError('user_profile 未设身高，无法计算 BMI（先维护档案身高）');
-  }
+  // C5 #43 · 缺身高不抛：回 null，调用方记 BMI null（延后算）。
+  if (h === undefined || h === null || h <= 0) return null;
   return h;
 }
 
@@ -38,7 +37,7 @@ function bmiOf(kg: number, heightCm: number): number {
 }
 
 export interface LogWeightResult {
-  id: number; date: string; time: string; kg: number; bmi: number; note: string; rowsAffected: number;
+  id: number; date: string; time: string; kg: number; bmi: number | null; note: string; rowsAffected: number;
 }
 
 export function logWeight(db: DatabaseSync, weightKg: number, note = '', targetDate?: string, targetTime?: string): LogWeightResult {
@@ -48,7 +47,7 @@ export function logWeight(db: DatabaseSync, weightKg: number, note = '', targetD
   const heightCm = profileHeightCm(db);
   const date = targetDate ?? todayStr();
   const time = targetTime ?? nowStr();
-  const bmi = bmiOf(kg, heightCm);
+  const bmi = heightCm === null ? null : bmiOf(kg, heightCm);
   const info = db.prepare(
     'INSERT INTO weight_log (date, time, weight_kg, height_cm, bmi, note) VALUES (?, ?, ?, ?, ?, ?)',
   ).run(date, time, kg, heightCm, bmi, note);
@@ -57,7 +56,7 @@ export function logWeight(db: DatabaseSync, weightKg: number, note = '', targetD
 
 export interface UpdateWeightResult {
   id: number; date: string; time: string | null;
-  oldWeight: number; newWeight: number; bmi: number; note: string | null; rowsAffected: number;
+  oldWeight: number; newWeight: number; bmi: number | null; note: string | null; rowsAffected: number;
 }
 
 export function updateWeight(db: DatabaseSync, weightId: number, weightKg?: number, note?: string): UpdateWeightResult {
@@ -70,7 +69,7 @@ export function updateWeight(db: DatabaseSync, weightId: number, weightKg?: numb
   if (!row) throw new FetchError(`体重记录 ID ${id} 不存在`);
   const newWeight = weightKg === undefined ? row.weight_kg : Number(weightKg);
   if (!Number.isFinite(newWeight)) throw new FetchError('体重必须是数字');
-  const bmi = bmiOf(newWeight, heightCm);
+  const bmi = heightCm === null ? null : bmiOf(newWeight, heightCm);
   // 老家语义：height_cm 列保留不动，只改 weight_kg/bmi（+note）。
   const sets = ['weight_kg = ?', 'bmi = ?'];
   const vals: SQLInputValue[] = [newWeight, bmi];
@@ -190,7 +189,7 @@ export function updateWeightByDate(db: DatabaseSync, targetDate: string, weightK
   if (weightKg !== undefined) {
     newKg = Number(weightKg);
     if (!Number.isFinite(newKg)) throw new FetchError('体重必须是数字');
-    newBmi = bmiOf(newKg, heightCm);
+    newBmi = heightCm === null ? null : bmiOf(newKg, heightCm);
     db.prepare('UPDATE weight_log SET weight_kg = ?, bmi = ? WHERE date = ?').run(newKg, newBmi, targetDate);
   }
   if (note !== undefined) db.prepare('UPDATE weight_log SET note = ? WHERE date = ?').run(note, targetDate);

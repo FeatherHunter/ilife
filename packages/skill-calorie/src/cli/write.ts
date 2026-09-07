@@ -100,15 +100,19 @@ function esc(s: unknown): string {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function receiptHtml(scene: string, summary: string, op: string, recordId: number | null): string {
+/** C6 #43 · 写收据 HTML 结构化分项：摘要 + 操作元 + items 逐条（id/日期/状态/原因/明细）。 */
+function receiptHtml(scene: string, summary: string, op: string, recordId: number | null, items?: CrudReceipt['items']): string {
+  const list = (items ?? []).length > 0
+    ? '<ul>' + (items ?? []).map((it) => '<li>#' + esc(it.id ?? '') + (it.date ? ' ' + esc(it.date) : '') + ' ' + esc(it.status) + (it.reason ? '（' + esc(it.reason) + '）' : '') + (it.detail ? ' · ' + esc(it.detail) : '') + '</li>').join('') + '</ul>'
+    : '';
   return '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:receipt"><h1>' + esc(scene) + '</h1>' +
-    '<div class="ilife-item"><b>' + esc(summary) + '</b><div>op=' + esc(op) + (recordId === null ? '' : ' · id=' + esc(recordId)) + '</div></div></section>';
+    '<div class="ilife-item"><b>' + esc(summary) + '</b><div>op=' + esc(op) + (recordId === null ? '' : ' · id=' + esc(recordId)) + '</div>' + list + '</div></section>';
 }
 
 function out(receipt: CrudReceipt): WriteOut {
   return {
     data: { ok: true, message: receipt.summary, receipt },
-    html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId),
+    html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items),
   };
 }
 
@@ -365,7 +369,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const date = optStr(params, 'date');
       if (date) assertISO(date, 'date');
       const r = logWeight(db, kg, optStr(params, 'note') ?? '', date, optStr(params, 'time'));
-      return out(R('记体重', 'create', '已记体重 ' + r.kg + ' kg（BMI ' + r.bmi + ' · ' + r.date + ' ' + r.time + '）', '记体重', 'weight_log (写库回执)', {
+      const bmiText = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
+      return out(R('记体重', 'create', '已记体重 ' + r.kg + ' kg（' + bmiText + ' · ' + r.date + ' ' + r.time + '）', '记体重', 'weight_log (写库回执)', {
         recordId: r.id, items: [{ id: r.id, date: r.date, status: '成功', reason: '', detail: r.kg + 'kg' }],
       }));
     }
@@ -378,7 +383,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (id !== undefined) {
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         const r = updateWeight(db, id, kg, note);
-        return out(R('改体重记录', 'update', '已更新体重 #' + id + '：' + r.oldWeight + '→' + r.newWeight + ' kg（BMI ' + r.bmi + '）', '改体重记录', 'weight_log (写库回执)', {
+        const bmiTextU = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
+        return out(R('改体重记录', 'update', '已更新体重 #' + id + '：' + r.oldWeight + '→' + r.newWeight + ' kg（' + bmiTextU + '）', '改体重记录', 'weight_log (写库回执)', {
           recordId: id, items: [{ id, status: '已更新', reason: '' }],
         }));
       }
@@ -543,7 +549,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         distance = null;
       }
       const receipt = buildAddReceipt(added, { tag, note: optStr(params, 'note'), distance, failedCount: srcPaths.length - added.length || undefined });
-      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId) };
+      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
     }
     case 'calorie.photo.remove': {
       const id = needId(params);
@@ -552,7 +558,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (!snap) throw new CalorieRenderError('missing-data', '身材照 #' + id + ' 不存在');
       deletePhoto(db, dir, id);
       const receipt = buildDeleteReceipt(snap);
-      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId) };
+      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
     }
     case 'calorie.photo.tag': {
       const id = needId(params);
@@ -580,7 +586,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       }
       const after = getPhotoRow(db, id)?.tag_list ?? before;
       const receipt = buildTagReceipt(id, before, after, scene);
-      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId) };
+      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
     }
     case 'calorie.product.add': {
       const productName = (optStr(params, 'productName') ?? optStr(params, 'product_name') ?? '');
