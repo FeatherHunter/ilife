@@ -37,8 +37,11 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../plugin-manager
+      skill-bill:
+        specifier: ^0.1.0
+        version: link:../skill-bill
 
   packages/plugin-calorie:
     dependencies:
@@ -81,7 +84,7 @@ importers:
   packages/skill-bill:
     dependencies:
       base-link-core:
-        specifier: workspace:^0.1.0
+        specifier: ^0.1.0
         version: link:../base-link-core
 
   packages/skill-calorie:
