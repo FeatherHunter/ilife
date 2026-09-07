@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "SKILL 整包：latest + skill.snapshot.json 跟包定位",
   "type": "module",
+  "files": [
+    "skill.snapshot.json"
+  ],
   "engines": {
     "node": ">=22.13"
   },

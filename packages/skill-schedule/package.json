@@ -12,6 +12,10 @@
     "./render": "./dist/render/index.js",
     "./cli": "./dist/cli/cmd_read.js"
   },
+  "files": [
+    "dist",
+    "templates/*.html"
+  ],
   "bin": {
     "schedule-cmd-read": "./dist/cli/cmd_read.js"
   },

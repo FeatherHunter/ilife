@@ -12,6 +12,9 @@
     "./render": "./dist/render/index.js",
     "./cli": "./dist/cli/cmd_read.js"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "base-render": "workspace:^0.1.0"
   },
