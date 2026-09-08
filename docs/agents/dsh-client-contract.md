@@ -105,7 +105,12 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
 
 - `exports` 三项：`"."`、`"./client"`、`"./package.json"`；`files` 含 `dist` + `cordis.patch.yml`。
 - `dependencies` 无 `workspace:`（发前 `npm pack --dry-run` 目检 + smoke「无 workspace」断言）。
-- 单技能双包单命令安装；新版本 24h 保护期用 `--config.minimumReleaseAge=0` 绕行（显式版本不受限）。
+- 单技能双包单命令安装（用户侧，2026-09-08 实证定稿，缺一不可）：
+  `dsh plugin --profile <name> add dsh-<x>@<a> dsh-life-pack@<b> --config.minimumReleaseAge=0 --registry=https://registry.npmjs.org`
+  ——显式版本（绕 24h 新版本保护，裸包名会被回退旧版）；`minimumReleaseAge=0`（松 DSH 装机前安检，
+  它连锁文件里的旧条目都拦）；官方源（镜像源 npmmirror 同步滞后，新版本 `NO_MATCHING_VERSION`）。
+  護欄：只装双包（余包坏的同批会炸整批）；装完先验落盘版本（`node_modules/<包>/package.json`）
+  再重启 DSH。
 - 版本对应：`dsh-<x>@a` 依赖 `skill-<x>@^b` 且注册表 `skill-<x>@b` 的 deps 干净（`npm view` 复核）。
 
 ## 9 失败表
@@ -114,6 +119,9 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
   `loaded without registering`；修=工厂包 + 纯度门；回路=`test/client-bundle-48.test.mjs`。
 - **0.1.0 workspace 泄露**：因=`workspace:` 随包发布；果=用户侧 `WORKSPACE_PKG_NOT_FOUND`；
   修=本地 `^` 声明 + `linkWorkspacePackages`（见 `pnpm-workspace.yaml` 注释）+ 发前审计。
+- **24h 门 + 安检 + 镜像滞后三连**：因=新包 24h 内、DSH 安检拦锁文件新条目、npmmirror 未同步；
+  果=旧版回退 / `MINIMUM_RELEASE_AGE_VIOLATION` / `NO_MATCHING_VERSION`；
+  修=§8 安装命令三件套（显式版本 + 松政策 + 官方源）。
 
 ## 10 新技能 5 常量（模板 `template/plugin-single/`）
 
