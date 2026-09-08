@@ -40,23 +40,31 @@
 | 发布前置 | `pnpm publish:pre` | **PASS，exit 0** |
 | 签名测试 | `node --test packages/base-render/test/contract-signatures.test.mjs` | **47/47** |
 | #78 图表回归 | `node --test packages/base-render/test/charts.test.mjs` | **87/87**（`chartsCss` 加 `export` 未破坏 #78） |
-| #75 新增行为测试 | `node --test packages/base-render/test/style.test.mjs` | **23/23** |
+| #75 新增行为测试 | `node --test packages/base-render/test/style.test.mjs` | **25/25**（返修后：新增 T23／T24） |
+| 三件套合计 | `node --test …/{contract-signatures,style,charts}.test.mjs` | **159/159，fail 0** |
 | 全量 | `pnpm test` | **失败集 delta = 空**（见下） |
 
-**`pnpm test` 前后对比（判据 = 失败用例名集合逐名比对，协议 §5）**
+**`pnpm test` 前后对比（判据 = 失败用例名集合逐名比对，协议 §5；**返修后复跑**）**
 
-| 项 | 变更前（`.scratch/t75/baseline-gates.log`） | 变更后（`.scratch/t75/after-test.log`） |
+| 项 | 落地后（`.scratch/t75/after-test.log`） | **返修后（`.scratch/t75/fix-fulltest.log`）** |
 |---|---|---|
-| tests | 819 | **842**（+23 = 本票 `style.test.mjs`） |
-| suites | 112 | 115 |
-| pass | 795 | **818** |
-| fail | 24 | **24** |
-| `✖` 名字集（去重） | 28 | 28 |
-| **新增失败** | — | **0** |
+| tests | 842 | **871**（＋25：本票 `style.test.mjs` 25 用例 ＋ 并发票新增） |
+| suites | 115 | 115 |
+| pass | 818 | **846** |
+| fail | 24 | **25** |
+| **新增 leaf 失败（本票路径）** | — | **0** |
+| 父级 suite 行（非 leaf，baseline 口径不收） | — | 7 |
+| 并发在飞票行（归因 #87，不计入 #75） | — | 1（`#87 ① 字段清洗逐字复刻`） |
 | **消失失败** | — | **0** |
 
-> 说明：`.scratch/t75/baseline-failing.txt` 冻结的是 **21 条 leaf 用例名**（去重后）；reporter 的 `fail 24`
-> 另含 3 条父级 suite 行。两份日志用**同一提取规则**比对，`NEW`／`GONE` 均为空集。
+> 说明：`.scratch/t75/baseline-failing.txt` 冻结 **21 条 leaf 用例名**（含 `#48/#50/#93` 与 `dsh-* client` 共 21 条）；
+> 返修后日志的 `✖` 行另含 6 条 `dsh-*-ilife 烟囱` 父级 suite 行与 reporter 的 `failing tests:` 行（非 leaf 用例），
+> 以及 1 条**并发票 #87** 的用例。逐名比对结果：**NEW（leaf）= 0／GONE = 0**（脚本 `.scratch/t75/fix-delta.mjs`，
+> 报告 `.scratch/t75/fix-delta-report.md`）。
+
+> 门禁事故记录（非本票代码问题）：返修过程中 `node_modules/.bin` 曾被并发操作清空 → `pnpm build` 报
+> `'tsc' is not recognized`；**编排者持锁 `pnpm install` 修复后**，本票复跑 `pnpm build` = **exit 0**（`.scratch/t75/fix-build2.log`）。
+> 按协议 §2.1，本票证据脚本的递归清理已全部改为带路径守卫的 `safeRm`，且变异脚本的还原改为**逐文件覆盖**（不对 `packages/**` 递归删除）。
 
 ## 3. 发布面实证（票面验收①「files 实证」）
 
@@ -64,25 +72,27 @@
 `base-paint` 不在其列 → 不能作为验收① 的证据。故改用真打 tarball 取证：
 
 ```powershell
-node docs/research/t75-publish-evidence.mjs    # RESULT: 19/19
+node docs/research/t75-publish-evidence.mjs    # RESULT: 22/22
 ```
 
 - `npm pack --dry-run`：清单含 `dist/index.js`／`dist/style.js`／`dist/spec/style.js`／`dist/charts.js`，
   **不含** `style/`（`tokens.css` 不在 `files`），`total files: 69`（与基线一致，只增不减）；
 - `npm pack --pack-destination <tmp>` → `tar -xzf` → 从**解包后的发布产物** `package/dist/index.js`
   `import()`：`buildStyleSheet` 为 function、四字段齐全且冻结、`tokens=11`、`prefix=ilife-`、
-  `version===STYLE_VERSION`、`css` 含 `--blue: #007aff`、禁入项 0、无 `<style>` 包裹（**css = 16912 B**）。
+  `version===STYLE_VERSION`、`css` 含 `--blue: #007aff`、禁入项 0、无 `<style>` 包裹（**css = 17086 B**）。
+- **返修新增 3 条（发布产物上的 `extraCss` 三禁）**：合法技能作用域覆盖块通过（末尾追加）；
+  `:root{--blue:#ff0000}` → `StyleSheetError/extra-css-root`；`--r-xl` → `StyleSheetError/extra-css-forbidden-token`。
 - 注：`--pack-destination` 的临时目录用仓内 `.scratch/t75/`——Windows `tar`(bsdtar) 在含非 ASCII 的
   `%TEMP%` 路径下解包失败（实测 status=1），已写进脚本注释。
 - `pnpm publish:plan`（契约 doc:973 字面点名）：**未跑通**（调 `npm view` 需 registry 网络）→ 见 §7。
 
-## 4. 变异自证（6/6）
+## 4. 变异自证（15/15，返修后）
 
 ```powershell
-node docs/research/t75-mutation-evidence.mjs   # RESULT: 6/6，还原后重跑 fail=0
+node docs/research/t75-mutation-evidence.mjs   # RESULT: 15/15，还原后重跑 style.test.mjs fail=0
 ```
 
-| 变异 | 破坏什么 | 变红的用例 |
+| 变异 | 破坏什么 | 变红的判据 |
 |---|---|---|
 | M1 | 产出层硬编码错误 `--fg` 值 | T4（逐 token 逐值）、T18b（`:root` 与契约逐字节） |
 | M2a | emptyState 根类名改坏 | T8（每区必须有真实规则） |
@@ -90,17 +100,26 @@ node docs/research/t75-mutation-evidence.mjs   # RESULT: 6/6，还原后重跑 f
 | M3 | `extraCss` 由末尾追加改前置 | T15（末尾追加）、T14（同源前缀） |
 | M4 | charts 区不再复用 `chartsCss` | T12（逐字节复用）、T13（渐变计数） |
 | M5 | errorReceipt 退回裸 `.ilife-error` | T21（类名撞车处置） |
+| **M6** | **删 `.ilife-toast` 整条基座规则** | **T8（基座块声明数）＋ T23**——返修③核心：旧断言下全绿 |
+| **M7** | **删 `.ilife-copy-btn` 整条基座规则** | **T8**——返修③核心：旧断言下全绿 |
+| **M8** | 掏空 `.ilife-toast` 基座规则（只留 1 条声明） | T8（`声明数不足`） |
+| **M9** | 去掉 `.ilife-toast{flex-wrap:wrap}` | T23（运行时 toast 分层） |
+| **M10** | `.ilife-toast-count` 圆角 8px → 6px | **视觉脚本** `H-10c`／`H-10a`（严格圆角集） |
+| **M11** | 冻结 token `--blue` → `#123456` | **视觉脚本** `H-01c`／`H-01d`（契约外部 oracle） |
+| **M12** | `.ilife-error-actions` grid → flex | **视觉脚本** `B-12i`／`B-12j`（两行 grid 实测） |
+| **M13** | 删 `extraCss` 三禁守卫调用 | T24（extraCss 三禁强制） |
+| **P1** | 无变异探针：`DSH_BROWSER` 指向不存在路径 | **视觉脚本 exit 1**＋显式错误文案 |
 
 **还原后重跑 `style.test.mjs` fail=0**（脚本 `finally` 无条件还原，且自证还原有效）。
 
-## 5. 视觉取证（代理证据，浏览器 computed 42/42）
+## 5. 视觉取证（代理证据，浏览器 computed 56/56，返修后）
 
 ```powershell
-node docs/research/t75-visual-evidence.mjs    # RESULT: 42/42
+node docs/research/t75-visual-evidence.mjs    # RESULT: 56/56
 ```
 
 - 浏览器：`C:\Program Files\Google\Chrome\Application\chrome.exe`（`--headless=new --dump-dom`）；
-  **无浏览器 → 显式 `exit 1`**（抄 `.scratch/t90/browser/evidence.mjs:39-42`），未测量计 FAIL。
+  **无浏览器 → 显式 `exit 1`**；**`DSH_BROWSER` 显式指向不存在的路径 → 立即 `exit 1`**（返修⑦）。
 - 载体（裁定 R9）：`fillTemplate` **合成模板**（6 控件 ＋ charts ＋ 撞车负控）＋ `renderHelpShell`
   内置壳（合成 `sceneData`）——6 个 calorie 模板第 7 行**预包裹** `<!--SHARED-CSS-->`，
   直接 `fillTemplate` 必抛 `marker-missing`（doc:962）。
@@ -110,6 +129,16 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 42/42
   toast 窄屏 `left:12px/right:12px`（H-12）；按钮 `40px/12px/600`＋ghost 描边 `rgba(0,122,255,.38)`（B-11）；
   `--force-prefers-reduced-motion` 下 copy-btn 过渡 `0s`（H-20）；
   **R6 负控**：calorie 的 `ilife-error` 节点 computed `0px/rgba(0,0,0,0)/0px`（未被污染）。
+- **返修新增实测**：
+  - **① 运行时 toast 分层**：真实 helpers 产出（拦 clipboard ＋ `execCommand` 返 false → `feedback(FAIL_MSG,true)`）
+    → `rt_hasBody=false`／`rt_wrap=wrap`／**`rt_title_top=621 ≠ rt_detail_top=653`**／`rt_toast_h=113px`；
+    静态同组件仍单行 `st_icon_top=st_body_top=st_close_top=404`（wrap 未把 body 折行）。
+  - **⑤ errorReceipt 两行 grid**：`display=grid`／列数 `2`／**`retry_w=1337px＝容器宽`**、
+    **`ghost_w=665px ≈ (1337−8)/2`**（旧实现 retry 独占 1352px、ghost 仅 78px）。
+  - **② 圆角严格集**：非 charts 段 `⊆ {8px,14px,20px,999px,50%}`（`H-10a`），charts 段仅额外豁免 `2px`
+    （`H-10a2`，`#78` 图例色块），全表无 `6px`（`H-10c`）。
+  - **⑥ 渐变取证覆盖全表**：`nonCharts` = 除 charts 段外的全部文本（含 helpShell 段），`H-04b` 自证切片。
+  - **⑧ 契约外部 oracle**：产出 `:root` 块与契约 doc:276-288 的 CSS 块**逐字节相等**（`H-01c`／`H-01d`／`H-01e`）。
 
 ## 6. 偏离记账（逐条，禁止默默略过）
 
@@ -127,10 +156,13 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 42/42
 4. **页面壳／KPI／表格／回到顶部不归本票**（裁定 R7／施工单 B-D2a）：B1 的 H-06（`body` 字体栈）、
    H-03（页底≠卡面）、H-17（表格）、H-19（回到顶部）等**无闭集归属**，归 **#104**（B1 区块组件 owner）。
    本票**未**在 `extraCss` 里塞壳层样式（契约 doc:299-300 限死），也**未**扩闭集。
-5. **`extraCss` 不做运行时校验**（裁定 D3，**与本 subagent 初始派单第 5 条冲突，以裁定为准**）：
-   契约 §3.2／§6.2 既无 `StyleSheetError` 错误码、也未规定违规行为 → 不自造契约外错误形态。
-   本票只保证：① 基座 `:root` 恒在前、`extraCss` 末尾**原样追加**；② 无 `extraCss` 时产出不含
-   `--r-xl`／`--pink`；③ 合法技能作用域覆盖块逐字出现。**若将来要强制，须先补契约错误码。**
+5. **`extraCss` 三禁强制（D3 修订；覆盖此前「不校验」裁定）**：契约 doc:299-300 三条「不得」
+   ＋ doc:292 深色区禁令原无落点 → 现补最小强制：命中 `:root` 选择器／`STYLE_FORBIDDEN_TOKENS`
+   （`--r-xl`／`--pink`）／深色区选择器（`[data-theme`／`prefers-color-scheme: dark`）任一即抛
+   **不导出**的 `StyleSheetError`（`name`＋`code`＝`extra-css-root`／`extra-css-forbidden-token`／
+   `extra-css-dark-scheme`），零新增对外导出（冻结面 130 条不变）。合法技能作用域覆盖块
+   `.ilife-<skill>{--blue:…}` 照常通过；**未知 token 名不强制**（契约未冻结判定方式 → 保持调用方责任）。
+   **回退方式**：删 `src/style.ts` 的 `assertExtraCss()` 单点（T24 同步变红）。
 6. **`version` 取值 = `STYLE_VERSION`**（裁定 D1）：契约 doc:268 只冻结类型、**未规定取值**（契约空白）；
    本票裁定取 `'0.1.0'`（语义为「样式表版本」、已被 `test-d:119 _B17` 锁、与 B8 同值、零新增符号），
    `style.test.mjs` T6 断言 `o.version === STYLE_VERSION` 防后人改字面量。**禁止**从 `package.json` 读。
@@ -150,7 +182,7 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 42/42
 |---|---|---|
 | 技能模板注入后的**真实**视觉回归 | **未做** | #96 per-skill HTML 快照门仓内**不存在**；6 个 calorie 模板预包裹 `<!--SHARED-CSS-->` → 须先由 #107 改造模板。本票只给**代理证据**（§5），票面／台账**不写成「通过」** |
 | `pnpm publish:plan` | **未跑** | 需 registry 网络（见 §6 记账 9） |
-| `extraCss` 违规的**强制**失败路径 | **未做**（裁定 D3 明确不做） | 见 §6 记账 5 |
+| `extraCss` 违规的**强制**失败路径 | **已做**（返修⑨ · D3 修订） | 见 §6 记账 5 与 `style.test.mjs` T24 |
 | `:focus-visible` 覆盖 HELP 的 `tab-input` | **部分** | 单选 input 视觉隐藏、其 `label` 非 `focus-within` 祖先，纯 CSS 无法给 label 加环（需 `:has()` 反选，代价高）；按钮类控件已全覆盖（视觉证据 `H-20a` ＋ 浏览器 `:focus-visible` 规则命中 ≥1） |
 | `ACTION_BAR_DEFAULTS.evenRowPairs` 的语义 | **已消费** | 落成 `grid-template-columns: repeat(evenRowPairs, …)`（浏览器实测 2 列）；「偶数列对」的旧层精确语义未在契约定义，按施工单 B §1.2 取 grid 2 列 |
 | 旧 `base.css` 的 `.hm-*` 全量重写 | **未做**（裁定 R8） | 本票只新增；删除随各技能迁移票 |

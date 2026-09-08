@@ -11,12 +11,30 @@
  */
 import { mkdtempSync, mkdirSync, rmSync, readdirSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { join, dirname } from 'node:path';
+import { basename, join, dirname, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PKG = join(ROOT, 'packages', 'base-render');
 const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const SCRATCH = join(ROOT, '.scratch', 't75');
+
+/** 协议 §2.1 第 3 条（全仓事故后新增）：递归删除前必须做路径守卫——
+ *  目标必须以**本票独占临时根** `.scratch/t75/pack-` 开头，且不得落在
+ *  `node_modules`／`packages`／`docs`／`test`／`tooling`／`.git` 之下。 */
+const FORBIDDEN_DIRS = ['node_modules', 'packages', 'docs', 'test', 'tooling', '.git']
+  .map((d) => join(ROOT, d).toLowerCase() + sep);
+function safeRm(dir, ownPrefix) {
+  const abs = resolve(dir);
+  const lower = abs.toLowerCase();
+  if (!lower.startsWith(resolve(SCRATCH).toLowerCase() + sep) || !basename(abs).startsWith(ownPrefix)) {
+    throw new Error('路径守卫失败（不在独占临时根下）：拒绝递归删除 ' + abs);
+  }
+  for (const p of FORBIDDEN_DIRS) {
+    if (lower === p.slice(0, -1) || lower.startsWith(p)) throw new Error('路径守卫失败（敏感目录之下）：' + abs);
+  }
+  rmSync(abs, { recursive: true, force: true });
+}
 const rows = [];
 let bad = 0;
 const add = (name, pass, detail) => { rows.push({ name, pass: pass === true, detail: String(detail) }); if (pass !== true) bad += 1; };
@@ -66,11 +84,26 @@ try {
       add('css 含 --blue 逐字', o.css.includes('--blue: #007aff'), 'hasBlue=' + o.css.includes('--blue: #007aff'));
       add('css 无 Q14 禁入项', !o.css.includes('--r-xl') && !o.css.includes('--pink'), 'forbidden=0');
       add('css 无包裹标签（可直接喂 fillTemplate）', !o.css.includes('<style') && !o.css.includes('</style'), 'bare=true');
+      /* 返修项⑨（D3 修订）：**发布产物**上的 extraCss 三禁强制 —— 合法覆盖块通过、违规抛错。
+       * 口径同 #74／#76：错误**不导出**，按 `name`／`code` 判定。 */
+      const legalExtra = '.ilife-calorie { --blue: #0055ff; }';
+      let legalOk = false;
+      try { legalOk = mod.buildStyleSheet({ extraCss: legalExtra }).css.endsWith(legalExtra); } catch (err) { legalOk = false; }
+      add('发布产物：合法技能作用域覆盖块通过（末尾追加）', legalOk, 'legal=' + legalOk);
+      const guardCode = (extra) => {
+        try { mod.buildStyleSheet({ extraCss: extra }); return 'NO-THROW'; }
+        catch (err) { return String(err && err.name) + '/' + String(err && err.code); }
+      };
+      const rootCode = guardCode(':root{--blue:#ff0000}');
+      add('发布产物：extraCss `:root` 改写抛错（name/code）', rootCode === 'StyleSheetError/extra-css-root', rootCode);
+      const tokenCode = guardCode('.ilife-calorie { --r-xl: 28px; }');
+      add('发布产物：extraCss 禁入 token 抛错（name/code）',
+        tokenCode === 'StyleSheetError/extra-css-forbidden-token', tokenCode);
       published = o;
     }
   }
 } finally {
-  rmSync(tmp, { recursive: true, force: true });
+  safeRm(tmp, 'pack-');
 }
 
 const pass = rows.filter((r) => r.pass).length;

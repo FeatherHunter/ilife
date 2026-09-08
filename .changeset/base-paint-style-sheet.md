@@ -47,7 +47,8 @@ doc:276-288 的 CSS 块；② 不自造类名——每个 CSS 类名都有产出
 `pnpm test` **新增失败 = 0**（判据 = `.scratch/t75/baseline-failing.txt` 的 21 条既有失败逐名比对）。
 
 **偏离记账**：① 契约 doc:295「技能现有私有 CSS 串随 #75 删除」**本票不执行**（4 技能尚未依赖
-base-paint，删除即破坏其 HTML 输出，且 #96 门未建）→ 落点 = #96 门 → #108–#113 真迁移；
+base-paint，删除即破坏其 HTML 输出，且 #96 门未建）→ 落点 = #96 门 → #108–#113 真迁移
+（契约 doc:295 已补**落点注记**，见返修台账 FX-75-10）；
 ② `packages/base-render/style/tokens.css`（49 B）**保留不动**（非契约资产、不在 `files`、
 是 `--ilife-font` 唯一落点，C-21 禁新增 token 名）；③ charts CSS **双份注入**（`buildChartsHelpersJs`
 自注入 `<style id="ilife-charts">` ＋ 本票 `sharedCssText` 含 charts 区）——同源、幂等、无命名空间分裂，
@@ -55,3 +56,28 @@ base-paint，删除即破坏其 HTML 输出，且 #96 门未建）→ 落点 = #
 `fillTemplate` 必抛 `marker-missing`，真实模板取证待 #107）；⑤ 契约 doc:973 称「`pnpm publish:plan`
 的 tarball 含契约资产」——实测该命令只打印发布计划、不做 tarball 内容断言，**措辞待校正**，
 本票以真打 tarball 取证。
+
+---
+
+## 返修（A1 PASS 87／A2 FAIL 77 → 编排者裁定返修；契约 §8.11.1 台账 FX-75-1…FX-75-10）
+
+- **S1 · 运行时 toast 布局回归**：`.ilife-toast{flex-wrap:wrap}` ＋ `.ilife-toast-title-detail{flex:1 1 100%}`
+  （helpers 运行时 DOM 无 `.ilife-toast-body` 包裹）；`.ilife-toast-body` 改 `flex:1 1 0%` 防静态侧折行。
+  浏览器实测：运行时 `rt_title_top=621／rt_detail_top=653／rt_toast_h=113px`，静态仍 `404/404/404` 单行。
+- **圆角越集 ＋ 证据断言被私自放宽**：`.ilife-toast-count` 圆角 `6px → 8px`；视觉脚本恢复**严格集**
+  `{8,14,20,999,50%}`（仅 charts 段豁免 `2px`）→ 变异 M10（改回 6px）使视觉脚本变红。
+- **T8／T10 对「基座规则整条删除」不敏感**：新增 `ruleBlocks()` ＋ `SECTION_BASE_RULE`（基座规则块 ＋
+  声明数下限）；T8／T10 改规则块选择器级断言 → 变异 M6／M7／M8 均红。
+- **statusBadge 逐值偏离**：对齐施工单 B §1.4（`gap:6px`／`padding:6px 14px`／`font-size:13px`／`width:fit-content`）。
+- **errorReceipt 按钮布局不等价**：改 grid 2 列 ＋ `.ilife-copy-btn-wide{grid-column:1/-1}`
+  （实测 `retry_w=1337px＝容器宽`、`ghost_w=665px ≈ (1337−8)/2`）。
+- **H-04 取证漏段**：`nonCharts` 改为「除 charts 段外的全部产出文本」（含 helpShell 段）。
+- **`DSH_BROWSER` 无效值静默回落**：显式设置但不存在 → `exit 1`（变异探针 P1 自证）。
+- **视觉证据无独立锚点**：新增对契约 doc:276-288 `:root` 块的**外部 oracle 逐字断言** → 变异 M11
+  （`--blue → #123456`）使视觉脚本变红。
+- **`extraCss` 无强制（D3 修订）**：命中 `:root`／`STYLE_FORBIDDEN_TOKENS`／深色区任一即抛**不导出**的
+  `StyleSheetError`（`name`＋`code`），零新增对外导出；合法技能作用域块照常通过，未知 token 名不强制。
+
+**返修后数字**：`style.test.mjs` **25 用例全绿**；视觉取证 **56/56**；变异自证 **15/15**（还原后 fail=0）；
+发布面真打 tarball **22/22**（新增发布产物上的 extraCss 三禁断言）；四门 exit 0；冻结面仍 **130 条**
+（implemented 130／pending 0）。
