@@ -1691,8 +1691,13 @@ export const charts: ChartsApi = new Proxy(CHART_DISPATCH, {
 /* ── 图表 CSS 文本（R12：唯一产出者 = 本文件内部常量/函数；#75 复用同一份） ── */
 
 /** 图表样式文本（**唯一一份**）：类名走 `prefix` 命名空间；容器零 padding；
- *  断点数值逐值取 `CHART_BREAKPOINTS`（`mobileMaxPx`／`dotSizeMobilePx`／`lineHeightMobilePx`）。 */
-function chartsCss(prefix: string): string {
+ *  断点数值逐值取 `CHART_BREAKPOINTS`（`mobileMaxPx`／`dotSizeMobilePx`／`lineHeightMobilePx`）。
+ *
+ *  **#75 复用点**：`buildStyleSheet()` 的 `charts` 样式区直接引用本函数产出，
+ *  **不得**在别处重述图表 CSS 文本（#78 结论，违反即 S1）。
+ *  本函数**不从 `src/index.ts` 导出**——冻结面无该条目，导出会打破
+ *  「新增运行时出口恰好等于清单 implemented 的运行时项」出口面锁（同 `ChartError` 口径）。 */
+export function chartsCss(prefix: string): string {
   const p = prefix;
   const mobile = CHART_BREAKPOINTS.mobileMaxPx;
   const dotMobile = CHART_BREAKPOINTS.dotSizeMobilePx;

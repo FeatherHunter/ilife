@@ -216,7 +216,10 @@ type _S05 = Expect<Equal<Mod['STYLE_FORBIDDEN_TOKENS'][number], '--r-xl' | '--pi
 type _S06 = Expect<Equal<StyleSheetInput, { readonly prefix?: string; readonly extraCss?: string }>>;
 type _S07 = Expect<Equal<StyleSheetOutput, { readonly css: string; readonly tokens: readonly CssVarName[]; readonly prefix: string; readonly version: string }>>;
 type _S08 = Expect<Equal<BuildStyleSheet, (input?: StyleSheetInput) => StyleSheetOutput>>;
-type _S09 = Expect<Equal<Absent<'buildStyleSheet'>, true>>;
+/* #75 落地（契约 §3.2 施工面 2 条 pending）：运行时出口**必须存在**（原 `Absent<>` 按契约
+ * 「实现后必须翻转清单」翻转为 `Present<>`），且出口类型与冻结签名逐字相等（签名值零改动）。 */
+type _S09 = Expect<Equal<Present<'buildStyleSheet'>, true>>;
+type _S09b = Expect<Equal<Mod['buildStyleSheet'], (input?: StyleSheetInput) => StyleSheetOutput>>;
 
 /* ── 4. 冻结面 · §3.3 控件层（#76） ───────────────────── */
 

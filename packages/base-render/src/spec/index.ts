@@ -76,8 +76,8 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'STYLE_FORBIDDEN_TOKENS', kind: 'runtime', ticket: '#75', status: 'implemented', section: '3.2', signature: "readonly ['--r-xl', '--pink']" },
   { name: 'StyleSheetInput', kind: 'type', ticket: '#75', status: 'implemented', section: '3.2', signature: '{ prefix?: string; extraCss?: string }' },
   { name: 'StyleSheetOutput', kind: 'type', ticket: '#75', status: 'implemented', section: '3.2', signature: '{ css: string; tokens: readonly CssVarName[]; prefix: string; version: string }' },
-  { name: 'BuildStyleSheet', kind: 'type', ticket: '#75', status: 'pending', section: '3.2', signature: '(input?: StyleSheetInput) => StyleSheetOutput' },
-  { name: 'buildStyleSheet', kind: 'runtime', ticket: '#75', status: 'pending', section: '3.2', signature: '(input?: StyleSheetInput): StyleSheetOutput' },
+  { name: 'BuildStyleSheet', kind: 'type', ticket: '#75', status: 'implemented', section: '3.2', signature: '(input?: StyleSheetInput) => StyleSheetOutput' },
+  { name: 'buildStyleSheet', kind: 'runtime', ticket: '#75', status: 'implemented', section: '3.2', signature: '(input?: StyleSheetInput): StyleSheetOutput' },
 
   // ── §3.3 控件层（#76） ──
   { name: 'ESCAPE_HTML_CHARS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "readonly ['&', '<', '>', '\"', \"'\"]" },

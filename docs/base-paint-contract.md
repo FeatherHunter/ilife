@@ -266,8 +266,8 @@
 | `STYLE_FORBIDDEN_TOKENS` | runtime | #75 | implemented | 3.2 | `readonly ['--r-xl', '--pink']` |
 | `StyleSheetInput` | type | #75 | implemented | 3.2 | `{ prefix?: string; extraCss?: string }` |
 | `StyleSheetOutput` | type | #75 | implemented | 3.2 | `{ css: string; tokens: readonly CssVarName[]; prefix: string; version: string }` |
-| `BuildStyleSheet` | type | #75 | pending | 3.2 | `(input?: StyleSheetInput) => StyleSheetOutput` |
-| `buildStyleSheet` | runtime | #75 | pending | 3.2 | `(input?: StyleSheetInput): StyleSheetOutput` |
+| `BuildStyleSheet` | type | #75 | implemented | 3.2 | `(input?: StyleSheetInput) => StyleSheetOutput` |
+| `buildStyleSheet` | runtime | #75 | implemented | 3.2 | `(input?: StyleSheetInput): StyleSheetOutput` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
 **11 个 token 逐值（AC-9；旧文写「12 变量」是错的）**
