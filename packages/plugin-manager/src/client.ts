@@ -29,15 +29,62 @@ export const inject = ['slots'];
 /** 爱生活页签槽（总管声明的 children，技能设置页注册进来；单段名，避开官方 settings.* 前缀）。 */
 export const CONFIG_TAB_SLOT = 'ilife.config-tab' as const;
 
+/** 总管视觉（内联 style；颜色走 DSH 主题别名，深浅主题自适应，写死值只做回退；与技能面板同语言）。 */
+const S = {
+  head: { fontSize: 15, fontWeight: 700, margin: '2px 0 8px', color: 'var(--dsw-alias-label-primary, inherit)' } as React.CSSProperties,
+  meta: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12, lineHeight: 1.7, marginBottom: 10 } as React.CSSProperties,
+  tablist: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 } as React.CSSProperties,
+  tab: {
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    background: 'transparent',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    borderRadius: 999,
+    padding: '4px 12px',
+    fontSize: 13,
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  tabActive: {
+    background: 'var(--dsw-alias-brand-primary, #0a84ff)',
+    borderColor: 'transparent',
+    color: '#fff',
+    fontWeight: 700,
+  } as React.CSSProperties,
+  reco: {
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: '1px dashed var(--dsw-alias-border, rgba(128,128,128,.45))',
+    color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
+    fontSize: 13,
+    lineHeight: 1.7,
+  } as React.CSSProperties,
+  cmd: {
+    display: 'block',
+    marginTop: 8,
+    padding: '8px 10px',
+    borderRadius: 8,
+    background: 'var(--dsw-alias-bg-base, rgba(128,128,128,.12))',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: 12,
+    userSelect: 'all',
+  } as React.CSSProperties,
+};
+
+/** 缺席卡：未安装技能的占位（样式化推荐安装；只读文本，不做假导航）。 */
+function AbsentCard(props: { tab: ManagerTab }): React.ReactElement {
+  const reco = recoFor(props.tab);
+  return React.createElement(
+    'div',
+    { style: S.reco },
+    React.createElement('div', null, reco.hint),
+    React.createElement('code', { style: S.cmd }, reco.installCmd),
+  );
+}
+
 /** 标签解析（resolveSlotLabel 同形：thunk 跟活，无则空字串；见 slots lib:27-29）。 */
 function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
   if (typeof label === 'function') return label();
   return label ?? '';
-}
-
-/** 缺席文案（grill 定案 Q2/Q5：调不通=没装；只读文本，不做假导航）。 */
-function absentHint(tab: ManagerTab): string {
-  return recoFor(tab).hint;
 }
 
 /** 爱生活面板：总设置区 + 爱生活页签条（slot 驱动）+ 技能设置页投影/缺席文案。 */
@@ -78,16 +125,16 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
   return React.createElement(
     'div',
     null,
-    React.createElement('h2', null, '爱生活'),
+    React.createElement('div', { style: S.head }, '爱生活'),
     React.createElement(
       'div',
-      null,
+      { style: S.meta },
       React.createElement('div', null, '总开关 · 开关（缺省启用，只读）'),
       React.createElement('div', null, '总管 dsh-life-pack · ' + MANAGER_VERSION),
     ),
     React.createElement(
       'div',
-      { role: 'tablist', 'aria-label': '爱生活技能页签' },
+      { role: 'tablist', 'aria-label': '爱生活技能页签', style: S.tablist },
       MANAGER_TABS.map((tab, index) => {
         const selected = tab.plugin === active;
         return React.createElement(
@@ -103,6 +150,7 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
             'aria-selected': selected,
             'aria-controls': tabsId + '-panel-' + tab.plugin,
             tabIndex: selected ? 0 : -1,
+            style: selected ? { ...S.tab, ...S.tabActive } : S.tab,
             onClick: () => {
               setActiveId(tab.plugin);
             },
@@ -110,7 +158,7 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
               onTabKeyDown(event, index);
             },
           },
-          labelFor(tab),
+          (present.has(tab.plugin) ? '● ' : '○ ') + labelFor(tab),
         );
       }),
     ),
@@ -127,7 +175,7 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
         },
         present.has(tab.plugin)
           ? (props.renderSlot(CONFIG_TAB_SLOT, {}, { only: tab.plugin }) as React.ReactNode)
-          : absentHint(tab),
+          : React.createElement(AbsentCard, { tab }),
       );
     }),
   );
