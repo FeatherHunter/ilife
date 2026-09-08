@@ -122,6 +122,10 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
 - **24h 门 + 安检 + 镜像滞后三连**：因=新包 24h 内、DSH 安检拦锁文件新条目、npmmirror 未同步；
   果=旧版回退 / `MINIMUM_RELEASE_AGE_VIOLATION` / `NO_MATCHING_VERSION`；
   修=§8 安装命令三件套（显式版本 + 松政策 + 官方源）。
+- **Electron 宿主 spawn hang**：因=桥直拿 `process.execPath` 当 node，Desktop 宿主它是 Electron 二进制，
+  spawn 起 GUI 子进程永不退出（POST 通道 15s 超时实证；CLI 本体 0.09s 即回、handler 直驱 100ms 回，凶手锁定传输层 spawn）；
+  果=双面板无限“加载中”；修=`resolveNodeBin`（node 直用 / Electron 加 `ELECTRON_RUN_AS_NODE`）+
+  20s spawn 超时杀 + client `AbortSignal.timeout`（UI 最多转 20s 即报超时错）；回路=`smoke` 超时双断言。
 
 ## 10 新技能 6 常量（模板 `template/plugin-single/`）
 

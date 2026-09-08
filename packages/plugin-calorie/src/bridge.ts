@@ -72,13 +72,29 @@ export function requestViaHost(host: { call(method: string, args: unknown): Prom
   return host.call(HOST_CALL_METHOD, { key, params });
 }
 
+/** spawn 超时毫秒：子进程超期未退即杀掉，转 fetch-failed，绝不无限挂起。
+ * #48 真机根因：Desktop 宿主的 process.execPath 是 Electron 二进制，直 spawn 会起 GUI 子进程永不退出。 */
+export const SPAWN_TIMEOUT_MS = 20_000 as const;
+
+/** node 可执行体解析（纯函数，execPath 可注入单测）。
+ * execPath 是 node 即直用；否则（Electron 宿主）沿用该二进制但加官方 ELECTRON_RUN_AS_NODE 语义当 node 用。 */
+export function resolveNodeBin(execPath: string = process.execPath): { readonly bin: string; readonly extraEnv: Record<string, string> } {
+  if (/(^|[\\/])node(\.exe)?$/i.test(execPath)) return { bin: execPath, extraEnv: {} };
+  return { bin: execPath, extraEnv: { ELECTRON_RUN_AS_NODE: '1' } };
+}
+
 /** 同步取数：spawn 技能 cmd_read，返回 envelope data（缺失阻断）。 */
 export function readViaCli(key: string, params: Record<string, unknown> = {}): unknown {
   const bin = cliPath();
   assertCliPresent(bin);
-  const node = process.execPath;
-  const r = spawnSync(node, [bin, key, '--params', JSON.stringify(params)], { encoding: 'utf8' });
-  if (r.error) throw new SkillBridgeError('fetch-failed', '出口 spawn 失败：' + (r.error as Error).message);
+  const { bin: node, extraEnv } = resolveNodeBin();
+  const r = spawnSync(node, [bin, key, '--params', JSON.stringify(params)], { encoding: 'utf8', timeout: SPAWN_TIMEOUT_MS, env: { ...process.env, ...extraEnv } });
+  if (r.error) {
+    if ((r.error as NodeJS.ErrnoException)?.code === 'ETIMEDOUT') {
+      throw new SkillBridgeError('fetch-failed', '出口超 ' + String(SPAWN_TIMEOUT_MS / 1000) + 's 未退，已杀掉（宿主非 node 时见 resolveNodeBin）');
+    }
+    throw new SkillBridgeError('fetch-failed', '出口 spawn 失败：' + (r.error as Error).message);
+  }
   if (r.status !== 0) {
     const tail = String(r.stderr ?? '').trim().split('\n').pop() ?? '';
     throw new SkillBridgeError('fetch-failed', '出口非 0（' + String(r.status) + '）：' + tail);

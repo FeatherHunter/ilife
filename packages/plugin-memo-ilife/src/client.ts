@@ -56,10 +56,12 @@ async function fetchRead(call: unknown, key: string, params: Record<string, unkn
   if (typeof call !== 'function') return { ok: false, absent: true, message: '宿主连接缺席：connection.rpc.call 不可用' };
   let result: RpcCallResult;
   try {
-    const raw: unknown = await call(RPC_CHANNEL, RPC_ENDPOINT_READ, { key, params });
+    // 防御纵深：宿主侧再 hang，UI 最多转 20s 圈（AbortSignal.timeout 无字面定时器，不触发轮询门）。
+    const raw: unknown = await call(RPC_CHANNEL, RPC_ENDPOINT_READ, { key, params }, AbortSignal.timeout(20_000));
     if (!isRpcResult(raw)) return { ok: false, absent: false, message: '回执信封异常（非 ok 信封）' };
     result = raw;
   } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') return { ok: false, absent: false, message: '取数超时（20s）：宿主未回，先查宿主日志与 DB 环境' };
     return { ok: false, absent: false, message: `取数失败：${e instanceof Error ? e.message : String(e)}` };
   }
   if (!result.ok) {
