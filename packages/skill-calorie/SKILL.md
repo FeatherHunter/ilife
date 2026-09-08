@@ -141,11 +141,11 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 ## 公共安装器运行时（skills-cli 装完必读，#47）
 
-- 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；“不走 npm”的只是 skill 发现这一步，运行时走 npm（`skill-calorie@0.1.0` 已发布）。
-- 取运行时二选一：`npm install -g skill-calorie@0.1.0`（一劳永逸），或免安装 `npx -p skill-calorie@0.1.0 calorie-cmd-read …`（每次现拉）。若 npm 报 EUNSUPPORTEDPROTOCOL（workspace:），说明已发布包待重发（发版流修，见 docs/public-installer-47.md「已发布包阻塞」），先用本仓构建产物验证链路。
+- 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；“不走 npm”的只是 skill 发现这一步，运行时走 npm（`skill-calorie@0.1.1` 已发布）。
+- 取运行时二选一：`npm install -g skill-calorie@0.1.1`（一劳永逸），或免安装 `npx -p skill-calorie@0.1.1 calorie-cmd-read …`（每次现拉）。若 npm 报 EUNSUPPORTEDPROTOCOL（workspace:），说明已发布包待重发（发版流修，见 docs/public-installer-47.md「已发布包阻塞」），先用本仓构建产物验证链路。
 - HELP 现找→cmd_read→envelope→HTML 验证（sh 先 `export SKILLS_DB_PATH="$(mktemp -d)"`；Windows PowerShell 先 `$env:SKILLS_DB_PATH = "$env:TEMP\sk-test"`；node>=22.13；完整口径见 docs/public-installer-47.md）：
   ```sh
   calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
   ```
 - 成功 stdout 只有一行 envelope JSON，进度与错误走 stderr；`--html <路径>` 显式落盘 utf8。
-- 版本钉死登记：本节 `@0.1.0` 为硬编码，随 #44 发版流重发 `0.1.1` 同步改（三处联动：本文件/docs/测试，登记见 docs/public-installer-47.md「版本钉死登记」）。
+- 版本钉死登记：本节版本硬编码现为 `@0.1.1`（已随 #44 发版流同步；历史登记见 docs/public-installer-47.md「版本钉死登记」）。

@@ -19,7 +19,7 @@ npx skills@latest add FeatherHunter/ilife
 - 样板：只给 `packages/skill-calorie/SKILL.md` 加了头（`name: skill-calorie`）+
   末尾「公共安装器运行时」小节；现有布局、base 三件套、依赖一律没动。
 - 本仓库 `dist/` 不进 git：装完目录里只有 SKILL.md + 源码 + 模板，
-  没有可执行文件；运行时走 npm（`skill-calorie@0.1.0` 已发布）。
+  没有可执行文件；运行时走 npm（`skill-calorie@0.1.1` 已发布）。
   「不走 npm」的只是 skill 发现这一步。
 
 ## 常用变体
@@ -53,7 +53,7 @@ npx skills@latest list -a opencode --json                     # 查已装
 
 ## 版本钉死登记（随 0.1.1 重发同步）
 
-- 三处 `@0.1.0` 硬编码：`packages/skill-calorie/SKILL.md`（公共安装器运行时小节）、本文档（发现小节/阻塞小节）、`test/skills-export-47.test.mjs`（版本断言）；#44 发版流重发 `0.1.1` 时三处联动改，不单改一处。
+- 三处版本硬编码已随 `0.1.1` 同步改完（SKILL.md 运行时小节、本文档发现小节、测试版本断言）；阻塞小节保留 0.1.0 历史记录备查。
 
 ## 已发布包阻塞（发版流修，不在本票硬上）
 
@@ -64,6 +64,7 @@ npx skills@latest list -a opencode --json                     # 查已装
   `workspace:` 改写为已解析版本号。
 - 修法（#44 发版流）：重发 skill 6 包（建议 patch 0.1.1），publish 前确认 manifest 无
   `workspace:`（pnpm publish 默认改写，0.1.0 疑似绕过改写直接发布）。
+- `base-combos@0.1.0` 同病（`base-link-core: workspace:^0.1.0` 未改写，registry 新装即 `EUNSUPPORTEDPROTOCOL`）；combos 暂无 registry 消费者，随 #50 收尾批量重发，不单独占 2FA 窗口。
 - 在重发落地前，用户侧链路用本仓 `pnpm build` 产物验证（与发布内容同源同构）。
 
 ## 复制到其余 5 包（样板通过后）

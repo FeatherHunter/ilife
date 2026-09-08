@@ -52,9 +52,9 @@ describe('#47 skills-cli 导出头（卡路里样板）', () => {
     it(pkg + '：公共安装器运行时小节存在', () => {
       const text = readFileSync(join(ROOT, 'packages', pkg, 'SKILL.md'), 'utf8');
       assert.ok(text.includes('## 公共安装器运行时'), '须含运行时小节（dist 不进 git，运行时走 npm）');
-      // 版本钉死 @0.1.0 为硬编码：随 #44 发版流重发 0.1.1 同步改
+      // 版本钉死 @0.1.1 为硬编码（已随 #44 发版流同步）
       // （SKILL.md/docs/测试三处联动，登记见 docs/public-installer-47.md「版本钉死登记」）。
-      assert.ok(text.includes('@0.1.0'), '须钉死 npm 运行时版本（随 0.1.1 重发同步改）');
+      assert.ok(text.includes('@0.1.1'), '须钉死 npm 运行时版本（已随 0.1.1 同步）');
     });
   }
   it('样板清单当前恰为 1 包（复制期扩展即改此断言）', () => {
