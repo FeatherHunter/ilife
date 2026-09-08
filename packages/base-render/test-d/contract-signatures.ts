@@ -35,6 +35,8 @@ import type {
   CopyTextOptions,
   CopyTextOutcome,
   CopyToastText,
+  CreateCopyRuntime,
+  CreateToastController,
   CssVarName,
   DataProjectionSpec,
   DataTextInput,
@@ -247,21 +249,33 @@ type _C24 = Expect<Equal<keyof Mod['CONTROL_AVAILABILITY'], ControlName>>;
 type _C24b = Expect<Equal<Mod['CONTROL_AVAILABILITY'][ControlName]['runtimePort'], ControlAvailability['runtimePort']>>;
 type _C24c = Expect<Equal<Mod['CONTROL_AVAILABILITY'][ControlName]['needsRuntime'], boolean>>;
 type _C25 = Expect<Equal<Mod['CONTROLS_HOST_REQUIREMENT'], 'none'>>;
-type _C26 = Expect<Equal<Absent<'copyText'>, true>>;
-type _C27 = Expect<Equal<Absent<'renderToast'>, true>>;
-type _C28 = Expect<Equal<Absent<'createToastController'>, true>>;
-type _C29 = Expect<Equal<Absent<'createCopyRuntime'>, true>>;
-type _C30 = Expect<Equal<Absent<'renderActionBar'>, true>>;
-type _C31 = Expect<Equal<Absent<'renderStatusBadge'>, true>>;
-type _C32 = Expect<Equal<Absent<'renderEmptyState'>, true>>;
-type _C33 = Expect<Equal<Absent<'renderErrorReceipt'>, true>>;
+/* #76 落地（契约 §3.3 施工面 13 条 pending）：运行时出口**必须存在**（原 `Absent<>` 按契约
+ * 「实现后必须翻转清单」翻转为 `Present<>`），且出口类型与冻结签名逐字相等（签名值零改动）。 */
+type _C26 = Expect<Equal<Present<'copyText'>, true>>;
+type _C27 = Expect<Equal<Present<'renderToast'>, true>>;
+type _C28 = Expect<Equal<Present<'createToastController'>, true>>;
+type _C29 = Expect<Equal<Present<'createCopyRuntime'>, true>>;
+type _C30 = Expect<Equal<Present<'renderActionBar'>, true>>;
+type _C31 = Expect<Equal<Present<'renderStatusBadge'>, true>>;
+type _C32 = Expect<Equal<Present<'renderEmptyState'>, true>>;
+type _C33 = Expect<Equal<Present<'renderErrorReceipt'>, true>>;
+type _C26b = Expect<Equal<Mod['copyText'], CopyText>>;
+type _C27b = Expect<Equal<Mod['renderToast'], RenderToast>>;
+type _C28b = Expect<Equal<Mod['createToastController'], CreateToastController>>;
+type _C29b = Expect<Equal<Mod['createCopyRuntime'], CreateCopyRuntime>>;
+type _C30b = Expect<Equal<Mod['renderActionBar'], RenderActionBar>>;
+type _C31b = Expect<Equal<Mod['renderStatusBadge'], RenderStatusBadge>>;
+type _C32b = Expect<Equal<Mod['renderEmptyState'], RenderEmptyState>>;
+type _C33b = Expect<Equal<Mod['renderErrorReceipt'], RenderErrorReceipt>>;
 type _C34 = Expect<Equal<CopyActionHostPort, { listActionIds(): readonly string[]; readDataText(actionId: string): string | undefined; onActivate(actionId: string, handler: () => void): () => void }>>;
 type _C35 = Expect<Equal<BindCopyAction, (port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }>>;
-type _C36 = Expect<Equal<Absent<'bindCopyAction'>, true>>;
+type _C36 = Expect<Equal<Present<'bindCopyAction'>, true>>;
+type _C36b = Expect<Equal<Mod['bindCopyAction'], BindCopyAction>>;
 type _C37 = Expect<Equal<SharedHelpersInput, { readonly prefix?: string; readonly dataAttr?: string }>>;
 type _C37b = Expect<Equal<Mod['DEFAULT_DATA_ATTR'], 'data-t'>>;
 type _C38 = Expect<Equal<BuildSharedHelpersJs, (input?: SharedHelpersInput) => string>>;
-type _C39 = Expect<Equal<Absent<'buildSharedHelpersJs'>, true>>;
+type _C39 = Expect<Equal<Present<'buildSharedHelpersJs'>, true>>;
+type _C39b = Expect<Equal<Mod['buildSharedHelpersJs'], BuildSharedHelpersJs>>;
 /* FX-17：复制按钮 actionId 来源（必填 id ＋ 冻结 id 表 ＋ 端口发现机制） */
 type _C40 = Expect<Equal<Mod['ACTION_ID_ATTR'], 'data-action-id'>>;
 type _C41 = Expect<Equal<Mod['COPY_ACTION_IDS'], {

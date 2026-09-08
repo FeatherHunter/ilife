@@ -12,3 +12,17 @@ export * from './spec/index.js';
 /** #74 统一占位符填充器（契约 §3.1／§6.1）。`TemplateError` **不在此导出**：
  *  冻结面 `SPEC_FROZEN_SURFACE` 无该运行时条目，调用方按 `name`／`code` 判定。 */
 export { fillTemplate } from './template.js';
+/** #76 控件层（契约 §3.3／§6.3）：六个控件的产出与复制编排。`ControlsError` **不在此导出**——
+ *  与 `TemplateError` 同口径（冻结面 44 条内无该运行时条目，调用方按 `name`／`code` 判定）。 */
+export {
+  bindCopyAction,
+  buildSharedHelpersJs,
+  copyText,
+  createCopyRuntime,
+  createToastController,
+  renderActionBar,
+  renderEmptyState,
+  renderErrorReceipt,
+  renderStatusBadge,
+  renderToast,
+} from './controls.js';

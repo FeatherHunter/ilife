@@ -81,6 +81,7 @@ import {
   WRAP_PREDICATES,
   SCENE_DATA_SCHEMA,
   SCENE_TYPE_FIELD,
+  buildSharedHelpersJs,
   escapeHtml,
 } from '../dist/index.js';
 import { ENVELOPE_SHAPES, ENVELOPE_VERSION } from 'base-link-core';
@@ -139,6 +140,51 @@ function frozenSurfaceRows(text) {
 const LINE_COMMENT = new RegExp('(^|[^:])//[^' + String.fromCharCode(10) + ']*', 'g');
 function stripJsComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(LINE_COMMENT, '$1');
+}
+
+/** 去掉**字符串／模板字面量的内容**（`${…}` 表达式区保留为代码）——#76 追加验收用：
+ *  产出 helpers JS 是**文本资产**，DOM 只允许活在它里面，故先把字面量内容剥离再扫剩余代码。
+ *  口径：与 `stripJsComments()` 串联（先剥字面量、再剥注释），判据只看**代码**。
+ *  局限（可接受）：`${…}` 内若出现裸 `}` 的字符串字面量（如 `` `${ {a:"}"} }` ``），深度计数会偏早收尾。 */
+function stripJsLiterals(src) {
+  let out = '';
+  let i = 0;
+  while (i < src.length) {
+    const ch = src[i];
+    if (ch === '"' || ch === "'") {
+      i += 1;
+      while (i < src.length && src[i] !== ch) i += src[i] === '\\' ? 2 : 1;
+      i += 1;
+      out += '""';
+      continue;
+    }
+    if (ch === '`') {
+      i += 1;
+      let expr = '';
+      let depth = 0;
+      while (i < src.length) {
+        if (src[i] === '\\') { i += 2; continue; }
+        if (depth === 0 && src[i] === '`') { i += 1; break; }
+        if (depth === 0 && src[i] === '$' && src[i + 1] === '{') { depth = 1; i += 2; continue; }
+        if (depth > 0) {
+          if (src[i] === '{') depth += 1;
+          else if (src[i] === '}') {
+            depth -= 1;
+            if (depth === 0) { i += 1; out += stripJsLiterals(expr) + ' '; expr = ''; continue; }
+          }
+          expr += src[i];
+          i += 1;
+          continue;
+        }
+        i += 1;
+      }
+      out += '""';
+      continue;
+    }
+    out += ch;
+    i += 1;
+  }
+  return out;
 }
 
 /** 纯度扫描口径（**唯一实现**，与 `SHARED_HELPERS_JS_RULE`（§3.3，FX-18）逐项对齐）：
@@ -905,6 +951,23 @@ describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
     }
     // ③ 注释里的说明文字不参与判定（dist 保留注释，禁的是代码）
     assert.deepEqual(purityViolations('/* 禁 window.toast = x 与 document.* 无关 */'), []);
+  });
+
+  it('#76 追加验收（FX-18②）：DOM 只允许出现在产出的 helpers JS 文本里', () => {
+    const helpers = buildSharedHelpersJs();
+    assert.ok(helpers.includes('document.'), '前置：产出文本必须真的含 DOM 读取，否则本断言无鉴别力');
+    assert.ok(helpers.includes('addEventListener'), '前置：产出文本必须真的含事件绑定');
+    // 自证（防恒真）：代码里的 DOM 必须被抓到、字符串里的 DOM 必须被剥离
+    assert.ok(stripJsComments(stripJsLiterals('const x = document.body;')).includes('document.'), '自证：代码里的 document. 必须命中');
+    assert.ok(!stripJsComments(stripJsLiterals('const s = "document.body";')).includes('document.'), '自证：字符串里的 document. 必须被剥离');
+    const files = listDistJs(fileURLToPath(new URL('../dist', import.meta.url)));
+    assert.ok(files.length > 0, 'dist 无 JS 产物');
+    for (const p of files) {
+      const code = stripJsComments(stripJsLiterals(readFileSync(p, 'utf8')));
+      for (const needle of ['document.', 'window.', 'navigator.']) {
+        assert.ok(!code.includes(needle), p + ' 的代码（剥字面量与注释后）不得出现 ' + needle);
+      }
+    }
   });
 
   it('src/spec/*.ts 只许 import type（AC-13）＋ 代码不得读写浏览器全局（AC-7）', () => {

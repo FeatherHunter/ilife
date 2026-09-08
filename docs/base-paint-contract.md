@@ -332,45 +332,58 @@
 | `CopyPorts` | type | #76 | implemented | 3.3 | `{ clipboard: ClipboardChannel \| null; fallback: (text: string) => boolean; toast?: ToastHostPort }` |
 | `CopyTextOptions` | type | #76 | implemented | 3.3 | `{ silent?: boolean; toast?: { ok?: CopyToastText; fail?: CopyToastText }; onOk?: (channel: CopyChannel) => void; onFail?: (reason: string) => void }` |
 | `CopyTextOutcome` | type | #76 | implemented | 3.3 | `{ ok: boolean; channel: CopyChannel \| null; reason?: string }` |
-| `CopyText` | type | #76 | pending | 3.3 | `(text: string, ports: CopyPorts, opts?: CopyTextOptions) => Promise<CopyTextOutcome>` |
-| `copyText` | runtime | #76 | pending | 3.3 | `(text: string, ports: CopyPorts, opts?: CopyTextOptions): Promise<CopyTextOutcome>` |
+| `CopyText` | type | #76 | implemented | 3.3 | `(text: string, ports: CopyPorts, opts?: CopyTextOptions) => Promise<CopyTextOutcome>` |
+| `copyText` | runtime | #76 | implemented | 3.3 | `(text: string, ports: CopyPorts, opts?: CopyTextOptions): Promise<CopyTextOutcome>` |
 | `CopyRuntime` | type | #76 | implemented | 3.3 | `{ copyText(text: string, opts?: CopyTextOptions): Promise<CopyTextOutcome>; dispose(): void }` |
-| `createCopyRuntime` | runtime | #76 | pending | 3.3 | `(ports: CopyPorts): CopyRuntime` |
+| `createCopyRuntime` | runtime | #76 | implemented | 3.3 | `(ports: CopyPorts): CopyRuntime` |
 | `CopyActionHostPort` | type | #76 | implemented | 3.3 | `{ listActionIds(): readonly string[]; readDataText(actionId: string): string \| undefined; onActivate(actionId: string, handler: () => void): () => void }` |
 | `ACTION_ID_ATTR` | runtime | #76 | implemented | 3.3 | `'data-action-id'` |
 | `COPY_ACTION_IDS` | runtime | #76 | implemented | 3.3 | `{ actionBar: { copyData: 'ilife-copy-data'; copyLog: 'ilife-copy-log' }; errorReceipt: { copyData: 'ilife-error-copy-data'; copyLog: 'ilife-error-copy-log' } }` |
-| `BindCopyAction` | type | #76 | pending | 3.3 | `(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }` |
-| `bindCopyAction` | runtime | #76 | pending | 3.3 | `(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }` |
+| `BindCopyAction` | type | #76 | implemented | 3.3 | `(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }` |
+| `bindCopyAction` | runtime | #76 | implemented | 3.3 | `(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }` |
 | `SharedHelpersInput` | type | #76 | implemented | 3.3 | `{ prefix?: string; dataAttr?: string }` |
 | `DEFAULT_DATA_ATTR` | runtime | #76 | implemented | 3.3 | `'data-t'` |
-| `BuildSharedHelpersJs` | type | #76 | pending | 3.3 | `(input?: SharedHelpersInput) => string` |
-| `buildSharedHelpersJs` | runtime | #76 | pending | 3.3 | `(input?: SharedHelpersInput): string` |
+| `BuildSharedHelpersJs` | type | #76 | implemented | 3.3 | `(input?: SharedHelpersInput) => string` |
+| `buildSharedHelpersJs` | runtime | #76 | implemented | 3.3 | `(input?: SharedHelpersInput): string` |
 | `SHARED_HELPERS_JS_RULE` | runtime | #76 | implemented | 3.3 | `{ selfContained: true; idempotent: true; domAllowed: true; forbidGlobalAssignment: true; forbidNodeBuiltins: true }` |
 | `ToastInput` | type | #76 | implemented | 3.3 | `{ msg: string; detail?: string; icon?: ToastIcon; badge?: ToastBadge; actions?: readonly ToastAction[]; count?: string; lines?: readonly string[]; code?: string; timeoutMs?: number; maxStack?: number }` |
 | `ToastHostPort` | type | #76 | implemented | 3.3 | `{ mount(html: string): { remove(): void } }` |
 | `ToastController` | type | #76 | implemented | 3.3 | `{ show(input: ToastInput): void; flush(): void; dispose(): void }` |
-| `renderToast` | runtime | #76 | pending | 3.3 | `(input: ToastInput): string` |
-| `createToastController` | runtime | #76 | pending | 3.3 | `(port: ToastHostPort): ToastController` |
+| `renderToast` | runtime | #76 | implemented | 3.3 | `(input: ToastInput): string` |
+| `createToastController` | runtime | #76 | implemented | 3.3 | `(port: ToastHostPort): ToastController` |
 | `ActionBarInput` | type | #76 | implemented | 3.3 | `{ buttons?: readonly ActionBarButton[]; copyData?: CopyButtonInput; copyLog?: CopyButtonInput }` |
-| `renderActionBar` | runtime | #76 | pending | 3.3 | `(input: ActionBarInput): string` |
+| `renderActionBar` | runtime | #76 | implemented | 3.3 | `(input: ActionBarInput): string` |
 | `StatusBadgeInput` | type | #76 | implemented | 3.3 | `{ status: StatusKind; text?: string }` |
-| `renderStatusBadge` | runtime | #76 | pending | 3.3 | `(input: StatusBadgeInput): string` |
+| `renderStatusBadge` | runtime | #76 | implemented | 3.3 | `(input: StatusBadgeInput): string` |
 | `EmptyStateInput` | type | #76 | implemented | 3.3 | `{ icon?: string; text: string; hint?: string; actionHtml?: string }` |
-| `renderEmptyState` | runtime | #76 | pending | 3.3 | `(input: EmptyStateInput): string` |
+| `renderEmptyState` | runtime | #76 | implemented | 3.3 | `(input: EmptyStateInput): string` |
 | `ErrorReceiptInput` | type | #76 | implemented | 3.3 | `{ message: string; retryPrompt?: string; dataText?: string; logText?: string; dataActionId?: string; logActionId?: string }` |
-| `renderErrorReceipt` | runtime | #76 | pending | 3.3 | `(input: ErrorReceiptInput): string` |
+| `renderErrorReceipt` | runtime | #76 | implemented | 3.3 | `(input: ErrorReceiptInput): string` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
 **控件清单与签名（6 个控件，逐条）**
 
 | 控件 | 冻结签名 | 语义（输入 → 输出） | 失败行为 |
 |---|---|---|---|
-| `toast` | `renderToast(input: ToastInput): string`；`createToastController(port: ToastHostPort): ToastController` | `ToastInput` → toast HTML 字符串；controller 负责堆叠（`maxStack` 5／≤820px 收窄 3）、FIFO 挤出、单条独立计时（`timeoutMs` 4500）、`flush()` 清栈 | `input.msg` 非字符串 → 抛 `ControlsError` code `bad-input`；`actions[]` 只接受 `actionId`，含内联 `onclick` 的入参一律拒；动作按钮的 id 写入 `ACTION_ID_ATTR`，**绑定归调用方**（无复制语义，不纳入 `bindCopyAction`；本条不冻结也不排除，owner #76，S-10） |
+| `toast` | `renderToast(input: ToastInput): string`；`createToastController(port: ToastHostPort): ToastController` | `ToastInput` → toast HTML 字符串；controller 负责堆叠（`maxStack` 5）、FIFO 挤出、单条独立计时（`timeoutMs` 4500）、`flush()` 清栈（**≤820px 收窄 3 是页面运行时行为**，见下「toast 移动端收窄的分工」） | `input.msg` 非字符串 → 抛 `ControlsError` code `bad-input`；`actions[]` 只接受 `actionId`，含内联 `onclick` 的入参一律拒；动作按钮的 id 写入 `ACTION_ID_ATTR`，**绑定归调用方**（无复制语义，不纳入 `bindCopyAction`；本条不冻结也不排除，owner #76，S-10） |
 | `copyText` | `copyText(text: string, ports: CopyPorts, opts?: CopyTextOptions): Promise<CopyTextOutcome>`；`createCopyRuntime(ports: CopyPorts): CopyRuntime`；`bindCopyAction(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }` | **双通道**：先走 `ports.clipboard.writeText`（通道 `clipboard`），失败/不可用（`clipboard === null`）再走 `ports.fallback`（通道 `fallback`）；`text === ''` 短路返回 `{ ok: false, channel: null, reason: 'empty' }`，不弹 toast 不触发回调；`opts.silent` 只静默**成功** toast，回调仍触发；**失败徽章恒在**（见下）；`onOk(channel)`／`onFail(reason)` 互斥且必触发一次 | 两通道皆失败 → `{ ok: false, channel: null, reason }`（不抛错，调用方据 `ok` 决策）；`ports` 缺失或 `fallback` 非函数 → 抛 `ControlsError` code `bad-input` |
 | `actionBar` | `renderActionBar(input: ActionBarInput): string` | 场景按钮（`kind: primary／red`）＋ 复制数据／复制日志 ghost 按钮（独立一行，偶数一行 2 个，`min-height` 40px、12px/600、描边透明度 0.38）；复制文本在**渲染期**序列化后写入 `data-t`，`actionId`（`CopyButtonInput.actionId`，**必填**）写入 `ACTION_ID_ATTR`，零注入面 | 同 `toast` 的入参校验；`copyData`／`copyLog` 缺 `actionId` 或 id 重复 → 抛 `ControlsError` code `bad-input` |
 | `statusBadge` | `renderStatusBadge(input: StatusBadgeInput): string` | `status` ∈ `ok／warn／danger／empty` → 语义色徽章；`text` 缺省取 `STATUS_DEFAULT_TEXT`；动态文本一律经 `ESCAPE_HTML_ENTITIES` | **非法 `status` 降级为 `empty`**（不抛错，防无样式徽章） |
 | `emptyState` | `renderEmptyState(input: EmptyStateInput): string` | `{ icon?, text, hint?, actionHtml? }` → 空态区块；`icon／text／hint` 一律转义 | `text` 缺失/非字符串 → 抛 `ControlsError` code `bad-input`；`actionHtml` 为**受信 HTML 透传**（调用方负责其内容安全，不转义） |
 | `errorReceipt` | `renderErrorReceipt(input: ErrorReceiptInput): string` | `{ message, retryPrompt?, dataText?, logText?, dataActionId?, logActionId? }` → 错误回执（描述 + 修正重试 + 复制数据/日志）；复制文本渲染期入 `data-t`，按钮 id 入 `ACTION_ID_ATTR`（缺省 `COPY_ACTION_IDS.errorReceipt.*`） | 缺 `dataText`／`logText` → **不渲染**对应复制按钮（容错，不抛错）；**不得**读 `window.__hmPayload`（AC-7） |
+
+**toast 移动端收窄的分工（FX-76-2 总架构师裁定）**
+
+「`maxStack` 5／**≤820px 收窄 3**」里的**收窄**一条，落地分工**显式记录**如下（不留歧义）：
+
+| 侧 | 责任 | 依据 |
+|---|---|---|
+| 模块侧 `createToastController` | **只**做堆叠容量（栈内 `maxStack` 最大值／空栈回落 5）、FIFO 挤出、单条独立计时、`flush()`／`dispose()`；**不读任何浏览器全局**（AC-7／红线 11），因而不读视口 | `src/controls.ts` `createToastController` |
+| 页面侧 `buildSharedHelpersJs()` **产出文本** | 读 `window.matchMedia('(max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px)')`，命中则反馈栈容量取 `TOAST_DEFAULTS.mobileMaxStack`，否则取 `maxStack`（`SHARED_HELPERS_JS_RULE.domAllowed = true`） | `src/controls.ts` 产出文本；旧层 `window.matchMedia`（`base.js:96`）本就是页面侧代码 |
+| 调用方 | 需要模块侧收窄时，显式传 `ToastInput.maxStack`（模块不猜视口） | `ToastInput.maxStack` |
+
+**因此**：「≤820px 收窄为 3」是**页面运行时行为**，**不是模块行为**——本条不要求模块读视口，`mobileMaxPx`／`mobileMaxStack` 仍为冻结常量，供两侧取用。
+**可执行证据**：`packages/base-render/test/controls.test.mjs`「helpers JS 在 ≤820px 视口把反馈栈收窄为 3」（窄 3／宽 5，且断言两档不同）＋ `docs/research/t76-nohost-evidence.md` §3（自包含 `file://` 页面）。
 
 **`copyText` 双通道逐字冻结（Q13／AC-16①）**
 
@@ -388,6 +401,7 @@ export type CopyText = (text: string, ports: CopyPorts, opts?: CopyTextOptions) 
 - **不得读隐式全局**：`navigator.clipboard` 由**调用方**作为 `ports.clipboard` 传入（AC-7）。**base-paint 的运行时代码**（`dist/**/*.js` 去掉注释后的代码）不得读写 `window.`／`document.`／`navigator.`；**唯一例外**是 `buildSharedHelpersJs`／`buildChartsHelpersJs` 产出的 **JS 文本字符串**——它按 `SHARED_HELPERS_JS_RULE.domAllowed = true` 允许页面侧 DOM 读取（FX-18②）。纯度扫描口径见 §7 与 §6.3（**禁 `node:` ＋ 禁隐式全局赋值**，不扫 DOM 读取）。
 - **空串短路**：`copyText('')` 立即返回 `{ ok: false, channel: null, reason: 'empty' }`，无 toast 无回调（旧语义 `contract:311`）。
 - **失败徽章恒在（FX-3② 定死：`copyText` 直接挂载，不交调用方插片段）**：失败态经 `ports.toast.mount(renderToast({ icon: 'danger', badge: { type: 'danger', text: … }, … }))` 挂载，`COPY_TEXT_DEFAULTS.failBadgeAlwaysOn = true`，**不受 `opts.silent` 影响**、不可被调用方移除；`ports.toast` 缺省时**降级为只回调 + 返回 outcome**（不产 HTML、不抛错，仍不违反「无宿主可用」）。
+- **失败 `reason` 的取值（文档只冻结 `'empty'`；FX-76-1）**：通道 2 返回假值 → `'fallback-failed'`；通道 2 **同步抛错** → `'fallback-threw'`。通道 2 **一律**包 `try/catch`——两通道皆失败**恒**为 `{ ok: false, channel: null, reason }`（**不抛错**）且**失败徽章照挂**；旧层 `_fbCopy` 整段 `try/catch`、失败返回 false 即此口径（回归已修）。
 
 **复制接线签名（FX-3③／FX-17，#90 仅凭契约即可落地）**
 
@@ -412,7 +426,8 @@ export type BindCopyAction = (
 - **actionId 来源（FX-17①②，定死）**：`CopyButtonInput.actionId` **必填**（`renderActionBar` 的复制数据／日志），`ErrorReceiptInput.dataActionId`／`logActionId` 可选、**缺省取 `COPY_ACTION_IDS.errorReceipt.*`**；三者渲染期写入 `ACTION_ID_ATTR` 属性。**不得**再出现「按钮没有 id」的形态；空串／非字符串／同次渲染内重复 → 抛 `ControlsError` code `bad-input`。
 - **与旧侧 `data-t` 口径的偏离（显式声明）**：旧侧复制按钮**无 id**——激活靠内联脚本 `onclick="copyText(this.dataset.t)"`（`base.js:311,648-649`），只有 `data-t` 一个属性；新契约禁内联脚本（AC-7 零注入面）→ 必须有 id 才能做事件委派。`data-t` 的**文本载体**语义**保留**（属性名 = `SharedHelpersInput.dataAttr`，缺省冻结常量 `DEFAULT_DATA_ATTR = 'data-t'`）。
 - **发现机制（FX-17③）**：`port.listActionIds()` 是**唯一** id 来源；`bindCopyAction` 只订阅其中列出的 id，**不得**猜 id／不得约定通配前缀／不得订阅未列出的 id。
-- **语义（逐条）**：对每个 id 订阅 → 激活时读 `port.readDataText(actionId)`（与旧侧 `this.dataset.t` 同时机）→ `undefined` 则跳过（不抛错）→ 否则 `void copyText(text, ports, opts)`；反馈一律走 `ports.toast`（FX-3②），binder 不另出反馈；`dispose()` 解绑**全部**已订阅 id 且**幂等**。
+- **语义（逐条）**：对每个 id 订阅 → 激活时读 `port.readDataText(actionId)`（与旧侧 `this.dataset.t` 同时机）→ `undefined` 则跳过（不抛错）→ 否则 `void copyText(text, ports, opts)`；反馈一律走 `ports.toast`（FX-3②），binder 不另出反馈；`dispose()` 解绑**全部**已订阅 id 且**幂等**。该 `void` **必须接住 rejection**（FX-76-6）：`copyText` 的正常失败已在内部 `settle()` 处理，逃逸异常只能来自端口实现抛错（或反馈挂载抛错），binder 既不产第二份反馈、也不重入 `onFail`（防重复回调）。
+- **绑定时机（#90 使用说明，FX-76-7⑤）**：`listActionIds()` 只在 **bind 时刻**调用**一次**，**没有** re-scan／`MutationObserver`（本条也未要求）→ **必须先渲染、再 `bindCopyAction`**；动态重渲染出新按钮后须重新 bind（`dispose()` 后重新 bind，或对新增节点单独 bind）。对照：页面侧 helpers JS 走 `document` 事件委派，对**晚渲染**按钮仍生效——两者口径不同，不可互相类推。
 - **DOM 边界**：`el` 以 `CopyActionHostPort` **端口**呈现（DOM 不得进 base-paint，AC-7／§4.1）；调用方用普通 `.html` 内联适配器实现三个方法即可，无需 DSH 宿主。
 - **`readDataText` 返回 `undefined` 不抛错**：跳过该按钮（与 `renderErrorReceipt` 缺 `dataText` 不渲染按钮同口径）。**`listActionIds()` 允许包含非复制按钮**（如 `ActionBarButton` 的场景按钮——它们同样带 `ACTION_ID_ATTR`）：binder 不区分用途，一律靠 `readDataText → undefined` 跳过，**不得**因此报错或另设白名单（S-9）。
 - **唯一性**：全部 base-paint `actionId`（`COPY_ACTION_IDS` ＋ `HELP_COPY_ACTIONS`）在**同一页面内唯一**，由签名测试断言不撞名；调用方覆盖 `ErrorReceiptInput.dataActionId`／`logActionId` 时同样须唯一且可被 `listActionIds()` 发现。
@@ -789,6 +804,20 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 **与 `docs/calorie-architecture.md` 的一致性**：该规格 `:64` 只要求「由 base-paint 统一填充共享样式与脚本占位符」、`:82` 要求「占位符零残留」，**均未规定包裹归属**；本契约把归属显式定死为填充器，**不与规格冲突**，只是补上规格未覆盖的缝。
 
+### 4.6 #76 与旧基线的偏离（toast 样式归位，显式记账）
+
+**偏离项**：旧基线把 **toast 的全部样式内联在 `base.js:75`（2682 字符 CSS 字符串）**，并在首次调用时**自注入 `document.head`**（`base.js:77-84`）；`base.css` 中 `hm-toast` 命中数为 **0**（旧层取证：`.scratch/t76/old-controls.md` §1.1／§3，施工期取证、**未入仓**）。而旧 README／契约同时声明「全部样式唯一真相源在 `base.css`」（旧 `contract:197`）——旧层自身「toast 自注入样式」与「样式唯一真相源」两说并存。本契约**有意偏离**旧层形态（施工单 C-3）：**toast 样式并入 #75 的共享样式区**（`CONTROL_STYLE_SECTIONS` 闭集已含 `toast`，`packages/base-render/src/spec/index.ts:75`），由 `buildStyleSheet` 产出的 `sharedCssText` 经 `<!--SHARED-CSS-->` 注入；`renderToast` **只产 HTML 字符串**（`ilife-` 命名空间类名），**不产样式常量、不自注入 head**。
+
+**理由（三条）**：
+
+1. **单一真相**：`CONTROL_STYLE_SECTIONS` 是闭集（8 个命名空间）；toast 若自注入即出现第二份样式源，与「样式只抖 base-paint」冲突（§4.3 第 6 条）。
+2. **无宿主口径一致**（C-1）：`renderToast` 是纯函数产字符串，页面用 `ToastHostPort.mount` 自挂；样式由模板的共享 CSS 块承载，页面侧不需要任何注入器或宿主。
+3. **可验收**：#96 的 per-skill HTML 快照回归门只认**一份** `sharedCssText`；自注入的 toast 样式进不了该门。
+
+**偏离的代价（如实记账）**：旧层「缺 `base.css` 时 toast 仍完整可用」这一行为**不再成立**——toast 的**视觉**依赖 `sharedCssText`。**功能面不受影响**：`renderToast` 产出的 HTML 自带 `role`／`aria-live`／`data-max`，`createToastController` 的堆叠与计时与样式无关，无 CSS 时仍是可用的降级块（§3.3「无宿主」表 `toast` 行）。
+
+**可复现证据（仓内）**：`packages/base-render/src/controls.ts`（#76 产出，**零**样式常量、代码零 `document.`）；`packages/base-render/test/controls.test.mjs`「复制数据／日志」用例断言产出**不含内联 `style=`**；`packages/base-render/test/contract-signatures.test.mjs`「#76 追加验收」断言 DOM 只出现在产出 JS 文本里。
+
 ## 5. 版本机制
 
 <!-- FROZEN-SURFACE-TABLE-START -->
@@ -1081,3 +1110,78 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | ⑨ | 反推法依赖零字面 `&#39;` | **修** | `escape-html-calorie-diff.md` 前提自查行补「真实用户数据含 `&#39;` 时反推法失效（只影响证据表算法，不影响结论）」 |
 
 **门禁实测（#74 返修后）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm test:types` 退出 0／签名测试单跑 **46 用例全绿**（exit 0）／行为测试 `template.test.mjs` **45 用例全绿**（返修前 36，新增 9）／`pnpm test` **新增失败 = 0**（判据 = #92 台账多重集，见 §7「门禁口径」）／`SPEC_FROZEN_SURFACE` **130 条**不变。
+
+### 8.9 #76 控件层施工台账（C-1…C-8 / D1–D6 / A1–A9）
+
+口径同 §8：每条给**处置**与**落点**，**禁止默默略过**。本轮**落地 13 条 `pending`**（10 runtime ＋ 3 type）→ `SPEC_FROZEN_SURFACE` 仍 **130 条**，`implemented` **＋13**／`pending` **−13**（落地后实测 **implemented 119／pending 11**，余下 11 条 = #75 2／#77 4／#78 5）；**未改任何既有签名的值**（三处同步：清单 ↔ 本文 §3.3 标记区 ↔ `test-d/contract-signatures.ts`），**未实现** #75／#77／#78 的任何行为（`buildStyleSheet`／`buildDataText`／`buildLogText`／`charts`／`renderHelpShell` 仍 `pending`）。
+
+| 编号 | 交付 | 落点 | 处置 |
+|---|---|---|---|
+| D1 | 13 条 `pending` 的运行时落地 | `packages/base-render/src/controls.ts`（10 出口：`copyText`／`createCopyRuntime`／`bindCopyAction`／`buildSharedHelpersJs`／`renderToast`／`createToastController`／`renderActionBar`／`renderStatusBadge`／`renderEmptyState`／`renderErrorReceipt`）＋ `src/index.ts`（只追加 10 个出口，`ControlsError` **不导出**） | **实现** |
+| D2 | status 翻转 ＋ 三处同步 | `src/spec/index.ts`（13 条）↔ 本文 §3.3 标记区（13 行）↔ `test-d/contract-signatures.ts`（`_C26…_C39` 的 `Absent<>` → `Present<>` ＋ 10 条出口类型逐字锁形 `_C26b…_C39b`） | **实现** |
+| D3 | 单测：六控件行为 ＋ 双通道 ＋ 接线 ＋ helpers 产出 | `packages/base-render/test/controls.test.mjs`（**64 用例**：toast 14／copyText 14／statusBadge 3／emptyState 4／errorReceipt 5／actionBar ＋ ghost 6／`bindCopyAction` 9／helpers 6／无宿主可用性表 1／无宿主可执行证据 2；计数口径 = describe 内顶层 `it(`，返修后实测）＋ `test/contract-signatures.test.mjs` 新增「#76 追加验收」1 条 | **实现** |
+| D4 | 无宿主可执行证据 | **主证据**：`docs/research/t76-nohost-evidence.mjs` ＋ 快照 `docs/research/t76-nohost-evidence.md`（自包含 `file://` 页面：零 `import`／零服务／零宿主注入，44 条断言全绿；FX-76-4）。**补充**：`test/controls.test.mjs` 末 describe 的 HTTP 夹具（可 `import` dist） | **实现** |
+| D5 | 契约 §4 记账 ＋ §8 台账 | 本文 §4.6（C-3 toast 样式归位偏离）＋ 本节 | **实现** |
+| D6 | changeset | `.changeset/base-paint-controls.md`（`'base-paint': minor`） | **实现** |
+
+**架构裁定逐条落地（C-1…C-8）**
+
+| 裁定 | 落地 | 落点 |
+|---|---|---|
+| C-1 无宿主 ＝ 不依赖 DSH 宿主注入（允许浏览器 API 经端口） | 全部能力经 `CopyPorts`／`ToastHostPort`／`CopyActionHostPort` 注入；模块代码零浏览器全局 | `src/controls.ts`；夹具 describe（页面内联适配器实现三个方法） |
+| C-2 禁内联 onclick，走 `ACTION_ID_ATTR` ＋ `bindCopyAction` | 产出按钮只带 `data-action-id`／`data-t`；helpers JS 走 `document.addEventListener` 委派；产出恒为**经典 script** IIFE | `src/controls.ts`；`test/controls.test.mjs`「零内联 onclick」＋「经典 script」用例 |
+| C-3 toast 样式并入 #75 共享样式区 | `renderToast` 只产类名，零样式常量、零自注入；偏离已记账 | 本文 §4.6 |
+| C-4 `actionBar` 文案可配 | `CopyButtonInput.label` 优先，缺省取 `ACTION_BAR_DEFAULTS.copyDataLabel`／`copyLogLabel` | `src/controls.ts` `normalizeCopyButton`；用例「复制按钮文案可配」 |
+| C-5 不实现 `formatMenu`／`download` | 无相关出口、无相关分支 | 冻结面 44 条内无该名 |
+| C-6 测试对齐旧层 31 用例行为面 ＋ 补 `actionBar` | 见 D3 用例分布；`actionBar` 补 6 条 | `test/controls.test.mjs` |
+| C-7 状态枚举按契约（`ok/warn/danger/empty`，无 `fail`） | `renderStatusBadge` 非法值降级 `empty`；票面 `fail` ＝ 契约 `danger` | 用例「非法 status 降级 empty」 |
+| C-8 模块代码不碰 DOM；`document.*` 只许在产出字符串里 | dist 扫描断言（剥字面量与注释后代码零 `document.`／`window.`／`navigator.`） | `test/contract-signatures.test.mjs`「#76 追加验收」 |
+
+**验收判据逐条（A1–A9）**
+
+| 判据 | 结论 | 证据 |
+|---|---|---|
+| A1 13 条全部 `implemented`、三处同步、签名值零改动 | **过** | 清单 13 条翻转；`git diff` 仅 `status` 字段变动（签名行零改动）；签名测试 47 用例全绿 |
+| A2 六控件在纯 HTML 页面可用（可执行证据） | **过** | **主证据**：`docs/research/t76-nohost-evidence.md`（自包含 `file://` 页面，零 import／零服务；44 断言全绿）＋ 补充：`test/controls.test.mjs` HTTP 夹具（headless 回读 `{"actionIds":…,"dataT":"DATA-TEXT","badgeText":"失败","receiptButtons":3,…}`） |
+| A3 `copyText` 双通道 ＋ 失败徽章恒在 ＋ 空串短路 ＋ `CopyPorts.toast` 生效 | **过** | 用例「clipboard 抛错／reject → fallback」「两通道皆失败…失败徽章恒在」「**fallback 同步抛错 → 返回 outcome 且徽章在（FX-76-1）**」「fallback 返回 false → reason 可区分」「空串短路」「silent 不抑制失败徽章」 |
+| A4 `bindCopyAction` ＋ `ACTION_ID_ATTR` ＋ `COPY_ACTION_IDS` 接线（#90 仅凭契约可接线） | **过** | 用例「发现 → 激活 → readDataText → copyText → 反馈」＋ 夹具页面用契约示例同款 DOM 适配器接线成功 |
+| A5 `buildSharedHelpersJs` 满足 `SHARED_HELPERS_JS_RULE` 五布尔；幂等只落 DOM | **过** | 用例「幂等判据只落 DOM…无 window 哨兵」「自包含」「domAllowed」＋ 签名测试纯度自证；夹具「注入两次 → `markerCount === 1`／一次点击一条反馈」 |
+| A6 无内联 `onclick`；helpers JS 可在经典 script 作用域运行 | **过** | 用例「不得出现内联 onclick」「必须是 IIFE／无 ESM 语法」＋ 夹具把 helpers JS 放进**无 `type` 的 `<script>`** 跑通 |
+| A7 状态枚举按契约，`fail` 映射已记账 | **过** | `STATUS_KINDS` 逐值断言（既有）＋ 用例「非法 status 降级 empty」＋ 本文 §3.3「Q8 消歧」 |
+| A8 测试覆盖对齐旧层 31 用例行为面 ＋ 补 `actionBar` | **过** | 用例分布见 D3（**实测 64**：toast 14／copyText 14／statusBadge 3／emptyState 4／errorReceipt 5／actionBar ＋ ghost 6／`bindCopyAction` 9／helpers 6／可用性表 1／无宿主证据 2；旧基线 31 条行为面逐条有对应，3 条有据） |
+| A9 门禁全绿、新增失败 0、changeset 到位、C-3 已记账 | **过** | 本节「门禁实测（#76 落地后）」＋ `.changeset/base-paint-controls.md` ＋ §4.6 |
+
+**#76 自查新洞（施工者自己扫出并处置／登记，不留待复验）**
+
+| # | 自查新洞 | 处置 |
+|---|---|---|
+| 76-1 | `createToastController` 的「≤820px 收窄为 3」**无法在模块代码里判定**——判定需 `matchMedia`（浏览器全局），而 AC-7 禁模块读全局；照字面实现即红线 | **登记 → 裁定后收口（FX-76-2）**：总架构师**接受**「模块纯逻辑 ＋ 页面运行时视口感知」的分工——控制器**不读**浏览器全局（AC-7 不变），收窄由页面侧 `buildSharedHelpersJs` **产出文本**（`domAllowed`）读 `matchMedia` 承担，或由调用方经 `ToastInput.maxStack` 施加；`mobileMaxPx`／`mobileMaxStack` 仍为冻结常量。契约 §3.3「toast 移动端收窄的分工」**显式记录**，可执行证据 = `controls.test.mjs`「helpers JS 在 ≤820px 视口把反馈栈收窄为 3」＋ `docs/research/t76-nohost-evidence.md` §3 |
+| 76-2 | 栈容量若以 `TOAST_DEFAULTS.maxStack` 为**地板**，`maxStack: 2` 永不生效（首版实现即此缺陷，被用例抓到） | **修**：容量 = 栈内各条 `maxStack` 的最大值，**空栈**才回落 5（旧层 `stackCap()` 同语义）；用例「单条 maxStack 生效」钉死 |
+| 76-3 | `renderErrorReceipt` 的「修正重试」按钮在冻结输入面里**没有 actionId**（无 `retryActionId`），若给它编 id 即撞红线 8（不许自造 actionId） | **登记（不冻结也不排除）**：该按钮**不写** `ACTION_ID_ATTR`，`retryPrompt` 只作其文案；绑定归调用方（旧层同样无 id）。若需冻结其绑定签名须走 changeset |
+| 76-4 | `buildSharedHelpersJs` 的 `execCommand` 兜底用临时 textarea 的 `position`／`left` 两个内联属性——可能被读作「自带样式常量」 | **登记（nit）**：该节点是**临时**离屏载体、非控件视觉、不进 CSS；若 #75 愿承接，可改由共享样式区提供 `.ilife-copy-sink`（须走 changeset） |
+| 76-5 | `renderToast` 的 `actions` 数量上限（旧层 `slice(0, 2)`）未进冻结面 | **登记**：不截断（渲染全部），记在 `src/controls.ts` 文件头；用例「actions 不截断」钉死 |
+| 76-6 | `CopyButtonInput.format` 在 §3.3 无口径，若在渲染端消费即等于自定第二套 `format` 语义 | **登记**：`format` 不参与渲染（序列化归 #77，`text` 恒为已序列化字符串） |
+| 76-7 | helpers JS 的反馈栈容量**不读**静态 `renderToast` 产出的 `data-max` | **登记（已知限制）**：`data-max` 属 `renderToast` 的产出属性，供**页面自建** `createToastController` 读取；helpers 的委派栈容量取冻结 `maxStack`／`mobileMaxStack`（按视口），两栈互不相干。**影响**：页面若同时用静态 toast ＋ helpers 反馈，两者容量可不同（视觉上并存两套栈）。**后续票**：#75 共享样式区落地时统一「页面栈容器」口径（owner #75／#78 页面装配） |
+| 76-8 | 真实剪贴板**成功**路径从未在真浏览器里被观测（headless 无用户手势 → `writeText` 抛 `NotAllowedError`）；`writeText` 返回的 promise **偶发不 settle** | **登记（已知限制）**：成功分支只由**页面侧 resolve 桩**证明（`t76-nohost-evidence.md` §2 的 reject 桩同理）。**影响**：① 「真手势下必成功」属浏览器权限语义，非控件缺陷；② promise 永不 settle 时 helpers 无任何反馈（`copyText` 只处理 thenable 的 resolve／reject）。**后续票**：#90 接线时在真实页面（有用户手势）补一次人工观测；如需兜底超时须走 changeset（冻结面暂无该输入） |
+| 76-9 | `renderEmptyState.actionHtml` 为**受信 HTML 透传**，调用方可放进内联 `onclick` | **登记（已知限制）**：契约 §3.3 明写「受信 HTML 透传（调用方负责其内容安全，不转义）」，本层**不校验**也不转义；「零注入面」只约束 base-paint **自产**标记。**影响**：调用方若把不可信数据拼进 `actionHtml` 即形成 XSS 面（责任在调用方）。**后续票**：如需收严（如禁 `on*` 属性白名单），须走 changeset（会破坏「不转义」条款）。用例「actionHtml 的受信边界显式」把该边界钉死 |
+
+**返修（FX-76-1…FX-76-7）逐条处置**
+
+| 编号 | 洞 | 处置 | 落点 |
+|---|---|---|---|
+| FX-76-1 | `ports.fallback` 同步抛错 → `copyText` 拒绝、无徽章（回归） | **修**：通道 2 包 `try/catch` → `{ ok:false, channel:null, reason:'fallback-threw' }` ＋ 失败徽章照挂 | `src/controls.ts` `copyText`（通道 2 分支）；用例「fallback 同步抛错 → 返回 outcome 且徽章在」「fallback 返回 false → reason 可区分」「fallback 抛错不影响通道 1」 |
+| FX-76-2 | 「≤820px 收窄 3」与 AC-7 冲突 | **裁定后收口**：接受「模块纯逻辑 ＋ 页面运行时视口感知」分工；契约显式记录；补 ≤820px headless 证据 | 本文 §3.3「toast 移动端收窄的分工」＋ `controls.test.mjs` 视口用例 ＋ `docs/research/t76-nohost-evidence.md` §3 |
+| FX-76-3① | 2 处无鉴别力断言（`controls.test.mjs` 旧 `:319`／`:712`） | **修**：`:319` 改为与 `renderToast({icon:'danger'})` **字形对拍**＋「不得是缺省图标」；`:712` 恒真布尔改为「`staticHtml=true` 的控件集合逐字固定」 | `test/controls.test.mjs` |
+| FX-76-3② | 台账计数偏差（toast 11／actionBar ＋ ghost 6 vs 实测 12／5） | **修**：D3／A8 两处计数改为**实测值**（返修后 64 用例；toast 14／copyText 14／statusBadge 3／emptyState 4／errorReceipt 5／actionBar ＋ ghost 6／bindCopyAction 9／helpers 6／表 1／无宿主证据 2） | 本节 D3／A8 |
+| FX-76-3③ | 无 Chrome 时 `t.skip` → 可执行证据消失 | **修**：改为**显式失败**（`requireBrowser()` 抛断言），绝不静默变绿 | `test/controls.test.mjs`；自证 `DSH_BROWSER_CANDIDATES=Z:/nonexistent/chrome.exe` → `fail 2／skipped 0` |
+| FX-76-3④ | 9 条未覆盖边界 | **逐条修或登记**：badge.type／icon 回落、actions 不截断、端口返回值守卫、`copyText('', null)` 次序、`data-t=""`、场景按钮 `kind:'ghost'`、`opts.toast.fail.icon` 覆盖 → **修**（补用例／补断言）；helpers 不读 `data-max`、真实剪贴板成功路径 → **登记**（见 76-7／76-8） | `test/controls.test.mjs`；`src/controls.ts` 文件头；本节 76-7／76-8 |
+| FX-76-4 | 无宿主证据靠 HTTP ＋ import，非「双击打开的独立 HTML」 | **修**：新增自包含 `file://` 页面证据（脚本 ＋ 快照）作 A2 **主证据**；HTTP 夹具降为补充 | `docs/research/t76-nohost-evidence.mjs`／`.md` |
+| FX-76-5 | `findBrowser()` 缺 macOS 路径 → CI 静默跳过 | **修**：候选表补 macOS 3 条 ＋ Linux 2 条；无浏览器 → 显式失败（与 FX-76-3③ 合并） | `test/controls.test.mjs` `browserCandidates()`／`requireBrowser()`；`docs/research/t76-nohost-evidence.mjs` 同口径 |
+| FX-76-6 | `void copyText(...)` 未捕 rejection | **修**：改为 `void copyText(...).catch(...)`（binder 不产第二份反馈、不重入 `onFail`）；用例监听 `unhandledRejection` 断言零触发 | `src/controls.ts` `bindCopyAction`；用例「激活回调不得产生未处理拒绝」 |
+| FX-76-7① | `emptyState.actionHtml` 受信透传可含 `onclick` | **登记**（76-9）＋ 用例把「受信边界」钉死 | 本节 76-9；`test/controls.test.mjs` |
+| FX-76-7② | helpers 不读 `data-max` | **登记**（76-7） | 本节 76-7；`src/controls.ts` 文件头 |
+| FX-76-7③ | 夹具未断言静态 `toast` 的 `role`／`aria`／`data-max` | **修**：夹具页回读 `role`／`aria-live`／`data-max`／关闭文案，并逐条断言 | `test/controls.test.mjs` 夹具 `out.staticToast*` |
+| FX-76-7④ | 真实剪贴板成功路径未观测 ＋ promise 偶发不 settle | **登记**（76-8，写明影响与后续票） | 本节 76-8 |
+| FX-76-7⑤ | `#90` 的 bind 时机未写进契约 | **修**：§3.3 接线语义补「必须先渲染再 bind；动态重渲染须重新 bind」＋与 helpers 委派的差异 | 本文 §3.3 |
+
+**门禁实测（#76 返修后）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm test:types` 退出 0／签名测试单跑 **47 用例全绿**／控件守卫测试 `controls.test.mjs` **64 用例全绿／skipped 0**（含 headless Chrome HTTP 夹具 ＋ ≤820px 视口收窄用例）／自包含 `file://` 证据 **44 断言全绿**（`docs/research/t76-nohost-evidence.md`）／`pnpm test` **新增失败 = 0**（判据 = #92 台账多重集，见 §7「门禁口径」）／`SPEC_FROZEN_SURFACE` **130 条**（implemented **119**／pending 11；runtime 88／type 42）。
