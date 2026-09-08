@@ -157,11 +157,12 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 56/56
    H-03（页底≠卡面）、H-17（表格）、H-19（回到顶部）等**无闭集归属**，归 **#104**（B1 区块组件 owner）。
    本票**未**在 `extraCss` 里塞壳层样式（契约 doc:299-300 限死），也**未**扩闭集。
 5. **`extraCss` 三禁强制（D3 修订；覆盖此前「不校验」裁定）**：契约 doc:299-300 三条「不得」
-   ＋ doc:292 深色区禁令原无落点 → 现补最小强制：命中 `:root` 选择器／`STYLE_FORBIDDEN_TOKENS`
-   （`--r-xl`／`--pink`）／深色区选择器（`[data-theme`／`prefers-color-scheme: dark`）任一即抛
-   **不导出**的 `StyleSheetError`（`name`＋`code`＝`extra-css-root`／`extra-css-forbidden-token`／
+   ＋ doc:292 深色区禁令原无落点 → 现补最小强制：命中 `:root` 选择器（**大小写不敏感**，`:ROOT` 同拦）／
+   `STYLE_FORBIDDEN_TOKENS`（`--r-xl`／`--pink`）／深色区选择器（`[data-theme`／`prefers-color-scheme: dark`）
+   任一即抛**不导出**的 `StyleSheetError`（`name`＋`code`＝`extra-css-root`／`extra-css-forbidden-token`／
    `extra-css-dark-scheme`），零新增对外导出（冻结面 130 条不变）。合法技能作用域覆盖块
    `.ilife-<skill>{--blue:…}` 照常通过；**未知 token 名不强制**（契约未冻结判定方式 → 保持调用方责任）。
+   **已知局限**：文本级判定（不解析 CSS AST）→ `html{--blue:…}` 等等价改写仍在调用方责任内（契约 §8.11 未定口径⑤）。
    **回退方式**：删 `src/style.ts` 的 `assertExtraCss()` 单点（T24 同步变红）。
 6. **`version` 取值 = `STYLE_VERSION`**（裁定 D1）：契约 doc:268 只冻结类型、**未规定取值**（契约空白）；
    本票裁定取 `'0.1.0'`（语义为「样式表版本」、已被 `test-d:119 _B17` 锁、与 B8 同值、零新增符号），

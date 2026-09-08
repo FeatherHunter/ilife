@@ -885,7 +885,8 @@ class StyleSheetExtraCssError extends Error {
  *  **未知 token 名不强制**（契约未冻结 token 名闭集的判定方式 → 保持调用方责任，记账见 §8.11）。 */
 function assertExtraCss(extraCss: string): void {
   if (extraCss === '') return;
-  if (/:root(?![\w-])/.test(extraCss)) {
+  // `:root` 是伪类名（CSS 伪类名大小写不敏感）→ 用 `/i` 拦住 `:ROOT` 之类的等价写法。
+  if (/:root(?![\w-])/i.test(extraCss)) {
     throw new StyleSheetExtraCssError('extra-css-root',
       'buildStyleSheet: extraCss 不得改写基座（命中 `:root` 选择器）；技能主题只许用 `.ilife-<skill>` 作用域覆盖块（契约 doc:299）');
   }

@@ -368,6 +368,12 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
       (err) => err.name === 'StyleSheetError' && err.code === 'extra-css-root',
       '任意位置的 :root 选择器都必须拦',
     );
+    // 伪类名大小写不敏感 → `:ROOT` 是等价写法，必须同样拦住。
+    assert.throws(
+      () => buildStyleSheet({ extraCss: ':ROOT { --blue: #ff0000; }' }),
+      (err) => err.name === 'StyleSheetError' && err.code === 'extra-css-root',
+      ':ROOT 等价写法必须拦',
+    );
     // ② (b) Q14 禁入 token（逐条从冻结常量取）。
     for (const forbidden of STYLE_FORBIDDEN_TOKENS) {
       assert.throws(

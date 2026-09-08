@@ -1366,7 +1366,7 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | **R9** 验收② 的载体与口径 | 6 个 calorie 模板**预包裹** `<!--SHARED-CSS-->` → 直接 `fillTemplate` 必抛 `marker-missing`（`:962`）→ 用**合成模板**取证；票面／台账写明「本票只给**代理证据**；真实技能模板取证待 #107」 | `docs/research/t75-visual-evidence.mjs`；`t75-style-evidence.md` §7 |
 | **R10** 视觉证据入仓 | 入仓 `docs/research/t75-visual-evidence.{mjs,md}`；逐条 `PASS/FAIL` ＋ 末尾 `RESULT: n/m`，任一 FAIL → exit 1，未测量计 FAIL，无浏览器**显式失败** | 同上 |
 
-**未定口径（登记，不冻结也不排除）**：① ~~`extraCss` 违规的强制失败路径~~（**已定：D3 修订 = 三禁强制**，见上表 D3 行）；② `charts` 区是否应进共享样式表（契约 §3.2 闭集含 `charts`，§3.5 声明「各有唯一产出者」，二者张力已在记账 3 写明；若后续裁定不入，删 `SECTION_BUILDERS.charts` 单点即可）；③ 零渐变的唯一例外（`chartsCss` 的虚线图例 `repeating-linear-gradient`，属 #78 冻结产出、本票必须复用）；④ `extraCss` 的**未知 token 名**是否也应拦（现**不强制**，见 D3 修订）。
+**未定口径（登记，不冻结也不排除）**：① ~~`extraCss` 违规的强制失败路径~~（**已定：D3 修订 = 三禁强制**，见上表 D3 行）；② `charts` 区是否应进共享样式表（契约 §3.2 闭集含 `charts`，§3.5 声明「各有唯一产出者」，二者张力已在记账 3 写明；若后续裁定不入，删 `SECTION_BUILDERS.charts` 单点即可）；③ 零渐变的唯一例外（`chartsCss` 的虚线图例 `repeating-linear-gradient`，属 #78 冻结产出、本票必须复用）；④ `extraCss` 的**未知 token 名**是否也应拦（现**不强制**，见 D3 修订）；⑤ 三禁守卫是**文本级**判定（`/:root/i`、`STYLE_FORBIDDEN_TOKENS`、`/[data-theme/i`／`prefers-color-scheme: dark`），**不解析 CSS AST**——已知未覆盖的等价绕过写法（如 `html{--blue:…}` 改写根元素、自定义属性名大小写变体）仍属**调用方责任**；如需覆盖，须先裁定扩大三禁范围（不在本票授权内）。
 
 #### 8.11.1 #75 返修台账（A1 PASS 87／A2 FAIL 77 → 编排者裁定返修）
 
