@@ -9,7 +9,8 @@ export const CHART_KINDS = ['bar', 'line', 'donut', 'progress', 'combo', 'sparkl
 
 export type ChartKind = (typeof CHART_KINDS)[number];
 
-/** 统一数据形状（旧 §6.5）：`value: null` 仅 line／scatter 视为缺失断点。 */
+/** 统一数据形状（旧 §6.5）：`value: null` **仅 line** 视为缺失断点
+ *  （scatter 走 `ScatterItem` 的 `x`／`y`，无 `value`；非法即抛）。 */
 export interface ChartItem {
   readonly label: string;
   readonly value: number | null;

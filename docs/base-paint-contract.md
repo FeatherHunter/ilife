@@ -767,15 +767,15 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | `ChartItem` | type | #78 | implemented | 3.5 | `{ label: string; value: number \| null; color?: string; values?: readonly number[]; anomaly?: boolean }` |
 | `ChartOutput` | type | #78 | implemented | 3.5 | `{ kind: ChartKind; html: string; empty: boolean; points: number }` |
 | `ChartsApi` | type | #78 | implemented | 3.5 | `{ bar(input: BarChartInput): ChartOutput; line(input: LineChartInput): ChartOutput; donut(input: DonutChartInput): ChartOutput; progress(input: ProgressChartInput): ChartOutput; combo(input: ComboChartInput): ChartOutput; sparkline(input: SparklineChartInput): ChartOutput; gauge(input: GaugeChartInput): ChartOutput; scatter(input: ScatterChartInput): ChartOutput }` |
-| `charts` | runtime | #78 | pending | 3.5 | `ChartsApi` |
+| `charts` | runtime | #78 | implemented | 3.5 | `ChartsApi` |
 | `SceneData` | type | #78 | implemented | 3.5 | `{ skill_name: string; title: string; subtitle?: string; meta_blocks?: readonly SceneMetaBlock[]; groups: readonly SceneGroup[]; init_banner?: SceneInitBanner; contact?: SceneContact; version?: string; recommendations?: readonly SceneRecommendation[] }` |
 | `Scene` | type | #78 | implemented | 3.5 | `{ id: string; title: string; wake_word: string; types?: readonly (string \| SceneTypeBadge)[]; status: SceneStatus; prompt_template: string; editable_fields?: readonly SceneEditableField[] }` |
 | `HelpShellInput` | type | #78 | implemented | 3.5 | `{ sceneData: SceneData; assets: TemplateAssets; strict?: boolean; template?: string }` |
-| `RenderHelpShell` | type | #78 | pending | 3.5 | `(input: HelpShellInput) => FillTemplateOutput` |
-| `renderHelpShell` | runtime | #78 | pending | 3.5 | `(input: HelpShellInput): FillTemplateOutput` |
+| `RenderHelpShell` | type | #78 | implemented | 3.5 | `(input: HelpShellInput) => FillTemplateOutput` |
+| `renderHelpShell` | runtime | #78 | implemented | 3.5 | `(input: HelpShellInput): FillTemplateOutput` |
 | `ChartsHelpersInput` | type | #78 | implemented | 3.5 | `{ prefix?: string; styleId?: string }` |
-| `BuildChartsHelpersJs` | type | #78 | pending | 3.5 | `(input?: ChartsHelpersInput) => string` |
-| `buildChartsHelpersJs` | runtime | #78 | pending | 3.5 | `(input?: ChartsHelpersInput): string` |
+| `BuildChartsHelpersJs` | type | #78 | implemented | 3.5 | `(input?: ChartsHelpersInput) => string` |
+| `buildChartsHelpersJs` | runtime | #78 | implemented | 3.5 | `(input?: ChartsHelpersInput): string` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
 #### 3.5.1 图表 8 接口逐条对照（AC-17／B4）
@@ -812,7 +812,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 
 #### 3.5.2 scene-data 契约（AC-3／AC-4）
 
-- **字段名取 `types`（复数）**：`SCENE_TYPE_FIELD = 'types'`，**不提供 `type` 别名**。这是对旧侧硬分歧的裁定——`docs/scene-data-contract.md:78` 与 `docs/scene_data.schema.json:70` 用 `types`，`assets/help_template.html:52` 用 `type`（笔误）；机读 schema 优先于散文与模板笔误，单复数双写会制造第二真相。
+- **字段名取 `types`（复数）**：`SCENE_TYPE_FIELD = 'types'`，**不提供 `type` 别名**。这是对旧侧硬分歧的裁定——旧侧 `docs/scene-data-contract.md:78` 与 `docs/scene_data.schema.json:70` 用 `types`，旧侧 `docs/help-template-contract.md:51` 用 `type`（笔误；#78 施工期取证 R2 更正引证：旧稿写的 `assets/help_template.html:52` 实为 CSS 行，模板资产本身用 `s.types`，见 `help_template.html:224`）；机读 schema 优先于散文与模板笔误，单复数双写会制造第二真相。
 - **唯一机读 schema**：`SCENE_DATA_SCHEMA`（`packages/base-render/src/spec/help.ts`，draft-07，`$id: 'ilife://base-paint/scene-data.schema.json'`）。**本文只是它的可读投影**；两者不一致视为契约缺陷。它已补齐旧 schema 因 `additionalProperties: false` 拒绝的字段：`init_banner`／`contact`／`version`／`recommendations`（old §6 缺口 5），因此旧 `help_example_data.json` 在新 schema 下可校验通过。
 - **随包发布的 `scene-data.schema.json`（FX-6，定死）**：若 #78 或任何包随包发布名为 `scene-data.schema.json` 的文件（`$id` 已用该文件名，极易被顺手实现），**必须**由 `SCENE_DATA_SCHEMA` **序列化生成**（`JSON.stringify(SCENE_DATA_SCHEMA)`，不得手写、不得二次编辑），并由签名测试**逐值断言**（`test/contract-signatures.test.mjs` 的 FX-6 用例：文件存在即与常量 `deepEqual`）。**不发布也合规**；一旦发布，禁止出现「TS 常量 vs 包内 `.json`」两份可独立漂移的权威（AC-4）。
 - **顶层**：`skill_name`（必填）／`title`（必填）／`groups`（必填）／`subtitle?`／`meta_blocks?`／`init_banner?`／`contact?`／`version?`／`recommendations?`。
@@ -961,8 +961,8 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 - **包裹与顺序（#118）**：三个共享资产按 `ASSET_WRAPPERS` 逐字包裹后替换标记（CSS→`<style>`、JS→`<script>`）；资产文本自带包裹标签 → `asset-missing`（判定谓词 `WRAP_PREDICATES.assetsBare`）；替换顺序恒按 `INJECTION_ORDER`（正文不在其中、且与四个注入步**无先后语义**，见 §3.1.2①／④）。
 - **calorie 6 模板的处置（FX-19，登记）**：`packages/skill-calorie/templates/{diet,exercise,goal,help,home,photo-gallery}.html` 实测**只有** `<!--SHARED-CSS-->`×1 ＋ `<!--SHARED-HELPERS-->`×1，**无 `<!--INJECT-DATA-->`、无 `<!--CONTENT-->`、无自带容器**（两载荷槽 0 命中）→ 按 `TEMPLATE_KIND_RULE` 属 **`legacy`（契约外遗留资产）**；即**死资产**（无引用、无填充者），按契约直接调用 `fillTemplate` **必抛** `marker-missing`（这是**正确行为**：它们不该能填；判定次序 `TEMPLATE_CHECK_ORDER` 中 `marker-missing` 早于其 SHARED-CSS 预包裹触发的 `marker-conflict`，见 §3.1.2⑤）。其**改造面（补载荷槽 ＋ 自带容器）与并入 HELP 重建的处置归 #107**（§4.4），**不属 #74**；#74 的票面验收②只对**迁移后满足占位符契约**的模板负责（53 内容页 ＋ `skill-memo-ilife/templates/*.html` 6 个数据页——memo 6 个当前**模板自带包裹**，须先完成迁移动作才满足③，FX-118-5 更正：旧版「已满足」与同节③及 §3.1.2④ 矛盾）。
 - **迁移方向（#118 D-6，供 #74 用）**：① **内容页 53**——删除技能私有 `CONTENT_MARKER` 与私有 `fillTemplate`，改由统一填充器填 `content`；模板本身**零改动**；② **数据页 6（memo）**——去掉模板自带的 `<style>`／`<script>` 包裹（改由填充器包），同时删除 `fillSharedMarkers`；③ **遗留 6（calorie）**——**不动**（归 #107）。
-- **数据页 6 的迁移面边界（FX-118-4，总架构师裁定）**：② 的「去掉模板自带包裹」**只是模板动作**，其**执行方是该技能自己的地图**（memo 侧改造归 #74 的实现清单，但**生产接线不属 #74**）；契约不规定、也不要求 #74 改动 memo／chef 的 CLI 生产链（`packages/skill-memo-ilife/src/cli/cmd_read.ts:133-135`、`packages/skill-chef/src/cli/cmd_read.ts:373-375` 直写裸 `<section>`，不经模板）。**memo 数据页的 assets 来源**由 **#75／#76** 产出者提供（当前 **pending**；memo 无私有 CSS／HELPERS 常量，`packages/skill-memo-ilife/src/render/html.ts:52-61` 只收调用方参数）——在产出者落地前，#74 的测试用**自造合法资产**（§6.1「跨票产出者依赖」）。其余 5 技能的迁移**只写路径、不执行**（本图 `Out of scope`）。
-- **跨票产出者依赖（FX-19，须写进 #74 票面）**：三个注入资产的产出者当前**全部 pending**——`sharedCssText` ← `buildStyleSheet`（#75）、`sharedHelpersJs` ← `buildSharedHelpersJs`（#76）、`chartsHelpersJs` ← `buildChartsHelpersJs`（#78）。→ #74 的实现／验收须在资产可用之后进行，或由测试**自造**合法资产；**不得**自产这三者（B3），也不得因缺资产而把 `asset-missing` 当成通过。
+- **数据页 6 的迁移面边界（FX-118-4，总架构师裁定）**：② 的「去掉模板自带包裹」**只是模板动作**，其**执行方是该技能自己的地图**（memo 侧改造归 #74 的实现清单，但**生产接线不属 #74**）；契约不规定、也不要求 #74 改动 memo／chef 的 CLI 生产链（`packages/skill-memo-ilife/src/cli/cmd_read.ts:133-135`、`packages/skill-chef/src/cli/cmd_read.ts:373-375` 直写裸 `<section>`，不经模板）。**memo 数据页的 assets 来源**由 **#75／#76** 产出者提供（**#78 施工期注记（2026-09-09）：#76 已落地，#75 仍 `pending`**；memo 无私有 CSS／HELPERS 常量，`packages/skill-memo-ilife/src/render/html.ts:52-61` 只收调用方参数）——在产出者落地前，#74 的测试用**自造合法资产**（§6.1「跨票产出者依赖」）。其余 5 技能的迁移**只写路径、不执行**（本图 `Out of scope`）。
+- **跨票产出者依赖（FX-19，须写进 #74 票面）**：三个注入资产的产出者中 `sharedCssText` ← `buildStyleSheet`（#75）**仍 `pending`**，`sharedHelpersJs` ← `buildSharedHelpersJs`（#76）与 `chartsHelpersJs` ← `buildChartsHelpersJs`（#78）**已落地**（**#78 施工期注记 2026-09-09**）。→ #74 的实现／验收须在资产可用之后进行，或由测试**自造**合法资产；**不得**自产这三者（B3），也不得因缺资产而把 `asset-missing` 当成通过。
 - **`escapeHtml` 归一 owner（V1 洞 13 处置）**：把既有 `escapeHtml` 从 4 字符改到 5 字符（`& < > " '`）并翻转 §7 哨兵**由 #74 执行**（#79 只复核）；改完必须同步删除技能侧本地副本，并保证 #96 快照门通过。
 - **验收怎么测**：`node -e` 断言六个标记的数量规则（缺失/重复/互斥各抛对应 code）；断言**载荷槽两态**——内容页缺 `content` → `content-missing`、数据页缺 `data` → `data-missing`；**断言含 `INJECT-DATA` 的模板缺自带容器或 id／type 不符 → `container-missing`**，且**内容页模板（无容器）不抛 `container-missing`**（FX-118-1／S-1）；断言**两条包裹不变量**——资产 `trim()` 后以包裹标签起止 → `asset-missing`、**作用域内**标记被预包裹 → `marker-conflict`，且**数据页的 `INJECT-DATA` 落在自带容器内不抛 `marker-conflict`**（FX-118-3／S-2）；断言**多条件输入按 `TEMPLATE_CHECK_ORDER` 首个命中即抛**（FX-118-2／S-4）；断言产出 HTML 里 `ASSET_WRAPPERS` 逐字出现且**不双包**；`Select-String -Path packages\*\src\render\html.ts -Pattern 'SHARED_CSS_MARKER|CONTENT_MARKER|fillSharedMarkers'` 必须零命中；`node tooling/check-boundaries.mjs` 仍 PASS。
 

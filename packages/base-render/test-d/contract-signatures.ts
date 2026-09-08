@@ -346,8 +346,13 @@ type _H09 = Expect<Equal<'type' extends keyof Scene ? true : false, false>>;
 type _H10 = Expect<Equal<keyof SceneData, 'skill_name' | 'title' | 'subtitle' | 'meta_blocks' | 'groups' | 'init_banner' | 'contact' | 'version' | 'recommendations'>>;
 type _H11 = Expect<Equal<HelpShellInput, { readonly sceneData: SceneData; readonly assets: TemplateAssets; readonly strict?: boolean; readonly template?: string }>>;
 type _H12 = Expect<Equal<RenderHelpShell, (input: HelpShellInput) => FillTemplateOutput>>;
-type _H13 = Expect<Equal<Absent<'charts'>, true>>;
-type _H14 = Expect<Equal<Absent<'renderHelpShell'>, true>>;
+/* #78 落地（契约 §3.5 施工面 5 条 pending）：3 条 runtime 出口**必须存在**（原 `Absent<>` 按契约
+ * 「实现后必须翻转清单」翻转为 `Present<>`），且出口类型与冻结签名逐字相等（签名值零改动）；
+ * 2 条 type 条目（`RenderHelpShell`／`BuildChartsHelpersJs`）类型别名本已存在，仅清单 status 翻转。 */
+type _H13 = Expect<Equal<Present<'charts'>, true>>;
+type _H13b = Expect<Equal<Mod['charts'], ChartsApi>>;
+type _H14 = Expect<Equal<Present<'renderHelpShell'>, true>>;
+type _H14b = Expect<Equal<Mod['renderHelpShell'], RenderHelpShell>>;
 type _H15 = Expect<Equal<Mod['SCENE_DATA_SCHEMA']['$schema'], 'http://json-schema.org/draft-07/schema#'>>;
 type _H16 = Expect<Equal<Mod['HELP_COPY_TARGETS'][number], 'prompt' | 'wakeWord' | 'params'>>;
 type _H17 = Expect<Equal<keyof Mod['HELP_COPY_ACTIONS'], 'prompt' | 'wakeWord' | 'params'>>;
@@ -356,7 +361,12 @@ type _H17c = Expect<Equal<Mod['HELP_COPY_ACTIONS']['wakeWord']['actionId'], 'ili
 /* FX-22：chartsHelpersJs 的唯一产出者（归 #78） */
 type _H18 = Expect<Equal<ChartsHelpersInput, { readonly prefix?: string; readonly styleId?: string }>>;
 type _H19 = Expect<Equal<import('../src/index.js').BuildChartsHelpersJs, (input?: ChartsHelpersInput) => string>>;
-type _H20 = Expect<Equal<Absent<'buildChartsHelpersJs'>, true>>;
+type _H20 = Expect<Equal<Present<'buildChartsHelpersJs'>, true>>;
+type _H20b = Expect<Equal<Mod['buildChartsHelpersJs'], import('../src/index.js').BuildChartsHelpersJs>>;
+/* #78 不导出的三类（与 `TemplateError`／`ControlsError` 同口径；内置壳模板只可经 `template` 覆盖）。 */
+type _H21 = Expect<Equal<Absent<'ChartError'>, true>>;
+type _H22 = Expect<Equal<Absent<'HelpSchemaError'>, true>>;
+type _H23 = Expect<Equal<Absent<'buildShellTemplate'>, true>>;
 
 /* ── 7. 冻结面逐值（FX-20）：27 条运行时条目的值锁（改 spec 值即编译红） ── */
 

@@ -3,7 +3,9 @@
  * B6：HELP 形态 = HTML 速查台；Q11：取 F3 并回补 F1／F2 的逐场景 CLI 展示与变体示例。
  * AC-3：场景类型徽章字段取 **`types`（复数）**，不提供 `type` 别名（旧侧
  *   `docs/scene-data-contract.md:78` 与 `docs/scene_data.schema.json:70` 用 `types`，
- *   `assets/help_template.html:52` 用 `type` —— 本契约是对该分歧的裁定）。
+ *   旧侧 `docs/help-template-contract.md:51` 用 `type` —— 本契约是对该分歧的裁定）。
+ *   引证更正（#78 施工期取证 R2）：旧稿把笔误出处写成 `assets/help_template.html:52`，
+ *   该行实为 CSS；模板资产本身用 `s.types`（`help_template.html:224`）。裁定结论不变。
  * AC-4：`SCENE_DATA_SCHEMA` 是**唯一机读权威**，文档 §3.5 只是它的可读投影。
  *
  * 依赖红线：只许 `import type`（AC-13）；壳复用面见 `HelpShellInput`（#88 直接消费）。
@@ -142,6 +144,9 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                 label: { type: 'string' },
                 scenes: {
                   type: 'array',
+                  /** 文档 §3.5.2 明写「`scenes[]`（必填，**非空**）」；机读权威此前缺该约束
+                   *  （#78 施工期取证 R1 缺陷 1，AC-4 下即缺陷态）→ 补齐 `minItems: 1`。 */
+                  minItems: 1,
                   items: {
                     type: 'object',
                     additionalProperties: false,

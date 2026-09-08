@@ -105,6 +105,9 @@ export const ACTION_ID_ATTR = 'data-action-id' as const;
  *
  *  约定：全部 base-paint actionId（含 `HELP_COPY_ACTIONS`）在**同一页面内唯一**；调用方可覆盖
  *  `ErrorReceiptInput.dataActionId`／`logActionId`，覆盖值同样必须唯一且可被 `listActionIds()` 发现。
+ *  **例外（#78 记账，R27）**：HELP 壳按 §3.5.3 字面把三个复制目标的 actionId **逐字**写入**每张**场景卡
+ *  （多场景卡必然页内重复，且 §3.5.3 禁「另定通配约定」）。歧义由宿主适配端解决——
+ *  `readDataText(actionId)` 在激活处理内**同步**调用（§3.3 语义 2），适配端按「最近一次激活元素」关联。
  */
 export const COPY_ACTION_IDS = Object.freeze({
   actionBar: { copyData: 'ilife-copy-data', copyLog: 'ilife-copy-log' },
