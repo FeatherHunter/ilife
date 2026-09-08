@@ -151,6 +151,9 @@ Test-Path node_modules\skill-calorie\templates -> True
 3. **发现（不在本票范围，需转票）**：安装态 `import('skill-calorie/render')` 会连带加载 `base-paint`，
    而 registry 上的 `base-paint` 落后于工作区（实测缺 `ACTION_ID_ATTR`）——这是**版本偏斜**，会让
    「安装态整包可用」类断言假红；G3 因此改从安装态 `dist/render/templates.js` 取 loader（见 §3.3 注）。
+4. **偏离记账（改动大于票面口径）**：`tooling/check-publish.mjs` 除 `WITH_TEMPLATES`／逐件点名／G3 loader 断言外，
+   还改了临时根与安装目录 `package.json`（§3.3 注）——起因是本票新增断言在 Windows 中文 `%TEMP%` 下必红，
+   而根因（`npm install` 空跑）属既有门禁缺陷，不修则本票证据无法真跑。CI（ASCII 路径）行为不变。
 
 ## 8. 复跑
 
