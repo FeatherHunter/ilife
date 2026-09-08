@@ -3,14 +3,18 @@
 // 用途：把本仓全部 `packages/skill-*/templates/*.html` 按**冻结契约**逐一分型，证明
 // 「数据页 6 ／ 内容页 53 ／ 遗留 6」且**不存在**「两类都不属于且非 legacy」的模板。
 //
-// 单一真相：判定规则**只读 `packages/base-render/dist/index.js` 的冻结常量**
-//（`TEMPLATE_MARKERS`／`TEMPLATE_KINDS`／`TEMPLATE_KIND_RULE`／`PAYLOAD_SLOT_RULE`），
-// 脚本内**不自带**任何标记字面量或分型表副本——契约漂移会立刻反映到输出。
-// 因此跑之前必须先 `pnpm build`（脚本会自检并给出提示）。
+// 单一真相（FX-118-9）：判定规则**只读 `packages/base-render/dist/index.js` 的冻结常量**
+//（`TEMPLATE_MARKERS`／`TEMPLATE_KINDS`／`TEMPLATE_KIND_RULE`／`PAYLOAD_SLOT_RULE`／
+// `ASSET_WRAPPERS`／`ASSET_MARKER_KEYS`／`WRAP_PREDICATES`／`CONTAINER_CHECK_RULE`），
+// 脚本内**不自带**任何标记字面量、分型字符串、包裹标签字面量或分型表副本——契约漂移会
+// 立刻反映到输出（或前置自检直接报错）。因此跑之前必须先 `pnpm build`。
+//
+// 包裹不变量②的判定谓词与 #74 **共用** `WRAP_PREDICATES.forbidPreWrappedMarker`（FX-118-3）：
+// 本脚本的 `wrapForm()` 是「按冻结谓词执行」的**唯一实现**，`method` 不符即前置失败。
 //
 // 用法：
 //   node tooling/classify-templates.mjs                       # 打印分型表 ＋ 汇总
-//   node tooling/classify-templates.mjs --inventory           # 另与清单逐条比对（默认 .scratch/t118/template-inventory.md）
+//   node tooling/classify-templates.mjs --inventory           # 另与清单逐条比对（默认 docs/research/t118-template-inventory.md）
 //   node tooling/classify-templates.mjs --inventory <path>    # 指定清单路径
 //
 // 退出码：0 = 全部可归类（且清单比对一致）；1 = 有模板不可归类／与清单不一致；2 = 前置缺失（dist 未构建）。
@@ -20,7 +24,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = join(ROOT, 'packages', 'base-render', 'dist', 'index.js');
-const DEFAULT_INVENTORY = join(ROOT, '.scratch', 't118', 'template-inventory.md');
+const DEFAULT_INVENTORY = join(ROOT, 'docs', 'research', 't118-template-inventory.md');
 
 if (!existsSync(DIST)) {
   console.error('[classify-templates] 缺 ' + DIST + '：先跑 `pnpm build`（分型判定读冻结常量，不自带副本）');
@@ -28,16 +32,60 @@ if (!existsSync(DIST)) {
 }
 
 const spec = await import(pathToFileURL(DIST).href);
-const { TEMPLATE_MARKERS, TEMPLATE_KINDS, TEMPLATE_KIND_RULE, PAYLOAD_SLOT_RULE } = spec;
-for (const [name, value] of Object.entries({ TEMPLATE_MARKERS, TEMPLATE_KINDS, TEMPLATE_KIND_RULE, PAYLOAD_SLOT_RULE })) {
+const {
+  TEMPLATE_MARKERS, TEMPLATE_KINDS, TEMPLATE_KIND_RULE, PAYLOAD_SLOT_RULE,
+  ASSET_WRAPPERS, ASSET_MARKER_KEYS, WRAP_PREDICATES, CONTAINER_CHECK_RULE,
+} = spec;
+for (const [name, value] of Object.entries({
+  TEMPLATE_MARKERS, TEMPLATE_KINDS, TEMPLATE_KIND_RULE, PAYLOAD_SLOT_RULE,
+  ASSET_WRAPPERS, ASSET_MARKER_KEYS, WRAP_PREDICATES, CONTAINER_CHECK_RULE,
+})) {
   if (value === undefined) {
     console.error('[classify-templates] 冻结常量缺失：' + name + '（dist 过期？重跑 `pnpm build`）');
     process.exit(2);
   }
 }
 
-/** 清单里的中文分型标签 → 契约分型（`.scratch/t118/template-inventory.md` 用「其它」表示契约外的遗留资产）。 */
-const INVENTORY_KIND = { 数据页: 'data-page', 内容页: 'content-page', 其它: 'legacy' };
+// ── 冻结常量的前置自检（FX-118-3／FX-118-9：不共用则失败，而不是静默各写一份） ──
+
+/** 不变量②的判定谓词：方式名必须与脚本实现一致；作用域必须在标记集内且排除 injectData。 */
+const PRE_WRAP = WRAP_PREDICATES.forbidPreWrappedMarker;
+if (PRE_WRAP.method !== 'enclosing-open-tag') {
+  console.error('[classify-templates] 谓词方式漂移：' + PRE_WRAP.method + '（本脚本只实现 enclosing-open-tag）');
+  process.exit(2);
+}
+for (const key of PRE_WRAP.scope) {
+  if (!(key in TEMPLATE_MARKERS)) {
+    console.error('[classify-templates] 不变量②作用域含非标记：' + key);
+    process.exit(2);
+  }
+}
+if (PRE_WRAP.scope.includes(CONTAINER_CHECK_RULE.appliesWhenMarker)) {
+  console.error('[classify-templates] 不变量②作用域不得含 ' + CONTAINER_CHECK_RULE.appliesWhenMarker + '（容器是必需项，不是预包裹）');
+  process.exit(2);
+}
+/** 资产键 ↔ 标记键映射必须与 `ASSET_WRAPPERS` 同键集。 */
+for (const key of Object.keys(ASSET_WRAPPERS)) {
+  if (!(key in ASSET_MARKER_KEYS)) {
+    console.error('[classify-templates] ASSET_MARKER_KEYS 缺资产键：' + key);
+    process.exit(2);
+  }
+}
+
+/** 包裹标签名（**唯一真相源** `ASSET_WRAPPERS`；脚本不写 `<style`／`<script` 字面量）。 */
+const WRAP_TAG_NAMES = [...new Set(Object.values(ASSET_WRAPPERS).map((w) => w.openTag.slice(1, -1)))];
+/** payload 容器标签名（**唯一真相源** `CONTAINER_CHECK_RULE`）。 */
+const CONTAINER_TAG_NAME = CONTAINER_CHECK_RULE.openTag.slice(1, -1);
+
+/** 清单里的中文分型标签（与 `TEMPLATE_KINDS` **同序**；长度不符即前置失败，不静默漂移）。
+ *  第三型的中文标签恒为「遗留」（FX-118-10②，三名并存已消除）。 */
+const KIND_LABELS = ['数据页', '内容页', '遗留'];
+if (KIND_LABELS.length !== TEMPLATE_KINDS.length) {
+  console.error('[classify-templates] 中文分型标签数 ' + KIND_LABELS.length + ' ≠ TEMPLATE_KINDS ' + TEMPLATE_KINDS.length);
+  process.exit(2);
+}
+/** 清单中文标签 → 契约分型（键序恒按 `TEMPLATE_KINDS`）。 */
+const INVENTORY_KIND = Object.fromEntries(TEMPLATE_KINDS.map((k, i) => [KIND_LABELS[i], k]));
 
 const argv = process.argv.slice(2);
 const wantInventory = argv.includes('--inventory');
@@ -51,26 +99,28 @@ const inventoryPath = (() => {
 /** 逐字出现次数（契约标记为逐字匹配，区分大小写）。 */
 const countOf = (text, literal) => text.split(literal).length - 1;
 
-/** 标记的包裹形态：裸／`<style>` 包裹／`<script>` 包裹（取首个出现处）。 */
+/** 标记的包裹形态：裸／`<style>` 包裹／`<script>` 包裹（取首个出现处）。
+ *  判定方式 = `WRAP_PREDICATES.forbidPreWrappedMarker.method`（`enclosing-open-tag`：
+ *  扫描标记左侧**全部前缀文本**，不限同行，故同行与跨行两种形态都命中）。 */
 function wrapForm(text, literal) {
   const idx = text.indexOf(literal);
   if (idx < 0) return null;
   const before = text.slice(0, idx);
-  const inStyle = before.lastIndexOf('<style') > before.lastIndexOf('</style');
-  const inScript = before.lastIndexOf('<script') > before.lastIndexOf('</script');
-  if (inStyle) return 'style';
-  if (inScript) return 'script';
+  for (const name of WRAP_TAG_NAMES) {
+    if (before.lastIndexOf('<' + name) > before.lastIndexOf('</' + name)) return name;
+  }
   return 'bare';
 }
 
-/** 标记所在的自带 payload 容器（首个出现处）：返回 { id, type } 或 null。 */
+/** 标记所在的自带 payload 容器（首个出现处）：返回 { id, type } 或 null。
+ *  标签名取 `CONTAINER_CHECK_RULE.openTag`，id／type 校验取同常量的 `id`／`type`。 */
 function containerOf(text, literal) {
   const idx = text.indexOf(literal);
   if (idx < 0) return null;
   const before = text.slice(0, idx);
-  const open = before.lastIndexOf('<script');
+  const open = before.lastIndexOf('<' + CONTAINER_TAG_NAME);
   if (open < 0) return null;
-  if (before.slice(open).includes('</script')) return null;
+  if (before.slice(open).includes(CONTAINER_CHECK_RULE.closeTag)) return null;
   const tag = text.slice(open, text.indexOf('>', open) + 1);
   const pick = (name) => new RegExp(name + '\\s*=\\s*"([^"]*)"').exec(tag)?.[1] ?? null;
   return { id: pick('id'), type: pick('type') };
@@ -140,7 +190,7 @@ console.log('|---|---|');
 for (const kind of TEMPLATE_KINDS) console.log('| ' + kind + ' | ' + totals[kind] + ' |');
 console.log('| **合计** | **' + totals.total + '** |');
 console.log('');
-console.log('分型计数：数据页 ' + totals['data-page'] + ' ／ 内容页 ' + totals['content-page'] + ' ／ 遗留 ' + totals.legacy + ' ／ 合计 ' + totals.total);
+console.log('分型计数：' + TEMPLATE_KINDS.map((k, i) => KIND_LABELS[i] + ' ' + totals[k]).join(' ／ ') + ' ／ 合计 ' + totals.total);
 const perSkill = skills
   .map((s) => [s, rows.filter((r) => r.skill === s).length])
   .filter(([, n]) => n > 0)
@@ -164,7 +214,10 @@ if (conflicted.length > 0) {
   console.log('[OK] 载荷槽零冲突（无模板同时含 INJECT-DATA 与 CONTENT）');
 }
 
-const dataPagesWithoutContainer = rows.filter((r) => r.counts.injectData === 1 && !r.container);
+/** 容器校验只在含 `injectData` 的模板上执行（`CONTAINER_CHECK_RULE.appliesWhenMarker`，FX-118-1），
+ *  且 id／type 必须与 `CONTAINER_CHECK_RULE` 逐字一致。 */
+const dataPagesWithoutContainer = rows.filter((r) => r.counts[CONTAINER_CHECK_RULE.appliesWhenMarker] === 1
+  && (!r.container || r.container.id !== CONTAINER_CHECK_RULE.id || r.container.type !== CONTAINER_CHECK_RULE.type));
 if (dataPagesWithoutContainer.length > 0) {
   bad += 1;
   console.error('[FAIL] 数据页缺自带 payload 容器：' + dataPagesWithoutContainer.map((r) => r.skill + '/' + r.file).join(', '));

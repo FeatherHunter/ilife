@@ -158,9 +158,9 @@ type _T20 = Expect<Equal<Mod['PAYLOAD_SLOT_RULE']['members'][number], 'injectDat
 type _T21 = Expect<Equal<Mod['TEMPLATE_KINDS'], readonly ['data-page', 'content-page', 'legacy']>>;
 type _T22 = Expect<Equal<TemplateKind, 'data-page' | 'content-page' | 'legacy'>>;
 type _T23 = Expect<Equal<Mod['TEMPLATE_KIND_RULE'], {
-  readonly 'data-page': { readonly required: readonly ['injectData']; readonly forbidden: readonly ['content'] };
-  readonly 'content-page': { readonly required: readonly ['content']; readonly forbidden: readonly ['injectData'] };
-  readonly legacy: { readonly required: readonly []; readonly forbidden: readonly ['injectData', 'content'] };
+  readonly 'data-page': { readonly required: readonly ['injectData']; readonly forbidden: readonly ['content']; readonly noKindCode: 'marker-conflict' };
+  readonly 'content-page': { readonly required: readonly ['content']; readonly forbidden: readonly ['injectData']; readonly noKindCode: 'marker-conflict' };
+  readonly legacy: { readonly required: readonly []; readonly forbidden: readonly ['injectData', 'content']; readonly noKindCode: 'marker-conflict' };
 }>>;
 type _T24 = Expect<Equal<keyof Mod['TEMPLATE_KIND_RULE'], TemplateKind>>;
 type _T25 = Expect<Equal<Mod['ASSET_WRAP_RULE'], {
@@ -173,6 +173,36 @@ type _T26 = Expect<Equal<Mod['ASSET_WRAPPERS'], {
   readonly chartsHelpersJs: { readonly openTag: '<script>'; readonly closeTag: '</script>' };
 }>>;
 type _T27 = Expect<Equal<keyof Mod['ASSET_WRAPPERS'], keyof TemplateAssets>>;
+type _T28 = Expect<Equal<Mod['ASSET_MARKER_KEYS'], {
+  readonly sharedCssText: 'sharedCss';
+  readonly sharedHelpersJs: 'sharedHelpers';
+  readonly chartsHelpersJs: 'chartsHelpers';
+}>>;
+type _T29 = Expect<Equal<Mod['WRAP_PREDICATES'], {
+  readonly assetsBare: {
+    readonly scope: readonly ['sharedCssText', 'sharedHelpersJs', 'chartsHelpersJs'];
+    readonly method: 'trim-prefix-or-suffix';
+    readonly code: 'asset-missing';
+  };
+  readonly forbidPreWrappedMarker: {
+    readonly scope: readonly ['sharedCss', 'sharedHelpers', 'chartsHelpers'];
+    readonly excludes: readonly ['injectData'];
+    readonly method: 'enclosing-open-tag';
+    readonly code: 'marker-conflict';
+  };
+}>>;
+type _T30 = Expect<Equal<Mod['CONTAINER_CHECK_RULE'], {
+  readonly appliesWhenMarker: 'injectData';
+  readonly openTag: '<script>';
+  readonly closeTag: '</script>';
+  readonly id: 'payload';
+  readonly type: 'application/json';
+  readonly code: 'container-missing';
+}>>;
+type _T31 = Expect<Equal<Mod['TEMPLATE_CHECK_ORDER'], readonly [
+  'marker-duplicate', 'marker-missing', 'marker-conflict', 'container-missing',
+  'asset-missing', 'data-missing', 'content-missing', 'strict-invalid',
+]>>;
 
 /* ── 3. 冻结面 · §3.2 样式资产（#75） ──────────────────── */
 

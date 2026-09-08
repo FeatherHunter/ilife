@@ -1,7 +1,7 @@
 # #118 模板分型 · 脚本输出快照（可复跑）
 
-- 脚本：`tooling/classify-templates.mjs`（**唯一真相**：判定只读 `packages/base-render/dist/index.js` 的冻结常量 `TEMPLATE_MARKERS`／`TEMPLATE_KINDS`／`TEMPLATE_KIND_RULE`／`PAYLOAD_SLOT_RULE`，脚本内不自带任何标记字面量或分型表副本）。
-- 复跑：`pnpm build` 之后执行 `node tooling/classify-templates.mjs --inventory`（`--inventory` 缺省比对 `.scratch/t118/template-inventory.md`）。
+- 脚本：`tooling/classify-templates.mjs`（**唯一真相**：判定只读 `packages/base-render/dist/index.js` 的冻结常量 `TEMPLATE_MARKERS`／`TEMPLATE_KINDS`／`TEMPLATE_KIND_RULE`／`PAYLOAD_SLOT_RULE`／`ASSET_WRAPPERS`／`ASSET_MARKER_KEYS`／`WRAP_PREDICATES`／`CONTAINER_CHECK_RULE`／`TEMPLATE_CHECK_ORDER`，脚本内不自带任何标记字面量或分型表副本）。
+- 复跑：`pnpm build` 之后执行 `node tooling/classify-templates.mjs --inventory`（`--inventory` 缺省比对 `docs/research/t118-template-inventory.md`）。
 - 结论：**65 个模板 = 数据页 6 ／ 内容页 53 ／ 遗留 6**，逐一命中且仅命中一型（无「两类都不属于且非 legacy」），载荷槽零冲突，数据页的 `INJECT-DATA` 全部落在自带容器内，与清单 65 条**逐条一致**。
 - 本文件是**输出快照**（#118 收工取证），不是第二真相：口径变更只改契约常量，脚本输出随之变化。
 
@@ -93,5 +93,5 @@
 [OK] 65 个模板逐一命中且仅命中一型（无「两类都不属于且非 legacy」）
 [OK] 载荷槽零冲突（无模板同时含 INJECT-DATA 与 CONTENT）
 [OK] 数据页的 INJECT-DATA 全部落在自带容器内
-[OK] 与清单逐条一致（65 条）：.scratch\t118\template-inventory.md
+[OK] 与清单逐条一致（65 条）：docs\research\t118-template-inventory.md
 ```

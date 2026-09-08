@@ -16,6 +16,7 @@ import {
   ACTION_BAR_DEFAULTS,
   ACTION_BAR_KINDS,
   ACTION_ID_ATTR,
+  ASSET_MARKER_KEYS,
   ASSET_WRAPPERS,
   ASSET_WRAP_RULE,
   BASE_PAINT_CONTRACT_VERSION,
@@ -27,6 +28,7 @@ import {
   CHART_PALETTE,
   CHART_STRUCTURE_RULE,
   CHARTS_STYLE_ID,
+  CONTAINER_CHECK_RULE,
   CONTROLS_ERROR_CODES,
   CONTROLS_HOST_REQUIREMENT,
   CONTROL_AVAILABILITY,
@@ -62,6 +64,7 @@ import {
   STRICT_ENVELOPE_SHAPES,
   STYLE_FORBIDDEN_TOKENS,
   STYLE_SHEET_ID,
+  TEMPLATE_CHECK_ORDER,
   TEMPLATE_ERROR_CODES,
   TEMPLATE_KIND_RULE,
   TEMPLATE_KINDS,
@@ -74,6 +77,7 @@ import {
   TEXT_SENSITIVE_MASK,
   TOAST_DEFAULTS,
   TOAST_ICONS,
+  WRAP_PREDICATES,
   SCENE_DATA_SCHEMA,
   SCENE_TYPE_FIELD,
   escapeHtml,
@@ -675,6 +679,175 @@ describe('#118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／
     assert.ok(doc.includes('零命中'), '必须写明旧基线 0 命中');
     assert.ok(doc.includes('content-missing'), '必须写明正文缺失错误码');
     for (const needle of ['正文槽位', '载荷槽', '模板分型']) assert.ok(doc.includes(needle), '文档缺 #118 小节：' + needle);
+  });
+
+  /* ── FX-118 返修机读自证（S-1…S-4） ───────────────────────── */
+
+  /** §3.1.2⑤ 判定次序表的数据行（列：次序／阶段／触发条件／错误码）。 */
+  const checkOrderRows = (text) => {
+    const body = text.split('**⑤ 错误码判定次序（机读，FX-118-2）**')[1]?.split('**所属包**')[0] ?? '';
+    return splitLines(body).filter((l) => l.trim().startsWith('|')).map(parseRow)
+      .filter((c) => c[0] !== '次序' && !/^-+$/.test(c[0]));
+  };
+
+  /** 包裹不变量②判定执行：作用域／标签名／判定方式**全部读冻结常量**（`WRAP_PREDICATES`／
+   *  `ASSET_WRAPPERS`）；方式名不符即抛错，避免静默漂移。本函数只做「按冻结谓词执行」，
+   *  不构成第二份实现。 */
+  const preWrappedMarkers = (template) => {
+    const p = WRAP_PREDICATES.forbidPreWrappedMarker;
+    assert.equal(p.method, 'enclosing-open-tag', '谓词方式漂移：' + p.method);
+    const tagNames = [...new Set(Object.values(ASSET_WRAPPERS).map((w) => w.openTag.slice(1, -1)))];
+    const hits = [];
+    for (const key of p.scope) {
+      const literal = TEMPLATE_MARKERS[key];
+      for (let idx = template.indexOf(literal); idx >= 0; idx = template.indexOf(literal, idx + 1)) {
+        const before = template.slice(0, idx);
+        if (tagNames.some((t) => before.lastIndexOf('<' + t) > before.lastIndexOf('</' + t))) { hits.push(key); break; }
+      }
+    }
+    return hits;
+  };
+
+  /** 容器判定执行（作用域／id／type 恒取 `CONTAINER_CHECK_RULE`）；返回错误码或 null。 */
+  const containerCode = (sample) => {
+    if ((sample.counts[CONTAINER_CHECK_RULE.appliesWhenMarker] ?? 0) === 0) return null;
+    const c = sample.container;
+    return c && c.id === CONTAINER_CHECK_RULE.id && c.type === CONTAINER_CHECK_RULE.type ? null : CONTAINER_CHECK_RULE.code;
+  };
+
+  /** 次序裁决器（**非填充器实现**——`fillTemplate` 仍 pending，见下「不得实现」断言）：
+   *  只回答「哪些码命中」与「谁最先」，条件判定读冻结常量，顺序读 `TEMPLATE_CHECK_ORDER`。 */
+  const codesHit = (sample) => {
+    const set = new Set();
+    const c = sample.counts;
+    if (Object.values(c).some((n) => n > 1)) set.add('marker-duplicate');
+    const slots = PAYLOAD_SLOT_RULE.members.map((m) => c[m] ?? 0);
+    if (slots.every((n) => n === 0)) set.add(PAYLOAD_SLOT_RULE.missingCode);
+    if (slots.every((n) => n >= 1)) set.add(PAYLOAD_SLOT_RULE.conflictCode);
+    if ((c.noShared ?? 0) > 0 && ((c.sharedCss ?? 0) > 0 || (c.sharedHelpers ?? 0) > 0)) set.add('marker-conflict');
+    if (sample.preWrapped.length > 0) set.add(WRAP_PREDICATES.forbidPreWrappedMarker.code);
+    if (containerCode(sample) !== null) set.add(CONTAINER_CHECK_RULE.code);
+    if (sample.assetsWrapped) set.add(WRAP_PREDICATES.assetsBare.code);
+    if (slots[0] >= 1 && sample.dataMissing) set.add('data-missing');
+    if (slots[1] >= 1 && sample.contentMissing) set.add('content-missing');
+    if (sample.strictInvalid) set.add('strict-invalid');
+    return set;
+  };
+  const firstHit = (sample) => TEMPLATE_CHECK_ORDER.find((code) => codesHit(sample).has(code)) ?? null;
+  const sampleOf = (counts, extra = {}) => ({
+    counts, container: null, preWrapped: [], assetsWrapped: false,
+    dataMissing: false, contentMissing: false, strictInvalid: false, ...extra,
+  });
+
+  it('FX-118-1／S-1：容器校验仅当模板含 INJECT-DATA 时执行（内容页无容器合法）', () => {
+    assert.deepEqual({ ...CONTAINER_CHECK_RULE }, {
+      appliesWhenMarker: 'injectData', openTag: '<script>', closeTag: '</script>',
+      id: 'payload', type: 'application/json', code: 'container-missing',
+    });
+    assert.ok(TEMPLATE_ERROR_CODES.includes(CONTAINER_CHECK_RULE.code), '容器码必须在错误码表内');
+    assert.equal(CONTAINER_CHECK_RULE.openTag, ASSET_WRAPPERS.sharedHelpersJs.openTag, '容器标签复用 ASSET_WRAPPERS，不得另写字面量');
+    assert.equal(CONTAINER_CHECK_RULE.id, DEFAULT_DATA_SCRIPT_ID);
+    assert.equal(CONTAINER_CHECK_RULE.type, DATA_SCRIPT_TYPE);
+    // S-1：内容页模板（无容器）→ 不执行容器校验 → 不抛 container-missing
+    assert.equal(containerCode(sampleOf({ injectData: 0, content: 1 })), null, 'S-1：内容页无容器必须合法');
+    // 数据页缺容器 / id 或 type 不符 → container-missing
+    assert.equal(containerCode(sampleOf({ injectData: 1, content: 0 })), 'container-missing');
+    assert.equal(containerCode(sampleOf({ injectData: 1, content: 0 }, { container: { id: 'payload', type: 'text/plain' } })), 'container-missing');
+    assert.equal(containerCode(sampleOf({ injectData: 1, content: 0 }, { container: { id: 'help-data', type: 'application/json' } })), 'container-missing');
+    // 合规容器 → 通过
+    assert.equal(containerCode(sampleOf({ injectData: 1, content: 0 }, { container: { id: 'payload', type: 'application/json' } })), null);
+    assert.ok(doc.includes('仅当模板含 `<!--INJECT-DATA-->` 时执行'), 'FX-118-1：§3.1 必须写明容器校验的条件性');
+    assert.ok(doc.includes('不可能**抛 `container-missing`'), 'FX-118-1：内容页不抛容器码必须写进条文');
+  });
+
+  it('FX-118-3／S-2：不变量②作用域排除 injectData（数据页容器不算预包裹）', () => {
+    assert.deepEqual([...WRAP_PREDICATES.forbidPreWrappedMarker.scope].sort(), Object.values(ASSET_MARKER_KEYS).sort(),
+      '作用域必须等于 ASSET_MARKER_KEYS 的值集');
+    assert.deepEqual(Object.keys(ASSET_MARKER_KEYS).sort(), Object.keys(ASSET_WRAPPERS).sort(),
+      '资产键映射必须与 ASSET_WRAPPERS 同键集');
+    assert.deepEqual([...WRAP_PREDICATES.forbidPreWrappedMarker.excludes], ['injectData']);
+    assert.ok(!WRAP_PREDICATES.forbidPreWrappedMarker.scope.includes('injectData'), 'injectData 必须在作用域外');
+    // S-2：memo 数据页形态（INJECT-DATA 落在自带容器内 ＋ 两个共享标记被包裹）
+    const dataPage = [
+      '<style><!--SHARED-CSS--></style>',
+      '<script id="payload" type="application/json"><!--INJECT-DATA--></script>',
+      '<script><!--SHARED-HELPERS--></script>',
+    ].join(LF);
+    const hits = preWrappedMarkers(dataPage).sort();
+    assert.ok(!hits.includes('injectData'), 'S-2：容器内的 INJECT-DATA 不得判为预包裹（否则不抛 marker-conflict）');
+    assert.deepEqual(hits, ['sharedCss', 'sharedHelpers'], '只有作用域内标记参与判定');
+    // 内容页形态（裸标记）→ 零命中
+    assert.deepEqual(preWrappedMarkers(['<!--SHARED-CSS-->', '<!--CONTENT-->', '<!--SHARED-HELPERS-->'].join(LF)), []);
+    // 跨行预包裹同样命中（口径＝扫描整个前缀，不限同行）
+    assert.deepEqual(preWrappedMarkers(['<style>', '<!--SHARED-CSS-->', '</style>'].join(LF)), ['sharedCss']);
+    assert.ok(doc.includes('排除 `injectData`'), 'FX-118-3：文档必须写明作用域排除 injectData');
+    assert.ok(doc.includes('enclosing-open-tag') && doc.includes('trim-prefix-or-suffix'), 'FX-118-3：两种判定方式必须写进条文');
+  });
+
+  it('FX-118-3／S-3：两条不变量的判定谓词只有一份实现（契约常量 ＋ 工具脚本共用）', () => {
+    assert.deepEqual({ ...WRAP_PREDICATES.assetsBare }, {
+      scope: ['sharedCssText', 'sharedHelpersJs', 'chartsHelpersJs'],
+      method: 'trim-prefix-or-suffix', code: 'asset-missing',
+    });
+    assert.deepEqual([...WRAP_PREDICATES.assetsBare.scope].sort(), Object.keys(ASSET_WRAPPERS).sort(), '不变量①作用域 = ASSET_WRAPPERS 键集');
+    assert.equal(WRAP_PREDICATES.assetsBare.code, ASSET_WRAP_RULE.assetWrappedCode);
+    assert.equal(WRAP_PREDICATES.forbidPreWrappedMarker.code, ASSET_WRAP_RULE.markerPreWrappedCode);
+    const toolSrc = readFileSync(new URL('../../../tooling/classify-templates.mjs', import.meta.url), 'utf8');
+    const toolCode = stripJsComments(toolSrc);
+    for (const needle of ['WRAP_PREDICATES', 'ASSET_WRAPPERS', 'ASSET_MARKER_KEYS', 'TEMPLATE_KINDS', 'CONTAINER_CHECK_RULE', 'TEMPLATE_MARKERS']) {
+      assert.ok(toolSrc.includes(needle), 'FX-118-9：分类脚本必须复用冻结常量：' + needle);
+    }
+    assert.ok(!/['"]<style['"]|['"]<script['"]/.test(toolCode), 'FX-118-9：脚本代码不得硬编码包裹标签字面量');
+    assert.ok(!/['"](?:data-page|content-page|legacy)['"]/.test(toolCode), 'FX-118-9：脚本代码不得硬编码分型字符串');
+    assert.ok(!toolSrc.includes('其它'), 'FX-118-10②：分型三名统一为「遗留」（不得再用「其它」）');
+  });
+
+  it('FX-118-2／S-4：判定次序唯一且多条件输入下首个命中即抛', () => {
+    assert.deepEqual([...TEMPLATE_CHECK_ORDER], [
+      'marker-duplicate', 'marker-missing', 'marker-conflict', 'container-missing',
+      'asset-missing', 'data-missing', 'content-missing', 'strict-invalid',
+    ]);
+    assert.equal(TEMPLATE_CHECK_ORDER.length, TEMPLATE_ERROR_CODES.length, '次序必须覆盖全部错误码');
+    assert.deepEqual([...TEMPLATE_CHECK_ORDER].sort(), [...TEMPLATE_ERROR_CODES].sort(), '次序是错误码表的一个排列');
+    assert.equal(new Set(TEMPLATE_CHECK_ORDER).size, TEMPLATE_CHECK_ORDER.length, '次序不得重复');
+    // 文档 §3.1.2⑤ 次序表的「错误码」列必须与常量逐值同序
+    const rows = checkOrderRows(doc);
+    assert.equal(rows.length, TEMPLATE_CHECK_ORDER.length, '§3.1.2⑤ 次序表必须逐码 1 行，实为 ' + rows.length);
+    assert.deepEqual(rows.map((r) => r[3]), [...TEMPLATE_CHECK_ORDER], '§3.1.2⑤ 次序表的错误码列必须与 TEMPLATE_CHECK_ORDER 逐值同序');
+    // S-4 样本①：真实 calorie 形态（两载荷槽皆无 ＋ SHARED-CSS 预包裹）→ 命中 2 条，取靠前的 marker-missing
+    const legacy = sampleOf({ injectData: 0, content: 0, sharedCss: 1, sharedHelpers: 1 }, { preWrapped: ['sharedCss'] });
+    assert.equal(codesHit(legacy).size, 2, '样本必须同时命中 ≥2 条（否则验证无意义）');
+    assert.equal(firstHit(legacy), 'marker-missing', 'S-4①：legacy＋预包裹 → marker-missing（次序 2 早于 3）');
+    // S-4 样本②：重复 ＋ 缺槽 ＋ 预包裹 ＋ 空资产 → 命中 4 条，取 marker-duplicate
+    const dup = sampleOf({ injectData: 0, content: 0, sharedCss: 1, sharedHelpers: 2 },
+      { preWrapped: ['sharedCss', 'sharedHelpers'], assetsWrapped: true });
+    assert.ok(codesHit(dup).size >= 3, '样本②必须同时命中 ≥3 条');
+    assert.equal(firstHit(dup), 'marker-duplicate', 'S-4②：重复优先于缺槽／冲突／资产');
+    // S-4 样本③：两载荷槽皆有 ＋ 缺容器 → marker-conflict 优先于 container-missing
+    const both = sampleOf({ injectData: 1, content: 1, sharedCss: 1, sharedHelpers: 1 });
+    assert.equal(firstHit(both), 'marker-conflict');
+    // S-4 样本④：数据页合规容器但 data 缺失 ＋ strict 非法 → data-missing 优先于 strict-invalid
+    const badData = sampleOf({ injectData: 1, content: 0, sharedCss: 1, sharedHelpers: 1 },
+      { container: { id: 'payload', type: 'application/json' }, dataMissing: true, strictInvalid: true });
+    assert.equal(firstHit(badData), 'data-missing');
+    assert.ok(doc.includes('首个命中即抛、不聚合'), 'FX-118-2：文档必须写明「首个命中即抛、不聚合」');
+    // 本票不得实现 fillTemplate（仍归 #74）
+    assert.ok(!runtimeKeys.has('fillTemplate'), 'FX-118：fillTemplate 必须仍未实现（归 #74）');
+    assert.ok(doc.includes('无先后语义') && !doc.includes('恒为最后一步'), 'FX-118-6：正文时序两说必须统一');
+  });
+
+  it('FX-118-4／5／8／10：迁移面、占位符口径、证据路径与三处措辞', () => {
+    assert.ok(doc.includes('生产接线不属 #74'), 'FX-118-4：memo 生产接线归属必须写明');
+    assert.ok(doc.includes('迁移后满足'), 'FX-118-5：memo 数据页须写「迁移后满足」');
+    assert.ok(doc.includes('docs/research/t118-template-inventory.md'), 'FX-118-8：证据指针必须指向仓内路径');
+    assert.ok(doc.includes('一码多义由 `message` 辨因'), 'FX-118-10①：一码多义必须要求 message 辨因');
+    assert.ok(doc.includes('勿与 `</script>`/`</style>` 字样混在资产注释里'), 'FX-118-10③：README:63 引用必须补全后半句');
+    assert.ok(doc.includes('仅对合法模板（计数 ∈ {0,1}）成立'), 'FX-118-7：三型穷尽性必须加计数限定');
+    assert.ok(doc.includes('不是 `marker-conflict`'), 'FX-118-7：计数 >1 的码归属必须更正为 marker-duplicate');
+    for (const k of TEMPLATE_KINDS) {
+      assert.equal(TEMPLATE_KIND_RULE[k].noKindCode, PAYLOAD_SLOT_RULE.conflictCode, 'FX-118-7：noKindCode 必须等于载荷槽冲突码');
+      assert.ok(TEMPLATE_ERROR_CODES.includes(TEMPLATE_KIND_RULE[k].noKindCode));
+    }
   });
 });
 
