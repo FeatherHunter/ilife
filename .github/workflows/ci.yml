@@ -73,10 +73,19 @@ jobs:
       - run: pnpm publish:fresh
       # #95：模板资产门（单包显式复跑，不吃 --only 全量口径的漂移）
       #   G2：tarball 清单逐件含 templates/*.html；G3：fresh 安装态 loadTemplate 真读 6 件
+      #   返修（A1-1／A1-2／A2-1）：临时根必须在仓库之外（协议 §2.1）＋ 门必须说真话（逐件／未跑记账）
       - name: 模板资产门（skill-calorie）
         run: |
           node tooling/check-publish.mjs --tarball --only skill-calorie
           node tooling/check-publish.mjs --fresh-tmp --only skill-calorie
+          node tooling/check-publish.mjs --tmp-hygiene
+          node docs/research/t95-g3-honesty.mjs
+      - name: 打包实证与清理守卫自证（#95 返修）
+        run: |
+          node docs/research/t95-publish-evidence.mjs
+          node docs/research/t95-publish-evidence.mjs --mutate
+          node docs/research/t95-publish-evidence.mjs --guard-selftest
+          node docs/research/t95-f1-attribution.mjs
 
   win-detail:
     # Win 人工细验位：中文路径/换行/CRLF/doctor 强提示

@@ -91,7 +91,7 @@
 - **本图只负责"技能能被正确找到并调用"**（发现性与链路），不承担本体图的功能完备性。
 - 与 MAP1 的关系：**不建原生阻塞边**。#81（唤醒词可达性）、#82（SKILL.md 门面）、#95（打包与模板装载）只作"完成后回归一次"的项——本图在乎的是"能否在 opencode 与 DSH 中正确找到技能"，不是 MAP1 的功能是否正常。
 - **面板按日参数化、面板增删改** → 全面面板图 #65，本图不改面板代码。
-- **模板资产边界（2026-09-08 实测）**：`packages/skill-calorie/dist/render/**` 与 `packages/base-render/dist/**` 均**零**运行时读盘（无 `readFileSync` / `fileURLToPath`），HTML 由 `src/render/html.ts` 纯代码生成并随 `dist` 发包；`packages/skill-calorie/templates/*.html` 是**只被测试读取的死资产**。按维护者 2026-09-08 的方案，HTML 一律以代码形式提供，不依赖固定模板文件。
+- **模板资产边界（2026-09-08 实测；2026-09-09 由 #95 返修就地更正——原陈述已成假，勿再引用）**：#95 之后 `packages/skill-calorie/src/render/templates.ts` 是**运行时读盘 loader**（`readFileSync` ＋ `fileURLToPath`），6 个 `packages/skill-calorie/templates/*.html` **随包发布**（`package.json` 的 `files` 含 `templates/*.html`），并由 publish 门在安装态逐件断言可读（`node tooling/check-publish.mjs --fresh-tmp --only skill-calorie`）。仍未变的只有一点：`src/render/html.ts` 的 `pageShell` **尚未**消费该 loader（HTML 仍以代码生成）。模板接线的落点：6 模板补 `<!--INJECT-DATA-->`／自带容器 ＋ 并入 HELP 重建 = **#107**（`docs/base-paint-contract.md` §4.4／§6.1；本票不接线、不发布 base-paint）。
 - **已知残余（不在本图修）**：线上 URL 安装不含 `dist`（gitignored），运行时走 npm 包；本地路径安装会拷走 `dist/node_modules`（#47 遗留）。本图验收只要求"官方推荐的安装路径能用"，残余记在此处备查。
 
 ## 7 证据归档清单
