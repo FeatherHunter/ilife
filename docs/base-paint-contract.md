@@ -12,7 +12,7 @@
 | `#66` 裁决评论 | Q8／Q12／Q13／Q14 | Q8 不引入 `status`，以 envelope `shape` 为准；Q12 主色锁 B1；Q13 复制走双通道；Q14 不引入 `--r-xl`／`--pink`／深色区 |
 | `docs/calorie-architecture.md` | Implementation Decisions（共享层归属三类、零运行时依赖、占位符注入、主题接缝、区块组件）＋ Testing Decisions（共享层模块边界＝接缝） | 归属边界（§4）与签名测试（§7）的判据 |
 | `docs/research/t72-shared-layer-gap.md` §6 | 冻结边界规则表 | §4 的 8 条边界 |
-| `docs/research/t92-architect-calls.md`（原 `.scratch/t92/ARCHITECT-CALLS.md`，FX-21 归档） | AC-1…AC-17（17 条条文） | 逐条落进 §1–§6，索引见下表。**注意**：`docs/research/t92-architect-rulings.md` 是 FX 返修裁定单，**不含**任何 `## AC-` 条文，不得作为 AC 出处 |
+| `docs/research/t92-architect-calls.md`（FX-21 归档正本；原路径 `.scratch/t92/ARCHITECT-CALLS.md` 是**归档前**的旧位置，已不引用、勿据此取件） | AC-1…AC-17（17 条条文） | 逐条落进 §1–§6，索引见下表。**注意**：`docs/research/t92-architect-rulings.md` 是 FX 返修裁定单，**不含**任何 `## AC-` 条文，不得作为 AC 出处 |
 | `docs/research/t92-old-v130-signatures.md` | 旧 v1.30 逐节签名（246 行表／353 处 `文件:行号` 证据） | §2 对照表与 §3 各节「旧侧对应物」 |
 | `docs/research/t92-base-exports-actual.md` | 新 base-* 三包实测出口面（33 运行时 ＋ 20 类型）＋ t72 判定复核（26 项仍成立） | §2 判定列的证据基准 |
 
@@ -367,7 +367,8 @@ export type BindCopyAction = (
   // ② DOM 适配器：实现 CopyActionHostPort 的三个方法（发现／取文本／订阅）
   const host = {
     listActionIds: () => [...document.querySelectorAll('[' + ACTION_ID_ATTR + ']')]
-      .map((el) => el.getAttribute(ACTION_ID_ATTR)),
+      .map((el) => el.getAttribute(ACTION_ID_ATTR))
+      .filter((id) => id !== null),   // 收窄为 string[]：CopyActionHostPort.listActionIds(): readonly string[]（FX-30／V5 C-9）
     readDataText: (actionId) => {
       const el = document.querySelector('[' + ACTION_ID_ATTR + '="' + actionId + '"]');
       return el ? (el.getAttribute(DEFAULT_DATA_ATTR) ?? undefined) : undefined;
@@ -400,6 +401,7 @@ export type BindCopyAction = (
 **共享 JS 文本的唯一产出者（FX-2③／FX-18，归 #76；#74 只消费）**
 
 - **冻结签名**：`buildSharedHelpersJs(input?: SharedHelpersInput): string`；`SharedHelpersInput = { prefix?: string; dataAttr?: string }`（缺省 `ilife-`／`DEFAULT_DATA_ATTR = 'data-t'`——属性名冻结为常量，渲染端与调用方适配端必须同一约定）。
+- **`dataAttr` 覆盖口径（FX-29／V5 C-6，定死）**：`DEFAULT_DATA_ATTR` 是**渲染端恒用**的属性名——`renderActionBar`／`renderErrorReceipt`（及 HELP 壳按钮）渲染期一律写 `DEFAULT_DATA_ATTR`，`ActionBarInput`／`CopyButtonInput`／`ErrorReceiptInput` **不设** `dataAttr` 入参；`SharedHelpersInput.dataAttr` 的覆盖**只影响产出 helpers JS 的选择器**（`buildSharedHelpersJs` 生成的事件委派读哪个属性名）。故调用方传 `dataAttr: 'data-x'` 时：helpers JS 读 `data-x`、渲染端仍写 `data-t` → **两者不一致由调用方自负**（契约不代渲染端改写属性名，也不因覆盖而改 `DEFAULT_DATA_ATTR` 的冻结值 `'data-t'`；要一致就只传缺省值）。
 - 产出恒为**非空** JS 文本，且必须是 IIFE 或显式挂载点；空串视为实现缺陷 → `fillTemplate` 抛 `asset-missing`。
 - **产出内容契约（FX-18①，机读唯一真相源 `SHARED_HELPERS_JS_RULE`）**——五个布尔量逐项定死：
 
@@ -518,7 +520,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | `json` | 无输出头 | 空值保留 `null`（**不**写「未填写」／「(未知)」，键不省略） | 文本中 `<` 一律写成反斜杠 + `u003c`（`TEXT_JSON_LT_RULE`） | 缩进 `TEXT_JSON_INDENT`（2 空格）；键名 = envelope 五字段原样 |
 | `csv` | 无输出头 | 空值写**空字符串**（机器可读，不写占位符） | RFC4180：字段含 `,`／`"`／换行时用 `"` 包裹，内部 `"` 写成 `""`（`CSV_DIALECT`） | 表头 `CSV_DIALECT.header = ['section', 'row']`；行尾 `LF` |
 
-- **敏感行判定口径（FX-23，机读真相源 `SENSITIVE_ROW_RULE`）**：投影行（`metrics`／`item` 的**值**、`items` 的**元素**）取值为 `{ text: string, sensitive: true }` 形态时判为**敏感行**——判定只看源值的 `sensitive` 字段是否为字面 `true`（`flagValue`），**不看文本内容**；`text` 字段是原文。该形态与旧侧 `_rowText` 的行值形态**逐字一致**（`base.js:219-225`）。
+- **敏感行判定口径（FX-23，机读真相源 `SENSITIVE_ROW_RULE`）**：投影行（`metrics`／`item` 的**值**、`items` 的**元素**）取值为 `{ text: string, sensitive: true }` 形态时判为**敏感行**——判定只看源值的 `sensitive` 字段是否为字面 `true`（`flagValue`），**不看文本内容**；`text` 字段是原文。该形态的**字段名**与旧侧 `_rowText` 一致（`{ text, sensitive }`，`base.js:218-221`——`:219` 函数、`:221` 合并掩码行）；**判定语义不同（FX-30／V5 C-8，显式声明）**：旧侧是**真值判定**（`if (r.sensitive)`，`base.js:221`，故 `sensitive: 1`／`'yes'` 亦脱敏），新契约只认**字面 `true`**（`flagValue`）——「形态一致」仅指字段名，**不是**判定一致。
   - 三种 format **一律**输出 `SENSITIVE_ROW_RULE.mask`（= `TEXT_SENSITIVE_MASK`，`****`）；`text` 口径在该行**之后紧跟一行** `SENSITIVE_ROW_RULE.textNotice`（`（敏感字段已脱敏）`）。
   - **与旧侧的偏离（显式声明）**：旧侧把掩码与提示合成一行 `'****（敏感字段已脱敏）'`（`base.js:221`）；新契约拆成「掩码行 ＋ 提示行」——理由是掩码值须能被 `TEXT_SENSITIVE_MASK` 逐值断言，且 `json`／`csv` 下不得夹中文提示（json 值必须是纯掩码字符串、csv 单元格同）。语义等价：原文一律不出现。
   - `EnvelopeDataByShape` 不含该形态 → 它是 **text 层的行值包装**，不改变 envelope 契约；`json` 口径该键值写 `mask`（不写 `null`）。
@@ -734,9 +736,9 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 - **用**：`renderToast`／`createToastController`／`copyText`／`createCopyRuntime`／**`bindCopyAction`／`CopyActionHostPort`（含 `listActionIds()`）／`ACTION_ID_ATTR`／`COPY_ACTION_IDS`／`DEFAULT_DATA_ATTR`**／**`buildSharedHelpersJs`／`SharedHelpersInput`／`SHARED_HELPERS_JS_RULE`**／`renderActionBar`／`renderStatusBadge`／`renderEmptyState`／`renderErrorReceipt` 及其 Input 类型、`CopyPorts`（含 `toast?`）／`ToastHostPort`、`COPY_CHANNELS`／`COPY_TEXT_DEFAULTS`／`TOAST_DEFAULTS`／`ACTION_BAR_DEFAULTS`／`STATUS_*`／`ESCAPE_HTML_*`／`CONTROL_AVAILABILITY`。
 - **不许自造**：`formPrompt`／`selectList`／`smartSelect`／`confirm`／`foldBox`（B7）；`window.*` 全局（AC-7）；只留 `execCommand` 的单通道复制（Q13）；把控件写成「需要宿主」；第二套反馈端口（反馈一律走 `CopyPorts.toast`）；第二套共享 JS 产出者（唯一产出者 `buildSharedHelpersJs`）；把 `el`／`document` 塞进签名（DOM 只经 `CopyActionHostPort`）；**自造复制按钮 actionId 或承载属性**（`actionId` 必填 ＋ 取 `COPY_ACTION_IDS`／`HELP_COPY_ACTIONS`，承载属性恒为 `ACTION_ID_ATTR`，FX-17）；**给 `CopyActionHostPort` 省略 `listActionIds()` 或另定通配约定**（FX-17③）；**产出 JS 里向 `window.<id>`／`globalThis.<id>` 赋值**（含用隐式全局做幂等哨兵，FX-18①）。
 - **产出内容契约（FX-18①）**：`buildSharedHelpersJs` 的返回值逐项满足 `SHARED_HELPERS_JS_RULE`（`selfContained`／`idempotent`／`domAllowed`／`forbidGlobalAssignment`／`forbidNodeBuiltins`）；幂等判据只许落在 DOM（打标记属性／`querySelector` 早退），**不得**用全局哨兵。
-- **dist 纯度扫描口径（FX-18②，三处一致）**：**扫描实现** = `test/contract-signatures.test.mjs` 的 `purityViolations()`（**递归**覆盖 `dist/**/*.js`，含 `dist/spec/*.js`；先剥注释）；**契约条文** = `SHARED_HELPERS_JS_RULE`；**本条验收** = 下面「验收怎么测」的最后一项。三者逐项一致：**禁 `node:` ＋ 禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值**，**允许** DOM 读取（`document.*`）。扫描自证用例：含 DOM 的合法 helpers JS 必须过门，`window.__x = 1`／`globalThis.toast = …`／`import … from 'node:fs'` 必须被拦。
+- **dist 纯度扫描口径（FX-18②，三处一致）**：**扫描实现** = `test/contract-signatures.test.mjs` 的 `purityViolations()`（**递归**覆盖 `dist/**/*.js`，含 `dist/spec/*.js`；先剥注释）；**契约条文** = `SHARED_HELPERS_JS_RULE`；**本条验收** = 下面「验收怎么测」的最后一项。三者逐项一致：**禁 `node:` ＋ 禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值**，**允许** DOM 读取（`document.*`）。扫描自证用例：含 DOM 的合法 helpers JS 必须过门，`window.__x = 1`／`globalThis.toast = …` 必须被拦；`node:` 的**四种写法**都必须被拦——`import … from 'node:fs'`／裸副作用 `import 'node:fs'`／`require('node:fs')`／动态 `import('node:fs')`（FX-28／V5 C-1；正则 `(?:from|import\s*\(|require\s*\(|import)\s*['"]node:`）。
 - **验收怎么测**：纯 HTML 夹具（不启 DSH）注入产出字符串 → 断言静态结构；`copyText` 用假 `CopyPorts`（clipboard 抛错 + fallback 返回 true）断言 `channel === 'fallback'`；空串短路；`silent` 仍回调；**失败时 `ports.toast.mount` 被调用（徽章恒在）且 `silent` 不抑制它**；`onOk`／`onFail` 互斥；`bindCopyAction` 用假 `CopyActionHostPort` 断言「`listActionIds()` 发现 → 激活 → `readDataText` → `copyText` → 反馈」链路、无 `data-t` 跳过、`dispose()` 幂等解绑；`renderActionBar` 的两个复制按钮断言 `ACTION_ID_ATTR` 与 `COPY_ACTION_IDS` 逐字一致、缺 `actionId`／重复 id 抛 `bad-input`；`renderErrorReceipt` 缺 `actionId` 时取 `COPY_ACTION_IDS.errorReceipt.*`；`buildSharedHelpersJs()` 返回非空且**通过 `SHARED_HELPERS_JS_RULE` 纯度口径**（禁 `node:`／禁隐式全局赋值；**允许** `document.*` 读取）；`statusBadge` 非法 status 降级 `empty`；`errorReceipt` 缺 `dataText` 不渲染复制按钮且不抛错。
-- **#76 追加验收（DOM 与红线共存，FX-18②）**：`buildSharedHelpersJs` 落地后，须补一条断言——把产出的 helpers JS 字符串从 `dist/**/*.js` 源码中剥离后，**剩余源码**不得出现 `document.`／`window.`／`navigator.`（即 DOM 只允许出现在产出文本里）。
+- **#76 追加验收（DOM 与红线共存，FX-18②）**：`buildSharedHelpersJs` 落地后，须补一条断言——把产出的 helpers JS 字符串从 `dist/**/*.js` 源码中剥离后，**剩余源码（剥注释后）**不得出现 `document.`／`window.`／`navigator.`（即 DOM 只允许出现在产出文本里）。**「剥注释后」与扫描实现逐字对齐（FX-26／V5 C-3）**：判据必须先过 `stripJsComments()`（`test/contract-signatures.test.mjs`，与 `purityViolations()` 同一实现，口径见 §7），**注释里的说明文字不参与判定**——否则由 `spec/controls.ts` 的 JSDoc 编译进 `dist/spec/controls.js` 的 `document.*`／`window.<id>` 规则说明会**假红**（按字面今天即已命中）。
 
 ### 6.4 #77 复制序列化（`src/text.ts`）
 
@@ -761,10 +763,10 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | 层 | 文件 | 断言什么 | 怎么跑 |
 |---|---|---|---|
 | 编译期类型断言 | `packages/base-render/test-d/contract-signatures.ts` | ① 既有 18 运行时出口＋12 类型出口逐条锁形；② §3 每条冻结签名逐字一致（`Equal<>`／`Expect<>`）；③ **运行时条目的值**另有 `_V01…_V27` 逐值断言（FX-20，改 `spec` 值即编译红）；④ `pending` 条目**尚未导出**（`Absent<>`），实现后必须翻转清单；⑤ 跨包漂移：`STRICT_ENVELOPE_SHAPES` ↔ link-core `EnvelopeShape` | `pnpm build`（root `tsconfig.json` 的 `include` 已收该目录，`tsc -b` 一并编译）；亦可 `pnpm test:types` |
-| 运行时出口面锁 | `packages/base-render/test/contract-signatures.test.mjs` | ① 既有 18 出口仍在（D4 只追加）；② 新增运行时出口**恰好等于**清单里 implemented 的运行时项；③ `pending` 未导出、type-only 不得有运行时值；④ 文档标记区表格与清单逐字一致；⑤ 章节标题／§2 26 行／AC-1…AC-17 落点／FX-1…FX-16 落点／**FX-17…FX-25 落点**／无 BOM 与字面反斜杠 n；⑥ 占位符/token/双通道/形状表/schema/逐 shape 投影表/6 段日志数据源/HELP 复制文案/`COPY_ACTION_IDS`/`ACTION_ID_ATTR`/`SHARED_HELPERS_JS_RULE`/`SENSITIVE_ROW_RULE` 逐值 ＋ **FX-20 的 27 条逐值** ＋ `scene-data.schema.json` 存在即与常量逐值相等（FX-6）；⑦ 门禁红线：无 `dependencies`、`files` 含 `dist`、**`dist/**/*.js`（递归，含 `dist/spec/*.js`）**禁 `node:`／禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值（**允许** DOM 读取，FX-18②）、`src/spec/*.ts` 只许 `import type` ＋ 代码不得读写浏览器全局 | `pnpm test`（root script 的 glob 已含 `packages/base-render/test/*.test.mjs`） |
+| 运行时出口面锁 | `packages/base-render/test/contract-signatures.test.mjs` | ① 既有 18 出口仍在（D4 只追加）；② 新增运行时出口**恰好等于**清单里 implemented 的运行时项；③ `pending` 未导出、type-only 不得有运行时值；④ 文档标记区表格与清单逐字一致；⑤ 章节标题／§2 26 行／AC-1…AC-17 落点／FX-1…FX-16 落点／**FX-17…FX-25 落点**／无 BOM 与字面反斜杠 n；⑥ 占位符/token/双通道/形状表/schema/逐 shape 投影表/6 段日志数据源**＋段序**/HELP 复制文案/`COPY_ACTION_IDS`/`ACTION_ID_ATTR`/`SHARED_HELPERS_JS_RULE`/`SENSITIVE_ROW_RULE` 逐值 ＋ **FX-20 的 27 条逐值** ＋ `scene-data.schema.json` 存在即与常量逐值相等（FX-6）；⑦ 门禁红线：无 `dependencies`、`files` 含 `dist`、**`dist/**/*.js`（递归，含 `dist/spec/*.js`）**禁 `node:`／禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值（**允许** DOM 读取，FX-18②）、`src/spec/*.ts` 只许 `import type` ＋ 代码（**剥注释后**，同 `stripJsComments()`）不得读写浏览器全局 | `pnpm test`（root script 的 glob 已含 `packages/base-render/test/*.test.mjs`） |
 
 - **怎么捕捉漂移（一句话）**：清单 `SPEC_FROZEN_SURFACE` 是唯一真相源，文档标记区表格与它逐字比对（`contract-signatures.test.mjs` 的「文档投影绑死」用例），类型层再对每条签名做 `Equal<>` 断言（`contract-signatures.ts`），**运行时条目的值**另有运行时逐值断言（`deepEqual`，含 FX-20 的 27 条），任一环改一处不改其余即红。
-- **纯度扫描自证（FX-18②）**：`purityViolations()` 是扫描口径的**唯一实现**，用例自带正／负样本——含 DOM 的合法 helpers JS 必须过门，`window.__x = 1`／`globalThis.toast = …`／`import … from 'node:fs'` 必须被拦，注释里的说明文字不参与判定。**口径变更必须同时改**：`SHARED_HELPERS_JS_RULE`（§3.3）＋ §6.3 验收条文 ＋ 本用例。
+- **纯度扫描自证（FX-18②）**：`purityViolations()` 是扫描口径的**唯一实现**，用例自带正／负样本——含 DOM 的合法 helpers JS 必须过门；`window.__x = 1`／`globalThis.toast = …` 必须被拦；`node:` 的四种写法（`from 'node:…'`／裸 `import 'node:…'`／`require('node:…')`／动态 `import('node:…')`）必须全部被拦（FX-28／V5 C-1）；**判据先剥注释（`stripJsComments()`）再判**，注释里的说明文字不参与判定（FX-26／V5 C-3，与 §6.3 追加验收同口径）。**口径变更必须同时改**：`SHARED_HELPERS_JS_RULE`（§3.3）＋ §6.3 验收条文 ＋ 本用例。
 - **哨兵**：`escapeHtml("'") === "'"` 是**已知待修**的漂移哨兵（AC-14）——**AC-14 归一后本断言必须翻转**为 `escapeHtml("'") === '&#39;'`；当前为真只表示缺陷未修，**不代表**该行为被契约接受（FX-16①）。执行归 #74（§6.1），#79 复核。
 - **既有失败台账（FX-13，不修）**：`pnpm test` 当前 exit 1（第二轮返修后实测 `tests 443 / pass 421 / fail 22`；第一轮返修后为 `435／413／22`，FX 前为 `430／408／22`，**新增失败 = 0**），**22 条全部是 #92 之前既有、与 base-paint 冻结面零耦合**的失败，**不属 #92 修复范围**：A 组 10 条 = Windows 并行 spawn 抖动（6 个 plugin smoke 单跑 46/46 绿、不可复现）；B 组 12 条 = `plugin-{bill,chef,home,schedule}-ilife` 缺 `"build:client":"tsdown"`（另案承接，不属 #63）。逐条清单与三重证明见 `docs/research/t92-verify-v2-gates.md`「A4 争议取证」。**A4 口径据此定为「三命令零回归」**：`pnpm build`／`pnpm boundaries`／`pnpm test:types` 绿 ＋ `pnpm test` **新增失败 = 0**（本契约的签名测试单跑必须 100% 绿，当前 `tests 36 / pass 36 / fail 0`）。
 - **门禁归属（FX-10）**：「门面文档示例可执行」门 owner **#99**；「计数断言（77）」owner 技能包／#79（本契约不复制计数）；两者均已在 §4.4 登记。
@@ -847,3 +849,17 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | S-8 | 「渲染期写 `data-t` → 激活期读回」的属性名只有散文缺省（`SharedHelpersInput.dataAttr` 缺省 `data-t`），调用方适配器只能硬编码字符串 | 冻结 `DEFAULT_DATA_ATTR = 'data-t'`（§3.3 标记区 ＋ §6.3 用列）；端到端示例改用该常量 |
 | S-9 | 非复制按钮（场景按钮）也带 `actionId`，若 `listActionIds()` 返回它们，binder 行为未写 | §3.3 明写：`listActionIds()` 可含非复制按钮，binder 靠 `readDataText → undefined` 跳过（不抛错、不产 toast） |
 | S-10 | `ToastAction.actionId` 被冻结（且禁内联 `onclick`），但**没有**任何读取／绑定者——与 N-1 同型的悬空 id | §3.3 明写：toast 动作按钮的 id 同样走 `ACTION_ID_ATTR`，**绑定归调用方**（无复制语义，故不纳入 `bindCopyAction`）；本条**不冻结也不排除**，owner #76（若需冻结绑定签名须走 changeset） |
+
+### 8.5 第三轮收尾定点修补台账（FX-26…FX-30 / V5 低·nit 建议）
+
+口径同 §8：每条给**处置**与**落点**。本轮**只改条文／JSDoc 注释与测试侧的扫描实现／断言**——`SPEC_FROZEN_SURFACE` 仍 **120 条**（`implemented 94 / pending 26`），**未新增／删除任何冻结签名**，也**未实现** #74–#78 的任何行为；既有断言一条未删、未放宽。
+
+| 项 | 洞（V5） | 处置 | 落点 |
+|---|---|---|---|
+| FX-26 | C-3 低：§6.3 追加验收按字面与「先剥注释再判」口径冲突（按字面**今天即已假红**） | **修** | §6.3「#76 追加验收」补「（**剥注释后**）」并与 `stripJsComments()`／`purityViolations()` 逐字对齐；§7⑦ ＋ §7 纯度自证同口径；用例锚点 `剥注释后` |
+| FX-27 | C-5 低：`LOG_SECTIONS` 段序无断言（唯一可静默漂移项） | **修** | 「6 段日志数据源」用例内新增**逐值顺序**断言 ＋ §3.4 段序表逐行「成员列／标题列」同序同值断言（重排成员或对调文档行即红） |
+| FX-28 | C-1 低：纯度扫描漏拦裸 `import 'node:…'` | **修** | `PURITY_CHECKS` 正则补 `import\s*['"]node:`（四种写法全覆盖）；负样本自证裸 import／`require`／动态 `import()` 三种写法都必须被拦；§6.3／§7 条文同步 |
+| FX-29 | C-6 低：`SharedHelpersInput.dataAttr` 可覆盖，但渲染端恒写 `data-t` 无裁决 | **修** | §3.3 新增「`dataAttr` 覆盖口径」：渲染端恒用 `DEFAULT_DATA_ATTR`、覆盖只影响 helpers JS 选择器、不一致由调用方自负；`spec/controls.ts` JSDoc 同步 |
+| FX-30 | C-7…C-10 nit | **修** | ①旧侧证据区间 `base.js:219-225` → `218-221`（§3.4 ＋ `spec/text.ts`）；②「与旧侧形态逐字一致」改为「字段名一致、**判定语义不同**」并显式登记真值判定 vs 字面 `true`；③接线示例 `listActionIds` 补 `.filter((id) => id !== null)` 收窄为 `string[]`；④§0 依据表把 `.scratch` 路径标为「归档前旧位置、已不引用、勿据此取件」 |
+
+- **本轮自查新洞：0 条**（新增断言均以负样本对照验证为**真断言**：重排 `LOG_SECTIONS` 变红、对调文档段序行变红、三种 `node:` 写法逐条命中且字符串／注释不误伤）。

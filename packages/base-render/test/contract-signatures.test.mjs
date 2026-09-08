@@ -44,6 +44,7 @@ import {
   HELP_SCHEMA_ERROR_CODES,
   HELP_SHELL_ID,
   INJECTION_ORDER,
+  LOG_SECTIONS,
   LOG_SECTION_SOURCES,
   LOG_SECTION_TITLES,
   LOG_UNKNOWN_PLACEHOLDER,
@@ -134,7 +135,8 @@ function stripJsComments(src) {
  *  只禁「`node:` 内建」与「向 `window.<id>`／`globalThis.<id>` 赋值」；
  *  **允许**页面侧 DOM 读取（`document.*`）——共享 JS 是页面侧代码。 */
 const PURITY_CHECKS = [
-  ['forbidNodeBuiltins', /(?:from|import\s*\(|require\s*\()\s*['"]node:/, 'node: 内建'],
+  // 四种写法都要拦（FX-28／V5 C-1）：`from 'node:…'`／裸副作用 `import 'node:…'`／动态 `import('node:…')`／`require('node:…')`。
+  ['forbidNodeBuiltins', /(?:from|import\s*\(|require\s*\(|import)\s*['"]node:/, 'node: 内建'],
   ['forbidGlobalAssignment', /\b(?:window|globalThis)\s*\.\s*[\w$]+\s*=(?!=)/, 'window／globalThis 隐式全局赋值'],
 ];
 
@@ -161,6 +163,13 @@ function section2Rows(text) {
   const body = text.split('## 2. v1.30 逐条对照表')[1]?.split('## 3. 冻结签名')[0] ?? '';
   return splitLines(body).filter((l) => l.trim().startsWith('|')).map(parseRow)
     .filter((c) => c[0] !== '节号' && !/^-+$/.test(c[0]));
+}
+
+/** 抽出 §3.4「6 段日志 ↔ `CopyLogFields` 对应表」的数据行（列：段序／`LOG_SECTIONS` 成员／`LOG_SECTION_TITLES`／数据源／缺失时）。 */
+function logSectionRows(text) {
+  const body = text.split('6 段日志 ↔ `CopyLogFields` 对应表')[1]?.split('**`format` 语义补全')[0] ?? '';
+  return splitLines(body).filter((l) => l.trim().startsWith('|')).map(parseRow)
+    .filter((c) => c[0] !== '段序' && !/^-+$/.test(c[0]));
 }
 
 const manifest = [...SPEC_FROZEN_SURFACE];
@@ -421,6 +430,14 @@ describe('冻结口径逐值', () => {
     assert.equal(LOG_SECTION_SOURCES.timestampVersion, 'copyLog.timestamp', 'timestampVersion 段取 copyLog.timestamp');
     assert.equal(LOG_SECTION_SOURCES.exception, 'copyLog.exception');
     assert.equal(Object.values(LOG_SECTION_SOURCES).filter((v) => v === 'envelope').length, 1, '恰好 1 段由 envelope 派生');
+    // FX-27（V5 C-5）：段序本身是契约（§3.4「段序恒按 `LOG_SECTIONS`」）——逐值顺序锁定，不只看成员集。
+    assert.deepEqual([...LOG_SECTIONS], ['scene', 'thinking', 'dataStructure', 'callChain', 'timestampVersion', 'exception'],
+      '段序恒按 LOG_SECTIONS：顺序是契约，重排成员即红');
+    const rows = logSectionRows(doc);
+    assert.equal(rows.length, LOG_SECTIONS.length, '§3.4 段序表必须逐段 1 行，实为 ' + rows.length);
+    assert.deepEqual(rows.map((r) => r[1]), [...LOG_SECTIONS], '文档段序表的成员列必须与 LOG_SECTIONS 逐值同序');
+    assert.deepEqual(rows.map((r) => r[2]), [...LOG_SECTIONS].map((s) => LOG_SECTION_TITLES[s]),
+      '文档段序表的标题列必须与 LOG_SECTION_TITLES 逐段同序同值');
   });
 
   it('INJECT-DATA 容器口径与 HELP 复制文案（FX-2／FX-7）', () => {
@@ -536,6 +553,7 @@ describe('冻结口径逐值', () => {
   it('FX-17：复制按钮 actionId 冻结表 ＋ 承载属性 ＋ 与 HELP 侧 id 不撞名', () => {
     assert.equal(ACTION_ID_ATTR, 'data-action-id');
     assert.equal(DEFAULT_DATA_ATTR, 'data-t', '复制文本承载属性名必须冻结为常量（渲染端与适配端同一约定）');
+    assert.ok(doc.includes('渲染端恒用'), '文档必须写明 dataAttr 覆盖口径：渲染端恒用 DEFAULT_DATA_ATTR（FX-29／V5 C-6）');
     assert.deepEqual({ ...COPY_ACTION_IDS }, {
       actionBar: { copyData: 'ilife-copy-data', copyLog: 'ilife-copy-log' },
       errorReceipt: { copyData: 'ilife-error-copy-data', copyLog: 'ilife-error-copy-log' },
@@ -560,6 +578,7 @@ describe('冻结口径逐值', () => {
       '扫描实现必须只覆盖 SHARED_HELPERS_JS_RULE 里为 true 的两项（DOM 读取不扫）');
     assert.ok(doc.includes('SHARED_HELPERS_JS_RULE'), '文档必须冻结产出内容契约');
     assert.ok(doc.includes('允许 DOM 读取'), '文档必须写明允许 DOM 读取');
+    assert.ok(doc.includes('剥注释后'), '扫描口径必须写明「剥注释后」（FX-26／V5 C-3，与 stripJsComments() 逐字对齐）');
   });
 
   it('FX-23：敏感行判定口径 ＋ 三 format 掩码文案', () => {
@@ -612,8 +631,13 @@ describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
     assert.deepEqual(purityViolations('window.__hmPayload = {};'), ['window／globalThis 隐式全局赋值']);
     assert.deepEqual(purityViolations('globalThis.toast = function () {};'), ['window／globalThis 隐式全局赋值']);
     assert.deepEqual(purityViolations("import { readFileSync } from 'node:fs';"), ['node: 内建']);
+    assert.deepEqual(purityViolations("import 'node:fs';"), ['node: 内建'], '裸副作用 import 必须被拦（FX-28／V5 C-1）');
     assert.deepEqual(purityViolations("const fs = require('node:fs');"), ['node: 内建']);
     assert.deepEqual(purityViolations("await import('node:fs');"), ['node: 内建']);
+    // 三种写法（裸 import／require／动态 import()）逐一自证，且换一个 node: 内建名同样命中（避免只锁 fs 字面）
+    for (const sample of ["import 'node:path';", "const p = require('node:path');", "await import('node:path');"]) {
+      assert.deepEqual(purityViolations(sample), ['node: 内建'], '三种写法都必须被拦：' + sample);
+    }
     // ③ 注释里的说明文字不参与判定（dist 保留注释，禁的是代码）
     assert.deepEqual(purityViolations('/* 禁 window.toast = x 与 document.* 无关 */'), []);
   });

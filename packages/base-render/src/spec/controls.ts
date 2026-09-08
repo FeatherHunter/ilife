@@ -145,7 +145,8 @@ export type BindCopyAction = (
 export interface SharedHelpersInput {
   /** 类名前缀；缺省既有 `STYLE_PREFIX`（`ilife-`）。 */
   readonly prefix?: string;
-  /** 复制文本数据属性名；缺省 `DEFAULT_DATA_ATTR`（`data-t`，`renderActionBar` 渲染期写入）。 */
+  /** 复制文本数据属性名；缺省 `DEFAULT_DATA_ATTR`（`data-t`，`renderActionBar` 渲染期写入）。
+   *  覆盖**只影响产出 helpers JS 的选择器**；渲染端恒写 `DEFAULT_DATA_ATTR`（不一致由调用方自负，见文档 §3.3「`dataAttr` 覆盖口径」）。 */
   readonly dataAttr?: string;
 }
 

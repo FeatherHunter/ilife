@@ -81,8 +81,9 @@ export const TEXT_SENSITIVE_MASK = '****';
 export const TEXT_HEADER_TEMPLATE = '【{skill} · {key}】';
 
 /** **敏感行判定口径（FX-23，机读）**：投影行（`metrics`／`item` 的值、`items` 的元素）取值为
- *  `{ text: string, sensitive: true }` 形态时判为**敏感行**——与旧侧 `_rowText` 的行值形态**逐字一致**
- *  （`base.js:219-225`：`{text, sensitive}`，`sensitive` 真值即脱敏）。
+ *  `{ text: string, sensitive: true }` 形态时判为**敏感行**——该形态的**字段名**与旧侧 `_rowText` 一致
+ *  （`base.js:218-221`：`:219` 函数、`:221` 合并掩码行），但**判定语义不同**（FX-30）：
+ *  旧侧是真值判定（`if (r.sensitive)`），本契约只认**字面 `true`**（`flagValue`）。
  *
  *  - 判定只看源值的 `flagField` 是否为字面 `flagValue`（`true`），**不看文本内容**；`text` 字段是原文。
  *  - `EnvelopeDataByShape` 不含该形态 → 它是 **text 层的行值包装**（`data.metrics`／`data.item` 的值、
