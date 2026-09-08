@@ -148,8 +148,8 @@
 | `FillTemplateInput` | type | #74 | implemented | 3.1 | `{ template: string; assets: TemplateAssets; data?: unknown; strict?: boolean; dataScriptId?: string; content?: string }` |
 | `FillTemplateReport` | type | #74 | implemented | 3.1 | `{ markers: readonly MarkerReport[]; strict: boolean; exempt: boolean; bytes: number }` |
 | `FillTemplateOutput` | type | #74 | implemented | 3.1 | `{ html: string; report: FillTemplateReport }` |
-| `FillTemplate` | type | #74 | pending | 3.1 | `(input: FillTemplateInput) => FillTemplateOutput` |
-| `fillTemplate` | runtime | #74 | pending | 3.1 | `(input: FillTemplateInput): FillTemplateOutput` |
+| `FillTemplate` | type | #74 | implemented | 3.1 | `(input: FillTemplateInput) => FillTemplateOutput` |
+| `fillTemplate` | runtime | #74 | implemented | 3.1 | `(input: FillTemplateInput): FillTemplateOutput` |
 | `TemplateErrorShape` | type | #74 | implemented | 3.1 | `{ name: 'TemplateError'; code: TemplateErrorCode; marker?: TemplateMarkerKey; message: string }` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
@@ -865,6 +865,7 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 - **哨兵**：`escapeHtml("'") === "'"` 是**已知待修**的漂移哨兵（AC-14）——**AC-14 归一后本断言必须翻转**为 `escapeHtml("'") === '&#39;'`；当前为真只表示缺陷未修，**不代表**该行为被契约接受（FX-16①）。执行归 #74（§6.1），#79 复核。
 - **既有失败台账（FX-13，不修）**：`pnpm test` 当前 exit 1（#118 返修后实测 `tests 453 / pass 431 / fail 22`；#118 首轮为 `448／426／22`，第二轮返修后 `443／421／22`，第一轮返修后为 `435／413／22`，FX 前为 `430／408／22`，**新增失败 = 0**），**22 条全部是 #92 之前既有、与 base-paint 冻结面零耦合**的失败，**不属 #92 修复范围**：A 组 10 条 = Windows 并行 spawn 抖动（6 个 plugin smoke 单跑 46/46 绿、不可复现）；B 组 12 条 = `plugin-{bill,chef,home,schedule}-ilife` 缺 `"build:client":"tsdown"`（另案承接，不属 #63）。逐条清单与三重证明见 `docs/research/t92-verify-v2-gates.md`「A4 争议取证」。**A4 口径据此定为「三命令零回归」**：`pnpm build`／`pnpm boundaries`／`pnpm test:types` 绿 ＋ `pnpm test` **新增失败 = 0**（本契约的签名测试单跑必须 100% 绿，当前 `tests 46 / pass 46 / fail 0`；#118 首轮 `tests 41 / pass 41 / fail 0`；失败用例名集合与 #118 前**逐条相同**，见 §8.6／§8.7）。
 - **门禁归属（FX-10）**：「门面文档示例可执行」门 owner **#99**；「计数断言（77）」owner 技能包／#79（本契约不复制计数）；两者均已在 §4.4 登记。
+- **门禁口径（FX-74-4，读法定死）**：「门禁全绿」**只**读作 **`pnpm build`／`pnpm boundaries`／`pnpm test:types` 三条 exit 0 ＋ `pnpm test` 新增失败 = 0**；`pnpm test` **整体 exit 1 属既有台账态**（见上条「既有失败台账」），**不得**读作「全量测试必须 exit 0」——后人据此判回归时，只看**新增失败数**与三条命令的退出码。**新增失败的判据（FX-74-5）**：以 #92 台账的**失败用例名多重集**（test 级，施工期文件 `docs/research/t92-baseline-failures.md`（入仓常驻判据））为基线；**不采用**任何施工者自建名单（`.scratch/t74/baseline-fail-names.txt` 含 6 条 suite 级名，与 test 级口径不同，V2 未采信）。
 - **失败即契约缺陷**：测试红时**只许**改实现或同时改「清单＋文档＋类型」三处，不许删断言、放宽断言或改成恒真。
 - **#118 补遗的断言落点**：六个占位符／载荷槽规则／包裹约定（两条不变量）／模板分型由 `test/contract-signatures.test.mjs` 的 `describe('#118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／模板分型）')` 逐值断言（含分型规则的四种计数组合自证：`1/0`→数据页、`0/1`→内容页、`0/0`→legacy、`1/1`→不属任何型），类型层由 `test-d/contract-signatures.ts` 的 `_T17…_T31` 锁形；65 个模板的**可复跑分型**由 `tooling/classify-templates.mjs` 给出（输出 数据页 6／内容页 53／遗留 6）。**FX-118 返修的机读自证**（同 describe，5 条用例）：S-1 内容页无容器不抛 `container-missing`／S-2 数据页 `INJECT-DATA` 在容器内不抛 `marker-conflict`／S-3 两条不变量谓词唯一（契约常量 ＋ 工具脚本共用，含脚本源码扫描）／S-4 多条件输入首个命中即抛（§3.1.2⑤ 表 ↔ `TEMPLATE_CHECK_ORDER` 逐值同序）／FX-118-4／5／8／10 措辞与迁移面落点。
 
@@ -1023,3 +1024,60 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | F-6 | V3 低洞顺手处置：H7 `dataScriptId` JSDoc 与冻结 `FillTemplateReport` 矛盾、H8 `legacy` 散文口径含容器、H10 `--strict` 段按字面无条件 | **修**：`spec/template.ts` `dataScriptId` JSDoc 改「只用于校验」；§3.1.2③ 写明「容器不是分型判据」；§3.1 `strict` 段补「仅数据页」 |
 
 **#74 票面冻结面计数已同步（D-3，本台账登记）**：#74 票面原写「`fillTemplate` 为 **126 条**冻结面中仅剩的 `pending` 之一」，该计数已由总架构师更正为 **130 条**，与本契约 §8.6／§8.7 及仓内 `SPEC_FROZEN_SURFACE` 实测一致（implemented 104／pending 26／runtime 88／type 42）；#74 票面不属本契约改动面，故仅在本台账登记该计数已同步。
+
+### 8.8 #74 返修台账（FX-74-1…FX-74-9 / V1·V2·V3 验收后 · 总架构师裁定）
+
+口径同 §8：每条给**处置**与**落点**，**禁止默默略过**。三份独立验收（V1 行为与契约／V2 门禁与越界／V3 迁移与影响面）**全部通过、阻塞级 0**，本轮修的是其遗留的 9 条低／nit 项。本轮为**测试与文档级**修复：`fillTemplate` 的**行为零变更**（唯一实现改动是把写死的 `u003c` 换成冻结常量 `TEXT_JSON_LT_RULE`，输出逐字节不变），冻结面仍 **130 条**（未增删、签名值零改动），技能包**零改动**。
+
+| 编号 | 洞（验收方） | 处置 | 落点 |
+|---|---|---|---|
+| FX-74-1 | V1：3 处恒真／零信息断言（`packages/base-render/test/template.test.mjs`） | **修** | 三处改为**有鉴别力**的断言（见下「FX-74-1 逐条」） |
+| FX-74-2 | V1：`src/template.ts` 写死 `'u003c'` 字面量（第二真相，契约 §3.1:172 点名 `TEXT_JSON_LT_RULE`） | **修** | 改引冻结常量 `TEXT_JSON_LT_RULE`（`src/spec/text.ts:129`）；该文件再无 `u003c` 字面量 |
+| FX-74-3 | V1：探针覆盖而作者测试未覆盖的边界（2 条必补 ＋ 12 条逐条处置） | **修 ＋ 登记** | 见下「FX-74-3 边界处置」 |
+| FX-74-4 | V2 N-1：A12「门禁全绿」口径易被误读为「全量测试必须 exit 0」 | **修** | §7「门禁口径（FX-74-4，读法定死）」条 |
+| FX-74-5 | V2 N-2：施工者自建基线名单与 #92 台账口径不同 | **修（口径）** | §7「门禁口径」条：判据统一为 #92 台账（test 级多重集），不采用施工者自建名单 |
+| FX-74-6 | V3①**必修**：`migration-path.md` 漏 memo 连带改动面（按字面执行 `tsc` 必红） | **修** | `docs/research/t74-migration-path.md` §2.5 动作 1／2／5 补 `src/render/index.ts:3` 再导出、`test/render.test.mjs:3` 导入面、`:37-39` 本地 `escapeHtml` 单测（与 §2.1 动作 1 同口径） |
+| FX-74-7 | V3③**必修**：资产替换的字节影响未声明（文档只讲「包裹字节中性」） | **修** | `migration-path.md` §1／§5 新增「资产替换面」声明（两个 CSS 变体 ＋ 谁批准） |
+| FX-74-8 | V3：差异证据措辞（「旧实现」易误读为旧版本） | **修** | `escape-html-calorie-diff.md` 改「归一前实现（base-paint）」＋ 明写旧基线本就五字符 |
+| FX-74-9 | V3 其余 7 条 | **逐条修或登记** | 见下「FX-74-9 其余 7 条」 |
+
+**FX-74-1 逐条（下表行号为**返修前**位置；新断言见 `template.test.mjs`，逐条给出「什么实现错误会让它变红」）**
+
+| 位置 | 原断言（问题） | 新断言（鉴别力） |
+|---|---|---|
+| `template.test.mjs` `:137` | `!none.html.includes(M.chartsHelpers)`（fixture 本就不含该标记 → 恒真、零信息） | ① 未被消费的 `chartsHelpersJs` 资产**不得出现在输出**（实现若「无脑注入三个资产」即红）；② `report.markers.chartsHelpers` 的 `count === 0`／`filled === false` |
+| `template.test.mjs` `:409` | `!('code' in new Error())`（与实现无关、永真） | ① `!(err instanceof RenderError)`；② `err` 的原型链不得包含 `RenderError.prototype`（若 `TemplateError` 继承／等于 `RenderError` 即红） |
+| `template.test.mjs` `:549` | `bytes >= html.length`（UTF-8 字节数恒 ≥ UTF-16 码元数、永真） | ① 样本含中文（前置条件，含则 `bytes` 必须**严格**大于 `html.length`）；② 实现若把 `bytes` 写成 `html.length`（码元数）即红 |
+
+**FX-74-3 边界处置（补测试 7 条 / 登记 5 条 ＝ 12 条逐条不略过）**
+
+| # | V1 边界 | 处置 | 落点 |
+|---|---|---|---|
+| 1 | `chartsHelpers` 预包裹 → `marker-conflict` | **补测试** | `template.test.mjs`「不变量②：chartsHelpers 被预包裹」 |
+| 2 | 容器属性形态（序颠倒／`data-id` 诱饵合法；未加引号／属性值含 `>`／大写 `<SCRIPT>` → `container-missing`） | **补测试** | 同文件「容器属性形态」用例 |
+| 4 | 纯空白资产 `'   '`（契约只写「空串」） | **补测试** | 同文件「资产为纯空白」用例 |
+| 5 | `NO-SHARED` ＋ `SHARED-CSS×2` 的次序组合 | **补测试** | 同文件「NO-SHARED ＋ SHARED-CSS×2 → marker-duplicate」用例 |
+| 6 | JSON 载荷含 `$&`／`` $` ``／`$'` | **补测试** | 同文件「JSON 载荷含 $&／$`／$' 时替换逐值安全」用例 |
+| 8 | 多标记同时重复时的 `marker` 归因 | **补测试** | 同文件「多标记同时重复：marker 归因取 `TEMPLATE_MARKERS` 键序首个重复项」用例 |
+| 9 | 输入形态边界（空输入／`null`／非字符串 `template`／`assets` 整体缺失／非字符串 `content`） | **补测试** | 同文件 `describe('输入形态边界（FX-74-3／V1 边界 9）')` |
+| 3 | 容器**无闭标签**（N-3） | **登记** | 契约 §3.1 第 2 条的定位口径只规定「左侧最近未闭合开标签」＋ id／type 逐字，**未要求**右侧存在闭标签 → **不冻结也不排除**，owner 契约（若需收严须走 changeset） |
+| 7 | 资产文本含契约标记字面量（N-10） | **登记** | §3.1.2① 已判为**产出者缺陷**（`SHARED_HELPERS_JS_RULE.selfContained`），填充器**不兜底** → **不冻结也不排除**，owner #76／#78 产出者 |
+| 10 | `strict` 信封字段「继承」口径（`Object.create(ENV)` → `strict-invalid`，`hasOwnProperty`） | **登记** | 契约只写「含五字段」，未规定自有／继承 → **不冻结也不排除**，owner 契约 |
+| 11 | `data` 可序列化但非 JSON 保真（`NaN` → `null`、`{a: undefined}` → `{}`） | **登记** | 契约只要求「可 JSON 序列化」，注入按 `JSON.stringify` 语义 → **不冻结也不排除**，owner #77（复制文本序列化同口径） |
+| 12 | `INJECTION_ORDER` 的行为断言缺失 | **登记** | §3.1.2①／④ 已定死「无先后语义」，唯一可观察场景即第 7 条的产出者缺陷面 → **不冻结也不排除**，owner 契约 |
+
+**注**：上表第 **4／8／9** 条的测试钉的是**实现口径**（契约未规定「纯空白资产」「多标记重复的 `marker` 归因」「非字符串入参」），属**不冻结也不排除**——契约若日后收严（走 changeset），须同步改这三条用例；第 2 条的四种属性形态则由 §3.1 第 2 条的「逐字 id／type ＋ 左侧最近未闭合开标签」直接推得，属**可推导行为**。
+
+**FX-74-9 其余 7 条（逐条修或登记）**
+
+| 项 | V3 洞 | 处置 | 落点 |
+|---|---|---|---|
+| ② | 测试 `fillTemplate` 导入面未点（bill `test/render.test.mjs:3`、chef `:6` 从 `../dist/index.js` 导入将被删除的 `fillTemplate`） | **修** | `migration-path.md` §2.1／§2.4 动作清单补「同步改测试导入面」 |
+| ④ | 两文档 `escapeHtml` 落点行号口径不一（声明行 7／7／8／7／8 vs 实现体行 8／8／9／8／9） | **修** | `migration-path.md` §4 加「行号口径」注记（两文档各自正确） |
+| ⑤ | 「同批删除」在本票红线内不可满足 | **修** | `migration-path.md` §4 改「同一迁移批次（各技能地图执行时）」＋登记两实现并存窗口 |
+| ⑥ | §3 标题「12 个预包裹模板」实为 **12 处**（6 模板 × 2 标记；calorie 另有 6 处） | **修** | `migration-path.md` §3 标题 ＋ `.changeset/base-paint-fill-template.md` 措辞改「12 处预包裹（6 模板 × 2 标记）」 |
+| ⑦ | memo 动作 2 的「调用点」措辞（生产链零调用，实指测试调用） | **修** | `migration-path.md` §2.5 动作 2 改「测试调用点」＋补「`src/render/index.ts:4` 只导出 `MEMO_TEMPLATES, loadTemplate`（无 `templateFor`）」 |
+| ⑧ | 影响面未明写「5 技能迁移后零变化」与 `renderPage`／`renderReco` | **修** | `migration-path.md` §4 补两条 |
+| ⑨ | 反推法依赖零字面 `&#39;` | **修** | `escape-html-calorie-diff.md` 前提自查行补「真实用户数据含 `&#39;` 时反推法失效（只影响证据表算法，不影响结论）」 |
+
+**门禁实测（#74 返修后）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm test:types` 退出 0／签名测试单跑 **46 用例全绿**（exit 0）／行为测试 `template.test.mjs` **45 用例全绿**（返修前 36，新增 9）／`pnpm test` **新增失败 = 0**（判据 = #92 台账多重集，见 §7「门禁口径」）／`SPEC_FROZEN_SURFACE` **130 条**不变。

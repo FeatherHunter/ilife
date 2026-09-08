@@ -6,6 +6,7 @@
 import type { Envelope } from 'base-link-core';
 import type { PageDescriptor } from './ui.js';
 import { cx } from './style.js';
+import { ESCAPE_HTML_CHARS, ESCAPE_HTML_ENTITIES } from './spec/controls.js';
 
 export const RENDER_CONTRACT_VERSION = '0.1.0' as const;
 /** 期望的 envelope 版本（与 link-core ENVELOPE_VERSION 同值，漂移由单测钉死）。 */
@@ -28,8 +29,14 @@ export class RenderError extends Error {
   }
 }
 
+/** AC-14 五字符归一（`& < > " '`）：转义集与实体表恒取冻结常量 `ESCAPE_HTML_CHARS`／
+ *  `ESCAPE_HTML_ENTITIES`（唯一真相源），不自写第二份字符表——改契约即改行为，漂移无处藏。
+ *  owner 归 #74（契约 §3.3／§6.1／§7 哨兵翻转），#79 只做收口复核。 */
+const ESCAPE_PATTERN = new RegExp('[' + ESCAPE_HTML_CHARS.join('') + ']', 'g');
+const ESCAPE_ENTITY: Readonly<Record<string, string>> = ESCAPE_HTML_ENTITIES;
+
 export function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s.replace(ESCAPE_PATTERN, (ch) => ESCAPE_ENTITY[ch]);
 }
 
 function head(page: PageDescriptor): string {

@@ -137,7 +137,7 @@ type _T11 = Expect<Equal<FillTemplateReport, { readonly markers: readonly Marker
 type _T12 = Expect<Equal<FillTemplateOutput, { readonly html: string; readonly report: FillTemplateReport }>>;
 type _T13 = Expect<Equal<FillTemplate, (input: FillTemplateInput) => FillTemplateOutput>>;
 type _T14 = Expect<Equal<TemplateErrorShape, { readonly name: 'TemplateError'; readonly code: TemplateErrorCode; readonly marker?: TemplateMarkerKey; readonly message: string }>>;
-type _T15 = Expect<Equal<Absent<'fillTemplate'>, true>>;
+type _T15 = Expect<Equal<Present<'fillTemplate'>, true>>;
 type _T16 = Expect<Equal<Absent<'FillTemplateInput'>, true>>;
 
 /* ── 2b. #118 契约补遗：CONTENT 槽位／载荷槽规则／包裹约定／模板分型（A1–A6） ── */

@@ -43,6 +43,7 @@ import {
   DEFAULT_DATA_ATTR,
   DEFAULT_DATA_SCRIPT_ID,
   ESCAPE_HTML_CHARS,
+  ESCAPE_HTML_ENTITIES,
   HELP_COPY_ACTIONS,
   HELP_COPY_TARGETS,
   HELP_SCHEMA_ERROR_CODES,
@@ -417,13 +418,15 @@ describe('冻结口径逐值', () => {
     assert.deepEqual([...ENVELOPE_SHAPES].filter((s) => !serializable.has(s)), ['fallback'], '唯一排除项必须是 fallback');
   });
 
-  it('escapeHtml 五字符口径（AC-14）：当前实现 4/5，本断言是漂移哨兵', () => {
+  it('escapeHtml 五字符口径（AC-14）：归一已落地，五字符逐值（漂移哨兵已翻转）', () => {
     assert.deepEqual([...ESCAPE_HTML_CHARS], ['&', '<', '>', '"', "'"]);
-    for (const ch of ESCAPE_HTML_CHARS.filter((c) => c !== "'")) assert.notEqual(escapeHtml(ch), ch);
-    // 哨兵（FX-16）：本断言当前为真**只表示 AC-14 归一尚未执行**，不代表该行为被契约接受。
-    // AC-14 归一（五字符 `& < > " '`）落地后，本断言**必须翻转**为 assert.equal(escapeHtml("'"), '&#39;')；
-    // 契约 §3.3／§7 已把它登记为待翻转 tripwire，执行归 #74（#79 复核）。
-    assert.equal(escapeHtml("'"), "'", "单引号尚未归一 → AC-14 归一后本断言必须翻转为 &#39;（不得把缺陷固化）");
+    for (const ch of ESCAPE_HTML_CHARS) assert.notEqual(escapeHtml(ch), ch, 'AC-14：五字符必须全部转义');
+    for (const ch of ESCAPE_HTML_CHARS) {
+      assert.equal(escapeHtml(ch), ESCAPE_HTML_ENTITIES[ch], ch + ' 必须按 ESCAPE_HTML_ENTITIES 逐值转义');
+    }
+    // 哨兵（FX-16①）**已按契约翻转**：AC-14 归一执行归 #74（#79 复核）。
+    // 翻转前为 `assert.equal(escapeHtml("'"), "'")`——那是「缺陷未修」的标记，不是被接受的行为。
+    assert.equal(escapeHtml("'"), '&#39;', 'AC-14：单引号必须归一为 &#39;（#74 已执行）');
   });
 
   it('逐 shape 投影表（FX-1①）：5 个可序列化 shape 全覆盖且逐值', () => {
@@ -831,8 +834,9 @@ describe('#118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／
       { container: { id: 'payload', type: 'application/json' }, dataMissing: true, strictInvalid: true });
     assert.equal(firstHit(badData), 'data-missing');
     assert.ok(doc.includes('首个命中即抛、不聚合'), 'FX-118-2：文档必须写明「首个命中即抛、不聚合」');
-    // 本票不得实现 fillTemplate（仍归 #74）
-    assert.ok(!runtimeKeys.has('fillTemplate'), 'FX-118：fillTemplate 必须仍未实现（归 #74）');
+    // #74 落地：`fillTemplate` 已实现 → 本条按契约「pending 条目实现后必须翻转」翻转为「必须已导出」
+    // （契约 §3／§7 状态语义：implemented 的运行时项必须出现在出口面；清单／文档表／test-d 三处已同步）。
+    assert.ok(runtimeKeys.has('fillTemplate'), '#74：fillTemplate 必须已实现并导出');
     assert.ok(doc.includes('无先后语义') && !doc.includes('恒为最后一步'), 'FX-118-6：正文时序两说必须统一');
   });
 

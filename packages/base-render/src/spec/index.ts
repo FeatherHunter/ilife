@@ -65,8 +65,8 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'FillTemplateInput', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ template: string; assets: TemplateAssets; data?: unknown; strict?: boolean; dataScriptId?: string; content?: string }' },
   { name: 'FillTemplateReport', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ markers: readonly MarkerReport[]; strict: boolean; exempt: boolean; bytes: number }' },
   { name: 'FillTemplateOutput', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ html: string; report: FillTemplateReport }' },
-  { name: 'FillTemplate', kind: 'type', ticket: '#74', status: 'pending', section: '3.1', signature: '(input: FillTemplateInput) => FillTemplateOutput' },
-  { name: 'fillTemplate', kind: 'runtime', ticket: '#74', status: 'pending', section: '3.1', signature: '(input: FillTemplateInput): FillTemplateOutput' },
+  { name: 'FillTemplate', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '(input: FillTemplateInput) => FillTemplateOutput' },
+  { name: 'fillTemplate', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: '(input: FillTemplateInput): FillTemplateOutput' },
   { name: 'TemplateErrorShape', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: "{ name: 'TemplateError'; code: TemplateErrorCode; marker?: TemplateMarkerKey; message: string }" },
 
   // ── §3.2 共享样式资产（#75） ──
