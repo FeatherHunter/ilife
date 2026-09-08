@@ -472,10 +472,17 @@ export type BindCopyAction = (
 
   // ③ 渲染：复制文本在渲染期序列化后写入 data-t；id 取冻结表
   const envelope = /* 技能包提供的 SerializableEnvelope */;
+  const copyLog = {                       // 6 段日志中 5 段的唯一来源（FX-77-7①：不传则 5 段全 `(未知)`）
+    thinking: '先查库再算',
+    dataStructure: 'items[]',
+    callChain: 'read → rank',
+    timestamp: '2026-01-02T03:04:05',
+    exception: '无',
+  };
   document.querySelector('#bar').innerHTML = renderActionBar({
     buttons: [{ label: '打开场景', kind: 'primary', actionId: 'ilife-demo-open' }],
     copyData: { actionId: COPY_ACTION_IDS.actionBar.copyData, text: buildDataText({ envelope }) },
-    copyLog: { actionId: COPY_ACTION_IDS.actionBar.copyLog, text: buildLogText({ envelope }) },
+    copyLog: { actionId: COPY_ACTION_IDS.actionBar.copyLog, text: buildLogText({ envelope, copyLog }) },
   });
 
   // ④ 接线：发现 → 订阅 → copyText → 徽章（失败徽章恒在，不受 silent 影响）
@@ -557,10 +564,10 @@ export type BindCopyAction = (
 | `LOG_SECTION_SOURCES` | runtime | #77 | implemented | 3.4 | `{ scene: 'envelope'; thinking: 'copyLog.thinking'; dataStructure: 'copyLog.dataStructure'; callChain: 'copyLog.callChain'; timestampVersion: 'copyLog.timestamp'; exception: 'copyLog.exception' }` |
 | `DataProjectionSpec` | type | #77 | implemented | 3.4 | `{ header: string; body: string; tail: string \| null; csvSections: readonly string[] }` |
 | `DATA_TEXT_PROJECTIONS` | runtime | #77 | implemented | 3.4 | `{ stat: { header: '【{skill} · {key}】'; body: 'metrics'; tail: null; csvSections: readonly ['metrics'] }; list: { header: '【{skill} · {key}】'; body: 'items'; tail: 'total'; csvSections: readonly ['items', 'total'] }; detail: { header: '【{skill} · {key}】'; body: 'item'; tail: null; csvSections: readonly ['item'] }; receipt: { header: '【{skill} · {key}】'; body: 'ok'; tail: 'message'; csvSections: readonly ['status', 'message'] }; analysis: { header: '【{skill} · {key}】'; body: 'summary'; tail: null; csvSections: readonly ['summary'] } }` |
-| `BuildDataText` | type | #77 | pending | 3.4 | `(input: DataTextInput) => string` |
-| `buildDataText` | runtime | #77 | pending | 3.4 | `(input: DataTextInput): string` |
-| `BuildLogText` | type | #77 | pending | 3.4 | `(input: LogTextInput) => string` |
-| `buildLogText` | runtime | #77 | pending | 3.4 | `(input: LogTextInput): string` |
+| `BuildDataText` | type | #77 | implemented | 3.4 | `(input: DataTextInput) => string` |
+| `buildDataText` | runtime | #77 | implemented | 3.4 | `(input: DataTextInput): string` |
+| `BuildLogText` | type | #77 | implemented | 3.4 | `(input: LogTextInput) => string` |
+| `buildLogText` | runtime | #77 | implemented | 3.4 | `(input: LogTextInput): string` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
 **签名与输入对齐（AC-5／B2）**
@@ -585,7 +592,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | `receipt` | `{ ok, message }` | 状态行 ＋ 消息行 | `data.ok` 状态行 | `data.message` | `status`／`message` |
 | `analysis` | `{ summary: string }` | 标题行 ＋ 摘要文本 | `data.summary` | 无 | `summary` |
 
-- 标题行逐字 = `TEXT_HEADER_TEMPLATE`（`【{skill} · {key}】`，取 `envelope.skill`／`envelope.key`）；`DataTextInput.title` 可覆盖，`occurredAt` 给定时在其后追加时间行。
+- 标题行逐字 = `TEXT_HEADER_TEMPLATE`（`【{skill} · {key}】`，取 `envelope.skill`／`envelope.key`）；`DataTextInput.title` 可覆盖（**空串视同缺省**，输出头行恒存在，FX-77-6），`occurredAt` 给定时在其后追加时间行。
 - `json`／`csv` 口径**无输出头**（标题行不输出）；`json` 的键名 = envelope 五字段原样。
 
 **6 段日志 ↔ `CopyLogFields` 对应表（FX-1③，定死）**——机读真相源 `LOG_SECTION_SOURCES`：
@@ -606,7 +613,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | format | 输出头 | 空值口径 | 转义口径 | 分隔／缩进 |
 |---|---|---|---|---|
 | `text`（缺省） | `TEXT_HEADER_TEMPLATE`（`【{skill} · {key}】`）+ 时间行（`occurredAt` 给定时）+ 主体行（投影表 `body`）+ 收尾行（投影表 `tail`） | 数据空值写 `TEXT_EMPTY_PLACEHOLDER`（`未填写`）；日志段缺失写 `LOG_UNKNOWN_PLACEHOLDER`（`(未知)`，见下） | 不转 HTML；行内换行替换为空格 | 行分隔 `LF`；分节标题与行各占一行 |
-| `json` | 无输出头 | 空值保留 `null`（**不**写「未填写」／「(未知)」，键不省略） | 文本中 `<` 一律写成反斜杠 + `u003c`（`TEXT_JSON_LT_RULE`） | 缩进 `TEXT_JSON_INDENT`（2 空格）；键名 = envelope 五字段原样 |
+| `json` | 无输出头 | 空值保留 `null`（**不**写「未填写」／「(未知)」，键不省略；`undefined` 属性**归一为 `null`** 以保键，FX-77-1） | 文本中 `<` 一律写成反斜杠 + `u003c`（`TEXT_JSON_LT_RULE`） | 缩进 `TEXT_JSON_INDENT`（2 空格）；键名 = envelope 五字段原样 |
 | `csv` | 无输出头 | 空值写**空字符串**（机器可读，不写占位符） | RFC4180：字段含 `,`／`"`／换行时用 `"` 包裹，内部 `"` 写成 `""`（`CSV_DIALECT`） | 表头 `CSV_DIALECT.header = ['section', 'row']`；行尾 `LF` |
 
 - **敏感行判定口径（FX-23，机读真相源 `SENSITIVE_ROW_RULE`）**：投影行（`metrics`／`item` 的**值**、`items` 的**元素**）取值为 `{ text: string, sensitive: true }` 形态时判为**敏感行**——判定只看源值的 `sensitive` 字段是否为字面 `true`（`flagValue`），**不看文本内容**；`text` 字段是原文。该形态的**字段名**与旧侧 `_rowText` 一致（`{ text, sensitive }`，`base.js:218-221`——`:219` 函数、`:221` 合并掩码行）；**判定语义不同（FX-30／V5 C-8，显式声明）**：旧侧是**真值判定**（`if (r.sensitive)`，`base.js:221`，故 `sensitive: 1`／`'yes'` 亦脱敏），新契约只认**字面 `true`**（`flagValue`）——「形态一致」仅指字段名，**不是**判定一致。
@@ -617,7 +624,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 - **空值口径分层（FX-1④，定死）**：`text` 口径下**数据**空值写 `TEXT_EMPTY_PLACEHOLDER`（`未填写`）、**日志**段缺失写 `LOG_UNKNOWN_PLACEHOLDER`（`(未知)`）；`json` 口径**两者都写 `null`**（键不省略，**不**写任何占位符）；`csv` 口径**两者都写空字符串**（不写占位符）。即：两个占位符**只作用于 `text`**，与 `json`／`csv` 不冲突（V1 洞 8 处置）。
 - **csv 两列语义（FX-1④，定死）**：表头 `CSV_DIALECT.header = ['section', 'row']`。
   - `buildDataText`（csv）：行序 = 投影表主体行 → 收尾行（标题行／时间行**不输出**）；`section` 列 = 投影表的 `csvSections`（逐行对应）；`row` 列 = 该行文本（空值写空串）。
-  - `buildLogText`（csv）：行序 = `LOG_SECTIONS` 段序，**每段一行**；`section` 列 = 段名（`scene`／`thinking`／…）；`row` 列 = 该段文本（缺失写空串）；敏感行整行写 `****` 于 `row` 列、`section` 保留段名（V1 洞 9 处置）。
+  - `buildLogText`（csv）：行序 = `LOG_SECTIONS` 段序，**每段一行**；`section` 列 = 段名（`scene`／`thinking`／…）；`row` 列 = 该段文本（缺失写空串）；敏感行整行写 `****` 于 `row` 列、`section` 保留段名（V1 洞 9 处置）。**注（FX-77-5 登记 5）**：该敏感子句在**现行冻结类型下不可达**——`CopyLogFields` 五字段全为 `string`、`resolveCopyLog` 拒收非字符串（传包装形态 → `structure-invalid`），故日志侧永不出现掩码；子句保留为「将来放开类型时」的口径，不构成可达行为。
   - 引号与行尾见上表（RFC4180 ／ `LF`）。
 - **日志 json 口径**：`buildLogText` 的 `json` 输出 = 以 6 个段名为键的对象（`scene`／`thinking`／`dataStructure`／`callChain`／`timestampVersion`／`exception`），缺失段写 `null`；`scene` 值同为 envelope 派生文本。
 - 结构校验违规（`title` 非字符串／`data` 与 shape 不匹配／`data` 不符 `EnvelopeDataByShape[shape]`）→ **直接抛错**，code `structure-invalid`（对齐旧 Q7 拍板「违规直接报错」，`contract:164`）。
@@ -626,6 +633,116 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 - `format` 不在 `COPY_FORMATS` 内 → 抛 `TextError` code `format-unknown`。
 
 **所属包**：`base-paint`。**旧侧对应物**：§6.1 `contract:145-166`；`base.js:197-267`（`_validateSnapshot`／`_rowText`／`buildDataText`／`buildLogText`）。
+
+**§3.4 行为补遗（#77 落地；`contract:616` 授权的书写形式定案 ＋ 14 条「文档无规定」定案 ＋ 与旧实现差异记账）**
+
+本票落地 `buildDataText`／`buildLogText`（`packages/base-render/src/text.ts`），**未改任何冻结签名的值**（仅把 4 条 `status` 由 `pending` 翻成 `implemented`）。以下口径在本节定死，供 #79／#90 与后人查 parity 时直接引用；**任何一条日后若需收严或改判，须走 changeset**。
+
+**§3.4.1 行文本格式（`contract:616` 登记为「不冻结也不排除」，owner #77 → 本票定案）**
+
+| 位置 | 书写形式 | 说明 |
+|---|---|---|
+| 输出头（`text`） | `TEXT_HEADER_TEMPLATE` 逐位替换（`{skill}` ← `envelope.skill`、`{key}` ← `envelope.key`）；`DataTextInput.title` **非空时**覆盖（**空串视同缺省**，FX-77-6） | 非字符串 `skill`／`key` 按空串渲染；模板**单趟**展开（替换结果不再被二次扫描，故 `skill: '{key}'` → `【{key} · KK】`，FX-77-8）；输出头行**恒存在**、恒非空 |
+| 时间行（`text`） | `时间: {occurredAt}` | 沿用旧基线 `base.js:254` 措辞；`occurredAt` 缺省不输出该行 |
+| 映射体主体行（`stat.metrics`／`detail.item`） | `键: 值`（逐键一行） | 键序 = 对象自身键序（`Object.keys`） |
+| 数组体主体行（`list.items`） | `值`（逐项一行、**无前缀**） | 对象元素 → `JSON.stringify`（一行 = 一个投影值） |
+| 标量体／收尾行（`ok`／`summary`／`total`／`message`） | `字段名: 值` | 字段名恒取 `DATA_TEXT_PROJECTIONS[shape].body`／`.tail` |
+| 敏感行 | 整行**恒为** `SENSITIVE_ROW_RULE.mask`（不带键名）；`text` 口径紧随一行 `textNotice` | 对齐验收措辞「掩码行 `****` ＋ 紧随一行 `（敏感字段已脱敏）`」（`contract:871`） |
+| 日志段（`text`） | 标题行 `LOG_SECTION_TITLES[段]`（**无** `①`–`⑥` 圈号）＋ 内容行，段间无空行 | 6 段 = 12 行 |
+| 值文本化 | `null`／`undefined`／空串 → 各 format 的空值口径；字符串原样；number／boolean／bigint 及其余标量 → `String()`；对象／数组 → `JSON.stringify`（`undefined` 属性归一为 `null`、保留键，FX-77-1；与 `json` 口径同一包装） | 不可序列化（循环引用／`BigInt` 等非 JSON 值）→ `structure-invalid`，`message` **按因区分**（FX-77-8） |
+
+- **展开策略由数据形态推导**（对象 → 逐键、数组 → 逐项、标量 → 单行），**字段名恒取 `DATA_TEXT_PROJECTIONS`**——实现里**没有**第二份 shape→字段表。
+- **行内换行的分工**：`text` 口径把 CR／LF 替换为空格（`contract:608`）；`csv` 口径**保留原样**并由 RFC4180 引号包裹（`contract:610` 的「换行」条件由此可观察）；`json` 口径按 JSON 转义。
+
+**§3.4.2 与旧实现的差异（R-1，逐条记账；**一律以新契约为准**，不移植旧实现）**
+
+| # | 旧实现（`base.js`／`旧 §6.1`） | 新契约（本票落地） | 性质 |
+|---|---|---|---|
+| 1 | `buildDataText(p, format?)` 读 `p.data.meta`／`scene`／`snapshot` | `DataTextInput{envelope, format?, title?, occurredAt?}` 读 envelope 五字段 | 输入对齐（AC-5／B2） |
+| 2 | `snapshot = {title, summary[], sections[{heading, rows}]}` | 逐 shape 投影表 `DATA_TEXT_PROJECTIONS`；旧结构**不移植** | B2（红线 R1） |
+| 3 | 输出头 `'【' + skill_name + ' · ' + command_cn + '】'` | `TEXT_HEADER_TEMPLATE` 取 `envelope.skill`／`envelope.key` | 字段来源改 envelope |
+| 4 | `场景:` 行 ＋ `时间:` 行 | 只保留 `时间: {occurredAt}` 时间行；场景信息移入日志 `scene` 段 | 去 snapshot |
+| 5 | `summary` 逐行输出 | 无对应（投影表无 `summary` 字段；`analysis` 的摘要走 `data.summary` 投影行） | 去 snapshot |
+| 6 | 分节标题 `'▍' + heading` 行 | 数据面**无分节标题**（只有投影主体行 ＋ 收尾行） | 去 snapshot |
+| 7 | 行前缀 `'  · ' + row` | 无前缀；映射体写 `键: 值` | §3.4.1 定案 |
+| 8 | `json` = `JSON.stringify(snapshot, null, 2)` | `{version, skill, shape, key, data}`（envelope 五字段）＋ 敏感值写 `mask` ＋ `<` 转义 ＋ `undefined` 属性**归一为 `null`（保留键）** | 键集与转义改口径 |
+| 9 | `csv` = 行数组以 LF 拼接（**无表头、无 `section` 列、无引号转义**） | `CSV_DIALECT.header`（`section,row`）＋ RFC4180 引号（含 `,`／`"`／换行即包裹、内部 `"` 双写）＋ LF 行尾 | 旧侧「不是 RFC4180」 |
+| 10 | `_validateSnapshot` 5 类文案抛 `Error` | `TextError` code `structure-invalid`，判据 `EnvelopeDataByShape[shape]`；另新增 `shape-unsupported`／`format-unknown` | 判据与错误面重写 |
+| 11 | `_rowText` 真值判定（`if (r.sensitive)`，`sensitive: 1` 亦脱敏） | 只认**字面** `true`（`SENSITIVE_ROW_RULE.flagValue`，FX-30） | 判定语义不同 |
+| 12 | 掩码与提示合成一行 `'****（敏感字段已脱敏）'` | 「掩码行 ＋ 提示行」两行；`json`／`csv` **不夹**中文提示 | FX-23 显式偏离 |
+| 13 | `buildLogText` **完全忽略** `format`（无 json／csv 行为） | 三 format 全定义：`json` = 6 段名为键的对象；`csv` = 每段一行两列 | 旧侧语义不完整 |
+| 14 | 段标题 `① 场景标识`…`⑥ 异常信息` | `LOG_SECTION_TITLES` 六标题（**无**圈号） | 标题唯一真相 |
+| 15 | ① 段三行（`命  令:`／`唤醒词:`／`场景名:`） | 单行 `{skill}.{key}（{shape}）`（恒由 envelope 派生） | 红线 R5 |
+| 16 | 各段缺省四种文案（`(本地渲染 · 无 AI 链)`／`(只读查询)`／`(未知)`／`无`） | 统一 `LOG_UNKNOWN_PLACEHOLDER`（`(未知)`） | FX-1④ |
+| 17 | ⑤ 段两行（`本地时间:` ＋ `版  本:` ← `meta.skill_version`） | 单段单行 ← `copyLog.timestamp`；**版本子行不输出** | U6 定案 |
+| 18 | `copy_log` 两层兜底 `d.copy_log \|\| s.copy_log \|\| {}` | `LogTextInput.copyLog` 由技能包**显式传入**（无兜底、无 `data.scene.copy_log`） | 输入面收窄 |
+| 19 | `occurred_at` 同时供数据时间行与日志 ⑤ 段 | `DataTextInput.occurredAt` 只供数据时间行；`LogTextInput` 无该入参 | 入参面收窄 |
+| 20 | `buildLogText` **无校验、不抛错** | 与 `buildDataText` **同口径**校验 `data`（U14 定案） | 一致优先 |
+
+**§3.4.3 14 条「文档无规定」逐条定案**（来源：`.scratch/t77/scope.md` §7.2；每条给**定案 ＋ 理由**）
+
+| # | 事项 | 定案 | 理由 |
+|---|---|---|---|
+| U1 | `list.total` 缺失 | **省略收尾行，不报错**：`text`／`csv` 省略该行，`json` 省略该键（`total: undefined` **视同缺失**，同省略）；**显式 `total: null` 属「空值」**，三 format 各按空值口径渲染（`未填写`／`null`／空串） | `total` 在 `EnvelopeDataByShape.list` 是可选字段，缺失不是结构违规；「缺省」与「空值」必须分开，否则 `null` 会与缺失混同、json 的「键不省略」失效 |
+| U2 | `receipt.ok` 的 `text` 书写形式 | `ok: true`／`ok: false`（字面布尔） | `body` 字段名恒取投影表；值文本化统一 `String()`，**不自造**「成功／失败」映射（冻结面无该常量，自造即第二真相） |
+| U3 | `metrics`／`item` 逐键展开的键序 | 对象自身键序（`Object.keys` 的 JS 规范序） | 不引入排序表即无第二真相；与 `json` 口径（`JSON.stringify` 同序）逐字一致 |
+| U4 | `list.items` 非敏感元素的文本化 | 标量原样；对象／数组 → `JSON.stringify`（一行 = 一个投影值，不展开为多行） | `contract:616` 授权 owner #77；JSON 是唯一可逆且无第二真相的写法；多行会违反「一行 = 一个投影值」 |
+| U5 | 段标题行书写形式 | `LOG_SECTION_TITLES` **逐字**（无圈号、无缩进、无冒号） | 标题文本唯一真相是该常量；加圈号／缩进即第二份写法（旧侧圈号不移植） |
+| U6 | ⑤ 段「版本」子行 | **不输出** | `CopyLogFields` 无 version 字段，`LOG_SECTION_SOURCES` 只指向 `copyLog.timestamp`；另找数据源撞红线 R5；版本信息已由 `scene` 段与 envelope 五字段（json 口径原样）承载 |
+| U7 | `buildDataText`（csv）敏感行的 `section` 列 | **保留投影表 `csvSections` 分组名**（与 `buildLogText`「保留段名」同口径） | `section` 列语义是「行来源分组」，与是否脱敏无关；改写会让两列语义与分组信息同时丢失 |
+| U8 | `TextErrorShape`／运行时错误类 | **不导出**（R-2）：`TextError` 类定义在 `src/text.ts`、不从 `src/index.ts` 导出；调用方按 `name === 'TextError'` ＋ `code` 判定 | 冻结面 130 条无该运行时条目，导出会打破「新增运行时出口恰好等于清单 implemented 的运行时项」出口面锁（与 `TemplateError`／`ControlsError` 同口径） |
+| U9 | `json` 口径下 `title`／`occurredAt` | **不参与输出**（json 对象恒为 envelope 五字段） | 「`json`／`csv` 无输出头」是定死口径；塞进 json 会改变「键名 = envelope 五字段原样」的键集 |
+| U10 | 日志 `json` 键序 | `LOG_SECTIONS` 段序 | 段序是契约（`contract:602`），是唯一无第二真相的确定序 |
+| U11 | csv 字段含 CR／首尾空格 | **CR 视同「换行」加引号**；**首尾空格不加引号** | `contract:610` 的「换行」在 RFC4180 语境含 CR／CRLF（否则裸 CR 破坏行边界）；RFC4180 不要求为首尾空格加引号，加了会破坏「字段值 = 原值」 |
+| U12 | `metrics` 值类型与敏感行包装冲突 | **放行**：结构校验只判容器形态，不判逐值类型 | `contract:612`／`:615` 明文把 `{ text, sensitive: true }` 列为 `metrics`／`item` 值位置与 `items` 元素的**合法形态**；逐值类型约束归 envelope 生产者（`createEnvelope`），`contract:624` 的 `structure-invalid` 判据只列 5 条容器级判据 |
+| U13 | `text` 口径 `data` 空值逐形态 | `null`／`undefined`／空串 → `未填写`；**空对象／空数组 → 无主体行**（不写占位符、不报错） | `contract:617` 只说「数据空值写 `未填写`」；「一行 = 一个投影值」意味着没有投影值就没有行；为空容器写占位符会凭空造行（旧侧无此行为） |
+| U14 | `buildLogText` 是否校验 `data` | **同口径校验**（`data` 不符 shape 同样抛 `structure-invalid`） | 一致性优先：两个出口共用同一 envelope 输入契约；否则同一载荷的判定随出口而异，调用方无法用一套判据 |
+
+**§3.4.4 本票自查新洞（施工者自己扫出并处置／登记，不留待复验）**
+
+| # | 自查新洞 | 处置 |
+|---|---|---|
+| 77-1 | **错误码判定次序未规定**：同一入参可同时命中 `format-unknown`／`shape-unsupported`／`structure-invalid`，不定死即「一实现一序」 | **定案**（本节 §3.4.5）：`format-unknown` → `shape-unsupported` → `structure-invalid`，**由外到内、首个命中即抛**（对齐 `TEMPLATE_CHECK_ORDER` 的「首个命中即抛、不聚合」哲学）；用例「判定次序」钉死 |
+| 77-2 | `occurredAt` 非字符串未规定（契约只写 `title` 非字符串 → `structure-invalid`） | **定案**：与 `title` 同口径 → `structure-invalid`（对称、可预期） |
+| 77-3 | 入参／`envelope` **非对象**未规定（按字面会抛 `TypeError`，非契约错误面） | **定案**：`structure-invalid`（`TypeError` 逃逸会让调用方无法按 `code` 判定） |
+| 77-4 | 投影值**不可 JSON 序列化**（循环引用）未规定 | **定案**：`structure-invalid`（值无法渲染即结构问题；不静默写占位符） |
+| 77-5 | `copyLog` 整体非对象／字段非字符串未规定 | **定案**：`structure-invalid`；`null`／`undefined` 视同缺失 |
+| 77-6 | `copyLog` 字段为**空串**未规定 | **定案**：视同缺失（三 format 一致）——否则 `text` 口径会出现空内容行，与「缺段写 `(未知)`」冲突 |
+| 77-7 | envelope 五字段**存在性**未规定 | **不校验**（归 #74 `STRICT_ENVELOPE_FIELDS`，本票不自造第二套信封校验）；非字符串 `skill`／`key` 在 `text` 头与 `scene` 段按空串渲染、在 `json` 原样透传；**`undefined`／缺失**在 `json` 归一为 `null`（**键不省略**，FX-77-1——`JSON.stringify` 默认丢键，与 `contract:609` 冲突） |
+| 77-8 | `json` 口径 `data` 的**多余键**未规定 | **定案**：原样透传（json 是「envelope 原样」口径）；`text`／`csv` 只输出投影字段（已用例钉死） |
+| 77-9 | 时间行**文案**未规定 | **定案**：`时间: ` 前缀（沿用旧基线措辞，属 §3.4.1 登记项） |
+| 77-10 | 空容器（`metrics: {}`／`item: {}`／`items: []`）未规定 | **定案**：无主体行、不报错（U13 同源；`csv` 只剩表头） |
+| 77-11 | `text` 行内换行替换 与 `csv` 引号包裹的**分工**未规定 | **定案**：各按该 format 的转义口径列执行（`text` 替换、`csv` 原样＋包裹、`json` 转义），见 §3.4.1 末条 |
+| 77-12 | `R-4`「#76 返回文本可直接喂 `copyText`」未规定**空产出**时怎么办 | **定案**：本票两个出口在**合规输入**下**恒非空**——`text` 口径输出头行**恒存在**（`title` 空串视同缺省、`skill`／`key` 空时按空串替换得 `【 · 】`，FX-77-6 已修 `title: ''` ＋ 空投影体的空串反例）、日志恒 12 行、`json`／`csv` 恒有结构／表头；故 `COPY_TEXT_DEFAULTS.emptyTextShortCircuit` 不会误短路。用例断言**五种空产出诱因 × 三 format 均非空且 `copyText` 返回 `ok`** ＋ 空串短路口径存在 |
+
+**§3.4.5 判定次序（本票定案，首个命中即抛）**
+
+`format-unknown`（入参 `format` 闭集）→ `shape-unsupported`（`envelope.shape` 闭集，含 `fallback`）→ `structure-invalid`（`title`／`occurredAt` 类型 → `copyLog` 形态 → `data` 与 `EnvelopeDataByShape[shape]`）。同一输入叠加多个违规时**只抛首个**，`message` 恒可辨因（一码多义由 `message` 区分，§3.1.2⑤ 同口径）。
+
+**§3.4.6 门禁与证据（#77 落地后）**：`pnpm build`／`pnpm boundaries`／`pnpm test:types` 三条 **exit 0**；`pnpm test` **新增失败 = 0**（判据 = `docs/research/t92-baseline-failures.md` 失败用例名多重集）；`packages/base-render/test/text.test.mjs` **83 用例全绿**；可复跑证据 `docs/research/t77-serialization-evidence.mjs` ＋ 快照 `docs/research/t77-serialization-evidence.md`（**215 条断言全绿**，重跑逐字节相同，SHA256 `BAF27B44E53B13597AC3A4E6A1D704DDBDB3AD9F3A99B709B92ADA8911BF5D27`）；`SPEC_FROZEN_SURFACE` **130 条**（implemented 123／pending 7）。
+
+**§3.4.7 返修（V1／V2／V3 三份独立验收后 · FX-77-1…8；均为落地口径的**收严**，不改任何冻结签名的值）**
+
+| 项 | 处置 |
+|---|---|
+| FX-77-1 `json` 下 `undefined` 属性被静默丢键 | **修**：`undefined` **归一为 `null`（保留键）**——同一输入的三种 format **键集／行数一一对应**（`json` `null` ＝ `text` 占位符 ＝ `csv` 空串的语义等价物），**含嵌套对象值**（`text`／`csv` 的对象值经同一 `JSON.stringify` 包装，不再丢键）；`list.total` **缺省**（含 `undefined`）仍**省略键**（U1 不破）。用例 ＋ 证据 §1.5 双向钉死 |
+| FX-77-2 缺断言的边界 | **修**：补断言——csv 的 CR 与首尾空格（U11）、循环引用（77-4）、非字符串 `skill`／`key`（77-7）、`title: ''`、`json` 键名含 `<`、深层缩进（2／4／6／8／10／12） |
+| FX-77-3 证据脚本缩进断言无鉴别力 | **修**：改为**逐行**比对缩进层级（每行恒为 `TEXT_JSON_INDENT` 的整数倍 ＋ 逐字节等于规范序列化），3 空格缩进即红 |
+| FX-77-4 近恒真断言（`test.mjs:169/242/302/679/714`） | **修**：改为行为断言（投影表 `header` 展开成首行／缺省 format 恰等于首项／行尾按 `CSV_DIALECT.lineEnding` 拆分／含分隔符与引号的两列逐行等值／逐行等值代替 `length > 0`） |
+| FX-77-5 其余低／nit | **修／登记**：见下表「登记项」 |
+| FX-77-6 空产出反例（`title: ''` ＋ 空投影体） | **修**：输出头行**恒存在**（空 `title` 视同缺省），产出**恒非空**；五种诱因 × 三 format 均断言非空且 `copyText` 返回 `ok` |
+| FX-77-7／8 随手清 | **修**：`contract:435-480` 示例补 `copyLog`；changeset 措辞改准；`switch` 补 `never` 穷尽兜底；`t77-acceptance.md` SHA 更新；`BigInt` 报错文案按因区分；模板**单趟**展开；`CSV_DIALECT.lineEnding` **被消费**（`csvText` 经映射取行尾字符）；`HEADER_FIELDS` 本地清单**删除**（替换位直接从 `TEXT_HEADER_TEMPLATE` 派生）、`'envelope'` 字面量**改引** `LOG_SECTION_SOURCES.scene` |
+
+**登记项（**不冻结也不排除**，owner **#77**；逐条记账，另见 §3.4.1／§3.4.2）**
+
+| # | 事项 | 现状（实测） | 说明 |
+|---|---|---|---|
+| 1 | 行内 **CRLF → 两个空格** | `text` 口径 `x<CR><LF>y` → `x  y`（CR、LF 各替换一次） | 契约只写「行内换行替换为空格」；逐字符替换是字面执行，**不冻结也不排除**，owner #77 |
+| 2 | `NaN`／`Infinity`／`BigInt`／`Date` 的三 format 口径 | `text`：`String()`（`NaN`／`Infinity`／`1`／ISO 串）；`json`：`NaN`／`Infinity` → `null`、`BigInt` → `structure-invalid`；`csv`：同 `text` | 契约只规定「其余标量 → `String()`」，未规定三口径必须一致；**不冻结也不排除**，owner #77 |
+| 3 | `U+2028`／`U+2029` 等行分隔符 | `sanitizeLine` 只替换 CR／LF，`U+2028` 在 `text` 口径原样保留（部分消费方视为换行） | 契约未规定；**不冻结也不排除**，owner #77 |
+| 4 | 容器级敏感包装（`metrics`／`item` **本身**是 `{text, sensitive:true}`） | **不脱敏**（判定位置是「投影行的**值**／**元素**」，`contract:612`）→ 原文出现。字段名同名，生产者误写时**静默泄漏**，故在此显式警告 | 实现与 `contract:612` 一致（越界输入）；**不冻结也不排除**，owner #77 |
+| 5 | `buildLogText`（csv）敏感行条款 | **不可达**：`CopyLogFields` 五字段全为 `string`、`resolveCopyLog` 拒收非字符串 → 日志侧永不出现掩码 | `contract:620` 该子句为「将来放开类型时」的口径，非现行可达行为 |
+| 6 | `csv` 末尾**不加** LF | 已由用例钉死（`contract:610` 未规定末尾空行） | 本票定案，已断言 |
 
 ### 3.5 图表层与 HELP 壳（#78）
 
@@ -1185,3 +1302,35 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | FX-76-7⑤ | `#90` 的 bind 时机未写进契约 | **修**：§3.3 接线语义补「必须先渲染再 bind；动态重渲染须重新 bind」＋与 helpers 委派的差异 | 本文 §3.3 |
 
 **门禁实测（#76 返修后）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm test:types` 退出 0／签名测试单跑 **47 用例全绿**／控件守卫测试 `controls.test.mjs` **64 用例全绿／skipped 0**（含 headless Chrome HTTP 夹具 ＋ ≤820px 视口收窄用例）／自包含 `file://` 证据 **44 断言全绿**（`docs/research/t76-nohost-evidence.md`）／`pnpm test` **新增失败 = 0**（判据 = #92 台账多重集，见 §7「门禁口径」）／`SPEC_FROZEN_SURFACE` **130 条**（implemented **119**／pending 11；runtime 88／type 42）。
+
+### 8.10 #77 复制文本序列化施工台账（D1–D6 / A1–A10）
+
+口径同 §8：每条给**处置**与**落点**，**禁止默默略过**。本轮**落地 4 条 `pending`**（2 runtime ＋ 2 type）→ `SPEC_FROZEN_SURFACE` 仍 **130 条**，`implemented` **＋4**／`pending` **−4**（落地后实测 **implemented 123／pending 7**，余下 7 条 = #75 2／#78 5；runtime 88／type 42）；**未改任何既有签名的值**（三处同步：清单 ↔ 本文 §3.4 标记区 ↔ `test-d/contract-signatures.ts`），**未实现** #75／#78 的任何行为（`buildStyleSheet`／`charts`／`renderHelpShell` 仍 `pending`），技能包**零改动**。
+
+| 编号 | 交付 | 落点 | 处置 |
+|---|---|---|---|
+| D1 | `buildDataText`／`buildLogText` 运行时（不改冻结签名） | `packages/base-render/src/text.ts`（唯一新文件；`TextError` 类在文件内、**不从 `src/index.ts` 导出**）＋ `src/index.ts`（只追加 2 个出口） | **实现** |
+| D2 | status 翻转 ＋ 三处同步 | `src/spec/index.ts`（4 条）↔ 本文 §3.4 标记区（4 行）↔ `test-d/contract-signatures.ts`（`_X10`／`_X11` 的 `Absent<>` → `Present<>` ＋ 出口类型逐字锁形 `_X10b`／`_X11b` ＋ `_X10c`／`_X11c`／`_X10d`／`_X11d`） | **实现** |
+| D3 | 单测：三 format ＋ 5 shape 投影 ＋ 6 段日志 ＋ 空值 ＋ 敏感行 ＋ 错误码 | `packages/base-render/test/text.test.mjs`（**66 用例**：8 个 describe；计数口径 = describe 内顶层 `it(` 展开后的 test 数） | **实现** |
+| D4 | 契约 §3.4 行为补遗：14 条定案 ＋ 与旧实现差异逐条 | 本文 §3.4.1（行文本格式）／§3.4.2（20 条旧→新差异）／§3.4.3（U1–U14）／§3.4.4（自查新洞）／§3.4.5（判定次序）／§3.4.6（门禁） | **实现** |
+| D5 | changeset（`base-paint: minor`） | `.changeset/base-paint-text-serialization.md` | **实现** |
+| D6 | 证据：可复跑脚本 ＋ 输出快照入仓 | `docs/research/t77-serialization-evidence.mjs` ＋ `docs/research/t77-serialization-evidence.md`（5 shape × 3 format 实际文本 ＋ 6 段日志 × 3 format ＋ 空值分层 ＋ 敏感行判定表 ＋ 三错误码逐码 ＋ **174 条断言**；重跑逐字节相同） | **实现** |
+
+**验收判据逐条（A1–A10）**
+
+| 判据 | 结论 | 证据 |
+|---|---|---|
+| A1 4 条 `pending` → `implemented`；三处同步；签名值零改动 | **过** | 清单 4 条翻转（`git diff` 仅 `status` 字段变动，签名行零改动）；本文标记区 4 行同步；`test-d` `Absent<>` → `Present<>`；签名测试 47 用例全绿 |
+| A2 5 个 shape 投影逐字段正确；`fallback` → `shape-unsupported` | **过** | `text.test.mjs`「逐 shape 投影」4 用例 × 5 shape（text 行序／json 键集／csv `section` 列）；证据 §1；`fallback` 与闭集外 shape 用例 |
+| A3 6 段日志逐段来源正确；`(未知)` 与 `未填写` 口径分明 | **过** | `text.test.mjs`「6 段日志」7 用例（含 `timestampVersion` ← `copyLog.timestamp`、空串视同缺失）；「空值口径分层」4 用例；证据 §2 |
+| A4 三 format 正确（`<` → 反斜杠 u003c／RFC4180 引号／两列语义） | **过** | `text.test.mjs`「三 format」9 用例（含 `,`／`"`／LF 三种引号条件与严格 CSV 解析）；证据 §1／§3 |
+| A5 敏感行按 `SENSITIVE_ROW_RULE` 判定与掩码 | **过** | 「敏感行」6 用例（字面 `true` vs `1`／`"yes"`／`{}` 反例；三 format 掩码；原文不出现）；证据 §3 判定表 |
+| A6 `TEXT_ERROR_CODES` 逐码可达；失败抛错不返空 | **过** | 「三个错误码」7 用例（逐码 ＋ 逐 shape 结构判据 ＋ 次序 ＋ message 辨因；`throwsCode()` 断言**无返回值**）；证据 §4 |
+| A7 14 条「文档无规定」逐条定案并记录 | **过** | 本文 §3.4.3（U1–U14 逐条定案 ＋ 理由）；机读落点在 `src/text.ts` 文件头与各函数 JSDoc |
+| A8 与旧实现的差异逐条记录（R-1） | **过** | 本文 §3.4.2（20 条）；changeset 摘要 |
+| A9 测试覆盖旧层 7 条序列化用例的行为面 | **过** | `text.test.mjs`「对齐旧层 7 条序列化用例行为面」7 用例（逐条映射：结构违规报错／text 输出／json 键集／csv 表头两列／敏感行／6 段／缺省文案） |
+| A10 门禁全绿、新增失败 0、changeset 到位、证据入仓 | **过** | §3.4.6 门禁实测；`.changeset/base-paint-text-serialization.md`；`docs/research/t77-serialization-evidence.md` |
+
+**#77 自查新洞**：见 §3.4.4（77-1…77-12，逐条处置／定案，不留待复验）。
+
+**门禁实测（#77 落地后）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm test:types` 退出 0／签名测试 `contract-signatures.test.mjs` **47 用例全绿**／`text.test.mjs` **66 用例全绿**／`controls.test.mjs` **64 用例全绿**／证据脚本 `node docs/research/t77-serialization-evidence.mjs` 退出 0（**174 条断言全绿**，重跑逐字节相同）／`pnpm test` **新增失败 = 0**（判据 = `docs/research/t92-baseline-failures.md` 失败用例名多重集，见 §7「门禁口径」）／`SPEC_FROZEN_SURFACE` **130 条**（implemented **123**／pending 7；runtime 88／type 42）。

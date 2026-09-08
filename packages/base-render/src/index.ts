@@ -26,3 +26,7 @@ export {
   renderStatusBadge,
   renderToast,
 } from './controls.js';
+/** #77 复制文本序列化（契约 §3.4／§6.4）：envelope 逐 shape 投影 → text／json／csv。
+ *  `TextError` **不在此导出**——与 `TemplateError`／`ControlsError` 同口径（冻结面无该运行时条目，
+ *  调用方按 `name`／`code` 判定）。 */
+export { buildDataText, buildLogText } from './text.js';

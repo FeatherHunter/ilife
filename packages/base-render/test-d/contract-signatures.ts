@@ -303,8 +303,17 @@ type _X06 = Expect<Equal<LogTextInput, { readonly envelope: SerializableEnvelope
 type _X07 = Expect<Equal<CopyLogFields, { readonly thinking?: string; readonly dataStructure?: string; readonly callChain?: string; readonly timestamp?: string; readonly exception?: string }>>;
 type _X08 = Expect<Equal<BuildDataText, (input: DataTextInput) => string>>;
 type _X09 = Expect<Equal<BuildLogText, (input: LogTextInput) => string>>;
-type _X10 = Expect<Equal<Absent<'buildDataText'>, true>>;
-type _X11 = Expect<Equal<Absent<'buildLogText'>, true>>;
+/* #77 落地（契约 §3.4 施工面 4 条 pending）：运行时出口**必须存在**（原 `Absent<>` 按契约
+ * 「实现后必须翻转清单」翻转为 `Present<>`），且出口类型与冻结签名逐字相等（签名值零改动）。
+ * 类型出口 `BuildDataText`／`BuildLogText` 仍是 type-only（`Absent<>` 口径不适用于类型名）。 */
+type _X10 = Expect<Equal<Present<'buildDataText'>, true>>;
+type _X11 = Expect<Equal<Present<'buildLogText'>, true>>;
+type _X10b = Expect<Equal<Mod['buildDataText'], BuildDataText>>;
+type _X11b = Expect<Equal<Mod['buildLogText'], BuildLogText>>;
+type _X10c = Expect<Equal<Absent<'BuildDataText'>, true>>;
+type _X11c = Expect<Equal<Absent<'BuildLogText'>, true>>;
+type _X10d = Expect<Equal<Absent<'TextError'>, true>>;
+type _X11d = Expect<Equal<Absent<'TextErrorShape'>, true>>;
 type _X12 = Expect<Equal<DataProjectionSpec, { readonly header: string; readonly body: string; readonly tail: string | null; readonly csvSections: readonly string[] }>>;
 type _X13 = Expect<Equal<keyof Mod['DATA_TEXT_PROJECTIONS'], SerializableShape>>;
 type _X13b = Expect<Equal<Mod['DATA_TEXT_PROJECTIONS']['stat']['body'], 'metrics'>>;

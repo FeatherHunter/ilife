@@ -145,10 +145,10 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'LOG_SECTION_SOURCES', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: "{ scene: 'envelope'; thinking: 'copyLog.thinking'; dataStructure: 'copyLog.dataStructure'; callChain: 'copyLog.callChain'; timestampVersion: 'copyLog.timestamp'; exception: 'copyLog.exception' }" },
   { name: 'DataProjectionSpec', kind: 'type', ticket: '#77', status: 'implemented', section: '3.4', signature: '{ header: string; body: string; tail: string | null; csvSections: readonly string[] }' },
   { name: 'DATA_TEXT_PROJECTIONS', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: "{ stat: { header: '【{skill} · {key}】'; body: 'metrics'; tail: null; csvSections: readonly ['metrics'] }; list: { header: '【{skill} · {key}】'; body: 'items'; tail: 'total'; csvSections: readonly ['items', 'total'] }; detail: { header: '【{skill} · {key}】'; body: 'item'; tail: null; csvSections: readonly ['item'] }; receipt: { header: '【{skill} · {key}】'; body: 'ok'; tail: 'message'; csvSections: readonly ['status', 'message'] }; analysis: { header: '【{skill} · {key}】'; body: 'summary'; tail: null; csvSections: readonly ['summary'] } }" },
-  { name: 'BuildDataText', kind: 'type', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: DataTextInput) => string' },
-  { name: 'buildDataText', kind: 'runtime', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: DataTextInput): string' },
-  { name: 'BuildLogText', kind: 'type', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: LogTextInput) => string' },
-  { name: 'buildLogText', kind: 'runtime', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: LogTextInput): string' },
+  { name: 'BuildDataText', kind: 'type', ticket: '#77', status: 'implemented', section: '3.4', signature: '(input: DataTextInput) => string' },
+  { name: 'buildDataText', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: '(input: DataTextInput): string' },
+  { name: 'BuildLogText', kind: 'type', ticket: '#77', status: 'implemented', section: '3.4', signature: '(input: LogTextInput) => string' },
+  { name: 'buildLogText', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: '(input: LogTextInput): string' },
   { name: 'SENSITIVE_ROW_RULE', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: "{ textField: 'text'; flagField: 'sensitive'; flagValue: true; mask: '****'; textNotice: '（敏感字段已脱敏）' }" },
 
   // ── §3.5 图表层与 HELP 壳（#78） ──
