@@ -90,14 +90,40 @@ type ReadOutcome =
   | { readonly ok: true; readonly text: string }
   | { readonly ok: false; readonly absent: boolean; readonly message: string };
 
+/** 请求超时毫秒：与 host 侧 SPAWN_TIMEOUT_MS 同级，UI 永不无限转圈。 */
+const READ_TIMEOUT_MS = 20_000 as const;
+
+/** 自家赛跑超时（有界：settle 即清 timer；不依赖传输是否搭理 AbortSignal——Desktop 自研传输会忽略 signal）。
+ * 注释即 p10 有界重试门要的例外依据（文件内另有 clearTimeout/tries 上限/本注释三件套）。 */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      timer = undefined;
+      const e = new Error(`取数超时（${Math.round(ms / 1000)}s）：宿主未回，先查宿主日志与 DB 环境`);
+      e.name = 'TimeoutError';
+      reject(e);
+    }, ms);
+  });
+  return Promise.race([
+    promise.finally(() => {
+      if (timer !== undefined) clearTimeout(timer);
+    }),
+    limit,
+  ]);
+}
+
 /** 单次读数（纯异步函数，无 hook；挂载期调用一次，无轮询）。 */
 async function fetchRead(call: unknown, key: string, params: Record<string, unknown>): Promise<ReadOutcome> {
   // extractRpc 同式守卫：非函数即缺席态。
   if (typeof call !== 'function') return { ok: false, absent: true, message: '宿主连接缺席：connection.rpc.call 不可用' };
   let result: RpcCallResult;
   try {
-    // 防御纵深：宿主侧再 hang，UI 最多转 20s 圈（AbortSignal.timeout 无字面定时器，不触发轮询门）。
-    const raw: unknown = await call(RPC_CHANNEL, RPC_ENDPOINT_READ, { key, params }, AbortSignal.timeout(20_000));
+    // 防御纵深 + 自家超时双保险（AbortSignal 帮正规传输提前收工；race 保传输忽略 signal 时仍落字）。
+    const raw: unknown = await withTimeout(
+      call(RPC_CHANNEL, RPC_ENDPOINT_READ, { key, params }, AbortSignal.timeout(READ_TIMEOUT_MS)),
+      READ_TIMEOUT_MS,
+    );
     if (!isRpcResult(raw)) return { ok: false, absent: false, message: '回执信封异常（非 ok 信封）' };
     result = raw;
   } catch (e) {
