@@ -71,6 +71,29 @@ test('#87 ① 字段清洗逐字复刻：非法字符 → _、去前后空格、
   assert.equal(sanitizeFilenamePart('   '), '');
 });
 
+// ---------------------------------------------------------------- ①b 码点截断（返修 F1 / A2 S2-1）
+test('#87 ①b 截断按码点（旧 Python s[:32]）：emoji 不劈代理对，回传名与落盘名逐字节一致', () => {
+  const raw = 'a' + '😀'.repeat(20); // 21 码点 / 41 UTF-16 码元
+  const s = sanitizeFilenamePart(raw);
+  assert.equal(s, raw, '21 码点 < 32 → 不截断（按码元切会剩 31 码元 ＋ 孤立代理项 \\ud83d）');
+  assert.equal(Array.from(s).length, 21, '按码点计数');
+  assert.equal(Buffer.from(s, 'utf8').toString('utf8'), s, '不得含孤立代理项（落盘会被 FS 换成 U+FFFD）');
+  assert.equal(sanitizeFilenamePart('😀'.repeat(33)), '😀'.repeat(32), '33 码点 → 32 码点（旧 s[:32] 口径）');
+  assert.equal(Array.from(sanitizeFilenamePart('😀'.repeat(33))).length, 32);
+
+  // 回传路径 vs 实际落盘：同一条命名管线写盘后，磁盘目录项与回传名逐字节相等
+  const dir = tmpDbDir('emoji-bytes');
+  const name = htmlFileName(s, { dir, now: new Date(2026, 6, 26, 12, 30, 0) });
+  const back = join(dir, name); // ≡ CLI envelope 的 data.output
+  writeFileSync(back, '<html>emoji</html>', 'utf8');
+  const onDisk = readdirSync(dir);
+  assert.equal(onDisk.length, 1, '只落一个文件');
+  assert.equal(onDisk[0], name, '磁盘目录项 = 回传名（逐字符；按码元切会得到 U+FFFD 的盘上名）');
+  assert.ok(Buffer.from(onDisk[0], 'utf8').equals(Buffer.from(name, 'utf8')), '磁盘目录项 = 回传名（逐字节）');
+  assert.ok(existsSync(back), '回传路径必须真实存在');
+  assert.equal(readFileSync(back, 'utf8'), '<html>emoji</html>');
+});
+
 // ---------------------------------------------------------------- ② 时间戳（旧 strftime("%Y%m%d_%H%M%S")）
 test('#87 ② 时间戳：YYYYMMDD_HHMMSS 零填充 ＋ 本地时区', () => {
   assert.equal(formatStamp(new Date(2026, 6, 26, 12, 30, 0)), '20260726_123000');
@@ -143,6 +166,39 @@ test('#87 ④ 同秒冲突：无冲突 → 无后缀；已有 1 个 → _2；已
   assert.equal(htmlFileName('今日总览', { dir, now }), base + '_3.html', '无关文件不得改变计数');
   assert.equal(htmlFileName('饮食总览', { dir, now }), '饮食总览_20260726_123000_2.html', '不同命令各自独立计数（饮食总览 自己已有 1 个 → _2）');
   assert.equal(htmlFileName('今日总览', { dir: join(dir, '不存在'), now }), base + '.html', '目录不存在视为 0');
+});
+
+// ---------------------------------------------------------------- ④b 大小写不敏感计数（返修 F2 / A2 S2-2）
+test('#87 ④b 同秒计数大小写不敏感（旧 glob 在 Windows 走 normcase）：.HTML 也算冲突，原文件不被覆盖', () => {
+  const dir = tmpDbDir('case-count');
+  const now = new Date(2026, 6, 26, 12, 30, 0);
+  const base = '今日总览_20260726_123000';
+  writeFileSync(join(dir, base + '.HTML'), 'ORIGINAL');
+  assert.equal(htmlFileName('今日总览', { dir, now }), base + '_2.html', '目录内已有 .HTML → 必须选 _2（否则 Windows 上覆盖原文件）');
+  assert.equal(readFileSync(join(dir, base + '.HTML'), 'utf8'), 'ORIGINAL', '原文件内容不得被覆盖');
+  writeFileSync(join(dir, base + '_2.HTML'), 'ORIGINAL2');
+  assert.equal(htmlFileName('今日总览', { dir, now }), base + '_3.html', '两个大写后缀 → _3');
+  assert.equal(readFileSync(join(dir, base + '_2.HTML'), 'utf8'), 'ORIGINAL2');
+  // 命令名含 ASCII 时同样不敏感（title 如「生成GIF」）
+  writeFileSync(join(dir, '生成gif_20260726_123000.html'), 'x');
+  assert.equal(htmlFileName('生成GIF', { dir, now }), '生成GIF_20260726_123000_2.html', '命令名段大小写不敏感');
+  // CLI 端到端：预置 10 个大写扩展名 → 落点 _2，种子内容不变，目录条目 = 种子 10 ＋ 产物 1
+  const cliDir = tmpDbDir('case-cli');
+  const html = join(cliDir, HTML_DIR_NAME);
+  mkdirSync(html, { recursive: true });
+  const seeds = [];
+  for (let i = 0; i < 10; i++) {
+    const s = formatStamp(new Date(Date.now() + i * 1000));
+    seeds.push(s);
+    writeFileSync(join(html, TITLE + '_' + s + '.HTML'), 'SEED');
+  }
+  const env = runOk(cliDir, [KEY, '--params', JSON.stringify(PARAMS)]);
+  const name = basename(env.data.output);
+  assert.match(name, new RegExp('^' + TITLE + '_' + STAMP_RE + '_2\\.html$'), '实际落点：' + name);
+  const stamp = name.slice(TITLE.length + 1, TITLE.length + 16);
+  assert.ok(seeds.includes(stamp), '落点秒须在预置窗口内：' + name);
+  assert.equal(readFileSync(join(html, TITLE + '_' + stamp + '.HTML'), 'utf8'), 'SEED', '大写种子不得被覆盖');
+  assert.equal(readdirSync(html).length, 11, '种子 10 ＋ 产物 1（无覆盖）');
 });
 
 // ---------------------------------------------------------------- ⑤ 目录解析（旧 html_dir/html_path）
@@ -239,4 +295,25 @@ test('#87 ⑧ --output 覆盖：写显式路径、不改名、不碰 calorie_htm
   const bad = runCli(dir, [KEY, '--params', JSON.stringify(PARAMS), '--output']);
   assert.equal(bad.status, 2, '--output 缺值仍走用法错误');
   assert.match(String(bad.stderr), /--output/);
+});
+
+// ---------------------------------------------------------------- ⑨ 落点解析失败（返修 F4 / A2 S2-4）
+test('#87 ⑨ 落点解析失败：exit 5 ＋「渲染失败」文案，不得落到「未知失败」的 exit 4', () => {
+  const dir = tmpDbDir('blocked');
+  // 用同名**文件**占位 calorie_html → htmlDir() 的 mkdirSync(recursive) 抛 EEXIST
+  writeFileSync(join(dir, HTML_DIR_NAME), 'not a dir');
+  const r = runCli(dir, [KEY, '--params', JSON.stringify(PARAMS)]);
+  const err = String(r.stderr);
+  assert.equal(r.status, 5, '须 exit 5（渲染/落盘），实得 ' + r.status + ' stderr=' + err.slice(-300));
+  assert.match(err, /ERR 5:/);
+  assert.match(err, /渲染失败/);
+  assert.match(err, new RegExp(HTML_DIR_NAME));
+  assert.doesNotMatch(err, /未知失败/, '不得再出现「未知失败」文案');
+  assert.equal(readFileSync(join(dir, HTML_DIR_NAME), 'utf8'), 'not a dir', '占位文件不得被改写');
+  assert.equal(String(r.stdout), '', 'stdout 保持纯净（不吐半截 envelope）');
+  // 显式 --output 不依赖默认目录，仍正常
+  const explicit = join(dir, 'sub', 'ok.html');
+  const env = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS), '--output', explicit]);
+  assert.equal(env.data.output, explicit);
+  assert.ok(existsSync(explicit));
 });

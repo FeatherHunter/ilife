@@ -27,12 +27,17 @@ import { resolveDbDir } from './paths.js';
 export const HTML_DIR_NAME = 'calorie_html';
 export const HTML_EXT = '.html';
 
-/** 旧版 `_sanitize_filename_part` 逐字复刻：非法字符 → `_`、trim、截断 32 字符（按字符，中文/emoji 安全）。 */
+/** 旧版 `_sanitize_filename_part` 逐字复刻：非法字符 → `_`、trim、截断 32 字符（按字符，中文/emoji 安全）。
+ *
+ * #87 返修 F1（A2 S2-1）：截断必须按 **Unicode 码点**（旧 Python `s[:32]` 语义），不得按 UTF-16 码元。
+ * 按码元切会把代理对劈成孤立代理项：落盘时文件系统把它换成 U+FFFD，而 `data.output` 回传的仍是
+ * 带 `\ud83d` 的原串 → **回传路径 ≠ 实际落盘文件**。`[...s]` 按码点迭代后再 `slice`，逐字对齐旧版。
+ */
 export function sanitizeFilenamePart(text: string | null | undefined): string {
   if (text === null || text === undefined) return '';
   let s = String(text).trim();
   for (const ch of '\\/:*?"<>|[]') s = s.split(ch).join('_');
-  return s.slice(0, 32);
+  return [...s].slice(0, 32).join('');
 }
 
 /** 旧版 `datetime.now().strftime("%Y%m%d_%H%M%S")` 等价物（本地时区，零填充）。 */
@@ -58,7 +63,12 @@ export function chineseCommandFor(key: string): string {
   return sanitizeFilenamePart(hit.title);
 }
 
-/** 同秒冲突计数：`<command>_<stamp>*.html`（旧版 `glob` 语义；目录不存在视为 0）。 */
+/** 同秒冲突计数：`<command>_<stamp>*.html`（旧版 `glob` 语义；目录不存在视为 0）。
+ *
+ * #87 返修 F2（A2 S2-2）：旧 `glob.glob()` 在 Windows 下走 `fnmatch.filter` → `os.path.normcase`，
+ * 文件名匹配**大小写不敏感**（`..._123000.HTML` 同样计入冲突）。故此处两侧 `toLowerCase()` 后比较：
+ * 否则目录内已有 `X.HTML` 时会再选 `X.html`，在 Windows 上**直接覆盖原文件**。
+ */
 function countSameSecond(dir: string, command: string, stamp: string): number {
   let names: readonly string[];
   try {
@@ -66,8 +76,12 @@ function countSameSecond(dir: string, command: string, stamp: string): number {
   } catch {
     return 0;
   }
-  const prefix = command + '_' + stamp;
-  return names.filter((n) => n.startsWith(prefix) && n.endsWith(HTML_EXT)).length;
+  const prefix = (command + '_' + stamp).toLowerCase();
+  const ext = HTML_EXT.toLowerCase();
+  return names.filter((n) => {
+    const lower = n.toLowerCase();
+    return lower.startsWith(prefix) && lower.endsWith(ext);
+  }).length;
 }
 
 /** 旧版 `html_name()`：只出文件名 `<command>_<stamp>[_N].html`，冲突时 `N = 同秒已有数 + 1`。 */

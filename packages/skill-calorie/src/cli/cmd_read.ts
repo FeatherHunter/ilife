@@ -7,7 +7,7 @@
  * 组合键为 registry 合法点式（见 cli/keys.ts；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
  * 缺失阻断不返空：空库/空窗/无目标一律抛（CalorieRenderError missing-data / FetchError），exit 4，不返空数组冒充正常。
  * 仅 type-only 消费 link-core（零运行时依赖）；envelope 手工装配，形状校验本地镜像 link-core。
- * HTML 用 --html 显式落盘（utf8）：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
+ * HTML 默认落盘（utf8，见下行 #87）＋ 可 --output/--html 显式覆盖：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
  * #87 · 输出命名规范复刻（M10）：不给 --output/--html 时默认落
  * <SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html（同秒冲突自动加后缀），
  * 中文 command 取 CALORIE_COMBOS[key].title；显式 --output（--html 为 legacy 别名）覆盖任意路径。
@@ -55,7 +55,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
-import { resolveDefaultHtmlPath, resolveExplicitHtmlPath } from '../output.js';
+import { HTML_DIR_NAME, resolveDefaultHtmlPath, resolveExplicitHtmlPath } from '../output.js';
 import type { CalorieComboKey } from './keys.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
@@ -686,7 +686,16 @@ async function main(): Promise<void> {
         ? dispatchWrite(o.key as string, params, db)
         : dispatch(o.key as string, params, db);
       // #87 · 输出落点：--output（显式覆盖）> --html（legacy 别名）> 默认 calorie_html/<中文command>_<TS>[_N].html
-      const htmlTarget = o.output ?? o.html ?? resolveDefaultHtmlPath(o.key as string);
+      // #87 返修 F4（A2 S2-4）：落点**解析**本身也会失败（如 <DB>/calorie_html 被同名文件占位 → EEXIST）；
+      // 旧写法把它漏到外层「未知失败」分支 → exit 4（＝取数/超时）＋「未知失败」文案。此处按渲染失败计：
+      // exit 5 ＋ 明确文案（与紧邻的「HTML 写盘失败」同码同形态）。
+      let htmlTarget: string;
+      try {
+        htmlTarget = o.output ?? o.html ?? resolveDefaultHtmlPath(o.key as string);
+      } catch (e) {
+        fail(5, '渲染失败：HTML 落点解析失败（' + (o.output ?? o.html ?? '默认目录 <SKILLS_DB_PATH>/' + HTML_DIR_NAME)
+          + '）：' + (e as Error).message);
+      }
       try {
         writeFileSync(resolveExplicitHtmlPath(htmlTarget), out.html, 'utf8');
       } catch (e) {
