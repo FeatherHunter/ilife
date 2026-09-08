@@ -39,6 +39,7 @@ import {
   renderToast,
 } from '../dist/index.js';
 import { chartsCss } from '../dist/charts.js';
+import * as BASE_PAINT from '../dist/index.js';
 import { TemplateError } from '../dist/template.js';
 
 const LF = String.fromCharCode(10);
@@ -74,6 +75,45 @@ function classesOf(html) {
   }
   return out;
 }
+
+/** 解析 CSS 成**规则块**（selector ＋ 声明数组）。
+ *
+ *  返修项③（A2 实测）：旧断言用 `css.includes('.ilife-toast {')` 这类**子串**匹配，
+ *  被 `.ilife-toast-stack`／`@media` 内同名选择器／`.ilife-copy-btn-primary` 误满足 →
+ *  「整条基座规则被删除」也能全绿。本函数把 CSS 切成规则块，让断言可以判「块存在 ＋ 声明数」。
+ *  口径：先剥注释（否则 `/* action-bar *\/` 会被算进选择器文本），再按**最内层** `选择器{声明}` 匹配
+ *  （`[^{}]` 天然跳过 `@media` 外层块，只取其中的规则块）。 */
+function ruleBlocks(css) {
+  const out = [];
+  for (const m of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+    const selector = m[1].replace(/\/\*[\s\S]*?\*\//g, '').trim().replace(/\s+/g, ' ');
+    if (selector === '') continue;
+    const decls = m[2].split(';').map((s) => s.trim()).filter((s) => s.includes(':'));
+    out.push({ selector, selectors: selector.split(',').map((s) => s.trim()), decls, body: m[2] });
+  }
+  return out;
+}
+
+/** 选择器里是否**以类名作为组件**出现（`.ilife-x` 后不接 `[A-Za-z0-9_-]`）——
+ *  与 `css.includes('.ilife-x')` 不同：`.ilife-copy-btn-primary` **不**满足 `.ilife-copy-btn`。 */
+function selectorHasClass(block, cls) {
+  const re = new RegExp('\\.' + cls.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&') + '(?![A-Za-z0-9_-])');
+  return block.selectors.some((s) => re.test(s));
+}
+
+/** 每区**基座规则块**（该区的第一条根类规则）与其**声明数下限**。
+ *  `minDecls` 取实测值向下留 2–3 条余量（实测值写在行尾注释）——「整条规则被删」或
+ *  「规则被掏空」都必然低于下限 → 返修项③的变异自证据此变红。 */
+const SECTION_BASE_RULE = Object.freeze({
+  toast: { selector: '.ilife-toast', minDecls: 14 },                       // 实测 17
+  actionBar: { selector: '.ilife-action-bar', minDecls: 6 },               // 实测 8
+  copyButton: { selector: '.ilife-copy-btn', minDecls: 13 },               // 实测 16
+  statusBadge: { selector: '.ilife-status-badge', minDecls: 9 },           // 实测 11
+  emptyState: { selector: '.ilife-empty', minDecls: 5 },                   // 实测 6
+  errorReceipt: { selector: '.ilife-error:has(> .ilife-error-title)', minDecls: 5 }, // 实测 6
+  charts: { selector: '.ilife-charts', minDecls: 6 },                      // 实测 7（#78 产出）
+  helpShell: { selector: '.ilife-help-shell', minDecls: 5 },               // 实测 6
+});
 
 /** 产出器实测：六个控件区 ＋ toast helpers 运行时类名。 */
 function emittedControlClasses() {
@@ -200,15 +240,28 @@ describe('#75 共享样式资产：形态与冻结值', () => {
 });
 
 describe('#75 共享样式资产：8 个样式区（闭集）', () => {
-  it('T8 每个区都有真实规则，必现类名逐字命中', () => {
+  it('T8 每个区都有真实规则，必现类名逐字命中 ＋ 基座规则块声明数达标', () => {
     const css = buildStyleSheet().css;
+    const blocks = ruleBlocks(css);
+    assert.ok(blocks.length > 60, '规则块解析异常偏少：' + blocks.length);
     assert.deepEqual([...CONTROL_STYLE_SECTIONS].sort(), Object.keys(SECTION_ROOTS).sort(), '区表与闭集必须同集');
+    assert.deepEqual([...CONTROL_STYLE_SECTIONS].sort(), Object.keys(SECTION_BASE_RULE).sort(), '基座规则表与闭集必须同集');
     for (const section of CONTROL_STYLE_SECTIONS) {
       for (const suffix of SECTION_ROOTS[section].required) {
         const cls = STYLE_PREFIX + suffix;
-        const hits = [...css.matchAll(new RegExp('\\.' + cls + '(?![A-Za-z0-9_-])', 'g'))].length;
-        assert.ok(hits > 0, section + ' 区缺真实规则：.' + cls);
+        const hits = blocks.filter((b) => selectorHasClass(b, cls)).length;
+        assert.ok(hits > 0, section + ' 区缺真实规则（规则块选择器级）：.' + cls);
       }
+      // 返修项③：**整条基座规则被删除**必须变红（旧口径 `css.includes('.ilife-x')` 会被
+      // `.ilife-x-stack`／`.ilife-x-primary` 等误满足 → 删基座块仍全绿）。
+      const base = SECTION_BASE_RULE[section];
+      const baseBlocks = blocks.filter((b) => b.selector === base.selector);
+      assert.ok(baseBlocks.length > 0, section + ' 区缺**基座规则块**：' + base.selector);
+      const maxDecls = Math.max(...baseBlocks.map((b) => b.decls.length));
+      assert.ok(
+        maxDecls >= base.minDecls,
+        section + ' 区基座规则块声明数不足：' + base.selector + ' 实测 ' + maxDecls + ' < 下限 ' + base.minDecls,
+      );
     }
   });
 
@@ -224,14 +277,16 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
 
   it('T10 控件区类名双向对齐：产出器产出的类名 ⊆ CSS，且 CSS 类名全部有产出者', () => {
     const css = buildStyleSheet().css;
+    const blocks = ruleBlocks(css);
     const emitted = emittedControlClasses();
     const controlSections = CONTROL_STYLE_SECTIONS.filter((s) => s !== 'charts' && s !== 'helpShell');
     const controlRoots = controlSections.map((s) => STYLE_PREFIX + SECTION_ROOTS[s].ns);
 
-    // ① 产出器 → CSS：漏配即红。
+    // ① 产出器 → CSS：漏配即红（返修项③：改为**规则块选择器级**匹配，`css.includes('.x')`
+    //    会被 `.x-primary` 之类子串误满足）。
     for (const c of emitted) {
       if (!controlRoots.some((r) => c === r || c.startsWith(r))) continue;
-      assert.ok(css.includes('.' + c), '产出器类名未被 CSS 覆盖：' + c);
+      assert.ok(blocks.some((b) => selectorHasClass(b, c)), '产出器类名未被 CSS 覆盖（规则块级）：' + c);
     }
     // ② CSS → 产出器：臆造即红（charts／helpShell 另有专测）。
     const cssControlClasses = [...new Set([...css.matchAll(/\.(ilife-[A-Za-z0-9_-]+)/g)].map((m) => m[1]))]
@@ -267,6 +322,76 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     assert.ok(SRC_STYLE.includes("from './charts.js'"), 'style.ts 必须从 charts.ts 取图表 CSS');
     assert.ok(!/['"]\.?\s*charts-/.test(SRC_STYLE), 'style.ts 不得重述图表 CSS 类名文本');
     assert.ok(SRC_CHARTS.includes('export function chartsCss'), 'chartsCss 必须是 charts.ts 的导出（#75 复用点）');
+  });
+
+  it('T23 运行时 toast（helpers DOM 无 body 包裹）标题与详情必须分层换行（返修项①）', () => {
+    const css = buildStyleSheet().css;
+    const blocks = ruleBlocks(css);
+    const baseBlocks = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'toast');
+    assert.ok(baseBlocks.length > 0, '缺 toast 基座规则块');
+    assert.ok(
+      baseBlocks.some((b) => b.decls.includes('flex-wrap: wrap')),
+      'toast 基座必须 flex-wrap: wrap（否则运行时 DOM 的标题／详情被排成 flex 同行）',
+    );
+    const detail = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'toast-title-detail');
+    assert.ok(detail.length > 0, '缺 .ilife-toast-title-detail 规则块');
+    assert.ok(
+      detail.some((b) => b.decls.includes('flex: 1 1 100%')),
+      '运行时详情必须 flex: 1 1 100%（独占一行）',
+    );
+    // 结构前提：helpers 运行时 DOM **没有** `.ilife-toast-body` 包裹（静态产出器有）——
+    // 两者共用同一份 `.ilife-toast` 规则，故只能靠 wrap ＋ 100% basis 兼顾。
+    const helpers = buildSharedHelpersJs();
+    assert.ok(!helpers.includes(STYLE_PREFIX + 'toast-body'), 'helpers 运行时 DOM 不得新增 body 包裹（会掩盖本回归）');
+    assert.ok(renderToast({ msg: 'm', detail: 'd' }).includes(STYLE_PREFIX + 'toast-body'), '静态产出器必须仍有 body 包裹');
+    // 静态侧不得因 wrap 折行：body 的 flex-basis 必须为 0（假定主尺寸 0 → 不触发换行）。
+    const body = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'toast-body');
+    assert.ok(body.some((b) => b.decls.includes('flex: 1 1 0%')), '静态 body 必须 flex: 1 1 0%（避免 wrap 把 body 折到第二行）');
+  });
+
+  it('T24 extraCss 三禁强制（返修项⑨ · D3 修订）：合法覆盖块通过、三类违规抛错', () => {
+    // ① 合法：技能作用域覆盖块 ＋ 任意合法规则 → 照常通过并末尾追加。
+    const legal = '.ilife-calorie { --blue: #0055ff; }';
+    const o = buildStyleSheet({ extraCss: legal });
+    assert.ok(o.css.endsWith(legal), '合法覆盖块必须照常通过并末尾原样追加');
+    assert.doesNotThrow(() => buildStyleSheet({ extraCss: '.ilife-bill .ilife-toast { border-radius: 8px; }' }));
+    // 未知 token 名**不强制**（契约未冻结 token 名判定方式 → 保持调用方责任，记账见 §8.11）。
+    assert.doesNotThrow(() => buildStyleSheet({ extraCss: '.ilife-calorie { --brand-x: #123456; }' }));
+    // ② (a) 改写基座 `:root`。
+    assert.throws(
+      () => buildStyleSheet({ extraCss: ':root{--blue:#ff0000}' }),
+      (err) => err.name === 'StyleSheetError' && err.code === 'extra-css-root',
+      ':root 改写必须抛 extra-css-root',
+    );
+    assert.throws(
+      () => buildStyleSheet({ extraCss: '.ilife-x :root { --blue: #ff0000; }' }),
+      (err) => err.name === 'StyleSheetError' && err.code === 'extra-css-root',
+      '任意位置的 :root 选择器都必须拦',
+    );
+    // ② (b) Q14 禁入 token（逐条从冻结常量取）。
+    for (const forbidden of STYLE_FORBIDDEN_TOKENS) {
+      assert.throws(
+        () => buildStyleSheet({ extraCss: '.ilife-calorie { ' + forbidden + ': 1px; }' }),
+        (err) => err.name === 'StyleSheetError' && err.code === 'extra-css-forbidden-token',
+        forbidden + ' 必须抛 extra-css-forbidden-token',
+      );
+    }
+    // ② (c) 深色区选择器（两种形态）。
+    for (const dark of [
+      '[data-theme="dark"] .ilife-toast { color: #fff; }',
+      '@media (prefers-color-scheme: dark) { .ilife-toast { color: #fff; } }',
+    ]) {
+      assert.throws(
+        () => buildStyleSheet({ extraCss: dark }),
+        (err) => err.name === 'StyleSheetError' && err.code === 'extra-css-dark-scheme',
+        '深色区选择器必须抛 extra-css-dark-scheme',
+      );
+    }
+    // ③ 错误形态**不导出**（按 `name`／`code` 判定，#74／#76 先例）：新增出口会让
+    //    `contract-signatures.test.mjs`「新增运行时出口恰好等于清单 implemented 项」变红。
+    const err = (() => { try { buildStyleSheet({ extraCss: ':root{}' }); return null; } catch (e) { return e; } })();
+    assert.ok(err instanceof Error, '违规必须抛 Error');
+    assert.ok(!('StyleSheetError' in BASE_PAINT), '错误类不得成为导出（冻结面 130 条不变）');
   });
 
   it('T13 零装饰渐变（唯一例外 = 复用的 charts 虚线图例）', () => {
