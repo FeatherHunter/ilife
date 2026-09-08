@@ -81,7 +81,10 @@
 | 快照 | `node tooling/write-snapshot.mjs --check` | **exit 0** |
 | 发布 | `pnpm publish:pre` | **exit 0**（`check-publish --pre：PASS`） |
 | 本票测试 | `node --test packages/skill-calorie/test/output-naming-87.test.mjs` | **exit 0**（`tests 14 / pass 14 / fail 0`） |
-| 全量 | `pnpm test` | 见 §2.1（失败集 delta） |
+| 全量 | `pnpm test` | exit 1（`# fail 12`，全在冻结基线内）→ 见 §2.1（失败集 delta） |
+
+> 终态复跑（commit `0de2a5f` 后，持锁）：四门与本票测试再次 exit 0（`.scratch/t87/final-gates.log`），
+> 全量 `pnpm test` 再次得到 `# tests 882 · # pass 870 · # fail 12`、delta 新增 0（`.scratch/t87/fulltest-final.log`）。
 
 ### 2.1 全量 `pnpm test` 失败集 delta
 
