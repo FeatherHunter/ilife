@@ -1,0 +1,37 @@
+; #101 · 门禁失败集**基线名单**（入仓，供 docs/research/t101-fail-set.mjs 直接引用）
+;
+; 为什么入仓：原先比对依赖 .scratch/t75/baseline-gates.log，而 .scratch/ 被 gitignore
+; → 新克隆无法复现「失败集 delta = 0」的验收（H5 缺陷）。此处只固化**名单**（不是整份日志）。
+; 注释行以 ';' 开头（条目本身可能以 '#' 开头，如 #48/#50/#93，故不用 '#' 作注释符）。
+;
+; 口径：pnpm test 输出中 ✖ 行的归一化结果（去首尾空白、去行尾 (1234ms)、
+; 剔除 '✖ failing tests:' 汇总行），共 27 条 ＝ 21 条测试级 ＋ 6 条 dsh-* 烟囱 suite 级。
+; 与 .scratch/t75/baseline-failing.txt（21 条）＋ .scratch/t75/baseline-summary.md（6 条烟囱）同源。
+; 用法：node docs/research/t101-fail-set.mjs docs/research/t101-baseline-failures.txt <after.log>
+#48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段
+#50 envelope 契约：SKILL 直执行 bill.help.lookup 回执 key/shape/data 全字段（空库安全）
+#50 envelope 契约：SKILL 直执行 chef.help.lookup 回执 key/shape/data 全字段（空库安全）
+#50 envelope 契约：SKILL 直执行 home.help.lookup 回执 key/shape/data 全字段（空库安全）
+#50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全）
+#50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全）
+#50 envelope 契约：面板路 readViaCli 同键打通不返空
+#93 ① 42 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等
+#93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接线保留 openDb 分支）
+dsh-bill-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-bill-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-bill-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-bill-ilife 烟囱
+dsh-calorie 烟囱
+dsh-chef client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-chef client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-chef client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-chef 烟囱
+dsh-home-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-home-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-home-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-home-ilife 烟囱
+dsh-memo-ilife 烟囱
+dsh-schedule-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-schedule-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-schedule-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-schedule-ilife 烟囱

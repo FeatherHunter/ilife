@@ -120,7 +120,8 @@ function esc(s: unknown): string {
 const SOFT_STILL_COUNTED = '（软删除：行保留，仍计入历史统计；暂无恢复入口）';
 const SOFT_EXCLUDED_INNER = '软删除：行保留，已从查询与统计中排除；暂无恢复入口';
 const SOFT_EXCLUDED = '（' + SOFT_EXCLUDED_INNER + '）';
-const HARD_WORDING = '（硬删除，不可恢复）';
+const HARD_INNER = '硬删除，不可恢复';
+const HARD_WORDING = '（' + HARD_INNER + '）';
 
 /** 状态串与 prose 同源：kind 决定「软/硬」，两者一律带「不可恢复」。 */
 function deleteStatus(kind: 'soft' | 'hard', base = '已删除'): string {
@@ -294,7 +295,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     case 'calorie.diet.remove': {
       const id = needId(params);
       const r = deleteMeal(db, id);
-      return out(R('删饮食记录', 'delete', '已删除饮食 #' + id + '（' + r.food_name + ' ' + r.calories + ' 卡 · 硬删除，不可恢复）', '删饮食记录', 'food_log (写库回执)', {
+      return out(R('删饮食记录', 'delete', '已删除饮食 #' + id + '（' + r.food_name + ' ' + r.calories + ' 卡 · ' + HARD_INNER + '）', '删饮食记录', 'food_log (写库回执)', {
         recordId: id, items: [{ id, status: deleteStatus('hard'), reason: '', detail: r.food_name }],
       }));
     }
@@ -431,7 +432,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (id !== undefined) {
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         const r = deleteWeight(db, id);
-        return out(R('删体重记录', 'delete', '已删除体重 #' + id + '（' + r.date + ' ' + r.weight_kg + ' kg · 硬删除，不可恢复）', '删体重记录', 'weight_log (写库回执)', {
+        return out(R('删体重记录', 'delete', '已删除体重 #' + id + '（' + r.date + ' ' + r.weight_kg + ' kg · ' + HARD_INNER + '）', '删体重记录', 'weight_log (写库回执)', {
           recordId: id, items: [{ id, status: deleteStatus('hard'), reason: '' }],
         }));
       }
