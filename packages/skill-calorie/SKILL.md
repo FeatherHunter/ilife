@@ -23,7 +23,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 二进制：`packages/skill-calorie/dist/cli/cmd_read.js`（bin `calorie-cmd-read`），纯 CLI 单轨，无面板/定时/外联动。
 - 运维定位（C1 #43）：`skill-calorie-fetch`（`dist/fetch/cli.js`）仅运维（import/validate/dedupe/export/history/audit/catalog-verify），不承载业务读写；业务读写唯一出口仍为 `calorie-cmd-read`。
 - 契约：P9 冻结 argv+JSON+exit；缺 key exit 2、未知 key exit 3、取数/缺失 exit 4、envelope/渲染/落盘 exit 5、预检 exit 1。
-- stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；`--html` 显式落盘 utf8。
+- stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；HTML 默认落 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`（同秒冲突自动加 `_2`/`_3`），落点回传在 envelope `data.output`；`--output <路径>` 显式覆盖任意路径（`--html <路径>` 为 legacy 别名）。
 - 预检：engines>=22.13 + SKILLS_DB_PATH 必设（无默认值）；照片存在位需 CALORIE_PHOTOS_DIR，否则记 null 不断言。
 - 写链（#40）：35 写键（diet/water/weight/exercise/photo/product/profile/goal/body）同出口可执行，一律 `receipt` 形（`ok/message` + T10 `receipt` 回执）；缺参 exit 2、缺失阻断 exit 4；训练计划/训记同步与 mmx vision 两步向导无独立写键（二期，见 triggers 旧链）。
 
@@ -43,18 +43,31 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 ## Wizard Verify 铁则（M6，v2.4.3 复刻）
 
-配置型 wizard ＝ 写库前要用户先看一眼的配置写。这类词**按场景分流**，分流先于任何写键：
+配置型 wizard ＝ 写库前要用户先看一眼的配置写。这类词**按场景分流**，分流先于任何写键。
 
-| 场景 | 触发 | 行为 | CLI 落点（可验） |
+**优先级**：本节优先级最高，高于本文件下方所有操作规范与功能说明（旧版 §⚠️ 强制性规定 第 2 条）；命中配置型词先按本表分流，再谈调写键。
+
+**前置：先问测量方式，再进表**。只说「记体脂」时**先问**是皮褶钳还是外部设备／健身房测量，答完再进表——路由层没有裸「记体脂」唤醒词，实际词见下表（`triggers/routing.ts` `WAKE_ROUTES` 场景 08 的 exec 项）。`记体脂（皮褶钳）` 须带算好的 `bodyFatPct`：`cli/write.ts` 缺 `bodyFatPct` 即 `fail(2, '缺参数 bodyFatPct（皮褶→体脂自动换算未移植，直传实测值）')`。
+
+**词 → verify 页映射**（页面文件本体归 #86，本票只定映射与前置）：
+
+| 唤醒词 | verify 页 | 备注 |
+|---|---|---|
+| `记体脂（皮褶钳）`／`记体脂（外部测量）`／`补记体脂` | `body_composition_wizard.html` | 皮褶钳 7 点须先换算成 `bodyFatPct`（换算未移植，调用方算） |
+| `记围度`／`补记围度` | `body_measurements_wizard.html` | 13 围度 3 分组；记录级至少 1 项 |
+| `定训练计划` | `plan_builder_wizard.html` | **当前不可写**：77 键无训练计划写键（见下） |
+
+| 场景 | 触发 | 行为 | CLI 落点（符号锚，可验） |
 |---|---|---|---|
-| 1 主动填 | 说「记围度」「记体脂」类词但**没给数据** | 出空 wizard（不传预填）→ 用户填 → 复制 prompt → AI 调写键 | 空参被拦：无围度项 → `bad-input` exit 2（`fetch/body.ts:107` → `cli/write.ts:205`） |
-| 2 预填 verify ⭐ | 同一类词**给了数据** | 出预填 wizard → 用户核对 → 复制 prompt → AI 调写键 | 预填键限白名单，非 `MEASURE_CAMEL` 字段 → exit 2（`cli/write.ts:754-756`）；皮褶钳类须带算好的 `bodyFatPct`（`cli/write.ts:732`，换算未移植）；计划类先跑 `calorie.view.plan-wizard` 纯校验（`render/planPlate.ts:55-72`，`dryRun:true`／`insertedCount:0`，只调 `validatePlan` 不写库） |
-| 3 直接录 | 用户**明确**说「直接录」「我信你」 | 跳过 wizard，直接调写键，回 `receipt` 形 | 35 写键一律 `receipt`（`cli/write.ts:3-5`、`:112-115`） |
+| 1 主动填 | 配置型词命中但**没给数据**（`记体脂` 类先问测量方式） | 出空 wizard（不传预填）→ 用户填 → 复制 prompt → AI 调写键 | 空参被拦：无围度项 → `bad-input` exit 2（`fetch/body.ts` `validateMeasurementInput` 的 `fail('围度','empty',…)` → `cli/write.ts` `dispatchWrite` 的 `ValidationError` 分支） |
+| 2 预填 verify ⭐ | 同一类词**给了数据** | 出预填 wizard → 用户核对 → 复制 prompt → AI 调写键 | 预填键限白名单：非 `MEASURE_CAMEL` 字段即 `fail(2,'不支持字段: ')`（`cli/write.ts` `MEASURE_CAMEL` 白名单循环）；皮褶钳缺 `bodyFatPct` 即 `fail(2,…)`；计划类先跑 `calorie.view.plan-wizard` 纯校验（`render/planPlate.ts` `buildPlanWizardView` → `fetch/plan.ts` `validatePlan`，返 `dryRun:true`／`insertedCount:0`，只校验不写库） |
+| 3 直接录 | 用户**明确**说「直接录」「我信你」 | 跳过 wizard，直接调写键，回 `receipt` 形 | 35 写键一律 `receipt`（`cli/write.ts` 模块头契约 ＋ `out()` 组装 `{ok,message,receipt}`） |
 
-- verify 页本体归 #86（3 个配置型 wizard ＋ 1 个 GIF 框选器；静态 HTML ＋ `copyText`）：本表定流程、页面出页，两处互相引用。
-- 需多步交互的配置写词在路由层落 `non-exec` 桶，`reason` 逐字 `NON_EXEC_REASONS.wizard`（`src/triggers/routing.ts:75-76`；词表 `:193-194`、`:366-372`）；77 键无训练计划写键（`routing.ts:97-98`），计划写入只走 verify。
-- `记围度`／`记体脂` 类词在路由层有单命令入口（`routing.ts:396-400`）——那只证明写键可达；分流仍按本表：有数据走场景 2，明确授权才走场景 3。
+- **fallback（#86 落地前）**：verify 页当前**不存在**（#86 OPEN 0%）。配置型 wizard 词命中且用户已给数据 → **不得直写**；改为**文字 verify**：逐字复述待写字段并请求确认，确认后再调写键；无确认则停在确认步。页面本体归 #86（3 个配置型 wizard ＋ 1 个 GIF 框选器；静态 HTML ＋ `copyText`）——**本侧已引用，#86 落地后回引**。
+- 需多步交互的配置写词在路由层落 `non-exec` 桶，`reason` 逐字 `NON_EXEC_REASONS.wizard`（`triggers/routing.ts` `NON_EXEC_REASONS` 及其词表项）；**训练计划 77 键无写键，当前不可写**——`NON_EXEC_REASONS.planWriteMissing` 逐字「命中但不执行：77 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。」，命中回 `non-exec` 并告知用户属二期，**不得**承诺 verify 后写入。
+- AUTO 块（本文件下方「联动速查」）列出的单命令写键只证明**写键可达**，**不豁免**本表的 verify 前置；分流仍按本表：有数据走场景 2，明确授权才走场景 3。
 - **禁止**：用户给了数据仍跳过 verify 直接调写键（数据看起来对也不例外）——v2.4.2 → v2.4.3 的根因就是这条。正解＝按场景分流。
+- **违反 = 协议 fail mode**：违反时向用户输出违规回执（逐字）：「我跳过了 M6 verify 直接写库，违反 Wizard Verify 铁则；已停止后续写入，请确认数据后重来」；不得静默补记、不得事后补 verify 掩盖；同轮修正循环 ≤ 3 次。
 
 ## 联动速查（构建期注入，勿手改）
 
@@ -162,5 +175,5 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
   ```sh
   calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
   ```
-- 成功 stdout 只有一行 envelope JSON，进度与错误走 stderr；`--html <路径>` 显式落盘 utf8。
+- 成功 stdout 只有一行 envelope JSON，进度与错误走 stderr；HTML 默认落 `calorie_html/<中文command>_<TS>[_N].html`（`<中文command>` = 该键注册表 title，落点见 `data.output`）；`--output <路径>` 显式覆盖。
 - 版本钉死登记：本节版本硬编码现为 `@0.1.1`（已随 #44 发版流同步；历史登记见 docs/public-installer-47.md「版本钉死登记」）。
