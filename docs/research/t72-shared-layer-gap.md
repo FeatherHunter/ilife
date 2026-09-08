@@ -7,7 +7,7 @@
   2. NEW 三包：`packages/base-link-core`、`packages/base-render`（npm `base-paint`）、`packages/base-combos`（src + package.json + test + scripts）。
   3. NEW 六技能 render 层与模板：`packages/skill-{calorie,memo-ilife,schedule,home,chef,bill}/src/render/*`、`templates/*.html`、`scripts/build-help.mjs`。
   4. 仓内边界规则：`tooling/check-boundaries.mjs`、`docs/p10-scaffold.md`、`docs/adr/0001-hexagonal-architecture.md`、`CONTEXT.md`。
-  5. 既有研究：`.scratch/research/t67-key-audit.md`、`docs/calorie-parity-39.md`。
+  5. 既有研究：`docs/research/t67-key-audit.md`、`docs/calorie-parity-39.md`。
 - 禁读声明：未读、未列、未引用任何路径名为 `.个人笔记不允许参考` 的内容（OLD 共享层与 OLD 卡路里技能均未触碰该目录）。
 
 ---

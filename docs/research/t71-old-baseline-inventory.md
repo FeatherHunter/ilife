@@ -634,7 +634,7 @@ out_path.write_text(injected, encoding='utf-8')                          # 原�
 
 **复刻时须修的既有缺陷**：`.trend-svg` 的 `preserveAspectRatio="none"`（B1:660, B2:822）会把 `r=5/r=9` 标记拉成椭圆 → 改 `xMidYMid meet` 或 `vector-effect:non-scaling-stroke`；toast/`#backTop` 缺 `env(safe-area-inset-bottom)`（B1:524, 566；C1:673 明确要求）；`#backTop` 的 `backdrop-filter` 需降级底色；B1:693/709 的 `<span class="state">` 是无 CSS 规则的死标记；B2 环中心 82% 与内环 60% 自相矛盾（B2:736 vs 733），不得当数据契约；B1:787 的 `id="cmdList"` 未被 JS 使用；B1:791 把命令文本同时写进 `.cmd` 与 `onclick` 字面量（须单一来源）。
 
-> 深度证据（逐行）另见：`D:\ilife\.scratch\research\benchmark-visual-spec.md`（758 行，含 C1 裁决依据与全部 token/组件/断点取值）。
+> 深度证据（逐行）另见：`docs/research/benchmark-visual-spec.md`（758 行，含 C1 裁决依据与全部 token/组件/断点取值）。
 
 ---
 
