@@ -3,9 +3,10 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildHelpBlock, START, END } from '../scripts/build-help.mjs';
 import { CALORIE_COMBOS } from '../dist/cli/keys.js';
 import { buildPhotoHelp, CALORIE_TEMPLATES, loadTemplate, CalorieRenderError } from '../dist/render/index.js';
@@ -54,6 +55,36 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
   });
   it('loader 未知模板大声失败（不返空）', () => {
     assert.throws(() => loadTemplate('no-such-template'), (e) => e instanceof CalorieRenderError && e.code === 'bad-input');
+  });
+  // #95 F7：`missing-data` 分支此前零守卫——变异（catch → return ''）后 build／skill-t11／G3 三绿。
+  // 用「安装布局副本」造缺件场景：只复制 dist 侧装载器（不复制 templates/），装载必抛 missing-data；
+  // 不碰仓库内真实模板文件（并发安全），rmSync 受守卫约束（协议 §2.1③）。
+  it('loader 缺文件抛 missing-data（不返空）', async () => {
+    const tmpRoot = tmpdir();
+    const tmp = mkdtempSync(join(tmpRoot, 'ilife-t95-missing-'));
+    const guard = (p) => {
+      const abs = resolve(p);
+      if (!abs.startsWith(resolve(tmpRoot) + sep) || abs === resolve(tmpRoot)) throw new Error('守卫拒绝删除：' + abs);
+      if (/[\\/](node_modules|packages|docs|test|tooling|\.git)([\\/]|$)/.test(abs)) throw new Error('守卫拒绝删除（仓库敏感路径）：' + abs);
+      return abs;
+    };
+    try {
+      const rel = join('node_modules', 'skill-calorie');
+      const dst = join(tmp, rel, 'dist', 'render');
+      mkdirSync(dst, { recursive: true });
+      for (const f of ['templates.js', 'errors.js']) copyFileSync(join(pkgDir, 'dist', 'render', f), join(dst, f));
+      const mod = await import(pathToFileURL(join(dst, 'templates.js')).href);
+      // 副本模块与被测 dist 是**两个模块实例**，不能 instanceof 比较类；按 name＋code 判。
+      const isMissingData = (e) => !!e && e.name === 'CalorieRenderError' && e.code === 'missing-data';
+      // 负例：包根 templates/ 缺席 → 必须抛 missing-data（变异成 return '' 即红）。
+      assert.throws(() => mod.loadTemplate('help'), isMissingData, '缺件必须抛 missing-data');
+      // 正例对照：同一布局补上文件后必须成功（证明上一条红的是「缺件」而非路径解析错）。
+      mkdirSync(join(tmp, rel, 'templates'), { recursive: true });
+      copyFileSync(join(pkgDir, 'templates', 'help.html'), join(tmp, rel, 'templates', 'help.html'));
+      assert.match(mod.loadTemplate('help'), /calorie-cmd-read/);
+    } finally {
+      rmSync(guard(tmp), { recursive: true, force: true });
+    }
   });
   it('T10 照片 HELP：10 条全可执行（模块+函数逐条 import 存在）', async () => {
     const all = buildPhotoHelp();

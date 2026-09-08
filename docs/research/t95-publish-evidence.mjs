@@ -11,9 +11,10 @@
  * 用法：node docs/research/t95-publish-evidence.mjs [--mutate]
  *   --mutate  期望 B/C 双红；「变异被抓住」= exit 0，没抓住 = exit 1。
  */
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -22,17 +23,68 @@ const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const SHELL = process.platform === 'win32';
 const MUTATE = process.argv.includes('--mutate');
 const EXPECT = ['diet', 'exercise', 'goal', 'help', 'home', 'photo-gallery'];
-// 临时根固定仓库内 .scratch/（ASCII）：Windows 中文 %TEMP% 下 bsdtar 打不开 tgz（实测），
-// 与 tooling/check-publish.mjs 的 TMP_ROOT 同口径。
-const EV_ROOT = join(root, '.scratch', 't95', 'ev');
-const mkEv = (prefix) => { mkdirSync(EV_ROOT, { recursive: true }); return mkdtempSync(join(EV_ROOT, prefix)); };
+// 临时根：优先**仓外** os.tmpdir()；但 Windows 自带 bsdtar 实测打不开非 ASCII 路径下的 tgz
+// （`tar.exe: Error opening archive`，同包复制到 ASCII 路径即可开），故非 ASCII 时退回仓库内 ASCII 的
+// .scratch/t95/。两种情形**都只跑 npm pack**（不跑 npm install、不触碰 node_modules，协议 §2.1②不适用），
+// 且所有 rmSync 经 guardEv 守卫（§2.1③）＋ 用完即清（§2.1④）。
+const ASCII_PATH = /^[\x20-\x7e]+$/;
+const EV_ROOT = ASCII_PATH.test(tmpdir())
+  ? mkdtempSync(join(tmpdir(), 'ilife-t95-ev-'))
+  : mkdtempSync(join(root, '.scratch', 't95', 'ev-'));
+const mkEv = (prefix) => mkdtempSync(join(EV_ROOT, prefix));
+// 清理守卫（协议 §2.1③）：目标必须在自己的独占临时根下，且不在 node_modules／packages／docs／test／tooling／.git 之下；守卫失败即抛。
+const REPO_SENSITIVE = ['node_modules', 'packages', 'docs', 'test', 'tooling', '.git'].map((d) => join(root, d));
+function guardEv(p) {
+  const abs = resolve(p), ev = resolve(EV_ROOT);
+  if (!(abs === ev || abs.startsWith(ev + sep))) throw new Error('清理守卫拒绝：' + abs + ' 不在独占临时根 ' + ev + ' 下');
+  for (const s of REPO_SENSITIVE) if (abs === s || abs.startsWith(s + sep)) throw new Error('清理守卫拒绝（仓库敏感路径）：' + abs);
+  return abs;
+}
+const cleanup = [];
+function cleanupAll() {
+  for (const d of cleanup) rmSync(guardEv(d), { recursive: true, force: true });
+  rmSync(guardEv(EV_ROOT), { recursive: true, force: true });
+}
+function bail(msg) {
+  console.error(msg);
+  try { cleanupAll(); } catch (e) { console.error('清理失败（守卫抛出）：' + e.message); process.exit(2); }
+  process.exit(1);
+}
+process.on('uncaughtException', (e) => bail('未捕获异常：' + e.message));
+
+// F2 自证：守卫必须有牙——仓库敏感路径／独占临时根之外的目标必须抛错，独占临时根内必须放行。
+// 变异自证：把 guardEv 改成 `return resolve(p)`（去守卫）→ 本段必红。
+if (process.argv.includes('--guard-selftest')) {
+  const cases = [
+    [join(root, 'node_modules', 'x'), false],
+    [join(root, 'packages', 'skill-calorie'), false],
+    [join(root, 'docs', 'x'), false],
+    [join(root, 'test', 'x'), false],
+    [join(root, 'tooling', 'x'), false],
+    [join(root, '.git', 'x'), false],
+    [root, false],
+    [join(tmpdir(), 'ilife-t95-elsewhere-' + Date.now()), false],
+    [join(EV_ROOT, 'child-ok'), true],
+    [EV_ROOT, true],
+  ];
+  let gbad = 0;
+  for (const [p, shouldPass] of cases) {
+    let threw = false;
+    try { guardEv(p); } catch { threw = true; }
+    if (threw === shouldPass) { console.error('FAIL(guard): ' + p + ' 期望' + (shouldPass ? '放行' : '抛错') + '，实际' + (threw ? '抛错' : '放行')); gbad++; }
+    else console.log('OK(guard): ' + (shouldPass ? '放行 ' : '拦住 ') + p);
+  }
+  cleanupAll();
+  if (gbad) { console.error('t95 清理守卫自证：' + gbad + ' 处红'); process.exit(1); }
+  console.log('t95 清理守卫自证：PASS');
+  process.exit(0);
+}
 
 let aBad = 0, bBad = 0, cBad = 0;
 const ok = (m) => console.log('OK: ' + m);
 const failA = (m) => { console.error('FAIL(A): ' + m); aBad++; };
 const failB = (m) => { console.error('FAIL(B): ' + m); bBad++; };
 const failC = (m) => { console.error('FAIL(C): ' + m); cBad++; };
-const cleanup = [];
 
 // ── A：files 口径 ─────────────────────────────────────────────────────────────
 const files = JSON.parse(readFileSync(join(pkgSrc, 'package.json'), 'utf8')).files || [];
@@ -57,13 +109,13 @@ const packDir = mkEv('pack-');
 cleanup.push(packDir);
 const r = spawnSync(NPM, ['pack', '--pack-destination', packDir], { cwd: stage, encoding: 'utf8', shell: SHELL });
 const tgzName = (r.stdout || '').trim().split('\n').pop();
-if (r.status !== 0 || !tgzName) { console.error('npm pack 失败：' + (r.stderr || '').slice(-500)); process.exit(1); }
+if (r.status !== 0 || !tgzName) bail('npm pack 失败：' + (r.stderr || '').slice(-500));
 const tgz = join(packDir, tgzName);
 ok('造包 ' + tgzName);
 
 // ── B：tarball 清单逐件 ───────────────────────────────────────────────────────
 const tf = spawnSync('tar', ['-tf', tgz], { encoding: 'utf8' });
-if (tf.status !== 0) { console.error('tar -tf 失败：' + (tf.stderr || '').slice(-300)); process.exit(1); }
+if (tf.status !== 0) bail('tar -tf 失败：' + (tf.stderr || '').slice(-300));
 const entries = tf.stdout.split('\n').map((s) => s.trim()).filter(Boolean);
 const wantTpl = EXPECT.map((n) => 'package/templates/' + n + '.html');
 const missTpl = wantTpl.filter((p) => !entries.includes(p));
@@ -78,7 +130,7 @@ const inst = mkEv('inst-');
 cleanup.push(inst);
 mkdirSync(join(inst, 'node_modules'), { recursive: true });
 const xf = spawnSync('tar', ['-xzf', tgz, '-C', inst], { encoding: 'utf8' });
-if (xf.status !== 0) { console.error('tar -xzf 失败：' + (xf.stderr || '').slice(-300)); process.exit(1); }
+if (xf.status !== 0) bail('tar -xzf 失败：' + (xf.stderr || '').slice(-300));
 const installed = join(inst, 'node_modules', 'skill-calorie');
 renameSync(join(inst, 'package'), installed);
 let mod = null;
@@ -106,8 +158,8 @@ if (mod) {
   failC('装载器未能从安装布局导入（模板不可达）');
 }
 
-for (const d of cleanup) rmSync(d, { recursive: true, force: true });
-rmSync(EV_ROOT, { recursive: true, force: true });
+cleanupAll();
+console.log('临时根已清（守卫 ' + EV_ROOT + '）：' + (existsSync(EV_ROOT) ? '仍存在（异常）' : '无残留'));
 
 // ── D：变异态必须被抓 ─────────────────────────────────────────────────────────
 if (MUTATE) {
