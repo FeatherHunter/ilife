@@ -192,13 +192,22 @@ M3 → 仅 `口径 · 删除回执可恢复性`；M4 → `落库 · 体重 log/u
 
 ## 8. 复跑
 
+`.scratch/` 是 gitignore 的施工草稿（不入库），故复跑只用**入仓脚本 ＋ 裸命令**：
+
 ```powershell
-# 门禁（持锁）
-powershell -NoProfile -ExecutionPolicy Bypass -File .scratch/t101/step4-gates.ps1
-# 失败集 delta
+# ① 门禁四门（须持 gate.lock：pnpm build / node --test 共享 dist 与 .tsbuildinfo）
+pnpm build; pnpm boundaries; pnpm snapshot:check; pnpm publish:pre   # 逐条须 exit 0
+
+# ② 全量测试（exit 1 属既有基线）＋ 失败集 delta 必须为空
+pnpm test *> .scratch/t101/pnpm-test-after.log
 node docs/research/t101-fail-set.mjs .scratch/t75/baseline-gates.log .scratch/t101/pnpm-test-after.log
-# 落库断言（35 键）
+
+# ③ 落库断言（35 键，15 用例）
 node --test packages/skill-calorie/test/cmd-write-40-persist.test.mjs
-# 变异自证（4 例，自带锁）
+
+# ④ 变异自证（4 例；脚本自己持 gate.lock，跑完自动复原源码并重建）
 node docs/research/t101-mutation.mjs
 ```
+
+持锁片段（协议 §2，pwsh）：见 `.scratch/t75/concurrency-protocol.md`；本票实测的持锁命令落在
+`.scratch/t101/*.ps1`（不入库，仅施工记录）。
