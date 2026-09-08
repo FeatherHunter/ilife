@@ -81,3 +81,26 @@ base-paint，删除即破坏其 HTML 输出，且 #96 门未建）→ 落点 = #
 **返修后数字**：`style.test.mjs` **25 用例全绿**；视觉取证 **56/56**；变异自证 **15/15**（还原后 fail=0）；
 发布面真打 tarball **22/22**（新增发布产物上的 extraCss 三禁断言）；四门 exit 0；冻结面仍 **130 条**
 （implemented 130／pending 0）。
+
+---
+
+## 第二轮返修（R1 FAIL 82／R2 PASS 84 → 编排者裁定再返修；契约 §8.11.2 台账 FX-75-11…FX-75-18）
+
+- **S2 · 运行时 toast 关闭按钮被挤到第 3 行（新引入缺陷，根因修）**：helpers 运行时 DOM 缺
+  `.ilife-toast-body`／`.ilife-toast-title-row` 包裹 → 与静态产出器／旧层**结构对齐**
+  （`icon? + .toast-body(> .toast-title-row ＋ 可选 .toast-title-detail) + .toast-close`），
+  类名常量提到模块级供两侧共用；**删除**全部权宜补丁（`flex-wrap`／`flex:1 1 100%`／`body{flex:1 1 0%}`）。
+  浏览器实测 `rt_close_top === rt_title_top`（关闭按钮与标题同行）、`rt_toast_h=58px`（旧缺陷 113px）。
+- **S2 · `statusBadge` 颜色溯源不实**：改回旧 `.hm-status` 逐值**实色**（ok `#e6f7ec`/`#1f8c3d`、
+  warn `#fff5e0`/`#a25b00`、danger `#fff0ee`/`#a83228`、empty `#f0f0f3`），注释与实现一致。
+- **S2 · H-16 `copied` 变绿缺失**：新增 `.ilife-copy-btn.copied{border-color:var(--ok);background:var(--ok);
+  color:var(--card)}`（弹簧 450ms 已在基座）；**运行时加类移交** #88／#91 或另开票。
+- **S2 · toast 入场动效缺失**：新增 CSS-only `@keyframes <prefix>toast-in`（`scale(.9)→1`／`opacity 0→1`）
+  ＋ `.ilife-toast{animation:… both}`，**不依赖 JS 加 `.show`**；`prefers-reduced-motion: reduce` 下归零。
+- **S3 · `.ilife-error-actions` 缺旧 `.hm-actions` 的 `max-width:520px;margin:0 auto`**：补上，
+  并把 `gap:8px` 改为 `row-gap:14px;column-gap:8px`（旧 `.hm-actions + .hm-actions{margin-top:14px}`）。
+- **S3 · `assertExtraCss` 假阳性**：判定前剥 CSS 注释（注释里的 `:root` 不再误拦）；禁入 token 改
+  **边界匹配**（`--pinkish`／`--r-xlarge` 不再误拦，`/*c*/:root{}` 仍拦）。
+- **S3 · 变异脚本判据弱**：只从**失败行**取判据名（`✖` 行／`**FAIL**` 表行），不再被 `✔ <同名>` 命中。
+- **S3 · 窄屏未真跑 375px**：改 iframe 宽 375（`--window-size=375` 实测 `innerWidth=526`），
+  `H-12e` 改结构判据 ＋ `B-12j`／`B-12k` 合并为逐值判据。

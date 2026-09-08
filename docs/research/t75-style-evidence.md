@@ -32,19 +32,23 @@
 
 ## 2. 门禁实测（变更后）
 
+**第二轮返修后（2026-09-09，本轮验收口径）**
+
 | 门 | 命令 | 结果 |
 |---|---|---|
-| 构建／类型 | `pnpm build`（`tsc -b`） | **exit 0** |
+| 构建／类型 | `pnpm build`（`tsc -b`） | **exit 0**（`.scratch/t75/f2-build.log`） |
 | 边界 | `node tooling/check-boundaries.mjs` | **PASS，exit 0**（7 条全 OK） |
-| 快照 | `node tooling/write-snapshot.mjs --check` | **exit 0**（`0.1.0@2fc0b42170d9604a`） |
+| 快照 | `node tooling/write-snapshot.mjs --check` | **exit 0**（`0.1.0@2fc0b42170d9604a` 未变） |
 | 发布前置 | `pnpm publish:pre` | **PASS，exit 0** |
-| 签名测试 | `node --test packages/base-render/test/contract-signatures.test.mjs` | **47/47** |
-| #78 图表回归 | `node --test packages/base-render/test/charts.test.mjs` | **87/87**（`chartsCss` 加 `export` 未破坏 #78） |
-| #75 新增行为测试 | `node --test packages/base-render/test/style.test.mjs` | **25/25**（返修后：新增 T23／T24） |
-| 三件套合计 | `node --test …/{contract-signatures,style,charts}.test.mjs` | **159/159，fail 0** |
-| 全量 | `pnpm test` | **失败集 delta = 空**（见下） |
+| 签名测试 | `node --test packages/base-render/test/contract-signatures.test.mjs` | **47/47**（冻结面 **130 条**／implemented **130**／pending **0** 仍由该用例钉死） |
+| #75 行为测试 | `node --test packages/base-render/test/style.test.mjs` | **29/29**（返修后：T23 重写 ＋ 新增 T25／T26／T27／T28） |
+| #78 图表回归 | `node --test packages/base-render/test/charts.test.mjs` | **87/87** |
+| #76 控件回归 | `node --test packages/base-render/test/controls.test.mjs` | **64/64**（helpers 结构对齐后**零改动**即全绿——见 §6 记账 10） |
+| 四件套合计 | `node --test …/{contract-signatures,style,charts,controls}.test.mjs` | **227/227，fail 0**（`.scratch/t75/f2-tests4.log`） |
 
-**`pnpm test` 前后对比（判据 = 失败用例名集合逐名比对，协议 §5；**返修后复跑**）**
+> 本轮**未复跑全量 `pnpm test`**（验收口径只要求四件套全绿并记录真实计数）；全量的失败集 delta 见下一小节（第一轮返修口径，本轮改动只触及 base-render 单测与证据脚本）。
+
+**`pnpm test` 前后对比（判据 = 失败用例名集合逐名比对，协议 §5；**第一轮返修后复跑**）**
 
 | 项 | 落地后（`.scratch/t75/after-test.log`） | **返修后（`.scratch/t75/fix-fulltest.log`）** |
 |---|---|---|
@@ -72,50 +76,62 @@
 `base-paint` 不在其列 → 不能作为验收① 的证据。故改用真打 tarball 取证：
 
 ```powershell
-node docs/research/t75-publish-evidence.mjs    # RESULT: 22/22
+node docs/research/t75-publish-evidence.mjs    # RESULT: 25/25
 ```
 
 - `npm pack --dry-run`：清单含 `dist/index.js`／`dist/style.js`／`dist/spec/style.js`／`dist/charts.js`，
   **不含** `style/`（`tokens.css` 不在 `files`），`total files: 69`（与基线一致，只增不减）；
 - `npm pack --pack-destination <tmp>` → `tar -xzf` → 从**解包后的发布产物** `package/dist/index.js`
   `import()`：`buildStyleSheet` 为 function、四字段齐全且冻结、`tokens=11`、`prefix=ilife-`、
-  `version===STYLE_VERSION`、`css` 含 `--blue: #007aff`、禁入项 0、无 `<style>` 包裹（**css = 17086 B**）。
+  `version===STYLE_VERSION`、`css` 含 `--blue: #007aff`、禁入项 0、无 `<style>` 包裹（**css = 17452 B**）。
 - **返修新增 3 条（发布产物上的 `extraCss` 三禁）**：合法技能作用域覆盖块通过（末尾追加）；
   `:root{--blue:#ff0000}` → `StyleSheetError/extra-css-root`；`--r-xl` → `StyleSheetError/extra-css-forbidden-token`。
+- **第二轮返修新增 3 条（发布产物上的 W2／W3／W4 事实）**：含 `@keyframes ilife-toast-in` ＋
+  `animation: ilife-toast-in`；含 `.ilife-copy-btn.copied` 且 `border-color/background: var(--ok)`；
+  statusBadge 四态取旧 `.hm-status` 逐值实色（`#e6f7ec`／`#1f8c3d`／`#fff0ee`／`#a83228`／`#f0f0f3`）——
+  防止「仓内 dist 有、发布产物没有」的假绿。
 - 注：`--pack-destination` 的临时目录用仓内 `.scratch/t75/`——Windows `tar`(bsdtar) 在含非 ASCII 的
   `%TEMP%` 路径下解包失败（实测 status=1），已写进脚本注释。
 - `pnpm publish:plan`（契约 doc:973 字面点名）：**未跑通**（调 `npm view` 需 registry 网络）→ 见 §7。
 
-## 4. 变异自证（15/15，返修后）
+## 4. 变异自证（21/21，第二轮返修后）
 
 ```powershell
-node docs/research/t75-mutation-evidence.mjs   # RESULT: 15/15，还原后重跑 style.test.mjs fail=0
+node docs/research/t75-mutation-evidence.mjs   # RESULT: 21/21，还原后重跑 style.test.mjs fail=0
 ```
 
 | 变异 | 破坏什么 | 变红的判据 |
 |---|---|---|
 | M1 | 产出层硬编码错误 `--fg` 值 | T4（逐 token 逐值）、T18b（`:root` 与契约逐字节） |
 | M2a | emptyState 根类名改坏 | T8（每区必须有真实规则） |
-| M2b | 删 helpShell 区实现 | 模块导入即 fail-fast（闭集守卫）→ 整文件红 |
+| M2b | 删 helpShell 区实现 | 模块导入即 fail-fast（闭集守卫）→ **错误文案**判据（导入抛错只在诊断行，`✖` 行无名字） |
 | M3 | `extraCss` 由末尾追加改前置 | T15（末尾追加）、T14（同源前缀） |
 | M4 | charts 区不再复用 `chartsCss` | T12（逐字节复用）、T13（渐变计数） |
 | M5 | errorReceipt 退回裸 `.ilife-error` | T21（类名撞车处置） |
 | **M6** | **删 `.ilife-toast` 整条基座规则** | **T8（基座块声明数）＋ T23**——返修③核心：旧断言下全绿 |
 | **M7** | **删 `.ilife-copy-btn` 整条基座规则** | **T8**——返修③核心：旧断言下全绿 |
 | **M8** | 掏空 `.ilife-toast` 基座规则（只留 1 条声明） | T8（`声明数不足`） |
-| **M9** | 去掉 `.ilife-toast{flex-wrap:wrap}` | T23（运行时 toast 分层） |
+| **M9** | **重新加回 `.ilife-toast{flex-wrap:wrap}` 权宜补丁**（W1 后原变异失效 → 改为反向变异） | T23（「补丁已删」断言） |
 | **M10** | `.ilife-toast-count` 圆角 8px → 6px | **视觉脚本** `H-10c`／`H-10a`（严格圆角集） |
 | **M11** | 冻结 token `--blue` → `#123456` | **视觉脚本** `H-01c`／`H-01d`（契约外部 oracle） |
-| **M12** | `.ilife-error-actions` grid → flex | **视觉脚本** `B-12i`／`B-12j`（两行 grid 实测） |
+| **M12** | `.ilife-error-actions` grid → flex | **视觉脚本** `B-12i`／`B-12j` |
 | **M13** | 删 `extraCss` 三禁守卫调用 | T24（extraCss 三禁强制） |
+| **M14** | 删 `.ilife-toast{animation:…}`（W4） | **视觉脚本** `H-21a` |
+| **M15** | `.ilife-copy-btn.copied` 背景改非成功色（W3） | **视觉脚本** `B-12m` |
+| **M16** | 删 `.ilife-error-actions{max-width:520px}`（W5） | **视觉脚本** `B-12j` |
+| **M17** | statusBadge ok 字色 `#1f8c3d` → `#1f8f3d`（W2） | T25（旧逐值外部 oracle） |
+| **M18** | 破坏 helpers 运行时 toast 结构（body 类名改坏，W1 根因） | **视觉脚本** `H-12d` |
+| **M19** | 删 reduced-motion 下 `.ilife-toast{animation:none}`（W4） | **视觉脚本** `H-21c` |
 | **P1** | 无变异探针：`DSH_BROWSER` 指向不存在路径 | **视觉脚本 exit 1**＋显式错误文案 |
 
-**还原后重跑 `style.test.mjs` fail=0**（脚本 `finally` 无条件还原，且自证还原有效）。
+**还原后重跑 `style.test.mjs` fail=0**（脚本 `finally` 无条件还原，并逐文件自证 sha256 与变异前**相同**）。
+**W7 口径**：命中判据**只从失败行取**（`✖` 行／`**FAIL**` 表行／导入抛错的错误文案行），
+旧实现 `out.includes(name)` 会被 node 报告里的 `✔ <同名>` 命中。
 
-## 5. 视觉取证（代理证据，浏览器 computed 56/56，返修后）
+## 5. 视觉取证（代理证据，浏览器 computed 71/71，第二轮返修后）
 
 ```powershell
-node docs/research/t75-visual-evidence.mjs    # RESULT: 56/56
+node docs/research/t75-visual-evidence.mjs    # RESULT: 71/71
 ```
 
 - 浏览器：`C:\Program Files\Google\Chrome\Application\chrome.exe`（`--headless=new --dump-dom`）；
@@ -139,6 +155,20 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 56/56
     （`H-10a2`，`#78` 图例色块），全表无 `6px`（`H-10c`）。
   - **⑥ 渐变取证覆盖全表**：`nonCharts` = 除 charts 段外的全部文本（含 helpShell 段），`H-04b` 自证切片。
   - **⑧ 契约外部 oracle**：产出 `:root` 块与契约 doc:276-288 的 CSS 块**逐字节相等**（`H-01c`／`H-01d`／`H-01e`）。
+- **第二轮返修新增实测（W1／W2／W3／W4／W5／W8）**：
+  - **W1（根因修后的真实 DOM）**：`rt_close_top=675 === rt_title_top=675`（关闭按钮**与标题同行**）、
+    `rt_title_top=675 < rt_detail_top=693`、`rt_toast_h=58px`（`rt_body_h=32px`，差值 **26 ≤ 30**）、
+    结构 `true/true/true/nowrap`（`.toast-body`／`.toast-title-row` 命中、detail 在 body 内、无 `flex-wrap`）；
+    静态同组件仍单行 `462/462/462`。
+  - **W8（真 375px）**：`H-12f` 内层 `innerWidth=375`；窄屏 `rt_close_top=743 === rt_title_top=743`、
+    `rt_right=331 ≤ 375`（`rt_toast_w=302px`）；窄屏 toast 栈仍 `left:12px/right:12px`。
+  - **W5**：`max-width=520px`／容器 `520`／`retry_w=520`／`ghost_w=256`／`row-gap=14px`／`column-gap=8px`／
+    居中偏移 `0px`（`B-12j`，逐值合并判据）。
+  - **W2**：四态 computed 逐值 = 旧 `.hm-status`（ok `rgb(230,247,236)/rgb(31,140,61)`、
+    warn `rgb(255,245,224)/rgb(162,91,0)`、danger `rgb(255,240,238)/rgb(168,50,40)`、empty `rgb(240,240,243)`）。
+  - **W3**：`.ilife-copy-btn.copied` computed 背景 `rgb(52, 199, 89)`（`B-12m`）＋ 基座弹簧 `0.45s`（`H-16a`）。
+  - **W4**：`animationName=ilife-toast-in`／`0.22s`／`fill-mode: both`／reduced-motion `none` ＋ 该页 `opacity=1`
+    （无动画时默认可见）＋ 关键帧终态 `to{opacity:1}`（`H-21a`…`H-21f`）。
 
 ## 6. 偏离记账（逐条，禁止默默略过）
 
@@ -163,6 +193,9 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 56/56
    `extra-css-dark-scheme`），零新增对外导出（冻结面 130 条不变）。合法技能作用域覆盖块
    `.ilife-<skill>{--blue:…}` 照常通过；**未知 token 名不强制**（契约未冻结判定方式 → 保持调用方责任）。
    **已知局限**：文本级判定（不解析 CSS AST）→ `html{--blue:…}` 等等价改写仍在调用方责任内（契约 §8.11 未定口径⑤）。
+   **第二轮 W6 修订**：判定前先剥注释（**误拦面**：注释里的 `:root`／`--pink` 不再拦），禁入 token 改
+   **边界匹配**（`--pinkish`／`--r-xlarge` 不再误拦）；**漏拦面**（`/*c*/:root{}` 仍拦、注释不豁免真实声明）
+   同时有 T24 ④⑤ 断言 ＋ 契约 §8.11 未定口径⑤「两面都记」。
    **回退方式**：删 `src/style.ts` 的 `assertExtraCss()` 单点（T24 同步变红）。
 6. **`version` 取值 = `STYLE_VERSION`**（裁定 D1）：契约 doc:268 只冻结类型、**未规定取值**（契约空白）；
    本票裁定取 `'0.1.0'`（语义为「样式表版本」、已被 `test-d:119 _B17` 锁、与 B8 同值、零新增符号），
@@ -176,6 +209,27 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 56/56
 9. **`pnpm publish:plan` 未跑**：契约 doc:973 称「`pnpm publish:plan` 的 tarball 含契约资产」，
    实测该命令只打印发布计划（`tooling/publish-chain.mjs:5` 自述）、调 `npm view` 需 registry 网络
    → **契约措辞待校正**；验收① 以 §3 的真打 tarball 为准。
+10. **W1 结构对齐属「根因修」，不是契约变更**（第二轮返修）：helpers 运行时 DOM 增补
+    `.ilife-toast-body`／`.ilife-toast-title-row` 包裹（与静态产出器／旧层同构）。
+    核对结论：`SHARED_HELPERS_JS_RULE`（§3.3／FX-18）**只约束**自包含／幂等／`domAllowed`／
+    禁全局赋值／禁 `node:`，**不约束 DOM 结构**；`contract-signatures.test.mjs` 47/47 仍全绿，
+    冻结面 130 条不变 → 不构成对 #76 产出内容契约的破坏。**权宜补丁全部删除**
+    （`flex-wrap`／`flex:1 1 100%`／`body{flex:1 1 0%}`），`style.test.mjs` 中把补丁锁死的断言
+    （`!helpers.includes('ilife-toast-body')`）一并删除（否则禁止根因修）。
+11. **W2 statusBadge 色值以 parity 为准**：改回旧 `.hm-status` 逐值**实色**（旧值 oracle
+    `公共组件/assets/base.css:225-228`）。**附带登记**：`.ilife-toast-chip-{ok,warn,danger}`
+    （`#1f8f3d`／`#b25000`／`#c0392b`）与 `.ilife-help-shell-badge-dev`（`#b25000`）的硬编码色
+    **仓内无旧层出处可核**（旧 toast 样式内联在 `base.js:75`、未入仓）→ 属**未确证色值**，
+    不在 W2 裁定范围（W2 只裁 statusBadge），登记待溯源；如需与旧 toast 逐值对齐，须先取得旧层文本。
+12. **W3 `copied` 只补 CSS 侧**（H-16 双反馈）：本票新增 `.ilife-copy-btn.copied` 变绿态 ＋ 复用
+    基座 450ms 弹簧；**运行时给按钮加 `copied` 类不在本票范围**（不得擅自改 helpers 的复制反馈行为）
+    → **移交登记**：落点 #88／#91 或另开票（契约 §8.11.2 FX-75-13）。
+13. **W8 窄屏判据改 iframe 宽 375**：`--window-size=375,812` 实测 `innerWidth=526`（Chrome 最小窗口
+    宽度所致）→ `≤400px` 断点从未覆盖。改用 **iframe 宽 375** 承载同一张控制页，`H-12f` 自证
+    `innerWidth===375`。**`H-12e` 高度区间下界取 50（非作业单建议的 60）**：实测正确两行高度 = 58px
+    （13+13 内距 ＋ 2 描边 ＋ 标题 17.5 ＋ 详情 16.5），60 会把**正确实现**判红；判别力改由
+    **结构差值**（`toast_h − body_h ≤ 30px`，即关闭按钮不另占行）承担——无 body 包裹时 `body_h=−1`、
+    关闭按钮另起一行时差值 ≥ 48px。
 
 ## 7. 未做／未确证（显式标注）
 
@@ -187,6 +241,10 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 56/56
 | `:focus-visible` 覆盖 HELP 的 `tab-input` | **部分** | 单选 input 视觉隐藏、其 `label` 非 `focus-within` 祖先，纯 CSS 无法给 label 加环（需 `:has()` 反选，代价高）；按钮类控件已全覆盖（视觉证据 `H-20a` ＋ 浏览器 `:focus-visible` 规则命中 ≥1） |
 | `ACTION_BAR_DEFAULTS.evenRowPairs` 的语义 | **已消费** | 落成 `grid-template-columns: repeat(evenRowPairs, …)`（浏览器实测 2 列）；「偶数列对」的旧层精确语义未在契约定义，按施工单 B §1.2 取 grid 2 列 |
 | 旧 `base.css` 的 `.hm-*` 全量重写 | **未做**（裁定 R8） | 本票只新增；删除随各技能迁移票 |
+| **H-16 运行时加 `copied` 类** | **移交** | 本票只补 CSS 侧（`.ilife-copy-btn.copied`）；运行时加类归 helpers → 落点 **#88／#91 或另开票**（契约 §8.11.2 FX-75-13） |
+| **`.ilife-toast-chip-{ok,warn,danger}`／`.ilife-help-shell-badge-dev` 的硬编码色** | **未确证** | 仓内**无旧层出处可核**（旧 toast 样式内联在 `base.js:75`、未入仓；`#1f8f3d` 全仓无出处，`#b25000` 仅见 `docs/calorie-architecture.html:10`）→ 不在 W2 裁定范围（W2 只裁 statusBadge），登记待溯源（§6 记账 11） |
+| **`H-12e` 高度区间下界 50px（非作业单建议的 60px）** | **有意偏离** | 实测正确两行高度 58px（60 会把正确实现判红）；判别力改由结构差值（`toast_h − body_h ≤ 30px`）承担（§6 记账 13） |
+| **`--dump-dom` 下 CSS 动画时钟不推进** | **已用替代判据** | 实测动画态 `opacity=0`（虚拟时间冻结）→ 可见性改用「reduced-motion 页 `opacity=1`」＋「关键帧终态 `to{opacity:1}`」两条不依赖动画时钟的判据（`H-21e`／`H-21f`） |
 
 ## 8. 自评风险 top3
 
