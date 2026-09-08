@@ -159,6 +159,15 @@ const TOAST_CLOSE_LABEL = '✓ 知道了';
 /** 关闭按钮的命名空间类（helpers JS 按 `prefix` 派生同名选择器，见 `buildSharedHelpersJs`）。 */
 const TOAST_CLOSE_CLASS = 'toast-close';
 
+/** toast 结构类名（**静态产出器与 helpers 运行时共用同一份**，故提为常量）：
+ *  `body` 包裹 `title-row`（＋ 可选 detail），close 在 body 之外 —— 与旧层
+ *  `.hm-toast-icon + .hm-toast-body(> .hm-toast-title-row + .hm-toast-detail) + .hm-toast-close`
+ *  **同构**（旧层取证 `.scratch/t76/old-controls.md` §1.1；返修 W1 根因修）。
+ *  运行时详情类名沿用 `toast-title-detail`（既有 helpers 产出，不新增类名）。 */
+const TOAST_BODY_CLASS = 'toast-body';
+const TOAST_TITLE_ROW_CLASS = 'toast-title-row';
+const TOAST_DETAIL_CLASS = 'toast-title-detail';
+
 function positiveInt(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : fallback;
 }
@@ -201,7 +210,7 @@ export const renderToast: RenderToast = (input) => {
     });
   }
 
-  const body: string[] = ['<div class="' + STYLE_PREFIX + 'toast-title-row">' + titleRow.join('') + '</div>'];
+  const body: string[] = ['<div class="' + STYLE_PREFIX + TOAST_TITLE_ROW_CLASS + '">' + titleRow.join('') + '</div>'];
   if (typeof toast.detail === 'string' && toast.detail !== '') {
     body.push('<div class="' + STYLE_PREFIX + 'toast-detail">' + esc(toast.detail) + '</div>');
   }
@@ -215,7 +224,7 @@ export const renderToast: RenderToast = (input) => {
   return (
     '<div class="' + STYLE_PREFIX + 'toast" role="' + TOAST_DEFAULTS.role + '" aria-live="' + TOAST_DEFAULTS.ariaLive + '" data-max="' + maxStack + '">'
     + head.join('')
-    + '<div class="' + STYLE_PREFIX + 'toast-body">' + body.join('') + '</div>'
+    + '<div class="' + STYLE_PREFIX + TOAST_BODY_CLASS + '">' + body.join('') + '</div>'
     + '<button type="button" class="' + STYLE_PREFIX + TOAST_CLOSE_CLASS + '">' + TOAST_CLOSE_LABEL + '</button>'
     + '</div>'
   );
@@ -475,8 +484,10 @@ function helpersDataAttr(input?: SharedHelpersInput): string {
  *  不向 `window.<id>`／`globalThis.<id>` 赋值／不引 `node:`。
  *
  *  功能面（文档无规定，本文记账）：① 幂等挂载点标记；② 事件委派 `[ACTION_ID_ATTR]` 点击 →
- *  读 `dataAttr` 文本 → 复制（`navigator.clipboard` → `execCommand` 兜底）；③ 单行反馈块
- *  （`prefix` 命名空间类，`maxStack`／`timeoutMs`／移动端收窄取冻结常量）；④ 关闭按钮。
+ *  读 `dataAttr` 文本 → 复制（`navigator.clipboard` → `execCommand` 兜底）；③ 反馈块
+ *  **与 `renderToast` 同构**（`.toast` > `.toast-body` > `.toast-title-row` ＋ 可选
+ *  `.toast-title-detail`，`.toast-close` 在 body 之外；W1 根因修），`prefix` 命名空间类，
+ *  `maxStack`／`timeoutMs`／移动端收窄取冻结常量；④ 关闭按钮。
  *  产出文本里的文案／数值**全部**取自冻结常量（不产第二份真相）。
  *  注：`execCommand` 兜底用临时 textarea 的两个内联定位属性（`position`／`left`），属临时节点
  *  定位而非控件样式，不构成第二份样式常量。 */
@@ -495,6 +506,9 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '  var STACK_CLASS = ' + jsStr(prefix + 'toast-stack') + ';',
     '  var TOAST_CLASS = ' + jsStr(prefix + 'toast') + ';',
     '  var TITLE_CLASS = ' + jsStr(prefix + 'toast-title') + ';',
+    '  var BODY_CLASS = ' + jsStr(prefix + TOAST_BODY_CLASS) + ';',
+    '  var TITLE_ROW_CLASS = ' + jsStr(prefix + TOAST_TITLE_ROW_CLASS) + ';',
+    '  var DETAIL_CLASS = ' + jsStr(prefix + TOAST_DETAIL_CLASS) + ';',
     '  var CLOSE_CLASS = ' + jsStr(prefix + TOAST_CLOSE_CLASS) + ';',
     '  var OK_MSG = ' + jsStr(COPY_TEXT_DEFAULTS.okMessage) + ';',
     '  var FAIL_MSG = ' + jsStr(COPY_TEXT_DEFAULTS.failMessage) + ';',
@@ -578,16 +592,27 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    box.className = bad ? TOAST_CLASS + " " + TOAST_CLASS + "-danger" : TOAST_CLASS;',
     '    box.setAttribute("role", ' + jsStr(TOAST_DEFAULTS.role) + ');',
     '    box.setAttribute("aria-live", ' + jsStr(TOAST_DEFAULTS.ariaLive) + ');',
+    // W1 根因修（结构对齐）：运行时 DOM 与静态产出器／旧层同构——
+    //   box > .toast-body(> .toast-title-row(> .toast-title) ＋ 可选 .toast-title-detail) ＋ .toast-close
+    // 旧层为 `.hm-toast-icon + .hm-toast-body(> .hm-toast-title-row + .hm-toast-detail) + .hm-toast-close`
+    // （`.scratch/t76/old-controls.md` §1.1）。缺 body 包裹时标题／详情／关闭被排进同一 flex 行，
+    // 靠 `flex-wrap` ＋ `flex:1 1 100%` 补丁才勉强分层，且把关闭按钮挤到第三行（R1 实测 113px 高）。
+    '    var body = document.createElement("div");',
+    '    body.className = BODY_CLASS;',
+    '    var titleRow = document.createElement("div");',
+    '    titleRow.className = TITLE_ROW_CLASS;',
     '    var title = document.createElement("span");',
     '    title.className = TITLE_CLASS;',
     '    title.textContent = msg;',
-    '    box.appendChild(title);',
+    '    titleRow.appendChild(title);',
+    '    body.appendChild(titleRow);',
     '    if (bad) {',
-    '      var detail = document.createElement("span");',
-    '      detail.className = TITLE_CLASS + "-detail";',
+    '      var detail = document.createElement("div");',
+    '      detail.className = DETAIL_CLASS;',
     '      detail.textContent = FAIL_DETAIL;',
-    '      box.appendChild(detail);',
+    '      body.appendChild(detail);',
     '    }',
+    '    box.appendChild(body);',
     '    var close = document.createElement("button");',
     '    close.type = "button";',
     '    close.className = CLOSE_CLASS;',

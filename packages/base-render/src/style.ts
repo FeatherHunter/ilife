@@ -95,7 +95,9 @@ function focusRing(selector: string): string {
 /** 各区 CSS 文本（闭集 `CONTROL_STYLE_SECTIONS` 的**唯一**实现处）。
  *  每区的类名逐条来自产出器实测（注释里给 `file:line`），**不许臆造未被使用的类名**。 */
 const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> = {
-  /** toast —— 类名产出者 `src/controls.ts:176-219`（静态）与 `:495-593`（helpers 运行时）。 */
+  /** toast —— 类名产出者：`src/controls.ts` 的 `renderToast`（静态）与 `buildSharedHelpersJs`
+   *  的 `feedback()`（helpers 运行时）；两侧结构**同构**（`.toast` > `.toast-body` >
+   *  `.toast-title-row` ＋ 可选 detail；`.toast-close` 在 body 之外）。 */
   toast: (p) => [
     '.' + p + 'toast-stack {',
     '  position: fixed;',
@@ -110,14 +112,12 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  max-width: calc(100vw - 32px);',
     '  pointer-events: none;',
     '}',
-    // `flex-wrap: wrap` ＋ 下面 `.ilife-toast-title-detail{flex:1 1 100%}` 是**运行时 DOM 的
-    // 布局回归修复**：静态产出器（`controls.ts:216-221`）有 `.ilife-toast-body` 包裹，
-    // 而 helpers 运行时 DOM（`controls.ts:577-596`）**没有**包裹 → 不换行时标题与详情被排成
-    // flex 同行（A2 浏览器实测 `rt_title_top=14 / rt_detail_top=14`）。静态侧在 body 内不受影响
-    // （`.ilife-toast-title-detail` 只由 helpers 产出，静态侧用的是 `.ilife-toast-detail`）。
+    // W1（返修第二轮）：此处原有 `flex-wrap: wrap` 是**权宜补丁**（helpers 运行时 DOM 缺 body 包裹
+    // 时靠换行分层，代价是把关闭按钮挤到第三行）。根因已由 `controls.ts` 的结构对齐修掉
+    // （helpers 与静态产出器／旧层同构：`icon? + .toast-body(> .toast-title-row + detail) + .toast-close`），
+    // 补丁一并删除 → 关闭按钮与标题恒同行。
     '.' + p + 'toast {',
     '  display: flex;',
-    '  flex-wrap: wrap;',
     '  align-items: flex-start;',
     '  gap: 12px;',
     '  box-sizing: border-box;',
@@ -133,6 +133,20 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  line-height: 1.4;',
     '  font-feature-settings: "tnum";',
     '  pointer-events: auto;',
+    '  animation: ' + p + 'toast-in .22s cubic-bezier(.34, 1.56, .64, 1) both;',
+    '}',
+    // 入场动效（W4）：旧层 `.hm-toast{opacity:0;transform:scale(.9)}` ＋ `.hm-toast.show{…}`
+    // （`base.js:75`）依赖 JS 加类，新控制器**不加 `.show`**（`ToastController.show` 是方法名，非类）
+    // → 改为 **CSS-only** `@keyframes` ＋ `animation`，**不依赖任何 JS 加类**，且默认可见。
+    '@keyframes ' + p + 'toast-in {',
+    '  from {',
+    '    opacity: 0;',
+    '    transform: scale(.9) translateY(4px);',
+    '  }',
+    '  to {',
+    '    opacity: 1;',
+    '    transform: none;',
+    '  }',
     '}',
     '.' + p + 'toast-danger {',
     '  border-color: rgba(255, 59, 48, .38);',
@@ -143,10 +157,11 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  font-size: 20px;',
     '  line-height: 1;',
     '}',
-    // `flex-basis: 0%`（原 `auto`）：让 body 的**假定主尺寸**为 0，静态侧在 `flex-wrap: wrap`
-    // 下也不会因内容 max-content 超宽而把 body 折到第二行（实测静态 toast 仍是单行 102px）。
+    // body 是 toast 的**唯一**内容列（静态产出器与 helpers 运行时同构，见 `controls.ts`
+    // `TOAST_BODY_CLASS`）：`flex: 1 1 auto` 让它吃掉剩余宽度并内部换行，
+    // 关闭按钮因此恒与标题同行（W1 判据 `rt_close_top === rt_title_top`）。
     '.' + p + 'toast-body {',
-    '  flex: 1 1 0%;',
+    '  flex: 1 1 auto;',
     '  min-width: 0;',
     '}',
     '.' + p + 'toast-title-row {',
@@ -162,10 +177,9 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  font-weight: 600;',
     '  line-height: 1.4;',
     '}',
-    // 运行时详情（helpers 产出 `.ilife-toast-title-detail`）：`flex-basis:100%` 强制独占一行，
-    // 修掉「标题与详情同排」的回归；静态侧无此类名，不受影响。
+    // 运行时详情（helpers 产出 `.ilife-toast-title-detail`，在 `.ilife-toast-body` 内）：
+    // 与静态侧 `.ilife-toast-detail` **同排版**；此前的 `flex: 1 1 100%` 权宜补丁已随结构对齐删除。
     '.' + p + 'toast-title-detail {',
-    '  flex: 1 1 100%;',
     '  color: var(--fg2);',
     '  font-size: 11px;',
     '  font-weight: 400;',
@@ -358,14 +372,27 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '.' + p + 'copy-btn:active {',
     '  transform: scale(.96);',
     '}',
+    // W3（H-16 双反馈的 CSS 侧）：复制成功态变绿。规格 `docs/visual-spec-help.md:195,197`
+    // 「按钮变绿进入 `copied` 态并跑 450ms 弹簧动画」；弹簧 = 基座 `transition: transform .45s
+    // cubic-bezier(.34, 1.56, .64, 1)`（B1 `benchmark-visual-spec.md:279,645`），本节只补**变绿**。
+    // 类名由**运行时**添加（`copied`，非 `ilife-` 前缀 → 不占样式区命名空间）；
+    // 本票**不改** helpers 的复制反馈行为，移交落点见契约 §8.11.1 FX-75-11。
+    '.' + p + 'copy-btn.copied {',
+    '  border-color: var(--ok);',
+    '  background: var(--ok);',
+    '  color: var(--card);',
+    '}',
     focusRing('.' + p + 'copy-btn'),
   ].join(LF),
 
   /** statusBadge —— 类名产出者 `controls.ts:702-707`。
-   *  **逐值对齐施工单 B §1.4**（旧 `.hm-status` 同值）：`gap:6px;padding:6px 14px;font-size:13px;
-   *  font-weight:600;border-radius:999px;width:fit-content`。此前实测偏离 `1px 8px／11px／gap:normal`
-   *  （A2 返修项④）→ 本票按规格值对齐，不再记账偏离。四组底色/字色沿用旧 `.hm-status.{ok,warn,
-   *  danger,empty}`（非 token 硬编码色 → 按 D-5 以 CSS 常量落地，不新增 token 名）。 */
+   *  **逐值对齐施工单 B §1.4**：`gap:6px;padding:6px 14px;font-size:13px;font-weight:600;
+   *  border-radius:999px;width:fit-content`。四组底色／字色**逐值取旧 `.hm-status.{ok,warn,danger,empty}`**
+   *  （`公共组件/assets/base.css:225-228`；旧值清单亦见施工单 B `:253`）——**实色**背景，非 alpha：
+   *  ok `#e6f7ec`／`#1f8c3d`、warn `#fff5e0`／`#a25b00`、danger `#fff0ee`／`#a83228`、
+   *  empty `#f0f0f3`／`var(--fg3)`（empty 字色旧层取灰阶 token，底色为实色 `#f0f0f3`）。
+   *  **返修 W2**：上一轮误用 `#1f8f3d`／`#b25000`（全仓无出处）＋ 12% alpha 底色，且注释谎称「沿用旧值」
+   *  → 已改回旧逐值，注释与实现一致（非 token 硬编码色按 D-5 以 CSS 常量落地，不新增 token 名）。 */
   statusBadge: (p) => [
     '.' + p + 'status-badge {',
     '  display: inline-flex;',
@@ -381,19 +408,19 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  width: fit-content;',
     '}',
     '.' + p + 'status-badge-ok {',
-    '  background: rgba(52, 199, 89, .12);',
-    '  color: #1f8f3d;',
+    '  background: #e6f7ec;',
+    '  color: #1f8c3d;',
     '}',
     '.' + p + 'status-badge-warn {',
-    '  background: rgba(255, 149, 0, .12);',
-    '  color: #b25000;',
+    '  background: #fff5e0;',
+    '  color: #a25b00;',
     '}',
     '.' + p + 'status-badge-danger {',
-    '  background: rgba(255, 59, 48, .12);',
-    '  color: #c0392b;',
+    '  background: #fff0ee;',
+    '  color: #a83228;',
     '}',
     '.' + p + 'status-badge-empty {',
-    '  background: var(--soft);',
+    '  background: #f0f0f3;',
     '  color: var(--fg3);',
     '}',
   ].join(LF),
@@ -449,14 +476,23 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  font-size: 15px;',
     '  font-weight: 700;',
     '}',
-    // **旧层两行 grid 语义对齐**（施工单 B §1.6 要求「等价」）：旧层 `.hm-error .hm-actions
-    // {margin-top:0}` ＋ 相邻 `+ .hm-actions{margin-top:14px}`，其中 `wide` 按钮跨列、两个 ghost
-    // 各占半宽。A2 返修项⑤实测旧实现 retry 独占 1352px、两个 ghost 仅 78px（单 flex 行）→ 改为
+    // **旧层两行 grid 语义对齐**（施工单 B §1.6 要求「等价」）：旧层 `.hm-actions`
+    // `{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:520px;margin:0 auto}`（`base.css:81-91`，
+    // 其中 `max-width:520px;margin:0 auto` 在 **`:87-89`**）＋ `.hm-error .hm-actions{margin-top:0}` 与
+    // 相邻 `+ .hm-actions{margin-top:14px}`（两行之间的竖向间距 14px）。
+    // A2 返修项⑤实测旧实现 retry 独占 1352px、两个 ghost 仅 78px（单 flex 行）→ 改为
     // grid 2 列（列数取 `ACTION_BAR_DEFAULTS.evenRowPairs`）＋ `.ilife-copy-btn-wide` 跨全列。
+    // **返修 W5**：上一轮漏了 `max-width:520px;margin:0 auto`（实测 retry 1352／ghost 672，
+    // 旧应为 520／256）→ 本节补上；两行间距由 `gap:8px` 改为 `row-gap:14px;column-gap:8px`
+    // 以逐值对齐旧层 `+.hm-actions{margin-top:14px}`。
     '.' + p + 'error-actions {',
     '  display: grid;',
     '  grid-template-columns: repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr));',
-    '  gap: 8px;',
+    '  row-gap: 14px;',
+    '  column-gap: 8px;',
+    '  max-width: 520px;',
+    '  margin-left: auto;',
+    '  margin-right: auto;',
     '}',
     '.' + p + 'error-actions > .' + p + 'copy-btn-wide {',
     '  grid-column: 1 / -1;',
@@ -841,6 +877,10 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  .' + p + 'copy-btn:active {',
     '    transform: none;',
     '  }',
+    // W4：入场动效在 reduced-motion 下**归零**（含动画本身，不只是时长）。
+    '  .' + p + 'toast {',
+    '    animation: none;',
+    '  }',
     '}',
   ].join(LF),
 };
@@ -874,6 +914,20 @@ class StyleSheetExtraCssError extends Error {
   }
 }
 
+/** CSS 块注释剥除（`/* … *\/` → 空格）：**判定前先剥注释**——注释里的 `:root`／`--pink` 只是说明文字，
+ *  不是「改写基座／引入禁入项」；反之注释**不能**藏住真实声明（`/*c*\/:root{}` 剥后仍命中）。 */
+function stripCssComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, ' ');
+}
+
+/** **token 边界**匹配（返修 W6）：`--pink` 只匹配完整自定义属性名，`--pinkish`／`--pink-2` **不**命中
+ *  （旧实现 `includes(forbidden)` 会把 `--pinkish` 误拦）。边界 = 前一个字符非 `[A-Za-z0-9_-]`、
+ *  后一个字符非 `[A-Za-z0-9_-]`。 */
+function hasBoundedToken(text: string, token: string): boolean {
+  const escaped = token.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+  return new RegExp('(^|[^A-Za-z0-9_-])' + escaped + '(?![A-Za-z0-9_-])').test(text);
+}
+
 /** `extraCss` 三禁强制（**编排者返修裁定：D3 修订**，见契约 §8.11）。
  *
  *  理由：契约 doc:299-300 的三条「不得」（不得改写基座值／不得引入 Q14 禁入项／不得引入深色区）
@@ -882,21 +936,25 @@ class StyleSheetExtraCssError extends Error {
  *  - (b) 含 `STYLE_FORBIDDEN_TOKENS`（`--r-xl`／`--pink`）；
  *  - (c) 含深色区选择器（`[data-theme`／`prefers-color-scheme: dark`）。
  *  命中**任一**即抛错；**合法技能作用域覆盖块**（`.ilife-<skill>{--blue:…}`）照常通过。
+ *  **返修 W6（误拦两面）**：① 判定前先 `stripCssComments()`（注释里的 `:root` 不再误拦）；
+ *  ② 禁入 token 改**边界匹配**（`--pinkish` 不再误拦）。**漏拦面**同时登记于契约 §8.11：
+ *  三禁仍是**文本级**判定（不解析 CSS AST），`html{--blue:…}` 这类等价改写仍属调用方责任。
  *  **未知 token 名不强制**（契约未冻结 token 名闭集的判定方式 → 保持调用方责任，记账见 §8.11）。 */
 function assertExtraCss(extraCss: string): void {
   if (extraCss === '') return;
+  const code = stripCssComments(extraCss);
   // `:root` 是伪类名（CSS 伪类名大小写不敏感）→ 用 `/i` 拦住 `:ROOT` 之类的等价写法。
-  if (/:root(?![\w-])/i.test(extraCss)) {
+  if (/:root(?![A-Za-z0-9_-])/i.test(code)) {
     throw new StyleSheetExtraCssError('extra-css-root',
       'buildStyleSheet: extraCss 不得改写基座（命中 `:root` 选择器）；技能主题只许用 `.ilife-<skill>` 作用域覆盖块（契约 doc:299）');
   }
   for (const forbidden of STYLE_FORBIDDEN_TOKENS) {
-    if (extraCss.includes(forbidden)) {
+    if (hasBoundedToken(code, forbidden)) {
       throw new StyleSheetExtraCssError('extra-css-forbidden-token',
         'buildStyleSheet: extraCss 不得引入 Q14 禁入 token（命中 ' + forbidden + '，契约 doc:292）');
     }
   }
-  if (/\[\s*data-theme/i.test(extraCss) || /prefers-color-scheme\s*:\s*dark/i.test(extraCss)) {
+  if (/\[\s*data-theme/i.test(code) || /prefers-color-scheme\s*:\s*dark/i.test(code)) {
     throw new StyleSheetExtraCssError('extra-css-dark-scheme',
       'buildStyleSheet: extraCss 不得引入深色区选择器（命中 `[data-theme` 或 `prefers-color-scheme: dark`，契约 doc:292）');
   }

@@ -148,7 +148,9 @@ function emittedControlClasses() {
   const helpers = buildSharedHelpersJs();
   for (const m of helpers.matchAll(new RegExp(STYLE_PREFIX + '[A-Za-z0-9_-]+', 'g'))) out.add(m[0]);
   // helpers JS 里**拼接**出的类名（文本扫描取不到全名）：先证后缀确有产出，再登记全名。
-  for (const [head, suffix] of [['toast', '-danger'], ['toast-title', '-detail']]) {
+  // W1 后 helpers 的 body／title-row／detail 三类名改为**完整字面量**（上面的文本扫描已收到），
+  // 仅 `toast-danger` 仍是 `TOAST_CLASS + "-danger"` 拼接。
+  for (const [head, suffix] of [['toast', '-danger']]) {
     assert.ok(helpers.includes('"' + suffix + '"') || helpers.includes("'" + suffix + "'"),
       'helpers 必须产出后缀 ' + suffix);
     out.add(STYLE_PREFIX + head + suffix);
@@ -324,29 +326,48 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     assert.ok(SRC_CHARTS.includes('export function chartsCss'), 'chartsCss 必须是 charts.ts 的导出（#75 复用点）');
   });
 
-  it('T23 运行时 toast（helpers DOM 无 body 包裹）标题与详情必须分层换行（返修项①）', () => {
+  it('T23 运行时 toast 结构对齐（W1 根因修）：helpers 与静态产出器同构 ＋ 权宜补丁已删', () => {
     const css = buildStyleSheet().css;
     const blocks = ruleBlocks(css);
-    const baseBlocks = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'toast');
-    assert.ok(baseBlocks.length > 0, '缺 toast 基座规则块');
-    assert.ok(
-      baseBlocks.some((b) => b.decls.includes('flex-wrap: wrap')),
-      'toast 基座必须 flex-wrap: wrap（否则运行时 DOM 的标题／详情被排成 flex 同行）',
-    );
-    const detail = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'toast-title-detail');
-    assert.ok(detail.length > 0, '缺 .ilife-toast-title-detail 规则块');
-    assert.ok(
-      detail.some((b) => b.decls.includes('flex: 1 1 100%')),
-      '运行时详情必须 flex: 1 1 100%（独占一行）',
-    );
-    // 结构前提：helpers 运行时 DOM **没有** `.ilife-toast-body` 包裹（静态产出器有）——
-    // 两者共用同一份 `.ilife-toast` 规则，故只能靠 wrap ＋ 100% basis 兼顾。
+    const p = STYLE_PREFIX;
     const helpers = buildSharedHelpersJs();
-    assert.ok(!helpers.includes(STYLE_PREFIX + 'toast-body'), 'helpers 运行时 DOM 不得新增 body 包裹（会掩盖本回归）');
-    assert.ok(renderToast({ msg: 'm', detail: 'd' }).includes(STYLE_PREFIX + 'toast-body'), '静态产出器必须仍有 body 包裹');
-    // 静态侧不得因 wrap 折行：body 的 flex-basis 必须为 0（假定主尺寸 0 → 不触发换行）。
-    const body = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'toast-body');
-    assert.ok(body.some((b) => b.decls.includes('flex: 1 1 0%')), '静态 body 必须 flex: 1 1 0%（避免 wrap 把 body 折到第二行）');
+
+    // ① 结构同构（**根因**）：helpers 运行时 DOM 必须与静态产出器／旧层一致——
+    //    `.toast > .toast-body(> .toast-title-row ＋ 可选 .toast-title-detail) ＋ .toast-close`
+    //    （旧层 `.hm-toast-icon + .hm-toast-body(> .hm-toast-title-row + .hm-toast-detail) + .hm-toast-close`）。
+    for (const cls of [p + 'toast-body', p + 'toast-title-row', p + 'toast-title-detail']) {
+      assert.ok(helpers.includes(cls), 'helpers 运行时 DOM 缺结构类：' + cls);
+    }
+    const staticHtml = renderToast({ msg: 'm', detail: 'd' });
+    const bodyAt = staticHtml.indexOf(p + 'toast-body');
+    const rowAt = staticHtml.indexOf(p + 'toast-title-row');
+    const detailAt = staticHtml.indexOf(p + 'toast-detail');
+    const closeAt = staticHtml.indexOf(p + 'toast-close');
+    assert.ok(bodyAt >= 0 && rowAt > bodyAt, '静态产出器：title-row 必须在 body 之内');
+    assert.ok(detailAt > rowAt && closeAt > detailAt, '静态产出器：detail 在 title-row 之后、close 在最末');
+    // 运行时侧同一顺序（helpers 产出的 JS 文本里 body → title-row → detail → close 逐段出现）。
+    const hBody = helpers.indexOf(p + 'toast-body');
+    const hRow = helpers.indexOf(p + 'toast-title-row');
+    const hDetail = helpers.indexOf(p + 'toast-title-detail');
+    const hClose = helpers.indexOf(p + 'toast-close');
+    assert.ok(hBody > 0 && hRow > hBody && hDetail > hRow && hClose > hDetail,
+      'helpers 产出必须按 body → title-row → title-detail → close 顺序出现结构类');
+
+    // ② 权宜补丁必须删除（结构对齐后不再需要；留着会把关闭按钮挤到第三行，R1 实测 113px 高）。
+    const toastBlocks = blocks.filter((b) => b.selector === '.' + p + 'toast');
+    assert.ok(toastBlocks.length > 0, '缺 .ilife-toast 基座规则块');
+    assert.ok(!toastBlocks.some((b) => b.decls.includes('flex-wrap: wrap')),
+      'toast 基座不得再有 `flex-wrap: wrap` 权宜补丁');
+    const detail = blocks.filter((b) => b.selector === '.' + p + 'toast-title-detail');
+    assert.ok(detail.length > 0, '缺 .ilife-toast-title-detail 规则块');
+    assert.ok(!detail.some((b) => b.decls.includes('flex: 1 1 100%')),
+      '运行时详情不得再有 `flex: 1 1 100%` 权宜补丁');
+    const body = blocks.filter((b) => b.selector === '.' + p + 'toast-body');
+    assert.ok(body.length > 0, '缺 .ilife-toast-body 规则块');
+    assert.ok(body.some((b) => b.decls.includes('flex: 1 1 auto')), 'toast body 必须 flex: 1 1 auto');
+    assert.ok(!body.some((b) => b.decls.includes('flex: 1 1 0%')),
+      'toast body 不得再有 `flex: 1 1 0%` 权宜补丁');
+    assert.ok(!helpers.includes('flex-wrap'), 'helpers 不得自带样式常量（样式唯一真相源在 style.ts）');
   });
 
   it('T24 extraCss 三禁强制（返修项⑨ · D3 修订）：合法覆盖块通过、三类违规抛错', () => {
@@ -398,6 +419,123 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     const err = (() => { try { buildStyleSheet({ extraCss: ':root{}' }); return null; } catch (e) { return e; } })();
     assert.ok(err instanceof Error, '违规必须抛 Error');
     assert.ok(!('StyleSheetError' in BASE_PAINT), '错误类不得成为导出（冻结面 130 条不变）');
+    // ④ 返修 W6：**误拦两面**必须消除（旧实现均抛错）。
+    assert.doesNotThrow(
+      () => buildStyleSheet({ extraCss: '.ilife-calorie { /* 不得改写 :root 基座，只覆盖主色 */ --blue: #0055ff; }' }),
+      '注释里出现 `:root` 不得误拦（合法覆盖块）',
+    );
+    assert.doesNotThrow(
+      () => buildStyleSheet({ extraCss: '.ilife-calorie { --pinkish: 1px; }' }),
+      '`--pinkish` 不得被 `--pink` 误拦（token 边界匹配）',
+    );
+    assert.doesNotThrow(
+      () => buildStyleSheet({ extraCss: '.ilife-calorie { --r-xlarge: 1px; }' }),
+      '`--r-xlarge` 不得被 `--r-xl` 误拦（token 边界匹配）',
+    );
+    // ⑤ 返修 W6：**漏拦面**必须仍然拦住——注释不能藏住真实声明。
+    assert.throws(
+      () => buildStyleSheet({ extraCss: '/* c */ :root { --blue: #ff0000; }' }),
+      (e) => e.name === 'StyleSheetError' && e.code === 'extra-css-root',
+      '注释不得藏住真实的 :root 声明',
+    );
+    assert.throws(
+      () => buildStyleSheet({ extraCss: '.ilife-calorie { /* --pink 禁入 */ --pink: 1px; }' }),
+      (e) => e.name === 'StyleSheetError' && e.code === 'extra-css-forbidden-token',
+      '注释里的 token 名不豁免真实声明（边界匹配仍命中 `--pink:`）',
+    );
+    assert.throws(
+      () => buildStyleSheet({ extraCss: '.ilife-calorie { --pink-2: 1px; --pink: 2px; }' }),
+      (e) => e.name === 'StyleSheetError' && e.code === 'extra-css-forbidden-token',
+      '`--pink-2` 与 `--pink` 同块时仍必须命中 `--pink`',
+    );
+  });
+
+  it('T25 statusBadge 四态逐值 = 旧 `.hm-status`（返修 W2 外部 oracle，不引用本票实现）', () => {
+    // 外部 oracle：`公共组件/assets/base.css:225-228`（旧值清单亦见施工单 B `:253`）。
+    // **实色**背景，不是 12% alpha；字色逐值。
+    const LEGACY = {
+      ok: { bg: '#e6f7ec', fg: '#1f8c3d' },
+      warn: { bg: '#fff5e0', fg: '#a25b00' },
+      danger: { bg: '#fff0ee', fg: '#a83228' },
+      empty: { bg: '#f0f0f3', fg: 'var(--fg3)' },
+    };
+    const blocks = ruleBlocks(buildStyleSheet().css);
+    for (const [status, want] of Object.entries(LEGACY)) {
+      const sel = '.' + STYLE_PREFIX + 'status-badge-' + status;
+      const hits = blocks.filter((b) => b.selector === sel);
+      assert.equal(hits.length, 1, '必须有且仅一条规则块：' + sel);
+      assert.ok(hits[0].decls.includes('background: ' + want.bg), sel + ' 底色必须逐值 ' + want.bg);
+      assert.ok(hits[0].decls.includes('color: ' + want.fg), sel + ' 字色必须逐值 ' + want.fg);
+      assert.ok(!hits[0].body.includes('rgba('), sel + ' 不得用 alpha 底色（旧层为实色）');
+    }
+    // 上一轮的无出处值不得残留在 statusBadge 段（`#1f8f3d`／`#b25000` 属 toast 区，另账）。
+    const sheet = buildStyleSheet().css;
+    const section = sheet.slice(sheet.indexOf('/* status-badge */'), sheet.indexOf('/* empty-state */'));
+    for (const bad of ['#1f8f3d', '#b25000', '#c0392b']) {
+      assert.ok(!section.includes(bad), 'statusBadge 段不得残留无出处色：' + bad);
+    }
+  });
+
+  it('T26 errorReceipt 按钮区 = 旧 `.hm-actions` 等价（返修 W5：max-width 520 居中 ＋ 行距 14px）', () => {
+    const blocks = ruleBlocks(buildStyleSheet().css);
+    const sel = '.' + STYLE_PREFIX + 'error-actions';
+    const hits = blocks.filter((b) => b.selector === sel);
+    assert.equal(hits.length, 1, '必须有且仅一条规则块：' + sel);
+    const decls = hits[0].decls;
+    // 外部 oracle：旧 `base.css:81-91`（`max-width:520px;margin:0 auto` 在 `:87-89`）＋
+    // `.hm-error .hm-actions + .hm-actions{margin-top:14px}`（两行间距）。
+    assert.ok(decls.includes('max-width: 520px'), '缺旧层 `max-width:520px`（v1.7 专修「被全宽容器拉伸」）');
+    assert.ok(decls.includes('margin-left: auto') && decls.includes('margin-right: auto'), '缺旧层 `margin:0 auto` 居中');
+    assert.ok(decls.includes('row-gap: 14px'), '两行间距必须逐值 14px（旧 `+ .hm-actions{margin-top:14px}`）');
+    assert.ok(decls.includes('column-gap: 8px'), '列间距必须逐值 8px（旧 `.hm-actions{gap:8px}`）');
+    assert.ok(!decls.includes('gap: 8px'), '不得再用单值 `gap:8px` 掩盖行距');
+    assert.ok(decls.includes('grid-template-columns: repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr))'),
+      '列数取冻结 ACTION_BAR_DEFAULTS.evenRowPairs');
+    // 与 actionBar 同宽（同一旧层 `.hm-actions` 语义）。
+    const bar = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'action-bar')[0];
+    assert.ok(bar !== undefined && bar.decls.includes('max-width: 520px'), 'actionBar 也必须有 520px（两处同源）');
+  });
+
+  it('T27 copy-btn `copied` 态变绿（返修 W3：H-16 双反馈的 CSS 侧）', () => {
+    const blocks = ruleBlocks(buildStyleSheet().css);
+    const sel = '.' + STYLE_PREFIX + 'copy-btn.copied';
+    const hits = blocks.filter((b) => b.selector === sel);
+    assert.equal(hits.length, 1, '必须有且仅一条 `.ilife-copy-btn.copied` 规则块');
+    assert.ok(hits[0].decls.includes('background: var(--ok)'), 'copied 态必须取成功色 token `--ok`');
+    // 弹簧已有（B1 `benchmark-visual-spec.md:279`：450ms spring）——断言它真的在基座上。
+    const base = blocks.filter((b) => b.selector === '.' + STYLE_PREFIX + 'copy-btn')[0];
+    assert.ok(base !== undefined, '缺 copy-btn 基座规则块');
+    assert.ok(base.decls.some((d) => d.startsWith('transition: transform .45s cubic-bezier(.34, 1.56, .64, 1)')),
+      '弹簧动画必须在 copy-btn 基座上（450ms spring）');
+    // `copied` 是**运行时**添加的类（非 `ilife-` 前缀）→ 不得成为样式区命名空间成员。
+    assert.ok(!sel.includes(STYLE_PREFIX + 'copied'), 'copied 类名不得加 ilife- 前缀（规格逐字 `copied`）');
+  });
+
+  it('T28 toast 入场动效 CSS-only（返修 W4）＋ reduced-motion 归零', () => {
+    const css = buildStyleSheet().css;
+    const blocks = ruleBlocks(css);
+    const p = STYLE_PREFIX;
+    // ① CSS-only：`@keyframes` ＋ `.ilife-toast{animation:…}`，**不依赖 JS 加 `.show`**（旧层 `base.js:75`）。
+    assert.ok(css.includes('@keyframes ' + p + 'toast-in'), '缺 toast 入场 @keyframes');
+    const keyframes = css.slice(css.indexOf('@keyframes ' + p + 'toast-in'), css.indexOf('/* action-bar */'));
+    assert.ok(/from\s*\{[\s\S]*opacity:\s*0/.test(keyframes), '入场必须从 opacity:0 开始（旧层 `.hm-toast{opacity:0}`）');
+    assert.ok(/from\s*\{[\s\S]*scale\(\.9\)/.test(keyframes), '入场必须从 scale(.9) 开始（旧层 `.hm-toast{transform:scale(.9)}`）');
+    assert.ok(/to\s*\{[\s\S]*opacity:\s*1/.test(keyframes), '入场必须收敛到 opacity:1（默认可见，无需 JS 加类）');
+    const toast = blocks.filter((b) => b.selector === '.' + p + 'toast');
+    assert.ok(toast.some((b) => b.decls.some((d) => d.startsWith('animation: ' + p + 'toast-in'))),
+      'toast 基座必须挂 `animation: <prefix>toast-in`');
+    // ② 不依赖 JS：helpers 产出里不得出现 `.show` 类操作。
+    const helpers = buildSharedHelpersJs();
+    assert.ok(!/["']show["']/.test(helpers), '入场动效不得依赖 JS 加 `.show` 类（旧层 `.show` 机制已废弃）');
+    assert.ok(!helpers.includes('classList'), 'helpers 不得操作 classList（动效纯 CSS）');
+    // ③ reduced-motion 归零（不只是时长，是动画本身）。
+    const rm = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+    assert.ok(rm.includes('.' + p + 'toast {') && /animation:\s*none/.test(rm),
+      'reduced-motion 下 `.ilife-toast{animation:none}` 必须归零');
+    // ④ 前缀随入参改写（不残留缺省前缀的关键帧名）。
+    const custom = buildStyleSheet({ prefix: 'x-' }).css;
+    assert.ok(custom.includes('@keyframes x-toast-in') && !custom.includes('@keyframes ilife-toast-in'),
+      '自定义前缀下关键帧名必须机械改写');
   });
 
   it('T13 零装饰渐变（唯一例外 = 复用的 charts 虚线图例）', () => {
