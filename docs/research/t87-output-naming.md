@@ -73,6 +73,33 @@
 - **本票自有 11 条用例全绿**（`node --test packages/skill-calorie/test/output-naming-87.test.mjs` → `# pass 11 / # fail 0`）。
 - 本票引入过的 2 条红（④ 断言写反、⑥b 种子不足）在 commit 前已修正，见 §6 偏离记账。
 
+### 2.2 最终复跑（HEAD 含并发伙伴提交后）
+
+在 `HEAD=0ec6dbc`（含 #98 提交）再跑一遍四门（同一持锁口径，日志 `.scratch/t87/final-*.log`）：
+
+| 命令 | 结果 |
+| --- | --- |
+| `pnpm build` | exit 0 |
+| `pnpm boundaries` | exit 0 |
+| `pnpm snapshot:check` | exit 0 |
+| `pnpm publish:pre` | exit 0 |
+| `node --test packages/skill-calorie/test/output-naming-87.test.mjs` | exit 0（`# pass 11 / # fail 0`） |
+| `pnpm test` | exit 1（`ℹ tests 869 / pass 843 / fail 26`） |
+
+最终失败集逐名归因（**本票路径 0 条**）：
+
+| 失败名 | 归属 | 依据 |
+| --- | --- | --- |
+| plugin client 产物 12 条 ＋ `dsh-* 烟囱` 6 条 | #57–#60／#64（冻结基线） | `.scratch/t75/baseline-failing.txt:10-21` |
+| `#48 envelope 契约：SKILL 直执行 calorie.help.center` | 冻结基线（`plugin-calorie/test/smoke.test.mjs:54`） | 同基线 `:1` |
+| `#50 envelope 契约…` 6 名（跨 4 个 plugin 重复计 9 次） | 冻结基线 | 同基线 `:2-7` |
+| `#93 ① 42 读键…`／`#93 回归 · CLI 读键在库文件缺失…` | 冻结基线（`db-readonly-93.test.mjs`） | 同基线 `:8-9` |
+| `calorie SKILL 与模板（M6 范式）` → 子用例 `模板 6 件经 loader 装载（#95…）` | **#95 在飞**（`skill-t11.test.mjs`＋`src/render/index.ts`＋`templates`） | 失败详情指向 #95 模板 loader；非本票路径 |
+| `口径 · 删除回执可恢复性…` | **#101 在飞**（未跟踪新文件 `cmd-write-40-persist.test.mjs:596`） | 断言 `product.deprecate` 文案；非本票路径 |
+
+**注（既有抖动，非本票引入）**：`#48/#50/#93` 在两次运行间红绿互换，失败形态是「子进程 exit 0 配空白 stdout」——
+`plugin-calorie/test/smoke.test.mjs:43-44` 已登记该 Windows 并行 spawn 配额抖动（沿 #41 结论），故按名归因而非按次计数。
+
 ## 3. 变异自证
 
 见 `docs/research/t87-mutation-evidence.md`（复跑：`node docs/research/t87-mutation-evidence.mjs`，脚本自持锁）。
