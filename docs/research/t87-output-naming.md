@@ -23,7 +23,7 @@
 | **F5** changeset 迁移指引错误 | 原写「需要旧行为（不落盘）时传 `--output`…即可」，实测 `--output` 仍写盘、全链无「不落盘」开关 | `.changeset/calorie-output-naming-87.md` 改为如实陈述：「`--output`／`--html` 只是改写落点，**仍然写盘**；无「不落盘」模式」 | changeset「行为变更」段 |
 | **F6** 证据文档 `file:line` 漂移 | `t87-output-naming.md` 的 `:119/:120/:110` 等行号已失效 | 全文改**符号锚**（本文件） | 本文件所有引用均为符号／用例名 |
 | **F7** 变异脚本污染工作区 | M5 在**仓库根**遗留未跟踪 `calorie_html_flat.html`；脚本每次覆写**被跟踪**的 `t87-mutation-evidence.md` | 变异固定落点改到**独占临时根**（`t87-mutation-<随机>`）；输出写 `.scratch/t87/`（**不覆写被跟踪 md**）；收尾按**路径守卫**删除 ＋ 自证仓库根无残留 | 变异脚本「工作区残留自证：无」；§3 |
-| **F8** `SKILL.md` 与默认落盘矛盾 | HEAD `SKILL.md` 第 26／165 行仍写「`--html` 显式落盘」 | **本票不改**（#98 独占）；逐字补丁见 §5 | §5（附 HEAD 原文与工作树现状） |
+| **F8** `SKILL.md` 与默认落盘矛盾 | 审查时 HEAD `SKILL.md` 第 26／165 行仍写「`--html` 显式落盘」 | **本票不改**（#98 独占）；逐字补丁见 §5。**现状：已由 #98 在 `d6e88b5` 落地修正**（HEAD 第 26／178 行已是「HTML 默认落 …」，补丁为 no-op） | §5（附审查时原文 ＋ 现 HEAD 原文） |
 
 ## 1. 旧版真值 → 新实现 → 证据（逐条 · 符号锚）
 
@@ -98,7 +98,7 @@
 
 ### 2.2 非 #87 路径失败归因（逐条单列）
 
-本次 12 条失败**全部**是冻结基线 `:10-21` 的 plugin client 产物用例，归 #57–#60／#64（与 #87 无关）：
+本次 12 条失败**全部**是冻结基线里那 12 条 `dsh-*` client 产物用例（`.scratch/t75/baseline-failing.txt`），归 #57–#60／#64（与 #87 无关）：
 
 | 失败名（12 条，`dsh-bill-ilife` / `dsh-chef` / `dsh-home-ilife` / `dsh-schedule-ilife` 各 3 条） | 归属 |
 | --- | --- |
@@ -151,28 +151,31 @@
 
 ## 5. 需改 `SKILL.md` 的补丁文本（**本票不改**，归 #98 独占）
 
-**HEAD 现状**（`git show HEAD:packages/skill-calorie/SKILL.md`）两处与默认落盘矛盾，逐字如下：
+**审查时 HEAD 的现状**（该文案由 `f05c1c0`／`2b2b14f` 引入，A1 S2-2 引的两处），逐字如下：
 
 - 第 26 行：`` - stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；`--html` 显式落盘 utf8。``
 - 第 165 行：`` - 成功 stdout 只有一行 envelope JSON，进度与错误走 stderr；`--html <路径>` 显式落盘 utf8。``
 
 **补丁（逐字替换，锚内容不锚行号）**：
 
-位置 1（HEAD 第 26 行）替换为：
+位置 1（审查时 HEAD 第 26 行）替换为：
 ```
 - stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；HTML 默认落
   `<SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`（同秒冲突自动加 `_2`/`_3`），
   落点回传在 envelope `data.output`；`--output <路径>` 显式覆盖任意路径（`--html <路径>` 为 legacy 别名）。
 ```
 
-位置 2（HEAD 第 165 行）替换为：
+位置 2（审查时 HEAD 第 165 行）替换为：
 ```
 - 成功 stdout 只有一行 envelope JSON，进度与错误走 stderr；HTML 默认落 `calorie_html/<中文command>_<TS>[_N].html`
   （`<中文command>` = 该键注册表 `title`，落点见 `data.output`）；`--output <路径>` 显式覆盖。
 ```
 
-**落地状态（2026-09-09 实测）**：#98 的**工作树未提交改动**已把这两处改成等价表述（`git status` 显示 ` M packages/skill-calorie/SKILL.md`；
-工作树第 26／178 行已是「HTML 默认落 …」）。HEAD 仍是旧文案 → **以 HEAD 为准的补丁文本如上**；#98 提交后该补丁为 no-op。
+**落地状态（2026-09-09 实测 · F8 已满足）**：`#98` 已在 **`d6e88b5`**（`fix(98): M6 铁则正文返修…`）落地等价表述 ——
+`git show HEAD:packages/skill-calorie/SKILL.md` 第 26／178 行现为「HTML 默认落 …／`--output <路径>` 显式覆盖」，
+全文件已无「`--html` 显式落盘」字样（`git log -S"显式落盘" -- packages/skill-calorie/SKILL.md` 显示该串由 `d6e88b5` 移除）。
+故上述补丁为 **no-op（已满足，无需再落地）**；此处保留逐字文本仅供审计与回归比对。
+
 
 ## 5.1 动态段／suffix 段补丁（F3 · **本票未实现**，供编排者裁定）
 
@@ -267,7 +270,7 @@ export function resolveDefaultHtmlPath(
 ## 6. 未做 / 未确证
 
 1. **动态段／suffix 段未复刻**（§5.1 补丁文本已给出，等裁定）。
-2. **`SKILL.md` 未改**（#98 独占；§5 逐字补丁；#98 工作树已含等价改动，未提交）。
+2. **`SKILL.md` 本票未改**（#98 独占；§5 逐字补丁）。**现状：已由 #98 在 `d6e88b5` 落地**，补丁为 no-op（无需再落地）。
 3. **未在安装态（tarball / fresh-tmp）实测默认落盘**：`pnpm publish:pre` 只做 workspace: 零外泄检查；`--tarball`／`--fresh-tmp` 非本票门禁。
 4. **`data.output` 无下游消费方接线**：本票只保证回传；面板/话术取用属 #98 文档面与 #95 发布面。
 5. **F2 修复只在 Windows 语义下自证**：大小写不敏感是旧 `glob` 的 Windows 行为；POSIX 上旧实现大小写敏感，本实现更严（只会多算冲突、不会少算，最坏是多个 `_N`，不会覆盖）。
