@@ -20,6 +20,7 @@ import type { CompareData, GalleryData, GifTask, PhotoCard, ViewerData } from '.
 import { GIF_PASSTHROUGH_NOTE } from './photo.js';
 import type { CrudReceipt, ErrorReceipt } from './receipt.js';
 import type { PhotoHelpHit } from './help.js';
+import { copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
 import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from './weightPlate.js';
 import type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
@@ -209,12 +210,43 @@ export function renderGifHtml(t: GifTask): string {
   return pageShell('calorie', 'ilife:calorie:photo:gif', '生成身材照 GIF · ' + t.photoCount + ' 张', body);
 }
 
+/** 唤醒词 HELP 速查（`calorie.help.lookup`）的一行；字段名沿用 envelope 口径。 */
+export interface HelpLookupHit {
+  readonly wake_word: string;
+  readonly category: string;
+  readonly key: string;
+  readonly cli: string;
+  readonly desc: string;
+}
+
+/** 一行 = 标题行 + 描述 + 可执行命令 + **复制按钮**（#90：复制交互走 Base P0 双通道）。 */
+function helpRowHtml(head: string, desc: string, cli: string): string {
+  return '<div class="' + cx('item') + '">' + head +
+    '<div>' + escapeHtml(desc) + '</div>' +
+    '<pre>' + escapeHtml(cli) + '</pre>' +
+    copyActionHtml(cli) + '</div>';
+}
+
+/** #90：HELP 页的复制接线 = 每行复制按钮（渲染期写入 `ACTION_ID_ATTR`／`DEFAULT_DATA_ATTR`）
+ *  ＋ 页尾注入页面侧运行时（`buildSharedHelpersJs()` 产出，双通道 ＋ toast）。 */
 export function renderPhotoHelpHtml(hits: PhotoHelpHit[], query?: string): string {
-  const rows = hits.map((h) => '<div class="' + cx('item') + '"><b>' + escapeHtml(h.wakeWord) + '</b> ' +
-    '<span style="color:' + token('muted') + '">' + escapeHtml(h.key) + '</span><div>' + escapeHtml(h.desc) + '</div>' +
-    '<pre>' + escapeHtml(h.exec) + '</pre></div>').join('');
+  const rows = hits.map((h) => helpRowHtml(
+    '<b>' + escapeHtml(h.wakeWord) + '</b> <span style="color:' + token('muted') + '">' + escapeHtml(h.key) + '</span>',
+    h.desc, h.exec,
+  )).join('');
   const body = (query ? '<div>查询：' + escapeHtml(query) + ' · 命中 ' + hits.length + ' 条</div>' : '<div>共 ' + hits.length + ' 条</div>') + rows;
-  return pageShell('calorie', 'ilife:calorie:photo:help', '身材照片 HELP 速查', body);
+  return pageShell('calorie', 'ilife:calorie:photo:help', '身材照片 HELP 速查', body) + copyRuntimeScriptHtml();
+}
+
+/** #90：唤醒词 HELP 速查列表（原 `cmd_read` 内联 HTML 收编）——同一套复制接线。 */
+export function renderHelpLookupHtml(hits: readonly HelpLookupHit[], query: string): string {
+  const rows = hits.map((h) => helpRowHtml(
+    '<b>' + escapeHtml(h.wake_word) + '</b> <span style="color:' + token('muted') + '">' + escapeHtml(h.key) + '</span>' +
+    '<span style="color:' + token('muted') + '">' + escapeHtml(h.category) + '</span>',
+    h.desc, h.cli,
+  )).join('');
+  const body = '<div>查询：' + escapeHtml(query) + ' · 命中 ' + hits.length + ' 条</div>' + rows;
+  return pageShell('calorie', 'ilife:calorie:help', '唤醒词 HELP 速查 · ' + escapeHtml(query) + '（' + hits.length + ' 条）', body) + copyRuntimeScriptHtml();
 }
 
 export function renderErrorHtml(e: ErrorReceipt): string {

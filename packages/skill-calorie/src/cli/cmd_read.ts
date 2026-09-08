@@ -36,7 +36,7 @@ import { buildCompareData, buildGalleryData, buildGifTask, buildViewerData } fro
 import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
 import {
   renderCombinedHtml, renderDeficitHtml, renderDietHtml, renderDietReviewHtml, renderExerciseHtml,
-  renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml,
+  renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
   renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
   renderGoalStatusHtml, renderGoalHtml, renderHealthHtml, renderHomeHtml, renderProductLibraryHtml,
   renderProductSearchHtml, renderRankingHtml, renderAllRankingsHtml,
@@ -452,8 +452,8 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         const category = src ? src.category : (sceneToCategory[h.scene] ?? h.scene);
         return { wake_word: h.wake_word, category, key: String(h.key ?? ''), cli: h.cli, desc: h.desc };
       });
-      const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:help"><h1>唤醒词 HELP 速查 · ' + q.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '（' + hits.length + ' 条）</h1>' +
-        hits.map((h) => '<div class="ilife-item"><b>' + String(h.wake_word).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</b> <span>' + String(h.key).replace(/&/g, '&amp;') + '</span><div>' + String(h.desc).replace(/&/g, '&amp;') + '</div><pre>' + String(h.cli).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre></div>').join('') + '</section>';
+      // #90 · 渲染收敛到 render/html.ts 的 renderHelpLookupHtml（每行复制按钮 ＋ 页尾注入双通道运行时）。
+      const html = renderHelpLookupHtml(hits, q);
       return { data: { items: hits, total: hits.length }, html };
     }
     case 'calorie.history': {

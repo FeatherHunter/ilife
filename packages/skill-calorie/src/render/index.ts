@@ -85,7 +85,9 @@ export { buildPhotoHelp, lookupPhotoHelp, PHOTO_HELP_MODULE } from './help.js';
 export type { PhotoHelpHit } from './help.js';
 export {
   photoCardHtml, renderPhotoReceiptHtml, renderGalleryHtml, renderCompareHtml,
-  renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderErrorHtml,
+  renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml, renderErrorHtml,
 } from './html.js';
+export type { HelpLookupHit } from './html.js';
+export { CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS, COPY_RUNTIME_JS, copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
 export { PHOTO_VIEW_KEYS, PHOTO_VIEW_SHAPES, photoShapeFor } from './envelope.js';
 export type { PhotoViewName } from './envelope.js';
