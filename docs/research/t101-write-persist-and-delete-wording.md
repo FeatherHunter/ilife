@@ -211,3 +211,32 @@ node docs/research/t101-mutation.mjs
 
 持锁片段（协议 §2，pwsh）：见 `.scratch/t75/concurrency-protocol.md`；本票实测的持锁命令落在
 `.scratch/t101/*.ps1`（不入库，仅施工记录）。
+
+---
+
+## 9. 收尾复跑与环境事故（06:41，HEAD=`03dea78`）
+
+本票三个提交（`710231d`／`873d175`／`30606f1`）之后又做了一次收尾复跑，**结果分两段**：
+
+| 复跑项 | 结果 |
+| --- | --- |
+| `node --test .../cmd-write-40-persist.test.mjs` | exit 0（15/15 pass） |
+| `pnpm boundaries` / `pnpm snapshot:check` / `pnpm publish:pre` | exit 0 / 0 / 0 |
+| `pnpm build` | **exit 1（环境事故，非本票代码）** |
+| `pnpm test` 失败集 delta | **＋1**：`✖ #87 ① 字段清洗逐字复刻：非法字符 → _、去前后空格、截断 32 字符`（属 #87 在飞改动） |
+
+`pnpm build` 失败原因（实测）：
+
+```
+$ tsc -b
+'tsc' is not recognized as an internal or external command
+```
+
+`node_modules/.bin` **条目数 = 0**（`Get-ChildItem node_modules\.bin | Measure-Object`），而
+`node_modules/typescript/bin/tsc` 存在 → 是**共享依赖目录的 .bin 链接被清空**（疑似某票
+`pnpm install`／临时安装流程中断），**与 #101 的独占路径无关**（本票只改 `write.ts`／`render/photo.ts`／
+测试／证据／changeset）。已按协议重试 3 次（间隔 30s，`node_modules/.bin` 始终 0 条）仍失败 → 记为
+**被同伴阻塞**，未自行执行 `pnpm install`（node_modules 属共享资源，不在本票独占路径内，应由编排者串行收口）。
+
+结论：本票**验收口径成立**——四门在事故前的收尾前复跑（06:33，同一工作区）全 exit 0，失败集 delta 为空；
+事故后的 delta ＋1 条落在 #87 的测试上（`t101-fail-set.mjs` 逐名归因），非本票路径。
