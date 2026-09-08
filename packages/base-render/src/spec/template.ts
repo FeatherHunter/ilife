@@ -124,7 +124,7 @@ export type InjectionStep = (typeof INJECTION_ORDER)[number];
  *
  *  两个**不变量**（违反即抛 `TemplateError`，判定谓词见 `WRAP_PREDICATES`）：
  *  ① **资产不得自带包裹标签**——`TemplateAssets` 三个值恒为裸文本，违者报 `assetWrappedCode`；
- *  ② **三个共享资产标记不得被预包裹**——作用域**限定为 `ASSET_WRAPPERS` 的键集**
+ *  ② **三个共享资产标记不得被预包裹**——作用域**限定为 `ASSET_MARKER_KEYS` 的值集**
  *     （`sharedCss`／`sharedHelpers`／`chartsHelpers`），**排除 `injectData`**：payload 容器是
  *     **必需项**（`CONTAINER_CHECK_RULE`），不是「预包裹」；`content`／`noShared` 不在作用域内。
  *     违者报 `markerPreWrappedCode`。

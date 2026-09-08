@@ -10,7 +10,7 @@
 
 **放宽 2 条（#118 授权的既有签名改动）**：`MARKER_RULES.injectData` 由 `exactly-one`／`required: true` 改为 `zero-or-one`／`required: false`——数量约束上移到 `PAYLOAD_SLOT_RULE` 承担；`FillTemplateInput.data` 由必填放宽为 `data?: unknown`（**D-8 裁定 2 授权**，与 `content?` 对称：数据页提供、内容页可省略；属追加式放宽、向后兼容）。
 
-**FX-118 返修（V1／V3 验收后 · 总架构师裁定）追加 4 条冻结签名**（全 runtime／implemented，**未改任何既有签名的值**、**未实现 `fillTemplate`**、**未改任何模板文件**）：
+**FX-118 返修（V1／V3 验收后 · 总架构师裁定）追加 4 条冻结签名**（全 runtime／implemented，**既有签名的值零改动**——`TEMPLATE_KIND_RULE` 三型各追加 `noKindCode` 字段属 FX-118-7 授权追加字段、既有字段值未改；**未实现 `fillTemplate`**；**未改任何模板文件**）：
 - `CONTAINER_CHECK_RULE`：容器校验**仅当模板含 `<!--INJECT-DATA-->` 时执行**（`appliesWhenMarker: 'injectData'`）——53 个内容页无容器**合法**，不抛 `container-missing`（FX-118-1 阻塞项）；
 - `TEMPLATE_CHECK_ORDER`：8 个错误码的**唯一判定次序**，**首个命中即抛、不聚合**（FX-118-2；真实 calorie 模板 → `marker-missing`）；
 - `WRAP_PREDICATES` ＋ `ASSET_MARKER_KEYS`：两条包裹不变量的**判定谓词唯一一份**（作用域＋判定方式；不变量②作用域**排除 `injectData`**——payload 容器是必需项而非「预包裹」），#74 与 `tooling/classify-templates.mjs` 共用（FX-118-3／9）。

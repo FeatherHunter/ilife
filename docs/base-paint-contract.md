@@ -774,7 +774,7 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 ### 4.5 与旧基线的偏离（#118 包裹约定，显式记账）
 
-**偏离项**：旧基线 `公共组件/README.md:63` 规定「⚠️ 占位符必须放在独立 `<script>`/`<style>` 块内, 勿与 `</script>`/`</style>` 字样混在资产注释里」——**完整原文两句**（FX-118-10③ 补全，此前引用截断，省略了后半句；原文见旧层取证快照 `.scratch/t118/baseline.md:74`——**归档前旧位置、未入仓、勿据此取件**）：前半句＝**模板自带包裹**（旧 `injector.py:104-122` 全是 `str.replace(marker, text, 1)`，**从不补写标签**），后半句＝**资产文本不得混入闭标签字样**，正是本契约**不变量①**（`WRAP_PREDICATES.assetsBare`）的旧层对应口径。本契约**有意偏离**前半句为「资产裸文本 ＋ **填充器包裹**」（条文见 §3.1.2④，常量 `ASSET_WRAP_RULE`／`ASSET_WRAPPERS`／`WRAP_PREDICATES`），并**沿用并机读化**后半句。
+**偏离项**：旧基线 `公共组件/README.md:63` 规定「⚠️ 占位符必须放在独立 `<script>`/`<style>` 块内, 勿与 `</script>`/`</style>` 字样混在资产注释里」——**完整原文两句**（FX-118-10③ 补全，此前引用截断，省略了后半句；原文见仓内摘录 `docs/research/t118-baseline-excerpts.md` §1，该摘录取证自旧层取证快照 `.scratch/t118/baseline.md:74`——**归档前旧位置、未入仓、勿据此取件**）：前半句＝**模板自带包裹**（旧 `injector.py:104-122` 全是 `str.replace(marker, text, 1)`，**从不补写标签**），后半句＝**资产文本不得混入闭标签字样**，正是本契约**不变量①**（`WRAP_PREDICATES.assetsBare`）的旧层对应口径。本契约**有意偏离**前半句为「资产裸文本 ＋ **填充器包裹**」（条文见 §3.1.2④，常量 `ASSET_WRAP_RULE`／`ASSET_WRAPPERS`／`WRAP_PREDICATES`），并**沿用并机读化**后半句。
 
 **理由（四条）**：
 
@@ -996,7 +996,7 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 ### 8.7 #118 返修台账（FX-118-1…FX-118-10 / V1·V3 验收后 · 总架构师裁定）
 
-口径同 §8。病根：**补遗改了载荷槽模型，§3.1 散文仍留着与之矛盾的无条件表述**。本轮为**文本级／常量级**修复：**未改任何既有冻结签名的值**（D-8 授权的 2 处本轮未触碰）、**未实现 `fillTemplate`**、**未改任何 `packages/skill-*/templates/*.html`**；追加 **4 条冻结签名**（全 runtime／implemented）→ `SPEC_FROZEN_SURFACE` **130 条**（implemented 104／pending 26；runtime 88／type 42）。
+口径同 §8。病根：**补遗改了载荷槽模型，§3.1 散文仍留着与之矛盾的无条件表述**。本轮为**文本级／常量级**修复：**既有签名的值零改动**（D-8 授权的 2 处本轮未触碰；`TEMPLATE_KIND_RULE` 三型各追加 `noKindCode` 字段，属 **FX-118-7 授权追加字段**，既有字段值未改）、**未实现 `fillTemplate`**、**未改任何 `packages/skill-*/templates/*.html`**；追加 **4 条冻结签名**（全 runtime／implemented）→ `SPEC_FROZEN_SURFACE` **130 条**（implemented 104／pending 26；runtime 88／type 42）。
 
 | 编号 | 洞（验收方） | 处置 | 落点 |
 |---|---|---|---|
@@ -1019,5 +1019,7 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | F-2 | 容器的**定位算法**未冻结（「最近的未闭合 `<script>`」？页内业务脚本算不算？）——#74 只能猜 | §3.1 第 2 条写死定位口径 ＋ `CONTAINER_CHECK_RULE.openTag/closeTag/id/type` 机读 |
 | F-3 | 不变量①的**校验条件**未写：按字面（无条件）实现会对「`NO-SHARED` 豁免 ＋ 空资产」报 `asset-missing`，与 §3.1 标记表「未豁免」口径冲突 | `WRAP_PREDICATES.assetsBare` JSDoc ＋ §3.1.2④① 写明「**仅在该资产被消费的标记存在时校验**」 |
 | F-4 | 分类脚本的容器自检只判「容器存在」，id 不是 `payload`／type 不是 `application/json` 也会 `[OK]`——与 `container-missing` 两因口径不符 | 脚本判据升级为逐字比对 `CONTAINER_CHECK_RULE.id`／`.type`（输出不变，判据变严） |
-| F-5 | **快照漂移（登记，未修）**：`docs/research/t118-template-classification.md` 不在本轮允许改动面。实测脚本输出 88 行中**仅末行**不同（`[OK] 与清单逐条一致（65 条）：.scratch\t118\template-inventory.md` → `docs\research\t118-template-inventory.md`），另该文件第 4 行的复跑说明仍写旧缺省路径 | **登记**：待允许面放开后重生成（或由该快照 owner 票承接）；脚本自身可复跑（exit 0，与仓内清单 65 条逐条一致），本差异不影响任何门禁 |
+| F-5 | **快照漂移**：`docs/research/t118-template-classification.md` 曾与脚本输出不一致（末行 `--inventory` 缺省路径 ＋ 第 4 行复跑说明仍写旧路径） | **已修**：快照已按新缺省路径重生成，与脚本输出**逐行一致**（88/88 行，V4 复验实跑比对；脚本 `--inventory` exit 0，与仓内清单 65 条逐条一致） |
 | F-6 | V3 低洞顺手处置：H7 `dataScriptId` JSDoc 与冻结 `FillTemplateReport` 矛盾、H8 `legacy` 散文口径含容器、H10 `--strict` 段按字面无条件 | **修**：`spec/template.ts` `dataScriptId` JSDoc 改「只用于校验」；§3.1.2③ 写明「容器不是分型判据」；§3.1 `strict` 段补「仅数据页」 |
+
+**#74 票面冻结面计数已同步（D-3，本台账登记）**：#74 票面原写「`fillTemplate` 为 **126 条**冻结面中仅剩的 `pending` 之一」，该计数已由总架构师更正为 **130 条**，与本契约 §8.6／§8.7 及仓内 `SPEC_FROZEN_SURFACE` 实测一致（implemented 104／pending 26／runtime 88／type 42）；#74 票面不属本契约改动面，故仅在本台账登记该计数已同步。
