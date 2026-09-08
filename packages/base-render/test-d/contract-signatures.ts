@@ -20,6 +20,7 @@ import type {
   ChartItem,
   ChartOutput,
   ChartsApi,
+  ChartsHelpersInput,
   ClipboardChannel,
   ControlAvailability,
   ControlName,
@@ -166,12 +167,14 @@ type _C11 = Expect<Equal<ToastHostPort, { mount(html: string): { remove(): void 
 type _C12 = Expect<Equal<ToastController, { show(input: ToastInput): void; flush(): void; dispose(): void }>>;
 type _C13 = Expect<Equal<RenderToast, (input: ToastInput) => string>>;
 type _C14 = Expect<Equal<ActionBarInput, { readonly buttons?: readonly import('../src/index.js').ActionBarButton[]; readonly copyData?: CopyButtonInput; readonly copyLog?: CopyButtonInput }>>;
+type _C14b = Expect<Equal<CopyButtonInput, { readonly actionId: string; readonly label?: string; readonly text?: string; readonly format?: CopyFormat }>>;
+type _C14c = Expect<Equal<Required<CopyButtonInput>['actionId'], string>>;
 type _C15 = Expect<Equal<RenderActionBar, (input: ActionBarInput) => string>>;
 type _C16 = Expect<Equal<StatusBadgeInput, { readonly status: StatusKind; readonly text?: string }>>;
 type _C17 = Expect<Equal<RenderStatusBadge, (input: StatusBadgeInput) => string>>;
 type _C18 = Expect<Equal<EmptyStateInput, { readonly icon?: string; readonly text: string; readonly hint?: string; readonly actionHtml?: string }>>;
 type _C19 = Expect<Equal<RenderEmptyState, (input: EmptyStateInput) => string>>;
-type _C20 = Expect<Equal<ErrorReceiptInput, { readonly message: string; readonly retryPrompt?: string; readonly dataText?: string; readonly logText?: string }>>;
+type _C20 = Expect<Equal<ErrorReceiptInput, { readonly message: string; readonly retryPrompt?: string; readonly dataText?: string; readonly logText?: string; readonly dataActionId?: string; readonly logActionId?: string }>>;
 type _C21 = Expect<Equal<RenderErrorReceipt, (input: ErrorReceiptInput) => string>>;
 type _C22 = Expect<Equal<Mod['STATUS_KINDS'][number], StatusKind>>;
 type _C23 = Expect<Equal<Mod['CONTROL_NAMES'][number], ControlName>>;
@@ -187,12 +190,28 @@ type _C30 = Expect<Equal<Absent<'renderActionBar'>, true>>;
 type _C31 = Expect<Equal<Absent<'renderStatusBadge'>, true>>;
 type _C32 = Expect<Equal<Absent<'renderEmptyState'>, true>>;
 type _C33 = Expect<Equal<Absent<'renderErrorReceipt'>, true>>;
-type _C34 = Expect<Equal<CopyActionHostPort, { readDataText(actionId: string): string | undefined; onActivate(actionId: string, handler: () => void): () => void }>>;
+type _C34 = Expect<Equal<CopyActionHostPort, { listActionIds(): readonly string[]; readDataText(actionId: string): string | undefined; onActivate(actionId: string, handler: () => void): () => void }>>;
 type _C35 = Expect<Equal<BindCopyAction, (port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }>>;
 type _C36 = Expect<Equal<Absent<'bindCopyAction'>, true>>;
 type _C37 = Expect<Equal<SharedHelpersInput, { readonly prefix?: string; readonly dataAttr?: string }>>;
+type _C37b = Expect<Equal<Mod['DEFAULT_DATA_ATTR'], 'data-t'>>;
 type _C38 = Expect<Equal<BuildSharedHelpersJs, (input?: SharedHelpersInput) => string>>;
 type _C39 = Expect<Equal<Absent<'buildSharedHelpersJs'>, true>>;
+/* FX-17：复制按钮 actionId 来源（必填 id ＋ 冻结 id 表 ＋ 端口发现机制） */
+type _C40 = Expect<Equal<Mod['ACTION_ID_ATTR'], 'data-action-id'>>;
+type _C41 = Expect<Equal<Mod['COPY_ACTION_IDS'], {
+  readonly actionBar: { readonly copyData: 'ilife-copy-data'; readonly copyLog: 'ilife-copy-log' };
+  readonly errorReceipt: { readonly copyData: 'ilife-error-copy-data'; readonly copyLog: 'ilife-error-copy-log' };
+}>>;
+type _C42 = Expect<Equal<CopyActionHostPort['listActionIds'], () => readonly string[]>>;
+/* FX-18：共享 JS 文本的产出内容契约 */
+type _C43 = Expect<Equal<Mod['SHARED_HELPERS_JS_RULE'], {
+  readonly selfContained: true;
+  readonly idempotent: true;
+  readonly domAllowed: true;
+  readonly forbidGlobalAssignment: true;
+  readonly forbidNodeBuiltins: true;
+}>>;
 
 /* ── 5. 冻结面 · §3.4 复制序列化（#77） ────────────────── */
 
@@ -216,6 +235,14 @@ type _X13e = Expect<Equal<Mod['DATA_TEXT_PROJECTIONS']['receipt']['csvSections']
 type _X14 = Expect<Equal<Mod['LOG_SECTION_SOURCES']['scene'], 'envelope'>>;
 type _X14b = Expect<Equal<Mod['LOG_SECTION_SOURCES']['timestampVersion'], 'copyLog.timestamp'>>;
 type _X14c = Expect<Equal<keyof Mod['LOG_SECTION_SOURCES'], 'scene' | 'thinking' | 'dataStructure' | 'callChain' | 'timestampVersion' | 'exception'>>;
+/* FX-23：敏感行判定口径 ＋ 三 format 掩码文案 */
+type _X15 = Expect<Equal<Mod['SENSITIVE_ROW_RULE'], {
+  readonly textField: 'text';
+  readonly flagField: 'sensitive';
+  readonly flagValue: true;
+  readonly mask: '****';
+  readonly textNotice: '（敏感字段已脱敏）';
+}>>;
 
 /* ── 6. 冻结面 · §3.5 图表与 HELP 壳（#78） ────────────── */
 
@@ -238,8 +265,59 @@ type _H16 = Expect<Equal<Mod['HELP_COPY_TARGETS'][number], 'prompt' | 'wakeWord'
 type _H17 = Expect<Equal<keyof Mod['HELP_COPY_ACTIONS'], 'prompt' | 'wakeWord' | 'params'>>;
 type _H17b = Expect<Equal<Mod['HELP_COPY_ACTIONS']['prompt']['label'], '复制指令'>>;
 type _H17c = Expect<Equal<Mod['HELP_COPY_ACTIONS']['wakeWord']['actionId'], 'ilife-help-copy-wakeWord'>>;
+/* FX-22：chartsHelpersJs 的唯一产出者（归 #78） */
+type _H18 = Expect<Equal<ChartsHelpersInput, { readonly prefix?: string; readonly styleId?: string }>>;
+type _H19 = Expect<Equal<import('../src/index.js').BuildChartsHelpersJs, (input?: ChartsHelpersInput) => string>>;
+type _H20 = Expect<Equal<Absent<'buildChartsHelpersJs'>, true>>;
 
-/* ── 7. 清单与版本 ─────────────────────────────────────── */
+/* ── 7. 冻结面逐值（FX-20）：27 条运行时条目的值锁（改 spec 值即编译红） ── */
+
+type _V01 = Expect<Equal<Mod['STRICT_ENVELOPE_FIELDS'], readonly ['version', 'skill', 'shape', 'key', 'data']>>;
+type _V02 = Expect<Equal<Mod['STYLE_SHEET_ID'], 'ilife-base'>>;
+type _V03 = Expect<Equal<Mod['COPY_TEXT_DEFAULTS'], {
+  readonly emptyTextShortCircuit: true; readonly failBadgeAlwaysOn: true;
+  readonly okMessage: '已复制'; readonly okDetail: '粘贴给 AI';
+  readonly failMessage: '复制失败'; readonly failDetail: '长按选择文本手动复制';
+}>>;
+type _V04 = Expect<Equal<Mod['TOAST_ICONS'], readonly ['copy', 'ok', 'warn', 'danger', 'info']>>;
+type _V05 = Expect<Equal<Mod['TOAST_DEFAULTS'], {
+  readonly timeoutMs: 4500; readonly maxStack: 5; readonly mobileMaxStack: 3; readonly mobileMaxPx: 820;
+  readonly gapPx: 8; readonly role: 'status'; readonly ariaLive: 'polite'; readonly defaultIcon: 'copy';
+}>>;
+type _V06 = Expect<Equal<Mod['ACTION_BAR_KINDS'], readonly ['primary', 'red', 'ghost']>>;
+type _V07 = Expect<Equal<Mod['ACTION_BAR_DEFAULTS'], {
+  readonly copyDataLabel: '复制数据'; readonly copyLogLabel: '复制日志'; readonly ghostOwnRow: true;
+  readonly evenRowPairs: 2; readonly minHeightPx: 40; readonly fontSizePx: 12; readonly fontWeight: 600;
+  readonly ghostBorderAlpha: 0.38;
+}>>;
+type _V08 = Expect<Equal<Mod['STATUS_DEFAULT_TEXT'], { readonly ok: '成功'; readonly warn: '警告'; readonly danger: '失败'; readonly empty: '无数据' }>>;
+type _V09 = Expect<Equal<Mod['CONTROLS_ERROR_CODES'], readonly ['bad-input', 'bad-format']>>;
+type _V10 = Expect<Equal<Mod['LOG_SECTION_TITLES'], {
+  readonly scene: '场景标识'; readonly thinking: 'AI 思考链'; readonly dataStructure: '数据结构';
+  readonly callChain: '调用链'; readonly timestampVersion: '时间戳版本'; readonly exception: '异常';
+}>>;
+type _V11 = Expect<Equal<Mod['LOG_UNKNOWN_PLACEHOLDER'], '(未知)'>>;
+type _V12 = Expect<Equal<Mod['TEXT_EMPTY_PLACEHOLDER'], '未填写'>>;
+type _V13 = Expect<Equal<Mod['TEXT_SENSITIVE_MASK'], '****'>>;
+type _V14 = Expect<Equal<Mod['TEXT_HEADER_TEMPLATE'], '【{skill} · {key}】'>>;
+type _V15 = Expect<Equal<Mod['TEXT_JSON_INDENT'], 2>>;
+type _V16 = Expect<Equal<Mod['TEXT_JSON_LT_RULE'], 'u003c'>>;
+type _V17 = Expect<Equal<Mod['CSV_DIALECT'], {
+  readonly delimiter: ','; readonly quote: '"'; readonly quoteEscape: '""'; readonly lineEnding: 'LF';
+  readonly header: readonly ['section', 'row'];
+}>>;
+type _V18 = Expect<Equal<Mod['TEXT_ERROR_CODES'], readonly ['shape-unsupported', 'structure-invalid', 'format-unknown']>>;
+type _V19 = Expect<Equal<Mod['CHARTS_STYLE_ID'], 'ilife-charts'>>;
+type _V20 = Expect<Equal<Mod['CHART_STRUCTURE_RULE'], 'throw'>>;
+type _V21 = Expect<Equal<Mod['CHART_EMPTY_RULE'], 'emptyState'>>;
+type _V22 = Expect<Equal<Mod['CHART_COORD_RULE'], 'viewBox-only'>>;
+type _V23 = Expect<Equal<Mod['CHART_BREAKPOINTS'], { readonly mobileMaxPx: 720; readonly dotSizeMobilePx: 8; readonly lineHeightMobilePx: 150; readonly stackedGapPx: 3 }>>;
+type _V24 = Expect<Equal<Mod['CHART_PALETTE'], readonly ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#5ac8fa', '#ffcc00', '#8e8e93', '#ff2d55', '#00c7be']>>;
+type _V25 = Expect<Equal<Mod['CHART_ERROR_CODES'], readonly ['structure-invalid', 'pct-invalid', 'kind-unknown']>>;
+type _V26 = Expect<Equal<Mod['HELP_SHELL_ID'], 'ilife-help-shell'>>;
+type _V27 = Expect<Equal<Mod['HELP_SCHEMA_ERROR_CODES'], readonly ['schema-invalid', 'duplicate-id', 'status-invalid', 'types-invalid']>>;
+
+/* ── 8. 清单与版本 ─────────────────────────────────────── */
 
 type _M01 = Expect<Equal<Mod['SPEC_FROZEN_SURFACE'][number], FrozenSurfaceEntry>>;
 type _M02 = Expect<Equal<FrozenSurfaceEntry['kind'], 'runtime' | 'type'>>;

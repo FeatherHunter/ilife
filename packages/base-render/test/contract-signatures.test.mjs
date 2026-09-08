@@ -9,31 +9,65 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
+  ACTION_BAR_DEFAULTS,
+  ACTION_BAR_KINDS,
+  ACTION_ID_ATTR,
   BASE_PAINT_CONTRACT_VERSION,
+  CHART_BREAKPOINTS,
+  CHART_COORD_RULE,
+  CHART_EMPTY_RULE,
+  CHART_ERROR_CODES,
   CHART_KINDS,
+  CHART_PALETTE,
+  CHART_STRUCTURE_RULE,
+  CHARTS_STYLE_ID,
+  CONTROLS_ERROR_CODES,
   CONTROLS_HOST_REQUIREMENT,
   CONTROL_AVAILABILITY,
   CONTROL_NAMES,
+  COPY_ACTION_IDS,
   COPY_CHANNELS,
+  COPY_TEXT_DEFAULTS,
   CSS_VAR_TOKENS,
+  CSV_DIALECT,
   DATA_TEXT_PROJECTIONS,
   DATA_SCRIPT_TYPE,
+  DEFAULT_DATA_ATTR,
   DEFAULT_DATA_SCRIPT_ID,
   ESCAPE_HTML_CHARS,
   HELP_COPY_ACTIONS,
   HELP_COPY_TARGETS,
+  HELP_SCHEMA_ERROR_CODES,
+  HELP_SHELL_ID,
   INJECTION_ORDER,
   LOG_SECTION_SOURCES,
+  LOG_SECTION_TITLES,
+  LOG_UNKNOWN_PLACEHOLDER,
   MARKER_RULES,
   RENDER_CONTRACT_VERSION,
+  SENSITIVE_ROW_RULE,
   SERIALIZABLE_SHAPES,
+  SHARED_HELPERS_JS_RULE,
   SPEC_FROZEN_SURFACE,
+  STATUS_DEFAULT_TEXT,
+  STRICT_ENVELOPE_FIELDS,
   STRICT_ENVELOPE_SHAPES,
   STYLE_FORBIDDEN_TOKENS,
+  STYLE_SHEET_ID,
   TEMPLATE_ERROR_CODES,
   TEMPLATE_MARKERS,
+  TEXT_EMPTY_PLACEHOLDER,
+  TEXT_ERROR_CODES,
+  TEXT_HEADER_TEMPLATE,
+  TEXT_JSON_INDENT,
+  TEXT_JSON_LT_RULE,
+  TEXT_SENSITIVE_MASK,
+  TOAST_DEFAULTS,
+  TOAST_ICONS,
   SCENE_DATA_SCHEMA,
   SCENE_TYPE_FIELD,
   escapeHtml,
@@ -88,6 +122,38 @@ function frozenSurfaceRows(text) {
     }
   }
   return rows;
+}
+
+/** 去掉注释（块注释 + 行注释；保留 `://` 这类 URL）——纯度扫描只判代码，不判注释文字（FX-18）。 */
+const LINE_COMMENT = new RegExp('(^|[^:])//[^' + String.fromCharCode(10) + ']*', 'g');
+function stripJsComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(LINE_COMMENT, '$1');
+}
+
+/** 纯度扫描口径（**唯一实现**，与 `SHARED_HELPERS_JS_RULE`（§3.3，FX-18）逐项对齐）：
+ *  只禁「`node:` 内建」与「向 `window.<id>`／`globalThis.<id>` 赋值」；
+ *  **允许**页面侧 DOM 读取（`document.*`）——共享 JS 是页面侧代码。 */
+const PURITY_CHECKS = [
+  ['forbidNodeBuiltins', /(?:from|import\s*\(|require\s*\()\s*['"]node:/, 'node: 内建'],
+  ['forbidGlobalAssignment', /\b(?:window|globalThis)\s*\.\s*[\w$]+\s*=(?!=)/, 'window／globalThis 隐式全局赋值'],
+];
+
+function purityViolations(source) {
+  const code = stripJsComments(source);
+  return PURITY_CHECKS
+    .filter(([flag, re]) => SHARED_HELPERS_JS_RULE[flag] === true && re.test(code))
+    .map(([, , label]) => label);
+}
+
+/** 递归收集 `dist/**\/*.js`（FX-18：旧扫描只查 dist 顶层，漏掉 `dist/spec/*.js`）。 */
+function listDistJs(dir) {
+  const out = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) out.push(...listDistJs(p));
+    else if (e.name.endsWith('.js')) out.push(p);
+  }
+  return out;
 }
 
 /** 抽出 §2 对照表的数据行。 */
@@ -225,6 +291,47 @@ describe('文档投影绑死（docs/base-paint-contract.md）', () => {
     assert.notEqual(doc.charCodeAt(0), 0xfeff, '文档不得以 BOM 开头');
     const literalBackslashN = String.fromCharCode(92) + 'n';
     assert.ok(!doc.includes(literalBackslashN), '文档不得出现字面换行转义');
+  });
+
+  it('第二轮返修单落点（FX-17…FX-25）在文档中可核', () => {
+    const anchors = [
+      ['FX-17', 'COPY_ACTION_IDS'],
+      ['FX-17', 'ACTION_ID_ATTR'],
+      ['FX-17', 'listActionIds'],
+      ['FX-17', '端到端接线示例'],
+      ['FX-18', 'SHARED_HELPERS_JS_RULE'],
+      ['FX-18', '允许 DOM 读取'],
+      ['FX-18', '禁 `node:`'],
+      ['FX-19', '占位符契约'],
+      ['FX-19', '死资产'],
+      ['FX-19', '#107'],
+      ['FX-20', '逐值断言'],
+      ['FX-21', 'docs/research/t92-architect-calls.md'],
+      ['FX-22', 'buildChartsHelpersJs'],
+      ['FX-23', 'SENSITIVE_ROW_RULE'],
+      ['FX-23', '（敏感字段已脱敏）'],
+      ['FX-24', '契约自定的 JSON 转义规则'],
+      ['FX-25', 'calorie-architecture.md:54'],
+    ];
+    for (const [fx, needle] of anchors) assert.ok(doc.includes(needle), fx + ' 落点缺失：' + needle);
+  });
+
+  it('FX-21：溯源指针指向已归档的 AC 条文（不得再指 rulings 或 .scratch）', () => {
+    assert.ok(doc.includes('docs/research/t92-architect-calls.md'), 'AC-1…AC-17 出处必须指归档文件');
+    const rulings = readFileSync(new URL('../../../docs/research/t92-architect-rulings.md', import.meta.url), 'utf8');
+    assert.ok(!/^## AC-/m.test(rulings), 'rulings 文件不含 AC 条文（故不得作为 AC 出处）');
+    const archived = readFileSync(new URL('../../../docs/research/t92-architect-calls.md', import.meta.url), 'utf8');
+    for (let i = 1; i <= 17; i += 1) assert.ok(archived.includes('## AC-' + i), '归档件缺 AC-' + i);
+    for (const line of splitLines(doc)) {
+      if (!line.includes('.scratch/t92/ARCHITECT-CALLS.md')) continue;
+      assert.ok(line.includes('归档'), '提及 .scratch 原路径时必须在同一行写明「已归档」：' + line);
+    }
+  });
+
+  it('FX-24：u003c 归因正确（契约自定规则，非旧侧行为）', () => {
+    assert.ok(doc.includes('契约自定的 JSON 转义规则'), '必须写明 u003c 是契约自定规则');
+    assert.ok(doc.includes('injector.py:119'), '仍须给出旧侧真实行为的证据行号');
+    assert.ok(!doc.includes('`injector.py:119-120` 即此形态'), '旧归因措辞必须删除（u003c 不是旧侧行为）');
   });
 });
 
@@ -364,6 +471,104 @@ describe('冻结口径逐值', () => {
     assert.ok(cs.includes('#92'), 'changeset 必须引票号');
     assert.ok(cs.includes('#79'), 'changeset 必须写明 B8 统一版本归 #79');
   });
+
+  /** FX-20（V4 N-4）：这 27 条曾「清单文本 ↔ 文档表」双约束、无任何断言 → 逐值钉死。 */
+  const FX20_VALUE_LOCKS = [
+    'STRICT_ENVELOPE_FIELDS', 'STYLE_SHEET_ID', 'COPY_TEXT_DEFAULTS', 'TOAST_ICONS', 'TOAST_DEFAULTS',
+    'ACTION_BAR_KINDS', 'ACTION_BAR_DEFAULTS', 'STATUS_DEFAULT_TEXT', 'CONTROLS_ERROR_CODES',
+    'LOG_SECTION_TITLES', 'LOG_UNKNOWN_PLACEHOLDER', 'TEXT_EMPTY_PLACEHOLDER', 'TEXT_SENSITIVE_MASK',
+    'TEXT_HEADER_TEMPLATE', 'TEXT_JSON_INDENT', 'TEXT_JSON_LT_RULE', 'CSV_DIALECT', 'TEXT_ERROR_CODES',
+    'CHARTS_STYLE_ID', 'CHART_STRUCTURE_RULE', 'CHART_EMPTY_RULE', 'CHART_COORD_RULE', 'CHART_BREAKPOINTS',
+    'CHART_PALETTE', 'CHART_ERROR_CODES', 'HELP_SHELL_ID', 'HELP_SCHEMA_ERROR_CODES',
+  ];
+
+  it('FX-20：27 条运行时条目逐值断言（V4 N-4 名单，改 spec 值即红）', () => {
+    assert.equal(FX20_VALUE_LOCKS.length, 27, '名单必须 27 条');
+    for (const n of FX20_VALUE_LOCKS) {
+      const e = manifest.find((x) => x.name === n);
+      assert.ok(e, n + ' 不在冻结面清单');
+      assert.equal(e.kind, 'runtime', n + ' 必须是运行时条目');
+      assert.equal(e.status, 'implemented', n + ' 必须已落地');
+    }
+    assert.deepEqual([...STRICT_ENVELOPE_FIELDS], ['version', 'skill', 'shape', 'key', 'data']);
+    assert.equal(STYLE_SHEET_ID, 'ilife-base');
+    assert.deepEqual({ ...COPY_TEXT_DEFAULTS }, {
+      emptyTextShortCircuit: true, failBadgeAlwaysOn: true, okMessage: '已复制', okDetail: '粘贴给 AI',
+      failMessage: '复制失败', failDetail: '长按选择文本手动复制',
+    });
+    assert.deepEqual([...TOAST_ICONS], ['copy', 'ok', 'warn', 'danger', 'info']);
+    assert.deepEqual({ ...TOAST_DEFAULTS }, {
+      timeoutMs: 4500, maxStack: 5, mobileMaxStack: 3, mobileMaxPx: 820, gapPx: 8,
+      role: 'status', ariaLive: 'polite', defaultIcon: 'copy',
+    });
+    assert.deepEqual([...ACTION_BAR_KINDS], ['primary', 'red', 'ghost']);
+    assert.deepEqual({ ...ACTION_BAR_DEFAULTS }, {
+      copyDataLabel: '复制数据', copyLogLabel: '复制日志', ghostOwnRow: true, evenRowPairs: 2,
+      minHeightPx: 40, fontSizePx: 12, fontWeight: 600, ghostBorderAlpha: 0.38,
+    });
+    assert.deepEqual({ ...STATUS_DEFAULT_TEXT }, { ok: '成功', warn: '警告', danger: '失败', empty: '无数据' });
+    assert.deepEqual([...CONTROLS_ERROR_CODES], ['bad-input', 'bad-format']);
+    assert.deepEqual({ ...LOG_SECTION_TITLES }, {
+      scene: '场景标识', thinking: 'AI 思考链', dataStructure: '数据结构',
+      callChain: '调用链', timestampVersion: '时间戳版本', exception: '异常',
+    });
+    assert.equal(LOG_UNKNOWN_PLACEHOLDER, '(未知)');
+    assert.equal(TEXT_EMPTY_PLACEHOLDER, '未填写');
+    assert.equal(TEXT_SENSITIVE_MASK, '****');
+    assert.equal(TEXT_HEADER_TEMPLATE, '【{skill} · {key}】');
+    assert.equal(TEXT_JSON_INDENT, 2);
+    assert.equal(TEXT_JSON_LT_RULE, 'u003c');
+    assert.deepEqual({ ...CSV_DIALECT }, {
+      delimiter: ',', quote: '"', quoteEscape: '""', lineEnding: 'LF', header: ['section', 'row'],
+    });
+    assert.deepEqual([...TEXT_ERROR_CODES], ['shape-unsupported', 'structure-invalid', 'format-unknown']);
+    assert.equal(CHARTS_STYLE_ID, 'ilife-charts');
+    assert.equal(CHART_STRUCTURE_RULE, 'throw');
+    assert.equal(CHART_EMPTY_RULE, 'emptyState');
+    assert.equal(CHART_COORD_RULE, 'viewBox-only');
+    assert.deepEqual({ ...CHART_BREAKPOINTS }, { mobileMaxPx: 720, dotSizeMobilePx: 8, lineHeightMobilePx: 150, stackedGapPx: 3 });
+    assert.deepEqual([...CHART_PALETTE], ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#5ac8fa', '#ffcc00', '#8e8e93', '#ff2d55', '#00c7be']);
+    assert.deepEqual([...CHART_ERROR_CODES], ['structure-invalid', 'pct-invalid', 'kind-unknown']);
+    assert.equal(HELP_SHELL_ID, 'ilife-help-shell');
+    assert.deepEqual([...HELP_SCHEMA_ERROR_CODES], ['schema-invalid', 'duplicate-id', 'status-invalid', 'types-invalid']);
+  });
+
+  it('FX-17：复制按钮 actionId 冻结表 ＋ 承载属性 ＋ 与 HELP 侧 id 不撞名', () => {
+    assert.equal(ACTION_ID_ATTR, 'data-action-id');
+    assert.equal(DEFAULT_DATA_ATTR, 'data-t', '复制文本承载属性名必须冻结为常量（渲染端与适配端同一约定）');
+    assert.deepEqual({ ...COPY_ACTION_IDS }, {
+      actionBar: { copyData: 'ilife-copy-data', copyLog: 'ilife-copy-log' },
+      errorReceipt: { copyData: 'ilife-error-copy-data', copyLog: 'ilife-error-copy-log' },
+    });
+    const ids = [
+      COPY_ACTION_IDS.actionBar.copyData, COPY_ACTION_IDS.actionBar.copyLog,
+      COPY_ACTION_IDS.errorReceipt.copyData, COPY_ACTION_IDS.errorReceipt.copyLog,
+      ...HELP_COPY_TARGETS.map((t) => HELP_COPY_ACTIONS[t].actionId),
+    ];
+    assert.equal(new Set(ids).size, ids.length, '全部 base-paint actionId 必须页面内唯一（含 HELP 侧）');
+    for (const id of ids) assert.ok(id.startsWith('ilife-'), id + ' 必须带 ilife- 前缀');
+    assert.ok(doc.includes('ACTION_ID_ATTR'), '文档必须写明 actionId 承载属性');
+    assert.ok(doc.includes('listActionIds'), '文档必须写明 actionId 发现机制');
+  });
+
+  it('FX-18：共享 JS 产出内容契约 ＋ 与扫描口径一致', () => {
+    assert.deepEqual({ ...SHARED_HELPERS_JS_RULE }, {
+      selfContained: true, idempotent: true, domAllowed: true,
+      forbidGlobalAssignment: true, forbidNodeBuiltins: true,
+    });
+    assert.deepEqual(PURITY_CHECKS.map(([flag]) => flag), ['forbidNodeBuiltins', 'forbidGlobalAssignment'],
+      '扫描实现必须只覆盖 SHARED_HELPERS_JS_RULE 里为 true 的两项（DOM 读取不扫）');
+    assert.ok(doc.includes('SHARED_HELPERS_JS_RULE'), '文档必须冻结产出内容契约');
+    assert.ok(doc.includes('允许 DOM 读取'), '文档必须写明允许 DOM 读取');
+  });
+
+  it('FX-23：敏感行判定口径 ＋ 三 format 掩码文案', () => {
+    assert.deepEqual({ ...SENSITIVE_ROW_RULE }, {
+      textField: 'text', flagField: 'sensitive', flagValue: true, mask: '****', textNotice: '（敏感字段已脱敏）',
+    });
+    assert.equal(SENSITIVE_ROW_RULE.mask, TEXT_SENSITIVE_MASK, '掩码必须等于 TEXT_SENSITIVE_MASK（唯一真相）');
+    assert.ok(doc.includes('SENSITIVE_ROW_RULE'), '文档必须冻结敏感行判定口径');
+  });
 });
 
 describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
@@ -373,24 +578,56 @@ describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
     assert.ok(!JSON.stringify(pkg).includes('base-combos'), 'L16：package.json 不得出现 base-combos 字样');
   });
 
-  it('dist 资产 browser-safe：无 node:、无隐式全局', () => {
-    for (const f of readdirSync(new URL('../dist', import.meta.url))) {
-      if (!f.endsWith('.js')) continue;
-      const src = readFileSync(new URL('../dist/' + f, import.meta.url), 'utf8');
-      assert.ok(!/from\s+['"]node:/.test(src), f + ' 不得 import node:');
-      assert.ok(!/\bwindow\./.test(src), f + ' 不得读 window（AC-7 无隐式全局）');
-      assert.ok(!/\bdocument\./.test(src), f + ' 不得直写 document（端口由调用方注入）');
+  it('dist 资产 browser-safe：无 node:、无隐式全局赋值；DOM 读取允许（FX-18 收窄口径）', () => {
+    assert.equal(SHARED_HELPERS_JS_RULE.domAllowed, true, '共享 JS 允许页面侧 DOM 读取（FX-18②）');
+    assert.equal(SHARED_HELPERS_JS_RULE.forbidNodeBuiltins, true);
+    assert.equal(SHARED_HELPERS_JS_RULE.forbidGlobalAssignment, true);
+    const files = listDistJs(fileURLToPath(new URL('../dist', import.meta.url)));
+    assert.ok(files.length > 0, 'dist 无 JS 产物');
+    assert.ok(files.some((p) => p.includes('spec') && p.endsWith('.js')), '扫描必须覆盖 dist/spec/*.js（FX-18 收窄口径后仍须递归）');
+    for (const p of files) {
+      const src = readFileSync(p, 'utf8');
+      assert.deepEqual(purityViolations(src), [], p + ' 违反纯度口径');
     }
   });
 
-  it('src/spec/*.ts 只许 import type（AC-13）', () => {
+  it('纯度扫描口径自证（FX-18）：含 DOM 的合法 helpers JS 过门，隐式全局赋值／node: 不过门', () => {
+    const legalHelpersJs = [
+      '(function () {',
+      '  if (document.querySelector(\'[data-ilife-helpers="1"]\')) return;',
+      '  var root = document.createElement("div");',
+      '  root.setAttribute("data-ilife-helpers", "1");',
+      '  document.addEventListener("click", function (ev) {',
+      '    var el = ev.target && ev.target.closest ? ev.target.closest("[data-action-id]") : null;',
+      '    if (!el) return;',
+      '    void el.getAttribute("data-t");',
+      '  });',
+      '  document.body.appendChild(root);',
+      '}());',
+    ].join(LF);
+    // ① 含 DOM 的合法 helpers JS 必须过门（FX-18 自证①）
+    assert.deepEqual(purityViolations(legalHelpersJs), [], '含 DOM 的合法 helpers JS 必须过纯度门');
+    assert.ok(legalHelpersJs.includes('document.'), '样本必须真的含 DOM 读取');
+    // ② 负样本必须被拦（否则口径形同虚设）
+    assert.deepEqual(purityViolations('window.__hmPayload = {};'), ['window／globalThis 隐式全局赋值']);
+    assert.deepEqual(purityViolations('globalThis.toast = function () {};'), ['window／globalThis 隐式全局赋值']);
+    assert.deepEqual(purityViolations("import { readFileSync } from 'node:fs';"), ['node: 内建']);
+    assert.deepEqual(purityViolations("const fs = require('node:fs');"), ['node: 内建']);
+    assert.deepEqual(purityViolations("await import('node:fs');"), ['node: 内建']);
+    // ③ 注释里的说明文字不参与判定（dist 保留注释，禁的是代码）
+    assert.deepEqual(purityViolations('/* 禁 window.toast = x 与 document.* 无关 */'), []);
+  });
+
+  it('src/spec/*.ts 只许 import type（AC-13）＋ 代码不得读写浏览器全局（AC-7）', () => {
     const dir = new URL('../src/spec/', import.meta.url);
     for (const f of readdirSync(dir)) {
       const src = readFileSync(new URL(f, dir), 'utf8');
       const bad = src.match(/^\s*import\s+(?!type\b)/m);
       assert.equal(bad, null, f + ' 只许 import type');
-      assert.ok(!/from\s+['"]node:/.test(src), f + ' 不得引 node:');
-      assert.ok(!/\bwindow\./.test(src), f + ' 不得读 window');
+      assert.ok(!/(?:from|import\s*\()\s*['"]node:/.test(src), f + ' 不得引 node:');
+      const code = stripJsComments(src);
+      assert.ok(!/\b(?:window|document|globalThis)\s*\./.test(code), f + ' 代码（非注释）不得读写浏览器全局');
+      assert.ok(!/\b(?:window|globalThis)\s*\.\s*[\w$]+\s*=(?!=)/.test(code), f + ' 不得向 window／globalThis 赋值');
     }
   });
 });

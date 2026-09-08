@@ -91,12 +91,16 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'copyText', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(text: string, ports: CopyPorts, opts?: CopyTextOptions): Promise<CopyTextOutcome>' },
   { name: 'CopyRuntime', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ copyText(text: string, opts?: CopyTextOptions): Promise<CopyTextOutcome>; dispose(): void }' },
   { name: 'createCopyRuntime', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(ports: CopyPorts): CopyRuntime' },
-  { name: 'CopyActionHostPort', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ readDataText(actionId: string): string | undefined; onActivate(actionId: string, handler: () => void): () => void }' },
+  { name: 'CopyActionHostPort', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ listActionIds(): readonly string[]; readDataText(actionId: string): string | undefined; onActivate(actionId: string, handler: () => void): () => void }' },
+  { name: 'ACTION_ID_ATTR', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "'data-action-id'" },
+  { name: 'COPY_ACTION_IDS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "{ actionBar: { copyData: 'ilife-copy-data'; copyLog: 'ilife-copy-log' }; errorReceipt: { copyData: 'ilife-error-copy-data'; copyLog: 'ilife-error-copy-log' } }" },
   { name: 'BindCopyAction', kind: 'type', ticket: '#76', status: 'pending', section: '3.3', signature: '(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }' },
   { name: 'bindCopyAction', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }' },
   { name: 'SharedHelpersInput', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ prefix?: string; dataAttr?: string }' },
+  { name: 'DEFAULT_DATA_ATTR', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "'data-t'" },
   { name: 'BuildSharedHelpersJs', kind: 'type', ticket: '#76', status: 'pending', section: '3.3', signature: '(input?: SharedHelpersInput) => string' },
   { name: 'buildSharedHelpersJs', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(input?: SharedHelpersInput): string' },
+  { name: 'SHARED_HELPERS_JS_RULE', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ selfContained: true; idempotent: true; domAllowed: true; forbidGlobalAssignment: true; forbidNodeBuiltins: true }' },
   { name: 'ToastInput', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ msg: string; detail?: string; icon?: ToastIcon; badge?: ToastBadge; actions?: readonly ToastAction[]; count?: string; lines?: readonly string[]; code?: string; timeoutMs?: number; maxStack?: number }' },
   { name: 'ToastHostPort', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ mount(html: string): { remove(): void } }' },
   { name: 'ToastController', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ show(input: ToastInput): void; flush(): void; dispose(): void }' },
@@ -108,7 +112,7 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'renderStatusBadge', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(input: StatusBadgeInput): string' },
   { name: 'EmptyStateInput', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ icon?: string; text: string; hint?: string; actionHtml?: string }' },
   { name: 'renderEmptyState', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(input: EmptyStateInput): string' },
-  { name: 'ErrorReceiptInput', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ message: string; retryPrompt?: string; dataText?: string; logText?: string }' },
+  { name: 'ErrorReceiptInput', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ message: string; retryPrompt?: string; dataText?: string; logText?: string; dataActionId?: string; logActionId?: string }' },
   { name: 'renderErrorReceipt', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(input: ErrorReceiptInput): string' },
 
   // ── §3.4 复制文本序列化（#77） ──
@@ -135,6 +139,7 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'buildDataText', kind: 'runtime', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: DataTextInput): string' },
   { name: 'BuildLogText', kind: 'type', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: LogTextInput) => string' },
   { name: 'buildLogText', kind: 'runtime', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: LogTextInput): string' },
+  { name: 'SENSITIVE_ROW_RULE', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: "{ textField: 'text'; flagField: 'sensitive'; flagValue: true; mask: '****'; textNotice: '（敏感字段已脱敏）' }" },
 
   // ── §3.5 图表层与 HELP 壳（#78） ──
   { name: 'CHART_KINDS', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "readonly ['bar', 'line', 'donut', 'progress', 'combo', 'sparkline', 'gauge', 'scatter']" },
@@ -161,6 +166,9 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'HelpShellInput', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ sceneData: SceneData; assets: TemplateAssets; strict?: boolean; template?: string }' },
   { name: 'RenderHelpShell', kind: 'type', ticket: '#78', status: 'pending', section: '3.5', signature: '(input: HelpShellInput) => FillTemplateOutput' },
   { name: 'renderHelpShell', kind: 'runtime', ticket: '#78', status: 'pending', section: '3.5', signature: '(input: HelpShellInput): FillTemplateOutput' },
+  { name: 'ChartsHelpersInput', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ prefix?: string; styleId?: string }' },
+  { name: 'BuildChartsHelpersJs', kind: 'type', ticket: '#78', status: 'pending', section: '3.5', signature: '(input?: ChartsHelpersInput) => string' },
+  { name: 'buildChartsHelpersJs', kind: 'runtime', ticket: '#78', status: 'pending', section: '3.5', signature: '(input?: ChartsHelpersInput): string' },
 
   // ── §5 版本机制 ──
   { name: 'BASE_PAINT_CONTRACT_VERSION', kind: 'runtime', ticket: '#92', status: 'implemented', section: '5', signature: "'0.1.0'" },

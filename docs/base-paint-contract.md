@@ -12,7 +12,7 @@
 | `#66` 裁决评论 | Q8／Q12／Q13／Q14 | Q8 不引入 `status`，以 envelope `shape` 为准；Q12 主色锁 B1；Q13 复制走双通道；Q14 不引入 `--r-xl`／`--pink`／深色区 |
 | `docs/calorie-architecture.md` | Implementation Decisions（共享层归属三类、零运行时依赖、占位符注入、主题接缝、区块组件）＋ Testing Decisions（共享层模块边界＝接缝） | 归属边界（§4）与签名测试（§7）的判据 |
 | `docs/research/t72-shared-layer-gap.md` §6 | 冻结边界规则表 | §4 的 8 条边界 |
-| `docs/research/t92-architect-rulings.md`（原 `.scratch/t92/ARCHITECT-CALLS.md`） | AC-1…AC-17 | 逐条落进 §1–§6，索引见下表 |
+| `docs/research/t92-architect-calls.md`（原 `.scratch/t92/ARCHITECT-CALLS.md`，FX-21 归档） | AC-1…AC-17（17 条条文） | 逐条落进 §1–§6，索引见下表。**注意**：`docs/research/t92-architect-rulings.md` 是 FX 返修裁定单，**不含**任何 `## AC-` 条文，不得作为 AC 出处 |
 | `docs/research/t92-old-v130-signatures.md` | 旧 v1.30 逐节签名（246 行表／353 处 `文件:行号` 证据） | §2 对照表与 §3 各节「旧侧对应物」 |
 | `docs/research/t92-base-exports-actual.md` | 新 base-* 三包实测出口面（33 运行时 ＋ 20 类型）＋ t72 判定复核（26 项仍成立） | §2 判定列的证据基准 |
 
@@ -42,9 +42,9 @@
 
 - 本票**只冻结**：文档 ＋ `src/spec/*.ts`（type-only 类型 ＋ 纯数据常量）＋ 签名测试 ＋ `src/index.ts` 的**追加**导出 ＋ changeset。
 - 本票**不实现**：`fillTemplate`、控件运行时、图表渲染、HELP 壳渲染、任何技能包迁移。清单里 `status: pending` 的条目就是执行票的施工面。
-- 类型层与运行时层的对应关系由机器断言绑死：`SPEC_FROZEN_SURFACE`（唯一清单）↔ 本文 §3 标记区表格 ↔ `test-d/contract-signatures.ts` 的类型断言。
+- 类型层与运行时层的对应关系由机器断言绑死：`SPEC_FROZEN_SURFACE`（唯一清单）↔ 本文 §3 标记区表格 ↔ `test-d/contract-signatures.ts` 的类型断言；**运行时条目的值**再由 `test/contract-signatures.test.mjs` 逐值断言（含 FX-20 的 27 条，见 §7），因此「改值不改清单」同样会红（FX-20）。
 - **两物区分（不可混称）**：`packages/base-render/src/spec/` = **冻结的共享层契约类型**（本文 §3 的施工面，type-only ＋ 纯数据常量）；`packages/base-render/src/contract.ts` = **既有渲染契约**（envelope → HTML 的 `renderPage`／`renderReco`／`escapeHtml`／`RenderError`）。两者语义不同、不得互相 import 实现：`spec/` 只描述 #74–#78 要实现的签名，`contract.ts` 是已存在的运行时。
-- **清单覆盖面口径（V1 洞 15 处置）**：`SPEC_FROZEN_SURFACE` 锁的是**主签名**（每条 = 一个对外名字）；被主签名引用但未单列的类型（`ClipboardChannel`／`CopyButtonInput`／`ToastAction`／8 个 `*ChartInput`／`SceneGroup` 等）以 `packages/base-render/src/spec/*.ts` 为**唯一真相源**，其形状变更视同签名变更（须走 changeset ＋ 三处同步），不得另立第二份声明。
+- **清单覆盖面口径（V1 洞 15 处置）**：`SPEC_FROZEN_SURFACE` 锁的是**主签名**（每条 = 一个对外名字）；被主签名引用但未单列的类型（`ClipboardChannel`／`CopyButtonInput`／`ToastAction`／8 个 `*ChartInput`／`SceneGroup` 等）以 `packages/base-render/src/spec/*.ts` 为**唯一真相源**，其形状变更视同签名变更（须走 changeset ＋ 三处同步），不得另立第二份声明。其中 `CopyButtonInput` 的**必填** `actionId` 另由 `test-d` 的 `_C14b`／`_C14c` 锁形（FX-17①）。
 - **术语口径（边界规则 8）**：术语以 `CONTEXT.md` 为准（设置面／干活面／sidebar槽／技能功能页）；本契约用「sidebar 槽位装配」而非「侧边栏／前端页」，用「技能功能页」而非「面板页」。`CONTEXT.md` 尚未收录「复制指令」词条（§3.5.3 的对外文案口径），其词条补录登记见 §4.4。
 
 ### 0.3 一处基准口径冲突（显式声明）
@@ -148,32 +148,33 @@
 | `<!--INJECT-DATA-->` | **恰好 1**（`exactly-one`，不可豁免） | 场景数据：由**技能包提供**（`input.data`），填充器只注入与校验，不生产数据（AC-12） | 缺失或重复 → 抛 `TemplateError`，code `marker-missing`／`marker-duplicate`，不输出空页 |
 | `<!--SHARED-HELPERS-->` | **恰好 1**（`exactly-one`，声明 `NO-SHARED` 时可缺席） | `input.assets.sharedHelpersJs`——**唯一产出签名 `buildSharedHelpersJs(input?)`**（§3.3，归 #76；#74 只消费，不得自产） | 缺失/重复且未豁免 → 抛错 `marker-missing`／`marker-duplicate`；资产为空串 → `asset-missing` |
 | `<!--SHARED-CSS-->` | **恰好 1**（`exactly-one`，声明 `NO-SHARED` 时可缺席） | `input.assets.sharedCssText`——**唯一产出签名 `buildStyleSheet().css`**（§3.2，归 #75） | 同上 |
-| `<!--CHARTS-HELPERS-->` | **0 或 1**（`zero-or-one`） | `input.assets.chartsHelpersJs`（可选） | 出现 >1 次 → 抛 `marker-duplicate`；出现 1 次但未提供资产 → `asset-missing`；0 次合法 |
+| `<!--CHARTS-HELPERS-->` | **0 或 1**（`zero-or-one`） | `input.assets.chartsHelpersJs`（可选）——**唯一产出签名 `buildChartsHelpersJs(input?)`**（§3.5，归 #78；#74 只消费，FX-22） | 出现 >1 次 → 抛 `marker-duplicate`；出现 1 次但未提供资产 → `asset-missing`；0 次合法 |
 | `<!--NO-SHARED-->` | **0 或 1**（`zero-or-one-exempt`） | 无填充物（豁免声明本身） | 与 SHARED 两标记**互斥**：声明后 SHARED 必须为 0，否则抛 `marker-conflict`；不得用「注释掉占位符」隐式豁免 |
 
 **注入顺序**：`INJECTION_ORDER = sharedHelpers → sharedCss → chartsHelpers → injectData`（逐字对齐旧 §7 `contract:363`；旧实现顺序代码在 `injector.py:107-120`，`:104-106` 只是 `NO-SHARED` 分支）。`NO-SHARED` 不是注入步，只改数量校验。
 
 **`<!--INJECT-DATA-->` 替换语义（FX-2①②，定死）**：
 
-1. 填充器**只把标记文本 `<!--INJECT-DATA-->` 替换为 JSON 字符串**（`JSON.stringify` 后文本中 `<` 一律写成反斜杠 + `u003c`），**不生成、不补写 `<script>` 容器标签**。依据：旧 `injector.py:119-120` 即此形态；`skill-memo-ilife/templates/*.html` 6 个模板逐字为 `<script id="payload" type="application/json"><!--INJECT-DATA--></script>`；新实现若生成包裹会与模板自带容器**双包**。
+1. 填充器**只把标记文本 `<!--INJECT-DATA-->` 替换为 JSON 字符串**（`JSON.stringify` 后文本中 `<` 一律写成反斜杠 + `u003c`），**不生成、不补写 `<script>` 容器标签**。依据：旧 `injector.py:119-120` 即「只替换标记文本」这一形态（`:119` 的实际转义是 `</` → 反斜杠 + `/`）；`skill-memo-ilife/templates/*.html` 6 个模板逐字为 `<script id="payload" type="application/json"><!--INJECT-DATA--></script>`；新实现若生成包裹会与模板自带容器**双包**。
+   - **`u003c` 的归因（FX-24 更正）**：`u003c` 是**契约自定的 JSON 转义规则**（`TEXT_JSON_LT_RULE`／`TEMPLATE` 侧同口径），**不是**旧侧行为——旧 `injector.py:119` 只做 `</` → 反斜杠 + `/` 的字符串替换。两者语义等价（都能防 `</script>` 断标签），新契约取 JSON 合法转义以便逐值断言；**不得**把 `u003c` 写进「旧侧证据」栏。
 2. **模板必须自带容器**（硬约束）：`<!--INJECT-DATA-->` 必须落在 `<script id="payload" type="application/json">…</script>` 内。`DEFAULT_DATA_SCRIPT_ID`／`DATA_SCRIPT_TYPE` 的用途**只是校验模板自带容器**（存在则断言 id／type 与 `DEFAULT_DATA_SCRIPT_ID`／`DATA_SCRIPT_TYPE`，或与 `FillTemplateInput.dataScriptId` 匹配），不用于生成。
 3. **缺容器或 id／type 不符 → 抛 `TemplateError`，code `container-missing`**（`message` 区分「容器缺失」与「id／type 不符」两因）；仍遵守边界规则 5，**不返空页**。
 4. `data === undefined` 或不可 JSON 序列化 → 抛 `TemplateError`，code `data-missing`（V1 洞 12 处置）。
 
 **`--strict` 校验语义**（对齐旧 `--strict-payload`，`contract:107`）：
 
-- **默认（`strict` 省略/false）**：五个标记的数量规则**一律硬拦截**（缺失/重复/互斥冲突即抛错）；`data` 只要求可 JSON 序列化。
+- **默认（`strict` 省略/false）**：五个标记的数量规则**一律硬拦截**（缺失/重复/互斥冲突即抛错）；**容器硬约束同样生效**——`<!--INJECT-DATA-->` 必须落在自带 `<script id="payload" type="application/json">…</script>` 内，缺容器或 id／type 不符 → `container-missing`（与 `strict` 无关，FX-25②）；`data` 只要求可 JSON 序列化。
 - **`strict: true`**：在数量规则之上，追加**零依赖信封校验**——`data` 必须是对象且含 `STRICT_ENVELOPE_FIELDS` 五字段，`shape` 必须 ∈ `STRICT_ENVELOPE_SHAPES`。不合法 → 抛 `TemplateError`，code `strict-invalid`。**不得**调用 base-link-core 的 `parseEnvelope`（AC-13）。
-- 注入的 payload 文本：JSON 序列化后**只替换 `<!--INJECT-DATA-->` 标记文本**（容器由模板自带，见上）；文本中 `<` 一律写成反斜杠 + `u003c`，防 `</script>` 断标签。
+- 注入的 payload 文本：JSON 序列化后**只替换 `<!--INJECT-DATA-->` 标记文本**（容器由模板自带，见上）；文本中 `<` 一律写成反斜杠 + `u003c`（**契约自定规则**，见上「归因更正」），防 `</script>` 断标签。
 
 **注入结果（机器可读）**：`FillTemplateOutput.report` = `{ markers, strict, exempt, bytes }`；`markers[]` 逐标记给 `{ key, literal, rule, count, filled }`；`bytes` = 输出 HTML 字节数（对齐旧 CLI 结果 JSON 的 `bytes` 口径，`injector.py:210-305`）。失败**不返回** `html: ''`——一律抛错（边界规则 5：缺失阻断不返空）。
 
 #### 3.1.1 envelope 形状裁定与追溯（FX-4）
 
 - **事实**：`packages/base-link-core/src/envelope.ts:9-11` 定义 `ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback']`，共 **6** 个形状（`fallback` = 降级载荷），`EnvelopeShape` 直接由它推导。
-- **分歧**：上位规格 `docs/calorie-architecture.md:53` 写 `shape ∈ stat/list/detail/analysis/receipt`（**5** 个），`ARCHITECT-CALLS.md:35`（AC-5）照抄同 5 个。
+- **分歧**：上位规格 `docs/calorie-architecture.md:53` 写 `shape ∈ stat/list/detail/analysis/receipt`（**5** 个），`docs/research/t92-architect-calls.md:35`（AC-5）照抄同 5 个。
 - **裁定**：以**六形状**为准——规格 `:53` 属**不完整列举**（漏 `fallback`），不是契约分叉。`STRICT_ENVELOPE_SHAPES` 逐字等于 link-core `ENVELOPE_SHAPES`，由 `test-d/contract-signatures.ts`（`_T05`）与 `test/contract-signatures.test.mjs`（形状表同步用例）双向钉死。
-- **追溯**：写法对齐 AC-3 对 `type`／`types` 的裁定（§3.5.2）——先给事实、再给裁定、再给同步动作；`docs/calorie-architecture.md:53` 已补一行勘误注记。
+- **追溯**：写法对齐 AC-3 对 `type`／`types` 的裁定（§3.5.2）——先给事实、再给裁定、再给同步动作；`docs/calorie-architecture.md:54` 已补一行勘误注记（FX-25①：勘误落在 `:54`，不是 `:53`）。
 - **不冲突声明**：`SERIALIZABLE_SHAPES`（5 个，六形状去掉 `fallback`）有单独交代（§3.4），**不构成**对六形状的否定。
 
 **所属包**：`base-paint`（`packages/base-render`）。**旧侧对应物**：§3 `contract:64-75`；§7 `contract:356-367`；`injector.py:26-30,68-123`。
@@ -261,12 +262,16 @@
 | `copyText` | runtime | #76 | pending | 3.3 | `(text: string, ports: CopyPorts, opts?: CopyTextOptions): Promise<CopyTextOutcome>` |
 | `CopyRuntime` | type | #76 | implemented | 3.3 | `{ copyText(text: string, opts?: CopyTextOptions): Promise<CopyTextOutcome>; dispose(): void }` |
 | `createCopyRuntime` | runtime | #76 | pending | 3.3 | `(ports: CopyPorts): CopyRuntime` |
-| `CopyActionHostPort` | type | #76 | implemented | 3.3 | `{ readDataText(actionId: string): string \| undefined; onActivate(actionId: string, handler: () => void): () => void }` |
+| `CopyActionHostPort` | type | #76 | implemented | 3.3 | `{ listActionIds(): readonly string[]; readDataText(actionId: string): string \| undefined; onActivate(actionId: string, handler: () => void): () => void }` |
+| `ACTION_ID_ATTR` | runtime | #76 | implemented | 3.3 | `'data-action-id'` |
+| `COPY_ACTION_IDS` | runtime | #76 | implemented | 3.3 | `{ actionBar: { copyData: 'ilife-copy-data'; copyLog: 'ilife-copy-log' }; errorReceipt: { copyData: 'ilife-error-copy-data'; copyLog: 'ilife-error-copy-log' } }` |
 | `BindCopyAction` | type | #76 | pending | 3.3 | `(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }` |
 | `bindCopyAction` | runtime | #76 | pending | 3.3 | `(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }` |
 | `SharedHelpersInput` | type | #76 | implemented | 3.3 | `{ prefix?: string; dataAttr?: string }` |
+| `DEFAULT_DATA_ATTR` | runtime | #76 | implemented | 3.3 | `'data-t'` |
 | `BuildSharedHelpersJs` | type | #76 | pending | 3.3 | `(input?: SharedHelpersInput) => string` |
 | `buildSharedHelpersJs` | runtime | #76 | pending | 3.3 | `(input?: SharedHelpersInput): string` |
+| `SHARED_HELPERS_JS_RULE` | runtime | #76 | implemented | 3.3 | `{ selfContained: true; idempotent: true; domAllowed: true; forbidGlobalAssignment: true; forbidNodeBuiltins: true }` |
 | `ToastInput` | type | #76 | implemented | 3.3 | `{ msg: string; detail?: string; icon?: ToastIcon; badge?: ToastBadge; actions?: readonly ToastAction[]; count?: string; lines?: readonly string[]; code?: string; timeoutMs?: number; maxStack?: number }` |
 | `ToastHostPort` | type | #76 | implemented | 3.3 | `{ mount(html: string): { remove(): void } }` |
 | `ToastController` | type | #76 | implemented | 3.3 | `{ show(input: ToastInput): void; flush(): void; dispose(): void }` |
@@ -278,7 +283,7 @@
 | `renderStatusBadge` | runtime | #76 | pending | 3.3 | `(input: StatusBadgeInput): string` |
 | `EmptyStateInput` | type | #76 | implemented | 3.3 | `{ icon?: string; text: string; hint?: string; actionHtml?: string }` |
 | `renderEmptyState` | runtime | #76 | pending | 3.3 | `(input: EmptyStateInput): string` |
-| `ErrorReceiptInput` | type | #76 | implemented | 3.3 | `{ message: string; retryPrompt?: string; dataText?: string; logText?: string }` |
+| `ErrorReceiptInput` | type | #76 | implemented | 3.3 | `{ message: string; retryPrompt?: string; dataText?: string; logText?: string; dataActionId?: string; logActionId?: string }` |
 | `renderErrorReceipt` | runtime | #76 | pending | 3.3 | `(input: ErrorReceiptInput): string` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
@@ -286,12 +291,12 @@
 
 | 控件 | 冻结签名 | 语义（输入 → 输出） | 失败行为 |
 |---|---|---|---|
-| `toast` | `renderToast(input: ToastInput): string`；`createToastController(port: ToastHostPort): ToastController` | `ToastInput` → toast HTML 字符串；controller 负责堆叠（`maxStack` 5／≤820px 收窄 3）、FIFO 挤出、单条独立计时（`timeoutMs` 4500）、`flush()` 清栈 | `input.msg` 非字符串 → 抛 `ControlsError` code `bad-input`；`actions[]` 只接受 `actionId`，含内联 `onclick` 的入参一律拒 |
+| `toast` | `renderToast(input: ToastInput): string`；`createToastController(port: ToastHostPort): ToastController` | `ToastInput` → toast HTML 字符串；controller 负责堆叠（`maxStack` 5／≤820px 收窄 3）、FIFO 挤出、单条独立计时（`timeoutMs` 4500）、`flush()` 清栈 | `input.msg` 非字符串 → 抛 `ControlsError` code `bad-input`；`actions[]` 只接受 `actionId`，含内联 `onclick` 的入参一律拒；动作按钮的 id 写入 `ACTION_ID_ATTR`，**绑定归调用方**（无复制语义，不纳入 `bindCopyAction`；本条不冻结也不排除，owner #76，S-10） |
 | `copyText` | `copyText(text: string, ports: CopyPorts, opts?: CopyTextOptions): Promise<CopyTextOutcome>`；`createCopyRuntime(ports: CopyPorts): CopyRuntime`；`bindCopyAction(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }` | **双通道**：先走 `ports.clipboard.writeText`（通道 `clipboard`），失败/不可用（`clipboard === null`）再走 `ports.fallback`（通道 `fallback`）；`text === ''` 短路返回 `{ ok: false, channel: null, reason: 'empty' }`，不弹 toast 不触发回调；`opts.silent` 只静默**成功** toast，回调仍触发；**失败徽章恒在**（见下）；`onOk(channel)`／`onFail(reason)` 互斥且必触发一次 | 两通道皆失败 → `{ ok: false, channel: null, reason }`（不抛错，调用方据 `ok` 决策）；`ports` 缺失或 `fallback` 非函数 → 抛 `ControlsError` code `bad-input` |
-| `actionBar` | `renderActionBar(input: ActionBarInput): string` | 场景按钮（`kind: primary／red`）＋ 复制数据／复制日志 ghost 按钮（独立一行，偶数一行 2 个，`min-height` 40px、12px/600、描边透明度 0.38）；复制文本在**渲染期**序列化后写入 `data-t`，零注入面 | 同 `toast` 的入参校验 |
+| `actionBar` | `renderActionBar(input: ActionBarInput): string` | 场景按钮（`kind: primary／red`）＋ 复制数据／复制日志 ghost 按钮（独立一行，偶数一行 2 个，`min-height` 40px、12px/600、描边透明度 0.38）；复制文本在**渲染期**序列化后写入 `data-t`，`actionId`（`CopyButtonInput.actionId`，**必填**）写入 `ACTION_ID_ATTR`，零注入面 | 同 `toast` 的入参校验；`copyData`／`copyLog` 缺 `actionId` 或 id 重复 → 抛 `ControlsError` code `bad-input` |
 | `statusBadge` | `renderStatusBadge(input: StatusBadgeInput): string` | `status` ∈ `ok／warn／danger／empty` → 语义色徽章；`text` 缺省取 `STATUS_DEFAULT_TEXT`；动态文本一律经 `ESCAPE_HTML_ENTITIES` | **非法 `status` 降级为 `empty`**（不抛错，防无样式徽章） |
 | `emptyState` | `renderEmptyState(input: EmptyStateInput): string` | `{ icon?, text, hint?, actionHtml? }` → 空态区块；`icon／text／hint` 一律转义 | `text` 缺失/非字符串 → 抛 `ControlsError` code `bad-input`；`actionHtml` 为**受信 HTML 透传**（调用方负责其内容安全，不转义） |
-| `errorReceipt` | `renderErrorReceipt(input: ErrorReceiptInput): string` | `{ message, retryPrompt?, dataText?, logText? }` → 错误回执（描述 + 修正重试 + 复制数据/日志）；复制文本渲染期入 `data-t` | 缺 `dataText`／`logText` → **不渲染**对应复制按钮（容错，不抛错）；**不得**读 `window.__hmPayload`（AC-7） |
+| `errorReceipt` | `renderErrorReceipt(input: ErrorReceiptInput): string` | `{ message, retryPrompt?, dataText?, logText?, dataActionId?, logActionId? }` → 错误回执（描述 + 修正重试 + 复制数据/日志）；复制文本渲染期入 `data-t`，按钮 id 入 `ACTION_ID_ATTR`（缺省 `COPY_ACTION_IDS.errorReceipt.*`） | 缺 `dataText`／`logText` → **不渲染**对应复制按钮（容错，不抛错）；**不得**读 `window.__hmPayload`（AC-7） |
 
 **`copyText` 双通道逐字冻结（Q13／AC-16①）**
 
@@ -306,15 +311,21 @@ export type CopyText = (text: string, ports: CopyPorts, opts?: CopyTextOptions) 
 ```
 
 - **不得只留 `execCommand`**：通道 1 必须优先尝试；通道 2 只在通道 1 不可用或失败时执行。
-- **不得读隐式全局**：`navigator.clipboard` 由**调用方**作为 `ports.clipboard` 传入（AC-7）。base-paint 自身不出现 `window.`／`document.`／`navigator.`（签名测试逐字节扫描 `dist/**/*.js`）。
+- **不得读隐式全局**：`navigator.clipboard` 由**调用方**作为 `ports.clipboard` 传入（AC-7）。**base-paint 的运行时代码**（`dist/**/*.js` 去掉注释后的代码）不得读写 `window.`／`document.`／`navigator.`；**唯一例外**是 `buildSharedHelpersJs`／`buildChartsHelpersJs` 产出的 **JS 文本字符串**——它按 `SHARED_HELPERS_JS_RULE.domAllowed = true` 允许页面侧 DOM 读取（FX-18②）。纯度扫描口径见 §7 与 §6.3（**禁 `node:` ＋ 禁隐式全局赋值**，不扫 DOM 读取）。
 - **空串短路**：`copyText('')` 立即返回 `{ ok: false, channel: null, reason: 'empty' }`，无 toast 无回调（旧语义 `contract:311`）。
 - **失败徽章恒在（FX-3② 定死：`copyText` 直接挂载，不交调用方插片段）**：失败态经 `ports.toast.mount(renderToast({ icon: 'danger', badge: { type: 'danger', text: … }, … }))` 挂载，`COPY_TEXT_DEFAULTS.failBadgeAlwaysOn = true`，**不受 `opts.silent` 影响**、不可被调用方移除；`ports.toast` 缺省时**降级为只回调 + 返回 outcome**（不产 HTML、不抛错，仍不违反「无宿主可用」）。
 
-**复制接线签名（FX-3③，#90 仅凭契约即可落地）**
+**复制接线签名（FX-3③／FX-17，#90 仅凭契约即可落地）**
 
 ```ts
+export const ACTION_ID_ATTR = 'data-action-id';          // actionId 的承载属性（渲染期写入）
+export const COPY_ACTION_IDS = {
+  actionBar:    { copyData: 'ilife-copy-data',       copyLog: 'ilife-copy-log' },
+  errorReceipt: { copyData: 'ilife-error-copy-data', copyLog: 'ilife-error-copy-log' },
+} as const;
 export interface CopyActionHostPort {
-  readDataText(actionId: string): string | undefined;          // 读渲染期写入的 data-t
+  listActionIds(): readonly string[];                    // 发现机制（必填）：可接线的全部 id
+  readDataText(actionId: string): string | undefined;    // 读渲染期写入的 data-t（DEFAULT_DATA_ATTR）
   onActivate(actionId: string, handler: () => void): () => void; // 订阅激活，返回解绑
 }
 export type BindCopyAction = (
@@ -324,15 +335,85 @@ export type BindCopyAction = (
 ) => { dispose(): void };
 ```
 
-- **语义**：`bindCopyAction` 把「`actionId` → `data-t` 文本 → `copyText` → 反馈」串成一条链——`renderActionBar`／`renderErrorReceipt` 渲染期把文本写入 `data-t`（`CopyButtonInput.text`），binder 用 `port.readDataText(actionId)` 取回、调 `copyText(text, ports, opts)`，反馈走 `ports.toast`；`ActionBarButton.actionId`／`data-t` 的读取者**就是本签名**（V1 洞 5）。
-- **DOM 边界**：`el` 以 `CopyActionHostPort` **端口**呈现（DOM 不得进 base-paint，AC-7／§4.1）；调用方用普通 `.html` 内联适配器实现两个方法即可，无需 DSH 宿主。
-- **无 `data-t` 不抛错**：`readDataText` 返回 `undefined` → 跳过该按钮（与 `renderErrorReceipt` 缺 `dataText` 不渲染按钮同口径）。
+- **actionId 来源（FX-17①②，定死）**：`CopyButtonInput.actionId` **必填**（`renderActionBar` 的复制数据／日志），`ErrorReceiptInput.dataActionId`／`logActionId` 可选、**缺省取 `COPY_ACTION_IDS.errorReceipt.*`**；三者渲染期写入 `ACTION_ID_ATTR` 属性。**不得**再出现「按钮没有 id」的形态；空串／非字符串／同次渲染内重复 → 抛 `ControlsError` code `bad-input`。
+- **与旧侧 `data-t` 口径的偏离（显式声明）**：旧侧复制按钮**无 id**——激活靠内联脚本 `onclick="copyText(this.dataset.t)"`（`base.js:311,648-649`），只有 `data-t` 一个属性；新契约禁内联脚本（AC-7 零注入面）→ 必须有 id 才能做事件委派。`data-t` 的**文本载体**语义**保留**（属性名 = `SharedHelpersInput.dataAttr`，缺省冻结常量 `DEFAULT_DATA_ATTR = 'data-t'`）。
+- **发现机制（FX-17③）**：`port.listActionIds()` 是**唯一** id 来源；`bindCopyAction` 只订阅其中列出的 id，**不得**猜 id／不得约定通配前缀／不得订阅未列出的 id。
+- **语义（逐条）**：对每个 id 订阅 → 激活时读 `port.readDataText(actionId)`（与旧侧 `this.dataset.t` 同时机）→ `undefined` 则跳过（不抛错）→ 否则 `void copyText(text, ports, opts)`；反馈一律走 `ports.toast`（FX-3②），binder 不另出反馈；`dispose()` 解绑**全部**已订阅 id 且**幂等**。
+- **DOM 边界**：`el` 以 `CopyActionHostPort` **端口**呈现（DOM 不得进 base-paint，AC-7／§4.1）；调用方用普通 `.html` 内联适配器实现三个方法即可，无需 DSH 宿主。
+- **`readDataText` 返回 `undefined` 不抛错**：跳过该按钮（与 `renderErrorReceipt` 缺 `dataText` 不渲染按钮同口径）。**`listActionIds()` 允许包含非复制按钮**（如 `ActionBarButton` 的场景按钮——它们同样带 `ACTION_ID_ATTR`）：binder 不区分用途，一律靠 `readDataText → undefined` 跳过，**不得**因此报错或另设白名单（S-9）。
+- **唯一性**：全部 base-paint `actionId`（`COPY_ACTION_IDS` ＋ `HELP_COPY_ACTIONS`）在**同一页面内唯一**，由签名测试断言不撞名；调用方覆盖 `ErrorReceiptInput.dataActionId`／`logActionId` 时同样须唯一且可被 `listActionIds()` 发现。
 
-**共享 JS 文本的唯一产出者（FX-2③，归 #76；#74 只消费）**
+**端到端接线示例（FX-17④：#90 仅凭契约即可接线）**——下面是**调用方页面**（普通 `.html`，非 base-paint 代码）的完整接线，只用本契约的签名：
 
-- 冻结签名：`buildSharedHelpersJs(input?: SharedHelpersInput): string`；`SharedHelpersInput = { prefix?: string; dataAttr?: string }`（缺省 `ilife-`／`data-t`）。
-- 产出恒为**非空** JS 文本，且必须是 IIFE 或显式挂载点（**不得**引入隐式全局，AC-7）；空串视为实现缺陷 → `fillTemplate` 抛 `asset-missing`。
-- 消费链：`#76` 产出 → 技能包把它放进 `TemplateAssets.sharedHelpersJs` → `#74` 的 `fillTemplate` 只负责填 `<!--SHARED-HELPERS-->`。**不许**出现「必填但无产出者」或技能侧自产副本（B3）。
+```html
+<script type="module">
+  import { renderActionBar, bindCopyAction, COPY_ACTION_IDS, ACTION_ID_ATTR,
+           DEFAULT_DATA_ATTR, buildDataText, buildLogText } from 'base-paint';
+
+  // ① 复制端口：双通道 ＋ 反馈（AC-16／FX-3）
+  const ports = {
+    clipboard: navigator.clipboard ?? null,
+    fallback: (text) => { /* 选区 + execCommand 兜底 */ return true; },
+    toast: {
+      mount: (html) => {
+        const el = document.createElement('div');
+        el.innerHTML = html;
+        document.body.appendChild(el);
+        return { remove: () => el.remove() };
+      },
+    },
+  };
+
+  // ② DOM 适配器：实现 CopyActionHostPort 的三个方法（发现／取文本／订阅）
+  const host = {
+    listActionIds: () => [...document.querySelectorAll('[' + ACTION_ID_ATTR + ']')]
+      .map((el) => el.getAttribute(ACTION_ID_ATTR)),
+    readDataText: (actionId) => {
+      const el = document.querySelector('[' + ACTION_ID_ATTR + '="' + actionId + '"]');
+      return el ? (el.getAttribute(DEFAULT_DATA_ATTR) ?? undefined) : undefined;
+    },
+    onActivate: (actionId, handler) => {
+      const el = document.querySelector('[' + ACTION_ID_ATTR + '="' + actionId + '"]');
+      if (!el) return () => {};
+      el.addEventListener('click', handler);
+      return () => el.removeEventListener('click', handler);
+    },
+  };
+
+  // ③ 渲染：复制文本在渲染期序列化后写入 data-t；id 取冻结表
+  const envelope = /* 技能包提供的 SerializableEnvelope */;
+  document.querySelector('#bar').innerHTML = renderActionBar({
+    buttons: [{ label: '打开场景', kind: 'primary', actionId: 'ilife-demo-open' }],
+    copyData: { actionId: COPY_ACTION_IDS.actionBar.copyData, text: buildDataText({ envelope }) },
+    copyLog: { actionId: COPY_ACTION_IDS.actionBar.copyLog, text: buildLogText({ envelope }) },
+  });
+
+  // ④ 接线：发现 → 订阅 → copyText → 徽章（失败徽章恒在，不受 silent 影响）
+  const handle = bindCopyAction(host, ports);
+  // handle.dispose();  // 页面卸载时解绑（幂等）
+</script>
+```
+
+- 该示例**只用** §3.3／§3.4 的签名：`renderActionBar`／`bindCopyAction`／`COPY_ACTION_IDS`／`ACTION_ID_ATTR`／`DEFAULT_DATA_ATTR`／`buildDataText`／`buildLogText`／`CopyPorts`（含 `toast`）／`CopyActionHostPort`；**不需要**任何未冻结的签名，也不读 `window.__hmPayload` 之类旧全局（AC-7）。
+- `errorReceipt` 同理：`renderErrorReceipt({ message, dataText, logText })` 渲染两个复制按钮（id 缺省取 `COPY_ACTION_IDS.errorReceipt.*`）；**同一个** `bindCopyAction(host, ports)` 同时接线 actionBar 与 errorReceipt 的按钮（`listActionIds()` 覆盖页面内全部 `data-action-id`），**不需要**第二套反馈端口（FX-3）。
+
+**共享 JS 文本的唯一产出者（FX-2③／FX-18，归 #76；#74 只消费）**
+
+- **冻结签名**：`buildSharedHelpersJs(input?: SharedHelpersInput): string`；`SharedHelpersInput = { prefix?: string; dataAttr?: string }`（缺省 `ilife-`／`DEFAULT_DATA_ATTR = 'data-t'`——属性名冻结为常量，渲染端与调用方适配端必须同一约定）。
+- 产出恒为**非空** JS 文本，且必须是 IIFE 或显式挂载点；空串视为实现缺陷 → `fillTemplate` 抛 `asset-missing`。
+- **产出内容契约（FX-18①，机读唯一真相源 `SHARED_HELPERS_JS_RULE`）**——五个布尔量逐项定死：
+
+  | 项 | 值 | 含义 |
+  |---|---|---|
+  | `selfContained` | `true` | 自包含：不 import 任何模块、不依赖其它脚本或既有全局 |
+  | `idempotent` | `true` | 可重复注入：同页面注入两次与注入一次等价（幂等判据不得依赖隐式全局，见下） |
+  | `domAllowed` | `true` | **允许 DOM 读取**：页面侧 DOM API（`document.*` 读取／事件绑定）合法——共享 JS 是页面侧代码 |
+  | `forbidGlobalAssignment` | `true` | **禁止**向 `window.<id>`／`globalThis.<id>` **赋值**（不得新增隐式全局，AC-7） |
+  | `forbidNodeBuiltins` | `true` | 禁止 `node:` 内建（浏览器侧资产必须 browser-safe，边界规则 7） |
+
+- **幂等的实现口径**：因为禁止隐式全局赋值，幂等判据**只能**落在 DOM 上（如 `if (document.querySelector('[data-ilife-helpers="1"]')) return;` 并给挂载点打标记属性），**不得**用 `window.__xxx = true` 之类的哨兵。
+- **消费链**：`#76` 产出 → 技能包把它放进 `TemplateAssets.sharedHelpersJs` → `#74` 的 `fillTemplate` 只负责填 `<!--SHARED-HELPERS-->`。**不许**出现「必填但无产出者」或技能侧自产副本（B3）。
+- **产出者归属**：`buildSharedHelpersJs` 归 **#76**；平行缺口 `chartsHelpersJs` 的唯一产出者 `buildChartsHelpersJs` 归 **#78**（§3.5，FX-22），两者产出内容**同受** `SHARED_HELPERS_JS_RULE` 约束（不设第二套规则表）。
 
 **「无宿主（纯 HTML）」可用性边界（AC-16②）**——逐控件、不得写成「需要宿主」：
 
@@ -377,6 +458,7 @@ export type BindCopyAction = (
 | `TEXT_JSON_LT_RULE` | runtime | #77 | implemented | 3.4 | `'u003c'` |
 | `CSV_DIALECT` | runtime | #77 | implemented | 3.4 | `{ delimiter: ','; quote: '"'; quoteEscape: '""'; lineEnding: 'LF'; header: readonly ['section', 'row'] }` |
 | `TEXT_ERROR_CODES` | runtime | #77 | implemented | 3.4 | `readonly ['shape-unsupported', 'structure-invalid', 'format-unknown']` |
+| `SENSITIVE_ROW_RULE` | runtime | #77 | implemented | 3.4 | `{ textField: 'text'; flagField: 'sensitive'; flagValue: true; mask: '****'; textNotice: '（敏感字段已脱敏）' }` |
 | `SerializableEnvelope` | type | #77 | implemented | 3.4 | `Envelope<SerializableShape>` |
 | `DataTextInput` | type | #77 | implemented | 3.4 | `{ envelope: SerializableEnvelope; format?: CopyFormat; title?: string; occurredAt?: string }` |
 | `LogTextInput` | type | #77 | implemented | 3.4 | `{ envelope: SerializableEnvelope; format?: CopyFormat; copyLog?: CopyLogFields }` |
@@ -436,7 +518,11 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | `json` | 无输出头 | 空值保留 `null`（**不**写「未填写」／「(未知)」，键不省略） | 文本中 `<` 一律写成反斜杠 + `u003c`（`TEXT_JSON_LT_RULE`） | 缩进 `TEXT_JSON_INDENT`（2 空格）；键名 = envelope 五字段原样 |
 | `csv` | 无输出头 | 空值写**空字符串**（机器可读，不写占位符） | RFC4180：字段含 `,`／`"`／换行时用 `"` 包裹，内部 `"` 写成 `""`（`CSV_DIALECT`） | 表头 `CSV_DIALECT.header = ['section', 'row']`；行尾 `LF` |
 
-- 三种 format 下**敏感行**（`{ text, sensitive: true }`）一律输出 `TEXT_SENSITIVE_MASK`（`****`），并在 `text` 口径附加一行提示（旧 `contract:162`）。
+- **敏感行判定口径（FX-23，机读真相源 `SENSITIVE_ROW_RULE`）**：投影行（`metrics`／`item` 的**值**、`items` 的**元素**）取值为 `{ text: string, sensitive: true }` 形态时判为**敏感行**——判定只看源值的 `sensitive` 字段是否为字面 `true`（`flagValue`），**不看文本内容**；`text` 字段是原文。该形态与旧侧 `_rowText` 的行值形态**逐字一致**（`base.js:219-225`）。
+  - 三种 format **一律**输出 `SENSITIVE_ROW_RULE.mask`（= `TEXT_SENSITIVE_MASK`，`****`）；`text` 口径在该行**之后紧跟一行** `SENSITIVE_ROW_RULE.textNotice`（`（敏感字段已脱敏）`）。
+  - **与旧侧的偏离（显式声明）**：旧侧把掩码与提示合成一行 `'****（敏感字段已脱敏）'`（`base.js:221`）；新契约拆成「掩码行 ＋ 提示行」——理由是掩码值须能被 `TEXT_SENSITIVE_MASK` 逐值断言，且 `json`／`csv` 下不得夹中文提示（json 值必须是纯掩码字符串、csv 单元格同）。语义等价：原文一律不出现。
+  - `EnvelopeDataByShape` 不含该形态 → 它是 **text 层的行值包装**，不改变 envelope 契约；`json` 口径该键值写 `mask`（不写 `null`）。
+- **主体行文本格式（登记：不冻结也不排除）**：单行文本的**书写形式**（键值分隔符、逐项行前缀、缩进等）**不冻结也不排除**，owner **#77**（其票面验收含逐 shape 输出行断言）。本契约冻结的是：行**来源**（`DATA_TEXT_PROJECTIONS`）、行**序**、`csv` 的 `section` 分组、三种 format 的空值口径、敏感行掩码，以及「一行 = 一个投影值」。**不得**因此自造第二份投影表。
 - **空值口径分层（FX-1④，定死）**：`text` 口径下**数据**空值写 `TEXT_EMPTY_PLACEHOLDER`（`未填写`）、**日志**段缺失写 `LOG_UNKNOWN_PLACEHOLDER`（`(未知)`）；`json` 口径**两者都写 `null`**（键不省略，**不**写任何占位符）；`csv` 口径**两者都写空字符串**（不写占位符）。即：两个占位符**只作用于 `text`**，与 `json`／`csv` 不冲突（V1 洞 8 处置）。
 - **csv 两列语义（FX-1④，定死）**：表头 `CSV_DIALECT.header = ['section', 'row']`。
   - `buildDataText`（csv）：行序 = 投影表主体行 → 收尾行（标题行／时间行**不输出**）；`section` 列 = 投影表的 `csvSections`（逐行对应）；`row` 列 = 该行文本（空值写空串）。
@@ -479,6 +565,9 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | `HelpShellInput` | type | #78 | implemented | 3.5 | `{ sceneData: SceneData; assets: TemplateAssets; strict?: boolean; template?: string }` |
 | `RenderHelpShell` | type | #78 | pending | 3.5 | `(input: HelpShellInput) => FillTemplateOutput` |
 | `renderHelpShell` | runtime | #78 | pending | 3.5 | `(input: HelpShellInput): FillTemplateOutput` |
+| `ChartsHelpersInput` | type | #78 | implemented | 3.5 | `{ prefix?: string; styleId?: string }` |
+| `BuildChartsHelpersJs` | type | #78 | pending | 3.5 | `(input?: ChartsHelpersInput) => string` |
+| `buildChartsHelpersJs` | runtime | #78 | pending | 3.5 | `(input?: ChartsHelpersInput): string` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
 #### 3.5.1 图表 8 接口逐条对照（AC-17／B4）
@@ -504,6 +593,14 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | 自包含（§6.5 `contract:240`） | `CHARTS_STYLE_ID = 'ilife-charts'` | 无 → 冻结 | 样式自注入、本地转义兜底、不依赖其它资产；**不得**引第三方库（零运行时依赖） |
 | 白名单例外（§6.5 `contract:241`） | **不移植**（B4） | 无 | 去掉例外：技能侧不得自建图表画布；`CHART_KINDS` 是闭集 |
 | 工程约束 | `ChartOutput.html` 为**纯 CSS + SVG 字符串** | 无 → 冻结 | 无 `<canvas>`、无内联脚本（交互走 `actionId`）、无 `node:` |
+
+**共享图表 JS 文本的唯一产出者（FX-22，归 #78；#74 只消费）**
+
+- **冻结签名**：`buildChartsHelpersJs(input?: ChartsHelpersInput): string`；`ChartsHelpersInput = { prefix?: string; styleId?: string }`（缺省 `ilife-`／`CHARTS_STYLE_ID`）。
+- **触发条件**：仅当模板含 `<!--CHARTS-HELPERS-->`（`MARKER_RULES.chartsHelpers.rule = 'zero-or-one'`）时，`TemplateAssets.chartsHelpersJs` 才被消费；出现 1 次但未提供资产 → `asset-missing`（§3.1）。
+- **产出内容契约**：与 `buildSharedHelpersJs` **同一份** `SHARED_HELPERS_JS_RULE`（§3.3，FX-18）——自包含／幂等／允许 DOM／禁 `window`·`globalThis` 赋值／禁 `node:`；**不设第二套规则表**。空串 → `asset-missing`。
+- **不许自造**：技能侧自产 charts helpers 副本（B3）；第二个 charts helpers 产出者；把 `el`／DOM 实例塞进签名。
+- 至此三个注入资产**各有唯一产出者**：`sharedHelpersJs` ← `buildSharedHelpersJs`（#76）、`sharedCssText` ← `buildStyleSheet().css`（#75）、`chartsHelpersJs` ← `buildChartsHelpersJs`（#78）；**无「被要求但无产出者」的资产**。
 
 #### 3.5.2 scene-data 契约（AC-3／AC-4）
 
@@ -538,7 +635,7 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
   | `wakeWord` | `ilife-help-copy-wakeWord` | 复制唤醒词 |
   | `params` | `ilife-help-copy-params` | 复制参数 |
 
-  壳渲染场景卡时把 `prompt_template` 全文写入按钮的 `data-t`（渲染期序列化，零注入面），三个按钮的 `actionId` 取上表；点击分发走 `bindCopyAction`（§3.3）。
+  壳渲染场景卡时把 `prompt_template` 全文写入按钮的 `data-t`（渲染期序列化，零注入面），三个按钮的 `actionId` 取上表并写入 `ACTION_ID_ATTR`（§3.3，FX-17）；点击分发走 `bindCopyAction`（§3.3，id 由 `listActionIds()` 发现，**不得**另定通配约定）。
 - **HELP 壳产物结构（V1 洞 7 处置：不冻结也不排除）**：DOM 结构／类名／区块顺序的**逐节点契约不冻结也不排除**——owner 是 **#78**（壳渲染）与 **#88**（速查台重建），验收以 #88 的三条守卫（占位符 0 残留／`id` 唯一／`copyText` 单实现）＋ #96 快照门为准。本契约冻结的是**可断言的锚点**：`HelpShellInput` 四件套、`HELP_SHELL_ID`／`HELP_COPY_TARGETS`／`HELP_COPY_ACTIONS`、类名前缀 `ilife-`（`CONTROL_STYLE_SECTIONS.helpShell`）、三个必需占位符各恰好 1 次。
 - **填充**：壳模板必须走 `fillTemplate`（`INJECT-DATA` 恰好 1、`SHARED-CSS` 恰好 1、`SHARED-HELPERS` 恰好 1）；HELP 壳不得自填、不得内联脚本、不得读全局。
 - **#88 复用面**：`HelpShellInput` ＋ `SceneData` ＋ `SCENE_DATA_SCHEMA` ＋ `HELP_COPY_TARGETS` 四件套即为 #88 的全部输入面——#88 **不需要**新增任何签名，只需提供 `SceneData` 与 `TemplateAssets`。
@@ -589,11 +686,11 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | #104 | 12 个区块组件的**接口 owner 是 #104**；本契约只冻结 base-paint 的共享层签名，**不定义**任何区块组件接口。粒度分层见 §4.1（控件级＝本契约冻结，区块级＝#104 组合控件而不重定义） |
 | #80 | `base-combos/HELP.md:66-71` 六行 `undefined：undefined（undefined）` 属 #80，本票不碰 |
 | #88 | 直接复用 §3.5.3 的四件套（`HelpShellInput`／`SceneData`／`SCENE_DATA_SCHEMA`／`HELP_COPY_TARGETS`）；复制按钮的 `actionId`／文案取 `HELP_COPY_ACTIONS` |
-| #90 | 直接复用 §3.3 的 `copyText` ＋ `bindCopyAction` ＋ `renderActionBar` ＋ §3.4 的序列化签名（`blocked_by [76,77]`）；「复制 → 反馈」仅凭契约即可接线（FX-3③） |
+| #90 | 直接复用 §3.3 的 `copyText` ＋ `bindCopyAction`（含 `listActionIds()` 发现机制）＋ `renderActionBar` ＋ `COPY_ACTION_IDS`／`ACTION_ID_ATTR` ＋ §3.4 的序列化签名（`blocked_by [76,77]`）；「复制 → 反馈」仅凭契约即可接线，端到端示例见 §3.3（FX-3③／FX-17） |
 | #83 | `delivery{mode,path?,template?,bytes?}` 与三态交付（文件态／内联态／文本态）由 **#83** 追加：本契约**不冻结其内部结构、也不排除**——§2 把 `Envelope` 冻结为五字段（`version／skill／shape／key／data`）**不构成**对 `delivery` 的否定（那是「当前五字段」的现状冻结，不是「不得新增字段」的禁令）；#83 追加后须同步 §2／§3.4 与签名测试（FX-5） |
 | #87 | 输出命名（「目录 ＋ 中文命令 ＋ 时间戳 ＋ 冲突后缀」＋ 显式指定输出路径，规格 ID-21）**不冻结也不排除**，owner #87；本契约只认 `FillTemplateReport.bytes`／`FillTemplateOutput.html` 两个产物面字段（FX-5） |
 | #106 | HELP 回补 F1／F2 的**逐场景 CLI 展示**与变体示例（Q11）**不冻结也不排除**，owner #106；壳侧目前只有 `Scene.id` 推导约定（§3.5.3），#106 可新增展示字段但不得改四件套签名（FX-5） |
-| #107 | 6 个未引用的「死模板」并入 HELP **不冻结也不排除**，owner #107；属技能侧数据，壳只提供渲染面（§3.5.3）（FX-5） |
+| #107 | 6 个未引用的「死模板」并入 HELP **不冻结也不排除**，owner **#107**；属技能侧数据，壳只提供渲染面（§3.5.3）。**calorie 6 模板的占位符改造面**（补 `INJECT-DATA` ＋ 自带容器，FX-19）同归 #107（§6.1）；#74 不对未满足占位符契约的模板负责 |
 | #99 | 「门面文档示例可执行」门（Testing Decisions 门禁）owner **#99**，不在 base-paint 冻结范围；本契约只保证 §6.1–§6.5 给出的命令可照抄执行（FX-10） |
 | #79 | §2 的 26 行对照表是**签名冻结口径**；#79 验收的「v1.30 签名 × 实现实况」对照表以**实现实况**为准——两者口径不同、不互为矛盾（V3 相邻票边界处置） |
 | #74 | `packages/skill-bill/scripts/build-help.mjs:28 injectHelpBlock` 与 `injector` 混称：**不属 #92 改动面**，交接给 **#74**（其任务正是消灭 per-skill 私有填充器）；本契约只登记不修（FX-16②） |
@@ -619,7 +716,10 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 ### 6.1 #74 统一填充器（`src/template.ts`）
 
 - **用**：`fillTemplate`／`FillTemplateInput`／`FillTemplateOutput`／`TemplateAssets`／`TEMPLATE_MARKERS`／`MARKER_RULES`／`INJECTION_ORDER`／`DEFAULT_DATA_SCRIPT_ID`／`DATA_SCRIPT_TYPE`／`STRICT_ENVELOPE_*`／`TEMPLATE_ERROR_CODES`。
-- **不许自造**：`injectHtml`／`htmlInjector`／任何 `inject*` 填充函数名；技能侧保留 `fillTemplate`／`fillSharedMarkers` 私有副本（B3 要求删除）；运行时 `import` base-link-core；**生成／补写 `<script>` 容器**（只替换标记文本，容器由模板自带，FX-2①②）；自产 `sharedHelpersJs`（产出者是 #76 的 `buildSharedHelpersJs`，FX-2③）。
+- **不许自造**：`injectHtml`／`htmlInjector`／任何 `inject*` 填充函数名；技能侧保留 `fillTemplate`／`fillSharedMarkers` 私有副本（B3 要求删除）；运行时 `import` base-link-core；**生成／补写 `<script>` 容器**（只替换标记文本，容器由模板自带，FX-2①②）；自产 `sharedHelpersJs`（产出者是 #76 的 `buildSharedHelpersJs`，FX-2③）；自产 `chartsHelpersJs`（产出者是 #78 的 `buildChartsHelpersJs`，FX-22）。
+- **模板必须满足占位符契约（FX-19，硬约束）**：任何交给 `fillTemplate` 的模板**必须**同时满足——① `<!--INJECT-DATA-->` **恰好 1 次**（`exactly-one`，`exemptable: false`）且落在自带容器 `<script id="payload" type="application/json">…</script>` 内；② `<!--SHARED-CSS-->`／`<!--SHARED-HELPERS-->` 各**恰好 1 次**（声明 `<!--NO-SHARED-->` 时可缺席）。不满足 → 抛 `marker-missing`／`marker-duplicate`／`container-missing`（`strict` 与否都生效），**不返空页**。
+- **calorie 6 模板的处置（FX-19，登记）**：`packages/skill-calorie/templates/{diet,exercise,goal,help,home,photo-gallery}.html` 实测**只有** `<!--SHARED-CSS-->`×1 ＋ `<!--SHARED-HELPERS-->`×1，**无 `<!--INJECT-DATA-->`、无自带容器**（两标记 0 命中）→ 属**死资产**（无引用、无填充者）；按契约直接调用 `fillTemplate` **必抛** `marker-missing`／`container-missing`。其**改造面（补 `INJECT-DATA` ＋ 自带容器）与并入 HELP 重建的处置归 #107**（§4.4），**不属 #74**；#74 的票面验收②只对**已满足占位符契约**的模板负责（如 `skill-memo-ilife/templates/*.html` 6 个）。
+- **跨票产出者依赖（FX-19，须写进 #74 票面）**：三个注入资产的产出者当前**全部 pending**——`sharedCssText` ← `buildStyleSheet`（#75）、`sharedHelpersJs` ← `buildSharedHelpersJs`（#76）、`chartsHelpersJs` ← `buildChartsHelpersJs`（#78）。→ #74 的实现／验收须在资产可用之后进行，或由测试**自造**合法资产；**不得**自产这三者（B3），也不得因缺资产而把 `asset-missing` 当成通过。
 - **`escapeHtml` 归一 owner（V1 洞 13 处置）**：把既有 `escapeHtml` 从 4 字符改到 5 字符（`& < > " '`）并翻转 §7 哨兵**由 #74 执行**（#79 只复核）；改完必须同步删除技能侧本地副本，并保证 #96 快照门通过。
 - **验收怎么测**：`node -e` 断言五个标记的数量规则（缺失/重复/互斥各抛对应 code）；**断言模板缺自带容器或 id／type 不符 → `container-missing`**；`Select-String -Path packages\*\src\render\html.ts -Pattern 'SHARED_CSS_MARKER|fillSharedMarkers'` 必须零命中；`node tooling/check-boundaries.mjs` 仍 PASS。
 
@@ -631,21 +731,24 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 ### 6.3 #76 控件层（`src/controls.ts`）
 
-- **用**：`renderToast`／`createToastController`／`copyText`／`createCopyRuntime`／**`bindCopyAction`／`CopyActionHostPort`**／**`buildSharedHelpersJs`／`SharedHelpersInput`**／`renderActionBar`／`renderStatusBadge`／`renderEmptyState`／`renderErrorReceipt` 及其 Input 类型、`CopyPorts`（含 `toast?`）／`ToastHostPort`、`COPY_CHANNELS`／`COPY_TEXT_DEFAULTS`／`TOAST_DEFAULTS`／`ACTION_BAR_DEFAULTS`／`STATUS_*`／`ESCAPE_HTML_*`／`CONTROL_AVAILABILITY`。
-- **不许自造**：`formPrompt`／`selectList`／`smartSelect`／`confirm`／`foldBox`（B7）；`window.*` 全局（AC-7）；只留 `execCommand` 的单通道复制（Q13）；把控件写成「需要宿主」；第二套反馈端口（反馈一律走 `CopyPorts.toast`）；第二套共享 JS 产出者（唯一产出者 `buildSharedHelpersJs`）；把 `el`／`document` 塞进签名（DOM 只经 `CopyActionHostPort`）。
-- **验收怎么测**：纯 HTML 夹具（不启 DSH）注入产出字符串 → 断言静态结构；`copyText` 用假 `CopyPorts`（clipboard 抛错 + fallback 返回 true）断言 `channel === 'fallback'`；空串短路；`silent` 仍回调；**失败时 `ports.toast.mount` 被调用（徽章恒在）且 `silent` 不抑制它**；`onOk`／`onFail` 互斥；`bindCopyAction` 用假 `CopyActionHostPort` 断言「激活 → `readDataText` → `copyText` → 反馈」链路与 `dispose()` 解绑；`buildSharedHelpersJs()` 返回非空且不含 `window.`；`statusBadge` 非法 status 降级 `empty`；`errorReceipt` 缺 `dataText` 不渲染复制按钮且不抛错。
+- **用**：`renderToast`／`createToastController`／`copyText`／`createCopyRuntime`／**`bindCopyAction`／`CopyActionHostPort`（含 `listActionIds()`）／`ACTION_ID_ATTR`／`COPY_ACTION_IDS`／`DEFAULT_DATA_ATTR`**／**`buildSharedHelpersJs`／`SharedHelpersInput`／`SHARED_HELPERS_JS_RULE`**／`renderActionBar`／`renderStatusBadge`／`renderEmptyState`／`renderErrorReceipt` 及其 Input 类型、`CopyPorts`（含 `toast?`）／`ToastHostPort`、`COPY_CHANNELS`／`COPY_TEXT_DEFAULTS`／`TOAST_DEFAULTS`／`ACTION_BAR_DEFAULTS`／`STATUS_*`／`ESCAPE_HTML_*`／`CONTROL_AVAILABILITY`。
+- **不许自造**：`formPrompt`／`selectList`／`smartSelect`／`confirm`／`foldBox`（B7）；`window.*` 全局（AC-7）；只留 `execCommand` 的单通道复制（Q13）；把控件写成「需要宿主」；第二套反馈端口（反馈一律走 `CopyPorts.toast`）；第二套共享 JS 产出者（唯一产出者 `buildSharedHelpersJs`）；把 `el`／`document` 塞进签名（DOM 只经 `CopyActionHostPort`）；**自造复制按钮 actionId 或承载属性**（`actionId` 必填 ＋ 取 `COPY_ACTION_IDS`／`HELP_COPY_ACTIONS`，承载属性恒为 `ACTION_ID_ATTR`，FX-17）；**给 `CopyActionHostPort` 省略 `listActionIds()` 或另定通配约定**（FX-17③）；**产出 JS 里向 `window.<id>`／`globalThis.<id>` 赋值**（含用隐式全局做幂等哨兵，FX-18①）。
+- **产出内容契约（FX-18①）**：`buildSharedHelpersJs` 的返回值逐项满足 `SHARED_HELPERS_JS_RULE`（`selfContained`／`idempotent`／`domAllowed`／`forbidGlobalAssignment`／`forbidNodeBuiltins`）；幂等判据只许落在 DOM（打标记属性／`querySelector` 早退），**不得**用全局哨兵。
+- **dist 纯度扫描口径（FX-18②，三处一致）**：**扫描实现** = `test/contract-signatures.test.mjs` 的 `purityViolations()`（**递归**覆盖 `dist/**/*.js`，含 `dist/spec/*.js`；先剥注释）；**契约条文** = `SHARED_HELPERS_JS_RULE`；**本条验收** = 下面「验收怎么测」的最后一项。三者逐项一致：**禁 `node:` ＋ 禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值**，**允许** DOM 读取（`document.*`）。扫描自证用例：含 DOM 的合法 helpers JS 必须过门，`window.__x = 1`／`globalThis.toast = …`／`import … from 'node:fs'` 必须被拦。
+- **验收怎么测**：纯 HTML 夹具（不启 DSH）注入产出字符串 → 断言静态结构；`copyText` 用假 `CopyPorts`（clipboard 抛错 + fallback 返回 true）断言 `channel === 'fallback'`；空串短路；`silent` 仍回调；**失败时 `ports.toast.mount` 被调用（徽章恒在）且 `silent` 不抑制它**；`onOk`／`onFail` 互斥；`bindCopyAction` 用假 `CopyActionHostPort` 断言「`listActionIds()` 发现 → 激活 → `readDataText` → `copyText` → 反馈」链路、无 `data-t` 跳过、`dispose()` 幂等解绑；`renderActionBar` 的两个复制按钮断言 `ACTION_ID_ATTR` 与 `COPY_ACTION_IDS` 逐字一致、缺 `actionId`／重复 id 抛 `bad-input`；`renderErrorReceipt` 缺 `actionId` 时取 `COPY_ACTION_IDS.errorReceipt.*`；`buildSharedHelpersJs()` 返回非空且**通过 `SHARED_HELPERS_JS_RULE` 纯度口径**（禁 `node:`／禁隐式全局赋值；**允许** `document.*` 读取）；`statusBadge` 非法 status 降级 `empty`；`errorReceipt` 缺 `dataText` 不渲染复制按钮且不抛错。
+- **#76 追加验收（DOM 与红线共存，FX-18②）**：`buildSharedHelpersJs` 落地后，须补一条断言——把产出的 helpers JS 字符串从 `dist/**/*.js` 源码中剥离后，**剩余源码**不得出现 `document.`／`window.`／`navigator.`（即 DOM 只允许出现在产出文本里）。
 
 ### 6.4 #77 复制序列化（`src/text.ts`）
 
-- **用**：`buildDataText`／`buildLogText`／`DataTextInput`／`LogTextInput`／`CopyLogFields`／**`DATA_TEXT_PROJECTIONS`／`DataProjectionSpec`／`LOG_SECTION_SOURCES`**／`COPY_FORMATS`／`SERIALIZABLE_SHAPES`／`LOG_SECTIONS`／`LOG_SECTION_TITLES`／`TEXT_*`／`CSV_DIALECT`／`TEXT_ERROR_CODES`。
-- **不许自造**：snapshot 结构接口（B2）；第二套 `format` 语义（§3.4 已定死）；自定的空值/转义口径；**自定的逐 shape 投影**（一律读 `DATA_TEXT_PROJECTIONS`）；**给 `scene` 段另找数据源**（恒由 envelope 派生，`LOG_SECTION_SOURCES.scene === 'envelope'`）。
-- **验收怎么测**：对 5 个 shape 各造一个 envelope，三种 format 各断言输出（含空值、敏感行 `****`、CSV 引号转义与两列语义、JSON 的 `<` 处理）；逐 shape 断言输出行与 `DATA_TEXT_PROJECTIONS` 一致；6 段日志逐段断言数据源与 `LOG_SECTION_SOURCES` 一致（`scene` 段取 `skill.key（shape）`；缺失段 `text` 写 `(未知)`／`json` 写 `null`／`csv` 写空串）；`fallback` shape 断言抛 `shape-unsupported`；`data` 不符 `EnvelopeDataByShape[shape]` 断言抛 `structure-invalid`。
+- **用**：`buildDataText`／`buildLogText`／`DataTextInput`／`LogTextInput`／`CopyLogFields`／**`DATA_TEXT_PROJECTIONS`／`DataProjectionSpec`／`LOG_SECTION_SOURCES`／`SENSITIVE_ROW_RULE`**／`COPY_FORMATS`／`SERIALIZABLE_SHAPES`／`LOG_SECTIONS`／`LOG_SECTION_TITLES`／`TEXT_*`／`CSV_DIALECT`／`TEXT_ERROR_CODES`。
+- **不许自造**：snapshot 结构接口（B2）；第二套 `format` 语义（§3.4 已定死）；自定的空值/转义口径；**自定的逐 shape 投影**（一律读 `DATA_TEXT_PROJECTIONS`）；**给 `scene` 段另找数据源**（恒由 envelope 派生，`LOG_SECTION_SOURCES.scene === 'envelope'`）；**自定敏感行判定或掩码文案**（形态与掩码恒取 `SENSITIVE_ROW_RULE`，FX-23）。
+- **验收怎么测**：对 5 个 shape 各造一个 envelope，三种 format 各断言输出（含空值、敏感行 `****`、CSV 引号转义与两列语义、JSON 的 `<` 处理）；逐 shape 断言输出行与 `DATA_TEXT_PROJECTIONS` 一致；6 段日志逐段断言数据源与 `LOG_SECTION_SOURCES` 一致（`scene` 段取 `skill.key（shape）`；缺失段 `text` 写 `(未知)`／`json` 写 `null`／`csv` 写空串）；**敏感行逐 format 断言**（`text`：掩码行 `****` ＋ 紧随一行 `（敏感字段已脱敏）`；`json`：该键值 = `****`；`csv`：`row` 列 = `****`），判定只认 `SENSITIVE_ROW_RULE.flagField === flagValue`；`fallback` shape 断言抛 `shape-unsupported`；`data` 不符 `EnvelopeDataByShape[shape]` 断言抛 `structure-invalid`。
 
 ### 6.5 #78 图表与 HELP 壳（`src/charts.ts`／`src/help.ts`）
 
-- **用**：`ChartsApi`（8 方法）及 8 个 Input 类型／`ChartItem`／`ChartOutput`／`CHART_*`／`CHART_PALETTE`；`renderHelpShell`／`HelpShellInput`／`SceneData`／`SCENE_DATA_SCHEMA`／`SCENE_TYPE_FIELD`／`SCENE_STATUS`／`HELP_*`／**`HELP_COPY_ACTIONS`**。
-- **不许自造**：`el` 参数（DOM 由调用方挂载）；`<canvas>`；技能侧图表实现或白名单例外（B4）；`type`（单数）字段或 `types` 别名（AC-3）；第二份 scene-data schema（AC-4）；手写 `scene-data.schema.json`（发布则必须由 `SCENE_DATA_SCHEMA` 序列化生成，FX-6）；复制按钮的第二套 `actionId`／文案（取 `HELP_COPY_ACTIONS`，FX-7）。
-- **验收怎么测**：8 个接口各跑一次结构断言（含空数组 → `empty === true` 且走 `renderEmptyState`；`pct` 型接口 `points === 1` 且 `pct === 0` 时 `empty === false`；非法 items 抛 `structure-invalid`；`pct` 非数抛 `pct-invalid`）；断言产出无 `<canvas>`／无 `<script`；`SCENE_DATA_SCHEMA` 校验一份含 `init_banner`／`contact`／`version`／`recommendations` 的数据；若随包发布 `scene-data.schema.json`，断言它与 `SCENE_DATA_SCHEMA` 逐值相等；`renderHelpShell` 走 `fillTemplate` 后断言三个必需标记各出现 1 次；三个复制按钮的 `actionId`／文案与 `HELP_COPY_ACTIONS` 逐字一致。
+- **用**：`ChartsApi`（8 方法）及 8 个 Input 类型／`ChartItem`／`ChartOutput`／`CHART_*`／`CHART_PALETTE`；**`buildChartsHelpersJs`／`ChartsHelpersInput`**（唯一产出者，FX-22）；`renderHelpShell`／`HelpShellInput`／`SceneData`／`SCENE_DATA_SCHEMA`／`SCENE_TYPE_FIELD`／`SCENE_STATUS`／`HELP_*`／**`HELP_COPY_ACTIONS`**。
+- **不许自造**：`el` 参数（DOM 由调用方挂载）；`<canvas>`；技能侧图表实现或白名单例外（B4）；`type`（单数）字段或 `types` 别名（AC-3）；第二份 scene-data schema（AC-4）；手写 `scene-data.schema.json`（发布则必须由 `SCENE_DATA_SCHEMA` 序列化生成，FX-6）；复制按钮的第二套 `actionId`／文案（取 `HELP_COPY_ACTIONS`，FX-7）；**第二个 charts helpers 产出者**（唯一产出者 `buildChartsHelpersJs`，FX-22）；**第二套产出内容规则表**（恒用 `SHARED_HELPERS_JS_RULE`）。
+- **验收怎么测**：8 个接口各跑一次结构断言（含空数组 → `empty === true` 且走 `renderEmptyState`；`pct` 型接口 `points === 1` 且 `pct === 0` 时 `empty === false`；非法 items 抛 `structure-invalid`；`pct` 非数抛 `pct-invalid`）；断言产出无 `<canvas>`／无 `<script`；`buildChartsHelpersJs()` 返回非空且通过 `SHARED_HELPERS_JS_RULE` 纯度口径（§6.3 同一实现）；`SCENE_DATA_SCHEMA` 校验一份含 `init_banner`／`contact`／`version`／`recommendations` 的数据；若随包发布 `scene-data.schema.json`，断言它与 `SCENE_DATA_SCHEMA` 逐值相等；`renderHelpShell` 走 `fillTemplate` 后断言三个必需标记各出现 1 次；三个复制按钮的 `actionId`／文案与 `HELP_COPY_ACTIONS` 逐字一致且写入 `ACTION_ID_ATTR`。
 
 ## 7. 签名测试清单
 
@@ -657,12 +760,13 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 | 层 | 文件 | 断言什么 | 怎么跑 |
 |---|---|---|---|
-| 编译期类型断言 | `packages/base-render/test-d/contract-signatures.ts` | ① 既有 18 运行时出口＋12 类型出口逐条锁形；② §3 每条冻结签名逐字一致（`Equal<>`／`Expect<>`）；③ `pending` 条目**尚未导出**（`Absent<>`），实现后必须翻转清单；④ 跨包漂移：`STRICT_ENVELOPE_SHAPES` ↔ link-core `EnvelopeShape` | `pnpm build`（root `tsconfig.json` 的 `include` 已收该目录，`tsc -b` 一并编译）；亦可 `pnpm test:types` |
-| 运行时出口面锁 | `packages/base-render/test/contract-signatures.test.mjs` | ① 既有 18 出口仍在（D4 只追加）；② 新增运行时出口**恰好等于**清单里 implemented 的运行时项；③ `pending` 未导出、type-only 不得有运行时值；④ 文档标记区表格与清单逐字一致；⑤ 章节标题／§2 26 行／AC-1…AC-17 落点／FX-1…FX-16 落点／无 BOM 与字面反斜杠 n；⑥ 占位符/token/双通道/形状表/schema/逐 shape 投影表/6 段日志数据源/HELP 复制文案逐值 ＋ `scene-data.schema.json` 存在即与常量逐值相等（FX-6）；⑦ 门禁红线：无 `dependencies`、`files` 含 `dist`、`dist/**/*.js` 无 `node:`／`window.`／`document.`、`src/spec/*.ts` 只许 `import type` | `pnpm test`（root script 的 glob 已含 `packages/base-render/test/*.test.mjs`） |
+| 编译期类型断言 | `packages/base-render/test-d/contract-signatures.ts` | ① 既有 18 运行时出口＋12 类型出口逐条锁形；② §3 每条冻结签名逐字一致（`Equal<>`／`Expect<>`）；③ **运行时条目的值**另有 `_V01…_V27` 逐值断言（FX-20，改 `spec` 值即编译红）；④ `pending` 条目**尚未导出**（`Absent<>`），实现后必须翻转清单；⑤ 跨包漂移：`STRICT_ENVELOPE_SHAPES` ↔ link-core `EnvelopeShape` | `pnpm build`（root `tsconfig.json` 的 `include` 已收该目录，`tsc -b` 一并编译）；亦可 `pnpm test:types` |
+| 运行时出口面锁 | `packages/base-render/test/contract-signatures.test.mjs` | ① 既有 18 出口仍在（D4 只追加）；② 新增运行时出口**恰好等于**清单里 implemented 的运行时项；③ `pending` 未导出、type-only 不得有运行时值；④ 文档标记区表格与清单逐字一致；⑤ 章节标题／§2 26 行／AC-1…AC-17 落点／FX-1…FX-16 落点／**FX-17…FX-25 落点**／无 BOM 与字面反斜杠 n；⑥ 占位符/token/双通道/形状表/schema/逐 shape 投影表/6 段日志数据源/HELP 复制文案/`COPY_ACTION_IDS`/`ACTION_ID_ATTR`/`SHARED_HELPERS_JS_RULE`/`SENSITIVE_ROW_RULE` 逐值 ＋ **FX-20 的 27 条逐值** ＋ `scene-data.schema.json` 存在即与常量逐值相等（FX-6）；⑦ 门禁红线：无 `dependencies`、`files` 含 `dist`、**`dist/**/*.js`（递归，含 `dist/spec/*.js`）**禁 `node:`／禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值（**允许** DOM 读取，FX-18②）、`src/spec/*.ts` 只许 `import type` ＋ 代码不得读写浏览器全局 | `pnpm test`（root script 的 glob 已含 `packages/base-render/test/*.test.mjs`） |
 
-- **怎么捕捉漂移（一句话）**：清单 `SPEC_FROZEN_SURFACE` 是唯一真相源，文档标记区表格与它逐字比对（`contract-signatures.test.mjs` 的「文档投影绑死」用例），类型层再对每条签名做 `Equal<>` 断言（`contract-signatures.ts`），任一环改一处不改其余即红。
+- **怎么捕捉漂移（一句话）**：清单 `SPEC_FROZEN_SURFACE` 是唯一真相源，文档标记区表格与它逐字比对（`contract-signatures.test.mjs` 的「文档投影绑死」用例），类型层再对每条签名做 `Equal<>` 断言（`contract-signatures.ts`），**运行时条目的值**另有运行时逐值断言（`deepEqual`，含 FX-20 的 27 条），任一环改一处不改其余即红。
+- **纯度扫描自证（FX-18②）**：`purityViolations()` 是扫描口径的**唯一实现**，用例自带正／负样本——含 DOM 的合法 helpers JS 必须过门，`window.__x = 1`／`globalThis.toast = …`／`import … from 'node:fs'` 必须被拦，注释里的说明文字不参与判定。**口径变更必须同时改**：`SHARED_HELPERS_JS_RULE`（§3.3）＋ §6.3 验收条文 ＋ 本用例。
 - **哨兵**：`escapeHtml("'") === "'"` 是**已知待修**的漂移哨兵（AC-14）——**AC-14 归一后本断言必须翻转**为 `escapeHtml("'") === '&#39;'`；当前为真只表示缺陷未修，**不代表**该行为被契约接受（FX-16①）。执行归 #74（§6.1），#79 复核。
-- **既有失败台账（FX-13，不修）**：`pnpm test` 当前 exit 1（返修后实测 `tests 435 / pass 413 / fail 22`；返修前为 `430／408／22`，**新增失败 = 0**），**22 条全部是 #92 之前既有、与 base-paint 冻结面零耦合**的失败，**不属 #92 修复范围**：A 组 10 条 = Windows 并行 spawn 抖动（6 个 plugin smoke 单跑 46/46 绿、不可复现）；B 组 12 条 = `plugin-{bill,chef,home,schedule}-ilife` 缺 `"build:client":"tsdown"`（另案承接，不属 #63）。逐条清单与三重证明见 `docs/research/t92-verify-v2-gates.md`「A4 争议取证」。**A4 口径据此定为「三命令零回归」**：`pnpm build`／`pnpm boundaries`／`pnpm test:types` 绿 ＋ `pnpm test` **新增失败 = 0**（本契约的签名测试单跑必须 100% 绿）。
+- **既有失败台账（FX-13，不修）**：`pnpm test` 当前 exit 1（第二轮返修后实测 `tests 443 / pass 421 / fail 22`；第一轮返修后为 `435／413／22`，FX 前为 `430／408／22`，**新增失败 = 0**），**22 条全部是 #92 之前既有、与 base-paint 冻结面零耦合**的失败，**不属 #92 修复范围**：A 组 10 条 = Windows 并行 spawn 抖动（6 个 plugin smoke 单跑 46/46 绿、不可复现）；B 组 12 条 = `plugin-{bill,chef,home,schedule}-ilife` 缺 `"build:client":"tsdown"`（另案承接，不属 #63）。逐条清单与三重证明见 `docs/research/t92-verify-v2-gates.md`「A4 争议取证」。**A4 口径据此定为「三命令零回归」**：`pnpm build`／`pnpm boundaries`／`pnpm test:types` 绿 ＋ `pnpm test` **新增失败 = 0**（本契约的签名测试单跑必须 100% 绿，当前 `tests 36 / pass 36 / fail 0`）。
 - **门禁归属（FX-10）**：「门面文档示例可执行」门 owner **#99**；「计数断言（77）」owner 技能包／#79（本契约不复制计数）；两者均已在 §4.4 登记。
 - **失败即契约缺陷**：测试红时**只许**改实现或同时改「清单＋文档＋类型」三处，不许删断言、放宽断言或改成恒真。
 
@@ -714,3 +818,32 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 - V3 三条必修：§3.1.1（形状裁定）、§4.4 #83／#87／#106／#107、§3.5.2（`.json` 生成）。
 - 三处同步：`SPEC_FROZEN_SURFACE`（`packages/base-render/src/spec/index.ts`）↔ 本文 §3 标记区表格 ↔ `test-d/contract-signatures.ts`。
 - 门禁口径：`build`／`boundaries`／`test:types` 绿 ＋ `test` 新增失败 = 0（既有 22 条见 §7 台账）。
+
+### 8.4 第二轮返修台账（FX-17…FX-25 / V4 新洞 N-1…N-9）
+
+| 项 | 洞（V4） | 处置 | 落点 |
+|---|---|---|---|
+| FX-17 | N-1 高：`bindCopyAction` 无 actionId 来源 | **修** | §3.3 `CopyButtonInput.actionId` 必填 ＋ `COPY_ACTION_IDS` ＋ `ACTION_ID_ATTR` ＋ `CopyActionHostPort.listActionIds()` ＋ 端到端接线示例；§6.3、§4.4 #90 |
+| FX-18 | N-2 高：`buildSharedHelpersJs` 产出契约缺 ＋ 与 dist 红线互斥 | **修** | §3.3 `SHARED_HELPERS_JS_RULE` ＋ 产出内容契约表；§7／§6.3 扫描口径收窄（禁 `node:` ＋ 禁隐式全局赋值，允许 DOM）；测试 `purityViolations()` ＋ 自证用例 |
+| FX-19 | N-3 中：calorie 6 模板无 `INJECT-DATA`／无容器 | **登记 #107** ＋ 硬约束写入 | §6.1「模板必须满足占位符契约」＋「calorie 6 模板处置」＋「跨票产出者依赖」；§4.4 #107 |
+| FX-20 | N-4 中：27 条运行时条目双无断言 | **修** | `test-d` `_V01…_V27` ＋ `test/contract-signatures.test.mjs`「FX-20：27 条运行时条目逐值断言」；§0.2／§7 口径 |
+| FX-21 | N-5 中低：AC 溯源指针错 | **修** | `docs/research/t92-architect-calls.md`（归档，17 条 AC）＋ §0 依据表 ＋ §3.1.1 |
+| FX-22 | N-6 低：`chartsHelpersJs` 无产出者 | **修** | §3.5 `buildChartsHelpersJs`／`ChartsHelpersInput`（归 #78）＋ §3.1 标记表 ＋ §3.5 产出者段 |
+| FX-23 | N-7 低：敏感行判定口径缺失 | **修** | §3.4 `SENSITIVE_ROW_RULE` ＋ 三 format 掩码文案（含与旧侧偏离说明） |
+| FX-24 | N-8 低：`u003c` 归因错 | **修** | §3.1「`u003c` 的归因（FX-24 更正）」＋ `--strict` 段 |
+| FX-25 | N-9 nit：四处精度 | **修** | ①§3.1.1 改 `:54`；②§3.1 `--strict` 默认档补容器硬约束；③§3.3 `:327` 旧措辞改 `ACTION_ID_ATTR`／`COPY_ACTION_IDS`；④`spec/text.ts` `DataTextInput.title` 注释改 `TEXT_HEADER_TEMPLATE` |
+
+**第二轮自查新洞（返修作者自己扫出并处置，不留待复验）**
+
+| # | 自查新洞 | 处置 |
+|---|---|---|
+| S-1 | dist 纯度扫描**不递归**（只查 `dist` 顶层），漏掉 `dist/spec/*.js`——全部冻结常量与未来 helpers 文本的真正落点 | 扫描改 `listDistJs()` 递归；用例断言「扫描必须覆盖 `dist/spec/*.js`」（§7⑦、§6.3） |
+| S-2 | 旧扫描禁 `window.`／`document.` 是**文本级**，会把注释与合法 DOM 读取一起打死（FX-18 收窄后若只删断言即形同虚设） | 扫描先 `stripJsComments()` 再判；`src/spec/*.ts` 检查同口径升级（代码不得读写浏览器全局，注释豁免） |
+| S-3 | `renderActionBar`／`renderErrorReceipt` 的 `actionId` 虽冻结，但**没有任何属性承载它**，调用方无法从 DOM 发现 | 冻结 `ACTION_ID_ATTR = 'data-action-id'` 并写入渲染期（§3.3／§6.3）；HELP 壳按钮同口径 |
+| S-4 | `CopyActionHostPort.listActionIds()` 落地后仍可能「两个按钮同一个 id」→ 委派歧义 | §3.3 冻结：`CopyButtonInput.actionId` 空串／重复 → `ControlsError` code `bad-input`；用例断言 `COPY_ACTION_IDS` ＋ `HELP_COPY_ACTIONS` 全部 id 唯一 |
+| S-5 | `chartsHelpersJs` 的产出内容若无规则表，会与 `sharedHelpersJs` 分叉成第二套口径 | 复用**同一份** `SHARED_HELPERS_JS_RULE`，显式写「不设第二套规则表」（§3.5） |
+| S-6 | 主体行**文本格式**（键值分隔符／逐项前缀）全契约无口径，`csv` 的 `row` 列随之未定 | §3.4 显式登记「**不冻结也不排除**，owner #77」，并列出已冻结的不变量（来源／行序／`section` 分组／空值／掩码／一行=一值） |
+| S-7 | 幂等要求与「禁隐式全局赋值」可能冲突（最自然写法是 `window.__x = true` 哨兵） | §3.3 明写幂等判据**只许落在 DOM**；§6.3 不许自造项同写 |
+| S-8 | 「渲染期写 `data-t` → 激活期读回」的属性名只有散文缺省（`SharedHelpersInput.dataAttr` 缺省 `data-t`），调用方适配器只能硬编码字符串 | 冻结 `DEFAULT_DATA_ATTR = 'data-t'`（§3.3 标记区 ＋ §6.3 用列）；端到端示例改用该常量 |
+| S-9 | 非复制按钮（场景按钮）也带 `actionId`，若 `listActionIds()` 返回它们，binder 行为未写 | §3.3 明写：`listActionIds()` 可含非复制按钮，binder 靠 `readDataText → undefined` 跳过（不抛错、不产 toast） |
+| S-10 | `ToastAction.actionId` 被冻结（且禁内联 `onclick`），但**没有**任何读取／绑定者——与 N-1 同型的悬空 id | §3.3 明写：toast 动作按钮的 id 同样走 `ACTION_ID_ATTR`，**绑定归调用方**（无复制语义，故不纳入 `bindCopyAction`）；本条**不冻结也不排除**，owner #76（若需冻结绑定签名须走 changeset） |

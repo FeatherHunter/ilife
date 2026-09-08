@@ -92,9 +92,12 @@ export interface TemplateErrorShape {
 
 /** 注入物：base-paint 产出的共享 JS／CSS 文本（技能不得自填，B3）。
  *
- * `sharedHelpersJs` 的**唯一产出签名** = `buildSharedHelpersJs(input?)`（§3.3，归 #76）；
- * `sharedCssText` 的唯一产出签名 = `buildStyleSheet().css`（§3.2，归 #75）。
- * 二者为空串 → `asset-missing`（产出者为空串视为实现缺陷）。
+ * 三个资产的**唯一产出签名**（各只有一个产出者，#74 只消费）：
+ *  - `sharedHelpersJs` ← `buildSharedHelpersJs(input?)`（§3.3，归 #76）；
+ *  - `sharedCssText` ← `buildStyleSheet().css`（§3.2，归 #75）；
+ *  - `chartsHelpersJs` ← `buildChartsHelpersJs(input?)`（§3.5，归 #78，FX-22）。
+ * 三者为空串 → `asset-missing`（产出者为空串视为实现缺陷）；产出 JS 文本的内容契约见
+ * `SHARED_HELPERS_JS_RULE`（§3.3，FX-18）。
  */
 export interface TemplateAssets {
   readonly sharedHelpersJs: string;

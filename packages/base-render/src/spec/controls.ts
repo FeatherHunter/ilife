@@ -89,18 +89,51 @@ export interface CopyRuntime {
 /** 冻结签名：`createCopyRuntime(ports: CopyPorts): CopyRuntime`。 */
 export type CreateCopyRuntime = (ports: CopyPorts) => CopyRuntime;
 
-/* ── 复制接线（FX-3／#90 可直接使用） ──────────────────────── */
+/* ── 复制接线（FX-3／FX-17／#90 可直接使用） ────────────────── */
+
+/** 复制按钮上承载 `actionId` 的属性名（FX-17④，冻结）：`renderActionBar`／`renderErrorReceipt`
+ *  ／HELP 壳**渲染期**写入该属性；调用方的 `CopyActionHostPort.listActionIds()` 据此发现 id 集合。
+ *  文本仍走 `SharedHelpersInput.dataAttr`（缺省 `DEFAULT_DATA_ATTR = 'data-t'`）——id 与文本是两个属性，不得混用。 */
+export const ACTION_ID_ATTR = 'data-action-id' as const;
+
+/** 复制按钮的 actionId 冻结表（FX-17②）：`actionBar` 的复制数据／日志 ＋ `errorReceipt` 的两个按钮。
+ *
+ *  **与旧侧 `data-t` 口径的偏离（显式声明）**：旧侧复制按钮**无 id**——激活靠内联脚本
+ *  `onclick="copyText(this.dataset.t)"`（`base.js:311,648-649`），只有 `data-t` 一个属性。
+ *  新契约禁内联脚本（AC-7 零注入面），激活一律经 `bindCopyAction` 事件委派 → **必须**冻结 id 集合；
+ *  旧侧 `data-t` 的文本载体语义**保留**（属性名 = `SharedHelpersInput.dataAttr`，缺省 `DEFAULT_DATA_ATTR = 'data-t'`）。
+ *
+ *  约定：全部 base-paint actionId（含 `HELP_COPY_ACTIONS`）在**同一页面内唯一**；调用方可覆盖
+ *  `ErrorReceiptInput.dataActionId`／`logActionId`，覆盖值同样必须唯一且可被 `listActionIds()` 发现。
+ */
+export const COPY_ACTION_IDS = Object.freeze({
+  actionBar: { copyData: 'ilife-copy-data', copyLog: 'ilife-copy-log' },
+  errorReceipt: { copyData: 'ilife-error-copy-data', copyLog: 'ilife-error-copy-log' },
+} as const);
 
 /** DOM 适配端口（AC-7／§4.1：DOM 不得进 base-paint，故 `el` 以端口替代）。
  *  调用方用内联适配器实现（普通 .html 即可），base-paint 自身不读任何浏览器全局对象。 */
 export interface CopyActionHostPort {
-  /** 读取渲染期写入的复制文本（`data-t`）；该 actionId 无文本返回 undefined。 */
+  /** **发现机制（FX-17③，必填）**：本端口可接线的全部 actionId（由渲染出的 `ACTION_ID_ATTR` 属性收集，
+   *  顺序无语义、可含重复但须自行去重）。`bindCopyAction` **只**订阅这里列出的 id——
+   *  不得猜 id、不得约定通配前缀、不得订阅未列出的 id。
+   *  允许包含**非复制按钮**（如 `ActionBarButton` 的场景按钮）：binder 一律靠
+   *  `readDataText → undefined` 跳过，不报错、不另设白名单。 */
+  listActionIds(): readonly string[];
+  /** 读取渲染期写入的复制文本（`dataAttr`，缺省 `data-t`）；该 actionId 无文本返回 undefined。 */
   readDataText(actionId: string): string | undefined;
-  /** 订阅按钮激活（click／keydown 由宿主适配）；返回解绑函数。 */
+  /** 订阅按钮激活（click／keydown 由宿主适配）；返回解绑函数（幂等，重复调用无害）。 */
   onActivate(actionId: string, handler: () => void): () => void;
 }
 
-/** 冻结签名：`bindCopyAction(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }`。 */
+/** 冻结签名：`bindCopyAction(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }`。
+ *
+ *  **语义（FX-17③，逐条定死）**：
+ *  1. `port.listActionIds()` 是唯一 id 来源；对每个 id 调 `port.onActivate(actionId, handler)`；
+ *  2. `handler` 在**激活时**读 `port.readDataText(actionId)`（与旧侧 `this.dataset.t` 同时机），
+ *     返回 `undefined` → 本次跳过（不抛错、不产 toast；非复制按钮即由此跳过）；否则 `void copyText(text, ports, opts)`；
+ *  3. 失败徽章仍由 `copyText` 经 `ports.toast` 挂载（FX-3②），binder 不另出反馈；
+ *  4. `dispose()` 解绑**全部**已订阅 id，**幂等**（重复调用无害）。 */
 export type BindCopyAction = (
   port: CopyActionHostPort,
   ports: CopyPorts,
@@ -112,12 +145,36 @@ export type BindCopyAction = (
 export interface SharedHelpersInput {
   /** 类名前缀；缺省既有 `STYLE_PREFIX`（`ilife-`）。 */
   readonly prefix?: string;
-  /** 复制文本数据属性名；缺省 `data-t`（`renderActionBar` 渲染期写入）。 */
+  /** 复制文本数据属性名；缺省 `DEFAULT_DATA_ATTR`（`data-t`，`renderActionBar` 渲染期写入）。 */
   readonly dataAttr?: string;
 }
 
+/** 复制文本的默认承载属性名（缺省 `SharedHelpersInput.dataAttr`）：渲染端与 `CopyActionHostPort`
+ *  适配端必须用**同一个**名字——它是「渲染期写入 → 激活期读回」的唯一约定，故冻结为常量而非散文。 */
+export const DEFAULT_DATA_ATTR = 'data-t' as const;
+
+/** `buildSharedHelpersJs`／`buildChartsHelpersJs` 的**产出内容契约（FX-18，机读）**——
+ *  dist 纯度扫描（`test/contract-signatures.test.mjs`）与 §6.3 验收条文**必须**与本表逐项一致：
+ *
+ *  - `selfContained`：自包含，不依赖外部脚本／其它全局，不 import 任何东西；
+ *  - `idempotent`：可重复注入（同页面注入两次，行为与注入一次等价）；
+ *  - `domAllowed`：**允许**页面侧 DOM API（`document.*` 读取／事件绑定）——共享 JS 是页面侧代码；
+ *  - `forbidGlobalAssignment`：**禁止**向 `window.<id>`／`globalThis.<id>` **赋值**（不得新增隐式全局，AC-7）；
+ *  - `forbidNodeBuiltins`：禁止 `node:` 内建（浏览器侧资产必须 browser-safe，边界规则 7）。
+ *
+ *  注意：本表约束的是**产出的 JS 文本**，不是 base-paint 自身运行时——`src/spec/*.ts` 与
+ *  base-paint 的运行时代码仍**不得**读 `window.`／`document.`（AC-7；DOM 只经端口或产出文本）。 */
+export const SHARED_HELPERS_JS_RULE = Object.freeze({
+  selfContained: true,
+  idempotent: true,
+  domAllowed: true,
+  forbidGlobalAssignment: true,
+  forbidNodeBuiltins: true,
+} as const);
+
 /** 冻结签名：`buildSharedHelpersJs(input?: SharedHelpersInput): string`。
- *  恒返回非空 JS 文本（IIFE／显式挂载点，不得引入隐式全局，AC-7）；空串视为实现缺陷 → `asset-missing`。 */
+ *  恒返回非空 JS 文本（IIFE／显式挂载点，不得引入隐式全局，AC-7）；产出内容受
+ *  `SHARED_HELPERS_JS_RULE` 约束（FX-18）；空串视为实现缺陷 → `fillTemplate` 抛 `asset-missing`。 */
 export type BuildSharedHelpersJs = (input?: SharedHelpersInput) => string;
 
 /* ── toast（堆叠提示） ──────────────────────────────────── */
@@ -191,8 +248,14 @@ export interface ActionBarButton {
 }
 
 export interface CopyButtonInput {
+  /** **必填（FX-17①）**：按钮的 `actionId`——`renderActionBar` 的复制数据／日志取
+   *  `COPY_ACTION_IDS.actionBar.copyData`／`copyLog`（或调用方自定，须页面内唯一），
+   *  渲染期写入 `ACTION_ID_ATTR` 属性，供 `CopyActionHostPort.listActionIds()` 发现。
+   *  空串／非字符串／与同一次渲染内其它按钮重复 → 抛 `ControlsError` code `bad-input`。 */
+  readonly actionId: string;
+  /** 缺省 `ACTION_BAR_DEFAULTS.copyDataLabel`／`copyLogLabel`（按用途）。 */
   readonly label?: string;
-  /** 渲染期已序列化的文本（走 buildDataText／buildLogText），存 data-t，零注入面。 */
+  /** 渲染期已序列化的文本（走 buildDataText／buildLogText），存 `data-t`，零注入面。 */
   readonly text?: string;
   readonly format?: CopyFormat;
 }
@@ -254,6 +317,10 @@ export interface ErrorReceiptInput {
   /** 显式传入；不得读旧全局 `__hmPayload` 兜底（AC-7）。 */
   readonly dataText?: string;
   readonly logText?: string;
+  /** 复制数据按钮的 `actionId`；缺省 `COPY_ACTION_IDS.errorReceipt.copyData`（FX-17②）。 */
+  readonly dataActionId?: string;
+  /** 复制日志按钮的 `actionId`；缺省 `COPY_ACTION_IDS.errorReceipt.copyLog`。 */
+  readonly logActionId?: string;
 }
 
 /** 缺 dataText／logText → 不渲染对应复制按钮（容错，不抛错）。 */

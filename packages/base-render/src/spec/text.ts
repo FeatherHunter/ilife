@@ -59,7 +59,7 @@ export interface DataTextInput {
   readonly envelope: SerializableEnvelope;
   /** 缺省 `text`。 */
   readonly format?: CopyFormat;
-  /** 覆盖输出头；缺省 `【skill · key】`。 */
+  /** 覆盖输出头；缺省 `TEXT_HEADER_TEMPLATE`（`'【{skill} · {key}】'`）。 */
   readonly title?: string;
   /** 时间行；缺省不输出该行。 */
   readonly occurredAt?: string;
@@ -79,6 +79,27 @@ export const TEXT_EMPTY_PLACEHOLDER = '未填写';
 export const TEXT_SENSITIVE_MASK = '****';
 /** text 口径输出头（`{skill}`／`{key}` 为替换位，非 HTML 占位符）。 */
 export const TEXT_HEADER_TEMPLATE = '【{skill} · {key}】';
+
+/** **敏感行判定口径（FX-23，机读）**：投影行（`metrics`／`item` 的值、`items` 的元素）取值为
+ *  `{ text: string, sensitive: true }` 形态时判为**敏感行**——与旧侧 `_rowText` 的行值形态**逐字一致**
+ *  （`base.js:219-225`：`{text, sensitive}`，`sensitive` 真值即脱敏）。
+ *
+ *  - 判定只看源值的 `flagField` 是否为字面 `flagValue`（`true`），**不看文本内容**；`text` 字段是原文。
+ *  - `EnvelopeDataByShape` 不含该形态 → 它是 **text 层的行值包装**（`data.metrics`／`data.item` 的值、
+ *    `data.items` 的元素），**不改变** envelope 契约，也不进 json 键名（json 口径该键值写 `mask`）。
+ *  - 三种 format 一律输出 `mask`（= `TEXT_SENSITIVE_MASK`）；`text` 口径在该行之后**紧跟一行**
+ *    `textNotice`。
+ *  - **与旧侧的偏离（显式声明）**：旧侧把掩码与提示合成一行 `'****（敏感字段已脱敏）'`（`base.js:221`）；
+ *    新契约拆成「掩码行 ＋ 提示行」，理由是掩码值须能被 `TEXT_SENSITIVE_MASK` 逐值断言、
+ *    且 `json`／`csv` 口径下不得夹中文提示（json 值必须是纯掩码字符串、csv 单元格同）。语义等价：原文一律不出现。
+ */
+export const SENSITIVE_ROW_RULE = Object.freeze({
+  textField: 'text',
+  flagField: 'sensitive',
+  flagValue: true,
+  mask: TEXT_SENSITIVE_MASK,
+  textNotice: '（敏感字段已脱敏）',
+} as const);
 
 /** 逐 shape 投影规格（FX-1①）：envelope `data` → 复制文本结构。 */
 export interface DataProjectionSpec {

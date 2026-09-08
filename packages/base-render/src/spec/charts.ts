@@ -253,3 +253,20 @@ export interface ChartErrorShape {
   readonly code: ChartErrorCode;
   readonly message: string;
 }
+
+/* ── 共享图表 JS 文本的唯一产出者（FX-22，归 #78；#74 只消费） ── */
+
+/** `TemplateAssets.chartsHelpersJs` 的**唯一产出者**入参。
+ *  该资产仅在模板含 `<!--CHARTS-HELPERS-->` 时使用（`MARKER_RULES.chartsHelpers.rule = 'zero-or-one'`）。 */
+export interface ChartsHelpersInput {
+  /** 类名前缀；缺省既有 `STYLE_PREFIX`（`ilife-`）。 */
+  readonly prefix?: string;
+  /** 图表样式表 id；缺省 `CHARTS_STYLE_ID`（`ilife-charts`）。 */
+  readonly styleId?: string;
+}
+
+/** 冻结签名：`buildChartsHelpersJs(input?: ChartsHelpersInput): string`（归 #78；#74 只消费，技能侧禁自产，B3）。
+ *  恒返回非空 JS 文本，产出内容受 `SHARED_HELPERS_JS_RULE`（§3.3，FX-18）约束：
+ *  自包含／可重复注入（幂等）／允许页面侧 DOM 读取／**禁止**向 `window`／`globalThis` 赋值／禁 `node:`。
+ *  空串视为实现缺陷 → `fillTemplate` 抛 `asset-missing`。 */
+export type BuildChartsHelpersJs = (input?: ChartsHelpersInput) => string;
