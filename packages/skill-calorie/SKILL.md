@@ -41,6 +41,21 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 缺失阻断不返空：空库/空窗/无目标一律 `missing-data`（调用方走 fallback，不静默空页）；坏输入 `bad-input`；精度泄漏 `precision-leak`。
 - 默认目标值（C7 #43）：无目标时热量 1800 卡/饮水 2000 ml，源自 `schema.ts daily_goal` 列 DEFAULT（calorie_goal DEFAULT 1800，water_goal DEFAULT 2000；蛋白 150/碳水 200/脂肪 60 同源）+ 渲染兜底（`render/diet.ts calorieGoal ?? 1800`、`render/home.ts waterGoal ?? 2000），非业务推算。
 
+## Wizard Verify 铁则（M6，v2.4.3 复刻）
+
+配置型 wizard ＝ 写库前要用户先看一眼的配置写。这类词**按场景分流**，分流先于任何写键：
+
+| 场景 | 触发 | 行为 | CLI 落点（可验） |
+|---|---|---|---|
+| 1 主动填 | 说「记围度」「记体脂」类词但**没给数据** | 出空 wizard（不传预填）→ 用户填 → 复制 prompt → AI 调写键 | 空参被拦：无围度项 → `bad-input` exit 2（`fetch/body.ts:107` → `cli/write.ts:205`） |
+| 2 预填 verify ⭐ | 同一类词**给了数据** | 出预填 wizard → 用户核对 → 复制 prompt → AI 调写键 | 预填键限白名单，非 `MEASURE_CAMEL` 字段 → exit 2（`cli/write.ts:754-756`）；皮褶钳类须带算好的 `bodyFatPct`（`cli/write.ts:732`，换算未移植）；计划类先跑 `calorie.view.plan-wizard` 纯校验（`render/planPlate.ts:55-72`，`dryRun:true`／`insertedCount:0`，只调 `validatePlan` 不写库） |
+| 3 直接录 | 用户**明确**说「直接录」「我信你」 | 跳过 wizard，直接调写键，回 `receipt` 形 | 35 写键一律 `receipt`（`cli/write.ts:3-5`、`:112-115`） |
+
+- verify 页本体归 #86（3 个配置型 wizard ＋ 1 个 GIF 框选器；静态 HTML ＋ `copyText`）：本表定流程、页面出页，两处互相引用。
+- 需多步交互的配置写词在路由层落 `non-exec` 桶，`reason` 逐字 `NON_EXEC_REASONS.wizard`（`src/triggers/routing.ts:75-76`；词表 `:193-194`、`:366-372`）；77 键无训练计划写键（`routing.ts:97-98`），计划写入只走 verify。
+- `记围度`／`记体脂` 类词在路由层有单命令入口（`routing.ts:396-400`）——那只证明写键可达；分流仍按本表：有数据走场景 2，明确授权才走场景 3。
+- **禁止**：用户给了数据仍跳过 verify 直接调写键（数据看起来对也不例外）——v2.4.2 → v2.4.3 的根因就是这条。正解＝按场景分流。
+
 ## 联动速查（构建期注入，勿手改）
 
 <!-- HELP-AUTO-START -->
