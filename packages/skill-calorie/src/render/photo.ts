@@ -258,11 +258,15 @@ export function buildAddReceipt(
   });
 }
 
-/** 删照片回执：删除前快照（调用方先 getPhotoRow 取快照，再调 T4 deletePhoto）。 */
+/** 删照片回执：删除前快照（调用方先 getPhotoRow 取快照，再调 T4 deletePhoto）。
+ *
+ * #101 删除可恢复性口径：`body_photos` 走 `DELETE FROM` ＋ 删文件，属**硬删除**，
+ * 故文案必须显式标注「硬删除，不可恢复」；软删除（行保留）统一写「软删除，可恢复」。
+ */
 export function buildDeleteReceipt(snapshot: PhotoRow): CrudReceipt {
   const tags = [...snapshot.tag_list].join('、') || '无标签';
   const summary = '已删除身材照 #' + snapshot.id + '(' + snapshot.date + ' · ' + tags + ')' +
-    (snapshot.note ? ' · ' + snapshot.note : '');
+    (snapshot.note ? ' · ' + snapshot.note : '') + '（硬删除，不可恢复）';
   return buildCrudReceipt({
     scene: '删身材照',
     action: 'delete',
