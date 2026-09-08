@@ -25,6 +25,15 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
     assert.ok(skill.includes(START) && skill.includes(END));
     assert.ok(skill.split('\n').length >= 70);
   });
+  it('M6 Wizard Verify 铁则正文（#98）在 AUTO 块外，含前置/映射/不可写/违规口径', () => {
+    assert.match(skill, /Wizard Verify 铁则/);
+    const m6 = skill.indexOf('## Wizard Verify 铁则');
+    assert.ok(m6 > 0, '缺 M6 章节标题');
+    assert.ok(m6 < skill.indexOf(START), 'M6 章节必须在 AUTO 块之外（块内会被 build-help 重写）');
+    for (const s of ['记体脂（皮褶钳）', 'body_composition_wizard.html', 'body_measurements_wizard.html', 'plan_builder_wizard.html', '当前不可写', '不豁免', '协议 fail mode']) {
+      assert.ok(skill.includes(s), 'M6 正文缺：' + s);
+    }
+  });
   it('互联区新鲜（构建期注入可复现，77 键全对齐 combos）', () => {
     const si = skill.indexOf(START), ei = skill.indexOf(END);
     assert.equal(skill.slice(si + START.length + 1, ei - 1), buildHelpBlock());
