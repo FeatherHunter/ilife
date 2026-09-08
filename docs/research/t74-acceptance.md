@@ -1,0 +1,17 @@
+# #74 验收判据自查表（A1–A13，施工者自证；独立验收见施工单 §6 V1–V3）
+
+| 判据 | 结论 | 证据（可复跑） |
+|---|---|---|
+| **A1** 六标记数量规则逐条（含 `NO-SHARED` 豁免与互斥） | ✅ | `packages/base-render/test/template.test.mjs` → `describe('A1 …')` 6 用例：`sharedCss`／`sharedHelpers` 缺席→`marker-missing`、重复→`marker-duplicate`；`chartsHelpers` 0 次合法／1 次缺资产→`asset-missing`／2 次→`marker-duplicate`；`noShared` 豁免合法（`exempt=true`、`filled=false`）＋与 SHARED 并存→`marker-conflict`＋重复→`marker-duplicate`；载荷槽两标记各自重复→`marker-duplicate` |
+| **A2** 载荷槽规则（恰有其一；两种违例各自的码） | ✅ | 同上 `describe('A2 …')`：两者都有→`marker-conflict`；都无→`marker-missing`；恰有其一→数据页只认 `injectData`／内容页只认 `content`（互斥字段互为忽略项）；`content` 缺失→`content-missing`、`''` 合法 |
+| **A3** 容器校验仅在有 `INJECT-DATA` 时触发；内容页无容器不抛 `container-missing` | ✅ | 同上 `describe('A3 …')`：内容页（含已闭合业务 `<script>`）无容器 → 填充成功且**不生成**容器；数据页缺容器／id 不符／type 不符→`container-missing`（message 辨因）；已闭合容器不算容器；`dataScriptId` 覆盖；单引号属性口径 |
+| **A4** 包裹约定（裸文本被包裹；两条不变量；数据页 `INJECT-DATA` 不误判） | ✅ | 同上 `describe('A4 …')`：三个资产按 `ASSET_WRAPPERS` 逐字包裹且逐字出现恰一次（不双包）；资产以包裹标签起／止→`asset-missing`、中段含 `<script>` 字面量合法、空串／未提供→`asset-missing`；作用域内标记预包裹（同行／跨行）→`marker-conflict`；数据页容器内 `INJECT-DATA` 不报；`content` 不在作用域 |
+| **A5** 判定次序：多条件输入首个命中即抛（≥4 组） | ✅ | 同上 `describe('A5 …')` **7 组样本**：legacy＋预包裹＋空资产→`marker-missing`；重复＋缺槽＋预包裹＋空资产→`marker-duplicate`；两槽皆有＋缺容器→`marker-conflict`；缺容器＋空资产→`container-missing`；容器合规＋data 缺失＋strict 非法→`data-missing`；内容页空资产＋content 缺失→`asset-missing`；data 不可序列化＋strict→`data-missing` |
+| **A6** 8 码逐条可达；失败一律抛 `TemplateError`、不返空页 | ✅ | 同上 `describe('A6 …')`：`SAMPLES` 覆盖 `TEMPLATE_ERROR_CODES` 全量并逐码断言；「失败不返空」逐样本再证；错误形态 `name`／`code`／`marker`／`message` ＋ code 集与 `RenderError` 不重叠 |
+| **A7** `strict` 两档；`strict:true` 零依赖信封校验；禁调 `parseEnvelope` | ✅ | 同上 `describe('A7 …')`：默认档硬拦截＋非信封对象放行；`strict:true` 非对象／缺五字段（逐个 delete）／shape 非法→`strict-invalid`；六形状逐一放行；内容页忽略 `data`／`strict`；**剥注释后**扫描 `dist/template.js` 无 `parseEnvelope`、无 `base-link-core` 运行时 import、无 `node:` |
+| **A8** 零残留标记（内容页 53 ＋ 数据页 6，fixture 资产） | ✅ | 同上 `describe('A8 …')`：真实 53 内容页（bill 16／chef 8／home 21／schedule 8）逐文件填完六标记零残留＋资产／正文到位；memo 6 数据页**迁移前必抛 `marker-conflict`**、按去包裹动作（内存内）后填完零残留且保留自带容器；口径说明见 `docs/research/t74-self-audit.md` N-12 |
+| **A9** calorie 6 模板 → `marker-missing`（正确行为） | ✅ | 同上 `describe('A9 …')`：6 个模板逐个断言无 `INJECT-DATA`／无 `CONTENT` 且抛 `marker-missing` |
+| **A10** `escapeHtml` 五字符 ＋ 哨兵翻转 ＋ calorie 差异证据 | ✅ | `src/contract.ts`（恒读 `ESCAPE_HTML_CHARS`／`ESCAPE_HTML_ENTITIES`）；`test/contract-signatures.test.mjs` 哨兵已翻转为 `escapeHtml("'") === '&#39;'` ＋ 五字符逐值；差异证据 `docs/research/t74-escape-html-calorie-diff.md`（脚本可复跑：41 处调用点、5／5 样本改变、+116 字节、现有资产 0 命中） |
+| **A11** 迁移路径文档完整（其余 5 技能） | ✅ | `docs/research/t74-migration-path.md`：逐技能（bill／chef／home／schedule／memo）现状 `文件:行号`＋动作清单；12 个预包裹模板逐条 `before → after`（memo 6 行号表 ＋ calorie 6 登记）；`escapeHtml` 本地副本 5 份落点＋删除顺序；6 条登记项 |
+| **A12** 门禁全绿、新增失败 0、三处同步、changeset 到位 | ✅ | `pnpm build` 0／`pnpm boundaries` 0（PASS）／`pnpm test:types` 0／签名测试 **46/46**；`pnpm test` **tests 489 / pass 467 / fail 22**（基线 **453／431／22**；新增 36 用例全绿），失败名单**多重集与基线逐条相同**（`Compare-Object` 差异 0 → 新增失败 0，`pnpm test` exit 1 与基线同因）；三处同步 = `src/spec/index.ts`（status 翻转）↔ `docs/base-paint-contract.md` §3.1 表 ↔ `test-d/contract-signatures.ts`（`_T15`）＋运行时出口面锁断言翻转；`.changeset/base-paint-fill-template.md`（`base-paint: minor`） |
+| **A13** 独立验收判定「可过、未越界改技能包」 | ⏳ 待 V1／V2／V3 | 改动面（`git status`）：`docs/base-paint-contract.md`（status 行）＋`packages/base-render/**`（6 个文件）＋`.changeset/base-paint-fill-template.md`；**技能包零改动**（无 `packages/skill-*` 变更） |

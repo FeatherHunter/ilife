@@ -1,10 +1,10 @@
 # #74 · D5 证据：`escapeHtml` 五字符归一（AC-14）对 calorie 输出的字节差异
 
-- 复跑：`node .scratch/t74/escape-html-calorie-diff.mjs`（先 `pnpm build`）。
+- 复跑：`node docs/research/t74-escape-html-calorie-diff.mjs`（先 `pnpm build`）。
 - **归一前实现（base-paint）**：`escapeHtml` 只转 `& < > "` 4 个字符（`packages/base-render/src/contract.ts:31-32` 归一前）。
   措辞更正（FX-74-8）：此处的「旧」指 **base-paint 自身归一之前**，**不是**「旧版本／旧共享层」——
   旧基线 `D:\2Study\StudyNotes\SKILLS\公共组件\assets\base.js:14` **本就五字符**（`'` → `&#39;`），
-  故本次归一属**朝旧版对齐**，不是新增偏离（独立取证见 `.scratch/t74/v3-migration.md`「旧基线对照」）。
+  故本次归一属**朝旧版对齐**，不是新增偏离（独立取证见 `docs/research/t74-verify-v3-migration.md`「旧基线对照」）。
 - 新实现：恒读冻结常量 `ESCAPE_HTML_CHARS`／`ESCAPE_HTML_ENTITIES` 5 个字符（`& < > " '`），`'` → `&#39;`（`packages/base-render/src/contract.ts`）。
 - 差异方向：**只增不减**——每个单引号使输出 +4 字节（`&#39;` 5 字节 vs `'` 1 字节）。
 - 前提自查（本脚本断言）：calorie 模板与 `src/render/html.ts` 中**零**字面 `&#39;`，故「归一前」输出可由「归一后」输出把 `&#39;` 还原为 `'` 逐字反推。

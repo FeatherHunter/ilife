@@ -21,7 +21,7 @@
 
 ### A10 `escapeHtml` 五字符 ＋ 哨兵翻转 ＋ calorie 差异证据：**通过**
 
-- **作者脚本复跑（不覆盖仓内文件）**：读入 `.scratch/t74/escape-html-calorie-diff.mjs`，仅在内存把 `ROOT` 固定为 `D:/ilife/` 并**摘掉最后一行 `writeFileSync`**，以 `data:text/javascript;base64,…` 执行 → EXIT=0，stdout 与仓内 `.scratch/t74/escape-html-calorie-diff.md` **逐字相同**（`MATCH=True`）。即：可复现，且未改动被验文件。
+- **作者脚本复跑（不覆盖仓内文件）**：读入 `docs/research/t74-escape-html-calorie-diff.mjs`，仅在内存把 `ROOT` 固定为 `D:/ilife/` 并**摘掉最后一行 `writeFileSync`**，以 `data:text/javascript;base64,…` 执行 → EXIT=0，stdout 与仓内 `docs/research/t74-escape-html-calorie-diff.md` **逐字相同**（`MATCH=True`）。即：可复现，且未改动被验文件。
 - **独立复算（自写复现同值 fixture）**：`renderPhotoReceiptHtml 8/+32`、`renderErrorHtml 7/+28`、`renderGalleryHtml 6/+24`、`renderPhotoHelpHtml 6/+24`、`renderGifHtml 2/+8` → `TOTAL hits=29 delta=+116 changed=5/5`，且**逐样本 `delta === 4*hits`** 成立。核对结论：`escape-html-calorie-diff.md:24`「29 个 `'`→`&#39;`、+116 字节、5/5 输出改变」**属实**。
 - **41 处调用点**：`packages/skill-calorie/src/render/html.ts` grep 命中 41 条，行号与 `escape-html-calorie-diff.md:11` 逐条一致。
 - **哨兵翻转**：`packages/base-render/test/contract-signatures.test.mjs:421-429`（`assert.equal(escapeHtml("'"), '&#39;')` ＋ 五字符逐值 `ESCAPE_HTML_ENTITIES[ch]`）；类型层 `packages/base-render/test-d/contract-signatures.ts:140`（`Absent<'fillTemplate'>` → `Present<'fillTemplate'>`）。实跑：base-render 全量 `96 pass / 0 fail`、`pnpm test:types` exit 0、`pnpm boundaries` exit 0、`pnpm build` exit 0。

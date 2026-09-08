@@ -3,7 +3,7 @@
 验证者：V1 独立对抗式验收（施工者不得自证）。工作目录 `D:\ilife`，**只读被验文件**，未执行任何 `git add`／`commit`，未修改任何被验文件。
 契约正本：`docs/base-paint-contract.md` §3.1（`:124-183`）＋ §3.1.2（`:193-251`）；冻结面 `packages/base-render/src/spec/template.ts`。
 被验对象：`packages/base-render/src/template.ts`（运行时，427 行）、`packages/base-render/test/template.test.mjs`（570 行 / 36 用例）。
-作者自述（`.scratch/t74/acceptance.md`、`.scratch/t74/self-audit.md`）仅作对照，**每条均自行复核**。
+作者自述（`docs/research/t74-acceptance.md`、`docs/research/t74-self-audit.md`）仅作对照，**每条均自行复核**。
 
 ## 实测方式（复跑命令原文）
 

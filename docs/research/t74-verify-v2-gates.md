@@ -417,8 +417,8 @@ spec/charts.ts:268         仅注释
 | `:14-17` `escapeHtml` 4 → 5 字符，恒读 `ESCAPE_HTML_CHARS`／`ESCAPE_HTML_ENTITIES` | `contract.ts:9` 导入、`:34-35` 使用、`:37` 实现 | ✓ |
 | `:21-22` `TemplateError` 不新增运行时出口 | `src/index.ts:12-13` 注释 + 出口面锁 PASS | ✓ |
 | `:24` 技能包零改动 | 四条 skill 命令全空 | ✓ |
-| `:25` 迁移路径写在 `.scratch/t74/migration-path.md` | 该文件存在（mtime 2026-09-09 00:28:45） | ✓（内容属 V3 面） |
-| `:17` calorie 差异证据 `.scratch/t74/escape-html-calorie-diff.md` | 该文件存在（mtime 2026-09-09 00:27:52） | ✓（内容属 V3 面） |
+| `:25` 迁移路径写在 `docs/research/t74-migration-path.md` | 该文件存在（mtime 2026-09-09 00:28:45） | ✓（内容属 V3 面） |
+| `:17` calorie 差异证据 `docs/research/t74-escape-html-calorie-diff.md` | 该文件存在（mtime 2026-09-09 00:27:52） | ✓（内容属 V3 面） |
 | `:27-28` 三个资产产出者仍 `pending` | 见「他人票未越界」 | ✓ |
 | `:22` 只声明 `base-paint`，base-* 统一版本归 #79 | frontmatter 仅一条 `'base-paint': minor` | ✓ |
 

@@ -175,11 +175,11 @@ HELPERS **裸注入**）；私有 `escapeHtml`（:7）；私有错误码 `BILL_M
 | `skill-memo-ilife` | `src/render/html.ts:8` | 同上 |
 | `skill-calorie` | **无副本**（`src/render/html.ts:14` 已 `import { cx, escapeHtml, token } from 'base-paint'`） | 无需动作 |
 
-- **calorie 侧字节差异证据**（数据含 `'` 时）：`.scratch/t74/escape-html-calorie-diff.md`
-  ＋ 可复跑脚本 `.scratch/t74/escape-html-calorie-diff.mjs`（41 处 `escapeHtml` 调用点；5／5 样本输出字节改变，
+- **calorie 侧字节差异证据**（数据含 `'` 时）：`docs/research/t74-escape-html-calorie-diff.md`
+  ＋ 可复跑脚本 `docs/research/t74-escape-html-calorie-diff.mjs`（41 处 `escapeHtml` 调用点；5／5 样本输出字节改变，
   每个 `'` +4 字节；现有资产 0 命中 → 快照零变化）。
 - **行号口径（FX-74-9④）**：本表用**声明行**（bill `:7`／chef `:7`／home `:8`／schedule `:7`／memo `:8`）；
-  `.scratch/t74/migration-map.md:30` 用**实现体行**（8／8／9／8／9）。两者**各自正确**（声明行 vs 函数体行），
+  `docs/research/t74-migration-map.md:30` 用**实现体行**（8／8／9／8／9）。两者**各自正确**（声明行 vs 函数体行），
   交叉阅读时勿当作矛盾——取件一律以本表声明行为准。
 - **5 技能迁移后 `escapeHtml` 输出零变化（FX-74-9⑧）**：5 份本地副本**同为五字符**（`& < > " '`，
   `'` → `&#39;`），与 base-paint 归一后逐值一致 → 仅换实现，**输出字节不变**（数据含 `'` 时两侧都写 `&#39;`）。
@@ -198,7 +198,7 @@ HELPERS **裸注入**）；私有 `escapeHtml`（:7）；私有错误码 `BILL_M
   （契约 §6.1「跨票产出者依赖」），但**技能侧端到端接线须待产出者落地**。
 - **验收（每个技能）**：① 模板零改动（memo 除外，仅去包裹）＋ ② 产出 HTML 零契约标记残留
   ＋ ③ `escapeHtml` 无本地副本 ＋ ④ #96 per-skill HTML 快照门通过（**该门在仓内尚未实现**，见
-  `.scratch/t74/migration-map.md` §4：现只有正则级断言；逐字节「HTML 未变」当前无法证明）。
+  `docs/research/t74-migration-map.md` §4：现只有正则级断言；逐字节「HTML 未变」当前无法证明）。
 - **④ 的口径修订（FX-74-7）**：④ 的「HTML 未变」**只对包裹与转义成立**——**资产内容替换（§1.1）必然改字节**，
   故须读作「**除 CSS 资产内容外**逐字节未变」；CSS 侧差异由 #96 快照门守门 ＋ 各技能地图 owner 显式批准，
   **不得**当作回归失败，也**不得**当作「零差异」而省略批准。
