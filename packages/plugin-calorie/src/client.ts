@@ -21,7 +21,7 @@ import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE, PLUGIN_VERSION, SKILL_VERSION } from
 import { SETTING_ROWS } from './settings.js';
 import type { ClientCtx, RpcCallResult } from './dsh-ctx.js';
 
-export const inject = ['slots'];
+export const inject = ['slots', 'connection'];
 
 /** 调用口取用器：每次取数时现取（connection 后到也不永久缺席）。 */
 export type GetCall = () => unknown;
@@ -148,7 +148,15 @@ function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
     let alive = true;
     const date = todayString();
     void (async () => {
-      const r = await fetchRead(props.getCall(), DEFAULT_READ_KEY, { date });
+      let r: ReadOutcome;
+      try {
+        r = await fetchRead(props.getCall(), DEFAULT_READ_KEY, { date });
+      } catch (e) {
+        // 调用口同步抛错兜底：fetchRead 之外的错不成不可见 rejection，直接落字。
+        if (!alive) return;
+        setState({ kind: 'error', message: `取数失败：${e instanceof Error ? e.message : String(e)}` });
+        return;
+      }
       if (!alive) return;
       if (r.ok) setState({ kind: 'data', date, total: r.text });
       else if (r.absent) setState({ kind: 'absent', message: r.message });
@@ -192,7 +200,15 @@ function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
     let alive = true;
     const date = todayString();
     void (async () => {
-      const r = await fetchRead(props.getCall(), DEFAULT_READ_KEY, { date });
+      let r: ReadOutcome;
+      try {
+        r = await fetchRead(props.getCall(), DEFAULT_READ_KEY, { date });
+      } catch (e) {
+        // 调用口同步抛错兜底：fetchRead 之外的错不成不可见 rejection，直接落字。
+        if (!alive) return;
+        setState({ kind: 'error', message: `取数失败：${e instanceof Error ? e.message : String(e)}` });
+        return;
+      }
       if (!alive) return;
       if (r.ok) setState({ kind: 'data', date, total: r.text });
       else if (r.absent) setState({ kind: 'absent', message: r.message });

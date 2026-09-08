@@ -122,6 +122,7 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
 - **24h 门 + 安检 + 镜像滞后三连**：因=新包 24h 内、DSH 安检拦锁文件新条目、npmmirror 未同步；
   果=旧版回退 / `MINIMUM_RELEASE_AGE_VIOLATION` / `NO_MATCHING_VERSION`；
   修=§8 安装命令三件套（显式版本 + 松政策 + 官方源）。
+- **client 读 connection 却只声明 slots**：因=client 代码短名缺 `connection`（manifest 包名层的 `@deepseek-ai/dsh-client-connection` 是对的），真机 loader 按短名守卫 ctx，effect 期 `ctx.connection` 抛 `cannot get property "connection" without inject`；果=双面板无限“加载中”（0.1.6 的 20s race 救不了：抛错在 race 之外，还成了不可见 rejection）；修=短名加 `connection`（对照 im-companion `['slots','connection','uiWorkspace']`）+ effect 外圈兜底落字；回路=loader 回路「用了就声明」断言（缺声明版必红）。
 - **Electron 宿主 spawn hang**：因=桥直拿 `process.execPath` 当 node，Desktop 宿主它是 Electron 二进制，
   spawn 起 GUI 子进程永不退出（POST 通道 15s 超时实证；CLI 本体 0.09s 即回、handler 直驱 100ms 回，凶手锁定传输层 spawn）；
   果=双面板无限“加载中”；修=`resolveNodeBin`（node 直用 / Electron 加 `ELECTRON_RUN_AS_NODE`）+

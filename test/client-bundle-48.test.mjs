@@ -84,6 +84,15 @@ for (const { pkg, dir } of PLUGINS) {
     const exp = regs[0].factory(stubRequire);
     assert.equal(typeof exp?.apply, 'function', `${pkg} client 必须导出 apply`);
     assert.ok(Array.isArray(exp?.inject), `${pkg} client 必须导出 inject 数组`);
+    // 真机 loader 按 inject 短名守卫 ctx 服务属性：读了 connection 却不声明，
+    // 真机 effect 期 `ctx.connection` 直接抛 without inject（#48 卡路里无限 loading 根因；
+    // 无头回路用裸对象 ctx 从不抛，所以门禁全绿、真机全红）。用了就声明。
+    if (/\.connection\b/.test(code)) {
+      assert.ok(
+        exp.inject.includes('connection'),
+        `${pkg} client 读了 ctx.connection，必须在 inject 短名里声明 'connection'（对照 dsh-im-companion:['slots','connection','uiWorkspace']）`,
+      );
+    }
     for (const spec of requested) {
       assert.ok(
         ALLOWED_EXTERNALS.has(spec) || spec.startsWith('react'),

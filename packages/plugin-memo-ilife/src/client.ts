@@ -19,7 +19,7 @@ import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE, PLUGIN_VERSION, SKILL_VERSION } from
 import { SETTING_ROWS } from './settings.js';
 import type { ClientCtx, RpcCallResult } from './dsh-ctx.js';
 
-export const inject = ['slots'];
+export const inject = ['slots', 'connection'];
 
 /** 调用口取用器：每次取数时现取（connection 后到也不永久缺席）。 */
 export type GetCall = () => unknown;
