@@ -14,7 +14,8 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "SKILL.md"
   ],
   "dependencies": {
     "base-paint": "^0.1.0"

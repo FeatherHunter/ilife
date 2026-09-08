@@ -4,14 +4,17 @@
  * apply 真注册通道，取数只经 bridge.readViaCli（spawn 技能 CLI），
  * 从不 import 任何技能实现。
  * 单品硬依赖总管（dependencies，非 peer，见 package.json）；设置页住本包。
+ * 打包技能提供方见 skill-provider.ts（badge 同形，#56）：单份 SKILL.md 按包名解析，
+ * rank 内联 600，名用 skill-calorie；面板/桥行为不受其影响。
  */
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, ok, fail, parseReadPayload } from './contract.js';
 import type { RpcResult } from './contract.js';
 import { SkillBridgeError, readViaCli } from './bridge.js';
 import type { HostCtx, RpcHandler } from './dsh-ctx.js';
+import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
 
 export const name = 'dsh-calorie';
-export const inject = ['connection'];
+export const inject = ['connection', 'skills'];
 
 interface HostLogger {
   info?(...args: unknown[]): void;
@@ -39,6 +42,13 @@ export function apply(ctx: HostCtx): void {
       ? (loggerSource as (scope: string) => HostLogger)(name)
       : (loggerSource as HostLogger | null | undefined)) ?? console;
   try {
+    ctx.skills.registerProvider(() => skillProvider);
+  } catch (error) {
+    // 提供方是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让（RPC 通道退让同形），他错重抛。
+    if (!String((error as Error)?.message ?? error).includes('already registered')) throw error;
+    logger.warn?.('[dsh-calorie] skill provider ' + PROVIDER_NAME + ' already registered by another instance; yielding');
+  }
+  try {
     const dispose = ctx.connection.rpc.handle(RPC_CHANNEL, handleCalorieRpc);
     ctx.effect(() => () => dispose(), 'dsh-calorie: rpc channel cleanup');
   } catch (error) {
@@ -56,5 +66,6 @@ export type { SlotDescriptor, TabsPort } from './slot.js';
 export { SETTINGS_OWNER, SETTINGS_SLOT, SETTING_ROWS } from './settings.js';
 export type { SettingRow } from './settings.js';
 export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli } from './bridge.js';
+export { PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK, SKILL_FILE, skillDir, skillFile, parseSkillText, provider as skillProvider } from './skill-provider.js';
 export { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, ok, fail, parseReadPayload } from './contract.js';
 export type { ReadPayload, RpcError, RpcResult } from './contract.js';

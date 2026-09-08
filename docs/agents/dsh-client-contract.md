@@ -44,6 +44,9 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
 - `"@deepseek-ai/dsh-client-ui-workspace" => "uiWorkspace"`（`dsh-client-ui-workspace/lib/client.js:37`；
   惰性可选读取可不声明——im-companion 注释，宿主未证实，按“用了就声明”从严）。
 - `"@deepseek-ai/dsh-client-runtime"` 映射不明（三方来源均无该包源码，P1 open question）——**本仓不用它**。
+- host 侧 `"skills"` 即服务名（SkillRegistry 以 `super(ctx, "skills")` 挂载，
+  `dsh-skill/lib/index.js:132`；host 插件 `inject` 写 `"skills"` 即注入该注册表，
+  先例见 badge `inject=["skills"]`，`dsh-skill-badge/lib/index.js:47`）。
 
 ## 5 slots 菜谱
 
@@ -156,5 +159,14 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
   标签解析与 `resolveSlotLabel` 同形（thunk 跟活，slots lib `:27-29`）。
 - 缺席=ledger 无该 `id`：显示 `未安装[<包名>]，请补装：dsh plugin add dsh-life-pack <包名>`
   只读文本（recoFor 同文）；总管零 import 技能代码。
+
+## 12 打包技能提供方（#56 卡路里样板，badge 同形）
+
+- 服务：`ctx.skills.registerProvider(create)`（`dsh-skill/lib/index.js:147`，effect label `skills.registerProvider()` 同文件 `:178`；SkillRegistry 以 `super(ctx, "skills")` 挂载为 `skills` 服务，同文件 `:132`）。
+- 排序：`BUNDLED_SKILL_RANK=600`（`dsh-skill/lib/index.js:23`；`RUNTIME_RANK=250` 同文件 `:21`；filesystem 各 root 100~500 见 `dsh-skill-filesystem/lib/index.js:21-25`）。打包技能提供方一律内联 600，不从宿主 import（宿主无该 dep，保持零依赖）。
+- badge 同形（`dsh-skill-badge/lib/index.js` 全段对照）：`PROVIDER_NAME`（`:10`）+ `CANDIDATE {name,description,invocation:{modelInvocable:true,userInvocable:true},provider,source:"bundled",resourceBase:{kind:"directory",path},rank,locator}`（`:16-28`）；`provider {name,list:()=>[CANDIDATE],get:()=>{name,description,invocation,provider,source,resourceBase,content}}`（`:29-42`）；cordis 形态 `name` + `inject=["skills"]` + `apply(ctx){ctx.skills.registerProvider(()=>provider)}`（`:44-51`）。
+- filesystem 对照：`name="skill-filesystem"` + `inject=["skills"]`（`dsh-skill-filesystem/lib/index.js:29-30`）；`apply(ctx,config){ctx.skills.registerProvider(...)}`（同文件 `:46-51`）。
+- 校验红线（`dsh-skill/lib/index.js`）：candidate 须含 `name/description/invocation/source/rank/provider` 且 `provider` 须等于注册名（`validateCandidate` 同文件 `:452`，调用点 `:360`）；`get` 回定义 `name` 与候选不一致即失效返回 undefined（同文件 `:259`）。
+- 本仓用法（卡路里样板）：host `inject` 加 `"skills"`（短名即服务名，见 §4 新增行）；单份 SKILL.md 按包名解析（`createRequire.resolve('skill-calorie/package.json')` 再拼 `SKILL.md`，不复制，避 R2 修法②双份腐化；不走 `exports` 子路径，免补 `./SKILL.md` 导出）；`resourceBase` 指技能包根目录；`content` 取 frontmatter 后正文（filesystem `parseSkillFile` 同形；badge 无 frontmatter 才整文返回，不照抄）。
 - DSH右侧槽（`details`）本项目明确不用；技能功能页唯一入口是 sidebar槽
  （`betterSidebar.registerTab`，软依赖：`ctx.get('betterSidebar')` 判空，没装就不注册，不断链）。
