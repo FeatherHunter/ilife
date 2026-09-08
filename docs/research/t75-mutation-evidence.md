@@ -25,5 +25,10 @@
 | P1 | **无变异探针**：`DSH_BROWSER` 指向不存在路径 → 视觉脚本必须显式 exit 1（返修⑦） | PASS | exit=1；命中预期判据=DSH_BROWSER 显式指向的浏览器不存在 |
 
 还原后重跑 style.test.mjs：fail=0（绿，还原有效）
+
+变异前 sha256（目标文件）：
+  style.js  11799db54a5307555aad3ff44f981d3c25a2c6070401f32ac599b36177b86de9
+  spec/style.js  be91370ca65d2139e74908cce35059dac3fe63834e2e146641d487010767600e
+还原自证：上述 sha256 逐文件与变异前**相同**（脚本内断言，不等即 exit 1）。
 RESULT: 15/15 变异使对应判据变红
 ```

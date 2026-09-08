@@ -15,6 +15,7 @@
  */
 import { readFileSync, writeFileSync, cpSync, rmSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { basename, join, dirname, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -230,8 +231,12 @@ cpSync(DIST, BACKUP, { recursive: true });
 /** 变异触及的文件（相对 dist）；还原 = 逐文件覆盖回 dist。 */
 const TOUCHED = [...new Set(MUTATIONS.map((m) => m.file).filter((f) => f !== null))];
 
-/** 还原：把备份**逐文件覆盖**回 `dist`（协议 §2.1：不对 `packages/**` 做递归删除）。
- *  变异只改既有文件、从不新增文件，故覆盖即完全还原；随后逐文件自证字节相等。 */
+/** 变异前的 sha256（协议：变异实验须**先记录目标文件 sha256**，还原后自证 sha 相同）。 */
+const sha256 = (p) => createHash('sha256').update(readFileSync(p)).digest('hex');
+const BEFORE_SHA = new Map(TOUCHED.map((rel) => [rel, sha256(join(DIST, rel))]));
+
+/** 还原：把备份**逐文件覆盖**回 `dist`（协议 §2.1：不对 `packages/**` 做递归删除），
+ *  随后逐文件自证 **sha256 与变异前相同**。 */
 const restore = () => {
   for (const rel of TOUCHED) {
     const from = join(BACKUP, rel);
@@ -239,9 +244,10 @@ const restore = () => {
     cpSync(from, join(DIST, rel), { force: true });
   }
   for (const rel of TOUCHED) {
-    const a = readFileSync(join(BACKUP, rel));
-    const b = readFileSync(join(DIST, rel));
-    if (!a.equals(b)) throw new Error('还原失败（字节不等）：' + rel + ' → 请 `pnpm build`');
+    const now = sha256(join(DIST, rel));
+    if (now !== BEFORE_SHA.get(rel)) {
+      throw new Error('还原失败（sha256 不等）：' + rel + ' before=' + BEFORE_SHA.get(rel) + ' after=' + now + ' → 请 `pnpm build`');
+    }
   }
   safeRm(BACKUP, 't75-dist-backup-');
 };
@@ -303,6 +309,9 @@ console.log('| 变异 | 破坏什么 | 结果 | 证据（对应判据是否变�
 console.log('|---|---|---|---|');
 for (const r of rows) console.log('| ' + r.id + ' | ' + r.label + ' | ' + r.verdict + ' | ' + r.detail + ' |');
 console.log('');
+console.log('变异前 sha256（目标文件）：');
+for (const rel of TOUCHED) console.log('  ' + rel + '  ' + BEFORE_SHA.get(rel));
 console.log('还原后重跑 style.test.mjs：fail=' + afterFail + (afterFail === 0 ? '（绿，还原有效）' : '（红，还原失败 → 请 `pnpm build`）'));
+console.log('还原自证：上述 sha256 逐文件与变异前**相同**（脚本内断言，不等即 exit 1）。');
 console.log('RESULT: ' + (rows.filter((r) => r.verdict === 'PASS').length) + '/' + rows.length + ' 变异使对应判据变红');
 if (bad > 0 || afterFail !== 0) process.exit(1);
