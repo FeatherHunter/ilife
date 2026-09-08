@@ -1334,3 +1334,38 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 **#77 自查新洞**：见 §3.4.4（77-1…77-12，逐条处置／定案，不留待复验）。
 
 **门禁实测（#77 落地后）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm test:types` 退出 0／签名测试 `contract-signatures.test.mjs` **47 用例全绿**／`text.test.mjs` **66 用例全绿**／`controls.test.mjs` **64 用例全绿**／证据脚本 `node docs/research/t77-serialization-evidence.mjs` 退出 0（**174 条断言全绿**，重跑逐字节相同）／`pnpm test` **新增失败 = 0**（判据 = `docs/research/t92-baseline-failures.md` 失败用例名多重集，见 §7「门禁口径」）／`SPEC_FROZEN_SURFACE` **130 条**（implemented **123**／pending 7；runtime 88／type 42）。
+
+### 8.11 #75 共享样式资产施工台账（D1–D8 / R1–R10）
+
+口径同 §8：每条给**处置**与**落点**，**禁止默默略过**。本轮**落地最后 2 条 `pending`**（1 runtime ＋ 1 type）→ `SPEC_FROZEN_SURFACE` 仍 **130 条**，`implemented` **＋2**／`pending` **−2**（落地后实测 **implemented 130／pending 0**，runtime 88／type 42）；**未改任何既有签名的值**（三处同步：清单 ↔ 本文 §3.2 标记区 ↔ `test-d/contract-signatures.ts`），**未实现**其它票的任何行为，技能包**零改动**。
+
+| 编号 | 交付 | 落点 | 处置 |
+|---|---|---|---|
+| D1 | `buildStyleSheet` 运行时（不改冻结签名） | `packages/base-render/src/style.ts`（唯一产出者；`STYLE_PREFIX`／`STYLE_VERSION`／`STYLE_TOKENS`／`cx`／`token` 原样保留）＋ `src/index.ts:4` 只追加 1 个出口 | **实现** |
+| D2 | status 翻转 ＋ 三处同步 | `src/spec/index.ts:79-80` ↔ 本文 §3.2 标记区（`:269-270`）↔ `test-d/contract-signatures.ts:219`（`Absent<>` → `Present<>` ＋ `:220` 追加 `_S09b` 出口类型锁形） | **实现** |
+| D3 | charts 复用接缝 | `src/charts.ts:1700` `chartsCss` 加 `export`（**不进** `src/index.ts` → 出口面锁不破）＋ `src/style.ts` `charts: (p) => chartsCss(p)` | **实现** |
+| D4 | 单测：形态／逐值／8 区／类名双向对齐／同源／联调 | `packages/base-render/test/style.test.mjs`（**23 用例**，T1–T22；计数口径 = 顶层 `it(` 展开后的 test 数） | **实现** |
+| D5 | 发布面实证（票面验收①） | `docs/research/t75-publish-evidence.mjs` ＋ `.md`（真打 tarball → 解包 → 从发布产物 import；**19/19**） | **实现** |
+| D6 | 变异自证 | `docs/research/t75-mutation-evidence.mjs` ＋ `.md`（**6/6** 变异使对应测试变红；还原后重跑 fail=0） | **实现** |
+| D7 | 视觉代理取证（票面验收②） | `docs/research/t75-visual-evidence.mjs` ＋ `.md`（headless Chrome computed **42/42**；无浏览器显式 exit 1） | **实现** |
+| D8 | changeset ＋ 证据报告 | `.changeset/base-paint-style-sheet.md`（`'base-paint': minor`）＋ `docs/research/t75-style-evidence.md` | **实现** |
+
+**需拍板决策的落地（编排者裁定，逐条）**
+
+| 裁定 | 落地 | 落点 |
+|---|---|---|
+| **D1** `StyleSheetOutput.version` 取值 | 契约 `:268` 只冻结类型 `version: string`、**未规定取值**（契约空白）→ 裁定取 **`STYLE_VERSION`**（`'0.1.0'`）：语义为「样式表版本」、已被 `test-d:119 _B17` 锁、与 B8 同值、零新增符号；**禁止**从 `package.json` 读（撞 `dist` 纯度红线） | `src/style.ts` `version: STYLE_VERSION`；`style.test.mjs` T6 |
+| **D2** 契约 `:295`「技能现有私有 CSS 串随 #75 删除」 | **本票不执行**：4 技能尚未依赖 base-paint，删除即破坏其 HTML 输出，且唯一能证明不回归的门 **#96 未建** → **落点 = #96 门 → #108–#113 真迁移**；本票技能包零改动 | `packages/skill-{bill,chef,home,schedule}/src/render/html.ts`（**未动**）；`docs/research/t75-style-evidence.md` §6 记账 1 |
+| **D3** `extraCss` 是否运行时校验 | **不校验**：契约 §3.2／§6.2 **既无 `StyleSheetError` 错误码、也未规定违规行为** → `extraCss` 合规由**调用方负责**，不自造契约外错误形态。本票只保证 ① 基座 `:root` 恒在前、`extraCss` 末尾**原样追加**；② 无 `extraCss` 时产出不含 `--r-xl`／`--pink`；③ 合法技能作用域覆盖块逐字出现。**若将来要强制，须先补契约错误码。** | `src/style.ts` `buildStyleSheet`；`style.test.mjs` T14／T15／T16 |
+| **R1** 验收① 的取证方法 | 现成 `pnpm publish:tarball` **不覆盖 base-paint**（`tooling/check-publish.mjs` 的 `--tarball` 分支只断言 6 skill ＋ 6 单品）→ 改真打 tarball ＋ 解包 import 取证 | `docs/research/t75-publish-evidence.mjs`（19/19） |
+| **R4** `style/tokens.css` 去留 | **保留不动**：非契约资产（`:308`）、不在 `files`、是 `--ilife-font` 唯一落点，C-21 禁新增 token 名 | 文件未动；`t75-style-evidence.md` §6 记账 2 |
+| **R5** charts「复用不得重述」 | `chartsCss` 加 `export`（不进 `index.ts`）；`buildStyleSheet` 的 `charts` 区**逐字节等于** `chartsCss(prefix)`（自定义 `prefix` 时由 `chartsCss` 机械改写）；**双份注入**（helpers 自注入 ＋ 共享样式表）登记为已知记账 | `src/charts.ts:1700`；`style.test.mjs` T12；`t75-style-evidence.md` §6 记账 3 |
+| **R6** 类名撞车 `ilife-error` | errorReceipt 容器**不用**裸 `.ilife-error`，改 `.ilife-error:has(> .ilife-error-title)`（calorie 的 `ilife-error` 节点无该子元素 → 不命中）；浏览器实测负控 computed `0px/rgba(0,0,0,0)/0px` | `src/style.ts` `errorReceipt` 区；`style.test.mjs` T21；`t75-visual-evidence.md` `R6` 行 |
+| **R7** 页面壳样式归属 | #75 只产 **11 token ＋ 8 闭集样式区**；页面壳／KPI／表格／回到顶部归 **#104**；**未**塞进 `extraCss`、**未**扩闭集（B1 的 H-06／H-09／H-17／H-19 不在本票验收面） | `style.test.mjs` T22；`t75-style-evidence.md` §6 记账 4 |
+| **R8** 旧样式删除 | 本票**只新增、不删**（含 `hm-*`／`fp/sl/ss`／5 个技能私有 CSS 串） | `git show --stat`；记账 1 |
+| **R9** 验收② 的载体与口径 | 6 个 calorie 模板**预包裹** `<!--SHARED-CSS-->` → 直接 `fillTemplate` 必抛 `marker-missing`（`:962`）→ 用**合成模板**取证；票面／台账写明「本票只给**代理证据**；真实技能模板取证待 #107」 | `docs/research/t75-visual-evidence.mjs`；`t75-style-evidence.md` §7 |
+| **R10** 视觉证据入仓 | 入仓 `docs/research/t75-visual-evidence.{mjs,md}`；逐条 `PASS/FAIL` ＋ 末尾 `RESULT: n/m`，任一 FAIL → exit 1，未测量计 FAIL，无浏览器**显式失败** | 同上 |
+
+**未定口径（登记，不冻结也不排除）**：① `extraCss` 违规的强制失败路径（须先补契约错误码，owner #75）；② `charts` 区是否应进共享样式表（契约 §3.2 闭集含 `charts`，§3.5 声明「各有唯一产出者」，二者张力已在记账 3 写明；若后续裁定不入，删 `SECTION_BUILDERS.charts` 单点即可）；③ 零渐变的唯一例外（`chartsCss` 的虚线图例 `repeating-linear-gradient`，属 #78 冻结产出、本票必须复用）。
+
+**门禁实测（#75 落地后）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm snapshot:check` 退出 0／`pnpm publish:pre` 退出 0（PASS）／签名测试 `contract-signatures.test.mjs` **47 用例全绿**／`charts.test.mjs` **87 用例全绿**（`chartsCss` 加 `export` 未破坏 #78）／`style.test.mjs` **23 用例全绿**／`pnpm test` **新增失败 = 0**（判据 = 失败用例名集合逐名比对：tests 819→842／pass 795→818／fail **24→24**／`✖` 名字集 28→28，NEW 与 GONE 均为空集）／发布面真打 tarball **19/19**／变异自证 **6/6**／浏览器 computed **42/42**／`SPEC_FROZEN_SURFACE` **130 条**（implemented **130**／pending **0**；runtime 88／type 42）。
