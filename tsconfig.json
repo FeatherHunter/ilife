@@ -22,5 +22,5 @@
     { "path": "./packages/plugin-chef" },
     { "path": "./packages/plugin-bill-ilife" }
   ],
-  "include": []
+  "include": ["packages/base-render/test-d"]
 }

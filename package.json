@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "test:types": "tsc -b",
     "test": "node --test \"test/*.test.mjs\" \"packages/base-render/test/*.test.mjs\" \"packages/skill-calorie/test/*.test.mjs\" \"packages/skill-memo-ilife/test/*.test.mjs\" \"packages/skill-schedule/test/*.test.mjs\" \"packages/skill-home/test/*.test.mjs\" \"packages/skill-bill/test/*.test.mjs\" \"packages/skill-chef/test/*.test.mjs\" \"packages/plugin-manager/test/*.test.mjs\" \"packages/plugin-calorie/test/*.test.mjs\" \"packages/plugin-memo-ilife/test/*.test.mjs\" \"packages/plugin-schedule-ilife/test/*.test.mjs\" \"packages/plugin-home-ilife/test/*.test.mjs\" \"packages/plugin-chef/test/*.test.mjs\" \"packages/plugin-bill-ilife/test/*.test.mjs\"",
     "doctor": "node tooling/skilllink.mjs doctor",
     "snapshot": "node tooling/write-snapshot.mjs",
