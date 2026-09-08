@@ -1,6 +1,6 @@
 {
   "name": "dsh-life-pack",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "爱生活总管插件 P10 脚手架：6 tab 只导航+推荐安装，不依赖单品、不 import 单品页",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,11 +30,21 @@
     },
     "client": {
       "platform": "web",
-      "inject": []
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "npm run build:host && npm run build:client",
+    "build:host": "tsc -b",
+    "build:client": "tsdown",
+    "typecheck": "tsc -p tsconfig.client.json",
     "test": "node --test test/smoke.test.mjs"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "react": "19.2.8",
+    "tsdown": "0.22.14"
   }
 }

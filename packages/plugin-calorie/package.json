@@ -1,6 +1,6 @@
 {
   "name": "dsh-calorie",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "爱生活单品插件 P10 脚手架：卡路里（ilife:calorie order 75），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,11 +34,22 @@
     },
     "client": {
       "platform": "web",
-      "inject": []
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-connection"
+      ]
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "npm run build:host && npm run build:client",
+    "build:host": "tsc -b",
+    "build:client": "tsdown",
+    "typecheck": "tsc -p tsconfig.client.json",
     "test": "node --test test/smoke.test.mjs"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "react": "19.2.8",
+    "tsdown": "0.22.14"
   }
 }
