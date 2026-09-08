@@ -8,6 +8,10 @@
  * 缺失阻断不返空：空库/空窗/无目标一律抛（CalorieRenderError missing-data / FetchError），exit 4，不返空数组冒充正常。
  * 仅 type-only 消费 link-core（零运行时依赖）；envelope 手工装配，形状校验本地镜像 link-core。
  * HTML 用 --html 显式落盘（utf8）：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
+ * #87 · 输出命名规范复刻（M10）：不给 --output/--html 时默认落
+ * <SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html（同秒冲突自动加后缀），
+ * 中文 command 取 CALORIE_COMBOS[key].title；显式 --output（--html 为 legacy 别名）覆盖任意路径。
+ * 落点随 envelope 的 data.output 回传（additive 字段，六形状守卫不校验 data 额外键）。
  */
 import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -51,6 +55,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
+import { resolveDefaultHtmlPath, resolveExplicitHtmlPath } from '../output.js';
 import type { CalorieComboKey } from './keys.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
@@ -76,17 +81,28 @@ function preflight(): string {
   return p as string;
 }
 
-function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
-  const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } = {
-    key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS,
+interface ReadArgs {
+  key: string | undefined;
+  params: string | undefined;
+  html: string | undefined;
+  output: string | undefined;
+  timeout: number;
+}
+
+const USAGE = '用法：cmd_read <calorie.key> [--params JSON对象] [--output 输出路径] [--html 输出路径（--output 别名）] [--timeout 毫秒]';
+
+function parseArgs(a: string[]): ReadArgs {
+  const o: ReadArgs = {
+    key: a[0], params: undefined, html: undefined, output: undefined, timeout: DEFAULT_TIMEOUT_MS,
   };
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i] as string;
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i] as string;
+    else if (a[i] === '--output' && i + 1 < a.length) o.output = a[++i] as string;
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
       if (!Number.isFinite(o.timeout) || (o.timeout as number) <= 0) fail(2, '--timeout 须为正数毫秒');
-    } else fail(2, '未知参数：' + a[i] + '（用法：cmd_read <calorie.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]）');
+    } else fail(2, '未知参数：' + a[i] + '（' + USAGE + '）');
   }
   return o;
 }
@@ -629,13 +645,13 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
   }
 }
 
-function parseReadArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
+function parseReadArgs(a: string[]): ReadArgs {
   return parseArgs(a);
 }
 
 async function main(): Promise<void> {
   const o = parseReadArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：calorie-cmd-read <calorie.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
+  if (!o.key) fail(2, USAGE);
   const dbPath = preflight();
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
@@ -669,14 +685,14 @@ async function main(): Promise<void> {
       const out = isCalorieWriteKey(o.key as string)
         ? dispatchWrite(o.key as string, params, db)
         : dispatch(o.key as string, params, db);
-      env = buildEnvelope(o.key as string, shape as EnvelopeShape, out.data);
-      if (o.html) {
-        try {
-          writeFileSync(o.html as string, out.html, 'utf8');
-        } catch (e) {
-          fail(5, 'HTML 写盘失败：' + String(o.html) + '（' + (e as Error).message + '）');
-        }
+      // #87 · 输出落点：--output（显式覆盖）> --html（legacy 别名）> 默认 calorie_html/<中文command>_<TS>[_N].html
+      const htmlTarget = o.output ?? o.html ?? resolveDefaultHtmlPath(o.key as string);
+      try {
+        writeFileSync(resolveExplicitHtmlPath(htmlTarget), out.html, 'utf8');
+      } catch (e) {
+        fail(5, 'HTML 写盘失败：' + htmlTarget + '（' + (e as Error).message + '）');
       }
+      env = buildEnvelope(o.key as string, shape as EnvelopeShape, { ...out.data, output: htmlTarget });
     } finally {
       db.close();
     }
