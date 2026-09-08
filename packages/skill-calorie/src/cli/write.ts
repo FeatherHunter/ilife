@@ -9,13 +9,20 @@
  * envelope/落盘 fail(5)。库函数 FetchError 透传（main 映射 exit 4）；body.ts
  * ValidationError 在此转 bad-input（exit 2）。
  *
- * #101 · 删除可恢复性口径（逐条删除回执必须自曝可恢复性，不得只写「已删除」）：
- * - 软删除（行保留、可恢复）：`exercise_log.is_deleted`／`body_composition.is_deprecated`／
- *   `body_measurements.is_deprecated`／`nutrition_products.is_deprecated` → 「（软删除，可恢复）」
+ * #101 · 删除可恢复性口径（**不得承诺可恢复**——全仓 0 个 restore/undo/recover 入口）：
+ * - 软删除、行仍在库、且**仍被统计**：`exercise_log.is_deleted`（`analysis/**` 11 处查询未过滤该列，
+ *   删后 `view.home.deficitToday`／`view.deficit.avgExerciseBurn`／`buildSeries.exerciseKcal` 不变）
+ *   → 「（软删除：行保留，仍计入历史统计；暂无恢复入口）」
+ * - 软删除、行仍在库、**已从查询与统计排除**：`body_composition`／`body_measurements`（`is_deprecated`，
+ *   读层 `fetch/body.ts:131,197,155,166` ＋ `analysis/series.ts:102,105`／`cross.ts:144-145` 均带
+ *   `is_deprecated = 0`）／`nutrition_products`（`fetch/products.ts:72,108,114,120`）
+ *   → 「（软删除：行保留，已从查询与统计中排除；暂无恢复入口）」
  * - 硬删除（行删除、不可恢复）：`food_log`／`weight_log`／`body_photos`（`DELETE FROM`）→ 「（硬删除，不可恢复）」
+ * `items[].status` 结构化字段与 prose **同源**（同一口径常量派生，软/硬 ＋ 不可恢复）。
  * 依据：fetch 层 delete* 实测（`fetch/exercise.ts:216-238` 软删／`fetch/diet.ts:153-161` 硬删／
  * `fetch/weight.ts:148-178` 硬删／`fetch/body.ts:144-148,207-211` 软删）＋ 审计
- * `docs/research/t67-key-audit.md:246`。照片键文案在 `render/photo.ts:buildDeleteReceipt`。
+ * `docs/research/t67-key-audit.md:246`＋ 复跑证据 `docs/research/t101-softdelete-still-counted.mjs`。
+ * 照片键文案在 `render/photo.ts:buildDeleteReceipt`。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import {
@@ -106,6 +113,18 @@ function assertISO(v: string, field: string): void {
 
 function esc(s: unknown): string {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** #101 · 删除口径单一来源（prose 词条 ＋ `items[].status` 状态串同源派生）。
+ * `recoverable` 恒 false：全仓 77 键 0 个 restore/undo/recover 入口，故不得出现「可恢复」承诺。 */
+const SOFT_STILL_COUNTED = '（软删除：行保留，仍计入历史统计；暂无恢复入口）';
+const SOFT_EXCLUDED_INNER = '软删除：行保留，已从查询与统计中排除；暂无恢复入口';
+const SOFT_EXCLUDED = '（' + SOFT_EXCLUDED_INNER + '）';
+const HARD_WORDING = '（硬删除，不可恢复）';
+
+/** 状态串与 prose 同源：kind 决定「软/硬」，两者一律带「不可恢复」。 */
+function deleteStatus(kind: 'soft' | 'hard', base = '已删除'): string {
+  return base + (kind === 'soft' ? '（软，不可恢复）' : '（硬，不可恢复）');
 }
 
 /** C6 #43 · 写收据 HTML 结构化分项：摘要 + 操作元 + items 逐条（id/日期/状态/原因/明细）。 */
@@ -276,7 +295,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const id = needId(params);
       const r = deleteMeal(db, id);
       return out(R('删饮食记录', 'delete', '已删除饮食 #' + id + '（' + r.food_name + ' ' + r.calories + ' 卡 · 硬删除，不可恢复）', '删饮食记录', 'food_log (写库回执)', {
-        recordId: id, items: [{ id, status: '已删除', reason: '', detail: r.food_name }],
+        recordId: id, items: [{ id, status: deleteStatus('hard'), reason: '', detail: r.food_name }],
       }));
     }
     case 'calorie.diet.batch': {
@@ -331,7 +350,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       assertISO(date, 'date');
       const r = deleteMealsByDate(db, date);
       if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-      return out(R('删某日饮食', 'delete', '已删除 ' + date + ' 饮食 ' + r.deleted + ' 条（硬删除，不可恢复）', '删某日饮食', 'food_log (写库回执)', {}));
+      return out(R('删某日饮食', 'delete', '已删除 ' + date + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '删某日饮食', 'food_log (写库回执)', {}));
     }
     case 'calorie.diet.remove-by-range': {
       const start = needStr(params, 'start');
@@ -341,7 +360,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (start > end) fail(2, 'start 不得晚于 end');
       const r = deleteMealsByRange(db, start, end);
       if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + start + '~' + end + '）');
-      return out(R('批量删饮食', 'delete', '已删除 ' + start + '~' + end + ' 饮食 ' + r.deleted + ' 条（硬删除，不可恢复）', '批量删饮食', 'food_log (写库回执)', {}));
+      return out(R('批量删饮食', 'delete', '已删除 ' + start + '~' + end + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '批量删饮食', 'food_log (写库回执)', {}));
     }
     case 'calorie.diet.remove-by-type': {
       const date = needStr(params, 'date');
@@ -350,7 +369,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (!Object.prototype.hasOwnProperty.call(MEAL_WINDOWS, mealType)) fail(2, 'mealType 须为 ' + Object.keys(MEAL_WINDOWS).join('/') + '：' + mealType);
       const r = deleteMealsByType(db, date, mealType);
       if (r.deleted === 0) throw new CalorieRenderError('missing-data', date + ' 无' + mealType + '记录');
-      return out(R('删一餐', 'delete', '已删除 ' + date + ' ' + mealType + ' ' + r.deleted + ' 条（硬删除，不可恢复）', '删一餐', 'food_log (写库回执)', {}));
+      return out(R('删一餐', 'delete', '已删除 ' + date + ' ' + mealType + ' ' + r.deleted + ' 条' + HARD_WORDING, '删一餐', 'food_log (写库回执)', {}));
     }
     case 'calorie.water.log': {
       const ml = needNum(params, 'ml');
@@ -413,13 +432,13 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         const r = deleteWeight(db, id);
         return out(R('删体重记录', 'delete', '已删除体重 #' + id + '（' + r.date + ' ' + r.weight_kg + ' kg · 硬删除，不可恢复）', '删体重记录', 'weight_log (写库回执)', {
-          recordId: id, items: [{ id, status: '已删除', reason: '' }],
+          recordId: id, items: [{ id, status: deleteStatus('hard'), reason: '' }],
         }));
       }
       if (date !== undefined) {
         assertISO(date, 'date');
         const r = deleteWeightByDate(db, date);
-        return out(R('删某日体重', 'delete', '已删除 ' + date + ' 体重 ' + r.deletedCount + ' 条（硬删除，不可恢复）', '删某日体重', 'weight_log (写库回执)', {}));
+        return out(R('删某日体重', 'delete', '已删除 ' + date + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '删某日体重', 'weight_log (写库回执)', {}));
       }
       if (start !== undefined || end !== undefined) {
         if (start === undefined || end === undefined) fail(2, '按范围删须同时传 start/end');
@@ -427,7 +446,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         assertISO(end as string, 'end');
         if ((start as string) > (end as string)) fail(2, 'start 不得晚于 end');
         const r = deleteWeightRange(db, start as string, end as string);
-        return out(R('批量删体重', 'delete', '已删除 ' + start + '~' + end + ' 体重 ' + r.deletedCount + ' 条（硬删除，不可恢复）', '批量删体重', 'weight_log (写库回执)', {}));
+        return out(R('批量删体重', 'delete', '已删除 ' + start + '~' + end + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '批量删体重', 'weight_log (写库回执)', {}));
       }
       fail(2, '缺参数 id/date/start+end（三选一）');
       throw new Error('unreachable');
@@ -516,15 +535,15 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (id !== undefined) {
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         deleteRecord(db, id);
-        return out(R('删运动记录', 'delete', '已删除运动 #' + id + '（软删除，可恢复）', '删运动记录', 'exercise_log (写库回执)', {
-          recordId: id, items: [{ id, status: '已删除', reason: '' }],
+        return out(R('删运动记录', 'delete', '已删除运动 #' + id + SOFT_STILL_COUNTED, '删运动记录', 'exercise_log (写库回执)', {
+          recordId: id, items: [{ id, status: deleteStatus('soft'), reason: '' }],
         }));
       }
       if (date !== undefined) {
         assertISO(date, 'date');
         const n = deleteDay(db, date);
         if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-        return out(R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条（软删除，可恢复）', '删某日运动', 'exercise_log (写库回执)', {}));
+        return out(R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '删某日运动', 'exercise_log (写库回执)', {}));
       }
       if (from !== undefined || to !== undefined) {
         if (from === undefined || to === undefined) fail(2, '按范围删须同时传 from/to');
@@ -533,7 +552,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if ((from as string) > (to as string)) fail(2, 'from 不得晚于 to');
         const n = deleteRange(db, from as string, to as string);
         if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + from + '~' + to + '）');
-        return out(R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条（软删除，可恢复）', '批量删运动', 'exercise_log (写库回执)', {}));
+        return out(R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '批量删运动', 'exercise_log (写库回执)', {}));
       }
       fail(2, '缺参数 id/date/from+to（三选一）');
       throw new Error('unreachable');
@@ -638,8 +657,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if (/not found/.test(String(r.error ?? ''))) throw new CalorieRenderError('missing-data', '食品 #' + id + ' 不存在');
         fail(2, String(r.error ?? '废弃失败'));
       }
-      return out(R('下架食品', 'update', '已下架食品 #' + id + '（' + (r.name ?? '') + ' · 软删除，可恢复）', '下架食品', 'nutrition_products (写库回执)', {
-        recordId: id, items: [{ id, status: '已下架', reason: '' }],
+      return out(R('下架食品', 'update', '已下架食品 #' + id + '（' + (r.name ?? '') + ' · ' + SOFT_EXCLUDED_INNER + '）', '下架食品', 'nutrition_products (写库回执)', {
+        recordId: id, items: [{ id, status: deleteStatus('soft', '已下架'), reason: '' }],
       }));
     }
     case 'calorie.profile.set':
@@ -747,8 +766,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     case 'calorie.body.composition-remove': {
       const id = needId(params);
       deleteComposition(db, id);
-      return out(R('删体脂', 'delete', '已删除体脂记录 #' + id + '（软删除，可恢复）', '删体脂', 'body_composition (写库回执)', {
-        recordId: id, items: [{ id, status: '已删除', reason: '' }],
+      return out(R('删体脂', 'delete', '已删除体脂记录 #' + id + SOFT_EXCLUDED, '删体脂', 'body_composition (写库回执)', {
+        recordId: id, items: [{ id, status: deleteStatus('soft'), reason: '' }],
       }));
     }
     case 'calorie.body.measure-add': {
@@ -774,8 +793,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     case 'calorie.body.measure-remove': {
       const id = needId(params);
       deleteMeasurement(db, id);
-      return out(R('删围度', 'delete', '已删除围度记录 #' + id + '（软删除，可恢复）', '删围度', 'body_measurements (写库回执)', {
-        recordId: id, items: [{ id, status: '已删除', reason: '' }],
+      return out(R('删围度', 'delete', '已删除围度记录 #' + id + SOFT_EXCLUDED, '删围度', 'body_measurements (写库回执)', {
+        recordId: id, items: [{ id, status: deleteStatus('soft'), reason: '' }],
       }));
     }
     default:

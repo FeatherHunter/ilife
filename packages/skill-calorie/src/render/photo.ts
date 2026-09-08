@@ -261,7 +261,8 @@ export function buildAddReceipt(
 /** 删照片回执：删除前快照（调用方先 getPhotoRow 取快照，再调 T4 deletePhoto）。
  *
  * #101 删除可恢复性口径：`body_photos` 走 `DELETE FROM` ＋ 删文件，属**硬删除**，
- * 故文案必须显式标注「硬删除，不可恢复」；软删除（行保留）统一写「软删除，可恢复」。
+ * 故文案必须显式标注「硬删除，不可恢复」；软删除键（行保留）一律**不承诺可恢复**
+ * （全仓 0 个 restore/undo/recover 入口），词条与 `items[].status` 同源。
  */
 export function buildDeleteReceipt(snapshot: PhotoRow): CrudReceipt {
   const tags = [...snapshot.tag_list].join('、') || '无标签';
@@ -278,7 +279,7 @@ export function buildDeleteReceipt(snapshot: PhotoRow): CrudReceipt {
       date: snapshot.date,
       photoPath: basename(snapshot.photo_path),
       tagList: [...snapshot.tag_list],
-      status: '已删除',
+      status: '已删除（硬，不可恢复）',
       reason: '',
     }],
     wakeWord: '删身材照',
