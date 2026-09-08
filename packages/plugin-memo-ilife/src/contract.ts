@@ -42,3 +42,10 @@ export function parseReadPayload(raw: unknown): ReadPayload | null {
 
 /** 面板默认读键：memo.search 无参直读，空库安全（items []、total 0）。 */
 export const DEFAULT_READ_KEY = 'memo.search' as const;
+
+/** 信封守卫：供 client 拆包前校验（port 拥有信封定义，守卫住 port）。 */
+export function isRpcResult(raw: unknown): raw is RpcResult {
+  if (typeof raw !== 'object' || raw === null) return false;
+  const ok = (raw as { ok?: unknown }).ok;
+  return ok === true || ok === false;
+}

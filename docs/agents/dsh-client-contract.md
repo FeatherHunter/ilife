@@ -20,8 +20,9 @@
 `entryFileNames:'client.js'` / banner `window.__ModuleLoader__.load({ id: "<插件名>", factory: (require) => {` /
 footer `return module.exports; } });` / intro `var module = { exports: {} }; var exports = module.exports;` /
 `codeSplitting:false`。
-externals（`tsdown.config.ts:6`）：`react react/jsx-runtime react-dom react-dom/client cordis
-@deepseek-ai/dsh-client-ui-slots @deepseek-ai/dsh-client-runtime/client`——其余一律打进包。
+externals：`react react/jsx-runtime react-dom react-dom/client cordis
+@deepseek-ai/dsh-client-ui-slots`——其余一律打进包。（`dsh-client-runtime/client` 曾随抄，
+映射不明且本仓无 import，已删；见 §4。）
 
 ## 3 manifest 语义（宿主 `dsh-client-modules/lib/index.js`）
 

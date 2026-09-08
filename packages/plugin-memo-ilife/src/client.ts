@@ -7,12 +7,15 @@
  * 组件 React.createElement 手写，不引入 JSX 构建复杂度。
  */
 import * as React from 'react';
-import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY } from './contract.js';
+import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
 import { SLOT_TITLE } from './slot.js';
 import { SETTING_ROWS } from './settings.js';
 import type { ClientCtx, RpcCallResult } from './dsh-ctx.js';
 
 export const inject = ['slots', 'connection'];
+
+/** 调用口取用器：每次取数时现取（connection 后到也不永久缺席）。 */
+export type GetCall = () => unknown;
 
 type PanelState =
   | { readonly kind: 'loading' }
@@ -36,18 +39,12 @@ function extractTotal(value: unknown): string | null {
   return String(value);
 }
 
-function isEnvelope(raw: unknown): raw is RpcCallResult {
-  if (typeof raw !== 'object' || raw === null) return false;
-  const ok = (raw as { ok?: unknown }).ok;
-  return ok === true || ok === false;
-}
-
 /** 备忘录面板：挂载期一次 RPC，无轮询；loading / 数据 / 缺席或错误三态。 */
-function MemoPanel(props: { call: unknown }): React.ReactElement {
+function MemoPanel(props: { getCall: GetCall }): React.ReactElement {
   const [state, setState] = React.useState<PanelState>({ kind: 'loading' });
   React.useEffect(() => {
     let alive = true;
-    const call = props.call;
+    const call = props.getCall();
     (async () => {
       // extractRpc 同式守卫：非函数即缺席态。
       if (typeof call !== 'function') {
@@ -60,7 +57,7 @@ function MemoPanel(props: { call: unknown }): React.ReactElement {
           key: DEFAULT_READ_KEY,
           params: {},
         });
-        if (!isEnvelope(raw)) {
+        if (!isRpcResult(raw)) {
           if (alive) setState({ kind: 'error', message: '回执信封异常（非 ok 信封）' });
           return;
         }
@@ -90,7 +87,7 @@ function MemoPanel(props: { call: unknown }): React.ReactElement {
     return () => {
       alive = false;
     };
-  }, [props.call]);
+  }, [props.getCall]);
   if (state.kind === 'loading') {
     return React.createElement('div', null, '备忘录加载中…');
   }
@@ -106,12 +103,12 @@ function MemoPanel(props: { call: unknown }): React.ReactElement {
 }
 
 /** 边栏入口：标题 + 面板同体，紧凑只读。 */
-function MemoAction(props: { call: unknown }): React.ReactElement {
+function MemoAction(props: { getCall: GetCall }): React.ReactElement {
   return React.createElement(
     'div',
     null,
     React.createElement('div', null, SLOT_TITLE),
-    React.createElement(MemoPanel, { call: props.call }),
+    React.createElement(MemoPanel, { getCall: props.getCall }),
   );
 }
 
@@ -123,11 +120,11 @@ function controlLabel(control: string): string {
 }
 
 /** 设置卡：面板 + 设置行只读呈现（禁做假开关，无交互控件）。 */
-function MemoSettings(props: { call: unknown }): React.ReactElement {
+function MemoSettings(props: { getCall: GetCall }): React.ReactElement {
   return React.createElement(
     'div',
     null,
-    React.createElement(MemoPanel, { call: props.call }),
+    React.createElement(MemoPanel, { getCall: props.getCall }),
     React.createElement(
       'div',
       null,
@@ -139,8 +136,8 @@ function MemoSettings(props: { call: unknown }): React.ReactElement {
 }
 
 export function apply(ctx: ClientCtx): void {
-  // 调用口在注册期快照进组件 props（extractRpc 同式，非函数由组件判缺席）。
-  const call: unknown = ctx.connection?.rpc?.call ?? null;
+  // 调用口取用器透传给组件（每次取数现取；非函数由组件判缺席）。
+  const getCall: GetCall = () => ctx.connection?.rpc?.call ?? null;
   ctx.slots.inject('settings.section', () =>
     ctx.slots.register(
       {
@@ -150,7 +147,7 @@ export function apply(ctx: ClientCtx): void {
         label: () => SLOT_TITLE,
         inject: () => ({}),
       },
-      () => React.createElement(MemoSettings, { call }),
+      () => React.createElement(MemoSettings, { getCall }),
     ),
   );
   ctx.slots.inject('sidebar.footer.action', () =>
@@ -160,7 +157,7 @@ export function apply(ctx: ClientCtx): void {
         id: 'dsh-memo-ilife',
         order: 70,
       },
-      () => React.createElement(MemoAction, { call }),
+      () => React.createElement(MemoAction, { getCall }),
     ),
   );
 }
