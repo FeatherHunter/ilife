@@ -99,6 +99,15 @@ const MUTANTS = [
     neu: "const SOFT_STILL_COUNTED = '（软删除：行保留，已从查询与统计中排除；暂无恢复入口）';",
     note: 'H1：把运动软删文案换成「已排除」——实测仍计入 → 文案诚实性用例必须红',
   },
+  {
+    name: 'M9-wording-site-count-drift',
+    file: WRITE_TS,
+    old: "' 条' + HARD_WORDING, '删某日饮食'",
+    neu: "' 条（硬删除，不可恢复）', '删某日饮食'",
+    extra: 'node docs/research/t101-softdelete-still-counted.mjs',
+    expectPersist: false,
+    note: 'H3：1 处词条落点改成内联字面量（消息不变、两个测试文件全绿）→ 事实 E 计数 13→12 必须红',
+  },
 ];
 
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -185,23 +194,30 @@ try {
     const build = m.noBuild ? { status: 0, skipped: true } : run('pnpm build');
     const newT = run('node --test ' + NEW_TEST);
     const oldT = run('node --test ' + OLD_TEST);
+    const extraT = m.extra ? run(m.extra) : null;
     restoreAll('mutant ' + m.name);
     restored = false; // 下一个变异继续用同一份原文
     rows.push({
       mutant: m.name, build: m.noBuild ? '跳过' : build.status,
-      persistAssert: newT.status, oldReceiptAssert: oldT.status, note: m.note,
+      persistAssert: newT.status, oldReceiptAssert: oldT.status,
+      extra: extraT ? extraT.status : '—', note: m.note, hasExtra: Boolean(m.extra), expectPersist: m.expectPersist !== false,
     });
-    console.log(`${m.name}: build=${m.noBuild ? '跳过(.mjs 测试文件无需重建)' : build.status} newPersistTest=${newT.status} oldReceiptTest=${oldT.status}`);
+    console.log(`${m.name}: build=${m.noBuild ? '跳过(.mjs 测试文件无需重建)' : build.status} newPersistTest=${newT.status} oldReceiptTest=${oldT.status}` +
+      (extraT ? ` 附加校验=${extraT.status}` : ''));
   }
 } finally {
   restoreAll('finally');
   const build = run('pnpm build');
   console.log('RESTORED: build=' + build.status);
-  rows.push({ mutant: 'RESTORED', build: build.status, persistAssert: 0, oldReceiptAssert: 0, note: '源码复原后重建（dist 与源一致）' });
+  rows.push({ mutant: 'RESTORED', build: build.status, persistAssert: 0, oldReceiptAssert: 0, extra: '—', expectPersist: false, note: '源码复原后重建（dist 与源一致）' });
   if (lockHeld) { rmSync(LOCK, { recursive: true, force: true }); lockHeld = false; }
 }
-console.log('\n| 变异 | build | 落库断言（新） | 旧回执断言（对照） | 说明 |');
-console.log('| --- | --- | --- | --- | --- |');
-for (const r of rows) console.log(`| ${r.mutant} | ${r.build} | ${r.persistAssert} | ${r.oldReceiptAssert} | ${r.note} |`);
-const bad = rows.filter((r) => r.mutant !== 'RESTORED' && ((r.build !== 0 && r.build !== '跳过') || r.persistAssert === 0));
+console.log('\n| 变异 | build | 落库断言（新） | 旧回执断言（对照） | 附加校验 | 说明 |');
+console.log('| --- | --- | --- | --- | --- | --- |');
+for (const r of rows) console.log(`| ${r.mutant} | ${r.build} | ${r.persistAssert} | ${r.oldReceiptAssert} | ${r.extra} | ${r.note} |`);
+const bad = rows.filter((r) => r.mutant !== 'RESTORED' && (
+  (r.build !== 0 && r.build !== '跳过') ||
+  (r.expectPersist && r.persistAssert === 0) ||
+  (r.hasExtra && r.extra === 0)
+));
 if (bad.length) { console.error('变异自证不成立：' + bad.map((b) => b.mutant).join('、')); process.exitCode = 1; }

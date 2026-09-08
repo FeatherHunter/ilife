@@ -26,7 +26,7 @@
 | **H1**（S1 · A2） | 软删文案「可恢复」在用户可见面被证伪：`analysis/**` 11 处查询未过滤 `is_deleted`（统计删前=删后）＋ `view.exercise` 同时 exit 4 ＋ 全仓 0 个 restore 入口 | 软删文案**不承诺可恢复**并**如实标注统计口径**（仍计入／已排除两档）＋ `items[].status` 与 prose 同源 ＋ 新增「文案↔实测同源」用例；**不修查询**（根因在读层，另开票见 §7） | `write.ts:118-127`（口径常量）／`write.ts:539,547,556,661,770,797`（软删词条）／`cmd-write-40-persist.test.mjs:640-660`（诚实性用例）／`docs/research/t101-softdelete-still-counted.mjs`（事实 A–E） |
 | **H2**（S2 · A1-1） | 覆盖门自报式：`cover()` 与 `withRead()` 解耦 → 删掉某键 SELECT 块仍 pass 15 | `withRead(dir, key, fn)` **必须声明写键**，内部 Proxy 统计真实 `prepare()` 次数，0 次直接抛；覆盖门断言 35 键**每键 ≥1 次真实只读查询** | `cmd-write-40-persist.test.mjs:95-115`（withRead）／`:743-753`（覆盖门） |
 | **H3**（S2 · A1-2） | 计数三处互不一致：doc:9「11 处」／doc:87「14 处」／changeset「13 处」 | 全口径统一为**可复跑实测值 14 处（`write.ts` 13 ＋ `render/photo.ts` 1）** | 本文件 §3；事实 E 机器断言（`t101-softdelete-still-counted.mjs`） |
-| **H4**（S3 · A1-1） | 变异脚本无落盘备份／无 sha256 自证（强杀会留变异态） | 跑前 `sha256` ＋ 落盘 `.bak` ＋ `finally`／`SIGINT`／`SIGTERM` 还原 ＋ **还原后 sha 相同断言**（不等即 exit 2） | `docs/research/t101-mutation.mjs:96-140` |
+| **H4**（S3 · A1-1） | 变异脚本无落盘备份／无 sha256 自证（强杀会留变异态） | 跑前 `sha256` ＋ 落盘 `.bak` ＋ `finally`／`SIGINT`／`SIGTERM` 还原 ＋ **还原后 sha 相同断言**（不等即 exit 2）；变异扩到 9 例 | `docs/research/t101-mutation.mjs:146-181` |
 | **H5**（S3 · A1-2） | 复跑基线依赖 `.scratch/t75/baseline-gates.log`（`.scratch` 被 gitignore）→ 新克隆无法复现 delta | 基线**失败集名单**入仓 `docs/research/t101-baseline-failures.txt`（27 条），脚本自动识别名单/日志两种模式 | `t101-fail-set.mjs:37-58`／§8 |
 | **H6**（S3 · A1-3） | `.scratch/t75/collision-matrix.md` 声明 `cmd-write-40.test.mjs`，与实际新增文件不符（该文件在 `.scratch`，本票不改） | 在本文件 §6.4 写明实际路径 `packages/skill-calorie/test/cmd-write-40-persist.test.mjs` | §6.4 |
 | **H7**（S3 · A1-4） | 删除用例未断言「回执 id 能定位被删行」 | 数据驱动用例：软删用回执 id 查到该行且标志位=1；硬删用回执 id **查不到**该行 | `cmd-write-40-persist.test.mjs:603-637` |
@@ -228,30 +228,36 @@ node docs/research/t101-fail-set.mjs docs/research/t101-baseline-failures.txt .s
 
 ---
 
-## 5. 变异自证（`docs/research/t101-mutation.mjs`，8 例 ＋ H4 安全网）
+## 5. 变异自证（`docs/research/t101-mutation.mjs`，9 例 ＋ H4 安全网）
 
 判据：源码变异后 `pnpm build` 必须 exit 0（变异真编译进去），落库断言必须变红；恢复后两者皆绿。
 **H4 安全网**（每次运行都打印）：跑前 `sha256`（前 16 位）＋ 落盘备份 `.scratch/t101-mutation-backup/*.bak`
 ＋ 每个变异后 `restoreAll()` 与 `finally` 各做一次**还原自证**（sha256 与跑前不等即 exit 2），
 `SIGINT`／`SIGTERM` 也会先还原再退出。
 
-| 变异 | 做了什么 | build | 落库断言（新） | 旧回执断言（对照） |
-| --- | --- | --- | --- | --- |
-| M1 | 运动写入值 `caloriesBurned: cal` → `0` | 0 | **1（红）** | 0（绿） |
-| M2 | 摘掉 `deleteRecord(db, id)` | 0 | **1（红）** | 1（红，撞 exit 4 存在性校验，非落库断言） |
-| M3 | 软删词条 → `[MUTANT-TAG]` | 0 | **1（红）** | 0（绿） |
-| M4 | 硬删后把行按原 id 插回 | 0 | **1（红）** | 0（绿） |
-| **M5** | 整块删除 `calorie.water.log` 的落库断言（键仍在注册表） | 跳过（`.mjs` 无需重建） | **1（红）** | 0（绿） |
-| **M6** | `items[].status` 退回裸「已删除」 | 0 | **1（红）** | 0（绿） |
-| **M7** | 软删回执 `recordId: id` → `null` | 0 | **1（红）** | 0（绿） |
-| **M8** | 运动软删文案改成「已从查询与统计中排除」（与实测相反） | 0 | **1（红）** | 0（绿） |
-| 恢复 | 源码复原＋重建 | 0 | 0（绿） | 0（绿） |
+单次跑批（`.scratch/t101/mutation-9.log`，exit 0；跑前 `write.ts` sha256 = `4f94ff317e1ae369`、
+测试文件 = `b1eb9e43ecfdd66b`，9 次变异 ＋ finally 的还原自证全部 OK）：
 
-红在哪（实测日志 `.scratch/t101/mutation-full.log`）：M1 → `落库 · 运动 add/update` ＋ 覆盖门；
-M2 → `落库 · 运动 remove` ＋ 口径；M3 → 口径词条；M4 → `落库 · 体重 …` ＋ 覆盖门；
+| 变异 | 做了什么 | build | 落库断言（新） | 旧回执断言（对照） | 附加校验 |
+| --- | --- | --- | --- | --- | --- |
+| M1 | 运动写入值 `caloriesBurned: cal` → `0` | 0 | **1（红）** | 0（绿） | — |
+| M2 | 摘掉 `deleteRecord(db, id)` | 0 | **1（红）** | 1（红，撞 exit 4 存在性校验，非落库断言） | — |
+| M3 | 软删词条 → `[MUTANT-TAG]` | 0 | **1（红）** | 0（绿） | — |
+| M4 | 硬删后把行按原 id 插回 | 0 | **1（红）** | 0（绿） | — |
+| **M5**（H2） | 整块删除 `calorie.water.log` 的落库断言（键仍在注册表） | 跳过（`.mjs` 无需重建） | **1（红）** | 0（绿） | — |
+| **M6**（H1） | `items[].status` 退回裸「已删除」 | 0 | **1（红）** | 0（绿） | — |
+| **M7**（H7） | 软删回执 `recordId: id` → `null` | 0 | **1（红）** | 0（绿） | — |
+| **M8**（H1） | 运动软删文案改成「已从查询与统计中排除」（与实测相反） | 0 | **1（红）** | 0（绿） | — |
+| **M9**（H3） | 1 处词条落点改内联字面量（回执文字不变） | 0 | 0（绿，符合预期） | 0（绿） | **1（红）**：事实 E 计数 13→12 |
+| 恢复 | 源码复原＋重建 | 0 | 0（绿） | 0（绿） | — |
+
+红在哪（实测日志）：M1 → `落库 · 运动 add/update` ＋ 覆盖门；M2 → `落库 · 运动 remove` ＋ 口径；
+M3 → 口径词条；M4 → `落库 · 体重 …` ＋ 覆盖门；
 M5 → 覆盖门（`calorie.water.log：withRead 内没有任何只读查询`）；M6 → `口径 · 删除键数据驱动`（status 不同源）；
-M7 → `口径 · 删除键数据驱动`（recordId 未指向被删行）；M8 → `口径 · 软删运动「仍计入历史统计」与实测同源`。
-**M1／M3／M4／M5／M6／M7／M8 上旧测试（`cmd-write-40.test.mjs`）全绿**，即票面「只断言回执、没有逐键库内断言」的直接证据。
+M7 → `口径 · 删除键数据驱动`（recordId 未指向被删行）；M8 → `口径 · 软删运动「仍计入历史统计」与实测同源`；
+M9 → `t101-softdelete-still-counted.mjs` 事实 E（`词条落点计数 ＝ 12 处 … 与文档／changeset 口径一致 = 否`）。
+**M1／M3／M4／M5／M6／M7／M8／M9 上旧测试（`cmd-write-40.test.mjs`）全绿**，即票面「只断言回执、
+没有逐键库内断言」的直接证据；M9 还证明**计数口径由机器守住**（任何落点增删都会让事实 E 与文档不符）。
 
 ---
 
@@ -328,7 +334,7 @@ node docs/research/t101-fail-set.mjs docs/research/t101-baseline-failures.txt .s
 # ④ 文案诚实性事实复核（H1；读 dist 里的 CLI，故须在 dist 未被变异/未被并发重建时跑 → 建议同样持 gate.lock）
 node docs/research/t101-softdelete-still-counted.mjs
 
-# ⑤ 变异自证（8 例；脚本自持 gate.lock，跑前 sha256＋落盘备份，跑完自动还原并自证 sha）
+# ⑤ 变异自证（9 例；脚本自持 gate.lock，跑前 sha256＋落盘备份，跑完自动还原并自证 sha）
 node docs/research/t101-mutation.mjs
 ```
 
