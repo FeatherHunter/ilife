@@ -11,15 +11,15 @@
 
 ## 1. 旧版真值 → 新实现 → 证据（逐条）
 
-| # | 旧版真值（行号） | 新实现（落点） | 证据（测试 file:line） |
+| # | 旧版真值（行号） | 新实现（落点 file:line） | 证据（测试 file:line） |
 | --- | --- | --- | --- |
-| 1 | 目录 `HTML_DIR = DATA_DIR / "calorie_html"`，`DATA_DIR = find_db_path().parent`（跟随 `SKILLS_DB_PATH`，`html_paths.py:39,42-56`） | `HTML_DIR_NAME='calorie_html'`；`htmlDir(dbDir=resolveDbDir())` = `<SKILLS_DB_PATH>/calorie_html`，`mkdirSync(recursive)`（`src/output.ts:97-102`） | `test/output-naming-87.test.mjs` ⑤ |
-| 2 | 文件名 `<command>_<YYYYMMDD>_<HHMMSS>.html`（`html_paths.py:78-109`） | `htmlFileName()` = `<中文command>_<stamp>.html`；`formatStamp()` = 本地时区零填充（`src/output.ts:31-58,79-87`） | ②、⑤、⑥ |
-| 3 | 同秒冲突 `_N`，`N = len(glob("<command>_<stamp>*.html")) + 1`（首个冲突 `_2`；`html_paths.py:105-109`） | `countSameSecond()` 用 `readdirSync` + `startsWith`/`endsWith` 计数，`n===0 ? base : _${n+1}`（`src/output.ts:61-87`） | ④（`_2`/`_3`/无关文件不干扰）、⑦（真 CLI） |
-| 4 | `--output <path>` 显式覆盖，绕过命名规则（旧 `SKILL.md:104`；`render_calorie_trend.py:161` 等 4 处 argparse） | `--output <path>` 优先；`--html <path>` 保留为 legacy 别名；两者都给定则 `--output` 胜（`src/cli/cmd_read.ts:79-98,688-695`） | ⑧ |
-| 5 | `<中文command>` 中文化：静态 command 直接传中文、动态 command 拼接中文（`html_paths.py:11-15`；`SKILL.md:94-102`） | 真值 = `CALORIE_COMBOS[key].title`（`src/output.ts:70-77`） | ③（77 键逐键相等）、③b（`combos.yaml` 镜像逐键相等）、⑥b |
-| 6 | 字段清洗 `\\ / : * ? " < > | [ ]` → `_`、trim、截断 32 字符（`html_paths.py:59-75`） | `sanitizeFilenamePart()` 逐字复刻（`src/output.ts:41-47`） | ① |
-| 7 | 默认落盘（每个 `render_*.py` 都写 `calorie_html/`） | 无 `--output`/`--html` 时默认写 `calorie_html/`；落点经 envelope `data.output` 回传（`src/cli/cmd_read.ts:688-695`） | ⑥、⑥b |
+| 1 | 目录 `HTML_DIR = DATA_DIR / "calorie_html"`，`DATA_DIR = find_db_path().parent`（跟随 `SKILLS_DB_PATH`，`html_paths.py:39,42-56`） | `HTML_DIR_NAME='calorie_html'`；`htmlDir(dbDir=resolveDbDir())` = `<SKILLS_DB_PATH>/calorie_html`，`mkdirSync(recursive)`（`src/output.ts:27,82-87`） | `test/output-naming-87.test.mjs:149`（⑤） |
+| 2 | 文件名 `<command>_<YYYYMMDD>_<HHMMSS>.html`（`html_paths.py:78-109`） | `htmlFileName()` = `<中文command>_<stamp>.html`；`formatStamp()` = 本地时区零填充（`src/output.ts:38-50,73-80`） | `:75`（②）、`:149`（⑤）、`:172`（⑥） |
+| 3 | 同秒冲突 `_N`，`N = len(glob("<command>_<stamp>*.html")) + 1`（首个冲突 `_2`；`html_paths.py:105-109`） | `countSameSecond()` 用 `readdirSync` + `startsWith`/`endsWith` 计数，`n===0 ? base : _${n+1}`（`src/output.ts:61-71,73-80`） | `:130`（④，`_2`/`_3`/无关文件不干扰）、`:206`（⑦，真 CLI） |
+| 4 | `--output <path>` 显式覆盖，绕过命名规则（旧 `SKILL.md:104`；`render_calorie_trend.py:161` 等 4 处 argparse） | `--output <path>` 优先；`--html <path>` 保留为 legacy 别名；两者都给定则 `--output` 胜（`src/cli/cmd_read.ts:84-108,688-695`） | `:224`（⑧） |
+| 5 | `<中文command>` 中文化：静态 command 直接传中文、动态 command 拼接中文（`html_paths.py:11-15`；`SKILL.md:94-102`） | 真值 = `CALORIE_COMBOS[key].title`（`src/output.ts:52-59`） | `:86`（③ 77 键逐键相等）、`:101`（③b `combos.yaml` 镜像逐键相等）、`:188`（⑥b） |
+| 6 | 字段清洗 `\\ / : * ? " < > | [ ]` → `_`、trim、截断 32 字符（`html_paths.py:59-75`） | `sanitizeFilenamePart()` 逐字复刻（`src/output.ts:30-36`） | `:63`（①） |
+| 7 | 默认落盘（每个 `render_*.py` 都写 `calorie_html/`） | 无 `--output`/`--html` 时默认写 `calorie_html/`；落点经 envelope `data.output` 回传（`src/cli/cmd_read.ts:688-695`） | `:172`（⑥）、`:188`（⑥b） |
 
 ### 1.1 `<中文command>` 真值来源（票内「需自行侦察判定」项）
 
