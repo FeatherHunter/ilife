@@ -54,6 +54,7 @@
 - **状态**：无（静态）。
 - **证据**：`docs/base-paint-contract.md:823-851`；`packages/base-render/src/spec/template.ts:52,84`。
 - **可断言形式**：产物 grep 三个资产／载荷占位符 → `SHARED-CSS`／`SHARED-HELPERS` 各恰 1、残留 0、载荷槽恰有其一；根节点类名匹配 `^ilife-`。
+- **裁定**：已定（编排者 R35）——本区块锚点有效；**清单本身与「区块样式区」命名空间登记移交 `#104`**（DB-1／DB-2）。
 
 ### B-02 KPI 卡
 
@@ -63,6 +64,7 @@
 - **状态**：徽章 kind ∈ `STATUS_KINDS`（§3）；非法 status 降级 `empty`（§3 `renderStatusBadge`）。
 - **证据**：`benchmark-visual-spec.md:446-461`（§3.1 四槽）；`packages/base-render/src/spec/controls.ts:289-298,707`。
 - **可断言形式**：每张卡同时含 label／value／unit／detail 文本节点；value 与 unit 同行基线；badge 类名后缀 ∈ `STATUS_KINDS`。
+- **裁定**：已定（编排者 R35）——四槽 ＋ `STATUS_KINDS` 锚点有效；对应 HELP 尺 H-13（HELP 页判 N/A，转本区块）。
 
 ### B-03 表格
 
@@ -72,6 +74,7 @@
 - **状态**：空数据 → 走 **B-10 空态**（不渲染空表）。
 - **证据**：`benchmark-visual-spec.md:707-718,846`。
 - **可断言形式**：`th` computed `text-transform:uppercase`／`background-color:transparent`／`border-bottom-width:1px`；`td` `padding` ∈ [12px,14px]；`tr:last-child td` 无下边框。
+- **裁定**：已定（编排者 R35）——**强制语义标签**（DB-3 取推荐 a）；对应 HELP 尺 H-17。
 
 ### B-04 图表
 
@@ -81,6 +84,7 @@
 - **状态**：空数组 → `empty=true` 且走空态（§3 `CHART_EMPTY_RULE`），**不得**静默渲染空图；结构违规 → **直接抛错**（§3 `CHART_STRUCTURE_RULE`），不得降级成残缺图。
 - **证据**：`packages/base-render/src/spec/charts.ts:3-8,196-232`；旧侧 8 接口对照 `docs/research/t72-shared-layer-gap.md:152-170`。
 - **可断言形式**：调 `charts.<kind>(input)` 返回 `{kind,html,empty,points}`；`html` 含 `viewBox` 且容器 `padding:0`；空数组时 `empty===true` 且 `html` 含空态锚点；非法输入抛 `ChartError`。
+- **裁定**：已定（编排者 R35）——**不允许 `canvas` 例外**（DB-6 取推荐 a，对齐 `spec/charts.ts:3-5`）；色板例外见 §4 CB-5（D-10）；对应 HELP 尺 H-14。
 
 ### B-05 列表（行）
 
@@ -90,6 +94,7 @@
 - **状态**：完成态行 → 文本删除线 ＋ 成功色；空列表 → 走 **B-10 空态**。
 - **证据**：`benchmark-visual-spec.md:566-618`（§3.7）；旧版实测 `fixtures/help-instances/卡路里_HELP_20260730_130429.html:355-363`（`.log-row` grid `44px 1fr auto`）。
 - **可断言形式**：行容器每行 `border-top-width:1px` 且颜色为软描边、`:first-child` 为 0；完成态行 computed `text-decoration-line:line-through`。
+- **裁定**：已定（编排者 R35）——软描边取值随 HELP 尺 C-2 取冻结口径（DB-5 取推荐 a：`--line` ＋ alpha 派生，不新增 token）；对应 HELP 尺 H-11。
 
 ### B-06 指令块 `<pre>`
 
@@ -99,6 +104,7 @@
 - **状态**：无命令 → 不渲染空板（走 B-10 或省略）。
 - **证据**：`benchmark-visual-spec.md:726-737,844`；旧版实测 `fixtures/help-instances/卡路里_HELP_20260731_201530.html:193-198,429`（`<pre class="prompt-pre">`，圆角 4px ≠ 规格）。
 - **可断言形式**：命令块 tagName === `PRE`；computed `font-family` 为等宽栈、`font-size ∈ [11.5px,12px]`、`line-height:1.55`、`overflow-x:auto`、`border-radius:8px`。
+- **裁定**：已定（编排者 R35）——`<pre>` 板规格有效；圆角 8px 走局部 CSS 常量（不新增 token，D-5）；对应 HELP 尺 H-15。
 
 ### B-07 详情区
 
@@ -107,6 +113,7 @@
 - **状态**：`status` ∈ `SCENE_STATUS`（§3 两值闭集）；`status='【待开发】'` 时渲染待开发徽章，**复制按钮仍可点**（`docs/base-paint-contract.md:820`）。
 - **证据**：`packages/base-render/src/spec/help.ts:17,22,38-46,106-238`；`docs/base-paint-contract.md:813-850`。
 - **可断言形式**：对每个场景对象按 schema 校验 → 必填齐全、`status` 命中闭集、`types`（复数）合法；详情层文本包含 `prompt_template` 原串（逐字，不 trim）。
+- **裁定**：已定（编排者 R35）——schema／`types` 复数／`SCENE_STATUS` 锚点均为冻结常量，直接可用。
 
 ### B-08 折叠区
 
@@ -116,6 +123,7 @@
 - **状态**：默认展开／折叠由层级决定（HELP 二级默认展开）；点击复制按钮**不得**触发折叠 toggle（50ms 兜底检查，`docs/research/t71-help-dissect.md:408`）。
 - **证据**：`fixtures/help-instances/卡路里_HELP_20260731_201530.html:114,137,157,451`（`[open]` 与箭头旋转）；`docs/research/t72-shared-layer-gap.md:140`（旧 `foldBox`）；`docs/research/t71-help-dissect.md:408`。
 - **可断言形式**：折叠节点 tagName === `DETAILS` 且子节点含 `SUMMARY`；`[open]` 时 `summary::before` 的 computed `transform` 为旋转 90°；点击 `.copy-btn` 后 50ms 内 `open` 属性不变。
+- **裁定**：已定（编排者 R35）——**强制原生 `<details>`**（DB-4 取推荐 a）。
 
 ### B-09 表单／参数区
 
@@ -125,6 +133,7 @@
 - **状态**：`required=true` 且值为空 → **拒绝复制**并提示缺失字段名；输入变化 → 实时重算预览文本（`input` 事件）。
 - **证据**：`packages/base-render/src/spec/help.ts:30-36,174-188`；`docs/research/t72-shared-layer-gap.md:137`；`docs/research/t71-help-dissect.md:395,398`；`benchmark-visual-spec.md:671-685,741-742`。
 - **可断言形式**：每个字段渲染出 `label` 与 `input` 且 `placeholder` 等于 `hint`；`required` 字段留空时点击复制 → 无剪贴板写入 ＋ 出现含字段名的提示；修改输入 → 预览文本随之变化。
+- **裁定**：已定（编排者 R35）——实时预览触发用 **`input` 事件**（DB-7 取推荐 a）。
 
 ### B-10 空态
 
@@ -134,6 +143,7 @@
 - **状态**：无数据即空态；**异常**走 B-12 错误回执（两者不得混用，§5 DB-8）。
 - **证据**：`packages/base-render/src/spec/controls.ts:308-316,719-728`；`packages/base-render/src/spec/style.ts:37`；`benchmark-visual-spec.md:847,658-667`。
 - **可断言形式**：`renderEmptyState({text})` 产出含 `ilife-empty` 根 ＋ `empty-text`；computed `padding:48px 20px`；图标 `font-size:40px`／`opacity:0.5`。
+- **裁定**：已定（编排者 R35）——**无数据＝空态／异常＝错误回执**，两者不混用（DB-8 取推荐 a）。
 
 ### B-11 复制区
 
@@ -143,6 +153,7 @@
 - **状态**：成功 → `.copied` 态 ＋ 成功文案（取 `COPY_TEXT_DEFAULTS`，§3）；失败 → 失败文案恒在（不可静默）；空文本 → 短路不复制。
 - **证据**：`packages/base-render/src/spec/controls.ts:74-82,97,112-115,158,254-285,649-695`；`docs/base-paint-contract.md:837-846`。
 - **可断言形式**：每个按钮同时含 `data-action-id` 与 `data-t`；`listActionIds()` 能发现全部 id；空文本时 `copyText` 返回 `ok:false` 且不写剪贴板。
+- **裁定**：已定（编排者 R35）——两个属性分工不混用；HELP 页不保留「复制全部」胶囊（D-8），本区块的「复制数据／复制日志」仍按冻结 `COPY_ACTION_IDS.actionBar`。
 
 ### B-12 反馈区（toast ＋ 错误回执）
 
@@ -152,6 +163,7 @@
 - **状态**：toast `.show` 控制显隐；错误回执缺 `dataText`／`logText` 时**不渲染**对应复制按钮（容错不抛错）。
 - **证据**：`packages/base-render/src/spec/controls.ts:186-240,318-331,747-765`；`benchmark-visual-spec.md:696`。
 - **可断言形式**：toast 根节点 `role`／`aria-live` 属性等于冻结值；`data-max` 等于栈上限；错误回执在缺文本时按钮计数 = 0。
+- **裁定**：已定（编排者 R35）——数值规格全部引用冻结 `TOAST_DEFAULTS`（不复述）；对应 HELP 尺 H-16／H-18。
 
 ---
 
@@ -176,35 +188,41 @@
 
 **结论：无「数值矛盾」，但有 2 处缺口 ＋ 3 处口径待登记。**
 
-| # | 项 | 状况 | 处置建议 |
+> **裁定（编排者 R35）**：与冻结契约冲突处**一律以冻结契约为准**；下表「处置建议」栏即最终落法。
+
+| # | 项 | 状况 | 处置（R35 落法） |
 |---|---|---|---|
-| **CB-1** | 12 个区块的**类名命名空间** | 冻结闭集 `CONTROL_STYLE_SECTIONS` 只有 8 个（`toast`／`actionBar`／`copyButton`／`statusBadge`／`emptyState`／`errorReceipt`／`charts`／`helpShell`），而 12 区块中 B-01～B-09 大多没有专属区 | **缺口**：需 `#75`／`#104` 联合裁定「区块样式区」命名空间的登记方式，**不得**改写控件闭集（§5 DB-2） |
-| **CB-2** | 软描边 token（列表分隔线／表格 td 下边框） | 冻结 11 token 只有实色 `--line`，无 `--lineS` 等价物 | **缺口**：与 HELP 尺 C-2／D-2 同族，一并裁定 |
-| **CB-3** | 圆角集 | 冻结表零圆角 token | **缺口**：同 HELP 尺 C-5／D-5 |
-| **CB-4** | 控件 vs 区块粒度重叠 | `emptyState`／`actionBar`／`copyText` 既是冻结控件，又被区块「空态／复制」组合 | **口径**：本尺已按 FX-9 分层（控件＝原子冻结／区块＝组合不重定义），登记即可（§5 DB-1） |
-| **CB-5** | 图表色板含紫／粉 | `CHART_PALETTE` 含紫／粉，而 HELP 尺 H-01 要求 UI 无紫无粉 | **口径**：禁色只约束 UI 主色，数据可视化色板例外（与 HELP 尺 D-10 同一裁定） |
+| **CB-1** | 12 个区块的**类名命名空间** | 冻结闭集 `CONTROL_STYLE_SECTIONS` 只有 8 个（`toast`／`actionBar`／`copyButton`／`statusBadge`／`emptyState`／`errorReceipt`／`charts`／`helpShell`），而 12 区块中 B-01～B-09 大多没有专属区 | **缺口 → 移交 `#104`**：本尺**不自造第二份闭集**（§5 DB-2 移交）；`#75`／`#104` 联合裁定登记方式，**不得**改写控件闭集 |
+| **CB-2** | 软描边 token（列表分隔线／表格 td 下边框） | 冻结 11 token 只有实色 `--line`，无 `--lineS` 等价物 | **已定**：`--line` ＋ alpha 派生（DB-5 推荐 a），不动冻结表 |
+| **CB-3** | 圆角集 | 冻结表零圆角 token | **已定**：局部 **CSS 常量**收敛到 `{8,14,20,999,50%}`，**不新增 token 名**（HELP 尺 D-5） |
+| **CB-4** | 控件 vs 区块粒度重叠 | `emptyState`／`actionBar`／`copyText` 既是冻结控件，又被区块「空态／复制」组合 | **已定**：按 FX-9 分层（控件＝原子冻结／区块＝组合不重定义）；区块清单终审仍移交 `#104`（DB-1） |
+| **CB-5** | 图表色板含紫／粉 | `CHART_PALETTE` 含紫／粉，而 HELP 尺 H-01 要求 UI 无紫无粉 | **已定**：禁色只约束 UI 主色，**数据可视化色板例外**（HELP 尺 D-10 同一裁定） |
 
 ---
 
-## 5. 需维护者拍板的条目
+## 5. 拍板条目与裁定
 
-| # | 问题 | 选项 | 推荐 |
-|---|---|---|---|
-| **DB-1** | 12 区块清单是否就取本尺拟定的 12 个？ | (a) 取本尺 12 个；(b) `#104` 另定 | **(a)**：每条都有证据出处；改名需保留锚点语义 |
-| **DB-2** | 区块类名命名空间怎么登记？ | (a) 新增「区块样式区」闭集（不改控件闭集）；(b) 扩写 `CONTROL_STYLE_SECTIONS`；(c) 区块不登记，只用 `ilife-` 前缀 | **(a)**：控件闭集已冻结，扩写属破坏性变更；完全自由则失去可断言性 |
-| **DB-3** | 表格是否强制语义标签？ | (a) 强制 `<table>/<th>/<td>`；(b) 允许 div 栅格 | **(a)**：无障碍刚需，且让「th 透明背景／td 末行无边框」可机判 |
-| **DB-4** | 折叠是否强制原生 `<details>`？ | (a) 原生；(b) 自绘 ＋ `aria-expanded` | **(a)**：键盘可达免费获得；旧版已有 50ms 兜底经验 |
-| **DB-5** | 软描边用什么值？ | (a) `--line` ＋ alpha 派生；(b) 新增 token（须改冻结表）；(c) 沿用实色 | **(a)**：不动冻结表；`--lineS` 类语义由 `#75` 落 |
-| **DB-6** | 图表是否允许 `canvas` 例外？ | (a) 不允许（B4 已否决）；(b) 允许 | **(a)**：`packages/base-render/src/spec/charts.ts:3-5` 已裁定「唯一实现住 base-paint，纯 CSS ＋ SVG」 |
-| **DB-7** | 表单实时预览的触发事件？ | (a) `input`（逐键）；(b) `change`（失焦） | **(a)**：旧版 F3 即用 `input`（`docs/research/t71-help-dissect.md:398`） |
-| **DB-8** | 空态与错误回执的边界？ | (a) 无数据＝空态；异常＝错误回执；(b) 统一用一种 | **(a)**：冻结层已分两个控件（`emptyState`／`errorReceipt`），混用会丢语义 |
-| **DB-9** | 区块尺是否要求「区块级视觉规格」逐条落值？ | (a) 只锚命名空间／属性／状态 ＋ 引用控件级数值规格；(b) 再写一套区块级数值 | **(a)**：`#104` 票面要「组件级视觉规格」，但数值真相源仍应是冻结常量与 HELP 尺，避免第三份数值 |
+> 裁定来源：**编排者 R35**（2026-09-09）；裁定后取值不再改动（除维护者另行纠正）。
+
+| # | 问题 | 选项 | 推荐 | 裁定（R35） |
+|---|---|---|---|---|
+| **DB-1** | 12 区块清单是否就取本尺拟定的 12 个？ | (a) 取本尺 12 个；(b) `#104` 另定 | **(a)**：每条都有证据出处；改名需保留锚点语义 | **移交 `#104`**：清单**暂定**，最终以 `#104` 为准（接口 owner） |
+| **DB-2** | 区块类名命名空间怎么登记？ | (a) 新增「区块样式区」闭集（不改控件闭集）；(b) 扩写 `CONTROL_STYLE_SECTIONS`；(c) 区块不登记，只用 `ilife-` 前缀 | **(a)**：控件闭集已冻结，扩写属破坏性变更；完全自由则失去可断言性 | **移交 `#104`**：新增闭集属契约面，**本尺不得自造第二份闭集** |
+| **DB-3** | 表格是否强制语义标签？ | (a) 强制 `<table>/<th>/<td>`；(b) 允许 div 栅格 | **(a)**：无障碍刚需，且让「th 透明背景／td 末行无边框」可机判 | **已定**：强制语义标签（取 a） |
+| **DB-4** | 折叠是否强制原生 `<details>`？ | (a) 原生；(b) 自绘 ＋ `aria-expanded` | **(a)**：键盘可达免费获得；旧版已有 50ms 兜底经验 | **已定**：强制原生（取 a） |
+| **DB-5** | 软描边用什么值？ | (a) `--line` ＋ alpha 派生；(b) 新增 token（须改冻结表）；(c) 沿用实色 | **(a)**：不动冻结表；`--lineS` 类语义由 `#75` 落 | **已定**：`--line` ＋ alpha 派生（取 a） |
+| **DB-6** | 图表是否允许 `canvas` 例外？ | (a) 不允许（B4 已否决）；(b) 允许 | **(a)**：`packages/base-render/src/spec/charts.ts:3-5` 已裁定「唯一实现住 base-paint，纯 CSS ＋ SVG」 | **已定**：不允许 `canvas`（取 a） |
+| **DB-7** | 表单实时预览的触发事件？ | (a) `input`（逐键）；(b) `change`（失焦） | **(a)**：旧版 F3 即用 `input`（`docs/research/t71-help-dissect.md:398`） | **已定**：`input`（取 a） |
+| **DB-8** | 空态与错误回执的边界？ | (a) 无数据＝空态；异常＝错误回执；(b) 统一用一种 | **(a)**：冻结层已分两个控件（`emptyState`／`errorReceipt`），混用会丢语义 | **已定**：无数据＝空态／异常＝回执（取 a） |
+| **DB-9** | 区块尺是否要求「区块级视觉规格」逐条落值？ | (a) 只锚命名空间／属性／状态 ＋ 引用控件级数值规格；(b) 再写一套区块级数值 | **(a)**：`#104` 票面要「组件级视觉规格」，但数值真相源仍应是冻结常量与 HELP 尺，避免第三份数值 | **已定**：只锚 ＋ 引用（取 a） |
+
+> 结论：**DB-3…DB-9 全部落定**；**DB-1／DB-2 移交 `#104`**（区块组件接口 owner）。
 
 ---
 
 ## 6. 可验收性自证（区块锚点的实测行）
 
-同一个只读脚本 `.scratch/t105/check-rulers.mjs` 也覆盖区块尺中**能从冻结常量直接判**的锚点，实测（本轮真实输出，节选；全表 47 行，小计「可判 43 条（PASS 25 / FAIL 18）；N/A 2 条；需落地后判 2 条」）：
+同一个只读脚本 `.scratch/t105/check-rulers.mjs` 也覆盖区块尺中**能从冻结常量直接判**的锚点，实测（本轮真实输出，节选；全表 47 行，小计「可判 43 条（PASS 25 / OLD-DEVIATION 18 / DEFECT 0）；N/A 2 条；需落地后判 2 条」——口径见 HELP 尺 §6，`OLD-DEVIATION` 只出现在旧版实例行，区块尺行全为 `PASS`）：
 
 | 区块 | 判什么 | 实测值 | 判定 |
 |---|---|---|---|
@@ -234,4 +252,4 @@
 1. **12 个区块的清单是拟定的**（`#104` 票面未枚举），已在 §5 DB-1 请求确认；本尺的锚点语义不依赖具体名字。
 2. **本尺不提供像素基线**：不做 DOM 同构、不做截图 diff；判据是「锚点 ＋ computed 值」。
 3. **区块级数值规格有意保持「引用」而非「新写」**：避免与 `docs/visual-spec-help.md` 和冻结常量形成三份真相；若 `#104` 确需区块级独立数值，须先在 §5 DB-9 拍板。
-4. **命名空间缺口（CB-1／CB-2／CB-3）未拍前**，`#104` 不应据本尺落定类名与描边 token。
+4. **命名空间缺口（CB-1）已移交 `#104`**：`#104` 未落定前，区块类名可用 `ilife-` 前缀做**临时**锚点，但**不得**据本尺新增第二份样式区闭集。
