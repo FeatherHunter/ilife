@@ -60,6 +60,8 @@
 
 **delta 不为空，但与本票无因果**——归属分析见 §6。冻结基线（`.scratch/t75/baseline-failing.txt`，21 条）取点早于本轮多个已落地提交（如 `526e94e feat(93)…`）与 #101 的在途测试文件，故共享工作区上的全量 delta 天然受并发票污染。
 
+**末轮复跑（终态：正文＋证据＋changeset 全部提交后，持锁）**：`pnpm build`／`pnpm boundaries`／`pnpm snapshot:check`／`pnpm publish:pre` 四条 `EXIT=0`（`boundaries: PASS`／`OK: 快照 == 实际拉取版（0.1.0@2fc0b42170d9604a）`／`check-publish --pre：PASS`）。
+
 ## 5. 冲突登记（以实现为准）
 
 - **C-1（路由层 vs 旧 M6 的适用范围）**：旧 M6 点名 `记围度`／`记体脂` 为「配置型 wizard，必须先 verify」；新版路由层把同族 5 词判为 `exec` 直连写键（`src/triggers/routing.ts:396-400`；判据见 `:14-20`、`:71-72`）。**以实现为准**：正文按「单命令入口只证明写键可达，分流仍按本表」登记（`SKILL.md:56`），verify 体验归 #86 页面层。**未改任何实现代码**（归 #87／#101）。
