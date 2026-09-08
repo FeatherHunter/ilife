@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卡路里技能 · 架构说明（MAP 全部完成后）</title>
+<style>
+  :root{
+    --blue:#007aff; --ink:#1d1d1f; --ink-2:#4b4b52; --ink-3:#86868b;
+    --line:#e5e5ea; --bg:#ffffff; --bg-2:#f7f7fa; --ok:#1a7f37; --warn:#b25000; --bad:#c62828;
+    --r:12px; --r-sm:8px; --shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:40px 20px 80px; background:var(--bg-2); color:var(--ink);
+    font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px; margin:0 auto}
+  header.page{
+    background:var(--bg); border:1px solid var(--line); border-radius:var(--r);
+    padding:28px 30px; box-shadow:var(--shadow); margin-bottom:24px;
+  }
+  header.page h1{margin:0 0 8px; font-size:26px; letter-spacing:-.01em}
+  header.page .sub{color:var(--ink-3); font-size:14px}
+  .pill{display:inline-block; padding:2px 10px; border-radius:999px; background:rgba(0,122,255,.1);
+    color:var(--blue); font-size:12px; font-weight:600; margin-right:6px}
+  section{
+    background:var(--bg); border:1px solid var(--line); border-radius:var(--r);
+    padding:24px 30px; box-shadow:var(--shadow); margin-bottom:20px;
+  }
+  section h2{margin:0 0 6px; font-size:19px; letter-spacing:-.01em}
+  section h2 .num{color:var(--blue); font-weight:700; margin-right:8px}
+  section h3{margin:22px 0 8px; font-size:15px; color:var(--ink-2)}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0 10px 22px; padding:0}
+  li{margin:6px 0}
+  code{background:#f0f0f4; border-radius:5px; padding:1px 6px; font-size:13.5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  pre{
+    background:#1d1d1f; color:#f2f2f7; border-radius:var(--r-sm); padding:16px 18px; overflow:auto;
+    font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; margin:14px 0;
+  }
+  pre .c{color:#8e8e93}
+  pre .k{color:#6fc3ff}
+  pre .g{color:#7ee787}
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:14.5px}
+  th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{background:var(--bg-2); color:var(--ink-2); font-weight:600; font-size:13.5px}
+  tr:last-child td{border-bottom:none}
+  .tag{display:inline-block; padding:1px 8px; border-radius:6px; font-size:12px; font-weight:600; white-space:nowrap}
+  .tag.ok{background:rgba(26,127,55,.1); color:var(--ok)}
+  .tag.warn{background:rgba(178,80,0,.1); color:var(--warn)}
+  .tag.bad{background:rgba(198,40,40,.1); color:var(--bad)}
+  .tag.info{background:rgba(0,122,255,.1); color:var(--blue)}
+  .callout{border-left:3px solid var(--blue); background:rgba(0,122,255,.05);
+    border-radius:0 var(--r-sm) var(--r-sm) 0; padding:12px 16px; margin:16px 0}
+  .callout.warn{border-left-color:var(--warn); background:rgba(178,80,0,.06)}
+  .callout.decide{border-left-color:var(--bad); background:rgba(198,40,40,.05)}
+  .callout b{color:var(--ink)}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:14px 0}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line); border-radius:var(--r-sm); padding:14px 16px; background:var(--bg)}
+  .card h4{margin:0 0 6px; font-size:14px}
+  .card p{margin:6px 0 0; font-size:14px; color:var(--ink-2)}
+  .muted{color:var(--ink-3); font-size:13.5px}
+  .q{color:var(--blue); font-weight:700}
+  footer{color:var(--ink-3); font-size:13px; text-align:center; margin-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>卡路里技能 · 架构说明</h1>
+  <div class="sub">
+    <span class="pill">MAP 全部完成后的终态</span>
+    <span class="pill">2026-09-08</span>
+    <span class="pill">依据仓库实测</span>
+  </div>
+  <p class="muted" style="margin-top:14px">
+    回答你提出的 10 个问题。凡涉及现状的数字与文件路径，都取自本仓实测（非推测）；凡属"地图完成后才会成立"的部分，都标明对应票号。
+  </p>
+</header>
+
+<section>
+  <h2>结论速览</h2>
+  <table>
+    <tr><th style="width:52px">#</th><th style="width:210px">问题</th><th>一句话答案</th></tr>
+    <tr><td>1</td><td>为什么需要交付信号</td><td><span class="tag decide">要你拍</span> 因为现在 <code>--html</code> 写没写成功、文件在哪，stdout 都不说；旧版是靠 <code>ACTION=SEND_TO_USER | HTML=&lt;路径&gt;</code> 一行解决的，新版这行**不存在**。推荐扩 envelope 加 <code>delivery</code> 字段。</td></tr>
+    <tr><td>2</td><td>数据库技术成熟吗</td><td><span class="tag ok">很成熟</span> SQLite，驱动是 Node 22.13 <b>内置</b>的 <code>node:sqlite</code>，零第三方依赖。</td></tr>
+    <tr><td>3</td><td>是否六边形架构</td><td><span class="tag ok">是</span> <code>docs/adr/0001</code>，但只覆盖<b>插件侧</b>（host/client）；技能侧是分层管线，端口＝进程边界。</td></tr>
+    <tr><td>4</td><td>唤醒词→路由 靠 SKILL.md 保证吗</td><td><span class="tag bad">不是</span> 真相源是 TS 里的 436 条 triggers；SKILL.md 是构建期生成的<b>镜像</b>。</td></tr>
+    <tr><td>5</td><td>新增能力耦合高吗</td><td><span class="tag warn">现在高</span> 要动 <b>6 处</b>；地图完成后降到 3–4 处（计数断言是刻意保留的）。</td></tr>
+    <tr><td>6</td><td>中间态 HTML 能处理吗</td><td><span class="tag warn">能，但有缺口</span> 渲染没问题，<b>回传回路</b>缺 3 样（#76/#77/#98）。</td></tr>
+    <tr><td>7</td><td>插件新增数据再调技能</td><td><span class="tag ok">可以</span> 这正是设计意图；"单向"指<b>代码依赖</b>方向，不是数据方向。</td></tr>
+    <tr><td>8</td><td>规格 / token / DOM 是什么</td><td>白话解释见正文——一句话：复用"设计变量与规范"，不搬"网页结构"。</td></tr>
+    <tr><td>9</td><td>base-paint 是不是你想的设计</td><td><span class="tag bad">还不是</span> 现在只有薄薄一层；地图里的 #74/#75/#76/#78/#104 就是把它做成你想要的。</td></tr>
+    <tr><td>10</td><td>三态</td><td><span class="tag ok">已接受</span> 落进 #83；另建议补第 4 态"回传态"（见 Q6）。</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="num">Q1</span>为什么需要"交付信号"？</h2>
+
+  <h3>背景：旧版靠一行字解决的事</h3>
+  <p>旧 SKILL.md 的<b>强制性规定第 4 条</b>是"HTML-First 铁则"：唤醒词命中后，只要模板清单里有对应页面，AI <b>必须</b>渲染 HTML 并打开，<b>严禁文字答</b>；渲染失败必须给错误回执，<b>严禁手写 HTML 兜底</b>。</p>
+  <p>问题来了：AI 怎么知道"渲染成功了"？旧版第 6 条给了答案——CLI 的 stdout 里必须出现这一行：</p>
+  <pre>⚠️ ACTION=SEND_TO_USER | HTML=D:\...\calorie_html\饮食_20260908_101530.html</pre>
+  <p class="muted">这行就是<b>交付信号</b>：既宣布"渲染成功、这是给用户的东西"，又给出文件在哪。</p>
+
+  <h3>新版断在哪</h3>
+  <ul>
+    <li>新架构规定 stdout <b>只打一行 envelope JSON</b>（<code>SKILL.md:26</code>，P9 契约）。</li>
+    <li>envelope 的字段是 <code>{skill, key, shape, version, data}</code>——<b>没有</b> html、path、template 任何一项。</li>
+    <li>全仓 grep <code>ACTION=SEND_TO_USER</code> = <b>0 命中</b>。</li>
+  </ul>
+
+  <h3>后果（三条，都是真的）</h3>
+  <ol>
+    <li>AI 不知道渲染成没成功，只能去猜目录、猜文件名；</li>
+    <li>"渲染失败给回执"这条验收<b>无法判定</b>——没有信号就没有"失败"可言；</li>
+    <li>一旦 AI 不确定，它最可能的动作就是<b>自己手写一段 HTML</b>——正好是旧版明令禁止的反模式。</li>
+  </ol>
+
+  <h3>两个选项</h3>
+  <div class="grid">
+    <div class="card">
+      <h4>A. 扩 envelope（推荐）</h4>
+      <p>在那一行 JSON 里加 <code>delivery:{mode:"file", path:"…", template:"…", bytes:5768}</code>。仍是"一行 JSON"，老消费方忽略未知字段即可，面板与 agent 都能用。</p>
+    </div>
+    <div class="card">
+      <h4>B. 修订 P9</h4>
+      <p>允许 stdout 出现第二行标记（照抄旧版 <code>ACTION=SEND_TO_USER</code>）。省事，但破掉"stdout 只一行"的纯净契约，解析方要改成两段式。</p>
+    </div>
+  </div>
+  <div class="callout decide"><b>要你拍：</b>选 A 还是 B。（推荐 A：envelope 本来就是唯一真相，加字段不新增真相。）</div>
+</section>
+
+<section>
+  <h2><span class="num">Q2</span>数据库技术成熟吗？</h2>
+  <p><b>用的是 SQLite</b>——世界上最广泛部署的数据库引擎（手机、浏览器、飞机娱乐系统里都有它）。特点：单文件、事务完整、无需服务器进程、崩溃安全。</p>
+  <table>
+    <tr><th style="width:150px">项</th><th>实测</th></tr>
+    <tr><td>驱动</td><td><code>import { DatabaseSync } from 'node:sqlite'</code>（<code>packages/skill-calorie/src/schema.ts:12</code>）——Node 22.13+ <b>内置</b>模块</td></tr>
+    <tr><td>第三方依赖</td><td><b>零</b>（全仓 grep <code>sqlite</code> 依赖 = 0；没有 better-sqlite3 之类）</td></tr>
+    <tr><td>版本门槛</td><td><code>engines: node &gt;= 22.13</code> 就是为了这个内置模块</td></tr>
+    <tr><td>数据位置</td><td>环境变量 <code>SKILLS_DB_PATH</code>（无默认值，必须设）</td></tr>
+    <tr><td>访问纪律</td><td>只许经 CLI（<code>calorie-cmd-read</code>），<b>禁止直连库</b>；缺失数据一律阻断，不返空数组</td></tr>
+  </table>
+  <div class="callout warn"><b>唯一需要注意的地方：</b><code>openDb()</code> 每次打开都会建表＋跑迁移（<code>ALTER</code>/<code>DROP</code>/<code>UPDATE</code>），所以<b>"只读打开真库"在这套代码里并不存在</b>。想拿真实数据做只读对照，要么拷贝一份、要么新增只读打开路径（票 #93）。</div>
+</section>
+
+<section>
+  <h2><span class="num">Q3</span>是六边形架构（Hexagonal / Ports &amp; Adapters）吗？</h2>
+  <p><b>是</b>——<code>docs/adr/0001-hexagonal-architecture.md</code>，状态"已决定（2026-09-08，用户原话：之后用这个架构）"。</p>
+  <table>
+    <tr><th style="width:120px">层</th><th>内容</th></tr>
+    <tr><td>端口 Port</td><td>纯契约模块：零 <code>node:</code> 导入、浏览器安全。放 RPC 通道/方法/键、参数与回执形状、slots 能力描述。</td></tr>
+    <tr><td>适配器 Adapter</td><td>host 侧：node 实现（spawn CLI、注册 RPC）；client 侧：browser 实现（loader 工厂包、slots、React、RPC 调用）。</td></tr>
+  </table>
+  <p>三条铁律：① client 产物必须是 loader 校验过的工厂包，传递闭包无 <code>node:</code>、无 ESM 顶层语句；② 两侧<b>只经端口</b>对话，client 不 import host 实现、反之亦然；③ 不虚构 host API。</p>
+  <div class="callout"><b>范围要分清：</b>ADR-0001 管的是<b>插件侧</b>（跨 host/client）。<b>技能侧</b>不是六边形，而是分层管线：<code>cli → fetch → analysis → render</code>，它对外的"端口"就是<b>进程边界 + envelope JSON</b>。</div>
+</section>
+
+<section>
+  <h2><span class="num">Q4</span>"用户说唤醒词 / 点面板 → 路由"是 SKILL.md 保证的吗？</h2>
+  <p><b>不是。这段由三层分别保证，SKILL.md 只管第一层。</b></p>
+  <table>
+    <tr><th style="width:110px">层</th><th>真相在哪</th><th>作用</th></tr>
+    <tr><td>发现层</td><td><code>SKILL.md</code>（其中「联动速查」块是构建期由 <code>scripts/build-help.mjs</code> 自动生成，带 <code>&lt;!-- HELP-AUTO-START --&gt;</code> 标记，<b>手改会被覆盖</b>）＋ 插件注册的"技能提供方"（#56）</td><td>让用户/agent <b>知道</b>有哪些能力、怎么调</td></tr>
+    <tr><td>路由层</td><td><code>src/triggers/scene-01..10.ts</code>，<b>436 条</b> <code>wake_word</code>；<code>test/calorie-triggers.test.mjs</code> 断言条数/10 场景/逐条 sha</td><td>把"话"映射成 <code>key</code> + 参数</td></tr>
+    <tr><td>执行层</td><td><code>calorie-cmd-read &lt;key&gt;</code> → 取数/口径/渲染</td><td>把 key 变成数据与 HTML</td></tr>
+  </table>
+  <p>另外：<b>点面板不走唤醒词</b>。面板直接指定 key（当前只有 <code>calorie.view.home</code> 一个），与唤醒词无关。</p>
+</section>
+
+<section>
+  <h2><span class="num">Q5</span>新增一个"唤醒词 + 逻辑 + HTML 页面"会不会耦合太高？</h2>
+  <p><b>现在确实高——要动 6 处</b>（这是对抗式审查实测的结论）：</p>
+  <ol>
+    <li><code>src/triggers/scene-*.ts</code>：加唤醒词</li>
+    <li><code>src/cli/keys.ts</code>：加 key（77 个被冻结，只许<b>追加</b>，禁止改名）</li>
+    <li><code>src/cli/cmd_read.ts</code>：加 dispatch 分支（77 个 case 的单文件）</li>
+    <li><code>src/fetch/*</code> + <code>src/analysis/*</code>：加取数与口径</li>
+    <li><code>src/render/*</code> + <code>templates/*.html</code>：加渲染器与模板</li>
+    <li><b>扇出断言</b>：<code>combos.yaml</code>、<code>base-combos</code> 的 <code>PRESENT_KEYS</code>、以及 4 个测试文件里的 <code>length === 77</code></li>
+  </ol>
+  <p><b>地图完成后降到 3–4 处</b>：加词 → 加 key → 写一个"数据 → 区块组件"的薄渲染函数 → 加模板。第 6 处<b>会保留</b>，因为计数断言是<b>刻意</b>的——防止有人静默改键表导致全链漂移。</p>
+  <p class="muted">如果将来还想再降，可以做"key 注册表 + 渲染器注册表"（声明式注册，不用改 dispatch），但那属于二期，本图不做。</p>
+</section>
+
+<section>
+  <h2><span class="num">Q6</span>老版的"中间态 HTML"场景（填表 → 复制 prompt → 交给 AI → 出结果 HTML）能处理吗？</h2>
+  <p><b>能渲染，但缺一条回路。</b>先把这个场景拆开看：</p>
+  <pre><span class="c">①</span> 用户："记围度 胸95 腰80"
+<span class="c">②</span> AI 返回<span class="k">中间态 HTML</span>（预填好的表单/verify 页）
+<span class="c">③</span> 用户在页面里确认/修改 → 点"复制 prompt" → 页面把字段<span class="k">序列化成一段文本</span>
+<span class="c">④</span> 用户把这段文本粘给 AI
+<span class="c">⑤</span> AI 按文本调 CLI 写库
+<span class="c">⑥</span> 返回<span class="g">结果型 HTML</span>（回执）</pre>
+  <p>现状盘点：</p>
+  <table>
+    <tr><th style="width:150px">环节</th><th style="width:110px">现状</th><th>说明</th></tr>
+    <tr><td>② 渲染中间态页</td><td><span class="tag ok">能做</span></td><td>渲染器已具备</td></tr>
+    <tr><td>③ 页面内"复制 prompt"</td><td><span class="tag bad">缺</span></td><td>旧版靠 <code>base.js</code> 的 <code>copyText</code>／toast；新版 base-paint <b>没有控件层</b> → 票 <b>#76</b></td></tr>
+    <tr><td>③ 字段序列化成文本</td><td><span class="tag bad">缺</span></td><td>旧版 <code>buildDataText</code>/<code>buildLogText</code>；新版无对应 → 票 <b>#77</b></td></tr>
+    <tr><td>⑤ "禁止跳过 verify" 的规则</td><td><span class="tag bad">缺</span></td><td>旧版是 SKILL.md 里的 M6 铁则正文；新版只活在页面里 → 票 <b>#98</b></td></tr>
+    <tr><td>⑥ 结果型 HTML</td><td><span class="tag ok">能做</span></td><td>写库回执页 → 票 <b>#97</b>（M5 回执契约）</td></tr>
+  </table>
+  <div class="callout warn"><b>结论：</b>能处理，但必须把 #76 + #77 + #98 三张票做完，这条回路才闭合。它也说明一件事——<b>HTML 不总是终点，有时它是"输入界面的载体"</b>。所以除了你已接受的三态，建议再加一态：<b>回传态</b>（页面产出可粘贴回 AI 的文本）。</div>
+</section>
+
+<section>
+  <h2><span class="num">Q7</span>"方向永久单向"——插件新增数据、再调技能接口，可以吗？</h2>
+  <p><b>可以，而且这就是设计意图。</b>"单向"说的是<b>代码依赖方向</b>，不是数据方向：</p>
+  <ul>
+    <li><b>依赖单向</b>：插件依赖技能的 CLI 契约（按包名解析、spawn）；技能<b>永不</b> import 插件。所以技能包 grep DSH 引用 = 0。</li>
+    <li><b>数据双向</b>：读有 42 个读键、写有 35 个写键。插件点"新增一餐" → 走 <code>host.call → spawn calorie-cmd-read calorie.diet.add --params '{…}'</code> → CLI 写 SQLite → 返回回执（M5 契约要求带 id、时间戳、影响行数）。</li>
+  </ul>
+  <div class="callout"><b>唯一约束：</b>插件不得直接碰数据库，也不得 import 技能的取数/渲染实现——只能走那一个进程出口。</div>
+</section>
+
+<section>
+  <h2><span class="num">Q8</span>规格、token、DOM 到底是什么（白话版）</h2>
+  <div class="grid">
+    <div class="card">
+      <h4>DOM</h4>
+      <p>网页的"结构骨架"：哪些标签、谁套谁、有哪些属性。相当于一栋楼的<b>房间与墙</b>。</p>
+    </div>
+    <div class="card">
+      <h4>token（设计变量）</h4>
+      <p>把颜色/圆角/字号/间距写成变量，例如 <code>--blue:#007aff</code>、<code>--r:12px</code>。改一处，全站生效。相当于<b>装修色卡与尺寸表</b>。</p>
+    </div>
+    <div class="card">
+      <h4>规格（spec）</h4>
+      <p>文字规范："KPI 卡＝白底、圆角 12、数字 32px 主色、副标 14px 灰"。相当于<b>施工图纸</b>。</p>
+    </div>
+    <div class="card">
+      <h4>为什么"复用规格与 token，不搬 DOM"</h4>
+      <p>HTML 页是"字符串拼装"，DSH 面板是 React 组件树，两者结构天生不同，硬搬骨架会崩。但让它们<b>共用同一份色卡与图纸</b>，看起来就一致——这才是稳的复用方式。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">Q9</span>base-paint 的初衷（通用组件一次开发、所有技能共用、改样式全生效）——现在是这个设计吗？</h2>
+  <p><b>还不是。现在它只是一层很薄的骨架。</b></p>
+  <table>
+    <tr><th style="width:170px">你想的</th><th style="width:110px">现状</th><th>证据 / 补齐票</th></tr>
+    <tr><td>统一的可注入样式资产</td><td><span class="tag bad">缺</span></td><td><code>base-render/src/style.ts</code> 只有 997 字节的 JS token；<code>style/tokens.css</code> 仅 3 行且不在 <code>files</code> → <b>#75</b></td></tr>
+    <tr><td>统一占位符注入器</td><td><span class="tag bad">缺</span></td><td>6 个技能各自复制同一段约 300 字符 CSS + 3 行 copyItem → <b>#74</b></td></tr>
+    <tr><td>通用控件（toast/复制/状态）</td><td><span class="tag bad">缺</span></td><td>旧版 <code>base.js</code> 46.9KB 无对应 → <b>#76</b></td></tr>
+    <tr><td>通用图表</td><td><span class="tag bad">缺</span></td><td>旧版 <code>charts.js</code> 67.6KB 无对应 → <b>#78</b></td></tr>
+    <tr><td>通用区块组件</td><td><span class="tag bad">缺</span></td><td>→ <b>#104</b>（12 个组件，接口唯一 owner）</td></tr>
+    <tr><td>改样式所有技能生效</td><td><span class="tag warn">有风险</span></td><td>base-paint 被 <b>6 个技能</b>共用、45 处 <code>token()</code>；直接换配色会静默重刷全部技能 → <b>#96</b> 回归门 + <b>D7</b> 主题接缝</td></tr>
+  </table>
+  <div class="callout"><b>一句话：</b>你的初衷是对的，地图里的 #74／#75／#76／#78／#104（再加 #96 与主题接缝）<b>就是在把它实现出来</b>。达成的标志是：改一处 token，6 个技能同步变；且 calorie 的浅色主题不会强推给另外 5 个技能。</div>
+</section>
+
+<section>
+  <h2><span class="num">Q10</span>三态交付契约（已接受）</h2>
+  <table>
+    <tr><th style="width:110px">态</th><th style="width:210px">触发条件</th><th>产物</th></tr>
+    <tr><td><b>① 文件态</b>（默认）</td><td>有对应模板 + 可写文件系统</td><td><code>calorie_html/*.html</code> 绝对路径（配合 Q1 的交付信号）</td></tr>
+    <tr><td><b>② 内联态</b></td><td>有模板但无法写文件（沙箱/只读）</td><td>stdout envelope 带 <code>html</code> 片段</td></tr>
+    <tr><td><b>③ 文本态</b></td><td>无对应模板，或用户明确要文本</td><td>结构化文本（直接叙述 envelope）</td></tr>
+  </table>
+  <div class="callout"><b>三态同源</b>：都由同一个 key、同一份 envelope 产生，绝不各自取数。落地票：<b>#83</b>。<br>
+  <b>建议补第 ④ 态「回传态」</b>（见 Q6）：页面把用户填好的字段序列化成可粘贴文本 → 依赖 #76／#77／#98。</div>
+</section>
+
+<section>
+  <h2>附：从指令到 HTML 的完整流程（终态）</h2>
+  <pre>用户说唤醒词 / 点面板
+      │
+      ▼
+<span class="k">路由层</span>  src/triggers/scene-*.ts（436 条）  →  key + 默认参数
+      │            <span class="c">（点面板则直接给 key）</span>
+      ▼
+<span class="k">唯一出口</span> calorie-cmd-read &lt;key&gt; --params '{…}'
+      │
+      ├─ 参数校验            非法 → exit 2
+      ├─ <span class="k">取数层</span> src/fetch/*        SQLite（SKILLS_DB_PATH）
+      ├─ <span class="k">口径层</span> src/analysis/*     赤字 / 趋势 / 异常 / 复盘
+      └─ <span class="k">装配</span>  envelope { skill, key, shape, version, data }
+      │
+      ├─ 无 --html  → stdout 一行 envelope JSON      <span class="c">（面板 / agent 消费）</span>
+      └─ 有 --html  → <span class="k">渲染层</span> renderHtml(envelope)  纯函数
+                        → base-paint 注入 &lt;!--SHARED-CSS--&gt; / &lt;!--SHARED-HELPERS--&gt;
+                        → 写 calorie_html/&lt;中文command&gt;_&lt;YYYYMMDD&gt;_&lt;HHMMSS&gt;[_N].html
+                        → stdout 一行 envelope + <span class="g">delivery{path,…}</span>
+      │
+      ▼
+agent 打开/交付文件；渲染失败 → 错误回执（严禁手写 HTML 兜底）
+      │
+      ▼
+<span class="c">（回传态）</span> 页面内"复制 prompt" → 用户粘贴给 AI → AI 再调 CLI</pre>
+</section>
+
+<section>
+  <h2>待你拍板 &amp; 已落票</h2>
+  <div class="callout decide"><b>只剩 1 项要你拍：</b>Q1 的交付信号走 <b>A（扩 envelope 加 <code>delivery</code> 字段，推荐）</b> 还是 <b>B（修订 P9 允许多一行）</b>。</div>
+  <p><b>已按你的答复落票：</b>三态交付契约 → <b>#83</b>。</p>
+  <p class="muted">本轮另外查证并确认的事实：DB 驱动＝<code>node:sqlite</code>（零依赖）；ADR-0001 仅覆盖插件侧；唤醒词 SoT＝436 条在 TS；新增能力现需动 6 处；中间态回传回路缺 #76／#77／#98；base-paint 目前无控件/图表/可注入样式资产。</p>
+</section>
+
+<section>
+  <h2>补充问答（第二轮 · 7 问）</h2>
+
+  <h3>① 没有 SKILL.md，AI 怎么知道怎么处理？</h3>
+  <p><b>澄清：SKILL.md 不能少，它是 agent 的第一入口。</b>我说"镜像"只针对<b>其中那张 77 键表格</b>——它由 <code>scripts/build-help.mjs</code> 从 <code>src/cli/keys.ts</code> 自动生成、带 <code>&lt;!-- HELP-AUTO-START --&gt;</code> 标记、<b>手改会被构建覆盖</b>。</p>
+  <p>SKILL.md 的<b>手写部分</b>（唯一出口、口径、环境与出 scope、HELP 说明）才是真正的行为指导；#82 正是重写这部分。AI 的信息来源是三层：</p>
+  <ol>
+    <li><b>发现</b>：读 SKILL.md 全文（未来经 #56 的技能提供方，或直接读包内文件）→ 知道有哪些能力、怎么调、什么口径；</li>
+    <li><b>查词</b>：<code>calorie.help.lookup --params '{"q":"…"}'</code> 查唤醒词 → key；</li>
+    <li><b>执行</b>：<code>calorie-cmd-read &lt;key&gt;</code>。</li>
+  </ol>
+
+  <h3>② 新增能力降到 3–4 处，是最佳吗？</h3>
+  <p><b>不是理论最优。</b>理论最优是 <b>2 处声明 + 0 处扇出</b>：一张 key 注册表（key + 元数据 + 取数 + 渲染引用）＋一张渲染器注册表，<code>cmd_read.ts</code> 的 dispatch 与 4 个测试里的 <code>length === 77</code> 都从注册表派生。</p>
+  <p>代价：把 77 个静态 case 改成动态注册会牺牲类型安全与可追踪性；而且本图正要在这几个文件上做大量页面工作，重构会直接冲突。<b>所以 3–4 处是"本图不引入大重构"下的合理值</b>；注册表化记成二期候选。</p>
+
+  <h3>③ "回传回路缺 3 样"是哪 3 样？</h3>
+  <table>
+    <tr><th style="width:90px">票</th><th style="width:190px">缺什么</th><th>作用</th></tr>
+    <tr><td>#76</td><td>浏览器端控件：<code>copyText</code> ＋ <code>toast</code></td><td>把文本写进剪贴板，并给"已复制"反馈。现在 base-paint 一个控件都没有</td></tr>
+    <tr><td>#77</td><td>复制文本序列化：<code>buildDataText</code>／<code>buildLogText</code></td><td>把用户填的字段拼成 <b>AI 能读的一段文本</b>——也就是"复制出来的 prompt"</td></tr>
+    <tr><td>#98</td><td>M6 铁则正文</td><td>SKILL.md 写明"配置型 wizard 必须先判断场景，<b>禁止</b>不判断就直写库"</td></tr>
+  </table>
+  <p class="muted">缺任一条链路就断：能填不能复制 → 能复制 AI 读不懂 → AI 读了却跳过 verify。</p>
+
+  <h3>④ 交付信号</h3>
+  <p><span class="tag ok">已拍：A</span> 扩 envelope 加 <code>delivery{mode,path?,template?,bytes?}</code>；stdout 仍保持"一行 JSON"的 P9 契约。已写入 <b>#83</b> 与地图。</p>
+
+  <h3>⑤ 每次执行命令都会调 openDb() 吗？</h3>
+  <p><b>会。</b><code>cmd_read.ts:651</code> 在 <code>main()</code> 里对<b>每一个 key</b>（读和写都走这里）都调用一次：</p>
+  <pre>const db = openDb(join(dbPath, DB_FILENAME));   <span class="c">// new DatabaseSync + initDb + applyMigrations</span>
+… dispatch / dispatchWrite …
+db.close();</pre>
+  <p><code>openDb</code> ＝ <code>new DatabaseSync(path)</code> ＋ <code>initDb</code>（13 张表 <code>CREATE TABLE IF NOT EXISTS</code>）＋ <code>applyMigrations</code>（PRAGMA 列检查 ＋ 幂等迁移）。所以在已迁移的库上大多是 no-op，<b>但"读一次也写库"这件事真实存在</b>——这就是 #93 的理由。</p>
+  <div class="callout"><b>顺带一个和 #87 有关的事实：</b><code>--html</code> 的路径是<b>调用方给的</b>（<code>cmd_read.ts:659</code> <code>writeFileSync(o.html, …)</code>），CLI 不自己算文件名。命名规范（M10）目前落在调用方——这正是 #87 要收口的地方。写盘失败有专门的 <b>exit 5</b>。</div>
+
+  <h3>⑥ 技能侧要不要也改成六边形架构？</h3>
+  <p><b>不需要，也不该现在改。</b></p>
+  <ul>
+    <li>六边形解决的是"跨 host/client、两侧不能互相 import"——那是<b>插件侧</b>的问题（#48 证明两侧直引会炸整批加载）。</li>
+    <li>技能侧是<b>单进程 CLI</b>，它的端口已经存在：<b>进程边界 ＋ envelope JSON ＋ 退出码</b>。<code>cli → fetch → analysis → render</code> 是内部分层，改内部不影响外部契约。</li>
+    <li>收益（换数据库、换呈现方式）不是当前需求；成本是重构 77 键的取数／渲染路径，而本图正要在这上面做大量页面工作 → 直接冲突。</li>
+  </ul>
+  <p><b>折中（已在票里）</b>：把两个接缝显式化——① 数据接缝 ＝ <code>openDb</code>／fetch 层（#93 的只读路径落这里）；② 呈现接缝 ＝ <code>renderHtml(envelope)</code>（#104 的区块组件落这里）。这就是"够用的端口化"；二期若真要换 DB 或加新呈现，再抽接口。</p>
+
+  <h3>⑦ 代码放 base-paint 还是 skill-calorie，是按情况选吗？</h3>
+  <p>是按<b>规则</b>选，不是拍脑袋。三类归属：</p>
+  <table>
+    <tr><th style="width:170px">判据</th><th>归属</th></tr>
+    <tr><td>≥2 个技能会用到、且与领域无关</td><td><b>base-paint</b></td></tr>
+    <tr><td>依赖宿主（浏览器／DOM／DSH 交互）</td><td><b>插件 client</b></td></tr>
+    <tr><td>其余（领域逻辑、页面、取数）</td><td><b>技能包 skill-calorie</b></td></tr>
+  </table>
+  <p><b>硬约束</b>（<code>tooling/check-boundaries.mjs</code>）：<code>base-render</code> 零运行时依赖、<code>base-link-core</code> 零依赖、<code>base-combos</code> 只许字符串级引 key、装配 owner 归一 render。所以图表与控件必须<b>自包含</b>（不能引第三方库）。</p>
+  <p><b>本图的具体归属</b>：base-paint ＝ #74／#75／#76／#77／#78／#79／#104；skill-calorie ＝ #81／#82／#83／#87／#84／#85／#88／#90／#91；插件 client ＝ <code>formPrompt</code>／<code>selectList</code>／<code>smartSelect</code>（裁决 B7）。</p>
+</section>
+
+<footer>卡路里技能 · 架构说明 · 生成于 2026-09-08 · 地图：<a href="https://github.com/FeatherHunter/ilife/issues/63" style="color:var(--blue)">卡路里·本体图（1/3）</a></footer>
+
+</div>
+</body>
+</html>
