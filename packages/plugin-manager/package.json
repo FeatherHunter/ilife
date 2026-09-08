@@ -1,7 +1,7 @@
 {
   "name": "dsh-life-pack",
-  "version": "0.1.1",
-  "description": "爱生活总管插件 P10 脚手架：6 tab 只导航+推荐安装，不依赖单品、不 import 单品页",
+  "version": "0.2.0",
+  "description": "爱生活总管插件：单 DSH设置面板槽（爱生活卡）+ 爱生活页签槽 children，技能设置页动态聚合，不依赖单品、不 import 单品页",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

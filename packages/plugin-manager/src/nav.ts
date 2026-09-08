@@ -26,6 +26,9 @@ export interface RecoTab extends ManagerTab {
 
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
 
+/** 总管版本号（与 package.json 同步，release 时一起 bump；设置页总设置区版本行唯一来源）。 */
+export const MANAGER_VERSION = '0.2.0' as const;
+
 export const DUAL_ADD_PREFIX = 'dsh plugin add dsh-life-pack' as const;
 
 export function dualInstallCmd(singlePlugin: string): string {

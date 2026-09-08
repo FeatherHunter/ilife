@@ -65,10 +65,10 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
   （`dsh-cordis-client-runner/lib/client.js:3885`）。
 - 只读面：`entries/getVersion/subscribe`（uSES 配对，`renderer:1188`）；`ctx.get` miss 返回 undefined，
   一律先判空（`cordis-client-runner:4083`）。
-- `settings.section` order 分配表（人工错开，新技能取未用值）：
-  settings-plugins 15 / agent-presets 20 / dsh-memo-ilife 20（与前者并列由排序消化，P6 实证无冲突；
-  新增优先取空位）/ dsh-life-pack 21 / dsh-im-companion 22 / dsh-calorie 23。
-  sidebar 侧 order 直接复用 SLOT_ORDER（memo 70 / calorie 75），天然有序。
+- `settings.section` order 分配表（单卡方案后只剩总管一条；单品独立 section 已删）：
+  settings-plugins 15 / agent-presets 20 / dsh-life-pack 21（爱生活卡）/ dsh-im-companion 22。
+  爱生活页签槽内 tab 顺序复用 SLOT_ORDER（memo 70 / calorie 75 / schedule 80 / home 85 / chef 90 / bill 95）。
+  sidebar槽 order 各技能自定（memo 60 / calorie 61，避开 deck:map 的 60 并列则取 61）。
 
 ## 6 RPC 菜谱
 
@@ -123,7 +123,33 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
   果=旧版回退 / `MINIMUM_RELEASE_AGE_VIOLATION` / `NO_MATCHING_VERSION`；
   修=§8 安装命令三件套（显式版本 + 松政策 + 官方源）。
 
-## 10 新技能 5 常量（模板 `template/plugin-single/`）
+## 10 新技能 6 常量（模板 `template/plugin-single/`）
 
-`skill` / `slotId`（`ilife:` 命名空间）/ `title` / `order` / `channel`（单段 `/ilife-<skill>`）。
+`skill` / `slotId`（`ilife:` 命名空间）/ `title` / `order` / `channel`（单段 `/ilife-<skill>`）/
+`configTabId`（=`dsh-<skill>` 插件包名，即爱生活页签槽注册 id，也是总管 ledger 缺席判定的 join 键）。
 填完跑门：`tsc` → `node --test`（含 loader 回路）→ `boundaries` → `publish:pre`。
+
+## 11 爱生活单卡方案（grill 定案，术语见 `CONTEXT.md`）
+
+- 设置面只留一条 DSH设置面板槽：`{name:'settings.section', id:'dsh-life-pack', order:21,
+  label:()=>'爱生活'}`；单品独立 section（如 dsh-calorie 0.1.2 的 `id:'dsh-calorie'`）与
+  `sidebar.footer.action` 旧注册一律删除（破坏性变更，发版说明写清）。
+- 总管 section 声明 children 爱生活页签槽：`children:{'ilife.config-tab':{kind:'list',scope:'root'}}`
+  （children 声明形见 `dsh-client-ui-settings-plugins/lib/client.js:1776-1779`；
+  options 全形见 `dsh-client-ui-renderer/lib/client.js:1388`）。
+- 各技能往爱生活页签槽注册自家技能设置页：
+  `{name:'ilife.config-tab', id:'dsh-<skill>', order:<SLOT_ORDER>, label:<title>, inject:()=>({})}`
+  （跨插件注册先例：skills-deck 往 settings-plugins 声明的 `settings.plugins.tab` 注册，
+  见 `dsh-mattpocock-skills-deck/src/client/panelAssembly.js:86-87`）。
+- 爱生活页签条走 ledger 投影（settings-plugins:1744-1767/428-513 同形）：
+  tab 行=`entries('ilife.config-tab')` 取 `{id,order,label}` 按 order 排；
+  面板=`renderSlot('ilife.config-tab', {}, {only: activeTab})`（一次只挂载一个，
+  settings-general 同形）+ visited 缓存；`renderSlot` 面仅声明过 children 的条目才有
+  （`dsh-client-ui-renderer/lib/client.js:613-614`），调用形 `(key, owner, opts)`
+  （同文件 `:283-293`）；`hooks.tabs` 源出组件 `useTabs`（`use<Name>` 命名见
+  `dsh-client-ui-slots/lib/index.js:7-9`，调用形见 renderer `:203-210`）；
+  标签解析与 `resolveSlotLabel` 同形（thunk 跟活，slots lib `:27-29`）。
+- 缺席=ledger 无该 `id`：显示 `未安装[<包名>]，请补装：dsh plugin add dsh-life-pack <包名>`
+  只读文本（recoFor 同文）；总管零 import 技能代码。
+- DSH右侧槽（`details`）本项目明确不用；技能功能页唯一入口是 sidebar槽
+ （`betterSidebar.registerTab`，软依赖：`ctx.get('betterSidebar')` 判空，没装就不注册，不断链）。

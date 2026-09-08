@@ -66,12 +66,19 @@ describe('P10 槽位定案', () => {
     assert.deepEqual(nav.MANAGER_TABS.map((t) => t.slotId), ['ilife:memo', 'ilife:calorie', 'ilife:schedule', 'ilife:home', 'ilife:chef', 'ilife:cookie']);
     assert.deepEqual(nav.MANAGER_TABS.map((t) => t.order), [70, 75, 80, 85, 90, 95]);
   });
-  it('写死原生组件：无动态按需加载、无外嵌页、无轮询', () => {
+  it('写死原生组件：无动态按需加载、无外嵌页、无数据轮询（注册有界重试除外）', () => {
     for (const d of SINGLES.concat(['plugin-manager'])) {
       const t = srcText(d);
       assert.ok(!/import\s*\(/.test(t), d + ' 禁动态 import');
       assert.ok(!/iframe/i.test(t), d + ' 禁外嵌页');
-      assert.ok(!/setInterval|setTimeout/.test(t), d + ' 缺席纯条件渲染，无轮询');
+      if (/setInterval|setTimeout/.test(t)) {
+        // grill 定案（Q12 软依赖）：唯一允许的定时器是 sidebar槽注册有界重试
+        // （skills-deck 同款；注册重试非数据轮询）。静态门要求三件套：
+        // 有清理（clear*）+ 有次数上限（tries>=N）+ 有例外依据注释。
+        assert.ok(/clearInterval|clearTimeout/.test(t), d + ' 定时器须有清理');
+        assert.ok(/tries\s*>=/.test(t), d + ' 定时器须有次数上限');
+        assert.ok(/有界重试/.test(t), d + ' 定时器须注例外依据');
+      }
     }
   });
   it('子页不占栏：导航表仅 6 行，卡路里子页不在表内', async () => {
