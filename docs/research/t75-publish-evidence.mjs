@@ -99,6 +99,19 @@ try {
       const tokenCode = guardCode('.ilife-calorie { --r-xl: 28px; }');
       add('发布产物：extraCss 禁入 token 抛错（name/code）',
         tokenCode === 'StyleSheetError/extra-css-forbidden-token', tokenCode);
+      /* 第二轮返修（W2／W3／W4）：发布产物上的三条新事实——避免「仓内 dist 有、发布产物没有」的假绿。 */
+      add('发布产物：含 toast 入场 `@keyframes ilife-toast-in`（W4）',
+        o.css.includes('@keyframes ilife-toast-in') && o.css.includes('animation: ilife-toast-in'),
+        'keyframes=' + o.css.includes('@keyframes ilife-toast-in'));
+      add('发布产物：含 `.ilife-copy-btn.copied` 变绿态（W3，`border-color/background: var(--ok)`）',
+        o.css.includes('.ilife-copy-btn.copied {') && o.css.includes('border-color: var(--ok);')
+          && o.css.includes('background: var(--ok);'),
+        'copiedRule=' + o.css.includes('.ilife-copy-btn.copied {'));
+      add('发布产物：statusBadge 四态取旧 `.hm-status` 逐值实色（W2）',
+        o.css.includes('background: #e6f7ec;') && o.css.includes('color: #1f8c3d;')
+          && o.css.includes('background: #fff0ee;') && o.css.includes('color: #a83228;')
+          && o.css.includes('background: #f0f0f3;'),
+        'legacyBadge=' + o.css.includes('color: #1f8c3d;'));
       published = o;
     }
   }

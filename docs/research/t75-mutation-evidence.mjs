@@ -6,10 +6,14 @@
  * 口径：
  *  - 变异打在 **`packages/base-render/dist/`（构建产物，未入 git、可重生成）** 上，跑的是
  *    **仓内真实测试文件** `packages/base-render/test/style.test.mjs`（不是脚本自带副本）；
- *    其中 M10／M11／M12 跑的是**真视觉证据脚本**（`docs/research/t75-visual-evidence.mjs`），
- *    证明「圆角严格集／契约外部 oracle／errorReceipt grid」三类断言对变异敏感（返修项②⑤⑧）；
+ *    其中 M10／M11／M12／M14／M15／M16／M18／M19 跑的是**真视觉证据脚本**
+ *    （`docs/research/t75-visual-evidence.mjs`），证明「圆角严格集／契约外部 oracle／
+ *    errorReceipt 等价／toast 入场动效／copied 态／helpers 结构」等断言对变异敏感；
  *  - `P1` 是**无变异探针**：显式设 `DSH_BROWSER` 为不存在的路径 → 视觉脚本必须 `exit 1`
  *    （返修项⑦：旧实现静默回落硬编码 Chrome）；
+ *  - **命中判据只从「失败行」取**（返修 W7）：`node --test` 只看 `✖` 行，视觉脚本只看
+ *    `**FAIL**` 表行 —— 旧实现用 `out.includes(name)`，node 报告里的 `✔ <同名>` 也会命中
+ *    （判据形同虚设）；
  *  - 每条变异前把整份 `dist` 备份到 `os.tmpdir()`，`finally` 无条件还原；
  *  - 还原失败 → 立即 `exit 1` 并提示 `pnpm build`。
  */
@@ -112,6 +116,9 @@ const MUTATIONS = [
     mutate: (src) => replaceOnce(src, 'helpShell: (p) => [', 'helpShellDisabled: (p) => ['),
     cmd: STYLE_TEST_CMD,
     expect: ['CONTROL_STYLE_SECTIONS 闭集缺样式区实现'],
+    // 该变异让模块**导入即抛错** → 失败信息只出现在诊断／栈里（`✖` 行只有文件名），
+    // 故按「错误文案出现在输出中」判定（仍要求 red：fail>0 由外层统一断言）。
+    expectMode: 'message',
   },
   {
     id: 'M3',
@@ -171,9 +178,10 @@ const MUTATIONS = [
   },
   {
     id: 'M9',
-    label: '去掉 `.ilife-toast{flex-wrap:wrap}`（运行时标题／详情退回同排）',
+    label: '重新加回 `.ilife-toast{flex-wrap:wrap}` 权宜补丁（W1：T23 的「补丁已删」断言必须变红）',
     file: 'style.js',
-    mutate: (src) => replaceRuleDecl(src, "'.' + p + 'toast {',", '  flex-wrap: wrap;', ''),
+    mutate: (src) => replaceRuleDecl(src, "'.' + p + 'toast {',", '  align-items: flex-start;',
+      "  align-items: flex-start;'," + String.fromCharCode(10) + "    '  flex-wrap: wrap;"),
     cmd: STYLE_TEST_CMD,
     expect: ['T23 运行时 toast'],
   },
@@ -210,6 +218,60 @@ const MUTATIONS = [
     expect: ['T24 extraCss 三禁强制'],
   },
   {
+    id: 'M14',
+    label: '删掉 `.ilife-toast{animation:…}`（W4：入场动效判据必须变红）',
+    file: 'style.js',
+    mutate: (src) => replaceRuleDecl(src, "'.' + p + 'toast {',", "  animation: ' + p + 'toast-in .22s", '  /* animation-removed */'),
+    cmd: VISUAL_CMD,
+    expect: ['H-21a'],
+  },
+  {
+    id: 'M15',
+    label: '`.ilife-copy-btn.copied` 背景改非成功色（W3：copied 变绿判据必须变红）',
+    file: 'style.js',
+    mutate: (src) => replaceRuleDecl(src, "'.' + p + 'copy-btn.copied {',", '  background: var(--ok);', '  background: #123456;'),
+    cmd: VISUAL_CMD,
+    expect: ['B-12m'],
+  },
+  {
+    id: 'M16',
+    label: '删掉 `.ilife-error-actions{max-width:520px}`（W5：旧 `.hm-actions` 等价判据必须变红）',
+    file: 'style.js',
+    mutate: (src) => replaceRuleDecl(src, "'.' + p + 'error-actions {',", '  max-width: 520px;', ''),
+    cmd: VISUAL_CMD,
+    expect: ['B-12j'],
+  },
+  {
+    id: 'M17',
+    label: 'statusBadge ok 字色 `#1f8c3d` → `#1f8f3d`（W2：旧逐值判据必须变红）',
+    file: 'style.js',
+    mutate: (src) => replaceRuleDecl(src, "'.' + p + 'status-badge-ok {',", '  color: #1f8c3d;', '  color: #1f8f3d;'),
+    cmd: STYLE_TEST_CMD,
+    expect: ['T25 statusBadge'],
+  },
+  {
+    id: 'M18',
+    label: '破坏 helpers 运行时 toast 结构（body 类名改坏 → W1 结构判据必须变红）',
+    file: 'controls.js',
+    mutate: (src) => replaceOnce(src, "'    body.className = BODY_CLASS;',", "'    body.className = \"no-body\";',"),
+    cmd: VISUAL_CMD,
+    expect: ['H-12d'],
+  },
+  {
+    id: 'M19',
+    label: '删掉 reduced-motion 下 `.ilife-toast{animation:none}`（W4 归零判据必须变红）',
+    file: 'style.js',
+    mutate: (src) => {
+      const lines = src.split(String.fromCharCode(10));
+      const i = lines.findIndex((l, idx) => l.includes("'  .' + p + 'toast {'")
+        && (lines[idx + 1] || '').includes('animation: none;'));
+      if (i < 0) throw new Error('reduced-motion 锚点未命中');
+      return lines.slice(0, i + 1).concat(lines.slice(i + 2)).join(String.fromCharCode(10));
+    },
+    cmd: VISUAL_CMD,
+    expect: ['H-21c'],
+  },
+  {
     id: 'P1',
     label: '**无变异探针**：`DSH_BROWSER` 指向不存在路径 → 视觉脚本必须显式 exit 1（返修⑦）',
     file: null,
@@ -217,6 +279,7 @@ const MUTATIONS = [
     cmd: VISUAL_CMD,
     env: { DSH_BROWSER: join(tmpdir(), 't75-no-such-browser.exe') },
     expect: ['DSH_BROWSER 显式指向的浏览器不存在'],
+    expectMode: 'message',
   },
 ];
 
@@ -264,6 +327,33 @@ function run([exe, args], env) {
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
 }
 
+const LF = String.fromCharCode(10);
+
+/** **命中判据只从失败行取**（返修 W7）。
+ *
+ *  旧实现 `result.out.includes(name)`：`node --test` 的 `✔ <同名>`（通过用例）也会命中，
+ *  「变异让对应测试变红」这一条就退化成「测试文件里存在这个名字」。
+ *  现口径按命令分型：
+ *  - `STYLE_TEST_CMD` → 只看 `✖` 行（spec reporter 的失败用例行；TAP 的 `not ok` 也收）；
+ *  - 视觉脚本 → 只看表格里 `**FAIL**` 的行，且判据名必须取自该行的第 1 列；
+ *  - `expectMode: 'message'`（无变异探针 P1）→ 只看非 PASS 的错误输出行。 */
+function matchedExpect(m, out) {
+  const lines = out.split(LF);
+  // `expectMode:'message'`（导入即抛错的变异 M2b／无变异探针 P1）→ 只看非 PASS 的输出行。
+  if (m.expectMode === 'message') {
+    return m.expect.filter((name) => lines.some((l) => l.includes(name) && !l.includes('PASS')));
+  }
+  if (m.cmd === STYLE_TEST_CMD) {
+    const failLines = lines.filter((l) => l.trimStart().startsWith('✖') || l.trimStart().startsWith('not ok'));
+    return m.expect.filter((name) => failLines.some((l) => l.includes(name)));
+  }
+  const failedIds = lines
+    .filter((l) => l.includes('**FAIL**'))
+    .map((l) => (l.match(/^\|\s*([A-Za-z0-9-]+)\s*\|/) ?? [])[1])
+    .filter((id) => typeof id === 'string');
+  return m.expect.filter((name) => failedIds.includes(name));
+}
+
 try {
   for (const m of MUTATIONS) {
     const target = m.file === null ? null : join(DIST, m.file);
@@ -284,7 +374,8 @@ try {
     const isStyleTest = m.cmd === STYLE_TEST_CMD;
     const failLine = (result.out.match(/^ℹ fail (\d+)$/m) ?? [])[1];
     const red = isStyleTest ? Number(failLine ?? 0) > 0 : result.status !== 0;
-    const matched = m.expect.filter((name) => result.out.includes(name));
+    // W7：只从失败行取名字（旧 `out.includes(name)` 会被 `✔ <同名>` 命中）。
+    const matched = matchedExpect(m, result.out);
     const ok = red && matched.length > 0;
     if (!ok) bad += 1;
     rows.push({
@@ -292,7 +383,8 @@ try {
       label: m.label,
       verdict: ok ? 'PASS' : 'FAIL',
       detail: (isStyleTest ? 'fail=' + (failLine ?? '?') : 'exit=' + result.status)
-        + '；命中预期判据=' + (matched.join('／') || '无'),
+        + (m.expectMode === 'message' ? '；错误文案命中预期判据=' : '；失败行命中预期判据=')
+        + (matched.join('／') || '无'),
     });
   }
 } finally {
