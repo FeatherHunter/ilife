@@ -137,13 +137,24 @@
 | 单测 | `node --test packages/skill-calorie/test/skill-t11.test.mjs` | 7/7 绿（exit 0） |
 | 打包实证 | `node docs/research/t95-publish-evidence.mjs` / `--mutate` / `--guard-selftest` | PASS／被抓住／PASS |
 | 归因 | `node docs/research/t95-f1-attribution.mjs` | PASS |
-| 全量 | `pnpm test` | 见 §2.1（delta，非 #95 路径单列） |
+| 全量 | `pnpm test`（经 `t95-test-delta.mjs --tag=FINAL`） | `not ok` 12／新增 **0**／基线命中 12/21（见 §2.1） |
+
+以上 14 项于**提交后**在同一持锁批次内复跑，全部 exit 0（汇总：`.scratch/t95-fix/final-gates.txt`；
+逐项输出 `final-*.txt`）。
 
 ### 2.1 全量 `pnpm test` delta
 
-见 `docs/research/t95-test-delta.mjs` 与 `.scratch/t95-fix/test-delta-*.txt`（冻结基线
-`.scratch/t75/baseline-failing.txt`）。**本票路径新增失败 0 条**：`skill-t11` 7/7 绿；
-其余失败逐条落到在飞票（#87 CLI 出口／#101 写链／#98 SKILL.md），本票不碰这些文件。
+命令：`node docs/research/t95-test-delta.mjs --tag=FINAL`（glob 与 `pnpm test` 同一组文件；TAP 由 node 直写 UTF-8）。
+
+- **终态实测**：`not ok` 12 条（去重 12）／冻结基线命中 **12/21**／**新增 0 条**／基线中消失 9 条。
+  → **本票路径新增失败 0**：`packages/skill-calorie/test/skill-t11.test.mjs` 7/7 绿。
+- 剩余 12 条全部落在在飞票路径：`dsh-{bill,chef,home,schedule}-ilife client` 三连（#48 整批 crash 回归，
+  归插件线）＋ `口径 · 删除键数据驱动`（#101，已由 `4306d71` 修复，本次快照取其后）。
+- **中途快照（同一工作区早 10 分钟，用于归因口径）**：`not ok` 16 条／新增 4 条
+  （`packages/base-render/test/style.test.mjs` 3 条 = #75；`packages/skill-calorie/test/cmd-write-40-persist.test.mjs`
+  1 条 = #101）——**4 条均不在本票路径**，且随后由 #75／#101 的在飞提交消解（故终态 ADDED=0）。
+- 口径提醒：本工作区同时有 5 个 agent 在飞，失败集在移动（同一命令先后跑出 16／12 条）；
+  审查者要核的是「**本票路径未新增失败**」而非「集合冻结」。
 
 ---
 
