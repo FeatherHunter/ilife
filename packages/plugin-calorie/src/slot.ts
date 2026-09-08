@@ -12,6 +12,12 @@ export const SLOT_ORDER = 75 as const;
 export const SLOT_TITLE = '卡路里' as const;
 export const PLUGIN = 'dsh-calorie' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
+export const SKILL_PACKAGE = 'skill-calorie' as const;
+
+/** 版本行唯一来源（面板展示用；smoke 断言与两处 package.json 一致，防漂移）。
+ * 发版 bump 时同步改这里（与 package.json 同值）。 */
+export const PLUGIN_VERSION = '0.1.5' as const;
+export const SKILL_VERSION = '0.1.1' as const;
 
 export interface SlotDescriptor {
   readonly skill: string;

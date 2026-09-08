@@ -15,7 +15,7 @@
  */
 import * as React from 'react';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
-import { SLOT_TITLE } from './slot.js';
+import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE, PLUGIN_VERSION, SKILL_VERSION } from './slot.js';
 import { SETTING_ROWS } from './settings.js';
 import type { ClientCtx, RpcCallResult } from './dsh-ctx.js';
 
@@ -23,6 +23,36 @@ export const inject = ['slots'];
 
 /** 调用口取用器：每次取数时现取（connection 后到也不永久缺席）。 */
 export type GetCall = () => unknown;
+
+/** 面板视觉（内联 style；颜色走 DSH 主题别名，深浅主题自适应，写死值只做回退）。 */
+const S = {
+  card: {
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    background: 'var(--dsw-alias-bg-base, transparent)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    fontSize: 13,
+    lineHeight: 1.6,
+  } as React.CSSProperties,
+  title: { fontSize: 14, fontWeight: 700, marginBottom: 8 } as React.CSSProperties,
+  total: { fontSize: 22, fontWeight: 700, margin: '2px 0 4px' } as React.CSSProperties,
+  muted: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12 } as React.CSSProperties,
+  error: { color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', fontSize: 13 } as React.CSSProperties,
+  rows: { marginTop: 8, borderTop: '1px solid var(--dsw-alias-border, rgba(128,128,128,.25))', paddingTop: 8 } as React.CSSProperties,
+  version: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTop: '1px dashed var(--dsw-alias-border, rgba(128,128,128,.25))',
+    color: 'var(--dsw-alias-label-tertiary, #8a8a8a)',
+    fontSize: 12,
+  } as React.CSSProperties,
+};
+
+/** 版本行：插件与技能双版本号（用户要求：每技能设置页自报家门）。 */
+function VersionLine(): React.ReactElement {
+  return React.createElement('div', { style: S.version }, `${PLUGIN} ${PLUGIN_VERSION} · ${SKILL_PACKAGE} ${SKILL_VERSION}`);
+}
 
 type PanelState =
   | { readonly kind: 'loading' }
@@ -92,17 +122,23 @@ function MemoWork(props: { getCall: GetCall }): React.ReactElement {
     };
   }, [props.getCall]);
   if (state.kind === 'loading') {
-    return React.createElement('div', null, '备忘录加载中…');
+    return React.createElement('div', { style: S.card }, React.createElement('div', { style: S.muted }, '备忘录加载中…'));
   }
   if (state.kind === 'data') {
     return React.createElement(
       'div',
-      null,
-      React.createElement('div', null, SLOT_TITLE),
-      React.createElement('div', null, `total ${state.total}`),
+      { style: S.card },
+      React.createElement('div', { style: S.title }, SLOT_TITLE),
+      React.createElement('div', { style: S.total }, `total ${state.total}`),
+      React.createElement(VersionLine, null),
     );
   }
-  return React.createElement('div', null, state.message);
+  return React.createElement(
+    'div',
+    { style: S.card },
+    React.createElement('div', { style: state.kind === 'absent' ? S.muted : S.error }, state.message),
+    React.createElement(VersionLine, null),
+  );
 }
 
 function controlLabel(control: string): string {
@@ -130,21 +166,27 @@ function MemoConfig(props: { getCall: GetCall }): React.ReactElement {
   }, [props.getCall]);
   const status =
     state.kind === 'loading'
-      ? '状态读取中…'
+      ? React.createElement('div', { style: S.muted }, '状态读取中…')
       : state.kind === 'data'
-        ? `total ${state.total}`
-        : state.message;
+        ? React.createElement(
+            'div',
+            null,
+            React.createElement('div', { style: S.title }, SLOT_TITLE),
+            React.createElement('div', { style: S.total }, `total ${state.total}`),
+          )
+        : React.createElement('div', { style: state.kind === 'absent' ? S.muted : S.error }, state.message);
   return React.createElement(
     'div',
-    null,
-    React.createElement('div', null, status),
+    { style: S.card },
+    status,
     React.createElement(
       'div',
-      null,
+      { style: S.rows },
       SETTING_ROWS.map((row) =>
         React.createElement('div', { key: row.key }, `${row.title} · ${controlLabel(row.control)}`),
       ),
     ),
+    React.createElement(VersionLine, null),
   );
 }
 

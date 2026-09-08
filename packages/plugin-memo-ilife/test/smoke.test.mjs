@@ -6,7 +6,10 @@ import { mkdtempSync, mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import { PLUGIN, PLUGIN_VERSION, SKILL_VERSION } from '../dist/slot.js';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
+const requirePkg = createRequire(import.meta.url);
 
 describe('dsh-memo-ilife 烟囱', () => {
   it('槽位 id 与 order 与 P3 定案一致', () => {
@@ -76,5 +79,12 @@ describe('dsh-memo-ilife 烟囱', () => {
     }
     assert.deepEqual(data.items, []);
     assert.equal(data.total, 0);
+  });
+  it('版本行与双 package.json 一致（面板自报家门，防漂移）', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
+    assert.equal(PLUGIN, pkg.name);
+    assert.equal(PLUGIN_VERSION, pkg.version);
+    assert.equal(SKILL_VERSION, requirePkg(SKILL_PACKAGE + '/package.json').version);
   });
 });

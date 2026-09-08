@@ -8,6 +8,9 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
 import { resolveNodeBin, SPAWN_TIMEOUT_MS } from '../dist/bridge.js';
+import { PLUGIN, PLUGIN_VERSION, SKILL_VERSION } from '../dist/slot.js';
+import { createRequire } from 'node:module';
+const requirePkg = createRequire(import.meta.url);
 
 describe('dsh-calorie 烟囱', () => {
   it('槽位 id 与 order 与 P3 定案一致', () => {
@@ -82,6 +85,13 @@ describe('dsh-calorie 烟囱', () => {
     it('spawn timeout 语义：超期子进程被杀并报 ETIMEDOUT（readViaCli 依赖此语义）', () => {
       const r = spawnSync(process.execPath, ['-e', 'setTimeout(()=>{},30000)'], { encoding: 'utf8', timeout: 400 });
       assert.equal(r.error?.code, 'ETIMEDOUT');
+    });
+    it('版本行与双 package.json 一致（面板自报家门，防漂移）', () => {
+      const here = dirname(fileURLToPath(import.meta.url));
+      const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
+      assert.equal(PLUGIN, pkg.name);
+      assert.equal(PLUGIN_VERSION, pkg.version);
+      assert.equal(SKILL_VERSION, requirePkg(SKILL_PACKAGE + '/package.json').version);
     });
   });
 });
