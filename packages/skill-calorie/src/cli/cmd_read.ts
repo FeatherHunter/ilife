@@ -9,7 +9,7 @@
  * 仅 type-only 消费 link-core（零运行时依赖）；envelope 手工装配，形状校验本地镜像 link-core。
  * HTML 用 --html 显式落盘（utf8）：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
  */
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDb } from '../schema.js';
@@ -52,6 +52,7 @@ import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 import type { CalorieComboKey } from './keys.js';
+import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
 import type { EnvelopeShape } from 'base-link-core';
 
@@ -660,7 +661,9 @@ async function main(): Promise<void> {
   (timer as unknown as { unref: () => void }).unref();
   let env: Record<string, unknown> | null = null;
   try {
-    const db = openDb(join(dbPath as string, DB_FILENAME));
+    const dbFile = join(dbPath as string, DB_FILENAME);
+    // #93 · 读键走只读打开（不建表、不迁移、写入被拒）；写键或库文件尚不存在时仍走 openDb。
+    const db = isCalorieWriteKey(o.key as string) || !existsSync(dbFile) ? openDb(dbFile) : openDbReadOnly(dbFile);
     try {
       // #40 · 唯一出口：写键走 write.ts 分发（memo.create/update/remove 范式），读键走既有 dispatch。
       const out = isCalorieWriteKey(o.key as string)
