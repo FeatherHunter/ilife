@@ -30,9 +30,9 @@
 
 **取法 ②（生成器现算，不硬编码）**：`node docs/research/t98-auto-block-check.mjs` 把 `scripts/build-help.mjs` 复制到**仓库外**临时目录、把其 dist 导入改绝对路径后 import，调 `buildHelpBlock()` 现算 → 与块内容相同（`idempotent-equals-buildHelpBlock=true`）。**不跑包级 build**（`packages/skill-calorie` 的 `build` = `tsc -b && node scripts/build-help.mjs`，属禁区；只用根 `pnpm build` = `tsc -b`）。
 
-**取法 ③（git 基线，现取不冻结）**：同一脚本 `--ref <gitref>`（默认 `HEAD`）现取 `git show <ref>:packages/skill-calorie/SKILL.md` 的块比对 → `git-block-match=true`。
+**取法 ③（git 基线，现取不冻结）**：同一脚本 `--ref <gitref>`（默认 `HEAD`）现取 `git show <ref>:packages/skill-calorie/SKILL.md` 的块比对 → `git-block-match=true`。终态实测 `--ref 14e7872`（改动前提交）同样 `PASS`／`git-block-match=true`。
 
-- `git diff 14e7872 HEAD -- packages/skill-calorie/SKILL.md` 的 hunk 头全部落在块外（旧坐标 `@@ -26`／`@@ -44,14`／`@@ -165`，旧 AUTO 块 61-144；新坐标 `@@ -26`／`@@ -44,14`／`@@ -165`，新 AUTO 块 74-157）→ 只动块外文字。
+- `git diff 14e7872 HEAD -- packages/skill-calorie/SKILL.md` 的 hunk 头全部落在块外：旧坐标 `@@ -26`／`@@ -46`／`@@ -48`／`@@ -50,3`／`@@ -54,3`／`@@ -57,0`／`@@ -165`（旧 AUTO 块 61-144）；新坐标 `@@ +26`／`+46`／`+48,13`／`+62,3`／`+66,3`／`+70`／`+178`（新 AUTO 块 74-157）→ 旧侧全部 < 61 或 > 144，新侧全部 < 74 或 > 157，**只动块外文字**。
 - 文件属性实测：LF-only（`CR` 计数 0）、无 BOM（首 3 字节 `45,45,45` = `---`）、字面反斜杠n 计数 0。
 
 ## 3. 逐条「正文条目 → 实现符号锚」对照
