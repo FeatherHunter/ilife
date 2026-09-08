@@ -66,6 +66,8 @@ export {
   renderDedupeHtml,
   renderProfileHtml,
 } from './html.js';
+export { CALORIE_TEMPLATES, loadTemplate } from './templates.js';
+export type { CalorieTemplate } from './templates.js';
 export { VIEW_KEYS, VIEW_SHAPES, viewShapeFor, assertStatMetrics } from './envelope.js';
 export type { ViewName } from './envelope.js';
 export {

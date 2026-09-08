@@ -71,6 +71,12 @@ jobs:
       - run: pnpm publish:pre
       - run: pnpm publish:tarball
       - run: pnpm publish:fresh
+      # #95：模板资产门（单包显式复跑，不吃 --only 全量口径的漂移）
+      #   G2：tarball 清单逐件含 templates/*.html；G3：fresh 安装态 loadTemplate 真读 6 件
+      - name: 模板资产门（skill-calorie）
+        run: |
+          node tooling/check-publish.mjs --tarball --only skill-calorie
+          node tooling/check-publish.mjs --fresh-tmp --only skill-calorie
 
   win-detail:
     # Win 人工细验位：中文路径/换行/CRLF/doctor 强提示

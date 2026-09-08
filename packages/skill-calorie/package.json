@@ -15,7 +15,8 @@
   },
   "files": [
     "dist",
-    "SKILL.md"
+    "SKILL.md",
+    "templates/*.html"
   ],
   "dependencies": {
     "base-paint": "^0.1.0"
