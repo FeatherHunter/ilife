@@ -40,10 +40,10 @@
 | key | 形状 | 背书 |
 |---|---|---|
 | calorie.today | list | skilllink-cmd |
-| calorie.view_home | stat | render-view |
-| calorie.view_diet | stat | render-view |
-| calorie.view_exercise | stat | render-view |
-| calorie.view_goal | stat | render-view |
+| calorie.view.home | stat | render-view |
+| calorie.view.diet | stat | render-view |
+| calorie.view.exercise | stat | render-view |
+| calorie.view.goal | stat | render-view |
 | memo.search | list | skilllink-cmd |
 | memo.detail | detail | skilllink-cmd |
 | memo.create | receipt | skilllink-cmd |
@@ -63,13 +63,7 @@
 - L3.6：居家食品库存无热量蛋白字段，库存侧只做数量参考（营养缺口以卡路里侧为准，库存只给数量参考）
 - L4.2：备忘录是心愿无量化目标概念，与卡路里正式目标体系语义接近但非等价（对照须标注语义差异，不把心愿当正式目标汇报）
 - L6.6：L6空位一期不实现，目标追踪调用走降级（如实告知未实现，不编造目标数据）
-- undefined：undefined（undefined）
-- undefined：undefined（undefined）
-- undefined：undefined（undefined）
-- undefined：undefined（undefined）
-- undefined：undefined（undefined）
-- undefined：undefined（undefined）
 
-L6 空位（一期不实现，内容不记录）：。
+L6 空位（一期不实现，内容不记录）：L6.1、L6.2、L6.3、L6.4、L6.5、L6.6。
 <!-- HELP-AUTO-END -->
 注：L6.1～L6.6 为空位，一期不实现；降级位调用走 fallback 形状显式标记。

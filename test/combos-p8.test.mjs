@@ -123,8 +123,17 @@ describe('P8 combos 真相源与 HELP 注入', () => {
     const text = readFileSync(join(root, 'packages/base-combos/HELP.md'), 'utf8');
     const si = text.indexOf(START), ei = text.indexOf(END);
     assert.ok(si >= 0 && ei > si);
-    assert.equal(text.slice(si + START.length, ei).trim(), buildHelpBlock(yaml).trim());
-    assert.match(text, /L6\.1/);
+    const block = text.slice(si + START.length, ei);
+    assert.equal(block.trim(), buildHelpBlock(yaml).trim());
+    // #80：原断言 assert.match(text, /L6\.1/) 是假阳性——HELP.md 尾注行自带 "L6.1～L6.6" 字样，
+    // 生成块 L6 段为空 + 6 行 undefined 也照样过。改为对生成块逐行钉死。
+    const bad = block.split('\n').filter((ln) => /undefined/.test(ln));
+    assert.deepEqual(bad, [], '生成块含 undefined 行：' + JSON.stringify(bad));
+    const l6 = block.split('\n').filter((ln) => ln.startsWith('L6 空位'));
+    assert.equal(l6.length, 1, 'L6 空位行缺失或重复：' + JSON.stringify(l6));
+    for (const id of ['L6.1', 'L6.2', 'L6.3', 'L6.4', 'L6.5', 'L6.6']) {
+      assert.ok(l6[0].includes(id), 'L6 空位行漏 ' + id + '：' + l6[0]);
+    }
   });
   it('HELP 不进运行时（发货代码无 HELP 标记计算）', () => {
     const runtime = [

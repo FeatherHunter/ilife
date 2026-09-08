@@ -10,9 +10,9 @@ const yamlPath = join(root, 'packages/base-combos/combos.yaml');
 
 const SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'];
 const KEY_RE = /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9-.]*$/;
-// 通道键放宽下划线：calorie 历史 view/取数键含下划线（VIEW_KEYS/KEYS 既定），
-// 其通由各背书自证（registry 11 键走 parseRegistryKey，view 4 键走 viewShapeFor），此处只验格式。
-const CHAN_KEY_RE = /^[a-z][a-z0-9-]*\.[A-Za-z0-9][A-Za-z0-9-_.]*$/;
+// #80：通道键收紧为与 combos/PRESENT_KEYS 同形的 registry 点号键（旧版放宽下划线，
+// 于是 calorie.view_home 这类渲染层内部 VIEW_KEYS 混进说明书，且对不出注册条目）。
+const CHAN_KEY_RE = KEY_RE;
 const SCN_RE = /^(L[1-5]\.\d+|CS-\d+)$/;
 const CMD_RE = /^[a-z][a-z0-9-]*$/;
 const SECTIONS = ['combos', 'channels', 'scenarios', 'fallbacks', 'l6_slots'];
@@ -71,19 +71,19 @@ function main() {
   const hkeys = new Set();
   for (const c of s.channels) {
     for (const k of Object.keys(c)) if (!CHAN_FIELDS.includes(k)) fail('channels 非法字段：' + c.key + '.' + k);
-    if (!c.key || !CHAN_KEY_RE.test(c.key)) fail('channels 非法 key：' + c.key);
+    if (!c.key || !CHAN_KEY_RE.test(c.key)) fail('channels 非法 key（须 registry 点号键）：' + c.key);
     if (hkeys.has(c.key)) fail('channels 重复 key：' + c.key);
     hkeys.add(c.key);
     if (!SHAPES.includes(c.shape)) { console.error('FAIL: channels 未知 shape：' + c.key); process.exit(5); }
     if (!['skilllink-pilot', 'skilllink-cmd', 'render-view'].includes(c.backing)) fail('channels 非法 backing：' + c.key);
     if (!c.note) fail('channels 缺 note 出处：' + c.key);
     if (c.backing === 'skilllink-pilot' && c.key !== 'calorie.today') fail('pilot 只许 calorie.today：' + c.key);
-    if (c.backing === 'render-view' && !/^calorie\.view_/.test(c.key)) fail('render-view 只许 calorie.view_*：' + c.key);
-    if (c.backing === 'skilllink-cmd') {
-      const e = s.combos.find((t) => t.key === c.key);
-      if (!e || !e.cmd) fail('skilllink-cmd 通道缺 combos 出口：' + c.key);
-      if (e.shape !== c.shape) fail('通道形状与注册不一致：' + c.key);
-    }
+    if (c.backing === 'render-view' && !/^calorie\.view\.(home|diet|exercise|goal)$/.test(c.key)) fail('render-view 只许四主视图：' + c.key);
+    // #80：通道键必须是 combos 注册键（展示键即注册键），形状逐键对齐。
+    const e = s.combos.find((t) => t.key === c.key);
+    if (!e) fail('通道未在 combos 注册：' + c.key);
+    if (e.shape !== c.shape) fail('通道形状与注册不一致：' + c.key);
+    if (c.backing === 'skilllink-cmd' && !e.cmd) fail('skilllink-cmd 通道缺 combos 出口：' + c.key);
   }
 
   // scenarios 段：30 联动（L6 禁入，只许 L1-5/CS；降级须注原因）。

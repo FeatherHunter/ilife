@@ -1,4 +1,4 @@
-# 唯一真相源（P8 #9）：联动 36 位 = scenarios 30 条 + l6_slots 6 空位；注册 11 键（combos 段，P9 冻结格式）。
+# 唯一真相源（P8 #9）：联动 36 位 = scenarios 30 条 + l6_slots 6 空位；注册 87 键（combos 段，P9 冻结格式；#80 按实测校正，原注释写 11 键）。
 # 铁律：0 张业务表进说明书（本文件只有声明式联动描述，无库定义语句）；L6.1～L6.6 只留空位、
 # 内容一期不议不记录（l6_slots 只许 id+reserved，多一字段校验即挂）；HELP 互联区见 HELP.md，构建期注入静态文本，
 # 不进运行时；以后每加一条只加配置（本文件加一行 + 过 tooling/check-combos.mjs，不改代码）。
@@ -439,23 +439,24 @@ combos:
     title: 聚合统计
     cmd: skill-memo-ilife
 channels:
+  # #80：通道 key 一律 registry 点号键（下划线 calorie.view_home 是渲染层内部 VIEW_KEYS，非法 registry 名）。
   - key: calorie.today
     shape: list
     backing: skilllink-cmd
     note: T11 cmd_read 转正（今日饮食 list，直返空试点已退役）
-  - key: calorie.view_home
+  - key: calorie.view.home
     shape: stat
     backing: render-view
     note: T8四主视图总览，render home.js + VIEW_KEYS
-  - key: calorie.view_diet
+  - key: calorie.view.diet
     shape: stat
     backing: render-view
     note: T8饮食视图，render diet.js + VIEW_KEYS
-  - key: calorie.view_exercise
+  - key: calorie.view.exercise
     shape: stat
     backing: render-view
     note: T8运动视图，render exercise.js + VIEW_KEYS
-  - key: calorie.view_goal
+  - key: calorie.view.goal
     shape: stat
     backing: render-view
     note: T8目标视图，render goal.js + VIEW_KEYS

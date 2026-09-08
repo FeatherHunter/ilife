@@ -15,7 +15,8 @@ export function combosKeys(text) {
   let inCombos = false;
   for (const ln of text.replace(/\r\n/g, '\n').split('\n')) {
     if (/^\s*#/.test(ln) || /^\s*$/.test(ln)) continue;
-    const sec = ln.match(/^([A-Za-z_]+):\s*$/);
+    // #80：段名可含数字（同 build-help.mjs 的 SEC_HEAD_RE，旧写法漏认含数字段头）。
+    const sec = ln.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*$/);
     if (sec) { inCombos = sec[1] === 'combos'; continue; }
     if (!inCombos) continue;
     const m = ln.match(/^  - key: (\S+)\s*$/);
