@@ -8,7 +8,7 @@
 //  5. 红线：无运行时依赖、无 `node:`、无隐式全局、spec 只许 import type。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 
 import {
   BASE_PAINT_CONTRACT_VERSION,
@@ -18,14 +18,21 @@ import {
   CONTROL_NAMES,
   COPY_CHANNELS,
   CSS_VAR_TOKENS,
+  DATA_TEXT_PROJECTIONS,
+  DATA_SCRIPT_TYPE,
+  DEFAULT_DATA_SCRIPT_ID,
   ESCAPE_HTML_CHARS,
+  HELP_COPY_ACTIONS,
+  HELP_COPY_TARGETS,
   INJECTION_ORDER,
+  LOG_SECTION_SOURCES,
   MARKER_RULES,
   RENDER_CONTRACT_VERSION,
   SERIALIZABLE_SHAPES,
   SPEC_FROZEN_SURFACE,
   STRICT_ENVELOPE_SHAPES,
   STYLE_FORBIDDEN_TOKENS,
+  TEMPLATE_ERROR_CODES,
   TEMPLATE_MARKERS,
   SCENE_DATA_SCHEMA,
   SCENE_TYPE_FIELD,
@@ -182,6 +189,38 @@ describe('文档投影绑死（docs/base-paint-contract.md）', () => {
     assert.ok(doc.includes('不提供 `type` 别名'), 'AC-3 必须显式否定单数别名');
   });
 
+  it('返修单落点（FX-1…FX-16）在文档中可核', () => {
+    const anchors = [
+      ['FX-1', 'EnvelopeDataByShape'],
+      ['FX-1', 'DATA_TEXT_PROJECTIONS'],
+      ['FX-1', 'LOG_SECTION_SOURCES'],
+      ['FX-2', '只替换标记文本'],
+      ['FX-2', 'container-missing'],
+      ['FX-2', 'buildSharedHelpersJs'],
+      ['FX-3', 'toast?: ToastHostPort'],
+      ['FX-3', 'bindCopyAction'],
+      ['FX-4', 'ENVELOPE_SHAPES'],
+      ['FX-5', 'delivery'],
+      ['FX-5', '#83'],
+      ['FX-5', '#87'],
+      ['FX-5', '#106'],
+      ['FX-5', '#107'],
+      ['FX-6', 'scene-data.schema.json'],
+      ['FX-7', 'HELP_COPY_ACTIONS'],
+      ['FX-7', '复制指令'],
+      ['FX-8', '主题接缝'],
+      ['FX-9', '区块'],
+      ['FX-10', '#99'],
+      ['FX-11', 'injector.py:107-120'],
+      ['FX-13', '既有失败台账'],
+      ['FX-14', 'STATUS_KINDS'],
+      ['FX-15', 'CONTEXT.md'],
+      ['FX-15', 'RenderError'],
+      ['FX-16', 'injectHelpBlock'],
+    ];
+    for (const [fx, needle] of anchors) assert.ok(doc.includes(needle), fx + ' 落点缺失：' + needle);
+  });
+
   it('格式合规：无 BOM、无字面反斜杠 n', () => {
     assert.notEqual(doc.charCodeAt(0), 0xfeff, '文档不得以 BOM 开头');
     const literalBackslashN = String.fromCharCode(92) + 'n';
@@ -250,7 +289,54 @@ describe('冻结口径逐值', () => {
   it('escapeHtml 五字符口径（AC-14）：当前实现 4/5，本断言是漂移哨兵', () => {
     assert.deepEqual([...ESCAPE_HTML_CHARS], ['&', '<', '>', '"', "'"]);
     for (const ch of ESCAPE_HTML_CHARS.filter((c) => c !== "'")) assert.notEqual(escapeHtml(ch), ch);
-    assert.equal(escapeHtml("'"), "'", "单引号尚未归一 → #74／#79 实现后必须翻转为 &#39;");
+    // 哨兵（FX-16）：本断言当前为真**只表示 AC-14 归一尚未执行**，不代表该行为被契约接受。
+    // AC-14 归一（五字符 `& < > " '`）落地后，本断言**必须翻转**为 assert.equal(escapeHtml("'"), '&#39;')；
+    // 契约 §3.3／§7 已把它登记为待翻转 tripwire，执行归 #74（#79 复核）。
+    assert.equal(escapeHtml("'"), "'", "单引号尚未归一 → AC-14 归一后本断言必须翻转为 &#39;（不得把缺陷固化）");
+  });
+
+  it('逐 shape 投影表（FX-1①）：5 个可序列化 shape 全覆盖且逐值', () => {
+    assert.deepEqual(Object.keys(DATA_TEXT_PROJECTIONS).sort(), [...SERIALIZABLE_SHAPES].sort(), '投影表必须覆盖全部可序列化 shape');
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.stat }, { header: '【{skill} · {key}】', body: 'metrics', tail: null, csvSections: ['metrics'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.list }, { header: '【{skill} · {key}】', body: 'items', tail: 'total', csvSections: ['items', 'total'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.detail }, { header: '【{skill} · {key}】', body: 'item', tail: null, csvSections: ['item'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.receipt }, { header: '【{skill} · {key}】', body: 'ok', tail: 'message', csvSections: ['status', 'message'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.analysis }, { header: '【{skill} · {key}】', body: 'summary', tail: null, csvSections: ['summary'] });
+  });
+
+  it('6 段日志数据源（FX-1③）：scene 由 envelope 派生，其余 5 段取 CopyLogFields', () => {
+    assert.deepEqual(Object.keys(LOG_SECTION_SOURCES).sort(),
+      ['callChain', 'dataStructure', 'exception', 'scene', 'thinking', 'timestampVersion'].sort());
+    assert.equal(LOG_SECTION_SOURCES.scene, 'envelope', 'scene 段必须由 envelope 派生（skill／key／shape）');
+    assert.equal(LOG_SECTION_SOURCES.thinking, 'copyLog.thinking');
+    assert.equal(LOG_SECTION_SOURCES.dataStructure, 'copyLog.dataStructure');
+    assert.equal(LOG_SECTION_SOURCES.callChain, 'copyLog.callChain');
+    assert.equal(LOG_SECTION_SOURCES.timestampVersion, 'copyLog.timestamp', 'timestampVersion 段取 copyLog.timestamp');
+    assert.equal(LOG_SECTION_SOURCES.exception, 'copyLog.exception');
+    assert.equal(Object.values(LOG_SECTION_SOURCES).filter((v) => v === 'envelope').length, 1, '恰好 1 段由 envelope 派生');
+  });
+
+  it('INJECT-DATA 容器口径与 HELP 复制文案（FX-2／FX-7）', () => {
+    assert.equal(TEMPLATE_ERROR_CODES.length, 7);
+    assert.ok([...TEMPLATE_ERROR_CODES].includes('container-missing'), '模板缺自带容器必须有错误码');
+    assert.equal(DEFAULT_DATA_SCRIPT_ID, 'payload');
+    assert.equal(DATA_SCRIPT_TYPE, 'application/json');
+    assert.deepEqual(Object.keys(HELP_COPY_ACTIONS).sort(), [...HELP_COPY_TARGETS].sort());
+    assert.equal(HELP_COPY_ACTIONS.prompt.label, '复制指令', 'prompt 目标文案必须是「复制指令」');
+    assert.equal(HELP_COPY_ACTIONS.wakeWord.label, '复制唤醒词');
+    assert.equal(HELP_COPY_ACTIONS.params.label, '复制参数');
+    for (const t of HELP_COPY_TARGETS) {
+      assert.ok(HELP_COPY_ACTIONS[t].actionId.startsWith('ilife-help-copy-'), t + ' actionId 必须带 ilife-help-copy- 前缀');
+    }
+  });
+
+  it('scene-data.schema.json 若随包发布必须由 SCENE_DATA_SCHEMA 生成（FX-6）', () => {
+    for (const u of [new URL('../dist/scene-data.schema.json', import.meta.url), new URL('../scene-data.schema.json', import.meta.url)]) {
+      if (!existsSync(u)) continue;
+      const parsed = JSON.parse(readFileSync(u, 'utf8'));
+      assert.deepEqual(parsed, JSON.parse(JSON.stringify(SCENE_DATA_SCHEMA)),
+        '随包发布的 schema 必须由 SCENE_DATA_SCHEMA 序列化生成，禁止手写第二真相：' + u.pathname);
+    }
   });
 
   it('图表 8 接口，无白名单例外（B4／AC-17）', () => {

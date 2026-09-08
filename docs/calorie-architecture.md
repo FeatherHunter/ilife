@@ -51,6 +51,7 @@
 - **单一真相**：技能能力 ＝ 77 个 key 的 envelope。HTML 与面板是同一 envelope 的两种呈现；禁止出现第二真相。
 - **唯一出口**：所有数据操作只经 `calorie-cmd-read`（argv ＋ JSON ＋ exit）。禁止直连数据库；插件禁止 import 技能实现。
 - **envelope 形状**：`{skill, key, shape, version, data}`；`shape ∈ stat/list/detail/analysis/receipt`。
+  - 勘误注记（#92）：上句 `shape` 实为 **6** 个——以 `packages/base-link-core/src/envelope.ts:9-11` 的 `ENVELOPE_SHAPES` 为准（`list`／`detail`／`stat`／`receipt`／`analysis`／`fallback`）；本行原列举漏 `fallback`（降级载荷），属**不完整列举**，不是契约分叉。
 - **交付信号（已拍方案 A）**：扩 envelope 增加 `delivery{mode, path?, template?, bytes?}`；stdout 仍保持"一行 JSON"契约。
 - **三态交付**：① 文件态（默认，可写文件系统）② 内联态（无法写文件时 envelope 带 html 片段）③ 文本态（无模板或用户要求时给结构化文本）。三态同源。
 - **回传态（第 4 态）**：中间态页面把用户填写的字段序列化为可粘贴文本，供 AI 再次调用 CLI。依赖共享层控件（复制＋反馈）与复制文本序列化能力。

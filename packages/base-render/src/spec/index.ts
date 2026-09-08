@@ -9,6 +9,10 @@
  * `SPEC_FROZEN_SURFACE` 是**冻结面清单**（机器可读唯一真相源）：
  * 文档 §3 的签名表是它的投影，`test-d/contract-signatures.ts` 与
  * `test/contract-signatures.test.mjs` 把清单／文档／类型三者绑死。
+ *
+ * 覆盖面口径（V1 洞 15）：清单锁**主签名**（每条 = 一个对外名字）；
+ * 被主签名引用但未单列的类型（`ClipboardChannel`／`CopyButtonInput`／`ToastAction`／8 个 `*ChartInput`／
+ * `SceneGroup` 等）以 `src/spec/*.ts` 为唯一真相源，其形状变更视同签名变更（须走 changeset ＋ 三处同步）。
  */
 
 export * from './template.js';
@@ -46,7 +50,7 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'DATA_SCRIPT_TYPE', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "'application/json'" },
   { name: 'STRICT_ENVELOPE_FIELDS', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['version', 'skill', 'shape', 'key', 'data']" },
   { name: 'STRICT_ENVELOPE_SHAPES', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback']" },
-  { name: 'TEMPLATE_ERROR_CODES', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'asset-missing', 'strict-invalid']" },
+  { name: 'TEMPLATE_ERROR_CODES', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'container-missing', 'asset-missing', 'strict-invalid']" },
   { name: 'TemplateAssets', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ sharedHelpersJs: string; sharedCssText: string; chartsHelpersJs?: string }' },
   { name: 'FillTemplateInput', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ template: string; assets: TemplateAssets; data: unknown; strict?: boolean; dataScriptId?: string }' },
   { name: 'FillTemplateReport', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ markers: readonly MarkerReport[]; strict: boolean; exempt: boolean; bytes: number }' },
@@ -80,13 +84,19 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'CONTROL_NAMES', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "readonly ['toast', 'copyText', 'actionBar', 'statusBadge', 'emptyState', 'errorReceipt']" },
   { name: 'CONTROLS_HOST_REQUIREMENT', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "'none'" },
   { name: 'CONTROL_AVAILABILITY', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: 'Record<ControlName, ControlAvailability>' },
-  { name: 'CopyPorts', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ clipboard: ClipboardChannel | null; fallback: (text: string) => boolean }' },
+  { name: 'CopyPorts', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ clipboard: ClipboardChannel | null; fallback: (text: string) => boolean; toast?: ToastHostPort }' },
   { name: 'CopyTextOptions', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ silent?: boolean; toast?: { ok?: CopyToastText; fail?: CopyToastText }; onOk?: (channel: CopyChannel) => void; onFail?: (reason: string) => void }' },
   { name: 'CopyTextOutcome', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ ok: boolean; channel: CopyChannel | null; reason?: string }' },
   { name: 'CopyText', kind: 'type', ticket: '#76', status: 'pending', section: '3.3', signature: '(text: string, ports: CopyPorts, opts?: CopyTextOptions) => Promise<CopyTextOutcome>' },
   { name: 'copyText', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(text: string, ports: CopyPorts, opts?: CopyTextOptions): Promise<CopyTextOutcome>' },
   { name: 'CopyRuntime', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ copyText(text: string, opts?: CopyTextOptions): Promise<CopyTextOutcome>; dispose(): void }' },
   { name: 'createCopyRuntime', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(ports: CopyPorts): CopyRuntime' },
+  { name: 'CopyActionHostPort', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ readDataText(actionId: string): string | undefined; onActivate(actionId: string, handler: () => void): () => void }' },
+  { name: 'BindCopyAction', kind: 'type', ticket: '#76', status: 'pending', section: '3.3', signature: '(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }' },
+  { name: 'bindCopyAction', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }' },
+  { name: 'SharedHelpersInput', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ prefix?: string; dataAttr?: string }' },
+  { name: 'BuildSharedHelpersJs', kind: 'type', ticket: '#76', status: 'pending', section: '3.3', signature: '(input?: SharedHelpersInput) => string' },
+  { name: 'buildSharedHelpersJs', kind: 'runtime', ticket: '#76', status: 'pending', section: '3.3', signature: '(input?: SharedHelpersInput): string' },
   { name: 'ToastInput', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ msg: string; detail?: string; icon?: ToastIcon; badge?: ToastBadge; actions?: readonly ToastAction[]; count?: string; lines?: readonly string[]; code?: string; timeoutMs?: number; maxStack?: number }' },
   { name: 'ToastHostPort', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ mount(html: string): { remove(): void } }' },
   { name: 'ToastController', kind: 'type', ticket: '#76', status: 'implemented', section: '3.3', signature: '{ show(input: ToastInput): void; flush(): void; dispose(): void }' },
@@ -118,6 +128,9 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'DataTextInput', kind: 'type', ticket: '#77', status: 'implemented', section: '3.4', signature: '{ envelope: SerializableEnvelope; format?: CopyFormat; title?: string; occurredAt?: string }' },
   { name: 'LogTextInput', kind: 'type', ticket: '#77', status: 'implemented', section: '3.4', signature: '{ envelope: SerializableEnvelope; format?: CopyFormat; copyLog?: CopyLogFields }' },
   { name: 'CopyLogFields', kind: 'type', ticket: '#77', status: 'implemented', section: '3.4', signature: '{ thinking?: string; dataStructure?: string; callChain?: string; timestamp?: string; exception?: string }' },
+  { name: 'LOG_SECTION_SOURCES', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: "{ scene: 'envelope'; thinking: 'copyLog.thinking'; dataStructure: 'copyLog.dataStructure'; callChain: 'copyLog.callChain'; timestampVersion: 'copyLog.timestamp'; exception: 'copyLog.exception' }" },
+  { name: 'DataProjectionSpec', kind: 'type', ticket: '#77', status: 'implemented', section: '3.4', signature: '{ header: string; body: string; tail: string | null; csvSections: readonly string[] }' },
+  { name: 'DATA_TEXT_PROJECTIONS', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: "{ stat: { header: '【{skill} · {key}】'; body: 'metrics'; tail: null; csvSections: readonly ['metrics'] }; list: { header: '【{skill} · {key}】'; body: 'items'; tail: 'total'; csvSections: readonly ['items', 'total'] }; detail: { header: '【{skill} · {key}】'; body: 'item'; tail: null; csvSections: readonly ['item'] }; receipt: { header: '【{skill} · {key}】'; body: 'ok'; tail: 'message'; csvSections: readonly ['status', 'message'] }; analysis: { header: '【{skill} · {key}】'; body: 'summary'; tail: null; csvSections: readonly ['summary'] } }" },
   { name: 'BuildDataText', kind: 'type', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: DataTextInput) => string' },
   { name: 'buildDataText', kind: 'runtime', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: DataTextInput): string' },
   { name: 'BuildLogText', kind: 'type', ticket: '#77', status: 'pending', section: '3.4', signature: '(input: LogTextInput) => string' },
@@ -137,6 +150,7 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'SCENE_DATA_SCHEMA', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "object（draft-07；$id: 'ilife://base-paint/scene-data.schema.json'）" },
   { name: 'HELP_SHELL_ID', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "'ilife-help-shell'" },
   { name: 'HELP_COPY_TARGETS', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "readonly ['prompt', 'wakeWord', 'params']" },
+  { name: 'HELP_COPY_ACTIONS', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "{ prompt: { actionId: 'ilife-help-copy-prompt'; label: '复制指令' }; wakeWord: { actionId: 'ilife-help-copy-wakeWord'; label: '复制唤醒词' }; params: { actionId: 'ilife-help-copy-params'; label: '复制参数' } }" },
   { name: 'HELP_SCHEMA_ERROR_CODES', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "readonly ['schema-invalid', 'duplicate-id', 'status-invalid', 'types-invalid']" },
   { name: 'ChartItem', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ label: string; value: number | null; color?: string; values?: readonly number[]; anomaly?: boolean }' },
   { name: 'ChartOutput', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ kind: ChartKind; html: string; empty: boolean; points: number }' },

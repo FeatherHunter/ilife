@@ -13,7 +13,8 @@ export const COPY_FORMATS = ['text', 'json', 'csv'] as const;
 
 export type CopyFormat = (typeof COPY_FORMATS)[number];
 
-/** 可序列化形状：envelope 六形状去掉 `fallback`（降级载荷不进复制文本）。 */
+/** 可序列化形状：envelope 六形状去掉 `fallback`（降级载荷不进复制文本）。
+ *  成员**顺序无语义**（不决定 CSV 行序／遍历序），只有成员集有效。 */
 export const SERIALIZABLE_SHAPES = ['stat', 'list', 'detail', 'analysis', 'receipt'] as const;
 
 export type SerializableShape = (typeof SERIALIZABLE_SHAPES)[number];
@@ -43,6 +44,17 @@ export interface CopyLogFields {
   readonly exception?: string;
 }
 
+/** 6 段日志 → 数据源（FX-1③）：`scene` 由 **envelope 派生**（`skill`／`key`／`shape`），
+ *  其余 5 段取 `CopyLogFields`；`timestampVersion` ← `copyLog.timestamp`（不是 `timestampVersion` 字段）。 */
+export const LOG_SECTION_SOURCES = Object.freeze({
+  scene: 'envelope',
+  thinking: 'copyLog.thinking',
+  dataStructure: 'copyLog.dataStructure',
+  callChain: 'copyLog.callChain',
+  timestampVersion: 'copyLog.timestamp',
+  exception: 'copyLog.exception',
+} as const satisfies Record<LogSection, string>);
+
 export interface DataTextInput {
   readonly envelope: SerializableEnvelope;
   /** 缺省 `text`。 */
@@ -60,12 +72,36 @@ export interface LogTextInput {
   readonly copyLog?: CopyLogFields;
 }
 
+/** 日志缺省占位（FX-1④）：**只作用于 `text` 口径**；`json` 写 `null`，`csv` 写空串。 */
 export const LOG_UNKNOWN_PLACEHOLDER = '(未知)';
-/** text 口径的空值占位（json／csv 口径见文档 §3.4：不写占位）。 */
+/** `text` 口径的数据空值占位：**只作用于 `text` 口径**；`json` 保留 `null`，`csv` 写空串。 */
 export const TEXT_EMPTY_PLACEHOLDER = '未填写';
 export const TEXT_SENSITIVE_MASK = '****';
 /** text 口径输出头（`{skill}`／`{key}` 为替换位，非 HTML 占位符）。 */
 export const TEXT_HEADER_TEMPLATE = '【{skill} · {key}】';
+
+/** 逐 shape 投影规格（FX-1①）：envelope `data` → 复制文本结构。 */
+export interface DataProjectionSpec {
+  /** 标题行（`text` 口径输出头；`json`／`csv` 无输出头）。 */
+  readonly header: string;
+  /** 主体行来源：`data` 上的字段名（`stat` 的 metrics 逐键展开、`list` 的 items 逐项展开）。 */
+  readonly body: string;
+  /** 收尾行来源：`data` 上的字段名；无收尾行为 null。 */
+  readonly tail: string | null;
+  /** `csv` 口径下这些行写入 `section` 列的分组名（行序 = body 行 → tail 行）。 */
+  readonly csvSections: readonly string[];
+}
+
+/** 逐 shape 投影表（FX-1①；数据形态对齐 `EnvelopeDataByShape`）：
+ *  `stat`→metrics 键值行；`list`→逐项行 + `total` 收尾；`detail`→item 字段行；
+ *  `receipt`→状态行 + `message` 行；`analysis`→`summary` 文本行。 */
+export const DATA_TEXT_PROJECTIONS = Object.freeze({
+  stat: { header: TEXT_HEADER_TEMPLATE, body: 'metrics', tail: null, csvSections: ['metrics'] },
+  list: { header: TEXT_HEADER_TEMPLATE, body: 'items', tail: 'total', csvSections: ['items', 'total'] },
+  detail: { header: TEXT_HEADER_TEMPLATE, body: 'item', tail: null, csvSections: ['item'] },
+  receipt: { header: TEXT_HEADER_TEMPLATE, body: 'ok', tail: 'message', csvSections: ['status', 'message'] },
+  analysis: { header: TEXT_HEADER_TEMPLATE, body: 'summary', tail: null, csvSections: ['summary'] },
+} as const satisfies Record<SerializableShape, DataProjectionSpec>);
 export const TEXT_JSON_INDENT = 2;
 /** json 口径：文本中 `<` 一律写成反斜杠 + u003c，防 `</script>` 断标签。 */
 export const TEXT_JSON_LT_RULE = 'u003c' as const;

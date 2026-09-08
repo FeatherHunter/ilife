@@ -12,8 +12,10 @@
 import type { Envelope, EnvelopeShape } from 'base-link-core';
 import type {
   ActionBarInput,
+  BindCopyAction,
   BuildDataText,
   BuildLogText,
+  BuildSharedHelpersJs,
   BuildStyleSheet,
   ChartItem,
   ChartOutput,
@@ -21,6 +23,7 @@ import type {
   ClipboardChannel,
   ControlAvailability,
   ControlName,
+  CopyActionHostPort,
   CopyButtonInput,
   CopyChannel,
   CopyFormat,
@@ -32,6 +35,7 @@ import type {
   CopyTextOutcome,
   CopyToastText,
   CssVarName,
+  DataProjectionSpec,
   DataTextInput,
   EmptyStateInput,
   ErrorReceiptInput,
@@ -62,6 +66,7 @@ import type {
   SceneTypeBadge,
   SerializableEnvelope,
   SerializableShape,
+  SharedHelpersInput,
   SlotsPort,
   StatusBadgeInput,
   StatusKind,
@@ -123,7 +128,7 @@ type _T04 = Expect<Equal<Mod['INJECTION_ORDER'][number], 'sharedHelpers' | 'shar
 type _T05 = Expect<Equal<Mod['STRICT_ENVELOPE_SHAPES'][number], EnvelopeShape>>;
 type _T06 = Expect<Equal<Mod['DEFAULT_DATA_SCRIPT_ID'], 'payload'>>;
 type _T07 = Expect<Equal<Mod['DATA_SCRIPT_TYPE'], 'application/json'>>;
-type _T08 = Expect<Equal<Mod['TEMPLATE_ERROR_CODES'][number], 'marker-missing' | 'marker-duplicate' | 'marker-conflict' | 'data-missing' | 'asset-missing' | 'strict-invalid'>>;
+type _T08 = Expect<Equal<Mod['TEMPLATE_ERROR_CODES'][number], 'marker-missing' | 'marker-duplicate' | 'marker-conflict' | 'data-missing' | 'container-missing' | 'asset-missing' | 'strict-invalid'>>;
 type _T09 = Expect<Equal<TemplateAssets, { readonly sharedHelpersJs: string; readonly sharedCssText: string; readonly chartsHelpersJs?: string }>>;
 type _T10 = Expect<Equal<FillTemplateInput, { readonly template: string; readonly assets: TemplateAssets; readonly data: unknown; readonly strict?: boolean; readonly dataScriptId?: string }>>;
 type _T11 = Expect<Equal<FillTemplateReport, { readonly markers: readonly MarkerReport[]; readonly strict: boolean; readonly exempt: boolean; readonly bytes: number }>>;
@@ -151,7 +156,7 @@ type _C01 = Expect<Equal<Mod['ESCAPE_HTML_CHARS'][number], '&' | '<' | '>' | '"'
 type _C02 = Expect<Equal<Mod['ESCAPE_HTML_ENTITIES'], { readonly '&': '&amp;'; readonly '<': '&lt;'; readonly '>': '&gt;'; readonly '"': '&quot;'; readonly "'": '&#39;' }>>;
 type _C03 = Expect<Equal<EscapeHtml, (s: string) => string>>;
 type _C04 = Expect<Equal<Mod['COPY_CHANNELS'][number], CopyChannel>>;
-type _C05 = Expect<Equal<CopyPorts, { readonly clipboard: ClipboardChannel | null; readonly fallback: (text: string) => boolean }>>;
+type _C05 = Expect<Equal<CopyPorts, { readonly clipboard: ClipboardChannel | null; readonly fallback: (text: string) => boolean; readonly toast?: ToastHostPort }>>;
 type _C06 = Expect<Equal<CopyTextOptions, { readonly silent?: boolean; readonly toast?: { readonly ok?: CopyToastText; readonly fail?: CopyToastText }; readonly onOk?: (channel: CopyChannel) => void; readonly onFail?: (reason: string) => void }>>;
 type _C07 = Expect<Equal<CopyTextOutcome, { readonly ok: boolean; readonly channel: CopyChannel | null; readonly reason?: string }>>;
 type _C08 = Expect<Equal<CopyText, (text: string, ports: CopyPorts, opts?: CopyTextOptions) => Promise<CopyTextOutcome>>>;
@@ -182,6 +187,12 @@ type _C30 = Expect<Equal<Absent<'renderActionBar'>, true>>;
 type _C31 = Expect<Equal<Absent<'renderStatusBadge'>, true>>;
 type _C32 = Expect<Equal<Absent<'renderEmptyState'>, true>>;
 type _C33 = Expect<Equal<Absent<'renderErrorReceipt'>, true>>;
+type _C34 = Expect<Equal<CopyActionHostPort, { readDataText(actionId: string): string | undefined; onActivate(actionId: string, handler: () => void): () => void }>>;
+type _C35 = Expect<Equal<BindCopyAction, (port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions) => { dispose(): void }>>;
+type _C36 = Expect<Equal<Absent<'bindCopyAction'>, true>>;
+type _C37 = Expect<Equal<SharedHelpersInput, { readonly prefix?: string; readonly dataAttr?: string }>>;
+type _C38 = Expect<Equal<BuildSharedHelpersJs, (input?: SharedHelpersInput) => string>>;
+type _C39 = Expect<Equal<Absent<'buildSharedHelpersJs'>, true>>;
 
 /* ── 5. 冻结面 · §3.4 复制序列化（#77） ────────────────── */
 
@@ -196,6 +207,15 @@ type _X08 = Expect<Equal<BuildDataText, (input: DataTextInput) => string>>;
 type _X09 = Expect<Equal<BuildLogText, (input: LogTextInput) => string>>;
 type _X10 = Expect<Equal<Absent<'buildDataText'>, true>>;
 type _X11 = Expect<Equal<Absent<'buildLogText'>, true>>;
+type _X12 = Expect<Equal<DataProjectionSpec, { readonly header: string; readonly body: string; readonly tail: string | null; readonly csvSections: readonly string[] }>>;
+type _X13 = Expect<Equal<keyof Mod['DATA_TEXT_PROJECTIONS'], SerializableShape>>;
+type _X13b = Expect<Equal<Mod['DATA_TEXT_PROJECTIONS']['stat']['body'], 'metrics'>>;
+type _X13c = Expect<Equal<Mod['DATA_TEXT_PROJECTIONS']['list']['tail'], 'total'>>;
+type _X13d = Expect<Equal<Mod['DATA_TEXT_PROJECTIONS']['analysis']['tail'], null>>;
+type _X13e = Expect<Equal<Mod['DATA_TEXT_PROJECTIONS']['receipt']['csvSections'][number], 'status' | 'message'>>;
+type _X14 = Expect<Equal<Mod['LOG_SECTION_SOURCES']['scene'], 'envelope'>>;
+type _X14b = Expect<Equal<Mod['LOG_SECTION_SOURCES']['timestampVersion'], 'copyLog.timestamp'>>;
+type _X14c = Expect<Equal<keyof Mod['LOG_SECTION_SOURCES'], 'scene' | 'thinking' | 'dataStructure' | 'callChain' | 'timestampVersion' | 'exception'>>;
 
 /* ── 6. 冻结面 · §3.5 图表与 HELP 壳（#78） ────────────── */
 
@@ -215,6 +235,9 @@ type _H13 = Expect<Equal<Absent<'charts'>, true>>;
 type _H14 = Expect<Equal<Absent<'renderHelpShell'>, true>>;
 type _H15 = Expect<Equal<Mod['SCENE_DATA_SCHEMA']['$schema'], 'http://json-schema.org/draft-07/schema#'>>;
 type _H16 = Expect<Equal<Mod['HELP_COPY_TARGETS'][number], 'prompt' | 'wakeWord' | 'params'>>;
+type _H17 = Expect<Equal<keyof Mod['HELP_COPY_ACTIONS'], 'prompt' | 'wakeWord' | 'params'>>;
+type _H17b = Expect<Equal<Mod['HELP_COPY_ACTIONS']['prompt']['label'], '复制指令'>>;
+type _H17c = Expect<Equal<Mod['HELP_COPY_ACTIONS']['wakeWord']['actionId'], 'ilife-help-copy-wakeWord'>>;
 
 /* ── 7. 清单与版本 ─────────────────────────────────────── */
 

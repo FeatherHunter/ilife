@@ -42,6 +42,9 @@ export interface CopyPorts {
   /** 无宿主／无 Clipboard API 时传 null，直接走 fallback。 */
   readonly clipboard: ClipboardChannel | null;
   readonly fallback: (text: string) => boolean;
+  /** 反馈通道（FX-3 定死）：`copyText` **直接挂载**，不把 HTML 片段交调用方插入。
+   *  缺省（未提供）时只回调 + 返回 outcome，不产 HTML、不抛错（降级，非「需要宿主」）。 */
+  readonly toast?: ToastHostPort;
 }
 
 export interface CopyToastText {
@@ -70,6 +73,7 @@ export type CopyText = (text: string, ports: CopyPorts, opts?: CopyTextOptions) 
 
 export const COPY_TEXT_DEFAULTS = Object.freeze({
   emptyTextShortCircuit: true,
+  /** 失败徽章恒在：失败态经 `ports.toast.mount` 挂载，不受 `opts.silent` 影响。 */
   failBadgeAlwaysOn: true,
   okMessage: '已复制',
   okDetail: '粘贴给 AI',
@@ -84,6 +88,37 @@ export interface CopyRuntime {
 
 /** 冻结签名：`createCopyRuntime(ports: CopyPorts): CopyRuntime`。 */
 export type CreateCopyRuntime = (ports: CopyPorts) => CopyRuntime;
+
+/* ── 复制接线（FX-3／#90 可直接使用） ──────────────────────── */
+
+/** DOM 适配端口（AC-7／§4.1：DOM 不得进 base-paint，故 `el` 以端口替代）。
+ *  调用方用内联适配器实现（普通 .html 即可），base-paint 自身不读任何浏览器全局对象。 */
+export interface CopyActionHostPort {
+  /** 读取渲染期写入的复制文本（`data-t`）；该 actionId 无文本返回 undefined。 */
+  readDataText(actionId: string): string | undefined;
+  /** 订阅按钮激活（click／keydown 由宿主适配）；返回解绑函数。 */
+  onActivate(actionId: string, handler: () => void): () => void;
+}
+
+/** 冻结签名：`bindCopyAction(port: CopyActionHostPort, ports: CopyPorts, opts?: CopyTextOptions): { dispose(): void }`。 */
+export type BindCopyAction = (
+  port: CopyActionHostPort,
+  ports: CopyPorts,
+  opts?: CopyTextOptions,
+) => { dispose(): void };
+
+/* ── 共享 JS 文本的唯一产出者（FX-2③，归 #76；#74 只消费） ── */
+
+export interface SharedHelpersInput {
+  /** 类名前缀；缺省既有 `STYLE_PREFIX`（`ilife-`）。 */
+  readonly prefix?: string;
+  /** 复制文本数据属性名；缺省 `data-t`（`renderActionBar` 渲染期写入）。 */
+  readonly dataAttr?: string;
+}
+
+/** 冻结签名：`buildSharedHelpersJs(input?: SharedHelpersInput): string`。
+ *  恒返回非空 JS 文本（IIFE／显式挂载点，不得引入隐式全局，AC-7）；空串视为实现缺陷 → `asset-missing`。 */
+export type BuildSharedHelpersJs = (input?: SharedHelpersInput) => string;
 
 /* ── toast（堆叠提示） ──────────────────────────────────── */
 

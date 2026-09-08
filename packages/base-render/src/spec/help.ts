@@ -239,6 +239,14 @@ export const HELP_COPY_TARGETS = ['prompt', 'wakeWord', 'params'] as const;
 
 export type HelpCopyTarget = (typeof HELP_COPY_TARGETS)[number];
 
+/** id → actionId → 对外文案（FX-7）：文案统一「复制…」，`prompt` 一律写「**复制指令**」
+ *  （不写「复制 prompt」）；actionId 供 `bindCopyAction` 分发（§3.3）。 */
+export const HELP_COPY_ACTIONS = Object.freeze({
+  prompt: { actionId: 'ilife-help-copy-prompt', label: '复制指令' },
+  wakeWord: { actionId: 'ilife-help-copy-wakeWord', label: '复制唤醒词' },
+  params: { actionId: 'ilife-help-copy-params', label: '复制参数' },
+} as const satisfies Record<HelpCopyTarget, { readonly actionId: string; readonly label: string }>);
+
 export interface HelpShellInput {
   readonly sceneData: SceneData;
   /** 共享资产走同一填充器（B3）：HELP 壳不得自填。 */
