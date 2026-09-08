@@ -16,6 +16,8 @@ import {
   ACTION_BAR_DEFAULTS,
   ACTION_BAR_KINDS,
   ACTION_ID_ATTR,
+  ASSET_WRAPPERS,
+  ASSET_WRAP_RULE,
   BASE_PAINT_CONTRACT_VERSION,
   CHART_BREAKPOINTS,
   CHART_COORD_RULE,
@@ -49,6 +51,7 @@ import {
   LOG_SECTION_TITLES,
   LOG_UNKNOWN_PLACEHOLDER,
   MARKER_RULES,
+  PAYLOAD_SLOT_RULE,
   RENDER_CONTRACT_VERSION,
   SENSITIVE_ROW_RULE,
   SERIALIZABLE_SHAPES,
@@ -60,6 +63,8 @@ import {
   STYLE_FORBIDDEN_TOKENS,
   STYLE_SHEET_ID,
   TEMPLATE_ERROR_CODES,
+  TEMPLATE_KIND_RULE,
+  TEMPLATE_KINDS,
   TEMPLATE_MARKERS,
   TEXT_EMPTY_PLACEHOLDER,
   TEXT_ERROR_CODES,
@@ -345,16 +350,21 @@ describe('文档投影绑死（docs/base-paint-contract.md）', () => {
 });
 
 describe('冻结口径逐值', () => {
-  it('五个占位符逐字 + 数量规则（AC-6／AC-12）', () => {
+  it('六个占位符逐字 + 数量规则（AC-6／AC-12／#118 A1）', () => {
     assert.deepEqual(TEMPLATE_MARKERS, {
       injectData: '<!--INJECT-DATA-->',
+      content: '<!--CONTENT-->',
       sharedHelpers: '<!--SHARED-HELPERS-->',
       sharedCss: '<!--SHARED-CSS-->',
       chartsHelpers: '<!--CHARTS-HELPERS-->',
       noShared: '<!--NO-SHARED-->',
     });
-    assert.equal(MARKER_RULES.injectData.rule, 'exactly-one');
-    assert.equal(MARKER_RULES.injectData.required, true);
+    assert.equal(MARKER_RULES.injectData.rule, 'zero-or-one', '#118 D-2：INJECT-DATA 放宽为 zero-or-one');
+    assert.equal(MARKER_RULES.injectData.required, false, '#118 D-2：INJECT-DATA required 放宽为 false');
+    assert.equal(MARKER_RULES.content.rule, 'zero-or-one', '#118 D-1：CONTENT 为 zero-or-one');
+    assert.equal(MARKER_RULES.content.required, false);
+    assert.equal(MARKER_RULES.content.exemptable, false);
+    assert.equal(MARKER_RULES.content.literal, '<!--CONTENT-->');
     assert.equal(MARKER_RULES.sharedHelpers.rule, 'exactly-one');
     assert.equal(MARKER_RULES.sharedCss.rule, 'exactly-one');
     assert.equal(MARKER_RULES.chartsHelpers.rule, 'zero-or-one');
@@ -362,6 +372,7 @@ describe('冻结口径逐值', () => {
     assert.equal(MARKER_RULES.sharedCss.exemptable, true, 'NO-SHARED 是唯一豁免通道');
     assert.equal(MARKER_RULES.injectData.exemptable, false, 'INJECT-DATA 不可豁免（AC-12 认领）');
     assert.deepEqual([...INJECTION_ORDER], ['sharedHelpers', 'sharedCss', 'chartsHelpers', 'injectData']);
+    assert.ok(!INJECTION_ORDER.includes('content'), '#118：CONTENT 不在 INJECTION_ORDER 内（既有冻结签名不得改，见契约 §3.1.2）');
     for (const lit of Object.values(TEMPLATE_MARKERS)) assert.ok(doc.includes(lit), '文档缺占位符逐字：' + lit);
   });
 
@@ -441,7 +452,11 @@ describe('冻结口径逐值', () => {
   });
 
   it('INJECT-DATA 容器口径与 HELP 复制文案（FX-2／FX-7）', () => {
-    assert.equal(TEMPLATE_ERROR_CODES.length, 7);
+    assert.equal(TEMPLATE_ERROR_CODES.length, 8, '#118 A3：既有 7 个 ＋ content-missing');
+    assert.deepEqual([...TEMPLATE_ERROR_CODES].slice(0, 7),
+      ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'container-missing', 'asset-missing', 'strict-invalid'],
+      '#118 A3：只追加——既有 7 个逐字逐序不变，content-missing 在末尾');
+    assert.ok([...TEMPLATE_ERROR_CODES].includes('content-missing'), '#118 D-4：正文缺失必须有错误码');
     assert.ok([...TEMPLATE_ERROR_CODES].includes('container-missing'), '模板缺自带容器必须有错误码');
     assert.equal(DEFAULT_DATA_SCRIPT_ID, 'payload');
     assert.equal(DATA_SCRIPT_TYPE, 'application/json');
@@ -587,6 +602,79 @@ describe('冻结口径逐值', () => {
     });
     assert.equal(SENSITIVE_ROW_RULE.mask, TEXT_SENSITIVE_MASK, '掩码必须等于 TEXT_SENSITIVE_MASK（唯一真相）');
     assert.ok(doc.includes('SENSITIVE_ROW_RULE'), '文档必须冻结敏感行判定口径');
+  });
+});
+
+describe('#118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／模板分型）', () => {
+  /** 分型判定（机读规则 `TEMPLATE_KIND_RULE` 的镜像实现）：按 required／forbidden 逐型试配。 */
+  const classify = (counts) => TEMPLATE_KINDS.filter((k) => {
+    const r = TEMPLATE_KIND_RULE[k];
+    return r.required.every((m) => counts[m] === 1) && r.forbidden.every((m) => counts[m] === 0);
+  });
+
+  it('A2：载荷槽规则可机读（两者都有 → marker-conflict；都没有 → marker-missing）', () => {
+    assert.deepEqual({ ...PAYLOAD_SLOT_RULE }, {
+      members: ['injectData', 'content'], rule: 'exactly-one',
+      conflictCode: 'marker-conflict', missingCode: 'marker-missing',
+    });
+    assert.equal(PAYLOAD_SLOT_RULE.members.length, 2, '载荷槽恰两成员');
+    for (const m of PAYLOAD_SLOT_RULE.members) assert.ok(m in MARKER_RULES, m + ' 必须是已冻结标记');
+    assert.ok(TEMPLATE_ERROR_CODES.includes(PAYLOAD_SLOT_RULE.conflictCode), '冲突码必须在错误码表内');
+    assert.ok(TEMPLATE_ERROR_CODES.includes(PAYLOAD_SLOT_RULE.missingCode), '缺失码必须在错误码表内');
+    // 恰有其一 → 合法分型；两者皆有 → 三型皆不命中（= marker-conflict 的机读判据）
+    assert.deepEqual(classify({ injectData: 1, content: 0 }), ['data-page']);
+    assert.deepEqual(classify({ injectData: 0, content: 1 }), ['content-page']);
+    assert.deepEqual(classify({ injectData: 0, content: 0 }), ['legacy']);
+    assert.deepEqual(classify({ injectData: 1, content: 1 }), [], '两者都有 → 不属任何型');
+  });
+
+  it('A5：三分型穷尽且互斥（无「两类都不属于且非 legacy」的模板）', () => {
+    assert.deepEqual([...TEMPLATE_KINDS], ['data-page', 'content-page', 'legacy']);
+    assert.deepEqual(Object.keys(TEMPLATE_KIND_RULE), [...TEMPLATE_KINDS], '规则表必须覆盖全部三型且同序');
+    for (const k of TEMPLATE_KINDS) {
+      const r = TEMPLATE_KIND_RULE[k];
+      assert.ok(Array.isArray(r.required) && Array.isArray(r.forbidden), k + ' 必须给 required／forbidden');
+      for (const m of [...r.required, ...r.forbidden]) assert.ok(m in MARKER_RULES, k + ' 引用了非标记：' + m);
+      for (const m of r.required) assert.ok(!r.forbidden.includes(m), k + ' 同一标记不得既 required 又 forbidden');
+    }
+    assert.deepEqual([...TEMPLATE_KIND_RULE.legacy.forbidden].sort(), [...PAYLOAD_SLOT_RULE.members].sort(),
+      'legacy 口径 = 两载荷槽皆无（与 PAYLOAD_SLOT_RULE 同口径）');
+    for (const c of [{ injectData: 2, content: 0 }, { injectData: 0, content: 3 }]) {
+      assert.deepEqual(classify(c), [], '数量不为 0／1 的组合不得命中任何型：' + JSON.stringify(c));
+    }
+  });
+
+  it('A4：包裹约定＝资产裸文本 ＋ 填充器包裹（两条不变量 ＋ 断言）', () => {
+    assert.deepEqual({ ...ASSET_WRAP_RULE }, {
+      assetsBare: true, fillerWraps: true, forbidPreWrappedMarker: true,
+      assetWrappedCode: 'asset-missing', markerPreWrappedCode: 'marker-conflict',
+    });
+    assert.ok(TEMPLATE_ERROR_CODES.includes(ASSET_WRAP_RULE.assetWrappedCode), '不变量①的错误码必须在错误码表内');
+    assert.ok(TEMPLATE_ERROR_CODES.includes(ASSET_WRAP_RULE.markerPreWrappedCode), '不变量②的错误码必须在错误码表内');
+    assert.deepEqual(Object.keys(ASSET_WRAPPERS).sort(), ['chartsHelpersJs', 'sharedCssText', 'sharedHelpersJs'],
+      '包裹表必须与 TemplateAssets 同键集');
+    assert.deepEqual({ ...ASSET_WRAPPERS.sharedCssText }, { openTag: '<style>', closeTag: '</style>' });
+    assert.deepEqual({ ...ASSET_WRAPPERS.sharedHelpersJs }, { openTag: '<script>', closeTag: '</script>' });
+    assert.deepEqual({ ...ASSET_WRAPPERS.chartsHelpersJs }, { openTag: '<script>', closeTag: '</script>' });
+    assert.notEqual(ASSET_WRAPPERS.sharedCssText.openTag, ASSET_WRAPPERS.sharedHelpersJs.openTag,
+      'CSS 与 JS 的包裹标签不得互换（style vs script）');
+    for (const needle of ['ASSET_WRAP_RULE', 'ASSET_WRAPPERS', '不变量']) {
+      assert.ok(doc.includes(needle), '文档缺包裹约定条文：' + needle);
+    }
+  });
+
+  it('A6：与旧基线的偏离已显式记账（README.md:63 模板自带包裹 vs 本契约填充器包裹）', () => {
+    assert.ok(doc.includes('README.md:63'), '必须引旧基线原文行号');
+    assert.ok(doc.includes('填充器包裹'), '必须写明新约定');
+    assert.ok(doc.includes('有意偏离'), '必须写明这是有意偏离');
+    assert.ok(doc.includes('与旧基线的偏离'), '必须有偏离记账小节');
+  });
+
+  it('A1：CONTENT 槽位溯源＝新架构发明的槽位（旧基线 0 命中）', () => {
+    assert.ok(doc.includes('新架构发明'), '必须写明 CONTENT 是新架构发明的槽位');
+    assert.ok(doc.includes('零命中'), '必须写明旧基线 0 命中');
+    assert.ok(doc.includes('content-missing'), '必须写明正文缺失错误码');
+    for (const needle of ['正文槽位', '载荷槽', '模板分型']) assert.ok(doc.includes(needle), '文档缺 #118 小节：' + needle);
   });
 });
 

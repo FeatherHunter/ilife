@@ -77,6 +77,7 @@ import type {
   TemplateAssets,
   TemplateErrorCode,
   TemplateErrorShape,
+  TemplateKind,
   TemplateMarkerKey,
   ToastAction,
   ToastBadge,
@@ -120,24 +121,58 @@ type _B20 = Expect<Equal<Present<'renderPage'>, true>>;
 
 /* ── 2. 冻结面 · §3.1 占位符与填充器（#74） ─────────────── */
 
-type _T01 = Expect<Equal<keyof Mod['TEMPLATE_MARKERS'], 'injectData' | 'sharedHelpers' | 'sharedCss' | 'chartsHelpers' | 'noShared'>>;
-type _T02 = Expect<Equal<Mod['TEMPLATE_MARKERS'][TemplateMarkerKey], '<!--INJECT-DATA-->' | '<!--SHARED-HELPERS-->' | '<!--SHARED-CSS-->' | '<!--CHARTS-HELPERS-->' | '<!--NO-SHARED-->'>>;
+type _T01 = Expect<Equal<keyof Mod['TEMPLATE_MARKERS'], 'injectData' | 'content' | 'sharedHelpers' | 'sharedCss' | 'chartsHelpers' | 'noShared'>>;
+type _T02 = Expect<Equal<Mod['TEMPLATE_MARKERS'][TemplateMarkerKey], '<!--INJECT-DATA-->' | '<!--CONTENT-->' | '<!--SHARED-HELPERS-->' | '<!--SHARED-CSS-->' | '<!--CHARTS-HELPERS-->' | '<!--NO-SHARED-->'>>;
 type _T03 = Expect<Equal<keyof Mod['MARKER_RULES'], TemplateMarkerKey>>;
 type _T03b = Expect<Equal<Mod['MARKER_RULES'][TemplateMarkerKey]['rule'], MarkerRuleSpec['rule']>>;
-type _T03c = Expect<Equal<Mod['MARKER_RULES'][TemplateMarkerKey]['literal'], '<!--INJECT-DATA-->' | '<!--SHARED-HELPERS-->' | '<!--SHARED-CSS-->' | '<!--CHARTS-HELPERS-->' | '<!--NO-SHARED-->'>>;
+type _T03c = Expect<Equal<Mod['MARKER_RULES'][TemplateMarkerKey]['literal'], '<!--INJECT-DATA-->' | '<!--CONTENT-->' | '<!--SHARED-HELPERS-->' | '<!--SHARED-CSS-->' | '<!--CHARTS-HELPERS-->' | '<!--NO-SHARED-->'>>;
 type _T04 = Expect<Equal<Mod['INJECTION_ORDER'][number], 'sharedHelpers' | 'sharedCss' | 'chartsHelpers' | 'injectData'>>;
 type _T05 = Expect<Equal<Mod['STRICT_ENVELOPE_SHAPES'][number], EnvelopeShape>>;
 type _T06 = Expect<Equal<Mod['DEFAULT_DATA_SCRIPT_ID'], 'payload'>>;
 type _T07 = Expect<Equal<Mod['DATA_SCRIPT_TYPE'], 'application/json'>>;
-type _T08 = Expect<Equal<Mod['TEMPLATE_ERROR_CODES'][number], 'marker-missing' | 'marker-duplicate' | 'marker-conflict' | 'data-missing' | 'container-missing' | 'asset-missing' | 'strict-invalid'>>;
+type _T08 = Expect<Equal<Mod['TEMPLATE_ERROR_CODES'][number], 'marker-missing' | 'marker-duplicate' | 'marker-conflict' | 'data-missing' | 'container-missing' | 'asset-missing' | 'strict-invalid' | 'content-missing'>>;
 type _T09 = Expect<Equal<TemplateAssets, { readonly sharedHelpersJs: string; readonly sharedCssText: string; readonly chartsHelpersJs?: string }>>;
-type _T10 = Expect<Equal<FillTemplateInput, { readonly template: string; readonly assets: TemplateAssets; readonly data: unknown; readonly strict?: boolean; readonly dataScriptId?: string }>>;
+type _T10 = Expect<Equal<FillTemplateInput, { readonly template: string; readonly assets: TemplateAssets; readonly data?: unknown; readonly strict?: boolean; readonly dataScriptId?: string; readonly content?: string }>>;
 type _T11 = Expect<Equal<FillTemplateReport, { readonly markers: readonly MarkerReport[]; readonly strict: boolean; readonly exempt: boolean; readonly bytes: number }>>;
 type _T12 = Expect<Equal<FillTemplateOutput, { readonly html: string; readonly report: FillTemplateReport }>>;
 type _T13 = Expect<Equal<FillTemplate, (input: FillTemplateInput) => FillTemplateOutput>>;
 type _T14 = Expect<Equal<TemplateErrorShape, { readonly name: 'TemplateError'; readonly code: TemplateErrorCode; readonly marker?: TemplateMarkerKey; readonly message: string }>>;
 type _T15 = Expect<Equal<Absent<'fillTemplate'>, true>>;
 type _T16 = Expect<Equal<Absent<'FillTemplateInput'>, true>>;
+
+/* ── 2b. #118 契约补遗：CONTENT 槽位／载荷槽规则／包裹约定／模板分型（A1–A6） ── */
+
+type _T17 = Expect<Equal<Mod['MARKER_RULES']['injectData'], {
+  readonly literal: '<!--INJECT-DATA-->'; readonly rule: 'zero-or-one'; readonly required: false; readonly exemptable: false;
+}>>;
+type _T18 = Expect<Equal<Mod['MARKER_RULES']['content'], {
+  readonly literal: '<!--CONTENT-->'; readonly rule: 'zero-or-one'; readonly required: false; readonly exemptable: false;
+}>>;
+type _T19 = Expect<Equal<Mod['PAYLOAD_SLOT_RULE'], {
+  readonly members: readonly ['injectData', 'content'];
+  readonly rule: 'exactly-one';
+  readonly conflictCode: 'marker-conflict';
+  readonly missingCode: 'marker-missing';
+}>>;
+type _T20 = Expect<Equal<Mod['PAYLOAD_SLOT_RULE']['members'][number], 'injectData' | 'content'>>;
+type _T21 = Expect<Equal<Mod['TEMPLATE_KINDS'], readonly ['data-page', 'content-page', 'legacy']>>;
+type _T22 = Expect<Equal<TemplateKind, 'data-page' | 'content-page' | 'legacy'>>;
+type _T23 = Expect<Equal<Mod['TEMPLATE_KIND_RULE'], {
+  readonly 'data-page': { readonly required: readonly ['injectData']; readonly forbidden: readonly ['content'] };
+  readonly 'content-page': { readonly required: readonly ['content']; readonly forbidden: readonly ['injectData'] };
+  readonly legacy: { readonly required: readonly []; readonly forbidden: readonly ['injectData', 'content'] };
+}>>;
+type _T24 = Expect<Equal<keyof Mod['TEMPLATE_KIND_RULE'], TemplateKind>>;
+type _T25 = Expect<Equal<Mod['ASSET_WRAP_RULE'], {
+  readonly assetsBare: true; readonly fillerWraps: true; readonly forbidPreWrappedMarker: true;
+  readonly assetWrappedCode: 'asset-missing'; readonly markerPreWrappedCode: 'marker-conflict';
+}>>;
+type _T26 = Expect<Equal<Mod['ASSET_WRAPPERS'], {
+  readonly sharedCssText: { readonly openTag: '<style>'; readonly closeTag: '</style>' };
+  readonly sharedHelpersJs: { readonly openTag: '<script>'; readonly closeTag: '</script>' };
+  readonly chartsHelpersJs: { readonly openTag: '<script>'; readonly closeTag: '</script>' };
+}>>;
+type _T27 = Expect<Equal<keyof Mod['ASSET_WRAPPERS'], keyof TemplateAssets>>;
 
 /* ── 3. 冻结面 · §3.2 样式资产（#75） ──────────────────── */
 

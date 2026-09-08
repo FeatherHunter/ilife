@@ -42,17 +42,23 @@ export interface FrozenSurfaceEntry {
 }
 
 export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze([
-  // ── §3.1 占位符契约与统一填充器（#74） ──
-  { name: 'TEMPLATE_MARKERS', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "{ injectData: '<!--INJECT-DATA-->'; sharedHelpers: '<!--SHARED-HELPERS-->'; sharedCss: '<!--SHARED-CSS-->'; chartsHelpers: '<!--CHARTS-HELPERS-->'; noShared: '<!--NO-SHARED-->' }" },
+  // ── §3.1 占位符契约与统一填充器（#74；#118 补遗：CONTENT 槽位／载荷槽／包裹约定／分型） ──
+  { name: 'TEMPLATE_MARKERS', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "{ injectData: '<!--INJECT-DATA-->'; content: '<!--CONTENT-->'; sharedHelpers: '<!--SHARED-HELPERS-->'; sharedCss: '<!--SHARED-CSS-->'; chartsHelpers: '<!--CHARTS-HELPERS-->'; noShared: '<!--NO-SHARED-->' }" },
   { name: 'MARKER_RULES', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: 'Record<TemplateMarkerKey, MarkerRuleSpec>' },
+  { name: 'PAYLOAD_SLOT_RULE', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "{ members: readonly ['injectData', 'content']; rule: 'exactly-one'; conflictCode: 'marker-conflict'; missingCode: 'marker-missing' }" },
+  { name: 'TEMPLATE_KINDS', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['data-page', 'content-page', 'legacy']" },
+  { name: 'TemplateKind', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: "'data-page' | 'content-page' | 'legacy'" },
+  { name: 'TEMPLATE_KIND_RULE', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "{ 'data-page': { required: readonly ['injectData']; forbidden: readonly ['content'] }; 'content-page': { required: readonly ['content']; forbidden: readonly ['injectData'] }; legacy: { required: readonly []; forbidden: readonly ['injectData', 'content'] } }" },
   { name: 'INJECTION_ORDER', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['sharedHelpers', 'sharedCss', 'chartsHelpers', 'injectData']" },
+  { name: 'ASSET_WRAP_RULE', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "{ assetsBare: true; fillerWraps: true; forbidPreWrappedMarker: true; assetWrappedCode: 'asset-missing'; markerPreWrappedCode: 'marker-conflict' }" },
+  { name: 'ASSET_WRAPPERS', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "{ sharedCssText: { openTag: '<style>'; closeTag: '</style>' }; sharedHelpersJs: { openTag: '<script>'; closeTag: '</script>' }; chartsHelpersJs: { openTag: '<script>'; closeTag: '</script>' } }" },
   { name: 'DEFAULT_DATA_SCRIPT_ID', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "'payload'" },
   { name: 'DATA_SCRIPT_TYPE', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "'application/json'" },
   { name: 'STRICT_ENVELOPE_FIELDS', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['version', 'skill', 'shape', 'key', 'data']" },
   { name: 'STRICT_ENVELOPE_SHAPES', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback']" },
-  { name: 'TEMPLATE_ERROR_CODES', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'container-missing', 'asset-missing', 'strict-invalid']" },
+  { name: 'TEMPLATE_ERROR_CODES', kind: 'runtime', ticket: '#74', status: 'implemented', section: '3.1', signature: "readonly ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'container-missing', 'asset-missing', 'strict-invalid', 'content-missing']" },
   { name: 'TemplateAssets', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ sharedHelpersJs: string; sharedCssText: string; chartsHelpersJs?: string }' },
-  { name: 'FillTemplateInput', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ template: string; assets: TemplateAssets; data: unknown; strict?: boolean; dataScriptId?: string }' },
+  { name: 'FillTemplateInput', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ template: string; assets: TemplateAssets; data?: unknown; strict?: boolean; dataScriptId?: string; content?: string }' },
   { name: 'FillTemplateReport', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ markers: readonly MarkerReport[]; strict: boolean; exempt: boolean; bytes: number }' },
   { name: 'FillTemplateOutput', kind: 'type', ticket: '#74', status: 'implemented', section: '3.1', signature: '{ html: string; report: FillTemplateReport }' },
   { name: 'FillTemplate', kind: 'type', ticket: '#74', status: 'pending', section: '3.1', signature: '(input: FillTemplateInput) => FillTemplateOutput' },

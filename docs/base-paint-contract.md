@@ -82,7 +82,7 @@
 
 | 节号 | 能力名 | 旧签名（逐字） | 新判定 | 新落点 | 新签名（逐字） | 备注 |
 |---|---|---|---|---|---|---|
-| §3 | 占位符标准与填充机制 | `<!--INJECT-DATA-->`／`<!--SHARED-HELPERS-->`／`<!--SHARED-CSS-->` 各「必须恰好 1」；`inject(template_text, payload, js_asset=None, css_asset=None, charts_asset=None, strict=False)` 返回 `(html, error)` | 部分 | `base-paint` `src/template.ts` | `fillTemplate(input: FillTemplateInput): FillTemplateOutput` | 实测：base-paint 18 出口零占位符 API；标记常量 5 份、恰一次校验 5 套错误码、`INJECT-DATA` 6 处存在但**填充者全仓不存在**（old §1 §3；new-exports §3.3） |
+| §3 | 占位符标准与填充机制 | `<!--INJECT-DATA-->`／`<!--SHARED-HELPERS-->`／`<!--SHARED-CSS-->` 各「必须恰好 1」；`inject(template_text, payload, js_asset=None, css_asset=None, charts_asset=None, strict=False)` 返回 `(html, error)` | 部分 | `base-paint` `src/template.ts` | `fillTemplate(input: FillTemplateInput): FillTemplateOutput` | 实测：base-paint 18 出口零占位符 API；标记常量 5 份、恰一次校验 5 套错误码、`INJECT-DATA` 6 处存在但**填充者全仓不存在**（old §1 §3；new-exports §3.3）。**#118 补遗**：本行签名扩为**六标记**（`CONTENT` 收归）＋ 载荷槽规则 ＋ 包裹约定 ＋ 模板分型，见 §3.1.2 与 §4.5 |
 | §3 | `NO-SHARED` 豁免 + `CHARTS-HELPERS` 占位符 | `<!--NO-SHARED-->` 0 或 1（与 SHARED 互斥）；`<!--CHARTS-HELPERS-->` 0 或 1 | 无 | `base-paint` `src/template.ts` | `MARKER_RULES.noShared.rule: 'zero-or-one-exempt'`；`MARKER_RULES.chartsHelpers.rule: 'zero-or-one'` | 实测 `packages/**` 两标记 0 命中（new-exports §3.1）；契约**认领**语义（AC-6／AC-12），实现待 #74 |
 | §4 | payload 信封 + 结构校验 | `{ "status": "ok", "message": "(可选，失败时必有)", "data": { meta, scene, copy_log } }`；`--strict-payload` 缺必填 → error | 有 | `base-link-core`（保持，不移植旧字段） | `createEnvelope(input)`／`parseEnvelope(input)`／`assertShapeData(shape, data)`；`Envelope = { version; skill; shape; key; data }` | 能力对等且更严（缺即 throw）；**字段不兼容**：旧 `status/data.meta/scene` 不得直接搬（Q8；new-exports §1.1） |
 | §5 | P0 守卫组 `esc/arr/val/yes/validate` | `esc(s)`／`arr(v)`／`val(v)`／`yes(v)`／`validate(p)` | 部分 | `base-paint` `escapeHtml` 归一（AC-14）＋ `base-link-core` 承担 `validate` | `escapeHtml(s: string): string`；口径 `ESCAPE_HTML_CHARS = readonly ['&', '<', '>', '"', "'"]` | 实测 `escapeHtml` **6 处**实现且转义集不一致（base-paint 只转 4 个）；`arr/val/yes` 零命中（new-exports §2#4） |
@@ -111,6 +111,8 @@
 
 **计数：有 2 / 部分 7 / 无 17（合计 26 行），与 t72 §3 复核一致。**
 
+**#118 补遗（非 v1.30 项，故不新增表行，只更新上表 §3 行）**：`<!--CONTENT-->` 是**新架构发明的槽位**（旧基线 73 个模板**零命中**），不属于 v1.30 的 26 项能力，因此本表恒为 26 行（由签名测试「§2 必须 26 行」钉死）；#118 的落点是 §3.1.2（正文槽位／载荷槽规则／包裹约定）与 §4.5（与旧基线的偏离记账）。
+
 ## 3. 冻结签名
 
 **读法**：每节的「标记区表格」是本文的**机器可读投影**，由 `packages/base-render/test/contract-signatures.test.mjs` 与 `SPEC_FROZEN_SURFACE` 逐字比对；表格外是语义、失败行为、所属包与旧侧对应物。签名中的 `|` 在表格里转义为 `\|`，解析时还原。
@@ -124,16 +126,22 @@
 <!-- FROZEN-SURFACE-TABLE-START -->
 | 名字 | 种类 | 票 | 状态 | 章节 | 逐字签名 |
 |---|---|---|---|---|---|
-| `TEMPLATE_MARKERS` | runtime | #74 | implemented | 3.1 | `{ injectData: '<!--INJECT-DATA-->'; sharedHelpers: '<!--SHARED-HELPERS-->'; sharedCss: '<!--SHARED-CSS-->'; chartsHelpers: '<!--CHARTS-HELPERS-->'; noShared: '<!--NO-SHARED-->' }` |
+| `TEMPLATE_MARKERS` | runtime | #74 | implemented | 3.1 | `{ injectData: '<!--INJECT-DATA-->'; content: '<!--CONTENT-->'; sharedHelpers: '<!--SHARED-HELPERS-->'; sharedCss: '<!--SHARED-CSS-->'; chartsHelpers: '<!--CHARTS-HELPERS-->'; noShared: '<!--NO-SHARED-->' }` |
 | `MARKER_RULES` | runtime | #74 | implemented | 3.1 | `Record<TemplateMarkerKey, MarkerRuleSpec>` |
+| `PAYLOAD_SLOT_RULE` | runtime | #74 | implemented | 3.1 | `{ members: readonly ['injectData', 'content']; rule: 'exactly-one'; conflictCode: 'marker-conflict'; missingCode: 'marker-missing' }` |
+| `TEMPLATE_KINDS` | runtime | #74 | implemented | 3.1 | `readonly ['data-page', 'content-page', 'legacy']` |
+| `TemplateKind` | type | #74 | implemented | 3.1 | `'data-page' \| 'content-page' \| 'legacy'` |
+| `TEMPLATE_KIND_RULE` | runtime | #74 | implemented | 3.1 | `{ 'data-page': { required: readonly ['injectData']; forbidden: readonly ['content'] }; 'content-page': { required: readonly ['content']; forbidden: readonly ['injectData'] }; legacy: { required: readonly []; forbidden: readonly ['injectData', 'content'] } }` |
 | `INJECTION_ORDER` | runtime | #74 | implemented | 3.1 | `readonly ['sharedHelpers', 'sharedCss', 'chartsHelpers', 'injectData']` |
+| `ASSET_WRAP_RULE` | runtime | #74 | implemented | 3.1 | `{ assetsBare: true; fillerWraps: true; forbidPreWrappedMarker: true; assetWrappedCode: 'asset-missing'; markerPreWrappedCode: 'marker-conflict' }` |
+| `ASSET_WRAPPERS` | runtime | #74 | implemented | 3.1 | `{ sharedCssText: { openTag: '<style>'; closeTag: '</style>' }; sharedHelpersJs: { openTag: '<script>'; closeTag: '</script>' }; chartsHelpersJs: { openTag: '<script>'; closeTag: '</script>' } }` |
 | `DEFAULT_DATA_SCRIPT_ID` | runtime | #74 | implemented | 3.1 | `'payload'` |
 | `DATA_SCRIPT_TYPE` | runtime | #74 | implemented | 3.1 | `'application/json'` |
 | `STRICT_ENVELOPE_FIELDS` | runtime | #74 | implemented | 3.1 | `readonly ['version', 'skill', 'shape', 'key', 'data']` |
 | `STRICT_ENVELOPE_SHAPES` | runtime | #74 | implemented | 3.1 | `readonly ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback']` |
-| `TEMPLATE_ERROR_CODES` | runtime | #74 | implemented | 3.1 | `readonly ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'container-missing', 'asset-missing', 'strict-invalid']` |
+| `TEMPLATE_ERROR_CODES` | runtime | #74 | implemented | 3.1 | `readonly ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'container-missing', 'asset-missing', 'strict-invalid', 'content-missing']` |
 | `TemplateAssets` | type | #74 | implemented | 3.1 | `{ sharedHelpersJs: string; sharedCssText: string; chartsHelpersJs?: string }` |
-| `FillTemplateInput` | type | #74 | implemented | 3.1 | `{ template: string; assets: TemplateAssets; data: unknown; strict?: boolean; dataScriptId?: string }` |
+| `FillTemplateInput` | type | #74 | implemented | 3.1 | `{ template: string; assets: TemplateAssets; data?: unknown; strict?: boolean; dataScriptId?: string; content?: string }` |
 | `FillTemplateReport` | type | #74 | implemented | 3.1 | `{ markers: readonly MarkerReport[]; strict: boolean; exempt: boolean; bytes: number }` |
 | `FillTemplateOutput` | type | #74 | implemented | 3.1 | `{ html: string; report: FillTemplateReport }` |
 | `FillTemplate` | type | #74 | pending | 3.1 | `(input: FillTemplateInput) => FillTemplateOutput` |
@@ -141,11 +149,12 @@
 | `TemplateErrorShape` | type | #74 | implemented | 3.1 | `{ name: 'TemplateError'; code: TemplateErrorCode; marker?: TemplateMarkerKey; message: string }` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
-**五个占位符（逐字写法 + 语义 + 数量约束 + 填充物来源 + 缺失行为）**
+**六个占位符（逐字写法 + 语义 + 数量约束 + 填充物来源 + 缺失行为）**
 
 | 标记（逐字） | 数量规则 | 填充物来源 | 缺失/重复行为 |
 |---|---|---|---|
-| `<!--INJECT-DATA-->` | **恰好 1**（`exactly-one`，不可豁免） | 场景数据：由**技能包提供**（`input.data`），填充器只注入与校验，不生产数据（AC-12） | 缺失或重复 → 抛 `TemplateError`，code `marker-missing`／`marker-duplicate`，不输出空页 |
+| `<!--INJECT-DATA-->` | **0 或 1**（`zero-or-one`，不可豁免；#118 由 `exactly-one` 放宽） | 场景数据：由**技能包提供**（`input.data`），填充器只注入与校验，不生产数据（AC-12） | 单标记超 1 次 → `marker-duplicate`；**数据页与内容页的互斥约束**由载荷槽规则承担（见 §3.1.2）：两者皆无 → `marker-missing`，两者皆有 → `marker-conflict` |
+| `<!--CONTENT-->` | **0 或 1**（`zero-or-one`，不可豁免；#118 新增） | 正文 HTML：由**技能包提供**（`input.content`），填充器只注入与校验，不生产正文 | 模板含本标记但 `input.content` 未提供 → 抛 `TemplateError`，code **`content-missing`**（与 `data-missing` 对称）；超 1 次 → `marker-duplicate` |
 | `<!--SHARED-HELPERS-->` | **恰好 1**（`exactly-one`，声明 `NO-SHARED` 时可缺席） | `input.assets.sharedHelpersJs`——**唯一产出签名 `buildSharedHelpersJs(input?)`**（§3.3，归 #76；#74 只消费，不得自产） | 缺失/重复且未豁免 → 抛错 `marker-missing`／`marker-duplicate`；资产为空串 → `asset-missing` |
 | `<!--SHARED-CSS-->` | **恰好 1**（`exactly-one`，声明 `NO-SHARED` 时可缺席） | `input.assets.sharedCssText`——**唯一产出签名 `buildStyleSheet().css`**（§3.2，归 #75） | 同上 |
 | `<!--CHARTS-HELPERS-->` | **0 或 1**（`zero-or-one`） | `input.assets.chartsHelpersJs`（可选）——**唯一产出签名 `buildChartsHelpersJs(input?)`**（§3.5，归 #78；#74 只消费，FX-22） | 出现 >1 次 → 抛 `marker-duplicate`；出现 1 次但未提供资产 → `asset-missing`；0 次合法 |
@@ -163,11 +172,11 @@
 
 **`--strict` 校验语义**（对齐旧 `--strict-payload`，`contract:107`）：
 
-- **默认（`strict` 省略/false）**：五个标记的数量规则**一律硬拦截**（缺失/重复/互斥冲突即抛错）；**容器硬约束同样生效**——`<!--INJECT-DATA-->` 必须落在自带 `<script id="payload" type="application/json">…</script>` 内，缺容器或 id／type 不符 → `container-missing`（与 `strict` 无关，FX-25②）；`data` 只要求可 JSON 序列化。
+- **默认（`strict` 省略/false）**：六个标记的数量规则**一律硬拦截**（缺失/重复/互斥冲突即抛错）＋ **载荷槽规则**（`INJECT-DATA` 与 `CONTENT` 恰有其一，见 §3.1.2②）；**容器硬约束同样生效**——`<!--INJECT-DATA-->` 必须落在自带 `<script id="payload" type="application/json">…</script>` 内，缺容器或 id／type 不符 → `container-missing`（与 `strict` 无关，FX-25②）；`data` 只要求可 JSON 序列化（且**仅数据页**校验）。
 - **`strict: true`**：在数量规则之上，追加**零依赖信封校验**——`data` 必须是对象且含 `STRICT_ENVELOPE_FIELDS` 五字段，`shape` 必须 ∈ `STRICT_ENVELOPE_SHAPES`。不合法 → 抛 `TemplateError`，code `strict-invalid`。**不得**调用 base-link-core 的 `parseEnvelope`（AC-13）。
 - 注入的 payload 文本：JSON 序列化后**只替换 `<!--INJECT-DATA-->` 标记文本**（容器由模板自带，见上）；文本中 `<` 一律写成反斜杠 + `u003c`（**契约自定规则**，见上「归因更正」），防 `</script>` 断标签。
 
-**注入结果（机器可读）**：`FillTemplateOutput.report` = `{ markers, strict, exempt, bytes }`；`markers[]` 逐标记给 `{ key, literal, rule, count, filled }`；`bytes` = 输出 HTML 字节数（对齐旧 CLI 结果 JSON 的 `bytes` 口径，`injector.py:210-305`）。失败**不返回** `html: ''`——一律抛错（边界规则 5：缺失阻断不返空）。
+**注入结果（机器可读）**：`FillTemplateOutput.report` = `{ markers, strict, exempt, bytes }`；`markers[]` **覆盖全部六个标记**（含 `content`）逐标记给 `{ key, literal, rule, count, filled }`（`filled` = 该标记被替换；缺席标记的 `count` 为 0、`filled` 为 false）；`bytes` = 输出 HTML 字节数（对齐旧 CLI 结果 JSON 的 `bytes` 口径，`injector.py:210-305`）。失败**不返回** `html: ''`——一律抛错（边界规则 5：缺失阻断不返空）。
 
 #### 3.1.1 envelope 形状裁定与追溯（FX-4）
 
@@ -177,7 +186,49 @@
 - **追溯**：写法对齐 AC-3 对 `type`／`types` 的裁定（§3.5.2）——先给事实、再给裁定、再给同步动作；`docs/calorie-architecture.md:54` 已补一行勘误注记（FX-25①：勘误落在 `:54`，不是 `:53`）。
 - **不冲突声明**：`SERIALIZABLE_SHAPES`（5 个，六形状去掉 `fallback`）有单独交代（§3.4），**不构成**对六形状的否定。
 
+#### 3.1.2 正文槽位／载荷槽规则／包裹约定／模板分型（#118 补遗）
+
+**① 正文槽位 `<!--CONTENT-->`**
+
+- **溯源（不可省）**：旧基线 `D:/2Study/StudyNotes/SKILLS/卡路里` 的 73 个模板对本标记**零命中**（`templates/`／`scripts/`／`docs/`／`references/`／`html/` 逐字搜索全空，见 `.scratch/t118/baseline.md` §0.1）。因此 `<!--CONTENT-->` **不是旧 v1.30 能力，而是新架构发明的槽位**——本仓 53 个内容页此前由 4 个技能各自私有 `CONTENT_MARKER` 事实使用（`packages/skill-bill/src/render/html.ts:55`／`skill-chef:70`／`skill-home:61`／`skill-schedule:64`）；#118 把它收归 `TEMPLATE_MARKERS.content`，成为唯一真相源。
+- **语义**：填充物是**已渲染好的正文 HTML**（`FillTemplateInput.content`）；填充器**只做标记文本替换**，不生产正文、不转义正文（转义责任在产出正文的技能侧，与旧侧同口径）。
+- **数量**：`MARKER_RULES.content = { rule: 'zero-or-one', required: false, exemptable: false }`。
+- **缺失**：模板含 `<!--CONTENT-->` 而 `content` **未提供（`undefined`）** → 抛 `TemplateError`，code **`content-missing`**；`content: ''` 视为**已提供**（正文替换为空串，合法——空正文是技能侧的表达，不是契约缺失）。`TEMPLATE_ERROR_CODES` **只追加**：既有 7 个逐字、逐序不变，`content-missing` 追加在**末尾**。
+- **`data` 的适用条件（#118 D-8 裁定 2 已授权放宽）**：`FillTemplateInput.data` 是**可选字段**（`data?: unknown`）——**数据页提供；内容页可省略**（载荷槽模型使 `data` 与 `content` **同为条件字段**，与 `content?` 对称；属**追加式放宽**、向后兼容，即 #118 授权的**第 2 处既有签名改动**）。**只在模板含 `<!--INJECT-DATA-->` 时被校验**（缺失／不可序列化 → `data-missing`；`strict: true` 的信封校验同样**只在数据页执行**）；内容页忽略 `data`、也不读它。反之数据页忽略 `content`。内容页调用方**既可不传 `data`**，也可传 `data: undefined`（`unknown` 接受 `undefined`），都不会被判 `data-missing`／`strict-invalid`。
+- **正文替换恒为最后一步**：在 `INJECTION_ORDER` 的四步之后执行（见 ④），以免注入的资产／数据文本里的标记字面量被二次替换。
+
+**② 载荷槽规则（机读）**
+
+`PAYLOAD_SLOT_RULE = { members: ['injectData', 'content'], rule: 'exactly-one', conflictCode: 'marker-conflict', missingCode: 'marker-missing' }`——`INJECT-DATA` 与 `CONTENT` **恰有其一**：
+
+| 情形 | 判定 | 错误码 |
+|---|---|---|
+| 恰有其一 | 合法（再按分型定数据页／内容页） | — |
+| 两者都有 | 冲突 | `marker-conflict` |
+| 两者都无 | 缺失 | `marker-missing` |
+
+`MARKER_RULES.injectData` 由 `exactly-one`／`required: true` **放宽**为 `zero-or-one`／`required: false`（#118 授权放宽的既有签名之一；另一处为 `FillTemplateInput.data?`，见 §8.6 D11）——数量约束上移到本规则承担。事实依据：全仓 65 个模板**零冲突**（无任何一个同时含两标记，见 `.scratch/t118/template-inventory.md` §2）。
+
+**③ 模板分型（机读）**
+
+- `TEMPLATE_KINDS = ['data-page', 'content-page', 'legacy']`；`TEMPLATE_KIND_RULE` 逐型给 `required`（须恰 1 次）与 `forbidden`（须 0 次）。
+- 三型**穷尽且互斥**：恰有其一载荷槽 → 数据页／内容页；两者皆无 → `legacy`；两者皆有 → 三型皆不命中（即 `marker-conflict`）。因此**不存在**「两类都不属于且非 legacy」的模板。
+- `legacy` = **契约外的遗留资产**（无载荷槽、无 payload 容器）：`fillTemplate` 对它们抛 `marker-missing` 是**正确行为**（不该能填）。
+- **全仓 65 个模板实测：数据页 6 ／ 内容页 53 ／ 遗留 6**（bill 16 ＋ chef 8 ＋ home 21 ＋ schedule 8 = 53 内容页；memo-ilife 6 数据页；calorie 6 遗留）。复跑命令：`node tooling/classify-templates.mjs`（读 `dist` 的冻结常量判定，可 `--inventory` 逐条比对清单）；输出快照见 `docs/research/t118-template-classification.md`。
+
+**④ 包裹约定（方案 i：资产裸文本 ＋ 填充器负责包裹）**
+
+- `ASSET_WRAP_RULE = { assetsBare: true, fillerWraps: true, forbidPreWrappedMarker: true, assetWrappedCode: 'asset-missing', markerPreWrappedCode: 'marker-conflict' }`。
+- `ASSET_WRAPPERS`（逐字，唯一真相源）：`sharedCssText` → `<style>` ＋ 文本 ＋ `</style>`；`sharedHelpersJs`／`chartsHelpersJs` → `<script>` ＋ 文本 ＋ `</script>`。实现只许引本常量，不得另写字面量。
+- **两条不变量（可机读断言）**：
+  1. **资产不得自带包裹标签**：`TemplateAssets` 三值恒为裸文本；资产自带 `<style>`／`<script>` → 抛 `asset-missing`（`ASSET_WRAP_RULE.assetWrappedCode`）。
+  2. **模板中的标记不得被预包裹**：标记外层已有 `<style>`／`<script>` 即冲突 → 抛 `marker-conflict`（`ASSET_WRAP_RULE.markerPreWrappedCode`）。
+- **唯一例外**：`<!--INJECT-DATA-->` 的 payload 容器由**模板自带**（§3.1 FX-2①②），填充器不得生成；本约定只管**三个共享资产**的包裹。
+- **`INJECTION_ORDER` 不含 `content`（显式记账）**：该数组是既有冻结签名，本票无授权改动；且载荷槽两成员互斥，正文替换与四个资产／数据步之间无先后语义。
+- **与现状可共存（分阶段迁移）**：① 53 个裸内容页**产出不变**——迁移只是把「技能私有 `CONTENT_MARKER` ＋ 私有 `fillTemplate`」换成「契约槽位 ＋ 统一填充器」（模板**零改动**）；② memo 6 个数据页当前**模板自带包裹**、由 `fillSharedMarkers` 原样工作，在 #74 迁移之前与新约定**互不干扰**（不同填充器、不同模板）；③ calorie 6 个遗留模板不动（归 #107）。**不变量②是迁移期判据**：模板若仍预包裹，统一填充器报 `marker-conflict`——这是**期望行为**（防双包），迁移动作即「删掉模板自带的 `<style>`／`<script>`」。迁移面 **12 个模板**（memo 6 ＋ calorie 6）vs 方案 ii 的 53～59 个；parity 不受影响：两种约定产出的 HTML 可完全一致。
+
 **所属包**：`base-paint`（`packages/base-render`）。**旧侧对应物**：§3 `contract:64-75`；§7 `contract:356-367`；`injector.py:26-30,68-123`。
+
 
 **B3 强约束**：技能可保留私有模板，但**必须走同一填充器**；技能侧 `SHARED_CSS_MARKER`／`SHARED_HELPERS_MARKER`／`fillTemplate`／`fillSharedMarkers` 全部删除（5 份常量 + 5 套 `*_MARKER_INVALID` 错误码，new-exports §3.2）。迁移路径归 #74，不在本票。
 
@@ -639,7 +690,7 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
   壳渲染场景卡时把 `prompt_template` 全文写入按钮的 `data-t`（渲染期序列化，零注入面），三个按钮的 `actionId` 取上表并写入 `ACTION_ID_ATTR`（§3.3，FX-17）；点击分发走 `bindCopyAction`（§3.3，id 由 `listActionIds()` 发现，**不得**另定通配约定）。
 - **HELP 壳产物结构（V1 洞 7 处置：不冻结也不排除）**：DOM 结构／类名／区块顺序的**逐节点契约不冻结也不排除**——owner 是 **#78**（壳渲染）与 **#88**（速查台重建），验收以 #88 的三条守卫（占位符 0 残留／`id` 唯一／`copyText` 单实现）＋ #96 快照门为准。本契约冻结的是**可断言的锚点**：`HelpShellInput` 四件套、`HELP_SHELL_ID`／`HELP_COPY_TARGETS`／`HELP_COPY_ACTIONS`、类名前缀 `ilife-`（`CONTROL_STYLE_SECTIONS.helpShell`）、三个必需占位符各恰好 1 次。
-- **填充**：壳模板必须走 `fillTemplate`（`INJECT-DATA` 恰好 1、`SHARED-CSS` 恰好 1、`SHARED-HELPERS` 恰好 1）；HELP 壳不得自填、不得内联脚本、不得读全局。
+- **填充**：壳模板必须走 `fillTemplate`（**载荷槽恰有其一**——HELP 壳为**数据页**：`INJECT-DATA` 恰 1 次且落在自带容器内，见 §3.1.2②；`SHARED-CSS` 恰好 1、`SHARED-HELPERS` 恰好 1）；HELP 壳不得自填、不得内联脚本、不得读全局。
 - **#88 复用面**：`HelpShellInput` ＋ `SceneData` ＋ `SCENE_DATA_SCHEMA` ＋ `HELP_COPY_TARGETS` 四件套即为 #88 的全部输入面——#88 **不需要**新增任何签名，只需提供 `SceneData` 与 `TemplateAssets`。
 - **数据归技能包**：唤醒词与场景数据是技能资产（t72 §5.2）；壳归共享层。
 
@@ -698,6 +749,23 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | #74 | `packages/skill-bill/scripts/build-help.mjs:28 injectHelpBlock` 与 `injector` 混称：**不属 #92 改动面**，交接给 **#74**（其任务正是消灭 per-skill 私有填充器）；本契约只登记不修（FX-16②） |
 | 文档 owner／#79 | `CONTEXT.md` 补录「复制指令」词条（术语基线未收录，见 §0.2）；对外文案口径已定死在 `HELP_COPY_ACTIONS`，词条补录**不冻结也不排除**（FX-15①） |
 
+### 4.5 与旧基线的偏离（#118 包裹约定，显式记账）
+
+**偏离项**：旧基线 `公共组件/README.md:63` 规定「⚠️ 占位符必须放在独立 `<script>`／`<style>` 块内」——即**模板自带包裹**（旧 `injector.py:104-122` 全是 `str.replace(marker, text, 1)`，**从不补写标签**）。本契约**有意偏离**为「资产裸文本 ＋ **填充器包裹**」（条文见 §3.1.2④，常量 `ASSET_WRAP_RULE`／`ASSET_WRAPPERS`）。
+
+**理由（四条）**：
+
+1. **迁移面**：本约定只需改 **12 个模板**（memo 6 ＋ calorie 6）；反向方案（模板自包）需改 **53～59 个**，代价与风险高一个数量级。
+2. **事实多数**：新仓 65 个模板里 **53 个已是「裸标记 ＋ 填充器包」**（bill 16／chef 8／home 21／schedule 8），模板自包是少数派（12 个）。
+3. **单一真相**：包裹标签只由 `ASSET_WRAPPERS` 一处给出，避免 65 个模板各自漂移（现状已有「CSS 被 `<style>` 包、HELPERS 裸」的同文件两形态并存）。
+4. **旧规则本身不是机读契约**：旧 `docs/component-contract.md` §3（`:64-75`）只规定数量与硬拦截、**未提包裹**；包裹约定仅存在于 README 散文（`:63`）与最小骨架示例（`:75-86`），且旧层存在两代注入形态（Base 管线 vs 渲染器生成 `window.__DATA__`）。
+
+**parity 不受影响**：两种约定产出的 HTML 可完全一致（`<style>` ＋ 资产 ＋ `</style>`／`<script>` ＋ 资产 ＋ `</script>`），Q2 亦不要求 DOM 同构。
+
+**偏离的可复现证据**：`.scratch/t118/baseline.md`（旧层取证：`injector.py:104-122` 无标签拼接、`README.md:63` 原文、本仓三形态并存）＋ `.scratch/t118/template-inventory.md` §0.3（裸 53／包裹 12 逐条统计）。
+
+**与 `docs/calorie-architecture.md` 的一致性**：该规格 `:64` 只要求「由 base-paint 统一填充共享样式与脚本占位符」、`:82` 要求「占位符零残留」，**均未规定包裹归属**；本契约把归属显式定死为填充器，**不与规格冲突**，只是补上规格未覆盖的缝。
+
 ## 5. 版本机制
 
 <!-- FROZEN-SURFACE-TABLE-START -->
@@ -717,13 +785,16 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 ### 6.1 #74 统一填充器（`src/template.ts`）
 
-- **用**：`fillTemplate`／`FillTemplateInput`／`FillTemplateOutput`／`TemplateAssets`／`TEMPLATE_MARKERS`／`MARKER_RULES`／`INJECTION_ORDER`／`DEFAULT_DATA_SCRIPT_ID`／`DATA_SCRIPT_TYPE`／`STRICT_ENVELOPE_*`／`TEMPLATE_ERROR_CODES`。
-- **不许自造**：`injectHtml`／`htmlInjector`／任何 `inject*` 填充函数名；技能侧保留 `fillTemplate`／`fillSharedMarkers` 私有副本（B3 要求删除）；运行时 `import` base-link-core；**生成／补写 `<script>` 容器**（只替换标记文本，容器由模板自带，FX-2①②）；自产 `sharedHelpersJs`（产出者是 #76 的 `buildSharedHelpersJs`，FX-2③）；自产 `chartsHelpersJs`（产出者是 #78 的 `buildChartsHelpersJs`，FX-22）。
-- **模板必须满足占位符契约（FX-19，硬约束）**：任何交给 `fillTemplate` 的模板**必须**同时满足——① `<!--INJECT-DATA-->` **恰好 1 次**（`exactly-one`，`exemptable: false`）且落在自带容器 `<script id="payload" type="application/json">…</script>` 内；② `<!--SHARED-CSS-->`／`<!--SHARED-HELPERS-->` 各**恰好 1 次**（声明 `<!--NO-SHARED-->` 时可缺席）。不满足 → 抛 `marker-missing`／`marker-duplicate`／`container-missing`（`strict` 与否都生效），**不返空页**。
-- **calorie 6 模板的处置（FX-19，登记）**：`packages/skill-calorie/templates/{diet,exercise,goal,help,home,photo-gallery}.html` 实测**只有** `<!--SHARED-CSS-->`×1 ＋ `<!--SHARED-HELPERS-->`×1，**无 `<!--INJECT-DATA-->`、无自带容器**（两标记 0 命中）→ 属**死资产**（无引用、无填充者）；按契约直接调用 `fillTemplate` **必抛** `marker-missing`／`container-missing`。其**改造面（补 `INJECT-DATA` ＋ 自带容器）与并入 HELP 重建的处置归 #107**（§4.4），**不属 #74**；#74 的票面验收②只对**已满足占位符契约**的模板负责（如 `skill-memo-ilife/templates/*.html` 6 个）。
+- **用**：`fillTemplate`／`FillTemplateInput`（含 `content?`）／`FillTemplateOutput`／`TemplateAssets`／`TEMPLATE_MARKERS`（六标记）／`MARKER_RULES`／**`PAYLOAD_SLOT_RULE`／`TEMPLATE_KINDS`／`TemplateKind`／`TEMPLATE_KIND_RULE`／`ASSET_WRAP_RULE`／`ASSET_WRAPPERS`（#118）**／`INJECTION_ORDER`／`DEFAULT_DATA_SCRIPT_ID`／`DATA_SCRIPT_TYPE`／`STRICT_ENVELOPE_*`／`TEMPLATE_ERROR_CODES`。
+- **不许自造**：`injectHtml`／`htmlInjector`／任何 `inject*` 填充函数名；技能侧保留 `fillTemplate`／`fillSharedMarkers` 私有副本（B3 要求删除）；运行时 `import` base-link-core；**生成／补写 `<script>` 容器**（只替换标记文本，容器由模板自带，FX-2①②）；自产 `sharedHelpersJs`（产出者是 #76 的 `buildSharedHelpersJs`，FX-2③）；自产 `chartsHelpersJs`（产出者是 #78 的 `buildChartsHelpersJs`，FX-22）；**自造 `<!--CONTENT-->` 字面量或第二份正文标记**（恒取 `TEMPLATE_MARKERS.content`）；**自造包裹标签字面量**（恒取 `ASSET_WRAPPERS`，不得在实现里写第二份 `<style>`／`<script>`）；**自造分型表或载荷槽判定**（恒取 `TEMPLATE_KIND_RULE`／`PAYLOAD_SLOT_RULE`）。
+- **模板必须满足占位符契约（FX-19／#118 硬约束）**：任何交给 `fillTemplate` 的模板**必须**同时满足——① **载荷槽恰有其一**（`PAYLOAD_SLOT_RULE`）：含 `<!--INJECT-DATA-->`（数据页）或 `<!--CONTENT-->`（内容页），两者皆无 → `marker-missing`、两者皆有 → `marker-conflict`；② 数据页的 `<!--INJECT-DATA-->` **恰 1 次**且落在自带容器 `<script id="payload" type="application/json">…</script>` 内（缺容器或 id／type 不符 → `container-missing`）；③ `<!--SHARED-CSS-->`／`<!--SHARED-HELPERS-->` 各**恰好 1 次**（声明 `<!--NO-SHARED-->` 时可缺席），且三个共享资产标记**不得被预包裹**（不变量②，违者 `marker-conflict`）。不满足 → 抛对应 code（`strict` 与否都生效），**不返空页**。
+- **正文填充（#118）**：模板含 `<!--CONTENT-->` → 用 `input.content` 替换该标记文本（不转义、不加工）；`input.content === undefined` → `content-missing`。数据页忽略 `content`，内容页忽略 `data`（§3.1.2①）。`data` 只在模板含 `<!--INJECT-DATA-->` 时校验。
+- **包裹与顺序（#118）**：三个共享资产按 `ASSET_WRAPPERS` 逐字包裹后替换标记（CSS→`<style>`、JS→`<script>`）；资产文本自带包裹标签 → `asset-missing`；替换顺序恒按 `INJECTION_ORDER`（正文不在其中，见 §3.1.2④）。
+- **calorie 6 模板的处置（FX-19，登记）**：`packages/skill-calorie/templates/{diet,exercise,goal,help,home,photo-gallery}.html` 实测**只有** `<!--SHARED-CSS-->`×1 ＋ `<!--SHARED-HELPERS-->`×1，**无 `<!--INJECT-DATA-->`、无 `<!--CONTENT-->`、无自带容器**（两载荷槽 0 命中）→ 按 `TEMPLATE_KIND_RULE` 属 **`legacy`（契约外遗留资产）**；即**死资产**（无引用、无填充者），按契约直接调用 `fillTemplate` **必抛** `marker-missing`（这是**正确行为**：它们不该能填）。其**改造面（补载荷槽 ＋ 自带容器）与并入 HELP 重建的处置归 #107**（§4.4），**不属 #74**；#74 的票面验收②只对**已满足占位符契约**的模板负责（53 内容页 ＋ `skill-memo-ilife/templates/*.html` 6 个数据页）。
+- **迁移方向（#118 D-6，供 #74 用）**：① **内容页 53**——删除技能私有 `CONTENT_MARKER` 与私有 `fillTemplate`，改由统一填充器填 `content`；模板本身**零改动**；② **数据页 6（memo）**——去掉模板自带的 `<style>`／`<script>` 包裹（改由填充器包），同时删除 `fillSharedMarkers`；③ **遗留 6（calorie）**——**不动**（归 #107）。
 - **跨票产出者依赖（FX-19，须写进 #74 票面）**：三个注入资产的产出者当前**全部 pending**——`sharedCssText` ← `buildStyleSheet`（#75）、`sharedHelpersJs` ← `buildSharedHelpersJs`（#76）、`chartsHelpersJs` ← `buildChartsHelpersJs`（#78）。→ #74 的实现／验收须在资产可用之后进行，或由测试**自造**合法资产；**不得**自产这三者（B3），也不得因缺资产而把 `asset-missing` 当成通过。
 - **`escapeHtml` 归一 owner（V1 洞 13 处置）**：把既有 `escapeHtml` 从 4 字符改到 5 字符（`& < > " '`）并翻转 §7 哨兵**由 #74 执行**（#79 只复核）；改完必须同步删除技能侧本地副本，并保证 #96 快照门通过。
-- **验收怎么测**：`node -e` 断言五个标记的数量规则（缺失/重复/互斥各抛对应 code）；**断言模板缺自带容器或 id／type 不符 → `container-missing`**；`Select-String -Path packages\*\src\render\html.ts -Pattern 'SHARED_CSS_MARKER|fillSharedMarkers'` 必须零命中；`node tooling/check-boundaries.mjs` 仍 PASS。
+- **验收怎么测**：`node -e` 断言六个标记的数量规则（缺失/重复/互斥各抛对应 code）；断言**载荷槽两态**——内容页缺 `content` → `content-missing`、数据页缺 `data` → `data-missing`；**断言模板缺自带容器或 id／type 不符 → `container-missing`**；断言**两条包裹不变量**——资产自带 `<style>`／`<script>` → `asset-missing`、标记被预包裹 → `marker-conflict`；断言产出 HTML 里 `ASSET_WRAPPERS` 逐字出现且**不双包**；`Select-String -Path packages\*\src\render\html.ts -Pattern 'SHARED_CSS_MARKER|CONTENT_MARKER|fillSharedMarkers'` 必须零命中；`node tooling/check-boundaries.mjs` 仍 PASS。
 
 ### 6.2 #75 样式资产（`src/style.ts` ＋ 产出函数）
 
@@ -763,14 +834,15 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | 层 | 文件 | 断言什么 | 怎么跑 |
 |---|---|---|---|
 | 编译期类型断言 | `packages/base-render/test-d/contract-signatures.ts` | ① 既有 18 运行时出口＋12 类型出口逐条锁形；② §3 每条冻结签名逐字一致（`Equal<>`／`Expect<>`）；③ **运行时条目的值**另有 `_V01…_V27` 逐值断言（FX-20，改 `spec` 值即编译红）；④ `pending` 条目**尚未导出**（`Absent<>`），实现后必须翻转清单；⑤ 跨包漂移：`STRICT_ENVELOPE_SHAPES` ↔ link-core `EnvelopeShape` | `pnpm build`（root `tsconfig.json` 的 `include` 已收该目录，`tsc -b` 一并编译）；亦可 `pnpm test:types` |
-| 运行时出口面锁 | `packages/base-render/test/contract-signatures.test.mjs` | ① 既有 18 出口仍在（D4 只追加）；② 新增运行时出口**恰好等于**清单里 implemented 的运行时项；③ `pending` 未导出、type-only 不得有运行时值；④ 文档标记区表格与清单逐字一致；⑤ 章节标题／§2 26 行／AC-1…AC-17 落点／FX-1…FX-16 落点／**FX-17…FX-25 落点**／无 BOM 与字面反斜杠 n；⑥ 占位符/token/双通道/形状表/schema/逐 shape 投影表/6 段日志数据源**＋段序**/HELP 复制文案/`COPY_ACTION_IDS`/`ACTION_ID_ATTR`/`SHARED_HELPERS_JS_RULE`/`SENSITIVE_ROW_RULE` 逐值 ＋ **FX-20 的 27 条逐值** ＋ `scene-data.schema.json` 存在即与常量逐值相等（FX-6）；⑦ 门禁红线：无 `dependencies`、`files` 含 `dist`、**`dist/**/*.js`（递归，含 `dist/spec/*.js`）**禁 `node:`／禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值（**允许** DOM 读取，FX-18②）、`src/spec/*.ts` 只许 `import type` ＋ 代码（**剥注释后**，同 `stripJsComments()`）不得读写浏览器全局 | `pnpm test`（root script 的 glob 已含 `packages/base-render/test/*.test.mjs`） |
+| 运行时出口面锁 | `packages/base-render/test/contract-signatures.test.mjs` | ① 既有 18 出口仍在（D4 只追加）；② 新增运行时出口**恰好等于**清单里 implemented 的运行时项；③ `pending` 未导出、type-only 不得有运行时值；④ 文档标记区表格与清单逐字一致；⑤ 章节标题／§2 26 行／AC-1…AC-17 落点／FX-1…FX-16 落点／**FX-17…FX-25 落点**／无 BOM 与字面反斜杠 n；⑥ 占位符/token/双通道/形状表/schema/逐 shape 投影表/6 段日志数据源**＋段序**/HELP 复制文案/`COPY_ACTION_IDS`/`ACTION_ID_ATTR`/`SHARED_HELPERS_JS_RULE`/`SENSITIVE_ROW_RULE` 逐值 ＋ **FX-20 的 27 条逐值** ＋ **#118 的六标记／载荷槽规则／包裹约定／模板分型逐值（`describe('#118 契约补遗…')`）** ＋ `scene-data.schema.json` 存在即与常量逐值相等（FX-6）；⑦ 门禁红线：无 `dependencies`、`files` 含 `dist`、**`dist/**/*.js`（递归，含 `dist/spec/*.js`）**禁 `node:`／禁 `window.<id> =`／`globalThis.<id> =` 隐式全局赋值（**允许** DOM 读取，FX-18②）、`src/spec/*.ts` 只许 `import type` ＋ 代码（**剥注释后**，同 `stripJsComments()`）不得读写浏览器全局 | `pnpm test`（root script 的 glob 已含 `packages/base-render/test/*.test.mjs`） |
 
 - **怎么捕捉漂移（一句话）**：清单 `SPEC_FROZEN_SURFACE` 是唯一真相源，文档标记区表格与它逐字比对（`contract-signatures.test.mjs` 的「文档投影绑死」用例），类型层再对每条签名做 `Equal<>` 断言（`contract-signatures.ts`），**运行时条目的值**另有运行时逐值断言（`deepEqual`，含 FX-20 的 27 条），任一环改一处不改其余即红。
 - **纯度扫描自证（FX-18②）**：`purityViolations()` 是扫描口径的**唯一实现**，用例自带正／负样本——含 DOM 的合法 helpers JS 必须过门；`window.__x = 1`／`globalThis.toast = …` 必须被拦；`node:` 的四种写法（`from 'node:…'`／裸 `import 'node:…'`／`require('node:…')`／动态 `import('node:…')`）必须全部被拦（FX-28／V5 C-1）；**判据先剥注释（`stripJsComments()`）再判**，注释里的说明文字不参与判定（FX-26／V5 C-3，与 §6.3 追加验收同口径）。**口径变更必须同时改**：`SHARED_HELPERS_JS_RULE`（§3.3）＋ §6.3 验收条文 ＋ 本用例。
 - **哨兵**：`escapeHtml("'") === "'"` 是**已知待修**的漂移哨兵（AC-14）——**AC-14 归一后本断言必须翻转**为 `escapeHtml("'") === '&#39;'`；当前为真只表示缺陷未修，**不代表**该行为被契约接受（FX-16①）。执行归 #74（§6.1），#79 复核。
-- **既有失败台账（FX-13，不修）**：`pnpm test` 当前 exit 1（第二轮返修后实测 `tests 443 / pass 421 / fail 22`；第一轮返修后为 `435／413／22`，FX 前为 `430／408／22`，**新增失败 = 0**），**22 条全部是 #92 之前既有、与 base-paint 冻结面零耦合**的失败，**不属 #92 修复范围**：A 组 10 条 = Windows 并行 spawn 抖动（6 个 plugin smoke 单跑 46/46 绿、不可复现）；B 组 12 条 = `plugin-{bill,chef,home,schedule}-ilife` 缺 `"build:client":"tsdown"`（另案承接，不属 #63）。逐条清单与三重证明见 `docs/research/t92-verify-v2-gates.md`「A4 争议取证」。**A4 口径据此定为「三命令零回归」**：`pnpm build`／`pnpm boundaries`／`pnpm test:types` 绿 ＋ `pnpm test` **新增失败 = 0**（本契约的签名测试单跑必须 100% 绿，当前 `tests 36 / pass 36 / fail 0`）。
+- **既有失败台账（FX-13，不修）**：`pnpm test` 当前 exit 1（第二轮返修后实测 `tests 443 / pass 421 / fail 22`；第一轮返修后为 `435／413／22`，FX 前为 `430／408／22`，**新增失败 = 0**），**22 条全部是 #92 之前既有、与 base-paint 冻结面零耦合**的失败，**不属 #92 修复范围**：A 组 10 条 = Windows 并行 spawn 抖动（6 个 plugin smoke 单跑 46/46 绿、不可复现）；B 组 12 条 = `plugin-{bill,chef,home,schedule}-ilife` 缺 `"build:client":"tsdown"`（另案承接，不属 #63）。逐条清单与三重证明见 `docs/research/t92-verify-v2-gates.md`「A4 争议取证」。**A4 口径据此定为「三命令零回归」**：`pnpm build`／`pnpm boundaries`／`pnpm test:types` 绿 ＋ `pnpm test` **新增失败 = 0**（本契约的签名测试单跑必须 100% 绿，当前 `tests 41 / pass 41 / fail 0`；#118 收工实测 `pnpm test` = `tests 448 / pass 426 / fail 22`，失败用例名集合与 #118 前**逐条相同** → 新增失败 = 0，见 §8.6）。
 - **门禁归属（FX-10）**：「门面文档示例可执行」门 owner **#99**；「计数断言（77）」owner 技能包／#79（本契约不复制计数）；两者均已在 §4.4 登记。
 - **失败即契约缺陷**：测试红时**只许**改实现或同时改「清单＋文档＋类型」三处，不许删断言、放宽断言或改成恒真。
+- **#118 补遗的断言落点**：六个占位符／载荷槽规则／包裹约定（两条不变量）／模板分型由 `test/contract-signatures.test.mjs` 的 `describe('#118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／模板分型）')` 逐值断言（含分型规则的四种计数组合自证：`1/0`→数据页、`0/1`→内容页、`0/0`→legacy、`1/1`→不属任何型），类型层由 `test-d/contract-signatures.ts` 的 `_T17…_T27` 锁形；65 个模板的**可复跑分型**由 `tooling/classify-templates.mjs` 给出（输出 数据页 6／内容页 53／遗留 6）。
 
 ## 8. 返修处置台账（FX-1…FX-16 / V1 洞 1–15 / V3 疑点①–⑤）
 
@@ -863,3 +935,37 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | FX-30 | C-7…C-10 nit | **修** | ①旧侧证据区间 `base.js:219-225` → `218-221`（§3.4 ＋ `spec/text.ts`）；②「与旧侧形态逐字一致」改为「字段名一致、**判定语义不同**」并显式登记真值判定 vs 字面 `true`；③接线示例 `listActionIds` 补 `.filter((id) => id !== null)` 收窄为 `string[]`；④§0 依据表把 `.scratch` 路径标为「归档前旧位置、已不引用、勿据此取件」 |
 
 - **本轮自查新洞：0 条**（新增断言均以负样本对照验证为**真断言**：重排 `LOG_SECTIONS` 变红、对调文档段序行变红、三种 `node:` 写法逐条命中且字符串／注释不误伤）。
+
+### 8.6 #118 契约补遗台账（D1–D10 / A1–A8）
+
+口径同 §8。本轮**只冻结契约、不实现运行时**：新增 **6 条冻结签名**（`PAYLOAD_SLOT_RULE`／`TEMPLATE_KINDS`／`TemplateKind`／`TEMPLATE_KIND_RULE`／`ASSET_WRAP_RULE`／`ASSET_WRAPPERS`），**改 3 条既有签名**（`TEMPLATE_MARKERS` 加 `content`；`TEMPLATE_ERROR_CODES` 末尾追加 `content-missing`；`FillTemplateInput` 末尾追加 `content?`），**放宽 2 条**（`MARKER_RULES.injectData` → `zero-or-one`／`required: false`；`FillTemplateInput.data` → `data?: unknown`，D-8 裁定 2 授权的**第 2 处既有签名改动**）。`SPEC_FROZEN_SURFACE` 由 **120 条增至 126 条**（implemented 94 → 100，pending 26 不变；runtime 79 → 84，type 41 → 42）。**未写 `fillTemplate` 运行时、未改任何模板文件**（12 个预包裹模板的改造归 #74／#107）。
+
+| 编号 | 交付 | 落点 | 处置 |
+|---|---|---|---|
+| D1 | `TEMPLATE_MARKERS` += `content` | `src/spec/template.ts`（`content: '<!--CONTENT-->'`） | **修** |
+| D2 | `MARKER_RULES` 放宽 `injectData` ＋ 新增 `content` ＋ 载荷槽规则 | 同上（`PAYLOAD_SLOT_RULE`） | **修** |
+| D3 | `FillTemplateInput.content?` | 同上 | **修** |
+| D4 | `TEMPLATE_ERROR_CODES` += `content-missing`（末尾） | 同上 | **修** |
+| D5 | 包裹约定常量 ＋ 两条不变量 | 同上（`ASSET_WRAP_RULE`／`ASSET_WRAPPERS`）＋ §3.1.2④ | **修** |
+| D6 | 模板分型常量与判定规则 | 同上（`TEMPLATE_KINDS`／`TemplateKind`／`TEMPLATE_KIND_RULE`）＋ §3.1.2③ | **修** |
+| D7 | 契约文档补遗 | 本文 §2 补遗注记（**不新增表行**，理由见 118-4）＋ §3.1.2 ＋ §4.5 ＋ §6.1 ＋ §7 ＋ §8.6 | **修** |
+| D8 | 三处同步 ＋ 签名测试 | `SPEC_FROZEN_SURFACE`（126 条）↔ 本文 §3.1 标记区表格 ↔ `test-d/contract-signatures.ts`（`_T17…_T27`）↔ `test/contract-signatures.test.mjs`（#118 用例 5 条） | **修** |
+| D9 | 65 模板分类脚本 ＋ 输出 | `tooling/classify-templates.mjs`（输出 数据页 6／内容页 53／遗留 6；`--inventory` 逐条比对清单）＋ 输出快照 `docs/research/t118-template-classification.md` | **修** |
+| D10 | changeset | `.changeset/base-paint-content-slot.md`（`'base-paint': minor`） | **修** |
+| D11 | `FillTemplateInput.data` 放宽为可选（**D-8 裁定 2 已授权**，第 2 处既有签名改动） | `src/spec/template.ts`（`data?: unknown` ＋ JSDoc「数据页提供；内容页可省略」）＋ `src/spec/index.ts` ＋ `test-d/contract-signatures.ts`（`_T10`）＋ §3.1 标记区表格 ＋ §3.1.2① | **放宽** |
+
+**#118 自查新洞（施工者自己扫出并处置，不留待复验）**
+
+| # | 自查新洞 | 处置 |
+|---|---|---|
+| 118-1 | `FillTemplateInput.data` 是**必填**字段，而内容页没有 data——按字面内容页调用方无法合规调用 | 契约 §3.1.2① 显式收窄 `data` 的**校验条件**（只在模板含 `INJECT-DATA` 时校验）；**后经 D-8 裁定 2 授权放宽为 `data?: unknown`**（内容页可省略，见 D11），故内容页**既可不传 `data`**、也可传 `data: undefined` |
+| 118-2 | `INJECTION_ORDER` 无 `content` 步，若不记账会被实现者当作「契约漏项」而自行追加（= 改既有冻结签名） | §3.1.2④ ＋ `spec/template.ts` JSDoc 显式记账：该数组是既有冻结签名、本票无授权改动，且载荷槽互斥使顺序无意义 |
+| 118-3 | 包裹不变量需要错误码，而本票只授权追加 `content-missing` | **不新增错误码**：不变量①复用 `asset-missing`（资产不可用）、②复用 `marker-conflict`（与约定冲突），并写进 `ASSET_WRAP_RULE.assetWrappedCode`／`markerPreWrappedCode`（机读） |
+| 118-4 | 施工单 D7 要求「§2 对照表追加行」，而 §2 被签名测试钉死为 **26 行**（= v1.30 能力数），且 `<!--CONTENT-->` **不是** v1.30 能力 | **不新增表行**：改为更新既有 §3 行 ＋ 表后追加一条**非表格**补遗注记（写明「非 v1.30 项，故不新增行」），使「§2 必须 26 行」断言不变 |
+| 118-5 | 旧 §6.1 写「`INJECT-DATA` **恰好 1 次**（exactly-one）」，与放宽后的冻结面**直接矛盾**——#74 照旧条文实现即与 spec 冲突 | §6.1 重写为载荷槽规则口径（A8 独立性的关键项）；§3.5.3「填充」一行同步修正 |
+| 118-6 | 分类脚本若自持标记字面量即成**第二真相**（与契约漂移无从发现） | 脚本**只读 `dist` 的冻结常量**（`TEMPLATE_MARKERS`／`TEMPLATE_KINDS`／`TEMPLATE_KIND_RULE`）判定，不自带副本；缺 `dist` 时显式报错提示先 `pnpm build` |
+| 118-7 | `strict: true` 与内容页的关系未定（信封校验的是 `data`，而内容页没有 data）——不写死就会一票一解 | §3.1.2① 定死：信封校验与 `data-missing` **同条件**（只在模板含 `INJECT-DATA` 时执行）；内容页 `strict` 不触发 `strict-invalid` |
+| 118-8 | 正文替换与四个注入步的**先后**未定；若正文先填，注入物里的标记字面量会被二次替换（正文里出现 `<!--SHARED-CSS-->` 即污染） | §3.1.2① 定死：**正文替换恒为最后一步**（在 `INJECTION_ORDER` 四步之后） |
+| 118-9 | `content: ''`（空正文）与 `content` 缺席的判定未分——不写死就会「空正文页被误判 `content-missing`」 | §3.1.2① 定死：只有 `undefined` 触发 `content-missing`，`''` 视为已提供；同时 §3.1「注入结果」写明 `report.markers` 覆盖全部六标记 |
+
+**门禁实测（#118 收工）**：`pnpm build` 退出 0／`pnpm boundaries` 退出 0（PASS）／`pnpm test:types` 退出 0／签名测试单跑 **41 用例全绿**（exit 0）／`pnpm test` **tests 448 ／ pass 426 ／ fail 22**，**新增失败 = 0**（失败用例名集合与 #118 前**逐条相同**，既有 22 条台账见 §7；本票只增断言、未删未放宽）／分类脚本 `node tooling/classify-templates.mjs --inventory` 退出 0（数据页 6／内容页 53／遗留 6，与清单 65 条逐条一致）。
