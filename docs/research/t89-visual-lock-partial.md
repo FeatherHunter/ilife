@@ -11,11 +11,11 @@
 
 | 条 | verdict | 实测值（摘要） | 证据路径 | 逐字复算命令 |
 |---|---|---|---|---|
-| H-01 | 待采 | — | — | `node tooling/run-locked.mjs --ticket 89 -- node docs/research/t89-probe-help-static.mjs --out docs/research/t89-evidence/<runId>/S` |
-| H-02 | 待采 | — | — | 同上（S）＋ shots |
-| H-03 | 待采 | — | — | 同上 |
-| H-04 | 待采 | — | — | 同上（须同时打印 gradHelp／gradAll） |
-| H-05 | 待采 | — | — | 同上（S）＋ shots computed |
+| H-01 | PASS | 禁色命中`[]`；`--blue:#007aff`逐字；computed根/壳均为`#007aff` | `t89-evidence/<runId>/S/probe-static.json`(H-01)＋`shots/H-01/{viewport,element}.png`＋`shots/probe-shots.json`(H-01.1) | `node tooling/run-locked.mjs --ticket 89 -- node docs/research/t89-probe-help-static.mjs --out <dir>`；`node tooling/run-locked.mjs --ticket 89 -- node docs/research/t89-probe-shots.mjs --out <dir>` |
+| H-02 | PASS | 冻结token 7/7；正文h1/卡标题`rgb(29,29,31)`=--fg、副标题/命令`rgb(110,110,115)`=--fg2；--fg3仅落≤13px提示层 | `S/probe-static.json`(H-02)＋`shots/H-02/{viewport,element,lead}.png`＋`shots/probe-shots.json`(H-02.1/.2) | 同上 |
+| H-03 | PASS | `--bg:#f5f5f7`≠`--card:#ffffff`；卡面computed纯白`rgb(255,255,255)` | `S/probe-static.json`(H-03)＋`shots/H-03/{viewport,card}.png`＋`shots/probe-shots.json`(H-03.1) | 同上 |
+| H-04 | PASS | CSS区分区：`gradHelp:0`／`gradAll:1`／`gradCharts:1`（charts区`repeating-linear-gradient`属冻结图表资产，D-10/L-17例外） | `S/probe-static.json`(H-04)＋`shots/H-04/element.png`＋`shots/probe-shots.json`(H-04.1) | 同上（须同时打印gradHelp与gradAll） |
+| H-05 | PASS | 无≥48px（max 32；D-9不要求）；h2 17px/600×3；正文subtitle 15px；提示12/13px；h1 32px/700∈[28,32] | `S/probe-static.json`(H-05)＋`shots/H-05/element.png`＋`shots/probe-shots.json`(H-05.1/.2/.3) | 同上 |
 | H-06 | 待采（预期「未达」） | — | — | 同上 |
 | H-07 | 待采 | — | — | 同上 |
 | H-08 | 待采 | — | — | 同上 |
@@ -34,4 +34,8 @@
 
 ## 取证轮次记账（GATE-RUN 对账用）
 
-（随跑随记：`GATE-RUN runId=<本次 runId> cmd=<命令>`）
+- `GATE-RUN runId=9f2ebd7b-0c28-493f-ad89-0f7d3ec89148 cmd="node .scratch/t89/cmdA.mjs (calorie.help.center mode=file)"` → artifact 1264822B sha16=F380EF685065A1E9（与交接基线逐字节一致）
+- `GATE-RUN runId=91af98be-b3f1-4381-8327-97f9cc3c3ecf cmd="node docs/research/t89-probe-browser.mjs"` → `RESULT: 10/10 PASS`
+- `GATE-RUN runId=d30a51ee-99d0-4253-bc6e-2b2ab5e0aa23 cmd="node docs/research/t89-probe-help-static.mjs"` → `RESULT: 24/27`（红=H-06.2/H-10.1/H-17.1）
+- `GATE-RUN runId=15c0ee76-0170-4d27-a666-65c22617df64 cmd="node docs/research/t89-probe-help-interactive.mjs"` → `RESULT: 21/21 PASS`
+- `GATE-RUN runId=48d3b30d-82ef-4099-bf96-a8cb8431e614 cmd="node docs/research/t89-probe-shots.mjs"` → `RESULT: 34/36`（红=H-06.2/H-10.1）
