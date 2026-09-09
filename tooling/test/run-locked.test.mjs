@@ -302,4 +302,37 @@ describe('run-locked：持锁包装器', () => {
     assert.equal(starts[0].ticket, '88-start');
     assert.match(starts[0].runId, /^[0-9a-f-]{36}$/);
   });
+
+  it('⑨ #88 A.5：--child-timeout-ms 到点杀子进程树 ＋ RUN 记 timeout=1 ＋ exit 124 ＋ 放锁', () => {
+    const lockDir = makeTmpLockDir('child-timeout');
+    const marker = path.join(lockDir, 'child-done.txt');
+    // 子命令永不自行退出，且**故意留下一个孙进程**（shell:true 下 pid 是 cmd.exe，只杀它不够）。
+    const script = "const{spawn}=require('child_process');"
+      + "spawn(process.execPath,['-e','setTimeout(()=>{},60000)'],{stdio:'ignore'});"
+      + `require('fs').writeFileSync(${JSON.stringify(marker)},'started');`
+      + 'setTimeout(()=>{},60000)';
+    const r = runLocked(['--ticket', '88-timeout', '--lock-dir', lockDir,
+      '--child-timeout-ms', '1500', '--child-kill-grace-ms', '15000', '--', 'node', '-e', script],
+    { timeout: 90000 });
+    assert.equal(fs.existsSync(marker), true, `前置：子命令必须真的跑起来（stderr=${r.stderr}）`);
+    assert.equal(r.status, 124, `超时必须 exit 124（≠0），实测 ${r.status}；stderr=${r.stderr}`);
+    assert.match(r.stderr, /TIMEOUT: 子进程超时/, `应打印超时诊断：${r.stderr}`);
+    const runs = readRuns(lockDir);
+    assert.equal(runs.length, 1, `应有且仅有 1 条 RUN：${JSON.stringify(runs)}`);
+    assert.equal(runs[0].timeout, '1', `RUN 必须记 timeout=1：${JSON.stringify(runs[0])}`);
+    assert.equal(runs[0].exit, '124', `RUN 的 exit 必须记 124：${JSON.stringify(runs[0])}`);
+    assert.equal(fs.existsSync(path.join(lockDir, 'gate.lock')), false, '超时后必须放锁（否则堵死其他 session）');
+    assert.equal(fs.existsSync(path.join(lockDir, 'owner.json')), false, '超时后 owner.json 必须清理');
+  });
+
+  it('⑨b 未超时的运行不得记 timeout 字段（防「总是 timeout=1」的假绿）', () => {
+    const lockDir = makeTmpLockDir('no-timeout');
+    const r = runLocked(['--ticket', '88-no-timeout', '--lock-dir', lockDir,
+      '--child-timeout-ms', '30000', '--', 'node', '-e', '0']);
+    assert.equal(r.status, 0, `正常运行应 exit 0：stderr=${r.stderr}`);
+    const runs = readRuns(lockDir);
+    assert.equal(runs.length, 1);
+    assert.equal(runs[0].timeout, undefined, `正常运行不得出现 timeout 字段：${JSON.stringify(runs[0])}`);
+    assert.equal(runs[0].exit, '0');
+  });
 });

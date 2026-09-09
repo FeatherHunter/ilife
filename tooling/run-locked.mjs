@@ -22,6 +22,9 @@
  *   3. 释放（§2）：`finally` 内**先校验归属**（`owner.json.pid === process.pid` 才允许删除，R-2-1-1），
  *      通过后**先删 `owner.json`、再删锁目录**（顺序不可交换：先删锁会误删新持锁者的记录）；
  *      归属不符（锁已被他人接管／owner.json 不可读）→ 一律不删并以 exit ≠ 0 告警。
+ *   4. **子进程超时**（#88 A.5，防「子进程挂死 → 包装器永久持锁 → 堵死其他 session」）：子进程超过
+ *      `--child-timeout-ms` 仍在跑 → 终止**进程树**、`RUN … timeout=1`、**exit=124**；若终止后
+ *      `--child-kill-grace-ms`（默认 15 s）内仍未退出，则强制结算并释放锁（宁可留孤儿进程，不可持锁不放）。
  *
  * 选项：
  *   --ticket <票号>        审计条目的票号（缺省 `unknown`，会打印告警）
@@ -29,6 +32,8 @@
  *   --stale-minutes <n>    无 pid 可探活时的锁龄抢回阈值（分钟，缺省 10）
  *   --poll-ms <n>          抢锁轮询间隔（毫秒，缺省 10000，与协议 §2 的 10s 一致）
  *   --max-wait-ms <n>      最长等待（毫秒，0＝不限，缺省 0）
+ *   --child-timeout-ms <n> 子进程超时（毫秒，0＝不限，缺省 900000＝15 分钟）→ 超时杀树 ＋ exit 124
+ *   --child-kill-grace-ms <n> 超时杀树后的强制结算宽限（毫秒，0＝不限，缺省 15000）
  *   --run-id <id>          显式指定本次运行的 runId（缺省随机 UUID；仅供测试／调试）
  *   --                  选项与命令的分隔符（可省略；遇到首个非选项参数即视为命令起点）
  *
@@ -111,12 +116,15 @@ const OPTION_SPECS = {
   '--stale-minutes': 'value',
   '--poll-ms': 'value',
   '--max-wait-ms': 'value',
+  '--child-timeout-ms': 'value',
+  '--child-kill-grace-ms': 'value',
   '--run-id': 'value',
 };
 
 export function parseArgs(argv) {
   const opts = {
-    ticket: '', lockDir: '', staleMinutes: 10, pollMs: 10000, maxWaitMs: 0, runId: '', command: [], help: false,
+    ticket: '', lockDir: '', staleMinutes: 10, pollMs: 10000, maxWaitMs: 0,
+    childTimeoutMs: 900000, childKillGraceMs: CHILD_KILL_GRACE_MS, runId: '', command: [], help: false,
   };
   let i = 0;
   for (; i < argv.length; i++) {
@@ -131,10 +139,12 @@ export function parseArgs(argv) {
     else if (arg === '--stale-minutes') opts.staleMinutes = Number(value);
     else if (arg === '--poll-ms') opts.pollMs = Number(value);
     else if (arg === '--max-wait-ms') opts.maxWaitMs = Number(value);
+    else if (arg === '--child-timeout-ms') opts.childTimeoutMs = Number(value);
+    else if (arg === '--child-kill-grace-ms') opts.childKillGraceMs = Number(value);
     else if (arg === '--run-id') opts.runId = value;
   }
   opts.command = argv.slice(i);
-  for (const key of ['staleMinutes', 'pollMs', 'maxWaitMs']) {
+  for (const key of ['staleMinutes', 'pollMs', 'maxWaitMs', 'childTimeoutMs', 'childKillGraceMs']) {
     if (!Number.isFinite(opts[key]) || opts[key] < 0) throw new Error(`${key} 必须是非负数字`);
   }
   return opts;
@@ -148,6 +158,30 @@ export function toShellCommandLine(command) {
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** 超时杀树后的强制结算宽限（毫秒）：到点仍未退出就放弃等待，**必须**释放锁。 */
+export const CHILD_KILL_GRACE_MS = 15000;
+
+/**
+ * 终止子进程**及其进程树**（#88 A.5）。
+ * Windows 下 `shell: true` 的 `child.pid` 是 `cmd.exe`——只 kill 它会留下真正的孙进程（挂死源头），
+ * 故必须**先** `taskkill /T /F` 连子孙一起杀，**只有它失败时**才兜底 `child.kill('SIGKILL')`；
+ * 顺序不可交换：先 kill 掉 shell 会让 `taskkill` 找不到 PID，孙进程存活（实测 30 s 才自然退出）。
+ * 失败不抛错（由 `--child-kill-grace-ms` 兜底）。
+ */
+export function killChildTree(child, spawnImpl = spawn) {
+  if (!child || !Number.isInteger(child.pid)) return;
+  const fallback = () => { try { child.kill('SIGKILL'); } catch { /* 已退出 */ } };
+  if (process.platform === 'win32') {
+    try {
+      const tk = spawnImpl('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
+      tk.on('error', fallback);
+      tk.on('close', (code) => { if (code !== 0) fallback(); });
+      return;
+    } catch { /* 落到 fallback */ }
+  }
+  fallback();
+}
 
 /**
  * 抢锁：返回 `{ waitedMs, stolen }`。
@@ -284,6 +318,9 @@ async function main() {
   let signal = null;
   let spawnError = null;
   let lockNote = '';
+  let timedOut = false;
+  let timeoutTimer = null;
+  let graceTimer = null;
 
   try {
     const acq = await acquireLock({
@@ -355,12 +392,34 @@ async function main() {
         try {
           const child = spawn(cmdText, { cwd: repoRoot, stdio: 'inherit', shell: true });
           const outcome = await new Promise((resolve) => {
-            child.on('error', (err) => resolve({ code: null, signal: null, error: err }));
-            child.on('close', (code, sig) => resolve({ code, signal: sig }));
+            let settled = false;
+            const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+            child.on('error', (err) => finish({ code: null, signal: null, error: err }));
+            child.on('close', (code, sig) => finish({ code, signal: sig }));
+            // #88 A.5：子进程超时 → 杀进程树 ＋ 记 timeout=1 ＋ exit 124；宽限内仍未退出则强制结算（必须放锁）。
+            if (opts.childTimeoutMs > 0) {
+              timeoutTimer = setTimeout(() => {
+                timedOut = true;
+                console.error(`TIMEOUT: 子进程超时（--child-timeout-ms=${opts.childTimeoutMs}，pid=${child.pid}）`
+                  + '→ 终止进程树（否则包装器会永久持锁、堵死其他 session）');
+                killChildTree(child);
+                if (opts.childKillGraceMs > 0) {
+                  graceTimer = setTimeout(() => {
+                    console.error(`TIMEOUT: 杀树后 ${opts.childKillGraceMs}ms 仍未退出 → 强制结算并释放锁（可能留下孤儿进程）`);
+                    finish({ code: null, signal: 'TIMEOUT' });
+                  }, opts.childKillGraceMs);
+                }
+              }, opts.childTimeoutMs);
+            }
           });
+          if (timeoutTimer !== null) { clearTimeout(timeoutTimer); timeoutTimer = null; }
+          if (graceTimer !== null) { clearTimeout(graceTimer); graceTimer = null; }
           if (outcome.error) {
             spawnError = outcome.error;
             exitCode = 127;
+          } else if (timedOut) {
+            signal = outcome.signal || 'TIMEOUT';
+            exitCode = 124;
           } else if (outcome.code === null) {
             signal = outcome.signal;
             exitCode = 1; // 被信号终止：按失败记账（协议 §2 的死锁／误杀口径）
@@ -390,6 +449,7 @@ async function main() {
           pid: process.pid,
           at: new Date().toISOString(),
           signal: signal || undefined,
+          timeout: timedOut ? 1 : undefined,
         }));
       } catch (err) {
         // R-2-3：写日志失败不得静默——exit 必须 ≠ 0。
