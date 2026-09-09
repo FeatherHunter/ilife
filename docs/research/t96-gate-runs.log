@@ -1,0 +1,20 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：96｜since：2026-09-09T13:50:00.000Z｜until：2026-09-09T13:54:00.000Z｜条目数：12｜导出时间：2026-09-09T13:53:45.920Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=96 runId=1642ceb1-1ec0-4e5c-9a30-2cf2f4fdff69 cmd="node --test tooling/test/skill-html-snapshot.test.mjs" waitedMs=0 exit=0 pid=10372 at=2026-09-09T13:50:39.291Z
+RUN ticket=96 runId=732259e1-243f-4f0b-9c30-c9fb266944ff cmd="git add tooling/skill-html-snapshot.mjs tooling/skill-html.snapshot.json tooling/test/skill-html-snapshot.test.mjs tooling/check-boundaries.mjs .github/workflows/ci.yml package.json" waitedMs=0 exit=0 pid=32840 at=2026-09-09T13:50:48.704Z
+RUN ticket=96 runId=def286ea-aeeb-4b8e-845a-7debe2fb755b cmd="git commit --only tooling/skill-html-snapshot.mjs tooling/skill-html.snapshot.json tooling/test/skill-html-snapshot.test.mjs tooling/check-boundaries.mjs .github/workflows/ci.yml package.json -F .scratch\\t96\\commit-1.txt" waitedMs=0 exit=0 pid=29300 at=2026-09-09T13:50:48.836Z
+RUN ticket=96 runId=2c82745a-f47e-4316-8876-19f667f5f992 cmd="git add tooling/skill-html-snapshot.mjs tooling/skill-html.snapshot.json tooling/test/skill-html-snapshot.test.mjs" waitedMs=0 exit=0 pid=32836 at=2026-09-09T13:52:10.274Z
+RUN ticket=96 runId=640ba821-d207-4fb2-aff5-22251a2270b6 cmd="git commit --only tooling/skill-html-snapshot.mjs tooling/skill-html.snapshot.json tooling/test/skill-html-snapshot.test.mjs -F .scratch\\t96\\commit-2.txt" waitedMs=0 exit=0 pid=18408 at=2026-09-09T13:52:10.397Z
+RUN ticket=96 runId=t96-mut-20260909a cmd="node docs/research/t96-mutation-evidence.mjs --expect-run-id t96-mut-20260909a" waitedMs=0 exit=0 pid=27448 at=2026-09-09T13:52:18.442Z
+RUN ticket=96 runId=7a64e2fd-02e3-4770-8311-ac9ce3511654 cmd="pnpm build" waitedMs=0 exit=0 pid=37080 at=2026-09-09T13:52:39.587Z
+RUN ticket=96 runId=95faba5a-5c6e-40e2-b9a6-a093a0ce3086 cmd="pnpm boundaries" waitedMs=1 exit=0 pid=9836 at=2026-09-09T13:52:40.500Z
+RUN ticket=96 runId=f190509d-f5ee-47a1-a855-4f10fcfc8d78 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=31696 at=2026-09-09T13:52:41.391Z
+RUN ticket=96 runId=39ba890c-fc92-4c2d-8794-afd4c8e1d2eb cmd="pnpm publish:pre" waitedMs=1 exit=0 pid=30568 at=2026-09-09T13:52:42.470Z
+RUN ticket=96 runId=a1aa9d50-a7db-4daa-b5d9-28df51047dbd cmd="pnpm snapshot:html:check" waitedMs=1 exit=0 pid=28300 at=2026-09-09T13:52:43.401Z
+RUN ticket=96 runId=e67e1a7d-ffa3-410d-ad08-010c1a948324 cmd="pnpm test" waitedMs=0 exit=1 pid=9220 at=2026-09-09T13:53:11.771Z
+```
