@@ -84,18 +84,23 @@
     （`fetch/nutritionGoal.ts:68-78` 两条 `INSERT OR REPLACE`），摘要为 `calorie,protein,carbs,fat`；传 `water` 才追加 `water`。
   - **delete 键**＝`[]`（无写入字段）。
 - **派生列／记账列不入摘要**（它们没有 CLI 参数名，与「CLI 名口径」正交）：`weight_log.height_cm`／`bmi`
-  （`fetch/weight.ts:52,74`，由档案身高与 kg 派生）／`weight_log.bmi` 的同值更新（`fetch/weight.ts:74`）、各表 `updated_at`
-  （`CURRENT_TIMESTAMP`）。→ 与「写入字段全集」的落差在 `t97-impl.md` §7 逐条登记。
+  （`fetch/weight.ts:52` 插入、`:74` 更新时一并重算，由档案身高与 kg 派生）、各表 `updated_at`
+  （`CURRENT_TIMESTAMP`）。→ 与「写入字段全集」的落差在 `t97-impl.md` §7.1 逐条登记。
 - 无 CLI 参数对应的标志位写（软删／下架／暂停）用库列名：`is_deleted`／`is_deprecated`／`goal_paused`。
 
 ### 3.5 软删语义（与 #101 同源，**不改文案**）
 
-本票**不改**任何既有文案：`SOFT_STILL_COUNTED`／`SOFT_EXCLUDED`／`HARD_WORDING` 与 `items[].status`
-（`write.ts:deleteStatus`）逐字沿用 #101 三档口径。M5 只补**计数与字段**：
+本票**不改**任何既有文案：`SOFT_EXCLUDED`／`HARD_WORDING` 与 `items[].status`
+（`write.ts:deleteStatus`）逐字沿用 #101／#120 口径。M5 只补**计数与字段**：
+
+> **口径同步注记（#120 起）**：`exercise_log` 软删**已从查询与统计中排除**
+> （#120 `aaf494d`／`4d98e5f` supersedes #101 的「仍计入历史统计」；唯一谓词 `analysis/utils.ts:EX_ALIVE`），
+> 故 `SOFT_STILL_COUNTED` 常量已不存在、运动删除文案改用既有 `SOFT_EXCLUDED`。本票（#97）**零文案改动**，
+> M5 字段口径不受影响；下表「软/硬」列即 #120 后的实际口径。
 
 | 写类 | 软/硬 | `affectedRows` | `writtenFields` |
 |---|---|---|---|
-| `exercise_log.is_deleted` 软删（仍计入统计） | 软 | 被标记行数 | `['is_deleted']` |
+| `exercise_log.is_deleted` 软删（#120 起已从统计排除） | 软 | 被标记行数 | `['is_deleted']` |
 | `body_composition`／`body_measurements` 软删（已排除） | 软 | 被标记行数 | `['is_deprecated']` |
 | `nutrition_products` 下架 | 软 | 1 | `['is_deprecated']` |
 | `food_log`／`weight_log`／`body_photos` 硬删 | 硬 | 被删除行数 | `[]` |
