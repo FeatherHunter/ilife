@@ -70,6 +70,12 @@ import {
   buildReviewTemplateDoc, buildSixFactorsDoc,
 } from '../render/trendMiscPortDocs.js';
 import {
+  buildCompositionWizardView, buildGifPlannerView, buildMeasureWizardView, buildPhotoLogWizardView,
+} from '../render/wizardPort.js';
+import {
+  buildCompositionWizardDoc, buildGifPlannerDoc, buildMeasureWizardDoc, buildPhotoLogWizardDoc,
+} from '../render/wizardPortDocs.js';
+import {
   buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
   buildGoalPredictDoc, buildPredictDoc,
 } from '../render/trendDocs.js';
@@ -481,6 +487,37 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         meals: v.factors[5]?.ok ? 1 : 0,
       });
       return { data: { metrics }, html: buildSixFactorsDoc(v) };
+    }
+    case 'calorie.view.measure-wizard': {
+      const v = buildMeasureWizardView(db, params);
+      const metrics = nums({
+        filledCount: v.filledCount, hasRecent: v.recent ? 1 : 0,
+      });
+      return { data: { metrics }, html: buildMeasureWizardDoc(v) };
+    }
+    case 'calorie.view.composition-wizard': {
+      const v = buildCompositionWizardView(db, params);
+      const metrics = nums({
+        filledCount: (v.source ? 1 : 0) + (v.bodyFatPct === null ? 0 : 1) + v.calipers.length,
+        caliperCount: v.calipers.length, sum7: v.sum7, hasRecent: v.recent ? 1 : 0,
+      });
+      return { data: { metrics }, html: buildCompositionWizardDoc(v) };
+    }
+    case 'calorie.view.photo-log-wizard': {
+      const v = buildPhotoLogWizardView(params);
+      const metrics = nums({
+        fileCount: v.srcPaths.length, hasTag: v.tag ? 1 : 0,
+      });
+      return { data: { metrics }, html: buildPhotoLogWizardDoc(v) };
+    }
+    case 'calorie.view.gif-planner': {
+      const dir = photosDirOf(params);
+      const v = buildGifPlannerView(db, params, dir ?? null);
+      const metrics = nums({
+        photoCount: v.photos.length, selectedCount: v.selectedIds.length,
+        missingCount: v.missingIds.length, cropCount: v.photos.filter((p) => p.crop).length,
+      });
+      return { data: { metrics }, html: buildGifPlannerDoc(v) };
     }
     case 'calorie.view.lint-health': {
       const v = buildLintHealthView(db);

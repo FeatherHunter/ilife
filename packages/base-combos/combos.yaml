@@ -303,6 +303,26 @@ combos:
     shape: stat
     title: 每日六因素
     cmd: skill-calorie
+  - key: calorie.view.measure-wizard
+    skill: calorie
+    shape: stat
+    title: 围度向导
+    cmd: skill-calorie
+  - key: calorie.view.composition-wizard
+    skill: calorie
+    shape: stat
+    title: 体脂向导
+    cmd: skill-calorie
+  - key: calorie.view.photo-log-wizard
+    skill: calorie
+    shape: stat
+    title: 身材照向导
+    cmd: skill-calorie
+  - key: calorie.view.gif-planner
+    skill: calorie
+    shape: stat
+    title: GIF规划器
+    cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt

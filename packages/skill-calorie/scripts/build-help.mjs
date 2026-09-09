@@ -42,6 +42,10 @@ const REPR = {
   'calorie.view.process-progress': '看落地训练进度',
   'calorie.view.review-template': '看复盘报告',
   'calorie.view.six-factors': '看每日六因素',
+  'calorie.view.measure-wizard': '看围度向导',
+  'calorie.view.composition-wizard': '看体脂向导',
+  'calorie.view.photo-log-wizard': '看身材照向导',
+  'calorie.view.gif-planner': '看GIF规划器',
   'calorie.view.ranking': '查高热量排行',
   'calorie.view.library': '查食品库',
   'calorie.view.search': '查食品',
@@ -123,6 +127,10 @@ function exampleFor(key) {
     case 'calorie.view.process-progress': return 'calorie-cmd-read calorie.view.process-progress';
     case 'calorie.view.review-template': return 'calorie-cmd-read calorie.view.review-template --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
     case 'calorie.view.six-factors': return 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"2026-09-07"}\'';
+    case 'calorie.view.measure-wizard': return 'calorie-cmd-read calorie.view.measure-wizard';
+    case 'calorie.view.composition-wizard': return 'calorie-cmd-read calorie.view.composition-wizard';
+    case 'calorie.view.photo-log-wizard': return 'calorie-cmd-read calorie.view.photo-log-wizard';
+    case 'calorie.view.gif-planner': return 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'';
     case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
     case 'calorie.view.library': return 'calorie-cmd-read calorie.view.library';
     case 'calorie.view.search': return 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'';
