@@ -773,12 +773,29 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  font-size: ' + ACTION_BAR_DEFAULTS.fontSizePx + 'px;',
     '  font-weight: ' + ACTION_BAR_DEFAULTS.fontWeight + ';',
     '  line-height: 1;',
+    // #121：H-16「跑 450ms 弹簧动画」——弹簧口径**逐字复用** `copyButton` 基座（B1
+    // `benchmark-visual-spec.md:279,645`：`transform .45s cubic-bezier(.34,1.56,.64,1)`），
+    // 不新增机制、不新增关键帧；按下态同 `.ilife-copy-btn:active`（scale .96）。
+    '  transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;',
     '  cursor: pointer;',
+    '}',
+    '.' + p + 'help-shell-btn:active {',
+    '  transform: scale(.96);',
     '}',
     '.' + p + 'help-shell-btn-prompt,',
     '.' + p + 'help-shell-btn-wakeWord,',
     '.' + p + 'help-shell-btn-params {',
     '  background: var(--blue);',
+    '  color: var(--card);',
+    '}',
+    // #121（H-16 双反馈的 CSS 侧补面）：HELP 速查台的复制按钮是 helpShell 命名空间（静态三目标
+    // `.ilife-help-shell-btn-*` ＋ 运行时注入的 `.ilife-help-shell-card-copy`），**不含** `.ilife-copy-btn`
+    // → #75 的 `.ilife-copy-btn.copied` 命中不到。此处按同一成功色 token `--ok` 补 `copied` 态，
+    // 类名逐字 `copied`（运行时加，非 `ilife-` 前缀 → 不占样式区命名空间）。
+    '.' + p + 'help-shell-btn.copied,',
+    '.' + p + 'help-shell-card-copy.copied {',
+    '  border-color: var(--ok);',
+    '  background: var(--ok);',
     '  color: var(--card);',
     '}',
     focusRing('.' + p + 'help-shell-btn'),
@@ -916,7 +933,12 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  font-size: 12px;',
     '  font-weight: 600;',
     '  line-height: 1;',
+    // #121：弹簧口径同 `copyButton` 基座（H-16「450ms 弹簧」），成功态 `.copied` 见上方 helpShell 区。
+    '  transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;',
     '  cursor: pointer;',
+    '}',
+    '.' + p + 'help-shell-card-copy:active {',
+    '  transform: scale(.96);',
     '}',
     focusRing('.' + p + 'help-shell-card-copy'),
     '.' + p + 'help-shell-card-mark {',
@@ -1009,6 +1031,15 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     // #88 S4：回到顶部按钮的透明度过渡同样归零（H-20 覆盖全部可交互控件）。
     '  .' + p + 'help-shell-btn-backtop {',
     '    transition: none;',
+    '  }',
+    // #121：helpShell 复制按钮新增的弹簧过渡同样归零（口径同上一行）。
+    '  .' + p + 'help-shell-btn,',
+    '  .' + p + 'help-shell-card-copy {',
+    '    transition: none;',
+    '  }',
+    '  .' + p + 'help-shell-btn:active,',
+    '  .' + p + 'help-shell-card-copy:active {',
+    '    transform: none;',
     '  }',
     '}',
   ].join(LF),

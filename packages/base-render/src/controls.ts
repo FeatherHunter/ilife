@@ -522,6 +522,14 @@ const HELP_SEARCH_ARIA = '搜索全部场景';
 /** 清空按钮字形（F3 `#sClear` 逐字：`✕`）与无障碍名。 */
 const HELP_CLEAR_LABEL = '✕';
 const HELP_CLEAR_ARIA = '清空搜索';
+/** H-16 双反馈的**按钮通道**类名（#121；规格逐字 `copied`，**非** `ilife-` 前缀 → 不占样式区命名空间）。
+ *  CSS 侧两处已就位：`style.ts` 的 `copyButton` 区（`.ilife-copy-btn.copied`，#75）与本区追加的
+ *  helpShell 复制按钮 `.copied`（#121）；本常量只供运行时**加类**，不产第二份样式真相。 */
+const HELP_COPY_COPIED_CLASS = 'copied';
+/** 复制成功态停留时长 = 弹簧动画时长 **450ms**（`docs/visual-spec-help.md:195,197`「按钮变绿进入
+ *  `copied` 态并跑 450ms 弹簧动画」）。与 `style.ts` 的 `transition: transform .45s …` 同源数值，
+ *  由 `test/copy-copied-121.test.mjs` 跨文件交叉钉死（改一侧不改另一侧即红）。 */
+const HELP_COPY_COPIED_MS = 450;
 /** 命中计数文案（F3 `#hitC` 逐字：`匹配 N 个场景`）。 */
 const HELP_HIT_PREFIX = '匹配 ';
 const HELP_HIT_SUFFIX = ' 个场景';
@@ -560,7 +568,14 @@ const HELP_HIT_EMPTY = '没有找到相关场景,换个词试试～';
  *  - **回到顶部**（`btn-backtop`，`id="backTop"`，H-19）：`scrollTop > 400` 加 `-show`，点击平滑回顶。
  *  纯度：只用 `document.*`（含只读 `document.scrollingElement`）＋ 既有只读 `window.matchMedia`；
  *  不向 `window.<id>`／`globalThis.<id>` 赋值、不引 `node:`、不用 `classList`（类名走 `className` 字符串
- *  增删，兼容 `style.test.mjs` T28 的「动效纯 CSS」断言）、不产内联 `on*`。 */
+ *  增删，兼容 `style.test.mjs` T28 的「动效纯 CSS」断言）、不产内联 `on*`。
+ *
+ *  **#121 追加（H-16 双反馈的按钮通道；文档 `docs/visual-spec-help.md:195,197`）**：复制**成功**时给
+ *  **被点击的那个按钮**加 `copied` 类（`HELP_COPY_COPIED_CLASS`，规格逐字、无 `ilife-` 前缀），
+ *  `HELP_COPY_COPIED_MS`（450ms）后移除；失败路径**不**加类（不静默变绿）。落点仍在**既有
+ *  `boot()`／既有委派**内：`onClick` 把命中的按钮一并传给 `copy()` → 两条成功通道
+ *  （`navigator.clipboard`／`execCommand` 兜底）各自在成功分支调 `markCopied(btn)`，零新增监听、
+ *  零新增 marker、零新签名；类名增删复用既有 `addClass`／`removeClass`（`className` 字符串口径）。 */
 export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
   const prefix = helpersPrefix(input);
   const dataAttr = helpersDataAttr(input);
@@ -638,6 +653,8 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '  var HIT_EMPTY = ' + jsStr(HELP_HIT_EMPTY) + ';',
     '  var COPY_ACTION = ' + jsStr(copyAction.actionId) + ';',
     '  var COPY_LABEL = ' + jsStr(copyAction.label) + ';',
+    '  var COPIED_CLASS = ' + jsStr(HELP_COPY_COPIED_CLASS) + ';',
+    '  var COPIED_MS = ' + HELP_COPY_COPIED_MS + ';',
     '  var PARAMS_ACTION = ' + jsStr(paramsAction.actionId) + ';',
     '  var searchTerm = "";',
     '  var clickBound = false;',
@@ -674,29 +691,30 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    if (!btn) return;',
     '    var text = btn.getAttribute(TEXT_ATTR);',
     '    if (text === null) return;',
-    '    copy(text);',
+    '    copy(text, btn);',
     '  }',
     '',
-    '  function copy(text) {',
+    '  function copy(text, btn) {',
     '    var clip = navigator.clipboard;',
     '    if (clip && typeof clip.writeText === "function") {',
     '      try {',
     '        var done = clip.writeText(text);',
     '        if (done && typeof done.then === "function") {',
-    '          done.then(function () { feedback(OK_MSG, false); }, function () { fallback(text); });',
+    '          done.then(function () { markCopied(btn); feedback(OK_MSG, false); }, function () { fallback(text, btn); });',
     '          return;',
     '        }',
+    '        markCopied(btn);',
     '        feedback(OK_MSG, false);',
     '        return;',
     '      } catch (err) {',
-    '        fallback(text);',
+    '        fallback(text, btn);',
     '        return;',
     '      }',
     '    }',
-    '    fallback(text);',
+    '    fallback(text, btn);',
     '  }',
     '',
-    '  function fallback(text) {',
+    '  function fallback(text, btn) {',
     '    var sink = document.createElement("textarea");',
     '    sink.value = text;',
     '    sink.setAttribute("readonly", "readonly");',
@@ -708,7 +726,17 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    var done = false;',
     '    try { done = document.execCommand("copy"); } catch (err) { done = false; }',
     '    if (sink.parentNode) sink.parentNode.removeChild(sink);',
+    '    if (done) markCopied(btn);',
     '    feedback(done ? OK_MSG : FAIL_MSG, !done);',
+    '  }',
+    '',
+    '  /* #121（H-16 双反馈的按钮通道）：成功态加 `copied` 类，450ms 后移除。',
+    '     只在**成功**分支调用 → 失败路径不静默变绿；类名走 className 字符串（addClass／removeClass），',
+    '     不用 DOM 的类名列表 API（纯度口径）；按钮缺失／已离页时 removeClass 仍安全（操作的是节点自身）。 */',
+    '  function markCopied(btn) {',
+    '    if (!btn) return;',
+    '    addClass(btn, COPIED_CLASS);',
+    '    setTimeout(function () { removeClass(btn, COPIED_CLASS); }, COPIED_MS);',
     '  }',
     '',
     '  function feedback(msg, bad) {',
