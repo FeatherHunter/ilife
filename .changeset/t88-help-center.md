@@ -13,9 +13,17 @@
 
 ## 实施 B 段（S4：helpers 扩展 ＋ 卡级复制按钮 ＋ helpShell CSS）
 
-- **`buildSharedHelpersJs` 功能面扩展（签名不变，`SharedHelpersInput` 未动）**：全部挂进**既有 `boot()`**、共用**既有幂等 marker**（`MARKER_SEL` ＋ `querySelector` 早退，**不新增第二个标记**），非 HELP 页逐项早退（helpers 被所有技能页面共享）。新增：① 卡级复制按钮（每张场景卡卡头 1 个，`actionId`／文案恒读 `HELP_COPY_ACTIONS.prompt`，`data-t` 取同卡 Sheet prompt 按钮原文＝该卡 `<pre>` 逐字，复用既有 `[data-action-id]` 委派 → **零契约变更、零新增 actionId**）；② 搜索（过滤 ＋ `<mark>` 高亮 ＋ 命中卡片 Sheet／子功能组自动展开 ＋ 命中计数「匹配 N 个场景」＋ 清空复原 ＋ `Enter` 在命中分组页间跳页）；③ Sheet 参数实时预览（`editable_fields` 静态值换输入框，输入即重组「prompt ＋ 空行 ＋ `label: value` 行」，并同步 prompt／params 复制按钮的 `data-t`）；④ `#backTop`（`scrollTop > 400` 加 `-show`，点击平滑回顶）。
+- **`buildSharedHelpersJs` 功能面扩展（签名不变，`SharedHelpersInput` 未动）**：全部挂进**既有 `boot()`**、共用**既有幂等 marker**（`MARKER_SEL` ＋ `querySelector` 早退，**不新增第二个标记**），非 HELP 页逐项早退（helpers 被所有技能页面共享）。新增：① 卡级复制按钮（每张场景卡卡头 1 个，`actionId`／文案恒读 `HELP_COPY_ACTIONS.prompt`，`data-t` 取同卡 `<pre class="prompt">` 原文（S5 起以 `<pre>` 为主源；读不到才回落 Sheet prompt 按钮），复用既有 `[data-action-id]` 委派 → **零契约变更、零新增 actionId**）；② 搜索（过滤 ＋ `<mark>` 高亮 ＋ 命中卡片 Sheet／子功能组自动展开 ＋ 命中计数「匹配 N 个场景」＋ 清空复原 ＋ `Enter` 在命中分组页间跳页）；③ Sheet 参数实时预览（`editable_fields` 静态值换输入框，输入即重组「prompt ＋ 空行 ＋ `label: value` 行」，并同步 prompt／params 复制按钮的 `data-t`）；④ `#backTop`（`scrollTop > 400` 加 `-show`，点击平滑回顶）。
 - **纯度**：只用 `document.*`（含只读 `document.scrollingElement`）＋ 既有只读 `window.matchMedia`；零 `window.<id>=`／`globalThis.<id>=`／`node:`／`classList`／内联 `on*`／`<canvas>`（`contract-signatures` ＋ `style.test.mjs` T23／T28 逐条过门）。
 - **`src/style.ts` helpShell 区新增 11 个类**（`card-copy`／`card-mark`／`card-hidden`／`subgroup-hidden`／`tab-search`／`tab-search-input`／`tab-search-clear`／`page-hitcount`／`field-input`／`btn-backtop`／`btn-backtop-show`）：全部落在 `ilife-help-shell` 命名空间内（T9 闭集）且后缀 `startsWith` 既有 `cls()` 实参（T11 归属）；**不新增 token、不越区、不走技能侧 `extraCss`**；`prefers-reduced-motion` 下 `#backTop` 过渡归零。
 - **无 JS 降级**：不注入 helpers 时页面＝今日 CSS-only 壳（436 卡／1308 静态复制按钮／Tab 可切换／搜索框与 `#backTop` 均不存在）。
 - **证据**：`docs/research/t88-impl-b.md` ＋ `packages/base-render/test/help-center-js-88.test.mjs`（7 用例，含真实 headless Chrome）＋ `docs/research/t88-browser-evidence-b.mjs`（CDP **29/29**：436/436 卡头按钮、`data-t` 逐字、委派复制、搜索 44 命中／99 mark／计数、`#backTop` 原生滚动出现＋可信点击回顶、删 marker 后二次注入幂等、禁用脚本引擎下 436 卡／0 注入／原生点击 Tab 可切换）＋ `docs/research/t88-probe-impl-b.mjs`（59/59）。四门 exit 0；canonical `pnpm test` **8 轮**失败集并集：新增 3 条**全为 B 类（子进程 NTSTATUS 崩溃／环境抖动，均单独复跑全绿）**、真 delta 0；2 处 src 级变异红→还原→绿（sha256 自证）。
 - **仍未含**：CLI 接线（#91）—— **#88 关闭时用户仍看不到新版速查台**。
+
+## 收尾 S5（审查缺陷修复 ＋ 门禁工具）
+
+- **卡级复制按钮不再倍增**：`boot()` 重入只挂一次委派，并在**事件对象**上做跨实例去重（helpers 被多次注入时每个实例各有闭包）→ 一次点击恒只复制 1 次／只出 1 个 toast（修前实测 4 次）。
+- **卡级按钮主源改为同卡 `<pre class="prompt">` 原文**：无 Sheet prompt 按钮的卡不再被静默跳过，且解掉「卡级按钮跟 Sheet 按钮走」的耦合；真实壳 436/436 卡恒有 `<pre>`。
+- **补三档徽章色逐条断言**（`TYPE_DEFAULT[text] → {bg,fg}` 逐档钉死）＋ `text` 态裸 `<N>` 判为 legacy CLI 原文（逐字保留、非 HTML）。
+- **`tooling/run-locked.mjs` 补子进程超时**：`--child-timeout-ms`（默认 900000）超时杀进程树 ＋ `RUN … timeout=1` ＋ exit 124 ＋ 放锁（防「子进程挂死 → 包装器永久持锁 → 堵死其他 session」）；`pnpm gate:selftest` 改用独立锁目录，**调用方不得再套 `run-locked`**。
+- **证据**：`docs/research/t88-final.md`（A1–A8 总表／四门与 canonical 实测／9 轮 delta 分类／变异索引／偏离总账／未做项／#91 接线说明）；靶向 220/220、`gate:selftest` 20/20、canonical 新增 0、S5 三处 src 级变异 3/3。
