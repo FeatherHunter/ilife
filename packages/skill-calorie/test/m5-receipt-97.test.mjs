@@ -239,3 +239,159 @@ test('#97 · P9：stdout 恒为一行 JSON，M5 只落字段不改 stdout 形态
   assert.equal(r.status, 0);
   assert.equal(r.stdout.trimEnd().split('\n').length, 1, 'stdout 必须一行 JSON');
 });
+
+// ------------------------------------------------------------------ 五、返修轮独立判定（R-1／R-3）
+// 本节**不经** `checkM5`／`SCENARIOS`（探针与回归同源判定的盲区，红队 D-5）：
+// 期望值逐字手写，只走 CLI stdout ＋ 只读句柄回查，独立于探针脚本。
+
+/** 可写句柄（openDb 会迁移）——只用于把种子改成可区分的值。 */
+function execOn(dir, fn) {
+  const db = openDb(join(dir, 'calorie_data.db'));
+  try {
+    return fn(db);
+  } finally {
+    db.close();
+  }
+}
+
+test('#97 · R-1：goal.set 的 writtenFields ＝ 本次实际 SET 列（不传 water 不报 water）', () => {
+  const ctx = mkEnv();
+  const env = { SKILLS_DB_PATH: ctx.dir };
+  // 种子 `water_goal` 恰为列默认 2000，先改成可区分的 2300，并给上 weight_goal／goal_deadline
+  execOn(ctx.dir, (db) => {
+    db.prepare("UPDATE daily_goal SET water_goal = 2300, weight_goal = 68.0, goal_deadline = '2026-12-31' WHERE id = 1").run();
+  });
+
+  // ① 不传 water：SQL 里没有 water_goal 列（fetch/nutritionGoal.ts:74-77）→ 摘要不得出现 water
+  const r1 = run('calorie.goal.set', { calorie: 1750, protein: 140, carbs: 180, fat: 50 }, env);
+  assert.equal(r1.status, 0, 'goal.set(no water) exit ' + r1.status + ' stderr=' + (r1.stderr || '').slice(-300));
+  const rc1 = JSON.parse(r1.stdout).data.receipt;
+  assert.equal(rc1.op, 'update');
+  assert.deepEqual(rc1.writtenFields, ['calorie', 'protein', 'carbs', 'fat'], '不传 water → water 列未被 SET');
+  assert.ok(!rc1.m5Line.includes('water'), 'm5Line 字段段不得含 water：' + rc1.m5Line);
+  assert.ok(rc1.m5Line.endsWith('| 字段 calorie,protein,carbs,fat'), rc1.m5Line);
+  assert.equal(rc1.affectedRows, 1);
+  assert.equal(rc1.recordId, 1);
+  assert.deepEqual(rc1.ids, [1]);
+  assert.equal(rc1.idSource, 'singleton');
+  const after1 = readOnly(ctx.dir, (db) => db.prepare('SELECT calorie_goal, water_goal, weight_goal, goal_deadline FROM daily_goal WHERE id = 1').get());
+  assert.equal(after1.calorie_goal, 1750, '本次 SET 的列确已写入');
+  // 未 SET 的列被 `INSERT OR REPLACE` 连带重置为列默认／NULL —— 实际行为缺陷（红队 D-4）已转 #127，
+  // 本票不改语义，只把事实钉在这里，避免「摘要＝全行写入」的误读。
+  assert.equal(after1.water_goal, 2000, 'water 未被 SET：值只因 INSERT OR REPLACE 落列默认（→ #127）');
+  assert.equal(after1.weight_goal, null, 'weight_goal 被 REPLACE 重置（→ #127）');
+  assert.equal(after1.goal_deadline, null, 'goal_deadline 被 REPLACE 重置（→ #127）');
+
+  // ② 传 water：SQL 含 water_goal 列 → 摘要含 water（同一键的两条 SQL 分别对账）
+  const r2 = run('calorie.goal.set', { calorie: 1750, protein: 140, carbs: 180, fat: 50, water: 2400 }, env);
+  assert.equal(r2.status, 0, 'goal.set(water) exit ' + r2.status);
+  const rc2 = JSON.parse(r2.stdout).data.receipt;
+  assert.deepEqual(rc2.writtenFields, ['calorie', 'protein', 'carbs', 'fat', 'water']);
+  assert.ok(rc2.m5Line.endsWith('| 字段 calorie,protein,carbs,fat,water'), rc2.m5Line);
+  assert.equal(readOnly(ctx.dir, (db) => db.prepare('SELECT water_goal AS w FROM daily_goal WHERE id = 1').get().w), 2400);
+});
+
+test('#97 · R-3：water.log 重复跳过回传原 id（与 diet.add 同口径，§3.3 record）', () => {
+  const ctx = mkEnv();
+  const env = { SKILLS_DB_PATH: ctx.dir };
+  const p = { ml: 300, date: '2026-09-07', time: '09:00:00' };
+  const a = run('calorie.water.log', p, env);
+  assert.equal(a.status, 0, 'water.log exit ' + a.status + ' stderr=' + (a.stderr || '').slice(-300));
+  const rid = JSON.parse(a.stdout).data.receipt.recordId;
+  assert.ok(Number.isInteger(rid) && rid > 0);
+  const b = run('calorie.water.log', p, env);
+  assert.equal(b.status, 0);
+  const rc = JSON.parse(b.stdout).data.receipt;
+  assert.equal(rc.noChange, true);
+  assert.equal(rc.affectedRows, 0, '重复跳过不得虚报影响行数');
+  assert.deepEqual(rc.writtenFields, []);
+  assert.equal(rc.idSource, 'record', '拿得到原 id 时报 record（返修 R-3 与 diet.add 统一）');
+  assert.deepEqual(rc.ids, [rid]);
+  assert.equal(rc.recordId, rid);
+  assert.ok(rc.m5Line.startsWith('id=' + rid + ' | 日期 '), rc.m5Line);
+  assert.equal(countOf(ctx.dir, 'food_log'), 3, '重复跳过不得落库（种子 2 条 ＋ 首写 1 条）');
+});
+
+test('#97 · R-3：同值 UPDATE 实测 noChange=false／affectedRows=1（契约 §3.6 措辞锚）', () => {
+  const ctx = mkEnv();
+  const env = { SKILLS_DB_PATH: ctx.dir };
+  const a = run('calorie.weight.log', { kg: 70.4, date: '2026-09-07', time: '07:00:00' }, env);
+  assert.equal(a.status, 0);
+  const id = JSON.parse(a.stdout).data.receipt.recordId;
+  const b = run('calorie.weight.update', { id, kg: 70.4 }, env);
+  assert.equal(b.status, 0);
+  const rc = JSON.parse(b.stdout).data.receipt;
+  assert.equal(rc.noChange, false, 'weight.update 不设 noChange（#101 语义保持，本票不改）');
+  assert.equal(rc.affectedRows, 1, 'SQLite 同值 UPDATE 仍计 1 行变更');
+  assert.deepEqual(rc.writtenFields, ['kg']);
+  assert.equal(readOnly(ctx.dir, (db) => Number(db.prepare('SELECT weight_kg AS n FROM weight_log WHERE id = ?').get(id).n)), 70.4);
+});
+
+test('#97 · 独立判定：四要素逐字对账（不经 checkM5／SCENARIOS，红队 D-5）', () => {
+  // ① create：diet.add（种子 2 条 food_log → 新 id=3）
+  {
+    const ctx = mkEnv();
+    const env = { SKILLS_DB_PATH: ctx.dir };
+    const r = run('calorie.diet.add', { foodName: '独立判定', calories: 210, protein: 12, date: '2026-09-08', time: '12:00:00' }, env);
+    assert.equal(r.status, 0, 'diet.add exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-300));
+    const e = JSON.parse(r.stdout);
+    const rc = e.data.receipt;
+    assert.equal(e.shape, 'receipt');
+    assert.deepEqual(Object.keys(rc).sort(), [...BASE_KEYS, ...M5_KEYS].sort());
+    assert.equal(rc.m5Contract, '1');
+    assert.equal(rc.affectedRowsSource, 'sqlite:total_changes');
+    assert.equal(rc.affectedRows, 1);
+    assert.equal(rc.recordId, 3);
+    assert.deepEqual(rc.ids, [3]);
+    assert.equal(rc.idSource, 'record');
+    assert.match(rc.meta.actionAt, STAMP_RE);
+    assert.deepEqual(rc.writtenFields, ['foodName', 'calories', 'protein', 'carbs', 'fat', 'grams', 'note', 'date', 'time']);
+    assert.equal(rc.m5Line, 'id=3 | 日期 ' + rc.meta.actionAt + ' | 影响 1 行 | 字段 foodName,calories,protein,carbs,fat,grams,note,date,time');
+  }
+  // ② create（体重）：种子 1 条 weight_log → 新 id=2；bmi／height_cm 为派生列，不入 CLI 摘要（§3.4）
+  {
+    const ctx = mkEnv();
+    const env = { SKILLS_DB_PATH: ctx.dir };
+    const r = run('calorie.weight.log', { kg: 71.2, date: '2026-09-08', time: '07:00:00' }, env);
+    assert.equal(r.status, 0);
+    const rc = JSON.parse(r.stdout).data.receipt;
+    assert.equal(rc.affectedRows, 1);
+    assert.equal(rc.recordId, 2);
+    assert.deepEqual(rc.writtenFields, ['kg', 'note', 'date', 'time']);
+    assert.equal(rc.m5Line, 'id=2 | 日期 ' + rc.meta.actionAt + ' | 影响 1 行 | 字段 kg,note,date,time');
+    // 库内实写 6 列（含派生 height_cm／bmi）——摘要按 CLI 口径只列 4 项，落差在证据 §7 登记
+    assert.equal(readOnly(ctx.dir, (db) => db.prepare('SELECT height_cm, bmi FROM weight_log WHERE id = 2').get()).height_cm, 175);
+  }
+  // ③ 条件批量硬删：种子 2 条 → affectedRows=2，id 不适用（旧版 id=n/a）
+  {
+    const ctx = mkEnv();
+    const env = { SKILLS_DB_PATH: ctx.dir };
+    const r = run('calorie.diet.remove-by-date', { date: '2026-09-05' }, env);
+    assert.equal(r.status, 0);
+    const rc = JSON.parse(r.stdout).data.receipt;
+    assert.equal(rc.op, 'delete');
+    assert.equal(rc.affectedRows, 2);
+    assert.equal(rc.recordId, null);
+    assert.deepEqual(rc.ids, []);
+    assert.equal(rc.idSource, 'condition');
+    assert.deepEqual(rc.writtenFields, []);
+    assert.equal(rc.m5Line, 'id=n/a | 日期 ' + rc.meta.actionAt + ' | 影响 2 行 | 字段 —');
+    assert.equal(countOf(ctx.dir, 'food_log'), 0);
+  }
+  // ④ 软删：行仍在库，affectedRows 计被写行数，摘要用库列名（无 CLI 参数）
+  {
+    const ctx = mkEnv();
+    const env = { SKILLS_DB_PATH: ctx.dir };
+    const a = run('calorie.exercise.add', { type: '独立判定跑', calories: 150, date: '2026-09-08' }, env);
+    assert.equal(a.status, 0);
+    const eid = JSON.parse(a.stdout).data.receipt.recordId;
+    const r = run('calorie.exercise.remove', { id: eid }, env);
+    assert.equal(r.status, 0);
+    const rc = JSON.parse(r.stdout).data.receipt;
+    assert.equal(rc.affectedRows, 1);
+    assert.deepEqual(rc.writtenFields, ['is_deleted']);
+    assert.equal(rc.m5Line, 'id=' + eid + ' | 日期 ' + rc.meta.actionAt + ' | 影响 1 行 | 字段 is_deleted');
+    assert.equal(countOf(ctx.dir, 'exercise_log'), 2, '软删不删行');
+    assert.equal(readOnly(ctx.dir, (db) => Number(db.prepare('SELECT is_deleted AS n FROM exercise_log WHERE id = ?').get(eid).n)), 1);
+  }
+});

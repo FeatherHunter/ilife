@@ -1,0 +1,17 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：97｜since：2026-09-09T13:54:30.000Z｜until：2026-09-09T13:56:50.382Z｜条目数：9｜导出时间：2026-09-09T13:57:21.870Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=97 runId=6e345070-f2b1-45d6-b589-05155043c5d4 cmd="pnpm build" waitedMs=0 exit=0 pid=21532 at=2026-09-09T13:54:43.359Z
+RUN ticket=97 runId=a7a719a0-c079-40c6-8987-143a11884588 cmd="pnpm boundaries" waitedMs=0 exit=0 pid=36912 at=2026-09-09T13:54:44.271Z
+RUN ticket=97 runId=36512849-08ac-4521-9185-c6073597f857 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=34096 at=2026-09-09T13:54:45.151Z
+RUN ticket=97 runId=0c914811-736b-4d40-9ead-ae3dec897780 cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=26848 at=2026-09-09T13:54:46.030Z
+RUN ticket=97 runId=1772fb00-6cef-4c23-a519-d9442d0912fe cmd="node --test packages/skill-calorie/test/m5-receipt-97.test.mjs" waitedMs=0 exit=0 pid=5732 at=2026-09-09T13:55:03.842Z
+RUN ticket=97 runId=c42fcf63-57fe-46dd-ae50-d7b12102f41d cmd="node --test --test-concurrency=8 packages/skill-calorie/test/m5-receipt-97.test.mjs" waitedMs=0 exit=0 pid=31264 at=2026-09-09T13:55:22.663Z
+RUN ticket=97 runId=24237609-07d2-47ac-ad6d-6cfd256a4a7c cmd="node docs/research/t97-probe-receipts.mjs --json .scratch/t97/after-repair.json" waitedMs=0 exit=0 pid=27972 at=2026-09-09T13:55:30.164Z
+RUN ticket=97 runId=2c2b4c5e-0082-458a-87e2-62203d823ef3 cmd="node .scratch/t97/mut-r1.mjs" waitedMs=0 exit=0 pid=36264 at=2026-09-09T13:56:08.603Z
+RUN ticket=97 runId=5bc54987-0f73-4e09-b590-2db473eda08a cmd="pnpm test" waitedMs=1 exit=1 pid=37604 at=2026-09-09T13:56:39.456Z
+```

@@ -148,8 +148,18 @@ const F = {
   exercise: ['type', 'calories', 'minutes', 'date', 'time', 'note', 'reps', 'category', 'difficulty', 'distance', 'heartRate', 'maxHeartRate', 'steps', 'setIndex', 'loadKg', 'backfill'],
   photo: ['srcPaths', 'tag', 'note', 'date', 'time'],
   product: ['productName', 'brand', 'calories', 'protein', 'fat', 'saturatedFat', 'carbohydrates', 'sugar', 'dietaryFiber', 'sodium', 'note'],
-  goal: ['calorie', 'protein', 'carbs', 'fat', 'water'],
 } as const;
+
+/** `calorie.goal.set` 本次**实际被 SET 的列** → CLI 参数名（正本 §3.4「update 键＝本次实际变更字段」）。
+ * 与 `fetch/nutritionGoal.ts:68-78` 的两条 SQL 同源：传 `water` 走 6 列 `INSERT OR REPLACE`
+ * （含 `water_goal`），不传则 SQL 里**没有** `water_goal` 列——该列的值只因 REPLACE 落列默认
+ * （`schema.ts:32` `water_goal INTEGER DEFAULT 2000`），**不属本次 SET 的字段**，故不得报 `water`。
+ * 记账列 `updated_at` 无 CLI 参数，按 §3.4 不计入摘要。
+ * 注意：`INSERT OR REPLACE` 连带把 `weight_goal`／`goal_deadline`／`goal_paused`／`start_weight`／
+ * `start_date` 重置为默认/NULL——那是**实际行为缺陷**（红队 D-4），已转 #127；本票只让回执如实
+ * 反映「本次 SET 了哪些列」，**不改写语义**（不做 UPSERT 化）。 */
+const goalSetWrittenFields = (hasWater: boolean): string[] =>
+  ['calorie', 'protein', 'carbs', 'fat', ...(hasWater ? ['water'] : [])];
 
 /** 库列名 → CLI 参数名（update 键按实际变更列回报写入字段摘要）。 */
 const COL_CLI: Record<string, string> = {
@@ -448,7 +458,12 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         note: optStr(params, 'note'), date, time: optStr(params, 'time'),
       });
       if (r.duplicate) {
-        return out(R('记喝水', 'create', String(r.message ?? '重复记录已跳过'), '记喝水', 'food_log (写库回执)', { noChange: true, ids: [], idSource: 'none', writtenFields: [] }));
+        // 与 `calorie.diet.add` 同口径（§3.3 `record`）：重复跳过的原 id 由 fetch 回传（`fetch/diet.ts:96`），
+        // 拿得到就报 `record`＋`ids=[dupId]`，拿不到才退 `none`（返修 R-3／蓝队 D-3 统一）。
+        return out(R('记喝水', 'create', String(r.message ?? '重复记录已跳过'), '记喝水', 'food_log (写库回执)', {
+          recordId: r.dupId ?? null, noChange: true,
+          ids: r.dupId ? [r.dupId] : [], idSource: r.dupId ? 'record' : 'none', writtenFields: [],
+        }));
       }
       const day = date ?? todayISO();
       const sum = getDailySummary(db, day);
@@ -793,7 +808,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = setNutritionGoal(db, { calorie, protein, carbs, fat, water });
       const tail = r.consistent ? ' · 宏量自洽' : ' · ⚠宏量换算差 ' + r.diffKcal + ' 卡（>50 建议复核）';
       return out(R('定营养目标', had ? 'update' : 'create', '已定营养目标：' + r.calorieGoal + ' 卡·蛋白 ' + r.proteinGoal + '·碳水 ' + r.carbsGoal + '·脂肪 ' + r.fatGoal + (r.waterGoal === null ? '' : '·饮水 ' + r.waterGoal) + tail, '定营养目标', 'daily_goal (写库回执)', {
-        recordId: 1, ids: [1], idSource: 'singleton', writtenFields: [...F.goal],
+        recordId: 1, ids: [1], idSource: 'singleton', writtenFields: goalSetWrittenFields(water !== undefined),
       }));
     }
     case 'calorie.goal.water': {

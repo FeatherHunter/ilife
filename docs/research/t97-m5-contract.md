@@ -71,13 +71,21 @@
 - `singleton`：单例行表写（`user_profile`／`daily_goal`），固定 `id=1`（旧版 `id=1` 硬编码同值）。
 - `condition`：按条件／批量的写（按日／范围／餐别／批量项），id 不适用 —— **旧版 `id=n/a` 的等价物**。
 - `none`：本次无写入且拿不到 id（如重复跳过且 fetch 未回传原 id）——`affectedRows` 同时为 `0`。
+  （`calorie.water.log` 重复跳过已与 `calorie.diet.add` 统一：`addMeal` 回传原 id 时报 `record` ＋ `ids=[dupId]`，
+  仅在拿不到 id 时才退 `none`——返修 R-3／蓝队 D-3。）
 
 ### 3.4 `writtenFields` 口径
 
 - **CLI 参数名（camelCase）**，不是库列名：契约面是「CLI 一行 JSON」，用户／AI 说的是 CLI 名；列名映射在 fetch 层（`COL_CLI` 表仅用于把 update 键的**实际变更列**回译成 CLI 名）。
-- **create 键**＝该键写入字段全集（缺省值也算写入，如 `calorie.diet.add` 恒写 `foodName,calories,protein,carbs,fat,grams,note,date,time`）。
-- **update 键**＝**本次实际变更字段**（`Object.keys(fields)` 回译；无实际变化时仍列出被 SET 的列）。
-- **delete 键**＝`[]`（无写入字段）。
+- **摘要＝本次实际写入的列中「有 CLI 参数名」的那些**（返修 R-1／R-3 收紧，`4671169` 的 `goal.set` 口径不符已修正）：
+  - **create 键**＝该键本次写入的 CLI 字段全集（缺省值也算写入，如 `calorie.diet.add` 恒写 `foodName,calories,protein,carbs,fat,grams,note,date,time`）。
+  - **update 键**＝**本次实际被 SET 的列**回译成 CLI 名（`Object.keys(fields)`；无实际变化时仍列出被 SET 的列）。
+    **未进本次 SQL SET 列表的列不得出现**：`calorie.goal.set` 不传 `water` 时 SQL 无 `water_goal` 列
+    （`fetch/nutritionGoal.ts:68-78` 两条 `INSERT OR REPLACE`），摘要为 `calorie,protein,carbs,fat`；传 `water` 才追加 `water`。
+  - **delete 键**＝`[]`（无写入字段）。
+- **派生列／记账列不入摘要**（它们没有 CLI 参数名，与「CLI 名口径」正交）：`weight_log.height_cm`／`bmi`
+  （`fetch/weight.ts:52,74`，由档案身高与 kg 派生）／`weight_log.bmi` 的同值更新（`fetch/weight.ts:74`）、各表 `updated_at`
+  （`CURRENT_TIMESTAMP`）。→ 与「写入字段全集」的落差在 `t97-impl.md` §7 逐条登记。
 - 无 CLI 参数对应的标志位写（软删／下架／暂停）用库列名：`is_deleted`／`is_deprecated`／`goal_paused`。
 
 ### 3.5 软删语义（与 #101 同源，**不改文案**）
@@ -99,7 +107,9 @@
 `noChange` 语义**保持 #101 不变**（值未变／重复跳过）。`affectedRows` 是**库行数**，故允许：
 
 - 重复跳过（`diet.add` 命中同餐同食）：`noChange=true`，`affectedRows=0`，`writtenFields=[]`，`idSource='record'`（拿得到原 id）或 `'none'`；
-- 同值 UPDATE（如 `weight.update` 传相同 kg）：`noChange=true`，但 SQLite 仍计 **1** 行变更 → `affectedRows=1`。
+- 同值 UPDATE（如 `weight.update` 传相同 kg）：SQLite 仍计 **1** 行变更 → `affectedRows=1`；
+  `noChange` 取该键 #101 既有值（**`weight.update` 实测 `noChange=false`**——该键不设 `noChange`，本票不改其语义），
+  故 `noChange` 与 `affectedRows` **不等价**（返修 R-3／蓝队 D-4 按实测修正旧措辞「同值 UPDATE → `noChange=true`」）。
 
 **不变量**：`affectedRows===0` ⇒ 该键未对库做任何行变更（测试用只读句柄独立复核）。
 
