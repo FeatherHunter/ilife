@@ -1,0 +1,35 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：83｜since：2026-09-09T15:36:00.000Z｜until：2026-09-09T15:50:00.000Z｜条目数：27｜导出时间：2026-09-09T15:49:34.484Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=83 runId=8ec55c1a-667b-4a97-a37d-845c8a08b6de cmd="pnpm build" waitedMs=0 exit=0 pid=6836 at=2026-09-09T15:38:02.011Z
+RUN ticket=83 runId=74c76e0f-d8ce-40bd-a650-7bed4411d499 cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center" waitedMs=0 exit=0 pid=15640 at=2026-09-09T15:38:10.942Z
+RUN ticket=83 runId=2d86d743-e40e-4794-8f9c-6a669a3850ec cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center --params \"{\\\"mode\\\":\\\"inline\\\"}\"" waitedMs=0 exit=0 pid=22604 at=2026-09-09T15:38:14.503Z
+RUN ticket=83 runId=51c8e6b4-d3b2-439b-9218-95a7113ded27 cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center --params \"{\\\"mode\\\":\\\"text\\\"}\"" waitedMs=0 exit=0 pid=35848 at=2026-09-09T15:38:14.733Z
+RUN ticket=83 runId=43cd77c4-e596-4fde-a9b1-0c5a3f108c00 cmd="pnpm build" waitedMs=50049 exit=0 pid=34028 at=2026-09-09T15:39:51.429Z
+RUN ticket=83 runId=2132a51f-4ec0-4be7-bcc0-52f7427de0ee cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center" waitedMs=70044 exit=0 pid=26008 at=2026-09-09T15:40:50.783Z
+RUN ticket=83 runId=16bbcbe4-a747-4dea-a841-581b6de11a8d cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center --params \"{\\\"mode\\\":\\\"inline\\\"}\"" waitedMs=0 exit=0 pid=23292 at=2026-09-09T15:40:51.049Z
+RUN ticket=83 runId=0df7895a-f42c-476a-b860-8040b4cd2a0d cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center --params \"{\\\"mode\\\":\\\"text\\\"}\"" waitedMs=0 exit=0 pid=2344 at=2026-09-09T15:40:51.436Z
+RUN ticket=83 runId=4a2d38f1-ceec-43b4-866f-055cda3ab05d cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center" waitedMs=0 exit=0 pid=37004 at=2026-09-09T15:41:02.882Z
+RUN ticket=83 runId=a3b993f1-4973-4f06-8c6e-37eb50aafca7 cmd="node docs/research/t83-review-blue.mjs" waitedMs=30030 exit=1 pid=23496 at=2026-09-09T15:41:09.012Z
+RUN ticket=83 runId=824bfbfe-f255-4f0f-a72d-d30aa5eb1fd5 cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center" waitedMs=60053 exit=0 pid=23172 at=2026-09-09T15:42:19.338Z
+RUN ticket=83 runId=3e04a0e6-21bb-4f1a-99ba-5bafc9739d8d cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center --params \"{\\\"mode\\\":\\\"inline\\\"}\"" waitedMs=0 exit=0 pid=29468 at=2026-09-09T15:42:19.628Z
+RUN ticket=83 runId=7ec29247-d609-43ec-aaa5-87b4555d7ed4 cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center --params \"{\\\"mode\\\":\\\"text\\\"}\"" waitedMs=1 exit=0 pid=35664 at=2026-09-09T15:42:19.999Z
+RUN ticket=83 runId=c0c2ad24-742b-4837-8e65-98e93e489207 cmd="node docs/research/t83-review-blue.mjs" waitedMs=50027 exit=1 pid=14908 at=2026-09-09T15:42:31.844Z
+RUN ticket=83 runId=02345c33-64f4-46b0-a4b9-30b1f57758c0 cmd="node docs/research/t83-review-blue.mjs" waitedMs=20015 exit=1 pid=23232 at=2026-09-09T15:43:00.315Z
+RUN ticket=83 runId=ac0bf06b-f5c7-4fdb-ac39-562e59f7bd7f cmd="node docs/research/t83-review-blue.mjs" waitedMs=10008 exit=1 pid=8492 at=2026-09-09T15:43:24.278Z
+RUN ticket=83 runId=6aa13830-edc9-4330-9dd3-d603bc8de5bc cmd="node docs/research/t83-review-blue.mjs" waitedMs=20015 exit=1 pid=6260 at=2026-09-09T15:44:15.588Z
+RUN ticket=83 runId=48e53a8d-9e4a-4527-993a-34c9b213039f cmd="node docs/research/t83-review-blue.mjs" waitedMs=10008 exit=1 pid=37148 at=2026-09-09T15:44:58.180Z
+RUN ticket=83 runId=465f6bfd-34d5-49ad-9fb4-2023de7936fb cmd="node docs/research/t83-review-blue-mut.mjs" waitedMs=0 exit=0 pid=33408 at=2026-09-09T15:46:00.579Z
+RUN ticket=83 runId=00f3e6a4-4371-4e27-bb0e-909017e92ec7 cmd="pnpm build" waitedMs=10011 exit=0 pid=32856 at=2026-09-09T15:46:26.786Z
+RUN ticket=83 runId=005aec00-0415-4830-9eeb-ccb9ed7435ee cmd="node --test packages/skill-calorie/test/delivery-83.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs" waitedMs=0 exit=0 pid=14972 at=2026-09-09T15:46:31.673Z
+RUN ticket=83 runId=28e95781-60be-41bc-840d-e1cbb2ad75be cmd="pnpm boundaries" waitedMs=0 exit=0 pid=6244 at=2026-09-09T15:46:32.524Z
+RUN ticket=83 runId=12012bba-f60c-4ff4-bebc-fcbeb32daa2c cmd="pnpm snapshot:check" waitedMs=1 exit=0 pid=34000 at=2026-09-09T15:46:33.366Z
+RUN ticket=83 runId=48326cfe-6f22-4fd4-8af1-47638e75dc6d cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=6700 at=2026-09-09T15:46:34.219Z
+RUN ticket=83 runId=f680a57a-1570-4c31-8472-cbebaee0df42 cmd="pnpm test" waitedMs=0 exit=1 pid=13784 at=2026-09-09T15:47:04.032Z
+RUN ticket=83 runId=14f974bc-b456-4ea9-af50-f4afa0e6c67a cmd="node docs/research/t83-review-blue.mjs" waitedMs=0 exit=0 pid=18392 at=2026-09-09T15:47:19.402Z
+RUN ticket=83 runId=adcdfff1-ed2b-473a-aada-74d75b61b2a0 cmd="node docs/research/t83-review-blue-mut.mjs" waitedMs=0 exit=0 pid=28076 at=2026-09-09T15:48:32.652Z
+```
