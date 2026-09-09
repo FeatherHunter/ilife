@@ -1,6 +1,7 @@
 /** #121 复制按钮 `copied` 态（H-16 JS 侧）——真实浏览器实证（headless Chrome ＋ **CDP 真手势**）。
  *
- *  跑法（仓根）：`node docs/research/t121-browser-evidence.mjs [--label before|after]`
+ *  跑法（仓根）：`node tooling/run-locked.mjs --ticket 121 -- node docs/research/t121-browser-evidence.mjs [--label before|after]`
+ *  （**必须经持锁包装器**：本脚本读共享 `dist/`，他席的变异构建窗口会污染读数——红队 S3-2／`t121-review-red.md:57`。）
  *  退出码：0＝全部断言通过；1＝有断言失败；2＝**缺浏览器／缺 dist**（实证未完成，绝不静默变绿）。
  *
  *  被验对象：`packages/base-render/dist/controls.js` 的 `buildSharedHelpersJs()` 复制反馈路径
@@ -9,13 +10,18 @@
  *
  *  为什么用 CDP 而不是 `--dump-dom`：本票的验收面是**真实手势 → 类名 → computed 背景 → 450ms 回落**
  *  的时序；`--dump-dom` 无真实时间轴、无命中测试（`docs/research/t88-browser-evidence-b.mjs:12-15` 同口径）。
- *  页面**零桩**（不替换 navigator.clipboard／不改产品代码），断言全部由驱动侧 `Runtime.evaluate` 读回；
- *  唯一页面侧注入是**只读采样器**（点击后每 20ms 记一次类名，用来算 `copied` 类存活时长）。
+ *  页面侧**零产品改动**（不替换 navigator.clipboard／不改产品代码）；页面侧只装**只读观测器**：
+ *  ① 捕获阶段 click 时间戳；② 目标按钮上的 `MutationObserver`（`class` 属性）记录 `copied` 被加／被移除的
+ *  精确 `performance.now()`——存活时长**以此为准**（驱动侧 CDP 采样只用于**背景过渡**取证；S2-1：~31ms 粒度会
+ *  低估存活时长，实测曾出现 394/395/398ms < 400 下界的伪红，`t121-review-red.md:55`）。
+ *
+ *  指纹：`dist/index.js` ＋ `dist/controls.js` ＋ **`dist/style.js`**（S3-1：CSS 产出面必须入指纹，
+ *  否则 `.copied` 被换成别的 token 时指纹不变＝对 CSS 面失明，`t121-review-red.md:56`）。
  *
  *  四个观测面：
  *    A 卡级复制按钮（`.ilife-help-shell-card-copy`，helpers 运行时注入）——H-16「每行恰一个行内复制按钮」；
  *    B Sheet 内 prompt 复制按钮（`.ilife-help-shell-btn-prompt`，静态渲染）；
- *    C 通用复制按钮（`.ilife-copy-btn`，`renderPreBlock` 产出）——#75 的 CSS 侧命中面；
+ *    C 通用复制按钮（`.ilife-copy-btn`，`renderActionBar` 产出）——#75 的 CSS 侧命中面；
  *    D 失败路径（通道 1 拒 ＋ `execCommand` 假）：**不得**出现 `copied` 类，必须出 danger toast。
  */
 import { spawn } from 'node:child_process';
@@ -60,12 +66,18 @@ if (!SCRATCH.replace(/\\/g, '/').includes('/.scratch/t121/browser')) die(2, '输
 mkdirSync(SCRATCH, { recursive: true });
 const DIST = join(ROOT, 'packages', 'base-render', 'dist', 'index.js');
 const DIST_CONTROLS = join(ROOT, 'packages', 'base-render', 'dist', 'controls.js');
+const DIST_STYLE = join(ROOT, 'packages', 'base-render', 'dist', 'style.js');
 if (!existsSync(DIST)) die(2, '缺 dist：' + DIST + '（先 pnpm build）');
-const fingerprint = [DIST, DIST_CONTROLS].map((p) => ({
-  file: p.slice(ROOT.length + 1).replace(/\\/g, '/'),
-  bytes: readFileSync(p).length,
-  sha256: createHash('sha256').update(readFileSync(p)).digest('hex'),
-}));
+/* S3-1（红队 `t121-review-red.md:56`）：指纹必须覆盖 **CSS 产出面** `dist/style.js`——
+ * 只记 `index.js`＋`controls.js` 时，他席把 `.copied` 改成 `var(--blue)` 的变异构建指纹**完全一致**（对 CSS 面失明）。 */
+const fingerprint = [DIST, DIST_CONTROLS, DIST_STYLE].map((p) => {
+  const buf = readFileSync(p);
+  return {
+    file: p.slice(ROOT.length + 1).replace(/\\/g, '/'),
+    bytes: buf.length,
+    sha256: createHash('sha256').update(buf).digest('hex'),
+  };
+});
 
 /* ── 1. 找浏览器（找不到 → 显式失败） ─────────────────────────────────────── */
 
@@ -238,7 +250,8 @@ const probeExpr = (selector, nth = 0) => `(function () {
   return { cls: el.className, bg: cs.backgroundColor, transformTransition: cs.transitionProperty + " / " + cs.transitionDuration };
 }())`;
 
-/** 真手势点击 ＋ **驱动侧**时间线采样（页面零探针：采样由 CDP 读回，不受页面定时器节流影响）。 */
+/** 真手势点击 ＋ **驱动侧**时间线采样（背景过渡用）＋ **页面侧 MutationObserver 精确计时**（类名存活时长）。
+ *  页面侧只装**只读观测器**（`MutationObserver` ＋ 捕获阶段 click 时间戳），不替换任何产品行为。 */
 async function clickAndTrack(selector, nth = 0) {
   const rect = await evalJson(`(function () {
     var els = Array.prototype.slice.call(document.querySelectorAll(${JSON.stringify(selector)}));
@@ -249,6 +262,34 @@ async function clickAndTrack(selector, nth = 0) {
     return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), w: Math.round(r.width), h: Math.round(r.height) };
   }())`);
   if (rect === null || rect.w === 0 || rect.h === 0) return null;
+  // 两个**页面侧只读**计时器（S2-1 修法：提高采样率，不放宽阈值）：
+  //   ① 1ms 轮询（主口径）——记录 `copied` 首次出现／首次消失的 `performance.now()`（偏差 ≤ 一拍）；
+  //   ② `MutationObserver`（交叉校验）——独立第二条时间线，两者互证。
+  const observed = await evaluate(`(function () {
+    var el = document.querySelectorAll(${JSON.stringify(selector)})[${nth}];
+    if (!el) return false;
+    var st = { pollAdd: null, pollRemove: null, obsAdd: null, obsRemove: null, polls: 0, clickT: null, cls0: el.className };
+    window.__t121obs = st;
+    var on = function () { return (" " + el.className + " ").indexOf(" copied ") > -1; };
+    var tick = function () {
+      var t = performance.now();
+      st.polls += 1;
+      if (on() && st.pollAdd === null) st.pollAdd = t;
+      if (!on() && st.pollAdd !== null && st.pollRemove === null) st.pollRemove = t;
+      if (t - st.installedAt < 900) setTimeout(tick, 1); else st.done = true;
+    };
+    var obs = new MutationObserver(function () {
+      var t = performance.now();
+      if (on() && st.obsAdd === null) st.obsAdd = t;
+      if (!on() && st.obsAdd !== null && st.obsRemove === null) st.obsRemove = t;
+    });
+    obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+    document.addEventListener("click", function () { if (st.clickT === null) st.clickT = performance.now(); }, true);
+    st.installedAt = performance.now();
+    setTimeout(tick, 1);
+    return true;
+  }())`);
+  if (observed !== true) return null;
   const t0 = Date.now();
   await s('Input.dispatchMouseEvent', { type: 'mouseMoved', x: rect.x, y: rect.y });
   await s('Input.dispatchMouseEvent', { type: 'mousePressed', x: rect.x, y: rect.y, button: 'left', clickCount: 1 });
@@ -260,22 +301,40 @@ async function clickAndTrack(selector, nth = 0) {
     timeline.push({ t: Date.now() - t0, cls: st.cls, bg: st.bg, tt: st.transformTransition });
     await sleep(20);
   }
-  return { rect, timeline };
+  const obs = await evalJson(`(function () {
+    var st = window.__t121obs || {};
+    var nz = function (v) { return v === undefined ? null : v; };
+    return { pollAdd: nz(st.pollAdd), pollRemove: nz(st.pollRemove), obsAdd: nz(st.obsAdd), obsRemove: nz(st.obsRemove),
+      polls: st.polls || 0, clickT: nz(st.clickT), done: st.done === true, cls0: st.cls0 || null };
+  }())`);
+  return { rect, timeline, obs };
 }
 
 /** 时间线 → 可断言摘要（`copied` 首/末次命中、背景稳定后的绿值、回落态）。 */
 function summarize(track) {
   const tl = track.timeline;
+  const obs = track.obs ?? { pollAdd: null, pollRemove: null, obsAdd: null, obsRemove: null, clickT: null, polls: 0 };
   const on = tl.filter((x) => (' ' + x.cls + ' ').includes(' copied '));
   const settled = on.filter((x) => x.t >= 260 && x.t <= 430);
   const green = settled.find((x) => x.bg === 'rgb(52, 199, 89)') ?? null;
   const last = tl[tl.length - 1] ?? null;
   const first = tl[0] ?? null;
+  const round2 = (v) => (v === null || v === undefined ? null : Number(v.toFixed(2)));
+  const pollCopiedMs = obs.pollAdd !== null && obs.pollRemove !== null ? obs.pollRemove - obs.pollAdd : 0;
+  const obsCopiedMs = obs.obsAdd !== null && obs.obsRemove !== null ? obs.obsRemove - obs.obsAdd : 0;
+  const addLatency = obs.pollAdd !== null && obs.clickT !== null ? obs.pollAdd - obs.clickT : null;
   return {
     samples: tl.length,
     firstOn: on.length ? on[0].t : null,
     lastOn: on.length ? on[on.length - 1].t : null,
     copiedMs: on.length ? on[on.length - 1].t - on[0].t : 0,
+    pollCopiedMs: round2(pollCopiedMs),
+    obsCopiedMs: round2(obsCopiedMs),
+    instrumentDelta: round2(Math.abs(pollCopiedMs - obsCopiedMs)),
+    pollAdd: round2(obs.pollAdd),
+    pollRemove: round2(obs.pollRemove),
+    addLatency: round2(addLatency),
+    polls: obs.polls,
     settledBg: settled.length ? settled[0].bg : null,
     greenSettled: green !== null,
     spring: (on[0] ?? first)?.tt ?? null,
@@ -306,14 +365,20 @@ check('A2', '点击后按钮获得 `copied` 类', cardSum.firstOn !== null, card
 check('A3', 'copied 态 computed 背景 = 成功色 --ok（过渡结束后采样）', cardSum.greenSettled === true, cardSum.settledBg, 'rgb(52, 199, 89)');
 check('A4', '450ms 后回落（类名移除）', cardSum.after !== null && !(' ' + cardSum.after.cls + ' ').includes(' copied '), cardSum.after, '不含 copied');
 check('A5', '回落背景 ≠ 成功色（回到常态底色）', cardSum.after !== null && cardSum.after.bg !== 'rgb(52, 199, 89)', cardSum.after && cardSum.after.bg, '≠ rgb(52, 199, 89)');
-check('A6', 'copied 类存活 400–600ms（450ms 规格 ± 采样粒度）',
-  cardSum.copiedMs >= 400 && cardSum.copiedMs <= 600, cardSum.copiedMs + 'ms', '400–600ms');
+check('A6', 'copied 类存活 440–520ms（**页面侧 1ms 轮询**主口径；下界 440 比红队要求的 400 更严，上界只容忍浏览器定时器抖动）',
+  cardSum.pollCopiedMs >= 440 && cardSum.pollCopiedMs <= 520,
+  cardSum.pollCopiedMs + 'ms（MutationObserver ' + cardSum.obsCopiedMs + 'ms／驱动侧 ' + cardSum.copiedMs + 'ms）', '440–520ms');
 check('A7', '弹簧过渡在按钮上（450ms spring）', typeof cardSum.spring === 'string' && /0\.45s|450ms/.test(cardSum.spring),
   cardSum.spring, '含 .45s');
 const norm = (s) => (typeof s === 'string' ? s.replace(/\r\n/g, '\n') : s);
 check('A8', '真剪贴板回读 = 该卡 <pre> 原文（双反馈的另一通道真的也成立）',
   norm(cardClip) === PROMPT(0), norm(cardClip).slice(0, 40), PROMPT(0).slice(0, 40));
 check('A9', '一次点击只出一枚 toast（委派不倍增）', cardToasts === 1, cardToasts, 1);
+check('A10', '两条独立页面侧计时器互证（轮询 vs MutationObserver 差 ≤ 25ms；点击→加类延迟 < 30ms）',
+  cardSum.pollAdd !== null && cardSum.pollRemove !== null && cardSum.obsCopiedMs > 0
+    && cardSum.instrumentDelta <= 25 && cardSum.addLatency !== null && cardSum.addLatency < 30,
+  { pollAdd: cardSum.pollAdd, pollRemove: cardSum.pollRemove, addLatency: cardSum.addLatency, polls: cardSum.polls, delta: cardSum.instrumentDelta },
+  '两计时器差 ≤ 25ms 且 addLatency < 30ms');
 
 /* ── B. Sheet 内 prompt 复制按钮（静态渲染面） ───────────────────────────── */
 

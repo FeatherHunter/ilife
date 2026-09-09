@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：121｜since：2026-09-09T14:30:00Z｜until：2026-09-09T14:42:50Z｜条目数：28｜导出时间：2026-09-09T14:42:48.991Z
+> 票号过滤：121｜since：2026-09-09T14:30:00Z｜until：2026-09-09T15:03:30Z｜条目数：44｜导出时间：2026-09-09T15:04:16.429Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -33,4 +33,20 @@ RUN ticket=121 runId=491d8c46-ad89-4a4b-ba62-54d77cc703fb cmd="pnpm boundaries" 
 RUN ticket=121 runId=0680ec17-a135-40dc-a9aa-a90f96196001 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=35724 at=2026-09-09T14:41:11.801Z
 RUN ticket=121 runId=0eb70746-28ba-4928-9002-23c739f9dcce cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=3012 at=2026-09-09T14:41:12.715Z
 RUN ticket=121 runId=301a040c-d8e7-4f76-8b99-b012b8de233b cmd="pnpm test" waitedMs=0 exit=1 pid=3920 at=2026-09-09T14:41:48.200Z
+RUN ticket=121 runId=52ef91f0-45a0-43f4-80a1-2badb591dd8f cmd="git add docs/research/t121-copied-runtime.md docs/research/t121-gate-runs.log .changeset/t121-copy-copied-runtime.md" waitedMs=0 exit=0 pid=30808 at=2026-09-09T14:42:55.477Z
+RUN ticket=121 runId=a065e0ba-f3f3-452b-8101-4daaf8fc73a9 cmd="git commit --only docs/research/t121-copied-runtime.md docs/research/t121-gate-runs.log .changeset/t121-copy-copied-runtime.md -F .scratch/t121/commit-2.txt" waitedMs=0 exit=0 pid=37680 at=2026-09-09T14:42:55.610Z
+RUN ticket=121 runId=95fff23b-a66d-4627-8b83-06ee04ac1a40 cmd="pnpm build" waitedMs=0 exit=0 pid=29000 at=2026-09-09T14:44:56.870Z
+RUN ticket=121 runId=4016aa7c-f18f-475e-85ac-9d0d04fcdb32 cmd="node docs/research/t121-browser-evidence.mjs --label fix1" waitedMs=0 exit=0 pid=35644 at=2026-09-09T15:00:39.671Z
+RUN ticket=121 runId=4e9cc0c6-fc35-4df1-b5ac-4841c708e286 cmd="node D:\\ilife\\.scratch\\t121\\clean-build.mjs" waitedMs=10003 exit=0 pid=21312 at=2026-09-09T15:01:31.705Z
+RUN ticket=121 runId=feb3db9f-6143-4268-81b9-f1c5fde8af9d cmd="node D:\\ilife\\docs\\research\\t121-browser-evidence.mjs --label r1" waitedMs=0 exit=0 pid=36360 at=2026-09-09T15:01:37.093Z
+RUN ticket=121 runId=6af3ae0a-ea74-425b-95ac-043246af8501 cmd="node D:\\ilife\\docs\\research\\t121-browser-evidence.mjs --label r2" waitedMs=0 exit=0 pid=31324 at=2026-09-09T15:01:42.455Z
+RUN ticket=121 runId=27b153ba-9cac-4534-b93a-07fd171b07c5 cmd="node D:\\ilife\\docs\\research\\t121-browser-evidence.mjs --label r3" waitedMs=0 exit=0 pid=30660 at=2026-09-09T15:01:47.804Z
+RUN ticket=121 runId=10c1c98f-08e8-4786-a610-0c54813c8d9f cmd="node D:\\ilife\\docs\\research\\t121-browser-evidence.mjs --label r4" waitedMs=0 exit=0 pid=32160 at=2026-09-09T15:01:53.189Z
+RUN ticket=121 runId=82156706-260f-4c4c-9c4b-049af7be96c5 cmd="node D:\\ilife\\docs\\research\\t121-browser-evidence.mjs --label r5" waitedMs=0 exit=0 pid=35700 at=2026-09-09T15:01:58.552Z
+RUN ticket=121 runId=cb2aed36-17b0-4d7c-b88d-73cc02503a62 cmd="pnpm build" waitedMs=0 exit=0 pid=37184 at=2026-09-09T15:02:18.237Z
+RUN ticket=121 runId=24b11c27-cfb2-400d-8d87-7cdf2055a514 cmd="node docs/research/t121-browser-evidence.mjs --label m4" waitedMs=0 exit=1 pid=38848 at=2026-09-09T15:02:23.608Z
+RUN ticket=121 runId=e386ace7-59aa-4220-8b58-e3531db0c5e7 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=0 exit=1 pid=37124 at=2026-09-09T15:02:29.199Z
+RUN ticket=121 runId=b6bdbd3e-dba7-4e6e-94ef-28dc3de87b08 cmd="pnpm build" waitedMs=1 exit=0 pid=6548 at=2026-09-09T15:02:34.329Z
+RUN ticket=121 runId=35f680b1-27f0-469b-8c5d-f8ce20c3be81 cmd="node docs/research/t121-browser-evidence.mjs --label after-m4" waitedMs=0 exit=0 pid=30516 at=2026-09-09T15:02:39.712Z
+RUN ticket=121 runId=d5898f3d-0c12-454c-8f77-e9f811130771 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=0 exit=0 pid=8240 at=2026-09-09T15:02:47.026Z
 ```
