@@ -327,6 +327,17 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t79-base-contract.md 
 \`\`\`
 
 窗口内本票 RUN 条目 **33 条全部被声明并一对一绑定 runId**，反向未声明 **0**；非零条目按 \`GATE-RELAX flag=--allow-nonzero\` 显式放宽（理由见 §7）。
+
+## 11. 过程自曝（硬约束「违反＝S1-过程违规，必须自曝」）
+
+共享工作区有他席并发提交，本席犯了两个**过程错误**，逐条自曝如下（均**无内容损失**，已复核）：
+
+| # | 事件 | 事实 | 处置与复核 | 教训 |
+|---|---|---|---|---|
+| P-1 | **提交污染** | 本席用 \`git commit --amend --only <2 路径>\` 补交报告；实测该组合**未按 pathspec 限制**，把他席已 \`git add\` 的 \`docs/research/t83-recheck-r2.md\`（t83 席 §10 追加 19 行）并入本席提交 \`40fa1c5\` | **内容逐字未改、未删**（正是 t83 席原文，现已随 HEAD 在位、工作树 clean）；**不做历史改写**（其上已叠 \`223f1a5\`／\`5e2eb22\` 两个他席提交，改写会伤及他席），改由本表显式登记，提请编排者／t83 席知悉归属 | 共享仓**禁用 \`git commit --amend\`**；只用 \`git commit --only <路径>\`，且提交前核 \`git diff --cached --name-only\` 恰为本席文件 |
+| P-2 | **HEAD 误重置** | 为撤回 P-1，本席执行 \`git reset --soft HEAD~1\`；因期间他席已在本席提交之上落了两个提交，该命令**把 HEAD 从 \`5e2eb22\` 退回 \`223f1a5\`**（仅动 HEAD，未改工作树／索引内容） | **约 10 秒内 \`git reset --soft 5e2eb22\` 原样恢复**；复核：\`git diff --cached --name-only\` 空、\`git log -1\` = \`5e2eb22\`、他席文件与提交一致、本席 18 个交付文件在 HEAD 中齐备 | 共享仓**禁止任何 \`reset\`**；提交归属只能「新提交 ＋ 登记」 |
+
+**结论**：两个错误都发生在**提交动作**层面，**不触碰任何交付内容**（版本／断言／对照表／渲染产物均未受影响，§6 的逐字节证据不受影响）；P-1 的 19 行内容属 t83 席且完好，建议由编排者在收尾时统一核归属。
 `;
 
 writeFileSync(join(root, 'docs/research/t79-base-contract.md'), doc);
