@@ -7,7 +7,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { getActivityFactor, parseDate } from './utils.js';
+import { EX_ALIVE, getActivityFactor, parseDate } from './utils.js';
 import { ok, rejection } from './result.js';
 import type { AnalysisResult } from './result.js';
 
@@ -159,7 +159,7 @@ export function dietDeficitAnalysis(db: DatabaseSync, startDate: string, endDate
   ).all(start, end) as unknown as Array<{ date: string; v: number | null }>;
   const dietRows: Array<[string, number | null]> = dietRaw.map((r) => [r.date, r.v]);
   const exRaw = db.prepare(
-    'SELECT date, SUM(calories_burned) AS v FROM exercise_log WHERE date >= ? AND date <= ? GROUP BY date ORDER BY date ASC',
+    'SELECT date, SUM(calories_burned) AS v FROM exercise_log WHERE date >= ? AND date <= ? AND ' + EX_ALIVE + ' GROUP BY date ORDER BY date ASC',
   ).all(start, end) as unknown as Array<{ date: string; v: number | null }>;
   const exRows: Array<[string, number | null]> = exRaw.map((r) => [r.date, r.v]);
   if (dietRows.length === 0) return rejection('无记录（' + start + ' ~ ' + end + '）');

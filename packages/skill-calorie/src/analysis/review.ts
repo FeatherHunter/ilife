@@ -7,7 +7,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { getActivityFactor, shiftISODate, todayISO } from './utils.js';
+import { EX_ALIVE, getActivityFactor, shiftISODate, todayISO } from './utils.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -66,7 +66,7 @@ export function query5dims(db: DatabaseSync, start: string, end: string): FiveDi
   const dailyBurn = db.prepare(
     'SELECT date, SUM(calories_burned) AS totalBurned, SUM(duration_minutes) AS totalMinutes,' +
     ' GROUP_CONCAT(DISTINCT exercise_type) AS types, GROUP_CONCAT(DISTINCT category) AS categories' +
-    ' FROM exercise_log WHERE date BETWEEN ? AND ? GROUP BY date ORDER BY date',
+    ' FROM exercise_log WHERE date BETWEEN ? AND ? AND ' + EX_ALIVE + ' GROUP BY date ORDER BY date',
   ).all(start, end) as unknown as DayBurn[];
   const weightLogs = db.prepare(
     'SELECT date, weight_kg AS weightKg FROM weight_log WHERE date BETWEEN ? AND ? ORDER BY date',

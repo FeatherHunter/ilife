@@ -2,6 +2,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../../fetch/errors.js';
 import { seriesAvg, seriesDelta } from '../series.js';
+import { EX_ALIVE } from '../utils.js';
 import type { DaySeries } from '../series.js';
 
 export const MIN_DAYS = 7;
@@ -81,7 +82,7 @@ export interface ExRow { date: string; type: string; category: string | null; mi
 
 export function exerciseRows(db: DatabaseSync, start: string, end: string): ExRow[] {
   const raw = db.prepare(
-    'SELECT date AS d, exercise_type AS t, category AS c, duration_minutes AS dur, calories_burned AS k FROM exercise_log WHERE date BETWEEN ? AND ? ORDER BY date',
+    'SELECT date AS d, exercise_type AS t, category AS c, duration_minutes AS dur, calories_burned AS k FROM exercise_log WHERE date BETWEEN ? AND ? AND ' + EX_ALIVE + ' ORDER BY date',
   ).all(start, end) as unknown as Array<{ d: string; t: string; c: string | null; dur: number | null; k: number | null }>;
   return raw.map((r) => ({ date: r.d, type: r.t, category: r.c, minutes: r.dur, kcal: r.k }));
 }

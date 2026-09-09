@@ -7,7 +7,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { calcTdee, shiftISODate, todayISO } from './utils.js';
+import { EX_ALIVE, calcTdee, shiftISODate, todayISO } from './utils.js';
 
 export const WATER_NAME = '💧水';
 
@@ -110,7 +110,7 @@ export function buildSeries(db: DatabaseSync, start: string, end: string): DaySe
     'SELECT date, SUM(grams) AS v FROM food_log WHERE date BETWEEN ? AND ? AND food_name = ? GROUP BY date',
   ).all(start, end, WATER_NAME) as unknown as DateVal[];
   const ex = db.prepare(
-    'SELECT date, SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? GROUP BY date',
+    'SELECT date, SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND ' + EX_ALIVE + ' GROUP BY date',
   ).all(start, end) as unknown as DateVal[];
   const wrows = db.prepare(
     'SELECT date, weight_kg AS v FROM weight_log WHERE date BETWEEN ? AND ? ORDER BY date, time ASC, id ASC',

@@ -5,7 +5,7 @@
  */
 import { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { todayISO } from './utils.js';
+import { EX_ALIVE, todayISO } from './utils.js';
 import { sameDayCompare, scenarioA1, scenarioA2, scenarioA3, scenarioA4, scenarioA5, scenarioB1 } from './weightCompare.js';
 import type { ScenarioOpts, ScenarioResult } from './weightCompare.js';
 import { scenarioB8, scenarioE1, scenarioE2, scenarioE3, scenarioE5, scenarioE6 } from './weightCompare2.js';
@@ -65,7 +65,7 @@ function monthRange(m: string): [string, string] {
 
 export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): ScenarioResult {
   const monthsRaw = db.prepare(
-    "SELECT strftime('%Y-%m', date) AS m, COALESCE(SUM(calories_burned), 0) AS v FROM exercise_log WHERE date IS NOT NULL GROUP BY m ORDER BY m",
+    "SELECT strftime('%Y-%m', date) AS m, COALESCE(SUM(calories_burned), 0) AS v FROM exercise_log WHERE date IS NOT NULL AND " + EX_ALIVE + ' GROUP BY m ORDER BY m',
   ).all() as unknown as Array<{ m: string; v: number }>;
   const months: Array<[string, number]> = monthsRaw.map((r) => [r.m, r.v]);
   if (months.length < 2) throw new FetchError('数据不足(需至少 2 个月有运动记录)');

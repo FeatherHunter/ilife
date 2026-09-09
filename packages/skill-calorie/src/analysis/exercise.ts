@@ -8,7 +8,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { getActivityFactor, parseDate, shiftISODate } from './utils.js';
+import { EX_ALIVE, getActivityFactor, parseDate, shiftISODate } from './utils.js';
 import { ok, rejection } from './result.js';
 import type { AnalysisResult } from './result.js';
 
@@ -42,7 +42,7 @@ export interface ExerciseTrend { daysWithExercise: number; totalDays: number; co
 export function exerciseTrend(db: DatabaseSync, startDate: string, endDate?: string | null): AnalysisResult<ExerciseTrend> {
   const [start, end] = rangeOf(startDate, endDate);
   const raw = db.prepare(
-    'SELECT date AS d, exercise_type AS t, duration_minutes AS dur, calories_burned AS k FROM exercise_log WHERE date >= ? AND date <= ? ORDER BY date ASC',
+    'SELECT date AS d, exercise_type AS t, duration_minutes AS dur, calories_burned AS k FROM exercise_log WHERE date >= ? AND date <= ? AND ' + EX_ALIVE + ' ORDER BY date ASC',
   ).all(start, end) as unknown as Array<{ d: string; t: string; dur: number | null; k: number | null }>;
   const rows: Array<[string, string, number | null, number | null]> = raw.map((r) => [r.d, r.t, r.dur, r.k]);
   if (rows.length === 0) return rejection('无运动记录（' + start + ' ~ ' + end + '）');
@@ -83,7 +83,7 @@ export interface ExerciseBreakdown { totalCalories: number; totalCount: number; 
 export function exerciseTypeBreakdown(db: DatabaseSync, startDate: string, endDate?: string | null): AnalysisResult<ExerciseBreakdown> {
   const [start, end] = rangeOf(startDate, endDate);
   const raw = db.prepare(
-    'SELECT exercise_type AS t, SUM(calories_burned) AS k, COUNT(*) AS n, SUM(duration_minutes) AS dur FROM exercise_log WHERE date >= ? AND date <= ? GROUP BY exercise_type ORDER BY SUM(calories_burned) DESC',
+    'SELECT exercise_type AS t, SUM(calories_burned) AS k, COUNT(*) AS n, SUM(duration_minutes) AS dur FROM exercise_log WHERE date >= ? AND date <= ? AND ' + EX_ALIVE + ' GROUP BY exercise_type ORDER BY SUM(calories_burned) DESC',
   ).all(start, end) as unknown as Array<{ t: string; k: number | null; n: number; dur: number | null }>;
   const rows: Array<[string, number | null, number, number | null]> = raw.map((r) => [r.t, r.k, r.n, r.dur]);
   if (rows.length === 0) return rejection('无运动记录（' + start + ' ~ ' + end + '）');
@@ -106,7 +106,7 @@ export interface DeficitContribution { dietDeficit: number; dietContribPct: numb
 
 export function exerciseDeficitContribution(db: DatabaseSync, startDate: string, endDate?: string | null): AnalysisResult<DeficitContribution> {
   const [start, end] = rangeOf(startDate, endDate);
-  const exRow = db.prepare('SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date >= ? AND date <= ?').get(start, end) as { v: number | null };
+  const exRow = db.prepare('SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date >= ? AND date <= ? AND ' + EX_ALIVE).get(start, end) as { v: number | null };
   const inRow = db.prepare('SELECT SUM(calories) AS v FROM food_log WHERE date >= ? AND date <= ?').get(start, end) as { v: number | null };
   const totalEx = exRow.v ?? 0;
   const totalIntake = inRow.v ?? 0;
@@ -224,7 +224,7 @@ export function exerciseReview(db: DatabaseSync, startDate: string, endDate?: st
       }
     }
     const exRaw = db.prepare(
-      'SELECT exercise_type AS t, duration_minutes AS dur, calories_burned AS k, reps AS r, load_kg AS l FROM exercise_log WHERE date = ? ORDER BY exercise_type',
+      'SELECT exercise_type AS t, duration_minutes AS dur, calories_burned AS k, reps AS r, load_kg AS l FROM exercise_log WHERE date = ? AND ' + EX_ALIVE + ' ORDER BY exercise_type',
     ).all(d) as unknown as Array<{ t: string; dur: number | null; k: number | null; r: number | null; l: number | null }>;
     const exRows: Array<[string, number | null, number | null, number | null, number | null]> = exRaw.map((r) => [r.t, r.dur, r.k, r.r, r.l]);
     const actual = new Map<string, { sets: number; calories: number; minutes: number }>();

@@ -7,6 +7,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import type { DaySeries } from './series.js';
+import { EX_ALIVE } from './utils.js';
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -104,8 +105,8 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
         try {
           const start = (series[0] as DaySeries).date;
           const end = (series[series.length - 1] as DaySeries).date;
-          const st = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '力量'").get(start, end) as { v: number | null };
-          const ca = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '有氧'").get(start, end) as { v: number | null };
+          const st = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '力量' AND " + EX_ALIVE).get(start, end) as { v: number | null };
+          const ca = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '有氧' AND " + EX_ALIVE).get(start, end) as { v: number | null };
           extra.push('力量消耗合计 ' + round(st.v ?? 0) + ' 卡 vs 有氧 ' + round(ca.v ?? 0) + ' 卡');
         } catch (e) { extra.push('力量/有氧分层不可用: ' + (e as Error).message); }
       } else extra.push('力量/有氧分层不可用: 缺 db');
