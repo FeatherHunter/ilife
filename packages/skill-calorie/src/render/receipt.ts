@@ -3,6 +3,12 @@
  * 收据只承载“已执行结果”的呈现数据：调用方先调 T4 fetch 写数（addPhotos/deletePhoto/
  * updateTag/tagAdd/tagRemove），再把返回值组装进来，本层不写库、不读二进制。
  * 失败回执对齐老家 build_error：场景/操作/原因/数据文本/建议/修正 prompt。
+ *
+ * #97 · M5 写库回执契约（**只追加字段**，v1；正本 `docs/research/t97-m5-contract.md`）：
+ * 旧版铁则 M5（`SKILL.md:30-41`）要求写库类 CLI stdout 含 `id=<N>` ＋ `日期 <YYYY-MM-DD>
+ * <HH:MM:SS>` ＋ `影响 N 行` ＋ 写入字段摘要；新架构 stdout 是**一行 JSON**（P9），四要素落在
+ * `CrudReceipt` 的追加字段上：`recordId`／`ids`／`idSource` ＋ `meta.actionAt` ＋ `affectedRows`
+ * ＋ `writtenFields`，并以 `m5Line` 给出旧版整行文本的等价物。既有字段一字未改。
  */
 import { CalorieRenderError } from './errors.js';
 
@@ -34,7 +40,7 @@ export interface ReceiptMeta {
   source: string;
 }
 
-export interface CrudReceipt {
+export interface CrudReceipt extends M5Fields {
   scene: string;
   action: string;
   op: 'create' | 'update' | 'delete';
@@ -56,6 +62,91 @@ export interface ErrorReceipt {
   suggestions: string[];
   fixPrompt: string;
   meta: ReceiptMeta;
+}
+
+/* ---------------------------------------------------------------- #97 · M5 追加字段 */
+
+/** M5 契约版本（回执自证：探针/测试据此断言「本回执满足哪一版 M5」）。 */
+export const M5_CONTRACT = '1' as const;
+/** 影响行数来源：SQLite `total_changes()` 在本键写库前后的增量（真实库行数，非自报）。 */
+export const M5_AFFECTED_SOURCE = 'sqlite:total_changes' as const;
+
+/** id 口径（旧版 `id=<N>`；条件/批量写旧版为 `id=n/a`）。
+ * - `record`：单条记录 id（`recordId` 或 `ids` 非空）
+ * - `singleton`：单例行表（user_profile／daily_goal），固定 id=1
+ * - `condition`：按条件/批量的写（旧版 `id=n/a`，`ids` 为空数组）
+ * - `none`：本次无写入且无 id 可指（如重复跳过且拿不到原 id）
+ */
+export type M5IdSource = 'record' | 'singleton' | 'condition' | 'none';
+
+export interface M5Fields {
+  m5Contract: '1';
+  affectedRows: number;
+  affectedRowsSource: 'sqlite:total_changes';
+  ids: number[];
+  idSource: M5IdSource;
+  writtenFields: string[];
+  m5Line: string;
+}
+
+export interface M5Input {
+  recordId: number | null;
+  ids?: number[];
+  idSource?: M5IdSource;
+  affectedRows?: number;
+  writtenFields?: string[];
+  actionAt: string;
+  noChange?: boolean;
+}
+
+/** 旧版整行文本等价物：`id=<N|n/a> | 日期 <YYYY-MM-DD HH:MM:SS> | 影响 N 行 | 字段 a,b`。 */
+export function m5LineOf(input: {
+  recordId: number | null; ids: number[]; actionAt: string; affectedRows: number; writtenFields: string[];
+}): string {
+  const idText = input.recordId !== null
+    ? String(input.recordId)
+    : (input.ids.length > 0 ? input.ids.join(',') : 'n/a');
+  const fields = input.writtenFields.length > 0 ? input.writtenFields.join(',') : '—';
+  return 'id=' + idText + ' | 日期 ' + input.actionAt + ' | 影响 ' + input.affectedRows + ' 行 | 字段 ' + fields;
+}
+
+/** M5 字段派生（单一来源：`buildCrudReceipt` 与 `withM5` 都走这里）。 */
+export function buildM5(input: M5Input): M5Fields {
+  const ids = [...(input.ids ?? (input.recordId !== null ? [input.recordId] : []))];
+  const affectedRows = input.affectedRows ?? 0;
+  const writtenFields = [...(input.writtenFields ?? [])];
+  const idSource: M5IdSource = input.idSource
+    ?? (input.recordId !== null || ids.length > 0
+      ? 'record'
+      : (input.noChange ? 'none' : 'condition'));
+  if (!Number.isInteger(affectedRows) || affectedRows < 0) {
+    throw new CalorieRenderError('bad-input', 'M5 affectedRows 须为非负整数：' + String(affectedRows));
+  }
+  return {
+    m5Contract: M5_CONTRACT,
+    affectedRows,
+    affectedRowsSource: M5_AFFECTED_SOURCE,
+    ids,
+    idSource,
+    writtenFields,
+    m5Line: m5LineOf({ recordId: input.recordId, ids, actionAt: input.actionAt, affectedRows, writtenFields }),
+  };
+}
+
+/** 只追加：把 M5 字段补进既有回执（photo.ts 三回执与本层同一入口，既有字段一字不改）。 */
+export function withM5(receipt: CrudReceipt, patch: Omit<M5Input, 'recordId' | 'actionAt'> = {}): CrudReceipt {
+  return {
+    ...receipt,
+    ...buildM5({
+      recordId: receipt.recordId,
+      ids: patch.ids ?? receipt.ids,
+      idSource: patch.idSource ?? receipt.idSource,
+      affectedRows: patch.affectedRows ?? receipt.affectedRows,
+      writtenFields: patch.writtenFields ?? receipt.writtenFields,
+      actionAt: receipt.meta.actionAt,
+      noChange: receipt.noChange,
+    }),
+  };
 }
 
 function nowStamp(): string {
@@ -82,23 +173,36 @@ export function buildCrudReceipt(input: {
   noChange?: boolean;
   wakeWord: string;
   source: string;
+  /** #97 · M5 追加字段（缺省：ids 由 recordId 派生、affectedRows=0、writtenFields=[]）。 */
+  ids?: number[];
+  idSource?: M5IdSource;
+  affectedRows?: number;
+  writtenFields?: string[];
 }): CrudReceipt {
   if (!input.scene) throw new CalorieRenderError('bad-input', 'scene 必填');
   if (!input.summary) throw new CalorieRenderError('bad-input', 'summary 必填（回执无摘要不返空页）');
   if (input.op !== 'create' && input.op !== 'update' && input.op !== 'delete') {
     throw new CalorieRenderError('bad-input', 'op 非法：' + String(input.op));
   }
+  const recordId = input.recordId ?? null;
+  const noChange = input.noChange ?? false;
+  const meta = buildReceiptMeta(input.scene, input.wakeWord, input.source);
   return {
     scene: input.scene,
     action: input.action || input.scene,
     op: input.op,
-    recordId: input.recordId ?? null,
+    recordId,
     summary: input.summary,
     items: input.items ?? [],
     tagDiff: input.tagDiff ?? null,
     distance: input.distance ?? null,
-    noChange: input.noChange ?? false,
-    meta: buildReceiptMeta(input.scene, input.wakeWord, input.source),
+    noChange,
+    meta,
+    ...buildM5({
+      recordId, noChange, actionAt: meta.actionAt,
+      ids: input.ids, idSource: input.idSource,
+      affectedRows: input.affectedRows, writtenFields: input.writtenFields,
+    }),
   };
 }
 

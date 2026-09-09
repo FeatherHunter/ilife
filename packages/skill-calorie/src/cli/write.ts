@@ -49,8 +49,8 @@ import {
 } from '../fetch/body.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import type { SourceChoice } from '../kcal.js';
-import { buildCrudReceipt } from '../render/receipt.js';
-import type { CrudReceipt } from '../render/receipt.js';
+import { buildCrudReceipt, withM5 } from '../render/receipt.js';
+import type { CrudReceipt, M5IdSource } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { isCalorieWriteKey } from './keys.js';
@@ -128,6 +128,56 @@ function deleteStatus(kind: 'soft' | 'hard', base = '已删除'): string {
   return base + (kind === 'soft' ? '（软，不可恢复）' : '（硬，不可恢复）');
 }
 
+/* ------------------------------------------------ #97 · M5 回执契约（追加字段，正本 t97-m5-contract.md） */
+
+/** 影响行数来源：SQLite `total_changes()` 在本键写库前后的增量。
+ * 真实库行数（INSERT／UPDATE／DELETE／软删标记一律计；`INSERT OR REPLACE` 命中已有行＝1，
+ * `INSERT OR IGNORE` 命中已有行＝0——实测 node:sqlite v24），非自报。 */
+function totalChanges(db: DatabaseSync): number {
+  const row = db.prepare('SELECT total_changes() AS n').get() as { n?: number } | undefined;
+  return row && typeof row.n === 'number' ? Number(row.n) : 0;
+}
+
+/** 写入字段摘要（CLI 参数名口径）：create 键＝该键写入字段全集（缺省值也算写入）；
+ * update 键＝本次实际变更字段；delete 键＝空数组（无写入字段，旧版同样只印 id/日期/影响）。 */
+const F = {
+  diet: ['foodName', 'calories', 'protein', 'carbs', 'fat', 'grams', 'note', 'date', 'time'],
+  water: ['ml', 'note', 'date', 'time'],
+  weight: ['kg', 'note', 'date', 'time'],
+  weightBatch: ['kg', 'date'],
+  exercise: ['type', 'calories', 'minutes', 'date', 'time', 'note', 'reps', 'category', 'difficulty', 'distance', 'heartRate', 'maxHeartRate', 'steps', 'setIndex', 'loadKg', 'backfill'],
+  photo: ['srcPaths', 'tag', 'note', 'date', 'time'],
+  product: ['productName', 'brand', 'calories', 'protein', 'fat', 'saturatedFat', 'carbohydrates', 'sugar', 'dietaryFiber', 'sodium', 'note'],
+  goal: ['calorie', 'protein', 'carbs', 'fat', 'water'],
+} as const;
+
+/** 库列名 → CLI 参数名（update 键按实际变更列回报写入字段摘要）。 */
+const COL_CLI: Record<string, string> = {
+  food_name: 'foodName', grams: 'grams', calories: 'calories', protein: 'protein', carbs: 'carbs',
+  fat: 'fat', note: 'note', date: 'date', time: 'time',
+  exercise_type: 'type', calories_burned: 'calories', duration_minutes: 'minutes', category: 'category',
+  difficulty: 'difficulty', distance_km: 'distance', avg_heart_rate: 'heartRate',
+  max_heart_rate: 'maxHeartRate', steps: 'steps', reps: 'reps', load_kg: 'loadKg',
+  set_index: 'setIndex', is_backfill: 'backfill',
+  product_name: 'productName', brand: 'brand', saturated_fat: 'saturatedFat', carbohydrates: 'carbohydrates',
+  sugar: 'sugar', dietary_fiber: 'dietaryFiber', sodium: 'sodium',
+};
+
+const cliNames = (cols: readonly string[]): string[] => cols.map((c) => COL_CLI[c] ?? c);
+
+/** 只取「实际提供」的参数名（写入字段摘要；`undefined` 不算写入）。 */
+function provided(params: Record<string, unknown>, names: readonly string[]): string[] {
+  return names.filter((n) => params[n] !== undefined);
+}
+
+/** `input` 里实际有值的键（体脂／围度等动态字段表）。 */
+function definedKeys(input: Record<string, unknown>): string[] {
+  return Object.keys(input).filter((k) => input[k] !== undefined);
+}
+
+/** M5 追加补丁：ids／idSource／writtenFields（`affectedRows` 由 dispatchWrite 统一注入）。 */
+type M5Patch = { ids?: number[]; idSource?: M5IdSource; writtenFields?: string[] };
+
 /** C6 #43 · 写收据 HTML 结构化分项：摘要 + 操作元 + items 逐条（id/日期/状态/原因/明细）。 */
 function receiptHtml(scene: string, summary: string, op: string, recordId: number | null, items?: CrudReceipt['items']): string {
   const list = (items ?? []).length > 0
@@ -146,7 +196,7 @@ function out(receipt: CrudReceipt): WriteOut {
 
 const R = (
   scene: string, op: CrudReceipt['op'], summary: string, wakeWord: string, source: string,
-  extra?: Partial<Pick<CrudReceipt, 'recordId' | 'items' | 'tagDiff' | 'distance' | 'noChange' | 'action'>>,
+  extra?: Partial<Pick<CrudReceipt, 'recordId' | 'items' | 'tagDiff' | 'distance' | 'noChange' | 'action'>> & M5Patch,
 ): CrudReceipt =>
   buildCrudReceipt({
     scene, action: scene, op, recordId: null, summary, items: [], wakeWord, source,
@@ -224,11 +274,16 @@ function oneExercise(item: Record<string, unknown>, i: string): ExerciseRecordIn
   };
 }
 
-/** 写分发（唯一出口 cmd_read 内调用；未知键上游已拦，此处再拦一道）。 */
+/** 写分发（唯一出口 cmd_read 内调用；未知键上游已拦，此处再拦一道）。
+ * #97 · M5：`affectedRows` 在此统一注入——写库前后各取一次 SQLite `total_changes()`，
+ * 增量即「影响 N 行」（35 键单一来源，逐键不各自自报）。 */
 export function dispatchWrite(key: string, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   if (!isCalorieWriteKey(key)) fail(3, '未知 calorie 写键：' + key);
+  const before = totalChanges(db);
   try {
-    return dispatchInner(key, params, db);
+    const res = dispatchInner(key, params, db);
+    const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
+    return { data: { ...res.data, receipt }, html: res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;
@@ -264,11 +319,13 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (r.duplicate) {
         return out(R('记一餐', 'create', String(r.message ?? '重复记录已跳过'), '记一餐', 'food_log (写库回执)', {
           recordId: r.dupId ?? null, noChange: true,
+          ids: r.dupId ? [r.dupId] : [], idSource: r.dupId ? 'record' : 'none', writtenFields: [],
         }));
       }
       const remain = r.remainingCal === null || r.remainingCal === undefined ? '' : ' · 今日剩 ' + r.remainingCal + ' 卡';
       return out(R('记一餐', 'create', '已记一餐：' + r.food_name + ' ' + r.date + ' ' + r.time + '（' + r.meal + '）' + remain, '记一餐', 'food_log (写库回执)', {
-        recordId: r.id, items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: r.food_name }],
+        recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.diet],
+        items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: r.food_name }],
       }));
     }
     case 'calorie.diet.update': {
@@ -288,7 +345,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (typeof fields['date'] === 'string') assertISO(fields['date'] as string, 'date');
       const r = updateMeal(db, id, fields);
       return out(R('改饮食记录', 'update', '已更新饮食 #' + id + '（' + (r.changed.length ? r.changed.join('、') : '无实际变化') + '）', '改饮食记录', 'food_log (写库回执)', {
-        recordId: id, noChange: r.changed.length === 0,
+        recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)), noChange: r.changed.length === 0,
         items: [{ id, status: '已更新', reason: '', detail: r.changed.join(',') || '无变化' }],
       }));
     }
@@ -296,7 +353,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const id = needId(params);
       const r = deleteMeal(db, id);
       return out(R('删饮食记录', 'delete', '已删除饮食 #' + id + '（' + r.food_name + ' ' + r.calories + ' 卡 · ' + HARD_INNER + '）', '删饮食记录', 'food_log (写库回执)', {
-        recordId: id, items: [{ id, status: deleteStatus('hard'), reason: '', detail: r.food_name }],
+        recordId: id, ids: [id], writtenFields: [], items: [{ id, status: deleteStatus('hard'), reason: '', detail: r.food_name }],
       }));
     }
     case 'calorie.diet.batch': {
@@ -315,7 +372,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         };
       }));
       return out(R('批量补记饮食', 'create', '批量记饮食：新增 ' + r.added + '，跳过 ' + r.skipped + '，失败 ' + r.failed, '批量补记饮食', 'food_log (写库回执)', {
-        noChange: r.added === 0,
+        noChange: r.added === 0, ids: [], idSource: 'condition',
+        writtenFields: r.added > 0 ? [...F.diet] : [],
         items: r.failures.slice(0, 20).map(([idx, reason]) => ({ status: '失败', reason, detail: '第' + idx + '条' })),
       }));
     }
@@ -328,7 +386,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = copyMeals(db, from, to);
       if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '来源无饮食记录（' + from + '）');
       return out(R('复制昨日饮食', 'create', '已复制饮食 ' + from + '→' + to + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日饮食', 'food_log (写库回执)', {
-        noChange: r.copied === 0,
+        noChange: r.copied === 0, ids: [], idSource: 'condition',
+        writtenFields: r.copied > 0 ? [...F.diet] : [],
       }));
     }
     case 'calorie.diet.update-by-date': {
@@ -344,14 +403,16 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (Object.keys(fields).length === 0) fail(2, '至少传 1 个待改字段');
       const r = updateMealsByDate(db, date, fields);
       if (r.matched === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-      return out(R('改某日饮食', 'update', '已更新 ' + date + ' 饮食 ' + r.updated + ' 条（' + r.changedFields.join('、') + '）', '改某日饮食', 'food_log (写库回执)', {}));
+      return out(R('改某日饮食', 'update', '已更新 ' + date + ' 饮食 ' + r.updated + ' 条（' + r.changedFields.join('、') + '）', '改某日饮食', 'food_log (写库回执)', {
+        ids: [], idSource: 'condition', writtenFields: cliNames(r.changedFields),
+      }));
     }
     case 'calorie.diet.remove-by-date': {
       const date = needStr(params, 'date');
       assertISO(date, 'date');
       const r = deleteMealsByDate(db, date);
       if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-      return out(R('删某日饮食', 'delete', '已删除 ' + date + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '删某日饮食', 'food_log (写库回执)', {}));
+      return out(R('删某日饮食', 'delete', '已删除 ' + date + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '删某日饮食', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
     }
     case 'calorie.diet.remove-by-range': {
       const start = needStr(params, 'start');
@@ -361,7 +422,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (start > end) fail(2, 'start 不得晚于 end');
       const r = deleteMealsByRange(db, start, end);
       if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + start + '~' + end + '）');
-      return out(R('批量删饮食', 'delete', '已删除 ' + start + '~' + end + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '批量删饮食', 'food_log (写库回执)', {}));
+      return out(R('批量删饮食', 'delete', '已删除 ' + start + '~' + end + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '批量删饮食', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
     }
     case 'calorie.diet.remove-by-type': {
       const date = needStr(params, 'date');
@@ -370,7 +431,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (!Object.prototype.hasOwnProperty.call(MEAL_WINDOWS, mealType)) fail(2, 'mealType 须为 ' + Object.keys(MEAL_WINDOWS).join('/') + '：' + mealType);
       const r = deleteMealsByType(db, date, mealType);
       if (r.deleted === 0) throw new CalorieRenderError('missing-data', date + ' 无' + mealType + '记录');
-      return out(R('删一餐', 'delete', '已删除 ' + date + ' ' + mealType + ' ' + r.deleted + ' 条' + HARD_WORDING, '删一餐', 'food_log (写库回执)', {}));
+      return out(R('删一餐', 'delete', '已删除 ' + date + ' ' + mealType + ' ' + r.deleted + ' 条' + HARD_WORDING, '删一餐', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
     }
     case 'calorie.water.log': {
       const ml = needNum(params, 'ml');
@@ -382,12 +443,12 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         note: optStr(params, 'note'), date, time: optStr(params, 'time'),
       });
       if (r.duplicate) {
-        return out(R('记喝水', 'create', String(r.message ?? '重复记录已跳过'), '记喝水', 'food_log (写库回执)', { noChange: true }));
+        return out(R('记喝水', 'create', String(r.message ?? '重复记录已跳过'), '记喝水', 'food_log (写库回执)', { noChange: true, ids: [], idSource: 'none', writtenFields: [] }));
       }
       const day = date ?? todayISO();
       const sum = getDailySummary(db, day);
       return out(R('记喝水', 'create', '已记喝水 ' + ml + ' ml（' + day + ' 累计 ' + sum.waterMl + ' ml）', '记喝水', 'food_log (写库回执)', {
-        recordId: r.id,
+        recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.water],
         items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: ml + 'ml' }],
       }));
     }
@@ -399,7 +460,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = logWeight(db, kg, optStr(params, 'note') ?? '', date, optStr(params, 'time'));
       const bmiText = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
       return out(R('记体重', 'create', '已记体重 ' + r.kg + ' kg（' + bmiText + ' · ' + r.date + ' ' + r.time + '）', '记体重', 'weight_log (写库回执)', {
-        recordId: r.id, items: [{ id: r.id, date: r.date, status: '成功', reason: '', detail: r.kg + 'kg' }],
+        recordId: r.id, ids: [r.id], writtenFields: [...F.weight],
+        items: [{ id: r.id, date: r.date, status: '成功', reason: '', detail: r.kg + 'kg' }],
       }));
     }
     case 'calorie.weight.update': {
@@ -413,13 +475,16 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         const r = updateWeight(db, id, kg, note);
         const bmiTextU = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
         return out(R('改体重记录', 'update', '已更新体重 #' + id + '：' + r.oldWeight + '→' + r.newWeight + ' kg（' + bmiTextU + '）', '改体重记录', 'weight_log (写库回执)', {
-          recordId: id, items: [{ id, status: '已更新', reason: '' }],
+          recordId: id, ids: [id], writtenFields: [...(kg !== undefined ? ['kg'] : []), ...(note !== undefined ? ['note'] : [])],
+          items: [{ id, status: '已更新', reason: '' }],
         }));
       }
       if (date !== undefined) {
         assertISO(date, 'date');
         const r = updateWeightByDate(db, date, kg, note);
-        return out(R('改某日体重', 'update', '已更新 ' + date + ' 体重 ' + r.hitCount + ' 条', '改某日体重', 'weight_log (写库回执)', {}));
+        return out(R('改某日体重', 'update', '已更新 ' + date + ' 体重 ' + r.hitCount + ' 条', '改某日体重', 'weight_log (写库回执)', {
+          ids: [], idSource: 'condition', writtenFields: [...(kg !== undefined ? ['kg'] : []), ...(note !== undefined ? ['note'] : [])],
+        }));
       }
       fail(2, '缺参数 id 或 date（二选一）');
       throw new Error('unreachable');
@@ -433,13 +498,13 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         const r = deleteWeight(db, id);
         return out(R('删体重记录', 'delete', '已删除体重 #' + id + '（' + r.date + ' ' + r.weight_kg + ' kg · ' + HARD_INNER + '）', '删体重记录', 'weight_log (写库回执)', {
-          recordId: id, items: [{ id, status: deleteStatus('hard'), reason: '' }],
+          recordId: id, ids: [id], writtenFields: [], items: [{ id, status: deleteStatus('hard'), reason: '' }],
         }));
       }
       if (date !== undefined) {
         assertISO(date, 'date');
         const r = deleteWeightByDate(db, date);
-        return out(R('删某日体重', 'delete', '已删除 ' + date + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '删某日体重', 'weight_log (写库回执)', {}));
+        return out(R('删某日体重', 'delete', '已删除 ' + date + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '删某日体重', 'weight_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
       }
       if (start !== undefined || end !== undefined) {
         if (start === undefined || end === undefined) fail(2, '按范围删须同时传 start/end');
@@ -447,7 +512,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         assertISO(end as string, 'end');
         if ((start as string) > (end as string)) fail(2, 'start 不得晚于 end');
         const r = deleteWeightRange(db, start as string, end as string);
-        return out(R('批量删体重', 'delete', '已删除 ' + start + '~' + end + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '批量删体重', 'weight_log (写库回执)', {}));
+        return out(R('批量删体重', 'delete', '已删除 ' + start + '~' + end + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '批量删体重', 'weight_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
       }
       fail(2, '缺参数 id/date/start+end（三选一）');
       throw new Error('unreachable');
@@ -460,7 +525,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         return { date: o['date'] === undefined ? undefined : String(o['date']), kg: o['kg'] as number | undefined };
       }));
       return out(R('批量补录体重', 'create', '批量记体重：写入 ' + r.wrote + '，跳过 ' + r.skipped + '，失败 ' + r.failed, '批量补录体重', 'weight_log (写库回执)', {
-        noChange: r.wrote === 0,
+        noChange: r.wrote === 0, ids: [], idSource: 'condition',
+        writtenFields: r.wrote > 0 ? [...F.weightBatch] : [],
         items: r.items.filter((x) => x.status === '失败').slice(0, 20).map((x) => ({ status: '失败', reason: x.reason, detail: String(x.date) })),
       }));
     }
@@ -472,7 +538,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         const r = copyYesterday(db, target);
         if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '昨日无运动记录可复制');
         return out(R('复制昨日运动', 'create', '已复制昨日运动→' + target + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日运动', 'exercise_log (写库回执)', {
-          noChange: r.copied === 0,
+          noChange: r.copied === 0, ids: [], idSource: 'condition',
+          writtenFields: r.copied > 0 ? [...F.exercise] : [],
         }));
       }
       if (params['items'] !== undefined) {
@@ -480,13 +547,15 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if (items.length > 200) fail(2, 'items 至多 200 条');
         const r = batchAdd(db, items.map((e, i) => oneExercise((e ?? {}) as Record<string, unknown>, '（第' + i + '条）')));
         return out(R('记运动', 'create', '批量记运动：新增 ' + r.added + ' 条', '批量补记运动', 'exercise_log (写库回执)', {
-          recordId: r.ids[0] ?? null,
+          recordId: r.ids[0] ?? null, ids: r.ids, idSource: r.ids.length > 0 ? 'record' : 'condition',
+          writtenFields: r.added > 0 ? [...F.exercise] : [],
         }));
       }
       const input = oneExercise(params, '');
       const r = addRecord(db, input);
       return out(R('记运动', 'create', '已记运动：' + input.exerciseType + ' ' + input.caloriesBurned + ' 卡' + (input.minutes ? ' · ' + input.minutes + ' 分钟' : '') + '（' + input.date + '）', '记运动', 'exercise_log (写库回执)', {
-        recordId: r.id, items: [{ id: r.id, date: input.date, status: '成功', reason: '', detail: input.exerciseType }],
+        recordId: r.id, ids: [r.id], writtenFields: [...F.exercise],
+        items: [{ id: r.id, date: input.date, status: '成功', reason: '', detail: input.exerciseType }],
       }));
     }
     case 'calorie.exercise.update': {
@@ -516,14 +585,17 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         updateRecord(db, id, fields);
         return out(R('改运动记录', 'update', '已更新运动 #' + id + '（' + Object.keys(fields).join('、') + '）', '改运动记录', 'exercise_log (写库回执)', {
-          recordId: id, items: [{ id, status: '已更新', reason: '' }],
+          recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)),
+          items: [{ id, status: '已更新', reason: '' }],
         }));
       }
       if (date !== undefined) {
         assertISO(date, 'date');
         const r = updateDay(db, date, fields);
         if (r.matched === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-        return out(R('改某日运动', 'update', '已更新 ' + date + ' 运动 ' + r.matched + ' 条', '改某日运动', 'exercise_log (写库回执)', {}));
+        return out(R('改某日运动', 'update', '已更新 ' + date + ' 运动 ' + r.matched + ' 条', '改某日运动', 'exercise_log (写库回执)', {
+          ids: [], idSource: 'condition', writtenFields: cliNames(Object.keys(fields)),
+        }));
       }
       fail(2, '缺参数 id 或 date（二选一）');
       throw new Error('unreachable');
@@ -537,14 +609,14 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         deleteRecord(db, id);
         return out(R('删运动记录', 'delete', '已删除运动 #' + id + SOFT_STILL_COUNTED, '删运动记录', 'exercise_log (写库回执)', {
-          recordId: id, items: [{ id, status: deleteStatus('soft'), reason: '' }],
+          recordId: id, ids: [id], writtenFields: ['is_deleted'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
         }));
       }
       if (date !== undefined) {
         assertISO(date, 'date');
         const n = deleteDay(db, date);
         if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-        return out(R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '删某日运动', 'exercise_log (写库回执)', {}));
+        return out(R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '删某日运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
       }
       if (from !== undefined || to !== undefined) {
         if (from === undefined || to === undefined) fail(2, '按范围删须同时传 from/to');
@@ -553,7 +625,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if ((from as string) > (to as string)) fail(2, 'from 不得晚于 to');
         const n = deleteRange(db, from as string, to as string);
         if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + from + '~' + to + '）');
-        return out(R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '批量删运动', 'exercise_log (写库回执)', {}));
+        return out(R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '批量删运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
       }
       fail(2, '缺参数 id/date/from+to（三选一）');
       throw new Error('unreachable');
@@ -576,7 +648,9 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       } catch {
         distance = null;
       }
-      const receipt = buildAddReceipt(added, { tag, note: optStr(params, 'note'), distance, failedCount: srcPaths.length - added.length || undefined });
+      const receipt = withM5(buildAddReceipt(added, { tag, note: optStr(params, 'note'), distance, failedCount: srcPaths.length - added.length || undefined }), {
+        ids: added.map((a) => a.id), writtenFields: [...F.photo],
+      });
       return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
     }
     case 'calorie.photo.remove': {
@@ -585,7 +659,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const snap = getPhotoRow(db, id);
       if (!snap) throw new CalorieRenderError('missing-data', '身材照 #' + id + ' 不存在');
       deletePhoto(db, dir, id);
-      const receipt = buildDeleteReceipt(snap);
+      const receipt = withM5(buildDeleteReceipt(snap), { ids: [id], writtenFields: [] });
       return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
     }
     case 'calorie.photo.tag': {
@@ -613,7 +687,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         scene = '删照片标签';
       }
       const after = getPhotoRow(db, id)?.tag_list ?? before;
-      const receipt = buildTagReceipt(id, before, after, scene);
+      const receipt = withM5(buildTagReceipt(id, before, after, scene), { ids: [id], writtenFields: op === 'set' ? ['tags'] : ['tag'] });
       return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
     }
     case 'calorie.product.add': {
@@ -627,7 +701,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         sodium: needNum(params, 'sodium'), note: optStr(params, 'note'),
       });
       return out(R('存食品', 'create', '已存食品 #' + r.id + '（' + productName.trim() + '）', '存食品', 'nutrition_products (写库回执)', {
-        recordId: r.id, items: [{ id: r.id, status: '成功', reason: '', detail: productName.trim() }],
+        recordId: r.id, ids: [r.id], writtenFields: [...F.product],
+        items: [{ id: r.id, status: '成功', reason: '', detail: productName.trim() }],
       }));
     }
     case 'calorie.product.update': {
@@ -648,7 +723,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = updateProduct(db, id, fields);
       if (!r.updated) throw new CalorieRenderError('missing-data', '食品 #' + id + ' 不存在');
       return out(R('改食品', 'update', '已更新食品 #' + id + '（' + Object.keys(fields).join('、') + '）', '改食品', 'nutrition_products (写库回执)', {
-        recordId: id, items: [{ id, status: '已更新', reason: '' }],
+        recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)),
+        items: [{ id, status: '已更新', reason: '' }],
       }));
     }
     case 'calorie.product.deprecate': {
@@ -659,7 +735,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         fail(2, String(r.error ?? '废弃失败'));
       }
       return out(R('下架食品', 'update', '已下架食品 #' + id + '（' + (r.name ?? '') + ' · ' + SOFT_EXCLUDED_INNER + '）', '下架食品', 'nutrition_products (写库回执)', {
-        recordId: id, items: [{ id, status: deleteStatus('soft', '已下架'), reason: '' }],
+        recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft', '已下架'), reason: '' }],
       }));
     }
     case 'calorie.profile.set':
@@ -686,7 +762,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = updateProfile(db, picked);
       const after = r.after;
       return out(R(scene, 'update', '已' + scene + '（身高 ' + (after.height_cm ?? '—') + ' · 年龄 ' + (after.age ?? '—') + ' · 活动量 ' + (after.activity_level ?? '—') + '）', wake, 'user_profile (写库回执)', {
-        recordId: 1, noChange: r.changed.length === 0,
+        recordId: 1, ids: [1], idSource: 'singleton', writtenFields: Object.keys(picked), noChange: r.changed.length === 0,
       }));
     }
     case 'calorie.profile.activity': {
@@ -694,7 +770,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (!level.trim()) fail(2, '缺参数 activityLevel');
       const r = setActivityLevel(db, level);
       return out(R('设活动量', 'update', '已设活动量：' + (r.before ?? '—') + '→' + r.after, '设活动量', 'user_profile (写库回执)', {
-        recordId: 1, noChange: r.before === r.after,
+        recordId: 1, ids: [1], idSource: 'singleton', writtenFields: ['activityLevel'], noChange: r.before === r.after,
       }));
     }
     case 'calorie.goal.set': {
@@ -712,7 +788,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = setNutritionGoal(db, { calorie, protein, carbs, fat, water });
       const tail = r.consistent ? ' · 宏量自洽' : ' · ⚠宏量换算差 ' + r.diffKcal + ' 卡（>50 建议复核）';
       return out(R('定营养目标', had ? 'update' : 'create', '已定营养目标：' + r.calorieGoal + ' 卡·蛋白 ' + r.proteinGoal + '·碳水 ' + r.carbsGoal + '·脂肪 ' + r.fatGoal + (r.waterGoal === null ? '' : '·饮水 ' + r.waterGoal) + tail, '定营养目标', 'daily_goal (写库回执)', {
-        recordId: 1,
+        recordId: 1, ids: [1], idSource: 'singleton', writtenFields: [...F.goal],
       }));
     }
     case 'calorie.goal.water': {
@@ -720,7 +796,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (getNutritionGoal(db) === null) throw new CalorieRenderError('missing-data', '尚无营养目标行（先定营养目标）');
       const r = updateWaterGoal(db, water);
       return out(R('定饮水目标', 'update', '已定饮水目标：' + (r.oldWaterGoal ?? '—') + '→' + r.newWaterGoal + ' ml', '定饮水目标', 'daily_goal (写库回执)', {
-        recordId: 1, noChange: r.oldWaterGoal === r.newWaterGoal,
+        recordId: 1, ids: [1], idSource: 'singleton', writtenFields: ['water'], noChange: r.oldWaterGoal === r.newWaterGoal,
       }));
     }
     case 'calorie.goal.weight': {
@@ -730,19 +806,20 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         kg, deadline: params['deadline'], startKg: params['startKg'], startDate: params['startDate'],
       });
       return out(R('定体重目标', 'update', '已定体重目标 ' + r.weightGoal + ' kg' + (r.deadline ? '（截止 ' + r.deadline + '）' : '') + (r.startKg !== null ? ' · 起点 ' + r.startKg + ' kg' : ''), '定体重目标', 'daily_goal (写库回执)', {
-        recordId: 1,
+        recordId: 1, ids: [1], idSource: 'singleton',
+        writtenFields: provided(params, ['kg', 'deadline', 'startKg', 'startDate']),
       }));
     }
     case 'calorie.goal.pause': {
       const r = pauseAllGoals(db);
       return out(R('暂停所有目标', 'update', '已暂停所有目标（记录照常，仅目标暂停）', '暂停所有目标', 'daily_goal (写库回执)', {
-        recordId: r.id,
+        recordId: r.id, ids: [r.id], idSource: 'singleton', writtenFields: ['goal_paused'],
       }));
     }
     case 'calorie.goal.resume': {
       const r = resumeAllGoals(db);
       return out(R('重启所有目标', 'update', '已重启所有目标（恢复正常）', '重启所有目标', 'daily_goal (写库回执)', {
-        recordId: r.id,
+        recordId: r.id, ids: [r.id], idSource: 'singleton', writtenFields: ['goal_paused'],
       }));
     }
     case 'calorie.body.composition-add': {
@@ -761,14 +838,15 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = addComposition(db, input as unknown as Parameters<typeof addComposition>[1]);
       const label = SOURCE_LABELS[source] ?? source;
       return out(R('记体脂', 'create', '已记体脂：' + date + ' ' + label + ' ' + r.bodyFatPct + '%', '记体脂', 'body_composition (写库回执)', {
-        recordId: r.id, items: [{ id: r.id, date, status: '成功', reason: '', detail: r.bodyFatPct + '%' }],
+        recordId: r.id, ids: [r.id], writtenFields: definedKeys(input),
+        items: [{ id: r.id, date, status: '成功', reason: '', detail: r.bodyFatPct + '%' }],
       }));
     }
     case 'calorie.body.composition-remove': {
       const id = needId(params);
       deleteComposition(db, id);
       return out(R('删体脂', 'delete', '已删除体脂记录 #' + id + SOFT_EXCLUDED, '删体脂', 'body_composition (写库回执)', {
-        recordId: id, items: [{ id, status: deleteStatus('soft'), reason: '' }],
+        recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
       }));
     }
     case 'calorie.body.measure-add': {
@@ -788,14 +866,15 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         return camel + ' ' + String((input as Record<string, unknown>)[f]);
       }).join('、');
       return out(R('记围度', 'create', '已记围度：' + date + '（' + filledCn + '）', '记围度', 'body_measurements (写库回执)', {
-        recordId: r.id, items: [{ id: r.id, date, status: '成功', reason: '', detail: filledCn }],
+        recordId: r.id, ids: [r.id], writtenFields: definedKeys(input),
+        items: [{ id: r.id, date, status: '成功', reason: '', detail: filledCn }],
       }));
     }
     case 'calorie.body.measure-remove': {
       const id = needId(params);
       deleteMeasurement(db, id);
       return out(R('删围度', 'delete', '已删除围度记录 #' + id + SOFT_EXCLUDED, '删围度', 'body_measurements (写库回执)', {
-        recordId: id, items: [{ id, status: deleteStatus('soft'), reason: '' }],
+        recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
       }));
     }
     default:
