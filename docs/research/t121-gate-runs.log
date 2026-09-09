@@ -1,0 +1,36 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：121｜since：2026-09-09T14:30:00Z｜until：2026-09-09T14:42:50Z｜条目数：28｜导出时间：2026-09-09T14:42:48.991Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=121 runId=fda4087c-4f9c-4562-8285-d39e59c233d6 cmd="pnpm build" waitedMs=10011 exit=0 pid=5816 at=2026-09-09T14:35:08.350Z
+RUN ticket=121 runId=f2f57024-d624-47f7-a502-1f65d517d3dc cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=30029 exit=1 pid=38276 at=2026-09-09T14:37:13.971Z
+RUN ticket=121 runId=6b20c64b-9039-456d-8b65-0932c1f8c936 cmd="pnpm build" waitedMs=0 exit=0 pid=16216 at=2026-09-09T14:37:33.770Z
+RUN ticket=121 runId=0252b5c6-d7d1-43b0-b2b9-7c380b81a3ab cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=0 exit=1 pid=29304 at=2026-09-09T14:37:41.087Z
+RUN ticket=121 runId=862cbd8c-e2c9-4184-aae4-ad790d87f103 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=0 exit=0 pid=35976 at=2026-09-09T14:38:05.161Z
+RUN ticket=121 runId=aafd82d0-a922-4043-86ec-0c13403c7813 cmd="node --test packages/base-render/test/*.test.mjs" waitedMs=0 exit=0 pid=32660 at=2026-09-09T14:38:14.780Z
+RUN ticket=121 runId=9801c073-0633-4f6b-9cdf-844b5394e8b7 cmd="git commit --only packages/base-render/src/controls.ts packages/base-render/src/style.ts packages/base-render/test/copy-copied-121.test.mjs docs/research/t121-browser-evidence.mjs -F .scratch/t121/commit-1.txt" waitedMs=0 exit=1 pid=20896 at=2026-09-09T14:38:25.451Z
+RUN ticket=121 runId=663663f4-4e57-440c-b031-a1fbe10ca334 cmd="pwsh -NoProfile -Command \"git add packages/base-render/test/copy-copied-121.test.mjs docs/research/t121-browser-evidence.mjs; git diff --cached --name-only; git commit --only packages/base-render/src/controls.ts packages/base-render/src/style.ts packages/base-render/test/copy-copied-121.test.mjs docs/research/t121-browser-evidence.mjs -F .scratch/t121/commit-1.txt\"" waitedMs=0 exit=1 pid=37800 at=2026-09-09T14:38:27.894Z
+RUN ticket=121 runId=c289cd58-6903-4608-b749-9ce7961ab77b cmd="git add packages/base-render/test/copy-copied-121.test.mjs docs/research/t121-browser-evidence.mjs" waitedMs=0 exit=0 pid=30228 at=2026-09-09T14:38:30.262Z
+RUN ticket=121 runId=698baa14-d8f0-4ffc-9d72-921ab44be6bc cmd="git commit --only packages/base-render/src/controls.ts packages/base-render/src/style.ts packages/base-render/test/copy-copied-121.test.mjs docs/research/t121-browser-evidence.mjs -F .scratch/t121/commit-1.txt" waitedMs=0 exit=0 pid=30896 at=2026-09-09T14:38:32.241Z
+RUN ticket=121 runId=3b3c701e-0760-49ac-9107-45d19414a515 cmd="pnpm build" waitedMs=0 exit=0 pid=28048 at=2026-09-09T14:38:43.389Z
+RUN ticket=121 runId=c31a8006-7aa2-4cd6-bb20-d945bffca061 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=0 exit=1 pid=16120 at=2026-09-09T14:38:48.987Z
+RUN ticket=121 runId=1926709d-a98f-4e9e-aaea-c3fbfd9275c3 cmd="pnpm build" waitedMs=20017 exit=0 pid=34032 at=2026-09-09T14:39:26.492Z
+RUN ticket=121 runId=fd24c895-4d23-4709-9fb2-1adac7505439 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=0 exit=1 pid=31172 at=2026-09-09T14:39:33.790Z
+RUN ticket=121 runId=3a14b0ff-11fa-46bd-b4a1-8624a54e438a cmd="pnpm build" waitedMs=0 exit=0 pid=38352 at=2026-09-09T14:39:47.788Z
+RUN ticket=121 runId=b5049d25-3283-47d5-a3db-3575b28bab58 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=0 exit=1 pid=20896 at=2026-09-09T14:39:53.368Z
+RUN ticket=121 runId=a4e24910-2c7a-4aee-b27f-887e451babe1 cmd="pnpm build" waitedMs=0 exit=0 pid=27500 at=2026-09-09T14:40:03.009Z
+RUN ticket=121 runId=8bba7584-e4f7-4e4e-9a57-2f089e49c5f8 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=1 exit=0 pid=3296 at=2026-09-09T14:40:10.317Z
+RUN ticket=121 runId=d8cf36e7-aa9b-42fe-a452-79bc46f366a8 cmd="pwsh -Command \"pnpm build\"" waitedMs=30027 exit=1 pid=33436 at=2026-09-09T14:40:51.557Z
+RUN ticket=121 runId=1c7222ff-af80-4e20-8533-2e147be64739 cmd="pwsh -Command \"pnpm boundaries\"" waitedMs=0 exit=1 pid=30260 at=2026-09-09T14:40:51.631Z
+RUN ticket=121 runId=97c51bf3-e297-4332-9dad-30230f54b441 cmd="pwsh -Command \"pnpm snapshot:check\"" waitedMs=0 exit=1 pid=13832 at=2026-09-09T14:40:51.707Z
+RUN ticket=121 runId=fbc38eee-5469-4914-b845-4ea4cdad1f31 cmd="pwsh -Command \"pnpm publish:pre\"" waitedMs=0 exit=1 pid=38588 at=2026-09-09T14:40:51.783Z
+RUN ticket=121 runId=e30962b2-5568-4229-a454-274319f282a8 cmd="node --test packages/base-render/test/contract-signatures.test.mjs packages/base-render/test/help-center-js-88.test.mjs" waitedMs=0 exit=0 pid=34656 at=2026-09-09T14:41:06.290Z
+RUN ticket=121 runId=ddbcfbe5-f261-495b-b314-885b42dead2e cmd="pnpm build" waitedMs=0 exit=0 pid=38112 at=2026-09-09T14:41:09.966Z
+RUN ticket=121 runId=491d8c46-ad89-4a4b-ba62-54d77cc703fb cmd="pnpm boundaries" waitedMs=0 exit=0 pid=38248 at=2026-09-09T14:41:10.902Z
+RUN ticket=121 runId=0680ec17-a135-40dc-a9aa-a90f96196001 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=35724 at=2026-09-09T14:41:11.801Z
+RUN ticket=121 runId=0eb70746-28ba-4928-9002-23c739f9dcce cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=3012 at=2026-09-09T14:41:12.715Z
+RUN ticket=121 runId=301a040c-d8e7-4f76-8b99-b012b8de233b cmd="pnpm test" waitedMs=0 exit=1 pid=3920 at=2026-09-09T14:41:48.200Z
+```
