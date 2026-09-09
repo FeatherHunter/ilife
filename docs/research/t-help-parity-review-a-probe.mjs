@@ -18,13 +18,13 @@ const ROOT = process.cwd();
 const OUT = path.resolve(ROOT, '.scratch/review-a-probe');
 const DB = path.resolve(ROOT, '.scratch/review-a-db');
 const OLD = 'D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\卡路里.html';
-const TICKET = '63';
 fs.mkdirSync(OUT, { recursive: true });
 fs.mkdirSync(DB, { recursive: true });
 
 const argv = process.argv.slice(2);
 const has = (n) => argv.includes(n);
 const argOf = (n, d) => { const i = argv.indexOf(n); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : d; };
+const TICKET = argOf('--ticket', '63');
 const sha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const bOf = (s) => Buffer.byteLength(s, 'utf8');
 const nb = (s) => (s === '' ? 0 : s.split('\n').filter((l, i, a) => !(i === a.length - 1 && l === '')).length);
@@ -497,4 +497,93 @@ if (has('--deep')) {
   process.exit(0);
 }
 
-console.log('usage: node docs/research/t-help-parity-review-a-probe.mjs --inspect|--regen|--parse|--analyze|--same|--extra|--deep');
+if (has('--r3')) {
+  // R-3 定点复核：只验证台账返修后的每条断言，独立重算
+  const rep = JSON.parse(fs.readFileSync(path.resolve(ROOT, '.scratch/review-a-probe/parse-a.json'), 'utf8'));
+  const same = JSON.parse(fs.readFileSync(path.resolve(ROOT, '.scratch/review-a-probe/same-source.json'), 'utf8'));
+  const O = rep.old, N = rep.newFile;
+  const oHtml = fs.readFileSync(O.file, 'utf8');
+  const nHtml = fs.readFileSync(N.file, 'utf8');
+  const iHtml = fs.readFileSync(same.modes.inline.path, 'utf8');
+  const tHtml = fs.readFileSync(same.modes.text.path, 'utf8');
+  const R = {};
+  // ① 块口径（含标签）与闭合
+  const blockOf = (s, tag) => { const m = s.match(new RegExp('<' + tag + '\\b[^>]*>[\\s\\S]*?</' + tag + '>')); return m ? bOf(m[0]) : 0; };
+  const nPayloadBlock = blockOf(nHtml, 'script');           // 首个 script 即 payload（在 markup 之后）
+  const nPayloadJson = payloadOf(nHtml).bytes;
+  const nPayloadTagBytes = (nHtml.match(/<script\b[^>]*id="payload"[^>]*type="application\/json"[^>]*>/) ?? [''])[0];
+  const nClose = '</script>';
+  const nStyleTag = (nHtml.match(/<style\b[^>]*>/) ?? [''])[0];
+  const nJsTags = [...nHtml.matchAll(/<script\b[^>]*>[\s\S]*?<\/script>/g)].filter((m) => !/type="application\/json"/.test(m[0]));
+  const nJsBlockBytes = nJsTags.reduce((a, m) => a + bOf(m[0]), 0);
+  const nStyleBlockBytes = [...nHtml.matchAll(/<style\b[^>]*>[\s\S]*?<\/style>/g)].reduce((a, m) => a + bOf(m[0]), 0);
+  const oPayloadBlockBytes = [...oHtml.matchAll(/<script\b[^>]*type="application\/json"[^>]*>[\s\S]*?<\/script>/g)].reduce((a, m) => a + bOf(m[0]), 0);
+  const oStyleBlockBytes = [...oHtml.matchAll(/<style\b[^>]*>[\s\S]*?<\/style>/g)].reduce((a, m) => a + bOf(m[0]), 0);
+  const oJsBlockBytes = [...oHtml.matchAll(/<script\b[^>]*>[\s\S]*?<\/script>/g)].filter((m) => !/type="application\/json"/.test(m[0])).reduce((a, m) => a + bOf(m[0]), 0);
+  R.blocks = {
+    newFile: { total: N.bytes, markup: N.chunks.markup, payloadBlock: oPayloadBlockBytes && nPayloadJson ? nPayloadJson + bOf(nPayloadTagBytes) + 9 : null, payloadBlock2: nPayloadBlock, styleBlock: nStyleBlockBytes, jsBlock: nJsBlockBytes },
+    oldFile: { total: O.bytes, markup: O.chunks.markup, payloadBlock: oPayloadBlockBytes, styleBlock: oStyleBlockBytes, jsBlock: oJsBlockBytes },
+  };
+  R.blocks.newSum = N.chunks.markup + (nPayloadJson + bOf(nPayloadTagBytes) + 9) + nStyleBlockBytes + nJsBlockBytes;
+  R.blocks.newResidual = N.bytes - R.blocks.newSum;
+  R.blocks.oldSum = O.chunks.markup + oPayloadBlockBytes + oStyleBlockBytes + oJsBlockBytes;
+  R.blocks.oldResidual = O.bytes - R.blocks.oldSum;
+  // ② 分段同源（style／content／helpers）
+  const segOf = (s) => {
+    const style = s.match(/<style\b[^>]*>[\s\S]*?<\/style>/)?.[0] ?? '';
+    const content = s.match(/<section class="ilife-help-shell"[\s\S]*?<\/section>\s*(?=<script)/)?.[0] ?? s.match(/<section class="ilife-help-shell"[\s\S]*<\/section>/)?.[0] ?? '';
+    const helpers = [...s.matchAll(/<script\b[^>]*>[\s\S]*?<\/script>/g)].filter((m) => !/type="application\/json"/.test(m[0])).map((m) => m[0]).join('');
+    return { style: sha256(style), content: sha256(content), helpers: sha256(helpers), styleLen: bOf(style), contentLen: bOf(content), helpersLen: bOf(helpers) };
+  };
+  const fs1 = segOf(nHtml), is1 = segOf(iHtml);
+  R.segEqual = { style: fs1.style === is1.style, content: fs1.content === is1.content, helpers: fs1.helpers === is1.helpers, file: fs1, inline: is1 };
+  R.inlineIsSubstringOfFile = nHtml.includes(iHtml);
+  R.inlineTrimSubstringOfFile = nHtml.includes(iHtml.trim());
+  // ③ 按钮：静态 vs 运行时第 4 个
+  const mk = strips(nHtml).markup;
+  const nJs = strips(nHtml).jsBlocks.map((b) => b.body).join('\n');
+  R.buttons = {
+    staticButtons: N.dom.buttons,
+    staticActionIds: Object.fromEntries([...mk.matchAll(/data-action-id="([^"]+)"/g)].reduce((m, x) => (m.set(x[1], (m.get(x[1]) ?? 0) + 1), m), new Map())),
+    staticCardCopyHits: (mk.match(/card-copy/g) || []).length,
+    jsCreateButton: (nJs.match(/createElement\("button"\)|createElement\('button'\)/g) || []).length,
+    injectCardCopyHits: (nJs.match(/injectCardCopy/g) || []).length,
+    injectCtx: [...nJs.matchAll(/.{0,200}injectCardCopy[\s\S]{0,260}/g)].slice(0, 1).map((m) => m[0].replace(/\s+/g, ' ')),
+  };
+  // ④ 源码侧 <N> 计数
+  const walk = (d, acc) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p, acc); else if (/\.(ts|mjs|js|json)$/.test(e.name)) acc.push(p); } return acc; };
+  const srcFiles = walk(path.join(ROOT, 'packages/skill-calorie/src'), []);
+  let srcN = 0; const srcHits = [];
+  for (const f of srcFiles) { const t = fs.readFileSync(f, 'utf8'); const c = (t.match(/<N>/g) || []).length; if (c) { srcN += c; srcHits.push([path.relative(ROOT, f).replace(/\\/g, '/'), c]); } }
+  R.sourceAngle = { files: srcFiles.length, totalN: srcN, hits: srcHits };
+  // ⑤ CLI 参数冻结日期 222/341
+  const cliScenes = N.scenes.filter((s) => s.cli !== null);
+  const withDate = cliScenes.filter((s) => /\d{4}-\d{2}-\d{2}/.test(s.cli));
+  R.cliDates = { cliTotal: cliScenes.length, withDate: withDate.length, distinctDates: [...new Set(withDate.flatMap((s) => s.cli.match(/\d{4}-\d{2}-\d{2}/g)))].sort() };
+  // ⑥ 95 条无字段卡「复制参数」回落 Scene.id
+  const noCliIds = new Set(N.scenes.filter((s) => s.cli === null).map((s) => s.id));
+  const cardBlocks = [...mk.matchAll(/<article class="ilife-help-shell-card"[\s\S]*?<\/article>/g)].map((m) => m[0]);
+  const paramsBtn = cardBlocks.map((c) => { const m = c.match(/<button[^>]*data-action-id="ilife-help-copy-params"[^>]*>/); return m ? (m[0].match(/data-t="([^"]*)"/) ?? [])[1] ?? null : null; });
+  R.copyParamsFallback = { cards: cardBlocks.length, withBtn: paramsBtn.filter((x) => x !== null).length, fallbackToIdCount: paramsBtn.filter((x, i) => x !== null && noCliIds.has(N.scenes[i].id) && x === N.scenes[i].id).length, noCliScenes: noCliIds.size, sample: cardBlocks.map((c, i) => [N.scenes[i].id, paramsBtn[i]]).filter((x) => noCliIds.has(x[0])).slice(0, 3) };
+  // ⑦ subtitle / tnum / 字体栈
+  R.meta = {
+    oldSubtitle: O.payload?.topKeys && (() => { const p = payloadOf(oHtml); return p?.data?.subtitle; })(),
+    newSubtitle: (() => { const p = payloadOf(nHtml); return p?.data?.subtitle; })(),
+    oldTnum: /tnum/.test(strips(oHtml).cssBlocks.map((b) => b.body).join('\n')),
+    newTnum: /tnum/.test(strips(nHtml).cssBlocks.map((b) => b.body).join('\n')),
+    oldFontStack: /-apple-system/.test(strips(oHtml).cssBlocks.map((b) => b.body).join('\n')) && /PingFang SC/.test(strips(oHtml).cssBlocks.map((b) => b.body).join('\n')),
+    newFontStack: /-apple-system/.test(strips(nHtml).cssBlocks.map((b) => b.body).join('\n')) || /PingFang SC/.test(strips(nHtml).cssBlocks.map((b) => b.body).join('\n')),
+  };
+  // ⑧ 唤醒词「记身材照」计数
+  R.wakeDup = { 记身材照: N.scenes.filter((s) => s.wake_word === '记身材照').length, uniqueWake: new Set(N.scenes.map((s) => s.wake_word)).size };
+  // ⑨ 卡级 code 435/436
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  R.cardCode = { exact: N.cardCode.filter((c, i) => c.code === N.scenes[i].id).length, unescapedEq: N.cardCode.filter((c, i) => { const u = (x) => x.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&'); return u(c.code) === N.scenes[i].id; }).length, escapedForm: N.cardCode.filter((c, i) => c.code === esc(N.scenes[i].id)).length };
+  // ⑩ text 态裸 <N>
+  R.textAngle = { bareN: (tHtml.match(/<N>/g) || []).length, anyAngle: (tHtml.match(/<[^<>]{1,20}>/g) || []).length, payloadEscapedN: (nHtml.match(/\\u003cN>/g) || []).length, cardEscapedN: (mk.match(/&lt;N&gt;/g) || []).length };
+  j('.scratch/review-a-probe/r3-checks.json', R);
+  console.log(JSON.stringify(R, null, 1));
+  process.exit(0);
+}
+
+console.log('usage: node docs/research/t-help-parity-review-a-probe.mjs --inspect|--regen|--parse|--analyze|--same|--extra|--deep|--r3');
