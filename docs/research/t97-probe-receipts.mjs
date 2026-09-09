@@ -88,7 +88,7 @@ export const SCENARIOS = [
   { key: 'calorie.diet.remove', pre: [['calorie.diet.add', { foodName: '鱼', calories: 180, protein: 28, date: '2026-09-06', time: '12:30:00' }]], params: (ids) => ({ id: ids[0] }) },
   { key: 'calorie.diet.batch', params: { items: [{ foodName: '粥', calories: 150, protein: 3, date: '2026-09-06', time: '08:00:00' }] } },
   { key: 'calorie.diet.copy', params: { from: '2026-09-05', to: '2026-09-06' } },
-  { key: 'calorie.diet.update-by-date', params: { date: '2026-09-06', note: '食堂' } },
+  { key: 'calorie.diet.update-by-date', pre: [['calorie.diet.add', { foodName: '加餐', calories: 120, protein: 5, date: '2026-09-06', time: '15:00:00' }]], params: { date: '2026-09-06', note: '食堂' } },
   { key: 'calorie.diet.remove-by-date', params: { date: '2026-09-05' } },
   { key: 'calorie.diet.remove-by-range', params: { start: '2026-09-05', end: '2026-09-05' } },
   { key: 'calorie.diet.remove-by-type', params: { date: '2026-09-05', mealType: '早餐' } },
@@ -133,7 +133,7 @@ function main() {
     let failure = null;
     try {
       for (const [pkey, pparams] of sc.pre ?? []) {
-        const r = run(pkey, typeof pparams === 'function' ? pparams(ids, ctx) : pparams, localEnv);
+        const r = run(pkey, typeof pparams === 'function' ? pparams(ctx) : pparams, localEnv);
         if (r.status !== 0) { failure = 'pre ' + pkey + ' exit ' + r.status + ' ' + (r.stderr || '').slice(-200); break; }
         const rid = JSON.parse(r.stdout).data.receipt.recordId;
         if (typeof rid === 'number') ids.push(rid);
