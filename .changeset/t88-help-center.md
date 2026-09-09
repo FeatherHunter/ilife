@@ -10,3 +10,12 @@
 - **三守卫**（`test/help-center-88.test.mjs`，23 用例）：① 六标记逐个残留 0 ＋ 泛化 `<!--[A-Z0-9-]+-->` 0 ＋ `report.markers` 六键；② id 唯一（数据层／HTML 层 ＋ 人为重复抛 `duplicate-id`）；③ `COPY_RUNTIME_JS === buildSharedHelpersJs()` ＋ 剥 helpers 后 `navigator.clipboard`／`execCommand`／`onclick=` 命中 0 ＋ 源码级零复制通道。
 - **证据**：`docs/research/t88-impl-a.md`（A1–A8／R-cond-1…8／门禁／变异／台账）＋ `docs/research/t88-probe-impl-a.mjs`（断言式 **44/44**，含 F3 逐条对账：436 条 prompt／title／wake_word 逐字相等、10 组 × 54 子功能序相等）。四门 exit 0；canonical `pnpm test` 三轮失败集**新增 0**；4 处 src 级变异红→还原→绿（sha256 自证）。
 - **未含**（实施 B）：扩 `buildSharedHelpersJs`（搜索／高亮／跳页／Sheet 实时预览／`#backTop`）、卡级复制按钮运行时注入（R1-1）、`style.ts` helpShell 新类 CSS；CLI 接线归 #91 —— **#88 关闭时用户仍看不到新版速查台**。
+
+## 实施 B 段（S4：helpers 扩展 ＋ 卡级复制按钮 ＋ helpShell CSS）
+
+- **`buildSharedHelpersJs` 功能面扩展（签名不变，`SharedHelpersInput` 未动）**：全部挂进**既有 `boot()`**、共用**既有幂等 marker**（`MARKER_SEL` ＋ `querySelector` 早退，**不新增第二个标记**），非 HELP 页逐项早退（helpers 被所有技能页面共享）。新增：① 卡级复制按钮（每张场景卡卡头 1 个，`actionId`／文案恒读 `HELP_COPY_ACTIONS.prompt`，`data-t` 取同卡 Sheet prompt 按钮原文＝该卡 `<pre>` 逐字，复用既有 `[data-action-id]` 委派 → **零契约变更、零新增 actionId**）；② 搜索（过滤 ＋ `<mark>` 高亮 ＋ 命中卡片 Sheet／子功能组自动展开 ＋ 命中计数「匹配 N 个场景」＋ 清空复原 ＋ `Enter` 在命中分组页间跳页）；③ Sheet 参数实时预览（`editable_fields` 静态值换输入框，输入即重组「prompt ＋ 空行 ＋ `label: value` 行」，并同步 prompt／params 复制按钮的 `data-t`）；④ `#backTop`（`scrollTop > 400` 加 `-show`，点击平滑回顶）。
+- **纯度**：只用 `document.*`（含只读 `document.scrollingElement`）＋ 既有只读 `window.matchMedia`；零 `window.<id>=`／`globalThis.<id>=`／`node:`／`classList`／内联 `on*`／`<canvas>`（`contract-signatures` ＋ `style.test.mjs` T23／T28 逐条过门）。
+- **`src/style.ts` helpShell 区新增 11 个类**（`card-copy`／`card-mark`／`card-hidden`／`subgroup-hidden`／`tab-search`／`tab-search-input`／`tab-search-clear`／`page-hitcount`／`field-input`／`btn-backtop`／`btn-backtop-show`）：全部落在 `ilife-help-shell` 命名空间内（T9 闭集）且后缀 `startsWith` 既有 `cls()` 实参（T11 归属）；**不新增 token、不越区、不走技能侧 `extraCss`**；`prefers-reduced-motion` 下 `#backTop` 过渡归零。
+- **无 JS 降级**：不注入 helpers 时页面＝今日 CSS-only 壳（436 卡／1308 静态复制按钮／Tab 可切换／搜索框与 `#backTop` 均不存在）。
+- **证据**：`docs/research/t88-impl-b.md` ＋ `packages/base-render/test/help-center-js-88.test.mjs`（7 用例，含真实 headless Chrome）＋ `docs/research/t88-browser-evidence-b.mjs`（CDP **29/29**：436/436 卡头按钮、`data-t` 逐字、委派复制、搜索 44 命中／99 mark／计数、`#backTop` 原生滚动出现＋可信点击回顶、删 marker 后二次注入幂等、禁用脚本引擎下 436 卡／0 注入／原生点击 Tab 可切换）＋ `docs/research/t88-probe-impl-b.mjs`（59/59）。四门 exit 0；canonical `pnpm test` **8 轮**失败集并集：新增 3 条**全为 B 类（子进程 NTSTATUS 崩溃／环境抖动，均单独复跑全绿）**、真 delta 0；2 处 src 级变异红→还原→绿（sha256 自证）。
+- **仍未含**：CLI 接线（#91）—— **#88 关闭时用户仍看不到新版速查台**。

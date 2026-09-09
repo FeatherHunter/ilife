@@ -60,6 +60,13 @@ function helpClassLiterals() {
   return out;
 }
 
+/** CSS 里是否**以类名作为组件**出现（`.x` 后不接 `[A-Za-z0-9_-]`）——同 `style.test.mjs:99-102` 的
+ *  `selectorHasClass` 口径；`css.includes('.x')` 会被 `.x-input` 之类子串误满足（本用例变异自证踩到过）。 */
+function cssHasClass(css, cls) {
+  const re = new RegExp('\\.' + cls.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&') + '(?![A-Za-z0-9_-])');
+  return re.test(css);
+}
+
 /* ── 夹具：436 场景（2 组 × 2 子功能 × 109），部分带 editable_fields ───────────── */
 
 const SCENE_COUNT = 436;
@@ -138,13 +145,13 @@ describe('#88 S4 helpers 产出面（静态）', () => {
 
   it('S4-3 新类名双向：CSS 有规则 且 helpers 真产（蓝队 N-4：防「CSS 有类名、产出者空转」）', () => {
     for (const suffix of NEW_SUFFIXES) {
-      assert.ok(CSS.includes('.' + cls(suffix)), 'CSS 缺规则：.' + cls(suffix));
+      assert.ok(cssHasClass(CSS, cls(suffix)), 'CSS 缺规则（类名作组件级匹配）：.' + cls(suffix));
       assert.ok(HELPERS.includes(cls(suffix)), 'helpers 未产类名：' + cls(suffix));
     }
     // 反向：helpers 里出现的 helpShell 类名必须在 CSS 里有规则（防臆造类名）。
     const emitted = [...new Set([...HELPERS.matchAll(new RegExp(CLS + '-[A-Za-z0-9-]+', 'g'))].map((m) => m[0]))];
     assert.ok(emitted.length >= NEW_SUFFIXES.length, 'helpers 产出的 helpShell 类名数量异常偏少：' + emitted.length);
-    for (const c of emitted) assert.ok(CSS.includes('.' + c), 'helpers 产出类名未被 CSS 覆盖：' + c);
+    for (const c of emitted) assert.ok(cssHasClass(CSS, c), 'helpers 产出类名未被 CSS 覆盖：' + c);
   });
 
   it('S4-4 类名不臆造：新后缀 ⊆ 既有 cls() 实参前缀（T11 归属）', () => {
