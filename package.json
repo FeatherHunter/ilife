@@ -25,8 +25,8 @@
     "changeset:status": "changeset status",
     "gate:run": "node tooling/run-locked.mjs",
     "gate:audit": "node tooling/check-gate-audit.mjs",
-    "gate:selftest": "node tooling/run-locked.mjs --ticket selftest -- node --test tooling/test/run-locked.test.mjs tooling/test/check-gate-audit.test.mjs",
-    "gate:selftest:html": "node tooling/run-locked.mjs --ticket 96 -- node --test tooling/test/skill-html-snapshot.test.mjs"
+    "gate:selftest": "node tooling/run-locked.mjs --ticket selftest --lock-dir .scratch/locks-selftest -- node --test tooling/test/run-locked.test.mjs tooling/test/check-gate-audit.test.mjs",
+    "gate:selftest:html": "node tooling/run-locked.mjs --ticket 96 --lock-dir .scratch/locks-selftest -- node --test tooling/test/skill-html-snapshot.test.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",

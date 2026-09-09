@@ -1,11 +1,14 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   SKILLS, SHAPES, BASE_PAINT_MARKERS, MARKER_ALLOW,
   normalize, sha256, byteLen, collectArtifacts, buildSnapshot, compare, firstDiff, baseFingerprint,
+  writeSnapshotChecked,
 } from '../skill-html-snapshot.mjs';
 
 /**
@@ -58,6 +61,30 @@ describe('#96 per-skill HTML 回归门工具自证', () => {
     const c = compare(snap, injected);
     assert.equal(c.markers.length, 1);
     assert.equal(c.markers[0].marker, 'ilife-');
+  });
+
+  it('--write 先校验后落盘：标记命中时快照文件 sha256 不变（R-S3-1）', () => {
+    const dir = mkdtempSync(join(tmpdir(), 't96-snap-'));
+    const target = join(dir, 'skill-html.snapshot.json');
+    const raw = (p) => createHash('sha256').update(readFileSync(p)).digest('hex');
+    try {
+      const clean = new Map([['a', { text: '<p>ok</p>', src: 's' }]]);
+      assert.equal(writeSnapshotChecked(clean, { snapPath: target }).written, true, '干净产物应落盘');
+      const before = raw(target);
+
+      const dirty = new Map([['a', { text: '<div class="ilife-toast">x</div>', src: 's' }]]);
+      const r = writeSnapshotChecked(dirty, { snapPath: target });
+      assert.equal(r.written, false, '影响面标记命中必须拒绝落盘');
+      assert.deepEqual(r.markers, [{ id: 'a', marker: 'ilife-' }]);
+      assert.equal(raw(target), before, '校验失败不得把受跟踪快照写脏（sha256 必须逐字节不变）');
+
+      const missing = join(dir, 'not-created.json');
+      assert.equal(writeSnapshotChecked(dirty, { snapPath: missing }).written, false);
+      assert.equal(existsSync(missing), false, '校验失败不得创建快照文件');
+    } finally {
+      if (!dir.startsWith(tmpdir())) throw new Error('路径守卫：临时目录必须在 os.tmpdir() 下');
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('定位：firstDiff 指出首个不同行', () => {

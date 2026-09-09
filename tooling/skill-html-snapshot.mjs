@@ -22,7 +22,7 @@
  * 在途改造的对象，冻结它会让别的票一改就红（跨票假红）。
  *
  * 用法：
- *   node tooling/skill-html-snapshot.mjs --write        # 重建快照（受跟踪文件 tooling/skill-html.snapshot.json）
+ *   node tooling/skill-html-snapshot.mjs --write        # 重建快照（**先校验后落盘**：影响面标记命中即 exit 1 且一个字节都不写）
  *   node tooling/skill-html-snapshot.mjs --check        # 校验（默认动作，差异即 exit 1）
  *   node tooling/skill-html-snapshot.mjs --show <id>    # 打印单件「快照 vs 实际」全文
  *   node tooling/skill-html-snapshot.mjs --list         # 列出全部产物 id ＋ 出处
@@ -31,7 +31,7 @@
  * 依赖：读 `packages/<pkg>/dist/render/index.js`（构建产物）＋ `packages/base-link-core/dist`。
  * 未构建时**显式失败**，不静默跳过。
  */
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, renameSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -222,6 +222,30 @@ export function readSnapshot(path = SNAP_PATH) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
+/**
+ * **先校验后落盘**（红队 R-S3-1）：影响面断言不通过时**一个字节都不写**，
+ * 受跟踪快照 `tooling/skill-html.snapshot.json` 的 sha256 保持不变。
+ * 校验通过则写同目录临时文件再 `rename` 原子替换，避免半截文件。
+ *
+ * 变异点（自证用）：把 `compare` 挪到 `renameSync` 之后 → 本函数在标记命中时也会落盘。
+ *
+ * @returns {{written:boolean, markers:Array<{id:string,marker:string}>, snap:object}}
+ */
+export function writeSnapshotChecked(artifacts, { snapPath = SNAP_PATH } = {}) {
+  const snap = buildSnapshot(artifacts);
+  const cmp = compare(snap, artifacts);
+  if (cmp.markers.length) return { written: false, markers: cmp.markers, snap };
+  const tmp = `${snapPath}.tmp-${process.pid}`;
+  try {
+    writeFileSync(tmp, JSON.stringify(snap, null, 2) + '\n', 'utf8');
+    renameSync(tmp, snapPath);
+  } catch (e) {
+    if (existsSync(tmp)) unlinkSync(tmp);
+    throw e;
+  }
+  return { written: true, markers: [], snap };
+}
+
 // ---------------------------------------------------------------- 比较
 
 /**
@@ -342,13 +366,11 @@ if (isEntry) {
     }
 
     if (has('--write')) {
-      const snap = buildSnapshot(artifacts);
-      writeFileSync(SNAP_PATH, JSON.stringify(snap, null, 2) + '\n', 'utf8');
-      // 写后自校验：任何影响面标记都会让写模式也红（迁移必须显式改本工具，不得静默变绿）
-      const cmp = compare(snap, artifacts);
-      if (cmp.markers.length) {
-        console.error(`FAIL: 影响面断言：${cmp.markers.length} 件产物含 base-paint 命名空间标记`);
-        for (const { id, marker } of cmp.markers.slice(0, 20)) console.error(`  ! ${id} ← ${marker}`);
+      // 先校验后落盘（R-S3-1）：标记命中即 exit 1，且**不写**受跟踪快照（不留脏文件）
+      const { written, markers, snap } = writeSnapshotChecked(artifacts);
+      if (!written) {
+        console.error(`FAIL: 影响面断言：${markers.length} 件产物含 base-paint 命名空间标记（**未落盘**，受跟踪快照逐字节不变）`);
+        for (const { id, marker } of markers.slice(0, 20)) console.error(`  ! ${id} ← ${marker}`);
         console.error('  （若这是有意的迁移，须先显式修改 tooling/skill-html-snapshot.mjs 的 MARKER_ALLOW 并走审查）');
         process.exit(1);
       }
