@@ -162,7 +162,7 @@ test('120 · analysis 11 处查询逐处排除软删行（每处唯一可观测�
   assert.equal(after.reviewSets, 0, 'exercise.ts:227 · exerciseReview 当日 actualTotalSets');
   assert.equal(after.dailyBurn, 0, 'review.ts:69 · query5dims.dailyBurn');
   assert.equal(after.dietDef, 0, 'diet.ts:162 · dietDeficitAnalysis.avgExerciseBurn');
-  assert.equal(after.cross, '力量消耗合计 0 卡 vs 有氧 0 卡', 'cross.ts:107-108 · 力量/有氧分层');
+  assert.equal(after.cross, '力量消耗合计 0 卡 vs 有氧 0 卡', 'cross.ts:108,109 · 力量/有氧分层');
   assert.equal(after.rows, 0, 'anomaly/common.ts:84 · exerciseRows');
   assert.equal(after.c5, '数据不足(需至少 2 个月有运动记录)', 'weightCompare3.ts:68 · scenarioC5 只剩 1 个月');
 });

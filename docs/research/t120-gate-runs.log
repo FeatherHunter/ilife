@@ -1,15 +1,14 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：120｜since：2026-09-09T13:19:30Z｜until：（无）｜条目数：7｜导出时间：2026-09-09T13:24:14.315Z
+> 票号过滤：120｜since：2026-09-09T13:37:15.937Z｜until：2026-09-09T13:38:04.305Z｜条目数：6｜导出时间：2026-09-09T13:39:18.883Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
-RUN ticket=120 runId=c9da0d5c-f8fe-488b-b9f9-27d48aba5b89 cmd="git checkout -- packages/skill-calorie/src/analysis/anomaly/common.ts packages/skill-calorie/src/analysis/utils.ts" waitedMs=60054 exit=0 pid=27960 at=2026-09-09T13:19:31.981Z
-RUN ticket=120 runId=daad9b94-4854-41ef-920f-671a2f4db131 cmd="pnpm build" waitedMs=0 exit=0 pid=9048 at=2026-09-09T13:19:34.023Z
-RUN ticket=120 runId=936ec8f9-d862-4869-b15b-031dd53bc171 cmd="node --test packages/skill-calorie/test/softdelete-120.test.mjs" waitedMs=0 exit=0 pid=33160 at=2026-09-09T13:19:40.457Z
-RUN ticket=120 runId=3ab0ead3-881d-4d2e-a944-62f39a37eb88 cmd="pnpm boundaries" waitedMs=110137 exit=0 pid=1984 at=2026-09-09T13:21:58.216Z
-RUN ticket=120 runId=7d612f03-2e39-447b-b8c3-4b258741340a cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=30736 at=2026-09-09T13:21:59.074Z
-RUN ticket=120 runId=f26fddf9-6243-47fd-b564-62617c5b4b43 cmd="pnpm publish:pre" waitedMs=30017 exit=0 pid=5144 at=2026-09-09T13:22:29.952Z
-RUN ticket=120 runId=3fa40024-ac03-4d30-9a1e-4da2d3442347 cmd="pnpm test" waitedMs=30042 exit=1 pid=27824 at=2026-09-09T13:23:32.258Z
+RUN ticket=120 runId=a0ec2448-a69e-4f80-beb9-2f72c0926fb5 cmd="pnpm build" waitedMs=30035 exit=0 pid=30028 at=2026-09-09T13:37:15.937Z
+RUN ticket=120 runId=4f68b43c-c2c9-4b04-a03d-b833e689190f cmd="pnpm boundaries" waitedMs=0 exit=0 pid=31272 at=2026-09-09T13:37:16.807Z
+RUN ticket=120 runId=cb6845c4-6955-4213-8f44-4c9bf437445f cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=32140 at=2026-09-09T13:37:17.678Z
+RUN ticket=120 runId=e44d9540-bb88-4a98-9330-b4f701cf1848 cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=36288 at=2026-09-09T13:37:18.569Z
+RUN ticket=120 runId=e99c654a-35a4-486f-bef5-73996635c1cd cmd="node --test packages/skill-calorie/test/softdelete-120.test.mjs packages/skill-calorie/test/cmd-write-40-persist.test.mjs" waitedMs=0 exit=0 pid=35524 at=2026-09-09T13:37:30.120Z
+RUN ticket=120 runId=7475e5c5-d99c-44ff-b8b0-afc0ddc73494 cmd="pnpm test" waitedMs=0 exit=1 pid=32780 at=2026-09-09T13:37:58.105Z
 ```
