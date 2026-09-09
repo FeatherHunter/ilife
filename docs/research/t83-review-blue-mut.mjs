@@ -72,7 +72,7 @@ const MUTS = [
     what: '`deliveryTemplateOf` 判定次序：把 `shape==="receipt"` 提到 `<!DOCTYPE` 之前——既有脚本无覆盖',
     from: "  if (/^\\s*<!DOCTYPE/i.test(s)) return 'doc-shell';\n  if (shape === 'receipt') return 'receipt';",
     to: "  if (shape === 'receipt') return 'receipt'; // MUT-83B-3\n  if (/^\\s*<!DOCTYPE/i.test(s)) return 'doc-shell';",
-    expectRed: false,
+    expectRed: true,
   },
   {
     id: 'MUT-83B-4',
@@ -96,7 +96,7 @@ const MUTS = [
     what: '回执落盘态**也**回传正文（`html: delivery.mode === "inline" ? receiptHtml : undefined` → 恒给）——测既有断言是否恒真',
     from: "      ok: false, ...receipt, delivery, html: delivery.mode === 'inline' ? receiptHtml : undefined,",
     to: "      ok: false, ...receipt, delivery, html: receiptHtml, // MUT-83B-6",
-    expectRed: false,
+    expectRed: true,
   },
 ];
 
