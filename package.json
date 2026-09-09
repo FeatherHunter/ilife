@@ -14,6 +14,9 @@
     "doctor": "node tooling/skilllink.mjs doctor",
     "snapshot": "node tooling/write-snapshot.mjs",
     "snapshot:check": "node tooling/write-snapshot.mjs --check",
+    "snapshot:html": "node tooling/skill-html-snapshot.mjs --write",
+    "snapshot:html:check": "node tooling/skill-html-snapshot.mjs --check",
+    "snapshot:html:list": "node tooling/skill-html-snapshot.mjs --list",
     "boundaries": "node tooling/check-boundaries.mjs",
     "publish:pre": "node tooling/check-publish.mjs --pre --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
     "publish:tarball": "node tooling/check-publish.mjs --tarball --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
@@ -22,7 +25,8 @@
     "changeset:status": "changeset status",
     "gate:run": "node tooling/run-locked.mjs",
     "gate:audit": "node tooling/check-gate-audit.mjs",
-    "gate:selftest": "node tooling/run-locked.mjs --ticket selftest -- node --test tooling/test/run-locked.test.mjs tooling/test/check-gate-audit.test.mjs"
+    "gate:selftest": "node tooling/run-locked.mjs --ticket selftest -- node --test tooling/test/run-locked.test.mjs tooling/test/check-gate-audit.test.mjs",
+    "gate:selftest:html": "node tooling/run-locked.mjs --ticket 96 -- node --test tooling/test/skill-html-snapshot.test.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",

@@ -32,6 +32,11 @@ jobs:
       - run: pnpm boundaries
       # Q92-①：构建忘写快照致误导 → CI 重 resolve 后 diff，不等 fail
       - run: pnpm snapshot:check
+      # #96：其余 5 技能 HTML 不回归门（per-skill HTML 逐件 sha256；base-* 影响面断言）
+      #   本地同口径命令就是这一条：pnpm snapshot:html:check（见 tooling/skill-html-snapshot.mjs）
+      - run: pnpm snapshot:html:check
+      # #96：门禁工具自证（协议 §2.4.6：不在 canonical pnpm test 的 glob 内，须单独触发）
+      - run: pnpm gate:selftest:html
       # changeset status 按字面 merge-base master HEAD：显式建本地 master 基线
       # 主仓签出 master 时冒号写法被拒，回退普通 fetch（本地 master 本来就在）
       - name: 取 master 基线

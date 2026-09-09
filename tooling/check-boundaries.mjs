@@ -26,5 +26,34 @@ const grepHit = ['base-link-core/src', 'base-combos/src'].some((d) =>
   readdirSync(join(root, 'packages', d)).some((f) =>
     /registerTab|openTab|mountInjector/.test(readFileSync(join(root, 'packages', d, f), 'utf8'))));
 assert(!grepHit, '装配 owner 归一 render（link-core/combos 无自装配）');
+
+// #96 · base-* 变更影响面断言：其余 5 技能（bill/chef/home/schedule/memo-ilife）当前**不消费** base-*，
+// 故 base-paint（目录 base-render）的任何变更都不得改动这 5 个技能的页面。结构面在这里卡死，
+// 行为面（HTML 产物逐件 sha256）在 `pnpm snapshot:html:check`（tooling/skill-html-snapshot.mjs）。
+const SKILLS_5 = ['skill-bill', 'skill-chef', 'skill-home', 'skill-schedule', 'skill-memo-ilife'];
+const BASE_RUNTIME = new Set(['base-paint', 'base-render']); // 目录名／包名两种写法都算
+for (const name of SKILLS_5) {
+  const p = pkg(name);
+  const deps = { ...(p.dependencies ?? {}), ...(p.devDependencies ?? {}), ...(p.peerDependencies ?? {}) };
+  const hit = Object.keys(deps).filter((d) => BASE_RUNTIME.has(d));
+  assert(hit.length === 0, `${name} 依赖闭包不含 base-*（实得：${hit.join(',') || '无'}）`);
+}
+const SRC_RE = /(?:from|import|require\s*\()\s*['"](?:base-paint|base-render)/;
+/** 递归列出目录下的 .ts 源文件（无子目录时退化为空）。 */
+function walkSrc(dir) {
+  const out = [];
+  for (const f of readdirSync(dir, { withFileTypes: true })) {
+    const abs = join(dir, f.name);
+    if (f.isDirectory()) out.push(...walkSrc(abs));
+    else if (f.name.endsWith('.ts')) out.push(abs);
+  }
+  return out;
+}
+const SRC_SCAN = [...SKILLS_5.flatMap((n) => walkSrc(join(root, 'packages', n, 'src'))),
+  ...SKILLS_5.flatMap((n) => readdirSync(join(root, 'packages', n, 'templates'))
+    .filter((f) => f.endsWith('.html')).map((f) => join(root, 'packages', n, 'templates', f)))];
+const srcHit = SRC_SCAN.filter((f) => SRC_RE.test(readFileSync(f, 'utf8')));
+assert(srcHit.length === 0, `5 技能源码／模板不 import base-*（命中：${srcHit.map((f) => f.slice(root.length + 1)).join(',') || '无'}）`);
+
 if (bad) { console.error(`boundaries: ${bad} 处破界`); process.exit(1); }
 console.log('boundaries: PASS');
