@@ -463,11 +463,20 @@ function labelIndexes(mode: LabelsMode, items: readonly ChartItem[], select: 'pe
   return Array.from(new Set<number>([0, peak, n - 1])).sort((a, b) => a - b);
 }
 
-function xLabelsSvg(common: ResolvedCommon, frame: Frame, items: readonly ChartItem[], select: 'peak' | 'edge' = 'peak'): string {
+/* t-chartfix：X 标签的 x 标度缺省与折线点同一 `xAt` 点标度；柱族（bar／combo）
+ * 的柱列中心走 band 标度 `x0 + slot*(i+0.5)`——点标度会把首尾标签钉在绘图区
+ * 左右边缘（3 柱时偏差 48.7 单位），与柱错位。调用方按自家几何传入。 */
+function xLabelsSvg(
+  common: ResolvedCommon,
+  frame: Frame,
+  items: readonly ChartItem[],
+  select: 'peak' | 'edge' = 'peak',
+  xOf: (index: number, count: number) => number = (i, n) => xAt(frame, i, n),
+): string {
   if (common.labels === 'none') return '';
   const baseY = frame.y1 + (common.compact ? 9 : 12);
   return labelIndexes(common.labels, items, select).map((i) => {
-    const x = xAt(frame, i, items.length);
+    const x = xOf(i, items.length);
     const rotate = common.labelRotate === 0 ? '' : ' transform="rotate(' + common.labelRotate + ' ' + n1(x) + ' ' + n1(baseY) + ')"';
     return '<text class="' + STYLE_PREFIX + 'charts-xlabel" x="' + n1(x) + '" y="' + n1(baseY)
       + '" text-anchor="middle"' + rotate + ' fill="' + MUTED_COLOR + '">' + esc(items[i].label) + '</text>';
@@ -1239,7 +1248,8 @@ function renderBar(raw: BarChartInput): ChartOutput {
     + (common.grid ? gridSvg(frame) : '')
     + barsSvg
     + valuesSvg
-    + xLabelsSvg(common, frame, items, 'edge')
+    /* t-chartfix：柱标签取柱列中心（与 `barsSvg` 同一 band 标度），不得用点标度。 */
+    + xLabelsSvg(common, frame, items, 'edge', (i, n) => frame.x0 + (frame.w / n) * (i + 0.5))
     + '</svg></div>';
   return { kind: 'bar', html, empty: points === 0, points };
 }
@@ -1460,7 +1470,8 @@ function renderCombo(raw: ComboChartInput): ChartOutput {
     + barsSvg
     + lineSvg
     + valuesSvg
-    + xLabelsSvg(common, frame, bars.length > 0 ? bars : lines)
+    /* t-chartfix：与 bar 同因——combo 柱列／线点同走 band 标度，标签亦然。 */
+    + xLabelsSvg(common, frame, bars.length > 0 ? bars : lines, 'peak', (i, n) => frame.x0 + (frame.w / n) * (i + 0.5))
     + '</svg></div>';
   return { kind: 'combo', html, empty: points === 0, points };
 }
@@ -1725,6 +1736,10 @@ export function chartsCss(prefix: string): string {
     '.' + p + 'charts-legend-value{color:var(--fg,#1d1d1f)}',
     '.' + p + 'charts-legend-pct{color:var(--fg3,#86868b)}',
     '.' + p + 'charts-pct{display:block;font-size:12px;color:var(--fg2,#6e6e73);text-align:right}',
+    /* t-chartfix：进度轨道最小可辨高度 12px。`height` 选项→内联 `height:Npx`／viewBox
+     * 的映射由 `E.height` 钉死（缺省 8）不得改；此处只加样式层下限（不同属性，不与
+     * 内联 height 冲突），缺省与过小的自定义高度渲染为 12px，65% 处可读。 */
+    '.' + p + 'charts-progress .' + p + 'charts-svg{min-height:12px}',
     '.' + p + 'charts-spark-value{font-size:11px}',
     /* 文本字号（旧 `charts.js:55,67,70,79,87,90,92,96,102-103,113,122` 逐值）：
      * 缺了这些规则 SVG 文本会继承页面字号（14–16 用户单位），比旧版大 30%–60%（R2-N12）。 */
