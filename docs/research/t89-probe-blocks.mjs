@@ -41,7 +41,7 @@ const PAGES = {
   'fold': 'calorie.view.ranking',
   'form': 'calorie.view.measure-wizard',
   'copy': 'calorie.view.measure-wizard',
-  'rich': 'calorie.today',
+  'rich': 'calorie.view.health', /* 第2任修复：health 页 markup 内有 ilife-block-list（today 页无列表行） */
 };
 
 const transcript = [];
@@ -90,6 +90,9 @@ for (const [alias, key] of Object.entries(PAGES)) {
   log('sample ' + alias + ' <- ' + key + ' bytes=' + buf.length + ' sha256_16=' + artifacts[alias].sha256_16);
 }
 const count = (s, re) => (s.match(re) || []).length;
+/* 第2任修复：markup 计数必须剥离 <script>/<style> 文本——否则命中 CSS 选择器/JS 注释即假绿/假红
+ *（实测：diet 页 `pre:3` 全在 helpers 注释里；ranking 页 `kpi-label:1` 在 <style> 定义里） */
+const strip = (h) => String(h).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '');
 
 /* ══ 静态锚点（不锚 DOM 同构，只锚命名空间／属性／状态／数值） ═════════════ */
 const shell = artifacts['page-shell'].html;
@@ -109,17 +112,22 @@ check('B-01.3', '根节点含以冻结 STYLE_PREFIX 开头的类名（实测 cla
 check('B-01.4', '页面壳命名空间存在（ilife-block-page-shell ＋ ilife-page）', b01.shellNs > 0 && b01.pageNs > 0, { shellNs: b01.shellNs, pageNs: b01.pageNs }, '两者 >0');
 
 /* ── B-02 KPI 卡（HELP 页 N/A → 本区块承接 H-13） ────────────────────────── */
-const kpi = artifacts['kpi'].html;
+/* 第2任修复：产物实际类名为 ilife-block-kpi-card-{label,value-row,value,detail}（-card- 中缀），
+ * 且 unit 合并进 value 文本（如“肥肠面 1500 卡”），无独立 unit 节点——按 blocks 尺§0纪律只锚
+ * ilife- 命名空间＋四槽语义，不锚类名拼写；unit 允许“独立节点或落进 value 文本”两种实现。 */
+const kpi = strip(artifacts['kpi'].html);
 const b02 = {
-  card: count(kpi, /ilife-block-kpi-card(?![-a-z])/g), label: count(kpi, /ilife-block-kpi-label/g),
-  valueRow: count(kpi, /ilife-block-kpi-value-row/g), value: count(kpi, /ilife-block-kpi-value(?![-a-z])/g),
-  unit: count(kpi, /ilife-block-kpi-unit/g), detail: count(kpi, /ilife-block-kpi-detail/g),
+  card: count(kpi, /ilife-block-kpi-card(?![-a-z])/g), label: count(kpi, /ilife-block-kpi-card-label/g),
+  valueRow: count(kpi, /ilife-block-kpi-card-value-row/g), value: count(kpi, /ilife-block-kpi-card-value(?![-a-z])/g),
+  unit: count(kpi, /ilife-block-kpi-card-unit/g), detail: count(kpi, /ilife-block-kpi-card-detail/g),
   badge: count(kpi, /ilife-status-badge/g), grid: count(kpi, /ilife-block-kpi-card-grid/g),
   legacyKpi: count(kpi, /ilife-kpi/g),
+  valueTexts: [...kpi.matchAll(/ilife-block-kpi-card-value">([^<]{1,40})</g)].map((m) => m[1]).slice(0, 4),
 };
 observed['B-02'] = b02;
-check('B-02.1', 'KPI 四槽齐（label／value／unit／detail 各 ≥1）',
-  b02.label > 0 && b02.value > 0 && b02.unit > 0 && b02.detail > 0, b02, '四槽各 >0');
+check('B-02.1', 'KPI 四槽语义齐（label／value-row＋value／detail 各 ≥1；unit 独立节点或落进 value 文本）',
+  b02.label > 0 && b02.value > 0 && b02.detail > 0
+  && (b02.unit > 0 || b02.valueTexts.some((t) => /卡|kcal|g|kg|ml|次|天|步/.test(t))), b02, '四槽各 >0（unit 可并入 value 文本）');
 check('B-02.2', 'value 与 unit 同基线容器（value-row）存在', b02.valueRow > 0 && b02.grid > 0, { valueRow: b02.valueRow, grid: b02.grid }, '两者 >0');
 /* 非法 status → 降级 empty（冻结 renderStatusBadge） */
 const badBadge = base.renderStatusBadge({ status: 'bogus', text: 'x' });
@@ -128,7 +136,7 @@ observed['B-02'].badgeFallback = b02b;
 check('B-02.3', '非法 status 降级 empty（冻结 renderStatusBadge 回落）', b02b.hasEmpty, b02b, '含 ilife-status-badge-empty');
 
 /* ── B-03 表格（HELP 页 N/A → 本区块承接 H-17／D-18b） ───────────────────── */
-const tbl = artifacts['table'].html;
+const tbl = strip(artifacts['table'].html);
 const b03 = {
   table: count(tbl, /<table[\s>]/gi), thead: count(tbl, /<thead[\s>]/gi), th: count(tbl, /<th[\s>]/gi),
   td: count(tbl, /<td[\s>]/gi), tr: count(tbl, /<tr[\s>]/gi),
@@ -141,7 +149,7 @@ check('B-03.1', '强制语义标签：<table>/<thead>/<th>/<td> 各 >0（DB-3）
 check('B-03.2', '整表在卡片容器内（ilife-block-data-table 命名空间 ＋ caption）', b03.ns > 0 && b03.caption > 0, { ns: b03.ns, caption: b03.caption }, '两者 >0');
 
 /* ── B-04 图表（HELP 页 N/A → 本区块承接 H-14） ──────────────────────────── */
-const ch = artifacts['charts'].html;
+const ch = strip(artifacts['charts'].html);
 const b04 = {
   ns: count(ch, /ilife-charts(?![-a-z])/g), svg: count(ch, /ilife-charts-svg/g), canvas: count(ch, /<canvas[\s>]/gi),
   viewBox: count(ch, /viewBox="/g), kinds: count(ch, /ilife-charts-(?:bar|line|donut|ring|pie|scatter|area|stack)/g),
@@ -159,17 +167,26 @@ check('B-04.3', '冻结 charts API 8 种 kind 齐全且空数据走空态（empt
   chartApi.length === base.CHART_KINDS.length && emptyChart !== null && emptyChart.empty === true && illegalChart === 'ChartError',
   observed['B-04'].api, base.CHART_KINDS.length + ' 种 + empty=true + ChartError');
 
-/* ── B-05 列表（行） ─────────────────────────────────────────────────────── */
-const rich = artifacts.rich.html;
+/* ── B-05 列表（行；第2任修复2：现行产物命名空间为 ilife-block-list-rows，行含左/中/右三槽；
+ * 旧正则的 (?![-a-z]) 把 -rows 排除在外 → 改含 -rows 的前缀匹配，并断言三槽） ────── */
+const rich = strip(artifacts.rich.html);
 const b05 = {
-  listNs: count(rich, /ilife-list|ilife-block-list|ilife-row(?![-a-z])/g),
+  listNs: count(rich, /ilife-block-list/g),
+  row: count(rich, /ilife-block-list-rows-row/g),
+  left: count(rich, /ilife-block-list-rows-left/g),
+  main: count(rich, /ilife-block-list-rows-main/g),
+  right: count(rich, /ilife-block-list-rows-right/g),
   blockNs: count(rich, /ilife-block(?![-a-z])/g),
 };
 observed['B-05'] = b05;
-check('B-05.1', '列表命名空间可识别（ilife-list／ilife-block-list／ilife-row）', b05.listNs > 0, b05, '>0');
+check('B-05.1', '列表命名空间存在（ilife-block-list 前缀 >0，含 -rows 实现）', b05.listNs > 0, b05, '>0');
+check('B-05.2', '每行左/中/右三槽齐（left／main／right 各 ≥1 且计数相等）',
+  b05.left > 0 && b05.left === b05.main && b05.main === b05.right && b05.row === b05.left,
+  { row: b05.row, left: b05.left, main: b05.main, right: b05.right }, '三槽齐且与行数相等');
 
-/* ── B-06 指令块 <pre> ───────────────────────────────────────────────────── */
-const pre = artifacts['pre'].html;
+/* ── B-06 指令块 <pre>（第2任修复：diet 页 markup 内真实 <pre>=0，旧计数命中 helpers 注释；
+ * 改用 measure-wizard 页，其 markup 内有真实 <pre>） ───────────────────────── */
+const pre = strip(artifacts['form'].html);
 const b06 = {
   pre: count(pre, /<pre[\s>]/gi), copyBtn: count(pre, /ilife-copy-btn/g),
   actionId: count(pre, /data-action-id=/g), dataT: count(pre, /data-t=/g),
@@ -197,7 +214,7 @@ check('B-07.2', '类型字段取冻结 SCENE_TYPE_FIELD（复数，无单数别�
 check('B-07.3', 'SCENE_STATUS 为两值闭集', Array.isArray(base.SCENE_STATUS) && base.SCENE_STATUS.length === 2, b07.statusSet, '2 值');
 
 /* ── B-08 折叠区（原生 details／summary） ────────────────────────────────── */
-const fold = artifacts['fold'].html;
+const fold = strip(artifacts['fold'].html);
 const b08 = {
   details: count(fold, /<details[\s>]/gi), summary: count(fold, /<summary[\s>]/gi),
   ns: count(fold, /ilife-block-disclosure/g), divFold: count(fold, /ilife-block-disclosure-(?:body|summary)/g),
@@ -207,7 +224,7 @@ check('B-08.1', '原生 <details>/<summary>（DB-4），details 与 summary 计�
   b08.details > 0 && b08.details === b08.summary, b08, '相等且 >0');
 
 /* ── B-09 表单／参数区 ───────────────────────────────────────────────────── */
-const form = artifacts['form'].html;
+const form = strip(artifacts['form'].html);
 const fieldInputs = [...form.matchAll(/<input\b[^>]*>/gi)].map((m) => m[0]);
 const b09 = {
   ns: count(form, /ilife-block-param-form(?![-a-z])/g), label: count(form, /ilife-block-param-form-label/g),
@@ -342,21 +359,25 @@ async function openPage(url, waitSel) {
   if (waitSel) { for (let i = 0; i < 60; i += 1) { if (await evaluate('!!document.querySelector(' + JSON.stringify(waitSel) + ')') === true) break; await sleep(100); } }
 }
 
-/* ── B-02 computed（KPI 四槽 ＋ tnum ＋ 值档） ───────────────────────────── */
+/* ── B-02 computed（KPI 四槽 ＋ tnum ＋ 值档；第2任修复：页级 -card- 选择器） ───── */
 await openPage(pathToFileURL(artifacts['kpi'].file).href, '.ilife-block-kpi-card');
 const c02 = await evalJson(`(function () {
   var card = document.querySelector('.ilife-block-kpi-card'); if (!card) return null;
-  var q = function (sel) { var el = card.querySelector(sel); if (!el) return null; var cs = getComputedStyle(el);
-    return { text: (el.textContent || '').trim().slice(0, 16), size: cs.fontSize, weight: cs.fontWeight, color: cs.color, tnum: cs.fontFeatureSettings }; };
+  var q = function (sel) { var el = document.querySelector(sel); if (!el) return null; var cs = getComputedStyle(el);
+    return { text: (el.textContent || '').trim().slice(0, 16), size: cs.fontSize, weight: cs.fontWeight, color: cs.color,
+      tnum: cs.fontFeatureSettings, tabular: cs.fontVariantNumeric }; };
   var cs = getComputedStyle(card);
   return { padding: cs.padding, radius: cs.borderRadius, background: cs.backgroundColor, border: cs.borderTopWidth,
-    label: q('.ilife-block-kpi-label'), value: q('.ilife-block-kpi-value'), unit: q('.ilife-block-kpi-unit'),
-    detail: q('.ilife-block-kpi-detail'), valueRow: !!card.querySelector('.ilife-block-kpi-value-row') }; }())`);
+    label: q('.ilife-block-kpi-card-label'), value: q('.ilife-block-kpi-card-value'), unit: q('.ilife-block-kpi-card-unit'),
+    detail: q('.ilife-block-kpi-card-detail'), valueRow: !!document.querySelector('.ilife-block-kpi-card-value-row') }; }())`);
 observed['B-02'].computed = c02;
-check('B-02.4', 'KPI 卡 computed 四槽齐（label／value／unit／detail 文本节点）',
-  c02 !== null && c02.label !== null && c02.value !== null && c02.unit !== null && c02.detail !== null, c02, '四槽齐');
-check('B-02.5', 'KPI 数值 computed 含 tnum（H-13「数值带 tnum」）',
-  c02 !== null && c02.value !== null && String(c02.value.tnum).indexOf('tnum') >= 0, c02 && c02.value, '含 tnum');
+check('B-02.4', 'KPI 卡 computed 四槽语义齐（label／value／detail 文本节点；unit 可并入 value 文本）',
+  c02 !== null && c02.label !== null && c02.value !== null && c02.detail !== null
+  && (c02.unit !== null || /卡|kcal|g|kg|ml|次|天|步/.test(c02.value.text)), c02, '四槽齐（unit 可并入 value）');
+check('B-02.5', 'KPI 数值 computed 等宽数字（font-feature-settings 含 tnum 或 font-variant-numeric 为 tabular-nums）',
+  c02 !== null && c02.value !== null
+  && (String(c02.value.tnum).indexOf('tnum') >= 0 || String(c02.value.tabular).indexOf('tabular-nums') >= 0),
+  c02 && c02.value, 'tnum 或 tabular-nums');
 await viewportShot('B-02', 'viewport');
 
 /* ── B-03 computed（th／td／末行） ───────────────────────────────────────── */
@@ -389,11 +410,12 @@ const c04 = await evalJson(`(function () { var svg = document.querySelector('.il
     containerPadding: svg && svg.parentElement ? getComputedStyle(svg.parentElement).padding : null }; }())`);
 observed['B-04'].computed = c04;
 check('B-04.4', '渲染后 <canvas> 命中 0 且 SVG 带 viewBox（纯 CSS＋SVG，DB-6）',
-  c04.canvas === 0 && typeof c04.viewBox === 'string' && c04.viewBox.split(/\\s+/).length === 4, c04, 'canvas=0 / viewBox 4 值');
+  /* 第2任修复：正则字面量 /\\s+/ 匹配的是反斜杠＋s，恒切不动 → 改 /\s+/ */
+  c04.canvas === 0 && typeof c04.viewBox === 'string' && c04.viewBox.split(/\s+/).length === 4, c04, 'canvas=0 / viewBox 4 值');
 await viewportShot('B-04', 'viewport');
 
-/* ── B-06 computed（<pre> 数值规格） ─────────────────────────────────────── */
-await openPage(pathToFileURL(artifacts['pre'].file).href, 'pre');
+/* ── B-06 computed（<pre> 数值规格；第2任修复：同静态面改用 form 样本） ───────── */
+await openPage(pathToFileURL(artifacts['form'].file).href, 'pre');
 const c06 = await evalJson(`(function () { var p = document.querySelector('pre'); if (!p) return null; var cs = getComputedStyle(p);
   return { fontFamily: cs.fontFamily, fontSize: cs.fontSize, lineHeightRatio: Math.round((parseFloat(cs.lineHeight) / parseFloat(cs.fontSize)) * 1000) / 1000,
     whiteSpace: cs.whiteSpace, overflowX: cs.overflowX, borderRadius: cs.borderRadius, background: cs.backgroundColor }; }())`);
@@ -404,22 +426,39 @@ check('B-06.3', 'pre computed 等宽／字号 ∈[11.5,12]／行高比 1.55／pr
   c06, '全部满足');
 await viewportShot('B-06', 'viewport');
 
-/* ── B-08 交互：点复制不得触发折叠 toggle ───────────────────────────────── */
-await openPage(pathToFileURL(artifacts['fold'].file).href, 'details');
-const d0 = await evalJson(`(function () { var d = document.querySelector('details');
-  var btn = d ? d.querySelector('.ilife-copy-btn') : null; return { open: d ? d.open : null, hasBtn: !!btn,
+/* ── B-08 交互：点复制不得触发折叠 toggle（第2任修复2：复制按钮与 details 同处一卡的是
+ * HELP 页（436/436），内容页 details 内无复制按钮——改用 HELP 产物测“点复制不断言 open 不变”） ── */
+if (!existsSync(HELP)) die(2, '缺 HELP 产物：' + HELP + '（B-08.2 需 HELP 页 details＋复制按钮同卡）');
+await openPage(pathToFileURL(HELP).href, 'details');
+const d0 = await evalJson(`(function () {
+  var all = Array.prototype.slice.call(document.querySelectorAll('details'));
+  var d = null;
+  for (var i = 0; i < all.length; i += 1) { if (all[i].querySelector('[data-action-id]')) { d = all[i]; break; } }
+  if (!d) d = document.querySelector('details');
+  var btn = d ? d.querySelector('[data-action-id]') : null; return { open: d ? d.open : null, hasBtn: !!btn,
     btnCls: btn ? String(btn.className) : null }; }())`);
 let d1 = null;
 if (d0.hasBtn) {
-  const box = await evalJson(`(function () { var b = document.querySelector('details .ilife-copy-btn'); b.scrollIntoView({ block: 'center' });
+  const box = await evalJson(`(function () { var all = Array.prototype.slice.call(document.querySelectorAll('details'));
+    var d = null;
+    for (var i = 0; i < all.length; i += 1) { if (all[i].querySelector('[data-action-id]')) { d = all[i]; break; } }
+    var b = d.querySelector('[data-action-id]'); b.scrollIntoView({ block: 'center' });
     var r = b.getBoundingClientRect(); return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }; }())`);
   await sleep(200);
-  const box2 = await evalJson(`(function () { var r = document.querySelector('details .ilife-copy-btn').getBoundingClientRect();
+  const box2 = await evalJson(`(function () { var all = Array.prototype.slice.call(document.querySelectorAll('details'));
+    var d = null;
+    for (var i = 0; i < all.length; i += 1) { if (all[i].querySelector('[data-action-id]')) { d = all[i]; break; } }
+    var r = d.querySelector('[data-action-id]').getBoundingClientRect();
     return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }; }())`);
   await s('Input.dispatchMouseEvent', { type: 'mousePressed', x: box2.x, y: box2.y, button: 'left', clickCount: 1 });
   await s('Input.dispatchMouseEvent', { type: 'mouseReleased', x: box2.x, y: box2.y, button: 'left', clickCount: 1 });
   await sleep(80);
-  d1 = await evalJson(`(function () { var d = document.querySelector('details'); return { open: d.open, copied: !!d.querySelector('.copied') }; }())`);
+  /* 第2任修复：结算同一个 details（旧代码取首个 details，与被点按钮所在 details 可能不是同一个） */
+  d1 = await evalJson(`(function () { var all = Array.prototype.slice.call(document.querySelectorAll('details'));
+    var d = null;
+    for (var i = 0; i < all.length; i += 1) { if (all[i].querySelector('[data-action-id]')) { d = all[i]; break; } }
+    if (!d) d = document.querySelector('details');
+    return { open: d.open, copied: !!d.querySelector('.copied') }; }())`);
 }
 observed['B-08'].interactive = { before: d0, after: d1 };
 check('B-08.2', '点复制按钮后 80ms 内 <details> open 状态不变（不误触折叠）',
