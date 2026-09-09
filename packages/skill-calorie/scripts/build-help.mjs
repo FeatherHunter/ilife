@@ -2,7 +2,7 @@
 // HELP 构建期注入（T11，照 M6 范式；#40 追加 35 写键）：CALORIE_COMBOS 全量键 + 代表唤醒词→速查表→SKILL.md 互联区；只重写标记块，其余不动。无标记即大声失败。
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CALORIE_COMBOS } from '../dist/cli/keys.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
@@ -134,6 +134,27 @@ function exampleFor(key) {
     case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
     case 'calorie.view.library': return 'calorie-cmd-read calorie.view.library';
     case 'calorie.view.search': return 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'';
+
+    // #99：#41 的 18 个 view 键补齐（此前落到 default → 无 --params → 照抄即 exit 2／4）。
+    // 参数取值逐字来自 packages/skill-calorie/test/cli-smoke-t41.test.mjs 的 CASES（同一验收口径）。
+    case 'calorie.view.weight': return 'calorie-cmd-read calorie.view.weight --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.weight-history': return 'calorie-cmd-read calorie.view.weight-history --params \'{"days":7}\'';
+    case 'calorie.view.weight-compare': return 'calorie-cmd-read calorie.view.weight-compare --params \'{"start":"2026-09-01","end":"2026-09-07","compareStart":"2026-08-23","compareEnd":"2026-08-29"}\'';
+    case 'calorie.view.weight-review': return 'calorie-cmd-read calorie.view.weight-review --params \'{"today":"2026-09-07"}\'';
+    case 'calorie.view.volatility': return 'calorie-cmd-read calorie.view.volatility --params \'{"start":"2026-08-23","end":"2026-09-07"}\'';
+    case 'calorie.view.body-composition': return 'calorie-cmd-read calorie.view.body-composition';
+    case 'calorie.view.body-measure': return 'calorie-cmd-read calorie.view.body-measure --params \'{"metric":"waist_cm"}\'';
+    case 'calorie.view.plan': return 'calorie-cmd-read calorie.view.plan';
+    case 'calorie.view.plan-wizard': return 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"t","start_date":"2026-09-01","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"a","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\'';
+    case 'calorie.view.exercise-goal': return 'calorie-cmd-read calorie.view.exercise-goal --params \'{"start":"2026-09-06","end":"2026-09-07"}\'';
+    case 'calorie.view.goal-expiring': return 'calorie-cmd-read calorie.view.goal-expiring --params \'{"withinDays":150,"today":"2026-09-07"}\'';
+    case 'calorie.view.goal-predict': return 'calorie-cmd-read calorie.view.goal-predict --params \'{"start":"2026-08-23","end":"2026-09-07"}\'';
+    case 'calorie.view.goal-vs-actual': return 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
+    case 'calorie.view.predict': return 'calorie-cmd-read calorie.view.predict --params \'{"start":"2026-08-23","end":"2026-09-07","horizonDays":30}\'';
+    case 'calorie.view.anomaly': return 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"diet_over","start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.contraindication': return 'calorie-cmd-read calorie.view.contraindication --params \'{"part":"all"}\'';
+    case 'calorie.view.dedupe': return 'calorie-cmd-read calorie.view.dedupe';
+    case 'calorie.view.profile': return 'calorie-cmd-read calorie.view.profile';
     case 'calorie.photo.list': return 'calorie-cmd-read calorie.photo.list --params \'{"tag":"正面"}\'';
     case 'calorie.photo.detail': return 'calorie-cmd-read calorie.photo.detail --params \'{"id":1}\'';
     case 'calorie.photo.compare': return 'calorie-cmd-read calorie.photo.compare --params \'{"id1":1,"id2":2}\'';
@@ -177,7 +198,9 @@ function exampleFor(key) {
     case 'calorie.body.measure-add': return 'calorie-cmd-read calorie.body.measure-add --params \'{"waistCm":85}\'';
     case 'calorie.body.measure-remove': return 'calorie-cmd-read calorie.body.measure-remove --params \'{"id":1}\'';
 
-    default: return 'calorie-cmd-read ' + key;
+    // #99 生成期结构断言：新键必须自带可执行示例。落 default 的旧写法会生成
+    // `calorie-cmd-read <key>`（无 --params）——照抄即 exit 2／4，且 SKILL.md 看不出来。
+    default: throw new Error('exampleFor 缺 case：' + key + '（新增键必须补可执行示例，不得落 default）');
   }
 }
 
@@ -195,11 +218,27 @@ export function buildHelpBlock() {
   return lines.join('\n');
 }
 
-const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
-const skillPath = join(pkgDir, 'SKILL.md');
-const text = readFileSync(skillPath, 'utf8');
-const si = text.indexOf(START), ei = text.indexOf(END);
-if (si < 0 || ei < 0 || ei < si) { console.error('ERR: SKILL.md 缺 HELP 标记块'); process.exit(1); }
-const next = text.slice(0, si + START.length) + '\n' + buildHelpBlock() + '\n' + text.slice(ei);
-writeFileSync(skillPath, next);
-console.log('HELP 已注入：' + skillPath);
+/** 只重写 AUTO 块：标记缺失即抛（不静默截断文件）。供 runMain 与门禁脚本复用。 */
+export function renderSkillMd(text) {
+  const si = text.indexOf(START), ei = text.indexOf(END);
+  if (si < 0 || ei < 0 || ei < si) throw new Error('ERR: SKILL.md 缺 HELP 标记块');
+  return text.slice(0, si + START.length) + '\n' + buildHelpBlock() + '\n' + text.slice(ei);
+}
+
+function runMain() {
+  const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const skillPath = join(pkgDir, 'SKILL.md');
+  const next = renderSkillMd(readFileSync(skillPath, 'utf8'));
+  writeFileSync(skillPath, next);
+  console.log('HELP 已注入：' + skillPath);
+}
+
+// 只在**作为脚本运行**时写盘（照 packages/base-combos/scripts/build-help.mjs 同形，#80 已落地）。
+// 被 import 时零副作用：否则 `pnpm test`（skill-t11 导入本模块取 buildHelpBlock）会在测试进程里
+// 重写受跟踪的 SKILL.md —— 进程被杀即等长零填充（事故 #124），且会让 skill-t11 的「互联区新鲜」
+// 断言恒真（自己写、自己比，永远相等，无鉴别力）。
+const isMain = (() => {
+  try { return process.argv[1] ? pathToFileURL(process.argv[1]).href === import.meta.url : false; }
+  catch { return false; }
+})();
+if (isMain) runMain();

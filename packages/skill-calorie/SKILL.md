@@ -112,14 +112,14 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 设置档案 | calorie.profile.set | receipt | `calorie-cmd-read calorie.profile.set --params '{"heightCm":175,"activityLevel":"moderate"}'` |
 | 改档案 | calorie.profile.update | receipt | `calorie-cmd-read calorie.profile.update --params '{"field":"heightCm","value":176}'` |
 | 看今日饮食概览 | calorie.today | list | `calorie-cmd-read calorie.today --params '{"date":"2026-09-07"}'` |
-| calorie.view.anomaly | calorie.view.anomaly | stat | `calorie-cmd-read calorie.view.anomaly` |
+| calorie.view.anomaly | calorie.view.anomaly | stat | `calorie-cmd-read calorie.view.anomaly --params '{"kind":"diet_over","start":"2026-09-01","end":"2026-09-07"}'` |
 | 看批量导入预览 | calorie.view.batch-import-preview | stat | `calorie-cmd-read calorie.view.batch-import-preview --params '{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"2026-09-06"}]}'` |
 | calorie.view.body-composition | calorie.view.body-composition | stat | `calorie-cmd-read calorie.view.body-composition` |
-| calorie.view.body-measure | calorie.view.body-measure | stat | `calorie-cmd-read calorie.view.body-measure` |
+| calorie.view.body-measure | calorie.view.body-measure | stat | `calorie-cmd-read calorie.view.body-measure --params '{"metric":"waist_cm"}'` |
 | 看热量趋势 | calorie.view.calorie-trend | stat | `calorie-cmd-read calorie.view.calorie-trend --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 看体重 vs 摄入(最近 7 天) | calorie.view.combined | stat | `calorie-cmd-read calorie.view.combined --params '{"pair":"weight_calorie","window":"7d"}'` |
 | 看体脂向导 | calorie.view.composition-wizard | stat | `calorie-cmd-read calorie.view.composition-wizard` |
-| calorie.view.contraindication | calorie.view.contraindication | stat | `calorie-cmd-read calorie.view.contraindication` |
+| calorie.view.contraindication | calorie.view.contraindication | stat | `calorie-cmd-read calorie.view.contraindication --params '{"part":"all"}'` |
 | calorie.view.dedupe | calorie.view.dedupe | stat | `calorie-cmd-read calorie.view.dedupe` |
 | 看热量缺口 | calorie.view.deficit | stat | `calorie-cmd-read calorie.view.deficit --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
 | 看今日饮食概览 | calorie.view.diet | stat | `calorie-cmd-read calorie.view.diet --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
@@ -127,7 +127,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看今日运动概览 | calorie.view.exercise | stat | `calorie-cmd-read calorie.view.exercise --params '{"start":"2026-09-06","end":"2026-09-07"}'` |
 | 看有氧训练总览 | calorie.view.exercise-cardio | stat | `calorie-cmd-read calorie.view.exercise-cardio --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 看运动分类占比 | calorie.view.exercise-distribution | stat | `calorie-cmd-read calorie.view.exercise-distribution --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
-| calorie.view.exercise-goal | calorie.view.exercise-goal | stat | `calorie-cmd-read calorie.view.exercise-goal` |
+| calorie.view.exercise-goal | calorie.view.exercise-goal | stat | `calorie-cmd-read calorie.view.exercise-goal --params '{"start":"2026-09-06","end":"2026-09-07"}'` |
 | 看运动复盘 | calorie.view.exercise-recap | stat | `calorie-cmd-read calorie.view.exercise-recap --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 计划复盘（本周） | calorie.view.exercise-review | stat | `calorie-cmd-read calorie.view.exercise-review --params '{"start":"2026-08-31","end":"2026-09-07"}'` |
 | 看力量训练总览 | calorie.view.exercise-strength | stat | `calorie-cmd-read calorie.view.exercise-strength --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
@@ -135,12 +135,12 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看GIF规划器 | calorie.view.gif-planner | stat | `calorie-cmd-read calorie.view.gif-planner --params '{"tag":"正面"}'` |
 | 看今日目标进度 | calorie.view.goal | stat | `calorie-cmd-read calorie.view.goal --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
 | 定营养目标 | calorie.view.goal-config | stat | `calorie-cmd-read calorie.view.goal-config` |
-| calorie.view.goal-expiring | calorie.view.goal-expiring | stat | `calorie-cmd-read calorie.view.goal-expiring` |
-| calorie.view.goal-predict | calorie.view.goal-predict | stat | `calorie-cmd-read calorie.view.goal-predict` |
+| calorie.view.goal-expiring | calorie.view.goal-expiring | stat | `calorie-cmd-read calorie.view.goal-expiring --params '{"withinDays":150,"today":"2026-09-07"}'` |
+| calorie.view.goal-predict | calorie.view.goal-predict | stat | `calorie-cmd-read calorie.view.goal-predict --params '{"start":"2026-08-23","end":"2026-09-07"}'` |
 | 看今日目标进度 | calorie.view.goal-progress | stat | `calorie-cmd-read calorie.view.goal-progress --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
 | 定营养目标(自动算) | calorie.view.goal-recommend | stat | `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'` |
 | 看目标状态 | calorie.view.goal-status | stat | `calorie-cmd-read calorie.view.goal-status` |
-| calorie.view.goal-vs-actual | calorie.view.goal-vs-actual | stat | `calorie-cmd-read calorie.view.goal-vs-actual` |
+| calorie.view.goal-vs-actual | calorie.view.goal-vs-actual | stat | `calorie-cmd-read calorie.view.goal-vs-actual --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
 | 定体重目标 | calorie.view.goal-weight | stat | `calorie-cmd-read calorie.view.goal-weight --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 看健康盘 | calorie.view.health | stat | `calorie-cmd-read calorie.view.health --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
 | 看今日主页 | calorie.view.home | stat | `calorie-cmd-read calorie.view.home --params '{"date":"2026-09-07"}'` |
@@ -153,8 +153,8 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 查营养配比 | calorie.view.nutrition-ratio | stat | `calorie-cmd-read calorie.view.nutrition-ratio --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 看身材照向导 | calorie.view.photo-log-wizard | stat | `calorie-cmd-read calorie.view.photo-log-wizard` |
 | calorie.view.plan | calorie.view.plan | stat | `calorie-cmd-read calorie.view.plan` |
-| calorie.view.plan-wizard | calorie.view.plan-wizard | stat | `calorie-cmd-read calorie.view.plan-wizard` |
-| calorie.view.predict | calorie.view.predict | stat | `calorie-cmd-read calorie.view.predict` |
+| calorie.view.plan-wizard | calorie.view.plan-wizard | stat | `calorie-cmd-read calorie.view.plan-wizard --params '{"plan":{"config":{"title":"t","start_date":"2026-09-01","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"a","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}'` |
+| calorie.view.predict | calorie.view.predict | stat | `calorie-cmd-read calorie.view.predict --params '{"start":"2026-08-23","end":"2026-09-07","horizonDays":30}'` |
 | 看落地训练进度 | calorie.view.process-progress | stat | `calorie-cmd-read calorie.view.process-progress` |
 | calorie.view.profile | calorie.view.profile | stat | `calorie-cmd-read calorie.view.profile` |
 | 查高热量排行 | calorie.view.ranking | stat | `calorie-cmd-read calorie.view.ranking --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
@@ -163,11 +163,11 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看每日六因素 | calorie.view.six-factors | stat | `calorie-cmd-read calorie.view.six-factors --params '{"date":"2026-09-07"}'` |
 | 看食品来源统计 | calorie.view.source-stats | stat | `calorie-cmd-read calorie.view.source-stats` |
 | 看今日喝水 | calorie.view.today-water | stat | `calorie-cmd-read calorie.view.today-water --params '{"date":"2026-09-07"}'` |
-| calorie.view.volatility | calorie.view.volatility | stat | `calorie-cmd-read calorie.view.volatility` |
-| calorie.view.weight | calorie.view.weight | stat | `calorie-cmd-read calorie.view.weight` |
-| calorie.view.weight-compare | calorie.view.weight-compare | stat | `calorie-cmd-read calorie.view.weight-compare` |
-| calorie.view.weight-history | calorie.view.weight-history | stat | `calorie-cmd-read calorie.view.weight-history` |
-| calorie.view.weight-review | calorie.view.weight-review | stat | `calorie-cmd-read calorie.view.weight-review` |
+| calorie.view.volatility | calorie.view.volatility | stat | `calorie-cmd-read calorie.view.volatility --params '{"start":"2026-08-23","end":"2026-09-07"}'` |
+| calorie.view.weight | calorie.view.weight | stat | `calorie-cmd-read calorie.view.weight --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
+| calorie.view.weight-compare | calorie.view.weight-compare | stat | `calorie-cmd-read calorie.view.weight-compare --params '{"start":"2026-09-01","end":"2026-09-07","compareStart":"2026-08-23","compareEnd":"2026-08-29"}'` |
+| calorie.view.weight-history | calorie.view.weight-history | stat | `calorie-cmd-read calorie.view.weight-history --params '{"days":7}'` |
+| calorie.view.weight-review | calorie.view.weight-review | stat | `calorie-cmd-read calorie.view.weight-review --params '{"today":"2026-09-07"}'` |
 | 记喝水 | calorie.water.log | receipt | `calorie-cmd-read calorie.water.log --params '{"ml":300}'` |
 | 批量补录体重 | calorie.weight.batch | receipt | `calorie-cmd-read calorie.weight.batch --params '{"items":[{"date":"2026-09-06","kg":70.5}]}'` |
 | 记体重 | calorie.weight.log | receipt | `calorie-cmd-read calorie.weight.log --params '{"kg":70.5}'` |
