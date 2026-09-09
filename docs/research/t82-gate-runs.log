@@ -1,0 +1,30 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：82｜since：2026-09-09T14:38:50.000Z｜until：2026-09-09T14:43:30.000Z｜条目数：22｜导出时间：2026-09-09T14:43:18.209Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=82 runId=fc2baf10-93e2-45ad-a2bb-49d4e268b9df cmd="pnpm build" waitedMs=10014 exit=0 pid=11772 at=2026-09-09T14:38:58.968Z
+RUN ticket=82 runId=a06d633c-50a5-4168-8084-3f3ee17e94e3 cmd="pnpm boundaries" waitedMs=0 exit=0 pid=18000 at=2026-09-09T14:39:02.142Z
+RUN ticket=82 runId=ab3d28d9-9742-4896-bb22-ea02e21b14a1 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=12256 at=2026-09-09T14:39:03.068Z
+RUN ticket=82 runId=dedb7010-b684-43cc-9851-5daa53928451 cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=22636 at=2026-09-09T14:39:05.884Z
+RUN ticket=82 runId=578596e9-9acb-4e94-916c-738e416d8c91 cmd="pnpm help:examples:check" waitedMs=0 exit=0 pid=28692 at=2026-09-09T14:39:19.749Z
+RUN ticket=82 runId=2ba91cd7-a025-41c8-8b15-8adcebd3f432 cmd="node packages/skill-calorie/scripts/build-help.mjs" waitedMs=0 exit=0 pid=18844 at=2026-09-09T14:39:22.378Z
+RUN ticket=82 runId=f7570290-f2e6-45b5-97d0-c63a8a503cac cmd="node --test test/skills-export-47.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/calorie-c43.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs test/calorie-routing-81.test.mjs" waitedMs=10005 exit=1 pid=25500 at=2026-09-09T14:39:41.752Z
+RUN ticket=82 runId=b831a6be-1f5f-4909-966d-baa37b464423 cmd="pnpm test" waitedMs=10011 exit=1 pid=37436 at=2026-09-09T14:40:41.556Z
+RUN ticket=82 runId=0a48f461-ca1a-4b0f-a7c6-47f6a64258ae cmd="pnpm build" waitedMs=30026 exit=0 pid=35320 at=2026-09-09T14:41:53.444Z
+RUN ticket=82 runId=1b25cca0-242e-47c5-9579-5bb7b6ca3801 cmd="pnpm boundaries" waitedMs=0 exit=0 pid=33312 at=2026-09-09T14:41:54.355Z
+RUN ticket=82 runId=17194887-6727-473a-a7de-567ece28f1f7 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=15288 at=2026-09-09T14:41:55.271Z
+RUN ticket=82 runId=ae310953-1903-4766-8592-736f8969d1e4 cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=10684 at=2026-09-09T14:41:56.197Z
+RUN ticket=82 runId=90aa32d9-62a8-4326-b451-e28d0ced311c cmd="pnpm help:examples:check" waitedMs=0 exit=0 pid=6548 at=2026-09-09T14:42:09.832Z
+RUN ticket=82 runId=1ffc2046-8b72-4931-b8f0-5bc2846424fe cmd="git add packages/skill-calorie/SKILL.md docs/research/t82-skill-facade.md .changeset/t82-skill-facade.md" waitedMs=0 exit=0 pid=37088 at=2026-09-09T14:42:17.838Z
+RUN ticket=82 runId=5f2c5e9a-96f6-4294-a58f-c8dd70e6a3f5 cmd="git commit --only packages/skill-calorie/SKILL.md docs/research/t82-skill-facade.md .changeset/t82-skill-facade.md -F .scratch/t82/commit-msg-1.txt" waitedMs=0 exit=0 pid=15752 at=2026-09-09T14:42:17.993Z
+RUN ticket=82 runId=137891ed-7aa2-44be-95e5-7a2dd8a703bf cmd="node --test test/skills-export-47.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs" waitedMs=0 exit=1 pid=38740 at=2026-09-09T14:42:28.519Z
+RUN ticket=82 runId=b78e486e-4e52-4149-9bda-8fdd7ff6eec2 cmd="git checkout HEAD -- packages/skill-calorie/SKILL.md" waitedMs=0 exit=0 pid=12412 at=2026-09-09T14:42:30.713Z
+RUN ticket=82 runId=e10cafa8-171b-4344-b941-9b6b0f28df59 cmd="node --test test/skills-export-47.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs" waitedMs=0 exit=0 pid=13600 at=2026-09-09T14:42:30.982Z
+RUN ticket=82 runId=17ea6aab-a1dd-460b-bfa0-356eb86a3c6c cmd="pnpm help:examples:check" waitedMs=0 exit=1 pid=34872 at=2026-09-09T14:42:34.360Z
+RUN ticket=82 runId=45b64ca0-eb1b-4949-963f-a991da0b21b9 cmd="git checkout HEAD -- packages/skill-calorie/SKILL.md" waitedMs=0 exit=0 pid=34740 at=2026-09-09T14:42:36.455Z
+RUN ticket=82 runId=4c61a24b-bb88-43dc-b26c-561034110962 cmd="pnpm help:examples:check" waitedMs=1 exit=0 pid=32972 at=2026-09-09T14:42:49.839Z
+RUN ticket=82 runId=3a3bccc8-6cec-40cb-aa7e-84934329d23b cmd="git checkout HEAD -- packages/skill-calorie/SKILL.md" waitedMs=0 exit=0 pid=37772 at=2026-09-09T14:42:51.925Z
+```

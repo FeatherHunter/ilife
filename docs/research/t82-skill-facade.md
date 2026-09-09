@@ -102,6 +102,16 @@ description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯
 | 7 | 靶向 5 文件 `node --test …` | `f7570290-f2e6-45b5-97d0-c63a8a503cac` | **1**（32 tests／31 pass／1 fail，见下） |
 | 8 | canonical `pnpm test`（1 轮） | `b831a6be-1f5f-4909-966d-baa37b464423` | **1**（既有红，见下） |
 
+**最终树复跑**（写完证据文档／changeset 后，同一工作区再跑一遍，故 §5 表格后半段为最终树口径）：
+
+| # | 命令 | runId | exit |
+|---|---|---|---|
+| 9 | `pnpm build` | `0a48f461-ca1a-4b0f-a7c6-47f6a64258ae` | **0**（waitedMs=30026） |
+| 10 | `pnpm boundaries` | `1b25cca0-242e-47c5-9579-5bb7b6ca3801` | **0** |
+| 11 | `pnpm snapshot:check` | `17194887-6727-473a-a7de-567ece28f1f7` | **0** |
+| 12 | `pnpm publish:pre` | `ae310953-1903-4766-8592-736f8969d1e4` | **0** |
+| 13 | `pnpm help:examples:check` | `90aa32d9-62a8-4326-b451-e28d0ced311c` | **0**（`RESULT: 99/99`） |
+
 **靶向组明细**（`node --test test/skills-export-47.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/calorie-c43.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs test/calorie-routing-81.test.mjs`）：`#47 skills-export 3/3`、`skill-t11 9/9`（含 M6 正文 7 串、互联区新鲜）、`calorie-c43 7/7`（含 C1 运维定位、C7 默认目标值）、`#56 provider 5/5`（`description` 同源断言）；**唯一红**＝`FX-81-5 不变量：exec ⟺ 实跑 exit 0`（`test/calorie-routing-81.test.mjs:293`，读 `docs/research/t81-exec-smoke.md` 的「非零 1」行）——**该测试名在基线白名单内**（`docs/research/t88-baseline/test-failset.txt`），且 `t81-exec-smoke.md` 工作区无改动 → **既有红，非本票引入**（本票只改 SKILL.md 门面，与该快照零因果）。
 
 **canonical ＋ t101 delta**：`pnpm test` → `tests 1114／pass 1089／fail 25／exit 1`；`node docs/research/t101-fail-set.mjs docs/research/t88-baseline/test-failset.txt .scratch/t82/gate-8-canonical-1.log` → **`base=34 after=29 新增=0 消失=5`**。
@@ -115,7 +125,15 @@ description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯
 
 > 本票唯一改动面是文档 `SKILL.md`，无 src 可变异 → 变异打在**受门禁看守的文档面**上，逐处「变异 → 对应门红 → `git checkout HEAD -- <路径>` 还原 → 门绿 → sha 复核」。
 
-（本节在提交后补跑，见 §6 结果表。）
+（本节在提交后补跑，见下表。）
+
+| 变异 | 做法 | 应红 | 实测 | 还原自证 |
+|---|---|---|---|---|
+| **MUT-82-1** | `description` 改回**多行块标量**（复刻票面前提 S1-1 的坏形态） | `skills-export` 的「frontmatter 行须为 `key: value`」＋ provider 拿不到候选 | `node --test test/skills-export-47.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs` → **exit 1**（pass 5／fail 3）：`AssertionError: frontmatter 行须为 key: value：  卡路里一期饮食体重运动身体目标照片分析复盘。`；`#56 list/get` 双红（解析器返 null → 候选为空）。`runId=137891ed…` | `git checkout HEAD -- …` → hash `7433560f…`（=HEAD blob）；复跑 **8/8 pass exit 0**（`runId=e10cafa8…`） |
+| **MUT-82-2** | 手删 `HELP-AUTO` 块内**一行示例** | #99 生成期门四判据之首（产物不新鲜）＋行数 | `pnpm help:examples:check` → **exit 1**：`STRUCT 产物不新鲜：AUTO 块 != 生成器输出`／`STRUCT 示例行数 98 != 组合键数 99`／`STRUCT 缺示例行：calorie.diet.add`，`RESULT: 0/98`。`runId=17ea6aab…` | 还原 → hash `7433560f…`；复跑 **`RESULT: 99/99` exit 0**（`runId=4c61a24b…`） |
+| **MUT-82-3** | `description` 删「`卡路里HELP`」入口 | 本票验收探针 | `.scratch/t82/check-description.mjs` → **exit 1**（`RESULT: 6/9`）：`RED 含 卡路里HELP`／`RED 含 calorie.help.center`／`RED 截断后仍含…` | 还原 → hash `7433560f…`；复跑 **`RESULT: 9/9` exit 0** |
+
+还原动作全部经持锁（`git checkout HEAD -- packages/skill-calorie/SKILL.md`），三处还原后 `git hash-object` 均等于 `HEAD` blob `7433560f…`；期间 `check-integrity.mjs` **8/8**（首 3 字节 `2d 2d 2d`、零 NUL）。
 
 ## 7. 偏离记账 / 未做 / 风险 top3
 
@@ -137,4 +155,40 @@ description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯
 
 ## 8. 机械门禁对账（协议 §2.4）
 
-（GATE-RUN 声明 ＋ 导出对账源见提交后补跑的 §6/§9。）
+**对账窗口**：`--ticket 82 --since 2026-09-09T14:38:50.000Z --until 2026-09-09T14:43:30.000Z`（覆盖本票全部门禁／靶向／canonical／变异轮次；证据提交本身在窗口之外，与 #97 同做法）。**受跟踪对账源**：`docs/research/t82-gate-runs.log`（本窗口内 `RUN` 条目导出）。
+
+窗口内**每一条** `RUN` 都声明如下（含 `git` 条目——为满足 §2.4② 反向对账）：
+
+GATE-RUN runId=fc2baf10-93e2-45ad-a2bb-49d4e268b9df cmd=pnpm build
+GATE-RUN runId=a06d633c-50a5-4168-8084-3f3ee17e94e3 cmd=pnpm boundaries
+GATE-RUN runId=ab3d28d9-9742-4896-bb22-ea02e21b14a1 cmd=pnpm snapshot:check
+GATE-RUN runId=dedb7010-b684-43cc-9851-5daa53928451 cmd=pnpm publish:pre
+GATE-RUN runId=578596e9-9acb-4e94-916c-738e416d8c91 cmd=pnpm help:examples:check
+GATE-RUN runId=2ba91cd7-a025-41c8-8b15-8adcebd3f432 cmd=node packages/skill-calorie/scripts/build-help.mjs
+GATE-RUN runId=f7570290-f2e6-45b5-97d0-c63a8a503cac cmd=node --test test/skills-export-47.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/calorie-c43.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs test/calorie-routing-81.test.mjs
+GATE-RUN runId=b831a6be-1f5f-4909-966d-baa37b464423 cmd=pnpm test
+GATE-RUN runId=0a48f461-ca1a-4b0f-a7c6-47f6a64258ae cmd=pnpm build
+GATE-RUN runId=1b25cca0-242e-47c5-9579-5bb7b6ca3801 cmd=pnpm boundaries
+GATE-RUN runId=17194887-6727-473a-a7de-567ece28f1f7 cmd=pnpm snapshot:check
+GATE-RUN runId=ae310953-1903-4766-8592-736f8969d1e4 cmd=pnpm publish:pre
+GATE-RUN runId=90aa32d9-62a8-4326-b451-e28d0ced311c cmd=pnpm help:examples:check
+GATE-RUN runId=1ffc2046-8b72-4931-b8f0-5bc2846424fe cmd=git add packages/skill-calorie/SKILL.md docs/research/t82-skill-facade.md .changeset/t82-skill-facade.md
+GATE-RUN runId=5f2c5e9a-96f6-4294-a58f-c8dd70e6a3f5 cmd=git commit --only packages/skill-calorie/SKILL.md docs/research/t82-skill-facade.md .changeset/t82-skill-facade.md -F .scratch/t82/commit-msg-1.txt
+GATE-RUN runId=137891ed-7aa2-44be-95e5-7a2dd8a703bf cmd=node --test test/skills-export-47.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs
+GATE-RUN runId=b78e486e-4e52-4149-9bda-8fdd7ff6eec2 cmd=git checkout HEAD -- packages/skill-calorie/SKILL.md
+GATE-RUN runId=e10cafa8-171b-4344-b941-9b6b0f28df59 cmd=node --test test/skills-export-47.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs
+GATE-RUN runId=17ea6aab-a1dd-460b-bfa0-356eb86a3c6c cmd=pnpm help:examples:check
+GATE-RUN runId=45b64ca0-eb1b-4949-963f-a991da0b21b9 cmd=git checkout HEAD -- packages/skill-calorie/SKILL.md
+GATE-RUN runId=4c61a24b-bb88-43dc-b26c-561034110962 cmd=pnpm help:examples:check
+GATE-RUN runId=3a3bccc8-6cec-40cb-aa7e-84934329d23b cmd=git checkout HEAD -- packages/skill-calorie/SKILL.md
+
+GATE-RELAX flag=--allow-nonzero reason=四条非 0 条目**按设计**为红：`f7570290`／`b831a6be` 是基线既有红（`FX-81-5` 在白名单内；canonical `pnpm test` 恒 exit 1，判据是「具名失败集新增 0」），`137891ed`／`17ea6aab` 是 §6 的**变异应红**轮次；门禁证据只认 13 条 exit=0 条目（§5 表 1–6／9–13 行）。
+
+复跑口径（第三方可直接执行，`--log` 指受跟踪对账源）：
+
+```sh
+node tooling/check-gate-audit.mjs --evidence docs/research/t82-skill-facade.md --log docs/research/t82-gate-runs.log \
+  --ticket 82 --since 2026-09-09T14:38:50.000Z --until 2026-09-09T14:43:30.000Z --allow-nonzero
+```
+
+**对账实测**：`RESULT: matched=22/22 auditEntries=22 scoped=22 undeclared=0` → `gate-audit: PASS`（exit 0）。不带 `--allow-nonzero` 时为 `matched=18/22 undeclared=4`（正是 §6 的 4 条应红轮次），故放宽必须留痕（上一条 `GATE-RELAX`）。
