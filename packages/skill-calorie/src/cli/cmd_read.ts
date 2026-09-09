@@ -38,19 +38,23 @@ import {
   buildAllRankingsDoc, buildDedupeDoc, buildDietReviewDoc, buildHealthDoc, buildLibraryDoc,
   buildRankingDoc, buildSearchDoc, buildTodayDietDoc, buildViewDietDoc,
 } from '../render/dietDocs.js';
+import {
+  buildBodyCompositionDoc, buildBodyMeasureDoc, buildExerciseDoc, buildExerciseGoalDoc,
+  buildVolatilityDoc, buildWeightCompareDoc, buildWeightDoc, buildWeightHistoryDoc,
+  buildWeightReviewDoc,
+} from '../render/sportDocs.js';
 import { buildHealthPlate } from '../render/health.js';
 import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
 import { buildProductLibrary, buildProductSearch, buildProductStats } from '../render/library.js';
 import { buildCompareData, buildGalleryData, buildGifTask, buildViewerData } from '../render/photo.js';
 import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
 import {
-  renderCombinedHtml, renderDeficitHtml, renderExerciseHtml,
+  renderCombinedHtml, renderDeficitHtml,
   renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
   renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
   renderGoalStatusHtml, renderGoalHtml, renderHomeHtml,
-  renderWeightHtml, renderWeightHistoryHtml, renderWeightCompareHtml, renderWeightReviewHtml,
-  renderVolatilityHtml, renderBodyCompositionHtml, renderBodyMeasureHtml, renderPlanHtml,
-  renderPlanWizardHtml, renderExerciseGoalHtml, renderGoalExpiringHtml, renderGoalPredictHtml,
+  renderPlanHtml,
+  renderPlanWizardHtml, renderGoalExpiringHtml, renderGoalPredictHtml,
   renderGoalVsActualHtml, renderPredictHtml, renderAnomalyHtml, renderContraHtml,
   renderProfileHtml,
 } from '../render/html.js';
@@ -301,7 +305,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         activeDays: v.review.activeDays, totalBurnedSeries: v.totalBurnedSeries,
         avgBurnedPerLoggedDay: v.avgBurnedPerLoggedDay, seriesActiveDays: v.activeDays,
       });
-      return { data: { metrics }, html: renderExerciseHtml(v) };
+      return { data: { metrics }, html: buildExerciseDoc(v) };
     }
     case 'calorie.view.goal': {
       const { start, end } = defaultRange(db, params);
@@ -517,7 +521,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         changeKg: w.trend.changeKg, dailyChangeG: w.trend.dailyChangeG,
         weightGoal: w.weightGoal, gapKg: w.gapKg,
       });
-      return { data: { metrics }, html: renderWeightHtml(w) };
+      return { data: { metrics }, html: buildWeightDoc(w) };
     }
     case 'calorie.view.weight-history': {
       const startDate = optStr(params, 'startDate') ?? optStr(params, 'start');
@@ -533,7 +537,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         spanDays: h.change?.spanDays, first: h.change?.first, last: h.change?.last,
         delta: h.change?.delta, dailyAvg: h.change?.dailyAvg,
       });
-      return { data: { metrics }, html: renderWeightHistoryHtml(h) };
+      return { data: { metrics }, html: buildWeightHistoryDoc(h) };
     }
     case 'calorie.view.weight-compare': {
       const start = needStr(params, 'start');
@@ -546,7 +550,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         currentAvg: v.compare.currentPeriod.avgWeight, compareAvg: v.compare.comparePeriod.avgWeight,
         currentChange: v.compare.currentPeriod.changeKg, compareChange: v.compare.comparePeriod.changeKg,
       });
-      return { data: { metrics }, html: renderWeightCompareHtml(v) };
+      return { data: { metrics }, html: buildWeightCompareDoc(v) };
     }
     case 'calorie.view.weight-review': {
       const today = optStr(params, 'today') ?? optStr(params, 'date');
@@ -556,7 +560,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         gapKg: v.milestone.gapKg, actualDailyChangeKg: v.milestone.actualDailyChangeKg,
         estDays: v.milestone.estDays, calorieAdjustment: v.milestone.calorieAdjustment,
       });
-      return { data: { metrics }, html: renderWeightReviewHtml(v) };
+      return { data: { metrics }, html: buildWeightReviewDoc(v) };
     }
     case 'calorie.view.volatility': {
       const { start, end } = defaultRange(db, params);
@@ -568,7 +572,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         points: v.volatility.points.length, anomalies: v.volatility.recentAnomalies.length,
         deviationKg: v.volatility.earlyWarning.deviationKg,
       });
-      return { data: { metrics }, html: renderVolatilityHtml(v) };
+      return { data: { metrics }, html: buildVolatilityDoc(v) };
     }
     case 'calorie.view.body-composition': {
       const days = optNum(params, 'days') ?? 90;
@@ -576,7 +580,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const limit = optNum(params, 'limit') ?? 20;
       const v = buildBodyCompositionView(db, { days: days as number, source: source ?? undefined, limit: limit as number });
       const metrics = nums({ total: v.total, latestPct: v.latestPct, trendDays: v.trend.length });
-      return { data: { metrics }, html: renderBodyCompositionHtml(v) };
+      return { data: { metrics }, html: buildBodyCompositionDoc(v) };
     }
     case 'calorie.view.body-measure': {
       const metric = optStr(params, 'metric');
@@ -586,7 +590,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const dateTo = optStr(params, 'dateTo');
       const v = buildBodyMeasureView(db, { metric: metric ?? undefined, days: days as number, limit: limit as number, dateFrom: dateFrom ?? undefined, dateTo: dateTo ?? undefined });
       const metrics = nums({ total: v.total, latestVal: v.latestVal, trendDays: v.trend.length });
-      return { data: { metrics }, html: renderBodyMeasureHtml(v) };
+      return { data: { metrics }, html: buildBodyMeasureDoc(v) };
     }
     case 'calorie.view.plan': {
       const v = buildPlanView(db);
@@ -605,7 +609,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const { start, end } = defaultRange(db, params);
       const v = buildExerciseGoalView(db, start, end);
       const metrics = nums({ dailyGoal: v.dailyGoal, goalTotal: v.goalTotal, actual: v.actual, pct: v.pct, gap: v.gap, achieved: v.achieved ? 1 : 0, days: v.days });
-      return { data: { metrics }, html: renderExerciseGoalHtml(v) };
+      return { data: { metrics }, html: buildExerciseGoalDoc(v) };
     }
     case 'calorie.view.goal-expiring': {
       const withinDays = optNum(params, 'withinDays') ?? optNum(params, 'days') ?? 14;
