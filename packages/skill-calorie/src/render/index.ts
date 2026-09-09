@@ -91,5 +91,12 @@ export {
 } from './html.js';
 export type { HelpLookupHit } from './html.js';
 export { CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS, COPY_RUNTIME_JS, copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
+/** #88 · HELP 速查台（取 F3）：数据模型（运行期派生自 TRIGGERS）＋ 壳落地（三态同源）。 */
+export {
+  HELP_CONTACT, HELP_CENTER_MODES, HELP_GROUPS, HELP_LEGACY_CATEGORY, HELP_LEGACY_SUBGROUP,
+  HELP_SKILL_NAME, HELP_SUBFUNC_ORDER, HELP_TITLE, HELP_TYPE_BADGES,
+  buildHelpSceneData, helpCenterAssets, renderHelpCenterHtml,
+} from './helpCenter.js';
+export type { HelpCenterMode, HelpCenterRenderOptions, HelpCenterRenderResult, HelpSceneDataOptions } from './helpCenter.js';
 export { PHOTO_VIEW_KEYS, PHOTO_VIEW_SHAPES, photoShapeFor } from './envelope.js';
 export type { PhotoViewName } from './envelope.js';
