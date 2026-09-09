@@ -1,0 +1,22 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：83｜since：2026-09-09T15:11:00.000Z｜until：2026-09-09T15:15:31.000Z｜条目数：14｜导出时间：2026-09-09T15:16:01.134Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=83 runId=f493b6ce-f94f-4f36-b955-bfbabe90332e cmd="node --test packages/skill-calorie/test/delivery-83.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs" waitedMs=40032 exit=0 pid=25100 at=2026-09-09T15:11:45.954Z
+RUN ticket=83 runId=26eb0744-78c6-4994-891e-1a051af863a9 cmd="node docs/research/t83-evidence.mjs" waitedMs=10005 exit=1 pid=10416 at=2026-09-09T15:12:21.251Z
+RUN ticket=83 runId=2f5cebc4-376f-4bbb-97ec-447b6b478fc6 cmd="node docs/research/t83-evidence.mjs" waitedMs=0 exit=0 pid=37136 at=2026-09-09T15:12:29.268Z
+RUN ticket=83 runId=e7e40e94-1daa-4137-8cd9-1b20d75ef63a cmd="node docs/research/t83-evidence.mjs" waitedMs=0 exit=0 pid=34384 at=2026-09-09T15:12:41.811Z
+RUN ticket=83 runId=c09cf3fc-2b18-4937-b02a-9d91b9752c8c cmd="git commit --only packages/skill-calorie/src/cli/cmd_read.ts packages/skill-calorie/src/output.ts packages/skill-calorie/src/render/envelope.ts packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/delivery-83.test.mjs docs/research/t83-evidence.mjs -F .scratch/t83/commit-msg.txt" waitedMs=0 exit=1 pid=3964 at=2026-09-09T15:12:50.249Z
+RUN ticket=83 runId=9c9fd643-0e88-4faf-a7c9-61b395d60787 cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/test/delivery-83.test.mjs docs/research/t83-evidence.mjs; git commit --only packages/skill-calorie/src/cli/cmd_read.ts packages/skill-calorie/src/output.ts packages/skill-calorie/src/render/envelope.ts packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/delivery-83.test.mjs docs/research/t83-evidence.mjs -F .scratch/t83/commit-msg.txt\"" waitedMs=0 exit=1 pid=23280 at=2026-09-09T15:12:52.567Z
+RUN ticket=83 runId=b59820f3-809c-4157-9b6e-eb8102312f63 cmd="git add packages/skill-calorie/test/delivery-83.test.mjs docs/research/t83-evidence.mjs" waitedMs=0 exit=0 pid=35920 at=2026-09-09T15:12:55.246Z
+RUN ticket=83 runId=e3a7d2c8-39d6-42c2-bf4d-a225ade0db7c cmd="git commit --only packages/skill-calorie/src/cli/cmd_read.ts packages/skill-calorie/src/output.ts packages/skill-calorie/src/render/envelope.ts packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/delivery-83.test.mjs docs/research/t83-evidence.mjs -F .scratch/t83/commit-msg.txt" waitedMs=0 exit=0 pid=3632 at=2026-09-09T15:12:55.396Z
+RUN ticket=83 runId=483f7192-bd36-42ed-97e9-32ab84184a93 cmd="node docs/research/t83-mutation.mjs" waitedMs=0 exit=0 pid=30852 at=2026-09-09T15:13:22.317Z
+RUN ticket=83 runId=598e891a-1b0c-4f5e-9352-cbc3c9d3d916 cmd="node .scratch/t83/gates.mjs" waitedMs=0 exit=0 pid=36000 at=2026-09-09T15:13:48.457Z
+RUN ticket=83 runId=d389cdfe-c9e3-4695-b568-40e4afb7f64f cmd="node .scratch/t83/consumers.mjs" waitedMs=0 exit=1 pid=32440 at=2026-09-09T15:14:19.884Z
+RUN ticket=83 runId=c18d6f9a-1d69-4c67-a2c4-0796e5b36069 cmd="pnpm publish:fresh" waitedMs=0 exit=0 pid=12204 at=2026-09-09T15:14:30.781Z
+RUN ticket=83 runId=e5a12300-eef5-43e7-862e-3219300197c3 cmd="pnpm test" waitedMs=0 exit=1 pid=16012 at=2026-09-09T15:15:06.298Z
+RUN ticket=83 runId=764e8a3e-e738-45fe-b6fb-f4ff42630619 cmd="node docs/research/t83-mutation.mjs" waitedMs=1 exit=0 pid=31812 at=2026-09-09T15:15:30.773Z
+```
