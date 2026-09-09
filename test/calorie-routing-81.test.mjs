@@ -22,7 +22,8 @@ import {
   routingSummary,
 } from '../packages/skill-calorie/dist/triggers/routing.js';
 
-// #81 · 路由层断言（D2 ①–⑤）：436 条逐条恰一个桶／零 py／77 键全可达／与冻结表逐条对齐／新增入口不重复。
+// #81 · 路由层断言（D2 ①–⑤）：436 条逐条恰一个桶／零 py／83 键全可达／与冻结表逐条对齐／新增入口不重复。
+// #111 追加：可执行 326→336／命中但不执行 110→100（促进 10 词）＋ 新拟 34→40（运动移植 6 键）。
 // 冻结面（scene-*.ts、calorie-sot.snapshot.json、两处 legacyCli 断言）本文件不碰、不弱化。
 
 const ROUTING_SRC = new URL('../packages/skill-calorie/src/triggers/routing.ts', import.meta.url);
@@ -70,7 +71,7 @@ const smokeSection = (md, heading) => {
 const unquote = (s) => String(s).replace(/`/g, '');
 
 describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
-  it('D2① 436 条逐条恰一个桶（可执行 326 ／ 命中但不执行 110）', () => {
+  it('D2① 436 条逐条恰一个桶（可执行 336 ／ 命中但不执行 100，#111 促进 10 词）', () => {
     assert.equal(WAKE_ROUTES.length, 436);
     assert.equal(EXEC_ROUTES.length + HIT_NOT_EXEC_ROUTES.length, 436);
     const buckets = { exec: 0, 'non-exec': 0 };
@@ -88,16 +89,16 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         assert.ok(Object.values(NON_EXEC_REASONS).includes(r.reason), r.wakeWord);
       }
     }
-    assert.deepEqual(buckets, { exec: 326, 'non-exec': 110 });
+    assert.deepEqual(buckets, { exec: 336, 'non-exec': 100 });
     assert.deepEqual(routingSummary(), {
       total: 436,
-      exec: 326,
-      nonExec: 110,
+      exec: 336,
+      nonExec: 100,
       outOfScope: 10,
-      legacyChain: 100,
-      newEntries: 34,
+      legacyChain: 90,
+      newEntries: 40,
       repairEntries: 1,
-      coveredKeys: 77,
+      coveredKeys: 83,
     });
   });
 
@@ -111,11 +112,11 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     }
   });
 
-  it('D2③ 77 键全部有可执行入口（436 条 ＋ 34 条新拟入口）', () => {
+  it('D2③ 83 键全部有可执行入口（436 条 ＋ 40 条新拟入口，#111 +6）', () => {
     const covered = new Set(ALL_ROUTES.filter((r) => r.kind === 'exec').map((r) => r.key));
     assert.deepEqual([...covered].sort(), [...KEY_LIST].sort());
-    assert.equal(covered.size, 77);
-    assert.equal(Object.keys(EXEC_ROUTE_BY_KEY).length, 77);
+    assert.equal(covered.size, 83);
+    assert.equal(Object.keys(EXEC_ROUTE_BY_KEY).length, 83);
     for (const key of KEY_LIST) {
       assert.ok(execCliForKey(key), key);
       assert.match(execCliForKey(key), new RegExp('^calorie-cmd-read ' + key.replace(/\./g, '\\.')));
@@ -201,7 +202,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     // FX-81-7（同 key 可参数化）：其余非直连／非 override 的冻结词必须入 exec 且 cli 为**单条命令**、
     // 键 token 与 r.key 一致、需参数的键带 --params（逐条映射与实跑见证据表 §2.3／smoke §1）。
     const paramFlips = paramFlipRoutes();
-    assert.equal(paramFlips.length, 222, 'FX-81-7 同 key 可参数化翻转条数');
+    assert.equal(paramFlips.length, 232, 'FX-81-7 同 key 可参数化翻转条数（#111 +10 促进）');
     for (const r of paramFlips) {
       assert.equal(/ → /.test(r.cli), false, `${r.wakeWord} cli 含多步链`);
       assert.ok(
@@ -212,15 +213,15 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
-      471,
+      477,
     );
     for (const w of new Set(WAKE_ROUTES.map((r) => r.wakeWord))) {
       assert.ok(routesFor(w).length >= 1, w);
     }
   });
 
-  it('D2⑤ 新增入口（34 键）与施工前既有入口零重复', () => {
-    assert.equal(NEW_KEY_ROUTES.length, 34);
+  it('D2⑤ 新增入口（40 键，#111 +6）与施工前既有入口零重复', () => {
+    assert.equal(NEW_KEY_ROUTES.length, 40);
     // 「既有入口」按施工前口径＝冻结表直连 cli ＋ HELP_EXEC_OVERRIDES 命中的键（43 键）。
     // FX-81-2 后 EXEC_ROUTES 含孪生词转 exec 的记录（它们按设计指向新拟键），故不能再用 EXEC_ROUTES 当基线。
     const frozenExecKeys = new Set(
@@ -248,11 +249,11 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       assert.match(r.cli, /^calorie-cmd-read calorie\./);
       assert.equal(/python/i.test(r.cli), false);
     }
-    assert.equal(newKeys.size, 34);
-    assert.equal(newWords.size, 34);
+    assert.equal(newKeys.size, 40);
+    assert.equal(newWords.size, 40);
   });
 
-  it('FX-81-5 覆盖修复：wizard 降级词失去的唯一入口由 1 条单命令入口承接（77 键不放宽）', () => {
+  it('FX-81-5 覆盖修复：wizard 降级词失去的唯一入口由 1 条单命令入口承接（83 键不放宽，#111 +6）', () => {
     assert.equal(COVERAGE_REPAIR_ROUTES.length, 1);
     // 修复入口的键＝「降级后失去唯一可跑入口」的键（从冻结表 ＋ 路由层派生，非手写清单）。
     const downgradedKeys = new Set();
@@ -289,7 +290,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
   it('FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 exit 0 ＋ 需参数键必须带 --params）', () => {
     const md = readFileSync(SMOKE_MD, 'utf8');
     const execAll = allExec();
-    assert.equal(execAll.length, 361, 'exec 桶记录数');
+    assert.equal(execAll.length, 377, 'exec 桶记录数（#111 +16：促进 10＋新拟 6）');
     // ① 快照汇总：非零 0。
     const zero = /^\| \*\*非零（失败）\*\* \| (\d+) \|$/m.exec(md);
     assert.ok(zero, 'smoke 快照缺「非零」汇总行');

@@ -106,9 +106,9 @@ test('#87 ② 时间戳：YYYYMMDD_HHMMSS 零填充 ＋ 本地时区', () => {
 });
 
 // ---------------------------------------------------------------- ③ <中文command> 真值来源
-test('#87 ③ <中文command> 真值 = CALORIE_COMBOS[key].title（77 键全量，且清洗为恒等）', () => {
+test('#87 ③ <中文command> 真值 = CALORIE_COMBOS[key].title（83 键全量，#111 +6），且清洗为恒等）', () => {
   const keys = Object.keys(CALORIE_COMBOS);
-  assert.equal(keys.length, 77);
+  assert.equal(keys.length, 83);
   for (const k of keys) {
     const title = CALORIE_COMBOS[k].title;
     assert.ok(typeof title === 'string' && title.length > 0, k + ' 缺 title');

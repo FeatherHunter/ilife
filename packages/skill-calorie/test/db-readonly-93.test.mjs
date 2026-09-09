@@ -128,6 +128,13 @@ const READ_PARAMS = {
   'calorie.view.anomaly': { kind: 'overall', ...RANGE },
   'calorie.view.plan-wizard': { plan: {} },
   'calorie.view.exercise-goal': RANGE,
+  // #111 · 运动移植 6 键（只读句柄同跑；strength 在 t93 种子上无力量行，两侧同 missing-data）。
+  'calorie.view.exercise-strength': RANGE,
+  'calorie.view.exercise-cardio': RANGE,
+  'calorie.view.exercise-distribution': RANGE,
+  'calorie.view.exercise-recap': RANGE,
+  'calorie.view.exercise-review': RANGE,
+  'calorie.view.exercise-trend': RANGE,
   'calorie.photo.list': { dateFrom: D3, dateTo: D0 },
   'calorie.photo.detail': { id: 1 },
   'calorie.photo.compare': { id1: 1, id2: 2 },
@@ -137,7 +144,7 @@ const READ_PARAMS = {
 };
 
 // ---------------------------------------------------------------- sweep 子进程
-// 单进程跑完 42 个读键：某个键若因缺参走到 fail(2) 会 process.exit，父进程靠「少了一行」发现。
+// 单进程跑完 48 个读键（#111 +6）：某个键若因缺参走到 fail(2) 会 process.exit，父进程靠「少了一行」发现。
 if (process.argv[2] === '--sweep') {
   const tpl = process.argv[3];
   const work = tmpDir('sweep');
@@ -252,13 +259,13 @@ test('#93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接�
 });
 
 // ---------------------------------------------------------------- 验收 ①：读键全部可用 ＋ 接线等价
-test('#93 ① 42 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等', () => {
+test('#93 ① 48 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#111 +6）', () => {
   const tpl = makeTemplate();
   const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--sweep', tpl], { encoding: 'utf8' });
   assert.equal(r.status, 0, 'sweep 子进程必须正常退出：' + String(r.stderr).slice(0, 400));
   const lines = String(r.stdout).split('\n').filter((s) => s.startsWith('{')).map((s) => JSON.parse(s));
   const started = String(r.stdout).split('\n').filter((s) => s.startsWith('START ')).map((s) => s.slice(6));
-  assert.equal(READ_KEYS.length, 42, '读键应为 42 个（77 组合键 − 35 写键）');
+  assert.equal(READ_KEYS.length, 48, '读键应为 48 个（83 组合键 − 35 写键）');
   assert.equal(WRITE_KEYS.length, 35);
   assert.deepEqual(started, READ_KEYS, '每个读键都跑到（缺失＝该键把进程 exit 掉了，参数不全）');
   assert.equal(lines.length, READ_KEYS.length);

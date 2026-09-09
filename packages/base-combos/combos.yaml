@@ -213,6 +213,36 @@ combos:
     shape: stat
     title: 档案视图
     cmd: skill-calorie
+  - key: calorie.view.exercise-strength
+    skill: calorie
+    shape: stat
+    title: 力量训练总览
+    cmd: skill-calorie
+  - key: calorie.view.exercise-cardio
+    skill: calorie
+    shape: stat
+    title: 有氧训练总览
+    cmd: skill-calorie
+  - key: calorie.view.exercise-distribution
+    skill: calorie
+    shape: stat
+    title: 运动类型分布
+    cmd: skill-calorie
+  - key: calorie.view.exercise-recap
+    skill: calorie
+    shape: stat
+    title: 运动复盘
+    cmd: skill-calorie
+  - key: calorie.view.exercise-review
+    skill: calorie
+    shape: stat
+    title: 计划复盘
+    cmd: skill-calorie
+  - key: calorie.view.exercise-trend
+    skill: calorie
+    shape: stat
+    title: 运动趋势
+    cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt

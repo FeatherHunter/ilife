@@ -44,6 +44,14 @@ import {
   buildWeightReviewDoc,
 } from '../render/sportDocs.js';
 import {
+  buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildReviewDoc,
+  buildStrengthDoc, buildTrendDoc,
+} from '../render/sportPortDocs.js';
+import {
+  buildCardioView, buildDistributionView, buildRecapView, buildReviewView,
+  buildStrengthView, buildTrendView,
+} from '../render/exercisePort.js';
+import {
   buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
   buildGoalPredictDoc, buildPredictDoc,
 } from '../render/trendDocs.js';
@@ -309,6 +317,62 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         avgBurnedPerLoggedDay: v.avgBurnedPerLoggedDay, seriesActiveDays: v.activeDays,
       });
       return { data: { metrics }, html: buildExerciseDoc(v) };
+    }
+    // #111 · 运动移植 6 键（t71 需移植 exercise_*；envelope stat metrics 只收确定数字）。
+    case 'calorie.view.exercise-strength': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildStrengthView(db, start, end);
+      const metrics = nums({
+        movementCount: v.movementCount, totalSets: v.totalSets,
+        totalVolumeKg: v.totalVolumeKg, totalReps: v.totalReps,
+      });
+      return { data: { metrics }, html: buildStrengthDoc(v) };
+    }
+    case 'calorie.view.exercise-cardio': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildCardioView(db, start, end);
+      const metrics = nums({
+        sessions: v.sessions, totalMinutes: v.totalMinutes,
+        totalDistanceKm: v.totalDistanceKm, avgPaceMinPerKm: v.avgPaceMinPerKm,
+      });
+      return { data: { metrics }, html: buildCardioDoc(v) };
+    }
+    case 'calorie.view.exercise-distribution': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildDistributionView(db, start, end);
+      const metrics = nums({
+        sessions: v.sessions, activeDays: v.activeDays, days: v.days, totalBurned: v.totalBurned,
+        intakeCal: v.intakeCal, tdeeTotal: v.tdeeTotal, deficit: v.deficit,
+      });
+      return { data: { metrics }, html: buildDistributionDoc(v) };
+    }
+    case 'calorie.view.exercise-recap': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildRecapView(db, start, end);
+      const metrics = nums({
+        sessions: v.sessions, totalMinutes: v.totalMinutes, totalBurned: v.totalBurned,
+        activeDays: v.activeDays, days: v.days,
+      });
+      return { data: { metrics }, html: buildRecapDoc(v) };
+    }
+    case 'calorie.view.exercise-review': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildReviewView(db, start, end);
+      const metrics = nums({
+        plannedSessions: v.plannedSessions, hitSessions: v.hitSessions,
+        completionPct: v.completionPct, plannedMovements: v.plannedMovements,
+        hitMovements: v.hitMovements, movementPct: v.movementPct,
+      });
+      return { data: { metrics }, html: buildReviewDoc(v) };
+    }
+    case 'calorie.view.exercise-trend': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildTrendView(db, start, end);
+      const metrics = nums({
+        activeDays: v.activeDays, totalMinutes: v.totalMinutes,
+        totalBurned: v.totalBurned, peakBurned: v.peak?.burned,
+      });
+      return { data: { metrics }, html: buildTrendDoc(v) };
     }
     case 'calorie.view.goal': {
       const { start, end } = defaultRange(db, params);
