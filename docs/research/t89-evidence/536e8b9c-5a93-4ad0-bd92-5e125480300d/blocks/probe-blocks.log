@@ -1,0 +1,55 @@
+# #89 内容页区块级验收探针（B-01…B-12）
+STYLE_PREFIX=ilife- TOAST_DEFAULTS={"timeoutMs":4500,"maxStack":5,"mobileMaxStack":3,"mobileMaxPx":820,"gapPx":8,"role":"status","ariaLive":"polite","defaultIcon":"copy"}
+sample page-shell <- calorie.view.ranking bytes=57883 sha256_16=81E4BFBD5DB98215
+sample kpi <- calorie.view.ranking bytes=57883 sha256_16=81E4BFBD5DB98215
+sample table <- calorie.view.diet bytes=62226 sha256_16=0948156CC4B995FA
+sample charts <- calorie.view.nutrition-ratio bytes=57612 sha256_16=2D5E8BDD25E74137
+sample pre <- calorie.view.diet bytes=62226 sha256_16=0948156CC4B995FA
+sample detail <- calorie.view.diet bytes=62226 sha256_16=0948156CC4B995FA
+sample fold <- calorie.view.ranking bytes=57883 sha256_16=81E4BFBD5DB98215
+sample form <- calorie.view.measure-wizard bytes=55291 sha256_16=5F77756D66FF23BA
+sample copy <- calorie.view.measure-wizard bytes=55291 sha256_16=5F77756D66FF23BA
+sample rich <- calorie.view.health bytes=51998 sha256_16=8C097322005C7D84
+[ASSERT] B-01.1 占位符零残留（<!--[A-Z0-9-]+--> 命中 0） → PASS  实测=0  期望=0
+[ASSERT] B-01.2 元素 id 全唯一 → PASS  实测={"uniq":0,"total":0}  期望="n/n"
+[ASSERT] B-01.3 根节点含以冻结 STYLE_PREFIX 开头的类名（实测 class="wrap ilife-page"） → PASS  实测="wrap ilife-page"  期望="含 ilife- 前缀类"
+[ASSERT] B-01.4 页面壳命名空间存在（ilife-block-page-shell ＋ ilife-page） → PASS  实测={"shellNs":12,"pageNs":1}  期望="两者 >0"
+[ASSERT] B-02.1 KPI 四槽语义齐（label／value-row＋value／detail 各 ≥1；unit 独立节点或落进 value 文本） → PASS  实测={"card":5,"label":5,"valueRow":5,"value":5,"unit":0,"detail":5,"badge":0,"grid":1,"legacyKpi":0,"valueTexts":["肥肠面 1500 卡","肥肠面 1500 卡","肥肠面 1500 卡","肥肠面 1500 卡"]}  期望="四槽各 >0（unit 可并入 value 文本）"
+[ASSERT] B-02.2 value 与 unit 同基线容器（value-row）存在 → PASS  实测={"valueRow":5,"grid":1}  期望="两者 >0"
+[ASSERT] B-02.3 非法 status 降级 empty（冻结 renderStatusBadge 回落） → PASS  实测={"fallback":"<span class=\"ilife-status-badge ilife-status-badge-empty\">x</span>","hasEmpty":true}  期望="含 ilife-status-badge-empty"
+[ASSERT] B-03.1 强制语义标签：<table>/<thead>/<th>/<td> 各 >0（DB-3） → PASS  实测={"table":2,"thead":2,"th":15,"td":51,"tr":10,"ns":2,"caption":2,"divTable":0}  期望="四者各 >0"
+[ASSERT] B-03.2 整表在卡片容器内（ilife-block-data-table 命名空间 ＋ caption） → PASS  实测={"ns":2,"caption":2}  期望="两者 >0"
+[ASSERT] B-04.1 图表命名空间存在且 `<canvas>` 命中 0（DB-6：纯 CSS＋SVG） → PASS  实测={"ns":1,"svg":1,"canvas":0,"viewBox":1,"kinds":2,"anim":1,"emptyRule":"emptyState","kindsFrozen":8}  期望="ns>0 / svg>0 / canvas=0"
+[ASSERT] B-04.2 SVG 含 viewBox（坐标系自洽） → PASS  实测=1  期望=">0"
+[ASSERT] B-04.3 冻结 charts API 8 种 kind 齐全且空数据走空态（empty=true）＋ 非法输入抛错 → PASS  实测={"keys":["bar","line","donut","progress","combo","sparkline","gauge","scatter"],"emptyShape":["kind","html","empty","points"],"emptyFlag":true,"illegal":"ChartError"}  期望="8 种 + empty=true + ChartError"
+[ASSERT] B-05.1 列表命名空间存在（ilife-block-list 前缀 >0，含 -rows 实现） → PASS  实测={"listNs":22,"row":5,"left":5,"main":5,"right":5,"blockNs":9}  期望=">0"
+[ASSERT] B-05.2 每行左/中/右三槽齐（left／main／right 各 ≥1 且计数相等） → PASS  实测={"row":5,"left":5,"main":5,"right":5}  期望="三槽齐且与行数相等"
+[ASSERT] B-06.1 指令块载体是 <pre> → PASS  实测=1  期望=">0"
+[ASSERT] B-06.2 带复制则按钮必带 data-action-id ＋ data-t（两属性计数相等且 >0） → PASS  实测={"pre":1,"copyBtn":4,"actionId":2,"dataT":2}  期望="相等且 >0"
+[ASSERT] B-07.1 场景必填字段含 id／title／wake_word／status／prompt_template 逐字 → PASS  实测=["id","title","wake_word","status","prompt_template"]  期望="五字段在册"
+[ASSERT] B-07.2 类型字段取冻结 SCENE_TYPE_FIELD（复数，无单数别名） → PASS  实测={"field":"types","props":["id","title","wake_word","types","status","prompt_template","editable_fields"]}  期望="types"
+[ASSERT] B-07.3 SCENE_STATUS 为两值闭集 → PASS  实测=["","【待开发】"]  期望="2 值"
+[ASSERT] B-08.1 原生 <details>/<summary>（DB-4），details 与 summary 计数相等且 >0 → PASS  实测={"details":5,"summary":5,"ns":15,"divFold":10}  期望="相等且 >0"
+[ASSERT] B-09.1 参数区命名空间 ＋ label ＋ input 齐（每个字段带 name） → PASS  实测={"ns":4,"label":15,"inputs":15,"namesNonEmpty":15}  期望="ns/label >0 且 name 齐"
+[ASSERT] B-10.1 空态根 ilife-empty ＋ 子节点 icon／text／hint（text 必填，action 可选） → PASS  实测={"root":true,"icon":true,"text":true,"hint":true,"actionOptional":true}  期望="四者齐"
+[ASSERT] B-11.1 复制按钮必带 data-action-id 与 data-t（两个不同属性） → PASS  实测={"actionBar":2,"actionRow":4,"copyBtn":4,"actionId":2,"dataT":2,"idAttr":"data-action-id","dataAttr":"data-t","ids":["actionBar","errorReceipt"]}  期望="data-action-id / data-t"
+[ASSERT] B-11.2 空文本短路：copyText 返回 ok:false（reason=empty）且**不调**写入端口 → PASS  实测={"result":{"ok":false,"channel":null,"reason":"empty"},"portCalls":0}  期望="ok:false / 端口零调用"
+[ASSERT] B-12.1 toast 冻结 role／aria-live 在册（status／polite） → PASS  实测={"role":"status","live":"polite"}  期望="status/polite"
+[ASSERT] B-12.2 toast／errorReceipt 在冻结控件样式闭集内（8 区闭集） → PASS  实测={"hit":["toast","errorReceipt"],"sections":["toast","actionBar","copyButton","statusBadge","emptyState","errorReceipt","charts","helpShell"]}  期望="2 个 / 闭集 8"
+[ASSERT] B-12.3 错误回执缺 dataText／logText 时不渲染复制按钮 → PASS  实测=true  期望=true
+browser=C:\Program Files\Google\Chrome\Application\chrome.exe version=Chrome/152.0.7977.83
+[ASSERT] B-02.4 KPI 卡 computed 四槽语义齐（label／value／detail 文本节点；unit 可并入 value 文本） → PASS  实测={"padding":"14px","radius":"14px","background":"rgb(255, 255, 255)","border":"1px","label":{"text":"高热量","size":"16px","weight":"400","color":"rgb(29, 29, 31)","tnum":"\"tnum\"","tabular":"normal"},"value":{"text":"肥肠面 1500 卡","size":"16px","weight":"400","color":"rgb(29, 29, 31)","tnum":"\"tnum\"","tabular":"normal"},"unit":null,"detail":{"text":"TOP 1","size":"16px","weight":"400","color":"rgb(29, 29, 31)","tnum":"\"tnum\"","tabular":"normal"},"valueRow":true}  期望="四槽齐（unit 可并入 value）"
+[ASSERT] B-02.5 KPI 数值 computed 等宽数字（font-feature-settings 含 tnum 或 font-variant-numeric 为 tabular-nums） → PASS  实测={"text":"肥肠面 1500 卡","size":"16px","weight":"400","color":"rgb(29, 29, 31)","tnum":"\"tnum\"","tabular":"normal"}  期望="tnum 或 tabular-nums"
+[ASSERT] B-03.3 th computed 大写 ＋ 透明背景 ＋ 1px 下边框 ＋ 字号 ∈[11.5,12]px ＋ 600 → PASS  实测={"textTransform":"uppercase","fontSize":"12px","fontWeight":"600","background":"rgba(0, 0, 0, 0)","borderBottom":"1px solid","padding":"10px/14px","color":"rgb(134, 134, 139)"}  期望="uppercase/transparent/1px/11.5–12/600"
+[ASSERT] B-03.4 td 内距 ∈[12,14]px ＋ 1px 软描边 ＋ 末行无下边框 → PASS  实测={"td":{"textTransform":"none","fontSize":"13px","fontWeight":"400","background":"rgba(0, 0, 0, 0)","borderBottom":"1px solid","padding":"12px/14px","color":"rgb(110, 110, 115)"},"lastTd":{"textTransform":"none","fontSize":"13px","fontWeight":"400","background":"rgba(0, 0, 0, 0)","borderBottom":"0px none","padding":"12px/14px","color":"rgb(110, 110, 115)"}}  期望="12–14px/1px/末行 0px"
+[ASSERT] B-03.5 整表在卡片容器内 → PASS  实测=true  期望=true
+[ASSERT] B-04.4 渲染后 <canvas> 命中 0 且 SVG 带 viewBox（纯 CSS＋SVG，DB-6） → PASS  实测={"canvas":0,"viewBox":"0 0 150.0 150.0","containerPadding":"0px"}  期望="canvas=0 / viewBox 4 值"
+[ASSERT] B-06.3 pre computed 等宽／字号 ∈[11.5,12]／行高比 1.55／pre-wrap／overflow-x auto／圆角 8px → PASS  实测={"fontFamily":"\"SF Mono\", monospace","fontSize":"12px","lineHeightRatio":1.55,"whiteSpace":"pre-wrap","overflowX":"auto","borderRadius":"8px","background":"rgb(245, 248, 255)"}  期望="全部满足"
+[ASSERT] B-08.2 点复制按钮后 80ms 内 <details> open 状态不变（不误触折叠） → PASS  实测={"before":true,"after":true}  期望="open 不变"
+[ASSERT] B-09.2 每个参数字段 input 带 name 与 placeholder（渲染齐） → PASS  实测={"n":15,"sample":[{"name":"date","placeholder":"YYYY-MM-DD","value":"2026-09-09"},{"name":"note","placeholder":"如：早上空腹 / 减脂期第 30 天","value":""},{"name":"chest_cm","placeholder":"如 95.0","value":""},{"name":"waist_cm","placeholder":"如 95.0","value":""},{"name":"abdomen_cm","placeholder":"如 95.0","value":""}]}  期望="name + placeholder"
+[ASSERT] B-10.2 空态 computed 内距 48px 20px／图标 40px opacity .5／标题 17px 600／说明 13px → PASS  实测={"padding":"48px/20px","radius":"20px","align":"center","iconSize":"40px","iconOpacity":"0.5","textSize":"17px","textWeight":"600","hintSize":"13px"}  期望="全部满足"
+[ASSERT] B-11.3 渲染后每个复制按钮同时带 data-action-id 与 data-t → PASS  实测={"bar":true,"btnCount":2,"ids":[{"id":"ilife-help-copy-prompt","hasT":true},{"id":"ilife-copy-data","hasT":true}]}  期望="全部带两属性"
+[ASSERT] B-12.4 运行时 toast 带 role=status ＋ aria-live=polite（冻结值） → PASS  实测={"toasts":1,"role":"status","live":"polite","cls":"ilife-toast"}  期望="status/polite"
+
+shots=9 bytes=524292
+RESULT: 39/39 PASS, 0 FAIL

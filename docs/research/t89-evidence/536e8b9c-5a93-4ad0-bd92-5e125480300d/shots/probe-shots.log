@@ -1,0 +1,47 @@
+# #89 逐条截图 ＋ computed 采集探针（H-01…H-20）
+artifact=.scratch/t89/help-file.html bytes=1264822 sha256_16=F380EF685065A1E9
+browser=C:\Program Files\Google\Chrome\Application\chrome.exe version=Chrome/152.0.7977.83
+domCounts={"kpi":0,"svg":0,"table":0,"pre":436,"details":490,"inputs":353,"buttons":1746,"cards":436,"empty":0}
+[ASSERT] H-01.1 渲染页 computed --blue 逐字 #007aff（根 ＋ 壳） → PASS  实测={"blueRoot":"#007aff","blueShell":"#007aff","heroBg":"rgba(0, 0, 0, 0)","titleColor":"rgb(29, 29, 31)"}  期望="#007aff"
+[ASSERT] H-01.2 页头主色块元素级截图已取证 → PASS  实测="H-01\\element.png"  期望="非 null"
+[ASSERT] H-02.1 正文面（h1／卡标题／副标题／命令）computed color ∈ {--fg, --fg2}（hex→rgb 归一后比较） → PASS  实测={"title":"rgb(29, 29, 31)","cardTitle":"rgb(29, 29, 31)","subtitle":"rgb(110, 110, 115)","prompt":"rgb(110, 110, 115)","fieldLabel":"rgb(110, 110, 115)","fgRgb":"rgb(29, 29, 31)","fg2Rgb":"rgb(110, 110, 115)"}  期望="∈{--fg,--fg2}"
+[ASSERT] H-02.2 最浅一档灰 --fg3 只落在提示层（≤13px），不承载正文 → PASS  实测={"fg3":"#86868b","hits":[{"cls":"ilife-help-shell-lead","tag":"P","size":"13px","text":"436 场景 · 点场景卡看指令全文,一键复制指令"},{"cls":"ilife-help-shell-count","tag":"SPAN","size":"12px","text":"6"},{"cls":"ilife-help-shell-cli","tag":"CODE","size":"11.5px","text":"home_today_overview"}]}  期望="全部 ≤13px"
+[ASSERT] H-02.3 卡面元素级截图已取证 → PASS  实测="H-02\\element.png"  期望="非 null"
+[ASSERT] H-03.1 页底 ≠ 卡面且卡面为纯白（computed） → PASS  实测={"body":"rgba(0, 0, 0, 0)","shell":"rgba(0, 0, 0, 0)","card":"rgb(255, 255, 255)","bg":"#f5f5f7","cardToken":"#ffffff"}  期望="card=rgb(255,255,255) 且 shell≠card"
+[ASSERT] H-04.1 HELP 页自身 CSS 区零渐变（charts 区按 D-10 例外，须同时打印两值） → PASS  实测={"gradAll":1,"gradHelp":0,"gradCharts":1}  期望="{gradHelp:0}"
+[ASSERT] H-05.1 HELP 页无 ≥48px 大数字（D-9 不要求） → PASS  实测={"maxSize":32,"sizes":[11,12,13,15,17,32]}  期望="<48"
+[ASSERT] H-05.2 四档逐值：h2 17px／600 ＋ 正文 15px ＋ 提示 12–13px → PASS  实测={"h2":[{"size":17,"weight":600,"text":"联系作者"},{"size":17,"weight":600,"text":"版本"},{"size":17,"weight":600,"text":"看板页入口"}],"subtitle":{"size":15,"weight":400,"text":"10 分类 · 436 场景"},"count":{"size":12,"weight":600,"text":"6"},"lead":{"size":13,"weight":400,"text":"436 场景 · 点场景卡看指令全文"}}  期望="17/600 + 15 + 12–13"
+[ASSERT] H-05.3 h1 32px／700（D-9 推荐 a：28–32px 区间） → PASS  实测={"size":32,"weight":700,"text":"唤醒词速查台"}  期望="28–32px/700"
+[ASSERT] H-06.1 等宽面 computed 以 "SF Mono" 开头且无 Consolas（D-13） → PASS  实测={"pre":"\"SF Mono\", monospace","cssConsolas":0}  期望="\"SF Mono\" 开头 / Consolas 0"
+[ASSERT] H-06.2 正文面 computed 含 "SF Pro Display"（H-06 规格值） → FAIL  实测={"body":"\"Noto Sans SC\"","shell":"\"Noto Sans SC\"","lead":"\"Noto Sans SC\"","cssSfPro":0}  期望="含 SF Pro Display"
+[ASSERT] H-07.1 数值面 computed font-feature-settings 含 tnum（继承生效） → PASS  实测={"shell":"\"tnum\"","count":"\"tnum\"","badge":"\"tnum\"","cardTitle":"\"tnum\""}  期望="含 tnum"
+[ASSERT] H-08.1 h1／h2 textContent emoji 命中 = 0 → PASS  实测={"total":4,"bad":[],"h1":"唤醒词速查台"}  期望="[]"
+[ASSERT] H-09.1 容器 computed padding 逐值 32px 20px 80px ＋ max-width 960px → PASS  实测={"paddingTop":"32px","paddingLeft":"20px","paddingRight":"20px","paddingBottom":"80px","maxWidth":"960px","marginLeft":"203px","marginRight":"203px","leftGap":211,"rightGap":211,"innerWidth":1422}  期望="32/20/20/80 + 960px"
+[ASSERT] H-09.2 1440px 视口下内容列居中、两侧留白可见 → PASS  实测={"leftGap":211,"rightGap":211}  期望="两侧 >0 且差 ≤2"
+[ASSERT] H-10.1 HELP 页自身 CSS 区 border-radius 声明 ⊆ {8,14,20,999px,50%}（charts 区按 D-10 例外） → FAIL  实测={"cssBad":[{"sel":".ilife-help-shell-card-mark","radius":"4px"}],"badCount":0,"bad":[]}  期望="[]"
+[ASSERT] H-10.2 HELP 壳内所有元素 computed border-radius ∈ 规定集 → PASS  实测={"badCount":0,"bad":[]}  期望="[]"
+[ASSERT] H-11.1 列表首行 computed border-top 0、后续行 1px 软描边 → PASS  实测={"rows":[{"i":0,"top":"0px","color":"rgb(29, 29, 31)","style":"none"},{"i":1,"top":"1px","color":"rgb(210, 210, 215)","style":"solid"},{"i":2,"top":"1px","color":"rgb(210, 210, 215)","style":"solid"}],"firstChildRule":2}  期望="首行 0px／后续 1px ＋ :first-child 规则 >0"
+[ASSERT] H-12.1 ≤640px computed 内距四值 = 20px 16px 60px（含 top） → PASS  实测={"w":640,"innerWidth":640,"pt":"20px","pl":"16px","pr":"16px","pb":"60px","maxWidth":"960px","gridCols":1}  期望="20/16/16/60"
+[ASSERT] H-12.2 ≤400px computed 内距四值 = 20px 16px 60px（400 层不另改容器） → PASS  实测={"w":400,"innerWidth":400,"pt":"20px","pl":"16px","pr":"16px","pb":"60px","maxWidth":"960px","gridCols":1}  期望="20/16/16/60"
+[ASSERT] H-12.3 宽屏 computed 内距四值 = 32px 20px 80px → PASS  实测={"w":1440,"innerWidth":1440,"pt":"32px","pl":"20px","pr":"20px","pb":"80px","maxWidth":"960px","gridCols":2}  期望="32/20/20/80"
+[N/A ] H-13 HELP 页 KPI 卡 → 转内容页区块尺 B-02（实测 .ilife-kpi 命中 0）
+[N/A ] H-14 HELP 页进度环 → 转内容页区块尺 B-04（实测 <svg> 命中 0）
+[ASSERT] H-15.1 命令块载体 tagName = PRE → PASS  实测="PRE"  期望="PRE"
+[ASSERT] H-15.2 computed 等宽栈／字号 ∈[11.5,12]px／line-height 比值 1.55／pre-wrap／overflow-x auto／圆角 8px → PASS  实测={"tag":"PRE","fontFamily":"\"SF Mono\", monospace","fontSize":"12px","lineHeight":"18.6px","whiteSpace":"pre-wrap","overflowX":"auto","borderRadius":"8px","backgroundColor":"rgb(245, 248, 255)","lineHeightRatio":1.55}  期望="全部满足（line-height 用比值判：computed 恒为 px）"
+[ASSERT] H-16.1 真手势后按钮进入 copied 态（截图 after 已取证） → PASS  实测={"cls":"ilife-help-shell-card-copy copied","copied":true,"toasts":1,"toastText":"📋已复制✓ 知道了"}  期望="copied=true"
+[ASSERT] H-16.2 同一时刻恰 1 枚 toast 出现（双反馈第二通道） → PASS  实测=1  期望=1
+[N/A ] H-17 表格：HELP 页 <table> 实测 0 → 按 D-18b 判 HELP 页 N/A，转内容页区块尺 B-03
+[ASSERT] H-19.1 回顶按钮几何 42×42／圆形／fixed／right=bottom=24 → PASS  实测={"opacity":"0","pe":"none","w":42,"h":42,"radius":"50%","position":"fixed","right":24,"bottom":24}  期望="42×42/50%/fixed/24,24"
+[ASSERT] H-19.2 scrollY=0 时不可见（opacity 0 ＋ pointer-events none） → PASS  实测={"o":"0","pe":"none"}  期望="0/none"
+[ASSERT] H-19.3 scrollY>400 后出现（opacity 1 ＋ 可点，截图 after 已取证） → PASS  实测={"scrollY":500,"opacity":"1","pe":"auto"}  期望="opacity 1 / 可点"
+[ASSERT] H-20.1 Tab 后活动元素 matches(:focus-visible) 且 outline ≥1px（截图 focus 已取证） → PASS  实测={"tag":"SUMMARY","cls":"ilife-help-shell-sheet-summary","matchesFV":true,"outlineWidth":"1px","outlineStyle":"auto","outlineColor":"rgb(16, 16, 16)"}  期望="matchesFV=true / outline ≥1px"
+[ASSERT] H-20.2 Tab 遍历到的每个可交互控件焦点环均可见（outline ≥1px 且 :focus-visible） → PASS  实测={"controls":10,"anyRing":10,"samples":["BUTTON.ilife-help-shell-card-copy solid/2px/rgb(0, 122, 255)","SUMMARY.ilife-help-shell-sheet-summary auto/1px/rgb(16, 16, 16)","BUTTON.ilife-help-shell-card-copy solid/2px/rgb(0, 122, 255)","SUMMARY.ilife-help-shell-sheet-summary auto/1px/rgb(16, 16, 16)","BUTTON.ilife-help-shell-card-copy solid/2px/rgb(0, 122, 255)","SUMMARY.ilife-help-shell-sheet-summary auto/1px/rgb(16, 16, 16)","BUTTON.ilife-help-shell-card-copy solid/2px/rgb(0, 122, 255)","SUMMARY.ilife-help-shell-sheet-summary auto/1px/rgb(16, 16, 16)","BUTTON.ilife-help-shell-card-copy solid/2px/rgb(0, 122, 255)","SUMMARY.ilife-help-shell-sheet-summary auto/1px/rgb(16, 16, 16)"]}  期望="每个控件都有环"
+[ASSERT] H-20.3 prefers-reduced-motion:reduce 下复制按钮过渡归零（computed） → PASS  实测={"transition":"0s","anim":"0s","name":"none"}  期望="0s"
+[ASSERT] H-18.1 空态根含卡片外观（背景／圆角／描边 ＋ 居中） → PASS  实测={"background":"rgb(255, 255, 255)","radius":"20px","border":"1px solid","textAlign":"center"}  期望="卡片外观"
+[ASSERT] H-18.2 空态 computed padding = 48px 20px → PASS  实测="48px/20px/48px/20px"  期望="48/20/48/20"
+[ASSERT] H-18.3 图标 40px ＋ opacity .5 → PASS  实测={"size":"40px","opacity":"0.5"}  期望="40px/0.5"
+[ASSERT] H-18.4 标题 17px／600、说明 13px 最浅灰 → PASS  实测={"text":"17px/600","hint":"13px","hintColor":"rgb(134, 134, 139)"}  期望="17/600 + 13"
+
+shots=28 bytes=1095389
+RESULT: 34/36 PASS, 2 FAIL
+FAILED: H-06.2 H-10.1

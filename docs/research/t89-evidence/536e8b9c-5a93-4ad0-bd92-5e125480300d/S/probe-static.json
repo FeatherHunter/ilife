@@ -1,0 +1,291 @@
+{
+  "artifact": ".scratch\\t89\\help-file.html",
+  "sha256_16": "F380EF685065A1E9",
+  "observed": {
+    "H-01": {
+      "forbidden": [],
+      "blue": "--blue: #007aff"
+    },
+    "H-02": {
+      "rootBlock": ":root { --fg: #1d1d1f; --fg2: #6e6e73; --fg3: #86868b; --bg: #f5f5f7; --card: #ffffff; --line: #d2d2d7; --blue: #007aff; --blue2: #0a63ce; --soft: #f5f8ff; --ok: #34c759; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 36px rgba(0,0,0,.06); }",
+      "tokens": [
+        "--fg",
+        "--fg2",
+        "--fg3",
+        "--bg",
+        "--card",
+        "--line",
+        "--shadow"
+      ]
+    },
+    "H-03": {
+      "bg": "#f5f5f7",
+      "card": "#ffffff"
+    },
+    "H-04": {
+      "gradAll": 1,
+      "gradHelp": 0,
+      "chartsHasGradient": 1
+    },
+    "H-05": {
+      "fontSizes": [
+        8,
+        9.5,
+        10,
+        10,
+        10.5,
+        10.5,
+        11,
+        11,
+        11.5,
+        11.5,
+        12,
+        12,
+        12.5,
+        13,
+        13,
+        14,
+        15,
+        17,
+        18,
+        20,
+        26,
+        26,
+        32,
+        40
+      ]
+    },
+    "H-06": {
+      "stacks": [
+        "font-family: \"SF Mono\", monospace",
+        "font-family: inherit",
+        "font-family:inherit"
+      ],
+      "sfPro": 0,
+      "sfMono": 4,
+      "consolas": 0
+    },
+    "H-07": {
+      "tnum": 2
+    },
+    "H-08": {
+      "headings": 4,
+      "emojiHeadings": 0,
+      "first": "唤醒词速查台"
+    },
+    "H-09": {
+      "maxWidth960": 1,
+      "padding": 1
+    },
+    "H-10": {
+      "radii": [
+        "14px",
+        "999px",
+        "8px",
+        "20px",
+        "2px",
+        "50%",
+        "4px"
+      ],
+      "badRadiiAll": [
+        "2px",
+        "4px"
+      ],
+      "badRadiiHelp": [
+        "4px"
+      ],
+      "shadows": [
+        "var(--shadow)"
+      ]
+    },
+    "H-11": {
+      "firstChildNoBorder": 2
+    },
+    "H-12": {
+      "m640": 1,
+      "m400": 1,
+      "m720": 1,
+      "m820": 2
+    },
+    "H-13": {
+      "kpiHits": 0
+    },
+    "H-14": {
+      "svg": 0,
+      "circle": 0
+    },
+    "H-15": {
+      "preCount": 439,
+      "preAttrs": [
+        "<pre class=\"ilife-help-shell-prompt\">",
+        "<pre class=\"prompt\">",
+        "<pre>"
+      ],
+      "preWrap": 4,
+      "overflowX": 2,
+      "lineHeight155": 3
+    },
+    "H-16": {
+      "dataActionId": 1308,
+      "dataT": 1308,
+      "copiedRule": 3
+    },
+    "H-17": {
+      "tables": 0
+    },
+    "H-18": {
+      "emptyHits": 5,
+      "pad4820": 1,
+      "icon40": 1
+    },
+    "H-19": {
+      "backtopRule": 4
+    },
+    "H-20": {
+      "focusVisible": 10,
+      "reducedMotion": 1
+    },
+    "B-01": {
+      "residual": 0,
+      "ids": "13/13",
+      "rootCls": "ilife-help-shell"
+    }
+  },
+  "results": [
+    {
+      "id": "H-01.1",
+      "name": "最终 CSS 无禁色（#0a84ff／#af52de／#ff375f／#0071e3）",
+      "ok": true
+    },
+    {
+      "id": "H-01.2",
+      "name": "冻结主色 --blue 已声明",
+      "ok": true
+    },
+    {
+      "id": "H-02.1",
+      "name": "冻结 token 表含三灰＋页底＋卡面＋描边＋阴影（以冻结契约为准）",
+      "ok": true
+    },
+    {
+      "id": "H-03.1",
+      "name": "页底 token ≠ 卡面 token（卡面纯白）",
+      "ok": true
+    },
+    {
+      "id": "H-04.1",
+      "name": "HELP 页自身 CSS 区零渐变（charts 区按 D-10／L-17 例外）",
+      "ok": true
+    },
+    {
+      "id": "H-05.1",
+      "name": "CSS 中存在 ≥2 档字号（阶梯可观测；逐档 computed 判定归浏览器探针）",
+      "ok": true
+    },
+    {
+      "id": "H-05.2",
+      "name": "HELP 页无 ≥48px 大数字（D-9 取推荐 a：不要求）",
+      "ok": true
+    },
+    {
+      "id": "H-06.1",
+      "name": "等宽栈逐字 \"SF Mono\", monospace 且无 Consolas（D-13）",
+      "ok": true
+    },
+    {
+      "id": "H-06.2",
+      "name": "正文栈含 \"SF Pro Display\"（H-06 规格值；**当前态实测**）",
+      "ok": false
+    },
+    {
+      "id": "H-07.1",
+      "name": "CSS 中 font-feature-settings: \"tnum\" 命中 > 0",
+      "ok": true
+    },
+    {
+      "id": "H-08.1",
+      "name": "h1／h2 文本 emoji 数 = 0",
+      "ok": true
+    },
+    {
+      "id": "H-09.1",
+      "name": "CSS 含 max-width:960px ＋ padding:32px 20px 80px 逐字",
+      "ok": true
+    },
+    {
+      "id": "H-10.1",
+      "name": "HELP 页自身 CSS 区圆角集合 ⊆ {8px,14px,20px,999px,50%}（charts 区按 D-10 例外）",
+      "ok": false
+    },
+    {
+      "id": "H-10.2",
+      "name": "阴影只取冻结单条 var(--shadow)（D-4）",
+      "ok": true
+    },
+    {
+      "id": "H-11.1",
+      "name": "存在「首行无上边框」规则（:first-child border-top:0）",
+      "ok": true
+    },
+    {
+      "id": "H-12.1",
+      "name": "页面断点恰 640px／400px 各 1（图表 720／toast 栈 820 并存，D-6）",
+      "ok": true
+    },
+    {
+      "id": "H-15.1",
+      "name": "命令块载体是 <pre>（数量 > 0）",
+      "ok": true
+    },
+    {
+      "id": "H-15.2",
+      "name": "CSS 含 pre-wrap ＋ overflow-x:auto ＋ line-height:1.55",
+      "ok": true
+    },
+    {
+      "id": "H-16.1",
+      "name": "每个复制按钮同时带 data-action-id 与 data-t（两者计数相等且 >0）",
+      "ok": true
+    },
+    {
+      "id": "H-16.2",
+      "name": "CSS 存在 .copied 成功态规则",
+      "ok": true
+    },
+    {
+      "id": "H-17.1",
+      "name": "HELP 页含语义 <table>（规格要求表格组件存在）",
+      "ok": false
+    },
+    {
+      "id": "H-18.1",
+      "name": "空态控件存在且 CSS 含 48px 20px ＋ 图标 40px",
+      "ok": true
+    },
+    {
+      "id": "H-19.1",
+      "name": "CSS 含回顶按钮规则",
+      "ok": true
+    },
+    {
+      "id": "H-20.1",
+      "name": "CSS 含 :focus-visible（≥1）＋ prefers-reduced-motion（≥1）",
+      "ok": true
+    },
+    {
+      "id": "B-01.1",
+      "name": "占位符零残留（<!--[A-Z0-9-]+--> 命中 0）",
+      "ok": true
+    },
+    {
+      "id": "B-01.2",
+      "name": "元素 id 全唯一",
+      "ok": true
+    },
+    {
+      "id": "B-01.3",
+      "name": "根节点类名以冻结 STYLE_PREFIX 开头",
+      "ok": true
+    }
+  ]
+}

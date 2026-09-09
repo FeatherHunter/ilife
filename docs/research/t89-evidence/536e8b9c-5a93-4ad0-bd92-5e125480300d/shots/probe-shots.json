@@ -1,0 +1,878 @@
+{
+  "artifact": ".scratch\\t89\\help-file.html",
+  "sha256_16": "F380EF685065A1E9",
+  "browser": "Chrome/152.0.7977.83",
+  "observed": {
+    "dom": {
+      "kpi": 0,
+      "svg": 0,
+      "table": 0,
+      "pre": 436,
+      "details": 490,
+      "inputs": 353,
+      "buttons": 1746,
+      "cards": 436,
+      "empty": 0
+    },
+    "H-01": {
+      "blueRoot": "#007aff",
+      "blueShell": "#007aff",
+      "heroBg": "rgba(0, 0, 0, 0)",
+      "titleColor": "rgb(29, 29, 31)"
+    },
+    "H-02": {
+      "fg": "#1d1d1f",
+      "fg2": "#6e6e73",
+      "fg3": "#86868b",
+      "fgRgb": "rgb(29, 29, 31)",
+      "fg2Rgb": "rgb(110, 110, 115)",
+      "fg3Rgb": "rgb(134, 134, 139)",
+      "title": "rgb(29, 29, 31)",
+      "lead": "rgb(134, 134, 139)",
+      "cardTitle": "rgb(29, 29, 31)",
+      "subtitle": "rgb(110, 110, 115)",
+      "prompt": "rgb(110, 110, 115)",
+      "fieldLabel": "rgb(110, 110, 115)",
+      "fg3Hits": [
+        {
+          "cls": "ilife-help-shell-lead",
+          "tag": "P",
+          "size": "13px",
+          "text": "436 场景 · 点场景卡看指令全文,一键复制指令"
+        },
+        {
+          "cls": "ilife-help-shell-count",
+          "tag": "SPAN",
+          "size": "12px",
+          "text": "6"
+        },
+        {
+          "cls": "ilife-help-shell-cli",
+          "tag": "CODE",
+          "size": "11.5px",
+          "text": "home_today_overview"
+        }
+      ],
+      "fieldCounts": {
+        "fields": 341,
+        "label": 341,
+        "value": 0,
+        "hint": 0
+      }
+    },
+    "H-03": {
+      "body": "rgba(0, 0, 0, 0)",
+      "shell": "rgba(0, 0, 0, 0)",
+      "card": "rgb(255, 255, 255)",
+      "bg": "#f5f5f7",
+      "cardToken": "#ffffff"
+    },
+    "H-04": {
+      "gradAll": 1,
+      "gradHelp": 0,
+      "gradCharts": 1
+    },
+    "H-05": {
+      "h1": {
+        "size": 32,
+        "weight": 700,
+        "text": "唤醒词速查台"
+      },
+      "h3": {
+        "size": 17,
+        "weight": 600,
+        "text": "看今日主页"
+      },
+      "lead": {
+        "size": 13,
+        "weight": 400,
+        "text": "436 场景 · 点场景卡看指令全文"
+      },
+      "subtitle": {
+        "size": 15,
+        "weight": 400,
+        "text": "10 分类 · 436 场景"
+      },
+      "hint": {
+        "size": 11,
+        "weight": 600,
+        "text": "看今日主页"
+      },
+      "badge": {
+        "size": 11,
+        "weight": 600,
+        "text": "结果"
+      },
+      "count": {
+        "size": 12,
+        "weight": 600,
+        "text": "6"
+      },
+      "h2s": [
+        {
+          "size": 17,
+          "weight": 600,
+          "text": "联系作者"
+        },
+        {
+          "size": 17,
+          "weight": 600,
+          "text": "版本"
+        },
+        {
+          "size": 17,
+          "weight": 600,
+          "text": "看板页入口"
+        }
+      ]
+    },
+    "H-06": {
+      "body": "\"Noto Sans SC\"",
+      "shell": "\"Noto Sans SC\"",
+      "lead": "\"Noto Sans SC\"",
+      "pre": "\"SF Mono\", monospace",
+      "cli": "\"SF Mono\", monospace",
+      "cssSfPro": 0,
+      "cssConsolas": 0,
+      "cssSfMono": 4
+    },
+    "H-07": {
+      "shell": "\"tnum\"",
+      "count": "\"tnum\"",
+      "badge": "\"tnum\"",
+      "cardTitle": "\"tnum\""
+    },
+    "H-08": {
+      "total": 4,
+      "bad": [],
+      "h1": "唤醒词速查台"
+    },
+    "H-09": {
+      "paddingTop": "32px",
+      "paddingLeft": "20px",
+      "paddingRight": "20px",
+      "paddingBottom": "80px",
+      "maxWidth": "960px",
+      "marginLeft": "203px",
+      "marginRight": "203px",
+      "leftGap": 211,
+      "rightGap": 211,
+      "innerWidth": 1422
+    },
+    "H-10": {
+      "bad": [],
+      "badCount": 0,
+      "shadowSet": [
+        "rgba(0, 0, 0, 0.04) 0px 1px 2px 0px, rgba(0, 0, 0, 0.06) 0px 12px 36px 0px"
+      ],
+      "cssBad": [
+        {
+          "sel": ".ilife-help-shell-card-mark",
+          "radius": "4px"
+        }
+      ],
+      "cardMarkInDom": 0
+    },
+    "H-11": {
+      "rows": [
+        {
+          "i": 0,
+          "top": "0px",
+          "color": "rgb(29, 29, 31)",
+          "style": "none"
+        },
+        {
+          "i": 1,
+          "top": "1px",
+          "color": "rgb(210, 210, 215)",
+          "style": "solid"
+        },
+        {
+          "i": 2,
+          "top": "1px",
+          "color": "rgb(210, 210, 215)",
+          "style": "solid"
+        }
+      ],
+      "firstChildRule": 2
+    },
+    "H-12": [
+      {
+        "w": 1440,
+        "innerWidth": 1440,
+        "pt": "32px",
+        "pl": "20px",
+        "pr": "20px",
+        "pb": "80px",
+        "maxWidth": "960px",
+        "gridCols": 2
+      },
+      {
+        "w": 640,
+        "innerWidth": 640,
+        "pt": "20px",
+        "pl": "16px",
+        "pr": "16px",
+        "pb": "60px",
+        "maxWidth": "960px",
+        "gridCols": 1
+      },
+      {
+        "w": 400,
+        "innerWidth": 400,
+        "pt": "20px",
+        "pl": "16px",
+        "pr": "16px",
+        "pb": "60px",
+        "maxWidth": "960px",
+        "gridCols": 1
+      }
+    ],
+    "H-15": {
+      "tag": "PRE",
+      "fontFamily": "\"SF Mono\", monospace",
+      "fontSize": "12px",
+      "lineHeight": "18.6px",
+      "whiteSpace": "pre-wrap",
+      "overflowX": "auto",
+      "borderRadius": "8px",
+      "backgroundColor": "rgb(245, 248, 255)"
+    },
+    "H-16": {
+      "cls": "ilife-help-shell-card-copy copied",
+      "copied": true,
+      "toasts": 1,
+      "toastText": "📋已复制✓ 知道了"
+    },
+    "H-17": {
+      "tables": 0
+    },
+    "H-19": {
+      "initial": {
+        "opacity": "0",
+        "pe": "none",
+        "w": 42,
+        "h": 42,
+        "radius": "50%",
+        "position": "fixed",
+        "right": 24,
+        "bottom": 24
+      },
+      "shown": {
+        "scrollY": 500,
+        "opacity": "1",
+        "pe": "auto"
+      }
+    },
+    "H-20": {
+      "focus": {
+        "tag": "SUMMARY",
+        "cls": "ilife-help-shell-sheet-summary",
+        "matchesFV": true,
+        "outlineWidth": "1px",
+        "outlineStyle": "auto",
+        "outlineColor": "rgb(16, 16, 16)"
+      },
+      "tab": [
+        {
+          "tag": "BUTTON",
+          "cls": "ilife-help-shell-card-copy",
+          "matchesFV": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(0, 122, 255)"
+        },
+        {
+          "tag": "SUMMARY",
+          "cls": "ilife-help-shell-sheet-summary",
+          "matchesFV": true,
+          "outlineWidth": "1px",
+          "outlineStyle": "auto",
+          "outlineColor": "rgb(16, 16, 16)"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "ilife-help-shell-card-copy",
+          "matchesFV": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(0, 122, 255)"
+        },
+        {
+          "tag": "SUMMARY",
+          "cls": "ilife-help-shell-sheet-summary",
+          "matchesFV": true,
+          "outlineWidth": "1px",
+          "outlineStyle": "auto",
+          "outlineColor": "rgb(16, 16, 16)"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "ilife-help-shell-card-copy",
+          "matchesFV": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(0, 122, 255)"
+        },
+        {
+          "tag": "SUMMARY",
+          "cls": "ilife-help-shell-sheet-summary",
+          "matchesFV": true,
+          "outlineWidth": "1px",
+          "outlineStyle": "auto",
+          "outlineColor": "rgb(16, 16, 16)"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "ilife-help-shell-card-copy",
+          "matchesFV": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(0, 122, 255)"
+        },
+        {
+          "tag": "SUMMARY",
+          "cls": "ilife-help-shell-sheet-summary",
+          "matchesFV": true,
+          "outlineWidth": "1px",
+          "outlineStyle": "auto",
+          "outlineColor": "rgb(16, 16, 16)"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "ilife-help-shell-card-copy",
+          "matchesFV": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(0, 122, 255)"
+        },
+        {
+          "tag": "SUMMARY",
+          "cls": "ilife-help-shell-sheet-summary",
+          "matchesFV": true,
+          "outlineWidth": "1px",
+          "outlineStyle": "auto",
+          "outlineColor": "rgb(16, 16, 16)"
+        }
+      ],
+      "controls": 10,
+      "customRing": 5,
+      "anyRing": 10,
+      "reduced": {
+        "copy": {
+          "transition": "0s",
+          "anim": "0s",
+          "name": "none"
+        },
+        "backtop": {
+          "transition": "0s",
+          "anim": "0s",
+          "name": "none"
+        },
+        "toast": {
+          "transition": "0s",
+          "anim": "0s",
+          "name": "none"
+        }
+      }
+    },
+    "H-18": {
+      "tag": "DIV",
+      "cls": "ilife-empty",
+      "padding": "48px/20px/48px/20px",
+      "background": "rgb(255, 255, 255)",
+      "border": "1px solid",
+      "radius": "20px",
+      "textAlign": "center",
+      "iconTag": "DIV",
+      "iconSize": "40px",
+      "iconOpacity": "0.5",
+      "textTag": "DIV",
+      "textSize": "17px",
+      "textWeight": "600",
+      "hintTag": "DIV",
+      "hintSize": "13px",
+      "hintColor": "rgb(134, 134, 139)"
+    }
+  },
+  "results": [
+    {
+      "id": "H-01.1",
+      "name": "渲染页 computed --blue 逐字 #007aff（根 ＋ 壳）",
+      "ok": true
+    },
+    {
+      "id": "H-01.2",
+      "name": "页头主色块元素级截图已取证",
+      "ok": true
+    },
+    {
+      "id": "H-02.1",
+      "name": "正文面（h1／卡标题／副标题／命令）computed color ∈ {--fg, --fg2}（hex→rgb 归一后比较）",
+      "ok": true
+    },
+    {
+      "id": "H-02.2",
+      "name": "最浅一档灰 --fg3 只落在提示层（≤13px），不承载正文",
+      "ok": true
+    },
+    {
+      "id": "H-02.3",
+      "name": "卡面元素级截图已取证",
+      "ok": true
+    },
+    {
+      "id": "H-03.1",
+      "name": "页底 ≠ 卡面且卡面为纯白（computed）",
+      "ok": true
+    },
+    {
+      "id": "H-04.1",
+      "name": "HELP 页自身 CSS 区零渐变（charts 区按 D-10 例外，须同时打印两值）",
+      "ok": true
+    },
+    {
+      "id": "H-05.1",
+      "name": "HELP 页无 ≥48px 大数字（D-9 不要求）",
+      "ok": true
+    },
+    {
+      "id": "H-05.2",
+      "name": "四档逐值：h2 17px／600 ＋ 正文 15px ＋ 提示 12–13px",
+      "ok": true
+    },
+    {
+      "id": "H-05.3",
+      "name": "h1 32px／700（D-9 推荐 a：28–32px 区间）",
+      "ok": true
+    },
+    {
+      "id": "H-06.1",
+      "name": "等宽面 computed 以 \"SF Mono\" 开头且无 Consolas（D-13）",
+      "ok": true
+    },
+    {
+      "id": "H-06.2",
+      "name": "正文面 computed 含 \"SF Pro Display\"（H-06 规格值）",
+      "ok": false
+    },
+    {
+      "id": "H-07.1",
+      "name": "数值面 computed font-feature-settings 含 tnum（继承生效）",
+      "ok": true
+    },
+    {
+      "id": "H-08.1",
+      "name": "h1／h2 textContent emoji 命中 = 0",
+      "ok": true
+    },
+    {
+      "id": "H-09.1",
+      "name": "容器 computed padding 逐值 32px 20px 80px ＋ max-width 960px",
+      "ok": true
+    },
+    {
+      "id": "H-09.2",
+      "name": "1440px 视口下内容列居中、两侧留白可见",
+      "ok": true
+    },
+    {
+      "id": "H-10.1",
+      "name": "HELP 页自身 CSS 区 border-radius 声明 ⊆ {8,14,20,999px,50%}（charts 区按 D-10 例外）",
+      "ok": false
+    },
+    {
+      "id": "H-10.2",
+      "name": "HELP 壳内所有元素 computed border-radius ∈ 规定集",
+      "ok": true
+    },
+    {
+      "id": "H-11.1",
+      "name": "列表首行 computed border-top 0、后续行 1px 软描边",
+      "ok": true
+    },
+    {
+      "id": "H-12.1",
+      "name": "≤640px computed 内距四值 = 20px 16px 60px（含 top）",
+      "ok": true
+    },
+    {
+      "id": "H-12.2",
+      "name": "≤400px computed 内距四值 = 20px 16px 60px（400 层不另改容器）",
+      "ok": true
+    },
+    {
+      "id": "H-12.3",
+      "name": "宽屏 computed 内距四值 = 32px 20px 80px",
+      "ok": true
+    },
+    {
+      "id": "H-15.1",
+      "name": "命令块载体 tagName = PRE",
+      "ok": true
+    },
+    {
+      "id": "H-15.2",
+      "name": "computed 等宽栈／字号 ∈[11.5,12]px／line-height 比值 1.55／pre-wrap／overflow-x auto／圆角 8px",
+      "ok": true
+    },
+    {
+      "id": "H-16.1",
+      "name": "真手势后按钮进入 copied 态（截图 after 已取证）",
+      "ok": true
+    },
+    {
+      "id": "H-16.2",
+      "name": "同一时刻恰 1 枚 toast 出现（双反馈第二通道）",
+      "ok": true
+    },
+    {
+      "id": "H-19.1",
+      "name": "回顶按钮几何 42×42／圆形／fixed／right=bottom=24",
+      "ok": true
+    },
+    {
+      "id": "H-19.2",
+      "name": "scrollY=0 时不可见（opacity 0 ＋ pointer-events none）",
+      "ok": true
+    },
+    {
+      "id": "H-19.3",
+      "name": "scrollY>400 后出现（opacity 1 ＋ 可点，截图 after 已取证）",
+      "ok": true
+    },
+    {
+      "id": "H-20.1",
+      "name": "Tab 后活动元素 matches(:focus-visible) 且 outline ≥1px（截图 focus 已取证）",
+      "ok": true
+    },
+    {
+      "id": "H-20.2",
+      "name": "Tab 遍历到的每个可交互控件焦点环均可见（outline ≥1px 且 :focus-visible）",
+      "ok": true
+    },
+    {
+      "id": "H-20.3",
+      "name": "prefers-reduced-motion:reduce 下复制按钮过渡归零（computed）",
+      "ok": true
+    },
+    {
+      "id": "H-18.1",
+      "name": "空态根含卡片外观（背景／圆角／描边 ＋ 居中）",
+      "ok": true
+    },
+    {
+      "id": "H-18.2",
+      "name": "空态 computed padding = 48px 20px",
+      "ok": true
+    },
+    {
+      "id": "H-18.3",
+      "name": "图标 40px ＋ opacity .5",
+      "ok": true
+    },
+    {
+      "id": "H-18.4",
+      "name": "标题 17px／600、说明 13px 最浅灰",
+      "ok": true
+    }
+  ],
+  "shots": [
+    {
+      "item": "H-01",
+      "step": "viewport",
+      "file": "H-01/viewport.png",
+      "bytes": 85803
+    },
+    {
+      "item": "H-03",
+      "step": "viewport",
+      "file": "H-03/viewport.png",
+      "bytes": 85803
+    },
+    {
+      "item": "H-01",
+      "step": "element",
+      "file": "H-01/element.png",
+      "bytes": 13012,
+      "clip": {
+        "x": 219,
+        "y": 28,
+        "width": 984,
+        "height": 136,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-hero"
+    },
+    {
+      "item": "H-02",
+      "step": "element",
+      "file": "H-02/element.png",
+      "bytes": 11060,
+      "clip": {
+        "x": 234,
+        "y": 311,
+        "width": 483,
+        "height": 181,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-card"
+    },
+    {
+      "item": "H-02",
+      "step": "lead",
+      "file": "H-02/lead.png",
+      "bytes": 5816,
+      "clip": {
+        "x": 219,
+        "y": 120,
+        "width": 984,
+        "height": 43,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-lead"
+    },
+    {
+      "item": "H-03",
+      "step": "card",
+      "file": "H-03/card.png",
+      "bytes": 11060,
+      "clip": {
+        "x": 234,
+        "y": 311,
+        "width": 483,
+        "height": 181,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-card"
+    },
+    {
+      "item": "H-04",
+      "step": "element",
+      "file": "H-04/element.png",
+      "bytes": 11060,
+      "clip": {
+        "x": 234,
+        "y": 311,
+        "width": 483,
+        "height": 181,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-card"
+    },
+    {
+      "item": "H-05",
+      "step": "element",
+      "file": "H-05/element.png",
+      "bytes": 13012,
+      "clip": {
+        "x": 219,
+        "y": 28,
+        "width": 984,
+        "height": 136,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-hero"
+    },
+    {
+      "item": "H-06",
+      "step": "element",
+      "file": "H-06/element.png",
+      "bytes": 5816,
+      "clip": {
+        "x": 219,
+        "y": 120,
+        "width": 984,
+        "height": 43,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-lead"
+    },
+    {
+      "item": "H-07",
+      "step": "element",
+      "file": "H-07/element.png",
+      "bytes": 3989,
+      "clip": {
+        "x": 249,
+        "y": 359,
+        "width": 453,
+        "height": 52,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-card-top"
+    },
+    {
+      "item": "H-08",
+      "step": "element",
+      "file": "H-08/element.png",
+      "bytes": 5283,
+      "clip": {
+        "x": 219,
+        "y": 51,
+        "width": 984,
+        "height": 63,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-title"
+    },
+    {
+      "item": "H-09",
+      "step": "element",
+      "file": "H-09/element.png",
+      "bytes": 13012,
+      "clip": {
+        "x": 219,
+        "y": 28,
+        "width": 984,
+        "height": 136,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-hero"
+    },
+    {
+      "item": "H-10",
+      "step": "element",
+      "file": "H-10/element.png",
+      "bytes": 11060,
+      "clip": {
+        "x": 234,
+        "y": 311,
+        "width": 483,
+        "height": 181,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-card"
+    },
+    {
+      "item": "H-11",
+      "step": "element",
+      "file": "H-11/element.png",
+      "bytes": 113,
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-about-list"
+    },
+    {
+      "item": "H-12",
+      "step": "viewport-1440",
+      "file": "H-12/viewport-1440.png",
+      "bytes": 93147
+    },
+    {
+      "item": "H-12",
+      "step": "viewport-640",
+      "file": "H-12/viewport-640.png",
+      "bytes": 79688
+    },
+    {
+      "item": "H-12",
+      "step": "viewport-400",
+      "file": "H-12/viewport-400.png",
+      "bytes": 70992
+    },
+    {
+      "item": "H-13",
+      "step": "na",
+      "file": "H-13/na.png",
+      "bytes": 87193
+    },
+    {
+      "item": "H-14",
+      "step": "na",
+      "file": "H-14/na.png",
+      "bytes": 87193
+    },
+    {
+      "item": "H-15",
+      "step": "element",
+      "file": "H-15/element.png",
+      "bytes": 6825,
+      "clip": {
+        "x": 249,
+        "y": 453,
+        "width": 453,
+        "height": 123,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-prompt"
+    },
+    {
+      "item": "H-16",
+      "step": "before",
+      "file": "H-16/before.png",
+      "bytes": 11060,
+      "clip": {
+        "x": 234,
+        "y": 311,
+        "width": 483,
+        "height": 181,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-card"
+    },
+    {
+      "item": "H-16",
+      "step": "after",
+      "file": "H-16/after.png",
+      "bytes": 94193
+    },
+    {
+      "item": "H-17",
+      "step": "na",
+      "file": "H-17/na.png",
+      "bytes": 11362,
+      "clip": {
+        "x": 234,
+        "y": 311,
+        "width": 483,
+        "height": 181,
+        "scale": 1
+      },
+      "sel": ".ilife-help-shell-card"
+    },
+    {
+      "item": "H-19",
+      "step": "before",
+      "file": "H-19/before.png",
+      "bytes": 90515
+    },
+    {
+      "item": "H-19",
+      "step": "after",
+      "file": "H-19/after.png",
+      "bytes": 77394
+    },
+    {
+      "item": "H-20",
+      "step": "focus",
+      "file": "H-20/focus.png",
+      "bytes": 90555
+    },
+    {
+      "item": "H-18",
+      "step": "viewport",
+      "file": "H-18/viewport.png",
+      "bytes": 12184
+    },
+    {
+      "item": "H-18",
+      "step": "element",
+      "file": "H-18/element.png",
+      "bytes": 7189,
+      "clip": {
+        "x": 219,
+        "y": 28,
+        "width": 498,
+        "height": 226,
+        "scale": 1
+      },
+      "sel": ".ilife-empty"
+    }
+  ]
+}

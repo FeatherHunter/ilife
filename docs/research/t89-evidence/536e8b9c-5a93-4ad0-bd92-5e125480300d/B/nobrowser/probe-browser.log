@@ -1,0 +1,3 @@
+# #89 取证链路探针（能力自证；**不是**验收结论）
+node=v24.19.0 platform=win32 out=D:\ilife\.scratch\t89\run536e\B\nobrowser
+RESULT: ABORT exit=2 :: 未找到 Chrome／Edge（候选：0 个命中 0）→ 取证链路**不可用**；用 DSH_BROWSER=<chrome 路径> 指定。本脚本绝不静默跳过浏览器断言。

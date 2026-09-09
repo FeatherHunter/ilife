@@ -2,6 +2,7 @@
 
 - runId（本席取证轮）：`536e8b9c-5a93-4ad0-bd92-5e125480300d`
 - 证据根：`docs/research/t89-evidence/536e8b9c-5a93-4ad0-bd92-5e125480300d/`
+- 证据规模：58 文件／2,078,259 B（截图28＋9＋3＋逐条元素图；Chrome profile 与 1.26MB HTML 未入库；SHA256SUMS 55/55 自验通过）
 - 交接基线：`docs/research/t89-evidence-plan.md`（commit `b927a3c`）§1 矩阵／§4 归档约定／§6 移交清单
 - 照判裁定：H-12 的 400px 子句按冻结 820 为准；H-17 HELP 页 N/A；H-06 如实判「未达」＋最小修复方案（不改冻结面）
 - 判据收窄：H-01 禁色只约束 UI 主色（图表色板例外 D-10）；H-04／H-10 按 CSS 区判（charts 区除外，L-17）
@@ -41,3 +42,4 @@
 - `GATE-RUN runId=b6400a16-6ec3-47e8-82fe-2490185a89f3 cmd="node docs/research/t121-browser-evidence.mjs --label t89reuse"` → `RESULT: 22/22 PASS`（H-16交叉）
 - `GATE-RUN runId=52c27b1e-5e0a-4464-a4e7-535a57469813 cmd="node docs/research/t88-probe-impl-b.mjs"` → `RESULT: 59/59`（样本sha fb87787c…）
 - `GATE-RUN runId=c77f9195-0448-47d0-beb3-720af39c170a cmd="node docs/research/t88-browser-evidence-b.mjs"` → `RESULT: 28/29`（唯一红B26=fields:341过期断言，非#89面；H-19相关B20/B22/B23/B25/B27全绿）
+- `GATE-RUN runId=3ddb1565-272b-437d-a11f-bf265a7e230b cmd="node docs/research/t89-probe-blocks.mjs"` → `RESULT: 39/39 PASS`（B-01…B-12；途中修探针5处：markup剥离style/script、B-02卡片命名+unit并入value、B-04.4切分正则、B-06换measure-wizard真pre样本、B-08.2改HELP同卡、B-05改health的list-rows三槽）

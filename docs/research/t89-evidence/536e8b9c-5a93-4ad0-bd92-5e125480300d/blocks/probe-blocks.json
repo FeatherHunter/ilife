@@ -1,0 +1,666 @@
+{
+  "browser": "Chrome/152.0.7977.83",
+  "samples": {
+    "page-shell": {
+      "key": "calorie.view.ranking",
+      "bytes": 57883,
+      "sha256_16": "81E4BFBD5DB98215"
+    },
+    "kpi": {
+      "key": "calorie.view.ranking",
+      "bytes": 57883,
+      "sha256_16": "81E4BFBD5DB98215"
+    },
+    "table": {
+      "key": "calorie.view.diet",
+      "bytes": 62226,
+      "sha256_16": "0948156CC4B995FA"
+    },
+    "charts": {
+      "key": "calorie.view.nutrition-ratio",
+      "bytes": 57612,
+      "sha256_16": "2D5E8BDD25E74137"
+    },
+    "pre": {
+      "key": "calorie.view.diet",
+      "bytes": 62226,
+      "sha256_16": "0948156CC4B995FA"
+    },
+    "detail": {
+      "key": "calorie.view.diet",
+      "bytes": 62226,
+      "sha256_16": "0948156CC4B995FA"
+    },
+    "fold": {
+      "key": "calorie.view.ranking",
+      "bytes": 57883,
+      "sha256_16": "81E4BFBD5DB98215"
+    },
+    "form": {
+      "key": "calorie.view.measure-wizard",
+      "bytes": 55291,
+      "sha256_16": "5F77756D66FF23BA"
+    },
+    "copy": {
+      "key": "calorie.view.measure-wizard",
+      "bytes": 55291,
+      "sha256_16": "5F77756D66FF23BA"
+    },
+    "rich": {
+      "key": "calorie.view.health",
+      "bytes": 51998,
+      "sha256_16": "8C097322005C7D84"
+    }
+  },
+  "observed": {
+    "B-01": {
+      "residual": 0,
+      "ids": {
+        "uniq": 0,
+        "total": 0
+      },
+      "rootCls": "wrap ilife-page",
+      "shellNs": 12,
+      "pageNs": 1,
+      "payloadSlot": 0
+    },
+    "B-02": {
+      "card": 5,
+      "label": 5,
+      "valueRow": 5,
+      "value": 5,
+      "unit": 0,
+      "detail": 5,
+      "badge": 0,
+      "grid": 1,
+      "legacyKpi": 0,
+      "valueTexts": [
+        "肥肠面 1500 卡",
+        "肥肠面 1500 卡",
+        "肥肠面 1500 卡",
+        "肥肠面 1500 卡"
+      ],
+      "badgeFallback": {
+        "fallback": "<span class=\"ilife-status-badge ilife-status-badge-empty\">x</span>",
+        "hasEmpty": true
+      },
+      "computed": {
+        "padding": "14px",
+        "radius": "14px",
+        "background": "rgb(255, 255, 255)",
+        "border": "1px",
+        "label": {
+          "text": "高热量",
+          "size": "16px",
+          "weight": "400",
+          "color": "rgb(29, 29, 31)",
+          "tnum": "\"tnum\"",
+          "tabular": "normal"
+        },
+        "value": {
+          "text": "肥肠面 1500 卡",
+          "size": "16px",
+          "weight": "400",
+          "color": "rgb(29, 29, 31)",
+          "tnum": "\"tnum\"",
+          "tabular": "normal"
+        },
+        "unit": null,
+        "detail": {
+          "text": "TOP 1",
+          "size": "16px",
+          "weight": "400",
+          "color": "rgb(29, 29, 31)",
+          "tnum": "\"tnum\"",
+          "tabular": "normal"
+        },
+        "valueRow": true
+      }
+    },
+    "B-03": {
+      "table": 2,
+      "thead": 2,
+      "th": 15,
+      "td": 51,
+      "tr": 10,
+      "ns": 2,
+      "caption": 2,
+      "divTable": 0,
+      "computed": {
+        "th": {
+          "textTransform": "uppercase",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderBottom": "1px solid",
+          "padding": "10px/14px",
+          "color": "rgb(134, 134, 139)"
+        },
+        "td": {
+          "textTransform": "none",
+          "fontSize": "13px",
+          "fontWeight": "400",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderBottom": "1px solid",
+          "padding": "12px/14px",
+          "color": "rgb(110, 110, 115)"
+        },
+        "lastTd": {
+          "textTransform": "none",
+          "fontSize": "13px",
+          "fontWeight": "400",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderBottom": "0px none",
+          "padding": "12px/14px",
+          "color": "rgb(110, 110, 115)"
+        },
+        "rows": 7,
+        "inCard": true
+      }
+    },
+    "B-04": {
+      "ns": 1,
+      "svg": 1,
+      "canvas": 0,
+      "viewBox": 1,
+      "kinds": 2,
+      "anim": 1,
+      "emptyRule": "emptyState",
+      "kindsFrozen": 8,
+      "api": {
+        "keys": [
+          "bar",
+          "line",
+          "donut",
+          "progress",
+          "combo",
+          "sparkline",
+          "gauge",
+          "scatter"
+        ],
+        "emptyShape": [
+          "kind",
+          "html",
+          "empty",
+          "points"
+        ],
+        "emptyFlag": true,
+        "illegal": "ChartError"
+      },
+      "computed": {
+        "canvas": 0,
+        "viewBox": "0 0 150.0 150.0",
+        "containerPadding": "0px"
+      }
+    },
+    "B-05": {
+      "listNs": 22,
+      "row": 5,
+      "left": 5,
+      "main": 5,
+      "right": 5,
+      "blockNs": 9
+    },
+    "B-06": {
+      "pre": 1,
+      "copyBtn": 4,
+      "actionId": 2,
+      "dataT": 2,
+      "computed": {
+        "fontFamily": "\"SF Mono\", monospace",
+        "fontSize": "12px",
+        "lineHeightRatio": 1.55,
+        "whiteSpace": "pre-wrap",
+        "overflowX": "auto",
+        "borderRadius": "8px",
+        "background": "rgb(245, 248, 255)"
+      }
+    },
+    "B-07": {
+      "required": [
+        "id",
+        "title",
+        "wake_word",
+        "status",
+        "prompt_template"
+      ],
+      "props": [
+        "id",
+        "title",
+        "wake_word",
+        "types",
+        "status",
+        "prompt_template",
+        "editable_fields"
+      ],
+      "typeField": "types",
+      "statusSet": [
+        "",
+        "【待开发】"
+      ],
+      "helpScenes": 437,
+      "helpFields": 343,
+      "pluralField": true
+    },
+    "B-08": {
+      "details": 5,
+      "summary": 5,
+      "ns": 15,
+      "divFold": 10,
+      "interactive": {
+        "before": {
+          "open": true,
+          "hasBtn": true,
+          "btnCls": "ilife-help-shell-card-copy"
+        },
+        "after": {
+          "open": true,
+          "copied": true
+        }
+      }
+    },
+    "B-09": {
+      "ns": 4,
+      "label": 15,
+      "input": 15,
+      "inputs": 15,
+      "placeholders": [
+        "YYYY-MM-DD",
+        "如：早上空腹 / 减脂期第 30 天",
+        "如 95.0",
+        "如 95.0",
+        "如 95.0",
+        "如 95.0"
+      ],
+      "names": [
+        "date",
+        "note",
+        "chest_cm",
+        "waist_cm",
+        "abdomen_cm",
+        "hip_cm",
+        "shoulder_cm",
+        "left_thigh_cm",
+        "right_thigh_cm",
+        "left_calf_cm",
+        "right_calf_cm",
+        "left_arm_cm",
+        "right_arm_cm",
+        "left_forearm_cm",
+        "right_forearm_cm"
+      ],
+      "namesNonEmpty": 15,
+      "computed": {
+        "n": 15,
+        "sample": [
+          {
+            "name": "date",
+            "placeholder": "YYYY-MM-DD",
+            "value": "2026-09-09"
+          },
+          {
+            "name": "note",
+            "placeholder": "如：早上空腹 / 减脂期第 30 天",
+            "value": ""
+          },
+          {
+            "name": "chest_cm",
+            "placeholder": "如 95.0",
+            "value": ""
+          },
+          {
+            "name": "waist_cm",
+            "placeholder": "如 95.0",
+            "value": ""
+          },
+          {
+            "name": "abdomen_cm",
+            "placeholder": "如 95.0",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "B-10": {
+      "markup": "<div class=\"ilife-empty\"><div class=\"ilife-empty-icon\">📭</div><div class=\"ilife-empty-text\">暂无数据</div><div class=\"ilife-empty-hint\">换个筛选条件试试</div></div>",
+      "root": true,
+      "icon": true,
+      "text": true,
+      "hint": true,
+      "actionOptional": true,
+      "computed": {
+        "padding": "48px/20px",
+        "radius": "20px",
+        "align": "center",
+        "iconSize": "40px",
+        "iconOpacity": "0.5",
+        "textSize": "17px",
+        "textWeight": "600",
+        "hintSize": "13px"
+      }
+    },
+    "B-11": {
+      "actionBar": 2,
+      "actionRow": 4,
+      "copyBtn": 4,
+      "actionId": 2,
+      "dataT": 2,
+      "idAttr": "data-action-id",
+      "dataAttr": "data-t",
+      "ids": [
+        "actionBar",
+        "errorReceipt"
+      ],
+      "emptyText": {
+        "result": {
+          "ok": false,
+          "channel": null,
+          "reason": "empty"
+        },
+        "portCalls": 0
+      },
+      "computed": {
+        "bar": true,
+        "btnCount": 2,
+        "ids": [
+          {
+            "id": "ilife-help-copy-prompt",
+            "hasT": true
+          },
+          {
+            "id": "ilife-copy-data",
+            "hasT": true
+          }
+        ]
+      }
+    },
+    "B-12": {
+      "defaults": {
+        "timeoutMs": 4500,
+        "maxStack": 5,
+        "mobileMaxStack": 3,
+        "mobileMaxPx": 820,
+        "gapPx": 8,
+        "role": "status",
+        "ariaLive": "polite",
+        "defaultIcon": "copy"
+      },
+      "role": "status",
+      "live": "polite",
+      "nsInSections": [
+        "toast",
+        "errorReceipt"
+      ],
+      "allSections": [
+        "toast",
+        "actionBar",
+        "copyButton",
+        "statusBadge",
+        "emptyState",
+        "errorReceipt",
+        "charts",
+        "helpShell"
+      ],
+      "receiptNoBtn": true,
+      "computed": {
+        "toasts": 1,
+        "role": "status",
+        "live": "polite",
+        "cls": "ilife-toast"
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "B-01.1",
+      "name": "占位符零残留（<!--[A-Z0-9-]+--> 命中 0）",
+      "ok": true
+    },
+    {
+      "id": "B-01.2",
+      "name": "元素 id 全唯一",
+      "ok": true
+    },
+    {
+      "id": "B-01.3",
+      "name": "根节点含以冻结 STYLE_PREFIX 开头的类名（实测 class=\"wrap ilife-page\"）",
+      "ok": true
+    },
+    {
+      "id": "B-01.4",
+      "name": "页面壳命名空间存在（ilife-block-page-shell ＋ ilife-page）",
+      "ok": true
+    },
+    {
+      "id": "B-02.1",
+      "name": "KPI 四槽语义齐（label／value-row＋value／detail 各 ≥1；unit 独立节点或落进 value 文本）",
+      "ok": true
+    },
+    {
+      "id": "B-02.2",
+      "name": "value 与 unit 同基线容器（value-row）存在",
+      "ok": true
+    },
+    {
+      "id": "B-02.3",
+      "name": "非法 status 降级 empty（冻结 renderStatusBadge 回落）",
+      "ok": true
+    },
+    {
+      "id": "B-03.1",
+      "name": "强制语义标签：<table>/<thead>/<th>/<td> 各 >0（DB-3）",
+      "ok": true
+    },
+    {
+      "id": "B-03.2",
+      "name": "整表在卡片容器内（ilife-block-data-table 命名空间 ＋ caption）",
+      "ok": true
+    },
+    {
+      "id": "B-04.1",
+      "name": "图表命名空间存在且 `<canvas>` 命中 0（DB-6：纯 CSS＋SVG）",
+      "ok": true
+    },
+    {
+      "id": "B-04.2",
+      "name": "SVG 含 viewBox（坐标系自洽）",
+      "ok": true
+    },
+    {
+      "id": "B-04.3",
+      "name": "冻结 charts API 8 种 kind 齐全且空数据走空态（empty=true）＋ 非法输入抛错",
+      "ok": true
+    },
+    {
+      "id": "B-05.1",
+      "name": "列表命名空间存在（ilife-block-list 前缀 >0，含 -rows 实现）",
+      "ok": true
+    },
+    {
+      "id": "B-05.2",
+      "name": "每行左/中/右三槽齐（left／main／right 各 ≥1 且计数相等）",
+      "ok": true
+    },
+    {
+      "id": "B-06.1",
+      "name": "指令块载体是 <pre>",
+      "ok": true
+    },
+    {
+      "id": "B-06.2",
+      "name": "带复制则按钮必带 data-action-id ＋ data-t（两属性计数相等且 >0）",
+      "ok": true
+    },
+    {
+      "id": "B-07.1",
+      "name": "场景必填字段含 id／title／wake_word／status／prompt_template 逐字",
+      "ok": true
+    },
+    {
+      "id": "B-07.2",
+      "name": "类型字段取冻结 SCENE_TYPE_FIELD（复数，无单数别名）",
+      "ok": true
+    },
+    {
+      "id": "B-07.3",
+      "name": "SCENE_STATUS 为两值闭集",
+      "ok": true
+    },
+    {
+      "id": "B-08.1",
+      "name": "原生 <details>/<summary>（DB-4），details 与 summary 计数相等且 >0",
+      "ok": true
+    },
+    {
+      "id": "B-09.1",
+      "name": "参数区命名空间 ＋ label ＋ input 齐（每个字段带 name）",
+      "ok": true
+    },
+    {
+      "id": "B-10.1",
+      "name": "空态根 ilife-empty ＋ 子节点 icon／text／hint（text 必填，action 可选）",
+      "ok": true
+    },
+    {
+      "id": "B-11.1",
+      "name": "复制按钮必带 data-action-id 与 data-t（两个不同属性）",
+      "ok": true
+    },
+    {
+      "id": "B-11.2",
+      "name": "空文本短路：copyText 返回 ok:false（reason=empty）且**不调**写入端口",
+      "ok": true
+    },
+    {
+      "id": "B-12.1",
+      "name": "toast 冻结 role／aria-live 在册（status／polite）",
+      "ok": true
+    },
+    {
+      "id": "B-12.2",
+      "name": "toast／errorReceipt 在冻结控件样式闭集内（8 区闭集）",
+      "ok": true
+    },
+    {
+      "id": "B-12.3",
+      "name": "错误回执缺 dataText／logText 时不渲染复制按钮",
+      "ok": true
+    },
+    {
+      "id": "B-02.4",
+      "name": "KPI 卡 computed 四槽语义齐（label／value／detail 文本节点；unit 可并入 value 文本）",
+      "ok": true
+    },
+    {
+      "id": "B-02.5",
+      "name": "KPI 数值 computed 等宽数字（font-feature-settings 含 tnum 或 font-variant-numeric 为 tabular-nums）",
+      "ok": true
+    },
+    {
+      "id": "B-03.3",
+      "name": "th computed 大写 ＋ 透明背景 ＋ 1px 下边框 ＋ 字号 ∈[11.5,12]px ＋ 600",
+      "ok": true
+    },
+    {
+      "id": "B-03.4",
+      "name": "td 内距 ∈[12,14]px ＋ 1px 软描边 ＋ 末行无下边框",
+      "ok": true
+    },
+    {
+      "id": "B-03.5",
+      "name": "整表在卡片容器内",
+      "ok": true
+    },
+    {
+      "id": "B-04.4",
+      "name": "渲染后 <canvas> 命中 0 且 SVG 带 viewBox（纯 CSS＋SVG，DB-6）",
+      "ok": true
+    },
+    {
+      "id": "B-06.3",
+      "name": "pre computed 等宽／字号 ∈[11.5,12]／行高比 1.55／pre-wrap／overflow-x auto／圆角 8px",
+      "ok": true
+    },
+    {
+      "id": "B-08.2",
+      "name": "点复制按钮后 80ms 内 <details> open 状态不变（不误触折叠）",
+      "ok": true
+    },
+    {
+      "id": "B-09.2",
+      "name": "每个参数字段 input 带 name 与 placeholder（渲染齐）",
+      "ok": true
+    },
+    {
+      "id": "B-10.2",
+      "name": "空态 computed 内距 48px 20px／图标 40px opacity .5／标题 17px 600／说明 13px",
+      "ok": true
+    },
+    {
+      "id": "B-11.3",
+      "name": "渲染后每个复制按钮同时带 data-action-id 与 data-t",
+      "ok": true
+    },
+    {
+      "id": "B-12.4",
+      "name": "运行时 toast 带 role=status ＋ aria-live=polite（冻结值）",
+      "ok": true
+    }
+  ],
+  "shots": [
+    {
+      "block": "B-02",
+      "step": "viewport",
+      "file": "B-02/viewport.png",
+      "bytes": 72630
+    },
+    {
+      "block": "B-03",
+      "step": "viewport",
+      "file": "B-03/viewport.png",
+      "bytes": 39940
+    },
+    {
+      "block": "B-04",
+      "step": "viewport",
+      "file": "B-04/viewport.png",
+      "bytes": 65344
+    },
+    {
+      "block": "B-06",
+      "step": "viewport",
+      "file": "B-06/viewport.png",
+      "bytes": 61083
+    },
+    {
+      "block": "B-08",
+      "step": "viewport",
+      "file": "B-08/viewport.png",
+      "bytes": 92882
+    },
+    {
+      "block": "B-09",
+      "step": "viewport",
+      "file": "B-09/viewport.png",
+      "bytes": 61083
+    },
+    {
+      "block": "B-10",
+      "step": "viewport",
+      "file": "B-10/viewport.png",
+      "bytes": 12072
+    },
+    {
+      "block": "B-11",
+      "step": "viewport",
+      "file": "B-11/viewport.png",
+      "bytes": 61083
+    },
+    {
+      "block": "B-12",
+      "step": "viewport",
+      "file": "B-12/viewport.png",
+      "bytes": 58175
+    }
+  ]
+}

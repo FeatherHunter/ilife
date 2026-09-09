@@ -1,0 +1,36 @@
+# #89 静态面取证链路探针（当前态抽样；**不是**验收结论）
+artifact=.scratch/t89/help-file.html bytes=1264822 sha256_16=F380EF685065A1E9
+cssBytes=21016 cssSha256_16=42968B6915AE55F8
+[ASSERT] H-01.1 最终 CSS 无禁色（#0a84ff／#af52de／#ff375f／#0071e3） → PASS  实测=[]  期望="[]"
+[ASSERT] H-01.2 冻结主色 --blue 已声明 → PASS  实测="--blue: #007aff"  期望="--blue: #007aff"
+[ASSERT] H-02.1 冻结 token 表含三灰＋页底＋卡面＋描边＋阴影（以冻结契约为准） → PASS  实测=["--fg","--fg2","--fg3","--bg","--card","--line","--shadow"]  期望="7 个"
+[ASSERT] H-03.1 页底 token ≠ 卡面 token（卡面纯白） → PASS  实测={"bg":"#f5f5f7","card":"#ffffff"}  期望="两者不同"
+[ASSERT] H-04.1 HELP 页自身 CSS 区零渐变（charts 区按 D-10／L-17 例外） → PASS  实测={"gradHelp":0,"gradAll":1}  期望="help 区 0（全量可 >0）"
+[ASSERT] H-05.1 CSS 中存在 ≥2 档字号（阶梯可观测；逐档 computed 判定归浏览器探针） → PASS  实测=24  期望="≥2"
+[ASSERT] H-05.2 HELP 页无 ≥48px 大数字（D-9 取推荐 a：不要求） → PASS  实测=[]  期望="[]"
+[ASSERT] H-06.1 等宽栈逐字 "SF Mono", monospace 且无 Consolas（D-13） → PASS  实测={"sfMono":4,"consolas":0}  期望="SF Mono 命中且 Consolas=0"
+[ASSERT] H-06.2 正文栈含 "SF Pro Display"（H-06 规格值；**当前态实测**） → FAIL  实测={"sfPro":0,"stacks":["font-family: \"SF Mono\", monospace","font-family: inherit","font-family:inherit"]}  期望=">0（若红见 §5 风险 R-3）"
+[ASSERT] H-07.1 CSS 中 font-feature-settings: "tnum" 命中 > 0 → PASS  实测=2  期望=">0"
+[ASSERT] H-08.1 h1／h2 文本 emoji 数 = 0 → PASS  实测={"headings":4,"hit":0}  期望="0"
+[ASSERT] H-09.1 CSS 含 max-width:960px ＋ padding:32px 20px 80px 逐字 → PASS  实测={"maxWidth960":1,"padding":1}  期望="两者各 ≥1"
+[ASSERT] H-10.1 HELP 页自身 CSS 区圆角集合 ⊆ {8px,14px,20px,999px,50%}（charts 区按 D-10 例外） → FAIL  实测={"badRadiiHelp":["4px"],"badRadiiAll":["2px","4px"],"radiiHelp":["14px","999px","8px","20px","50%","4px"]}  期望="[]"
+[ASSERT] H-10.2 阴影只取冻结单条 var(--shadow)（D-4） → PASS  实测=["var(--shadow)"]  期望="全部 var(--shadow)"
+[ASSERT] H-11.1 存在「首行无上边框」规则（:first-child border-top:0） → PASS  实测=2  期望=">0"
+[ASSERT] H-12.1 页面断点恰 640px／400px 各 1（图表 720／toast 栈 820 并存，D-6） → PASS  实测={"m640":1,"m400":1,"m720":1,"m820":2}  期望="{m640:1,m400:1}"
+[N/A ] H-13 HELP 页 KPI 卡 → 转内容页区块尺 B-02（实测 .kpi 命中 0）
+[N/A ] H-14 HELP 页进度环 → 转内容页区块尺 B-04（实测 svg=0）
+[ASSERT] H-15.1 命令块载体是 <pre>（数量 > 0） → PASS  实测={"preCount":439,"preAttrs":["<pre class=\"ilife-help-shell-prompt\">","<pre class=\"prompt\">","<pre>"]}  期望=">0"
+[ASSERT] H-15.2 CSS 含 pre-wrap ＋ overflow-x:auto ＋ line-height:1.55 → PASS  实测={"preCount":439,"preAttrs":["<pre class=\"ilife-help-shell-prompt\">","<pre class=\"prompt\">","<pre>"],"preWrap":4,"overflowX":2,"lineHeight155":3}  期望="三者各 >0"
+[ASSERT] H-16.1 每个复制按钮同时带 data-action-id 与 data-t（两者计数相等且 >0） → PASS  实测={"dataActionId":1308,"dataT":1308,"copiedRule":3}  期望="相等且 >0"
+[ASSERT] H-16.2 CSS 存在 .copied 成功态规则 → PASS  实测=3  期望=">0"
+[ASSERT] H-17.1 HELP 页含语义 <table>（规格要求表格组件存在） → FAIL  实测=0  期望=">0（若红见 §5 风险 R-4）"
+[ASSERT] H-18.1 空态控件存在且 CSS 含 48px 20px ＋ 图标 40px → PASS  实测={"emptyHits":5,"pad4820":1,"icon40":1}  期望="三者各 >0"
+[ASSERT] H-19.1 CSS 含回顶按钮规则 → PASS  实测={"backtopRule":4}  期望=">0"
+[ASSERT] H-20.1 CSS 含 :focus-visible（≥1）＋ prefers-reduced-motion（≥1） → PASS  实测={"focusVisible":10,"reducedMotion":1}  期望="两者各 ≥1"
+[ASSERT] B-01.1 占位符零残留（<!--[A-Z0-9-]+--> 命中 0） → PASS  实测=0  期望=0
+[ASSERT] B-01.2 元素 id 全唯一 → PASS  实测="13/13"  期望="n/n"
+[ASSERT] B-01.3 根节点类名以冻结 STYLE_PREFIX 开头 → PASS  实测="ilife-help-shell"  期望="ilife- 开头"
+
+observed={"H-01":{"forbidden":[],"blue":"--blue: #007aff"},"H-02":{"rootBlock":":root { --fg: #1d1d1f; --fg2: #6e6e73; --fg3: #86868b; --bg: #f5f5f7; --card: #ffffff; --line: #d2d2d7; --blue: #007aff; --blue2: #0a63ce; --soft: #f5f8ff; --ok: #34c759; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 36px rgba(0,0,0,.06); }","tokens":["--fg","--fg2","--fg3","--bg","--card","--line","--shadow"]},"H-03":{"bg":"#f5f5f7","card":"#ffffff"},"H-04":{"gradAll":1,"gradHelp":0,"chartsHasGradient":1},"H-05":{"fontSizes":[8,9.5,10,10,10.5,10.5,11,11,11.5,11.5,12,12,12.5,13,13,14,15,17,18,20,26,26,32,40]},"H-06":{"stacks":["font-family: \"SF Mono\", monospace","font-family: inherit","font-family:inherit"],"sfPro":0,"sfMono":4,"consolas":0},"H-07":{"tnum":2},"H-08":{"headings":4,"emojiHeadings":0,"first":"唤醒词速查台"},"H-09":{"maxWidth960":1,"padding":1},"H-10":{"radii":["14px","999px","8px","20px","2px","50%","4px"],"badRadiiAll":["2px","4px"],"badRadiiHelp":["4px"],"shadows":["var(--shadow)"]},"H-11":{"firstChildNoBorder":2},"H-12":{"m640":1,"m400":1,"m720":1,"m820":2},"H-13":{"kpiHits":0},"H-14":{"svg":0,"circle":0},"H-15":{"preCount":439,"preAttrs":["<pre class=\"ilife-help-shell-prompt\">","<pre class=\"prompt\">","<pre>"],"preWrap":4,"overflowX":2,"lineHeight155":3},"H-16":{"dataActionId":1308,"dataT":1308,"copiedRule":3},"H-17":{"tables":0},"H-18":{"emptyHits":5,"pad4820":1,"icon40":1},"H-19":{"backtopRu
+RESULT: 24/27 PASS, 3 FAIL
+FAILED: H-06.2 H-10.1 H-17.1

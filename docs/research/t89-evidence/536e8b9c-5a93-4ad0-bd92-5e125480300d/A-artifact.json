@@ -1,0 +1,8 @@
+{
+  "path": ".scratch/t89/help-file.html (not archived)",
+  "bytes": 1264822,
+  "sha256": "f380ef685065a1e9279961952cc9ef76bd235d6ee65c157f9114f4e60b2b79c2",
+  "sha256_16": "F380EF685065A1E9",
+  "gateRun": "9f2ebd7b-0c28-493f-ad89-0f7d3ec89148",
+  "cmd": "node .scratch/t89/cmdA.mjs (calorie.help.center --params {\"mode\":\"file\"})"
+}

@@ -1,0 +1,28 @@
+# #89 交互／时序取证链路探针（H-12／H-16／H-19／H-20）
+artifact=.scratch/t89/help-file.html bytes=1264822 sha256_16=F380EF685065A1E9
+browser=C:\Program Files\Google\Chrome\Application\chrome.exe version=Chrome/152.0.7977.83
+injected={"cards":436,"cardCopy":436,"shellBtn":1308}
+[ASSERT] H-16.1 真手势命中卡级复制按钮（click 事件时间戳存在） → PASS  实测=true  期望=true
+[ASSERT] H-16.2 点击后按钮获得 copied 类（双计时器都观测到） → PASS  实测={"obsMs":453.2,"pollMs":455.4,"addLatencyMs":5.3}  期望="两计时器均非 null"
+[ASSERT] H-16.3 copied 存活时长落在窗口 440–520ms（页面侧双计时器，非驱动侧采样） → PASS  实测={"obsMs":453.2,"pollMs":455.4}  期望="440–520ms"
+[ASSERT] H-16.4 剪贴板回读逐字等于按钮 data-t（归一 CRLF） → PASS  实测={"clipLen":82,"dataTLen":82,"rawCrlf":true}  期望="归一后逐字相等"
+[ASSERT] H-16.5 按钮在窗口后复原（settled 类名不含 copied） → PASS  实测="ilife-help-shell-card-copy"  期望="不含 copied"
+[ASSERT] H-16.6 单次点击恰出现 1 枚 toast（childList MutationObserver ＋ 25ms 轮询） → PASS  实测={"onsets":1,"maxNodes":1,"batches":2,"records":3,"addedSeen":2}  期望="{onsets:1,maxNodes:1}"
+[ASSERT] H-16.7 toast 存活时长 ≈ 冻结 4500ms（±20%；两计时器互证） → PASS  实测={"obsMs":4501,"pollMs":4466}  期望="4500ms ±20%"
+[ASSERT] H-16.8 每张卡恰 1 个行内复制按钮（抽前 40 卡） → PASS  实测={"sampled":40,"bad":[],"copyAll":0}  期望="坏卡 0"
+[ASSERT] H-16.9 「复制全部」胶囊不存在（D-8 裁定） → PASS  实测=0  期望=0
+[ASSERT] H-12.1 静态 CSS 恰有 640px／400px 两条页面断点 → PASS  实测={"m640":1,"m400":1,"m720":1,"m820":2}  期望="{m640:1,m400:1}"
+[ASSERT] H-12.2 ≤640px 容器内距降为 20px 16px 60px（实测 computed） → PASS  实测="16px/16px/60px"  期望="16px/16px/60px"
+[ASSERT] H-12.3 宽屏容器内距 32px 20px 80px ＋ max-width 960px → PASS  实测={"padding":"20px/20px/80px","maxWidth":"960px"}  期望="20px/20px/80px + 960px"
+[ASSERT] H-12.4 ≤400px（实测亦含冻结 820 层）toast 栈左右内距 = 12px → PASS  实测={"left":"12px","right":"12px"}  期望="12px/12px"
+[ASSERT] H-19.1 回顶按钮存在且几何符合规格（42×42／圆形／fixed／24px） → PASS  实测={"found":true,"opacity":"0","pointerEvents":"none","position":"fixed","w":42,"h":42,"radius":"50%","right":24,"bottom":24}  期望="42×42 / fixed / 24,24 / 50%"
+[ASSERT] H-19.2 初始不可见（opacity 0 ＋ pointer-events none） → PASS  实测={"o":"0","pe":"none"}  期望="0 / none"
+[ASSERT] H-19.3 scrollY > 400 后出现（opacity 1 ＋ 可点） → PASS  实测={"scrollY":401,"opacity":"1","pointerEvents":"auto","cls":"ilife-help-shell-btn-backtop ilife-help-shell-btn-backtop-show"}  期望="opacity 1 / pointer-events 非 none"
+[ASSERT] H-19.4 点击后平滑回顶（rAF 采样单调下降到 0，窗口 1200ms） → PASS  实测={"finalScrollY":0,"samples":22,"distinct":20,"monotonicDown":true}  期望="scrollY=0 且单调下降且采样 >2 个不同值"
+[ASSERT] H-20.1 prefers-reduced-motion: reduce 下复制按钮过渡归零 → PASS  实测="0s"  期望="0s"
+[ASSERT] H-20.2 prefers-reduced-motion: reduce 下回顶按钮过渡归零 → PASS  实测="0s"  期望="0s"
+[ASSERT] H-20.3 prefers-reduced-motion: reduce 下 toast 滑入动画关闭 → PASS  实测={"sel":".ilife-toast","transitionDuration":"0s","animationDuration":"0s","animationName":"none"}  期望="animation-name none 或时长 0s"
+[ASSERT] H-20.4 Tab 遍历到的可交互控件带可见焦点环（outline ≥1px 且 :focus-visible 命中） → PASS  实测={"sampled":6,"withRing":4,"samples":["BODY.undefined fv=undefined w=undefined","BUTTON.ilife-toast-close fv=true w=2px","BUTTON.ilife-toast-close fv=true w=2px","BODY.undefined fv=undefined w=undefined","INPUT.ilife-help-shell-tab-search-input fv=true w=2px","BUTTON.ilife-help-shell-tab-search-clear fv=true w=2px"]}  期望="≥2 个控件带环"
+
+observed={"H16":{"target":{"x":653,"y":385},"gesture":{"clicked":true,"obsMs":453.2,"pollMs":455.4,"addLatencyMs":5.3,"settledClass":"ilife-help-shell-card-copy","polls":379,"toast":{"onsets":1,"maxNodes":1,"batches":1,"records":2,"addedSeen":2}},"toast":{"onsets":1,"maxNodes":1,"polls":320,"live":0,"batches":2,"records":3,"addedSeen":2,"toastMs":4501,"pollToastMs":4466,"liveToasts":0},"perCard":{"sampled":40,"bad":[],"copyAll":0}},"H12":[{"w":1440,"innerWidth":1440,"padding":"20px/20px/80px","maxWidth":"960px","gridCols":2,"toastLeft":"720px","toastRight":"420px","toastTransform":"matrix(1, 0, 0, 1, -150, 0)"},{"w":640,"innerWidth":640,"padding":"16px/16px/60px","maxWidth":"960px","gridCols":1,"toastLeft":"12px","toastRight":"12px","toastTransform":"none"},{"w":400,"innerWidth":400,"padding":"16px/16px/60px","maxWidth":"960px","gridCols":1,"toastLeft":"12px","toastRight":"12px","toastTransform":"none"}],"H19":{"initial":{"found":true,"opacity":"0","pointerEvents":"none","position":"fixed","w":42,"h":42,"radius":"50%","right":24,"bottom":24},"shown":{"scrollY":401,"opacity":"1","pointerEvents":"auto","cls":"ilife-help-shell-btn-backtop ilife-help-shell-btn-backtop-show"},"trace":{"samples":
+RESULT: 21/21 PASS, 0 FAIL

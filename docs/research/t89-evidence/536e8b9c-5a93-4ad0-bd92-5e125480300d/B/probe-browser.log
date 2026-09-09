@@ -1,0 +1,18 @@
+# #89 取证链路探针（能力自证；**不是**验收结论）
+node=v24.19.0 platform=win32 out=D:\ilife\.scratch\t89\run536e\B
+[ASSERT] P5 无浏览器时显式失败（T89_NO_BROWSER=1 子进程 exit=2 ＋ RESULT: ABORT，不静默变绿） → PASS  实测={"exit":2,"abort":true,"stderr":""}  期望={"exit":2,"abort":true}
+[ASSERT] P1 找到浏览器可执行文件（版本见 P2 的 CDP product） → PASS  实测="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"  期望="存在的路径"
+[ASSERT] P2 CDP 建连（Browser.getVersion ＋ Target.attach ＋ Page.enable） → PASS  实测="Chrome/152.0.7977.83 / protocol 1.3"  期望="非空 product"
+[ASSERT] P3a file:// 产物视口截图（PNG 字节 > 0） → PASS  实测={"bytes":84896,"file":".scratch/t89/run536e/B/probe-viewport.png"}  期望=">1000 B"
+[ASSERT] P3b 元素级 clip 截图（H-01…H-11 的逐条截图证据形态） → PASS  实测={"bytes":5638,"rect":{"x":149,"y":0,"w":960,"h":111.390625},"file":".scratch/t89/run536e/B/probe-element-hero.png"}  期望=">500 B"
+[ASSERT] P4a 产物里存在可点击的复制按钮（helpers 运行时注入后） → PASS  实测=1744  期望=">0"
+[ASSERT] P4b 真手势命中（Input.dispatchMouseEvent 触发 click） → PASS  实测=true  期望=true
+[ASSERT] P4c 页面侧 MutationObserver 观测到 copied 加/移除（双计时器之一） → PASS  实测={"copiedAdded":true,"copiedMs":460.5}  期望="true（时长按 #121 口径 440–520ms）"
+[ASSERT] P4d 剪贴板回读逐字等于按钮 data-t（归一 CRLF 后） → PASS  实测={"rawCrlf":true,"clipLen":82,"expectLen":82,"firstDiffAt":-1,"clipAt":null,"expectAt":null}  期望="归一后逐字相等"
+[ASSERT] P4e Emulation.setDeviceMetricsOverride 切视口（H-12 断点采样） → PASS  实测=[{"w":1440,"innerWidth":1440},{"w":640,"innerWidth":640},{"w":400,"innerWidth":400}]  期望="innerWidth 逐档相等"
+
+browser=C:\Program Files\Google\Chrome\Application\chrome.exe
+browserVersion=Chrome/152.0.7977.83 / protocol 1.3
+artifact=.scratch/t89/help-file.html bytes=1264822 sha256_16=F380EF685065A1E9
+evidenceDir=.scratch/t89/run536e/B
+RESULT: 10/10 PASS, 0 FAIL
