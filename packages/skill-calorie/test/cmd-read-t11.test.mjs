@@ -146,6 +146,17 @@ test('T9 目标分析盘 parity：12 键抽查 stat + 缺失阻断', () => {
   assert.equal(miss.status, 4);
   assert.equal(miss.stdout, '');
   assert.match(miss.stderr, /缺失|取数/);
+  // #100 · G5 三键空库一律 exit 4（missing-data），stdout 纯净无合成数字。
+  for (const [k, p] of [
+    ['calorie.view.deficit', { start: '2026-09-05', end: '2026-09-07' }],
+    ['calorie.view.goal-recommend', { profile: 'cut' }],
+    ['calorie.photo.gif', { tag: '正面' }],
+  ]) {
+    const r = run(BIN, k, p, { SKILLS_DB_PATH: emptyDir });
+    assert.equal(r.status, 4, k + ' 空库未阻断');
+    assert.equal(r.stdout, '', k + ' 空库 stdout 非空');
+    assert.match(r.stderr, /缺失|取数/, k + ' 空库 stderr 无阻断文案');
+  }
 });
 
 test('T10 照片 parity：画廊/单图/对比/动图/HELP + 二进制不内嵌', async () => {

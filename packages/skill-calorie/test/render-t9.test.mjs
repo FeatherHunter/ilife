@@ -219,6 +219,11 @@ test('缺失阻断：空库各盘一律 missing-data 不返空', () => {
   assert.throws(() => buildGoalConfig(db), (e) => e instanceof CalorieRenderError && e.code === 'missing-data');
   assert.throws(() => buildGoalStatus(db), /未设营养目标/);
   assert.throws(() => buildGoalWeight(db, '2026-09-01', '2026-09-07'), /无体重目标/);
+  // #100 · G5 三键之二：空库 deficit / goal-recommend 一律 missing-data，不返合成数字。
+  assert.throws(() => buildDeficitPlate(db, '2026-09-05', '2026-09-07'),
+    (e) => e instanceof CalorieRenderError && e.code === 'missing-data');
+  assert.throws(() => buildGoalRecommend(db, 'cut'),
+    (e) => e instanceof CalorieRenderError && e.code === 'missing-data');
   assert.throws(() => buildDietReview(db, '2026-09-05', '2026-09-07'), /无饮食记录/);
   assert.throws(() => buildFoodRankingPlate(db, '2026-09-05', '2026-09-07'), /无饮食记录/);
   assert.throws(() => buildProductLibrary(db), /食品库空/);

@@ -161,9 +161,9 @@ test('动图：只出任务描述，不碰二进制', () => {
   assert.match(t.note, /不碰二进制/);
   const scoped = buildGifTask(db, { tag: '正面', days: 90, photoIds: [t.photoIds[0]] });
   assert.equal(scoped.photoCount, 1);
-  const empty = buildGifTask(db, { tag: '不存在', days: 90 });
-  assert.equal(empty.photoCount, 0);
-  assert.match(empty.note, /无匹配照片/);
+  // #100 · 空库/零匹配即 missing-data，不返 photoCount=0 合成页。
+  assert.throws(() => buildGifTask(db, { tag: '不存在', days: 90 }),
+    (e) => e instanceof CalorieRenderError && e.code === 'missing-data');
   assert.throws(() => buildGifTask(db, { tag: '' }), /tag 必填/);
   const html = renderGifHtml(t);
   assert.match(html, /生成身材照 GIF · 2 张/);
