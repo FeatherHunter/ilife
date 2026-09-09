@@ -13,4 +13,4 @@
 - **验收③自证**：持锁重跑 `build-help.mjs` 后整文件 `git hash-object` **前=后=`7433560f…`**；块内／块外前缀／块外后缀三段逐字相等。
 - **门禁**：`pnpm build`／`boundaries`／`snapshot:check`／`publish:pre`／`help:examples:check`（99/99）**逐条 exit 0**；canonical `pnpm test` 1 轮 → t101 delta **新增=0**（base 34 → after 29，消失 5 全为基线抖动侧）；白名单 diff 0 行。
 - **未含**：`routing.ts` 的确定性入口（另票，动 #81 冻结面）／M6 节位置调整（D-2，S3）／`HELP-AUTO` 块内 `help.center` 代表词（`REPR` 归 #99）。
-- **证据**：`docs/research/t82-skill-facade.md` ＋ 探针 `.scratch/t82/{verify-triggers,check-description,check-acceptance3,check-integrity}.mjs`。
+- **证据**：`docs/research/t82-skill-facade.md` ＋ 可复跑探针 `docs/research/t82-{verify-triggers,check-description,check-acceptance3,check-integrity,mutate}.mjs` ＋ 受跟踪对账源 `docs/research/t82-gate-runs.log`。

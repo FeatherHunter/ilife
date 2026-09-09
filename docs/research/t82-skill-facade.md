@@ -14,7 +14,7 @@
 
 | 票面验收 | 怎么满足 | 证据（可复跑） |
 |---|---|---|
-| `description` 含触发词与 HELP 入口 | 单行 `description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯一出口 calorie-cmd-read。触发词：<69 项>"`；`SKILL.md:3` | `.scratch/t82/check-description.mjs` → **RESULT: 9/9**（含 69 项元素级逐字同序、499≤500、截断后 `卡路里HELP`＋命令仍可见） |
+| `description` 含触发词与 HELP 入口 | 单行 `description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯一出口 calorie-cmd-read。触发词：<69 项>"`；`SKILL.md:3` | `docs/research/t82-check-description.mjs` → **RESULT: 9/9**（含 69 项元素级逐字同序、499≤500、截断后 `卡路里HELP`＋命令仍可见） |
 | `skills-export` 测试绿 | frontmatter 仍为 `name`＋单行 `description`（`key: value` 逐行成立） | `test/skills-export-47.test.mjs` **3/3 pass**（`GATE-RUN f7570290…` 组内） |
 | 构建后 `HELP-AUTO` 块不覆盖门面改动 | 跑 `node packages/skill-calorie/scripts/build-help.mjs` → 文件 hash **前=后=7433560f**；块内／块外前缀／块外后缀三段逐字相等 | `.scratch/t82/check-acceptance3.mjs` → **RESULT: 9/9** |
 
@@ -45,8 +45,8 @@ description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯
 **触发词清单怎么核实的**（票面要求「自己核实实际应含哪些」）：
 
 1. **来源**：旧基线 frontmatter `触发词:` 行以 `、` 切分 → **69 项**（`docs/research/t71-old-baseline-inventory.md:20/51` 同口径）；旧正文 L5 另注册 `卡路里HELP`（不在 69 项内）→ 合计 **70**。
-2. **可达性**：探针 `.scratch/t82/verify-triggers.mjs`（只读；解析新 SoT `src/triggers/scene-*.ts` 的 `wake_word` ＋ `routing.ts` 的 `wakeWord/kind`）→ **旧 69 项 69/69 全在新 SoT**（434 唯一词／436 条）且**全被路由层命中**：`exec 60`／`non-exec 9`。9 条 non-exec ＝ `拍营养表记一餐`／`批量导入食品`／`体重复盘（本周）`／`看某天练什么`／`看某动作安排`／`定训练计划`／`落地训练`／`同步到训记`／`开启定时复盘`（#81「命中但不执行」桶，仍应可达）。
-3. **逐字**：`.scratch/t82/check-description.mjs` 把新 `description` 的 `触发词：` 段按 `、` 切分后与旧 69 项**元素级比对（顺序敏感）** → `69/69 相等`。
+2. **可达性**：探针 `docs/research/t82-verify-triggers.mjs`（只读；解析新 SoT `src/triggers/scene-*.ts` 的 `wake_word` ＋ `routing.ts` 的 `wakeWord/kind`）→ **旧 69 项 69/69 全在新 SoT**（434 唯一词／436 条）且**全被路由层命中**：`exec 60`／`non-exec 9`。9 条 non-exec ＝ `拍营养表记一餐`／`批量导入食品`／`体重复盘（本周）`／`看某天练什么`／`看某动作安排`／`定训练计划`／`落地训练`／`同步到训记`／`开启定时复盘`（#81「命中但不执行」桶，仍应可达）。
+3. **逐字**：`docs/research/t82-check-description.mjs` 把新 `description` 的 `触发词：` 段按 `、` 切分后与旧 69 项**元素级比对（顺序敏感）** → `69/69 相等`。
 4. **不写进去的**：旧版尾句「完整触发词见 SKILL.md §触发词速查表(权威:scripts/_triggers.py)」——权威已迁到新 SoT＋构建期 AUTO 块，该句在新区已失真。
 
 **500 字符预算（宿主侧硬边界）**：DSH 宿主模型目录对 `description` 截断（`node_modules/@deepseek-ai/dsh-tool-skill/lib/index.js`：`DEFAULT_CATALOG_DESCRIPTION_MAX_LENGTH = 500`，超长 `slice(0,497)+'...'`）。本票最终 **499 字符 → 不触发截断**；`卡路里HELP`＋命令在第 1–30 字符，**即使截断也必然可见**（`check-description.mjs` 第 9 项自证）。
@@ -131,7 +131,7 @@ description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯
 |---|---|---|---|---|
 | **MUT-82-1** | `description` 改回**多行块标量**（复刻票面前提 S1-1 的坏形态） | `skills-export` 的「frontmatter 行须为 `key: value`」＋ provider 拿不到候选 | `node --test test/skills-export-47.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs` → **exit 1**（pass 5／fail 3）：`AssertionError: frontmatter 行须为 key: value：  卡路里一期饮食体重运动身体目标照片分析复盘。`；`#56 list/get` 双红（解析器返 null → 候选为空）。`runId=137891ed…` | `git checkout HEAD -- …` → hash `7433560f…`（=HEAD blob）；复跑 **8/8 pass exit 0**（`runId=e10cafa8…`） |
 | **MUT-82-2** | 手删 `HELP-AUTO` 块内**一行示例** | #99 生成期门四判据之首（产物不新鲜）＋行数 | `pnpm help:examples:check` → **exit 1**：`STRUCT 产物不新鲜：AUTO 块 != 生成器输出`／`STRUCT 示例行数 98 != 组合键数 99`／`STRUCT 缺示例行：calorie.diet.add`，`RESULT: 0/98`。`runId=17ea6aab…` | 还原 → hash `7433560f…`；复跑 **`RESULT: 99/99` exit 0**（`runId=4c61a24b…`） |
-| **MUT-82-3** | `description` 删「`卡路里HELP`」入口 | 本票验收探针 | `.scratch/t82/check-description.mjs` → **exit 1**（`RESULT: 6/9`）：`RED 含 卡路里HELP`／`RED 含 calorie.help.center`／`RED 截断后仍含…` | 还原 → hash `7433560f…`；复跑 **`RESULT: 9/9` exit 0** |
+| **MUT-82-3** | `description` 删「`卡路里HELP`」入口 | 本票验收探针 | `docs/research/t82-check-description.mjs` → **exit 1**（`RESULT: 6/9`）：`RED 含 卡路里HELP`／`RED 含 calorie.help.center`／`RED 截断后仍含…` | 还原 → hash `7433560f…`；复跑 **`RESULT: 9/9` exit 0** |
 
 还原动作全部经持锁（`git checkout HEAD -- packages/skill-calorie/SKILL.md`），三处还原后 `git hash-object` 均等于 `HEAD` blob `7433560f…`；期间 `check-integrity.mjs` **8/8**（首 3 字节 `2d 2d 2d`、零 NUL）。
 
