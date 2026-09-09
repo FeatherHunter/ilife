@@ -14,6 +14,10 @@
  * 退出码：0 ＝ 全部核对通过；1 ＝ 有漂移（逐条打印 expected/actual）；2 ＝ 缺 `dist/`（先 `pnpm build`，**不静默变绿**）。
  * 末行：`RESULT: n/m`（机器可读摘要行，口径与 `t83-evidence.mjs:251` 同形）。
  *
+ * **只读前提（显式声明，返修 R-4 · S2-2 附注）**：本脚本自身零 `spawn`／零写盘／零网络；但它 `import()`
+ *   四个 `dist/*.js`（会执行其顶层代码）。若将来某 dist 模块产生写副作用，本脚本即不再只读——改动
+ *   dist 顶层行为的票必须复核本前提。
+ *
  * 判据来源（每条都在输出里带出处）：
  *   - `docs/research/t71-old-trigger-records.csv`（旧版 436 条 SoT，受跟踪）
  *   - `docs/research/t71-old-baseline-inventory.md:226-234,283-295`（73／67 判定计数，E3 台账）
@@ -21,6 +25,7 @@
  *   - `packages/base-render/src/spec/index.ts`（`SPEC_FROZEN_SURFACE` 130 条）
  *   - `fixtures/help-instances/{SHA256SUMS.txt,*.html}`（旧 HELP 实例冻结物）
  *   - `docs/visual-spec-help.md`／`docs/visual-spec-blocks.md`（B1 20 条／12 区块）
+ *   - `packages/skill-calorie/test/help-center-106.test.mjs`（**交叉来源**：341／95 的断言字面值，见 C11）
  */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
@@ -74,7 +79,15 @@ check('A6', '两桶之和 = 436（互斥且完备）', routing.EXEC_ROUTES.lengt
 check('A7', '新拟入口（#111–#113／#86 追加后）', routing.NEW_KEY_ROUTES.length === 56, 56, routing.NEW_KEY_ROUTES.length, 'routing.ts NEW_KEY_ROUTES');
 check('A8', '覆盖修复入口', routing.COVERAGE_REPAIR_ROUTES.length === 1, 1, routing.COVERAGE_REPAIR_ROUTES.length, 'routing.ts COVERAGE_REPAIR_ROUTES');
 check('A9', 'ALL_ROUTES = 436 ＋ 56 ＋ 1', routing.ALL_ROUTES.length === 493, 493, routing.ALL_ROUTES.length, 'routing.ts:680');
-check('A10', '门面 description 含「卡路里HELP」', read('packages/skill-calorie/SKILL.md').includes('卡路里HELP'), true, read('packages/skill-calorie/SKILL.md').includes('卡路里HELP'), 'SKILL.md:3（#82）');
+check('A10', '门面 description 行含「卡路里HELP」（按 frontmatter 取值，非整文件搜索）', (() => {
+  const m = read('packages/skill-calorie/SKILL.md').match(/^description:\s*(.+)$/m);
+  const v = m ? m[1].trim().replace(/^"|"$/g, '') : '';
+  return v.includes('卡路里HELP') || v.includes('卡里路HELP');
+})(), true, (() => {
+  const m = read('packages/skill-calorie/SKILL.md').match(/^description:\s*(.+)$/m);
+  const v = m ? m[1].trim().replace(/^"|"$/g, '') : '';
+  return v.includes('卡路里HELP') || v.includes('卡里路HELP');
+})(), 'SKILL.md:3（#82）＋ 返修 R-4 · S2-1');
 
 /* ── B 段 · 主线② 的静态面（尺子与冻结物，不含渲染／浏览器） ─────────────────── */
 const descLine = read('packages/skill-calorie/SKILL.md').match(/^description:\s*(.+)$/m);
@@ -121,6 +134,15 @@ const inv = read('docs/research/t71-old-baseline-inventory.md');
 const declared = (re) => (inv.match(re) ?? [null])[0];
 check('C9', 'E3 台账：模板 73 判定 47／18／5／3', /新版已有 \| \*\*47\*\*/.test(inv) && /\| 需移植 \| \*\*18\*\*/.test(inv) && /\| 新架构不适用 \| \*\*5\*\*/.test(inv) && /\| 明确不做 \| \*\*3\*\*/.test(inv), '47/18/5/3', '见台账', 't71-old-baseline-inventory.md:226-234');
 check('C10', 'E3 台账：渲染脚本 46 映射／19 无对应', /\| 已映射（NEW 键／渲染器） \| \*\*46\*\*/.test(inv) && /未映射数 = 16（需移植）\+ 3（明确不做）= 19/.test(inv), '46/19', '见台账', 't71-old-baseline-inventory.md:283-295');
+
+/* ── C11 · 交叉来源（返修 R-4 · S2-2）：341／95 必须同时钉在「路由层实测」与「测试断言字面值」上 ──
+   伪造路径（S2-2）：某票把 `help-center-106.test.mjs` 里的 341 改成 342 → 若采集器只读 routing 导出，
+   它会照样 PASS 并继续引用该行。此处**解析被引断言的字面值**并与路由层实测比对。 */
+const hc106 = read('packages/skill-calorie/test/help-center-106.test.mjs');
+const lit341 = hc106.match(/assert\.equal\(\s*withCli\.length\s*,\s*(\d+)/);
+const lit95 = hc106.match(/assert\.equal\(\s*scenes\.length\s*-\s*withCli\.length\s*,\s*(\d+)/);
+check('C11', '交叉来源：测试断言字面值 341 与路由层 exec 桶一致', !!lit341 && Number(lit341[1]) === routing.EXEC_ROUTES.length, '断言字面值 = exec 实测 ' + routing.EXEC_ROUTES.length, lit341 ? lit341[1] : '(未匹配)', 'help-center-106.test.mjs:66 ↔ routing.EXEC_ROUTES');
+check('C12', '交叉来源：测试断言字面值 95 与路由层 non-exec 桶一致', !!lit95 && Number(lit95[1]) === routing.HIT_NOT_EXEC_ROUTES.length, '断言字面值 = non-exec 实测 ' + routing.HIT_NOT_EXEC_ROUTES.length, lit95 ? lit95[1] : '(未匹配)', 'help-center-106.test.mjs:67 ↔ routing.HIT_NOT_EXEC_ROUTES');
 /* ── 摘要 ───────────────────────────────────────────────────────────────── */
 const total = pass + fail;
 const byPrefix = (pfx) => {
