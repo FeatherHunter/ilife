@@ -100,15 +100,170 @@ export function htmlDir(dbDir: string = resolveDbDir()): string {
   return d;
 }
 
-/** 旧版 `html_path()`：`<SKILLS_DB_PATH>/calorie_html/<中文command>_<stamp>[_N].html`（完整可写路径）。 */
-export function resolveDefaultHtmlPath(key: string, opts: { now?: Date; dbDir?: string } = {}): string {
+/** 旧版 `html_path()`：`<SKILLS_DB_PATH>/calorie_html/<中文command>_<stamp>[_N].html`（完整可写路径）。
+ *  #119 · 按段拼接：`<覆盖|title>[_回执][_动态段][_内容标识]_<TS>[_N].html`
+ *  （旧 `html_scene_path()` 类型段 ＋ `_cmd_maps.py` 动态段 ＋ `html_name(suffix=)` 内容标识段）。 */
+export function resolveDefaultHtmlPath(
+  key: string,
+  opts: { now?: Date; dbDir?: string; suffix?: string | null; params?: Record<string, unknown> } = {},
+): string {
   const d = htmlDir(opts.dbDir ?? resolveDbDir());
-  const name = htmlFileName(chineseCommandFor(key), { dir: d, now: opts.now ?? new Date() });
-  return join(d, name);
+  const segs = [LEGACY_COMMAND_OVERRIDES[key] ?? chineseCommandFor(key)];
+  const type = sceneTypeFor(key);
+  if (type) segs.push(OUTPUT_TYPE_LABELS[type] as string);
+  const dyn = dynamicSegmentFor(key, opts.params ?? {});
+  if (dyn) segs.push(dyn);
+  const suf = opts.suffix ? sanitizeFilenamePart(opts.suffix) : '';
+  if (suf) segs.push(suf);
+  return join(d, htmlFileName(segs.join('_'), { dir: d, now: opts.now ?? new Date() }));
 }
 
 /** 显式 `--output` / `--html` 落点：命名规则不参与，只保证父目录存在。 */
 export function resolveExplicitHtmlPath(file: string): string {
   mkdirSync(dirname(file), { recursive: true });
   return file;
+}
+
+/** #119 · 旧 `html_scene_path()` 的「类型中文」段真值（`html_paths.py` OUTPUT_TYPE_LABELS）。 */
+export const OUTPUT_TYPE_LABELS: Record<string, string> = { process: '过程', result: '结果', receipt: '回执' };
+
+/** #119 · 该键的旧版类型段：写键一律 `receipt`（旧 `render_*_receipt.py` 全部走 `html_scene_path(..., 'receipt')`）；
+ *  视图键**默认不加段**（旧视图多数走 `html_path()` 无类型段，只有少数走场景命名，须逐键核对旧脚本后登记）。 */
+export function sceneTypeFor(key: string): 'process' | 'result' | 'receipt' | null {
+  const hit = (CALORIE_COMBOS as Record<string, { shape?: string }>)[key];
+  return hit?.shape === 'receipt' ? 'receipt' : null;
+}
+
+/** #119 · 旧 `html_path()` 实参与注册表 `title` 不同的键（逐键核对旧脚本后登记）。
+ *  `calorie.view.ranking`：旧 `render_food_ranking.py` 用 `'食物排行_' + FOOD_RANKING_CATEGORY_MAP[category]`
+ * （`title` 为 `食品排行`，差一字；同秒五榜＋全榜互撞的根因，见 `docs/research/t87-output-naming.md` §5.1）。 */
+export const LEGACY_COMMAND_OVERRIDES: Record<string, string> = {
+  'calorie.view.ranking': '食物排行',
+};
+
+/** #119 · 旧 `_cmd_maps.py` 的动态参数中文化映射（逐表复刻；未命中即不加段）。
+ *  只收录新架构确有同名参数且旧映射无歧义的两张表；其余旧动态场景（体重历史日期驱动、
+ *  运动汇总 mode、饮食复盘 type 等）在新分发中无对应参数或已被合并，记残留（见 `docs/research/t119-dynamic-suffix.md`）。 */
+export const DYNAMIC_COMMAND_SEGMENTS: Record<string, Record<string, string>> = {
+  'calorie.view.ranking': {
+    high_calorie: '高热量', low_calorie: '低热量', frequent: '常吃', high_carb: '高碳水', high_protein: '高蛋白', all: '全部',
+  },
+  'calorie.view.contraindication': { 腰: '腰', 膝: '膝', 肩: '肩', all: '全部' },
+};
+
+/** #119 · 动态段：ranking 取 `category`、contraindication 取 `part`；缺省 `all`；旧表未命中 → 不加段。 */
+export function dynamicSegmentFor(key: string, params: Record<string, unknown>): string {
+  const table = DYNAMIC_COMMAND_SEGMENTS[key];
+  if (!table) return '';
+  const raw = key === 'calorie.view.ranking' ? (params['category'] ?? 'all') : (params['part'] ?? 'all');
+  const v = raw === undefined || raw === null ? 'all' : String(raw);
+  return sanitizeFilenamePart(table[v] ?? '');
+}
+
+/** #119 · 旧版 `html_name(suffix=)`／`html_scene_path(suffix=)` 的内容标识段（issue #49／#266／#284／#286 拍板）。
+ *  纯 params 派生（落点解析在写库前后均可调用，不读库）：需要写后回执值的键（删饮食/删食品/
+ *  下架食品/删身材照/id 删体重/删体脂/删围度）返回 ''，记残留（见 `docs/research/t119-dynamic-suffix.md`）。
+ *  返回值未经 sanitize（由调用方 `resolveDefaultHtmlPath` 统一清洗＋截断 32 码点）。 */
+export function writeSuffixFor(key: string, params: Record<string, unknown>): string {
+  const str = (...names: string[]): string => {
+    for (const n of names) {
+      const v = params[n];
+      if (typeof v === 'string' && v.trim().length > 0) return v.trim();
+    }
+    return '';
+  };
+  /** YYYY-MM-DD → YYYYMMDD（旧 `str(date).replace('-', '')`）；非法格式原样返回（sanitize 兜底）。 */
+  const compactDate = (v: unknown): string =>
+    typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.replace(/-/g, '') : (typeof v === 'string' ? v : '');
+  /** 旧 `format(float(x), 'g')`：去尾零（68.0→'68'、70.5→'70.5'）；非有限 number → ''。 */
+  const numG = (v: unknown): string =>
+    typeof v === 'number' && Number.isFinite(v) ? String(v) : '';
+  const firstItem = (): Record<string, unknown> => {
+    const items = params['items'];
+    if (!Array.isArray(items) || items.length === 0) return {};
+    const o = items[0];
+    return typeof o === 'object' && o !== null ? (o as Record<string, unknown>) : {};
+  };
+  const batchCount = (): number => (Array.isArray(params['items']) ? (params['items'] as unknown[]).length : 0);
+  switch (key) {
+    case 'calorie.diet.add':
+    case 'calorie.diet.update':
+      return str('foodName', 'food_name'); // 旧：记一餐带食物名（#49）／改后名（#266 Q4A）
+    case 'calorie.diet.batch': {
+      const first = firstItem();
+      const food = typeof first['foodName'] === 'string' && (first['foodName'] as string).trim()
+        ? String(first['foodName']).trim()
+        : (typeof first['food_name'] === 'string' ? String(first['food_name']).trim() : '');
+      if (!food) return '';
+      const n = batchCount();
+      return n > 1 ? food + '等' + n + '项' : food; // 旧 #266 Q1A：首食物＋等N项
+    }
+    case 'calorie.diet.copy':
+      return compactDate(params['from'] ?? params['fromDate']); // 旧 #266 Q2A：源日期
+    case 'calorie.diet.update-by-date':
+    case 'calorie.diet.remove-by-date':
+      return compactDate(params['date']); // 旧：目标日期
+    case 'calorie.diet.remove-by-range':
+      return compactDate(params['start']) && compactDate(params['end'])
+        ? compactDate(params['start']) + '至' + compactDate(params['end']) : ''; // 旧：起止范围
+    case 'calorie.diet.remove-by-type':
+      return compactDate(params['date']) + str('mealType'); // 旧：日期＋餐别
+    case 'calorie.water.log':
+      return numG(params['ml']) ? numG(params['ml']) + 'ml' : ''; // 旧 #284 Q1A：毫升
+    case 'calorie.weight.log':
+      return numG(params['kg']) ? numG(params['kg']) + 'kg' : ''; // 旧 #286：体重值
+    case 'calorie.weight.update':
+      return compactDate(params['date']) || (numG(params['kg']) ? numG(params['kg']) + 'kg' : ''); // 旧 #284 Q3A：日期
+    case 'calorie.weight.remove':
+      if (typeof params['date'] === 'string') return compactDate(params['date']);
+      if (typeof params['start'] === 'string' && typeof params['end'] === 'string') {
+        return compactDate(params['start']) + '至' + compactDate(params['end']);
+      }
+      return ''; // id 删：旧带记录日期（需读库），记残留
+    case 'calorie.weight.batch': {
+      const first = firstItem();
+      const kg = numG(first['kg']);
+      if (!kg) return '';
+      const n = batchCount();
+      return n > 1 ? kg + 'kg等' + n + '项' : kg + 'kg'; // 旧 #286：首条体重＋等N项
+    }
+    case 'calorie.exercise.add': {
+      if (params['copyFrom'] !== undefined) return ''; // 旧带源日期（需读库），记残留
+      if (params['items'] !== undefined) {
+        const first = firstItem();
+        const t = typeof first['type'] === 'string' && (first['type'] as string).trim()
+          ? String(first['type']).trim()
+          : (typeof first['exerciseType'] === 'string' ? String(first['exerciseType']).trim() : '');
+        if (!t) return '';
+        const n = batchCount();
+        return n > 1 ? t + '等' + n + '项' : t;
+      }
+      return str('type', 'exerciseType'); // 旧 render_exercise_receipt：运动类型
+    }
+    case 'calorie.exercise.update':
+      return compactDate(params['date']) || str('type', 'exerciseType');
+    case 'calorie.exercise.remove':
+      if (typeof params['date'] === 'string') return compactDate(params['date']);
+      if (typeof params['from'] === 'string' && typeof params['to'] === 'string') {
+        return compactDate(params['from']) + '至' + compactDate(params['to']);
+      }
+      return '';
+    case 'calorie.photo.add':
+      return str('tag'); // 旧 body_photo_receipt：标签／首项内容
+    case 'calorie.photo.tag': {
+      const raw = params['tags'] ?? params['tag'];
+      if (Array.isArray(raw)) {
+        const tags = (raw as unknown[]).map(String).filter((t) => t.trim().length > 0);
+        return tags.length > 0 ? tags.join('、') : ''; // 旧：'、'.join
+      }
+      return str('tag');
+    }
+    case 'calorie.product.add':
+    case 'calorie.product.update':
+      return str('productName', 'product_name'); // 旧 #284 Q2A：食品名
+    case 'calorie.photo.gif':
+      return str('tag'); // 旧 gif_planner：tag＋数量（数量需读库，记残留）
+    default:
+      return '';
+  }
 }

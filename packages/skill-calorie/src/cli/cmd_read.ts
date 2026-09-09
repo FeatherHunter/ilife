@@ -55,7 +55,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
-import { HTML_DIR_NAME, resolveDefaultHtmlPath, resolveExplicitHtmlPath } from '../output.js';
+import { HTML_DIR_NAME, resolveDefaultHtmlPath, resolveExplicitHtmlPath, writeSuffixFor } from '../output.js';
 import type { CalorieComboKey } from './keys.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
@@ -691,9 +691,12 @@ async function main(): Promise<void> {
       // #87 返修 F4（A2 S2-4）：落点**解析**本身也会失败（如 <DB>/calorie_html 被同名文件占位 → EEXIST）；
       // 旧写法把它漏到外层「未知失败」分支 → exit 4（＝取数/超时）＋「未知失败」文案。此处按渲染失败计：
       // exit 5 ＋ 明确文案（与紧邻的「HTML 写盘失败」同码同形态）。
+      // #119 · 动态段＋后缀段（M10 残项）：默认落点按段拼接
+      // `<覆盖|title>[_回执][_动态段][_内容标识]_<TS>[_N].html`（旧 html_scene_path 类型段＋_cmd_maps 动态段＋suffix 内容标识）。
+      // suffix 纯 params 派生（不读库；需写后回执值的键返回 ''，残留见 docs/research/t119-dynamic-suffix.md）。
       let htmlTarget: string;
       try {
-        htmlTarget = o.output ?? o.html ?? resolveDefaultHtmlPath(o.key as string);
+        htmlTarget = o.output ?? o.html ?? resolveDefaultHtmlPath(o.key as string, { params, suffix: writeSuffixFor(o.key as string, params) });
       } catch (e) {
         fail(5, '渲染失败：HTML 落点解析失败（' + (o.output ?? o.html ?? '默认目录 <SKILLS_DB_PATH>/' + HTML_DIR_NAME)
           + '）：' + (e as Error).message);
