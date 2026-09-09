@@ -1750,7 +1750,10 @@ export function chartsCss(prefix: string): string {
     '.' + p + 'charts-marktext{font-size:10px}',
     '.' + p + 'charts-marktext-v{font-size:10px}',
     '.' + p + 'charts-mptext{font-size:10.5px;font-weight:700}',
-    '.' + p + 'charts-bar .' + p + 'charts-xlabel{font-size:10.5px}',
+    '.' + p + 'charts-bar .' + p + 'charts-xlabel{font-size:9.5px}',
+    /* t-chartfix D1（2026-09-09 编排者裁定）：桌面端 bar 轴标签 10.5px＞数值 10px 系倒挂 bug 值
+     * （测试快照，非契约冻结；契约正文零命中 10.5px）。改 9.5px＝移动端同选择器值，恢复层级
+     * （9.5＜10）与双端一致；全局 xlabel 10px（相等非倒挂）不动，最小 scope。 */
     '.' + p + 'charts-bar .' + p + 'charts-value{font-size:10px}',
     '.' + p + 'charts-center-label{font-size:8px}',
     '.' + p + 'charts-center-value{font-size:13px;font-weight:700}',

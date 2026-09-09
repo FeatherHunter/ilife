@@ -1699,7 +1699,8 @@ describe('H 常量与规则', () => {
       '.ilife-charts-marktext{font-size:10px}',
       '.ilife-charts-marktext-v{font-size:10px}',
       '.ilife-charts-mptext{font-size:10.5px;font-weight:700}',
-      '.ilife-charts-bar .ilife-charts-xlabel{font-size:10.5px}',
+      '.ilife-charts-bar .ilife-charts-xlabel{font-size:9.5px}',
+      /* 层级：轴标签 9.5＜数值 10（移动端同值；2026-09-09 倒挂修正） */
       '.ilife-charts-center-label{font-size:8px}',
       '.ilife-charts-center-value{font-size:13px;font-weight:700}',
       '.ilife-charts-gauge-value{font-size:26px;font-weight:800}',
@@ -1707,9 +1708,16 @@ describe('H 常量与规则', () => {
       '.ilife-charts-bar .ilife-charts-xlabel{font-size:9.5px}',
     ];
     for (const rule of rules) assert.ok(css.includes(rule), 'CSS 必须含 ' + rule);
+    /* D1 之后桌面端同值 9.5px（排媒体查询之前）→ 用 lastIndexOf 仍断"媒体查询内含该规则"（旧 charts.js:127）。 */
     assert.ok(
-      css.indexOf('.ilife-charts-bar .ilife-charts-xlabel{font-size:9.5px}') > css.indexOf('@media (max-width:720px)'),
+      css.lastIndexOf('.ilife-charts-bar .ilife-charts-xlabel{font-size:9.5px}') > css.indexOf('@media (max-width:720px)'),
       'bar 的 9.5px 字号必须在 ≤720px 媒体查询内（旧 charts.js:127）',
+    );
+    /* D1 回潮哨兵：桌面端倒挂值 10.5 不得重现（9.5 在媒体查询内仍合法，上条已断；本条只盯桌面端字面量）。 */
+    assert.equal(
+      css.includes('.ilife-charts-bar .ilife-charts-xlabel{font-size:10.5px}'),
+      false,
+      '桌面端 bar 轴标签不得回潮 10.5px（D1 倒挂修正，2026-09-09）',
     );
   });
 
