@@ -233,6 +233,8 @@ ${tableC}
 
 **影响面实测为零（可复验）**：① skill-calorie 对 \`base-link-core\` 的引用**全是 \`import type\`**（\`src/cli/keys.ts:11\`／\`src/cli/cmd_read.ts:118\`／\`src/fetch/shapes.ts:7\`／\`src/render/envelope.ts:8\`），类型擦除、不进产物；② registry 的 \`base-link-core@0.1.0\` 与本地 \`dist\` **20/20 文件逐字节相同**（\`npm pack base-link-core@0.1.0\` 解包后全树 sha256 比对，见 \`docs/research/t79-gen-report.mjs\` 旁证与 §9 缺口 G-2）。**仍登记为缺口**：range 与统一版本不同线，应在 skill-calorie 解冻后一行对齐。
 
+**锁文件一致性复验**：锁文件同步后 \`pnpm install --frozen-lockfile\` 复跑 **exit 0**（runId \`690b3052-d9bb-4799-8018-9af0b454ed62\`）——CI 的 \`--frozen-lockfile\` 安装不再红。
+
 ## 5. CI 断言（版本一致 ＋ 边界绿）
 
 **新增文件** \`packages/base-render/test/base-version-lockstep.test.mjs\`（5 个用例，落在 \`pnpm test\` 的 \`packages/base-render/test/*.test.mjs\` glob 内，CI 的 \`build-test\` 与 \`win-detail\` 两个 job 都会跑）：
@@ -320,11 +322,11 @@ GATE-RELAX flag=--allow-nonzero reason=本票非零退出的条目分四类，�
 \`\`\`
 node tooling/check-gate-audit.mjs --evidence docs/research/t79-base-contract.md --ticket 79 \\
   --since 2026-09-09T15:45:42Z --until 2026-09-09T16:18:52Z --allow-nonzero
-→ RESULT: matched=32/32 auditEntries=887 scoped=32 undeclared=0
+→ RESULT: matched=33/33 auditEntries=891 scoped=33 undeclared=0
 → gate-audit: PASS   （exit 0）
 \`\`\`
 
-窗口内本票 RUN 条目 **32 条全部被声明并一对一绑定 runId**，反向未声明 **0**；非零条目按 \`GATE-RELAX flag=--allow-nonzero\` 显式放宽（理由见 §7）。
+窗口内本票 RUN 条目 **33 条全部被声明并一对一绑定 runId**，反向未声明 **0**；非零条目按 \`GATE-RELAX flag=--allow-nonzero\` 显式放宽（理由见 §7）。
 `;
 
 writeFileSync(join(root, 'docs/research/t79-base-contract.md'), doc);

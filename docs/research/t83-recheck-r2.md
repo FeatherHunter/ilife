@@ -169,3 +169,22 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t83-recheck-r2.md \
      > **注意**：`--params '{"delivery":"text"}'` 由**交付层**统一识别（`cmd_read.ts:1040`），但写键能否吃到取决于该键的**参数白名单**——白名单键会先拒未知字段（实测 `calorie.body.measure-add`／`calorie.exercise.update` → **exit 2 `不支持字段: delivery`**），其余写键实测可用（`water.log`／`diet.add`／`weight.log`／`exercise.add`／`body.composition-add`／`diet.update`／`profile.set` → exit 0 ＋ `delivery.mode=text`）；要文本回执最稳的路径仍是读键传参或写后读回。
   2. （可选，S3）R-2 自述的 `:61` 更正为 `:62`；`t83-review-blue-mut.mjs` 的 -3／-6 `what` 文案同步为「R-2 后已钉住」。
 - 整改后**无须**重跑全部门禁：只需文档 diff ＋（若动 `SKILL.md` 才需）`pnpm build`；本席探针 `docs/research/t83-recheck-r2-scope.mjs` 可逐字复跑复核。
+
+---
+
+## 10. 追加（本席提交后观测）：R-6 订正已在工作区出现 —— 直接指向 R2N-1
+
+- **观测时点**：本席提交 `dc40fa6` 时，`.changeset/t83-html-first-delivery.md`（1+/1−）与 `docs/research/t83-html-first.md`（29+/4−）**已被他席改写为 R-6 订正**（工作区**未提交**），其新增 §11.5 逐字引用本席结论「**定点复核 R2N-1**」并把原句替换为「`--params '{"delivery":"text"}'` 是**交付层通用开关**（`cmd_read.ts:1040`），对读键与**多数写键同样生效**……**例外**＝对**原始 `params` 键**做白名单校验的 3 个写键 …」。
+- **本席抽查 R-6 新句（runId `48707706-a4a4-4bbe-8c60-11afd9d9c211`，exit 0）**：
+
+| 写键 | exit | `delivery.mode` | 实测 |
+|---|---|---|---|
+| `calorie.exercise.update` | 2 | — | `不支持字段: delivery` |
+| `calorie.product.update` | 2 | — | `不支持字段: delivery` |
+| `calorie.body.measure-add` | 2 | — | `不支持字段: delivery` |
+| `calorie.profile.update` | **0** | **text** | 白名单只遍历 `picked`，`delivery` 被忽略、仍生效 |
+| `calorie.water.log` | **0** | **text** | 生效 |
+
+⇒ **R-6 新句的事实面成立**（白名单拒＝3 例、profile.update 例外说法成立），较原句准确。
+- **新句仅剩 1 条 S3 措辞 nit（不阻断）**：新句把「实测 **10 个写键中 7 个** exit 0」与「例外＝**3 个**白名单写键」并列，但两组**不同源**——本席 10 例中的第 3 个未生效键是 `calorie.goal.water`（exit 4，空库缺目标行，非白名单拒），而 `calorie.product.update` 出自 R-6 自建 6 例探针。建议改为「抽样 **7** 例生效；另 **3** 例白名单键（`exercise.update`／`product.update`／`body.measure-add`）拒之」，去掉「10 个中 7 个」的算术框。
+- **verdict 不变（对 `bee97bc`）＝ FAIL**；但**阻断项 R2N-1 已可解除**：编排者只需核对 R-6 的 diff ＋ `runId 59fd4ecd`／`48707706` 即可关闭，**无须新开 R-3**（建议同时落 R2N-2 的 `:62` 订正——R-6 已含）。

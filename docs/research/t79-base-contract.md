@@ -244,6 +244,8 @@
 
 **影响面实测为零（可复验）**：① skill-calorie 对 `base-link-core` 的引用**全是 `import type`**（`src/cli/keys.ts:11`／`src/cli/cmd_read.ts:118`／`src/fetch/shapes.ts:7`／`src/render/envelope.ts:8`），类型擦除、不进产物；② registry 的 `base-link-core@0.1.0` 与本地 `dist` **20/20 文件逐字节相同**（`npm pack base-link-core@0.1.0` 解包后全树 sha256 比对，见 `docs/research/t79-gen-report.mjs` 旁证与 §9 缺口 G-2）。**仍登记为缺口**：range 与统一版本不同线，应在 skill-calorie 解冻后一行对齐。
 
+**锁文件一致性复验**：锁文件同步后 `pnpm install --frozen-lockfile` 复跑 **exit 0**（runId `690b3052-d9bb-4799-8018-9af0b454ed62`）——CI 的 `--frozen-lockfile` 安装不再红。
+
 ## 5. CI 断言（版本一致 ＋ 边界绿）
 
 **新增文件** `packages/base-render/test/base-version-lockstep.test.mjs`（5 个用例，落在 `pnpm test` 的 `packages/base-render/test/*.test.mjs` glob 内，CI 的 `build-test` 与 `win-detail` 两个 job 都会跑）：
@@ -306,6 +308,7 @@
 | `pnpm snapshot:html:check` | 0 | `71cb2fbd-027b-4f3d-9fd4-8a4c82eb0b51` |  |
 | `pnpm boundaries` | 0 | `7e085f9f-d07f-4e49-8d20-dbd0f557f6c5` |  |
 | `node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center` | 0 | `7f88fb24-7c50-41a2-9652-2d7d00ca4a27` |  |
+| `pnpm install --frozen-lockfile` | 0 | `690b3052-d9bb-4799-8018-9af0b454ed62` |  |
 
 **声明（供 `check-gate-audit` 对账）**：
 
@@ -341,6 +344,7 @@ GATE-RUN runId=460f017a-c212-4e5b-86e3-c3a09911ae6f cmd="pnpm snapshot:check"
 GATE-RUN runId=71cb2fbd-027b-4f3d-9fd4-8a4c82eb0b51 cmd="pnpm snapshot:html:check"
 GATE-RUN runId=7e085f9f-d07f-4e49-8d20-dbd0f557f6c5 cmd="pnpm boundaries"
 GATE-RUN runId=7f88fb24-7c50-41a2-9652-2d7d00ca4a27 cmd="node packages/skill-calorie/dist/cli/cmd_read.js calorie.help.center"
+GATE-RUN runId=690b3052-d9bb-4799-8018-9af0b454ed62 cmd="pnpm install --frozen-lockfile"
 
 GATE-RELAX flag=--allow-nonzero reason=本票非零退出的条目分四类，全部是**取证对象本身**，不得以退出码抹去：① 两条 `pnpm test` 全量运行 exit 1——失败集与冻结基线 `docs/research/t88-baseline/test-failset.txt` 比对**新增稳定失败 0**（§7.1）；② 变异自证期间的一条断言运行 exit 1——**红点即自证目标**（§8）；③ 两条 HELP 预跑 exit 4——`SKILLS_DB_PATH` 误传文件路径（该变量是**目录**）的操作失误，改正后即 exit 0（终态证据以 exit 0 的 `0acbcad8`／`7f88fb24` 为准）；④ `pnpm install --frozen-lockfile` exit 1——「先改清单后改锁文件」的中间态，锁文件同步后复跑即 exit 0（`e63948eb`／`17b7c5d0`）。
 
@@ -395,8 +399,8 @@ GATE-RELAX flag=--allow-nonzero reason=本票非零退出的条目分四类，�
 ```
 node tooling/check-gate-audit.mjs --evidence docs/research/t79-base-contract.md --ticket 79 \
   --since 2026-09-09T15:45:42Z --until 2026-09-09T16:18:52Z --allow-nonzero
-→ RESULT: matched=32/32 auditEntries=887 scoped=32 undeclared=0
+→ RESULT: matched=33/33 auditEntries=891 scoped=33 undeclared=0
 → gate-audit: PASS   （exit 0）
 ```
 
-窗口内本票 RUN 条目 **32 条全部被声明并一对一绑定 runId**，反向未声明 **0**；非零条目按 `GATE-RELAX flag=--allow-nonzero` 显式放宽（理由见 §7）。
+窗口内本票 RUN 条目 **33 条全部被声明并一对一绑定 runId**，反向未声明 **0**；非零条目按 `GATE-RELAX flag=--allow-nonzero` 显式放宽（理由见 §7）。
