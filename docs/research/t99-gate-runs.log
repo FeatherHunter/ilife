@@ -1,0 +1,23 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：99｜since：2026-09-09T14:17:00Z｜until：2026-09-09T14:23:00Z｜条目数：15｜导出时间：2026-09-09T14:23:54.343Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=99 runId=20583188-c581-405b-b071-ad58587d202b cmd="git add docs/research/t99-probe-examples.mjs" waitedMs=20015 exit=0 pid=22816 at=2026-09-09T14:18:10.787Z
+RUN ticket=99 runId=acf65cb1-3de2-470e-9ebe-189062f6e4a2 cmd="git commit -F .scratch/t99/msg-probe.txt" waitedMs=0 exit=0 pid=33132 at=2026-09-09T14:18:14.674Z
+RUN ticket=99 runId=05d25ca3-256a-4884-8586-3d992fb7efec cmd="node .scratch/t99/gen-with-integrity.mjs" waitedMs=20010 exit=0 pid=38080 at=2026-09-09T14:18:51.967Z
+RUN ticket=99 runId=10a7d5d8-8d2d-41ee-9b86-502ca5bc3bb6 cmd="git add packages/skill-calorie/scripts/build-help.mjs packages/skill-calorie/SKILL.md" waitedMs=10008 exit=0 pid=32788 at=2026-09-09T14:19:26.389Z
+RUN ticket=99 runId=1c2e9ff5-4a15-4856-aab9-085ac5f96269 cmd="git commit -F .scratch/t99/msg-gen.txt" waitedMs=0 exit=0 pid=21568 at=2026-09-09T14:19:26.564Z
+RUN ticket=99 runId=0942a26a-a4d1-44cf-82af-59a205b091b0 cmd="pnpm help:examples:check" waitedMs=0 exit=0 pid=1936 at=2026-09-09T14:20:18.599Z
+RUN ticket=99 runId=ffee7301-f8e5-4da3-979a-94612fcec861 cmd="git add packages/skill-calorie/scripts/check-examples.mjs package.json .github/workflows/ci.yml" waitedMs=10002 exit=0 pid=33436 at=2026-09-09T14:20:32.008Z
+RUN ticket=99 runId=4281fd71-da31-4df2-8e3c-c719dcad7a63 cmd="git commit -F .scratch/t99/msg-gate.txt" waitedMs=0 exit=0 pid=31992 at=2026-09-09T14:20:32.178Z
+RUN ticket=99 runId=d4be3162-8679-4187-8239-09c520c5b4f4 cmd="node --test packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=1 exit=1 pid=33136 at=2026-09-09T14:20:44.443Z
+RUN ticket=99 runId=6a4e302b-ea63-4a65-add4-ea11524ff9f7 cmd="node .scratch/t99/gen-with-integrity.mjs" waitedMs=1 exit=0 pid=34320 at=2026-09-09T14:20:46.518Z
+RUN ticket=99 runId=d4651ab7-a1cd-48f0-9b18-f0c775046ad3 cmd="pnpm help:examples:check" waitedMs=0 exit=1 pid=15564 at=2026-09-09T14:21:00.863Z
+RUN ticket=99 runId=092e41a2-2c5d-44df-bf02-2c8c6f3ffc5e cmd="node .scratch/t99/gen-with-integrity.mjs" waitedMs=0 exit=0 pid=36172 at=2026-09-09T14:21:03.897Z
+RUN ticket=99 runId=2e1102c8-1b8c-46e7-a88d-5ac75a44510f cmd="node packages/skill-calorie/scripts/build-help.mjs" waitedMs=0 exit=1 pid=36088 at=2026-09-09T14:21:10.328Z
+RUN ticket=99 runId=8a85d5a1-5fab-4272-a148-ebf737a7366e cmd="node .scratch/t99/run-gates.mjs" waitedMs=0 exit=0 pid=31260 at=2026-09-09T14:21:58.984Z
+RUN ticket=99 runId=d5b272e8-4a3a-49ba-b4f7-b77e58c5aa27 cmd="pnpm test" waitedMs=0 exit=1 pid=33352 at=2026-09-09T14:22:33.208Z
+```
