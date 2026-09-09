@@ -35,12 +35,17 @@
   截图 after 可见轨道明显加粗；`E.height` 末尾新增字面量断言。
 - 未选方案：缺省 8→12 会打破 `charts.test.mjs:138`（viewBox `100.0 8.0`）与`:1010`（`height:8px`），属钉住值，按约束不碰。
 
-### D1 X 轴标签字号倒挂（未修，等裁定）
+### D1 X 轴标签字号倒挂（已闭环，2026-09-09 编排者裁定）
 
-- 实测：`.ilife-charts-xlabel{font-size:10px}`＝`.ilife-charts-value{font-size:10px}`；
+- 修前实测：`.ilife-charts-xlabel{font-size:10px}`＝`.ilife-charts-value{font-size:10px}`；
   bar 内 `.ilife-charts-bar .ilife-charts-xlabel{font-size:10.5px}`＞`.ilife-charts-bar .ilife-charts-value{font-size:10px}`。
-- 任何方向的修法（降轴标签或升数值）都会改动 `H.图表文本字号` 钉死的字面量（§4），按硬约束停下，未动源码。
-- 拟议修法（供编排者裁定后执行）：bar 轴标签 10.5px→9px、全局轴标签 10px→9px（数值 0.9x），同步更新该用例三处字面量。
+- 裁定：契约正文零命中 `10.5px`，系测试快照值非冻结；桌面端 bar 轴标签改为 **`9.5px`**（与移动端
+  同选择器同值，恢复 9.5＜10 层级与双端一致）；全局 xlabel 10px 不动，最小 scope。
+- 修法：`src/charts.ts` 桌面端 bar xlabel 字面量一处 `10.5px`→`9.5px`；
+  `test/charts.test.mjs`（`H.图表文本字号`）同步字面量＋层级注释；
+  契约 `docs/base-paint-contract.md` 文末加一行修正记账（非冻结面变更，仍 130/130/0）。
+- 前后 computed：`FONT_BAR_XLABEL=10.5px`→`9.5px`（＜`FONT_BAR_VALUE=10px`）；after 截图已更新为修复态。
+- 变异 M3：改回 10.5 → `H.图表文本字号` 变红（exit 非 0）→ 还原 sha 一致 → 全绿（日志见 `.scratch/t-chartfix/`）。
 
 ## 2. 门禁与计数（持锁，exit code 逐项）
 
@@ -61,18 +66,17 @@
   exit 1；还原后 sha 一致（同上值）；重建 exit 0；四测试回绿 227/227。
 - 日志：`.scratch/t-chartfix/run-mut{1,2}-{build,test}.log`、`run-rebuild.log`、`run-tests-final2.log`。
 
-## 4. 测试钉住 bug 的清单（D1，逐条）
+## 4. 测试钉住 bug 的清单（D1，原逐条；2026-09-09 已裁定执行）
 
 文件均为 `packages/base-render/test/charts.test.mjs`，用例为
-`H.图表文本字号：CSS 补齐各文本类 font-size（旧 charts.js:…）`（`:1660–1683`）：
+`H.图表文本字号：CSS 补齐各文本类 font-size（旧 charts.js:…）`：
 
-1. `:1665` — `'.ilife-charts-xlabel{font-size:10px}'`：轴标签 10px，要求修为**小于**数值字号则本条必改
-   （数值规则 `:1666` 同为 10px，相等非小于）。
-2. `:1671` — `'.ilife-charts-bar .ilife-charts-xlabel{font-size:10.5px}'`：正是倒挂值（＞同文件 CSS 的 bar 数值 10px）。
-3. `:1666` — `'.ilife-charts-value{font-size:10px}'`：反向修法（升数值字号）同样撞本条。
-4. `:1676` —移动端 `'.ilife-charts-bar .ilife-charts-xlabel{font-size:9.5px}'`：连带受字号体系调整影响。
+1. `:1665` — `'.ilife-charts-xlabel{font-size:10px}'`：全局相等非倒挂，裁定**不动**（最小 scope）。
+2. `:1671` — `'.ilife-charts-bar .ilife-charts-xlabel{font-size:10.5px}'`：倒挂值，裁定改为 `9.5px`＋层级注释（已执行）。
+3. `:1666` — `'.ilife-charts-value{font-size:10px}'`：未动（修法走降轴标签方向）。
+4. 移动端同选择器 `9.5px`：未动；桌面端改后与之同值，双端一致。
 
-以上未做任何改动，等编排者契约级裁定。
+以上第 2 条已按裁定同步，其余不动。
 
 ## 5. 跨票影响（#75，只报不修）
 
