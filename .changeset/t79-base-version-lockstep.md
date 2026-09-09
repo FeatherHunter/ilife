@@ -9,4 +9,4 @@
 
 **签名面零改动**：本 changeset 不改任何冻结签名、不改任何渲染产出（`pnpm snapshot:check`／`pnpm snapshot:html:check` changed=0，`calorie.help.center` file 态产物 sha256 逐字节不变）。版本常量（`ENVELOPE_VERSION`／`RENDER_CONTRACT_VERSION`／`RENDER_ENVELOPE_VERSION`／`STYLE_VERSION`／`BASE_PAINT_CONTRACT_VERSION` = `'0.1.0'`）是**契约版本**，非包版本，保持冻结值不动。
 
-**未覆盖面（登记，不掩饰）**：6 个技能包仍声明 `base-link-core: ^0.1.0`（5 个 devDependency ＋ `skill-calorie`）；本票禁改 `packages/skill-calorie/**`，其余 5 包的范围对齐另票处理。registry 上 `base-link-core@0.1.0` 存在，故这些声明仍可解析，不构成断链。
+**未覆盖面（登记，不掩饰）**：`packages/skill-calorie` 的 devDependency 仍为 `base-link-core: ^0.1.0`（本票禁改该包；锁文件落到 registry `0.1.0`，但该包引用全为 `import type`、类型擦除，影响面为零，见交付报告 §4.5，缺口 G-2；解冻后一行对齐 `^0.2.0`）。其余 5 技能包（bill／chef／home／schedule／memo-ilife）的 `dependencies.base-link-core` 已对齐 `^0.2.0`，并由 lockstep 技能面断言锁住（R-8 返修）。

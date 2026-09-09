@@ -8,12 +8,12 @@
 
 - **①** 冻结契约 `docs/base-paint-contract.md` §3 的 **130 条签名面**逐条实测：**有 130 / 部分 0 / 无 0**（表 B，100% 有结论）；v1.30 **26 项能力**逐条实测：**有 12 / 部分 6 / 无 8**（表 A，100% 有结论）。
 - **②** 三包统一到 **0.2.0**（`base-link-core` 0.1.0→0.2.0、`base-combos` 0.1.0→0.2.0、`base-paint` 0.2.0 不动），机制落 `.changeset/config.json` 的 `fixed` 组。
-- **③** CI 断言落 `packages/base-render/test/base-version-lockstep.test.mjs`（`pnpm test` glob 内，5 用例全绿）。
+- **③** CI 断言落 `packages/base-render/test/base-version-lockstep.test.mjs`（`pnpm test` glob 内，6 用例全绿；R-8 由 5 扩到 6）＋ `assert-shape-data-79.test.mjs`（`assertShapeData` 直测，2 用例）。
 - **渲染输出不变**：`snapshot:check` changed=0（快照 `0.1.0@932e7b250d278d50` 前后同值）、`snapshot:html:check` **185 件 changed=0**、`calorie.help.center` file 态产物 sha256 前后同为 `f380ef685065a1e9279961952cc9ef76bd235d6ee65c157f9114f4e60b2b79c2`（1,264,822 B）。
 
 ## 1. 口径与判据（先定口径，再摆事实）
 
-**证据符号**：`✓` 实测成立；`✗` 实测缺失；`file:line` 为**声明点**（源码里真定义该符号的那一行）；「测试引用」＝ `packages/base-render/test/**` ＋ `test-d/**` 内出现该名字的文件数／次数（`docs/research/t79-surface-probe.mjs` 机读统计）。
+**证据符号**：`✓` 实测成立；`✗` 实测缺失；`file:line` 为**声明点**（源码里真定义该符号的那一行）；「测试引用」＝ 根 `test/**` ＋ `packages/base-render/test/**` ＋ `test-d/**` 内出现该名字的文件数／次数（`docs/research/t79-surface-probe.mjs` 机读统计；表 A 计数含根 `test/`，如 `createEnvelope` 13＝3＋2＋8）。
 
 **表 B 的结论规则（冻结面 130 条）**：`有` ＝ 声明点 ＋ 包出口面（runtime 走 `dist/index.js` 实测导出；type 走 TS 编译器 API 解析 `dist/index.d.ts` 模块导出，含 `export * from` 再导出）＋ ≥1 处测试引用，三者齐备；缺其一 → `部分`；声明点或出口面缺失 → `无`。
 
@@ -248,15 +248,16 @@
 
 ## 5. CI 断言（版本一致 ＋ 边界绿）
 
-**新增文件** `packages/base-render/test/base-version-lockstep.test.mjs`（5 个用例，落在 `pnpm test` 的 `packages/base-render/test/*.test.mjs` glob 内，CI 的 `build-test` 与 `win-detail` 两个 job 都会跑）：
+**新增文件** `packages/base-render/test/base-version-lockstep.test.mjs`（6 个用例，落在 `pnpm test` 的 `packages/base-render/test/*.test.mjs` glob 内，CI 的 `build-test` 与 `win-detail` 两个 job 都会跑；R-8 返修把用例 4 扩面并新增技能面用例）＋ `packages/base-render/test/assert-shape-data-79.test.mjs`（`assertShapeData` 正例＋反例直测，R-8 补，G-4 关闭）：
 
 | # | 断言 | 防的回归 |
 |---|---|---|
 | 1 | 三包 `name` 与目录映射不变 | 包名／目录漂移（`base-paint` 住 `base-render` 目录） |
 | 2 | 三包 `version` **逐字相等**（且形如 `x.y.z`） | 版本偏斜复发（本票的核心 AC） |
 | 3 | `.changeset/config.json` 的 `fixed` 组**恰含**三包 | 机制被回退成 `[]` 或扩到别包 |
-| 4 | 包内 caret 范围与工作区版本**同 major.minor**（`base-combos`→`base-link-core`、`base-paint`→`base-link-core`） | range 与版本脱钩（与 `check-publish.mjs` 同源口径） |
-| 5 | 5 个版本常量仍是 `'0.1.0'` | 有人把「包版本」误当「契约版本」一起升号 |
+| 4 | 包内 caret 范围与工作区版本**同 major.minor**（`base-combos`→`base-link-core`、`base-paint`→`base-link-core`），且 `base-combos` 的 range 必须带 `workspace:` 前缀（R-8 纳入 G-3） | range 与版本脱钩（与 `check-publish.mjs` 同源口径）；`workspace:` 前缀被去掉即红（发布期防外泄 registry） |
+| 5 | 技能面：5 技能（bill／chef／home／schedule／memo-ilife）的 `dependencies.base-link-core` 与工作区版本**同 major.minor**；`skill-calorie` 的 devDep 例外值钉死 `^0.1.0`（R-8 新增，关红 D-1） | 技能 range 静默退回旧线导致运行时换 registry 源（§4.3 自述风险）；skill-calorie 例外漂移（G-2） |
+| 6 | 5 个版本常量仍是 `'0.1.0'` | 有人把「包版本」误当「契约版本」一起升号 |
 
 **版本无关化**（与 `tooling/check-publish.mjs` 的 #123 返修同源）：断言只比较三包**彼此相等**与 **major.minor 同线**，不写死 `0.2.0`——下次发版改号不会打红这条门。
 
@@ -415,3 +416,39 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t79-base-contract.md 
 | P-2 | **HEAD 误重置** | 为撤回 P-1，本席执行 `git reset --soft HEAD~1`；因期间他席已在本席提交之上落了两个提交，该命令**把 HEAD 从 `5e2eb22` 退回 `223f1a5`**（仅动 HEAD，未改工作树／索引内容） | **约 10 秒内 `git reset --soft 5e2eb22` 原样恢复**；复核：`git diff --cached --name-only` 空、`git log -1` = `5e2eb22`、他席文件与提交一致、本席 18 个交付文件在 HEAD 中齐备 | 共享仓**禁止任何 `reset`**；提交归属只能「新提交 ＋ 登记」 |
 
 **结论**：两个错误都发生在**提交动作**层面，**不触碰任何交付内容**（版本／断言／对照表／渲染产物均未受影响，§6 的逐字节证据不受影响）；P-1 的 19 行内容属 t83 席且完好，建议由编排者在收尾时统一核归属。
+
+## 返修 R-8（两席审查）
+
+> 范围：红队 FAIL 唯一驱动 **D-1（S2)**＋4 S3、蓝队 PASS 附整改 **G-3（S2 潜伏）**＋2 S3，共同指向 lockstep CI 覆盖缺口。本节逐条记账；**不改契约 §2 的任何判定**（§2 表格 L105「现状三包各 0.1.0」一行原样保留，留契约维护票统一刷）。
+
+| # | 来源 | 改了哪行 | 变异判据（变异必须红） |
+|---|---|---|---|
+| 1 | 红 D-1（S2） | `base-version-lockstep.test.mjs` 新增用例「技能面…（D-1…)」：5 技能（bill／chef／home／schedule／memo-ilife）`dependencies.base-link-core` 必须与工作区版本同 major.minor；`skill-calorie` devDep 例外值钉死 `^0.1.0` 单列（G-2，解冻对齐时并入同线） | MUT-4（`skill-bill` range 退回 `^0.1.0`）：**红** exit 1（runId `2878861f`，`actual 0.1 / expected 0.2`），还原 sha `0326177B…` 逐字节等 → 8/8 绿 |
+| 2 | 蓝 G-3（S2） | 同一文件用例 4 加 `workspace:` 前缀断言（`base-combos` 去前缀即红） | 变体 A（去前缀→`^0.2.0`）：**红** exit 1（runId `274b9e13`），还原后 6/6 绿（runId `ad304b0e`）；变体 B（错线→`workspace:^0.1.0`）：**红** exit 1（runId `5059f91c`）；还原 sha `CE47FF33…`（== 红队基线 `ce47ff3316f4e139…`）逐字节等 |
+| 3 | 红 S3-② | 新建 `packages/base-render/test/assert-shape-data-79.test.mjs`（6 形状正例不抛＋7 反例必抛），落进 `pnpm test` glob | 直跑 2/2 绿（与 lockstep 合跑 8/8，runId `39532c40` exit 0） |
+| 4a | 红 S3 文字 | `.changeset/t79-base-version-lockstep.md` 末段 stale 文字（"6 技能包仍 ^0.1.0"）→ 改写为实况（仅 skill-calorie 例外＋5 包已对齐并被 lockstep 锁住） | 文字，无机制影响 |
+| 4b | 红 S3 文字 | 本报告 §1「测试引用」补根 `test/**`（表 A 计数本就含根 test/，如 `createEnvelope` 13＝3＋2＋8） | 文字，与计数口径对齐 |
+| 4c | G-1（文档漂移） | `docs/base-paint-contract.md` §5 两行：B8 口径（`fixed: []`／不升版 → 已落地＋已统一 0.2.0）、现状（三包 0.1.0 → 0.2.0） | 纯措辞；冻结签名表与 §2 表格未动 |
+| — | 不修（已记账） | 红 S3 前任探针 import 窗口误标、蓝 S3 `check-publish` 全量口径 bug（`:98` Dirent 崩溃）与 P-1：均不动 | — |
+
+**渲染不变三项（改后重跑）**：`snapshot:check` exit 0（`0.1.0@932e7b250d278d50`，runId `8484d83d`）／`snapshot:html:check` exit 0（`artifacts=185 changed=0`，runId `f9477e12`，fingerprint 仍 `0686fc23…` 只报告不入快照）／HELP file 态 sha256 `f380ef68…`×2 确定性一致（runId `f790be8f`）。
+
+**纪律**：全部门禁经 `run-locked --ticket 79`；禁全量 `t81-exec-smoke.mjs`（未跑）；变异即还原＋sha256 自证，`.mutbak` 残留 0；`SKILL.md` 首 3 字节 `2D 2D 2D`、30,143 B；`commit --only` 本席 5 路径；不 push；不关票。
+
+**R-8 门禁声明（供 `check-gate-audit` 对账）**：
+
+```
+GATE-RUN runId=c2b5b1e2-6753-4160-a21e-55765ceff90e cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs packages/base-render/test/assert-shape-data-79.test.mjs"
+GATE-RUN runId=2878861f-fbd7-4b21-963b-7adf4a36a210 cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs"
+GATE-RUN runId=274b9e13-ba35-4083-8de5-34c9d090a384 cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs"
+GATE-RUN runId=ad304b0e-04d4-48c3-94d1-3455b399cddf cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs"
+GATE-RUN runId=e03209f5-97a6-4a8c-b886-1ce0ad72e0e6 cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs packages/base-render/test/assert-shape-data-79.test.mjs"
+GATE-RUN runId=1f074c76-5373-45dc-a03f-e17f3d37d51f cmd="pnpm snapshot:check"
+GATE-RUN runId=f9477e12-1f6a-476c-a3e9-fbc9619338b3 cmd="pnpm snapshot:html:check"
+GATE-RUN runId=f790be8f-3c60-4eb4-ab73-34e8b9e2e109 cmd="node docs/research/t79-review-blue-probe.mjs help"
+GATE-RUN runId=8484d83d-56e0-4dd0-91eb-6cb7f504d06e cmd="pnpm snapshot:check"
+GATE-RUN runId=5059f91c-0b53-4e5d-922d-0aa0f1cf1505 cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs"
+GATE-RUN runId=39532c40-2a5c-4db6-bbd0-aa98a7be59f8 cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs packages/base-render/test/assert-shape-data-79.test.mjs"
+GATE-RELAX flag=--allow-nonzero reason=R-8 三条 exit 1 全是变异自证的取证对象本身（MUT-4 红 2878861f／G-3 去前缀红 274b9e13／G-3 错线红 5059f91c），§7 四类放宽理由不变
+GATE-RELAX flag=--allow-undeclared reason=同票红/蓝审查席并发运行（两席探针＋门禁）与本席 R-8 运行同窗口交织，时间窗无法切分；本席 11 条已上表一对一声明
+```

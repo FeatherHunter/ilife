@@ -1,4 +1,4 @@
-// #79（79b）· CI 断言：base-* 三包版本一致（lockstep）＋ 包内依赖同版本线。
+// #79（79b；R-8 扩面）· CI 断言：base-* 三包版本一致（lockstep）＋ 包内依赖同版本线 ＋ 技能面 range 同版本线。
 //
 // 口径（与 `tooling/check-publish.mjs` 的 #123 返修同源：**版本无关化**）：
 //   - 断言的是「三包 `version` 彼此逐字相等」，**不写死任何具体版本号**——发版改号不该打红这条门；
@@ -51,13 +51,23 @@ describe('#79 base-* 三包版本 lockstep', () => {
     );
   });
 
-  it('包内 caret 范围与工作区版本同 major.minor（同版本线）', () => {
+  it('包内 caret 范围与工作区版本同 major.minor（同版本线）＋ base-combos 必须走 workspace: 协议（G-3）', () => {
     const versionOf = (name) => manifests.find((m) => m.name === name)?.json.version;
     const lineOf = (v) => v.split('.').slice(0, 2).join('.');
     /** `workspace:^x.y.z` 与 `^x.y.z` 都接受；比对 major.minor。 */
     const cases = [
-      { from: 'base-combos', dep: 'base-link-core', range: pkg('base-combos').dependencies?.['base-link-core'] },
-      { from: 'base-paint', dep: 'base-link-core', range: pkg('base-render').devDependencies?.['base-link-core'] },
+      {
+        from: 'base-combos',
+        dep: 'base-link-core',
+        range: pkg('base-combos').dependencies?.['base-link-core'],
+        workspace: true,
+      },
+      {
+        from: 'base-paint',
+        dep: 'base-link-core',
+        range: pkg('base-render').devDependencies?.['base-link-core'],
+        workspace: false,
+      },
     ];
     for (const c of cases) {
       assert.ok(c.range, `${c.from} 必须声明 ${c.dep}`);
@@ -68,7 +78,35 @@ describe('#79 base-* 三包版本 lockstep', () => {
         lineOf(versionOf(c.dep)),
         `${c.from} 的 ${c.dep} 范围「${c.range}」与工作区版本 ${versionOf(c.dep)} 不同版本线`,
       );
+      if (c.workspace) {
+        assert.ok(
+          c.range.startsWith('workspace:'),
+          `${c.from} 的 ${c.dep} 范围「${c.range}」必须带 workspace: 前缀（发布期防外泄 registry，G-3；去前缀即红）`,
+        );
+      }
     }
+  });
+
+  it('技能面 base-link-core runtime range 与工作区版本同 major.minor（D-1；skill-calorie 例外单列）', () => {
+    const coreVersion = manifests.find((m) => m.name === 'base-link-core')?.json.version;
+    const lineOf = (v) => v.split('.').slice(0, 2).join('.');
+    // 5 个 runtime 消费技能：dependencies 必须同版本线（任一退回 ^0.1.0 即红，MUT-4）。
+    const runtimeSkills = ['skill-bill', 'skill-chef', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
+    for (const dir of runtimeSkills) {
+      const range = pkg(dir).dependencies?.['base-link-core'];
+      assert.ok(range, `${dir} 必须在 dependencies 声明 base-link-core`);
+      const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(range);
+      assert.ok(m, `${dir} 的 base-link-core 范围「${range}」必须是 ^x.y.z`);
+      assert.equal(
+        `${m[1]}.${m[2]}`,
+        lineOf(coreVersion),
+        `${dir} 的 base-link-core 范围「${range}」与工作区版本 ${coreVersion} 不同版本线`,
+      );
+    }
+    // skill-calorie 例外单列（G-2）：本票禁改该包，devDep 钉死当前值 ^0.1.0；任何漂移即红。
+    // 解冻对齐 ^0.2.0 时把本断言并入同版本线（届时改此一行）。
+    const calRange = pkg('skill-calorie').devDependencies?.['base-link-core'];
+    assert.equal(calRange, '^0.1.0', `skill-calorie 的 base-link-core 例外值漂移（实得「${calRange}」，G-2）`);
   });
 
   it('版本常量仍是契约版本 0.1.0，不随包版本漂移（口径分离）', async () => {

@@ -943,9 +943,9 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | `BASE_PAINT_CONTRACT_VERSION` | runtime | #92 | implemented | 5 | `'0.1.0'` |
 <!-- FROZEN-SURFACE-TABLE-END -->
 
-- **B8 统一版本口径**：`base-link-core`／`base-paint`／`base-combos` 三包**统一版本号**，一次变更三包同版本、同发布。#79 用 changesets 的 `fixed` 组落地（`.changeset/config.json` 现为 `"fixed": []`）；本票只写机制与现状，**不实际升版**。
+- **B8 统一版本口径**：`base-link-core`／`base-paint`／`base-combos` 三包**统一版本号**，一次变更三包同版本、同发布。#79 已用 changesets 的 `fixed` 组落地并实际统一到 **0.2.0**（`.changeset/config.json` 现为 `"fixed": [["base-link-core","base-paint","base-combos"]]`，见 #79 交付报告 §4）。
 - **签名变更 = 破坏性变更**：改本文件 §3 的任何签名，必须走 changeset（minor 起），并在同一变更里同步 `SPEC_FROZEN_SURFACE`、`test-d/contract-signatures.ts`、本文标记区表格——三者由签名测试绑死，漏改即 `pnpm build`／`pnpm test` 红。
-- **现状**：三包 `version` 均为 `0.1.0`；4 个版本常量（`ENVELOPE_VERSION`／`RENDER_CONTRACT_VERSION`／`RENDER_ENVELOPE_VERSION`／`STYLE_VERSION`）＋本票新增 `BASE_PAINT_CONTRACT_VERSION`，漂移由签名测试钉死（四者必须同值）；`.changeset/` 中与 base-* 版本相关的 7 条见 `new-exports-actual.md` §5.2。
+- **现状**：三包 `version` 均为 `0.2.0`（#79 统一；registry 上 `base-paint` 另有已发布的 0.1.0／0.2.0、`base-link-core`／`base-combos` 另有已发布的 0.1.0）；4 个版本常量（`ENVELOPE_VERSION`／`RENDER_CONTRACT_VERSION`／`RENDER_ENVELOPE_VERSION`／`STYLE_VERSION`）＋本票新增 `BASE_PAINT_CONTRACT_VERSION`，漂移由签名测试钉死（四者必须同值）；`.changeset/` 中与 base-* 版本相关的 7 条见 `new-exports-actual.md` §5.2。
 - **本票的 changeset**：`.changeset/base-paint-contract-freeze.md`（`'base-paint': minor`）。
 
 ## 6. 给执行票的实现指引
