@@ -219,6 +219,7 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t120-softdelete-filte
    **转票措辞（建议新票）**：`body_composition／body_measurements 的 is_deprecated 可空，但读层用 is_deprecated = 0 → NULL 活行被静默排除（与 #120 的 COALESCE 口径不一致）`；验收＝统一谓词（如 `COALESCE(is_deprecated, 0) = 0`）＋ NULL 活行护栏测试。
 7. **新测试另一条注释行号未改（提请编排者裁）**：本批只把两席一致指认的 `cross.ts:107-108` 改为 `cross.ts:108,109`（与源码实测一致）。
    同文件另一条断言文案仍写 `anomaly/common.ts:84`（§2 表记漂移后为 `:85`）——**未改**，理由：该字符串是 §6 M2 变异红签名的**引文**（`AssertionError: anomaly/common.ts:84 · exerciseRows`），改字面会让既有引文不可复现；是否同步为 `:85` **提请编排者裁**。
+   裁定（编排者 2026-09-09）：引文行号＝**变异当时**（M2 红签名）；**保持现状不改**。
 
 ## 10. 风险 top3
 
