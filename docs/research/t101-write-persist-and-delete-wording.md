@@ -356,3 +356,37 @@ node docs/research/t101-mutation.mjs
 
 事故根因（协议 §2.1 已收录）：某票在仓库内临时目录跑 `npm install <tgz>` → 向上解析到 workspace 根，
 把 `.bin` 重写。编排者持锁 `pnpm install` 修复后，本票返修轮四门已全部 exit 0（§4）。
+
+---
+
+## 10. 返修轮终态复跑（机器重启后 · 编排者复核口径）
+
+返修轮的收尾复跑被**机器重启**打断（终端进程全灭），但 3 个提交（`4306d71`／`01cb905`／`8c5b42f`）
+都在 git 里，`git status` 干净 → 无代码丢失。重启后**从零复跑**（新 sidebar 终端 `101-fix`，持 `gate.lock`）：
+
+| 复跑项 | 命令 | 结果 |
+| --- | --- | --- |
+| 构建 | `pnpm build` | exit 0 |
+| 边界 | `pnpm boundaries` | exit 0 |
+| 快照 | `pnpm snapshot:check` | exit 0 |
+| 发布 | `pnpm publish:pre` | exit 0 |
+| 本票落库断言 | `node --test .../cmd-write-40-persist.test.mjs` | exit 0（**17/17**） |
+| 文案诚实性复核 | `node docs/research/t101-softdelete-still-counted.mjs` | exit 0（事实 A–E 全「是」，计数 14） |
+| 全量 | `pnpm test` | exit 1（既有基线）＋ tests 882／suites 115／pass 858／**fail 24** |
+| 失败集 delta | `t101-fail-set.mjs docs/research/t101-baseline-failures.txt <log>` | `base=27 after=27 新增=0 消失=0`（exit 0） |
+
+**一次瞬时假红（如实记账）**：重启前那一次全量跑批出现过 `新增=1` ——
+`✖ 饮食批量/复制/按日改/按日删/按范围删/按餐别删`（`cmd-write-40.test.mjs:109`，**非本票路径**），
+失败详情为子进程退出码 `3221225477`（＝ `0xC0000005`，Windows access violation，**node 进程崩溃**）
+而非断言失败；该测试**单独跑 13/13 全绿**，重启后的 F3 全量跑批 delta 回到 0 → 判为并发/资源压力下的
+瞬时崩溃，非本票代码问题。本票未改动该测试文件，也未改动 `src/cli/cmd_read.ts`／`src/output.ts`（#87 路径）。
+
+## 11. 提交清单（本票，全部 `-F` 中文信息，未 push）
+
+| sha | 信息 |
+| --- | --- |
+| `4306d71` | fix(101): 删除回执文案如实化（不承诺可恢复＋软删标注统计口径）＋ items[].status 与 prose 同源＋落库断言覆盖门改真实只读计数 |
+| `01cb905` | docs(101): 返修 H3-H7 证据与脚本加固——词条落点口径统一为 14 处／变异脚本 sha256＋落盘备份＋还原自证／基线名单入仓 |
+| `8c5b42f` | docs(101): 变异自证补 M9（H3 计数口径机器守住）＋ 证据表按单次 9 例跑批更新 |
+
+（首轮提交 `710231d`／`873d175`／`30606f1`／`44c0cd4`／`03dea78` 见首轮记录。）
