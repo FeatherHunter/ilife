@@ -16,7 +16,7 @@
 | `check-gate-audit --evidence docs/research/t99-examples-gate.md --log docs/research/t99-gate-runs.log --ticket 99 --since 14:17Z --until 14:23Z --allow-nonzero` | **0** | `matched=15/15 undeclared=0 PASS` |
 | `git diff 93e27f9 -- docs/research/t88-baseline/test-failset.txt` | — | **0 行** |
 
-`SKILL.md` 终态：`size=27965`、前 3 字节 `2d 2d 2d`、blob `51bcf2cf…`、`git status` 干净 → 无零填充。
+`SKILL.md` 终态：`size=27965`、前 3 字节 `2d 2d 2d`、blob `51bcf2cf…`、`git status` 中该文件无改动 → 无零填充。
 
 ## ② 门鉴别力（自设 10 个新变异，副本级 `--skill`，红→还原→绿）
 
