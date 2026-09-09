@@ -43,3 +43,10 @@
 - 提供方解析到的技能版本 = 落盘 `skill-calorie@0.2.0`（`SKILL_VERSION=0.2.0`，探针实测），不是旧的 `0.1.1`。
 - 版本元组复核：落盘 `dsh-calorie@0.2.0`（`skill_dep=^0.2.0`）· 落盘 `skill-calorie@0.2.0` ·
   工作区 `dsh-calorie=0.2.0` / `skill-calorie=0.2.0` / `skill_dep=^0.2.0` —— 落盘与工作区一致，无版本漂移。
+
+## 4 收口（AFK 完成项 vs 待 HITL 项）
+
+- AFK 已完成：
+- ① 回路测试 exit 0（5/5）；② 安装态三量与票面一致（§2）；③ 版本一致 0.2.0（§3）。
+- 回路全绿 → 无回归定位、无源码改动（本票只许写本文档与 `.scratch/t56/`；实际提交仅本文档，`.scratch/` gitignore 不入仓）。
+- **待维护者一句话 HITL 确认**（未完成项）：agent 会话里查到 `skill-calorie`（名＋介绍）的一句话确认由编排者另行收集，不归本次 AFK；无此确认 #56 不得 close。
