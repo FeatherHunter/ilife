@@ -26,12 +26,11 @@
 | H-13 | N/A（转内容页B-02，D-15） | HELP页`.kpi`命中0／`<svg>`0（shots domCounts）；判据转区块尺B-02 | blocks `B-02/`＋`probe-blocks.json`(B-02) | `node tooling/run-locked.mjs --ticket 89 -- node docs/research/t89-probe-blocks.mjs --out <dir>` |
 | H-14 | N/A（转内容页B-04，D-15） | 同上（svg=0／circle=0） | blocks `B-04/`＋`probe-blocks.json`(B-04) | 同上 |
 | H-15 | PASS | `<pre>`载体439个；computed等宽栈/`12px`/行高比1.55/`pre-wrap`/`overflow-x:auto`/圆角8px全满足 | `S/probe-static.json`(H-15)＋`shots/H-15/element.png`＋`shots/probe-shots.json`(H-15.1/.2) | S＋shots同上 |
-| H-16 | 待采（交互＋t121 交叉） | — | — | I ＋ `node tooling/run-locked.mjs --ticket 89 -- node docs/research/t121-browser-evidence.mjs --label t89reuse` |
-| H-17 | N/A（转 B-03，照判） | — | — | blocks 探针 B-03 |
-| H-18 | 待采 | — | — | shots（空态样本） |
-| H-19 | 待采（交互＋t88 交叉） | — | — | I ＋ t88-browser-evidence-b（B20／B22／B23／B25／B27） |
-| H-20 | 待采（交互新采） | — | — | I ＋ shots |
-
+| H-16 | PASS（交互记录＋t121交叉） | 真手势命中；copied存活453.2ms∈[440,520]（双计时器）；剪贴板归一后逐字等长82；复原无残留；toast恰1枚存活4501ms≈冻结4500；抽40卡每卡1按钮；无「复制全部」；t121交叉22/22（含失败零加类＋danger toast）；shots before/after双证 | `I/probe-interactive.json`(H16)＋`I/h12-*.png`＋`shots/H-16/{before,after}.png`＋`R1/t121-t89reuse.log`(22/22) | I＋`node tooling/run-locked.mjs --ticket 89 -- node docs/research/t121-browser-evidence.mjs --label t89reuse` |
+| H-17 | N/A（转内容页B-03，照判） | HELP页`<table>`=0（shots domCounts）；表格为内容页新增能力，转区块尺B-03（th大写/透明/1px＋td 12-14px＋末行无边框已由blocks实证） | blocks `B-03/`＋`probe-blocks.json`(B-03.1/.2/.3/.4/.5全绿) | blocks探针 |
+| H-18 | PASS | 空态卡片外观（白底/20px圆角/1px描边/居中）；padding 48/20；图标40px/.5；标题17px/600；说明13px `#86868b` | `shots/H-18/{viewport,element}.png`＋`shots/probe-shots.json`(H-18.1/.2/.3/.4) | shots（现场构造空态样本） |
+| H-19 | PASS（交互记录＋t88交叉） | 几何42×42/50%/fixed/right=bottom=24；scrollY=0时opacity0＋pe none；401时出现可点；点击rAF 22采样单调降到0；t88交叉B20/B22/B23/B25/B27全PASS | `I/probe-interactive.json`(H19.trace)＋`shots/H-19/{before,after}.png`＋`R2/t88-evidence-b.log`(B20/B22/B23/B25/B27) | I＋t88-browser-evidence-b（注：B26红=fields:341过期断言，非#89面） |
+| H-20 | PASS（交互新采） | reduce下复制/回顶过渡0s、toast动画none；Tab遍历6次4环（I）＋10控件10环（shots）；首Tab SUMMARY :focus-visible＋1px环；焦点截图focus.png | `I/probe-interactive.json`(H20)＋`shots/H-20/focus.png`＋`shots/probe-shots.json`(H-20.1/.2/.3) | I＋shots（两套件零命中故新采） |
 ## 取证轮次记账（GATE-RUN 对账用）
 
 - `GATE-RUN runId=9f2ebd7b-0c28-493f-ad89-0f7d3ec89148 cmd="node .scratch/t89/cmdA.mjs (calorie.help.center mode=file)"` → artifact 1264822B sha16=F380EF685065A1E9（与交接基线逐字节一致）
@@ -39,3 +38,6 @@
 - `GATE-RUN runId=d30a51ee-99d0-4253-bc6e-2b2ab5e0aa23 cmd="node docs/research/t89-probe-help-static.mjs"` → `RESULT: 24/27`（红=H-06.2/H-10.1/H-17.1）
 - `GATE-RUN runId=15c0ee76-0170-4d27-a666-65c22617df64 cmd="node docs/research/t89-probe-help-interactive.mjs"` → `RESULT: 21/21 PASS`
 - `GATE-RUN runId=48d3b30d-82ef-4099-bf96-a8cb8431e614 cmd="node docs/research/t89-probe-shots.mjs"` → `RESULT: 34/36`（红=H-06.2/H-10.1）
+- `GATE-RUN runId=b6400a16-6ec3-47e8-82fe-2490185a89f3 cmd="node docs/research/t121-browser-evidence.mjs --label t89reuse"` → `RESULT: 22/22 PASS`（H-16交叉）
+- `GATE-RUN runId=52c27b1e-5e0a-4464-a4e7-535a57469813 cmd="node docs/research/t88-probe-impl-b.mjs"` → `RESULT: 59/59`（样本sha fb87787c…）
+- `GATE-RUN runId=c77f9195-0448-47d0-beb3-720af39c170a cmd="node docs/research/t88-browser-evidence-b.mjs"` → `RESULT: 28/29`（唯一红B26=fields:341过期断言，非#89面；H-19相关B20/B22/B23/B25/B27全绿）
