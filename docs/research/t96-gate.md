@@ -41,7 +41,7 @@
 
 ### 2.1 新增门：`pnpm snapshot:html:check`（行为面）
 
-- 脚本：`tooling/skill-html-snapshot.mjs`（406 行）；快照：`tooling/skill-html.snapshot.json`（185 件，113 KB）。
+- 脚本：`tooling/skill-html-snapshot.mjs`（434 行／20 750 B）；快照：`tooling/skill-html.snapshot.json`（185 件，1148 行／114 273 B）。
 - 覆盖 5 技能（`SKILLS`，`:43`）的 **185 件产物**：
 
 | 产物族 | id 形态 | 件数 | 打的分支 |
@@ -58,7 +58,7 @@
 
 - 判据：**逐件 `sha256(归一化文本)`**（归一化＝去 BOM ＋ CRLF→LF，跨 3 个 CI OS 同值；`normalize`，`:62`）。任一件不同即 exit 1，并打印**首个差异行**（`firstDiff`，`:252`）。
 - 体积控制（票面要求）：单件 > 2048 B 只存 `sha256`＋`bytes`（`textOmitted:true`，当前 6 件 memo 大模板）；**定位路径**＝`src` 字段给出的源文件 ＋ `git diff`，或用 `--show <id>` 打印实际全文。185 件中 179 件带全文，`git diff` 可直接看差异。
-- 反手改快照：带 `text` 的条目其 `sha256` 必须自洽，否则红（`compare` 的 `staleText`，`:231`）。
+- 反手改快照：带 `text` 的条目其 `sha256` 必须自洽，否则红（`compare` 的 `staleText`，`:231`）。**口径收窄（红队 S3-2 登记）**：实际只覆盖 `text↔sha256`——删 `text`／改 `bytes`／改顶层 `artifactCount` 仍绿，见 §9。
 - 未构建时**显式失败**（不静默跳过）：`dist/render/index.js` 缺失即 `FAIL`。
 
 ### 2.2 边界断言：base-* 变更影响面（结构面）
@@ -171,7 +171,7 @@ RESULT: skills=5 five_clean=5 positive_control_base_star=1 bad=0
 
 - **本地与 CI 同口径**：CI 跑的就是 `pnpm snapshot:html:check`（`package.json:18`），与本地完全同一条命令；快照比较用归一化 sha256，跨 ubuntu／macos／windows 三 OS 同值。
 - 结构面断言随 `pnpm boundaries` 一起进 CI（`ci.yml:32` 既有行），故「5 技能一旦消费 base-*」会在**两个** job 步同时暴露。
-- 新增 script（`package.json:17-19`、`:29`）：`snapshot:html`（写）／`snapshot:html:check`（校验）／`snapshot:html:list`（列产物）／`gate:selftest:html`（工具自证，内部即经持锁包装器）。
+- 新增 script（`package.json:17-19`、`:29`）：`snapshot:html`（写）／`snapshot:html:check`（校验）／`snapshot:html:list`（列产物）／`gate:selftest:html`（工具自证，内部即经持锁包装器，**且用独立锁目录 `.scratch/locks-selftest`**，见 §9-1）。
 
 ---
 
@@ -220,3 +220,44 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t96-gate.md --ticket 
 1. **快照门只冻结「当前 5 技能」，不阻止未来迁移**：一旦某技能接入 base-paint，门会**红**（依赖断言 ＋ `ilife-` 标记断言），需要显式改工具／断言并走审查——这是设计意图，但迁移票（各技能本体图）必须知道「#96 的断言要一起改」，否则会被当成假红。
 2. **`textOmitted` 的 6 件大产物定位依赖 `git diff` 源文件**：差异能检出，但门自己只给 `src` 路径 ＋ 摘要；若源文件同时被他票改动，定位需人工分辨。
 3. **`--allow-nonzero` 属放宽开关**：本票只用一次且已留 `GATE-RELAX` 行（`pnpm test` 基线即红）。若审查认为应改为「不声明该条」，则反向对账需要 `--allow-undeclared`，同样需要留痕——两条路径都需审查者确认口径。
+
+---
+
+## 9. 关闭前置闭环 ＋ 未做登记 ＋ 迁移票派单五条（2026-09-09 收尾轮）
+
+> 两席初审：红队 `caf3ebd`（**PASS 91**，S3×5）／蓝队 `6f891f6`＋`9bbdc0b`（**PASS 86**，**S2×1** ＋ S3×5）。
+> 收尾轮实施与实测证据：`docs/research/t96-close-gate.md`（＋ `t96-close-mutation.mjs`／`t96-close-gate-runs.log`／`t96-selftest-audit.md`／`t96-selftest-runs.log`）；commit `83ebad4`。
+
+### 9.1 关闭前置闭环（唯一 S2 已修 ＋ 顺带修 R-S3-1）
+
+| 项 | 修法 | 实证 |
+| --- | --- | --- |
+| **D-1**（S2·蓝队）`gate:selftest:html` 自锁 | `package.json:29` 加 `--lock-dir .scratch/locks-selftest`（独立锁目录，与 #88 的 `gate:selftest` 同口径） | ① 新口径单跑 exit 0（`runId=53a348de…`，`waitedMs=30018`，10/10）；② 主锁被占时内层 `waitedMs=0`（`16a455de…`）；③ **复现死锁场景**（外层持主锁＋内层脚本）→ 内层 `waitedMs=0`、外层 exit 0（修复前必死锁） |
+| **R-S3-1**（S3·红队）`--write` 先落盘后校验 | 新增 `writeSnapshotChecked`：先 `compare` 标记 → 通过才写 tmp＋`rename` 原子替换；CLI 失败即「未落盘」 | 新增用例（标记命中时快照 raw sha256 不变 ＋ 目标不存在时不创建）；**src 级变异**（判定挪回落盘后 → 用例红）→ 逐字节还原 → 绿，sha256 `a86d4ca0ec4d7b37` 前后一致 |
+
+**新口径（本条写死）**：`pnpm gate:selftest:html` **自身即持锁（独立锁目录 `.scratch/locks-selftest`），调用方不得再套 `run-locked`／`pnpm gate:run`**。CI 注释同步：`.github/workflows/ci.yml:38-41`。同理 `pnpm gate:selftest`（#88）亦用同一独立锁目录。
+该命令的审计留痕落在 `.scratch/locks-selftest/gate-runs.log`（**不在**主日志），单独对账见 `docs/research/t96-selftest-audit.md`。
+
+### 9.2 未做登记（S3 · 只记账不返工）
+
+| # | 来源 | 内容 | 处置 |
+| --- | --- | --- | --- |
+| S3-2 | 红队 | 快照自洽面只覆盖 `text↔sha256`（删 `text`／改 `bytes`／改 `artifactCount` 仍绿） | 登记；§2.1 口径已收窄为「改 `text` 或 `sha256` 即红」 |
+| S3-3 | 红队 | CI 缺「新快照只许工具写」守卫（`ci.yml:46-59` 只覆盖 `skill.snapshot.json`） | 登记；建议后续票加 `pnpm snapshot:html && git diff --exit-code -- tooling/skill-html.snapshot.json` |
+| S3-4 | 红队 | 「依赖闭包」实为直接声明依赖；`SRC_RE` 不匹配动态 `import()` | 登记；补偿：未声明依赖的动态导入运行期 `ERR_MODULE_NOT_FOUND`，非静默变绿路径 |
+| S3-5 | 红队 | 文档行数／体积 nit | 本轮按实测更新（工具 434 行／20 750 B；快照 1148 行／114 273 B） |
+| D-2 | 蓝队 | 假绿窗口：门只读 `dist`、`staleness()` 只 WARN | 登记；**成因已注记**——变异／还原写回更新 src mtime，`tsc -b` 增量构建不重写内容未变的产物 → mtime 落后；内容判据仍绿（`changed=0`），升红会误红 |
+| D-3 | 蓝队 | 6 件 `textOmitted` 快照更新不可从 `git diff` 审阅 | 登记；已写进 §9.3 第①条 |
+| D-4 | 蓝队 | `--allow-nonzero` 无鉴别力；`--expect-exit 1 --reason` 未实现 | **转 #88 收尾清单**（`check-gate-audit.mjs` 属 #88 路径） |
+| D-5 | 蓝队 | 风险 1 表述不完整 | 本轮以 §9.3 补全 |
+| D-6 | 蓝队 | 缺快照文件时仅裸 ENOENT 栈 | 登记 |
+
+### 9.3 迁移票派单五条（蓝队 ⑥ 跨票建议，逐条生效）
+
+**适用面：任何触碰 `packages/skill-{bill,chef,home,schedule,memo-ilife}/**` 的票。派单须写明「#96 门被判红属预期，须审快照 diff」。**
+
+1. **同一 commit 跑 `pnpm snapshot:html` 并附 185 件差异摘要**；6 件 `textOmitted`（memo 大模板）**必须附 `--show <id>` 全文**，否则快照更新不可审阅（D-3）。
+2. `tooling/check-boundaries.mjs:35-40` 该技能的零依赖断言须**改为正向断言**（含 `base-paint`），**不得只删**；`:41-56` 的 import 断言同步——注意 `devDependencies` 也计入，测试期依赖同样触发。
+3. `tooling/skill-html-snapshot.mjs:55` 的 `MARKER_ALLOW` **只加该技能该 id 的条目**（或改成「必须出现」断言）；**注意「无 `ilife-` 标记 ≠ 未迁移」**——若迁移只消费 `token()`／`escapeHtml()`／`recoDescriptor()`（实测不含 `ilife-`），标记断言不红但产物 sha256 仍变；**迁移与否一律以依赖断言为准**。
+4. 同步更新 `docs/research/t96-base-impact.mjs`（`FIVE`／正对照冻结了迁移前态）与 `docs/research/t96-mutation-evidence.mjs`（锚点字符串会失效）；两者被冻结成假红时须在本票内改口径并留痕。
+5. 门的采集面假定 5 技能导出 `*_KEY_SHAPES`／`renderEnvelopeHtml`／`escapeHtml`／`loadTemplate`／`fillTemplate` 等；迁移若改导出名，门会以**裸栈报错**（exit 1 但定位差）→ 迁移票须同步改采集器。

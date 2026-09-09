@@ -1,0 +1,11 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks-selftest\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：96｜since：2026-09-09T14:04:00.000Z｜until：2026-09-09T14:08:00.000Z｜条目数：3｜导出时间：2026-09-09T14:08:29.258Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=96 runId=53a348de-5560-4095-b7e8-d75d6a59d370 cmd="node --test tooling/test/skill-html-snapshot.test.mjs" waitedMs=30018 exit=0 pid=9000 at=2026-09-09T14:04:17.934Z
+RUN ticket=96 runId=16a455de-742a-40f7-8340-ccf4056dfe28 cmd="node --test tooling/test/skill-html-snapshot.test.mjs" waitedMs=0 exit=0 pid=33012 at=2026-09-09T14:06:51.980Z
+RUN ticket=96 runId=14b787b9-6558-4a3f-98dd-d49316094e98 cmd="node --test tooling/test/skill-html-snapshot.test.mjs" waitedMs=0 exit=0 pid=33996 at=2026-09-09T14:07:28.793Z
+```
