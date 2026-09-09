@@ -49,11 +49,14 @@ import {
   ACTION_BAR_DEFAULTS,
   ACTION_BAR_KINDS,
   ACTION_ID_ATTR,
+  CONTROL_STYLE_SECTIONS,
   COPY_ACTION_IDS,
   COPY_TEXT_DEFAULTS,
   DEFAULT_DATA_ATTR,
   ESCAPE_HTML_CHARS,
   ESCAPE_HTML_ENTITIES,
+  HELP_COPY_ACTIONS,
+  HELP_SHELL_ID,
   STATUS_DEFAULT_TEXT,
   STATUS_KINDS,
   TOAST_DEFAULTS,
@@ -476,6 +479,55 @@ function helpersDataAttr(input?: SharedHelpersInput): string {
   return typeof attr === 'string' && attr !== '' ? attr : DEFAULT_DATA_ATTR;
 }
 
+/* ── #88 S4：HELP 速查台运行时增强的类名来源（**不引 `src/help.ts`**） ────────────
+ *  helpers 运行时注入的元素必须与 `src/help.ts` 的 `cls()` 同一命名空间，否则样式落空。
+ *  这里**不** `import` help.ts：help.ts 已 `import { STYLE_PREFIX } from './style.js'`，
+ *  controls.ts 再引 help.ts 会形成 `controls → help → template` 的潜在模块环；改为
+ *  「`CONTROL_STYLE_SECTIONS` 闭集里 kebab 后与 `HELP_SHELL_ID` 同值者」这条**与 help.ts:87-93
+ *  逐条同构**的派生式，闭集漂移即在此 fail-fast（不静默换命名空间）。两侧一致性由
+ *  `test/help-center-js-88.test.mjs` 机读钉死（对照 `renderHelpShell` 的真实产出类名）。 */
+
+/** 样式区名 kebab（`helpShell` → `help-shell`）：与 `src/help.ts:81-83` 同一映射。 */
+function styleSectionSlug(section: string): string {
+  return section.replace(/[A-Z]/g, (ch) => '-' + ch.toLowerCase());
+}
+
+/** HELP 壳类名命名空间 kebab 后缀（`help-shell`；缺省前缀下根 = `ilife-help-shell`）。
+ *  **延迟求值**（不在模块顶层）：`style.ts → charts.ts → controls.ts → style.ts` 存在模块环，
+ *  顶层读 `STYLE_PREFIX` 会在 `style.js` 初始化完成前触发 TDZ（实测 `ReferenceError`），
+ *  故派生式只在 `buildSharedHelpersJs()` **调用时**执行（此时全部模块已初始化）。 */
+function helpShellSlug(): string {
+  const section = CONTROL_STYLE_SECTIONS.find(
+    (name) => STYLE_PREFIX + styleSectionSlug(name) === HELP_SHELL_ID,
+  );
+  if (section === undefined) {
+    throw new Error('base-paint/controls：CONTROL_STYLE_SECTIONS 闭集缺与 HELP_SHELL_ID 同 kebab 的区名（'
+      + HELP_SHELL_ID + '）');
+  }
+  return styleSectionSlug(section);
+}
+
+/** 回到顶部按钮的 `id`（视觉尺 H-19 逐字点名 `#backTop`；`backTop` 是**冻结规格值**）。 */
+const HELP_BACKTOP_ID = 'backTop';
+/** H-19：`scrollY > 400` 才出现（阈值逐字取规格）。 */
+const HELP_BACKTOP_MIN_Y = 400;
+/** H-19：按钮字形 `↑`（18px／600 由 CSS 承担）。 */
+const HELP_BACKTOP_LABEL = '↑';
+/** 无障碍名（文档未规定 → 本票取值，与 `TOAST_CLOSE_LABEL` 同口径记账）。 */
+const HELP_BACKTOP_ARIA = '回到顶部';
+/** 搜索框占位文案（F3 `卡路里.html` 的 `#sB` 逐字：`搜索全部场景`）。 */
+const HELP_SEARCH_PLACEHOLDER = '搜索全部场景';
+/** 搜索框无障碍名（文档未规定 → 本票取值）。 */
+const HELP_SEARCH_ARIA = '搜索全部场景';
+/** 清空按钮字形（F3 `#sClear` 逐字：`✕`）与无障碍名。 */
+const HELP_CLEAR_LABEL = '✕';
+const HELP_CLEAR_ARIA = '清空搜索';
+/** 命中计数文案（F3 `#hitC` 逐字：`匹配 N 个场景`）。 */
+const HELP_HIT_PREFIX = '匹配 ';
+const HELP_HIT_SUFFIX = ' 个场景';
+/** 零命中文案（F3 `#emptyC` 逐字）。 */
+const HELP_HIT_EMPTY = '没有找到相关场景,换个词试试～';
+
 /** 冻结签名：`buildSharedHelpersJs(input?: SharedHelpersInput): string`。
  *
  *  产出恒为**非空**、**经典 script** 作用域可跑的 IIFE（无 `import`／`export`／顶层 `await`），
@@ -490,12 +542,35 @@ function helpersDataAttr(input?: SharedHelpersInput): string {
  *  `maxStack`／`timeoutMs`／移动端收窄取冻结常量；④ 关闭按钮。
  *  产出文本里的文案／数值**全部**取自冻结常量（不产第二份真相）。
  *  注：`execCommand` 兜底用临时 textarea 的两个内联定位属性（`position`／`left`），属临时节点
- *  定位而非控件样式，不构成第二份样式常量。 */
+ *  定位而非控件样式，不构成第二份样式常量。
+ *
+ *  **#88 S4 追加（HELP 速查台运行时增强；文档无规定 → 本文记账）**：全部挂进**既有 `boot()`**、
+ *  共用**既有幂等 marker**（`MARKER_SEL` ＋ `querySelector` 早退），**不新增第二个标记**；每一项都
+ *  先判 HELP 壳是否在页面（helpers 被所有技能页面共享，非 HELP 页逐项早退、零副作用）：
+ *  - **卡级复制按钮**（`card-copy`）：每张场景卡的**卡头**注入 1 个按钮，`actionId`／文案恒读
+ *    `HELP_COPY_ACTIONS.prompt`，`dataAttr` 取同卡 Sheet 内 prompt 按钮的原文（＝该卡 `<pre>` 逐字），
+ *    复用上面的 `[ACTION_ID_ATTR]` 委派（零新增监听、零契约变更）；卡内已有该类即跳过（幂等）。
+ *  - **搜索**（`tab-search` ＋ `tab-search-input` ＋ `tab-search-clear` ＋ `page-hitcount`）：跨分组过滤卡片、
+ *    `<mark class="card-mark">` 高亮命中、自动展开命中卡片的 Sheet 与子功能组、命中计数、
+ *    清空复原、`Enter` 在命中分组页间跳页（自动跳第一个命中页）。
+ *  - **Sheet 参数实时预览**：`editable_fields` 的静态值换成输入框，输入即重组
+ *    「prompt ＋ 空行 ＋ `label: value` 行」（F3 `buildPrompt` 语义），并同步 prompt／params 复制按钮的
+ *    `dataAttr`（否则复制到的是编辑前的旧文本）。
+ *  - **回到顶部**（`btn-backtop`，`id="backTop"`，H-19）：`scrollTop > 400` 加 `-show`，点击平滑回顶。
+ *  纯度：只用 `document.*`（含只读 `document.scrollingElement`）＋ 既有只读 `window.matchMedia`；
+ *  不向 `window.<id>`／`globalThis.<id>` 赋值、不引 `node:`、不用 `classList`（类名走 `className` 字符串
+ *  增删，兼容 `style.test.mjs` T28 的「动效纯 CSS」断言）、不产内联 `on*`。 */
 export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
   const prefix = helpersPrefix(input);
   const dataAttr = helpersDataAttr(input);
   const markerAttr = 'data-' + prefix.replace(/-+$/, '') + '-helpers';
   const markerSelector = '[' + markerAttr + '="1"]';
+  // #88 S4：HELP 壳命名空间（缺省 `ilife-help-shell`；`prefix` 覆盖时随动，不残留缺省前缀）。
+  const shellClass = prefix + helpShellSlug();
+  const shellPart = (suffix: string): string => shellClass + '-' + suffix;
+  const promptAttr = 'data-' + prefix.replace(/-+$/, '') + '-help-prompt';
+  const copyAction = HELP_COPY_ACTIONS.prompt;
+  const paramsAction = HELP_COPY_ACTIONS.params;
   const lines: string[] = [
     '(function () {',
     "  'use strict';",
@@ -520,6 +595,50 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '  var MAX_STACK = ' + TOAST_DEFAULTS.maxStack + ';',
     '  var MOBILE_MAX_STACK = ' + TOAST_DEFAULTS.mobileMaxStack + ';',
     '  var MOBILE_MAX_PX = ' + TOAST_DEFAULTS.mobileMaxPx + ';',
+    '  var LF = String.fromCharCode(10);',
+    '  var LF2 = LF + LF;',
+    // #88 S4：HELP 速查台类名／选择器（同一命名空间，逐条由 `shellClass` 派生）
+    '  var SHELL_SEL = ' + jsStr('.' + shellClass) + ';',
+    '  var CARD_CLASS = ' + jsStr(shellPart('card')) + ';',
+    '  var CARD_TOP_CLASS = ' + jsStr(shellPart('card-top')) + ';',
+    '  var CARD_COPY_CLASS = ' + jsStr(shellPart('card-copy')) + ';',
+    '  var CARD_MARK_CLASS = ' + jsStr(shellPart('card-mark')) + ';',
+    '  var CARD_HIDDEN_CLASS = ' + jsStr(shellPart('card-hidden')) + ';',
+    '  var SHEET_CLASS = ' + jsStr(shellPart('sheet')) + ';',
+    '  var PROMPT_CLASS = ' + jsStr(shellPart('prompt')) + ';',
+    '  var PROMPT_ATTR = ' + jsStr(promptAttr) + ';',
+    '  var FIELD_CLASS = ' + jsStr(shellPart('field')) + ';',
+    '  var FIELD_LABEL_CLASS = ' + jsStr(shellPart('field-label')) + ';',
+    '  var FIELD_VALUE_CLASS = ' + jsStr(shellPart('field-value')) + ';',
+    '  var FIELD_HINT_CLASS = ' + jsStr(shellPart('field-hint')) + ';',
+    '  var FIELD_INPUT_CLASS = ' + jsStr(shellPart('field-input')) + ';',
+    '  var TAB_BAR_CLASS = ' + jsStr(shellPart('tab-bar')) + ';',
+    '  var TAB_INPUT_CLASS = ' + jsStr(shellPart('tab-input')) + ';',
+    '  var SEARCH_BOX_CLASS = ' + jsStr(shellPart('tab-search')) + ';',
+    '  var SEARCH_INPUT_CLASS = ' + jsStr(shellPart('tab-search-input')) + ';',
+    '  var SEARCH_CLEAR_CLASS = ' + jsStr(shellPart('tab-search-clear')) + ';',
+    '  var HITCOUNT_CLASS = ' + jsStr(shellPart('page-hitcount')) + ';',
+    '  var PAGE_CLASS = ' + jsStr(shellPart('page')) + ';',
+    '  var SUBGROUP_CLASS = ' + jsStr(shellPart('subgroup')) + ';',
+    '  var SUBGROUP_HIDDEN_CLASS = ' + jsStr(shellPart('subgroup-hidden')) + ';',
+    '  var CLI_CLASS = ' + jsStr(shellPart('cli')) + ';',
+    '  var BACKTOP_CLASS = ' + jsStr(shellPart('btn-backtop')) + ';',
+    '  var BACKTOP_SHOW_CLASS = ' + jsStr(shellPart('btn-backtop-show')) + ';',
+    '  var BACKTOP_ID = ' + jsStr(HELP_BACKTOP_ID) + ';',
+    '  var BACKTOP_MIN_Y = ' + HELP_BACKTOP_MIN_Y + ';',
+    '  var BACKTOP_LABEL = ' + jsStr(HELP_BACKTOP_LABEL) + ';',
+    '  var BACKTOP_ARIA = ' + jsStr(HELP_BACKTOP_ARIA) + ';',
+    '  var SEARCH_PLACEHOLDER = ' + jsStr(HELP_SEARCH_PLACEHOLDER) + ';',
+    '  var SEARCH_ARIA = ' + jsStr(HELP_SEARCH_ARIA) + ';',
+    '  var CLEAR_LABEL = ' + jsStr(HELP_CLEAR_LABEL) + ';',
+    '  var CLEAR_ARIA = ' + jsStr(HELP_CLEAR_ARIA) + ';',
+    '  var HIT_PREFIX = ' + jsStr(HELP_HIT_PREFIX) + ';',
+    '  var HIT_SUFFIX = ' + jsStr(HELP_HIT_SUFFIX) + ';',
+    '  var HIT_EMPTY = ' + jsStr(HELP_HIT_EMPTY) + ';',
+    '  var COPY_ACTION = ' + jsStr(copyAction.actionId) + ';',
+    '  var COPY_LABEL = ' + jsStr(copyAction.label) + ';',
+    '  var PARAMS_ACTION = ' + jsStr(paramsAction.actionId) + ';',
+    '  var searchTerm = "";',
     '',
     '  function boot() {',
     '    if (!document.body) return;',
@@ -529,6 +648,7 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    marker.hidden = true;',
     '    document.body.appendChild(marker);',
     '    document.addEventListener("click", onClick);',
+    '    initHelpShell();',
     '  }',
     '',
     '  function onClick(ev) {',
@@ -635,6 +755,312 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    setTimeout(function () {',
     '      if (box.parentNode) box.parentNode.removeChild(box);',
     '    }, TIMEOUT_MS);',
+    '  }',
+    '',
+    // ── #88 S4：HELP 速查台运行时增强（见上方产出内容契约的记账；全部由既有 boot() 调用） ──
+    '  function initHelpShell() {',
+    '    var shell = document.querySelector(SHELL_SEL);',
+    '    if (!shell) return;',
+    '    var cards = allOf(shell, "." + CARD_CLASS);',
+    '    if (cards.length === 0) return;',
+    '    injectCardCopy(cards);',
+    '    initSheetPreview(cards);',
+    '    initSearch(shell, cards);',
+    '    initBackTop();',
+    '  }',
+    '',
+    '  function allOf(root, sel) {',
+    '    return Array.prototype.slice.call(root.querySelectorAll(sel));',
+    '  }',
+    '',
+    '  function attrSel(name, value) {',
+    '    return "[" + name + "=\\"" + value + "\\"]";',
+    '  }',
+    '',
+    '  function hasClass(el, name) {',
+    '    return (" " + el.className + " ").indexOf(" " + name + " ") > -1;',
+    '  }',
+    '',
+    '  function addClass(el, name) {',
+    '    if (hasClass(el, name)) return;',
+    '    el.className = el.className ? el.className + " " + name : name;',
+    '  }',
+    '',
+    '  function removeClass(el, name) {',
+    '    if (!el.className) return;',
+    '    var parts = el.className.split(" ");',
+    '    var kept = [];',
+    '    for (var i = 0; i < parts.length; i++) { if (parts[i] && parts[i] !== name) kept.push(parts[i]); }',
+    '    el.className = kept.join(" ");',
+    '  }',
+    '',
+    '  /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，',
+    '     文本取同卡 Sheet 内 prompt 按钮的 data-t（＝该卡 <pre> 逐字）→ 复用既有委派。 */',
+    '  function injectCardCopy(cards) {',
+    '    for (var i = 0; i < cards.length; i++) {',
+    '      var card = cards[i];',
+    '      if (card.querySelector("." + CARD_COPY_CLASS)) continue;',
+    '      var src = card.querySelector(attrSel(ACTION_ATTR, COPY_ACTION));',
+    '      if (!src) continue;',
+    '      var text = src.getAttribute(TEXT_ATTR);',
+    '      if (text === null) continue;',
+    '      var btn = document.createElement("button");',
+    '      btn.type = "button";',
+    '      btn.className = CARD_COPY_CLASS;',
+    '      btn.textContent = COPY_LABEL;',
+    '      btn.setAttribute(ACTION_ATTR, COPY_ACTION);',
+    '      btn.setAttribute(TEXT_ATTR, text);',
+    '      var head = card.querySelector("." + CARD_TOP_CLASS);',
+    '      if (head) head.appendChild(btn); else card.insertBefore(btn, card.firstChild);',
+    '    }',
+    '  }',
+    '',
+    '  /* Sheet 参数实时预览：静态值换输入框，输入即重组「prompt ＋ 空行 ＋ label: value 行」。 */',
+    '  function initSheetPreview(cards) {',
+    '    for (var i = 0; i < cards.length; i++) {',
+    '      var card = cards[i];',
+    '      var pre = card.querySelector("." + PROMPT_CLASS);',
+    '      if (!pre) continue;',
+    '      if (pre.getAttribute(PROMPT_ATTR) === null) pre.setAttribute(PROMPT_ATTR, pre.textContent);',
+    '      var fields = allOf(card, "." + FIELD_CLASS);',
+    '      for (var j = 0; j < fields.length; j++) bindField(card, fields[j]);',
+    '    }',
+    '  }',
+    '',
+    '  function bindField(card, field) {',
+    '    if (field.querySelector("." + FIELD_INPUT_CLASS)) return;',
+    '    var value = field.querySelector("." + FIELD_VALUE_CLASS);',
+    '    var input = document.createElement("input");',
+    '    input.type = "text";',
+    '    input.className = FIELD_INPUT_CLASS;',
+    '    input.value = value ? value.textContent : "";',
+    '    input.setAttribute("value", input.value);',
+    '    var hint = field.querySelector("." + FIELD_HINT_CLASS);',
+    '    if (hint) input.setAttribute("placeholder", hint.textContent);',
+    '    input.addEventListener("input", function () { refreshPreview(card); });',
+    '    if (value && value.parentNode === field) field.replaceChild(input, value);',
+    '    else field.appendChild(input);',
+    '  }',
+    '',
+    '  function refreshPreview(card) {',
+    '    var pre = card.querySelector("." + PROMPT_CLASS);',
+    '    if (!pre) return;',
+    '    var base = pre.getAttribute(PROMPT_ATTR);',
+    '    if (base === null) return;',
+    '    var lines = fieldLines(card);',
+    '    var text = lines.length > 0 ? base + LF2 + lines.join(LF) : base;',
+    '    pre.textContent = text;',
+    '    syncCopyText(card, text, lines);',
+    '    if (searchTerm !== "") markCard(card, searchTerm);',
+    '  }',
+    '',
+    '  function fieldLines(card) {',
+    '    var fields = allOf(card, "." + FIELD_CLASS);',
+    '    var lines = [];',
+    '    for (var i = 0; i < fields.length; i++) {',
+    '      var input = fields[i].querySelector("." + FIELD_INPUT_CLASS);',
+    '      var labelEl = fields[i].querySelector("." + FIELD_LABEL_CLASS);',
+    '      var label = labelEl ? labelEl.textContent : "";',
+    '      var raw = input ? input.value : "";',
+    '      var val = raw.replace(/^\\s+|\\s+$/g, "");',
+    '      if (val !== "") lines.push(label + ": " + val);',
+    '    }',
+    '    return lines;',
+    '  }',
+    '',
+    '  /* 复制按钮文本同步：prompt 目标（卡头 ＋ Sheet 内）＝ 预览文本；params 目标＝label: value 行，',
+    '     无字段时回落该卡 CLI 文本（与冻结壳 paramsText 同口径）。 */',
+    '  function syncCopyText(card, text, lines) {',
+    '    var buttons = allOf(card, "[" + ACTION_ATTR + "]");',
+    '    for (var i = 0; i < buttons.length; i++) {',
+    '      var id = buttons[i].getAttribute(ACTION_ATTR);',
+    '      if (id === COPY_ACTION) buttons[i].setAttribute(TEXT_ATTR, text);',
+    '      else if (id === PARAMS_ACTION) buttons[i].setAttribute(TEXT_ATTR, lines.length > 0 ? lines.join(LF) : cliTextOf(card));',
+    '    }',
+    '  }',
+    '',
+    '  function cliTextOf(card) {',
+    '    var cli = card.querySelector("." + CLI_CLASS);',
+    '    return cli ? cli.textContent : "";',
+    '  }',
+    '',
+    '  /* 搜索：过滤 ＋ <mark> 高亮 ＋ 自动展开 ＋ 命中计数 ＋ 清空 ＋ 跳页。 */',
+    '  function initSearch(shell, cards) {',
+    '    var tabBar = shell.querySelector("." + TAB_BAR_CLASS);',
+    '    if (!tabBar || !tabBar.parentNode) return;',
+    '    if (shell.querySelector("." + SEARCH_BOX_CLASS)) return;',
+    '    var box = document.createElement("div");',
+    '    box.className = SEARCH_BOX_CLASS;',
+    '    var input = document.createElement("input");',
+    '    input.type = "search";',
+    '    input.className = SEARCH_INPUT_CLASS;',
+    '    input.setAttribute("placeholder", SEARCH_PLACEHOLDER);',
+    '    input.setAttribute("aria-label", SEARCH_ARIA);',
+    '    input.setAttribute("autocomplete", "off");',
+    '    var clear = document.createElement("button");',
+    '    clear.type = "button";',
+    '    clear.className = SEARCH_CLEAR_CLASS;',
+    '    clear.textContent = CLEAR_LABEL;',
+    '    clear.setAttribute("aria-label", CLEAR_ARIA);',
+    '    var count = document.createElement("span");',
+    '    count.className = HITCOUNT_CLASS;',
+    '    count.setAttribute("role", "status");',
+    '    box.appendChild(input);',
+    '    box.appendChild(clear);',
+    '    box.appendChild(count);',
+    '    tabBar.parentNode.insertBefore(box, tabBar.nextSibling);',
+    '    var state = { sheets: [], subgroups: [], pages: [], index: 0 };',
+    '    input.addEventListener("input", function () { runSearch(shell, cards, input, count, state); });',
+    '    input.addEventListener("keydown", function (ev) {',
+    '      if (ev.key !== "Enter") return;',
+    '      ev.preventDefault();',
+    '      if (state.pages.length === 0) return;',
+    '      state.index = (state.index + 1) % state.pages.length;',
+    '      jumpTo(state.pages[state.index]);',
+    '    });',
+    '    clear.addEventListener("click", function () {',
+    '      input.value = "";',
+    '      runSearch(shell, cards, input, count, state);',
+    '      input.focus();',
+    '    });',
+    '  }',
+    '',
+    '  function runSearch(shell, cards, input, count, state) {',
+    '    var term = input.value.replace(/^\\s+|\\s+$/g, "").toLowerCase();',
+    '    resetSearch(shell, cards, state);',
+    '    searchTerm = term;',
+    '    if (term === "") { count.textContent = ""; state.pages = []; state.index = 0; return; }',
+    '    var hits = [];',
+    '    var i;',
+    '    for (i = 0; i < cards.length; i++) {',
+    '      var card = cards[i];',
+    '      if (card.textContent.toLowerCase().indexOf(term) < 0) { addClass(card, CARD_HIDDEN_CLASS); continue; }',
+    '      hits.push(card);',
+    '      markCard(card, term);',
+    '      var sheet = card.querySelector("." + SHEET_CLASS);',
+    '      if (sheet && !sheet.open) { sheet.open = true; state.sheets.push(sheet); }',
+    '    }',
+    '    var subgroups = allOf(shell, "." + SUBGROUP_CLASS);',
+    '    for (i = 0; i < subgroups.length; i++) {',
+    '      var inner = allOf(subgroups[i], "." + CARD_CLASS);',
+    '      var visible = false;',
+    '      for (var j = 0; j < inner.length; j++) { if (hits.indexOf(inner[j]) > -1) { visible = true; break; } }',
+    '      if (visible) { if (!subgroups[i].open) { subgroups[i].open = true; state.subgroups.push(subgroups[i]); } }',
+    '      else addClass(subgroups[i], SUBGROUP_HIDDEN_CLASS);',
+    '    }',
+    '    var pages = allOf(shell, "." + PAGE_CLASS);',
+    '    var hitPages = [];',
+    '    for (i = 0; i < pages.length; i++) {',
+    '      var pageCards = allOf(pages[i], "." + CARD_CLASS);',
+    '      for (var k = 0; k < pageCards.length; k++) { if (hits.indexOf(pageCards[k]) > -1) { hitPages.push(pages[i]); break; } }',
+    '    }',
+    '    state.pages = hitPages;',
+    '    state.index = 0;',
+    '    count.textContent = hits.length > 0 ? HIT_PREFIX + hits.length + HIT_SUFFIX : HIT_EMPTY;',
+    '    jumpTo(hitPages[0]);',
+    '  }',
+    '',
+    '  function resetSearch(shell, cards, state) {',
+    '    var i;',
+    '    for (i = 0; i < cards.length; i++) {',
+    '      removeClass(cards[i], CARD_HIDDEN_CLASS);',
+    '      unmarkCard(cards[i]);',
+    '    }',
+    '    for (i = 0; i < state.sheets.length; i++) state.sheets[i].open = false;',
+    '    state.sheets = [];',
+    '    for (i = 0; i < state.subgroups.length; i++) state.subgroups[i].open = false;',
+    '    state.subgroups = [];',
+    '    var subgroups = allOf(shell, "." + SUBGROUP_CLASS);',
+    '    for (i = 0; i < subgroups.length; i++) removeClass(subgroups[i], SUBGROUP_HIDDEN_CLASS);',
+    '  }',
+    '',
+    '  function jumpTo(page) {',
+    '    if (!page) return;',
+    '    var radio = page.querySelector("." + TAB_INPUT_CLASS);',
+    '    if (radio && radio.checked !== true) radio.checked = true;',
+    '  }',
+    '',
+    '  function markCard(card, term) {',
+    '    unmarkCard(card);',
+    '    var nodes = [];',
+    '    collectText(card, nodes);',
+    '    for (var i = 0; i < nodes.length; i++) wrapTerm(nodes[i], term);',
+    '  }',
+    '',
+    '  function unmarkCard(card) {',
+    '    var marks = allOf(card, "." + CARD_MARK_CLASS);',
+    '    for (var i = 0; i < marks.length; i++) {',
+    '      var parent = marks[i].parentNode;',
+    '      if (!parent) continue;',
+    '      parent.replaceChild(document.createTextNode(marks[i].textContent), marks[i]);',
+    '      if (typeof parent.normalize === "function") parent.normalize();',
+    '    }',
+    '  }',
+    '',
+    '  function collectText(root, out) {',
+    '    var kids = root.childNodes;',
+    '    for (var i = 0; i < kids.length; i++) {',
+    '      var node = kids[i];',
+    '      if (node.nodeType === 3) { if (node.nodeValue) out.push(node); continue; }',
+    '      if (node.nodeType !== 1) continue;',
+    '      if (hasClass(node, CARD_MARK_CLASS)) continue;',
+    '      var tag = node.tagName;',
+    '      if (tag === "SCRIPT" || tag === "STYLE" || tag === "TEXTAREA" || tag === "INPUT") continue;',
+    '      collectText(node, out);',
+    '    }',
+    '  }',
+    '',
+    '  function wrapTerm(node, term) {',
+    '    var rest = node.nodeValue;',
+    '    var at = rest.toLowerCase().indexOf(term);',
+    '    if (at < 0) return;',
+    '    var frag = document.createDocumentFragment();',
+    '    while (at > -1) {',
+    '      if (at > 0) frag.appendChild(document.createTextNode(rest.slice(0, at)));',
+    '      var mark = document.createElement("mark");',
+    '      mark.className = CARD_MARK_CLASS;',
+    '      mark.textContent = rest.slice(at, at + term.length);',
+    '      frag.appendChild(mark);',
+    '      rest = rest.slice(at + term.length);',
+    '      at = rest.toLowerCase().indexOf(term);',
+    '    }',
+    '    if (rest !== "") frag.appendChild(document.createTextNode(rest));',
+    '    if (node.parentNode) node.parentNode.replaceChild(frag, node);',
+    '  }',
+    '',
+    '  /* 回到顶部（H-19）：scrollTop > BACKTOP_MIN_Y 才加 -show；点击平滑回顶。 */',
+    '  function initBackTop() {',
+    '    if (document.querySelector("." + BACKTOP_CLASS)) return;',
+    '    var btn = document.createElement("button");',
+    '    btn.type = "button";',
+    '    btn.id = BACKTOP_ID;',
+    '    btn.className = BACKTOP_CLASS;',
+    '    btn.textContent = BACKTOP_LABEL;',
+    '    btn.setAttribute("aria-label", BACKTOP_ARIA);',
+    '    btn.setAttribute("title", BACKTOP_ARIA);',
+    '    btn.addEventListener("click", function () {',
+    '      var root = scrollRoot();',
+    '      if (!root) return;',
+    '      if (typeof root.scrollTo === "function") {',
+    '        try { root.scrollTo({ top: 0, behavior: "smooth" }); return; } catch (err) { root.scrollTop = 0; return; }',
+    '      }',
+    '      root.scrollTop = 0;',
+    '    });',
+    '    document.body.appendChild(btn);',
+    '    document.addEventListener("scroll", syncBackTop, true);',
+    '    syncBackTop();',
+    '  }',
+    '',
+    '  function scrollRoot() {',
+    '    return document.scrollingElement || document.documentElement || document.body;',
+    '  }',
+    '',
+    '  function syncBackTop() {',
+    '    var btn = document.querySelector("." + BACKTOP_CLASS);',
+    '    if (!btn) return;',
+    '    var root = scrollRoot();',
+    '    var y = root ? root.scrollTop : 0;',
+    '    if (y > BACKTOP_MIN_Y) addClass(btn, BACKTOP_SHOW_CLASS); else removeClass(btn, BACKTOP_SHOW_CLASS);',
     '  }',
     '',
     '  if (document.body) boot();',
