@@ -60,6 +60,7 @@
 
 - **消失 5 条＝基线的 5 条抖动项**（`#41 M3`／`#76`／`#80`／`helpers JS ≤820px`／`③ check-combos`），与 `BASELINE.md:92` 的抖动清单逐字一致；口径只要求「新增=0」。
 - 模式纪律：一律 canonical `pnpm test`（`BASELINE.md:95-99`：直跑 ≠ canonical）。
+- **HEAD 复验**（commit `bf43324` 之后、持锁）：`FINAL_BUILD=0`／靶向 `tests 23 pass 23 fail 0`（`FINAL_TARGETED=0`）／`RESULT: 44/44 fails=0`（`FINAL_PROBE=0`）／`git status --short` 只剩与本票无关的既有未跟踪目录（`.tmp-*`／`docs/research/t123-release-evidence/`）。
 
 ## 3. 变异自证（红 → 还原 → 绿 ＋ sha256）
 
