@@ -60,6 +60,16 @@ import {
   buildTodayWaterDoc,
 } from '../render/nutritionPortDocs.js';
 import {
+  buildBatchImportPreviewView, buildCalorieTrendView, buildLintHealthView,
+  buildLongTrendView, buildNutritionAnalysisView, buildProcessProgressView,
+  buildReviewTemplateView, buildSixFactorsView,
+} from '../render/trendMiscPort.js';
+import {
+  buildBatchImportPreviewDoc, buildCalorieTrendDoc, buildLintHealthDoc,
+  buildLongTrendDoc, buildNutritionAnalysisDoc, buildProcessProgressDoc,
+  buildReviewTemplateDoc, buildSixFactorsDoc,
+} from '../render/trendMiscPortDocs.js';
+import {
   buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
   buildGoalPredictDoc, buildPredictDoc,
 } from '../render/trendDocs.js';
@@ -422,6 +432,93 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
       });
       return { data: { metrics }, html: buildTodayWaterDoc(v) };
+    }
+    // #113 · 趋势 2＋其他 6 移植 8 键（t71 需移植八模板；envelope stat metrics 只收确定数字）。
+    case 'calorie.view.calorie-trend': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildCalorieTrendView(db, start, end);
+      const s = v.data.summary;
+      const metrics = nums({
+        avg: s.avg, target: s.target, trendValue: s.trendValue,
+        startAvg: s.startAvg, endAvg: s.endAvg, weekdayAvg: s.weekdayAvg,
+        weekendAvg: s.weekendAvg, weekendDiff: s.weekendDiff,
+        compliantDays: s.compliantDays, complianceRate: s.complianceRate,
+      });
+      return { data: { metrics }, html: buildCalorieTrendDoc(v) };
+    }
+    case 'calorie.view.long-trend': {
+      const end = optStr(params, 'end') ?? latestFoodDate(db) ?? todayISO();
+      assertISO(end, 'end');
+      const v = buildLongTrendView(db, optStr(params, 'group'), optStr(params, 'window'), end);
+      const metrics = nums({
+        windowDays: v.windowDays, avgCalorie: v.avgCalorie, weightChange: v.weightChange,
+      });
+      return { data: { metrics }, html: buildLongTrendDoc(v) };
+    }
+    case 'calorie.view.nutrition-analysis': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildNutritionAnalysisView(db, start, end);
+      const metrics = nums({
+        days: v.days, totalCalorie: v.totalCalorie,
+        proteinG: v.proteinG, proteinPct: v.proteinPct,
+        carbG: v.carbG, carbPct: v.carbPct, fatG: v.fatG, fatPct: v.fatPct,
+        fiberAvg: v.fiberAvg, sodiumAvg: v.sodiumAvg, sugarAvg: v.sugarAvg,
+        adviceCount: v.advice.length,
+      });
+      return { data: { metrics }, html: buildNutritionAnalysisDoc(v) };
+    }
+    case 'calorie.view.six-factors': {
+      const date = optStr(params, 'date') ?? latestFoodDate(db) ?? todayISO();
+      assertISO(date, 'date');
+      const v = buildSixFactorsView(db, date);
+      const metrics = nums({
+        score: v.score,
+        calorie: v.factors[0]?.ok ? 1 : 0,
+        protein: v.factors[1]?.ok ? 1 : 0,
+        water: v.factors[2]?.ok ? 1 : 0,
+        exercise: v.factors[3]?.ok ? 1 : 0,
+        weigh: v.factors[4]?.ok ? 1 : 0,
+        meals: v.factors[5]?.ok ? 1 : 0,
+      });
+      return { data: { metrics }, html: buildSixFactorsDoc(v) };
+    }
+    case 'calorie.view.lint-health': {
+      const v = buildLintHealthView(db);
+      const metrics = nums({
+        issueCount: v.issueCount,
+        unmatched: v.checks[0]?.count,
+        badCalorie: v.checks[1]?.count,
+        future: v.checks[2]?.count,
+        duplicate: v.checks[3]?.count,
+      });
+      return { data: { metrics }, html: buildLintHealthDoc(v) };
+    }
+    case 'calorie.view.batch-import-preview': {
+      const v = buildBatchImportPreviewView(db, params['items']);
+      const metrics = nums({
+        total: v.total, matched: v.matched, missing: v.missing, totalCalorie: v.totalCalorie,
+      });
+      return { data: { metrics }, html: buildBatchImportPreviewDoc(v) };
+    }
+    case 'calorie.view.process-progress': {
+      const end = optStr(params, 'end') ?? latestFoodDate(db) ?? todayISO();
+      assertISO(end, 'end');
+      const v = buildProcessProgressView(db, end);
+      const metrics = nums({
+        hasPlan: v.hasPlan ? 1 : 0, plannedDays: v.plannedDays,
+        sessions7d: v.sessions7d, minutes7d: v.minutes7d,
+      });
+      return { data: { metrics }, html: buildProcessProgressDoc(v) };
+    }
+    case 'calorie.view.review-template': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildReviewTemplateView(db, start, end);
+      const metrics = nums({
+        days: v.days, meals: v.meals, avgCalorie: v.avgCalorie,
+        sessions: v.sessions, minutes: v.minutes, weightChange: v.weightChange,
+        points: v.points.length,
+      });
+      return { data: { metrics }, html: buildReviewTemplateDoc(v) };
     }
     case 'calorie.view.goal': {
       const { start, end } = defaultRange(db, params);
