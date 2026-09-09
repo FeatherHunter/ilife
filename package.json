@@ -17,6 +17,7 @@
     "snapshot:html": "node tooling/skill-html-snapshot.mjs --write",
     "snapshot:html:check": "node tooling/skill-html-snapshot.mjs --check",
     "snapshot:html:list": "node tooling/skill-html-snapshot.mjs --list",
+    "help:examples:check": "node packages/skill-calorie/scripts/check-examples.mjs",
     "boundaries": "node tooling/check-boundaries.mjs",
     "publish:pre": "node tooling/check-publish.mjs --pre --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
     "publish:tarball": "node tooling/check-publish.mjs --tarball --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",

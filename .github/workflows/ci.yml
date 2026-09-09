@@ -27,6 +27,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # #99：SKILL.md「例」列逐行可执行门（99 行 spawn 真 CLI 断言 exit 0；需先 build 出 dist/）
+      #   判据与 #81「exec ⟺ exit 0」同源：同一份标准种子库 docs/research/t81-seed.mjs
+      - run: pnpm help:examples:check
       - run: pnpm doctor
       - run: pnpm test
       - run: pnpm boundaries
