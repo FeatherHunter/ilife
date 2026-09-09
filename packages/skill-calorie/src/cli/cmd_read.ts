@@ -140,7 +140,7 @@ function latestFoodDate(db: DatabaseSync): string | null {
   }
 }
 
-function defaultRange(db: DatabaseSync, params: Record<string, unknown>): { start: string; end: string } {
+function defaultRange(db: DatabaseSync, params: Record<string, unknown>, defDays = 7): { start: string; end: string } {
   let end = optStr(params, 'end') ?? optStr(params, 'date') ?? optStr(params, 'today') ?? undefined;
   let start = optStr(params, 'start') ?? undefined;
   if (end) assertISO(end, 'end');
@@ -156,7 +156,7 @@ function defaultRange(db: DatabaseSync, params: Record<string, unknown>): { star
     if (start > (end as string)) fail(2, 'start 不得晚于 end');
     return { start, end: end as string };
   }
-  return { start: shiftISODate(end as string, -6), end: end as string };
+  return { start: shiftISODate(end as string, -(defDays - 1)), end: end as string };
 }
 
 /** 本地 envelope 形状校验（镜像 link-core assertShapeData，不运行时 import）。 */
@@ -590,7 +590,8 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { metrics }, html: renderGoalExpiringHtml(v) };
     }
     case 'calorie.view.goal-predict': {
-      const { start, end } = defaultRange(db, params);
+      // #103 G2 · 目标预测需 ≥14 条体重记录（simulate SIM_MIN_DAYS=14），7 天默认窗结构性不可达 → 默认 14 天。
+      const { start, end } = defaultRange(db, params, 14);
       const v = buildGoalPredictView(db, start, end);
       const metrics = nums({ targetKg: v.targetKg, current: v.current, daysLeft: v.daysLeft, ratePerWeek: v.ratePerWeek, feasible: v.feasible ? 1 : 0 });
       return { data: { metrics }, html: renderGoalPredictHtml(v) };
@@ -606,7 +607,8 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { metrics }, html: renderGoalVsActualHtml(v) };
     }
     case 'calorie.view.predict': {
-      const { start, end } = defaultRange(db, params);
+      // #103 G2 · 同 goal-predict：默认 14 天，否则缺省调用恒走 missing-data。
+      const { start, end } = defaultRange(db, params, 14);
       const horizonDays = optNum(params, 'horizonDays') ?? optNum(params, 'days') ?? 30;
       const v = buildPredictView(db, start, end, horizonDays as number);
       const metrics = nums({ current: v.current, ratePerWeek: v.ratePerWeek, forecastValue: v.forecastValue, forecastLo: v.forecastLo, forecastHi: v.forecastHi, horizonDays: v.horizonDays });
