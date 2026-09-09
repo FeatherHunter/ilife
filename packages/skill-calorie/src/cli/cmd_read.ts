@@ -33,22 +33,26 @@ import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } fr
 import { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from '../render/insightPlate.js';
 import { buildProfileView } from '../render/profilePlate.js';
 import { buildCombinedAnalysis, buildDeficitPlate, buildDietReview } from '../render/analysisPlate.js';
+import { dietFoodRanking, dietMacroRatio } from '../analysis/diet.js';
+import {
+  buildAllRankingsDoc, buildDedupeDoc, buildDietReviewDoc, buildHealthDoc, buildLibraryDoc,
+  buildRankingDoc, buildSearchDoc, buildTodayDietDoc, buildViewDietDoc,
+} from '../render/dietDocs.js';
 import { buildHealthPlate } from '../render/health.js';
 import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
 import { buildProductLibrary, buildProductSearch, buildProductStats } from '../render/library.js';
 import { buildCompareData, buildGalleryData, buildGifTask, buildViewerData } from '../render/photo.js';
 import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
 import {
-  renderCombinedHtml, renderDeficitHtml, renderDietHtml, renderDietReviewHtml, renderExerciseHtml,
+  renderCombinedHtml, renderDeficitHtml, renderExerciseHtml,
   renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
   renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
-  renderGoalStatusHtml, renderGoalHtml, renderHealthHtml, renderHomeHtml, renderProductLibraryHtml,
-  renderProductSearchHtml, renderRankingHtml, renderAllRankingsHtml,
+  renderGoalStatusHtml, renderGoalHtml, renderHomeHtml,
   renderWeightHtml, renderWeightHistoryHtml, renderWeightCompareHtml, renderWeightReviewHtml,
   renderVolatilityHtml, renderBodyCompositionHtml, renderBodyMeasureHtml, renderPlanHtml,
   renderPlanWizardHtml, renderExerciseGoalHtml, renderGoalExpiringHtml, renderGoalPredictHtml,
   renderGoalVsActualHtml, renderPredictHtml, renderAnomalyHtml, renderContraHtml,
-  renderDedupeHtml, renderProfileHtml,
+  renderProfileHtml,
 } from '../render/html.js';
 import { assertStatMetrics } from '../render/envelope.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -230,7 +234,9 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const items = rows.map((r) => ({ id: r.id, date: r.date, time: r.time, food_name: r.food_name, grams: r.grams, calories: r.calories, protein: r.protein, carbs: r.carbs, fat: r.fat }));
       const o = buildDietOverview(db, date, date);
       const dist = buildMealDistribution(db, date);
-      return { data: { items, total: items.length }, html: renderDietHtml(o, dist) };
+      // #108 · 今日饮食全文档（餐次进度＋营养配比＋今日明细；配比无数据即 skip，不编数）。
+      const mt = dietMacroRatio(db, date, date);
+      return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null }) };
     }
     case 'calorie.view.home': {
       const date = optStr(params, 'date') ?? optStr(params, 'today') ?? latestFoodDate(db) ?? todayISO();
@@ -260,6 +266,20 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         if (e instanceof CalorieRenderError && e.code === 'missing-data') dist = zeroMealDistribution(date as string);
         else throw e;
       }
+      // #108 · 窗口明细（逐日 listMeals 去水，上限 100 条并明示截断；单日失败跳过）。
+      const mealRows: Array<{ date: string; time: string | null; food_name: string; grams: number; calories: number; protein: number; carbs: number; fat: number }> = [];
+      for (const d of o.series) {
+        try {
+          for (const r of listMeals(db, d.date)) {
+            if (r.food_name !== '💧水') mealRows.push(r);
+          }
+        } catch {
+          continue;
+        }
+      }
+      const MEAL_CAP = 100;
+      const mealTotal = mealRows.length;
+      const mealSlice = mealRows.slice(0, MEAL_CAP);
       const metrics = nums({
         totalCalories: o.totalCalories, avgCalories: o.avgCalories, calorieGoal: o.calorieGoal,
         loggedDays: o.loggedDays, days: o.days, distTotal: dist.totalCalories,
@@ -268,7 +288,10 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         'meal.晚餐': dist.slices.find((s) => s.meal === '晚餐')?.calories,
         'meal.加餐': dist.slices.find((s) => s.meal === '加餐')?.calories,
       });
-      return { data: { metrics }, html: renderDietHtml(o, dist) };
+      return { data: { metrics }, html: buildViewDietDoc({
+        overview: o, dist, distDate: date as string, days: o.series,
+        meals: mealSlice, mealTotal, mealsTruncated: mealTotal > MEAL_CAP,
+      }) };
     }
     case 'calorie.view.exercise': {
       const { start, end } = defaultRange(db, params);
@@ -374,13 +397,15 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         'meal.晚餐': r.byMeal.find((s) => s.meal === '晚餐')?.totalCalories,
         'meal.加餐': r.byMeal.find((s) => s.meal === '加餐')?.totalCalories,
       });
-      return { data: { metrics }, html: renderDietReviewHtml(r) };
+      // #108 · 复盘全文档（趋势折线＋配比环＋高频 TOP5＋按餐汇总；TOP5 取数失败即空态，不编数）。
+      const fr = dietFoodRanking(db, start, end, 'frequent', 5);
+      return { data: { metrics }, html: buildDietReviewDoc(r, fr.status === 'ok' ? (fr.data ?? null) : null) };
     }
     case 'calorie.view.health': {
       const { start, end } = defaultRange(db, params);
       const h = buildHealthPlate(db, start, end);
       const metrics = nums({ loggedDays: h.loggedDays, avgIntake: h.avgIntake, avgDeficit: h.avgDeficit });
-      return { data: { metrics }, html: renderHealthHtml(h) };
+      return { data: { metrics }, html: buildHealthDoc(h) };
     }
     case 'calorie.view.ranking': {
       const { start, end } = defaultRange(db, params);
@@ -391,11 +416,11 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         const one = buildFoodRankingPlate(db, start, end, category, topN as number);
         const top = one.items[0];
         const metrics = nums({ total: one.items.length, topN: one.topN, topCal: top?.totalCal, topCnt: top?.cnt, topRank: top?.rank });
-        return { data: { metrics }, html: renderRankingHtml(one) };
+        return { data: { metrics }, html: buildRankingDoc(one) };
       }
       const all = buildAllRankings(db, start, end, topN as number);
       const metrics = nums({ okCount: all.okCount, topN: all.topN });
-      return { data: { metrics }, html: renderAllRankingsHtml(all) };
+      return { data: { metrics }, html: buildAllRankingsDoc(all) };
     }
     case 'calorie.view.library': {
       const category = optStr(params, 'category') ?? null;
@@ -404,7 +429,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const lib = buildProductLibrary(db, category, limit as number);
       const stats = buildProductStats(db);
       const metrics = nums({ total: lib.total, statsTotal: stats.total });
-      return { data: { metrics }, html: renderProductLibraryHtml(lib) };
+      return { data: { metrics }, html: buildLibraryDoc(lib, stats.total) };
     }
     case 'calorie.view.search': {
       const keyword = needStr(params, 'keyword');
@@ -412,7 +437,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 100) fail(2, 'limit 须为 1..100 整数');
       const s = buildProductSearch(db, keyword, limit as number);
       const metrics = nums({ total: s.total, limit: limit as number });
-      return { data: { metrics }, html: renderProductSearchHtml(s) };
+      return { data: { metrics }, html: buildSearchDoc(s) };
     }
     case 'calorie.photo.list': {
       const dir = photosDirOf(params);
@@ -630,7 +655,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     case 'calorie.view.dedupe': {
       const v = buildDedupeView(db);
       const metrics = nums({ groupCount: v.groupCount, rowCount: v.rowCount, totalProducts: v.totalProducts });
-      return { data: { metrics }, html: renderDedupeHtml(v) };
+      return { data: { metrics }, html: buildDedupeDoc(v) };
     }
     case 'calorie.view.profile': {
       const v = buildProfileView(db);
