@@ -19,7 +19,9 @@
     "publish:tarball": "node tooling/check-publish.mjs --tarball --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
     "publish:fresh": "node tooling/check-publish.mjs --fresh-tmp --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
     "publish:plan": "node tooling/publish-chain.mjs --plan --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint",
-    "changeset:status": "changeset status"
+    "changeset:status": "changeset status",
+    "gate:run": "node tooling/run-locked.mjs",
+    "gate:audit": "node tooling/check-gate-audit.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",
