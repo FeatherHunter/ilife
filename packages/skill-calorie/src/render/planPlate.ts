@@ -48,7 +48,8 @@ export interface PlanWizardView {
   warnings: string[];
   errorCount: number;
   warningCount: number;
-  insertedCount: number;
+  /** G15 #102 · 纯校验计数（输入计划含的会话数，未写库；原名 insertedCount 名实不符） */
+  validatedCount: number;
   dryRun: true;
 }
 
@@ -68,7 +69,10 @@ export function buildPlanWizardView(plan: unknown, catalog?: unknown): PlanWizar
     cats = catalog as string[];
   }
   const { errors, warnings } = validatePlan(p, cats ? { catalog: cats } : {});
-  return { errors, warnings, errorCount: errors.length, warningCount: warnings.length, insertedCount: 0, dryRun: true };
+  // G15 #102 · 诚实计数：只统计输入含的会话数，不触库（原 insertedCount: 0 恒零且暗示已落库）。
+  let validatedCount = 0;
+  for (const week of p.weeks ?? []) for (const day of week.days ?? []) validatedCount += (day.sessions ?? []).length;
+  return { errors, warnings, errorCount: errors.length, warningCount: warnings.length, validatedCount, dryRun: true };
 }
 
 export interface ExerciseGoalView {

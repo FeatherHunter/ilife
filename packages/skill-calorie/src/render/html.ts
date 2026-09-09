@@ -545,7 +545,7 @@ export function renderPlanWizardHtml(v: PlanWizardView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
     kpi('构建向导', v.errorCount === 0 ? '可落地' : '有硬止', '错误 ' + v.errorCount + ' 警告 ' + v.warningCount) +
-    kpi('dryRun', '不写库', '预览插入 ' + v.insertedCount) +
+    kpi('纯校验', '不写库', '已校验 ' + v.validatedCount + ' 个会话') +
     '</div><div>' + errs + warns + '</div>';
   return pageShell('calorie', 'ilife:calorie:plan-wizard', '构建向导', body);
 }
