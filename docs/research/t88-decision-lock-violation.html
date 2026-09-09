@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#88 决策简报 · 一次「未持锁」过程违规如何处置</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#12161c; --muted:#5b6472; --line:#e3e7ee;
+    --accent:#0a63ce; --accent-soft:#e8f2ff;
+    --danger:#c62828; --danger-soft:#fdecea;
+    --warn:#b26a00; --warn-soft:#fff5e5;
+    --ok:#0f7b52; --ok-soft:#e7f6ef;
+    --code:#f2f4f8;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1116; --card:#161a21; --ink:#e8ecf2; --muted:#9aa4b2; --line:#242a34;
+      --accent:#6aa8ff; --accent-soft:#132033;
+      --danger:#ff8a80; --danger-soft:#2a1512;
+      --warn:#ffc46b; --warn-soft:#2a2011;
+      --ok:#5fd0a0; --ok-soft:#10251c;
+      --code:#1b2028;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px; margin:0 auto; padding:28px 20px 120px}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd{
+    font-family:"SF Mono",Consolas,"Cascadia Mono",monospace;
+    font-size:.88em; background:var(--code); padding:.12em .4em; border-radius:5px;
+    word-break:break-word;
+  }
+  h1{font-size:27px; line-height:1.35; margin:0 0 6px; letter-spacing:-.2px}
+  h2{font-size:19px; margin:44px 0 14px; padding-bottom:9px; border-bottom:1px solid var(--line)}
+  h3{font-size:16px; margin:26px 0 10px}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0; padding-left:22px}
+  li{margin:5px 0}
+  .sub{color:var(--muted); font-size:14px}
+  .eyebrow{
+    display:inline-block; font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:10px;
+  }
+  /* ---- TL;DR ---- */
+  .tldr{
+    background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:12px; padding:18px 20px; box-shadow:var(--shadow); margin:18px 0 8px;
+  }
+  .tldr h2{margin:0 0 12px; border:0; padding:0; font-size:17px}
+  .tldr-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px}
+  .tldr-item{border-left:2px solid var(--line); padding-left:12px}
+  .tldr-item b{display:block; font-size:12.5px; color:var(--muted); font-weight:600; margin-bottom:3px}
+  .tldr-item span{font-size:14.5px}
+  /* ---- badges ---- */
+  .badge{
+    display:inline-block; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:999px;
+    vertical-align:middle; letter-spacing:.02em; white-space:nowrap;
+  }
+  .b-danger{background:var(--danger-soft); color:var(--danger)}
+  .b-warn{background:var(--warn-soft); color:var(--warn)}
+  .b-ok{background:var(--ok-soft); color:var(--ok)}
+  .b-info{background:var(--accent-soft); color:var(--accent)}
+  .b-mute{background:var(--code); color:var(--muted)}
+  /* ---- timeline ---- */
+  .tl{list-style:none; padding:0; margin:16px 0 0; position:relative}
+  .tl:before{content:""; position:absolute; left:11px; top:6px; bottom:6px; width:2px; background:var(--line)}
+  .tl li{position:relative; padding:0 0 20px 38px; margin:0}
+  .tl li:before{
+    content:""; position:absolute; left:5px; top:7px; width:14px; height:14px; border-radius:50%;
+    background:var(--card); border:2px solid var(--line);
+  }
+  .tl li.done:before{background:var(--ok); border-color:var(--ok)}
+  .tl li.now:before{background:var(--accent); border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft)}
+  .tl li.fail:before{background:var(--danger); border-color:var(--danger)}
+  .tl .t{font-weight:600}
+  .tl .d{color:var(--muted); font-size:13.5px}
+  /* ---- cards ---- */
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-top:16px}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+    box-shadow:var(--shadow); display:flex; flex-direction:column;
+  }
+  .card.rec{border-color:var(--ok); box-shadow:0 0 0 2px var(--ok-soft), var(--shadow)}
+  .card h3{margin:0 0 8px; font-size:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .card .body{font-size:14.3px}
+  .card .body p:first-child{margin-top:0}
+  .card dl{margin:12px 0 0; font-size:13.6px}
+  .card dt{font-weight:700; color:var(--muted); margin-top:10px; font-size:12.5px; letter-spacing:.02em}
+  .card dd{margin:3px 0 0}
+  /* ---- callouts ---- */
+  .note{border-radius:10px; padding:13px 16px; margin:14px 0; font-size:14.3px; border:1px solid transparent}
+  .note.danger{background:var(--danger-soft); border-color:var(--danger)}
+  .note.warn{background:var(--warn-soft); border-color:var(--warn)}
+  .note.ok{background:var(--ok-soft); border-color:var(--ok)}
+  .note.info{background:var(--accent-soft); border-color:var(--accent)}
+  .note b:first-child{display:block; margin-bottom:4px}
+  /* ---- table ---- */
+  .tblwrap{overflow-x:auto; margin:14px 0; border:1px solid var(--line); border-radius:10px; background:var(--card)}
+  table{border-collapse:collapse; width:100%; font-size:14px; min-width:560px}
+  th,td{padding:10px 13px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+  th{background:var(--code); font-size:12.5px; letter-spacing:.02em; color:var(--muted); font-weight:700; white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  td.num{font-variant-numeric:tabular-nums}
+  .yes{color:var(--ok); font-weight:700}
+  .no{color:var(--danger); font-weight:700}
+  /* ---- score bars ---- */
+  .score{display:flex; align-items:center; gap:10px; margin:6px 0}
+  .score .lbl{width:74px; font-size:13px; color:var(--muted); flex:none}
+  .score .bar{flex:1; height:9px; background:var(--code); border-radius:99px; overflow:hidden}
+  .score .bar i{display:block; height:100%; background:var(--accent); border-radius:99px}
+  .score .val{font-variant-numeric:tabular-nums; font-size:13px; width:44px; text-align:right; flex:none}
+  /* ---- details ---- */
+  details{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:0; margin:12px 0; overflow:hidden}
+  details>summary{cursor:pointer; padding:12px 16px; font-weight:600; font-size:14.3px; list-style:none}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary:before{content:"▸ "; color:var(--muted)}
+  details[open]>summary:before{content:"▾ "}
+  details .inner{padding:0 16px 16px; font-size:14px}
+  /* ---- misc ---- */
+  .kv{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:14px; margin:12px 0}
+  .kv dt{color:var(--muted); white-space:nowrap}
+  .kv dd{margin:0}
+  .path{font-family:"SF Mono",Consolas,monospace; font-size:12.8px; word-break:break-all}
+  .ask{
+    background:var(--card); border:2px dashed var(--accent); border-radius:12px; padding:18px 20px; margin-top:16px;
+  }
+  .ask ol{margin:10px 0 0}
+  footer{margin-top:56px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px}
+  .toc{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 0}
+  .toc a{
+    font-size:13px; padding:5px 11px; border-radius:999px; background:var(--card);
+    border:1px solid var(--line); color:var(--ink);
+  }
+  .toc a:hover{border-color:var(--accent); text-decoration:none}
+  @media print{
+    body{background:#fff}
+    .toc,details>summary:before{display:none}
+    details{border:0; padding:0}
+    details .inner{padding:0}
+    .card,.tldr{box-shadow:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Wayfinder 地图 #63 · 票 #88 · 决策简报</div>
+  <h1>一次「未持锁」过程违规，怎么处置？</h1>
+  <p class="sub">这份简报只解决一个问题：实施 A 段出现的一处纪律违规，是<b>按字面作废重做</b>，还是<b>具名书面按比例处置</b>。请你看完「前因后果 + 关键事实 + 利弊」后拍一档。</p>
+
+  <div class="tldr">
+    <h2>一眼看结论</h2>
+    <div class="tldr-grid">
+      <div class="tldr-item"><b>发生了什么</b><span>实施者核对变异还原时，用<b>未持锁</b>的 <code>node --test</code> 做了一次只读自检（其余 build／test 全部持锁）。</span></div>
+      <div class="tldr-item"><b>两席审查结果</b><span>红队 <b class="badge b-danger">FAIL</b> 技术面 93／蓝队 <b class="badge b-danger">FAIL</b> 87。两席都<b>只</b>因这条纪律判 FAIL，<b>交付物无技术性 S1</b>。</span></div>
+      <div class="tldr-item"><b>协议怎么写的</b><span>§6 第 112 行：绕过锁跑 test ＝ <b>S1 违规 → 成果作废并重做</b>，且<b>未给按比例豁免权</b>。</span></div>
+      <div class="tldr-item"><b>为什么值得你拍</b><span>这一票的处置会成为<b>整张图后续 12 张票的先例</b>，也会决定协议条文要不要补严。</span></div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <a href="#bg">① 前因后果</a>
+    <a href="#what">② 违规到底是什么</a>
+    <a href="#facts">③ 关键事实</a>
+    <a href="#options">④ 三个选项</a>
+    <a href="#pros">⑤ 利弊对比与推荐</a>
+    <a href="#always">⑥ 无论选什么都得修</a>
+    <a href="#decide">⑦ 待你拍板</a>
+  </nav>
+
+  <h2 id="bg">① 前因后果</h2>
+  <p>这不是一次孤立的操作失误，而是一条长链上的一个环节。先把链条摆清楚，才好判断它值多少代价。</p>
+
+  <ol class="tl">
+    <li class="done">
+      <div class="t"><span class="badge b-info">起点</span> 地图 #63「卡路里·本体图 parity 极致重做」</div>
+      <div class="d">目标：新版卡路里技能的使用体验与旧版完全一致。三条主线里，<b>主线②「HELP 速查台」此前一直未开工</b>。</div>
+    </li>
+    <li class="done">
+      <div class="t">选票：<b>#88《HELP 速查台重建：取 F3 并回补 F1／F2 独有能力》</b></div>
+      <div class="d">第一性原理选票——它<b>独占解阻 5 张票</b>（#89／#91／#106／#107／#121），且串行序在 #91／#83 之前；直接对应你「先产出 HELP HTML」的要求。</div>
+    </li>
+    <li class="done">
+      <div class="t">方案 v1 → <span class="badge b-danger">双审查 FAIL</span>（红队 S1＋75／蓝队 70）</div>
+      <div class="d">抓出：P-1 卡级复制按钮被误判「不可达」、S4 类名撞既有冻结测试 T11、22 条 legacy 卡会显示不可执行命令、守卫只覆盖 5/6 标记等。</div>
+    </li>
+    <li class="done">
+      <div class="t">返修 R1（14 条）→ 定点复核 <span class="badge b-ok">PASS</span>（红队 85／蓝队 89）</div>
+      <div class="d">P-1 改判「运行时注入可达」；类名改用 T9／T11 双绿前缀；legacy 卡改显示真 CLI；守卫扩到 6/6。</div>
+    </li>
+    <li class="done">
+      <div class="t">实施 A 段（S1 数据模型＋S2 壳＋S3 三守卫）→ <b>5 个 commit</b></div>
+      <div class="d">四门 exit 0；canonical <code>pnpm test</code> 三轮失败集<b>新增 0</b>；4 处 src 变异红→还原→绿；渲染样本 <b>1,010,979 B／436 场景／54 子功能／1,308 复制按钮</b>。</div>
+    </li>
+    <li class="fail">
+      <div class="t">实施 A 段审查 → <span class="badge b-danger">双审查 FAIL</span>（红队 93／蓝队 87，<b>仅因纪律</b>）</div>
+      <div class="d">两席独立复跑：A1–A8 全达成、样本 sha256 逐字一致、F3 parity 逐条相等。<b>唯一否决项＝那一次未持锁的 <code>node --test</code></b>。</div>
+    </li>
+    <li class="now">
+      <div class="t"><b>现在：你拍处置档位</b></div>
+      <div class="d">同时实施 B 段（扩 helpers＋卡级复制按钮＋CSS）仍在后台跑，路径与 A 段无交集。</div>
+    </li>
+  </ol>
+
+  <h2 id="what">② 违规到底是什么</h2>
+
+  <div class="note info">
+    <b>协议原文（两句）</b>
+    <p style="margin:6px 0 0"><code>subagent-concurrency-protocol.md §2</code>：以下操作<b>必须持锁</b>执行：<code>pnpm build</code>／<code>tsc -b</code>、<code>pnpm test</code>／<code>node --test</code>、<code>git add</code>／<code>git commit</code>。<b>不需要持锁</b>：读文件、编辑自己路径下的文件、grep、<code>git status</code>／<code>diff</code>／<code>log</code>。</p>
+    <p style="margin:6px 0 0"><code>§6</code>：<b>违规</b>：未经声明改动他人路径、<b>绕过锁跑 build/test/git</b>、使用危险 git 命令、违反 §2.1／§2.2 ＝ <b>S1 违规，该票成果作废并重做</b>。</p>
+  </div>
+
+  <p><b>实际发生的事</b>：实施者在核对第一处变异（MUT-A）是否还原干净时，直接跑了一次 <code>node --test</code> 做只读自检，<b>没有走锁</b>。它在自己的证据文件 <span class="path">docs/research/t88-impl-a.md §7-5</span> 里<b>主动如实登记</b>了这件事，并请编排者裁决。</p>
+
+  <p><b>为什么这条规则这么硬</b>：多个 agent 共用同一个工作区、同一个 <code>node_modules</code>、同一个 <code>dist/</code>。锁保护的正是这些<b>共享可变状态</b>——build 写 <code>dist/</code> 与 <code>.tsbuildinfo</code>，<code>git add</code> 写索引。两个 agent 同时写，会静默损坏对方的产物，而且<b>不会有报错</b>。</p>
+
+  <h2 id="facts">③ 关键事实：这次违规的实质风险有多大</h2>
+  <p>规则保护共享状态，那么判断一次违例的实质风险，看四个维度就够了。两席审查都独立核实过：</p>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>判断维度</th><th>事实</th><th>来源</th></tr></thead>
+      <tbody>
+        <tr><td><b>是否写了共享面</b></td><td><span class="yes">否</span>：新代码零 <code>node:</code>／零 fs 写；靶向测试不写 <code>SKILL.md</code>（三轮均 CLEAN）</td><td>红队＋蓝队独立复跑</td></tr>
+        <tr><td><b>当时锁是否被别人持有</b></td><td><span class="yes">否</span>：同序列 <code>WAITED_*=0</code></td><td>实施者日志（<span class="badge b-warn">不可复核</span>，见 §6）</td></tr>
+        <tr><td><b>结论能否独立复现</b></td><td><span class="yes">能</span>：两席各自持锁复跑 23/23、44/44、三轮 <code>新增=0</code>，与那次自检<b>无分歧</b></td><td>红队 <code>678f113a</code>／蓝队 <code>1d64a0c3</code></td></tr>
+        <tr><td><b>是否自认、有无掩盖</b></td><td><span class="yes">主动登记</span>，写在证据 §7-5 并请裁决</td><td>证据文件</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>四项都指向「<b>零实质风险</b>」。而交付物本身也被两席反复独立验证：</p>
+
+  <div class="cards">
+    <div class="card">
+      <h3>红队 <span class="badge b-danger">FAIL</span> <span class="badge b-mute">93/100</span></h3>
+      <div class="body">
+        <p class="sub">技术面全过：A1–A8 逐条自跑；样本自写度量复算零不符；磁盘样本与它独立渲染 <b>sha256 逐字一致</b>；F3 parity 逐条相等；变异独立重跑 3 处。</p>
+        <div class="score"><span class="lbl">契约</span><span class="bar"><i style="width:96.7%"></i></span><span class="val">29/30</span></div>
+        <div class="score"><span class="lbl">证据</span><span class="bar"><i style="width:96%"></i></span><span class="val">24/25</span></div>
+        <div class="score"><span class="lbl">parity</span><span class="bar"><i style="width:95%"></i></span><span class="val">19/20</span></div>
+        <div class="score"><span class="lbl">红线</span><span class="bar"><i style="width:73.3%"></i></span><span class="val">11/15</span></div>
+        <div class="score"><span class="lbl">文档</span><span class="bar"><i style="width:100%"></i></span><span class="val">10/10</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>蓝队 <span class="badge b-danger">FAIL</span> <span class="badge b-mute">87/100</span></h3>
+      <div class="body">
+        <p class="sub">禁区／冻结面／提交纪律／门禁全通过；自设 5 个新探针（含跨进程并发确定性、属性转义往返）；并独立裁定「构成 S1 违规」。</p>
+        <div class="score"><span class="lbl">契约</span><span class="bar"><i style="width:96.7%"></i></span><span class="val">29/30</span></div>
+        <div class="score"><span class="lbl">证据</span><span class="bar"><i style="width:88%"></i></span><span class="val">22/25</span></div>
+        <div class="score"><span class="lbl">parity</span><span class="bar"><i style="width:95%"></i></span><span class="val">19/20</span></div>
+        <div class="score"><span class="lbl">红线</span><span class="bar"><i style="width:66.7%"></i></span><span class="val">10/15</span></div>
+        <div class="score"><span class="lbl">文档</span><span class="bar"><i style="width:70%"></i></span><span class="val">7/10</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <b>但另一面同样成立</b>
+    如果豁免变成常态，锁就退化成「建议」，下一张票就会有人「顺手跑一下」。所以真正要定的不是「这次放不放」，而是<b>放行的形式</b>——必须让豁免的代价高于违规本身。
+  </div>
+
+  <h2 id="options">④ 三个选项</h2>
+
+  <div class="cards">
+    <div class="card rec">
+      <h3>A. 具名书面按比例处置 <span class="badge b-ok">推荐</span></h3>
+      <div class="body">
+        <p><b>做法</b>：不重做。由编排者出具<b>具名书面处置</b>，附三项补偿控制；该违规记为<b>过程缺陷（S3，不阻断关闭）</b>；再犯即按 §6 字面作废重做。</p>
+        <dl>
+          <dt>三个条件</dt>
+          <dd>① 书面处置入 #88 票面 ＋ 地图 Decisions（具名、一次性、引条号）<br>
+              ② 补偿控制：持锁复跑证明无分歧（<b>两席已完成</b>）＋ <code>WAITED_*</code> 改落盘（现在不可复核）＋ 「测试必须经持锁包装器」做成机械门禁<br>
+              ③ 累犯升级：再犯即字面作废</dd>
+          <dt>代价</dt>
+          <dd>约 0.5 轮编排（写处置＋补门禁）</dd>
+          <dt>风险</dt>
+          <dd>「豁免可商量」的先例风险 → 用「具名＋一次性＋累犯升级＋机械门禁」对冲</dd>
+          <dt>适用</dt>
+          <dd>你认同「锁的目的是保护共享状态，而非惩罚」</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>B. 字面执行 §6：作废重做</h3>
+      <div class="body">
+        <p><b>做法</b>：A 段 5 个 commit 成果作废，按方案重写并重新过双审查。</p>
+        <dl>
+          <dt>代价</dt>
+          <dd>约 2 轮实施 ＋ 2 轮审查（数小时级），且<b>交付物质量不会因此改变</b></dd>
+          <dt>风险</dt>
+          <dd>几乎没有纪律风险；但会示范「规则字面优先于实质风险判断」</dd>
+          <dt>适用</dt>
+          <dd>你认同「规则的确定性 ＞ 单次成本」，或希望以此立威</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>C. 你给口径</h3>
+      <div class="body">
+        <p>例如：本次豁免但<b>立即加一条机械钩子</b>（未持锁即拒绝执行）；或<b>只对重复犯罚</b>；或<b>直接改协议条文</b>，把「S1」拆成两类。</p>
+        <dl>
+          <dt>我的补充建议</dt>
+          <dd>无论 A 还是 B，都建议把 §6 拆成 <b>S1-交付缺陷</b>（字面作废重做）与 <b>S1-过程违规</b>（具名比例处置路径＋累犯升级）。这是改协议正本，需你拍。</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <h2 id="pros">⑤ 利弊对比与推荐</h2>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>维度</th><th>A · 比例处置</th><th>B · 作废重做</th></tr></thead>
+      <tbody>
+        <tr><td>交付物质量</td><td>不变（两席已独立复跑 93／87）</td><td>不变</td></tr>
+        <tr><td>时间成本</td><td><span class="yes">低</span>（约 0.5 轮）</td><td><span class="no">高</span>（约 4 轮）</td></tr>
+        <tr><td>纪律信号强度</td><td>中（靠具名＋累犯升级＋机械门禁补足）</td><td><span class="yes">最强</span></td></tr>
+        <tr><td>先例风险</td><td>有 → 需明确「一次性、不类推」</td><td>无</td></tr>
+        <tr><td>可复核性</td><td>需补 <code>WAITED_*</code> 落盘才成立</td><td>无需补</td></tr>
+        <tr><td>根因治理</td><td><span class="yes">正面</span>：把「靠自觉持锁」改成「机械门禁」</td><td>不触及根因</td></tr>
+        <tr><td>对后续 12 张票的影响</td><td>确立「过程违规可具名比例处置」的路径</td><td>确立「字面优先」，后续容错为 0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note ok">
+    <b>我的推荐：A</b>
+    理由一句话：<b>锁的目的是保护共享状态，而不是惩罚人</b>；这次四项风险判据全部指向零实质风险，且结论已被两席持锁独立复现。但 A 只有在「具名书面 ＋ 一次性 ＋ 累犯升级 ＋ 把持锁改成机械门禁」四条同时成立时才是安全的——否则它就是「悄悄放过」，那我会反对。
+  </div>
+
+  <p class="sub">如果你更看重「规则不能商量」，选 B 我也照办：会把 A 段 5 个 commit 作废重写，并把「字面优先」这一先例记进地图 Decisions。</p>
+
+  <h2 id="always">⑥ 无论选 A 还是 B，都得处理的两件事</h2>
+
+  <details>
+    <summary>① 冻结产物里藏着一把能改写自己的刀（结构性隐患）</summary>
+    <div class="inner">
+      <p><span class="path">docs/research/t88-baseline/failset-union.mjs:21</span> 会<b>覆盖冻结白名单</b> <code>test-failset.txt</code>。蓝队审查时误触该脚本，把白名单瞬时改写成 30 条；随后用 <code>git cat-file blob</code> 逐字节还原，<code>git hash-object</code> == <code>HEAD:</code> == <code>b7a48bb…</code>，<code>git diff 93e27f9</code> 回 0 行，<b>未 commit</b>，并主动上报。红队也独立观测到白名单被瞬时改写。</p>
+      <p><b>为什么是真问题</b>：一个被冻结、被当作「唯一基准」的产物里，放着一个能改写自己的脚本——任何人（或任何 agent）误跑一次，基准就被悄悄改了，而门禁结论随之失真。</p>
+      <p><b>建议</b>：默认 <code>--dry-run</code>，写需显式 <code>--write</code>；并把「白名单文件未被改动」做成机械判据（现已有 <code>git diff</code> 0 行这一条，但只在人工流程里）。</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>② 红队自设的 MUT-E 打出一个证据盲区（S3）</summary>
+    <div class="inner">
+      <p>红队自设变异：把 <code>receipt</code> 徽章色改成过程色 → 实施者的 23 个用例<b>全绿</b>。这证明「三档徽章色」的证据对「哪一档配哪个色」<b>零鉴别力</b>。</p>
+      <p><b>产物本身正确</b>（红队逐条比对 F3 的 <code>TYPE_DEFAULT</code> 相等），<b>是证据弱</b>，不是交付缺陷。已列入 S5 收尾补齐清单：补 <code>TYPE_DEFAULT[text] === badge.{bg,fg}</code> 的逐条断言。</p>
+    </div>
+  </details>
+
+  <h2 id="decide">⑦ 待你拍板</h2>
+  <div class="ask">
+    <p style="margin:0"><b>请选一档：</b></p>
+    <ol>
+      <li><b>A（推荐）</b> — 具名书面按比例处置 ＋ 三项补偿控制 ＋ 累犯升级；同时把 §6 拆成「S1-交付缺陷／S1-过程违规」。</li>
+      <li><b>B</b> — 字面执行 §6:112，A 段成果作废重做。</li>
+      <li><b>C</b> — 你给口径（例如只对重复犯罚、或立刻加机械钩子、或改协议条文）。</li>
+    </ol>
+    <p class="sub" style="margin-bottom:0">你拍完，我立刻执行，并把这一条写进地图 #63 的 Decisions so far（永久留档，后续票照此办）。</p>
+  </div>
+
+  <h2>附：证据索引（可复跑）</h2>
+  <div class="kv">
+    <dt>基线冻结</dt><dd><code>93e27f9</code> · <span class="path">docs/research/t88-baseline/</span></dd>
+    <dt>方案 v2 返修</dt><dd><code>c3ad473</code> · <span class="path">docs/research/t88-plan.md</span></dd>
+    <dt>定点复核</dt><dd>红队 <code>aafbeca</code>／蓝队 <code>36ec933</code></dd>
+    <dt>实施 A 段</dt><dd><code>8bb13a9 → d7a0492 → 92b9cfd → bf43324 → 42d51f2</code></dd>
+    <dt>A 段红队审查</dt><dd><code>678f113a</code> · <span class="path">docs/research/t88-review-impl-a-red.md</span></dd>
+    <dt>A 段蓝队审查</dt><dd><code>1d64a0c3</code> · <span class="path">docs/research/t88-review-impl-a-blue.md</span></dd>
+    <dt>渲染样本</dt><dd><span class="path">.scratch/t88/out/卡路里_HELP_preview.html</span>（1,010,979 B／436 场景／54 子功能／1,308 复制按钮）</dd>
+    <dt>复跑命令</dt><dd><code>node docs/research/t88-probe-impl-a.mjs</code>（44/44）· <code>node docs/research/t101-fail-set.mjs docs/research/t88-baseline/test-failset.txt &lt;after.log&gt;</code>（新增须 0）</dd>
+  </div>
+
+  <footer>
+    <p>本简报由编排者生成，用于一次具体决策；不含实施细节。相关正本：<span class="path">docs/subagent-concurrency-protocol.md</span>、<span class="path">.scratch/orchestrator/t88-acceptance.md</span>。</p>
+    <p>生成时间：2026-09-09 · 对应地图：<a href="https://github.com/FeatherHunter/ilife/issues/63">#63 卡路里·本体图（1/3）parity 极致重做</a> · 对应票：<a href="https://github.com/FeatherHunter/ilife/issues/88">#88 HELP 速查台重建</a></p>
+  </footer>
+
+</div>
+</body>
+</html>
