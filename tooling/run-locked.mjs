@@ -8,31 +8,43 @@
  *   node tooling/run-locked.mjs --ticket 88 --lock-dir .scratch/locks-t -- node -e "…"   # 隔离锁目录（测试用）
  *
  * 语义（逐条对应协议条文）：
- *   1. 抢锁（§2）：目录锁 `<lock-dir>/gate.lock`，`mkdir` 原子创建；已被占用且 mtime 超过
- *      `--stale-minutes`（默认 10）分钟 → 视为死锁，按 §2.1.3 路径守卫后抢回。
- *   2. 留痕（§2.3）：持锁期间写 `<lock-dir>/owner.json`（pid／ticket／cmd／startedAt／waitedMs）；
- *      命令结束后**追加**一行机读记录到 `<lock-dir>/gate-runs.log`：
- *        RUN ticket=<票号> cmd=<命令> waitedMs=<n> exit=<n> at=<ISO>
- *      （值含空格／引号时以双引号包裹；被信号终止时追加 `signal=<信号>`。）
- *   3. 释放（§2）：`finally` 内删除 `owner.json` 与锁目录，路径守卫失败即抛错（不静默）。
+ *   1. 抢锁（§2）：目录锁 `<lock-dir>/gate.lock`，`mkdir` 原子创建。等待期间的判定顺序：
+ *      - **先探活再等**（R-3-3）：每轮先读 `<lock-dir>/owner.json` 的 `pid`，用 `process.kill(pid, 0)` 探活；
+ *      - **活进程一律不抢回**（R-2-1-2）：owner 存活时**无论锁龄多大**都不抢回，`--stale-minutes` 不得夺活锁；
+ *      - owner 已死、且该记录**属于当前锁**（`owner.json` mtime 不早于锁目录 mtime，否则是上一轮残留记录）
+ *        → 立即按 §2.1.3 路径守卫后抢回（不等 10 分钟）；
+ *      - 无可用 pid（owner.json 缺失／是残留记录）→ 退化为锁龄 > `--stale-minutes`（默认 10 分钟）才抢回；
+ *      - 每次抢回**落盘**一行 `LOCK-STOLEN …` 到 `gate-runs.log`（R-2-1-3，审计面可见）。
+ *   2. 留痕（§2.3）：持锁期间写 `<lock-dir>/owner.json`（pid／runId／ticket／cmd／startedAt／waitedMs）；
+ *      持锁后**立即**追加 `START …`（R-3-1，崩溃／被杀也留痕），命令结束后追加
+ *      `RUN ticket=<票号> runId=<id> cmd=<命令> waitedMs=<n> exit=<n> at=<ISO>`（被信号终止时附 `signal=`）。
+ *      **写 `gate-runs.log`／`owner.json` 失败即 exit ≠ 0**（R-2-3，不得仅 `WARN` 静默）。
+ *   3. 释放（§2）：`finally` 内**先校验归属**（`owner.json.pid === process.pid` 才允许删除，R-2-1-1），
+ *      通过后**先删 `owner.json`、再删锁目录**（顺序不可交换：先删锁会误删新持锁者的记录）；
+ *      归属不符（锁已被他人接管／owner.json 不可读）→ 一律不删并以 exit ≠ 0 告警。
  *
  * 选项：
  *   --ticket <票号>        审计条目的票号（缺省 `unknown`，会打印告警）
  *   --lock-dir <目录>      锁目录，缺省 `<仓库根>/.scratch/locks`（可用环境变量 ILIFE_GATE_LOCK_DIR 覆盖）
- *   --stale-minutes <n>    死锁抢回阈值（分钟，缺省 10）
+ *   --stale-minutes <n>    无 pid 可探活时的锁龄抢回阈值（分钟，缺省 10）
  *   --poll-ms <n>          抢锁轮询间隔（毫秒，缺省 10000，与协议 §2 的 10s 一致）
  *   --max-wait-ms <n>      最长等待（毫秒，0＝不限，缺省 0）
+ *   --run-id <id>          显式指定本次运行的 runId（缺省随机 UUID；仅供测试／调试）
  *   --                  选项与命令的分隔符（可省略；遇到首个非选项参数即视为命令起点）
  *
  * 注意：**不支持重入**。被包装的命令若内部再次调用本工具（例如自证测试），必须用
- *       `--lock-dir` 指向独立目录，否则会等待自己持有的锁（10 分钟后被抢回）。
+ *       `--lock-dir` 指向独立目录，否则会等待自己持有的锁。
  */
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const FORBIDDEN_REMOVE_SEGMENTS = new Set(['node_modules', 'packages', 'docs', 'test', 'tooling', '.git']);
+
+/** `owner.json` 与锁目录 mtime 的容差（毫秒）：owner.json 只要不早于「锁目录 mtime − 容差」即视为属于当前锁。 */
+export const OWNER_RECORD_TOLERANCE_MS = 2;
 
 /** 协议 §2.1.3 路径守卫：只允许删除 root 之下的路径，且不得落在禁区目录内。 */
 export function assertSafeToRemove(target, root) {
@@ -52,13 +64,39 @@ export function formatFieldValue(value) {
   return /[\s"]/.test(s) ? JSON.stringify(s) : s;
 }
 
-/** 生成一行机读记录（`RUN …` ／ 未来可复用于其它前缀）。 */
+/** 生成一行机读记录（`RUN …`／`START …`／`LOCK-STOLEN …`）。 */
 export function formatRecord(kind, fields) {
   const body = Object.entries(fields)
     .filter(([, v]) => v !== undefined && v !== null)
     .map(([k, v]) => `${k}=${formatFieldValue(v)}`)
     .join(' ');
   return `${kind} ${body}`;
+}
+
+/** 读取 owner.json；缺失／损坏／非对象时返回 null（不抛错）。 */
+export function readOwnerRecord(ownerPath) {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(ownerPath, 'utf8'));
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * pid 存活探测（R-2-1-2／R-3-3）：
+ * `ESRCH` → 已死；`EPERM` → 存在但无权限（视为活）；其它错误／非法 pid → 保守视为**活**（宁可不抢回）。
+ */
+export function probePidAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return { alive: false, reason: 'invalid-pid' };
+  try {
+    process.kill(pid, 0);
+    return { alive: true, reason: 'signal-0-ok' };
+  } catch (err) {
+    if (err && err.code === 'ESRCH') return { alive: false, reason: 'esrch' };
+    if (err && err.code === 'EPERM') return { alive: true, reason: 'eperm' };
+    return { alive: true, reason: `unknown:${(err && (err.code || err.message)) || 'error'}` };
+  }
 }
 
 function usage() {
@@ -73,10 +111,13 @@ const OPTION_SPECS = {
   '--stale-minutes': 'value',
   '--poll-ms': 'value',
   '--max-wait-ms': 'value',
+  '--run-id': 'value',
 };
 
 export function parseArgs(argv) {
-  const opts = { ticket: '', lockDir: '', staleMinutes: 10, pollMs: 10000, maxWaitMs: 0, command: [], help: false };
+  const opts = {
+    ticket: '', lockDir: '', staleMinutes: 10, pollMs: 10000, maxWaitMs: 0, runId: '', command: [], help: false,
+  };
   let i = 0;
   for (; i < argv.length; i++) {
     const arg = argv[i];
@@ -90,6 +131,7 @@ export function parseArgs(argv) {
     else if (arg === '--stale-minutes') opts.staleMinutes = Number(value);
     else if (arg === '--poll-ms') opts.pollMs = Number(value);
     else if (arg === '--max-wait-ms') opts.maxWaitMs = Number(value);
+    else if (arg === '--run-id') opts.runId = value;
   }
   opts.command = argv.slice(i);
   for (const key of ['staleMinutes', 'pollMs', 'maxWaitMs']) {
@@ -107,10 +149,26 @@ export function toShellCommandLine(command) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** 抢锁：返回 { waitedMs, stolen }。 */
-export async function acquireLock({ lockPath, staleMinutes, pollMs, maxWaitMs, log = () => {} }) {
+/**
+ * 抢锁：返回 `{ waitedMs, stolen }`。
+ * 抢回判定顺序＝先探活（活进程一律不抢回）→ 死 owner 且记录属于当前锁 → 立即抢回
+ * → 无 pid 可用时按锁龄兜底（`--stale-minutes`）。
+ */
+export async function acquireLock({
+  lockPath,
+  ownerPath = path.join(path.dirname(lockPath), 'owner.json'),
+  staleMinutes,
+  pollMs,
+  maxWaitMs,
+  ticket = '',
+  runId = '',
+  log = () => {},
+  onSteal = () => {},
+}) {
   const started = Date.now();
   let stolen = 0;
+  let warnedLive = false;
+  let warnedResidual = false;
   for (;;) {
     try {
       fs.mkdirSync(lockPath);
@@ -118,19 +176,67 @@ export async function acquireLock({ lockPath, staleMinutes, pollMs, maxWaitMs, l
     } catch (err) {
       if (err.code !== 'EEXIST') throw err;
     }
-    let ageMinutes = 0;
+    let lockStat = null;
     try {
-      ageMinutes = (Date.now() - fs.statSync(lockPath).mtimeMs) / 60000;
+      lockStat = fs.statSync(lockPath);
     } catch {
       continue; // 锁刚被别人释放
     }
-    if (staleMinutes > 0 && ageMinutes > staleMinutes) {
+    let ownerStat = null;
+    try { ownerStat = fs.statSync(ownerPath); } catch { ownerStat = null; }
+    const owner = readOwnerRecord(ownerPath);
+    const ownerPid = owner && Number.isInteger(owner.pid) ? owner.pid : null;
+    const probe = ownerPid === null ? null : probePidAlive(ownerPid);
+    // 残留记录判定：owner.json 早于锁目录 → 属于上一轮（死）运行的记录，不得据其 pid 抢回。
+    const ownerBelongsToLock = Boolean(ownerStat) && Boolean(lockStat)
+      && ownerStat.mtimeMs >= lockStat.mtimeMs - OWNER_RECORD_TOLERANCE_MS;
+    const ageMinutes = (Date.now() - lockStat.mtimeMs) / 60000;
+    let stealReason = null;
+
+    if (probe && probe.alive) {
+      // R-2-1-2：活进程一律不抢回（无论 age）。
+      if (!warnedLive) {
+        log(`WAIT-OWNER-ALIVE pid=${ownerPid} ticket=${owner.ticket ?? ''} runId=${owner.runId ?? ''}`
+          + ` ageMinutes=${ageMinutes.toFixed(2)}（活进程一律不抢回，等它释放）`);
+        warnedLive = true;
+      }
+    } else if (probe && !probe.alive) {
+      if (ownerBelongsToLock) stealReason = 'owner-dead';
+      else if (!warnedResidual) {
+        log(`WARN: owner.json 早于锁目录（疑似上一轮残留记录），忽略其 pid=${ownerPid}`);
+        warnedResidual = true;
+      }
+    }
+    if (!stealReason && !(probe && probe.alive) && staleMinutes > 0 && ageMinutes > staleMinutes) {
+      stealReason = 'age';
+    }
+
+    if (stealReason) {
+      if (stealReason === 'owner-dead') {
+        // 顺序不可交换：先删残留 owner.json（避免新持锁者被它顶替），再删锁目录。
+        try {
+          assertSafeToRemove(ownerPath, path.dirname(ownerPath));
+          fs.rmSync(ownerPath, { force: true });
+        } catch (err) {
+          log(`WARN: 残留 owner.json 删除失败（继续抢回）：${err.message}`);
+        }
+      }
       assertSafeToRemove(lockPath, path.dirname(lockPath));
       fs.rmSync(lockPath, { recursive: true, force: true });
       stolen += 1;
-      log(`LOCK-STOLEN lock=${lockPath} ageMinutes=${ageMinutes.toFixed(1)}`);
+      onSteal({
+        ticket,
+        runId,
+        reason: stealReason,
+        ownerPid: ownerPid ?? '',
+        ownerAlive: probe ? (probe.alive ? '1' : '0') : 'unknown',
+        ownerBelongsToLock: ownerBelongsToLock ? '1' : '0',
+        ageMinutes: ageMinutes.toFixed(2),
+        lockPath,
+      });
       continue;
     }
+
     const waitedMs = Date.now() - started;
     if (maxWaitMs > 0 && waitedMs >= maxWaitMs) {
       throw new Error(`等待锁超时（maxWaitMs=${maxWaitMs}，当前 waitedMs=${waitedMs}，lock=${lockPath}）`);
@@ -156,85 +262,183 @@ async function main() {
   const ownerPath = path.join(lockDir, 'owner.json');
   const logPath = path.join(lockDir, 'gate-runs.log');
   const ticket = opts.ticket || 'unknown';
+  const runId = opts.runId || randomUUID();
   const cmdText = toShellCommandLine(opts.command);
   if (!opts.ticket) console.error('WARN: 未给 --ticket，审计条目的票号记作 unknown（协议 §2.4 建议显式给出）');
 
   fs.mkdirSync(lockDir, { recursive: true });
-  const { waitedMs, stolen } = await acquireLock({
-    lockPath,
-    staleMinutes: opts.staleMinutes,
-    pollMs: opts.pollMs,
-    maxWaitMs: opts.maxWaitMs,
-    log: (msg) => console.error(msg),
-  });
 
-  const startedAt = new Date().toISOString();
-  fs.writeFileSync(ownerPath, `${JSON.stringify({
-    pid: process.pid,
-    ticket,
-    cmd: cmdText,
-    startedAt,
-    waitedMs,
-    stolen,
-    lockPath,
-    cwd: repoRoot,
-  }, null, 2)}\n`, 'utf8');
-  console.error(`LOCK-ACQUIRED ticket=${ticket} waitedMs=${waitedMs} pid=${process.pid}`);
+  /** R-2-3：写审计日志失败必须 exit ≠ 0（抛错由 main 兜住），不得只 WARN。 */
+  const appendOrThrow = (kind, fields, what) => {
+    try {
+      appendLogLine(logPath, formatRecord(kind, fields));
+    } catch (err) {
+      throw new Error(`审计日志写入失败（${what}，${logPath}）：${err.message}`);
+    }
+  };
 
+  let acquired = false;
+  let ownerWritten = false;
   let exitCode = 1;
+  let waitedMs = 0;
   let signal = null;
   let spawnError = null;
+  let lockNote = '';
+
   try {
-    const child = spawn(cmdText, { cwd: repoRoot, stdio: 'inherit', shell: true });
-    const outcome = await new Promise((resolve) => {
-      child.on('error', (err) => resolve({ code: null, signal: null, error: err }));
-      child.on('close', (code, sig) => resolve({ code, signal: sig }));
+    const acq = await acquireLock({
+      lockPath,
+      ownerPath,
+      staleMinutes: opts.staleMinutes,
+      pollMs: opts.pollMs,
+      maxWaitMs: opts.maxWaitMs,
+      ticket,
+      runId,
+      log: (msg) => console.error(msg),
+      // R-2-1-3：抢回落盘（写失败 → 抛错 → exit ≠ 0）。
+      onSteal: (info) => {
+        console.error(`LOCK-STOLEN lock=${info.lockPath} reason=${info.reason} ownerPid=${info.ownerPid} ageMinutes=${info.ageMinutes}`);
+        appendOrThrow('LOCK-STOLEN', {
+          ticket,
+          runId,
+          reason: info.reason,
+          ownerPid: info.ownerPid || undefined,
+          ownerAlive: info.ownerAlive,
+          ownerBelongsToLock: info.ownerBelongsToLock,
+          ageMinutes: info.ageMinutes,
+          at: new Date().toISOString(),
+        }, 'LOCK-STOLEN');
+      },
     });
-    if (outcome.error) {
-      spawnError = outcome.error;
-      exitCode = 127;
-    } else if (outcome.code === null) {
-      signal = outcome.signal;
-      exitCode = 1; // 被信号终止：按失败记账（协议 §2 的死锁／误杀口径）
-    } else {
-      exitCode = outcome.code;
-      signal = outcome.signal;
-    }
-  } catch (err) {
-    spawnError = err;
-    exitCode = 1;
-  } finally {
+    acquired = true;
+    waitedMs = acq.waitedMs;
+    const startedAt = new Date().toISOString();
+
+    // R-2-3：owner.json 写失败必须 exit ≠ 0（且不执行命令，避免产生无归属的持锁运行）。
     try {
-      appendLogLine(logPath, formatRecord('RUN', {
+      fs.writeFileSync(ownerPath, `${JSON.stringify({
+        pid: process.pid,
+        runId,
         ticket,
         cmd: cmdText,
+        startedAt,
         waitedMs,
-        exit: exitCode,
-        at: new Date().toISOString(),
-        signal: signal || undefined,
-      }));
+        stolen: acq.stolen,
+        lockPath,
+        cwd: repoRoot,
+      }, null, 2)}\n`, 'utf8');
+      ownerWritten = true;
     } catch (err) {
-      console.error(`WARN: 审计日志写入失败（${logPath}）：${err.message}`);
+      console.error(`FAIL: owner.json 写入失败（${ownerPath}）：${err.message}`);
+      exitCode = 1;
     }
-    try {
-      if (fs.existsSync(ownerPath)) { assertSafeToRemove(ownerPath, lockDir); fs.rmSync(ownerPath); }
-    } catch (err) {
-      console.error(`WARN: owner.json 清理失败：${err.message}`);
+
+    if (ownerWritten) {
+      console.error(`LOCK-ACQUIRED ticket=${ticket} runId=${runId} waitedMs=${waitedMs} pid=${process.pid}`);
+      // R-3-1：START 行——崩溃／被杀也留痕；写失败即不执行命令并 exit ≠ 0（R-2-3）。
+      try {
+        appendLogLine(logPath, formatRecord('START', {
+          ticket,
+          runId,
+          cmd: cmdText,
+          waitedMs,
+          pid: process.pid,
+          at: startedAt,
+        }));
+      } catch (err) {
+        console.error(`FAIL: 审计日志写入失败（START 行，${logPath}）：${err.message}`);
+        exitCode = 1;
+        lockNote = 'START 行写入失败，未执行命令';
+      }
+
+      if (!lockNote) {
+        try {
+          const child = spawn(cmdText, { cwd: repoRoot, stdio: 'inherit', shell: true });
+          const outcome = await new Promise((resolve) => {
+            child.on('error', (err) => resolve({ code: null, signal: null, error: err }));
+            child.on('close', (code, sig) => resolve({ code, signal: sig }));
+          });
+          if (outcome.error) {
+            spawnError = outcome.error;
+            exitCode = 127;
+          } else if (outcome.code === null) {
+            signal = outcome.signal;
+            exitCode = 1; // 被信号终止：按失败记账（协议 §2 的死锁／误杀口径）
+          } else {
+            exitCode = outcome.code;
+            signal = outcome.signal;
+          }
+        } catch (err) {
+          spawnError = err;
+          exitCode = 1;
+        }
+      }
     }
-    try {
-      assertSafeToRemove(lockPath, lockDir);
-      fs.rmSync(lockPath, { recursive: true, force: true });
-      console.error(`LOCK-RELEASED ticket=${ticket} exit=${exitCode}`);
-    } catch (err) {
-      console.error(`FAIL: 锁释放失败（锁可能残留，需人工处理）：${err.message}`);
-      if (exitCode === 0) exitCode = 1;
+  } catch (err) {
+    // 抢锁阶段失败（等待超时／LOCK-STOLEN 落盘失败等）：未持有锁，无需释放。
+    console.error(`FAIL: ${err.message}`);
+    exitCode = 1;
+  } finally {
+    if (acquired && ownerWritten) {
+      try {
+        appendLogLine(logPath, formatRecord('RUN', {
+          ticket,
+          runId,
+          cmd: cmdText,
+          waitedMs,
+          exit: exitCode,
+          pid: process.pid,
+          at: new Date().toISOString(),
+          signal: signal || undefined,
+        }));
+      } catch (err) {
+        // R-2-3：写日志失败不得静默——exit 必须 ≠ 0。
+        console.error(`FAIL: 审计日志写入失败（RUN 行，${logPath}）：${err.message}`);
+        if (exitCode === 0) exitCode = 1;
+      }
+      // R-2-1-1：归属校验——只有 owner.json.pid === 本进程 pid 才允许删除。
+      const ownerNow = readOwnerRecord(ownerPath);
+      const ownedByUs = ownerNow !== null && Number(ownerNow.pid) === process.pid;
+      if (ownedByUs) {
+        try {
+          // 顺序不可交换：先删 owner.json，再删锁目录（否则可能误删新持锁者的 owner.json）。
+          assertSafeToRemove(ownerPath, lockDir);
+          fs.rmSync(ownerPath, { force: true });
+        } catch (err) {
+          console.error(`FAIL: owner.json 清理失败：${err.message}`);
+          if (exitCode === 0) exitCode = 1;
+        }
+        try {
+          assertSafeToRemove(lockPath, lockDir);
+          fs.rmSync(lockPath, { recursive: true, force: true });
+          console.error(`LOCK-RELEASED ticket=${ticket} runId=${runId} exit=${exitCode}`);
+        } catch (err) {
+          console.error(`FAIL: 锁释放失败（锁可能残留，需人工处理）：${err.message}`);
+          if (exitCode === 0) exitCode = 1;
+        }
+      } else {
+        console.error('FAIL: 释放前归属校验失败——'
+          + `owner.json.pid=${ownerNow ? ownerNow.pid : '缺失'} ≠ 本进程 pid=${process.pid}`
+          + '（锁已被他人接管／owner.json 不可读；本进程不删除锁与 owner.json，协议 §2／R-2-1-1）');
+        if (exitCode === 0) exitCode = 1;
+      }
+    } else if (acquired && !ownerWritten) {
+      // owner.json 未写成：本进程刚 mkdir 成功，删掉自己刚创建的锁（他人无法据 pid 抢回它）。
+      try {
+        assertSafeToRemove(lockPath, lockDir);
+        fs.rmSync(lockPath, { recursive: true, force: true });
+        console.error(`LOCK-RELEASED ticket=${ticket} runId=${runId} exit=${exitCode}（owner.json 未写成，未执行命令）`);
+      } catch (releaseErr) {
+        console.error(`FAIL: 锁释放失败（锁可能残留，需人工处理）：${releaseErr.message}`);
+      }
     }
   }
+
   if (spawnError) {
     console.error(`FAIL: 命令启动失败（${opts.command[0]}）：${spawnError.message}`);
     if (exitCode === 0) exitCode = 127;
   }
-  console.error(`RESULT: ticket=${ticket} waitedMs=${waitedMs} exit=${exitCode}`);
+  console.error(`RESULT: ticket=${ticket} runId=${runId} waitedMs=${waitedMs} exit=${exitCode}`);
   return exitCode;
 }
 
