@@ -143,13 +143,18 @@ test('#41 计划三盘 + HTML 字段断言', () => {
   assert.match(html, /test计划/);
   const wiz = buildPlanWizardView({ config: { title: 't', start_date: '2026-09-01', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: 'a', movements: [{ name: '俯卧撑', part: '胸', type: '力量', sets: [] }] }] }] }] });
   assert.equal(wiz.errorCount, 0);
-  assert.equal(wiz.validatedCount, 1); // #102 G15：纯校验计数（输入 1 会话，未写库）
-  assert.ok(!('insertedCount' in wiz)); // #102 G15：名实修正后不再返 insertedCount
+  assert.equal(wiz.checkedSessions, 1); // #102 G15：已检查计数（输入 1 会话，未写库；≠通过数）
+  assert.ok(!('insertedCount' in wiz) && !('validatedCount' in wiz)); // #102 G15：改名后旧键均不再返
   html = renderPlanWizardHtml(wiz);
   assert.match(html, /构建向导/);
   assert.match(html, /可落地/);
+  assert.match(html, /已检查 1 个会话/);
   const bad = buildPlanWizardView({ config: {}, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: 'a', movements: [{ name: '硬拉', part: '背', type: '力量', sets: [] }] }] }] }] }, ['深蹲']);
   assert.ok(bad.errorCount >= 1);
+  assert.equal(bad.checkedSessions, 1); // #102 G15：坏计划也计 N（已检查≠已通过）
+  const badHtml = renderPlanWizardHtml(bad);
+  assert.match(badHtml, /有硬止/);
+  assert.match(badHtml, /已检查 1 个会话（\d+硬止）/);
   const goal = buildExerciseGoalView(db, '2026-09-06', '2026-09-07');
   assert.equal(goal.dailyGoal, 300);
   assert.equal(goal.actual, 620);

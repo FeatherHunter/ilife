@@ -573,7 +573,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       if (typeof plan !== 'object' || plan === null || Array.isArray(plan)) fail(2, '缺参数 plan（PlanInput 对象）');
       const catalog = params['catalog'];
       const v = buildPlanWizardView(plan, (catalog as string[] | undefined) ?? undefined);
-      const metrics = nums({ errorCount: v.errorCount, warningCount: v.warningCount, validatedCount: v.validatedCount });
+      const metrics = nums({ errorCount: v.errorCount, warningCount: v.warningCount, checkedSessions: v.checkedSessions });
       return { data: { metrics }, html: renderPlanWizardHtml(v) };
     }
     case 'calorie.view.exercise-goal': {

@@ -545,7 +545,8 @@ export function renderPlanWizardHtml(v: PlanWizardView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
     kpi('构建向导', v.errorCount === 0 ? '可落地' : '有硬止', '错误 ' + v.errorCount + ' 警告 ' + v.warningCount) +
-    kpi('纯校验', '不写库', '已校验 ' + v.validatedCount + ' 个会话') +
+    // G15 #102 · 已检查≠已通过：坏计划也计 N，通过与否看 errorCount；错误态追加（X硬止）与首 KPI 的“有硬止”呼应。
+    kpi('纯校验', '不写库', '已检查 ' + v.checkedSessions + ' 个会话' + (v.errorCount > 0 ? '（' + v.errorCount + '硬止）' : '')) +
     '</div><div>' + errs + warns + '</div>';
   return pageShell('calorie', 'ilife:calorie:plan-wizard', '构建向导', body);
 }
