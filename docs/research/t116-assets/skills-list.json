@@ -1,0 +1,14 @@
+[
+  {
+    "name": "skill-calorie",
+    "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\ilife-t116-173949\\.agents\\skills\\skill-calorie",
+    "scope": "project",
+    "agents": [
+      "GitHub Copilot",
+      "OpenCode"
+    ],
+    "source": "FeatherHunter/ilife",
+    "sourceUrl": null,
+    "sourceType": "github"
+  }
+]
