@@ -43,6 +43,10 @@ export interface CalorieTrendView {
 
 export function buildCalorieTrendView(db: DatabaseSync, start: string, end: string): CalorieTrendView {
   assertRange(start, end);
+  const n = (db.prepare(
+    'SELECT COUNT(*) AS n FROM food_log WHERE date BETWEEN ? AND ? AND food_name != ?',
+  ).get(start, end, WATER_NAME) as { n: number }).n;
+  if (n === 0) throw new CalorieRenderError('missing-data', `无饮食记录：${start} ~ ${end}`);
   return { start, end, data: buildTrendData(db, start, end) };
 }
 
