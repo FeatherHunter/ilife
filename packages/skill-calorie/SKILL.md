@@ -31,7 +31,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 - 版本 `0.1.0`（与 link-core/render 同值，漂移单测钉死）；形状 6 种全字段校验，缺字段即抛，不返空数组冒充正常。
 - `list` 须 `items[]`（`total?`）；`detail` 须 `item{}`；`stat` 须 `metrics{number}` 全有限 number；`receipt` 须 `ok/message`；`analysis` 须非空 `summary`；`fallback` 须 `reason/degraded:true`。
-- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等读 60 键 + 写 35 键共 95 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
+- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等读 64 键 + 写 35 键共 99 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
 
 ## 口径（T7 + 精度 + 餐别）
 
@@ -63,7 +63,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 2 预填 verify ⭐ | 同一类词**给了数据** | 出预填 wizard → 用户核对 → 复制 prompt → AI 调写键 | 预填键限白名单：非 `MEASURE_CAMEL` 字段即 `fail(2,'不支持字段: ')`（`cli/write.ts` `MEASURE_CAMEL` 白名单循环）；皮褶钳缺 `bodyFatPct` 即 `fail(2,…)`；计划类先跑 `calorie.view.plan-wizard` 纯校验（`render/planPlate.ts` `buildPlanWizardView` → `fetch/plan.ts` `validatePlan`，返 `dryRun:true`／`checkedSessions:N`（输入含 N 个会话的已检查计数；≠通过数：坏计划也计 N，通过与否看 `errorCount`，只校验不写库）） |
 | 3 直接录 | 用户**明确**说「直接录」「我信你」 | 跳过 wizard，直接调写键，回 `receipt` 形 | 35 写键一律 `receipt`（`cli/write.ts` 模块头契约 ＋ `out()` 组装 `{ok,message,receipt}`） |
 
-- **fallback（#86 落地前）**：verify 页当前**不存在**（#86 OPEN 0%）。配置型 wizard 词命中且用户已给数据 → **不得直写**；改为**文字 verify**：逐字复述待写字段并请求确认，确认后再调写键；无确认则停在确认步。页面本体归 #86（3 个配置型 wizard ＋ 1 个 GIF 框选器；静态 HTML ＋ `copyText`）——**本侧已引用，#86 落地后回引**。
+- **fallback（#86 落地前）**：verify 页当前**不存在**（#86 在途）。配置型 wizard 词命中且用户已给数据 → **不得直写**；改为**文字 verify**：逐字复述待写字段并请求确认，确认后再调写键；无确认则停在确认步。页面本体归 #86（3 个配置型 wizard ＋ 1 个 GIF 框选器；静态 HTML ＋ `copyText`）——**本侧已引用，#86 落地后回引**：`calorie.view.measure-wizard`（记围度／补记围度；场景 1 空页／场景 2 预填）／`calorie.view.composition-wizard`（记体脂三词；来源＋体脂率＋皮褶钳 7 点）／`calorie.view.photo-log-wizard`（记身材照；纯配置）／`calorie.view.gif-planner`（查身材照／生成身材照GIF；照片框选＋4 数字裁剪）。未落地前本 fallback 继续有效。
 - 需多步交互的配置写词在路由层落 `non-exec` 桶，`reason` 逐字 `NON_EXEC_REASONS.wizard`（`triggers/routing.ts` `NON_EXEC_REASONS` 及其词表项）；**训练计划 95 键无写键，当前不可写**——`NON_EXEC_REASONS.planWriteMissing` 逐字「命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。」，命中回 `non-exec` 并告知用户属二期，**不得**承诺 verify 后写入。
 - AUTO 块（本文件下方「联动速查」）列出的单命令写键只证明**写键可达**，**不豁免**本表的 verify 前置；分流仍按本表：有数据走场景 2，明确授权才走场景 3。
 - **禁止**：用户给了数据仍跳过 verify 直接调写键（数据看起来对也不例外）——v2.4.2 → v2.4.3 的根因就是这条。正解＝按场景分流。
@@ -118,6 +118,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | calorie.view.body-measure | calorie.view.body-measure | stat | `calorie-cmd-read calorie.view.body-measure` |
 | 看热量趋势 | calorie.view.calorie-trend | stat | `calorie-cmd-read calorie.view.calorie-trend --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 看体重 vs 摄入(最近 7 天) | calorie.view.combined | stat | `calorie-cmd-read calorie.view.combined --params '{"pair":"weight_calorie","window":"7d"}'` |
+| 看体脂向导 | calorie.view.composition-wizard | stat | `calorie-cmd-read calorie.view.composition-wizard` |
 | calorie.view.contraindication | calorie.view.contraindication | stat | `calorie-cmd-read calorie.view.contraindication` |
 | calorie.view.dedupe | calorie.view.dedupe | stat | `calorie-cmd-read calorie.view.dedupe` |
 | 看热量缺口 | calorie.view.deficit | stat | `calorie-cmd-read calorie.view.deficit --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
@@ -131,6 +132,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 计划复盘（本周） | calorie.view.exercise-review | stat | `calorie-cmd-read calorie.view.exercise-review --params '{"start":"2026-08-31","end":"2026-09-07"}'` |
 | 看力量训练总览 | calorie.view.exercise-strength | stat | `calorie-cmd-read calorie.view.exercise-strength --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 看运动消耗趋势 | calorie.view.exercise-trend | stat | `calorie-cmd-read calorie.view.exercise-trend --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
+| 看GIF规划器 | calorie.view.gif-planner | stat | `calorie-cmd-read calorie.view.gif-planner --params '{"tag":"正面"}'` |
 | 看今日目标进度 | calorie.view.goal | stat | `calorie-cmd-read calorie.view.goal --params '{"start":"2026-09-05","end":"2026-09-07"}'` |
 | 定营养目标 | calorie.view.goal-config | stat | `calorie-cmd-read calorie.view.goal-config` |
 | calorie.view.goal-expiring | calorie.view.goal-expiring | stat | `calorie-cmd-read calorie.view.goal-expiring` |
@@ -145,9 +147,11 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 查食品库 | calorie.view.library | stat | `calorie-cmd-read calorie.view.library` |
 | 查卡路里数据 | calorie.view.lint-health | stat | `calorie-cmd-read calorie.view.lint-health` |
 | 看整体趋势 | calorie.view.long-trend | stat | `calorie-cmd-read calorie.view.long-trend --params '{"group":"weight_calorie","window":"30d"}'` |
+| 看围度向导 | calorie.view.measure-wizard | stat | `calorie-cmd-read calorie.view.measure-wizard` |
 | 看营养分析 | calorie.view.nutrition-analysis | stat | `calorie-cmd-read calorie.view.nutrition-analysis --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 看营养素深度 | calorie.view.nutrition-detail | stat | `calorie-cmd-read calorie.view.nutrition-detail --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 查营养配比 | calorie.view.nutrition-ratio | stat | `calorie-cmd-read calorie.view.nutrition-ratio --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
+| 看身材照向导 | calorie.view.photo-log-wizard | stat | `calorie-cmd-read calorie.view.photo-log-wizard` |
 | calorie.view.plan | calorie.view.plan | stat | `calorie-cmd-read calorie.view.plan` |
 | calorie.view.plan-wizard | calorie.view.plan-wizard | stat | `calorie-cmd-read calorie.view.plan-wizard` |
 | calorie.view.predict | calorie.view.predict | stat | `calorie-cmd-read calorie.view.predict` |
@@ -170,7 +174,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 删体重记录 | calorie.weight.remove | receipt | `calorie-cmd-read calorie.weight.remove --params '{"id":1}'` |
 | 改体重记录 | calorie.weight.update | receipt | `calorie-cmd-read calorie.weight.update --params '{"id":1,"kg":70.2}'` |
 
-相关场景：calorie.body.composition-add、calorie.body.composition-remove、calorie.body.measure-add、calorie.body.measure-remove、calorie.diet.add、calorie.diet.batch、calorie.diet.copy、calorie.diet.remove、calorie.diet.remove-by-date、calorie.diet.remove-by-range、calorie.diet.remove-by-type、calorie.diet.update、calorie.diet.update-by-date、calorie.exercise.add、calorie.exercise.remove、calorie.exercise.update、calorie.goal.pause、calorie.goal.resume、calorie.goal.set、calorie.goal.water、calorie.goal.weight、calorie.help.center、calorie.help.lookup、calorie.history、calorie.photo.add、calorie.photo.compare、calorie.photo.detail、calorie.photo.gif、calorie.photo.list、calorie.photo.remove、calorie.photo.tag、calorie.product.add、calorie.product.deprecate、calorie.product.update、calorie.profile.activity、calorie.profile.set、calorie.profile.update、calorie.today、calorie.view.anomaly、calorie.view.batch-import-preview、calorie.view.body-composition、calorie.view.body-measure、calorie.view.calorie-trend、calorie.view.combined、calorie.view.contraindication、calorie.view.dedupe、calorie.view.deficit、calorie.view.diet、calorie.view.diet-review、calorie.view.exercise、calorie.view.exercise-cardio、calorie.view.exercise-distribution、calorie.view.exercise-goal、calorie.view.exercise-recap、calorie.view.exercise-review、calorie.view.exercise-strength、calorie.view.exercise-trend、calorie.view.goal、calorie.view.goal-config、calorie.view.goal-expiring、calorie.view.goal-predict、calorie.view.goal-progress、calorie.view.goal-recommend、calorie.view.goal-status、calorie.view.goal-vs-actual、calorie.view.goal-weight、calorie.view.health、calorie.view.home、calorie.view.library、calorie.view.lint-health、calorie.view.long-trend、calorie.view.nutrition-analysis、calorie.view.nutrition-detail、calorie.view.nutrition-ratio、calorie.view.plan、calorie.view.plan-wizard、calorie.view.predict、calorie.view.process-progress、calorie.view.profile、calorie.view.ranking、calorie.view.review-template、calorie.view.search、calorie.view.six-factors、calorie.view.source-stats、calorie.view.today-water、calorie.view.volatility、calorie.view.weight、calorie.view.weight-compare、calorie.view.weight-history、calorie.view.weight-review、calorie.water.log、calorie.weight.batch、calorie.weight.log、calorie.weight.remove、calorie.weight.update（95 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。
+相关场景：calorie.body.composition-add、calorie.body.composition-remove、calorie.body.measure-add、calorie.body.measure-remove、calorie.diet.add、calorie.diet.batch、calorie.diet.copy、calorie.diet.remove、calorie.diet.remove-by-date、calorie.diet.remove-by-range、calorie.diet.remove-by-type、calorie.diet.update、calorie.diet.update-by-date、calorie.exercise.add、calorie.exercise.remove、calorie.exercise.update、calorie.goal.pause、calorie.goal.resume、calorie.goal.set、calorie.goal.water、calorie.goal.weight、calorie.help.center、calorie.help.lookup、calorie.history、calorie.photo.add、calorie.photo.compare、calorie.photo.detail、calorie.photo.gif、calorie.photo.list、calorie.photo.remove、calorie.photo.tag、calorie.product.add、calorie.product.deprecate、calorie.product.update、calorie.profile.activity、calorie.profile.set、calorie.profile.update、calorie.today、calorie.view.anomaly、calorie.view.batch-import-preview、calorie.view.body-composition、calorie.view.body-measure、calorie.view.calorie-trend、calorie.view.combined、calorie.view.composition-wizard、calorie.view.contraindication、calorie.view.dedupe、calorie.view.deficit、calorie.view.diet、calorie.view.diet-review、calorie.view.exercise、calorie.view.exercise-cardio、calorie.view.exercise-distribution、calorie.view.exercise-goal、calorie.view.exercise-recap、calorie.view.exercise-review、calorie.view.exercise-strength、calorie.view.exercise-trend、calorie.view.gif-planner、calorie.view.goal、calorie.view.goal-config、calorie.view.goal-expiring、calorie.view.goal-predict、calorie.view.goal-progress、calorie.view.goal-recommend、calorie.view.goal-status、calorie.view.goal-vs-actual、calorie.view.goal-weight、calorie.view.health、calorie.view.home、calorie.view.library、calorie.view.lint-health、calorie.view.long-trend、calorie.view.measure-wizard、calorie.view.nutrition-analysis、calorie.view.nutrition-detail、calorie.view.nutrition-ratio、calorie.view.photo-log-wizard、calorie.view.plan、calorie.view.plan-wizard、calorie.view.predict、calorie.view.process-progress、calorie.view.profile、calorie.view.ranking、calorie.view.review-template、calorie.view.search、calorie.view.six-factors、calorie.view.source-stats、calorie.view.today-water、calorie.view.volatility、calorie.view.weight、calorie.view.weight-compare、calorie.view.weight-history、calorie.view.weight-review、calorie.water.log、calorie.weight.batch、calorie.weight.log、calorie.weight.remove、calorie.weight.update（99 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。
 身材照片 HELP 模块：skill-calorie/dist/render/photo.js（gallery/compare/viewer/gif + buildPhotoHelp/lookupPhotoHelp，现找直达可执行 exec）。
 <!-- HELP-AUTO-END -->
 

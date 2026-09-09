@@ -53,7 +53,7 @@ function runOk(dir, args) {
 test('#119 ① sceneTypeFor：35 写键一律 receipt（旧 render_*_receipt 全走 html_scene_path receipt）', () => {
   assert.deepEqual(OUTPUT_TYPE_LABELS, { process: '过程', result: '结果', receipt: '回执' });
   const keys = Object.keys(CALORIE_COMBOS);
-  assert.equal(keys.length, 95);
+  assert.equal(keys.length, 99);
   let receiptCount = 0;
   for (const k of keys) {
     if (calorieShapeFor(k) === 'receipt') {

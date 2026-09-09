@@ -142,7 +142,7 @@ describe('#42 combos 补登记 18 新读键（skilllink 可读）', () => {
   it('CALORIE_COMBOS 全量 ⊆ combos.yaml（形状/标题/出口逐键对齐，漏登记即挂）', () => {
     const rows = loadCombos();
     const byKey = new Map(rows.map((r) => [r.key, r]));
-    assert.equal(Object.keys(CALORIE_COMBOS).length, 95);
+    assert.equal(Object.keys(CALORIE_COMBOS).length, 99);
     assert.equal(READ18.length, 18);
     for (const [key, meta] of Object.entries(CALORIE_COMBOS)) {
       const hit = byKey.get(key);

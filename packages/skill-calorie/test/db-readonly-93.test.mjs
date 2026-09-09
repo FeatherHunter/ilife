@@ -134,6 +134,7 @@ const READ_PARAMS = {
   'calorie.view.source-stats': {},
   'calorie.view.today-water': { date: D0 },
   // #113 · 趋势 2＋其他 6 移植 8 键（只读句柄同跑；t93 种子有餐/水/秤/运动/计划/库行，全键可跑）。
+  // #86 · wizard 4 键（只读句柄同跑；围度/体脂 recent 取自 t93 种子，照片向导纯配置，GIF 框选列正面照）。
   'calorie.view.calorie-trend': RANGE,
   'calorie.view.long-trend': { group: 'weight_calorie', window: '30d' },
   'calorie.view.nutrition-analysis': RANGE,
@@ -142,6 +143,10 @@ const READ_PARAMS = {
   'calorie.view.batch-import-preview': { items: [{ foodName: '米饭', calories: 130 }, { foodName: '包子', calories: 300 }] },
   'calorie.view.process-progress': {},
   'calorie.view.review-template': RANGE,
+  'calorie.view.measure-wizard': { date: D0, waistCm: 84 },
+  'calorie.view.composition-wizard': { date: D0, source: 'home_caliper', bodyFatPct: 18.9 },
+  'calorie.view.photo-log-wizard': { tag: '正面', srcPaths: ['t93_a.jpg'] },
+  'calorie.view.gif-planner': { tag: '正面' },
   // #111 · 运动移植 6 键（只读句柄同跑；strength 在 t93 种子上无力量行，两侧同 missing-data）。
   'calorie.view.exercise-strength': RANGE,
   'calorie.view.exercise-cardio': RANGE,
@@ -158,7 +163,7 @@ const READ_PARAMS = {
 };
 
 // ---------------------------------------------------------------- sweep 子进程
-// 单进程跑完 60 个读键（#113 +8）：某个键若因缺参走到 fail(2) 会 process.exit，父进程靠「少了一行」发现。
+// 单进程跑完 64 个读键（#113 +8／#86 +4）：某个键若因缺参走到 fail(2) 会 process.exit，父进程靠「少了一行」发现。
 if (process.argv[2] === '--sweep') {
   const tpl = process.argv[3];
   const work = tmpDir('sweep');
@@ -273,13 +278,13 @@ test('#93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接�
 });
 
 // ---------------------------------------------------------------- 验收 ①：读键全部可用 ＋ 接线等价
-test('#93 ① 60 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8）', () => {
+test('#93 ① 64 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4）', () => {
   const tpl = makeTemplate();
   const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--sweep', tpl], { encoding: 'utf8' });
   assert.equal(r.status, 0, 'sweep 子进程必须正常退出：' + String(r.stderr).slice(0, 400));
   const lines = String(r.stdout).split('\n').filter((s) => s.startsWith('{')).map((s) => JSON.parse(s));
   const started = String(r.stdout).split('\n').filter((s) => s.startsWith('START ')).map((s) => s.slice(6));
-  assert.equal(READ_KEYS.length, 60, '读键应为 60 个（95 组合键 − 35 写键）');
+  assert.equal(READ_KEYS.length, 64, '读键应为 64 个（99 组合键 − 35 写键）');
   assert.equal(WRITE_KEYS.length, 35);
   assert.deepEqual(started, READ_KEYS, '每个读键都跑到（缺失＝该键把进程 exit 掉了，参数不全）');
   assert.equal(lines.length, READ_KEYS.length);

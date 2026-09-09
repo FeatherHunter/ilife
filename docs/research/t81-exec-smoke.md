@@ -12,11 +12,11 @@
 
 | 指标 | 值 |
 |---|---|
-| exec 桶记录数 | 394 |
-| 原样实跑 exit 0（envelope key 一致） | 389 |
+| exec 桶记录数 | 398 |
+| 原样实跑 exit 0（envelope key 一致） | 393 |
 | 占位符替换后 exit 0 | 4 |
 | **非零（失败）** | 1 |
-| 涉及键数 | 95 |
+| 涉及键数 | 99 |
 | 无参裸跑非零的键（＝需要参数） | 42 |
 | └ 其中 exec 记录数（结构性断言覆盖面） | 107 |
 
@@ -417,7 +417,11 @@
 | 391 | 新拟 | 05 | 看落地训练进度 | `calorie.view.process-progress` | — | 0 | calorie.view.process-progress | `calorie-cmd-read calorie.view.process-progress` |
 | 392 | 新拟 | 10 | 看复盘报告 | `calorie.view.review-template` | — | 0 | calorie.view.review-template | `calorie-cmd-read calorie.view.review-template --params '{"start":"2026-09-01","end":"2026-09-07"}'` |
 | 393 | 新拟 | 02 | 看每日六因素 | `calorie.view.six-factors` | — | 0 | calorie.view.six-factors | `calorie-cmd-read calorie.view.six-factors --params '{"date":"2026-09-07"}'` |
-| 394 | 修复 | 06 | 看目标推荐 | `calorie.view.goal-recommend` | — | 0 | calorie.view.goal-recommend | `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'` |
+| 394 | 新拟 | 08 | 看围度向导 | `calorie.view.measure-wizard` | — | 0 | calorie.view.measure-wizard | `calorie-cmd-read calorie.view.measure-wizard` |
+| 395 | 新拟 | 08 | 看体脂向导 | `calorie.view.composition-wizard` | — | 0 | calorie.view.composition-wizard | `calorie-cmd-read calorie.view.composition-wizard` |
+| 396 | 新拟 | 09 | 看身材照向导 | `calorie.view.photo-log-wizard` | — | 0 | calorie.view.photo-log-wizard | `calorie-cmd-read calorie.view.photo-log-wizard` |
+| 397 | 新拟 | 09 | 看GIF规划器 | `calorie.view.gif-planner` | — | 0 | calorie.view.gif-planner | `calorie-cmd-read calorie.view.gif-planner --params '{"tag":"正面"}'` |
+| 398 | 修复 | 06 | 看目标推荐 | `calorie.view.goal-recommend` | — | 0 | calorie.view.goal-recommend | `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'` |
 
 ## 2. 占位符替换
 
@@ -473,6 +477,7 @@
 | `calorie.view.body-measure` | 0 | 是 |
 | `calorie.view.calorie-trend` | 0 | 是 |
 | `calorie.view.combined` | 0 | 是 |
+| `calorie.view.composition-wizard` | 0 | 是 |
 | `calorie.view.contraindication` | 0 | 是 |
 | `calorie.view.dedupe` | 0 | 是 |
 | `calorie.view.deficit` | 0 | 是 |
@@ -486,6 +491,7 @@
 | `calorie.view.exercise-review` | 0 | 是 |
 | `calorie.view.exercise-strength` | 0 | 是 |
 | `calorie.view.exercise-trend` | 0 | 是 |
+| `calorie.view.gif-planner` | 0 | 是 |
 | `calorie.view.goal` | 0 | 是 |
 | `calorie.view.goal-config` | 0 | 是 |
 | `calorie.view.goal-expiring` | 0 | 是 |
@@ -500,9 +506,11 @@
 | `calorie.view.library` | 0 | 是 |
 | `calorie.view.lint-health` | 0 | 是 |
 | `calorie.view.long-trend` | 0 | 是 |
+| `calorie.view.measure-wizard` | 0 | 是 |
 | `calorie.view.nutrition-analysis` | 0 | 是 |
 | `calorie.view.nutrition-detail` | 0 | 是 |
 | `calorie.view.nutrition-ratio` | 0 | 是 |
+| `calorie.view.photo-log-wizard` | 0 | 是 |
 | `calorie.view.plan` | 0 | 是 |
 | `calorie.view.plan-wizard` | 2 | 否 |
 | `calorie.view.predict` | 0 | 是 |

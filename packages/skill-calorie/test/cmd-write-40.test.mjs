@@ -67,9 +67,9 @@ function runWrite(dir, key, params, extra) {
   return env;
 }
 
-test('写键表：35 键一律 receipt + registry 合法 + 全量 95（#113 +8）', () => {
+test('写键表：35 键一律 receipt + registry 合法 + 全量 99（#113 +8／#86 +4）', () => {
   assert.equal(WRITE_KEYS.length, 35);
-  assert.equal(Object.keys(CALORIE_COMBOS).length, 95);
+  assert.equal(Object.keys(CALORIE_COMBOS).length, 99);
   for (const k of WRITE_KEYS) {
     assert.match(k, /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9-.]*$/);
     assert.equal(CALORIE_WRITE_COMBOS[k].shape, 'receipt');
