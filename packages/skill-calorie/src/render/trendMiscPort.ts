@@ -135,11 +135,21 @@ export interface NutritionAnalysisView {
 
 export function buildNutritionAnalysisView(db: DatabaseSync, start: string, end: string): NutritionAnalysisView {
   assertRange(start, end);
+  // 微量口径（M2 回填 parity）：food_log.sodium_mg／sugar_g／fiber_g 任一 NULL 即整行
+  // 按迁移同公式从库折算（ORDER BY id DESC 取最新未下架，ROUND 1 位），与 openDb 回填逐值一致，
+  // 故只读句柄（不跑迁移）与可写句柄结果全等；三列全有实测值即用实测。
+  const micro = (col: 'sodium_mg' | 'sugar_g' | 'fiber_g', prod: 'sodium' | 'sugar' | 'dietary_fiber') =>
+    `CASE WHEN f.sodium_mg IS NULL OR f.sugar_g IS NULL OR f.fiber_g IS NULL THEN ` +
+    `ROUND((SELECT n.${prod} FROM nutrition_products n WHERE n.product_name = f.food_name ` +
+    `AND COALESCE(n.is_deprecated, 0) = 0 ORDER BY n.id DESC LIMIT 1) * f.grams / 100.0, 1) ` +
+    `ELSE f.${col} END`;
   const row = db.prepare(
-    `SELECT COUNT(*) AS n, COALESCE(SUM(calories), 0) AS cal,
-       COALESCE(SUM(protein), 0) AS p, COALESCE(SUM(carbs), 0) AS c, COALESCE(SUM(fat), 0) AS f,
-       COALESCE(SUM(fiber_g), 0) AS fiber, COALESCE(SUM(sodium_mg), 0) AS sodium, COALESCE(SUM(sugar_g), 0) AS sugar
-     FROM food_log WHERE date BETWEEN ? AND ? AND food_name != ?`,
+    `SELECT COUNT(*) AS n, COALESCE(SUM(f.calories), 0) AS cal,
+       COALESCE(SUM(f.protein), 0) AS p, COALESCE(SUM(f.carbs), 0) AS c, COALESCE(SUM(f.fat), 0) AS f,
+       COALESCE(SUM(${micro('fiber_g', 'dietary_fiber')}), 0) AS fiber,
+       COALESCE(SUM(${micro('sodium_mg', 'sodium')}), 0) AS sodium,
+       COALESCE(SUM(${micro('sugar_g', 'sugar')}), 0) AS sugar
+     FROM food_log f WHERE f.date BETWEEN ? AND ? AND f.food_name != ?`,
   ).get(start, end, WATER_NAME) as {
     n: number; cal: number; p: number; c: number; f: number; fiber: number; sodium: number; sugar: number;
   };
