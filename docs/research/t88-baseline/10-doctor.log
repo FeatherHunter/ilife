@@ -1,0 +1,13 @@
+﻿
+pnpm : $ node tooling/skilllink.mjs doctor
+At line:1 char:9
++ $null = pnpm doctor *>&1 | Out-File -Encoding utf8 D:\ilife\.scratch\ ...
++         ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/skilllink.mjs doctor:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+OK: node 24.18.1 >= 22.13
+OK: SKILLS_DB_PATH 可写：D:\2Study\StudyNotes\.db
+WARN: lark-cli 未找到：缺失阻断取数，不返空数组（默认 warn，--strict 升 fail）
+OK: CLI 契约：argv+JSON(stdout)+exit；HTML 用 --html 显式落盘（utf8，路径/编码待定中转方案）
+doctor: PASS

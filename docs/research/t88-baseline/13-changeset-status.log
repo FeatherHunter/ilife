@@ -1,0 +1,38 @@
+﻿
+pnpm : $ changeset status
+At line:1 char:9
++ $null = pnpm changeset:status *>&1 | Out-File -Encoding utf8 D:\ilife ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ changeset status:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+node:internal/modules/cjs/loader:1524
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module '@changesets/errors'
+Require stack:
+- D:\ilife\node_modules\.pnpm\@changesets+cli@2.31.1_@types+node@26.4.1\node_modules\@changesets\cli\dist\changesets-cl
+i.cjs.js
+- D:\ilife\node_modules\.pnpm\@changesets+cli@2.31.1_@types+node@26.4.1\node_modules\@changesets\cli\bin.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1524:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1078:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1102:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1129:12)
+    at Module._load (node:internal/modules/cjs/loader:1301:5)
+    at c._load (node:electron/js2c/node_init:2:18068)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:262:19)
+    at Module.require (node:internal/modules/cjs/loader:1624:12)
+    at require (node:internal/modules/helpers:153:16)
+    at Object.<anonymous> (D:\ilife\node_modules\.pnpm\@changesets+cli@2.31.1_@types+node@26.4.1\node_modules\@changese
+ts\cli\dist\changesets-cli.cjs.js:4:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'D:\\ilife\\node_modules\\.pnpm\\@changesets+cli@2.31.1_@types+node@26.4.1\\node_modules\\@changesets\\cli\\dist\\c
+hangesets-cli.cjs.js',
+    'D:\\ilife\\node_modules\\.pnpm\\@changesets+cli@2.31.1_@types+node@26.4.1\\node_modules\\@changesets\\cli\\bin.js'
+  ]
+}
+
+Node.js v24.18.1
+[ELIFECYCLE] Command failed with exit code 1.

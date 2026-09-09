@@ -1,0 +1,17 @@
+﻿
+pnpm : $ node tooling/check-publish.mjs --tarball --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint
+At line:1 char:9
++ $null = pnpm publish:tarball *>&1 | Out-File -Encoding utf8 D:\ilife\ ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/...pack,base-paint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+OK: skill-calorie tarball 含 dist/cli/cmd_read.js
+OK: skill-calorie tarball 含 templates/
+OK: skill-calorie tarball 含全部 6 件模板
+OK: dsh-calorie tarball 含 dist/index.js
+OK: dsh-calorie tarball 含 cordis.patch.yml
+check-publish --tarball：PASS
+(node:9700) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security v
+ulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `DSH Desktop --trace-deprecation ...` to show where the warning was created)

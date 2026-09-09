@@ -1,0 +1,20 @@
+﻿
+pnpm : $ node tooling/check-publish.mjs --fresh-tmp --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint
+At line:1 char:9
++ $null = pnpm publish:fresh *>&1 | Out-File -Encoding utf8 D:\ilife\.s ...
++         ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/...pack,base-paint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+OK: skill-calorie 打包 skill-calorie-0.2.0.tgz
+OK: dsh-calorie 打包 dsh-calorie-0.2.0.tgz
+STEP: fresh-tmp 安装目录 C:\Users\辰辰洋洋\AppData\Local\Temp\ilife-fresh-xNxzuQ（仓外临时根 C:\Users\辰辰洋洋\AppData\Local\Temp）
+OK: fresh-tmp npm install 2 实包成功
+
+
+OK: G3 安装态：模板断言 1 包逐件装载全绿（应发清单逐件比对）；契约断言 1 键全绿（cliPath 解析 + 契约回执 + 面板路 readViaCli）
+NOTE: 公开出口断言（安装态 import(<skill>/render)）**未跑**——受 registry base-paint 版本偏斜阻塞，待 base-paint 发版后补（#95 F3 记账，见 docs/research/t95-packaging-and-template-loading.md）。
+check-publish --fresh-tmp：PASS
+(node:28548) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security 
+vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `DSH Desktop --trace-deprecation ...` to show where the warning was created)

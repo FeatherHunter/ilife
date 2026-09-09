@@ -1,0 +1,8 @@
+﻿
+pnpm : $ tsc -b
+At line:1 char:625
++ ... k } catch { Start-Sleep -Seconds 5 } }; try { pnpm build *>&1 | Out-F ...
++                                                   ~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ tsc -b:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

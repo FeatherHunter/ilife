@@ -1,0 +1,10 @@
+
+$ node tooling/check-boundaries.mjs
+OK: link-core 零依赖
+OK: render 无运行时依赖（link-core 仅 dev/typeof）
+OK: render 不依赖 combos
+OK: combos 强依赖 link-core
+OK: present 只许字符串级引用，禁 import render
+OK: link-core 源码不引用任何 workspace 包
+OK: 装配 owner 归一 render（link-core/combos 无自装配）
+boundaries: PASS

@@ -1,0 +1,9 @@
+﻿
+pnpm : $ node tooling/write-snapshot.mjs --check
+At line:1 char:9
++ $null = pnpm snapshot:check *>&1 | Out-File -Encoding utf8 D:\ilife\. ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/...hot.mjs --check:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+OK: 快照 == 实际拉取版（0.1.0@932e7b250d278d50）

@@ -1,0 +1,15 @@
+﻿
+pnpm : $ node tooling/check-publish.mjs --pre --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint
+At line:1 char:9
++ $null = pnpm publish:pre *>&1 | Out-File -Encoding utf8 D:\ilife\.scr ...
++         ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/...pack,base-paint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+OK: dsh-calorie 无 workspace: 外泄
+OK: skill-calorie 无 workspace: 外泄
+OK: dsh-life-pack 无 workspace: 外泄
+OK: base-paint 无 workspace: 外泄
+OK: dsh-calorie 声明 dsh-life-pack ^0.2.0（工作区 0.2.0，同版本线）
+OK: dsh-calorie 声明 skill-calorie ^0.2.0（工作区 0.2.0，同版本线）
+check-publish --pre：PASS

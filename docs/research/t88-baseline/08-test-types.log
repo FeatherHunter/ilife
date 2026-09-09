@@ -1,0 +1,8 @@
+﻿
+pnpm : $ tsc -b
+At line:1 char:9
++ $null = pnpm test:types *>&1 | Out-File -Encoding utf8 D:\ilife\.scra ...
++         ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ tsc -b:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

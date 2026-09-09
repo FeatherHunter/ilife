@@ -1,0 +1,30 @@
+﻿base=34 after=23 新增=9 消失=20
+  + #47 skills-cli 导出头（卡路里样板）
+  + #56 打包技能提供方（卡路里样板）
+  + C1 fetch-cli运维定位注明（SKILL唯一出口节+fetch头注）
+  + C7 默认目标值1800/2000来源文档一笔
+  + get 给全文（frontmatter 后正文，可调 CLI），过期候选失效
+  + list 给出唯一的 skill-calorie 摘要（bundled/600/单份 SKILL.md）
+  + packages\skill-calorie\test\skill-t11.test.mjs
+  + skill-calorie：frontmatter name/description 合法
+  + skill-calorie：公共安装器运行时小节存在
+  - #41 M3：真 CLI 串行冒烟 18 新键（exit 0 + envelope stat + --html 含 ilife-page）
+  - #48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段
+  - #50 envelope 契约：SKILL 直执行 bill.help.lookup 回执 key/shape/data 全字段（空库安全）
+  - #50 envelope 契约：SKILL 直执行 chef.help.lookup 回执 key/shape/data 全字段（空库安全）
+  - #50 envelope 契约：SKILL 直执行 home.help.lookup 回执 key/shape/data 全字段（空库安全）
+  - #50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全）
+  - #50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全）
+  - #50 envelope 契约：面板路 readViaCli 同键打通不返空
+  - #76 无宿主可执行证据（纯 HTML 页面 ＋ headless 浏览器）
+  - #80 HELP 生成与键名一致性
+  - #93 ① 64 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4）
+  - #93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接线保留 openDb 分支）
+  - dsh-bill-ilife 烟囱
+  - dsh-calorie 烟囱
+  - dsh-chef 烟囱
+  - dsh-home-ilife 烟囱
+  - dsh-memo-ilife 烟囱
+  - dsh-schedule-ilife 烟囱
+  - helpers JS 在 ≤820px 视口把反馈栈收窄为 3（页面运行时行为，FX-76-2）
+  - ③ check-combos 全绿（键形/注册一致性构建期门）

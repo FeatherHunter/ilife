@@ -1,0 +1,32 @@
+﻿失败集 31 条（D:\ilife\.scratch\t88\baseline\09b-pnpm-test.log）
+  #48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段
+  #50 envelope 契约：SKILL 直执行 bill.help.lookup 回执 key/shape/data 全字段（空库安全）
+  #50 envelope 契约：SKILL 直执行 chef.help.lookup 回执 key/shape/data 全字段（空库安全）
+  #50 envelope 契约：SKILL 直执行 home.help.lookup 回执 key/shape/data 全字段（空库安全）
+  #50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全）
+  #50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全）
+  #50 envelope 契约：面板路 readViaCli 同键打通不返空
+  #80 HELP 生成与键名一致性
+  #81 唤醒词路由层（路由与 parity 分家）
+  #93 ① 64 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4）
+  #93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接线保留 openDb 分支）
+  FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 exit 0 ＋ 需参数键必须带 --params）
+  dsh-bill-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+  dsh-bill-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+  dsh-bill-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+  dsh-bill-ilife 烟囱
+  dsh-calorie 烟囱
+  dsh-chef client：classic 执行并注册自身 id（#48 整批 crash 回归）
+  dsh-chef client：factory 可物化，导出 apply/inject，无 node 依赖
+  dsh-chef client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+  dsh-chef 烟囱
+  dsh-home-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+  dsh-home-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+  dsh-home-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+  dsh-home-ilife 烟囱
+  dsh-memo-ilife 烟囱
+  dsh-schedule-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+  dsh-schedule-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+  dsh-schedule-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+  dsh-schedule-ilife 烟囱
+  ③ check-combos 全绿（键形/注册一致性构建期门）

@@ -1,0 +1,18 @@
+﻿
+pnpm : $ node tooling/publish-chain.mjs --plan --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint
+At line:1 char:9
++ $null = pnpm publish:plan *>&1 | Out-File -Encoding utf8 D:\ilife\.sc ...
++         ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/...pack,base-paint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PLAN 预演：base-paint → skill-calorie → dsh-life-pack → dsh-calorie
+ - base-paint: VERIFY 在位（registry 0.2.0，本地 0.2.0）
+ - skill-calorie: PUBLISH（#48 样板重发，changeset 定版后，本地现 0.2.0）
+ - dsh-life-pack: VERIFY 在位（registry 0.2.0，本地 0.2.0）
+ - dsh-calorie: PUBLISH（#48 样板重发，changeset 定版后，本地现 0.2.0）
+预演结束：未写 registry。真发布用 --live（先合入 master，changeset 定版后跑）。
+publish-chain：PASS
+(node:30532) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security 
+vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `DSH Desktop --trace-deprecation ...` to show where the warning was created)
