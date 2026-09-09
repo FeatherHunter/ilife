@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：107｜since：2026-09-09T14:24:00Z｜until：（无）｜条目数：10｜导出时间：2026-09-09T14:30:34.691Z
+> 票号过滤：107｜since：2026-09-09T14:24:00Z｜until：2026-09-09T14:30:40Z｜条目数：10｜导出时间：2026-09-09T14:31:09.223Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text

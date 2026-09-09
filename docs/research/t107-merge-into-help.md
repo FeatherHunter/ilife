@@ -1,4 +1,4 @@
-# #107 · HELP：6 个死模板并入重建 —— 证据（可复跑）
+﻿# #107 · HELP：6 个死模板并入重建 —— 证据（可复跑）
 
 > 票：https://github.com/FeatherHunter/ilife/issues/107（父图 #63，D4「6 个死模板并入 HELP」）
 > 结论：**6 件模板全部「并入 HELP 重建」并真被渲染**（不留死文件、不删除）；`skill-t11.test.mjs`
@@ -116,7 +116,9 @@ M3 是「模板**承重**」的直接证据：模板不是被搬进代码的副�
 
 ## 7. 机械门禁对账（协议 §2.4）
 
-对账窗口：`--ticket 107 --since 2026-09-09T14:24:00Z`。对账源导出：`docs/research/t107-gate-runs.log`。
+对账窗口：`--ticket 107 --since 2026-09-09T14:24:00Z --until 2026-09-09T14:30:40Z`（**窗口右端停在提交前**——
+`git add`／`git commit` 两条条目在窗口外，属协议 §2.4-4 允许的「提交后 git 条目」；build／test 运行全在窗口内）。
+对账源导出：`docs/research/t107-gate-runs.log`。
 **窗口内本席全部 10 次运行逐条声明**（含 2 次 exit≠0 的过程／canonical 运行，故用 `--allow-nonzero`）。
 
 GATE-RELAX flag=--allow-nonzero reason=① canonical `pnpm test` 因冻结基线既有红必然 exit=1（判据＝失败集新增=0，非 exit 码，见 §6）；② 首跑一条过程运行因包装器内 `pwsh` 不在 PATH 而 exit=1（非门禁证据，仅为如实留痕）
@@ -143,7 +145,7 @@ node tooling/run-locked.mjs --ticket 107 -- node docs/research/t107-mutate.mjs  
 node tooling/run-locked.mjs --ticket 107 -- node docs/research/t107-run.mjs gates      # 四门逐条 exit
 node tooling/run-locked.mjs --ticket 107 -- node docs/research/t107-run.mjs canonical  # canonical（1 轮）
 node docs/research/t101-fail-set.mjs docs/research/t88-baseline/test-failset.txt <canonical.log>
-node tooling/check-gate-audit.mjs --evidence docs/research/t107-merge-into-help.md --ticket 107 --since 2026-09-09T14:24:00Z --allow-nonzero --export docs/research/t107-gate-runs.log
+node tooling/check-gate-audit.mjs --evidence docs/research/t107-merge-into-help.md --ticket 107 --since 2026-09-09T14:24:00Z --until 2026-09-09T14:30:40Z --allow-nonzero --export docs/research/t107-gate-runs.log
 ```
 
 ## 9. 未做／风险 top3
