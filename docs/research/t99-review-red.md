@@ -64,7 +64,7 @@ AUTO 块示例行 **99** ＝ `CALORIE_COMBOS` 键 **99**；逐键对齐（缺 0�
 - **S3-4（本票·依赖 dist）**：门从 `../dist/cli/keys.js` 取键表（`:70`），改 `src/cli/keys.ts` 未 build 时门对新键无感（CI 顺序已缓解）。
 - **S3-5（范围外·转 #124）**：chef／schedule 残留写盘面。
 - **新引入缺陷**：未发现。并发上下文：canonical 轮与 #107 WIP 同树（其 commit `d812dac` 晚于本轮），`新增=0`，不触发 `t88-delta-flake-ruling.md` 分类。
-- 说明：探针脚本按派单只写 `.scratch/orchestrator/red10-review/`（未入仓），与协议 §5.1「可复跑 `.mjs` 须跟踪」冲突，请编排者裁定。
+- 探针已入仓（编排者裁定后补做）：`docs/research/t99-review-red-probe.mjs`，7 子命令 `premises`／`mutate`／`params-effect`／`ismain`／`default-throw`／`gen-e2e`／`seed-dep`／`all`，commit `57ad27d9…`。
 
 ## ⑧ 五维打分
 
@@ -81,4 +81,4 @@ AUTO 块示例行 **99** ＝ `CALORIE_COMBOS` 键 **99**；逐键对齐（缺 0�
 GATE-RELAX flag=--allow-nonzero reason=窗口内必须如实登记 1 条既有红 canonical pnpm test（exit 1，delta 新增 0）；放宽只用于「声明→条目」匹配，门禁证据仍只认 exit=0 条目（runId=78b6f1ea…）
 
 复跑：`node tooling/check-gate-audit.mjs --evidence docs/research/t99-review-red.md --log .scratch/locks/gate-runs.log --ticket 99 --since 2026-09-09T14:26:00Z --until 2026-09-09T14:31:00Z`（`pnpm test` 需 `--allow-nonzero` 并留 `GATE-RELAX`）。
-探针：`.scratch/orchestrator/red10-review/{mutate,probe-params-effect,probe-isMain,probe-default-throw,probe-seed-dep,probe-premises,gen-e2e}.mjs`；日志同目录 `mutate.log`／`params-effect.log`／`prefix-gate.log`／`skill-integrity.log`。
+探针（**已入仓，可复跑**）：`node docs/research/t99-review-red-probe.mjs <premises|mutate|params-effect|ismain|default-throw|gen-e2e|seed-dep|all>`（本文件头记 `SKILL.md` 锚 `size/first3/sha256/blob`；变异只落系统 tmp 副本，永不写 `SKILL.md`）。审查期原始脚本与日志留在 `.scratch/orchestrator/red10-review/`（gitignored）：`mutate.log`／`params-effect.log`／`prefix-gate.log`／`skill-integrity.log`。
