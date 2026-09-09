@@ -18,7 +18,7 @@
  *      语义等价且不引入依赖；
  *   3. 显式 `--output` 路径自动建父目录（老家直接 `open()` 会 ENOENT）；对旧行为是超集。
  */
-import { mkdirSync, readdirSync } from 'node:fs';
+import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { CALORIE_COMBOS } from './cli/keys.js';
 import { CalorieRenderError } from './render/errors.js';
@@ -122,6 +122,57 @@ export function resolveDefaultHtmlPath(
 export function resolveExplicitHtmlPath(file: string): string {
   mkdirSync(dirname(file), { recursive: true });
   return file;
+}
+
+/* ── #83 · 三态交付：落盘／只读回退（M4「必须渲染并打开」的机械保证） ───────────────────────── */
+
+/** 只读／沙箱类写失败码 → ② 内联态（产物随 envelope 回传，绝不因写不进去而文字答）。
+ *  **结构错**（`EEXIST`／`ENOTDIR`／`EISDIR`／`ENAMETOOLONG` 等）**不**回退：那是落点本身非法，
+ *  按旧契约走「渲染失败回执」（exit 5），避免把用户笔误静默变成另一种交付形态。 */
+export const READONLY_WRITE_CODES = ['EACCES', 'EPERM', 'EROFS', 'EBUSY'] as const;
+
+export function isReadOnlyWriteFailure(e: unknown): boolean {
+  const code = (e as NodeJS.ErrnoException | null | undefined)?.code;
+  return typeof code === 'string' && (READONLY_WRITE_CODES as readonly string[]).includes(code);
+}
+
+export type HtmlDelivery =
+  | { readonly mode: 'file'; readonly path: string; readonly bytes: number }
+  | { readonly mode: 'inline'; readonly reason: string; readonly bytes: number };
+
+/** 交付一次 HTML 产物（**唯一落盘点**）：
+ *  - `target` 显式给定时逐字写该路径（回执落点）；否则 `explicit`（`--output`／`--html`）＞
+ *    默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html`；
+ *  - 只读类失败 → `{mode:'inline'}`（调用方把产物随 envelope 回传）；其余失败**原样抛出**（走回执）。
+ *  落点**解析**与写入同在一个 try 内：`calorie_html` 被同名文件占位等解析期失败同样归类（#87 返修 F4）。 */
+export function deliverHtml(input: {
+  key: string;
+  params: Record<string, unknown>;
+  explicit?: string;
+  target?: string;
+  html: string;
+  now?: Date;
+}): HtmlDelivery {
+  const bytes = Buffer.byteLength(input.html, 'utf8');
+  try {
+    const target = input.target ?? input.explicit ?? resolveDefaultHtmlPath(input.key, {
+      params: input.params,
+      suffix: writeSuffixFor(input.key, input.params),
+      now: input.now,
+    });
+    writeFileSync(resolveExplicitHtmlPath(target), input.html, 'utf8');
+    return { mode: 'file', path: target, bytes };
+  } catch (e) {
+    if (isReadOnlyWriteFailure(e)) return { mode: 'inline', reason: (e as Error).message, bytes };
+    throw e;
+  }
+}
+
+/** #83 · 回执落点：`<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html`（旧 `render_error_receipt.py`
+ *  的 `COMMAND_CN = '操作失败'` 逐字对齐；回执本身也走三态，写不进去即内联）。 */
+export function resolveReceiptHtmlPath(command = '操作失败', now: Date = new Date()): string {
+  const d = htmlDir();
+  return join(d, htmlFileName(command, { dir: d, now }));
 }
 
 /** #119 · 旧 `html_scene_path()` 的「类型中文」段真值（`html_paths.py` OUTPUT_TYPE_LABELS）。 */

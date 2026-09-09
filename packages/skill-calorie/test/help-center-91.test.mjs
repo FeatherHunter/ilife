@@ -30,7 +30,7 @@ const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'n
 const SCENE_IDS = buildHelpSceneData().groups.flatMap(
   (g) => g.subgroups.flatMap((s) => s.scenes.map((scene) => scene.id)),
 );
-const ENVELOPE_FIELDS = ['version', 'skill', 'shape', 'key', 'data'];
+const ENVELOPE_FIELDS = ['version', 'skill', 'shape', 'key', 'data', 'delivery'];
 
 function mkEnv() {
   const dir = mkdtempSync(join(tmpdir(), 't91-cli-'));
@@ -78,7 +78,7 @@ test('#91 ① 默认（无参）＝全量速查台 file 态：完整文档落盘
   const dir = mkEnv();
   const first = runOk(dir, undefined);
   const env = first.env;
-  assert.deepEqual(Object.keys(env), ENVELOPE_FIELDS, 'envelope 恒五字段（Q8：无 status）');
+  assert.deepEqual(Object.keys(env), ENVELOPE_FIELDS, 'envelope 恒六字段（Q8：无 status；delivery 由 #83 追加）');
   assert.equal(env.version, '0.1.0');
   assert.equal(env.skill, 'calorie');
   assert.equal(env.shape, 'list');

@@ -16,7 +16,7 @@
  * （D6，缺省 `file`）；`q`／`keyword` 保留**照片 10 键**语义（非空＝现找、空串＝全量 10 键）。envelope 恒五字段
  * `version/skill/shape/key/data`（Q8：**无 `status`**），`data` 只回索引与落点／字节数，不回 1 MB 产物。
  */
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDb } from '../schema.js';
@@ -92,6 +92,7 @@ import { HELP_CENTER_MODES, buildHelpSceneData, renderHelpCenterHtml } from '../
 import type { HelpCenterMode } from '../render/helpCenter.js';
 import {
   renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
+  renderErrorHtml,
   renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
   renderGoalStatusHtml, renderGoalHtml, renderHomeHtml,
   renderPlanHtml,
@@ -99,18 +100,32 @@ import {
   renderGoalVsActualHtml,
   renderProfileHtml,
 } from '../render/html.js';
-import { assertStatMetrics } from '../render/envelope.js';
+import { assertStatMetrics, buildDelivery, withDelivery } from '../render/envelope.js';
+import type { Delivery } from '../render/envelope.js';
+import { buildErrorReceipt } from '../render/receipt.js';
+import type { ErrorReceipt } from '../render/receipt.js';
+import { buildDataText } from 'base-paint';
 import { CalorieRenderError } from '../render/errors.js';
 import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
-import { HTML_DIR_NAME, resolveDefaultHtmlPath, resolveExplicitHtmlPath, writeSuffixFor } from '../output.js';
+import {
+  HTML_DIR_NAME, deliverHtml, resolveReceiptHtmlPath,
+} from '../output.js';
 import type { CalorieComboKey } from './keys.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
 import type { EnvelopeShape } from 'base-link-core';
 
 const DEFAULT_TIMEOUT_MS = 30000;
+
+/** #83 · 该次分发的产物种类：`html`＝HTML 产物（模板／壳渲染），`text`＝结构化文本（渲染层已定文本交付）。 */
+export type DeliveryKind = 'html' | 'text';
+export interface DispatchOut {
+  data: Record<string, unknown>;
+  html: string;
+  deliveryKind?: DeliveryKind;
+}
 
 function fail(code: number, msg: string): never {
   console.error('ERR ' + code + ': ' + msg);
@@ -297,7 +312,7 @@ function helpCenterIndex(data: ReturnType<typeof buildHelpSceneData>): {
 
 // 全键分发：读走 render/fetch 读，HELP 走触发词现找；未知键上游已拦，此处再拦一道。
 /** #41 · 测试直调出口（纯 CLI 同逻辑，不经过 argv/spawn；CLI 唯一出口仍为 main）。 */
-export function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): { data: Record<string, unknown>; html: string } {
+export function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): DispatchOut {
   switch (key) {
     case 'calorie.today': {
       const date = optStr(params, 'date') ?? latestFoodDate(db) ?? todayISO();
@@ -793,7 +808,8 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         bytes: Buffer.byteLength(rendered.html, 'utf8'),
       };
       if (mode === 'text') data['text'] = rendered.html;
-      return { data, html: rendered.html };
+      // #83 · 渲染层已定文本交付：产物即文本（③ 文本态之一），交付装配层据此走文本通道。
+      return { data, html: rendered.html, deliveryKind: mode === 'text' ? 'text' : 'html' };
     }
     case 'calorie.help.lookup': {
       const q = needStr(params, 'q');
@@ -985,6 +1001,115 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
   }
 }
 
+/* ── #83 · 三态交付装配（M4 HTML-First ＋ 渲染失败回执） ───────────────────────────────── */
+
+/** 交付落点的可读描述（回执文案用；默认目录名必须出现在文案里，便于用户定位）。 */
+function describeDeliveryTarget(explicit: string | undefined): string {
+  return explicit !== undefined ? '显式落点 ' + explicit : '默认目录 <SKILLS_DB_PATH>/' + HTML_DIR_NAME;
+}
+
+/** ③ 文本态的结构化文本：**同源**取 `buildDataText`（#77 契约，五 shape 投影）。
+ *  `fallback` 形不在 `SERIALIZABLE_SHAPES` 内（#93 登记：无 CLI 出口）——此时退化为缩进 JSON，
+ *  仍是「结构化文本」且零编造；本退化分支由 `delivery-83.test.mjs` 直接钉住。 */
+function dataTextOf(shape: EnvelopeShape, key: string, data: Record<string, unknown>): string {
+  try {
+    return buildDataText({
+      envelope: { version: ENVELOPE_VERSION, skill: CALORIE_SKILL, shape, key, data },
+      format: 'text',
+    } as unknown as Parameters<typeof buildDataText>[0]);
+  } catch {
+    return JSON.stringify(data, null, 2);
+  }
+}
+
+/** 三态判定 ＋ envelope 装配（**唯一交付落点**：同一 key、同一份 `data`，绝不各自取数）：
+ *  ③ 文本态：用户**明确**要文本（通用 `--params '{"delivery":"text"}'`）／渲染层已产出文本
+ *     （#91 `help.center` 的 `mode:'text'`）／**无 HTML 产物**（结构缝：`html` 为空 ⇒ 无对应模板，允许文字答）；
+ *  ② 内联态：有 HTML 产物但写不进去（只读／沙箱 `EACCES|EPERM|EROFS|EBUSY`）⇒ 产物随 envelope 回传；
+ *  ① 文件态（默认）：落盘 `calorie_html/*.html`，`data.output` 与 `delivery.path` 同值同源。
+ *  `delivery` 为 envelope 的**顶层追加字段**（既有五字段一字不改）；P9「stdout 一行 JSON」不变。 */
+export function buildDeliveredEnvelope(input: {
+  key: string;
+  shape: EnvelopeShape;
+  out: DispatchOut;
+  params: Record<string, unknown>;
+  explicit: string | undefined;
+}): Record<string, unknown> {
+  const { key, shape, params, out } = input;
+  const html = typeof out.html === 'string' ? out.html : '';
+  const askedText = params['delivery'] === 'text';
+  const kind: DeliveryKind = askedText ? 'text' : (out.deliveryKind ?? (html.trim() === '' ? 'text' : 'html'));
+
+  if (kind === 'text') {
+    // 三态同源：文本由**同一份** envelope data 经 #77 `buildDataText` 投影（技能侧不自产第二套序列化）。
+    const text = typeof out.data['text'] === 'string' ? (out.data['text'] as string) : dataTextOf(shape, key, out.data);
+    const data: Record<string, unknown> = { ...out.data, text };
+    // 渲染层已定文本交付的键（#91 `help.center` text 态）**保留既有落盘**（`data.output` 指向该文本文件）；
+    // 其余键的文本态只走 envelope（③ 产物＝结构化文本，不落 HTML 文件）。
+    if (out.deliveryKind === 'text') {
+      const d = deliverHtml({ key, params, explicit: input.explicit, html: text });
+      if (d.mode === 'file') data['output'] = d.path;
+      return withDelivery(buildEnvelope(key, shape, data), buildDelivery({
+        mode: 'text', path: d.mode === 'file' ? d.path : undefined, shape, html: text, bytes: d.bytes, template: 'text',
+      }));
+    }
+    return withDelivery(buildEnvelope(key, shape, data), buildDelivery({
+      mode: 'text', shape, html: text, bytes: Buffer.byteLength(text, 'utf8'), template: 'text',
+    }));
+  }
+
+  const d = deliverHtml({ key, params, explicit: input.explicit, html });
+  const data: Record<string, unknown> = d.mode === 'file'
+    ? { ...out.data, output: d.path }
+    : { ...out.data, html };
+  return withDelivery(buildEnvelope(key, shape, data), buildDelivery({
+    mode: d.mode, path: d.mode === 'file' ? d.path : undefined, shape, html, bytes: d.bytes,
+  }));
+}
+
+/** #83 · M4「渲染失败回执」：**模板化**回执（`buildErrorReceipt` ＋ `renderErrorHtml`，旧
+ *  `render_error_receipt.py` 的等价物）——**严禁手写 HTML 兜底**。回执自身也走三态：默认目录可写即落盘，
+ *  否则内联随 stderr 回传。机器可读回执以一行 `RECEIPT {…}` 落 **stderr**（P9：stdout 保持纯净，
+ *  不吐半截 envelope），exit 5 与既有「渲染/落盘失败」口径一致。 */
+function failWithReceipt(reason: string, key: string | undefined): never {
+  console.error('ERR 5: ' + reason);
+  try {
+    const receipt: ErrorReceipt = buildErrorReceipt({
+      sceneName: '渲染',
+      wakeWord: key ?? '渲染失败',
+      op: '渲染／落盘未完成',
+      reason,
+      suggestions: [
+        '检查 SKILLS_DB_PATH 与 ' + HTML_DIR_NAME + ' 目录权限（只读／沙箱会自动转内联交付）',
+        '用 --output <可写绝对路径> 显式指定落点后重试',
+        '确认 ' + HTML_DIR_NAME + ' 未被同名文件占位（占位会挡住落点解析）',
+      ],
+      fixPrompt: 'calorie-cmd-read ' + (key ?? '<key>') + " --params '{…}' --output <可写绝对路径>",
+    });
+    const receiptHtml = renderErrorHtml(receipt);
+    let delivery: Delivery;
+    try {
+      const d = deliverHtml({
+        key: key ?? 'calorie.help.center', params: {}, target: resolveReceiptHtmlPath(), html: receiptHtml,
+      });
+      delivery = buildDelivery({
+        mode: d.mode, path: d.mode === 'file' ? d.path : undefined, shape: 'receipt', html: receiptHtml, bytes: d.bytes,
+      });
+    } catch {
+      delivery = buildDelivery({
+        mode: 'inline', shape: 'receipt', html: receiptHtml, bytes: Buffer.byteLength(receiptHtml, 'utf8'),
+      });
+    }
+    // 内联回执把模板化回执页面一并回传（否则调用方拿不到回执正文）；落盘态只回路径。
+    console.error('RECEIPT ' + JSON.stringify({
+      ok: false, ...receipt, delivery, html: delivery.mode === 'inline' ? receiptHtml : undefined,
+    }));
+  } catch (e) {
+    console.error('TOAST: 回执生成失败（' + ((e as Error).message || String(e)) + '）');
+  }
+  process.exit(5);
+}
+
 function parseReadArgs(a: string[]): ReadArgs {
   return parseArgs(a);
 }
@@ -1025,33 +1150,27 @@ async function main(): Promise<void> {
       const out = isCalorieWriteKey(o.key as string)
         ? dispatchWrite(o.key as string, params, db)
         : dispatch(o.key as string, params, db);
-      // #87 · 输出落点：--output（显式覆盖）> --html（legacy 别名）> 默认 calorie_html/<中文command>_<TS>[_N].html
-      // #87 返修 F4（A2 S2-4）：落点**解析**本身也会失败（如 <DB>/calorie_html 被同名文件占位 → EEXIST）；
-      // 旧写法把它漏到外层「未知失败」分支 → exit 4（＝取数/超时）＋「未知失败」文案。此处按渲染失败计：
-      // exit 5 ＋ 明确文案（与紧邻的「HTML 写盘失败」同码同形态）。
-      // #119 · 动态段＋后缀段（M10 残项）：默认落点按段拼接
-      // `<覆盖|title>[_回执][_动态段][_内容标识]_<TS>[_N].html`（旧 html_scene_path 类型段＋_cmd_maps 动态段＋suffix 内容标识）。
-      // suffix 纯 params 派生（不读库；需写后回执值的键返回 ''，残留见 docs/research/t119-dynamic-suffix.md）。
-      let htmlTarget: string;
+      // #83 · 三态交付（M4 HTML-First）：① 文件态（默认）／② 内联态（只读·沙箱回退）／③ 文本态。
+      // 落点：--output（显式覆盖）> --html（legacy 别名）> 默认 calorie_html/<中文command>_<TS>[_N].html（#87／#119）。
+      // 只读类写失败 → 内联交付（产物随 envelope 回传，绝不因写不进去而文字答）；
+      // 结构错／渲染错 → 渲染失败回执（模板化回执，exit 5；严禁手写 HTML 兜底）。
       try {
-        htmlTarget = o.output ?? o.html ?? resolveDefaultHtmlPath(o.key as string, { params, suffix: writeSuffixFor(o.key as string, params) });
+        env = buildDeliveredEnvelope({
+          key: o.key as string, shape: shape as EnvelopeShape, out, params, explicit: o.output ?? o.html,
+        });
       } catch (e) {
-        fail(5, '渲染失败：HTML 落点解析失败（' + (o.output ?? o.html ?? '默认目录 <SKILLS_DB_PATH>/' + HTML_DIR_NAME)
-          + '）：' + (e as Error).message);
+        if (e instanceof CalorieRenderError) throw e;
+        failWithReceipt('渲染失败：' + describeDeliveryTarget(o.output ?? o.html) + '：'
+          + ((e as Error).message || String(e)), o.key as string);
       }
-      try {
-        writeFileSync(resolveExplicitHtmlPath(htmlTarget), out.html, 'utf8');
-      } catch (e) {
-        fail(5, 'HTML 写盘失败：' + htmlTarget + '（' + (e as Error).message + '）');
-      }
-      env = buildEnvelope(o.key as string, shape as EnvelopeShape, { ...out.data, output: htmlTarget });
     } finally {
       db.close();
     }
   } catch (e) {
     if (e instanceof CalorieRenderError) {
       if (e.code === 'missing-data') fail(4, '取数失败（缺失阻断）：' + e.message);
-      fail(e.code === 'bad-input' ? 2 : 5, (e.code === 'bad-input' ? '参数失败：' : '渲染失败：') + e.message);
+      if (e.code === 'bad-input') fail(2, '参数失败：' + e.message);
+      failWithReceipt('渲染失败：' + e.message, o.key as string);
     }
     if (e instanceof FetchError) fail(4, '取数失败：' + (e as Error).message);
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
