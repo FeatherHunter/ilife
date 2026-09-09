@@ -147,10 +147,10 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t83-html-first.md \
 | 项 | 改了什么（file:line） | 判据／实测 | 证据 runId |
 |---|---|---|---|
 | **D-1（S2）· 取口径 ②** | `t83-html-first.md` §2 新增「**回执口径（R-2 · D-1 取口径 ②）**」：`RECEIPT` ＝**渲染／落盘失败（exit 5）专属**；`exit 2`＝参数失败、`exit 4`＝取数／缺失阻断，**各自已有独立文案、不发回执**；理由＝给 exit 2／4 追加 `RECEIPT` 会改 97 读键＋35 写键失败态 stderr＝**新能力**，不并入本票，**若未来需要另票承接**。**行为零改动**（`cmd_read.ts:1170-1176` 一字未动） | 实测 `exit4 receiptLines=0`／`exit2-缺参=0`／`exit2-写键未知字段=0`／`exit5=1`，四例 stdout 均 0 B | `cba87050-91fa-40d0-8762-d9d5d00c3d26` |
-| **D-2（S2）** | `t83-html-first.md:61` 表标题「成功渲染并**打开**」→「成功渲染并**落盘＋回传落点**」；§7 新增第 1 条「**「打开（唤起查看器）」未确证**」，标注**归 #64 打通图／地图 Out of scope** | 证据表无「打开」已达成字样；`t83-evidence.mjs` 全文无 open／打开观测 | 文档 diff（本文件） |
+| **D-2（S2）** | `t83-html-first.md:62`（**R-6 订正行号**：原引 `:61` 系 §2 插入新条目后漂移）表标题「成功渲染并**打开**」→「成功渲染并**落盘＋回传落点**」；§7 新增第 1 条「**「打开（唤起查看器）」未确证**」，标注**归 #64 打通图／地图 Out of scope** | 证据表无「打开」已达成字样；`t83-evidence.mjs` 全文无 open／打开观测 | 文档 diff（本文件） |
 | **D-4（S3）** | `delivery-83.test.mjs:246` 恒真断言 `assert.equal(html, rec.html === undefined ? html : rec.html, …)` → `assert.equal(rec.html, undefined, …)` | **MUT-83B-6 由全绿 → 红 fail=1** | `f16cded2-089c-4197-8a88-91350c656035` |
 | **D-5（S3）** | `delivery-83.test.mjs:282-285` 新增 **1 条断言** `deliveryTemplateOf('receipt', '<!DOCTYPE html>…') === 'doc-shell'`（钉判定次序）。**注明：当前 99 键实测 0 例**（`OBS B8c` 无「receipt 形全文档」真机产物），钉的是**次序**本身 | **MUT-83B-3 由全绿 → 红 fail=1** | 同上 |
-| **D-6（S3 · 文档）** | `.changeset/t83-html-first-delivery.md:9` 补「`--params '{"delivery":"text"}'` 对**写键不适用**：35 写键各有参数白名单、未知字段一律拒（实测 exit 2 `不支持字段: delivery`）」 | 探针 `OBS R2-exit2-writekey-unknownfield exit=2 receiptLines=0` | `cba87050…` |
+| **D-6（S3 · 文档）** | `.changeset/t83-html-first-delivery.md:9` 补写键覆盖面说明。**初版表述（「对写键不适用／35 写键一律拒」）已被定点复核证伪 → 见 §11.5 R-6 订正**；现表述＝「`--params '{"delivery":"text"}'` 是**交付层通用开关**（`cmd_read.ts:1040`），对读键与**多数写键同样生效**；**例外**＝对**原始 `params` 键**做白名单校验的 3 个写键（`write.ts:600/740/881`）→ exit 2 `不支持字段: delivery`」 | 探针 6 例：3 个写键 exit 0 ＋ `delivery.mode=text`／3 个写键 exit 2 拒未知字段 → `RESULT-R6-DELIVERY-SCOPE: PASS` | `59fd4ecd-425a-4f3b-b43f-2778a8e0b469`（R-6；原 `cba87050…` 只覆盖 1 个白名单键、未覆盖生效面） |
 | **D-8（S3 · 文档）** | `t83-html-first.md:7`「新测试（**10 用例**）」→「**13 用例**」（实测 13 个 `test()`；本轮**只加断言不加用例**，故仍 13）；`SKILL.md:31` 补「`data.output`（**恒绝对路径**，相对 `SKILLS_DB_PATH`／`--output` 亦按 cwd 归一后回传）」 | `TEST-CASES=13`；`pnpm build` 后该行仍在（生成器 `packages/skill-calorie/scripts/build-help.mjs` 只重写 `HELP-AUTO` 块，块起点＝`SKILL.md:79`，本行在块**外**） | `53445b2c…`／`160ed1c7-edc3-4316-ab61-43cd711db612` |
 | **不修（编排者已记账）** | D-3／D-7／D-9（行为面）／D-10／D-11 —— 本轮**不动** | — | — |
 
@@ -190,8 +190,9 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t83-html-first.md \
 
 ### 11.4 机械门禁对账（协议 §2.4）
 
-- **本席窗口（R-2）**：`--ticket 83 --since 2026-09-09T15:50:47.805Z --until 2026-09-09T15:54:37.000Z` → 窗口内本席 `RUN` **11 条**（10 门禁＋1 过程轮，逐条列于下），同窗口他席以 `--ticket 63/79` 运行（不入本席声明）。
-- **对账窗口须取并集**（`--since 2026-09-09T15:11:00.000Z`）：`check-gate-audit` 的**条目池按窗口过滤**，而本文件同时含 §8（R-1 前实现轮）／§10（R-1）／§11（R-2）三轮声明，故单一窗口必须覆盖 15:11–15:15 与 15:50–15:54 两段；窗口内**他席 RUN 43 条**（蓝队审查轮 `f680a57a`／`adcdfff1` 等与并发 `cmd_read.js` 探针）非本席执行、不得作为本席证据声明 → 按 `--allow-undeclared` 放宽并留痕（见下 GATE-RELAX）。对账源：`.scratch/locks/gate-runs.log`。
+- **本席 R-2 段**：`--since 2026-09-09T15:50:47.805Z --until 2026-09-09T15:54:37.000Z` → 本席 `RUN` **11 条**（10 门禁＋1 过程轮）。
+- **本席 R-6 段**：`--since 2026-09-09T16:16:00.000Z --until 2026-09-09T16:19:10.000Z` → 本席 `RUN` **6 条**（探针 2＋一致性自检 4，见 §11.5）。
+- **对账窗口须取并集**（`--since 2026-09-09T15:11:00.000Z --until 2026-09-09T16:19:10.000Z`）：`check-gate-audit` 的**条目池按窗口过滤**，而本文件同时含 §8（R-1 前实现轮）／§10（R-1）／§11.1-11.3（R-2）／§11.5（R-6）四段声明，故单一窗口必须覆盖 15:11–15:15、15:50–15:55、16:16–16:19 三段；窗口内**他席 `RUN`**（蓝队审查轮 `f680a57a`／`adcdfff1` 等、并发 `cmd_read.js` 探针、**定点复核席 R-6 探针**）非本席执行、不得作为本席证据声明 → 按 `--allow-undeclared` 放宽并留痕（见下 GATE-RELAX）。对账源：`.scratch/locks/gate-runs.log`。
 
 GATE-RUN runId=53445b2c-01e0-4f17-91a9-37e369f82e41 cmd=pnpm build
 GATE-RUN runId=ea5d4eda-5419-4732-a2b5-86f437cf62b0 cmd=node --test packages/skill-calorie/test/delivery-83.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs
@@ -203,26 +204,59 @@ GATE-RUN runId=cba87050-91fa-40d0-8762-d9d5d00c3d26 cmd=node .scratch/t83/r2-rec
 GATE-RUN runId=7600dc90-9554-4604-94c1-4bcec595044e cmd=pnpm test
 GATE-RUN runId=ccef0bab-928f-4308-8367-11aa939d1c47 cmd=node docs/research/t101-fail-set.mjs docs/research/t88-baseline/test-failset.txt .scratch/t83/r2-canonical.log
 GATE-RUN runId=160ed1c7-edc3-4316-ab61-43cd711db612 cmd=node .scratch/t83/r2-selfcheck.mjs
+GATE-RUN runId=435f5462-43b0-48b5-9cac-057dde8c6e9b cmd=node tooling/check-gate-audit.mjs
+GATE-RUN runId=64181c6d-5174-4162-a90a-e2ba376b4058 cmd=git commit --only
+GATE-RUN runId=59fd4ecd-425a-4f3b-b43f-2778a8e0b469 cmd=node .scratch/t83/r2b-delivery-scope.mjs
+GATE-RUN runId=c8ed0d87-2bfe-4150-8afd-6f910e7f5e99 cmd=node .scratch/t83/r2b-consistency.mjs
+GATE-RUN runId=726568be-5f4a-42e2-b33d-da7ca1492659 cmd=node .scratch/t83/r2b-consistency.mjs
 
 **过程轮（非门禁证据，逐条声明）**
 
 GATE-RUN runId=392c0fab-771d-474d-958b-a510b4129f69 cmd=node -e
+GATE-RUN runId=8d8e5fcd-b9d9-4bd7-9be3-f8168efbb2b6 cmd=node tooling/check-gate-audit.mjs
+GATE-RUN runId=05370212-10df-4d46-b67f-94b27d006c38 cmd=node tooling/check-gate-audit.mjs
+GATE-RUN runId=742a413b-3fee-43e7-a4c0-e45cd5505652 cmd=node .scratch/t83/r2b-delivery-scope.mjs
+GATE-RUN runId=690a3b3f-f6fd-4aa1-a34f-cb80467d6330 cmd=node .scratch/t83/r2b-consistency.mjs
+GATE-RUN runId=a6570f29-de6f-4be8-87c0-54bc0f6bf5d1 cmd=node .scratch/t83/r2b-consistency.mjs
 
-（上一行＝`node -e` 内联自检**首跑**：嵌套引号语法错、exit 1 → 改用 `.scratch/t83/r2-selfcheck.mjs`，`160ed1c7` 复跑 exit 0。）
+（逐条说明：`392c0fab`＝`node -e` 内联自检首跑，嵌套引号语法错 → 改用 `.scratch/t83/r2-selfcheck.mjs`，`160ed1c7` 复跑 exit 0；`8d8e5fcd`＝对账窗口只取 R-2 段致 §8／§10 的 14 条声明判 missing（**窗口选法**问题，非门禁失败）→ 改并集窗口；`05370212`＝缺 `GATE-RELAX --allow-undeclared` 留痕 → 补留痕后 `435f5462` PASS；`742a413b`＝R-6 探针首跑，探针自身参数不全（`calorie.diet.add` 缺 `protein`、`calorie.profile.update` 期望值写错）→ 修正后 `59fd4ecd` PASS；`690a3b3f`／`a6570f29`＝R-6 一致性自检前两轮（① 未把 §11.5「改前」引文排除 ② 未排除「被证伪的原句」引文）→ 修正后 `c8ed0d87` PASS。）
 
-GATE-RELAX flag=--allow-nonzero reason=`7600dc90` canonical `pnpm test` exit 1 系**基线既有红**（判据＝具名失败集**新增 0**，实测 `base=34 after=29 新增=0`）；`392c0fab` 为**过程轮**（见上），非门禁证据。
+GATE-RELAX flag=--allow-nonzero reason=`7600dc90` canonical `pnpm test` exit 1 系**基线既有红**（判据＝具名失败集**新增 0**，实测 `base=34 after=29 新增=0`）；上列**过程轮** 5 条 exit≠0（`392c0fab`／`8d8e5fcd`／`05370212`／`742a413b`／`690a3b3f`／`a6570f29`）均为脚本／窗口自身缺陷的修复轮，非门禁证据。
 
-GATE-RELAX flag=--allow-undeclared reason=对账窗口取并集后（`--since 2026-09-09T15:11:00.000Z`）窗口内含**他席** `RUN` 43 条（蓝队审查轮 `f680a57a`／`adcdfff1` 等 ＋ 并发 `cmd_read.js calorie.help.center` 探针，见 `.scratch/locks/gate-runs.log`），非本席执行、不得作为本席证据声明；本席三轮声明共 **25 条全部 matched**。
+GATE-RELAX flag=--allow-undeclared reason=对账窗口取并集后（15:11–16:18）窗口内含**他席** `RUN`（蓝队审查轮 `f680a57a`／`adcdfff1` 等 ＋ 并发 `cmd_read.js calorie.help.center` 探针 ＋ **定点复核席 R-6 探针**，见 `.scratch/locks/gate-runs.log`），非本席执行、不得作为本席证据声明；本席四段声明共 **35 条全部 matched**。
 
 对账命令（逐字复跑）：
 
 ```
 node tooling/check-gate-audit.mjs --evidence docs/research/t83-html-first.md \
-  --ticket 83 --since 2026-09-09T15:11:00.000Z --until 2026-09-09T15:54:37.000Z \
+  --ticket 83 --since 2026-09-09T15:11:00.000Z --until 2026-09-09T16:19:10.000Z \
   --allow-nonzero --allow-undeclared
 ```
 
-实测：`RESULT: matched=25/25 auditEntries=774 scoped=68 undeclared=43` → **gate-audit: PASS**（exit 0；runId `435f5462-43b0-48b5-9cac-057dde8c6e9b`）。
+实测：`RESULT: matched=35/35 auditEntries=891 scoped=123 undeclared=88` → **gate-audit: PASS**（exit 0；runId `4087864b-df38-4de7-86d1-b48ef29fd9ad`）。快照说明：`auditEntries`／`scoped`／`undeclared` 随并发他席运行持续增长，数值以该 runId 轮次为准（`undeclared` 含**定点复核席**以 `--ticket 83` 运行的 `341c69eb`／`50817376` 等）。
 
-**对账轮过程记录（`--until` 之后，不入声明窗口，故不列 GATE-RUN）**：`8d8e5fcd-b9d9-4bd7-9be3-f8168efbb2b6`（窗口只取 R-2 段 → 池过滤致 §8／§10 的 14 条声明判 missing，exit 1，非门禁失败而是**窗口选法**问题）→ 改并集窗口；`05370212-10df-4d46-b67f-94b27d006c38`（缺 `GATE-RELAX --allow-undeclared` 留痕，exit 1）→ 补留痕后 `435f5462` PASS。
+### 11.5 R-6 订正（定点复核 R2N-1）— 2026-09-09 追加
+
+- **定点复核结论**：R-2 其余 4 条声称成立（D-1 真机 5 例＋`src` 零改动／D-2 在位／D-4／D-5 在位且 **MUT-83B-3／-6 变异轮 exit=1 fail=1**、还原 59/59、sha256 逐字节回原／四门 0/0/0/0、靶向 59/59、canonical 新增 0）；**唯一阻断项 R2N-1（S2）＝文档事实错误**。
+- **被证伪的原句**（R-2 写入 `.changeset/t83-html-first-delivery.md:9` 与本文件 §11.1 D-6 行）：「`--params '{"delivery":"text"}'` **对写键不适用** —— 35 个写键各有参数白名单、未知字段一律拒」。错因：把「**遍历原始 `params` 键**的 3 处白名单」误推成「35 写键全拒」，且与本段首句「用户明确要文本（`--params '{"delivery":"text"}'`）」**自相矛盾**。
+- **改前 → 改后（逐字）**：
+  - 改前：`--params '{"delivery":"text"}'` **对写键不适用** —— 35 个写键各有参数白名单、未知字段一律拒（实测 `calorie.exercise.update …` → exit 2 `不支持字段: delivery`）。
+  - 改后：`--params '{"delivery":"text"}'` 是**交付层通用开关**（`cmd_read.ts:1040` `params['delivery'] === 'text'`），对读键与**多数写键同样生效**（实测 10 个写键中 **7 个** exit 0 ＋ `delivery.mode=text`）；**例外**＝对**原始 `params` 键**做白名单校验的 3 个写键 `calorie.exercise.update`／`calorie.product.update`／`calorie.body.measure-add`（`write.ts:600/740/881`）→ 未知字段被拒、**exit 2 `不支持字段: delivery`**（`calorie.profile.update` 的白名单只遍历**已过滤字段** `picked`，`write.ts:779`，`delivery` 被忽略、仍生效）。
+- **真机证据**（`node .scratch/t83/r2b-delivery-scope.mjs`，6 例 6 PASS；runId `59fd4ecd-425a-4f3b-b43f-2778a8e0b469`，exit 0）：
+
+```
+# 非白名单写键（delivery 生效）
+node packages/skill-calorie/dist/cli/cmd_read.js calorie.water.log  --params '{"ml":250,"delivery":"text"}'            → exit 0 · delivery.mode=text · template=text · data.text ✓
+node packages/skill-calorie/dist/cli/cmd_read.js calorie.diet.add  --params '{"foodName":"鸡胸","calories":200,"protein":35,"delivery":"text"}' → exit 0 · delivery.mode=text · data.text ✓
+node packages/skill-calorie/dist/cli/cmd_read.js calorie.profile.update --params '{"field":"age","value":30,"delivery":"text"}' → exit 0 · delivery.mode=text · data.text ✓（白名单只遍历 picked）
+# 遍历原始 params 的白名单写键（delivery 被拒）
+node packages/skill-calorie/dist/cli/cmd_read.js calorie.exercise.update --params '{"id":1,"calories":10,"delivery":"text"}'    → exit 2 · ERR 2: 不支持字段: delivery
+node packages/skill-calorie/dist/cli/cmd_read.js calorie.product.update  --params '{"id":1,"note":"x","delivery":"text"}'      → exit 2 · ERR 2: 不支持字段: delivery
+node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.measure-add --params '{"waistCm":85,"delivery":"text"}'          → exit 2 · ERR 2: 不支持字段: delivery
+```
+
+- **引用漂移一并更正**：§11.1 D-2 行的 `t83-html-first.md:61` → **`:62`**（§2 插入新条目后行号漂移；表行现位于 `:62`）。其余引用复核实测：`delivery-83.test.mjs:246`（D-4 断言）／`:282-285`（D-5 断言）／`SKILL.md:31`／`SKILL.md:79`（AUTO 块起点）／`cmd_read.ts:1040`／`cmd_read.ts:1170-1176`／`write.ts:600/740/779/881` 全部在位。
+- **一致性自检**（`node .scratch/t83/r2b-consistency.mjs`，runId `c8ed0d87-2bfe-4150-8afd-6f910e7f5e99`，exit 0）：断言 `.changeset:9` 与本文件 §11.1 D-6／§11.5 的表述**一致**、被证伪句**只以历史引文形式**存在、且 8 处 src／test 锚点**逐字相符**（`RESULT-R6-CONSISTENCY: PASS`）。过程轮 `690a3b3f`／`a6570f29` 为自检脚本自身两轮缺陷（未排除历史引文），已在 §11.4 逐条声明。
+- **范围**：只改这**一句话**（两处同源表述）＋行号引用；**不动代码／测试**（`git diff --name-only` 仅 `.changeset/t83-html-first-delivery.md`＋本文件）。
+
 
