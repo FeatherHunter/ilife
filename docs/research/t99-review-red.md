@@ -11,7 +11,7 @@
 | `pnpm help:examples:check`（持锁 `runId=78b6f1ea…`） | **0** | `RESULT: 99/99`，14.5 s |
 | `node docs/research/t99-probe-examples.mjs` | **0** | `RESULT: 99/99` |
 | 同上 `--db empty`（两次） | 1 | `RESULT: 25/99`（**≠ 证据 §9 的「期望 24/99」**） |
-| `build`／`boundaries`／`snapshot:check`／`publish:pre`（同一持锁区） | **0/0/0/0** | `boundaries: PASS`／`快照 == 实际拉取版`／`check-publish --pre：PASS` |
+| `build`／`boundaries`／`snapshot:check`／`publish:pre`（同一持锁区） | **0/0/0/0** | `boundaries: PASS`／`snapshot OK`／`publish:pre PASS` |
 | canonical `pnpm test` 1 轮（`runId=54df5780…`，waitedMs=10005） | 1（既有红） | delta `base=34 after=29 新增=0 消失=5`（逐字复现证据 §5） |
 | `check-gate-audit --evidence docs/research/t99-examples-gate.md --log docs/research/t99-gate-runs.log --ticket 99 --since 14:17Z --until 14:23Z --allow-nonzero` | **0** | `matched=15/15 undeclared=0 PASS` |
 | `git diff 93e27f9 -- docs/research/t88-baseline/test-failset.txt` | — | **0 行** |
@@ -64,7 +64,7 @@ AUTO 块示例行 **99** ＝ `CALORIE_COMBOS` 键 **99**；逐键对齐（缺 0�
 - **S3-4（本票·依赖 dist）**：门从 `../dist/cli/keys.js` 取键表（`:70`），改 `src/cli/keys.ts` 未 build 时门对新键无感（CI 顺序已缓解）。
 - **S3-5（范围外·转 #124）**：chef／schedule 残留写盘面。
 - **新引入缺陷**：未发现。并发上下文：canonical 轮与 #107 WIP 同树（其 commit `d812dac` 晚于本轮），`新增=0`，不触发 `t88-delta-flake-ruling.md` 分类。
-- 说明：探针脚本按派单只写 `.scratch/orchestrator/red10-review/`（未入仓），与协议 §5.1「可复跑 `.mjs` 须跟踪」冲突，由编排者裁定是否补入仓。
+- 说明：探针脚本按派单只写 `.scratch/orchestrator/red10-review/`（未入仓），与协议 §5.1「可复跑 `.mjs` 须跟踪」冲突，请编排者裁定。
 
 ## ⑧ 五维打分
 
@@ -73,7 +73,7 @@ AUTO 块示例行 **99** ＝ `CALORIE_COMBOS` 键 **99**；逐键对齐（缺 0�
 
 ## ⑨ 本报告自身的运行声明（协议 §2.4.3）
 
-对账窗口 `--since 2026-09-09T14:26:00Z --until 2026-09-09T14:31:00Z`，`--ticket 99`（`scoped=2`；**实测 `matched=2/2 undeclared=0 PASS`**）。本报告自身的 `git add`／`git commit` 在窗口右端之后（同 #99 证据 §10 的窗口口径）。
+对账窗口 `--since 2026-09-09T14:26:00Z --until 2026-09-09T14:31:00Z`，`--ticket 99`（**实测 `matched=2/2 undeclared=0 PASS`**）；本报告自身的 `git add`／`git commit` 在窗口右端之后。
 
 - GATE-RUN runId=78b6f1ea-22c3-431d-881a-3d202e0e3b3f （exit 0） cmd=node .scratch/orchestrator/red10-review/run-gates.mjs
 - GATE-RUN runId=54df5780-ca79-4e3c-871f-1f4005591fb3 （exit 1，既有红 canonical；delta 新增 0） cmd=pnpm test
