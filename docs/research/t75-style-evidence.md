@@ -223,7 +223,7 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 71/71
     不在 W2 裁定范围（W2 只裁 statusBadge），登记待溯源；如需与旧 toast 逐值对齐，须先取得旧层文本。
 12. **W3 `copied` 只补 CSS 侧**（H-16 双反馈）：本票新增 `.ilife-copy-btn.copied` 变绿态 ＋ 复用
     基座 450ms 弹簧；**运行时给按钮加 `copied` 类不在本票范围**（不得擅自改 helpers 的复制反馈行为）
-    → **移交登记**：落点 #88／#91 或另开票（契约 §8.11.2 FX-75-13）。
+    → **移交登记**：落点 #121《复制按钮 copied 态：运行时加类》（已建，阻塞 #88）（契约 §8.11.2 FX-75-13）。
 13. **W8 窄屏判据改 iframe 宽 375**：`--window-size=375,812` 实测 `innerWidth=526`（Chrome 最小窗口
     宽度所致）→ `≤400px` 断点从未覆盖。改用 **iframe 宽 375** 承载同一张控制页，`H-12f` 自证
     `innerWidth===375`。**`H-12e` 高度区间下界取 50（非作业单建议的 60）**：实测正确两行高度 = 58px
@@ -241,7 +241,7 @@ node docs/research/t75-visual-evidence.mjs    # RESULT: 71/71
 | `:focus-visible` 覆盖 HELP 的 `tab-input` | **部分** | 单选 input 视觉隐藏、其 `label` 非 `focus-within` 祖先，纯 CSS 无法给 label 加环（需 `:has()` 反选，代价高）；按钮类控件已全覆盖（视觉证据 `H-20a` ＋ 浏览器 `:focus-visible` 规则命中 ≥1） |
 | `ACTION_BAR_DEFAULTS.evenRowPairs` 的语义 | **已消费** | 落成 `grid-template-columns: repeat(evenRowPairs, …)`（浏览器实测 2 列）；「偶数列对」的旧层精确语义未在契约定义，按施工单 B §1.2 取 grid 2 列 |
 | 旧 `base.css` 的 `.hm-*` 全量重写 | **未做**（裁定 R8） | 本票只新增；删除随各技能迁移票 |
-| **H-16 运行时加 `copied` 类** | **移交** | 本票只补 CSS 侧（`.ilife-copy-btn.copied`）；运行时加类归 helpers → 落点 **#88／#91 或另开票**（契约 §8.11.2 FX-75-13） |
+| **H-16 运行时加 `copied` 类** | **移交** | 本票只补 CSS 侧（`.ilife-copy-btn.copied`）；运行时加类归 helpers → 落点 **#121《复制按钮 copied 态：运行时加类》（已建，阻塞 #88）**（契约 §8.11.2 FX-75-13） |
 | **`.ilife-toast-chip-{ok,warn,danger}`／`.ilife-help-shell-badge-dev` 的硬编码色** | **未确证** | 仓内**无旧层出处可核**（旧 toast 样式内联在 `base.js:75`、未入仓；`#1f8f3d` 全仓无出处，`#b25000` 仅见 `docs/calorie-architecture.html:10`）→ 不在 W2 裁定范围（W2 只裁 statusBadge），登记待溯源（§6 记账 11） |
 | **`H-12e` 高度区间下界 50px（非作业单建议的 60px）** | **有意偏离** | 实测正确两行高度 58px（60 会把正确实现判红）；判别力改由结构差值（`toast_h − body_h ≤ 30px`）承担（§6 记账 13） |
 | **`--dump-dom` 下 CSS 动画时钟不推进** | **已用替代判据** | 实测动画态 `opacity=0`（虚拟时间冻结）→ 可见性改用「reduced-motion 页 `opacity=1`」＋「关键帧终态 `to{opacity:1}`」两条不依赖动画时钟的判据（`H-21e`／`H-21f`） |

@@ -326,16 +326,17 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     assert.ok(SRC_CHARTS.includes('export function chartsCss'), 'chartsCss 必须是 charts.ts 的导出（#75 复用点）');
   });
 
-  it('T23 运行时 toast 结构对齐（W1 根因修）：helpers 与静态产出器同构 ＋ 权宜补丁已删', () => {
+  it('T23 运行时 toast 结构对齐（W1 根因修 ＋ F-c 图标）：helpers 与静态产出器同构 ＋ 权宜补丁已删', () => {
     const css = buildStyleSheet().css;
     const blocks = ruleBlocks(css);
     const p = STYLE_PREFIX;
     const helpers = buildSharedHelpersJs();
 
     // ① 结构同构（**根因**）：helpers 运行时 DOM 必须与静态产出器／旧层一致——
-    //    `.toast > .toast-body(> .toast-title-row ＋ 可选 .toast-title-detail) ＋ .toast-close`
+    //    `.toast > .toast-icon ＋ .toast-body(> .toast-title-row ＋ 可选 .toast-title-detail) ＋ .toast-close`
     //    （旧层 `.hm-toast-icon + .hm-toast-body(> .hm-toast-title-row + .hm-toast-detail) + .hm-toast-close`）。
-    for (const cls of [p + 'toast-body', p + 'toast-title-row', p + 'toast-title-detail']) {
+    //    F-c：旧层运行时 toast 有 📋 图标（契约 `:141`），缺图标时“同构”不实 → 必须有 `.toast-icon`。
+    for (const cls of [p + 'toast-icon', p + 'toast-body', p + 'toast-title-row', p + 'toast-title-detail']) {
       assert.ok(helpers.includes(cls), 'helpers 运行时 DOM 缺结构类：' + cls);
     }
     const staticHtml = renderToast({ msg: 'm', detail: 'd' });
@@ -345,13 +346,21 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     const closeAt = staticHtml.indexOf(p + 'toast-close');
     assert.ok(bodyAt >= 0 && rowAt > bodyAt, '静态产出器：title-row 必须在 body 之内');
     assert.ok(detailAt > rowAt && closeAt > detailAt, '静态产出器：detail 在 title-row 之后、close 在最末');
-    // 运行时侧同一顺序（helpers 产出的 JS 文本里 body → title-row → detail → close 逐段出现）。
+    // 运行时侧同一顺序（helpers 产出的 JS 文本里 icon → body → title-row → detail → close 逐段出现）。
+    const hIcon = helpers.indexOf(p + 'toast-icon');
     const hBody = helpers.indexOf(p + 'toast-body');
     const hRow = helpers.indexOf(p + 'toast-title-row');
     const hDetail = helpers.indexOf(p + 'toast-title-detail');
     const hClose = helpers.indexOf(p + 'toast-close');
+    assert.ok(hIcon > 0 && hIcon < hBody, 'helpers 图标必须在 body 之前（icon ＋ body ＋ close，同构静态产出器）');
     assert.ok(hBody > 0 && hRow > hBody && hDetail > hRow && hClose > hDetail,
       'helpers 产出必须按 body → title-row → title-detail → close 顺序出现结构类');
+    // F-c：图标字形与静态产出器同源（📋），CSS 规则共用 `.toast-icon`（旧层尺寸/位置已对齐，无需新规则）。
+    // 图标必须真实挂到 DOM（仅定义类名／字形变量不够，删 `appendChild(icon)` 即漏挂 → 此处变红）。
+    assert.ok(helpers.includes('📋'), 'helpers 运行时图标字形必须为 📋（旧层缺省，契约 :141）');
+    assert.ok(helpers.includes('appendChild(icon)'), 'helpers 运行时图标必须挂到 toast 节点（缺 append 即漏图标）');
+    const iconBlocks = blocks.filter((b) => b.selector === '.' + p + 'toast-icon');
+    assert.ok(iconBlocks.length > 0, '缺 .ilife-toast-icon 规则块（运行时图标与静态共用）');
 
     // ② 权宜补丁必须删除（结构对齐后不再需要；留着会把关闭按钮挤到第三行，R1 实测 113px 高）。
     const toastBlocks = blocks.filter((b) => b.selector === '.' + p + 'toast');
@@ -452,12 +461,13 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
 
   it('T25 statusBadge 四态逐值 = 旧 `.hm-status`（返修 W2 外部 oracle，不引用本票实现）', () => {
     // 外部 oracle：`公共组件/assets/base.css:225-228`（旧值清单亦见施工单 B `:253`）。
-    // **实色**背景，不是 12% alpha；字色逐值。
+    // **实色**背景，不是 12% alpha；字色逐值。empty 字色旧层 `:228` 为 `#6e6e73`（=`--fg2` 解析值），
+    // 实现用 token 引用 `var(--fg2)`，故此处表值取旧字面 `#6e6e73`（可逐字核对旧文件），另断言 token 解析。
     const LEGACY = {
       ok: { bg: '#e6f7ec', fg: '#1f8c3d' },
       warn: { bg: '#fff5e0', fg: '#a25b00' },
       danger: { bg: '#fff0ee', fg: '#a83228' },
-      empty: { bg: '#f0f0f3', fg: 'var(--fg3)' },
+      empty: { bg: '#f0f0f3', fg: '#6e6e73' },
     };
     const blocks = ruleBlocks(buildStyleSheet().css);
     for (const [status, want] of Object.entries(LEGACY)) {
@@ -465,7 +475,12 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
       const hits = blocks.filter((b) => b.selector === sel);
       assert.equal(hits.length, 1, '必须有且仅一条规则块：' + sel);
       assert.ok(hits[0].decls.includes('background: ' + want.bg), sel + ' 底色必须逐值 ' + want.bg);
-      assert.ok(hits[0].decls.includes('color: ' + want.fg), sel + ' 字色必须逐值 ' + want.fg);
+      if (status === 'empty') {
+        assert.ok(hits[0].decls.includes('color: var(--fg2)'), sel + ' 字色必须取 --fg2（解析值 #6e6e73＝旧 base.css:228）');
+        assert.equal(CSS_VAR_TOKENS['--fg2'], want.fg, '--fg2 解析值必须逐值 ' + want.fg + '（外部 oracle base.css:228）');
+      } else {
+        assert.ok(hits[0].decls.includes('color: ' + want.fg), sel + ' 字色必须逐值 ' + want.fg);
+      }
       assert.ok(!hits[0].body.includes('rgba('), sel + ' 不得用 alpha 底色（旧层为实色）');
     }
     // 上一轮的无出处值不得残留在 statusBadge 段（`#1f8f3d`／`#b25000` 属 toast 区，另账）。

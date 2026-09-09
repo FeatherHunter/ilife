@@ -297,6 +297,7 @@ function CONTROL_PROBE() {
     '  out.badgeDangerBg = g(".ilife-status-badge-danger", "backgroundColor");',
     '  out.badgeDangerColor = g(".ilife-status-badge-danger", "color");',
     '  out.badgeEmptyBg = g(".ilife-status-badge-empty", "backgroundColor");',
+    '  out.badgeEmptyColor = g(".ilife-status-badge-empty", "color");',
     '  out.errorPad = g(".ilife-error-title", "fontSize");',
     '  out.errorBoxPad = (function () { var t = document.querySelector(".ilife-error-title"); return t ? getComputedStyle(t.parentElement).padding : "MISSING"; }());',
     '  out.errorBoxRadius = (function () { var t = document.querySelector(".ilife-error-title"); return t ? getComputedStyle(t.parentElement).borderTopLeftRadius : "MISSING"; }());',
@@ -341,6 +342,9 @@ function CONTROL_PROBE() {
     '    out.rt_hasBody = rt ? !!rt.querySelector(".' + STYLE_PREFIX + 'toast-body") : "MISSING";',
     '    out.rt_hasRow = rt ? !!rt.querySelector(".' + STYLE_PREFIX + 'toast-title-row") : "MISSING";',
     '    out.rt_detailInBody = !!(d && d.closest(".' + STYLE_PREFIX + 'toast-body"));',
+    '    out.rt_hasIcon = rt ? !!rt.querySelector(".' + STYLE_PREFIX + 'toast-icon") : "MISSING";',
+    '    out.rt_iconText = (function () { var i = rt ? rt.querySelector(".' + STYLE_PREFIX + 'toast-icon") : null; return i ? i.textContent : "MISSING"; }());',
+    '    out.rt_iconVisible = (function () { var i = rt ? rt.querySelector(".' + STYLE_PREFIX + 'toast-icon") : null; if (!i) return "MISSING"; var cs = getComputedStyle(i); var r = i.getBoundingClientRect(); return cs.display !== "none" && cs.visibility !== "hidden" && r.width > 0 && r.height > 0; }());',
     '    out.rt_titleTop = (function () { var t = rt ? rt.querySelector(".' + STYLE_PREFIX + 'toast-title") : null; return t ? Math.round(t.getBoundingClientRect().top) : "MISSING"; }());',
     '    out.rt_detailTop = d ? Math.round(d.getBoundingClientRect().top) : "MISSING";',
     '    out.rt_closeTop = (function () { var c = rt ? rt.querySelector(".' + STYLE_PREFIX + 'toast-close") : null; return c ? Math.round(c.getBoundingClientRect().top) : "MISSING"; }());',
@@ -483,6 +487,8 @@ add('H-12c3', 'W1：运行时 toast **关闭按钮与标题同行**（rt_close_t
   'rt_close_top=' + d.rt_closeTop + '／rt_title_top=' + d.rt_titleTop + '／rt_toast_h=' + d.rt_toastH + 'px');
 eq('H-12d', 'W1：运行时 toast 结构与静态产出器同构（`.toast-body` ＋ `.toast-title-row` 命中，detail 在 body 内，无 flex-wrap）',
   [d.rt_hasBody, d.rt_hasRow, d.rt_detailInBody, d.rt_wrap].join('/'), 'true/true/true/nowrap');
+eq('H-12d-icon', 'F-c：运行时 toast 有图标（`.toast-icon` 存在且可见，字形 📋，旧层缺省契约:141）',
+  [d.rt_hasIcon, d.rt_iconText, d.rt_iconVisible].join('/'), 'true/📋/true');
 // 高度判据（W1）：**结构性**判据（toast 高度 − body 高度 ≤ 内距 26px ＋ 描边 2px ＋ 2px 取整余量 ⇒
 // 关闭按钮**没有**另起一行）＋ 绝对区间 [50,90]px。实测两行内容 = 58px（13+13 内距 ＋ 2 描边 ＋
 // 标题 17.5 ＋ 详情 16.5），故区间下界取 50（作业单建议 60–90 是估值，实测正确值 58px；
@@ -534,8 +540,8 @@ eq('B-12d2', 'W2：statusBadge warn 底色/字色逐值（#fff5e0 / #a25b00）',
   d.badgeWarnBg + ' / ' + d.badgeWarnColor, 'rgb(255, 245, 224) / rgb(162, 91, 0)');
 eq('B-12d3', 'W2：statusBadge danger 底色/字色逐值（#fff0ee / #a83228）',
   d.badgeDangerBg + ' / ' + d.badgeDangerColor, 'rgb(255, 240, 238) / rgb(168, 50, 40)');
-eq('B-12d4', 'W2：statusBadge empty 底色逐值（#f0f0f3）＋ 四态可区分',
-  d.badgeEmptyBg + ' / ' + String(d.badgeOkBg !== d.badgeEmptyBg), 'rgb(240, 240, 243) / true');
+eq('B-12d4', 'W2：statusBadge empty 底色/字色逐值（#f0f0f3 / #6e6e73→rgb(110,110,115)，旧 base.css:228）＋ 四态可区分',
+  d.badgeEmptyBg + ' / ' + d.badgeEmptyColor + ' / ' + String(d.badgeOkBg !== d.badgeEmptyBg), 'rgb(240, 240, 243) / rgb(110, 110, 115) / true');
 
 /* ── E. 输出 ───────────────────────────────────────────────────────────── */
 

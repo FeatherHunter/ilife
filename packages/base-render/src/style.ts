@@ -390,7 +390,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
    *  border-radius:999px;width:fit-content`。四组底色／字色**逐值取旧 `.hm-status.{ok,warn,danger,empty}`**
    *  （`公共组件/assets/base.css:225-228`；旧值清单亦见施工单 B `:253`）——**实色**背景，非 alpha：
    *  ok `#e6f7ec`／`#1f8c3d`、warn `#fff5e0`／`#a25b00`、danger `#fff0ee`／`#a83228`、
-   *  empty `#f0f0f3`／`var(--fg3)`（empty 字色旧层取灰阶 token，底色为实色 `#f0f0f3`）。
+   *  empty `#f0f0f3`／`var(--fg2)`（empty 字色旧层 `base.css:228` 为 `#6e6e73`＝`--fg2` 解析值，底色为实色 `#f0f0f3`）。
    *  **返修 W2**：上一轮误用 `#1f8f3d`／`#b25000`（全仓无出处）＋ 12% alpha 底色，且注释谎称「沿用旧值」
    *  → 已改回旧逐值，注释与实现一致（非 token 硬编码色按 D-5 以 CSS 常量落地，不新增 token 名）。 */
   statusBadge: (p) => [
@@ -421,7 +421,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '}',
     '.' + p + 'status-badge-empty {',
     '  background: #f0f0f3;',
-    '  color: var(--fg3);',
+    '  color: var(--fg2);',
     '}',
   ].join(LF),
 

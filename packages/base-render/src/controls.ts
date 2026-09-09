@@ -485,8 +485,8 @@ function helpersDataAttr(input?: SharedHelpersInput): string {
  *
  *  功能面（文档无规定，本文记账）：① 幂等挂载点标记；② 事件委派 `[ACTION_ID_ATTR]` 点击 →
  *  读 `dataAttr` 文本 → 复制（`navigator.clipboard` → `execCommand` 兜底）；③ 反馈块
- *  **与 `renderToast` 同构**（`.toast` > `.toast-body` > `.toast-title-row` ＋ 可选
- *  `.toast-title-detail`，`.toast-close` 在 body 之外；W1 根因修），`prefix` 命名空间类，
+ *  **与 `renderToast` 同构**（`.toast` > `.toast-icon` ＋ `.toast-body` > `.toast-title-row` ＋ 可选
+ *  `.toast-title-detail`，`.toast-close` 在 body 之外；W1 根因修 ＋ F-c 图标），`prefix` 命名空间类，
  *  `maxStack`／`timeoutMs`／移动端收窄取冻结常量；④ 关闭按钮。
  *  产出文本里的文案／数值**全部**取自冻结常量（不产第二份真相）。
  *  注：`execCommand` 兜底用临时 textarea 的两个内联定位属性（`position`／`left`），属临时节点
@@ -505,6 +505,8 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '  var TEXT_ATTR = ' + jsStr(dataAttr) + ';',
     '  var STACK_CLASS = ' + jsStr(prefix + 'toast-stack') + ';',
     '  var TOAST_CLASS = ' + jsStr(prefix + 'toast') + ';',
+    '  var ICON_CLASS = ' + jsStr(prefix + 'toast-icon') + ';',
+    '  var ICON_GLYPH = ' + jsStr(TOAST_ICON_GLYPHS[TOAST_DEFAULTS.defaultIcon]) + ';',
     '  var TITLE_CLASS = ' + jsStr(prefix + 'toast-title') + ';',
     '  var BODY_CLASS = ' + jsStr(prefix + TOAST_BODY_CLASS) + ';',
     '  var TITLE_ROW_CLASS = ' + jsStr(prefix + TOAST_TITLE_ROW_CLASS) + ';',
@@ -592,11 +594,20 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    box.className = bad ? TOAST_CLASS + " " + TOAST_CLASS + "-danger" : TOAST_CLASS;',
     '    box.setAttribute("role", ' + jsStr(TOAST_DEFAULTS.role) + ');',
     '    box.setAttribute("aria-live", ' + jsStr(TOAST_DEFAULTS.ariaLive) + ');',
-    // W1 根因修（结构对齐）：运行时 DOM 与静态产出器／旧层同构——
-    //   box > .toast-body(> .toast-title-row(> .toast-title) ＋ 可选 .toast-title-detail) ＋ .toast-close
+    // W1 根因修（结构对齐）＋ F-c 图标：运行时 DOM 与静态产出器／旧层同构——
+    //   box > .toast-icon ＋ .toast-body(> .toast-title-row(> .toast-title) ＋ 可选 .toast-title-detail) ＋ .toast-close
     // 旧层为 `.hm-toast-icon + .hm-toast-body(> .hm-toast-title-row + .hm-toast-detail) + .hm-toast-close`
-    // （`.scratch/t76/old-controls.md` §1.1）。缺 body 包裹时标题／详情／关闭被排进同一 flex 行，
+    // （`.scratch/t76/old-controls.md` §1.1）。图标字形取 `TOAST_ICON_GLYPHS[TOAST_DEFAULTS.defaultIcon]`
+    // （📋，旧层 `base.js:74`／契约 `:141` 缺省；与静态产出器 `renderToast` 同源，不产第二份真相）。
+    // 缺 body 包裹时标题／详情／关闭被排进同一 flex 行，
     // 靠 `flex-wrap` ＋ `flex:1 1 100%` 补丁才勉强分层，且把关闭按钮挤到第三行（R1 实测 113px 高）。
+    // F-c 自证：新增仅用 `document.createElement／className／setAttribute／textContent／appendChild`
+    // （`SHARED_HELPERS_JS_RULE.domAllowed=true` 允许 DOM 读取；未向 `window／globalThis` 赋值、
+    // 未引 `node:`、未用 `classList／show`），故不破坏 #76 冻结产出内容契约与 T28 纯 CSS 动效断言。
+    '    var icon = document.createElement("span");',
+    '    icon.className = ICON_CLASS;',
+    '    icon.setAttribute("aria-hidden", "true");',
+    '    icon.textContent = ICON_GLYPH;',
     '    var body = document.createElement("div");',
     '    body.className = BODY_CLASS;',
     '    var titleRow = document.createElement("div");',
@@ -612,6 +623,7 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '      detail.textContent = FAIL_DETAIL;',
     '      body.appendChild(detail);',
     '    }',
+    '    box.appendChild(icon);',
     '    box.appendChild(body);',
     '    var close = document.createElement("button");',
     '    close.type = "button";',
