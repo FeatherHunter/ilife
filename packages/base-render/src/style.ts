@@ -87,6 +87,12 @@ function rootBlock(): string {
  *  这是**派生字面量**、不是第二份 token 表（不新增 token 名，doc:299）。 */
 const BLUE_RGB = '0, 122, 255';
 
+/** 正文栈（H-06：首位 `"SF Pro Display"`，后接系统兜底＋`"Noto Sans SC"`）。
+ *  **局部 CSS 常量**、不是 token（D-5 纪律：不新增 token 名）；等宽栈不动（D-13，各 `font-family: "SF Mono", monospace` 原样保留）。
+ *  B1 原栈见 `docs/research/benchmark-visual-spec.md:105`（`body`）；按 #89 返修方案把 `"SF Pro Display"` 提首位、
+ *  尾部补 `"Noto Sans SC"`（修前正文 computed 回落实测，CJK 渲染不变）；落点仅 `.ilife-help-shell`（T22：壳层样式归 #104，不得产 `body` 规则）。 */
+const BODY_FONT_STACK = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+
 /** 焦点环（视觉尺 H-20 强制项）：`:focus-visible` 覆盖全部可交互控件。 */
 function focusRing(selector: string): string {
   return selector + ':focus-visible {' + LF + '  outline: 2px solid var(--blue);' + LF + '  outline-offset: 2px;' + LF + '}';
@@ -517,6 +523,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  margin: 0 auto;',
     '  padding: 32px 20px 80px;',
     '  color: var(--fg);',
+    // H-06 正文栈（局部常量 BODY_FONT_STACK，首位 "SF Pro Display"；不新增 token 名，等宽栈不动）。
+    '  font-family: ' + BODY_FONT_STACK + ';',
     '  font-feature-settings: "tnum";',
     '}',
     '.' + p + 'help-shell-hero {',
@@ -943,7 +951,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     focusRing('.' + p + 'help-shell-card-copy'),
     '.' + p + 'help-shell-card-mark {',
     '  padding: 0 2px;',
-    '  border-radius: 4px;',
+    // H-10：`4px` ∉ {8,14,20,999px,50%} → 取集合内最近的 `8px`（D-5：CSS 常量直写，不新增 token 名）。
+    '  border-radius: 8px;',
     '  background: var(--soft);',
     '  color: var(--blue2);',
     '  font-weight: 600;',
