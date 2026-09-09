@@ -12,6 +12,9 @@
  * <SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html（同秒冲突自动加后缀），
  * 中文 command 取 CALORIE_COMBOS[key].title；显式 --output（--html 为 legacy 别名）覆盖任意路径。
  * 落点随 envelope 的 data.output 回传（additive 字段，六形状守卫不校验 data 额外键）。
+ * #91 · `calorie.help.center` 承载**全量速查台**（Q9）：`--params '{"mode":"file|inline|text"}'` 显式选交付形态
+ * （D6，缺省 `file`）；`q`／`keyword` 保留**照片 10 键**语义（非空＝现找、空串＝全量 10 键）。envelope 恒五字段
+ * `version/skill/shape/key/data`（Q8：**无 `status`**），`data` 只回索引与落点／字节数，不回 1 MB 产物。
  */
 import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -84,6 +87,9 @@ import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
 import { buildProductLibrary, buildProductSearch, buildProductStats } from '../render/library.js';
 import { buildCompareData, buildGalleryData, buildGifTask, buildViewerData } from '../render/photo.js';
 import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
+// #91 · 全量速查台（Q9）：只读消费 #88 的 `render/helpCenter.js`（三态同源，零改动）。
+import { HELP_CENTER_MODES, buildHelpSceneData, renderHelpCenterHtml } from '../render/helpCenter.js';
+import type { HelpCenterMode } from '../render/helpCenter.js';
 import {
   renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
   renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
@@ -259,6 +265,34 @@ function photosDirOf(params: Record<string, unknown>): string | undefined {
   if (p) return p;
   const e = process.env.CALORIE_PHOTOS_DIR;
   return e ? e : undefined;
+}
+
+/** #91 · 全量速查台的信封载荷：**10 分组索引**（不把 1 MB 产物塞进 envelope）。
+ *
+ *  `items` 恒为 10 条分组（`total` = `items.length`，与 `list` 形语义一致）；
+ *  `sceneTotal`／`subgroupTotal` 把「436 场景／54 子功能」如实回传，避免只报 10 丢掉全量口径。
+ */
+function helpCenterIndex(data: ReturnType<typeof buildHelpSceneData>): {
+  items: Record<string, unknown>[];
+  total: number;
+  sceneTotal: number;
+  subgroupTotal: number;
+} {
+  let sceneTotal = 0;
+  let subgroupTotal = 0;
+  const items = data.groups.map((group) => {
+    const sceneCount = group.subgroups.reduce((n, sub) => n + sub.scenes.length, 0);
+    sceneTotal += sceneCount;
+    subgroupTotal += group.subgroups.length;
+    return {
+      id: group.id,
+      icon: typeof group.icon === 'string' ? group.icon : '',
+      label: group.label,
+      subgroupCount: group.subgroups.length,
+      sceneCount,
+    };
+  });
+  return { items, total: items.length, sceneTotal, subgroupTotal };
 }
 
 // 全键分发：读走 render/fetch 读，HELP 走触发词现找；未知键上游已拦，此处再拦一道。
@@ -730,11 +764,36 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { summary: 'GIF 任务：标签 ' + gif.tag + ' 共 ' + gif.photoCount + ' 张（' + (gif.firstDate ?? '—') + ' ~ ' + (gif.lastDate ?? '—') + '）· ' + gif.note }, html: renderGifHtml(gif) };
     }
     case 'calorie.help.center': {
+      // #91 · Q9：本键承载**全量速查台**（#88 壳，三态同源）；**照片 10 键兼容走 `q`**（既有语义逐字不变）。
+      // D6：交付形态**显式** `mode`（`file`／`inline`／`text`），不靠猜、不从别的参数推；非法值即 exit 2。
       const q = optStr(params, 'q') ?? optStr(params, 'keyword') ?? undefined;
-      const hits = q ? lookupPhotoHelp(q) : buildPhotoHelp();
-      if (q && hits.length === 0) throw new CalorieRenderError('missing-data', 'HELP 无命中：' + q);
-      const items = hits.map((h) => ({ wakeWord: h.wakeWord, key: h.key, desc: h.desc, exec: h.exec }));
-      return { data: { items, total: items.length }, html: renderPhotoHelpHtml(hits, q) };
+      const modeRaw = optStr(params, 'mode');
+      const photoLookup = q !== undefined && q !== '';
+      if (photoLookup && modeRaw !== undefined) {
+        fail(2, '参数 q 与 mode 互斥：q＝照片 HELP 现找（10 键），mode＝全量速查台交付形态（'
+          + HELP_CENTER_MODES.join('／') + '）');
+      }
+      if (q !== undefined && modeRaw === undefined) {
+        // 照片路径（原样保留）：非空 q ＝ 现找（无命中 exit 4）；`q:""` ＝ 全量 10 键。
+        const hits = photoLookup ? lookupPhotoHelp(q as string) : buildPhotoHelp();
+        if (photoLookup && hits.length === 0) throw new CalorieRenderError('missing-data', 'HELP 无命中：' + q);
+        const items = hits.map((h) => ({ wakeWord: h.wakeWord, key: h.key, desc: h.desc, exec: h.exec }));
+        return { data: { items, total: items.length }, html: renderPhotoHelpHtml(hits, q) };
+      }
+      // 全量速查台：缺省 `file`（#88 的缺省同值）；`text` 态把文本一并回传（file／inline 只回落点，不塞 1 MB）。
+      const mode = (modeRaw ?? 'file') as HelpCenterMode;
+      if (!(HELP_CENTER_MODES as readonly string[]).includes(mode)) {
+        fail(2, '参数 mode 非法（' + String(mode) + '）：须为 ' + HELP_CENTER_MODES.join('／'));
+      }
+      const sceneData = buildHelpSceneData();
+      const rendered = renderHelpCenterHtml({ mode, sceneData });
+      const data: Record<string, unknown> = {
+        ...helpCenterIndex(sceneData),
+        mode,
+        bytes: Buffer.byteLength(rendered.html, 'utf8'),
+      };
+      if (mode === 'text') data['text'] = rendered.html;
+      return { data, html: rendered.html };
     }
     case 'calorie.help.lookup': {
       const q = needStr(params, 'q');

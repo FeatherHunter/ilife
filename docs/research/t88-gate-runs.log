@@ -1,0 +1,14 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：88｜since：2026-09-09T14:07:50Z｜until：2026-09-09T14:09:40Z｜条目数：6｜导出时间：2026-09-09T14:11:12.659Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=88 runId=7fdaa6f4-e626-4723-8186-0e0b6325fea5 cmd="node .scratch/t88/s5-mut.mjs" waitedMs=0 exit=0 pid=30876 at=2026-09-09T14:07:52.980Z
+RUN ticket=88 runId=ceecc1c1-4d37-463e-8e1c-a07ac1354152 cmd="powershell -NoProfile -ExecutionPolicy Bypass -File .scratch/t88/s5-run.ps1 gates" waitedMs=0 exit=0 pid=33160 at=2026-09-09T14:07:59.799Z
+RUN ticket=88 runId=03bdc30c-2bdd-4879-a240-239d54bc54df cmd="powershell -NoProfile -ExecutionPolicy Bypass -File .scratch/t88/s5-run.ps1 canonical" waitedMs=0 exit=0 pid=32636 at=2026-09-09T14:08:32.174Z
+RUN ticket=88 runId=ead0a6a8-4010-45ea-a57d-28262d4181d0 cmd="powershell -NoProfile -ExecutionPolicy Bypass -File .scratch/t88/s5-run.ps1 targeted" waitedMs=1 exit=0 pid=34808 at=2026-09-09T14:09:00.876Z
+RUN ticket=88 runId=20b27301-a09e-4dae-88e0-ed8f0e360430 cmd="powershell -NoProfile -ExecutionPolicy Bypass -File .scratch/t88/s5-run.ps1 gates" waitedMs=0 exit=0 pid=29732 at=2026-09-09T14:09:04.794Z
+RUN ticket=88 runId=e5ba5021-a864-4af2-8f48-5c41497ec7cb cmd="powershell -NoProfile -ExecutionPolicy Bypass -File .scratch/t88/s5-run.ps1 canonical" waitedMs=1 exit=1 pid=9492 at=2026-09-09T14:09:35.012Z
+```
