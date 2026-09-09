@@ -9,19 +9,20 @@
  * envelope/落盘 fail(5)。库函数 FetchError 透传（main 映射 exit 4）；body.ts
  * ValidationError 在此转 bad-input（exit 2）。
  *
- * #101 · 删除可恢复性口径（**不得承诺可恢复**——全仓 0 个 restore/undo/recover 入口）：
- * - 软删除、行仍在库、且**仍被统计**：`exercise_log.is_deleted`（`analysis/**` 11 处查询未过滤该列，
- *   删后 `view.home.deficitToday`／`view.deficit.avgExerciseBurn`／`buildSeries.exerciseKcal` 不变）
- *   → 「（软删除：行保留，仍计入历史统计；暂无恢复入口）」
- * - 软删除、行仍在库、**已从查询与统计排除**：`body_composition`／`body_measurements`（`is_deprecated`，
- *   读层 `fetch/body.ts:131,197,155,166` ＋ `analysis/series.ts:102,105`／`cross.ts:144-145` 均带
- *   `is_deprecated = 0`）／`nutrition_products`（`fetch/products.ts:72,108,114,120`）
+ * #101 → #120 · 删除可恢复性口径（**不得承诺可恢复**——全仓 0 个 restore/undo/recover 入口）：
+ * - 软删除、行仍在库、**已从查询与统计排除**：`exercise_log.is_deleted`（#120 起 `analysis/**`
+ *   11 处查询统一内联 `analysis/utils.ts:EX_ALIVE`，删后 `view.home.deficitToday`／
+ *   `view.deficit.avgExerciseBurn`／`buildSeries.exerciseKcal` 同步排除；**supersedes #101 的
+ *   「仍计入历史统计」口径**，见 `docs/research/t120-softdelete-filter.md`）／
+ *   `body_composition`／`body_measurements`（`is_deprecated`，读层 `fetch/body.ts:131,197,155,166`
+ *   ＋ `analysis/series.ts:119,122`／`cross.ts:144-145` 均带 `is_deprecated = 0`）／
+ *   `nutrition_products`（`fetch/products.ts:72,108,114,120`）
  *   → 「（软删除：行保留，已从查询与统计中排除；暂无恢复入口）」
  * - 硬删除（行删除、不可恢复）：`food_log`／`weight_log`／`body_photos`（`DELETE FROM`）→ 「（硬删除，不可恢复）」
  * `items[].status` 结构化字段与 prose **同源**（同一口径常量派生，软/硬 ＋ 不可恢复）。
  * 依据：fetch 层 delete* 实测（`fetch/exercise.ts:216-238` 软删／`fetch/diet.ts:153-161` 硬删／
  * `fetch/weight.ts:148-178` 硬删／`fetch/body.ts:144-148,207-211` 软删）＋ 审计
- * `docs/research/t67-key-audit.md:246`＋ 复跑证据 `docs/research/t101-softdelete-still-counted.mjs`。
+ * `docs/research/t67-key-audit.md:246` ＋ 复跑证据 `docs/research/t120-probe-softdelete.mjs`。
  * 照片键文案在 `render/photo.ts:buildDeleteReceipt`。
  */
 import type { DatabaseSync } from 'node:sqlite';
@@ -117,7 +118,6 @@ function esc(s: unknown): string {
 
 /** #101 · 删除口径单一来源（prose 词条 ＋ `items[].status` 状态串同源派生）。
  * `recoverable` 恒 false：全仓 77 键 0 个 restore/undo/recover 入口，故不得出现「可恢复」承诺。 */
-const SOFT_STILL_COUNTED = '（软删除：行保留，仍计入历史统计；暂无恢复入口）';
 const SOFT_EXCLUDED_INNER = '软删除：行保留，已从查询与统计中排除；暂无恢复入口';
 const SOFT_EXCLUDED = '（' + SOFT_EXCLUDED_INNER + '）';
 const HARD_INNER = '硬删除，不可恢复';
@@ -173,6 +173,11 @@ function provided(params: Record<string, unknown>, names: readonly string[]): st
 /** `input` 里实际有值的键（体脂／围度等动态字段表）。 */
 function definedKeys(input: Record<string, unknown>): string[] {
   return Object.keys(input).filter((k) => input[k] !== undefined);
+}
+
+/** 围度库列名 → CLI 参数名（`MEASURE_CAMEL` 反向；写入字段摘要统一走 CLI 名口径）。 */
+function measureCliNames(keys: string[]): string[] {
+  return keys.map((k) => Object.keys(MEASURE_CAMEL).find((c) => MEASURE_CAMEL[c] === k) ?? k);
 }
 
 /** M5 追加补丁：ids／idSource／writtenFields（`affectedRows` 由 dispatchWrite 统一注入）。 */
@@ -608,7 +613,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (id !== undefined) {
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         deleteRecord(db, id);
-        return out(R('删运动记录', 'delete', '已删除运动 #' + id + SOFT_STILL_COUNTED, '删运动记录', 'exercise_log (写库回执)', {
+        return out(R('删运动记录', 'delete', '已删除运动 #' + id + SOFT_EXCLUDED, '删运动记录', 'exercise_log (写库回执)', {
           recordId: id, ids: [id], writtenFields: ['is_deleted'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
         }));
       }
@@ -616,7 +621,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         assertISO(date, 'date');
         const n = deleteDay(db, date);
         if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-        return out(R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '删某日运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
+        return out(R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '删某日运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
       }
       if (from !== undefined || to !== undefined) {
         if (from === undefined || to === undefined) fail(2, '按范围删须同时传 from/to');
@@ -625,7 +630,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if ((from as string) > (to as string)) fail(2, 'from 不得晚于 to');
         const n = deleteRange(db, from as string, to as string);
         if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + from + '~' + to + '）');
-        return out(R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_STILL_COUNTED, '批量删运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
+        return out(R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '批量删运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
       }
       fail(2, '缺参数 id/date/from+to（三选一）');
       throw new Error('unreachable');
@@ -866,7 +871,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         return camel + ' ' + String((input as Record<string, unknown>)[f]);
       }).join('、');
       return out(R('记围度', 'create', '已记围度：' + date + '（' + filledCn + '）', '记围度', 'body_measurements (写库回执)', {
-        recordId: r.id, ids: [r.id], writtenFields: definedKeys(input),
+        recordId: r.id, ids: [r.id], writtenFields: measureCliNames(definedKeys(input)),
         items: [{ id: r.id, date, status: '成功', reason: '', detail: filledCn }],
       }));
     }

@@ -29,13 +29,16 @@ const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const WRITE_KEYS = Object.keys(CALORIE_WRITE_COMBOS);
 
-/** 删除可恢复性口径（#101 返修 H1）：一律**不承诺可恢复**（全仓 0 个 restore/undo/recover 入口）。
- * - 软删·仍被统计（`exercise_log`：`analysis/**` 查询未过滤 `is_deleted`）；
- * - 软删·已排除（`body_composition`／`body_measurements`／`nutrition_products`：读层带 `is_deprecated = 0`）；
- * - 硬删（`DELETE FROM`）。
+/** 删除可恢复性口径（#101 返修 H1 → **#120 口径收敛**）：一律**不承诺可恢复**（全仓 0 个
+ * restore/undo/recover 入口）。
+ * - 软删·**已排除**（`exercise_log.is_deleted`：`analysis/utils.ts:EX_ALIVE` 11 处内联
+ *   ＋ `body_composition`／`body_measurements`／`nutrition_products`：读层 `is_deprecated = 0`）；
+ *   **supersedes #101 的「仍计入历史统计」口径**（见 `docs/research/t120-softdelete-filter.md`）；
+ * - 硬删（`DELETE FROM`）不受影响。
  * 断言口径取**词条**（不含外层括号）：`product.deprecate` 把词条嵌在自己的括号里。 */
-const SOFT_TAG = '软删除：行保留，仍计入历史统计；暂无恢复入口';
 const SOFT_EXCLUDED_TAG = '软删除：行保留，已从查询与统计中排除；暂无恢复入口';
+/** #120：软删运动与体脂/围度/下架食品同款措辞（口径收敛后二者同值）。 */
+const SOFT_TAG = SOFT_EXCLUDED_TAG;
 const HARD_TAG = '硬删除，不可恢复';
 
 /** 「承诺可恢复」检测：剔除「不可恢复」后仍出现「可恢复」即视为说谎。 */
@@ -637,7 +640,7 @@ test('口径 · 删除键数据驱动：prose／items[].status／库内行三源
   }
 });
 
-test('口径 · 软删运动「仍计入历史统计」与实测同源（删前=删后，且列表侧已不可见）', () => {
+test('口径 · 软删运动后逐面排除（#120 口径收敛，supersedes #101 的「仍计入」口径）', () => {
   const dir = mkEnv();
   const date = '2026-09-05'; // mkEnv 已播 户外跑 300 卡
   const metrics = () => ({
@@ -646,14 +649,17 @@ test('口径 · 软删运动「仍计入历史统计」与实测同源（删前=
     exerciseKcal: withRead(dir, 'calorie.exercise.remove', (db) => buildSeries(db, date, date)[0].exerciseKcal),
   });
   const before = metrics();
-  assert.ok(before.exerciseKcal > 0, '前置：该日应有运动消耗');
+  assert.equal(before.exerciseKcal, 300, '前置：该日应有 300 卡运动消耗');
 
   const row = withRead(dir, 'calorie.exercise.remove', (db) => q1(db, "SELECT id FROM exercise_log WHERE date = ? AND exercise_type = '户外跑'", date));
   const d = runWrite(dir, 'calorie.exercise.remove', { id: row.id });
   assert.ok(d.data.message.includes(SOFT_TAG), 'exercise.remove 文案缺「' + SOFT_TAG + '」：' + d.data.message);
 
-  assert.deepEqual(metrics(), before,
-    '文案「仍计入历史统计」必须与实测同源：analysis/** 11 处查询未过滤 is_deleted → 删后统计不变');
+  // #120 · 软删即不计入用户可见统计（analysis/** 11 处查询统一走 EX_ALIVE）
+  const after = metrics();
+  assert.equal(after.exerciseKcal, null, '软删后 buildSeries.exerciseKcal 应排除该行');
+  assert.equal(after.avgExerciseBurn, 0, '软删后 view.deficit.avgExerciseBurn 应排除该行');
+  assert.equal(after.deficitToday, before.deficitToday - 300, '软删后 view.home.deficitToday 应减少该日运动消耗');
   const ve = run('calorie.view.exercise', { start: date, end: date }, { SKILLS_DB_PATH: dir });
   assert.equal(ve.status, 4, '列表侧（fetch listWindow 过滤 is_deleted）应看不到软删行：exit=' + ve.status);
   assert.match(ve.stderr || '', /无运动记录/, '列表侧应报「无运动记录」');
