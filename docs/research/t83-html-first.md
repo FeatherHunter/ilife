@@ -121,3 +121,15 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t83-html-first.md \
   --ticket 83 --since 2026-09-09T15:11:00.000Z --until 2026-09-09T15:15:31.000Z \
   --allow-nonzero --export docs/research/t83-gate-runs.log
 ```
+
+---
+
+## 10. 返修 R-1（红队 S1-交付缺陷 · 相对落点）— 2026-09-09 追加
+
+- 审查：`docs/research/t83-review-red.md`（红队席，本 session 自任；独立探针 `docs/research/t83-review-red.mjs`）。**审查轮 verdict FAIL（五维 82）**，S1-交付缺陷 ×1（R-1）＋ S3×5。
+- **R-1**：`deliverHtml` 把落点**原样字符串**当 `delivery.path` 回传，而 `buildDelivery` 有「绝对路径」不变量 → `SKILLS_DB_PATH` 或 `--output` 给**相对路径**时**产物已写盘却 exit 2**（`参数失败`）、stdout 无 envelope；**写键更危险**（库已写入仍报失败，按 M4 判据会被当成写失败而重试）。
+- **修复**：`output.ts:deliverHtml` 内 `const written = resolve(target)`——写的就是它、回传的也是它。**只改回传值**：落盘行为、命名（#87／#119）、只读回退、回执、`delivery` 契约全部逐字不变；`cmd_read.ts`／`envelope.ts`／`base-render/**`／`SKILL.md`／`tooling/**` **零改动**。
+- **回归测试**：`test/delivery-83.test.mjs` ⑥ 三例（相对 `SKILLS_DB_PATH`／相对 `--output`／相对 `SKILLS_DB_PATH` ＋ 写键）。
+- **复核实测**：红队探针 **33/33**、靶向 **59/59（0 fail）**、四门 **0/0/0/0**、变异 **15/15**（新增 **M3** 还原「原样回传」→ `delivery-83` **fail=3**，还原 sha256 逐字节相同）、canonical `pnpm test` 失败集 **base=34 after=29 新增=0**、`check-gate-audit` **11/11 matched／undeclared 0**。
+- **未做**：蓝队第二席（见审查报告 §8-1）。
+

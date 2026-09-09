@@ -19,7 +19,7 @@
  *   3. 显式 `--output` 路径自动建父目录（老家直接 `open()` 会 ENOENT）；对旧行为是超集。
  */
 import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { CALORIE_COMBOS } from './cli/keys.js';
 import { CalorieRenderError } from './render/errors.js';
 import { resolveDbDir } from './paths.js';
@@ -160,8 +160,13 @@ export function deliverHtml(input: {
       suffix: writeSuffixFor(input.key, input.params),
       now: input.now,
     });
-    writeFileSync(resolveExplicitHtmlPath(target), input.html, 'utf8');
-    return { mode: 'file', path: target, bytes };
+    // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--output` 亦文档化为
+    // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
+    // `bad-input` → **产物已写盘却 exit 2**。此处与 `writeFileSync` 同口径 `resolve`（写的就是它），
+    // 只归一化回传值，落盘行为与旧版逐字一致。
+    const written = resolve(target);
+    writeFileSync(resolveExplicitHtmlPath(written), input.html, 'utf8');
+    return { mode: 'file', path: written, bytes };
   } catch (e) {
     if (isReadOnlyWriteFailure(e)) return { mode: 'inline', reason: (e as Error).message, bytes };
     throw e;

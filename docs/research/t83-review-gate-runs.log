@@ -1,0 +1,19 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：83｜since：2026-09-09T15:31:50.000Z｜until：2026-09-09T15:35:10.000Z｜条目数：11｜导出时间：2026-09-09T15:35:37.435Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=83 runId=f7874e83-1819-4a88-9a3b-5d01e013dfd6 cmd="pnpm build" waitedMs=0 exit=0 pid=32940 at=2026-09-09T15:31:53.864Z
+RUN ticket=83 runId=c24b074d-2251-4170-95d1-8b2c3720d954 cmd="node --test packages/skill-calorie/test/delivery-83.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs" waitedMs=0 exit=1 pid=32424 at=2026-09-09T15:32:00.708Z
+RUN ticket=83 runId=dbbf5903-703f-4cdc-afe2-b32fc2ea7a9c cmd="node --test packages/skill-calorie/test/delivery-83.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs" waitedMs=0 exit=0 pid=38288 at=2026-09-09T15:32:14.328Z
+RUN ticket=83 runId=79a9c4f2-cd6f-4b1c-ab43-394a9777113a cmd="node --test packages/skill-calorie/test/delivery-83.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs" waitedMs=0 exit=0 pid=24984 at=2026-09-09T15:32:22.225Z
+RUN ticket=83 runId=355203ef-f3d7-4e87-8d57-8dfbda7c3d20 cmd="node docs/research/t83-review-red.mjs" waitedMs=1 exit=1 pid=33556 at=2026-09-09T15:32:52.233Z
+RUN ticket=83 runId=5aa91f76-ef70-4238-9522-9b47667a1fc3 cmd="node docs/research/t83-review-red.mjs" waitedMs=0 exit=0 pid=13804 at=2026-09-09T15:33:53.056Z
+RUN ticket=83 runId=a2d2bede-2195-4e2c-9cdb-9dc16e76e405 cmd="node docs/research/t83-mutation.mjs" waitedMs=0 exit=0 pid=27912 at=2026-09-09T15:34:23.812Z
+RUN ticket=83 runId=fa9f09fc-8c6f-4621-9451-291187c8ac30 cmd="pnpm boundaries" waitedMs=0 exit=0 pid=35084 at=2026-09-09T15:34:27.313Z
+RUN ticket=83 runId=38a23ac9-668f-4a43-8618-6ad1284677d1 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=33884 at=2026-09-09T15:34:28.196Z
+RUN ticket=83 runId=1bfee536-e6a6-4e4d-b537-b8dfbb02965c cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=29224 at=2026-09-09T15:34:29.058Z
+RUN ticket=83 runId=72dc41ac-ffcc-44f2-b10b-b5e3e5a7e823 cmd="pnpm test" waitedMs=0 exit=1 pid=34580 at=2026-09-09T15:35:04.036Z
+```

@@ -5,6 +5,7 @@
  * 变异点（均在本票新增逻辑上）：
  *   M1 `output.ts:deliverHtml`  只读类写失败回退 inline 被摘掉 → 内联态必红
  *   M2 `cmd_read.ts:buildDeliveredEnvelope` 交付信号注入被摘掉 → delivery 断言必红
+ *   M3 `output.ts:deliverHtml`  落点归一化被还原为「原样回传」→ 相对落点三例必红（R-1 返修鉴别力）
  * 判据：变异轮 `node --test packages/skill-calorie/test/delivery-83.test.mjs` exit ≠ 0；
  *       还原后 sha256 与变异前**逐字节相同**，重建后同一测试 exit 0。
  */
@@ -38,6 +39,14 @@ const MUTATIONS = [
       + "    mode: d.mode, path: d.mode === 'file' ? d.path : undefined, shape, html, bytes: d.bytes,\n  }));",
     replace: '  return buildEnvelope(key, shape, data);',
     why: '摘掉 delivery 注入（交付信号）',
+  },
+  {
+    // R-1 返修（红队 S1）的鉴别力：还原「落点原样回传」的旧写法 → 相对落点必红（⑥ 三例）。
+    id: 'M3',
+    file: 'packages/skill-calorie/src/output.ts',
+    find: '    const written = resolve(target);',
+    replace: '    const written = (resolve(target), target);',
+    why: '还原相对落点原样回传（产物已写盘却 exit 2）',
   },
 ];
 

@@ -298,3 +298,53 @@ test('#83 写键同样有 delivery（receipt 产物族）', () => {
   assert.ok(existsSync(r.env.delivery.path));
   assert.equal(r.env.delivery.bytes, statSync(r.env.delivery.path).size);
 });
+
+/* ── ⑥ 返修 R-1（红队 S1）：相对落点不得把「写盘成功」报成参数失败 ───────────────────────────
+ * 复现（返修前）：`SKILLS_DB_PATH` 为相对路径（或 `--output` 给相对路径）时，`deliverHtml` 把原样字符串
+ * 当 `delivery.path` 回传 → `buildDelivery` 的绝对路径不变量抛 `bad-input` → **产物已写盘却 exit 2**
+ * （`ERR 2: 参数失败：delivery.path 须为绝对路径：…`）、stdout 无 envelope；写键更危险：库已写入而
+ * 退出码非 0，按 M4 判据会被当成失败并诱导重试（重复写）。 */
+
+test('#83 ⑥ 相对 SKILLS_DB_PATH：仍为文件态 exit 0 ＋ 绝对 delivery.path ＋ 产物存在', () => {
+  const dir = mkDb('reldb');
+  // 子进程 cwd 设进 tmp，`SKILLS_DB_PATH=.` 即「相对落点」（落点字符串不含盘符，返修前必红）。
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.lookup', '--params', JSON.stringify({ q: '看今日主页' })], {
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, SKILLS_DB_PATH: '.' },
+  });
+  assert.equal(r.status, 0, '相对 SKILLS_DB_PATH 不得把成功渲染报成参数失败：' + String(r.stderr));
+  const env = JSON.parse(String(r.stdout));
+  assert.deepEqual(Object.keys(env), ENVELOPE_FIELDS);
+  assert.equal(env.delivery.mode, 'file');
+  assert.ok(isAbsolute(env.delivery.path), 'delivery.path 契约＝绝对路径');
+  assert.equal(env.delivery.path, env.data.output, 'data.output 与 delivery.path 同值同源');
+  assert.ok(existsSync(env.delivery.path), '产物须真实存在');
+  assert.equal(env.delivery.bytes, statSync(env.delivery.path).size);
+});
+
+test('#83 ⑥ 相对 --output：exit 0 ＋ 绝对 delivery.path（写的就是回传的那个路径）', () => {
+  const dir = mkDb('relout');
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.lookup', '--params', JSON.stringify({ q: '看今日主页' }),
+    '--output', join('nested', 'rel.html')], {
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, SKILLS_DB_PATH: dir },
+  });
+  assert.equal(r.status, 0, '相对 --output 不得把写盘成功报成参数失败：' + String(r.stderr));
+  const env = JSON.parse(String(r.stdout));
+  assert.equal(env.delivery.mode, 'file');
+  assert.equal(env.delivery.path, join(dir, 'nested', 'rel.html'), '回传路径＝实际写入路径（resolve 归一）');
+  assert.ok(isAbsolute(env.delivery.path));
+  assert.equal(env.delivery.path, env.data.output);
+  assert.ok(existsSync(env.delivery.path));
+});
+
+test('#83 ⑥ 相对 SKILLS_DB_PATH ＋ 写键：exit 0（库已写入不得报失败）＋ receipt 落盘', () => {
+  const dir = mkDb('relwrite');
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.water.log', '--params', JSON.stringify({ ml: 250 })], {
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, SKILLS_DB_PATH: '.' },
+  });
+  assert.equal(r.status, 0, '写键相对落点不得报参数失败（否则会被误判为写失败并重试）：' + String(r.stderr));
+  const env = JSON.parse(String(r.stdout));
+  assert.equal(env.data.ok, true);
+  assert.equal(env.delivery.mode, 'file');
+  assert.equal(env.delivery.template, 'receipt');
+  assert.ok(existsSync(env.delivery.path));
+});
