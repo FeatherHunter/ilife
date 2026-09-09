@@ -43,19 +43,22 @@ import {
   buildVolatilityDoc, buildWeightCompareDoc, buildWeightDoc, buildWeightHistoryDoc,
   buildWeightReviewDoc,
 } from '../render/sportDocs.js';
+import {
+  buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
+  buildGoalPredictDoc, buildPredictDoc,
+} from '../render/trendDocs.js';
 import { buildHealthPlate } from '../render/health.js';
 import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
 import { buildProductLibrary, buildProductSearch, buildProductStats } from '../render/library.js';
 import { buildCompareData, buildGalleryData, buildGifTask, buildViewerData } from '../render/photo.js';
 import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
 import {
-  renderCombinedHtml, renderDeficitHtml,
   renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
   renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
   renderGoalStatusHtml, renderGoalHtml, renderHomeHtml,
   renderPlanHtml,
-  renderPlanWizardHtml, renderGoalExpiringHtml, renderGoalPredictHtml,
-  renderGoalVsActualHtml, renderPredictHtml, renderAnomalyHtml, renderContraHtml,
+  renderPlanWizardHtml, renderGoalExpiringHtml,
+  renderGoalVsActualHtml,
   renderProfileHtml,
 } from '../render/html.js';
 import { assertStatMetrics } from '../render/envelope.js';
@@ -378,7 +381,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         correlationR: c.analysis.correlation.r, correlationN: c.analysis.correlation.n, days: c.analysis.days,
         seriesDays: c.series.length,
       });
-      return { data: { metrics }, html: renderCombinedHtml(c) };
+      return { data: { metrics }, html: buildCombinedDoc(c) };
     }
     case 'calorie.view.deficit': {
       const { start, end } = defaultRange(db, params);
@@ -389,7 +392,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         days: d.meta.days, weekdayCount: d.meta.weekdayCount, weekendCount: d.meta.weekendCount,
         targetIntake: d.target.intake, targetTdee: d.target.tdee,
       });
-      return { data: { metrics }, html: renderDeficitHtml(d) };
+      return { data: { metrics }, html: buildDeficitDoc(d) };
     }
     case 'calorie.view.diet-review': {
       const { start, end } = defaultRange(db, params);
@@ -623,7 +626,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const { start, end } = defaultRange(db, params, 14);
       const v = buildGoalPredictView(db, start, end);
       const metrics = nums({ targetKg: v.targetKg, current: v.current, daysLeft: v.daysLeft, ratePerWeek: v.ratePerWeek, feasible: v.feasible ? 1 : 0 });
-      return { data: { metrics }, html: renderGoalPredictHtml(v) };
+      return { data: { metrics }, html: buildGoalPredictDoc(v) };
     }
     case 'calorie.view.goal-vs-actual': {
       const { start, end } = defaultRange(db, params);
@@ -641,20 +644,20 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const horizonDays = optNum(params, 'horizonDays') ?? optNum(params, 'days') ?? 30;
       const v = buildPredictView(db, start, end, horizonDays as number);
       const metrics = nums({ current: v.current, ratePerWeek: v.ratePerWeek, forecastValue: v.forecastValue, forecastLo: v.forecastLo, forecastHi: v.forecastHi, horizonDays: v.horizonDays });
-      return { data: { metrics }, html: renderPredictHtml(v) };
+      return { data: { metrics }, html: buildPredictDoc(v) };
     }
     case 'calorie.view.anomaly': {
       const kind = needStr(params, 'kind');
       const { start, end } = defaultRange(db, params);
       const v = buildAnomalyView(db, kind, start, end);
       const metrics = nums({ findingCount: v.findingCount, days: v.diagnosis.days, degraded: v.diagnosis.degraded ? 1 : 0 });
-      return { data: { metrics }, html: renderAnomalyHtml(v) };
+      return { data: { metrics }, html: buildAnomalyDoc(v) };
     }
     case 'calorie.view.contraindication': {
       const part = optStr(params, 'part') ?? 'all';
       const v = buildContraView(db, part);
       const metrics = nums({ scannedSessions: v.scannedSessions, scannedMovements: v.scannedMovements, errorCount: v.errorCount, warnCount: v.warnCount, infoCount: v.infoCount });
-      return { data: { metrics }, html: renderContraHtml(v) };
+      return { data: { metrics }, html: buildContraDoc(v) };
     }
     case 'calorie.view.dedupe': {
       const v = buildDedupeView(db);
