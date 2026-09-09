@@ -243,7 +243,7 @@ test('#83 ④ 回执自身也走三态：可写时落盘（#87 命名）＋ 产�
   const html = readFileSync(rec.delivery.path, 'utf8');
   assert.ok(html.includes('渲染失败回执'));
   assert.equal(rec.delivery.bytes, Buffer.byteLength(html, 'utf8'));
-  assert.equal(html, rec.html === undefined ? html : rec.html, '落盘态不重复回传正文');
+  assert.equal(rec.html, undefined, '落盘态不重复回传正文（回执已落盘，正文只经 delivery.path 取）');
 });
 
 /* ── ⑤ 与 #81 联动：命中即渲染 ─────────────────────────────────────────────────── */
@@ -279,6 +279,10 @@ test('#83 delivery 契约单元：闭集校验／绝对路径／bytes／产物�
   assert.equal(deliveryTemplateOf('list', '<section class="ilife-help-shell" id="ilife-help-shell"></section>'), 'help-shell');
   assert.equal(deliveryTemplateOf('stat', '<!DOCTYPE html><html></html>'), 'doc-shell');
   assert.equal(deliveryTemplateOf('receipt', '<section class="ilife-page"></section>'), 'receipt');
+  // 判定次序（D-5）：`shape==='receipt'` 不得吞掉整文档 —— `<!DOCTYPE` 先行 ⇒ doc-shell。
+  // 当前 99 键实测 0 例（无「receipt 形全文档」真机产物），此断言钉住的是**次序**本身。
+  assert.equal(deliveryTemplateOf('receipt', '<!DOCTYPE html><html><body>渲染失败回执</body></html>'), 'doc-shell',
+    'receipt 形全文档仍判 doc-shell（判定次序：DOCTYPE 先于 shape）');
   assert.equal(deliveryTemplateOf('list', '<section class="ilife-page"></section>'), 'fragment');
 
   const env = withDelivery(

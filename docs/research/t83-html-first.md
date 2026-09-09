@@ -4,7 +4,7 @@
 - 认领（第一笔写操作）：`gh issue edit 83 --add-assignee FeatherHunter` → `assignees: FeatherHunter`
 - 基准：`.scratch/t88/baseline/BASELINE.md`（四门 exit 0；`pnpm test` 判据＝具名失败集**新增 0**，白名单 34 条）
 - 可复跑证据：`node docs/research/t83-evidence.mjs`（真机 **21/21 PASS**）／`node docs/research/t83-mutation.mjs`（变异 **10/10 PASS**）
-- 新测试：`packages/skill-calorie/test/delivery-83.test.mjs`（10 用例）
+- 新测试：`packages/skill-calorie/test/delivery-83.test.mjs`（13 用例）
 - commit：`8439976`（实现＋测试＋探针）／收尾 commit 见 §9
 
 ---
@@ -34,6 +34,7 @@
 - **结构错不回退**：`EEXIST｜ENOTDIR｜EISDIR` 等（落点本身非法）**不**转内联，仍走渲染失败回执 exit 5 —— 保住 `output-naming-87.test.mjs:301-313` 的既有断言（exit 5 ＋ stdout 空 ＋ 占位文件不被改写）。
 - **交付信号**：envelope **顶层追加** `delivery{mode,path?,template?,bytes?}`；`template` 为**结构判定**的产物族（`help-shell`／`doc-shell`／`receipt`／`fragment`／`text`），零配置表、零第二套取数。既有五字段与序一字未改；stdout 仍守 P9 一行 JSON。
 - **渲染失败回执**（旧 `SKILL.md:18-19` 渲染失败契约）：`buildErrorReceipt` ＋ `renderErrorHtml` 的**模板化**回执（原因／建议／建议命令），stderr 一行 `RECEIPT {…}`（stdout 保持纯净），exit 5 不变；回执自身也走三态（可写则落 `操作失败_<TS>.html`，否则内联随 `RECEIPT` 回传）。**零手写 HTML 兜底**。
+- **回执口径（R-2 · D-1 取口径 ②，编排者裁决）**：`RECEIPT` ＝**渲染／落盘失败（exit 5）专属**；`exit 2`＝参数失败、`exit 4`＝取数／缺失阻断，**各自已有独立文案**（`ERR 2: 参数失败：…`／`ERR 4: 取数失败（缺失阻断）…`），**不发回执**（`cmd_read.ts:1170-1176` 只在 exit 5 分支发 `RECEIPT`）。理由：给 exit 2／4 追加 `RECEIPT` 会改动 97 读键＋35 写键的失败态 stderr，而既有测试对 exit 2／4 有大量 exit-code 与文案断言（`cmd-write-40.test.mjs` 30＋处 `status===2|4`、`cmd-read-t11.test.mjs:146/202/205`）＝**新能力**，不并入本票；若未来需要，**另票承接**。旧铁则正本「退出码非 0 → 回执」的字面缺口由此**显式记口径**而非改行为（蓝队 D-1 判据 ②）。
 
 ## 3. `delivery` 冲突的裁定与偏离账
 
@@ -58,7 +59,7 @@
 
 | 场景 | 实测 |
 |---|---|
-| ① 成功渲染并打开（4 键 × 4 产物族） | `help.lookup` fragment 20,665 B／`view.diet` doc-shell 62,335 B／`help.center` help-shell 1,264,822 B／`water.log` receipt 272 B；`mode=file`、`path` 绝对、`path===data.output`、`bytes===statSync().size`、无 `data.html`／`data.text` |
+| ① 成功渲染并落盘＋回传落点（4 键 × 4 产物族） | `help.lookup` fragment 20,665 B／`view.diet` doc-shell 62,335 B／`help.center` help-shell 1,264,822 B／`water.log` receipt 272 B；`mode=file`、`path` 绝对、`path===data.output`、`bytes===statSync().size`、无 `data.html`／`data.text` |
 | ② 渲染失败回执 | `calorie_html` 被同名文件占位 → exit 5 ＋ stdout **空** ＋ `ERR 5: 渲染失败…` ＋ `RECEIPT{…}`（`ok:false`／`sceneName:渲染`／`suggestions:3`／`fixPrompt` 含 `calorie-cmd-read`／`delivery.template=receipt`／`html` 含 `<section>`＋「渲染失败回执」）；占位文件未被改写 |
 | ③ 无对应模板时文字答 | **如实标注**：97 键全有渲染器 → 真机不可达；结构缝探针（`buildDeliveredEnvelope` 传 `html:''`）→ `mode=text`／`template=text`／`data.text` 有值。真机文本态用「用户明确要文本」取证 |
 | ② 内联态（只读目录） | `icacls <DB>/calorie_html /deny Everyone:(W,AD,WD)` 后新建文件被拒 → exit 0、`mode=inline`、无 `path`、无 `data.output`、`data.html` 20,665 B、**与 ① 落盘产物逐字相同**、无 `data.text`、stdout 一行 JSON（21,081 B） |
@@ -89,9 +90,10 @@
 
 ## 7. 未做／未确证（风险 top3）
 
-1. **「无对应模板」无真机场景**（结构缝＋单元探针覆盖）：新架构 97 键全有渲染器；若要真机取证，须先有「注册但无渲染器」的键（新能力，另票）。
-2. **`help-center-91.test.mjs` 文件头注释仍写「envelope 全字段＝五字段」**（`:8`）：授权只限 `:33`／`:81` 两个 token，**注释未改**（S3 文档漂移，转编排者决定是否另改）。
-3. **开发期裸跑（自认，协议 §2.4）**：实现轮为快速迭代跑了 `npx tsc -b`（约 4 次）与 `node --test packages/skill-calorie/test/delivery-83.test.mjs`（2 次）**未经持锁包装器** —— 属 §2.4.5 的 S1-过程违规，主动自认；其结论已由持锁轮（`runId` f493b6ce／598e891a／764e8a3e）独立复现，未写共享面、未与他票冲突。
+1. **「打开（唤起查看器）」未确证**（R-2 · D-2）：本票唯一出口只负责**落盘＋回传落点**（`delivery.path`／`data.output`），**没有任何**「唤起浏览器／查看器／宿主 tab」的观测（`t83-evidence.mjs` 全文无 open／打开类观测）。验收①的原字面「渲染并**打开**」中的「打开」**不构成本票已达成项**，已从 §4 表标题移除。归属：**#64 打通图／地图 Out of scope**（安装／双路实证归打通图）。
+2. **「无对应模板」无真机场景**（结构缝＋单元探针覆盖）：新架构 97 键全有渲染器；若要真机取证，须先有「注册但无渲染器」的键（新能力，另票）。
+3. **`help-center-91.test.mjs` 文件头注释仍写「envelope 全字段＝五字段」**（`:8`）：授权只限 `:33`／`:81` 两个 token，**注释未改**（S3 文档漂移，转编排者决定是否另改）。
+4. **开发期裸跑（自认，协议 §2.4）**：实现轮为快速迭代跑了 `npx tsc -b`（约 4 次）与 `node --test packages/skill-calorie/test/delivery-83.test.mjs`（2 次）**未经持锁包装器** —— 属 §2.4.5 的 S1-过程违规，主动自认；其结论已由持锁轮（`runId` f493b6ce／598e891a／764e8a3e）独立复现，未写共享面、未与他票冲突。
 
 ## 8. 机械门禁对账（协议 §2.4）
 
@@ -132,4 +134,95 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t83-html-first.md \
 - **回归测试**：`test/delivery-83.test.mjs` ⑥ 三例（相对 `SKILLS_DB_PATH`／相对 `--output`／相对 `SKILLS_DB_PATH` ＋ 写键）。
 - **复核实测**：红队探针 **33/33**、靶向 **59/59（0 fail）**、四门 **0/0/0/0**、变异 **15/15**（新增 **M3** 还原「原样回传」→ `delivery-83` **fail=3**，还原 sha256 逐字节相同）、canonical `pnpm test` 失败集 **base=34 after=29 新增=0**、`check-gate-audit` **11/11 matched／undeclared 0**。
 - **未做**：蓝队第二席（见审查报告 §8-1）。
+
+---
+
+## 11. 返修 R-2（蓝队 S2／S3）— 2026-09-09 追加
+
+- 依据：蓝队 `docs/research/t83-review-blue.md`（commit `7ed94c5`）**verdict PASS（五维 85）**：S1-交付缺陷 0／**S2 ×2**（D-1／D-2）／S3 ×9，并给 §7「最小整改清单」。**编排者裁决**＝票内返修 **R-2**，只做 7 条，**不得扩大范围**。
+- **改动面（4 文件）**：`packages/skill-calorie/test/delivery-83.test.mjs`／`docs/research/t83-html-first.md`／`.changeset/t83-html-first-delivery.md`／`packages/skill-calorie/SKILL.md:31`（仅该行）。**`src/**` 产品代码零改动**（`git diff --numstat -- packages/skill-calorie/src` = 0 行）、`tooling/**` 零改动、他人文件零改动。
+
+### 11.1 逐条（改了什么／判据／证据 runId）
+
+| 项 | 改了什么（file:line） | 判据／实测 | 证据 runId |
+|---|---|---|---|
+| **D-1（S2）· 取口径 ②** | `t83-html-first.md` §2 新增「**回执口径（R-2 · D-1 取口径 ②）**」：`RECEIPT` ＝**渲染／落盘失败（exit 5）专属**；`exit 2`＝参数失败、`exit 4`＝取数／缺失阻断，**各自已有独立文案、不发回执**；理由＝给 exit 2／4 追加 `RECEIPT` 会改 97 读键＋35 写键失败态 stderr＝**新能力**，不并入本票，**若未来需要另票承接**。**行为零改动**（`cmd_read.ts:1170-1176` 一字未动） | 实测 `exit4 receiptLines=0`／`exit2-缺参=0`／`exit2-写键未知字段=0`／`exit5=1`，四例 stdout 均 0 B | `cba87050-91fa-40d0-8762-d9d5d00c3d26` |
+| **D-2（S2）** | `t83-html-first.md:61` 表标题「成功渲染并**打开**」→「成功渲染并**落盘＋回传落点**」；§7 新增第 1 条「**「打开（唤起查看器）」未确证**」，标注**归 #64 打通图／地图 Out of scope** | 证据表无「打开」已达成字样；`t83-evidence.mjs` 全文无 open／打开观测 | 文档 diff（本文件） |
+| **D-4（S3）** | `delivery-83.test.mjs:246` 恒真断言 `assert.equal(html, rec.html === undefined ? html : rec.html, …)` → `assert.equal(rec.html, undefined, …)` | **MUT-83B-6 由全绿 → 红 fail=1** | `f16cded2-089c-4197-8a88-91350c656035` |
+| **D-5（S3）** | `delivery-83.test.mjs:282-285` 新增 **1 条断言** `deliveryTemplateOf('receipt', '<!DOCTYPE html>…') === 'doc-shell'`（钉判定次序）。**注明：当前 99 键实测 0 例**（`OBS B8c` 无「receipt 形全文档」真机产物），钉的是**次序**本身 | **MUT-83B-3 由全绿 → 红 fail=1** | 同上 |
+| **D-6（S3 · 文档）** | `.changeset/t83-html-first-delivery.md:9` 补「`--params '{"delivery":"text"}'` 对**写键不适用**：35 写键各有参数白名单、未知字段一律拒（实测 exit 2 `不支持字段: delivery`）」 | 探针 `OBS R2-exit2-writekey-unknownfield exit=2 receiptLines=0` | `cba87050…` |
+| **D-8（S3 · 文档）** | `t83-html-first.md:7`「新测试（**10 用例**）」→「**13 用例**」（实测 13 个 `test()`；本轮**只加断言不加用例**，故仍 13）；`SKILL.md:31` 补「`data.output`（**恒绝对路径**，相对 `SKILLS_DB_PATH`／`--output` 亦按 cwd 归一后回传）」 | `TEST-CASES=13`；`pnpm build` 后该行仍在（生成器 `packages/skill-calorie/scripts/build-help.mjs` 只重写 `HELP-AUTO` 块，块起点＝`SKILL.md:79`，本行在块**外**） | `53445b2c…`／`160ed1c7-edc3-4316-ab61-43cd711db612` |
+| **不修（编排者已记账）** | D-3／D-7／D-9（行为面）／D-10／D-11 —— 本轮**不动** | — | — |
+
+### 11.2 蓝队变异复跑（判据＝蓝队 §7：MUT-83B-3／-6 必须由「全绿」变「红」）
+
+`node docs/research/t83-review-blue-mut.mjs`（单锁内「变异→重建→靶向→还原→重建→靶向 ＋ src／dist 双向 sha256 自证」）：
+
+| 变异 | 变异轮 exit／counts | 变化 | 还原轮 | src／dist sha256 |
+|---|---|---|---|---|
+| MUT-83B-1 | 1 ／ `{tests:59,pass:56,fail:3}` | 仍红（R-1 三条） | 0 ／ 59-59-0 | 逐字节回原 |
+| MUT-83B-2 | 1 ／ `{pass:55,fail:4}` | 仍红（`--html` 别名） | 0 ／ 59-59-0 | 逐字节回原 |
+| **MUT-83B-3** | **1 ／ `{pass:58,fail:1}`** | **全绿 → 红**（D-5 断言钉住） | 0 ／ 59-59-0 | 逐字节回原 |
+| MUT-83B-4 | 1 ／ `{pass:58,fail:1}` | 仍红（只读回退） | 0 ／ 59-59-0 | 逐字节回原 |
+| MUT-83B-5 | 1 ／ `{pass:47,fail:12}` | 仍红（`delivery` 注入） | 0 ／ 59-59-0 | 逐字节回原 |
+| **MUT-83B-6** | **1 ／ `{pass:58,fail:1}`** | **全绿 → 红**（D-4 断言钉住） | 0 ／ 59-59-0 | 逐字节回原 |
+
+- **6 支变异轮全部 exit=1**；-3／-6 由审查轮 `{fail:0}` 变 `{fail:1}`，红行分别为 `#83 delivery 契约单元…`（-3）与 `#83 ④ 回执自身也走三态…`（-6）。每支还原后靶向 **59/59 绿**、`src`＋`dist` sha256 **逐字节回原**（脚本内自证）。
+- **登记（不改）**：脚本内 -3／-6 的 `expectRed` 旗标仍为 `false`（蓝队审查期预期＝全绿），故脚本自身 `RESULT-MUT-BLUE` 行仍打印 `ALL OK`；**判定须读变异轮 exit／fail 计数**。该旗标属**蓝队审查物**、不在本席改动面 → **登记不动**（如需改，由蓝队／复核席定）。
+
+### 11.3 门禁／回归（全部持锁）
+
+| 门 | 命令 | exit | 关键行 | runId |
+|---|---|---|---|---|
+| 四门 | `pnpm build` | 0 | `tsc -b` 无 error | `53445b2c-01e0-4f17-91a9-37e369f82e41` |
+| | `pnpm boundaries` | 0 | `boundaries: PASS` | `6e9eb223-380a-46f4-9f5f-73aa6bfbd0a2` |
+| | `pnpm snapshot:check` | 0 | 快照一致 | `2f4b4150-db5c-4579-bcbe-ffdb15b78931` |
+| | `pnpm publish:pre` | 0 | `check-publish --pre：PASS` | `50b8de6c-b30c-4959-8816-ac711f44be1e` |
+| 靶向 | `node --test` delivery-83／cmd-read-t11／render-copy-90／help-center-91／skill-t11／output-naming-87 | 0 | `tests 59／pass 59／fail 0` | `ea5d4eda-5419-4732-a2b5-86f437cf62b0` |
+| 蓝队变异 | `node docs/research/t83-review-blue-mut.mjs` | 0 | 6 支变异轮全红（见 §11.2） | `f16cded2-089c-4197-8a88-91350c656035` |
+| D-1 口径实证 | `node .scratch/t83/r2-receipt-scope.mjs` | 0 | `RESULT-R2-SCOPE: PASS` | `cba87050-91fa-40d0-8762-d9d5d00c3d26` |
+| canonical | `pnpm test` | 1（基线既有红） | `tests 1142／suites 134／pass 1117／fail 25` | `7600dc90-9554-4604-94c1-4bcec595044e` |
+| 失败集 | `node docs/research/t101-fail-set.mjs docs/research/t88-baseline/test-failset.txt .scratch/t83/r2-canonical.log` | 0 | **base=34 after=29 新增=0** 消失=5（均为基线已登记抖动项） | `ccef0bab-928f-4308-8367-11aa939d1c47` |
+| 自检 | `node .scratch/t83/r2-selfcheck.mjs` | 0 | `TEST-CASES=13`／`SKILL-BYTES3=2d 2d 2d`／`SKILL-L31-HAS-ABSOLUTE=true`／`SRC-DIFF-LINES=0`／`MUT-RESIDUE=0` | `160ed1c7-edc3-4316-ab61-43cd711db612` |
+
+- **canonical 计数附注**：`tests 1142／suites 134` 较蓝队轮（1137／133）＋5／＋1，系**并发他席 #79** 新增 `packages/base-render/test/base-version-lockstep.test.mjs`（`git status` 可见）；本席**零新增 `test()`**（只加 1 条断言）。判据＝t88 白名单**新增 0**。
+- **写盘事故自检（#124）**：`packages/skill-calorie/SKILL.md` 首 3 字节 `2d 2d 2d`；`MUT-\d` 残留 **0**。
+
+### 11.4 机械门禁对账（协议 §2.4）
+
+- **本席窗口（R-2）**：`--ticket 83 --since 2026-09-09T15:50:47.805Z --until 2026-09-09T15:54:37.000Z` → 窗口内本席 `RUN` **11 条**（10 门禁＋1 过程轮，逐条列于下），同窗口他席以 `--ticket 63/79` 运行（不入本席声明）。
+- **对账窗口须取并集**（`--since 2026-09-09T15:11:00.000Z`）：`check-gate-audit` 的**条目池按窗口过滤**，而本文件同时含 §8（R-1 前实现轮）／§10（R-1）／§11（R-2）三轮声明，故单一窗口必须覆盖 15:11–15:15 与 15:50–15:54 两段；窗口内**他席 RUN 43 条**（蓝队审查轮 `f680a57a`／`adcdfff1` 等与并发 `cmd_read.js` 探针）非本席执行、不得作为本席证据声明 → 按 `--allow-undeclared` 放宽并留痕（见下 GATE-RELAX）。对账源：`.scratch/locks/gate-runs.log`。
+
+GATE-RUN runId=53445b2c-01e0-4f17-91a9-37e369f82e41 cmd=pnpm build
+GATE-RUN runId=ea5d4eda-5419-4732-a2b5-86f437cf62b0 cmd=node --test packages/skill-calorie/test/delivery-83.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs
+GATE-RUN runId=f16cded2-089c-4197-8a88-91350c656035 cmd=node docs/research/t83-review-blue-mut.mjs
+GATE-RUN runId=6e9eb223-380a-46f4-9f5f-73aa6bfbd0a2 cmd=pnpm boundaries
+GATE-RUN runId=2f4b4150-db5c-4579-bcbe-ffdb15b78931 cmd=pnpm snapshot:check
+GATE-RUN runId=50b8de6c-b30c-4959-8816-ac711f44be1e cmd=pnpm publish:pre
+GATE-RUN runId=cba87050-91fa-40d0-8762-d9d5d00c3d26 cmd=node .scratch/t83/r2-receipt-scope.mjs
+GATE-RUN runId=7600dc90-9554-4604-94c1-4bcec595044e cmd=pnpm test
+GATE-RUN runId=ccef0bab-928f-4308-8367-11aa939d1c47 cmd=node docs/research/t101-fail-set.mjs docs/research/t88-baseline/test-failset.txt .scratch/t83/r2-canonical.log
+GATE-RUN runId=160ed1c7-edc3-4316-ab61-43cd711db612 cmd=node .scratch/t83/r2-selfcheck.mjs
+
+**过程轮（非门禁证据，逐条声明）**
+
+GATE-RUN runId=392c0fab-771d-474d-958b-a510b4129f69 cmd=node -e
+
+（上一行＝`node -e` 内联自检**首跑**：嵌套引号语法错、exit 1 → 改用 `.scratch/t83/r2-selfcheck.mjs`，`160ed1c7` 复跑 exit 0。）
+
+GATE-RELAX flag=--allow-nonzero reason=`7600dc90` canonical `pnpm test` exit 1 系**基线既有红**（判据＝具名失败集**新增 0**，实测 `base=34 after=29 新增=0`）；`392c0fab` 为**过程轮**（见上），非门禁证据。
+
+GATE-RELAX flag=--allow-undeclared reason=对账窗口取并集后（`--since 2026-09-09T15:11:00.000Z`）窗口内含**他席** `RUN` 43 条（蓝队审查轮 `f680a57a`／`adcdfff1` 等 ＋ 并发 `cmd_read.js calorie.help.center` 探针，见 `.scratch/locks/gate-runs.log`），非本席执行、不得作为本席证据声明；本席三轮声明共 **25 条全部 matched**。
+
+对账命令（逐字复跑）：
+
+```
+node tooling/check-gate-audit.mjs --evidence docs/research/t83-html-first.md \
+  --ticket 83 --since 2026-09-09T15:11:00.000Z --until 2026-09-09T15:54:37.000Z \
+  --allow-nonzero --allow-undeclared
+```
+
+实测：`RESULT: matched=25/25 auditEntries=774 scoped=68 undeclared=43` → **gate-audit: PASS**（exit 0；runId `435f5462-43b0-48b5-9cac-057dde8c6e9b`）。
+
+**对账轮过程记录（`--until` 之后，不入声明窗口，故不列 GATE-RUN）**：`8d8e5fcd-b9d9-4bd7-9be3-f8168efbb2b6`（窗口只取 R-2 段 → 池过滤致 §8／§10 的 14 条声明判 missing，exit 1，非门禁失败而是**窗口选法**问题）→ 改并集窗口；`05370212-10df-4d46-b67f-94b27d006c38`（缺 `GATE-RELAX --allow-undeclared` 留痕，exit 1）→ 补留痕后 `435f5462` PASS。
 
