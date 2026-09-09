@@ -12,8 +12,11 @@
 // 检查项：入桶、id 唯一、分组／子功能计数、逐字／sha parity、non-exec 理由闭集、命中面（路由 ＋ HELP）。
 //
 // 冻结表**只读**：脚本自算 git blob sha1（等价 `git hash-object`，不 spawn）证明未被改动。
+// 返修 R-5（审查席 S2-②）：漂移归因由 `info()` 文本升级为**逐词身份断言**——只读取 #81 期
+// 路由层源码（`git show 52e6fc8:…/routing.ts`，1 次只读 spawn）解析每词 kind，比对漂移集合。
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { CATEGORIES, HELP_LOOKUP, TRIGGERS, getSummary } from '../../packages/skill-calorie/dist/triggers/index.js';
 import { CALORIE_COMBOS, CALORIE_WRITE_COMBOS } from '../../packages/skill-calorie/dist/cli/keys.js';
@@ -34,6 +37,13 @@ const rel = (p) => fileURLToPath(new URL(p, ROOT));
 const BASELINE_81 = { total: 436, exec: 326, nonExec: 110, outOfScope: 10, legacyChain: 100, coveredKeys: 77, newEntries: 34 };
 /** 冻结源 git blob sha1（HEAD 值，本票不得改动）。 */
 const FROZEN_CSV_SHA1 = '61e28727c43d2091d7ee4058a2705031f1b68cb3';
+/** #111／#112／#113 自陈的促进词（15 词；身份断言用，与顺序无关）。 */
+const FLIP_WORDS_111_113 = [
+  '看运动记录（按力量筛选）', '看运动记录（按有氧筛选）', '看力量训练总览', '看有氧训练总览',
+  '计划复盘（本周）', '计划复盘（本月）', '计划复盘（全部）', '看计划完成率', '看未完成训练', '看动作完成率',
+  '看营养素深度',
+  '看钠糖纤维趋势', '看钠糖纤维综合', '看每日 6 因素综合', '查卡路里数据',
+];
 
 const rows = [];
 const fails = [];
@@ -129,6 +139,29 @@ info(`#81 登记 exec ${BASELINE_81.exec} / non-exec ${BASELINE_81.nonExec} → 
   + `（漂移 ${driftExec >= 0 ? '+' : ''}${driftExec} / ${driftNon >= 0 ? '+' : ''}${driftNon}）`);
 info('归因（routing.ts 变更史）：ee8a1f0 #111 促进 10 词 ＋ 964c41f #112 促进 1 词 ＋ b23f72d #113 促进 4 词 ＝ 15 词 non-exec → exec');
 check('漂移量 = #111／#112／#113 促进词数之和 15', driftExec === 15 && driftNon === -15, `实际 ${driftExec}/${driftNon}`);
+
+// ── 归因身份比对（返修 R-5 · 审查席 S2-②）：只读 #81 期路由层源码，逐词解析 kind ──────────
+const kindsAt = (rev) => {
+  const r = spawnSync('git', ['show', `${rev}:packages/skill-calorie/src/triggers/routing.ts`],
+    { encoding: 'utf8', cwd: fileURLToPath(ROOT), maxBuffer: 32 * 1024 * 1024 });
+  if (r.status !== 0) throw new Error(`git show ${rev} 失败（status=${r.status}）：${String(r.stderr).slice(0, 200)}`);
+  const map = new Map();
+  for (const m of r.stdout.matchAll(/\{\s*wakeWord:\s*'([^']*)',\s*scene:\s*'(\d+)',\s*kind:\s*'(exec|non-exec)'/g)) {
+    map.set(m[1], m[3]);
+  }
+  return map;
+};
+const kinds81 = kindsAt('52e6fc8');
+check('#81 期路由层（52e6fc8）源码解析覆盖 436 词',
+  WAKE_ROUTES.every((r) => kinds81.has(r.wakeWord)),
+  `缺 ${WAKE_ROUTES.filter((r) => !kinds81.has(r.wakeWord)).length} 词`);
+const flipWords = WAKE_ROUTES.filter((r) => kinds81.get(r.wakeWord) === 'non-exec' && r.kind === 'exec').map((r) => r.wakeWord);
+const backWords = WAKE_ROUTES.filter((r) => kinds81.get(r.wakeWord) === 'exec' && r.kind === 'non-exec').map((r) => r.wakeWord);
+check('漂移集合 = #111／#112／#113 促进词（逐词身份比对，15 词）',
+  flipWords.length === FLIP_WORDS_111_113.length
+  && JSON.stringify([...flipWords].sort()) === JSON.stringify([...FLIP_WORDS_111_113].sort()),
+  `实际 ${flipWords.length} 词：${[...flipWords].sort().join('／')}`);
+check('无反向漂移（exec → non-exec）0 词', backWords.length === 0, `实际 ${backWords.length} 词：${backWords.join('／')}`);
 check('non-exec 细分桶仅 {out-of-scope, legacy-chain}',
   nonExec.every((r) => r.bucket === 'out-of-scope' || r.bucket === 'legacy-chain'),
   `异常 ${nonExec.filter((r) => !['out-of-scope', 'legacy-chain'].includes(r.bucket)).length} 条`);

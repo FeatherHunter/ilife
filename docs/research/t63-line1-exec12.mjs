@@ -134,7 +134,8 @@ check('抽样覆盖 10 个分组', covered.size === 10, `覆盖 ${covered.size}�
 check('抽样条数 = 12', PICK.length === 12, `实际 ${PICK.length}`);
 
 // ── 补充诊断：`t81-exec-smoke.md`（#86 重生成）登记的唯一非零记录「复制昨日运动」 ──
-// 该词 cli 的 `copyFrom:'yesterday'` 以**系统日期**为锚（cli/write.ts:556 todayISO → :558 copyYesterday），
+// 该词 cli 的 `copyFrom:'yesterday'` 以 **UTC 日期**（`todayISO()` = `new Date().toISOString()`，`analysis/utils.ts:45-47`）
+// 为锚（cli/write.ts:556 todayISO → :558 copyYesterday），
 // 而标准种子库数据止于 2026-09-07 → 墙钟漂移后必然 exit 4 missing-data（种子窗口缺口，非 cli 缺陷）。
 // 诊断：① 原样 cli 复现非零；② 按该词自身 fill_hint「复制到哪一天(选填)」显式给 date 消解墙钟依赖 → exit 0。
 console.log('');
