@@ -61,11 +61,15 @@ export interface GoalRecommend {
 
 const PROFILES: readonly string[] = ['cut', 'maintain', 'bulk'];
 
-/** 目标推荐盘（goal_recommend）：纯算式推荐 + 饮水推荐，恒有值（缺项记 missing，不抛）。 */
+/** 目标推荐盘（goal_recommend）：纯算式推荐 + 饮水推荐；档案/体重缺项即 missing-data，不编造默认值（#100）。 */
 export function buildGoalRecommend(db: DatabaseSync, profile: string = 'cut'): GoalRecommend {
   if (!PROFILES.includes(profile)) throw new CalorieRenderError('bad-input', 'profile 非法（cut/maintain/bulk）: ' + String(profile));
   const p = profile as NutriProfile;
   const recommend = recommendNutritionGoal(db, { profile: p });
+  // #100 · 空库阻断：缺档案/体重时不返 weightKg=70 等合成数字，明示缺失（exit 4）。
+  if (recommend.missing.length > 0) {
+    throw new CalorieRenderError('missing-data', '目标推荐缺必要输入（' + recommend.missing.join('、') + '缺失，不编造默认值，先补档案与体重记录）');
+  }
   const water = recommendWaterGoal(db, {});
   return { profile: p, recommend, water };
 }

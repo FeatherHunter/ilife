@@ -208,6 +208,10 @@ export function buildGifTask(
     const want = new Set(input.photoIds);
     ids = ids.filter((x) => want.has(x));
   }
+  // #100 · 空库阻断：零匹配即 missing-data，不返 photoCount=0 的"共 0 张"合成页（exit 4）。
+  if (ids.length === 0) {
+    throw new CalorieRenderError('missing-data', '无匹配照片（标签 ' + tag + '，检查标签/日期范围）');
+  }
   let firstDate = plan.dateFrom;
   let lastDate = plan.dateTo;
   if (input.photoIds) {
@@ -228,7 +232,7 @@ export function buildGifTask(
     photoIds: ids,
     firstDate,
     lastDate,
-    note: ids.length === 0 ? '无匹配照片（检查标签/日期范围） · ' + GIF_PASSTHROUGH_NOTE : GIF_PASSTHROUGH_NOTE,
+    note: GIF_PASSTHROUGH_NOTE,
   };
 }
 

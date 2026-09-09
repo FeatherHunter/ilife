@@ -9,6 +9,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { getNutritionGoal } from '../fetch/nutritionGoal.js';
 import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
+import { FetchError } from '../fetch/errors.js';
 import { listCompletedGoals } from '../fetch/goalHistory.js';
 import type { GoalHistory } from '../fetch/goalHistory.js';
 import { buildDeficitData } from '../analysis/deficit.js';
@@ -36,8 +37,16 @@ export function buildGoalView(db: DatabaseSync, start: string, end: string): Goa
   const nutrition = getNutritionGoal(db);
   if (!nutrition) throw new CalorieRenderError('missing-data', '未设营养目标（daily_goal#1 缺失，先维护目标）');
   const history = listCompletedGoals(db, 30, end);
-  const deficit = buildDeficitData(db, start, end);
-  const trend = buildTrendData(db, start, end);
+  // #100 · 缺口/趋势空窗的 FetchError 转 missing-data（与 goalPlate.buildGoalProgress 同约）。
+  let deficit: DeficitData;
+  let trend: TrendData;
+  try {
+    deficit = buildDeficitData(db, start, end);
+    trend = buildTrendData(db, start, end);
+  } catch (e) {
+    if (e instanceof FetchError) throw new CalorieRenderError('missing-data', e.message);
+    throw e;
+  }
   const total = history.completedCount + history.incompleteCount;
   const completionPct = total ? round2((history.completedCount / total) * 100) : null;
   return { start, end, nutrition, history, deficit, trend, completionPct };

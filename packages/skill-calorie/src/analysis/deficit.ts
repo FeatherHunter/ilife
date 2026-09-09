@@ -37,6 +37,10 @@ export interface DeficitData {
 export function buildDeficitData(db: DatabaseSync, start: string, end: string): DeficitData {
   const s = buildSeries(db, start, end);
   if (!s.length) throw new FetchError(`无数据：${start} ~ ${end}`);
+  // #100 · 空窗阻断：窗内无任何饮食摄入即 missing-data，不返 avgIntake=0 / avgBurn=TDEE 的合成数字。
+  if (!s.some((d) => d.calories !== null && d.calories !== undefined)) {
+    throw new FetchError(`无饮食记录（${start} ~ ${end}）`);
+  }
   const first = s[0] as (typeof s)[number];
   const targetIntake = first.calorieGoal || 1800;
   const tdee = first.tdee || 1800;
