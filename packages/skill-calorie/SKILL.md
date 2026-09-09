@@ -31,7 +31,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 - 版本 `0.1.0`（与 link-core/render 同值，漂移单测钉死）；形状 6 种全字段校验，缺字段即抛，不返空数组冒充正常。
 - `list` 须 `items[]`（`total?`）；`detail` 须 `item{}`；`stat` 须 `metrics{number}` 全有限 number；`receipt` 须 `ok/message`；`analysis` 须非空 `summary`；`fallback` 须 `reason/degraded:true`。
-- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等读 52 键 + 写 35 键共 87 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
+- 组合键 registry 合法点式（下划线→点）：`calorie.view.home` 等读 60 键 + 写 35 键共 95 键（见下表）；内部 `VIEW_KEYS` 下划线键仅渲染层复用，不直接登记。
 
 ## 口径（T7 + 精度 + 餐别）
 
@@ -55,7 +55,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 |---|---|---|
 | `记体脂（皮褶钳）`／`记体脂（外部测量）`／`补记体脂` | `body_composition_wizard.html` | 皮褶钳 7 点须先换算成 `bodyFatPct`（换算未移植，调用方算） |
 | `记围度`／`补记围度` | `body_measurements_wizard.html` | 13 围度 3 分组；记录级至少 1 项 |
-| `定训练计划` | `plan_builder_wizard.html` | **当前不可写**：87 键无训练计划写键（见下） |
+| `定训练计划` | `plan_builder_wizard.html` | **当前不可写**：95 键无训练计划写键（见下） |
 
 | 场景 | 触发 | 行为 | CLI 落点（符号锚，可验） |
 |---|---|---|---|
@@ -64,7 +64,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 3 直接录 | 用户**明确**说「直接录」「我信你」 | 跳过 wizard，直接调写键，回 `receipt` 形 | 35 写键一律 `receipt`（`cli/write.ts` 模块头契约 ＋ `out()` 组装 `{ok,message,receipt}`） |
 
 - **fallback（#86 落地前）**：verify 页当前**不存在**（#86 OPEN 0%）。配置型 wizard 词命中且用户已给数据 → **不得直写**；改为**文字 verify**：逐字复述待写字段并请求确认，确认后再调写键；无确认则停在确认步。页面本体归 #86（3 个配置型 wizard ＋ 1 个 GIF 框选器；静态 HTML ＋ `copyText`）——**本侧已引用，#86 落地后回引**。
-- 需多步交互的配置写词在路由层落 `non-exec` 桶，`reason` 逐字 `NON_EXEC_REASONS.wizard`（`triggers/routing.ts` `NON_EXEC_REASONS` 及其词表项）；**训练计划 87 键无写键，当前不可写**——`NON_EXEC_REASONS.planWriteMissing` 逐字「命中但不执行：87 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。」，命中回 `non-exec` 并告知用户属二期，**不得**承诺 verify 后写入。
+- 需多步交互的配置写词在路由层落 `non-exec` 桶，`reason` 逐字 `NON_EXEC_REASONS.wizard`（`triggers/routing.ts` `NON_EXEC_REASONS` 及其词表项）；**训练计划 95 键无写键，当前不可写**——`NON_EXEC_REASONS.planWriteMissing` 逐字「命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。」，命中回 `non-exec` 并告知用户属二期，**不得**承诺 verify 后写入。
 - AUTO 块（本文件下方「联动速查」）列出的单命令写键只证明**写键可达**，**不豁免**本表的 verify 前置；分流仍按本表：有数据走场景 2，明确授权才走场景 3。
 - **禁止**：用户给了数据仍跳过 verify 直接调写键（数据看起来对也不例外）——v2.4.2 → v2.4.3 的根因就是这条。正解＝按场景分流。
 - **违反 = 协议 fail mode**：违反时向用户输出违规回执（逐字）：「我跳过了 M6 verify 直接写库，违反 Wizard Verify 铁则；已停止后续写入，请确认数据后重来」；不得静默补记、不得事后补 verify 掩盖；同轮修正循环 ≤ 3 次。
