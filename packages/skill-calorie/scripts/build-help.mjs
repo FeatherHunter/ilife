@@ -34,6 +34,14 @@ const REPR = {
   'calorie.view.nutrition-detail': '看营养素深度',
   'calorie.view.source-stats': '看食品来源统计',
   'calorie.view.today-water': '看今日喝水',
+  'calorie.view.batch-import-preview': '看批量导入预览',
+  'calorie.view.calorie-trend': '看热量趋势',
+  'calorie.view.lint-health': '查卡路里数据',
+  'calorie.view.long-trend': '看整体趋势',
+  'calorie.view.nutrition-analysis': '看营养分析',
+  'calorie.view.process-progress': '看落地训练进度',
+  'calorie.view.review-template': '看复盘报告',
+  'calorie.view.six-factors': '看每日六因素',
   'calorie.view.ranking': '查高热量排行',
   'calorie.view.library': '查食品库',
   'calorie.view.search': '查食品',
@@ -107,6 +115,14 @@ function exampleFor(key) {
     case 'calorie.view.nutrition-detail': return 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
     case 'calorie.view.source-stats': return 'calorie-cmd-read calorie.view.source-stats';
     case 'calorie.view.today-water': return 'calorie-cmd-read calorie.view.today-water --params \'{"date":"2026-09-07"}\'';
+    case 'calorie.view.batch-import-preview': return 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"2026-09-06"}]}\'';
+    case 'calorie.view.calorie-trend': return 'calorie-cmd-read calorie.view.calorie-trend --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.lint-health': return 'calorie-cmd-read calorie.view.lint-health';
+    case 'calorie.view.long-trend': return 'calorie-cmd-read calorie.view.long-trend --params \'{"group":"weight_calorie","window":"30d"}\'';
+    case 'calorie.view.nutrition-analysis': return 'calorie-cmd-read calorie.view.nutrition-analysis --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.process-progress': return 'calorie-cmd-read calorie.view.process-progress';
+    case 'calorie.view.review-template': return 'calorie-cmd-read calorie.view.review-template --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.six-factors': return 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"2026-09-07"}\'';
     case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
     case 'calorie.view.library': return 'calorie-cmd-read calorie.view.library';
     case 'calorie.view.search': return 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'';

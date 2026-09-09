@@ -263,6 +263,46 @@ combos:
     shape: stat
     title: 今日饮水
     cmd: skill-calorie
+  - key: calorie.view.batch-import-preview
+    skill: calorie
+    shape: stat
+    title: 批量导入预览
+    cmd: skill-calorie
+  - key: calorie.view.calorie-trend
+    skill: calorie
+    shape: stat
+    title: 热量趋势
+    cmd: skill-calorie
+  - key: calorie.view.lint-health
+    skill: calorie
+    shape: stat
+    title: 数据健康检查
+    cmd: skill-calorie
+  - key: calorie.view.long-trend
+    skill: calorie
+    shape: stat
+    title: 整体趋势
+    cmd: skill-calorie
+  - key: calorie.view.nutrition-analysis
+    skill: calorie
+    shape: stat
+    title: 营养分析
+    cmd: skill-calorie
+  - key: calorie.view.process-progress
+    skill: calorie
+    shape: stat
+    title: 落地训练进度
+    cmd: skill-calorie
+  - key: calorie.view.review-template
+    skill: calorie
+    shape: stat
+    title: 复盘报告
+    cmd: skill-calorie
+  - key: calorie.view.six-factors
+    skill: calorie
+    shape: stat
+    title: 每日六因素
+    cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt
