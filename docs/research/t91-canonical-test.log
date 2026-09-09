@@ -1,0 +1,1920 @@
+﻿node : LOCK-ACQUIRED ticket=91 runId=516c3705-609f-426d-88f8-05bf994a4644 waitedMs=1 pid=2128
+At line:1 char:142
++ ... d D:\ilife; node tooling/run-locked.mjs --ticket 91 -- pnpm test *>&1 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (LOCK-ACQUIRED t...edMs=1 pid=2128:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+$ node --test "test/*.test.mjs" "packages/base-render/test/*.test.mjs" "packages/skill-calorie/test/*.test.mjs" "packag
+es/skill-memo-ilife/test/*.test.mjs" "packages/skill-schedule/test/*.test.mjs" "packages/skill-home/test/*.test.mjs" "p
+ackages/skill-bill/test/*.test.mjs" "packages/skill-chef/test/*.test.mjs" "packages/plugin-manager/test/*.test.mjs" "pa
+ckages/plugin-calorie/test/*.test.mjs" "packages/plugin-memo-ilife/test/*.test.mjs" "packages/plugin-schedule-ilife/tes
+t/*.test.mjs" "packages/plugin-home-ilife/test/*.test.mjs" "packages/plugin-chef/test/*.test.mjs" "packages/plugin-bill
+-ilife/test/*.test.mjs"
+▶ DB-1／DB-2：12 区块清单与样式区闭集
+  ✔ 闭集恰 12 区（DB-1 清单逐字落定）、名字唯一 (1.0101ms)
+  ✔ 闭集不改写控件闭集（8 区原样，无交集污染判定面） (0.0935ms)
+  ✔ blocksCss 覆盖 12 区（每区注释头＋类名前缀） (1.2015ms)
+  ✔ blocksCss 前缀可覆盖 (0.1977ms)
+  ✔ blocksCss 只读冻结 token（全部 var(--x) ∈ CSS_VAR_TOKENS） (0.2338ms)
+  ✔ blocksCss 无 Q14 禁入项、无 :root 改写、无深色区、无 canvas／script (0.4071ms)
+✔ DB-1／DB-2：12 区块清单与样式区闭集 (3.9444ms)
+▶ B-01 页面壳
+  ✔ 标题三件套＋正文透传（正文不转义、标题转义） (0.3768ms)
+  ✔ 缺 title／content 非串 → bad-input (0.416ms)
+✔ B-01 页面壳 (0.9323ms)
+▶ B-02 KPI 卡
+  ✔ 四槽齐备＋value 行锚点 (0.3291ms)
+  ✔ 徽章 kind ∈ STATUS_KINDS；非法降级 empty（冻结语义） (0.2176ms)
+  ✔ 与冻结 renderStatusBadge 同构（组合不重定义） (0.0772ms)
+  ✔ renderKpiGrid 组合多卡；空数组 → bad-input (0.1356ms)
+  ✔ 缺 label／value → bad-input；五字符转义 (0.0902ms)
+✔ B-02 KPI 卡 (1.0142ms)
+▶ B-03 表格
+  ✔ 语义标签＋th scope＋末行无边框由 CSS 承载 (0.2917ms)
+  ✔ 零行 → 空态（不渲染空表），与冻结 renderEmptyState 同构 (0.1328ms)
+  ✔ 非法列／非法对齐／非法单元格 → bad-input；null 单元格置空 (0.1464ms)
+✔ B-03 表格 (0.6529ms)
+▶ B-04 图表
+  ✔ 8 kind 全部分发（产物含 viewBox 且被区块包裹） (3.5048ms)
+  ✔ 空数组走空态（冻结语义）；非法 kind／非法 input → bad-input；结构违规抛错透传 (0.3323ms)
+✔ B-04 图表 (3.9308ms)
+▶ B-05 列表
+  ✔ 三槽＋首行无边框＋完成态删除线（CSS 承载） (0.2412ms)
+  ✔ 零行 → 空态；缺 main → bad-input (0.1543ms)
+✔ B-05 列表 (0.4666ms)
+▶ B-06 指令块
+  ✔ 载体恒为 PRE＋等宽三件套（CSS 承载） (0.1877ms)
+  ✔ 复制按钮走冻结双属性（ACTION_ID_ATTR＋DEFAULT_DATA_ATTR 分工不混用） (0.0993ms)
+  ✔ 空命令 → bad-input（不渲染空板） (0.0788ms)
+✔ B-06 指令块 (0.4468ms)
+▶ B-07 详情区
+  ✔ 必填五字段逐字展示＋types 复数＋cli 行 (0.2187ms)
+  ✔ 【待开发】徽章；types 字符串走类、对象走内联配色（与 help.ts 同口径） (0.1328ms)
+  ✔ 缺必填／status 非法／types 非数组 → bad-input (0.1287ms)
+✔ B-07 详情区 (0.5798ms)
+▶ B-08 折叠区
+  ✔ 原生 details／summary＋open 属性＋箭头旋转 CSS (0.1721ms)
+  ✔ 缺 title／contentHtml 非串 → bad-input (0.0769ms)
+✔ B-08 折叠区 (0.3106ms)
+▶ B-09 表单
+  ✔ label＋input＋placeholder=hint＋required 落 data 约定（零 JS） (0.2642ms)
+  ✔ 空 fields／缺 name／缺 label → bad-input (0.1065ms)
+✔ B-09 表单 (0.4356ms)
+▶ B-10 空态／B-11 复制区／B-12 反馈区（组合冻结控件）
+  ✔ B-10：冻结 emptyState 逐字内嵌＋可选标题 (0.1127ms)
+  ✔ B-11：冻结 actionBar 逐字内嵌＋id 缺省取 COPY_ACTION_IDS (0.3853ms)
+  ✔ B-12：toast role／aria 取冻结值＋errorReceipt 缺文本不渲染按钮（冻结语义） (0.3387ms)
+✔ B-10 空态／B-11 复制区／B-12 反馈区（组合冻结控件） (0.9446ms)
+▶ 红线：B7 禁名／AC-7 零 DOM／确定性／转义
+  ✔ B7 交互控件名不得是 blocks 导出 (0.2691ms)
+  ✔ dist/blocks.js 代码（剥字面量与注释后）零 document.／window.／navigator. (0.7569ms)
+  ✔ 同输入同输出（确定性，供 108–113 快照） (0.1794ms)
+  ✔ 五字符转义全覆盖（用户串），已组合 HTML 不二次转义 (0.0777ms)
+  ✔ 内联事件处理器字段一律拒（零注入面） (0.0691ms)
+  ✔ package.json 暴露 ./blocks 子路径（index 出口面不动） (0.2711ms)
+✔ 红线：B7 禁名／AC-7 零 DOM／确定性／转义 (1.7691ms)
+▶ STATUS_KINDS 前置口径（B-02 徽章面）
+  ✔ 冻结 4 种（含 empty 降级位） (0.0904ms)
+✔ STATUS_KINDS 前置口径（B-02 徽章面） (0.1462ms)
+▶ 端到端（108–113 的执行前置证明）：12 区块组装内容页走 fillTemplate
+  ✔ 数据→组件→填充器全链路：12 区齐备、零标记残留 (2.4452ms)
+✔ 端到端（108–113 的执行前置证明）：12 区块组装内容页走 fillTemplate (2.5006ms)
+OPTION-MATRIX 覆盖清单：{"A":["height","width","compact","color","colors","format","animation","emptyText","tooltip","labels","showValues","labelRotate","yMin","yMax","grid","actionId"],"B":["lineWidth","dashed","smooth","step","showDots","dotSize","dotStyle","area","areaOpacity","yTicks","connectNulls","legend","highlightLast","avgLine","markLine.value","markLine.xValue","markPoint","band","fillBetween","highlightPoints","series","series[].ownScale","ChartItem.value===null","ChartItem.anomaly"],"C":["singleColor","values[]","stacked","stackMode","grouped","stacked×grouped","segNames","缺省"],"D":["size","ringWidth","legend","showPercent","centerLabel","centerValue","合计为零"],"E":["gradient","showPct","gauge.label","gauge.size","pct 非数","pct 超界","points"],"F":["bars/lines","barColor/lineColor","legend","showValue"],"G":["regression","regressionColor","dotSize","ScatterItem.x/y","空数组","ScatterItem.label"],"H":["CHART_KINDS","kind-unknown","CHARTS_STYLE_ID","CHART_STRUCTURE_RULE","CHART_EMPTY_RULE","CHART_COORD_RULE","CHART_BREAKPOINTS","CHART_PALETTE","CHART_ERROR_CODES","ChartOutput","纯度","buildChartsHelpersJs"]} / 命中用例 74 条
+▶ A 通用选项 ChartCommonOptions
+  ✔ A.height / A.width：viewBox 宽高逐值生效，缺省按 kind (3.6453ms)
+  ✔ A.compact：内边距收紧 → 首点 x 由 14.0 收到 6.0 (1.5488ms)
+  ✔ A.color：单序列描边/填充 = 该值 (0.3313ms)
+  ✔ A.colors：逐点/逐段按色板顺序覆盖 (0.1969ms)
+  ✔ A.format：数值文本经 format(v) 输出（哨兵函数被调用） (0.2583ms)
+  ✔ A.animation：缺省含动画类，false 时不含 (0.1722ms)
+  ✔ A.emptyText：空态文本 = 该值；缺省取冻结 STATUS_DEFAULT_TEXT.empty (0.1549ms)
+  ✔ A.tooltip：产出 tooltip 数据属性（零内联脚本） (0.1369ms)
+  ✔ A.labels：edge/all/none/select 改变 X 轴标签集合 (0.3049ms)
+  ✔ A.showValues：true / edge / false 改变数值标签集合 (1.3801ms)
+  ✔ A.labelRotate：X 标签带 rotate 变换 (0.2762ms)
+  ✔ A.yMin / A.yMax：显式域优先于数据域 (0.1877ms)
+  ✔ A.grid：false 时无网格线，缺省 3 条 (0.1195ms)
+  ✔ A.actionId：交互元素带 ACTION_ID_ATTR = 该值 (0.2604ms)
+✔ A 通用选项 ChartCommonOptions (9.9334ms)
+▶ B LineChartOptions
+  ✔ B.lineWidth / B.dashed：stroke-width 与 stroke-dasharray (0.2741ms)
+  ✔ B.smooth：Catmull-Rom 路径，点仍在线上，d 与直线不同 (0.4177ms)
+  ✔ B.step：阶梯路径（水平段 + 垂直段） (0.1588ms)
+  ✔ B.showDots / B.dotSize / B.dotStyle：点开关 / 半径 / 样式 (0.1913ms)
+  ✔ B.area / B.areaOpacity：面积填充与透明度 (0.1878ms)
+  ✔ B.yTicks：false 无刻度；数字收敛 2-6；刻度值 = 共享域（含 6% padding，尊重 yMin/yMax） (0.2791ms)
+  ✔ B.connectNulls：跨空连线；点只在有值处；首尾 null 不外延；全 null 仍空 (0.1695ms)
+  ✔ B.legend / B.series[].ownScale：图例块 + ownScale 注记 (0.5107ms)
+  ✔ B.highlightLast：最后一个有效点高亮 + 数值（受 showValues/labels 门控） (0.2083ms)
+  ✔ B.avgLine：均线序列（窗口收敛 3..items.length） (0.3847ms)
+  ✔ B.markLine.value：水平阈值虚线 + 文字 (0.3308ms)
+  ✔ B.markLine.xValue：垂直虚线（索引或 label）+ 顶部标注 + 贴边锚定 (0.4745ms)
+  ✔ B.markPoint：true = 主序列最大值点；{index} 越界忽略；{value} 首个匹配 (0.7624ms)
+  ✔ B.band：等长校验 / 任一侧 null 断开 / fill-opacity 0.15 / 值并入共享域 (0.9853ms)
+  ✔ B.fillBetween：a/b 系列索引；4 类违规抛错；绘制在折线之前；null 断开且不随 connectNulls 跨空 (0.4986ms)
+  ✔ B.highlightPoints：turns 拐点 / crossings 交点右端点 (0.3068ms)
+  ✔ B.series：多序列逐项生效（name/items/color/dashed/smooth/area/ownScale） (0.2586ms)
+  ✔ B.series[].ownScale：自身 min-max +6% padding，忽略 yMin/yMax，铺满图高，不参与共享域 (0.2203ms)
+  ✔ B.ChartItem.value === null：仅 line 合法，其余 kind 抛 structure-invalid (0.265ms)
+  ✔ B.ChartItem.anomaly：该点染警示红（缺省 #ff3b30，含光晕） (0.495ms)
+✔ B LineChartOptions (7.8407ms)
+▶ C BarChartOptions
+  ✔ C.singleColor：全部柱同色（覆盖 colors） (0.5479ms)
+  ✔ C.values[]：长度一致 + 值必须为数字，违规抛 structure-invalid (0.5727ms)
+  ✔ C.stacked：纵向堆叠 + 柱顶合计（percent 缺省 = 柱内 100%） (0.3926ms)
+  ✔ C.stackMode：percent（缺省，柱内 100%，不参与 yMin/yMax）/ absolute（相对全局最大合计） (0.4988ms)
+  ✔ C.grouped：每列 N 根并排子柱（宽度均分，gap = CHART_BREAKPOINTS.stackedGapPx） (0.3734ms)
+  ✔ C.stacked × C.grouped：互斥，同传时 stacked 优先 (0.1789ms)
+  ✔ C.segNames：段名图例；缺省「段1/段2…」 (0.1911ms)
+  ✔ C.labels：bar 的 select 只标首尾（旧 charts.js:385-388，与 line 的首+峰值+尾不同） (0.3983ms)
+  ✔ C.缺省（都不传）：单柱渲染路径 (0.1592ms)
+✔ C BarChartOptions (3.5594ms)
+▶ D DonutChartOptions
+  ✔ D.size / D.ringWidth：直径 / 环宽（半径自适应） (0.366ms)
+  ✔ D.legend：'right'/'bottom'/'none' 三态 (0.3229ms)
+  ✔ D.showPercent：图例百分比（缺省 true） (0.3989ms)
+  ✔ D.centerLabel / D.centerValue：中心两行文本（centerValue 字面渲染） (0.337ms)
+  ✔ D.合计为零：走空态（empty:true / points:0） (0.1284ms)
+✔ D DonutChartOptions (1.7079ms)
+▶ E ProgressChartOptions / GaugeChartOptions
+  ✔ E.gradient：渐变填充（id 由渐变参数派生 → 同输入同输出） (0.3841ms)
+  ✔ E.showPct：百分比文字开关（缺省 true） (0.2274ms)
+  ✔ E.pct 取整：分数输入按 Math.round（progress／gauge／donut 百分比逐字） (0.4959ms)
+  ✔ E.gauge.label / E.gauge.size：标签 / 尺寸 (0.2792ms)
+  ✔ E.gauge 弧几何：非对称 pct 的端点坐标逐值（pct=50 是两式同值的盲点） (0.3042ms)
+  ✔ E.height：进度条渲染高度 == height px（旧契约「轨道 px」，缺省 8） (0.3092ms)
+  ✔ E.pct 非数：抛 pct-invalid (0.1589ms)
+  ✔ E.pct 超界：收敛 0~100（不抛错） (0.1408ms)
+  ✔ E.points：pct 型接口恒 1；pct === 0 时 empty === false (0.0944ms)
+✔ E ProgressChartOptions / GaugeChartOptions (2.5845ms)
+▶ F ComboChartOptions / SparklineChartOptions
+  ✔ F.bars / F.lines：同长同 label（违规抛错） (0.7419ms)
+  ✔ F.combo 共享域：0..max(柱,线) 无 padding（柱底贴底，旧 charts.js:742-753） (0.1601ms)
+  ✔ F.barColor / F.lineColor：两族颜色 (0.1347ms)
+  ✔ F.legend：图例（量 / 趋势） (0.122ms)
+  ✔ F.showValue（sparkline）：末尾数值；涨绿跌红 (0.2812ms)
+✔ F ComboChartOptions / SparklineChartOptions (1.5521ms)
+▶ G ScatterChartOptions
+  ✔ G.regression：最小二乘回归线；false 关闭 (0.3544ms)
+  ✔ G.regressionColor：缺省 #ff3b30 (0.725ms)
+  ✔ G.dotSize：缺省 9px（r=4.5）；显式值走内联样式；≤720px 走 CHART_BREAKPOINTS.dotSizeMobilePx (0.2899ms)
+  ✔ G.yTicks 缺省：scatter 渲染 4 条 Y 轴刻度（旧 charts.js:854,884-893） (0.2534ms)
+  ✔ G.ScatterItem.x/y 非法：抛 structure-invalid (0.1459ms)
+  ✔ G.空数组：走空态 (0.0593ms)
+  ✔ G.ScatterItem.label：X 标签与 tooltip 用该 label（缺省回退 x 值） (0.2571ms)
+✔ G ScatterChartOptions (2.2094ms)
+▶ H 常量与规则
+  ✔ H.CHART_KINDS：8 成员闭集；charts 只暴露这 8 个方法 (0.3044ms)
+  ✔ H.kind-unknown：派表未命中（JS 调用方可达）抛 ChartError (0.1383ms)
+  ✔ H.CHART_ERROR_CODES：三码逐值 + 三码皆可达 (0.0805ms)
+  ✔ H.CHART_STRUCTURE_RULE / CHART_EMPTY_RULE / CHART_COORD_RULE：逐值 + 可观察效果 (0.4455ms)
+  ✔ H.CHARTS_STYLE_ID：helpers JS 注入的 <style> id 缺省值 (0.055ms)
+  ✔ H.CHART_BREAKPOINTS：四值逐值 + 在产出中生效 (0.0985ms)
+  ✔ H.CHART_PALETTE：10 色逐值 + 取色顺序 (0.2266ms)
+  ✔ H.移动端满宽：line/combo/scatter 用 preserveAspectRatio="none"（旧 charts.js:661,774,899） (0.4134ms)
+  ✔ H.类名命名空间：ilife-charts*（STYLE_PREFIX + 区名 charts，R1-A3／R3） (0.368ms)
+  ✔ H.ChartOutput：4 字段齐备；empty ⇔ points === 0（pct 型例外） (0.3381ms)
+  ✔ H.纯度：产出无 canvas / 内联 script / onclick / node: / 第三方 URL (0.3722ms)
+  ✔ H.转义：文本/属性出口全部经 escapeHtml（注入 script 标签与引号） (0.4987ms)
+  ✔ H.空态文案与图标：EMPTY_HINT 逐字 ＋ 📊 图标（8 接口共用） (0.1172ms)
+  ✔ H.纯度（src 侧）：src/charts.ts 模块代码零 DOM 全局／node: (1.2599ms)
+  ✔ H.buildChartsHelpersJs：IIFE 结构逐行固定 + 幂等自注入 + styleId/prefix 覆盖 (0.7485ms)
+  ✔ H.图表文本字号：CSS 补齐各文本类 font-size（旧 charts.js:55,67,70,79,87,90,92,96,102-103,113,122） (0.0777ms)
+  ✔ H.chartsCss 经 jsStr 嵌入：CSS 以 JSON 字符串字面量出现（转义正确） (0.1302ms)
+  ✔ H.覆盖清单（机读）：每个矩阵字段都绑定到一条真实存在的用例标题 (2.0887ms)
+✔ H 常量与规则 (8.0367ms)
+▶ 冻结面清单（SPEC_FROZEN_SURFACE）
+  ✔ 不可变、条目合法、名字唯一 (1.7809ms)
+  ✔ B7：交互控件不得进 base-paint (0.1743ms)
+✔ 冻结面清单（SPEC_FROZEN_SURFACE） (2.8748ms)
+▶ 运行时出口面锁
+  ✔ 既有 18 个出口仍在（D4 只追加） (0.1997ms)
+  ✔ 新增运行时出口恰好等于清单 implemented 的运行时项 (0.7289ms)
+  ✔ pending 运行时项必须尚未导出（实现后翻转清单） (0.0984ms)
+  ✔ type-only 名字不得成为运行时出口 (0.0831ms)
+✔ 运行时出口面锁 (1.2978ms)
+▶ 文档投影绑死（docs/base-paint-contract.md）
+  ✔ 标记区表格与清单逐字一致 (1.4675ms)
+  ✔ 章节标题逐字合规（D1 结构） (0.2846ms)
+  ✔ §2 覆盖 v1.30 全部 26 项且判定合法 (0.4757ms)
+  ✔ AC-1…AC-17 逐条有落点，且不移植项写明理由 (0.1253ms)
+  ✔ 返修单落点（FX-1…FX-16）在文档中可核 (0.2954ms)
+  ✔ 格式合规：无 BOM、无字面反斜杠 n (0.0699ms)
+  ✔ 第二轮返修单落点（FX-17…FX-25）在文档中可核 (0.171ms)
+  ✔ FX-21：溯源指针指向已归档的 AC 条文（不得再指 rulings 或 .scratch） (0.6475ms)
+  ✔ FX-24：u003c 归因正确（契约自定规则，非旧侧行为） (0.0786ms)
+✔ 文档投影绑死（docs/base-paint-contract.md） (3.8339ms)
+▶ 冻结口径逐值
+  ✔ 六个占位符逐字 + 数量规则（AC-6／AC-12／#118 A1） (0.1262ms)
+  ✔ 样式 token 恰 11 个、逐值、无 Q14 禁入项（AC-9／Q12／Q14） (0.1474ms)
+  ✔ 复制双通道逐字（Q13／AC-16） (0.0268ms)
+  ✔ 控件清单与可用性表一一对应（AC-16②） (0.0398ms)
+  ✔ envelope 形状表与 link-core 同步（AC-13 零依赖自持 + 漂移钉死） (0.0523ms)
+  ✔ escapeHtml 五字符口径（AC-14）：归一已落地，五字符逐值（漂移哨兵已翻转） (0.0991ms)
+  ✔ 逐 shape 投影表（FX-1①）：5 个可序列化 shape 全覆盖且逐值 (0.0886ms)
+  ✔ 6 段日志数据源（FX-1③）：scene 由 envelope 派生，其余 5 段取 CopyLogFields (0.4977ms)
+  ✔ INJECT-DATA 容器口径与 HELP 复制文案（FX-2／FX-7） (0.0903ms)
+  ✔ scene-data.schema.json 若随包发布必须由 SCENE_DATA_SCHEMA 生成（FX-6） (0.1825ms)
+  ✔ 图表 8 接口，无白名单例外（B4／AC-17） (0.0543ms)
+  ✔ scene-data 取 types（AC-3）＋ 机读 schema 权威（AC-4） (0.0878ms)
+  ✔ 版本口径（B8／AC-10）＋ changeset 交付（D5） (0.2624ms)
+  ✔ FX-20：27 条运行时条目逐值断言（V4 N-4 名单，改 spec 值即红） (0.2341ms)
+  ✔ FX-17：复制按钮 actionId 冻结表 ＋ 承载属性 ＋ 与 HELP 侧 id 不撞名 (0.1584ms)
+  ✔ FX-18：共享 JS 产出内容契约 ＋ 与扫描口径一致 (0.1926ms)
+  ✔ FX-23：敏感行判定口径 ＋ 三 format 掩码文案 (0.0718ms)
+✔ 冻结口径逐值 (2.6075ms)
+▶ #118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／模板分型）
+  ✔ A2：载荷槽规则可机读（两者都有 → marker-conflict；都没有 → marker-missing） (0.2136ms)
+  ✔ A5：三分型穷尽且互斥（无「两类都不属于且非 legacy」的模板） (0.1388ms)
+  ✔ A4：包裹约定＝资产裸文本 ＋ 填充器包裹（两条不变量 ＋ 断言） (0.1319ms)
+  ✔ A6：与旧基线的偏离已显式记账（README.md:63 模板自带包裹 vs 本契约填充器包裹） (0.132ms)
+  ✔ A1：CONTENT 槽位溯源＝新架构发明的槽位（旧基线 0 命中） (0.0787ms)
+  ✔ FX-118-1／S-1：容器校验仅当模板含 INJECT-DATA 时执行（内容页无容器合法） (0.1469ms)
+  ✔ FX-118-3／S-2：不变量②作用域排除 injectData（数据页容器不算预包裹） (0.2519ms)
+  ✔ FX-118-3／S-3：两条不变量的判定谓词只有一份实现（契约常量 ＋ 工具脚本共用） (0.4969ms)
+  ✔ FX-118-2／S-4：判定次序唯一且多条件输入下首个命中即抛 (0.6007ms)
+  ✔ FX-118-4／5／8／10：迁移面、占位符口径、证据路径与三处措辞 (0.2116ms)
+✔ #118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／模板分型） (2.5835ms)
+▶ 门禁红线（AC-7／AC-13／browser-safe）
+  ✔ base-paint 无运行时依赖、files 覆盖发布面 (0.1162ms)
+  ✔ dist 资产 browser-safe：无 node:、无隐式全局赋值；DOM 读取允许（FX-18 收窄口径） (5.3068ms)
+  ✔ 纯度扫描口径自证（FX-18）：含 DOM 的合法 helpers JS 过门，隐式全局赋值／node: 不过门 (0.3445ms)
+  ✔ #76 追加验收（FX-18②）：DOM 只允许出现在产出的 helpers JS 文本里 (14.3764ms)
+  ✔ src/spec/*.ts 只许 import type（AC-13）＋ 代码不得读写浏览器全局（AC-7） (1.9001ms)
+✔ 门禁红线（AC-7／AC-13／browser-safe） (22.1873ms)
+▶ #76 toast：renderToast ＋ createToastController
+  ✔ 向后兼容文案与无障碍属性（role／aria-live／data-max） (0.782ms)
+  ✔ badge 文本与类型渲染 (0.1141ms)
+  ✔ 非法 badge.type 回落 ok；非法 icon 回落 defaultIcon（文档无规定，实现记账） (0.1779ms)
+  ✔ actions 不截断（渲染全部，旧层 slice(0,2) 未进冻结面） (0.1724ms)
+  ✔ count／lines／code／detail 渲染且逐项转义 (0.1115ms)
+  ✔ actions 只接受 actionId：写入 ACTION_ID_ATTR，零内联 onclick (0.0844ms)
+  ✔ 含内联 onclick 的 actions 入参一律拒（bad-input） (0.1457ms)
+  ✔ msg 非字符串 → ControlsError bad-input (0.076ms)
+  ✔ 堆叠顺序：新条追加在后（老上旧下由样式区承载） (1.0667ms)
+  ✔ 超 maxStack 挤最旧（FIFO） (0.8776ms)
+  ✔ 单条 maxStack 生效（容量取栈内最大值） (0.2108ms)
+  ✔ 单条独立计时（各自 timeoutMs） (0.2171ms)
+  ✔ flush() 清栈，dispose() 幂等且之后 show 为 no-op (0.1556ms)
+  ✔ port 非法 → bad-input (0.0885ms)
+✔ #76 toast：renderToast ＋ createToastController (5.2647ms)
+▶ #76 copyText：双通道与反馈
+  ✔ clipboard 通道优先，成功文案取 COPY_TEXT_DEFAULTS (0.4626ms)
+  ✔ clipboard 抛错／reject → 降级 fallback，channel === fallback (0.3828ms)
+  ✔ clipboard === null → 直接走 fallback（真值即成功，旧层口径） (0.2204ms)
+  ✔ 两通道皆失败 → ok:false／channel:null／不抛错，且失败徽章恒在 (0.1737ms)
+  ✔ fallback 同步抛错 → 返回 outcome 不抛错，且失败徽章恒在（FX-76-1） (0.2176ms)
+  ✔ fallback 返回 false → reason 与抛错路径可区分，且同样出徽章（FX-76-1） (0.1378ms)
+  ✔ fallback 抛错不影响通道 1 成功路径（通道 1 优先） (0.1156ms)
+  ✔ copyText('', null) 先校验端口 → bad-input（次序文档无规定，实现记账） (0.2577ms)
+  ✔ 空串短路：无 toast、无回调（reason === empty） (0.1184ms)
+  ✔ silent 只静默成功 toast，回调仍触发；失败徽章不受 silent 影响 (0.1499ms)
+  ✔ onOk／onFail 互斥且各触发一次 (0.134ms)
+  ✔ opts.toast.ok／fail 逐字段覆盖，未提供字段回落默认 (0.167ms)
+  ✔ ports 缺失／fallback 非函数 → bad-input；缺 ports.toast → 降级只回调 (0.2354ms)
+  ✔ createCopyRuntime：转发 copyText 且 dispose 回收自己挂的反馈节点 (0.1927ms)
+✔ #76 copyText：双通道与反馈 (3.3007ms)
+▶ #76 statusBadge
+  ✔ 四个合法状态映射语义默认文案与类名 (0.1453ms)
+  ✔ 非法 status 降级 empty（不抛错，防无样式徽章） (0.085ms)
+  ✔ text 覆盖与 XSS 转义 (0.0736ms)
+✔ #76 statusBadge (0.3899ms)
+▶ #76 emptyState
+  ✔ icon／text／hint 渲染且一律转义 (0.1325ms)
+  ✔ actionHtml 为受信 HTML 透传（不转义） (0.0566ms)
+  ✔ actionHtml 的受信边界显式：调用方片段原样透传，本层自产标记零内联处理器（FX-76-7①） (0.3616ms)
+  ✔ text 缺失／非字符串 → bad-input (0.1145ms)
+✔ #76 emptyState (0.7988ms)
+▶ #76 errorReceipt
+  ✔ 三按钮 ＋ 修正重试 wide ＋ 单容器（旧基线结构面） (0.2031ms)
+  ✔ dataText／logText 渲染期写入 data-t，id 缺省取 COPY_ACTION_IDS.errorReceipt.* (0.0648ms)
+  ✔ 缺 dataText／logText → 不渲染对应按钮且不抛错 (0.0945ms)
+  ✔ message／dataText／logText 一律转义（含属性值） (0.059ms)
+  ✔ 重复 actionId ／空串 → bad-input；message 缺失 → bad-input (0.0809ms)
+✔ #76 errorReceipt (0.6018ms)
+▶ #76 actionBar ＋ ghost 口径
+  ✔ 场景按钮按 kind 产类名并写入 ACTION_ID_ATTR (0.3133ms)
+  ✔ 复制数据／日志：ghost 独立一行、id 与 COPY_ACTION_IDS 逐字一致、文本写入 data-t (0.1459ms)
+  ✔ 复制按钮文案可配（C-4），缺省取 ACTION_BAR_DEFAULTS (0.0687ms)
+  ✔ 缺 actionId ／空串 ／同次渲染内重复 → bad-input (0.19ms)
+  ✔ 空输入产出空骨架（不抛错） (0.0507ms)
+  ✔ text === '' 仍写 data-t=""；场景按钮 kind:ghost 被接受（ACTION_BAR_KINDS 全量） (0.0788ms)
+✔ #76 actionBar ＋ ghost 口径 (0.946ms)
+▶ #76 bindCopyAction 接线
+  ✔ 发现 → 激活 → readDataText → copyText → 反馈 全链路 (138.8058ms)
+  ✔ listActionIds() 可含非复制按钮：靠 readDataText → undefined 跳过，不报错 (14.8686ms)
+  ✔ 只订阅 listActionIds() 列出的 id（不猜 id、不通配） (0.1571ms)
+  ✔ 重复 id 由 binder 去重（同 id 只订阅一次） (0.0657ms)
+  ✔ dispose() 解绑全部已订阅 id 且幂等（解绑后不再复制） (14.6103ms)
+  ✔ opts 透传到 copyText（silent 生效） (15.1295ms)
+  ✔ port 非法 → bad-input (0.2055ms)
+  ✔ 端口返回值守卫：listActionIds() 非数组 → 零订阅不抛错；onActivate 返回非函数 → dispose 安全 (0.1648ms)
+  ✔ 激活回调不得产生未处理拒绝（FX-76-6：fallback 抛错／反馈挂载抛错） (59.7589ms)
+✔ #76 bindCopyAction 接线 (244.1442ms)
+▶ #76 buildSharedHelpersJs 产出契约
+  ✔ 恒非空，且是 IIFE（经典 script 作用域可跑，无 ESM 语法） (0.2342ms)
+  ✔ 自包含：不 import、不依赖其它脚本或既有全局 (0.1497ms)
+  ✔ 幂等判据只落 DOM（标记属性 ＋ querySelector 早退），无 window 哨兵 (0.1507ms)
+  ✔ 允许页面侧 DOM 读取与事件绑定（domAllowed） (0.0745ms)
+  ✔ 双通道复制 ＋ 冻结常量注入产出文本（不产第二份真相） (0.0793ms)
+  ✔ dataAttr 覆盖只影响产出 JS 的选择器；prefix 覆盖只影响类名 (0.1688ms)
+✔ #76 buildSharedHelpersJs 产出契约 (0.9602ms)
+▶ #76 无宿主可用性表（CONTROL_AVAILABILITY）
+  ✔ 静态 HTML 与运行时端口两列与实现行为逐条一致 (0.1716ms)
+✔ #76 无宿主可用性表（CONTROL_AVAILABILITY） (0.2041ms)
+▶ #76 无宿主可执行证据（纯 HTML 页面 ＋ headless 浏览器）
+  ✔ renderX 产出 ＋ helpers JS 在无宿主注入的页面里跑通（双通道／接线／幂等／flush） (1249.2155ms)
+  ℹ 夹具（headless C:\Program Files\Google\Chrome\Application\chrome.exe）产出：{"actionIds":["ilife-demo-open","ilife-copy-data","ilife-copy-log","ilife-error-copy-data","ilife-error-copy-log"],"dataT":"DATA-TEXT","badgeText":"失败","emptyText":"暂无数据","receiptButtons":3,"inlineHandlers":0,"staticToastRole":"status","staticToastAriaLive":"polite","staticToastDataMax":"5","staticToastCloseLabel":"✓ 知道了","bindFallback":["DATA-TEXT"],"bindMounted":1,"afterDispose":["DATA-TEXT"],"channels":["clipboard","fallback",null,null],"okFlags":[true,true,false,false],"emptyReason":"empty","stackBefore":2,"stackAfter":0,"markerCount":1,"helpersToasts":1,"helpersStackClass":true}
+  ✔ helpers JS 在 ≤820px 视口把反馈栈收窄为 3（页面运行时行为，FX-76-2） (2706.0547ms)
+  ℹ 窄视口（headless C:\Program Files\Google\Chrome\Application\chrome.exe --window-size=390,844）产出：{"clicks":7,"markerCount":1,"stackCount":3,"toastCount":3,"matchesMobile":true,"innerWidth":526}
+  ℹ 宽视口（headless C:\Program Files\Google\Chrome\Application\chrome.exe --window-size=1200,800）产出：{"clicks":7,"markerCount":1,"stackCount":5,"toastCount":5,"matchesMobile":false,"innerWidth":1174}
+✔ #76 无宿主可执行证据（纯 HTML 页面 ＋ headless 浏览器） (3955.5065ms)
+▶ #88 S4 helpers 产出面（静态）
+  ✔ S4-1 纯度与冻结面：单 marker／单 boot／零隐式全局／零 classList／零 node: (0.9872ms)
+  ✔ S4-2 卡级按钮常量恒读冻结面（不自造 actionId／文案） (1.0859ms)
+  ✔ S4-3 新类名双向：CSS 有规则 且 helpers 真产（蓝队 N-4：防「CSS 有类名、产出者空转」） (1.0248ms)
+  ✔ S4-4 类名不臆造：新后缀 ⊆ 既有 cls() 实参前缀（T11 归属） (0.2853ms)
+  ✔ S4-5 无 JS 降级：静态 HTML 零卡级按钮／零搜索框／零 #backTop ＋ CSS-only Tab 结构在 (14.0288ms)
+✔ #88 S4 helpers 产出面（静态） (18.216ms)
+▶ #88 S4 HELP 速查台运行时（真实浏览器）
+  ✔ S4-6 卡头按钮／data-t／委派复制／搜索／高亮／计数／跳页／清空／Sheet 预览／backTop／幂等 (1459.9757ms)
+  ℹ S4 夹具（headless C:\Program Files\Google\Chrome\Application\chrome.exe）产出：{"cardCount":436,"promptPres":436,"copyTotal":436,"oneEach":436,"inCardTop":436,"dataTEqualsPre":436,"actionId":436,"label":436,"classExact":436,"display":"flex","borderRadius":"999px","copied":436,"copiedEqualsPre":true,"toastCount":5,"afterReinjectCopy":436,"afterReinjectSearch":1,"afterReinjectBackTop":1,"afterReinjectMarkers":1,"afterBoot3Copy":436,"afterBoot3Markers":1,"singleClickCopies":1,"singleClickTextOk":true,"singleClickToasts":1,"hasSearch":true,"expected":32,"hidden":404,"visible":32,"subgroupHidden":2,"marks":32,"markTag":"MARK","marksAllTerm":true,"hitText":"匹配 32 个场景","autoOpenSheets":32,"checkedPage":"g0","enterChanged":true,"afterClearValue":"","afterClearHidden":0,"afterClearMarks":0,"afterClearSheets":0,"afterClearHitText":"","hasFieldInput":true,"previewExpected":"请你执行第 0 项。\n\n天数:____\n\n天数: X88","previewText":"请你执行第 0 项。\n\n天数:____\n\n天数: X88","previewMatch":true,"cardCopyTracks":true,"paramsTracks":true,"hasBackTop":true,"backTopClass":"ilife-help-shell-btn-backtop","backTopLabel":"↑","backTopOpacityAtTop":"0","scrolledY":900,"backTopShown":true,"backTopPointerShown":"auto","backTopOpacityShown":"0","backTopHiddenAgain":true,"noSheetButtonStillCopies":true,"noSheetButtonEqualsPre":true}
+  ✔ S4-7 静态壳（不注入 helpers ＝ 无 JS 时的页面）在真实浏览器里完全可用 (1281.9408ms)
+  ℹ 静态壳（浏览器渲染，无 helpers）实测：{"cards":436,"prompts":436,"cardCopy":0,"search":0,"backTop":0,"marker":0,"staticButtons":1308,"checkedRadio":1,"tabLabels":3,"cssOnlyTabRule":1}
+✔ #88 S4 HELP 速查台运行时（真实浏览器） (2742.5005ms)
+▶ renderHelpShell：数据页分型与占位符契约（R7／§3.5.3）
+  ✔ 三个必需占位符各恰好 1 次；载荷槽恰有其一；禁入标记 0 次 (0.5326ms)
+  ✔ 占位符 0 残留：逐标记断言字面量不在产物中 (0.1107ms)
+  ✔ 载荷槽分型 = data-page：容器 id／type 取冻结常量，容器内 JSON 逐值等于 sceneData (0.902ms)
+  ✔ 唯一可执行脚本 = 填充器包裹的 sharedHelpersJs；壳不自产脚本／画布／事件处理器 (0.2052ms)
+  ✔ 产物是完整 HTML 文档：DOCTYPE／lang／charset／viewport／转义 title／闭合（R31） (0.1219ms)
+  ✔ <title> 注入不逃逸：危险字符经 escapeHtml（不产生第二个 <script>） (0.503ms)
+  ✔ 根元素恒为 HELP_SHELL_ID；类名全部落在 helpShell 命名空间；HTML id 全页唯一 (0.4968ms)
+  ✔ CSS-only 交互结构：分组 Tab = radio ＋ for 标签；折叠／Sheet = details (0.3635ms)
+✔ renderHelpShell：数据页分型与占位符契约（R7／§3.5.3） (4.2174ms)
+▶ renderHelpShell：壳结构（标题区／Tab／折叠／场景卡／Sheet／关于／meta_blocks）
+  ✔ 标题区：skill_name／title／subtitle／场景数逐字段落位 (0.2452ms)
+  ✔ init_banner：title／subtitle／prompt／steps（新类型 string[]）＋ 复制指令按钮 (0.5632ms)
+  ✔ 分组 Tab：icon／label 逐字段落位 (0.1003ms)
+  ✔ 二级折叠：subgroup label ＋ 场景数；data-subgroup-id 可追溯 (0.0634ms)
+  ✔ 场景卡：逐场景 CLI 形态文本 = Scene.id 原文（Q11／R17／R32）＋ 反向断言无拼接串 (0.219ms)
+  ✔ 场景卡：title／wake_word chip 逐字段落位 (0.0596ms)
+  ✔ chip 文本恒取 wake_word（wake_word ≠ title 的场景；FX-78-V2b-4） (0.2979ms)
+  ✔ types 徽章：字符串元素用默认配色；{text,bg,fg} 元素写内联 style（两种变体） (0.073ms)
+  ✔ status：徽章文本逐字 === SCENE_STATUS[1]；空串 → 无徽章（恒读冻结常量） (0.1236ms)
+  ✔ Sheet：prompt_template 全文 ＋ editable_fields（label／value／hint／必填标记） (0.087ms)
+  ✔ 关于 Tab：contact items／copy_all／version／recommendations 逐字段落位 (0.095ms)
+  ✔ meta_blocks：id／title 转义，html 原样透传（doc:821） (0.0565ms)
+  ✔ meta_blocks[].html 透传不设消毒：脚本同样原样落地（技能方自理，doc:821） (0.5344ms)
+✔ renderHelpShell：壳结构（标题区／Tab／折叠／场景卡／Sheet／关于／meta_blocks） (2.8067ms)
+▶ renderHelpShell：复制按钮（FX-7／FX-17／Q13）
+  ✔ 三个目标的 actionId／文案逐字取 HELP_COPY_ACTIONS 并写入 ACTION_ID_ATTR (0.2595ms)
+  ✔ 每场景三目标各 1 个按钮 ＋ init_banner 1 个指令按钮（计数逐 actionId） (0.1028ms)
+  ✔ 复制文本写入 DEFAULT_DATA_ATTR：prompt／wake_word 逐字相等，params = label: value 行 (0.0594ms)
+  ✔ 多字段 params：逐字以 LF 连接（FX-78-V2b-1） (0.0498ms)
+  ✔ 无 editable_fields 的场景：params 复制文本回落为该场景 Scene.id（R32） (0.0302ms)
+  ✔ 复制按钮零内联 onclick：只带 actionId ＋ data-t (0.2274ms)
+✔ renderHelpShell：复制按钮（FX-7／FX-17／Q13） (0.8187ms)
+▶ renderHelpShell：scene-data 校验器（R6／§3.5.2）
+  ✔ duplicate-id：scenes[].id 跨分组重复即抛（含 path 定位） (0.1743ms)
+  ✔ status-invalid：出现值不在 SCENE_STATUS 白名单即抛 (0.6497ms)
+  ✔ types-invalid：元素既非字符串也非 {text} 即抛（逐形态） (0.2107ms)
+  ✔ schema-invalid：顶层与逐层结构（必填／类型／多余字段／minLength／minItems／oneOf） (0.663ms)
+  ✔ 空 scenes[] → schema-invalid（裁定 R11：SCENE_DATA_SCHEMA.minItems=1） (0.109ms)
+  ✔ sceneData 非对象／缺席 → schema-invalid（不逃逸 TypeError） (0.1374ms)
+  ✔ 判定次序：duplicate-id → status-invalid → types-invalid → schema-invalid（首个命中即抛） (0.1995ms)
+  ✔ 四个错误码逐条可达（本 describe 覆盖全 HELP_SCHEMA_ERROR_CODES） (0.1304ms)
+  ✔ HelpSchemaError 不从 src/index.ts 导出（与 TemplateError／ControlsError 同口径） (0.3829ms)
+  ✔ 校验先于填充：非法数据 ＋ 缺资产 → HelpSchemaError（不是 asset-missing） (0.1653ms)
+  ✔ 合法数据 ＋ 空资产 → 校验通过后由 fillTemplate 抛 asset-missing（壳不自填） (0.5938ms)
+  ✔ strict 原样透传给 fillTemplate：SceneData 非信封 → strict-invalid (0.4684ms)
+  ✔ template 覆盖生效：走调用方模板，不再产内置壳 (0.3548ms)
+✔ renderHelpShell：scene-data 校验器（R6／§3.5.2） (4.5084ms)
+▶ renderHelpShell：逐字段转义（AC-14；meta_blocks[].html 唯一豁免）
+  ✔ 每个 sceneData 文本字段都渲染且经 escapeHtml（逐字段） (10.1479ms)
+  ✔ meta_blocks[].html 原样透传（唯一豁免，不转义） (0.3491ms)
+  ✔ 数据载荷里的 `<` 由填充器转义（JSON 不断标签，数据保真） (0.4221ms)
+✔ renderHelpShell：逐字段转义（AC-14；meta_blocks[].html 唯一豁免） (11.0847ms)
+▶ renderHelpShell：模块纯度与单一真相（R8／R13）
+  ✔ dist/help.js（剥注释）：零 DOM／零 node:／零第三方 import (0.3467ms)
+  ✔ src/help.ts（剥注释）不写标记／包裹标签字面量（恒读 TEMPLATE_MARKERS／ASSET_WRAPPERS） (0.1416ms)
+  ✔ src/help.ts（剥注释）不写字面量属性名／命名空间（FX-78-V2b-2／3 负控） (0.1012ms)
+  ✔ H.纯度（src 侧）：src/help.ts 模块代码零 DOM 全局／node:（W17） (0.567ms)
+  ✔ 内置壳模板不导出（R13）：dist/help.js 导出面恰为 renderHelpShell ＋ HelpSchemaError (0.1646ms)
+✔ renderHelpShell：模块纯度与单一真相（R8／R13） (1.4258ms)
+▶ ui 自注册
+  ✔ 按 order 升序，重复 slotId 大声失败 (1.74ms)
+  ✔ disposer 移除且幂等 (0.1546ms)
+  ✔ 缺席纯条件回 reco（总管不 import 单品） (0.1109ms)
+✔ ui 自注册 (2.8896ms)
+▶ style 单源
+  ✔ 类名全加前缀，token 冻结 (0.1738ms)
+✔ style 单源 (0.2808ms)
+▶ 渲染契约
+  ✔ 版本与 link-core 同值（防漂移） (0.1411ms)
+  ✔ 正常渲染转义输出 (0.3406ms)
+  ✔ 缺失阻断不返空 (0.198ms)
+  ✔ reco 渲染带显式缺席标记 (0.0816ms)
+  ✔ escapeHtml 全覆盖 (0.0686ms)
+✔ 渲染契约 (1.0145ms)
+▶ injector 装配归一
+  ✔ 按 order 注册 ilife 星号 id (0.3663ms)
+  ✔ 服务未就绪有界重试，就绪后补注册，无轮询残留 (60.4898ms)
+  ✔ 始终未就绪则停重试（不无限轮询） (60.7462ms)
+  ✔ openPage 走 path seed，缺席静默返回 (0.216ms)
+  ✔ render 包无运行时依赖（红线钉死） (0.4857ms)
+✔ injector 装配归一 (122.5245ms)
+▶ #75 共享样式资产：形态与冻结值
+  ✔ T1 无参可调，返回 {css,tokens,prefix,version} 且冻结 (1.8953ms)
+  ✔ T2 tokens 逐值等于 CSS_VAR_TOKENS 的键集（11 个、同序） (1.2137ms)
+  ✔ T3 prefix 缺省 STYLE_PREFIX；显式传入生效并作用于全部类名 (0.3438ms)
+  ✔ T4 :root 块逐 token 逐值（期望值从常量循环取，不写死字面量） (0.3181ms)
+  ✔ T5 --blue 逐字、Q14 禁入 0 命中、无深色区、无包裹标签、无 B1 禁色 (0.3346ms)
+  ✔ T6 版本取 STYLE_VERSION（契约未规定取值 → 本票裁定，doc:268 只冻结类型） (0.3082ms)
+  ✔ T7 与既有 STYLE_TOKENS 并存、不得互相覆盖（doc:293） (0.2278ms)
+✔ #75 共享样式资产：形态与冻结值 (5.883ms)
+▶ #75 共享样式资产：8 个样式区（闭集）
+  ✔ T8 每个区都有真实规则，必现类名逐字命中 ＋ 基座规则块声明数达标 (3.3802ms)
+  ✔ T9 无臆造类名：产出 CSS 的每个 ilife- 类名都归属某个区 (0.6154ms)
+  ✔ T10 控件区类名双向对齐：产出器产出的类名 ⊆ CSS，且 CSS 类名全部有产出者 (4.3843ms)
+  ✔ T11 helpShell 类名全部有产出者（`cls()` 实参） (1.0012ms)
+  ✔ T12 charts 区逐字节复用 chartsCss（唯一产出者，重述即 S1） (0.2282ms)
+  ✔ T23 运行时 toast 结构对齐（W1 根因修 ＋ F-c 图标）：helpers 与静态产出器同构 ＋ 权宜补丁已删 (0.434ms)
+  ✔ T24 extraCss 三禁强制（返修项⑨ · D3 修订）：合法覆盖块通过、三类违规抛错 (0.8759ms)
+  ✔ T25 statusBadge 四态逐值 = 旧 `.hm-status`（返修 W2 外部 oracle，不引用本票实现） (0.371ms)
+  ✔ T26 errorReceipt 按钮区 = 旧 `.hm-actions` 等价（返修 W5：max-width 520 居中 ＋ 行距 14px） (0.3137ms)
+  ✔ T27 copy-btn `copied` 态变绿（返修 W3：H-16 双反馈的 CSS 侧） (0.6264ms)
+  ✔ T28 toast 入场动效 CSS-only（返修 W4）＋ reduced-motion 归零 (0.923ms)
+  ✔ T13 零装饰渐变（唯一例外 = 复用的 charts 虚线图例） (0.3406ms)
+✔ #75 共享样式资产：8 个样式区（闭集） (13.883ms)
+▶ #75 共享样式资产：同源与 extraCss 接缝
+  ✔ T14 同源：连调逐字节相等；基座段与 extraCss 无关 (0.3361ms)
+  ✔ T15 extraCss 原样追加、不按技能名分支（doc:299-300） (0.2678ms)
+  ✔ T16 合法技能作用域覆盖块逐字出现在产出中（主题接缝验收，doc:299） (0.1289ms)
+  ✔ T17 产出可作 fillTemplate 的 sharedCssText（不抛 asset-missing，跨票联调） (1.3678ms)
+  ✔ T18 不自造第二份 token 表（实现文件与测试文件双向自证） (0.2019ms)
+  ✔ T18b :root 块逐字节等于契约 §3.2 的 CSS 块（doc:276-288，非自造副本） (1.6579ms)
+  ✔ T19 样式区闭集漂移 fail-fast（缺实现即导入报错） (0.0987ms)
+  ✔ T20 冻结常量消费：数值锚点来自 TOAST_DEFAULTS／ACTION_BAR_DEFAULTS（不自造） (0.1443ms)
+  ✔ T21 类名撞车处置：errorReceipt 不得用裸 `.ilife-error` 选择器（裁定 R6） (0.2157ms)
+  ✔ T22 页面壳样式不归本票（裁定 R7）：无 body/html/ilife-page 等壳层规则 (0.2889ms)
+✔ #75 共享样式资产：同源与 extraCss 接缝 (4.9ms)
+▶ A1 六标记数量规则（含 NO-SHARED 豁免与互斥）
+  ✔ SHARED-CSS／SHARED-HELPERS 缺席（未豁免）→ marker-missing；重复 → marker-duplicate (0.8393ms)
+  ✔ CHARTS-HELPERS：0 次合法；1 次缺资产 → asset-missing；1 次齐 → 被包裹填充；2 次 → marker-duplicate (0.4788ms)
+  ✔ NO-SHARED 豁免：SHARED 两标记缺席合法（exempt=true、filled=false、count=0） (0.1981ms)
+  ✔ NO-SHARED 数据页：豁免后 SHARED 缺席 ＋ 资产空串也合法（未被消费不校验，F-3） (0.3138ms)
+  ✔ NO-SHARED 与 SHARED 并存 → marker-conflict；NO-SHARED 重复 → marker-duplicate (0.1026ms)
+  ✔ 载荷槽两标记各自重复 → marker-duplicate（不是 marker-conflict） (0.1123ms)
+  ✔ NO-SHARED ＋ SHARED-CSS×2 → marker-duplicate（次序 1 早于 3 的互斥判定） (0.0664ms)
+  ✔ 多标记同时重复：marker 归因取 TEMPLATE_MARKERS 键序首个重复项（content 早于 sharedCss） (0.8115ms)
+✔ A1 六标记数量规则（含 NO-SHARED 豁免与互斥） (4.6241ms)
+▶ A2 载荷槽规则（恰有其一）
+  ✔ 两者都有 → marker-conflict；两者都无 → marker-missing（legacy） (0.1587ms)
+  ✔ 恰有其一：数据页只认 injectData、内容页只认 content（互斥字段互为忽略项） (0.2986ms)
+  ✔ 内容页 content 缺失 → content-missing；content 空串视为已提供（合法） (0.1078ms)
+✔ A2 载荷槽规则（恰有其一） (0.6611ms)
+▶ A3 容器校验仅当模板含 INJECT-DATA 时执行
+  ✔ 内容页无容器合法：不抛 container-missing（页内已闭合 <script> 也不算容器） (0.1016ms)
+  ✔ 数据页缺容器 → container-missing；id／type 不符 → container-missing（message 辨因） (0.134ms)
+  ✔ 容器定位＝最近未闭合开标签：已闭合的容器不算；dataScriptId 可覆盖期望 id (0.1927ms)
+  ✔ 容器属性形态：序颠倒与 data-id 诱饵合法；未加引号／属性值含 >／大写 <SCRIPT> → container-missing (0.1926ms)
+✔ A3 容器校验仅当模板含 INJECT-DATA 时执行 (0.7047ms)
+▶ A4 包裹约定（资产裸文本 ＋ 填充器包裹；两条不变量）
+  ✔ 三个资产按 ASSET_WRAPPERS 逐字包裹、恰好一次（不双包） (0.1939ms)
+  ✔ 不变量① assetsBare：资产以包裹标签起／止 → asset-missing；中段含 <script> 字面量合法 (0.1762ms)
+  ✔ 不变量② forbidPreWrappedMarker：作用域内标记被预包裹 → marker-conflict；injectData／content 不在作用域 (0.1827ms)
+  ✔ 不变量②：chartsHelpers 被预包裹 → marker-conflict（作用域第三个标记的真实样本） (0.1036ms)
+  ✔ 资产为纯空白（非空串）：按字面合法，且必须被逐字包裹（契约未规定，登记为不冻结也不排除） (0.0872ms)
+✔ A4 包裹约定（资产裸文本 ＋ 填充器包裹；两条不变量） (0.8398ms)
+▶ A5 判定次序：多条件输入首个命中即抛（不聚合）
+  ✔ TEMPLATE_CHECK_ORDER 是 8 码的排列，且真实 calorie 形态取 marker-missing (0.1391ms)
+  ✔ 样本②：重复 ＋ 缺槽 ＋ 预包裹 ＋ 空资产 → marker-duplicate（次序 1） (0.0797ms)
+  ✔ 样本③：两载荷槽皆有 ＋ 缺容器 → marker-conflict（次序 3 早于 4） (0.0578ms)
+  ✔ 样本④：缺容器 ＋ 空资产 → container-missing（次序 4 早于 5） (0.0561ms)
+  ✔ 样本⑤：容器合规 ＋ data 缺失 ＋ strict 非法 → data-missing（次序 6 早于 8） (0.068ms)
+  ✔ 样本⑥：内容页空资产 ＋ content 缺失 → asset-missing（次序 5 早于 7） (0.0571ms)
+  ✔ 样本⑦：容器合规 ＋ data 不可序列化 ＋ strict 非法 → data-missing（次序 6 早于 8） (9.7113ms)
+✔ A5 判定次序：多条件输入首个命中即抛（不聚合） (10.3067ms)
+▶ A6 八个错误码逐条可达；失败一律抛 TemplateError（不返空页）
+  ✔ 8 码逐条可达（覆盖 TEMPLATE_ERROR_CODES 全量） (0.308ms)
+  ✔ 失败不返空页：抛错路径不产出 html:""（逐个样本再证一次） (0.2179ms)
+  ✔ 错误形态逐字：name／code／marker／message（TemplateErrorShape） (0.1642ms)
+✔ A6 八个错误码逐条可达；失败一律抛 TemplateError（不返空页） (0.7823ms)
+▶ A7 strict 两档（零依赖信封校验；禁调 parseEnvelope）
+  ✔ 默认档硬拦截（数量／载荷槽／容器与 strict 无关） (0.1703ms)
+  ✔ strict:true 追加信封校验：非对象／缺五字段／shape 非法 → strict-invalid (0.3122ms)
+  ✔ strict:true 合法信封 → 通过；六形状逐一放行；report.strict 记录档位 (0.2001ms)
+  ✔ 内容页忽略 data 与 strict（不触发 data-missing／strict-invalid） (0.0793ms)
+  ✔ AC-13：实现不 import base-link-core 运行时代码、不调用 parseEnvelope (0.4478ms)
+✔ A7 strict 两档（零依赖信封校验；禁调 parseEnvelope） (1.3152ms)
+▶ A8 零残留标记（真实 53 内容页 ＋ 6 数据页，fixture 资产）
+  ✔ 53 个内容页：fixture 资产填完无 <!--…--> 残留 (9.6166ms)
+  ✔ 6 个数据页（memo）：先按迁移动作去包裹，再填完无残留（且迁移前必抛 marker-conflict） (3.1196ms)
+✔ A8 零残留标记（真实 53 内容页 ＋ 6 数据页，fixture 资产） (12.8728ms)
+▶ A9 calorie 6 模板 → marker-missing（契约外遗留资产，正确行为）
+  ✔ 6 个 calorie 模板两载荷槽皆无 → 一律抛 marker-missing（早于其预包裹的 marker-conflict） (1.5087ms)
+✔ A9 calorie 6 模板 → marker-missing（契约外遗留资产，正确行为） (1.6494ms)
+▶ report／bytes／替换细节（机器可读结果）
+  ✔ report.markers 覆盖六标记、序＝TEMPLATE_MARKERS 键序、逐字段逐值 (0.333ms)
+  ✔ bytes ＝ 输出 HTML 的 UTF-8 字节数；注入顺序恒按 INJECTION_ORDER（位置原样保留） (0.1647ms)
+  ✔ JSON 载荷：< 一律写成反斜杠 + u003c；替换不受 $&／$` 等替换模式影响 (0.1385ms)
+  ✔ JSON 载荷含 $&／$`／$' 时替换逐值安全（不得被当替换模式回填） (0.0991ms)
+✔ report／bytes／替换细节（机器可读结果） (0.8822ms)
+▶ 输入形态边界（FX-74-3／V1 边界 9）
+  ✔ 空输入／null／非字符串 template → marker-missing（不抛 TypeError） (0.1068ms)
+  ✔ assets 整体缺失 → asset-missing（按 INJECTION_ORDER 首个被消费资产，不硬编码次序） (0.1008ms)
+  ✔ content 非字符串 → 强制 String() 注入（不抛错、不残留标记） (0.1038ms)
+✔ 输入形态边界（FX-74-3／V1 边界 9） (0.3813ms)
+▶ #77 逐 shape 投影（A2）
+  ✔ 5 个可序列化 shape 全部有投影规格，且与 SERIALIZABLE_SHAPES 同键集 (2.9522ms)
+  ✔ stat：text 行 = 输出头 ＋ 投影主体行 ＋ 投影收尾行 (0.557ms)
+  ✔ stat：json 键名 = envelope 五字段原样，data 取投影字段 (0.3568ms)
+  ✔ stat：csv 表头 ＋ section 列 = 投影表 csvSections，行序 = 主体行 → 收尾行 (0.3066ms)
+  ✔ list：text 行 = 输出头 ＋ 投影主体行 ＋ 投影收尾行 (0.1076ms)
+  ✔ list：json 键名 = envelope 五字段原样，data 取投影字段 (0.1038ms)
+  ✔ list：csv 表头 ＋ section 列 = 投影表 csvSections，行序 = 主体行 → 收尾行 (0.0978ms)
+  ✔ detail：text 行 = 输出头 ＋ 投影主体行 ＋ 投影收尾行 (0.1615ms)
+  ✔ detail：json 键名 = envelope 五字段原样，data 取投影字段 (0.1213ms)
+  ✔ detail：csv 表头 ＋ section 列 = 投影表 csvSections，行序 = 主体行 → 收尾行 (0.1311ms)
+  ✔ analysis：text 行 = 输出头 ＋ 投影主体行 ＋ 投影收尾行 (0.0905ms)
+  ✔ analysis：json 键名 = envelope 五字段原样，data 取投影字段 (0.0524ms)
+  ✔ analysis：csv 表头 ＋ section 列 = 投影表 csvSections，行序 = 主体行 → 收尾行 (0.0365ms)
+  ✔ receipt：text 行 = 输出头 ＋ 投影主体行 ＋ 投影收尾行 (0.0394ms)
+  ✔ receipt：json 键名 = envelope 五字段原样，data 取投影字段 (0.0355ms)
+  ✔ receipt：csv 表头 ＋ section 列 = 投影表 csvSections，行序 = 主体行 → 收尾行 (0.0302ms)
+  ✔ 投影表之外的 data 字段不进 text／csv（字段来源恒取投影表，不自造第二份） (0.0705ms)
+  ✔ fallback 降级载荷 → shape-unsupported（不进复制文本） (0.4273ms)
+  ✔ 六形状之外的 shape → shape-unsupported（闭集判定，不静默降级） (0.0678ms)
+✔ #77 逐 shape 投影（A2） (6.9466ms)
+▶ #77 三 format（A4）
+  ✔ format 缺省 = COPY_FORMATS 首项（行为面：与显式传首项逐字相同，其余 format 不同） (0.0926ms)
+  ✔ text：输出头恒为 TEXT_HEADER_TEMPLATE 替换位；title 覆盖；occurredAt 追加时间行 (0.0514ms)
+  ✔ text：不转 HTML，行内换行替换为空格（行数不变） (0.0349ms)
+  ✔ json：缩进 TEXT_JSON_INDENT；无输出头（title／occurredAt 不参与） (0.0519ms)
+  ✔ json：`<` 一律写成反斜杠 + TEXT_JSON_LT_RULE（防断标签），其余字符不动 (0.0348ms)
+  ✔ json：空值保留 null，键不省略（不写占位符） (0.0439ms)
+  ✔ csv：表头恒为 CSV_DIALECT.header，行尾恒按 CSV_DIALECT.lineEnding，无输出头／时间行 (0.0694ms)
+  ✔ csv：含分隔符／引号／换行的字段用引号包裹，内部引号双写（RFC4180） (0.0635ms)
+  ✔ csv：空值写空字符串（不写占位符） (0.0511ms)
+  ✔ csv：data 两列语义 = section 列取投影表，row 列取该行文本 (0.0426ms)
+✔ #77 三 format（A4） (0.6333ms)
+▶ #77 6 段日志（A3）
+  ✔ text：段序恒按 LOG_SECTIONS，标题恒取 LOG_SECTION_TITLES，段间无空行 (0.1462ms)
+  ✔ scene 段恒由 envelope 派生，形如 {skill}.{key}（{shape}） (0.061ms)
+  ✔ timestampVersion 段取 copyLog.timestamp（不是同名字段） (0.0428ms)
+  ✔ json：6 个段名为键，键序 = LOG_SECTIONS，缺失段写 null，scene 同为派生文本 (0.0699ms)
+  ✔ csv：每段一行，section 列 = 段名，缺失写空串 (0.1019ms)
+  ✔ copyLog 缺省：text 写 LOG_UNKNOWN_PLACEHOLDER，json 写 null，csv 写空串 (0.061ms)
+  ✔ copyLog 字段为空串 → 视同缺失（三 format 一致） (0.0576ms)
+  ✔ 日志 json：`<` 同样按 TEXT_JSON_LT_RULE 转义 (0.0286ms)
+✔ #77 6 段日志（A3） (0.6534ms)
+▶ #77 敏感行判定与掩码（A5）
+  ✔ 判定只认字面 true：sensitive: 1／"yes"／"true" 一律不脱敏（与旧侧真值判定不同） (0.089ms)
+  ✔ text：掩码行恒为 TEXT_SENSITIVE_MASK，紧随一行 SENSITIVE_ROW_RULE.textNotice (0.0546ms)
+  ✔ list 元素／detail 值同样按敏感行处理（投影行的三处值位置） (0.0457ms)
+  ✔ json：该键值 = mask（不写 null、不夹中文提示） (0.0453ms)
+  ✔ csv：row 列 = mask，section 列保留投影分组名（V1 洞 9 同口径） (0.0537ms)
+  ✔ 日志侧不受敏感行包装影响（copyLog 字段是纯字符串） (0.0978ms)
+✔ #77 敏感行判定与掩码（A5） (0.4461ms)
+▶ #77 空值口径分层（A3／A4）
+  ✔ 数据空值：text 写「未填写」／json 写 null／csv 写空串 (0.1115ms)
+  ✔ 两个占位符互不串味：数据空值不写「(未知)」，日志缺段不写「未填写」 (0.0349ms)
+  ✔ U1：list.total 缺省 → 省略收尾行（text／csv／json 三口径一致），不报错 (0.0726ms)
+  ✔ 显式 total: null 是「空值」而非「缺省」：三 format 各按空值口径渲染 (0.0574ms)
+  ✔ 空容器（metrics／item／items 为空）→ 无主体行，不报错、不写占位符 (0.0423ms)
+  ✔ receipt.ok 的 text 口径书写形式 = `ok: true`／`ok: false`（U2 定案） (0.0585ms)
+✔ #77 空值口径分层（A3／A4） (0.447ms)
+▶ #77 `undefined` 归一为 null（FX-77-1）
+  ✔ 同一输入的三 format 键集／行数一一对应：`item` 含 undefined (0.1266ms)
+  ✔ `metrics` 含 undefined：json 保留键写 null，text／csv 各按空值口径写行 (0.051ms)
+  ✔ envelope 缺 `key`／`key: undefined`：json 五键集不缩水，text 头按空串渲染 (0.0901ms)
+  ✔ U1 不被归一破坏：缺省 `total` 仍省略键（缺省 ≠ 空值） (0.072ms)
+  ✔ 非投影字段的 undefined 同样保留键（77-8 透传口径） (0.0636ms)
+  ✔ 嵌套对象值内的 undefined 同样归一为 null（三 format 键集一一对应，含嵌套） (0.1265ms)
+✔ #77 `undefined` 归一为 null（FX-77-1） (0.607ms)
+▶ #77 产出恒非空（FX-77-6）
+  ✔ 五种空产出诱因 × 三 format：产出均非空，且喂 copyText 不走 empty 短路 (0.3167ms)
+  ✔ `title: ''` 视同缺省：输出头恒为模板展开（整行不得消失） (0.0413ms)
+  ✔ 空 `skill`／`key`：输出头恒存在（模板括号与分隔符即兜底文本） (0.0341ms)
+✔ #77 产出恒非空（FX-77-6） (0.4337ms)
+▶ #77 未覆盖边界补测（FX-77-2／FX-77-8）
+  ✔ csv：字段含 CR 视同换行加引号（U11），首尾空格不加引号 (0.0803ms)
+  ✔ 循环引用 → structure-invalid（77-4）：三 format 均抛错、不返空 (0.1576ms)
+  ✔ 非字符串 `skill`／`key`（77-7）：text 头／scene 段按空串，json 原样透传 (0.072ms)
+  ✔ json：键名含 `<` 同样按 TEXT_JSON_LT_RULE 转义，且往返无损 (0.0625ms)
+  ✔ json：深层缩进逐级恰为 TEXT_JSON_INDENT 的倍数（2／4／6／8…） (0.1034ms)
+  ✔ 输出头模板单趟展开：`skill` 值里的 `{key}` 不得被二次展开（FX-77-8-3） (0.034ms)
+  ✔ `$` 系字符原样：无替换语义泄漏 (0.025ms)
+  ✔ BigInt：text 按 String()、json 抛 structure-invalid，文案不得误称「循环引用」（FX-77-8-2） (0.0976ms)
+✔ #77 未覆盖边界补测（FX-77-2／FX-77-8） (0.7101ms)
+▶ #77 三个错误码（A6）
+  ✔ TEXT_ERROR_CODES 三码全部可达（逐码） (0.1139ms)
+  ✔ format-unknown：非字符串／闭集外／显式 undefined 之外的一切非法值 (0.0692ms)
+  ✔ structure-invalid：逐 shape 判据以 EnvelopeDataByShape 为准 (0.2078ms)
+  ✔ structure-invalid：data 整体非对象／envelope 非对象／入参非对象 (0.1406ms)
+  ✔ structure-invalid：title／occurredAt 非字符串；copyLog 形态非法 (0.1219ms)
+  ✔ U14：buildLogText 与 buildDataText 同口径校验 data (0.1243ms)
+  ✔ 判定次序：format-unknown → shape-unsupported → structure-invalid（首个命中即抛） (0.0962ms)
+  ✔ 一码多义由 message 辨因：同码不同因的 message 必须不同 (0.0897ms)
+✔ #77 三个错误码（A6） (1.1151ms)
+▶ #77 对齐旧层 7 条序列化用例行为面（A9）
+  ✔ ① 旧 `test_snapshot_validation_blocked`（6 样本）→ 全部结构违规必须抛错 (0.1771ms)
+  ✔ ② 旧 default 文本输出 → 输出头 ＋ 逐行主体（无分节标题） (0.0804ms)
+  ✔ ③ 旧 json 输出 → 现在是 envelope 五字段（不再序列化 snapshot） (0.1017ms)
+  ✔ ④ 旧 csv 输出 → 现在是表头 ＋ 两列（section／row），不再是行拼接 (0.1002ms)
+  ✔ ⑤ 旧敏感行 → 掩码＋提示拆两行，原文不出现（三 format 一律 mask） (0.07ms)
+  ✔ ⑥ 旧 `build_log_text_sections` → 6 段逐段可定位且段序恒定 (0.0955ms)
+  ✔ ⑦ 旧 `build_log_text_missing_defaults` → 缺省统一 (未知)（旧侧四种文案已统一） (0.097ms)
+✔ #77 对齐旧层 7 条序列化用例行为面（A9） (0.8654ms)
+▶ #77 与 #76／#90 的接口（R-4）
+  ✔ 产出可直接喂 copyText（空串短路口径下恒非空） (0.19ms)
+  ✔ 产出可进 ErrorReceiptInput.dataText／logText（走 DEFAULT_DATA_ATTR，零注入面） (0.2741ms)
+✔ #77 与 #76／#90 的接口（R-4） (0.5253ms)
+▶ dsh-bill-ilife 烟囱
+  ✔ 槽位 id 与 order 与 P3 定案一致 (0.4778ms)
+  ✔ 设置页住单品包 (0.0523ms)
+  ✔ 桥缺失阻断不返空（bill 缺席抛 missing-cli） (0.4291ms)
+  ✔ #50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace） (0.6629ms)
+  ✔ #50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合） (2.2412ms)
+  ✖ #50 envelope 契约：SKILL 直执行 bill.help.lookup 回执 key/shape/data 全字段（空库安全） (2177.3119ms)
+  ✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1654.6635ms)
+✖ dsh-bill-ilife 烟囱 (3836.6922ms)
+▶ #56 打包技能提供方（卡路里样板）
+  ✔ inject 声明 connection + skills（用了就声明） (0.6701ms)
+  ✔ apply 注册且仅注册一个提供方，RPC 通道不受影响 (1.2163ms)
+  ✔ list 给出唯一的 skill-calorie 摘要（bundled/600/单份 SKILL.md） (8.3831ms)
+  ✔ get 给全文（frontmatter 后正文，可调 CLI），过期候选失效 (3.1997ms)
+  ✔ 重装配时提供方重名退让（抛 already registered 不炸，RPC 照常） (0.3489ms)
+✔ #56 打包技能提供方（卡路里样板） (14.9966ms)
+▶ dsh-calorie 烟囱
+  ✔ 槽位 id 与 order 与 P3 定案一致 (0.5212ms)
+  ✔ 设置页住单品包 (0.1804ms)
+  ✔ 桥缺失阻断不返空（chef 缺席抛 missing-cli） (0.9005ms)
+  ✔ #48 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace） (0.993ms)
+  ✔ #48 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合） (3.3713ms)
+  ✖ #48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段 (1503.9152ms)
+  ✔ #48 envelope 契约：面板路 readViaCli 同键打通不返空 (934.4894ms)
+  ▶ #48 真机 hang 根因：Electron 宿主 execPath + spawn 超时
+    ✔ resolveNodeBin：node 直用，Electron 加 RUN_AS_NODE (1.5519ms)
+    ✔ spawn timeout 语义：超期子进程被杀并报 ETIMEDOUT（readViaCli 依赖此语义） (448.2565ms)
+    ✔ 版本行与双 package.json 一致（面板自报家门，防漂移） (2.3953ms)
+  ✔ #48 真机 hang 根因：Electron 宿主 execPath + spawn 超时 (452.477ms)
+✖ dsh-calorie 烟囱 (2898.2079ms)
+▶ dsh-chef 烟囱
+  ✔ 槽位 id 与 order 与 P3 定案一致 (0.7475ms)
+  ✔ 设置页住单品包 (0.1041ms)
+  ✔ 桥缺失阻断不返空（chef 缺席抛 missing-cli） (0.5564ms)
+  ✔ #50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace） (0.8428ms)
+  ✔ #50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合） (2.42ms)
+  ✖ #50 envelope 契约：SKILL 直执行 chef.help.lookup 回执 key/shape/data 全字段（空库安全） (1575.2953ms)
+  ✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1597.7554ms)
+✖ dsh-chef 烟囱 (3178.8775ms)
+▶ dsh-home-ilife 烟囱
+  ✔ 槽位 id 与 order 与 P3 定案一致 (0.7917ms)
+  ✔ 设置页住单品包 (0.0942ms)
+  ✔ 桥缺失阻断不返空（home 缺席抛 missing-cli） (0.5316ms)
+  ✔ #50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace） (0.8275ms)
+  ✔ #50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合） (2.4273ms)
+  ✖ #50 envelope 契约：SKILL 直执行 home.help.lookup 回执 key/shape/data 全字段（空库安全） (1359.5787ms)
+  ✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1784.7217ms)
+✖ dsh-home-ilife 烟囱 (3150.4926ms)
+▶ manager 烟囱
+  ✔ 6 tab id 与 order 与 P3 定案一致 (1.7441ms)
+  ✔ 缺席回 reco 带补装命令 (0.3073ms)
+  ✔ 双包 reconcile 双含 (0.1895ms)
+✔ manager 烟囱 (3.3999ms)
+▶ dsh-memo-ilife 烟囱
+  ✔ 槽位 id 与 order 与 P3 定案一致 (0.7529ms)
+  ✔ 设置页住单品包 (0.0964ms)
+  ✔ 桥缺失阻断不返空（memo 缺席抛 missing-cli） (0.5287ms)
+  ✔ #50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace） (0.626ms)
+  ✔ #50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合） (2.1473ms)
+  ✖ #50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全） (1446.2041ms)
+  ✔ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (279.8128ms)
+  ✔ 版本行与双 package.json 一致（面板自报家门，防漂移） (1.7664ms)
+✖ dsh-memo-ilife 烟囱 (1733.0919ms)
+▶ dsh-schedule-ilife 烟囱
+  ✔ 槽位 id 与 order 与 P3 定案一致 (0.7593ms)
+  ✔ 设置页住单品包 (0.0925ms)
+  ✔ 桥缺失阻断不返空（schedule 缺席抛 missing-cli） (0.5901ms)
+  ✔ #50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace） (0.814ms)
+  ✔ #50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合） (2.3531ms)
+  ✖ #50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全） (1787.1223ms)
+  ✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1899.4072ms)
+✖ dsh-schedule-ilife 烟囱 (3692.2906ms)
+▶ 饼干记账唯一出口 cmd_read（16 键全票）
+  ✔ record.today：exit 0 + 纯 JSON list (192.3726ms)
+  ✔ record.range：条件查 + 空区间 exit 4 (572.1576ms)
+  ✔ record.search：备注/标签/欠款 + record.detail 闭环 (852.607ms)
+  ✔ record.update：改 + 撤销恢复闭环 (1168.8595ms)
+  ✔ analysis 三键：overview stat + compare/trend analysis (480.254ms)
+  ✔ goal/account 写读闭环（写走 receipt） (1265.5027ms)
+  ✔ link/setup/help：联动采单 + 初始化 + 现找 (800.6849ms)
+  ✔ 契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；--html 落盘 (591.4771ms)
+✔ 饼干记账唯一出口 cmd_read（16 键全票） (5924.7334ms)
+[skill-bill] BILL_FORCE_PROD=1: 写入 D:\prod-bill.db
+▶ 饼干取数 fetch
+  ✔ 当日查 + 关键词 + #tag 精确匹配 (1.2033ms)
+  ✔ 改/撤销/恢复闭环 + 查无对条 (3.5316ms)
+  ✔ goals.json 原子读写 + 坏文件大声失败 (4.3556ms)
+  ✔ SKILLS_DB_PATH 缺失阻断 (0.1714ms)
+  ✔ BILL_FORCE_PROD 哨兵：非 tmp 写须 opt-in（tmp 直过） (0.743ms)
+✔ 饼干取数 fetch (10.5962ms)
+▶ 饼干口径 policy
+  ✔ L1 10支出+6收入+隔离三类 + 三级上限 (0.9278ms)
+  ✔ amount 符号即方向 + 零阻断 (0.1498ms)
+  ✔ 时间容错 + 整单默认 (0.3738ms)
+  ✔ 唤醒词 77 全量 + 最长匹配 + 缺槽位 (0.2537ms)
+  ✔ 错误皆为 BillPolicyError (0.0837ms)
+✔ 饼干口径 policy (2.7606ms)
+▶ 饼干渲染 render
+  ✔ 16 key×shape 全合法（命名空间+6 形状） (1.058ms)
+  ✔ envelope 全字段 + 错形状 throw (0.2777ms)
+  ✔ KPI 转账除外 + 总览 metrics 全 number (0.4892ms)
+  ✔ HTML 按形状渲染 + 体积门 + 三标记 (1.0905ms)
+  ✔ 16 模板全在 + key 映射 (2.1991ms)
+✔ 饼干渲染 render (6.1641ms)
+▶ 饼干 SKILL 与 HELP
+  ✔ SKILL 含出口/口径/标记块 (0.8594ms)
+  ✔ 速查：77 短语全可路由且 key 对得上 (0.942ms)
+  ✔ record.add 示例可直跑最小槽位（category+amount） (0.5764ms)
+  ✔ 互联区新鲜（构建期注入可复现） (0.5546ms)
+✔ 饼干 SKILL 与 HELP (4.1754ms)
+✔ utils：系数表+TDEE+窗口 (4.3992ms)
+✔ series：对齐+缺口+聚合 (184.0246ms)
+✔ diet：趋势+配比+排行+缺口 (199.8391ms)
+✔ exercise：趋势+分布+贡献+复盘 (303.9047ms)
+✔ weight：趋势+对比+里程碑+波动+v2 (245.9976ms)
+✔ weightCompare：17 场景分发 (618.7877ms)
+✔ weightCompare：平台期/极端月/同期 (357.2914ms)
+✔ cross：相关+回归+配对 (227.2877ms)
+✔ simulate：外推+模拟+摄入 (350.7828ms)
+✔ dashboard：四维聚合+单日修正 (179.4682ms)
+✔ anomaly：23 场景分发+降级 (423.2543ms)
+✔ review：range+5维+derive (295.4677ms)
+✔ contraindications：规则+扫描 (230.3762ms)
+✔ C1 fetch-cli运维定位注明（SKILL唯一出口节+fetch头注） (1.6056ms)
+✔ C7 默认目标值1800/2000来源文档一笔 (0.4906ms)
+✔ C2 记早餐/午餐/晚餐别名→calorie.diet.add（WAKE_TABLE+现找） (1180.0531ms)
+✔ C3 HELP去legacy首命中（看今日主页→view.home，减肥/目标首条可执行） (1379.4608ms)
+✔ C4 view.diet空尾日回零而非整窗missing (826.4905ms)
+✔ C5 缺身高仍记体重 BMI null（库函数级） (230.6028ms)
+✔ C6 写收据HTML结构化分项 (496.838ms)
+✔ #41 M3：真 CLI 串行冒烟 18 新键（exit 0 + envelope stat + --html 含 ilife-page） (6056.0993ms)
+✔ 键表：99 组合（读 64 + 写 35，#113 趋势2+其他6移植 +8／#86 wizard 4 页 +4）registry 合法 + 形状对齐 envelope 全字段 (1.4971ms)
+✔ T8 四主视图 parity：envelope stat + metrics 全 number + HTML 快照 (2505.2237ms)
+✔ T9 目标分析盘 parity：12 键抽查 stat + 缺失阻断 (4472.2432ms)
+✔ T10 照片 parity：画廊/单图/对比/动图/HELP + 二进制不内嵌 (1323.187ms)
+✔ T2+T6 parity：唤醒词 HELP 现找 + 热量历史 + CLI 契约 (1155.4172ms)
+✔ 落库 · 饮食 add/update/remove：回执 id 指向的行逐列回读 (1180.0532ms)
+✔ 落库 · 饮食 batch/copy/update-by-date/remove-by-type/remove-by-date/remove-by-range (2457.2953ms)
+✔ 落库 · 喝水：food_log 落水行（名＝WATER_NAME，热量 0，克数＝毫升） (551.802ms)
+✔ 落库 · 体重 log/update/batch/remove：三删法各自真删 (2190.5883ms)
+✔ 落库 · 运动 add（单条/批量/复制昨日）：逐列回读 (753.4911ms)
+✔ 落库 · 运动 update（id/date 两路）：改动落库、未传字段不动 (730.1821ms)
+✔ 落库 · 运动 remove：软删——行保留且 is_deleted=1（id/date/range 三路） (983.9188ms)
+✔ 落库 · 身材照 add/tag/remove：body_photos 行与文件同源 (847.73ms)
+✔ 落库 · 食品 add/update/deprecate：营养列逐列回读 + 软删标记 (494.1874ms)
+✔ 落库 · 档案 set/activity/update：user_profile#1 逐列回读 (611.6026ms)
+✔ 落库 · 目标 set/water/weight/pause/resume：daily_goal#1 逐列回读 (723.7722ms)
+✔ 落库 · 体脂 composition-add/remove：软删行保留 (353.1512ms)
+✔ 落库 · 围度 measure-add/remove：软删行保留 (361.7969ms)
+✔ 口径 · 删除键数据驱动：prose／items[].status／库内行三源一致（回执 id 定位被删行） (2490.7041ms)
+✔ 口径 · 软删运动后逐面排除（#120 口径收敛，supersedes #101 的「仍计入」口径） (836.2613ms)
+✔ 口径 · 删除回执可恢复性：文案与库内语义一致（软删行留／硬删行无） (3304.2757ms)
+✔ 覆盖门 · 35 写键逐键落库断言（每键 ≥1 次真实只读查询，缺键/空转即红） (0.1589ms)
+✔ 写键表：35 键一律 receipt + registry 合法 + 全量 99（#113 +8／#86 +4） (17.0413ms)
+✔ 饮食记/改/删 + 幂等 + 缺失阻断 (2970.8738ms)
+✔ 饮食批量/复制/按日改/按日删/按范围删/按餐别删 (3227.4012ms)
+✔ 记喝水累计 (547.072ms)
+✔ 体重记/改/删/批量 + 缺身高仍记（C5 #43） (2063.6823ms)
+✔ 运动记/改/删/批量/复制 + 字段白名单 (2095.3099ms)
+✔ 身材照存/删/标签 + 源缺失阻断 (1338.3274ms)
+✔ 食品库存取改废 + 缺失阻断 (841.3326ms)
+✔ 档案设/活动量/改 + 白名单 (928.8179ms)
+✔ 目标定/改/暂停/重启 + 无行阻断 (1159.3577ms)
+✔ 体脂围度记/删 + 来源白名单 (1179.5882ms)
+✔ skilllink 登记：write 键经 skilllink read 可执行 (288.7787ms)
+✔ 写键 exit 契约 + --html 落盘 (690.5472ms)
+✔ #93 ② 空库只读打开：不建表（sqlite_master 仍为空） (5.3884ms)
+✔ #93 ② 老 schema 库只读打开：不升级、不建表（迁移只在 openDb 里） (196.864ms)
+✔ #93 ③ 只读句柄写入被拒（CREATE/INSERT/DELETE 均抛 readonly database） (647.9515ms)
+✔ #93 只读打开 + 读键：库文件 sha256/size/mtime 不变 (691.9598ms)
+✔ #93 库文件缺失时只读打开直接抛（只读路径不隐式建库） (1.0679ms)
+✔ #93 回归 · openDb 原语义不变：空库仍建出 11 张终态表 (177.8928ms)
+✖ #93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接线保留 openDb 分支） (971.6616ms)
+✖ #93 ① 64 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4） (1281.1631ms)
+✔ 新库建出 11 张终态表（13 老家表 − 2 历史临时表） (136.0461ms)
+✔ initDb 幂等：重入无报错、无副表 (186.689ms)
+✔ 老库升级：entries 合并 + intensity 回填 + 皮褶去 NOT NULL + gym 可写 (409.8224ms)
+✔ 钠糖纤维回填：按食品库每100g值 × 克数/100，ROUND(2→1) (192.6539ms)
+✔ 触发器：非法 activity_level 与空围度被阻断 (214.9992ms)
+✔ 路径守卫：缺 env 抛错；非 tmp 无 opt-in 拒绝；tmp 放行 (192.0798ms)
+✔ kcal 公约：round(2) 与泄漏判定复刻老家规则 (0.1707ms)
+✔ #108 域内唤醒词命中：代表词→饮食域 8 键（路由不断） (1.2476ms)
+✔ #108 唤醒词→key→HTML 链：路由 cli 直跑产出对应全文档 (277.4528ms)
+✔ #108 饮食总览＋餐别分布：区块对照（KPI＋双图＋按日表＋明细折叠＋复制） (311.3194ms)
+✔ #108 今日饮食：明细表＋配比环＋餐别图 (249.835ms)
+✔ #108 饮食复盘：趋势折线＋配比环＋TOP5＋按餐汇总 (298.1116ms)
+✔ #108 食品排行：单榜表＋复制榜单／全榜五折叠 (285.1228ms)
+✔ #108 查食品／食品库：参数表单＋结果表＋复制 (250.7434ms)
+✔ #108 健康盘：四维＋今日该做什么＋复制回 AI（数据驱动建议） (230.662ms)
+✔ #108 去重报告：KPI＋重复组表＋处理建议（种子含 1 组重复） (208.3759ms)
+✔ #108 无假数据：8 键空库一律 exit 4 且 stdout 纯净 (2709.1582ms)
+✔ #108 命名底座可用：排行动态段落点＋回传一致＋产物为全文档 (557.2004ms)
+✔ #108 复制头与冻结 envelope 版本对齐（防漂移） (178.6849ms)
+✔ #111 域内唤醒词命中：16 词→运动移植 6 键（促进 10＋新拟 6） (1.2806ms)
+✔ #111 唤醒词→key→HTML 链：路由 cli 直跑产出对应全文档 (376.5562ms)
+✔ #111 力量总览：按动作聚合＋重量轨迹＋逐条记录 (327.3583ms)
+✔ #111 有氧总览：按类型聚合＋配速＋逐条记录 (343.2855ms)
+✔ #111 类型分布：分类占比双 bar＋摄入/TDEE 联动 (332.027ms)
+✔ #111 运动复盘：KPI＋分类＋TOP5＋日趋势＋一句话 (319.3091ms)
+✔ #111 计划复盘：计划 vs 实绩＋双完成率＋未完成清单 (272.6365ms)
+✔ #111 运动趋势：日序列＋周频次＋峰值（空日断点） (240.3824ms)
+✔ #111 无假数据：6 键空库一律 exit 4 且 stdout 纯净 (1753.0082ms)
+✔ #111 非法窗：start 晚于 end 即 exit 2 (663.9011ms)
+✔ #111 命名底座可用：力量训练总览落点＋回传一致＋产物为全文档 (623.5638ms)
+✔ #111 复制头与冻结 envelope 版本对齐（防漂移） (217.9647ms)
+✔ goal：缺省未暂停→暂停→恢复 (197.108ms)
+✔ goalHistory：完成/未完成/无记录三态+计数 (234.7502ms)
+✔ nutritionGoal：读写+校验+自洽 (200.2466ms)
+✔ recommend：cut 模板数值钉死+缺省标记 (169.6389ms)
+✔ updateWaterGoal：无行回 0，有行更新 (219.5325ms)
+✔ plan 校验：三硬止+软提示 (0.5916ms)
+✔ plan 写入+CRUD 全链路 (327.9294ms)
+✔ products：增删改查+下架隔离+统计 (203.1316ms)
+✔ photos：标签+目录守卫+增删改查 (228.2466ms)
+✔ validate：7 必填 + source 非空 + 数值≥0 (1.3027ms)
+✔ import：新增/跳过/覆盖/废弃/dry-run 与统计 (256.33ms)
+✔ validateFile JSON 输出与 dedupe/export (207.4038ms)
+✔ history：按日聚合倒序 + 目标状态 + 空库空行 (190.0721ms)
+✔ cross-skill：缺失/超时/坏 JSON 一律阻断，永不空数组当正常 (0.6109ms)
+✔ catalog：缺失→空集→无法验证；命中/落榜/建议 (2.3858ms)
+✔ audit：ok/warn/fail 三段式 + 建议 (219.5996ms)
+✔ CLI：import/history/audit exit 码 parity (1224.0843ms)
+✔ 饮食：增删改查 + 幂等防重 + 餐次推断 (240.844ms)
+✔ 饮食：批量/复制/按餐删 (217.9727ms)
+✔ 体重：记录/BMI/历史/删除/批量/标签 (216.3678ms)
+✔ 体重：缺身高仍记 BMI null（C5 #43 去强前置） (217.0591ms)
+✔ 运动：CRUD软删除 + 窗口 + 复制 (222.8882ms)
+✔ 运动：MET/难度/综合口径 parity (0.6138ms)
+✔ 身体：围度/体成分增查趋势对比 + 校验 (210.7788ms)
+✔ envelope 结构段：key 命名空间 + 形状载荷 (0.2626ms)
+✔ #103 G2：predict／goal-predict 缺省调用可达（默认 14 天窗） (646.8599ms)
+✔ #103 G3：view.anomaly 23 kind 参数化（render 层逐个可用） (715.3452ms)
+✔ #103 G4：view.combined window 白名单（拒 99d／未知值） (504.4089ms)
+✔ A1 10 分组／54 子功能／436 场景（红点：分组或子功能聚合逻辑改坏） (2.2326ms)
+✔ A1 分组序／label／图标逐字 = F3 十组（红点：HELP_GROUPS 任一项改动） (1.3276ms)
+✔ A1 每分组子功能序 = F3 显式序 ＋ 既有唤醒词恒最后（红点：HELP_SUBFUNC_ORDER 改坏） (0.1522ms)
+✔ A1 types 直方图 329/79/6/22 ＋ 恒发 SceneTypeBadge{text,bg,fg}（红点：types 发字符串＝丢三档色） (0.5768ms)
+✔ P-3 徽章色集 ⊆ F3 三档 ＋ 不触 H-01 禁色表（红点：改配色值） (0.536ms)
+✔ A1 顶层键 = F3 键集（skill_name/title/subtitle/contact/groups）（红点：多塞一个顶层字段） (0.3607ms)
+✔ P-2 updatedAt 显式参数：缺省无时间戳且两次调用逐字相同（红点：改用 Date.now()） (2.7963ms)
+✔ R1-7 legacy 22 条 id = main_prompt.cli 原文（红点：改回 legacy_{wake_word}） (0.8336ms)
+✔ R-cond-7 id 轴子集：F3 十 id ⊆ SoT CATEGORIES 十三 id（红点：HELP_GROUPS 自造 id） (0.1998ms)
+✔ R1-12 436 条 prompt_template 无 </script>／<!--（红点：数据里注入破壳串） (0.4535ms)
+✔ D-1 三档徽章色**逐条**映射 = F3 TYPE_DEFAULT（红点：互换 receipt／process 配色——集合口径零鉴别力） (1.017ms)
+✔ D-3 text 态裸 `<N>` = legacy CLI 原文（逐字保留、非 HTML；红点：把原文转义成 &lt;N&gt;） (0.6381ms)
+✔ A2 复用冻结面 130 条 implemented／0 pending（红点：base-render 新增契约面） (0.1565ms)
+✔ A2 file 态：完整文档 ＋ 436 卡／54 子功能／1308 复制按钮（红点：壳结构改动） (1.2483ms)
+✔ P-5 inline 态：只取 <section> 片段 ＋ <style> 落点钉死（红点：inline 返回整页／丢样式） (1.9364ms)
+✔ 三态同源：file／inline 的 436 个 data-scene-id 逐字同序；text 覆盖同一 436 个 id（红点：三态各派生一份数据） (16.2075ms)
+✔ 守卫① 6/6 冻结标记逐个残留 0（红点：任一标记泄漏进产物） (2.4301ms)
+✔ 守卫① 泛化 `<!--[A-Z0-9-]+-->` 残留 0（红点：新标记泄漏，旧 5 字面量口径会静默通过） (0.7716ms)
+✔ 守卫① report.markers 六键（计数与 filled 口径钉死）（红点：填充器报告口径漂移） (0.2254ms)
+✔ 守卫② id 唯一：数据层 436/436 ＋ 子功能 54/54（红点：id 派生规则碰撞） (0.2586ms)
+✔ 守卫② id 唯一：HTML 层 data-scene-id 436/436 ＋ 元素 id 全唯一（红点：壳内 id 派生用数据里的重复值） (0.9895ms)
+✔ 守卫② 人为重复 id → 抛 `duplicate-id`（红点：壳不再校验唯一性） (0.2807ms)
+✔ 守卫③ copyText 单实现：COPY_RUNTIME_JS === buildSharedHelpersJs()（红点：技能侧自产第二套运行时） (0.2097ms)
+✔ 守卫③ 剥掉 helpers 块后全文 `navigator.clipboard`／`execCommand`／`onclick=` 命中 0（红点：内联 onclick／自写复制） (3.9463ms)
+✔ 守卫③ 技能侧零复制实现：helpCenter.ts 源码不含复制通道（红点：技能侧自写 execCommand／onclick） (0.1913ms)
+✔ #91 ① 默认（无参）＝全量速查台 file 态：完整文档落盘 ＋ envelope 五字段无 status (1008.3504ms)
+✔ #91 ② mode 显式三态：file／inline／text 同源 436 场景，inline 片段与 text 文本不入 envelope (232.0534ms)
+✔ #91 ②b mode=text 走 CLI：data.text 与落盘产物逐字一致，stdout 不含 1 MB 产物 (441.6118ms)
+✔ #91 ③ 照片 10 键兼容：q 现找／q:"" 全量，data 键集与产物接线不回归 (1205.3538ms)
+✔ #91 ④ q 与 mode 互斥、mode 非法／非字符串一律 exit 2 (926.4216ms)
+✔ #97 · 场景表覆盖 35 写键（与 CALORIE_WRITE_COMBOS 一一对应） (2.2188ms)
+✔ #97 · M5 四要素：calorie.diet.add (541.7087ms)
+✔ #97 · M5 四要素：calorie.diet.update (1061.9342ms)
+✔ #97 · M5 四要素：calorie.diet.remove (899.7862ms)
+✔ #97 · M5 四要素：calorie.diet.batch (524.6531ms)
+✔ #97 · M5 四要素：calorie.diet.copy (548.3547ms)
+✔ #97 · M5 四要素：calorie.diet.update-by-date (814.927ms)
+✔ #97 · M5 四要素：calorie.diet.remove-by-date (525.2178ms)
+✔ #97 · M5 四要素：calorie.diet.remove-by-range (457.7764ms)
+✔ #97 · M5 四要素：calorie.diet.remove-by-type (403.0962ms)
+✔ #97 · M5 四要素：calorie.water.log (346.9101ms)
+✔ #97 · M5 四要素：calorie.weight.log (340.3651ms)
+✔ #97 · M5 四要素：calorie.weight.update (523.2683ms)
+✔ #97 · M5 四要素：calorie.weight.remove (519.7754ms)
+✔ #97 · M5 四要素：calorie.weight.batch (302.6133ms)
+✔ #97 · M5 四要素：calorie.exercise.add (301.1599ms)
+✔ #97 · M5 四要素：calorie.exercise.update (426.1332ms)
+✔ #97 · M5 四要素：calorie.exercise.remove (393.1388ms)
+✔ #97 · M5 四要素：calorie.photo.add (246.043ms)
+✔ #97 · M5 四要素：calorie.photo.remove (382.9808ms)
+✔ #97 · M5 四要素：calorie.photo.tag (364.6844ms)
+✔ #97 · M5 四要素：calorie.product.add (237.5251ms)
+✔ #97 · M5 四要素：calorie.product.update (372.0181ms)
+✔ #97 · M5 四要素：calorie.product.deprecate (383.2636ms)
+✔ #97 · M5 四要素：calorie.profile.set (229.4956ms)
+✔ #97 · M5 四要素：calorie.profile.update (229.3822ms)
+✔ #97 · M5 四要素：calorie.profile.activity (236.368ms)
+✔ #97 · M5 四要素：calorie.goal.set (230.8519ms)
+✔ #97 · M5 四要素：calorie.goal.water (236.3902ms)
+✔ #97 · M5 四要素：calorie.goal.weight (229.5303ms)
+✔ #97 · M5 四要素：calorie.goal.pause (230.7843ms)
+✔ #97 · M5 四要素：calorie.goal.resume (242.4209ms)
+✔ #97 · M5 四要素：calorie.body.composition-add (225.9256ms)
+✔ #97 · M5 四要素：calorie.body.composition-remove (340.1634ms)
+✔ #97 · M5 四要素：calorie.body.measure-add (224.4718ms)
+✔ #97 · M5 四要素：calorie.body.measure-remove (357.9253ms)
+✔ #97 · affectedRows＝库真实行数（只读句柄独立复核，非自报） (1750.3883ms)
+✔ #97 · 重复跳过：affectedRows=0 且写入字段摘要为空（无写入不虚报） (348.9683ms)
+✔ #97 · idSource 三值（record／singleton／condition）在 35 键内全部出现 (9281.3771ms)
+✔ #97 · P9：stdout 恒为一行 JSON，M5 只落字段不改 stdout 形态 (438.6171ms)
+✔ #97 · R-1：goal.set 的 writtenFields ＝ 本次实际 SET 列（不传 water 不报 water） (351.4547ms)
+✔ #97 · R-3：water.log 重复跳过回传原 id（与 diet.add 同口径，§3.3 record） (332.1914ms)
+✔ #97 · R-3：同值 UPDATE 实测 noChange=false／affectedRows=1（契约 §3.6 措辞锚） (364.2366ms)
+✔ #97 · 独立判定：四要素逐字对账（不经 checkM5／SCENARIOS，红队 D-5） (989.3101ms)
+✔ 复制件迁移：行数对账 + 口径抽查 + 三代收敛 (478.0073ms)
+✔ 幂等可重跑：同 src/dst 再跑行数口径一致 (522.8852ms)
+✔ 缺失阻断不返空：src 缺/空库/同文件一律抛 (250.3637ms)
+✔ 失败回滚：CHECK 违反整库回滚、dst 无部分行 (413.4997ms)
+✔ #112 域内唤醒词命中：5 词→营养移植 4 键（促进 1＋新拟 4） (1.2203ms)
+✔ #112 唤醒词→key→HTML 链：路由 cli 直跑产出对应全文档 (269.066ms)
+✔ #112 营养配比：3 维 KPI＋热量占比 donut＋推荐范围对比 (261.4021ms)
+✔ #112 营养素深度：纤维/钠/糖明细＋缺数据盒（精确名匹配） (244.1121ms)
+✔ #112 食品来源统计：来源数＋总数＋按来源分组 (219.6085ms)
+✔ #112 今日饮水：进度＋7 天窗＋每杯明细 (196.3499ms)
+✔ #112 R11 收敛：饮水 7 天窗为自然日回退（不做周一派生） (164.3565ms)
+✔ #112 无假数据：4 键空库一律 exit 4 且 stdout 纯净 (1249.9219ms)
+✔ #112 非法窗：start 晚于 end 即 exit 2 (538.3038ms)
+✔ #112 非法 date：饮水 date 非 ISO 即 exit 2 (534.1346ms)
+✔ #112 命名底座可用：营养配比落点＋回传一致＋产物为全文档 (543.4044ms)
+✔ #112 复制头与冻结 envelope 版本对齐（防漂移） (229.3538ms)
+✔ #119 ① sceneTypeFor：35 写键一律 receipt（旧 render_*_receipt 全走 html_scene_path receipt） (2.4029ms)
+✔ #119 ② ranking 旧命令名覆盖：title 食品排行 → 落盘食物排行（旧 render_food_ranking.py） (4.5209ms)
+✔ #119 ③ ranking 动态段全表（旧 FOOD_RANKING_CATEGORY_MAP）：六名互异，不靠 _2 区分语义 (8.6906ms)
+✔ #119 ④ contraindication 动态段（旧 CONTRAINDICATION_PART_MAP）：部位可区分，缺省全部 (5.287ms)
+✔ #119 ⑤ writeSuffixFor：内容标识纯 params 派生（旧 suffix 口径） (0.6883ms)
+✔ #119 ⑥ 段拼接：title_回执_内容_<TS>，suffix 走 sanitize（非法字符→_、按码点截 32） (11.9338ms)
+✔ #119 ⑦ CLI 同秒六榜单：五榜＋全榜同秒落盘六名互异（无 _N），data.output 与盘上名逐字节一致 (2112.218ms)
+✔ #119 ⑧ CLI 写键：记体重落 记体重_回执_68kg_<TS>.html，data.output 与盘上名逐字节一致 (739.7863ms)
+✔ #119 ⑨ 段拼接产物天然文件名安全（无非法/ glob 元字符） (2.8918ms)
+✔ #87 ① 字段清洗逐字复刻：非法字符 → _、去前后空格、截断 32 字符 (1.2764ms)
+✔ #87 ①b 截断按码点（旧 Python s[:32]）：emoji 不劈代理对，回传名与落盘名逐字节一致 (8.3365ms)
+✔ #87 ② 时间戳：YYYYMMDD_HHMMSS 零填充 ＋ 本地时区 (0.4594ms)
+✔ #87 ③ <中文command> 真值 = CALORIE_COMBOS[key].title（99 键全量，#113 +8／#86 +4），且清洗为恒等） (3.7442ms)
+✔ #87 ③b combos.yaml（唯一真相源镜像）与注册表 title 逐键同值 (0.9823ms)
+✔ #87 ③c 反例：wake_word 不是命令名真值（含空格/括号，且与 CLI 键非一一对应） (1.3434ms)
+✔ #87 ④ 同秒冲突：无冲突 → 无后缀；已有 1 个 → _2；已有 2 个 → _3 (8.0183ms)
+✔ #87 ④b 同秒计数大小写不敏感（旧 glob 在 Windows 走 normcase）：.HTML 也算冲突，原文件不被覆盖 (382.5174ms)
+✔ #87 ⑤ 默认落点：<SKILLS_DB_PATH>/calorie_html/<中文command>_<stamp>[_N].html，目录递归创建 (4.4438ms)
+✔ #87 ⑥ CLI 默认落盘：无 flag 也写 calorie_html，落点经 envelope data.output 回传 (481.375ms)
+✔ #87 ⑥b stat 形状逐键生效：calorie.view.home 落「今日总览_<TS>.html」，metrics 不受 output 影响 (554.6595ms)
+✔ #87 ⑦ CLI 同秒冲突：同秒已有同名 → 自动追加 _2（预置未来 10 秒，避免跨秒抖动） (401.9684ms)
+✔ #87 ⑧ --output 覆盖：写显式路径、不改名、不碰 calorie_html；--html 为等价别名 (1195.4624ms)
+✔ #87 ⑨ 落点解析失败：exit 5 ＋「渲染失败」文案，不得落到「未知失败」的 exit 4 (644.6555ms)
+✔ COPY_RUNTIME_JS 逐字等于 buildSharedHelpersJs()（红点：技能侧自造第二套复制实现） (1.6177ms)
+✔ 页面运行时是双通道：clipboard 主通道 ＋ execCommand 兜底（红点：改回单通道） (0.174ms)
+✔ 技能侧零复制实现：copy.ts 不出现 navigator／document／execCommand／addEventListener（红点：技能侧自造） (0.2695ms)
+✔ HELP 速查每行一个复制按钮：ACTION_ID_ATTR ＋ DEFAULT_DATA_ATTR，actionId 取冻结表（红点：自造 id／丢属性） (1.005ms)
+✔ 零内联事件处理器 ＋ 运行时恰注入一次（红点：内联 onclick／漏注入运行时） (0.5634ms)
+✔ 唤醒词 HELP 速查（renderHelpLookupHtml）走同一套接线（红点：漏第二处落点） (1.7438ms)
+✔ copyActionHtml：单按钮走 renderActionBar 产出（不自造按钮 HTML） (0.5532ms)
+✔ bindCopyAction 端到端：通道 1（clipboard）成功 → 复制文本逐字、反馈取冻结文案 (19.5631ms)
+✔ bindCopyAction 端到端：通道 1 失败 → 降级通道 2（fallback）成功，channel === fallback (15.1445ms)
+✔ bindCopyAction 端到端：两通道皆失败 → 不抛错 ＋ 失败徽章恒在（danger） (16.7915ms)
+✔ 非复制按钮（无 data-t）被跳过：readDataText → undefined 不复制、不抛错 (0.5169ms)
+✔ 冻结表与既有 actionBar／errorReceipt id 不撞名（页面内唯一性口径） (0.1733ms)
+✔ calorie.help.center --html 落盘产物含复制按钮 ＋ 页面运行时（红点：照片 HELP 落点漏接线） (451.0883ms)
+✔ 收据：存照片（单张/批量）+ 间隔 + HTML (163.3187ms)
+✔ 收据：删照片快照 + 标签三操作 + 无变化明示 (204.7792ms)
+✔ 画廊：筛选/计数/距上次 + 二进制不内嵌 (162.4228ms)
+✔ 对比：间隔 + 跨标签警告 + 同体拒绝 (193.2288ms)
+✔ 单图：同标签 prev/next 导航 (174.0222ms)
+✔ 动图：只出任务描述，不碰二进制 (212.1148ms)
+✔ HELP：现找直达可执行命令（Q71） (1.5278ms)
+✔ envelope 键表：六视图形状 + 未知拒绝 (0.1953ms)
+✔ crud/error 收据：守卫 + 缺省 + HTML (0.3822ms)
+✔ #41 键表：99 组合（读 64 + 写 35，#113 +8／#86 +4）registry 合法 + 新增 18 stat (1.4588ms)
+✔ #41 体重系五盘 + HTML 字段断言 (365.52ms)
+✔ #41 身体系两盘 + HTML 字段断言 (377.2744ms)
+✔ #41 计划三盘 + HTML 字段断言 (406.875ms)
+✔ #41 目标扩展三盘 + HTML 字段断言 (436.6892ms)
+✔ #41 分析长尾四盘 + HTML 字段断言 (406.0617ms)
+✔ #41 档案视图 + HTML 字段断言 (294.4374ms)
+✔ #41 缺失阻断：空库 18 键一律 missing-data（wizard 走 bad-input）不返空 (144.4971ms)
+✔ #41 M1：空库全部有效诊断 kind 一律 missing-data 阻断（零观测 series，不返假健康） (161.2972ms)
+✔ #41 分发直调：18 新键 stat metrics 全 number + HTML 同源（与 CLI 同 dispatch） (415.6288ms)
+✔ T4 缺 key 本票补：9 键命名空间 calorie.* (1.2051ms)
+✔ 视图 key 表：四视图 stat 形状 (0.4166ms)
+✔ 总览：今日 KPI + 周数列 + 缺口 + HTML 快照 (277.9325ms)
+✔ 饮食：总览数列=series 和 + 餐别窗口跟 MEAL_WINDOWS + HTML 快照 (274.7525ms)
+✔ 运动：T7 复核 + T5 数列 + HTML 快照 (269.5479ms)
+✔ 目标分析：T4 目标 + T7 缺口趋势 + HTML 快照 (319.6261ms)
+✔ 缺失阻断：空库四视图一律 missing-data 不返空 (171.3137ms)
+✔ T4 五域 key 本票补：9 键命名空间 calorie.* (1.2129ms)
+✔ 视图 key 表：十二盘 stat 形状 (0.596ms)
+✔ 死规矩：餐别窗口跟 diet.ts（15 点=下午茶，老家旧口径作废） (0.151ms)
+✔ 目标五盘 + HTML 快照 (294.9331ms)
+✔ 组合分析：T5 series 源 + pair 相关 + HTML 快照 (310.2559ms)
+✔ 缺口复盘健康三盘 + HTML 快照 (335.0746ms)
+✔ 排行单榜全榜 + HTML 快照 (309.5455ms)
+✔ 食品库搜索 + HTML 快照 (366.7353ms)
+✔ 缺失阻断：空库各盘一律 missing-data 不返空 (182.5974ms)
+✔ 赤字快照：正=缺口，summary/series 自洽 (287.6061ms)
+✔ 趋势快照：7dim + 精度字段 round(2) (195.4323ms)
+✔ 运动复核快照：总量/分类/估算校验 (180.8232ms)
+✔ 运动复核：空窗抛错 (190.0496ms)
+✔ 精度守卫：检出泄漏并抛错 (0.2404ms)
+HELP 已注入：D:\ilife\packages\skill-calorie\SKILL.md
+▶ calorie SKILL 与模板（M6 范式）
+  ✔ SKILL 含说明/唯一出口/envelope/HELP/环境 (1.2518ms)
+  ✔ M6 Wizard Verify 铁则正文（#98）在 AUTO 块外，含前置/映射/不可写/违规口径 (0.5406ms)
+  ✔ 互联区新鲜（构建期注入可复现，99 键全对齐 combos（#113 +8／#86 +4）） (0.6752ms)
+  ✔ 模板 6 件经 loader 装载（#95：dist/render 上溯两级取包根 templates/） (2.995ms)
+  ✔ loader 未知模板大声失败（不返空） (0.4238ms)
+  ✔ loader 缺文件抛 missing-data（不返空） (28.5079ms)
+  ✔ T10 照片 HELP：10 条全可执行（模块+函数逐条 import 存在） (2.0988ms)
+✔ calorie SKILL 与模板（M6 范式） (38.4406ms)
+✔ 120 · 软删运动后 view.exercise／view.home／view.deficit／view.health／buildSeries 口径一致（全排除） (5233.9199ms)
+✔ 120 · analysis 11 处查询逐处排除软删行（每处唯一可观测面） (1908.8865ms)
+✔ 120 · 过度过滤护栏：is_deleted 为 NULL 的活行仍计入（谓词必须 COALESCE） (1452.1896ms)
+✔ 120 · 硬删表不受影响（回归护栏）：food_log／weight_log 删后口径不变 (1664.3519ms)
+✔ #109 域内唤醒词命中：代表词→运动/身体域 9 键（路由不断） (1.3009ms)
+✔ #109 唤醒词→key→HTML 链：路由 cli 直跑产出对应全文档 (271.3849ms)
+✔ #109 运动总览：汇总＋双图＋按日表＋类型明细＋分类折叠＋复制 (254.7589ms)
+✔ #109 运动目标：目标 vs 实际＋完成度＋达成判定 (272.5004ms)
+✔ #109 体重盘：首末＋均值＋变化＋曲线＋记录表 (248.2902ms)
+✔ #109 体重历史：曲线＋全量记录表（时间/BMI/备注列） (248.2933ms)
+✔ #109 对比＋复核＋波动：两期表＋里程碑＋基线预警 (189.023ms)
+✔ #109 体成分：来源表单＋趋势＋记录表＋复制 (199.6477ms)
+✔ #109 围度：单项趋势＋全量表（胸腰腹臀）＋复制 (199.5818ms)
+✔ #109 无假数据：9 键空库一律 exit 4 且 stdout 纯净 (2236.4172ms)
+✖ #109 命名底座可用：运动总览落点＋回传一致＋产物为全文档 (242.9306ms)
+✔ #109 复制头与冻结 envelope 版本对齐（防漂移） (155.4428ms)
+✔ #110 域内唤醒词命中：代表词→趋势/分析域 6 键（路由不断） (1.3865ms)
+✔ #110 唤醒词→key→HTML 链：路由 cli 直跑产出对应全文档 (360.3526ms)
+✔ #110 组合分析落差闭合：KPI＋双轴＋散点回归＋延迟＋分层＋明细＋复制 (357.5348ms)
+✔ #110 热量缺口：KPI＋摄入消耗双线＋目标线＋明细表＋复制 (332.9677ms)
+✔ #110 异常诊断：参数表单＋发现全量列表＋insight＋复制 (256.829ms)
+✔ #110 禁忌扫描：概览＋命中表＋替代建议＋复制修改指令（种子含 1 error） (252.1872ms)
+✔ #110 双预测：点预测 KPI＋insight＋复制（曲线归组合分析） (247.9181ms)
+✔ #110 无假数据：6 键空库一律 exit 4 且 stdout 纯净 (1496.1582ms)
+✔ #110 combined 窗口白名单：99d 拒收 exit 2（#103 G4，不静默回退） (396.8835ms)
+✔ #110 多配对同键直出：weight_deficit 分桶节＋custom 窗（子集→同质） (229.6082ms)
+✔ #110 命名底座可用：组合分析动态段落点＋回传一致＋产物为全文档 (449.7096ms)
+✔ #110 复制头与冻结 envelope 版本对齐（防漂移） (200.4911ms)
+✔ #113 域内唤醒词命中：12 词→趋势其他 8 键（促进 4＋新拟 8） (1.4002ms)
+✔ #113 热量趋势：T7 口径日均＋达标统计 (274.4462ms)
+✔ #113 整体趋势：30 天窗体重变化 −0.4kg (300.6006ms)
+✔ #113 营养分析：配比＋微量＋规则建议 (282.9422ms)
+✔ #113 每日六因素：09-06 得 3 分（热量/运动/三餐达标） (205.3957ms)
+✔ #113 数据健康检查：未匹配 2 种（未知餐/米饭团），余项为零 (205.4773ms)
+✔ #113 批量导入预览：2 条（匹配 1/缺库 1），只预览不写库 (216.6664ms)
+✔ #113 落地训练进度：有计划＋近 7 天 1 次 30 分钟 (175.6649ms)
+✔ #113 复盘报告：3 天 6 餐＋体重 −0.4kg＋要点 (173.6244ms)
+✔ #113 无假数据：6 键空库一律 exit 4 且 stdout 纯净；lint/batch 空库 exit 0 (1826.8663ms)
+✔ #113 非法输入：window/group/items/date 非法即 exit 2 (1217.0088ms)
+✔ #113 命名底座可用：热量趋势落盘＋回传一致＋产物为全文档 (347.6233ms)
+✔ #113 复制头与冻结 envelope 版本对齐（防漂移） (180.395ms)
+✔ #86 域内唤醒词命中：4 新拟词→wizard 4 键 (1.6193ms)
+✔ #86 围度 wizard：场景1空页＋场景2预填＋recent＋白名单 (206.1073ms)
+✔ #86 围度 camel 口径与写键 MEASURE_CAMEL 同集（防漂移） (1.1602ms)
+✔ #86 体脂 wizard：来源＋体脂率＋皮褶7点＋换算未移植口径 (193.2662ms)
+✔ #86 身材照 wizard：纯配置＋新 CLI 命令段 (197.9918ms)
+✔ #86 GIF 框选器：列表＋框选＋裁剪＋命令段（无 cropper.js） (167.9519ms)
+✔ #86 空库不抛：4 键在空库均可开页（场景1） (124.0201ms)
+✔ #86 CLI 端到端：4 键 exit 0＋落盘＋复制属性 (1235.8265ms)
+✔ #86 复制只走 Base P0 双通道：页内无自造复制实现 (137.9657ms)
+▶ 私家大厨唯一出口 cmd_read（8 键全票）
+  ✔ write 加菜→view 闭环→search 命中 (299.3963ms)
+  ✔ cooking steps + shopping 合并 (328.5302ms)
+  ✔ history record/query 闭环 + help 现找 (659.9335ms)
+  ✔ update 接线 + filter 全维度（含川菜 exit0） (1646.597ms)
+  ✔ 契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；空结果 4；--html 落盘 (723.7067ms)
+✔ 私家大厨唯一出口 cmd_read（8 键全票） (3658.9307ms)
+▶ 私家大厨取数 fetch
+  ✔ list/search/filter + 废弃过滤 (2.9581ms)
+  ✔ 空查询抛，不返空冒充 (0.5884ms)
+  ✔ 历史统计闭环 (4.2661ms)
+  ✔ 采购合并：同食材跨菜累加 (7.1815ms)
+  ✔ 体检排序：缺口/风险有序 (1.2889ms)
+  ✔ filter 多维筛选 + update 闭环 (10.855ms)
+  ✔ SKILLS_DB_PATH 缺失阻断 (0.2236ms)
+✔ 私家大厨取数 fetch (28.0484ms)
+▶ 私家大厨口径 policy
+  ✔ 难度 5 档 (1.014ms)
+  ✔ 状态 4 种 + 火候 5 档 (0.2366ms)
+  ✔ 食材 11 类 + 评分 0-5 (0.2523ms)
+  ✔ 唤醒词 37 全量 + 最长匹配 + 缺槽位（#43 F1 看菜/看菜谱→view） (0.3179ms)
+  ✔ 错误皆为 ChefPolicyError (0.1005ms)
+✔ 私家大厨口径 policy (3.0165ms)
+▶ 私家大厨渲染 render
+  ✔ 8 key x shape 全合法（命名空间+形状） (1.3363ms)
+  ✔ envelope 8 key 全字段 + 未知 key 抛 (0.6103ms)
+  ✔ HTML 三形状渲染含 section + 超体积抛 (0.6631ms)
+  ✔ 模板 8 全可装载 + 三标记恰 1 次 (1.5848ms)
+✔ 私家大厨渲染 render (5.529ms)
+HELP 已注入：D:\ilife\packages\skill-chef\SKILL.md
+▶ 私家大厨 SKILL 与 HELP
+  ✔ SKILL 含出口/口径/标记块 (0.937ms)
+  ✔ 速查：37 短语全可路由且 key 对得上（#43 F1 看菜/看菜谱） (0.659ms)
+  ✔ 互联区新鲜（构建期注入可复现） (0.2773ms)
+✔ 私家大厨 SKILL 与 HELP (3.1051ms)
+▶ 居家唯一出口 cmd_read（21 键全票）
+  ✔ search/detail：list/detail + 查无对条 4 (481.2965ms)
+  ✔ add/update 写链 receipt 闭环 (949.1829ms)
+  ✔ tag/inventory/location：查改分流 (733.8526ms)
+  ✔ outfit/trip/stats：推荐与统计 (547.6443ms)
+  ✔ shopping/ticket/care：三域读写 (945.0994ms)
+  ✔ help.lookup：全表 + 现找 (178.1416ms)
+  ✔ 契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；--html 落盘 (467.7825ms)
+✔ 居家唯一出口 cmd_read（21 键全票） (4303.7827ms)
+▶ 居家取数 fetch（tmp 隔离）
+  ✔ 开库 8 顶级种子 + 增查闭环 (9.5595ms)
+  ✔ 查无对条大声失败 + 非 tmp 守卫 (0.3923ms)
+  ✔ 标签合并 + 账号加解密 + master-key 门 (184.5544ms)
+✔ 居家取数 fetch（tmp 隔离） (195.0888ms)
+▶ 居家口径 policy
+  ✔ 位置两级 + 11 状态 + 食品判定 (1.0243ms)
+  ✔ add 强校验 + update op 分流 (0.3641ms)
+  ✔ 唤醒词最长匹配 + 废弃词无命中 + 缺槽位 (1.2359ms)
+  ✔ 错误皆为 HomePolicyError (0.1346ms)
+✔ 居家口径 policy (3.7854ms)
+▶ 居家渲染 render（21 键全票）
+  ✔ 21 联动 shape 分配 (1.0132ms)
+  ✔ envelope 全字段（21 键各一） (2.5643ms)
+  ✔ 看密码 HTML 脱敏 + 体积门 + 转义 (0.4056ms)
+  ✔ 模板 21 件齐 + 三标记 + 落盘快照 (4.0321ms)
+  ✔ #43 H2 analysis/fallback 直调分支（经 key 不可达，保留显式降级） (0.1796ms)
+  ✔ toItemCard 装配 (0.1667ms)
+✔ 居家渲染 render（21 键全票） (9.484ms)
+▶ 居家 SKILL 与 HELP
+  ✔ SKILL 含出口/口径/标记块/出 scope (1.0284ms)
+  ✔ 速查：短语全可路由且 key 对得上 (1.1027ms)
+  ✔ 互联区新鲜（构建期注入可重现） (0.5383ms)
+  ✔ 废弃词不在速查中 (0.2711ms)
+✔ 居家 SKILL 与 HELP (4.9424ms)
+▶ memo 唯一出口 cmd_read
+  ✔ 搜备忘：exit 0 + 纯 JSON list (159.5701ms)
+  ✔ 记一条：回执 + 落盘 (187.8227ms)
+  ✔ 更新/删除闭环 (293.5318ms)
+  ✔ 未知 key exit 3 且 stdout 空；坏参数 exit 2；缺 DB exit 1 (621.3447ms)
+  ✔ 查无对条 exit 4；--html 落盘 (316.0449ms)
+✔ memo 唯一出口 cmd_read (1579.0664ms)
+▶ memo 取数层
+  ✔ 列/取/搜（CJK 子串+分类过滤） (6.6798ms)
+  ✔ 坏输入 throw 不返空 (1.3898ms)
+  ✔ lark 四门（fake CLI）：存在+版本+登录+scope (2366.3327ms)
+  ✔ LARK_CLI_PATH 坏路径 throw (0.3851ms)
+✔ memo 取数层 (2375.4515ms)
+▶ memo 口径层
+  ✔ 9 查询唤醒词路由 (1.809ms)
+  ✔ 写入与消歧：批量改分类走 batch，改子分类走 update (0.1547ms)
+  ✔ 无命中与缺槽位 throw (0.3589ms)
+  ✔ 分类：4 顶层+默认备忘+sub 归一 (0.1508ms)
+  ✔ 提醒：四向+日期校验+废弃留笔记 (0.2446ms)
+  ✔ 心愿与 CRUD 政策 (0.2174ms)
+✔ memo 口径层 (3.978ms)
+▶ memo 渲染层
+  ✔ 10 key 建 envelope 全字段可用 (1.5691ms)
+  ✔ 坏 key/错形状 throw（#34 题面追认：未知形状/超体积一律 throw） (0.471ms)
+  ✔ 转义（代理对原样保留）与超体积门 (0.471ms)
+  ✔ 模板：6 随包（含 init_report，M6 落定），标记各恰 1 (2.005ms)
+✔ memo 渲染层 (5.678ms)
+▶ memo SKILL 与 HELP
+  ✔ SKILL 含出口/口径/标记块 (0.7229ms)
+  ✔ 速查：短语全可路由且 key 对得上 (0.5605ms)
+  ✔ 互联区新鲜（构建期注入可复现） (0.2533ms)
+✔ memo SKILL 与 HELP (2.487ms)
+▶ 作息唯一出口 cmd_read（8 键全票）
+  ✔ record.today：exit 0 + 纯 JSON list + 相对日期 (167.9875ms)
+  ✔ record.range：stat metrics 全 number；空区间 exit 4 (345.2844ms)
+  ✔ record.detail：按 id；查无对条 exit 4 (251.5737ms)
+  ✔ record.write：修正闭环 + 写摘要 (365.1626ms)
+  ✔ record.compare：months 对比 analysis 非空 (230.3022ms)
+  ✔ plan.today：查日程 + 标题搜 + 多日 (340.1364ms)
+  ✔ plan.write：preview/upsert/ensure 幂等/update/deactivate/review (977.9267ms)
+  ✔ help.lookup：全表 + 现找 + 空结果指引 + 飞书缺失阻断 (435.1957ms)
+  ✔ 契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；--html 落盘 (525.2111ms)
+✔ 作息唯一出口 cmd_read（8 键全票） (3639.6301ms)
+▶ 作息取数 fetch（tmp 隔离）
+  ✔ 记/查/修正闭环（edit_count 审计） (3.9627ms)
+  ✔ 区间 + 摘要 upsert (3.8132ms)
+  ✔ 查无对条/非法 id 大声失败 (0.5351ms)
+  ✔ 日程 ensure 幂等 + upsert 整日替换 + 改/删 (6.5476ms)
+  ✔ 标题搜空 title 阻断 + 非 tmp 写盘守卫 (0.2313ms)
+✔ 作息取数 fetch（tmp 隔离） (15.7358ms)
+▶ 作息口径 policy
+  ✔ 相对日期 7 表达（含大前/后天） (1.4147ms)
+  ✔ 相对范围跨月/跨年/闰年 (1.9733ms)
+  ✔ 分类 8 一级 + 白名单二级 + 别名 (0.5474ms)
+  ✔ 健康分口径（工作上限/分档衰减/7 维均值） (0.294ms)
+  ✔ 异常 ±20 红 ±10 黄 (0.2313ms)
+  ✔ 日期/时间容错与 24:00 归一 (0.2357ms)
+  ✔ add 9 字段强校验 + compare 口径 (0.4332ms)
+  ✔ 24h 覆盖 + completion 6 态 (0.4206ms)
+  ✔ 唤醒词最长匹配 + 废弃词无命中 + 缺槽位 (0.3806ms)
+  ✔ 错误皆为 SchedulePolicyError (0.1953ms)
+  ✔ #43 S1 今日作息/今日总结/今天作息别名→record.today (0.1182ms)
+  ✔ #43 S2 HELP空结果out-of-scope指引+routeWakeword文案 (1.9338ms)
+✔ 作息口径 policy (9.8188ms)
+▶ 作息渲染 render（8 键全票）
+  ✔ 8 联动 shape 分配 (2.1141ms)
+  ✔ envelope 全字段（8 键各一） (2.1481ms)
+  ✔ stat metrics 全 number + 对比/category/异常摘要非空 (0.4847ms)
+  ✔ 模板 8 件齐名 + 三标记 + 落盘快照 (2.1256ms)
+  ✔ 体积门 + 转义 (0.4358ms)
+✔ 作息渲染 render（8 键全票） (8.5507ms)
+HELP 已注入：D:\ilife\packages\skill-schedule\SKILL.md
+▶ 作息 SKILL 与 HELP
+  ✔ SKILL 含出口/口径/标记块/出 scope (1.5731ms)
+  ✔ 速查：短语全可路由且 key 对得上 (1.2409ms)
+  ✔ 互联区新鲜（构建期注入可复现） (0.3611ms)
+  ✔ 废弃词不在速查中 (0.2026ms)
+✔ 作息 SKILL 与 HELP (5.1507ms)
+▶ 饼干拆分确认 #19
+  ✔ 16 联动 key×shape 全合法（命名空间+6 形状） (13.9019ms)
+  ✔ 定时与联动出 scope 已定 (0.771ms)
+  ✔ 写走 receipt 口径已定 (0.1471ms)
+✔ 饼干拆分确认 #19 (16.3917ms)
+▶ #81 唤醒词路由层（路由与 parity 分家）
+  ✔ D2① 436 条逐条恰一个桶（可执行 341 ／ 命中但不执行 95，#113 促进 4 词） (7.0628ms)
+  ✔ D2② 路由层零 py 命令引用（源码 ＋ 全部 exec cli） (1.0901ms)
+  ✔ D2③ 99 键全部有可执行入口（436 条 ＋ 56 条新拟入口，#113 +8／#86 +4） (0.8323ms)
+  ✔ D2④ 与冻结表逐条对齐（唤醒词集合相等 ＋ 场景对齐；FX-81-2 授权放宽 cli 逐字） (1.7269ms)
+  ✔ D2⑤ 新增入口（56 键，#113 +8／#86 +4）与施工前既有入口零重复 (0.5633ms)
+  ✔ FX-81-5 覆盖修复：wizard 降级词失去的唯一入口由 1 条单命令入口承接（99 键不放宽，#113 +8／#86 +4） (0.3341ms)
+  ✖ FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 exit 0 ＋ 需参数键必须带 --params） (2.0697ms)
+  ✔ A7 明确不做桶按架构规格 :60 建立，t71 差异逐条登记（两处出处） (0.3644ms)
+✖ #81 唤醒词路由层（路由与 parity 分家） (15.73ms)
+▶ calorie triggers parity（SoT scripts/_triggers.py）
+  ✔ 总数 436 条无增删 (1.1033ms)
+  ✔ 10 场景计数全对齐 (1.2661ms)
+  ✔ wake_word 多重集一致（含记身材照×3） (0.295ms)
+  ✔ 逐条 sha 一致（prompt 全文行为对齐） (8.2146ms)
+  ✔ getSummary 与 SoT get_summary() 一致 (0.287ms)
+  ✔ HELP 速查覆盖全部唤醒词与别名 (0.3461ms)
+  ✔ CATEGORIES 13 分类原样保留 (0.102ms)
+✔ calorie triggers parity（SoT scripts/_triggers.py） (13.2978ms)
+✖ dsh-bill-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归） (2.094ms)
+✖ dsh-bill-ilife client：factory 可物化，导出 apply/inject，无 node 依赖 (0.7726ms)
+✖ dsh-bill-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.5637ms)
+✔ dsh-calorie client：classic 执行并注册自身 id（#48 整批 crash 回归） (2.6946ms)
+✔ dsh-calorie client：factory 可物化，导出 apply/inject，无 node 依赖 (1.9357ms)
+✔ dsh-calorie client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.82ms)
+✖ dsh-chef client：classic 执行并注册自身 id（#48 整批 crash 回归） (0.9396ms)
+✖ dsh-chef client：factory 可物化，导出 apply/inject，无 node 依赖 (0.8467ms)
+✖ dsh-chef client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.4305ms)
+✖ dsh-home-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归） (0.8083ms)
+✖ dsh-home-ilife client：factory 可物化，导出 apply/inject，无 node 依赖 (0.7079ms)
+✖ dsh-home-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.3596ms)
+✔ dsh-life-pack client：classic 执行并注册自身 id（#48 整批 crash 回归） (1.0684ms)
+✔ dsh-life-pack client：factory 可物化，导出 apply/inject，无 node 依赖 (1.2107ms)
+✔ dsh-life-pack client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.4563ms)
+✔ dsh-memo-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归） (1.2602ms)
+✔ dsh-memo-ilife client：factory 可物化，导出 apply/inject，无 node 依赖 (2.7096ms)
+✔ dsh-memo-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.4198ms)
+✖ dsh-schedule-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归） (0.75ms)
+✖ dsh-schedule-ilife client：factory 可物化，导出 apply/inject，无 node 依赖 (1.1205ms)
+✖ dsh-schedule-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.434ms)
+▶ #42 combos 补登记 18 新读键（skilllink 可读）
+  ✔ CALORIE_COMBOS 全量 ⊆ combos.yaml（形状/标题/出口逐键对齐，漏登记即挂） (2.9086ms)
+  ✔ skilllink read 18 新键逐键 exit 0（tmp 隔离种子库，真实 DB 零触碰） (4946.5335ms)
+✔ #42 combos 补登记 18 新读键（skilllink 可读） (4950.4548ms)
+▶ #80 HELP 生成与键名一致性
+  ✔ ① 生成块无 undefined（段头正则失配即红） (5.439ms)
+  ✔ ① L6 段有内容：六个空位 id 全列，降级区不越界 (1.0522ms)
+  ✔ ① 含数字段名必须成段（合成 yaml，不依赖 combos.yaml 内容） (0.2881ms)
+  ✔ ① 构建期断言 assertHelpBlock：含 undefined 的块必须抛（生成器拒发） (0.3036ms)
+  ✔ ② channels 键一律 registry 点号键（无下划线）且逐键在 combos 注册 (0.782ms)
+  ✔ ② 构建期断言 assertChannelKeys：下划线键必须抛 (0.1904ms)
+  ✔ ② HELP.md 通道表展示的 key == combos.yaml channels 键（展示键即注册键） (2.0073ms)
+  ✔ ③ 仓内 HELP.md == 生成器输出（产物不新鲜即红） (1.2115ms)
+  ✔ ③ check-combos 全绿（键形/注册一致性构建期门） (901.5159ms)
+✔ #80 HELP 生成与键名一致性 (914.0084ms)
+present 已生成：109 键 → D:\ilife\packages\base-combos\src\present.ts
+▶ P8 combos 真相源与 HELP 注入
+  ✔ check-combos 全绿（加条目只改 yaml 的门禁） (142.0307ms)
+  ✔ calorie.today 转正 cmd_read（空库阻断 exit 4，有数 exit 0 由 T11 覆盖） (438.8433ms)
+  ✔ memo 十键取数全通（skilllink spawn 出口，tmp 隔离） (2566.949ms)
+  ✔ calorie 四视图取数通（VIEW_KEYS×stat envelope 全字段） (0.4321ms)
+  ✔ 15 对 key×shape 与实现侧一致（memo MEMO_KEY_SHAPES + registry） (0.2313ms)
+  ✔ present.ts == 代码生成输出（手改即挂，加注册条目跑构建） (0.7984ms)
+  ✔ HELP.md 块 == 构建注入输出（静态文本，36 位+15 对+6 降级+L6 空位） (3.5885ms)
+  ✔ HELP 不进运行时（发货代码无 HELP 标记计算） (1.5899ms)
+  ✔ 0 张业务表进说明书（yaml+HELP 无库定义语义） (0.9991ms)
+✔ P8 combos 真相源与 HELP 注入 (3156.3393ms)
+▶ 居家拆分确认 #17
+  ✔ 21 联动 key×shape 全合法（命名空间+6 形状） (0.8964ms)
+  ✔ 定时与联动出 scope 已定 (0.2356ms)
+  ✔ 写走 receipt 口径已定 (0.1123ms)
+✔ 居家拆分确认 #17 (2.2312ms)
+▶ link-core envelope
+  ✔ 6 形状全字段取数可用（create+parse 回环） (2.2868ms)
+  ✔ 坏输入 throw、不返空数组 (0.5154ms)
+✔ link-core envelope (4.0356ms)
+▶ link-core registry 命名空间修复
+  ✔ skill.combo 解析，对不上即 fail (0.3718ms)
+✔ link-core registry 命名空间修复 (0.4842ms)
+▶ link-core runner
+  ✔ 正常取数回 envelope；失败 throw 永不返 [] (0.5446ms)
+✔ link-core runner (0.6399ms)
+▶ 备忘录联动端到端 M7
+  ✔ 读键全链路（registry→spawn 出口→envelope） (1973.4333ms)
+  ✔ 写键闭环（建→改→删） (778.1704ms)
+  ✔ HELP 现找一句可执行（框架 6 条第 2 条） (173.5378ms)
+  ✔ 对不上即 fail，不返空 (99.7681ms)
+  ✔ 仓内无 py 残留（验收第 5 条） (22.2859ms)
+✔ 备忘录联动端到端 M7 (3048.2233ms)
+▶ 备忘录拆分确认 M1
+  ✔ 10 联动 key×shape 全合法（命名空间+6 形状） (0.9269ms)
+  ✔ 定时出 scope 已定（reminder_scheduler 不迁） (0.173ms)
+✔ 备忘录拆分确认 M1 (2.0504ms)
+▶ P10 依赖方向
+  ✔ 单品→总管单向（总管零单品依赖） (3.2372ms)
+  ✔ 总管不 import 单品（源码级） (1.3705ms)
+  ✔ 单品不 import 技能实现（只读消费 dist/CLI，纯 CLI 单轨） (8.5307ms)
+✔ P10 依赖方向 (14.3356ms)
+▶ P10 槽位定案
+  ✔ id 命名空间 ilife:* + order 与 P3 定案一致 (7.1542ms)
+  ✔ 写死原生组件：无动态按需加载、无外嵌页、无数据轮询（注册有界重试除外） (5.65ms)
+  ✔ 子页不占栏：导航表仅 6 行，卡路里子页不在表内 (0.2415ms)
+✔ P10 槽位定案 (13.3461ms)
+▶ P10 设置页与导航归属
+  ✔ 设置页住单品包（总管无设置文件） (1.314ms)
+  ✔ 总管只导航：含 openTab 路径导航，不含单品内容渲染 (0.9075ms)
+  ✔ 推荐安装：缺席 tab 带补装命令与提示 (0.3085ms)
+✔ P10 设置页与导航归属 (2.7497ms)
+▶ P10 红线
+  ✔ engines>=22.13（7 包逐一） (1.0837ms)
+  ✔ dsh.bundle.patch 声明 + 官方包模式字段齐 (0.9439ms)
+  ✔ combos.yaml 不动（无 dsh 插件名渗入） (0.3714ms)
+  ✔ 技能包不动（无对插件的反向依赖） (1.8295ms)
+✔ P10 红线 (4.392ms)
+▶ P10 安装验收
+  ✔ 单命令双包：双含（正向断言，6 单品逐一） (0.8655ms)
+  ✔ 单 add 单品：bundles 无总管（负向断言，6 单品逐一） (0.4199ms)
+  ✔ 单品 dependencies 硬依赖总管（开发兜底声明仍在） (1.188ms)
+  ✔ 装配行双含：cordis.patch.yml insert id/name 与包名一致 (1.2175ms)
+  ✔ 首验文档写单命令双包（6 单品逐一可查） (0.3305ms)
+✔ P10 安装验收 (5.1791ms)
+▶ scaffold
+  ✔ boundaries 冻结不断言失败 (600.7269ms)
+  ✔ 快照 == 实际拉取版 (634.4062ms)
+✔ scaffold (1236.1411ms)
+▶ 作息拆分确认 #15
+  ✔ 8 联动 key×shape 全合法（命名空间+6 形状） (0.8748ms)
+  ✔ 定时出 scope 已定（Cron/定时不迁） (0.192ms)
+  ✔ lark-cli 外置口径已定 (0.1131ms)
+✔ 作息拆分确认 #15 (2.1488ms)
+▶ skilllink 契约冻结
+  ✔ read calorie.today：exit 0 + stdout 纯 JSON envelope 全字段 (313.3267ms)
+  ✔ 未知 key：exit 3 + stdout 为空 + stderr 指 key (114.8201ms)
+  ✔ 缺 key：exit 2 用法 (94.0168ms)
+  ✔ --params 非对象：exit 非 0 (119.1616ms)
+  ✔ --html 落盘 utf8 含 section (308.2379ms)
+  ✔ doctor：exit 0 (113.4047ms)
+✔ skilllink 契约冻结 (1063.7392ms)
+▶ #47 skills-cli 导出头（卡路里样板）
+  ✔ skill-calorie：frontmatter name/description 合法 (1.533ms)
+  ✔ skill-calorie：公共安装器运行时小节存在 (0.6948ms)
+  ✔ 样板清单当前恰为 1 包（复制期扩展即改此断言） (1.1348ms)
+✔ #47 skills-cli 导出头（卡路里样板） (4.3987ms)
+ℹ tests 1102
+ℹ suites 131
+ℹ pass 1076
+ℹ fail 26
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28846.6634
+
+✖ failing tests:
+
+test at packages\plugin-bill-ilife\test\smoke.test.mjs:50:3
+✖ #50 envelope 契约：SKILL 直执行 bill.help.lookup 回执 key/shape/data 全字段（空库安全） (2177.3119ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-bill-ilife/test/smoke.test.mjs:53:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\plugin-bill-ilife\test\smoke.test.mjs:59:3
+✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1654.6635ms)
+  Error [SkillBridgeError]: 出口非 JSON
+      at readViaCli (file:///D:/ilife/packages/plugin-bill-ilife/dist/bridge.js:82:15)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-bill-ilife/test/smoke.test.mjs:67:74)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    code: 'bad-json'
+  }
+
+test at packages\plugin-calorie\test\smoke.test.mjs:54:3
+✖ #48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段 (1503.9152ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-calorie/test/smoke.test.mjs:57:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\plugin-chef\test\smoke.test.mjs:50:3
+✖ #50 envelope 契约：SKILL 直执行 chef.help.lookup 回执 key/shape/data 全字段（空库安全） (1575.2953ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-chef/test/smoke.test.mjs:53:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\plugin-chef\test\smoke.test.mjs:59:3
+✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1597.7554ms)
+  Error [SkillBridgeError]: 出口非 JSON
+      at readViaCli (file:///D:/ilife/packages/plugin-chef/dist/bridge.js:82:15)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-chef/test/smoke.test.mjs:67:74)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    code: 'bad-json'
+  }
+
+test at packages\plugin-home-ilife\test\smoke.test.mjs:50:3
+✖ #50 envelope 契约：SKILL 直执行 home.help.lookup 回执 key/shape/data 全字段（空库安全） (1359.5787ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-home-ilife/test/smoke.test.mjs:53:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\plugin-home-ilife\test\smoke.test.mjs:59:3
+✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1784.7217ms)
+  Error [SkillBridgeError]: 出口非 JSON
+      at readViaCli (file:///D:/ilife/packages/plugin-home-ilife/dist/bridge.js:82:15)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-home-ilife/test/smoke.test.mjs:67:74)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    code: 'bad-json'
+  }
+
+test at packages\plugin-memo-ilife\test\smoke.test.mjs:60:3
+✖ #50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全） (1446.2041ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-memo-ilife/test/smoke.test.mjs:63:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\plugin-schedule-ilife\test\smoke.test.mjs:50:3
+✖ #50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全） (1787.1223ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-schedule-ilife/test/smoke.test.mjs:53:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\plugin-schedule-ilife\test\smoke.test.mjs:59:3
+✖ #50 envelope 契约：面板路 readViaCli 同键打通不返空 (1899.4072ms)
+  Error [SkillBridgeError]: 出口非 JSON
+      at readViaCli (file:///D:/ilife/packages/plugin-schedule-ilife/dist/bridge.js:82:15)
+      at TestContext.<anonymous> (file:///D:/ilife/packages/plugin-schedule-ilife/test/smoke.test.mjs:67:74)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    code: 'bad-json'
+  }
+
+test at packages\skill-calorie\test\db-readonly-93.test.mjs:271:1
+✖ #93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接线保留 openDb 分支） (971.6616ms)
+  AssertionError [ERR_ASSERTION]: 缺数据仍是 exit 4（缺失阻断不返空）
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-calorie/test/db-readonly-93.test.mjs:276:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\skill-calorie\test\db-readonly-93.test.mjs:281:1
+✖ #93 ① 64 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4） (1281.1631ms)
+  AssertionError [ERR_ASSERTION]: 每个读键都跑到（缺失＝该键把进程 exit 掉了，参数不全）
+  + actual - expected
+  
+  + []
+  - [
+  -   'calorie.today',
+  -   'calorie.view.home',
+  -   'calorie.view.diet',
+  -   'calorie.view.exercise',
+  -   'calorie.view.goal',
+  -   'calorie.view.goal-config',
+  -   'calorie.view.goal-recommend',
+  -   'calorie.view.goal-weight',
+  -   'calorie.view.goal-progress',
+  -   'calorie.view.goal-status',
+  -   'calorie.view.combined',
+  -   'calorie.view.deficit',
+  -   'calorie.view.diet-review',
+  -   'calorie.view.health',
+  -   'calorie.view.ranking',
+  -   'calorie.view.library',
+  -   'calorie.view.search',
+  -   'calorie.photo.list',
+  -   'calorie.photo.detail',
+  -   'calorie.photo.compare',
+  -   'calorie.photo.gif',
+  -   'calorie.help.center',
+  -   'calorie.help.lookup',
+  -   'calorie.history',
+  -   'calorie.view.weight',
+  -   'calorie.view.weight-history',
+  -   'calorie.view.weight-compare',
+  -   'calorie.view.weight-review',
+  -   'calorie.view.volatility',
+  -   'calorie.view.body-composition',
+  -   'calorie.view.body-measure',
+  -   'calorie.view.plan',
+  -   'calorie.view.plan-wizard',
+  -   'calorie.view.exercise-goal',
+  -   'calorie.view.goal-expiring',
+  -   'calorie.view.goal-predict',
+  -   'calorie.view.goal-vs-actual',
+  -   'calorie.view.predict',
+  -   'calorie.view.anomaly',
+  -   'calorie.view.contraindication',
+  -   'calorie.view.dedupe',
+  -   'calorie.view.profile',
+  -   'calorie.view.exercise-strength',
+  -   'calorie.view.exercise-cardio',
+  -   'calorie.view.exercise-distribution',
+  -   'calorie.view.exercise-recap',
+  -   'calorie.view.exercise-review',
+  -   'calorie.view.exercise-trend',
+  -   'calorie.view.nutrition-ratio',
+  -   'calorie.view.nutrition-detail',
+  -   'calorie.view.source-stats',
+  -   'calorie.view.today-water',
+  -   'calorie.view.batch-import-preview',
+  -   'calorie.view.calorie-trend',
+  -   'calorie.view.lint-health',
+  -   'calorie.view.long-trend',
+  -   'calorie.view.nutrition-analysis',
+  -   'calorie.view.process-progress',
+  -   'calorie.view.review-template',
+  -   'calorie.view.six-factors',
+  -   'calorie.view.measure-wizard',
+  -   'calorie.view.composition-wizard',
+  -   'calorie.view.photo-log-wizard',
+  -   'calorie.view.gif-planner'
+  - ]
+  
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-calorie/test/db-readonly-93.test.mjs:289:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [
+      'calorie.today',                      'calorie.view.home',
+      'calorie.view.diet',                  'calorie.view.exercise',
+      'calorie.view.goal',                  'calorie.view.goal-config',
+      'calorie.view.goal-recommend',        'calorie.view.goal-weight',
+      'calorie.view.goal-progress',         'calorie.view.goal-status',
+      'calorie.view.combined',              'calorie.view.deficit',
+      'calorie.view.diet-review',           'calorie.view.health',
+      'calorie.view.ranking',               'calorie.view.library',
+      'calorie.view.search',                'calorie.photo.list',
+      'calorie.photo.detail',               'calorie.photo.compare',
+      'calorie.photo.gif',                  'calorie.help.center',
+      'calorie.help.lookup',                'calorie.history',
+      'calorie.view.weight',                'calorie.view.weight-history',
+      'calorie.view.weight-compare',        'calorie.view.weight-review',
+      'calorie.view.volatility',            'calorie.view.body-composition',
+      'calorie.view.body-measure',          'calorie.view.plan',
+      'calorie.view.plan-wizard',           'calorie.view.exercise-goal',
+      'calorie.view.goal-expiring',         'calorie.view.goal-predict',
+      'calorie.view.goal-vs-actual',        'calorie.view.predict',
+      'calorie.view.anomaly',               'calorie.view.contraindication',
+      'calorie.view.dedupe',                'calorie.view.profile',
+      'calorie.view.exercise-strength',     'calorie.view.exercise-cardio',
+      'calorie.view.exercise-distribution', 'calorie.view.exercise-recap',
+      'calorie.view.exercise-review',       'calorie.view.exercise-trend',
+      'calorie.view.nutrition-ratio',       'calorie.view.nutrition-detail',
+      'calorie.view.source-stats',          'calorie.view.today-water',
+      'calorie.view.batch-import-preview',  'calorie.view.calorie-trend',
+      'calorie.view.lint-health',           'calorie.view.long-trend',
+      'calorie.view.nutrition-analysis',    'calorie.view.process-progress',
+      'calorie.view.review-template',       'calorie.view.six-factors',
+      'calorie.view.measure-wizard',        'calorie.view.composition-wizard',
+      'calorie.view.photo-log-wizard',      'calorie.view.gif-planner'
+    ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at packages\skill-calorie\test\sport-homogeneity-109.test.mjs:280:1
+✖ #109 命名底座可用：运动总览落点＋回传一致＋产物为全文档 (242.9306ms)
+  AssertionError [ERR_ASSERTION]: stderr=
+  
+  3221225477 !== 0
+  
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-calorie/test/sport-homogeneity-109.test.mjs:283:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3221225477,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\calorie-routing-81.test.mjs:293:3
+✖ FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 exit 0 ＋ 需参数键必须带 --params） (2.0697ms)
+  AssertionError [ERR_ASSERTION]: smoke 快照存在非零记录（exec 桶应全部 exit 0）
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///D:/ilife/test/calorie-routing-81.test.mjs:300:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\client-bundle-48.test.mjs:65:3
+✖ dsh-bill-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归） (2.094ms)
+  D:\ilife\packages\plugin-bill-ilife\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:67:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17)
+
+test at test\client-bundle-48.test.mjs:74:3
+✖ dsh-bill-ilife client：factory 可物化，导出 apply/inject，无 node 依赖 (0.7726ms)
+  D:\ilife\packages\plugin-bill-ilife\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:76:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at test\client-bundle-48.test.mjs:104:3
+✖ dsh-bill-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.5637ms)
+  AssertionError [ERR_ASSERTION]: dsh-bill-ilife 产物缺 loader 注册头
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test\client-bundle-48.test.mjs:65:3
+✖ dsh-chef client：classic 执行并注册自身 id（#48 整批 crash 回归） (0.9396ms)
+  D:\ilife\packages\plugin-chef\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:67:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at test\client-bundle-48.test.mjs:74:3
+✖ dsh-chef client：factory 可物化，导出 apply/inject，无 node 依赖 (0.8467ms)
+  D:\ilife\packages\plugin-chef\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:76:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at test\client-bundle-48.test.mjs:104:3
+✖ dsh-chef client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.4305ms)
+  AssertionError [ERR_ASSERTION]: dsh-chef 产物缺 loader 注册头
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test\client-bundle-48.test.mjs:65:3
+✖ dsh-home-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归） (0.8083ms)
+  D:\ilife\packages\plugin-home-ilife\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:67:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at test\client-bundle-48.test.mjs:74:3
+✖ dsh-home-ilife client：factory 可物化，导出 apply/inject，无 node 依赖 (0.7079ms)
+  D:\ilife\packages\plugin-home-ilife\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:76:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at test\client-bundle-48.test.mjs:104:3
+✖ dsh-home-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.3596ms)
+  AssertionError [ERR_ASSERTION]: dsh-home-ilife 产物缺 loader 注册头
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test\client-bundle-48.test.mjs:65:3
+✖ dsh-schedule-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归） (0.75ms)
+  D:\ilife\packages\plugin-schedule-ilife\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:67:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at test\client-bundle-48.test.mjs:74:3
+✖ dsh-schedule-ilife client：factory 可物化，导出 apply/inject，无 node 依赖 (1.1205ms)
+  D:\ilife\packages\plugin-schedule-ilife\dist\client.js:7
+  import { TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
+  ^^^^^^
+  
+  SyntaxError: Cannot use import statement outside a module
+      at new Script (node:vm:117:7)
+      at executeClassic (file:///D:/ilife/test/client-bundle-48.test.mjs:59:18)
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:76:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at test\client-bundle-48.test.mjs:104:3
+✖ dsh-schedule-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像） (0.434ms)
+  AssertionError [ERR_ASSERTION]: dsh-schedule-ilife 产物缺 loader 注册头
+      at TestContext.<anonymous> (file:///D:/ilife/test/client-bundle-48.test.mjs:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Test failed. See above for more details.
+LOCK-RELEASED ticket=91 runId=516c3705-609f-426d-88f8-05bf994a4644 exit=1
+RESULT: ticket=91 runId=516c3705-609f-426d-88f8-05bf994a4644 waitedMs=1 exit=1

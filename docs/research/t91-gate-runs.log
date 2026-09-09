@@ -1,0 +1,33 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：91｜since：2026-09-09T14:09:30Z｜until：2026-09-09T14:13:00Z｜条目数：25｜导出时间：2026-09-09T14:13:56.397Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=91 runId=3c3c067d-1051-49a4-9f30-26bd2c443704 cmd="pnpm build" waitedMs=20022 exit=0 pid=36756 at=2026-09-09T14:09:36.782Z
+RUN ticket=91 runId=a92a36ff-d131-4b80-b330-dd68027ff3f7 cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=0 exit=1 pid=33904 at=2026-09-09T14:10:20.826Z
+RUN ticket=91 runId=38a60227-186c-4569-b6bf-671d70bc4412 cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=1 exit=1 pid=36460 at=2026-09-09T14:10:38.993Z
+RUN ticket=91 runId=f2f0e8a6-4703-480e-91e8-66840f5dc6ff cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=0 exit=1 pid=34896 at=2026-09-09T14:10:46.173Z
+RUN ticket=91 runId=5f86cec3-9e24-4268-b862-9f9dbccff07e cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=0 exit=0 pid=36796 at=2026-09-09T14:10:52.993Z
+RUN ticket=91 runId=440d51a7-2908-43c7-ab05-03af2abb3628 cmd="node --test packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/render-copy-90.test.mjs packages/skill-calorie/test/render-t10.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs packages/skill-calorie/test/db-readonly-93.test.mjs" waitedMs=0 exit=0 pid=25332 at=2026-09-09T14:10:59.859Z
+RUN ticket=91 runId=7034c73f-df7d-4fe8-a33e-fe2490af6bb7 cmd="git commit --only packages/skill-calorie/src/cli/cmd_read.ts packages/skill-calorie/test/help-center-91.test.mjs -F .scratch/t91/commit-1.txt" waitedMs=0 exit=1 pid=33532 at=2026-09-09T14:11:09.500Z
+RUN ticket=91 runId=80f76b2e-4f2d-4d02-89ab-8824f5dea7d1 cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/src/cli/cmd_read.ts packages/skill-calorie/test/help-center-91.test.mjs; git diff --cached --name-only; git commit -F .scratch/t91/commit-1.txt\"" waitedMs=0 exit=1 pid=33876 at=2026-09-09T14:11:12.277Z
+RUN ticket=91 runId=e8332510-e169-4c69-ae5e-feb4a6de0549 cmd="powershell -NoProfile -Command \"git add packages/skill-calorie/src/cli/cmd_read.ts packages/skill-calorie/test/help-center-91.test.mjs; git diff --cached --name-only; git commit -F .scratch/t91/commit-1.txt\"" waitedMs=0 exit=0 pid=16056 at=2026-09-09T14:11:15.465Z
+RUN ticket=91 runId=213351bf-5301-4c57-a594-7330c0b156f0 cmd="pnpm build" waitedMs=0 exit=0 pid=34064 at=2026-09-09T14:11:27.987Z
+RUN ticket=91 runId=bb5e613b-ccb7-4786-80be-3f32b86b0da1 cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=0 exit=1 pid=6512 at=2026-09-09T14:11:29.423Z
+RUN ticket=91 runId=b507e543-47d9-4116-b5fe-f936d88576c4 cmd="pnpm build" waitedMs=0 exit=0 pid=34628 at=2026-09-09T14:11:34.547Z
+RUN ticket=91 runId=9d8dfd79-ce10-4390-ac17-447cf0053daa cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=0 exit=0 pid=26244 at=2026-09-09T14:11:36.191Z
+RUN ticket=91 runId=a8d6091b-ae93-4dfb-b24e-c6e34fe98dae cmd="pnpm build" waitedMs=0 exit=0 pid=36848 at=2026-09-09T14:11:42.522Z
+RUN ticket=91 runId=e06871f9-11fb-4d60-85b0-7f87058edd90 cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=0 exit=1 pid=34820 at=2026-09-09T14:11:43.880Z
+RUN ticket=91 runId=1c46eb37-65c3-4f59-9d36-ea10ef572e7e cmd="pnpm build" waitedMs=1 exit=0 pid=35732 at=2026-09-09T14:11:48.948Z
+RUN ticket=91 runId=0f9b929f-e230-461d-93ff-fdd10cb53e66 cmd="node --test packages/skill-calorie/test/help-center-91.test.mjs" waitedMs=0 exit=0 pid=31364 at=2026-09-09T14:11:50.562Z
+RUN ticket=91 runId=acd6af12-60db-4e26-b930-dbb76ec725d7 cmd="pnpm build" waitedMs=1 exit=0 pid=19420 at=2026-09-09T14:11:55.148Z
+RUN ticket=91 runId=1afe8667-9863-42aa-9ad4-85de4a2aed71 cmd="pnpm boundaries" waitedMs=0 exit=0 pid=37684 at=2026-09-09T14:11:56.037Z
+RUN ticket=91 runId=da8a89be-2dca-4566-99da-caee4b1ec96f cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=33920 at=2026-09-09T14:11:56.904Z
+RUN ticket=91 runId=80453eeb-78e9-4f38-aa2c-6ca2ea1d53cb cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=31016 at=2026-09-09T14:11:57.771Z
+RUN ticket=91 runId=516c3705-609f-426d-88f8-05bf994a4644 cmd="pnpm test" waitedMs=1 exit=1 pid=2128 at=2026-09-09T14:12:33.082Z
+RUN ticket=91 runId=d6f24450-297f-458b-a239-095711d79d2b cmd="pnpm build" waitedMs=0 exit=0 pid=27692 at=2026-09-09T14:12:44.609Z
+RUN ticket=91 runId=58586875-5ac9-4526-b027-d9d3eb56f584 cmd="node --test packages/skill-calorie/test/sport-homogeneity-109.test.mjs" waitedMs=0 exit=0 pid=37460 at=2026-09-09T14:12:46.756Z
+RUN ticket=91 runId=e8618cd9-fb1f-4491-b750-5540cf86116a cmd="node --test packages/skill-calorie/test/sport-homogeneity-109.test.mjs" waitedMs=0 exit=0 pid=33808 at=2026-09-09T14:12:48.877Z
+```
