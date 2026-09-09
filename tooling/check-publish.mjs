@@ -70,6 +70,30 @@ let bad = 0;
 const ok = (m) => console.log('OK: ' + m);
 const fail = (m) => { console.error('FAIL: ' + m); bad++; };
 
+/** #123：依赖范围断言版本无关化。
+ *
+ * 旧实现硬编码 `/^\^0\.1\./`（:84,:86）→ 发版一改 range（`^0.1.0` → `^0.2.0`）门禁即红，
+ * 与「发版」这件事本身冲突。新实现保留两条**有意义**的语义、去掉版本硬编码：
+ *   ① 必须声明该依赖（缺失即红）；
+ *   ② 声明的 caret 的 `major.minor` 必须等于该依赖在**工作区**的实际版本
+ *      （`^0.2.0` ↔ 工作区 `0.2.0` 通过；`^0.1.0` ↔ 工作区 `0.2.0` 红）——即「同版本线」，
+ *      比 `/^\^\d+\.\d+\.\d+$/`（会放行 `^9.9.9`，R1 FX-R1-10）强，且不含任何具体版本号。
+ *   形态上只认 `^major.minor.patch`：`workspace:`（:78 另查）、tag、`>=…<…` 区间一律红。
+ */
+function assertSameVersionLine(dependent, depName, range) {
+  if (!range) { fail(dependent + ' 未声明 ' + depName); return; }
+  if (!DIRM[depName]) { fail(dependent + ' 的 ' + depName + ' 不在本仓包清单（无法比对工作区版本）'); return; }
+  const want = pkgJson(depName).version;
+  const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(range);
+  if (!m) { fail(dependent + ' 的 ' + depName + ' 范围「' + range + '」非 ^major.minor.patch 形态'); return; }
+  const [maj, min] = String(want).split('.');
+  if (m[1] !== maj || m[2] !== min) {
+    fail(dependent + ' 的 ' + depName + ' 范围「' + range + '」与工作区版本 ' + want + ' 的 major.minor 不一致');
+    return;
+  }
+  ok(dependent + ' 声明 ' + depName + ' ' + range + '（工作区 ' + want + '，同版本线）');
+}
+
 function gatePre() {
   const names = SCOPE ? [...SCOPE] : readdirSync(join(root, 'packages'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => JSON.parse(readFileSync(join(root, 'packages', d, 'package.json'), 'utf8'))).filter((j) => j && j.name && !j.private).map((j) => j.name);
   for (const n of names) {
@@ -81,10 +105,8 @@ function gatePre() {
   for (const plug of PLUGINS.filter(inScope)) {
     const dep = pkgJson(plug).dependencies || {};
     const skill = PLUGIN_OF[plug];
-    if (!/^\^0\.1\./.test(dep['dsh-life-pack'] || '')) fail(plug + ' 未声明 dsh-life-pack ^0.1.x');
-    else ok(plug + ' 声明 dsh-life-pack ' + dep['dsh-life-pack']);
-    if (!/^\^0\.1\./.test(dep[skill] || '')) fail(plug + ' 未声明 ' + skill + ' ^0.1.x');
-    else ok(plug + ' 声明 ' + skill + ' ' + dep[skill]);
+    assertSameVersionLine(plug, 'dsh-life-pack', dep['dsh-life-pack']);
+    assertSameVersionLine(plug, skill, dep[skill]);
   }
 }
 

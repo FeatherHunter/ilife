@@ -19,7 +19,7 @@ npx skills@latest add FeatherHunter/ilife
 - 样板：只给 `packages/skill-calorie/SKILL.md` 加了头（`name: skill-calorie`）+
   末尾「公共安装器运行时」小节；现有布局、base 三件套、依赖一律没动。
 - 本仓库 `dist/` 不进 git：装完目录里只有 SKILL.md + 源码 + 模板，
-  没有可执行文件；运行时走 npm（`skill-calorie@0.1.1` 已发布）。
+  没有可执行文件；运行时走 npm（`skill-calorie@0.2.0` 已发布）。
   「不走 npm」的只是 skill 发现这一步。
 
 ## 常用变体
@@ -51,9 +51,9 @@ npx skills@latest list -a opencode --json                     # 查已装
    - 同命令加 `--html <tmp>/home.html` → exit 0，落盘 2488 字节，头为 `<section class="ilife-page" data-skill="calorie" …>`。
 5. 回归：`test/skills-export-47.test.mjs` 钉死导出头（frontmatter name=目录名、description 非空、HELP 标记块仍在、运行时小节存在；仅静态导出头，真跑/落点/端到端不在单测覆盖，见测试头注记）。
 
-## 版本钉死登记（随 0.1.1 重发同步）
+## 版本钉死登记（随 0.1.1 重发同步；现为 0.2.0）
 
-- 三处版本硬编码已随 `0.1.1` 同步改完（SKILL.md 运行时小节、本文档发现小节、测试版本断言）；阻塞小节保留 0.1.0 历史记录备查。
+- 三处版本硬编码已随 `0.1.1` 同步改完（SKILL.md 运行时小节、本文档发现小节、测试版本断言）；阻塞小节保留 0.1.0 历史记录备查。`#123` 发版窗口已把同一三处硬编码同步升到 `0.2.0`（`packages/skill-calorie/SKILL.md`、本文档发现小节、`test/skills-export-47.test.mjs`）。
 
 ## 已发布包阻塞（发版流修，不在本票硬上）
 

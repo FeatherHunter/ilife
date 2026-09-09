@@ -30,8 +30,8 @@ describe('dsh-calorie 烟囱', () => {
   it('#48 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace）', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.1\./);
-    assert.match(dep['skill-calorie'] ?? '', /^\^0\.1\./);
+    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.2\./);
+    assert.match(dep['skill-calorie'] ?? '', /^\^0\.2\./);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
   it('#48 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {
