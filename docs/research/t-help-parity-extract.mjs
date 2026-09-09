@@ -68,6 +68,38 @@ function parseHtml(file, label) {
   // DOM 计数只在**标记**上做：剥掉 <script>／<style> 的内容，避免 JS 模板串与 CSS 选择器污染计数。
   const markup = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, '');
   const countMarkup = (re) => (markup.match(re) || []).length;
+  const bOf = (x) => Buffer.byteLength(x, 'utf8');
+  // 块口径（含标签）与内容口径（不含标签）**双记**：R-3 · B-S2-4／A-S3-1 要求体积等式闭合可核。
+  const scriptBlocksAll = [...s.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+  const styleBlocksAll = [...s.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)];
+  const payloadBlocks = scriptBlocksAll.filter((m) => /type="application\/json"/.test(m[1]));
+  const helpersBlocks = scriptBlocksAll.filter((m) => !/type="application\/json"/.test(m[1]));
+  const sizeOf = {
+    markup: bOf(markup),
+    payloadBlock: payloadBlocks.reduce((a, m) => a + bOf(m[0]), 0),
+    payloadInner: payloadBlocks.reduce((a, m) => a + bOf(m[2]), 0),
+    styleBlock: styleBlocksAll.reduce((a, m) => a + bOf(m[0]), 0),
+    styleInner: styleBlocksAll.reduce((a, m) => a + bOf(m[1]), 0),
+    jsBlock: helpersBlocks.reduce((a, m) => a + bOf(m[0]), 0),
+    jsInner: helpersBlocks.reduce((a, m) => a + bOf(m[2]), 0),
+    payloadBlockCount: payloadBlocks.length,
+    styleBlockCount: styleBlocksAll.length,
+    jsBlockCount: helpersBlocks.length,
+  };
+  sizeOf.blockSum = sizeOf.markup + sizeOf.payloadBlock + sizeOf.styleBlock + sizeOf.jsBlock;
+  sizeOf.innerSum = sizeOf.markup + sizeOf.payloadInner + sizeOf.styleInner + sizeOf.jsInner;
+  sizeOf.total = Buffer.byteLength(s, 'utf8');
+  sizeOf.blockResidual = sizeOf.total - sizeOf.blockSum;
+  sizeOf.innerResidual = sizeOf.total - sizeOf.innerSum;
+  const actionIds = {};
+  for (const m of markup.matchAll(/data-action-id="([^"]+)"/g)) actionIds[m[1]] = (actionIds[m[1]] || 0) + 1;
+  // 卡级 <code class=cli> 与 Scene.id 的逐字关系（R-3 · A-1／B-S3-2：435/436 逐字，1 条实体转义）
+  const cardCodes = new Map();
+  for (const m of markup.matchAll(/<article class="ilife-help-shell-card" data-scene-id="([^"]*)"[\s\S]*?<code class="ilife-help-shell-cli">([\s\S]*?)<\/code>/g)) cardCodes.set(m[1], m[2]);
+  const cardFields = new Set();
+  for (const m of markup.matchAll(/<article class="ilife-help-shell-card" data-scene-id="([^"]*)"[\s\S]*?<\/article>/g)) if (/ilife-help-shell-field/.test(m[0])) cardFields.add(m[1]);
+  const unesc = (x) => String(x).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  const escAttr = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const scenes = [];
   const groups = data?.groups ?? data?.categories ?? [];
   for (const g of groups) {
@@ -106,6 +138,21 @@ function parseHtml(file, label) {
   }));
   const subgroupDigest = groups.flatMap((g) => (g.subgroups ?? []).map((sg) => ({ gid: g.id, id: sg.id, label: sg.label, scenes: (sg.scenes ?? []).length })));
 
+  /* 卡级 <code> ↔ Scene.id 逐字关系（R-3 · A-1／B-S3-2）：
+     属性值经 HTML 实体转义，故 raw 匹配对含 `<`／`"` 的 id 需先反转义再判等。 */
+  let cardCodeVerbatimEq = 0;
+  let cardCodeUnescapeEq = 0;
+  const cardCodeDiff = [];
+  for (const sc of scenes) {
+    // 卡面属性值经 HTML 实体转义 → 以「转义后的 id」为键查表（含 `<`／`"` 的 id 才能命中）。
+    const code = cardCodes.get(sc.id) ?? cardCodes.get(escAttr(sc.id));
+    if (code === undefined) continue;
+    if (code === sc.id) cardCodeVerbatimEq++;
+    if (unesc(code) === sc.id) cardCodeUnescapeEq++;
+    else cardCodeDiff.push({ id: sc.id, code: String(code) });
+  }
+  const cardsWithSheetField = scenes.filter((sc) => cardFields.has(sc.id) || cardFields.has(escAttr(sc.id))).length;
+
   return {
     label,
     file,
@@ -113,7 +160,22 @@ function parseHtml(file, label) {
     lines: s.split('\n').length,
     sha256: sha256(buf),
     utf8NoBom: !(buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf),
+    derived: {
+      cliCount: scenes.filter((x) => x.cli !== null).length,
+      cliDatedCount: scenes.filter((x) => x.cli !== null && /\d{4}-\d{2}-\d{2}/.test(x.cli)).length,
+      cliUndatedCount: scenes.filter((x) => x.cli !== null && !/\d{4}-\d{2}-\d{2}/.test(x.cli)).length,
+      cliSampleDated: scenes.filter((x) => x.cli !== null && /\d{4}-\d{2}-\d{2}/.test(x.cli)).slice(0, 3).map((x) => ({ wake_word: x.wake_word, cli: x.cli })),
+      noCliCount: scenes.filter((x) => x.cli === null).length,
+      wakeWordUnique: new Set(scenes.map((x) => x.wake_word)).size,
+      wakeWordDups: Object.entries(scenes.reduce((acc, x) => { acc[x.wake_word] = (acc[x.wake_word] ?? 0) + 1; return acc; }, {})).filter((x) => x[1] > 1),
+      promptWithLt: scenes.filter((x) => (x.prompt_template ?? '').includes('<')).length,
+      sceneIdWithLt: scenes.filter((x) => x.id.includes('<')).map((x) => x.id),
+      subtitle: data?.subtitle ?? null,
+      metaBlockIds: (data?.meta_blocks ?? []).map((x) => x.id),
+      metaBlockEntries: (data?.meta_blocks ?? []).flatMap((blk) => [...String(blk.html ?? '').matchAll(/data-view-entry="([^"]+)"/g)].map((m) => m[1])),
+    },
     payload: payloadM ? { scriptId: payloadM[1], bytes: Buffer.byteLength(payloadM[2], 'utf8'), topKeys: Object.keys(data ?? {}) } : null,
+    size: sizeOf,
     meta: data
       ? { skill_name: data.skill_name ?? null, title: data.title ?? null, subtitle: data.subtitle ?? null, contactKeys: Object.keys(data.contact ?? {}), meta_blocks: data.meta_blocks ?? null }
       : null,
@@ -147,6 +209,16 @@ function parseHtml(file, label) {
       viewEntries: countMarkup(/data-view-entry=/g),
       staticCardsJson: null,
       jsTemplateCards: count(/class="mini"/g),
+      // R-3 新增：按钮归因（静态 vs 运行时注入）＋卡级 code 逐字关系
+      staticActionIds: actionIds,
+      staticButtonsWithActionId: Object.values(actionIds).reduce((a, x) => a + x, 0),
+      staticCardCopyButtons: countMarkup(/class="ilife-help-shell-card-copy"/g),
+      cardCodeVerbatimEq,
+      cardCodeUnescapeEq,
+      cardCodeDiff,
+      cardsWithSheetField,
+      jsCreateButton: (js.match(/createElement\("button"\)|createElement\('button'\)/g) || []).length,
+      jsCreateInput: (js.match(/createElement\("input"\)|createElement\('input'\)/g) || []).length,
     },
     css: {
       bytes: Buffer.byteLength(css, 'utf8'),
@@ -157,6 +229,11 @@ function parseHtml(file, label) {
       mediaQueries: [...new Set([...css.matchAll(/@media[^{]*\{/g)].map((m) => m[0].replace(/\s+/g, ' ').trim()))],
       tnum: /tnum/.test(css),
       fontStack: /-apple-system/.test(css) && /PingFang SC/.test(css),
+      fontStackDetail: {
+        appleSystem: /-apple-system/.test(css),
+        pingFang: /PingFang/.test(css),
+        fontFamilyRules: [...css.matchAll(/font-family\s*:[^;}]*/g)].map((m) => m[0].trim()).slice(0, 8),
+      },
       markRule: /(^|[},])\s*mark\b/.test(css),
     },
     js: {
@@ -281,6 +358,27 @@ if (manifest) {
     ok(fileMode.dom.cardsNew === 436, '新侧静态卡 436/436（#88 交付形态）', 'cardsNew=' + fileMode.dom.cardsNew);
     ok(fileMode.dom.codeCli === 436, '新侧卡级 <code class=cli> 436/436（L-09 显示 Scene.id）', 'codeCli=' + fileMode.dom.codeCli);
     ok((fileMode.sceneKeyHist.cli_field ?? 0) === 341, '新侧 sheet「可执行命令」341/436（#106）', 'cliField=' + (fileMode.sceneKeyHist.cli_field ?? 0));
+    // ── R-3 加固断言（A-1／A-4／B-S2-4／B-S2-5／B-S2-6／B-S3-4／B-S3-6）────────────
+    ok(fileMode.dom.cardCodeVerbatimEq === 435 && fileMode.dom.cardCodeUnescapeEq === 436,
+      '卡级 code ↔ Scene.id：435/436 逐字 ＋ 1 条 HTML 实体转义（反转义后 436/436）',
+      `verbatim=${fileMode.dom.cardCodeVerbatimEq} unescape=${fileMode.dom.cardCodeUnescapeEq}`);
+    ok(fileMode.dom.staticButtonsWithActionId === 1308 && fileMode.dom.staticCardCopyButtons === 0,
+      '每卡 3 按钮＝**静态 markup** 1,308 个（data-action-id 各 436）；卡头第 4 个按钮为运行时注入',
+      `staticActionId=${fileMode.dom.staticButtonsWithActionId} staticCardCopy=${fileMode.dom.staticCardCopyButtons} jsCreateButton=${fileMode.dom.jsCreateButton}`);
+    ok(fileMode.size.blockResidual === 0, '体积块口径闭合（markup＋payload＋style＋js 块 ＝ 文件字节）',
+      `${fileMode.size.blockSum} vs ${fileMode.size.total} residual=${fileMode.size.blockResidual}`);
+    ok(fileMode.size.innerResidual === fileMode.size.total - fileMode.size.innerSum && fileMode.size.innerResidual > 0,
+      '体积内容口径残差＝标签壳（>0，可解释）', 'innerResidual=' + fileMode.size.innerResidual);
+    ok(fileMode.derived.cliDatedCount === 222 && fileMode.derived.cliCount === 341,
+      'CLI 参数含冻结绝对日期的条数 222/341（B-S2-5）', `${fileMode.derived.cliDatedCount}/${fileMode.derived.cliCount}`);
+    ok(fileMode.derived.wakeWordUnique === 434 && fileMode.derived.wakeWordDups.length === 1,
+      'wake_word 非唯一：434/436 唯一（记身材照×3）→ 脚本禁用 wake_word 作 join 键（B-S3-6）',
+      JSON.stringify(fileMode.derived.wakeWordDups));
+    ok(fileMode.derived.promptWithLt === 0, '产物侧 prompt_template 内裸 `<` 命中 0（A-2／B-S2-1：源码侧 13 处）', 'promptWithLt=' + fileMode.derived.promptWithLt);
+    ok(fileMode.derived.metaBlockIds.length === 1 && fileMode.payload.topKeys.includes('meta_blocks'),
+      'payload 顶层键新增 meta_blocks（#107）', fileMode.payload.topKeys.join(','));
+    ok(fileMode.css.fontStackDetail.appleSystem === false && fileMode.css.fontStackDetail.pingFang === false,
+      '新侧无正文字体栈（H-06 断言形式不成立，登记偏离）', JSON.stringify(fileMode.css.fontStackDetail.fontFamilyRules));
   }
   const inlineMode = newParses.inline;
   if (inlineMode) ok(inlineMode.payload === null, 'inline 态无 payload JSON（片段交付）', String(inlineMode.payload));

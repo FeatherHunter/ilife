@@ -145,6 +145,8 @@ for (const spec of specs) {
     exit: r.exit,
     stdoutLines: r.stdoutLines,
     stdoutBytes: r.stdoutBytes,
+    // R-3 · A-S3-3：stdout 字节含 `data.output` 绝对路径 → 随 SKILLS_DB_PATH／文件名长度变化（Δ＝2×ΔpathLen）。
+    stdoutBytesNote: 'env-dependent: stdoutBytes = 基线 + 2×Δ(SKILLS_DB_PATH+文件名长度)；换 DB 路径即变，勿当固定值比对',
     envelopeKeys: env ? Object.keys(env) : [],
     dataKeys: env?.data ? Object.keys(env.data) : [],
     dataMode: env?.data?.mode ?? null,
@@ -186,6 +188,29 @@ if (f && i2 && t) {
     const m = s.match(/<script id="[^"]+" type="application\/json">([\s\S]*?)<\/script>/);
     return m ? m[1] : null;
   };
+  /* R-3 · A-S3-4：inline **不是** file 的连续子串（payload 块插在 markup 与 helpers 之间）。
+     故改判「**分段逐字相等**」：style 块 / markup（去 script·style） / helpers 脚本 三段各自 sha256 相等，
+     并断言 inline 整串**不**出现在 file 内（把「子串」这一过强命题钉成红）。 */
+  const segOf = (s) => {
+    const styleBlocks = [...s.matchAll(/<style\b[^>]*>[\s\S]*?<\/style>/g)].map((m) => m[0]);
+    const scripts = [...s.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+    const helpers = scripts.filter((m) => !/type="application\/json"/.test(m[1])).map((m) => m[0]);
+    const markup = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, '');
+    // **内容段**＝`<section id="ilife-help-shell">…</section>`（file 的 doc 外壳／inline 的缺省外壳不参与比对）
+    const firstSection = markup.indexOf('<section');
+    const lastSection = markup.lastIndexOf('</section>');
+    const content = firstSection >= 0 && lastSection > firstSection ? markup.slice(firstSection, lastSection + '</section>'.length) : '';
+    return {
+      style: sha256(styleBlocks.join('\n')),
+      content: sha256(content),
+      helpers: sha256(helpers.join('')),
+      styleBytes: Buffer.byteLength(styleBlocks.join('\n'), 'utf8'),
+      contentBytes: Buffer.byteLength(content, 'utf8'),
+      helpersBytes: Buffer.byteLength(helpers.join(''), 'utf8'),
+    };
+  };
+  const fileSeg = segOf(fileHtml);
+  const inlineSeg = segOf(inlineHtml);
   manifest.sameSource = {
     fileHasDoctype: /^<!DOCTYPE html>/i.test(fileHtml),
     inlineHasDoctype: /^<!DOCTYPE html>/i.test(inlineHtml),
@@ -193,7 +218,14 @@ if (f && i2 && t) {
     inlineHasPayload: /type="application\/json"/.test(inlineHtml),
     filePayloadSha256: payloadOf(fileHtml) ? sha256(payloadOf(fileHtml)) : null,
     inlinePayloadSha256: payloadOf(inlineHtml) ? sha256(payloadOf(inlineHtml)) : null,
-    inlineFragmentInFile: fileHtml.includes(inlineHtml.trim().slice(0, 200)),
+    // 分段同源（权威判据）
+    fileSeg,
+    inlineSeg,
+    segEqual: { style: fileSeg.style === inlineSeg.style, content: fileSeg.content === inlineSeg.content, helpers: fileSeg.helpers === inlineSeg.helpers },
+    // 过强命题的实测值（用于把「inline 是 file 子串」钉成 false）
+    inlineIsSubstringOfFile: fileHtml.includes(inlineHtml),
+    inlineTrim200InFile: fileHtml.includes(inlineHtml.trim().slice(0, 200)),
+    payloadBlockBytes: Buffer.byteLength(String(payloadOf(fileHtml) ?? ''), 'utf8'),
     textBytes: Buffer.byteLength(textHtml, 'utf8'),
     textLines: textHtml.split('\n').length,
     textHead: textHtml.split('\n').slice(0, 6),
@@ -203,7 +235,12 @@ if (f && i2 && t) {
   ok(!!manifest.sameSource.filePayloadSha256 && manifest.sameSource.inlineHasPayload === false,
     'file 有内嵌 payload／inline 无 payload（三态同源：同一 SceneData，inline 不带 JSON 备份）',
     'filePayload=' + manifest.sameSource.filePayloadSha256 + ' inlineHasPayload=' + manifest.sameSource.inlineHasPayload);
-  ok(manifest.sameSource.inlineFragmentInFile === true, 'inline 片段逐字出现在 file 产物内（同源实证）', String(manifest.sameSource.inlineFragmentInFile));
+  ok(manifest.sameSource.segEqual.style && manifest.sameSource.segEqual.content && manifest.sameSource.segEqual.helpers,
+    'inline 与 file **分段逐字相等**（style／内容段 `<section>`／helpers 三段 sha256 各自相等）',
+    JSON.stringify(manifest.sameSource.segEqual));
+  ok(manifest.sameSource.inlineIsSubstringOfFile === false,
+    'inline 整串**不是** file 的连续子串（payload 块插在 markup 与 helpers 之间；A-S3-4 更正）',
+    'substring=' + manifest.sameSource.inlineIsSubstringOfFile);
   ok(!manifest.sameSource.inlineHasDoctype, 'inline 态无 <!DOCTYPE html>', 'inlineHasDoctype=' + manifest.sameSource.inlineHasDoctype);
 }
 
