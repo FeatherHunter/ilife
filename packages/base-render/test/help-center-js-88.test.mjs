@@ -6,6 +6,7 @@
  *  验收面（`.scratch/orchestrator/t88-acceptance.md` ＋ 返修单 R1-1／R1-6／R1-8 ＋ 蓝队 N-4）：
  *  ① 卡头注入按钮 = 卡数（每卡恰 1 个）；② 其 `data-t` 与该卡 `<pre>` **逐字相等**；
  *  ③ 委派点击复制得到同一文本；④ 二次注入不重复（幂等，含「删 marker 后重注入」更强判据）；
+ *  ④b **委派不倍增**（#88 S5）：连续 3 次 `boot()` 后单次点击只复制 1 次／只出 1 个 toast；
  *  ⑤ 静态 HTML 卡头按钮 **0**（无 JS 降级）；⑥ 注入按钮**真带**新类名且该类名有 CSS 规则（N-4 借道反面）；
  *  ⑦ 搜索（过滤＋`<mark>`＋命中计数＋清空＋跳页）／⑧ Sheet 参数实时预览／⑨ `#backTop`（`scrollY>400` 出现）。
  *
@@ -128,6 +129,8 @@ describe('#88 S4 helpers 产出面（静态）', () => {
     assert.ok(!/["']show["']/.test(HELPERS), '不得出现 "show" 字面量（style.test.mjs T28）');
     assert.ok(!HELPERS.includes('<canvas'), '零 canvas');
     assert.ok(!/onclick\s*=/i.test(HELPERS), '不得产内联 onclick');
+    assert.equal((HELPERS.match(/addEventListener\("click", onClick\)/g) ?? []).length, 1, '点击委派只允许挂 1 处');
+    assert.ok((HELPERS.match(/clickBound/g) ?? []).length >= 2, '委派必须由 clickBound 守卫（重入 boot 不得倍增）');
   });
 
   it('S4-2 卡级按钮常量恒读冻结面（不自造 actionId／文案）', () => {
@@ -253,6 +256,7 @@ const PROBE = [
   '    var q1 = function (s, r) { return (r || document).querySelector(s); };',
   '    var cards = qa(".' + cls('card') + '");',
   '    out.cardCount = cards.length;',
+  '    out.promptPres = qa(".' + cls('prompt') + '").length;',
   '    var perCard = cards.map(function (c) { return qa(".' + cls('card-copy') + '", c); });',
   '    out.copyTotal = qa(".' + cls('card-copy') + '").length;',
   '    out.oneEach = perCard.filter(function (a) { return a.length === 1; }).length;',
@@ -294,6 +298,28 @@ const PROBE = [
   '    out.afterReinjectSearch = qa(".' + cls('tab-search') + '").length;',
   '    out.afterReinjectBackTop = qa("#backTop").length;',
   '    out.afterReinjectMarkers = qa("[data-ilife-helpers=\\"1\\"]").length;',
+  /* ④b 委派倍增（#88 S5 · B 段红队 S3-a）：再删 marker ＋ 再 boot 2 次（共 3 次 boot）后，
+     单次点击必须**只复制 1 次／只出 1 个 toast**（改坏前实测 3 次／3 个）。 */
+  '    for (var rb = 0; rb < 2; rb++) {',
+  '      var mk = q1("[data-ilife-helpers=\\"1\\"]");',
+  '      if (mk && mk.parentNode) mk.parentNode.removeChild(mk);',
+  '      var again2 = document.createElement("script");',
+  '      again2.textContent = src ? src.textContent : "";',
+  '      document.body.appendChild(again2);',
+  '    }',
+  '    await new Promise(function (r) { setTimeout(r, 80); });',
+  '    out.afterBoot3Copy = qa(".' + cls('card-copy') + '").length;',
+  '    out.afterBoot3Markers = qa("[data-ilife-helpers=\\"1\\"]").length;',
+  '    qa(".ilife-toast-stack > .ilife-toast").forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });',
+  '    var copiesAfterBoot3 = [];',
+  '    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: function (t) { copiesAfterBoot3.push(t); return Promise.resolve(); } } });',
+  '    var oneBtn = q1(".' + cls('card-copy') + '");',
+  '    var preOfOne = oneBtn ? q1(".' + cls('prompt') + '", oneBtn.closest(".' + cls('card') + '")) : null;',
+  '    if (oneBtn) oneBtn.click();',
+  '    await new Promise(function (r) { setTimeout(r, 150); });',
+  '    out.singleClickCopies = copiesAfterBoot3.length;',
+  '    out.singleClickTextOk = copiesAfterBoot3.length === 1 && preOfOne !== null && copiesAfterBoot3[0] === preOfOne.textContent;',
+  '    out.singleClickToasts = qa(".ilife-toast-stack > .ilife-toast").length;',
   /* ⑦ 搜索 */
   '    var input = q1(".' + cls('tab-search-input') + '");',
   '    var count = q1(".' + cls('page-hitcount') + '");',
@@ -364,6 +390,22 @@ const PROBE = [
   '    scroller.scrollTop = 0;',
   '    document.dispatchEvent(new Event("scroll"));',
   '    out.backTopHiddenAgain = bt ? bt.className.indexOf("' + cls('btn-backtop-show') + '") < 0 : null;',
+  /* ⑩ A.2（#88 S5）：删掉某卡的 Sheet prompt 按钮 ＋ 其卡级按钮后重注入 → 卡级按钮仍必须存在
+     （#88 S5 起主源改为同卡 <pre class="prompt">，不再依赖 Sheet 按钮，故不静默丢卡）。 */
+  '    var probeCard = cards[0];',
+  '    var cc = q1(".' + cls('card-copy') + '", probeCard);',
+  '    if (cc && cc.parentNode) cc.parentNode.removeChild(cc);',
+  '    var sheetPrompt = q1("[' + ACTION_ID_ATTR + '=\\"" + "' + HELP_COPY_ACTIONS.prompt.actionId + '" + "\\"]", probeCard);',
+  '    if (sheetPrompt && sheetPrompt.parentNode) sheetPrompt.parentNode.removeChild(sheetPrompt);',
+  '    var mk2 = q1("[data-ilife-helpers=\\"1\\"]");',
+  '    if (mk2 && mk2.parentNode) mk2.parentNode.removeChild(mk2);',
+  '    var again3 = document.createElement("script");',
+  '    again3.textContent = src ? src.textContent : "";',
+  '    document.body.appendChild(again3);',
+  '    await new Promise(function (r) { setTimeout(r, 80); });',
+  '    var cc2 = q1(".' + cls('card-copy') + '", probeCard);',
+  '    out.noSheetButtonStillCopies = cc2 !== null;',
+  '    out.noSheetButtonEqualsPre = cc2 !== null && cc2.getAttribute("' + DEFAULT_DATA_ATTR + '") === q1(".' + cls('prompt') + '", probeCard).textContent;',
   '    document.getElementById("result").textContent = "RESULT:" + JSON.stringify(out);',
   '  } catch (err) {',
   '    document.getElementById("result").textContent = "PROBE_ERROR:" + (err && err.stack ? err.stack : String(err));',
@@ -395,6 +437,7 @@ describe('#88 S4 HELP 速查台运行时（真实浏览器）', () => {
 
       // ① 卡头恰 1 个按钮 ＋ ② data-t 逐字 ＋ ⑥ 类名
       assert.equal(out.cardCount, SCENE_COUNT, '夹具必须真的渲染 436 张卡');
+      assert.equal(out.promptPres, SCENE_COUNT, '前置：每张卡恒有 <pre class="prompt">（卡级按钮的主源，缺它才会静默丢卡）');
       assert.equal(out.copyTotal, SCENE_COUNT, '卡级复制按钮数必须等于卡数');
       assert.equal(out.oneEach, SCENE_COUNT, '每张卡头必须恰 1 个卡级复制按钮');
       assert.equal(out.inCardTop, SCENE_COUNT, '注入落点必须是卡头 card-top');
@@ -413,6 +456,12 @@ describe('#88 S4 HELP 速查台运行时（真实浏览器）', () => {
       assert.equal(out.afterReinjectSearch, 1, '搜索框必须唯一');
       assert.equal(out.afterReinjectBackTop, 1, '#backTop 必须唯一');
       assert.equal(out.afterReinjectMarkers, 1, '重注入后幂等 marker 必须恰好 1 个');
+      // ④b 委派倍增（#88 S5 新增判据）
+      assert.equal(out.afterBoot3Copy, SCENE_COUNT, '3 次 boot 后卡级按钮仍必须恰 436 个（不重复注入）');
+      assert.equal(out.afterBoot3Markers, 1, '3 次 boot 后幂等 marker 必须恰好 1 个');
+      assert.equal(out.singleClickCopies, 1, '3 次 boot 后一次点击必须只复制 1 次（委派不得倍增），实测 ' + out.singleClickCopies);
+      assert.equal(out.singleClickTextOk, true, '那一次复制的内容必须是该卡 <pre> 原文');
+      assert.equal(out.singleClickToasts, 1, '3 次 boot 后一次点击必须只出 1 个 toast，实测 ' + out.singleClickToasts);
       // ⑦ 搜索
       assert.equal(out.hasSearch, true, '搜索框／命中计数／清空按钮必须都在');
       assert.ok(out.expected > 0 && out.expected < SCENE_COUNT, '前置：搜索词必须命中一部分卡（否则断言无鉴别力），实测 ' + out.expected);
@@ -442,6 +491,9 @@ describe('#88 S4 HELP 速查台运行时（真实浏览器）', () => {
       assert.equal(out.backTopShown, true, 'scrollY>400 必须加 -show');
       assert.equal(out.backTopPointerShown, 'auto', '出现后必须可点击（pointer-events 非动画属性，立即可判）');
       assert.equal(out.backTopHiddenAgain, true, '回到 400px 以下必须再次隐藏');
+      // ⑩ A.2：无 Sheet prompt 按钮的卡不得被静默跳过
+      assert.equal(out.noSheetButtonStillCopies, true, '删掉 Sheet prompt 按钮后卡级按钮仍必须注入（主源 = 同卡 <pre>，不静默丢卡）');
+      assert.equal(out.noSheetButtonEqualsPre, true, '该按钮的 data-t 必须仍等于同卡 <pre> 原文');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

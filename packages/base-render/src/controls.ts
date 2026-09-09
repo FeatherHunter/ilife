@@ -548,7 +548,8 @@ const HELP_HIT_EMPTY = '没有找到相关场景,换个词试试～';
  *  共用**既有幂等 marker**（`MARKER_SEL` ＋ `querySelector` 早退），**不新增第二个标记**；每一项都
  *  先判 HELP 壳是否在页面（helpers 被所有技能页面共享，非 HELP 页逐项早退、零副作用）：
  *  - **卡级复制按钮**（`card-copy`）：每张场景卡的**卡头**注入 1 个按钮，`actionId`／文案恒读
- *    `HELP_COPY_ACTIONS.prompt`，`dataAttr` 取同卡 Sheet 内 prompt 按钮的原文（＝该卡 `<pre>` 逐字），
+ *    `HELP_COPY_ACTIONS.prompt`，`dataAttr` 取同卡 `<pre class="prompt">` 的原文（＝该卡 prompt 逐字；
+ *    #88 S5 起改以 `<pre>` 为**主源**，读不到才回落 Sheet 内 prompt 按钮的 data-t），
  *    复用上面的 `[ACTION_ID_ATTR]` 委派（零新增监听、零契约变更）；卡内已有该类即跳过（幂等）。
  *  - **搜索**（`tab-search` ＋ `tab-search-input` ＋ `tab-search-clear` ＋ `page-hitcount`）：跨分组过滤卡片、
  *    `<mark class="card-mark">` 高亮命中、自动展开命中卡片的 Sheet 与子功能组、命中计数、
@@ -639,6 +640,11 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '  var COPY_LABEL = ' + jsStr(copyAction.label) + ';',
     '  var PARAMS_ACTION = ' + jsStr(paramsAction.actionId) + ';',
     '  var searchTerm = "";',
+    '  var clickBound = false;',
+    // #88 S5（B 段红队 S3-a）：委派去重的**跨实例**判据——同一页面里 helpers 被多次注入时，
+    // 每个实例各有自己的闭包（`clickBound` 管不住别人），故在**事件对象**上打一次性标记：
+    // 同一事件只会被第一个处理器消费，一次点击恒只复制 1 次／出 1 个 toast。
+    '  var HANDLED_PROP = ' + jsStr(prefix + 'help-click-handled') + ';',
     '',
     '  function boot() {',
     '    if (!document.body) return;',
@@ -647,11 +653,15 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    marker.setAttribute(MARKER_ATTR, "1");',
     '    marker.hidden = true;',
     '    document.body.appendChild(marker);',
-    '    document.addEventListener("click", onClick);',
+    // #88 S5（B 段红队 S3-a）：委派**只挂一次**——marker 被删后重入 boot() 不得重复 addEventListener，
+    // 否则一次点击触发 N 次复制／N 个 toast。按钮／搜索框／#backTop 各自的幂等由自身早退保证。
+    '    if (!clickBound) { clickBound = true; document.addEventListener("click", onClick); }',
     '    initHelpShell();',
     '  }',
     '',
     '  function onClick(ev) {',
+    '    if (ev[HANDLED_PROP]) return;',
+    '    ev[HANDLED_PROP] = 1;',
     '    var node = ev.target;',
     '    if (!node || typeof node.closest !== "function") return;',
     '    var close = node.closest("." + CLOSE_CLASS);',
@@ -795,14 +805,17 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '  }',
     '',
     '  /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，',
-    '     文本取同卡 Sheet 内 prompt 按钮的 data-t（＝该卡 prompt 原文，逐字相等）→ 复用既有委派。 */',
+    '     文本取同卡 `<pre class="prompt">` 的**原文**（＝该卡 prompt 逐字，与 F3 卡面同源）；',
+    '     读不到 <pre> 才回落同卡 Sheet 内 prompt 按钮的 data-t，两者都无才跳过',
+    '     （#88 S5／B 段红队 S3-a：真实壳恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */',
     '  function injectCardCopy(cards) {',
     '    for (var i = 0; i < cards.length; i++) {',
     '      var card = cards[i];',
     '      if (card.querySelector("." + CARD_COPY_CLASS)) continue;',
-    '      var src = card.querySelector(attrSel(ACTION_ATTR, COPY_ACTION));',
-    '      if (!src) continue;',
-    '      var text = src.getAttribute(TEXT_ATTR);',
+    '      var pre = card.querySelector("." + PROMPT_CLASS);',
+    '      var src = pre !== null ? pre : card.querySelector(attrSel(ACTION_ATTR, COPY_ACTION));',
+    '      if (src === null) continue;',
+    '      var text = pre !== null ? pre.textContent : src.getAttribute(TEXT_ATTR);',
     '      if (text === null) continue;',
     '      var btn = document.createElement("button");',
     '      btn.type = "button";',

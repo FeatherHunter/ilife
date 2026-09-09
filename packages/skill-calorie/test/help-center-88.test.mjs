@@ -137,6 +137,54 @@ test('R1-12 436 条 prompt_template 无 </script>／<!--（红点：数据里注
   }
 });
 
+test('D-1 三档徽章色**逐条**映射 = F3 TYPE_DEFAULT（红点：互换 receipt／process 配色——集合口径零鉴别力）', () => {
+  // F3 `卡路里.html` 运行时 `var TYPE_DEFAULT`（`:1693-1703`）：结果／回执／查看／校验／选择 → `#e8f2ff/#0a63ce`，
+  // 过程／向导 → `#e2f7f5/#00897b`。逐**文本**钉死：互换两档配色必红（A 段红队 MUT-E 曾证明「集合相等」口径零鉴别力）。
+  const EXPECTED = {
+    结果: { bg: '#e8f2ff', fg: '#0a63ce' },
+    回执: { bg: '#e8f2ff', fg: '#0a63ce' },
+    过程: { bg: '#e2f7f5', fg: '#00897b' },
+  };
+  assert.deepEqual(Object.keys(HELP_TYPE_BADGES).sort(), ['process', 'receipt', 'result']);
+  const byKey = new Map(TRIGGERS.filter((t) => 'output_type' in t).map((t) => [t.key, t.output_type]));
+  const hist = {};
+  for (const scene of flat(sceneData)) {
+    for (const badge of scene.types ?? []) {
+      const want = EXPECTED[badge.text];
+      assert.ok(want !== undefined, '未知徽章文本：' + badge.text);
+      assert.equal(badge.bg, want.bg, badge.text + ' 的 bg 必须逐字取 F3 TYPE_DEFAULT');
+      assert.equal(badge.fg, want.fg, badge.text + ' 的 fg 必须逐字取 F3 TYPE_DEFAULT');
+      hist[badge.text] = (hist[badge.text] ?? 0) + 1;
+    }
+  }
+  assert.deepEqual(hist, { 结果: 329, 回执: 79, 过程: 6 }, '三档文本的条数必须逐档对上（防整档错配）');
+  // 徽章对象必须**恒等于** `HELP_TYPE_BADGES[output_type]`（防「换键不换色」／文本与色错配）。
+  for (const scene of flat(sceneData)) {
+    if (scene.types === undefined) continue;
+    const outputType = byKey.get(scene.id);
+    assert.ok(outputType !== undefined, '非新场景却带 types：' + scene.id);
+    assert.equal(scene.types.length, 1);
+    assert.equal(scene.types[0], HELP_TYPE_BADGES[outputType],
+      scene.id + ' 的徽章必须恒取 HELP_TYPE_BADGES[' + outputType + ']');
+  }
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(HELP_TYPE_BADGES).map(([key, value]) => [key, value.text])),
+    { process: '过程', result: '结果', receipt: '回执' },
+  );
+});
+
+test('D-3 text 态裸 `<N>` = legacy CLI 原文（逐字保留、非 HTML；红点：把原文转义成 &lt;N&gt;）', () => {
+  const angles = [...new Set([...text.html.matchAll(/<[^<>]*>/g)].map((m) => m[0]))];
+  assert.deepEqual(angles, ['<N>'], 'text 态的尖括号文本必须恰为 legacy CLI 原文的 <N>（不得新增别的）');
+  const originals = flat(sceneData).flatMap((s) => [s.id, s.wake_word, s.title, s.prompt_template]);
+  for (const seq of angles) {
+    assert.ok(originals.some((o) => o.includes(seq)), '尖括号文本必须逐字来自 prompt／CLI 原文：' + seq);
+  }
+  assert.ok(flat(sceneData).filter((s) => s.types === undefined).some((s) => s.id.includes('<N>')),
+    '前置：legacy CLI 里确实有 <N> 原文（否则本用例无鉴别力）');
+  assert.ok(!text.html.includes('&lt;'), 'text 态是纯文本载体，不得做 HTML 转义（须与 CLI 原文逐字一致）');
+});
+
 /* ── S2 壳落地（A2） ───────────────────────────────────────────── */
 
 test('A2 复用冻结面 130 条 implemented／0 pending（红点：base-render 新增契约面）', () => {
