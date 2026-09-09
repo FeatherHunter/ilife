@@ -1,0 +1,25 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：106｜since：2026-09-09T14:45:00Z｜until：2026-09-09T14:55:30Z｜条目数：17｜导出时间：2026-09-09T14:56:03.854Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=106 runId=8bc849e2-15c8-4296-aed7-6cfead687758 cmd="pnpm build" waitedMs=0 exit=0 pid=37100 at=2026-09-09T14:46:08.598Z
+RUN ticket=106 runId=a66f435a-fcd2-4038-9c4c-0766caf912c2 cmd="node --test packages/skill-calorie/test/help-center-88.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/help-center-106.test.mjs packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=0 exit=1 pid=31852 at=2026-09-09T14:46:12.581Z
+RUN ticket=106 runId=a89f0748-040a-4b95-817e-6e20462c20af cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=10002 exit=0 pid=30812 at=2026-09-09T14:46:33.784Z
+RUN ticket=106 runId=acd591a8-c2b6-4964-a467-a432d62a87cc cmd="node --test packages/skill-calorie/test/help-center-88.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/help-center-106.test.mjs packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=0 exit=0 pid=31328 at=2026-09-09T14:46:36.982Z
+RUN ticket=106 runId=b2e83287-b56c-4f71-891a-b144c453b5c2 cmd="git commit --only packages/skill-calorie/src/render/helpCenter.ts packages/skill-calorie/test/help-center-106.test.mjs -F .scratch/t106/msg-1.txt" waitedMs=10006 exit=1 pid=12188 at=2026-09-09T14:46:59.911Z
+RUN ticket=106 runId=2bc5a722-4ef2-4750-967c-9f21eba6724f cmd="git add packages/skill-calorie/test/help-center-106.test.mjs packages/skill-calorie/src/render/helpCenter.ts" waitedMs=30021 exit=0 pid=26580 at=2026-09-09T14:50:25.106Z
+RUN ticket=106 runId=a4ec0df1-5258-4437-a040-00795afa3ca4 cmd="git commit --only packages/skill-calorie/src/render/helpCenter.ts packages/skill-calorie/test/help-center-106.test.mjs -F .scratch/t106/msg-1.txt" waitedMs=0 exit=0 pid=6764 at=2026-09-09T14:50:25.239Z
+RUN ticket=106 runId=52bb2758-7742-4413-a3b4-e550d28016d8 cmd="pwsh -NoProfile -Command \"$e=@{}; pnpm build *> .scratch\\t106\\g1.log; $e.build=$LASTEXITCODE; pnpm boundaries *> .scratch\\t106\\g2.log; $e.boundaries=$LASTEXITCODE; pnpm snapshot:check *> .scratch\\t106\\g3.log; $e.snapshot=$LASTEXITCODE; pnpm publish:pre *> .scratch\\t106\\g4.log; $e.publish=$LASTEXITCODE; Write-Output (GATES\" build={0} boundaries={1} snapshot={2} \"publish={3} -f $e.build,$e.boundaries,$e.snapshot,$e.publish)\"" waitedMs=0 exit=1 pid=27784 at=2026-09-09T14:50:29.676Z
+RUN ticket=106 runId=e87ece15-5014-4fc3-8961-9e80b1cf262f cmd="pnpm build" waitedMs=0 exit=0 pid=37872 at=2026-09-09T14:50:40.624Z
+RUN ticket=106 runId=05e6c5b7-5bd0-4b7f-98ad-f22fe2850dcc cmd="pnpm boundaries" waitedMs=0 exit=0 pid=22928 at=2026-09-09T14:50:41.535Z
+RUN ticket=106 runId=779d3c5d-0a05-4a85-b778-8c4e1d775f65 cmd="pnpm snapshot:check" waitedMs=0 exit=0 pid=22948 at=2026-09-09T14:50:42.448Z
+RUN ticket=106 runId=e676e25a-20ef-47dc-a2fb-f4abc583a975 cmd="pnpm publish:pre" waitedMs=0 exit=0 pid=13752 at=2026-09-09T14:50:43.333Z
+RUN ticket=106 runId=5d5d0415-a410-4417-8780-37927e05c79e cmd="pnpm test" waitedMs=20022 exit=1 pid=23280 at=2026-09-09T14:51:44.234Z
+RUN ticket=106 runId=a238fac4-c103-4ed7-8fc8-b754170274c2 cmd="node --test packages/base-render/test/copy-copied-121.test.mjs" waitedMs=10004 exit=0 pid=36128 at=2026-09-09T14:52:51.560Z
+RUN ticket=106 runId=26408b4e-c86b-4b77-8448-ed257358caab cmd="node docs/research/t106-mutate.mjs" waitedMs=40049 exit=0 pid=37064 at=2026-09-09T14:53:41.840Z
+RUN ticket=106 runId=b398825c-2b6b-4423-99ac-c724609810b0 cmd="pnpm test" waitedMs=0 exit=1 pid=14432 at=2026-09-09T14:54:27.516Z
+RUN ticket=106 runId=f85722bb-c4fe-46b2-9df4-cfcd69583949 cmd="node --test packages/skill-calorie/test/help-center-88.test.mjs packages/skill-calorie/test/help-center-91.test.mjs packages/skill-calorie/test/help-center-106.test.mjs packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=20018 exit=0 pid=18348 at=2026-09-09T14:54:56.840Z
+```
