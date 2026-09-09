@@ -141,6 +141,15 @@ describe('check-gate-audit：证据声称 vs 审计日志（严格默认）', ()
     });
     const windowed = runAudit(c2.evidencePath, c2.logPath, ['--ticket', '88', '--since', '2026-09-09T12:00:00Z']);
     assert.equal(windowed.status, 0, `窗口外的条目不应计入反向对账：stderr=${windowed.stderr}`);
+
+    // --until 界定窗口上界（提交后的 git 条目不该被算进本票对账窗口）
+    const c3 = writeCase('until', {
+      evidence,
+      log: [runLine('pnpm build', { runId: 'r-build', at: '2026-09-09T10:00:00.000Z' }),
+        runLine('pnpm test', { runId: 'r-ghost', at: '2026-09-09T13:00:00.000Z' })],
+    });
+    const upper = runAudit(c3.evidencePath, c3.logPath, ['--ticket', '88', '--until', '2026-09-09T12:00:00Z']);
+    assert.equal(upper.status, 0, `窗口上界之外的条目不应计入反向对账：stderr=${upper.stderr}`);
   });
 
   it('③e runId 一对一绑定：同 cmd 历史条目不得顶替新声明', () => {
@@ -251,6 +260,8 @@ describe('check-gate-audit：证据声称 vs 审计日志（严格默认）', ()
     assert.equal(dup.duplicateRunIds.length, 1, '重复 runId 应被标记（日志可疑）');
     assert.equal(inWindow({ ticket: '88', at: '2026-09-09T12:00:00.000Z' }, { ticket: '88', sinceMs: Date.parse('2026-09-09T11:00:00Z') }), true);
     assert.equal(inWindow({ ticket: '88', at: '2026-09-09T10:00:00.000Z' }, { ticket: '88', sinceMs: Date.parse('2026-09-09T11:00:00Z') }), false);
+    assert.equal(inWindow({ ticket: '88', at: '2026-09-09T12:00:00.000Z' }, { ticket: '88', untilMs: Date.parse('2026-09-09T13:00:00Z') }), true);
+    assert.equal(inWindow({ ticket: '88', at: '2026-09-09T12:00:00.000Z' }, { ticket: '88', untilMs: Date.parse('2026-09-09T11:00:00Z') }), false);
     assert.equal(inWindow({ ticket: '99' }, { ticket: '88' }), false);
 
     // GATE-RELAX 解析

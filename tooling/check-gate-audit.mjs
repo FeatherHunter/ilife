@@ -6,8 +6,11 @@
  *
  * 用法：
  *   node tooling/check-gate-audit.mjs --evidence docs/research/t88-impl-governance-fix.md --ticket 88
- *   node tooling/check-gate-audit.mjs --evidence <文件> --log .scratch/locks/gate-runs.log --ticket 88 --since 2026-09-09T13:00:00Z
+ *   node tooling/check-gate-audit.mjs --evidence <文件> --log .scratch/locks/gate-runs.log --ticket 88 --since <ISO> --until <ISO>
  *   node tooling/check-gate-audit.mjs --evidence <文件> --export docs/research/t88-gate-runs.log   # 导出受跟踪的对账源
+ *
+ * 对账窗口（共享日志下必须界定）：`--ticket` ＋ `--since`（含）／`--until`（含）——只有窗口内的
+ * `RUN` 条目参与「声明认领」与「反向对账」，窗口外的条目（他人票号、提交后的 git 条目）不受影响。
  *
  * 声明写法（证据文件里，一行一条，`-`／`*`／表格 `|` 前缀可带）：
  *   GATE-RUN runId=<本次运行的 runId> cmd=<命令>        ← 默认口径（runId 必填）
@@ -168,12 +171,15 @@ export function parseAuditLog(text) {
   return entries;
 }
 
-/** 窗口过滤：票号（可选）＋ 起始时间（可选，`at` 缺失的条目视为始终在窗口内）。 */
-export function inWindow(entry, { ticket = '', sinceMs = null } = {}) {
+/** 窗口过滤：票号（可选）＋ 起始／截止时间（可选，`at` 缺失的条目视为始终在窗口内）。 */
+export function inWindow(entry, { ticket = '', sinceMs = null, untilMs = null } = {}) {
   if (ticket && entry.ticket !== ticket) return false;
-  if (sinceMs !== null && entry.at) {
+  if (entry.at) {
     const at = Date.parse(entry.at);
-    if (Number.isFinite(at) && at < sinceMs) return false;
+    if (Number.isFinite(at)) {
+      if (sinceMs !== null && at < sinceMs) return false;
+      if (untilMs !== null && at > untilMs) return false;
+    }
   }
   return true;
 }
@@ -199,8 +205,8 @@ export function claimMatchesEntry(claim, entry, { ticket = '', allowNoRunId = fa
  * `pnpm gate:selftest` 记 `ticket=selftest`），票号仍由 `claimMatchesEntry` 逐条强制。
  */
 export function reconcile(claims, entries, opts = {}) {
-  const { ticket = '', sinceMs = null, allowNoRunId = false, allowNonzero = false } = opts;
-  const pool = entries.filter((e) => inWindow(e, { sinceMs })).map((e) => ({ ...e, used: false }));
+  const { ticket = '', sinceMs = null, untilMs = null, allowNoRunId = false, allowNonzero = false } = opts;
+  const pool = entries.filter((e) => inWindow(e, { sinceMs, untilMs })).map((e) => ({ ...e, used: false }));
   const missing = [];
   for (const claim of claims) {
     const wantTicket = claim.ticket || ticket || '';
@@ -235,6 +241,7 @@ function parseArgs(argv) {
     log: '',
     ticket: '',
     since: '',
+    until: '',
     export: '',
     requireClaims: true,
     allowNoClaims: false,
@@ -253,13 +260,14 @@ function parseArgs(argv) {
     if (arg === '--allow-nonzero') { opts.allowNonzero = true; continue; }
     if (arg === '--allow-no-runid') { opts.allowNoRunId = true; continue; }
     if (arg === '--json') { opts.json = true; continue; }
-    if (['--evidence', '--log', '--ticket', '--since', '--export'].includes(arg)) {
+    if (['--evidence', '--log', '--ticket', '--since', '--until', '--export'].includes(arg)) {
       const value = argv[++i];
       if (value === undefined) throw new Error(`${arg} 缺少取值`);
       if (arg === '--evidence') opts.evidence = value;
       else if (arg === '--log') opts.log = value;
       else if (arg === '--ticket') opts.ticket = value;
       else if (arg === '--since') opts.since = value;
+      else if (arg === '--until') opts.until = value;
       else opts.export = value;
       continue;
     }
@@ -274,23 +282,23 @@ function usage() {
   return block ? block[1].replace(/^\s*\*?/gm, '').trim() : 'check-gate-audit.mjs';
 }
 
-function parseSince(raw) {
+function parseTime(raw, flag) {
   if (!raw) return null;
   const asNumber = Number(raw);
   if (Number.isFinite(asNumber) && String(asNumber) === raw.trim()) return asNumber;
   const parsed = Date.parse(raw);
-  if (!Number.isFinite(parsed)) throw new Error(`--since 无法解析：${raw}`);
+  if (!Number.isFinite(parsed)) throw new Error(`${flag} 无法解析：${raw}`);
   return parsed;
 }
 
-function exportRuns(exportPath, { entries, logPath, ticket, since }) {
+function exportRuns(exportPath, { entries, logPath, ticket, since, until }) {
   const lines = entries.map((e) => e.raw.replace(/\r?\n$/, ''));
   const content = [
     '# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）',
     '',
     `> 来源日志：\`${logPath}\`（gitignored，不可单独作为第三方复核依据）`,
-    `> 票号过滤：${ticket || '（无）'}｜since：${since || '（无）'}｜条目数：${lines.length}｜导出时间：${new Date().toISOString()}`,
-    '> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上>`',
+    `> 票号过滤：${ticket || '（无）'}｜since：${since || '（无）'}｜until：${until || '（无）'}｜条目数：${lines.length}｜导出时间：${new Date().toISOString()}`,
+    `> 复核用法：\`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>\``,
     '',
     '```text',
     ...lines,
@@ -317,7 +325,8 @@ function main() {
   else logPath = path.resolve(repoRoot, '.scratch/locks/gate-runs.log');
 
   if (!fs.existsSync(evidencePath)) { console.error(`FAIL: 证据文件不存在：${evidencePath}`); return 2; }
-  const sinceMs = parseSince(opts.since);
+  const sinceMs = parseTime(opts.since, '--since');
+  const untilMs = parseTime(opts.until, '--until');
   const evidenceText = fs.readFileSync(evidencePath, 'utf8');
   const claims = parseClaims(evidenceText);
   const relaxations = parseRelaxations(evidenceText);
@@ -326,10 +335,11 @@ function main() {
   const result = reconcile(claims, entries, {
     ticket: opts.ticket,
     sinceMs,
+    untilMs,
     allowNoRunId: opts.allowNoRunId,
     allowNonzero: opts.allowNonzero,
   });
-  const scoped = entries.filter((e) => inWindow(e, { ticket: opts.ticket, sinceMs }));
+  const scoped = entries.filter((e) => inWindow(e, { ticket: opts.ticket, sinceMs, untilMs }));
 
   const usedRelaxations = [];
   if (opts.allowNoClaims) usedRelaxations.push(RELAXATION_FLAGS.allowNoClaims);
@@ -354,6 +364,7 @@ function main() {
       log: logPath,
       ticket: opts.ticket || null,
       since: opts.since || null,
+      until: opts.until || null,
       claims: claims.length,
       auditEntries: entries.length,
       scopedEntries: scoped.length,
@@ -368,7 +379,7 @@ function main() {
     }, null, 2));
   } else {
     console.log(`证据：${evidencePath}`);
-    console.log(`审计：${logPath}（RUN 条目 ${entries.length} 条；窗口内 ${scoped.length} 条${opts.ticket ? `，ticket=${opts.ticket}` : ''}${opts.since ? `，since=${opts.since}` : ''}）`);
+    console.log(`审计：${logPath}（RUN 条目 ${entries.length} 条；窗口内 ${scoped.length} 条${opts.ticket ? `，ticket=${opts.ticket}` : ''}${opts.since ? `，since=${opts.since}` : ''}${opts.until ? `，until=${opts.until}` : ''}）`);
     console.log(`声称运行 ${claims.length} 条${opts.allowNoRunId ? '（--allow-no-runid）' : ''}`);
     for (const c of claims) console.log(`  - 证据 :${c.line} runId=${c.runId || '（无）'} cmd=${c.cmd}${c.ticket ? ` ticket=${c.ticket}` : ''}`);
     if (result.undeclared.length > 0) {
@@ -383,7 +394,7 @@ function main() {
 
   if (opts.export) {
     const exportPath = path.resolve(repoRoot, opts.export);
-    const count = exportRuns(exportPath, { entries: scoped, logPath, ticket: opts.ticket, since: opts.since });
+    const count = exportRuns(exportPath, { entries: scoped, logPath, ticket: opts.ticket, since: opts.since, until: opts.until });
     if (!opts.json) console.log(`EXPORT: ${exportPath}（窗口内 RUN 条目 ${count} 条，受 git 跟踪）`);
   }
 
