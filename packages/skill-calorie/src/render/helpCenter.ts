@@ -17,12 +17,13 @@
  *  - **22 条 legacy 取 `main_prompt.cli` 原文**（R1-7 解耦）：F3 的 `legacy_{wake_word}` 会让卡面
  *    显示并复制一条**不存在的命令**（`help.ts` 侧无该键），差异已登记台账 **L-19**。
  */
-import { ASSET_WRAPPERS, HELP_SHELL_ID, buildStyleSheet, renderHelpShell } from 'base-paint';
+import { ASSET_WRAPPERS, HELP_SHELL_ID, buildStyleSheet, escapeHtml, renderHelpShell } from 'base-paint';
 import type {
   FillTemplateReport,
   Scene,
   SceneData,
   SceneGroup,
+  SceneMetaBlock,
   SceneTypeBadge,
   TemplateAssets,
 } from 'base-paint';
@@ -30,6 +31,7 @@ import { TRIGGERS } from '../triggers/index.js';
 import type { SceneTrigger, Trigger } from '../triggers/index.js';
 import { COPY_RUNTIME_JS } from './copy.js';
 import { CalorieRenderError } from './errors.js';
+import { CALORIE_TEMPLATES, loadTemplate } from './templates.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面 `\n`）。 */
 const LF = String.fromCharCode(10);
@@ -225,6 +227,85 @@ export function buildHelpSceneData(opts: HelpSceneDataOptions = {}): SceneData {
   };
 }
 
+/* ── S3 · 看板页入口（#107）：6 个 view 页模板 → 速查台「看板页入口」块 ──────────────
+ *
+ * 背景（#107／地图 #63 D4「6 个死模板并入 HELP」）：`templates/*.html` 6 件此前只被
+ * 装载器与发布门读，**生产渲染链零消费＝死文件**。本模块是它们的**唯一消费者**：
+ * 逐件经 `loadTemplate` 读盘 → 抽取三个锚点（`<h1>` 页名／`<p class="lead">` 一句说明／
+ * `<pre class="view-cli">` 取数命令）→ 走 `SceneData.meta_blocks`（base-paint 契约
+ * 既有槽位，`html` 原样透传）渲染进速查台。**改模板一个字，速查台产物即变**——
+ * 「被真正使用」由此可机械验证（`test/skill-t11.test.mjs`）。
+ *
+ * 锚点口径：每件**恰 1 处**，缺失／重复／空值即抛（`missing-data`；命令非 `calorie-cmd-read`
+ * 开头即 `bad-input`），不返空、不静默跳过（仓库「缺失阻断不返空」口径）。
+ */
+
+export const HELP_VIEW_ENTRIES_META_ID = 'view-entries';
+export const HELP_VIEW_ENTRIES_META_TITLE = '看板页入口';
+
+export interface HelpViewEntry {
+  /** 模板 stem（＝`CALORIE_TEMPLATES` 成员，如 `home`）。 */
+  readonly name: string;
+  /** `<h1>` 文本（看板页名）。 */
+  readonly title: string;
+  /** `<p class="lead">` 文本（一句话说明）。 */
+  readonly lead: string;
+  /** `<pre class="view-cli">` 文本（取数命令，恒 `calorie-cmd-read …` 开头）。 */
+  readonly cli: string;
+}
+
+/** 抽取锚点（**字面量恒此处一份**；模板侧只负责出现恰 1 次）。 */
+const VIEW_ENTRY_ANCHORS = {
+  title: '<h1>([^<]*)</h1>',
+  lead: '<p class="lead">([^<]*)</p>',
+  cli: '<pre class="view-cli">([^<]*)</pre>',
+} as const;
+
+function pickAnchor(html: string, pattern: string, name: string, label: string): string {
+  const hits = [...html.matchAll(new RegExp(pattern, 'g'))].map((match) => match[1].trim());
+  if (hits.length !== 1) {
+    throw new CalorieRenderError(
+      'missing-data',
+      '模板 ' + name + ' 的 ' + label + ' 必须恰 1 处，实测 ' + String(hits.length),
+    );
+  }
+  if (hits[0] === '') throw new CalorieRenderError('missing-data', '模板 ' + name + ' 的 ' + label + ' 为空');
+  return hits[0];
+}
+
+/** 6 件模板 → 看板页入口（顺序恒 `CALORIE_TEMPLATES`；逐件真读盘，缺件即抛）。 */
+export function buildHelpViewEntries(): HelpViewEntry[] {
+  return CALORIE_TEMPLATES.map((name) => {
+    const html = loadTemplate(name);
+    const cli = pickAnchor(html, VIEW_ENTRY_ANCHORS.cli, name, '<pre class="view-cli">');
+    if (!cli.startsWith('calorie-cmd-read ')) {
+      throw new CalorieRenderError('bad-input', '模板 ' + name + ' 的取数命令非 calorie-cmd-read 开头：' + cli);
+    }
+    return {
+      name,
+      title: pickAnchor(html, VIEW_ENTRY_ANCHORS.title, name, '<h1>'),
+      lead: pickAnchor(html, VIEW_ENTRY_ANCHORS.lead, name, '<p class="lead">'),
+      cli,
+    };
+  });
+}
+
+/** 入口块 HTML（`meta_blocks[].html` **原样透传** ⇒ 本函数自负转义）。 */
+export function renderViewEntriesHtml(entries: readonly HelpViewEntry[] = buildHelpViewEntries()): string {
+  const items = entries.map((entry) => '<li data-view-entry="' + escapeHtml(entry.name) + '">'
+    + '<b>' + escapeHtml(entry.title) + '</b> ' + escapeHtml(entry.lead) + '<br>'
+    + '<code style="white-space:pre-wrap;word-break:break-all">' + escapeHtml(entry.cli) + '</code>'
+    + '</li>');
+  return '<ol class="view-entries">' + items.join(LF) + '</ol>';
+}
+
+/** 速查台「看板页入口」块（`meta_blocks` 槽位；`id`／`title` 恒本模块常量）。 */
+export function helpViewEntriesMetaBlock(
+  entries: readonly HelpViewEntry[] = buildHelpViewEntries(),
+): SceneMetaBlock {
+  return { id: HELP_VIEW_ENTRIES_META_ID, title: HELP_VIEW_ENTRIES_META_TITLE, html: renderViewEntriesHtml(entries) };
+}
+
 /* ── S2 · 壳落地：三态同源（file／inline／text），恒走 `renderHelpShell` ───────── */
 
 /** 交付形态（P-5：默认 `file`；`inline` 供宿主页面内嵌；`text` 为纯文本索引接缝）。 */
@@ -298,8 +379,13 @@ function inlineFragment(html: string, assets: TemplateAssets): string {
   return style + LF + fragment + LF + helpers;
 }
 
-/** `text` 态：同一 `SceneData` 的纯文本索引（无标签、无脚本；供 CLI／日志面复用）。 */
-function renderTextIndex(data: SceneData): string {
+/** `text` 态：同一 `SceneData` 的纯文本索引（无标签、无脚本；供 CLI／日志面复用）。
+ *
+ * 末尾追加同一份「看板页入口」（#107）：与 `file`／`inline` 的 `meta_blocks` 块**同源同序**，
+ * 使三态在内容上仍是一份数据换三个载体。入口行缩进 2 空格（场景行恒 4 空格，
+ * `help-center-91` 的 `textSceneIds` 只认 4 空格行，故不污染 436 条场景序）。
+ */
+function renderTextIndex(data: SceneData, entries: readonly HelpViewEntry[]): string {
   const lines: string[] = [data.skill_name + ' ' + data.title];
   if (typeof data.subtitle === 'string') lines.push(data.subtitle);
   for (const group of data.groups) {
@@ -312,6 +398,9 @@ function renderTextIndex(data: SceneData): string {
       }
     }
   }
+  lines.push('');
+  lines.push('[' + HELP_VIEW_ENTRIES_META_TITLE + ']');
+  for (const entry of entries) lines.push('  ' + entry.title + ' · ' + entry.cli);
   return lines.join(LF) + LF;
 }
 
@@ -322,18 +411,25 @@ function renderTextIndex(data: SceneData): string {
  * - `text`：纯文本索引（数据同源，只换载体）。
  *
  * 三态**都先过 `renderHelpShell`**（同一 schema 校验与同一填充器），故不存在第二套数据路径。
+ * #107：三态各自**同一份**「看板页入口」（6 件模板派生）——`file`／`inline` 走 `meta_blocks`，
+ * `text` 走文本段；签名与三态语义不变。
  */
 export function renderHelpCenterHtml(opts: HelpCenterRenderOptions = {}): HelpCenterRenderResult {
   const mode: HelpCenterMode = opts.mode === undefined ? 'file' : opts.mode;
   if (!HELP_CENTER_MODES.includes(mode)) {
     throw new CalorieRenderError('bad-input', 'HELP 交付形态非法：' + String(mode));
   }
-  const sceneData = opts.sceneData ?? buildHelpSceneData(
+  const baseData = opts.sceneData ?? buildHelpSceneData(
     opts.updatedAt === undefined ? {} : { updatedAt: opts.updatedAt },
   );
+  const entries = buildHelpViewEntries();
+  const sceneData: SceneData = {
+    ...baseData,
+    meta_blocks: [...(baseData.meta_blocks ?? []), helpViewEntriesMetaBlock(entries)],
+  };
   const assets = helpCenterAssets();
   const output = renderHelpShell({ sceneData, assets, strict: opts.strict === true });
   if (mode === 'file') return { mode, html: output.html, report: output.report };
   if (mode === 'inline') return { mode, html: inlineFragment(output.html, assets), report: output.report };
-  return { mode, html: renderTextIndex(sceneData), report: output.report };
+  return { mode, html: renderTextIndex(sceneData, entries), report: output.report };
 }

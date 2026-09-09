@@ -1,5 +1,7 @@
 /** T11 #30 追加 · SKILL.md + templates 验收（照 M6 范式）：技能说明/唯一出口/envelope/HELP 现找（含 T10 照片模块）。
  * 模板 6 件经 dist 侧 loader 装载（#95）+ HELP 构建期注入可复现 + 照片 exec 逐条可 import。
+ * #107：6 件模板**不再存在「存在但零引用」**——逐件被 HELP 速查台渲染进「看板页入口」
+ * （`buildHelpViewEntries` → `meta_blocks`），故断言从「文件存在」升级为「存在 ＋ 真被渲染」。
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,9 +12,18 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildHelpBlock, START, END } from '../scripts/build-help.mjs';
 import { CALORIE_COMBOS } from '../dist/cli/keys.js';
 import { buildPhotoHelp, CALORIE_TEMPLATES, loadTemplate, CalorieRenderError } from '../dist/render/index.js';
+import {
+  HELP_VIEW_ENTRIES_META_ID, HELP_VIEW_ENTRIES_META_TITLE,
+  buildHelpViewEntries, renderHelpCenterHtml, renderViewEntriesHtml,
+} from '../dist/render/helpCenter.js';
 
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skill = readFileSync(join(pkgDir, 'SKILL.md'), 'utf8');
+
+/** 剥 HTML 实体（`meta_blocks[].html` 经 `escapeHtml` 落地，比对原文前须还原）。 */
+const decodeEntities = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const countOf = (haystack, needle) => haystack.split(needle).length - 1;
 
 describe('calorie SKILL 与模板（M6 范式）', () => {
   it('SKILL 含说明/唯一出口/envelope/HELP/环境', () => {
@@ -51,7 +62,56 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
       assert.match(t, /calorie-cmd-read/);
       assert.equal(t.split('<!--SHARED-CSS-->').length - 1, 1, f + ' CSS 标记');
       assert.equal(t.split('<!--SHARED-HELPERS-->').length - 1, 1, f + ' HELPERS 标记');
+      // #107：抽取锚点（看板页入口）逐件恰 1 处——模板侧漂移即在此红。
+      assert.equal(countOf(t, '<h1>'), 1, f + ' <h1> 锚点');
+      assert.equal(countOf(t, '<p class="lead">'), 1, f + ' <p class="lead"> 锚点');
+      assert.equal(countOf(t, '<pre class="view-cli">'), 1, f + ' <pre class="view-cli"> 锚点');
     }
+  });
+  // #107 验收：6 件模板**要么被真正使用、要么删除**。本票取「并入 HELP 重建」——
+  // 逐件经 loader 读盘 → 抽三锚点 → 进速查台「看板页入口」（file／inline 走 meta_blocks，text 走文本段）。
+  // 本组断言把「死文件」堵死：模板消失／锚点漂移／HELP 停止渲染 → 逐条红。
+  it('模板 6 件被 HELP 速查台真正渲染（#107：不留「存在但零引用」）', () => {
+    const entries = buildHelpViewEntries();
+    assert.equal(entries.length, 6, '入口数＝模板数');
+    assert.deepEqual(entries.map((e) => e.name), [...CALORIE_TEMPLATES], '入口序恒 CALORIE_TEMPLATES');
+    for (const e of entries) {
+      assert.ok(e.title.length > 0, e.name + ' 缺 <h1> 标题');
+      assert.ok(e.lead.length > 0, e.name + ' 缺 lead 说明');
+      assert.ok(e.cli.startsWith('calorie-cmd-read '), e.name + ' 取数命令须 calorie-cmd-read 开头');
+      // 抽取结果必须**逐字来自磁盘模板文件**（防「模块内第二份副本冒充」）。
+      const raw = loadTemplate(e.name);
+      assert.ok(raw.includes('<h1>' + e.title + '</h1>'), e.name + ' 标题非取自模板文件');
+      assert.ok(raw.includes('<pre class="view-cli">' + e.cli + '</pre>'), e.name + ' 命令非取自模板文件');
+      assert.ok(raw.includes('<title>' + e.title + '</title>'), e.name + ' <h1> 与 <title> 不一致');
+    }
+    // 三态同源：file／inline 的 meta 块 ＋ text 文本段都是同一份入口。
+    const file = renderHelpCenterHtml({ mode: 'file' });
+    const inline = renderHelpCenterHtml({ mode: 'inline' });
+    const text = renderHelpCenterHtml({ mode: 'text' });
+    for (const [label, html] of [['file', file.html], ['inline', inline.html]]) {
+      assert.equal(countOf(html, 'data-meta-id="' + HELP_VIEW_ENTRIES_META_ID + '"'), 1, label + ' 缺看板页入口块');
+      assert.equal(countOf(html, 'data-view-entry="'), 6, label + ' 入口条目数');
+      const decoded = decodeEntities(html);
+      for (const e of entries) {
+        assert.ok(decoded.includes('<b>' + e.title + '</b>'), label + ' 未渲染模板标题：' + e.name);
+        assert.ok(decoded.includes(e.cli), label + ' 未渲染模板命令：' + e.name);
+      }
+    }
+    assert.ok(text.html.includes('[' + HELP_VIEW_ENTRIES_META_TITLE + ']'), 'text 态缺看板页入口段');
+    for (const e of entries) {
+      assert.ok(text.html.includes('  ' + e.title + ' · ' + e.cli), 'text 态未渲染入口：' + e.name);
+    }
+    // 入口行不得混进场景行口径（4 空格行恒 436 条）。
+    assert.equal(text.html.split('\n').filter((line) => line.startsWith('    ')).length, 436);
+  });
+  it('入口块自负转义（meta_blocks.html 原样透传，不得让模板内容注入标签）', () => {
+    const html = renderViewEntriesHtml([
+      { name: 'x', title: '<b>t</b>', lead: 'a&b', cli: 'calorie-cmd-read x' },
+    ]);
+    assert.ok(!html.includes('<b>t</b>'), '标题未转义');
+    assert.ok(html.includes('&lt;b&gt;t&lt;/b&gt;'), '标题须转义为实体');
+    assert.ok(html.includes('a&amp;b'), '说明须转义为实体');
   });
   it('loader 未知模板大声失败（不返空）', () => {
     assert.throws(() => loadTemplate('no-such-template'), (e) => e instanceof CalorieRenderError && e.code === 'bad-input');
