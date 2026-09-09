@@ -82,7 +82,7 @@
 | 靶向 | `contract-signatures`／`style`／`help`／`controls`／`help-center-js-88`／`help-center-88` | **0** | `FINAL_CONTRACT/STYLE/HELP/CONTROLS/S4/SKILL88=0`（变异还原后复跑，`run-final-b-*.log`） |
 | 探针 | `t88-probe-impl-b.mjs`（新）／`t88-probe-impl-a.mjs`／`t88-probe-contract.mjs` | **0** | `59/59`／`44/44`／`17/17` |
 | 浏览器 | `t88-browser-evidence-b.mjs` | **0** | `RESULT: 29/29 fails=0` |
-| 事故自检 | 每轮 `git status --short -- packages/skill-calorie/SKILL.md` | — | 8 轮全部为空（无 `Bin … -> …`，事故票 #124 未复现） |
+| 事故自检 | 每轮 `git status --short -- packages/skill-calorie/SKILL.md` | — | **9 轮**全部为空（无 `Bin … -> …`，事故票 #124 未复现）；重启后复验同样为空 |
 | 不计入 | `pnpm changeset:status` | 1（环境红） | 基线即红（`BASELINE.md:134-144`），按 R1-9 不列入本票门禁 |
 
 ### 3.1 `pnpm test` 失败集 delta（canonical **8 轮**；分类口径＝`t88-delta-flake-ruling.md` §2／§5）
@@ -101,6 +101,24 @@
 - **白名单未改**：`git diff 93e27f9 -- docs/research/t88-baseline/test-failset.txt` = **0 行**（`run-failset-diff-b.log`）。
 - **并发上下文（每轮）**：8 轮均在**4 个 session 并行**（#88 实施 B／治理返修／#120／#97）下经锁执行；本 session 的浏览器实证在轮 1 之前已结束、**未与全量测试并行**（其余 session 是否并行跑浏览器无法观测）；期间 `pnpm exec tsc -b --force` 曾两次报出**他人未提交**的 `packages/skill-calorie/src/cli/write.ts(327,451) TS2322`（随后消失），说明当时工作区含他人在途改动。
 - **模式纪律**：一律 canonical `pnpm test`（`BASELINE.md:95-99`：`node --test` 直跑 ≠ canonical）。
+
+### 3.2 重启后收尾复验（第 9 轮 ＋ 全门重跑）
+
+**事故**：2026-09-09 约 21:05 电脑意外重启（`.git/refs/heads/master` 被零填充），由编排者恢复，HEAD `4d98e5f5`（本段 4 个 commit 全部在链上）。重启后**只读自证**：`git log --oneline -6` 链完整、`git show --stat 0ff4deb` 命中、本段路径 `git status --short` 为空、`packages/skill-calorie/SKILL.md` 未变、无悬空锁。
+
+持锁重跑（`.scratch/t88/close-b.ps1`，现场日志 `run-close-*.log`）：`pnpm build`／`boundaries`／`snapshot:check`／`publish:pre` 逐条 **exit 0**；`contract-signatures`／`style`／`help`／`controls`／`help-center-js-88` 全 **exit 0**；探针 **59/59**；浏览器实证 **29/29**（`CLOSE_PROBE=0`／`CLOSE_BROWSER=0`）。
+
+**第 9 轮 canonical `pnpm test`（最终态）**：`新增=4 消失=5`，四条**全部属于 #120 的在途 WIP（软删口径）**，与本票路径无交集：
+
+| 轮 | 新增（白名单外） | 签名 | 归属／分类 |
+|---|---|---|---|
+| 9 | `120 · analysis 11 处查询逐处排除软删行（每处唯一可观测面）` | `AssertionError: 350 !== null`（`softdelete-120.test.mjs:157`） | **#120 WIP**（A 类内容断言，非本票面） |
+| 9 | `120 · 软删运动后 view.exercise／view.home／view.deficit／view.health／buildSeries 口径一致（全排除）` | `AssertionError: 350 !== null`（`softdelete-120.test.mjs:107`） | **#120 WIP**（A 类） |
+| 9 | `口径 · 软删运动后逐面排除（#120 口径收敛…）` | `AssertionError: 300 !== null`（`cmd-write-40-persist.test.mjs:660`） | **#120 WIP**（A 类） |
+| 9 | `体重记/改/删/批量 + 缺身高仍记（C5 #43）` | `exit=3221225477`（`cmd-write-40.test.mjs:53` 子进程，stderr 空） | **B 类**（子进程 NTSTATUS 崩溃） |
+
+- **9 轮并集**：`rounds=9 base=34 union=36 新增=7 消失=5`（`run-delta-union-b9.log`）＝ 本票 3 条 B 类（轮 1／2／8）＋ **#120 在途 WIP 4 条（轮 9）**。**本票（#88）范围内真 delta ＝ 0**；#120 的 4 条按编排者「不得据此判本票 delta」处置（其证据由该 session 维护）。
+- **并发上下文（第 9 轮）**：工作区含 #120 未提交的 `src/analysis/series.ts` 与已提交的 `aaf494d`／`4d98e5f`（软删口径）；另有 #97 未跟踪测试文件与 `tooling/check-gate-audit.mjs` WIP。全量测试经锁串行执行，**未与浏览器实证并行**（浏览器实证在本轮之前已跑完）。
 
 ## 4. 变异自证（红 → 还原 → 绿 ＋ sha256；持锁；`tsc -b --force` 重建）
 
