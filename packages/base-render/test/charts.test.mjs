@@ -823,6 +823,20 @@ describe('C BarChartOptions', () => {
     assert.deepEqual(labels('none'), []);
     const single = textsOf(charts.bar({ items: [{ label: 'A', value: 1 }], options: { ...BAR_FIXED, labels: 'select' } }).html, P + 'charts-xlabel');
     assert.deepEqual(single, ['A'], '单柱 select 只标 1 个');
+    /* t-chartfix：类目标签必须水平居中于各自柱形（点标度会把首尾标签钉在绘图区边缘）。
+     * 缺省 3 柱 / width:320 → frame x0 14 / x1 306（w=292）、slot 97.333 → 柱心 62.7/160.0/257.3；
+     * 点标度旧值是 14.0/160.0/306.0（首尾偏差 48.7）。 */
+    const centered = charts.bar({
+      items: [{ label: '周一', value: 120 }, { label: '周二', value: 200 }, { label: '周三', value: 150 }],
+    }).html;
+    const barCenters = attrsOf(centered, 'rect', P + 'charts-bar')
+      .map((r) => (Number(r.x) + Number(r.width) / 2).toFixed(1));
+    assert.deepEqual(barCenters, ['62.7', '160.0', '257.3'], '柱列中心逐值');
+    assert.deepEqual(
+      attrsOf(centered, 'text', P + 'charts-xlabel').map((t) => Number(t.x).toFixed(1)),
+      barCenters,
+      'X 标签 x 必须 == 各自柱列中心 x（t-chartfix 居中）',
+    );
   });
 
   it('C.缺省（都不传）：单柱渲染路径', () => {
@@ -1011,6 +1025,12 @@ describe('E ProgressChartOptions / GaugeChartOptions', () => {
     assert.equal(styleOf(charts.progress({ pct: 40, options: { height: 20 } }).html), 'height:20px');
     assert.equal(viewBoxOf(charts.progress({ pct: 40, options: { height: 20 } }).html), '0 0 100.0 20.0', 'viewBox 同步（坐标唯一）');
     assert.equal((svgOf(charts.progress({ pct: 40 }).html).match(/preserveAspectRatio="([^"]*)"/) ?? [])[1], 'none', '宽度仍满宽拉伸');
+    /* t-chartfix：缺省 8px 轨道肉眼近乎发丝 → 样式层最小可辨高度 12px（`height` 选项映射本身不动，
+     * 上面四条照旧；min-height 与内联 height 是不同属性，不冲突；无渐变/圆角增量，T13 与 H-10a2 不受影响）。 */
+    assert.ok(
+      buildChartsHelpersJs().includes('.ilife-charts-progress .ilife-charts-svg{min-height:12px}'),
+      '进度 svg 必须有 12px 最小高度兜底（字面量）',
+    );
   });
 
   it('E.pct 非数：抛 pct-invalid', () => {
@@ -1113,6 +1133,17 @@ describe('F ComboChartOptions / SparklineChartOptions', () => {
     assert.equal(attrsOf(linesOnly.html, 'rect', 'ilife-charts-bar').length, 0);
     assert.deepEqual(attrsOf(linesOnly.html, 'circle', 'ilife-charts-dot').map((d) => d.cx), ['50.5', '123.5', '196.5', '269.5'], '只传 lines 仍走同一 band 标度（旧版线点落在柱列容器内 left:50%）');
     assert.equal(pathD(linesOnly.html, 'ilife-charts-combo-line'), 'M50.5 123.5L123.5 85.0L196.5 46.5L269.5 8.0');
+    /* t-chartfix：combo 标签同样居中于柱列（与 bar 同因；只传 lines 时 n=4 同一 band 标度）。 */
+    const comboLabeled = charts.combo({
+      bars: [{ label: 'A', value: 10 }, { label: 'B', value: 20 }, { label: 'C', value: 30 }, { label: 'D', value: 40 }],
+      lines: [{ label: 'A', value: 5 }, { label: 'B', value: 15 }, { label: 'C', value: 25 }, { label: 'D', value: 35 }],
+      options: { ...COMBO_FIXED, labels: 'all' },
+    }).html;
+    assert.deepEqual(
+      attrsOf(comboLabeled, 'text', 'ilife-charts-xlabel').map((t) => t.x),
+      ['50.5', '123.5', '196.5', '269.5'],
+      'combo X 标签 x 必须 == 柱列中心 x（t-chartfix 居中）',
+    );
   });
 
   it('F.combo 共享域：0..max(柱,线) 无 padding（柱底贴底，旧 charts.js:742-753）', () => {
