@@ -40,6 +40,7 @@ $ git status --short
 ### 1.1 envelope 字段（三态实测）
 
 - 顶层键恒 `version,skill,shape,key,data,delivery`（六键＝P9 五字段 ＋ #83 追加的 `delivery`；`version=0.1.0`、`skill=calorie`、`shape=list`、`key=calorie.help.center`）。
+- stdout 字节：`file`／`inline` 各 **1,276 B**（单行 envelope），`text` **26,827 B**（含 `data.text` 24,989 B）；三态 stdout 行数恒 1（P9 纯净）。
 - `data` 键：`file`／`inline` ＝ `items,total,sceneTotal,subgroupTotal,mode,bytes,output`；`text` 多一个 `text`（24,989 B，与产物逐字同源）。
 - `data.items` 恒 10 组：`home(3/9) diet(9/70) weight(8/58) exercise(5/39) workout(6/32) goal(3/25) body_detail(4/13) body_photo(4/10) profile(3/4) analysis(9/176)`，`total=10 / subgroupTotal=54 / sceneTotal=436`。
 - `delivery`：`{mode,path?,template,bytes}`；`file`／`inline` 的 `template='help-shell'`，`text` 的 `template='text'`。
