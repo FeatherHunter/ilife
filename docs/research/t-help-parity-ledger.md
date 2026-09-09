@@ -3,13 +3,15 @@
 > 本席＝「HELP 最终产物生成 ＋ 新旧差异台账席」。**只观测、不修代码、不改产物**。
 > 旧侧＝**F3 根镜像** `D:\2Study\StudyNotes\SKILLS\卡路里\卡路里.html`（302,820 B，只读）＋ 两个冻结实例
 > `fixtures/help-instances/*.html`（只读，哈希对账）；新侧＝**最终代码**（`5fffe1e`）在持锁下重生成的三态产物。
-> 机器可读台账：`.scratch/t-parity/ledger.json`（**50 行**七维度；sha256 `e8233c78a1f019348dd3426b843575a04b416e11b0434a23cca5f77de1adca45`，
+> 机器可读台账：`.scratch/t-parity/ledger.json`（**51 行**七维度；sha256 `b634f0bf91451e4631c05ea7ebc53c95234903e57cb44ed78aec6e62da3ad094`，
 > 去 `generatedAt` 后**逐字节确定**，同一输入复跑同值）／解析：`.scratch/t-parity/{old,new,fixtures}-parse.json`／
 > 产物清单：`.scratch/t-parity/gen-manifest.json`。**`.scratch/` 不入库**，哈希与路径逐条抄在本文件里。
 >
 > **纪律**：判定只用四值 `一致／差异（可解释）／新版缺失／新版新增`；每条差异带根因或归属票。
 > **未**为「看起来一致」改代码或改产物；缺口如实登记并给「缺口 → 建议归属票」。
 > **本版＝返修 R-3**（两席对抗式审查：席 A `aee89ed`／席 B `05a72ee`），逐条处置见 **§9**。
+> **R-7 补记**（席 B 定点复核 R3-B-1…B-4，salvage）：D6「Tab 形态」改判＋补「断点」行（51 行）、体积断言换标签壳金标式、
+> 穷举键集改实测＋覆盖须非「一致」、证据方向一致性校验；逐条复算见 **§9.3**，计数与 sha 已同步更新。
 
 ## 0. 起点与工作区（如实记录他票 WIP）
 
@@ -57,19 +59,19 @@ $ git status --short
   且 `inlineIsSubstringOfFile=false`（gen.mjs 已把这条过强命题钉成断言）。
 - **字节稳定性（P-2）**：同一 commit 五次独立运行三态 sha256 **逐字相同**。
 
-## 2. 七维度差异台账（50 行）
+## 2. 七维度差异台账（51 行）
 
 **头条数字（旧 → 新）**：分组 **10 → 10**｜子功能 **54 → 54**｜场景 **436 → 436**｜prompt 逐字 **436/436 相同**｜
 CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字＝Scene.id**）｜file 态体积 **302,820 B → 1,264,822 B**。
-判定分布：**一致 18／差异（可解释）18／新版新增 11／新版缺失 3**（合计 50 行；逐行机器可读见 `.scratch/t-parity/ledger.json`）。
+判定分布：**一致 17／差异（可解释）20／新版新增 11／新版缺失 3**（合计 51 行；逐行机器可读见 `.scratch/t-parity/ledger.json`）。
 
 ### D1 分组数 —— 4/4 一致
 
 | 项 | 旧值 | 新值 | 判定 | 证据／归属 |
 |---|---|---|---|---|
 | 分组条数 | 10 | 10 | **一致** | `D1.groups`；envelope `data.total=10` |
-| 分组 id 序列 | `home>diet>weight>exercise>workout>goal>body_detail>body_photo>profile>analysis` | 逐字相同 | **一致** | L-01／`helpCenter.ts:47 HELP_GROUPS` |
-| 分组 label／icon | 主页🏠／饮食🍚／体重⚖️／运动🏃／健身计划💪／目标管理🎯／身体细节🧬／身材照片📸／基础信息⚙️／分析📊 | 逐字相同（含 `profile=⚙️`） | **一致** | L-01（SoT `profile='🛠'` 已按 L-01 收敛为 F3） |
+| 分组 id 序列逐字 | `home>diet>weight>exercise>workout>goal>body_detail>body_photo>profile>analysis` | 逐字相同 | **一致** | L-01／`helpCenter.ts:47 HELP_GROUPS` |
+| 分组 label／icon 逐字 | 主页🏠／饮食🍚／体重⚖️／运动🏃／健身计划💪／目标管理🎯／身体细节🧬／身材照片📸／基础信息⚙️／分析📊 | 逐字相同（含 `profile=⚙️`） | **一致** | L-01（SoT `profile='🛠'` 已按 L-01 收敛为 F3） |
 | 每分组子功能／场景分布 | `3:9 9:70 8:58 5:39 6:32 3:25 4:13 4:10 3:4 9:176` | 逐组相同 | **一致** | `D1.groupDigest` |
 
 ### D2 子功能数 —— 3/3 一致
@@ -77,8 +79,8 @@ CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字
 | 项 | 旧值 | 新值 | 判定 | 证据／归属 |
 |---|---|---|---|---|
 | 子功能条数 | 54 | 54 | **一致** | envelope `data.subgroupTotal=54` |
-| 子功能 id 集合 | 54 条同序 | 54/54 逐字同序 | **一致** | L-03；「既有唤醒词」**仅出现在 `diet_9`／`analysis_9` 两组**且恒列组末（其余 8 组无此子功能，A-S3-8 措辞更正） |
-| 子功能 label | 54 条 | 54/54 逐字相同 | **一致** | L-18（diet 展示名取 F3「饮食」） |
+| 子功能 id 集合逐字 | 54 条同序 | 54/54 逐字同序 | **一致** | L-03；「既有唤醒词」**仅出现在 `diet_9`／`analysis_9` 两组**且恒列组末（其余 8 组无此子功能，A-S3-8 措辞更正） |
+| 子功能 label 逐字 | 54 条 | 54/54 逐字相同 | **一致** | L-18（diet 展示名取 F3「饮食」） |
 
 ### D3 场景（唤醒词）数 —— 5 一致 ＋ 1 可解释
 
@@ -87,7 +89,7 @@ CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字
 | 场景条数 | 436 | 436 | **一致** | envelope `data.sceneTotal=436` |
 | 唤醒词逐字 | 436 条 | **436/436 相同** | **一致** | 按 `(子分组 id, 组内序)` 对齐（**不以 `wake_word` 为 join 键**：434/436 唯一，`记身材照`×3，B-S3-6） |
 | 场景 title 逐字 | 436 条 | **436/436 相同** | **一致** | 同上 |
-| `status` 字段 | 436 条空串 | 436/436 相同 | **一致** | 同上 |
+| status 字段逐字 | 436 条空串 | 436/436 相同 | **一致** | 同上 |
 | 场景 id 逐字 | 414/436 相同 ＋ 22 条 `legacy_{唤醒词}` | 414/436 相同 ＋ 22 条 `main_prompt.cli` 原文 | **差异（可解释）** | **L-19／#83 R-7**；22 条逐条见 `D3.idChanged` |
 | 场景 id 唯一性 | — | 436/436 唯一 | **一致** | #88 断言 |
 
@@ -97,8 +99,8 @@ CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字
 
 | 项 | 旧值 | 新值 | 判定 | 证据／归属 |
 |---|---|---|---|---|
-| 每条 prompt 逐字 | 436 条 | **436/436 逐字相同** | **一致** | `D4.promptEq`；差异集为空 |
-| `types` 徽章文本序列 | 414 条 `["结果"]`（字符串数组，shaped=0） | 414 条文本逐字相同，形状 `[{text,bg,fg}]`（shaped=414） | **差异（可解释）** | **L-12**／`helpCenter.ts:132 HELP_TYPE_BADGES`（只发字符串会丢三档色） |
+| 每条场景 prompt_template 逐字 | 436 条 | **436/436 逐字相同** | **一致** | `D4.promptEq`；差异集为空 |
+| types 徽章文本序列 | 414 条 `["结果"]`（字符串数组，shaped=0） | 414 条文本逐字相同，形状 `[{text,bg,fg}]`（shaped=414） | **差异（可解释）** | **L-12**／`helpCenter.ts:132 HELP_TYPE_BADGES`（只发字符串会丢三档色） |
 | 裸 `<N>` 等尖括号 | **源码侧 13 处**（`t88-final.md:129`：`scene-02-diet.ts:29` 等）／**产物侧 prompt 内 0 处** | 源码侧 13 处／**产物侧 prompt 内 0 处**（唯一 `<N>` 在 1 条 scene id：text 态裸 1 处、payload 转义 `\u003cN>`、卡级 `&lt;N&gt;`） | **一致** | **A-2／B-S2-1 更正**：13 处是**源码侧**计数，产物侧不可复现；产物侧两侧均为 0 ⇒ 判「一致」 |
 | subtitle（L-10 时间戳） | `"10 分类 · 436 场景 · 更新于 2026-08-14 11:38"` | `"10 分类 · 436 场景"`（不发时间戳） | **差异（可解释）** | **L-10／P-2**（`updatedAt` 缺省不写 → 字节稳定）；B-S3-3 新增登记 |
 
@@ -106,21 +108,22 @@ CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字
 
 | 项 | 旧值 | 新值 | 判定 | 证据／归属 |
 |---|---|---|---|---|
-| Sheet「可执行命令」行 | **0**（F3 payload 无 `editable_fields`） | **341/436** | **新版新增** | **#106**（数据源 #81 exec 桶 341 条；`helpCenter.ts:94-123`） |
-| 卡级 `<code class=cli>` | 0 | **436 条**，其中 **435 条逐字＝Scene.id**（1 条例外＝含 `<N>`／`"` 的 id，渲染为 `&lt;N&gt;`／`&quot;`，**反转义后 436/436**） | **新版新增** | **L-09**；**A-1／B-S3-2 更正**（原写「436＝Scene.id」） |
-| 无 CLI 的场景（**缺口**） | 不适用 | **95/436** | **新版缺失** | 分布 `diet 6／weight 18／exercise 1／workout 23／goal 3／body_detail 2／analysis 42`；根因＝**#81 non-exec 110 − 漂移 15 ＝ 95**（漂移归 #111/#112/#113；细分 out-of-scope 10 ＋ legacy-chain 85），**不是**「95 键」（**B-S2-3 更正**：SKILL.md 的「95 键」是键表口径，与 95 条 noCli 无关） |
+| Sheet「可执行命令」行数 | **0**（F3 payload 无 `editable_fields`） | **341/436** | **新版新增** | **#106**（数据源 #81 exec 桶 341 条；`helpCenter.ts:94-123`） |
+| 卡级 `<code class=cli>` 行数 | 0 | **436 条**，其中 **435 条逐字＝Scene.id**（1 条例外＝含 `<N>`／`"` 的 id，渲染为 `&lt;N&gt;`／`&quot;`，**反转义后 436/436**） | **新版新增** | **L-09**；**A-1／B-S3-2 更正**（原写「436＝Scene.id」） |
+| 无 CLI 的场景数（**缺口**） | 不适用 | **95/436** | **新版缺失** | 分布 `diet 6／weight 18／exercise 1／workout 23／goal 3／body_detail 2／analysis 42`；根因＝**#81 non-exec 110 − 漂移 15 ＝ 95**（漂移归 #111/#112/#113；细分 out-of-scope 10 ＋ legacy-chain 85），**不是**「95 键」（**B-S2-3 更正**：SKILL.md 的「95 键」是键表口径，与 95 条 noCli 无关） |
 | 卡级 code vs Sheet CLI（22 条 legacy） | 不适用 | **22/22 条不同源**：**18 条**卡级＝`python…`／`mavis…` 而 Sheet＝路由层新 CLI；**4 条**卡级有原文、Sheet **无字段行**（`看「有备注」的饮食记录`＝reason `noNoteFilter`；`开启／关闭／查定时复盘`＝reason `oosCron`） | **差异（可解释）** | **B-S1-1 更正**（原写「18 不同源＋4 两处皆无」，与「卡级 code 436/436」自相矛盾）；L-19＋#106 口径叠加 |
 | 每卡按钮（静态 vs 运行时） | 每卡 1 个「复制」（运行时注入 `.mini`） | **静态 markup 1,308 个**（`data-action-id` 各 436：复制指令／复制唤醒词／复制参数）＋ 运行时注入卡头**第 4 个**（`injectCardCopy`） | **新版新增** | **A-4／B-S2-3 更正**（原写「每卡 3 按钮＝运行时注入」）：静态 `card-copy` 命中 0、JS `createElement("button")` 仅 4 处 |
 | CLI 参数含冻结绝对日期 | 不适用 | **222/341** 条命令参数带 `YYYY-MM-DD`（如 `calorie.view.home --params '{"date":"2026-09-07"}'` **当日即错**） | **差异（可解释）** | **B-S2-5 新增登记**：样例参数由 #81 路由层冻结写入；建议归 #81 后续维护票或新票 |
 | 95 条无字段卡的「复制参数」按钮 | 不适用 | 回落复制**卡级 code（＝Scene.id）**而非命令（样例 `diet_scan_label` → `data-t="diet_scan_label"`） | **差异（可解释）** | **B-S3-5 新增登记**（`t106:73` L-106-03） |
 
-### D6 交互能力 —— 3 一致 ＋ 7 可解释 ＋ 6 新增 ＋ 2 缺失
+### D6 交互能力 —— 2 一致 ＋ 9 可解释 ＋ 6 新增 ＋ 2 缺失
 
 | 能力 | 旧值（F3） | 新值 | 判定 | 证据／归属 |
 |---|---|---|---|---|
 | 搜索（输入框＋清空＋计数） | 有（`#sB`／`#sClear`／`#hitC`） | 有（运行时注入 `input[type=search]` ＋ 清空 ＋ 计数） | **一致** | L-06；两侧静态 HTML 均无搜索框（旧 0／新 0） |
-| 命中计数／空态文案 | 「匹配 N 个场景」／「没有找到相关场景,换个词试试～」 | 逐字相同 | **一致** | L-06 |
-| Tab 形态 | 横滑页 ＋ 底部 tabBar | radio 标签条（11 个 `.tab-input`） | **一致** | 见下「跳页／断点」两行（穷举对账把 mediaQueries 归此行） |
+| 命中计数／空态文案逐字 | 「匹配 N 个场景」／「没有找到相关场景,换个词试试～」 | 逐字相同 | **一致** | L-06 |
+| Tab 形态（横滑页 → radio 标签条） | 横滑页 `.page` ＋ 底部 tabBar（scroll-snap） | radio 标签条（`.ilife-help-shell-tab-input` 11 个） | **差异（可解释）** | **R3-B-1 更正**：本行值列两侧不同，原判「一致」系 rule 误测 `jumpPage`（两侧恒 true）所致；现 rule 测 `tabRadios`（旧 0／新 11），`evidenceRef` 指向本行证据对。**L-07**（横滑页 → radio 标签条，功能对等） |
+| 断点（mediaQueries） | 3 组：`@media(min-width:501px)`／`@media(max-width:500px)`／`@media (max-width: 820px)` | 5 组：`@media (max-width: 820px)`／`720px`／`640px`／`400px`／`@media (prefers-reduced-motion: reduce)` | **差异（可解释）** | **R3-B-1 补行**：`mediaQueries` 真差异此前**无行可依**（G-4 指针悬空）；现独立成行并承接 G-4。**L-13／#89**（B1 视觉锁逐值验收） |
 | 高亮 | 仅高亮卡面标题 `.m-name` | 整卡文本节点 `wrapTerm` ＋ `<mark class=card-mark>` | **差异（可解释）** | L-06（S4）；B §4.1 反例 3 指出「范围扩大」可能产生视觉噪声 → 已在 §3 用 C 口径兜 |
 | 跳页 | 命中后 `pages.scrollTo({left})` | `jumpTo` 勾选命中页 radio ＋ Enter 循环 | **差异（可解释）** | L-07（横滑页 → radio 标签条） |
 | 复制按钮（卡级） | 每卡 1 个（运行时 `.mini`） | 静态 3 个/卡（Sheet 内）＋ 运行时卡头 1 个 | **新版新增** | L-05／#88 S4-S5 |
@@ -142,17 +145,17 @@ CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字
 | 项 | 旧值 | 新值 | 判定 | 证据／归属 |
 |---|---|---|---|---|
 | file 态字节 | **302,820 B** | **1,264,822 B**（+962,002 B，×4.18） | **差异（可解释）** | **L-16／P-5**：旧侧 DOM **运行时生成**（静态标记 1,130 B），新侧静态壳 |
-| 体积构成（块口径闭合） | — | markup 953,821 ＋ payload 块 270,313 ＋ style 块 21,031 ＋ js 块 19,657 ＝ **1,264,822** ＝ 文件字节（**残差 0**） | **差异（可解释）** | **B-S2-4 更正**：块口径（含标签）严格闭合 |
+| 体积构成（块口径闭合） | 旧：内容 302,700 ＋ 标签壳 120 ＝ **302,820** | 新：内容 1,264,736 ＋ 标签壳 86 ＝ **1,264,822** | **差异（可解释）** | **R-7／R3-B-2 更正**：旧「残差 0」 headline 是定义式恒真（`markup ＝ 文件 − 块`），改断言**内容口径 ＋ 独立正则标签壳 ＝ 文件字节**（新 `1264736+86=1264822`／旧 `302700+120=302820`）＋ 金标 **86／120／Δ−34** |
 | 体积残差（两处） | 旧侧标签壳 **120 B** | 新侧标签壳 **86 B** | **差异（可解释）** | ① 构成残差＝三个块的标签壳（新 86／旧 120）；② 增减残差＝**−34 B**（120→86）。口径声明：本脚本 size 账按「多块 style 原文直接相连」计，与席 B 的 `join('\n')` 口径差 1 B（旧壳 120 vs 119）＝A-S3-5 已登记的 ±1 口径混用 |
 | 体积增减（分块 ＋ 标签壳闭合） | markup 1,130 ＋ payload 196,902 ＋ css 33,469 ＋ js 71,199 | markup 953,821 ＋ payload 270,259 ＋ css 21,016 ＋ js 19,640 | **差异（可解释）** | markup **+952,691**／payload **+73,357**（#106 cli 字段 53,596 B＋#107 `meta_blocks` 1,826 B＋22 条 legacy 原文）／css **−12,453**／js **−51,559**；分块和 **962,036** ＋ 标签壳 **−34** ＝ **962,002**（闭合） |
 | 与 L-16 记录值对账 | L-16 记 1,010,979 B（#88 期） | 1,264,822 B → **+253,843 B** | **差异（可解释）** | **B-S3-3 新增登记**：增量归 #106（341 条 CLI 字段）＋#107（看板入口）＋#121 等，未逐字节二分 |
 | payload 顶层键 | `skill_name,title,subtitle,contact,groups`（5 键） | `…,meta_blocks`（6 键） | **新版新增** | **B-S3-4 新增登记**：#107 看板页入口段（6 条：`home／diet／exercise／goal／photo-gallery／help`） |
 | inline／text 态字节 | 不适用 | inline **994,295 B**／text **24,989 B** | **新版新增** | #91 三态／#83 delivery |
-| 字节稳定性 | — | 五次独立运行 sha256 逐字相同 | **一致** | P-2 |
+| 字节稳定性（多次运行同 sha256） | — | 五次独立运行 sha256 逐字相同 | **一致** | P-2 |
 
 ### 2.1 差异条数与最高风险 3 条
 
-- 差异合计 **32 条**（18 可解释 ＋ 11 新版新增 ＋ 3 新版缺失）；「新版缺失」3 条＝**D5 的 95 条无 CLI**、**D6 的参数必填阻断**、**D6 的正文字体栈（H-06）**。
+- 差异合计 **34 条**（20 可解释 ＋ 11 新版新增 ＋ 3 新版缺失）；「新版缺失」3 条＝**D5 的 95 条无 CLI**、**D6 的参数必填阻断**、**D6 的正文字体栈（H-06）**。
 - **风险 1（口径叠加 · 用户可见）**：D5「卡级 code vs Sheet CLI」——**22/22 条 legacy 卡**上，卡级显示 `python …`／`mavis …`（18 条 Sheet 另给新 CLI，4 条 Sheet 无字段行）。两条口径各自正确，叠加后同一张卡给出两个不同命令 → **建议维护者拍板**（收敛为「卡级只显示 id」或「卡级显示 Sheet 同一命令」）。
 - **风险 2（能力缺口 · 95/436）**：95 条场景没有「可执行命令」行（workout 23、analysis 42、weight 18 等），且这 95 条的「复制参数」按钮回落复制 **Scene.id**（非命令）。根因 #81 non-exec，非 #106 漏做。
 - **风险 3（时效 · 222/341）**：341 条命令中 **222 条**参数是**冻结绝对日期**（`--params '{"date":"2026-09-07"}'`），复制即执行会指向过去窗口；「看本周饮食」这类词当日即错。**新增登记（B-S2-5）**，建议归 #81 后续维护票。
@@ -172,11 +175,11 @@ CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字
 ### 口径 B · 结构化等价 ＋ 登记偏离（**推荐**）
 
 - **判据**：两侧结构化解剖后逐维度比对（D1–D7）：① 计数与 id 集合逐字相等；② 差异**必须**登记并带根因或归属票；③ 未登记差异＝红；④ 三态 envelope 契约（exit／五字段＋`delivery`／`data.bytes＝产物字节`）。
-- **R-3 加固（本版已落地，见 §9）**：
-  1. **判定由测量产生**：50 行 verdict 全部由 `rule(实测值)` 计算，脚本内无判定字面量、无 `? A : A`；
-  2. **每行 `evidenceRef`** 指向 `ledger.json` 取数路径，收尾断言 **50/50 可解析**；
-  3. **穷举对账**：枚举 payload 顶层键／场景字段键／CSS token／JS marker／DOM 计数共 **17 个可枚举差异键**，**100% 须有登记行覆盖**（未覆盖即红）——B 反例「`+meta_blocks` 漏登」即由这条捕获；
-  4. `ledger.json` **逐字节确定**（去时间戳）→ sha256 `e8233c78…adca45` 写进本台账，第三方可一键复算；
+- **R-3 加固（本版已落地，见 §9；R-7 补记见 §9.3）**：
+  1. **判定由测量产生**：51 行 verdict 全部由 `rule(实测值)` 计算，脚本内无判定字面量、无 `? A : A`；
+  2. **每行 `evidenceRef`** 指向 `ledger.json` 证据对表（D6 行形如 `D6.newDom.tabRadios`），收尾断言 **51/51 可解析** ＋ **方向一致性**（`一致⟺证据相等`，R-7）；
+  3. **穷举对账**：枚举 payload 顶层键／场景字段键（解析 JSON 实测）／CSS token／JS marker／DOM 计数（含 `tabRadios`）共 **18 个可枚举差异键**，**100% 须被判定≠「一致」的登记行覆盖**（未覆盖即红）——B 反例「`+meta_blocks` 漏登」即由这条捕获；
+  4. `ledger.json` **逐字节确定**（去时间戳）→ sha256 `b634f0bf…a3ad094` 写进本台账，第三方可一键复算；
   5. 禁用 `wake_word` 作 join 键（434/436 唯一）。
 - **会漏掉什么**：① 纯视觉／像素级偏差（H-01…H-14 逐值尺，需 #89 浏览器面）；② 运行时行为（点击是否真复制、搜索是否真过滤）；③ **语义时效**（222 条冻结日期——已在 B 内登记，但 B 不自动判「窗口是否还有效」）；④ 「把真回归写成可解释」的判断性作弊（靠人审）。
 - **能否被伪造**：**较难但非不可能**——伪造需同时改两侧解析 JSON ＋ `ledger.json` ＋ 台账 md；缓解＝判定由脚本算、`evidenceRef` 机器校验、穷举对账、sha256 入档、一键复算。**不能**防判断性作弊。
@@ -201,7 +204,7 @@ CLI 展示命令 **0 → 341**（＋卡级 code 436 条，其中 **435 条逐字
 | G-1 | **95/436 场景无 Sheet「可执行命令」行**（根因＝#81 non-exec **110 − 漂移 15 ＝ 95**；细分 out-of-scope 10 ＋ legacy-chain 85）；其中 4 条＝legacy python／mavis 原文，reason code：`noNoteFilter` ×1、`oosCron` ×3 | D5；`D5.noCli` | wizard 类 5 条 → **#86**；计划类 → 二期写键票；legacy python 类 → 登记「不移植」。（**B-S2-3 更正**：删除原「#88 已登记 95 键无计划写键」——「95 键」是 SKILL.md 键表口径，与 95 条 noCli 无关） |
 | G-2 | **HELP Sheet 内无必填阻断**（F3 `getMissing` 无对应物） | D6「参数必填校验」 | **#86**（配置型 wizard 已落地：`016bf9f`／`18354fe`／`aef6ae0`／`90128d8`，Sheet 字段运行时换 `input`）。（**B-S2-2 更正**：原「新版拿不到填写入口」已过期） |
 | G-3 | **22/22 条 legacy 卡「卡级 code ≠ Sheet CLI」**（18 双命令＋4 卡级单侧） | D5；`D5.legacyCardVsSheet` | **#106 后续或新票**（需维护者拍板收敛口径） |
-| G-4 | 断点三层并存（旧 `500/501/820` → 新 `820/720/640/400`），未做逐值视觉验收 | D6「Tab 形态」 | **#89**（B1 视觉锁；L-13 已登记） |
+| G-4 | 断点三层并存（旧 `500/501/820` → 新 `820/720/640/400`），未做逐值视觉验收 | D6「断点（mediaQueries）」（**R-7 更正**：原指「Tab 形态」行，悬空；现独立成行承接） | **#89**（B1 视觉锁；L-13 已登记） |
 | G-5 | ~~inline 态 delivery.mode=file~~ → **已移出缺口清单**：属 #91／#83 规格内行为，改登记为 §1.1 观测点＋命名歧义 | §1.1 | **#91 主／#83 辅**（B-S2-1 更正） |
 | G-6 | 冻结实例为 v2.4.12／v2.4.13 期（81 唤醒词／12 分类；80 场景／9 分类），**不是** 436 场景版 | `fixtures-parse.json`（哈希对账 ✔） | 参考物；如需 436 版对照物 → **#94** 追加流程（不得覆盖既有条目） |
 | G-7 | **222/341 条命令参数为冻结绝对日期**（当日即错的实例：`看今日主页 → --params '{"date":"2026-09-07"}'`） | D5；`D5.cliDatedCount` | **#81 后续维护票或新票**（样例参数口径） |
@@ -282,7 +285,7 @@ src/tooling 命中 0；docs 命中仅历史证据/变异脚本内的**登记性�
 $env:SKILLS_DB_PATH = "D:\ilife\.scratch\final-db"
 node docs/research/t-help-parity-gen.mjs                      # 持锁 build ＋ 三态生成 → gen-manifest.json（RESULT: 32/32）
 node docs/research/t-help-parity-extract.mjs                  # 两侧结构化解析 → {old,new,fixtures}-parse.json（RESULT: 27/27）
-node docs/research/t-help-parity-compare.mjs                  # 七维度台账 → ledger.json（RESULT: 23/23）
+node docs/research/t-help-parity-compare.mjs                  # 七维度台账 → ledger.json（RESULT: 29/29）
 # 两席审查探针（受跟踪，只读）
 node tooling/run-locked.mjs --ticket 83 -- node docs/research/t-help-parity-review-a-probe.mjs --analyze
 node tooling/run-locked.mjs --ticket 83 -- node docs/research/t-help-parity-review-b-probe.mjs
@@ -307,7 +310,7 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t-help-parity-ledger.
 | `.scratch/t-parity/old-parse.json` | — | 旧侧解析（302,820 B／`940939c772b3d304b1f59ff4557501ffa33ab1677dea8c8fef7617beb91118cc`） |
 | `.scratch/t-parity/fixtures-parse.json` | — | 两冻结实例解析（哈希与 `SHA256SUMS.txt` 对账 ✔） |
 | `.scratch/t-parity/new-parse.json` | — | 三态新侧解析 |
-| `.scratch/t-parity/ledger.json` | — | 七维度 **50 行** ＋ 穷举对账 17 键；sha256 **`e8233c78a1f019348dd3426b843575a04b416e11b0434a23cca5f77de1adca45`**（去时间戳后逐字节确定） |
+| `.scratch/t-parity/ledger.json` | — | 七维度 **51 行** ＋ 穷举对账 18 键；sha256 **`b634f0bf91451e4631c05ea7ebc53c95234903e57cb44ed78aec6e62da3ad094`**（去时间戳后逐字节确定） |
 
 **旧侧参考哈希**：F3 根镜像 `940939c772b3d304b1f59ff4557501ffa33ab1677dea8c8fef7617beb91118cc`（302,820 B）；
 冻结实例 `56807c11bd32be7afd7a3a2623ee1a79ef2bf41e6ecb08077b758de144befa28`（65,366 B）／
@@ -344,15 +347,15 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t-help-parity-ledger.
 | **B-S3-4** payload 顶层键 | S3 | **接受（新增行）** | 新增 D7「payload 顶层键」行（`+meta_blocks`，#107） | 旧 5 键／新 6 键；6 条入口 `home/diet/exercise/goal/photo-gallery/help` |
 | **B-S3-5** 无字段卡「复制参数」 | S3 | **接受（新增行）** | 新增 D5 行：回落复制 **Scene.id** | 样例 `diet_scan_label` → `data-t="diet_scan_label"`；`t106:73` L-106-03 |
 | **B-S3-6** wake_word join 键 | S3 | **接受** | 脚本改用 `(子分组 id, 组内序)` 对齐；断言 `wakeWordUnique=434`＋dup `记身材照×3` | `derived.wakeWordDups=[["记身材照",3]]` |
-| **B-S3-1** verdict 恒真／硬编码 | S3 | **接受** | 见 §9.1 ①②③ | 50 行全部 `rule(实测值)`；`? A : A` 已删；`evidenceRef` 50/50 可解析 |
+| **B-S3-1** verdict 恒真／硬编码 | S3 | **接受** | 见 §9.1 ①②③ | 51 行全部 `rule(实测值)`；`? A : A` 已删；`evidenceRef` 51/51 可解析 |
 
 ### 9.1 脚本加固点（B §4.5／A §4）
 
-1. **判定由测量产生**：`add(dim,item,old,new,rule,…)`，`rule()` 返回四值之一，脚本内**无判定字面量**；旧版 `typesTextEq.length === 436 ? A : A` 恒真分支已删（断言数 21 → **23**）。
-2. **`evidenceRef` 机器校验**：50 行逐行带取数路径（如 `D5.noCli`、`D7.blockSum`），收尾 `resolveRef` 断言 **50/50 可解析**（判定与证据不脱钩）。
-3. **穷举对账**：17 个可枚举差异键（payload 顶层键／场景字段键／CSS token ×5／JS marker ×6／DOM 计数 ×5）**100% 须有登记行覆盖**，未覆盖即红。
-4. **体积等式闭合**：`块口径和 ＝ 文件字节`（残差 0）＋ `增减分块和 ＋ 标签壳差 ＝ 头条 delta` 两条断言。
-5. **`ledger.json` 逐字节确定**：删 `generatedAt` → sha256 可复算并写进 §8（两次独立运行同值）。
+1. **判定由测量产生**：`add(dim,item,old,new,rule,…)`，`rule()` 返回四值之一，脚本内**无判定字面量**；旧版 `typesTextEq.length === 436 ? A : A` 恒真分支已删（断言数 21 → 23 → **29**，R-7 加方向一致性／金标／覆盖判定）。
+2. **`evidenceRef` 机器校验**：51 行逐行带证据对（D6 行形如 `D6.newMarkers.*`／`D6.newCss.*`／`D6.newDom.*`），收尾 `resolveRef` 断言 **51/51 可解析** ＋ **方向一致性 51/51**（`both` 行 `一致⟺证据相等`；`new-only` 行须新增／缺失；`na` 行限 ≤3，当前 2 行：场景 id 唯一性／字节稳定性）。
+3. **穷举对账**：18 个可枚举差异键（payload 顶层键／场景字段键·实测／CSS token ×5／JS marker ×6／DOM 计数 ×6 含 `tabRadios`）**100% 被判定≠「一致」的登记行覆盖**，未覆盖即红。
+4. **体积等式闭合（R-7 改述）**：删「块口径残差 0」恒真 headline，改断言**内容口径 ＋ 独立正则标签壳 ＝ 文件字节**（新 `1264736+86=1264822`／旧 `302700+120=302820`）＋ **标签壳金标 86／120／Δ−34** ＋ `分块和＋标签壳差＝头条 delta`（`962036−34=962002`）。
+5. **`ledger.json` 逐字节确定**：删 `generatedAt` → sha256 可复算并写进 §8（复跑同值 `b634f0bf…a3ad094`）。
 6. **inline／file 关系钉死**：分段 sha256 相等 ＋ `inlineIsSubstringOfFile === false`（把过强命题钉红）。
 
 ### 9.2 两席探针复跑（R-3 判据）
@@ -368,3 +371,45 @@ node tooling/check-gate-audit.mjs --evidence docs/research/t-help-parity-ledger.
 > 结论：席 B 的 **2 处 S1 ＋ 6 处 S2 已在台账中消失**（S1-1→D5 22/22；S1-2→D6 H-04 交裁定；S2-1→§1.1＋#91 主；
 > S2-2→G-2 改判；S2-3→G-1 改归因；S2-4→D7 两处残差闭合；S2-5→D5 222/341 新行；S2-6→D6 字体栈新行）；
 > 席 A 的 3 条 S2 各有更正行（A-1→D5 435/436；A-2→D4 源码侧 13／产物侧 0；A-3→D6 能力对等扩展；A-4→D5 静态 1,308）。
+
+### 9.3 返修 R-7（席 B 定点复核 R3-B-1…B-4 · salvage 验证）
+
+> 前任（台账原作者）已销毁，留下未提交改动；本席逐 hunk 审查、独立复算、补齐台账正文同步后提交。
+> 本轮只改 3 个文件：`t-help-parity-compare.mjs`／`t-help-parity-extract.mjs`／本文件（`gen.mjs` 未动；`packages/**` 零改动）。
+
+| # | 缺陷 | 前任改动 | 本席独立复算（持锁 `--ticket 83`） | 结论 |
+|---|---|---|---|---|
+| **R3-B-1**（S1） | D6「Tab 形态」误判「一致」＋断点无行可依 | Tab 行 rule 改测 `tabRadios`、判可解释；补「断点（mediaQueries）」行；G-4 指针本席补指断点行 | `tabRadios` 旧 **0**／新 **11**；mediaQueries 旧 3 组（500/501/820）→ 新 5 组（820/720/640/400＋reduced-motion）；两行 verdict 均为**差异（可解释）**；旧误判行经方向谓词验证**会被拦截** | ✅ 留用 ＋ 本席补 G-4 指针与 §2/§8 计数 |
+| **R3-B-2** | 体积两条恒等式断言 | extract 加独立正则 `tagsBytes`；断言换 `innerSum＋tagsBytes＝total` ＋ 金标 86／120／Δ−34 | 独立正则复算：新 6 标签 **86 B**（`style×2＋payload脚本×2＋普通脚本×2`）、旧 10 标签 **120 B**；`1264736+86=1264822`／`302700+120=302820`／`962036−34=962002`；旧恒等式行已删 | ✅ 留用 ＋ 本席改述 D7「体积构成」行 headline |
+| **R3-B-3** | 穷举键集硬编码＋覆盖不查判定 | `enumPairs` 改由 `rawKeys`（extract 实测）产生，新增 `subgroup.fieldKeys`／`dom.tabRadios`；覆盖须 `verdict≠一致` | scene 键旧 6 键 → 新 7 键（＋`editable_fields`）确由解析 JSON 产生；`enumDiffs` **18/18** 被非「一致」行覆盖（`mediaQueries→断点`、`tabRadios→Tab 形态`）；硬编码探针 `false` | ✅ 留用 |
+| **R3-B-4** | `evidenceRef` 只查可解析 | 证据对表 `{old,new,mode}` ＋ 方向一致性断言（`both`：`一致⟺相等`；`new-only`：须新增／缺失；`na` 限 ≤3） | **51/51** 行通过；`na` 恰 2 行（场景 id 唯一性／字节稳定性）；probe5 `BIND-MISMATCH` **0**、`md-missing` **0**、`verdict mismatch` **0** | ✅ 留用 |
+
+前任遗漏（本席补齐，均属上面 4 条的台账同步，不重开）：① §2/§2.1/§6/D6 表头计数仍为 50 行版（→51 行：一致 17／可解释 20／新增 11／缺失 3）；
+② `ledger.json` sha 仍为 R-3 值（→`b634f0bf…a3ad094`，复跑逐字稳定）；③ G-4 证据指针仍指「Tab 形态」（→「断点（mediaQueries）」）；
+④ §3-§9.1 的 50/50、17 键、`23/23`、`D5.noCli` 旧 ref 例（→51/51、18 键、`29/29`、证据对表述）；⑤ D7「体积构成」行 headline 仍写「残差 0 严格闭合」（→内容＋标签壳式）。
+`evidence.eNN` 自动编号（非 D6 行）为前任实现选择：md↔ledger 一致性按 item＋判定核对（probe5 §1 **0 缺失／0 误判**），`dimensions` 旧表保留可读，未引入新不一致，故留用。
+
+```
+GATE-RUN runId=1fad4fd4-d43b-4302-8124-0cc366a4089e cmd="node docs/research/t-help-parity-extract.mjs"
+GATE-RUN runId=a198c626-2f6c-458b-8fe8-bec6978eb9c7 cmd="node docs/research/t-help-parity-compare.mjs"
+GATE-RUN runId=585b5fd5-3c81-4a6f-8f9c-68fbb3ec2007 cmd="node docs/research/t-help-parity-compare.mjs"
+GATE-RUN runId=798d15ad-823a-4225-99a3-1b455eb02cc7 cmd="node docs/research/t-help-parity-review-b-probe.mjs"
+GATE-RUN runId=fb6fd4b4-c8b3-4edb-8a47-293f830ed69e cmd="node docs/research/t-help-parity-review-b-probe2.mjs"
+GATE-RUN runId=ee5bba43-ccdc-4474-880e-44b898d3d35a cmd="node docs/research/t-help-parity-review-b-probe3.mjs"
+GATE-RUN runId=da420ba0-e8d5-427d-9ee6-90c1f02a275a cmd="node docs/research/t-help-parity-review-b-probe4.mjs"
+GATE-RUN runId=0e590f7b-a768-4476-8daa-b79cc2f0cd29 cmd="node docs/research/t-help-parity-review-b-probe5.mjs"
+```
+
+> `gen.mjs --skip-build` 本轮超时中断（120 s，进程已杀，输出未采用）：`gen.mjs` 本轮零改动且 compare 已断言产物 sha 与 manifest 一致（PASS），故不重跑、不声明。
+> 摘要行：extract `RESULT: 27/27`；compare `RESULT: 29/29`（`LEDGER-SHA256 b634f0bf…a3ad094`，复跑逐字稳定）；
+> probe `222 of 341`／probe3 输入框运行时注入／probe4 `R1–R16` 全同值（含 R12 `tabRadios 11`、R14/R16 残差 86/120）；
+> probe5 `MD rows 97 | ledger rows 51 | md-missing 0 | verdict mismatch 0`，`一致` 行 BIND-MISMATCH 0，硬编码 `false`，覆盖缺口 0。
+
+**R-7 对账输出（实测，宽窗口覆盖 R-3 28 条 ＋ R-7 8 条）**：
+
+```
+$ node tooling/check-gate-audit.mjs --evidence docs/research/t-help-parity-ledger.md --ticket 83 `
+    --since 2026-09-09T15:38:02Z --until 2026-09-09T20:05:00Z --allow-undeclared
+RESULT: matched=36/36 auditEntries=960 scoped=114 undeclared=78
+gate-audit: PASS
+```

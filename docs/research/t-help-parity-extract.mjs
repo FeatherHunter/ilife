@@ -91,6 +91,10 @@ function parseHtml(file, label) {
   sizeOf.total = Buffer.byteLength(s, 'utf8');
   sizeOf.blockResidual = sizeOf.total - sizeOf.blockSum;
   sizeOf.innerResidual = sizeOf.total - sizeOf.innerSum;
+  // **独立来源**的标签壳字节：不经「块 − 内容」减法，而是对原文正则数 `<script>/<style>` 开闭标签长度
+  // （R-3 复核 R3-B-2：让 `innerSum + tagsBytes === total` 成为**可失败**断言，而非定义式恒真）。
+  sizeOf.tagsBytes = [...s.matchAll(/<\/?(?:script|style)\b[^>]*>/g)].reduce((a, m) => a + bOf(m[0]), 0);
+  sizeOf.tagsDetail = [...s.matchAll(/<\/?(?:script|style)\b[^>]*>/g)].map((m) => ({ tag: m[0], bytes: bOf(m[0]) }));
   const actionIds = {};
   for (const m of markup.matchAll(/data-action-id="([^"]+)"/g)) actionIds[m[1]] = (actionIds[m[1]] || 0) + 1;
   // 卡级 <code class=cli> 与 Scene.id 的逐字关系（R-3 · A-1／B-S3-2：435/436 逐字，1 条实体转义）
@@ -137,6 +141,13 @@ function parseHtml(file, label) {
     scenes: (g.subgroups ?? []).reduce((a, sg) => a + (sg.scenes ?? []).length, 0),
   }));
   const subgroupDigest = groups.flatMap((g) => (g.subgroups ?? []).map((sg) => ({ gid: g.id, id: sg.id, label: sg.label, scenes: (sg.scenes ?? []).length })));
+  /* **由解析 JSON 实测**的键集（R-3 复核 R3-B-3：穷举对账不得用硬编码数组——两侧新增字段必须被告警）。 */
+  const rawKeys = {
+    payload: Object.keys(data ?? {}),
+    group: [...new Set(groups.flatMap((g) => Object.keys(g)))].sort(),
+    subgroup: [...new Set(groups.flatMap((g) => (g.subgroups ?? []).flatMap((sg) => Object.keys(sg))))].sort(),
+    scene: [...new Set(groups.flatMap((g) => (g.subgroups ?? []).flatMap((sg) => (sg.scenes ?? []).flatMap((sc) => Object.keys(sc)))))].sort(),
+  };
 
   /* 卡级 <code> ↔ Scene.id 逐字关系（R-3 · A-1／B-S3-2）：
      属性值经 HTML 实体转义，故 raw 匹配对含 `<`／`"` 的 id 需先反转义再判等。 */
@@ -175,6 +186,7 @@ function parseHtml(file, label) {
       metaBlockEntries: (data?.meta_blocks ?? []).flatMap((blk) => [...String(blk.html ?? '').matchAll(/data-view-entry="([^"]+)"/g)].map((m) => m[1])),
     },
     payload: payloadM ? { scriptId: payloadM[1], bytes: Buffer.byteLength(payloadM[2], 'utf8'), topKeys: Object.keys(data ?? {}) } : null,
+    rawKeys,
     size: sizeOf,
     meta: data
       ? { skill_name: data.skill_name ?? null, title: data.title ?? null, subtitle: data.subtitle ?? null, contactKeys: Object.keys(data.contact ?? {}), meta_blocks: data.meta_blocks ?? null }
