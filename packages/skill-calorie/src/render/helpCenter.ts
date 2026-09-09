@@ -12,16 +12,28 @@
  *     「label ⊆ CATEGORIES」这类会自红的守卫。
  *
  * 逐场景 CLI 形态文本（Q11／R17／R32）：壳的 `cliText(scene) = scene.id`（`help.ts:391-393`）恒读
- * `Scene.id`，故 **id 就是展示面**：
+ * `Scene.id`，故 **id 就是卡面展示面**：
  *  - 414 条新场景取 `key`（＝真实键，与 F3 逐字相等）；
  *  - **22 条 legacy 取 `main_prompt.cli` 原文**（R1-7 解耦）：F3 的 `legacy_{wake_word}` 会让卡面
  *    显示并复制一条**不存在的命令**（`help.ts` 侧无该键），差异已登记台账 **L-19**。
+ *
+ * **#106 回补（Q11 第二半：「F3 丢了逐场景 CLI 展示」）**：卡面 id 之外，另在**详情层**
+ * （壳的 Sheet）逐场景发一条 `editable_fields` 行「可执行命令」＝**#81 路由层的 exec CLI**
+ * （`calorie-cmd-read calorie.*`，341/436；见 `helpSceneCli`）。三点口径：
+ *  1. **槽位**＝冻结面既有的 `SceneEditableField`（`{name,label,value}`），**不新增契约面**；
+ *     落点对齐旧 ADR-0008 实施规范「`data_source` → ✅ cli 块 → L4 直接显示」。
+ *  2. **内容取路由层、不取 `main_prompt.cli` 原文**：后者 353/436 是已不存在的
+ *     `python scripts/render_*.py`／`mavis`／`mmx` 命令，展示它违背 ADR-0008「必须遵守 3」
+ *     （可一键复制执行）。
+ *  3. **非 exec 的 95 条不发该行**（#81 裁定：out-of-scope 10／legacy-chain 85，无单命令入口），
+ *     不造占位文案；`text` 态不加该行（纯文本索引，且 #88 D-3 锁「text 尖括号集恒 {<N>}」）。
  */
 import { ASSET_WRAPPERS, HELP_SHELL_ID, buildStyleSheet, escapeHtml, renderHelpShell } from 'base-paint';
 import type {
   FillTemplateReport,
   Scene,
   SceneData,
+  SceneEditableField,
   SceneGroup,
   SceneMetaBlock,
   SceneTypeBadge,
@@ -29,6 +41,7 @@ import type {
 } from 'base-paint';
 import { TRIGGERS } from '../triggers/index.js';
 import type { SceneTrigger, Trigger } from '../triggers/index.js';
+import { routesFor } from '../triggers/routing.js';
 import { COPY_RUNTIME_JS } from './copy.js';
 import { CalorieRenderError } from './errors.js';
 import { CALORIE_TEMPLATES, loadTemplate } from './templates.js';
@@ -77,6 +90,37 @@ export const HELP_LEGACY_CATEGORY: Readonly<Record<string, string>> = Object.fre
 
 /** legacy 子功能名（F3 恒把旧版条目收在「既有唤醒词」子功能下）。 */
 export const HELP_LEGACY_SUBGROUP = '既有唤醒词';
+
+/* ── #106 · 逐场景「可执行命令」回补（Q11 第二半） ────────────────────────────────
+ *
+ * 数据来源＝**#81 路由层**（`triggers/routing.ts` 的 `WAKE_ROUTES`；exec 桶 341 条，
+ * `docs/research/t81-exec-smoke.md` 全量实跑 exit 0）。单一真相：本模块不自造键、
+ * 不读 `main_prompt.cli` 原文、不做 `python → calorie-cmd-read` 的二次翻译。
+ */
+
+/** 字段名（`data-field` 承载值）；**恒本模块常量**，不写第二份字面量。 */
+export const HELP_CLI_FIELD_NAME = 'cli';
+
+/** 对外文案（对齐 ADR-0008「可一键复制执行」口径）。 */
+export const HELP_CLI_FIELD_LABEL = '可执行命令';
+
+/** 唤醒词 → 该场景的**可执行 CLI**；无 exec 路由（#81 的 95 条 non-exec）→ `null`。
+ *
+ * 记身材照一词三命中（`body_photo_add_single`／`_note`／`_batch`）：路由层按唤醒词给键，
+ * 三条同唤醒词场景取到同一条 CLI——如实照搬路由层口径，差异见 `t106-*.md` 台账。
+ */
+export function helpSceneCli(wakeWord: string): string | null {
+  for (const route of routesFor(wakeWord)) {
+    if (route.kind === 'exec') return route.cli;
+  }
+  return null;
+}
+
+/** 该唤醒词的 `editable_fields`（无 exec CLI 时返空数组＝**不发字段**，不造空值行）。 */
+function cliFields(wakeWord: string): SceneEditableField[] {
+  const cli = helpSceneCli(wakeWord);
+  return cli === null ? [] : [{ name: HELP_CLI_FIELD_NAME, label: HELP_CLI_FIELD_LABEL, value: cli }];
+}
 
 /** `output_type` → 徽章（**必须发 `SceneTypeBadge{text,bg,fg}`**，E-2）。
  *
@@ -175,6 +219,7 @@ export function buildHelpSceneData(opts: HelpSceneDataOptions = {}): SceneData {
   });
   for (const trigger of newTriggers) {
     const badge = HELP_TYPE_BADGES[trigger.output_type];
+    const fields = cliFields(trigger.wake_word);
     const scene: Scene = {
       id: trigger.key,
       title: trigger.name,
@@ -182,6 +227,7 @@ export function buildHelpSceneData(opts: HelpSceneDataOptions = {}): SceneData {
       status: '',
       prompt_template: trigger.prompt_template,
       ...(badge === undefined ? {} : { types: [badge] }),
+      ...(fields.length === 0 ? {} : { editable_fields: fields }),
     };
     push(scene, trigger.category, trigger.subfunction !== '' ? trigger.subfunction : HELP_LEGACY_SUBGROUP);
   }
@@ -191,12 +237,14 @@ export function buildHelpSceneData(opts: HelpSceneDataOptions = {}): SceneData {
     .slice()
     .sort((a, b) => (a.wake_word < b.wake_word ? -1 : a.wake_word > b.wake_word ? 1 : 0));
   for (const trigger of legacyTriggers) {
+    const fields = cliFields(trigger.wake_word);
     const scene: Scene = {
       id: trigger.main_prompt.cli,
       title: trigger.wake_word,
       wake_word: trigger.wake_word,
       status: '',
       prompt_template: trigger.main_prompt.text,
+      ...(fields.length === 0 ? {} : { editable_fields: fields }),
     };
     const category = HELP_LEGACY_CATEGORY[trigger.category] ?? trigger.category;
     push(scene, category, HELP_LEGACY_SUBGROUP);
