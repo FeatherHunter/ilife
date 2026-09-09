@@ -33,7 +33,17 @@ export interface DaySeries {
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
-/** 窗口选择器：Nd / 本周/上周/今年…（老家别名 week_cur 等一并支持）/ custom / 默认 30d。 */
+/** 窗口选择器：Nd / 本周/上周/今年…（老家别名 week_cur 等一并支持）/ custom / 默认 30d。
+ *
+ * #103 G4 · window 白名单：Nd 仅收唤醒词契约的 7 档（7/15/30/60/90/180/365），
+ * 具名仅收显式分支（week_cur/week_prev/month_cur/month_prev/year_cur/custom＋中文别名）；
+ * 其余（`99d`、未知串）一律抛 FetchError（上层转 bad-input），不再静默生效/静默回退 30d。 */
+export const COMBINED_WINDOW_DAYS = [7, 15, 30, 60, 90, 180, 365];
+export const COMBINED_WINDOWS = [
+  '7d', '15d', '30d', '60d', '90d', '180d', '365d',
+  'week_cur', 'week_prev', 'month_cur', 'month_prev', 'year_cur', 'custom',
+  '本周', '上周', '本月', '上月', '今年',
+];
 export function resolveWindow(window: string, start?: string | null, end?: string | null, today: string = todayISO()): [string, string] {
   const t = Date.parse(today + 'T12:00:00Z');
   if (Number.isNaN(t)) throw new FetchError('日期非法: ' + today);
@@ -44,7 +54,13 @@ export function resolveWindow(window: string, start?: string | null, end?: strin
     return [shiftISODate(today, -30), shiftISODate(today, -1)];
   }
   const m = /^([0-9]+)d$/.exec(window);
-  if (m) return [shiftISODate(today, -(Number(m[1]) - 1)), today];
+  if (m) {
+    const n = Number(m[1]);
+    if (!(COMBINED_WINDOW_DAYS as number[]).includes(n)) {
+      throw new FetchError('window 非法（Nd 仅收 ' + COMBINED_WINDOW_DAYS.map((d) => d + 'd').join('/') + '）：' + window);
+    }
+    return [shiftISODate(today, -(n - 1)), today];
+  }
   if (window === '本周' || window === 'week_cur') return [shiftISODate(today, mondayOffset), today];
   if (window === '上周' || window === 'week_prev') return [shiftISODate(today, mondayOffset - 7), shiftISODate(today, mondayOffset - 1)];
   if (window === '本月' || window === 'month_cur') return [today.slice(0, 8) + '01', today];
@@ -54,7 +70,8 @@ export function resolveWindow(window: string, start?: string | null, end?: strin
     return [lastLast.slice(0, 8) + '01', lastLast];
   }
   if (window === '今年' || window === 'year_cur') return [today.slice(0, 4) + '-01-01', today];
-  return [shiftISODate(today, -29), today];
+  // #103 G4 · 未知值不再静默回退 30d：显式拒绝，上层转 bad-input（exit 2）。
+  throw new FetchError('window 非法，可选: ' + COMBINED_WINDOWS.join(', '));
 }
 
 interface ProfileRow {
