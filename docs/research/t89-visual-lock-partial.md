@@ -16,11 +16,11 @@
 | H-03 | PASS | `--bg:#f5f5f7`≠`--card:#ffffff`；卡面computed纯白`rgb(255,255,255)` | `S/probe-static.json`(H-03)＋`shots/H-03/{viewport,card}.png`＋`shots/probe-shots.json`(H-03.1) | 同上 |
 | H-04 | PASS | CSS区分区：`gradHelp:0`／`gradAll:1`／`gradCharts:1`（charts区`repeating-linear-gradient`属冻结图表资产，D-10/L-17例外） | `S/probe-static.json`(H-04)＋`shots/H-04/element.png`＋`shots/probe-shots.json`(H-04.1) | 同上（须同时打印gradHelp与gradAll） |
 | H-05 | PASS | 无≥48px（max 32；D-9不要求）；h2 17px/600×3；正文subtitle 15px；提示12/13px；h1 32px/700∈[28,32] | `S/probe-static.json`(H-05)＋`shots/H-05/element.png`＋`shots/probe-shots.json`(H-05.1/.2/.3) | 同上 |
-| H-06 | 待采（预期「未达」） | — | — | 同上 |
-| H-07 | 待采 | — | — | 同上 |
-| H-08 | 待采 | — | — | 同上 |
-| H-09 | 待采 | — | — | 同上 |
-| H-10 | 待采 | — | — | 同上（按 CSS 区判） |
+| H-06 | 未达 | 等宽面PASS（computed`"SF Mono",monospace`逐字开头，Consolas=0）；正文面FAIL：CSS正文栈缺失（stacks仅`SF Mono/inherit`，sfPro=0），正文computed回落浏览器默认`"Noto Sans SC"` | `S/probe-static.json`(H-06)＋`shots/H-06/element.png`＋`shots/probe-shots.json`(H-06.1 PASS/H-06.2 FAIL) | 同上（见最终报告H-06最小修复方案，不改冻结面） |
+| H-07 | PASS | CSS `font-feature-settings…tnum`命中2；computed壳/计数/徽章/卡标题均为`"tnum"` | `S/probe-static.json`(H-07)＋`shots/H-07/element.png`＋`shots/probe-shots.json`(H-07.1) | 同上 |
+| H-08 | PASS | h1/h2共4个，emoji命中0；h1=`唤醒词速查台`（已去emoji，D-12） | `S/probe-static.json`(H-08)＋`shots/H-08/element.png`＋`shots/probe-shots.json`(H-08.1) | 同上 |
+| H-09 | PASS | CSS逐字`max-width:960px`＋`padding:32px 20px 80px`；1440视口computed四值32/20/20/80＋max-width 960px；内容列居中留白211/211 | `S/probe-static.json`(H-09)＋`shots/H-09/element.png`＋`shots/probe-shots.json`(H-09.1/.2) | 同上 |
+| H-10 | FAIL | CSS声明面：`cssBad=[{sel:.ilife-help-shell-card-mark,radius:4px}]`∉{8,14,20,999,50%}；阴影面PASS（全`var(--shadow)`）；computed抽样面badCount=0 | `S/probe-static.json`(H-10)＋`shots/H-10/element.png`＋`shots/probe-shots.json`(H-10.1 FAIL/H-10.2 PASS) | 同上（按CSS区判；charts区2px已除外） |
 | H-11 | 待采 | — | — | 同上 |
 | H-12 | 待采（交互） | — | — | `node tooling/run-locked.mjs --ticket 89 -- node docs/research/t89-probe-help-interactive.mjs --out docs/research/t89-evidence/<runId>/I` |
 | H-13 | N/A（转 B-02，D-15） | — | — | blocks 探针 B-02 |
