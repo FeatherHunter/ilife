@@ -24,7 +24,7 @@
 
 | 命令 | exit | 关键行 |
 |---|---|---|
-| `pnpm build` | 0 | 51.4 s |
+| `pnpm build` | 0 | 锁等待 50.0 s（他席 #97 持锁）＋增量构建 ≈1.4 s，无 `error TS` |
 | `pnpm boundaries` | 0 | 13 条 OK／`boundaries: PASS` |
 | `pnpm snapshot:check` | 0 | 快照 == 实际 |
 | `pnpm publish:pre` | 0 | PASS |
