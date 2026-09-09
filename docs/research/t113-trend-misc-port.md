@@ -50,6 +50,13 @@
 
 - 新测试 `test/trend-misc-port-113.test.mjs`：**13／13 绿**（12 词→8 键路由；每键 1 用例；
   空库 6 阻断＋lint/batch 2 通过；非法 6 拒收；命名底座；envelope 对齐）。
-- 包级相关：待 smoke 回填后跑 `test/calorie-routing-81.test.mjs`＋`test/combos-42.test.mjs`。
-- `pnpm --filter skill-calorie build` 绿；`t101 delta` 比对见 §4。
-- 待总控关：issue #113 进度 100%（本文件＋smoke 快照＋snapshot 落盘后）。
+- 包级：`packages/skill-calorie/test/*.test.mjs` **259／259 绿**（含只读 60 键全等）；
+  `test/combos-42.test.mjs` 2／2 绿；`pnpm --filter skill-calorie build` 绿；
+  `pnpm --filter base-combos build` 绿（present 重生成无 diff）；`pnpm snapshot` 重写
+  `0.1.0@75397f34cd81a4ba`。
+- `test/calorie-routing-81.test.mjs` 7／8：唯一红为 FX-81-5 快照非零断言，命中的是
+  SoT `复制昨日运动（calorie.exercise.add copyFrom yesterday）`——固定种子运动日止于
+  09-07，昨日无记录即 exit 4，属日期相关他票 flake（HEAD 快照 `t81-exec-smoke.md:510`
+  同记录非零，基线 `t101-baseline-failures.txt` 无此条；本票 12 条新记录全 exit 0，
+  §1 394 行／§3 95 键／覆盖面 107 均与路由层一致）。t101 delta：本票范围内新增失败 0。
+- 待总控关：issue #113 进度 100%（flake 定夺归总控：修种子相对化或路由降级均属他票，不在本票动）。
