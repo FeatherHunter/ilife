@@ -1,6 +1,6 @@
 /** T11 #30 + #41 · cmd_read 组合键表（registry 合法命名，点式分隔；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
  * #40 追加 35 写键（CALORIE_WRITE_COMBOS，一律 receipt 形）：单条 CRUD 可执行入口，命名对照旧 CLI；
- * CALORIE_COMBOS 为读 48 + 写 35 全量注册表（skilllink 登记与 HELP 注入的上游）。
+ * CALORIE_COMBOS 为读 52 + 写 35 全量注册表（skilllink 登记与 HELP 注入的上游）。
  *
  * 背景：VIEW_KEYS/PHOTO_VIEW_KEYS 用 calorie.view_home / calorie.photo_list（下划线），
  * 过不了 link-core registry（KEY_RE 只许 [a-z0-9-.]，下划线非法）。T11 出口复用“同一语义”，
@@ -112,6 +112,12 @@ export const CALORIE_COMBOS = {
   'calorie.view.exercise-recap': { shape: 'stat' as EnvelopeShape, title: '运动复盘' },
   'calorie.view.exercise-review': { shape: 'stat' as EnvelopeShape, title: '计划复盘' },
   'calorie.view.exercise-trend': { shape: 'stat' as EnvelopeShape, title: '运动趋势' },
+  // #112 · 营养移植 4 键（D2 只许追加：读 48→52，共 87；t71 需移植 nutrition_ratio／
+  // nutrition_detail／source_stats／today_water 四模板；#108 R4 记账来源表、lint／六因子／批量导入归 #113）。
+  'calorie.view.nutrition-ratio': { shape: 'stat' as EnvelopeShape, title: '营养配比' },
+  'calorie.view.nutrition-detail': { shape: 'stat' as EnvelopeShape, title: '营养素深度' },
+  'calorie.view.source-stats': { shape: 'stat' as EnvelopeShape, title: '食品来源统计' },
+  'calorie.view.today-water': { shape: 'stat' as EnvelopeShape, title: '今日饮水' },
 } as const;
 
 export type CalorieComboKey = keyof typeof CALORIE_COMBOS;

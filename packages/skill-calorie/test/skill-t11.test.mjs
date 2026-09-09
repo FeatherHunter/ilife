@@ -35,10 +35,10 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
       assert.ok(skill.includes(s), 'M6 正文缺：' + s);
     }
   });
-  it('互联区新鲜（构建期注入可复现，83 键全对齐 combos（#111 +6））', () => {
+  it('互联区新鲜（构建期注入可复现，87 键全对齐 combos（#112 +4））', () => {
     const si = skill.indexOf(START), ei = skill.indexOf(END);
     assert.equal(skill.slice(si + START.length + 1, ei - 1), buildHelpBlock());
-    assert.equal(Object.keys(CALORIE_COMBOS).length, 83);
+    assert.equal(Object.keys(CALORIE_COMBOS).length, 87);
     for (const k of Object.keys(CALORIE_COMBOS)) assert.ok(skill.includes(k), '缺键 ' + k);
   });
   it('模板 6 件经 loader 装载（#95：dist/render 上溯两级取包根 templates/）', () => {

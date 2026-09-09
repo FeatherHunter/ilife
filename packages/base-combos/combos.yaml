@@ -243,6 +243,26 @@ combos:
     shape: stat
     title: 运动趋势
     cmd: skill-calorie
+  - key: calorie.view.nutrition-ratio
+    skill: calorie
+    shape: stat
+    title: 营养配比
+    cmd: skill-calorie
+  - key: calorie.view.nutrition-detail
+    skill: calorie
+    shape: stat
+    title: 营养素深度
+    cmd: skill-calorie
+  - key: calorie.view.source-stats
+    skill: calorie
+    shape: stat
+    title: 食品来源统计
+    cmd: skill-calorie
+  - key: calorie.view.today-water
+    skill: calorie
+    shape: stat
+    title: 今日饮水
+    cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt

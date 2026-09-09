@@ -76,8 +76,8 @@ function runOk(dir, key, params, extra) {
   return env;
 }
 
-test('键表：83 组合（读 48 + 写 35，#111 运动移植 +6）registry 合法 + 形状对齐 envelope 全字段', () => {
-  assert.equal(Object.keys(CALORIE_COMBOS).length, 83);
+test('键表：87 组合（读 52 + 写 35，#112 营养移植 +4）registry 合法 + 形状对齐 envelope 全字段', () => {
+  assert.equal(Object.keys(CALORIE_COMBOS).length, 87);
   for (const [k, v] of Object.entries(CALORIE_COMBOS)) {
     assert.match(k, /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9-.]*$/);
     assert.ok(['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'].includes(v.shape));

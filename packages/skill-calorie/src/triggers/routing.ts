@@ -1,11 +1,11 @@
-/** #81 · 唤醒词路由层（436 条 SoT 逐条恰一次 ＋ 40 键新增入口）。
+/** #81 · 唤醒词路由层（436 条 SoT 逐条恰一次 ＋ 44 键新增入口）。
  *
  * 裁定 D-1（parity 与路由分家）：`src/triggers/scene-*.ts` 唤醒词表原样冻结——它的 `main_prompt.cli` 是
  * 19 字段 sha 的 parity 证据，不是路由；本票全部新能力落在本文件。本文件**只做路由**，不复制唤醒词表的
  * 其它字段（category／desc／main_prompt.text／variants…），唤醒词集合与冻结表的相等性由断言钉死。
  *
  * 裁定 D-2（形态）：每条路由记录以唤醒词为键，436 条逐条恰一次；顺序与 `TRIGGERS` 逐位对齐。
- *   - `kind: 'exec'`     → 可执行桶，带 `key`（必在 83 键内）与 `cli`（唯一出口形态）
+ *   - `kind: 'exec'`     → 可执行桶，带 `key`（必在 87 键内）与 `cli`（唯一出口形态）
  *   - `kind: 'non-exec'` → 命中但不执行桶，带 `bucket` 与 `reason`
  *
  * 裁定 D-3（两个桶）：
@@ -19,11 +19,11 @@
  *     （同 key ＋ 参数，实跑 `exit 0`），就必须进 `exec` 桶。逐条映射（旧词 → 键 ＋ 参数 → 实跑 exit）
  *     见 `docs/research/t81-route-evidence.md` §2.3；实跑快照见 `docs/research/t81-exec-smoke.md`。
  *   - `non-exec` 细分 `bucket`：`'out-of-scope'`＝架构规格 `docs/calorie-architecture.md:60`
- *     的明确不做（定时复盘／训记／营养表／落地）；`'legacy-chain'`＝该词所述能力在 83 键内无同形可执行
+ *     的明确不做（定时复盘／训记／营养表／落地）；`'legacy-chain'`＝该词所述能力在 87 键内无同形可执行
  *     入口（缺参数／缺形态／缺写键）或语义上必须多步交互（wizard）——逐条理由见 §2.3 右列。
  *   - t71 O1–O6 与规格的口径差异逐条登记在 `T71_DIFFS`（两处出处都给）。
  *
- * 裁定 D-4（40/83 无入口的键）：`NEW_KEY_ROUTES` 补入口，唤醒词新拟（清单见
+ * 裁定 D-4（44/87 无入口的键）：`NEW_KEY_ROUTES` 补入口，唤醒词新拟（清单见
  * `docs/research/t81-route-evidence.md`），**不写入冻结表**。
  *
  * 零 py 命令引用（含本注释）：本文件不含任何 py 起头的命令，exec `cli` 一律 `calorie-cmd-read calorie.*` 形态；
@@ -32,7 +32,7 @@
 import type { CalorieComboKey, CalorieWriteKey } from '../cli/keys.js';
 import { HELP_EXEC_OVERRIDES } from './help-lookup.js';
 
-/** 83 键内的路由键（读 48 ＋ 写 35；两 registry 无重叠） */
+/** 87 键内的路由键（读 52 ＋ 写 35；两 registry 无重叠） */
 export type RouteKey = CalorieComboKey | CalorieWriteKey;
 
 /** 场景号（与 SoT 10 场景一致） */
@@ -46,7 +46,7 @@ export interface ExecWakeRoute {
   readonly wakeWord: string;
   readonly scene: SceneNo;
   readonly kind: 'exec';
-  /** 必须在 83 键内（编译期由 RouteKey 约束，运行期由测试断言） */
+  /** 必须在 87 键内（编译期由 RouteKey 约束，运行期由测试断言） */
   readonly key: RouteKey;
   /** 唯一出口形态：calorie-cmd-read calorie.* */
   readonly cli: string;
@@ -68,18 +68,18 @@ export type WakeRoute = ExecWakeRoute | NonExecWakeRoute;
  *
  * FX-81-7 复核：一个旧唤醒词，只要存在一条能达成其所述能力的单命令（同 key ＋ 参数，实跑 exit 0），
  * 就必须进 exec 桶（逐条映射与实跑见 docs/research/t81-route-evidence.md §2.3 ＋ t81-exec-smoke.md）。
- * 仍留在本桶的词只有两类：① 语义上必须多步交互（wizard，归 #86）；② 83 键内无同形可执行入口
+ * 仍留在本桶的词只有两类：① 语义上必须多步交互（wizard，归 #86）；② 87 键内无同形可执行入口
  * （缺参数／缺形态／缺写键，逐条理由见 §2.3 右列）。
  */
 export const NON_EXEC_REASONS = {
   wizard:
     '命中但不执行：需多步交互（wizard）——先预览／确认再写库，非单条命令可达成（归 #86）。',
   noNoteFilter:
-    '命中但不执行：83 键无「备注」筛选参数（饮食／体重／运动三面的备注均非任何键的筛选维度），单命令不可达成（逐条见 docs/research/t81-route-evidence.md §2.3）。',
+    '命中但不执行：87 键无「备注」筛选参数（饮食／体重／运动三面的备注均非任何键的筛选维度），单命令不可达成（逐条见 docs/research/t81-route-evidence.md §2.3）。',
   noNutrientDetail:
-    '命中但不执行：83 键无钠／糖／纤维等营养素明细维度（view.diet-review 的 macro 只有蛋白／碳水／脂肪配比），单命令不可达成。',
+    '命中但不执行：87 键无钠／糖／纤维趋势／综合报告形态（nutrition-detail 只给窗内明细深度，无趋势序列与综合报告；view.diet-review 的 macro 只有蛋白／碳水／脂肪配比），单命令不可达成（#112 翻转看营养素深度后余下两词，归 #113 nutrition_analysis）。',
   noNutritionAdvice:
-    '命中但不执行：83 键无营养建议形态（view.diet-review／view.health 给数据盘，不给建议条目）。',
+    '命中但不执行：87 键无营养建议形态（view.diet-review／view.health 给数据盘，不给建议条目）。',
   compoundCurve:
     '命中但不执行：该词要的是「曲线＋标注」（目标线／里程碑／异常点）复合形态；view.weight-history 只给历史点与变化量，view.anomaly 只给异常点，无单键同形。',
   anchorCompare:
@@ -89,27 +89,27 @@ export const NON_EXEC_REASONS = {
   milestoneForwardOnly:
     '命中但不执行：view.weight-review 的 milestone 是「目标达成预测」（estDays／estDate 前向），不是里程碑回溯列表 → 无单命令同形。',
   recordFilterMissing:
-    '命中但不执行：83 键无运动记录级列表／筛选参数（view.exercise 是汇总盘：byType／byCategory 为分项统计，不含逐条记录与备注筛选）。',
+    '命中但不执行：87 键无运动记录级列表／筛选参数（view.exercise 是汇总盘：byType／byCategory 为分项统计，不含逐条记录与备注筛选）。',
   categoryOverviewMissing:
     '命中但不执行：view.exercise 无 category 参数（分项统计按运动类型 byType 渲染 TOP4，byCategory 未渲染，力量／有氧非独立形态），无单命令同形。',
   planFilterMissing:
     '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。',
   planWriteMissing:
-    '命中但不执行：83 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。',
+    '命中但不执行：87 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。',
   planReviewMissing:
-    '命中但不执行：83 键无计划完成率／未完成训练／动作完成率入口（view.exercise-goal 只对照运动目标，不对照训练计划）→ 无单命令同形。',
+    '命中但不执行：87 键无计划完成率／未完成训练／动作完成率入口（view.exercise-goal 只对照运动目标，不对照训练计划）→ 无单命令同形。',
   bodyCompareMissing:
     '命中但不执行：view.body-composition／view.body-measure 只有 days／source／limit／metric 等参数，无两期对比参数 → 无单命令同形（渲染层已有 buildBodyCompositionCompare／buildBodyMeasureCompare：render/bodyPlate.ts:49／:112，经 render/index.ts:25 导出，但 CLI 侧未接线）。',
   reportKindMissing:
-    '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，83 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。',
+    '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，87 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。',
   multiTrendMissing:
-    '命中但不执行：83 键无多指标趋势键（view.combined 只吃两指标配对，旧链 trend --group g1–g11 为 2–4 指标组合）→ 无单命令同形。',
+    '命中但不执行：87 键无多指标趋势键（view.combined 只吃两指标配对，旧链 trend --group g1–g11 为 2–4 指标组合）→ 无单命令同形。',
   predictParamMissing:
     '命中但不执行：view.predict 只有 start／end／horizonDays（体重外推），无 target（目标体重）／deficit（每日缺口）／摄入速率参数 → 无单命令同形。',
   sixFactorsMissing:
-    '命中但不执行：83 键无「每日 6 因素综合」形态（view.home 为当日总览，不含旧链 six 的 6 因素评分）。',
+    '命中但不执行：87 键无「每日 6 因素综合」形态（view.home 为当日总览，不含旧链 six 的 6 因素评分）。',
   lintMissing:
-    '命中但不执行：83 键无数据质量／lint 形态（旧链 render_lint_health.py 为数据体检）。',
+    '命中但不执行：87 键无数据质量／lint 形态（旧链 render_lint_health.py 为数据体检）。',
   oosCron: '明确不做（架构规格 docs/calorie-architecture.md:60：定时复盘）；词只保证命中与文案，执行层不承接（t71 O1 同项）。',
   oosXunji: '明确不做（架构规格 docs/calorie-architecture.md:60：训记）；词只保证命中与文案，执行层不承接（t71 O3 同项）。',
   oosLabel: '明确不做（架构规格 docs/calorie-architecture.md:60：营养表）；词只保证命中与文案，执行层不承接（t71 O4 同项）。',
@@ -196,7 +196,8 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '看营养结构', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '看今日营养', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"start":"2026-09-07","end":"2026-09-07"}\'' },
   { wakeWord: '看饮食总览', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
-  { wakeWord: '看营养素深度', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: NON_EXEC_REASONS.noNutrientDetail },
+  // #112 · 看营养素深度 non-exec→exec（旧链 render_nutrition_detail.py 的纤维/钠/糖明细维度已由 nutrition-detail 承接；钠糖纤维趋势／综合两词仍 non-exec，归 #113）。
+  { wakeWord: '看营养素深度', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '看高热量榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","start":"2026-09-01","end":"2026-09-07","topN":10}\'' },
   { wakeWord: '看低热量榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"low_calorie","start":"2026-09-01","end":"2026-09-07","topN":10}\'' },
   { wakeWord: '看频繁吃榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"frequent","start":"2026-09-01","end":"2026-09-07","topN":10}\'' },
@@ -601,12 +602,12 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
  * FX-81-7 复核后：`看目标预测达成` 已改 exec（≥14 天窗口实跑 exit 0）→ 其键
  * `calorie.view.goal-predict` 由该词自身承接，原修复入口 `看目标达成预测` 删除（不再需要）。
  * `定营养目标(自动算)`／`定饮水目标(自动算)`／`一键定全套目标` 三条链式词保留 non-exec（wizard），
- * 其键 `calorie.view.goal-recommend` 由本条承接（D2③「83 键全部有可执行入口」不放宽）。 */
+ * 其键 `calorie.view.goal-recommend` 由本条承接（D2③「87 键全部有可执行入口」不放宽）。 */
 export const COVERAGE_REPAIR_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看目标推荐', scene: '06', kind: 'exec', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
 ];
 
-/** D-4：40 个无入口键的新拟入口（唤醒词新拟，不写入冻结表） */
+/** D-4：44 个无入口键的新拟入口（唤醒词新拟，不写入冻结表） */
 export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '存身材照', scene: '09', kind: 'exec', key: 'calorie.photo.add', cli: 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'' },
   { wakeWord: '移除身材照', scene: '09', kind: 'exec', key: 'calorie.photo.remove', cli: 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'' },
@@ -642,18 +643,23 @@ export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看禁忌扫描', scene: '05', kind: 'exec', key: 'calorie.view.contraindication', cli: 'calorie-cmd-read calorie.view.contraindication' },
   { wakeWord: '看去重报告', scene: '02', kind: 'exec', key: 'calorie.view.dedupe', cli: 'calorie-cmd-read calorie.view.dedupe' },
   { wakeWord: '看档案视图', scene: '07', kind: 'exec', key: 'calorie.view.profile', cli: 'calorie-cmd-read calorie.view.profile' },
-  // #111 · 运动移植 6 键新拟入口（D2③ 83 键全可达；其中 strength／cardio／review 已由上文促进词覆盖，本表补齐 distribution／recap／trend＋三键短名）。
+  // #111 · 运动移植 6 键新拟入口（D2③ 87 键全可达；其中 strength／cardio／review 已由上文促进词覆盖，本表补齐 distribution／recap／trend＋三键短名）。
   { wakeWord: '看力量总览', scene: '04', kind: 'exec', key: 'calorie.view.exercise-strength', cli: 'calorie-cmd-read calorie.view.exercise-strength --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '看有氧总览', scene: '04', kind: 'exec', key: 'calorie.view.exercise-cardio', cli: 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '看运动分类占比', scene: '04', kind: 'exec', key: 'calorie.view.exercise-distribution', cli: 'calorie-cmd-read calorie.view.exercise-distribution --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '看运动复盘', scene: '04', kind: 'exec', key: 'calorie.view.exercise-recap', cli: 'calorie-cmd-read calorie.view.exercise-recap --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '看训练计划复盘', scene: '05', kind: 'exec', key: 'calorie.view.exercise-review', cli: 'calorie-cmd-read calorie.view.exercise-review --params \'{"start":"2026-08-31","end":"2026-09-07"}\'' },
   { wakeWord: '看运动消耗趋势', scene: '04', kind: 'exec', key: 'calorie.view.exercise-trend', cli: 'calorie-cmd-read calorie.view.exercise-trend --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
+  // #112 · 营养移植 4 键新拟入口（D2③ 87 键全可达；其中 nutrition-detail 已由上文促进词覆盖，本表补齐 4 键短名）。
+  { wakeWord: '查营养配比', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-ratio', cli: 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
+  { wakeWord: '看营养素明细', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
+  { wakeWord: '看食品来源分布', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
+  { wakeWord: '看今日饮水', scene: '02', kind: 'exec', key: 'calorie.view.today-water', cli: 'calorie-cmd-read calorie.view.today-water --params \'{"date":"2026-09-07"}\'' },
 ];
 
 
 
-/** 全量路由（436 条 SoT ＋ 40 条新拟入口 ＋ 1 条覆盖修复入口） */
+/** 全量路由（436 条 SoT ＋ 44 条新拟入口 ＋ 1 条覆盖修复入口） */
 export const ALL_ROUTES: readonly WakeRoute[] = [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES];
 
 /** 唤醒词 → 路由（记身材照 3 条，故值为数组） */
@@ -665,7 +671,7 @@ export const ROUTES_BY_WAKE_WORD: Readonly<Record<string, readonly WakeRoute[]>>
   {} as Record<string, WakeRoute[]>,
 );
 
-/** calorie key → 首条可执行路由（83 键全可达的索引） */
+/** calorie key → 首条可执行路由（87 键全可达的索引） */
 export const EXEC_ROUTE_BY_KEY: Readonly<Record<string, ExecWakeRoute>> = ALL_ROUTES.filter(
   (r): r is ExecWakeRoute => r.kind === 'exec',
 ).reduce(

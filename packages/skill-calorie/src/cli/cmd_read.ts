@@ -52,6 +52,14 @@ import {
   buildStrengthView, buildTrendView,
 } from '../render/exercisePort.js';
 import {
+  buildNutritionDetailView, buildNutritionRatioView, buildSourceStatsView,
+  buildTodayWaterView,
+} from '../render/nutritionPort.js';
+import {
+  buildNutritionDetailDoc, buildNutritionRatioDoc, buildSourceStatsDoc,
+  buildTodayWaterDoc,
+} from '../render/nutritionPortDocs.js';
+import {
   buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
   buildGoalPredictDoc, buildPredictDoc,
 } from '../render/trendDocs.js';
@@ -373,6 +381,47 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         totalBurned: v.totalBurned, peakBurned: v.peak?.burned,
       });
       return { data: { metrics }, html: buildTrendDoc(v) };
+    }
+    // #112 · 营养移植 4 键（t71 需移植 nutrition_*／source_stats／today_water；envelope stat metrics 只收确定数字）。
+    case 'calorie.view.nutrition-ratio': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildNutritionRatioView(db, start, end);
+      const metrics = nums({
+        totalCalorie: v.totalCalorie, proteinG: v.proteinG, proteinPct: v.proteinPct,
+        carbG: v.carbG, carbPct: v.carbPct, fatG: v.fatG, fatPct: v.fatPct,
+        targetProteinG: v.targetProteinG, targetCarbG: v.targetCarbG, targetFatG: v.targetFatG,
+      });
+      return { data: { metrics }, html: buildNutritionRatioDoc(v) };
+    }
+    case 'calorie.view.nutrition-detail': {
+      const { start, end } = defaultRange(db, params);
+      const v = buildNutritionDetailView(db, start, end);
+      const metrics = nums({
+        days: v.days,
+        matchedMeals: v.matchedMeals,
+        missingFoods: v.missingFoods.length,
+        fiberAvg: v.items[0]?.avg,
+        sodiumAvg: v.items[1]?.avg,
+        sugarAvg: v.items[2]?.avg,
+        fiberPct: v.items[0]?.pct,
+        sodiumPct: v.items[1]?.pct,
+        sugarPct: v.items[2]?.pct,
+      });
+      return { data: { metrics }, html: buildNutritionDetailDoc(v) };
+    }
+    case 'calorie.view.source-stats': {
+      const v = buildSourceStatsView(db);
+      const metrics = nums({ total: v.total, sources: v.sources });
+      return { data: { metrics }, html: buildSourceStatsDoc(v) };
+    }
+    case 'calorie.view.today-water': {
+      const date = optStr(params, 'date') ?? latestFoodDate(db) ?? todayISO();
+      assertISO(date, 'date');
+      const v = buildTodayWaterView(db, date);
+      const metrics = nums({
+        todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
+      });
+      return { data: { metrics }, html: buildTodayWaterDoc(v) };
     }
     case 'calorie.view.goal': {
       const { start, end } = defaultRange(db, params);

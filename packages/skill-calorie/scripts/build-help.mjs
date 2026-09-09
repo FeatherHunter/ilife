@@ -30,6 +30,10 @@ const REPR = {
   'calorie.view.exercise-recap': '看运动复盘',
   'calorie.view.exercise-review': '计划复盘（本周）',
   'calorie.view.exercise-trend': '看运动消耗趋势',
+  'calorie.view.nutrition-ratio': '查营养配比',
+  'calorie.view.nutrition-detail': '看营养素深度',
+  'calorie.view.source-stats': '看食品来源统计',
+  'calorie.view.today-water': '看今日喝水',
   'calorie.view.ranking': '查高热量排行',
   'calorie.view.library': '查食品库',
   'calorie.view.search': '查食品',
@@ -99,6 +103,10 @@ function exampleFor(key) {
     case 'calorie.view.exercise-recap': return 'calorie-cmd-read calorie.view.exercise-recap --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
     case 'calorie.view.exercise-review': return 'calorie-cmd-read calorie.view.exercise-review --params \'{"start":"2026-08-31","end":"2026-09-07"}\'';
     case 'calorie.view.exercise-trend': return 'calorie-cmd-read calorie.view.exercise-trend --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.nutrition-ratio': return 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.nutrition-detail': return 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.source-stats': return 'calorie-cmd-read calorie.view.source-stats';
+    case 'calorie.view.today-water': return 'calorie-cmd-read calorie.view.today-water --params \'{"date":"2026-09-07"}\'';
     case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
     case 'calorie.view.library': return 'calorie-cmd-read calorie.view.library';
     case 'calorie.view.search': return 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'';
