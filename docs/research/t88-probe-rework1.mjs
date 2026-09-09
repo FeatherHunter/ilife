@@ -80,20 +80,41 @@ check('R1-2 六项键集合', JSON.stringify(report.markers.map((m) => m.key)) =
 const gen = [...html.matchAll(/<!--[A-Z0-9-]+-->/g)].map((m) => m[0]);
 check('R1-2 产物内泛化标记残留 = 0', gen.length === 0, JSON.stringify(gen.slice(0, 3)));
 
-/* ── R1-6：T11 类名锁（镜像判据）── */
+/* ── R1-6：T9＋T11 双锁（**R-cond-4 修**：原 `viol()` 硬切 `ilife-help-shell-` 前缀 →
+ *  `ilife-card-*` 备选恒判「违规」、该组断言空转。现改为**逐字复用 `style.test.mjs` 的判据**：
+ *  T9 = 类名必须落在 `CONTROL_STYLE_SECTIONS × SECTION_ROOTS.ns` 闭集根内（`style.test.mjs:270-278`）；
+ *  T11 = `ilife-help-shell-<suffix>` 的 suffix ∈ `src/help.ts` 的 `cls()` 实参字面量（或 startsWith 其一）
+ *  （`style.test.mjs:302-315` ＋ `:162-168`）。── */
 const SRC_HELP = await import('node:fs').then((fs) => fs.readFileSync(new URL('../../packages/base-render/src/help.ts', import.meta.url), 'utf8'));
+const SRC_STYLE_TEST = await import('node:fs').then((fs) => fs.readFileSync(new URL('../../packages/base-render/test/style.test.mjs', import.meta.url), 'utf8'));
+// SECTION_ROOTS（style.test.mjs:59-68）：区名 → 命名空间根。
+const SECTION_NS = {};
+for (const m of SRC_STYLE_TEST.matchAll(/^\s{2}(\w+):\s*\{\s*ns:\s*'([^']+)'/gm)) SECTION_NS[m[1]] = m[2];
+const T9_ROOTS = Object.values(SECTION_NS).map((ns) => 'ilife-' + ns);
 const literals = new Set([...SRC_HELP.matchAll(/cls\('([^']*)'/g)].map((m) => m[1]));
 for (const m of SRC_HELP.matchAll(/cls\("([^"]*)"/g)) literals.add(m[1]);
 literals.add('help-shell');
+/** T9：类名归属某个闭集根。 */
+const t9ok = (name) => T9_ROOTS.some((r) => name === r || name.startsWith(r));
+/** T11：仅对 helpShell 命名空间内的类名生效（其余区由 T10 管）。 */
+const t11ok = (name) => {
+  const prefix = 'ilife-help-shell-';
+  if (!name.startsWith(prefix)) return true;
+  const suffix = name.slice(prefix.length);
+  return literals.has(suffix) || [...literals].some((lit) => suffix.startsWith(lit));
+};
+const viol = (name) => !(t9ok(name) && t11ok(name));
 const css = base.buildStyleSheet().css;
-const nsClasses = [...new Set([...css.matchAll(/\.(ilife-help-shell-[A-Za-z0-9_-]+)/g)].map((m) => m[1]))];
-const viol = (name) => { const suffix = name.slice('ilife-help-shell-'.length); return !(literals.has(suffix) || [...literals].some((l) => suffix.startsWith(l))); };
-check('R1-6 基线：现有 help-shell 类 0 违规', nsClasses.filter(viol).length === 0, String(nsClasses.length) + ' classes');
+const nsClasses = [...new Set([...css.matchAll(/\.(ilife-[A-Za-z0-9_-]+)/g)].map((m) => m[1]))];
+check('R1-6 基线：产出 CSS 全部类名 0 违规（T9＋T11）', nsClasses.filter(viol).length === 0, String(nsClasses.length) + ' classes');
 for (const c of ['ilife-help-shell-search', 'ilife-help-shell-hitcount', 'ilife-help-shell-backtop', 'ilife-help-shell-mark']) {
-  check('R1-6 方案类 ' + c + ' 是否违规', viol(c), viol(c) ? '（违规，会被 T11 拦）' : '');
+  check('R1-6 旧方案类 ' + c + ' 应被拦', viol(c) === true, viol(c) ? '违规（T11 拦）' : '（未拦＝判据失效）');
+}
+for (const c of ['ilife-help-shell-card-copy', 'ilife-help-shell-card-mark', 'ilife-help-shell-tab-search', 'ilife-help-shell-page-hitcount', 'ilife-help-shell-btn-backtop']) {
+  check('R1-6 采用类 ' + c + ' 应双绿', viol(c) === false, viol(c) ? '（违规）' : '（T9＋T11 双绿）');
 }
 for (const c of ['ilife-card-copy', 'ilife-card-search', 'ilife-card-hitcount', 'ilife-card-backtop', 'ilife-card-mark']) {
-  check('R1-6 备选前缀 ' + c + ' 是否违规', viol(c), viol(c) ? '（违规）' : '（不触 T11 正则）');
+  check('R1-6 备选前缀 ' + c + ' 应撞 T9', viol(c) === true, viol(c) ? '违规（撞 T9 闭集）' : '（未拦＝判据失效）');
 }
 say('RESULT: ' + (total - fails) + '/' + total + ' fails=' + fails);
 console.log(out.join('\n'));

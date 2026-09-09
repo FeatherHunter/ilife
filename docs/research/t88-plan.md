@@ -2,7 +2,7 @@
 
 > 关系：v1＝`.scratch/t88/t88-plan.md`（**不重抄**）；本文件**只写变更与新增**。v1 被证伪处逐条勘误见 §0（显式标注，不静默改写）。
 > 返修正本：`.scratch/orchestrator/t88-rework-order-1.md`；两席报告 `review-red-t88.md`（FAIL／S1＋75）／`review-blue-t88.md`（FAIL／70）。
-> 本 session 自证：`.scratch/t88/probe-rework1.mjs`（**21/21**）／`probe-rework2.mjs`（**6/6**）／`probe-contract.mjs`（**17/17，已改断言式**）＋ 6 个原探针的修复版；全部只读、断言式、`fails>0 → exit 1`。
+> 本 session 自证（**R-cond-6 修：指针改为入仓正本**）：`docs/research/t88-probe-rework1.mjs`（**21/21**）／`t88-probe-rework2.mjs`（**6/6**）／`t88-probe-contract.mjs`（**17/17，已改断言式**）＋ 6 个原探针的修复版；全部只读、断言式、`fails>0 → exit 1`。（`.scratch/t88/` 同名文件是过程稿且被 gitignore，**不作复跑入口**。）
 > **本 session 已闭环的返修项**：R1-3（A1 断言化）／R1-4（证据入仓）／R1-10（NaN）／R1-14（假阳性＋度量窗口）／R1-5（两处勘误）／R1-2 与 R1-1 的**可行性与口径**（S1／S4 落地）。**未闭环（S1–S5 实施）**：R1-1／R1-6／R1-7／R1-8／R1-11／R1-12／R1-13。
 > 入仓（R1-4）：`docs/research/t88-plan.md`（本文件）＋ `docs/research/t88-probe-{current,sot,contract,shell,shell2,shell3,rework1,rework2}.mjs`（8 个）；门禁基准 `docs/research/t88-baseline/BASELINE.md`（编排者冻结）。
 
@@ -136,16 +136,16 @@
 
 ## 3. A1–A8 修订后覆盖
 
-| # | 状态 | 变化 |
+| # | 状态（**R-cond-3 修：方案层 ≠ 实施层**） | 变化 |
 |---|---|---|
-| A1 | **S1 达成** | R1-3 把复算改成断言式脚本（`RESULT: n/m`，exit≠0）；R1-7 修正 legacy 事实 |
-| A2 | **达成** | R1-6 类名双绿（不新增区根／不新增契约面）；S4 门禁含 `snapshot:check`（R1-8） |
-| A3 | **达成** | 守卫① 扩 6/6＋泛化（R1-2）；②③ 原样；卡级按钮不破③（零新增 actionId） |
+| A1 | **方案已定，实施后达成**（S1） | R1-3 把复算改成断言式脚本（`RESULT: n/m`，exit≠0）；R1-7 修正 legacy 事实 |
+| A2 | **方案已定，实施后达成**（S2／S4） | R1-6 类名双绿（不新增区根／不新增契约面）；S4 门禁含 `snapshot:check`（R1-8） |
+| A3 | **方案已定，实施后达成**（S3） | 守卫① 扩 6/6＋泛化（R1-2）；②③ 原样；卡级按钮不破③（零新增 actionId） |
 | A4 | **口径已冻结可执行** | 基准 `docs/research/t88-baseline/BASELINE.md`（HEAD `90128d8`）＋`test-failset.txt` 34 条白名单；四门基线全 0；`pnpm test` 判据＝具名失败集新增 0；`changeset:status` 环境红不计入门禁（R1-9） |
-| A5 | **达成** | 3 处 src 变异按 S1／S2／S4 分摊（R1-13）＋1 探针级 |
+| A5 | **方案已定，实施后达成**（S1／S2／S4 分摊） | 3 处 src 变异按 S1／S2／S4 分摊（R1-13）＋1 探针级 |
 | A6 | **S0 已达成** | 方案＋8 探针入 `docs/research/` 并被 git 跟踪（R1-4） |
-| A7 | **达成** | 步骤表逐格声明路径；`cmd_read.ts`／`keys.ts`／`templates/*`／`plugin-*` 禁改 |
-| A8 | **达成** | S4 与 #91／#121 严格串行（#91／#121 blocked-by #88） |
+| A7 | **纪律已定（实施中逐提交自检）** | 步骤表逐格声明路径；`cmd_read.ts`／`keys.ts`／`templates/*`／`plugin-*` 禁改 |
+| A8 | **纪律已定（实施中逐提交自检）** | S4 与 #91／#121 严格串行（#91／#121 blocked-by #88） |
 
 ---
 

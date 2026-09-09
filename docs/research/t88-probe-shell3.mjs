@@ -28,7 +28,8 @@ say('RESULT-BODY-BYTES ' + Buffer.byteLength(body, 'utf8'));
 say('RESULT-CSS-BYTES ' + Buffer.byteLength(assets.sharedCssText, 'utf8'));
 say('RESULT-HELPERS-BYTES ' + Buffer.byteLength(assets.sharedHelpersJs, 'utf8'));
 say('RESULT-PAYLOAD-BYTES ' + (html.match(/<script id="[^"]*"[^>]*>[\s\S]*?<\/script>/)?.[0].length ?? -1));
-say('RESULT-PLACEHOLDER-RESIDUE ' + ['<!--INJECT-DATA-->','<!--SHARED-CSS-->','<!--SHARED-HELPERS-->','<!--CHARTS-HELPERS-->','<!--CONTENT-->'].map((m) => m + '=' + (html.split(m).length - 1)).join(' '));
+say('RESULT-PLACEHOLDER-RESIDUE ' + Object.values(base.TEMPLATE_MARKERS).map((m) => m + '=' + (html.split(m).length - 1)).join(' '));
+say('RESULT-PLACEHOLDER-GENERIC ' + JSON.stringify([...html.matchAll(/<!--[A-Z0-9-]+-->/g)].map((m) => m[0])));
 say('RESULT-REPORT ' + JSON.stringify(o.report));
 // 正文特征
 const feats = {
