@@ -79,16 +79,17 @@ describe('#96 per-skill HTML 回归门工具自证', () => {
       const mine = ids.filter((id) => id.startsWith(s.id + '/'));
       // 结构件：keys／templates／escape／shape-throw ＋ 6 形状
       const structural = mine.filter((id) => /^\w+\/(keys|templates|escape|shape-throw|shape\/)/.test(id));
-      assert.equal(structural.length, 4 + SHAPES.length, `${s.id} 结构件数量`);
+      assert.equal(structural.length, 4 + SHAPES.length + 1, `${s.id} 结构件数量（含空列表探针）`);
       assert.equal(mine.filter((id) => id.startsWith(`${s.id}/frag/`)).length, EXPECT_KEYS[s.id], `${s.id} key 片段数`);
       assert.equal(mine.filter((id) => id.startsWith(`${s.id}/tpl/`)).length, EXPECT_TPL[s.id], `${s.id} 模板页数`);
       for (const sh of SHAPES) assert.ok(arts.has(`${s.id}/shape/${sh}`), `${s.id} 缺形状探针 ${sh}`);
+      assert.ok(arts.get(`${s.id}/shape/list-empty`).text.includes('hm-empty'), `${s.id} 空列表探针须打到空态分支`);
       assert.match(arts.get(`${s.id}/shape-throw`).text, /^[A-Za-z]+RenderError\/[A-Z_]+_SHAPE_MISMATCH$/,
         `${s.id} 未知形状必须抛本技能 RenderError/CODE`);
       assert.ok(arts.get(`${s.id}/escape`).text.includes('&amp;&lt;&gt;&quot;&#39;'), `${s.id} 转义探针须真转义`);
     }
     // 精确总数：结构件 ＋ frag ＋ tpl ＋ shared-css/helpers（bill/chef/home/schedule 各 2，memo 0）
-    const want = SKILLS.length * (4 + SHAPES.length)
+    const want = SKILLS.length * (4 + SHAPES.length + 1)
       + Object.values(EXPECT_KEYS).reduce((a, b) => a + b, 0)
       + Object.values(EXPECT_TPL).reduce((a, b) => a + b, 0)
       + 4 * 2;

@@ -31,7 +31,7 @@
       "package": "packages/skill-memo-ilife"
     }
   ],
-  "artifactCount": 180,
+  "artifactCount": 185,
   "artifacts": {
     "bill/escape": {
       "src": "packages/skill-bill/src/render/html.ts",
@@ -170,6 +170,12 @@
       "bytes": 553,
       "sha256": "bb98eda97eddae73b1d5a3318c12367e",
       "text": "<section data-skill=\"bill\" data-shape=\"list\" data-key=\"bill.snapshot.list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"time\">2026-01-02 03:04:05</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span><span class=\"amt\">-35.5</span></div><div class=\"content\">a&lt;b&gt;&amp;&quot;&#39;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"time\">2026-01-03 08:00:00</span><span class=\"badge\">交通/地铁</span><span class=\"amt\">5</span></div><div class=\"content\"></div></div></section>"
+    },
+    "bill/shape/list-empty": {
+      "src": "packages/skill-bill/src/render/html.ts",
+      "bytes": 131,
+      "sha256": "d8a314bafec25f131ea7b8534a36858d",
+      "text": "<section data-skill=\"bill\" data-shape=\"list\" data-key=\"bill.snapshot.list-empty\"><div class=\"hm-empty\">暂无记录</div></section>"
     },
     "bill/shape/receipt": {
       "src": "packages/skill-bill/src/render/html.ts",
@@ -386,6 +392,12 @@
       "bytes": 381,
       "sha256": "2fe91e97d233c981a9f4decdee534f60",
       "text": "<section data-skill=\"chef\" data-shape=\"list\" data-key=\"chef.snapshot.list\"><div class=\"item\"><div class=\"item-head\"><span class=\"badge\">名称&lt;&amp;&gt;</span><span class=\"time\">id=1 status=ok unit=个</span></div></div><div class=\"item\"><div class=\"item-head\"><span class=\"badge\">名称&lt;&amp;&gt;</span><span class=\"time\">id=2 status=ok unit=个</span></div></div></section>"
+    },
+    "chef/shape/list-empty": {
+      "src": "packages/skill-chef/src/render/html.ts",
+      "bytes": 131,
+      "sha256": "bb2825f0c448e9a4026bf21f47d6c657",
+      "text": "<section data-skill=\"chef\" data-shape=\"list\" data-key=\"chef.snapshot.list-empty\"><div class=\"hm-empty\">暂无记录</div></section>"
     },
     "chef/shape/receipt": {
       "src": "packages/skill-chef/src/render/html.ts",
@@ -632,6 +644,12 @@
       "bytes": 399,
       "sha256": "c91a53af63961a71692bdfb241a45831",
       "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.snapshot.list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+    },
+    "home/shape/list-empty": {
+      "src": "packages/skill-home/src/render/html.ts",
+      "bytes": 131,
+      "sha256": "84f9636076390e14441d8b5159cfbde4",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.snapshot.list-empty\"><div class=\"hm-empty\">暂无记录</div></section>"
     },
     "home/shape/receipt": {
       "src": "packages/skill-home/src/render/html.ts",
@@ -891,6 +909,12 @@
       "sha256": "caac0cf65ed2952f204e40e7b4fb679e",
       "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
     },
+    "memo/shape/list-empty": {
+      "src": "packages/skill-memo-ilife/src/render/html.ts",
+      "bytes": 95,
+      "sha256": "92c28614cb5fa21141e9b407f4c96b89",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"hm-empty\">暂无记录</div></section>"
+    },
     "memo/shape/receipt": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
       "bytes": 108,
@@ -1034,6 +1058,12 @@
       "bytes": 483,
       "sha256": "27e9289a4dd4a838c98976af74d836e0",
       "text": "<section data-skill=\"schedule\" data-shape=\"list\" data-key=\"schedule.snapshot.list\"><div class=\"item\"><div class=\"item-head\"><span class=\"time\">2026-01-02 03:04:05</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span><span class=\"dur\">30</span></div><div class=\"content\"></div></div><div class=\"item\"><div class=\"item-head\"><span class=\"time\">2026-01-03 08:00:00</span><span class=\"badge\">交通/地铁</span><span class=\"dur\">30</span></div><div class=\"content\"></div></div></section>"
+    },
+    "schedule/shape/list-empty": {
+      "src": "packages/skill-schedule/src/render/html.ts",
+      "bytes": 139,
+      "sha256": "2215511ceaede3a1780fca81058bc6af",
+      "text": "<section data-skill=\"schedule\" data-shape=\"list\" data-key=\"schedule.snapshot.list-empty\"><div class=\"hm-empty\">暂无记录</div></section>"
     },
     "schedule/shape/receipt": {
       "src": "packages/skill-schedule/src/render/html.ts",

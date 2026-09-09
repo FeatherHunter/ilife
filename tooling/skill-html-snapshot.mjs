@@ -94,6 +94,9 @@ export const PAYLOAD = {
 
 export const SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'];
 
+/** 空列表探针（第 7 件形状探针）：5 技能都有 `!items.length` 空态分支，非空载荷打不到它。 */
+export const LIST_EMPTY = { items: [], total: 0 };
+
 /** escape 探针输入（五字符 ＋ 反引号 ＋ 波浪号 ＋ 代理对 ＋ 换行）。 */
 export const ESCAPE_PROBE = '&<>"\'`~ 中文 🍣\n第二行';
 
@@ -147,11 +150,14 @@ export async function collectArtifacts() {
       put(`${entry.id}/frag/${k}`, m.renderEnvelopeHtml(env), envSrc);
     }
 
-    // ③ 6 形状全覆盖（含 5 技能都没分配的 fallback 分支）＋未知形状必抛
+    // ③ 6 形状全覆盖（含 5 技能都没分配的 fallback 分支）＋空列表空态分支＋未知形状必抛
     for (const shape of SHAPES) {
       const env = core.createEnvelope({ skill: entry.id, shape, key: `${entry.id}.snapshot.${shape}`, data: PAYLOAD[shape] });
       put(`${entry.id}/shape/${shape}`, m.renderEnvelopeHtml(env), htmlSrc);
     }
+    put(`${entry.id}/shape/list-empty`,
+      m.renderEnvelopeHtml(core.createEnvelope({ skill: entry.id, shape: 'list', key: `${entry.id}.snapshot.list-empty`, data: LIST_EMPTY })),
+      htmlSrc);
     let threw = '';
     try {
       m.renderEnvelopeHtml({ version: core.ENVELOPE_VERSION, skill: entry.id, shape: 'bogus', key: `${entry.id}.snapshot.bogus`, data: {} });
