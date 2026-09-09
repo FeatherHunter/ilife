@@ -112,6 +112,8 @@ description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯
 | 12 | `pnpm publish:pre` | `ae310953-1903-4766-8592-736f8969d1e4` | **0** |
 | 13 | `pnpm help:examples:check` | `90aa32d9-62a8-4326-b451-e28d0ced311c` | **0**（`RESULT: 99/99`） |
 
+> **为何探针入仓后未再复跑第三轮**：此后新增／改动的文件全在 `docs/research/`（5 个 `.mjs` 探针 ＋ 证据文本 ＋ 对账源），而五门的输入面**逐条实测**均不含该目录——`check-boundaries.mjs` 扫描面＝`packages/*/src`＋`packages/*/templates`＋`package.json`（`:21-53`）；`write-snapshot.mjs` 读取面＝`ilife-skills/package.json`＋`base-combos/combos.yaml`＋`base-combos/src/present.ts`；`check-publish.mjs` 读取面＝`package.json`／tarball 内文件；`help:examples:check` 读取面＝`SKILL.md`＋`dist/`＋`docs/research/t81-seed.mjs`（**未改动**）。且 `SKILL.md` 自 `d719197` 起 `git hash-object` 恒 `7433560f…`（＝`HEAD` blob；本报告收尾复核同值）。
+
 **靶向组明细**（`node --test test/skills-export-47.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/calorie-c43.test.mjs packages/plugin-calorie/test/skills-provider.test.mjs test/calorie-routing-81.test.mjs`）：`#47 skills-export 3/3`、`skill-t11 9/9`（含 M6 正文 7 串、互联区新鲜）、`calorie-c43 7/7`（含 C1 运维定位、C7 默认目标值）、`#56 provider 5/5`（`description` 同源断言）；**唯一红**＝`FX-81-5 不变量：exec ⟺ 实跑 exit 0`（`test/calorie-routing-81.test.mjs:293`，读 `docs/research/t81-exec-smoke.md` 的「非零 1」行）——**该测试名在基线白名单内**（`docs/research/t88-baseline/test-failset.txt`），且 `t81-exec-smoke.md` 工作区无改动 → **既有红，非本票引入**（本票只改 SKILL.md 门面，与该快照零因果）。
 
 **canonical ＋ t101 delta**：`pnpm test` → `tests 1114／pass 1089／fail 25／exit 1`；`node docs/research/t101-fail-set.mjs docs/research/t88-baseline/test-failset.txt .scratch/t82/gate-8-canonical-1.log` → **`base=34 after=29 新增=0 消失=5`**。
