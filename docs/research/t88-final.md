@@ -18,7 +18,9 @@
   S5 三处 src 级变异 3/3 红→还原→绿；靶向 220/220；`pnpm gate:selftest` 20/20。
 - **过程面**：#88 共 **1 条过程缺陷（S3，不阻断关闭）**——「B 段门禁未走 §2.4 包装器」，已由
   `t88-ruling-process-violation-b.md` 具名比例处置（不重做／不回填，归因编排者未广播新条款）。
-- **用户可见性**：**#88 关闭时用户仍看不到新版速查台**（CLI 接线归 **#91**，见 §6）。
+- **用户可见性**：**已可达**——#91 的 CLI 接线于 `a245431`（2026-09-09 22:11:15 +0800，本席关闭前 3 分钟）
+  落地，`calorie.help.center` 现支持 `mode` 三态并真实调用 `renderHelpCenterHtml`（§6-1 勘误；
+  接线本身归 #91，**#88 不含**）。
 - 两席审查 verdict 均为 **FAIL**，但否决项**全部**是 S1-过程违规（已处置降 S3）与「证据面扣分」；
   **无一条 S1-交付缺陷**（红队 86／蓝队 84，技术面项「全部独立复现成立」）。
 
@@ -139,15 +141,21 @@ L-17 零渐变判据作废；**L-18 diet 展示名取 F3「饮食」（SoT「饮
   按 `dispatch-rules.md` §4.6「如实补注归属、不返工」处置（**S3 记账**）。
 - `gate:selftest:html`（#96 路径）**本席未改**；口径已核对：两者**同为自持锁**（均 `--lock-dir .scratch/locks-selftest`）
   → **调用方一律不得再套 `run-locked`**。
-- 收尾 commit：`7e3b864`（S5 代码＋测试）、`29a8c46`（run-locked 超时＋自证）、本文件所在 commit（证据）。
+- **`docs/research/t88-gate-runs.log`（本票 §8 的对账源导出）被 #91 的提交 `a245431` 连带提交**（共享 index；
+  本席 `git add` 后 commit 因引号问题失败，随后被其 commit 收走）→ 内容正确、已受跟踪，按 §4.6 补注归属（**S3 记账**）。
+- 收尾 commit：`7e3b864`（S5 代码＋测试）、`29a8c46`（run-locked 超时＋自证）、`c78cb8b`（本文件＋changeset）、
+  本勘误所在 commit（证据更新）。
 
 ## 6. 未做／未确证（**最重要的一条在最前**）
 
-1. **#88 关闭时用户仍看不到新版速查台** —— HEAD 上 `calorie.help.center` **仍只服务照片 10 键**
-   （`git show HEAD:packages/skill-calorie/src/cli/cmd_read.ts` 的该 case ＝ `lookupPhotoHelp`／`buildPhotoHelp`，
-   `keys.ts:87` shape 仍为 `list`／标题「身材照HELP」）。**CLI 接线归 #91**（见 §7）。
-   实测：收尾期间 **#91 正在把接线写进工作区**（`git status --short` 显示 `cmd_read.ts` 未提交改动 63 行），
-   本席**未触碰、未提交**该文件。
+1. **【勘误 · 关闭前 3 分钟变更】用户可见性已达成**：本文件初稿写「#88 关闭时用户仍看不到新版速查台」，
+   该判断在 **`a245431`（2026-09-09 22:11:15 +0800，`feat(91): help.center 承载全量速查台（Q9）＋ mode 显式三态（D6）＋ 照片 10 键兼容`）
+   之前**成立；该 commit 之后 **HEAD 上 `calorie.help.center` 已支持 `--params '{"mode":"file|inline|text"}'`
+   并真实调用 `renderHelpCenterHtml`**（复核：`git show HEAD:packages/skill-calorie/src/cli/cmd_read.ts`
+   含 `import { HELP_CENTER_MODES, buildHelpSceneData, renderHelpCenterHtml }`；`git diff a245431 -- <该文件>` **空**
+   ⇒ 与收尾门禁跑的树逐字一致）。⇒ **#88 关闭时新版速查台已可达**；CLI 接线仍归 #91（#88 零触碰该文件）。
+   **遗留**：本席的四门／canonical／靶向跑在 `a245431` **之前**（当时 #91 的 `cmd_read.ts` WIP 已在工作区且
+   与提交内容逐字一致，但 `help-center-91.test.mjs` 尚未出现）→ 合并点安静态复核归编排者／#91 关闭轮。
 2. `--expect-exit <n> --reason <基线既有红>`（门禁对 canonical 既有红的**显式**承认开关）**待修**，
    本 session 不做（当前靠 `GATE-RELAX flag=--allow-nonzero` ＋ 失败集新增 0 判据）。
 3. **F3 搜索作用域未逐值比对**（F3 的搜索是否含 Sheet 内文本／是否大小写敏感未逐值核；本票只证
@@ -193,7 +201,10 @@ export function helpCenterAssets(): TemplateAssets; // { sharedHelpersJs: COPY_R
 
 非法 `mode` → `CalorieRenderError('bad-input')`（**调用方应转 exit 2**）。
 
-### 7.3 现状（HEAD）与 #91 需要做什么
+### 7.3 接线口径（**#91 已于 `a245431` 落地**；下表为落接口径 ＋ 仍需注意的边界）
+
+> 本节写成时 #91 尚未提交；`a245431` 的实现与下表推荐口径一致（`q`／`mode` 互斥 exit 2、缺省 `file`、
+> `mode` 显式三态）。下表保留为**接缝契约**与**后续维护口径**，仍适用于 #91 及其后续票。
 
 1. **键语义**：`calorie.help.center` 现在＝**照片 10 键 HELP**（`keys.ts:87` `shape:'list'`／标题「身材照HELP」；
    `cmd_read.ts` 的 case 走 `lookupPhotoHelp(q)`／`buildPhotoHelp()`）。#91 要让它**同时**承载**全量速查台**。
@@ -239,4 +250,4 @@ GATE-RUN runId=e5ba5021-a864-4af2-8f48-5c41497ec7cb cmd="powershell -NoProfile -
 - [x] S5 三处 src 级变异 3/3；A／B 段变异索引齐备。
 - [x] 证据入仓（本文件 ＋ `docs/research/t88-*`）；工作区干净（本席路径无未提交／未跟踪）。
 - [x] 票面进度 100% ＋ 结题评论（含两席 verdict／全部 commit sha／裁定指针／未做项）＋ `gh issue close 88`。
-- [ ] **用户可见**：等 **#91** 接线落地（§6-1／§7）。
+- [x] **用户可见**：#91 接线 `a245431` 已落地（§6-1 勘误）；#88 只提供渲染接缝，不含接线。
