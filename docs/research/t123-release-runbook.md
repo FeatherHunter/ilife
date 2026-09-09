@@ -3,9 +3,11 @@
 - 票：[卡路里·发版窗口](https://github.com/FeatherHunter/ilife/issues/123)（父图 #64）。**agent 不发布；本单由维护者本人执行，2FA OTP 只在维护者手上。**
 - 本单形态：**可一条条照着执行的走查单**（阶段式，S0–S13 共 14 阶段；每阶段给①精确命令 ②期望可观察结果 ③失败判据／中止条件 ④证据文件名与落点）。
 - 执行环境：Windows + PowerShell 5.1（sidebar 终端实测 `5.1.26100.9168`）、Node `v24.19.0`、npm `10.9.2`、pnpm `11.8.0`。
-- 复现约定：命令在 `D:\ilife` 下执行；`<X>` = `--registry=https://registry.npmjs.org/`（**默认源是 npmmirror，发 npmjs 必须显式加**）。
+- 复现约定：命令在 `D:\ilife` 下执行；**所有 npmjs 操作显式带全量 `--registry=https://registry.npmjs.org/`**（默认源是 npmmirror，漏带就打到镜像）。
+- **可直接粘贴**：本单命令块一律内联字面版本号与全量 registry 串，**不依赖上一阶段定义的 shell 变量**（每阶段可开新终端）；带 `<…>` 的占位符只剩 `--otp=<6位>` 的 6 位码，以及**不在命令块内**的 `<原 profile>`／`<旧版本>`／`<文件清单>`。
+- 返修（FX-R4-2）：原单用「尖括号 X」／「尖括号 V_BASEPAINT」等文本占位符，而 S0-1 定义的 `$V_*` 变量在 S1–S13 里从未被使用（死代码）；PS 5.1 又把 `<` 当保留运算符 → 7/18 个 `powershell` 块**直接 parse error**（`The '<' operator is reserved for future use.`）。现已全部内联；复核方式见 §0.2。
 - 记号：`[HITL]` = 只有人能做的步骤（2FA OTP／`npm login`／托盘 Quit 重启／真机截图／opencode 手跑）；`[AFK]` = 可脚本化、无需人工交互。
-- 快照锚点：本单修订时 `git rev-parse --short HEAD` = `f4d57ba`、取证 2026-09-09；**工作树含 C1 未提交的发版前置修复（见 §0.1）**。**所有 `file:line` 都必须用现场命令复核**（并发 session 会移动 HEAD，见 S1）。
+- 快照锚点：本单**本次返修时**（C4，2026-09-09）`git rev-parse --short HEAD` = `c6ba6e0`、`git status --porcelain` 仅 1 行未跟踪（`docs/research/t123-review-R4.md`）；C1 的发版前置修复**已由 `ca46495`（2026-09-09 12:58:28）提交**（见 §0.1）。**所有 `file:line` 都必须用现场命令复核**（并发 session 会移动 HEAD，见 S1）。
 - 证据标记：`[实测·本单 2026-09-09]` = 本单修订时现场跑过；`[转引 R1/R2]` = 审查报告实测（`docs/research/t123-review-R1.md`／`t123-review-R2.md`）；`[未验证]` = 本单未跑过，**执行时必须先跑并留 exit 码**。
 
 ---
@@ -14,12 +16,14 @@
 
 > **闭包已定案，依据诊断 §10.1／§10.3 ＋ R1／R2 复核**（`docs/research/t123-release-window-diagnosis.md` §10.1 判「base-paint 必须发」、§10.3 给最小一致发布集；R1 的 C4 独立扫 dist 裸依赖得 `{base-paint, skill-calorie, dsh-calorie}`，R2 的 V1 独立重算三包目标版本）。**本单只给这一套序列；原先的「集合 A（只发两包）／集合 B（含 base-paint）二选一」已作废**（作废理由见本节末）。
 
-| 占位符 | 含义 | 定案值 | 依据 |
+| 包 | 含义 | 定案版本 | 依据 |
 | --- | --- | --- | --- |
-| `<V_BASEPAINT>` | `base-paint` 发布版本 | `0.2.0` | 诊断 §1.1／§10.3；R1 V3（9 个 minor changeset → `0.2.0`） |
-| `<V_SKILL_CALORIE>` | `skill-calorie` 发布版本 | `0.2.0` | 诊断 §1.3；R1 V1／R2 V1 |
-| `<V_DSH_CALORIE>` | `dsh-calorie` 发布版本 | `0.2.0` | 诊断 §1.3；R1 V2／R2 V1 |
-| `<V_LIFEPACK>` | `dsh-calorie` 依赖的 `dsh-life-pack` 版本（**本次不发此包**） | `0.2.0`（registry 已发布） | 诊断 §10.3「可选发」＋R1 P2/P3：`dsh-calorie` 的 range 必须提到 `^0.2.0`，否则干净安装解析到 `0.1.1`（不含 `ilife.config-tab` 槽 → 卡路里设置页静默缺席） |
+| `base-paint` | 本次发布 | **`0.2.0`** | 诊断 §1.1／§10.3；R1 V3（9 个 minor changeset → `0.2.0`） |
+| `skill-calorie` | 本次发布 | **`0.2.0`** | 诊断 §1.3；R1 V1／R2 V1 |
+| `dsh-calorie` | 本次发布 | **`0.2.0`** | 诊断 §1.3；R1 V2／R2 V1 |
+| `dsh-life-pack` | `dsh-calorie` 依赖的版本（**本次不发此包**） | **`0.2.0`**（registry 已发布） | 诊断 §10.3「可选发」＋R1 P2/P3：`dsh-calorie` 的 range 必须提到 `^0.2.0`，否则干净安装解析到 `0.1.1`（不含 `ilife.config-tab` 槽 → 卡路里设置页静默缺席） |
+
+> 返修（FX-R4-2）：本表原以「尖括号 V_…」文本占位符出现，且 S0-1 定义的 `$V_*` 变量在 S1–S13 中一次都没用上（死代码）。现改为**定案版本记账表**，命令块一律内联字面版本号——每阶段可开新终端，不依赖 shell 状态。
 
 **唯一发布序列（依赖自底向上，顺序错会导致中途 `ETARGET`）：**
 
@@ -35,13 +39,13 @@ base-paint@0.2.0  →  skill-calorie@0.2.0  →  dsh-calorie@0.2.0
 
 | # | 阻断项 | 现场判据 | 落点 |
 | --- | --- | --- | --- |
-| P-1 | npm 凭据失效 | `npm whoami <X>` → `E401 / 401 Unauthorized`（**本单实测仍为 401**，`WHOAMI_EXIT=1`） | S0-0（维护者 `npm login`） |
+| P-1 | npm 凭据失效 | `npm whoami --registry=https://registry.npmjs.org/` → `E401 / 401 Unauthorized`（**本单实测仍为 401**，`WHOAMI_EXIT=1`） | S0-0（维护者 `npm login`） |
 | P-2 | 锁文件一致性（**曾失配，C1 已修**） | 肇因 `42a5b49`：`packages/skill-calorie/package.json:22` 改成 `^0.2.0` 而 `pnpm-lock.yaml` 仍 `specifier: ^0.1.0` → `--frozen-lockfile` 报 `ERR_PNPM_OUTDATED_LOCKFILE`（R2 FX-R2-2 在仓外复本实测 exit 1），`ci.yml:28,69,103` 三处因此红。**本单实测：C1 已同步锁文件，两个 importer 均 `^0.2.0`** → 闸门保留用于**验证与防回归**（S7 若再改 range 会再次失配） | S3（新增闸门） |
 | P-3 | 真机是 junction 直连工作区 | 真机四包全是 Junction，两层链仍解析进 `D:\ilife` → 现在取证**假绿**（R2 J1–J8；本单 S12-0 复验） | S12（两条解除路径） |
 
-### 0.1 C1 发版前置修复的现状（**本单实测 2026-09-09，工作树未提交**）
+### 0.1 C1 发版前置修复的现状（**已提交 `ca46495`，2026-09-09 12:58:28**）
 
-> 另一 agent（C1）的发版前置修复**已落在工作树**（`git status --short` 显示 12 个文件 `M`，尚未 commit）。本单据此把 S7 改为**逐项复核**，但每条都保留「若未改」的修法，用于回归或 C1 改动丢失时兜底。
+> 返修（FX-R4-4）：本节原写「工作树未提交／`git status --short` 显示 12 个文件 `M`」——**现状已过期**：C1 的修复由 `ca46495` 提交（本次实测 `git status --porcelain` 仅剩未跟踪文件）。本单据此把 S7 改为**逐项复核**，但每条都保留「若未改」的修法，用于回归或改动丢失时兜底。
 
 | 项 | C1 现状（本单实测） | 本单落点 |
 | --- | --- | --- |
@@ -53,7 +57,37 @@ base-paint@0.2.0  →  skill-calorie@0.2.0  →  dsh-calorie@0.2.0
 | 文档版本串 | `SKILL.md:172,173,179` 与 `docs/public-installer-47.md:22` 均 `0.2.0` | S7-6 复核 |
 | 锁文件 | `pnpm-lock.yaml` 的 `packages/skill-calorie` 与 `packages/plugin-calorie` importer specifier 均 `^0.2.0` | S3／S7-8 复核 |
 | **未完成 ①** | **changeset 消费**：`.changeset/` 未被 C1 触碰（实测仍 53 个 `.md`） | S7-7 |
-| **未完成 ②** | **`dist` 未重建**：`packages/plugin-calorie/dist/slot.js` 实测仍是 `0.1.6`／`0.1.1`（`src` 已是 `0.2.0`）→ 不重建则 `smoke.test.mjs:93-94` 必红 | S4／S7-4／S8 |
+| ~~**未完成 ②**~~ **已完成 ②**（原句已过期） | **`dist` 已重建**：`packages/plugin-calorie/dist/slot.js:17,18` 实测 = `0.2.0`／`0.2.0`（与 `src` 一致；mtime `2026-09-09 13:05:39`）。**注意**：`dist/client.js` 只由 `tsdown` 产出（根 `pnpm build` = `tsc -b`，而 `tsconfig.json` 排除了 `src/client.ts`）→ S4 删 dist 后必须补跑包级 build，见 S4 | S4／S7-4／S8 |
+
+### 0.2 命令块可解析性自检（**返修 FX-R4-2 新增**）
+
+> **为什么**：PS 5.1 把 `<` 当保留运算符——任何**未加引号**的尖括号占位符都会让整块 parse error（`The '<' operator is reserved for future use.`）。原单 18 个 `powershell` 块里 **7 个**中招（维护者粘贴即报错）。本单已把占位符全部内联，下面这条只读命令是**回归自检**，任意时刻可跑。
+
+① 命令
+
+```powershell
+cd D:\ilife
+$log  = 'D:\ilife\.scratch\t123w\check-ps-blocks.log'
+$fence = ([string][char]96) * 3
+$lines = [System.IO.File]::ReadAllLines('D:\ilife\docs\research\t123-release-runbook.md')
+$blocks = @(); $cur = $null
+for ($i = 0; $i -lt $lines.Count; $i++) {
+  $l = $lines[$i]
+  if ($l -eq ($fence + 'powershell')) { $cur = @{ n = $i + 2; src = @() }; continue }
+  if ($cur -and $l -eq $fence) { $blocks += $cur; $cur = $null; continue }
+  if ($cur) { $cur.src += $l }
+}
+$bad = 0
+foreach ($b in $blocks) {
+  try { [void][scriptblock]::Create(($b.src -join [Environment]::NewLine)) }
+  catch { $bad++; ("FAIL mdL" + $b.n + ": " + $_.Exception.Message) | Tee-Object -FilePath $log -Append }
+}
+("PS_BLOCKS=" + $blocks.Count + " PS_BLOCKS_BAD=" + $bad) | Tee-Object -FilePath $log -Append
+```
+
+② 期望可观察结果：`PS_BLOCKS=19 PS_BLOCKS_BAD=0`（**19 = S0–S13／附录的 18 个步骤块 ＋ 本自检块自身**；C4 返修后实测）。
+③ 失败判据／中止条件：`PS_BLOCKS_BAD > 0` → 该块**不能直接粘贴**，先回本单核对（说明又有人引入了尖括号占位符）。
+④ 证据：`.scratch/t123w/check-ps-blocks.log`。
 
 ---
 
@@ -66,7 +100,7 @@ base-paint@0.2.0  →  skill-calorie@0.2.0  →  dsh-calorie@0.2.0
    - PATH 上的 `bash` 是 **WSL2**（`C:\Windows\System32\bash.exe`，bash `5.1.16`）；同一份 **CRLF** 脚本在 WSL 下直接报 `set: pipefail: invalid option name`（CRLF 未剥离）。
    - 正确调用：`& 'C:\Program Files\Git\bin\bash.exe' <脚本>`（MSYS2 Git Bash `5.2.37`，CRLF 不致命）。脚本一律 **LF** 保存；`chmod +x` 在 Windows 上无实际意义。
    - 复验命令（`[转引 R1/R2]` 的 prereq P-2）：`& 'C:\Program Files\Git\bin\bash.exe' --version`。
-5. **npm 默认源是 npmmirror**：`npm config get registry` → `https://registry.npmmirror.com`（`[实测·本单]`）。所有 npmjs 操作显式带 `<X>`。
+5. **npm 默认源是 npmmirror**：`npm config get registry` → `https://registry.npmmirror.com`（`[实测·本单]`）。所有 npmjs 操作显式带 `--registry=https://registry.npmjs.org/`。
 6. **插件真名是 `dsh-better-sidebar`**（`0.18.0`，真实目录非 junction），**不是 `better-sidebar`**（`[实测·本单]`；`docs/calorie-dual-path-acceptance.md:42` 与 #123 票面写的 `better-sidebar` 是简称）。S12 查在位时按真名查。
 7. **pnpm 11 有版本冷静期**：任何安装类命令带 `--config.minimumReleaseAge=0`，漏加可能装到旧版。
 8. **持锁模板 §L（后续所有 build／test／仓内 install／git 动作都用它包裹）**：
@@ -100,46 +134,56 @@ cd D:\ilife
 New-Item -ItemType Directory -Force -Path D:\ilife\.scratch\t123w | Out-Null
 # 0-0 凭据闸门（[HITL] 维护者亲手；本单实测现状 = 401，必须修）
 npm config get registry                                   # 期望 https://registry.npmmirror.com
-npm whoami <X> 2>&1 | Out-File .scratch\t123w\whoami-before.log -Encoding utf8
+npm whoami --registry=https://registry.npmjs.org/ 2>&1 | Out-File .scratch\t123w\whoami-before.log -Encoding utf8
 "WHOAMI_BEFORE_EXIT=$LASTEXITCODE"                        # 期望修复后为 0；修复前实测为 1（E401）
 # 备份 ~/.npmrc（**落在仓库外**：该文件含 token，不得进仓、不得写进任何证据）
 Copy-Item "$env:USERPROFILE\.npmrc" "$env:USERPROFILE\.npmrc.bak-$(Get-Date -Format yyyyMMdd-HHmmss)" -Force
 npm login --registry=https://registry.npmjs.org/          # 交互：用户名/密码/（若开了 2FA）OTP
-npm whoami <X> 2>&1 | Out-File .scratch\t123w\whoami-after.log -Encoding utf8
+npm whoami --registry=https://registry.npmjs.org/ 2>&1 | Out-File .scratch\t123w\whoami-after.log -Encoding utf8
 "WHOAMI_AFTER_EXIT=$LASTEXITCODE"                         # 期望 0 且打出维护者用户名
-npm ping <X> 2>&1 | Out-File .scratch\t123w\ping.log -Encoding utf8
+npm ping --registry=https://registry.npmjs.org/ 2>&1 | Out-File .scratch\t123w\ping.log -Encoding utf8
 "PING_EXIT=$LASTEXITCODE"                                 # 期望 0（PONG）
 npm config get registry                                   # 必须仍是 npmmirror（登录不应改默认源）
 
-# 0-1 本次版本元组（值已由 §0 定案，直接抄）
+# 0-1 本次版本元组（值已由 §0 定案；这些变量只在本块内用，跨阶段命令一律内联字面值）
 $V_BASEPAINT      = '0.2.0'
 $V_SKILL_CALORIE  = '0.2.0'
 $V_DSH_CALORIE    = '0.2.0'
 $V_LIFEPACK       = '0.2.0'      # 本次不发此包，仅作为依赖范围目标
 $HEAD             = (git rev-parse --short HEAD).Trim()
 $TODAY            = (Get-Date).ToString('yyyy-MM-dd')
-$STAMP            = (Get-Date).ToString('yyyyMMdd-HHmmss')
 
 # 0-2 证据位（原始日志落 .scratch，入仓证据落 docs/research，执行后 git add）
 New-Item -ItemType Directory -Force -Path D:\ilife\.scratch\t123w | Out-Null
 New-Item -ItemType Directory -Force -Path D:\ilife\docs\research\t123-release-evidence | Out-Null
 
+# 0-2b 元组的两个外部工具版本（§9-1 要求元组含 skills@w / opencode@z：docs/calorie-dual-path-acceptance.md:118）
+#   skills 本机没有全局安装（`npm ls -g skills --depth=0` 实测 `(empty)` 且 exit 1）——它只经 `npx skills@latest` 被调用，
+#   所以取「npx skills@latest 会解析到的版本」，与元组同一时刻取证
+$SKILLS_VER   = (npm view skills@latest version --registry=https://registry.npmjs.org/ 2>$null | Select-Object -First 1)
+$OPENCODE_VER = (& opencode --version 2>$null | Select-Object -First 1)
+"skills=$SKILLS_VER opencode=$OPENCODE_VER" | Tee-Object -FilePath D:\ilife\.scratch\t123w\version-tuple-tools.txt
+#   期望（C4 实测 2026-09-09）：skills=1.5.25  opencode=1.18.13
+#   取不到 → 写 skills=N/A(理由)／opencode=N/A(理由)，**不要留空、不要编**
+
 # 0-3 版本元组头（§9-1 要求：命令 + exit + 版本元组 + 取证日期）
-"ticket=#123 head=$HEAD date=$TODAY node=$(node --version) npm=$(npm --version) pnpm=$(pnpm --version) base-paint=$V_BASEPAINT skill-calorie=$V_SKILL_CALORIE dsh-calorie=$V_DSH_CALORIE dsh-life-pack=$V_LIFEPACK closure=base-paint>skill-calorie>dsh-calorie" |
+"ticket=#123 head=$HEAD date=$TODAY node=$(node --version) npm=$(npm --version) pnpm=$(pnpm --version) skills=$SKILLS_VER opencode=$OPENCODE_VER base-paint=$V_BASEPAINT skill-calorie=$V_SKILL_CALORIE dsh-calorie=$V_DSH_CALORIE dsh-life-pack=$V_LIFEPACK closure=base-paint>skill-calorie>dsh-calorie" |
   Out-File D:\ilife\.scratch\t123w\version-tuple.txt -Encoding utf8
 Get-Content D:\ilife\.scratch\t123w\version-tuple.txt
 ```
 
-② 期望可观察结果：`WHOAMI_AFTER_EXIT=0`（打出用户名）、`PING_EXIT=0`、`npm config get registry` 仍为 npmmirror；`version-tuple.txt` 一行，含三包目标版本 + `HEAD` + 取证日期 + 工具版本 + `closure=` 序列。
+> 返修（FX-R4-11／FX-R2-6）：原 0-3 元组只有 `node/npm/pnpm` ＋四包版本，**缺 §9-1 点名的 `skills@w`／`opencode@z`**（`docs/calorie-dual-path-acceptance.md:118`）→ §9 条 1「可复现」不成立。现补 0-2b 两条可执行采集命令与期望值（skills 取 `npx skills@latest` 的解析值，因为本机没有全局 `skills` 二进制）。
+
+② 期望可观察结果：`WHOAMI_AFTER_EXIT=0`（打出用户名）、`PING_EXIT=0`、`npm config get registry` 仍为 npmmirror；`version-tuple.txt` 一行，含三包目标版本 + `HEAD` + 取证日期 + 工具版本 + **`skills=`／`opencode=`** + `closure=` 序列（`skills`／`opencode` 取不到时写 `N/A(理由)`，不得留空）。
 
 ③ 失败判据／中止条件：
 
 - `WHOAMI_AFTER_EXIT ≠ 0`（`E401`／`ENEEDAUTH`／`EOTP`）→ **中止**，不要往下走。改换有效 token 后重跑 0-0 直到 exit 0。**凭据没修好之前，本单整单无意义**（诊断 §7）。
-- `npm ping <X>` 不通 → 网络/registry 侧问题，先排查再继续。
+- `npm ping --registry=https://registry.npmjs.org/` 不通 → 网络/registry 侧问题，先排查再继续。
 - 诊断票或本单 §0 的闭包结论缺失 → **中止**（本单已定案，若文件被改，先确认改判依据）。
 - `git status --short` 出现你不认识的改动 → 记录后进 S1，**不擅自处理**。
 
-④ 证据：`.scratch/t123w/whoami-before.log`／`whoami-after.log`／`ping.log`／`version-tuple.txt`（**不要把 token 值写进证据**）→ 入仓 `docs/research/t123-release-evidence/`。
+④ 证据：`.scratch/t123w/whoami-before.log`／`whoami-after.log`／`ping.log`／`version-tuple.txt`／`version-tuple-tools.txt`（**不要把 token 值写进证据**）→ 入仓 `docs/research/t123-release-evidence/`。
 
 ---
 
@@ -153,7 +197,7 @@ Get-Content D:\ilife\.scratch\t123w\version-tuple.txt
 ```powershell
 cd D:\ilife
 $log = 'D:\ilife\.scratch\t123w\gate-worktree-clean.log'
-"# $(Get-Date -Format o)  head=$HEAD" | Out-File $log -Encoding utf8
+"# $(Get-Date -Format o)  head=$(git rev-parse --short HEAD)" | Out-File $log -Encoding utf8
 $pkgDirs = @('packages/base-render','packages/skill-calorie','packages/plugin-calorie')
 $dirty = @()
 foreach ($d in $pkgDirs) {
@@ -171,6 +215,8 @@ git status --short | Out-File $log -Encoding utf8 -Append
 ```
 
 ② 期望可观察结果：三行 `CLEAN <pkgdir>` ＋ 一行 `CLEAN pnpm-lock.yaml`，末行 `GATE_WORKTREE_CLEAN=PASS`。
+
+> 返修（FX-R4-2 配套）：原块首行写 `head=$HEAD`，而 `$HEAD` 只在 S0-1 里定义——换终端后该行会是空的（日志少了锚点，且误导「已跑过 S0」）。现改为现场 `git rev-parse --short HEAD`。
 
 ③ 失败判据／中止条件：**任一行 `DIRTY` 或末行 `FAIL:…` → 立即中止本次发版**（不 publish、不改版本、不删 changeset），在 #123 留一条评论：`待 <文件清单> 提交后再发`。**三包中只要有一个脏，整个窗口就等它提交**（`base-paint` 尤其：它的 tarball 只含 `dist/`，`src` 脏 = 发陈旧代码）。
 
@@ -194,7 +240,7 @@ Get-ChildItem D:\ilife\node_modules\.bin -Name | Out-File $log -Encoding utf8 -A
 
 # 2-2 凭据复验（S0 已修；这里是发版前的第二道锁）
 "registry(default)=" + (npm config get registry) | Tee-Object -FilePath $log -Append
-npm whoami <X> 2>&1 | Tee-Object -FilePath $log -Append
+npm whoami --registry=https://registry.npmjs.org/ 2>&1 | Tee-Object -FilePath $log -Append
 "WHOAMI_EXIT=$LASTEXITCODE" | Tee-Object -FilePath $log -Append
 "minimumReleaseAge=" + (pnpm config get minimumReleaseAge 2>&1) | Tee-Object -FilePath $log -Append
 
@@ -224,7 +270,7 @@ Get-ChildItem D:\ilife\.scratch\t123w -Filter *.log -File -ErrorAction SilentlyC
 
 > **为什么新增**：`42a5b49` 曾把 `packages/skill-calorie/package.json:22` 的 `base-paint` 从 `^0.1.0` 改成 `^0.2.0` 而**没有同步 `pnpm-lock.yaml`**（当时该 importer 仍是 `specifier: ^0.1.0`）→ pnpm 判 `ERR_PNPM_OUTDATED_LOCKFILE`，`.github/workflows/ci.yml:28`／`:69`／`:103` 三处 `pnpm install --frozen-lockfile` 因此**全红**；任何人跑一次非 frozen 的 install 都会改写锁文件（仓内写操作）。
 > **现状（本单实测 2026-09-09）**：C1 已同步锁文件 —— `packages/skill-calorie` 与 `packages/plugin-calorie` 两个 importer 的 `base-paint`／`dsh-life-pack`／`skill-calorie` specifier **均为 `^0.2.0`** → 本闸门现在应绿。
-> **为什么仍然保留**：① 它是**回归闸门**——S7 每改一处 range（`packages/plugin-calorie/package.json:28,29`），锁文件会再次失配；② 它是 CI 三处红线的**本地等价物**；③ C1 的改动**尚未提交**，后续任何人改 range 而不改锁文件都会重新踩中。
+> **为什么仍然保留**：① 它是**回归闸门**——S7 每改一处 range（`packages/plugin-calorie/package.json:28,29`），锁文件会再次失配；② 它是 CI 三处红线的**本地等价物**；③ 后续任何人改 range 而不改锁文件都会重新踩中。
 
 ① 命令（**校验型**：`--frozen-lockfile` 不写锁文件、`--lockfile-only` 不写 `node_modules`；但它是仓内 install 命令，协议 §2.1 属例外项 → **必须持锁并取得编排者授权**）
 
@@ -253,7 +299,8 @@ git status --short -- pnpm-lock.yaml | Out-File $log -Encoding utf8 -Append
   - **禁止**跳过：锁文件失配 = CI 三处红（`ci.yml:28,69,103`）＋ 任何人的非 frozen install 都会污染工作树。
 - `LOCKFILE_UNCHANGED=False` → 说明这条命令写了文件（版本/参数不符预期）→ 记录后报告编排者，不要继续。
 - **若本步就报红** → 锁文件又被改坏（C1 的同步丢失、或 S7 改了 range 后没同步）→ 按上面修法处理，**不得**跳过。
-- **本单未在仓内实测该命令**（协议禁仓内 install）→ 首次执行时以实际 exit 码为准；R2 在**仓外复本**实测 exit 1（`[转引 R2]` FX-R2-2）；C1 同步锁文件后**应转绿**，但该 exit 码仍未实测。
+- **该命令已被 C1 在仓内跑过一次**（`[转引 C1]` `.scratch/t123c1/run-lockfile-frozen.log`，2026-09-09）：输出 `Scope: all 18 workspace projects`／`✓ Lockfile passes supply-chain policies`／`Done in 254ms using pnpm v11.8.0`，**无报错**；但该日志**未落显式 exit 码**（只有 3 行）→ 本步仍以现场 `FROZEN_LOCKFILE_EXIT` 为准。R2 在**仓外复本**曾实测 exit 1（`[转引 R2]` FX-R2-2）。
+- 返修（FX-R4-4）：原句写「本单未在仓内实测该命令……exit 码仍未实测」——**低估**：C1 已实测通过（见上）。本单不因此放宽判据，只更正记账。
 
 ④ 证据：`.scratch/t123w/gate-lockfile-frozen.log`（含 manifest/锁文件现值、exit、`LOCKFILE_UNCHANGED`）→ 入仓 `docs/research/t123-release-evidence/gate-lockfile-frozen.log`。
 
@@ -263,6 +310,7 @@ git status --short -- pnpm-lock.yaml | Out-File $log -Encoding utf8 -Append
 
 > **为什么必须**：`tsc -b` 是**增量**构建，靠 `tsconfig.tsbuildinfo` 判新鲜度。删了 `dist` 但留着 `.tsbuildinfo` 时，tsc 会认为「已是最新」而不重新产出；而 `npm publish` 打的是磁盘上的 `dist`，陈旧产物会被原样发出去。
 > **不写死结论**：R1 X11／R2 G2 实测修订时 `dist/charts.js` 的 `charts-xlabel` 已是 `9.5px`、dist mtime 晚于 src —— **旧现象已不复现，但风险机制仍在**。本步判据是机器可判的「强制重建后 mtime 关系 + 导出面 + 关键串」，**不是复述旧现象**。
+> **返修（FX-R4-14，C4 新发现）**：根 `pnpm build` = **`tsc -b` 一条**（`package.json:11`），它**不跑任何包自己的 `build` 脚本**；而 `packages/plugin-calorie/dist/client.js`（面板 bundle，`exports["./client"]`）**只由 `tsdown` 产出**——`packages/plugin-calorie/tsconfig.json:15-16` 把 `src/client.ts` 排除在 `tsc` 之外，`tsdown` 只装在 `packages/plugin-calorie/node_modules/.bin`（根 `.bin` 里没有）。**删了 `dist` 再只跑根 `pnpm build`，`dist/client.js` 不会被重建** → 4-5 的 `Select-String` 找不到文件（**假红中止**）；而 `check-publish --tarball` 也**不断言** `client.js`（只断言 `dist/index.js`／`cordis.patch.yml`）→ 若被忽略则**假绿**（发出缺面板 bundle 的包）。实测旁证：`dist/client.js` mtime `13:21:52`，同目录其余 30 个文件全为 `13:05:39`（13:05 那次就是根 build，13:21 那次是包级 `tsdown`）。**所以持锁区里必须补跑包级 build。**
 
 ① 命令（**持锁 §L**：锁必须包住删除 + 重建；持锁区只做这件事）
 
@@ -277,6 +325,12 @@ foreach ($p in $dirs) {
 }
 pnpm build 2>&1 | Out-File $log -Encoding utf8
 "BUILD_EXIT=$LASTEXITCODE" | Tee-Object -FilePath $log -Append
+# 4-0 【返修 FX-R4-14 新增】包级 build：dsh-calorie 的 dist/client.js 只有 tsdown 能产出（tsc -b 排除了 src/client.ts）
+pnpm --filter dsh-calorie run build 2>&1 | Out-File $log -Encoding utf8 -Append
+"BUILD_PKG_DSHCALORIE_EXIT=$LASTEXITCODE" | Tee-Object -FilePath $log -Append
+"DIST_CLIENT_EXISTS=" + (Test-Path D:\ilife\packages\plugin-calorie\dist\client.js) | Tee-Object -FilePath $log -Append
+# 注意：skill-calorie 的包级 build 会重写 SKILL.md 的 HELP 自动块（内容确定、mtime 变）→ 只在需要时跑，
+#      跑完用 git status --short -- packages/skill-calorie/SKILL.md 确认没有内容差异
 # —— 释放锁 ——
 
 # 4-1 mtime 关系：dist 内最旧文件必须不早于 src 内最新文件
@@ -306,9 +360,9 @@ Select-String -Path D:\ilife\packages\plugin-calorie\dist\client.js -Pattern 'co
 "DSH_SKILL_PROVIDER_EXISTS=" + (Test-Path D:\ilife\packages\plugin-calorie\dist\skill-provider.js) | Tee-Object -FilePath $log -Append
 ```
 
-② 期望可观察结果：`BUILD_EXIT=0`；三包均 `=> FRESH`；`BASE_PAINT_EXPORTS_OK=10` 且 `BASE_PAINT_EXPORT_EXIT=0`；`CHART_STR` 两行均 `MATCH`；`SKILL_DIST resolveDefaultHtmlPath/calorie_html/readFileSync` 均 > 0；`const inject = ["slots", "connection"];`；`DSH_SKILL_PROVIDER_EXISTS=True`。
+② 期望可观察结果：`BUILD_EXIT=0`；`BUILD_PKG_DSHCALORIE_EXIT=0` 且 `DIST_CLIENT_EXISTS=True`；三包均 `=> FRESH`；`BASE_PAINT_EXPORTS_OK=10` 且 `BASE_PAINT_EXPORT_EXIT=0`；`CHART_STR` 两行均 `MATCH`；`SKILL_DIST resolveDefaultHtmlPath/calorie_html/readFileSync` 均 > 0；`const inject = ["slots", "connection"];`；`DSH_SKILL_PROVIDER_EXISTS=True`。
 
-③ 失败判据／中止条件：`BUILD_EXIT ≠ 0`、任一 `STALE`（**强制重建后仍 STALE** 说明 tsc 没真正全量重建 → 查 `tsbuildinfo` 位置与项目引用，先修再发）、任一 `MISMATCH`、`BASE_PAINT_MISS:…`、`inject` 只有 `["slots"]`、`skill-provider.js` 不存在 → **中止**。**不允许**「反正 dist 里有新串就行」——`src`／`dist` 计数不等即判陈旧。
+③ 失败判据／中止条件：`BUILD_EXIT ≠ 0`、**`DIST_CLIENT_EXISTS=False` 或 4-5 的 `DSH_CLIENT` 行不出现**（= 面板 bundle 没重建，见 4-0 返修）、任一 `STALE`（**强制重建后仍 STALE** 说明 tsc 没真正全量重建 → 查 `tsbuildinfo` 位置与项目引用，先修再发）、任一 `MISMATCH`、`BASE_PAINT_MISS:…`、`inject` 只有 `["slots"]`、`skill-provider.js` 不存在 → **中止**。**不允许**「反正 dist 里有新串就行」——`src`／`dist` 计数不等即判陈旧。
 
 ④ 证据：`.scratch/t123w/gate-rebuild-dist.log`（含 build 全量输出，**只读尾 5 行判断 exit**；明细留文件）→ 入仓 `docs/research/t123-release-evidence/gate-rebuild-dist.log`。
 
@@ -340,15 +394,17 @@ $sum = foreach ($p in @(@('skill-calorie','packages\skill-calorie'), @('dsh-calo
 $sum | Tee-Object -FilePath "$out\gate-pack-dryrun.log"
 ```
 
-② 期望可观察结果（`entryCount` 随版本串同步会变；下表为 `[转引 R1 X3]` 修订时实测值）：
+② 期望可观察结果（**`entryCount` 随 `dist` 文件数变化**，下表为 `[实测·C4 2026-09-09]` 现场值；执行时以现场输出为准）：
 
 | 包 | entryCount | `SKILL.md` | `templates/*.html` | `dist` | 其他 |
 | --- | --- | --- | --- | --- | --- |
 | `skill-calorie` | 400 | **有** | **6 件**（diet／exercise／goal／help／home／photo-gallery） | 392 文件（含 `dist/cli/cmd_read.js`） | `package.json` |
-| `dsh-calorie` | 34 | — | — | 32 文件（含 `dist/index.js`） | `cordis.patch.yml` |
+| `dsh-calorie` | **32** | — | — | **30 文件**（含 `dist/index.js`、`dist/client.js`、`dist/slot.js`） | `cordis.patch.yml` |
 | `base-paint` | 69 | — | — | 68 文件（含 `dist/index.js`、`dist/charts.js`） | — |
 
-③ 失败判据／中止条件：任一包 `PACK_EXIT ≠ 0`；`skill-calorie` 缺 `SKILL.md` 或模板 ≠ 6 件；`dsh-calorie` 缺 `dist/index.js` 或 `cordis.patch.yml`；`base-paint` 缺 `dist/index.js`；manifest 出现 `workspace:` → **中止**（`workspace:` 外泄会让第三方 `npm install` 直接 `EUNSUPPORTEDPROTOCOL`，见 `docs/public-installer-47.md`「已发布包阻塞」）。
+> 返修（FX-R4-9）：`dsh-calorie` 原写 `34 / 32`，实测 `npm pack --dry-run --json` = **`entryCount=32` / `dist` 30 文件**（R4 与 C4 两次独立复跑一致）。原注脚「entryCount 随版本串同步会变」也不成立——它随**文件数**变。判据本身（③）不含具体数字，故不会因此假红，但表格数字会误导复核。
+
+③ 失败判据／中止条件：任一包 `PACK_EXIT ≠ 0`；`skill-calorie` 缺 `SKILL.md` 或模板 ≠ 6 件；`dsh-calorie` 缺 `dist/index.js`／`dist/client.js`／`cordis.patch.yml`（**`dist/client.js` 是面板 bundle，只由 `tsdown` 产出——见 S4 返修 FX-R4-14**）；`base-paint` 缺 `dist/index.js`；manifest 出现 `workspace:` → **中止**（`workspace:` 外泄会让第三方 `npm install` 直接 `EUNSUPPORTEDPROTOCOL`，见 `docs/public-installer-47.md`「已发布包阻塞」）。
 
 ④ 证据：`.scratch/t123w/pack-dryrun-<pkg>.json`（原始 JSON）+ `.scratch/t123w/gate-pack-dryrun.log` → 入仓 `docs/research/t123-release-evidence/`。
 
@@ -367,7 +423,7 @@ New-Item -ItemType Directory -Force -Path $t | Out-Null
 Push-Location $t
 
 # 6-1 反例面：registry base-paint@0.1.0（= 不发 base-paint 的后果）
-npm install base-paint@0.1.0 --no-audit --no-fund <X> 2>&1 | Out-File "$t\probe-reg-install.log" -Encoding utf8
+npm install base-paint@0.1.0 --no-audit --no-fund --registry=https://registry.npmjs.org/ 2>&1 | Out-File "$t\probe-reg-install.log" -Encoding utf8
 "PROBE_REG_INSTALL_EXIT=$LASTEXITCODE"
 node --input-type=module -e "import('base-paint').then(m=>{const miss=['ACTION_ID_ATTR','DEFAULT_DATA_ATTR','HELP_COPY_ACTIONS','buildSharedHelpersJs','renderActionBar'].filter(k=>!(k in m));console.log(miss.length?'REG_MISSING_EXPORTS:'+miss.join(','):'REG_EXPORTS_OK');process.exit(miss.length?1:0)})" 2>&1 | Out-File "$t\probe-reg-exports.log" -Encoding utf8
 "PROBE_REG_EXPORT_EXIT=$LASTEXITCODE"
@@ -398,8 +454,8 @@ if ($t.StartsWith($env:TEMP) -and $t -notlike 'D:\ilife*') { Remove-Item $t -Rec
 ## S7 `[AFK]` 定版与元数据同步（**C1 已落地 → 本阶段以复核为主**；手工 bump 路线，先例 `1519c10`）
 
 > 定版路径：**乙 = 手工 bump**（先例 `1519c10`，可执行）。甲 = 全仓 `changeset version`：本工作区 `.pnpm` 内多个 `@changesets/*` 为空目录 → 当前不可执行（S2-3 复验），且爆炸半径 17 包（诊断 §6.1）。
-> **现状（本单实测 2026-09-09，工作树未提交）**：C1 的发版前置修复**已把 7-0～7-6、7-8 改到位**（见 §0.1 表）。因此本阶段是**逐项复核**；每条都保留「若未改」的修法，用于回归或 C1 改动丢失时兜底。
-> **本阶段真正待做的两件事**：① **7-7 changeset 消费**（C1 未触碰 `.changeset/`，实测仍 53 个 `.md`）；② **重建 `dist`** —— `packages/plugin-calorie/dist/slot.js` 实测仍是 `0.1.6`／`0.1.1`（`src/slot.ts` 已是 `0.2.0`），不重建则 `smoke.test.mjs:93-94` 必红。
+> **现状（本单实测 2026-09-09，已提交 `ca46495`）**：C1 的发版前置修复**已把 7-0～7-6、7-8 改到位**（见 §0.1 表）。因此本阶段是**逐项复核**；每条都保留「若未改」的修法，用于回归或改动丢失时兜底。
+> **本阶段真正待做的一件事**：**7-7 changeset 消费**（C1 未触碰 `.changeset/`，实测仍 53 个 `.md`）。~~重建 `dist`~~ 已由 C1 完成（`dist/slot.js:17,18` 实测 `0.2.0`／`0.2.0`，mtime `13:05:39`；见 S4 与 §0.1 返修 FX-R4-3）。
 > **漏一处 → `pnpm test` delta 非空 → 窗口卡住。**
 
 ① 命令（按 7-0 → 7-8 顺序；每条「复核 → 不合格才改」）
@@ -410,7 +466,7 @@ $log = 'D:\ilife\.scratch\t123w\gate-version-bump.log'
 "# $(Get-Date -Format o)" | Out-File $log -Encoding utf8
 
 # ---------- 7-0 第一步：base-paint bump（**必做，不是可选**）----------
-#   现状实测：packages/base-render/package.json:3 已是 "0.2.0"（C1 已改，未提交）
+#   现状实测：packages/base-render/package.json:3 已是 "0.2.0"（C1 已改，`ca46495` 已提交）
 #   若仍是 0.1.0：skill-calorie@0.2.0 声明 base-paint ^0.2.0 而 registry 无 0.2.0
 #   → 第三方 npm install 直接 ETARGET（腿2 挂）；强发未 bump 的 0.1.0 → npm 拒绝（版本已存在）。
 node -e "console.log('base-paint =', require('./packages/base-render/package.json').version)" |
@@ -427,9 +483,19 @@ node -e "for (const p of ['packages/skill-calorie','packages/plugin-calorie']) c
 #   现状实测：skill-calorie/package.json:22 = ^0.2.0；plugin-calorie/package.json:28 = ^0.2.0；:29 = ^0.2.0
 #   （若未改）plugin-calorie:28 "dsh-life-pack": "^0.1.0" → "^0.2.0"（指向 registry 已发布版）
 #   （若未改）plugin-calorie:29 "skill-calorie": "^0.1.0" → "^0.2.0"
-Select-String -Path packages\skill-calorie\package.json,packages\plugin-calorie\package.json -Pattern '"\^\d' -Encoding utf8 |
-  ForEach-Object { "$($_.Filename):$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
-#   期望：三行分别 ^0.2.0 / ^0.2.0 / ^0.2.0；出现 ^0.1.0 即未改完
+#   返修（FX-R4-1）：原命令用 -Pattern '"\^\d' 收全部 caret 依赖 → 实测 4 命中，其中
+#   skill-calorie/package.json:25 "base-link-core": "^0.1.0" 是 **devDependencies（构建期）**，属正常；
+#   而原判据写「出现 ^0.1.0 即未改完」→ 照单执行会**假红中止**。改成只筛本次三包，并打印完整路径。
+Select-String -Path packages\skill-calorie\package.json,packages\plugin-calorie\package.json `
+  -Pattern '"dsh-life-pack"|"skill-calorie"|"base-paint"' -Encoding utf8 |
+  ForEach-Object { "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
+#   期望：4 行 —— skill-calorie/package.json 的 "name" 行 + :22 base-paint ^0.2.0；
+#         plugin-calorie/package.json :28 dsh-life-pack ^0.2.0、:29 skill-calorie ^0.2.0
+#   （C4 实测 2026-09-09：4 行，三处依赖 range 全 ^0.2.0）
+#   另附：devDep 的 ^0.1.0 单独列一眼，确认它没被误判
+Select-String -Path packages\skill-calorie\package.json -Pattern 'base-link-core' -Encoding utf8 |
+  ForEach-Object { "DEVDEP-OK $($_.Path):$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
+#   期望：1 行 "base-link-core": "^0.1.0"（devDependencies，**不参与发版，保持 ^0.1.0 属正常**）
 
 # ---------- 7-3 门禁断言（**以 C1 的修复为准**；未修则改 range 会让 publish:pre 变红）----------
 #   旧实现：tooling/check-publish.mjs:84,86 硬编码 /^\^0\.1\./ → 改 range 即红（诊断 §2.3 #4/#5）
@@ -438,11 +504,14 @@ Select-String -Path packages\skill-calorie\package.json,packages\plugin-calorie\
 #   :108,109 调用。它不含任何具体版本号，也不放行 ^9.9.9（R1 FX-R1-10 的顾虑已解）。
 Select-String -Path tooling\check-publish.mjs -Pattern 'assertSameVersionLine|0\\\.1\\\.' -Encoding utf8 |
   ForEach-Object { "L$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
-#   期望：命中 assertSameVersionLine 的定义与两处调用；**不再有** /^\^0\.1\./ 硬编码（命中 0 行）
+#   期望（返修 FX-R4-5）：**4 命中** —— :83 定义、:108/:109 两处调用，**:75 是注释**（描述旧实现，不是硬编码）。
+#   原判据写「不再有 /^\^0\.1\./ 硬编码（命中 0 行）」与实测冲突（:75 注释也会命中）→ 现按上面这条可判。
+#   若出现形如 `/^\^0\.1\./` 的**可执行断言**（不在注释里）→ 门禁未升级，改 range 会让 publish:pre 变红。
 node tooling\check-publish.mjs --pre --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint 2>&1 |
   Out-File .scratch\t123w\gate-pre-after-range.log -Encoding utf8
 "PRE_AFTER_RANGE_EXIT=$LASTEXITCODE" | Tee-Object -FilePath $log -Append
-#   期望 PASS / exit 0（[实测·本单] 现状即 PASS，日志含「同版本线」三行 OK）
+#   期望 PASS / exit 0（[实测·本单] 现状即 PASS）；日志里「同版本线」字样**两行**（dsh-life-pack、skill-calorie 各一行）
+#   返修（FX-R4-5）：原写「三行」，C4 实测 = 2 行（.scratch/t123c4/gate-pre-live.log）。
 
 # ---------- 7-3b 变异自证（证明门禁**还会咬**，不是被改瞎）----------
 $f = 'packages\plugin-calorie\package.json'
@@ -458,12 +527,15 @@ node tooling\check-publish.mjs --pre --only dsh-calorie 2>&1 | Out-File .scratch
 
 # ---------- 7-4 面板版本行常量：src/slot.ts:19-20（R1 FX-R1-2 新登记）----------
 #   现状实测：src/slot.ts:19 PLUGIN_VERSION='0.2.0'、:20 SKILL_VERSION='0.2.0'（C1 已改）
-#   **但 dist/slot.js 实测仍是 '0.1.6'/'0.1.1'（未重建）** → 本步必须重建，否则 smoke.test.mjs:93-94 红
+#   返修（FX-R4-3）：原句写「dist/slot.js 实测仍是 '0.1.6'/'0.1.1'（未重建）→ 本步必须重建」——
+#   **已过期**：dist/slot.js:17,18 实测 = '0.2.0'/'0.2.0'（mtime 2026-09-09 13:05:39，晚于 src）。
+#   现在改为「先比对，不一致才重建」（下面的 node 断言就是判据）。
 Select-String -Path packages\plugin-calorie\src\slot.ts -Pattern 'VERSION' -Encoding utf8 |
   ForEach-Object { "SRC L$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
 Select-String -Path packages\plugin-calorie\dist\slot.js -Pattern 'VERSION' -Encoding utf8 |
   ForEach-Object { "DIST L$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
-#   持锁 §L：pnpm --filter dsh-calorie build     ← 关键一步（测试 import 的是 dist/slot.js）
+#   期望：SRC L19/L20 = '0.2.0'/'0.2.0'；DIST L17/L18 = '0.2.0'/'0.2.0'（一致 → 无需重建）
+#   若 DIST 仍是旧值 → 持锁 §L：pnpm --filter dsh-calorie run build（**注意这会同时跑 tsdown**，见 S4 返修）
 node -e "import('./packages/plugin-calorie/dist/slot.js').then(m=>console.log('dist slot =', m.PLUGIN_VERSION, m.SKILL_VERSION))" |
   Tee-Object -FilePath $log -Append
 #   期望 dist slot = 0.2.0 0.2.0；仍是旧值 → build 没生效，先查再发
@@ -478,19 +550,39 @@ node -e "import('./packages/plugin-calorie/dist/slot.js').then(m=>console.log('d
 #     test/skills-export-47.test.mjs:55,57 钉死 @0.2.0
 Select-String -Path packages\plugin-calorie\test\smoke.test.mjs,test\plugin-p10-boundaries.test.mjs,test\plugin-p10-install.test.mjs,test\skills-export-47.test.mjs -Pattern '0\\\.1\\\.|0\\\.2\\\.|WINDOW123|LIFEPACK123' -Encoding utf8 |
   ForEach-Object { "$($_.Filename):$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
-#   期望：plugin-calorie 的取值处是 '^0.2.0'；`^0.1.0` 只出现在 WINDOW123/LIFEPACK123 的 ?? 兜底；
-#         skills-export-47 必须是 @0.2.0（不再是 @0.1.1）
+#   期望（C4 实测 2026-09-09）= **6 命中**：smoke:33,34；boundaries:34,35；install:43,46
+#   返修（FX-R4-7）：上面这条 pattern 里的 `0\\\.2\\\.` 只匹配**字面** `0\.2\.`（即正则字面量写法），
+#   匹配不到 `@0.2.0` → skills-export-47 **一行都不出现**，原句「skills-export-47 必须是 @0.2.0」
+#   用这条命令**判不了**。故追加下面这条独立断言：
+Select-String -Path test\skills-export-47.test.mjs -Pattern '@0\.2\.0' -Encoding utf8 |
+  ForEach-Object { "EXPORT47 L$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
+#   期望：**2 命中** —— :55 注释、:57 assert.ok(text.includes('@0.2.0'))
 #   注意 smoke.test.mjs:93-94 断言 dist/slot.js 的两个常量 == 两处 package.json 的 version
 #   → 7-1 + 7-4 必须同批完成，否则该用例红
 
-# ---------- 7-6 SKILL.md 与两处外部版本串 ----------
+# ---------- 7-6 版本串残留检查（**返修 FX-R4-6：原命令会把历史文档算成残留 → 假红中止**）----------
 #   现状实测：SKILL.md:172/173/179 与 docs/public-installer-47.md:22 均已 @0.2.0；
 #             test/skills-export-47.test.mjs:55,57 已钉 @0.2.0（不同步则该单测**必红**）
-Select-String -Path packages\skill-calorie\SKILL.md -Pattern '0\.1\.1' -Encoding utf8 |
+#   原命令把 docs/public-installer-47.md 与 skills-export-47.test.mjs 一起 grep `0.1.1` → 实测 **3 命中**
+#   （public-installer-47.md:54,56,65；:65 的「建议 patch 0.1.1」不在任何豁免名单里），
+#   而中止判据点名「两处外部文件仍命中 0.1.1 → 中止」→ 照单执行**必假红中止**。
+#   返修后口径：**判据只钉「会被打包/被运行时读取」的路径**（SKILL.md、slot.ts、三处 package.json、
+#   check-publish.mjs、四个测试文件）；docs/research 下的历史证据与 public-installer-47.md 属旁证文档，
+#   **只做白名单登记，不参与中止**。
+Select-String -Path packages\skill-calorie\SKILL.md -Pattern '0\.1\.1|0\.1\.6' -Encoding utf8 |
   ForEach-Object { "SKILL L$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
+"SKILL_RESIDUE_HITS=" + (Select-String -Path packages\skill-calorie\SKILL.md -Pattern '0\.1\.1|0\.1\.6' -Encoding utf8 | Measure-Object).Count |
+  Tee-Object -FilePath $log -Append
+#   期望：**0 命中**（C4 实测 2026-09-09 = 0）→ 这条是**中止判据**
+Select-String -Path packages\plugin-calorie\src\slot.ts,packages\skill-calorie\package.json,packages\plugin-calorie\package.json,packages\base-render\package.json,tooling\check-publish.mjs -Pattern '0\.1\.1|0\.1\.6' -Encoding utf8 |
+  ForEach-Object { "RESIDUE $($_.Path):$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
+"RELEASE_PATH_RESIDUE_HITS=" + (Select-String -Path packages\plugin-calorie\src\slot.ts,packages\skill-calorie\package.json,packages\plugin-calorie\package.json,packages\base-render\package.json,tooling\check-publish.mjs -Pattern '0\.1\.1|0\.1\.6' -Encoding utf8 | Measure-Object).Count |
+  Tee-Object -FilePath $log -Append
+#   期望：**0 命中**（C4 实测 = 0）→ 这条也是**中止判据**
 Select-String -Path docs\public-installer-47.md,test\skills-export-47.test.mjs -Pattern '0\.1\.1' -Encoding utf8 |
-  ForEach-Object { "$($_.Filename):$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
-#   期望：三处均命中 0 行（`public-installer-47.md:54,56` 的「0.1.1 重发」是历史登记，**允许保留**）
+  ForEach-Object { "DOC-WHITELIST $($_.Filename):$($_.LineNumber): $($_.Line.Trim())" } | Tee-Object -FilePath $log -Append
+#   期望：命中行**只允许**出现在 {public-installer-47.md:54, :56, :65} 这一白名单内（C4 实测就是这 3 行）；
+#         出现白名单外的行 → 才按残留处理。skills-export-47.test.mjs 期望 0 命中。
 #   不要误改：SKILL.md:32 的「版本 0.1.0」是 envelope 契约版本，不是 npm 包版本
 
 # ---------- 7-7 changeset 消费（**本阶段真正待做的第一件**；先核对跨包耦合！）----------
@@ -516,12 +608,13 @@ pnpm install --frozen-lockfile --lockfile-only --ignore-scripts 2>&1 | Out-File 
 git status --short -- pnpm-lock.yaml | Out-File $log -Encoding utf8 -Append
 ```
 
-② 期望可观察结果：7-0 `base-paint = 0.2.0`；7-1 两包 `0.2.0`；7-2 三行 range 全 `^0.2.0`；7-3 `check-publish.mjs` 不再有 `/^\^0\.1\./` 硬编码、`PRE_AFTER_RANGE_EXIT=0`（`[实测·本单]` 现状即 PASS）；7-3b `MUT_GATE_RED_EXIT≠0` ＋ `MUT_RESTORED=True` ＋ `MUT_GATE_GREEN_EXIT=0`；7-4 `SRC` 两行 `0.2.0` ＋ `dist slot = 0.2.0 0.2.0`（**build 之后**）；7-5 plugin-calorie 取值 `^0.2.0`、`skills-export-47` 为 `@0.2.0`；7-6 三处版本串无 `0.1.1` 残留；7-8 `FROZEN_AFTER_S7_EXIT=0`。
+② 期望可观察结果：7-0 `base-paint = 0.2.0`；7-1 两包 `0.2.0`；7-2 **4 行**（`name` 行 + 三处 range 全 `^0.2.0`）＋ `DEVDEP-OK` 1 行 `^0.1.0`（正常）；7-3 **4 命中**（:75 注释 + :83 定义 + :108/:109 调用）、`PRE_AFTER_RANGE_EXIT=0`（`[实测·本单]` 现状即 PASS，日志含「同版本线」**两行**）；7-3b `MUT_GATE_RED_EXIT≠0` ＋ `MUT_RESTORED=True` ＋ `MUT_GATE_GREEN_EXIT=0`；7-4 `SRC`／`DIST` 各两行 `0.2.0` ＋ `dist slot = 0.2.0 0.2.0`；7-5 **6 命中** ＋ `EXPORT47` **2 命中**；7-6 `SKILL_RESIDUE_HITS=0`、`RELEASE_PATH_RESIDUE_HITS=0`、`DOC-WHITELIST` 行 ⊆ {`public-installer-47.md:54/56/65`}；7-8 `FROZEN_AFTER_S7_EXIT=0`。
 
 ③ 失败判据／中止条件：
 
 - 7-0 `base-paint` 仍是 `0.1.0` → **中止**（后续 `skill-calorie@0.2.0` 的 `^0.2.0` 会 ETARGET）。
-- 任一 `version` 未变、任一 range 仍指旧版本、`PRE_AFTER_RANGE_EXIT ≠ 0`、`SKILL.md`／两处外部文件仍命中 `0.1.1`、测试断言里 plugin-calorie 取值仍 `^0.1.0`／`skills-export-47` 仍 `@0.1.1`、`dist slot` 仍旧值 → **中止**并修完重跑本阶段。
+- 任一 `version` 未变、三处 range 任一仍指旧版本、`PRE_AFTER_RANGE_EXIT ≠ 0`、**`SKILL_RESIDUE_HITS ≠ 0` 或 `RELEASE_PATH_RESIDUE_HITS ≠ 0`**、`DOC-WHITELIST` 出现白名单外的行、测试断言里 plugin-calorie 取值仍 `^0.1.0`／`EXPORT47` 无 `@0.2.0` 命中、`dist slot` 仍旧值 → **中止**并修完重跑本阶段。
+  - 返修（FX-R4-6）：原判据写「`SKILL.md`／两处外部文件仍命中 `0.1.1` → 中止」——其中「两处外部文件」含 `docs/public-installer-47.md`（旁证文档，历史登记 3 行命中）→ **照做必假红中止**。现把中止判据收窄到「会被打包/被运行时读取」的路径，旁证文档只做白名单登记。
 - **7-4／7-5 漏改或漏重建的后果**：`pnpm test` 会出现**新增失败**（基线 21 条不含这些用例 —— R1 X7 复核）→ S8 判 delta ≠ 空 → 窗口卡住。特别是 `dist/slot.js` 陈旧时 `smoke.test.mjs:93-94` 必红。
 - 7-7 误删了含 `dsh-life-pack` 的 changeset → **中止**（会让本次不发包的 6 个包丢失 pending bump，属不可逆污染，需先 `git status` 确认后由编排者裁定恢复方式）。**本单不允许 `git add -A`**。
 - 7-8 若 `FROZEN_AFTER_S7_EXIT ≠ 0` → 锁文件未同步，**不得进 S8**。
@@ -554,18 +647,29 @@ cmd /c "node tooling\check-publish.mjs --tmp-hygiene 2>&1" | Out-File $log -Enco
 cmd /c "node tooling\publish-chain.mjs --plan --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint 2>&1" | Out-File $log -Encoding utf8 -Append
 ("publish-chain:plan EXIT=$LASTEXITCODE") | Out-File $log -Encoding utf8 -Append
 # 回归：本就有 21 条既有失败（.scratch/t75/baseline-failing.txt），验收 = 失败集 delta 为空
-cmd /c "pnpm test 2>&1" | Out-File $log -Encoding utf8 -Append
+# 返修（FX-R4-8）：原单只对日志做「失败签名计数」，**没有任何 delta 命令** —— 21 条基线名要在
+# 100 KB+ 日志里手工比对，验收（delta 为空）实际不可判。现改用仓内已有脚本（C1 写的只读脚本）。
+cmd /c "pnpm test 2>&1" | Tee-Object -FilePath D:\ilife\.scratch\t123w\gate-test.log -Append | Out-File $log -Encoding utf8 -Append
 ("pnpm test EXIT=$LASTEXITCODE") | Out-File $log -Encoding utf8 -Append
 # —— 释放锁 ——
+# 8-delta：失败集 delta（只读；脚本取 spec reporter 末尾「✖ failing tests:」小节的叶子失败项）
+node .scratch\t123c1\test-delta.mjs .scratch\t123w\gate-test.log .scratch\t75\baseline-failing.txt |
+  Tee-Object -FilePath $log -Append
+#   期望：FAIL_NOW=21  BASELINE=21  ADDED=0  FIXED=0  DELTA_EMPTY=true（C1 实测 DELTA_EMPTY=true）
+#   若 .scratch/t123c1/test-delta.mjs 不在（他人清理过）→ 用下面这条最小替代（等价语义：新增失败名 = 0）
+#   $now = (Select-String -Path .scratch\t123w\gate-test.log -Pattern '^\s*✖ ' -Encoding utf8 | ForEach-Object { $_.Line.Trim() }) 
+#   "ADDED_COUNT=" + (@($now | Where-Object { $_ -notin (Get-Content .scratch\t75\baseline-failing.txt) }).Count)
 Get-Content $log -Tail 5
 Select-String -Path $log -Pattern 'FAIL|✖|not ok|AssertionError|处红' -Encoding utf8 | Measure-Object
 ```
 
-② 期望可观察结果：`pnpm build`／`boundaries`／`snapshot:check`／`publish:pre`／`publish:tarball`／`frozen-lockfile`／`publish:fresh`／`--tmp-hygiene` 全 `PASS`（各末行 `check-publish <mode>：PASS`）；`publish-chain:plan` 打印 `base-paint → skill-calorie → dsh-calorie` 顺序；`pnpm test` 失败集与 `.scratch/t75/baseline-failing.txt`（21 条）**delta 为空**。
+> 返修（FX-R4-8）：S8 的验收是「失败集 delta 为空」，但原命令只输出失败签名**计数**，没有 delta 计算；现补 `test-delta.mjs` 断言 `DELTA_EMPTY=true`，并把 `pnpm test` 输出用 `Tee-Object` 单独落 `.scratch/t123w/gate-test.log` 供脚本读取（原单把全部门禁混写进一个 `gate-all-publish.log`，脚本无法稳定取到测试段）。
 
-③ 失败判据／中止条件：任一门非 `PASS`／exit ≠ 0 → **中止**；`pnpm test` 失败集出现**新增**失败（delta ≠ 空）→ **中止**（不得用「本来就有 21 条红」搪塞；尤其 `smoke.test.mjs` 的版本行用例、`plugin-p10-boundaries`／`plugin-p10-install` 的依赖口径用例、`skills-export-47` 的版本钉死用例 —— 这些一变红就是 S7 漏改）；`frozen-lockfile` 非 0 → 回 S7-8；`--tmp-hygiene` 报仓内残留 `ilife-fresh-*`／`ilife-pack-*` → 先清残留再重跑（残留属协议 §2.1④ 违规）。**不要**用 `publish-chain.mjs --live` 代替 S9——它不带 `--registry`，会打向 npmmirror。
+② 期望可观察结果：`pnpm build`／`boundaries`／`snapshot:check`／`publish:pre`／`publish:tarball`／`frozen-lockfile`／`publish:fresh`／`--tmp-hygiene` 全 `PASS`（`boundaries`／`snapshot:check` 的末行分别是 `boundaries: PASS`／`OK: 快照 == 实际拉取版`，`check-publish` 各模式末行 `check-publish <mode>：PASS`）；`publish-chain:plan` 打印 `base-paint → skill-calorie → dsh-calorie` 顺序；**8-delta：`FAIL_NOW=21 BASELINE=21 ADDED=0 FIXED=0 DELTA_EMPTY=true`**。
 
-④ 证据：`.scratch/t123w/gate-all-publish.log`（**只读尾 5 行 + 失败签名计数**，不读全文）→ 入仓 `docs/research/t123-release-evidence/gate-all-publish.log`。
+③ 失败判据／中止条件：任一门非 `PASS`／exit ≠ 0 → **中止**；`DELTA_EMPTY≠true`（即 `ADDED>0`）→ **中止**（不得用「本来就有 21 条红」搪塞；尤其 `smoke.test.mjs` 的版本行用例、`plugin-p10-boundaries`／`plugin-p10-install` 的依赖口径用例、`skills-export-47` 的版本钉死用例 —— 这些一变红就是 S7 漏改）；`FIXED>0` 属好消息但要记账（基线文件该更新了）；`frozen-lockfile` 非 0 → 回 S7-8；`--tmp-hygiene` 报仓内残留 `ilife-fresh-*`／`ilife-pack-*` → 先清残留再重跑（残留属协议 §2.1④ 违规）。**不要**用 `publish-chain.mjs --live` 代替 S9——它不带 `--registry`，会打向 npmmirror。
+
+④ 证据：`.scratch/t123w/gate-all-publish.log`（**只读尾 5 行 + 失败签名计数**，不读全文）、`.scratch/t123w/gate-test.log`（`pnpm test` 原始输出，供 `test-delta.mjs` 读）→ 入仓 `docs/research/t123-release-evidence/`。
 
 ---
 
@@ -578,25 +682,37 @@ Select-String -Path $log -Pattern 'FAIL|✖|not ok|AssertionError|处红' -Encod
 
 ```powershell
 # 9-1 逐包发布（顺序固定：base-paint → skill-calorie → dsh-calorie）
+# 【返修 FX-R4-15】发布命令**不要重定向输出**：`> file`／`2>&1 | Out-File` 会让 stdout 非 TTY，
+#   npm 直接报 EOTP 且不打印授权 URL。依据：仓内权威 `SKILLS/npm-publish/SKILL.md` §4
+#   「发布命令不要重定向输出（`> file` 会让 stdout 非 TTY 而触发 EOTP）」；正在被实际执行的
+#   `wizard-ilife-123.sh` 同样明示「输出故意不重定向」。本单原命令带了 `2>&1 | Out-File` → 与两者冲突。
+#   证据改用 Start-Transcript 抓屏（不改子进程的 stdout 句柄）；成功与否**以 9-2 的 npm view 为准**。
+#   默认走网页审批流（与 wizard 同口径）；`--otp=<6位>` 是备选，同样不得重定向。
+Start-Transcript -Path D:\ilife\.scratch\t123w\publish-transcript.log -Append
+
 cd D:\ilife\packages\base-render
-npm publish --registry=https://registry.npmjs.org/ --access public --otp=<6位> 2>&1 | Out-File D:\ilife\.scratch\t123w\publish-base-paint.log -Encoding utf8
-"PUBLISH_BASEPAINT_EXIT=$LASTEXITCODE"; Get-Content D:\ilife\.scratch\t123w\publish-base-paint.log -Tail 5
+npm publish --registry=https://registry.npmjs.org/ --access public
+"PUBLISH_BASEPAINT_EXIT=$LASTEXITCODE"
 
 cd D:\ilife\packages\skill-calorie
-npm publish --registry=https://registry.npmjs.org/ --access public --otp=<6位> 2>&1 | Out-File D:\ilife\.scratch\t123w\publish-skill-calorie.log -Encoding utf8
-"PUBLISH_SKILLCALORIE_EXIT=$LASTEXITCODE"; Get-Content D:\ilife\.scratch\t123w\publish-skill-calorie.log -Tail 5
+npm publish --registry=https://registry.npmjs.org/ --access public
+"PUBLISH_SKILLCALORIE_EXIT=$LASTEXITCODE"
 
 cd D:\ilife\packages\plugin-calorie
-npm publish --registry=https://registry.npmjs.org/ --access public --otp=<6位> 2>&1 | Out-File D:\ilife\.scratch\t123w\publish-dsh-calorie.log -Encoding utf8
-"PUBLISH_DSHCALORIE_EXIT=$LASTEXITCODE"; Get-Content D:\ilife\.scratch\t123w\publish-dsh-calorie.log -Tail 5
+npm publish --registry=https://registry.npmjs.org/ --access public
+"PUBLISH_DSHCALORIE_EXIT=$LASTEXITCODE"
+
+Stop-Transcript
 ```
+
+> 返修（FX-R4-15）：原 9-1 把 `npm publish … 2>&1 | Out-File publish-<pkg>.log` 写进命令——**重定向会让 stdout 非 TTY，npm 直接报 EOTP 且不打印授权 URL**。依据是仓内权威 `SKILLS/npm-publish/SKILL.md` §4 与正在被实际执行的 `wizard-ilife-123.sh`（两者都明示「发布命令不要重定向输出」）。现改为**不重定向**＋`Start-Transcript` 抓屏取证；成功判据以 9-2 的 `npm view` 为准。若你的终端下 `Start-Transcript` 仍干扰 TTY，就去掉它、只靠 9-2 复核（不影响判据）。
 
 **9-2 每包之后的注册表可见性确认**（前一步不确认，不进下一步）
 
 ```powershell
-npm view base-paint@<V_BASEPAINT> version <X>
-npm view skill-calorie@<V_SKILL_CALORIE> version <X>
-npm view dsh-calorie@<V_DSH_CALORIE> version <X>
+npm view base-paint@0.2.0 version --registry=https://registry.npmjs.org/
+npm view skill-calorie@0.2.0 version --registry=https://registry.npmjs.org/
+npm view dsh-calorie@0.2.0 version --registry=https://registry.npmjs.org/
 ```
 
 **9-3 每包之后的依赖范围解析确认**（用 `--dry-run` 让 npm 真解析一次依赖树；落盘文件是 stdout+stderr 混合，故用 `Select-String` 而非 `ConvertFrom-Json` 解析）
@@ -606,22 +722,22 @@ $t = Join-Path $env:TEMP ('ilife-t123w-resolve-' + (-join ((1..6) | ForEach-Obje
 New-Item -ItemType Directory -Force -Path $t | Out-Null
 '{ "name": "ilife-t123w-resolve", "version": "0.0.0", "private": true }' | Out-File "$t\package.json" -Encoding utf8
 Push-Location $t
-npm install skill-calorie@<V_SKILL_CALORIE> --dry-run --json <X> 2>&1 | Out-File D:\ilife\.scratch\t123w\resolve-skill-calorie.json -Encoding utf8
-npm install dsh-calorie@<V_DSH_CALORIE> --dry-run --json <X> 2>&1 | Out-File D:\ilife\.scratch\t123w\resolve-dsh-calorie.json -Encoding utf8
+npm install skill-calorie@0.2.0 --dry-run --json --registry=https://registry.npmjs.org/ 2>&1 | Out-File D:\ilife\.scratch\t123w\resolve-skill-calorie.json -Encoding utf8
+npm install dsh-calorie@0.2.0 --dry-run --json --registry=https://registry.npmjs.org/ 2>&1 | Out-File D:\ilife\.scratch\t123w\resolve-dsh-calorie.json -Encoding utf8
 Pop-Location
 Select-String -Path D:\ilife\.scratch\t123w\resolve-*.json -Pattern 'base-paint|skill-calorie|dsh-life-pack' -Encoding utf8 | Select-Object -First 12
 ```
 
-② 期望可观察结果：三包各 `+ <pkg>@<ver>` 且 `PUBLISH_*_EXIT=0`；`npm view … version` 打出的就是目标版本（**npmmirror 会滞后，务必带 `<X>`**）；`resolve-*.json` 里 `skill-calorie` 解析到 `<V_SKILL_CALORIE>`、`base-paint` 解析到 `<V_BASEPAINT>`、`dsh-life-pack` 解析到 `<V_LIFEPACK>`（`0.2.0`）。
+② 期望可观察结果：三包各 `+ <pkg>@0.2.0` 且 `PUBLISH_*_EXIT=0`（`<pkg>` 是包名占位）；`npm view … version` 打出的就是目标版本（**npmmirror 会滞后，务必带 `--registry=https://registry.npmjs.org/`**）；`resolve-*.json` 里 `skill-calorie`／`base-paint`／`dsh-life-pack` 均解析到 `0.2.0`。
 
 ③ 失败判据／中止条件：
 
-- 任一次 publish `exit ≠ 0`（`EOTP`／`E401`／`EPUBLISHCONFLICT`／`403`）→ **停止，不继续发下一个包**。`EOTP` = OTP 过期/输错，重试当前包即可；`E401` = 凭据失效，回 S0-0；`EPUBLISHCONFLICT`/`403 cannot publish over` = 版本未 bump 或已被他人发过，回 S7。
-- `npm view` 5 分钟后仍看不到新版本（带 `<X>`）→ **中止**（不要靠「等镜像同步」继续）。
+- 任一次 publish `exit ≠ 0`（`EOTP`／`E401`／`EPUBLISHCONFLICT`／`403`）→ **停止，不继续发下一个包**。**`EOTP` 先分清两种**：① 输出被重定向/无 TTY → 去掉管道与 `Out-File`，在交互终端重跑（见 9-1 返修 FX-R4-15）；② OTP 过期/输错 → 重新取码重试当前包。`E401` = 凭据失效，回 S0-0；`EPUBLISHCONFLICT`/`403 cannot publish over` = 版本未 bump 或已被他人发过，回 S7。
+- `npm view` 5 分钟后仍看不到新版本（带 `--registry=https://registry.npmjs.org/`）→ **中止**（不要靠「等镜像同步」继续）。
 - `resolve-*.json` 里解析到的是旧版本 → **中止**（这正是 `^0.1.0` 陷阱；发出去也装不到新代码）。
 - **已发布不可撤回**：npm 对 72 小时内的版本可 `npm unpublish`（有严格限制、且会连带破坏依赖者）；本单**不主张** unpublish，补救路径见附录 B。
 
-④ 证据：`publish-<pkg>.log`（完整发版日志，含 OTP 交互与时间戳）、`resolve-<pkg>.json`、`npm view` 输出 → 入仓 `docs/research/t123-release-evidence/`。
+④ 证据：`publish-transcript.log`（`Start-Transcript` 抓的完整发版交互，含 OTP 交互与时间戳；**发布命令本身不得重定向**）、`resolve-<pkg>.json`、`npm view` 输出 → 入仓 `docs/research/t123-release-evidence/`。
 
 ---
 
@@ -635,23 +751,31 @@ $log = 'D:\ilife\.scratch\t123w\post-publish-verify.log'
 "# $(Get-Date -Format o)" | Out-File $log -Encoding utf8
 foreach ($p in 'base-paint','skill-calorie','dsh-calorie') {
   "=== $p" | Out-File $log -Encoding utf8 -Append
-  npm view $p version <X> | Out-File $log -Encoding utf8 -Append
-  npm view $p dependencies --json <X> | Out-File $log -Encoding utf8 -Append
+  npm view $p version --registry=https://registry.npmjs.org/ | Out-File $log -Encoding utf8 -Append
+  npm view $p dependencies --json --registry=https://registry.npmjs.org/ | Out-File $log -Encoding utf8 -Append
 }
 # 工具自带：registry 侧复核（含 workspace: 零容忍，带重试）
-node tooling\check-publish.mjs --post --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint <X> 2>&1 | Out-File D:\ilife\.scratch\t123w\gate-post.log -Encoding utf8
+# 【返修 FX-R4-16】`check-publish.mjs` **不解析 `--registry`**（源码只读 `process.argv[2]` 与 `--only`；
+#   gatePost 内部直接 `execFileSync(npm, ['view', …])`）→ 原命令行尾的 `--registry=…` 被**静默忽略**，
+#   `--post` 实际查的是**默认源 npmmirror**：镜像滞后 → 假红；而证据口径又写「核了 npmjs」→ 假绿。
+#   用环境变量显式改源（npm 读 `npm_config_registry`，C4 实测 `npm config get registry` 随之变 npmjs）：
+$env:npm_config_registry = 'https://registry.npmjs.org/'
+node tooling\check-publish.mjs --post --only dsh-calorie,skill-calorie,dsh-life-pack,base-paint 2>&1 | Out-File D:\ilife\.scratch\t123w\gate-post.log -Encoding utf8
 "POST_EXIT=$LASTEXITCODE"
+Remove-Item Env:\npm_config_registry
 Get-Content D:\ilife\.scratch\t123w\gate-post.log -Tail 5
 # tarball 下载断言（真从 registry 拉回来数文件）
 $t = Join-Path $env:TEMP ('ilife-t123w-regpack-' + (-join ((1..6) | ForEach-Object { 'abcdefghijkmnpqrstuvwxyz23456789'[(Get-Random -Max 32)] })))
 New-Item -ItemType Directory -Force -Path $t | Out-Null
-npm pack skill-calorie@<V_SKILL_CALORIE> --pack-destination $t <X> 2>&1 | Out-File "$t\pack.log" -Encoding utf8
-tar -tzf "$t\skill-calorie-<V_SKILL_CALORIE>.tgz" | Select-String -Pattern 'package/SKILL.md|package/templates/'
+npm pack skill-calorie@0.2.0 --pack-destination $t --registry=https://registry.npmjs.org/ 2>&1 | Out-File "$t\pack.log" -Encoding utf8
+tar -tzf "$t\skill-calorie-0.2.0.tgz" | Select-String -Pattern 'package/SKILL.md|package/templates/'
 ```
+
+> 返修（FX-R4-16）：`check-publish.mjs` **不接受 `--registry`**（源码只读 `process.argv[2]` 与 `--only`；`gatePost` 内部直接 `execFileSync(npm, ['view', …])`），原命令行尾的 `--registry=…` 被**静默忽略** → `--post` 实际查默认源 npmmirror：镜像滞后会**假红**，而证据口径声称「核了 npmjs」→ **假绿**。现用 `$env:npm_config_registry` 显式钉源（C4 实测该变量对 `npm config get registry` 生效）。
 
 ② 期望可观察结果：`npm view` 三包版本 = 目标版本；`dependencies` 无 `workspace:` 且 range 指向新版本（`skill-calorie` 的 `base-paint: ^0.2.0`、`dsh-calorie` 的 `skill-calorie: ^0.2.0` 与 `dsh-life-pack: ^0.2.0`）；`--post` 末行 `PASS`（`POST_EXIT=0`）；registry tarball 里**同时**列出 `package/SKILL.md` 与 `package/templates/*.html`（6 件）。
 
-③ 失败判据／中止条件：`--post` 非 `PASS`；任一 `dependencies` 含 `workspace:`；registry tarball 缺 `SKILL.md` 或模板 ≠ 6 件 → **中止后续真机步骤**（装到真机也是坏的），按附录 B 走补救。**不允许**用本仓 `dist` 的清单冒充 registry tarball 清单。
+③ 失败判据／中止条件：`--post` 非 `PASS`；任一 `dependencies` 含 `workspace:`；registry tarball 缺 `SKILL.md` 或模板 ≠ 6 件 → **中止后续真机步骤**（装到真机也是坏的），按附录 B 走补救。**不允许**用本仓 `dist` 的清单冒充 registry tarball 清单。`--post` 报 `npm view 失败（未发布或复制延迟）` 时，**先确认它查的是哪个源**——本步已用 `$env:npm_config_registry` 钉到 npmjs（见 9-1 上方返修 FX-R4-16）；若仍看不到，用 `npm view <pkg>@0.2.0 version --registry=https://registry.npmjs.org/` 单独复核，别在镜像上反复重试。
 
 ④ 证据：`.scratch/t123w/post-publish-verify.log`、`gate-post.log`、`tar -tzf` 清单 → 入仓 `docs/research/t123-release-evidence/`。
 
@@ -675,9 +799,14 @@ $t = Join-Path $env:TEMP ('ilife-t123w-smoke-' + (-join ((1..6) | ForEach-Object
 New-Item -ItemType Directory -Force -Path $t | Out-Null
 '{ "name": "ilife-t123w-smoke", "version": "0.0.0", "private": true }' | Out-File "$t\package.json" -Encoding utf8
 Push-Location $t
-npx -y -p skill-calorie@<V_SKILL_CALORIE> calorie-cmd-read calorie.view.home --params ('{"date":"' + $today + '"}') 2>&1 | Out-File "$t\smoke-envelope.json" -Encoding utf8
+# 【返修 FX-R4-17】原命令把 stdout+stderr 一起写进 smoke-envelope.json，再 ConvertFrom-Json ——
+#   npx/npm 首次安装会往 stderr 打进度/warn（是否出现取决于本地缓存状态，不可控）→ JSON 被污染
+#   → ConvertFrom-Json 抛错 → SMOKE1_* 全失败 → 按 ③ 会误判「包不含落盘逻辑」而假红中止。
+#   现分开落盘：stdout 只写 JSON，stderr 单独进 .err.log。
+npx -y -p skill-calorie@0.2.0 calorie-cmd-read calorie.view.home --params ('{"date":"' + $today + '"}') 2>"$t\smoke-envelope.err.log" | Out-File "$t\smoke-envelope.json" -Encoding utf8
 ("SMOKE1_EXIT=$LASTEXITCODE")
 Pop-Location
+Get-Content "$t\smoke-envelope.err.log" -Tail 3   # 备查：stderr 里若只有 npm 进度/警告，属正常
 $envl = Get-Content "$t\smoke-envelope.json" -Raw -Encoding utf8 | ConvertFrom-Json   # 注意：不要用 $env 作变量名（PowerShell 保留）
 ("SMOKE1_HAS_OUTPUT=" + [bool]$envl.data.output)
 ("SMOKE1_OUTPUT_PATH=" + $envl.data.output)
@@ -686,7 +815,7 @@ $envl = Get-Content "$t\smoke-envelope.json" -Raw -Encoding utf8 | ConvertFrom-J
 
 # 11-2 冒烟②：安装态 loadTemplate 能读 6 件模板（#95 的发版后 HITL）
 Push-Location $t
-npm install skill-calorie@<V_SKILL_CALORIE> --no-audit --no-fund <X> 2>&1 | Out-File "$t\smoke-install.log" -Encoding utf8
+npm install skill-calorie@0.2.0 --no-audit --no-fund --registry=https://registry.npmjs.org/ 2>&1 | Out-File "$t\smoke-install.log" -Encoding utf8
 ("SMOKE2_INSTALL_EXIT=$LASTEXITCODE")
 # 走安装态 dist 文件路径：skill-calorie/render 这个公开出口会连带加载 base-paint（与 check-publish G3 同理由）
 @'
@@ -714,12 +843,14 @@ Pop-Location
 ③ 失败判据／中止条件：
 
 - `SMOKE1_EXIT=4` → 当日窗口无数据（**不是包的问题**）：先按 §4 的 HITL-0 真实记一餐，再重跑；**不得**用空库同文顶替，也不得改系统时钟。
-- `SMOKE1_HAS_OUTPUT=False` 或文件不存在 → 发出去的包不含 #87 落盘逻辑 → **记缺证据**，按附录 B 处理（不得进 S12）。
+- `SMOKE1_HAS_OUTPUT=False` 或文件不存在 → **先排除假红**：看 `smoke-envelope.err.log` 与 `smoke-envelope.json` 是否被 npx 的 stderr 污染（`ConvertFrom-Json` 抛错时上面 4 行 `SMOKE1_*` 会全灭，但**不是包的问题**）。确认 JSON 本身干净后才判「发出去的包不含 #87 落盘逻辑」→ **记缺证据**，按附录 B 处理（不得进 S12）。
 - 出现 `does not provide an export named` → 说明 `base-paint` 版本偏斜（闭包定案要防的正是它）→ 回 S6 复核、按附录 B 处理。
 - `LOADTPL_FAIL>0` → 模板未随包或装载器坏 → **中止**。
 - DB SHA256 前后不一致 → **立即停手**，记录并报告（§9-6 零触碰被破）。
 
-④ 证据：`smoke-envelope.json`（envelope 原文）、落盘 HTML 路径 + 首行含 `ilife-page`、`smoke-install.log`、`LOADTPL_OK=6` 行、`db-hash-before/after.txt` → 入仓 `docs/research/t123-release-evidence/`（HTML 产物同时给路径与文件大小）。
+④ 证据：`smoke-envelope.json`（envelope 原文，**只含 stdout**）＋ `smoke-envelope.err.log`（npx/npm 的 stderr 备查）、落盘 HTML 路径 + 首行含 `ilife-page`、`smoke-install.log`、`LOADTPL_OK=6` 行、`db-hash-before/after.txt` → 入仓 `docs/research/t123-release-evidence/`（HTML 产物同时给路径与文件大小）。
+
+> 返修（FX-R4-17）：原 11-1 把 `npx` 的 **stdout+stderr 一起**写进 `smoke-envelope.json` 再 `ConvertFrom-Json`。npx/npm 首次安装会往 stderr 打进度或 warn（**是否出现取决于本地缓存状态，不可控**）→ JSON 被污染 → `ConvertFrom-Json` 抛错 → 4 行 `SMOKE1_*` 全灭 → 按 ③ 会误判「包不含落盘逻辑」而**假红中止**。现分开落盘：stdout 只写 JSON，stderr 进 `smoke-envelope.err.log`。
 
 ---
 
@@ -746,7 +877,7 @@ Pop-Location
 
 | 路径 | 命令要点 | 风险 |
 | --- | --- | --- |
-| **① 新建干净 profile**（推荐） | `dsh plugin --profile web-clean add dsh-calorie@<V_DSH_CALORIE> dsh-life-pack@<V_LIFEPACK> --config.minimumReleaseAge=0 --registry=https://registry.npmjs.org/`；随后把 **`dsh-better-sidebar`（真名，`0.18.0`）** 一并装上（否则边栏槽缺失 → 截图无从取得，§2.3 前置） | 新 profile 无原 profile 的其它插件与 UI 状态；需确认 DSH 能用新 profile 起来；证据必须标注「新 profile（非原 `web`）」 |
+| **① 新建干净 profile**（推荐） | `dsh plugin --profile web-clean add dsh-calorie@0.2.0 dsh-life-pack@0.2.0 --config.minimumReleaseAge=0 --registry=https://registry.npmjs.org/`；随后把 **`dsh-better-sidebar`（真名，`0.18.0`）** 一并装上（否则边栏槽缺失 → 截图无从取得，§2.3 前置） | 新 profile 无原 profile 的其它插件与 UI 状态；需确认 DSH 能用新 profile 起来；证据必须标注「新 profile（非原 `web`）」 |
 | **② 现有 profile 显式版本重装真包** | 同上命令但 `--profile web`，并**先备份** `profiles\web\package.json` 与 `node_modules` 清单 | 该 profile 已是 dev 链接态（`dsh-memo-ilife`／`dsh-prompt` 本身就是 `link:D:\ilife\...`／`link:D:/dsh-plugin/...`）；若安装器在本地工作区存在时仍走 link/junction，**装完还是假绿**；一旦装坏影响日常使用，回滚靠附录 B-3 |
 
 ① 命令
@@ -767,7 +898,7 @@ Get-Content (Join-Path (Split-Path $nm) 'package.json') -Encoding utf8 | Select-
 
 # 12-1 显式版本重装（一条命令装双包；skill-calorie 由依赖链带出）
 #   路径①：--profile web-clean（新建）；路径②：--profile web（现有，先备份）
-dsh plugin --profile web add dsh-calorie@<V_DSH_CALORIE> dsh-life-pack@<V_LIFEPACK> --config.minimumReleaseAge=0 --registry=https://registry.npmjs.org/ 2>&1 | Out-File D:\ilife\.scratch\t123w\install-realmachine.log -Encoding utf8
+dsh plugin --profile web add dsh-calorie@0.2.0 dsh-life-pack@0.2.0 --config.minimumReleaseAge=0 --registry=https://registry.npmjs.org/ 2>&1 | Out-File D:\ilife\.scratch\t123w\install-realmachine.log -Encoding utf8
 "INSTALL_EXIT=$LASTEXITCODE"
 Get-Content D:\ilife\.scratch\t123w\install-realmachine.log -Tail 20
 
@@ -790,8 +921,8 @@ $rmAfter
 ② 期望可观察结果：
 
 - 12-0 打印四个 `link=Junction` ＋ profile `dsh-calorie: ^0.1.5`（**这就是阻断现状，必须解除**）。
-- `install-realmachine.log` 里**一条命令同时出现** `dsh-calorie@<V_DSH_CALORIE>` 与 `skill-calorie@<V_SKILL_CALORIE>`（**腿1.1 判据：单命令装双包**）。
-- `realmachine-versions.txt` 四行 = `dsh-calorie <V_DSH_CALORIE>` / `dsh-life-pack <V_LIFEPACK>` / `skill-calorie <V_SKILL_CALORIE>` / `base-paint <V_BASEPAINT>`。
+- `install-realmachine.log` 里**一条命令同时出现** `dsh-calorie@0.2.0` 与 `skill-calorie@0.2.0`（**腿1.1 判据：单命令装双包**）。
+- `realmachine-versions.txt` 四行 = `dsh-calorie 0.2.0` / `dsh-life-pack 0.2.0` / `skill-calorie 0.2.0` / `base-paint 0.2.0`。
 - `realmachine-after.txt` 里 `link=` 全为空（junction 已解除）；进一步用 SHA256 反证：真机 `dist/client.js` 与工作区产物**不同**（与 R2 J4 相反）。
 - 重启后 DSH 正常起来（面板/技能目录可用）。
 
@@ -844,16 +975,16 @@ git status --short -- docs/research
 # 发版集合 = {base-paint, skill-calorie, dsh-calorie}；dsh-life-pack 不发，但 range 指向已发布 ^0.2.0
 cd D:\ilife\packages\base-render
 npm publish --registry=https://registry.npmjs.org/ --access public --otp=<6位>
-npm view base-paint@<V_BASEPAINT> version --registry=https://registry.npmjs.org/
+npm view base-paint@0.2.0 version --registry=https://registry.npmjs.org/
 
 cd D:\ilife\packages\skill-calorie
 npm publish --registry=https://registry.npmjs.org/ --access public --otp=<6位>
-npm view skill-calorie@<V_SKILL_CALORIE> dependencies --json --registry=https://registry.npmjs.org/
+npm view skill-calorie@0.2.0 dependencies --json --registry=https://registry.npmjs.org/
 # 期望：{"base-paint":"^0.2.0"}
 
 cd D:\ilife\packages\plugin-calorie
 npm publish --registry=https://registry.npmjs.org/ --access public --otp=<6位>
-npm view dsh-calorie@<V_DSH_CALORIE> dependencies --json --registry=https://registry.npmjs.org/
+npm view dsh-calorie@0.2.0 dependencies --json --registry=https://registry.npmjs.org/
 # 期望：{"skill-calorie":"^0.2.0","dsh-life-pack":"^0.2.0"}
 ```
 
@@ -872,22 +1003,22 @@ npm view dsh-calorie@<V_DSH_CALORIE> dependencies --json --registry=https://regi
 
 | 证据名 | 命令 | 落点 | 满足 §9 哪一条 |
 | --- | --- | --- | --- |
-| `whoami-before.log` / `whoami-after.log` / `ping.log` | `npm whoami <X>`（修前/修后）＋ `npm login` | `.scratch/t123w/` → `docs/research/t123-release-evidence/` | 1 可复现（含 exit） |
-| `version-tuple.txt` | `git rev-parse --short HEAD` ＋ `node/npm/pnpm --version` ＋ 三包版本 + 日期 + 闭包序列 | 同上 | 1 可复现 |
+| `whoami-before.log` / `whoami-after.log` / `ping.log` | `npm whoami --registry=https://registry.npmjs.org/`（修前/修后）＋ `npm login` | `.scratch/t123w/` → `docs/research/t123-release-evidence/` | 1 可复现（含 exit） |
+| `version-tuple.txt` ＋ `version-tuple-tools.txt` | `git rev-parse --short HEAD` ＋ `node/npm/pnpm --version` ＋ **`npm view skills@latest version`（`skills=1.5.25`）＋ `opencode --version`（`1.18.13`）** ＋ 四包版本 + 日期 + 闭包序列 | 同上 | 1 可复现（**返修 FX-R4-11／FX-R2-6：补 §9-1 点名的 `skills@w`／`opencode@z`**） |
 | `gate-worktree-clean.log` | `git status --short -- <pkgdir>` × 3 ＋ `-- pnpm-lock.yaml` | 同上 | 1 可复现、5 版本一致 |
-| `gate-env-baseline.log` | `Get-ChildItem node_modules\.bin`／`npm whoami <X>`／`pnpm changeset status` | 同上 | 1 可复现 |
+| `gate-env-baseline.log` | `Get-ChildItem node_modules\.bin`／`npm whoami --registry=https://registry.npmjs.org/`／`pnpm changeset status` | 同上 | 1 可复现 |
 | `gate-lockfile-frozen.log`（＋ `-after-s7`） | `pnpm install --frozen-lockfile --lockfile-only --ignore-scripts`（改 range 前后各一次） | 同上 | 1 可复现、3 机器可判 |
-| `gate-rebuild-dist.log` | 删 `dist`+`tsbuildinfo` → 持锁 `pnpm build` → mtime + 导出面 + 关键串断言 | 同上 | 1 可复现、3 机器可判 |
+| `gate-rebuild-dist.log` | 删 `dist`+`tsbuildinfo` → 持锁 `pnpm build` ＋ **`pnpm --filter dsh-calorie run build`（tsdown，返修 FX-R4-14）** → mtime + 导出面 + 关键串断言 | 同上 | 1 可复现、3 机器可判 |
 | `pack-dryrun-<pkg>.json` | `npm pack --dry-run --json` × 3 | 同上 | 3 机器可判 |
 | `probe-reg-*.log` / `probe-local-*.log` | 仓外隔离安装 + 导出面断言（反例／正例） | 同上 | 3 机器可判、7 无替代品 |
 | `gate-version-bump.log` / `gate-pre-after-range.log` / `mut-gate-*.log` | 版本＋range＋门禁正则＋**变异自证**＋同步点 grep | 同上 | 3 机器可判、1 可复现 |
-| `gate-all-publish.log` | `pnpm build`／`boundaries`／`snapshot:check`／`publish:pre`／`publish:tarball`／`frozen-lockfile`／`publish:fresh`／`--tmp-hygiene`／`pnpm test` | 同上 | 3 机器可判 |
-| `publish-<pkg>.log` | `npm publish --registry=… --otp=<6位>` × 3 | 同上 | 1 可复现、5 版本一致 |
-| `post-publish-verify.log` / `gate-post.log` | `npm view <pkg> version|dependencies` ＋ `check-publish --post` | 同上 | 5 版本一致、3 机器可判 |
-| `smoke-envelope.json` ＋ 落盘 HTML | `npx -p skill-calorie@<V> calorie-cmd-read calorie.view.home --params '{"date":"<今天>"}'` | 同上 | 2 可打开（`output` 路径 + `ilife-page`）、7 无替代品 |
-| `smoke-install.log` ＋ `LOADTPL_OK=6` | 仓外 `npm install skill-calorie@<V>` ＋ 逐件 `loadTemplate` | 同上 | 3 机器可判、7 无替代品 |
+| `gate-all-publish.log` ＋ `gate-test.log` | `pnpm build`／`boundaries`／`snapshot:check`／`publish:pre`／`publish:tarball`／`frozen-lockfile`／`publish:fresh`／`--tmp-hygiene`／`pnpm test`（测试段单独落 `gate-test.log`）＋ `test-delta.mjs` | 同上 | 3 机器可判 |
+| `publish-transcript.log` | `Start-Transcript` ＋ `npm publish --registry=…` × 3（**发布命令不得重定向**，返修 FX-R4-15） | 同上 | 1 可复现、5 版本一致 |
+| `post-publish-verify.log` / `gate-post.log` | `npm view <pkg> version\|dependencies` ＋ `check-publish --post`（**用 `$env:npm_config_registry` 钉源**，返修 FX-R4-16） | 同上 | 5 版本一致、3 机器可判 |
+| `smoke-envelope.json`（＋ `smoke-envelope.err.log`）＋ 落盘 HTML | `npx -p skill-calorie@0.2.0 calorie-cmd-read calorie.view.home --params '{"date":"<今天>"}'`（**stdout 只写 JSON**，返修 FX-R4-17） | 同上 | 2 可打开（`output` 路径 + `ilife-page`）、7 无替代品 |
+| `smoke-install.log` ＋ `LOADTPL_OK=6` | 仓外 `npm install skill-calorie@0.2.0` ＋ 逐件 `loadTemplate` | 同上 | 3 机器可判、7 无替代品 |
 | `realmachine-before.txt` / `realmachine-after.txt` | 逐跳 `Get-Item -Force` 的 LinkType/Target | 同上 | 5 版本一致（junction 已解除）、7 无替代品 |
-| `install-realmachine.log` | `dsh plugin --profile <p> add dsh-calorie@<V> dsh-life-pack@<V> …` | 同上 | 1 可复现、腿1.1 单命令装双包 |
+| `install-realmachine.log` | `dsh plugin --profile web add dsh-calorie@0.2.0 dsh-life-pack@0.2.0 …` | 同上 | 1 可复现、腿1.1 单命令装双包 |
 | `realmachine-versions.txt` | `node -e require(...package.json).version` × 4 | 同上 | 5 版本一致 |
 | `db-hash-before.txt` / `db-hash-after.txt` | `Get-FileHash …calorie_data.db -Algorithm SHA256` | 同上 | 6 零触碰 |
 | 面板两处截图 + `opencode` 手跑截图 | 维护者手工 | 同上（**执行归 #115／#116**） | 2 可打开、4 数据标注、7 无替代品 |
@@ -908,11 +1039,18 @@ npm view dsh-calorie@<V_DSH_CALORIE> dependencies --json --registry=https://regi
 
 | 项 | 状态 |
 | --- | --- |
-| 三包当前版本（`0.2.0`／`0.2.0`／`0.2.0`）／三处 range（均 `^0.2.0`）／`slot.ts:19-20`（`0.2.0`）／四处测试断言现值／`skills-export-47.test.mjs:57`（`@0.2.0`）／`check-publish.mjs:83,108,109` 新断言／`ci.yml:28,69,103`／`pnpm-lock.yaml` 两 importer specifier 均 `^0.2.0`／`npm whoami <X>` = 401／真机 junction 多层链／`.bin` = 9／changeset 53 个／基线 21 条 | `[实测·本单 2026-09-09]` |
+| 三包当前版本（`0.2.0`／`0.2.0`／`0.2.0`）／三处 range（均 `^0.2.0`）／`slot.ts:19-20`（`0.2.0`）／四处测试断言现值／`skills-export-47.test.mjs:57`（`@0.2.0`）／`check-publish.mjs:83,108,109` 新断言／`ci.yml:28,69,103`／`pnpm-lock.yaml` 两 importer specifier 均 `^0.2.0`／`npm whoami --registry=https://registry.npmjs.org/` = 401／真机 junction 多层链／`.bin` = 9／changeset 53 个／基线 21 条 | `[实测·本单 2026-09-09]` |
 | `node tooling/check-publish.mjs --pre --only …` 现状 = `PASS`／exit 0 | `[实测·本单 2026-09-09]`（只读跑过，日志 `.scratch/t123c3/gate-pre-now.log`） |
-| `packages/plugin-calorie/dist/slot.js` 仍是 `0.1.6`／`0.1.1`（`src` 已 `0.2.0`）→ 未重建 | `[实测·本单 2026-09-09]` |
-| `pnpm install --frozen-lockfile --lockfile-only --ignore-scripts` 的 exit 码（本单未在仓内跑，协议禁仓内 install） | `[未验证]`（R2 在仓外复本实测 exit 1，`[转引 R2]`；C1 同步后应转绿但未实测） |
+| `packages/plugin-calorie/dist/slot.js` = **`0.2.0`／`0.2.0`**（与 `src` 一致，mtime `13:05:39`）→ **已重建**（原「未重建」句已过期，返修 FX-R4-3） | `[实测·C4 2026-09-09]` |
+| `pnpm install --frozen-lockfile --lockfile-only --ignore-scripts` 的 exit 码 | `[转引 C1]`（`.scratch/t123c1/run-lockfile-frozen.log`：`✓ Lockfile passes supply-chain policies`／`Done in 254ms`，**该日志未落显式 exit 码**；R2 在仓外复本曾实测 exit 1） |
 | S7 的 `pnpm install --lockfile-only` 同步后 `git status --short -- pnpm-lock.yaml` 的具体差异 | `[未验证]` |
-| 7-3b 变异自证（把 `:28` 改 `^0.3.0` → 门禁红 → 还原 sha 一致 → 绿） | `[未验证]`（本单未改任何 manifest） |
-| `pnpm build`／`pnpm test`／`publish:*` 各门禁的 exit 码 | `[未验证]`（本单未跑 build/test，未持锁） |
+| 7-3b 变异自证（把 `:28` 改 `^0.3.0` → 门禁红 → 还原 sha 一致 → 绿） | `[转引 C1]`（`.scratch/t123c1/run-mut-red.log`：`FAIL: dsh-calorie 的 dsh-life-pack 范围「^0.1.0」与工作区版本 0.2.0 的 major.minor 不一致`／`check-publish --pre：2 处红`／exit 1） |
+| `pnpm build`／`pnpm test`／`publish:*` 各门禁的 exit 码 | 部分 `[实测·C4]`：`pnpm boundaries`=0（`boundaries: PASS`）、`pnpm snapshot:check`=0（`OK: 快照 == 实际拉取版`）、`node tooling/check-publish.mjs --pre …`=0；`pnpm build`／`pnpm test`／`publish:fresh`／`--tarball`／`--tmp-hygiene` **仍 `[未验证]`**（C4 未持锁、未跑 build/test） |
+| 18 个 `powershell` 块的 raw 可解析性 | `[实测·C4 2026-09-09]`：返修后 `PS_BLOCKS=18 PS_BLOCKS_BAD=0`（返修前 `RAW_BAD=7`，日志 `.scratch/t123c4/run-parse-check.log`） |
 | `npm publish`／`npm view` 发版后结果、真机 `dsh plugin` 安装、托盘重启、冒烟 `npx` 与 `loadTemplate` | `[未验证]`（只有维护者能执行） |
+
+> **跨文档待修（不在本单写入范围，仅登记备查；C4 已复验成立）**：
+> ① `docs/research/t123-release-window-diagnosis.md:238`「同步点 = 8 个 `file:line` / **9 次**版本串」应为 **10 次**（C4 独立复算：`SKILL.md:172,173,179` = 4 次 ＋ `docs/public-installer-47.md:22` = 1 次 ＋ `test/skills-export-47.test.mjs:55,57` = 3 次 ＋ `src/slot.ts:19,20` = 2 次）；
+> ② 同文件 §2.3 第 8/9/10 行的 `file:line` 是 C1 前快照（现 `test/plugin-p10-boundaries.test.mjs:35` 已是 `rangeOf` 兜底、`:36` 是 `for` 循环；`test/plugin-p10-install.test.mjs:44` 是 `for` 循环）——C1 后落点见本单 S7-5；
+> ③ `docs/research/t123-realmachine-prereq.md:57/186/198` 的走查单阶段号错位（「走查单 S11 已按显式版本写」实为 **S12-1**；「按走查单 S10 留 `Get-FileHash`」实为 **S11-0/11-3**；「走查单 S11-0／S11-2 已加判据」实为 **S12-0/12-2**）。
+> 本单自身的 `file:line` 已全部按现场现值写（见 S7-4／7-5／7-6）。
