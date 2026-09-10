@@ -20,7 +20,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDb } from '../schema.js';
-import { DB_FILENAME } from '../paths.js';
+import { DB_FILENAME, resolveDbDir } from '../paths.js';
 import { listMeals } from '../fetch/diet.js';
 import { getCalorieHistory } from '../fetch/history.js';
 import { FetchError } from '../fetch/errors.js';
@@ -90,6 +90,8 @@ import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
 // #91 · 全量速查台（Q9）：只读消费 #88 的 `render/helpCenter.js`（三态同源，零改动）。
 import { HELP_CENTER_MODES, buildHelpSceneData, renderHelpCenterHtml } from '../render/helpCenter.js';
 import type { HelpCenterMode } from '../render/helpCenter.js';
+import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from '../render/helpFile.js';
+import { SHEET_FILE_STEM, resolveStemTarget } from '../render/helpPaths.js';
 import {
   renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
   renderErrorHtml,
@@ -125,6 +127,9 @@ export interface DispatchOut {
   data: Record<string, unknown>;
   html: string;
   deliveryKind?: DeliveryKind;
+  /** #139 · 该次产物的落点**初候选**（绝对路径）：给定时绕过 `<中文command>` 命名（`output.ts:deliverHtml`），
+   *  仍走 `wx` 独占＋`EEXIST` 递补；一个 key 出多种产物（HELP 文件／速查台）时用它分开命名。 */
+  target?: string;
 }
 
 function fail(code: number, msg: string): never {
@@ -779,8 +784,13 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { summary: 'GIF 任务：标签 ' + gif.tag + ' 共 ' + gif.photoCount + ' 张（' + (gif.firstDate ?? '—') + ' ~ ' + (gif.lastDate ?? '—') + '）· ' + gif.note }, html: renderGifHtml(gif) };
     }
     case 'calorie.help.center': {
-      // #91 · Q9：本键承载**全量速查台**（#88 壳，三态同源）；**照片 10 键兼容走 `q`**（既有语义逐字不变）。
-      // D6：交付形态**显式** `mode`（`file`／`inline`／`text`），不靠猜、不从别的参数推；非法值即 exit 2。
+      // #139 · 本键出**两种产物**，靠 `mode` 分流（旧地图口径「缺省＝速查台」已被 #131 新图准则覆盖：
+      // Q2「整个卡路里只有一个 HELP」＋ Q17「比对以老实物为准」）：
+      //   缺省（不给 `mode`）＝「卡路里help」的交付物：老实物同款 V4 三级目录 HELP 文件
+      //     （`卡路里_HELP_<TS>.html`，与老技能同名同视觉——地图目的地①②就落在这一支）；
+      //   显式 `mode`＝#88 全量速查台三态（`file`／`inline`／`text`，内容与语义逐字不变），
+      //     落 `卡路里_速查台_<TS>.html`（与 HELP 文件分名，两份产物不撞车）。
+      // D6：`mode` 不靠猜、不从别的参数推，非法值即 exit 2；`q`＝照片 10 键现找（既有语义逐字不变）。
       const q = optStr(params, 'q') ?? optStr(params, 'keyword') ?? undefined;
       const modeRaw = optStr(params, 'mode');
       const photoLookup = q !== undefined && q !== '';
@@ -795,8 +805,20 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         const items = hits.map((h) => ({ wakeWord: h.wakeWord, key: h.key, desc: h.desc, exec: h.exec }));
         return { data: { items, total: items.length }, html: renderPhotoHelpHtml(hits, q) };
       }
-      // 全量速查台：缺省 `file`（#88 的缺省同值）；`text` 态把文本一并回传（file／inline 只回落点，不塞 1 MB）。
-      const mode = (modeRaw ?? 'file') as HelpCenterMode;
+      const now = new Date();
+      if (modeRaw === undefined) {
+        // 缺省：老实物同款 HELP 文件（5 键 JSON → V4 三级目录壳）。落点走 `target`——本键的
+        // <中文command>（注册表 title）另有其物，不能拿来命名这份产物。
+        const html = renderHelpFileHtml(buildHelpFileData(now));
+        const data: Record<string, unknown> = {
+          ...helpCenterIndex(buildHelpSceneData()),
+          mode: 'file' as const,
+          bytes: Buffer.byteLength(html, 'utf8'),
+        };
+        return { data, html, target: resolveStemTarget(resolveDbDir(), HELP_FILE_STEM, now) };
+      }
+      // 全量速查台：须显式 `mode`；`text` 态把文本一并回传（file／inline 只回落点，不塞 1 MB）。
+      const mode = modeRaw as HelpCenterMode;
       if (!(HELP_CENTER_MODES as readonly string[]).includes(mode)) {
         fail(2, '参数 mode 非法（' + String(mode) + '）：须为 ' + HELP_CENTER_MODES.join('／'));
       }
@@ -809,7 +831,10 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       };
       if (mode === 'text') data['text'] = rendered.html;
       // #83 · 渲染层已定文本交付：产物即文本（③ 文本态之一），交付装配层据此走文本通道。
-      return { data, html: rendered.html, deliveryKind: mode === 'text' ? 'text' : 'html' };
+      return {
+        data, html: rendered.html, deliveryKind: mode === 'text' ? 'text' : 'html',
+        target: resolveStemTarget(resolveDbDir(), SHEET_FILE_STEM, now),
+      };
     }
     case 'calorie.help.lookup': {
       const q = needStr(params, 'q');
@@ -1047,7 +1072,7 @@ export function buildDeliveredEnvelope(input: {
     // 渲染层已定文本交付的键（#91 `help.center` text 态）**保留既有落盘**（`data.output` 指向该文本文件）；
     // 其余键的文本态只走 envelope（③ 产物＝结构化文本，不落 HTML 文件）。
     if (out.deliveryKind === 'text') {
-      const d = deliverHtml({ key, params, explicit: input.explicit, html: text });
+      const d = deliverHtml({ key, params, explicit: input.explicit, target: out.target, html: text });
       if (d.mode === 'file') data['output'] = d.path;
       return withDelivery(buildEnvelope(key, shape, data), buildDelivery({
         mode: 'text', path: d.mode === 'file' ? d.path : undefined, shape, html: text, bytes: d.bytes, template: 'text',
@@ -1058,7 +1083,7 @@ export function buildDeliveredEnvelope(input: {
     }));
   }
 
-  const d = deliverHtml({ key, params, explicit: input.explicit, html });
+  const d = deliverHtml({ key, params, explicit: input.explicit, target: out.target, html });
   const data: Record<string, unknown> = d.mode === 'file'
     ? { ...out.data, output: d.path }
     : { ...out.data, html };

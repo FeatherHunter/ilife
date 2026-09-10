@@ -1,8 +1,11 @@
 /** #91 · `calorie.help.center` 承载**全量速查台**（裁决 Q9）＋ 照片 10 键兼容 ＋ envelope 新契约（Q8 无 `status`）。
  *
  * 本文件锁四件事（逐条对票面验收）：
- *  ① 全量语义可用：默认（无参）＝全量速查台 `file` 态；`mode` 显式选 `file`／`inline`／`text`（D6）；
- *     三态同源（同一 436 场景，顺序一致）；`file` 产物＝完整 HTML 文档，`inline` 产物＝片段，`text` 产物＝纯文本索引。
+ *  ① 缺省语义（#139 改判，见下）：默认（无参）＝「卡路里help」的交付物＝老实物同款 HELP 文件
+ *     （`卡路里_HELP_<TS>.html`，V4 三级目录壳）；速查台改由**显式** `mode:'file'` 取得。
+ *     三态同源（同一 436 场景，顺序一致）：`file` 产物＝完整 HTML 文档，`inline` 产物＝片段，`text` 产物＝纯文本索引。
+ *     改判依据：地图 #131 目的地（Q2「整个卡路里只有一个 HELP」＋ Q17「比对以老实物为准」）优先于旧地图 Q9
+ *     口径；速查台本体（#88／#106／#107）内容与三态语义一字未动，只是不再占缺省位。
  *  ② 照片 10 键不回归：`q` 非空＝现找（3 命中）、`q:""`＝全量 10 键，`data` 键集恒 `items/total`（＋落点），
  *     落盘产物仍带复制按钮与页面运行时（#90 接线未被本票破坏）。
  *  ③ envelope 全字段＝`version/skill/shape/key/data`（**无 `status`**，Q8），`data` 只回索引＋落点＋字节数，
@@ -72,9 +75,9 @@ function textSceneIds(text) {
     .map((line) => line.slice(4).split(' · ').slice(1).join(' · '));
 }
 
-/* ── ① 全量速查台（默认 file 态）＋ 落盘 ＋ envelope 新契约 ───────────────────── */
+/* ── ① 缺省＝HELP 文件（#139 改判）／速查台＝显式 mode ＋ envelope 新契约 ─────────── */
 
-test('#91 ① 默认（无参）＝全量速查台 file 态：完整文档落盘 ＋ envelope 五字段无 status', () => {
+test('#91 ① 缺省（无参）＝HELP 文件：envelope 索引不变 ＋ 落 卡路里_HELP_<TS>.html', () => {
   const dir = mkEnv();
   const first = runOk(dir, undefined);
   const env = first.env;
@@ -96,7 +99,21 @@ test('#91 ① 默认（无参）＝全量速查台 file 态：完整文档落盘
   assert.deepEqual(Object.keys(d.items[0]), ['id', 'icon', 'label', 'subgroupCount', 'sceneCount']);
   assert.equal(d.items[0].label, '主页', 'F3 逐字分组 label');
 
-  // 落盘：完整 HTML 文档 ＋ #87 命名规范
+  // 落盘：老实物同款 HELP 文件（名／壳）；CLI 级细锁见 help-delivery-139.test.mjs。
+  assert.match(basename(d.output), /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/, '老命名（#139 改判）');
+  const html = readFileSync(d.output, 'utf8');
+  assert.equal(statSync(d.output).size, d.bytes, 'data.bytes ＝ 落盘字节数');
+  assert.ok(html.includes('<title>HELP 原型 · V4 三级目录版</title>'), '缺省＝老实物同款 V4 壳');
+  assert.equal(html.includes('id="ilife-help-shell"'), false, '缺省产物不再是速查台壳');
+});
+
+test('#91 ①b 速查台＝显式 mode file：完整文档落盘 ＋ 独立命名 ＋ #88 结构不动', () => {
+  const dir = mkEnv();
+  const r = runOk(dir, { mode: 'file' });
+  const d = r.env.data;
+  assert.equal(d.mode, 'file');
+  assert.equal(d.sceneTotal, 436);
+
   const html = readFileSync(d.output, 'utf8');
   assert.equal(statSync(d.output).size, d.bytes, 'data.bytes ＝ 落盘字节数');
   assert.equal(Buffer.byteLength(html, 'utf8'), d.bytes);
@@ -105,14 +122,14 @@ test('#91 ① 默认（无参）＝全量速查台 file 态：完整文档落盘
   assert.equal(countOf(html, 'data-scene-id="'), 436);
   assert.equal(countOf(html, 'data-subgroup-id="'), 54);
   assert.equal(countOf(html, 'data-action-id="'), 1308, '复制按钮 1308（#88/#90 接线保持）');
-  assert.match(basename(d.output), /^身材照HELP_\d{8}_\d{6}(_\d+)?\.html$/, '#87 默认命名');
+  assert.match(basename(d.output), /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/, '#139 速查台独立命名');
   assert.ok(d.bytes > 900_000, 'file 产物量级（≠ 旧 10 键片段 31KB），实际 ' + d.bytes + ' B');
 
   // 字节稳定：同一参数两次调用产物逐字相同（P-2：无时间戳）
-  const second = runOk(dir, undefined);
+  const second = runOk(dir, { mode: 'file' });
   assert.equal(readFileSync(second.env.data.output, 'utf8'), html, '两次调用产物逐字相等');
   const strip = (o) => { const c = { ...o.data }; delete c.output; return JSON.stringify(c); };
-  assert.equal(strip(second.env), strip(env), '除落点外 data 逐字相等');
+  assert.equal(strip(second.env), strip(r.env), '除落点外 data 逐字相等');
   assert.notEqual(second.env.data.output, d.output, '落点各自独立（同秒冲突加后缀）');
 });
 

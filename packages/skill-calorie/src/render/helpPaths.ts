@@ -10,21 +10,19 @@
  *     TS 线 `join(dbDir, 'calorie_html')`（`dbDir` 为 `SKILLS_DB_PATH` **目录**，见 `src/paths.ts`）；
  *     目录不存在则递归创建（老 `html_dir(mkdir=True)`），不写死任何盘符。
  *
- * 与 `src/output.ts` 的分工：`output.ts` 是 CLI 默认落点全量管线（含 `--output` 覆盖、
- * `readdirSync` 计数、`wx` 并发重试）；本模块是 HELP 渲染接线（T2-②b）的前置小件。
- * 耦合实话（S3-1）：`exists` 回调注入只隔离「命名决策」（可单测），本模块仍做
- * `mkdirSync` 真 IO（`resolveHelpPath` 内）；真正零 IO 的是纯函数
- * `buildHelpFileName／formatHelpStamp`。②b 接线落盘**不用**本模块的 `exists` 循环
- * 定最终名（判存与写入之间无独占性，并发必交叉），只用 `buildHelpFileName` 算初候选，
- * 最终名由 `output.ts:writeFileExclusiveWithRetry` 的 `wx`＋`EEXIST` 重试仲裁。
+ * 本模块只出**初候选**（`resolveStemTarget`，零 IO）：最终名由
+ * `output.ts:writeFileExclusiveWithRetry` 的 `wx` 独占＋`EEXIST` 递补仲裁——
+ * 判存与写入之间无独占性，check-then-write 并发同秒必交叉覆盖（S2）。
  */
-import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 /** HELP 产物子目录名（老 `SKILL_HTML_NAME + "_html"`，卡路里 → `calorie_html`）。 */
 export const HELP_HTML_DIR_NAME = 'calorie_html';
 /** HELP 产物扩展名。 */
 export const HELP_HTML_EXT = '.html';
+
+/** 速查台（#88，须显式 `mode` 才出）的文件名主体：与 HELP 文件分名，两份产物不撞名。 */
+export const SHEET_FILE_STEM = '卡路里_速查台';
 
 /** 老 `strftime("%Y%m%d_%H%M%S")` 等价物（本地时区，零填充）。 */
 export function formatHelpStamp(now: Date): string {
@@ -52,27 +50,14 @@ export function buildHelpFileName(stem: string, date: Date, n?: number): string 
   return n === undefined ? stem + '_' + stamp + HELP_HTML_EXT : stem + '_' + stamp + '_' + String(n) + HELP_HTML_EXT;
 }
 
-/** HELP 落点绝对路径：`<dbDir>/calorie_html/〈文件名主体〉_<stamp>[_<n>].html`。
+/** 通式落点**初候选**（绝对路径、零 IO）：`<dbDir>/calorie_html/〈文件名主体〉_<stamp>.html`。
  *
- * @param dbDir  DB 目录（`SKILLS_DB_PATH` 口径的目录，非 db 文件）。
- * @param stem   文件名主体（如 `卡路里_HELP`），原样使用。
- * @param date   产出时刻（文件名秒取其本地时区秒）。
- * @param exists 碰撞判定回调（接线时传 `existsSync`）；首候选已存在则 `_2` 起递增。
- * @returns 绝对路径；`calorie_html` 目录不存在则递归创建。
+ * 目录不在此处建：`writeFileExclusiveWithRetry` 落盘前 `mkdirSync(recursive)`（#83 返修 F4 同口径）。
+ *
+ * @param dbDir DB 目录（`SKILLS_DB_PATH` 口径的目录，非 db 文件）。
+ * @param stem  文件名主体（如 `卡路里_HELP`），原样使用。
+ * @param now   产出时刻（文件名秒取其本地时区秒）。
  */
-export function resolveHelpPath(
-  dbDir: string,
-  stem: string,
-  date: Date,
-  exists: (candidateAbs: string) => boolean,
-): string {
-  const dir = join(resolve(dbDir), HELP_HTML_DIR_NAME);
-  mkdirSync(dir, { recursive: true });
-  let candidate = join(dir, buildHelpFileName(stem, date));
-  let n = 2;
-  while (exists(candidate)) {
-    candidate = join(dir, buildHelpFileName(stem, date, n));
-    n += 1;
-  }
-  return candidate;
+export function resolveStemTarget(dbDir: string, stem: string, now: Date): string {
+  return join(resolve(dbDir), HELP_HTML_DIR_NAME, buildHelpFileName(stem, now));
 }

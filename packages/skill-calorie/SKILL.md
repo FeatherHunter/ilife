@@ -1,20 +1,20 @@
 ---
 name: skill-calorie
-description: "「卡路里HELP」→calorie.help.center 出完整速查台；唯一出口 calorie-cmd-read。触发词：看今日主页、看今日热量预算、记一餐、拍营养表记一餐、看今日饮食、记喝水、补记饮食、复制昨日饮食、改饮食记录、删饮食记录、看本周饮食、查食品、存食品、改食品、下架食品、批量导入食品、看营养结构、看今日营养、看饮食总览、看营养素深度、看高热量榜、看低热量榜、看频繁吃榜、看高碳水榜、看高蛋白榜、饮食复盘（本周）、看全部餐别分布（最近 7 天）、记体重、补录体重、看今日体重、看体重曲线、对比体重：最近 30 天 vs 之前 30 天、体重复盘（本周）、记运动、记力量训练、记有氧运动、补记运动、看今日运动、看运动趋势、运动复盘（本周）、看计划概览、看完整计划、看某天练什么、看某动作安排、定训练计划、落地训练、同步到训记、定营养目标、定体重目标、定饮水目标、看今日目标进度、记体脂（皮褶钳）、记围度、看体脂趋势、看围度趋势、记身材照、查身材照、生成身材照GIF、对比两张照片、设置档案、改档案、查档案、查健康报告、查热量趋势、查热量缺口、复盘、开启定时复盘、本周复盘、本月复盘"
+description: "「卡路里HELP」→calorie.help.center 出老技能同款 HELP 文件（V4 三级目录壳）；唯一出口 calorie-cmd-read。触发词：看今日主页、看今日热量预算、记一餐、拍营养表记一餐、看今日饮食、记喝水、补记饮食、复制昨日饮食、改饮食记录、删饮食记录、看本周饮食、查食品、存食品、改食品、下架食品、批量导入食品、看营养结构、看今日营养、看饮食总览、看营养素深度、看高热量榜、看低热量榜、看频繁吃榜、看高碳水榜、看高蛋白榜、饮食复盘（本周）、看全部餐别分布（最近 7 天）、记体重、补录体重、看今日体重、看体重曲线、对比体重：最近 30 天 vs 之前 30 天、体重复盘（本周）、记运动、记力量训练、记有氧运动、补记运动、看今日运动、看运动趋势、运动复盘（本周）、看计划概览、看完整计划、看某天练什么、看某动作安排、定训练计划、落地训练、同步到训记、定营养目标、定体重目标、定饮水目标、看今日目标进度、记体脂（皮褶钳）、记围度、看体脂趋势、看围度趋势、记身材照、查身材照、生成身材照GIF、对比两张照片、设置档案、改档案、查档案、查健康报告、查热量趋势、查热量缺口、复盘、开启定时复盘、本周复盘、本月复盘"
 ---
 
 # 卡路里（calorie）SKILL
 
 饮食/体重/运动/身体/目标/照片/分析/复盘一期全量：13 表（终态 11 张持久表）+ 10 场景 436 唤醒词 + 取数/口径/渲染全 TS。唯一出口 `calorie-cmd-read <calorie.key>`，argv+JSON(stdout)+exit，非 0 走 stderr。
 
-- 用户说「**卡路里HELP**」→ 跑 `calorie-cmd-read calorie.help.center`（缺省 `mode=file`）出**完整能力速查台**；另两态与照片 10 键见下文 HELP 节。
+- 用户说「**卡路里HELP**」→ 跑 `calorie-cmd-read calorie.help.center`（缺省）出**老技能同款 HELP 文件**（`卡路里_HELP_<时间戳>.html`，V4 三级目录壳）；速查台与另两态、照片 10 键见下文 HELP 节。
 - **配置型写词**（记体脂／记围度／定训练计划类）命中，先按「Wizard Verify 铁则」分流再调写键。
 - 唤醒词 → key 对照表见下方「联动速查」（构建期注入 99 键）。
 
 ## 快速开始
 
 ```sh
-calorie-cmd-read calorie.help.center                                    # 卡路里HELP：完整能力速查台（缺省 file 态）
+calorie-cmd-read calorie.help.center                                    # 卡路里HELP：老技能同款 HELP 文件（缺省；速查台加 --params '{"mode":"file"}'）
 calorie-cmd-read calorie.diet.add --params '{"foodName":"鸡胸","calories":200,"protein":35}'
 calorie-cmd-read calorie.weight.log --params '{"kg":70.5}'
 calorie-cmd-read calorie.view.home --params '{"date":"2026-09-07"}'
@@ -183,9 +183,10 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 身材照片 HELP 模块：skill-calorie/dist/render/photo.js（gallery/compare/viewer/gif + buildPhotoHelp/lookupPhotoHelp，现找直达可执行 exec）。
 <!-- HELP-AUTO-END -->
 
-## HELP 现找与「卡路里HELP」速查台
+## HELP 交付与速查台
 
-- **「卡路里HELP」速查台**（Q9）：`calorie-cmd-read calorie.help.center` → 缺省 `mode=file` 出**完整 HTML 速查台**（436 场景／54 子功能／10 分组，卡级复制按钮；落 `data.output`，约 1 MB **只落盘**、不进 envelope）；`--params '{"mode":"inline"}'` 出内嵌片段／`{"mode":"text"}'` 出纯文本索引；非法 `mode` 与 `q`＋`mode` 同给一律 exit 2。
+- **「卡路里HELP」＝老技能同款 HELP 文件**（#139 起）：`calorie-cmd-read calorie.help.center` 缺省即出 `卡路里_HELP_<时间戳>.html`（老命名，V4 三级目录壳，与老技能视觉一致；落 `data.output`，约 300 KB **只落盘**、不进 envelope）。**别再给它加参数**——缺省就是目的地交付物。
+- **速查台（#88，须显式要）**：`--params '{"mode":"file"}'` 出完整 HTML 速查台（436 场景／54 子功能／10 分组，卡级复制按钮，约 1 MB，落 `卡路里_速查台_<时间戳>.html`）；`{"mode":"inline"}` 出内嵌片段／`{"mode":"text"}` 出纯文本索引；非法 `mode` 与 `q`＋`mode` 同给一律 exit 2。
 - **照片 10 键走 `q`**（不是 `mode`）：`--params '{"q":"记身材照"}'` 现找、`{"q":""}` 全表，顺序跟 SCENE_09_PHOTO SoT 序；每条命中自带 `exec`（node 一行式，读 SKILLS_DB_PATH 库）+`legacyCli`（老家 python 原命令备查）；模块 `skill-calorie/dist/render/photo.js`，函数须存在（单测逐条 import 断言）。
 - **通用唤醒词现找**：`calorie.help.lookup --params '{"q":"<唤醒词/分类/描述子串>"}'`（436 唤醒词全量，10 场景，空串抛，不返全表冒充命中）。
 - 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64；GIF 只出任务描述不碰二进制。

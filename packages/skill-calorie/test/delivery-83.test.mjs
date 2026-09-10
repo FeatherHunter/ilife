@@ -128,12 +128,21 @@ test('#83 ① 文件态（默认）：delivery 顶层追加六字段 ＋ 绝对�
   assert.equal(r.stdout.trim().split('\n').length, 1, 'P9：stdout 恒一行 JSON');
 });
 
-test('#83 ① 产物族结构判定：help-shell（速查台）／doc-shell（全文档）逐例', () => {
+test('#83 ① 产物族结构判定：doc-shell（缺省＝HELP 文件）／help-shell（速查台 mode=file）／doc-shell（视图全文档）逐例', () => {
   const dir = mkDb('tpl', true);
+  // #139 改判：缺省＝「卡路里help」的老实物同款 HELP 文件（V4 文档壳，名卡路里_HELP_<TS>.html）。
   const help = runOk(dir, 'calorie.help.center');
-  assert.equal(help.env.delivery.template, 'help-shell');
-  assert.ok(help.env.delivery.bytes > 900_000, '速查台量级：' + help.env.delivery.bytes);
+  assert.equal(help.env.delivery.template, 'doc-shell');
+  assert.ok(help.env.delivery.bytes > 200_000 && help.env.delivery.bytes < 400_000,
+    'HELP 文件量级（对齐老实物 303KB）：' + help.env.delivery.bytes);
   assert.ok(readFileSync(help.env.delivery.path, 'utf8').startsWith('<!DOCTYPE html>'));
+  assert.match(basename(help.env.delivery.path), /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/);
+
+  // 速查台（#88 壳）仍在，但要显式 mode，且独立命名（两份产物不撞名）。
+  const sheet = runOk(dir, 'calorie.help.center', { mode: 'file' });
+  assert.equal(sheet.env.delivery.template, 'help-shell');
+  assert.ok(sheet.env.delivery.bytes > 900_000, '速查台量级：' + sheet.env.delivery.bytes);
+  assert.match(basename(sheet.env.delivery.path), /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/);
 
   const doc = runOk(dir, 'calorie.view.diet', { start: '2026-09-05', end: '2026-09-07' });
   assert.equal(doc.env.delivery.template, 'doc-shell');

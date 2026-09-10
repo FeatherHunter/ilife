@@ -14,7 +14,8 @@ import {
   formatHelpStamp,
   HELP_HTML_DIR_NAME,
   HELP_HTML_EXT,
-  resolveHelpPath,
+  SHEET_FILE_STEM,
+  resolveStemTarget,
 } from '../dist/render/helpPaths.js';
 
 /** 本地 2026-07-26 12:30:00（构造与格式化同为本地时区，任何机器时区下金值不变）。 */
@@ -45,28 +46,12 @@ test('#133 ④ 特殊字符主体原样：空格／：／vs／_ 逐字保留', (
   );
 });
 
-test('#133 ⑤ 碰撞 → _2（首候选已存在）', () => {
-  const dbDir = tmpDbDir('coll2');
-  const seen = new Set([join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html')]);
-  const got = resolveHelpPath(dbDir, '卡路里_HELP', D0, (p) => seen.has(p));
-  assert.equal(got, join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '_2.html'));
-});
-
-test('#133 ⑥ 碰撞 → _3（首候选＋_2 均已存在）', () => {
-  const dbDir = tmpDbDir('coll3');
-  const seen = new Set([
-    join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'),
-    join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '_2.html'),
-  ]);
-  const got = resolveHelpPath(dbDir, '卡路里_HELP', D0, (p) => seen.has(p));
-  assert.equal(got, join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '_3.html'));
-});
-
-test('#133 ⑦ 无碰撞不加后缀（exists 恒假）', () => {
-  const dbDir = tmpDbDir('nocoll');
-  const got = resolveHelpPath(dbDir, '卡路里_HELP', D0, () => false);
-  assert.equal(got, join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'));
-});
+/* ── ⑤⑥⑦⑩⑪ 已随 #139 删除 ────────────────────────────────────────────────────────
+ * 那五条钉的是 `resolveHelpPath` 的 `exists` 判存循环（判存→取名→再写）。判存与写入之间
+ * 没有独占性，并发同秒必交叉覆盖（S2），#128 起最终名一律由
+ * `output.ts:writeFileExclusiveWithRetry` 的 `wx`＋`EEXIST` 递补仲裁。故该 API 已删，
+ * 本模块只剩「算初候选」一件事，用例改为 ⑬⑭⑮。
+ */
 
 test('#133 ⑧ 显式 _n 直拼（含 _6 上限形）', () => {
   assert.equal(buildHelpFileName('卡路里_HELP', D0, 2), '卡路里_HELP_' + STAMP + '_2.html');
@@ -84,24 +69,39 @@ test('#133 ⑨ 时间戳秒一致：同秒毫秒不同 → 同名；跨秒 → �
   );
 });
 
-test('#133 ⑩ 绝对路径：相对 dbDir 输入亦返回绝对路径', () => {
-  const cwd = process.cwd();
-  const leaf = 't133-rel-' + String(Date.now());
-  const relDb = join(leaf, 'db');
-  const got = resolveHelpPath(relDb, '卡路里_HELP', D0, () => false);
-  assert.ok(isAbsolute(got), '须为绝对路径：' + got);
-  assert.equal(got, join(resolve(cwd, relDb), HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'));
-  rmSync(join(cwd, leaf), { recursive: true, force: true });
-});
-
 test('#133 ⑫ 落点目录名／扩展名字面量（防漂移：老 `SKILL_HTML_NAME + "_html"` → calorie_html）', () => {
   assert.equal(HELP_HTML_DIR_NAME, 'calorie_html');
   assert.equal(HELP_HTML_EXT, '.html');
 });
-test('#133 ⑪ 目录自动创建：calorie_html 不存在则递归建出', () => {
-  const dbDir = join(tmpDbDir('mkdir'), 'not-exist-db');
-  assert.ok(!existsSync(dbDir), '前置：dbDir 不存在');
-  const got = resolveHelpPath(dbDir, '卡路里_HELP', D0, () => false);
-  assert.ok(existsSync(join(dbDir, HELP_HTML_DIR_NAME)), 'calorie_html 须被建出');
-  assert.equal(got, join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'));
+
+test('#133 ⑬ 初候选：<dbDir>/calorie_html/〈主体〉_<stamp>.html', () => {
+  const dbDir = tmpDbDir('target');
+  assert.equal(
+    resolveStemTarget(dbDir, '卡路里_HELP', D0),
+    join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'),
+  );
+});
+
+test('#133 ⑭ 相对 dbDir 亦返回绝对路径；且零 IO——初候选不建目录', () => {
+  const cwd = process.cwd();
+  const leaf = 't133-rel-' + String(Date.now());
+  const relDb = join(leaf, 'db');
+  const got = resolveStemTarget(relDb, '卡路里_HELP', D0);
+  assert.ok(isAbsolute(got), '须为绝对路径：' + got);
+  assert.equal(got, join(resolve(cwd, relDb), HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'));
+  assert.equal(existsSync(join(cwd, leaf)), false, '初候选不得建目录（零 IO；落盘时由 wx 独占写建）');
+  rmSync(join(cwd, leaf), { recursive: true, force: true });
+});
+
+test('#133 ⑮ 速查台主体与 HELP 文件主体分名（#139：两份产物不撞名）', () => {
+  const dbDir = tmpDbDir('sheet');
+  assert.equal(SHEET_FILE_STEM, '卡路里_速查台');
+  assert.equal(
+    resolveStemTarget(dbDir, SHEET_FILE_STEM, D0),
+    join(dbDir, HELP_HTML_DIR_NAME, '卡路里_速查台_' + STAMP + '.html'),
+  );
+  assert.notEqual(
+    resolveStemTarget(dbDir, SHEET_FILE_STEM, D0),
+    resolveStemTarget(dbDir, '卡路里_HELP', D0),
+  );
 });
