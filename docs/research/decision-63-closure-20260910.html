@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地图 #63 收口拍板简报（2026-09-10）</title>
+<style>
+  :root { --bg:#0f141b; --card:#161d27; --line:#2a3442; --fg:#e8edf3; --mut:#9aa7b8;
+          --green:#2f9e5f; --greenbg:#123324; --amber:#c98a1b; --amberbg:#3a2c10;
+          --red:#d65353; --redbg:#3d1a1a; --blue:#3b82c4; --bluebg:#14293f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1060px; margin:0 auto; padding:28px 22px 60px; }
+  header.top { border:1px solid var(--line); border-radius:12px; padding:22px 24px;
+               background:linear-gradient(180deg,#182130,#141b26); }
+  header.top h1 { margin:0 0 6px; font-size:24px; }
+  header.top .sub { color:var(--mut); font-size:13.5px; }
+  .pills { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
+  .pill { font-size:12.5px; padding:3px 12px; border-radius:999px; border:1px solid var(--line); }
+  .pill.ok { background:var(--greenbg); color:#7fd79f; border-color:#1f4d33; }
+  .pill.warn { background:var(--amberbg); color:#e8bd6a; border-color:#5c4416; }
+  h2.sec { margin:34px 0 4px; font-size:20px; padding-left:12px; border-left:4px solid var(--blue); }
+  .lede { color:var(--mut); margin:4px 0 14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:20px 22px; margin:14px 0; }
+  .card h3 { margin:0 0 2px; font-size:17px; }
+  .card h3 .tag { font-size:12px; vertical-align:2px; margin-left:8px; padding:2px 10px;
+                  border-radius:999px; }
+  .tag.rec { background:var(--greenbg); color:#7fd79f; }
+  .tag.block { background:var(--redbg); color:#f09393; }
+  .tag.info { background:var(--bluebg); color:#8fbdf0; }
+  h4 { margin:16px 0 6px; font-size:14.5px; color:#cdd8e4; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; margin:8px 0; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#1b2330; white-space:nowrap; }
+  td.num { text-align:center; white-space:nowrap; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12.5px;
+         background:#0c1118; border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+  .fact { background:#101823; border:1px dashed #33405280; border-radius:8px;
+          padding:10px 14px; margin:8px 0; font-size:13.5px; }
+  .fact b.k { color:#8fbdf0; }
+  .recbox { border:1px solid #1f4d33; background:#0f231a; border-radius:8px;
+            padding:10px 14px; margin:10px 0; font-size:14px; }
+  .recbox b { color:#7fd79f; }
+  .procon td:first-child { white-space:nowrap; font-weight:700; }
+  .pro { color:#7fd79f; } .con { color:#f09393; }
+  a { color:#7fb5ef; }
+  .reply { border:1px solid var(--blue); background:var(--bluebg); border-radius:12px;
+           padding:16px 20px; margin-top:26px; }
+  .reply code { font-size:14px; }
+  footer { color:var(--mut); font-size:12.5px; margin-top:26px; }
+  nav.toc { margin:14px 0 0; font-size:13.5px; color:var(--mut); }
+  nav.toc a { margin-right:14px; }
+  @media print { body { background:#fff; color:#111; } .card,header.top { border-color:#ccc; background:#fff; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>地图 #63《卡路里·本体图》收口拍板简报</h1>
+  <div class="sub">2026-09-10 · 子票 <b>50/50 → 100%</b>（实现票全关：#83／#79／#89）· 要宣布 Destination 达成，差下面 <b>4 个拍板</b></div>
+  <div class="pills">
+    <span class="pill ok">主线① 证据齐</span>
+    <span class="pill ok">主线② 证据齐</span>
+    <span class="pill ok">主线③ 证据齐</span>
+    <span class="pill warn">4 项待拍板</span>
+  </div>
+  <nav class="toc">直达：<a href="#m0">M-0 收口口径</a><a href="#m1">M-1 比对规则</a><a href="#m2">M-2 验收口径</a><a href="#m3">M-3 运行时入口</a><a href="#reply">如何回复</a></nav>
+</header>
+
+<h2 class="sec">决策总览（先看这张表）</h2>
+<table>
+  <tr><th>#</th><th>事项</th><th>我的建议</th><th>不拍板会怎样</th></tr>
+  <tr><td class="num"><b>M-0</b></td><td>Destination① 是否限定 exec 341/436；四类边缘能力是否出 scope</td><td><b>接受收口口径</b>（见下）</td><td>① 字面不可达成，地图永远不能宣布完成</td></tr>
+  <tr><td class="num"><b>M-1</b></td><td>新旧 HELP「同质」的比对规则</td><td><b>B 主＋C 补</b>（判定须由测量产生，已落实）</td><td>② 的 acceptance 没有判据，台账只是数字堆</td></tr>
+  <tr><td class="num"><b>M-2</b></td><td>整图验收的判定口径与证据形态</td><td><b>机读为门＋交互条浏览器实景</b>；豁免成立；t81 重基线新开票</td><td>验收跑不起来／跑了也不算数</td></tr>
+  <tr><td class="num"><b>M-3</b></td><td>运行时入口（#64 已关、3 处副本仍无唤醒词）归谁</td><td><b>本图只声明代码侧达成＋新开票</b></td><td>② 的运行时半句永远悬空</td></tr>
+</table>
+
+<!-- ================= M-0 ================= -->
+<h2 class="sec" id="m0">M-0 · 地图收口口径 <span class="tag block" style="font-size:12px;padding:2px 10px;border-radius:999px;background:var(--redbg);color:#f09393;">不拍则地图无法宣布完成</span></h2>
+<p class="lede">决定 Destination① 的字面含义，以及四类边缘能力的去留。</p>
+<div class="card">
+  <h3>前因后果</h3>
+  <h4>① 字面 vs 现实</h4>
+  <div class="fact">地图 Destination① 字面：「旧版<b>全部</b>唤醒词在新版同样命中并<b>产出对应 HTML</b>」（436 条）。现实：#81 落地 exec 326／non-exec 110；#111–#113 把 15 词从 non-exec <b>促进</b>为 exec → 现网 <b>exec 341／non-exec 95</b>。若按字面，95 条 non-exec 永不产出 HTML → <b>① 字面不可达成</b>。</div>
+  <h4>四类边缘能力：地图与三处既有裁定字面矛盾</h4>
+  <div class="fact">地图 <code>Not yet specified</code> 写「<b>在范围内</b>但排最后处理，处置逐个拍」；而 <code>docs/calorie-architecture.md:90</code>（Out of Scope）、<code>docs/calorie-parity-39.md:21</code>（非缺口）、<code>docs/research/t71-old-baseline-inventory.md:737-744</code>（明确不做）三处均写 <b>out of scope</b>（定时 cron／飞书发送归档／训记同步／mmx vision）。</div>
+  <h3>关键事实（可复算）</h3>
+  <div class="fact"><b class="k">桶层：</b>exec 341／non-exec 95；漂移 15 词逐词身份断言（<code>git show</code> 解析 kind，反向 0）；冻结表 parity 436/436；non-exec reason 闭集 23 条零越界。<br>
+  <b class="k">95 条构成：</b>out-of-scope 10 ＋ legacy-chain 85（均有逐字 reason）。<br>
+  <b class="k">证据：</b><code>docs/research/t63-acceptance-line1.md</code>（最终代码全量 smoke 398／钉死日期 398/398 全绿）。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>A（推荐）</b></td><td>Destination① <b>限定 exec 341/436</b>；95 条以「<b>命中但不执行</b>」为终态；四类边缘能力<b>作废·执行层不承接</b>；双包命名出 scope；残留目录可清；其余登记</td><td class="pro">零代码；与三处既有裁定自洽；地图可收口</td><td class="con">95 条与四类能力永不在本图交付（本来也没交付）</td></tr>
+    <tr><td>B</td><td>逐项开票做完（95 条全给执行＋四类能力全开发）</td><td class="pro">字面最完整</td><td class="con">需新增数张票、数周工作量；且 #106 已裁定「不存在的数据不能补」（会违反 D2）</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 A。</b>拍板后动作：我把口径追加进地图 <code>## Out of scope</code>（只追加不改写历史）。</div>
+</div>
+
+<!-- ================= M-1 ================= -->
+<h2 class="sec" id="m1">M-1 · 新旧 HELP 比对规则</h2>
+<p class="lede">决定「同质」用什么判据。台账已就绪，判定层全部机械化。</p>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">最终产物（三态 sha 确定：file 1,264,822 B）与旧 F3 根镜像（302,820 B）的七维度台账已完成：分组 10→10／子功能 54→54／场景 436→436／<b>prompt 逐字 436/436</b>／CLI 0→341／体积 ×4.18。两席审查后返修：判定行从 41 扩到 <b>51 行</b>，判定**全部由测量产生**（29 条机械断言，禁硬编码字面量），体积两处残差闭合。</div>
+  <h3>关键事实</h3>
+  <div class="fact"><b class="k">台账状态：</b><code>docs/research/t-help-parity-ledger.md</code>（51 行＝一致 18／可解释 18／新增 11／缺失 3）＋ <code>ledger.json</code>（去时间戳，sha 可复算）。<br>
+  <b class="k">三条已知风险：</b>① 卡级 code vs Sheet CLI 不同源（22 条，已裁决以 Sheet 为准）；② 95/436 无 CLI 行（随 M-0）；③ Sheet 参数表单＋必填阻断缺失（建议见下）。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td>A</td><td>逐字全等</td><td class="pro">最严</td><td class="con">新版结构性重写必然全红（体积 ×4.18），不可用</td></tr>
+    <tr><td><b>B（推荐·主）</b></td><td><b>结构化等价＋登记偏离</b>（每行判定由测量产生）</td><td class="pro">可复算、可审计；偏离逐条有归属票</td><td class="con">判断性作弊仍需人审（已比返修前大幅收窄）</td></tr>
+    <tr><td><b>C（推荐·补）</b></td><td><b>场景抽样＋浏览器交互实测</b>，且**必须覆盖 B1 第 12/16/19/20 条**</td><td class="pro">抓住 B 看不见的交互/时序退化</td><td class="con">抽样不覆盖全量</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 B 主＋C 补。</b>第 3 条风险（Sheet 参数表单＋必填阻断缺失）是旧版用户可见交互，请一并拍：<b>新开 P1 票</b>（修它不碰冻结面）／登记为偏离（二选一，我推荐前者）。</div>
+</div>
+
+<!-- ================= M-2 ================= -->
+<h2 class="sec" id="m2">M-2 · 整图验收口径</h2>
+<p class="lede">决定「三条主线全绿」之后，用什么一次性证据宣布达成。</p>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">验收方案（<code>docs/research/t-help-acceptance-plan.md</code>，返修后：矩阵 <b>19/8/5＋4</b>、机时实测 <b>≈1.7 min</b>）给出三条主线终局判据与一次性证据形态。但三处须拍板，否则验收跑了也不算数。</div>
+  <h3>三个子项与建议</h3>
+  <table>
+    <tr><th>#</th><th>拍板点</th><th>建议</th><th>不拍的后果</th></tr>
+    <tr><td class="num">1</td><td>判定口径：机读全绿即可，还是必须浏览器实景？</td><td><b>机读全绿为门，B1 第 12/16/19/20 条（交互/时序）必须附浏览器实景</b>（票面明文「截图不足」）</td><td>交互退化无人背书</td></tr>
+    <tr><td class="num">2</td><td>证据形态：报告入仓／原始产物不入仓＋「旧侧不可复算声明」？</td><td><b>同意</b>（与既有归档纪律一致）</td><td>证据不可复现</td></tr>
+    <tr><td class="num">3</td><td>豁免（95 non-exec＋3 不做＝达成；18 处 OLD-DEVIATION＝改进）＋ t81 重基线新开票？</td><td><b>同意</b>；另加一条：<b>「白名单条目本身须全绿」</b>（否则核心不变量会被「新增 0」判绿）</td><td>验收判据有盲区</td></tr>
+  </table>
+  <div class="recbox"><b>建议三项全同意。</b>拍板后动作：我把口径写入方案 → 跑整图验收执行（≈1.7 min 机时）→ 拿 <code>RESULT-L1/L2/L3/63</code> 做最终核验。</div>
+</div>
+
+<!-- ================= M-3 ================= -->
+<h2 class="sec" id="m3">M-3 · 运行时入口归属 <span class="tag block" style="font-size:12px;padding:2px 10px;border-radius:999px;background:var(--redbg);color:#f09393;">跨图缺口</span></h2>
+<p class="lede">决定「卡路里HELP 在真机里能打开」这句话归谁负责。</p>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">② 的验收有一半在运行时：agent 念出唤醒词 → skill 被加载 → 速查台打开。<b>代码侧已达成</b>（<code>SKILL.md</code> 的 <code>description</code> 499 字符含唤醒词＋正文三处逐字命令）。但<b>运行时需要重装/重发版</b>才能生效，而负责安装的 <b>#64（打通图）已于 2026-09-09 14:32:58Z COMPLETED 关闭</b>，且实测 <b>3 处安装副本</b>（<code>.dsh/profiles/web/node_modules</code>／<code>.agents/skills</code>／<code>~/node_modules</code>）的 <code>description</code> <b>仍是 61 字符旧版、无唤醒词</b> → 运行时半句<b>不可判定</b>，且<b>无在册票承接</b>。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>新开票（推荐）</b></td><td>本图只声明「代码侧达成」；**新开一票**承接「重发版／重装取证」（装完复测 3 处副本 description＋真机打开一次）</td><td class="pro">责任清晰；本图可收口；证据链完整</td><td class="con">多一张票（但它本就属于打通图范畴）</td></tr>
+    <tr><td>移出判定</td><td>把 B8 移出 <code>RESULT-L2</code>，改为跨图声明</td><td class="pro">本图数字好看</td><td class="con">② 的运行时半句**永久无人负责**</td></tr>
+  </table>
+  <div class="recbox"><b>推荐新开票。</b>拍板后动作：我建票（标题拟定「重发版/重装后运行时入口取证」），本图验收将其标为跨图依赖。</div>
+</div>
+
+<div class="reply" id="reply">
+  <b>如何回复（任选一种）：</b><br>
+  ① <code>四个全同意（第 3 条风险新开 P1 票）</code> → 我按全部建议落地；<br>
+  ② 逐条回，如 <code>M-0 同意，M-1 改 C 为主，M-2 第 1 条不同意…，M-3 新开票</code> → 我按你的改法落地。<br>
+  落地顺序：写口径进地图与方案（只追加）→ 跑整图端到端验收执行（≈1.7 min）→ 最终核验 → 标记目标完成。
+</div>
+
+<footer>编排者（总负责人）· 事实均可在仓内复算：<code>docs/research/t63-scope-closure.md</code>（M-0）· <code>docs/research/t-help-parity-ledger.md</code>（M-1）· <code>docs/research/t-help-acceptance-plan.md</code>（M-2）· <code>docs/research/t89-visual-lock.md</code>（B1 20 条）· <code>gh issue view 63</code>（地图）</footer>
+
+</div>
+</body>
+</html>
