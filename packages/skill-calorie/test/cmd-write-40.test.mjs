@@ -174,7 +174,8 @@ test('运动记/改/删/批量/复制 + 字段白名单', () => {
   runWrite(dir, 'calorie.exercise.update', { date: '2026-09-06', note: '补' });
   assert.equal(run('calorie.exercise.update', { date: '2026-01-01', note: 'x' }, { SKILLS_DB_PATH: dir }).status, 4);
   runWrite(dir, 'calorie.exercise.remove', { id });
-  assert.equal(run('calorie.exercise.remove', { id }, { SKILLS_DB_PATH: dir }).status, 0);
+  // #125 口径收敛：软删＝不存在，重复 remove(id) 与按日／按范围路径一致报缺失（exit 4；此前 exit 0 是 E2 缺陷）。
+  assert.equal(run('calorie.exercise.remove', { id }, { SKILLS_DB_PATH: dir }).status, 4);
   assert.equal(run('calorie.exercise.remove', { id: 999999 }, { SKILLS_DB_PATH: dir }).status, 4);
   const dd = runWrite(dir, 'calorie.exercise.remove', { date: '2026-09-06' });
   assert.match(dd.data.message, /3 条/);

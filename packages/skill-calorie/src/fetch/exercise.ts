@@ -196,7 +196,9 @@ const KNOWN_EX_COLS = new Set([
 export function updateRecord(db: DatabaseSync, recordId: number, fields: Record<string, unknown>): { old: ExerciseRow; new: ExerciseRow } {
   const id = Number(recordId);
   if (!Number.isInteger(id)) throw new FetchError('记录 ID 必须是数字');
-  const old = db.prepare('SELECT * FROM exercise_log WHERE id = ?').get(id) as ExerciseRow | undefined;
+  // #125 · 按 id 改必须与按日改／删同口径：软删行视为不存在（`COALESCE` 保 NULL 活行，
+  // 与 `listWindow`／`softDeleteWhere`／#120 `EX_ALIVE` 同款；否则 E1 对软删行报成功）。
+  const old = db.prepare('SELECT * FROM exercise_log WHERE id = ? AND COALESCE(is_deleted, 0) = 0').get(id) as ExerciseRow | undefined;
   if (!old) throw new FetchError(`记录 ID ${id} 不存在`);
   const sets: string[] = [];
   const vals: SQLInputValue[] = [];
@@ -223,9 +225,11 @@ function softDeleteWhere(db: DatabaseSync, where: string, params: SQLInputValue[
 export function deleteRecord(db: DatabaseSync, recordId: number): ExerciseRow {
   const id = Number(recordId);
   if (!Number.isInteger(id)) throw new FetchError('记录 ID 必须是数字');
-  const row = db.prepare('SELECT * FROM exercise_log WHERE id = ?').get(id) as ExerciseRow | undefined;
+  // #125 · 按 id 删必须与按日／按范围删同口径：软删行视为不存在（否则 E2 重复删报成功，
+  // 而按日路径 `softDeleteWhere` changes=0 → missing-data，两套幂等语义）。
+  const row = db.prepare('SELECT * FROM exercise_log WHERE id = ? AND COALESCE(is_deleted, 0) = 0').get(id) as ExerciseRow | undefined;
   if (!row) throw new FetchError(`记录 ID ${id} 不存在`);
-  db.prepare('UPDATE exercise_log SET is_deleted = 1, updated_at = ? WHERE id = ?').run(nowStamp(), id);
+  db.prepare('UPDATE exercise_log SET is_deleted = 1, updated_at = ? WHERE id = ? AND COALESCE(is_deleted, 0) = 0').run(nowStamp(), id);
   return row;
 }
 
