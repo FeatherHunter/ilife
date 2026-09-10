@@ -124,6 +124,54 @@ export function resolveExplicitHtmlPath(file: string): string {
   return file;
 }
 
+/* ── #128 · 并发原子落盘：独占创建 + 重试（S2 数据完整性） ───────────────────────────
+ *
+ * 根因：默认落点曾是「`readdirSync` 计数选名 → `writeFileSync`（`w` 覆盖）」两步，
+ * 两步之间无独占性；多进程并发同秒时都选同一路径 → 后写覆盖先写，
+ * 用户按 envelope 的 `data.output` 可能打开另一次调用的产物（#91 红队 3 轮 ×5 实测）。
+ * #91 后 `help.center` file 态约 1 MB，写窗口 200–300 ms，撞名概率显著放大。
+ *
+ * 修法（票面建议 1）：`flag:'wx'` 独占创建，`EEXIST` 时递增 `_N` 重试（原子，无需锁）。
+ *  - 串行语义不变：首选仍是 `htmlFileName` 的计数 hint，首试即中 → 路径与旧版逐字一致；
+ *  - 并发下由文件系统仲裁：败者 `EEXIST` → `_N+1` 重试，保证每个 envelope 的落点内容即本次产物；
+ *  - 大小写不敏感（Windows `normcase`，#87 F2）由 `wx` 天然覆盖：`.HTML` 占位同样 `EEXIST`；
+ *  - 仅 `EEXIST` 重试；只读类（`EACCES` 等）仍走 #83 内联回退，其余原样抛出走回执；
+ *  - 显式 `--output`／`--html` 保持覆盖语义（`w`），不参与重试：那是用户逐字指定的落点；
+ *  - `target`（回执落点，`resolveReceiptHtmlPath` 的默认命名）与默认路径同走独占重试。
+ */
+
+function nextExclusiveCandidate(currentAbs: string): string {
+  const dir = dirname(currentAbs);
+  const base = currentAbs.slice(dir.length + 1);
+  const m = base.match(/^(.*_\d{8}_\d{6})(?:_(\d+))?(\.[^.]+)$/);
+  if (m) {
+    const prefix = m[1] as string;
+    const n = m[2] !== undefined ? Number.parseInt(m[2] as string, 10) : 1;
+    return join(dir, prefix + '_' + String(n + 1) + HTML_EXT);
+  }
+  const dot = base.lastIndexOf('.');
+  const stem = dot >= 0 ? base.slice(0, dot) : base;
+  return join(dir, stem + '_2' + HTML_EXT);
+}
+
+function writeFileExclusiveWithRetry(initialAbs: string, html: string): string {
+  let candidate = initialAbs;
+  for (let i = 0; i < 1000; i++) {
+    try {
+      mkdirSync(dirname(candidate), { recursive: true });
+      writeFileSync(candidate, html, { flag: 'wx', encoding: 'utf8' });
+      return candidate;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException)?.code === 'EEXIST') {
+        candidate = nextExclusiveCandidate(candidate);
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw Object.assign(new Error('落点独占创建重试超限：' + initialAbs), { code: 'EEXIST' });
+}
+
 /* ── #83 · 三态交付：落盘／只读回退（M4「必须渲染并打开」的机械保证） ───────────────────────── */
 
 /** 只读／沙箱类写失败码 → ② 内联态（产物随 envelope 回传，绝不因写不进去而文字答）。
@@ -141,8 +189,9 @@ export type HtmlDelivery =
   | { readonly mode: 'inline'; readonly reason: string; readonly bytes: number };
 
 /** 交付一次 HTML 产物（**唯一落盘点**）：
- *  - `target` 显式给定时逐字写该路径（回执落点）；否则 `explicit`（`--output`／`--html`）＞
- *    默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html`；
+ *  - `target` 显式给定时为回执类默认命名 → **独占创建 + 重试**（#128，与默认同）；
+ *    `explicit`（`--output`／`--html`）为用户逐字指定 → **覆盖写**（`w`，语义不变）；
+ *    否则默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html` → **独占创建 + 重试**（#128）；
  *  - 只读类失败 → `{mode:'inline'}`（调用方把产物随 envelope 回传）；其余失败**原样抛出**（走回执）。
  *  落点**解析**与写入同在一个 try 内：`calorie_html` 被同名文件占位等解析期失败同样归类（#87 返修 F4）。 */
 export function deliverHtml(input: {
@@ -155,7 +204,17 @@ export function deliverHtml(input: {
 }): HtmlDelivery {
   const bytes = Buffer.byteLength(input.html, 'utf8');
   try {
-    const target = input.target ?? input.explicit ?? resolveDefaultHtmlPath(input.key, {
+    if (input.target !== undefined) {
+      const written = resolve(input.target);
+      const finalPath = writeFileExclusiveWithRetry(written, input.html);
+      return { mode: 'file', path: finalPath, bytes };
+    }
+    if (input.explicit !== undefined) {
+      const written = resolve(input.explicit);
+      writeFileSync(resolveExplicitHtmlPath(written), input.html, 'utf8');
+      return { mode: 'file', path: written, bytes };
+    }
+    const hint = resolveDefaultHtmlPath(input.key, {
       params: input.params,
       suffix: writeSuffixFor(input.key, input.params),
       now: input.now,
@@ -164,9 +223,9 @@ export function deliverHtml(input: {
     // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
     // `bad-input` → **产物已写盘却 exit 2**。此处与 `writeFileSync` 同口径 `resolve`（写的就是它），
     // 只归一化回传值，落盘行为与旧版逐字一致。
-    const written = resolve(target);
-    writeFileSync(resolveExplicitHtmlPath(written), input.html, 'utf8');
-    return { mode: 'file', path: written, bytes };
+    const written = resolve(hint);
+    const finalPath = writeFileExclusiveWithRetry(written, input.html);
+    return { mode: 'file', path: finalPath, bytes };
   } catch (e) {
     if (isReadOnlyWriteFailure(e)) return { mode: 'inline', reason: (e as Error).message, bytes };
     throw e;
