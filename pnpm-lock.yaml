@@ -49,7 +49,7 @@ importers:
         specifier: ^0.2.0
         version: link:../plugin-manager
       skill-calorie:
-        specifier: ^0.2.0
+        specifier: 0.2.1
         version: link:../skill-calorie
     devDependencies:
       '@types/react':
