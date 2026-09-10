@@ -140,7 +140,8 @@ export function resolveExplicitHtmlPath(file: string): string {
  *  - `target`（回执落点，`resolveReceiptHtmlPath` 的默认命名）与默认路径同走独占重试。
  */
 
-function nextExclusiveCandidate(currentAbs: string): string {
+/** #128 · 下一独占候选（可单测）：`<cmd>_<TS>[_N].html` 的 `_N` 递增；无 `_N` 则 `_2`。导出仅供测试。 */
+export function nextExclusiveCandidate(currentAbs: string): string {
   const dir = dirname(currentAbs);
   const base = currentAbs.slice(dir.length + 1);
   const m = base.match(/^(.*_\d{8}_\d{6})(?:_(\d+))?(\.[^.]+)$/);
@@ -154,7 +155,8 @@ function nextExclusiveCandidate(currentAbs: string): string {
   return join(dir, stem + '_2' + HTML_EXT);
 }
 
-function writeFileExclusiveWithRetry(initialAbs: string, html: string): string {
+/** #128 · 独占写 + 重试（可单测）：`wx` 首试，`EEXIST` 则 `_N+1` 重试。导出仅供测试。 */
+export function writeFileExclusiveWithRetry(initialAbs: string, html: string): string {
   let candidate = initialAbs;
   for (let i = 0; i < 1000; i++) {
     try {
