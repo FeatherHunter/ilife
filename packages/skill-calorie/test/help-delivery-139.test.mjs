@@ -10,14 +10,14 @@
  *  ② 壳＝老实物同款 V4 三级目录（`<title>HELP 原型 · V4 三级目录版</title>` ＋ `id="help-data"`），
  *     载荷 10 分类／436 场景（老实物 `:195` 口径）；
  *  ③ 反向锁（防退回孤岛／串产物）：缺省产物**不是**速查台（无 `id="ilife-help-shell"`），
- *     文件名**不得**再出现 `身材照`；
- *  ④ 同秒二次调用 → `_2` 递补（`wx` 独占，#128 语义未被本改动破坏）。
+ *     文件名**不得**再出现 `身材照`；速查台须显式 `mode` 且独立命名；
+ *  ④ 并发两次调用 → 落点永不相同；同秒时后到者 `_2` 递补（`wx` 独占，#128 语义未被本改动破坏）。
  *
  * 运行：先 `npx tsc -b packages/skill-calorie`，再
  * `node --test packages/skill-calorie/test/help-delivery-139.test.mjs`
  */
 import { strict as assert } from 'node:assert';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
@@ -44,6 +44,22 @@ function run(dir, params) {
   return { status: r.status, stdout: String(r.stdout), stderr: String(r.stderr), env };
 }
 
+/** 异步版（并发两次用；`spawnSync` 会把并发串成串行，测不出独占）。 */
+function runAsync(dir) {
+  return new Promise((resolve) => {
+    const child = spawn(NODE_BIN, [BIN, 'calorie.help.center'], {
+      env: { ...process.env, SKILLS_DB_PATH: dir },
+    });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.on('close', (code) => {
+      let env = null;
+      try { env = JSON.parse(out); } catch { env = null; }
+      resolve({ status: code, stdout: out, env });
+    });
+  });
+}
+
 function runOk(dir, params) {
   const r = run(dir, params);
   assert.equal(r.status, 0, 'exit 0（stderr：' + r.stderr + '）');
@@ -56,6 +72,11 @@ function helpData(html) {
   const m = html.match(/<script id="help-data" type="application\/json">([\s\S]*?)<\/script>/);
   assert.ok(m, '缺 help-data 载荷（老实物 :195）');
   return JSON.parse(m[1]);
+}
+
+/** 文件名里的秒级时间戳与 `_N` 递补段。 */
+function stampOf(p) {
+  return basename(p).match(/_(\d{8}_\d{6})(?:_(\d+))?\.html$/);
 }
 
 test('#139 ① 缺省＝「卡路里help」HELP 文件：卡路里_HELP_<TS>.html 落 calorie_html／回执绝对路径', () => {
@@ -119,13 +140,26 @@ test('#139 ③ 反向：缺省不是速查台（无 ilife-help-shell 锚），�
   assert.ok(sheet.env.data.bytes > 900_000, '速查台量级 ≈1 MB，实际 ' + sheet.env.data.bytes + ' B');
 });
 
-test('#139 ④ 同秒二次调用 → _2 递补（wx 独占语义不被改动破坏）', () => {
+test('#139 ④ 并发两次调用：落点各自独立；同秒则后到者 _2 递补', async () => {
   const dir = mkDir('collide');
-  const a = runOk(dir, undefined);
-  const b = runOk(dir, undefined);
+  const [a, b] = await Promise.all([runAsync(dir), runAsync(dir)]);
+  assert.equal(a.status, 0, 'A exit ' + a.status);
+  assert.equal(b.status, 0, 'B exit ' + b.status);
+  assert.ok(a.env && b.env, '两个 stdout 都须可解析');
   assert.match(basename(a.env.data.output), NAME_RE);
+  assert.match(basename(b.env.data.output), NAME_RE);
   assert.notEqual(b.env.data.output, a.env.data.output, '两次调用落点各自独立');
-  assert.match(basename(b.env.data.output), /_\d{8}_\d{6}_2\.html$/, '同秒冲突 → _2：'
-    + basename(b.env.data.output));
-  assert.ok(existsSync(a.env.data.output) && existsSync(b.env.data.output));
+  assert.ok(existsSync(a.env.data.output) && existsSync(b.env.data.output), '两份产物都在');
+
+  const A = stampOf(a.env.data.output);
+  const B = stampOf(b.env.data.output);
+  if (A[1] === B[1]) {
+    // 同一秒：首候选被 `wx` 占住 → 后到者必须走 `EEXIST` 递补 _2（#128 语义）。
+    assert.ok(A[2] === '2' || B[2] === '2',
+      '同秒必有一方 _2：' + basename(a.env.data.output) + ' / ' + basename(b.env.data.output));
+  } else {
+    // 跨秒（并发两进程恰被秒边界切开）：各自名下独立落点，同样不覆盖。
+    assert.equal(A[2], undefined);
+    assert.equal(B[2], undefined);
+  }
 });
