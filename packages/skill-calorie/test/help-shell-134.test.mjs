@@ -39,7 +39,6 @@ test('#134 ① 壳锚点：前后缀切分＋关键槽位存在', () => {
   for (const slot of [
     'id="help-data"',
     'class="stage"',
-    'stage-title',
     'class="phone"',
     'id="screen"',
     'id="sheetMask"',
@@ -64,19 +63,22 @@ test('#134 ① 壳锚点：前后缀切分＋关键槽位存在', () => {
   }
 });
 
-test('#134 ② 桌面端：680 居中列＋stage 标题＋Tab 栏对齐主体', () => {
+test('#134 ② 桌面端：680 居中列＋Tab 栏对齐主体＋标题由 5 键派生', () => {
   const html = renderHelpShellHtml(buildHelpFileData(D0));
   assert.ok(html.includes('.phone{width:680px'), '桌面 phone 须 680px');
   assert.ok(html.includes('@media(min-width:501px){'), '须有 501px 壳级断点');
   assert.ok(html.includes('.tab-bar{width:680px'), '宽屏 Tab 栏须对齐 680 主体');
   assert.ok(html.includes('transform:translateX(-50%)'), '宽屏 Tab 栏须居中');
-  assert.ok(html.includes('.stage-title{color:#3a3a3c'), '桌面须有 stage 标题样式');
+  // #141：原型水印（stage 头）已移除；文档标题改由 5 键派生。
+  assert.equal(html.includes('stage-title'), false, '原型水印 stage-title 须已移除');
+  assert.equal(html.includes('B1-B4'), false, '拍板水印须已移除');
+  assert.ok(html.includes('<title>卡路里 · 唤醒词速查台</title>'), '文档标题须＝skill_name · title');
 });
 
-test('#134 ③ 手机端≤500px 沉浸：去标题＋screen 滚动容器＋sheet iOS 抽屉', () => {
+test('#134 ③ 手机端≤500px 沉浸：stage 归零＋screen 滚动容器＋sheet iOS 抽屉', () => {
   const html = renderHelpShellHtml(buildHelpFileData(D0));
   assert.ok(html.includes('@media(max-width:500px){'), '须有 500px 壳级断点');
-  assert.ok(html.includes('.stage-title,.stage-sub{display:none}'), '沉浸须去标题');
+  assert.ok(html.includes('.stage{padding:0;background:var(--bg)}'), '沉浸须把 stage 内边距归零');
   assert.ok(html.includes('.screen{height:100%;overflow-y:auto'), 'screen 须变滚动容器');
   assert.ok(
     html.includes('.sheet{left:0;right:0;bottom:0;border-radius:22px 22px 0 0}'),

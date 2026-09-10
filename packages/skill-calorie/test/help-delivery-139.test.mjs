@@ -7,7 +7,7 @@
  *  ① 缺省（不给 `q`、不给 `mode`）＝「卡路里help」的交付物：名 `卡路里_HELP_<TS>[_N].html`、
  *     落 `<SKILLS_DB_PATH>/calorie_html/`、`data.output` 为绝对路径且与 `delivery.path` 同值、
  *     字节＝落盘大小、stdout 恒一行 JSON（P9）；
- *  ② 壳＝老实物同款 V4 三级目录（`<title>HELP 原型 · V4 三级目录版</title>` ＋ `id="help-data"`），
+ *  ② 壳＝老实物同款 V4 三级目录（`<title>卡路里 · 唤醒词速查台</title>` ＋ `id="help-data"`，
  *     载荷 10 分类／436 场景（老实物 `:195` 口径）；
  *  ③ 反向锁（防退回孤岛／串产物）：缺省产物**不是**速查台（无 `id="ilife-help-shell"`），
  *     文件名**不得**再出现 `身材照`；速查台须显式 `mode` 且独立命名；
@@ -111,7 +111,7 @@ test('#139 ② 壳＝老实物同款 V4 三级目录（10 分类／436 场景）
   const html = readFileSync(r.env.data.output, 'utf8');
 
   assert.ok(html.startsWith('<!DOCTYPE html>'), 'file 态＝完整文档');
-  assert.ok(html.includes('<title>HELP 原型 · V4 三级目录版</title>'), '老实物标题逐字');
+  assert.ok(html.includes('<title>卡路里 · 唤醒词速查台</title>'), '文档标题＝skill_name · title（#141 去原型水印）');
   assert.ok(html.includes('id="' + 'help-data"'), '老实物 payload 容器 id');
 
   const data = helpData(html);

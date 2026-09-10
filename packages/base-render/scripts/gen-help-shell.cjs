@@ -17,6 +17,8 @@ const OUT_SRC = path.join(DIR, '..', 'src', 'helpShell.ts');
 const OUT_TEST = path.join(DIR, '..', 'test', 'help-shell-136.test.mjs');
 const OPEN = '<script id="help-data" type="application/json">';
 const SLOTS = ['SLOT:1/INJECT-DATA', 'SLOT:2/SHARED-HELPERS', 'SLOT:3/SHARED-CSS'];
+/** 文档标题占位（在 PREFIX 内；渲染时替换为 `<skill_name> · <title>`——源里写死即回原型水印）。 */
+const TITLE_SLOT = '__HELP_TITLE__';
 const CHECK = process.argv.includes('--check');
 
 const sha = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
@@ -37,6 +39,7 @@ for (const slot of SLOTS) {
   if (!MIDDLE.includes(slot)) throw new Error('source middle missing slot contract: ' + slot);
 }
 if (!PREFIX.endsWith(OPEN)) throw new Error('PREFIX must end with DATA_OPEN');
+if (!PREFIX.includes(TITLE_SLOT)) throw new Error('PREFIX 缺文档标题占位 ' + TITLE_SLOT + '（源里写死标题＝回原型水印）');
 if (!SUFFIX.startsWith('</script>')) throw new Error('SUFFIX must start with close tag');
 
 // 纯度命中的值内切块（JSON.stringify 永不转义 window/点/等号，故值坐标命中恒落在字面量原文）。
@@ -72,10 +75,10 @@ function emitLiteral(value) {
 const L = [];
 L.push('/** #136 · help模板新家（base-paint 子路径 `base-paint/help-shell`，不进主入口）。');
 L.push(' *');
-L.push(' * 来源：`packages/base-render/assets/help-template.html`（help模板唯一真相源；人类/AI 可读可编辑，3 槽注释即契约）。');
+L.push(' * 来源：`packages/base-render/assets/help-template.html`（help模板唯一真相源；人类/AI 可读可编辑，3 槽注释＋前缀 title 占位即契约）。');
 L.push(' * 生成方式：本文件由 `node packages/base-render/scripts/gen-help-shell.cjs` 机器生成，禁止手工改动');
 L.push(' * （含换行与转义）；改模板只改源→跑 `pnpm --filter base-paint gen:help-shell`→过门（字节锁/像素门/单测）。');
-L.push(' * 生成器断言：源按 help-data 开标签尾／配对闭标签切分得 PREFIX/SUFFIX，中段须含 3 槽注释；');
+L.push(' * 生成器断言：源按 help-data 开标签尾／配对闭标签切分得 PREFIX/SUFFIX，中段须含 3 槽注释、PREFIX 须含 title 占位；');
 L.push(' * 产出全文过 base-paint 纯度口径（`--check` 在 CI/本地校验 drift，重跑不一致即非 0）。');
 L.push(' * 纯度注记：旧壳 SUFFIX 是冻结的页面侧遗留运行时，文本内含 `window` 赋值；字面量在命中点内');
 L.push(' * 以 `"a" + "b"` 切块（运行时拼接值不变，源码面无连续命中串），故本文件常量为多段拼接而非单字面量。');
@@ -119,13 +122,22 @@ L.push('');
 L.push('/** help-data 容器开标签（PREFIX 与 SUFFIX 的切分锚点）。 */');
 L.push('export const HELP_SHELL_DATA_OPEN = ' + JSON.stringify(OPEN) + ' as const;');
 L.push('');
+L.push('/** 文档标题占位（在 PREFIX 内；渲染时替换，源里写死即回原型水印）。 */');
+L.push('export const HELP_SHELL_TITLE_SLOT = ' + JSON.stringify(TITLE_SLOT) + ' as const;');
+L.push('');
+L.push('/** 文本节点转义（标题只进 <title>，五字符即够）。 */');
+L.push('function escapeTitleText(s: string): string {');
+L.push("  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');");
+L.push('}');
+L.push('');
 L.push('/** 5 键 JSON → 全壳 HTML（与老实物同壳；小于号转义防 script 破壳，parse 后逐字一致）。 */');
 L.push('export function renderHelpShellHtml(data: HelpShellData): string {');
 L.push('  if (!data || !Array.isArray(data.groups) || data.groups.length === 0) {');
 L.push("    throw new HelpShellError('HELP 渲染缺分组（不返空页）。');");
 L.push('  }');
 L.push("  const json = JSON.stringify(data).replace(/</g, '\\\\u003c');");
-L.push('  return HELP_SHELL_PREFIX + json + HELP_SHELL_SUFFIX;');
+L.push("  const title = escapeTitleText(String(data.skill_name) + ' · ' + String(data.title));");
+L.push('  return HELP_SHELL_PREFIX.split(HELP_SHELL_TITLE_SLOT).join(title) + json + HELP_SHELL_SUFFIX;');
 L.push('}');
 L.push('');
 L.push('/** #136 标准出口（`renderHelpShellHtml` 同实现；skill 侧只传自家 HELP JSON 即接）。 */');
@@ -178,7 +190,8 @@ const FIXTURE = {
   }],
 };
 const fixtureJson = JSON.stringify(FIXTURE).replace(/</g, '\\u003c');
-const fixtureHtml = PREFIX + fixtureJson + SUFFIX;
+const fixtureTitle = String(FIXTURE.skill_name) + ' · ' + String(FIXTURE.title);
+const fixtureHtml = PREFIX.split(TITLE_SLOT).join(fixtureTitle) + fixtureJson + SUFFIX;
 const T = [];
 T.push('/** #136 · help模板 base 侧等价锁（机器生成，哈希常量禁手填）。');
 T.push(' * 锁三面：① PREFIX/SUFFIX 值与源切分逐字节一致（改模板即红）；');
@@ -231,7 +244,7 @@ T.push('  const oOpen = src.indexOf(open);');
 T.push("  assert.ok(oOpen > 0, '源缺 help-data 开标签');");
 T.push('  assert.equal(sha(src.slice(0, oOpen + open.length)), sha(HELP_SHELL_PREFIX), \'源切分 PREFIX 须等于常量\');');
 T.push("  assert.equal(sha(src.slice(src.indexOf('</script>', oOpen))), sha(HELP_SHELL_SUFFIX), '源切分 SUFFIX 须等于常量');");
-T.push("  for (const slot of ['SLOT:1/INJECT-DATA', 'SLOT:2/SHARED-HELPERS', 'SLOT:3/SHARED-CSS']) {");
+T.push("  for (const slot of ['SLOT:1/INJECT-DATA', 'SLOT:2/SHARED-HELPERS', 'SLOT:3/SHARED-CSS', '__HELP_TITLE__']) {");
 T.push("    assert.ok(src.includes(slot), '源缺槽契约：' + slot);");
 T.push('  }');
 T.push('});');

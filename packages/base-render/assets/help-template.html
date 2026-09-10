@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HELP 原型 · V4 三级目录版</title>
+<title>__HELP_TITLE__</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{--fg:#1d1d1f;--fg2:#6e6e73;--fg3:#86868b;--bg:#f2f2f7;--card:#fff;--line:#d1d1d6;--blue:#007aff;--blue2:#0a63ce;--soft:#f0f6ff;--ok:#34c759;--orange:#ff9500;--red:#ff3b30;--shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.05)}
   body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);line-height:1.5;-webkit-font-smoothing:antialiased;font-size:14px}
   button{font-family:inherit}
   .stage{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 60px;background:var(--bg)}
-  .stage-title{color:#3a3a3c;font-size:15px;font-weight:700;text-align:center}
-  .stage-sub{color:#6e6e73;font-size:12px;text-align:center;margin:3px 0 14px}
   .phone{width:680px;max-width:100%;height:auto;background:transparent;border-radius:0;border:0;overflow:visible;position:relative;box-shadow:none}
   .screen{height:auto;overflow:visible;-webkit-overflow-scrolling:touch;background:transparent;scrollbar-width:none;overscroll-behavior-y:auto}
   .screen::-webkit-scrollbar{display:none}
@@ -158,7 +156,6 @@
   @media(max-width:500px){
     body{background:var(--bg)}
     .stage{padding:0;background:var(--bg)}
-    .stage-title,.stage-sub{display:none}
     .phone{width:100%;height:100vh;border:0;border-radius:0;max-height:none;background:var(--bg);overflow:hidden}
     .screen{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);overscroll-behavior-y:contain}
     .notch{display:none}
@@ -170,8 +167,6 @@
 <body>
 
 <div class="stage">
-  <div class="stage-title">📱 HELP 原型 · V4 三级目录版（B1-B4 拍板全落地）</div>
-  <div class="stage-sub">Tab→子功能折叠→场景卡 · 参数=prompt+key:value · 复制不自动关 · 无参数显prompt · 手机打开全屏真机</div>
 
   <div class="phone"><div class="notch"></div><div class="screen" id="screen"></div></div>
 

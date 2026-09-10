@@ -103,7 +103,7 @@ test('#91 ① 缺省（无参）＝HELP 文件：envelope 索引不变 ＋ 落 �
   assert.match(basename(d.output), /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/, '老命名（#139 改判）');
   const html = readFileSync(d.output, 'utf8');
   assert.equal(statSync(d.output).size, d.bytes, 'data.bytes ＝ 落盘字节数');
-  assert.ok(html.includes('<title>HELP 原型 · V4 三级目录版</title>'), '缺省＝老实物同款 V4 壳');
+  assert.ok(html.includes('<title>卡路里 · 唤醒词速查台</title>'), '缺省＝HELP 文件（文档标题由 5 键派生，非原型水印）');
   assert.equal(html.includes('id="ilife-help-shell"'), false, '缺省产物不再是速查台壳');
 });
 
