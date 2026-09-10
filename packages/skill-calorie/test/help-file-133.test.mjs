@@ -17,9 +17,6 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { test } from 'node:test';
 import {
-  HELP_FILE_KEY,
-  HELP_FILE_MIRROR_NAME,
-  HELP_FILE_STEM,
   HELP_WAKE_WORDS,
   buildHelpFileData,
   renderHelpFileHtml,
@@ -49,6 +46,8 @@ function sceneCount(groups) {
 
 test('#133 ②b-① HELP key 双写：文件存在＋JSON 可 parse＋10组/54子组/436场景', () => {
   const dbDir = tmpDb('e2e');
+  // 红队①：HELP_WAKE_WORDS 闭集字面钉死（顺序无关），常量增删即红。
+  assert.deepEqual([...HELP_WAKE_WORDS].sort(), ['卡路里HELP', '卡路里 help'].sort());
   for (const w of HELP_WAKE_WORDS) {
     const r = runHelpFile({ dbDir, wakeWord: w, now: new Date(2026, 6, 26, 12, 30, 59) });
     assert.equal(r.mode, 'file');
@@ -86,7 +85,7 @@ test('#133 ②b-③ 回执绝对路径（data.output===delivery.path＋文件即
   assert.equal(r.mode, 'file');
   assert.ok(isAbsolute(r.path), '须为绝对路径：' + r.path);
   const env = r.envelope;
-  assert.equal(env.key, HELP_FILE_KEY);
+  assert.equal(env.key, 'calorie.help.center');
   assert.equal(env.data.output, r.path);
   assert.equal(env.delivery.path, r.path);
   assert.ok(isAbsolute(env.delivery.path), 'delivery.path 绝对路径不变式');
@@ -104,8 +103,8 @@ test('#133 ②b-④ 二次同秒产_2（wx独占递增_N）', () => {
   const b = runHelpFile({ dbDir, wakeWord: '卡路里HELP', now: D0 });
   assert.equal(a.mode, 'file');
   assert.equal(b.mode, 'file');
-  assert.equal(a.path, join(dbDir, 'calorie_html', HELP_FILE_STEM + '_' + STAMP + '.html'));
-  assert.equal(b.path, join(dbDir, 'calorie_html', HELP_FILE_STEM + '_' + STAMP + '_2.html'));
+  assert.equal(a.path, join(dbDir, 'calorie_html', '卡路里_HELP' + '_' + STAMP + '.html'));
+  assert.equal(b.path, join(dbDir, 'calorie_html', '卡路里_HELP' + '_' + STAMP + '_2.html'));
   assert.ok(existsSync(a.path) && existsSync(b.path), '两份产物并存零覆盖');
 });
 
@@ -154,12 +153,12 @@ test('#133 ②b-⑦ mirror默认关闭；显式开即落根卡路里.html且逐�
   const off = runHelpFile({ dbDir, wakeWord: '卡路里HELP', now: D0 });
   assert.equal(off.mode, 'file');
   assert.equal(off.mirrorPath, undefined);
-  assert.ok(!existsSync(join(dbDir, HELP_FILE_MIRROR_NAME)), '默认不写根镜像');
+  assert.ok(!existsSync(join(dbDir, '卡路里.html')), '默认不写根镜像');
   assert.equal(off.envelope.data.mirror, undefined);
   const on2 = runHelpFile({ dbDir, wakeWord: '卡路里HELP', now: D0, mirrorRoot: true });
   assert.equal(on2.mode, 'file');
   assert.ok(isAbsolute(on2.mirrorPath), '镜像路径须绝对');
-  assert.equal(on2.mirrorPath, join(dbDir, HELP_FILE_MIRROR_NAME));
+  assert.equal(on2.mirrorPath, join(dbDir, '卡路里.html'));
   assert.equal(readFileSync(on2.mirrorPath, 'utf8'), readFileSync(on2.path, 'utf8'), '镜像与主产物逐字节一致');
   assert.equal(on2.envelope.data.mirror, on2.mirrorPath);
   assert.equal(statSync(on2.mirrorPath).size, on2.bytes);
