@@ -33,6 +33,6 @@ export function renderHelpShellHtml(data: HelpFileData): string {
   if (!data || !Array.isArray(data.groups) || data.groups.length === 0) {
     throw new CalorieRenderError('missing-data', 'HELP 渲染缺分组（不返空页）。');
   }
-  const json = JSON.stringify(data).replace(/</g, '\u003c');
+  const json = JSON.stringify(data).replace(/</g, '\\u003c');
   return HELP_SHELL_PREFIX + json + HELP_SHELL_SUFFIX;
 }
