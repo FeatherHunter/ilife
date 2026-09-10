@@ -11,8 +11,12 @@
  *     目录不存在则递归创建（老 `html_dir(mkdir=True)`），不写死任何盘符。
  *
  * 与 `src/output.ts` 的分工：`output.ts` 是 CLI 默认落点全量管线（含 `--output` 覆盖、
- * `readdirSync` 计数、`wx` 并发重试）；本模块是 HELP 渲染接线（T2-②b）的前置小件，
- * 碰撞判定以外置 `exists` 回调注入（可单测、零 IO 耦合），接线时再由调用方传入 `existsSync`。
+ * `readdirSync` 计数、`wx` 并发重试）；本模块是 HELP 渲染接线（T2-②b）的前置小件。
+ * 耦合实话（S3-1）：`exists` 回调注入只隔离「命名决策」（可单测），本模块仍做
+ * `mkdirSync` 真 IO（`resolveHelpPath` 内）；真正零 IO 的是纯函数
+ * `buildHelpFileName／formatHelpStamp`。②b 接线落盘**不用**本模块的 `exists` 循环
+ * 定最终名（判存与写入之间无独占性，并发必交叉），只用 `buildHelpFileName` 算初候选，
+ * 最终名由 `output.ts:writeFileExclusiveWithRetry` 的 `wx`＋`EEXIST` 重试仲裁。
  */
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
