@@ -38,6 +38,7 @@ import { HELP_CONTACT } from './helpCenter.js';
 import { HELP_HTML_DIR_NAME, buildHelpFileName } from './helpPaths.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import type { WakeGroupAsset } from '../triggers/wake-assets.js';
+import { renderHelpShellHtml } from './helpShell.js';
 
 /** HELP key 闭集（HELP 唯一入口；大小写／空格逐字，老 SKILL 口径 `卡路里HELP`）。 */
 export const HELP_WAKE_WORDS = ['卡路里HELP', '卡路里 help'] as const;
@@ -103,27 +104,11 @@ export function buildHelpFileData(now: Date = new Date()): HelpFileData {
   };
 }
 
-/** 换行（仓库口径：`String.fromCharCode(10)`，不写字面 `\n`）。 */
-const LF = String.fromCharCode(10);
-
-/** 5 键 JSON → 最小数据载体 HTML（`help-data` 内联；F3 `help_template.html`
- * 611 行全量视觉 parity——Tab／搜索／Sheet——非本票范围，本壳只保证契约可解析＋
- * `file://` 可开；`<` 转 `\u003c` 防 `</script>` 破壳，`JSON.parse` 后逐字一致）。 */
+/** 5 键 JSON → 全壳 HTML（T3 #134：与老实物同壳；`render/helpShell.ts:renderHelpShellHtml`
+ * 唯一实现——DOM＋CSS变量＋三槽填充物照搬老实物，本函数只做接线层转发，不自造第二套壳；
+ * 空分组抛 `missing-data`（不返空页；沿 T2-②b 口径，调用方 exit 5）。 */
 export function renderHelpFileHtml(data: HelpFileData): string {
-  if (!data || !Array.isArray(data.groups) || data.groups.length === 0) {
-    throw new CalorieRenderError('missing-data', 'HELP 渲染缺分组（不返空页）。');
-  }
-  const json = JSON.stringify(data).replace(/</g, '\\u003c');
-  return '<!DOCTYPE html>' + LF
-    + '<html lang="zh-CN">' + LF
-    + '<head>' + LF
-    + '<meta charset="UTF-8">' + LF
-    + '<title>' + data.title + '</title>' + LF
-    + '</head>' + LF
-    + '<body>' + LF
-    + '<script id="' + HELP_FILE_DATA_ID + '" type="application/json">' + json + '</script>' + LF
-    + '</body>' + LF
-    + '</html>' + LF;
+  return renderHelpShellHtml(data);
 }
 
 export interface HelpFileRunOptions {
