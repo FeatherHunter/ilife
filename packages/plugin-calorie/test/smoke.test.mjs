@@ -27,11 +27,12 @@ describe('dsh-calorie 烟囱', () => {
     assert.ok(typeof assertCliPresent === 'function');
     assert.throws(() => assertCliPresent('/nonexistent/skill-calorie-cmd_read.js'), (e) => e instanceof SkillBridgeError && e.code === 'missing-cli');
   });
-  it('#48 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace）', () => {
+  it('#48 安装布局：单品声明 skill 精确 pin 依赖（正式版号，无 workspace；ticket63 exact，防旧 skill 残留）', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
+    const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-calorie', 'package.json'), 'utf8')).version;
     assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.2\./);
-    assert.match(dep['skill-calorie'] ?? '', /^\^0\.2\./);
+    assert.equal(dep['skill-calorie'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
   it('#48 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {
