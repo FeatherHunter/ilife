@@ -1,6 +1,6 @@
 {
   "name": "skill-calorie",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "卡路里SKILL一期：DB schema与迁移收敛（T1 #20），零依赖",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,7 +19,7 @@
     "templates/*.html"
   ],
   "dependencies": {
-    "base-paint": "^0.2.0"
+    "base-paint": "^0.3.0"
   },
   "devDependencies": {
     "base-link-core": "^0.1.0"

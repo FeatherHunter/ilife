@@ -3,3 +3,4 @@ packages/*/dist/
 *.tsbuildinfo
 # 工作副本（施工/取证/验收的临时产物）：永不入库，权威在 docs/ 与票面
 .scratch/
+.tmp-*/

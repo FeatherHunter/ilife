@@ -1,6 +1,6 @@
 {
   "name": "base-paint",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "渲染包：ui+style+injector+渲染契约，装配唯一 owner",
   "type": "module",
   "main": "./dist/index.js",

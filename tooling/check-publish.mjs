@@ -79,11 +79,19 @@ const fail = (m) => { console.error('FAIL: ' + m); bad++; };
  *      （`^0.2.0` ↔ 工作区 `0.2.0` 通过；`^0.1.0` ↔ 工作区 `0.2.0` 红）——即「同版本线」，
  *      比 `/^\^\d+\.\d+\.\d+$/`（会放行 `^9.9.9`，R1 FX-R1-10）强，且不含任何具体版本号。
  *   形态上只认 `^major.minor.patch`：`workspace:`（:78 另查）、tag、`>=…<…` 区间一律红。
+ *   唯一例外（#129）：插件→其单品必须精确 pin（caret＋存量 lockfile 会让旧 skill
+ *   残留），且 pin 值逐字等于该单品在**工作区**的实际版本（与 skill-pin.test.mjs
+ *   同语义；`0.2.2` ↔ 工作区 `0.2.2` 通过，其余一律红）。
  */
 function assertSameVersionLine(dependent, depName, range) {
   if (!range) { fail(dependent + ' 未声明 ' + depName); return; }
   if (!DIRM[depName]) { fail(dependent + ' 的 ' + depName + ' 不在本仓包清单（无法比对工作区版本）'); return; }
   const want = pkgJson(depName).version;
+  if (PLUGIN_OF[dependent] === depName) {
+    if (range === want) { ok(dependent + ' 精确 pin ' + depName + ' ' + range + '（工作区 ' + want + '，#129）'); return; }
+    fail(dependent + ' 的 ' + depName + ' 必须精确 pin 工作区版本 ' + want + '（#129），现为「' + range + '」');
+    return;
+  }
   const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(range);
   if (!m) { fail(dependent + ' 的 ' + depName + ' 范围「' + range + '」非 ^major.minor.patch 形态'); return; }
   const [maj, min] = String(want).split('.');
