@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#125 收口裁定简报：一句话就能关掉的票</title>
+<style>
+  :root { --bg:#0f141b; --card:#161d27; --line:#2a3442; --fg:#e8edf3; --mut:#9aa7b8;
+          --green:#2f9e5f; --greenbg:#123324; --amber:#c98a1b; --amberbg:#3a2c10;
+          --red:#d65353; --redbg:#3d1a1a; --blue:#3b82c4; --bluebg:#14293f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:28px 22px 70px; }
+  header.top { border:1px solid var(--line); border-radius:12px; padding:22px 24px;
+               background:linear-gradient(180deg,#182130,#141b26); }
+  header.top h1 { margin:0 0 6px; font-size:24px; }
+  header.top .sub { color:var(--mut); font-size:13.5px; }
+  .pills { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
+  .pill { font-size:12.5px; padding:3px 12px; border-radius:999px; border:1px solid var(--line); }
+  .pill.ok { background:var(--greenbg); color:#7fd79f; border-color:#1f4d33; }
+  .pill.warn { background:var(--amberbg); color:#e8bd6a; border-color:#5c4416; }
+  .pill.block { background:var(--redbg); color:#f09393; border-color:#5c2020; }
+  .pill.info { background:var(--bluebg); color:#8fbdf0; border-color:#1d3a58; }
+  h2.sec { margin:36px 0 4px; font-size:20px; padding-left:12px; border-left:4px solid var(--blue); }
+  .lede { color:var(--mut); margin:4px 0 14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:20px 22px; margin:14px 0; }
+  .card h3 { margin:0 0 2px; font-size:17px; }
+  h4 { margin:16px 0 6px; font-size:14.5px; color:#cdd8e4; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; margin:8px 0; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#1b2330; white-space:nowrap; }
+  td.num { text-align:center; white-space:nowrap; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12.5px;
+         background:#0c1118; border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+  .fact { background:#101823; border:1px dashed #33405280; border-radius:8px;
+          padding:10px 14px; margin:8px 0; font-size:13.5px; }
+  .fact b.k { color:#8fbdf0; }
+  .recbox { border:1px solid #1f4d33; background:#0f231a; border-radius:8px;
+            padding:12px 16px; margin:10px 0; font-size:14.5px; }
+  .recbox b { color:#7fd79f; }
+  .warnbox { border:1px solid #5c4416; background:#241c0c; border-radius:8px; padding:12px 16px; margin:10px 0; font-size:14px; }
+  .warnbox b { color:#e8bd6a; }
+  .procon td:first-child { white-space:nowrap; font-weight:700; }
+  .pro { color:#7fd79f; } .con { color:#f09393; }
+  a { color:#7fb5ef; }
+  .reply { border:1px solid var(--blue); background:var(--bluebg); border-radius:12px; padding:16px 20px; margin-top:26px; }
+  .reply pre { background:#0c1118; border:1px solid var(--line); border-radius:8px; padding:12px 14px;
+               font-size:14px; overflow-x:auto; margin:10px 0 0; }
+  footer { color:var(--mut); font-size:12.5px; margin-top:26px; }
+  nav.toc { margin:14px 0 0; font-size:13.5px; color:var(--mut); }
+  nav.toc a { margin-right:14px; }
+  details { border:1px solid var(--line); border-radius:8px; background:#101823; margin:10px 0; }
+  details > summary { cursor:pointer; padding:9px 14px; font-size:13.5px; color:#8fbdf0; }
+  details > div { padding:0 14px 12px; font-size:13.5px; }
+  .kv { display:grid; grid-template-columns:140px 1fr; gap:2px 12px; font-size:13.5px; margin:6px 0 0; }
+  .kv div:nth-child(odd) { color:var(--mut); }
+  .big { font-size:30px; font-weight:800; letter-spacing:-1px; }
+  .big.ok { color:#7fd79f; } .big.warn { color:#e8bd6a; }
+  .grid3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:12px 0 4px; }
+  .tile { border:1px solid var(--line); border-radius:10px; background:#121a24; padding:14px 16px; text-align:center; }
+  .tile .lbl { color:var(--mut); font-size:12.5px; }
+  .before { color:#f09393; } .after { color:#7fd79f; }
+  .step { border-left:3px solid var(--green); padding:2px 0 2px 14px; margin:10px 0; }
+  @media print { body { background:#fff; color:#111; } .card,header.top,.tile { border-color:#ccc; background:#fff; }
+                 .fact,.reply pre,details { background:#f7f7f7; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>#125 收口裁定简报 · 一句话就能关掉的票</h1>
+  <div class="sub">2026-09-10 · 票《写层回执与软删幂等语义不一致》现在 <b>95%</b>；代码早已修好并入仓，只差你对「那 2 条红与它无关」点个头</div>
+  <div class="pills">
+    <span class="pill ok">修复已入仓 2545c9d</span>
+    <span class="pill ok">相关测试 97/97</span>
+    <span class="pill ok">四门 exit 0</span>
+    <span class="pill warn">1 句裁定 → 100% ＋ 关闭</span>
+  </div>
+  <nav class="toc">直达：
+    <a href="#summary">30 秒速览</a>
+    <a href="#what">一、这票是什么</a>
+    <a href="#state">二、现在到哪一步</a>
+    <a href="#red">三、那 2 条红是什么</a>
+    <a href="#why">四、为什么必须你判</a>
+    <a href="#decide">五、三个选项</a>
+    <a href="#reply">怎么回我</a>
+  </nav>
+</header>
+
+<!-- ============ 速览 ============ -->
+<h2 class="sec" id="summary">30 秒速览</h2>
+<div class="card">
+  <table>
+    <tr><th>用一句话说</th><td><b>同一个「删除」动作，两条路径给出两种说法</b>——按记录编号重复删会说「已删除」（exit 0），按日期删却正确说「无运动记录」（exit 4）。用户看到的回执会骗人。</td></tr>
+    <tr><th>严重程度</th><td>不丢数据；是<b>回执与幂等语义不一致</b>（回执说成功、那行其实早已不可见）。由 #120 的审查实测发现并转出。</td></tr>
+    <tr><th>修好了吗</th><td><b>修好了</b>：三条路径统一为「已软删＝不存在」，重复删除一律 exit 4；4 个回归用例 ＋ 2 处「故意改坏就变红」的自证。<b>也已入仓</b>（<code>2545c9d</code>）。</td></tr>
+    <tr><th>那还缺什么</th><td>只缺<b>一句裁定</b>：全量测试里还剩 2 条新增失败，需要你确认「与 #125 无关」。票面写着「未确认不得 close」。</td></tr>
+    <tr><th>你要做</th><td>回一句「<b>同意：那 2 条 P10 红与 #125 无关</b>」→ 我推 100% 并关闭。<b>不回也不会坏</b>（代码在仓里、功能已修、测试已绿）。</td></tr>
+  </table>
+  <div class="recbox"><b>推荐：甲 —— 同意并关闭</b>；同时建议<b>另开一张小票</b>修那 2 条红（它们是真债：测试落后于规范 #129，但和 #125 无关）。</div>
+</div>
+
+<!-- ============ 一、是什么 ============ -->
+<h2 class="sec" id="what">一、#125 到底是什么（前因后果）</h2>
+
+<div class="card">
+  <h3>1.1 起因：一张表、两套说法</h3>
+  <p class="lede">运动记录用的是「软删除」——删除时只是打上删除标记，行仍留在库里。问题出在：<b>有的路径认这个标记，有的不认</b>。</p>
+  <table>
+    <tr><th>软删一条运动记录之后，你做的事</th><th>修复前的回执</th><th>应该是什么</th></tr>
+    <tr>
+      <td>按<b>记录编号</b>再改它（<code>calorie.exercise.update</code>）</td>
+      <td class="before">「已更新运动 #2」 · exit 0 ❌</td>
+      <td class="after">「记录 ID 2 不存在」 · exit 4</td>
+    </tr>
+    <tr>
+      <td>按<b>记录编号</b>再删一次（<code>calorie.exercise.remove</code>）</td>
+      <td class="before">「已删除运动 #2（软删除…）」 · exit 0 ❌</td>
+      <td class="after">「记录 ID 2 不存在」 · exit 4</td>
+    </tr>
+    <tr>
+      <td>按<b>日期</b>删同一批</td>
+      <td class="after">「无运动记录（…）」 · exit 4 ✅</td>
+      <td class="after">一直是对的</td>
+    </tr>
+  </table>
+  <div class="fact"><b class="k">为什么算缺陷：</b>同一张表、同一条记录，「存不存在」这件事在写层有两种答案。用户按回执行事（以为改成功/删干净了），而记录早已被排除在查询与统计之外——回执与事实不符。</div>
+</div>
+
+<div class="card">
+  <h3>1.2 修法（已完成）</h3>
+  <div class="kv">
+    <div>做法</div><div>按编号的改／删补上同一个过滤条件 <code>COALESCE(is_deleted, 0) = 0</code>，与按日／按范围路径、与读层统计口径（#120 的 <code>EX_ALIVE</code>）逐字同款；删除落库的 UPDATE 同加该条件以防竞态。</div>
+    <div>效果</div><div>三条路径行为一致：<b>首次删 exit 0；任何路径重复删一律 exit 4</b>；<code>is_deleted IS NULL</code> 的历史活行不受误伤（COALESCE 保住）。</div>
+    <div>测试</div><div>新增 <code>packages/skill-calorie/test/softdelete-125.test.mjs</code> 4 用例（三条路径×活行/软删行矩阵／跨路径幂等／防过度过滤／NULL 活行护栏）；把 <code>cmd-write-40.test.mjs</code> 里那条「重复删 id 期望 exit 0」的旧断言（＝缺陷本身）改成 exit 4。</div>
+    <div>自证</div><div>2 处「把过滤条件改回去就变红、改回来就变绿」的变异验证。</div>
+    <div>入仓</div><div>提交 <code>2545c9d</code> —— 注意：这个修复此前<b>只躺在工作区、从没进过版本控制</b>（票却已标关闭），今天一并入仓并推送。</div>
+  </div>
+</div>
+
+<!-- ============ 二、状态 ============ -->
+<h2 class="sec" id="state">二、现在到哪一步</h2>
+<div class="card">
+  <div class="grid3">
+    <div class="tile"><div class="lbl">票面进度</div><div class="big warn">95%</div><div class="lbl">待确认，未 close</div></div>
+    <div class="tile"><div class="lbl">相关测试</div><div class="big ok">97/97</div><div class="lbl">8 个文件 · fail 0</div></div>
+    <div class="tile"><div class="lbl">门禁</div><div class="big ok">4/4</div><div class="lbl">全部 exit 0</div></div>
+  </div>
+  <h3>二、两项「待确认」的现状</h3>
+  <table>
+    <tr><th>待确认项</th><th>票面原状（一天前）</th><th>今天实测</th></tr>
+    <tr>
+      <td><b>(a)</b> <code>pnpm publish:pre</code></td>
+      <td><span class="pill block">exit 1</span> 三个包版本号不一致导致的既有红</td>
+      <td><span class="pill ok">exit 0</span> 三包今天已归位 0.3.0 并上架（#140）⇒ <b>这条红消失</b></td>
+    </tr>
+    <tr>
+      <td><b>(b)</b> 全量测试的新增失败</td>
+      <td><span class="pill block">字面新增≠0</span> 当时 4 条</td>
+      <td><span class="pill warn">只剩 2 条</span> 且与本票<b>无任何文件交集</b>（见下一节）</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============ 三、2 条红 ============ -->
+<h2 class="sec" id="red">三、剩下那 2 条红是什么（关键决策信息）</h2>
+<div class="card">
+  <h3>3.1 实测数字</h3>
+  <div class="fact">
+    口径＝仓库自己的治理名单 <code>docs/research/t88-baseline/test-failset.txt</code>（34 条）。
+    今天实测：<b>base=34 → after=31，新增 2 ／ 消失 5</b>。<br>
+    <b class="k">消失的 5 条</b>（都是既有基线抖动项，非本票造成）：<code>#41 M3 真 CLI 串行冒烟</code>／<code>#76 无宿主可执行证据</code>／<code>#80 HELP 生成与键名一致性</code>／<code>helpers ≤820px 收窄</code>／<code>check-combos 全绿</code>。
+  </div>
+
+  <h3>3.2 新增的 2 条 ＝ 同一条测试 ＋ 它的套件行</h3>
+  <table>
+    <tr><th>失败的测试名</th><th>断言的实测原话</th><th>根因</th></tr>
+    <tr>
+      <td><code>单品→总管单向（总管零单品依赖）</code><br>（套件行：<code>P10 依赖方向</code>）<br><span class="pill info">test/plugin-p10-boundaries.test.mjs:39</span></td>
+      <td><code>plugin-calorie 须同版本 ^ 声明对应 skill</code><br><code>'0.2.2' !== '^0.2.0'</code></td>
+      <td>该测试仍按<b>旧规则</b>要求插件声明 <code>skill-calorie: ^0.2.0</code>；而插件现在按规范 <b>#129</b> 精确 pin <code>0.2.2</code>——发布门 <code>tooling/check-publish.mjs:90-92</code> 已经按 #129 改好，<b>这条测试没跟着改</b>。</td>
+    </tr>
+  </table>
+
+  <h3>3.3 为什么可以断定「与 #125 无关」</h3>
+  <details>
+    <summary>点开看两边的文件对照（这是判定的硬依据）</summary>
+    <div>
+      <table>
+        <tr><th>#125 这次动过的文件</th><th>那 2 条红读的文件</th></tr>
+        <tr>
+          <td><code>packages/skill-calorie/src/fetch/exercise.ts</code>（软删过滤）<br>
+              <code>packages/skill-calorie/test/softdelete-125.test.mjs</code>（新）<br>
+              <code>packages/skill-calorie/test/cmd-write-40.test.mjs</code>（旧断言改）<br>
+              <code>.changeset/t125-exercise-softdelete-idempotency.md</code>（新）</td>
+          <td><code>test/plugin-p10-boundaries.test.mjs</code>（读各包 <code>package.json</code> 的依赖写法）<br>
+              <code>packages/plugin-calorie/package.json</code>（插件依赖声明）<br>
+              <code>tooling/check-publish.mjs</code>（#129 规则本体）</td>
+        </tr>
+      </table>
+      <p><b>两边零交集</b>：一个改的是「运动记录删除路径」，一个读的是「插件对技能的依赖写法」。</p>
+    </div>
+  </details>
+
+  <div class="warnbox">
+    <b>但请注意：这 2 条红本身是真债。</b>不是抖动、不是环境问题——是<b>那条测试落后于规范 #129</b>。
+    它与 #125 无关，却也不该长期挂着；建议单独开一张小票修它（见 §五 的可选动作）。
+  </div>
+</div>
+
+<!-- ============ 四、为什么你判 ============ -->
+<h2 class="sec" id="why">四、为什么这件事必须由你判</h2>
+<div class="card">
+  <div class="fact">
+    仓库自己的纪律（<code>docs/research/t88-delta-flake-ruling.md</code> §6 末行）写着：
+    <blockquote style="margin:8px 0 0;border-left:3px solid var(--amber);padding-left:12px;color:#e8bd6a">
+      「该判据<b>只能</b>由编排者按三步判定逐条裁；<b>session 不得自行援引第 1 条豁免</b>。」
+    </blockquote>
+  </div>
+  <p class="lede">翻译：把「某条新增失败不计入本票」这句话说出口的资格，<b>只在编排者（＝你）手上</b>。我可以把实测、归因、文件对照全部摆出来，但不能替你宣布结论——否则等于自己给自己发免罪牌，这正是那条纪律要防的事。</p>
+</div>
+
+<!-- ============ 五、选项 ============ -->
+<h2 class="sec" id="decide">五、三个选项，利弊摆在一起</h2>
+<div class="card">
+  <table class="procon">
+    <tr><th>选项</th><th>做什么</th><th>利</th><th>弊</th></tr>
+    <tr>
+      <td><b>甲（推荐）</b></td>
+      <td>你说一句「那 2 条 P10 红与 #125 无关」→ 我把 #125 推到 <b>100% 并关闭</b></td>
+      <td class="pro">
+        · 一句话的事；<br>
+        · 依据已经是实测的：两边文件零交集，且该测试的规则出处（#129）与本票毫无关系；<br>
+        · 地图 #63 上少一张「已做完却挂着」的票
+      </td>
+      <td class="con">
+        · 将来若想复核，要翻票面的记录（记录已写进票面，不会丢）；<br>
+        · 那 2 条红仍要在别处处理（不影响 #125 关闭）
+      </td>
+    </tr>
+    <tr>
+      <td><b>乙（零决策）</b></td>
+      <td>什么都不回，#125 保持 95% 挂着</td>
+      <td class="pro">
+        · 不用做任何判断；<br>
+        · <b>什么都不会坏</b>：代码已入仓、功能已修好、相关测试全绿
+      </td>
+      <td class="con">地图上长期挂一张「做完了没关」的票；下次盘账还要再解释一遍那 2 条红</td>
+    </tr>
+    <tr>
+      <td>丙</td>
+      <td>先把那 2 条红修掉（改一条测试对齐 #129），再回头关 #125</td>
+      <td class="pro">从根上让「新增=0」，之后判定不再需要任何人开口</td>
+      <td class="con">要动框架侧的一条测试与插件依赖断言；且与 #125 完全无关，等于让 #125 多等一件别人的事</td>
+    </tr>
+  </table>
+
+  <div class="recbox">
+    <b>推荐：甲 ＋ 一个可选动作。</b><br>
+    ① <b>甲</b>：一句「同意」，#125 收口（它是本图最后一张「做完了」的票）。<br>
+    ② 可选：另开一张小票「<b>把 plugin-p10 边界测试对齐 #129 的精确 pin 规则</b>」，把那 2 条真债收进正常流程——这样它既不耽误 #125，也不会被忘掉。
+  </div>
+</div>
+
+<!-- ============ 我之后做什么 ============ -->
+<h2 class="sec">六、你点头之后，我做这三件事</h2>
+<div class="card">
+  <div class="step"><b>1.</b> 把 #125 推到 <b>100%</b>，票面写明「已确认：新增 2 条属 P10／#129 测试同步，不计入本票 delta」。</div>
+  <div class="step"><b>2.</b> 关闭 #125，并在地图 #63 的「Decisions so far」追加一行（票名＋链接＋一句结论）。</div>
+  <div class="step"><b>3.</b> 若你同意，再把那张 P10 测试同步小票开出来（可选）。</div>
+  <div class="fact" style="margin-top:14px">可复算的锚点：修复提交 <code>2545c9d</code>；靶向 97/97（runId <code>2fa5ef22…</code>）；canonical 治理名单 delta 日志 <code>.scratch/hygiene/canonical-after-bump-2.log</code>；纪律出处 <code>docs/research/t88-delta-flake-ruling.md</code> §6。</div>
+</div>
+
+<div class="reply" id="reply">
+  <b>你可以这样回（只回第一行也行）：</b>
+  <pre>#125：甲（那 2 条与它无关，关掉）
+#125：甲＋小票（关掉，并把 P10 测试同步开成新票）
+#125：乙（先挂着，别动）</pre>
+  <div style="margin-top:10px;color:#9aa7b8;font-size:13.5px">
+    不回也没关系——默认就是「乙」，地图、代码、测试都不会因此坏掉。
+  </div>
+</div>
+
+<footer>
+  票据：<a href="https://github.com/FeatherHunter/ilife/issues/125">#125 写层回执与软删幂等语义不一致</a> ·
+  地图：<a href="https://github.com/FeatherHunter/ilife/issues/63">#63 卡路里·本体图</a> ·
+  相关发布：<a href="https://github.com/FeatherHunter/ilife/issues/140">#140 base-* 三包 0.3.0</a><br>
+  生成时间：2026-09-10 · 本文件为决策简报；事实以票面与提交为准（票面已同步补正为「新增 2」）
+</footer>
+
+</div>
+</body>
+</html>
