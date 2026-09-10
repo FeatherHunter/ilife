@@ -8,6 +8,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./blocks": "./dist/blocks.js",
+    "./help-shell": "./dist/helpShell.js",
     "./package.json": "./package.json"
   },
   "files": [
