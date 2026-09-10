@@ -9,7 +9,7 @@
  *     `contact` 与 `render/helpCenter.ts:HELP_CONTACT` 同源（实物 2 项逐字）；
  *     `init_banner/version/recommendations` 为模板侧可选能力，本接线**不传**——传了即
  *     第二真相源，漂移面无收益）。
- *  3. 命名：`render/helpPaths.ts:buildHelpFileName`（通式 `〈茎〉_<TS>[_<n>].html`）。
+ *  3. 命名：`render/helpPaths.ts:buildHelpFileName`（通式 `〈文件名主体〉_<TS>[_<n>].html`）。
  *  4. 落盘：`output.ts:writeFileExclusiveWithRetry`（`wx` 独占＋`EEXIST` 递增 `_N` 重试，
  *     #128 同款；**不可 check-then-write**——`resolveHelpPath` 的 `exists` 回调只做命名
  *     hint，判存与写入之间无独占性，并发同秒必交叉覆盖，红队 S2 硬要求）。
@@ -23,8 +23,8 @@
  *  静态资产下不可达、防御性分支），写结构错／渲染错 → 5；缺 dbDir **目录**不算缺数据——
  *  `mkdirSync(recursive)` 建出后照常落盘（exit 0）。
  *
- * 红队 S3-3／S3-4（调用方不接受外部茎／`n` 越权）：
- *  茎在接线层写死 `HELP_FILE_STEM`（`卡路里_HELP`），本模块**无 stem 参数**；
+ * 红队 S3-3／S3-4（调用方不接受外部传入的文件名主体／`n` 越权）：
+ *  文件名主体在接线层写死 `HELP_FILE_STEM`（`卡路里_HELP`），本模块**无 stem 参数**；
  *  `buildHelpFileName` 的 `n` 本接线**永不传**（初候选无后缀；冲突重试走
  *  `output.ts:nextExclusiveCandidate`，首重试即 `_2`），故 `n<2` 不可达。
  */
@@ -55,7 +55,7 @@ export function assertHelpWakeWord(w: unknown): asserts w is HelpWakeWord {
   }
 }
 
-/** 文件名茎（接线层写死；调用方不接受外部茎，S3-3）。 */
+/** 文件名主体（接线层写死；调用方不接受外部传入，S3-3）。 */
 export const HELP_FILE_STEM = '卡路里_HELP' as const;
 /** 根镜像名（老 `mirror_to_root` 的 `<skill_dir>/卡路里.html`，ADR-0001）。 */
 export const HELP_FILE_MIRROR_NAME = '卡路里.html' as const;

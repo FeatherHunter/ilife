@@ -1,11 +1,11 @@
 /** T2-②a #133 · HELP 落盘命名工具（只做命名，不碰渲染接线）。
  *
  * 老命名规则复刻（只读基线 `D:\2Study\StudyNotes\SKILLS\卡路里\scripts\html_paths.py`）：
- *   - 通式 `〈茎〉_<YYYYMMDD>_<HHMMSS>[_<n>].html`（`html_name`）
- *   - HELP 形即茎为 `卡路里_HELP` 的通式（`卡路里_HELP_<ts>.html`）
+ *   - 通式 `〈文件名主体〉_<YYYYMMDD>_<HHMMSS>[_<n>].html`（`html_name`）
+ *   - HELP 形即文件名主体为 `卡路里_HELP` 的通式（`卡路里_HELP_<ts>.html`）
  *   - 文件名秒 ＝ 产出时刻秒（本地时区，`strftime("%Y%m%d_%H%M%S")`）
  *   - 同秒碰撞追加 `_2`／`_3`…（首个冲突 `_2`）
- *   - 茎原样使用：可含中文／空格／`：`／`vs`／`_`（老 `html_name` 只 sanitize `suffix`，`command` 不洗）
+ *   - 文件名主体原样使用：可含中文／空格／`：`／`vs`／`_`（老 `html_name` 只 sanitize `suffix`，`command` 不洗）
  *   - 输出目录：老 `db_path.parent / calorie_html`（`db_path` 为 db **文件**）≡
  *     TS 线 `join(dbDir, 'calorie_html')`（`dbDir` 为 `SKILLS_DB_PATH` **目录**，见 `src/paths.ts`）；
  *     目录不存在则递归创建（老 `html_dir(mkdir=True)`），不写死任何盘符。
@@ -43,7 +43,7 @@ export function formatHelpStamp(now: Date): string {
   );
 }
 
-/** 通式文件名 `〈茎〉_<stamp>[_<n>].html`；茎原样拼入，不做任何清洗。 */
+/** 通式文件名 `〈文件名主体〉_<stamp>[_<n>].html`；主体原样拼入，不做任何清洗。 */
 export function buildHelpFileName(stem: string, date: Date, n?: number): string {
   if (typeof stem !== 'string' || stem.length === 0) {
     throw new Error('[skill-calorie] buildHelpFileName stem 须为非空字符串（缺失阻断不返空）。');
@@ -52,10 +52,10 @@ export function buildHelpFileName(stem: string, date: Date, n?: number): string 
   return n === undefined ? stem + '_' + stamp + HELP_HTML_EXT : stem + '_' + stamp + '_' + String(n) + HELP_HTML_EXT;
 }
 
-/** HELP 落点绝对路径：`<dbDir>/calorie_html/〈茎〉_<stamp>[_<n>].html`。
+/** HELP 落点绝对路径：`<dbDir>/calorie_html/〈文件名主体〉_<stamp>[_<n>].html`。
  *
  * @param dbDir  DB 目录（`SKILLS_DB_PATH` 口径的目录，非 db 文件）。
- * @param stem   文件名茎（如 `卡路里_HELP`），原样使用。
+ * @param stem   文件名主体（如 `卡路里_HELP`），原样使用。
  * @param date   产出时刻（文件名秒取其本地时区秒）。
  * @param exists 碰撞判定回调（接线时传 `existsSync`）；首候选已存在则 `_2` 起递增。
  * @returns 绝对路径；`calorie_html` 目录不存在则递归创建。

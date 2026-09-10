@@ -25,7 +25,7 @@ function tmpDbDir(tag) {
   return mkdtempSync(join(tmpdir(), 't133-' + tag + '-'));
 }
 
-test('#133 ① 通式：〈茎〉_<YYYYMMDD>_<HHMMSS>.html', () => {
+test('#133 ① 通式：〈文件名主体〉_<YYYYMMDD>_<HHMMSS>.html', () => {
   assert.equal(buildHelpFileName('主页仪表盘', D0), '主页仪表盘_' + STAMP + '.html');
   assert.equal(formatHelpStamp(new Date(2026, 0, 2, 3, 4, 5)), '20260102_030405');
 });
@@ -34,11 +34,11 @@ test('#133 ② HELP 形：卡路里_HELP_<ts>.html', () => {
   assert.equal(buildHelpFileName('卡路里_HELP', D0), '卡路里_HELP_' + STAMP + '.html');
 });
 
-test('#133 ③ 中文茎原样（不清洗不截断）', () => {
+test('#133 ③ 中文主体原样（不清洗不截断）', () => {
   assert.equal(buildHelpFileName('热量趋势', D0), '热量趋势_' + STAMP + '.html');
 });
 
-test('#133 ④ 特殊字符茎原样：空格／：／vs／_ 逐字保留', () => {
+test('#133 ④ 特殊字符主体原样：空格／：／vs／_ 逐字保留', () => {
   assert.equal(
     buildHelpFileName('看体重 vs 摄入：最近_7天', D0),
     '看体重 vs 摄入：最近_7天_' + STAMP + '.html',
