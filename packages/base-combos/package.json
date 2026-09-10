@@ -1,6 +1,6 @@
 {
   "name": "base-combos",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "语义包：combos.yaml 唯一真相源，36 组语义条目",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,7 @@
     "dist"
   ],
   "dependencies": {
-    "base-link-core": "workspace:^0.2.0"
+    "base-link-core": "^0.3.0"
   },
   "engines": {
     "node": ">=22.13"

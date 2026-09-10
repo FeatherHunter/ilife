@@ -21,7 +21,7 @@ importers:
   packages/base-combos:
     dependencies:
       base-link-core:
-        specifier: workspace:^0.2.0
+        specifier: ^0.3.0
         version: link:../base-link-core
 
   packages/base-link-core: {}
@@ -29,7 +29,7 @@ importers:
   packages/base-render:
     devDependencies:
       base-link-core:
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../base-link-core
 
   packages/ilife-skills: {}
@@ -123,7 +123,7 @@ importers:
   packages/skill-bill:
     dependencies:
       base-link-core:
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../base-link-core
 
   packages/skill-calorie:
@@ -139,25 +139,25 @@ importers:
   packages/skill-chef:
     dependencies:
       base-link-core:
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../base-link-core
 
   packages/skill-home:
     dependencies:
       base-link-core:
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../base-link-core
 
   packages/skill-memo-ilife:
     dependencies:
       base-link-core:
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../base-link-core
 
   packages/skill-schedule:
     dependencies:
       base-link-core:
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../base-link-core
 
 packages:

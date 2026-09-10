@@ -51,39 +51,40 @@ describe('#79 base-* 三包版本 lockstep', () => {
     );
   });
 
-  it('包内 caret 范围与工作区版本同 major.minor（同版本线）＋ base-combos 必须走 workspace: 协议（G-3）', () => {
+  it('包内 caret 范围与工作区版本同 major.minor（同版本线）＋ 发布面零 workspace:（G-3 改判 #140）', () => {
     const versionOf = (name) => manifests.find((m) => m.name === name)?.json.version;
     const lineOf = (v) => v.split('.').slice(0, 2).join('.');
-    /** `workspace:^x.y.z` 与 `^x.y.z` 都接受；比对 major.minor。 */
     const cases = [
       {
         from: 'base-combos',
         dep: 'base-link-core',
         range: pkg('base-combos').dependencies?.['base-link-core'],
-        workspace: true,
       },
       {
         from: 'base-paint',
         dep: 'base-link-core',
         range: pkg('base-render').devDependencies?.['base-link-core'],
-        workspace: false,
       },
     ];
     for (const c of cases) {
       assert.ok(c.range, `${c.from} 必须声明 ${c.dep}`);
-      const m = /^(?:workspace:)?\^(\d+)\.(\d+)\.\d+$/.exec(c.range);
-      assert.ok(m, `${c.from} 的 ${c.dep} 范围「${c.range}」必须是 ^x.y.z（可带 workspace: 前缀）`);
+      // G-3 改判（#140）：原断言要求 base-combos 带 `workspace:` 前缀（理由写「发布期防外泄 registry」），
+      // 但与发布门 `tooling/check-publish.mjs:110`（package.json 整文件零 `workspace:` 命中）**直接矛盾**；
+      // 此前 base-combos 从未进过发布范围，矛盾没被执行到。本次它首次上架 → 前缀必须去掉：
+      // 发布走 `npm publish`（不改写 `workspace:`），前缀本身就是外泄源——先例见 `docs/public-installer-47.md:67`
+      // （registry `base-combos@0.1.0` 新装 `EUNSUPPORTEDPROTOCOL`）与 `docs/skill-landing-r2.md:68`（已定「去 workspace:」）。
+      // 本地一律链 workspace 由 `pnpm-workspace.yaml` 的 `linkWorkspacePackages`／`preferWorkspacePackages: true` 保证，不依赖前缀。
+      assert.ok(
+        !c.range.startsWith('workspace:'),
+        `${c.from} 的 ${c.dep} 范围「${c.range}」不得带 workspace: 前缀（发布面外泄；G-3 改判见 #140）`,
+      );
+      const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(c.range);
+      assert.ok(m, `${c.from} 的 ${c.dep} 范围「${c.range}」必须是 ^x.y.z 形态`);
       assert.equal(
         `${m[1]}.${m[2]}`,
         lineOf(versionOf(c.dep)),
         `${c.from} 的 ${c.dep} 范围「${c.range}」与工作区版本 ${versionOf(c.dep)} 不同版本线`,
       );
-      if (c.workspace) {
-        assert.ok(
-          c.range.startsWith('workspace:'),
-          `${c.from} 的 ${c.dep} 范围「${c.range}」必须带 workspace: 前缀（发布期防外泄 registry，G-3；去前缀即红）`,
-        );
-      }
     }
   });
 
