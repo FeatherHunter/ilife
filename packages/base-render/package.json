@@ -22,6 +22,8 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "gen:help-shell": "node scripts/gen-help-shell.cjs",
+    "gen:help-shell:check": "node scripts/gen-help-shell.cjs --check",
     "test": "node --test ../../test/scaffold.test.mjs"
   }
 }
