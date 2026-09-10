@@ -1,0 +1,2 @@
+# 行尾声明（help模板源唯一真相源，CRLF 进库；gen 门 fail-closed 双保险）
+packages/base-render/assets/help-template.html text eol=crlf
