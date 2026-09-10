@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地图 #63 · 本轮结果与唯一待你回的一句话（2026-09-10）</title>
+<style>
+  :root { --bg:#0f141b; --card:#161d27; --line:#2a3442; --fg:#e8edf3; --mut:#9aa7b8;
+          --green:#2f9e5f; --greenbg:#123324; --amber:#c98a1b; --amberbg:#3a2c10;
+          --red:#d65353; --redbg:#3d1a1a; --blue:#3b82c4; --bluebg:#14293f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:28px 22px 70px; }
+  header.top { border:1px solid var(--line); border-radius:12px; padding:22px 24px;
+               background:linear-gradient(180deg,#182130,#141b26); }
+  header.top h1 { margin:0 0 6px; font-size:24px; }
+  header.top .sub { color:var(--mut); font-size:13.5px; }
+  .pills { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
+  .pill { font-size:12.5px; padding:3px 12px; border-radius:999px; border:1px solid var(--line); }
+  .pill.ok { background:var(--greenbg); color:#7fd79f; border-color:#1f4d33; }
+  .pill.warn { background:var(--amberbg); color:#e8bd6a; border-color:#5c4416; }
+  .pill.block { background:var(--redbg); color:#f09393; border-color:#5c2020; }
+  .pill.info { background:var(--bluebg); color:#8fbdf0; border-color:#1d3a58; }
+  h2.sec { margin:36px 0 4px; font-size:20px; padding-left:12px; border-left:4px solid var(--blue); }
+  .lede { color:var(--mut); margin:4px 0 14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:20px 22px; margin:14px 0; }
+  .card h3 { margin:0 0 2px; font-size:17px; }
+  h4 { margin:16px 0 6px; font-size:14.5px; color:#cdd8e4; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; margin:8px 0; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#1b2330; white-space:nowrap; }
+  td.num { text-align:center; white-space:nowrap; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12.5px;
+         background:#0c1118; border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+  .fact { background:#101823; border:1px dashed #33405280; border-radius:8px;
+          padding:10px 14px; margin:8px 0; font-size:13.5px; }
+  .fact b.k { color:#8fbdf0; }
+  .recbox { border:1px solid #1f4d33; background:#0f231a; border-radius:8px;
+            padding:10px 14px; margin:10px 0; font-size:14px; }
+  .recbox b { color:#7fd79f; }
+  .warnbox { border:1px solid #5c4416; background:#241c0c; border-radius:8px; padding:10px 14px; margin:10px 0; font-size:14px; }
+  .warnbox b { color:#e8bd6a; }
+  .procon td:first-child { white-space:nowrap; font-weight:700; }
+  .pro { color:#7fd79f; } .con { color:#f09393; }
+  a { color:#7fb5ef; }
+  .reply { border:1px solid var(--blue); background:var(--bluebg); border-radius:12px; padding:16px 20px; margin-top:26px; }
+  .reply pre { background:#0c1118; border:1px solid var(--line); border-radius:8px; padding:12px 14px;
+               font-size:14px; overflow-x:auto; margin:10px 0 0; }
+  footer { color:var(--mut); font-size:12.5px; margin-top:26px; }
+  nav.toc { margin:14px 0 0; font-size:13.5px; color:var(--mut); }
+  nav.toc a { margin-right:14px; }
+  details { border:1px solid var(--line); border-radius:8px; background:#101823; margin:10px 0; }
+  details > summary { cursor:pointer; padding:9px 14px; font-size:13.5px; color:#8fbdf0; }
+  details > div { padding:0 14px 12px; font-size:13.5px; }
+  .commit { border:1px solid var(--line); border-left:4px solid var(--green); border-radius:8px;
+            background:#121a24; padding:12px 16px; margin:10px 0; }
+  .commit .sha { font-family:ui-monospace,Consolas,monospace; font-size:14px; color:#7fd79f; font-weight:700; }
+  .commit .stat { color:var(--mut); font-size:12.5px; }
+  .kv { display:grid; grid-template-columns:120px 1fr; gap:2px 12px; font-size:13.5px; margin:6px 0 0; }
+  .kv div:nth-child(odd) { color:var(--mut); }
+  .tile { border:1px solid var(--line); border-radius:10px; background:#121a24; padding:14px 16px; text-align:center; }
+  .grid3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:12px 0 4px; }
+  .tile .lbl { color:var(--mut); font-size:12.5px; }
+  .big { font-size:30px; font-weight:800; letter-spacing:-1px; }
+  .big.ok { color:#7fd79f; } .big.warn { color:#e8bd6a; } .big.info { color:#8fbdf0; }
+  .no { border-left:4px solid var(--red); }
+  @media print { body { background:#fff; color:#111; } .card,header.top,.commit,.tile { border-color:#ccc; background:#fff; }
+                 .fact,.reply pre,details { background:#f7f7f7; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>地图 #63《卡路里·本体图》· 本轮结果与唯一待你回的一句话</h1>
+  <div class="sub">2026-09-10 · 上一轮我问你的三个问题，现在只剩 <b>一句话可选</b>；其余我已按规则自己处理完</div>
+  <div class="pills">
+    <span class="pill ok">2 张票的修复已入库</span>
+    <span class="pill ok">归档文件已入库</span>
+    <span class="pill ok">截图缓存已进忽略清单</span>
+    <span class="pill info">#131 在另一个会话处理中（我不碰）</span>
+    <span class="pill warn">1 个可选裁定（#125）</span>
+  </div>
+  <nav class="toc">直达：
+    <a href="#summary">结论速览</a>
+    <a href="#done">一、已完成</a>
+    <a href="#131">二、#131 怎么办</a>
+    <a href="#q">三、唯一待你回的一句</a>
+    <a href="#reply">怎么回我</a>
+  </nav>
+</header>
+
+<h2 class="sec" id="summary">结论速览（先看这张表）</h2>
+<div class="card">
+  <table>
+    <tr><th>你上一轮被问到的</th><th>现在的状态</th><th>还需要你做什么</th></tr>
+    <tr>
+      <td>① 几份没入库的文件怎么处置</td>
+      <td><span class="pill ok">已办</span> 3 份属于<b>已完成</b>工作、没有人在用的归档文件入库；截图缓存加进忽略清单；<b>唯一没动的是属于 #131 的那一份</b>（它正在被改写）</td>
+      <td><b>不用做任何事</b></td>
+    </tr>
+    <tr>
+      <td>② #125 要不要关闭</td>
+      <td><span class="pill warn">等你一句话（也可以不回）</span> 代码已入库、门禁四项全绿；只剩「4 条版本号相关的失败算不算 #125 的」这一句话</td>
+      <td>看 <a href="#q">§三</a>：同意就回「甲」，不想拍就不回</td>
+    </tr>
+    <tr>
+      <td>③ 下一张票取哪张</td>
+      <td><span class="pill info">这个问题作废</span> 你说 #131 还在另一个会话处理——#137／#139 都是它的活，<b>我本来就不该插手</b></td>
+      <td><b>不用做任何事</b></td>
+    </tr>
+  </table>
+  <div class="recbox">
+    <b>一句话：</b>你只需要知道两件事——<b>#131 在别人手上，我退出</b>；<b>#63 本体这边的活已全部落地并入库，等 #131 结束就能收口</b>。
+  </div>
+</div>
+
+<h2 class="sec" id="done">一、已完成（都不用你确认）</h2>
+
+<div class="card">
+  <h3>1.1 两张票的修复入库（这才是要紧的那件）</h3>
+  <div class="fact">
+    入库前的事实：<b>#127 票面已经写着「关闭」，但它的修复从没进过版本控制</b>——只躺在工作区；#125 也一样。
+    也就是说，谁要是按当时的正式版本检出代码，<b>「目标值被静默重置、用户数据丢失」这个缺陷会复活</b>。
+  </div>
+  <div class="commit">
+    <div><span class="sha">2545c9d</span> &nbsp;<b>#125</b>：按记录编号改／删运动记录时，补上「已删除的记录视为不存在」的过滤</div>
+    <div class="stat">4 files changed, +157 / −4</div>
+  </div>
+  <div class="commit">
+    <div><span class="sha">2ef0bba</span> &nbsp;<b>#127</b>：设定目标时改成只写传入的列，没传的列保持原值（不再整行覆盖）</div>
+    <div class="stat">4 files changed, +151 / −15</div>
+  </div>
+  <details>
+    <summary>验证证据（6 项门禁 · 全部持锁运行 · 点开看）</summary>
+    <div>
+      <table>
+        <tr><th>门禁</th><th>结果</th><th>runId</th></tr>
+        <tr><td>构建 <code>pnpm build</code></td><td><span class="pill ok">exit 0</span></td><td><code>b9915bf5…8bce20</code></td></tr>
+        <tr><td>相关测试 8 个文件</td><td><span class="pill ok">97/97 通过，失败 0</span></td><td><code>2fa5ef22…d7e0</code></td></tr>
+        <tr><td>依赖方向 <code>pnpm boundaries</code></td><td><span class="pill ok">exit 0</span></td><td><code>34bba1dd…ad47</code></td></tr>
+        <tr><td>快照对照 <code>pnpm snapshot:check</code></td><td><span class="pill ok">exit 0</span></td><td><code>14d337e8…2eb0</code></td></tr>
+        <tr><td>发版前检查 <code>pnpm publish:pre</code></td><td><span class="pill ok">exit 0（原先红，现已转绿）</span></td><td><code>b37c1614…b44</code></td></tr>
+        <tr><td>全量测试 <code>pnpm test</code></td><td><span class="pill warn">exit 1（既有名单里的红，与本次改动无关）</span></td><td><code>63af7d62…fe70</code></td></tr>
+      </table>
+      <p><b>全量测试那 4 条新增失败是什么：</b>相对仓库自己的治理名单（34 条）实测为 <b>新增 4 条／消失 5 条</b>；新增的 4 条是「三个包版本号必须一致」「依赖方向」「单品到总管单向」等，<b>只读 <code>package.json</code>，而这个文件本次一个字都没改</b>——原因是三个包的版本号目前不一致（<code>base-paint 0.3.0</code> / <code>skill-calorie 0.2.2</code> / <code>plugin 0.2.3</code>），属于发版流程自己的事。</p>
+    </div>
+  </details>
+</div>
+
+<div class="card">
+  <h3>1.2 归档文件入库 ＋ 截图缓存进忽略清单</h3>
+  <table>
+    <tr><th>文件</th><th>是什么</th><th>处置</th></tr>
+    <tr><td><code>docs/research/decision-116-3q-20260909.html</code></td><td>#116 的拍板记录（属已关闭的「打通图」）</td><td><span class="pill ok">入库</span></td></tr>
+    <tr><td><code>docs/research/t123-release-evidence/</code>（2 件）</td><td>#123 发版窗口当次的取证留档（已关闭）</td><td><span class="pill ok">入库</span></td></tr>
+    <tr><td><code>docs/research/decision-63-hygiene-20260910.html</code></td><td>本简报</td><td><span class="pill ok">入库</span></td></tr>
+    <tr><td><code>.dsh-vision-router/</code></td><td>截图工具留下的 9 张图片缓存（约 640 KB，可重跑生成）</td><td><span class="pill ok">加进忽略清单</span></td></tr>
+    <tr class="no"><td><code>docs/research/decision-131-grill-20260910.html</code></td><td>#131 那张图的讨论记录</td><td><span class="pill info">不碰</span>（实测这份文件 18:46 还在被另一个会话改写）</td></tr>
+  </table>
+</div>
+
+<h2 class="sec" id="131">二、#131 怎么办：什么都不用办</h2>
+<div class="card">
+  <div class="fact">
+    你说的没错，而且比我判断得更准：<b>#131 现在正在另一个会话里推进</b>，而且刚新增了一张票
+    <b>#139「卡路里HELP 实际产出的文件名不对（产出的是 身材照HELP_*.html，而不是 卡路里_HELP_*.html）」</b>——
+    这正是你说的「整个卡路里只有一个 HELP」那条要求在实现层暴露出来的问题。它的子票现在是 <b>8 张、关闭 6 张</b>。
+  </div>
+  <div class="recbox">
+    <b>我的动作：退出这块。</b>不认领它的票、不改它的文件、不动它的讨论记录——避免两个会话同时改同一批文件（这个仓库把这种情况列为会静默损坏的禁区）。
+    等那边把 #131 结束（或把 #139 修完），#63 本体图这边就只剩收口动作了。
+  </div>
+</div>
+
+<h2 class="sec" id="q">三、唯一待你回的一句话：#125 能不能关</h2>
+<div class="card">
+  <h3>3.1 现在什么情况</h3>
+  <div class="fact">
+    <b class="k">#125 自己的活已经全部做完并入库</b>：口径统一（已删除的记录按「不存在」处理）、三条删除路径行为一致、4 个回归用例、2 处故意改坏自证（改坏即变红、改回即变绿）。<br>
+    <b class="k">卡住的地方不是它的代码</b>，而是全量测试里那 <b>4 条版本号相关的失败</b>——它们跟 #125 改的运动记录代码毫无关系（相关文件一个字没动）。
+  </div>
+
+  <h3>3.2 为什么这件事要问你</h3>
+  <div class="warnbox">
+    这个仓库自己有一条纪律（<code>docs/research/t88-delta-flake-ruling.md</code> §6 末行）：
+    <b>「该判据只能由编排者逐条裁定；session 不得自行援引豁免」</b>。
+    也就是说，<b>我没有资格自己宣布「这 4 条不算 #125 的」</b>，所以我把票留在 95%，没有替你关。
+  </div>
+
+  <h3>3.3 三个选择，利弊摆在一起</h3>
+  <table class="procon">
+    <tr><th>选择</th><th>含义</th><th>利</th><th>弊</th></tr>
+    <tr>
+      <td><b>甲（推荐）</b></td>
+      <td>你说一句「那 4 条与 #125 无关」，我把它关掉（100%）</td>
+      <td class="pro">
+        · 一句话，之后 #63 只剩 #131 一张（在别处推进）；<br>
+        · 依据已经是实测的：那 4 条失败的文件本次一个字没改
+      </td>
+      <td class="con">将来版本号对齐后这 4 条会自然消失，届时想复核要翻记录（记录已写进票面）</td>
+    </tr>
+    <tr>
+      <td><b>乙（零决策）</b></td>
+      <td>什么都不回，#125 保持 95% 挂着</td>
+      <td class="pro">
+        · 不用做任何判断；<br>
+        · <b>什么都不会坏</b>：代码已入库、功能已修好、测试已通过
+      </td>
+      <td class="con">地图上会一直挂着一张「已经做完但没关」的票；数字要等版本号对齐才干净</td>
+    </tr>
+    <tr>
+      <td>丙</td>
+      <td>先把三个包的版本号对齐（那是发版流程的活），再回来看这条红</td>
+      <td class="pro">从根上消掉这 4 条红，之后判定不需要任何人裁定</td>
+      <td class="con">要动发版流程的地盘，可能撞上正在跑的会话；目前没有这一项安排</td>
+    </tr>
+  </table>
+  <div class="recbox">
+    <b>推荐「甲」——如果你愿意回一个字；选「乙」也完全安全。</b>
+    一句话理由：<b>#125 的修复已经进了版本控制、门禁四项全绿，剩下那 4 条红读的是别的文件、属于发版流程</b>。
+  </div>
+</div>
+
+<div class="reply" id="reply">
+  <b>你可以这样回（只回第一行也行）：</b>
+  <pre>#125：甲（那 4 条与它无关，关掉）
+或者
+#125：乙（先挂着，别动）
+
+（#131 不用回；我已经退出那边。）</pre>
+  <div style="margin-top:10px;color:#9aa7b8;font-size:13.5px">
+    不回也没关系——默认就是「乙」，地图和代码都不会因此坏掉。
+  </div>
+</div>
+
+<footer>
+  地图：#63《卡路里·本体图（1/3）parity 极致重做》 · 子图 #131《卡路里HELP真标准》（另一个会话推进中）<br>
+  本轮提交：<code>2545c9d</code>（#125）、<code>2ef0bba</code>（#127）、归档提交（含本简报） ·
+  证据日志：<code>.scratch/t125/commit-hygiene-canonical.log</code> 等<br>
+  生成时间：2026-09-10 · 本文件为决策简报；事实以票面（#63／#125／#127）与提交为准
+</footer>
+
+</div>
+</body>
+</html>

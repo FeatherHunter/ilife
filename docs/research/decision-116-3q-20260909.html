@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#116 三个待决策事项 · 决策简报</title>
+<style>
+  :root{
+    --bg:#0f1420; --card:#182034; --card2:#1f2a44; --line:#2c3a5c;
+    --ink:#eef2ff; --muted:#a9b4d0; --accent:#5aa2ff; --accent2:#7c6bff;
+    --ok:#2fbf71; --warn:#f5a524; --bad:#f31260;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#1d2a52 0%,var(--bg) 55%) fixed, var(--bg);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.7}
+  .wrap{max-width:1020px;margin:0 auto;padding:28px 20px 60px}
+  header.hero{background:linear-gradient(135deg,#233259 0%,#2a2a6b 50%,#173d4d 100%);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+  .kicker{display:inline-block;font-size:12px;letter-spacing:.12em;color:#cfe0ff;background:rgba(90,162,255,.15);border:1px solid rgba(90,162,255,.4);padding:4px 10px;border-radius:999px;margin-bottom:12px}
+  h1{margin:.2em 0;font-size:28px;line-height:1.3}
+  .sub{color:var(--muted);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .pill{font-size:12.5px;background:#0e162b;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:#dbe6ff}
+  .pill b{color:#fff}
+  .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0}
+  .toc a{text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:block}
+  .toc a:hover{border-color:var(--accent)}
+  .toc .n{font-size:12px;color:var(--muted)}
+  .toc .t{font-weight:700;margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+  .card h2{margin:0 0 4px;font-size:21px}
+  .tagrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+  .tag{font-size:12px;border-radius:999px;padding:4px 10px;border:1px solid var(--line);background:#0e162b;color:#dbe6ff}
+  .tag.hot{border-color:var(--warn);color:#ffe6b3;background:rgba(245,165,36,.12)}
+  .tag.key{border-color:var(--accent);color:#cfe4ff;background:rgba(90,162,255,.12)}
+  .tag.owner{border-color:var(--accent2);color:#ddd6ff;background:rgba(124,107,255,.12)}
+  h3{font-size:15px;margin:18px 0 8px;color:#cfe0ff}
+  h3::before{content:"▍ ";color:var(--accent)}
+  p{margin:8px 0}
+  .story{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
+  .story li{margin:6px 0}
+  .qbox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  @media(max-width:760px){.qbox{grid-template-columns:1fr}}
+  .q{background:#0e1930;border:1px dashed #3a4f82;border-radius:12px;padding:12px 14px}
+  .q b{color:#fff}
+  .rec{background:linear-gradient(180deg,rgba(47,191,113,.16),rgba(47,191,113,.06));border:1px solid rgba(47,191,113,.5);border-radius:12px;padding:14px;margin:12px 0}
+  .rec .t{font-weight:800;color:#b8f5d3}
+  table.compare{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;background:#0e162b;border-radius:12px;overflow:hidden}
+  table.compare th,table.compare td{border:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}
+  table.compare th{background:#1a2542;color:#fff}
+  table.compare td ul{margin:4px 0 4px 18px;padding:0}
+  .pro{color:#8df0b6}.con{color:#ffb3c7}
+  .need{background:#0e162b;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .need code{background:#00000055;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#ffe9a8;font-size:12.5px}
+  .foot{color:var(--muted);font-size:13px}
+  .verdict{display:flex;gap:10px;align-items:center;background:#0e162b;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:12px}
+  .dot{width:12px;height:12px;border-radius:50%;flex:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="kicker">ILIFE · MAP #64 打通图 → #116 纯技能路真调用取证</span>
+  <h1>三个待决策事项 · 给领导的决策简报</h1>
+  <div class="sub">当前状态：<b style="color:#fff">#116 进度95%待确认（OPEN，不close）</b>——0.2.0两轮严口径重跑诚实红（A1/A2/A4败记缺证据）、wrapper旁证根因已修、真库零触碰、证据指针已修正。双审：红队86有条件通过 / 蓝队88优化通过。</div>
+  <div class="meta">
+    <span class="pill">隔离装 <b>exit 0</b> · 两轮 <b>3消息/1工具/0CLI</b> · wrapper <b>exit 0 / 2486B</b></span>
+    <span class="pill">真库SHA <b>DC6A…一致</b> · 版本 <b>0.2.0/0.2.0</b></span>
+    <span class="pill">冻结口径 <b>缺证据≠缺陷</b> · 严口径 <b>AI自读自调</b></span>
+  </div>
+  <div class="toc">
+    <a href="#q1"><div class="n">Q1 · 采样策略</div><div class="t">① 继续多轮采样，还是先收手跑？</div></a>
+    <a href="#q2"><div class="n">Q2 · 口径红线</div><div class="t">② wrapper提示算不算破严口径？</div></a>
+    <a href="#q3"><div class="n">Q3 · 收口时机</div><div class="t">③ #116何时并入#122？</div></a>
+  </div>
+</header>
+
+<section class="card" id="q1">
+  <h2>① 继续多轮采样追全PASS，还是先收手跑旁证？</h2>
+  <div class="tagrow"><span class="tag hot">策略型</span><span class="tag key">关键信息：两轮模式完全一致，非随机波动</span><span class="tag owner">定错代价：烧轮次零产出 / 误判版本能力</span></div>
+  <h3>前因后果</h3>
+  <div class="story"><ul>
+    <li>0.2.0新隔离目录下跑了两轮 <code>opencode run '卡路里 help'</code>（同模型 mimo-v2.5-free），opencode均 <b>exit 0</b>，但AI两轮都是 <b>3消息/1工具/0CLI</b>——只做了skill-load，一次CLI都没调，A1 FAIL/A2 FAIL/A3 PASS/A4 FAIL，assert判1 session FAILED。</li>
+    <li>执行员记“免费模型波动，按§5/§9-7记缺证据不记过”。红队纠正：n=2且模式<b>完全一致</b>，更像<b>系统性不触发</b>（该模型/该prompt下AI从不调CLI），不是随机波动。</li>
+    <li>直接wrapper旁证（node直调发布产物）exit 0、data.output 2486B存在，证明0.2.0交付能力具备——版本侧没问题，问题在“AI愿不愿意调”。</li>
+  </ul></div>
+  <h3>1）当前需要你做什么决策？</h3>
+  <div class="qbox">
+    <div class="q"><b>A（推荐）：先收手跑。</b><br>你亲手跑一次同一句（反正验收必需），手跑若PASS则证能力在模型侧，再定追不追采。</div>
+    <div class="q"><b>B：继续多轮采样。</b><br>换模型/换prompt/定止损线（如再5轮），追一轮A1–A4全PASS。</div>
+  </div>
+  <h3>2）为什么必须你定？</h3>
+  <p>采样烧的是轮次和你的手跑时间，且“追到什么算够”（止损线）是验收尺度问题，执行兵无权定。定错一边空烧5轮免费额度零产出，一边可能错过“换个模型就过”的低成本解。</p>
+  <div class="rec"><div class="t">推荐答案：A（先收手跑）</div>
+  <table class="compare"><tr><th style="width:50%">选A利弊</th><th>选B利弊</th></tr><tr>
+  <td><span class="pro">利：</span><ul><li>手跑反正是验收必需项，不白花时间</li><li>手跑PASS即定位到“模型侧”，后采样有的放矢</li><li>零额外成本</li></ul><span class="con">弊：</span><ul><li>若手跑也0CLI，仍需回头定采样</li></ul></td>
+  <td><span class="pro">利：</span><ul><li>可能撞上一轮全PASS直接100%</li></ul><span class="con">弊：</span><ul><li>同模型同prompt期望极低，大概率连败</li><li>烧轮次且推迟收口</li></ul></td>
+  </tr></table></div>
+  <h3>3）要更科学，还缺哪三份信息？（我可派兵取）</h3>
+  <div class="need">① 历史三轮（t116旧证据）＋本轮两轮共5轮的<b>失败模态对照表</b>（0CLI vs CLI错参 vs 落盘失败） ② 同模型在别技能严口径下的<b>触发率</b>（判断模型性还是 prompt 性） ③ 你的<b>手跑时间窗口</b>（哪天能跑，决定等不等）。<br><span class="foot">有这三样，采样止损线可量化（如“手跑后仍0CLI则换模型采3轮即停”）。</span></div>
+</section>
+
+<section class="card" id="q2">
+  <h2>② 给AI加wrapper/免引号提示，算不算破严口径？</h2>
+  <div class="tagrow"><span class="tag key">口径型·红线</span><span class="tag key">关键信息：严口径考的是自主性，不是结果</span><span class="tag owner">定错代价：A4含水 / 永远过不了</span></div>
+  <h3>前因后果</h3>
+  <div class="story"><ul>
+    <li>严口径定义（冻结）：<b>AI自读SKILL.md、自调calorie-cmd-read</b>，产envelope＋HTML。考的是AI自主走完链路。</li>
+    <li>WinPS5.1有个实锤坑：PowerShell向原生程序传参会<b>剥掉JSON双引号</b>，直接 <code>--params (Get-Content -Raw)</code> 必报ERR2（#123-H5b已实测复现，改wrapper才过）。历史run4的A2/A4就败在引号坑。</li>
+    <li>执行员问：能否提示AI“先跑bare命令”或“用node-wrapper避引号”，让它别死在环境坑里？</li>
+  </ul></div>
+  <h3>1）当前需要你做什么决策？</h3>
+  <div class="qbox">
+    <div class="q"><b>A（推荐）：不计入A4，可记旁证。</b><br>带提示的轮次只算旁证（证明版本能力），A4全PASS必须无提示轮。</div>
+    <div class="q"><b>B：允许环境类提示。</b><br>bulk视“避引号坑”提示为环境说明不算作弊，计入A4。</div>
+  </div>
+  <h3>2）为什么必须你定？</h3>
+  <p>这是验收红线的解释权——严口径是#117冻的规格，什么算“自读自调”只有你能定。定错一边让A4含水（后人复现无提示即败），一边让AI永远死在环境坑里（A4永不过）。</p>
+  <div class="rec"><div class="t">推荐答案：A（提示轮只算旁证）</div>
+  <table class="compare"><tr><th style="width:50%">选A利弊</th><th>选B利弊</th></tr><tr>
+  <td><span class="pro">利：</span><ul><li>A4含金量 intact，后人可复现</li><li>提示轮仍有价值（记旁证，定位版本vs模型责任）</li></ul><span class="con">弊：</span><ul><li>A4通过难度保持最高，需撞无提示PASS轮</li></ul></td>
+  <td><span class="pro">利：</span><ul><li>A4通过率大涨，收口快</li></ul><span class="con">弊：</span><ul><li>“自读自调”被稀释，严口径名存实亡</li><li>与#123-H5b“人类用wrapper”混为一谈（那是人类操作，AI自主是另一回事）</li></ul></td>
+  </tr></table></div>
+  <h3>3）要更科学，还缺哪三份信息？（我可派兵取）</h3>
+  <div class="need">① run4的<b>A2/A4败因原文</b>（引号坑 vs 真不会调） ② 冻结规格§5对“提示”的<b>字面定义</b>（环境说明算不算提示） ③ 别技能严口径是否允许提示的<b>先例</b>。<br><span class="foot">有这三样，红线可一字定死，写进#122收口引用。</span></div>
+</section>
+
+<section class="card" id="q3">
+  <h2>③ #116何时并入#122收口？</h2>
+  <div class="tagrow"><span class="tag key">顺序型</span><span class="tag key">关键信息：A4＋HITL双缺，现在并入即带病收口</span><span class="tag owner">定错代价：#122返工</span></div>
+  <h3>前因后果</h3>
+  <div class="story"><ul>
+    <li>#122是双过总回归闸门：逐判据对照＋§9七条质量清单，须#115/#116全关后执行。现在#115停80%（等你两处截图）、#116停95%待确认（A4缺＋手跑缺）。</li>
+    <li>执行员建议：AFK任一轮A1–A4全PASS＋手跑齐后100%再close，届时并入。蓝队附议并给出判据式，红队确认当前双缺不宜并入。</li>
+  </ul></div>
+  <h3>1）当前需要你做什么决策？</h3>
+  <div class="qbox">
+    <div class="q"><b>A（推荐）：全PASS＋手跑齐后并入。</b><br>#116到100% close后，#122一次收双腿。</div>
+    <div class="q"><b>B：现在就并入预演。</b><br>#122先写AFK侧结论，A4/手跑后补。</div>
+  </div>
+  <h3>2）为什么必须你定？</h3>
+  <p>收口顺序决定#122写出来是“一遍过”还是“写两遍”。B省等待但#122必返工（A4一变就得重对照）；A等得久但#122一次成型。这是你的时间账。</p>
+  <div class="rec"><div class="t">推荐答案：A（达标再并入）</div>
+  <table class="compare"><tr><th style="width:50%">选A利弊</th><th>选B利弊</th></tr><tr>
+  <td><span class="pro">利：</span><ul><li>#122一次写成，不返工</li><li>判据干净（100% close即并入条件）</li></ul><span class="con">弊：</span><ul><li>#122启动晚，等A4＋手跑</li></ul></td>
+  <td><span class="pro">利：</span><ul><li>#122先行，图上进度好看</li></ul><span class="con">弊：</span><ul><li>双缺状态下写出的对照全是“待补”，等于写两遍</li></ul></td>
+  </tr></table></div>
+  <h3>3）要更科学，还缺哪三份信息？（我可派兵取）</h3>
+  <div class="need">① 你的<b>手跑＋截图时间窗口</b>（两件事同日即可定#122启动日） ② #115收口ETA（#122须双腿齐） ③ #122正文当前<b>空表结构</b>（预填AFK侧能省几天）。<br><span class="foot">有这三样，#122启动日可精确到天。</span></div>
+</section>
+
+<section class="card">
+  <h2>你可以怎么答（最省力）</h2>
+  <p>回三个字母即可，例如 <b>“AAA按推荐”</b>，或单题改（如“1改B，其余按推荐”）。要取的原文点名即可（如“取run4败因原文”），我派兵贴你，不灌大上下文。</p>
+  <div class="verdict"><span class="dot" style="background:var(--ok)"></span><span><b>本波结论：</b>#116停95% OPEN（红86有条件通过/蓝88优化通过），D1指针已修正；#115停80% OPEN等你两处截图；齐后进#122。</span></div>
+  <p class="foot">生成时间 2026-09-09 · MAP #64 · 本页不含思考过程，只含决策信息。来源：#116正文95%版、.scratch/map2/t116/两轮会话＋assert、红（86）蓝（88）双审、D1修正记录。</p>
+</section>
+
+</div>
+</body>
+</html>

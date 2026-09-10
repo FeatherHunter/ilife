@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAP #64 三个待决策事项 · 决策简报</title>
+<style>
+  :root{
+    --bg:#0f1420; --card:#182034; --card2:#1f2a44; --line:#2c3a5c;
+    --ink:#eef2ff; --muted:#a9b4d0; --accent:#5aa2ff; --accent2:#7c6bff;
+    --ok:#2fbf71; --warn:#f5a524; --bad:#f31260; --info:#00b8d9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#1d2a52 0%,var(--bg) 55%) fixed, var(--bg);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.7}
+  .wrap{max-width:1020px;margin:0 auto;padding:28px 20px 60px}
+  header.hero{background:linear-gradient(135deg,#233259 0%,#2a2a6b 50%,#173d4d 100%);border:1px solid var(--line);border-radius:18px;padding:26px 26px 20px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+  .kicker{display:inline-block;font-size:12px;letter-spacing:.12em;color:#cfe0ff;background:rgba(90,162,255,.15);border:1px solid rgba(90,162,255,.4);padding:4px 10px;border-radius:999px;margin-bottom:12px}
+  h1{margin:.2em 0 .2em;font-size:28px;line-height:1.3}
+  .sub{color:var(--muted);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .pill{font-size:12.5px;background:#0e162b;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:#dbe6ff}
+  .pill b{color:#fff}
+  .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0}
+  .toc a{text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px;display:block;transition:.15s}
+  .toc a:hover{transform:translateY(-2px);border-color:var(--accent)}
+  .toc .n{font-size:12px;color:var(--muted)}
+  .toc .t{font-weight:700;margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+  .card h2{margin:0 0 4px;font-size:21px}
+  .tagrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+  .tag{font-size:12px;border-radius:999px;padding:4px 10px;border:1px solid var(--line);background:#0e162b;color:#dbe6ff}
+  .tag.hot{border-color:var(--warn);color:#ffe6b3;background:rgba(245,165,36,.12)}
+  .tag.key{border-color:var(--accent);color:#cfe4ff;background:rgba(90,162,255,.12)}
+  .tag.owner{border-color:var(--accent2);color:#ddd6ff;background:rgba(124,107,255,.12)}
+  h3{font-size:15px;margin:18px 0 8px;color:#cfe0ff;letter-spacing:.02em}
+  h3::before{content:"▍ ";color:var(--accent)}
+  p{margin:8px 0}
+  .story{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 14px;margin:10px 0}
+  .story li{margin:6px 0}
+  .qbox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  @media(max-width:760px){.qbox{grid-template-columns:1fr}}
+  .q{background:#0e1930;border:1px dashed #3a4f82;border-radius:12px;padding:12px 14px}
+  .q b{color:#fff}
+  .rec{background:linear-gradient(180deg,rgba(47,191,113,.16),rgba(47,191,113,.06));border:1px solid rgba(47,191,113,.5);border-radius:12px;padding:14px;margin:12px 0}
+  .rec .t{font-weight:800;color:#b8f5d3}
+  table.compare{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;background:#0e162b;border-radius:12px;overflow:hidden}
+  table.compare th,table.compare td{border:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}
+  table.compare th{background:#1a2542;color:#fff}
+  table.compare td ul{margin:4px 0 4px 18px;padding:0}
+  .pro{color:#8df0b6}.con{color:#ffb3c7}
+  .need{background:#0e162b;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .need code{background:#00000055;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#ffe9a8;font-size:12.5px}
+  .foot{color:var(--muted);font-size:13px}
+  .verdict{display:flex;gap:10px;align-items:center;background:#0e162b;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:12px}
+  .dot{width:12px;height:12px;border-radius:50%;flex:none}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .btn{font-size:13px;border-radius:10px;padding:8px 14px;border:1px solid var(--accent);color:#fff;background:linear-gradient(180deg,#2f5bd7,#2447a8);cursor:pointer}
+  .btn.ghost{background:transparent;color:#cfe0ff}
+  @media print{body{background:#fff;color:#111}.card,header.hero,.q,.need,.story{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="kicker">ILIFE · MAP #64 卡路里·打通图（2/3）装上即用·双路实证</span>
+  <h1>三个待决策事项 · 给领导的决策简报</h1>
+  <div class="sub">当前状态：<b style="color:#fff">#123 发版窗口 90%</b>（AFK完成＋整改复核通过，真机HITL待你执行）· #115 / #116 仍被 #123 阻塞 · #122 最后收口 · 本页只讲你要拍板的三件事，不讲执行细节。</div>
+  <div class="meta">
+    <span class="pill">执行 <b>aaa96f4c</b> · 红队 <b>83分</b> · 蓝队 <b>90分</b> · 整改 <b>95分</b> · 复核 <b>通过</b></span>
+    <span class="pill">冻结口径 <b>docs/calorie-dual-path-acceptance.md</b></span>
+    <span class="pill">不关闭 · <b>## 进度：90%</b> · 待HITL H0–H6</span>
+  </div>
+  <div class="toc">
+    <a href="#q1"><div class="n">Q1 · 关闭票结论冲突</div><div class="t">① #56“已成立” vs 真机仍是junction</div></a>
+    <a href="#q2"><div class="n">Q2 · 口径澄清</div><div class="t">② output 到底住哪一层？</div></a>
+    <a href="#q3"><div class="n">Q3 · 发版顺序</div><div class="t">③ #119 要不要插队？</div></a>
+  </div>
+</header>
+
+<!-- Q1 -->
+<section class="card" id="q1">
+  <h2>① #56“已成立” vs “真机仍是junction” —— 矛不矛盾？</h2>
+  <div class="tagrow"><span class="tag hot">冲突型</span><span class="tag key">关键信息：取证面不同</span><span class="tag owner">定错代价：放行缺陷 / 白重开票</span></div>
+
+  <h3>前因后果（发生了什么）</h3>
+  <div class="story"><ul>
+    <li><b>已关票 #56「DSH技能目录可查」</b>在map上记了一笔：回路5/5通、目录三量（rank 600 / source bundled / candidate）全对、版本0.2.0、维护者新会话一句话确认 → §2.2判据成立。</li>
+    <li><b>当前票 #123「发版窗口」</b>如实写着：真机现在还是 <b>junction 软链</b>，Stage 9重装没做，腿1.1安装日志缺失，90%不关闭。</li>
+    <li>表面打架，侦察＋双审一致推断：<b>两人验的不是同一面</b>——#56验的是“代码和回路通没通（会话里能查到）”，#123卡的是“真机硬盘落盘对不对（node_modules里有没有junction）”。但原票没把这句话写死。</li>
+  </ul></div>
+
+  <h3>1）当前需要你做什么决策？</h3>
+  <div class="qbox">
+    <div class="q"><b>A（推荐）：只算代码/回路侧成立。</b><br>#56不用重开，真机确认等#123重装后回贴补上，收口#122时引用即可。</div>
+    <div class="q"><b>B：当初就含真机落盘。</b><br>等于#123推翻了#56，得改map上的Decisions记录、甚至重开#56，下游#115/#116全等。</div>
+  </div>
+
+  <h3>2）为什么必须你定？</h3>
+  <p>#56是<b>已关闭票</b>，map的 Decisions so far 是全图唯一的 canonical 记录。重新解释已关票 = <b>改图行为</b>，执行兵无权干。定错一边放走真机缺陷，一边白白拖住整条线。</p>
+
+  <div class="rec"><div class="t">推荐答案：A（先收口补确认，不重开）</div>
+  <table class="compare"><tr><th style="width:50%">选A利弊</th><th>选B利弊</th></tr><tr>
+  <td><span class="pro">利：</span><ul><li>最快解阻，不阻塞#115/#116</li><li>与双审证据一致（回路侧确实通了）</li></ul><span class="con">弊：</span><ul><li>若当初确认真含落盘，会漏记一次推翻</li></ul></td>
+  <td><span class="pro">利：</span><ul><li>最严谨，彻底消除“假绿”嫌疑</li></ul><span class="con">弊：</span><ul><li>重开已关票＋全线等待，成本最高</li><li>目前无证据支持当初含落盘</li></ul></td>
+  </tr></table></div>
+
+  <h3>3）要更科学，还缺哪三份信息？（我可派兵取）</h3>
+  <div class="need">① #56关闭时那句<b>“一句话确认”原文＋时间＋版本号</b>（确认的是“能查到”还是“无junction”）<br>② #123 prereq P-1那条 <b>junction基线路径＋截图时间</b> <code>.tmp-t123logs/</code><br>③ 验收规格 <b>§9第5条版本元组原文</b> <code>docs/calorie-dual-path-acceptance.md</code><br><span class="foot">三样齐了，A/B一眼可断；你也可以先按A执行HITL，看到真机落盘证据后再终审。</span></div>
+</section>
+
+<!-- Q2 -->
+<section class="card" id="q2">
+  <h2>② “含output”到底指哪一层？要不要钉死到 data.output？</h2>
+  <div class="tagrow"><span class="tag key">口径型</span><span class="tag key">关键信息：顶层无 output，实物在 data.output</span><span class="tag owner">影响：#115判定表 / #122收口</span></div>
+
+  <h3>前因后果（发生了什么）</h3>
+  <div class="story"><ul>
+    <li>冻结规格只写 <b>“envelope含output字段”</b>，没写它住哪层。</li>
+    <li>执行兵实测：<b>顶层没有output，真东西在 <code>data.output</code></b>（合成库2488B文件存在即证）。他在#123正文加了一句“票面说的含output就是指data.output”，怕#115面板对数时找错地方判错。</li>
+    <li>这不是改功能，是把话说死。但规格已冻结，任何澄清都可能被当成改规格。</li>
+  </ul></div>
+
+  <h3>1）当前需要你做什么决策？</h3>
+  <div class="qbox">
+    <div class="q"><b>A（推荐）：确认澄清。</b><br>“以后#115/#122判定表里，output一律按 <code>data.output</code> 找，顶层没有不算缺。”</div>
+    <div class="q"><b>B：不钉死。</b><br>维持“含output”字面，#115执行时再临场判断。</div>
+  </div>
+
+  <h3>2）为什么必须你定？</h3>
+  <p>它<b>横跨三张票</b>（#123冒烟、#115比对、#122收口）。执行兵自己定了等于替收口改卷子，只有你能定“这算澄清还是改规格”。不定，#115必走弯路；定错（万一真有顶层output场景），#115会判错。</p>
+
+  <div class="rec"><div class="t">推荐答案：A（钉死到 data.output，不改冻结规格）</div>
+  <table class="compare"><tr><th style="width:50%">选A利弊</th><th>选B利弊</th></tr><tr>
+  <td><span class="pro">利：</span><ul><li>#115判定表一次写对，收口不返工</li><li>与三次实测一致（空库/合成库/安装态）</li></ul><span class="con">弊：</span><ul><li>若未来schema加顶层output，需再发一次澄清</li></ul></td>
+  <td><span class="pro">利：</span><ul><li>字面最保守，不动任何文字</li></ul><span class="con">弊：</span><ul><li>#115执行人极易找错层，误判为缺证据</li></ul></td>
+  </tr></table></div>
+
+  <h3>3）要更科学，还缺哪三份信息？（我可派兵取）</h3>
+  <div class="need">① 冻结规格 output 那<b>半页原文</b> ② <b>envelope schema定义</b>（<code>cmd_read.ts / output.ts</code> 里output写在哪）③ 一个<b>真机直读样本JSON的data.output片段</b>（三行）。<br><span class="foot">有这三样，你一眼能定；建议在你做H4（当天冒烟）之前定即可，不阻塞H0–H3。</span></div>
+</section>
+
+<!-- Q3 -->
+<section class="card" id="q3">
+  <h2>③ #119（刚进HEAD的新改动）要不要插队发版？</h2>
+  <div class="tagrow"><span class="tag hot">顺序型·不可逆</span><span class="tag key">关键信息：注册表0.2.0未变，结论仍有效</span><span class="tag owner">定错代价：AFK作废重来</span></div>
+
+  <h3>前因后果（发生了什么）</h3>
+  <div class="story"><ul>
+    <li>AFK取证时HEAD是 <code>a8156fa</code>，现在HEAD是 <code>6f07efa feat(119)</code>，动了 <code>skill-calorie/src/cli/cmd_read.ts</code> + <code>src/output.ts</code>（output命名），<b>还没发布</b>。</li>
+    <li>注册表上的0.2.0产物没变，所以现在的AFK结论依然有效——红蓝双审一致认定，整改兵已加注记，无需重做。</li>
+    <li>风险在<b>未来</b>：如果#119先发布（变0.2.1），“全部证据同版本元组”（§9要求）就破了，AFK得重跑，H4文件名预期也可能变。工作树那两处M改动就是#119的，本次没碰。</li>
+  </ul></div>
+
+  <h3>1）当前需要你做什么决策？</h3>
+  <div class="qbox">
+    <div class="q"><b>A（推荐）：先收口，再发#119。</b><br>你先做完真机H0–H6，把0.2.0双路证据锁死，#119等下一轮。</div>
+    <div class="q"><b>B：一起发。</b><br>把#119纳入本次窗口，版本号上走，AFK重跑一遍（约半天到一天）。</div>
+  </div>
+
+  <h3>2）为什么必须你定？</h3>
+  <p>发npm包是<b>不可逆外部动作</b>，还牵涉你的真机时间窗口和MAP1/MAP2边界（#119归哪张图）。执行兵不能替你按按钮。选错一边让#119多等一轮，一边让已做完的AFK作废。</p>
+
+  <div class="rec"><div class="t">推荐答案：A（先锁0.2.0证据）</div>
+  <table class="compare"><tr><th style="width:50%">选A利弊</th><th>选B利弊</th></tr><tr>
+  <td><span class="pro">利：</span><ul><li>最快拿到“双路装上即用”结论</li><li>不浪费已完成的AFK＋整改</li></ul><span class="con">弊：</span><ul><li>#119多等一轮</li></ul></td>
+  <td><span class="pro">利：</span><ul><li>一次发干净，省一次发版窗口</li></ul><span class="con">弊：</span><ul><li>AFK重做＋H4预期重评估</li><li>阻塞#115/#116更久</li></ul></td>
+  </tr></table></div>
+
+  <h3>3）要更科学，还缺哪三份信息？（我可派兵取）</h3>
+  <div class="need">① <b>#119标题＋内容＋测试状态</b>（是不是非发不可的修复，还是可等的优化）② <b>npm上0.2.0发布时间＋你HITL能安排在哪天</b>（能否抢在#119发布前锁死）③ <b>下个发版窗口计划</b>（#119等一轮有无业务影响）。<br><span class="foot">有这三样，A/B的账很好算；建议在你按H1（官方源重装）之前定即可。</span></div>
+</section>
+
+<section class="card">
+  <h2>你可以怎么答（最省力）</h2>
+  <p>不用长篇回复，三行即可，例如：<b>“1选A，2选A，3选A”</b>，或单题先定（如“先定①选A，其余待信息”）。需要我取的原文，你点名（如“取#56一句话确认原文”），我派兵贴你，不灌大上下文。</p>
+  <div class="verdict"><span class="dot" style="background:var(--ok)"></span><span><b>本波结论：</b>#123 AFK 90%复核通过，可按票末H0–H6交接真机HITL；#115/#116待#123到100%自动解阻，届时各一兵跟进。</span></div>
+  <p class="foot">生成时间 2026-09-09 · MAP #64 · 本页不含思考过程，只含决策信息。来源：#123正文90%版、AFK证据 afk-20260909-02.md、红（83）蓝（90）双审、整改（95）与复核报告。</p>
+</section>
+
+</div>
+</body>
+</html>
