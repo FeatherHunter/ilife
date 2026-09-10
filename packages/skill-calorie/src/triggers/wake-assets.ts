@@ -4743,5 +4743,5 @@ export const SCENE_BY_ID: Readonly<Record<string, WakeSceneAsset>> = Object.from
   WAKE_ASSETS.map((s) => [s.id, s]),
 );
 
-/** 资产总数（与测试断言同值，改数即红）。 */
-export const WAKE_ASSET_TOTAL = 436 as const;
+/** 资产总数（由 `WAKE_ASSETS` 派生，单源不复写第二遍数；改资产即跟变，测试仍钉 436）。 */
+export const WAKE_ASSET_TOTAL: number = WAKE_ASSETS.length;
