@@ -11,7 +11,7 @@ import { SkillBridgeError, readViaCli } from './bridge.js';
 import type { HostCtx, RpcHandler } from './dsh-ctx.js';
 
 export const name = 'dsh-memo-ilife';
-export const inject = ['connection'];
+export const inject = ['connection', 'webServer'];
 
 interface HostLogger {
   info?(...args: unknown[]): void;

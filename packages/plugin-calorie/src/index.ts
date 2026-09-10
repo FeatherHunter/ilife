@@ -14,7 +14,7 @@ import type { HostCtx, RpcHandler } from './dsh-ctx.js';
 import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
 
 export const name = 'dsh-calorie';
-export const inject = ['connection', 'skills'];
+export const inject = ['connection', 'skills', 'webServer'];
 
 interface HostLogger {
   info?(...args: unknown[]): void;
