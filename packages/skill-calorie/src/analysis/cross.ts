@@ -7,7 +7,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import type { DaySeries } from './series.js';
-import { EX_ALIVE } from './utils.js';
+import { BODY_ALIVE, EX_ALIVE } from './utils.js';
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -142,8 +142,8 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
         const end = (series[series.length - 1] as DaySeries).date;
         const deltas: Array<[string, number]> = [];
         for (const [col, label] of cols) {
-          const first = db.prepare('SELECT ' + col + ' AS v FROM body_measurements WHERE date BETWEEN ? AND ? AND ' + col + ' IS NOT NULL AND is_deprecated = 0 ORDER BY date, id LIMIT 1').get(start, end) as { v: number | null } | undefined;
-          const last = db.prepare('SELECT ' + col + ' AS v FROM body_measurements WHERE date BETWEEN ? AND ? AND ' + col + ' IS NOT NULL AND is_deprecated = 0 ORDER BY date DESC, id DESC LIMIT 1').get(start, end) as { v: number | null } | undefined;
+          const first = db.prepare('SELECT ' + col + ' AS v FROM body_measurements WHERE date BETWEEN ? AND ? AND ' + col + ' IS NOT NULL AND ' + BODY_ALIVE + ' ORDER BY date, id LIMIT 1').get(start, end) as { v: number | null } | undefined;
+          const last = db.prepare('SELECT ' + col + ' AS v FROM body_measurements WHERE date BETWEEN ? AND ? AND ' + col + ' IS NOT NULL AND ' + BODY_ALIVE + ' ORDER BY date DESC, id DESC LIMIT 1').get(start, end) as { v: number | null } | undefined;
           if (first?.v !== null && first?.v !== undefined && last?.v !== null && last?.v !== undefined) {
             deltas.push([label, round1(last.v - first.v)]);
           }

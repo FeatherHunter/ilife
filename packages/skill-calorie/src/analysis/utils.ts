@@ -14,6 +14,18 @@
  */
 export const EX_ALIVE = 'COALESCE(is_deleted, 0) = 0';
 
+/** #126 · 体脂/围度存活谓词（唯一来源）：`body_composition`／`body_measurements`
+ * 软删行（`is_deprecated=1`）不计入任何用户可见统计。
+ *
+ * 与 #120 的 `EX_ALIVE` 同构：两表 `is_deprecated` 列可空（历史行可为 NULL），
+ * 故用 `COALESCE` 而非 `is_deprecated = 0`（后者会静默排除 NULL 活行）。
+ * 与 `nutrition_products` 口径对齐：该列 `NOT NULL`，`= 0` ≡ `COALESCE(...) = 0`。
+ * analysis 层（`series.ts`／`cross.ts`）统一内联本谓词；fetch 层
+ * （`fetch/body.ts`）内联同字面（fetch 不反向依赖 analysis，沿 `fetch/exercise.ts`
+ * `listWindow` 的内联惯例）。口径依据：`docs/research/t126-deprecated-null.md`。
+ */
+export const BODY_ALIVE = 'COALESCE(is_deprecated, 0) = 0';
+
 export const TDEE_ACTIVITY_FACTORS: Record<string, number> = {
   sedentary: 1.2,
   light: 1.375,

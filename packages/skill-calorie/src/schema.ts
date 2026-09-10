@@ -277,6 +277,18 @@ export function applyMigrations(db: DatabaseSync): void {
     }
   }
 
+  // M8 #126 · 体脂/围度 is_deprecated 历史 NULL 回填（幂等）。
+  // 两列保持可空 DDL（与 #120 的 exercise_log.is_deleted 一致）：migrate.ts 按
+  // `SELECT *` 逐字复制 src 行，若 dst 改 NOT NULL 会导致含 NULL 历史行的老库
+  // 迁移整库失败；读路径已由 COALESCE(is_deprecated, 0) = 0 覆盖（与新库
+  // NOT NULL 语义等价），本回填仅做数据卫生，使未来任何漏网的 `= 0` 写法也不丢行。
+  if (tableExists(db, 'body_composition')) {
+    db.exec('UPDATE body_composition SET is_deprecated = 0 WHERE is_deprecated IS NULL');
+  }
+  if (tableExists(db, 'body_measurements')) {
+    db.exec('UPDATE body_measurements SET is_deprecated = 0 WHERE is_deprecated IS NULL');
+  }
+
   for (const sql of INDEX_SQLS) db.exec(sql);
   for (const sql of TRIGGER_SQLS) db.exec(sql);
 }

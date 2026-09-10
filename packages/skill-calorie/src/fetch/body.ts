@@ -128,7 +128,7 @@ export function addMeasurement(db: DatabaseSync, input: MeasurementInput): { id:
 
 export function listMeasurements(db: DatabaseSync, opts: { dateFrom?: string; dateTo?: string; days?: number; metric?: string; limit?: number } = {}): Record<string, unknown>[] {
   const cols = ['id', 'date', ...MEASUREMENT_FIELDS, 'note'];
-  let sql = 'SELECT ' + cols.join(', ') + ' FROM body_measurements WHERE is_deprecated = 0';
+  let sql = 'SELECT ' + cols.join(', ') + ' FROM body_measurements WHERE COALESCE(is_deprecated, 0) = 0';
   const params: SQLInputValue[] = [];
   if (opts.metric) {
     if (!MEASUREMENT_FIELDS.includes(opts.metric)) throw new FetchError(`未知围度项: ${opts.metric}`);
@@ -152,7 +152,7 @@ export function trendMeasurement(db: DatabaseSync, metric: string, days: number)
     throw new FetchError(`--metric 必填且为: ${MEASUREMENT_FIELDS.join(', ')}`);
   }
   const rows = db.prepare(`SELECT date, AVG(${metric}) AS avg_val, COUNT(*) AS n FROM body_measurements
-    WHERE is_deprecated = 0 AND date >= ? AND ${metric} IS NOT NULL GROUP BY date ORDER BY date ASC`)
+    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ? AND ${metric} IS NOT NULL GROUP BY date ORDER BY date ASC`)
     .all(daysAgo(days)) as unknown as { date: string; avg_val: number; n: number }[];
   return rows.map((r) => ({ date: r.date, avgVal: r.avg_val, n: r.n }));
 }
@@ -163,7 +163,7 @@ export function compareMeasurements(db: DatabaseSync, date1: string, date2: stri
   const snap = (day: string) => {
     const cols = ['id', ...MEASUREMENT_FIELDS];
     return db.prepare(`SELECT ${cols.join(', ')} FROM body_measurements
-      WHERE is_deprecated = 0 AND date = ? ORDER BY id DESC LIMIT 1`).get(day) as unknown as Record<string, number> | undefined;
+      WHERE COALESCE(is_deprecated, 0) = 0 AND date = ? ORDER BY id DESC LIMIT 1`).get(day) as unknown as Record<string, number> | undefined;
   };
   const s1 = snap(date1);
   if (!s1) throw new FetchError(`${date1} 无围度记录`);
@@ -194,7 +194,7 @@ export function addComposition(db: DatabaseSync, input: CompositionInput): { id:
 }
 
 export function listCompositions(db: DatabaseSync, opts: { dateFrom?: string; dateTo?: string; days?: number; source?: string; limit?: number } = {}): Record<string, unknown>[] {
-  let sql = 'SELECT id, date, source, body_fat_pct, note FROM body_composition WHERE is_deprecated = 0';
+  let sql = 'SELECT id, date, source, body_fat_pct, note FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0';
   const params: SQLInputValue[] = [];
   if (opts.source) { sql += ' AND source = ?'; params.push(opts.source); }
   if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }
@@ -212,14 +212,14 @@ export function deleteComposition(db: DatabaseSync, id: number): { id: number } 
 
 export function latestSource(db: DatabaseSync): string | null {
   const row = db.prepare(`SELECT source FROM body_composition
-    WHERE is_deprecated = 0 ORDER BY date DESC, id DESC LIMIT 1`).get() as { source: string } | undefined;
+    WHERE COALESCE(is_deprecated, 0) = 0 ORDER BY date DESC, id DESC LIMIT 1`).get() as { source: string } | undefined;
   return row?.source ?? null;
 }
 
 export function trendComposition(db: DatabaseSync, days: number, source?: string): { date: string; avgPct: number; n: number }[] {
   const src = source ?? latestSource(db) ?? 'home_caliper';
   const rows = db.prepare(`SELECT date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
-    WHERE is_deprecated = 0 AND date >= ? AND source = ? GROUP BY date ORDER BY date ASC`)
+    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ? AND source = ? GROUP BY date ORDER BY date ASC`)
     .all(daysAgo(days), src) as unknown as { date: string; avg_pct: number; n: number }[];
   return rows.map((r) => ({ date: r.date, avgPct: r.avg_pct, n: r.n }));
 }
@@ -228,7 +228,7 @@ export function compareCompositions(db: DatabaseSync, fromDate: string, toDate: 
   const src = source ?? latestSource(db) ?? 'home_caliper';
   const agg = (day: string, cmp: string) => db.prepare(`SELECT AVG(body_fat_pct) AS avg_pct,
     MIN(body_fat_pct) AS min_pct, COUNT(*) AS n FROM body_composition
-    WHERE is_deprecated = 0 AND source = ? AND date ${cmp} ?`).get(src, day) as
+    WHERE COALESCE(is_deprecated, 0) = 0 AND source = ? AND date ${cmp} ?`).get(src, day) as
     { avg_pct: number | null; min_pct: number | null; n: number };
   const before = agg(fromDate, '<');
   const after = agg(toDate, '>=');

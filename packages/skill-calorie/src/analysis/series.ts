@@ -7,7 +7,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { EX_ALIVE, calcTdee, shiftISODate, todayISO } from './utils.js';
+import { BODY_ALIVE, EX_ALIVE, calcTdee, shiftISODate, todayISO } from './utils.js';
 
 export const WATER_NAME = '💧水';
 
@@ -116,10 +116,10 @@ export function buildSeries(db: DatabaseSync, start: string, end: string): DaySe
     'SELECT date, weight_kg AS v FROM weight_log WHERE date BETWEEN ? AND ? ORDER BY date, time ASC, id ASC',
   ).all(start, end) as unknown as DateVal[];
   const bfrows = db.prepare(
-    'SELECT date, body_fat_pct AS v FROM body_composition WHERE date BETWEEN ? AND ? AND is_deprecated = 0 ORDER BY date, id ASC',
+    'SELECT date, body_fat_pct AS v FROM body_composition WHERE date BETWEEN ? AND ? AND ' + BODY_ALIVE + ' ORDER BY date, id ASC',
   ).all(start, end) as unknown as DateVal[];
   const bmrows = db.prepare(
-    'SELECT date, waist_cm AS waist, hip_cm AS hip FROM body_measurements WHERE date BETWEEN ? AND ? AND is_deprecated = 0 ORDER BY date, id ASC',
+    'SELECT date, waist_cm AS waist, hip_cm AS hip FROM body_measurements WHERE date BETWEEN ? AND ? AND ' + BODY_ALIVE + ' ORDER BY date, id ASC',
   ).all(start, end) as unknown as WaistRow[];
   const goal = db.prepare('SELECT calorie_goal, water_goal FROM daily_goal WHERE id = 1').get() as
     | { calorie_goal: number | null; water_goal: number | null }
