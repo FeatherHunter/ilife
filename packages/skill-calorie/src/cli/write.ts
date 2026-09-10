@@ -151,13 +151,12 @@ const F = {
 } as const;
 
 /** `calorie.goal.set` 本次**实际被 SET 的列** → CLI 参数名（正本 §3.4「update 键＝本次实际变更字段」）。
- * 与 `fetch/nutritionGoal.ts:68-78` 的两条 SQL 同源：传 `water` 走 6 列 `INSERT OR REPLACE`
- * （含 `water_goal`），不传则 SQL 里**没有** `water_goal` 列——该列的值只因 REPLACE 落列默认
- * （`schema.ts:32` `water_goal INTEGER DEFAULT 2000`），**不属本次 SET 的字段**，故不得报 `water`。
+ * 与 `fetch/nutritionGoal.ts` 的两条 UPSERT 同源（#127 已改）：传 `water` 走 6 列
+ * （含 `water_goal`），不传则 SQL 里**没有** `water_goal` 列——该列保持原值，
+ * **不属本次 SET 的字段**，故不得报 `water`。
  * 记账列 `updated_at` 无 CLI 参数，按 §3.4 不计入摘要。
- * 注意：`INSERT OR REPLACE` 连带把 `weight_goal`／`goal_deadline`／`goal_paused`／`start_weight`／
- * `start_date` 重置为默认/NULL——那是**实际行为缺陷**（红队 D-4），已转 #127；本票只让回执如实
- * 反映「本次 SET 了哪些列」，**不改写语义**（不做 UPSERT 化）。 */
+ * #127：UPSERT 只覆盖传入列，`weight_goal`／`goal_deadline`／`goal_paused`／`start_weight`／
+ * `start_date`／`exercise_goal`／未传的 `water_goal` 逐列保持原值（不再整行替换）。 */
 const goalSetWrittenFields = (hasWater: boolean): string[] =>
   ['calorie', 'protein', 'carbs', 'fat', ...(hasWater ? ['water'] : [])];
 

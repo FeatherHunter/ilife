@@ -276,11 +276,10 @@ test('#97 · R-1：goal.set 的 writtenFields ＝ 本次实际 SET 列（不传 
   assert.equal(rc1.idSource, 'singleton');
   const after1 = readOnly(ctx.dir, (db) => db.prepare('SELECT calorie_goal, water_goal, weight_goal, goal_deadline FROM daily_goal WHERE id = 1').get());
   assert.equal(after1.calorie_goal, 1750, '本次 SET 的列确已写入');
-  // 未 SET 的列被 `INSERT OR REPLACE` 连带重置为列默认／NULL —— 实际行为缺陷（红队 D-4）已转 #127，
-  // 本票不改语义，只把事实钉在这里，避免「摘要＝全行写入」的误读。
-  assert.equal(after1.water_goal, 2000, 'water 未被 SET：值只因 INSERT OR REPLACE 落列默认（→ #127）');
-  assert.equal(after1.weight_goal, null, 'weight_goal 被 REPLACE 重置（→ #127）');
-  assert.equal(after1.goal_deadline, null, 'goal_deadline 被 REPLACE 重置（→ #127）');
+  // #127 已修为 UPSERT：未 SET 的列逐列保持原值（不再整行替换）。
+  assert.equal(after1.water_goal, 2300, 'water 未传 → 保持原值 2300（#127 UPSERT）');
+  assert.equal(after1.weight_goal, 68, 'weight_goal 保持原值（#127 UPSERT）');
+  assert.equal(after1.goal_deadline, '2026-12-31', 'goal_deadline 保持原值（#127 UPSERT）');
 
   // ② 传 water：SQL 含 water_goal 列 → 摘要含 water（同一键的两条 SQL 分别对账）
   const r2 = run('calorie.goal.set', { calorie: 1750, protein: 140, carbs: 180, fat: 50, water: 2400 }, env);

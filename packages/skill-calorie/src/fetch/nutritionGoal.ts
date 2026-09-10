@@ -65,15 +65,26 @@ export function setNutritionGoal(db: DatabaseSync, input: SetGoalInput): SetGoal
     if (water < 0) throw new FetchError('饮水目标不能为负数');
   }
   const diff = protein * 4 + carbs * 4 + fat * 9 - calorie;
+  // #127：必须用 UPSERT（仅 SET 传入列），禁止 INSERT OR REPLACE 整行替换。
+  // REPLACE 会把未列出的列（water_goal／weight_goal／goal_deadline／goal_paused／
+  // exercise_goal／start_weight／start_date）重置为默认/NULL＝用户可见数据丢失。
+  // UPSERT：不存在时按列默认插入，存在时只覆盖传入列，其余列逐列保持原值。
   if (water !== null) {
     db.prepare(
-      'INSERT OR REPLACE INTO daily_goal (id, calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal, updated_at)' +
-        ' VALUES (1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
+      'INSERT INTO daily_goal (id, calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal, updated_at)' +
+        ' VALUES (1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)' +
+        ' ON CONFLICT(id) DO UPDATE SET calorie_goal = excluded.calorie_goal,' +
+        ' protein_goal = excluded.protein_goal, carbs_goal = excluded.carbs_goal,' +
+        ' fat_goal = excluded.fat_goal, water_goal = excluded.water_goal,' +
+        ' updated_at = CURRENT_TIMESTAMP',
     ).run(calorie, protein, carbs, fat, water);
   } else {
     db.prepare(
-      'INSERT OR REPLACE INTO daily_goal (id, calorie_goal, protein_goal, carbs_goal, fat_goal, updated_at)' +
-        ' VALUES (1, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
+      'INSERT INTO daily_goal (id, calorie_goal, protein_goal, carbs_goal, fat_goal, updated_at)' +
+        ' VALUES (1, ?, ?, ?, ?, CURRENT_TIMESTAMP)' +
+        ' ON CONFLICT(id) DO UPDATE SET calorie_goal = excluded.calorie_goal,' +
+        ' protein_goal = excluded.protein_goal, carbs_goal = excluded.carbs_goal,' +
+        ' fat_goal = excluded.fat_goal, updated_at = CURRENT_TIMESTAMP',
     ).run(calorie, protein, carbs, fat);
   }
   const row = getNutritionGoal(db);
