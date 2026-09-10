@@ -1,6 +1,7 @@
 /** #136 · help模板 base 侧等价锁（机器生成，哈希常量禁手填）。
- * 锁两面：① PREFIX/SUFFIX 值与搬家基线逐字节一致（改模板即红）；
- * ② 固定夹具渲染输出逐字节一致（渲染逻辑漂移即红）。运行：先 `npx tsc -b packages/base-render`，
+ * 锁三面：① PREFIX/SUFFIX 值与源切分逐字节一致（改模板即红）；
+ * ② 固定夹具渲染输出逐字节一致（渲染逻辑漂移即红）；③ 源可复现（源切分即得常量）；
+ * 运行：先 `npx tsc -b packages/base-render`，
  * 再 `node --test packages/base-render/test/help-shell-136.test.mjs`。
  */
 import { strict as assert } from 'node:assert';
@@ -39,4 +40,16 @@ test('#136 ③ 子路径登记：exports 含 ./help-shell（主入口不动）',
   assert.equal(pkg.exports['./help-shell'], './dist/helpShell.js', '子路径导出');
   assert.equal(pkg.exports['.'], './dist/index.js', '主入口不动');
   assert.ok(pkg.files.includes('dist'), 'files 须含 dist');
+});
+
+test('#136 ④ 源可复现：assets 源切分即得前后缀（删生成物重跑 gen 逐字节一致）', () => {
+  const src = readFileSync(new URL('../assets/help-template.html', import.meta.url), 'utf8');
+  const open = '<script id="help-data" type="application/json">';
+  const oOpen = src.indexOf(open);
+  assert.ok(oOpen > 0, '源缺 help-data 开标签');
+  assert.equal(sha(src.slice(0, oOpen + open.length)), sha(HELP_SHELL_PREFIX), '源切分 PREFIX 须等于常量');
+  assert.equal(sha(src.slice(src.indexOf('</script>', oOpen))), sha(HELP_SHELL_SUFFIX), '源切分 SUFFIX 须等于常量');
+  for (const slot of ['SLOT:1/INJECT-DATA', 'SLOT:2/SHARED-HELPERS', 'SLOT:3/SHARED-CSS']) {
+    assert.ok(src.includes(slot), '源缺槽契约：' + slot);
+  }
 });
