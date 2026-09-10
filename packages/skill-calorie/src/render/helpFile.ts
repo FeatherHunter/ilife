@@ -104,8 +104,9 @@ export function buildHelpFileData(now: Date = new Date()): HelpFileData {
   };
 }
 
-/** 5 键 JSON → 全壳 HTML（T3 #134：与老实物同壳；`render/helpShell.ts:renderHelpShellHtml`
- * 唯一实现——DOM＋CSS变量＋三槽填充物照搬老实物，本函数只做接线层转发，不自造第二套壳；
+/** 5 键 JSON → 全壳 HTML（T3 #134：与老实物同壳；#136 模板唯一实现已搬家至
+ * `base-paint/help-shell:renderHelpShellHtml`——DOM＋CSS变量＋三槽填充物照搬老实物，
+ * 本函数只做接线层转发，不自造第二套壳；
  * 空分组抛 `missing-data`（不返空页；沿 T2-②b 口径，调用方 exit 5）。 */
 export function renderHelpFileHtml(data: HelpFileData): string {
   return renderHelpShellHtml(data);
