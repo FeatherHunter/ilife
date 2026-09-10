@@ -145,7 +145,21 @@
         <tr><td>发版前检查 <code>pnpm publish:pre</code></td><td><span class="pill ok">exit 0（原先红，现已转绿）</span></td><td><code>b37c1614…b44</code></td></tr>
         <tr><td>全量测试 <code>pnpm test</code></td><td><span class="pill warn">exit 1（既有名单里的红，与本次改动无关）</span></td><td><code>63af7d62…fe70</code></td></tr>
       </table>
-      <p><b>全量测试那 4 条新增失败是什么：</b>相对仓库自己的治理名单（34 条）实测为 <b>新增 4 条／消失 5 条</b>；新增的 4 条是「三个包版本号必须一致」「依赖方向」「单品到总管单向」等，<b>只读 <code>package.json</code>，而这个文件本次一个字都没改</b>——原因是三个包的版本号目前不一致（<code>base-paint 0.3.0</code> / <code>skill-calorie 0.2.2</code> / <code>plugin 0.2.3</code>），属于发版流程自己的事。</p>
+      <p><b>全量测试那 4 条新增失败是什么：</b>相对仓库自己的治理名单（34 条）实测为 <b>新增 4 条／消失 5 条</b>。4 条其实是<b>两个互不相同的成因</b>（前一版简报把它们笼统写成「版本号偏斜」，此处更正）：</p>
+      <table>
+        <tr><th>红的两行</th><th>成因</th><th>性质</th></tr>
+        <tr>
+          <td><code>三包 version 逐字相等（版本偏斜即红）</code>＋ 它的套件行 <code>#79 base-* 三包版本 lockstep</code></td>
+          <td>共享底座的三个包（<code>base-link-core</code> / <code>base-paint</code> / <code>base-combos</code>）本应同号，现在 <code>base-paint</code> 是 <b>0.3.0</b>、另两个还是 <b>0.2.0</b></td>
+          <td><span class="pill warn">已知 · 有意 · 临时</span> 热修提交 <code>3e46ab0</code> 自己写明「已知红……热修临时偏斜，下次 fixed 联动发版自愈」</td>
+        </tr>
+        <tr>
+          <td><code>单品→总管单向（总管零单品依赖）</code>＋ 它的套件行 <code>P10 依赖方向</code></td>
+          <td>插件对技能的依赖写法：插件现在按新规则<b>精确 pin</b> <code>skill-calorie: 0.2.2</code>（规范 #129 要求），而测试 <code>test/plugin-p10-boundaries.test.mjs</code> 还按<b>旧规则</b>要求 <code>^0.2.0</code></td>
+          <td><span class="pill warn">测试没跟上新规则</span> 发布门 <code>tooling/check-publish.mjs</code> 已按 #129 改，测试没同步</td>
+        </tr>
+      </table>
+      <p>两件事都<b>与 #125 改的运动记录代码无关</b>（相关文件本次一个字没改）。</p>
     </div>
   </details>
 </div>
@@ -180,7 +194,7 @@
   <h3>3.1 现在什么情况</h3>
   <div class="fact">
     <b class="k">#125 自己的活已经全部做完并入库</b>：口径统一（已删除的记录按「不存在」处理）、三条删除路径行为一致、4 个回归用例、2 处故意改坏自证（改坏即变红、改回即变绿）。<br>
-    <b class="k">卡住的地方不是它的代码</b>，而是全量测试里那 <b>4 条版本号相关的失败</b>——它们跟 #125 改的运动记录代码毫无关系（相关文件一个字没动）。
+    <b class="k">卡住的地方不是它的代码</b>，而是全量测试里那 <b>4 条与它无关的失败</b>：2 条是共享底座三个包的<b>已知热修偏斜</b>（提交 <code>3e46ab0</code> 写明「下次联动发版自愈」），2 条是<b>测试没跟上新规则 #129</b>（插件该精确 pin 技能版本）。两者都没碰 #125 改的运动记录代码。
   </div>
 
   <h3>3.2 为什么这件事要问你</h3>
@@ -213,9 +227,9 @@
     </tr>
     <tr>
       <td>丙</td>
-      <td>先把三个包的版本号对齐（那是发版流程的活），再回来看这条红</td>
-      <td class="pro">从根上消掉这 4 条红，之后判定不需要任何人裁定</td>
-      <td class="con">要动发版流程的地盘，可能撞上正在跑的会话；目前没有这一项安排</td>
+      <td>不等裁定，先把这 4 条红消掉：跑一次正式发版（固定组会把三包一起升到 0.3.0）＋ 把那条旧测试改到 #129 的新规则</td>
+      <td class="pro">从根上消掉这 4 条红，之后判定不再需要任何人裁定</td>
+      <td class="con">要动发版流程与一条框架测试的地盘，可能撞上正在跑的会话；而且热修提交已登记「下次联动发版自愈」，现在做等于把同一件事做两遍</td>
     </tr>
   </table>
   <div class="recbox">
