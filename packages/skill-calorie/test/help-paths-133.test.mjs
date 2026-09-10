@@ -13,6 +13,7 @@ import {
   buildHelpFileName,
   formatHelpStamp,
   HELP_HTML_DIR_NAME,
+  HELP_HTML_EXT,
   resolveHelpPath,
 } from '../dist/render/helpPaths.js';
 
@@ -93,6 +94,10 @@ test('#133 ⑩ 绝对路径：相对 dbDir 输入亦返回绝对路径', () => {
   rmSync(join(cwd, leaf), { recursive: true, force: true });
 });
 
+test('#133 ⑫ 落点目录名／扩展名字面量（防漂移：老 `SKILL_HTML_NAME + "_html"` → calorie_html）', () => {
+  assert.equal(HELP_HTML_DIR_NAME, 'calorie_html');
+  assert.equal(HELP_HTML_EXT, '.html');
+});
 test('#133 ⑪ 目录自动创建：calorie_html 不存在则递归建出', () => {
   const dbDir = join(tmpDbDir('mkdir'), 'not-exist-db');
   assert.ok(!existsSync(dbDir), '前置：dbDir 不存在');
