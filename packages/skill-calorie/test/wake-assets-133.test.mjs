@@ -32,7 +32,7 @@ const SPOT = [
 ];
 
 describe('T2-① #133 唤醒词资产清单', () => {
-  it('总数 436（扁平／总量常量／id 索引三口径一致）', () => {
+  it('总数 436（扁平／总量常量／id 索引／分组求和四口径一致）', () => {
     assert.equal(WAKE_ASSETS.length, 436);
     assert.equal(WAKE_ASSET_TOTAL, 436);
     assert.equal(Object.keys(SCENE_BY_ID).length, 436);
