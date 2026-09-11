@@ -39,7 +39,11 @@ export type { SlotDescriptor, TabsPort } from './slot.js';
 export { SETTINGS_OWNER, SETTINGS_SLOT, SETTING_ROWS } from './settings.js';
 export type { SettingRow } from './settings.js';
 export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli } from './bridge.js';
-export { CLIENT_COMPONENT, CLIENT_METHOD, mountSingleClient, openSingleClient, requestReadViaHost } from './client.js';
+// 宿主**不**再导出 `./client.js` 的值（#602 现场实测）：客户端产物是 **loader 工厂包**
+// （`window.__ModuleLoader__.load({id, factory})` 的 CJS，由 tsdown 打），不是 ESM 模块——
+// 宿主 `export … from './client.js'` 会让插件树在启动期报
+// 「The requested module './client.js' does not provide an export named 'CLIENT_COMPONENT'」而整棵树起不来。
+// 样板 plugin-calorie 同样只在浏览器侧消费 client.ts，宿主不碰；类型可留（type-only 会被擦除）。
 export type { HostCaller } from './client.js';
 export { PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK, SKILL_FILE, skillDir, skillFile, parseSkillText, provider as skillProvider } from './skill-provider.js';
 export type { SkillCandidate, SkillDefinition, SkillProvider, SkillInvocationPolicy, SkillsFace, SkillHostCtx } from './dsh-ctx.js';

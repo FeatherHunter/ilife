@@ -42,6 +42,10 @@ importers:
       skill-bill:
         specifier: ^0.1.0
         version: link:../skill-bill
+    devDependencies:
+      tsdown:
+        specifier: 0.22.14
+        version: 0.22.14(typescript@5.9.2)
 
   packages/plugin-calorie:
     dependencies:
