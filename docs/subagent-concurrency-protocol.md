@@ -11,7 +11,7 @@
 
 - 每票在开工前必须**声明自己会写的路径集合**（文件级，写进派单），只允许写这些路径。
 - **禁止**修改其他票已声明占用的路径。需要跨票改动时：**停下来报告**，不要自己动手。
-- 各自证据文件写 `docs/research/t<票号>-*`（天然不重叠）；工作草稿写 `.scratch/t<票号>/`；changeset 文件名各自唯一（`.changeset/<票号专属名>.md`）。
+- 各自证据文件写**归属件目录** `docs/<类别>/<件名>/t<票号>-*`（类别＝`skills`／`plugins`／`base`，件名见 `docs/agents/doc-homes.md`；同一件的多个票共用一个目录，靠票号前缀保持**文件级**不重叠）。`docs/research/` 是历史归档，**不再新增**。工作草稿写 `.scratch/t<票号>/`；changeset 文件名各自唯一（`.changeset/<票号专属名>.md`）。
 
 ## 2. 共享资源串行化（目录锁）
 
@@ -91,7 +91,7 @@ try {
    放宽开关 `--allow-no-claims`／`--allow-undeclared`／`--allow-nonzero`／`--allow-no-runid` **必须**在证据里留一行 `GATE-RELAX flag=<开关> reason=<理由>`，否则 exit ≠ 0；**私自放宽＝S1-交付缺陷**（§6）。
 3. **机读声明写法**：证据里声称一次运行的规范写法是单独一行 `GATE-RUN runId=<runId> cmd=<命令>`（可附 `ticket=<票号>`）；`runId` 从 `gate-runs.log` 该次运行的 `RUN` 行抄录。**没有** `GATE-RUN` 声明的运行**不计入**对账，也**不得**当作门禁证据引用。
 4. **对账源必须可追踪**：审计日志在 gitignored 的 `.scratch/locks/` 下，第三方无法复核 → 收尾时用
-   `node tooling/check-gate-audit.mjs --evidence <证据文件> --ticket <票号> --since <ISO> --export docs/research/t<票号>-gate-runs.log`
+   `node tooling/check-gate-audit.mjs --evidence <证据文件> --ticket <票号> --since <ISO> --export docs/<类别>/<件名>/t<票号>-gate-runs.log`
    把本次对账窗口内的 `RUN` 条目导出为**受 git 跟踪**的对账源，并在证据里引用该文件（导出文件可直接当 `--log` 复核）。
 5. **裸跑与门禁的鉴别力边界**：裸跑（不经包装器跑 build／test／`tsc -b`／`node --test`）＝ §6 的 **S1-过程违规**。但机械门禁**只能对账「已声明」的运行**；**裸跑本身不可机械检测**（`node --test` 尤其：不写任何产物、不留 mtime 痕迹），故裸跑只能靠**自认／举报／审查**发现。对账**查漏不防伪**（日志与工具同在可写工作区），**造假按 S1-交付缺陷处置**。
 6. **自证测试须单独触发**（蓝队 G-3）：`tooling/test/*.test.mjs` **不在** canonical `pnpm test` 的 glob 内（纳入会与外层持锁包装器嵌套持锁）；改为 `pnpm gate:selftest`（内部即经包装器）显式跑门禁工具自证测试，**须手工或 CI 单独触发**——不得据此认为 canonical `pnpm test` 已覆盖门禁工具自身。
@@ -131,7 +131,7 @@ try {
 - **归属标注**：每个缺陷必须标注**本票引入／本票范围／范围外发现**；范围外发现不得单独决定 FAIL（只能 S3＋转票措辞），除非它直接证伪本票的验收结论。
 - **关闭 verdict 以合并点安静态复核为准**；单票审查是初审。
 - 分数（如用）只是次要摘要：verdict＋缺陷清单才是正文；五维（契约一致 30／证据真实可复现 25／parity 20／工程红线 15／文档同步 10）供参考，不跨票比较。
-- 证据入仓 `docs/research/t<票号>-*.md` ＋ 可复跑 `.mjs`；**必须被 git 跟踪**。
+- 证据入仓归属件目录 `docs/<类别>/<件名>/t<票号>-*.md`（类别与件名见 `docs/agents/doc-homes.md`）＋ 可复跑 `.mjs`；**必须被 git 跟踪**。
 - 报告 ≤1200 词：① commit sha ＋ 改动文件清单（`git show --stat`）；② 逐条验收「怎么满足＋证据 file:line」；③ 门禁实测；④ 变异自证；⑤ 偏离记账；⑥ 未做／未确证；⑦ 风险 top3。
 - 完成后**停止**，等编排者安排对抗式审查。
 
