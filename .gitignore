@@ -6,3 +6,5 @@ packages/*/dist/
 .tmp-*/
 # vision-router 的截图缓存（工具产物，可重跑生成，不入库）
 .dsh-vision-router/
+# skills deck 插件的工作副本（工具产物，可重跑生成，不入库）
+.dsh-mattskillsdeck-cache/
