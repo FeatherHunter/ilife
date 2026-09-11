@@ -13,6 +13,7 @@ import {
   HELP_SHELL_PREFIX,
   HELP_SHELL_SUFFIX,
   HelpShellError,
+  composeDocTitle,
   renderHelpShell,
   renderHelpShellHtml,
 } from '../dist/helpShell.js';
@@ -33,6 +34,15 @@ test('#136 ② 固定夹具渲染逐字节一致＋空分组抛 missing-data', (
   assert.equal(renderHelpShell, renderHelpShellHtml, '标准出口须为同一实现');
   assert.throws(() => renderHelpShellHtml({ ...FIXTURE, groups: [] }),
     (e) => e instanceof HelpShellError && e.code === 'missing-data');
+});
+
+test('#145 文档标题：title 不含技能名时前缀；已含则原样（老世代大标题含技能名，禁重复）', () => {
+  const docTitleOf = (html) => html.slice(html.indexOf('<title>') + 7, html.indexOf('</title>'));
+  assert.equal(composeDocTitle({ skill_name: '卡路里', title: '唤醒词速查台' }), '卡路里 · 唤醒词速查台');
+  assert.equal(composeDocTitle({ skill_name: '饼干记账', title: '饼干记账 · 使用手册(HELP)' }), '饼干记账 · 使用手册(HELP)');
+  assert.equal(docTitleOf(renderHelpShellHtml(FIXTURE)), '卡路里 · 唤醒词速查台', '既有形状逐字节不变');
+  const bill = renderHelpShellHtml({ ...FIXTURE, skill_name: '饼干记账', title: '饼干记账 · 使用手册(HELP)' });
+  assert.equal(docTitleOf(bill), '饼干记账 · 使用手册(HELP)', '自带技能名不重复前缀');
 });
 
 test('#136 ③ 子路径登记：exports 含 ./help-shell（主入口不动）', () => {

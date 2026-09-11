@@ -5,3 +5,8 @@ export { BILL_TEMPLATES, templateFor, loadTemplate } from './templates.js';
 export type { BillTemplate } from './templates.js';
 export { toBillItem, calcKpi, calcCategories, buildRecordToday, buildRecordRange, buildRecordSearch, buildRecordDetail, buildRecordReceipt, buildOverview, buildCompare, buildTrend, buildGoalQuery, buildAccountQuery, buildHelpItems } from './views.js';
 export type { BillItem, HelpItem } from './views.js';
+export {
+  HELP_FILE_STEM, HELP_FILE_SKILL_NAME, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID, HELP_CONTACT,
+  formatHelpMinute, deriveSummaryLine, buildMetaBlocks, buildInitBanner, buildHelpFileData, renderHelpFileHtml,
+} from './helpFile.js';
+export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpFileData, HelpFileOptions } from './helpFile.js';

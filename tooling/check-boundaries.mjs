@@ -27,12 +27,16 @@ const grepHit = ['base-link-core/src', 'base-combos/src'].some((d) =>
     /registerTab|openTab|mountInjector/.test(readFileSync(join(root, 'packages', d, f), 'utf8'))));
 assert(!grepHit, '装配 owner 归一 render（link-core/combos 无自装配）');
 
-// #96 · base-* 变更影响面断言：其余 5 技能（bill/chef/home/schedule/memo-ilife）当前**不消费** base-*，
-// 故 base-paint（目录 base-render）的任何变更都不得改动这 5 个技能的页面。结构面在这里卡死，
+// #96 · base-* 变更影响面断言：其余 4 技能（chef/home/schedule/memo-ilife）当前**不消费** base-*，
+// 故 base-paint（目录 base-render）的任何变更都不得改动这 4 个技能的页面。结构面在这里卡死，
 // 行为面（HTML 产物逐件 sha256）在 `pnpm snapshot:html:check`（tooling/skill-html-snapshot.mjs）。
-const SKILLS_5 = ['skill-bill', 'skill-chef', 'skill-home', 'skill-schedule', 'skill-memo-ilife'];
+//
+// #145 起 skill-bill **移出**该名单：地图 #143 已裁「饼干记账 HELP 的模板与渲染走共享层
+// base-paint/help-shell」（用户 Q2＝两条同时达成／Q9＝可选键照传），bill 自此是**有意的**消费方，
+// #96 那条「尚未迁移」的现状断言对它已失效。其余 4 个技能的断言一字未放宽（仍查依赖闭包＋源码）。
+const SKILLS_BASE_FROZEN = ['skill-chef', 'skill-home', 'skill-schedule', 'skill-memo-ilife'];
 const BASE_RUNTIME = new Set(['base-paint', 'base-render']); // 目录名／包名两种写法都算
-for (const name of SKILLS_5) {
+for (const name of SKILLS_BASE_FROZEN) {
   const p = pkg(name);
   const deps = { ...(p.dependencies ?? {}), ...(p.devDependencies ?? {}), ...(p.peerDependencies ?? {}) };
   const hit = Object.keys(deps).filter((d) => BASE_RUNTIME.has(d));
@@ -49,11 +53,11 @@ function walkSrc(dir) {
   }
   return out;
 }
-const SRC_SCAN = [...SKILLS_5.flatMap((n) => walkSrc(join(root, 'packages', n, 'src'))),
-  ...SKILLS_5.flatMap((n) => readdirSync(join(root, 'packages', n, 'templates'))
+const SRC_SCAN = [...SKILLS_BASE_FROZEN.flatMap((n) => walkSrc(join(root, 'packages', n, 'src'))),
+  ...SKILLS_BASE_FROZEN.flatMap((n) => readdirSync(join(root, 'packages', n, 'templates'))
     .filter((f) => f.endsWith('.html')).map((f) => join(root, 'packages', n, 'templates', f)))];
 const srcHit = SRC_SCAN.filter((f) => SRC_RE.test(readFileSync(f, 'utf8')));
-assert(srcHit.length === 0, `5 技能源码／模板不 import base-*（命中：${srcHit.map((f) => f.slice(root.length + 1)).join(',') || '无'}）`);
+assert(srcHit.length === 0, `未迁移技能源码／模板不 import base-*（命中：${srcHit.map((f) => f.slice(root.length + 1)).join(',') || '无'}）`);
 
 if (bad) { console.error(`boundaries: ${bad} 处破界`); process.exit(1); }
 console.log('boundaries: PASS');

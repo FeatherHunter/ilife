@@ -55,13 +55,27 @@ function escapeTitleText(s: string): string {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/** 文档标题＝`skill_name · title`；`title` 已自带技能名时**不再重复前缀**（#145）。
+ *
+ * 背景：#141 把 `<title>` 从原型水印改成「由 5 键派生」，规则写作 `skill_name + ' · ' + title`。
+ * 但**老世代口径要求大标题含技能名**（老 `render_help.py` 自述的 #303 验收反馈：技能名应在大字行，
+ * eyebrow 小字不算），于是饼干记账这类技能的 `title` 本身就是 `饼干记账 · 使用手册(HELP)`——
+ * 照拼即得 `饼干记账 · 饼干记账 · 使用手册(HELP)`（标签页重复）。
+ * 故此处只加一条**结构性**判断：`title` 含 `skill_name` ⇒ 直接用 `title`；卡路里（`title` 不含技能名）
+ * 走原分支，输出逐字节不变。 */
+export function composeDocTitle(data: { readonly skill_name: unknown; readonly title: unknown }): string {
+  const skill = String(data.skill_name);
+  const title = String(data.title);
+  return title.includes(skill) ? title : skill + ' · ' + title;
+}
+
 /** 5 键 JSON → 全壳 HTML（与老实物同壳；小于号转义防 script 破壳，parse 后逐字一致）。 */
 export function renderHelpShellHtml(data: HelpShellData): string {
   if (!data || !Array.isArray(data.groups) || data.groups.length === 0) {
     throw new HelpShellError('HELP 渲染缺分组（不返空页）。');
   }
   const json = JSON.stringify(data).replace(/</g, '\\u003c');
-  const title = escapeTitleText(String(data.skill_name) + ' · ' + String(data.title));
+  const title = escapeTitleText(composeDocTitle(data));
   return HELP_SHELL_PREFIX.split(HELP_SHELL_TITLE_SLOT).join(title) + json + HELP_SHELL_SUFFIX;
 }
 
