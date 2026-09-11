@@ -1,3 +1,7 @@
+## 结构纪律（最高优先级）
+
+管 `packages/` 下全部代码的形状（技能／插件／公共层）。改源码、建能力、排目录层级、或文件行数超告警线时，先读 `docs/agents/structure.md`：五条铁律、结构标准、能力目录形状、必报五步。
+
 ## Agent skills
 
 ### Issue tracker
