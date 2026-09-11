@@ -28,6 +28,7 @@
   },
   "scripts": {
     "build": "tsc -b && node scripts/build-help.mjs",
+    "gen:wake-assets": "node scripts/gen-wake-assets.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }
