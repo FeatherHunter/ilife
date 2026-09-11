@@ -151,3 +151,32 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
 export function renderHelpFileHtml(data: HelpFileData): string {
   return renderHelpShellHtml(data);
 }
+
+/** 交付索引（envelope 的 `data` 载荷；`list` 形要 `items`）：域级一行，计数全**派生**——
+ *  与 `help_summary` 同源思路，改资产即跟变，不回写第二份数字。 */
+export interface HelpIndexItem {
+  readonly id: string;
+  readonly icon: string;
+  readonly label: string;
+  readonly subgroupCount: number;
+  readonly sceneCount: number;
+}
+
+export interface HelpIndex {
+  readonly items: readonly HelpIndexItem[];
+  readonly total: number;
+  readonly sceneTotal: number;
+  readonly subgroupTotal: number;
+}
+
+export function buildHelpIndex(): HelpIndex {
+  let sceneTotal = 0;
+  let subgroupTotal = 0;
+  const items = WAKE_GROUPS.map((g) => {
+    const sceneCount = g.subgroups.reduce((n, s) => n + s.scenes.length, 0);
+    sceneTotal += sceneCount;
+    subgroupTotal += g.subgroups.length;
+    return { id: g.id, icon: g.icon, label: g.label, subgroupCount: g.subgroups.length, sceneCount };
+  });
+  return { items, total: items.length, sceneTotal, subgroupTotal };
+}

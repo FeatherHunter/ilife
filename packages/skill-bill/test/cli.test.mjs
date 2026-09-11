@@ -98,7 +98,13 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     assert.equal(run(['bill.setup.run', '--params', P({ op: 'init-status' })]).status, 0);
     const h = run(['bill.help.lookup']);
     assert.equal(h.status, 0);
-    assert.equal(JSON.parse(h.stdout).data.total, 77);
+    // #144：缺省＝老实物同款 HELP 文件（`data` 换成域级索引），全量 77 条改走显式 `mode`。
+    const he = JSON.parse(h.stdout);
+    assert.equal(he.data.mode, 'file');
+    assert.equal(he.data.total, 7);
+    assert.ok(he.delivery.path.endsWith('.html') && he.delivery.path.includes('biscuit_accountant_html'));
+    const all = run(['bill.help.lookup', '--params', P({ mode: 'lookup' })]);
+    assert.equal(JSON.parse(all.stdout).data.total, 77);
     const q = run(['bill.help.lookup', '--params', P({ q: '帮我查今天花了多少' })]);
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'bill.record.today'));
   });

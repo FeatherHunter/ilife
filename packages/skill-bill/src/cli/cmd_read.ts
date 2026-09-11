@@ -6,7 +6,7 @@ import { writeFileSync, readFileSync, copyFileSync, readdirSync, existsSync, mkd
 import { join, basename } from 'node:path';
 import {
   BillFetchError, BillPolicyError,
-  resolveDbPath, resolveGoalsPath, assertWritablePath, openBillDb, closeBillDb,
+  resolveDbPath, resolveDbDir, resolveGoalsPath, assertWritablePath, openBillDb, closeBillDb,
   fetchAll, listToday, listRange, getById, searchKeyword, listByTag,
   addBill, updateBill, undoBill, restoreBill, loadGoals, saveGoals,
 } from '../fetch/index.js';
@@ -23,8 +23,11 @@ import {
   toBillItem, calcKpi, calcCategories, buildRecordToday, buildRecordRange, buildRecordSearch,
   buildRecordDetail, buildRecordReceipt, buildOverview, buildCompare, buildTrend,
   buildGoalQuery, buildAccountQuery, buildHelpItems,
+  buildHelpIndex, buildHelpFileData, renderHelpFileHtml, resolveStemTarget,
+  HELP_FILE_STEM, LOOKUP_FILE_STEM,
   BillRenderError,
 } from '../render/index.js';
+import { deliverHtml, type HtmlDelivery } from '../output.js';
 import { buildHelpLookup } from '../help/index.js';
 import type { BillRow } from '../fetch/db.js';
 
@@ -61,6 +64,50 @@ function weekRange(): { start: string; end: string } {
   const mon = new Date(now); mon.setDate(now.getDate() - day);
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
   return { start: mon.toISOString().slice(0, 10), end: sun.toISOString().slice(0, 10) };
+}
+
+/* ── #144 · 「饼干记账help」的交付装配（**在开库之前**走） ────────────────────────────────
+ *
+ * 缺省（不给任何参数）＝ 老实物同款 HELP 文件：`<SKILLS_DB_PATH>/biscuit_accountant_html/
+ * 饼干记账_HELP_<YYYYMMDD_HHMMSS>[_N].html`，独占落盘 ＋ 绝对路径回执（`delivery` 顶层追加）。
+ * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体 `饼干记账_速查表`，与 HELP 分名——照 #139 判法：
+ * 一个键两种产物就分成两个名字，别让用户按一个名字打开到另一个东西）。
+ * 显式 `q` ＝ 现找：只回命中（stdout），`--html <路径>` 给了才落盘（检索式问答不刷目录）。
+ * 全程**不开库**：初始化状态用「DB 文件是否存在」判定（见 render/helpFile.ts 头注释的取舍），
+ * 免得「看帮助」把记账库 `new DatabaseSync` 出来并跑 DDL 自愈。
+ */
+interface DeliverIntent { readonly html?: string; readonly target: string; }
+interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
+
+/** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized`）；
+ *  判定本身异常 ⇒ `false`＝横幅照显（fail-open，理由见 render/helpFile.ts 头注释）。 */
+function helpInitialized(): boolean {
+  try { return existsSync(resolveDbPath()); } catch { return false; }
+}
+
+function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
+  const dbDir = resolveDbDir();
+  const now = new Date();
+  const mode = params.mode === undefined ? undefined : String(params.mode);
+  const q = params.q === undefined ? undefined : String(params.q);
+  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
+  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本键只认 lookup');
+  if (q !== undefined) {
+    const hits = buildHelpItems(buildHelpLookup(), q);
+    return { data: { ...hits, mode: 'lookup', query: q } };
+  }
+  if (mode === 'lookup') {
+    const hits = buildHelpItems(buildHelpLookup(), undefined);
+    return {
+      data: { ...hits, mode: 'lookup' },
+      deliver: { target: resolveStemTarget(dbDir, LOOKUP_FILE_STEM, now) },
+    };
+  }
+  const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
+  return {
+    data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
+    deliver: { html, target: resolveStemTarget(dbDir, HELP_FILE_STEM, now) },
+  };
 }
 
 // 十六键分发：读走 fetch 读，写走 fetch 写+policy 校验；未知键上游已拦，此处再拦一道。
@@ -399,11 +446,10 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         fail(2, 'setup op 非法（期望 init/init-status/backup-create/backup-list/restore/import）');
         return null;
       }
-      case 'bill.help.lookup': {
-        const all = buildHelpLookup();
-        const q = params.q === undefined ? undefined : String(params.q);
-        return buildHelpItems(all, q);
-      }
+      case 'bill.help.lookup':
+        // #144：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
+        fail(1, '内部错误：bill.help.lookup 须走 dispatchHelp（开库之前）');
+        return null;
       default: fail(3, '未知 bill key：' + key); return null;
     }
   } finally {
@@ -428,6 +474,7 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：bill-cmd-read <bill.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
+  const key = o.key;
   const dbPath = preflight();
   void dbPath;
   let params: Record<string, unknown> = {};
@@ -436,31 +483,44 @@ async function main() {
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
   let shape = null;
-  try { shape = billShapeFor(o.key); } catch (e) { fail(3, (e as Error).message); }
+  try { shape = billShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
   void shape;
   const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
   timer.unref();
   let env = null;
+  let delivery: HtmlDelivery | undefined;
   try {
-    const data = dispatch(o.key, params);
-    env = buildBillEnvelope(o.key, data);
-    if (o.html) {
-      // B4：--html 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
-      const section = renderEnvelopeHtml(env);
-      const full = fillTemplate(loadTemplate(templateFor(o.key)), section);
+    // #144：HELP 在开库之前分派（只读页不建库）；其余 15 键照旧走 dispatch（内部开库）。
+    const help = key === 'bill.help.lookup' ? dispatchHelp(params) : null;
+    const built = buildBillEnvelope(key, help ? help.data : dispatch(key, params));
+    env = built;
+    // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
+    const sectionHtml = (): string => {
+      const full = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
       assertHtmlSize(full);
-      try { writeFileSync(o.html, full, 'utf8'); }
-      catch (e) { fail(5, 'HTML 写盘失败：' + o.html); }
+      return full;
+    };
+    if (help?.deliver !== undefined) {
+      // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
+      const html = help.deliver.html ?? sectionHtml();
+      if (help.deliver.html !== undefined) assertHtmlSize(html);
+      delivery = deliverHtml({ explicit: o.html, target: help.deliver.target, html });
+    } else if (o.html) {
+      delivery = deliverHtml({ explicit: o.html, html: sectionHtml() });
     }
   } catch (e) {
     if (e instanceof BillFetchError) fail(4, '取数失败：' + e.message);
     if (e instanceof BillPolicyError) fail(2, '口径失败：' + e.message);
     if (e instanceof BillRenderError) fail(5, '渲染失败：' + e.message);
+    if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
+      fail(5, '落盘失败：' + ((e as Error).message || String(e)));
+    }
     if ((e as Error).message?.includes('SKILLS_DB_PATH')) fail(1, (e as Error).message);
     if ((e as Error).message?.includes('BILL_FORCE_PROD')) fail(1, (e as Error).message);
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally { clearTimeout(timer); }
-  process.stdout.write(JSON.stringify(env) + '\n');
+  // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
+  process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
 }
 
 await main();

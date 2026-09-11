@@ -8,5 +8,10 @@ export type { BillItem, HelpItem } from './views.js';
 export {
   HELP_FILE_STEM, HELP_FILE_SKILL_NAME, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID, HELP_CONTACT,
   formatHelpMinute, deriveSummaryLine, buildMetaBlocks, buildInitBanner, buildHelpFileData, renderHelpFileHtml,
+  buildHelpIndex,
 } from './helpFile.js';
-export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpFileData, HelpFileOptions } from './helpFile.js';
+export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpFileData, HelpFileOptions, HelpIndex, HelpIndexItem } from './helpFile.js';
+export {
+  HELP_HTML_DIR_NAME, HELP_HTML_EXT, LOOKUP_FILE_STEM,
+  formatHelpStamp, buildHelpFileName, resolveStemTarget,
+} from './helpPaths.js';
