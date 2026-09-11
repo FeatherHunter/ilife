@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卡路里多 MAP · 对抗式审查（7 项发现 ＋ 3 个方案）</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#fff; --line:#e2e6ea; --fg:#1e2430; --mut:#68727f;
+    --red:#b42318; --redbg:#fdecea; --redline:#f2c2bc;
+    --amber:#8a5200; --amberbg:#fdf4e3; --amberline:#eed9ad;
+    --blue:#0b5cad; --bluebg:#eaf2fd; --blueline:#bdd8f6;
+    --ok:#0f7b46; --okbg:#e8f6ee; --okline:#b6dfc7;
+    --purple:#5b3fa8; --purplebg:#f1edfd; --purpleline:#d5c9f5;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:16px/1.78 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 18px 72px}
+  code{background:#eceff2;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+       font:13px/1.5 ui-monospace,Consolas,monospace;word-break:break-word}
+  b.hl{background:#fff3bf;padding:0 3px;border-radius:3px}
+
+  header{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:22px 24px}
+  header h1{margin:0 0 6px;font-size:22px;letter-spacing:-.3px}
+  header .sub{color:var(--mut);font-size:14px}
+  header .meta{margin-top:10px;font-size:12.5px;color:var(--mut)}
+
+  /* 最重要的一段 */
+  .verdict{border:1px solid var(--redline);background:var(--redbg);border-radius:14px;
+           padding:18px 22px;margin:16px 0}
+  .verdict h2{margin:0 0 8px;font-size:18px;color:var(--red)}
+  .verdict ul{margin:8px 0 0;padding-left:22px}
+  .verdict li{margin:6px 0}
+
+  h2.sec{font-size:17px;margin:34px 0 10px;padding-left:11px;border-left:4px solid var(--blue)}
+
+  /* 发现卡 */
+  .find{background:var(--card);border:1px solid var(--line);border-radius:13px;
+        padding:18px 22px;margin:13px 0}
+  .find.crit{border-left:6px solid var(--red)}
+  .find.high{border-left:6px solid #d98200}
+  .find.mid{border-left:6px solid var(--blue)}
+  .fhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:3px}
+  .num{font-size:12px;font-weight:800;color:#fff;background:var(--fg);
+       border-radius:7px;padding:2px 9px;flex:0 0 auto}
+  .find.crit .num{background:var(--red)}
+  .find.high .num{background:#c47a00}
+  .find.mid .num{background:var(--blue)}
+  .fhead h3{margin:0;font-size:16.5px;flex:1 1 260px;line-height:1.5}
+  .kind{font-size:11.5px;font-weight:800;border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .kind.crit{background:var(--redbg);color:var(--red);border:1px solid var(--redline)}
+  .kind.high{background:var(--amberbg);color:var(--amber);border:1px solid var(--amberline)}
+  .kind.mid{background:var(--bluebg);color:var(--blue);border:1px solid var(--blueline)}
+  .find p{margin:9px 0}
+  .ev{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:11px 15px;margin:9px 0}
+  .ev .t{font-size:12px;font-weight:800;color:var(--mut);letter-spacing:.4px;margin-bottom:5px}
+  .ev .t::before{content:"▍";color:var(--blue);margin-right:5px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:9px 0}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:middle}
+  th{background:#f0f2f5;font-size:12.5px;white-space:nowrap}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.hot td{background:#fff6f4}
+  tr.cool td{background:#f4f8ff}
+  .bar{display:inline-block;height:9px;border-radius:3px;background:var(--blue);vertical-align:middle}
+  .bar.r{background:var(--red)} .bar.g{background:var(--ok)}
+
+  /* 方案 */
+  .opts{margin-top:12px}
+  label.opt{display:block;border:1px solid var(--line);border-radius:12px;padding:14px 17px;
+            margin:10px 0;cursor:pointer;background:#fcfcfd;transition:border-color .15s,background .15s}
+  label.opt:hover{border-color:#b6c0cd}
+  label.opt.sel{border-color:var(--blue);background:var(--bluebg)}
+  label.opt input{position:absolute;opacity:0;width:0;height:0}
+  label.opt:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+  .oh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .tag{font-size:11.5px;font-weight:800;border:1px solid var(--line);background:#fff;
+       border-radius:6px;padding:1px 9px;color:var(--mut)}
+  label.opt.sel .tag{color:var(--blue);border-color:var(--blueline)}
+  .ot{font-weight:700;font-size:15.5px}
+  .rec{font-size:11px;font-weight:800;color:var(--ok);background:var(--okbg);
+       border:1px solid var(--okline);border-radius:999px;padding:1px 9px;margin-left:auto}
+  .ow{font-size:14px;color:#4a5563;margin-top:6px}
+  .pc{margin-top:9px;font-size:14px}
+  .pc div{display:flex;gap:8px;margin:3px 0}
+  .pc b{flex:0 0 34px;font-size:12.5px;padding-top:2px}
+  .pc .p b{color:var(--ok)} .pc .c b{color:var(--red)}
+
+  .recbox{background:var(--okbg);border:1px solid var(--okline);border-radius:12px;
+          padding:15px 18px;margin:14px 0 0;font-size:14.5px}
+  .recbox strong{color:var(--ok)}
+
+  /* 保留 vs 要改 */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+  .split > div{border-radius:11px;padding:13px 16px;font-size:14px}
+  .keep{background:var(--okbg);border:1px solid var(--okline)}
+  .fix{background:var(--amberbg);border:1px solid var(--amberline)}
+  .split h4{margin:0 0 7px;font-size:14px}
+  .keep h4{color:var(--ok)} .fix h4{color:var(--amber)}
+  .split ul{margin:0;padding-left:19px} .split li{margin:5px 0}
+
+  .reply{background:var(--card);border:1px solid var(--line);border-radius:14px;
+         padding:20px 23px;margin-top:26px}
+  .reply h3{margin:0 0 4px;font-size:17px}
+  textarea{width:100%;min-height:104px;border:1px solid var(--line);border-radius:10px;
+           padding:12px;font:13.5px/1.75 ui-monospace,Consolas,monospace;background:#fcfcfd;resize:vertical}
+  .btnrow{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  button{background:var(--blue);color:#fff;border:0;border-radius:9px;padding:10px 20px;
+         font:700 15px inherit;font-family:inherit;cursor:pointer}
+  button.g{background:#fff;color:var(--fg);border:1px solid var(--line);font-weight:600}
+  #ok{color:var(--ok);font-weight:700;font-size:13.5px}
+
+  details{background:#fafbfc;border:1px solid var(--line);border-radius:11px;padding:11px 15px;margin:11px 0}
+  summary{cursor:pointer;font-weight:700;font-size:14.5px}
+  details table{font-size:13px}
+  footer{margin-top:26px;color:var(--mut);font-size:12.5px;text-align:center}
+  @media (max-width:640px){
+    .wrap{padding:16px 13px 60px}
+    .split{grid-template-columns:1fr}
+    header h1{font-size:19.5px}
+  }
+  @media print{body{background:#fff}.find,header,.reply,.verdict{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>卡路里多 MAP · 对抗式审查</h1>
+  <div class="sub">从第一性原理重审我刚建的那批图。<b>7 项发现，其中 2 项推翻了我自己的估算方式。</b></div>
+  <div class="meta">2026-09-11 · 工作区 <code>D:\ilife</code> · 已建的 22 个 issue 未被改动 · 底线证据：老技能 <code>SKILLS\公共组件\docs\component-contract.md</code>＋<code>assets\base.*</code>＋<code>tests\test_components.py</code></div>
+</header>
+
+<div class="verdict">
+  <h2>一句话结论</h2>
+  <p style="margin:6px 0">
+    我按「场景」切了 11 张图——而<b>场景是用户视角的导航分类，不是工作量单位</b>。
+    我去量了老技能之后发现：真正的资产是<b>一套已经建好的组件库（约 4300 行共享资产 ＋ 222 个视觉测试）</b>，
+    而你要的「写库前预检确认页」<b>老技能里几乎没有</b>（79 条写流程里只有 6 条有实物可照）。
+  </p>
+  <ul>
+    <li><b>我的估算方式错了</b>：不是「436 条 × 双产物要画一堆页面」，而是「搬一套组件库 ＋ 把页面做成组件调用」。</li>
+    <li><b>我漏了一件大事</b>：预检确认页是<b>新设计</b>，79 条写流程级别，不是 5 条。</li>
+    <li><b>我切错了轴</b>：27 个真实页面族被我切成 11 张体量差 <b>44 倍</b>的图。</li>
+  </ul>
+</div>
+
+<h2 class="sec">7 项发现</h2>
+
+<!-- 1 -->
+<section class="find crit">
+  <div class="fhead">
+    <span class="num">1</span>
+    <h3>真实的「工作单元」是老技能那套已经建好的组件库，不是 436 条唤醒词、也不是 74 张页面</h3>
+    <span class="kind crit">推翻估算</span>
+  </div>
+  <p>
+    我之前所有的切图、估算、任务清单，都建立在一个<b>我从未验证的假设</b>上：工作单元是「场景」或「页面」。
+    去量了老技能之后，事实是：复用是以<b>一个组件库</b>的形式存在的。
+  </p>
+  <div class="ev">
+    <div class="t">证据</div>
+    <table>
+      <tr><th>资产</th><th>体量</th><th>性质</th></tr>
+      <tr><td><code>公共组件/docs/component-contract.md</code></td><td class="num">50.8 KB / 390 行</td><td>完整组件契约：占位符标准、payload 信封、P0 冻结签名、样式 token、图表参数化、复合形态</td></tr>
+      <tr><td><code>公共组件/tests/test_components.py</code></td><td class="num">147.9 KB / 2824 行</td><td><b>222 个测试函数</b>，用 Playwright 跑：含「手机 375 不溢出」「环形图粗环不裁切」「图例圆点不压名字」</td></tr>
+      <tr><td><code>assets/base.css</code></td><td class="num">17 KB / 496 行</td><td>64 个 CSS 类（共享样式）</td></tr>
+      <tr><td><code>assets/base.js</code></td><td class="num">46.9 KB / 950 行</td><td>52 个函数：<code>snapshot</code>（结构化接口，<b>领域无关</b>）、复制按钮、toast、<code>smartSelect</code>、<code>actionBar</code></td></tr>
+      <tr><td><code>assets/charts.js</code></td><td class="num">66.6 KB / 934 行</td><td>全参数化图表：line／bar／barGrouped／barStacked／donut／progress／combo</td></tr>
+      <tr class="hot"><td><b>模板本身</b></td><td class="num"><b>72 / 73 张</b></td><td><b>靠 <code>&lt;!--SHARED-CSS--&gt;</code> 注入共享样式</b>——页面不是独立设计，是组件调用</td></tr>
+    </table>
+  </div>
+  <p>
+    <b>含义：</b>真正该照搬的是<b>这个库</b>，不是重画页面。我早先说「436 条对应几十上百个产物」方向没错（确有复用），
+    但<b>我完全没发现复用长什么样</b>——它是一套有契约、有 222 个视觉断言的组件库。
+  </p>
+</section>
+
+<!-- 2 -->
+<section class="find crit">
+  <div class="fhead">
+    <span class="num">2</span>
+    <h3>你要的「写库前预检确认页」，老技能里几乎没有 —— 我严重低估了这块</h3>
+    <span class="kind crit">漏了大工程</span>
+  </div>
+  <p>
+    你的原话：「说『记体脂』→ 出预检页（日期、来源、7 处皮褶、体脂率…）→ 点复制 → 把 prompt 发给 AI → AI 执行 → 出结果页」。
+    我去数了老技能 79 条 <code>output_type=receipt</code> 的记录，看它们的模板到底是<b>写之前</b>确认还是<b>写完之后</b>回执：
+  </p>
+  <div class="ev">
+    <div class="t">证据：79 条写类流程里，有多少张是「写前确认页」</div>
+    <table>
+      <tr><th></th><th>条数</th><th>模板</th></tr>
+      <tr class="cool"><td><b>是写前确认</b>（wizard／preview）</td><td class="num"><b>6</b></td><td><code>body_composition_wizard</code>×3、<code>body_measurements_wizard</code>×2、<code>plan_builder_wizard</code>×1</td></tr>
+      <tr class="hot"><td><b>是写后回执</b>（<b>不是</b>你要的那个）</td><td class="num"><b>73</b></td><td><code>crud_receipt</code>×49、<code>body_photo_receipt</code>×7、<code>goal_config</code>×4、<code>goal_weight</code>×4 …</td></tr>
+    </table>
+    <p style="margin:8px 0 0;font-size:13.5px">
+      对照：新仓有 <b>35 条会改数据库的命令</b>（<code>CalorieWriteKey</code>）。
+    </p>
+  </div>
+  <p>
+    <b>含义：</b>你说「记一餐」要出确认页，但老技能的 <code>crud_receipt.html</code> 是<b>记完之后</b>说「已经记好了」。
+    那 49 条写流程的<b>写前确认页在老技能里根本不存在</b>，得新设计。
+  </p>
+  <div class="ev" style="border-color:var(--redline);background:var(--redbg)">
+    <div class="t" style="color:var(--red)">我之前说错在哪</div>
+    <p style="margin:4px 0;font-size:14px">
+      我早先告诉你「只有 <b>5 条</b>必须多步交互」。那句话在「<b>执行层做不到</b>」这个意义上是真的
+      （新仓只有 5 条词被标注为需要多步交互），但它会让你以为<b>预检确认页只有 5 张</b>。
+      按你的模型，要走确认页的写类流程是 <b>79 条级别</b>。这是<b>设计决策</b>，不是执行层缺陷，我把它漏了。
+    </p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="find crit">
+  <div class="fhead">
+    <span class="num">3</span>
+    <h3>我把 27 个页面族，切成了 11 张体量差 44 倍的图</h3>
+    <span class="kind crit">切错轴</span>
+  </div>
+  <p>
+    把 51 个模板名按结构指纹（类名相似度）去重，得到 <b>27 个页面族</b>。再按场景看它们怎么分布：
+  </p>
+  <div class="ev">
+    <div class="t">证据：场景 vs 页面族</div>
+    <table>
+      <tr><th>场景</th><th>唤醒词</th><th>模板名</th><th>页面族</th><th>每条词 / 族</th></tr>
+      <tr class="hot"><td>10 分析</td><td class="num">176</td><td class="num">2</td><td class="num"><b>1</b></td><td class="num"><b>176.0</b> <span class="bar r" style="width:88px"></span></td></tr>
+      <tr class="cool"><td>07 基础信息</td><td class="num">4</td><td class="num">2</td><td class="num"><b>2</b></td><td class="num"><b>2.0</b> <span class="bar g" style="width:2px"></span></td></tr>
+      <tr><td>01 主页</td><td class="num">9</td><td class="num">1</td><td class="num">1</td><td class="num">9.0 <span class="bar" style="width:5px"></span></td></tr>
+      <tr><td>04 运动</td><td class="num">39</td><td class="num">8</td><td class="num">4</td><td class="num">9.8 <span class="bar" style="width:5px"></span></td></tr>
+      <tr><td>02 饮食</td><td class="num">70</td><td class="num">15</td><td class="num">10</td><td class="num">7.0 <span class="bar" style="width:4px"></span></td></tr>
+      <tr><td>03 体重</td><td class="num">58</td><td class="num">8</td><td class="num">6</td><td class="num">9.7 <span class="bar" style="width:5px"></span></td></tr>
+    </table>
+  </div>
+  <p>
+    <b>含义：</b>「场景」是你翻 HELP 页时的<b>导航分类</b>，不是工作量单位。
+    场景 10 是<b>1 个页面族顶 176 条词</b>；场景 07 是<b>2 个页面族顶 4 条词</b>。
+    我拆场景 10 成 A／B 时用的是「15+15+8 vs 19+13 条词」——<b>按词分，不是按页面族分</b>，而 A 和 B 用的是<b>同一个</b> <code>combined_analysis.html</code>。
+  </p>
+</section>
+
+<!-- 4 -->
+<section class="find high">
+  <div class="fhead">
+    <span class="num">4</span>
+    <h3>18 个模板名只顶 1 条唤醒词 —— 高成本、低覆盖，会被系统性低估</h3>
+    <span class="kind high">分配陷阱</span>
+  </div>
+  <div class="ev">
+    <div class="t">证据</div>
+    <p style="margin:4px 0;font-size:14px">
+      <b>18 / 51 = 35% 的模板名，只覆盖 18 / 414 = 4.3% 的唤醒词。</b>
+      而每一个都是一个<b>独立页面族</b>（结构各不相同，见下方折叠清单）。
+    </p>
+  </div>
+  <p>
+    <b>含义：</b>按唤醒词数分配资源，这 18 个（照片对比、GIF 结果、画廊、体脂围度对比、力量／有氧／分布／趋势、
+    营养素深度、营养配比、来源统计、饮水、去重报告、禁忌报告、批量删体重…）会被<b>永远排在最后</b>。
+    它们是「35% 的名字数、4.3% 的分母」——必须显式记账。
+  </p>
+</section>
+
+<!-- 5 -->
+<section class="find high">
+  <div class="fhead">
+    <span class="num">5</span>
+    <h3>你的场景顺序有个副作用，我没提醒你</h3>
+    <span class="kind high">顺序冲突</span>
+  </div>
+  <p>
+    你指定 <b>07 基础信息排第一</b>。但 07 的真实数据是：4 条唤醒词 ／ 2 个模板名 ／ <b>0 条写类流程</b> ／ 0 条跑不通 ／ 2.0 条词每族 ——<b>全场最薄</b>。
+  </p>
+  <div class="ev">
+    <div class="t">冲突在哪</div>
+    <p style="margin:4px 0;font-size:14px">
+      Q2 你定的是「<b>公共层跟着场景一集一集长</b>」。而第一集如果是 07，它<b>攒不下公共层最吃重的部件</b>——
+      预检确认页、回执页、进度对照页，<b>一个都不在 07 里</b>。
+    </p>
+  </div>
+  <p>
+    <b>含义：</b>我在 Q5 里其实写过这个理由（当时用它论证 06 该排第一），但你说「第一个不做主页」之后，
+    我<b>照单接受了 07 打头，没把这个冲突摆回给你</b>。
+    07 作为第一张图的真实价值只有两个：<b>验证交付链路端到端通</b>、<b>验证「一图一票」的流程本身</b>。它不是骨架票。
+  </p>
+</section>
+
+<!-- 6 -->
+<section class="find high">
+  <div class="fhead">
+    <span class="num">6</span>
+    <h3>Q4=B 的「最后人工收口」没有主语；24 张被丢掉的模板永远不会进入工作面</h3>
+    <span class="kind high">机制缺口</span>
+  </div>
+  <p>
+    你选 B（各图自己归类，最后人工收口）。但我没有定义：<b>谁收口、什么时候收、收口的输入是什么。</b>
+  </p>
+  <div class="ev">
+    <div class="t">可预测的后果</div>
+    <p style="margin:4px 0;font-size:14px">
+      每张图只看得见自己那几个模板名，<b>跨图的同形页面会被归成不同的类</b>——饮食的「排行榜」与分析里的「榜单」、
+      体重与分析里的「曲线」。最后那次「收口」会变成<b>重新归类</b>，而不是合并。
+    </p>
+  </div>
+  <p>
+    另外：旧技能里有 <b>24 张模板既不被任何唤醒词引用、本仓也丢了</b>。我把它们写进了每张图的
+    <code>Not yet specified</code>，但图的边界是「本场景的唤醒词」——
+    所以它们在结构上<b>永远不会被任何一张图碰到</b>。是我把它们放错了地方。
+  </p>
+</section>
+
+<!-- 7 -->
+<section class="find mid">
+  <div class="fhead">
+    <span class="num">7</span>
+    <h3>我把「公共层」和「页面模板层」混着用了</h3>
+    <span class="kind mid">用词牵连</span>
+  </div>
+  <p>你自己定的目标是：</p>
+  <div class="ev">
+    <div class="t">你的原话</div>
+    <p style="margin:4px 0;font-size:14.5px">
+      「能封装、抽出来的<b>组件</b>成为 base 库的一部分」「等于是用 <b>base 库的组件</b>来制作卡路里的 html」
+    </p>
+  </div>
+  <p>
+    老技能的契约证实了这一点——抽离对象是 <b>snapshot／toast／复制按钮／图表／列表选择器／smartSelect／actionBar</b>，<b>不是「页面」</b>。
+    我写的「公共层＝页面」，会让你的人工验收落在<b>页面</b>上，而真正该验的是<b>组件</b>。
+  </p>
+</section>
+
+<h2 class="sec">我建的东西，哪些站得住</h2>
+<div class="split">
+  <div class="keep">
+    <h4>✓ 站得住，不用重做</h4>
+    <ul>
+      <li><b>22 个 issue 与原生边全部正确</b>：11 条子议题边 ＋ 11 条阻塞边，独立复核过，<code>expected=actual</code>，面板计数非 0/0</li>
+      <li><b>每张图正文口径一致</b>：Destination／进度／Notes／雾／Out of scope 都在</li>
+      <li><b>「防幻觉词」机制</b>：95 条跑不通的唤醒词在老技能里 <b>95/95 都存在、91 条带完整定义</b>——这条是真发现，已写进每张图</li>
+      <li><b>数据层</b>：436／95／74 张模板／51 个模板名，数字都核过</li>
+    </ul>
+  </div>
+  <div class="fix">
+    <h4>！该改的</h4>
+    <ul>
+      <li><b>把「组件库」立成第一等工作对象</b>（契约＋共享资产＋222 个测试是现成规格）</li>
+      <li><b>补一张「写前确认页」设计票</b>：79 条写流程只有 6 条有老实物</li>
+      <li><b>切图轴从「场景」改为「页面族」</b>：27 个族是真实基数</li>
+      <li><b>07 打头的定位摆正</b>：它验链路，不产骨架</li>
+      <li><b>18 个单条模板显式记账</b></li>
+      <li><b>给「最后收口」定主语</b>：谁、何时、以什么为输入</li>
+    </ul>
+  </div>
+</div>
+
+<details>
+  <summary>展开：27 个页面族全清单（按覆盖的唤醒词条数排序）</summary>
+  <table>
+    <tr><th>族</th><th>覆盖条数</th><th>族内模板名</th></tr>
+    <tr><td class="num">1</td><td class="num">201</td><td><code>combined_analysis</code>、<code>weight_history</code>、<code>exercise_summary</code>、<code>today_meals</code>、<code>today_diet</code>、<code>nutrition_ratio</code>、<code>exercise_distribution</code>、<code>calorie_deficit</code></td></tr>
+    <tr><td class="num">2</td><td class="num">56</td><td><code>crud_receipt</code>、<code>body_photo_receipt</code></td></tr>
+    <tr><td class="num">3</td><td class="num">21</td><td><code>food_ranking</code></td></tr>
+    <tr><td class="num">4</td><td class="num">18</td><td><code>weight_compare</code></td></tr>
+    <tr><td class="num">5</td><td class="num">14</td><td><code>goal_progress</code>、<code>goal_status</code></td></tr>
+    <tr><td class="num">6</td><td class="num">13</td><td><code>workout_plan_view</code></td></tr>
+    <tr><td class="num">7</td><td class="num">13</td><td><code>goal_weight</code>、<code>process_progress</code>、<code>goal_recommend</code>、<code>batch_import_preview</code>、<code>plan_builder_wizard</code></td></tr>
+    <tr><td class="num">8</td><td class="num">9</td><td><code>home_dashboard</code></td></tr>
+    <tr><td class="num">9</td><td class="num">9</td><td><code>weight_review</code>、<code>weight_dashboard</code>、<code>weight_batch_receipt</code></td></tr>
+    <tr><td class="num">10</td><td class="num">8</td><td><code>exercise_recap</code>、<code>exercise_strength</code>、<code>exercise_cardio</code>、<code>exercise_trend</code></td></tr>
+    <tr><td class="num">11</td><td class="num">7</td><td><code>diet_review</code>、<code>source_stats</code>、<code>diet_overview</code></td></tr>
+    <tr><td class="num">12</td><td class="num">6</td><td><code>meal_distribution</code>、<code>dedupe_report</code></td></tr>
+    <tr><td class="num">13</td><td class="num">6</td><td><code>body_composition_view</code>、<code>body_measurements_view</code></td></tr>
+    <tr><td class="num">14</td><td class="num">5</td><td><code>weight_volatility_v2</code></td></tr>
+    <tr><td class="num">15</td><td class="num">5</td><td><code>body_composition_wizard</code>、<code>body_measurements_wizard</code></td></tr>
+    <tr><td class="num">16</td><td class="num">3</td><td><code>weight_log_receipt</code></td></tr>
+    <tr><td class="num">17</td><td class="num">3</td><td><code>exercise_review</code></td></tr>
+    <tr><td class="num">18</td><td class="num">2</td><td><code>nutrition_label_wizard</code></td></tr>
+    <tr><td class="num">19</td><td class="num">2</td><td><code>food_search</code></td></tr>
+    <tr><td class="num">20</td><td class="num">2</td><td><code>exercise_goal_view</code></td></tr>
+    <tr><td class="num">21–27</td><td class="num">各 1</td><td><code>today_water</code>、<code>nutrition_detail</code>、<code>contraindication_report</code>、<code>crud_view</code>、<code>body_photo_gallery</code>、<code>body_photo_compare</code>、<code>body_photo_gif_result</code></td></tr>
+  </table>
+  <p style="font-size:13px;color:var(--mut);margin:8px 0 0">
+    说明：这是按结构指纹（类名相似度 ≥ 0.5）自动归的，<b>是粗算不是定论</b>——第 1 族把 8 个模板并在一起（201 条）明显偏粗，
+    说明「自动归族」只能当作<b>基数参考</b>，真正的族边界要人工看实物定。这一条本身就是「该由谁来归类」的证据（见发现 6）。
+  </p>
+</details>
+
+<h2 class="sec">怎么办：三个方案</h2>
+<div class="opts" data-g="PLAN">
+  <label class="opt sel">
+    <input type="radio" name="PLAN" value="乙" checked>
+    <div class="oh"><span class="tag">乙</span><span class="ot">加一张前置图：组件库搬迁与页面族总谱，排在 11 张之前</span><span class="rec">推荐</span></div>
+    <div class="ow">
+      新开一张图（例：<b>「卡路里共享组件库搬迁 ＋ 27 个页面族总谱」</b>），产出两样：
+      ① 照 <code>component-contract.md</code> 把共享资产搬进 <code>packages/base-render/</code>（含视觉断言）；
+      ② 定下 27 个族的边界与归属。11 张场景图改成它的<b>消费者</b>，各自只填自己那些唤醒词。
+    </div>
+    <div class="pc">
+      <div class="p"><b>利</b><span>一次修掉两个根问题（单位错了 ＋ 07 打头凑不出骨架）；<b>不用推翻已复核的 22 个 issue</b>，只需新增一张图并把 11 张图的 Destination 指向它；照老契约搬迁风险低（那份契约＋222 个测试就是现成规格）；「谁收口」自然有了答案——就是这张图</span></div>
+      <div class="c"><b>弊</b><span>多一张图要先做完（或先做出接口），11 张图才能真动手；如果你希望尽快看到场景产物，这会让「见到东西」更晚一点</span></div>
+    </div>
+  </label>
+  <label class="opt">
+    <input type="radio" name="PLAN" value="甲">
+    <div class="oh"><span class="tag">甲</span><span class="ot">就地修正：保留 11 张图框架，改写它们的 Destination 与任务清单</span></div>
+    <div class="ow">
+      不新增图，把工作单元从「场景」改成「页面族 × 输出形态」，补进组件库搬迁与写前确认页两件大事，把 27 个族的账挂到各图。
+    </div>
+    <div class="pc">
+      <div class="p"><b>利</b><span>不增加图的数量；11 张图立刻可用</span></div>
+      <div class="c"><b>弊</b><span>「谁来搬组件库、谁定族边界」仍然没有归属——这正是发现 1 和 6 的病根；组件库搬迁会成为 11 张图<b>人人都要碰、谁都不负责</b>的公共品，最后大概率重复实现</span></div>
+    </div>
+  </label>
+  <label class="opt">
+    <input type="radio" name="PLAN" value="丙">
+    <div class="oh"><span class="tag">丙</span><span class="ot">推倒重切：废掉 11 张场景图，改按 27 个页面族建图</span></div>
+    <div class="ow">场景变成每个族下的「唤醒词清单」标签。</div>
+    <div class="pc">
+      <div class="p"><b>利</b><span>工作单元与真实工作量完全对齐；体量差 44 倍的问题从根上消失</span></div>
+      <div class="c"><b>弊</b><span>推翻已复核的 22 个 issue（数据没错，是切法错，浪费的是那部分工作）；「436 条 = 10 个场景」这个你熟悉的分母口径在面板上会消失；而且 27 个族的边界我这次是<b>自动粗算</b>的，还没人工校准，现在按它重切等于把未经确认的东西固化成结构</span></div>
+    </div>
+  </label>
+</div>
+
+<div class="recbox">
+  <strong>➡️ 推荐乙。</strong>
+  理由：这次审查暴露的两个根问题（<b>工作单元错、骨架图缺位</b>）都是「结构性」的，只有新增一张图能同时解掉；
+  而甲会让组件库变成无人负责的公共品，丙会拿一个<b>我自己都还没校准的自动归类</b>去固化结构。
+  乙还顺手解决了发现 6——「最后人工收口」的主语就是那张前置图。
+  <br><br>
+  <b>如果你更想先看到东西</b>，折中做法：<b>乙 但分两步</b>——
+  前置图先只交「组件库搬迁 ＋ 页面族总谱」的<b>接口</b>（不追求全部 27 族定死），
+  让 07／06 两张图先动起来；等它们跑通，再回头把剩下的族定完。
+</div>
+
+<h2 class="sec">答复</h2>
+<section class="reply">
+  <h3>选一个方案</h3>
+  <div class="sub" style="color:var(--mut);font-size:14px">点上面的选项就会记下来；也可以直接在下面文本框里写别的做法。</div>
+  <textarea id="tpl" spellcheck="false"></textarea>
+  <div class="btnrow">
+    <button onclick="copyTpl()">复制答复</button>
+    <button class="g" onclick="resetAll()">清空</button>
+    <span id="ok"></span>
+  </div>
+</section>
+
+<footer>
+  卡路里多 MAP · 对抗式审查 · 2026-09-11 · 22 个 issue 未被改动<br>
+  证据来源：<code>SKILLS\公共组件\docs\component-contract.md</code>、<code>assets\base.css/base.js/charts.js</code>、<code>tests\test_components.py</code>、<code>SKILLS\卡路里\templates\</code>、<code>scripts\_triggers.py</code>
+</footer>
+
+<script>
+(function(){
+  var L = {
+    '甲':'甲 就地修正（保留 11 张图，改写 Destination 与任务清单）',
+    '乙':'乙 加一张前置图（组件库搬迁 ＋ 页面族总谱），11 张图改为消费者',
+    '丙':'丙 推倒重切（废掉 11 张场景图，改按 27 个页面族建图）'
+  };
+  var TA = document.getElementById('tpl'), OK = document.getElementById('ok');
+  function sync(){
+    var s = document.querySelector('input[name="PLAN"]:checked');
+    TA.value = '方案：' + (s ? L[s.value] : '') + '\n补充：';
+  }
+  document.querySelectorAll('label.opt').forEach(function(o){
+    var i = o.querySelector('input');
+    i.addEventListener('change', function(){
+      document.querySelectorAll('input[name="PLAN"]').forEach(function(x){
+        x.closest('label.opt').classList.toggle('sel', x.checked);
+      });
+      sync(); OK.textContent = '';
+    });
+  });
+  window.copyTpl = function(){
+    TA.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    try{ if(navigator.clipboard){ navigator.clipboard.writeText(TA.value); } }catch(e){}
+    OK.textContent = '已复制';
+  };
+  window.resetAll = function(){
+    document.querySelectorAll('input[name="PLAN"]').forEach(function(x){ x.checked = false; });
+    document.querySelectorAll('label.opt').forEach(function(o){ o.classList.remove('sel'); });
+    sync(); OK.textContent = '';
+  };
+  sync();
+})();
+</script>
+</div>
+</body>
+</html>
