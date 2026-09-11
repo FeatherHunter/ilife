@@ -8,12 +8,19 @@ import { join } from 'node:path';
 import { apply, inject, PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK } from '../dist/index.js';
 
 function stubCtx() {
-  const calls = { rpc: [], providers: [], effects: [], warns: [] };
+  const calls = { rpc: [], routes: [], providers: [], effects: [], warns: [] };
   const ctx = {
     connection: {
       rpc: {
         handle: (channel, handler) => {
           calls.rpc.push([channel, handler]);
+          return () => {};
+        },
+      },
+      // #80 改道：通道改走 DSH 公开的 /api 载体（host 侧 connection.fetch.register）。
+      fetch: {
+        register: (options) => {
+          calls.routes.push([options.path, options.methods]);
           return () => {};
         },
       },
@@ -41,12 +48,13 @@ describe('#56 打包技能提供方（卡路里样板）', () => {
     assert.ok(inject.includes('skills'), '打包技能提供方需声明 skills');
   });
 
-  it('apply 注册且仅注册一个提供方，RPC 通道不受影响', () => {
+  it('apply 注册且仅注册一个提供方，交付通道不受影响', () => {
     const { ctx, calls } = stubCtx();
     apply(ctx);
     assert.equal(calls.providers.length, 1, '须注册一个技能提供方');
     assert.equal(calls.providers[0].name, PROVIDER_NAME);
-    assert.deepEqual(calls.rpc.map(([c]) => c), ['/ilife-calorie'], 'RPC 通道注册不变');
+    assert.deepEqual(calls.routes.map(([p]) => p), ['/api/ilife-calorie'], '#80 改道后注册 /api 前缀路由');
+    assert.deepEqual(calls.routes.map(([, m]) => m), [['POST']], '只收 POST');
   });
 
   it('list 给出唯一的 skill-calorie 摘要（bundled/600/单份 SKILL.md）', async () => {
@@ -90,13 +98,13 @@ describe('#56 打包技能提供方（卡路里样板）', () => {
     assert.equal(stale, undefined, '过期候选须失效（宿主 get 契约）');
   });
 
-  it('重装配时提供方重名退让（抛 already registered 不炸，RPC 照常）', () => {
+  it('重装配时提供方重名退让（抛 already registered 不炸，交付通道照常）', () => {
     const { ctx, calls } = stubCtx();
     ctx.skills.registerProvider = () => {
       throw new Error('a skill provider named "dsh-calorie" is already registered');
     };
     assert.doesNotThrow(() => apply(ctx), '重名退让不得抛');
-    assert.deepEqual(calls.rpc.map(([c]) => c), ['/ilife-calorie'], '退让后 RPC 照常注册');
+    assert.deepEqual(calls.routes.map(([p]) => p), ['/api/ilife-calorie'], '退让后交付通道照常注册');
     assert.ok(calls.warns.length >= 1, '退让须 warn 留痕');
   });
 });

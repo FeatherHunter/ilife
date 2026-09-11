@@ -111,7 +111,8 @@ async function fetchRead(call: unknown, key: string, params: Record<string, unkn
   try {
     // 防御纵深 + 自家超时双保险（AbortSignal 帮正规传输提前收工；race 保传输忽略 signal 时仍落字）。
     const raw: unknown = await withTimeout(
-      call(RPC_CHANNEL, RPC_ENDPOINT_READ, { key, params }, AbortSignal.timeout(READ_TIMEOUT_MS)),
+      // #80：走 DSH 公开的 /api 载体（host 侧为 connection.fetch.register 注册的 /api/ilife-memo）。
+      call('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_READ, payload: { key, params } }, AbortSignal.timeout(READ_TIMEOUT_MS)),
       READ_TIMEOUT_MS,
     );
     if (!isRpcResult(raw)) return { ok: false, absent: false, message: '回执信封异常（非 ok 信封）' };

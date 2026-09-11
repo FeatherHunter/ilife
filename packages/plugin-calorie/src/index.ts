@@ -48,12 +48,39 @@ export function apply(ctx: HostCtx): void {
     if (!String((error as Error)?.message ?? error).includes('already registered')) throw error;
     logger.warn?.('[dsh-calorie] skill provider ' + PROVIDER_NAME + ' already registered by another instance; yielding');
   }
+  // #80：迁移到 DSH 公开的 /api 载体（ctx.connection.fetch.register）。
+  // 旧写法 ctx.connection.rpc.handle() 会以 connection 服务自身的 Context 去调
+  // webServer.register 注册前缀路由，而那个 Context 没有 webServer 注入 → 装配期必抛
+  // cannot get property "webServer" without inject（实测：给本插件加 webServer 声明也无效）。
+  // 参考实现：@xmanrui/dsh-im 的 plugin-src/management-rpc.mjs（上游 503a24a 的改道）。
+  const conn = ctx.connection as unknown as {
+    fetch: { register: (options: Record<string, unknown>) => () => void };
+  };
+  const reply = (rpcId: string, result: unknown) => Response.json({ type: 'server-response', rpcId, result });
   try {
-    const dispose = ctx.connection.rpc.handle(RPC_CHANNEL, handleCalorieRpc);
-    ctx.effect(() => () => dispose(), 'dsh-calorie: rpc channel cleanup');
+    const dispose = conn.fetch.register({
+      path: '/api' + RPC_CHANNEL,
+      methods: ['POST'],
+      requestBody: 'buffered',
+      async fetch(request: any) {
+        if (request.method !== 'POST') return new Response('method not allowed', { status: 405 });
+        let message: any;
+        try { message = await request.json(); } catch { return new Response('body is not JSON', { status: 400 }); }
+        const rpcId = typeof message?.rpcId === 'string' ? message.rpcId : 'invalid-request';
+        const call = message?.payload;
+        if (message?.type !== 'client-request' || typeof message.rpcId !== 'string'
+          || message.method !== RPC_CHANNEL.slice(1) || !call || typeof call.method !== 'string'
+          || !Object.hasOwn(call, 'payload')) {
+          return reply(rpcId, { ok: false, error: { code: 'gateway/bad-request', message: 'Invalid calorie request.', details: {} } });
+        }
+        try { return reply(rpcId, await handleCalorieRpc(call.method, call.payload)); }
+        catch { return new Response('calorie handler failed', { status: 500 }); }
+      },
+    });
+    ctx.effect(() => () => dispose(), 'dsh-calorie: fetch route cleanup');
   } catch (error) {
     // 通道是宿主共享单例：重装配时上一实例可能已注册，此时退让（照抄 companion），他错重抛。
-    if (String((error as Error)?.message ?? error).includes('duplicate prefix route')) {
+    if (/(duplicate prefix route|already registered)/.test(String((error as Error)?.message ?? error))) {
       logger.warn?.('[dsh-calorie] rpc channel ' + RPC_CHANNEL + ' already registered by another instance; yielding');
       return;
     }
