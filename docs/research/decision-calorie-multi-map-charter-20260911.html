@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卡路里 436 场景 · 多 MAP 立项简报（已拍板 3 项 · 待定 3 项）</title>
+<style>
+  :root{
+    --bg:#0f141b; --card:#161d27; --card2:#131a24; --line:#2a3442; --fg:#e8edf3; --mut:#9aa7b8;
+    --green:#2f9e5f; --greenfg:#7fd79f; --greenbg:#123324; --greenline:#1f4d33;
+    --amber:#c98a1b; --amberfg:#e8bd6a; --amberbg:#3a2c10; --amberline:#5c4416;
+    --red:#d65353;   --redfg:#f09393;   --redbg:#3d1a1a;   --redline:#5e2626;
+    --blue:#3b82c4;  --bluefg:#8fbdf0;  --bluebg:#14293f;  --blueline:#25507a;
+    --purple:#7d5bd6;--purplefg:#b9a2f5;--purplebg:#241c3d;--purpleline:#413263;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:26px 20px 70px}
+  a{color:var(--bluefg)}
+
+  /* ---------- 头部 ---------- */
+  header.top{border:1px solid var(--line);border-radius:14px;padding:24px 26px;
+             background:linear-gradient(180deg,#1a2331,#131a24)}
+  header.top h1{margin:0 0 8px;font-size:24px;line-height:1.35}
+  header.top .sub{color:var(--mut);font-size:13.5px}
+  header.top .sub b{color:var(--fg)}
+  .meta{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--mut)}
+  .meta code{background:#0c1118;border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+
+  /* ---------- KPI ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin:16px 0 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kpi .n{font-size:27px;font-weight:800;line-height:1.15;letter-spacing:-.5px}
+  .kpi .l{font-size:12.5px;color:var(--mut);margin-top:3px}
+  .kpi .h{font-size:11.5px;color:var(--mut);margin-top:6px;opacity:.75}
+  .kpi.blue .n{color:var(--bluefg)} .kpi.amber .n{color:var(--amberfg)}
+  .kpi.green .n{color:var(--greenfg)} .kpi.red .n{color:var(--redfg)}
+  .kpi.purple .n{color:var(--purplefg)}
+
+  /* ---------- 目录 ---------- */
+  nav.toc{position:sticky;top:0;z-index:20;margin:16px 0 0;padding:9px 12px;
+          background:rgba(15,20,27,.93);backdrop-filter:blur(10px);
+          border:1px solid var(--line);border-radius:11px;font-size:12.5px;line-height:2}
+  nav.toc a{color:var(--mut);text-decoration:none;margin-right:14px;white-space:nowrap}
+  nav.toc a:hover{color:var(--bluefg)}
+  nav.toc a b{color:var(--bluefg)}
+
+  h2.sec{margin:36px 0 6px;font-size:19.5px;padding-left:12px;border-left:4px solid var(--blue)}
+  h2.sec .tail{color:var(--mut);font-size:13px;font-weight:400}
+  .lede{color:var(--mut);margin:4px 0 14px;font-size:13.5px}
+
+  /* ---------- 卡片 ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px;margin:14px 0}
+  .card.tldr{border-left:6px solid var(--red);background:linear-gradient(180deg,#1a2331,#151d28)}
+  .card h3{margin:0 0 6px;font-size:16.5px}
+  .punch{background:#101823;border:1px dashed #33405280;border-radius:9px;padding:11px 14px;margin:10px 0;font-size:13.5px}
+  .punch b.k{color:var(--bluefg)}
+
+  /* ---------- 表格 ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:middle}
+  th{background:#1b2330;font-weight:700;white-space:nowrap;font-size:12.5px}
+  td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  td.ctr{text-align:center;white-space:nowrap}
+  tr.hi td{background:#182231}
+  tr.tot td{background:#1b2330;font-weight:800}
+  .bar{position:relative;height:17px;border-radius:4px;background:#0c1118;border:1px solid var(--line);overflow:hidden;min-width:104px}
+  .bar i{position:absolute;inset:0 auto 0 0;display:block;border-radius:3px 0 0 3px}
+  .bar i.ok{background:linear-gradient(90deg,#1f7a49,#2f9e5f)}
+  .bar i.wa{background:linear-gradient(90deg,#8a5c10,#c98a1b)}
+  .bar i.no{background:linear-gradient(90deg,#8a2f2f,#d65353)}
+  .bar span{position:absolute;right:6px;top:0;font-size:11px;line-height:17px;color:#cbd5e1;font-weight:700}
+
+  /* ---------- 诊断块 ---------- */
+  .diag{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+  .diag .d{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--card2)}
+  .diag .d .n{font-size:25px;font-weight:800;line-height:1.2}
+  .diag .d .t{font-size:13.5px;font-weight:700;margin-top:2px}
+  .diag .d .x{font-size:12.5px;color:var(--mut);margin-top:5px}
+  .diag .d.g{border-color:var(--greenline);background:var(--greenbg)} .diag .d.g .n{color:var(--greenfg)}
+  .diag .d.a{border-color:var(--amberline);background:var(--amberbg)} .diag .d.a .n{color:var(--amberfg)}
+  .diag .d.r{border-color:var(--redline);background:var(--redbg)}     .diag .d.r .n{color:var(--redfg)}
+  .diag .d.b{border-color:var(--blueline);background:var(--bluebg)}   .diag .d.b .n{color:var(--bluefg)}
+
+  /* ---------- 决策卡 ---------- */
+  .q{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--purple);
+     border-radius:13px;padding:20px 22px;margin:18px 0}
+  .q.lv-high{border-left-color:var(--amber)} .q.lv-crit{border-left-color:var(--red)}
+  .qhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px}
+  .qhead .qn{font-size:12px;font-weight:800;color:var(--purplefg);background:var(--purplebg);
+             border:1px solid var(--purpleline);border-radius:999px;padding:2px 10px;letter-spacing:.4px}
+  .q.lv-high .qhead .qn{color:var(--amberfg);background:var(--amberbg);border-color:var(--amberline)}
+  .q.lv-crit .qhead .qn{color:var(--redfg);background:var(--redbg);border-color:var(--redline)}
+  .qhead h3{margin:0;font-size:17.5px;flex:1 1 320px}
+  .lv{font-size:11.5px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+  .lv.crit{background:var(--redbg);color:var(--redfg);border-color:var(--redline)}
+  .lv.high{background:var(--amberbg);color:var(--amberfg);border-color:var(--amberline)}
+  .lv.mid{background:var(--bluebg);color:var(--bluefg);border-color:var(--blueline)}
+
+  h4.lbl{margin:16px 0 5px;font-size:12.5px;color:var(--mut);letter-spacing:.6px;
+         text-transform:uppercase;font-weight:800}
+  h4.lbl::before{content:"▍";color:var(--blue);margin-right:5px}
+  .q p{margin:7px 0}
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;
+       background:#0c1118;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+       word-break:break-word}
+  .factline{background:#101823;border:1px dashed #33405280;border-radius:8px;
+            padding:9px 13px;margin:8px 0;font-size:13px}
+  .factline b.k{color:var(--bluefg)}
+
+  /* 选项 */
+  .opts{margin:10px 0 0}
+  .opt{display:block;border:1px solid var(--line);border-radius:11px;padding:12px 15px;margin:9px 0;
+       background:var(--card2);cursor:pointer;transition:border-color .15s,background .15s}
+  .opt:hover{border-color:#3d4a5c}
+  .opt input{position:absolute;opacity:0;width:0;height:0}
+  .opt:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+  .opt .oh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .opt .tag{font-size:11px;font-weight:800;border:1px solid var(--line);border-radius:6px;
+            padding:1px 7px;background:#0c1118;color:var(--mut);white-space:nowrap}
+  .opt .ot{font-weight:700;font-size:14px}
+  .opt .ow{font-size:13px;color:var(--mut);margin-top:5px}
+  .opt .pc{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12.5px}
+  .opt .pc div{display:flex;gap:6px}
+  .opt .pc .pl{color:var(--greenfg);font-weight:800;flex:0 0 auto}
+  .opt .pc .cl{color:var(--redfg);font-weight:800;flex:0 0 auto}
+  .opt.sel{border-color:var(--blue);background:var(--bluebg)}
+  .opt.sel .tag{background:var(--bluebg);color:var(--bluefg);border-color:var(--blueline)}
+  .opt.rec::after{content:"推荐";font-size:10.5px;font-weight:800;color:var(--greenfg);
+                  background:var(--greenbg);border:1px solid var(--greenline);
+                  border-radius:999px;padding:1px 8px;margin-left:auto}
+
+  .rec-box{border:1px solid var(--greenline);background:var(--greenbg);border-radius:10px;
+           padding:11px 14px;margin:12px 0 0;font-size:13.5px}
+  .rec-box b{color:var(--greenfg)}
+  .risk-box{border:1px solid var(--amberline);background:var(--amberbg);border-radius:10px;
+            padding:9px 13px;margin:8px 0 0;font-size:13px}
+  .risk-box b{color:var(--amberfg)}
+
+  /* ---------- 答复区 ---------- */
+  .reply{border:1px solid var(--blueline);background:var(--bluebg);border-radius:13px;
+         padding:18px 20px;margin-top:28px}
+  .reply h2{margin:0 0 8px;font-size:18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+  .chip{font-size:12.5px;border:1px solid var(--line);background:#0c1118;border-radius:999px;
+        padding:3px 12px;color:var(--mut)}
+  .chip b{color:var(--fg)}
+  .chip.done{border-color:var(--greenline);background:var(--greenbg);color:var(--greenfg)}
+  .chip.done b{color:#b6ecc9}
+  textarea{width:100%;min-height:210px;background:#0c1118;color:var(--fg);border:1px solid var(--line);
+           border-radius:10px;padding:12px;font:13px/1.7 ui-monospace,Consolas,monospace;resize:vertical}
+  button{background:var(--blue);color:#fff;border:0;border-radius:9px;padding:9px 18px;
+         font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  button:hover{filter:brightness(1.1)}
+  button.ghost{background:#0c1118;color:var(--fg);border:1px solid var(--line);font-weight:600}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  #ok{color:var(--greenfg);font-weight:700;font-size:13px}
+
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+         color:var(--mut);font-size:12.5px}
+  footer summary{cursor:pointer;font-weight:700;color:var(--fg)}
+  details{background:var(--card2);border:1px solid var(--line);border-radius:10px;
+          padding:10px 14px;margin:10px 0}
+  details[open]{padding-bottom:14px}
+  summary{cursor:pointer;font-weight:700;font-size:13.5px}
+  ol.tight,ul.tight{margin:6px 0;padding-left:22px}
+  ul.tight li,ol.tight li{margin:3px 0}
+  .nowrap{white-space:nowrap}
+
+  @media (max-width:700px){
+    .opt .pc{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+    header.top h1{font-size:20px}
+    .wrap{padding:18px 13px 60px}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+    .wrap{max-width:none}
+    nav.toc{display:none}
+    header.top,.card,.q,.diag .d,details{background:#fff!important;border-color:#bbb}
+    .kpi .n,.kpi .l,.opt .ow,.lede,.meta,.punch{color:#333}
+    .opt.sel{background:#eef4ff}
+    .reply{background:#f4f8ff}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>卡路里 436 场景 · 多 MAP 立项简报</h1>
+  <div class="sub">
+    目标：把「HELP HTML 的成功经验」铺到卡路里全部底层流程 —— 说唤醒词 → 拿到<b>过程型</b>HTML（有的流程没有）→ 复制 prompt 给 AI 执行 → 拿到<b>结果型</b>HTML；
+    可复用控件放进 base 库。<br>
+    上一张图（#131「卡路里HELP真标准」）已收口验收。本简报摆出<b>开图之前必须拍板的 6 件事</b>：每题含 前因后果 → 关键信息 → 选项利弊 → 我的推荐。
+  </div>
+  <div class="meta">
+    <span>日期 <b>2026-09-11</b></span>
+    <span>分支 <code>master</code></span>
+    <span>上游 <a href="https://github.com/FeatherHunter/ilife/issues/131">#131（已收口）</a> · <a href="https://github.com/FeatherHunter/ilife/issues/137">#137（范围移交）</a></span>
+    <span>证据底稿 <code>.scratch/wayfinder-s1/recon-calorie-scenes-20260911.md</code></span>
+    <span>答完待定的 3 件（Q4／Q5／Q6）即开图</span>
+  </div>
+</header>
+
+<div class="kpis">
+  <div class="kpi blue"><div class="n">436</div><div class="l">条唤醒词</div><div class="h">= 10 个场景之和（不是 13 个展示分类）</div></div>
+  <div class="kpi amber"><div class="n">95</div><div class="l">条跑不通</div><div class="h">占 21.8%；场景 05 高达 71.9%</div></div>
+  <div class="kpi red"><div class="n">5</div><div class="l">条真的是 wizard</div><div class="h">另 80 条缺命令、10 条新架构不做</div></div>
+  <div class="kpi purple"><div class="n">74</div><div class="l">张旧模板</div><div class="h">仓内新包只有 6 张 token 模板</div></div>
+  <div class="kpi green"><div class="n">154</div><div class="l">词共用 1 张模板</div><div class="h">证明「工作单元＝模板」成立</div></div>
+</div>
+
+<!-- ================= 已拍板 / 待拍板 ================= -->
+<h2 class="sec" id="progress">进度 <span class="tail">已拍板 3 项 · 待定 3 项</span></h2>
+<table>
+  <thead><tr><th style="width:64px">题</th><th>问什么</th><th style="width:96px">状态</th><th>你的答案</th></tr></thead>
+  <tbody>
+    <tr><td class="ctr"><b>Q1</b></td><td>多 MAP 按什么切</td>
+      <td class="ctr"><span class="lv" style="background:var(--greenbg);color:var(--greenfg);border-color:var(--greenline)">已拍板</span></td>
+      <td><b>A</b> — 按 10 个场景切（场景 10 再拆）</td></tr>
+    <tr><td class="ctr"><b>Q2</b></td><td>公共层怎么长出来</td>
+      <td class="ctr"><span class="lv" style="background:var(--greenbg);color:var(--greenfg);border-color:var(--greenline)">已拍板</span></td>
+      <td><b>A</b> — 跟着场景一集一集长：MAP1 从第一集场景出发，边做边把公共的部分提取出来；下一集直接用现成的、只补自己缺的；依次长到 MAP9</td></tr>
+    <tr><td class="ctr"><b>Q3</b></td><td>95 条跑不通的唤醒词算什么</td>
+      <td class="ctr"><span class="lv" style="background:var(--greenbg);color:var(--greenfg);border-color:var(--greenline)">已拍板</span></td>
+      <td><b>A</b> — 按性质分三种去处（另：已按你的提醒逐条查证老技能，95 条当年<b>全都有出路</b>，「幻影词」确实存在）</td></tr>
+    <tr><td class="ctr"><b>Q4</b></td><td>51 个模板名归成哪几类</td>
+      <td class="ctr"><span class="lv high">要和你讨论</span></td>
+      <td>之前写糊了，已用大白话重写（见下），推荐 A</td></tr>
+    <tr><td class="ctr"><b>Q5</b></td><td>场景推进顺序</td>
+      <td class="ctr"><span class="lv high">要和你讨论</span></td>
+      <td><b>A</b>（第一集 06 目标管理定公共层骨架 → 第二集 01 主页定新样子）。你说过「第一个不做主页」，所以我把 06 排第一；若你其实想让主页打头，选 B</td></tr>
+    <tr><td class="ctr"><b>Q6</b></td><td>本次 session 止点</td>
+      <td class="ctr"><span class="lv mid">待答</span></td>
+      <td>推荐 A：本次只开图（建齐 9 张 map ＋ 各自首发票 ＋ 原生边）</td></tr>
+  </tbody>
+</table>
+<div class="punch">
+  <b class="k">你提的两条更正已落地：</b>
+  ① Q2 改成「跟着场景一集一集长」，不再推荐「先做完公共层再铺场景」；
+  ② 正文里的内部术语已按规范词改写（原先的「执行层轨／渲染轨／补写键／缺键／真出口／非执行／闭环／打通／收敛／沉淀」等）；
+  并把用词纪律写进了 <code>docs/agents/wording.md</code>。<b>保留的两处是「解释这个词是什么意思」和「列出被清掉的词」，不是漏改。</b>
+</div>
+
+
+<nav class="toc">
+  <a href="#tldr"><b>TL;DR</b></a>
+  <a href="#progress"><b>进度</b></a>
+  <a href="#facts">地基事实</a>
+  <a href="#diag">关键诊断</a>
+  <a href="#q1"><b>Q1</b> 切法</a>
+  <a href="#q2"><b>Q2</b> 公共层怎么长</a>
+  <a href="#q3"><b>Q3</b> 95 条没有命令可执行</a>
+  <a href="#q4"><b>Q4</b> 模板归类</a>
+  <a href="#q5"><b>Q5</b> 场景顺序</a>
+  <a href="#q6"><b>Q6</b> 本次止点</a>
+  <a href="#reply"><b>答复区</b></a>
+</nav>
+
+<!-- ================= TL;DR ================= -->
+<div class="card tldr" id="tldr">
+  <h3>TL;DR — 先看这四条，剩下的都是细节</h3>
+  <ul class="tight">
+    <li><b>① 分母口径已经钉死，不用再对账。</b>436 = 10 个场景之和，逐场景 <code>9 / 70 / 58 / 39 / 32 / 25 / 4 / 13 / 10 / 176</code>，加得正好 436。HELP 页那 13 个分类是<b>展示层</b>的（食品库、复盘、综合是跨场景摊开的），拿它当工作分组会重复计数。</li>
+    <li><b>② 真正拦住你「过程型→结果型」跑通的，不是页面，是命令。</b>95 条现在跑不通的唤醒词里，只有 <b>5 条</b>是「必须多步交互」（AI 一次调用干不完，中间要你确认）；另 <b>10 条</b>是新架构规格划出去不做的（<b>老技能当年其实做了</b>）；剩下 <b>80 条</b>是老技能做过、新仓没接上命令——这批要的是<b>补命令</b>，不是画页面。</li>
+    <li><b>③ 工作量比 436 这个数字看起来小得多。</b>单张 <code>combined_analysis.html</code> 就覆盖 <b>154 条</b>唤醒词；10 个场景一共只引用 <b>51 个不同模板名</b>。所以「工作单元＝模板 × {过程型, 结果型}」，你人工肉眼验收的批次是<b>几十张模板级</b>，不是 872 个产物。</li>
+    <li><b>④ 旧技能有 24 张模板被本仓彻底丢掉了</b>（<code>cron_setup</code>／<code>six_factors</code>／<code>lint_health</code>／<code>predict_report</code>／<code>anomaly_report</code>／<code>long_trend</code> …）。它们不对应任何唤醒词，但都是能力。要不要救回来，是<b>范围决定</b>——我在 Q3 里单列了它。</li>
+  </ul>
+</div>
+
+<!-- ================= 地基事实 ================= -->
+<h2 class="sec" id="facts">地基事实 <span class="tail">全部只读扫描所得，可复核</span></h2>
+<p class="lede">来源：<code>packages/skill-calorie/src/triggers/scene-*.ts</code>（436 条）、<code>routing.ts</code>（execute／non-execute 分桶）、<code>docs/research/…</code>、以及旧技能目录 <code>D:\2Study\StudyNotes\SKILLS\卡路里\templates\</code> 的只读清点。</p>
+
+<h3 style="font-size:14.5px;margin:16px 0 4px">事实一：逐场景覆盖表 —— 一眼看出该从哪下手</h3>
+<table>
+  <thead>
+    <tr>
+      <th>场景</th><th>名称</th>
+      <th style="text-align:right">唤醒词</th>
+      <th class="nowrap">能跑通的比例</th>
+      <th style="text-align:right">跑不通</th>
+      <th style="text-align:right">比例</th>
+      <th>引用模板</th>
+      <th>最高复用单张</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="hi"><td class="ctr">01</td><td>主页</td><td class="num">9</td>
+      <td><div class="bar"><i class="ok" style="width:100%"></i><span>100%</span></div></td>
+      <td class="num">0</td><td class="num">100%</td><td class="num">1</td><td><code>home_dashboard</code> ×9</td></tr>
+    <tr><td class="ctr">02</td><td>饮食</td><td class="num">70</td>
+      <td><div class="bar"><i class="ok" style="width:91.4%"></i><span>91%</span></div></td>
+      <td class="num">6</td><td class="num">91.4%</td><td class="num">15</td><td><code>food_ranking</code> ×21</td></tr>
+    <tr><td class="ctr">03</td><td>体重</td><td class="num">58</td>
+      <td><div class="bar"><i class="ok" style="width:69.0%"></i><span>69%</span></div></td>
+      <td class="num">18</td><td class="num">69.0%</td><td class="num">8</td><td><code>weight_compare</code> ×18<br><code>weight_history</code> ×18</td></tr>
+    <tr><td class="ctr">04</td><td>运动</td><td class="num">39</td>
+      <td><div class="bar"><i class="ok" style="width:97.4%"></i><span>97%</span></div></td>
+      <td class="num">1</td><td class="num">97.4%</td><td class="num">8</td><td><code>exercise_summary</code> ×15</td></tr>
+    <tr class="hi"><td class="ctr">05</td><td>健身计划</td><td class="num">32</td>
+      <td><div class="bar"><i class="ok" style="width:28.1%"></i><span>28%</span></div></td>
+      <td class="num">23</td><td class="num" style="color:var(--redfg);font-weight:800">28.1%</td><td class="num">6</td><td><code>workout_plan_view</code> ×13</td></tr>
+    <tr><td class="ctr">06</td><td>目标管理</td><td class="num">25</td>
+      <td><div class="bar"><i class="ok" style="width:88.0%"></i><span>88%</span></div></td>
+      <td class="num">3</td><td class="num">88.0%</td><td class="num">5</td><td><code>goal_progress</code> ×12</td></tr>
+    <tr><td class="ctr">07</td><td>基础信息</td><td class="num">4</td>
+      <td><div class="bar"><i class="ok" style="width:100%"></i><span>100%</span></div></td>
+      <td class="num">0</td><td class="num">100%</td><td class="num">2</td><td><code>crud_receipt</code> ×3</td></tr>
+    <tr><td class="ctr">08</td><td>身体细节</td><td class="num">13</td>
+      <td><div class="bar"><i class="ok" style="width:84.6%"></i><span>85%</span></div></td>
+      <td class="num">2</td><td class="num">84.6%</td><td class="num">5</td><td>3 张各 ×3</td></tr>
+    <tr><td class="ctr">09</td><td>身材照片</td><td class="num">10</td>
+      <td><div class="bar"><i class="ok" style="width:100%"></i><span>100%</span></div></td>
+      <td class="num">0</td><td class="num">100%</td><td class="num">4</td><td><code>body_photo_receipt</code> ×7</td></tr>
+    <tr class="hi"><td class="ctr">10</td><td>分析</td><td class="num">176</td>
+      <td><div class="bar"><i class="ok" style="width:76.1%"></i><span>76%</span></div></td>
+      <td class="num">42</td><td class="num">76.1%</td><td class="num">2</td><td><code>combined_analysis</code> <b>×154</b></td></tr>
+    <tr class="tot"><td class="ctr">—</td><td>合计</td><td class="num">436</td>
+      <td><div class="bar"><i class="ok" style="width:78.2%"></i><span>78%</span></div></td>
+      <td class="num">95</td><td class="num">78.2%</td><td class="num">56</td><td>—</td></tr>
+  </tbody>
+</table>
+<div class="punch">
+  <b class="k">怎么读这张表：</b>
+  <b>01 / 04 / 07 / 09</b> 能跑通的比例 97–100%，是「只差做页面」的甜区；
+  <b>05 健身计划</b> 是全场最烂（28.1%，23 条走不完），因为它缺的是<b>整套训练计划会改数据库的命令</b>——不是页面的问题；
+  <b>10 分析</b> 词最多（176 条）但只有 <b>2 张模板</b>，且 42 条走不完集中在三类缺口上（多指标趋势 15、预测参数 15、报告类 8，另 4 条零星），<b>性价比最高</b>。
+</div>
+
+<h3 style="font-size:14.5px;margin:22px 0 4px">事实二：跑不通的 95 条，按原因拆开</h3>
+<p class="lede">来源 <code>routing.ts</code> 的 <code>NON_EXEC_REASONS</code>。这张表决定了 Q3 怎么答。</p>
+<table>
+  <thead><tr><th>原因</th><th style="text-align:right">条数</th><th>卡在哪</th><th>性质</th></tr></thead>
+  <tbody>
+    <tr><td><code>predictParamMissing</code></td><td class="num">15</td><td>预测／模拟减重缺 <code>target</code>／<code>deficit</code> 参数</td><td><span class="lv high">缺参数</span></td></tr>
+    <tr><td><code>multiTrendMissing</code></td><td class="num">15</td><td>没有多指标趋势命令（现有只能两指标配对）</td><td><span class="lv high">缺命令</span></td></tr>
+    <tr><td><code>planWriteMissing</code></td><td class="num">10</td><td>完全没有训练计划会改数据库的命令</td><td><span class="lv crit">缺整套命令</span></td></tr>
+    <tr><td><code>planFilterMissing</code></td><td class="num">8</td><td>计划视图无周／日／动作筛选参数</td><td><span class="lv high">缺筛选</span></td></tr>
+    <tr><td><code>reportKindMissing</code></td><td class="num">8</td><td>没有报告类命令（BMI/TDEE/BMR/评分…）</td><td><span class="lv high">缺命令</span></td></tr>
+    <tr><td><code>anchorCompare</code></td><td class="num">8</td><td>对比需先派生锚点日期（平台期首日／历史最低…）</td><td><span class="lv high">缺派生参数</span></td></tr>
+    <tr><td><code>wizard</code></td><td class="num">5</td><td><b>必须多步交互</b>，非单命令可达成</td><td><span class="lv mid">真·wizard</span></td></tr>
+    <tr><td><code>reviewWindowOnly</code></td><td class="num">5</td><td>复盘形态只吃 today／date，无期间窗口</td><td><span class="lv high">缺筛选</span></td></tr>
+    <tr><td><code>noNoteFilter</code></td><td class="num">4</td><td>三面（饮食／体重／运动）都无「备注」筛选维度</td><td><span class="lv high">缺列维度</span></td></tr>
+    <tr><td><code>oosLanding</code> + <code>oosCron</code> + <code>oosXunji</code> + <code>oosLabel</code></td><td class="num">10</td><td>拍营养表／定时复盘／训记／落地</td><td><span class="lv mid">明确不做</span></td></tr>
+    <tr><td><code>compoundCurve</code> + <code>bodyCompareMissing</code> + <code>milestoneForwardOnly</code> + <code>noNutritionAdvice</code></td><td class="num">7</td><td>复合曲线（带目标／里程碑／异常点）、体脂围度对比、里程碑回溯、营养建议</td><td><span class="lv high">缺形态</span></td></tr>
+    <tr class="tot"><td>合计</td><td class="num">95</td><td colspan="2">其中 <b>5</b> 条必须多步交互 ＋ <b>10</b> 条明确不做 ＋ <b>80</b> 条缺命令／缺参数／缺维度</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 关键诊断 ================= -->
+<h2 class="sec" id="diag">关键诊断 <span class="tail">这一节最重要：它改变了「要做什么」的判断</span></h2>
+<div class="diag">
+  <div class="d b"><div class="n">436</div><div class="t">全部唤醒词</div><div class="x">都要能出结果型 HTML</div></div>
+  <div class="d a"><div class="n">95</div><div class="t">跑不通</div><div class="x">21.8%，卡在「过程型→执行→结果型」的中间那一跳</div></div>
+  <div class="d g"><div class="n">5</div><div class="t">真的是 wizard</div><div class="x">批量导入食品／校验批量导入／定营养目标(自动算)／定饮水目标(自动算)／一键定全套目标</div></div>
+  <div class="d a"><div class="n">10</div><div class="t">明确不做</div><div class="x">拍营养表 2、定时复盘 3、训记 2、落地 3</div></div>
+  <div class="d r"><div class="n">80</div><div class="t">老技能做过、新仓没接命令</div><div class="x">页面模板老技能里都有，缺的是新命令册里的命令</div></div>
+</div>
+<div class="card">
+  <h3>为什么想清楚这件事能省掉一大半力气</h3>
+  <p>
+    你要的目标流程是：<b>说唤醒词 → 过程型 HTML → 复制 prompt → AI 执行 → 结果型 HTML</b>。
+    直觉上会以为「95 条跑不通」＝「还差 95 张过程页没画」。
+    实际拆开看：<b>只有 5 条</b>是「必须多步交互、AI 一次调用干不完」的。
+  </p>
+  <p>
+    <b>更要紧的一条（2026-09-11 逐条查证）：这 95 条全都在老技能里有出路。</b>
+    老表 <code>_triggers.py</code> 里 95 条一条不缺，其中 91 条还带着完整的出路定义（写明 <code>output_type</code> 与对应模板）。
+    所以它们不是「老技能也没有的能力」，而是<b>「老技能有、新版本没接通」</b>。
+    这一点必须写进每张票，否则会出现「幻影词」——明明当年能做，却被当成天生缺能力，白做一遍或干脆漏掉。
+  </p>
+  <p>
+    剩下 <b>80 条</b> 卡的是 <code>predictParamMissing</code>／<code>multiTrendMissing</code>／<code>planWriteMissing</code> 这类——
+    它们的<b>结果页模板早就存在</b>（旧技能里 <code>predict_report.html</code>、<code>long_trend.html</code>、<code>workout_plan_view.html</code> 都有实物），
+    缺的是让 AI 能一次调用成功的 <b>命令与参数</b>。
+  </p>
+  <p>
+    所以这批活有三种完全不同的性质，<b>不该混在一条流水线上</b>：
+    <b>(a) 做页面</b>——能力已经有了，只差把页面做成新样子（大多数）；
+    <b>(b) 补命令</b>——加命令／加参数／加筛选维度（80 条）；
+    <b>(c) 做交互</b>——预检确认页（5 条）＋进度型中间反馈页。
+    (c) 是跨场景<b>同一个东西</b>，这正是 Q2 要问的。
+  </p>
+  <div class="risk-box">
+    <b>⚠️ 反过来讲：</b>如果把 80 条「缺命令」当成「缺页面」去做，会产出 80 张<b>永远拿不到真实数据</b>的空页面 ——
+    这正是 #139 那次事故的形状（「单测绿 ≠ 产品通」，接线是孤岛）。你在 #131 的采访区里已经骂过一次这个模式。
+  </div>
+</div>
+
+<h3 style="font-size:14.5px;margin:22px 0 4px">事实三：页面模板的真实落差</h3>
+<table>
+  <thead><tr><th>看什么</th><th>旧技能</th><th>本仓新包</th><th>含义</th></tr></thead>
+  <tbody>
+    <tr><td>模板文件</td><td><b>74 张</b>（目录 76 项 = 74 文件 + 2 目录）</td><td><b>6 张</b> token 模板</td><td>新架构只搬了壳，场景页还没上</td></tr>
+    <tr><td>场景引用的模板名</td><td>—</td><td><b>51 个</b></td><td>这就是真正的「模板族」基数</td></tr>
+    <tr><td>引用但旧目录找不到</td><td>—</td><td><code>goal_config.html</code>（scene-06 有 4 条词指向）</td><td>旧目录里只有 <code>goal_config_nutrition</code>／<code>goal_config_water</code> 两个分身，且都没被引用 → <b>疑似改名漏接</b></td></tr>
+    <tr><td>旧目录有、但没有任何场景引用</td><td><b>24 张</b></td><td>—</td><td>被丢掉的能力，见下</td></tr>
+  </tbody>
+</table>
+<details>
+  <summary>展开：旧技能里被本仓丢掉的 24 张模板（点开看清单）</summary>
+  <p style="font-size:13px;color:var(--mut);margin:8px 0">
+    这些模板不对应 436 条里的任何唤醒词，所以从「436 全覆盖」的角度看它们不在分母里。
+    但这 24 张里绝大多数各自代表一个能力，其中几张与 95 条跑不通里的「明确不做」直接呼应（最后两行不是能力，见下表末）。
+  </p>
+  <table style="font-size:12.5px">
+    <thead><tr><th>模板</th><th>对应能力</th><th>与现状的关系</th></tr></thead>
+    <tbody>
+      <tr><td><code>cron_setup.html</code></td><td>定时复盘配置界面</td><td>呼应 <code>oosCron</code> 3 条（开启／查／关闭定时复盘）——架构规格写「明确不做」，但界面当年是做了的</td></tr>
+      <tr><td><code>predict_report.html</code></td><td>预测报告</td><td>呼应 <code>predictParamMissing</code> 15 条 —— <b>结果页模板已存在</b>，缺的只是参数</td></tr>
+      <tr><td><code>long_trend.html</code> / <code>calorie_trend.html</code></td><td>长周期趋势</td><td>呼应 <code>multiTrendMissing</code> 15 条 —— 同上，模板在，键不在</td></tr>
+      <tr><td><code>anomaly_report.html</code></td><td>异常点报告</td><td>呼应 <code>compoundCurve</code>「曲线带异常点」</td></tr>
+      <tr><td><code>health_report.html</code> / <code>health_dashboard.html</code></td><td>健康报告／看板</td><td>呼应 <code>reportKindMissing</code> 8 条（BMI/TDEE/BMR/评分…）</td></tr>
+      <tr><td><code>six_factors.html</code></td><td>每日 6 因素评分</td><td>routing 注释说 #113 起已由 <code>six-factors</code> 键翻转，但模板本体没搬</td></tr>
+      <tr><td><code>lint_health.html</code></td><td>数据体检</td><td>routing 注释说 #113 起已由 <code>lint-health</code> 翻转，模板本体没搬</td></tr>
+      <tr><td><code>nutrition_analysis.html</code></td><td>营养综合分析</td><td>呼应 <code>noNutritionAdvice</code>「看营养建议」</td></tr>
+      <tr><td><code>body_photo_gif_planner.html</code> / <code>body_photo_viewer.html</code> / <code>body_photo_log_wizard.html</code></td><td>GIF 规划／查看器／照片登记向导</td><td>场景 09 现在只引用了 4 张（compare／gallery／gif_result／receipt）</td></tr>
+      <tr><td><code>weight_batch_delete.html</code></td><td>批量删除体重</td><td>批量删现在走 <code>crud_receipt</code></td></tr>
+      <tr><td><code>goal_weight_result.html</code> / <code>goal_config_nutrition.html</code> / <code>goal_config_water.html</code></td><td>目标结果页／营养目标配置／饮水目标配置</td><td>三个分身，正好对上 <code>goal_config.html</code> 缺失这件事</td></tr>
+      <tr><td><code>food_library.html</code></td><td>食品库总览</td><td>现走 <code>food_search</code>／<code>dedupe_report</code></td></tr>
+      <tr><td><code>profile_setup.html</code></td><td>档案设置</td><td>现走 <code>crud_view</code>／<code>crud_receipt</code></td></tr>
+      <tr><td><code>review_template.html</code></td><td>复盘母版</td><td>可能是各 <code>*_review.html</code> 的祖先</td></tr>
+      <tr><td><code>cross_skill_sleep.html</code></td><td>跨技能（作息）联动</td><td>跨技能，可能本就不该在卡路里范围内</td></tr>
+      <tr><td><code>error_receipt.html</code></td><td>错误回执</td><td>错误路径的产物形态</td></tr>
+      <tr><td><code>help_center_v2_4_12.html.bak</code></td><td>HELP 备份</td><td>不是能力，是备份文件</td></tr>
+      <tr><td><code>设计审查报告.html</code></td><td>设计审查文档</td><td>不是运行时产物</td></tr>
+    </tbody>
+  </table>
+</details>
+
+<!-- ================= Q1 ================= -->
+<h2 class="sec" id="questions">要拍板的 6 件事</h2>
+<p class="lede">每题四段固定结构：<b>前因后果</b>（为什么会撞上这个问题）→ <b>关键信息</b>（做决定要看的事实）→ <b>选项与利弊</b>（点一下选中）→ <b>我的推荐</b>。建议按 Q1 → Q6 顺序答，后面的题依赖前面的答案。</p>
+
+<section class="q lv-crit" id="q1" data-q="Q1" data-title="MAP 按什么切">
+  <div class="qhead">
+    <span class="qn">Q1</span>
+    <h3>多 MAP 按哪个维度切？10 个场景，还是 13 个展示分类？</h3>
+    <span class="lv mid">切法题</span>
+  </div>
+
+  <h4 class="lbl">前因后果</h4>
+  <p>
+    你说「针对卡路里技能开多个 MAP」。切法直接决定了每一张图的<b>目的地怎么写</b>、<b>ticket 怎么分</b>、以及最后怎么才叫「覆盖完了」。
+    仓库里同时存在两套分组口径，很容易选错：
+  </p>
+  <p>
+    ① <b>10 个场景</b>——<code>src/triggers/scene-01-home.ts</code> … <code>scene-10-analysis.ts</code>，
+    是数据真实所在的文件切分（也是「场景 01→10，场景内保 SoT 序」的既有顺序）。
+    ② <b>13 个展示分类</b>——<code>src/triggers/index.ts:19</code> 的 <code>CATEGORIES</code>（主页／饮食记录／食品库／体重／运动／健身计划／分析／综合／复盘／身体细节／身材照片／目标管理／基础信息），
+    这是 HELP 页上给人看的目录。
+  </p>
+
+  <h4 class="lbl">关键信息</h4>
+  <div class="factline">
+    <b class="k">10 个场景加得正好 436：</b>
+    <code>9 + 70 + 58 + 39 + 32 + 25 + 4 + 13 + 10 + 176 = 436</code>。
+  </div>
+  <div class="factline">
+    <b class="k">13 个分类会重复计数：</b>「食品库」的词实际写在 scene-02（饮食）里；
+    「复盘」的词散落在 scene-02/03/04/05 四个文件；「综合」是分析场景的展示名。
+    它们是<b>呈现层</b>的标签，不是存储层的分组——拿它切图，同一张 ticket 会同时属于多张 map。
+  </div>
+  <div class="factline">
+    <b class="k">体量极不均衡（这决定了要不要再拆）：</b>
+    176 / 70 / 58 三个场景占了 <b>304 条＝69.7%</b>，而 07 基础信息只有 4 条、01 主页只有 9 条。
+    按「一张 map 一个能跑完的 agent session」的量级，<b>场景 10 必须再拆</b>，01/07/08/09 甚至可以并。
+  </div>
+  <div class="factline">
+    <b class="k">已有先例：</b>#131 那张图（HELP）的 <code>Destination</code> 就是按「一个明确产物 + 两条判据」写的，9 张子票收口。
+    本批图的 <code>Destination</code> 可以照这个模板写，只是产物从「1 张 HELP」变成「一组模板 × 双产物」。
+  </div>
+
+  <h4 class="lbl">选项与利弊</h4>
+  <div class="opts" data-group="Q1">
+    <label class="opt rec">
+      <input type="radio" name="Q1" value="A">
+      <div class="oh"><span class="tag">A</span><span class="ot">按 10 个场景切；10 分析再拆</span></div>
+      <div class="ow">每个场景一张 map（场景 10 因为 176 条 + 2 张模板的极端结构，拆成 2 张）。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>与文件切分、SoT 顺序、既有 ticket（#106 逐场景 CLI、#108–#110 分组）完全对齐；加总正好 436，验收有硬分母；每张 map 的目的地天然清晰（「本场景这些唤醒词的页面 × 双产物」）</span></div>
+        <div><span class="cl">弊</span><span>小的场景（07 只有 4 条）开一张图略重；场景 05 的 23 条没有命令可执行会集中在同一张图里，那张图会明显比其他图难</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q1" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">按 13 个展示分类切</span></div>
+      <div class="ow">照 HELP 页目录走，一眼能对上你现在看的那张表。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>与 HELP 页视觉目录一一对应，你翻页时好定位</span></div>
+        <div><span class="cl">弊</span><span><b>会重复计数</b>（复盘跨 4 个场景、食品库在饮食里）；13 张小图里有一半没有独立的数据源；与 <code>scene-*.ts</code> 的物理切分对不上，每张图的边界要在正文里额外解释</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q1" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">先不切，一张总图包 436 条</span></div>
+      <div class="ow">只开一张大 map，所有场景的模板族都挂在它下面。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>不用现在决定边界；唯一一张图，索引简单</span></div>
+        <div><span class="cl">弊</span><span>Wayfinder 的一张 map 是给「一个能跑完的 session」用的索引；436 条 × 双产物挂在一张图下，<b>frontier（此刻能开工的票）会失去意义</b>；而且你明确说了要「多个 MAP」</span></div>
+      </div>
+    </label>
+  </div>
+
+  <div class="rec-box">
+    <b>➡️ 推荐 A（10 个场景，场景 10 再拆）。</b>
+    理由：分母恰恰好是 436，验收时能一句话说清「覆盖完了」；边界与代码物理切分一致，不存在解释成本；
+    而体量失衡的问题用「场景 10 再拆 + 小场景合并」解决，不牺牲分母口径。
+    <br><b>建议的具体切法（10 个场景 → 9 张图）：</b>
+    独立开图的 = 场景 06 目标管理（第一张，公共层从这里长出来）、01 主页、02 饮食、03 体重、04 运动、05 健身计划；
+    需要拆的 = 场景 10 分析（176 条，拆成 2 张）；可以合并的 = 07 基础信息（4 条）并入 01 主页那张、09 身材照片（10 条）并入 08 身体细节那张。数一遍：01+07、02、03、04、05、06、08+09、10a、10b = <b>9 张</b>。
+    <b>最终张数你定</b>，我这里给的是配比建议。
+  </div>
+  <div class="risk-box"><b>不切的代价：</b>没有分母就没有「跑通」的验收标准。#131 之前那轮把 436 / 414 / 446 / 432 四个数混着用，正是你批评过的「你自己创了几个标准」的根源。</div>
+</section>
+
+<!-- ================= Q2 ================= -->
+<section class="q lv-mid" id="q2" data-q="Q2" data-title="公共层怎么长出来">
+  <div class="qhead">
+    <span class="qn">Q2</span>
+    <h3>公共层怎么长出来？先做一张公共图，还是跟着场景一集一集长？</h3>
+    <span class="lv mid" style="background:var(--greenbg);color:var(--greenfg);border-color:var(--greenline)">你已拍板</span>
+  </div>
+
+  <h4 class="lbl">前因后果</h4>
+  <p>
+    你裁定过「过程型」<b>有两类都要做</b>：① <b>预检确认页</b>（要写库之前，把将要写入的字段摆出来问「这些信息是否确认」＋复制 prompt 按钮）；
+    ② <b>进度型中间反馈页</b>（长耗时操作如同步：已同步多少／正在执行什么／预计还要等多久）。
+    这两类，加上<b>复制按钮</b>、<b>双端适配</b>（你强调过手机版是你最喜欢的体验，电脑版也要好），
+    在 10 个场景里是<b>同一类页面</b>——不是每个场景各画一份。
+  </p>
+  <p>
+    <b>我原来推荐「先开一张公共图、做完再解锁其余场景」，你的反驳是对的</b>：公共层还没在实际场景里打磨过，怎么知道需要哪些零件？
+    凭空定出来的公共层，很可能做了一堆场景用不上的东西，真正要用的又没有。
+  </p>
+  <p>
+    你的做法是：<b>从第一个场景出发，边做边把公共的部分提取出来；每做完一个场景，公共层就厚一点；下一个场景直接拿现成的用，只补自己缺的。</b>
+    场景一集一集推进，公共层跟着长。
+  </p>
+
+  <h4 class="lbl">关键信息</h4>
+  <div class="factline">
+    <b class="k">公共层不用凭空设计——老技能有 7 张实物可以照着分析：</b>
+    <code>plan_builder_wizard.html</code>（37.3 KB）／<code>body_composition_wizard.html</code>（29.7 KB）／
+    <code>batch_import_preview.html</code>（23.8 KB）／<code>nutrition_label_wizard.html</code>（22.3 KB）／
+    <code>body_measurements_wizard.html</code>（19.6 KB）／<code>process_progress.html</code>（18.4 KB）／
+    <code>body_photo_log_wizard.html</code>（11.0 KB）。
+    <b>这跟 #131 的成功路子完全一样</b>——那次就是把老 <code>help_template.html</code>（你指定的「最权威」那份）拿来分析、照搬过关的。
+  </div>
+  <div class="factline">
+    <b class="k">公共层本来就一直是「干出来的」，不是设计出来的：</b>
+    <code>packages/base-render/src/</code> 现在有 <code>blocks</code>／<code>charts</code>／<code>controls</code>／<code>style</code>／<code>template</code>／<code>text</code> 六个共享件，
+    它们是前面几期工作一点点攒下来的。<b>你的做法与这个仓库的历史一致。</b>
+  </div>
+  <div class="factline">
+    <b class="k">复制按钮已经有现成的：</b><code>packages/skill-calorie/src/render/copy.ts</code>（<code>COPY_RUNTIME_JS</code>）。
+    不用重造，要做的是把它接进新的页面模板。
+  </div>
+  <div class="factline">
+    <b class="k">两层归属已经定了：</b>跨技能通用的进 <code>packages/base-render/src/</code>（主入口受签名冻结锁 <code>test/contract-signatures.test.mjs</code>，大块走子路径如 <code>./blocks</code>）；
+    只有卡路里多个场景用得到的，先留在卡路里包内，成熟了再上移。
+    <b>现成例子：</b><code>crud_receipt.html</code> 被 6 个场景共用（49 条）——它就是典型的「卡路里内部共用件」。
+  </div>
+  <div class="factline">
+    <b class="k">「公共层」交付的是什么：</b>只交付「<b>有哪些共用件、各自吃什么数据、有哪些位置可以填</b>」这份说明，
+    <b>不含具体内容</b>。内容是每个场景自己的事。这样才不会出现「10 个场景长得一模一样」——你批评过的那种。
+  </div>
+
+  <h4 class="lbl">怎么推进（你的方案，细化成可执行的）</h4>
+  <table>
+    <thead><tr><th>顺序</th><th>做什么</th><th>公共层变成什么样</th><th>你看到什么</th></tr></thead>
+    <tbody>
+      <tr><td class="ctr"><b>MAP1</b><br>场景 06 目标管理</td>
+        <td>25 条唤醒词里 22 条能直接跑通；一次把预检确认页／回执页／进度对照页攒进公共层</td>
+        <td>从无到有：把目标管理用到的预检确认页、回执页、进度对照页、复制按钮、双端适配提出来，成为公共层第一批</td>
+        <td>真 HTML 产物，肉眼验收</td></tr>
+      <tr><td class="ctr"><b>MAP2</b><br>场景 01 主页 ＋ 07 基础信息</td>
+        <td>13 条唤醒词；直接用 MAP1 的共用件，只补自己缺的</td>
+        <td>补上最基础的展示页形状（主页 1 张模板、基础信息 2 张）</td>
+        <td>真 HTML 产物，肉眼验收</td></tr>
+      <tr><td class="ctr">MAP3…MAP9</td>
+        <td>依次推进，每张图都先复用现有共用件，再补自己缺的</td>
+        <td>每轮厚一点，直到 9 张图走完</td>
+        <td>每轮产物</td></tr>
+      <tr class="tot"><td class="ctr">收尾</td>
+        <td>公共层里成熟、且别的技能也用得到的，上移到 <code>base-render</code></td>
+        <td>跨技能公共层</td>
+        <td>—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="factline">
+    <b class="k">配三条规则（这是你这个做法需要补的机制）：</b><br>
+    <b>① 只要分析下来有可能被多个场景用到，就提到公共层</b>——不等「已经有两个场景在用」。
+    开发时<b>优先去公共层找</b>，找到了就用，不重复造。<br>
+    <b>② 更通用的（别的技能也用得到的）往上提到 base 库</b>，给所有技能用；
+    只对卡路里多个场景有价值的，留在<b>卡路里的公共层</b>。<br>
+    <b>③ MAP1 只定「有哪些共用件、吃什么数据、有哪些位置可以填」，不定长相</b>；长相在每个 MAP 真实用的时候才定下来。<br>
+    这三条就是「边做边提取」不失控的保证。
+  </div>
+  <div class="factline">
+    <b class="k">所以公共层分两层，归属判据是「谁会用」：</b>
+    <code>base 库</code>（跨技能通用，放 <code>packages/base-render/src/</code>）
+    ／<code>卡路里公共层</code>（卡路里多场景用得上，留在卡路里包内）
+    ／<code>只此一处用</code>（就地写，不强行组件化）。
+  </div>
+
+  <h4 class="lbl">选项与利弊</h4>
+  <div class="opts" data-group="Q2">
+    <label class="opt rec sel">
+      <input type="radio" name="Q2" value="A" checked>
+      <div class="oh"><span class="tag">A</span><span class="ot">跟着场景一集一集长（你的方案）</span></div>
+      <div class="ow">MAP1 场景 06 目标管理出发 → 边做边提取公共层 → MAP2 场景 01 主页用 MAP1 的 ＋ 补自己的 → 依次到 MAP9。公共层每轮厚一点。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>公共层里每一件都是真实用到的，不会凭空造零件；每个 MAP 都交得出真产物（不会出现「先做公共层、半天看不到东西」的空窗）；与 #131 的成功路径一致（照老实物分析，不凭空设计）；与 <code>base-render</code> 的历史做法一致</span></div>
+        <div><span class="cl">弊</span><span>需要一个机制防止跑偏——如果没有准入规则，可能出现「每个场景各自实现一份」并在后面返工；MAP1 定的共用件接口若在 MAP2 发现不合适，要改（所以接口只定输入输出和可填位置，不锁长相）</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q2" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">先开一张公共图，一次做完 5 类页面再铺开场景</span></div>
+      <div class="ow">（我原来的推荐）先定共享页面模板 ＋ 预检确认页 ＋ 进度页 ＋ 复制按钮 ＋ 双端适配，再解锁其余场景图。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>重复实现一次性杜绝；你只需肉眼验收一套页面的样子</span></div>
+        <div><span class="cl">弊</span><span><b>正是你指出的问题</b>：没有场景打磨，不知道需要哪些零件；前一段时间只有公共层、看不到场景产物；方向若错，后面全部返工</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q2" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">不设公共层，每个场景自己做自己的页面</span></div>
+      <div class="ow">9 张图完全独立，互相不管。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>每张图最自由，不用协调</span></div>
+        <div><span class="cl">弊</span><span>同一类页面（预检确认页／进度页／复制按钮）会出现 10 套实现，没法统一；你裁定过的「交互是复制按钮」这条硬要求会在 10 个地方各写一遍</span></div>
+      </div>
+    </label>
+  </div>
+
+  <div class="rec-box">
+    <b>➡️ 按你说的办（A）。</b>
+    收尾补一句：<b>公共层不是一张图，而是每张图都要交的一份东西</b>——所以每张场景图的 Notes 里要写上一句
+    「本图必须把复用的页面部件提取出来，并说明它们吃什么数据、有哪些位置可以填」。
+    这样公共层跟着 9 张图自然长出来，不需要额外开图，也不需要提前猜。
+  </div>
+  <div class="risk-box"><b>沿用 #131 的学费：</b>「单测绿 ≠ 产品通」——锁必须锁在<b>真正的交付出口</b>（AI 实际调用的那条路），而且必须真机跑一次 ＋ 你眼睛看。</div>
+</section>
+
+<!-- ================= Q3 ================= -->
+<section class="q lv-high" id="q3" data-q="Q3" data-title="95 条没有命令可执行">
+  <div class="qhead">
+    <span class="qn">Q3</span>
+    <h3>那 95 条「现在跑不通」的唤醒词，在这一批里算什么？</h3>
+    <span class="lv" style="background:var(--greenbg);color:var(--greenfg);border-color:var(--greenline)">你已拍板 A</span>
+  </div>
+
+  <h4 class="lbl">先解释清楚：为什么会跑不通</h4>
+  <p>
+    一条唤醒词要<b>从头走到尾</b>，需要两样东西同时具备：
+    <b>① AI 能执行的一条命令</b>（你说了「记一餐」，AI 得真的有一条命令去把这一餐写进库里）；
+    <b>② 一个给你看的 HTML 页面</b>。
+  </p>
+  <p>
+    现在有 <b>436 条</b>唤醒词，其中 <b>341 条</b>两样都有；剩下 <b>95 条</b>缺东西。
+    最多的一种是<b>连命令都还没有</b>：你说了「看BMI报告」「定训练计划」「模拟减重(60天减Xkg)」，AI 找不到一条能执行的命令。
+  </p>
+  <p style="background:var(--purplebg);border:1px solid var(--purpleline);border-radius:9px;padding:11px 14px">
+    <b>你原话里那句「补写键是另一批工作，不混入」，翻译过来就是：</b><br>
+    有些活儿要<b>新写一条会改数据库的命令</b>（比如记一餐、改体重、删运动、定训练计划），
+    这件事的性质跟「把页面做得好看」完全不一样，所以<b>要单独排、不要和做页面混在一起做</b>。
+    「补写键」＝加一条会改数据库的命令。
+  </p>
+
+  <h4 class="lbl">⚠️ 你提的「幻影词」担心是真的——已逐条查证</h4>
+  <p>
+    你提醒：有些唤醒词说不定在老技能里本来就能走通，只是新版本没做通，不能一看到「跑不通」就当它天生缺能力。
+    <b>我去把老技能的唤醒词表（<code>SKILLS\卡路里\scripts\_triggers.py</code>，621 KB）和新仓的 95 条逐条对了一遍，结果：</b>
+  </p>
+  <div class="diag">
+    <div class="d b"><div class="n">436</div><div class="t">老表唤醒词总数</div><div class="x">其中 414 条带完整出路定义（output_type／模板／命令）</div></div>
+    <div class="d g"><div class="n">95 / 95</div><div class="t">全部在老技能里存在</div><div class="x">新仓判「跑不通」的 95 条，<b>一条不缺</b>地都在老表里</div></div>
+    <div class="d a"><div class="n">91</div><div class="t">老技能里明确写着出路</div><div class="x">带 output_type ＋ 指定了模板</div></div>
+    <div class="d r"><div class="n">0</div><div class="t">老技能里找不到的</div><div class="x">没有一条是老技能没做过的</div></div>
+  </div>
+  <div class="factline">
+    <b class="k">结论：这 95 条不是「老技能也没有的能力」，是「老技能有、新版本没接通」。</b>
+    我原来的说法把它归成「缺命令」，字面上没错（新的命令册 <code>calorie-cmd-read</code> 里确实没有），
+    但我把它写成「瓶颈在执行层」会让人误以为「能力从来没做过」——<b>那个理解是错的</b>。真实情况是：能力做过，命令没接。
+  </div>
+  <div class="risk-box">
+    <b>⚠️ 由此定一条纪律，写进每张图的 Notes：</b>
+    <b>每张票开工前，必须先去老技能（<code>_triggers.py</code> ＋ <code>templates/</code> ＋ <code>scripts/render_*.py</code>）核对该唤醒词当年到底是怎么做的</b>，
+    再判断它属于哪一种：<b>「老技能做过、新仓没接命令」</b>（绝大多数）／<b>「必须多步交互」</b>／<b>「新架构规格划出去不做」</b>。
+    <b>本次逐条查过：没有一条属于「老技能也没做过」</b>——所以别再把它们说成「从来没做过的能力」。
+    <b>不许只看新仓 <code>routing.ts</code> 的标注就下结论</b>——那正是这次差点出错的地方。
+  </div>
+
+    <h4 class="lbl">对账明细：95 条在老技能里分别去向哪张模板</h4>
+  <table>
+    <thead><tr><th>老技能里的出路</th><th style="text-align:right">条数</th><th>举例</th><th>新仓现状</th></tr></thead>
+    <tbody>
+      <tr><td><code>combined_analysis.html</code></td><td class="num">39</td><td>看整体趋势 15 条、摄入预测与模拟减重 19 条、看营养建议、看健康趋势</td><td>没有对应命令</td></tr>
+      <tr><td><code>crud_receipt.html</code></td><td class="num">9</td><td>改动作、定一周计划、加训练动作、定休息日、删某天训练、改某天训练、改训练计划、撤销训练计划、复制训练计划</td><td>完全没有会改数据库的命令</td></tr>
+      <tr><td><code>crud_receipt.html</code>（同上模板）</td><td class="num">2</td><td>同步到训记、拉训记实绩</td><td>新架构规格明确不做</td></tr>
+      <tr><td><code>weight_compare.html</code></td><td class="num">8</td><td>对比体重：当前 vs 历史最低／平台期首日／入夏最低</td><td>缺「先算出对比基准日」的参数</td></tr>
+      <tr><td><code>workout_plan_view.html</code></td><td class="num">8</td><td>看本周计划、看今天练什么、看某动作安排、看计划 vs 实际</td><td>计划页面缺按周／按天／按动作的筛选参数</td></tr>
+      <tr><td><code>weight_review.html</code></td><td class="num">6</td><td>体重复盘（本周／本月／今年／最近 90 天／自定义）、看里程碑回溯</td><td>复盘形态缺期间窗口参数</td></tr>
+      <tr><td><code>weight_history.html</code></td><td class="num">4</td><td>看体重曲线（带目标／带里程碑／带异常点）、看「有备注」的体重记录</td><td>缺复合形态／缺「有备注」筛选维度</td></tr>
+      <tr><td><code>process_progress.html</code></td><td class="num">3</td><td>落地训练、落地到本周末、落地到本月底</td><td>新架构规格明确不做</td></tr>
+      <tr><td><code>goal_recommend.html</code></td><td class="num">3</td><td>一键定全套目标、定营养目标(自动算)、定饮水目标(自动算)</td><td>必须多步交互</td></tr>
+      <tr><td><code>nutrition_label_wizard.html</code>（老技能<b>有</b>这个渲染器）</td><td class="num">2</td><td>拍营养表记一餐、拍营养表补记一餐</td><td>新架构规格明确不做</td></tr>
+      <tr><td><code>batch_import_preview.html</code></td><td class="num">2</td><td>批量导入食品、校验批量导入</td><td>必须多步交互</td></tr>
+      <tr><td><code>today_meals.html</code>／<code>exercise_summary.html</code></td><td class="num">2</td><td>看有备注的饮食记录／看运动记录（有备注）</td><td>缺「有备注」筛选维度</td></tr>
+      <tr><td><code>body_composition_view</code>／<code>body_measurements_view</code></td><td class="num">2</td><td>对比体脂、对比围度</td><td>缺对比参数（渲染层已有函数，命令侧没接）</td></tr>
+      <tr><td><code>plan_builder_wizard.html</code></td><td class="num">1</td><td>定训练计划</td><td>没有会改数据库的命令</td></tr>
+      <tr><td><code>cron_setup.html</code>（老技能<b>有</b>渲染器 <code>render_cron_setup.py</code>；这 3 条老表里没写 output_type，模板名是据此推出）</td><td class="num">3</td><td>开启／查／关闭定时复盘</td><td>新架构规格明确不做</td></tr>
+      <tr><td colspan="2">另外 1 条：老表里没有单独的模板定义</td><td>看「有备注」的饮食记录（与「看有备注的饮食记录」是同一个词的不同写法）</td><td>缺「有备注」筛选维度</td></tr>
+      <tr class="tot"><td>合计</td><td class="num">95</td><td colspan="2">已经能跑通的 341 条 ＋ 这 95 条 ＝ 436</td></tr>
+    </tbody>
+  </table>
+  <div class="factline">
+    <b class="k">老技能里这 95 条的信息完整度：</b>95 条<b>全都在</b>老表里；
+    其中 <b>91 条</b>带完整的出路定义（<code>output_type</code> ＋ 指定模板），
+    剩下 <b>4 条</b>没有单独定义——就是「开启／查／关闭定时复盘」3 条，加上「看『有备注』的饮食记录」这个别名写法。
+  </div>
+
+  <h4 class="lbl">「明确不做」的 10 条，老技能当年是做了的</h4>
+  <div class="factline">
+    <b class="k">新架构规格 <code>docs/calorie-architecture.md:60</code> 划掉的四样，老技能都有实物：</b>
+    <b>定时复盘</b> → <code>scripts/render_cron_setup.py</code>（注释写明「开启/关闭定时复盘 HTML 渲染器」，配 <code>templates/cron_setup.html</code>）；
+    <b>训记</b> → <code>scripts/xunji_bridge/__main__.py</code>（一整个包，不只是个 shim）；
+    <b>营养表</b> → <code>scripts/render_nutrition_label.py</code>（注释写明「过程型 HTML，必含 2 个复制按钮:采纳 + 修改后复制」——<b>正是你要的那种预检确认页</b>）；
+    <b>落地</b> → <code>scripts/render_plan_builder.py</code>／<code>render_plan_receipt.py</code>／<code>sync_plan.py</code>。
+  </div>
+  <div class="risk-box">
+    <b>所以这 10 条不是「技术上做不到」，是「新架构主动划出去的」。</b>
+    要不要把它们重新纳进来，是<b>范围决定</b>，不是技术判断。我按架构规格先列进 Out of scope，
+    <b>但这一条你可以推翻</b>——尤其「拍营养表」那条，老实现的两个复制按钮跟你要的交互是同一个东西。
+  </div>
+
+  <h4 class="lbl">按性质分三种去处（你已拍板 A）</h4>
+  <table>
+    <thead><tr><th>性质</th><th style="text-align:right">条数</th><th>来路</th><th>去处</th></tr></thead>
+    <tbody>
+      <tr><td><b>必须多步交互</b>（AI 一次调用干不完，中间要你确认）</td><td class="num">5</td>
+        <td>批量导入食品、校验批量导入、定营养目标(自动算)、定饮水目标(自动算)、一键定全套目标</td>
+        <td>跟着场景图做，当预检确认页的第一批样本</td></tr>
+      <tr><td><b>做过、但新仓没接命令</b>（缺命令／缺参数／缺筛选维度）</td><td class="num">80</td>
+        <td>明细表里除「新架构不做」和「必须多步交互」两种之外的全部</td>
+        <td>在各自场景图里<b>单独列一批票</b>，每张票只写「缺哪条命令／哪个参数」，不掺页面改版</td></tr>
+      <tr><td><b>新架构明确不做</b></td><td class="num">10</td>
+        <td>定时复盘 3、训记 2、营养表 2、落地 3</td>
+        <td>写进对应图的 Out of scope，说明原因（但可被你推翻，见上）</td></tr>
+      <tr class="tot"><td>合计</td><td class="num">95</td><td colspan="2">已经能跑通的 341 条 ＋ 这 95 条 ＝ 436</td></tr>
+    </tbody>
+  </table>
+
+  <h4 class="lbl">为什么推荐「同一张图里分开列票」而不是拆成两张图</h4>
+  <div class="factline">
+    你裁定过「加命令是另一批工作，不混入」。做到这一点有两种办法：
+    <b>(甲) 同一张场景图里，做页面的票和加命令的票分开列</b>；
+    <b>(乙) 把 80 条抽出来，单独开一张跨场景的「加命令」图</b>。
+    推荐甲，因为 436 这个总数是验收的硬分母——拆成两张图之后，「覆盖完了」就要跨图对账，
+    而且「补一整块会改数据库的命令」（场景 05 的 10 条）和「加两个参数」（预测类的 15 条）量级差太远，放同一张图也难统一。
+  </div>
+
+  <div class="rec-box">
+    <b>➡️ 你已拍板 A。落到执行上的三条：</b>
+    ① <b>5 条必须多步交互</b> → 跟着场景图做，当预检确认页的第一批样本；
+    ② <b>80 条缺命令／缺参数</b> → 各场景图里单独一批票，每张写清缺的是哪条命令或哪个参数，并标明是「加一个参数」还是「新写一整块命令」；
+    ③ <b>10 条明确不做</b> → 写进对应图的 Out of scope，一句话说明原因是「新架构规格划出去的」，并注明老技能当年有实现。
+    <br><b>另外留一道小口子：</b>那 24 张被丢掉的旧模板，<b>不算进 436 里</b>，
+    但在每张场景图的「Not yet specified」里留一行「本场景对应的旧模板 X 没搬过来，它服务的能力现在没有入口」——
+    等那张图走到那里时再决定要不要救。
+  </div>
+</section>
+
+<!-- ================= Q4 ================= -->
+<section class="q lv-high" id="q4" data-q="Q4" data-title="模板归类">
+  <div class="qhead">
+    <span class="qn">Q4</span>
+    <h3>51 个模板名 → 新的页面分类：这张对照表现在就做，还是各场景自己边做边定？</h3>
+    <span class="lv mid">方法题</span>
+  </div>
+
+  <h4 class="lbl">这一问到底在干什么（先把话说白）</h4>
+  <p>
+    <b>一件事：现在有 51 个页面模板名字，散落在各个场景里。它们要合并成多少个、每个归谁管，得有个说法。</b>
+    我原来给它起了个内部叫法（「模板族总谱」），名字太难懂，重说一遍。
+  </p>
+  <div class="factline">
+    <b class="k">为什么必须合并、不能一个名字一个页面地照搬：</b><br>
+    <b>① 重复得厉害：</b><code>crud_receipt.html</code> 这一张，<b>6 个场景</b>在用（饮食 15 条、运动 13 条、健身计划 11 条、体重 5 条、基础信息 3 条、身体细节 2 条，共 49 条——「已记好」这类回执全是它）。<br>
+    <b>② 一张顶一大片：</b><code>combined_analysis.html</code> 一张，顶 <b>154 条</b>唤醒词（各种趋势、预测、报告都在它上面）。<br>
+    <b>③ 数字很明确：</b>10 个场景一共引用 <b>51 个不同模板名</b>，而旧模板目录里有 <b>74 张</b>文件——也就是说本来就该合。
+  </div>
+  <div class="factline">
+    <b class="k">不合并会出什么事（举一个具体的）：</b>
+    场景 02 饮食里有一大堆排行榜（高热量榜、低热量榜、频繁吃榜…共 21 条词，现在都指向 <code>food_ranking.html</code>）；
+    场景 10 分析里也有榜单类的东西（现在都塞在 <code>combined_analysis.html</code> 里）。
+    <b>如果两个场景各自决定，饮食会做一套排行榜页面、分析又做一套榜单页面</b>——同一类东西两个样，
+    正是你早先批评过的「体验完全不一样」。
+  </div>
+  <div class="factline">
+    <b class="k">所以这张表长这样（就是你要「先给模板清单再出产物」的那份清单）：</b>
+    一行一个模板名，写清楚四件事——
+    <b>① 哪些场景在用、各用几条；② 它是什么形状（展示／列表／图表／预检确认／回执／进度）；③ 合并到哪一类；④ 归谁管（base 库／卡路里公共层／只此一处用）。</b>
+    51 行，一次做完。
+  </div>
+  <div class="factline">
+    <b class="k">是不是把简单任务搞复杂了？我的判断是：不是，但可以更轻。</b>
+    你不需要逐行审这份表——<b>它主要是给 AI 看的清单</b>，免得 9 张图各自拍脑袋。
+    你只需要看<b>第三列「合并到哪一类」</b>：51 个名字应该合并成十几个类别，那一列错了才会出大问题。
+    如果你觉得连这个都不必现在定，<b>选 B（各场景自己定，最后人工收口）也是可以的</b>，代价写在下面。
+  </div>
+
+  <h4 class="lbl">关键信息</h4>
+  <div class="factline">
+    <b class="k">归谁管这一列，你已经定过规矩了：</b>
+    跨技能通用的 → <code>packages/base-render/src/</code>（给所有技能用）；
+    卡路里多个场景用得上的 → 卡路里自己的公共层；
+    只此一处用的 → 就地写，不强行组件化。
+    <b>所以这张表实质上是在执行你已经定过的规矩</b>，不是新造流程。
+  </div>
+  <div class="factline">
+    <b class="k">有正本可以参考，不用从零想：</b>
+    旧技能的 <code>docs/adr/0009-template-split-principle.md</code>（模板拆分原则）、
+    老公共组件库的 <code>docs/component-contract.md</code>（52KB 控件正本）与 <code>scene-data-contract.md</code>——
+    这就是「控件怎么拆、契约怎么定」的直接参照。
+  </div>
+  <div class="factline">
+    <b class="k">做在哪：</b>它是 <b>MAP1（场景 06 目标管理）的第一张票</b>，不单独开图。
+    这样它既拿到了全局口径，又不增加图的数量。
+  </div>
+
+  <h4 class="lbl">选项与利弊</h4>
+  <div class="opts" data-group="Q4">
+    <label class="opt rec">
+      <input type="radio" name="Q4" value="A">
+      <div class="oh"><span class="tag">A</span><span class="ot">现在就把 51 个模板名过一遍，定出「合并成哪几类、每类归谁管」</span></div>
+      <div class="ow">做成 MAP1 的第一张票。你只看「合并成哪几类」那一列。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>同一类东西在不同场景不会各做一套；后面 8 张图直接查表，不用各拍脑袋；这张表同时就是你要求「先给模板清单再出产物」的第一份清单；工作量小（51 行分类），一个 session 做得完</span></div>
+        <div><span class="cl">弊</span><span>要求现在就把 51 个模板看一遍（这是查资料的活，可以让子代理并行做）；定得过细的话，后面场景可能发现要微调</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q4" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">各场景自己定自己的，最后人工收口</span></div>
+      <div class="ow">不预先列表，每张图在正文里写清自己怎么合并的。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>开工门槛低，不用前置的查资料；每个决定都由最了解该场景的人做</span></div>
+        <div><span class="cl">弊</span><span><b>跨场景的重复没人负责</b>——<code>crud_receipt</code> 出现在 6 个场景、榜单类同时出现在饮食和分析，这两处必然出现两套做法；最后一定要返工统一，而返工的时候页面已经给你看过、你也认可过了，改动更难</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q4" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">不合并，一张旧模板对应一张新页面（74 张照搬）</span></div>
+      <div class="ow">追求最大保真，逐个重做。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>保真度最高，不会有「合并后丢了个性」的风险</span></div>
+        <div><span class="cl">弊</span><span>与你「尽可能复用」「形状相同的合并成一张」这两条裁定直接冲突；74 张要你人工逐一看，正是你嫌「太耗时」的量级；而且旧目录里 24 张已被丢掉、1 张（<code>goal_config</code>）已缺失，照搬在事实上做不到</span></div>
+      </div>
+    </label>
+  </div>
+
+  <div class="rec-box">
+    <b>➡️ 推荐 A，但只占你很少的注意力。</b>
+    理由：「形状相同的合并成一张」这条裁定<b>只有在一个统一视野下才能执行</b>——单看饮食场景，你不会知道排行榜该不该和分析场景的榜单合并。
+    产出形式我建议压到最轻：<b>一张 51 行的对照表，你只审「合并成哪几类」那一列（十几行）</b>，其余交给 AI。
+    <br><b>这张票的具体产出：</b>
+    <code>旧模板名 | 哪些场景在用／各几条 | 形状（展示／列表／图表／预检确认／回执／进度） | 合并到哪一类 | 归谁管（base／卡路里公共层／只此一处）</code>。
+  </div>
+  <div class="risk-box"><b>注意：</b>这张表定的是「合并成哪几类」和「归谁管」，<b>不定长相</b>。长什么样按 Q5 的节奏，MAP1 做出来给你看。</div>
+</section>
+
+<!-- ================= Q5 ================= -->
+<section class="q lv-high" id="q5" data-q="Q5" data-title="场景顺序">
+  <div class="qhead">
+    <span class="qn">Q5</span>
+    <h3>场景按什么顺序推进？第一个做哪个？</h3>
+    <span class="lv high">要和你讨论</span>
+  </div>
+
+  <h4 class="lbl">这一问要你定的只有一件事</h4>
+  <p>
+    你已拍板「MAP1 先做、你肉眼看、再解锁其余」，同时说<b>「第一个不做主页场景」，要一起讨论顺序</b>。
+    所以这一问只定一件事：<b>把哪个场景放在第一集？</b>
+  </p>
+  <p>
+    <b>关键在于「第一集的任务是什么」。</b>Q2 你已经定了「公共层跟着场景一集一集长」，
+    那么第一集就是<b>第一铲土</b>——挖得对不对，决定后面 8 张图顺不顺。
+    于是有两个不同的目标，只能选一个当第一集：
+  </p>
+  <div class="factline">
+    <b class="k">目标甲：先定「新样子」。</b>用最少的产物让你肉眼确认视觉方向对不对。<br>
+    <b class="k">目标乙：先定「公共层骨架」。</b>一次把最吃重、后面每张图都要用的部件攒下来。<br>
+    <b>这两个目标对应不同的第一集</b>：主页最省、最能快速给你看「新样子」，但它攒不下骨架；
+    目标管理一次能攒下骨架，但第一集要你审的东西多一倍。
+    <b>你说「第一个不做主页」，等于倾向目标乙</b>——那下面的推荐就按这个来。
+  </div>
+
+  <h4 class="lbl">选顺序要看四件事（不是看谁简单）</h4>
+  <div class="factline">
+    <b class="k">① 能不能验证「写类流程先出预检确认页」</b>——这是你最强调的交互（说「记体脂」→ 先出确认页 → 复制 → AI 执行 → 出结果页）。<br>
+    <b class="k">② 第一个场景要能同时攒下公共层里最吃重的几件东西</b>——预检确认页、回执页、数据展示页、图表页。<br>
+    <b class="k">③ 现成资料够不够</b>——老技能里有没有对应的模板可以照着分析（照 #131 的成功路子）。<br>
+    <b class="k">④ 会不会一开工就撞上「缺命令」</b>——撞上了就得停下去补命令，第一个场景不该卡在这里。
+  </div>
+
+  <h4 class="lbl">候选场景摆在一起看</h4>
+  <table>
+    <thead>
+      <tr><th>场景</th><th style="text-align:right">唤醒词</th><th style="text-align:right">跑不通</th>
+      <th class="nowrap">含写类流程</th><th class="nowrap">含「必须多步交互」</th>
+      <th style="text-align:right">现成模板</th><th>能攒下哪些公共层部件</th><th class="nowrap">资料完整度</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>01 主页</b></td><td class="num">9</td><td class="num">0</td><td>无</td><td>无</td><td class="num">1</td>
+        <td>数据展示页（最基础的一层）</td><td>齐</td></tr>
+      <tr class="hi"><td><b>06 目标管理</b></td><td class="num">25</td><td class="num">3</td><td><b>有，13 条</b></td><td><b>有，3 条</b></td><td class="num">5</td>
+        <td><b>预检确认页 ＋ 回执页 ＋ 进度对照页</b>——正好是公共层里最吃重的三件</td><td>四张有实物，<code>goal_config</code> 一张要新设计</td></tr>
+      <tr><td><b>08 身体细节</b></td><td class="num">13</td><td class="num">2</td><td>有</td><td>无（老技能有向导实物）</td><td class="num">5</td>
+        <td>预检确认页跟它的结果页成对出现</td><td>齐</td></tr>
+      <tr><td><b>04 运动</b></td><td class="num">39</td><td class="num">1</td><td>有，13 条</td><td>无</td><td class="num">8</td>
+        <td>回执页 ＋ 汇总页 ＋ 强度／有氧分开的列表页</td><td>齐</td></tr>
+      <tr><td><b>02 饮食</b></td><td class="num">70</td><td class="num">6</td><td>有，数量最多</td><td>有，2 条</td><td class="num">15</td>
+        <td>什么都有一点，是最考验公共层的一集</td><td>齐</td></tr>
+      <tr><td><b>03 体重</b></td><td class="num">58</td><td class="num">18</td><td>有，9 条</td><td>无</td><td class="num">8</td>
+        <td>曲线页（带目标／里程碑／异常点多变体）＋ 两段对比页</td><td>齐</td></tr>
+      <tr><td><b>10 分析</b></td><td class="num">176</td><td class="num">42</td><td>无</td><td>无</td><td class="num">2</td>
+        <td>一张通用分析页顶 154 条——收益最大，但依赖前面攒好的展示／图表部件</td><td>齐</td></tr>
+      <tr><td><b>05 健身计划</b></td><td class="num">32</td><td class="num">23</td><td>有，但命令全缺</td><td>无</td><td class="num">6</td>
+        <td>计划视图页；但一开工就要新写一整块会改数据库的命令</td><td>齐</td></tr>
+      <tr><td><b>07 基础信息</b></td><td class="num">4</td><td class="num">0</td><td>有，3 条</td><td>无</td><td class="num">2</td>
+        <td>档案展示／回执——太薄，单独做一集不划算，建议并入别集</td><td>齐</td></tr>
+      <tr><td><b>09 身材照片</b></td><td class="num">10</td><td class="num">0</td><td>有</td><td>无</td><td class="num">4</td>
+        <td>照片对比、GIF 生成——是独占交互，复用价值低</td><td>齐</td></tr>
+    </tbody>
+  </table>
+
+  <h4 class="lbl">三种排法</h4>
+  <div class="opts" data-group="Q5">
+    <label class="opt rec">
+      <input type="radio" name="Q5" value="A">
+      <div class="oh"><span class="tag">A</span><span class="ot">第一集做 06 目标管理（先定公共层骨架），第二集做 01 主页（定新样子）</span></div>
+      <div class="ow">照你的话，第一集不排主页。MAP1 ＝ 06 目标管理（25 条、5 张模板），一次把<b>预检确认页／回执页／进度对照页</b>三件攒进公共层；MAP2 ＝ 01 主页 ＋ 07 基础信息（13 条、3 张模板），拿最小产物让你确认「新样子」。这两步走完，骨架＋方向都齐了，其余 7 张一次解锁。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>第一集就把后面 8 张图都要用的三件攒下来，晚攒一集就多一集要返工；目标管理资料最完整——老技能里有 <code>goal_progress</code>／<code>goal_recommend</code>／<code>goal_status</code>／<code>goal_weight</code> 四张实物可照 #131 的路子直接分析（第五张 <code>goal_config</code> 在旧目录里找不到，<b>这一张要新设计</b>）；它的 13 条写类流程正好验证你最强调的「先出预检确认页」；跑不通只有 3 条且全是「必须多步交互」，不会卡在缺命令上</span></div>
+        <div><span class="cl">弊</span><span>第一集要你肉眼审的东西比主页多（25 条 vs 9 条），如果「新样子」的方向不对，返工面比主页大一倍多。缓解办法：MAP1 先只给你看<b>两三张代表性页面</b>（一张预检确认页、一张回执页、一张进度对照页），方向确认了再铺满 25 条</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q5" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">第一集仍做 01 主页（先花最小力气定新样子），第二集再做 06</span></div>
+      <div class="ow">我原来的推荐，与你「第一个不做主页」的说法相反，列在这里供你比较。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>第一集最便宜（9 条、1 张模板），万一「新样子」不是你要的，返工面最小；你只需要看很少的东西就能给方向拍板</span></div>
+        <div><span class="cl">弊</span><span>主页那一集攒不下公共层里最吃重的三件，等于<b>骨架晚一集才立起来</b>；后面 8 张图里凡是用到预检确认页／回执页的，都要等第二集完成，或者先各写一版再返工</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q5" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">第一集做 08 身体细节（体脂／围度向导）</span></div>
+      <div class="ow">老技能里 <code>body_composition_wizard</code>／<code>body_measurements_wizard</code> 是预检确认页最完整的实物，直接照它做。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>预检确认页有最直接的实物可照（两张向导模板 ＋ 两张对应的展示模板，成对出现），而且不排主页</span></div>
+        <div><span class="cl">弊</span><span>只有 13 条词，攒不出「进度对照页」这类更难的东西，骨架只立起一半；而且「对比体脂／对比围度」这 2 条跑不通，一开工就撞上缺参数的问题</span></div>
+      </div>
+    </label>
+  </div>
+
+  <h4 class="lbl">我的推荐路线（9 张图，第一集不是主页）</h4>
+  <table>
+    <thead><tr><th style="width:52px">序</th><th>图</th><th>这一步的目的</th></tr></thead>
+    <tbody>
+      <tr><td class="ctr"><b>1</b></td><td><b>06 目标管理</b></td><td>攒公共层最吃重的三件：<b>预检确认页、回执页、进度对照页</b>。这一步验证你最强调的「写类流程先出确认页」。给你看时只挑两三张代表作，不铺满 25 条</td></tr>
+      <tr><td class="ctr"><b>2</b></td><td>01 主页 ＋ 07 基础信息</td><td>拿最小产物（13 条全跑得通、3 张模板）让你<b>确认「新样子」</b>；同时补上最基础的展示页形状</td></tr>
+      <tr><td class="ctr"><b>3</b></td><td>08 身体细节 ＋ 09 身材照片</td><td>复用预检确认页，补「向导页跟结果页成对」这种形状</td></tr>
+      <tr><td class="ctr"><b>4</b></td><td>04 运动</td><td>补「汇总页／分类列表页」形状；39 条里 38 条跑得通，不卡命令</td></tr>
+      <tr><td class="ctr"><b>5</b></td><td>02 饮食</td><td>复用已有部件的大考（15 张模板、21 条排行榜）</td></tr>
+      <tr><td class="ctr"><b>6</b></td><td>03 体重</td><td>补「曲线页多变体 ＋ 两段对比页」形状</td></tr>
+      <tr><td class="ctr"><b>7</b></td><td>05 健身计划</td><td>先补会改数据库的命令（10 条），再出计划视图页</td></tr>
+      <tr><td class="ctr"><b>8–9</b></td><td>10 分析（拆 2 张）</td><td>收益最大的一张：1 张通用分析页顶 154 条。留到最后，因为要靠前面攒好的展示／图表部件</td></tr>
+    </tbody>
+  </table>
+  <div class="factline">
+    <b class="k">排这个顺序的两条理由：</b>
+    <b>① 第一集就把最吃重、也最容易各造一套的三件攒进公共层</b>（预检确认页／回执页／进度对照页），
+    因为这三件后面 <b>8</b> 张图都要用——晚攒一集，就多一集要返工；
+    <b>② 第二集用最便宜的产物把「新样子」定下来</b>（主页 9 条、1 张模板），
+    这样万一「新样子」不是你要的，返工面也只是那一集。
+    <b>把 10 分析留到最后</b>，是因为它是「1 张页面顶 154 条」的极端结构，最依赖前面攒好的部件；反过来如果先做它，等于用一张模板去迁就 154 条词。
+  </div>
+  <div class="rec-box">
+    <b>➡️ 推荐 A：第一集 06 目标管理（定公共层骨架）→ 第二集 01 主页（定新样子）→ 其余解锁。</b>
+    这与你说过的「第一个不做主页场景」一致。
+    <br>如果你其实想让主页打头（先花最小力气定视觉方向），那就选 <b>B</b>；
+    代价是预检确认页／回执页这些骨架要晚一集才立起来，而这期间别的场景用不到现成的。
+    <br><b>要请你定的就一件事：</b>第一集做 06 目标管理（先定骨架，但第一次要审的东西多一些），
+    还是第一集做 01 主页（先定样子，最省，但骨架晚一集）？
+  </div>
+</section>
+
+<!-- ================= Q6 ================= -->
+<section class="q" id="q6" data-q="Q6" data-title="本次 session 止点">
+  <div class="qhead">
+    <span class="qn">Q6</span>
+    <h3>本次 session 走到哪一步停？只开图，还是开完就开工？</h3>
+    <span class="lv mid">节奏题</span>
+  </div>
+
+  <h4 class="lbl">前因后果</h4>
+  <p>
+    Wayfinder 的「图」默认是<b>规划</b>：每张票解决一个决策，图做完＝路看清了，然后交给别人去做。
+    但 #131 与 #143 这两张图都在 Notes 里明确写了「<b>本图携带执行</b>」——
+    也就是说这个仓库的惯例是「图里直接交货，不只出决策」。本次要沿用哪种，得先定，因为它决定本次 session 的产出物形态。
+  </p>
+
+  <h4 class="lbl">关键信息</h4>
+  <div class="factline">
+    <b class="k">仓库既有惯例是「携带执行」：</b>#131 的 Notes 原文——「本图携带执行：默认 plan-don't-do 在此不适用——T2/T3 必须交付可运行的功能与页面，而不仅是决策（用户要的就是功能本身）」；
+    #143 同样写了「本图携带执行（用户 Q7=A）」。
+  </div>
+  <div class="factline">
+    <b class="k">Wayfinder 的硬规则（技能原文）：</b>「<b>never resolve more than one ticket per session</b>」——一次 session 只结一张票。
+    这决定了「开完图就开工」最多只能开<b>一张</b>票的工。
+  </div>
+  <div class="factline">
+    <b class="k">开图本身是有量的：</b>按 Q1 的切法，本次要建 <b>9 张 map</b>，
+    每张 map 还要建它的首发 child issue（frontier 票）并挂原生子议题边＋原生阻塞边。
+    按 #143 的先例（1 张图 ＋ 8 张子票），本次是 <b>9 张图 ＋ 9 张首发票</b>——<b>光是开图就是一次完整 session 的工作量</b>。
+  </div>
+  <div class="factline">
+    <b class="k">建边的正确做法已固化：</b>用插件脚本一次搞定——<code>node "&lt;插件目录&gt;/scripts/wire-subissues.mjs" --map &lt;地图号&gt; --children &lt;子票号列表&gt; --body-file &lt;绝对路径&gt;</code>。
+    脚本自己取数据库编号、建原生边、校验 <code>expected</code> 与 <code>actual</code> 是否一致（对不上非零退出）。
+    <b>原生阻塞边的声明位置有硬约定</b>：子票正文的<b>第一处有内容的行</b>必须是 <code>Blocked by: #n</code>，脚本只认第一处。
+  </div>
+
+  <h4 class="lbl">选项与利弊</h4>
+  <div class="opts" data-group="Q6">
+    <label class="opt rec">
+      <input type="radio" name="Q6" value="A">
+      <div class="oh"><span class="tag">A</span><span class="ot">本次只开图：建齐 9 张 map ＋ 各自首发 child issue ＋ 原生边，不开工</span></div>
+      <div class="ow">产出＝一套可开工的图。开工由你按 <code>/wayfinder &lt;地图号&gt;</code> 逐张发起。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>本次 session 做得完、做得实（建 9 张图 + 边本身就是完整工作量）；每张图的目的地／Notes／雾都能写透，不会被「顺便开工」挤掉；你可以在面板上一次性看到全貌再决定顺序</span></div>
+        <div><span class="cl">弊</span><span>本次看不到任何 HTML 产物，只有图；你要多跑一轮才见到东西</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q6" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">开图 ＋ 顺手结掉 MAP1 的第一张票（51 个模板名归类）</span></div>
+      <div class="ow">建完图后，按 Wayfinder「一次只结一张票」的规则，claim 并结掉总谱那张（51 个模板的分类表）。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>本次就产出 Q4 那张清单（你裁定要「先给模板清单再出产物」，这张清单就是要给你看的第一份东西）；不违反「一次一张票」</span></div>
+        <div><span class="cl">弊</span><span>总谱要先做一轮研究（51 个模板逐个看交互形态），会把本次 session 拉长；开图本身已经用掉大部分预算，赶工会让总谱质量打折</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q6" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">开图 ＋ 直接开 MAP1 的工（做到 06 目标管理样板出真产物）</span></div>
+      <div class="ow">一口气把公共层＋样板批做完，本次就交给你一张真 HTML 看。</div>
+      <div class="pc">
+        <div><span class="pl">利</span><span>最快见到真产物；一次把「方向对不对」和「交付链路通不通」都验证掉</span></div>
+        <div><span class="cl">弊</span><span><b>远超一个 session 的量</b>——公共层含共享页面模板＋生成器＋交付出口锁＋装机三件事，加样板批的渲染与验收；而且它违反 Wayfinder「一次只结一张票」；赶工的风险正是 #131 那次「加了很多检测却没实现功能」</span></div>
+      </div>
+    </label>
+  </div>
+
+  <div class="rec-box">
+    <b>➡️ 推荐 A。</b>
+    理由：本次的真实工作量是「9 张图 × （Destination ＋ Notes ＋ 雾 ＋ 首发票 ＋ 原生边）」，
+    这已经是一次完整 session；把它做扎实，比多做一张票更有价值——
+    因为图的质量决定了后面 8 张图是否各自为政。
+    <br><b>如果你更想快点看到东西</b>，我建议 <b>B</b>（本次多结 MAP1 的第一张票，即 51 个模板名归类），而不是 C：
+    总谱产出的是你要的第一份清单，且它不需要真机装机，风险最低。
+    <br><b>「携带执行」怎么写：</b>不管选哪个，每张图的 Notes 里都照 #131/#143 的原文写上「本图携带执行」，
+    免得以后的 session 按 plan-don't-do 只出决策不交货。
+  </div>
+  <div class="risk-box"><b>提醒：</b>不管你选 A 还是 B，本次都<b>不 close 任何 map</b>。图刚开就关＝假完成。#131 那次之所以能关，是因为 9 张子票全关且两条目的地在真机验收。</div>
+</section>
+
+<!-- ================= 答复区 ================= -->
+<section class="reply" id="reply">
+  <h2>你的答复</h2>
+  <p style="font-size:13.5px;margin:6px 0 0">
+    上面每题点一下选项就会自动记下来；也可以直接在下面文本框里改。确认后点「复制答复」发给我，我按答案开始建图。
+  </p>
+  <div class="chips" id="chips">
+    <span class="chip done" data-c="Q1">Q1 <b>已拍板 A</b></span>
+    <span class="chip done" data-c="Q2">Q2 <b>已拍板 A</b></span>
+    <span class="chip done" data-c="Q3">Q3 <b>已拍板 A</b></span>
+    <span class="chip" data-c="Q4">Q4 <b>未选</b></span>
+    <span class="chip" data-c="Q5">Q5 <b>未选</b></span>
+    <span class="chip" data-c="Q6">Q6 <b>未选</b></span>
+  </div>
+  <textarea id="tpl" spellcheck="false">Q1（MAP 切法）：
+Q2（公共层怎么长）：
+Q3（95 条没有命令可执行）：
+Q4（51 个模板名归成哪几类）：
+Q5（场景推进顺序）：
+Q6（本次止点）：
+补充：
+</textarea>
+  <div class="btnrow">
+    <button onclick="copyTpl()">复制答复</button>
+    <button class="ghost" onclick="fillRec()">全部填推荐答案</button>
+    <button class="ghost" onclick="resetAll()">清空</button>
+    <span id="ok"></span>
+  </div>
+</section>
+
+<footer>
+  <details>
+    <summary>方法与来源（点开看证据链）</summary>
+    <p style="font-size:13px">
+      本简报所有数字来自<b>只读扫描</b>，未改动任何文件：
+    </p>
+    <ul class="tight" style="font-size:13px">
+      <li><b>436 条唤醒词、逐场景计数</b>：<code>packages/skill-calorie/src/triggers/scene-01-home.ts</code> … <code>scene-10-analysis.ts</code>（每文件 <code>"wake_word"</code> 出现次数；合计 436）</li>
+      <li><b>哪些唤醒词有命令可执行、哪些没有，以及 95 条的明细</b>：<code>packages/skill-calorie/src/triggers/routing.ts</code>（<code>WAKE_ROUTES</code> 的 <code>kind</code> 字段与 <code>NON_EXEC_REASONS</code>）</li>
+      <li><b>13 个展示分类</b>：<code>packages/skill-calorie/src/triggers/index.ts:19</code> 的 <code>CATEGORIES</code></li>
+      <li><b>模板引用与复用率</b>：各 scene 文件的 <code>html_template</code> 字段（51 个不同模板名；<code>combined_analysis</code> ×154）</li>
+      <li><b>旧技能 74 张模板清单、24 张未被引用、<code>goal_config.html</code> 缺失</b>：<code>D:\2Study\StudyNotes\SKILLS\卡路里\templates\</code> 只读清点（目录 76 项 = 74 文件 + 2 目录）</li>
+      <li><b>仓内 6 张 token 模板</b>：<code>packages/skill-calorie/templates/</code>（diet／exercise／goal／help／home／photo-gallery）</li>
+      <li><b>老技能唤醒词表的逐条对账（95/95 都在、91 条带完整出路）</b>：<code>D:\2Study\StudyNotes\SKILLS\卡路里\scripts\_triggers.py</code>（621 KB，436 条 TRIGGER、其中 414 条带 <code>output_type</code>）只读解析；对账脚本见 <code>.scratch/wayfinder-s1/verify-counts.py</code></li>
+      <li><b>老技能里「明确不做」那几样的实现证据</b>：<code>scripts/render_cron_setup.py</code>（定时复盘）、<code>scripts/render_nutrition_label.py</code>（拍营养表，含采纳／修改后复制两个按钮）、<code>scripts/xunji_bridge/__main__.py</code>（训记）、<code>scripts/render_plan_builder.py</code>＋<code>sync_plan.py</code>（落地）</li>
+      <li><b>架构形式与交付出口锁</b>：<code>packages/base-render/assets/help-template.html</code>、<code>packages/base-render/scripts/gen-help-shell.cjs</code>、<code>packages/skill-calorie/src/output.ts:deliverHtml</code>、<code>packages/skill-calorie/test/help-delivery-139.test.mjs</code>、<code>packages/base-render/test/help-shell-136.test.mjs</code>、<code>packages/base-render/test/contract-signatures.test.mjs</code></li>
+      <li><b>复制按钮运行时</b>：<code>packages/skill-calorie/src/render/copy.ts</code>（<code>COPY_RUNTIME_JS</code>）</li>
+      <li><b>已收口存量与裁定</b>：GitHub <a href="https://github.com/FeatherHunter/ilife/issues/131">#131</a>（含用户原话采访区）、<a href="https://github.com/FeatherHunter/ilife/issues/137">#137</a>（范围移交）、<a href="https://github.com/FeatherHunter/ilife/issues/108">#108</a>–<a href="https://github.com/FeatherHunter/ilife/issues/113">#113</a>、<a href="https://github.com/FeatherHunter/ilife/issues/104">#104</a>–<a href="https://github.com/FeatherHunter/ilife/issues/106">#106</a></li>
+      <li><b>Wayfinder 与建边约定</b>：<code>docs/agents/issue-tracker.md</code>「Wayfinding operations」；建边脚本在插件目录 <code>&lt;插件目录&gt;/scripts/wire-subissues.mjs</code>（仓库内没有这个文件）</li>
+    </ul>
+    <p style="font-size:13px">
+      <b>禁区遵守：</b><code>D:\2Study\StudyNotes\SKILLS\卡路里\.个人笔记不允许参考\</code> 未被读取。<br>
+      <b>用词纪律：</b>遵守 <code>docs/agents/wording.md</code>（写「文件名主体」，不写「茎」）。<br>
+      <b>证据底稿：</b><code>.scratch/wayfinder-s1/recon-calorie-scenes-20260911.md</code>（含可重跑的复核命令）。
+    </p>
+  </details>
+  <p style="margin-top:12px">卡路里 436 场景 · 多 MAP 立项简报 · 2026-09-11 · 答完待定的 3 件（Q4／Q5／Q6）即开图</p>
+</footer>
+
+<script>
+(function(){
+  var REC = {Q1:'A', Q2:'A', Q3:'A', Q4:'A', Q5:'A', Q6:'A'};
+  var LABEL = {
+    Q1:{A:'A 按 10 个场景切（场景 10 再拆）', B:'B 按 13 个展示分类切', C:'C 一张总图包 436 条'},
+    Q2:{A:'A 跟着场景一集一集长', B:'B 先开一张公共图一次做完 5 类页面', C:'C 不设公共层'},
+    // Q3 已拍板，无可点选项，答案在 DECIDED 里
+    Q4:{A:'A 现在就把 51 个模板名过一遍，定出合并成哪几类、每类归谁管', B:'B 各场景自己定自己的，最后人工收口', C:'C 不合并，一张旧模板对应一张新页面'},
+    Q5:{A:'A 第一集 06 目标管理定骨架 → 第二集 01 主页定新样子', B:'B 第一集仍做 01 主页', C:'C 第一集做 08 身体细节'},
+    Q6:{A:'A 本次只开图', B:'B 开图 ＋ 结掉 MAP1 第一张票（51 个模板名归类）', C:'C 开图 ＋ 直接开 MAP1 的工'}
+  };
+  // 已拍板的题没有可点的选项，答案直接写在这里（来自进度表）
+  var DECIDED = {
+    Q1: 'A — 按 10 个场景切（场景 10 再拆）',
+    Q3: 'A — 按性质分三种去处（5 条跟着场景图做 / 80 条同图分开列票 / 10 条出范围）'
+  };
+  var TITLE = {Q1:'（MAP 切法）', Q2:'（公共层怎么长）', Q3:'（95 条跑不通）', Q4:'（模板归类）', Q5:'（场景顺序）', Q6:'（本次止点）'};
+  var TA = document.getElementById('tpl');
+  var OK = document.getElementById('ok');
+
+  function chips(){
+    document.querySelectorAll('#chips .chip').forEach(function(ch){
+      var q = ch.getAttribute('data-c');
+      if (DECIDED[q]) {
+        ch.classList.add('done');
+        ch.innerHTML = q + ' <b>已拍板 ' + DECIDED[q].charAt(0) + '</b>';
+        return;
+      }
+      var sel = document.querySelector('input[name="'+q+'"]:checked');
+      if(sel){
+        ch.classList.add('done');
+        ch.innerHTML = q + ' <b>' + sel.value + '</b>';
+      } else {
+        ch.classList.remove('done');
+        ch.innerHTML = q + ' <b>未选</b>';
+      }
+    });
+  }
+
+  function syncText(){
+    var lines = [];
+    ['Q1','Q2','Q3','Q4','Q5','Q6'].forEach(function(q){
+      if (DECIDED[q]) { lines.push(q + TITLE[q] + '：' + DECIDED[q]); return; }
+      var sel = document.querySelector('input[name="'+q+'"]:checked');
+      lines.push(q + TITLE[q] + '：' + (sel ? LABEL[q][sel.value] : ''));
+    });
+    lines.push('补充：');
+    TA.value = lines.join('\n');
+  }
+
+  document.querySelectorAll('.opt').forEach(function(opt){
+    var input = opt.querySelector('input');
+    input.addEventListener('change', function(){
+      var name = input.name;
+      document.querySelectorAll('input[name="'+name+'"]').forEach(function(sib){
+        sib.closest('.opt').classList.toggle('sel', sib.checked);
+      });
+      chips(); syncText(); OK.textContent = '';
+    });
+  });
+
+  window.copyTpl = function(){
+    TA.select();
+    try { document.execCommand('copy'); } catch(e){}
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(TA.value); }
+    } catch(e){}
+    OK.textContent = '已复制，去粘贴发给我即可';
+  };
+
+  window.fillRec = function(){
+    ['Q1','Q2','Q3','Q4','Q5','Q6'].forEach(function(q){
+      var el = document.querySelector('input[name="'+q+'"][value="'+REC[q]+'"]');
+      if(el){ el.checked = true; el.closest('.opt').classList.add('sel'); }
+    });
+    chips(); syncText(); OK.textContent = '已填入我的推荐答案，可直接改';
+  };
+
+  window.resetAll = function(){
+    document.querySelectorAll('.opt input').forEach(function(i){ i.checked = false; });
+    document.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('sel'); });
+    chips(); syncText(); OK.textContent = '';
+  };
+
+  chips(); syncText();
+})();
+</script>
+</div>
+</body>
+</html>

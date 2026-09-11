@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新图 #131 思想对齐简报：6 个待拍板（Q13–Q18）</title>
+<style>
+  :root { --bg:#0f141b; --card:#161d27; --line:#2a3442; --fg:#e8edf3; --mut:#9aa7b8;
+          --green:#2f9e5f; --greenbg:#123324; --amber:#c98a1b; --amberbg:#3a2c10;
+          --red:#d65353; --redbg:#3d1a1a; --blue:#3b82c4; --bluebg:#14293f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1060px; margin:0 auto; padding:28px 22px 60px; }
+  header.top { border:1px solid var(--line); border-radius:12px; padding:22px 24px;
+               background:linear-gradient(180deg,#182130,#141b26); }
+  header.top h1 { margin:0 0 6px; font-size:24px; }
+  header.top .sub { color:var(--mut); font-size:13.5px; }
+  .pills { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
+  .pill { font-size:12.5px; padding:3px 12px; border-radius:999px; border:1px solid var(--line); }
+  .pill.ok { background:var(--greenbg); color:#7fd79f; border-color:#1f4d33; }
+  .pill.warn { background:var(--amberbg); color:#e8bd6a; border-color:#5c4416; }
+  h2.sec { margin:34px 0 4px; font-size:20px; padding-left:12px; border-left:4px solid var(--blue); }
+  .lede { color:var(--mut); margin:4px 0 14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:20px 22px; margin:14px 0; }
+  .card h3 { margin:0 0 2px; font-size:17px; }
+  .tag { font-size:12px; vertical-align:2px; margin-left:8px; padding:2px 10px; border-radius:999px; }
+  .tag.rec { background:var(--greenbg); color:#7fd79f; }
+  .tag.pend { background:var(--amberbg); color:#e8bd6a; }
+  .tag.lock { background:var(--bluebg); color:#8fbdf0; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; margin:8px 0; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#1b2330; white-space:nowrap; }
+  td.num { text-align:center; white-space:nowrap; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12.5px;
+         background:#0c1118; border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+  .fact { background:#101823; border:1px dashed #33405280; border-radius:8px;
+          padding:10px 14px; margin:8px 0; font-size:13.5px; }
+  .fact b.k { color:#8fbdf0; }
+  .recbox { border:1px solid #1f4d33; background:#0f231a; border-radius:8px;
+            padding:10px 14px; margin:10px 0; font-size:14px; }
+  .recbox b { color:#7fd79f; }
+  .procon td:first-child { white-space:nowrap; font-weight:700; }
+  .pro { color:#7fd79f; } .con { color:#f09393; }
+  nav.toc { margin:14px 0 0; font-size:13.5px; color:var(--mut); }
+  nav.toc a { margin-right:14px; color:#7fb5ef; }
+  .reply { border:1px solid var(--blue); background:var(--bluebg); border-radius:12px;
+           padding:16px 20px; margin-top:26px; }
+  .reply code { font-size:14px; }
+  footer { color:var(--mut); font-size:12.5px; margin-top:26px; }
+  @media print { body { background:#fff; color:#111; } .card,header.top { border-color:#ccc; background:#fff; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>新图 #131 思想对齐简报：6 个待拍板</h1>
+  <div class="sub">2026-09-10 · T1 研究已关（A 实物解剖／B 机制追踪／C 模板对照三席齐）· Q1–Q12 已锁死 · 本轮只拍 <b>Q13–Q18</b>，拍完即开工</div>
+  <div class="pills">
+    <span class="pill ok">Q1–Q6 锁死</span>
+    <span class="pill ok">Q7–Q12 锁死</span>
+    <span class="pill ok">T1 已关</span>
+    <span class="pill warn">Q13–Q18 待拍</span>
+  </div>
+  <nav class="toc">直达：<a href="#locked">已锁死回顾</a><a href="#q13">Q13 口径</a><a href="#q14">Q14 通用方案</a><a href="#q15">Q15 双壳</a><a href="#q16">Q16 死槽</a><a href="#q17">Q17 token</a><a href="#q18">Q18 顺序</a><a href="#reply">如何回复</a></nav>
+</header>
+
+<h2 class="sec" id="locked">已锁死回顾（只看结论，不决策）</h2>
+<p class="lede">第一轮 Q1–Q6、第二轮 Q7–Q12 均为用户原话，已进 #131 采访区。这里只列结论，帮你定位本轮问题从哪来。</p>
+<div class="card">
+<table>
+<tr><th>#</th><th>结论（用户原话）</th></tr>
+<tr><td class="num">Q1/Q5/Q9</td><td>命名规则与老卡路里完全一致；全部命令产 html 命名按老来</td></tr>
+<tr><td class="num">Q2/Q8</td><td>整个卡路里只有一个 HELP；唤醒词HELP、身材照HELP 是开发偏差，触发词从老 SKILL.md 根分支找</td></tr>
+<tr><td class="num">Q3/Q10</td><td>肉眼完全一样＋纯像素一致（vision 比对）；新老截图对比；手机＋桌面双端都要（手机最爱）</td></tr>
+<tr><td class="num">Q4</td><td>任何地方都按老文件视觉效果</td></tr>
+<tr><td class="num">Q6</td><td>先查新卡路里是否实现老全部唤醒词，这是地基</td></tr>
+<tr><td class="num">Q7/Q11</td><td>先调查再对齐：从老实物拿唤醒词＋查老生成机制；先啃权威公共模板 <code>公共组件\assets\help_template.html</code>，能代码全仿就仿</td></tr>
+<tr><td class="num">Q12</td><td>旧 M-0…M-3 全部废弃</td></tr>
+</table>
+</div>
+
+<h2 class="sec" id="q13">Q13 · 436 与旧文档"80 词"打架，以谁为准 <span class="tag pend">待拍</span></h2>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">Q6 定了"先查新卡路里是否实现老全部唤醒词"。三席实测一边倒：A 从实物 JSON 抽出 <b>10 组／54 子组／436 场景</b>（subtitle 原文"10 分类 · 436 场景"）；B 对 <code>_triggers.py</code> 做 AST 精确计数 <b>436＝414 新＋22 legacy</b>；C 数出实物 groups＝10。但老文档多处写 <b>"80 唤醒词／109 prompt"</b>（SKILL.md:299、html_templates.md:15），AGENTS 又称 432。若基准错 1 条，后面"全实现"永远对不上。</div>
+  <h3>关键信息</h3>
+  <div class="fact"><b class="k">实测侧：</b>实物 JSON／资产 AST／实物 groups 三源同指 436。<br><b class="k">文档侧：</b>80／109（旧模板清单口径，已漂移）／432（AGENTS，与 AST 差 4）。<br><b class="k">附带：</b>legacy 22（AST）vs 渲染器自述 23，差 1 条待认。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>A（推荐）</b></td><td>以<b>实物＋资产双 436</b>为准，旧文档数判漂移、执行忽略</td><td class="pro">三源互证，可复算；地基一次钉死</td><td class="con">若 80 另有所指（如"常用词"），会被误杀——需你一句话排除</td></tr>
+    <tr><td>B</td><td>以文档 80 为准</td><td class="pro">数字小、好做完</td><td class="con">与实物 436 矛盾，"全部实现"成空话；三席证据作废</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 A。</b>拍板后动作：436 全表即 Q6 地基清单；legacy 差 1 条单独追。</div>
+</div>
+
+<h2 class="sec" id="q14">Q14 · "类似相同方案"到哪层 <span class="tag pend">待拍</span></h2>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">Q7 原话：未来所有技能"用类似相同的方案"获知唤醒词。B 抽查居家管家后判<b>半成立</b>：获知机制同构（都读自家场景资产——卡路里读 <code>_triggers.py</code> py 表，居家读 <code>scenarios.yaml</code>），但载体、模板归属（共享 vs 自有）、payload 结构、HELP 词形态全各异。若"相同"卡到载体，居家这种老技能先不合格。</div>
+  <h3>关键信息</h3>
+  <div class="fact"><b class="k">同构（4 条）：</b>自家资产唯一源 · HELP 自豁免（防自指）· <code>_HELP_</code>保留字命名 · 根镜像（<code>卡路里.html</code>／<code>居家管家.html</code>）。<br><b class="k">异构（4 处）：</b>载体 py／yaml · 模板共享／自有 · payload 契约 v1／domains · HELP 词"卡路里HELP"／"居家管家 帮助"。<br><b class="k">B 的 5 条通用假设</b>见 T1 决议评论，核心就是上面 4 条＋固定管线。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>A（推荐）</b></td><td>卡死<b>四条同构</b>（唯一源＋自豁免＋保留字命名＋根镜像），载体不限，模板向共享 V4 收敛</td><td class="pro">新老技能都能过；未来技能照抄四条即合规</td><td class="con">"相同"二字变弱，有人会拿载体差异说事</td></tr>
+    <tr><td>B</td><td>连载体一起统一（全迁 py 表＋共享模板）</td><td class="pro">字面最齐</td><td class="con">要改居家等老技能， scope 爆炸；本图完不成</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 A。</b>拍板后动作：四条进新图准则，载体差异登记为例外、不阻塞。</div>
+</div>
+
+<h2 class="sec" id="q15">Q15 · 数据页与 HELP 是否同壳 <span class="tag pend">待拍</span></h2>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">C 发现 <b>双壳并存</b>：HELP 走 V4 模板（浅色整页 303KB）；数据页（今日总览等）另走 ilife-base 壳（深色小 <code>section</code> 碎片，今日总览仅 2.4KB）。Q5 只定了命名按老来，壳没定。若全站统一 V4，数据页要重做；若各归各壳，今日总览就保持深色小块——但 Q4 说"任何地方都按老视觉"，而老今日总览<b>本来就是</b>深色小块。</div>
+  <h3>关键信息</h3>
+  <div class="fact"><b class="k">HELP 形：</b>31 个 <code>卡路里_HELP_*.html</code>，226–448KB，随场景数膨胀。<br><b class="k">数据页形：</b>文件名主体＝唤醒词（今日总览 76 个／记一餐／查食品／对比体重…_结果_ 等 40＋ 项），ilife-base 壳。<br><b class="k">注意：</b>Q4 的"完全一致"是"新老同类相比"，不是"全站同一张脸"。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>A（推荐）</b></td><td><b>各归各壳</b>：HELP 套 V4，数据页按老实物原样搬</td><td class="pro">与 Q4 自洽（老什么样新什么样）；工作量可控</td><td class="con">新版视觉仍是"两张脸"——但老版本来就是两张脸</td></tr>
+    <tr><td>B</td><td>全站统一 V4</td><td class="pro">视觉最齐</td><td class="con">违背"按老来"；数据页全部重做，本图膨胀数周</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 A。</b>拍板后动作：T3 只收 HELP 壳；数据页回搬记雾区毕业项、本图内执行。</div>
+</div>
+
+<h2 class="sec" id="q16">Q16 · 死槽传不传 <span class="tag pend">待拍</span></h2>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">C 解剖模板发现两个<b>死槽</b>：<code>subtitle</code>、<code>meta_blocks</code>——模板只读不渲染。但实物照传了 <code>subtitle</code>（"10 分类 · 436 场景 · 更新于…"）。传了没人看，不传少数字节。Q3 要"纯像素一致"，死槽不影响像素；但"字节级像不像"没人定过。</div>
+  <h3>关键信息</h3>
+  <div class="fact"><b class="k">实物 5 键：</b>skill_name／title／subtitle／contact／groups；version／recommendations／init_banner 等全未传。<br><b class="k">成本：</b>跟传只多几十字节；不传则实物 diff 多一行。<br><b class="k">风险：</b>未来模板若启用死槽，不传的一方先缺。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>A（推荐）</b></td><td><b>跟传</b>（照抄实物 5 键形态，连尸体都像）</td><td class="pro">字节级也像；未来启用不断档</td><td class="con">多传一个无用字段，有洁癖的人难受</td></tr>
+    <tr><td>B</td><td>不传，干净</td><td class="pro">JSON 最小</td><td class="con">与实物 diff 永久差一行；对账时每次都要解释</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 A。</b>拍板后动作：5 键形态写进 T2 验收断言。</div>
+</div>
+
+<h2 class="sec" id="q17">Q17 · 两层 token 以谁为准 <span class="tag pend">待拍</span></h2>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">C 发现<b>两套 <code>:root</code></b>：模板自带（<code>--bg:#f2f2f7</code>…）vs 注入 token A 组（<code>--bg:#f5f5f7</code>…），后加载覆盖，像素差 1–3 灰阶。Q10 的截图比对必须先定"标准答案是哪一套"，否则 diff 出来不知道谁对谁错。另有 <code>esc()</code> 双定义，转义表字面一致，风险低。</div>
+  <h3>关键信息</h3>
+  <div class="fact"><b class="k">用户看到的＝覆盖后</b>（注入层生效）。<br><b class="k">加载序（实物）：</b>模板 style → SHARED-CSS，严禁"合并去重"。<br><b class="k">差值：</b>约 1–3 灰阶，肉眼难辨、机器可测——正好是 Q10 阈值争论的来源。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>A（推荐）</b></td><td>以<b>覆盖后（注入层）</b>为准，新版保持同一加载序</td><td class="pro">与用户所见一致；比对基准唯一</td><td class="con">模板裸文件单看是另一套灰——新人会懵，需注释说明</td></tr>
+    <tr><td>B</td><td>以模板自带为准，注入层改成同值</td><td class="pro">单文件自洽</td><td class="con">改了注入层＝改了实物，违背"按老来"</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 A。</b>拍板后动作：Q10 的 vision 比对基准＝覆盖后截图；加载序进回归断言。</div>
+</div>
+
+<h2 class="sec" id="q18">Q18 · 执行顺序 <span class="tag pend">待拍</span></h2>
+<div class="card">
+  <h3>前因后果</h3>
+  <div class="fact">Q6 定了"先唤醒词"。T2（HELP 文件交付）被 T1 挡住，现 T1 已关、blocking 自动解除；T3（视觉一致）同样就绪。顺序不定，并行开工会互相踩（壳没定、芯先动）。</div>
+  <h3>关键信息</h3>
+  <div class="fact"><b class="k">依赖链：</b>资产（436）→ 交付（落盘＋命名＋根镜像）→ 仿壳（V4＋双端＋双视口像素对）→ 数据页回搬。<br><b class="k">机时：</b>前两步纯逻辑，第三步要双视口截图＋vision 比对，最慢。<br><b class="k">T2/T3 状态：</b>T1 关闭后均为 frontier，可立即开工。</div>
+  <h3>选项对比</h3>
+  <table class="procon">
+    <tr><th>选项</th><th>内容</th><th>利</th><th>弊</th></tr>
+    <tr><td><b>A（推荐）</b></td><td>① 436 落资产 → ② HELP 交付 → ③ V4 全仿＋双端像素对 → ④ 数据页回搬</td><td class="pro">先芯后壳，前一步是后一步的输入；每步可独立验收</td><td class="con">全串行最慢——但并行省的时间会在联调里加倍还回去</td></tr>
+    <tr><td>B</td><td>②③并行</td><td class="pro">快几天</td><td class="con">壳与交付互相等，联调返工风险高</td></tr>
+  </table>
+  <div class="recbox"><b>推荐 A。</b>拍板后动作：按序派单 T2→T3，每步双评审后才进下一步。</div>
+</div>
+
+<div class="reply" id="reply">
+  <b>如何回复（任选一种）：</b><br>
+  ① <code>全同意</code> → 我按全部推荐落地，直接派单开工；<br>
+  ② 逐条回，如 <code>Q13=A，Q14 同意，Q15 改 B，因为…</code> → 我按你的改法落地。<br>
+  落地顺序：决议进 #131 Decisions → T2 开工（资产436）→ T3（交付＋视觉）→ 双视口像素对 → 数据页回搬。
+</div>
+
+<footer>编排者 · 事实来源：T1 三席 final（A 实物解剖／B 机制追踪／C 模板对照，见 #132 评论）· 用户原话见 #131 采访区 · 地面真相只读：<code>D:\2Study\StudyNotes\.db\calorie_html\卡路里_HELP_20260906_220726.html</code> · <code>D:\2Study\StudyNotes\SKILLS\公共组件\assets\help_template.html</code></footer>
+
+</div>
+</body>
+</html>

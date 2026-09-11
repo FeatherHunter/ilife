@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卡路里多 MAP · 待定的 3 件事（Q4 / Q5 / Q6）</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --fg:#1f2430; --mut:#6b7280;
+    --ok:#0f7b46; --okbg:#e8f6ee; --okline:#b7e0c8;
+    --no:#b42318; --nobg:#fdecea; --noline:#f3c3bd;
+    --hi:#0b5cad; --hibg:#eaf2fd; --hiline:#bcd8f7;
+    --warn:#8a5a00; --warnbg:#fdf5e3; --warnline:#f0dcae;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:16px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 72px}
+  code{background:#eef0f3;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+       font:13px/1.5 ui-monospace,Consolas,monospace;word-break:break-word}
+  a{color:var(--hi)}
+
+  header{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:22px 24px}
+  header h1{margin:0 0 6px;font-size:23px;letter-spacing:-.3px}
+  header .sub{color:var(--mut);font-size:14px}
+  header .meta{margin-top:10px;font-size:12.5px;color:var(--mut)}
+
+  h2{font-size:17px;margin:34px 0 10px;padding-left:11px;border-left:4px solid var(--hi)}
+
+  /* 已定的三件 —— 一眼扫过 */
+  .settled{background:var(--okbg);border:1px solid var(--okline);border-radius:12px;padding:4px 18px 14px}
+  .settled table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  .settled td{padding:7px 8px;border-bottom:1px solid #cfe8da;vertical-align:top}
+  .settled tr:last-child td{border-bottom:0}
+  .settled td:first-child{white-space:nowrap;font-weight:800;color:var(--ok);width:52px}
+  .settled td:nth-child(2){color:var(--mut);width:150px}
+
+  /* 决策卡 */
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;
+     padding:22px 24px;margin:16px 0}
+  .qhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;margin-bottom:2px}
+  .qhead .n{font-size:12.5px;font-weight:800;color:var(--hi);background:var(--hibg);
+            border:1px solid var(--hiline);border-radius:999px;padding:2px 11px}
+  .qhead h3{margin:0;font-size:18px;flex:1 1 300px;line-height:1.5}
+
+  h4{margin:18px 0 6px;font-size:12.5px;letter-spacing:.5px;color:var(--mut);font-weight:800}
+  h4::before{content:"▍";color:var(--hi);margin-right:5px}
+  .q p{margin:8px 0}
+
+  .facts{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:8px 0}
+  .facts ul{margin:0;padding-left:20px}
+  .facts li{margin:5px 0}
+
+  .opts{margin-top:10px}
+  label.opt{display:block;border:1px solid var(--line);border-radius:11px;
+            padding:13px 16px;margin:9px 0;cursor:pointer;background:#fcfcfd;
+            transition:border-color .15s,background .15s}
+  label.opt:hover{border-color:#b9c2cf}
+  label.opt.sel{border-color:var(--hi);background:var(--hibg)}
+  label.opt input{position:absolute;opacity:0;width:0;height:0}
+  label.opt:focus-within{outline:2px solid var(--hi);outline-offset:2px}
+  .oh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .tag{font-size:11.5px;font-weight:800;border:1px solid var(--line);background:#fff;
+       border-radius:6px;padding:1px 8px;color:var(--mut)}
+  label.opt.sel .tag{background:#fff;color:var(--hi);border-color:var(--hiline)}
+  .ot{font-weight:700;font-size:15px}
+  .rec{font-size:11px;font-weight:800;color:var(--ok);background:var(--okbg);
+       border:1px solid var(--okline);border-radius:999px;padding:1px 9px;margin-left:auto}
+  .ow{font-size:14px;color:#4b5563;margin-top:6px}
+  .pc{margin-top:9px;font-size:14px}
+  .pc div{display:flex;gap:8px;margin:3px 0}
+  .pc b{flex:0 0 34px;font-size:12.5px;padding-top:2px}
+  .pc .p b{color:var(--ok)} .pc .c b{color:var(--no)}
+
+  .rec-box{background:var(--okbg);border:1px solid var(--okline);border-radius:11px;
+           padding:13px 16px;margin:14px 0 0;font-size:14.5px}
+  .rec-box strong{color:var(--ok)}
+
+  /* 答复区 */
+  .reply{background:var(--card);border:1px solid var(--line);border-radius:14px;
+         padding:22px 24px;margin-top:26px}
+  .reply h3{margin:0 0 4px;font-size:18px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .chip{font-size:13px;border:1px solid var(--line);background:#fafbfc;border-radius:999px;
+        padding:4px 13px;color:var(--mut)}
+  .chip b{color:var(--fg)}
+  .chip.done{border-color:var(--okline);background:var(--okbg);color:var(--ok)}
+  .chip.done b{color:#0b5c37}
+  textarea{width:100%;min-height:132px;border:1px solid var(--line);border-radius:10px;
+           padding:12px;font:13.5px/1.75 ui-monospace,Consolas,monospace;background:#fcfcfd;resize:vertical}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:11px}
+  button{background:var(--hi);color:#fff;border:0;border-radius:9px;padding:10px 20px;
+         font:700 15px inherit;font-family:inherit;cursor:pointer}
+  button.g{background:#fff;color:var(--fg);border:1px solid var(--line);font-weight:600}
+  button:hover{filter:brightness(1.06)}
+  #ok{color:var(--ok);font-weight:700;font-size:13.5px}
+  footer{margin-top:26px;color:var(--mut);font-size:12.5px;text-align:center}
+  @media (max-width:620px){
+    .wrap{padding:18px 13px 60px}
+    header h1{font-size:20px}
+    .qhead h3{font-size:16.5px}
+    .pc b{flex:0 0 30px}
+  }
+  @media print{body{background:#fff}.q,header,.reply{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>卡路里多 MAP · 待定的 3 件事</h1>
+  <div class="sub">Q4／Q5／Q6 答完就开图。前面 Q1–Q3 已经定了，附在下面供对照。</div>
+  <div class="meta">2026-09-11 · 工作区 <code>D:\ilife</code> · 详细底稿在 <code>docs/research/decision-calorie-multi-map-charter-20260911.html</code></div>
+</header>
+
+<h2>已经定的三件（可以跳过）</h2>
+<div class="settled">
+  <table>
+    <tr><td>Q1</td><td>怎么切图</td><td>按 <b>10 个场景</b>切，场景 10 拆成 2 张 → 一共 <b>9 张图</b></td></tr>
+    <tr><td>Q2</td><td>公共层怎么长</td><td><b>跟着场景一集一集长</b>：第一集边做边把公共的部分提取出来，下一集直接用现成的、只补自己缺的；开发时优先去公共层找</td></tr>
+    <tr><td>Q3</td><td>95 条跑不通的唤醒词</td><td><b>按性质分三种去处</b>：5 条必须多步交互 / 80 条缺命令 / 10 条新架构划出去不做</td></tr>
+  </table>
+</div>
+
+<h2>要你定的三件</h2>
+
+<!-- ================= Q4 ================= -->
+<section class="q" id="q4">
+  <div class="qhead">
+    <span class="n">Q4</span>
+    <h3>51 个页面模板名，现在就把它们归好类，还是各场景边做边定？</h3>
+  </div>
+
+  <h4>这一问在干什么</h4>
+  <p>
+    现在有 <b>51 个不同的页面模板名字</b>，散在 10 个场景里。它们要合并成几类、每一类归谁管（给所有技能用／只给卡路里用／只此一处用），
+    得有个说法。就这一件事。
+  </p>
+
+  <h4>关键信息</h4>
+  <div class="facts">
+    <ul>
+      <li><b>重复得厉害：</b><code>crud_receipt.html</code> 这一张，<b>6 个场景</b>都在用（饮食 15 条、运动 13 条、健身计划 11 条、体重 5 条、基础信息 3 条、身体细节 2 条，共 49 条）——「已记好」这类回执全是它。</li>
+      <li><b>一张顶一大片：</b><code>combined_analysis.html</code> 一张，顶 <b>154 条</b>唤醒词（各种趋势、预测、报告都长在它上面）。</li>
+      <li><b>数字很明确：</b>10 个场景共引用 <b>51 个</b>模板名，而旧模板目录里有 <b>74 张</b>文件——本来就该合。</li>
+      <li><b>不合并会出什么事：</b>饮食里 21 条排行榜词都指向 <code>food_ranking.html</code>，分析里也有榜单类塞在 <code>combined_analysis.html</code> 里。两个场景各自决定，就会做出<b>两套榜单页面</b>。</li>
+      <li><b>你不用逐行审：</b>这张表主要是给 AI 看的清单。你只看<b>「合并成哪几类」那一列</b>（十几行）就够了。</li>
+    </ul>
+  </div>
+
+  <h4>三个选法</h4>
+  <div class="opts" data-g="Q4">
+    <label class="opt sel">
+      <input type="radio" name="Q4" value="A" checked>
+      <div class="oh"><span class="tag">A</span><span class="ot">现在把 51 个名字过一遍，定出合并成哪几类、每类归谁管</span><span class="rec">推荐</span></div>
+      <div class="ow">做成第一集（06 目标管理）的第一张票。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>同一类东西在不同场景不会各做一套；后面 8 张图直接查表；这张表同时就是你要的「先给模板清单再出产物」的第一份清单；工作量小，一个 session 做得完</span></div>
+        <div class="c"><b>弊</b><span>要把 51 个模板看一遍（查资料的活，可以让子代理并行做）；定得过细的话，后面可能微调</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q4" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">各场景自己定自己的，最后人工收口</span></div>
+      <div class="ow">不预先列表，每张图在正文里写清自己怎么合并的。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>开工门槛低，不用前置查资料；每个决定都由最了解该场景的人做</span></div>
+        <div class="c"><b>弊</b><span>跨场景的重复没人负责——<code>crud_receipt</code> 出现在 6 个场景、榜单类同时出现在饮食和分析，这两处必然出现两套做法；最后一定要返工统一，而那时页面已经给你看过、你也认可过了，改动更难</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q4" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">不合并，一张旧模板对应一张新页面（74 张照搬）</span></div>
+      <div class="ow">追求最大保真，逐个重做。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>保真度最高，不会有「合并后丢了个性」的风险</span></div>
+        <div class="c"><b>弊</b><span>与你「尽可能复用」「形状相同的合并成一张」两条裁定直接冲突；74 张要你人工逐一看，正是你嫌「太耗时」的量级；而且旧目录里 24 张已被丢掉、1 张（<code>goal_config</code>）已缺失，照搬事实上做不到</span></div>
+      </div>
+    </label>
+  </div>
+
+  <div class="rec-box">
+    <strong>➡️ 推荐 A，而且只占你很少的注意力。</strong>
+    「形状相同的合并成一张」这条裁定，只有在一个统一视野下才能执行——单看饮食场景，你不会知道排行榜该不该和分析场景的榜单合并。
+    产出压到最轻：<b>一张 51 行的对照表，你只审「合并成哪几类」那一列</b>，其余交给 AI。
+  </div>
+</section>
+
+<!-- ================= Q5 ================= -->
+<section class="q" id="q5">
+  <div class="qhead">
+    <span class="n">Q5</span>
+    <h3>第一集做哪个场景？</h3>
+  </div>
+
+  <h4>为什么要单独定这个</h4>
+  <p>
+    你说过<b>「第一个不做主页场景」</b>，所以要另选一个当第一集。
+    Q2 已经定了「公共层跟着场景一集一集长」，那么<b>第一集就是第一铲土</b>——挖得对不对，决定后面 8 张图顺不顺。
+  </p>
+  <p>于是有两个不同的目标，<b>第一集只能服务一个</b>：</p>
+  <div class="facts">
+    <ul>
+      <li><b>目标甲：先定「新样子」</b>——用最少的产物让你肉眼确认视觉方向。主页最省，但攒不下公共层部件。</li>
+      <li><b>目标乙：先定「公共层骨架」</b>——一次把后面每张图都要用的部件攒下来。目标管理能一次攒够，但第一集要你审的东西多一些。</li>
+    </ul>
+  </div>
+
+  <h4>候选场景对比</h4>
+  <div class="facts">
+    <ul>
+      <li><b>06 目标管理</b>：25 条词 / 跑不通 3 条 / <b>含 13 条写类流程</b> / <b>含 3 条必须多步交互</b> / 5 张模板（4 张有实物，<code>goal_config</code> 一张要新设计）→ 能一次攒下<b>预检确认页 ＋ 回执页 ＋ 进度对照页</b>，正好是公共层最吃重的三件。</li>
+      <li><b>01 主页 ＋ 07 基础信息</b>：13 条词 / 跑不通 0 条 / 无写类流程 / 3 张模板 → 最省，但只攒得下最基础的展示页。</li>
+      <li><b>08 身体细节</b>：13 条词 / 跑不通 2 条 / 有写类流程 / 5 张模板（老技能里两张向导实物最完整）→ 预检确认页有最直接的实物可照，但攒不出进度对照页，骨架只立起一半。</li>
+    </ul>
+  </div>
+
+  <h4>三个选法</h4>
+  <div class="opts" data-g="Q5">
+    <label class="opt sel">
+      <input type="radio" name="Q5" value="A" checked>
+      <div class="oh"><span class="tag">A</span><span class="ot">第一集做 06 目标管理（定骨架），第二集做 01 主页（定样子）</span><span class="rec">推荐</span></div>
+      <div class="ow">照你的话第一集不排主页。给第一集验收时先只挑两三张代表作（一张预检确认页、一张回执页、一张进度对照页），方向确认了再铺满 25 条。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>第一集就把后面 8 张图都要用的三件攒下来，晚攒一集就多一集要返工；目标管理资料最完整（4 张实物可照 #131 的路子直接分析）；13 条写类流程正好验证你最强调的「写类流程先出预检确认页」；跑不通只有 3 条且全是「必须多步交互」，不会卡在缺命令上</span></div>
+        <div class="c"><b>弊</b><span>第一集要你审的东西比主页多（25 条 vs 13 条）；如果「新样子」方向不对，返工面比主页大一倍多——靠「先只给你看两三张代表作」化解</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q5" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">第一集仍做 01 主页（先定样子，最省）</span></div>
+      <div class="ow">与「第一个不做主页」相反，列在这里供你比较。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>第一集最便宜（13 条、3 张模板），万一「新样子」不是你要的，返工面最小；你只需看很少的东西就能给方向拍板</span></div>
+        <div class="c"><b>弊</b><span>主页这一集攒不下公共层里最吃重的三件，<b>骨架晚一集才立起来</b>；这期间别的场景用不到现成的预检确认页／回执页，要么等，要么先各写一版再返工</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q5" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">第一集做 08 身体细节（体脂／围度向导）</span></div>
+      <div class="ow">老技能里 <code>body_composition_wizard</code>／<code>body_measurements_wizard</code> 是预检确认页最完整的实物。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>预检确认页有最直接的实物可照（两张向导模板 ＋ 两张对应的展示模板，成对出现），而且不排主页</span></div>
+        <div class="c"><b>弊</b><span>只有 13 条词，攒不出「进度对照页」这类更难的东西，骨架只立起一半；「对比体脂／对比围度」2 条跑不通，一开工就撞上缺参数</span></div>
+      </div>
+    </label>
+  </div>
+
+  <div class="rec-box">
+    <strong>➡️ 推荐 A。</strong>理由两条：<b>① 第一集就把最吃重、也最容易各造一套的三件攒进公共层</b>——这三件后面 8 张图都要用；
+    <b>② 第二集再用最便宜的产物把「新样子」定下来</b>，万一不是你要的，返工面也只是那一集。
+  </div>
+</section>
+
+<!-- ================= Q6 ================= -->
+<section class="q" id="q6">
+  <div class="qhead">
+    <span class="n">Q6</span>
+    <h3>本次 session 走到哪一步停？只开图，还是开完就开工？</h3>
+  </div>
+
+  <h4>为什么要定</h4>
+  <p>
+    开图本身是有量的：按 Q1 的切法要建 <b>9 张 map</b>，每张还要建它的首发 child issue，再挂原生子议题边＋原生阻塞边。
+    另外 Wayfinder 有条硬规则：<b>一次 session 只结一张票</b>——所以「开完就开工」最多也只能开一张票的工。
+  </p>
+  <div class="facts">
+    <ul>
+      <li><b>参考先例：</b><code>#143</code> 那张图是 1 张地图 ＋ 8 张子票。本次是 <b>9 张图 ＋ 9 张首发票</b>——光是开图就是一次完整 session 的工作量。</li>
+      <li><b>仓库惯例是「本图要交货」：</b><code>#131</code>／<code>#143</code> 的 Notes 都写了「本图携带执行」，不只出决定。这条会写进每张图的 Notes。</li>
+    </ul>
+  </div>
+
+  <h4>三个选法</h4>
+  <div class="opts" data-g="Q6">
+    <label class="opt sel">
+      <input type="radio" name="Q6" value="A" checked>
+      <div class="oh"><span class="tag">A</span><span class="ot">本次只开图：建齐 9 张 map ＋ 各自首发票 ＋ 原生边，不开工</span><span class="rec">推荐</span></div>
+      <div class="ow">产出＝一套可开工的图。开工由你按 <code>/wayfinder &lt;地图号&gt;</code> 逐张发起。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>本次做得完、做得实（9 张图 ＋ 边本身就是完整工作量）；每张图的目的地／Notes／雾都能写透，不会被「顺便开工」挤掉；你可以在面板上一次性看到全貌再决定顺序</span></div>
+        <div class="c"><b>弊</b><span>本次看不到任何 HTML 产物，只有图；你要多跑一轮才见到东西</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q6" value="B">
+      <div class="oh"><span class="tag">B</span><span class="ot">开图 ＋ 顺手结掉第一集的第一张票（51 个模板名归类）</span></div>
+      <div class="ow">就是 Q4 那张表。它不需要真机装机，风险最低。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>本次就产出你要的「模板清单」（你裁定过「先给模板清单再出产物」）；不违反「一次只结一张票」</span></div>
+        <div class="c"><b>弊</b><span>那张表要先做一轮查资料（51 个模板逐个看形状），会把本次拉长；开图已用掉大部分预算，赶工会让表的质量打折</span></div>
+      </div>
+    </label>
+    <label class="opt">
+      <input type="radio" name="Q6" value="C">
+      <div class="oh"><span class="tag">C</span><span class="ot">开图 ＋ 直接开工（做到第一集样板出真产物）</span></div>
+      <div class="ow">一口气把公共层骨架＋样板批做完，本次就交给你一张真 HTML 看。</div>
+      <div class="pc">
+        <div class="p"><b>利</b><span>最快见到真产物；一次把「方向对不对」和「交付链路通不通」都验证掉</span></div>
+        <div class="c"><b>弊</b><span><b>远超一个 session 的量</b>（公共层含共享页面模板＋生成器＋交付出口锁＋装机三件事，加样板批的渲染与验收）；违反「一次只结一张票」；赶工的风险正是 #131 那次「加了很多检测却没做出功能」</span></div>
+      </div>
+    </label>
+  </div>
+
+  <div class="rec-box">
+    <strong>➡️ 推荐 A。</strong>图的质量决定后面 8 张图会不会各自为政，把开图做扎实比多做一张票更有价值。
+    如果你更想快点看到东西，选 <b>B</b>（多结「51 个模板名归类」一张票），而不是 C。
+    <br><b>另：</b>不管选哪个，本次都<b>不 close 任何 map</b>——图刚开就关等于假完成。
+  </div>
+</section>
+
+<!-- ================= 答复 ================= -->
+<section class="reply" id="reply">
+  <h3>你的答复</h3>
+  <div class="sub" style="color:var(--mut);font-size:14px">点上面的选项就会记下来。确认后点「复制答复」发给我。</div>
+  <div class="chips" id="chips">
+    <span class="chip done" data-c="Q4">Q4 <b>A</b></span>
+    <span class="chip done" data-c="Q5">Q5 <b>A</b></span>
+    <span class="chip done" data-c="Q6">Q6 <b>A</b></span>
+  </div>
+  <textarea id="tpl" spellcheck="false"></textarea>
+  <div class="btnrow">
+    <button onclick="copyTpl()">复制答复</button>
+    <button class="g" onclick="resetAll()">清空重选</button>
+    <span id="ok"></span>
+  </div>
+</section>
+
+<footer>
+  卡路里多 MAP · 待定 3 件 · 2026-09-11 · 详细底稿 <code>docs/research/decision-calorie-multi-map-charter-20260911.html</code>
+</footer>
+
+<script>
+(function(){
+  var T = {Q4:'（51 个模板名归类）', Q5:'（第一集场景）', Q6:'（本次止点）'};
+  var L = {
+    Q4:{A:'A 现在把 51 个名字过一遍，定出合并成哪几类、每类归谁管',
+        B:'B 各场景自己定自己的，最后人工收口',
+        C:'C 不合并，74 张照搬'},
+    Q5:{A:'A 第一集做 06 目标管理（定骨架），第二集做 01 主页（定样子）',
+        B:'B 第一集仍做 01 主页（先定样子，最省）',
+        C:'C 第一集做 08 身体细节（体脂／围度向导）'},
+    Q6:{A:'A 本次只开图（建齐 9 张 map ＋ 各自首发票 ＋ 原生边）',
+        B:'B 开图 ＋ 顺手结掉第一集第一张票（51 个模板名归类）',
+        C:'C 开图 ＋ 直接开工，做到第一集样板出真产物'}
+  };
+  var TA = document.getElementById('tpl'), OK = document.getElementById('ok');
+
+  function chips(){
+    document.querySelectorAll('#chips .chip').forEach(function(ch){
+      var q = ch.getAttribute('data-c');
+      var s = document.querySelector('input[name="'+q+'"]:checked');
+      if(s){ ch.classList.add('done'); ch.innerHTML = q + ' <b>' + s.value + '</b>'; }
+      else { ch.classList.remove('done'); ch.innerHTML = q + ' <b>未选</b>'; }
+    });
+  }
+  function sync(){
+    var out = [];
+    ['Q4','Q5','Q6'].forEach(function(q){
+      var s = document.querySelector('input[name="'+q+'"]:checked');
+      out.push(q + T[q] + '：' + (s ? L[q][s.value] : ''));
+    });
+    out.push('补充：');
+    TA.value = out.join('\n');
+  }
+  document.querySelectorAll('label.opt').forEach(function(o){
+    var i = o.querySelector('input');
+    i.addEventListener('change', function(){
+      document.querySelectorAll('input[name="'+i.name+'"]').forEach(function(s){
+        s.closest('label.opt').classList.toggle('sel', s.checked);
+      });
+      chips(); sync(); OK.textContent = '';
+    });
+  });
+  window.copyTpl = function(){
+    TA.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    try{ if(navigator.clipboard){ navigator.clipboard.writeText(TA.value); } }catch(e){}
+    OK.textContent = '已复制，去粘贴发给我即可';
+  };
+  window.resetAll = function(){
+    document.querySelectorAll('label.opt input').forEach(function(i){ i.checked = false; });
+    document.querySelectorAll('label.opt').forEach(function(o){ o.classList.remove('sel'); });
+    chips(); sync(); OK.textContent = '';
+  };
+  chips(); sync();
+})();
+</script>
+</div>
+</body>
+</html>

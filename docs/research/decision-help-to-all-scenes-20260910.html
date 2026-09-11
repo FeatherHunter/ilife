@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HELP HTML 铺到全场景 · 决策简报（Q1–Q14 待你拍板）</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#ffffff;--line:#e5e5ea;--blue:#007aff;--green:#34c759;--orange:#ff9500;--red:#ff3b30;--purple:#5856d6;--soft:#f0f6ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.65}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 80px}
+header.hero{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 22px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.hero h1{margin:0 0 6px;font-size:22px}
+.hero .sub{color:var(--fg2);font-size:13px}
+.badges{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;border:1px solid var(--line);background:var(--bg)}
+.badge.fatal{background:#fdeceb;color:#c81e1e;border-color:#f5c2c0}
+.badge.high{background:#fff4e5;color:#b25e09;border-color:#f3d9a4}
+.badge.mid{background:#eef4ff;color:#1d4fd7;border-color:#c9dcff}
+.badge.ok{background:#e9f9ee;color:#157347;border-color:#bfe6c9}
+nav.toc{position:sticky;top:0;z-index:5;background:rgba(245,245,247,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:14px 0}
+nav.toc a{font-size:12.5px;color:var(--blue);text-decoration:none;margin:2px 8px 2px 0;display:inline-block}
+.tldr{background:linear-gradient(180deg,#fff,#f7faff);border:1px solid var(--line);border-left:6px solid var(--red);border-radius:14px;padding:14px 16px;margin:14px 0}
+.tldr h2,.card h2{margin:0 0 8px;font-size:17px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.card.fatal{border-left:6px solid var(--red)}
+.card.high{border-left:6px solid var(--orange)}
+.card.mid{border-left:6px solid var(--blue)}
+.qid{font-size:12px;color:var(--fg2)}
+h3.sec{margin:18px 0 4px;font-size:14px;color:var(--fg2)}
+ul.tight{margin:6px 0;padding-left:20px}
+code{background:#f2f2f7;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:12.5px}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top}
+th{background:#f7f7f9;text-align:left}
+.rec{background:var(--soft);border:1px solid #cfe3ff;border-radius:10px;padding:10px 12px;margin-top:10px}
+.rec b{color:#0a54c2}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 10px;font-size:13.5px}
+.kv dt{color:var(--fg2)}
+details{background:#fafafa;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin-top:8px}
+summary{cursor:pointer;font-weight:700;color:#333}
+table.sum th{white-space:nowrap}
+.foot{color:var(--fg2);font-size:12.5px}
+textarea{width:100%;min-height:180px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px}
+button{background:var(--blue);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-size:14px;cursor:pointer}
+@media(max-width:640px){.kv{grid-template-columns:1fr}table{font-size:12.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>HELP HTML 铺到全场景 · 决策简报</h1>
+<div class="sub">用途：把「卡路里 436 条底层流程统一出 过程型 / 结果型 HTML」之前必须拍板的题，一次摆齐。每题含：前因后果 → 关键信息 → 选项 → 推荐答案 → 利弊。答完即进入下一轮（依赖这些答案的题）。日期：2026-09-10</div>
+<div class="badges"><span class="badge fatal">致命 1（Q12）</span><span class="badge high">高 4（Q1/Q3/Q8/Q13）</span><span class="badge mid">中 8</span><span class="badge ok">点头项 2（S1/S2）</span></div>
+</header>
+
+<nav class="toc">
+<a href="#tldr">TL;DR</a><a href="#sum">速览表</a><a href="#q12">Q12</a><a href="#q1">Q1</a><a href="#q3">Q3</a><a href="#q8">Q8</a><a href="#q2">Q2</a><a href="#q13">Q13</a><a href="#q4">Q4</a><a href="#q5">Q5</a><a href="#q6">Q6</a><a href="#q7">Q7</a><a href="#q9">Q9</a><a href="#q11">Q11</a><a href="#q14">Q14</a><a href="#s">S1/S2</a><a href="#reply">答复模板</a>
+</nav>
+
+<div class="tldr" id="tldr">
+<h2>TL;DR（先看这三条）</h2>
+<ul class="tight">
+<li><b>最致命的是 Q12 术语歧义</b>：你说的"过程型"，老版权威定义是"执行中反馈（进度条/实时日志）"、全库只有 6 个场景且无实物；但你的例子（确认信息→复制→执行→已记好）对应的是 <b>wizard 预检确认页</b>。选哪边，分母从 <b>6</b> 变到 <b>数十</b>，模板设计完全不同。</li>
+<li><b>形态不要再做两套</b>：面板现在只吃 JSON 不吃 HTML（<code>plugin-calorie/src/bridge.ts:87-110</code>），内嵌片段无消费方 → 主产物只做落盘文档。</li>
+<li><b>测试自动化的落法已有老先例</b>：日常走剪贴板文本，批量/流程类走 <code>--input &lt;file.jsonl&gt;</code> 固定待执行内容 → 双通道，不新增协议。</li>
+</ul>
+</div>
+
+<h2 id="sum">决策速览表</h2>
+<table class="sum">
+<tr><th>编号</th><th>问题</th><th>优先级</th><th>我的推荐</th><th>不定会怎样</th></tr>
+<tr><td><a href="#q12">Q12</a></td><td>「过程型」＝wizard 还是老版 process？</td><td><span class="badge fatal">致命</span></td><td>wizard 语义；进度/日志单列"进度型"</td><td>分母 6 vs 数十，模板全错</td></tr>
+<tr><td><a href="#q1">Q1</a></td><td>交付形态：落盘 / 面板内嵌 / 双载体？</td><td><span class="badge high">高</span></td><td>收敛到落盘文档</td><td>继续维护无人消费的片段</td></tr>
+<tr><td><a href="#q3">Q3</a></td><td>确认要机读载荷吗？测试怎么自动走？</td><td><span class="badge high">高</span></td><td>双通道：日常文本＋测试文件</td><td>测试回执页变"伪造"</td></tr>
+<tr><td><a href="#q8">Q8</a></td><td>写类词本身出过程页，还是另立向导词？</td><td><span class="badge high">高</span></td><td>写类词本身先出过程页</td><td>用户说记围度却直接写库</td></tr>
+<tr><td><a href="#q2">Q2</a></td><td>过程/结果文件名怎么定？</td><td><span class="badge mid">中</span></td><td>照老版实证（结果_结果/回执_回执/向导用场景名）</td><td>用户按名打开错文件</td></tr>
+<tr><td><a href="#q13">Q13</a></td><td>分母以哪套为准？</td><td><span class="badge high">高</span></td><td><code>_triggers</code> 414 为基线＋对账表</td><td>"打通"无分母</td></tr>
+<tr><td><a href="#q4">Q4</a></td><td>复制物每场景一份还是每模板一份？</td><td><span class="badge mid">中</span></td><td>每模板一份基线＋场景填字段</td><td>436 份文案爆炸</td></tr>
+<tr><td><a href="#q5">Q5</a></td><td>按交互形态还是场景族合并模板？</td><td><span class="badge mid">中</span></td><td>形态合并＋场景供内容＋变体槽</td><td>个性丢失或模板爆炸</td></tr>
+<tr><td><a href="#q6">Q6</a></td><td>内容保真 vs 视觉自由？</td><td><span class="badge mid">中</span></td><td>字段保真、版式自由、删信息单独批</td><td>悄悄丢能力</td></tr>
+<tr><td><a href="#q7">Q7</a></td><td>验收节奏？</td><td><span class="badge mid">中</span></td><td>一组一交付，模板级给看</td><td>你一次被 436 条淹没</td></tr>
+<tr><td><a href="#q9">Q9</a></td><td>无写键流程怎么算？</td><td><span class="badge mid">中</span></td><td>分两档（有写键闭环优先）</td><td>范围混入补写键工程</td></tr>
+<tr><td><a href="#q11">Q11</a></td><td>复制按钮留哪几个？</td><td><span class="badge mid">中</span></td><td>过程页只留复制 prompt</td><td>误导性按钮</td></tr>
+<tr><td><a href="#q14">Q14</a></td><td>结果页必须送达＋撤销按钮？</td><td><span class="badge mid">中</span></td><td>继承送达；撤销仅可撤销写操作</td><td>结果无人看；误删无救</td></tr>
+</table>
+
+<section class="card fatal" id="q12">
+<h2>❓ Q12 — 「过程型」到底指哪个？（术语炸弹） <span class="badge fatal">致命</span></h2>
+<p><b>前因后果：</b>你举的例子（"这些信息是否确认"→复制→AI执行→"已经记好了"）听起来像"预检确认页"。但老版权威定义（<code>.scratch/meta-issue-appendix.md:38-44</code>）写的是：过程型＝<b>执行中的中间反馈（进度条/实时日志）</b>；且机器码 <code>scripts/html_paths.py:131-135</code> 的 process 全库只有 <b>6 个场景</b>，<b>没有任何 <code>_过程_</code> 实物</b>。反倒是老命名契约（<code>html_paths.py:17-22</code>，用户拍板）明写"<b>一个场景可能多类型（wizard=过程 + 回执）</b>"——即你例子里的东西在老版叫 <b>wizard</b>。</p>
+<div class="kv"><dt>关键信息</dt><dd>定义源 <code>.scratch/meta-issue-appendix.md:38-44</code>；机器码 <code>scripts/html_paths.py:131-135</code>；命名契约 <code>:17-22</code>；分母 <code>scripts/_triggers.py</code> process 6 / result 329 / receipt 79；无 <code>_过程_</code> 实物。</dd></div>
+<table><tr><th>选项</th><th>利</th><th>弊</th></tr>
+<tr><td><b>A. wizard 语义</b>（预检确认页；process 另名单列"进度型"）</td><td>与你的例子一致；79 个 receipt 场景有明确目标</td><td>大扩张：老版只有约 9 个向导/预览页</td></tr>
+<tr><td><b>B. process 原义</b>（执行中反馈）</td><td>工作量最小（6 个）</td><td>和你的例子对不上；用户要的确认页没覆盖</td></tr></table>
+<div class="rec"><b>➡️ 推荐 A</b>：你举的例子就是 wizard。把"进度/日志"单列为"进度型"，避免与机器码打架。</div>
+</section>
+
+<section class="card high" id="q1">
+<h2>❓ Q1 — 交付形态：落盘文档 / 面板内嵌 / 双载体？ <span class="badge high">高</span></h2>
+<p><b>前因后果：</b>现在两种形态并存：完整文档（<code>饮食总览_*.html</code> 41KB）与深色内嵌片段（<code>今日总览_*.html</code> 2.4KB，<code>&lt;section class="ilife-page" data-slot="ilife:calorie"&gt;</code>）。你要的是"说唤醒词→拿到 HTML"，指向落盘文档；但 side bar 面板可能要片段。</p>
+<div class="kv"><dt>关键信息</dt><dd>插件只取 JSON：<code>packages/plugin-calorie/src/bridge.ts:87-110</code>（<code>return env.data</code>）；注入器 <code>packages/base-render/src/injector.ts:52-101</code> 仅测试引用；形态判定 <code>packages/skill-calorie/src/render/envelope.ts:160-167</code>。</dd></div>
+<table><tr><th>选项</th><th>利</th><th>弊</th></tr>
+<tr><td><b>A. 收敛到落盘文档</b></td><td>只有一套要维护；与你要的完全一致</td><td>若将来面板要整页，需再补</td></tr>
+<tr><td><b>B. 双载体（文档+片段）</b></td><td>保留未来可能</td><td>维护两套；片段现在无人消费</td></tr>
+<tr><td><b>C. 维持现状</b></td><td>零成本</td><td>继续产出无人用的片段</td></tr></table>
+<div class="rec"><b>➡️ 推荐 A</b>：面板事实只吃 JSON；无人消费的载体是负担。</div>
+</section>
+
+<section class="card high" id="q3">
+<h2>❓ Q3 — 确认要机读载荷吗？测试怎么自动走？ <span class="badge high">高</span></h2>
+<p><b>前因后果：</b>你要求"测试中 AI 生成中间 HTML 后自动生成回执页"，使用时才人工复制。那么自动化时"用户会确认的内容"从哪来？现在全仓<b>无确认令牌/确认 JSON/暂存表</b>（写入口直接 <code>dispatchWrite</code>），复制物是自然语言文本。</p>
+<div class="kv"><dt>关键信息</dt><dd>复制样式：<code>packages/skill-calorie/src/render/wizardPort.ts:102-113,164-192,269-277,356-392</code>（围度/体脂无命令段；身材照/GIF 带命令段）；老先例：<code>--input &lt;meals.json&gt;</code>／<code>&lt;file.jsonl&gt;</code> 固定待执行内容；反向预填走 CLI 参数（机读）。</dd></div>
+<table><tr><th>选项</th><th>利</th><th>弊</th></tr>
+<tr><td><b>A. 双通道</b>：日常剪贴板文本；测试用文件载荷</td><td>贴合老先例；不依赖 AI 解析；满足"自动生成回执"</td><td>每张确认页多落一份 payload 文件（要定命名/落点）</td></tr>
+<tr><td><b>B. 纯文本</b>：测试也让 AI 读同一份文本继续</td><td>零新协议</td><td>测试稳定性依赖 AI 解析</td></tr></table>
+<div class="rec"><b>➡️ 推荐 A</b>：否则测试里的回执页是"没有真实确认内容的空壳"，等于又一个假完成。</div>
+</section>
+
+<section class="card high" id="q8">
+<h2>❓ Q8 — 写类词本身出过程页，还是另立"看…向导"词？ <span class="badge high">高</span></h2>
+<p><b>前因后果：</b>现在 <code>记围度/记体脂/补记</code> 等词<b>直接指向写键</b>（<code>triggers/routing.ts:397-401</code>，exec 桶），零确认；过程页只能靠另立的词进（<code>看围度向导</code> 等，<code>:670-674</code>）。而你要的是"说唤醒词→拿到过程型 HTML"。</p>
+<div class="kv"><dt>关键信息</dt><dd>SKILL.md 三场景分流（主动填/预填 verify/直接录，<code>:65-69</code>）；路由注释 <code>:670</code>「agent 按 M6 三场景选用」。</dd></div>
+<table><tr><th>选项</th><th>利</th><th>弊</th></tr>
+<tr><td><b>A. 写类词本身先出过程页</b>（"看…向导"降级为辅助入口；保留"直接录"逃生门）</td><td>与目标流程一致</td><td>改变现有路由；写体验变两步</td></tr>
+<tr><td><b>B. 维持另立词</b></td><td>零改动</td><td>"说记围度却直接写库"，与目标相悖</td></tr></table>
+<div class="rec"><b>➡️ 推荐 A</b>。</div>
+</section>
+
+<section class="card mid" id="q2">
+<h2>❓ Q2 — 过程/结果文件名怎么定？ <span class="badge mid">中</span></h2>
+<p><b>前因后果：</b>老通式 <code>&lt;场景名&gt;_&lt;类型中文&gt;[_&lt;内容&gt;]_&lt;TS&gt;.html</code>（<code>html_scene_path()</code>，且"禁止手拼"），实物如 <code>对比体重：…_结果_20260810_140446.html</code>、<code>记一餐_回执_金枪鱼芥末饼干_….html</code>；而向导/预览页反而不带类型段（<code>体脂向导_*</code>）。</p>
+<table><tr><th>选项</th><th>利</th><th>弊</th></tr>
+<tr><td><b>A. 照老版实证</b>：结果 <code>_结果</code>、回执 <code>_回执</code>、确认页用场景名</td><td>符合肌肉记忆；可复用改名逻辑</td><td>确认页无类型段可辨</td></tr>
+<tr><td><b>B. 全面加段</b>（含 <code>_过程</code>）</td><td>一目了然</td><td>与老版不一致；要改 output.ts 新分支</td></tr></table>
+<div class="rec"><b>➡️ 推荐 A</b>：只有真做"进度/日志型"才启用 <code>_过程</code>。</div>
+</section>
+
+<section class="card high" id="q13">
+<h2>❓ Q13 — 分母以哪套为准？ <span class="badge high">高</span></h2>
+<p><b>前因后果：</b>同时存在 432 词／436（HELP 表）／446 场景／414（老 output_type）／360（场景 prompt 标注）。"打通"没有分母就无法验收。</p>
+<div class="rec"><b>➡️ 推荐：以 <code>_triggers</code> 414（process 6 / result 329 / receipt 79）为基线</b>，另附 432/436/446/360 对账表——差异本身就是"无产物"那批。</div>
+</section>
+
+<section class="card mid" id="q4">
+<h2>❓ Q4 — 复制物每场景一份，还是每模板一份基线？ <span class="badge mid">中</span></h2>
+<p><b>前因后果：</b>老版是每模板一个 <code>buildPrompt()</code>（如体脂向导 <code>:518-523</code>），且 #44 拍板"prompt 不硬编码脚本/CLI"。</p>
+<div class="rec"><b>➡️ 推荐：每模板一份基线＋场景填字段</b>（N 份而非 436 份）；先复用老 <code>docs/scene-prompts/01…10</code> 再改写。</div>
+</section>
+
+<section class="card mid" id="q5">
+<h2>❓ Q5 — 按交互形态还是场景族合并模板？ <span class="badge mid">中</span></h2>
+<p><b>前因后果：</b>老版 5 个 wizard＋5 个 receipt 模板覆盖多场景；合并过头会失去个性（你批评过"体验完全一样"）。</p>
+<div class="rec"><b>➡️ 推荐：模板按交互形态合并（确认页/结果页/列表/图表），内容按场景族供给＋变体槽</b>；独占交互（GIF 规划、照片对比、批量导入预览）才单开模板。</div>
+</section>
+
+<section class="card mid" id="q6">
+<h2>❓ Q6 — 内容保真 vs 视觉自由？ <span class="badge mid">中</span></h2>
+<p><b>前因后果：</b>老结果页 44–224KB 信息很重；新视觉更轻。</p>
+<div class="rec"><b>➡️ 推荐：字段与口径保真（不丢不改），版式密度自由（可分组折叠）；凡删信息单独列给你批</b>——那是内容决策不是视觉决策。</div>
+</section>
+
+<section class="card mid" id="q7">
+<h2>❓ Q7 — 一次给你看多少？ <span class="badge mid">中</span></h2>
+<div class="rec"><b>➡️ 推荐：一组一交付</b>——先给"模板清单＋覆盖唤醒词＋哪些属过程型"，你看过方向再出模板级产物（N 张模板，每张 2–3 个真实样例）。</div>
+</section>
+
+<section class="card mid" id="q9">
+<h2>❓ Q9 — 无写键流程怎么算？ <span class="badge mid">中</span></h2>
+<p><b>前因后果：</b>如训练计划构建向导只 dryRun（<code>routing.ts:97-98 planWriteMissing</code>），另有批量导入/自动定目标等"命中但不执行"词。</p>
+<div class="rec"><b>➡️ 推荐：分两档</b>——优先已有写键的闭环；无写键的只出过程页＋复制物并单列清单（补写键是另一批工作）。</div>
+</section>
+
+<section class="card mid" id="q11">
+<h2>❓ Q11 — 复制按钮留哪几个？ <span class="badge mid">中</span></h2>
+<p><b>前因后果：</b>现在过程页有「复制 prompt（必走）」＋「复制数据」（后者只复制 metrics 计数，刻意不含字段值）。</p>
+<div class="rec"><b>➡️ 推荐：过程页只留"复制 prompt"；结果页可保留"复制数据"</b>（仅有数据价值时）。</div>
+</section>
+
+<section class="card mid" id="q14">
+<h2>❓ Q14 — 结果页必须送达＋撤销按钮？ <span class="badge mid">中</span></h2>
+<p><b>前因后果：</b>老约定：结果型"必须 SEND_TO_USER"（<code>SKILL.md:654</code>）；回执带撤销钩子（仅 <code>meta.undo_cli</code> 存在时显示，<code>crud_receipt.html:414-426</code>）。</p>
+<div class="rec"><b>➡️ 推荐：继承"必须送达"；撤销仅对可撤销写操作保留</b>。</div>
+</section>
+
+<h2 id="s">点头项（S1/S2：摇头才需讨论）</h2>
+<div class="card"><b>S1</b>：模板里"报告型/配置型"只是俗称，归并回 process/result/receipt 三型（依据 <code>docs/adr/0008 L76</code> 禁新增类型）。<br><b>S2</b>：继承老版 4 条双端静态断言当前门（viewport／≥1 条 @media／svg 高度非固定／table 在 overflow 容器，<code>check_html_responsive.py</code>），不写像素脚本。</div>
+
+<h2 id="reply">一键复制答复模板</h2>
+<textarea id="tpl">Q1: 
+Q2: 
+Q3: 
+Q4: 
+Q5: 
+Q6: 
+Q7: 
+Q8: 
+Q9: 
+Q11: 
+Q12: 
+Q13: 
+Q14: 
+S1/S2: 同意</textarea><br><br>
+<button onclick="copyTpl()">复制答复模板</button> <span id="ok" style="color:var(--green);font-weight:700"></span>
+<script>
+function copyTpl(){var t=document.getElementById('tpl');t.select();try{document.execCommand('copy')}catch(e){}try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.value)}}catch(e){}document.getElementById('ok').textContent='已复制，去粘贴回复即可';}
+</script>
+<p class="foot">证据均来自只读取证（老技能目录 <code>D:\2Study\StudyNotes\SKILLS\卡路里</code> 未动；禁区 <code>.个人笔记不允许参考</code> 未读）。答完本轮后结论将追加进交接文档 §1，并开启第三轮（确认载荷落点、公共模板批次顺序、"直接录"逃生门、模板族清单）。下一轮依赖本轮答案。</p>
+</div>
+</body>
+</html>
