@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>卡路里多 MAP · 对抗式审查（7 项发现 ＋ 3 个方案）</title>
+<title>卡路里多 MAP · 对抗式审查（<span id="nfind">8</span> 项发现 ＋ 3 个方案）</title>
 <style>
   :root{
     --bg:#f5f6f8; --card:#fff; --line:#e2e6ea; --fg:#1e2430; --mut:#68727f;
@@ -130,25 +130,25 @@
 
 <header>
   <h1>卡路里多 MAP · 对抗式审查</h1>
-  <div class="sub">从第一性原理重审我刚建的那批图。<b>7 项发现，其中 2 项推翻了我自己的估算方式。</b></div>
-  <div class="meta">2026-09-11 · 工作区 <code>D:\ilife</code> · 已建的 22 个 issue 未被改动 · 底线证据：老技能 <code>SKILLS\公共组件\docs\component-contract.md</code>＋<code>assets\base.*</code>＋<code>tests\test_components.py</code></div>
+  <div class="sub">从第一性原理重审我刚建的那批图。<b>8 项发现，其中 3 项推翻了我自己的估算方式。</b></div>
+  <div class="meta">2026-09-11 · 工作区 <code>D:\ilife</code> · 已建的 22 个 issue 未被删除或重建（只有我在修一处引用错误时更新过 11 张地图的正文） · 底线证据：老技能 <code>SKILLS\公共组件\docs\component-contract.md</code>＋<code>assets\base.*</code>＋<code>tests\test_components.py</code></div>
 </header>
 
 <div class="verdict">
   <h2>一句话结论</h2>
   <p style="margin:6px 0">
     我按「场景」切了 11 张图——而<b>场景是用户视角的导航分类，不是工作量单位</b>。
-    我去量了老技能之后发现：真正的资产是<b>一套已经建好的组件库（约 4300 行共享资产 ＋ 222 个视觉测试）</b>，
+    我去量了老技能之后发现：真正的资产是<b>一套已经建好的组件库（<b>契约 389 行 ＋ 共享资产约 2400 行 ＋ 测试 2823 行</b>，含 <b>222 个视觉测试</b>）</b>，
     而你要的「写库前预检确认页」<b>老技能里几乎没有</b>（79 条写流程里只有 6 条有实物可照）。
   </p>
   <ul>
     <li><b>我的估算方式错了</b>：不是「436 条 × 双产物要画一堆页面」，而是「搬一套组件库 ＋ 把页面做成组件调用」。</li>
     <li><b>我漏了一件大事</b>：预检确认页是<b>新设计</b>，79 条写流程级别，不是 5 条。</li>
-    <li><b>我切错了轴</b>：27 个真实页面族被我切成 11 张体量差 <b>44 倍</b>的图。</li>
+    <li><b>我切错了轴</b>：真实基数是 27 个页面族，我却按「场景」切成 11 张图——每张图承载的<b>唤醒词数差 44 倍</b>（176 vs 4）。</li>
   </ul>
 </div>
 
-<h2 class="sec">7 项发现</h2>
+<h2 class="sec">8 项发现</h2>
 
 <!-- 1 -->
 <section class="find crit">
@@ -165,11 +165,11 @@
     <div class="t">证据</div>
     <table>
       <tr><th>资产</th><th>体量</th><th>性质</th></tr>
-      <tr><td><code>公共组件/docs/component-contract.md</code></td><td class="num">50.8 KB / 390 行</td><td>完整组件契约：占位符标准、payload 信封、P0 冻结签名、样式 token、图表参数化、复合形态</td></tr>
-      <tr><td><code>公共组件/tests/test_components.py</code></td><td class="num">147.9 KB / 2824 行</td><td><b>222 个测试函数</b>，用 Playwright 跑：含「手机 375 不溢出」「环形图粗环不裁切」「图例圆点不压名字」</td></tr>
-      <tr><td><code>assets/base.css</code></td><td class="num">17 KB / 496 行</td><td>64 个 CSS 类（共享样式）</td></tr>
-      <tr><td><code>assets/base.js</code></td><td class="num">46.9 KB / 950 行</td><td>52 个函数：<code>snapshot</code>（结构化接口，<b>领域无关</b>）、复制按钮、toast、<code>smartSelect</code>、<code>actionBar</code></td></tr>
-      <tr><td><code>assets/charts.js</code></td><td class="num">66.6 KB / 934 行</td><td>全参数化图表：line／bar／barGrouped／barStacked／donut／progress／combo</td></tr>
+      <tr><td><code>公共组件/docs/component-contract.md</code></td><td class="num">50.8 KB / 389 行</td><td>完整组件契约：占位符标准、payload 信封、P0 冻结签名、样式 token、图表参数化、复合形态</td></tr>
+      <tr><td><code>公共组件/tests/test_components.py</code></td><td class="num">147.9 KB / 2823 行</td><td><b>222 个测试函数</b>，用 Playwright 跑：含「手机 375 不溢出」「环形图粗环不裁切」「图例圆点不压名字」</td></tr>
+      <tr><td><code>assets/base.css</code></td><td class="num">17.2 KB / 495 行</td><td><b>76 个</b> CSS 类（共享样式；原稿写 64，是漏算了 <code>@media</code> 与复合选择器里的 12 个）</td></tr>
+      <tr><td><code>assets/base.js</code></td><td class="num">45.8 KB / 949 行</td><td><b>49 个</b>具名函数（原稿写 52，数错了）：复制按钮、toast、<code>smartSelect</code>、<code>actionBar</code>、<code>buildDataText</code> 等。<br><b>另有一个 <code>snapshot</code> 结构化接口</b>——它是<b>数据结构</b>（<code>payload.data.scene.snapshot</code>，由 <code>_validateSnapshot</code> 校验、<code>buildDataText</code> 渲染），<b>不是函数</b>，我上一版把它混进函数里了</td></tr>
+      <tr><td><code>assets/charts.js</code></td><td class="num">66.0 KB / 933 行</td><td>全参数化图表，<b>八个接口</b>：<code>line</code>／<code>bar</code>／<code>donut</code>／<code>progress</code>／<code>combo</code>／<code>scatter</code>／<code>gauge</code>／<code>sparkline</code>。原稿写的 <code>barGrouped</code>／<code>barStacked</code> <b>不存在</b>——堆叠／分组是 <code>charts.bar</code> 的 <code>opt.stacked</code>／<code>opt.grouped</code></td></tr>
       <tr class="hot"><td><b>模板本身</b></td><td class="num"><b>72 / 73 张</b></td><td><b>靠 <code>&lt;!--SHARED-CSS--&gt;</code> 注入共享样式</b>——页面不是独立设计，是组件调用</td></tr>
     </table>
   </div>
@@ -219,11 +219,11 @@
 <section class="find crit">
   <div class="fhead">
     <span class="num">3</span>
-    <h3>我把 27 个页面族，切成了 11 张体量差 44 倍的图</h3>
+    <h3>真实基数是 27 个页面族；我按「场景」切成 11 张图，每张承载的唤醒词数差 <b>44 倍</b></h3>
     <span class="kind crit">切错轴</span>
   </div>
   <p>
-    把 51 个模板名按结构指纹（类名相似度）去重，得到 <b>27 个页面族</b>。再按场景看它们怎么分布：
+    把 51 个模板名按结构指纹（类名相似度）去重，得到 <b>27 个页面族</b>（覆盖 410 条引用；第 51 个名字 <code>goal_config.html</code> <b>旧目录里没有实物</b>，没法算指纹，所以它是第 28 个未归类项——这条本身也说明「自动归族」只是基数参考）。再按场景看它们怎么分布：
   </p>
   <div class="ev">
     <div class="t">证据：场景 vs 页面族</div>
@@ -240,7 +240,7 @@
   <p>
     <b>含义：</b>「场景」是你翻 HELP 页时的<b>导航分类</b>，不是工作量单位。
     场景 10 是<b>1 个页面族顶 176 条词</b>；场景 07 是<b>2 个页面族顶 4 条词</b>。
-    我拆场景 10 成 A／B 时用的是「15+15+8 vs 19+13 条词」——<b>按词分，不是按页面族分</b>，而 A 和 B 用的是<b>同一个</b> <code>combined_analysis.html</code>。
+    我拆场景 10 成 A／B 时，划的是「多指标趋势 vs 预测与报告」这类<b>词的分类</b>，不是页面族——而两张拆出来的图<b>用的是同一个</b> <code>combined_analysis.html</code>（B 另外还牵扯 <code>calorie_deficit.html</code>）。
   </p>
 </section>
 
@@ -255,13 +255,13 @@
     <div class="t">证据</div>
     <p style="margin:4px 0;font-size:14px">
       <b>18 / 51 = 35% 的模板名，只覆盖 18 / 414 = 4.3% 的唤醒词。</b>
-      而每一个都是一个<b>独立页面族</b>（结构各不相同，见下方折叠清单）。
+      按自动归族的结果，这 18 个里只有 <b>7 个</b>是独占一族，另外 11 个是与别的模板共享族（例如 <code>exercise_cardio</code>／<code>exercise_strength</code>／<code>exercise_trend</code> 在同一族）。<b>所以「低覆盖」是真的，但它们未必都各占一族</b>——族边界还得人工看实物定。
     </p>
   </div>
   <p>
     <b>含义：</b>按唤醒词数分配资源，这 18 个（照片对比、GIF 结果、画廊、体脂围度对比、力量／有氧／分布／趋势、
     营养素深度、营养配比、来源统计、饮水、去重报告、禁忌报告、批量删体重…）会被<b>永远排在最后</b>。
-    它们是「35% 的名字数、4.3% 的分母」——必须显式记账。
+    它们是「35% 的名字数、4.3% 的分母」——必须显式记账。<br><span style="font-size:13px;color:var(--mut)">（更正：上一版把「体脂围度对比」也列进这 18 个，其实 <code>body_composition_view</code>／<code>body_measurements_view</code> 各被引用 3 次，不在其中。）</span>
   </p>
 </section>
 
@@ -307,9 +307,12 @@
     </p>
   </div>
   <p>
-    另外：旧技能里有 <b>24 张模板既不被任何唤醒词引用、本仓也丢了</b>。我把它们写进了每张图的
-    <code>Not yet specified</code>，但图的边界是「本场景的唤醒词」——
-    所以它们在结构上<b>永远不会被任何一张图碰到</b>。是我把它们放错了地方。
+    另外：旧技能里有 <b>23 张 <code>.html</code> 模板不被任何唤醒词引用</b>（另有 1 个 <code>.html.bak</code> 备份；
+    上一版我写「24 张」是把备份也算进去了，写「本仓也丢了」则是<b>错的</b>——<code>src/cli/keys.ts</code> 的注释明确记录了移植
+    <code>batch_import_preview</code>／<code>calorie_trend</code>／<code>lint_health</code>／<code>long_trend</code>／<code>nutrition_analysis</code>／<code>process_progress</code>／<code>review_template</code>／<code>six_factors</code> 八张，以及
+    <code>wizard</code> 四页；新仓也已有 <code>calorie.view.six-factors</code>／<code>.calorie-trend</code>／<code>.long-trend</code>／<code>.lint-health</code> 等命令。我当时只翻了模板目录就下了结论。）
+    <br>不过<b>结构性问题仍然成立</b>：我把它们写进了每张图的 <code>Not yet specified</code>，而图的边界是「本场景的唤醒词」——
+    所以只要一张图只按唤醒词划范围，这些页面<b>就不会被任何一张图主动碰到</b>。
   </p>
 </section>
 
@@ -330,6 +333,30 @@
   <p>
     老技能的契约证实了这一点——抽离对象是 <b>snapshot／toast／复制按钮／图表／列表选择器／smartSelect／actionBar</b>，<b>不是「页面」</b>。
     我写的「公共层＝页面」，会让你的人工验收落在<b>页面</b>上，而真正该验的是<b>组件</b>。
+  </p>
+</section>
+
+<section class="find high">
+  <div class="fhead">
+    <span class="num">8</span>
+    <h3>一个我从头到尾没说的前提：436 里只有 414 条带页面，而且新仓的词表已经长到 493</h3>
+    <span class="kind high">未声明的前提</span>
+  </div>
+  <p>
+    这套分析从头到尾用 <b>436</b> 当分母。但老表里真正带 <code>html_template</code> 的只有 <b>414 条</b>——
+    另外 <b>22 条</b>（<code>今日复盘</code>、<code>复盘</code>、各条「定时复盘」、榜单类若干、<code>查健康报告</code>、<code>查热量趋势</code>…）
+    <b>既没有 <code>output_type</code> 也没有模板</b>，是 6 字段的老式行。
+  </p>
+  <div class="ev">
+    <div class="t">更要紧的一条</div>
+    <p style="margin:4px 0;font-size:14px">
+      新仓的 <code>routing.ts</code> 除了那 436 条，还定义了 <code>NEW_KEY_ROUTES</code>（<b>56 条新拟唤醒词</b>）＋ <code>COVERAGE_REPAIR_ROUTES</code>（1 条），
+      所以<b>新仓实际认的词是 436 ＋ 56 ＋ 1 ＝ 493 条</b>。
+    </p>
+  </div>
+  <p>
+    <b>含义：</b>「436 全覆盖」这个验收口径，是拿一个<b>实现已经长过去</b>的表在量。
+    我建的 11 张图全部按 436 划边界，那 57 条新拟的词<b>不属于任何一张图</b>——它们会被整个批次漏掉。
   </p>
 </section>
 
@@ -451,7 +478,8 @@
 
 <footer>
   卡路里多 MAP · 对抗式审查 · 2026-09-11 · 22 个 issue 未被改动<br>
-  证据来源：<code>SKILLS\公共组件\docs\component-contract.md</code>、<code>assets\base.css/base.js/charts.js</code>、<code>tests\test_components.py</code>、<code>SKILLS\卡路里\templates\</code>、<code>scripts\_triggers.py</code>
+  证据来源：<code>SKILLS\公共组件\docs\component-contract.md</code>、<code>assets\base.css/base.js/charts.js</code>、<code>tests\test_components.py</code>、<code>SKILLS\卡路里\templates\</code>、<code>scripts\_triggers.py</code>、<code>ilife\packages\skill-calorie\src\cli\keys.ts</code>、<code>src\triggers\routing.ts</code>、<code>src\triggers\scene-*.ts</code><br>
+    <b>已按独立复核更正的 7 处：</b>组件库尺寸与派生数字（行数、CSS 类数、函数数、图表接口名）、「24 张丢失模板」、「约 4300 行」、场景 10 拆 A／B 的理由、发现 4 的举例、头部计数、顶部结论里「44 倍」的所指。
 </footer>
 
 <script>
