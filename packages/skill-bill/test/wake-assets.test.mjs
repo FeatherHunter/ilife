@@ -14,7 +14,7 @@ const ADDED_IDS = new Set(['write_record', 'query_bills', 'query_bill_detail']);
 const LEGACY_DIGEST = '93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0';
 /** 老实物的域顺序（照搬，不许重排）。 */
 const GROUP_IDS = ['write', 'query', 'analysis', 'goal', 'account', 'link', 'setup'];
-/** 老词表（共享壳 TYPE_DEFAULT 认得的 5 个）。 */
+/** 老词表（共享 help 模板 TYPE_DEFAULT 认得的 5 个）。 */
 const TYPE_WORDS = new Set(['采集', '查看', '选择', '向导', '回执']);
 
 const legacy = WAKE_ASSETS.filter((s) => !ADDED_IDS.has(s.id));

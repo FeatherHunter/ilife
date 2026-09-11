@@ -1,4 +1,4 @@
-// #145 · 渲染接线锁：内容资产 → 共享壳全页 HTML（5 键 ＋ 三块可选键，全部可复现）。
+// #145 · 渲染接线锁：内容资产 → 共享 help 模板全页 HTML（5 键 ＋ 三块可选键，全部可复现）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildHelpFileData, renderHelpFileHtml, HELP_FILE_STEM, HELP_FILE_TITLE } from '../dist/index.js';

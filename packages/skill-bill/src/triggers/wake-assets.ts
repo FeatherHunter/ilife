@@ -14,7 +14,7 @@
  *     多出的 3 条（`记一笔`/`查账单`/`查账单详情`，用户 Q8=A 补进对应域）；老实物无此三条，
  *     `prompt_template` 按老实样重写（`____` 空槽 ＋ `(唤醒词:…)` 尾注）。
  *  2. `status` 全空照老实样（71/71 可用，无「待开发」）。
- *  3. `types` 沿用老词（采集／查看／选择／向导／回执）——共享壳 `help-template.html:TYPE_DEFAULT`
+ *  3. `types` 沿用老词（采集／查看／选择／向导／回执）——共享 help 模板 `help-template.html:TYPE_DEFAULT`
  *     的徽章配色表里本来就有这 5 个词，零模板改动。
  *
  * 4 条 HELP 短语（`bill.help.lookup`）**不进场景目录**：HELP 是资产的呈现载体而非场景（防自指，
@@ -24,7 +24,7 @@
  */
 import { WAKE_TABLE } from '../policy/wakewords.js';
 
-/** 徽章类型词（老实物用到的全集；共享壳 `TYPE_DEFAULT` 认得这些词，缺席即配色表要改）。 */
+/** 徽章类型词（老实物用到的全集；共享 help 模板 `TYPE_DEFAULT` 认得这些词，缺席即配色表要改）。 */
 export type WakeSceneType = '采集' | '查看' | '选择' | '向导' | '回执';
 
 export interface WakeSceneAsset {

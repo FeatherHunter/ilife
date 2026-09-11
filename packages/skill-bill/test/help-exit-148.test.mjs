@@ -1,6 +1,6 @@
 // #148 · 真出口锁：spawn `bill-cmd-read`（argv＋JSON＋exit），锁四件事——
 //  ① 文件名通式与落点（`饼干记账_HELP_<TS>[_N].html` 落 biscuit_accountant_html，回执绝对路径）；
-//  ② 壳层：产物 = 共享壳前后缀逐字 ＋ `help-data` 载荷（7 域／74 场景／两块 meta）；
+//  ② 壳层：产物 = 共享 help 模板前后缀逐字 ＋ `help-data` 载荷（7 域／74 场景／两块 meta）；
 //  ③ 独占与递补：并发调用落点两两不同、内容互不覆盖（同秒时后到者 `_2`）；
 //  ④ 两支产物互不串（缺省 HELP 文件 vs `mode:"lookup"` 速查表）。
 // 课（#139）：模块级测试全绿 ≠ 用户拿到东西，故本文件**只经真 spawn**，不直接调模块。
@@ -83,7 +83,7 @@ test('#148 ① 缺省＝HELP 文件：名字通式／落点／回执绝对路径
   assert.equal(r.env.data.subgroupTotal, 20);
 });
 
-test('#148 ② 壳层锁：产物 = 共享壳前后缀逐字 ＋ help-data 载荷（7 域／74 场景／两块 meta）', () => {
+test('#148 ② 壳层锁：产物 = 共享 help 模板前后缀逐字 ＋ help-data 载荷（7 域／74 场景／两块 meta）', () => {
   const dir = mkDir('shell');
   const out = runOk(dir, undefined).env.delivery.path;
   const html = readFileSync(out, 'utf8');

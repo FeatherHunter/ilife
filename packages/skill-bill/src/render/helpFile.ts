@@ -1,4 +1,4 @@
-/** #145 · 「饼干记账help」的交付**内容**：内容资产 ＋ 派生 → 共享壳（`base-paint/help-shell`）全页 HTML。
+/** #145 · 「饼干记账help」的交付**内容**：内容资产 ＋ 派生 → 共享 help 模板（`base-paint/help-shell`）全页 HTML。
  *
  * 本模块**零 IO、零落盘**：落点与写盘全在 CLI 交付管线（#144：`render/helpPaths.ts` ＋ `output.ts`）。
  * 逐字对照老口径（只读基线 `D:\2Study\StudyNotes\SKILLS\饼干记账\scripts\render_help.py:build_help_contract`）：
@@ -8,7 +8,7 @@
  *  - `init_banner` 文案照老 `INIT_BANNER_TEXT`（`:69-74`），`prompt` 取自 `setup_init_wizard`
  *    场景的 `prompt_template`（老 `:124-132` 同一个「从汇总里取该场景 prompt」的单源做法）。
  *
- * 三块可选键（用户 Q9=B 完整照传；仓内共享壳运行时全量读这些键，TS 类型面只声明 5 键）：
+ * 三块可选键（用户 Q9=B 完整照传；仓内共享 help 模板运行时全量读这些键，TS 类型面只声明 5 键）：
  *  - `meta_blocks`：两块（`help_summary`／`help_wake_words`），内容全部派生，不写第二份源；
  *  - `version`：`'2.0'`——老口径 `str(summary.get("version","2.0"))`，语义是**技能数据世代**
  *    （bill 自己的 `init-status` 也自述「v2.0 特征 deleted_at」），**不是** npm 包版本 `0.1.0`；
@@ -69,7 +69,7 @@ export interface HelpInitBanner {
   readonly hidden: boolean;
 }
 
-/** 老 5 键 ＋ 三块可选键（共享壳运行时契约的超集）。 */
+/** 老 5 键 ＋ 三块可选键（共享 help 模板运行时契约的超集）。 */
 export interface HelpFileData {
   readonly skill_name: typeof HELP_FILE_SKILL_NAME;
   readonly title: typeof HELP_FILE_TITLE;
