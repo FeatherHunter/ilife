@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
+import { TRIGGERS } from '../dist/triggers/index.js';
 import {
   addPhotos, getPhotoRow, deletePhoto, updateTag, tagAdd, tagRemove,
   daysSinceTagPhoto,
@@ -177,7 +178,19 @@ test('HELP：现找直达可执行命令（Q71）', async () => {
   const hits = lookupPhotoHelp('记身材照');
   assert.equal(hits.length, 3);
   assert.ok(hits.every((h) => h.exec.startsWith('node ') && h.exec.includes(h.fn)));
-  assert.ok(all.every((h) => h.legacyCli.startsWith('python scripts/render_')));
+  // #180 前提已变（原断言：`all.every(h => h.legacyCli.startsWith('python scripts/render_'))`）：
+  // `legacyCli` 取的就是该唤醒词 SoT 的 `main_prompt.cli`（`src/render/help.ts:61`），#180 已把 10 个场景
+  // 文件的三个命令字段全量改写成 `calorie-cmd-read calorie.*`（源级扫描见 no-script-commands-180.test.mjs，
+  // 命中 0），故「老家 python 原命令备查」这个前提**不存在了**。改口径而不删断言：
+  // ① 钉新形态前提——不得退回脚本命令形态；② 钉它仍与 SoT 同源（防「改了数据忘了 HELP」）。
+  // 说明：没有任何字段还留着 legacy python 形态（留一份就等于把 python 命令写回仓，正是 #180 要消灭的），
+  // 故不走「改读另一个仍保留 legacy 形态的字段」那条路；字段名 `legacyCli` 已名不副实，改名属契约变更，
+  // 记账在 docs/skills/skill-calorie/t180-collection.md。
+  const sotCli = new Map(TRIGGERS.map((t) => [t.wake_word, t.main_prompt.cli]));
+  assert.ok(all.every((h) => sotCli.get(h.wakeWord) === h.legacyCli),
+    'legacyCli 必须逐字同源 SoT 命令字段');
+  assert.ok(all.every((h) => h.legacyCli.startsWith('calorie-cmd-read calorie.')),
+    'legacyCli 不得退回脚本命令形态：' + JSON.stringify(all.map((h) => h.legacyCli)));
   // 可执行性实证：exec 指向的模块确有该导出（包名前缀映射为相对路径同文件）
   for (const h of all) {
     const rel = h.module.replace('skill-calorie/dist/', '../dist/');

@@ -11,6 +11,7 @@ import { join, dirname, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildHelpBlock, START, END } from '../scripts/build-help.mjs';
 import { CALORIE_COMBOS } from '../dist/cli/keys.js';
+import { TRIGGERS } from '../dist/triggers/index.js';
 import { buildPhotoHelp, CALORIE_TEMPLATES, loadTemplate, CalorieRenderError } from '../dist/render/index.js';
 import {
   HELP_VIEW_ENTRIES_META_ID, HELP_VIEW_ENTRIES_META_TITLE,
@@ -149,9 +150,27 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
   it('T10 照片 HELP：10 条全可执行（模块+函数逐条 import 存在）', async () => {
     const all = buildPhotoHelp();
     assert.equal(all.length, 10);
+    // #180 前提已变（原断言 `h.legacyCli.startsWith('python scripts/render_')` 的前提是「SoT 里还有老家
+    // python 原命令」）：#180 已把 10 个场景文件的命令字段全量改写成路由层命令（源级扫描见
+    // `no-script-commands-180.test.mjs`，命中 0）。**不删断言，改口径**：
+    // ① 钉新形态前提——不得退回脚本命令形态；② 钉仍与 SoT 同源（防「改了数据忘了 HELP」）。
+    // 与 `render-t10.test.mjs:181-193` 同一路数；差别在这一处按「同唤醒词的**全部** SoT 条目」比对——
+    // 照片这 10 条里 `记身材照` 在 SoT 里出现 3 次（`body_photo_add_single`／`_add_note`／`_add_batch`），
+    // 按唤醒词建 `Map` 会把前两条压掉、只比最后一条（实测三条 cli 逐字相同，但那是数据事实、不是保证）。
+    const photoWakes = new Set(all.map((h) => h.wakeWord));
+    const sotClis = new Map();
+    for (const t of TRIGGERS) {
+      if (!photoWakes.has(t.wake_word)) continue;
+      sotClis.set(t.wake_word, [...(sotClis.get(t.wake_word) ?? []), t.main_prompt.cli]);
+    }
     for (const h of all) {
       assert.ok(h.exec.startsWith('node ') && h.exec.includes(h.fn));
-      assert.ok(h.legacyCli.startsWith('python scripts/render_'));
+      const clis = sotClis.get(h.wakeWord);
+      assert.ok(clis && clis.length > 0, '唤醒词在 SoT 里找不到：' + h.wakeWord);
+      assert.ok(clis.every((c) => c === h.legacyCli),
+        'legacyCli 必须逐字同源 SoT 命令字段：' + h.wakeWord + ' SoT=' + JSON.stringify(clis) + '／HELP=' + h.legacyCli);
+      assert.ok(h.legacyCli.startsWith('calorie-cmd-read calorie.'),
+        'legacyCli 不得退回脚本命令形态：' + h.legacyCli);
       const rel = h.module.replace('skill-calorie/dist/', '../dist/');
       const mod = await import(rel);
       assert.equal(typeof mod[h.fn], 'function', h.key + ' 缺导出 ' + h.fn);

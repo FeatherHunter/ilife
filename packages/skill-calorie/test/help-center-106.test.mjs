@@ -2,8 +2,9 @@
  *
  * 本文件锁五件事（逐条对票面验收「回补清单逐条勾选」）：
  *  ① **口径唯一**：逐场景 CLI 恒取 #81 路由层该唤醒词的首条 `kind==='exec'` 路由
- *     （`calorie-cmd-read calorie.*`），**不取** `main_prompt.cli` 原文（353/436 是已不存在的
- *     `python scripts/render_*.py`／`mavis`／`mmx` 死命令）。
+ *     （`calorie-cmd-read calorie.*`），**不取** `main_prompt.cli` 原文（#180 之前 353/436 是已不存在的
+ *     `python scripts/render_*.py`／`mavis`／`mmx` 死命令；#180 清完后该字段已零死命令，
+ *     源级三字段扫描由 `no-script-commands-180.test.mjs` 守，本文件不另立第二份判定串）。
  *  ② **落位**：发在冻结槽位 `SceneEditableField`（`{name:'cli', label:'可执行命令', value}`），
  *     壳渲染进 Sheet 详情层（`data-field="cli"`），**卡面 `cliText` 仍是 `Scene.id`**（壳冻结面不动）。
  *  ③ **不新增契约面**：`SPEC_FROZEN_SURFACE` 恒 130 条；`Scene` 的机读 schema 属性集不变。
@@ -79,9 +80,11 @@ test('① 死命令零泄漏：任何 CLI 值都不是 python／mavis／mmx 原�
   const bad = scenes.map((s) => helpSceneCli(s.wake_word)).filter((c) => c !== null)
     .filter((c) => /^(python|mavis|mmx)\b/.test(c));
   assert.deepEqual(bad, [], 'CLI 不得是旧架构死命令');
-  // 前置鉴别力：SoT 原文里确实有 353 条死命令（否则本用例无鉴别力）
+  // #180 收口：SoT 原文里的死命令已清零（改写前是 353 条）。这一行从「前置鉴别力」改成**残留账目**——
+  // 它今天锁的是「10 个场景文件的命令字段不再有脚本命令」；源级三字段全扫在
+  // `no-script-commands-180.test.mjs`（同一判定串只写那一处）。
   const dead = TRIGGERS.filter((t) => /^(python|mavis|mmx)\b/.test(t.main_prompt.cli));
-  assert.ok(dead.length > 300, 'SoT 里死命令条数应 >300，实际 ' + dead.length);
+  assert.equal(dead.length, 0, 'SoT 里死命令条数应为 0（#180 清完），实际 ' + dead.length);
   // 源码级：`helpSceneCli` 函数体内不得出现 `main_prompt`（取值只许走路由层）
   const body = /export function helpSceneCli\([\s\S]*?\n\}/.exec(SRC);
   assert.ok(body !== null, '缺 helpSceneCli 函数体');
