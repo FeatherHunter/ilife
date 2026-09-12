@@ -6,6 +6,7 @@ $REG = 'https://registry.npmjs.org'
 $ROOT = 'D:\ilife'
 
 $want = [ordered]@{
+  'base-paint'         = '0.3.1'
   'skill-memo-ilife'   = '0.2.0'
   'dsh-memo-ilife'     = '0.2.0'
   'skill-calorie'      = '0.2.3'
@@ -69,6 +70,21 @@ foreach ($p in $pluginPins.Keys) {
   Report ([bool]($list | Where-Object { $_ -eq 'package/dist/client.js' })) "$p tarball 含 dist/client.js（面板 bundle）"
 }
 Pop-Location
+
+"=== 3b. base-paint 必须在 registry 安装态就能 import './help-shell'（本次发版的核心判据） ==="
+# 为什么单独查这条：三个技能的 HELP 交付链都 import 'base-paint/help-shell'；
+# 线上 0.3.0 没有这个导出子路径，装到第三方直接 ERR_PACKAGE_PATH_NOT_EXPORTED。
+# 这里用**隔离安装 + 真 import** 判，不看 workspace —— 正是原先全仓门禁漏掉的那一面。
+$bpTmp = Join-Path $env:TEMP ('ilife-bp-verify-' + (-join ((1..6) | ForEach-Object { 'abcdefghijkmnpqrstuvwxyz23456789'[(Get-Random -Max 32)] })))
+New-Item -ItemType Directory -Force -Path $bpTmp | Out-Null
+'{ "name": "bp-verify", "version": "0.0.0", "private": true }' | Out-File (Join-Path $bpTmp 'package.json') -Encoding utf8
+Push-Location $bpTmp
+npm install "base-paint@$($want['base-paint'])" --no-audit --no-fund --registry=$REG 2>&1 | Out-Null
+$probe = node --input-type=module -e "try { const m = await import('base-paint/help-shell'); const need = ['renderHelpShellHtml','HELP_SHELL_PREFIX','HELP_SHELL_SUFFIX','HELP_SHELL_DATA_OPEN']; const miss = need.filter(k => !(k in m)); console.log(miss.length ? 'MISSING:' + miss.join(',') : 'OK'); } catch (e) { console.log('THROW:' + (e.code || e.message)); }" 2>&1 | Out-String
+$probe = $probe.Trim()
+Report ($probe -eq 'OK') "隔离安装 base-paint@$($want['base-paint']) 后 import 'base-paint/help-shell' → $probe"
+Pop-Location
+if ($bpTmp.StartsWith($env:TEMP) -and -not $bpTmp.StartsWith($ROOT)) { Remove-Item $bpTmp -Recurse -Force -ErrorAction SilentlyContinue }
 
 "=== 4. 隔离安装：三个插件各自 --dry-run 解析（不许出现旧技能版本） ==="
 Push-Location $tmp
