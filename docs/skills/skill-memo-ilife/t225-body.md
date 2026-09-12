@@ -18,6 +18,27 @@
 - 票 1 指出备忘录今天**一件 HELP 交付件都没有**、且**没有库就看不了帮助**——结构设计要把「分派先于开库」写进形状里。
 - 「HELP 交付算不算一个能力」多一份先例：兄弟图 `#208`（私家大厨）也把 `src/` 下的工种名（`cli`／`fetch`／`policy`／`render`，只有 `help/` 站得住）判给「整包重排」那张票，本图照此**只摆正被碰到的件**。
 
-## 进度：0%
+## 进度：90%
 
-下一步：票 2 已关票，写形状报告报用户点头。
+下一步：形状报告已成文，待项目负责人点头后关票
+
+报告落 `docs/skills/skill-memo-ilife/t225-structure-design.md`（十一节：第一步影响清单／第二步结构设计／逐件归属表／告警线实测表／给负责人的一页纸／开工前置与风险／已定案件／点头条件／第五步对账位）。
+告警线已落 `packages/skill-memo-ilife/AGENTS.md`（**350 ＋ LF 口径**）。**本票只写形状、不写业务代码**：未改 `packages/` 下任何代码文件、未 commit、未动任何 issue（含本图正文）。
+
+### 三句话说清新件住哪
+
+- **新件全落既有的 `packages/skill-memo-ilife/src/help/`**（技能级入口，非能力目录——同题先例＝卡路里 `help-lookup`）；目录名不动、不做整包重排。
+- **8 个域文件落 `src/help/scenes/{memo,search,remind,wish,checkin,mood,sync,init}.ts`**（域＝HELP 一级分组，铁律四下身**文件名**取自这一级），加 `sceneData.ts`（合成）／`helpFile.ts`（出整页 HTML）／`manifest.ts`（命名三个值）；生成器 `scripts/gen-help-assets.mjs`。
+- **出口仍只有一条命令** `memo.help.lookup`，落 `src/cli/cmd_read.ts`；**分派先于开库**（今天没有库就看不了帮助）整体归票 9。
+
+### 告警线实测（350 ＋ LF）
+
+本包今天 **0 件超线**：最大 `src/cli/cmd_read.ts` **147 LF**，其后 `fetch/db.ts` 108／`fetch/feishu.ts` 100／`render/html.ts` 62／`render/envelope.ts` 43／`help/lookup.ts` 42／`scripts/build-help.mjs` 37／`package.json` 33，其余 ≤30。
+
+### 要负责人点头的两条（一页纸原文在报告第五节）
+
+1. **`test/combos-p8.test.mjs` 要求「备忘录每个命令都登记在 `combos.yaml`」，而票 4 草案写「不登记」**——二者只能留一个（**建议：登记 `memo.help.lookup` 那一条**，与既有 10 条备忘录命令同形）。
+2. **包内 `npm test` 今天盖不到包内任何用例**（`test/*.test.mjs` 五件只在仓根跑，实测 22 项全绿）——**建议票 10 同批改一行**。
+
+另：落盘共用件方向已按编排会话定案走**乙（`#237` 的 `saveHtmlFile`）**，报告 §1.3 已写出「未就绪时先放同名同签名临时件、共用件一到即删」的降级写法。
+

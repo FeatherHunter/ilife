@@ -1,6 +1,6 @@
 {
   "name": "dsh-schedule-ilife",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "爱生活单品插件 P10 脚手架：作息（ilife:schedule order 80），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,8 +25,8 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "^0.1.0",
-    "skill-schedule": "^0.1.0"
+    "dsh-life-pack": "^0.2.0",
+    "skill-schedule": "0.2.0"
   },
   "dsh": {
     "bundle": {
@@ -38,7 +38,13 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "npm run build:host && npm run build:client",
+    "build:host": "tsc -b",
+    "build:client": "tsdown",
+    "typecheck": "tsc -p tsconfig.client.json",
     "test": "node --test test/smoke.test.mjs"
+  },
+  "devDependencies": {
+    "tsdown": "0.22.14"
   }
 }

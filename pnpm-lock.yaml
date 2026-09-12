@@ -53,7 +53,7 @@ importers:
         specifier: ^0.2.0
         version: link:../plugin-manager
       skill-calorie:
-        specifier: 0.2.2
+        specifier: 0.2.3
         version: link:../skill-calorie
     devDependencies:
       '@types/react':
@@ -74,6 +74,10 @@ importers:
       skill-chef:
         specifier: ^0.1.0
         version: link:../skill-chef
+    devDependencies:
+      tsdown:
+        specifier: 0.22.14
+        version: 0.22.14(typescript@5.9.2)
 
   packages/plugin-home-ilife:
     dependencies:
@@ -99,10 +103,10 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.2.0
+        version: link:../plugin-manager
       skill-memo-ilife:
-        specifier: ^0.1.0
+        specifier: 0.2.0
         version: link:../skill-memo-ilife
     devDependencies:
       '@types/react':
@@ -118,11 +122,15 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.2.0
+        version: link:../plugin-manager
       skill-schedule:
-        specifier: ^0.1.0
+        specifier: 0.2.0
         version: link:../skill-schedule
+    devDependencies:
+      tsdown:
+        specifier: 0.22.14
+        version: 0.22.14(typescript@5.9.2)
 
   packages/skill-bill:
     dependencies:
@@ -160,12 +168,18 @@ importers:
       base-link-core:
         specifier: ^0.3.0
         version: link:../base-link-core
+      base-paint:
+        specifier: ^0.3.0
+        version: link:../base-render
 
   packages/skill-schedule:
     dependencies:
       base-link-core:
         specifier: ^0.3.0
         version: link:../base-link-core
+      base-paint:
+        specifier: ^0.3.0
+        version: link:../base-render
 
 packages:
 

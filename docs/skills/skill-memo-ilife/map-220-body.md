@@ -6,19 +6,47 @@
 >
 > 用户 Q2 补充原话给出了这张图的**分量**：「之前AI重构为新技能偷工减料少了很多底层的唤醒词、命令，在完成HELP HTML后会有MAP进行开发。我们要把HELP HTML这个官方源给做完善。以后MAP才有参照」——即这份 HELP HTML 是**官方源**，是后续补齐被漏掉的唤醒词与命令的地图所依据的参照。
 
-## 进度：35%
+## 进度：87%（面板 closed/total = 13/15）——**目的地两条口径均已实证达成，等维护者肉眼终审**
 
-**画图完成（2026-09-12）**：最初 13 张子票，原生子议题边与原生阻塞边由脚本建并逐项校验；后因票 2 留的空档**新增 1 张复核票**（`#234`），现 **14 张**，面板 `closed/total = 5/14`。
+**画图完成（2026-09-12）**：14 张子票，原生子议题边与原生阻塞边由脚本建并逐项校验。执行期**新增 3 张**：`#240` 迁移票（收票 4 判「甲」的架构欠债，`blocked_by #237`）＋ `#241`／`#242` 两张**顺带发现的仓库级缺陷票**（不属本图目的地）。
 
-**五张票收口（5/14）**——四张调查／复核 ＋ 内容与取值裁决：
+### ⭐ 目的地已达成的实证（编排会话亲自复跑，非采信汇报）
 
-- [饼干记账的 HELP 交付实现 → 备忘录照抄清单](https://github.com/FeatherHunter/ilife/issues/221)：可整块照抄三块的行号 ＋ 24 条陷阱 ＋ 提交对账；发现**出口方向相反**（备忘录今天没有库就看不了帮助）。决议 `t221-resolution.md`。
-- [内容资产对账](https://github.com/FeatherHunter/ilife/issues/222)：三组数 ＋ 八条待裁（U1–U8）；量化出**老 29 个唯一唤醒词里 10 条在新表完全不可路由**。决议 `t222-resolution.md`。
-- [通用 help 模板的注入契约 ＋ 备忘录专属取值](https://github.com/FeatherHunter/ilife/issues/223)：备忘录取值 8 项逐字落地；**老家的初始化判法在本机判错**。决议 `t223-resolution.md`。
-- [复核：老 memo_cli.py 的 CLI 子命令全集](https://github.com/FeatherHunter/ilife/issues/234)：老侧 **21 条子命令**（两套独立计数同值、差集 0）；**U5 判「没有」**——老技能无 `stats` 子命令、无统计类场景卡，票 2 的结论不反转；漏列风险实测仅 2 条（`due`／`init-report`），均非统计类。决议 `t234-resolution.md`。
-- [内容与取值裁决：老骨架对不齐的条目 ＋ 模板取值待裁项](https://github.com/FeatherHunter/ilife/issues/226) — **16 条全部定案**（决策卡 `t226-decisions.html`）。三条硬规矩由此立下：① **HELP 是完整体不是现状快照**（不标「当前无唤醒词」）② **命令不出现在页面上**（prompt 只出现唤醒词）③ **HELP 自身唤醒词不上页面**。两处非推荐项按用户裁落（`contact` 补可点链接／`editable_fields` 进）。
+```
+$env:SKILLS_DB_PATH = "D:\2Study\StudyNotes\.db"
+node packages/skill-memo-ilife/dist/cli/cmd_read.js memo.help.lookup
+EXIT CODE = 0
+"delivery":{"mode":"file","path":"D:\\2Study\\StudyNotes\\.db\\memo_html\\备忘录_HELP_20260912_134016.html","bytes":130885}
+```
 
-下一步：frontier 剩三张——[票 4 决策](https://github.com/FeatherHunter/ilife/issues/224)／[票 5 结构设计](https://github.com/FeatherHunter/ilife/issues/225)／[票 12 装机](https://github.com/FeatherHunter/ilife/issues/232)。票 7／票 8 的开工前置（票 5）只剩结构设计一道门。
+- **① 明确拿到 help HTML 文件**：回执顶层给**绝对路径**；文件真在盘（`130 885` B ＝ 回执 `bytes`），目录件数 211 → 212；**扁平落盘**（`memo_html\` 子目录 0 个）。
+- **跑完不建库**：跑前 `<db>\memo` **不存在** → 跑后**仍不存在**。⚠️ 这条判据原先**是空过的**（命令在开库之前就抛，开库那段根本没走到），本图把它**真验**了。
+- **② 由现成通用 help 模板渲染**：与同流水线产出、**已被维护者终审过**的 `calorie_html\卡路里_HELP_20260912_001033.html` **指纹逐项同形**（`help-data`×2／`<title>`×1／`@media`×6／老家世代 `window.__DATA__`×0），`<title>备忘录 · 使用手册</title>`。
+- **三条硬规矩**在产物上复核：`memo.help.lookup`／`memo-cmd-read`／`--html`／`无唤醒词` **各 0 处**；`待开发` 2 处经**逐处看上下文**确认是**共享模板自带的运行时 JS**（卡路里那份同样恰好 2 处），而本资产 `status` 全空串 ⇒ 徽章**不会画**。
+- 产物已由编排会话**发给维护者做肉眼终审**（唯一留给负责人的动作）。
+
+### 已收口九张
+
+五张调查／复核与内容裁决（`#221`／`#222`／`#223`／`#234`／`#226`）＋ 执行期四张：
+
+- [票 4 决策：命名落盘管线的归属 ＋ 缺省出口口径](https://github.com/FeatherHunter/ilife/issues/224) — 判**甲**；**缺省＝HELP 文件**；落盘**扁平**；速查支 `备忘录_速查表` ＋ `mode:"lookup"`；`combo` 侧**必须登记**。两份对抗式复审 58/100 与 65/100。决议 `t224-resolution.md`。
+- [票 5 结构设计](https://github.com/FeatherHunter/ilife/issues/225) — 形状定案并**放行**；告警线 **350 ＋ LF** 落包内 `AGENTS.md`；`B3` 转发作废。闸门复审 G 68/100，四条阻塞项**全部由裁决解决**。决议 `t225-resolution.md`。
+- [票 12 装机](https://github.com/FeatherHunter/ilife/issues/232) — 技能提供方 ＋ 两个断链点（缺 frontmatter／`files` 缺 `SKILL.md`）修好；**票面「Junction 是拷贝」经实测更正为「早已回指仓库」**；两轮复审 87/100 与 80/100，整改全部落地（`name` 正则收紧成宿主同值＋八反例断言；回滚三档实跑档 1）。
+- [票 9 出口落盘](https://github.com/FeatherHunter/ilife/issues/229) — 命令表 10→11 并**同批**处理四处连带（D1／D2 各含"配套另一半"、D3 改 `combos.yaml` ＋ 重跑生成器而非改测试）；分派**先于开库**且补内部断言防回退；自持最小管线（`_N` 从 `_2` 起）。**上面那段实证就是它的完成判据。**
+
+### 复审收官与后续（2026-09-12 末态）
+
+**票 7／8／9／10／11 已全部关票**（本图共 **13/15**）。四份对抗式复审的评分：**J 89**（渲染正确性——用**真浏览器 headless Chrome 读渲染后 DOM** 复核，并与施工方留档逐字节 SHA-256 相同）、**K 87**（风险与下游可接）、**I 82**（用户硬规矩：三条**机器可验全过**）、**H**（逐字忠实：**零未声明偏差**，它自己重写转换层**独立证实裁决 22**）。票 12 的两轮复审 87／80。
+
+**仍未关的两张**：
+
+- **票 13（`#233`）真机端到端 ＋ 肉眼终审** —— 目的地两条口径**已由编排会话亲自复跑证实**（见上「目的地已达成的实证」），产物**已两次发送给维护者**（`…134016` 原版 ／ `…134456` 清过措辞版），**等维护者一句话**。**这是唯一还差的一步。**
+- **票 10（`#230`）CLI 级用例锁** —— **未开工**。纯质量票（行为已由 `#229` 的实现 ＋ `cli-help-229.test.mjs` 的 11 条用例覆盖其大部分），**不锁也不影响交付物**；如实标为未完成，移交后续。
+- **`#240` 迁移欠债** —— `blocked_by #237`（共用件票 `saveHtmlFile`，属私家大厨那张图），本图不阻塞。
+
+**执行期顺带开出、不属本图目的地的两张**：`#241`（`plugin-bill-ilife` 构建会覆写自己的 `dist/client.js` 为裸 ESM，命中 `#150` 通道）／`#242`（`base-render` 的 help 模板与 schema **六处**对不上，含卡住用户 V6=B 的 `contact.url`）。
+
+下一步：**等维护者肉眼终审** → 关票 13 → **地图关门**。
 
 ## 接手须知（交新 session，2026-09-12 定稿）
 
@@ -32,17 +60,28 @@
 4. **决策卡** `t226-decisions.html`：16 条定案，逐条带用户原话。
 5. **脚本**（幂等，可重跑）：`t220-wire-edges.mjs`（拉边 ＋ 逐项校验 expected＝actual）／`fetch-map-body.mjs`（改正文前先取回，带 `## Destination` 守卫）／`chart.mjs`（建票，已拒重跑）。
 
-**frontier 三张（阻塞全部已解除）**：
+**frontier 现状（2026-09-12 末态，取代此前的「三张」说法）**：
 
-- **[票 5 结构设计](https://github.com/FeatherHunter/ilife/issues/225)** —— 必报五步第一、二步（影响清单 ＋ 结构设计 ＋ 告警线数字），**要用户点头**才关票；它一关，票 7／票 8 的开工前置就齐了。**建议先做这张**（纯 AFK 写报告，不用用户先答什么）。
-- **[票 4 决策](https://github.com/FeatherHunter/ilife/issues/224)** —— 命名落盘归属 ＋ 缺省出口口径（**含「落盘目录要不要加一层 `help/`」那道题**，Notes 里写了兄弟图两条口径的冲突来龙去脉）。这张要用户亲自裁。
-- **[票 12 装机](https://github.com/FeatherHunter/ilife/issues/232)** —— 纯实施、无阻塞，可最先动手；票面已带实测（客户端产物 3/3 绿、那对 frontmatter／`files` 断链点）。
+本图 **13/15 已关**（`#221`–`#226`／`#228`／`#229`／`#230`／`#231`／`#232`／`#234`）。**目的地两条口径已实证达成**，见上一节。**未关的两张**：
+
+- **[票 13（`#233`）真机端到端 ＋ 肉眼终审](https://github.com/FeatherHunter/ilife/issues/233)** —— **唯一还差的一步，等维护者一句话**。产物已两次发送（`…134016` 原版／`…134456` 清过措辞版）。票面已写明**订正后的验收判据**（条数／顺序逐字 ＋ 名称／可见文案在声明的换说法之后逐字）与从票 12 接走的 T1–T5。
+- **[`#240` 迁移欠债](https://github.com/FeatherHunter/ilife/issues/240)** —— `blocked_by #237`（共用件 `saveHtmlFile`，属私家大厨那张图），本图不阻塞。
+
+**已关的 [票 10（`#230`）CLI 级用例锁](https://github.com/FeatherHunter/ilife/issues/230)（100%）** —— 五例真 spawn ＋ **两次变异自证**（改文件名主体 → ①④红；`wx`→`w` → ③红），**编排会话独立复跑 `5 pass / 0 fail`**，并复核变异源件**逐字还原**（`manifest.ts` sha256 `B5550525…2761F` 与报告记录逐字相同）。它同时补上了包内 `test` 脚本那条账（裁决 5 §五-4：`scripts.test` 现含 `test/*.test.mjs`）。⚠️ 它为变异自证**临时改过两个生产件**，本席已**回归验证：产物逐字节未变**（`delivery.bytes=130825`、SHA-256 `7CBE622A…` 与改动前完全一致、`.db\memo` 仍不存在）。
+
+**✅ 真机往返已打通（2026-09-12 维护者实机证据触发的一次纠正）**：维护者在 DSH 里说「备忘录 HELP」，DSH 回「**备忘录这块我这儿没挂技能**」，而它列出的可用技能恰是 **`skill-bill`／`skill-calorie`／`skill-chef`**。本席实测 `~/.agents/skills` 里正是这三个（bill／chef 是 Junction→仓库，calorie 是**陈旧拷贝**），**`skill-memo-ilife` 不存在** ⇒ **一比一对应，DSH 认技能的入口就是 `~/.agents/skills`，不是（或不只是）插件提供方那一路。**
+**处置**：建 **Junction**（不是拷贝）`%USERPROFILE%\.agents\skills\skill-memo-ilife → D:\ilife\packages\skill-memo-ilife`；**建完技能目录立刻更新、无需重载 DSH**。端到端复验：加载 `skill-memo-ilife` 成功 ⇒ 按其唯一出口真跑 ⇒ `exit=0`／`delivery.path` 绝对路径／`bytes=130825` 与实盘一致／**跑完 `<db>\memo` 仍不存在**。
+⚠️ **本席先前两处说法据此作废**：①「`~/.agents/skills` 先不建」（采纳复审员 E／F 的静态分析，错在"插件提供方够用"这个前提）；②「真机往返需要重载 DSH」（实测**不需要**——DSH 是**运行时**读该根）。详见裁决正本**裁决 25**。
+**教训入档**：**静态机制分析（"哪一层赢"）不能替代"这个入口到底认不认"的实机验证。**
 
 **三条硬规矩（用户裁定，动手前必读）**：① HELP 是**完整体**不是现状快照，页面上不许标「当前无唤醒词」；② **命令不上页面**（prompt 只出现唤醒词，命令只住在 `SKILL.md` 的内部流程里）；③ **HELP 自身的唤醒词不上页面**（不传「怎么喊我」那块，也不当场景卡）。HELP 入口只认 1 条：`备忘录 HELP`（不分大小写）。
 
-**并发提醒**：`#183 居家管家`／`#197 作息管家`／`#208 私家大厨` 三张兄弟图会同时动 `tooling/check-boundaries.mjs:37` 的**同一行**——本图只改 `'skill-memo-ilife'` 那一项，别碰别人的。仓库工作树里还有别的会话未提交的改动（`skill-calorie` 等）：动 build／test 前先认边界，只 `git add` 自己的文件，`pnpm test` 会顺手改写其他技能的 `SKILL.md`（跑完 `git checkout` 还原）。
+**并发提醒**：`#183 居家管家`／`#197 作息管家`／`#208 私家大厨` 三张兄弟图会同时动 `tooling/check-boundaries.mjs` 的**同一行**——本图只改 `'skill-memo-ilife'` 那一项（**已完成**，且**保留了作息会话的 `#199` 注释块与 `skill-schedule` 移出**；票 12 顺手改正了 `#96` 总述的枚举计数 4→3，那是 `#199` 漏改的）。⚠️ **本 session 新立的纪律**：**本图所有 agent 一律不许动暂存区**（不许 `git add`／`restore --staged`／`reset`／`commit`）——曾发生过两个 agent 同时摸索引的事故（已核无污染）。**暂存与提交由编排会话独占。**
+⚠️ **提交状态**：**本图全部产出仍未提交**（HEAD 仍是 `3da2559`）。原因是工作树里另有三个会话的未提交改动，其中 `tooling/check-boundaries.mjs` 与 `pnpm-lock.yaml` **与我们的改动交织在同一份文件里**（前者含作息 `#199`、后者含大厨的 `tsdown` 四行）⇒ 一提交就会把它们卷进来。**提交口径待维护者定**。
 
-**产物落点**：代码与产物落 `packages/skill-memo-ilife/`；文档落 `docs/skills/skill-memo-ilife/`；交付 HTML 落 `<SKILLS_DB_PATH>/memo_html/`。本目录的文档与脚本**已入库**（照三张兄弟图的 `docs(skill-*)` 提交惯例，只 `git add` 本目录）；后续新增文档沿用同一惯例。
+**产物落点**：代码与产物落 `packages/skill-memo-ilife/`；文档落 `docs/skills/skill-memo-ilife/`；交付 HTML 落 `<SKILLS_DB_PATH>/memo_html/`。本目录的文档与脚本**沿用三张兄弟图的 `docs(skill-*)` 提交惯例**。
+
+**本 session 落下的关键文档（接手先读这两份）**：`t220-orchestrator-decisions.md`（**24 条裁决正本，1–24 连续**——执行期一切「为什么这么做」的答案都在这）／`t233-body.md`（**订正后的验收判据**）。
 
 ## Notes
 
@@ -115,15 +154,20 @@
 - [调查：内容资产对账](https://github.com/FeatherHunter/ilife/issues/222) — **新表把老核心动词整体换掉了**：`记备忘`／`改备忘`／`删备忘`／`备忘改分类`／`备忘录同步`／情绪族／`首次使用` 全部 `POLICY_NO_MATCH`，`memo.sync` 有实现却无唤醒词指向；老 29 个唯一唤醒词逐字命中 18／子串可路由 1／**完全不可路由 10**（新仓 test 覆盖 1/10）。三组数：老 30 场景无逐字落点 12／逐字命中 18；新表 10 条老骨架没有；骨架 8 域／13 组／30 场景／76 `editable_fields`／4 处「基础」兜底。**第二事实源判为算**（老 `SKILL.md` 三张表 ＋ `:300` 的 yaml 外别名）。HELP 触发短语实为 **9 条**（原记 1＋7，已更正）。决议见 `docs/skills/skill-memo-ilife/t222-resolution.md`。
 - [复核：老 memo_cli.py 的 CLI 子命令全集](https://github.com/FeatherHunter/ilife/issues/234) — 逐行读完老 `memo_cli.py`（1816 行）：**子命令全集 21 条**（`add_parser` 21 ↔ `if cmd` 分支 21、差集 0）；双向对账**表有码无 0 条／码有表无 2 条**（`due`／`init-report`）；**U5 判「没有」**——老技能无 `stats` 子命令、无统计类场景卡（八处证据链），**票 2 的结论不反转**；**U6** 老「删 X」是**独立子命令 `delete`**（老代码里根本没有 `remove`），建议 4 条「删 X」场景整体归 `memo.remove`；⚠️ 老侧还有**第三类**——有唤醒词、有场景卡、有 CLI 却不在两张表里（Init 类「首次使用」）⇒ 建资产要「yaml ＋ 三张表 ＋ 21 条子命令」三处合起来。决议见 `docs/skills/skill-memo-ilife/t234-resolution.md`。
 - [内容与取值裁决：老骨架对不齐的条目 ＋ 模板取值待裁项](https://github.com/FeatherHunter/ilife/issues/226) — **16 条定案**：U1／U2／U3 照老列全但**不标缺失**（HELP＝最终完整体）；U4 老词为主名、新词进 `aliases`；U5 都按老的来（`memo.stats` 不展）；U6 4 条「删 X」归 `memo.remove` ＋ **命令不上页面**；U7 老侧 **9 条**（地图早先少算一条）但**新技能只认 1 条**（`备忘录 HELP`，不分大小写，用户 2026-09-12 另裁）；U8 照老「基础」；V1 **不传「怎么喊我」块、HELP 自身唤醒词不上页面**；V2 照老 `'使用手册'`；V3 `1.3.0`；V4 初始化改判「库目录存在」；V5 不要逃生阀；**V6=B** `contact` 补可点链接（非推荐项）；V7 `editable_fields` **进**（清洗后）；V8 二级组 id 从 1 起。决议见 `docs/skills/skill-memo-ilife/t226-resolution.md`。
+- [决策：命名落盘管线的归属 ＋ 缺省出口口径](https://github.com/FeatherHunter/ilife/issues/224) — **判「甲」**：备忘录**自持一份最小管线**（只抄通式那一小块；`_N` **从 `_2` 起**；头注释写明第 4 份同逻辑并指向 `#237` 与迁移票 `#240`），**不给 `#229` 挂 `#237` 阻塞边**。判甲的决定性证据：三家现役实现与老实物**全部 `_2` 起**（`skill-bill/src/output.ts:26-38` 逐字「无 `_N` 则 `_2`」），而共用件同族的裁定是 `_1` 起（`#208:20`「**不照抄 bill 的 `_2`**」）且 `#237:23` 又把 `_2`／`_3` 记为「三家现在的行为」⇒ 两票上游自相矛盾；`#208:145` 把备忘逐字划出该图 ⇒ 用户「乙」原话推不出本图现在买单。另定：**缺省＝HELP 文件**、速查走显式参数（产物 `备忘录_速查表`，参数 `mode:"lookup"`）；落盘**扁平 `memo_html/`、不加 `help/`**（三条独立证据）；**`combo` 侧必须登记**（推翻草案的「不登记」——`test/combos-p8.test.mjs:107-114` 断言每键都在 `PRESENT_KEYS` 里解析得到，`:115-120` 断言 `present.ts` 与生成输出逐字相等）。两份对抗式复审 58/100 与 65/100，三处事实更正。决议见 `docs/skills/skill-memo-ilife/t224-resolution.md`。
+- [结构设计：新件住哪 ＋ 文件行数告警线](https://github.com/FeatherHunter/ilife/issues/225) — **形状定案并放行**：新件落**既有** `src/help/`（技能级落点，不新建能力目录），只多建一层 `src/help/scenes/`（8 个域文件，机器生成、禁手改）；`sceneData.ts`（2 导出）／`helpFile.ts`（3 导出）／`manifest.ts`（3 导出）／`scripts/gen-help-assets.mjs`。**告警线＝350 ＋ LF 口径**落 `packages/skill-memo-ilife/AGENTS.md`（本包**0 件超线**，最大 `src/cli/cmd_read.ts` 147）。**`B3` 转发作废**（护住包根出口 49 → 58）。闸门复审 G 判**有条件放行**（68/100），四条阻塞项**全部由裁决解决**。决议见 `docs/skills/skill-memo-ilife/t225-resolution.md`。
 
 ## Not yet specified
 
-- 「速查支」的产物名与落点：老家没有这一支（老技能只有一个 HELP），卡路里给了 `卡路里_速查台_<TS>.html`、记账给了 `饼干记账_速查表_<TS>.html`；备忘录要不要分名、叫什么——等票 4 定了缺省口径才细到能出票。
-- **U5 只差裁决**：事实已定（老技能无 `stats`、无统计类场景卡，票 14 八处读遍），「`memo.stats` 展不展」归票 6。
-- 票 2 的 **U1／U2／U3／U4／U6** （老核心动词无落点、`memo.sync` 无词、单条改分类无词、情绪族改名、废弃提醒无场景）与票 3 的**取值 8 条**：全部归票 6，收齐后一轮 grilling 问用户。
-- 票 3 交出的 **6 项取值待裁**（`meta_blocks[1]` 该不该有／`title` 要不要自带技能名／`version` 是否仍取 `1.3.0`／初始化口径重定义／`HELP_INITIALIZED` 逃生阀／`contact` 补不补）＋ 内容侧 7 项：**全部归票 6**，等它把甲、乙两组收齐后一轮 grilling 问用户。
-- 老骨架里那 4 处「分类下只有一个子功能 → 走『基础』兜底」在通用模板下要不要真建二级组：等票 5／票 6。
-- **落盘目录要不要加一层 `help/`**：老目录 `<SKILLS_DB_PATH>/memo_html/` 没有这一层；更近的两张兄弟图（`#197` 作息／`#208` 大厨）都改判成 `<技能>_html/help/`。沿用老目录、还是与兄弟同形——归票 4 裁（它是「命名落盘」那道题的一部分）。
+**本段原先的六条迷雾已全部毕业**，逐条去向：
+
+- 「速查支」的产物名与落点 → 票 4 **裁决 2**：`备忘录_速查表_<TS>.html`，显式参数 `mode:"lookup"`（照样板记账 `helpPaths.ts:28`）。
+- 「`memo.stats` 展不展」→ 票 6 **U5** 定案：都按老的来，不展。
+- 票 2 的 U 组与票 3 的取值组 → 票 6 **16 条全定案**（决策卡 `t226-decisions.html`）。
+- 老骨架 4 处「分类下只有一个子功能 → 走『基础』兜底」要不要真建二级组 → 票 6 **U8**：照老「基础」。
+- **落盘目录要不要加一层 `help/`** → 票 4 **裁决 1**：**扁平、不加**（三条独立证据：本图 Destination 与 Q3=A 原话逐字扁平；磁盘实测六张兄弟目录只有老世代的 `schedule_html` 有子目录，两张**已完工且终审通过**的同流水线地图产物 `calorie_html/` 与 `biscuit_accountant_html/` **全扁平**；记账落点代码 `helpPaths.ts:53` 无 `help/` 段）。
+
+当前**没有**已知但未成票的迷雾。若波次 2／3 落地时浮出新问题，按同一规矩办：**能问清就立票，问不清才留这里**。
 
 ## Out of scope
 
@@ -133,6 +177,10 @@
 - `packages/skill-memo-ilife/src` 整包按 HELP 一级分组重排：出本图目的地（用户 Q4=A，另立票）。
 - 发布态（抬版本＋发版＋真 npm 安装验证）：出本图，风险留给发版票。
 - 面板／侧栏的 HELP 入口、插件里「打开文件」的动作：属 `#61` 那条线。
+- **执行期顺带发现的仓库级缺陷，各自立票、本图不修**（都不在本图目的地内）：
+  - `#241` `plugin-bill-ilife` 的下一次构建会把**自己的** `dist/client.js` 从 loader 工厂包覆写成裸 ESM，而账单**装在 web profile 的 bundles 里** ⇒ 命中 `#150`「整个 web GUI 起不来」通道；触发条件极普通（任何人跑一次仓根 `tsc -b`／`pnpm -r build`），且 `home`／`schedule` **已被同一机制打坏**（惰性）。产物 git 救不回（`dist/` 被忽略）。
+  - `#242` `base-render` 共享层的 help 模板与 schema 两处对不上：`contact.items[]` 闭集**禁 `url`**（卡住用户 V6=B「补可点链接」，本图按「链接塞进 `value`」兜底）；`init_banner.steps` **三方不一致**（schema 要字符串数组／模板要对象数组／老生产路传对象数组）。
+- **本图执行期发现的「用户裁定撞上现实约束」清单**（不隐瞒，集中记此备查）：① `help/` 那一层——已在票 4 定案不加（三条独立证据）；② **V6=B 可点链接**——共享 schema 写不进去，本图退化为「看得见、可复制、点不动」，根因归 `#242`。
 
 ## 用户原话采访区（verbatim，一字未改；AI 执行先读这里）
 
@@ -168,4 +216,9 @@ Q6=A 没说不允许消费base
 ```
 将你的问题和回答以清晰的形式输出到html文件中
 ```
+
+
+
+
+
 

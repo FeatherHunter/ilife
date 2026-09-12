@@ -26,11 +26,12 @@ describe('dsh-memo-ilife 烟囱', () => {
     assert.ok(typeof assertCliPresent === 'function');
     assert.throws(() => assertCliPresent('/nonexistent/skill-memo-ilife-cmd_read.js'), (e) => e instanceof SkillBridgeError && e.code === 'missing-cli');
   });
-  it('#50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace）', () => {
+  it('#50 安装布局：单品声明 skill 精确 pin 依赖（正式版号，无 workspace；#129 防旧 skill 残留）', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.1\./);
-    assert.match(dep['skill-memo-ilife'] ?? '', /^\^0\.1\./);
+    const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-memo-ilife', 'package.json'), 'utf8')).version;
+    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.2\./);
+    assert.equal(dep['skill-memo-ilife'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
   it('#50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {

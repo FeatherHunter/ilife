@@ -15,7 +15,8 @@ export function buildHelpBlock() {
   const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
   for (const h of buildHelpLookup()) lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
   lines.push('');
-  lines.push('相关场景：' + keys.join('、') + '（10 联动，key 字符串 P8 落表时冻结）。');
+  // #229：计数**派生**，不写死（写死 10 时命令表已 11 条，块自述与实际当场打脸）。
+  lines.push('相关场景：' + keys.join('、') + '（' + keys.length + ' 联动，key 字符串 P8 落表时冻结）。');
   return lines.join('\n');
 }
 

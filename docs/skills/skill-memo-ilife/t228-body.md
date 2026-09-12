@@ -32,6 +32,19 @@
 - ⚠️ **HELP 自身的唤醒词不上页面**（用户 V1 定案）：「HELP HTML 中不包括 HELP 的唤醒词场景。用户说 备忘录HELP 就能拿到」⇒ **不传** `meta_blocks[1]`（「怎么喊我」那块），也不把 HELP 自己的唤醒词渲染成场景卡。
 - **`editable_fields` 要渲染**（用户 V7 定案）：模板第 `:1669` 行认这一栏，照资产里的清洗后 76 条渲染。
 
-## 进度：0%
+## 进度：100%
 
-下一步：等票 5（结构设计）关票；票 1／票 3 已关。
+**已交付**（交付报告 `docs/skills/skill-memo-ilife/t228-render-report.md`，含必报五步第五步对账）：
+
+- `packages/skill-memo-ilife/src/help/helpFile.ts`（220 LF，运行时导出恰 3 个：`buildMemoHelpFileData`／`renderMemoHelpHtml`／`formatHelpMinute`；类型出口 0）；
+- `packages/skill-memo-ilife/test/help-file-228.test.mjs`（191 LF，15 条回归锁全绿）；
+- `packages/skill-memo-ilife/package.json` 手工加一行 `"base-paint": "^0.3.0"`；
+- `tooling/check-boundaries.mjs` 就地删 `'skill-memo-ilife'` 一项（保留作息会话的 `#199` 注释块，未碰 `'skill-home'`）。
+
+**三条门**：`pnpm boundaries` 退出码 0；`pnpm --filter base-paint gen:help-shell:check` 退出码 0（前后缀哈希同基线）；**只构建本包** `tsc -b packages/skill-memo-ilife/tsconfig.json` 零 error（未跑仓根 `tsc -b`，避 `#241` 的雷）。
+
+**整页渲染**：用 **#227 真资产**验通（`备忘录 · 使用手册`／8 域／13 二级组／30 场景／64 条 `editable_fields`／6 个初始化步骤卡文案齐全），既解了载荷也把模板运行时在极简 DOM 桩上真跑了一遍。
+
+**裁决 20 的落地**：`init_banner.steps` 从「上报」改为**照模板的对象形 `{title,desc}[]`**（取页面正确那一边），并补了两条验证——① 6 条步骤的 title／desc **12/12 命中整页 HTML**；② 隔离探针留证「本票载荷**只对 A 路合法**」（喂 B 路校验器命中 `/init_banner/hidden` 与 `/init_banner/steps/0` 两处，根因归 `#242`）。
+
+**未做／归别人**：出口落盘与分派顺序归 `#229`；`combos.yaml` 与那四处测试归 `#229`；`SKILL.md` 正文归 `#231`；资产件与生成器归 `#227`。**未 commit、未 close 任何票、未动 `packages/base-render/**`。**

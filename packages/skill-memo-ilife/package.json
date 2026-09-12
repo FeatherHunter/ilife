@@ -1,6 +1,6 @@
 {
   "name": "skill-memo-ilife",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "备忘录SKILL一期：取数+口径+渲染+出口（M2/M3/M4/M5），依 link-core",
   "type": "module",
   "main": "./dist/index.js",
@@ -15,19 +15,21 @@
   },
   "files": [
     "dist",
+    "SKILL.md",
     "templates/*.html"
   ],
   "bin": {
     "memo-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "base-link-core": "^0.3.0"
+    "base-link-core": "^0.3.0",
+    "base-paint": "^0.3.0"
   },
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc -b && node scripts/build-help.mjs",
-    "test": "node --test ../../test/scaffold.test.mjs"
+    "test": "node --test ../../test/scaffold.test.mjs test/*.test.mjs"
   }
 }

@@ -93,7 +93,7 @@ import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
 import { HELP_CENTER_MODES, buildHelpSceneData, renderHelpCenterHtml } from '../render/helpCenter.js';
 import type { HelpCenterMode } from '../render/helpCenter.js';
 import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from '../render/helpFile.js';
-import { SHEET_FILE_STEM, resolveStemTarget } from '../render/helpPaths.js';
+import { SHEET_FILE_STEM, HELP_HTML_DIR_NAME } from '../render/helpPaths.js';
 import {
   renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
   renderErrorHtml,
@@ -115,6 +115,7 @@ import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCal
 import {
   HTML_DIR_NAME, deliverHtml, resolveReceiptHtmlPath,
 } from '../output.js';
+import type { HtmlLanding } from 'base-paint/save-html';
 import type { CalorieComboKey } from './keys.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
@@ -128,9 +129,10 @@ export interface DispatchOut {
   data: Record<string, unknown>;
   html: string;
   deliveryKind?: DeliveryKind;
-  /** #139 · 该次产物的落点**初候选**（绝对路径）：给定时绕过 `<中文command>` 命名（`output.ts:deliverHtml`），
-   *  仍走 `wx` 独占＋`EEXIST` 递补；一个 key 出多种产物（HELP 文件／速查台）时用它分开命名。 */
-  target?: string;
+  /** #139 · 该次产物的落点**意图**（目录 ＋ 文件名主体）：给定时绕过 `<中文command>` 命名（`output.ts:deliverHtml`），
+   *  仍走 `wx` 独占＋同秒递补（#237 起由共用件 `base-paint/save-html` 仲裁）；一个 key 出多种产物
+   *  （HELP 文件／速查台／回执）时用它分开命名。 */
+  target?: HtmlLanding;
 }
 
 function fail(code: number, msg: string): never {
@@ -824,7 +826,10 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
           mode: 'file' as const,
           bytes: Buffer.byteLength(html, 'utf8'),
         };
-        return { data, html, target: resolveStemTarget(resolveDbDir(), HELP_FILE_STEM, now) };
+        return {
+          data, html,
+          target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: HELP_FILE_STEM },
+        };
       }
       // 全量速查台：须显式 `mode`；`text` 态把文本一并回传（file／inline 只回落点，不塞 1 MB）。
       const mode = modeRaw as HelpCenterMode;
@@ -842,7 +847,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       // #83 · 渲染层已定文本交付：产物即文本（③ 文本态之一），交付装配层据此走文本通道。
       return {
         data, html: rendered.html, deliveryKind: mode === 'text' ? 'text' : 'html',
-        target: resolveStemTarget(resolveDbDir(), SHEET_FILE_STEM, now),
+        target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: SHEET_FILE_STEM },
       };
     }
     case 'calorie.help.lookup': {

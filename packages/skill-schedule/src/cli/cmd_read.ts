@@ -2,10 +2,11 @@
 // 作息管家唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。
-import { writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
+import type { Envelope } from 'base-link-core';
 import {
   ScheduleFetchError, SchedulePolicyError,
-  resolveDbPath, openScheduleDb, closeScheduleDb,
+  resolveDbPath, resolveDbDir, openScheduleDb, closeScheduleDb,
   listRecordsByDate, listRecordsRange, getRecordById, getStatus, getLastRecord,
   addRecord, amendRecord, addSummary,
   listPlanEvents, getPlanEventsRange, searchPlanEvent, getPlanEvent,
@@ -28,6 +29,10 @@ import {
   ScheduleRenderError,
 } from '../render/index.js';
 import { buildHelpLookup } from '../help/index.js';
+import { resolveStemTarget } from '../help/helpPaths.js';
+import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
+import { HELP_GROUPS } from '../help/scenes/help-assets.js';
+import { deliverHtml, type HtmlDelivery } from '../help/output.js';
 import type { ScheduleRecord } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -59,6 +64,61 @@ function monthRange(month: string): { start: string; end: string } {
 
 function toISODateTime(date: string, time: string): string {
   return date + 'T' + time + ':00';
+}
+
+// ── #203 · 「作息管家help」的交付装配（**在开库之前**走，照 skill-bill/src/cli/cmd_read.ts:493-495）────
+//
+// 缺省（不给任何参数）＝ 全量 HELP 文件：`<SKILLS_DB_PATH>/schedule_html/help/作息管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`
+// （目录与通式照老实物，`t198-old-help-truth.md` 第四节），独占落盘 ＋ **绝对路径**回执
+// （`delivery{mode,path,bytes}` 顶层追加，序在既有五字段之后）。
+// 显式 `q` ＝ 现找：只回命中（stdout），不落盘（检索式问答不刷目录）；`--html <路径>` 给了才写那个路径。
+// 全程**不开库**：初始化判据＝「DB 文件存在」（照老 `render_help._is_initialized`）；
+// 否则「看帮助」会 `new DatabaseSync` 出来并跑 DDL 自愈，把库建在用户还没开始用的目录里。
+const HELP_MODE_FILE = 'file' as const;
+
+/** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。 */
+interface DeliverIntent { readonly html?: string; readonly target: string; }
+interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
+
+/** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized` 与 bill `helpInitialized`）。
+ *  判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
+function helpInitialized(): boolean {
+  try { return existsSync(resolveDbPath()); } catch { return false; }
+}
+
+/** 交付索引（`list` 形，`schedule.help.lookup` 的缺省载荷）：一级分组一行，计数全**派生**自内容资产
+ *  （改资产即跟变，不写第二份 5／34／85）。行形状照 bill `HelpIndexItem`，不下重口。 */
+function buildHelpIndex() {
+  const items = HELP_GROUPS.map((g) => ({
+    id: g.id,
+    icon: g.icon,
+    label: g.label,
+    subgroupCount: g.subgroups.length,
+    sceneCount: g.subgroups.reduce((n, s) => n + s.scenes.length, 0),
+  }));
+  return {
+    items,
+    total: items.length,
+    sceneTotal: items.reduce((n, it) => n + it.sceneCount, 0),
+    subgroupTotal: items.reduce((n, it) => n + it.subgroupCount, 0),
+  };
+}
+
+function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
+  const dbDir = resolveDbDir();
+  const now = new Date();
+  const q = params.q === undefined ? undefined : String(params.q);
+  if (q !== undefined) {
+    // 现找：只回命中；落盘只有用户显式给 `--html <路径>` 才发生（main 里那支）。
+    const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
+    return { data: { ...buildHelpItems(all, q), mode: 'lookup', query: q } };
+  }
+  const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
+  assertHtmlSize(html);
+  return {
+    data: { ...buildHelpIndex(), mode: HELP_MODE_FILE, bytes: Buffer.byteLength(html, 'utf8') },
+    deliver: { html, target: resolveStemTarget(dbDir, HELP_FILE_STEM, now) },
+  };
 }
 
 function dispatch(key: string, params: Record<string, unknown>): unknown {
@@ -236,11 +296,11 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         }
         return buildPlanReceipt('已同步 ' + date + '：新建' + created + ' 更新' + updated + '（' + gate.openId + '）');
       }
-      case 'schedule.help.lookup': {
-        const q = typeof params.q === 'string' ? params.q : undefined;
-        const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
-        return buildHelpItems(all, q);
-      }
+      // #203：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
+      // 照 skill-bill/src/cli/cmd_read.ts:449-451 的同一道内部断言——防的是「改回无条件开库」这个静默回退。
+      case 'schedule.help.lookup':
+        fail(1, '内部错误：schedule.help.lookup 须走 dispatchHelp（开库之前）');
+        return null;
       default: fail(3, '未知 schedule key：' + key); return null;
     }
   } finally {
@@ -278,21 +338,29 @@ async function main() {
     process.exit(4);
   }, o.timeout);
   if (typeof timer.unref === 'function') timer.unref();
+  let env: Envelope | null = null;
+  let delivery: HtmlDelivery | undefined;
   try {
-    const data = dispatch(key, params);
-    const env = buildScheduleEnvelope(key, data);
-    if (o.html !== undefined) {
-      try {
-        const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
-        assertHtmlSize(html);
-        writeFileSync(o.html, html, 'utf8');
-        note('HTML 已写：' + o.html + '（utf8）');
-      } catch (e) {
-        if (e instanceof ScheduleRenderError) fail(5, (e as Error).message);
-        fail(5, 'HTML 写盘失败：' + o.html + '（' + (e as Error).message + '）');
-      }
+    // #203：`schedule.help.lookup` 在**开库之前**分派（只读页不建库）；其余 7 键照旧走 dispatch（内部开库）。
+    const help = key === 'schedule.help.lookup' ? dispatchHelp(params) : null;
+    env = buildScheduleEnvelope(key, help ? help.data : dispatch(key, params));
+    const built = env;
+    // 既有语义（不破）：`--html <路径>` 直写该路径，内容＝本包 envelope 片段（模板填充后）。
+    const sectionHtml = (): string => {
+      const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
+      assertHtmlSize(html);
+      return html;
+    };
+    if (help?.deliver !== undefined) {
+      // 本键的产物：缺省＝HELP 全壳页（自带 html），落盘走本包统一管线（独占 ＋ 同名递补）。
+      const html = help.deliver.html ?? sectionHtml();
+      if (help.deliver.html !== undefined) assertHtmlSize(html);
+      delivery = deliverHtml({ explicit: o.html, target: help.deliver.target, html });
+      note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+    } else if (o.html !== undefined) {
+      delivery = deliverHtml({ explicit: o.html, html: sectionHtml() });
+      note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
     }
-    process.stdout.write(JSON.stringify(env) + '\n');
     clearTimeout(timer);
   } catch (e) {
     clearTimeout(timer);
@@ -301,6 +369,8 @@ async function main() {
     if (e instanceof ScheduleRenderError) fail(5, (e as Error).message);
     fail(4, '取数失败：' + (e as Error).message);
   }
+  // #83／#144 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
+  process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
 }
 
 void main();

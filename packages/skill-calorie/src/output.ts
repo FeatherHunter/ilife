@@ -17,9 +17,17 @@
  *   2. 同秒冲突用 `readdirSync` + `startsWith` 计数，不用 `glob`——命令名已 sanitize，无 `[]` 元字符，
  *      语义等价且不引入依赖；
  *   3. 显式 `--output` 路径自动建父目录（老家直接 `open()` 会 ENOENT）；对旧行为是超集。
+ *
+ * #237 迁移（维护者 2026-09-12 裁决 8「放在 base-paint 吧，是绘制出 html 后的相关操作」＋ 地图 #208 的 Q7
+ * 裁「乙」＝收成共用位）：**独占创建 ＋ 同秒递补那一小块收进共用件** `base-paint/save-html` 的
+ * `saveHtmlFile`（本模块原先自持的 `nextExclusiveCandidate`／`writeFileExclusiveWithRetry` 与
+ * `skill-bill/src/output.ts` 的同名件逐行等价＝铁律二禁止的两份实现）。本件**保留**卡路里特有的三态交付
+ * （`file`／`inline`／`text`）与只读回退（`READONLY_WRITE_CODES`）——那是本技能既有的对外行为，
+ * 不并入共用件（记账线有意**不**做回退，两者的取舍正面不同，见 `skill-bill/src/output.ts` 尾注）。
  */
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { mkdirSync, readdirSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
+import { saveHtmlFile, type HtmlLanding } from 'base-paint/save-html';
 import { CALORIE_COMBOS } from './cli/keys.js';
 import { CalorieRenderError } from './render/errors.js';
 import { resolveDbDir } from './paths.js';
@@ -100,13 +108,13 @@ export function htmlDir(dbDir: string = resolveDbDir()): string {
   return d;
 }
 
-/** 旧版 `html_path()`：`<SKILLS_DB_PATH>/calorie_html/<中文command>_<stamp>[_N].html`（完整可写路径）。
- *  #119 · 按段拼接：`<覆盖|title>[_回执][_动态段][_内容标识]_<TS>[_N].html`
- *  （旧 `html_scene_path()` 类型段 ＋ `_cmd_maps.py` 动态段 ＋ `html_name(suffix=)` 内容标识段）。 */
-export function resolveDefaultHtmlPath(
+/** #119 · 缺省落点的**段拼接**：`<覆盖|title>[_回执][_动态段][_内容标识]`
+ *  （旧 `html_scene_path()` 类型段 ＋ `_cmd_maps.py` 动态段 ＋ `html_name(suffix=)` 内容标识段）。
+ *  #237 起它只出**落点意图**（目录 ＋ 文件名主体）：时间戳与同秒递补由共用件钉死。 */
+function defaultLanding(
   key: string,
-  opts: { now?: Date; dbDir?: string; suffix?: string | null; params?: Record<string, unknown> } = {},
-): string {
+  opts: { dbDir?: string; suffix?: string | null; params?: Record<string, unknown> } = {},
+): HtmlLanding {
   const d = htmlDir(opts.dbDir ?? resolveDbDir());
   const segs = [LEGACY_COMMAND_OVERRIDES[key] ?? chineseCommandFor(key)];
   const type = sceneTypeFor(key);
@@ -115,7 +123,21 @@ export function resolveDefaultHtmlPath(
   if (dyn) segs.push(dyn);
   const suf = opts.suffix ? sanitizeFilenamePart(opts.suffix) : '';
   if (suf) segs.push(suf);
-  return join(d, htmlFileName(segs.join('_'), { dir: d, now: opts.now ?? new Date() }));
+  return { dir: d, stem: segs.join('_') };
+}
+
+/** 旧版 `html_path()`：`<SKILLS_DB_PATH>/calorie_html/<中文command>_<stamp>[_N].html`（完整可写路径）。
+ *
+ *  这是**初候选**的命名真值（老 `html_name` 的「同秒已有数 + 1」口径），锁在 `output-naming-87`／
+ *  `output-naming-119`。⚠️ #237 起**落盘名的最终仲裁者是共用件** `saveHtmlFile`（同一通式 ＋ `wx` 独占
+ *  ＋ 同秒递补），本函数不再参与写盘：串行无撞名时两者逐字同值；只有「基线名被删而 `_N` 留空洞」这类
+ *  畸形目录态下，计数 hint 会指向与递补不同的槽位（本票按「甲」只做减法，未把这段计数口径一并收进共用件）。 */
+export function resolveDefaultHtmlPath(
+  key: string,
+  opts: { now?: Date; dbDir?: string; suffix?: string | null; params?: Record<string, unknown> } = {},
+): string {
+  const { dir, stem } = defaultLanding(key, opts);
+  return join(dir, htmlFileName(stem, { dir, now: opts.now ?? new Date() }));
 }
 
 /** 显式 `--output` / `--html` 落点：命名规则不参与，只保证父目录存在。 */
@@ -124,55 +146,23 @@ export function resolveExplicitHtmlPath(file: string): string {
   return file;
 }
 
-/* ── #128 · 并发原子落盘：独占创建 + 重试（S2 数据完整性） ───────────────────────────
+/* ── #128 · 并发原子落盘：独占创建 ＋ 同秒递补（**#237 起收进共用件**） ─────────────────────
  *
- * 根因：默认落点曾是「`readdirSync` 计数选名 → `writeFileSync`（`w` 覆盖）」两步，
+ * 根因（照抄保留）：默认落点曾是「`readdirSync` 计数选名 → `writeFileSync`（`w` 覆盖）」两步，
  * 两步之间无独占性；多进程并发同秒时都选同一路径 → 后写覆盖先写，
  * 用户按 envelope 的 `data.output` 可能打开另一次调用的产物（#91 红队 3 轮 ×5 实测）。
  * #91 后 `help.center` file 态约 1 MB，写窗口 200–300 ms，撞名概率显著放大。
  *
- * 修法（票面建议 1）：`flag:'wx'` 独占创建，`EEXIST` 时递增 `_N` 重试（原子，无需锁）。
- *  - 串行语义不变：首选仍是 `htmlFileName` 的计数 hint，首试即中 → 路径与旧版逐字一致；
- *  - 并发下由文件系统仲裁：败者 `EEXIST` → `_N+1` 重试，保证每个 envelope 的落点内容即本次产物；
+ * 修法（#128）：`flag:'wx'` 独占创建，`EEXIST` 时递增 `_N` 重试（原子，无需锁）。
+ * 本模块原先自持 `nextExclusiveCandidate`／`writeFileExclusiveWithRetry`；#237 起这两支由共用件
+ * `base-paint/save-html` 的 `saveHtmlFile` 唯一持有（`onExists:'succession'` ＝ 缺省），本模块只给落点意图：
+ *  - 串行语义不变：首选仍是通式初候选，首试即中 → 路径与旧版逐字一致；
+ *  - 并发下由文件系统仲裁：败者 `EEXIST` → `_N+1` 递补，保证每个 envelope 的落点内容即本次产物；
  *  - 大小写不敏感（Windows `normcase`，#87 F2）由 `wx` 天然覆盖：`.HTML` 占位同样 `EEXIST`；
- *  - 仅 `EEXIST` 重试；只读类（`EACCES` 等）仍走 #83 内联回退，其余原样抛出走回执；
- *  - 显式 `--output`／`--html` 保持覆盖语义（`w`），不参与重试：那是用户逐字指定的落点；
- *  - `target`（回执落点，`resolveReceiptHtmlPath` 的默认命名）与默认路径同走独占重试。
+ *  - 仅 `EEXIST` 递补；只读类（`EACCES` 等）仍走 #83 内联回退，其余原样抛出走回执；
+ *  - 显式 `--output`／`--html` 保持覆盖语义（共用件 `onExists:'overwrite'`），不参与递补：那是用户逐字指定的落点；
+ *  - `target`（HELP 文件／速查台／回执落点）与默认路径同走独占递补。
  */
-
-/** #128 · 下一独占候选（可单测）：`<cmd>_<TS>[_N].html` 的 `_N` 递增；无 `_N` 则 `_2`。导出仅供测试。 */
-export function nextExclusiveCandidate(currentAbs: string): string {
-  const dir = dirname(currentAbs);
-  const base = currentAbs.slice(dir.length + 1);
-  const m = base.match(/^(.*_\d{8}_\d{6})(?:_(\d+))?(\.[^.]+)$/);
-  if (m) {
-    const prefix = m[1] as string;
-    const n = m[2] !== undefined ? Number.parseInt(m[2] as string, 10) : 1;
-    return join(dir, prefix + '_' + String(n + 1) + HTML_EXT);
-  }
-  const dot = base.lastIndexOf('.');
-  const stem = dot >= 0 ? base.slice(0, dot) : base;
-  return join(dir, stem + '_2' + HTML_EXT);
-}
-
-/** #128 · 独占写 + 重试（可单测）：`wx` 首试，`EEXIST` 则 `_N+1` 重试。导出仅供测试。 */
-export function writeFileExclusiveWithRetry(initialAbs: string, html: string): string {
-  let candidate = initialAbs;
-  for (let i = 0; i < 1000; i++) {
-    try {
-      mkdirSync(dirname(candidate), { recursive: true });
-      writeFileSync(candidate, html, { flag: 'wx', encoding: 'utf8' });
-      return candidate;
-    } catch (e) {
-      if ((e as NodeJS.ErrnoException)?.code === 'EEXIST') {
-        candidate = nextExclusiveCandidate(candidate);
-        continue;
-      }
-      throw e;
-    }
-  }
-  throw Object.assign(new Error('落点独占创建重试超限：' + initialAbs), { code: 'EEXIST' });
-}
 
 /* ── #83 · 三态交付：落盘／只读回退（M4「必须渲染并打开」的机械保证） ───────────────────────── */
 
@@ -191,54 +181,49 @@ export type HtmlDelivery =
   | { readonly mode: 'inline'; readonly reason: string; readonly bytes: number };
 
 /** 交付一次 HTML 产物（**唯一落盘点**）：
- *  - `target` 显式给定时为回执类默认命名 → **独占创建 + 重试**（#128，与默认同）；
- *    `explicit`（`--output`／`--html`）为用户逐字指定 → **覆盖写**（`w`，语义不变）；
- *    否则默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html` → **独占创建 + 重试**（#128）；
+ *  - `target`（HELP 文件／速查台／回执的落点意图）→ **独占创建 ＋ 同秒递补**（共用件缺省 `succession`）；
+ *    `explicit`（`--output`／`--html`）为用户逐字指定 → **覆盖写**（共用件 `onExists:'overwrite'`，语义不变）；
+ *    否则默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html` → **独占创建 ＋ 同秒递补**；
  *  - 只读类失败 → `{mode:'inline'}`（调用方把产物随 envelope 回传）；其余失败**原样抛出**（走回执）。
- *  落点**解析**与写入同在一个 try 内：`calorie_html` 被同名文件占位等解析期失败同样归类（#87 返修 F4）。 */
+ *  落点**解析**与写入同在一个 try 内：`calorie_html` 被同名文件占位等解析期失败同样归类（#87 返修 F4）。
+ *  #237：`bytes` 由共用件**写后回读**给出（实际落盘字节数）；`inline` 态无文件可读，仍按 UTF-8 期望值算。 */
 export function deliverHtml(input: {
   key: string;
   params: Record<string, unknown>;
   explicit?: string;
-  target?: string;
+  target?: HtmlLanding;
   html: string;
-  now?: Date;
 }): HtmlDelivery {
-  const bytes = Buffer.byteLength(input.html, 'utf8');
   try {
     if (input.target !== undefined) {
-      const written = resolve(input.target);
-      const finalPath = writeFileExclusiveWithRetry(written, input.html);
-      return { mode: 'file', path: finalPath, bytes };
+      return saveHtmlFile({ dir: input.target.dir, stem: input.target.stem, html: input.html });
     }
     if (input.explicit !== undefined) {
-      const written = resolve(input.explicit);
-      writeFileSync(resolveExplicitHtmlPath(written), input.html, 'utf8');
-      return { mode: 'file', path: written, bytes };
+      // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--output` 亦文档化为
+      // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
+      // `bad-input` → **产物已写盘却 exit 2**。共用件回执的 `path` 恒为绝对路径（`resolve(dir)` ＋ 文件名）。
+      const abs = resolve(input.explicit);
+      return saveHtmlFile({
+        dir: dirname(abs), stem: basename(abs), html: input.html, onExists: 'overwrite',
+      });
     }
-    const hint = resolveDefaultHtmlPath(input.key, {
+    const landing = defaultLanding(input.key, {
       params: input.params,
       suffix: writeSuffixFor(input.key, input.params),
-      now: input.now,
     });
-    // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--output` 亦文档化为
-    // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
-    // `bad-input` → **产物已写盘却 exit 2**。此处与 `writeFileSync` 同口径 `resolve`（写的就是它），
-    // 只归一化回传值，落盘行为与旧版逐字一致。
-    const written = resolve(hint);
-    const finalPath = writeFileExclusiveWithRetry(written, input.html);
-    return { mode: 'file', path: finalPath, bytes };
+    return saveHtmlFile({ dir: landing.dir, stem: landing.stem, html: input.html });
   } catch (e) {
-    if (isReadOnlyWriteFailure(e)) return { mode: 'inline', reason: (e as Error).message, bytes };
+    if (isReadOnlyWriteFailure(e)) {
+      return { mode: 'inline', reason: (e as Error).message, bytes: Buffer.byteLength(input.html, 'utf8') };
+    }
     throw e;
   }
 }
 
-/** #83 · 回执落点：`<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html`（旧 `render_error_receipt.py`
- *  的 `COMMAND_CN = '操作失败'` 逐字对齐；回执本身也走三态，写不进去即内联）。 */
-export function resolveReceiptHtmlPath(command = '操作失败', now: Date = new Date()): string {
-  const d = htmlDir();
-  return join(d, htmlFileName(command, { dir: d, now }));
+/** #83 · 回执落点**意图**（#237：名字里的时间戳与递补由共用件钉死，本函数只给目录 ＋ 主体）：
+ *  主体 `操作失败`（旧 `render_error_receipt.py` 的 `COMMAND_CN` 逐字对齐；回执本身也走三态，写不进去即内联）。 */
+export function resolveReceiptHtmlPath(command = '操作失败'): HtmlLanding {
+  return { dir: htmlDir(), stem: command };
 }
 
 /** #119 · 旧 `html_scene_path()` 的「类型中文」段真值（`html_paths.py` OUTPUT_TYPE_LABELS）。 */

@@ -1,4 +1,4 @@
-// 渲染层·envelope（M4）：10 联动 key×shape 映射（M1 拆分表）；key 字符串 P8 落表时冻结，此处只做形状分配与全字段校验。
+// 渲染层·envelope（M4）：11 联动 key×shape 映射（M1 拆分表 10 条 ＋ #229 的 memo.help.lookup）；key 字符串 P8 落表时冻结，此处只做形状分配与全字段校验。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { MemoRenderError } from './errors.js';
 
@@ -13,6 +13,9 @@ export const MEMO_KEY_SHAPES: Record<string, EnvelopeShape> = {
   'memo.sync': 'receipt',
   'memo.batch': 'receipt',
   'memo.stats': 'stat',
+  // #229：「备忘录 help」这条主路（照 bill.help.lookup／home.help.lookup 命名）。载荷＝域级索引（list 形），
+  // 由出口层 `dispatchHelp` 在**开库之前**装配——本键必须登表，否则出口早期就抛 `ERR 3: 未知联动 key`。
+  'memo.help.lookup': 'list',
 };
 
 export function memoShapeFor(key: string): EnvelopeShape {

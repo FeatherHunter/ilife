@@ -1,5 +1,7 @@
 # 备忘录 HELP：通用 help 模板的注入契约 ＋ 备忘录专属取值（票 #223）
 
+> **更正（2026-09-12 补，t202）**：本报告全文凡写「`meta_blocks` 在 A 路**不渲染**／无落点／读了不渲染」处**均已失效**——共享 help 模板自 t202 起在**分组页页首**按 `m.id === g.key` 条件渲染 `id` 命中该分组的块（`:1786-1789`）。本件**不传** `meta_blocks`（用户裁定 V1），故页面输出仍与旧版逐字节相同。契约见 `docs/base/base-render/t202-help-meta-blocks.md`；§1.2 表格里 `meta_blocks` 那行已就地改对。
+
 调查日期 2026-09-12。一切结论以**代码与产物的实测**为准；行号按本报告当日在本仓／老仓盘上的文件实测。
 起点＝兄弟图 `#183` 的票 3 产物：`docs/skills/skill-home/t186-template-contract.md`（**实际读到的就是这个文件名**，227 行／30 KB，2026-09-12 仍在盘；`#183` 并发工作期间该目录未改名）。
 
@@ -54,7 +56,7 @@
 | `skill_name` | ① hero eyebrow 小字；②「关于」Tab 版本段的技能名 `<b>` | `:1772`（`esc(SKILL_NAME)`）、`:1817` |
 | `title` | ① `<title>` 文档标题（`__HELP_TITLE__` 占位替换）；② hero 大字 `<h1>` | `:6`（占位）、`:1772`（`esc(TITLE)`）；替换口径＝生成物 `helpShell.ts:141-145` 的 `composeDocTitle` |
 | `subtitle` | **无落点**。`:1650` 之后全模板零引用（实测全文 ×1） | — |
-| `meta_blocks` | **无落点**。`:1651` 之后全模板零引用（实测全文 ×1） | — |
+| `meta_blocks` | **按分组 id 条件渲染**（自 t202 起）：`:1653` 读入，`:1786-1789` 在分组页锚点后按 `m.id === g.key` 渲同 id 的块（`title` 转义、`html` 原样）。不传即 `[]` ⇒ 输出与旧版逐字节相同；`id` 不命中任何分组的块不上页。本件**不传**（§页面上不许出现的东西），故页面零差异。详见 `docs/base/base-render/t202-help-meta-blocks.md` | `:1653`（读）、`:1786-1789`（渲染） |
 | `version` | 「关于」Tab 版本段：`v` ＋ 值 ＋ ` · HELP 模板 v4`（整段不判空） | `:1817` |
 | `init_banner` | hero 下方首次使用横幅：`title`／`subtitle`／`button_text`／`prompt`（进复制按钮 `data-c`）／`steps[]`；`closable === false` 才不画 ✕ | 显隐门 `:1775`；steps `:1776`；✕ 关闭 `:1838-1841`；CSS `:28-41` |
 | `contact` | 「关于」Tab 第一段「联系作者」：逐项 `<b>label</b>` ＋ 值；`it.url` 为真**且**值以 `http` 开头才渲染成 `<a target="_blank">`；`copy_all` 为真再加一行「一键复制 全部联系信息」 | 门 `:1801`；项 `:1803-1809`；`url` 判 `:1804`；`copy_all` `:1810-1813` |

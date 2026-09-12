@@ -23,11 +23,13 @@ describe('dsh-schedule-ilife 烟囱', () => {
     assert.ok(typeof assertCliPresent === 'function');
     assert.throws(() => assertCliPresent('/nonexistent/skill-schedule-cmd_read.js'), (e) => e instanceof SkillBridgeError && e.code === 'missing-cli');
   });
-  it('#50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace）', () => {
+  it('#50 安装布局：单品声明总管同版本线 ＋ 技能精确 pin（正式版号，无 workspace）', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.1\./);
-    assert.match(dep['skill-schedule'] ?? '', /^\^0\.1\./);
+    // 本批发版窗口（作息线首发 0.2.0）：总管走 ^0.2.0 同版本线；
+    // 技能按 #129 用**精确 pin**——caret ＋ 存量 lockfile 会让旧 skill 残留，exact 才强制重解。
+    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.2\./);
+    assert.equal(dep['skill-schedule'], '0.2.0');
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
   it('#50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {

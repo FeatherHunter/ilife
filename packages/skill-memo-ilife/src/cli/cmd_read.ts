@@ -2,11 +2,16 @@
 // memo 唯一出口 cmd_read（M5 #35）：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。
-import { writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Envelope } from 'base-link-core';
 import { openMemoDb, listNotes, getNote, searchNotes, addNote, updateNote, removeNote, larkReady, MemoFetchError } from '../fetch/index.js';
 import { normalizeTop, normalizeSub, normalizeRemindAt, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
 import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, MemoRenderError } from '../render/index.js';
+import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
+import { buildHelpSceneIndex } from '../help/sceneData.js';
+import { buildHelpLookup } from '../help/index.js';
+import { HELP_FILE_STEM, LOOKUP_FILE_STEM, resolveStemTarget, deliverMemoHtml, type MemoHtmlDelivery } from '../help/memoOutput.js';
 import { MemoPolicyError } from '../fetch/errors.js';
 import type { MemoDb, MemoNote } from '../fetch/db.js';
 
@@ -29,7 +34,72 @@ function needStr(params: Record<string, unknown>, name: string): string {
   return v;
 }
 
-// 十键分发：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
+// ── #229 · 「备忘录 help」的交付装配（**在开库之前**走，照 skill-bill/src/cli/cmd_read.ts:493-495） ────
+//
+// 缺省（不给任何参数）＝ 全量 HELP 文件：`<SKILLS_DB_PATH>/memo_html/备忘录_HELP_<YYYYMMDD_HHMMSS>[_N].html`
+// （扁平、不加 `help/` 层：裁决 1），独占落盘 ＋ **绝对路径**回执（`delivery` 顶层追加，序在既有五字段之后）。
+// 显式 `mode:"lookup"` ＝ 速查表分名文件（主体 `备忘录_速查表`，裁决 2：一个键两种产物就分两个名字）。
+// 显式 `q` ＝ 现找：只回命中（stdout），给 `--html <路径>` 才落盘（检索式问答不刷目录）。
+// 全程**不开库**：初始化判据＝「**memo 库目录存在**」（票 6 V4：新库是目录 `<SKILLS_DB_PATH>/memo`，
+// 不是老家的 `memo.db` 文件——本机实测 0 字节空壳 `memo.db` 在、真目录不在，老家口径当场判错），
+// 且**只 stat、绝不建库**：免得「看帮助」把库目录 `mkdir` 出来。
+const HELP_MODE_FILE = 'file' as const;
+
+/** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。 */
+interface MemoDeliverIntent { readonly html?: string; readonly target: string; }
+interface MemoHelpDispatch { readonly data: unknown; readonly deliver?: MemoDeliverIntent; }
+
+/** 初始化状态：memo 库**目录**存在＝已初始化（票 6 V4）。只 `stat`、不建目录；
+ *  判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
+function helpInitialized(dbPath: string): boolean {
+  try { return existsSync(join(dbPath, 'memo')); } catch { return false; }
+}
+
+/** 速查支的 `list` 载荷：一行一唤醒词（短语／key／形状／调用形／一句话），全从 `WAKE_TABLE` 派生。 */
+function buildLookupItems() {
+  return buildHelpLookup().map((h) => ({
+    id: h.phrase,
+    title: h.cli,
+    category: h.key,
+    shape: h.shape,
+    desc: h.desc,
+  }));
+}
+
+function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelpDispatch {
+  const now = new Date();
+  const mode = params.mode === undefined ? undefined : String(params.mode);
+  const q = params.q === undefined ? undefined : String(params.q);
+  const initialized = helpInitialized(dbPath);
+  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
+  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + mode + '）：本键只认 lookup');
+
+  if (q !== undefined) {
+    const items = buildLookupItems().filter((it) => q.includes(String(it.id)));
+    return { data: { items, total: items.length, mode: 'lookup', query: q } };
+  }
+  if (mode === 'lookup') {
+    const items = buildLookupItems();
+    return {
+      data: { items, total: items.length, mode: 'lookup' },
+      deliver: { target: resolveStemTarget(dbPath, LOOKUP_FILE_STEM, now) },
+    };
+  }
+
+  const data = buildMemoHelpFileData(now, { initialized });
+  if (String(data.version) !== buildHelpSceneIndex().version) {
+    fail(5, 'HELP 世代不一致：载荷 ' + data.version + ' ≠ 资产 ' + buildHelpSceneIndex().version);
+  }
+  const html = renderMemoHelpHtml(data);
+  assertHtmlSize(html);
+  // 索引载荷（`list` 形）：一行一域，计数全派生；`memo.help.lookup`＝HELP 文件的交付索引。
+  return {
+    data: { ...buildHelpSceneIndex(), mode: HELP_MODE_FILE },
+    deliver: { html, target: resolveStemTarget(dbPath, HELP_FILE_STEM, now) },
+  };
+}
+
+// 十一键分发：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
 function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): unknown {
   switch (key) {
     case 'memo.search': {
@@ -92,6 +162,11 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): unk
       for (const n of all) metrics['cat.' + n.category] = (metrics['cat.' + n.category] || 0) + 1;
       return { metrics };
     }
+    // #229：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
+    // 照 skill-bill/src/cli/cmd_read.ts:449-451 的同一道内部断言——防的是「改回无条件开库」这个静默回退。
+    case 'memo.help.lookup':
+      fail(1, '内部错误：memo.help.lookup 须走 dispatchHelp（开库之前）');
+      return null;
     default: fail(3, '未知 memo key：' + key); return null;
   }
 }
@@ -124,24 +199,40 @@ async function main() {
   void shape;
   const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
   timer.unref();
-  let env = null;
+  let env: Envelope | null = null;
+  let delivery: MemoHtmlDelivery | undefined;
   try {
-    const db = openMemoDb(join(dbPath, 'memo'));
-    const data = dispatch(o.key, params, db);
-    env = buildMemoEnvelope(o.key, data);
-    if (o.html) {
-      const html = renderEnvelopeHtml(env);
+    // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余 10 键照旧走 dispatch（内部开库）。
+    const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
+    env = buildMemoEnvelope(o.key, help ? help.data : dispatch(o.key, params, openMemoDb(join(dbPath, 'memo'))));
+    const built = env;
+    // B4 既有语义：`--html <路径>` 逐字写用户给的路径，内容仍是本包的 envelope 片段（`renderEnvelopeHtml`）。
+    const sectionHtml = (): string => {
+      const html = renderEnvelopeHtml(built);
       assertHtmlSize(html);
-      try { writeFileSync(o.html, html, 'utf8'); }
-      catch (e) { fail(5, 'HTML 写盘失败：' + o.html); }
+      return html;
+    };
+    if (help?.deliver !== undefined) {
+      // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
+      const html = help.deliver.html ?? sectionHtml();
+      if (help.deliver.html !== undefined) assertHtmlSize(html);
+      delivery = deliverMemoHtml({ explicit: o.html, target: help.deliver.target, html });
+    } else if (o.html) {
+      delivery = deliverMemoHtml({ explicit: o.html, html: sectionHtml() });
     }
   } catch (e) {
     if (e instanceof MemoFetchError) fail(4, '取数失败：' + e.message);
     if (e instanceof MemoPolicyError) fail(2, '口径失败：' + e.message);
     if (e instanceof MemoRenderError) fail(5, '渲染失败：' + e.message);
+    // 落盘错误：`EACCES`／`ENOTDIR`／`ENOSPC`… 一律 exit 5（不静默当成功、不换形态降级）。
+    if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
+      fail(5, '落盘失败：' + ((e as Error).message || String(e)));
+    }
+    if ((e as Error).message?.includes('SKILLS_DB_PATH')) fail(1, (e as Error).message);
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally { clearTimeout(timer); }
-  process.stdout.write(JSON.stringify(env) + '\n');
+  // #83／#144 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，envelope 既有五字段一字不改、序不变。
+  process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
 }
 
 await main();

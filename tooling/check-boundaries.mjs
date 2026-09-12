@@ -27,14 +27,22 @@ const grepHit = ['base-link-core/src', 'base-combos/src'].some((d) =>
     /registerTab|openTab|mountInjector/.test(readFileSync(join(root, 'packages', d, f), 'utf8'))));
 assert(!grepHit, '装配 owner 归一 render（link-core/combos 无自装配）');
 
-// #96 · base-* 变更影响面断言：其余 4 技能（chef/home/schedule/memo-ilife）当前**不消费** base-*，
-// 故 base-paint（目录 base-render）的任何变更都不得改动这 4 个技能的页面。结构面在这里卡死，
+// #96 · base-* 变更影响面断言：其余 3 技能（chef/home/memo-ilife）当前**不消费** base-*，
+// 故 base-paint（目录 base-render）的任何变更都不得改动这 3 个技能的页面。结构面在这里卡死，
 // 行为面（HTML 产物逐件 sha256）在 `pnpm snapshot:html:check`（tooling/skill-html-snapshot.mjs）。
 //
 // #145 起 skill-bill **移出**该名单：地图 #143 已裁「饼干记账 HELP 的模板与渲染走共享层
 // base-paint/help-shell」（用户 Q2＝两条同时达成／Q9＝可选键照传），bill 自此是**有意的**消费方，
-// #96 那条「尚未迁移」的现状断言对它已失效。其余 4 个技能的断言一字未放宽（仍查依赖闭包＋源码）。
-const SKILLS_BASE_FROZEN = ['skill-chef', 'skill-home', 'skill-schedule', 'skill-memo-ilife'];
+// #96 那条「尚未迁移」的现状断言对它已失效。
+// #199 起 skill-schedule **移出**该名单：地图 #197 已裁「作息管家 HELP 走共享 help 模板
+// base-paint/help-shell」（用户 Q5=A／Q11=A，裁定成文见 docs/skills/skill-schedule/t199-structure-verdict.md），
+// schedule 自此同样是有意的消费方。断言口径、判定实现与其余技能的覆盖面一律未动
+// （仍查依赖闭包＋源码／模板扫描），只是这一份「尚未迁移」名单少一个名字。
+// #220 起 skill-memo-ilife **移出**该名单：地图 #220 已裁「备忘录 HELP 走共享 help 模板
+// base-paint/help-shell」（走 A 路＝`renderHelpShellHtml`，裁决正本 docs/skills/skill-memo-ilife/
+// t220-orchestrator-decisions.md），memo 自此同样是有意的消费方。同上：断言口径、判定实现
+// 与其余技能的覆盖面一律未动，只是这一份「尚未迁移」名单再少一个名字。
+const SKILLS_BASE_FROZEN = ['skill-chef', 'skill-home'];
 const BASE_RUNTIME = new Set(['base-paint', 'base-render']); // 目录名／包名两种写法都算
 for (const name of SKILLS_BASE_FROZEN) {
   const p = pkg(name);

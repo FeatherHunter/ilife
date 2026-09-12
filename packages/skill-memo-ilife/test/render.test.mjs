@@ -13,11 +13,13 @@ const GOOD = {
   'memo.sync': { ok: true, message: '已同步' },
   'memo.batch': { ok: true, message: '批量完成' },
   'memo.stats': { metrics: { count: 3 } },
+  // #229：命令表 10 → 11（缺省「备忘录 help」＝ HELP 文件那条主路，list 形＝域级索引载荷）。
+  'memo.help.lookup': { items: [{ id: '1', icon: '📝', label: '备忘', subgroupCount: 1, sceneCount: 6 }], total: 1, version: '1.3.0' },
 };
 
 describe('memo 渲染层', () => {
-  it('10 key 建 envelope 全字段可用', () => {
-    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 10);
+  it('11 key 建 envelope 全字段可用', () => {
+    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 11);
     for (const [key, shape] of Object.entries(MEMO_KEY_SHAPES)) {
       assert.equal(memoShapeFor(key), shape);
       const env = buildMemoEnvelope(key, GOOD[key]);

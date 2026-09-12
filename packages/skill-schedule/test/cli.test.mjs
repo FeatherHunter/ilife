@@ -103,7 +103,9 @@ describe('作息唯一出口 cmd_read（8 键全票）', () => {
     assert.match(JSON.parse(rv.stdout).data.message, /已复盘/);
   });
   it('help.lookup：全表 + 现找 + 空结果指引 + 飞书缺失阻断', () => {
-    const h = run(['schedule.help.lookup']);
+    // #203：缺省（不给参）改走「HELP 文件交付」支（见 test/help-delivery-203.test.mjs）；
+    // 速查全表改由显式 `q:''`（空检索＝不过滤）取，断言原样保留。
+    const h = run(['schedule.help.lookup', '--params', P({ q: '' })]);
     assert.equal(h.status, 0);
     assert.ok(JSON.parse(h.stdout).data.total >= 40);
     const q = run(['schedule.help.lookup', '--params', P({ q: '帮我查作息' })]);

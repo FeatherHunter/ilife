@@ -4,14 +4,19 @@
  * apply 真注册通道，取数只经 bridge.readViaCli（spawn 技能 CLI），
  * 从不 import 任何技能实现。
  * 单品硬依赖总管（dependencies，非 peer，见 package.json）；设置页住本包。
+ *
+ * #232：`inject` 加 `skills`，`apply` 注册**打包技能提供方**（见 skill-provider.ts）——
+ * DSH 里的 agent 由此知道有 `skill-memo-ilife` 这个技能（名＋介绍，可按需读全文调 CLI）。
+ * 提供方是宿主按名去重的单例：重装配时退让（照 #56 卡路里／#150 记账／#218 大厨样板），他错重抛。
  */
+import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, ok, fail, parseReadPayload } from './contract.js';
 import type { RpcResult } from './contract.js';
 import { SkillBridgeError, readViaCli } from './bridge.js';
 import type { HostCtx, RpcHandler } from './dsh-ctx.js';
 
 export const name = 'dsh-memo-ilife';
-export const inject = ['connection', 'webServer'];
+export const inject: readonly string[] = ['connection', 'webServer', 'skills'];
 
 interface HostLogger {
   info?(...args: unknown[]): void;
@@ -38,6 +43,14 @@ export function apply(ctx: HostCtx): void {
     (typeof loggerSource === 'function'
       ? (loggerSource as (scope: string) => HostLogger)(name)
       : (loggerSource as HostLogger | null | undefined)) ?? console;
+  // #232：注册打包技能提供方——agent 的技能表由此看得见 skill-memo-ilife（名＋介绍）。
+  try {
+    ctx.skills.registerProvider(() => skillProvider);
+  } catch (error) {
+    // 提供方是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让；他错重抛。
+    if (!String((error as Error)?.message ?? error).includes('already registered')) throw error;
+    logger.warn?.('[dsh-memo-ilife] skill provider ' + PROVIDER_NAME + ' already registered by another instance; yielding');
+  }
   // #80：迁移到 DSH 公开的 /api 载体（ctx.connection.fetch.register）。
   // 旧写法 ctx.connection.rpc.handle() 会以 connection 服务自身的 Context 去调
   // webServer.register 注册前缀路由，而那个 Context 没有 webServer 注入 → 装配期必抛
@@ -85,3 +98,10 @@ export type { SettingRow } from './settings.js';
 export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli } from './bridge.js';
 export { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, ok, fail, parseReadPayload } from './contract.js';
 export type { ReadPayload, RpcError, RpcResult } from './contract.js';
+// 宿主**不**导出 `./client.js` 的值也不引用它的类型（#218 拆雷）：客户端产物是 **loader 工厂包**
+// （`window.__ModuleLoader__.load({id, factory})` 的 CJS，由 tsdown 打），不是 ESM 模块——
+// 宿主 `export … from './client.js'` 会让插件树在启动期报
+// 「The requested module './client.js' does not provide an export named 'CLIENT_COMPONENT'」而整棵树起不来；
+// 连 type-only 引用也会把 client.ts 拉进宿主 `tsc -b` 的编译程序，把 loader 工厂包覆写成裸 ESM。
+export { PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK, SKILL_FILE, skillDir, parseSkillText, provider as skillProvider } from './skill-provider.js';
+export type { SkillCandidate, SkillDefinition, SkillProvider, SkillInvocationPolicy, SkillsFace } from './dsh-ctx.js';

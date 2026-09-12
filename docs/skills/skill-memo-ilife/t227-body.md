@@ -30,6 +30,8 @@
 - 老 30 场景里**12 条无逐字落点**：哪些进 HELP、哪些留登记位（`status`）、哪些不列——照票 6 的裁决落。
 - `editable_fields`：老备忘录场景多这一个字段（老 `memo_render.py:562-567`），共享模板**认它**（`help-template.html:1669`）——进不进由票 6 裁，进的话本票要落进资产。
 
-## 进度：0%
+## 进度：100%
 
-下一步：等票 5（结构设计）＋票 6（内容与取值裁决）关票；票 2 已关。
+下一步：已交工（含复审员 I 的 M1／M2／M3 处置）。产物＝`packages/skill-memo-ilife/src/help/scenes/{memo,search,remind,wish,checkin,mood,sync,init}.ts`（8 域）＋ `src/help/sceneData.ts`（**2 个导出**）＋ `scripts/gen-help-assets.mjs`（`--check` 只比对不落盘）＋ 交付报告 `docs/skills/skill-memo-ilife/t227-assets-report.md`。
+- 对账：与老骨架机器比对 **53 处偏差，逐条声明、零未声明偏差**；用户可见文案里的实现细节字面**已清零**（21 个 token 命中数全 0），反扫表住生成器（fail-closed）。
+- 下游：`#228`（渲染接线）从 `MEMO_HELP_GROUPS` 与 `buildHelpSceneIndex()` 取用（版本走 `buildHelpSceneIndex().version`，单一来源）；`#229`（出口落盘）据报告 §五 接。

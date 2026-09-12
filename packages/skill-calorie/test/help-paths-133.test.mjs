@@ -1,107 +1,90 @@
-/** T2-②a #133 · HELP 落盘命名单测（只测命名工具，不碰渲染接线）。
+/** T2-②a #133 · HELP 落盘的**命名与落点**锁（#237 改判后重写；本文件只锁本技能自己的值与真出口落点）。
  *
- * 全用例硬编码金值（禁 tautology：期望串全部手写，不由被测函数推导）。
- * 运行：先 `npx tsc -b packages/skill-calorie`，
- * 再 `node --test packages/skill-calorie/test/help-paths-133.test.mjs`
+ * 为什么重写：时间戳格式 `YYYYMMDD_HHMMSS` 与通式 `〈文件名主体〉_<stamp>[_N].html` 已收进共用件
+ * `base-paint/save-html`（`saveHtmlFile`），本票（#237，甲案）随之删掉了本模块的
+ * `formatHelpStamp`／`buildHelpFileName`／`resolveStemTarget`。原来那批对它们的金值型单测
+ * （①–④、⑧、⑨、⑬–⑮）**不再住这里**：通式本身的唯一定义地与用例归共用件
+ * （`packages/base-render/test/output-save-html-237.test.mjs`）。本文件改为锁三件事：
+ *  ① 本技能自己的三个值（目录名／扩展名／速查台主体）；
+ *  ② 真出口（spawn `dist/cli/cmd_read.js`）的落点：HELP 文件与速查台**两份产物分名**、都落 `<db>/calorie_html/`；
+ *  ③ 相对 `SKILLS_DB_PATH` 亦回传**绝对路径**（#83 返修 R-1 口径；#237 起由共用件 `resolve(dir)` 保证）。
  */
 import { strict as assert } from 'node:assert';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { isAbsolute, join, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import {
-  buildHelpFileName,
-  formatHelpStamp,
-  HELP_HTML_DIR_NAME,
-  HELP_HTML_EXT,
-  SHEET_FILE_STEM,
-  resolveStemTarget,
-} from '../dist/render/helpPaths.js';
+import { HELP_HTML_DIR_NAME, HELP_HTML_EXT, SHEET_FILE_STEM } from '../dist/render/helpPaths.js';
 
-/** 本地 2026-07-26 12:30:00（构造与格式化同为本地时区，任何机器时区下金值不变）。 */
-const D0 = new Date(2026, 6, 26, 12, 30, 0);
-const STAMP = '20260726_123000';
+const HERE = dirname(fileURLToPath(import.meta.url));
+const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
+const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
+const KEY = 'calorie.help.center';
+const HELP_NAME_RE = /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
+const SHEET_NAME_RE = /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/;
 
 function tmpDbDir(tag) {
   return mkdtempSync(join(tmpdir(), 't133-' + tag + '-'));
 }
 
-test('#133 ① 通式：〈文件名主体〉_<YYYYMMDD>_<HHMMSS>.html', () => {
-  assert.equal(buildHelpFileName('主页仪表盘', D0), '主页仪表盘_' + STAMP + '.html');
-  assert.equal(formatHelpStamp(new Date(2026, 0, 2, 3, 4, 5)), '20260102_030405');
-});
+function run(dbPath, args = [KEY], cwd) {
+  const r = spawnSync(NODE_BIN, [BIN, ...args], {
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, SKILLS_DB_PATH: dbPath },
+    ...(cwd === undefined ? {} : { cwd }),
+  });
+  let env = null;
+  try { env = JSON.parse(String(r.stdout)); } catch { env = null; }
+  return { status: r.status, stderr: String(r.stderr), env };
+}
 
-test('#133 ② HELP 形：卡路里_HELP_<ts>.html', () => {
-  assert.equal(buildHelpFileName('卡路里_HELP', D0), '卡路里_HELP_' + STAMP + '.html');
-});
-
-test('#133 ③ 中文主体原样（不清洗不截断）', () => {
-  assert.equal(buildHelpFileName('热量趋势', D0), '热量趋势_' + STAMP + '.html');
-});
-
-test('#133 ④ 特殊字符主体原样：空格／：／vs／_ 逐字保留', () => {
-  assert.equal(
-    buildHelpFileName('看体重 vs 摄入：最近_7天', D0),
-    '看体重 vs 摄入：最近_7天_' + STAMP + '.html',
-  );
-});
-
-/* ── ⑤⑥⑦⑩⑪ 已随 #139 删除 ────────────────────────────────────────────────────────
- * 那五条钉的是 `resolveHelpPath` 的 `exists` 判存循环（判存→取名→再写）。判存与写入之间
- * 没有独占性，并发同秒必交叉覆盖（S2），#128 起最终名一律由
- * `output.ts:writeFileExclusiveWithRetry` 的 `wx`＋`EEXIST` 递补仲裁。故该 API 已删，
- * 本模块只剩「算初候选」一件事，用例改为 ⑬⑭⑮。
- */
-
-test('#133 ⑧ 显式 _n 直拼（含 _6 上限形）', () => {
-  assert.equal(buildHelpFileName('卡路里_HELP', D0, 2), '卡路里_HELP_' + STAMP + '_2.html');
-  assert.equal(buildHelpFileName('卡路里_HELP', D0, 6), '卡路里_HELP_' + STAMP + '_6.html');
-});
-
-test('#133 ⑨ 时间戳秒一致：同秒毫秒不同 → 同名；跨秒 → 异名', () => {
-  assert.equal(
-    buildHelpFileName('卡路里_HELP', new Date(2026, 6, 26, 12, 30, 0, 987)),
-    '卡路里_HELP_' + STAMP + '.html',
-  );
-  assert.equal(
-    buildHelpFileName('卡路里_HELP', new Date(2026, 6, 26, 12, 30, 1, 0)),
-    '卡路里_HELP_20260726_123001.html',
-  );
-});
-
-test('#133 ⑫ 落点目录名／扩展名字面量（防漂移：老 `SKILL_HTML_NAME + "_html"` → calorie_html）', () => {
+test('#133 ⑫ 三个值字面量（防漂移：老 `SKILL_HTML_NAME + "_html"` → calorie_html；速查台与 HELP 分名）', () => {
   assert.equal(HELP_HTML_DIR_NAME, 'calorie_html');
   assert.equal(HELP_HTML_EXT, '.html');
-});
-
-test('#133 ⑬ 初候选：<dbDir>/calorie_html/〈主体〉_<stamp>.html', () => {
-  const dbDir = tmpDbDir('target');
-  assert.equal(
-    resolveStemTarget(dbDir, '卡路里_HELP', D0),
-    join(dbDir, HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'),
-  );
-});
-
-test('#133 ⑭ 相对 dbDir 亦返回绝对路径；且零 IO——初候选不建目录', () => {
-  const cwd = process.cwd();
-  const leaf = 't133-rel-' + String(Date.now());
-  const relDb = join(leaf, 'db');
-  const got = resolveStemTarget(relDb, '卡路里_HELP', D0);
-  assert.ok(isAbsolute(got), '须为绝对路径：' + got);
-  assert.equal(got, join(resolve(cwd, relDb), HELP_HTML_DIR_NAME, '卡路里_HELP_' + STAMP + '.html'));
-  assert.equal(existsSync(join(cwd, leaf)), false, '初候选不得建目录（零 IO；落盘时由 wx 独占写建）');
-  rmSync(join(cwd, leaf), { recursive: true, force: true });
-});
-
-test('#133 ⑮ 速查台主体与 HELP 文件主体分名（#139：两份产物不撞名）', () => {
-  const dbDir = tmpDbDir('sheet');
   assert.equal(SHEET_FILE_STEM, '卡路里_速查台');
-  assert.equal(
-    resolveStemTarget(dbDir, SHEET_FILE_STEM, D0),
-    join(dbDir, HELP_HTML_DIR_NAME, '卡路里_速查台_' + STAMP + '.html'),
-  );
-  assert.notEqual(
-    resolveStemTarget(dbDir, SHEET_FILE_STEM, D0),
-    resolveStemTarget(dbDir, '卡路里_HELP', D0),
-  );
+});
+
+test('#133 ⑬ 真出口缺省：HELP 文件落 <db>/calorie_html/卡路里_HELP_<TS>.html（干净目录无 _N）', () => {
+  const dbDir = tmpDbDir('target');
+  const r = run(dbDir);
+  assert.equal(r.status, 0, r.stderr);
+  const out = r.env.data.output;
+  assert.ok(isAbsolute(out), 'data.output 须绝对路径：' + out);
+  assert.equal(dirname(out), join(dbDir, HELP_HTML_DIR_NAME), '落 <SKILLS_DB_PATH>/calorie_html/');
+  assert.match(basename(out), HELP_NAME_RE, '老命名（旧 html_paths.html_name 通式）：' + basename(out));
+  assert.ok(existsSync(out), '产物须真实落盘');
+  assert.equal(basename(out).endsWith(HELP_HTML_EXT), true);
+  assert.equal(readdirSync(join(dbDir, HELP_HTML_DIR_NAME)).length, 1, '干净目录只落一份');
+});
+
+test('#133 ⑮ 速查台与 HELP 文件分名：两份产物同时在，互不覆盖', () => {
+  const dbDir = tmpDbDir('sheet');
+  const help = run(dbDir);
+  const sheet = run(dbDir, [KEY, '--params', '{"mode":"file"}']);
+  assert.equal(sheet.status, 0, sheet.stderr);
+  assert.match(basename(help.env.data.output), HELP_NAME_RE);
+  assert.match(basename(sheet.env.data.output), SHEET_NAME_RE, '速查台独立命名：' + basename(sheet.env.data.output));
+  assert.notEqual(help.env.data.output, sheet.env.data.output, '两份产物分名');
+  const files = readdirSync(join(dbDir, HELP_HTML_DIR_NAME)).sort();
+  assert.equal(files.length, 2, '两份产物同时在：' + files.join(','));
+  assert.ok(readFileSync(help.env.data.output, 'utf8').includes('<title>卡路里 · 唤醒词速查台</title>'));
+});
+
+test('#133 ⑭ 相对 SKILLS_DB_PATH 亦回传绝对路径（#83 R-1；#237 起由共用件 resolve(dir) 保证）', () => {
+  const root = tmpDbDir('rel');
+  try {
+    const relDb = 'rel_db';
+    mkdirSync(join(root, relDb), { recursive: true }); // 库目录须先在（否则开库即 ENOENT，测不到落点归一）
+    const r = run(relDb, [KEY], root);
+    assert.equal(r.status, 0, r.stderr);
+    const out = r.env.data.output;
+    assert.ok(isAbsolute(out), '相对 SKILLS_DB_PATH 下回执仍须绝对：' + out);
+    assert.equal(dirname(out), join(resolve(root), relDb, HELP_HTML_DIR_NAME));
+    assert.ok(existsSync(out), '产物按绝对路径真在盘上');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
