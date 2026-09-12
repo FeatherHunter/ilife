@@ -228,13 +228,22 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     assert.equal(NEW_KEY_ROUTES.length, 57);
     // 「既有入口」按施工前口径＝冻结表直连 cli ＋ HELP_EXEC_OVERRIDES 命中的键（43 键）。
     // FX-81-2 后 EXEC_ROUTES 含孪生词转 exec 的记录（它们按设计指向新拟键），故不能再用 EXEC_ROUTES 当基线。
+    //
+    // #152 场景 07 · 具名例外（一条，见 `docs/skills/skill-calorie/t152-scene07-audit.md`）：
+    // `查档案` 的 SoT cli 是老 python 死命令，真实命令 `calorie.view.profile` 由**呈现层覆盖**
+    // （`HELP_EXEC_OVERRIDES.profile_view`）供 HELP 查找用——**这是映射，不是新入口**，
+    // 且该键本来就由既有新拟词「看档案视图」（`routing.ts:649`）承载（孪生关系）。
+    // 方向说明：孪生机制只表达「新拟词承载冻结词」，本次是「冻结词拿到覆盖映射」，
+    // 不是新入口重复，故基线计算跳过这一个键、基数仍为 43。
+    // 根因（SoT 里 375 条 cli ＋ 353 条 data_source 的老命令）由 #180 成批重写，届时这句例外应一并撤销。
+    const LEGACY_OVERRIDE_EXCEPTIONS = new Set(['calorie.view.profile']);
     const frozenExecKeys = new Set(
       TRIGGERS.map((t) => {
         const cli = t.main_prompt.cli;
         if (cli.startsWith('calorie-cmd-read calorie.')) return calorieKeyOf(cli);
         const internal = frozenKeyOf(t);
         return internal && HELP_EXEC_OVERRIDES[internal] ? calorieKeyOf(HELP_EXEC_OVERRIDES[internal]) : null;
-      }).filter(Boolean),
+      }).filter((k) => Boolean(k) && !LEGACY_OVERRIDE_EXCEPTIONS.has(k)),
     );
     assert.equal(frozenExecKeys.size, 43, '施工前既有入口键数');
     const existingWords = new Set(TRIGGERS.map((t) => t.wake_word));

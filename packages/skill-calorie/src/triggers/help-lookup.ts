@@ -70,8 +70,19 @@ export function isExecCli(cli: string): boolean {
   return String(cli ?? '').startsWith('calorie-cmd-read calorie.');
 }
 
-/** C3 #43 · legacy 内部 key → 可执行 cli 映射（SoT 原文不动，呈现层替换首命中）。 */
+/** C3 #43 · legacy 内部 key → 可执行 cli 映射（SoT 原文不动，呈现层替换首命中）。
+ *
+ *  `profile_view` 一条是 #152 场景 07 的 `查档案`：SoT 里它的 `main_prompt.cli`／`data_source` 仍是老 python
+ *  死命令（`python scripts/render_crud_view.py …`），真实命令是 `calorie.view.profile`（路由 `routing.ts:396`）。
+ *  **为什么走覆盖表而不是改 SoT**（票 #177 第 3 条预留的两条路径，实测选了这条）：改 SoT 会让冻结账目连环动——
+ *  ① `test/calorie-triggers.test.mjs` 逐条 sha 红（需同批改 `test/calorie-sot.snapshot.json` 的
+ *  `entry_sha.profile_view` = `bfb7d75c0d64cf7f`）；② 更麻烦的是 `test/calorie-routing-81.test.mjs:227` 的
+ *  D2⑤：`calorie.view.profile` 一旦成为冻结直连键，就与新拟词「看档案视图」（`routing.ts:649`）撞键，
+ *  那张票的 57 新拟键／99 可达键／399 exec 记录的账目要连带动。**那套数据面清理是 #180 的活**（375 条 cli
+ *  ＋ 353 条 data_source 成批重写、快照同批重算），本图只修用户看到的那一条 → 用覆盖表。
+ *  实测：`searchHelp('查档案')`（`cmd_read.ts` 的 `calorie.help.lookup` 路径）回的就是覆盖表这条真实命令。 */
 export const HELP_EXEC_OVERRIDES: Record<string, string> = {
+  profile_view: 'calorie-cmd-read calorie.view.profile',
   home_today_overview: 'calorie-cmd-read calorie.view.home --params \u0027{"date":"2026-09-07"}\u0027',
   home_today_diet_overview: 'calorie-cmd-read calorie.view.diet --params \u0027{"start":"2026-09-05","end":"2026-09-07"}\u0027',
   home_today_exercise_overview: 'calorie-cmd-read calorie.view.exercise --params \u0027{"start":"2026-09-06","end":"2026-09-07"}\u0027',
