@@ -9,6 +9,9 @@
  *
  *  来源（2026-09-12 用户裁定「恢复老仓原样」）：老仓 `.fmt-menu` 三选一，见
  *  `D:\2Study\StudyNotes\SKILLS\卡路里\templates\crud_receipt.html` 的可点版本 `2262fee1~1`。
+ *  #249 返修（2026-09-13）：开合**只翻可视态、不动 DOM**——B7 钉住行内子节点序与包裹层下标；
+ *  S10 把窄屏菜单的锚点钉在**整行**（搬 DOM 那笔曾把按钮搬到右格，替窄屏挡掉了菜单越出视口）；
+ *  DOM 桩的 `insertBefore` 同时按真 DOM 收严（别层的孩子当参考节点即抛，不静默退化成 append）。
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -109,9 +112,13 @@ class StubNode {
     return child;
   }
 
+  /** 参考节点语义按**真 DOM**：`null` → 插到末尾；不是这个父节点的孩子 → 抛（真 DOM 是 `NotFoundError`）。
+   *  为什么不宽松兜底：宽松会把「把别层的孩子当参考节点」这类缺陷吞成一次静默 append——浏览器里要么
+   *  搬动结构、要么直接抛错，而桩里全绿（#249 正是这样漏过去的）。 */
   insertBefore(child, ref) {
+    if (ref === null) return this.appendChild(child);
     const i = this.children.indexOf(ref);
-    if (i < 0) return this.appendChild(child);
+    if (i < 0) throw new Error('DOM 桩：insertBefore 的参考节点不是这个父节点的孩子（真 DOM 会抛 NotFoundError）');
     if (child.parentNode !== null) child.parentNode.removeChild(child);
     child.parentNode = this;
     this.children.splice(i, 0, child);
@@ -119,6 +126,13 @@ class StubNode {
   }
 
   get firstChild() { return this.children.length > 0 ? this.children[0] : null; }
+
+  /** 同真 DOM：末子或已离树即 `null`。 */
+  get nextSibling() {
+    if (this.parentNode === null) return null;
+    const i = this.parentNode.children.indexOf(this);
+    return i < 0 || i === this.parentNode.children.length - 1 ? null : this.parentNode.children[i + 1];
+  }
 
   get classList() { throw new Error('#247 纯度违约：helpers 不得使用 classList'); }
 
@@ -367,6 +381,25 @@ describe('#247 三格式菜单 · 产出面', () => {
     assert.equal((plain.match(/<button/g) ?? []).length, 2);
   });
 
+  it('S10 窄屏菜单的锚点是**整行**（#249 返修）：窄屏包裹层不定位、行定位、菜单左右归零', () => {
+    // 反面（返修前）：窄屏菜单 `left:auto; width:calc(100vw - 32px)`，锚点仍是**左格**里的包裹层
+    // ⇒ 390 档实测菜单 x=-167，三项格式名全在视口外（`.scratch/t152-review/probe-menu-place.mjs`）。
+    const wrapNarrow = blocksOf('.' + STYLE_PREFIX + 'copy-menu-wrap').filter((b) => declValue(b, 'position') === 'static');
+    assert.equal(wrapNarrow.length, 1, '窄屏档必须把包裹层改成 position: static（锚点让给整行）');
+    const rowNarrow = blocksOf('.' + STYLE_PREFIX + 'action-row-ghost').filter((b) => declValue(b, 'position') === 'relative');
+    assert.equal(rowNarrow.length, 1, '窄屏档必须把整行定为定位祖先（桌面档不挂，锚点仍是包裹层）');
+    const menuNarrow = blocksOf('.' + STYLE_PREFIX + 'copy-menu').filter((b) => declValue(b, 'left') === '0');
+    assert.equal(menuNarrow.length, 1, '窄屏档菜单必须 left: 0');
+    assert.equal(declValue(menuNarrow[0], 'right'), '0', '窄屏档菜单必须 right: 0（两边归零＝铺满行盒）');
+    assert.equal(declValue(menuNarrow[0], 'width'), 'auto', '窄屏档菜单宽取行盒，不写死视口宽');
+    assert.equal(declValue(menuNarrow[0], 'min-width'), '0');
+    assert.equal(declValue(menuNarrow[0], 'max-width'), 'none');
+    // 桌面档那一份逐值不动：菜单仍是 200px、右缘贴按钮（用户 2026-09-12 已验收的样子）。
+    const menuBase = blocksOf('.' + STYLE_PREFIX + 'copy-menu')[0];
+    assert.equal(declValue(menuBase, 'right'), '0');
+    assert.equal(declValue(menuBase, 'min-width'), '200px');
+  });
+
   it('S8 运行时产出：菜单选择器／类名与渲染端逐字同值（不产第二份真相）', () => {
     for (const literal of [
       'var MENU_OPEN_SEL = "[data-fmt-open=\\"1\\"]";',
@@ -477,5 +510,38 @@ describe('#247 三格式菜单 · 运行时行为', () => {
     assert.equal(titleOf(list[0]).includes('数据复制成功'), false, '失败提示不得套成功词干（更不得报格式名）');
     assert.equal(titleOf(list[0]).includes('json'), false, '失败提示不得带上所选格式');
     doc.execCommand = realExec;
+  });
+
+  it('B7 开合**只翻可视态、不动 DOM**：行内子节点序与包裹层下标一字不动，菜单仍住在包裹层里（#249 返修）', () => {
+    // 现场同真页：ghost 行（两列网格）里两颗按钮——复制数据（`.copy-menu-wrap`）在前、复制日志在后。
+    // 网格按 DOM 序铺格，所以「搬走包裹层」＝与复制日志换位；且搬运后收起回不去（#249 的实物缺陷）。
+    const { doc, wrap, opener, menu } = runMenu();
+    const logBtn = doc.createElement('button');
+    logBtn.className = STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost';
+    logBtn.setAttribute(ACTION_ID_ATTR, COPY_ACTION_IDS.actionBar.copyLog);
+    logBtn.setAttribute(DEFAULT_DATA_ATTR, 'LOG');
+    const row = doc.createElement('div');
+    row.className = STYLE_PREFIX + 'action-row ' + STYLE_PREFIX + 'action-row-ghost';
+    doc.body.removeChild(wrap);
+    row.appendChild(wrap);
+    row.appendChild(logBtn);
+    doc.body.appendChild(row);
+
+    const slots = () => row.children.map((n) => (n === wrap ? '复制数据' : '复制日志'));
+    const at = () => row.children.indexOf(wrap);
+    assert.deepEqual(slots(), ['复制数据', '复制日志'], '前置：复制数据占第一格');
+    assert.equal(at(), 0, '前置：包裹层下标 0');
+
+    click(doc, opener);
+    assert.equal(isOpen(menu), true, '前置：菜单必须已开');
+    assert.deepEqual(slots(), ['复制数据', '复制日志'], '开菜单不得搬动包裹层（搬了就与复制日志换位）');
+    assert.equal(at(), 0, '开菜单后包裹层下标必须仍是 0');
+    assert.equal(menu.parentNode, wrap, '菜单必须还住在包裹层里——浮层的 `right:0` 贴着那颗按钮算，搬出去就没了锚点');
+
+    click(doc, opener);
+    assert.equal(isOpen(menu), false, '再点必须收');
+    assert.deepEqual(slots(), ['复制数据', '复制日志'], '收起同样不得搬动包裹层');
+    assert.equal(at(), 0, '收起后包裹层下标必须仍是 0');
+    assert.equal(menu.parentNode, wrap, '收起后锚点同样不许丢');
   });
 });

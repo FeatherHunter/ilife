@@ -321,6 +321,14 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     // `ACTION_BAR_DEFAULTS.evenRowPairs`（既有「偶数一行 2 个」的口径，不是新拍的数字）。
     '  grid-template-columns: repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr));',
     '}',
+    // #249：窄屏那档菜单**以整行做锚点**（同档 `copyButton` 区把包裹层改成 `position: static`）——
+    // 行盒＝内容宽，菜单 `left:0; right:0` 落进去就恒在视口内，与那颗按钮落在左格还是右格无关。
+    // 只在窄屏挂，桌面档的锚点仍是包裹层（菜单贴按钮右缘，用户已验收的样子不动）。
+    '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',
+    '  .' + p + 'action-row-ghost {',
+    '    position: relative;',
+    '  }',
+    '}',
     '.' + p + 'action-btn {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -502,9 +510,19 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     // 贴按钮会有一半越到屏幕左外；窄屏按钮在右半格，故改成
     // 「宽 = 视口 − 左右各 16px、右缘贴按钮右缘」——既恒在视口内，又跟着按钮（滚动时不漂、不挡按钮），
     // 也不会像 `position: fixed` 那样把浮层钉在视口底、压住别的正文。
+    //
+    // **#249 修正**：原先「宽 = 视口 − 32px ＋ 右缘贴按钮」只在按钮位于**右格**时成立；复制数据排在
+    // 复制日志前头（`renderActionBar` 的 ghost 行顺序），窄屏上它在**左格**，菜单右缘贴左格右缘 ⇒
+    // 菜单左缘跑到视口外 167px（390 实测 x=-167，三项的格式名全看不见）。修法：窄屏把锚点从**包裹层**
+    // 换成**整行**（行在这一档挂 `position: relative`，见 `actionBar` 区）；菜单 `left:0; right:0`
+    // 就落在行盒（＝内容宽 358）里，按钮在哪一格都在视口内，且仍是「跟着按钮走」的绝对定位浮层。
+    '  .' + p + 'copy-menu-wrap {',
+    '    position: static;',
+    '  }',
     '  .' + p + 'copy-menu {',
-    '    left: auto;',
-    '    width: calc(100vw - 32px);',
+    '    left: 0;',
+    '    right: 0;',
+    '    width: auto;',
     '    min-width: 0;',
     '    max-width: none;',
     '  }',
