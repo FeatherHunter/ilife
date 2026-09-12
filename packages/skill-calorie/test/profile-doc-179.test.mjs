@@ -36,7 +36,7 @@ function mkDb(seeded) {
 /** 真 CLI 跑一条命令并落盘（文件态＝默认的三态交付），顺带回 stdout 与产物文本。 */
 function runCli(dir, key, params, outName) {
   const out = join(dir, (outName ?? key.replace(/\./g, '_')) + '.html');
-  const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--output', out], {
+  const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
     encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
   });
   return {

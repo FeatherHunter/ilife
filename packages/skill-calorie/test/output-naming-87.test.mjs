@@ -1,7 +1,7 @@
-/** #87 · 输出命名规范复刻（M10）验收测试：目录／命名／同秒后缀／--output 覆盖 逐条对照旧基线。
+/** #87 · 输出命名规范复刻（M10）验收测试：目录／命名／同秒后缀／--html 覆盖 逐条对照旧基线。
  *
  * 旧版真值：`D:\2Study\StudyNotes\SKILLS\卡路里\scripts\html_paths.py`
- *   `calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`，跟随 `SKILLS_DB_PATH`，`--output` 显式覆盖。
+ *   `calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`，跟随 `SKILLS_DB_PATH`，`--html` 显式覆盖。
  * 新架构 `<中文command>` 真值 = `CALORIE_COMBOS[key].title`（`combos.yaml` 同值镜像）。
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/output-naming-87.test.mjs`
@@ -224,7 +224,7 @@ test('#87 ⑤ 默认落点：<SKILLS_DB_PATH>/calorie_html/<中文command>_<stam
   }
 });
 
-// ---------------------------------------------------------------- ⑥ CLI 默认落盘（无 --output/--html）
+// ---------------------------------------------------------------- ⑥ CLI 默认落盘（无 --html/--html）
 test('#87 ⑥ CLI 默认落盘：无 flag 也写 calorie_html，落点经 envelope data.output 回传', () => {
   const dir = tmpDbDir('cli-default');
   const env = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS)]);
@@ -276,25 +276,26 @@ test('#87 ⑦ CLI 同秒冲突：同秒已有同名 → 自动追加 _2（预置
   assert.ok(existsSync(env.data.output));
 });
 
-// ---------------------------------------------------------------- ⑧ --output 显式覆盖
-test('#87 ⑧ --output 覆盖：写显式路径、不改名、不碰 calorie_html；--html 为等价别名', () => {
+// ---------------------------------------------------------------- ⑧ --html 显式覆盖
+test('#87 ⑧ --html 覆盖：写显式路径、不改名、不碰 calorie_html；`--output` 已删（给了即 exit 2）', () => {
   const dir = tmpDbDir('cli-output');
   const explicit = join(dir, '自定义', '报告.html');
-  const env = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS), '--output', explicit]);
+  const env = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS), '--html', explicit]);
   assert.equal(env.data.output, explicit);
-  assert.ok(existsSync(explicit), '--output 须逐字写到给定路径');
+  assert.ok(existsSync(explicit), '--html 须逐字写到给定路径');
   assert.equal(existsSync(join(dir, HTML_DIR_NAME)), false, '显式覆盖时不得再产默认目录产物');
-  const alias = join(dir, 'alias.html');
-  const env2 = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS), '--html', alias]);
-  assert.equal(env2.data.output, alias, '--html 保持旧语义（legacy 别名）');
-  assert.ok(existsSync(alias));
-  const win = join(dir, 'win.html');
-  const env3 = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS), '--html', join(dir, 'lose.html'), '--output', win]);
-  assert.equal(env3.data.output, win, '--output 优先于 --html');
-  assert.ok(existsSync(win) && !existsSync(join(dir, 'lose.html')));
-  const bad = runCli(dir, [KEY, '--params', JSON.stringify(PARAMS), '--output']);
-  assert.equal(bad.status, 2, '--output 缺值仍走用法错误');
-  assert.match(String(bad.stderr), /--output/);
+
+  // #245 收口：老技能的 `--output` 别名已删——只认 `--html`（与其余五家同形）。
+  // 给 `--output` 必须走**未知参数**那条用法错（含参数名与用法行），不许静默忽略、也不许当成别的意思。
+  const legacy = runCli(dir, [KEY, '--params', JSON.stringify(PARAMS), '--output', join(dir, 'legacy.html')]);
+  assert.equal(legacy.status, 2, '`--output` 已删 ⇒ 走未知参数 exit 2');
+  assert.match(String(legacy.stderr), /未知参数：--output/);
+  assert.match(String(legacy.stderr), /--html 输出路径/, '用法行须给可用的落点参数名');
+  assert.equal(existsSync(join(dir, 'legacy.html')), false, '带 `--output` 的调用不得落任何产物');
+
+  const bad = runCli(dir, [KEY, '--params', JSON.stringify(PARAMS), '--html']);
+  assert.equal(bad.status, 2, '--html 缺值仍走用法错误');
+  assert.match(String(bad.stderr), /未知参数：--html/, '缺值时下一个 token 缺失 ⇒ 报未知参数（含用法行）');
 });
 
 // ---------------------------------------------------------------- ⑨ 落点解析失败（返修 F4 / A2 S2-4）
@@ -311,9 +312,9 @@ test('#87 ⑨ 落点解析失败：exit 5 ＋「渲染失败」文案，不得�
   assert.doesNotMatch(err, /未知失败/, '不得再出现「未知失败」文案');
   assert.equal(readFileSync(join(dir, HTML_DIR_NAME), 'utf8'), 'not a dir', '占位文件不得被改写');
   assert.equal(String(r.stdout), '', 'stdout 保持纯净（不吐半截 envelope）');
-  // 显式 --output 不依赖默认目录，仍正常
+  // 显式 --html 不依赖默认目录，仍正常
   const explicit = join(dir, 'sub', 'ok.html');
-  const env = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS), '--output', explicit]);
+  const env = runOk(dir, [KEY, '--params', JSON.stringify(PARAMS), '--html', explicit]);
   assert.equal(env.data.output, explicit);
   assert.ok(existsSync(explicit));
 });

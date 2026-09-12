@@ -4,7 +4,7 @@
  *   - `html_dir()`             → `DATA_DIR / "calorie_html"`（`DATA_DIR = find_db_path().parent`，跟随 `SKILLS_DB_PATH`）
  *   - `html_name()`            → `<command>_<YYYYMMDD>_<HHMMSS>.html`；同秒已有 N 个同名 → 追加 `_(N+1)`（首个冲突 `_2`）
  *   - `html_path()`            → 一步到位：目录不存在则递归创建
- *   - `--output`               → 显式路径覆盖，绕过命名规则（旧 `SKILL.md` L104「仍可显式覆盖到任意路径」）
+ *   - `--html`                 → 显式路径覆盖，绕过命名规则（旧 `SKILL.md` L104「仍可显式覆盖到任意路径」）
  *   - `_sanitize_filename_part()` → `\\ / : * ? " < > | [ ]` → `_`、去前后空格、截断 32 字符
  *
  * 新架构 `<中文command>` 真值来源（#87 侦察结论）＝ `CALORIE_COMBOS[key].title`
@@ -16,7 +16,7 @@
  *   1. 默认落盘改由 CLI 出口（`cli/cmd_read.ts`）执行，本模块只出路径，不做 IO 副作用判断；
  *   2. 同秒冲突用 `readdirSync` + `startsWith` 计数，不用 `glob`——命令名已 sanitize，无 `[]` 元字符，
  *      语义等价且不引入依赖；
- *   3. 显式 `--output` 路径自动建父目录（老家直接 `open()` 会 ENOENT）；对旧行为是超集。
+ *   3. 显式 `--html` 路径自动建父目录（老家直接 `open()` 会 ENOENT）；对旧行为是超集。
  *
  * #237 迁移（维护者 2026-09-12 裁决 8「放在 base-paint 吧，是绘制出 html 后的相关操作」＋ 地图 #208 的 Q7
  * 裁「乙」＝收成共用位）：**独占创建 ＋ 同秒递补那一小块收进共用件** `base-paint/save-html` 的
@@ -146,7 +146,7 @@ export function resolveDefaultHtmlPath(
   return join(dir, htmlFileName(stem, { dir, now: opts.now ?? new Date() }));
 }
 
-/** 显式 `--output` / `--html` 落点：命名规则不参与，只保证父目录存在。 */
+/** 显式 `--html` 落点：命名规则不参与，只保证父目录存在。 */
 export function resolveExplicitHtmlPath(file: string): string {
   mkdirSync(dirname(file), { recursive: true });
   return file;
@@ -166,7 +166,7 @@ export function resolveExplicitHtmlPath(file: string): string {
  *  - 并发下由文件系统仲裁：败者 `EEXIST` → `_N+1` 递补，保证每个 envelope 的落点内容即本次产物；
  *  - 大小写不敏感（Windows `normcase`，#87 F2）由 `wx` 天然覆盖：`.HTML` 占位同样 `EEXIST`；
  *  - 仅 `EEXIST` 递补；只读类（`EACCES` 等）仍走 #83 内联回退，其余原样抛出走回执；
- *  - 显式 `--output`／`--html` 保持覆盖语义（共用件 `onExists:'overwrite'`），不参与递补：那是用户逐字指定的落点；
+ *  - 显式 `--html` 保持覆盖语义（共用件 `onExists:'overwrite'`），不参与递补：那是用户逐字指定的落点；
  *  - `target`（HELP 文件／速查台／回执落点）与默认路径同走独占递补。
  */
 
@@ -189,7 +189,7 @@ export type HtmlDelivery =
 /** 吃复用窗口的 HELP 产物名（本技能自己的三个主体）。#245：判据**按落点名**而不是按 key——
  *  `calorie.help.center` 这个键下挂着三种 HELP 产物（HELP 文件／照片 HELP／速查台），三种都算「反复读的
  *  HELP 产物」；业务页面（`<中文command>_<类型段>…`）与渲染失败回执（`操作失败`）**不吃窗口**——那是
- *  另一次操作的产物，少一份就等于少一次留档；`--output` 逐字落点也不吃（说哪落哪）。
+ *  另一次操作的产物，少一份就等于少一次留档；`--html` 逐字落点也不吃（说哪落哪）。
  *
  *  ⚠️ **两种内容不许共用一个主体名**：照片 HELP（`q` 那支）曾走「按 `<中文command>` 自动命名」兜底，
  *  主体与「看身材照」那条**业务命令**同名（`看身材照`），既与主 HELP 分不开、也让「哪份是哪份」不可辨。
@@ -212,19 +212,19 @@ function windowForHelpDelivery(key: string, stem: string, params: Record<string,
 }
 
 /** 交付一次 HTML 产物（**唯一落盘点**）：
- *  - `explicit`（`--output`／`--html`，用户逐字指定）→ **覆盖写**（共用件 `onExists:'overwrite'`，语义不变）
+ *  - `explicit`（`--html`，用户逐字指定）→ **覆盖写**（共用件 `onExists:'overwrite'`，语义不变）
  *    ——**优先级最高**（用户指定胜过默认落点）；**不吃复用窗口**（逐字落点＝说哪落哪）；
  *  - `target`（HELP 文件／速查台／回执的落点意图）→ **独占创建 ＋ 同秒递补**（共用件缺省 `succession`）；
- *    其中 HELP 产物（`卡路里_HELP`／`卡路里_速查台`）另带**复用窗口**（#245：缺省一天内只留一份，
- *    窗口由 `--params` 的 `reuseHours` 定）；
+ *    其中 HELP 产物（`卡路里_HELP`／`卡路里_照片HELP`／`卡路里_速查台`）另带**复用窗口**
+ *    （#245：缺省一天内只留一份，窗口由 `--params` 的 `reuseHours` 定）；
  *  - 两者都没有 → 默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html` → **独占创建 ＋ 同秒递补**；
  *  - 只读类失败 → `{mode:'inline'}`（调用方把产物随 envelope 回传）；其余失败**原样抛出**（走回执）。
  *  落点**解析**与写入同在一个 try 内：`calorie_html` 被同名文件占位等解析期失败同样归类（#87 返修 F4）。
  *  #237：`bytes` 由共用件**写后回读**给出（实际落盘字节数）；`inline` 态无文件可读，仍按 UTF-8 期望值算。
  *
- *  ⚠️ #245 修一处静默的优先级反了：原先 `target` 那支先判、直接 return ⇒ 给了 `--output` 的 HELP 键
+ *  ⚠️ #245 修一处静默的优先级反了：原先 `target` 那支先判、直接 return ⇒ 给了显式落点的 HELP 键
  *  （`calorie.help.center` 的缺省／速查台两支都带 `target`）**显式落点被无声忽略**，产物照落 `calorie_html/`。
- *  这与 `--output`／`--html` 的文档口径（「任意路径，覆盖写」）相反，故把 `explicit` 提到最前。 */
+ *  这与 `--html` 的文档口径（「任意路径，覆盖写」）相反，故把 `explicit` 提到最前。 */
 export function deliverHtml(input: {
   key: string;
   params: Record<string, unknown>;
@@ -234,7 +234,7 @@ export function deliverHtml(input: {
 }): HtmlDelivery {
   try {
     if (input.explicit !== undefined) {
-      // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--output` 亦文档化为
+      // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--html` 亦文档化为
       // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
       // `bad-input` → **产物已写盘却 exit 2**。共用件回执的 `path` 恒为绝对路径（`resolve(dir)` ＋ 文件名）。
       // #237：走 `file`（确切文件名）而不是把 `basename(abs)` 当 `stem`——两件事各走各的口子。

@@ -242,7 +242,7 @@ test('#83 ④ 回执自身也走三态：可写时落盘（#87 命名）＋ 产�
   const dir = mkDb('receipt');
   writeFileSync(join(dir, 'blocker'), 'x');
   const bad = join(dir, 'blocker', 'x.html'); // 父路径是文件 → 结构错（非只读类）
-  const r = run(dir, 'calorie.help.lookup', { q: '看今日主页' }, ['--output', bad]);
+  const r = run(dir, 'calorie.help.lookup', { q: '看今日主页' }, ['--html', bad]);
   assert.equal(r.status, 5, '显式落点结构错 → exit 5');
   assert.equal(r.stdout, '');
   const rec = receiptOf(r.stderr);
@@ -313,7 +313,7 @@ test('#83 写键同样有 delivery（receipt 产物族）', () => {
 });
 
 /* ── ⑥ 返修 R-1（红队 S1）：相对落点不得把「写盘成功」报成参数失败 ───────────────────────────
- * 复现（返修前）：`SKILLS_DB_PATH` 为相对路径（或 `--output` 给相对路径）时，`deliverHtml` 把原样字符串
+ * 复现（返修前）：`SKILLS_DB_PATH` 为相对路径（或 `--html` 给相对路径）时，`deliverHtml` 把原样字符串
  * 当 `delivery.path` 回传 → `buildDelivery` 的绝对路径不变量抛 `bad-input` → **产物已写盘却 exit 2**
  * （`ERR 2: 参数失败：delivery.path 须为绝对路径：…`）、stdout 无 envelope；写键更危险：库已写入而
  * 退出码非 0，按 M4 判据会被当成失败并诱导重试（重复写）。 */
@@ -334,13 +334,13 @@ test('#83 ⑥ 相对 SKILLS_DB_PATH：仍为文件态 exit 0 ＋ 绝对 delivery
   assert.equal(env.delivery.bytes, statSync(env.delivery.path).size);
 });
 
-test('#83 ⑥ 相对 --output：exit 0 ＋ 绝对 delivery.path（写的就是回传的那个路径）', () => {
+test('#83 ⑥ 相对 --html：exit 0 ＋ 绝对 delivery.path（写的就是回传的那个路径）', () => {
   const dir = mkDb('relout');
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.lookup', '--params', JSON.stringify({ q: '看今日主页' }),
-    '--output', join('nested', 'rel.html')], {
+    '--html', join('nested', 'rel.html')], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, SKILLS_DB_PATH: dir },
   });
-  assert.equal(r.status, 0, '相对 --output 不得把写盘成功报成参数失败：' + String(r.stderr));
+  assert.equal(r.status, 0, '相对 --html 不得把写盘成功报成参数失败：' + String(r.stderr));
   const env = JSON.parse(String(r.stdout));
   assert.equal(env.delivery.mode, 'file');
   assert.equal(env.delivery.path, join(dir, 'nested', 'rel.html'), '回传路径＝实际写入路径（resolve 归一）');

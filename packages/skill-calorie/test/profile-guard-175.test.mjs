@@ -36,7 +36,7 @@ function mkEmpty() {
 /** 真 CLI 跑一条写命令。 */
 function runCli(dir, key, params) {
   const out = join(dir, key.replace(/\./g, '_') + '.html');
-  const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--output', out], {
+  const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
     encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
   });
   return {

@@ -229,9 +229,9 @@ test('#119 ⑧ CLI 写键：记体重落 记体重_回执_68kg_<TS>.html，data.
   const disk = readdirSync(join(dir, 'calorie_html'));
   assert.ok(disk.some((e) => Buffer.from(e, 'utf8').equals(Buffer.from(n, 'utf8'))), '逐字节一致');
   assert.ok(readFileSync(env.data.output, 'utf8').includes('记体重'), '产物为回执 HTML');
-  // --output 显式覆盖不受命名管线影响
+  // --html 显式覆盖不受命名管线影响
   const explicit = join(dir, '自定义', '报告.html');
-  const env2 = runOk(dir, ['calorie.diet.add', '--params', JSON.stringify({ foodName: '香蕉', calories: 100, protein: 5 }), '--output', explicit]);
+  const env2 = runOk(dir, ['calorie.diet.add', '--params', JSON.stringify({ foodName: '香蕉', calories: 100, protein: 5 }), '--html', explicit]);
   assert.equal(env2.data.output, explicit);
   assert.ok(existsSync(explicit));
 });

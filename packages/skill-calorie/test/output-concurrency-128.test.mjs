@@ -118,7 +118,7 @@ test('#128 独占语义不变：同一落点意图连写两次 → 两份产物�
   }
 });
 
-test('#128 显式 --output 语义不变：逐字覆盖，不参与 _N 重试', async () => {
+test('#128 显式 --html 语义不变：逐字覆盖，不参与 _N 重试', async () => {
   const { deliverHtml } = await import('../dist/output.js');
   const dbDir = tmpDbDir('explicit');
   const old = process.env.SKILLS_DB_PATH;

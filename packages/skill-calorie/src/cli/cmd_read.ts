@@ -7,10 +7,11 @@
  * 组合键为 registry 合法点式（见 cli/keys.ts；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
  * 缺失阻断不返空：空库/空窗/无目标一律抛（CalorieRenderError missing-data / FetchError），exit 4，不返空数组冒充正常。
  * 仅 type-only 消费 link-core（零运行时依赖）；envelope 手工装配，形状校验本地镜像 link-core。
- * HTML 默认落盘（utf8，见下行 #87）＋ 可 --output/--html 显式覆盖：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
- * #87 · 输出命名规范复刻（M10）：不给 --output/--html 时默认落
+ * HTML 默认落盘（utf8，见下行 #87）＋ 可用 `--html` 显式覆盖：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
+ * #87 · 输出命名规范复刻（M10）：不给 `--html` 时默认落
  * <SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html（同秒冲突自动加后缀），
- * 中文 command 取 CALORIE_COMBOS[key].title；显式 --output（--html 为 legacy 别名）覆盖任意路径。
+ * 中文 command 取 CALORIE_COMBOS[key].title；显式 `--html` 覆盖任意路径。
+ * ⚠️ 老技能的 `--output` 别名**已由 #245 收口删除**（与其余五家同形：只认 `--html`；给 `--output` 即 exit 2）。
  * 落点随 envelope 的 data.output 回传（additive 字段，六形状守卫不校验 data 额外键）。
  * #91 · `calorie.help.center` 承载**全量速查台**（Q9）：`--params '{"mode":"file|inline|text"}'` 显式选交付形态
  * （D6，缺省 `file`）；`q`／`keyword` 保留**照片 10 键**语义（非空＝现找、空串＝全量 10 键）。envelope 恒五字段
@@ -157,20 +158,18 @@ interface ReadArgs {
   key: string | undefined;
   params: string | undefined;
   html: string | undefined;
-  output: string | undefined;
   timeout: number;
 }
 
-const USAGE = '用法：cmd_read <calorie.key> [--params JSON对象] [--output 输出路径] [--html 输出路径（--output 别名）] [--timeout 毫秒]';
+const USAGE = '用法：cmd_read <calorie.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]';
 
 function parseArgs(a: string[]): ReadArgs {
   const o: ReadArgs = {
-    key: a[0], params: undefined, html: undefined, output: undefined, timeout: DEFAULT_TIMEOUT_MS,
+    key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS,
   };
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i] as string;
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i] as string;
-    else if (a[i] === '--output' && i + 1 < a.length) o.output = a[++i] as string;
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
       if (!Number.isFinite(o.timeout) || (o.timeout as number) <= 0) fail(2, '--timeout 须为正数毫秒');
@@ -1126,10 +1125,10 @@ function failWithReceipt(reason: string, key: string | undefined): never {
       reason,
       suggestions: [
         '检查 SKILLS_DB_PATH 与 ' + HTML_DIR_NAME + ' 目录权限（只读／沙箱会自动转内联交付）',
-        '用 --output <可写绝对路径> 显式指定落点后重试',
+        '用 --html <可写绝对路径> 显式指定落点后重试',
         '确认 ' + HTML_DIR_NAME + ' 未被同名文件占位（占位会挡住落点解析）',
       ],
-      fixPrompt: 'calorie-cmd-read ' + (key ?? '<key>') + " --params '{…}' --output <可写绝对路径>",
+      fixPrompt: 'calorie-cmd-read ' + (key ?? '<key>') + " --params '{…}' --html <可写绝对路径>",
     });
     const receiptHtml = renderErrorHtml(receipt);
     let delivery: Delivery;
@@ -1196,16 +1195,17 @@ async function main(): Promise<void> {
         ? dispatchWrite(o.key as string, params, db)
         : dispatch(o.key as string, params, db);
       // #83 · 三态交付（M4 HTML-First）：① 文件态（默认）／② 内联态（只读·沙箱回退）／③ 文本态。
-      // 落点：--output（显式覆盖）> --html（legacy 别名）> 默认 calorie_html/<中文command>_<TS>[_N].html（#87／#119）。
+      // 落点：--html（显式覆盖）> 默认 calorie_html/<中文command>_<TS>[_N].html（#87／#119）。
+      // ⚠️ 老技能的 `--output` 别名**已删**（#245 收口，与其余五家同形：只认 `--html`；给 `--output` 即 exit 2）。
       // 只读类写失败 → 内联交付（产物随 envelope 回传，绝不因写不进去而文字答）；
       // 结构错／渲染错 → 渲染失败回执（模板化回执，exit 5；严禁手写 HTML 兜底）。
       try {
         env = buildDeliveredEnvelope({
-          key: o.key as string, shape: shape as EnvelopeShape, out, params, explicit: o.output ?? o.html,
+          key: o.key as string, shape: shape as EnvelopeShape, out, params, explicit: o.html,
         });
       } catch (e) {
         if (e instanceof CalorieRenderError) throw e;
-        failWithReceipt('渲染失败：' + describeDeliveryTarget(o.output ?? o.html) + '：'
+        failWithReceipt('渲染失败：' + describeDeliveryTarget(o.html) + '：'
           + ((e as Error).message || String(e)), o.key as string);
       }
     } finally {

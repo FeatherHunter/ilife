@@ -10,7 +10,7 @@
  *  ③ **速查台那支也吃窗口**（同一个键的两种产物都要停涨）；
  *  ④ `reuseHours` 换窗口：`3` 同效（窗口内仍复用）、`0`＝**每次都要一份最新的**（落新的、不覆盖旧的）；
  *  ⑤ **坏参阻断**：负数／非数／布尔一律 exit 2（不静默当 0、不静默当缺省）；
- *  ⑥ **不吃窗口的那些路照旧**：业务页面（`calorie.view.diet`）连跑两次仍各留一份；`--output` 仍是逐字覆盖；
+ *  ⑥ **不吃窗口的那些路照旧**：业务页面（`calorie.view.diet`）连跑两次仍各留一份；`--html` 仍是逐字覆盖；
  *  ⑦ **历史文件不清**：窗口外的那份留着当留档（造一份「3 天前」改名的旧件，验它不被复用也不被删）。
  *
  * 运行：先 `pnpm build`（或逐包 `tsc -b`），再
@@ -142,7 +142,7 @@ test('#245 ⑤ 坏参阻断：负数／非数／布尔一律 exit 2（不静默�
   assert.deepEqual(namesOf(dir), [], '坏参一律不落盘');
 });
 
-test('#245 ⑥ 不吃窗口的路照旧：业务页面连跑两次各留一份；`--output` 仍是逐字覆盖', () => {
+test('#245 ⑥ 不吃窗口的路照旧：业务页面连跑两次各留一份；`--html` 仍是逐字覆盖', () => {
   const dir = mkDb('others');
   const db = openDb(join(dir, DB_FILE));
   try {
@@ -173,10 +173,10 @@ test('#245 ⑥ 不吃窗口的路照旧：业务页面连跑两次各留一份�
   assert.equal(existsSync(out1) && existsSync(out2), true, '两份业务页面都在盘上');
 
   const mine = join(dir, 'sub', '我的报告.html');
-  const e1 = runOk(dir, undefined, ['--output', mine]);
-  const e2 = runOk(dir, undefined, ['--output', mine]);
+  const e1 = runOk(dir, undefined, ['--html', mine]);
+  const e2 = runOk(dir, undefined, ['--html', mine]);
   assert.equal(e1.env.data.output, mine);
-  assert.equal(e2.env.data.output, mine, '--output 逐字落点不派生 _2');
+  assert.equal(e2.env.data.output, mine, '--html 逐字落点不派生 _2');
   assert.deepEqual(readdirSync(dirname(mine)), [basename(mine)], '覆盖写不产生 _2');
 });
 

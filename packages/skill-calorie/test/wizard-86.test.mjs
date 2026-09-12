@@ -46,7 +46,7 @@ function mkWizardDb() {
 
 function run(bin, key, params, envExtra, output) {
   const a = params === undefined ? [key] : [key, '--params', JSON.stringify(params)];
-  if (output) a.push('--output', output);
+  if (output) a.push('--html', output);
   return spawnSync(NODE_BIN, [bin, ...a], { encoding: 'utf8', env: { ...process.env, ...(envExtra || {}) } });
 }
 
@@ -234,7 +234,7 @@ test('#86 CLI 端到端：4 键 exit 0＋落盘＋复制属性', () => {
     const html = readFileSync(outPath, 'utf8');
     assert.ok(html.includes('data-action-id'), key + ' 缺复制按钮承载属性');
     assert.ok(html.includes('data-t='), key + ' 缺复制文本承载属性');
-    assert.ok(existsSync(outPath), key + ' 未落盘指定 --output');
+    assert.ok(existsSync(outPath), key + ' 未落盘指定 --html');
   }
 });
 
