@@ -1,6 +1,6 @@
 {
   "name": "skill-chef",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "私家大厨SKILL一期：取数+口径+渲染+出口（8 联动 key+cmd_read+SKILL+HELP+parity），依 link-core",
   "type": "module",
   "main": "./dist/index.js",

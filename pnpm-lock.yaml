@@ -37,10 +37,10 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.2.0
+        version: link:../plugin-manager
       skill-bill:
-        specifier: ^0.1.0
+        specifier: 0.2.0
         version: link:../skill-bill
     devDependencies:
       tsdown:
@@ -69,10 +69,10 @@ importers:
   packages/plugin-chef:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.2.0
+        version: link:../plugin-manager
       skill-chef:
-        specifier: ^0.1.0
+        specifier: 0.2.0
         version: link:../skill-chef
     devDependencies:
       tsdown:
@@ -82,10 +82,10 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.2.0
+        version: link:../plugin-manager
       skill-home:
-        specifier: ^0.1.0
+        specifier: 0.2.0
         version: link:../skill-home
     devDependencies:
       tsdown:
@@ -586,10 +586,6 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
-
-  dsh-life-pack@0.1.1:
-    resolution: {integrity: sha512-pt1vaY7bI8g8BDXoeiFo78/KKX9fo/bRNIb3wa9SHWAY9lcSwMWBe7AYFsCmL4jFUdSjTDOFS/jiOmgvf0I40A==}
-    engines: {node: '>=22.13'}
 
   dts-resolver@3.0.0:
     resolution: {integrity: sha512-1T1f+z+4tl9XD+m+0HBgWoL/nm0bOIffyWaUuUSBlFg/86IWvfx+wjNaO/ybU0AJzG9/Mi5hBUgGV6zCmWEN7Q==}
@@ -1336,8 +1332,6 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
-
-  dsh-life-pack@0.1.1: {}
 
   dts-resolver@3.0.0: {}
 

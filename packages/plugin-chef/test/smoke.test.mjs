@@ -23,11 +23,15 @@ describe('dsh-chef 烟囱', () => {
     assert.ok(typeof assertCliPresent === 'function');
     assert.throws(() => assertCliPresent('/nonexistent/skill-chef-cmd_read.js'), (e) => e instanceof SkillBridgeError && e.code === 'missing-cli');
   });
-  it('#50 安装布局：单品声明 skill 同版本 ^ 依赖（正式版号，无 workspace）', () => {
+  it('#50 安装布局：单品声明总管同版本线 ＋ 技能精确 pin（正式版号，无 workspace；#129 防旧 skill 残留）', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.1\./);
-    assert.match(dep['skill-chef'] ?? '', /^\^0\.1\./);
+    // 断言与版本号解耦（#123 口径）：总管＝工作区同版本线的 caret；技能＝#129 精确 pin（caret ＋ 存量
+    // lockfile 会让旧 skill 残留，exact 才强制重解）。两个期望值都从工作区 package.json 现取，发版不红。
+    const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-chef', 'package.json'), 'utf8')).version;
+    const packVer = JSON.parse(readFileSync(join(here, '..', '..', 'plugin-manager', 'package.json'), 'utf8')).version;
+    assert.equal(dep['dsh-life-pack'], '^' + packVer);
+    assert.equal(dep['skill-chef'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
   it('#50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {
