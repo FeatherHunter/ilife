@@ -11,11 +11,13 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderKpiGrid, renderDisclosure, renderDataTable } from 'base-paint/blocks';
+import type { SerializableEnvelope } from 'base-paint';
 import { getProfile } from '../fetch/profile.js';
 import type { ProfileRow } from '../fetch/profile.js';
 import { getNutritionGoal } from '../fetch/nutritionGoal.js';
 import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
-import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
+import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
 import { CalorieRenderError } from '../render/errors.js';
 
 /** envelope 头（值对齐 `cli/keys.ts` ENVELOPE_VERSION／CALORIE_SKILL）。 */
@@ -23,6 +25,8 @@ const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
 const DOC_TITLE = '卡路里·档案';
+/** 本页由哪条命令产出（写进「复制日志」第 4 段，可照抄重跑）。 */
+const VIEW_KEY = 'calorie.view.profile';
 
 export interface ProfileView {
   profile: ProfileRow;
@@ -53,9 +57,18 @@ export function buildProfileView(db: DatabaseSync): ProfileView {
   return { profile, nutrition, latestWeightKg, hasGoal: nutrition !== null };
 }
 
-/** ② 结果页整页：档案五项 KPI ＋ 逐字段表 ＋ 复制数据区（完整文档，不是片段）。 */
+/** ② 结果页整页：档案五项 KPI ＋ 逐字段表 ＋ 复制区（完整文档，不是片段）。 */
 export function buildProfileViewDoc(v: ProfileView): string {
   const p = v.profile;
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: VIEW_KEY,
+    data: {
+      metrics: metricsOf({
+        age: p.age, heightCm: p.height_cm, hasGoal: v.hasGoal ? 1 : 0,
+        latestWeightKg: v.latestWeightKg, calorieGoal: v.nutrition?.calorie_goal,
+      }),
+    },
+  };
   const content = [
     renderKpiGrid([
       { label: '档案视图', value: (p.gender ?? '—') + ' ' + (p.age ?? '—') + '岁', detail: '身高 ' + (p.height_cm ?? '—') + ' cm' },
@@ -80,15 +93,12 @@ export function buildProfileViewDoc(v: ProfileView): string {
         ? '热量 ' + v.nutrition.calorie_goal + ' 卡 · 蛋白 ' + v.nutrition.protein_goal + ' · 碳水 ' + v.nutrition.carbs_goal + ' · 脂肪 ' + v.nutrition.fat_goal
         : '未设营养目标（定营养目标后可在此看到口径）',
     }),
-    dataCopyArea('复制数据', {
-      envelope: {
-        version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.profile',
-        data: {
-          metrics: metricsOf({
-            age: p.age, heightCm: p.height_cm, hasGoal: v.hasGoal ? 1 : 0,
-            latestWeightKg: v.latestWeightKg, calorieGoal: v.nutrition?.calorie_goal,
-          }),
-        },
+    copyArea({
+      title: '复制数据',
+      data: { envelope },
+      log: {
+        envelope,
+        copyLog: copyLog({ command: 'calorie-cmd-read ' + VIEW_KEY, version: DOC_VERSION }),
       },
     }),
   ].join('');

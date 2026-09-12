@@ -75,6 +75,7 @@ test('#179 三条写入词的回执页一律完整文档（空库一遍 ＋ 已�
     assertDocPage(r.file, label);
     assert.ok(r.file.includes('基础信息 · 写后回执'), label + ' 缺场景 07 眉标');
     assert.ok(r.file.includes('M5 契约 v1'), label + ' 缺 M5 契约版本');
+    assert.ok(r.file.includes('ilife-copy-log'), label + ' 缺「复制日志」按钮（#239）');
     assert.ok(r.file.length > 10000, label + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
   }
 });
@@ -114,7 +115,41 @@ test('#179 查档案结果页是完整文档；空档案仍是缺失阻断（不
   assertDocPage(v.file, 'calorie.view.profile');
   assert.ok(v.file.includes('档案现值（user_profile#1 单例行）'), '结果页缺档案现值表');
   assert.ok(v.file.includes('基础信息 · 看档案'), '结果页缺场景 07 眉标');
+  assert.ok(v.file.includes('ilife-copy-log'), '结果页缺「复制日志」按钮（#239）');
   assert.equal(JSON.parse(v.stdout).data.metrics.hasGoal, 0);
+});
+
+test('#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，照抄可重跑', () => {
+  const cases = [
+    ['calorie.profile.set', SET_PARAMS],
+    ['calorie.profile.activity', { activityLevel: '活跃' }],
+    ['calorie.profile.update', { fields: { heightCm: 174, note: '改过一次' } }],
+  ];
+  for (const [key, params] of cases) {
+    const r = runCli(mkDb(true), key, params);
+    assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
+    const ids = [...r.file.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(ids, ['ilife-copy-data', 'ilife-copy-log'], key + ' 的按钮不是「复制数据 ＋ 复制日志」两颗');
+    assert.ok(r.file.includes('本页由本地 CLI 渲染，无 AI 链'), key + ' 日志缺第 2 段');
+    assert.ok(r.file.includes('calorie_data.db'), key + ' 日志缺库文件名');
+    assert.ok(r.file.includes(key + ' --params'), key + ' 日志缺命令原文');
+    assert.ok(r.file.includes('影响 1 行'), key + ' 日志缺 M5 整行');
+  }
+
+  // 查档案结果页是只读页：命令原文是本页那条查询，没有 M5 行。
+  const v = runCli(mkDb(true), 'calorie.view.profile', {});
+  assert.equal(v.status, 0, 'stderr=' + v.stderr.slice(-300));
+  assert.deepEqual([...v.file.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]),
+    ['ilife-copy-data', 'ilife-copy-log'], '结果页按钮不对');
+  assert.ok(v.file.includes('calorie-cmd-read calorie.view.profile'), '结果页日志缺命令原文');
+
+  // 预检确认页：prompt ＋ 数据 ＋ 日志三颗按钮，id 两两不同（页内唯一）。
+  const w = runCli(mkDb(true), 'calorie.view.profile-wizard', {});
+  assert.equal(w.status, 0, 'stderr=' + w.stderr.slice(-300));
+  assertDocPage(w.file, 'calorie.view.profile-wizard');
+  assert.deepEqual([...w.file.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]),
+    ['ilife-help-copy-prompt', 'ilife-copy-data', 'ilife-copy-log'], '预检确认页按钮不对');
+  assert.ok(w.file.includes('calorie-cmd-read calorie.view.profile-wizard'), '预检确认页日志缺命令原文');
 });
 
 test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）', () => {

@@ -14,7 +14,8 @@ import {
   renderListRows,
   renderParamForm,
 } from 'base-paint/blocks';
-import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
+import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { dataCopyArea } from '../shared/copyArea.js';
 import type {
   BatchImportPreviewView,
   CalorieTrendView,

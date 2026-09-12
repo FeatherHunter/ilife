@@ -24,7 +24,8 @@ import {
   renderListRows,
   renderParamForm,
 } from 'base-paint/blocks';
-import { assembleDocPage, dataCopyArea } from '../shared/docPage.js';
+import { assembleDocPage } from '../shared/docPage.js';
+import { dataCopyArea } from '../shared/copyArea.js';
 import type { DataTableColumn } from 'base-paint/blocks';
 import { inferMealType } from '../fetch/diet.js';
 /** 明细行最小形（fetch MealRow 的子集；调用方传全行亦可）。 */

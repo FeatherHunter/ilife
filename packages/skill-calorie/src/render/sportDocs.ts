@@ -27,7 +27,8 @@ import {
   renderListRows,
   renderParamForm,
 } from 'base-paint/blocks';
-import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
+import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { dataCopyArea } from '../shared/copyArea.js';
 import type { DataTableColumn } from 'base-paint/blocks';
 import type { DaySeries } from '../analysis/series.js';
 import { inferCategory } from '../fetch/exercise.js';

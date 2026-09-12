@@ -235,17 +235,23 @@ function profileDiffItems(before: ProfileRow | null, after: ProfileRow, fields: 
   return fields.map((f) => ({ status: f, reason: profileValue(before, f) + ' → ' + profileValue(after, f) }));
 }
 
+/** 页面「复制日志」第 4 段的命令原文：与 AI 实跑那条同形（含本次 `--params`），可照抄重跑。 */
+function commandLine(key: string, params: Record<string, unknown>): string {
+  return 'calorie-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";
+}
+
 /** 三条写入词的回执页换成整页装配；**其余 32 条一律返回 null**，由 `dispatchWrite` 的
  *  `?? res.html` 原样放行——那些命令的产物与 `receiptHtml` 那条片段路径逐字节不变
  *  （分派只认这三个命令名，认不出就不进这条路，也不碰 `receiptHtml` 本身）。
- *  必须在 `withM5` 之后调用：新页要印 `affectedRows`／`writtenFields`／`m5Line`。 */
-function profileReceiptDoc(key: string, receipt: CrudReceipt): string | null {
+ *  必须在 `withM5` 之后调用：新页要印 `affectedRows`／`writtenFields`／`m5Line`。
+ *  #239：把命令原文一并交给回执页，进「复制日志」第 4 段（key 与 params 都在本处作用域里）。 */
+function profileReceiptDoc(key: string, params: Record<string, unknown>, receipt: CrudReceipt): string | null {
   switch (key) {
     case 'calorie.profile.set':
     case 'calorie.profile.activity':
-      return buildProfileSettingReceiptDoc(receipt);
+      return buildProfileSettingReceiptDoc(receipt, commandLine(key, params));
     case 'calorie.profile.update':
-      return buildProfileUpdateReceiptDoc(receipt);
+      return buildProfileUpdateReceiptDoc(receipt, commandLine(key, params));
     default:
       return null;
   }
@@ -340,7 +346,7 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
   try {
     const res = dispatchInner(key, params, db);
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
-    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, receipt) ?? res.html };
+    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt) ?? res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;

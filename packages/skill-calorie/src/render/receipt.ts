@@ -149,7 +149,10 @@ export function withM5(receipt: CrudReceipt, patch: Omit<M5Input, 'recordId' | '
   };
 }
 
-function nowStamp(): string {
+/** 本仓唯一的时间戳口径（`YYYY-MM-DD HH:MM:SS`，本地时）。回执 `meta.actionAt` 与
+ *  复制日志第 5 段同源；#239 起对外给出去——别在别处再写一份同样的格式。
+ *  （注：`src/fetch/exercise.ts` 另有一份同名私有件，属取数层的既有重复，不在本次改动面。） */
+export function nowStamp(): string {
   const d = new Date();
   const p = (n: number): string => String(n).padStart(2, '0');
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());

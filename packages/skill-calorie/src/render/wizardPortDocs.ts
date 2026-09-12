@@ -25,7 +25,8 @@ import type {
 } from './wizardPort.js';
 import { PHOTO_LOG_TAGS } from './wizardPort.js';
 import { WIZARD_MEASURE_CAMEL, WIZARD_MEASURE_LABELS } from './wizardPort.js';
-import { assembleDocPage, dataCopyArea, metricsOf, promptCopyArea } from '../shared/docPage.js';
+import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { dataCopyArea, promptCopyArea } from '../shared/copyArea.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';

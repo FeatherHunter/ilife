@@ -12,17 +12,21 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
+import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
 import type { ProfileRow } from '../fetch/profile.js';
 import { ACTIVITY_LEVELS } from '../kcal.js';
 import { ACTIVITY_LEVEL_LABELS, TDEE_ACTIVITY_FACTORS, calcTdee } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { assembleDocPage, dataCopyArea, metricsOf, promptCopyArea } from '../shared/docPage.js';
+import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
 import { profileSnapshot } from './view.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·档案预检';
+/** 本页由哪条命令产出（写进「复制日志」第 4 段，可照抄重跑）。 */
+const WIZARD_KEY = 'calorie.view.profile-wizard';
 
 /** 三条写入词（HELP `scene-07-profile.ts` 的 name，逐字）。 */
 const SET_WORD = '设置档案';
@@ -215,10 +219,25 @@ function formOf(v: ProfileSettingView, fields: readonly { camel: string; label: 
   });
 }
 
-/** ② 写前页整页：三条写入词各自的字段与槽位 ＋ 改前→改后对照 ＋ 复制 prompt。 */
+/** ② 写前页整页：三条写入词各自的字段与槽位 ＋ 改前→改后对照 ＋ 复制 prompt。
+ *
+ *  复制区（#239）：prompt／数据／日志三样一个 `copyArea` 出——复制 prompt 区与今天逐字相同，
+ *  数据区多接一颗「复制日志」（日志里写的是产出本页那条命令，本页不写库）。 */
 export function buildProfileSettingDoc(v: ProfileSettingView): string {
   const current = v.before?.activity_level ?? null;
   const currentRow = v.activityChoices.find((c) => c.level === current);
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: WIZARD_KEY,
+    data: {
+      metrics: metricsOf({
+        filledCount: v.filledCount,
+        hasProfile: v.before ? 1 : 0,
+        latestWeightKg: v.latestWeightKg,
+        activityLevels: v.activityChoices.length,
+        tdeeReady: v.activityChoices[0]?.tdee === null ? 0 : 1,
+      }),
+    },
+  };
   const content = [
     renderKpiGrid([
       // #179 内容级排版：KPI 卡的 value 槽是给一个**短值**的（28px 粗体），19 字长句塞进去
@@ -237,19 +256,13 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
     renderDisclosure({ title: '设置档案 4 项（身高／年龄／性别／活动量）', contentHtml: formOf(v, SET_FIELDS), open: true }),
     renderDisclosure({ title: '改档案 5 项（另含备注；空库无改前值）', contentHtml: formOf(v, UPDATE_FIELDS) }),
     renderDisclosure({ title: '设活动量 5 档（系数与 TDEE 影响）', contentHtml: activityTable(v) }),
-    promptCopyArea(v.prompt),
-    dataCopyArea('复制数据', {
-      envelope: {
-        version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.profile-wizard',
-        data: {
-          metrics: metricsOf({
-            filledCount: v.filledCount,
-            hasProfile: v.before ? 1 : 0,
-            latestWeightKg: v.latestWeightKg,
-            activityLevels: v.activityChoices.length,
-            tdeeReady: v.activityChoices[0]?.tdee === null ? 0 : 1,
-          }),
-        },
+    copyArea({
+      title: '复制数据',
+      prompt: v.prompt,
+      data: { envelope },
+      log: {
+        envelope,
+        copyLog: copyLog({ command: 'calorie-cmd-read ' + WIZARD_KEY, version: DOC_VERSION }),
       },
     }),
   ].join('');
@@ -262,8 +275,13 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
   });
 }
 
-/** ③ 两条写命令（设置档案／设活动量）的写后回执页；改档案回执页在 `update.ts`（它的对照区不同）。 */
-export function buildProfileSettingReceiptDoc(receipt: CrudReceipt): string {
+/** ③ 两条写命令（设置档案／设活动量）的写后回执页；改档案回执页在 `update.ts`（它的对照区不同）。
+ *  `command` ＝ AI 真跑那条写命令的原文（`cli/write.ts` 从分派处传进来），进「复制日志」第 4 段。 */
+export function buildProfileSettingReceiptDoc(receipt: CrudReceipt, command: string): string {
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
+    data: { ok: true, message: receipt.summary },
+  };
   const content = [
     renderKpiGrid([
       { label: '动作', value: receipt.scene, detail: 'op=' + receipt.op },
@@ -281,10 +299,15 @@ export function buildProfileSettingReceiptDoc(receipt: CrudReceipt): string {
       ],
       caption: receipt.meta.entityType + '（写库回执）',
     }),
-    dataCopyArea('复制数据', {
-      envelope: {
-        version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
-        data: { ok: true, message: receipt.summary },
+    copyArea({
+      title: '复制数据',
+      data: { envelope },
+      log: {
+        envelope,
+        copyLog: copyLog({
+          command, source: receipt.meta.source, m5Line: receipt.m5Line,
+          actionAt: receipt.meta.actionAt, version: DOC_VERSION,
+        }),
       },
     }),
   ].join('');

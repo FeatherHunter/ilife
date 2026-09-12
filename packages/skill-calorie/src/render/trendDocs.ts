@@ -26,7 +26,8 @@ import {
   renderListRows,
   renderParamForm,
 } from 'base-paint/blocks';
-import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
+import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { dataCopyArea } from '../shared/copyArea.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { AnomalyView, ContraView, PredictView } from './insightPlate.js';

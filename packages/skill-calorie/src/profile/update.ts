@@ -9,8 +9,10 @@
  * （设计 §一：同一件事只留一处定义，铁律五不另起转手件）。
  */
 import { renderDataTable, renderKpiGrid, renderPreBlock } from 'base-paint/blocks';
+import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
-import { assembleDocPage, dataCopyArea } from '../shared/docPage.js';
+import { assembleDocPage } from '../shared/docPage.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -23,9 +25,14 @@ function diffRows(receipt: CrudReceipt): { field: string; change: string }[] {
     .map((it) => ({ field: it.status, change: it.reason === '' ? (it.detail ?? '—') : it.reason }));
 }
 
-/** 改档案写后回执整页：摘要 ＋ 逐字段 改前→改后 ＋ 写入字段 ＋ M5 整行。 */
-export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt): string {
+/** 改档案写后回执整页：摘要 ＋ 逐字段 改前→改后 ＋ 写入字段 ＋ M5 整行。
+ *  `command` ＝ AI 真跑那条写命令的原文（`cli/write.ts` 从分派处传进来），进「复制日志」第 4 段。 */
+export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: string): string {
   const rows = diffRows(receipt);
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
+    data: { ok: true, message: receipt.summary },
+  };
   const content = [
     renderKpiGrid([
       { label: '动作', value: receipt.scene, detail: 'op=' + receipt.op },
@@ -40,10 +47,15 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt): string {
       emptyText: '本次回执未带逐字段对照（写入字段：' + (receipt.writtenFields.join('、') || '—') + '）',
     }),
     renderPreBlock({ label: 'M5 整行（旧版等价物）', command: receipt.m5Line }),
-    dataCopyArea('复制数据', {
-      envelope: {
-        version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
-        data: { ok: true, message: receipt.summary },
+    copyArea({
+      title: '复制数据',
+      data: { envelope },
+      log: {
+        envelope,
+        copyLog: copyLog({
+          command, source: receipt.meta.source, m5Line: receipt.m5Line,
+          actionAt: receipt.meta.actionAt, version: DOC_VERSION,
+        }),
       },
     }),
   ].join('');
