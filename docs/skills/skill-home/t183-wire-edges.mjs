@@ -24,13 +24,14 @@ const MAP = 183;
 /** 阻塞关系（本图唯一真相源；票面正文里的 `Blocked by:` 行只作降级兜底）：child ← [blockers] */
 const BLOCKED_BY = {
   4: [1],
-  5: [2, 12],
-  6: [1, 3, 12],
+  5: [2, 12, 13],
+  6: [1, 3, 12, 13],
   7: [4, 6],
   8: [7],
   9: [7],
   11: [8, 9, 10],
   12: [2],
+  13: [],
 };
 
 const here = dirname(fileURLToPath(import.meta.url));

@@ -1,0 +1,169 @@
+{
+  "schema": "skill-home/scene-skeleton@1",
+  "for_ticket": "#188",
+  "sources": {"old":"D:/2Study/StudyNotes/SKILLS/居家管家/references/scenarios.yaml","new":"packages/skill-home/src/policy/wakewords.ts（WAKE_TABLE 91 词／HomeKey 21 命令／DEPRECATED_PHRASES 3 词）","help_auto":"packages/skill-home/SKILL.md:24-120","reconcile":"docs/skills/skill-home/t185-content-reconcile.md"},
+  "counts": {"domains":9,"subs":30,"scenes":73,"scenes_with_landing":70,"scenes_deprecated":3,"new_entries":91,"new_carried":71,"new_compensated":20},
+  "help_only": [
+    {"phrase":"居家管家 帮助","key":"home.help.lookup","in_help":true,"note":"HELP 自身入口，不属 9 域场景"},
+    {"phrase":"居家管家帮助","key":"home.help.lookup","in_help":true,"note":"HELP 自身入口，不属 9 域场景"},
+    {"phrase":"居家管家能做什么","key":"home.help.lookup","in_help":true,"note":"HELP 自身入口，不属 9 域场景"}
+  ],
+  "deprecated": [
+    {"phrase":"联动总览","key":null,"in_help":false,"old_scene":"SM9-1","note":"不路由；prompt 复制不迁（SKILL.md:125）；combos 登记走后续票"},
+    {"phrase":"记到卡路里","key":null,"in_help":false,"old_scene":"SM9-2","note":"不路由；prompt 复制不迁（SKILL.md:125）；combos 登记走后续票"},
+    {"phrase":"记到记账","key":null,"in_help":false,"old_scene":"SM9-3","note":"不路由；prompt 复制不迁（SKILL.md:125）；combos 登记走后续票"}
+  ],
+  "domains": [
+    { "key": "items", "name_cn": "物品管理", "subs": [
+      { "sub_cn": "录入", "name": "add", "scenes": [
+        { "id": "1-1", "wake": ["录物品"], "title": "录入一件新物品", "prompt_source": "old_yaml:40#prompt", "origin": "old_yaml", "old_template": "物品/add_form.html", "cli": "home-cmd-read home.item.add" },
+        { "id": "1-2", "wake": ["拍物品"], "title": "拍照识别录入物品", "prompt_source": "old_yaml:70#prompt", "origin": "old_yaml", "old_template": "物品/add_form.html", "cli": "home-cmd-read home.item.add --params '{\"photo\":\"1\"}'" },
+        { "id": "1-3", "wake": ["批量录入"], "title": "批量录入多件物品", "prompt_source": "old_yaml:90#prompt", "origin": "old_yaml", "old_template": "物品/add_form.html", "cli": "home-cmd-read home.item.add --params '{\"op\":\"batch\"}'" },
+        { "id": "1-4", "wake": ["补录"], "title": "补录历史物品(指定日期)", "prompt_source": "old_yaml:106#prompt", "origin": "old_yaml", "old_template": "物品/add_form.html", "cli": "home-cmd-read home.item.add --params '{\"op\":\"backfill\"}'" }
+      ] },
+      { "sub_cn": "查找", "name": "search", "scenes": [
+        { "id": "2-1", "wake": ["查物品"], "title": "搜索查找物品", "prompt_source": "old_yaml:123#prompt", "origin": "old_yaml", "old_template": "物品/search_list.html", "cli": "home-cmd-read home.item.search", "extra_wake": [{"phrase":"查物品(HTML)","key":"home.item.search","cli":"home-cmd-read home.item.search","in_help":false,"origin":"new_table","note":"兼容别名，不进 HELP"}] },
+        { "id": "2-2", "wake": ["看物品"], "title": "查看物品详情", "prompt_source": "old_yaml:151#prompt", "origin": "old_yaml", "old_template": "物品/detail.html", "cli": "home-cmd-read home.item.detail --params '{\"id\":1}'", "extra_wake": [{"phrase":"看物品(HTML)","key":"home.item.detail","cli":"home-cmd-read home.item.detail --params '{\"id\":1}'","in_help":false,"origin":"new_table","note":"兼容别名，不进 HELP"}] },
+        { "id": "2-3", "wake": ["紧急定位"], "title": "紧急查找物品位置", "prompt_source": "old_yaml:179#prompt", "origin": "old_yaml", "old_template": "物品/locate.html", "cli": "home-cmd-read home.item.search --params '{\"locate\":true}'" },
+        { "id": "2-4", "wake": ["筛选浏览"], "title": "按条件筛选浏览物品", "prompt_source": "old_yaml:194#prompt", "origin": "old_yaml", "old_template": "物品/browse.html", "cli": "home-cmd-read home.item.search --params '{\"browse\":true}'" },
+        { "id": "2-5", "wake": ["拍照找物品"], "title": "拍照反向查找物品", "prompt_source": "old_yaml:211#prompt", "origin": "old_yaml", "old_template": "物品/search_list.html", "cli": "home-cmd-read home.item.search --params '{\"photo\":true}'" },
+        { "id": "2-6", "wake": ["查重复"], "title": "检查重复物品", "prompt_source": "old_yaml:229#prompt", "origin": "old_yaml", "old_template": "物品/duplicates.html", "cli": "home-cmd-read home.item.search --params '{\"dupes\":true}'" }
+      ] },
+      { "sub_cn": "更新", "name": "update", "scenes": [
+        { "id": "3-1", "wake": ["改物品"], "title": "修改物品信息", "prompt_source": "old_yaml:244#prompt", "origin": "old_yaml", "old_template": "物品/add_form.html", "cli": "home-cmd-read home.item.update --params '{\"id\":1}'" },
+        { "id": "3-2", "wake": ["移物品"], "title": "移动物品位置", "prompt_source": "old_yaml:259#prompt", "origin": "old_yaml", "old_template": "物品/receipt.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"move\",\"id\":1}'" },
+        { "id": "3-3", "wake": ["数量变更"], "title": "变更物品数量", "prompt_source": "old_yaml:275#prompt", "origin": "old_yaml", "old_template": "物品/receipt.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"qty\",\"id\":1}'", "extra_wake": [{"phrase":"补物品","key":"home.item.update","cli":"home-cmd-read home.item.update --params '{\"op\":\"qty\",\"id\":1}'","in_help":true,"origin":"new_table"},{"phrase":"减物品","key":"home.item.update","cli":"home-cmd-read home.item.update --params '{\"op\":\"qty\",\"id\":1}'","in_help":true,"origin":"new_table"}] },
+        { "id": "3-4", "wake": ["状态变更"], "title": "变更物品状态", "prompt_source": "old_yaml:291#prompt", "origin": "old_yaml", "old_template": "物品/receipt.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"status\",\"id\":1}'", "extra_wake": [{"phrase":"废物品","key":"home.item.update","cli":"home-cmd-read home.item.update --params '{\"op\":\"status\",\"id\":1}'","in_help":true,"origin":"new_table"},{"phrase":"借物品","key":"home.item.update","cli":"home-cmd-read home.item.update --params '{\"op\":\"status\",\"id\":1}'","in_help":true,"origin":"new_table"},{"phrase":"修物品","key":"home.item.update","cli":"home-cmd-read home.item.update --params '{\"op\":\"status\",\"id\":1}'","in_help":true,"origin":"new_table"}] },
+        { "id": "3-5", "wake": ["合并物品"], "title": "合并重复物品", "prompt_source": "old_yaml:307#prompt", "origin": "old_yaml", "old_template": "物品/confirm.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"merge\",\"id\":1}'" },
+        { "id": "3-6", "wake": ["撤销操作"], "title": "撤销最近操作", "prompt_source": "old_yaml:323#prompt", "origin": "old_yaml", "old_template": "物品/undo_select.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"undo\"}'" },
+        { "id": "3-7", "wake": ["物品关联"], "title": "设置物品关联", "prompt_source": "old_yaml:338#prompt", "origin": "old_yaml", "old_template": "物品/relations.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"relate\",\"id\":1}'" },
+        { "id": "3-8", "wake": ["标物品"], "title": "修改物品标签", "prompt_source": "old_yaml:354#prompt", "origin": "old_yaml", "old_template": "物品/receipt.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"tags\",\"id\":1}'" }
+      ] },
+      { "sub_cn": "标签与分类", "name": "tag", "scenes": [
+        { "id": "4-1", "wake": ["管标签"], "title": "管理标签(查看/重命名/合并/清理)", "prompt_source": "old_yaml:370#prompt", "origin": "old_yaml", "old_template": "物品/tag_manage.html", "cli": "home-cmd-read home.tag.write --params '{\"op\":\"overview\"}'", "extra_wake": [{"phrase":"看标签","key":"home.tag.query","cli":"home-cmd-read home.tag.query","in_help":true,"origin":"new_table"},{"phrase":"合标签","key":"home.tag.write","cli":"home-cmd-read home.tag.write --params '{\"op\":\"merge\"}'","in_help":true,"origin":"new_table"}] },
+        { "id": "4-2", "wake": ["管分类"], "title": "管理分类(查看/新建/改名/合并/移动)", "prompt_source": "old_yaml:386#prompt", "origin": "old_yaml", "old_template": "物品/category_manage.html", "cli": "home-cmd-read home.tag.write --params '{\"op\":\"category\"}'" },
+        { "id": "4-3", "wake": ["整理建议"], "title": "标签分类整理建议(AI 检测)", "prompt_source": "old_yaml:402#prompt", "origin": "old_yaml", "old_template": "物品/tag_manage.html", "cli": "home-cmd-read home.tag.write --params '{\"op\":\"tidy\"}'" }
+      ] },
+      { "sub_cn": "照片档案", "name": "photo", "scenes": [
+        { "id": "5-1", "wake": ["查看照片"], "title": "查看物品照片(含类型筛选)", "prompt_source": "old_yaml:417#prompt", "origin": "old_yaml", "old_template": "物品/photos.html", "cli": "home-cmd-read home.item.detail --params '{\"view\":\"photos\",\"id\":1}'" },
+        { "id": "5-2", "wake": ["管照片"], "title": "管理物品照片(排序/换主图/加图/标记类型)", "prompt_source": "old_yaml:433#prompt", "origin": "old_yaml", "old_template": "物品/photos.html", "cli": "home-cmd-read home.item.update --params '{\"op\":\"photo\",\"id\":1}'" },
+        { "id": "5-3", "wake": ["照片墙"], "title": "浏览物品照片墙(分类/位置/类型)", "prompt_source": "old_yaml:449#prompt", "origin": "old_yaml", "old_template": "物品/photo_wall.html", "cli": "home-cmd-read home.item.search --params '{\"wall\":true}'" }
+      ] },
+      { "sub_cn": "盘点", "name": "inventory", "scenes": [
+        { "id": "6-1", "wake": ["盘点"], "title": "盘点核对(按位置/分类/全屋)", "prompt_source": "old_yaml:465#prompt", "origin": "old_yaml", "old_template": "物品/inventory_round.html", "cli": "home-cmd-read home.inventory.round --params '{\"op\":\"round\"}'", "extra_wake": [{"phrase":"盘物品","key":"home.inventory.round","cli":"home-cmd-read home.inventory.round --params '{\"op\":\"round\"}'","in_help":true,"origin":"new_table"},{"phrase":"盘全部","key":"home.inventory.round","cli":"home-cmd-read home.inventory.round --params '{\"op\":\"round\",\"scope\":\"all\"}'","in_help":true,"origin":"new_table"}] },
+        { "id": "6-2", "wake": ["差异处理"], "title": "处理盘点差异(缺/多/异/待确认)", "prompt_source": "old_yaml:493#prompt", "origin": "old_yaml", "old_template": "物品/inventory_diff.html", "cli": "home-cmd-read home.inventory.round --params '{\"op\":\"resolve\"}'" },
+        { "id": "6-3", "wake": ["盘点记录"], "title": "查看盘点记录(含复查)", "prompt_source": "old_yaml:508#prompt", "origin": "old_yaml", "old_template": "物品/inventory_records.html", "cli": "home-cmd-read home.inventory.records" },
+        { "id": "6-4", "wake": ["搬家盘点"], "title": "搬家打包盘点(带走/不带走)", "prompt_source": "old_yaml:523#prompt", "origin": "old_yaml", "old_template": "物品/move_checklist.html", "cli": "home-cmd-read home.inventory.round --params '{\"op\":\"move\"}'" }
+      ] },
+      { "sub_cn": "物品历史", "name": "history", "scenes": [
+        { "id": "7-1", "wake": ["历史"], "title": "查看物品历史(时间线/轨迹)", "prompt_source": "old_yaml:538#prompt", "origin": "old_yaml", "old_template": "物品/history.html", "cli": "home-cmd-read home.item.detail --params '{\"view\":\"history\",\"id\":1}'" }
+      ] }
+    ] },
+    { "key": "space", "name_cn": "空间与位置", "subs": [
+      { "sub_cn": "位置管理", "name": "locationManage", "scenes": [
+        { "id": "SM2-1", "wake": ["管位置"], "title": "管理位置体系(查看/新建/改名/合并/规范化)", "prompt_source": "old_yaml:553#prompt", "origin": "old_yaml", "old_template": "位置/location_manage.html", "cli": "home-cmd-read home.location.write --params '{\"op\":\"manage\"}'", "extra_wake": [{"phrase":"推位置","key":"home.location.query","cli":"home-cmd-read home.location.query --params '{\"mode\":\"suggest\"}'","in_help":true,"origin":"new_table","note":"U1 待裁：老家记作录入流程子步骤 features/add.md Step 2.5"},{"phrase":"找位置","key":"home.location.query","cli":"home-cmd-read home.location.query --params '{\"mode\":\"find\"}'","in_help":true,"origin":"new_table","note":"U1 待裁：老家记作录入流程子步骤 features/add.md Step 2.6"}] }
+      ] },
+      { "sub_cn": "固定位", "name": "fixedSpot", "scenes": [
+        { "id": "SM2-2", "wake": ["固定位"], "title": "设置固定位(常用件锚定)", "prompt_source": "old_yaml:576#prompt", "origin": "old_yaml", "old_template": "位置/fixed_spot.html", "cli": "home-cmd-read home.location.write --params '{\"op\":\"fixed\"}'" }
+      ] },
+      { "sub_cn": "收纳建议", "name": "suggestStorage", "scenes": [
+        { "id": "SM2-3", "wake": ["收纳建议"], "title": "收纳位置建议(AI 推荐)", "prompt_source": "old_yaml:599#prompt", "origin": "old_yaml", "old_template": "位置/suggest_storage.html", "cli": "home-cmd-read home.location.query --params '{\"mode\":\"storage\"}'" }
+      ] },
+      { "sub_cn": "空间视图", "name": "spaceView", "scenes": [
+        { "id": "SM2-4", "wake": ["空间视图"], "title": "空间视图浏览(位置树下钻)", "prompt_source": "old_yaml:621#prompt", "origin": "old_yaml", "old_template": "位置/space_view.html", "cli": "home-cmd-read home.location.query --params '{\"mode\":\"space\"}'" }
+      ] }
+    ] },
+    { "key": "outfit", "name_cn": "穿搭出行", "subs": [
+      { "sub_cn": "穿搭推荐", "name": "outfitPick", "scenes": [
+        { "id": "SM3-1", "wake": ["穿什么"], "title": "今日穿搭推荐(拼贴效果)", "prompt_source": "old_yaml:643#prompt", "origin": "old_yaml", "old_template": "穿搭/outfit_picker.html", "cli": "home-cmd-read home.outfit.pick" }
+      ] },
+      { "sub_cn": "衣橱管理", "name": "wardrobe", "scenes": [
+        { "id": "SM3-2", "wake": ["衣橱分析"], "title": "衣橱闲置分析(结构诊断/断舍离建议)", "prompt_source": "old_yaml:659#prompt", "origin": "old_yaml", "old_template": "穿搭/wardrobe_analyze.html", "cli": "home-cmd-read home.outfit.pick --params '{\"kind\":\"wardrobe\"}'" },
+        { "id": "SM3-3", "wake": ["换季"], "title": "换季收纳(季节衣物批量收纳)", "prompt_source": "old_yaml:674#prompt", "origin": "old_yaml", "old_template": "穿搭/wardrobe_season.html", "cli": "home-cmd-read home.outfit.pick --params '{\"kind\":\"season\"}'" }
+      ] },
+      { "sub_cn": "出行清单", "name": "tripPack", "scenes": [
+        { "id": "SM3-4", "wake": ["带物品","归物品"], "title": "出行带物清单(带/归,联动健身计划,出发核对)", "prompt_source": "old_yaml:690#prompt", "origin": "old_yaml", "old_template": "穿搭/travel_trip.html", "cli": "home-cmd-read home.trip.manage --params '{\"mode\":\"pack\"}'" }
+      ] },
+      { "sub_cn": "旅行穿搭计划", "name": "tripOutfitPlan", "scenes": [
+        { "id": "SM3-5", "wake": ["旅行穿搭"], "title": "旅行穿搭计划(天数+天气)", "prompt_source": "old_yaml:706#prompt", "origin": "old_yaml", "old_template": "穿搭/trip_outfit_plan.html", "cli": "home-cmd-read home.outfit.pick --params '{\"kind\":\"trip-plan\"}'" }
+      ] }
+    ] },
+    { "key": "stats", "name_cn": "统计总览", "subs": [
+      { "sub_cn": "统计总览", "name": "overview", "scenes": [
+        { "id": "SM4-1", "wake": ["统物品"], "title": "物品总览", "prompt_source": "old_yaml:721#prompt", "origin": "old_yaml", "old_template": "stats/overview.html", "cli": "home-cmd-read home.stats.overview --params '{\"kind\":\"summary\"}'", "extra_wake": [{"phrase":"查高频","key":"home.stats.overview","cli":"home-cmd-read home.stats.overview --params '{\"kind\":\"summary\"}'","in_help":true,"origin":"new_table"},{"phrase":"统物品(HTML)","key":"home.stats.overview","cli":"home-cmd-read home.stats.overview","in_help":false,"origin":"new_table","note":"兼容别名，不进 HELP"}] },
+        { "id": "SM4-2", "wake": ["查闲置"], "title": "闲置物品检测(AI 断舍离建议)", "prompt_source": "old_yaml:749#prompt", "origin": "old_yaml", "old_template": "stats/idle.html", "cli": "home-cmd-read home.stats.alert --params '{\"kind\":\"idle\"}'", "extra_wake": [{"phrase":"查低频","key":"home.stats.alert","cli":"home-cmd-read home.stats.alert --params '{\"kind\":\"idle\"}'","in_help":true,"origin":"new_table"}] },
+        { "id": "SM4-3", "wake": ["查过期"], "title": "过期检查与预告", "prompt_source": "old_yaml:764#prompt", "origin": "old_yaml", "old_template": "stats/expiring.html", "cli": "home-cmd-read home.stats.alert --params '{\"kind\":\"expiring\"}'" },
+        { "id": "SM4-4", "wake": ["盘点统计"], "title": "盘点统计与建议", "prompt_source": "old_yaml:779#prompt", "origin": "old_yaml", "old_template": "stats/inventory_stat.html", "cli": "home-cmd-read home.stats.overview --params '{\"kind\":\"inventory\"}'" }
+      ] }
+    ] },
+    { "key": "express", "name_cn": "快递购物", "subs": [
+      { "sub_cn": "购物清单", "name": "shoppingList", "scenes": [
+        { "id": "SM5-1", "wake": ["购物清单"], "title": "购物清单(组织/例行/采购闭环)", "prompt_source": "old_yaml:794#prompt", "origin": "old_yaml", "old_template": "快递购物/list.html", "cli": "home-cmd-read home.shopping.query --params '{\"kind\":\"list\"}'", "extra_wake": [{"phrase":"改购物清单","key":"home.shopping.write","cli":"home-cmd-read home.shopping.write --params '{\"op\":\"check\"}'","in_help":true,"origin":"new_table"}] }
+      ] },
+      { "sub_cn": "缺货检测", "name": "shoppingMissing", "scenes": [
+        { "id": "SM5-2", "wake": ["缺货检测"], "title": "缺货检测(自动进清单)", "prompt_source": "old_yaml:809#prompt", "origin": "old_yaml", "old_template": "快递购物/missing.html", "cli": "home-cmd-read home.shopping.query --params '{\"kind\":\"missing\"}'" }
+      ] },
+      { "sub_cn": "快递跟踪", "name": "searchExpress", "scenes": [
+        { "id": "SM5-3", "wake": ["查快递"], "title": "快递跟踪(查/超时/收货确认)", "prompt_source": "old_yaml:824#prompt", "origin": "old_yaml", "old_template": "快递购物/express.html", "cli": "home-cmd-read home.shopping.query --params '{\"kind\":\"express\"}'" }
+      ] },
+      { "sub_cn": "囤货盘点", "name": "stockCheck", "scenes": [
+        { "id": "SM5-4", "wake": ["囤货盘点"], "title": "囤货盘点(库存/阈值/不足检测)", "prompt_source": "old_yaml:839#prompt", "origin": "old_yaml", "old_template": "快递购物/stock.html", "cli": "home-cmd-read home.shopping.query --params '{\"kind\":\"stock\"}'" }
+      ] }
+    ] },
+    { "key": "family", "name_cn": "家庭协作", "subs": [
+      { "sub_cn": "借用管理", "name": "borrow", "scenes": [
+        { "id": "SM7-1", "wake": ["借用"], "title": "借用管理(借出/借入/归还/催还)", "prompt_source": "old_yaml:854#prompt", "origin": "old_yaml", "old_template": "family_borrow.html", "cli": "home-cmd-read home.care.query --params '{\"kind\":\"borrow\"}'" }
+      ] },
+      { "sub_cn": "家人档案", "name": "member", "scenes": [
+        { "id": "SM7-2", "wake": ["家人档案"], "title": "家人档案(成员/物品归属标记)", "prompt_source": "old_yaml:870#prompt", "origin": "old_yaml", "old_template": "family_members.html", "cli": "home-cmd-read home.care.query --params '{\"kind\":\"member\"}'" }
+      ] }
+    ] },
+    { "key": "setup", "name_cn": "开始使用", "subs": [
+      { "sub_cn": "开始使用", "name": "firstUse", "scenes": [
+        { "id": "SM8-1", "wake": ["首次使用"], "title": "首次使用(初始化工作流)", "prompt_source": "old_yaml:886#prompt", "origin": "old_yaml", "old_template": "开始使用/first_use_wizard.html", "cli": "home-cmd-read home.care.write --params '{\"kind\":\"init\"}'" },
+        { "id": "SM8-2", "wake": ["查异常"], "title": "数据检查(健康报告)", "prompt_source": "old_yaml:901#prompt", "origin": "old_yaml", "old_template": "开始使用/health_report.html", "cli": "home-cmd-read home.care.query --params '{\"kind\":\"lint\"}'" },
+        { "id": "SM8-3", "wake": ["备份导出"], "title": "备份与导出(数据资产)", "prompt_source": "old_yaml:916#prompt", "origin": "old_yaml", "old_template": "开始使用/backup_receipt.html", "cli": "home-cmd-read home.care.write --params '{\"kind\":\"backup\"}'" },
+        { "id": "SM8-4", "wake": ["导入恢复"], "title": "导入与恢复(迁移)", "prompt_source": "old_yaml:932#prompt", "origin": "old_yaml", "old_template": "开始使用/import_restore.html", "cli": "home-cmd-read home.care.write --params '{\"kind\":\"import\"}'" }
+      ] }
+    ] },
+    { "key": "link", "name_cn": "联动功能", "subs": [
+      { "sub_cn": "联动总览", "name": "linkOverview", "scenes": [
+        { "id": "SM9-1", "wake": ["联动总览"], "title": "联动功能总览(能力索引)", "prompt_source": null, "origin": "old_yaml", "old_template": "联动/link_overview.html", "cli": null, "status": "deprecated" }
+      ] },
+      { "sub_cn": "食品联动", "name": "linkCalorie", "scenes": [
+        { "id": "SM9-2", "wake": ["记到卡路里"], "title": "食品联动(记到卡路里/查热量)", "prompt_source": null, "origin": "old_yaml", "old_template": "联动/link_food.html", "cli": null, "status": "deprecated" }
+      ] },
+      { "sub_cn": "价格联动", "name": "linkAccounting", "scenes": [
+        { "id": "SM9-3", "wake": ["记到记账"], "title": "价格联动(记到记账)", "prompt_source": null, "origin": "old_yaml", "old_template": "联动/link_price.html", "cli": null, "status": "deprecated" }
+      ] }
+    ] },
+    { "key": "receipt", "name_cn": "票据凭证", "subs": [
+      { "sub_cn": "购买记录", "name": "purchase", "scenes": [
+        { "id": "SM6-1", "wake": ["查购买记录"], "title": "查购买记录(全量/按物品/按时间)", "prompt_source": "old_yaml:997#prompt", "origin": "old_yaml", "old_template": "票据凭证/purchase_records.html", "cli": "home-cmd-read home.ticket.query --params '{\"kind\":\"purchase\"}'" },
+        { "id": "SM6-2", "wake": ["查上月购买"], "title": "查上月购买(时间预填)", "prompt_source": "old_yaml:1013#prompt", "origin": "old_yaml", "old_template": "票据凭证/purchase_records.html", "cli": "home-cmd-read home.ticket.query --params '{\"kind\":\"purchase\",\"range\":\"last-month\"}'" },
+        { "id": "SM6-3", "wake": ["查今年花费"], "title": "查今年花费(年度统计)", "prompt_source": "old_yaml:1028#prompt", "origin": "old_yaml", "old_template": "票据凭证/purchase_records.html", "cli": "home-cmd-read home.ticket.query --params '{\"kind\":\"purchase\",\"range\":\"year\"}'" },
+        { "id": "SM6-4", "wake": ["查退货窗口"], "title": "查退货窗口(物品必填)", "prompt_source": "old_yaml:1043#prompt", "origin": "old_yaml", "old_template": "票据凭证/purchase_records.html", "cli": "home-cmd-read home.ticket.query --params '{\"kind\":\"purchase\",\"range\":\"return\"}'" },
+        { "id": "SM6-5", "wake": ["登记购买记录"], "title": "登记购买记录(录入)", "prompt_source": "old_yaml:1058#prompt", "origin": "old_yaml", "old_template": "票据凭证/purchase_records.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"purchase\",\"op\":\"add\"}'" }
+      ] },
+      { "sub_cn": "保修与保养", "name": "warranty", "scenes": [
+        { "id": "SM6-6", "wake": ["查保修状态"], "title": "查保修状态(在保/将到期/已过)", "prompt_source": "old_yaml:1075#prompt", "origin": "old_yaml", "old_template": "票据凭证/warranty.html", "cli": "home-cmd-read home.ticket.query --params '{\"kind\":\"warranty\"}'" },
+        { "id": "SM6-7", "wake": ["登记保修"], "title": "登记保修(录入保修期)", "prompt_source": "old_yaml:1090#prompt", "origin": "old_yaml", "old_template": "票据凭证/warranty.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"warranty\",\"op\":\"register\"}'" },
+        { "id": "SM6-8", "wake": ["记录维修"], "title": "记录维修(维修历史)", "prompt_source": "old_yaml:1106#prompt", "origin": "old_yaml", "old_template": "票据凭证/warranty.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"warranty\",\"op\":\"repair\"}'" },
+        { "id": "SM6-9", "wake": ["设置保养周期"], "title": "设置保养周期(定期保养)", "prompt_source": "old_yaml:1122#prompt", "origin": "old_yaml", "old_template": "票据凭证/warranty.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"warranty\",\"op\":\"cycle\"}'" },
+        { "id": "SM6-10", "wake": ["执行保养"], "title": "执行保养(刷新下次日)", "prompt_source": "old_yaml:1138#prompt", "origin": "old_yaml", "old_template": "票据凭证/warranty.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"warranty\",\"op\":\"maintain\"}'" }
+      ] },
+      { "sub_cn": "证件管理", "name": "cert", "scenes": [
+        { "id": "SM6-11", "wake": ["查证件到期"], "title": "查证件到期(按到期排序)", "prompt_source": "old_yaml:1154#prompt", "origin": "old_yaml", "old_template": "票据凭证/certificates.html", "cli": "home-cmd-read home.ticket.query --params '{\"kind\":\"cert\"}'" },
+        { "id": "SM6-12", "wake": ["登记证件"], "title": "登记证件(录入)", "prompt_source": "old_yaml:1169#prompt", "origin": "old_yaml", "old_template": "票据凭证/certificates.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"cert\",\"op\":\"add\"}'" },
+        { "id": "SM6-13", "wake": ["证件归档"], "title": "证件归档(照片)", "prompt_source": "old_yaml:1186#prompt", "origin": "old_yaml", "old_template": "票据凭证/certificates.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"cert\",\"op\":\"archive\"}'" },
+        { "id": "SM6-14", "wake": ["更新证件"], "title": "更新证件(改到期/持有人/号码)", "prompt_source": "old_yaml:1202#prompt", "origin": "old_yaml", "old_template": "票据凭证/certificates.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"cert\",\"op\":\"update\"}'" }
+      ] },
+      { "sub_cn": "账号密码", "name": "account", "scenes": [
+        { "id": "SM6-15", "wake": ["查账号"], "title": "查账号(密码脱敏)", "prompt_source": "old_yaml:1219#prompt", "origin": "old_yaml", "old_template": "票据凭证/accounts.html", "cli": "home-cmd-read home.ticket.query --params '{\"kind\":\"account\"}'" },
+        { "id": "SM6-16", "wake": ["存账号"], "title": "存账号(加密存储)", "prompt_source": "old_yaml:1234#prompt", "origin": "old_yaml", "old_template": "票据凭证/accounts.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"account\",\"op\":\"add\"}'" },
+        { "id": "SM6-17", "wake": ["改账号"], "title": "改账号(更新录入)", "prompt_source": "old_yaml:1251#prompt", "origin": "old_yaml", "old_template": "票据凭证/accounts.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"account\",\"op\":\"update\"}'" },
+        { "id": "SM6-18", "wake": ["看密码"], "title": "看密码(敏感回显)", "prompt_source": "old_yaml:1268#prompt", "origin": "old_yaml", "old_template": "票据凭证/accounts.html", "cli": "home-cmd-read home.ticket.write --params '{\"kind\":\"account\",\"op\":\"show\"}'" }
+      ] }
+    ] }
+  ]
+}

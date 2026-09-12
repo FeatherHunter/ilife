@@ -1,0 +1,97 @@
+=== JOIN 老场景 → 新表（每行一条）===
+J | 1-1 | items | 录入 | 录物品 | → | 录物品 | home.item.add | receipt | home-cmd-read home.item.add
+J | 1-2 | items | 录入 | 拍物品 | → | 拍物品 | home.item.add | receipt | home-cmd-read home.item.add --params '{"photo":"1"}'
+J | 1-3 | items | 录入 | 批量录入 | → | 批量录入 | home.item.add | receipt | home-cmd-read home.item.add --params '{"op":"batch"}'
+J | 1-4 | items | 录入 | 补录 | → | 补录 | home.item.add | receipt | home-cmd-read home.item.add --params '{"op":"backfill"}'
+J | 2-1 | items | 查找 | 查物品 | → | 查物品 | home.item.search | list | home-cmd-read home.item.search
+J | 2-2 | items | 查找 | 看物品 | → | 看物品 | home.item.detail | detail | home-cmd-read home.item.detail --params '{"id":1}'
+J | 2-3 | items | 查找 | 紧急定位 | → | 紧急定位 | home.item.search | list | home-cmd-read home.item.search --params '{"locate":true}'
+J | 2-4 | items | 查找 | 筛选浏览 | → | 筛选浏览 | home.item.search | list | home-cmd-read home.item.search --params '{"browse":true}'
+J | 2-5 | items | 查找 | 拍照找物品 | → | 拍照找物品 | home.item.search | list | home-cmd-read home.item.search --params '{"photo":true}'
+J | 2-6 | items | 查找 | 查重复 | → | 查重复 | home.item.search | list | home-cmd-read home.item.search --params '{"dupes":true}'
+J | 3-1 | items | 更新 | 改物品 | → | 改物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"id":1}'
+J | 3-2 | items | 更新 | 移物品 | → | 移物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"move","id":1}'
+J | 3-3 | items | 更新 | 数量变更 | → | 数量变更 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"qty","id":1}'
+J | 3-4 | items | 更新 | 状态变更 | → | 状态变更 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"status","id":1}'
+J | 3-5 | items | 更新 | 合并物品 | → | 合并物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"merge","id":1}'
+J | 3-6 | items | 更新 | 撤销操作 | → | 撤销操作 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"undo"}'
+J | 3-7 | items | 更新 | 物品关联 | → | 物品关联 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"relate","id":1}'
+J | 3-8 | items | 更新 | 标物品 | → | 标物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"tags","id":1}'
+J | 4-1 | items | 标签与分类 | 管标签 | → | 管标签 | home.tag.write | receipt | home-cmd-read home.tag.write --params '{"op":"overview"}'
+J | 4-2 | items | 标签与分类 | 管分类 | → | 管分类 | home.tag.write | receipt | home-cmd-read home.tag.write --params '{"op":"category"}'
+J | 4-3 | items | 标签与分类 | 整理建议 | → | 整理建议 | home.tag.write | receipt | home-cmd-read home.tag.write --params '{"op":"tidy"}'
+J | 5-1 | items | 照片档案 | 查看照片 | → | 查看照片 | home.item.detail | detail | home-cmd-read home.item.detail --params '{"view":"photos","id":1}'
+J | 5-2 | items | 照片档案 | 管照片 | → | 管照片 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"photo","id":1}'
+J | 5-3 | items | 照片档案 | 照片墙 | → | 照片墙 | home.item.search | list | home-cmd-read home.item.search --params '{"wall":true}'
+J | 6-1 | items | 盘点 | 盘点 | → | 盘点 | home.inventory.round | receipt | home-cmd-read home.inventory.round --params '{"op":"round"}'
+J | 6-2 | items | 盘点 | 差异处理 | → | 差异处理 | home.inventory.round | receipt | home-cmd-read home.inventory.round --params '{"op":"resolve"}'
+J | 6-3 | items | 盘点 | 盘点记录 | → | 盘点记录 | home.inventory.records | list | home-cmd-read home.inventory.records
+J | 6-4 | items | 盘点 | 搬家盘点 | → | 搬家盘点 | home.inventory.round | receipt | home-cmd-read home.inventory.round --params '{"op":"move"}'
+J | 7-1 | items | 物品历史 | 历史 | → | 历史 | home.item.detail | detail | home-cmd-read home.item.detail --params '{"view":"history","id":1}'
+J | SM2-1 | space | 位置管理 | 管位置 | → | 管位置 | home.location.write | receipt | home-cmd-read home.location.write --params '{"op":"manage"}'
+J | SM2-2 | space | 固定位 | 固定位 | → | 固定位 | home.location.write | receipt | home-cmd-read home.location.write --params '{"op":"fixed"}'
+J | SM2-3 | space | 收纳建议 | 收纳建议 | → | 收纳建议 | home.location.query | list | home-cmd-read home.location.query --params '{"mode":"storage"}'
+J | SM2-4 | space | 空间视图 | 空间视图 | → | 空间视图 | home.location.query | list | home-cmd-read home.location.query --params '{"mode":"space"}'
+J | SM3-1 | outfit | 穿搭推荐 | 穿什么 | → | 穿什么 | home.outfit.pick | list | home-cmd-read home.outfit.pick
+J | SM3-2 | outfit | 衣橱管理 | 衣橱分析 | → | 衣橱分析 | home.outfit.pick | list | home-cmd-read home.outfit.pick --params '{"kind":"wardrobe"}'
+J | SM3-3 | outfit | 衣橱管理 | 换季 | → | 换季 | home.outfit.pick | list | home-cmd-read home.outfit.pick --params '{"kind":"season"}'
+J | SM3-4 | outfit | 出行清单 | 带物品/归物品 | → | 带物品+归物品 | home.trip.manage+home.trip.manage | receipt | home-cmd-read home.trip.manage --params '{"mode":"pack"}'
+J | SM3-5 | outfit | 旅行穿搭计划 | 旅行穿搭 | → | 旅行穿搭 | home.outfit.pick | list | home-cmd-read home.outfit.pick --params '{"kind":"trip-plan"}'
+J | SM4-1 | stats | 统计总览 | 统物品 | → | 统物品 | home.stats.overview | stat | home-cmd-read home.stats.overview --params '{"kind":"summary"}'
+J | SM4-2 | stats | 统计总览 | 查闲置 | → | 查闲置 | home.stats.alert | list | home-cmd-read home.stats.alert --params '{"kind":"idle"}'
+J | SM4-3 | stats | 统计总览 | 查过期 | → | 查过期 | home.stats.alert | list | home-cmd-read home.stats.alert --params '{"kind":"expiring"}'
+J | SM4-4 | stats | 统计总览 | 盘点统计 | → | 盘点统计 | home.stats.overview | stat | home-cmd-read home.stats.overview --params '{"kind":"inventory"}'
+J | SM5-1 | express | 购物清单 | 购物清单 | → | 购物清单 | home.shopping.query | list | home-cmd-read home.shopping.query --params '{"kind":"list"}'
+J | SM5-2 | express | 缺货检测 | 缺货检测 | → | 缺货检测 | home.shopping.query | list | home-cmd-read home.shopping.query --params '{"kind":"missing"}'
+J | SM5-3 | express | 快递跟踪 | 查快递 | → | 查快递 | home.shopping.query | list | home-cmd-read home.shopping.query --params '{"kind":"express"}'
+J | SM5-4 | express | 囤货盘点 | 囤货盘点 | → | 囤货盘点 | home.shopping.query | list | home-cmd-read home.shopping.query --params '{"kind":"stock"}'
+J | SM7-1 | family | 借用管理 | 借用 | → | 借用 | home.care.query | list | home-cmd-read home.care.query --params '{"kind":"borrow"}'
+J | SM7-2 | family | 家人档案 | 家人档案 | → | 家人档案 | home.care.query | list | home-cmd-read home.care.query --params '{"kind":"member"}'
+J | SM8-1 | setup | 开始使用 | 首次使用 | → | 首次使用 | home.care.write | receipt | home-cmd-read home.care.write --params '{"kind":"init"}'
+J | SM8-2 | setup | 开始使用 | 查异常 | → | 查异常 | home.care.query | list | home-cmd-read home.care.query --params '{"kind":"lint"}'
+J | SM8-3 | setup | 开始使用 | 备份导出 | → | 备份导出 | home.care.write | receipt | home-cmd-read home.care.write --params '{"kind":"backup"}'
+J | SM8-4 | setup | 开始使用 | 导入恢复 | → | 导入恢复 | home.care.write | receipt | home-cmd-read home.care.write --params '{"kind":"import"}'
+J | SM9-1 | link | 联动总览 | 联动总览 | → 无落点 |  |  | 
+J | SM9-2 | link | 食品联动 | 记到卡路里 | → 无落点 |  |  | 
+J | SM9-3 | link | 价格联动 | 记到记账 | → 无落点 |  |  | 
+J | SM6-1 | receipt | 购买记录 | 查购买记录 | → | 查购买记录 | home.ticket.query | list | home-cmd-read home.ticket.query --params '{"kind":"purchase"}'
+J | SM6-2 | receipt | 购买记录 | 查上月购买 | → | 查上月购买 | home.ticket.query | list | home-cmd-read home.ticket.query --params '{"kind":"purchase","range":"last-month"}'
+J | SM6-3 | receipt | 购买记录 | 查今年花费 | → | 查今年花费 | home.ticket.query | list | home-cmd-read home.ticket.query --params '{"kind":"purchase","range":"year"}'
+J | SM6-4 | receipt | 购买记录 | 查退货窗口 | → | 查退货窗口 | home.ticket.query | list | home-cmd-read home.ticket.query --params '{"kind":"purchase","range":"return"}'
+J | SM6-5 | receipt | 购买记录 | 登记购买记录 | → | 登记购买记录 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"purchase","op":"add"}'
+J | SM6-6 | receipt | 保修与保养 | 查保修状态 | → | 查保修状态 | home.ticket.query | list | home-cmd-read home.ticket.query --params '{"kind":"warranty"}'
+J | SM6-7 | receipt | 保修与保养 | 登记保修 | → | 登记保修 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"warranty","op":"register"}'
+J | SM6-8 | receipt | 保修与保养 | 记录维修 | → | 记录维修 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"warranty","op":"repair"}'
+J | SM6-9 | receipt | 保修与保养 | 设置保养周期 | → | 设置保养周期 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"warranty","op":"cycle"}'
+J | SM6-10 | receipt | 保修与保养 | 执行保养 | → | 执行保养 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"warranty","op":"maintain"}'
+J | SM6-11 | receipt | 证件管理 | 查证件到期 | → | 查证件到期 | home.ticket.query | list | home-cmd-read home.ticket.query --params '{"kind":"cert"}'
+J | SM6-12 | receipt | 证件管理 | 登记证件 | → | 登记证件 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"cert","op":"add"}'
+J | SM6-13 | receipt | 证件管理 | 证件归档 | → | 证件归档 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"cert","op":"archive"}'
+J | SM6-14 | receipt | 证件管理 | 更新证件 | → | 更新证件 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"cert","op":"update"}'
+J | SM6-15 | receipt | 账号密码 | 查账号 | → | 查账号 | home.ticket.query | list | home-cmd-read home.ticket.query --params '{"kind":"account"}'
+J | SM6-16 | receipt | 账号密码 | 存账号 | → | 存账号 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"account","op":"add"}'
+J | SM6-17 | receipt | 账号密码 | 改账号 | → | 改账号 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"account","op":"update"}'
+J | SM6-18 | receipt | 账号密码 | 看密码 | → | 看密码 | home.ticket.write | receipt | home-cmd-read home.ticket.write --params '{"kind":"account","op":"show"}'
+=== JOIN 新表条目：无老场景承接 ===
+X | 居家管家 帮助 | home.help.lookup | list | home-cmd-read home.help.lookup | 
+X | 居家管家帮助 | home.help.lookup | list | home-cmd-read home.help.lookup | 
+X | 居家管家能做什么 | home.help.lookup | list | home-cmd-read home.help.lookup | 
+X | 查物品(HTML) | home.item.search | list | home-cmd-read home.item.search | 
+X | 看物品(HTML) | home.item.detail | detail | home-cmd-read home.item.detail --params '{"id":1}' | 
+X | 统物品(HTML) | home.stats.overview | stat | home-cmd-read home.stats.overview | 
+X | 补物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"qty","id":1}' | 
+X | 减物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"qty","id":1}' | 
+X | 废物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"status","id":1}' | 
+X | 借物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"status","id":1}' | 
+X | 修物品 | home.item.update | receipt | home-cmd-read home.item.update --params '{"op":"status","id":1}' | 
+X | 盘物品 | home.inventory.round | receipt | home-cmd-read home.inventory.round --params '{"op":"round"}' | 
+X | 盘全部 | home.inventory.round | receipt | home-cmd-read home.inventory.round --params '{"op":"round","scope":"all"}' | 
+X | 查高频 | home.stats.overview | stat | home-cmd-read home.stats.overview --params '{"kind":"summary"}' | 
+X | 查低频 | home.stats.alert | list | home-cmd-read home.stats.alert --params '{"kind":"idle"}' | 
+X | 看标签 | home.tag.query | list | home-cmd-read home.tag.query | 
+X | 合标签 | home.tag.write | receipt | home-cmd-read home.tag.write --params '{"op":"merge"}' | 
+X | 推位置 | home.location.query | list | home-cmd-read home.location.query --params '{"mode":"suggest"}' | 
+X | 找位置 | home.location.query | list | home-cmd-read home.location.query --params '{"mode":"find"}' | 
+X | 改购物清单 | home.shopping.write | receipt | home-cmd-read home.shopping.write --params '{"op":"check"}' | 
+=== COUNT ===
+old=73 old_no_landing=3 new_used=71 new_extra=20
