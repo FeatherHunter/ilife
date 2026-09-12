@@ -28,6 +28,7 @@ import type {
   CopyButtonInput,
   CopyChannel,
   CopyFormat,
+  CopyFormatTexts,
   CopyLogFields,
   CopyPorts,
   CopyRuntime,
@@ -237,7 +238,7 @@ type _C11 = Expect<Equal<ToastHostPort, { mount(html: string): { remove(): void 
 type _C12 = Expect<Equal<ToastController, { show(input: ToastInput): void; flush(): void; dispose(): void }>>;
 type _C13 = Expect<Equal<RenderToast, (input: ToastInput) => string>>;
 type _C14 = Expect<Equal<ActionBarInput, { readonly buttons?: readonly import('../src/index.js').ActionBarButton[]; readonly copyData?: CopyButtonInput; readonly copyLog?: CopyButtonInput }>>;
-type _C14b = Expect<Equal<CopyButtonInput, { readonly actionId: string; readonly label?: string; readonly text?: string; readonly format?: CopyFormat }>>;
+type _C14b = Expect<Equal<CopyButtonInput, { readonly actionId: string; readonly label?: string; readonly text?: string; readonly format?: CopyFormat; readonly formats?: CopyFormatTexts }>>;
 type _C14c = Expect<Equal<Required<CopyButtonInput>['actionId'], string>>;
 type _C15 = Expect<Equal<RenderActionBar, (input: ActionBarInput) => string>>;
 type _C16 = Expect<Equal<StatusBadgeInput, { readonly status: StatusKind; readonly text?: string }>>;
