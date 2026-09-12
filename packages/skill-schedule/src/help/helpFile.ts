@@ -7,11 +7,12 @@
  *  - `groups` 由内容资产 `HELP_GROUPS` 直转（只读引用，不 clone、不二次转换）；
  *  - `subtitle` 是页头摘要行（`deriveSummaryLine` 一处算、一处用），计数**全部派生**，不写死 5／34／85。
  *
- * 五必需键 ＋ 三块可选键（票面 ①）：
+ * 五必需键 ＋ 两块可选键（与其余技能 HELP 同一口径）：
  *  - 必需：`skill_name`／`title`／`subtitle`／`contact`／`groups`；
- *  - 可选：`meta_blocks`（**每个一级分组一块**的伴生信息；模板在分组页首按 `id` 命中渲染，见 `buildMetaBlocks`）／
- *    `version`（技能数据世代，非 npm 包版本）／
+ *  - 可选：`version`（技能数据世代，非 npm 包版本）／
  *    `init_banner`（键常在、显隐走 `hidden`，照 bill 的口径：payload 形状不随状态变）。
+ *  - **`meta_blocks` 不传**（用户 2026-09-13 裁定）：作息 HELP 与其它技能 HELP 同构，**不多自带功能模块**；
+ *    旧实物那 90 条伴生信息（85 条场景「预期结果说明」＋5 条一级分组说明）只在内容资产里留档，**不上页**。
  *
  * 缺必需键／空分组**抛错不降级**（票面 ③）：本模块按 `src/render/errors.ts` 的既有形状抛
  * `ScheduleRenderError`，`code` 取该类型已有的 `'SCHEDULE_BAD_PAYLOAD'`（不新增错误类、不改既有导出面）。
@@ -21,9 +22,8 @@
  */
 import { renderHelpShellHtml } from 'base-paint/help-shell';
 import type { HelpShellData } from 'base-paint/help-shell';
-import { HELP_ASSETS, HELP_GROUPS, HELP_GROUP_NOTES, HELP_SCENE_RESULTS } from './scenes/help-assets.js';
+import { HELP_ASSETS, HELP_GROUPS } from './scenes/help-assets.js';
 import type { HelpGroupAsset } from './scenes/help-assets.js';
-import { escapeHtml } from '../render/html.js';
 import { ScheduleRenderError } from '../render/errors.js';
 
 /** 「作息管家help」交付文件的**文件名主体**（接线层写死；调用方不接受外部传入，照 bill 先例）。 */
@@ -58,13 +58,6 @@ export const HELP_CONTACT: HelpContact = Object.freeze({
   copy_all: true as const,
 });
 
-/** 一次使用的信息块（契约 `meta_blocks[]` 的一条；`html` 原样透传，转义由技能方自理）。 */
-export interface HelpSceneBlock {
-  readonly id: string;
-  readonly title: string;
-  readonly html: string;
-}
-
 /** 首次使用横幅（照 bill 五键 ＋ 显隐开关 `hidden`）。 */
 export interface HelpInitBanner {
   readonly title: string;
@@ -75,14 +68,13 @@ export interface HelpInitBanner {
   readonly hidden: boolean;
 }
 
-/** 全量 HELP JSON（5 必需键 ＋ 三块可选键；共享 help 模板运行时契约的超集）。 */
+/** 全量 HELP JSON（5 必需键 ＋ 两块可选键；共享 help 模板运行时契约的超集）。 */
 export interface HelpFileData {
   readonly skill_name: typeof HELP_FILE_SKILL_NAME;
   readonly title: typeof HELP_FILE_TITLE;
   readonly subtitle: string;
   readonly contact: HelpContact;
   readonly groups: typeof HELP_GROUPS;
-  readonly meta_blocks: readonly HelpSceneBlock[];
   readonly version: typeof HELP_FILE_VERSION;
   readonly init_banner: HelpInitBanner;
 }
@@ -175,59 +167,14 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
     subtitle: summaryLine,
     contact: HELP_CONTACT,
     groups: HELP_GROUPS,
-    meta_blocks: buildMetaBlocks(),
     version: HELP_FILE_VERSION,
     init_banner: buildInitBanner(opts.initialized === true),
   };
 }
 
-/** 一个一级分组的伴生信息块正文：分组说明（`HELP_GROUP_NOTES`）＋ 该组各场景「标题 · 预期」（`HELP_SCENE_RESULTS`）。
- *
- *  `meta_blocks[].html` 由模板**原样透传**（不过滤），故这里逐条 `escapeHtml`：含 ASCII 尖括号的原文
- *  （如 `replay_range` 的 `<start> <end>`）不转义会被浏览器当标签解析、原文丢失。行形状复用模板
- *  `about-sec` 家族的 `.about-row`／`.a-t`（不新造类名）——样式由**模板侧** `.meta-sec` 区提供
- *  （`help-template.html:57` 的 `.meta-sec .a-t span`，靠源序盖过 `:52` 的 `.about-row .a-t span`）：
- *  本侧不自带 CSS，但正文形状与模板那一行样式**互相耦合**，改模板 `.meta-sec` 区须同步这里。
- *  契约＝`docs/base/base-render/t202-help-meta-blocks.md`。 */
-function groupBlockHtml(group: HelpGroupAsset): string {
-  const rows: string[] = [];
-  const note = HELP_GROUP_NOTES[group.id];
-  if (note) rows.push('<div class="about-row"><div class="a-t"><span>' + escapeHtml(note) + '</span></div></div>');
-  for (const subgroup of group.subgroups) {
-    for (const scene of subgroup.scenes) {
-      const result = HELP_SCENE_RESULTS[scene.id];
-      rows.push('<div class="about-row"><div class="a-t"><b>' + escapeHtml(scene.title) + '</b>'
-        + (result ? '<span>预期 · ' + escapeHtml(result) + '</span>' : '') + '</div></div>');
-    }
-  }
-  return rows.join('');
-}
-
-/** 载荷里的信息块：**每个一级分组一块**（块 `id` 逐字等于该分组 id）。
- *
- *  模板在**分组页首**按 `m.id === g.key` 挑块渲染（`help-template.html` 页面侧 JS 的 A-3 落点），
- *  故 `id` 对不上任何分组 id 的块**不上页**。块数与条数全由资产派生（块数＝分组数、条数＝场景数＋分组数），
- *  不写第二份数字。 */
-export function buildMetaBlocks(): readonly HelpSceneBlock[] {
-  return HELP_GROUPS.map((group) => ({ id: group.id, title: group.label, html: groupBlockHtml(group) }));
-}
-
-/* ── 90 条伴生信息：**已上页**（原 `TODO(t197-90条)` 缺口，在本图内落地后删去该标记）────────── */
-
-/** 记账（事实陈述，不是待办）：旧 HELP 页把「每条场景的预期结果说明」（85 条）与「一级分组说明」（5 条）
- *  画给用户看，而共享 help 模板此前把载荷 `meta_blocks` 读进来后全文零引用（读入即弃）——那 90 条因此上不了页。
- *  本图内落地两刀：① **模板侧**——分组页锚点（`h += '<div class="page" data-page="' + g.key + '">';` 之后）
- *  按 `m.id === g.key` 条件渲染同 id 的块，无命中时该页 DOM 逐字节不变；② **技能侧**——`buildMetaBlocks`
- *  把两张伴生表按一级分组聚合（每组建一块，不拆 85 块）并逐条转义。
- *
- *  公共层记录面已补齐：`docs/base/base-render/t202-help-meta-blocks.md`（改了什么／条件渲染契约／
- *  在用四家／「不传 `meta_blocks` ⇒ 输出与旧版逐字节相同」与「`html` 原样透传、转义责任在技能侧」两条契约／
- *  复现命令）。改的是 bill／calorie／schedule／memo-ilife 四家共用的资产，跨消费方影响表在那份记录里。
- *  `test/help-file-202.test.mjs` 的两条缺口反向锁与 bill 的页正文锁由另一路同步。 */
-
 /** 全量 HELP JSON → 全壳 HTML（完整文档：`<!DOCTYPE html>` 起、带 `<meta charset>` 与样式）。
  *  模板唯一实现＝共享层 `base-paint/help-shell`；本函数只做接线转发，不自造第二套页面。
- *  载荷按共享层声明的 `HelpShellData` 交出去：本模块多带的三块可选键是它的超集
+ *  载荷按共享层声明的 `HelpShellData` 交出去：本模块多带的 `version`／`init_banner` 两块可选键是它的超集
  *  （共享层运行时全量读这些键），形状不匹配时在此就地编译报错，不拖到运行时。 */
 export function renderHelpFileHtml(data: HelpFileData): string {
   const payload: HelpShellData = data;

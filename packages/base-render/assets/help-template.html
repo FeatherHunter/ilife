@@ -53,8 +53,6 @@
   .about-row .a-badge{font-size:9.5px;color:var(--fg3);background:var(--bg);border-radius:999px;padding:1px 8px;flex-shrink:0}
   .about-row .a-link{color:var(--blue);font-size:10.5px;word-break:break-all}
   .about-row .a-copy{min-height:28px;padding:0 10px;font-size:10.5px;border-radius:8px;flex-shrink:0}
-  /* ===== 分组页首信息块（载荷 `meta_blocks` 里 `id` 命中该分组时渲染；正文由技能侧给）===== */
-  .meta-sec .a-t span{color:var(--fg2);font-size:12.5px;line-height:1.5}
   /* ===== D4 联系作者（可配）===== */
   .contact-box{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden}
   .contact-box>summary{min-height:44px;padding:0 13px;cursor:pointer;font-size:13.5px;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px;user-select:none}
@@ -1782,11 +1780,6 @@ var h = '<div class="app"><div class="app-inner">' +
   '<div class="pages" id="pages">';
 GROUPS.forEach(function(g){
   h += '<div class="page" data-page="' + g.key + '">';
-  /* 该分组的伴生信息块：`id` 命中分组 id 才渲染；无命中时本页输出与旧版逐字节相同 */
-  META_BLOCKS.forEach(function(m){
-    if (!m || m.id !== g.key) return;
-    h += '<div class="about-sec meta-sec"><div class="as-head">' + esc(m.title) + '</div><div class="as-body">' + (m.html || '') + '</div></div>';
-  });
   g.subgroups.forEach(function(sg){
     h += '<details class="subgroup" open><summary>' + sg.name + '<span class="sg-count">' + sg.scenes.length + '</span></summary><div class="sg-body"><div class="grid">';
     sg.scenes.forEach(function(s){
@@ -1888,7 +1881,10 @@ tabs.forEach(function(t){
       screen.scrollTop = 0;
     } else {
       var pagesTop = pages.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0);
-      window.scrollTo(0, Math.max(0, pagesTop - 8));
+      /* 落点必须再让开吸顶搜索栏: 只减 8px 时 .pages 顶正好落在吸顶栏之下, 当页第一个元素(首个子功能组摘要)被压成一条缝,
+         点不到也看不见 —— 吸顶栏高动态取(不写死像素: 视口宽/字体缩放都会改它), 取不到时按 0 退化为原行为 */
+      var stickyBar = document.querySelector('.search-wrap');
+      window.scrollTo(0, Math.max(0, pagesTop - (stickyBar ? stickyBar.offsetHeight : 0) - 8));
     }
     pages.style.scrollSnapType = 'none';
     pages.scrollTo({left: i * pages.clientWidth, behavior:'smooth'});
@@ -2012,6 +2008,9 @@ function doSearch(){
       });
       pg.querySelectorAll('.subgroup').forEach(function(sg){ sg.style.display = ''; });
     });
+    /* 恢复全量后必须同步重算高度锁: 筛选期 .pages 被锁在「筛选后」的当页高, 不重算就当页被锁矮,
+       后半页连同末张场景卡一起滚不到 —— 这里的 scrollTo 目标就是当前位置(不触发 scroll 事件), 兜不住这次重算 */
+    lockPagesHeight();
     if (lastQuery) pages.scrollTo({left: cur * pages.clientWidth, behavior:'smooth'});
     lastQuery = '';
     document.getElementById('hitC').hidden = true;

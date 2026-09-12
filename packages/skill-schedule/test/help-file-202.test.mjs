@@ -10,15 +10,15 @@
  *  本文件因此同时做两段：静态段验「完整文档 ＋ 载荷」，运行时段把模板的运行时脚本真跑起来
  *  （`vm` ＋ 最小 DOM 桩，见下），拿「用户打开页面后的 DOM」来数数。
  *
- * 两段各自认一条**正面锁**，两条合起来＝「90 条伴生信息（85 条场景「预期结果说明」＋5 条一级分组
- * 说明）已补上页」的验收尺（#197 维护者裁定：这 90 条必须上页）。**锁的方向不许放宽**：
- *  - 静态段：90 条**逐条在载荷里**——只改模板不接线（`helpFile.ts` 的 `meta_blocks` 不传）
- *    这条就红，它正是「模板改了、载荷没传」这个半成品的探针；
- *  - 运行时段：同 90 条**逐条在用户可见文本里**——载荷带了、模板没补落点（页面渲染不到）这条红。
+ * 两段各自认一条锁，两条合起来＝「页上**没有**说明区」的验收尺（用户 2026-09-13 裁定：作息 HELP 与
+ * 其它技能 HELP 同构，**不多自带功能模块**；旧实物那 90 条伴生信息＝85 条场景「预期结果说明」＋
+ * 5 条一级分组说明，**一条都不上页**）。**锁的方向不许放宽**：
+ *  - 静态段：这 90 条**一条也不在载荷里**——`helpFile.ts` 一旦重新挂上 `meta_blocks` 就红；
+ *  - 运行时段：页上**不得**出现 `.meta-sec` 说明区标记、「预期 ·」字样与那 5 条一级分组说明。
  * 另有一条**反向锁**守着证词本身：`screen` 段在脚本执行前必须是空的（真「空壳」）——它若已经有
  * 内容，下面那段「渲染后的 DOM」就不是运行时产物，整套证词作废。
- * 边界四项（场景卡／一级分组页／子组／待开发徽章）的计数在运行时段那条锁里一并复核，防「补 90 条
- * 把原有结构挤掉」。**这两条锁红着＝待 #197 承接方落模板＋载荷，不是放宽断言的理由。**
+ * 边界四项（场景卡／一级分组页／子组／待开发徽章）的计数在运行时段那条锁里一并复核：删说明区
+ * 不许把原有结构一起削掉。
  *
  * ── harness 纪律（后来者照做）─────────────────────────────────────────────
  * 共享 help 模板的**界面全在页面侧 JS 里**：静态壳只有一个空 `<div id="screen">`，分组页／场景卡／
@@ -628,10 +628,12 @@ describe('#202 作息管家 HELP 渲染接线', () => {
         '文档标题＝title（已含技能名，不重复前缀）');
     });
 
-    it('载荷 8 键齐全：5 必需 ＋ meta_blocks／version／init_banner', () => {
+    it('载荷 7 键齐全：5 必需 ＋ version／init_banner（`meta_blocks` 不传）', () => {
       const back = payloadOf(renderHelpFileHtml(buildHelpFileData(NOW)));
       assert.deepEqual(Object.keys(back).sort(),
-        ['contact', 'groups', 'init_banner', 'meta_blocks', 'skill_name', 'subtitle', 'title', 'version']);
+        ['contact', 'groups', 'init_banner', 'skill_name', 'subtitle', 'title', 'version']);
+      assert.equal('meta_blocks' in back, false,
+        '`meta_blocks` 整块不传（与其它技能 HELP 同构，不多自带功能模块）');
       assert.deepEqual(back.groups, HELP_GROUPS, 'groups 由内容资产直转（零改写）');
       assert.deepEqual(back.contact, HELP_CONTACT);
       assert.equal(back.version, HELP_FILE_VERSION);
@@ -639,16 +641,10 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       assert.equal(HELP_FILE_STEM, '作息管家_HELP', '文件名主体（落盘归 #203）');
     });
 
-    it('计数派生：meta_blocks 块数＝分组数，三层条数都对得上', () => {
+    it('计数派生：三层条数都对得上（载荷里不再有伴生信息块）', () => {
       const data = buildHelpFileData(NOW);
       assert.equal(data.subtitle, DERIVED.groups + ' 类别 · ' + DERIVED.subgroups + ' 唤醒词 · '
         + DERIVED.scenes + ' 场景 · 版本 ' + HELP_FILE_VERSION + ' · 更新于 2026-09-13 14:30');
-      assert.deepEqual(data.meta_blocks.map((b) => [b.id, b.title]),
-        HELP_GROUPS.map((g) => [g.id, g.label]),
-        '块＝每个一级分组一块（id 逐字＝分组 id，模板按 id 命中落该组页首；块数派生）');
-      assert.equal(data.meta_blocks.length, DERIVED.groups, '块数＝一级分组数（派生，不写死 5）');
-      assert.ok(!data.meta_blocks.some((b) => b.id === 'help_summary'),
-        '不造汇总块：模板只渲 id 命中分组的块，id 不命中任何分组的块永不上页（死载荷）');
       const back = payloadOf(renderHelpFileHtml(data));
       assert.equal(back.groups.length, DERIVED.groups);
       assert.equal(back.groups.reduce((n, g) => n + g.subgroups.length, 0), DERIVED.subgroups);
@@ -678,20 +674,20 @@ describe('#202 作息管家 HELP 渲染接线', () => {
         (e) => e.name === 'ScheduleRenderError' && e.code === 'SCHEDULE_BAD_PAYLOAD');
     });
 
-    it('已补（静态段）：载荷带上全部 ' + COMPANIONS + ' 条伴生信息（' + DERIVED.results
+    it('反向锁（静态段）：载荷**不带**那 ' + COMPANIONS + ' 条伴生信息（' + DERIVED.results
       + ' 条「预期结果说明」＋ ' + DERIVED.notes + ' 条一级分组说明，逐条计数）', () => {
       const html = renderHelpFileHtml(buildHelpFileData(NOW));
-      const hay = payloadStrings(payloadOf(html));
-      /* 「载荷带上了没有」是页面看得见它的**前提**：模板已补落点（分组页首按 `id` 命中）而载荷没传，
-         这一条就红——这正是「只改模板不接线」那个半成品的探针。 */
-      const missResults = Object.entries(HELP_SCENE_RESULTS).filter(([, r]) => !containsAnywhere(hay, r));
-      assert.deepEqual(missResults.map(([id]) => id), [],
-        '载荷里缺「预期结果说明」' + missResults.length + ' 条（命中 '
-        + (DERIVED.results - missResults.length) + '/' + DERIVED.results + '）');
-      const missNotes = Object.entries(HELP_GROUP_NOTES).filter(([, n]) => !containsAnywhere(hay, n));
-      assert.deepEqual(missNotes.map(([id]) => id), [],
-        '载荷里缺一级分组说明' + missNotes.length + ' 条（命中 '
-        + (DERIVED.notes - missNotes.length) + '/' + DERIVED.notes + '）');
+      const payload = payloadOf(html);
+      const hay = payloadStrings(payload);
+      /* 「没上页」的第一层证据是「载荷根本没带」：模板那边已无该键的落点，载荷再挂回去就是死载荷。 */
+      const hitResults = Object.entries(HELP_SCENE_RESULTS).filter(([, r]) => containsAnywhere(hay, r));
+      assert.deepEqual(hitResults.map(([id]) => id), [],
+        '载荷里混进了「预期结果说明」' + hitResults.length + ' 条（命中 '
+        + hitResults.length + '/' + DERIVED.results + '）');
+      const hitNotes = Object.entries(HELP_GROUP_NOTES).filter(([, n]) => containsAnywhere(hay, n));
+      assert.deepEqual(hitNotes.map(([id]) => id), [],
+        '载荷里混进了一级分组说明' + hitNotes.length + ' 条（命中 '
+        + hitNotes.length + '/' + DERIVED.notes + '）');
       /* 条数口径也在这一条锁里对齐（全派生）：预期逐场景一条、分组说明逐分组一条。 */
       assert.equal(DERIVED.results, DERIVED.scenes, '「预期结果说明」应逐场景一条');
       assert.equal(DERIVED.notes, DERIVED.groups, '一级分组说明应逐分组一条');
@@ -815,52 +811,45 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       assert.equal(seen.size, DERIVED.scenes, '逐张点过的场景数应＝资产场景数');
     });
 
-    it('已补（运行时段）：' + DERIVED.results + ' 条「预期结果说明」＋ ' + DERIVED.notes
-      + ' 条一级分组说明逐条上页，且落在各自分组页首（边界四项不破）', () => {
+    it('反向锁（运行时段）：页上**没有**说明区——那 ' + COMPANIONS + ' 条伴生信息一条也不上页'
+      + '（边界四项照旧）', () => {
       const { screen } = runPage(renderHelpFileHtml(buildHelpFileData(NOW)));
       const seen = visibleText(screen);   /* 用户打开页面后**真看到的**文本（实体已还原） */
-      const markup = screen.innerHTML;    /* 页上的标记（看转义写法） */
+      const markup = screen.innerHTML;    /* 页上的标记（说明区标记只可能在标记里） */
 
-      /* ① 逐条计数：85 条「预期结果说明」一条不少地出现在页上（缺几条、命中几条都打进消息）。 */
-      const missResults = Object.entries(HELP_SCENE_RESULTS).filter(([, r]) => !seen.includes(r));
-      assert.deepEqual(missResults.map(([id]) => id), [],
-        '页上缺「预期结果说明」' + missResults.length + ' 条（命中 '
-        + (DERIVED.results - missResults.length) + '/' + DERIVED.results + '；'
-        + '载荷带了而页面看不到＝模板落点没生效）');
+      /* ① 说明区的两个标记面：`.meta-sec` 容器与它那一行「说明」摘要，页上一个也不许有。 */
+      assert.equal(screen.querySelectorAll('.meta-sec').length, 0,
+        '页上冒出 ' + screen.querySelectorAll('.meta-sec').length + ' 个说明区块（该功能模块已撤，不该再生）');
+      assert.equal(screen.querySelectorAll('.about-sec.meta-sec').length, 0, '页首信息块容器不得存在');
+      assert.equal(markup.includes('meta-sec'), false, '页面标记里不得出现 meta-sec');
+      assert.equal(markup.includes('ms-hint'), false, '页面标记里不得出现说明摘要的提示药丸');
 
-      /* ② 逐条计数：5 条一级分组说明同样一条不少。 */
-      const missNotes = Object.entries(HELP_GROUP_NOTES).filter(([, n]) => !seen.includes(n));
-      assert.deepEqual(missNotes.map(([id]) => id), [],
-        '页上缺一级分组说明' + missNotes.length + ' 条（命中 '
-        + (DERIVED.notes - missNotes.length) + '/' + DERIVED.notes + '）');
+      /* ② 逐条计数：85 条「预期结果说明」一条也不在用户可见文本里（命中几条就报几条 id）。 */
+      const hitResults = Object.entries(HELP_SCENE_RESULTS).filter(([, r]) => seen.includes(r));
+      assert.deepEqual(hitResults.map(([id]) => id), [],
+        '页上混进「预期结果说明」' + hitResults.length + ' 条（命中 '
+        + hitResults.length + '/' + DERIVED.results + '）');
+      assert.equal(seen.includes('预期 ·'), false, '「预期 ·」这个字样不该出现在页上');
 
-      /* ③ 含 `<` 的原文必须按**转义写法**进页：`meta_blocks[].html` 由模板原样透传，不转义的话
-         浏览器把 `<今日>` 这类当标签吞掉，用户其实看不见——「字串在页里」不等于「页上看得见」。 */
-      const unescaped = Object.entries(HELP_SCENE_RESULTS)
-        .filter(([, r]) => r !== escHtml(r) && !markup.includes(escHtml(r)))
-        .map(([id]) => id);
-      assert.deepEqual(unescaped, [], '这些「预期结果说明」没按转义写法进页（浏览器会当标签吞掉）');
+      /* ③ 逐条计数：5 条一级分组说明同样一条也不许有。 */
+      const hitNotes = Object.entries(HELP_GROUP_NOTES).filter(([, n]) => seen.includes(n));
+      assert.deepEqual(hitNotes.map(([id]) => id), [],
+        '页上混进一级分组说明' + hitNotes.length + ' 条（命中 '
+        + hitNotes.length + '/' + DERIVED.notes + '）');
 
-      /* ④ 块落在**对应**分组页首：id 命中分组 id 的块才上页，且只落在自己那一页、在该组场景之前；
-            载荷里没有 id 不命中分组的块（见上条「不造汇总块」）⇒ 上页块数恰＝一级分组数。 */
-      assert.equal(screen.querySelectorAll('.about-sec.meta-sec').length, DERIVED.groups,
-        '上页的伴生信息块数应恰＝一级分组数（id 命中分组 id 才渲染）');
+      /* ④ 五张分组页照旧存在、页首第一个元素是首个子功能组（撤掉说明区后页首不再被别的块占位）。 */
       const pages = screen.querySelectorAll('.page[data-page]');
       for (const g of HELP_GROUPS) {
-        const note = HELP_GROUP_NOTES[g.id];
         const page = pages.find((p) => p.getAttribute('data-page') === g.id);
         assert.ok(page, '缺分组页：' + g.id);
         const pageText = visibleText(page);
-        const atNote = pageText.indexOf(note);
-        assert.ok(atNote >= 0, '分组说明没落到自己那一页：' + g.id);
         const atFirstSub = pageText.indexOf(g.subgroups[0].label);
-        assert.ok(atFirstSub >= 0 && atNote < atFirstSub,
-          '分组说明须落在该组场景之前（分组页首）：' + g.id);
-        assert.deepEqual(pages.filter((p) => visibleText(p).includes(note)).map((p) => p.getAttribute('data-page')),
-          [g.id], '分组说明串页了（应只在自己那一页）：' + g.id);
+        assert.ok(atFirstSub >= 0, '分组页缺首个子功能组：' + g.id + '（' + g.subgroups[0].label + '）');
+        assert.equal(pageText.slice(0, atFirstSub).trim(), '',
+          '分组页首多了别的内容（撤说明区后该页首元素＝首个子功能组）：' + g.id);
       }
 
-      /* ⑤ 边界不破：补 90 条不许挤掉原有结构（四项计数全派生自资产）。 */
+      /* ⑤ 边界不破：撤说明区不许连带削掉原有结构（四项计数全派生自资产）。 */
       assert.equal(screen.querySelectorAll('.mini').length, DERIVED.scenes, '场景卡条数＝资产场景数');
       assert.equal(screen.querySelectorAll('.page[data-page]').length, DERIVED.groups + 1,
         '分组页数＝一级分组数 ＋ 关于页');

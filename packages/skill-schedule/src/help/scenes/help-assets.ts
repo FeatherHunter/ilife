@@ -24,13 +24,12 @@
  * 里面没有类型位，旧实物 HELP 也没有类型徽章——凭空补一个空 `types` 等于自造内容，故不落该字段；
  * 将来源数据真出现类型位，生成器会因字段闭集断言失败而报错（不会静默丢掉）。要变体徽章另开票。
  *
- * 未决的下游风险（留给渲染票 #202 收口；下面是「未决」，不是「已落地」）：契约没有对应位、故不进
- * `HELP_GROUPS` 的两处源信息，今天只有本文件里的伴随表形态——全仓没有消费者，两个渲染出口与
- * `#help-data` 载荷里都取不到 `result`／`desc`：即旧 HELP 页面上用户看得见的「预期 ·」与一级
- * 分组说明，在新产物里今天是不显示的。源场景的 `result` → `HELP_SCENE_RESULTS`；
- * 源一级分组的 `desc` → `HELP_GROUP_NOTES`。#202 要么把它们折进契约既有可见位（例如
- * `meta_blocks[].html`，该位原样透传）渲染出来，要么由用户裁定不显示后把这两张表一并删除；
- * 在那之前不得当作已交付的可见内容。
+ * 页面外的两张源数据镜像（**留档，页面不渲染**）：契约没有对应位、故不进 `HELP_GROUPS` 的两处源信息，
+ * 仍按原样镜像在本文件里——源场景的 `result` → `HELP_SCENE_RESULTS`（逐场景一条）；
+ * 源一级分组的 `desc` → `HELP_GROUP_NOTES`（逐分组一条）。保留数据本身的理由：这两张表的源头在
+ * **未入库**的 `.scratch/t198/old-scenarios.json`，删掉即从仓库里彻底灭失，故留档备查。
+ * **当前 HELP 页不展示它们**（用户 2026-09-13 裁定：作息 HELP 与其它技能 HELP 同构，不多自带功能模块）：
+ * 页面上的「预期 ·」与一级分组说明一律不出现，两个渲染出口与 `#help-data` 载荷里都取不到这两个键。
  * 为什么不塞进载荷：校验器按 `additionalProperties:false` 直接拒收多余键
  * （`packages/base-render/src/help.ts` 的字段闭集判定）；并进 `editable_fields[].hint` 会让
  * 「可编辑参数」这个位变浑浊，且没有维度的场景（`first_use`）无处可放。
@@ -2089,8 +2088,9 @@ export const HELP_ASSETS: readonly HelpSceneAsset[] = HELP_GROUPS.flatMap((g) =>
   g.subgroups.flatMap((s) => s.scenes),
 );
 
-/** 源场景 `result` 原文（85/85，键＝场景 id）。契约里没有这个位，故不进 `HELP_GROUPS`；
- *  今天无消费者、不进任何渲染出口（见文件头「未决的下游风险」，归 #202）。 */
+/** 源场景 `result` 原文（85/85，键＝场景 id）。契约里没有这个位，故不进
+ *  `HELP_GROUPS`（`HELP_GROUPS` 只装纯场景数据）；本表是源数据镜像，**当前 HELP 页不渲染**
+ *  —— 页面上的「预期 ·」一律不出现（见文件头「页面外的两张源数据镜像」）。 */
 export const HELP_SCENE_RESULTS: Readonly<Record<string, string>> = {
   "record_add_single": "写入 1 条作息记录,自动生成三件套结果 HTML(全天时间轴 + 过去几小时推断高亮 + 状态总览)",
   "record_add_json": "逐条校验后写入,自动生成三件套结果 HTML(多条记录;批量场景由「批量导入」强化)",
@@ -2180,7 +2180,7 @@ export const HELP_SCENE_RESULTS: Readonly<Record<string, string>> = {
 };
 
 /** 源一级分组 `desc` 原文（5/5，键＝分组 id）。同上：契约里没有这个位，
- *  今天无消费者、不进任何渲染出口（见文件头「未决的下游风险」，归 #202）。 */
+ *  不进 `HELP_GROUPS`；本表是源数据镜像，**当前 HELP 页不渲染**（见文件头「页面外的两张源数据镜像」）。 */
 export const HELP_GROUP_NOTES: Readonly<Record<string, string>> = {
   "write": "记录作息 / 同步消息 / 增量同步",
   "query": "查作息 / 查日程 / 查状态 / 时间轴 / 范围",
