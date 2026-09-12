@@ -1,3 +1,9 @@
+---
+name: skill-home
+description: "「居家管家HELP」→home.help.lookup 出一份居家管家速查列表（老骨架 9 域／30 组／73 场景）；唯一出口 home-cmd-read。触发词：居家管家 帮助、居家管家帮助、居家管家能做什么、查物品、看物品、录物品、改物品、盘物品、查位置、查快递、查保修、查证件、看统计、初始化。"
+help_wake_word: "居家管家 帮助"
+---
+
 # 居家管家（home）SKILL
 
 家庭物品全生命周期管理：搜/看/录/改、标签分类、盘点、位置、穿搭出行、统计、购物快递、票据凭证、家庭协作、初始化运维。唯一出口 `home-cmd-read <home.key>`，argv+JSON(stdout)+exit，非 0 走 stderr。写走 receipt（直通即真相）。

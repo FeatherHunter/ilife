@@ -38,7 +38,13 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
-    "test": "node --test test/smoke.test.mjs"
+    "build": "npm run build:host && npm run build:client",
+    "build:host": "tsc -b",
+    "build:client": "tsdown",
+    "typecheck": "tsc -p tsconfig.client.json",
+    "test": "node --test test/smoke.test.mjs test/skills-provider.test.mjs"
+  },
+  "devDependencies": {
+    "tsdown": "0.22.14"
   }
 }

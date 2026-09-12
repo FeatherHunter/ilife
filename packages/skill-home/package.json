@@ -15,6 +15,7 @@
   },
   "files": [
     "dist",
+    "SKILL.md",
     "templates/*.html"
   ],
   "bin": {

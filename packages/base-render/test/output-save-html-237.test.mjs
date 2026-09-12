@@ -231,6 +231,67 @@ test('#237 ④c reuse:"byDay"：当天已有同一主体的一份 → 返回它�
   assert.equal(r.json.count, 1, '目录里仍只有一份');
 });
 
+test('#237 ④e reuse:{byAge}：窗口内返回同一份（不新建）；窗口＝0 则每次都落新的', () => {
+  const dir = mkTmp('byage');
+  const r = spawnSave(dir, [
+    "const oneDay = { reuse: { byAge: 86400000 } };",
+    "const a = saveHtmlFile({ dir: DIR, stem: 'P_HELP', html: 'A', onExists: oneDay });",
+    "const b = saveHtmlFile({ dir: DIR, stem: 'P_HELP', html: 'B', onExists: oneDay });",
+    "const c = saveHtmlFile({ dir: DIR, stem: 'P_HELP', html: 'C', onExists: oneDay });",
+    "const d = saveHtmlFile({ dir: DIR, stem: 'Q_HELP', html: 'D', onExists: { reuse: { byAge: 0 } } });",
+    "const e = saveHtmlFile({ dir: DIR, stem: 'Q_HELP', html: 'E', onExists: { reuse: { byAge: 0 } } });",
+    "send({ same3: a.path === b.path && b.path === c.path, a: basename(a.path), body: readFileSync(a.path, 'utf8'),",
+    "  files: readdirSync(DIR).length, zeroNew: d.path !== e.path, dBody: readFileSync(d.path, 'utf8') });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.json.a, NAME_RE, 'byAge 首调落的名字也必须是通式（带时间戳）：' + r.json.a);
+  assert.equal(r.json.same3, true, '窗口内三次调用必须返回同一份');
+  assert.equal(r.json.body, 'A', '不新建、不改写（内容仍是第一次那份）');
+  assert.equal(r.json.files, 3, '窗口内 3 次只落 1 份（P 组）；byAge:0 两次各落一份（Q 组）⇒ 共 3 份');
+  assert.equal(r.json.zeroNew, true, 'byAge:0 永不命中 ⇒ 每次都落新的');
+  assert.equal(r.json.dBody, 'D', '原有的那份不得被改写');
+});
+
+test('#237 ④e2 reuse:{byAge}：超龄的那一份不算命中（改名造一份「3 天前」的来验）', () => {
+  const dir = mkTmp('byage-old');
+  const r = spawnSave(dir, [
+    // ⚠️ 不能在 body 里 `import`——body 被拼进 `try { … }` 里，ESM 的 import 只许在顶层。
+    "const { renameSync } = process.getBuiltinModule('node:fs');",
+    "const oneDay = { reuse: { byAge: 86400000 } };",
+    "const a = saveHtmlFile({ dir: DIR, stem: 'R_HELP', html: 'OLD', onExists: oneDay });",
+    "const p = (n) => String(n).padStart(2, '0');",
+    "const d3 = new Date(Date.now() - 3 * 86400000);",
+    "const stamp = String(d3.getFullYear()) + p(d3.getMonth() + 1) + p(d3.getDate()) + '_' + p(d3.getHours()) + p(d3.getMinutes()) + p(d3.getSeconds());",
+    "const oldName = 'R_HELP_' + stamp + '.html';",
+    "const old = join(DIR, oldName);",
+    "renameSync(a.path, old);",
+    "const b = saveHtmlFile({ dir: DIR, stem: 'R_HELP', html: 'NEW', onExists: oneDay });",
+    "send({ oldName, newEnough: b.path !== old, count: readdirSync(DIR).length, bBody: readFileSync(b.path, 'utf8') });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.notEqual(r.json.oldName, undefined);
+  assert.equal(r.json.newEnough, true, '唯一那份超龄 ⇒ 必须落新的，不许复用它');
+  assert.equal(r.json.count, 2, '旧的留着（留档），新的另落一份');
+  assert.equal(r.json.bBody, 'NEW');
+});
+
+test('#237 ④e3 reuse:{byAge} 的非法窗口真抛；file 仍不许配 reuse', () => {
+  const dir = mkTmp('byage-bad');
+  const r = spawnSave(dir, [
+    "const e = (f) => { try { return { ok: f() }; } catch (x) { return { code: x.code, message: String(x.message) }; } };",
+    "const neg = e(() => saveHtmlFile({ dir: DIR, stem: 'S_HELP', html: 'H', onExists: { reuse: { byAge: -1 } } }));",
+    "const nan = e(() => saveHtmlFile({ dir: DIR, stem: 'S_HELP', html: 'H', onExists: { reuse: { byAge: Number.NaN } } }));",
+    "const withFile = e(() => saveHtmlFile({ dir: DIR, file: 'X.html', html: 'H', onExists: { reuse: { byAge: 1000 } } }));",
+    "send({ neg, nan, withFile, files: readdirSync(DIR).length });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.neg.code, 'EINVAL');
+  assert.equal(r.json.nan.code, 'EINVAL');
+  assert.match(r.json.neg.message, /byAge/);
+  assert.equal(r.json.withFile.code, 'EINVAL', 'file（逐字落点）不许配 reuse');
+  assert.equal(r.json.files, 0, '三条阻断路径都不得落盘');
+});
+
 test('#237 ④d reuse:"byContent"：内容哈希相同 → 复用；内容不同 → 落新的', () => {
   const dir = mkTmp('bycontent');
   const r = spawnSave(dir, [

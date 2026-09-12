@@ -261,6 +261,8 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
       title: '复制数据',
       prompt: v.prompt,
       data: { envelope },
+      // #247：场景 07 五张页先开三格式菜单（2026-09-12 用户裁定「取老仓原样」）。
+      dataFormats: true,
       log: {
         envelope,
         copyLog: copyLog({
@@ -306,6 +308,8 @@ export function buildProfileSettingReceiptDoc(receipt: CrudReceipt, command: str
     copyArea({
       title: '复制数据',
       data: { envelope },
+      // #247：写后回执页先开三格式菜单（两条写命令共用这一张回执形状）。
+      dataFormats: true,
       log: {
         envelope,
         copyLog: copyLog({
