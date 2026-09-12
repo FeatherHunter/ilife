@@ -1,0 +1,218 @@
+=== OLD scenarios.yaml（30 条）===
+O | memo_add_basic | memo | 基础记录 | 记备忘 | type=采集+回执 | st= | dims=4 | p:请帮我记一条备忘(唤醒词:记备忘):nn请按以下格式填写你的参数:nn …
+O | memo_update_basic | memo | 基础记录 | 改备忘 | type=采集+回执 | st= | dims=4 | p:请帮我修改一条已有的备忘(唤醒词:改备忘):nn请按以下格式填写你的参数…
+O | memo_delete_basic | memo | 基础记录 | 删备忘 | type=采集+回执 | st= | dims=3 | p:请帮我删除一条或多条备忘(唤醒词:删备忘):nn请按以下格式填写你的参数…
+O | memo_change_category_single | memo | 分类调整 | 备忘改分类 | type=采集+回执 | st= | dims=3 | p:请帮我修改单条备忘的顶层分类(唤醒词:备忘改分类,单条):nn请按以下格…
+O | memo_change_subcategory | memo | 分类调整 | 备忘改子分类 | type=采集+回执 | st= | dims=2 | p:请帮我修改单条备忘的子分类(唤醒词:备忘改子分类):nn请按以下格式填写…
+O | memo_search_keyword | search | 基础查找 | 搜备忘 | type=查看+回执 | st= | dims=5 | p:请帮我搜备忘录(唤醒词:搜备忘):nn请按以下格式填写你的参数:nn 关…
+O | memo_search_alias | search | 基础查找 | 查备忘 | type=查看+回执 | st= | dims=1 | p:请帮我查备忘录(唤醒词:查备忘):nn请按以下格式填写你的参数:nn 关…
+O | memo_get_detail | search | 基础查找 | 看备忘 | type=查看+回执 | st= | dims=2 | p:请帮我查看某条备忘的详情(唤醒词:看备忘):nn请按以下格式填写你的参数…
+O | memo_search_by_date | search | 时间查找 | 按时间搜备忘 | type=查看+回执 | st= | dims=4 | p:请帮我按时间范围搜索备忘录(唤醒词:按时间搜备忘):nn请按以下格式填写…
+O | memo_search_wish | search | 分类查找 | 查心愿 | type=查看+回执 | st= | dims=3 | p:请帮我查看心愿(唤醒词:查心愿):nn请按以下格式填写你的参数:nn 关…
+O | memo_search_checkin | search | 分类查找 | 查打卡 | type=查看+回执 | st= | dims=2 | p:请帮我查看打卡记录(唤醒词:查打卡):nn请按以下格式填写你的参数:nn…
+O | memo_search_mood | search | 分类查找 | 查情绪 | type=查看+回执 | st= | dims=2 | p:请帮我查看情绪日记(唤醒词:查情绪):nn请按以下格式填写你的参数:nn…
+O | memo_remind_with_note | remind | 创建提醒 | 记提醒 | type=采集+回执 | st= | dims=4 | p:请帮我记一条提醒(唤醒词:记提醒 · 两步合一:添笔记 + 设提醒):n…
+O | memo_remind_existing | remind | 创建提醒 | 设提醒 | type=采集+回执 | st= | dims=5 | p:请帮我给已有笔记加提醒(唤醒词:设提醒):nn请按以下格式填写你的参数:…
+O | memo_reminders_active | remind | 查看提醒 | 看提醒 | type=查看+回执 | st= | dims=2 | p:请帮我查看有效提醒(唤醒词:看提醒):nn请按以下格式填写你的参数:nn…
+O | memo_completed_reminders | remind | 查看提醒 | 查已提醒备忘 | type=查看+回执 | st= | dims=1 | p:请帮我查看已提醒过的备忘(唤醒词:查已提醒备忘):nn无需参数,直接发送…
+O | memo_complete_wish | wish | 心愿推进 | 完成心愿 | type=向导+采集+回执 | st= | dims=3 | p:请帮我把心愿标记为已完成(唤醒词:完成心愿):nn请按以下格式填写你的参…
+O | memo_wish_schedule | wish | 心愿推进 | 心愿排期 | type=向导+采集+回执 | st= | dims=3 | p:请帮我给心愿设排期日期(唤醒词:心愿排期):nn请按以下格式填写你的参数…
+O | memo_batch_change_category | memo | 分类调整 | 备忘改分类 | type=向导+采集+回执 | st= | dims=4 | p:请帮我批量改分类(唤醒词:备忘改分类 · 批量场景):nn请按以下格式填…
+O | memo_sync_feishu | sync | (空) | 备忘录同步 | type=查看+回执 | st= | dims=1 | p:请帮我跑备忘录和飞书的双向对账(唤醒词:备忘录同步):nn无需参数,直接…
+O | memo_add_wish | wish | 心愿管理 | 记心愿 | type=采集+回执 | st= | dims=4 | p:请帮我快速添加心愿(唤醒词:记心愿 · 子唤醒词自动带心愿分类):nn请…
+O | memo_delete_wish | wish | 心愿管理 | 删心愿 | type=采集+回执 | st= | dims=1 | p:请帮我删除心愿(唤醒词:删心愿 · 子唤醒词自动带心愿过滤):nn请按以…
+O | memo_update_wish | wish | 心愿管理 | 改心愿 | type=采集+回执 | st= | dims=2 | p:请帮我改心愿(唤醒词:改心愿 · 子唤醒词自动带心愿过滤):nn请按以下…
+O | memo_add_checkin | checkin | (空) | 记打卡 | type=采集+回执 | st= | dims=3 | p:请帮我快速添加打卡(唤醒词:记打卡 · 子唤醒词自动带打卡分类):nn请…
+O | memo_delete_checkin | checkin | (空) | 删打卡 | type=采集+回执 | st= | dims=1 | p:请帮我删除打卡(唤醒词:删打卡 · 子唤醒词自动带打卡过滤):nn请按以…
+O | memo_update_checkin | checkin | (空) | 改打卡 | type=采集+回执 | st= | dims=2 | p:请帮我改打卡(唤醒词:改打卡 · 子唤醒词自动带打卡过滤):nn请按以下…
+O | memo_add_mood | mood | (空) | 记情绪 | type=采集+回执 | st= | dims=2 | p:请帮我快速添加情绪日记(唤醒词:记情绪 · 子唤醒词自动带情绪日记分类)…
+O | memo_delete_mood | mood | (空) | 删情绪 | type=采集+回执 | st= | dims=1 | p:请帮我删除情绪日记(唤醒词:删情绪 · 子唤醒词自动带情绪日记过滤):n…
+O | memo_update_mood | mood | (空) | 改情绪 | type=采集+回执 | st= | dims=2 | p:请帮我改情绪日记(唤醒词:改情绪 · 子唤醒词自动带情绪日记过滤):nn…
+O | memo_init_setup | init | (空) | 首次使用 | type=向导+采集+回执 | st= | dims=0 | p:请帮我初始化备忘录,我是第一次使用(唤醒词:首次使用):nn无需参数,直…
+
+=== NEW WAKE_TABLE（28 词 = 字面 16 + WAKE_TOPS 展开 12）===
+W | 按时间搜备忘 | memo.search | src=literal | needs=timeRange |  | cli=memo-cmd-read memo.search --params '{"timeRange":"2026-09"}'
+W | 查已提醒备忘 | memo.remind | src=literal |  |  | cli=memo-cmd-read memo.remind --params '{"done":false}'
+W | 批量改分类 | memo.batch | src=literal |  |  | cli=memo-cmd-read memo.batch
+W | 改子分类 | memo.update | src=literal | needs=id |  | cli=memo-cmd-read memo.update --params '{"id":"<id>"}'
+W | 搜备忘 | memo.search | src=literal |  |  | cli=memo-cmd-read memo.search
+W | 查备忘 | memo.search | src=literal |  |  | cli=memo-cmd-read memo.search
+W | 看备忘 | memo.detail | src=literal | needs=id |  | cli=memo-cmd-read memo.detail --params '{"id":"<id>"}'
+W | 看提醒 | memo.remind | src=literal |  |  | cli=memo-cmd-read memo.remind
+W | 查提醒 | memo.remind | src=literal |  |  | cli=memo-cmd-read memo.remind
+W | 设提醒 | memo.create | src=literal | needs=remindAt |  | cli=memo-cmd-read memo.create --params '{"remindAt":"2026-10-01"}'
+W | 记提醒 | memo.create | src=literal | needs=remindAt |  | cli=memo-cmd-read memo.create --params '{"remindAt":"2026-10-01"}'
+W | 废弃提醒 | memo.remove | src=literal |  |  | cli=memo-cmd-read memo.remove --params '{"mode":"abandon"}'
+W | 完成心愿 | memo.update | src=literal |  |  | cli=memo-cmd-read memo.update --params '{"done":true}'
+W | 心愿排期 | memo.wish | src=literal |  |  | cli=memo-cmd-read memo.wish
+W | 记一条 | memo.create | src=literal |  |  | cli=memo-cmd-read memo.create
+W | 添加笔记 | memo.create | src=literal |  |  | cli=memo-cmd-read memo.create
+W | 记心愿 | memo.create | src=wake_tops |  | preset=category:心愿 | cli=memo-cmd-read memo.create --params '{"category":"心愿"}'
+W | 记打卡 | memo.create | src=wake_tops |  | preset=category:打卡 | cli=memo-cmd-read memo.create --params '{"category":"打卡"}'
+W | 记情绪日记 | memo.create | src=wake_tops |  | preset=category:情绪日记 | cli=memo-cmd-read memo.create --params '{"category":"情绪日记"}'
+W | 查心愿 | memo.wish | src=wake_tops |  | preset=category:心愿 | cli=memo-cmd-read memo.wish --params '{"category":"心愿"}'
+W | 查打卡 | memo.search | src=wake_tops |  | preset=category:打卡 | cli=memo-cmd-read memo.search --params '{"category":"打卡"}'
+W | 查情绪日记 | memo.search | src=wake_tops |  | preset=category:情绪日记 | cli=memo-cmd-read memo.search --params '{"category":"情绪日记"}'
+W | 改心愿 | memo.update | src=wake_tops | needs=id | preset=category:心愿 | cli=memo-cmd-read memo.update --params '{"category":"心愿","id":"<id>"}'
+W | 改打卡 | memo.update | src=wake_tops | needs=id | preset=category:打卡 | cli=memo-cmd-read memo.update --params '{"category":"打卡","id":"<id>"}'
+W | 改情绪日记 | memo.update | src=wake_tops | needs=id | preset=category:情绪日记 | cli=memo-cmd-read memo.update --params '{"category":"情绪日记","id":"<id>"}'
+W | 删心愿 | memo.update | src=wake_tops | needs=id | preset=category:心愿 | cli=memo-cmd-read memo.update --params '{"category":"心愿","id":"<id>"}'
+W | 删打卡 | memo.update | src=wake_tops | needs=id | preset=category:打卡 | cli=memo-cmd-read memo.update --params '{"category":"打卡","id":"<id>"}'
+W | 删情绪日记 | memo.update | src=wake_tops | needs=id | preset=category:情绪日记 | cli=memo-cmd-read memo.update --params '{"category":"情绪日记","id":"<id>"}'
+
+=== JOIN 老场景 → 新表（每行一条）===
+J | memo_add_basic | memo | 基础记录 | 记备忘 | → | 无逐字落点 | route=不可路由 | 
+J | memo_update_basic | memo | 基础记录 | 改备忘 | → | 无逐字落点 | route=不可路由 | 
+J | memo_delete_basic | memo | 基础记录 | 删备忘 | → | 无逐字落点 | route=不可路由 | 
+J | memo_change_category_single | memo | 分类调整 | 备忘改分类 | → | 无逐字落点 | route=不可路由 | 
+J | memo_change_subcategory | memo | 分类调整 | 备忘改子分类 | → | 无逐字落点 | route=改子分类:memo.update(substring) | 
+J | memo_search_keyword | search | 基础查找 | 搜备忘 | → | 搜备忘:memo.search | route=搜备忘:memo.search(exact) | 搜备忘 ⊂ 按时间搜备忘
+J | memo_search_alias | search | 基础查找 | 查备忘 | → | 查备忘:memo.search | route=查备忘:memo.search(exact) | 
+J | memo_get_detail | search | 基础查找 | 看备忘 | → | 看备忘:memo.detail | route=看备忘:memo.detail(exact) | 
+J | memo_search_by_date | search | 时间查找 | 按时间搜备忘 | → | 按时间搜备忘:memo.search | route=按时间搜备忘:memo.search(exact/歧义:按时间搜备忘>搜备忘) | 
+J | memo_search_wish | search | 分类查找 | 查心愿 | → | 查心愿:memo.wish | route=查心愿:memo.wish(exact) | 
+J | memo_search_checkin | search | 分类查找 | 查打卡 | → | 查打卡:memo.search | route=查打卡:memo.search(exact) | 
+J | memo_search_mood | search | 分类查找 | 查情绪 | → | 无逐字落点 | route=不可路由 | 查情绪 ⊂ 查情绪日记
+J | memo_remind_with_note | remind | 创建提醒 | 记提醒 | → | 记提醒:memo.create | route=记提醒:memo.create(exact) | 
+J | memo_remind_existing | remind | 创建提醒 | 设提醒 | → | 设提醒:memo.create | route=设提醒:memo.create(exact) | 
+J | memo_reminders_active | remind | 查看提醒 | 看提醒 | → | 看提醒:memo.remind | route=看提醒:memo.remind(exact) | 
+J | memo_completed_reminders | remind | 查看提醒 | 查已提醒备忘 | → | 查已提醒备忘:memo.remind | route=查已提醒备忘:memo.remind(exact) | 
+J | memo_complete_wish | wish | 心愿推进 | 完成心愿 | → | 完成心愿:memo.update | route=完成心愿:memo.update(exact) | 
+J | memo_wish_schedule | wish | 心愿推进 | 心愿排期 | → | 心愿排期:memo.wish | route=心愿排期:memo.wish(exact) | 
+J | memo_batch_change_category | memo | 分类调整 | 备忘改分类 | → | 无逐字落点 | route=不可路由 | 
+J | memo_sync_feishu | sync | (空) | 备忘录同步 | → | 无逐字落点 | route=不可路由 | 
+J | memo_add_wish | wish | 心愿管理 | 记心愿 | → | 记心愿:memo.create | route=记心愿:memo.create(exact) | 
+J | memo_delete_wish | wish | 心愿管理 | 删心愿 | → | 删心愿:memo.update | route=删心愿:memo.update(exact) | 
+J | memo_update_wish | wish | 心愿管理 | 改心愿 | → | 改心愿:memo.update | route=改心愿:memo.update(exact) | 
+J | memo_add_checkin | checkin | (空) | 记打卡 | → | 记打卡:memo.create | route=记打卡:memo.create(exact) | 
+J | memo_delete_checkin | checkin | (空) | 删打卡 | → | 删打卡:memo.update | route=删打卡:memo.update(exact) | 
+J | memo_update_checkin | checkin | (空) | 改打卡 | → | 改打卡:memo.update | route=改打卡:memo.update(exact) | 
+J | memo_add_mood | mood | (空) | 记情绪 | → | 无逐字落点 | route=不可路由 | 记情绪 ⊂ 记情绪日记
+J | memo_delete_mood | mood | (空) | 删情绪 | → | 无逐字落点 | route=不可路由 | 删情绪 ⊂ 删情绪日记
+J | memo_update_mood | mood | (空) | 改情绪 | → | 无逐字落点 | route=不可路由 | 改情绪 ⊂ 改情绪日记
+J | memo_init_setup | init | (空) | 首次使用 | → | 无逐字落点 | route=不可路由 | 
+
+=== JOIN 新表条目：无老场景承接 ===
+X | 批量改分类 | memo.batch | src=literal | in_help | 
+X | 改子分类 | memo.update | src=literal | in_help | 
+X | 查提醒 | memo.remind | src=literal | in_help | 
+X | 废弃提醒 | memo.remove | src=literal | in_help | 
+X | 记一条 | memo.create | src=literal | in_help | 
+X | 添加笔记 | memo.create | src=literal | in_help | 
+X | 记情绪日记 | memo.create | src=wake_tops | in_help | preset=category:情绪日记
+X | 查情绪日记 | memo.search | src=wake_tops | in_help | preset=category:情绪日记
+X | 改情绪日记 | memo.update | src=wake_tops | in_help | preset=category:情绪日记
+X | 删情绪日记 | memo.update | src=wake_tops | in_help | preset=category:情绪日记
+
+=== COUNT ===
+old.scenes=30 old.hit=18 old.none=12
+old.unique_wake=29
+new.entries=28 new.carried=18 new.extra=10
+old.dims.total=76
+old.domains=8 old.subs=13
+old.sub_fallback=4
+old.none.route=substring=1 -> memo_change_subcategory(备忘改子分类→改子分类)
+old.none.route=no_route=11 -> memo_add_basic(记备忘) memo_update_basic(改备忘) memo_delete_basic(删备忘) memo_change_category_single(备忘改分类) memo_search_mood(查情绪) memo_batch_change_category(备忘改分类) memo_sync_feishu(备忘录同步) memo_add_mood(记情绪) memo_delete_mood(删情绪) memo_update_mood(改情绪) memo_init_setup(首次使用)
+old.ambiguous_routes=1 -> 按时间搜备忘(按时间搜备忘>搜备忘)
+=== 老唯一唤醒词三态：exact=18 substring=1 none=10 ===
+M | 记备忘 | none | - |  | scene=memo_add_basic | memo
+M | 改备忘 | none | - |  | scene=memo_update_basic | memo
+M | 删备忘 | none | - |  | scene=memo_delete_basic | memo
+M | 备忘改分类 | none | - |  | scene=memo_change_category_single | memo
+M | 备忘改子分类 | substring | memo.update | → 改子分类 | scene=memo_change_subcategory | memo
+M | 搜备忘 | exact | memo.search |  | scene=memo_search_keyword | search
+M | 查备忘 | exact | memo.search |  | scene=memo_search_alias | search
+M | 看备忘 | exact | memo.detail |  | scene=memo_get_detail | search
+M | 按时间搜备忘 | exact | memo.search |  | scene=memo_search_by_date | search
+M | 查心愿 | exact | memo.wish |  | scene=memo_search_wish | search
+M | 查打卡 | exact | memo.search |  | scene=memo_search_checkin | search
+M | 查情绪 | none | - |  | scene=memo_search_mood | search
+M | 记提醒 | exact | memo.create |  | scene=memo_remind_with_note | remind
+M | 设提醒 | exact | memo.create |  | scene=memo_remind_existing | remind
+M | 看提醒 | exact | memo.remind |  | scene=memo_reminders_active | remind
+M | 查已提醒备忘 | exact | memo.remind |  | scene=memo_completed_reminders | remind
+M | 完成心愿 | exact | memo.update |  | scene=memo_complete_wish | wish
+M | 心愿排期 | exact | memo.wish |  | scene=memo_wish_schedule | wish
+M | 备忘录同步 | none | - |  | scene=memo_sync_feishu | sync
+M | 记心愿 | exact | memo.create |  | scene=memo_add_wish | wish
+M | 删心愿 | exact | memo.update |  | scene=memo_delete_wish | wish
+M | 改心愿 | exact | memo.update |  | scene=memo_update_wish | wish
+M | 记打卡 | exact | memo.create |  | scene=memo_add_checkin | checkin
+M | 删打卡 | exact | memo.update |  | scene=memo_delete_checkin | checkin
+M | 改打卡 | exact | memo.update |  | scene=memo_update_checkin | checkin
+M | 记情绪 | none | - |  | scene=memo_add_mood | mood
+M | 删情绪 | none | - |  | scene=memo_delete_mood | mood
+M | 改情绪 | none | - |  | scene=memo_update_mood | mood
+M | 首次使用 | none | - |  | scene=memo_init_setup | init
+=== 路由口径复算（最长匹配，老词单独成句）===
+P | 记备忘 | POLICY_NO_MATCH |  | cands=0
+P | 改备忘 | POLICY_NO_MATCH |  | cands=0
+P | 删备忘 | POLICY_NO_MATCH |  | cands=0
+P | 备忘改分类 | POLICY_NO_MATCH |  | cands=0
+P | 备忘改子分类 | 改子分类:memo.update |  | cands=1
+P | 搜备忘 | 搜备忘:memo.search |  | cands=1
+P | 查备忘 | 查备忘:memo.search |  | cands=1
+P | 看备忘 | 看备忘:memo.detail |  | cands=1
+P | 按时间搜备忘 | 按时间搜备忘:memo.search | 歧义候选=按时间搜备忘>搜备忘 | cands=2
+P | 查心愿 | 查心愿:memo.wish |  | cands=1
+P | 查打卡 | 查打卡:memo.search |  | cands=1
+P | 查情绪 | POLICY_NO_MATCH |  | cands=0
+P | 记提醒 | 记提醒:memo.create |  | cands=1
+P | 设提醒 | 设提醒:memo.create |  | cands=1
+P | 看提醒 | 看提醒:memo.remind |  | cands=1
+P | 查已提醒备忘 | 查已提醒备忘:memo.remind |  | cands=1
+P | 完成心愿 | 完成心愿:memo.update |  | cands=1
+P | 心愿排期 | 心愿排期:memo.wish |  | cands=1
+P | 备忘录同步 | POLICY_NO_MATCH |  | cands=0
+P | 记心愿 | 记心愿:memo.create |  | cands=1
+P | 删心愿 | 删心愿:memo.update |  | cands=1
+P | 改心愿 | 改心愿:memo.update |  | cands=1
+P | 记打卡 | 记打卡:memo.create |  | cands=1
+P | 删打卡 | 删打卡:memo.update |  | cands=1
+P | 改打卡 | 改打卡:memo.update |  | cands=1
+P | 记情绪 | POLICY_NO_MATCH |  | cands=0
+P | 删情绪 | POLICY_NO_MATCH |  | cands=0
+P | 改情绪 | POLICY_NO_MATCH |  | cands=0
+P | 首次使用 | POLICY_NO_MATCH |  | cands=0
+phrase.route=ok=19 phrase.route=no_match=10
+=== 新仓 test/ 对老唯一唤醒词的覆盖 ===
+C | 记备忘 | NO_MATCH | NOT_in_test | -
+C | 改备忘 | NO_MATCH | NOT_in_test | -
+C | 删备忘 | NO_MATCH | NOT_in_test | -
+C | 备忘改分类 | NO_MATCH | NOT_in_test | -
+C | 备忘改子分类 | substring | NOT_in_test | memo.update
+C | 搜备忘 | exact | in_test | memo.search
+C | 查备忘 | exact | in_test | memo.search
+C | 看备忘 | exact | in_test | memo.detail
+C | 按时间搜备忘 | exact | in_test | memo.search
+C | 查心愿 | exact | in_test | memo.wish
+C | 查打卡 | exact | in_test | memo.search
+C | 查情绪 | NO_MATCH | in_test | -
+C | 记提醒 | exact | NOT_in_test | memo.create
+C | 设提醒 | exact | in_test | memo.create
+C | 看提醒 | exact | in_test | memo.remind
+C | 查已提醒备忘 | exact | in_test | memo.remind
+C | 完成心愿 | exact | in_test | memo.update
+C | 心愿排期 | exact | NOT_in_test | memo.wish
+C | 备忘录同步 | NO_MATCH | NOT_in_test | -
+C | 记心愿 | exact | in_test | memo.create
+C | 删心愿 | exact | NOT_in_test | memo.update
+C | 改心愿 | exact | NOT_in_test | memo.update
+C | 记打卡 | exact | NOT_in_test | memo.create
+C | 删打卡 | exact | NOT_in_test | memo.update
+C | 改打卡 | exact | NOT_in_test | memo.update
+C | 记情绪 | NO_MATCH | NOT_in_test | -
+C | 删情绪 | NO_MATCH | NOT_in_test | -
+C | 改情绪 | NO_MATCH | NOT_in_test | -
+C | 首次使用 | NO_MATCH | NOT_in_test | -
+phrase.no_match_in_test=1 / 10
+=== 两边并集 ===
+union=39 both=18 only_old=11 only_new=10
+only_old -> 记备忘(不可路由) 改备忘(不可路由) 删备忘(不可路由) 备忘改分类(不可路由) 备忘改子分类(可子串路由→改子分类) 查情绪(不可路由) 备忘录同步(不可路由) 记情绪(不可路由) 删情绪(不可路由) 改情绪(不可路由) 首次使用(不可路由)
+only_new -> 批量改分类 改子分类 查提醒 废弃提醒 记一条 添加笔记 记情绪日记 查情绪日记 改情绪日记 删情绪日记
+=== 改名对（老名 → 新名）===
+N | 备忘改子分类 | → | 改子分类 | memo.update | new_in_table=true | 逐字不同、可子串路由（唯一一条）
+N | 查情绪 | → | 查情绪日记 | memo.search | new_in_table=true | 顶层分类名对齐（情绪 → 情绪日记）
+N | 记情绪 | → | 记情绪日记 | memo.create | new_in_table=true | 同上
+N | 改情绪 | → | 改情绪日记 | memo.update | new_in_table=true | 同上
+N | 删情绪 | → | 删情绪日记 | memo.update | new_in_table=true | 同上

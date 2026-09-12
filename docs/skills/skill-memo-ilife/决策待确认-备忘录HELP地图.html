@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>备忘录 HELP 地图 · 开图前 6 问待裁</title>
+<style>
+  :root{
+    --bg:#0f1216; --card:#171b21; --card2:#1d2229; --line:#2a313a;
+    --fg:#e8ecf1; --dim:#9aa5b1; --acc:#4da3ff; --rec:#33c48d; --warn:#ffb545; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:16px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  header{padding:40px 0 24px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#131a24,transparent)}
+  h1{font-size:26px;margin:0 0 8px}
+  .lede{color:var(--dim);margin:0 0 16px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--dim);background:var(--card)}
+  .chip.warn{border-color:#5a4318;color:var(--warn)}
+  h2{font-size:19px;margin:0}
+  section{margin:28px 0}
+  .facts{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .fact{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px;padding:14px 16px}
+  .fact b{display:block;font-size:14px;color:var(--acc);margin-bottom:6px}
+  .fact p{margin:0;font-size:14px;color:#cfd8e3}
+  table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--card2);color:var(--dim);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+  .qhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .num{background:var(--acc);color:#08131f;font-weight:700;border-radius:8px;padding:2px 9px;font-size:14px}
+  .badge{margin-left:auto;font-size:13px;color:var(--rec);border:1px solid #1e5c43;background:#12271f;border-radius:999px;padding:3px 10px}
+  .why{margin:10px 0 8px;font-size:14.5px;color:#cfd8e3}
+  .why b{color:var(--fg)}
+  ul.kf{margin:8px 0 14px;padding-left:20px;font-size:14px;color:var(--dim)}
+  ul.kf li{margin:3px 0}
+  ul.kf code,td code,p code{background:#0b0e12;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px;color:#b9c6d4}
+  .opts{display:grid;gap:10px}
+  .opt{display:block;border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--card2)}
+  .opt:hover{border-color:#3d4753}
+  .opt.rec{border-color:#1e5c43;background:#13251f}
+  .opt input{margin-right:8px}
+  .tag{font-weight:700;color:var(--fg);margin-right:6px}
+  .opt.rec .tag{color:var(--rec)}
+  .proscons{list-style:none;margin:8px 0 0;padding:0;font-size:13.5px}
+  .proscons li{padding-left:16px;position:relative;color:var(--dim);margin:3px 0}
+  .proscons li.pro::before{content:"＋";position:absolute;left:0;color:var(--rec)}
+  .proscons li.con::before{content:"−";position:absolute;left:0;color:var(--warn)}
+  .defaults{background:#1a1710;border:1px solid #5a4318;border-radius:12px;padding:16px 20px}
+  .defaults h2{color:var(--warn);font-size:17px}
+  .defaults ol{margin:10px 0 0;padding-left:22px;font-size:14.5px;color:#ddd2bf}
+  .reply{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  button{background:var(--acc);color:#08131f;border:0;border-radius:9px;padding:10px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  button:hover{filter:brightness(1.1)}
+  textarea{width:100%;margin-top:12px;min-height:120px;background:#0b0e12;color:#cfd8e3;border:1px solid var(--line);border-radius:9px;padding:12px;font:13.5px/1.6 ui-monospace,Consolas,monospace;resize:vertical}
+  footer{color:var(--dim);font-size:13px;padding:24px 0 48px;border-top:1px solid var(--line);margin-top:32px}
+  @media(max-width:560px){h1{font-size:21px}.q{padding:14px}.badge{margin-left:0}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>备忘录 HELP 地图 · 开图前 6 问待裁</h1>
+  <p class="lede">地图还没建。这 6 条决定一落，我立刻写 map 正文、建子票、拉原生子议题边与原生阻塞边，并逐项校验计数。</p>
+  <div class="chips">
+    <span class="chip">样板：#143 饼干记账 · 8 票全关</span>
+    <span class="chip">兄弟：#183 居家管家 · 开着 10%</span>
+    <span class="chip warn">新技能 HELP 实测 exit 3</span>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section class="facts">
+  <div class="fact"><b>① 你的需求有一张字字相同的兄弟地图</b>
+    <p><code>#183 居家管家HELP真标准</code> 的「用户原话采访区」里，需求原话与你这次逐字相同，只换了技能名。它一天前替你答过同一套问题——最新、最贴近的先例。</p></div>
+  <div class="fact"><b>② 老实物有两代，最新那份不是通用模板世代</b>
+    <p><code>.db\memo_html\</code>：57500 B（8/10–8/12 自带壳）→ <b>103993 B（8/13，通用模板世代）</b> → 55053 B（8/20，另一条产线）。</p></div>
+  <div class="fact"><b>③ 真机这条路今天是断的</b>
+    <p><code>skill-memo-ilife</code> 在 DSH profile 里是 Junction 到 <code>.dsh-module-fallback</code> 的<b>拷贝</b>，不回指 <code>D:\ilife</code>——仓库改完到不了真机。</p></div>
+</section>
+
+<section>
+  <h2 style="margin-bottom:10px">决策速览</h2>
+  <table>
+    <tr><th style="width:38%">问题</th><th style="width:14%">推荐</th><th>一句话理由</th></tr>
+    <tr><td>Q1 目的地口径</td><td><b>A</b></td><td>照 #183：用现成通用模板，不比老 UI</td></tr>
+    <tr><td>Q2 内容骨架与 30↔10 错位</td><td><b>A</b></td><td>老骨架为准 ＋ 单开对账调查票</td></tr>
+    <tr><td>Q3 文档与产物落点</td><td><b>A</b></td><td>与 #183 同形：代码落仓、文档落 docs</td></tr>
+    <tr><td>Q4 新架构规则落地尺度</td><td><b>A</b></td><td>照 #183 那四条 ＋ 本图定告警线</td></tr>
+    <tr><td>Q5 范围与装机</td><td><b>A</b></td><td>HELP ＋ 两侧跑通 ＋ 图内出装机票</td></tr>
+    <tr><td>Q6 与 #183 的同一行冲突</td><td><b>A</b></td><td>各改各的一项，互不覆盖</td></tr>
+  </table>
+</section>
+
+<article class="q" id="q1">
+  <div class="qhead"><span class="num">Q1</span><h2>目的地口径</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b><code>#131</code>／<code>#143</code> 定的标准是两条——「①明确拿到 HELP 文件」＋「②与老实物视觉一致」。但一天前你为居家管家那张图改了口径：<i>「饼干记账和卡路里已经把通用模板开发好了，直接用就行了，UI 层面不需要看老 help 了」</i>。备忘录这边选老口径还会多一层麻烦：老实物有两代，最新那份恰恰不是通用模板世代。</p>
+  <ul class="kf">
+    <li>8/13 那批 <code>备忘录_HELP_20260813_161545.html</code>（103993 B／1409 行）＝公共组件 help 模板世代，与卡路里 9/6、饼干记账同一模板（模板非空短行命中 521/527＝98.9%）</li>
+    <li>8/20 那份（55053 B）既无 <code>id="help-data"</code> 也无 <code>meta_blocks</code>，与卡路里 9/2、9/5 的产物同壳（jaccard＝1.000），连标题都照抄——另一条产线</li>
+    <li>通用模板仓内真相源：<code>packages/base-render/assets/help-template.html</code>，出口 <code>base-paint/help-shell</code></li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q1" value="A">
+      <span class="tag">A · 照 #183</span>①拿到文件 ②用现成通用模板渲染，<b>不比老 UI</b> ＋ 维护者肉眼终审「过」
+      <ul class="proscons">
+        <li class="pro">与兄弟图同口径，三张图一套标准</li>
+        <li class="pro">省掉「以哪一代老实物为准」这道题</li>
+        <li class="pro">模板已被卡路里／记账／居家三代打磨过</li>
+        <li class="con">老 V4 世代上若有个别细节与通用模板不同，不会有人去追</li>
+      </ul></label>
+    <label class="opt"><input type="radio" name="q1" value="B">
+      <span class="tag">B · 回老口径</span>与老实物视觉一致（照 #131／#143 原文）
+      <ul class="proscons">
+        <li class="pro">最保守，老用户观感与从前一模一样</li>
+        <li class="con">必须先裁「以 8/13 还是 8/20 为准」</li>
+        <li class="con">两张兄弟图已放弃这条 → 三张图两套标准</li>
+      </ul></label>
+  </div>
+</article>
+
+<article class="q" id="q2">
+  <div class="qhead"><span class="num">Q2</span><h2>内容骨架，以及「30 场景 ↔ 10 命令」的错位</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>既定口径是「老骨架为准，新表多出的条目补进对应域」。但备忘录这儿对不齐：老骨架有 <b>30 个场景</b>，新技能只有 <b>10 条命令</b>，必然多个场景映到同一条命令。</p>
+  <ul class="kf">
+    <li>老内容唯一事实源：<code>SKILLS\备忘录\references\scenarios.yaml</code>（v1.3.0）＝ <b>8 域／13 二级组／30 场景／29 个唯一唤醒词</b></li>
+    <li>另有 76 个 <code>editable_fields</code>、30 场景全带 <code>types</code>、<b>无</b> <code>meta_blocks</code>；4 处「分类下只有一个子功能 → 走『基础』兜底」</li>
+    <li>新技能：<code>memo.search</code>／<code>detail</code>／<code>create</code>／<code>update</code>／<code>remove</code>／<code>remind</code>／<code>wish</code>／<code>sync</code>／<code>batch</code>／<code>stats</code> 共 10 条</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q2" value="A">
+      <span class="tag">A · 老骨架为准 ＋ 单开对账调查票</span>先把「老 30 场景 ↔ 新 28 唤醒词／10 命令」的对账表查出来，再动内容票
+      <ul class="proscons">
+        <li class="pro">页面与老用户认知一致，不因实现而缩水</li>
+        <li class="pro">对账表能挡住「场景映错命令」，照 #183 票 2 的做法</li>
+        <li class="con">多一张票、多一轮等待</li>
+        <li class="con">30 对 10 的多对一关系需人工过一遍</li>
+      </ul></label>
+    <label class="opt"><input type="radio" name="q2" value="B">
+      <span class="tag">B · 只留实现真有的</span>只保留能映到那 10 条命令的场景
+      <ul class="proscons">
+        <li class="pro">内容与实现严格一致，不出现「页面写了但跑不通」</li>
+        <li class="con">页面明显缩水，与「照搬老骨架」的既定口径冲突</li>
+      </ul></label>
+  </div>
+</article>
+
+<article class="q" id="q3">
+  <div class="qhead"><span class="num">Q3</span><h2>文档与产物落点</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>你这次说「过程中所有文档和输出都放在 skill-备忘录下面」。一天前你说过同样一句话，那次答成了 <code>(a)</code>：代码与产物落 <code>packages/skill-home/</code>，文档落 <code>docs/skills/skill-home/</code>。但仓规的目录名不是「备忘录」。</p>
+  <ul class="kf">
+    <li>仓规 <code>docs/agents/doc-homes.md</code>：技能文档落 <code>docs/skills/&lt;件名&gt;/</code>，<b>件名＝<code>packages/</code> 下目录名逐字</b> → 是 <code>skill-memo-ilife</code></li>
+    <li>老 HELP 产物落点实测：<code>&lt;SKILLS_DB_PATH&gt;\memo_html\备忘录_HELP_&lt;YYYYMMDD_HHMMSS&gt;.html</code></li>
+    <li>老技能那条「<b>覆盖</b>技能根 <code>备忘录.html</code>」的写法，已被 #131／#143 裁定「不写固定名镜像」否掉</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q3" value="A">
+      <span class="tag">A · 与 #183 同形</span>代码与产物落 <code>packages/skill-memo-ilife/</code>；文档落 <code>docs/skills/skill-memo-ilife/</code>；交付 HTML 落 <code>.db\memo_html\</code>
+      <ul class="proscons">
+        <li class="pro">与兄弟图、仓规三方一致</li>
+        <li class="pro">不写固定名镜像，老技能目录全程只读</li>
+        <li class="con">目录名是 <code>skill-memo-ilife</code>，不是「skill-备忘录」字面</li>
+      </ul></label>
+    <label class="opt"><input type="radio" name="q3" value="B">
+      <span class="tag">B · 按字面</span>文档也落 <code>packages/skill-memo-ilife/</code> 下
+      <ul class="proscons">
+        <li class="pro">严格照你说的字面</li>
+        <li class="con">撞仓规「仓根和 docs 根不放文档，技能文档归 docs/skills/」</li>
+        <li class="con">与 #183 那次替你答的 (a) 不一致</li>
+      </ul></label>
+  </div>
+</article>
+
+<article class="q" id="q4">
+  <div class="qhead"><span class="num">Q4</span><h2>新架构规则落到哪一步</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>你说「本次开发会遵循新的代码架构规则」，指的是 <code>docs/agents/structure.md</code>（五条铁律 ＋ 结构标准 ＋ 必报五步）。#183 那次把它定成了四条落地尺度。</p>
+  <ul class="kf">
+    <li>四条＝① 新增／改动的 HELP 件目录名取自 <b>HELP 一级分组</b>（备忘录＝那 8 个域）② 被碰到的旧件<b>就地摆正</b>，不顺手扩大范围 ③ 每张写代码的票必报五步：第一、二步先报你点头，超告警线当场报，交付时报对账 ④ <b>整包重排</b>不在图内，另立票</li>
+    <li>TODO 项：<code>skill-memo-ilife</code> 全包<b>没有</b>定过文件行数告警线（先例：卡路里 350 行）</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q4" value="A">
+      <span class="tag">A · 四条全照 #183</span>＋在本图内定告警线数字，写进 <code>docs/skills/skill-memo-ilife/</code>
+      <ul class="proscons">
+        <li class="pro">与兄弟图同尺度，也能直接对比两张图的执行记录</li>
+        <li class="pro">告警线定下来，第四步报警才有数字可依</li>
+        <li class="con">每张票多两道「先报你点头」的往返</li>
+      </ul></label>
+    <label class="opt"><input type="radio" name="q4" value="B">
+      <span class="tag">B · 只摆新的</span>只把新增 HELP 件按新规矩摆，旧件不动
+      <ul class="proscons">
+        <li class="pro">最快</li>
+        <li class="con">撞结构标准「就地摆正」那条</li>
+      </ul></label>
+    <label class="opt"><input type="radio" name="q4" value="C">
+      <span class="tag">C · 整包重排</span>把 <code>src/</code> 按 8 个域重排
+      <ul class="proscons">
+        <li class="con">远超「做 HELP」一张图的目的地</li>
+        <li class="con">要碰三个以上能力，按第二步必须先经你点头；#183 也把它划出图</li>
+      </ul></label>
+  </div>
+</article>
+
+<article class="q" id="q5">
+  <div class="qhead"><span class="num">Q5</span><h2>范围与真机装机</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>#183 的目的地含「技能侧与插件侧都要跑通 ＋ 维护者肉眼终审『过』」。我实测了备忘录这边的基础设施，发现断在装机这一环。</p>
+  <ul class="kf">
+    <li><code>plugin-memo-ilife</code>：profile 里已有 Junction，<b>回指仓库</b> ✓</li>
+    <li><code>skill-memo-ilife</code>：profile 里是 Junction 到 <code>.dsh-module-fallback\node_modules\skill-memo-ilife</code>，那是<b>拷贝</b>，不回指 <code>D:\ilife</code> ✗ → 仓库改了到不了真机</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q5" value="A">
+      <span class="tag">A · 只做 HELP，但两侧跑通</span>其余场景页与发版出图；图内开一张「插件侧最小装机（技能提供方 ＋ DSH profile）」票
+      <ul class="proscons">
+        <li class="pro">「真机端到端 ＋ 肉眼终审」那张票才有意义</li>
+        <li class="pro">照 #183 票 10 的做法，先例现成</li>
+        <li class="con">多一张票；要动 profile 里的 Junction（可回滚）</li>
+      </ul></label>
+    <label class="opt"><input type="radio" name="q5" value="B">
+      <span class="tag">B · 只做仓库侧</span>真机与装机出图
+      <ul class="proscons">
+        <li class="pro">图更小、更快关门</li>
+        <li class="con">「明确拿到文件」这条根本验不了，等于没达成目的地</li>
+      </ul></label>
+  </div>
+</article>
+
+<article class="q" id="q6">
+  <div class="qhead"><span class="num">Q6</span><h2>与 #183 并行时的同一行冲突</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>两张图都要把各自的技能从同一条边界断言里移出去，而 #183 此刻正在跑。</p>
+  <ul class="kf">
+    <li><code>tooling/check-boundaries.mjs</code> 有一份冻结名单：<code>['skill-chef','skill-home','skill-schedule','skill-memo-ilife']</code>，断言这 4 个技能<b>不许</b>消费 <code>base-*</code></li>
+    <li>备忘录要走共享 help 模板 → 必须把 <code>'skill-memo-ilife'</code> 移出；居家管家同理要移 <code>'skill-home'</code>——<b>两处都在同一个数组里</b></li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q6" value="A">
+      <span class="tag">A · 各改各的一项</span>本图票面写明「只改 <code>'skill-memo-ilife'</code> 一项，<code>'skill-home'</code> 归 #183」
+      <ul class="proscons">
+        <li class="pro">两边并发交错也不会互相覆盖</li>
+        <li class="pro">剩下没迁移的技能继续受冻结断言保护</li>
+        <li class="con">两张图谁先合并，另一张要 rebase 一次</li>
+      </ul></label>
+    <label class="opt"><input type="radio" name="q6" value="B">
+      <span class="tag">B · 一次移两个</span>顺手把 home 也移出去
+      <ul class="proscons">
+        <li class="con">越过各自地图的边界</li>
+        <li class="con">居家还没做完就先解冻，未完成的迁移失去现状断言保护</li>
+      </ul></label>
+  </div>
+</article>
+
+<section class="defaults">
+  <h2>以下三条我按先例照办，不另问——要改就喊停</h2>
+  <ol>
+    <li>HELP 命令名取 <code>memo.help.lookup</code>（照 <code>bill.help.lookup</code>／<code>home.help.lookup</code>；现状实测 <code>exit 3 未知联动 key</code>）</li>
+    <li>缺省＝交付 HELP 文件；<code>mode:"lookup"</code> 出速查表；<code>q</code> 只回命中不落盘；<code>--html</code> 逐字覆盖写（照 #144 定案）</li>
+    <li>同批派三张调查票：读懂饼干记账 HELP 实现 → 照抄清单／内容资产对账（Q2）／通用模板注入契约 ＋ 备忘录专属取值</li>
+  </ol>
+</section>
+
+<section class="reply">
+  <h2>把答案回给我</h2>
+  <p class="lede" style="margin:8px 0 0;font-size:14.5px">上面勾完，按这个按钮生成一行回复；不勾的按推荐 A 走。</p>
+  <button id="gen" type="button">生成我的选择</button>
+  <textarea id="out" readonly placeholder="点上面的按钮生成…"></textarea>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  本文件落点：<code>D:\ilife\docs\skills\skill-memo-ilife\决策待确认-备忘录HELP地图.html</code>（按 Q3 推荐项的读法；若你改判落点，我搬走）。
+  生成于 2026-09-12 · 依据：地图 #131／#143／#183 正文 ＋ 老技能与产物的只读查证报告。
+</div></footer>
+
+<script>
+(function(){
+  var ids = ['q1','q2','q3','q4','q5','q6'];
+  var btn = document.getElementById('gen'), out = document.getElementById('out');
+  btn.addEventListener('click', function(){
+    var lines = [];
+    ids.forEach(function(id){
+      var sel = document.querySelector('input[name="' + id + '"]:checked');
+      lines.push(id.toUpperCase() + '=' + (sel ? sel.value : 'A（默认）'));
+    });
+    lines.push('默认三条：照办');
+    out.value = lines.join('\n');
+    out.select();
+    try { navigator.clipboard.writeText(out.value); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

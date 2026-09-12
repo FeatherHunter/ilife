@@ -1,0 +1,2288 @@
+{
+  "schema": "skill-memo-ilife/scene-skeleton@1",
+  "for_ticket": "#222",
+  "map": "#220",
+  "sources": {
+    "old_yaml": "D:/2Study/StudyNotes/SKILLS/备忘录/references/scenarios.yaml（v1.3.0，8 域／13 二级组／30 场景）",
+    "old_skill_md": "D:/2Study/StudyNotes/SKILLS/备忘录/SKILL.md（HELP 变体行 1082 起；别名行 300；用户原话→CLI 行 156 起；HTML 对照行 235 起）",
+    "old_render": "D:/2Study/StudyNotes/SKILLS/备忘录/script/memo_render.py（_scenarios_to_contract_data:527／DIM_LABEL_MAP:49／COMMAND_CN_MAP:40）",
+    "new_wake": "packages/skill-memo-ilife/src/policy/wakewords.ts（WAKE_TABLE 字面 16 条 + WAKE_TOPS 展开 12 条 = 28 条）",
+    "new_category": "packages/skill-memo-ilife/src/policy/category.ts（WAKE_TOPS 12 条／MEMO_TOPS 4 顶层）",
+    "new_shapes": "packages/skill-memo-ilife/src/render/envelope.ts（MEMO_KEY_SHAPES 10 key）",
+    "new_md": "packages/skill-memo-ilife/SKILL.md:21-54（HELP-AUTO 构建期注入）",
+    "method": "docs/skills/skill-home/t185-extract.mjs（兄弟地图 #183 票 2 产物，本席实际读的就是该文件名）",
+    "reconcile": "docs/skills/skill-memo-ilife/t222-content-reconcile.md"
+  },
+  "counts": {
+    "old_scenes": 30,
+    "old_unique_wake": 29,
+    "old_domains": 8,
+    "old_subs": 13,
+    "old_sub_fallback": 4,
+    "old_dims_total": 76,
+    "old_none": 12,
+    "old_hit": 18,
+    "old_none_route_substring": 1,
+    "old_none_route_no_route": 11,
+    "old_ambiguous_routes": 1,
+    "old_deprecated_candidates": 1,
+    "old_other_no_landing": 11,
+    "old_route_no_match_scenes": 11,
+    "new_entries": 28,
+    "new_literal": 16,
+    "new_from_wake_tops": 12,
+    "new_carried": 18,
+    "new_extra": 10,
+    "new_keys": 8,
+    "new_help_rows": 28,
+    "new_deprecated_phrases": 0,
+    "old_unique_wake_exact": 18,
+    "old_unique_wake_substring": 1,
+    "old_unique_wake_none": 10,
+    "phrase_no_match": 10,
+    "phrase_no_match_list": [
+      "记备忘",
+      "改备忘",
+      "删备忘",
+      "备忘改分类",
+      "查情绪",
+      "备忘录同步",
+      "记情绪",
+      "删情绪",
+      "改情绪",
+      "首次使用"
+    ]
+  },
+  "help_only": [
+    {
+      "phrase": "备忘录 HELP",
+      "kind": "字面",
+      "old_line": 1088,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "备忘录 help",
+      "kind": "大小写变体",
+      "old_line": 1089,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "备忘 HELP",
+      "kind": "缩字变体",
+      "old_line": 1090,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "备忘录的help在哪",
+      "kind": "口语化 + 略错",
+      "old_line": 1091,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "帮我看下备忘录的使用说明",
+      "kind": "口语 + 同义(\"使用说明\"=\"HELP\")",
+      "old_line": 1092,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "/备忘录-help",
+      "kind": "slash command 风格",
+      "old_line": 1093,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "/备忘录 help",
+      "kind": "slash + 空格",
+      "old_line": 1094,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "备忘录 manual",
+      "kind": "英文同义词",
+      "old_line": 1095,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    },
+    {
+      "phrase": "备忘录 guide",
+      "kind": "英文同义词",
+      "old_line": 1095,
+      "key": null,
+      "note": "HELP 自身入口；老口径明示「不展示 HELP 唤醒词自身」，新表 10 key 无 help key"
+    }
+  ],
+  "old_aliases_not_in_yaml": [
+    {
+      "line": 262,
+      "raw": "别名:完成打卡",
+      "note": "别名只在老 SKILL.md 匹配层，scenarios.yaml 只存主词（yaml 头注 #31 Q1）"
+    },
+    {
+      "line": 300,
+      "raw": "别名:完成打卡",
+      "note": "别名只在老 SKILL.md 匹配层，scenarios.yaml 只存主词（yaml 头注 #31 Q1）"
+    },
+    {
+      "line": 300,
+      "raw": "别名:初始化 / 新手",
+      "note": "别名只在老 SKILL.md 匹配层，scenarios.yaml 只存主词（yaml 头注 #31 Q1）"
+    },
+    {
+      "line": 700,
+      "raw": "别名:完成打卡",
+      "note": "别名只在老 SKILL.md 匹配层，scenarios.yaml 只存主词（yaml 头注 #31 Q1）"
+    }
+  ],
+  "key_cn": {
+    "memo.search": "查（列表/全文/按时间/按分类过滤）",
+    "memo.detail": "看单条详情",
+    "memo.create": "新建笔记（含设提醒）",
+    "memo.update": "改（内容/分类/子分类/排期/完成）",
+    "memo.remove": "删/废弃提醒",
+    "memo.remind": "提醒查询（有效/已触发）",
+    "memo.wish": "心愿（查心愿/心愿排期）",
+    "memo.sync": "飞书双向对账",
+    "memo.batch": "批量改分类向导",
+    "memo.stats": "统计总览"
+  },
+  "wake_map": [
+    {
+      "wake": "记备忘",
+      "scene": "memo_add_basic",
+      "category": "memo",
+      "subfunction": "基础记录",
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "改备忘",
+      "scene": "memo_update_basic",
+      "category": "memo",
+      "subfunction": "基础记录",
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "删备忘",
+      "scene": "memo_delete_basic",
+      "category": "memo",
+      "subfunction": "基础记录",
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "备忘改分类",
+      "scene": "memo_change_category_single",
+      "category": "memo",
+      "subfunction": "分类调整",
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "备忘改子分类",
+      "scene": "memo_change_subcategory",
+      "category": "memo",
+      "subfunction": "分类调整",
+      "state": "substring",
+      "new_phrase": "改子分类",
+      "key": "memo.update",
+      "candidates": [
+        "改子分类"
+      ]
+    },
+    {
+      "wake": "搜备忘",
+      "scene": "memo_search_keyword",
+      "category": "search",
+      "subfunction": "基础查找",
+      "state": "exact",
+      "new_phrase": "搜备忘",
+      "key": "memo.search",
+      "candidates": [
+        "搜备忘"
+      ]
+    },
+    {
+      "wake": "查备忘",
+      "scene": "memo_search_alias",
+      "category": "search",
+      "subfunction": "基础查找",
+      "state": "exact",
+      "new_phrase": "查备忘",
+      "key": "memo.search",
+      "candidates": [
+        "查备忘"
+      ]
+    },
+    {
+      "wake": "看备忘",
+      "scene": "memo_get_detail",
+      "category": "search",
+      "subfunction": "基础查找",
+      "state": "exact",
+      "new_phrase": "看备忘",
+      "key": "memo.detail",
+      "candidates": [
+        "看备忘"
+      ]
+    },
+    {
+      "wake": "按时间搜备忘",
+      "scene": "memo_search_by_date",
+      "category": "search",
+      "subfunction": "时间查找",
+      "state": "exact",
+      "new_phrase": "按时间搜备忘",
+      "key": "memo.search",
+      "candidates": [
+        "按时间搜备忘",
+        "搜备忘"
+      ]
+    },
+    {
+      "wake": "查心愿",
+      "scene": "memo_search_wish",
+      "category": "search",
+      "subfunction": "分类查找",
+      "state": "exact",
+      "new_phrase": "查心愿",
+      "key": "memo.wish",
+      "candidates": [
+        "查心愿"
+      ]
+    },
+    {
+      "wake": "查打卡",
+      "scene": "memo_search_checkin",
+      "category": "search",
+      "subfunction": "分类查找",
+      "state": "exact",
+      "new_phrase": "查打卡",
+      "key": "memo.search",
+      "candidates": [
+        "查打卡"
+      ]
+    },
+    {
+      "wake": "查情绪",
+      "scene": "memo_search_mood",
+      "category": "search",
+      "subfunction": "分类查找",
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "记提醒",
+      "scene": "memo_remind_with_note",
+      "category": "remind",
+      "subfunction": "创建提醒",
+      "state": "exact",
+      "new_phrase": "记提醒",
+      "key": "memo.create",
+      "candidates": [
+        "记提醒"
+      ]
+    },
+    {
+      "wake": "设提醒",
+      "scene": "memo_remind_existing",
+      "category": "remind",
+      "subfunction": "创建提醒",
+      "state": "exact",
+      "new_phrase": "设提醒",
+      "key": "memo.create",
+      "candidates": [
+        "设提醒"
+      ]
+    },
+    {
+      "wake": "看提醒",
+      "scene": "memo_reminders_active",
+      "category": "remind",
+      "subfunction": "查看提醒",
+      "state": "exact",
+      "new_phrase": "看提醒",
+      "key": "memo.remind",
+      "candidates": [
+        "看提醒"
+      ]
+    },
+    {
+      "wake": "查已提醒备忘",
+      "scene": "memo_completed_reminders",
+      "category": "remind",
+      "subfunction": "查看提醒",
+      "state": "exact",
+      "new_phrase": "查已提醒备忘",
+      "key": "memo.remind",
+      "candidates": [
+        "查已提醒备忘"
+      ]
+    },
+    {
+      "wake": "完成心愿",
+      "scene": "memo_complete_wish",
+      "category": "wish",
+      "subfunction": "心愿推进",
+      "state": "exact",
+      "new_phrase": "完成心愿",
+      "key": "memo.update",
+      "candidates": [
+        "完成心愿"
+      ]
+    },
+    {
+      "wake": "心愿排期",
+      "scene": "memo_wish_schedule",
+      "category": "wish",
+      "subfunction": "心愿推进",
+      "state": "exact",
+      "new_phrase": "心愿排期",
+      "key": "memo.wish",
+      "candidates": [
+        "心愿排期"
+      ]
+    },
+    {
+      "wake": "备忘录同步",
+      "scene": "memo_sync_feishu",
+      "category": "sync",
+      "subfunction": null,
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "记心愿",
+      "scene": "memo_add_wish",
+      "category": "wish",
+      "subfunction": "心愿管理",
+      "state": "exact",
+      "new_phrase": "记心愿",
+      "key": "memo.create",
+      "candidates": [
+        "记心愿"
+      ]
+    },
+    {
+      "wake": "删心愿",
+      "scene": "memo_delete_wish",
+      "category": "wish",
+      "subfunction": "心愿管理",
+      "state": "exact",
+      "new_phrase": "删心愿",
+      "key": "memo.update",
+      "candidates": [
+        "删心愿"
+      ]
+    },
+    {
+      "wake": "改心愿",
+      "scene": "memo_update_wish",
+      "category": "wish",
+      "subfunction": "心愿管理",
+      "state": "exact",
+      "new_phrase": "改心愿",
+      "key": "memo.update",
+      "candidates": [
+        "改心愿"
+      ]
+    },
+    {
+      "wake": "记打卡",
+      "scene": "memo_add_checkin",
+      "category": "checkin",
+      "subfunction": null,
+      "state": "exact",
+      "new_phrase": "记打卡",
+      "key": "memo.create",
+      "candidates": [
+        "记打卡"
+      ]
+    },
+    {
+      "wake": "删打卡",
+      "scene": "memo_delete_checkin",
+      "category": "checkin",
+      "subfunction": null,
+      "state": "exact",
+      "new_phrase": "删打卡",
+      "key": "memo.update",
+      "candidates": [
+        "删打卡"
+      ]
+    },
+    {
+      "wake": "改打卡",
+      "scene": "memo_update_checkin",
+      "category": "checkin",
+      "subfunction": null,
+      "state": "exact",
+      "new_phrase": "改打卡",
+      "key": "memo.update",
+      "candidates": [
+        "改打卡"
+      ]
+    },
+    {
+      "wake": "记情绪",
+      "scene": "memo_add_mood",
+      "category": "mood",
+      "subfunction": null,
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "删情绪",
+      "scene": "memo_delete_mood",
+      "category": "mood",
+      "subfunction": null,
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "改情绪",
+      "scene": "memo_update_mood",
+      "category": "mood",
+      "subfunction": null,
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    },
+    {
+      "wake": "首次使用",
+      "scene": "memo_init_setup",
+      "category": "init",
+      "subfunction": null,
+      "state": "none",
+      "new_phrase": null,
+      "key": null,
+      "candidates": []
+    }
+  ],
+  "domains": [
+    {
+      "key": "memo",
+      "name_cn": "备忘类",
+      "name_en": "memo",
+      "subs": [
+        {
+          "sub_cn": "基础记录",
+          "sub_fallback": false,
+          "name": "create",
+          "scenes": [
+            {
+              "id": "memo_add_basic",
+              "wake": [
+                "记备忘"
+              ],
+              "title": "添加一条备忘笔记",
+              "type": "采集+回执",
+              "status": "",
+              "line": 52,
+              "n_dims": 4
+            },
+            {
+              "id": "memo_update_basic",
+              "wake": [
+                "改备忘"
+              ],
+              "title": "修改已有笔记",
+              "type": "采集+回执",
+              "status": "",
+              "line": 71,
+              "n_dims": 4
+            },
+            {
+              "id": "memo_delete_basic",
+              "wake": [
+                "删备忘"
+              ],
+              "title": "删除笔记",
+              "type": "采集+回执",
+              "status": "",
+              "line": 89,
+              "n_dims": 3
+            }
+          ]
+        },
+        {
+          "sub_cn": "分类调整",
+          "sub_fallback": false,
+          "name": "batch(单条走 update)",
+          "scenes": [
+            {
+              "id": "memo_change_category_single",
+              "wake": [
+                "备忘改分类"
+              ],
+              "title": "修改单条笔记的顶层分类",
+              "type": "采集+回执",
+              "status": "",
+              "line": 105,
+              "n_dims": 3
+            },
+            {
+              "id": "memo_change_subcategory",
+              "wake": [
+                "备忘改子分类"
+              ],
+              "title": "修改单条笔记的子分类",
+              "type": "采集+回执",
+              "status": "",
+              "line": 123,
+              "n_dims": 2
+            },
+            {
+              "id": "memo_batch_change_category",
+              "wake": [
+                "备忘改分类"
+              ],
+              "title": "批量改分类(过程型 HTML 向导)",
+              "type": "向导+采集+回执",
+              "status": "",
+              "line": 361,
+              "n_dims": 4
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "memo",
+        "old_name_cn": "备忘类",
+        "new_keys": [
+          "memo.create",
+          "memo.update",
+          "memo.remove",
+          "memo.batch"
+        ],
+        "new_keys_cn": [
+          "memo.create（新建笔记（含设提醒））",
+          "memo.update（改（内容/分类/子分类/排期/完成））",
+          "memo.remove（删/废弃提醒）",
+          "memo.batch（批量改分类向导）"
+        ],
+        "scenes": 6,
+        "subs": 2,
+        "note": ""
+      }
+    },
+    {
+      "key": "search",
+      "name_cn": "查找类",
+      "name_en": "search",
+      "subs": [
+        {
+          "sub_cn": "基础查找",
+          "sub_fallback": false,
+          "name": "search",
+          "scenes": [
+            {
+              "id": "memo_search_keyword",
+              "wake": [
+                "搜备忘"
+              ],
+              "title": "按关键词搜索笔记",
+              "type": "查看+回执",
+              "status": "",
+              "line": 138,
+              "n_dims": 5
+            },
+            {
+              "id": "memo_search_alias",
+              "wake": [
+                "查备忘"
+              ],
+              "title": "搜备忘的别名(同义触发)",
+              "type": "查看+回执",
+              "status": "",
+              "line": 158,
+              "n_dims": 1
+            },
+            {
+              "id": "memo_get_detail",
+              "wake": [
+                "看备忘"
+              ],
+              "title": "查看单条笔记详情",
+              "type": "查看+回执",
+              "status": "",
+              "line": 172,
+              "n_dims": 2
+            }
+          ]
+        },
+        {
+          "sub_cn": "时间查找",
+          "sub_fallback": false,
+          "name": "search(timeRange)",
+          "scenes": [
+            {
+              "id": "memo_search_by_date",
+              "wake": [
+                "按时间搜备忘"
+              ],
+              "title": "按日期范围搜索笔记",
+              "type": "查看+回执",
+              "status": "",
+              "line": 187,
+              "n_dims": 4
+            }
+          ]
+        },
+        {
+          "sub_cn": "分类查找",
+          "sub_fallback": false,
+          "name": "search(category)",
+          "scenes": [
+            {
+              "id": "memo_search_wish",
+              "wake": [
+                "查心愿"
+              ],
+              "title": "查所有心愿(自动带分类过滤)",
+              "type": "查看+回执",
+              "status": "",
+              "line": 205,
+              "n_dims": 3
+            },
+            {
+              "id": "memo_search_checkin",
+              "wake": [
+                "查打卡"
+              ],
+              "title": "查所有打卡记录",
+              "type": "查看+回执",
+              "status": "",
+              "line": 222,
+              "n_dims": 2
+            },
+            {
+              "id": "memo_search_mood",
+              "wake": [
+                "查情绪"
+              ],
+              "title": "查所有情绪日记",
+              "type": "查看+回执",
+              "status": "",
+              "line": 237,
+              "n_dims": 2
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "search",
+        "old_name_cn": "查找类",
+        "new_keys": [
+          "memo.search",
+          "memo.detail",
+          "memo.wish",
+          "memo.remind"
+        ],
+        "new_keys_cn": [
+          "memo.search（查（列表/全文/按时间/按分类过滤））",
+          "memo.detail（看单条详情）",
+          "memo.wish（心愿（查心愿/心愿排期））",
+          "memo.remind（提醒查询（有效/已触发））"
+        ],
+        "scenes": 7,
+        "subs": 3,
+        "note": ""
+      }
+    },
+    {
+      "key": "remind",
+      "name_cn": "提醒类",
+      "name_en": "remind",
+      "subs": [
+        {
+          "sub_cn": "创建提醒",
+          "sub_fallback": false,
+          "name": "create(remindAt)",
+          "scenes": [
+            {
+              "id": "memo_remind_with_note",
+              "wake": [
+                "记提醒"
+              ],
+              "title": "添加笔记 + 设置提醒(两步合一)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 252,
+              "n_dims": 4
+            },
+            {
+              "id": "memo_remind_existing",
+              "wake": [
+                "设提醒"
+              ],
+              "title": "给已有笔记加提醒",
+              "type": "采集+回执",
+              "status": "",
+              "line": 271,
+              "n_dims": 5
+            }
+          ]
+        },
+        {
+          "sub_cn": "查看提醒",
+          "sub_fallback": false,
+          "name": "remind",
+          "scenes": [
+            {
+              "id": "memo_reminders_active",
+              "wake": [
+                "看提醒"
+              ],
+              "title": "查看所有有效提醒",
+              "type": "查看+回执",
+              "status": "",
+              "line": 291,
+              "n_dims": 2
+            },
+            {
+              "id": "memo_completed_reminders",
+              "wake": [
+                "查已提醒备忘"
+              ],
+              "title": "查询已触发的提醒与对应打卡",
+              "type": "查看+回执",
+              "status": "",
+              "line": 306,
+              "n_dims": 1
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "remind",
+        "old_name_cn": "提醒类",
+        "new_keys": [
+          "memo.remind",
+          "memo.create"
+        ],
+        "new_keys_cn": [
+          "memo.remind（提醒查询（有效/已触发））",
+          "memo.create（新建笔记（含设提醒））"
+        ],
+        "scenes": 4,
+        "subs": 2,
+        "note": "老 提醒类 同时喂 memo.remind（查询）与 memo.create（设提醒）"
+      }
+    },
+    {
+      "key": "wish",
+      "name_cn": "心愿类",
+      "name_en": "wish",
+      "subs": [
+        {
+          "sub_cn": "心愿推进",
+          "sub_fallback": false,
+          "name": "wish+update(done)",
+          "scenes": [
+            {
+              "id": "memo_complete_wish",
+              "wake": [
+                "完成心愿"
+              ],
+              "title": "把心愿标记为已完成(原子操作)",
+              "type": "向导+采集+回执",
+              "status": "",
+              "line": 322,
+              "n_dims": 3
+            },
+            {
+              "id": "memo_wish_schedule",
+              "wake": [
+                "心愿排期"
+              ],
+              "title": "给心愿设排期日期(同步飞书 due)",
+              "type": "向导+采集+回执",
+              "status": "",
+              "line": 341,
+              "n_dims": 3
+            }
+          ]
+        },
+        {
+          "sub_cn": "心愿管理",
+          "sub_fallback": false,
+          "name": "wish",
+          "scenes": [
+            {
+              "id": "memo_add_wish",
+              "wake": [
+                "记心愿"
+              ],
+              "title": "快速添加心愿(自动心愿分类)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 403,
+              "n_dims": 4
+            },
+            {
+              "id": "memo_delete_wish",
+              "wake": [
+                "删心愿"
+              ],
+              "title": "删心愿(自动心愿分类过滤)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 424,
+              "n_dims": 1
+            },
+            {
+              "id": "memo_update_wish",
+              "wake": [
+                "改心愿"
+              ],
+              "title": "改心愿(自动心愿分类过滤)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 438,
+              "n_dims": 2
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "wish",
+        "old_name_cn": "心愿类",
+        "new_keys": [
+          "memo.wish",
+          "memo.update"
+        ],
+        "new_keys_cn": [
+          "memo.wish（心愿（查心愿/心愿排期））",
+          "memo.update（改（内容/分类/子分类/排期/完成））"
+        ],
+        "scenes": 5,
+        "subs": 2,
+        "note": ""
+      }
+    },
+    {
+      "key": "sync",
+      "name_cn": "同步类",
+      "name_en": "sync",
+      "subs": [
+        {
+          "sub_cn": "（空 → 「基础」兜底）",
+          "sub_fallback": true,
+          "name": "sync",
+          "scenes": [
+            {
+              "id": "memo_sync_feishu",
+              "wake": [
+                "备忘录同步"
+              ],
+              "title": "备忘录 ↔ 飞书双向对账",
+              "type": "查看+回执",
+              "status": "",
+              "line": 381,
+              "n_dims": 1
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "sync",
+        "old_name_cn": "同步类",
+        "new_keys": [
+          "memo.sync"
+        ],
+        "new_keys_cn": [
+          "memo.sync（飞书双向对账）"
+        ],
+        "scenes": 1,
+        "subs": 1,
+        "note": ""
+      }
+    },
+    {
+      "key": "checkin",
+      "name_cn": "打卡类",
+      "name_en": "checkin",
+      "subs": [
+        {
+          "sub_cn": "（空 → 「基础」兜底）",
+          "sub_fallback": true,
+          "name": "create/update(category=打卡)",
+          "scenes": [
+            {
+              "id": "memo_add_checkin",
+              "wake": [
+                "记打卡"
+              ],
+              "title": "快速添加打卡(自动打卡分类)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 453,
+              "n_dims": 3
+            },
+            {
+              "id": "memo_delete_checkin",
+              "wake": [
+                "删打卡"
+              ],
+              "title": "删打卡(自动打卡分类过滤)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 469,
+              "n_dims": 1
+            },
+            {
+              "id": "memo_update_checkin",
+              "wake": [
+                "改打卡"
+              ],
+              "title": "改打卡(自动打卡分类过滤)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 482,
+              "n_dims": 2
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "checkin",
+        "old_name_cn": "打卡类",
+        "new_keys": [
+          "memo.create",
+          "memo.update",
+          "memo.remove"
+        ],
+        "new_keys_cn": [
+          "memo.create（新建笔记（含设提醒））",
+          "memo.update（改（内容/分类/子分类/排期/完成））",
+          "memo.remove（删/废弃提醒）"
+        ],
+        "scenes": 3,
+        "subs": 1,
+        "note": ""
+      }
+    },
+    {
+      "key": "mood",
+      "name_cn": "情绪类",
+      "name_en": "mood",
+      "subs": [
+        {
+          "sub_cn": "（空 → 「基础」兜底）",
+          "sub_fallback": true,
+          "name": "create/update(category=情绪日记)",
+          "scenes": [
+            {
+              "id": "memo_add_mood",
+              "wake": [
+                "记情绪"
+              ],
+              "title": "快速添加情绪日记(自动情绪日记分类)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 496,
+              "n_dims": 2
+            },
+            {
+              "id": "memo_delete_mood",
+              "wake": [
+                "删情绪"
+              ],
+              "title": "删情绪(自动情绪日记分类过滤)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 510,
+              "n_dims": 1
+            },
+            {
+              "id": "memo_update_mood",
+              "wake": [
+                "改情绪"
+              ],
+              "title": "改情绪(自动情绪日记分类过滤)",
+              "type": "采集+回执",
+              "status": "",
+              "line": 523,
+              "n_dims": 2
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "mood",
+        "old_name_cn": "情绪类",
+        "new_keys": [
+          "memo.create",
+          "memo.update",
+          "memo.remove"
+        ],
+        "new_keys_cn": [
+          "memo.create（新建笔记（含设提醒））",
+          "memo.update（改（内容/分类/子分类/排期/完成））",
+          "memo.remove（删/废弃提醒）"
+        ],
+        "scenes": 3,
+        "subs": 1,
+        "note": ""
+      }
+    },
+    {
+      "key": "init",
+      "name_cn": "初始化类",
+      "name_en": "init",
+      "subs": [
+        {
+          "sub_cn": "（空 → 「基础」兜底）",
+          "sub_fallback": true,
+          "name": "init(新表无 init key)",
+          "scenes": [
+            {
+              "id": "memo_init_setup",
+              "wake": [
+                "首次使用"
+              ],
+              "title": "初始化备忘录(首次使用引导)",
+              "type": "向导+采集+回执",
+              "status": "",
+              "line": 535,
+              "n_dims": 0
+            }
+          ]
+        }
+      ],
+      "map": {
+        "old_key": "init",
+        "old_name_cn": "初始化类",
+        "new_keys": [],
+        "new_keys_cn": [],
+        "scenes": 1,
+        "subs": 1,
+        "note": "新表 10 命令无 init key（初始化落在技能安装层）"
+      }
+    }
+  ],
+  "new_table": [
+    {
+      "phrase": "按时间搜备忘",
+      "key": "memo.search",
+      "needs": [
+        "timeRange"
+      ],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.search --params '{\"timeRange\":\"2026-09\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "查已提醒备忘",
+      "key": "memo.remind",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.remind --params '{\"done\":false}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "批量改分类",
+      "key": "memo.batch",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.batch",
+      "landing": "no_old_scene",
+      "host_scene": "memo_batch_change_category",
+      "note": "老 yaml 里与单条共用 wake_word 备忘改分类；新表拆成独立短语"
+    },
+    {
+      "phrase": "改子分类",
+      "key": "memo.update",
+      "needs": [
+        "id"
+      ],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"id\":\"<id>\"}'",
+      "landing": "no_old_scene",
+      "host_scene": "memo_change_subcategory",
+      "note": "老名 备忘改子分类 → 新名 改子分类（同一 scenario_id）"
+    },
+    {
+      "phrase": "搜备忘",
+      "key": "memo.search",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.search",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "查备忘",
+      "key": "memo.search",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.search",
+      "landing": "old_scene",
+      "host_scene": "memo_search_alias",
+      "note": "老 yaml 有 查备忘(别名)、SKILL.md 表 3 又写「查备忘(搜备忘别名)」→ 同一 scenario_id memo_search_alias"
+    },
+    {
+      "phrase": "看备忘",
+      "key": "memo.detail",
+      "needs": [
+        "id"
+      ],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.detail --params '{\"id\":\"<id>\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "看提醒",
+      "key": "memo.remind",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.remind",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "查提醒",
+      "key": "memo.remind",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.remind",
+      "landing": "no_old_scene",
+      "host_scene": "memo_reminders_active",
+      "note": "老 yaml 的 看提醒 同义词，新表并列收录"
+    },
+    {
+      "phrase": "设提醒",
+      "key": "memo.create",
+      "needs": [
+        "remindAt"
+      ],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.create --params '{\"remindAt\":\"2026-10-01\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "记提醒",
+      "key": "memo.create",
+      "needs": [
+        "remindAt"
+      ],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.create --params '{\"remindAt\":\"2026-10-01\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "废弃提醒",
+      "key": "memo.remove",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.remove --params '{\"mode\":\"abandon\"}'",
+      "landing": "no_old_scene",
+      "host_scene": "memo_completed_reminders",
+      "note": "U2 待裁：新词 废弃提醒 对应 cmd_read 的 memo.remove mode=abandon；老 yaml 无此场景，暂挂「已完成提醒」"
+    },
+    {
+      "phrase": "完成心愿",
+      "key": "memo.update",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"done\":true}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "心愿排期",
+      "key": "memo.wish",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.wish",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "记一条",
+      "key": "memo.create",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.create",
+      "landing": "no_old_scene",
+      "host_scene": "memo_add_basic",
+      "note": "口语化，同 添加笔记"
+    },
+    {
+      "phrase": "添加笔记",
+      "key": "memo.create",
+      "needs": [],
+      "preset": null,
+      "origin": "literal",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.create",
+      "landing": "no_old_scene",
+      "host_scene": "memo_add_basic",
+      "note": "老 SKILL.md 章节标题「### 添加笔记」= 记备忘 的功能名"
+    },
+    {
+      "phrase": "记心愿",
+      "key": "memo.create",
+      "needs": [],
+      "preset": "category:心愿",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.create --params '{\"category\":\"心愿\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "记打卡",
+      "key": "memo.create",
+      "needs": [],
+      "preset": "category:打卡",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.create --params '{\"category\":\"打卡\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "记情绪日记",
+      "key": "memo.create",
+      "needs": [],
+      "preset": "category:情绪日记",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.create --params '{\"category\":\"情绪日记\"}'",
+      "landing": "no_old_scene",
+      "host_scene": "memo_add_mood",
+      "note": "老子唤醒词叫 记情绪，新表按顶层分类名对齐为 记情绪日记"
+    },
+    {
+      "phrase": "查心愿",
+      "key": "memo.wish",
+      "needs": [],
+      "preset": "category:心愿",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.wish --params '{\"category\":\"心愿\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "查打卡",
+      "key": "memo.search",
+      "needs": [],
+      "preset": "category:打卡",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.search --params '{\"category\":\"打卡\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "查情绪日记",
+      "key": "memo.search",
+      "needs": [],
+      "preset": "category:情绪日记",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.search --params '{\"category\":\"情绪日记\"}'",
+      "landing": "no_old_scene",
+      "host_scene": "memo_search_mood",
+      "note": "老名 查情绪 → 新名 查情绪日记"
+    },
+    {
+      "phrase": "改心愿",
+      "key": "memo.update",
+      "needs": [
+        "id"
+      ],
+      "preset": "category:心愿",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"category\":\"心愿\",\"id\":\"<id>\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "改打卡",
+      "key": "memo.update",
+      "needs": [
+        "id"
+      ],
+      "preset": "category:打卡",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"category\":\"打卡\",\"id\":\"<id>\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "改情绪日记",
+      "key": "memo.update",
+      "needs": [
+        "id"
+      ],
+      "preset": "category:情绪日记",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"category\":\"情绪日记\",\"id\":\"<id>\"}'",
+      "landing": "no_old_scene",
+      "host_scene": "memo_update_mood",
+      "note": "老名 改情绪 → 新名 改情绪日记"
+    },
+    {
+      "phrase": "删心愿",
+      "key": "memo.update",
+      "needs": [
+        "id"
+      ],
+      "preset": "category:心愿",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"category\":\"心愿\",\"id\":\"<id>\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "删打卡",
+      "key": "memo.update",
+      "needs": [
+        "id"
+      ],
+      "preset": "category:打卡",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"category\":\"打卡\",\"id\":\"<id>\"}'",
+      "landing": "old_scene"
+    },
+    {
+      "phrase": "删情绪日记",
+      "key": "memo.update",
+      "needs": [
+        "id"
+      ],
+      "preset": "category:情绪日记",
+      "origin": "wake_tops",
+      "in_help": true,
+      "cli": "memo-cmd-read memo.update --params '{\"category\":\"情绪日记\",\"id\":\"<id>\"}'",
+      "landing": "no_old_scene",
+      "host_scene": "memo_delete_mood",
+      "note": "老名 删情绪 → 新名 删情绪日记"
+    }
+  ],
+  "old_scenes": [
+    {
+      "id": "memo_add_basic",
+      "line": 52,
+      "category": "memo",
+      "name_cn": "备忘类",
+      "subfunction": "基础记录",
+      "wake": [
+        "记备忘"
+      ],
+      "title": "添加一条备忘笔记",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 4,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_update_basic",
+      "line": 71,
+      "category": "memo",
+      "name_cn": "备忘类",
+      "subfunction": "基础记录",
+      "wake": [
+        "改备忘"
+      ],
+      "title": "修改已有笔记",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 4,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_delete_basic",
+      "line": 89,
+      "category": "memo",
+      "name_cn": "备忘类",
+      "subfunction": "基础记录",
+      "wake": [
+        "删备忘"
+      ],
+      "title": "删除笔记",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 3,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_change_category_single",
+      "line": 105,
+      "category": "memo",
+      "name_cn": "备忘类",
+      "subfunction": "分类调整",
+      "wake": [
+        "备忘改分类"
+      ],
+      "title": "修改单条笔记的顶层分类",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 3,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_change_subcategory",
+      "line": 123,
+      "category": "memo",
+      "name_cn": "备忘类",
+      "subfunction": "分类调整",
+      "wake": [
+        "备忘改子分类"
+      ],
+      "title": "修改单条笔记的子分类",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": "改子分类",
+        "key": "memo.update",
+        "kind": "substring",
+        "candidates": [
+          "改子分类"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_search_keyword",
+      "line": 138,
+      "category": "search",
+      "name_cn": "查找类",
+      "subfunction": "基础查找",
+      "wake": [
+        "搜备忘"
+      ],
+      "title": "按关键词搜索笔记",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 5,
+      "landing": "hit",
+      "keys": [
+        "memo.search"
+      ],
+      "new_phrase": [
+        "搜备忘"
+      ],
+      "partial": [
+        "搜备忘 ⊂ 按时间搜备忘"
+      ],
+      "route": {
+        "phrase": "搜备忘",
+        "key": "memo.search",
+        "kind": "exact",
+        "candidates": [
+          "搜备忘"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_search_alias",
+      "line": 158,
+      "category": "search",
+      "name_cn": "查找类",
+      "subfunction": "基础查找",
+      "wake": [
+        "查备忘"
+      ],
+      "title": "搜备忘的别名(同义触发)",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 1,
+      "landing": "hit",
+      "keys": [
+        "memo.search"
+      ],
+      "new_phrase": [
+        "查备忘"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "查备忘",
+        "key": "memo.search",
+        "kind": "exact",
+        "candidates": [
+          "查备忘"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_get_detail",
+      "line": 172,
+      "category": "search",
+      "name_cn": "查找类",
+      "subfunction": "基础查找",
+      "wake": [
+        "看备忘"
+      ],
+      "title": "查看单条笔记详情",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "hit",
+      "keys": [
+        "memo.detail"
+      ],
+      "new_phrase": [
+        "看备忘"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "看备忘",
+        "key": "memo.detail",
+        "kind": "exact",
+        "candidates": [
+          "看备忘"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_search_by_date",
+      "line": 187,
+      "category": "search",
+      "name_cn": "查找类",
+      "subfunction": "时间查找",
+      "wake": [
+        "按时间搜备忘"
+      ],
+      "title": "按日期范围搜索笔记",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 4,
+      "landing": "hit",
+      "keys": [
+        "memo.search"
+      ],
+      "new_phrase": [
+        "按时间搜备忘"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "按时间搜备忘",
+        "key": "memo.search",
+        "kind": "exact",
+        "candidates": [
+          "按时间搜备忘",
+          "搜备忘"
+        ],
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "memo_search_wish",
+      "line": 205,
+      "category": "search",
+      "name_cn": "查找类",
+      "subfunction": "分类查找",
+      "wake": [
+        "查心愿"
+      ],
+      "title": "查所有心愿(自动带分类过滤)",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 3,
+      "landing": "hit",
+      "keys": [
+        "memo.wish"
+      ],
+      "new_phrase": [
+        "查心愿"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "查心愿",
+        "key": "memo.wish",
+        "kind": "exact",
+        "candidates": [
+          "查心愿"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_search_checkin",
+      "line": 222,
+      "category": "search",
+      "name_cn": "查找类",
+      "subfunction": "分类查找",
+      "wake": [
+        "查打卡"
+      ],
+      "title": "查所有打卡记录",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "hit",
+      "keys": [
+        "memo.search"
+      ],
+      "new_phrase": [
+        "查打卡"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "查打卡",
+        "key": "memo.search",
+        "kind": "exact",
+        "candidates": [
+          "查打卡"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_search_mood",
+      "line": 237,
+      "category": "search",
+      "name_cn": "查找类",
+      "subfunction": "分类查找",
+      "wake": [
+        "查情绪"
+      ],
+      "title": "查所有情绪日记",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [
+        "查情绪 ⊂ 查情绪日记"
+      ],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_remind_with_note",
+      "line": 252,
+      "category": "remind",
+      "name_cn": "提醒类",
+      "subfunction": "创建提醒",
+      "wake": [
+        "记提醒"
+      ],
+      "title": "添加笔记 + 设置提醒(两步合一)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 4,
+      "landing": "hit",
+      "keys": [
+        "memo.create"
+      ],
+      "new_phrase": [
+        "记提醒"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "记提醒",
+        "key": "memo.create",
+        "kind": "exact",
+        "candidates": [
+          "记提醒"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_remind_existing",
+      "line": 271,
+      "category": "remind",
+      "name_cn": "提醒类",
+      "subfunction": "创建提醒",
+      "wake": [
+        "设提醒"
+      ],
+      "title": "给已有笔记加提醒",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 5,
+      "landing": "hit",
+      "keys": [
+        "memo.create"
+      ],
+      "new_phrase": [
+        "设提醒"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "设提醒",
+        "key": "memo.create",
+        "kind": "exact",
+        "candidates": [
+          "设提醒"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_reminders_active",
+      "line": 291,
+      "category": "remind",
+      "name_cn": "提醒类",
+      "subfunction": "查看提醒",
+      "wake": [
+        "看提醒"
+      ],
+      "title": "查看所有有效提醒",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "hit",
+      "keys": [
+        "memo.remind"
+      ],
+      "new_phrase": [
+        "看提醒"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "看提醒",
+        "key": "memo.remind",
+        "kind": "exact",
+        "candidates": [
+          "看提醒"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_completed_reminders",
+      "line": 306,
+      "category": "remind",
+      "name_cn": "提醒类",
+      "subfunction": "查看提醒",
+      "wake": [
+        "查已提醒备忘"
+      ],
+      "title": "查询已触发的提醒与对应打卡",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 1,
+      "landing": "hit",
+      "keys": [
+        "memo.remind"
+      ],
+      "new_phrase": [
+        "查已提醒备忘"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "查已提醒备忘",
+        "key": "memo.remind",
+        "kind": "exact",
+        "candidates": [
+          "查已提醒备忘"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_complete_wish",
+      "line": 322,
+      "category": "wish",
+      "name_cn": "心愿类",
+      "subfunction": "心愿推进",
+      "wake": [
+        "完成心愿"
+      ],
+      "title": "把心愿标记为已完成(原子操作)",
+      "type": "向导+采集+回执",
+      "status": "",
+      "n_dims": 3,
+      "landing": "hit",
+      "keys": [
+        "memo.update"
+      ],
+      "new_phrase": [
+        "完成心愿"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "完成心愿",
+        "key": "memo.update",
+        "kind": "exact",
+        "candidates": [
+          "完成心愿"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_wish_schedule",
+      "line": 341,
+      "category": "wish",
+      "name_cn": "心愿类",
+      "subfunction": "心愿推进",
+      "wake": [
+        "心愿排期"
+      ],
+      "title": "给心愿设排期日期(同步飞书 due)",
+      "type": "向导+采集+回执",
+      "status": "",
+      "n_dims": 3,
+      "landing": "hit",
+      "keys": [
+        "memo.wish"
+      ],
+      "new_phrase": [
+        "心愿排期"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "心愿排期",
+        "key": "memo.wish",
+        "kind": "exact",
+        "candidates": [
+          "心愿排期"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_batch_change_category",
+      "line": 361,
+      "category": "memo",
+      "name_cn": "备忘类",
+      "subfunction": "分类调整",
+      "wake": [
+        "备忘改分类"
+      ],
+      "title": "批量改分类(过程型 HTML 向导)",
+      "type": "向导+采集+回执",
+      "status": "",
+      "n_dims": 4,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_sync_feishu",
+      "line": 381,
+      "category": "sync",
+      "name_cn": "同步类",
+      "subfunction": null,
+      "wake": [
+        "备忘录同步"
+      ],
+      "title": "备忘录 ↔ 飞书双向对账",
+      "type": "查看+回执",
+      "status": "",
+      "n_dims": 1,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_add_wish",
+      "line": 403,
+      "category": "wish",
+      "name_cn": "心愿类",
+      "subfunction": "心愿管理",
+      "wake": [
+        "记心愿"
+      ],
+      "title": "快速添加心愿(自动心愿分类)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 4,
+      "landing": "hit",
+      "keys": [
+        "memo.create"
+      ],
+      "new_phrase": [
+        "记心愿"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "记心愿",
+        "key": "memo.create",
+        "kind": "exact",
+        "candidates": [
+          "记心愿"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_delete_wish",
+      "line": 424,
+      "category": "wish",
+      "name_cn": "心愿类",
+      "subfunction": "心愿管理",
+      "wake": [
+        "删心愿"
+      ],
+      "title": "删心愿(自动心愿分类过滤)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 1,
+      "landing": "hit",
+      "keys": [
+        "memo.update"
+      ],
+      "new_phrase": [
+        "删心愿"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "删心愿",
+        "key": "memo.update",
+        "kind": "exact",
+        "candidates": [
+          "删心愿"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_update_wish",
+      "line": 438,
+      "category": "wish",
+      "name_cn": "心愿类",
+      "subfunction": "心愿管理",
+      "wake": [
+        "改心愿"
+      ],
+      "title": "改心愿(自动心愿分类过滤)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "hit",
+      "keys": [
+        "memo.update"
+      ],
+      "new_phrase": [
+        "改心愿"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "改心愿",
+        "key": "memo.update",
+        "kind": "exact",
+        "candidates": [
+          "改心愿"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_add_checkin",
+      "line": 453,
+      "category": "checkin",
+      "name_cn": "打卡类",
+      "subfunction": null,
+      "wake": [
+        "记打卡"
+      ],
+      "title": "快速添加打卡(自动打卡分类)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 3,
+      "landing": "hit",
+      "keys": [
+        "memo.create"
+      ],
+      "new_phrase": [
+        "记打卡"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "记打卡",
+        "key": "memo.create",
+        "kind": "exact",
+        "candidates": [
+          "记打卡"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_delete_checkin",
+      "line": 469,
+      "category": "checkin",
+      "name_cn": "打卡类",
+      "subfunction": null,
+      "wake": [
+        "删打卡"
+      ],
+      "title": "删打卡(自动打卡分类过滤)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 1,
+      "landing": "hit",
+      "keys": [
+        "memo.update"
+      ],
+      "new_phrase": [
+        "删打卡"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "删打卡",
+        "key": "memo.update",
+        "kind": "exact",
+        "candidates": [
+          "删打卡"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_update_checkin",
+      "line": 482,
+      "category": "checkin",
+      "name_cn": "打卡类",
+      "subfunction": null,
+      "wake": [
+        "改打卡"
+      ],
+      "title": "改打卡(自动打卡分类过滤)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "hit",
+      "keys": [
+        "memo.update"
+      ],
+      "new_phrase": [
+        "改打卡"
+      ],
+      "partial": [],
+      "route": {
+        "phrase": "改打卡",
+        "key": "memo.update",
+        "kind": "exact",
+        "candidates": [
+          "改打卡"
+        ],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_add_mood",
+      "line": 496,
+      "category": "mood",
+      "name_cn": "情绪类",
+      "subfunction": null,
+      "wake": [
+        "记情绪"
+      ],
+      "title": "快速添加情绪日记(自动情绪日记分类)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [
+        "记情绪 ⊂ 记情绪日记"
+      ],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_delete_mood",
+      "line": 510,
+      "category": "mood",
+      "name_cn": "情绪类",
+      "subfunction": null,
+      "wake": [
+        "删情绪"
+      ],
+      "title": "删情绪(自动情绪日记分类过滤)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 1,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [
+        "删情绪 ⊂ 删情绪日记"
+      ],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_update_mood",
+      "line": 523,
+      "category": "mood",
+      "name_cn": "情绪类",
+      "subfunction": null,
+      "wake": [
+        "改情绪"
+      ],
+      "title": "改情绪(自动情绪日记分类过滤)",
+      "type": "采集+回执",
+      "status": "",
+      "n_dims": 2,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [
+        "改情绪 ⊂ 改情绪日记"
+      ],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "memo_init_setup",
+      "line": 535,
+      "category": "init",
+      "name_cn": "初始化类",
+      "subfunction": null,
+      "wake": [
+        "首次使用"
+      ],
+      "title": "初始化备忘录(首次使用引导)",
+      "type": "向导+采集+回执",
+      "status": "",
+      "n_dims": 0,
+      "landing": "none",
+      "keys": [],
+      "new_phrase": [],
+      "partial": [],
+      "route": {
+        "phrase": null,
+        "key": null,
+        "kind": "no_route",
+        "candidates": [],
+        "ambiguous": false
+      }
+    }
+  ]
+}

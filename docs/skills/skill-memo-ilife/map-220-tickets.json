@@ -1,0 +1,86 @@
+[
+    {
+        "n": 1,
+        "issue": 221,
+        "type": "research",
+        "title": "备忘录HELP（1/13）调查：饼干记账的 HELP 交付实现 → 备忘录照抄清单"
+    },
+    {
+        "n": 2,
+        "issue": 222,
+        "type": "research",
+        "title": "备忘录HELP（2/13）调查：内容资产对账（老 8 域／13 组／30 场景 ↔ 新表 28 唤醒词／10 命令）"
+    },
+    {
+        "n": 3,
+        "issue": 223,
+        "type": "research",
+        "title": "备忘录HELP（3/13）调查：通用 help 模板的注入契约 ＋ 备忘录专属取值"
+    },
+    {
+        "n": 4,
+        "issue": 224,
+        "type": "grilling",
+        "title": "备忘录HELP（4/13）决策：命名落盘管线的归属 ＋ 缺省出口口径"
+    },
+    {
+        "n": 5,
+        "issue": 225,
+        "type": "grilling",
+        "title": "备忘录HELP（5/13）结构设计：新件住哪 ＋ 文件行数告警线（必报五步第一／二步，先报用户点头）"
+    },
+    {
+        "n": 6,
+        "issue": 226,
+        "type": "grilling",
+        "title": "备忘录HELP（6/13）内容与取值裁决：老骨架对不齐的条目 ＋ 模板取值待裁项（先报用户点头）"
+    },
+    {
+        "n": 7,
+        "issue": 227,
+        "type": "task",
+        "title": "备忘录HELP（7/13）内容资产入库：老骨架 → 仓内 typed const"
+    },
+    {
+        "n": 8,
+        "issue": 228,
+        "type": "task",
+        "title": "备忘录HELP（8/13）渲染接线：5 项 ＋ 三块可选内容 → 通用 help 模板"
+    },
+    {
+        "n": 9,
+        "issue": 229,
+        "type": "task",
+        "title": "备忘录HELP（9/13）出口与命名落盘：缺省＝HELP 文件，速查走显式参数"
+    },
+    {
+        "n": 10,
+        "issue": 230,
+        "type": "task",
+        "title": "备忘录HELP（10/13）锁：CLI 级用例（真 spawn 出口）"
+    },
+    {
+        "n": 11,
+        "issue": 231,
+        "type": "task",
+        "title": "备忘录HELP（11/13）SKILL.md 说明面"
+    },
+    {
+        "n": 12,
+        "issue": 232,
+        "type": "task",
+        "title": "备忘录HELP（12/13）插件侧最小装机（技能提供方 ＋ DSH profile；收窄 #61）"
+    },
+    {
+        "n": 13,
+        "issue": 233,
+        "type": "task",
+        "title": "备忘录HELP（13/13）真机端到端 ＋ 肉眼终审"
+    },
+    {
+        "n": 14,
+        "issue": 234,
+        "type": "research",
+        "title": "备忘录HELP 复核：老 memo_cli.py 的 CLI 子命令全集（票 2 留的空档，关系到 U5 会不会反转）"
+    }
+]

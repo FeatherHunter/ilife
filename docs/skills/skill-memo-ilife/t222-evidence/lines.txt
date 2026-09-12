@@ -1,0 +1,30 @@
+memo_add_basic|52|memo|备忘类|基础记录|记备忘|添加一条备忘笔记
+memo_update_basic|71|memo|备忘类|基础记录|改备忘|修改已有笔记
+memo_delete_basic|89|memo|备忘类|基础记录|删备忘|删除笔记
+memo_change_category_single|105|memo|备忘类|分类调整|备忘改分类|修改单条笔记的顶层分类
+memo_change_subcategory|123|memo|备忘类|分类调整|备忘改子分类|修改单条笔记的子分类
+memo_search_keyword|138|search|查找类|基础查找|搜备忘|按关键词搜索笔记
+memo_search_alias|158|search|查找类|基础查找|查备忘|搜备忘的别名(同义触发)
+memo_get_detail|172|search|查找类|基础查找|看备忘|查看单条笔记详情
+memo_search_by_date|187|search|查找类|时间查找|按时间搜备忘|按日期范围搜索笔记
+memo_search_wish|205|search|查找类|分类查找|查心愿|查所有心愿(自动带分类过滤)
+memo_search_checkin|222|search|查找类|分类查找|查打卡|查所有打卡记录
+memo_search_mood|237|search|查找类|分类查找|查情绪|查所有情绪日记
+memo_remind_with_note|252|remind|提醒类|创建提醒|记提醒|添加笔记 + 设置提醒(两步合一)
+memo_remind_existing|271|remind|提醒类|创建提醒|设提醒|给已有笔记加提醒
+memo_reminders_active|291|remind|提醒类|查看提醒|看提醒|查看所有有效提醒
+memo_completed_reminders|306|remind|提醒类|查看提醒|查已提醒备忘|查询已触发的提醒与对应打卡
+memo_complete_wish|322|wish|心愿类|心愿推进|完成心愿|把心愿标记为已完成(原子操作)
+memo_wish_schedule|341|wish|心愿类|心愿推进|心愿排期|给心愿设排期日期(同步飞书 due)
+memo_batch_change_category|361|memo|备忘类|分类调整|备忘改分类|批量改分类(过程型 HTML 向导)
+memo_sync_feishu|381|sync|同步类|(空)|备忘录同步|备忘录 ↔ 飞书双向对账
+memo_add_wish|403|wish|心愿类|心愿管理|记心愿|快速添加心愿(自动心愿分类)
+memo_delete_wish|424|wish|心愿类|心愿管理|删心愿|删心愿(自动心愿分类过滤)
+memo_update_wish|438|wish|心愿类|心愿管理|改心愿|改心愿(自动心愿分类过滤)
+memo_add_checkin|453|checkin|打卡类|(空)|记打卡|快速添加打卡(自动打卡分类)
+memo_delete_checkin|469|checkin|打卡类|(空)|删打卡|删打卡(自动打卡分类过滤)
+memo_update_checkin|482|checkin|打卡类|(空)|改打卡|改打卡(自动打卡分类过滤)
+memo_add_mood|496|mood|情绪类|(空)|记情绪|快速添加情绪日记(自动情绪日记分类)
+memo_delete_mood|510|mood|情绪类|(空)|删情绪|删情绪(自动情绪日记分类过滤)
+memo_update_mood|523|mood|情绪类|(空)|改情绪|改情绪(自动情绪日记分类过滤)
+memo_init_setup|535|init|初始化类|(空)|首次使用|初始化备忘录(首次使用引导)

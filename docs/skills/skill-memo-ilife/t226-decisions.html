@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>备忘录 HELP · 内容与取值裁决 16 条</title>
+<style>
+  :root{
+    --bg:#0f1216; --card:#171b21; --card2:#1d2229; --line:#2a313a;
+    --fg:#e8ecf1; --dim:#9aa5b1; --acc:#4da3ff; --rec:#33c48d; --warn:#ffb545;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:16px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px}
+  header{padding:36px 0 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#131a24,transparent)}
+  h1{font-size:25px;margin:0 0 8px}
+  .lede{color:var(--dim);margin:0 0 14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--dim);background:var(--card)}
+  .chip.rec{border-color:#1e5c43;color:var(--rec)}
+  h2{font-size:20px;margin:0}
+  h3{font-size:16px;margin:28px 0 8px;color:var(--acc);border-left:3px solid var(--acc);padding-left:10px}
+  section{margin:24px 0}
+  .hi{background:#12271f;border:1px solid #1e5c43;border-radius:12px;padding:14px 18px}
+  .hi b{color:var(--rec)}
+  .hi ul{margin:8px 0 0;padding-left:20px;font-size:14.5px;color:#cfe6da}
+  .hi li{margin:4px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--card2);color:var(--dim);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  td.r{color:var(--rec);font-weight:700;white-space:nowrap}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .q.hot{border-color:#5a4318}
+  .qhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .num{background:var(--acc);color:#08131f;font-weight:700;border-radius:7px;padding:2px 8px;font-size:13.5px}
+  .num.hot{background:var(--warn)}
+  .badge{margin-left:auto;font-size:12.5px;color:var(--rec);border:1px solid #1e5c43;background:#12271f;border-radius:999px;padding:2px 9px}
+  .why{margin:9px 0 6px;font-size:14.5px;color:#cfd8e3}
+  .why b{color:var(--fg)}
+  ul.kf{margin:6px 0 12px;padding-left:19px;font-size:13.5px;color:var(--dim)}
+  ul.kf li{margin:3px 0}
+  code{background:#0b0e12;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px;color:#b9c6d4}
+  .opts{display:grid;gap:9px}
+  .opt{display:block;border:1px solid var(--line);border-radius:9px;padding:10px 13px;cursor:pointer;background:var(--card2);font-size:14.5px}
+  .opt:hover{border-color:#3d4753}
+  .opt.rec{border-color:#1e5c43;background:#13251f}
+  .opt input{margin-right:8px}
+  .notewrap{display:block;margin:10px 0 0;font-size:12.5px;color:var(--dim)}
+  .notewrap span{display:block;margin-bottom:4px}
+  .note{width:100%;min-height:40px;background:#0b0e12;color:#cfd8e3;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;font:13px/1.55 inherit;resize:vertical}
+  .note:focus{border-style:solid;border-color:#3d4753;outline:none}
+  .note::placeholder{color:#5c6673}
+  .q.done{border-color:#1e5c43}
+  .q.done .qhead .badge{color:var(--dim);border-color:var(--line);background:var(--card2)}
+  .donebadge{font-size:12.5px;color:var(--rec);border:1px solid #1e5c43;background:#12271f;border-radius:999px;padding:2px 9px}
+  .tag{font-weight:700;margin-right:5px}
+  .opt.rec .tag{color:var(--rec)}
+  .pc{list-style:none;margin:7px 0 0;padding:0;font-size:13px}
+  .pc li{padding-left:15px;position:relative;color:var(--dim);margin:2px 0}
+  .pc li.pro::before{content:"＋";position:absolute;left:0;color:var(--rec)}
+  .pc li.con::before{content:"−";position:absolute;left:0;color:var(--warn)}
+  .bar{position:sticky;bottom:0;background:#0f1216ee;border-top:1px solid var(--line);padding:12px 0;margin-top:24px;backdrop-filter:blur(6px)}
+  .bar .wrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  button{background:var(--acc);color:#08131f;border:0;border-radius:9px;padding:10px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  button:hover{filter:brightness(1.1)}
+  .hint{color:var(--dim);font-size:13.5px}
+  textarea{width:100%;min-height:96px;background:#0b0e12;color:#cfd8e3;border:1px solid var(--line);border-radius:9px;padding:11px;font:13px/1.6 ui-monospace,Consolas,monospace;resize:vertical}
+  footer{color:var(--dim);font-size:13px;padding:20px 0 44px}
+  @media(max-width:560px){h1{font-size:20px}.badge{margin-left:0}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>备忘录 HELP · 内容与取值裁决 · 16 条</h1>
+  <p class="lede">这 16 条决定「HELP 里到底放什么」。裁完，内容资产、渲染接线、出口三票才有准数。</p>
+  <div class="chips">
+    <span class="chip">地图 #220 · 进度 30%</span>
+    <span class="chip">子票 4/14 已关</span>
+    <span class="chip rec">四张调查票全部收口，事实已齐</span>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section class="hi">
+  <b>16 条全部定稿（2026-09-12）——票 6 可以关了</b>
+  <ul>
+    <li><b>U1／U2／U3</b> 照老名单列全，<b>不标「当前无唤醒词」</b>——HELP HTML 就是最终功能全部实现的完整体</li>
+    <li><b>U5</b> 都按老的来　·　<b>U6</b> 归 <code>memo.remove</code> ＋ 新规「prompt 只出现唤醒词，不出现命令硬编码」　·　<b>U4／U8</b> 照老</li>
+    <li><b>U7</b> 老侧有 9 条入口说法，<b>新技能只认 1 条</b>：<code>备忘录 HELP</code>（不分大小写），其余太复杂不做</li>
+    <li><b>V1</b> 只加汇总行，<b>不加</b>「你可以这样喊我」那块　·　<b>V7</b> <code>editable_fields</code> <b>进</b>（清洗后）</li>
+    <li><b>V2／V3／V4／V5／V8</b> 均 A　·　<b>V6 = B</b>：<code>contact</code> 补上可点的链接</li>
+  </ul>
+</section>
+
+<section>
+  <h2>速览</h2>
+  <table>
+    <tr><th style="width:8%">序</th><th style="width:62%">问题</th><th>我的建议</th></tr>
+    <tr><td>U1</td><td>老核心动词无落点：补唤还是改名</td><td class="r">A 照老列全</td></tr>
+    <tr><td>U2</td><td><code>memo.sync</code> 有实现无唤醒词</td><td class="r">A 用老词</td></tr>
+    <tr><td>U3</td><td>单条改分类在新表无词可用</td><td class="r">A 照老一条</td></tr>
+    <tr><td>U4</td><td>情绪族改名：老词作废还是并存</td><td class="r">A 老词为主</td></tr>
+    <tr><td>U5</td><td><code>memo.stats</code> 展不展</td><td class="r">A 不展</td></tr>
+    <tr><td>U6</td><td>老「删 X」4 条归哪条命令</td><td class="r">A 归 remove</td></tr>
+    <tr><td>U7</td><td>HELP 入口说法：老侧 9 条，新技能留几条</td><td class="r">只留 1 条</td></tr>
+    <tr><td>U8</td><td>4 处单一功能域的组名</td><td class="r">A 照老「基础」</td></tr>
+    <tr><td>V1</td><td><code>meta_blocks[1]</code> 该不该有</td><td class="r">A 不传</td></tr>
+    <tr><td>V2</td><td><code>title</code> 要不要自带技能名</td><td class="r">A 照老</td></tr>
+    <tr><td>V3</td><td><code>version</code> 取 1.3.0 还是新号</td><td class="r">A 1.3.0</td></tr>
+    <tr><td>V4</td><td>初始化口径重定义</td><td class="r">A 判库目录</td></tr>
+    <tr><td>V5</td><td><code>HELP_INITIALIZED</code> 逃生阀</td><td class="r">A 不要</td></tr>
+    <tr><td>V6</td><td><code>contact</code> 补不补 url／邮箱</td><td class="r">A 不补</td></tr>
+    <tr><td>V7</td><td><code>editable_fields</code> 进不进</td><td class="r">A 进（清洗后）</td></tr>
+    <tr><td>V8</td><td>二级组 id 从 0 还是 1 起</td><td class="r">A 从 1 起</td></tr>
+  </table>
+</section>
+
+<h3>甲组 · 内容（HELP 里放什么）</h3>
+
+<article class="q hot" id="u1">
+  <div class="qhead"><span class="num hot">U1</span><h2>老核心动词无落点：补唤还是改名</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老骨架 30 个场景里 <b>12 条在新表没有逐字落点</b>。其中 <code>记备忘</code>／<code>改备忘</code>／<code>删备忘</code> 是「备忘类」的核心动词——用新表口径复算**全部 <code>POLICY_NO_MATCH</code>**（新表只有 <code>添加笔记</code>／<code>记一条</code>）。老 29 个唯一唤醒词里，**10 条在新表完全不可路由**。</p>
+  <ul class="kf">
+    <li>你 Q2 的原话：<i>「我们要把 HELP HTML 这个官方源给做完善，以后 MAP 才有参照」</i></li>
+    <li>本图 <b>不修</b>这些缺口（Out of scope 已写明：补齐另立图）——要定的是 HELP 上怎么显示</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="u1" value="A"><span class="tag">A · 照老名单列全</span>并在卡上标出「当前无唤醒词可路由」
+      <ul class="pc"><li class="pro">HELP 成为完整官方源，后续补唤图有清单可依</li><li class="con">页面上会有「列着但今天跑不通」的条目，要靠状态标说清</li></ul></label>
+    <label class="opt"><input type="radio" name="u1" value="B"><span class="tag">B · 只列新表真有的</span>缺的不出现
+      <ul class="pc"><li class="pro">页面与实现完全一致</li><li class="con">官方源不完整，补唤图没有参照——与「宁全勿缺」相抵</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="u2">
+  <div class="qhead"><span class="num">U2</span><h2><code>memo.sync</code> 有实现却叫不出来</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老有 <code>备忘录同步</code> 这个词；新表 28 条短语里<b>没有任何一条指向 <code>memo.sync</code></b>——命令实现着、注册着，就是叫不出来。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="u2" value="A"><span class="tag">A · HELP 用老词列出</span>并标「当前无唤醒词」
+      <ul class="pc"><li class="pro">与 U1 同一口径；补唤时直接照抄</li></ul></label>
+    <label class="opt"><input type="radio" name="u2" value="B"><span class="tag">B · 本图内就补进新表</span>
+      <ul class="pc"><li class="pro">立刻能用</li><li class="con">超出「只做 HELP」的目的地；动唤醒词表会拉动路由与测试</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="u3">
+  <div class="qhead"><span class="num">U3</span><h2>单条改分类在新表无词可用</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老 <code>备忘改分类</code> 一个词同时覆盖单条与批量；新表把它拆成 <code>批量改分类</code>（走 <code>memo.batch</code>），于是<b>单条改分类没有词也没有落点</b>。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="u3" value="A"><span class="tag">A · 照老只列一条</span><code>备忘改分类</code>，标它今天路由不到；拆分留给补唤图
+      <ul class="pc"><li class="pro">与老 HELP 逐条一致</li></ul></label>
+    <label class="opt"><input type="radio" name="u3" value="B"><span class="tag">B · 拆成两条</span>单条改分类／批量改分类
+      <ul class="pc"><li class="con">单条那条在新表没有词也没有命令，等于凭空造条目</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="u4">
+  <div class="qhead"><span class="num">U4</span><h2>情绪族改名：老词作废还是并存</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>新表把 <code>记情绪</code>／<code>删情绪</code>／<code>改情绪</code> 改成 <code>…情绪日记</code>，老词一律 <code>POLICY_NO_MATCH</code>。老用户张口说的还是老词。</p>
+  <ul class="kf"><li>票 2 提醒：4 条情绪孪生<b>不要各占一行场景</b>，别名进 <code>aliases</code></li></ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="u4" value="A"><span class="tag">A · 老词为主名，新词进别名</span>
+      <ul class="pc"><li class="pro">老用户照老话查得到；与「官方源照老骨架」一致</li><li class="con">场景卡上多一行别名</li></ul></label>
+    <label class="opt"><input type="radio" name="u4" value="B"><span class="tag">B · 新词为主名，老词作废</span>
+      <ul class="pc"><li class="con">老用户的老话在 HELP 里查不到——正是官方源要避免的</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="u5">
+  <div class="qhead"><span class="num">U5</span><h2><code>memo.stats</code> 展不展</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>新表有 <code>memo.stats</code> 命令与形状，但<b>老骨架 0 条内容</b>。票 14 把老 <code>memo_cli.py</code>（1816 行）逐行读完：老技能<b>没有</b> <code>stats</code> 子命令、<b>没有</b>任何统计类场景卡（八处证据链）。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="u5" value="A"><span class="tag">A · 不展</span>在 HELP 的口径区写一行「新表有、老骨架无，待补」
+      <ul class="pc"><li class="pro">页面与老骨架逐条一致；同时留了痕，补唤图看得到</li></ul></label>
+    <label class="opt"><input type="radio" name="u5" value="B"><span class="tag">B · 新造一条统计场景卡</span>
+      <ul class="pc"><li class="con">凭空造内容，与「老骨架为准」相抵</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="u6">
+  <div class="qhead"><span class="num">U6</span><h2>老「删 X」4 条归哪条命令</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老「删备忘／删心愿／删打卡／删情绪」4 条，语义归新表的哪条命令没定；而新词 <code>废弃提醒</code> 又没有对应场景。</p>
+  <ul class="kf">
+    <li>票 14 实测：老「删 X」是<b>独立子命令 <code>delete</code></b>（<code>:1571</code>／<code>:1704</code>／<code>:323</code>）——老 21 个 parser 里<b>根本没有 <code>remove</code></b>，<code>update</code> 也没有删除能力</li>
+    <li>「废弃」在老侧是另外两个命令：<code>dismiss</code>（提醒）与 <code>complete-wish</code>（心愿＝删心愿＋建打卡）</li>
+    <li>新表里 <code>删心愿</code> 的命令其实是 <code>memo.update</code>（不是 remove）</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="u6" value="A"><span class="tag">A · 4 条整体归 <code>memo.remove</code></span>（本仓唯一的删除命令）
+      <ul class="pc"><li class="pro">一条命令收口，口径干净</li><li class="con">与老 <code>delete</code> 的名字不同——但老代码里 <code>remove</code> 压根不存在</li></ul></label>
+    <label class="opt"><input type="radio" name="u6" value="B"><span class="tag">B · 照老名字写 <code>delete</code></span>
+      <ul class="pc"><li class="con">HELP 里出现一个仓内不存在的命令名</li></ul></label>
+  </div>
+</article>
+
+<article class="q done" id="u7">
+  <div class="qhead"><span class="num">U7</span><h2>HELP 的入口说法：老侧 9 条，新技能只留 1 条</h2><span class="donebadge">✔ 已裁</span></div>
+  <p class="why"><b>先说这 9 条是什么。</b>老技能里「备忘录 HELP」<b>不是一个死字符串</b>，而是一张灵活匹配表——老 <code>SKILL.md:1086-1095</code> 列了 8 行「用户原话示例」，每行标 ✅；最后一行把 <code>备忘录 manual</code> <b>和</b> <code>备忘录 guide</code> 写在<b>同一个格子</b>里，所以按词数是 <b>9 条</b>、按行数是 8 行。（地图早先记成「1＋7」＝8，就是漏了这一格。）</p>
+  <ul class="kf">
+    <li>① <code>备忘录 HELP</code>（字面主词，<code>:1080</code>）　② <code>备忘录 help</code>　③ <code>备忘 HELP</code>（少一个「录」字）</li>
+    <li>④ <code>备忘录的help在哪</code>　⑤ <code>帮我看下备忘录的使用说明</code></li>
+    <li>⑥ <code>/备忘录-help</code>　⑦ <code>/备忘录 help</code>　⑧ <code>备忘录 manual</code>　⑨ <code>备忘录 guide</code></li>
+  </ul>
+  <p class="why"><b>用户定案（2026-09-12）：</b>「<i>就 备忘录 HELP 不分大小写，其他的不需要，太复杂了</i>」⇒ 新技能的 HELP 入口<b>只认 1 条</b>（<code>备忘录 HELP</code>，<b>不分大小写</b>），其余 8 种变体<b>不做</b>。<br>老侧那 9 条作为对照事实留在调查报告里；这条只管 <b>HELP 自己的入口</b>，功能类唤醒词的补齐口径（U1／U2）不变。落点：[SKILL.md 说明面](https://github.com/FeatherHunter/ilife/issues/231)。</p>
+</article>
+
+<article class="q" id="u8">
+  <div class="qhead"><span class="num">U8</span><h2>4 处单一功能域的组名</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>8 个域里 sync／checkin／mood／init 各只有一个子功能，老 HELP 在这 4 处显示为「<b>基础</b>」组。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="u8" value="A"><span class="tag">A · 照老写「基础」</span>保持 13 个二级组
+      <ul class="pc"><li class="pro">与老 HELP 逐条一致；共享模板对「单一子功能」兼容已验过</li></ul></label>
+    <label class="opt"><input type="radio" name="u8" value="B"><span class="tag">B · 按域写更有描述性的组名</span>
+      <ul class="pc"><li class="pro">更好读</li><li class="con">老 HELP 上没有这四个名字，属于新造</li></ul></label>
+  </div>
+</article>
+
+<h3>乙组 · 模板取值（参数怎么填）</h3>
+
+<article class="q" id="v1">
+  <div class="qhead"><span class="num">V1</span><h2>页面上要不要加一块「你可以这样喊我」</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>这条在问什么：</b>共享 help 模板的页面上有<b>两块可选内容</b>。记账那份两块都用了——第一块是<b>汇总行</b>（「7 功能域 · 71 场景 · 版本 2.0 · 更新于…」），第二块是<b>「HELP 自己怎么喊」的提示</b>（「想问什么就问：饼干记账HELP／查帮助…」）。老备忘录的载荷里<b>一块都没有</b>。</p>
+  <ul class="kf">
+    <li>老家有条规矩写得很死（老 <code>SKILL.md:1141</code>）：「<b>不展示 HELP 唤醒词自身</b>」——那句「备忘录 HELP」本来就是用来打开这一页的，印在页面上成了自指</li>
+    <li>第一块（汇总行）有据可依：老副标题就是「8 个分类 · 30 个场景 · 30 可用 · 版本 1.3.0」</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v1" value="A"><span class="tag">A · 只加汇总行，不加「怎么喊我」</span>
+      <ul class="pc"><li class="pro">有据可依：老件两块都没有 ＋ 老家明规不许自指</li><li class="con">页脚比记账少一块</li></ul></label>
+    <label class="opt"><input type="radio" name="v1" value="B"><span class="tag">B · 两块都加</span>第二块把那 9 条 HELP 触发短语列出来
+      <ul class="pc"><li class="con">与老家「不展示 HELP 唤醒词自身」的规矩相冲</li></ul></label>
+  </div>
+  <p class="why" style="margin:11px 0 0"><b>用户定案（2026-09-12）：A</b> —— 原话「<i>HELP HTML 中不包括 HELP 的唤醒词场景。用户说 备忘录HELP 就能拿到</i>」。⇒ 页面上既不加「怎么喊我」那块，也不把 HELP 自己的唤醒词当成一条场景卡放进去。</p>
+</article>
+
+<article class="q" id="v2">
+  <div class="qhead"><span class="num">V2</span><h2><code>title</code> 要不要自带技能名</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>照老取 <code>'使用手册'</code>（老 <code>memo_render.py:587</code>）；新线的文档标题由 <code>composeDocTitle</code> 派生，会得到 <code>备忘录 · 使用手册</code>。「技能名应在大字行」那条验收口径出自 <code>#145</code>。</p>
+  <ul class="kf"><li><code>skill_name</code> 另有一处渲染落点（模板 <code>:1772</code>），hero 不会丢技能名</li></ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v2" value="A"><span class="tag">A · 照老取 <code>'使用手册'</code></span>
+      <ul class="pc"><li class="pro">与老 HELP 逐字一致；文档标题自动带上技能名</li></ul></label>
+    <label class="opt"><input type="radio" name="v2" value="B"><span class="tag">B · 写全 <code>'备忘录 · 使用手册'</code></span>
+      <ul class="pc"><li class="pro">大字行一眼看出是哪个技能</li><li class="con">与老 HELP 多一个前缀</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="v3">
+  <div class="qhead"><span class="num">V3</span><h2><code>version</code> 取 1.3.0 还是新号</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老 <code>scenarios.yaml:25</code> 与 <code>memo_render.py:590</code> 都是 <code>1.3.0</code>，语义是<b>技能数据世代</b>（不是 npm 包版本，照记账口径）。但新表与老 yaml 不是同代资产。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v3" value="A"><span class="tag">A · 取 <code>1.3.0</code></span>
+      <ul class="pc"><li class="pro">与老 HELP 逐字一致；世代语义清楚</li></ul></label>
+    <label class="opt"><input type="radio" name="v3" value="B"><span class="tag">B · 起一个新号（照记账 2.0）</span>
+      <ul class="pc"><li class="con">新仓还没有自己的数据世代定义，等于凭空起号</li></ul></label>
+  </div>
+</article>
+
+<article class="q hot" id="v4">
+  <div class="qhead"><span class="num hot">V4</span><h2>初始化口径重定义</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老家判「DB 文件存在＝已初始化」。本机实测<b>判错</b>：<code>D:\.db\memo.db</code> 是个 <b>0 字节空壳</b>，而真正的库目录 <code>D:\.db\memo</code> <b>不存在</b> ⇒ 老判法会答「已初始化」，而库其实是空的。新库是<b>目录</b>不是 <code>.db</code> 文件。</p>
+  <ul class="kf"><li><code>openMemoDb</code> 实测<b>不建库</b>（<code>src/fetch/db.ts:21-29</code> 只有 stat／access）——「看帮助不建库」这条天然过关</li></ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v4" value="A"><span class="tag">A · 改判「memo 库目录存在」</span>（<code>&lt;SKILLS_DB_PATH&gt;/memo</code>）
+      <ul class="pc"><li class="pro">本机实测正确；与新版实现一致</li><li class="con">与老家口径有一处差，要在说明面写清</li></ul></label>
+    <label class="opt"><input type="radio" name="v4" value="B"><span class="tag">B · 照老家「文件存在」判</span>
+      <ul class="pc"><li class="con">本机恒判「已初始化」，未初始化的用户永远看不到首次使用横幅</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="v5">
+  <div class="qhead"><span class="num">V5</span><h2><code>HELP_INITIALIZED</code> 逃生阀</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>这是老侧的一个环境变量开关，用来<b>强制显示</b>首次使用横幅；记账那张图没有这个。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v5" value="A"><span class="tag">A · 不要</span>（照记账的最小面）
+      <ul class="pc"><li class="pro">横幅显隐只由库状态决定，行为可预测</li></ul></label>
+    <label class="opt"><input type="radio" name="v5" value="B"><span class="tag">B · 保留，供调试</span>
+      <ul class="pc"><li class="con">多一个只在老代码里存在的概念，新仓无人用</li></ul></label>
+  </div>
+</article>
+
+<article class="q" id="v6">
+  <div class="qhead"><span class="num">V6</span><h2><code>contact</code> 补不补 url／邮箱</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老备忘录只给<b>两项</b>（GitHub／Issues），<b>没有 <code>url</code> 字段</b>；模板渲染是支持 <code>url</code> 的（<code>help-template.html:1804</code> 有判）。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v6" value="A"><span class="tag">A · 照老两项，不补</span>
+      <ul class="pc"><li class="pro">与老 HELP 一致；模板支持不等于必须填</li></ul></label>
+    <label class="opt"><input type="radio" name="v6" value="B"><span class="tag">B · 补上可点的链接</span>
+      <ul class="pc"><li class="pro">更好用</li><li class="con">与老 HELP 不一致，属本图外的观感改动</li></ul></label>
+  </div>
+</article>
+
+<article class="q hot" id="v7">
+  <div class="qhead"><span class="num hot">V7</span><h2>要不要把「这条要填什么」也印在页面上</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>这条在问什么：</b>老备忘录的每个场景卡除了标题和唤醒词，还带一栏 <code>editable_fields</code>——就是「<b>这条要填哪些东西</b>」（例：记一条 → 标题／正文／分类／子分类／提醒时间）。全省 <b>76 条</b>、覆盖 29 个场景。共享模板<b>认这一栏</b>（模板第 1669 行就在读它，页面上会渲染成每个参数一个可编辑小格／chip）；记账那份没有用这一栏。</p>
+  <ul class="kf">
+    <li>老数据<b>脏</b>：76 条里 1 条是 YAML 写错产生的布尔值；<b>22 条</b>的标签名掉成了英文键（<code>html</code>／<code>start</code>／<code>remind_at</code>……说明老代码里「英文键 → 中文名」那张对照表已经跟数据走散）；<b>12 条</b>其实是命令行开关（<code>html</code>），不是给用户填的参数</li>
+  </ul>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v7" value="A"><span class="tag">A · 进，但只进清洗过的</span>脏的剔掉、22 条补上中文名、12 条开关不列
+      <ul class="pc"><li class="pro">这正是「这个技能到底要填什么」的官方说明，也是后续补齐那张图最缺的一栏；模板本来就支持</li><li class="con">要一次人工清洗（约 76 条）</li></ul></label>
+    <label class="opt"><input type="radio" name="v7" value="B"><span class="tag">B · 不进</span>
+      <ul class="pc"><li class="pro">省一次清洗；与记账同形</li><li class="con">官方源缺一栏</li></ul></label>
+  </div>
+  <p class="why" style="margin:11px 0 0"><b>用户定案（2026-09-12）：A</b> —— 原话「<i>使用这个参数，挺好的，既然 HELP HTML 有这个说明还很优秀的功能</i>」。⇒ 进，按清洗后的 76 条落（脏的剔、22 条补中文名、12 条开关不列）。</p>
+</article>
+
+<article class="q" id="v8">
+  <div class="qhead"><span class="num">V8</span><h2>二级组 id 从 0 还是 1 起</h2><span class="badge">推荐 A</span></div>
+  <p class="why"><b>前因：</b>老 <code>subgroups[].id</code> 是 <code>memo_0</code>／<code>memo_1</code>…（<b>0 起</b>）；记账／居家的通式是 <code>&lt;域id&gt;_&lt;序数&gt;</code>、<b>1 起</b>。这个 id 是技术标识，页面上不显示。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="v8" value="A"><span class="tag">A · 从 1 起</span>（与记账／居家一致）
+      <ul class="pc"><li class="pro">三张兄弟图一套通式，后续对照省事</li><li class="con">与老物件的 id 不逐字同（页面上看不出来）</li></ul></label>
+    <label class="opt"><input type="radio" name="v8" value="B"><span class="tag">B · 从 0 起</span>（与老件逐字）
+      <ul class="pc"><li class="con">与兄弟图两套通式</li></ul></label>
+  </div>
+</article>
+
+<div class="bar"><div class="wrap">
+  <button id="gen" type="button">生成我的选择</button>
+  <span class="hint">不勾的按推荐 A 走；<b>每张卡下面都能写备注</b>（例外、条件、「这条先不定」都行），会一起带进回执。</span>
+</div></div>
+
+<section>
+  <textarea id="out" readonly placeholder="点上面的按钮生成…"></textarea>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  本卡落点：<code>D:\ilife\docs\skills\skill-memo-ilife\t226-decisions.html</code>　·　对应票：<a href="https://github.com/FeatherHunter/ilife/issues/226" style="color:#4da3ff">内容与取值裁决 #226</a>　·　地图：<a href="https://github.com/FeatherHunter/ilife/issues/220" style="color:#4da3ff">#220 备忘录HELP真标准</a><br>
+  依据：票 2 对账表 · 票 3 取值表 · 票 14 子命令全集复核；报告与决议同目录。<br>
+  生成于 2026-09-12。
+</div></footer>
+
+<script>
+(function(){
+  var ids = ['u1','u2','u3','u4','u5','u6','u7','u8','v1','v2','v3','v4','v5','v6','v7','v8'];
+
+  // 第一轮已裁的 13 条：预填选择与你的备注原话（改主意直接点别的选项就行）。
+  var PREFILL = {
+    u1:{pick:'A', note:'不标出“无唤醒词可以路由”。我们开发 help html 就是那个最终功能全部实现的完整体！'},
+    u2:{pick:'A', note:'不额外标记无唤醒词。我们肯定是要将新技能开发成和老技能一样支持这些功能。之前开发的新技能因为 AI 疏忽遗漏了大量功能。'},
+    u3:{pick:'A', note:'同 U2：不额外标记无唤醒词。'},
+    u4:{pick:'A'},
+    u5:{pick:'A', note:'都按老的来！'},
+    u6:{pick:'A', note:'HELP HTML 的 prompt 中不应该出现具体的命令硬编码，只有唤醒词；唤醒词在 SKILL.md 中内部流程才涉及到命令。'},
+    u8:{pick:'A'},
+    v2:{pick:'A'},
+    v3:{pick:'A'},
+    v4:{pick:'A'},
+    v5:{pick:'A'},
+    v6:{pick:'B', note:'contact 补上可点的链接。'},
+    v8:{pick:'A'},
+    // 第二轮（2026-09-12）：U7 由用户裁定；V1／V7 定案。
+    u7:{pick:'A', note:'就 备忘录 HELP 不分大小写，其他的不需要，太复杂了。（老侧 9 条留作对照；新技能只认这 1 条）'},
+    v1:{pick:'A', note:'HELP HTML 中不包括 HELP 的唤醒词场景。用户说 备忘录HELP 就能拿到。'},
+    v7:{pick:'A', note:'使用这个参数，挺好的，既然 HELP HTML 有这个说明还很优秀的功能。'}
+  };
+
+  // 每张卡在选项下面挂一个「备注」框（可选），随选择一起带进回执。
+  ids.forEach(function(id){
+    var card = document.getElementById(id);
+    if (!card) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'notewrap';
+    var cap = document.createElement('span');
+    cap.textContent = '备注（可选）';
+    var ta = document.createElement('textarea');
+    ta.className = 'note';
+    ta.rows = 2;
+    ta.setAttribute('aria-label', id.toUpperCase() + ' 的备注');
+    ta.placeholder = '例外、附加条件、「这条先不定」都写这里…';
+    wrap.appendChild(cap);
+    wrap.appendChild(ta);
+    card.appendChild(wrap);
+
+    // 第一轮已裁的：勾回原选择、把备注原话填回去、卡上盖个「已裁」戳。
+    var pf = PREFILL[id];
+    if (pf) {
+      var radio = card.querySelector('input[name="' + id + '"][value="' + pf.pick + '"]');
+      if (radio) radio.checked = true;
+      if (pf.note) ta.value = pf.note;
+      card.classList.add('done');
+      var stamp = document.createElement('span');
+      stamp.className = 'donebadge';
+      stamp.textContent = '✔ 已裁';
+      card.querySelector('.qhead').appendChild(stamp);
+    }
+  });
+
+  var btn = document.getElementById('gen'), out = document.getElementById('out');
+  btn.addEventListener('click', function(){
+    var lines = ids.map(function(id){
+      var sel = document.querySelector('input[name="' + id + '"]:checked');
+      var card = document.getElementById(id);
+      var ta = card ? card.querySelector('.note') : null;
+      var note = ta && ta.value.trim() ? ' ｜ 备注：' + ta.value.trim().replace(/\s*\n\s*/g, ' ') : '';
+      return id.toUpperCase() + '=' + (sel ? sel.value : 'A（默认）') + note;
+    });
+    out.value = lines.join('\n');
+    out.select();
+    try { navigator.clipboard.writeText(out.value); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

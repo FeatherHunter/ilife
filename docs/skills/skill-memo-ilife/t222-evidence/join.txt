@@ -1,0 +1,33 @@
+J | memo_add_basic | memo | 基础记录 | 记备忘 | → | 无落点
+J | memo_update_basic | memo | 基础记录 | 改备忘 | → | 无落点
+J | memo_delete_basic | memo | 基础记录 | 删备忘 | → | 无落点
+J | memo_change_category_single | memo | 分类调整 | 备忘改分类 | → | 无落点
+J | memo_change_subcategory | memo | 分类调整 | 备忘改子分类 | → | 无落点
+J | memo_search_keyword | search | 基础查找 | 搜备忘 | → | 搜备忘:memo.search
+J | memo_search_alias | search | 基础查找 | 查备忘 | → | 查备忘:memo.search
+J | memo_get_detail | search | 基础查找 | 看备忘 | → | 看备忘:memo.detail
+J | memo_search_by_date | search | 时间查找 | 按时间搜备忘 | → | 按时间搜备忘:memo.search
+J | memo_search_wish | search | 分类查找 | 查心愿 | → | 查心愿:memo.wish
+J | memo_search_checkin | search | 分类查找 | 查打卡 | → | 查打卡:memo.search
+J | memo_search_mood | search | 分类查找 | 查情绪 | → | 无落点
+J | memo_remind_with_note | remind | 创建提醒 | 记提醒 | → | 记提醒:memo.create
+J | memo_remind_existing | remind | 创建提醒 | 设提醒 | → | 设提醒:memo.create
+J | memo_reminders_active | remind | 查看提醒 | 看提醒 | → | 看提醒:memo.remind
+J | memo_completed_reminders | remind | 查看提醒 | 查已提醒备忘 | → | 查已提醒备忘:memo.remind
+J | memo_complete_wish | wish | 心愿推进 | 完成心愿 | → | 完成心愿:memo.update
+J | memo_wish_schedule | wish | 心愿推进 | 心愿排期 | → | 心愿排期:memo.wish
+J | memo_batch_change_category | memo | 分类调整 | 备忘改分类 | → | 无落点
+J | memo_sync_feishu | sync | (空) | 备忘录同步 | → | 无落点
+J | memo_add_wish | wish | 心愿管理 | 记心愿 | → | 记心愿:memo.create
+J | memo_delete_wish | wish | 心愿管理 | 删心愿 | → | 删心愿:memo.update
+J | memo_update_wish | wish | 心愿管理 | 改心愿 | → | 改心愿:memo.update
+J | memo_add_checkin | checkin | (空) | 记打卡 | → | 记打卡:memo.create
+J | memo_delete_checkin | checkin | (空) | 删打卡 | → | 删打卡:memo.update
+J | memo_update_checkin | checkin | (空) | 改打卡 | → | 改打卡:memo.update
+J | memo_add_mood | mood | (空) | 记情绪 | → | 无落点
+J | memo_delete_mood | mood | (空) | 删情绪 | → | 无落点
+J | memo_update_mood | mood | (空) | 改情绪 | → | 无落点
+J | memo_init_setup | init | (空) | 首次使用 | → | 无落点
+=== COUNT ===
+old.scenes=30 old.hit=18 old.none=12
+new.entries=28 new.carried=18 new.extra=10

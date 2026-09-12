@@ -1,0 +1,269 @@
+=== A. yaml 顶层注释行（契约与口径）===
+# 备忘录 · 场景资产(v1.2.1)
+#
+# 总纲 §07-HELP与场景完备性.md 契约:场景资产 = HELP HTML 唯一事实源
+# 字段(7 必填 + 3 新):
+# wake_word: 关联业务唤醒词(HELP 唯一展示名;别名只在 SKILL.md 匹配层,#31 Q1)
+# scenario_id: 稳定 ID,跨版本不变
+# scenario_title: 用户可读标题
+# dimensions: 合法维度(领域决定)
+# prompt: 稳定用户意图(不暴露 CLI / DB / Python / 模板路径)
+# status: ""(可用) | "【待开发】"(禁用 + AI 必停)
+# result: 预期结果(用户视角)
+# category: 必填,引用顶层 categories 的 key(#31 Q2/Q5 · #33 归类)
+# subfunction: 可选,子功能分组(空 = 「基础」兜底组,#31 Q3)
+# dependencies: 可选,环境依赖清单多行文本(#32 决议 · 仅 Init 场景)
+#
+# 30 个场景 = 29 个唯一唤醒词(28 业务 + 首次使用;备忘改分类 单条+批量 共用)。
+# 无 order 字段:组内序 = 书写序(#31 Q4)。
+# 共享校验:script/validate_scenarios.py(测试 + 渲染前双触发,#31 Q7)。
+# 复制契约:复制按钮直接复制 prompt 纯文本(自含唤醒词锚点,不加标签头 · 卡路里同型)。
+# DB fallback:Windows D:/.db · Linux(无 /mnt/d)~/.local/share/memo。
+#
+# 编辑本文件后,需重新跑 `memo_cli.py help` 刷新 HELP HTML。
+=== B. categories 块（老域中文名 + icon）===
+=== C. 老目录：category × subfunction × 场景数（域／二级组逐级计数）===
+D memo | 备忘类 | name_en=memo | 新表 key=memo.create+memo.update+memo.remove+memo.batch | scenes=6 | subs=2
+  S 基础记录 | fallback=false | name=create | scenes=3 -> memo_add_basic(记备忘) memo_update_basic(改备忘) memo_delete_basic(删备忘)
+  S 分类调整 | fallback=false | name=batch(单条走 update) | scenes=3 -> memo_change_category_single(备忘改分类) memo_change_subcategory(备忘改子分类) memo_batch_change_category(备忘改分类)
+D search | 查找类 | name_en=search | 新表 key=memo.search+memo.detail+memo.wish+memo.remind | scenes=7 | subs=3
+  S 基础查找 | fallback=false | name=search | scenes=3 -> memo_search_keyword(搜备忘) memo_search_alias(查备忘) memo_get_detail(看备忘)
+  S 时间查找 | fallback=false | name=search(timeRange) | scenes=1 -> memo_search_by_date(按时间搜备忘)
+  S 分类查找 | fallback=false | name=search(category) | scenes=3 -> memo_search_wish(查心愿) memo_search_checkin(查打卡) memo_search_mood(查情绪)
+D remind | 提醒类 | name_en=remind | 新表 key=memo.remind+memo.create | scenes=4 | subs=2
+  S 创建提醒 | fallback=false | name=create(remindAt) | scenes=2 -> memo_remind_with_note(记提醒) memo_remind_existing(设提醒)
+  S 查看提醒 | fallback=false | name=remind | scenes=2 -> memo_reminders_active(看提醒) memo_completed_reminders(查已提醒备忘)
+D wish | 心愿类 | name_en=wish | 新表 key=memo.wish+memo.update | scenes=5 | subs=2
+  S 心愿推进 | fallback=false | name=wish+update(done) | scenes=2 -> memo_complete_wish(完成心愿) memo_wish_schedule(心愿排期)
+  S 心愿管理 | fallback=false | name=wish | scenes=3 -> memo_add_wish(记心愿) memo_delete_wish(删心愿) memo_update_wish(改心愿)
+D sync | 同步类 | name_en=sync | 新表 key=memo.sync | scenes=1 | subs=1
+  S （空 → 「基础」兜底） | fallback=true | name=sync | scenes=1 -> memo_sync_feishu(备忘录同步)
+D checkin | 打卡类 | name_en=checkin | 新表 key=memo.create+memo.update+memo.remove | scenes=3 | subs=1
+  S （空 → 「基础」兜底） | fallback=true | name=create/update(category=打卡) | scenes=3 -> memo_add_checkin(记打卡) memo_delete_checkin(删打卡) memo_update_checkin(改打卡)
+D mood | 情绪类 | name_en=mood | 新表 key=memo.create+memo.update+memo.remove | scenes=3 | subs=1
+  S （空 → 「基础」兜底） | fallback=true | name=create/update(category=情绪日记) | scenes=3 -> memo_add_mood(记情绪) memo_delete_mood(删情绪) memo_update_mood(改情绪)
+D init | 初始化类 | name_en=init | 新表 key= | scenes=1 | subs=1
+  S （空 → 「基础」兜底） | fallback=true | name=init(新表无 init key) | scenes=1 -> memo_init_setup(首次使用)
+=== D. 老 SKILL.md 标题行 ===
+9: # 备忘录 (Memorandum)
+32: ## 改动前 3 问(总纲 §05 L5-11 · 强制肉眼自检)
+42: ## 强制性规定(最高优先级)
+50: ## HTML 镜像设计原则(v1.0.8 · 最高优先级 · 用户认知转变)
+81: ## HTML 交付规范(2026-07-24 加 · 最高优先级 · v1.0.3 修订 · v1.1.1 加强)
+121: ### ⚠️ HTML 交付 checklist(v1.1.2 · 任务结束前必走一遍)
+147: ## 用户原话 → 唤醒词 反向指引表(v1.1.4 · FAT G3 修复)
+226: ## 唤醒词 → HTML 生成对照表(2026-07-24 加 · v1.0.7 · 最高优先级)
+268: ### 统计
+277: ### AGENT 决策流程
+286: ### 优先级
+290: ### 防文档裂缝守护
+296: ## 描述
+307: ## 快速开始
+322: ### 首次使用行为规范
+442: ## 环境变量
+453: ## 操作规范
+460: ### 媒体附件
+466: ## ⚠️ 重要约定:提醒路由
+475: ## 功能与唤醒词
+477: ### 添加笔记
+506: ### sub_category 原则
+523: ### 搜索笔记
+545: ### 更新笔记
+561: ### 删除笔记
+576: ### 查看笔记详情
+591: ### 按时间搜索
+606: ### 编辑笔记顶层分类
+622: ### 编辑笔记子分类
+638: ### 唤醒词路由(避免与「批量改分类向导」歧义 · 2026-07-24 加)
+657: ### 心愿排期
+699: ### 完成心愿向导(2026-07-24 新增 · Step 5A · 过程型 HTML · v1.0.1 第一性修复 · v1.0.4 默认未勾)
+731: ### 批量改分类向导(2026-07-24 新增 · Step 5B · 过程型 HTML)
+760: #### 排期日期的用户-facing 表达(中文)
+772: #### 心愿 add 时的时间锚点识别(B 方案 / 2026-07-02 定稿)
+792: ### 设置提醒
+809: ### 记提醒(添笔记 + 设提醒)
+824: ### 查看提醒
+839: ### 废弃提醒
+842: ### 查询已完成提醒
+864: ### 备忘录同步(自动 + 反向)
+909: #### 飞书联动环境变量(用户特定,必须自己配置)
+925: #### tasklist 显式传入流程(少用场景)
+936: # 默认(不指定 tasklist)→ 飞书主页
+939: # 显式指定 tasklist → 飞书指定清单
+943: #### AI 首次引导(用户首次使用飞书联动时)
+972: ### 完成心愿:流式工作流
+1009: ### 完成提醒:提醒与打卡的完整流程(旧流程,推荐用「完成心愿」替换)
+1024: ## 定时提醒机制
+1026: ### Cron 配置
+1031: ### 提醒逻辑
+1037: ### 提醒输出格式(SKILL 内部执行时使用)
+1060: ### Cron Payload 示例
+1067: ## 参考文档
+1076: ## 备忘录 HELP(v1.1.4 · 总纲 §07 契约)
+1078: ### 唤醒词
+1082: ### 唤醒词灵活匹配(FAT 发现 · G1 修复)
+1109: ### 行为
+1118: ### 场景资产契约(§07 §2.2)
+1135: ### HELP HTML 必须(§07 §5)
+1143: ### 守门测试
+1153: ### CLI
+1171: ### 历史
+=== E. 老 SKILL.md 含「唤醒词/别名/HELP/分类子唤醒词」的行 ===
+13: > v1.2.1:HELP UI 全量对齐居家管家 + 中文搜索修复 + 开源就绪(wayfinder #152 map)
+14: > v1.2.0:HELP HTML 4 级重构 + 首次使用模块(wayfinder #30 map · ADR-0007)
+16: > v1.1.4:备忘录 HELP 唤醒词(总纲 §07 契约 · 场景资产 + HELP HTML + skill 根目录覆盖)
+22: > v1.0.8:HTML 镜像设计原则 + 唤醒词段可展开底层原理
+23: > v1.0.7:唤醒词 → HTML 生成对照表 + 文档裂缝守护
+45: - **v1.1.4 起**:`备忘录.html` 不再手写,**由 HELP 命令自动生成并覆盖**(总纲 §07 契约 + 用户约定)。
+46: - 时间戳副本:`D:\.db\memo_html\备忘录_HELP_<YYYYMMDD>_<HHMMSS>.html`(§04 原则 12.B)
+56: | 用户视角:唤醒词 + 使用方法 + 注意事项 | `备忘录.html`(默认展开) |
+61: **可展开详情语法**(每个唤醒词段下方):
+123: **触发场景**:任何生成 HTML 的命令(13 个会触发的命令,见 §唤醒词速查表)
+147: ## 用户原话 → 唤醒词 反向指引表(v1.1.4 · FAT G3 修复)
+149: **目的**:消除"用户口语化表达 → 哪个唤醒词"的歧义。FAT 实测 AI 缺乏反查表时易误判。
+152: 1. **意图优先**:用户语义决定唤醒词,不靠字面死匹配
+153: 2. **子唤醒词优先**:用户说"心愿/打卡/情绪"时,优先用对应子唤醒词(自动带分类)
+154: 3. **同义触发**:口语化变体走同一个唤醒词
+156: | # | 用户原话(口语化) | 唤醒词 | CLI 命令 |
+172: | 15 | "备忘录怎么用" / "使用说明" / "help" / "manual" / "指南" | 备忘录 HELP | `help` |
+176: 2. 命中行 → 用对应唤醒词 + CLI 命令
+211: 5. **唤醒词场景对应交付协议**(每个都 `<media>` + 浏览器并行):
+212: - 5 个查询唤醒词(搜备忘/查备忘/看备忘/按时间搜备忘/查已提醒备忘 + 子唤醒词查心愿/查打卡/查情绪):AI 推荐 `--html` 后并行
+226: ## 唤醒词 → HTML 生成对照表(2026-07-24 加 · v1.0.7 · 最高优先级)
+228: **目的**:消除"AGENT 是否要生成 HTML"的歧义。28 个唤醒词明确分类,AI 不再从叙述中"凑"出完整图。
+235: | # | 唤醒词 | HTML? | 命令 | 模板 / 备注 |
+239: | 3 | 查备忘(搜备忘别名) | ✅ | 同上 | 同上 |
+250: | 14 | 记心愿(子唤醒词) | ❌ | `add -c 心愿` | 单条回执 |
+254: | 18 | 记打卡(子唤醒词) | ❌ | `add -c 打卡` | 单条回执 |
+258: | 22 | 记情绪(子唤醒词) | ❌ | `add -c 情绪日记` | 单条回执 |
+262: | 26 | 完成心愿(别名:完成打卡) | 🟡 | `wish-complete --html` | `wish_complete.html`(过程型) |
+266: | 29 | **备忘录 HELP** | ✅ | `memo_cli.py help` | Base `help_template.html`(HELP 自描述 · **不展示自身**) |
+270: | HTML? | 数量 | 唤醒词 |
+272: | ✅ 必须生成 HTML | 10 | 搜备忘/查备忘/看备忘/按时间搜备忘/看提醒/查已提醒备忘/查心愿/查打卡/查情绪/备忘录 HELP |
+275: | **合计** | **29** | (含 12 个子唤醒词) |
+280: 收到用户原话 → 路由到唤醒词 → 查本表
+288: 本对照表与"HTML 同步"+"HTML 交付规范"同级(最高优先级)。任何 AGENT 处理备忘录相关唤醒词必须先查本表。
+292: `tests/test_html_trigger_coverage.py` 扫描 SKILL.md + 本表,确保所有 29 个唤醒词(含 HELP)在本表出现。改 SKILL.md 时自动验证。
+300: **唤醒词**:记备忘、搜备忘、查备忘、改备忘、删备忘、看备忘、按时间搜备忘、备忘改分类、备忘改子分类、记提醒、设提醒、看提醒、查已提醒备忘、完成心愿(**别名:完成打卡 · 2026-07-24 加…
+302: **分类子唤醒词**(心愿/打卡/情绪日记,自带顶层分类,操作同上):
+305: - 记情绪、删情绪、改情绪、查情绪(情绪日记的子唤醒词)
+312: 请帮我初始化备忘录,我是第一次使用(唤醒词:首次使用):
+430: - 报告页「完成验证清单」= 用户可勾选:Python 可运行 / 数据库已建 / 数据位置已确认(默认或自定义)/ HELP 页面可打开;**飞书项按权限编排结果填三态**(#46 · verify…
+475: ## 功能与唤醒词
+478: - 唤醒词:记备忘
+479: - 子唤醒词:记心愿、记打卡、记情绪日记(自带顶层分类,跳过分类确认)
+493: - **例外**:使用子唤醒词(记心愿/记打卡/记情绪)时,顶层分类已确定,跳过确认直接写入
+524: - 唤醒词:搜备忘、查备忘(别名)
+525: - 子唤醒词:查心愿、查打卡、查情绪日记(自动带 `-c 顶层分类` 过滤)
+536: - 子唤醒词:查心愿、查打卡、查情绪日记(自动带 `-c 顶层分类` 过滤)
+540: - **AI 推荐流程**:9 个查询类唤醒词(搜备忘 / 查备忘 / 看备忘 / 按时间搜备忘 / 看提醒 / 查已提醒备忘,以及子唤醒词 查心愿 / 查打卡 / 查情绪日记)在收到 JSON 后,…
+546: - 唤醒词:改备忘
+547: - 子唤醒词:改心愿、改打卡、改情绪日记(先按顶层分类搜索,再更新)
+562: - 唤醒词:删备忘
+563: - 子唤醒词:删心愿、删打卡、删情绪日记(先按顶层分类搜索,再删除)
+577: - 唤醒词:看备忘
+592: - 唤醒词:按时间搜备忘
+607: - 唤醒词:备忘改分类
+623: - 唤醒词:备忘改子分类
+638: ### 唤醒词路由(避免与「批量改分类向导」歧义 · 2026-07-24 加)
+639: **唤醒词 `备忘改分类` 同时对应两个命令,AI 必须按以下规则二选一**:
+658: - 唤醒词:心愿排期
+700: - 唤醒词:完成心愿(**别名:完成打卡 · 2026-07-24 加**)· 批量场景:「这些心愿我都完成了」「心愿 #36 #48 完成」「完成打卡 #36 #48」
+732: - 唤醒词:备忘改分类(批量场景,如「把 X 分类下这 10 条都改到 Y 分类」)
+793: - 唤醒词:设提醒
+810: - 唤醒词:记提醒
+825: - 唤醒词:看提醒
+843: - 唤醒词:查已提醒备忘
+867: - **唤醒词**:备忘录同步
+868: - **自动联动**(无需唤醒词):
+873: - **双向对账**(唤醒词触发):`备忘录同步`
+974: - 唤醒词:完成心愿
+1072: - **场景资产**(v1.1.4 · 总纲 §07 契约):`references/scenarios.yaml` — HELP HTML 的唯一事实源
+1076: ## 备忘录 HELP(v1.1.4 · 总纲 §07 契约)
+1078: ### 唤醒词
+1080: - **`备忘录 HELP`**(字面)
+1082: ### 唤醒词灵活匹配(FAT 发现 · G1 修复)
+1084: **HIT 规则**:不是仅 `备忘录 HELP` 严格 4 字命中,所有 HELP 类意图都应触发 `memo_cli.py help`:
+1088: | `备忘录 HELP` | 字面 | ✅ |
+1090: | `备忘 HELP`(少"录"字) | 缩字变体 | ✅ |
+1092: | `帮我看下备忘录的使用说明` | 口语 + 同义("使用说明"="HELP") | ✅ |
+1099: 2. **字面匹配**:含 "HELP" / "help" / "使用说明" / "说明书" / "manual" / "guide" 字样
+1100: 3. **不要的字面**:不含上述任何字样且无 HELP 意图 → **不**触发(避免误命中)
+1103: - ❌ "备忘录" 单独出现(无 HELP 字样) → 走默认唤醒词路由
+1111: `备忘录 HELP` 命中后:
+1113: 1. 读 `references/scenarios.yaml`(场景资产,HELP HTML 唯一事实源,不改动)
+1114: 2. 转换层对齐 scene-data 契约 v1(`memo_render._scenarios_to_contract_data`)+ Base `help_template.html` 渲染 →…
+1115: 3. 写**时间戳副本**:`$SKILLS_DB_PATH 解析目录\memo_html\备忘录_HELP_<YYYYMMDD>_<HHMMSS>.html`(§04 原则 12.B)
+1123: | `wake_word` | 关联业务唤醒词(唯一展示名;别名在 SKILL.md 匹配层 #31 Q1) |
+1135: ### HELP HTML 必须(§07 §5)
+1137: - 展示除 HELP 自身外的**全部 29 个业务唤醒词**(28 唯一 + 首次使用;备忘改分类 单条+批量 共用)
+1141: - **不展示 HELP 唤醒词自身**(避免死循环)
+1147: - 场景数 = SKILL.md 唤醒词数
+1150: - HELP HTML 不展示自身
+1156: python3 script/memo_cli.py help # 必生成 HELP HTML + 覆盖 skill 根 备忘录.html
+1174: - v1.1.4:新 `备忘录.html` = `memo_cli.py help` 自动生成的 HELP HTML
+=== F. 转换层证据 memo_render.py：COMMAND_CN_MAP + DIM_LABEL_MAP + 转换层映射注释 ===
+39: # 查询命令 → 中文命令名(信封 meta.command_cn + wake_word)
+40: COMMAND_CN_MAP = {
+41: "search": "查备忘",
+42: "get": "查备忘详情",
+43: "search-date": "按日期查备忘",
+44: "completed": "查已完成提醒",
+45: "reminders": "查提醒",
+46: }
+47: 
+48: # 场景 dimensions 键 → 中文标签(转换层 editable_fields 用)
+49: DIM_LABEL_MAP = {
+50: "id": "笔记 ID",
+51: "ids": "笔记 ID",
+52: "content": "内容",
+53: "category": "分类",
+54: "sub_category": "子分类",
+55: "media": "附件",
+56: "due": "排期日期",
+57: "with_reminders": "级联删除提醒",
+58: "true": "跳过二次确认",
+59: "bulk_indicator": "批量判定",
+60: "note_id": "笔记 ID",
+61: "at": "提醒时间",
+62: "repeat_type": "重复类型",
+63: "rule": "重复规则",
+64: "date": "日期",
+65: "keyword": "关键词",
+66: "from_category": "原分类",
+67: "to_category": "目标分类",
+68: "wish_id": "心愿 ID",
+69: }
+70: 
+531: - categories → groups(id=key, icon, label);subfunction → subgroups;书写序 = 组内序
+532: - scenario_id→id / scenario_title→title / wake_word / status / prompt→prompt_template
+534: - dimensions → editable_fields(name=键, label=中文映射, hint=原文, required=False)
+=== G. 新 SKILL.md HELP-AUTO 表 ===
+H | 按时间搜备忘 | memo.search | list | memo-cmd-read memo.search --params '{"timeRange":"2026-09"}' | line=24
+H | 查已提醒备忘 | memo.remind | list | memo-cmd-read memo.remind --params '{"done":false}' | line=25
+H | 批量改分类 | memo.batch | receipt | memo-cmd-read memo.batch | line=26
+H | 改子分类 | memo.update | receipt | memo-cmd-read memo.update --params '{"id":"<id>"}' | line=27
+H | 搜备忘 | memo.search | list | memo-cmd-read memo.search | line=28
+H | 查备忘 | memo.search | list | memo-cmd-read memo.search | line=29
+H | 看备忘 | memo.detail | detail | memo-cmd-read memo.detail --params '{"id":"<id>"}' | line=30
+H | 看提醒 | memo.remind | list | memo-cmd-read memo.remind | line=31
+H | 查提醒 | memo.remind | list | memo-cmd-read memo.remind | line=32
+H | 设提醒 | memo.create | receipt | memo-cmd-read memo.create --params '{"remindAt":"2026-10-01"}' | line=33
+H | 记提醒 | memo.create | receipt | memo-cmd-read memo.create --params '{"remindAt":"2026-10-01"}' | line=34
+H | 废弃提醒 | memo.remove | receipt | memo-cmd-read memo.remove --params '{"mode":"abandon"}' | line=35
+H | 完成心愿 | memo.update | receipt | memo-cmd-read memo.update --params '{"done":true}' | line=36
+H | 心愿排期 | memo.wish | list | memo-cmd-read memo.wish | line=37
+H | 记一条 | memo.create | receipt | memo-cmd-read memo.create | line=38
+H | 添加笔记 | memo.create | receipt | memo-cmd-read memo.create | line=39
+H | 记心愿 | memo.create | receipt | memo-cmd-read memo.create --params '{"category":"心愿"}' | line=40
+H | 记打卡 | memo.create | receipt | memo-cmd-read memo.create --params '{"category":"打卡"}' | line=41
+H | 记情绪日记 | memo.create | receipt | memo-cmd-read memo.create --params '{"category":"情绪日记"}' | line=42
+H | 查心愿 | memo.wish | list | memo-cmd-read memo.wish --params '{"category":"心愿"}' | line=43
+H | 查打卡 | memo.search | list | memo-cmd-read memo.search --params '{"category":"打卡"}' | line=44
+H | 查情绪日记 | memo.search | list | memo-cmd-read memo.search --params '{"category":"情绪日记"}' | line=45
+H | 改心愿 | memo.update | receipt | memo-cmd-read memo.update --params '{"category":"心愿","id":"<id>"}' | line=46
+H | 改打卡 | memo.update | receipt | memo-cmd-read memo.update --params '{"category":"打卡","id":"<id>"}' | line=47
+H | 改情绪日记 | memo.update | receipt | memo-cmd-read memo.update --params '{"category":"情绪日记","id":"<id>"}' | line=48
+H | 删心愿 | memo.update | receipt | memo-cmd-read memo.update --params '{"category":"心愿","id":"<id>"}' | line=49
+H | 删打卡 | memo.update | receipt | memo-cmd-read memo.update --params '{"category":"打卡","id":"<id>"}' | line=50
+H | 删情绪日记 | memo.update | receipt | memo-cmd-read memo.update --params '{"category":"情绪日记","id":"<id>"}' | line=51
