@@ -55,11 +55,15 @@ const TOKEN_NAMES = Object.keys(CSS_VAR_TOKENS);
 /** 8 个样式区的**真实类名**（逐条来自产出器实测，见每行 `file:line`）。
  *  `ns` = 命名空间前缀（T9 用）；`required` = 该区必须逐字出现的类名（T8 用）。
  *  区名 kebab **不等于**类名根（`copyButton`→`copy-btn`／`emptyState`→`empty`／
- *  `errorReceipt`→`error`），故本表显式列出，且由下面的「产出者扫描」用例反向钉死。 */
+ *  `errorReceipt`→`error`），故本表显式列出，且由下面的「产出者扫描」用例反向钉死。
+ *  `copyButton` 的根**不是单一前缀**：普通复制按钮是 `copy-btn`，而 #247 的三格式菜单是
+ *  `copy-menu`／`copy-menu-wrap`／`copy-menu-item`／`copy-menu-label`（同一区的另一族类名——
+ *  菜单与按钮同属 B-11 复制区，共用 `copyButton` 区的样式位，不新增第 9 个区）。
+ *  另注：`copy-menu-btn` 这种名字**不能用**——`.copy-btn` 的规则会把它一并命中。 */
 const SECTION_ROOTS = Object.freeze({
   toast: { ns: 'toast', required: ['toast', 'toast-stack', 'toast-title-detail'] },  // controls.ts:176-219／495-593
   actionBar: { ns: 'action', required: ['action-bar', 'action-row', 'action-btn'] }, // controls.ts:649-695
-  copyButton: { ns: 'copy-btn', required: ['copy-btn'] },                            // controls.ts:655／747／757
+  copyButton: { ns: 'copy', required: ['copy-btn', 'copy-menu', 'copy-menu-item'] },  // controls.ts（#247 菜单同区）
   statusBadge: { ns: 'status-badge', required: ['status-badge'] },                    // controls.ts:707
   emptyState: { ns: 'empty', required: ['empty'] },                                   // controls.ts:719-728
   errorReceipt: { ns: 'error', required: ['error-title', 'error-actions'] },          // controls.ts:763-765
@@ -136,6 +140,17 @@ function emittedControlClasses() {
   }));
   add(renderActionBar({ buttons: [{ actionId: 'only', label: 'L', kind: 'primary' }] }));
   add(renderActionBar({ copyData: { actionId: 'cd2' } }));
+  // #247 三格式形态（菜单族类名的唯一产出者）：不给这一笔，菜单类名就成了「CSS 里无产出者」。
+  add(renderActionBar({
+    copyData: {
+      actionId: 'cd3',
+      formats: {
+        text: 'T', json: 'J', csv: 'C',
+        hints: ['粘贴给 AI / 自己看', '结构化存档', '表格导入'],
+      },
+    },
+    copyLog: { actionId: 'cl3', text: 'L' },
+  }));
 
   for (const status of STATUS_KINDS) add(renderStatusBadge({ status }));
   add(renderStatusBadge({ status: 'bogus' }));

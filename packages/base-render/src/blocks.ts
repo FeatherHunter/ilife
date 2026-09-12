@@ -51,6 +51,7 @@ import type {
   ActionBarInput,
   ChartKind,
   CopyButtonInput,
+  CopyFormatTexts,
   EmptyStateInput,
   ErrorReceiptInput,
   EscapeHtmlChar,
@@ -596,20 +597,29 @@ export interface CopyBlockInput {
   readonly dataActionId?: string;
   readonly logActionId?: string;
   readonly buttons?: ActionBarInput['buttons'];
+  /** **三格式形态**（#247）：给了就出不带 `data-t` 的复制数据按钮 ＋ 格式选择菜单
+   *  （三个格式项各自带该格式已序列化文本）。与 `dataText` 互斥、需要 `dataActionId`
+   *  （菜单项的 `data-action-id` 留空，唯一性不与它冲突）。 */
+  readonly dataFormats?: CopyFormatTexts;
 }
 
-/** B-11：复制区块（冻结 `renderActionBar`；id 缺省取 `COPY_ACTION_IDS.actionBar.*`，调用方须保页内唯一）。 */
+/** B-11：复制区块（冻结 `renderActionBar`；id 缺省取 `COPY_ACTION_IDS.actionBar.*`，调用方须保页内唯一）。
+ *  `dataFormats` 给三格式形态（`dataText` 单格式），两者同给 → `bad-input`。 */
 export function renderCopyBlock(input: CopyBlockInput): string {
   assertPlainObject(input, 'renderCopyBlock: input');
   assertNoInlineHandler(input, 'renderCopyBlock: input');
   const block = input as CopyBlockInput;
+  if (block.dataFormats !== undefined && block.dataText !== undefined) {
+    badInput('renderCopyBlock: input.dataFormats 与 input.dataText 只能给一个');
+  }
   const bar: ActionBarInput = {};
   if (block.buttons !== undefined) (bar as { buttons?: ActionBarInput['buttons'] }).buttons = block.buttons;
-  if (block.dataText !== undefined || block.dataActionId !== undefined) {
+  if (block.dataText !== undefined || block.dataActionId !== undefined || block.dataFormats !== undefined) {
     (bar as { copyData?: CopyButtonInput }).copyData = {
       actionId: block.dataActionId ?? COPY_ACTION_IDS.actionBar.copyData,
       label: ACTION_BAR_DEFAULTS.copyDataLabel,
       ...(block.dataText === undefined ? {} : { text: block.dataText }),
+      ...(block.dataFormats === undefined ? {} : { formats: block.dataFormats }),
     };
   }
   if (block.logText !== undefined || block.logActionId !== undefined) {

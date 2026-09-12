@@ -28,6 +28,12 @@
  *    `readDataText → undefined` 跳过）；`text === ''` → 仍写 `data-t=""`（binder 送进空串短路，无反馈）；
  *    场景按钮 `kind` 取冻结 `ACTION_BAR_KINDS` **全量**（含 `ghost`），不以 §3.3 表格的「primary／red」为限；
  *    `format` 不参与渲染（序列化归 #77）；
+ *  - `renderActionBar` 的 `CopyButtonInput.formats`（#247 三格式形态）→ 按钮只开合菜单、**不写** `data-t`，
+ *    菜单三项各写自己的 `data-t`（键取 `COPY_FORMATS`，值＝该格式已序列化文本）；菜单项的
+ *    `data-action-id` **留空**（三颗逐字不同的 id 与「同次渲染内唯一」口径不合，见
+ *    `CopyButtonInput.formats` 注释）；`formats` 与 `text` 同给 → `bad-input`；
+ *    `formats` 缺某个格式／非字符串 → `bad-input`；`hints` 非三个串 → `bad-input`；
+ *    菜单的开合／点外收起／选中后按该项 `data-t` 复制并报所选格式 → 归 helpers 运行时的委派；
  *  - `renderStatusBadge` 的 `text === ''` → 视为缺省（旧层口径）；非法 `status` 降级 `'empty'`（冻结语义）；
  *  - `renderEmptyState` 的 `actionHtml` → **受信 HTML 透传**（契约同口径，调用方负责其内容安全），可含
  *    内联 `onclick`；「零注入面」只约束 base-paint **自产**标记，不约束调用方透传的受信片段；
@@ -51,6 +57,7 @@ import {
   ACTION_ID_ATTR,
   CONTROL_STYLE_SECTIONS,
   COPY_ACTION_IDS,
+  COPY_FORMATS,
   COPY_TEXT_DEFAULTS,
   DEFAULT_DATA_ATTR,
   ESCAPE_HTML_CHARS,
@@ -70,6 +77,7 @@ import type {
   CopyActionHostPort,
   CopyButtonInput,
   CopyChannel,
+  CopyFormatTexts,
   CopyPorts,
   CopyRuntime,
   CopyText,
@@ -619,6 +627,16 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '  var MOBILE_MAX_PX = ' + TOAST_DEFAULTS.mobileMaxPx + ';',
     '  var LF = String.fromCharCode(10);',
     '  var LF2 = LF + LF;',
+    // #247：复制数据的三格式形态（菜单开合器 ＋ 格式菜单项）。开合标记／格式键都是**属性**，
+    // 菜单容器、菜单项与按钮的共同父节点走类名——四者与渲染端（`copyMenuHtml`）逐字同值，
+    // 不产第二份真相。
+    '  var MENU_OPEN_SEL = ' + jsStr('[' + COPY_MENU_OPEN_ATTR + '="1"]') + ';',
+    '  var MENU_ITEM_SEL = ' + jsStr('[' + COPY_MENU_FMT_ATTR + ']') + ';',
+    '  var MENU_WRAP_CLASS = ' + jsStr(prefix + COPY_MENU_WRAP_CLASS) + ';',
+    '  var MENU_CLASS = ' + jsStr(prefix + COPY_MENU_CLASS) + ';',
+    '  var MENU_LABEL_CLASS = ' + jsStr(prefix + COPY_MENU_LABEL_CLASS) + ';',
+    '  var MENU_OPEN_CLASS = ' + jsStr(COPY_MENU_OPEN_CLASS) + ';',
+    '  var FORMAT_OK_MSG = ' + jsStr(COPY_FORMAT_OK_MSG) + ';',
     // #88 S4：HELP 速查台类名／选择器（同一命名空间，逐条由 `shellClass` 派生）
     '  var SHELL_SEL = ' + jsStr('.' + shellClass) + ';',
     '  var CARD_CLASS = ' + jsStr(shellPart('card')) + ';',
@@ -693,34 +711,94 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '      if (box && box.parentNode) box.parentNode.removeChild(box);',
     '      return;',
     '    }',
+    '    if (onMenuClick(node)) return;',
     '    var btn = node.closest("[" + ACTION_ATTR + "]");',
     '    if (!btn) return;',
+    // 点同一行另一颗复制按钮（复制日志／复制指令）时顺手收起菜单：与「点别处收起」同效，
+    // 且不影响它自己的复制（菜单与按钮是两个互不干扰的路径）。
+    '    var menuOpen = document.querySelector("." + MENU_OPEN_CLASS);',
+    '    if (menuOpen) closeMenu(menuOpen.parentNode);',
     '    var text = btn.getAttribute(TEXT_ATTR);',
     '    if (text === null) return;',
     '    copy(text, btn);',
     '  }',
     '',
-    '  function copy(text, btn) {',
+    '  /* #247：复制数据的三格式形态——按钮（`data-fmt-open`）只开合菜单，菜单项（`data-fmt`）各自带',
+    '     自己的 `data-t`。两条分支都排在复制委派**之前**：开合器**没有** `data-action-id`，故不会与',
+    '     复制委派抢同一次点击；菜单项走复制但**不用** id 反查（读被点击元素自己的属性，与 HELP 速查台',
+    '     逐行写同一冻结 id 的口径一致）。返回真＝本次点击已被菜单消费。 */',
+    '  function onMenuClick(node) {',
+    '    var opener = node.closest(MENU_OPEN_SEL);',
+    '    if (!opener) {',
+    '      /* 菜单项：处理完**直接返回**，不下落到复制委派——它没有 `data-action-id`，落下去只会空转。',
+    '         复制仍然走同一条 `copy()`（双通道 ＋ `copied` 态 ＋ 提示），只是多了「报所选格式」这一项。 */',
+    '      var item = node.closest(MENU_ITEM_SEL);',
+    '      if (item) {',
+    '        var itemText = item.getAttribute(TEXT_ATTR);',
+    '        var itemWrap = item.closest("." + MENU_WRAP_CLASS);',
+    '        if (itemWrap) closeMenu(itemWrap);',
+    '        var itemLabel = item.querySelector("." + MENU_LABEL_CLASS);',
+    '        copy(itemText, item, itemLabel ? itemLabel.textContent : "");',
+    '        return true;',
+    '      }',
+    '      /* 点别处收起（老仓 `document` 上那条「不在 .fmt-wrap 里就收起」的同效）：',
+    '         页面上最多只开一个菜单，故扫到开着的就收。 */',
+    '      var open = document.querySelector("." + MENU_OPEN_CLASS);',
+    '      if (open) closeMenu(open.parentNode);',
+    '      return false;',
+    '    }',
+    '    var wrap = opener.closest("." + MENU_WRAP_CLASS);',
+    '    if (!wrap) return true;',
+    '    var menu = wrap.querySelector("." + MENU_CLASS);',
+    '    if (menu) toggleMenu(opener, menu);',
+    '    return true;',
+    '  }',
+    '',
+    '  /* 开合：菜单是**浮层**（CSS 的 opacity 开合），故开时把它挪到按钮组之后（浮层覆盖下一行按钮，',
+    '     而不是去盖住上一行的正文）；`aria-expanded` 同步翻转；`+menu-open` 类翻当前可视态。 */',
+    '  function toggleMenu(opener, menu) {',
+    '    var open = hasClass(menu, MENU_OPEN_CLASS);',
+    '    if (open) {',
+    '      removeClass(menu, MENU_OPEN_CLASS);',
+    '      opener.setAttribute("aria-expanded", "false");',
+    '      return;',
+    '    }',
+    '    var wrap = menu.parentNode;',
+    '    if (wrap && wrap.parentNode) wrap.parentNode.insertBefore(wrap, menu.nextSibling);',
+    '    addClass(menu, MENU_OPEN_CLASS);',
+    '    opener.setAttribute("aria-expanded", "true");',
+    '  }',
+    '',
+    '  function closeMenu(wrap) {',
+    '    if (!wrap) return;',
+    '    var opener = wrap.querySelector(MENU_OPEN_SEL);',
+    '    var menu = wrap.querySelector("." + MENU_CLASS);',
+    '    if (!menu || !hasClass(menu, MENU_OPEN_CLASS)) return;',
+    '    removeClass(menu, MENU_OPEN_CLASS);',
+    '    if (opener) opener.setAttribute("aria-expanded", "false");',
+    '  }',
+    '',
+    '  function copy(text, btn, fmt) {',
     '    var clip = navigator.clipboard;',
     '    if (clip && typeof clip.writeText === "function") {',
     '      try {',
     '        var done = clip.writeText(text);',
     '        if (done && typeof done.then === "function") {',
-    '          done.then(function () { markCopied(btn); feedback(OK_MSG, false); }, function () { fallback(text, btn); });',
+    '          done.then(function () { markCopied(btn); feedback(OK_MSG, false, fmt); }, function () { fallback(text, btn, fmt); });',
     '          return;',
     '        }',
     '        markCopied(btn);',
-    '        feedback(OK_MSG, false);',
+    '        feedback(OK_MSG, false, fmt);',
     '        return;',
     '      } catch (err) {',
-    '        fallback(text, btn);',
+    '        fallback(text, btn, fmt);',
     '        return;',
     '      }',
     '    }',
-    '    fallback(text, btn);',
+    '    fallback(text, btn, fmt);',
     '  }',
     '',
-    '  function fallback(text, btn) {',
+    '  function fallback(text, btn, fmt) {',
     '    var sink = document.createElement("textarea");',
     '    sink.value = text;',
     '    sink.setAttribute("readonly", "readonly");',
@@ -733,7 +811,7 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    try { done = document.execCommand("copy"); } catch (err) { done = false; }',
     '    if (sink.parentNode) sink.parentNode.removeChild(sink);',
     '    if (done) markCopied(btn);',
-    '    feedback(done ? OK_MSG : FAIL_MSG, !done);',
+    '    feedback(done ? OK_MSG : FAIL_MSG, !done, fmt);',
     '  }',
     '',
     '  /* #121（H-16 双反馈的按钮通道）：成功态加 `copied` 类，450ms 后移除。',
@@ -745,7 +823,7 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    setTimeout(function () { removeClass(btn, COPIED_CLASS); }, COPIED_MS);',
     '  }',
     '',
-    '  function feedback(msg, bad) {',
+    '  function feedback(msg, bad, fmt) {',
     '    var cap = MAX_STACK;',
     '    if (window.matchMedia && window.matchMedia("(max-width: " + MOBILE_MAX_PX + "px)").matches) cap = MOBILE_MAX_STACK;',
     '    var host = document.querySelector("." + STACK_CLASS);',
@@ -778,7 +856,10 @@ export const buildSharedHelpersJs: BuildSharedHelpersJs = (input) => {
     '    titleRow.className = TITLE_ROW_CLASS;',
     '    var title = document.createElement("span");',
     '    title.className = TITLE_CLASS;',
-    '    title.textContent = msg;',
+    // #247：选了格式的那条**成功**提示报所选格式（「数据复制成功（纯文本／JSON／CSV）」）——格式名取
+    // 菜单项的标签文本（渲染期写死的那个键），不在运行时里另立一张中文表，选一个格式＝一个提示。
+    // **失败提示照旧**（`FAIL_MSG` ＋ ❌ ＋「失败」徽章）：失败与格式无关，别把它也套上格式名。
+    '    title.textContent = bad ? msg : (fmt ? FORMAT_OK_MSG + "（" + fmt + "）" : msg);',
     '    titleRow.appendChild(title);',
     // 5a（2026-09-12 用户裁定「UI 上要统一」）：失败态与静态产出器／老仓同形——红底「失败」徽章进标题行。
     '    if (bad) {',
@@ -1129,6 +1210,8 @@ interface NormalizedCopyButton {
   readonly label: string;
   readonly actionId: string;
   readonly text: string | undefined;
+  /** 三格式形态（#247）：给了就出「菜单开合器 ＋ 格式菜单」，`text` 恒缺。 */
+  readonly formats?: { readonly texts: readonly string[]; readonly hints: readonly string[] };
 }
 
 function normalizeButtons(buttons: ActionBarInput['buttons']): ActionBarButton[] {
@@ -1150,14 +1233,73 @@ function normalizeButtons(buttons: ActionBarInput['buttons']): ActionBarButton[]
   });
 }
 
+/** 菜单形态的标记属性（#247；运行时委派据它分辨「开合菜单的按钮」与「直接复制的按钮」）。
+ *  该按钮**不写** `data-action-id`：它不是复制目标、也不是复制动作——点击的效果是开合菜单。
+ *  `CopyActionHostPort.listActionIds()` 与 `bindCopyAction` 因此天然不碰它（无需为此改冻结签名）。 */
+const COPY_MENU_OPEN_ATTR = 'data-fmt-open';
+/** 菜单项的**格式键**承载属性（三格式形态里唯一分辨三项的东西——值取 `COPY_FORMATS`）。
+ *  与老仓逐字同名：老仓 `.fmt-item` 就是靠 `data-fmt` 分辨纯文本／JSON／CSV。 */
+const COPY_MENU_FMT_ATTR = 'data-fmt';
+/** 格式菜单容器与按钮的共同父节点类名（运行时据**最近的这个父节点**开合／收起菜单）。 */
+const COPY_MENU_WRAP_CLASS = 'copy-menu-wrap';
+/** 菜单容器自身的类名（浮动那一层）。 */
+const COPY_MENU_CLASS = 'copy-menu';
+/** 菜单项的类名。 */
+const COPY_MENU_ITEM_CLASS = 'copy-menu-item';
+/** 菜单项**标签**文本的类名（`data-fmt` 只放格式键；标签是格式键本身，如 `json`）。 */
+const COPY_MENU_LABEL_CLASS = 'copy-menu-label';
+/** 菜单项**用途提示**（老仓原样：`粘贴给 AI / 自己看`／`结构化存档`／`表格导入`）的类名。
+ *  老仓靠 `.fmt-item span`（后代选择器）收这行灰小字；本仓**显式给类名**——一是不用后代选择器
+ *  把标签也一并染成 11px 灰（`.copy-menu-item span` 会连窗口里两个 span 一起命中），
+ *  二是 CSS 里每个类名都要指得出产出者（`style.test.mjs` T10）。 */
+const COPY_MENU_HINT_CLASS = 'copy-menu-hint';
+/** 菜单**开着**时加在容器上的类（`opacity` / `visibility` 的开合开关；`aria-expanded` 同步）。 */
+const COPY_MENU_OPEN_CLASS = 'copy-menu-open';
+/** 选中某个格式后的成功提示词干（老仓 `.fmt-menu` 那张菜单当年报的是「…数据复制成功(格式)」；
+ *  本仓句头沿用既有「已复制」以外的**独立**一句，避免与单格式提示混同。格式名由运行时从菜单项标签读回，
+ *  不在运行时另立一张中文表——`COPY_FORMATS` 的键就是标签）。 */
+const COPY_FORMAT_OK_MSG = '数据复制成功';
+
+/** 三格式形态的校验 ＋ 归一（#247）：与 `text` 互斥；三格式恒齐、值恒为串；`hints` 恒三串。 */
+function normalizeFormats(
+  formats: CopyFormatTexts | undefined,
+  field: string,
+  hasText: boolean,
+): { readonly texts: readonly string[]; readonly hints: readonly string[] } | undefined {
+  if (formats === undefined || formats === null) return undefined;
+  assertPlainObject(formats, 'renderActionBar: input.' + field + '.formats');
+  if (hasText) badInput('renderActionBar: input.' + field + '.formats 与 .text 只能给一个');
+  const texts: string[] = [];
+  for (const key of COPY_FORMATS) {
+    const value: unknown = (formats as unknown as Record<string, unknown>)[key];
+    if (typeof value !== 'string') badInput('renderActionBar: input.' + field + '.formats.' + key + ' 必须是字符串');
+    texts.push(value);
+  }
+  const rawHints: unknown = formats.hints;
+  if (rawHints === undefined || rawHints === null) return { texts, hints: [] };
+  if (!Array.isArray(rawHints) || rawHints.length !== COPY_FORMATS.length) {
+    badInput('renderActionBar: input.' + field + '.formats.hints 必须是 ' + COPY_FORMATS.length + ' 个字符串');
+  }
+  const hints: string[] = [];
+  for (const hint of rawHints as readonly unknown[]) {
+    if (typeof hint !== 'string') badInput('renderActionBar: input.' + field + '.formats.hints 必须是字符串');
+    hints.push(hint);
+  }
+  return { texts, hints };
+}
+
 function normalizeCopyButton(input: CopyButtonInput | undefined, fallbackLabel: string, field: string): NormalizedCopyButton | null {
   if (input === undefined || input === null) return null;
   assertPlainObject(input, 'renderActionBar: input.' + field);
   assertNoInlineHandler(input, 'renderActionBar: input.' + field);
+  const button = input as CopyButtonInput;
+  const formats = normalizeFormats(button.formats, field, typeof button.text === 'string');
   return {
-    label: typeof input.label === 'string' && input.label !== '' ? input.label : fallbackLabel,
-    actionId: assertActionId(input.actionId, 'renderActionBar: input.' + field + '.actionId'),
-    text: typeof input.text === 'string' ? input.text : undefined,
+    label: typeof button.label === 'string' && button.label !== '' ? button.label : fallbackLabel,
+    actionId: assertActionId(button.actionId, 'renderActionBar: input.' + field + '.actionId'),
+    text: typeof button.text === 'string' ? button.text : undefined,
+    // 三格式形态的按钮是**菜单开合器**，不是复制目标：`data-t` 恒缺（点了不直接复制）。
+    ...(formats === undefined ? {} : { formats }),
   };
 }
 
@@ -1170,6 +1312,36 @@ function copyButtonHtml(button: NormalizedCopyButton): string {
   const textAttr = button.text === undefined ? '' : ' ' + DEFAULT_DATA_ATTR + '="' + esc(button.text) + '"';
   return '<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost" '
     + ACTION_ID_ATTR + '="' + esc(button.actionId) + '"' + textAttr + '>' + esc(button.label) + '</button>';
+}
+
+/** 复制数据的**三格式形态**（#247）：`<div class="ilife-copy-menu-wrap">` 里一颗开合器 ＋ 一个菜单。
+ *
+ *  按钮：`data-fmt-open` 是**开合标记**（不是 `data-action-id`——见 `COPY_MENU_OPEN_ATTR` 注释），
+ *  带 `aria-haspopup`／`aria-expanded`（`aria-expanded` 由运行时翻转）；
+ *  菜单：三个格式项，每项 `data-fmt="键"`（键取 `COPY_FORMATS`）＋ 自己的 `data-t`（该格式文本），
+ *  标签与用途提示取 `formats.hints`（对应位）。零内联脚本：开合与选中一律归 helpers 运行时的委派。
+ *  菜单容器**不加 `hidden`**：它是浮层，用 CSS 的 `opacity` 开合（`hidden` 的 `display:none` 会让浏览器
+ *  把 `opacity` 过渡整个跳过，且开合时重排整页——手机档上会看到内容跳一下）。 */
+function copyMenuHtml(button: NormalizedCopyButton, formats: { readonly texts: readonly string[]; readonly hints: readonly string[] }): string {
+  const openLabel = button.label + ' ▾';
+  const items: string[] = [];
+  for (let i = 0; i < COPY_FORMATS.length; i += 1) {
+    const key = COPY_FORMATS[i] as string;
+    const hint = formats.hints[i];
+    const hintHtml = hint === undefined || hint === '' ? '' : '<span class="' + STYLE_PREFIX + COPY_MENU_HINT_CLASS + '">' + esc(hint) + '</span>';
+    items.push('<button type="button" class="' + STYLE_PREFIX + COPY_MENU_ITEM_CLASS + '" ' + COPY_MENU_FMT_ATTR + '="' + esc(key) + '" '
+      + DEFAULT_DATA_ATTR + '="' + esc(formats.texts[i] as string) + '">'
+      + '<span class="' + STYLE_PREFIX + COPY_MENU_LABEL_CLASS + '">' + esc(key) + '</span>' + hintHtml + '</button>');
+  }
+  const opener = '<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost" '
+    + COPY_MENU_OPEN_ATTR + '="1" aria-haspopup="menu" aria-expanded="false">' + esc(openLabel) + '</button>';
+  return '<div class="' + STYLE_PREFIX + COPY_MENU_WRAP_CLASS + '">' + opener
+    + '<div class="' + STYLE_PREFIX + COPY_MENU_CLASS + '" role="menu">' + items.join('') + '</div></div>';
+}
+
+/** 一颗复制按钮：单格式＝普通按钮（`actionId` ＋ 可选 `data-t`）；三格式＝菜单形态（见 `copyMenuHtml`）。 */
+function copyControlHtml(button: NormalizedCopyButton): string {
+  return button.formats === undefined ? copyButtonHtml(button) : copyMenuHtml(button, button.formats);
 }
 
 /** 冻结签名：`renderActionBar(input: ActionBarInput): string`。
@@ -1198,7 +1370,7 @@ export const renderActionBar: RenderActionBar = (input) => {
   }
 
   const sceneHtml = buttons.map(sceneButtonHtml).join('');
-  const ghostHtml = [copyData, copyLog].filter((copy): copy is NormalizedCopyButton => copy !== null).map(copyButtonHtml).join('');
+  const ghostHtml = [copyData, copyLog].filter((copy): copy is NormalizedCopyButton => copy !== null).map(copyControlHtml).join('');
   const rowClass = STYLE_PREFIX + 'action-row';
   const ghostRowClass = rowClass + ' ' + STYLE_PREFIX + 'action-row-ghost';
   const rows: string[] = [];

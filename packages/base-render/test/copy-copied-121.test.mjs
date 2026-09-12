@@ -247,7 +247,7 @@ describe('#121 产出面（静态）', () => {
     // 定义 1 处 ＋ 调用 3 处（clipboard promise 回调／clipboard 同步返回／execCommand 兜底为真）
     assert.equal((HELPERS.match(/markCopied\(/g) ?? []).length, 4,
       'markCopied 必须恰好 1 处定义 ＋ 3 处调用（三条成功出口）');
-    assert.ok(/\.then\(function \(\) \{ markCopied\(btn\); feedback\(OK_MSG, false\); \}/.test(HELPERS),
+    assert.ok(/\.then\(function \(\) \{ markCopied\(btn\); feedback\(OK_MSG, false, fmt\); \}/.test(HELPERS),
       '通道 1（clipboard）resolve 回调必须先 markCopied 再出成功反馈');
     assert.ok(/if \(done\) markCopied\(btn\);/.test(HELPERS),
       '通道 2（execCommand 兜底）必须仅在 done 为真时 markCopied');

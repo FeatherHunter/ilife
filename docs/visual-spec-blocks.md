@@ -147,13 +147,17 @@
 
 ### B-11 复制区
 
-- **类名命名空间**：`ilife-action-bar`／`ilife-action-row`／`ilife-copy-btn`（引用 §3 `STYLE_PREFIX` ＋ `CONTROL_STYLE_SECTIONS` 的 `actionBar`／`copyButton`）。
+- **类名命名空间**：`ilife-action-bar`／`ilife-action-row`／`ilife-copy-btn`／`ilife-copy-menu-wrap`／`ilife-copy-menu`／`ilife-copy-menu-item`／`ilife-copy-menu-label`／`ilife-copy-menu-hint`（引用 §3 `STYLE_PREFIX` ＋ `CONTROL_STYLE_SECTIONS` 的 `actionBar`／`copyButton` 两区；菜单与按钮**同属 `copyButton` 区**，不新增第 9 个区）。
 - **必需属性**：每个复制按钮**必带** `ACTION_ID_ATTR`（`data-action-id`）与文本属性 `DEFAULT_DATA_ATTR`（`data-t`）——两者是**两个不同属性**，不得混用（§3 注释）；actionId 取 `COPY_ACTION_IDS.actionBar`（复制数据／日志）或 HELP 三目标 `HELP_COPY_ACTIONS`（§3）。
+  **三格式形态的例外（#247，2026-09-12 用户裁定「取老仓原样」）**：`CopyButtonInput.formats` 给了就出菜单——开合器按钮**两个属性都不带**（挂 `data-fmt-open="1"` 作开合标记，点击的效果是开合菜单），菜单三项各带 `data-fmt="<键>"`（键取 `COPY_FORMATS`）＋ 自己的 `data-t`（该格式已序列化文本），`data-action-id` **留空**。理由与唯一性口径见 `docs/base-paint-contract.md` §3.3「三格式菜单的例外」。
 - **数值规格**：按钮最小高度、字号、字重、ghost 描边透明度取 `ACTION_BAR_DEFAULTS`（§3，**不复述**）；ghost 按钮独立成行。
+  **菜单（#247，逐值取老仓 `.fmt-menu`）**：浮层 `bottom:calc(100% + 8px); right:0; min-width:200px; max-width:calc(100vw - 32px); padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.14)`；圆角 **14px**（老仓 12px，见下「偏离」）；项 `padding:10px 12px; border-radius:8px; font-size:13px`、hover 取 `--soft`；用途提示 `11px` ＋ `--fg3`。**窄屏（≤820px）菜单项抬到 44px、菜单改视口定位**（`position:fixed; left:16px; right:16px`）——老仓那句「右对齐视口内,手机不超界」的落法。
 - **状态**：成功 → `.copied` 态 ＋ 成功文案（取 `COPY_TEXT_DEFAULTS`，§3）；失败 → 失败文案恒在（不可静默）；空文本 → 短路不复制。
-- **证据**：`packages/base-render/src/spec/controls.ts:74-82,97,112-115,158,254-285,649-695`；`docs/base-paint-contract.md:837-846`。
-- **可断言形式**：每个按钮同时含 `data-action-id` 与 `data-t`；`listActionIds()` 能发现全部 id；空文本时 `copyText` 返回 `ok:false` 且不写剪贴板。
-- **裁定**：已定（编排者 R35）——两个属性分工不混用；HELP 页不保留「复制全部」胶囊（D-8），本区块的「复制数据／复制日志」仍按冻结 `COPY_ACTION_IDS.actionBar`。
+  **菜单三态（#247）**：关着＝`opacity:0; visibility:hidden; pointer-events:none`（看不见也点不到）；开着＝加运行时类 `copy-menu-open`（裸类名，同 #121 的 `copied` 口径）＋ `aria-expanded="true"`；选中某项＝复制该格式文本 ＋ 提示「数据复制成功（格式）」＋ 菜单收起。**失败提示不套格式名**（失败与格式无关）。
+- **偏离 1 处（记账）**：菜单圆角 `14px`（老仓 12px）——#89 R-9 的 H-10 把全部非图表 CSS 的 `border-radius` 钉在 `{8px,14px,20px,999px,50%}`，12px 越出该闭集；14px 是本仓既有卡片圆角（toast 同值），几何其余逐值不动。
+- **证据**：`packages/base-render/src/spec/controls.ts:74-82,97,112-115,158,254-285,649-695`；`packages/base-render/test/copy-format-menu-247.test.mjs`（#247 产出面 S1–S8 ＋ 行为面 B1–B6）；`docs/base-paint-contract.md:837-846`；老仓实物 `卡路里/templates/crud_receipt.html` 的可点版本 `2262fee1~1`。
+- **可断言形式**：每个按钮同时含 `data-action-id` 与 `data-t`（三格式形态下改为：开合器含 `data-fmt-open`、菜单项含 `data-fmt` 与各自的 `data-t`，两者都不含 `data-action-id`）；`listActionIds()` 能发现全部 id；空文本时 `copyText` 返回 `ok:false` 且不写剪贴板。
+- **裁定**：已定（编排者 R35）——两个属性分工不混用；HELP 页不保留「复制全部」胶囊（D-8），本区块的「复制数据／复制日志」仍按冻结 `COPY_ACTION_IDS.actionBar`。**2026-09-12 用户裁定「复制数据恢复老仓三格式三选一」**（票 #247），本区块新增上述菜单形态与上述 1 处记账偏离。
 
 ### B-12 反馈区（toast ＋ 错误回执）
 

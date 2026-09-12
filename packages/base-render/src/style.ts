@@ -408,6 +408,104 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '    min-height: 44px;',
     '  }',
     '}',
+    // ── 复制数据的三格式菜单（#247，2026-09-12 用户裁定「恢复老仓原样」）───────────────
+    // 逐值取自老仓 `卡路里/templates/crud_receipt.html`（可点版本 `2262fee1~1`）的 `.fmt-menu`／
+    // `.fmt-item`／`.fmt-item:hover`／`.fmt-item span` 四串；老仓的 `--border`／`--soft` 分别
+    // 对到本仓的 `--line`／`--soft`。**复用本区命名空间**（`CONTROL_STYLE_SECTIONS` 是冻结闭集，
+    // 不新增第 9 个区）；类名不对 `copy-btn` 用前缀相似的名字（`.copy-menu-btn` 会被
+    // `.copy-btn` 的规则一并命中，多出一圈胶囊底），故开合器只带 `copy-btn copy-btn-ghost` 两颗类。
+    // **偏离 1 处（记账）**：菜单圆角取 **14px**（老仓是 12px）——#89 R-9 的 H-10 把
+    // 全部非图表 CSS 的 `border-radius` 钉在 `{8px,14px,20px,999px,50%}`，12px 会让你越出闭集；
+    // 14px 是本仓既有卡片圆角（toast 同值），几何其余逐值不动（`bottom`／`right`／`min-width`／
+    // `max-width`／`padding`／投影／项内距与字号全取老仓）。
+    '.' + p + 'copy-menu-wrap {',
+    // 宽度必须**贴身**：本层落在 `.action-row` 的**网格轨道**里，网格项默认 `justify-self: stretch`
+    // → 会被撑满整条轨道，菜单的 `right: 0` 就贴到整行右端（离按钮远远的）。故显式 `start`。
+    // （`display` 只能写 `flex`：网格项会被块化，`inline-flex` 也算成 `flex`——别指望它贴身。）
+    '  position: relative;',
+    '  display: flex;',
+    '  justify-self: start;',
+    '  align-items: center;',
+    '  max-width: 100%;',
+    '}',
+    '.' + p + 'copy-menu {',
+    '  position: absolute;',
+    '  bottom: calc(100% + 8px);',
+    '  right: 0;',
+    '  z-index: 20;',
+    '  min-width: 200px;',
+    // 浮层开合走 opacity（不是 `display`／`hidden`）：一是 CSS 过渡不被跳过，二是开合不重排整页。
+    // 关着时同时收掉命中，免得看不见的菜单项还能被点到；`visibility` 可过渡 ⇒ 收起仍有淡出。
+    '  box-sizing: border-box;',
+    '  max-width: calc(100vw - 32px);',
+    '  padding: 6px;',
+    '  border: 1px solid var(--line);',
+    '  border-radius: 14px;',
+    '  background: var(--card);',
+    '  box-shadow: 0 8px 24px rgba(0, 0, 0, .14);',
+    '  opacity: 0;',
+    '  visibility: hidden;',
+    '  pointer-events: none;',
+    '  transition: opacity .16s ease-out, visibility .16s ease-out;',
+    '}',
+    // 开着的那条：`copy-menu-open` 是**运行时**加的类（与 #121 的 `copied` 同口径——类名不加
+    // `ilife-` 前缀，故不占样式区命名空间，也不作为 `ilife-` 类名进跨文件检查）；选择器把裸类
+    // 排在**前**面，这样从 CSS 里扫出来的 `ilife-` 类名仍只有 `ilife-copy-menu`（T10 ② 认得出产出者）。
+    '.copy-menu-open.' + p + 'copy-menu {',
+    '  opacity: 1;',
+    '  visibility: visible;',
+    '  pointer-events: auto;',
+    '}',
+    '.' + p + 'copy-menu-item {',
+    '  display: flex;',
+    '  justify-content: space-between;',
+    '  gap: 14px;',
+    '  width: 100%;',
+    '  padding: 10px 12px;',
+    '  border: none;',
+    '  border-radius: 8px;',
+    '  background: none;',
+    '  color: var(--fg);',
+    '  font-family: inherit;',
+    '  font-size: 13px;',
+    '  text-align: left;',
+    '  cursor: pointer;',
+    '}',
+    '.' + p + 'copy-menu-item:hover {',
+    '  background: var(--soft);',
+    '}',
+    // 标签（格式键）：显式一条——省得继承菜单项的既有值，也让「CSS 里每个类名都有产出者、
+    // 每个产出类名都有 CSS」这条跨文件检查两面都成立（`style.test.mjs` T10）。
+    '.' + p + 'copy-menu-item > .' + p + 'copy-menu-label {',
+    '  color: var(--fg);',
+    '  font-size: 13px;',
+    '}',
+    // 用途提示：老仓是 `.fmt-item span`（后代选择器，两项 span 都染 11px 灰）；本仓显式给类名，
+    // 标签那半仍取 13px／`--fg`（上一条）。选择器用 `>` ——本仓跨文件交叉检查按**整段选择器**比对。
+    '.' + p + 'copy-menu-item > .' + p + 'copy-menu-hint {',
+    '  color: var(--fg3);',
+    '  font-size: 11px;',
+    '  white-space: nowrap;',
+    '}',
+    // #179 触控目标：窄屏菜单项抬到 44px（与复制按钮同一口径；老仓 `.fmt-item` 是 36px 上下）。
+    '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',
+    '  .' + p + 'copy-menu-item {',
+    '    min-height: 44px;',
+    '  }',
+    // 窄屏改**视口定位**（老仓那句「右对齐视口内,手机不超界」的落法）：`right:0` 贴着按钮算，
+    // 按钮一旦靠左（宽档模板把按钮组压到 max-width:520 并由 margin:auto 居中，窄屏同理靠左），
+    // 200px 的菜单就有一半越到屏幕左外——那时既点不到也看不到。改成「左右各留 16px、贴底一行」
+    // 就恒在视口内（`left/right` 同给 ＋ `min-width:auto` 让宽度随视口），且不参与页面排布
+    // （`fixed` 从常规流里拿掉），开合不重排整页。
+    '  .' + p + 'copy-menu {',
+    '    position: fixed;',
+    '    left: 16px;',
+    '    right: 16px;',
+    '    bottom: calc(16px + env(safe-area-inset-bottom, 0px));',
+    '    min-width: 0;',
+    '    max-width: none;',
+    '  }',
+    '}',
     focusRing('.' + p + 'copy-btn'),
   ].join(LF),
 

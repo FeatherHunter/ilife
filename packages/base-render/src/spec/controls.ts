@@ -262,6 +262,25 @@ export interface CopyButtonInput {
   /** 渲染期已序列化的文本（走 buildDataText／buildLogText），存 `data-t`，零注入面。 */
   readonly text?: string;
   readonly format?: CopyFormat;
+  /** **三格式形态**（#247）：给了就出「按钮 ＋ 格式选择菜单」——按钮只开合菜单、**不写** `data-t`
+   *  （点了不该直接复制），菜单里每个格式项各带自己的 `data-t`（键＝`COPY_FORMATS` 成员，
+   *  值＝该格式已序列化文本）。菜单项的 `data-action-id` **留空**：三颗逐字不同的 id 会撞
+   *  `CONTROLS_ERROR_CODES` 的「同次渲染内唯一」口径，而 `listActionIds()` 允许含重复
+   *  （契约 §3.3 FX-17②），故三项共用按钮那颗 `actionId`，靠 `data-t` 分辨——
+   *  与 HELP 速查台逐行写同一冻结 id 同一口径（§3.5.3；记账见 `docs/base-paint-contract.md` §3.3）。
+   *  与 `text` 互斥：同给 → 抛 `ControlsError` code `bad-input`。 */
+  readonly formats?: CopyFormatTexts;
+}
+
+/** 复制数据的三格式形态（#247）：三个格式各自**渲染期已序列化**的文本（值经 `data-t` 进页面）。
+ *  只在与 `CopyButtonInput.text` 二选一时出现，故字段不设可选位——三个格式恒齐（`COPY_FORMATS`）。 */
+export interface CopyFormatTexts {
+  readonly text: string;
+  readonly json: string;
+  readonly csv: string;
+  /** 每个格式项右侧的用途提示（老仓原样：`粘贴给 AI / 自己看`／`结构化存档`／`表格导入`）。
+   *  **给人看的字**不落渲染层：调用方不给就不出提示行（同 `DataTextInput` 的 title／note 口径）。 */
+  readonly hints?: readonly [string, string, string] | readonly string[];
 }
 
 export interface ActionBarInput {

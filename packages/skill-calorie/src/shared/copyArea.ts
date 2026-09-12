@@ -17,6 +17,12 @@
  * `copyArea`／`copyLog`／`notice`（#239 新增）。入参类型不导出——调用方传字面量即可
  * （同 `docPage.ts` 的 `DocPageInput`）。
  *
+ * **#247（2026-09-12 用户裁定「恢复老仓原样」）**：`copyArea` 的 `data` 位增「三格式」开关
+ * （`dataFormats`，缺省关＝逐字节不变；**场景 07 五张页先开**）：开了之后复制数据那颗按钮
+ * 变成「复制数据 ▾ ＋ 纯文本／JSON／CSV 三选一菜单」，选中即复制并按所选格式报提示。
+ * 菜单的样式与形态全在 base-render（`copyButton` 样式区 ＋ `renderActionBar` 的三格式分支 ＋
+ * 页面运行时的菜单委派），本件只把三种格式**序列化好**递进去——序列化仍是 #77 的唯一出口。
+ *
  * **今天有调用方的是前 4 个**：`promptCopyArea`／`dataCopyArea` 与场景 07 五张页用的
  * `copyArea`／`copyLog`。`notice` 还没有调用方（场景 07 四张页的反馈面已由页面运行时自带）——
  * 它是整批按域接线与 #238 返修时的提示出口，见 `docs/skills/skill-calorie/t239-delivery.md`。
@@ -34,7 +40,11 @@ const LOG_EXCEPTION = '无';
 /** 复制区空态缺省句（三样全没给时出这一句、不出按钮——点了没反应的死按钮就是问题）。 */
 const COPY_EMPTY_TEXT = '本页没有可复制的数据';
 
-/** `copyArea` 的 5 个可填位：给了什么出什么，0–3 颗按钮。 */
+/** 三格式菜单里三项的用途提示（**逐字取老仓** `卡路里/templates/crud_receipt.html` 的 `.fmt-menu`
+ *  三行：纯文本「粘贴给 AI / 自己看」／JSON「结构化存档」／CSV「表格导入」）。顺序＝`COPY_FORMATS`。 */
+const MENU_HINTS: readonly string[] = ['粘贴给 AI / 自己看', '结构化存档', '表格导入'];
+
+/** `copyArea` 的 6 个可填位：给了什么出什么，0–3 颗按钮。 */
 interface CopyAreaInput {
   /** 区块标题；不给＝不出标题（同 `renderCopyBlock` 口径）。 */
   readonly title?: string;
@@ -42,6 +52,12 @@ interface CopyAreaInput {
   readonly prompt?: string;
   /** 给了就出「复制数据」，内部走 `buildDataText`。 */
   readonly data?: DataTextInput;
+  /** **三格式形态**（#247，2026-09-12 用户裁定「取老仓原样」）：**开在 `data` 上**——给了它就出
+   *  「复制数据 ▾ ＋ 三选一菜单」（纯文本／JSON／CSV，选中即复制并报所选格式）；不给则照旧单格式。
+   *  `true` ＝ 用老仓原样的用途提示；给对象则用它的 `hints`（不给也回落老仓原样）。
+   *  序列化仍走 `buildDataText`（#77）：本件把三种格式各算一份递进去，不另立序列化口径。
+   *  **`data` 位必须同时给**（菜单是「复制数据」那颗按钮的形态，没有数据就没有可复制的东西）。 */
+  readonly dataFormats?: { readonly hints?: readonly string[] } | true;
   /** 给了就出「复制日志」，内部走 `buildLogText`。 */
   readonly log?: LogTextInput;
   /** 三样全没给时的那句话（缺省也有一句，见 `COPY_EMPTY_TEXT`）。 */
@@ -83,6 +99,7 @@ export function promptCopyArea(prompt: string): string {
  *
  *  `copyArea({ title, data })` 与 `dataCopyArea(title, data)` 产物**逐字相同**——其余 46 张页
  *  可以机械替换、字节不动（`test/copy-component-179.test.mjs` 钉住这条）。
+ *  `dataFormats` 走**三格式形态**（#247）：三种格式各序列化一次，交给 `renderCopyBlock` 出菜单。
  *  只给 prompt 时不再补空态：prompt 区自己就有可复制的内容。 */
 export function copyArea(input: CopyAreaInput): string {
   const data = input.data;
@@ -92,7 +109,9 @@ export function copyArea(input: CopyAreaInput): string {
   if (data !== undefined || log !== undefined) {
     parts.push(renderCopyBlock({
       ...(input.title === undefined ? {} : { title: input.title }),
-      ...(data === undefined ? {} : { dataText: buildDataText(data) }),
+      ...(data === undefined ? {} : input.dataFormats === undefined
+        ? { dataText: buildDataText(data) }
+        : { dataFormats: formatsOf(data, input.dataFormats) }),
       ...(log === undefined ? {} : { logText: buildLogText(log) }),
     }));
     return parts.join('');
@@ -102,6 +121,24 @@ export function copyArea(input: CopyAreaInput): string {
     ...(input.title === undefined ? {} : { title: input.title }),
     text: input.emptyText ?? COPY_EMPTY_TEXT,
   });
+}
+
+/** 三格式形态的入参（#247）：`data` 位的那份数据 → 三种格式各算一份 ＋ 菜单提示。
+ *  `menu === true` 取老仓原样提示；给对象则用它的 `hints`（不给也回落老仓原样）。
+ *  格式是 `DataTextInput.format` 字段（#77 冻结签名的形状），不是第二个实参。 */
+function formatsOf(data: DataTextInput, menu: { readonly hints?: readonly string[] } | true): {
+  readonly text: string;
+  readonly json: string;
+  readonly csv: string;
+  readonly hints: readonly string[];
+} {
+  const hints = menu === true ? MENU_HINTS : menu.hints ?? MENU_HINTS;
+  return {
+    text: buildDataText({ ...data, format: 'text' }),
+    json: buildDataText({ ...data, format: 'json' }),
+    csv: buildDataText({ ...data, format: 'csv' }),
+    hints,
+  };
 }
 
 /** ③ 复制数据区：`copyArea` 的薄转发（50 处调用点仍走这个名字，产物不变）。 */

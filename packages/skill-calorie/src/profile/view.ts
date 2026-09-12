@@ -101,6 +101,8 @@ export function buildProfileViewDoc(v: ProfileView): string {
     copyArea({
       title: '复制数据',
       data: { envelope },
+      // #247：查档案结果页先开三格式菜单（场景 07 五张页之一）。
+      dataFormats: true,
       log: {
         envelope,
         copyLog: copyLog({

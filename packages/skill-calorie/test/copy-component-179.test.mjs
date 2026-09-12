@@ -77,6 +77,42 @@ test('#239 ③ 三样全不给＝出空态一句话、不出按钮', () => {
   assert.equal(copyArea({ prompt: 'P' }), promptCopyArea('P'));
 });
 
+test('#247 ④ 三格式开关：缺省关＝单格式逐字节不变；开了＝菜单；三样全不给时仍不出按钮', () => {
+  // ① 缺省关（**这条是 46 张页不破的判据**）：与 #247 之前逐字节相同。
+  assert.equal(copyArea({ title: '复制数据', data: DATA }), dataCopyArea('复制数据', DATA), '缺省关的产出变了');
+  assert.equal(copyArea({ title: '复制数据', data: DATA }).includes('data-fmt'), false, '缺省关不得出菜单');
+
+  // ② 开了：三种格式各一份文本，各自的 data-t 互不相同；按钮是开合器（不带 data-t）。
+  const html = copyArea({ title: '复制数据', data: DATA, dataFormats: true, log: LOG });
+  assert.deepEqual([...html.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
+    '菜单不是纯文本／JSON／CSV 三项');
+  const texts = [...html.matchAll(/data-fmt="([^"]+)"[^>]*\sdata-t="([^"]*)"/g)].map((m) => [m[1], m[2]]);
+  assert.deepEqual(texts, [
+    ['text', buildDataText({ ...DATA, format: 'text' }).replace(/&/g, '&amp;').replace(/"/g, '&quot;')],
+    ['json', buildDataText({ ...DATA, format: 'json' }).replace(/&/g, '&amp;').replace(/"/g, '&quot;')],
+    ['csv', buildDataText({ ...DATA, format: 'csv' }).replace(/&/g, '&amp;').replace(/"/g, '&quot;')],
+  ], '三项各自的 data-t 不是该格式 buildDataText 的投影');
+  assert.equal(new Set(texts.map((t) => t[1])).size, 3, '三份文本居然有重复');
+  assert.ok(html.includes('data-fmt-open="1"'), '缺菜单开合器');
+  assert.equal(/data-fmt-open="1"[^>]*\sdata-t=/.test(html), false, '开合器不得带 data-t');
+  assert.deepEqual([...html.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]), ['ilife-copy-log'],
+    '数据那颗已并入菜单，页内只剩复制日志一颗 data-action-id');
+
+  // ③ 用途提示：缺省取老仓原样三项（`hints` 可覆盖；不给自己另立一份中文表）。
+  for (const hint of ['粘贴给 AI / 自己看', '结构化存档', '表格导入']) {
+    assert.ok(html.includes(hint), '缺老仓原样的用途提示：' + hint);
+  }
+  const custom = copyArea({ title: '复制数据', data: DATA, dataFormats: { hints: ['甲', '乙', '丙'] } });
+  assert.ok(custom.includes('>甲</span>') && custom.includes('>丙</span>'), '调用方给的 hints 没生效');
+  assert.equal(custom.includes('结构化存档'), false, '给了 hints 就该只用自己的那三条');
+
+  // ④ `dataFormats` 是**开在 `data` 上**的形态开关：没给 data 就与「什么都没给」同口径——
+  //    一句空态、不出死按钮（不会凭空出一颗没有文本的按钮）。
+  const noData = copyArea({ title: '复制数据', dataFormats: true });
+  assert.ok(noData.includes('本页没有可复制的数据'), '没给数据就该说一句');
+  assert.equal(noData.includes('<button'), false, '没给数据不得出按钮');
+});
+
 test('#239 日志六段：场景标识／思考链／数据结构／调用链（命令＋M5 行）／时间戳版本／异常', () => {
   const text = buildLogText({ envelope: ENVELOPE, copyLog: LOG.copyLog });
   assert.ok(text.includes('calorie.calorie.view.profile（stat）'), '第 1 段不是 envelope 派生的场景标识');
