@@ -16,8 +16,8 @@
 
 | 件 | LF | 结论 |
 |---|---|---|
-| `src/cli/cmd_read.ts` | 428 | 已超线（一个文件装全部命令分派 ＋ argv 解析 ＋ envelope 打印 ＋ #215 的 HELP 交付装配）；拆法＝按域拆分派，属「整包按域重排」那张图外的票，见 `docs/skills/skill-chef/t236-structure-design.md:211`。读数沿革：#214 实测 388 → #215 抬 help 分支 ＋ 接交付后 **437**（净增 49：import 面 6 行、`dispatchHelp` 26 行、main 接线 9 行、exit 5 归类 3 行、注释与判据 5 行）→ **#245 接复用窗口后 428**（净减 9：手写的「小时→毫秒＋正数校验」三行换成共用件 `reuseWindowOfHours` ＋ 一层 4 行的 `helpWindowOrFail`，注释段重写）；#215 定的口径是「只搬一处分支、净增控制在最小」，故**这两票都不拆**，只记 |
+| `src/cli/cmd_read.ts` | 443 | 已超线（一个文件装全部命令分派 ＋ argv 解析 ＋ envelope 打印 ＋ #215 的 HELP 交付装配）；拆法＝按域拆分派，属「整包按域重排」那张图外的票，见 `docs/skills/skill-chef/t236-structure-design.md:211`。读数沿革：#214 实测 388 → #215 抬 help 分支 ＋ 接交付后 **437**（净增 49）→ **#245 接复用窗口后 443**（手写的「小时→毫秒＋正数校验」三行换成共用件 `reuseWindowOfHours` ＋ `helpWindowOrFail` 一层，注释段重写；净增 6）。⚠️ **此数按提交树实测**（`git show <commit>:<file>` 数 LF）：#245 首版表里写 428 是**迁移前的工作区读数**，同一轮里他会话的改动让提交树成了 443——**记读数一律以提交树为准**，别拿工作区当时的值。拆法同前：#215／#245 两票都不拆，只记 |
 | `src/fetch/db.ts` | 451 | 已超线（建库 ＋ 迁移 ＋ 全部查询混在一处）；拆法同上，见 `t236-structure-design.md:212`。**#215／#245 均未碰它**（HELP 全程在开库之前分派） |
 | `scripts/gen-help-assets.mjs` | 436 | 已超线（420 是 #213 交付时的读数；#214 只改其中两处注释 ＋ 一个常量，净增 16）。一个一次性生成器：十域表／组→域归属／字段映射 ＋ 三把摘要锁 ＋ 双向对账全在一份脚本里；拆法＝把「声明表」「断言」「渲染」三段拆成 `scripts/help-assets/` 下三件。**#214／#215／#245 都不拆**，只记 |
 
-其余件均在 350 以内（#245 实测新读数：`src/help/helpFile.ts` **273**、`src/help/manifest.ts` **25**、`src/help/output.ts` **50**、`src/help/lookup.ts` **49**）。
+其余件均在 350 以内（#245 按提交树实测：`src/help/helpFile.ts` **210**、`src/help/output.ts` **63**、`src/help/lookup.ts` **44**）。⚠️ 表里曾有一行 `src/help/manifest.ts`——**本包没有这个件**（`manifest.ts` 是 skill-memo-ilife 的），已删；别照抄邻居的件名。
