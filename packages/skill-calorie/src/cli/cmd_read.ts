@@ -34,7 +34,9 @@ import { buildBodyCompositionView, buildBodyMeasureView } from '../render/bodyPl
 import { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from '../render/planPlate.js';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
 import { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from '../render/insightPlate.js';
-import { buildProfileView } from '../render/profilePlate.js';
+// #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
+import { buildProfileView, buildProfileViewDoc } from '../profile/view.js';
+import { buildProfileSettingDoc, buildProfileSettingView } from '../profile/setup.js';
 import { buildCombinedAnalysis, buildDeficitPlate, buildDietReview } from '../render/analysisPlate.js';
 import { dietFoodRanking, dietMacroRatio } from '../analysis/diet.js';
 import {
@@ -100,7 +102,6 @@ import {
   renderPlanHtml,
   renderPlanWizardHtml, renderGoalExpiringHtml,
   renderGoalVsActualHtml,
-  renderProfileHtml,
 } from '../render/html.js';
 import { assertStatMetrics, buildDelivery, withDelivery } from '../render/envelope.js';
 import type { Delivery } from '../render/envelope.js';
@@ -573,6 +574,14 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       });
       return { data: { metrics }, html: buildGifPlannerDoc(v) };
     }
+    case 'calorie.view.profile-wizard': {
+      const v = buildProfileSettingView(db, params);
+      const metrics = nums({
+        filledCount: v.filledCount, hasProfile: v.before ? 1 : 0,
+        latestWeightKg: v.latestWeightKg, activityLevels: v.activityChoices.length,
+      });
+      return { data: { metrics }, html: buildProfileSettingDoc(v) };
+    }
     case 'calorie.view.lint-health': {
       const v = buildLintHealthView(db);
       const metrics = nums({
@@ -1018,7 +1027,8 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         hasGoal: v.hasGoal ? 1 : 0, latestWeightKg: v.latestWeightKg,
         calorieGoal: v.nutrition?.calorie_goal,
       });
-      return { data: { metrics }, html: renderProfileHtml(v) };
+      // #179 · 结果页换整页装配（原 `renderProfileHtml` 只出 `<section>` 片段，双击打不开）。
+      return { data: { metrics }, html: buildProfileViewDoc(v) };
     }
     default:
       fail(3, '未知 calorie key：' + key);

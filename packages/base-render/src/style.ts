@@ -17,6 +17,7 @@
  */
 
 import { chartsCss } from './charts.js';
+import { BODY_FONT_STACK } from './font.js';
 import { ACTION_BAR_DEFAULTS, TOAST_DEFAULTS } from './spec/index.js';
 import { CONTROL_STYLE_SECTIONS, CSS_VAR_TOKENS, STYLE_FORBIDDEN_TOKENS, STYLE_SHEET_ID } from './spec/style.js';
 import type {
@@ -79,19 +80,13 @@ function rootBlock(): string {
 }
 
 /** 页级基座（非控件区）：**本票不产**。
- *  裁定 R7／施工单 B-D2(a)：页面壳／KPI／表格／回到顶部等**无闭集归属**的样式归 #104
+ *  裁定 R7／施工单 B-D2(a)：共享页面模板／KPI／表格／回到顶部等**无闭集归属**的样式归 #104
  *  （区块组件 owner），#75 只产 11 token ＋ 8 个闭集样式区；`extraCss` 语义被
- *  契约 doc:299-300 限死（只许技能作用域 token 覆盖块），**不得**塞壳层样式。 */
+ *  契约 doc:299-300 限死（只许技能作用域 token 覆盖块），**不得**塞共享页面模板的样式。 */
 
 /** 主色 alpha 派生（`ghostBorderAlpha` 等）：RGB 与 `--blue` 同源（`#007aff`）。
  *  这是**派生字面量**、不是第二份 token 表（不新增 token 名，doc:299）。 */
 const BLUE_RGB = '0, 122, 255';
-
-/** 正文栈（H-06：首位 `"SF Pro Display"`，后接系统兜底＋`"Noto Sans SC"`）。
- *  **局部 CSS 常量**、不是 token（D-5 纪律：不新增 token 名）；等宽栈不动（D-13，各 `font-family: "SF Mono", monospace` 原样保留）。
- *  B1 原栈见 `docs/research/benchmark-visual-spec.md:105`（`body`）；按 #89 返修方案把 `"SF Pro Display"` 提首位、
- *  尾部补 `"Noto Sans SC"`（修前正文 computed 回落实测，CJK 渲染不变）；落点仅 `.ilife-help-shell`（T22：壳层样式归 #104，不得产 `body` 规则）。 */
-const BODY_FONT_STACK = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
 
 /** 焦点环（视觉尺 H-20 强制项）：`:focus-visible` 覆盖全部可交互控件。 */
 function focusRing(selector: string): string {
@@ -339,7 +334,13 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '.' + p + 'action-btn-ghost {',
     '  border-color: rgba(' + BLUE_RGB + ', ' + ACTION_BAR_DEFAULTS.ghostBorderAlpha + ');',
     '  background: var(--card);',
-    '  color: var(--blue);',
+    '  color: var(--blue2);',
+    '}',
+    // #179 触控目标：窄屏按钮抬到 44px（桌面 40px 沿用 `ACTION_BAR_DEFAULTS.minHeightPx`，不改冻结值）。
+    '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',
+    '  .' + p + 'action-btn {',
+    '    min-height: 44px;',
+    '  }',
     '}',
     focusRing('.' + p + 'action-btn'),
   ].join(LF),
@@ -370,7 +371,9 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '.' + p + 'copy-btn-ghost {',
     '  border-color: rgba(' + BLUE_RGB + ', ' + ACTION_BAR_DEFAULTS.ghostBorderAlpha + ');',
     '  background: var(--card);',
-    '  color: var(--blue);',
+    // #179 对比度：ghost 按钮是 12px 小字，`--blue` 在白底上 4.02:1 不到 AA 的 4.5:1
+    // → 换同族深一档的 `--blue2`（5.6:1）。实心按钮（白字压 `--blue`）不在本页，另账见交付报告。
+    '  color: var(--blue2);',
     '}',
     '.' + p + 'copy-btn-wide {',
     '  width: 100%;',
@@ -387,6 +390,12 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  border-color: var(--ok);',
     '  background: var(--ok);',
     '  color: var(--card);',
+    '}',
+    // #179 触控目标：窄屏按钮抬到 44px（桌面 40px 沿用 `ACTION_BAR_DEFAULTS.minHeightPx`，不改冻结值）。
+    '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',
+    '  .' + p + 'copy-btn {',
+    '    min-height: 44px;',
+    '  }',
     '}',
     focusRing('.' + p + 'copy-btn'),
   ].join(LF),
@@ -523,7 +532,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  margin: 0 auto;',
     '  padding: 32px 20px 80px;',
     '  color: var(--fg);',
-    // H-06 正文栈（局部常量 BODY_FONT_STACK，首位 "SF Pro Display"；不新增 token 名，等宽栈不动）。
+    // H-06 正文栈（唯一真相源 `src/font.ts` 的 BODY_FONT_STACK，首位 "SF Pro Display"；不新增 token 名，等宽栈不动）。
     '  font-family: ' + BODY_FONT_STACK + ';',
     '  font-feature-settings: "tnum";',
     '}',

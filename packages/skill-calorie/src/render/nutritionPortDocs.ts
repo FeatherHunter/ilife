@@ -18,17 +18,14 @@
  * 本层不做取数（数据由 render/nutritionPort.ts 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
-  blocksCss,
   renderChartBlock,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
-  renderPageShell,
   renderParamForm,
 } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildDataText, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
+import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
 import type {
   NutritionDetailView,
   NutritionRatioView,
@@ -40,54 +37,12 @@ import type {
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 内容页壳（裸标记＋CONTENT 槽；包裹约定：资产裸文本＋填充器包裹，标记不得预包裹）。
- *  wrap 带 ilife-page 兼容既有 --html 断言。 */
-const DOC_SHELL =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·营养移植</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n</body>\n</html>';
-
-/** 图表页壳（多一个 CHARTS-HELPERS 标记，图表 CSS 由 charts helpers 运行时注入）。 */
-const DOC_SHELL_CHARTS =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·营养移植</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n<!--CHARTS-HELPERS-->\n</body>\n</html>';
-
-type CopyInput = Parameters<typeof buildDataText>[0];
-
-function assemble(title: string, eyebrow: string, subtitle: string | null, content: string, charts: boolean): string {
-  const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss(),
-    sharedHelpersJs: buildSharedHelpersJs(),
-  };
-  if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
-  const body = renderPageShell({
-    title,
-    ...(eyebrow ? { eyebrow } : {}),
-    ...(subtitle ? { subtitle } : {}),
-    content,
-  });
-  return fillTemplate({ template: charts ? DOC_SHELL_CHARTS : DOC_SHELL, assets, content: body }).html;
-}
-
-function copyBlock(title: string, input: CopyInput): string {
-  return renderCopyBlock({ title, dataText: buildDataText(input) });
-}
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·营养移植';
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
   return String(n);
-}
-
-/** 复制投影 stat-metrics 只收确定数字（冻结口径：null/undefined 不进投影）。 */
-function metricsOf(obj: Record<string, number | null | undefined>): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== null && v !== undefined) out[k] = v;
-  }
-  return out;
 }
 
 function windowForm(start: string, end: string, extra: string): string {
@@ -166,7 +121,7 @@ export function buildNutritionRatioDoc(v: NutritionRatioView): string {
     caption: '推荐范围对比（' + v.start + ' ~ ' + v.end + '）',
     emptyText: '本窗无配比数据',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.nutrition-ratio',
       data: {
@@ -178,13 +133,14 @@ export function buildNutritionRatioDoc(v: NutritionRatioView): string {
       },
     },
   }));
-  return assemble(
-    '营养配比 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.nutrition-ratio · 营养移植域',
-    '蛋白/碳水/脂肪占比＋实际 vs 目标（无目标行即“—”，不编数）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '营养配比 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.nutrition-ratio · 营养移植域',
+    subtitle: '蛋白/碳水/脂肪占比＋实际 vs 目标（无目标行即“—”，不编数）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 营养素深度（nutrition_detail.html 对照：纤维/钠/糖 vs 固定推荐＋缺数据盒） ── */
@@ -227,7 +183,7 @@ export function buildNutritionDetailDoc(v: NutritionDetailView): string {
       }),
     }));
   }
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.nutrition-detail',
       data: {
@@ -245,13 +201,14 @@ export function buildNutritionDetailDoc(v: NutritionDetailView): string {
       },
     },
   }));
-  return assemble(
-    '营养素深度 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.nutrition-detail · 营养移植域',
-    '纤维/钠/糖实际 vs 推荐（缺库食物明示未计入，不编数）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '营养素深度 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.nutrition-detail · 营养移植域',
+    subtitle: '纤维/钠/糖实际 vs 推荐（缺库食物明示未计入，不编数）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 食品来源统计（source_stats.html 对照：来源数＋总数＋按来源分组） ── */
@@ -282,7 +239,7 @@ export function buildSourceStatsDoc(v: SourceStatsView): string {
     caption: '按来源分组（GROUP BY source，下架已排除；空串来源归“未知”）',
     emptyText: '库内无食品记录',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.source-stats',
       data: {
@@ -290,13 +247,14 @@ export function buildSourceStatsDoc(v: SourceStatsView): string {
       },
     },
   }));
-  return assemble(
-    '食品来源统计',
-    'calorie.view.source-stats · 营养移植域',
-    '库内食品按来源分组计数（库空即 missing，不编数）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '食品来源统计',
+    eyebrow: 'calorie.view.source-stats · 营养移植域',
+    subtitle: '库内食品按来源分组计数（库空即 missing，不编数）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 今日饮水（today_water.html 对照：进度环＋7 天＋每杯明细） ── */
@@ -354,7 +312,7 @@ export function buildTodayWaterDoc(v: TodayWaterView): string {
     caption: '今日每杯（共 ' + v.cups.length + ' 杯）',
     emptyText: '今天还没有喝水记录',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.today-water',
       data: {
@@ -364,11 +322,12 @@ export function buildTodayWaterDoc(v: TodayWaterView): string {
       },
     },
   }));
-  return assemble(
-    '今日饮水 ' + v.date,
-    'calorie.view.today-water · 营养移植域',
-    v.remainMl > 0 ? '还差 ' + v.remainMl + ' ml' : '已达标（' + v.pct + '%）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '今日饮水 ' + v.date,
+    eyebrow: 'calorie.view.today-water · 营养移植域',
+    subtitle: v.remainMl > 0 ? '还差 ' + v.remainMl + ' ml' : '已达标（' + v.pct + '%）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }

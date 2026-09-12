@@ -11,17 +11,12 @@
  * 本层不做取数（数据由 render/wizardPort.ts 备齐），空库不返空页（recent 为空即空态行）。
  */
 import {
-  blocksCss,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderEmptyBlock,
   renderKpiGrid,
-  renderPageShell,
   renderParamForm,
-  renderPreBlock,
 } from 'base-paint/blocks';
-import { buildDataText, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
 import type {
   CompositionWizardView,
   GifPlannerView,
@@ -30,54 +25,14 @@ import type {
 } from './wizardPort.js';
 import { PHOTO_LOG_TAGS } from './wizardPort.js';
 import { WIZARD_MEASURE_CAMEL, WIZARD_MEASURE_LABELS } from './wizardPort.js';
-import { copyActionHtml } from './copy.js';
+import { assembleDocPage, dataCopyArea, metricsOf, promptCopyArea } from '../shared/docPage.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 内容页壳（裸标记＋CONTENT 槽；包裹约定：资产裸文本＋填充器包裹，标记不得预包裹）。
- *  wrap 带 ilife-page 兼容既有 --html 断言。 */
-const DOC_SHELL =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·配置向导</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n</body>\n</html>';
-
-type CopyInput = Parameters<typeof buildDataText>[0];
-
-function assemble(title: string, eyebrow: string, subtitle: string | null, content: string): string {
-  const body = renderPageShell({
-    title,
-    ...(eyebrow ? { eyebrow } : {}),
-    ...(subtitle ? { subtitle } : {}),
-    content,
-  });
-  return fillTemplate({
-    template: DOC_SHELL,
-    assets: { sharedCssText: buildStyleSheet().css + '\n' + blocksCss(), sharedHelpersJs: buildSharedHelpersJs() },
-    content: body,
-  }).html;
-}
-
-/** 复制投影 stat-metrics 只收确定数字（冻结口径：null/undefined 不进投影）。 */
-function metricsOf(obj: Record<string, number | null | undefined>): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== null && v !== undefined) out[k] = v;
-  }
-  return out;
-}
-
-function copyBlock(key: string, title: string, input: CopyInput): string {
-  void key;
-  return renderCopyBlock({ title, dataText: buildDataText(input) });
-}
-
-/** prompt 预览＋复制按钮（旧模板 prompt-box＋btn-copy 的同形；复制执行走共享委派）。 */
-function promptCopy(prompt: string): string {
-  return renderPreBlock({ label: '复制 prompt（必走）', command: prompt }) + copyActionHtml(prompt);
-}
+/** 本文件四页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·配置向导';
 
 function fmtDate(d: string): string {
   return d;
@@ -139,15 +94,21 @@ export function buildMeasureWizardDoc(v: MeasureWizardView): string {
     ]),
     measureRecent(v),
     measureForm(v),
-    promptCopy(v.prompt),
-    copyBlock('x', '复制数据', {
+    promptCopyArea(v.prompt),
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.measure-wizard',
         data: { metrics: metricsOf({ filledCount: v.filledCount, hasRecent: v.recent ? 1 : 0 }) },
       },
     }),
   ].join('');
-  return assemble('记围度', '配置型 wizard · 填表→复制 prompt→AI 写库', '13 部位分 3 组，量了哪项填哪项', content);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '记围度',
+    eyebrow: '配置型 wizard · 填表→复制 prompt→AI 写库',
+    subtitle: '13 部位分 3 组，量了哪项填哪项',
+    content,
+  });
 }
 
 /* ── 2. 记体脂 wizard ── */
@@ -198,8 +159,8 @@ export function buildCompositionWizardDoc(v: CompositionWizardView): string {
     ]),
     compositionRecent(v),
     compositionForm(v),
-    promptCopy(v.prompt),
-    copyBlock('x', '复制数据', {
+    promptCopyArea(v.prompt),
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.composition-wizard',
         data: {
@@ -211,7 +172,13 @@ export function buildCompositionWizardDoc(v: CompositionWizardView): string {
       },
     }),
   ].join('');
-  return assemble('记体脂', '配置型 wizard · 填表→复制 prompt→AI 写库', '皮褶钳 7 点先换算成体脂率（换算未移植，调用方算好直传）', content);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '记体脂',
+    eyebrow: '配置型 wizard · 填表→复制 prompt→AI 写库',
+    subtitle: '皮褶钳 7 点先换算成体脂率（换算未移植，调用方算好直传）',
+    content,
+  });
 }
 
 /* ── 3. 记身材照 wizard（纯配置） ── */
@@ -234,15 +201,21 @@ export function buildPhotoLogWizardDoc(v: PhotoLogWizardView): string {
         { name: 'note', label: '备注', value: v.note ?? '', hint: '如：早上空腹 / 减脂期第 30 天' },
       ],
     }),
-    promptCopy(v.prompt),
-    copyBlock('x', '复制数据', {
+    promptCopyArea(v.prompt),
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.photo-log-wizard',
         data: { metrics: metricsOf({ fileCount: v.srcPaths.length, hasTag: v.tag ? 1 : 0 }) },
       },
     }),
   ].join('');
-  return assemble('记身材照', '配置型 wizard · 纯配置，填好后复制 prompt 给 AI', '选本地照片 → 选 tag → 加备注 → 复制 prompt', content);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '记身材照',
+    eyebrow: '配置型 wizard · 纯配置，填好后复制 prompt 给 AI',
+    subtitle: '选本地照片 → 选 tag → 加备注 → 复制 prompt',
+    content,
+  });
 }
 
 /* ── 4. GIF 框选器 ── */
@@ -295,8 +268,8 @@ export function buildGifPlannerDoc(v: GifPlannerView): string {
     ]),
     gifTable(v),
     gifForm(v),
-    promptCopy(v.prompt),
-    copyBlock('x', '复制数据', {
+    promptCopyArea(v.prompt),
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.gif-planner',
         data: {
@@ -309,5 +282,11 @@ export function buildGifPlannerDoc(v: GifPlannerView): string {
       },
     }),
   ].join('');
-  return assemble('身材照 GIF 规划器', 'GIF 框选器 · 无 cropper.js，手动 4 数字坐标', '框选照片 → 填裁剪与细节 → 复制 prompt 给 AI', content);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '身材照 GIF 规划器',
+    eyebrow: 'GIF 框选器 · 无 cropper.js，手动 4 数字坐标',
+    subtitle: '框选照片 → 填裁剪与细节 → 复制 prompt 给 AI',
+    content,
+  });
 }

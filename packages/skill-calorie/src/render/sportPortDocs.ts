@@ -19,17 +19,14 @@
  * 本层不做取数（数据由 render/exercisePort.ts 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
-  blocksCss,
   renderChartBlock,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
-  renderPageShell,
   renderParamForm,
 } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildDataText, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
+import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
 import type {
   CardioView,
   DistributionView,
@@ -43,54 +40,12 @@ import type {
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 内容页壳（裸标记＋CONTENT 槽；包裹约定：资产裸文本＋填充器包裹，标记不得预包裹）。
- *  wrap 带 ilife-page 兼容既有 --html 断言。 */
-const DOC_SHELL =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·运动移植</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n</body>\n</html>';
-
-/** 图表页壳（多一个 CHARTS-HELPERS 标记，图表 CSS 由 charts helpers 运行时注入）。 */
-const DOC_SHELL_CHARTS =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·运动移植</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n<!--CHARTS-HELPERS-->\n</body>\n</html>';
-
-type CopyInput = Parameters<typeof buildDataText>[0];
-
-function assemble(title: string, eyebrow: string, subtitle: string | null, content: string, charts: boolean): string {
-  const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss(),
-    sharedHelpersJs: buildSharedHelpersJs(),
-  };
-  if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
-  const body = renderPageShell({
-    title,
-    ...(eyebrow ? { eyebrow } : {}),
-    ...(subtitle ? { subtitle } : {}),
-    content,
-  });
-  return fillTemplate({ template: charts ? DOC_SHELL_CHARTS : DOC_SHELL, assets, content: body }).html;
-}
-
-function copyBlock(title: string, input: CopyInput): string {
-  return renderCopyBlock({ title, dataText: buildDataText(input) });
-}
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·运动移植';
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
   return String(n);
-}
-
-/** 复制投影 stat-metrics 只收确定数字（冻结口径：null/undefined 不进投影）。 */
-function metricsOf(obj: Record<string, number | null | undefined>): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== null && v !== undefined) out[k] = v;
-  }
-  return out;
 }
 
 function fmtPace(p: number | null | undefined): string {
@@ -161,7 +116,7 @@ export function buildStrengthDoc(v: StrengthView): string {
     caption: '力量逐条记录（共 ' + total + ' 条' + (total > RECORD_CAP ? '，仅列前 ' + RECORD_CAP + ' 条' : '') + '）',
     emptyText: '本窗无逐条记录',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-strength',
       data: {
@@ -172,13 +127,14 @@ export function buildStrengthDoc(v: StrengthView): string {
       },
     },
   }));
-  return assemble(
-    '力量训练总览 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise-strength · 运动移植域',
-    '按动作聚合＋重量轨迹（无重量数据即“—”，不编数）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '力量训练总览 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise-strength · 运动移植域',
+    subtitle: '按动作聚合＋重量轨迹（无重量数据即“—”，不编数）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 有氧训练总览（exercise_cardio.html 对照：按类型聚合＋配速＋逐条记录） ── */
@@ -231,7 +187,7 @@ export function buildCardioDoc(v: CardioView): string {
     caption: '有氧逐条记录（共 ' + total + ' 条' + (total > RECORD_CAP ? '，仅列前 ' + RECORD_CAP + ' 条' : '') + '）',
     emptyText: '本窗无逐条记录',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-cardio',
       data: {
@@ -242,13 +198,14 @@ export function buildCardioDoc(v: CardioView): string {
       },
     },
   }));
-  return assemble(
-    '有氧训练总览 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise-cardio · 运动移植域',
-    '按类型聚合＋配速（无距离不算配速，不编数）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '有氧训练总览 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise-cardio · 运动移植域',
+    subtitle: '按类型聚合＋配速（无距离不算配速，不编数）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 运动类型分布（exercise_distribution.html 对照：分类占比＋摄入/TDEE 联动） ── */
@@ -304,7 +261,7 @@ export function buildDistributionDoc(v: DistributionView): string {
       ],
     }),
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-distribution',
       data: {
@@ -315,13 +272,14 @@ export function buildDistributionDoc(v: DistributionView): string {
       },
     },
   }));
-  return assemble(
-    '运动类型分布 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise-distribution · 运动移植域',
-    '分类占比＋摄入/TDEE 联动（缺摄入不断缺口，不编数）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '运动类型分布 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise-distribution · 运动移植域',
+    subtitle: '分类占比＋摄入/TDEE 联动（缺摄入不断缺口，不编数）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 运动复盘（exercise_recap.html 对照：KPI＋分类＋TOP5＋日趋势＋一句话） ── */
@@ -365,7 +323,7 @@ export function buildRecapDoc(v: RecapView): string {
     caption: '高频 TOP5（旧截断沿袭：只列前 5，明细见运动总览全量表）',
     emptyText: '本窗无高频运动',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-recap',
       data: {
@@ -376,13 +334,14 @@ export function buildRecapDoc(v: RecapView): string {
       },
     },
   }));
-  return assemble(
-    '运动复盘 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise-recap · 运动移植域',
-    v.summary,
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '运动复盘 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise-recap · 运动移植域',
+    subtitle: v.summary,
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 计划复盘（exercise_review.html 对照：计划 vs 实绩＋完成率＋未完成清单） ── */
@@ -445,7 +404,7 @@ export function buildReviewDoc(v: ReviewView): string {
       }),
     }));
   }
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-review',
       data: {
@@ -457,13 +416,14 @@ export function buildReviewDoc(v: ReviewView): string {
       },
     },
   }));
-  return assemble(
-    '计划复盘 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise-review · 运动移植域',
-    v.planTitle + '（会话完成＝当日有记录；动作完成＝计划名与实做双向子串命中）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '计划复盘 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise-review · 运动移植域',
+    subtitle: v.planTitle + '（会话完成＝当日有记录；动作完成＝计划名与实做双向子串命中）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 运动趋势（exercise_trend.html 对照：日序列＋周频次＋峰值） ── */
@@ -522,7 +482,7 @@ export function buildTrendDoc(v: TrendView): string {
     caption: '逐日明细（共 ' + trendTotal + ' 天' + (trendTotal > TREND_CAP ? '，仅列前 ' + TREND_CAP + ' 天' : '') + '；空日“—”不断 0）',
     emptyText: '本窗无逐日明细',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-trend',
       data: {
@@ -533,11 +493,12 @@ export function buildTrendDoc(v: TrendView): string {
       },
     },
   }));
-  return assemble(
-    '运动趋势 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise-trend · 运动移植域',
-    '日序列＋周频次＋峰值（空日断点，不断 0）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '运动趋势 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise-trend · 运动移植域',
+    subtitle: '日序列＋周频次＋峰值（空日断点，不断 0）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }

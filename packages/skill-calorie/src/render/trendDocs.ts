@@ -19,17 +19,14 @@
  * 本层不做取数（数据由调用方 dispatch 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
-  blocksCss,
   renderChartBlock,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
-  renderPageShell,
   renderParamForm,
 } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildDataText, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
+import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { AnomalyView, ContraView, PredictView } from './insightPlate.js';
@@ -39,41 +36,8 @@ import type { GoalPredictView } from './goalExtra.js';
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 内容页壳（裸标记＋CONTENT 槽；包裹约定：资产裸文本＋填充器包裹，标记不得预包裹）。
- *  wrap 带 ilife-page 兼容既有 --html 断言。 */
-const DOC_SHELL =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·趋势分析</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n</body>\n</html>';
-
-/** 图表页壳（多一个 CHARTS-HELPERS 标记，图表 CSS 由 charts helpers 运行时注入）。 */
-const DOC_SHELL_CHARTS =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·趋势分析</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n<!--CHARTS-HELPERS-->\n</body>\n</html>';
-
-type CopyInput = Parameters<typeof buildDataText>[0];
-
-function assemble(title: string, eyebrow: string, subtitle: string | null, content: string, charts: boolean): string {
-  const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss(),
-    sharedHelpersJs: buildSharedHelpersJs(),
-  };
-  if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
-  const body = renderPageShell({
-    title,
-    ...(eyebrow ? { eyebrow } : {}),
-    ...(subtitle ? { subtitle } : {}),
-    content,
-  });
-  return fillTemplate({ template: charts ? DOC_SHELL_CHARTS : DOC_SHELL, assets, content: body }).html;
-}
-
-function copyBlock(title: string, input: CopyInput): string {
-  return renderCopyBlock({ title, dataText: buildDataText(input) });
-}
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·趋势分析';
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
@@ -87,15 +51,6 @@ function corrInterp(r: number | null): string {
   if (a >= 0.5) return '强相关';
   if (a >= 0.3) return '中等相关';
   return '弱相关';
-}
-
-/** 复制投影 stat-metrics 只收确定数字（冻结口径：null/undefined 不进投影；随 #108/#109 同理）。 */
-function metricsOf(obj: Record<string, number | null | undefined>): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== null && v !== undefined) out[k] = v;
-  }
-  return out;
 }
 
 const SEV_ZH: Record<string, string> = { error: '错误', warn: '警告', info: '提示' };
@@ -219,7 +174,7 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
       }),
     }));
   }
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.combined',
       data: {
@@ -232,13 +187,14 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
       },
     },
   }));
-  return assemble(
-    '组合分析 ' + a.labels.a + ' vs ' + a.labels.b,
-    'calorie.view.combined · 趋势分析域',
-    a.insight || null,
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '组合分析 ' + a.labels.a + ' vs ' + a.labels.b,
+    eyebrow: 'calorie.view.combined · 趋势分析域',
+    subtitle: a.insight || null,
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 热量缺口（calorie_deficit.html 对照：4 KPI＋每日摄入 vs 消耗＋缺口明细表） ── */
@@ -304,7 +260,7 @@ export function buildDeficitDoc(d: DeficitData): string {
       emptyText: '窗口内无缺口数据',
     }));
   }
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.deficit',
       data: {
@@ -317,7 +273,14 @@ export function buildDeficitDoc(d: DeficitData): string {
       },
     },
   }));
-  return assemble('热量缺口 ' + d.meta.start + ' ~ ' + d.meta.end, 'calorie.view.deficit · 趋势分析域', null, parts.join(''), charts);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '热量缺口 ' + d.meta.start + ' ~ ' + d.meta.end,
+    eyebrow: 'calorie.view.deficit · 趋势分析域',
+    subtitle: null,
+    content: parts.join(''),
+    charts,
+  });
 }
 
 /* ── 异常诊断（anomaly_report.html 对照：诊断 KPI＋发现列表＋insight；旧截断 5→全量） ── */
@@ -347,7 +310,7 @@ export function buildAnomalyDoc(v: AnomalyView): string {
       emptyText: '本窗无异常发现（诊断正常）',
     }),
   ];
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.anomaly',
       data: {
@@ -355,7 +318,14 @@ export function buildAnomalyDoc(v: AnomalyView): string {
       },
     },
   }));
-  return assemble('异常诊断 ' + (dg.title || v.kind), 'calorie.view.anomaly · 趋势分析域', dg.insight || null, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '异常诊断 ' + (dg.title || v.kind),
+    eyebrow: 'calorie.view.anomaly · 趋势分析域',
+    subtitle: dg.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 禁忌扫描（contraindication_report.html 对照：扫描概览＋命中表＋替代建议＋复制修改指令） ── */
@@ -404,7 +374,7 @@ export function buildContraDoc(v: ContraView): string {
       emptyText: '无替代建议',
     }));
   }
-  parts.push(copyBlock('复制修改指令', {
+  parts.push(dataCopyArea('复制修改指令', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.contraindication',
       data: {
@@ -415,7 +385,14 @@ export function buildContraDoc(v: ContraView): string {
       },
     },
   }));
-  return assemble('禁忌扫描（' + v.part + '）', 'calorie.view.contraindication · 趋势分析域', null, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '禁忌扫描（' + v.part + '）',
+    eyebrow: 'calorie.view.contraindication · 趋势分析域',
+    subtitle: null,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 体重预测（predict_report 对照：点预测 KPI＋insight；曲线归组合分析，见 §3 R4） ── */
@@ -437,7 +414,7 @@ export function buildPredictDoc(v: PredictView): string {
       { label: '区间', value: fmt(v.forecastLo) + ' ~ ' + fmt(v.forecastHi), unit: 'kg' },
     ]),
   ];
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -448,7 +425,14 @@ export function buildPredictDoc(v: PredictView): string {
       },
     },
   }));
-  return assemble('体重预测（' + v.horizonDays + ' 天）', 'calorie.view.predict · 趋势分析域', v.insight || null, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '体重预测（' + v.horizonDays + ' 天）',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 目标预测达成（目标达成 ETA：KPI＋可行性；曲线归组合分析，见 §3 R4） ── */
@@ -469,7 +453,7 @@ export function buildGoalPredictDoc(v: GoalPredictView): string {
       { label: '速率', value: String(v.ratePerWeek), unit: 'kg/周', detail: v.feasible ? '健康' : '超范围' },
     ]),
   ];
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.goal-predict',
       data: {
@@ -480,5 +464,12 @@ export function buildGoalPredictDoc(v: GoalPredictView): string {
       },
     },
   }));
-  return assemble('目标预测达成', 'calorie.view.goal-predict · 趋势分析域', null, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '目标预测达成',
+    eyebrow: 'calorie.view.goal-predict · 趋势分析域',
+    subtitle: null,
+    content: parts.join(''),
+    charts: false,
+  });
 }

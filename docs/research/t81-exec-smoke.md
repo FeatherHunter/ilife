@@ -12,11 +12,11 @@
 
 | 指标 | 值 |
 |---|---|
-| exec 桶记录数 | 398 |
-| 原样实跑 exit 0（envelope key 一致） | 393 |
+| exec 桶记录数 | 399 |
+| 原样实跑 exit 0（envelope key 一致） | 394 |
 | 占位符替换后 exit 0 | 4 |
 | **非零（失败）** | 1 |
-| 涉及键数 | 99 |
+| 涉及键数 | 100 |
 | 无参裸跑非零的键（＝需要参数） | 42 |
 | └ 其中 exec 记录数（结构性断言覆盖面） | 107 |
 
@@ -421,7 +421,8 @@
 | 395 | 新拟 | 08 | 看体脂向导 | `calorie.view.composition-wizard` | — | 0 | calorie.view.composition-wizard | `calorie-cmd-read calorie.view.composition-wizard` |
 | 396 | 新拟 | 09 | 看身材照向导 | `calorie.view.photo-log-wizard` | — | 0 | calorie.view.photo-log-wizard | `calorie-cmd-read calorie.view.photo-log-wizard` |
 | 397 | 新拟 | 09 | 看GIF规划器 | `calorie.view.gif-planner` | — | 0 | calorie.view.gif-planner | `calorie-cmd-read calorie.view.gif-planner --params '{"tag":"正面"}'` |
-| 398 | 修复 | 06 | 看目标推荐 | `calorie.view.goal-recommend` | — | 0 | calorie.view.goal-recommend | `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'` |
+| 398 | 新拟 | 07 | 看档案预检 | `calorie.view.profile-wizard` | — | 0 | calorie.view.profile-wizard | `calorie-cmd-read calorie.view.profile-wizard` |
+| 399 | 修复 | 06 | 看目标推荐 | `calorie.view.goal-recommend` | — | 0 | calorie.view.goal-recommend | `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'` |
 
 ## 2. 占位符替换
 
@@ -516,6 +517,7 @@
 | `calorie.view.predict` | 0 | 是 |
 | `calorie.view.process-progress` | 0 | 是 |
 | `calorie.view.profile` | 0 | 是 |
+| `calorie.view.profile-wizard` | 0 | 是 |
 | `calorie.view.ranking` | 0 | 是 |
 | `calorie.view.review-template` | 0 | 是 |
 | `calorie.view.search` | 2 | 否 |

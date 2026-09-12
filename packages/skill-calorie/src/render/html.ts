@@ -27,7 +27,7 @@ import type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanWizardView } from './planPlate.js';
 import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from './goalExtra.js';
 import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';
-import type { ProfileView } from './profilePlate.js';
+import type { ProfileView } from '../profile/view.js';
 import type { CombinedAnalysis, DietReview } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { FoodRanking } from '../analysis/diet.js';

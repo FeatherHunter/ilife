@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>场景 07 基础信息 · 三件待拍板的事</title>
+<style>
+  :root{
+    --ink:#1c2024; --ink-2:#4a5259; --ink-3:#727c85;
+    --line:#e3e7ec; --bg:#f6f7f9; --card:#ffffff;
+    --brand:#2f6feb; --brand-soft:#eaf1ff;
+    --ok:#1a7f4f; --ok-soft:#e8f6ee;
+    --warn:#a8640a; --warn-soft:#fdf3e3;
+    --stop:#b42318; --stop-soft:#fdecea;
+    --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --ink:#e8eaee; --ink-2:#b6bdc6; --ink-3:#8d959f; --line:#2b3138; --bg:#14171a; --card:#1c2024;
+           --brand-soft:#17243d; --ok-soft:#12301f; --warn-soft:#2e2411; --stop-soft:#3a1c19; }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.75 -apple-system,"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:32px 20px 96px}
+
+  header.top{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;box-shadow:var(--shadow)}
+  .kicker{font-size:13px;letter-spacing:.06em;color:var(--brand);font-weight:700;margin:0 0 8px}
+  h1{margin:0 0 10px;font-size:29px;line-height:1.35}
+  .lede{margin:0;color:var(--ink-2);font-size:16px}
+  .meta{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:12.5px;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--bg)}
+  .chip b{color:var(--ink)}
+  .chip.done{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,var(--line));background:var(--ok-soft)}
+
+  nav.toc{position:sticky;top:0;z-index:9;margin:18px 0 26px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:10px 0}
+  nav.toc a{display:inline-block;font-size:14px;text-decoration:none;color:var(--ink-2);padding:6px 12px;border-radius:999px;border:1px solid transparent}
+  nav.toc a:hover{color:var(--brand);background:var(--brand-soft);border-color:color-mix(in srgb,var(--brand) 25%,transparent)}
+
+  h2{font-size:21px;margin:38px 0 14px;padding-left:12px;border-left:4px solid var(--brand)}
+  h3{font-size:17px;margin:24px 0 10px}
+  p{margin:10px 0}
+  .muted{color:var(--ink-3);font-size:14px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);margin:16px 0}
+  .card.decision{border-left:5px solid var(--brand)}
+  .card.decision.q2{border-left-color:#7a5af8}
+  .card.decision.q3{border-left-color:var(--warn)}
+
+  .qhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .qnum{font-size:13px;font-weight:800;color:#fff;background:var(--brand);border-radius:8px;padding:2px 9px;letter-spacing:.04em}
+  .q2 .qnum{background:#7a5af8}
+  .q3 .qnum{background:var(--warn)}
+  .qtitle{font-size:19px;font-weight:750;margin:0}
+
+  .facts{list-style:none;margin:12px 0 0;padding:0}
+  .facts li{position:relative;padding:6px 0 6px 22px;color:var(--ink-2)}
+  .facts li::before{content:"";position:absolute;left:6px;top:15px;width:6px;height:6px;border-radius:50%;background:var(--brand)}
+  .q2 .facts li::before{background:#7a5af8}
+  .q3 .facts li::before{background:var(--warn)}
+
+  .num{font-weight:800;background:var(--brand-soft);color:var(--brand);border-radius:6px;padding:1px 7px;font-variant-numeric:tabular-nums}
+  .num.stop{background:var(--stop-soft);color:var(--stop)}
+  .num.ok{background:var(--ok-soft);color:var(--ok)}
+
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0 6px}
+  @media (max-width:720px){ .options{grid-template-columns:1fr} }
+  .opt{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--bg)}
+  .opt.rec{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));background:var(--ok-soft)}
+  .opt h4{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px}
+  .badge{font-size:11.5px;font-weight:800;letter-spacing:.05em;border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .badge.rec{background:var(--ok);color:#fff}
+  .badge.alt{background:var(--bg);color:var(--ink-3);border:1px solid var(--line)}
+  .opt p{margin:6px 0;font-size:14.5px;color:var(--ink-2)}
+  .pro,.con{display:block;font-size:14.5px;margin:6px 0}
+  .pro b{color:var(--ok)}
+  .con b{color:var(--stop)}
+  .opt ul{margin:8px 0 0;padding-left:20px;font-size:14.5px;color:var(--ink-2)}
+  .opt li{margin:4px 0}
+
+  .verdict{margin:16px 0 0;padding:14px 16px;border-radius:12px;background:var(--brand-soft);border:1px dashed color-mix(in srgb,var(--brand) 40%,transparent)}
+  .verdict strong{color:var(--brand)}
+  .q2 .verdict{background:#f1ecff;border-color:#c9b8ff}
+  @media (prefers-color-scheme: dark){ .q2 .verdict{background:#241c3d} }
+  .q2 .verdict strong{color:#7a5af8}
+  .q3 .verdict{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+  .q3 .verdict strong{color:var(--warn)}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px;background:var(--card)}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--bg);font-size:13.5px;color:var(--ink-2);font-weight:700;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .yes{color:var(--ok);font-weight:700}
+  .no{color:var(--stop);font-weight:700}
+
+  details{margin:12px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+  details>summary{cursor:pointer;padding:12px 16px;font-weight:650;font-size:14.5px;list-style:none;display:flex;align-items:center;gap:8px}
+  details>summary::before{content:"▸";color:var(--brand);transition:transform .15s}
+  details[open]>summary::before{transform:rotate(90deg)}
+  details .body{padding:0 16px 14px;font-size:14.5px;color:var(--ink-2)}
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,"Courier New",monospace;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+
+  .timeline{list-style:none;margin:14px 0 0;padding:0}
+  .timeline li{position:relative;padding:0 0 18px 26px;border-left:2px solid var(--line)}
+  .timeline li:last-child{border-left-color:transparent;padding-bottom:0}
+  .timeline li::before{content:"";position:absolute;left:-7px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--card);border:2px solid var(--brand)}
+  .timeline li.done::before{background:var(--ok);border-color:var(--ok)}
+  .timeline li.now::before{background:var(--warn);border-color:var(--warn)}
+  .timeline b{color:var(--ink)}
+
+  .reply{background:var(--card);border:2px solid var(--ok);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow)}
+  .reply .line{font-family:ui-monospace,Consolas,monospace;background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;margin:10px 0 4px;display:inline-block}
+  footer{margin-top:48px;color:var(--ink-3);font-size:13px;text-align:center;line-height:1.9}
+  footer a{color:var(--ink-2)}
+  @media print{
+    body{background:#fff} nav.toc{display:none} .card,header.top,.reply{box-shadow:none;break-inside:avoid}
+    details{break-inside:avoid} details>summary::before{content:""}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">待拍板 · 决策简报</p>
+  <h1>场景 07 基础信息：三件待你点头的事</h1>
+  <p class="lede">
+    地图 <b>#152</b>「基础信息：4 条唤醒词跑通 ＋ 出过程型／结果型 HTML」的关键票已经收口，
+    现在卡在三个「形状选择」上。三件定完，#180 当天就能开工；不定的话，后面 9 张场景图会重复踩同一批坑。
+  </p>
+  <div class="meta">
+    <span class="chip">地图 <b>#152</b> 进度 <b>25%</b></span>
+    <span class="chip done">边界票 <b>#163</b> 已关闭 100%</span>
+    <span class="chip">顺序已认可：<b>#180 → #179 → #175／#176／#177 → #178</b></span>
+    <span class="chip">待拍板 <b>3 件</b></span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="目录">
+  <ul>
+    <li><a href="#why">前因后果</a></li>
+    <li><a href="#q1">① 新组件住在哪</a></li>
+    <li><a href="#q2">② 92 条怎么显示</a></li>
+    <li><a href="#q3">③ 一条基线红怎么裁</a></li>
+    <li><a href="#settled">已经定了的</a></li>
+    <li><a href="#reply">你只需回一句</a></li>
+  </ul>
+</nav>
+
+<h2 id="why">前因后果（两分钟看完）</h2>
+<div class="card">
+  <ol class="timeline">
+    <li class="done"><b>目标</b>：场景 07 的 4 条唤醒词（设置档案／设活动量／改档案／查档案）从「说唤醒词」到「拿到 HTML」，<b>产物由你肉眼验收</b>。</li>
+    <li class="done"><b>边界票 #163 已收口</b>：对完 4 条词与老技能、定下页面归 3 类、定下公共层要新增什么、归类了模板名。</li>
+    <li class="done"><b>查实两处不达标</b>：4 条命令今天都能跑、都回执绝对路径，但产物是 <span class="num stop">片段白页</span>（回执只有 <span class="num">214～245 字节</span>，无 doctype／charset／样式）；内容也比场景规格少（查档案缺 6 项）。</li>
+    <li class="done"><b>你已裁定三项</b>：产物＝完整 HTML；脚本命令必须清（立成 #180）；回执页改造按场景切分（先只切场景 07 三条写入词）。</li>
+    <li class="done"><b>查实硬编码的分布</b>：<span class="num ok">prompt 文本里脚本 0 条</span>；泄漏只在命令字段 <span class="num stop">375 条</span>、取数来源字段 <span class="num stop">353 条</span>（那些 <code>.py</code> 在仓里根本不存在）。</li>
+    <li class="now"><b>现在这里</b>：三个形状选择定完，#180 开工。</li>
+  </ol>
+</div>
+
+<h2>三件待拍板的事 · 速览</h2>
+<table>
+  <thead>
+    <tr><th>决策</th><th>两个选项</th><th>我的推荐</th><th>定完的影响</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>① 新组件住在哪</b></td>
+      <td>甲：就地放，并把重复的装配件收成一份<br>乙：新建「基础信息」能力目录</td>
+      <td class="yes">甲（含收共用件）</td>
+      <td>#179 改约 13 个文件＋新增 2 个文件；<b>你看不到变化</b>，是代码形状</td>
+    </tr>
+    <tr>
+      <td><b>② 92 条没有命令的唤醒词怎么显示</b></td>
+      <td>A：不显示复制按钮，明写「没有可执行的命令」<br>B：按钮改成复制那段自然语言</td>
+      <td class="yes">A</td>
+      <td>#180 里 HELP 查找结果的一处渲染；<b>你会看到</b>：那 92 条从「跑不了的脚本＋复制按钮」变成一句实话</td>
+    </tr>
+    <tr>
+      <td><b>③ 一条基线红怎么裁</b></td>
+      <td>甲：放宽断言（数据依赖的失败不算命令缺陷）<br>乙：修行为（给测试数据补一条昨日运动记录）</td>
+      <td class="yes">放宽断言</td>
+      <td>#180 开工前的第一刀；不裁的话两票的「测试全绿」验收都过不去</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============ 决策一 ============ -->
+<h2 id="q1">决策一 · 新组件住在哪里</h2>
+<div class="card decision q1">
+  <div class="qhead"><span class="qnum">决策 ①</span><h3 class="qtitle">新做的「预检确认页」组件，放在现有技术目录里，还是新建能力目录？</h3></div>
+
+  <p class="muted">为什么现在要定：场景 07 要新做一个「预检确认页」组件（三条写入词共用，由一条只读页面命令产出）。它的住处一旦定下，后面 9 张场景图都会照这个先例走。</p>
+
+  <ul class="facts">
+    <li>今天 <code>src/render/</code> 是<b>按技术层</b>分的目录，<b>7 个同形状页面</b>都住在那儿。</li>
+    <li>仓里新立的「结构纪律」要求 <code>src/</code> 第一层是<b>能力名</b>（饮食／体重／目标这一级）。</li>
+    <li>那个「把区块拼成整页」的装配件，今天已经被<b>各抄一份、共 7 份</b>；新组件若不收口，就是第 <span class="num stop">8</span> 份。</li>
+  </ul>
+
+  <div class="options">
+    <div class="opt rec">
+      <h4>甲 · 就地放 ＋ 收共用件 <span class="badge rec">推荐</span></h4>
+      <p>新组件放 <code>src/render/</code>（与 7 个同形页面同住），并把那 7 份装配件<b>抽成一份</b> <code>docPage.ts</code>，7 个旧文件改成引用它。</p>
+      <span class="pro"><b>利</b>：改动面最小；后来人在同一个目录就能找到同类页面；一次把 7 份拷贝收成 1 份，以后加页面不用再抄。</span>
+      <span class="con"><b>弊</b>：新文件出生在按技术层分的目录里 → 要如实记一条「已知偏差」；收共用件会顺带改 7 个既有文件（有既存测试兜着）。</span>
+    </div>
+    <div class="opt">
+      <h4>乙 · 新建「基础信息」能力目录 <span class="badge alt">另选</span></h4>
+      <p>新建 <code>src/profile/</code>（域＝基础信息），并把共用装配件与复制件提到 <code>src/shared/</code>。</p>
+      <span class="pro"><b>利</b>：出生即合规，长期形状最干净。</span>
+      <span class="con"><b>弊</b>：要动共用层与多个件的引用，属于<b>顺手扩大范围</b>；本期一次要验的面变大，风险更高。</span>
+    </div>
+  </div>
+
+  <details>
+    <summary>还有一个「保守档」：只放不抽</summary>
+    <div class="body">
+      新组件就地放，但<b>不动</b>那 7 个既有文件。代价是装配件仍被抄 7 份、同一个概念在多处定义 —— 这次不加第 8 份，但也没查干净。
+      你若要最小风险，可以说「甲但不抽」。
+    </div>
+  </details>
+
+  <div class="verdict">
+    <strong>我的推荐：甲（含收共用件）。</strong>
+    理由是「一次付成本、长期少抄」：现在顺手收口，后面每加一张页面都少一份拷贝；反过来先放着，等它变成 8 份、12 份时再收，改动面只会更大。
+  </div>
+</div>
+
+<!-- ============ 决策二 ============ -->
+<h2 id="q2">决策二 · 92 条没有命令的唤醒词怎么显示</h2>
+<div class="card decision q2">
+  <div class="qhead"><span class="qnum">决策 ②</span><h3 class="qtitle">清理脚本命令后，那 92 条「没有命令可执行」的唤醒词，在 HELP 里显示什么？</h3></div>
+
+  <p class="muted">为什么现在要定：全批 <b>436 条</b>唤醒词里，命令字段残留脚本命令 <b>375 条</b>、取数来源字段 <b>353 条</b>；而 <b>prompt 文本本身是干净的（0 条）</b>。清理时，这 375 条会分成两半。</p>
+
+  <ul class="facts">
+    <li><span class="num ok">283 条</span>在路由层<b>有可执行入口</b> → 新文本就是<b>逐字抄自本仓的真实命令</b>。</li>
+    <li><span class="num stop">92 条</span>在路由层<b>没有入口</b>（正是此前判定的「没有命令可执行的唤醒词」）→ 只能写<b>自然语言</b>，且不许写成命令形态。</li>
+    <li>而 HELP 的查找结果里，「命令」那一格<b>固定显示一行命令，并配一个复制按钮</b>。</li>
+  </ul>
+
+  <div class="options">
+    <div class="opt rec">
+      <h4>A · 不显示复制按钮，明写一句实话 <span class="badge rec">推荐</span></h4>
+      <p>这 92 条的命令格改成：<b>「这条唤醒词目前没有可执行的命令」</b>，并<b>去掉</b>旁边的复制按钮。</p>
+      <span class="pro"><b>利</b>：诚实；不会让用户或 AI 复制一段跑不了的东西；与「没有命令可执行的唤醒词」的既有判定一致。</span>
+      <span class="con"><b>弊</b>：这一格会出现两种形态（有命令的带按钮、没有命令的不带），得把规则写清，免得后来人当成漏做。</span>
+    </div>
+    <div class="opt">
+      <h4>B · 保留按钮，改成复制那段自然语言 <span class="badge alt">另选</span></h4>
+      <p>界面形态统一：那一格还是一行字 ＋ 一个按钮，只是复制到的是中文说明而不是命令。</p>
+      <span class="pro"><b>利</b>：界面统一，不用写两种形态的规则。</span>
+      <span class="con"><b>弊</b>：按钮的语义被稀释（命令与说明共用一个按钮）；用户复制到一句话，AI 拿到后仍然不知道能干什么。</span>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <strong>我的推荐：A。</strong>
+    复制按钮存在的意义是「把<b>要执行的命令</b>复制走」；没有命令时，按钮就是在误导人。这 92 条如实呈现「暂时没有命令」，比给一个复制不到的按钮更清楚。
+  </div>
+</div>
+
+<!-- ============ 决策三 ============ -->
+<h2 id="q3">决策三 · 一条基线红怎么裁</h2>
+<div class="card decision q3">
+  <div class="qhead"><span class="qnum">决策 ③</span><h3 class="qtitle">「复制昨日运动」这条测试今天本来就是红的，用哪种方式裁？</h3></div>
+
+  <p class="muted">为什么现在要定：#180 与 #179 的验收都写着「测试全绿」。而这条用例今天就是红的 —— 不先裁，两票都会被它挡住。</p>
+
+  <ul class="facts">
+    <li>实测：「复制昨日运动」在空数据上失败（<code>exit 4</code>，原因「昨日无运动记录可复制」）—— 这其实是<b>合理</b>的行为：昨天没记录，没什么可复制。</li>
+    <li>而既有测试断言「<b>所有唤醒词执行成功、失败数必须为 0</b>」；重生成快照解决不了，因为重跑还会写回同一行。</li>
+    <li>老技能的实录里也写过：这条词的语义更接近「没有命令可执行的唤醒词」。</li>
+  </ul>
+
+  <div class="options">
+    <div class="opt rec">
+      <h4>甲 · 放宽断言 <span class="badge rec">推荐</span></h4>
+      <p>把断言从「必须全 0」改成「只统计<b>命令缺陷</b>」：数据依赖的失败（例如今天没有可复制的数据）不算缺陷，并在断言里写明判据。</p>
+      <span class="pro"><b>利</b>：如实区分「命令坏了」与「今天没有可复制的数据」；不用为凑绿造数据。</span>
+      <span class="con"><b>弊</b>：断言口径变宽，将来真出问题时要靠写清的判据来区分，不能只看一个 0。</span>
+    </div>
+    <div class="opt">
+      <h4>乙 · 修行为（给测试数据补记录） <span class="badge alt">另选</span></h4>
+      <p>给测试用的空库里补一条「昨天有运动」的记录，让这条命令真能成功。</p>
+      <span class="pro"><b>利</b>：测试保持「全绿＝全通」的简单口径。</span>
+      <span class="con"><b>弊</b>：用造数据掩盖真实语义；真实用户在空库上跑这条词，照样失败。</span>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <strong>我的推荐：甲（放宽断言）。</strong>
+    把「命令坏了」和「今天没有数据」分开，是这套测试本来就该有的判据；靠造数据凑绿，等于把问题藏起来。
+  </div>
+</div>
+
+<h2 id="settled">已经定了的（供回顾，不必再看）</h2>
+<table>
+  <thead><tr><th>事项</th><th>结论</th><th>谁定的</th></tr></thead>
+  <tbody>
+    <tr><td>产物验收口径</td><td class="yes">完整 HTML 文件：doctype ＋ charset ＋ 样式，双击能开、有版面</td><td>你（2026-09-11）</td></tr>
+    <tr><td>脚本命令硬编码</td><td class="yes">必须清；立成跨批独立票 #180，不塞进场景 07 的图</td><td>你（2026-09-11）</td></tr>
+    <tr><td>回执页改造范围</td><td class="yes">按场景切分：本图先只切场景 07 三条写入词，其余 32 条随各自场景的图走</td><td>你（已认可）</td></tr>
+    <tr><td>推进顺序</td><td class="yes">#180 → #179 → #175／#176／#177 → #178（你亲自跑）</td><td>你（已认可）</td></tr>
+  </tbody>
+</table>
+
+<h2 id="reply">你只需回一句话</h2>
+<div class="reply">
+  <p>三件都同意的话，回这句即可（我收到就开 #180 的第一步）：</p>
+  <span class="line">就按甲（含收共用件）＋ A ＋ 放宽断言</span>
+  <p class="muted" style="margin-top:14px">
+    要改哪一项，只说那一项，例如「甲但不抽共用件」「显示用 B」「基线红走乙」。
+    你不回也没关系：我按上面这套默认继续，改口在 #179 开工前都不影响已做的工作。
+  </p>
+</div>
+
+<footer>
+  本页文件：<code>D:\ilife\docs\skills\skill-calorie\决策待确认-179-180.html</code><br>
+  相关：地图 <a href="https://github.com/FeatherHunter/ilife/issues/152">#152</a> ·
+  边界票 <a href="https://github.com/FeatherHunter/ilife/issues/163">#163</a>（已关闭）·
+  页面装配 <a href="https://github.com/FeatherHunter/ilife/issues/179">#179</a> ·
+  脚本清理 <a href="https://github.com/FeatherHunter/ilife/issues/180">#180</a><br>
+  证据文档：<code>docs/skills/skill-calorie/</code> 下的四份 <code>t163-*.md</code> 与两份影响清单
+</footer>
+
+</div>
+</body>
+</html>

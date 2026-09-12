@@ -65,6 +65,7 @@ export const PRESENT_KEYS: string[] = [
   'calorie.view.composition-wizard',
   'calorie.view.photo-log-wizard',
   'calorie.view.gif-planner',
+  'calorie.view.profile-wizard',
   'calorie.diet.add',
   'calorie.diet.update',
   'calorie.diet.remove',

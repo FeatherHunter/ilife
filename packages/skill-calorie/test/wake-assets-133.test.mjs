@@ -67,9 +67,9 @@ describe('T2-① #133 唤醒词资产清单', () => {
 
   it('prompt 全量指纹（逐字证据：总字符＋sha256）', () => {
     const concat = WAKE_ASSETS.map((s) => s.prompt_template).join('');
-    assert.equal(concat.length, 47768);
+    assert.equal(concat.length, 47874);
     assert.equal(createHash('sha256').update(concat, 'utf8').digest('hex'),
-      '43a65af8ec18d3ffae77ba604035d92b085a31f12ef85650f4216695ede8143f');
+      'bef742ac3307ed117f5286651f3d4402e0f9f850355b40259f8160a558db4429');
   });
 
   it('legacy 三源一致（资产无 types 22 条 ＝ 新家无 key 22 条，逐词相等）', () => {

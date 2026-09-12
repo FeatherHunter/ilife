@@ -17,17 +17,14 @@
  * 本层不做取数（数据由调用方 dispatch 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
-  blocksCss,
   renderChartBlock,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
-  renderPageShell,
   renderParamForm,
 } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildDataText, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
+import { assembleDocPage, dataCopyArea } from '../shared/docPage.js';
 import type { DataTableColumn } from 'base-paint/blocks';
 import { inferMealType } from '../fetch/diet.js';
 /** 明细行最小形（fetch MealRow 的子集；调用方传全行亦可）。 */
@@ -55,41 +52,8 @@ import type { ProductLibrary, ProductSearch } from './library.js';
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 内容页壳（裸标记＋CONTENT 槽；包裹约定：资产裸文本＋填充器包裹，标记不得预包裹）。
- *  wrap 带 ilife-page 兼容既有 --html 断言。 */
-const DOC_SHELL =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·饮食</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n</body>\n</html>';
-
-/** 图表页壳（多一个 CHARTS-HELPERS 标记，图表 CSS 由 charts helpers 运行时注入）。 */
-const DOC_SHELL_CHARTS =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·饮食</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n<!--CHARTS-HELPERS-->\n</body>\n</html>';
-
-type CopyInput = Parameters<typeof buildDataText>[0];
-
-function assemble(title: string, eyebrow: string, subtitle: string | null, content: string, charts: boolean): string {
-  const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss(),
-    sharedHelpersJs: buildSharedHelpersJs(),
-  };
-  if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
-  const body = renderPageShell({
-    title,
-    ...(eyebrow ? { eyebrow } : {}),
-    ...(subtitle ? { subtitle } : {}),
-    content,
-  });
-  return fillTemplate({ template: charts ? DOC_SHELL_CHARTS : DOC_SHELL, assets, content: body }).html;
-}
-
-function copyBlock(title: string, input: CopyInput): string {
-  return renderCopyBlock({ title, dataText: buildDataText(input) });
-}
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·饮食';
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
@@ -163,7 +127,7 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
     caption: '今日明细（' + o.start + '，共 ' + meals.length + ' 条）',
     emptyText: '本日无明细',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.today',
       data: {
@@ -175,7 +139,14 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
       },
     },
   }));
-  return assemble('今日饮食 ' + o.start, 'calorie.today · 饮食域', MEAL_NOTE, parts.join(''), charts);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '今日饮食 ' + o.start,
+    eyebrow: 'calorie.today · 饮食域',
+    subtitle: MEAL_NOTE,
+    content: parts.join(''),
+    charts,
+  });
 }
 
 /* ── 饮食总览＋餐别分布（diet_overview／meal_distribution／today_meals 子集对照） ── */
@@ -263,7 +234,7 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       emptyText: '本窗无明细',
     }),
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.diet',
       data: {
@@ -274,13 +245,14 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       },
     },
   }));
-  return assemble(
-    '饮食总览 ' + o.start + ' ~ ' + o.end,
-    'calorie.view.diet · 饮食域',
-    '餐别分布 ' + distDate + '（' + MEAL_NOTE + '）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '饮食总览 ' + o.start + ' ~ ' + o.end,
+    eyebrow: 'calorie.view.diet · 饮食域',
+    subtitle: '餐别分布 ' + distDate + '（' + MEAL_NOTE + '）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 饮食复盘（diet_review.html 对照：每日热量趋势＋配比＋高频 TOP＋按餐汇总） ── */
@@ -359,13 +331,20 @@ export function buildDietReviewDoc(r: DietReview, top5: FoodRanking | null): str
     caption: '按餐汇总（' + MEAL_NOTE + '）',
     emptyText: '本窗无按餐汇总',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.diet-review',
       data: { metrics: { loggedDays: r.loggedDays } },
     },
   }));
-  return assemble('饮食复盘 ' + r.start + ' ~ ' + r.end, 'calorie.view.diet-review · 饮食域', null, parts.join(''), charts);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '饮食复盘 ' + r.start + ' ~ ' + r.end,
+    eyebrow: 'calorie.view.diet-review · 饮食域',
+    subtitle: null,
+    content: parts.join(''),
+    charts,
+  });
 }
 
 /* ── 食品排行（food_ranking.html 对照：榜单表＋复制榜单；tab 交互归宿主，静态页逐榜/全榜直出） ── */
@@ -404,7 +383,7 @@ export function buildRankingDoc(r: FoodRanking): string {
     caption: r.title,
     emptyText: '本窗无排行数据',
   }));
-  parts.push(copyBlock('复制榜单', {
+  parts.push(dataCopyArea('复制榜单', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.ranking',
       data: {
@@ -416,13 +395,14 @@ export function buildRankingDoc(r: FoodRanking): string {
       },
     },
   }));
-  return assemble(
-    '排行 ' + (RANK_ZH[r.category] ?? r.category) + ' ' + r.start + ' ~ ' + r.end,
-    'calorie.view.ranking · 饮食域',
-    'tab 切换归宿主：单榜直出（' + r.title + '）',
-    parts.join(''),
-    false,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '排行 ' + (RANK_ZH[r.category] ?? r.category) + ' ' + r.start + ' ~ ' + r.end,
+    eyebrow: 'calorie.view.ranking · 饮食域',
+    subtitle: 'tab 切换归宿主：单榜直出（' + r.title + '）',
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 export function buildAllRankingsDoc(a: AllRankings): string {
@@ -451,19 +431,20 @@ export function buildAllRankingsDoc(a: AllRankings): string {
       }),
     }));
   }
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.ranking',
       data: { metrics: { okCount: a.okCount, topN: a.topN } },
     },
   }));
-  return assemble(
-    '全部排行 ' + a.start + ' ~ ' + a.end,
-    'calorie.view.ranking · 饮食域',
-    a.start + ' ~ ' + a.end + ' · ' + a.okCount + '/5 榜有数据',
-    parts.join(''),
-    false,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '全部排行 ' + a.start + ' ~ ' + a.end,
+    eyebrow: 'calorie.view.ranking · 饮食域',
+    subtitle: a.start + ' ~ ' + a.end + ' · ' + a.okCount + '/5 榜有数据',
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 查食品／食品库（food_search／food_library 对照：参数表单＋结果表＋复制） ── */
@@ -496,14 +477,21 @@ export function buildSearchDoc(s: ProductSearch): string {
       caption: '查食品 ' + s.keyword + '（共 ' + s.total + ' 条）',
       emptyText: '无命中',
     }),
-    copyBlock('复制数据', {
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.search',
         data: { items: rows, total: s.total },
       },
     }),
   ];
-  return assemble('查食品 ' + s.keyword, 'calorie.view.search · 饮食域', null, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '查食品 ' + s.keyword,
+    eyebrow: 'calorie.view.search · 饮食域',
+    subtitle: null,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number): string {
@@ -525,14 +513,21 @@ export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number): string
       caption: '食品库' + (lib.category ? '（' + lib.category + '）' : '（全量）') + '（共 ' + lib.total + ' 条）',
       emptyText: '该分类空库',
     }),
-    copyBlock('复制数据', {
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.library',
         data: { items: rows, total: lib.total },
       },
     }),
   ];
-  return assemble('食品库' + (lib.category ? '（' + lib.category + '）' : ''), 'calorie.view.library · 饮食域', null, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '食品库' + (lib.category ? '（' + lib.category + '）' : ''),
+    eyebrow: 'calorie.view.library · 饮食域',
+    subtitle: null,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 健康盘（health_dashboard.html 对照：四维＋今日该做什么＋复制回 AI） ── */
@@ -592,7 +587,7 @@ export function buildHealthDoc(h: HealthPlate): string {
     open: true,
     contentHtml: renderListRows({ items: actions }),
   }));
-  parts.push(copyBlock('复制回 AI', {
+  parts.push(dataCopyArea('复制回 AI', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.health',
       data: {
@@ -604,7 +599,14 @@ export function buildHealthDoc(h: HealthPlate): string {
       },
     },
   }));
-  return assemble('健康盘 ' + h.start + ' ~ ' + h.end, 'calorie.view.health · 饮食域', h.dashboard.message, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '健康盘 ' + h.start + ' ~ ' + h.end,
+    eyebrow: 'calorie.view.health · 饮食域',
+    subtitle: h.dashboard.message,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 去重报告（dedupe_report.html 对照：KPI＋重复组表＋处理建议） ── */
@@ -639,7 +641,7 @@ export function buildDedupeDoc(v: DedupeView): string {
         ],
     }),
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.dedupe',
       data: {
@@ -648,5 +650,12 @@ export function buildDedupeDoc(v: DedupeView): string {
       },
     },
   }));
-  return assemble('去重报告', 'calorie.view.dedupe · 饮食域', '数据来源：nutrition_products', parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '去重报告',
+    eyebrow: 'calorie.view.dedupe · 饮食域',
+    subtitle: '数据来源：nutrition_products',
+    content: parts.join(''),
+    charts: false,
+  });
 }

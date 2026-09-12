@@ -1,7 +1,7 @@
 /** #93 · openDbReadOnly 验收测试（tmp 隔离，真实 DB 零触碰；运行前需先构建）。
  *
  * 覆盖票面三条验收：
- *   ① 读键全部可用 —— 42 个读键在**只读句柄**上逐个 dispatch（子进程 sweep），无系统级错误；
+ *   ① 读键全部可用 —— 65 个读键（#179 后）在**只读句柄**上逐个 dispatch（子进程 sweep），无系统级错误；
  *   ② 不触发迁移 —— 空库只读打开后 sqlite_master 仍为空；老 schema 库只读打开不升级；
  *   ③ 写入被拒 —— CREATE/INSERT/DELETE 一律抛 readonly database，且库文件字节不变。
  * 另加「接线等价性」：只读句柄与可写句柄跑同一批读键，data/html 全等（证明接线行为不变），
@@ -163,7 +163,7 @@ const READ_PARAMS = {
 };
 
 // ---------------------------------------------------------------- sweep 子进程
-// 单进程跑完 64 个读键（#113 +8／#86 +4）：某个键若因缺参走到 fail(2) 会 process.exit，父进程靠「少了一行」发现。
+// 单进程跑完 65 个读键（#113 +8／#86 +4／#179 +1）：某个键若因缺参走到 fail(2) 会 process.exit，父进程靠「少了一行」发现。
 if (process.argv[2] === '--sweep') {
   const tpl = process.argv[3];
   const work = tmpDir('sweep');
@@ -278,13 +278,13 @@ test('#93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接�
 });
 
 // ---------------------------------------------------------------- 验收 ①：读键全部可用 ＋ 接线等价
-test('#93 ① 64 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4）', () => {
+test('#93 ① 65 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4／#179 +1）', () => {
   const tpl = makeTemplate();
   const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--sweep', tpl], { encoding: 'utf8' });
   assert.equal(r.status, 0, 'sweep 子进程必须正常退出：' + String(r.stderr).slice(0, 400));
   const lines = String(r.stdout).split('\n').filter((s) => s.startsWith('{')).map((s) => JSON.parse(s));
   const started = String(r.stdout).split('\n').filter((s) => s.startsWith('START ')).map((s) => s.slice(6));
-  assert.equal(READ_KEYS.length, 64, '读键应为 64 个（99 组合键 − 35 写键）');
+  assert.equal(READ_KEYS.length, 65, '读键应为 65 个（100 组合键 − 35 写键）');
   assert.equal(WRITE_KEYS.length, 35);
   assert.deepEqual(started, READ_KEYS, '每个读键都跑到（缺失＝该键把进程 exit 掉了，参数不全）');
   assert.equal(lines.length, READ_KEYS.length);

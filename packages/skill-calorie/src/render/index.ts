@@ -30,8 +30,10 @@ export { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } fr
 export type { GoalExpiringView, GoalPredictView, GoalVsActualView } from './goalExtra.js';
 export { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from './insightPlate.js';
 export type { PredictView, AnomalyView, ContraView, DedupeView } from './insightPlate.js';
-export { buildProfileView } from './profilePlate.js';
-export type { ProfileView } from './profilePlate.js';
+// #179 · 档案读链取数已搬进能力目录 `src/profile/view.ts`（同一个取数不留两处）；
+// 本汇总出口按原样转出，既有调用方（`test/render-t41`）导入面不变。
+export { buildProfileView } from '../profile/view.js';
+export type { ProfileView } from '../profile/view.js';
 export {
   renderAllRankingsHtml,
   renderCombinedHtml,

@@ -4,7 +4,9 @@
  * buildCrudReceipt（照片键用 render/photo.ts 三回执）组装回执；envelope 数据为
  * { ok: true, message, receipt }（ok/message 过 envelope 全字段，receipt carry T10 形状）。
  * 本文件不写 render/ 新视图、不碰 envelope 键表（#41 边界）；HTML 为 dispatch 内联
- * receipt 小节（沿 cmd_read history/help 内联先例，不新增模板）。
+ * receipt 小节（沿 cmd_read history/help 内联先例，不新增模板）——**唯一例外**是
+ * #179 接线的场景 07 三条写入词（设置档案／设活动量／改档案）：它们的回执页换成
+ * 能力目录 `src/profile/` 那两页整页装配（见 `profileReceiptDoc`），其余 32 条一字不改。
  * 退出码沿 T11 冻结：缺参/坏参 fail(2)；未知键上游拦（exit 3）；缺失阻断 fail(4)；
  * envelope/落盘 fail(5)。库函数 FetchError 透传（main 映射 exit 4）；body.ts
  * ValidationError 在此转 bad-input（exit 2）。
@@ -42,6 +44,7 @@ import {
 import { buildAddReceipt, buildDeleteReceipt, buildTagReceipt } from '../render/photo.js';
 import { addProduct, updateProduct, deprecateProduct } from '../fetch/products.js';
 import { getProfile, setActivityLevel, updateProfile } from '../fetch/profile.js';
+import type { ProfileRow } from '../fetch/profile.js';
 import { getNutritionGoal, setNutritionGoal, updateWaterGoal } from '../fetch/nutritionGoal.js';
 import { pauseAllGoals, resumeAllGoals, setWeightGoal } from '../fetch/goal.js';
 import {
@@ -54,6 +57,9 @@ import { buildCrudReceipt, withM5 } from '../render/receipt.js';
 import type { CrudReceipt, M5IdSource } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
+// #179 · 场景 07 三条写入词的回执页：整页装配住在能力目录 `src/profile/`（写前页在 setup.ts）。
+import { buildProfileSettingReceiptDoc } from '../profile/setup.js';
+import { buildProfileUpdateReceiptDoc } from '../profile/update.js';
 import { isCalorieWriteKey } from './keys.js';
 
 export type WriteOut = { data: { ok: boolean; message: string; receipt: CrudReceipt }; html: string };
@@ -208,6 +214,43 @@ function out(receipt: CrudReceipt): WriteOut {
   };
 }
 
+/* -------------------------------------- #179 · 场景 07 三条写入词的回执页（整页装配） */
+
+/** 档案库列名 ↔ CLI 参数名（逐字段对照只用这 5 项，与 `PROFILE_UPDATABLE` 同集）。 */
+const PROFILE_COLS: Record<string, keyof ProfileRow> = {
+  age: 'age', gender: 'gender', heightCm: 'height_cm', activityLevel: 'activity_level', note: 'note',
+};
+
+/** 档案某字段的展示值：空库（无改前值）与库内 NULL 一律写「—」，不编数据。 */
+function profileValue(row: ProfileRow | null, camel: string): string {
+  const col = PROFILE_COLS[camel];
+  if (!row || col === undefined) return '—';
+  const v = row[col];
+  return v === null || v === undefined ? '—' : String(v);
+}
+
+/** 改档案逐字段对照：字段名（CLI 参数名，与 `writtenFields` 同口径）＋ 改前 → 改后。
+ *  形照 `profile/update.ts:diffRows` 的读法（`status`＝字段名、`reason`＝对照）。 */
+function profileDiffItems(before: ProfileRow | null, after: ProfileRow, fields: string[]): CrudReceipt['items'] {
+  return fields.map((f) => ({ status: f, reason: profileValue(before, f) + ' → ' + profileValue(after, f) }));
+}
+
+/** 三条写入词的回执页换成整页装配；**其余 32 条一律返回 null**，由 `dispatchWrite` 的
+ *  `?? res.html` 原样放行——那些命令的产物与 `receiptHtml` 那条片段路径逐字节不变
+ *  （分派只认这三个命令名，认不出就不进这条路，也不碰 `receiptHtml` 本身）。
+ *  必须在 `withM5` 之后调用：新页要印 `affectedRows`／`writtenFields`／`m5Line`。 */
+function profileReceiptDoc(key: string, receipt: CrudReceipt): string | null {
+  switch (key) {
+    case 'calorie.profile.set':
+    case 'calorie.profile.activity':
+      return buildProfileSettingReceiptDoc(receipt);
+    case 'calorie.profile.update':
+      return buildProfileUpdateReceiptDoc(receipt);
+    default:
+      return null;
+  }
+}
+
 const R = (
   scene: string, op: CrudReceipt['op'], summary: string, wakeWord: string, source: string,
   extra?: Partial<Pick<CrudReceipt, 'recordId' | 'items' | 'tagDiff' | 'distance' | 'noChange' | 'action'>> & M5Patch,
@@ -297,7 +340,7 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
   try {
     const res = dispatchInner(key, params, db);
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
-    return { data: { ...res.data, receipt }, html: res.html };
+    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, receipt) ?? res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;
@@ -782,6 +825,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const after = r.after;
       return out(R(scene, 'update', '已' + scene + '（身高 ' + (after.height_cm ?? '—') + ' · 年龄 ' + (after.age ?? '—') + ' · 活动量 ' + (after.activity_level ?? '—') + '）', wake, 'user_profile (写库回执)', {
         recordId: 1, ids: [1], idSource: 'singleton', writtenFields: Object.keys(picked), noChange: r.changed.length === 0,
+        // #179 · 改档案回执带逐字段对照（设置档案没有「改前」概念，items 保持空）。
+        items: isSet ? [] : profileDiffItems(r.before, after, Object.keys(picked)),
       }));
     }
     case 'calorie.profile.activity': {

@@ -5,12 +5,14 @@
  * 其它字段（category／desc／main_prompt.text／variants…），唤醒词集合与冻结表的相等性由断言钉死。
  *
  * 裁定 D-2（形态）：每条路由记录以唤醒词为键，436 条逐条恰一次；顺序与 `TRIGGERS` 逐位对齐。
- *   - `kind: 'exec'`     → 可执行桶，带 `key`（必在 99 键内）与 `cli`（唯一出口形态）
+ *   - `kind: 'exec'`     → 可执行桶，带 `key`（必在 100 键内）与 `cli`（唯一出口形态）
  *   - `kind: 'non-exec'` → 命中但不执行桶，带 `bucket` 与 `reason`
  *
  * 裁定 D-3（两个桶）：
- *   - `exec` 判据与 `help-lookup.ts:100-104 execCliFor` 同口径：`main_prompt.cli` 已可执行，
- *     或 `HELP_EXEC_OVERRIDES` 命中（SoT 原文不动，呈现层替换首命中）。
+ *   - `exec` 判据：`main_prompt.cli` 已可执行，或该词有本文件登记的单命令入口。
+ *     （#180 第一步：22 条补偿串已就地落成本文件字面，本文件不再引用 `help-lookup.ts`。
+ *     查找层那张 `HELP_EXEC_OVERRIDES` 的删除与 10 个场景数据文件的清理同批——单删它会让
+ *     `calorie.help.lookup` 的命中行退回脚本命令原文，属行为变化，见 `t180-impact-list.md` §7。）
  *   - 补判据一（FX-81-2 · 同能力孪生词）：冻结词的能力若已由 `NEW_KEY_ROUTES` 的新拟词承载
  *     （同一 key），则该冻结词一并入 `exec` 桶并指向同一 key——旧词指向的能力已经能执行，就不能
  *     对用户说「做不到」（架构规格 `docs/calorie-architecture.md:32`／:60 的目的）。词表见
@@ -30,9 +32,8 @@
  * 断言见 `test/calorie-routing-81.test.mjs`。
  */
 import type { CalorieComboKey, CalorieWriteKey } from '../cli/keys.js';
-import { HELP_EXEC_OVERRIDES } from './help-lookup.js';
 
-/** 99 键内的路由键（读 64 ＋ 写 35；两 registry 无重叠） */
+/** 100 键内的路由键（读 65 ＋ 写 35；两 registry 无重叠） */
 export type RouteKey = CalorieComboKey | CalorieWriteKey;
 
 /** 场景号（与 SoT 10 场景一致） */
@@ -46,7 +47,7 @@ export interface ExecWakeRoute {
   readonly wakeWord: string;
   readonly scene: SceneNo;
   readonly kind: 'exec';
-  /** 必须在 99 键内（编译期由 RouteKey 约束，运行期由测试断言） */
+  /** 必须在 100 键内（编译期由 RouteKey 约束，运行期由测试断言） */
   readonly key: RouteKey;
   /** 唯一出口形态：calorie-cmd-read calorie.* */
   readonly cli: string;
@@ -149,15 +150,15 @@ export const TWIN_WAKE_WORDS: readonly string[] = [
 /** 436 条 SoT 唤醒词路由（顺序与 TRIGGERS 逐位对齐） */
 export const WAKE_ROUTES: readonly WakeRoute[] = [
   // ---- 场景 01 ----
-  { wakeWord: '看今日主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: HELP_EXEC_OVERRIDES.home_today_overview },
-  { wakeWord: '看今日饮食概览', scene: '01', kind: 'exec', key: 'calorie.view.diet', cli: HELP_EXEC_OVERRIDES.home_today_diet_overview },
-  { wakeWord: '看今日运动概览', scene: '01', kind: 'exec', key: 'calorie.view.exercise', cli: HELP_EXEC_OVERRIDES.home_today_exercise_overview },
-  { wakeWord: '看今日体重概览', scene: '01', kind: 'exec', key: 'calorie.view.weight', cli: HELP_EXEC_OVERRIDES.home_today_weight_overview },
-  { wakeWord: '看今日目标进度', scene: '01', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.home_today_goal_progress },
-  { wakeWord: '看本周主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: HELP_EXEC_OVERRIDES.home_week_overview },
-  { wakeWord: '看本月主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: HELP_EXEC_OVERRIDES.home_month_overview },
-  { wakeWord: '看连续记录天数', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: HELP_EXEC_OVERRIDES.home_streak_days },
-  { wakeWord: '看今日热量预算', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: HELP_EXEC_OVERRIDES.home_today_budget },
+  { wakeWord: '看今日主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"2026-09-07"}\'' },
+  { wakeWord: '看今日饮食概览', scene: '01', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '看今日运动概览', scene: '01', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"start":"2026-09-06","end":"2026-09-07"}\'' },
+  { wakeWord: '看今日体重概览', scene: '01', kind: 'exec', key: 'calorie.view.weight', cli: 'calorie-cmd-read calorie.view.weight' },
+  { wakeWord: '看今日目标进度', scene: '01', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '看本周主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"2026-09-07","windowDays":7}\'' },
+  { wakeWord: '看本月主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"2026-09-07","windowDays":30}\'' },
+  { wakeWord: '看连续记录天数', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"2026-09-07"}\'' },
+  { wakeWord: '看今日热量预算', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"2026-09-07"}\'' },
   // ---- 场景 02 ----
   { wakeWord: '记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35}\'' },
   { wakeWord: '记一餐（含备注）', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35,"note":"加了辣酱"}\'' },
@@ -371,22 +372,22 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '定饮水目标', scene: '06', kind: 'exec', key: 'calorie.goal.water', cli: 'calorie-cmd-read calorie.goal.water --params \'{"water":2000}\'' },
   { wakeWord: '定饮水目标(自动算)', scene: '06', kind: 'non-exec', bucket: 'legacy-chain', reason: NON_EXEC_REASONS.wizard },
   { wakeWord: '一键定全套目标', scene: '06', kind: 'non-exec', bucket: 'legacy-chain', reason: NON_EXEC_REASONS.wizard },
-  { wakeWord: '看今日目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.goal_view_today },
-  { wakeWord: '看本周目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.goal_view_week },
-  { wakeWord: '看营养目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.goal_view_nutrition_progress },
-  { wakeWord: '看体重目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-weight', cli: HELP_EXEC_OVERRIDES.goal_view_weight_progress },
-  { wakeWord: '看饮水目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.goal_view_water_progress },
-  { wakeWord: '看目标对比实际', scene: '06', kind: 'exec', key: 'calorie.view.goal-vs-actual', cli: HELP_EXEC_OVERRIDES.goal_view_vs_actual },
-  { wakeWord: '看目标完成度', scene: '06', kind: 'exec', key: 'calorie.view.goal', cli: HELP_EXEC_OVERRIDES.goal_view_completion },
-  { wakeWord: '看即将到期的目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-expiring', cli: HELP_EXEC_OVERRIDES.goal_view_expiring },
-  { wakeWord: '看目标完成率(按周)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.goal_view_completion_rate_week },
-  { wakeWord: '看目标完成率(按月)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.goal_view_completion_rate_month },
+  { wakeWord: '看今日目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '看本周目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
+  { wakeWord: '看营养目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '看体重目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-weight', cli: 'calorie-cmd-read calorie.view.goal-weight --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
+  { wakeWord: '看饮水目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '看目标对比实际', scene: '06', kind: 'exec', key: 'calorie.view.goal-vs-actual', cli: 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '看目标完成度', scene: '06', kind: 'exec', key: 'calorie.view.goal', cli: 'calorie-cmd-read calorie.view.goal --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '看即将到期的目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-expiring', cli: 'calorie-cmd-read calorie.view.goal-expiring' },
+  { wakeWord: '看目标完成率(按周)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
+  { wakeWord: '看目标完成率(按月)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '改营养目标', scene: '06', kind: 'exec', key: 'calorie.goal.set', cli: 'calorie-cmd-read calorie.goal.set --params \'{"calorie":1800,"protein":150,"carbs":200,"fat":50}\'' },
   { wakeWord: '改体重目标', scene: '06', kind: 'exec', key: 'calorie.goal.weight', cli: 'calorie-cmd-read calorie.goal.weight --params \'{"kg":67.5}\'' },
   { wakeWord: '改饮水目标', scene: '06', kind: 'exec', key: 'calorie.goal.water', cli: 'calorie-cmd-read calorie.goal.water --params \'{"water":2200}\'' },
   { wakeWord: '暂停所有目标', scene: '06', kind: 'exec', key: 'calorie.goal.pause', cli: 'calorie-cmd-read calorie.goal.pause' },
   { wakeWord: '重启所有目标', scene: '06', kind: 'exec', key: 'calorie.goal.resume', cli: 'calorie-cmd-read calorie.goal.resume' },
-  { wakeWord: '看目标历史完成', scene: '06', kind: 'exec', key: 'calorie.view.goal', cli: HELP_EXEC_OVERRIDES.goal_view_history_complete },
+  { wakeWord: '看目标历史完成', scene: '06', kind: 'exec', key: 'calorie.view.goal', cli: 'calorie-cmd-read calorie.view.goal --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
   { wakeWord: '看目标预测达成', scene: '06', kind: 'exec', key: 'calorie.view.goal-predict', cli: 'calorie-cmd-read calorie.view.goal-predict --params \'{"start":"2026-08-25","end":"2026-09-07"}\'' },
   // ---- 场景 07 ----
   { wakeWord: '设置档案', scene: '07', kind: 'exec', key: 'calorie.profile.set', cli: 'calorie-cmd-read calorie.profile.set --params \'{"heightCm":175,"age":30,"gender":"male","activityLevel":"moderate"}\'' },
@@ -531,8 +532,8 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '为什么我没瘦', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"why_not_losing","start":"2026-08-09","end":"2026-09-07"}\'' },
   { wakeWord: '为什么我瘦太快', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"why_losing_fast","start":"2026-08-09","end":"2026-09-07"}\'' },
   { wakeWord: '我的减重速度合理吗', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"rate_reasonable","start":"2026-08-09","end":"2026-09-07"}\'' },
-  { wakeWord: '我的减肥策略对吗', scene: '10', kind: 'exec', key: 'calorie.view.goal-progress', cli: HELP_EXEC_OVERRIDES.diag_strategy_check },
-  { wakeWord: '我距离目标还差什么', scene: '10', kind: 'exec', key: 'calorie.view.goal-weight', cli: HELP_EXEC_OVERRIDES.diag_gap_to_goal },
+  { wakeWord: '我的减肥策略对吗', scene: '10', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-05","end":"2026-09-07"}\'' },
+  { wakeWord: '我距离目标还差什么', scene: '10', kind: 'exec', key: 'calorie.view.goal-weight', cli: 'calorie-cmd-read calorie.view.goal-weight --params \'{"start":"2026-09-01","end":"2026-09-07"}\'' },
   { wakeWord: '我这个月做得好的', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"month_highlights","start":"2026-08-09","end":"2026-09-07"}\'' },
   { wakeWord: '我这个月需要改的', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"month_improve","start":"2026-08-09","end":"2026-09-07"}\'' },
   { wakeWord: '综合健康评估', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"overall","start":"2026-08-09","end":"2026-09-07"}\'' },
@@ -672,11 +673,14 @@ export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看体脂向导', scene: '08', kind: 'exec', key: 'calorie.view.composition-wizard', cli: 'calorie-cmd-read calorie.view.composition-wizard' },
   { wakeWord: '看身材照向导', scene: '09', kind: 'exec', key: 'calorie.view.photo-log-wizard', cli: 'calorie-cmd-read calorie.view.photo-log-wizard' },
   { wakeWord: '看GIF规划器', scene: '09', kind: 'exec', key: 'calorie.view.gif-planner', cli: 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'' },
+  // #179 · 场景 07 基础信息写前预检页（D2③ 100 键全可达；1 键短名；静态 HTML＋copyText，
+  // 三条写入词共用一页，agent 按 M6 三场景选用）。
+  { wakeWord: '看档案预检', scene: '07', kind: 'exec', key: 'calorie.view.profile-wizard', cli: 'calorie-cmd-read calorie.view.profile-wizard' },
 ];
 
 
 
-/** 全量路由（436 条 SoT ＋ 56 条新拟入口 ＋ 1 条覆盖修复入口） */
+/** 全量路由（436 条 SoT ＋ 57 条新拟入口 ＋ 1 条覆盖修复入口） */
 export const ALL_ROUTES: readonly WakeRoute[] = [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES];
 
 /** 唤醒词 → 路由（记身材照 3 条，故值为数组） */
@@ -688,7 +692,7 @@ export const ROUTES_BY_WAKE_WORD: Readonly<Record<string, readonly WakeRoute[]>>
   {} as Record<string, WakeRoute[]>,
 );
 
-/** calorie key → 首条可执行路由（99 键全可达的索引） */
+/** calorie key → 首条可执行路由（100 键全可达的索引） */
 export const EXEC_ROUTE_BY_KEY: Readonly<Record<string, ExecWakeRoute>> = ALL_ROUTES.filter(
   (r): r is ExecWakeRoute => r.kind === 'exec',
 ).reduce(

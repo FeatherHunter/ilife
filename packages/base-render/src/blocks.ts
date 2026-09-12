@@ -8,7 +8,7 @@
  *    **不从** `src/index.ts` 导出（签名测试把 `dist/index.js` 出口与冻结清单绑死，
  *    区块接口是可演进的组合层，不是冻结签名）。消费方走子路径 `base-paint/blocks`；
  *  - 清单裁定（DB-1）：12 区块取 `docs/visual-spec-blocks.md` §1 拟定清单为终版，
- *    只做命名收敛（英文键），锚点语义不变；
+ *    只做命名统一（英文键），锚点语义不变；
  *  - 样式闭集裁定（DB-2）：新增 `BLOCK_STYLE_SECTIONS` 12 区闭集（**不改**
  *    `CONTROL_STYLE_SECTIONS`）；区块 CSS 由本模块唯一产出者 `blocksCss()` 产出，
  *    只读冻结 token（`CSS_VAR_TOKENS`）＋ 局部 CSS 常量（圆角 `{8,14,20,999}`、
@@ -31,6 +31,7 @@
 
 import { charts } from './charts.js';
 import { renderActionBar, renderEmptyState, renderErrorReceipt, renderStatusBadge, renderToast } from './controls.js';
+import { BODY_FONT_STACK } from './font.js';
 import {
   ACTION_BAR_DEFAULTS,
   ACTION_ID_ATTR,
@@ -151,7 +152,7 @@ function blockPart(section: BlockStyleSection, part: string): string {
 }
 
 /* ══════════════════════════════════════════════════════════════
- * B-01 页面壳／标题区
+ * B-01 共享页面模板／标题区
  * ══════════════════════════════════════════════════════════════ */
 
 export interface PageShellInput {
@@ -661,11 +662,11 @@ const LINE_RGB = '210, 210, 215';
 /** 主色 RGB（`--blue` `#007aff`；与 `src/style.ts` 同值，复用罗列处注明出处）。 */
 const BLUE_RGB = '0, 122, 255';
 
-/** 待开发徽章配色（沿用 HELP 壳 `help-shell-badge-dev` 逐值，不另发明）。 */
+/** 待开发徽章配色（沿用 help 模板 `help-shell-badge-dev` 逐值，不另发明）。 */
 const DEV_BG = 'rgba(255, 149, 0, .12)';
 const DEV_FG = '#b25000';
 
-/** 必填星号色（沿用 HELP 壳 `help-shell-field-required` 逐值）。 */
+/** 必填星号色（沿用 help 模板 `help-shell-field-required` 逐值）。 */
 const REQUIRED_FG = '#c0392b';
 
 /** 局部圆角常量（D-5：`{8,14,20,999}`，不新增 token 名）。 */
@@ -677,6 +678,23 @@ const RADIUS_PILL = 999;
 /** 区块 CSS：12 区各自实现（键与 `BLOCK_STYLE_SECTIONS` 一一对应，缺区导入即抛，防静默缺样式）。 */
 const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => string> = {
   pageShell: (p) => [
+    // #179 整页基座（文档级）：本区是「共享页面模板」的唯一落点（`style.test.mjs` T22 明写 body／html
+    // 规则归 #104，`buildStyleSheet()` 不得产）。此前一条都没有 → 实测 `body` 吃 UA 的 8px 外边距、
+    // 白底（`--bg` `#f5f5f7` 定义了却没人用）＋ 系统默认字体（computed 回落到 Noto Sans SC）。
+    // 这三条与参照件 HELP 的 `body{font-family…;background:var(--bg);color:var(--text)}` 对齐；
+    // 字体栈取 `src/font.ts` 唯一真相源（不各抄一份）。**不搬** HELP 的 `*{margin:0;padding:0}`：
+    // 本页没有任何盒子靠全局复位才不溢出（唯一需要 `box-sizing` 的输入框已自带），
+    // 搬了会把 `.ilife-block-page-shell` 的桌面内容宽从 960 压到 920（45 张页面一起变），
+    // 属另一题材。 */
+    'body {',
+    '  margin: 0;',
+    '  background: var(--bg);',
+    '  color: var(--fg);',
+    '  font-family: ' + BODY_FONT_STACK + ';',
+    '  font-size: 15px;',
+    '  line-height: 1.5;',
+    '  -webkit-font-smoothing: antialiased;',
+    '}',
     '.' + p + 'block-page-shell {',
     '  display: block;',
     '  max-width: 960px;',
@@ -687,7 +705,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-page-shell-eyebrow {',
     '  margin: 0;',
-    '  color: var(--blue);',
+    // #179 对比度：12px 小字压白底，`--blue` 4.02:1 不到 AA 的 4.5:1 → 同族深一档 `--blue2`（5.6:1）。
+    '  color: var(--blue2);',
     '  font-size: 12px;',
     '  font-weight: 600;',
     '  letter-spacing: .08em;',
@@ -720,6 +739,10 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
   ].join(LF),
 
   kpiCard: (p) => [
+    // #179 类名对账（硬证据：`.scratch/t179` 的类名对账脚本）：本区 6 条内层规则此前写成
+    // `block-kpi-*`，而 `blockPart('kpiCard', …)` 真产出的是 `block-kpi-card-*`
+    // → label／value-row／value／unit／detail／badge **6 条全部落空**（computed 实测：值 16px/400
+    // 普通正文色，不是设计的 28px/700）。本区逐条改回真产出的类名，并把说明落在每条前面。
     '.' + p + 'block-kpi-card-grid {',
     '  display: grid;',
     '  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));',
@@ -732,34 +755,40 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  background: var(--card);',
     '  box-shadow: var(--shadow);',
     '}',
-    '.' + p + 'block-kpi-label {',
+    '.' + p + 'block-kpi-card-label {',
     '  color: var(--fg2);',
     '  font-size: 12px;',
     '  font-weight: 600;',
     '}',
-    '.' + p + 'block-kpi-value-row {',
+    '.' + p + 'block-kpi-card-value-row {',
     '  display: flex;',
     '  align-items: baseline;',
     '  gap: 6px;',
+    '  min-width: 0;',
     '  margin-top: 4px;',
     '}',
-    '.' + p + 'block-kpi-value {',
+    '.' + p + 'block-kpi-card-value {',
+    '  min-width: 0;',
     '  color: var(--fg);',
     '  font-size: 28px;',
     '  font-weight: 700;',
     '  line-height: 1.2;',
+    '  overflow-wrap: anywhere;',
     '  font-variant-numeric: tabular-nums;',
     '}',
-    '.' + p + 'block-kpi-unit {',
+    '.' + p + 'block-kpi-card-unit {',
     '  color: var(--fg2);',
     '  font-size: 13px;',
     '}',
-    '.' + p + 'block-kpi-detail {',
+    '.' + p + 'block-kpi-card-detail {',
     '  margin-top: 4px;',
-    '  color: var(--fg3);',
+    // #179 对比度：12px 小字取 `--fg3`（`#86868b`）压卡片白底只有 3.62:1，不到 AA 的 4.5:1
+    // → 与 label 同色 `--fg2`（4.94:1），层次由字重（600／400）和字号承担，不靠更浅的灰。
+    '  color: var(--fg2);',
     '  font-size: 12px;',
+    '  overflow-wrap: anywhere;',
     '}',
-    '.' + p + 'block-kpi-badge {',
+    '.' + p + 'block-kpi-card-badge {',
     '  margin-top: 8px;',
     '}',
   ].join(LF),
@@ -787,7 +816,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  padding: 10px 14px;',
     '  border-bottom: 1px solid var(--line);',
     '  background-color: transparent;',
-    '  color: var(--fg3);',
+    // #179 对比度：表头 12px 取 `--fg3` 只有 3.62:1，不到 AA 的 4.5:1 → 取 `--fg2`（4.94:1）。
+    '  color: var(--fg2);',
     '  font-size: 12px;',
     '  font-weight: 600;',
     '  text-transform: uppercase;',
@@ -955,7 +985,12 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  background: var(--card);',
     '}',
     '.' + p + 'block-disclosure-summary {',
-    '  padding: 10px 14px;',
+    // #179 触控目标：折叠区整条是可点区域，实测 40px 高（10px 上下留白＋14px 字）不到 44px
+    // → 改 44px 定高＋纵向居中，横向留白不变（与 `.block-disclosure-body` 的 14px 对齐）。
+    '  display: flex;',
+    '  align-items: center;',
+    '  min-height: 44px;',
+    '  padding: 0 14px;',
     '  font-size: 14px;',
     '  font-weight: 600;',
     '  cursor: pointer;',
@@ -1077,7 +1112,7 @@ export interface BlocksCssInput {
 
 /** 区块样式资产唯一产出者（用法：调用方把返回值拼进 `TemplateAssets.sharedCssText`
  *  再交 `fillTemplate` 包裹注入；不得走 `StyleSheetInput.extraCss`——其语义被契约
- *  限死为技能作用域 token 覆盖块，不得塞壳层样式）。恒返回非空 CSS 文本。 */
+ *  限死为技能作用域 token 覆盖块，不得塞共享页面模板的样式）。恒返回非空 CSS 文本。 */
 export function blocksCss(input?: BlocksCssInput): string {
   const prefix = input !== undefined && input !== null && typeof input.prefix === 'string' && input.prefix !== ''
     ? input.prefix

@@ -20,17 +20,14 @@
  * 不返空（缺失由数据层抛 missing-data）。
  */
 import {
-  blocksCss,
   renderChartBlock,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
-  renderPageShell,
   renderParamForm,
 } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildDataText, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
+import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
 import type { DataTableColumn } from 'base-paint/blocks';
 import type { DaySeries } from '../analysis/series.js';
 import { inferCategory } from '../fetch/exercise.js';
@@ -52,54 +49,12 @@ import type {
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 内容页壳（裸标记＋CONTENT 槽；包裹约定：资产裸文本＋填充器包裹，标记不得预包裹）。
- *  wrap 带 ilife-page 兼容既有 --html 断言。 */
-const DOC_SHELL =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·运动身体</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n</body>\n</html>';
-
-/** 图表页壳（多一个 CHARTS-HELPERS 标记，图表 CSS 由 charts helpers 运行时注入）。 */
-const DOC_SHELL_CHARTS =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·运动身体</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n<!--CHARTS-HELPERS-->\n</body>\n</html>';
-
-type CopyInput = Parameters<typeof buildDataText>[0];
-
-function assemble(title: string, eyebrow: string, subtitle: string | null, content: string, charts: boolean): string {
-  const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss(),
-    sharedHelpersJs: buildSharedHelpersJs(),
-  };
-  if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
-  const body = renderPageShell({
-    title,
-    ...(eyebrow ? { eyebrow } : {}),
-    ...(subtitle ? { subtitle } : {}),
-    content,
-  });
-  return fillTemplate({ template: charts ? DOC_SHELL_CHARTS : DOC_SHELL, assets, content: body }).html;
-}
-
-function copyBlock(title: string, input: CopyInput): string {
-  return renderCopyBlock({ title, dataText: buildDataText(input) });
-}
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·运动身体';
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
   return String(n);
-}
-
-/** 复制投影 stat-metrics 只收确定数字（冻结口径：null/undefined 不进投影；随 #108 诸盘纯数字 metrics 同理）。 */
-function metricsOf(obj: Record<string, number | null | undefined>): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== null && v !== undefined) out[k] = v;
-  }
-  return out;
 }
 
 /* ── 运动总览（exercise_summary.html 对照：汇总＋每日趋势＋类型分布＋力量/有氧筛选子集） ── */
@@ -168,7 +123,7 @@ export function buildExerciseDoc(v: ExerciseView): string {
       }),
     }));
   }
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise',
       data: {
@@ -180,13 +135,14 @@ export function buildExerciseDoc(v: ExerciseView): string {
       },
     },
   }));
-  return assemble(
-    '运动总览 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise · 运动身体域',
-    '类型分布/力量有氧明细同窗直出（交互筛选归宿主）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '运动总览 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise · 运动身体域',
+    subtitle: '类型分布/力量有氧明细同窗直出（交互筛选归宿主）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 运动目标（exercise_goal_view.html 对照：目标 vs 实际＋完成度＋达成判定） ── */
@@ -206,7 +162,7 @@ export function buildExerciseGoalDoc(v: ExerciseGoalView): string {
     title: '目标 vs 实际',
     input: { items: [{ label: '目标', value: v.goalTotal }, { label: '实际', value: v.actual }] },
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-goal',
       data: {
@@ -217,13 +173,14 @@ export function buildExerciseGoalDoc(v: ExerciseGoalView): string {
       },
     },
   }));
-  return assemble(
-    '运动目标 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.exercise-goal · 运动身体域',
-    v.achieved ? '已达成（实际 ≥ 目标）' : '未达成（还差 ' + Math.abs(v.gap) + ' 卡）',
-    parts.join(''),
-    true,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '运动目标 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.exercise-goal · 运动身体域',
+    subtitle: v.achieved ? '已达成（实际 ≥ 目标）' : '未达成（还差 ' + Math.abs(v.gap) + ' 卡）',
+    content: parts.join(''),
+    charts: true,
+  });
 }
 
 /* ── 体重盘（weight_dashboard.html 对照：首末＋均值＋变化趋势＋目标差距） ── */
@@ -261,7 +218,7 @@ export function buildWeightDoc(w: WeightDashboard): string {
     caption: '体重记录（' + t.firstDate + ' ~ ' + t.lastDate + '，共 ' + t.recordCount + ' 条）',
     emptyText: '本窗无体重记录',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.weight',
       data: {
@@ -275,7 +232,14 @@ export function buildWeightDoc(w: WeightDashboard): string {
       },
     },
   }));
-  return assemble('体重盘 ' + w.start + ' ~ ' + w.end, 'calorie.view.weight · 运动身体域', '趋势' + t.trendCn, parts.join(''), charts);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '体重盘 ' + w.start + ' ~ ' + w.end,
+    eyebrow: 'calorie.view.weight · 运动身体域',
+    subtitle: '趋势' + t.trendCn,
+    content: parts.join(''),
+    charts,
+  });
 }
 
 /* ── 体重历史（weight_history.html 对照：曲线＋全量记录表；18 词多窗口子集直出） ── */
@@ -313,7 +277,7 @@ export function buildWeightHistoryDoc(h: WeightHistoryView): string {
     caption: '体重历史 ' + h.range + '（共 ' + h.rows.length + ' 条）',
     emptyText: '本窗无体重记录',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.weight-history',
       data: {
@@ -325,7 +289,14 @@ export function buildWeightHistoryDoc(h: WeightHistoryView): string {
       },
     },
   }));
-  return assemble('体重历史 ' + h.range, 'calorie.view.weight-history · 运动身体域', null, parts.join(''), charts);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '体重历史 ' + h.range,
+    eyebrow: 'calorie.view.weight-history · 运动身体域',
+    subtitle: null,
+    content: parts.join(''),
+    charts,
+  });
 }
 
 /* ── 体重对比（weight_compare.html 对照：两期均值差＋节奏＋分期明细；18 场景子集直出） ── */
@@ -362,7 +333,7 @@ export function buildWeightCompareDoc(v: WeightCompareView): string {
     caption: '两期对比（均值差 ' + (c.avgDiff >= 0 ? '+' : '') + c.avgDiff + ' kg）',
     emptyText: '对比期无数据',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.weight-compare',
       data: {
@@ -374,7 +345,14 @@ export function buildWeightCompareDoc(v: WeightCompareView): string {
       },
     },
   }));
-  return assemble('体重对比', 'calorie.view.weight-compare · 运动身体域', '本期 ' + v.start + ' ~ ' + v.end + ' vs 对比期 ' + v.compareStart + ' ~ ' + v.compareEnd, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '体重对比',
+    eyebrow: 'calorie.view.weight-compare · 运动身体域',
+    subtitle: '本期 ' + v.start + ' ~ ' + v.end + ' vs 对比期 ' + v.compareStart + ' ~ ' + v.compareEnd,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 体重复核（weight_review.html 对照：当前＋目标＋差距＋预计达成＋调整建议） ── */
@@ -404,7 +382,7 @@ export function buildWeightReviewDoc(v: WeightReviewView): string {
       },
     ],
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.weight-review',
       data: {
@@ -416,7 +394,14 @@ export function buildWeightReviewDoc(v: WeightReviewView): string {
       },
     },
   }));
-  return assemble('体重复核 ' + v.today, 'calorie.view.weight-review · 运动身体域', m.status, parts.join(''), false);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '体重复核 ' + v.today,
+    eyebrow: 'calorie.view.weight-review · 运动身体域',
+    subtitle: m.status,
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 波动分析（weight_volatility_v2.html 对照：基线＋阈值＋预警＋异常点） ── */
@@ -455,7 +440,7 @@ export function buildVolatilityDoc(v: VolatilityView): string {
     caption: '近期异常点（共 ' + o.recentAnomalies.length + ' 个，黄/红阈上）',
     emptyText: '近期无异常点（基线 ' + o.baselineValue + ' kg，黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + '）',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.volatility',
       data: {
@@ -468,13 +453,14 @@ export function buildVolatilityDoc(v: VolatilityView): string {
       },
     },
   }));
-  return assemble(
-    '波动分析 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.volatility · 运动身体域',
-    o.earlyWarning.message,
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '波动分析 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.volatility · 运动身体域',
+    subtitle: o.earlyWarning.message,
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 体成分（body_composition_view.html 对照：来源筛选＋趋势＋记录表＋复制） ── */
@@ -520,13 +506,20 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
     caption: '体成分记录（共 ' + v.total + ' 条）',
     emptyText: '无体成分记录',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.body-composition',
       data: { items: rows, total: v.total },
     },
   }));
-  return assemble('体成分看', 'calorie.view.body-composition · 运动身体域', null, parts.join(''), charts);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '体成分看',
+    eyebrow: 'calorie.view.body-composition · 运动身体域',
+    subtitle: null,
+    content: parts.join(''),
+    charts,
+  });
 }
 
 /* ── 围度（body_measurements_view.html 对照：项目筛选＋趋势＋记录表＋复制，13 项） ── */
@@ -599,11 +592,18 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
     }));
   }
   const rows = v.items.map((r) => ({ ...r }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.body-measure',
       data: { items: rows, total: v.total },
     },
   }));
-  return assemble('围度看', 'calorie.view.body-measure · 运动身体域', null, parts.join(''), charts);
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '围度看',
+    eyebrow: 'calorie.view.body-measure · 运动身体域',
+    subtitle: null,
+    content: parts.join(''),
+    charts,
+  });
 }

@@ -23,8 +23,10 @@
  *  1. **槽位**＝冻结面既有的 `SceneEditableField`（`{name,label,value}`），**不新增契约面**；
  *     落点对齐旧 ADR-0008 实施规范「`data_source` → ✅ cli 块 → L4 直接显示」。
  *  2. **内容取路由层、不取 `main_prompt.cli` 原文**：后者 **376/436** 是已不存在的
- *     `python scripts/render_*.py`（370）／`mavis`（3）／`mmx`（2）／裸键（1）命令，展示它
- *     违背 ADR-0008「必须遵守 3」（可一键复制执行）。
+ *     老命令——`python` 系 370（366 条 `scripts/render_*.py` ＋ `scripts/sync_plan.py` 3 ＋
+ *     `scripts/calorie_tracker.py` 1）／`mavis` 3／`mmx` 2／裸键 1，展示它
+ *     违背 ADR-0008「必须遵守 3」（可一键复制执行）。（#180 逐条复核后的实况；这批老命令清完后
+ *     该串数归 0，本行随之失效。）
  *  3. **非 exec 的 95 条不发该行**（#81 裁定：out-of-scope 10／legacy-chain 85，无单命令入口），
  *     不造占位文案；`text` 态不加该行（纯文本索引，且 #88 D-3 锁「text 尖括号集恒 {<N>}」）。
  */

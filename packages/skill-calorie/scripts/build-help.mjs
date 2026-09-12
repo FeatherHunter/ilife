@@ -46,6 +46,7 @@ const REPR = {
   'calorie.view.composition-wizard': '看体脂向导',
   'calorie.view.photo-log-wizard': '看身材照向导',
   'calorie.view.gif-planner': '看GIF规划器',
+  'calorie.view.profile-wizard': '看档案预检',
   'calorie.view.ranking': '查高热量排行',
   'calorie.view.library': '查食品库',
   'calorie.view.search': '查食品',
@@ -131,6 +132,7 @@ function exampleFor(key) {
     case 'calorie.view.composition-wizard': return 'calorie-cmd-read calorie.view.composition-wizard';
     case 'calorie.view.photo-log-wizard': return 'calorie-cmd-read calorie.view.photo-log-wizard';
     case 'calorie.view.gif-planner': return 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'';
+    case 'calorie.view.profile-wizard': return 'calorie-cmd-read calorie.view.profile-wizard';
     case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
     case 'calorie.view.library': return 'calorie-cmd-read calorie.view.library';
     case 'calorie.view.search': return 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'';

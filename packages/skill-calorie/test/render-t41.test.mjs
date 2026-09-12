@@ -67,8 +67,8 @@ function seedFull(db) {
   db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('米饭', '测试', 130, 2.7, 0.3, 28, 1, '主食', '测试')").run();
 }
 
-test('#41 键表：99 组合（读 64 + 写 35，#113 +8／#86 +4）registry 合法 + 新增 18 stat', () => {
-  assert.equal(Object.keys(CALORIE_COMBOS).length, 99);
+test('#41 键表：100 组合（读 65 + 写 35，#113 +8／#86 +4／#179 +1）registry 合法 + 新增 18 stat', () => {
+  assert.equal(Object.keys(CALORIE_COMBOS).length, 100);
   const added = ['calorie.view.weight', 'calorie.view.weight-history', 'calorie.view.weight-compare', 'calorie.view.weight-review', 'calorie.view.volatility', 'calorie.view.body-composition', 'calorie.view.body-measure', 'calorie.view.plan', 'calorie.view.plan-wizard', 'calorie.view.exercise-goal', 'calorie.view.goal-expiring', 'calorie.view.goal-predict', 'calorie.view.goal-vs-actual', 'calorie.view.predict', 'calorie.view.anomaly', 'calorie.view.contraindication', 'calorie.view.dedupe', 'calorie.view.profile'];
   for (const k of added) {
     assert.ok(CALORIE_COMBOS[k], '缺新键 ' + k);

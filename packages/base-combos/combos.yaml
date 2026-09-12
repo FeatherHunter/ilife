@@ -323,6 +323,11 @@ combos:
     shape: stat
     title: GIF规划器
     cmd: skill-calorie
+  - key: calorie.view.profile-wizard
+    skill: calorie
+    shape: stat
+    title: 档案预检
+    cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt

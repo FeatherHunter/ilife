@@ -7,17 +7,14 @@
  * 本层不做取数（数据由 render/trendMiscPort.ts 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
-  blocksCss,
   renderChartBlock,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
-  renderPageShell,
   renderParamForm,
 } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildDataText, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
+import { assembleDocPage, dataCopyArea, metricsOf } from '../shared/docPage.js';
 import type {
   BatchImportPreviewView,
   CalorieTrendView,
@@ -33,54 +30,12 @@ import type {
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 内容页壳（裸标记＋CONTENT 槽；包裹约定：资产裸文本＋填充器包裹，标记不得预包裹）。
- *  wrap 带 ilife-page 兼容既有 --html 断言。 */
-const DOC_SHELL =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·趋势其他移植</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n</body>\n</html>';
-
-/** 图表页壳（多一个 CHARTS-HELPERS 标记，图表 CSS 由 charts helpers 运行时注入）。 */
-const DOC_SHELL_CHARTS =
-  '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n' +
-  '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
-  '<title>卡路里·趋势其他移植</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n' +
-  '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n<!--CHARTS-HELPERS-->\n</body>\n</html>';
-
-type CopyInput = Parameters<typeof buildDataText>[0];
-
-function assemble(title: string, eyebrow: string, subtitle: string | null, content: string, charts: boolean): string {
-  const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss(),
-    sharedHelpersJs: buildSharedHelpersJs(),
-  };
-  if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
-  const body = renderPageShell({
-    title,
-    ...(eyebrow ? { eyebrow } : {}),
-    ...(subtitle ? { subtitle } : {}),
-    content,
-  });
-  return fillTemplate({ template: charts ? DOC_SHELL_CHARTS : DOC_SHELL, assets, content: body }).html;
-}
-
-function copyBlock(title: string, input: CopyInput): string {
-  return renderCopyBlock({ title, dataText: buildDataText(input) });
-}
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·趋势其他移植';
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
   return String(n);
-}
-
-/** 复制投影 stat-metrics 只收确定数字（冻结口径：null/undefined 不进投影）。 */
-function metricsOf(obj: Record<string, number | null | undefined>): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== null && v !== undefined) out[k] = v;
-  }
-  return out;
 }
 
 function windowForm(start: string, end: string, extra: string): string {
@@ -111,7 +66,7 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
       title: '每日热量',
       input: { items: v.data.series.map((d) => ({ label: d.date.slice(5), value: d.calorie })) },
     }),
-    copyBlock('复制数据', {
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.calorie-trend',
         data: {
@@ -125,13 +80,14 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
       },
     }),
   ];
-  return assemble(
-    '热量趋势 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.calorie-trend · 趋势其他移植域',
-    '日序列＋趋势方向＋达标统计（空窗阻断，不编数）',
-    parts.join(''),
-    true,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '热量趋势 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.calorie-trend · 趋势其他移植域',
+    subtitle: '日序列＋趋势方向＋达标统计（空窗阻断，不编数）',
+    content: parts.join(''),
+    charts: true,
+  });
 }
 
 /* ── 整体趋势（long_trend：体重＋热量双序列） ── */
@@ -172,7 +128,7 @@ export function buildLongTrendDoc(v: LongTrendView): string {
     caption: '逐日明细（' + v.start + ' ~ ' + v.end + '）',
     emptyText: '本窗无明细',
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.long-trend',
       data: {
@@ -180,13 +136,14 @@ export function buildLongTrendDoc(v: LongTrendView): string {
       },
     },
   }));
-  return assemble(
-    '整体趋势（' + v.windowDays + ' 天）',
-    'calorie.view.long-trend · 趋势其他移植域',
-    '体重＋热量双序列（称重不足 2 次则体重变化明示缺失）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '整体趋势（' + v.windowDays + ' 天）',
+    eyebrow: 'calorie.view.long-trend · 趋势其他移植域',
+    subtitle: '体重＋热量双序列（称重不足 2 次则体重变化明示缺失）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 营养分析（nutrition_analysis：宏量占比＋微量 vs 推荐＋规则建议） ── */
@@ -247,7 +204,7 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
       items: v.advice.map((a, i) => ({ left: String(i + 1), main: a, right: '' })),
     }),
   }));
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.nutrition-analysis',
       data: {
@@ -261,13 +218,14 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
       },
     },
   }));
-  return assemble(
-    '营养分析 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.nutrition-analysis · 趋势其他移植域',
-    '配比＋微量＋规则建议（建议阈值见数据层注释，不编造结论）',
-    parts.join(''),
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '营养分析 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.nutrition-analysis · 趋势其他移植域',
+    subtitle: '配比＋微量＋规则建议（建议阈值见数据层注释，不编造结论）',
+    content: parts.join(''),
     charts,
-  );
+  });
 }
 
 /* ── 每日六因素（six_factors） ── */
@@ -288,7 +246,7 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
       caption: '六因素明细（' + v.date + '，得分 ' + v.score + '/6）',
       emptyText: '当日无因素数据',
     }),
-    copyBlock('复制数据', {
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.six-factors',
         data: {
@@ -305,13 +263,14 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
       },
     }),
   ];
-  return assemble(
-    '每日六因素 ' + v.date,
-    'calorie.view.six-factors · 趋势其他移植域',
-    '热量/蛋白/饮水/运动/称重/三餐（无目标项明示，不编数）',
-    parts.join(''),
-    false,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '每日六因素 ' + v.date,
+    eyebrow: 'calorie.view.six-factors · 趋势其他移植域',
+    subtitle: '热量/蛋白/饮水/运动/称重/三餐（无目标项明示，不编数）',
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 数据健康检查（lint_health） ── */
@@ -335,7 +294,7 @@ export function buildLintHealthDoc(v: LintHealthView): string {
       caption: '健康检查明细（只读体检，不写库）',
       emptyText: '无检查项',
     }),
-    copyBlock('复制数据', {
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.lint-health',
         data: {
@@ -350,13 +309,14 @@ export function buildLintHealthDoc(v: LintHealthView): string {
       },
     }),
   ];
-  return assemble(
-    '数据健康检查',
-    'calorie.view.lint-health · 趋势其他移植域',
-    '未匹配库/零负热量/未来日期/疑似重复（只读，不写库）',
-    parts.join(''),
-    false,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '数据健康检查',
+    eyebrow: 'calorie.view.lint-health · 趋势其他移植域',
+    subtitle: '未匹配库/零负热量/未来日期/疑似重复（只读，不写库）',
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 批量导入预览（batch_import_preview） ── */
@@ -396,7 +356,7 @@ export function buildBatchImportPreviewDoc(v: BatchImportPreviewView): string {
       }),
     }));
   }
-  parts.push(copyBlock('复制数据', {
+  parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.batch-import-preview',
       data: {
@@ -406,13 +366,14 @@ export function buildBatchImportPreviewDoc(v: BatchImportPreviewView): string {
       },
     },
   }));
-  return assemble(
-    '批量导入预览',
-    'calorie.view.batch-import-preview · 趋势其他移植域',
-    '库匹配＋合计试算（仅预览，不写库；确认后走 diet.batch 写入）',
-    parts.join(''),
-    false,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '批量导入预览',
+    eyebrow: 'calorie.view.batch-import-preview · 趋势其他移植域',
+    subtitle: '库匹配＋合计试算（仅预览，不写库；确认后走 diet.batch 写入）',
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 落地训练进度（process_progress） ── */
@@ -425,7 +386,7 @@ export function buildProcessProgressDoc(v: ProcessProgressView): string {
       { label: '近7天运动', value: String(v.sessions7d), unit: '次', detail: v.start + ' ~ ' + v.end },
       { label: '近7天时长', value: String(v.minutes7d), unit: '分钟' },
     ]),
-    copyBlock('复制数据', {
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.process-progress',
         data: {
@@ -437,13 +398,14 @@ export function buildProcessProgressDoc(v: ProcessProgressView): string {
       },
     }),
   ];
-  return assemble(
-    '落地训练进度',
-    'calorie.view.process-progress · 趋势其他移植域',
-    '计划配置＋近 7 天执行（无计划且无执行即阻断）',
-    parts.join(''),
-    false,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '落地训练进度',
+    eyebrow: 'calorie.view.process-progress · 趋势其他移植域',
+    subtitle: '计划配置＋近 7 天执行（无计划且无执行即阻断）',
+    content: parts.join(''),
+    charts: false,
+  });
 }
 
 /* ── 复盘报告（review_template） ── */
@@ -466,7 +428,7 @@ export function buildReviewTemplateDoc(v: ReviewTemplateView): string {
         items: v.points.map((p, i) => ({ left: String(i + 1), main: p, right: '' })),
       }),
     }),
-    copyBlock('复制数据', {
+    dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.review-template',
         data: {
@@ -479,11 +441,12 @@ export function buildReviewTemplateDoc(v: ReviewTemplateView): string {
       },
     }),
   ];
-  return assemble(
-    '复盘报告 ' + v.start + ' ~ ' + v.end,
-    'calorie.view.review-template · 趋势其他移植域',
-    '三面小结＋派生要点（要点为规则输出，非 AI 建议）',
-    parts.join(''),
-    false,
-  );
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '复盘报告 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.review-template · 趋势其他移植域',
+    subtitle: '三面小结＋派生要点（要点为规则输出，非 AI 建议）',
+    content: parts.join(''),
+    charts: false,
+  });
 }
