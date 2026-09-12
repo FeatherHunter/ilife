@@ -101,3 +101,20 @@ test('#175 反面：空库先「设置档案」仍能建行；建好之后再改
   const env = JSON.parse(u.stdout);
   assert.deepEqual(env.data.receipt.items, [{ status: 'heightCm', reason: '175 → 174' }], '对照卡应带真改前值');
 });
+
+test('#175 同一条规则覆盖「设活动量」：空库 exit 4、不落盘、不建行；有档案照常设', () => {
+  // 第一性原理：活动量是档案的一个字段，「设」＝改已有档案的字段。允许第二条创建路径，
+  // 库里就会出现「只填了活动量」的半份档案（下游 TDEE 缺身高/年龄/性别一律算不出）。
+  const dir = mkEmpty();
+  const a = runCli(dir, 'calorie.profile.activity', { activityLevel: '活跃' });
+  assert.equal(a.status, 4, '空库设活动量应缺失阻断（exit 4），实测 ' + a.status + ' stderr=' + a.stderr.slice(-300));
+  assert.equal(a.file, null, '空库设活动量不该落盘');
+  assert.equal(profileRowCount(dir), 0, '空库设活动量不该 INSERT OR IGNORE 建行');
+  assert.match(a.stderr, /档案/, '报错要说清缺的是什么：' + a.stderr.slice(-200));
+
+  const s = runCli(dir, 'calorie.profile.set', { heightCm: 175, age: 30, gender: '男', activityLevel: '中度' });
+  assert.equal(s.status, 0, '空库设置档案应照常成功，实测 ' + s.status);
+  const b = runCli(dir, 'calorie.profile.activity', { activityLevel: '活跃' });
+  assert.equal(b.status, 0, '有档案后设活动量应照常成功，实测 ' + b.status + ' stderr=' + b.stderr.slice(-300));
+  assert.match(JSON.parse(b.stdout).data.message, /moderate→active/, '设活动量回执应带改前→改后');
+});

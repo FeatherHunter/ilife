@@ -116,14 +116,23 @@ export function setProfile(db: DatabaseSync, input: SetProfileInput): { before: 
   return { before, after, changed: changedFields(before, after, camels) };
 }
 
-/** 单独设活动量（--live-profile-activity 对照）。 */
+/** 单独设活动量（--live-profile-activity 对照）。
+ *
+ * **空库守卫（2026-09-12 · 与「改档案」同一条裁定的第一性原理延伸）**：活动量是档案的一个字段，
+ * 「设」＝改已有档案的那个字段——无档案时抛 `FetchError`（CLI exit 4、不落盘、不建行），不再 `ensureRow` 建行后更新。
+ * 三条理由：① 创建档案只许一条路（`setProfile`／设置档案，它一次收身高/年龄/性别/活动量）；
+ * 这里若能把行建出来，库里就会出现「只填了活动量」的半份档案，下游 TDEE 一律算不出（`nutritionGoal` 会缺身高/年龄/性别）；
+ * ② 回执会写「已设活动量：—→active」，凭空一个改前值——正是改档案那条缺陷的同型；
+ * ③ 守卫住能力层：两个函数都能创建同一行＝同一件事有两个定义（铁律二）。
+ * 校验次序：先判值合法（坏值 exit 4，既有口径），再判档案在不在（缺失阻断 exit 4）。 */
 export function setActivityLevel(db: DatabaseSync, activityLevel: unknown): { before: string | null; after: string } {
   if (activityLevel === undefined || activityLevel === null || String(activityLevel).trim() === '') {
     throw new FetchError('activityLevel 必填');
   }
   const norm = normalizeActivityLevel(activityLevel);
-  const before = getProfile(db)?.activity_level ?? null;
-  ensureRow(db);
+  const row = getProfile(db);
+  if (!row) throw new FetchError('尚无档案（先设置档案，再设活动量）');
+  const before = row.activity_level ?? null;
   db.prepare('UPDATE user_profile SET activity_level = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1').run(norm);
   return { before, after: norm };
 }

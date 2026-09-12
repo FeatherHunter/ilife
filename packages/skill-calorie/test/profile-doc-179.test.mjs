@@ -60,11 +60,10 @@ function assertDocPage(html, what) {
 }
 
 test('#179 三条写入词的回执页一律完整文档（空库一遍 ＋ 已写入档案一遍）', () => {
-  // 空库那一遍没有「改档案」：无档案的改档案自 #175 起是缺失阻断（exit 4、不落盘），
-  // 见 test/profile-guard-175.test.mjs。
+  // 空库那一遍只有「设置档案」：无档案的「改档案」与「设活动量」自 #175 起都是缺失阻断
+  // （exit 4、不落盘），见 test/profile-guard-175.test.mjs。
   const cases = [
     ['calorie.profile.set', SET_PARAMS, false, '空库'],
-    ['calorie.profile.activity', { activityLevel: '活跃' }, false, '空库'],
     ['calorie.profile.set', SET_PARAMS, true, '已有档案'],
     ['calorie.profile.activity', { activityLevel: '高度活跃' }, true, '已有档案'],
     ['calorie.profile.update', { fields: { heightCm: 174, note: '改过一次' } }, true, '已有档案'],
