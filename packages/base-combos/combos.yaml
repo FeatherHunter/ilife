@@ -503,6 +503,11 @@ combos:
     shape: receipt
     title: 删围度
     cmd: skill-calorie
+  - key: home.help.lookup
+    skill: home
+    shape: list
+    title: 居家管家HELP
+    cmd: skill-home
   - key: memo.search
     skill: memo
     shape: list

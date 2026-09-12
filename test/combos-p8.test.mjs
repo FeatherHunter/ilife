@@ -141,7 +141,12 @@ describe('P8 combos 真相源与 HELP 注入', () => {
       ...readdirSync(join(root, 'packages/base-combos/dist')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/base-combos/dist', f)),
       join(root, 'packages/skill-memo-ilife/dist/cli/cmd_read.js'),
       ...readdirSync(join(root, 'packages/skill-memo-ilife/dist/fetch')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/skill-memo-ilife/dist/fetch', f)),
+      // #190：居家管家运行时段（同形照 memo 两行）；不进数组＝新锁静默跑不到。
+      join(root, 'packages/skill-home/dist/cli/cmd_read.js'),
+      ...readdirSync(join(root, 'packages/skill-home/dist/fetch')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/skill-home/dist/fetch', f)),
     ];
+    const homeRuntime = runtime.filter((f) => f.includes('skill-home'));
+    assert.ok(homeRuntime.length >= 2, '居家运行时未进扫描面：' + JSON.stringify(homeRuntime));
     for (const f of runtime) assert.ok(!readFileSync(f, 'utf8').includes('HELP-AUTO'), '运行时含 HELP 计算：' + f);
   });
   it('0 张业务表进说明书（yaml+HELP 无库定义语义）', () => {

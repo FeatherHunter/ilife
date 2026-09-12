@@ -101,6 +101,7 @@ export const PRESENT_KEYS: string[] = [
   'calorie.body.composition-remove',
   'calorie.body.measure-add',
   'calorie.body.measure-remove',
+  'home.help.lookup',
   'memo.search',
   'memo.detail',
   'memo.create',
