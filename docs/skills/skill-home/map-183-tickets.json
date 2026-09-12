@@ -1,0 +1,68 @@
+[
+    {
+        "n":  1,
+        "issue":  184,
+        "type":  "research",
+        "title":  "居家管家HELP（1/11）调查：饼干记账的 HELP 交付实现逐件读懂 → 居家照抄清单"
+    },
+    {
+        "n":  2,
+        "issue":  185,
+        "type":  "research",
+        "title":  "居家管家HELP（2/11）调查：内容资产对账（老 9 域／30 组／73 场景 ↔ 新表 91 条唤醒词／21 条命令）"
+    },
+    {
+        "n":  3,
+        "issue":  186,
+        "type":  "research",
+        "title":  "居家管家HELP（3/11）调查：通用 help 模板的注入契约＋居家专属取值"
+    },
+    {
+        "n":  4,
+        "issue":  187,
+        "type":  "grilling",
+        "title":  "居家管家HELP（4/11）决策：命名落盘管线的归属＋缺省出口口径"
+    },
+    {
+        "n":  5,
+        "issue":  188,
+        "type":  "task",
+        "title":  "居家管家HELP（5/11）内容资产入库：老骨架 → 仓内 typed const"
+    },
+    {
+        "n":  6,
+        "issue":  189,
+        "type":  "task",
+        "title":  "居家管家HELP（6/11）渲染接线：5 项＋三块可选内容 → 通用 help 模板"
+    },
+    {
+        "n":  7,
+        "issue":  190,
+        "type":  "task",
+        "title":  "居家管家HELP（7/11）出口与命名落盘：缺省＝HELP 文件，速查走显式参数"
+    },
+    {
+        "n":  8,
+        "issue":  191,
+        "type":  "task",
+        "title":  "居家管家HELP（8/11）锁：CLI 级用例（真 spawn 出口）"
+    },
+    {
+        "n":  9,
+        "issue":  192,
+        "type":  "task",
+        "title":  "居家管家HELP（9/11）SKILL.md 说明面"
+    },
+    {
+        "n":  10,
+        "issue":  193,
+        "type":  "task",
+        "title":  "居家管家HELP（10/11）插件侧最小装机（技能提供方＋DSH profile；收窄 #58）"
+    },
+    {
+        "n":  11,
+        "issue":  194,
+        "type":  "task",
+        "title":  "居家管家HELP（11/11）真机端到端＋肉眼终审"
+    }
+]
