@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卡路里场景 07 基础信息 · 用户验收页（t152）</title>
+<style>
+  :root{
+    --bg:#101216; --panel:#171a20; --panel2:#1d2129; --line:#2b303a;
+    --fg:#e8edf4; --fg2:#aab3c0; --fg3:#7c8593;
+    --ok:#3fb950; --warn:#d29922; --bad:#f85149; --info:#58a6ff; --accent:#7d8590;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--fg);
+    font:14px/1.7 "Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
+    padding:24px 20px 64px;
+  }
+  .wrap{max-width:1100px;margin:0 auto}
+  h1{font-size:24px;line-height:1.4;margin:0 0 6px}
+  h2{font-size:19px;margin:34px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:0 0 10px}
+  p{margin:8px 0}
+  code,.mono{font-family:Consolas,"Cascadia Mono",Menlo,monospace;font-size:12.5px}
+  code{background:#0c0e12;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#d7e2f0;word-break:break-all}
+  pre{
+    background:#0c0e12;border:1px solid var(--line);border-left:3px solid var(--info);
+    border-radius:6px;padding:12px 14px;margin:10px 0;white-space:pre-wrap;word-break:break-word;
+    font-family:Consolas,"Cascadia Mono",Menlo,monospace;font-size:13px;line-height:1.75;color:#dfe8f3;
+  }
+  .sub{color:var(--fg2)}
+  .dim{color:var(--fg3)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:18px 0}
+  .card > .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:6px}
+  .badge{display:inline-block;font-size:12px;line-height:1.6;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--fg2);background:#12151a;white-space:nowrap}
+  .badge.proc{border-color:#3d5a86;color:#a8c8f0;background:#131c28}
+  .badge.res{border-color:#4a6b47;color:#a9d6a4;background:#141d14}
+  .badge.no{border-color:#6b3f3f;color:#f0b0ad;background:#221414}
+  .wake{font-size:20px;font-weight:700;color:#fff}
+  .row{margin:10px 0}
+  .row > .k{color:var(--fg3);font-size:12.5px;letter-spacing:.04em;margin-bottom:2px}
+  ul{margin:8px 0 8px 2px;padding-left:20px}
+  li{margin:5px 0}
+  .path{display:block;background:#0c0e12;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:6px 0;word-break:break-all}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;word-break:break-word}
+  th{background:#1b1f26;color:var(--fg2);font-weight:600;font-size:12.5px}
+  td.num{text-align:right;white-space:nowrap;font-family:Consolas,monospace}
+  .verdict{background:#12161c;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:6px;padding:10px 12px;margin:10px 0}
+  .verdict .t{color:var(--warn);font-weight:700;font-size:12.5px;letter-spacing:.04em}
+  .note{background:#1a1508;border:1px solid #4a3c12;border-left:3px solid var(--warn);border-radius:6px;padding:10px 12px;margin:12px 0;color:#f0dcae}
+  .bad{background:#1e0f0f;border:1px solid #5c2b2b;border-left:3px solid var(--bad);border-radius:6px;padding:10px 12px;margin:12px 0;color:#f3c3c0}
+  .step{display:flex;gap:12px;margin:14px 0}
+  .step .n{flex:0 0 30px;height:30px;border-radius:50%;background:#1c2531;border:1px solid #35507a;color:#a8c8f0;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .step .b{flex:1 1 auto;min-width:0}
+  .foot{margin-top:36px;border-top:1px solid var(--line);padding-top:14px;color:var(--fg3);font-size:12.5px}
+  .foot pre{font-size:12px}
+  a{color:#79b8ff}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){ .two{grid-template-columns:1fr} body{padding:16px 12px 48px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>卡路里场景 07「基础信息」· 用户验收页</h1>
+<p class="sub">四条唤醒词：<b>设置档案</b>／<b>改档案</b>／<b>设活动量</b>／<b>查档案</b>　＋　顺带验收「复制数据／复制日志」通用组件</p>
+<p class="dim">本页由 t152 交付。本页所有路径与字节数均为 2026-09-13 当天在本机实测得来，测不到的条目一律写「未测到」，没有编造。</p>
+
+<h2>第 1 块 · 一句话说明</h2>
+<div class="panel">
+  <p><b>这次要你验什么：</b>场景 07 的四条唤醒词，在 DSH 里能不能一条一条从头走到尾 —— 你说一句话，AI 先给你一张<b>过程型 HTML（预检确认页）</b>，你点头之后它才去写库；写完了再给你一张<b>结果型 HTML（写后回执页）</b>；「查档案」直接给你一张<b>结果型 HTML（查询结果页）</b>。四条都拿到文件、你都看过，就算过。</p>
+  <p><b>为什么现在验：</b>三张页面的内容与装配（#175／#176／#177／#179）已经关闭，复制组件（#239）的代码也已经实装（提交 <code>a8d3b27</code>／<code>814bd09</code>／<code>d5c135a</code>），另外两笔三格式菜单（#247／#248）也进了（<code>230db27</code>／<code>03b31e6</code>）。<b>剩下的只有你肉眼看这一件事</b>——这是场景 07 收口的最后一关（议题 #152）。</p>
+  <p><b>你定的验收方式（原话）：</b>「我先去看一眼生成的 HTML，然后我自己会亲自拿一个 prompt 提示词，去到一个全新的空白 session 里面去问，拿到 HTML 之后，我再看。」本页就是照这句话给你铺的路。</p>
+</div>
+
+<h2>第 2 块 · 四条唤醒词逐条验收卡</h2>
+
+<div class="note">
+  <b>先统一说清「产物躺哪」这件事</b>（四条通用，下面每张卡不再重复）<br>
+  落盘规则读自 <code>packages/skill-calorie/src/cli/cmd_read.ts</code> 第 11–13 行的件头说明：
+  <code>&lt;SKILLS_DB_PATH&gt;/calorie_html/&lt;中文command&gt;_&lt;YYYYMMDD&gt;_&lt;HHMMSS&gt;[_N].html</code>（同一秒撞名自动加 <code>_2</code>／<code>_3</code>）。
+  本机的 <code>SKILLS_DB_PATH</code> 实测＝<code>D:\2Study\StudyNotes\.db</code>，所以真库目录是
+  <code>D:\2Study\StudyNotes\.db\calorie_html\</code>。<br>
+  <b>实测（2026-09-13）：</b>该目录里共 <b>328</b> 个 <code>.html</code>；其中与场景 07 有关的<b>只有 1 个</b> ——
+  <code>档案视图_20260911_211158.html</code>，<b>1,358 字节</b>，落盘时刻 2026-09-11 21:11:58。
+  它是一个 <code>&lt;section&gt;</code> 开头的<b>片段</b>（不是完整文档），是 #177／#179 收口之前的早期产物。<br>
+  <b>设置档案／改档案／设活动量／档案预检四条词，在真库目录里本次未测到既有产物</b>（目录里确实没有这些前缀的文件）。<br>
+  手边有的、按新口径落盘的<b>完整文档实物</b>，来自 2026-09-13 01:56 的一次实跑，我复制了一份到本票自己的目录（下面每张卡给绝对路径）。<br>
+  <b>两个提醒：</b>① 下面卡里写的 <code>.scratch\t152-probe\db\calorie_html\*.html</code> 是<b>另一路探针存放的</b>，它会被反复覆盖、文件名里的时间戳会变 —— 以此为准的请用我复制好的那份（<code>.scratch\t152-user-accept\samples\</code>）。② 真库目录里那 328 个文件是历史累积，不都是场景 07 的。
+</div>
+
+<!-- ============ 卡 1 设置档案 ============ -->
+<div class="card">
+  <div class="head">
+    <span class="wake">① 设置档案</span>
+    <span class="badge proc">过程型 HTML → 再写库</span>
+    <span class="badge res">写后：结果型 HTML（回执）</span>
+  </div>
+
+  <div class="row">
+    <div class="k">你要在空白 session 里对 AI 说的那句话（逐字抄，一个字都别改）</div>
+    <pre>请你加载技能 卡路里,执行唤醒词「设置档案」。
+
+我想设置基础档案(身高/年龄/性别/活动量)。如果我没说全,请一项一项问我,并根据我的日常情况推荐合适的活动量。请先出预检确认页给我看(改前值/待写四项/活动量五档),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的身高(cm):____
+年龄:____
+性别(男/女):____
+日常活动情况(选填,用于推荐活动量):____</pre>
+    <p class="dim">来源：<code>packages/skill-calorie/src/triggers/scene-07-profile.ts</code> 第 5 行的 <code>prompt_template</code> 字段原文（与同行 <code>main_prompt.text</code> 逐字相同）。空位你自己填，身高那行可以照抄 <code>175</code> 试试。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">预期产物</div>
+    <p>先说这句话 → AI 应当先出<b>过程型 HTML（预检确认页，页面标题「档案预检」）</b>；你回一句确认之后，它才去写库，然后出<b>结果型 HTML（写后回执页）</b>。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">产物现在躺在哪（实测）</div>
+    <p>跑完以后，写后回执页会落成 <code>设置档案_回执_&lt;时间戳&gt;.html</code>。手边现有实物：</p>
+    <span class="path mono">D:\ilife\.scratch\t152-probe\db\calorie_html\设置档案_回执_20260913_015639.html　—　60,508 字节（2026-09-13 01:56:39，完整文档）</span>
+    <p class="dim">同一份的稳定副本（我复制到本票目录，随时可开）：<br>
+    <a href="../../../.scratch/t152-user-accept/samples/receipt-set.html">../../../.scratch/t152-user-accept/samples/receipt-set.html</a>　绝对路径 <code>D:\ilife\.scratch\t152-user-accept\samples\receipt-set.html</code></p>
+  </div>
+
+  <div class="row">
+    <div class="k">你要看什么（视觉检查点）</div>
+    <ul>
+      <li>标题区：出现「设置档案」这条词的写后回执，说明这是刚才那一步的<b>结果</b>。</li>
+      <li>指标卡／表格行：本次写进去的四项（身高／年龄／性别／活动量）都在，值就是你填的那些。</li>
+      <li>页面上有<b>两颗复制按钮</b>：「复制数据 ▾」和「复制日志」。</li>
+      <li>页面里<b>没有出现</b> <code>python</code>／<code>mmx</code>／<code>mavis</code> 这类脚本命令字样。</li>
+    </ul>
+  </div>
+
+  <div class="verdict">
+    <div class="t">这条怎么判</div>
+    <p>说出口之后，<b>预检确认页必须先出现</b>（AI 先出过程型页面，再执行会改数据库的命令）；你确认之后再出回执页。空库上也应当能走通 —— 设置档案是单例写入，没有档案时会建行（实测口径见 <code>packages/skill-calorie/src/fetch/profile.ts</code> 第 104–118 行 <code>setProfile</code>）。</p>
+  </div>
+</div>
+
+<!-- ============ 卡 2 改档案 ============ -->
+<div class="card">
+  <div class="head">
+    <span class="wake">② 改档案</span>
+    <span class="badge proc">过程型 HTML → 再写库</span>
+    <span class="badge res">写后：结果型 HTML（回执）</span>
+  </div>
+
+  <div class="row">
+    <div class="k">你要在空白 session 里对 AI 说的那句话（逐字抄）</div>
+    <pre>请你加载技能 卡路里,执行唤醒词「改档案」。
+
+我要改档案里的字段(身高/年龄/性别/活动量/备注)。改之前请先确认我原来的值。请先出预检确认页给我看(改前值/改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我要改的字段(允许一行一条,可改多个):
+身高(新值):____
+年龄(新值):____
+性别(新值):____
+活动量(新值):____
+备注(新值):____</pre>
+    <p class="dim">来源：同文件第 7 行的 <code>prompt_template</code> 字段原文。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">预期产物</div>
+    <p>先出<b>过程型 HTML（预检确认页「档案预检」，带改前值 → 改后对照）</b>，确认后写库，再出<b>结果型 HTML（写后回执页）</b>。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">产物现在躺在哪（实测）</div>
+    <span class="path mono">D:\ilife\.scratch\t152-probe\db\calorie_html\改档案_回执_20260913_015639.html　—　59,905 字节（2026-09-13 01:56:39，完整文档）</span>
+    <p class="dim">稳定副本：<a href="../../../.scratch/t152-user-accept/samples/receipt-update.html">../../../.scratch/t152-user-accept/samples/receipt-update.html</a>　绝对路径 <code>D:\ilife\.scratch\t152-user-accept\samples\receipt-update.html</code><br>
+    真库目录 <code>D:\2Study\StudyNotes\.db\calorie_html\</code> 里，本次<b>未测到</b>该词的既有产物。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">你要看什么（视觉检查点）</div>
+    <ul>
+      <li>标题区：写后回执，写清这次改了哪几项。</li>
+      <li>表格/对照区：<b>改前 → 改后</b> 一行一项，改前值不空、不写「—」装样子（真有档案时才会走通）。</li>
+      <li>两颗复制按钮：「复制数据 ▾」「复制日志」。</li>
+      <li>没有 <code>python</code>／<code>mmx</code>／<code>mavis</code> 字样。</li>
+    </ul>
+  </div>
+
+  <div class="verdict">
+    <div class="t">这条怎么判（重点）</div>
+    <p><b>档案不存在时，这条必须报错，不许静默建行后再更新。</b>实测口径：<code>packages/skill-calorie/src/fetch/profile.ts</code> 第 147–158 行，无档案时抛
+    <code>尚无档案（先设置档案，再改）</code>，退出码 4、<b>不落盘</b>。<br>
+    还有一条：说出口后<b>预检确认页必须先出现</b>，AI 不能跳过过程型页面直接写库。</p>
+  </div>
+
+  <div class="bad">
+    <b>怎么单独试这一条：</b>想要「档案不存在」那个现场，得在一个<b>全新的空库</b>上先问「改档案」。在你已经建过档案的库里，它会正常走到预检确认页 —— 那是另一回事，也算过。<b>两条都值得试一次。</b>
+  </div>
+</div>
+
+<!-- ============ 卡 3 设活动量 ============ -->
+<div class="card">
+  <div class="head">
+    <span class="wake">③ 设活动量</span>
+    <span class="badge proc">过程型 HTML → 再写库</span>
+    <span class="badge res">写后：结果型 HTML（回执）</span>
+  </div>
+
+  <div class="row">
+    <div class="k">你要在空白 session 里对 AI 说的那句话（逐字抄）</div>
+    <pre>请你加载技能 卡路里,执行唤醒词「设活动量」。
+
+我要单独设置活动量(久坐/轻度/中度/活跃/高度活跃)。请先出预检确认页给我看(活动量五档与 TDEE 影响/改前值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的活动量(久坐/轻度/中度/活跃/高度活跃):____</pre>
+    <p class="dim">来源：同文件第 6 行的 <code>prompt_template</code> 字段原文。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">预期产物</div>
+    <p>先出<b>过程型 HTML（预检确认页「档案预检」，带活动量五档与 TDEE 影响、改前值）</b>，确认后写库，再出<b>结果型 HTML（写后回执页）</b>。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">产物现在躺在哪（实测）</div>
+    <span class="path mono">D:\ilife\.scratch\t152-probe\db\calorie_html\设活动量_回执_20260913_015639.html　—　60,146 字节（2026-09-13 01:56:39，完整文档）</span>
+    <p class="dim">稳定副本：<a href="../../../.scratch/t152-user-accept/samples/receipt-activity.html">../../../.scratch/t152-user-accept/samples/receipt-activity.html</a>　绝对路径 <code>D:\ilife\.scratch\t152-user-accept\samples\receipt-activity.html</code><br>
+    真库目录里，本次<b>未测到</b>该词的既有产物。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">你要看什么（视觉检查点）</div>
+    <ul>
+      <li>预检确认页上「活动量五档」要能看全，五档字面是：<b>久坐／轻度／中度／活跃／高度活跃</b>（实测这张页面的输入项提示文字里就有这五行字）。</li>
+      <li>五档旁边要看得到<b>系数与 TDEE 影响</b>，不是只列五个词。</li>
+      <li>回执页上「改前 → 改后」写清了活动量从哪变到哪。</li>
+      <li>两颗复制按钮：「复制数据 ▾」「复制日志」；没有 <code>python</code>／<code>mmx</code>／<code>mavis</code> 字样。</li>
+    </ul>
+  </div>
+
+  <div class="verdict">
+    <div class="t">这条怎么判</div>
+    <p>说出口后<b>预检确认页必须先出现</b>。<br>
+    另外这条也带空库守卫（与「改档案」同一条裁定）：档案不存在时报错、不建行。实测口径 <code>fetch/profile.ts</code> 第 124–137 行，抛
+    <code>尚无档案（先设置档案，再设活动量）</code>，退出码 4、<b>不落盘</b>。</p>
+  </div>
+</div>
+
+<!-- ============ 卡 4 查档案 ============ -->
+<div class="card">
+  <div class="head">
+    <span class="wake">④ 查档案</span>
+    <span class="badge res">结果型 HTML（无过程型页面）</span>
+    <span class="badge no">空库：阻断，不落盘</span>
+  </div>
+
+  <div class="row">
+    <div class="k">你要在空白 session 里对 AI 说的那句话（逐字抄）</div>
+    <pre>请你加载技能 卡路里,执行唤醒词「查档案」。
+
+我想看自己的完整档案。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre>
+    <p class="dim">来源：同文件第 8 行的 <code>prompt_template</code> 字段原文。<b>这条没有空位</b>，你不需要提供任何东西，照抄整段就行。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">预期产物</div>
+    <p>直接一张<b>结果型 HTML（查询结果页，页面标题「档案视图」）</b>。这条是四条里<b>唯一没有预检确认页</b>的（读类词，不写库）。</p>
+  </div>
+
+  <div class="row">
+    <div class="k">产物现在躺在哪（实测）</div>
+    <p>真库目录里<b>确实存在</b>一个同名产物，但它是早期片段：</p>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\档案视图_20260911_211158.html　—　1,358 字节（2026-09-11 21:11:58）</span>
+    <p class="dim">⚠️ 这个文件以 <code>&lt;section</code> 开头、没有 <code>&lt;!doctype html&gt;</code>，是 #179／#177 收口<b>之前</b>的片段产物 —— 别拿它当这次的验收对象。</p>
+    <p>按新口径（完整文档）实跑的实物：</p>
+    <span class="path mono">D:\ilife\.scratch\t152-probe\db\calorie_html\档案视图_20260913_015638.html　—　63,838 字节（2026-09-13 01:56:38，完整文档）</span>
+    <p class="dim">稳定副本：<a href="../../../.scratch/t152-user-accept/samples/view-profile.html">../../../.scratch/t152-user-accept/samples/view-profile.html</a>　绝对路径 <code>D:\ilife\.scratch\t152-user-accept\samples\view-profile.html</code></p>
+  </div>
+
+  <div class="row">
+    <div class="k">你要看什么（视觉检查点）</div>
+    <ul>
+      <li>标题区：「档案视图」，下面一行说明这是档案现值 ＋ 最近体重。</li>
+      <li>指标卡：性别年龄、身高、活动量、BMI／BMR／TDEE、最新体重、目标。</li>
+      <li>展开面板：「活动系数说明（五档）」「档案现值」要能展开，看得到五档系数。</li>
+      <li>两颗复制按钮：「复制数据 ▾」「复制日志」；没有 <code>python</code>／<code>mmx</code>／<code>mavis</code> 字样。</li>
+    </ul>
+  </div>
+
+  <div class="verdict">
+    <div class="t">这条怎么判</div>
+    <p><b>空库上这条要按既有缺失阻断口径办：报「未设档案」，退出码 4，不落盘</b>（不新建空页、不返空页）。
+    实测口径：<code>packages/skill-calorie/src/profile/view.ts</code> 第 9／16／98 行，抛 <code>missing-data</code>
+    <code>未设档案（user_profile#1 缺失，先设置档案）</code>。<br>
+    档案在的时候，这页要把六项度量补齐（BMI／BMR／TDEE／活动系数／创建时间／更新时间）。</p>
+  </div>
+</div>
+
+<h2>第 3 块 · 顺带验收：复制数据／复制日志通用组件（议题 #239）</h2>
+
+<div class="panel">
+  <p><b>它是什么：</b>老技能页面上那两颗必备按钮 ——「复制数据」和「复制日志」—— 收成的一个通用组件，再加上三种反馈（复制成功／复制失败／没有可复制的数据）。
+  落点是卡路里自己的共用件 <code>packages/skill-calorie/src/shared/</code>（<code>copyArea.ts</code>／<code>docPage.ts</code>），底层按钮与运行时在 <code>packages/base-render</code>。
+  实装提交：<code>a8d3b27</code>／<code>814bd09</code>／<code>d5c135a</code>（#239），三格式菜单两笔 <code>230db27</code>／<code>03b31e6</code>（#247／#248）。</p>
+  <p><b>代码侧已实装完，只剩你肉眼看。</b></p>
+</div>
+
+<h3>要看的页面 与 要看的样子</h3>
+<table>
+  <thead>
+    <tr><th style="width:34%">页面</th><th style="width:16%">按钮数量</th><th>按钮文字（逐字）</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>预检确认页（档案预检）</td><td class="num">3 颗</td><td><code>复制指令</code>　<code>复制数据 ▾</code>　<code>复制日志</code></td></tr>
+    <tr><td>三条写入词的写后回执页（设置档案／改档案／设活动量）</td><td class="num">2 颗</td><td><code>复制数据 ▾</code>　<code>复制日志</code></td></tr>
+    <tr><td>查档案查询结果页（档案视图）</td><td class="num">2 颗</td><td><code>复制数据 ▾</code>　<code>复制日志</code></td></tr>
+  </tbody>
+</table>
+
+<h3>点下去应该是什么样</h3>
+<ul>
+  <li><b>点「复制数据 ▾」</b>：弹出一个<b>三选一菜单</b>。三项标签逐字是 <code>text</code>／<code>json</code>／<code>csv</code>，每项右侧一行用途提示：「粘贴给 AI / 自己看」「结构化存档」「表格导入」。选中哪一项就复制哪一项，并提示「数据复制成功」＋格式名。<span class="dim">（口径：<code>packages/base-render/src/controls.ts</code> 第 1260／1325／1331–1336 行；提示文案 <code>packages/skill-calorie/src/shared/copyArea.ts</code> 第 44–45 行。）</span></li>
+  <li><b>点「复制日志」</b>：复制<b>六段</b>日志 —— ① 场景标识　② 思考链（「本页由本地 CLI 渲染，无 AI 链」）　③ 数据结构（库文件名 ＋ 本次库表名）　④ 调用链（命令原文 ＋ M5 整行）　⑤ 时间戳　⑥ 异常（「无」）。</li>
+  <li><b>复制成功</b>提示「已复制／粘贴给 AI」；<b>两个通道都失败</b>时提示「复制失败」（带警示徽章）。</li>
+  <li><b>没有可复制的数据时</b>：给一句话说明，<b>不出点了没反应的死按钮</b>。</li>
+</ul>
+
+<h3>现成的实拍图（按钮长什么样）</h3>
+<div class="note">
+  ⚠️ <b>这批图的日期要看清楚。</b><code>.scratch\t239\shots\</code> 里的 12 张 PNG，实测落盘时刻是 <b>2026-09-12 14:02–14:08</b> —— <b>早于</b>三格式菜单那两笔提交（#247 是 09-12 19:54、#248 是 09-12 20:51）。
+  所以图上看到的是<b>普通的「复制数据」按钮，没有 ▾</b>。<br>
+  <b>用法：按钮的<b>数量与位置</b>看这批图；三格式菜单要看你新跑出来的页面</b>（或看下面 2026-09-13 重拍的两张）。
+</div>
+
+<div class="two">
+  <div>
+    <p class="dim">1440 宽档（6 张）：</p>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-wizard-1440.png　—　82,453 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\empty-profile-wizard-1440.png　—　74,835 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-set-1440.png　—　45,677 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-update-1440.png　—　45,036 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-activity-1440.png　—　42,629 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-view-profile-1440.png　—　43,979 字节</span>
+  </div>
+  <div>
+    <p class="dim">390 宽档（6 张，手机档）：</p>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-wizard-390.png　—　77,340 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\empty-profile-wizard-390.png　—　70,780 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-set-390.png　—　42,106 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-update-390.png　—　41,602 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-profile-activity-390.png　—　38,956 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t239\shots\seeded-view-profile-390.png　—　40,059 字节</span>
+  </div>
+</div>
+<p class="dim">实测：该目录下共 <b>12</b> 张 <code>.png</code>（6 张页面 × 390／1440 两档）＋ 12 个同名 <code>.json</code>。<b>这 12 张图没有内嵌进本页</b>（会让本页过大），照上面路径自己打开看就行。</p>
+
+<h3>2026-09-13 重拍的两张（带 ▾ 三格式菜单的现在长相）</h3>
+<p class="dim">从 09-13 01:56 那次实跑的完整文档实物渲染、1440 宽、整页截图：</p>
+<span class="path mono">D:\ilife\.scratch\t152-user-accept\shots\product-wizard-1440.png　—　预检确认页（3 颗按钮：复制指令／复制数据 ▾／复制日志）</span>
+<span class="path mono">D:\ilife\.scratch\t152-user-accept\shots\product-view-profile-1440.png　—　查档案结果页（2 颗按钮：复制数据 ▾／复制日志）</span>
+
+<div class="verdict">
+  <div class="t">这一块怎么报</div>
+  <p><b>你只需要说「通过」，或者指出哪里不对。</b>不对的话，写清是哪个页面、哪颗按钮、点了以后你看到了什么（或没看到什么）。</p>
+</div>
+
+<h2>第 4 块 · 操作步骤（照着做）</h2>
+
+<div class="step">
+  <div class="n">1</div>
+  <div class="b">
+    <h3>先打开现成的 HTML 产物，亲眼看一遍</h3>
+    <p>双击打开下面这些文件（都是完整文档，<code>&lt;!doctype html&gt;</code> 起，有版面）：</p>
+    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\wizard-profile.html　—　预检确认页，65,439 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\view-profile.html　—　查档案结果页，63,838 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\receipt-set.html　—　设置档案写后回执，60,508 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\receipt-update.html　—　改档案写后回执，59,905 字节</span>
+    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\receipt-activity.html　—　设活动量写后回执，60,146 字节</span>
+    <p class="dim">对着第 2 块每张卡的「你要看什么」逐条过；顺手把第 3 块的两颗复制按钮也点一下。<br>
+    顺便开一下真库目录，认认落盘位置：<code>D:\2Study\StudyNotes\.db\calorie_html\</code>。</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="n">2</div>
+  <div class="b">
+    <h3>再拿第 2 块里逐字的 prompt，去一个全新的空白 session 里问一遍</h3>
+    <p>四条一条一条来：抄第 2 块对应卡里那段话，<b>贴进一个全新的空白 session</b>，把它发出去。</p>
+    <ul>
+      <li>三条写入词（设置档案／改档案／设活动量）：发出去之后<b>先等预检确认页</b>。页面出来了你看一眼，再回它一句确认，让它去写库；写库完会再给你一张写后回执页，你打开看。</li>
+      <li>查档案：发出去直接给你查询结果页，打开看。</li>
+      <li>拿到新产物之后，照着第 2 块每张卡的「你要看什么」再对一遍。</li>
+    </ul>
+    <p class="dim">新产物会落在 <code>D:\2Study\StudyNotes\.db\calorie_html\</code>，文件名形状：写后回执 ＝ <code>设置档案_回执_&lt;时间戳&gt;.html</code>／<code>改档案_回执_&lt;时间戳&gt;.html</code>／<code>设活动量_回执_&lt;时间戳&gt;.html</code>；预检确认页 ＝ <code>档案预检_&lt;时间戳&gt;.html</code>；查询结果页 ＝ <code>档案视图_&lt;时间戳&gt;.html</code>。</p>
+    <p class="dim"><b>特别试这两个现场：</b>①「改档案」在<b>没有档案</b>的新库上，应当报错而不是默默建一条；②「查档案」在<b>空库</b>上，应当报「未设档案」并且<b>不落盘</b>。</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="n">3</div>
+  <div class="b">
+    <h3>要报什么</h3>
+    <ul>
+      <li>四条唤醒词，<b>每条给一个「通过／不通过」</b>。</li>
+      <li>不通过时，写清：是哪一条词、你在哪一步停住了、屏幕上出现了什么（AI 的原话／页面上你看到的东西），最好附上产物文件的路径。</li>
+      <li>第 3 块（复制组件）单独给一句「通过」，或指出哪里不对。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="foot">
+  <p><b>本次实测口径</b>（所有路径、字节数、时间都来自这几步，可复跑核对）：</p>
+  <pre>① Get-ChildItem 'D:\2Study\StudyNotes\.db\calorie_html\' -File           → 328 个 .html
+② 按文件名主体分组 → 与场景 07 有关的只有「档案视图」1 个（1,358 字节，2026-09-11 21:11:58，片段）
+③ 2026-09-13 01:56 那次实跑（.scratch\t152-probe\db\calorie_html\）→ 取 5 个完整文档，复制到 .scratch\t152-user-accept\samples\，
+   逐个记下原文件名／字节数／落盘时刻／sha256（见 .scratch\t152-user-accept\sample-manifest.tsv）
+④ Get-ChildItem '.scratch\t239\shots\*.png'  → 12 张，2026-09-12 14:02–14:08
+⑤ 落盘通式读自 packages/skill-calorie/src/cli/cmd_read.ts:11-13；预检页命令名读自 src/cli/keys.ts:140（calorie.view.profile-wizard，标题「档案预检」）
+⑥ 判定口径读自 src/fetch/profile.ts:104-118 / 124-137 / 147-158、src/profile/view.ts:9,16,98、议题 #178 正文
+⑦ 四条 prompt 原文取自 src/triggers/scene-07-profile.ts:5,6,7,8 的 prompt_template 字段</pre>
+  <p>逐条对账与出处见同目录 <code>t152-用户验收页-对账.md</code>。本页自包含：样式内联、不引用任何外部资源、双击即可打开。</p>
+</div>
+
+</div>
+</body>
+</html>
