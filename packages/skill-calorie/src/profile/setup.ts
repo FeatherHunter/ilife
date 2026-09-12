@@ -1,5 +1,9 @@
 /** #179 · 「设置资料」：设置档案／设活动量／改档案三条写入词共用的写前页（预检确认页）。
  *
+ * #175 补齐（本文件第三节）：两条写入词的**写后回执页**除摘要外，还摆出写后档案的
+ * 性别、推荐活动量（档位 ＋ 系数 ＋ TDEE 影响）与设置时间；推荐口径取自库内现值与
+ * 最近体重，**不进写命令参数**（写命令的字段允许清单只有 age/gender/heightCm/activityLevel/note）。
+ *
  * 一页一事：字段面（身高／年龄／性别／活动量／备注）就是本子功能的题目，
  * 故这一页住本文件，`update.ts` 要用就从同目录取用（设计 §一，铁律五不另起转手件）。
  *
@@ -15,6 +19,7 @@ import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm } fro
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
 import type { ProfileRow } from '../fetch/profile.js';
+import { normalizeGender } from '../fetch/profile.js';
 import { ACTIVITY_LEVELS } from '../kcal.js';
 import { ACTIVITY_LEVEL_LABELS, TDEE_ACTIVITY_FACTORS, calcTdee } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -102,23 +107,49 @@ function profileField(camel: string, p: ProfileRow | null): string | number | nu
   }
 }
 
-/** TDEE 影响：草稿优先于库值；四要素缺一即 null（不拿默认值算）。 */
+/** 性别归一：认 male/female 与 男/女（正本 `fetch/profile.normalizeGender`），认不出即 null——
+ *  宁可不给 TDEE 数字，也不拿另一半的公式算一个出来（`calcTdee` 把非 male 一律当 female）。 */
+function genderOrNull(raw: string | number | null): string | null {
+  try {
+    return normalizeGender(raw);
+  } catch {
+    return null;
+  }
+}
+
+/** TDEE 四要素（身高／年龄／性别／体重）缺哪几项，逐项取自 `pick`；缺项照实写出来，不拿默认值算。 */
+function missingTdeeParts(pick: (camel: string) => string | number | null, latestWeightKg: number | null): string[] {
+  const miss: string[] = [];
+  if (!(Number(pick('heightCm')) > 0)) miss.push('身高');
+  if (!(Number(pick('age')) > 0)) miss.push('年龄');
+  if (genderOrNull(pick('gender')) === null) miss.push('性别');
+  if (latestWeightKg === null) miss.push('体重');
+  return miss;
+}
+
+/** TDEE 影响：四要素齐备才算，缺一即 null——**本文件唯一一份判据**，写前页五档与回执页推荐活动量共用。 */
+function tdeeOrNull(
+  pick: (camel: string) => string | number | null,
+  latestWeightKg: number | null,
+  level: string,
+): number | null {
+  if (missingTdeeParts(pick, latestWeightKg).length > 0) return null;
+  const gender = genderOrNull(pick('gender')) as string;
+  return calcTdee(latestWeightKg, Number(pick('heightCm')), Number(pick('age')), gender, level);
+}
+
+/** 活动量五档：草稿优先于库值；TDEE 影响走 `tdeeOrNull`（四要素缺一即不出数字）。 */
 function tdeeChoices(
   before: ProfileRow | null,
   draft: ProfileSettingView['draft'],
   latestWeightKg: number | null,
 ): ProfileSettingView['activityChoices'] {
   const pick = (camel: string): string | number | null => draft.find((d) => d.camel === camel)?.value ?? profileField(camel, before);
-  const height = Number(pick('heightCm'));
-  const age = Number(pick('age'));
-  const gender = pick('gender');
-  const ready = Number.isFinite(height) && height > 0 && Number.isFinite(age) && age > 0
-    && typeof gender === 'string' && gender !== '' && latestWeightKg !== null;
   return ACTIVITY_LEVELS.map((level) => ({
     level,
     label: ACTIVITY_LEVEL_LABELS[level] as string,
     factor: TDEE_ACTIVITY_FACTORS[level] as number,
-    tdee: ready ? calcTdee(latestWeightKg, height, age, gender, level) : null,
+    tdee: tdeeOrNull(pick, latestWeightKg, level),
   }));
 }
 
@@ -279,9 +310,30 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
   });
 }
 
+/** 一格的展示值：空值一律写「—」，不编数据。 */
+function cellText(v: string | number | null | undefined): string {
+  return v === null || v === undefined || v === '' ? '—' : String(v);
+}
+
+/** 「推荐活动量」一格：档位 ＋ 系数 ＋ TDEE 影响（四要素缺哪项就写哪项，不算数字）。
+ *  推荐口径＝按「日常活动情况」在五档里判定的档位（老技能推荐规则），本次入库即该档；
+ *  它由页面按**库内现值 ＋ 最近体重**算出（不是写命令参数——字段允许清单里没有这一项）。 */
+function recommendedActivityText(profile: ProfileRow | null, latestWeightKg: number | null): string {
+  const level = profile?.activity_level ?? null;
+  if (level === null || level === '') return '—（档案里没有活动量）';
+  const label = (ACTIVITY_LEVEL_LABELS[level] as string | undefined) ?? level;
+  const head = label + '（系数 ×' + (TDEE_ACTIVITY_FACTORS[level] ?? '—') + '）';
+  const pick = (camel: string): string | number | null => profileField(camel, profile);
+  const tdee = tdeeOrNull(pick, latestWeightKg, level);
+  if (tdee === null) return head + ' · TDEE 待补（缺' + missingTdeeParts(pick, latestWeightKg).join('／') + '，不算）';
+  return head + ' · TDEE 约 ' + tdee + ' 卡/天（按最近体重 ' + latestWeightKg + ' kg）';
+}
+
 /** ③ 两条写命令（设置档案／设活动量）的写后回执页；改档案回执页在 `update.ts`（它的对照区不同）。
+ *  `db` ＝ 同一份库（写已完成，此处读**写后档案现值**算性别／推荐活动量）；
  *  `command` ＝ AI 真跑那条写命令的原文（`cli/write.ts` 从分派处传进来），进「复制日志」第 4 段。 */
-export function buildProfileSettingReceiptDoc(receipt: CrudReceipt, command: string): string {
+export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: string): string {
+  const { profile, latestWeightKg } = profileSnapshot(db);
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
     data: { ok: true, message: receipt.summary },
@@ -295,10 +347,20 @@ export function buildProfileSettingReceiptDoc(receipt: CrudReceipt, command: str
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: [
+        { k: '身高(cm)', v: cellText(profile?.height_cm) },
+        { k: '年龄', v: cellText(profile?.age) },
+        { k: '性别', v: cellText(profile?.gender) },
+        { k: '推荐活动量', v: recommendedActivityText(profile, latestWeightKg) },
+        { k: '设置时间', v: receipt.meta.actionAt },
+      ],
+      caption: '写后档案（user_profile#1 单例行）：推荐活动量＝按日常活动情况在五档里判定的档位，系数与 TDEE 影响同写前页口径',
+    }),
+    renderDataTable({
+      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      rows: [
         { k: '摘要', v: receipt.summary },
         { k: '记录 id', v: receipt.recordId === null ? 'n/a' : String(receipt.recordId) },
         { k: 'id 口径', v: receipt.idSource },
-        { k: '写入时刻', v: receipt.meta.actionAt },
         { k: '无变化', v: receipt.noChange ? '是' : '否' },
       ],
       caption: receipt.meta.entityType + '（写库回执）',

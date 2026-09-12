@@ -246,12 +246,15 @@ function commandLine(key: string, params: Record<string, unknown>): string {
  *  `?? res.html` 原样放行——那些命令的产物与 `receiptHtml` 那条片段路径逐字节不变
  *  （分派只认这三个命令名，认不出就不进这条路，也不碰 `receiptHtml` 本身）。
  *  必须在 `withM5` 之后调用：新页要印 `affectedRows`／`writtenFields`／`m5Line`。
- *  #239：把命令原文一并交给回执页，进「复制日志」第 4 段（key 与 params 都在本处作用域里）。 */
-function profileReceiptDoc(key: string, params: Record<string, unknown>, receipt: CrudReceipt): string | null {
+ *  #239：把命令原文一并交给回执页，进「复制日志」第 4 段（key 与 params 都在本处作用域里）。
+ *  #175：把 `db` 也交给回执页——设置档案／设活动量那两页要读写后档案现值算性别与推荐活动量。 */
+function profileReceiptDoc(
+  key: string, params: Record<string, unknown>, receipt: CrudReceipt, db: DatabaseSync,
+): string | null {
   switch (key) {
     case 'calorie.profile.set':
     case 'calorie.profile.activity':
-      return buildProfileSettingReceiptDoc(receipt, commandLine(key, params));
+      return buildProfileSettingReceiptDoc(db, receipt, commandLine(key, params));
     case 'calorie.profile.update':
       return buildProfileUpdateReceiptDoc(receipt, commandLine(key, params));
     default:
@@ -348,7 +351,7 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
   try {
     const res = dispatchInner(key, params, db);
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
-    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt) ?? res.html };
+    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;
