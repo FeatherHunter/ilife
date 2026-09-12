@@ -1,0 +1,166 @@
+=== 老家 SKILL.md 路由表（行 117-321）===
+R | 1 | 居家管家 帮助 | 技能速查（HELP） | `python3 scripts/home_manager.py help`（生成 HELP HTML） | 否
+R | 2 | 查物品 | 物品搜索 | features/search.md | 可选（无则列全部）
+R | 3 | 看物品 | 物品详情 | features/search.md → detail | 是（多件时让用户选）
+R | 4 | 录物品 | 文字录入 | features/add.md | 否（AI 解析描述）
+R | 5 | 拍物品 | 拍照录入 | features/add.md → 图片子流程 | 否（从图片提取）
+R | 6 | 改物品 | 通用更新 | features/update.md | 是
+R | 7 | 移物品 | 位置移动 | features/update.md → 位置移动 | 是
+R | 8 | 补物品 | 数量增加 | features/update.md → 数量变更 | 是
+R | 9 | 减物品 | 数量减少 | features/update.md → 数量变更 | 是
+R | 10 | 标物品 | 标签更新 | features/update.md → 标签更新 | 是
+R | 11 | 废物品 | 标记废弃 | features/update.md → 状态变更 | 是
+R | 12 | 借物品 | 标记借出 | features/update.md → 状态变更 | 是
+R | 13 | 修物品 | 标记维修 | features/update.md → 状态变更 | 是
+R | 14 | 盘物品 | 按位置盘点 | features/inventory.md | 是（位置）
+R | 15 | 盘全部 | 全屋盘点 | features/inventory.md | 否
+R | 16 | 穿什么 | 穿搭推荐 | `python3 scripts/home_manager.py sm3-outfit [--temperature N] [--occasion X] [--limit N]` → 穿搭/outfit_picker.html（拼贴卡相册风） | 否
+R | 17 | 带物品 | 出门标记 | `python3 scripts/home_manager.py sm3-trip [--trip-type X] [--days N] [--plan-type X] [--exercises X]` → 穿搭/travel_trip.html（行程规则/健身联动/出发核对） | 否
+R | 18 | 归物品 | 回家归位 | `python3 scripts/home_manager.py sm3-trip --mode return` → 穿搭/travel_trip.html（旅游中清单逐个确认归位） | 否（查所有旅游中）
+R | 19 | 统物品 | 总体统计 | features/stats.md → summary | 否
+R | 20 | 查高频 | 高频物品（并入物品总览） | features/stats.md → summary（T5 裁决：并入总览高频 TOP 区块） | 否
+R | 21 | 查低频 | 低频物品（并入闲置检测） | features/stats.md → idle（T5 裁决：语义由查闲置承接） | 否
+R | 22 | 查过期 | 过期检查 | features/stats.md → expiring | 否
+R | 23 | 看标签 | 列出标签 | features/tags.md → 列表 | 否
+R | 24 | 合标签 | 合并标签 | features/tags.md → 合并 | 是（from/to）
+R | 25 | 查快递 | 快递跟踪（查/超时/收货确认） | `python3 scripts/快递购物/cli.py express [--timeout-days 7]` → 快递购物/express.html | 否
+R | 26 | 推位置 | 位置推荐 | features/add.md → Step 2.5 | 是（category-id 整数）
+R | 27 | 找位置 | 参考锚定 | features/add.md → Step 2.6 | 是（reference）
+R | 28 | 查账号 | 查看账号（密码脱敏·类型组织） | `python3 scripts/票据凭证/cli.py account list` / `show --platform "XX" --master-key "XX"` → 票据凭证/accounts.html | 是（平台名，无则列全部）
+R | 29 | 存账号 | 新增账号（密码加密存储） | `python3 scripts/票据凭证/cli.py account add --platform "XX" --user "XX" --pass "XX" --master-key "XX" [--type 购物\ | 银行\
+R | 30 | 改账号 | 更新账号（重新录入语义） | `python3 scripts/票据凭证/cli.py account update --platform "XX" --master-key "XX" [--user] [--pass] [--type]` | 是（平台名）
+R | 31 | 看密码 | 查看密码（敏感回显·仅对话） | `python3 scripts/票据凭证/cli.py account show --platform "XX" --master-key "XX"` → 回执 JSON（仅对话回显,不进 HTML） | 是（平台名+主密钥）
+R | 32 | 查异常 | 数据健康检查 | `python3 scripts/开始使用/cli.py lint` → 开始使用/health_report.html | 否
+R | 33 | 查物品(HTML) | 物品搜索(默认输出 HTML) | features/search.md → Step 4 | 可选（无则列全部）
+R | 34 | 看物品(HTML) | 物品详情(默认输出 HTML) | features/search.md → Step 4 | 是（多件时先选）
+R | 35 | 统物品(HTML) | 总体统计(默认输出 HTML) | features/search.md → Step 4 | 否
+R | 36 | 借用 | 借用管理（借出/借入/归还/催还） | `python3 scripts/home_manager.py family --action borrow-list` → family_borrow.html | 否（登记时选/填）
+R | 37 | 家人档案 | 家人档案（成员/物品归属标记） | `python3 scripts/home_manager.py family --action member-list` → family_members.html | 否
+R | 38 | 管位置 | 位置管理（查看/新建/改名/合并） | features/位置.md → 管位置 | 否（操作+详情）
+R | 39 | 固定位 | 设置固定位（常用件锚定） | features/位置.md → 固定位 | 是（物品）
+R | 40 | 收纳建议 | 收纳位置建议（AI 推荐） | features/位置.md → 收纳建议 | 否（可多件/批量）
+R | 41 | 空间视图 | 空间视图浏览（位置树下钻） | features/位置.md → 空间视图 | 否（位置可选）
+R | 42 | 查闲置 | 闲置物品检测 | `python3 scripts/home_manager.py stats --type idle [--days 90 | 180
+R | 43 | 盘点统计 | 盘点统计与建议 | `python3 scripts/home_manager.py stats --type inventory-stat --output` → stats/inventory_stat.html | 否
+R | 44 | 首次使用 | 首次使用初始化（6 步向导，幂等可重试） | `python3 scripts/开始使用/cli.py check` / `init` / `init-status` → 开始使用/first_use_wizard.html | 是（路径确认，默认即确认）
+R | 45 | 备份导出 | 备份与导出（数据资产） | `python3 scripts/开始使用/cli.py backup` / `backup-list` / `export --format json\ | csv` → 开始使用/backup_receipt.html
+R | 46 | 导入恢复 | 导入与恢复（迁移，预告式文件） | `python3 scripts/开始使用/cli.py import-preview --file X` / `import --file X [--mode skip\ | overwrite]` → 开始使用/import_restore.html
+R | 47 | 批量录入 | 批量录入多件物品（清单/照片） | `python3 scripts/home_manager.py sm1-add-batch --json-file X [--commit]` → 物品/add_form.html | 否
+R | 48 | 补录 | 补录历史物品（指定日期） | `python3 scripts/home_manager.py sm1-add --backfill-date YYYY-MM-DD` → 物品/add_form.html | 否（AI 解析描述）
+R | 49 | 紧急定位 | 紧急查找物品位置（一屏直达） | `python3 scripts/home_manager.py sm1-locate --name X` → 物品/locate.html | 是（名称/描述）
+R | 50 | 筛选浏览 | 按条件筛选浏览物品（分组/排序） | `python3 scripts/home_manager.py sm1-browse [--group-by] [--location] [--tag]` → 物品/browse.html | 否
+R | 51 | 拍照找物品 | 拍照反向查找物品（图搜） | `python3 scripts/home_manager.py sm1-search --name X`（AI 图搜 → 关键词）→ 物品/search_list.html | 否（照片）
+R | 52 | 查重复 | 检查重复物品 | `python3 scripts/home_manager.py sm1-duplicates` → 物品/duplicates.html | 否
+R | 53 | 合并物品 | 合并重复物品（保留主条/数量相加） | `python3 scripts/home_manager.py sm1-merge --target N --sources 1,2` → 物品/receipt.html | 是（target/源）
+R | 54 | 撤销操作 | 撤销最近操作（一次性回滚） | `python3 scripts/home_manager.py sm1-undo-list` / `sm1-undo --event-id N` → 物品/undo_select.html | 否
+R | 55 | 物品关联 | 设置/解除物品关联（配件等） | `python3 scripts/home_manager.py sm1-relate --id N --related M [--action unlink]` → 物品/relations.html | 是
+R | 56 | 管标签 | 标签管理（总览/改名/合并/清理） | `python3 scripts/home_manager.py sm1-tag-overview` / `tag-merge` → 物品/tag_manage.html | 否
+R | 57 | 管分类 | 分类管理（树/新建/改名/合并） | `python3 scripts/home_manager.py sm1-category [--action add\ | rename\
+R | 58 | 整理建议 | 标签分类整理建议（AI 检测相近） | `python3 scripts/home_manager.py sm1-similar-tags` → 物品/tag_manage.html | 否
+R | 59 | 查看照片 | 查看物品照片（含类型筛选） | `python3 scripts/home_manager.py sm1-photos --id N` → 物品/photos.html | 是
+R | 60 | 管照片 | 管理物品照片（排序/主图/类型） | `python3 scripts/home_manager.py sm1-photo-update --id N --json-file X` → 物品/photos.html | 是
+R | 61 | 照片墙 | 照片墙浏览（分类/位置/类型） | `python3 scripts/home_manager.py sm1-photo-wall [--group-by] [--type]` → 物品/photo_wall.html | 否
+R | 62 | 盘点记录 | 查看盘点记录（含复查入口） | `python3 scripts/home_manager.py sm1-inventory-records` → 物品/inventory_records.html | 否
+R | 63 | 差异处理 | 处理盘点差异（缺/多/异/待确认） | `python3 scripts/home_manager.py sm1-inventory-diff [--record-id N]` / `sm1-inventory-resolve` → 物品/inventory_diff.html | 否（记录级）
+R | 64 | 搬家盘点 | 搬家打包盘点（带走/不带走） | `python3 scripts/home_manager.py sm1-move-checklist` / `sm1-move-commit` → 物品/move_checklist.html | 否
+R | 65 | 历史 | 查看物品历史（时间线/轨迹） | `python3 scripts/home_manager.py sm1-history --id N` → 物品/history.html | 是
+R | 66 | 数量变更 | 变更物品数量（补充/消耗/用完） | `python3 scripts/home_manager.py sm1-qty --id N [--plus\ | --minus\
+R | 67 | 状态变更 | 变更物品状态（废弃/借出/维修/恢复，状态机守卫） | `python3 scripts/home_manager.py sm1-status --id N --status X` → 物品/receipt.html | 是
+R | 68 | 盘点 | 盘点核对（按位置/分类/全屋，产生差异集） | `python3 scripts/home_manager.py sm1-inventory-round [--scope location\ | category\
+R | 69 | 购物清单 | 购物清单（组织/例行/采购闭环） | `python3 scripts/快递购物/cli.py list` → 快递购物/list.html | 否（可带条目）
+R | 70 | 缺货检测 | 缺货检测（自动进清单） | `python3 scripts/快递购物/cli.py missing [--category-id N]` → 快递购物/missing.html | 否（可选范围）
+R | 71 | 囤货盘点 | 囤货盘点（库存/阈值/不足检测） | `python3 scripts/快递购物/cli.py stock` → 快递购物/stock.html | 否
+R | 72 | 联动总览 | 跨技能联动能力索引 + 偏好设置 | `python3 scripts/联动/cli.py sm9-overview` → 联动/link_overview.html（或 home_manager.py sm9-overview，T2 注册后） | 否
+R | 73 | 记到卡路里 | 食品联动（记到今日饮食/查热量） | features/联动.md → 食品联动 | 是（先查物品确认）
+R | 74 | 记到记账 | 价格联动（记支出/记收入） | features/联动.md → 价格联动 | 是（先查物品确认）
+R | 75 | 查购买记录 | 查购买记录（全量/按物品/按时间） | `python3 scripts/票据凭证/cli.py purchase list [--item-id N] [--year YYYY] [--month MM] [--scene SM6-1]` → 票据凭证/purchase_records.html | 否（物品/时间可选）
+R | 76 | 查上月购买 | 查上月购买（时间预填·零填写） | `python3 scripts/票据凭证/cli.py purchase list --year YYYY --month MM --scene SM6-2` → 票据凭证/purchase_records.html | 否
+R | 77 | 查今年花费 | 查今年花费（年度消费统计） | `python3 scripts/票据凭证/cli.py purchase stats --year YYYY --scene SM6-3` → 票据凭证/purchase_records.html | 否
+R | 78 | 查退货窗口 | 查退货窗口（物品必填·退货截止日） | `python3 scripts/票据凭证/cli.py purchase list --item-id N --scene SM6-4` → 票据凭证/purchase_records.html | 是（物品）
+R | 79 | 登记购买记录 | 登记购买记录（录入） | `python3 scripts/票据凭证/cli.py purchase add --item-id N --date D [--price] [--channel] [--scene SM6-5]` → 回执 JSON | 是（物品+日期）
+R | 80 | 查保修状态 | 查保修状态（在保/将到期/已过） | `python3 scripts/票据凭证/cli.py warranty list [--status 在保\ | 即将到期\
+R | 81 | 登记保修 | 登记保修（录入保修期） | `python3 scripts/票据凭证/cli.py warranty register --item-id N --kind 保修 --start-date D --duration-days N [--scene SM6-7]` → 回执 JSON | 是（物品+起始日+时长）
+R | 82 | 记录维修 | 记录维修（维修历史） | `python3 scripts/票据凭证/cli.py warranty repair --warranty-id N --date D [--cost] [--scene SM6-8]` → 回执 JSON | 是（保修ID+日期）
+R | 83 | 设置保养周期 | 设置保养周期（定期保养） | `python3 scripts/票据凭证/cli.py warranty register --item-id N --kind 保养 --start-date D --duration-days N [--scene SM6-9]` → 回执 JSON | 是（物品+周期）
+R | 84 | 执行保养 | 执行保养（刷新下次日） | `python3 scripts/票据凭证/cli.py warranty maintain --warranty-id N --date D [--scene SM6-10]` → 回执 JSON | 是（保养ID+日期）
+R | 85 | 查证件到期 | 查证件到期（按到期排序·脱敏） | `python3 scripts/票据凭证/cli.py cert list [--scene SM6-11]` → 票据凭证/certificates.html | 否
+R | 86 | 登记证件 | 登记证件（录入） | `python3 scripts/票据凭证/cli.py cert add --type 护照\ | 身份证\
+R | 87 | 证件归档 | 证件归档（照片） | `python3 scripts/票据凭证/cli.py cert add --photo P [--scene SM6-13]` → 回执 JSON | 否（照片必附）
+R | 88 | 更新证件 | 更新证件（改到期/持有人/号码） | `python3 scripts/票据凭证/cli.py cert add --scene SM6-14`（重登记语义·只改填写字段） → 回执 JSON | 是（证件ID）
+R | 89 | 查账号 | 查账号（密码脱敏） | `python3 scripts/票据凭证/cli.py account list [--scene SM6-15]` → 票据凭证/accounts.html（密码 ；复制数据默认不含密码） | 否
+R | 90 | 存账号 | 存账号（加密存储） | `python3 scripts/票据凭证/cli.py account add --platform P --user U --pass X --master-key M [--scene SM6-16]` → 回执 JSON | 是（平台+用户名+密码+主密钥）
+R | 91 | 改账号 | 改账号（更新录入） | `python3 scripts/票据凭证/cli.py account update --platform P --master-key M [--scene SM6-17]` → 回执 JSON | 是（平台+主密钥）
+R | 92 | 看密码 | 看密码（敏感回显） | `python3 scripts/票据凭证/cli.py account show --platform P --master-key M [--scene SM6-18]` → 回执 JSON（仅对话回显） | 是（平台+主密钥）
+R | 93 | 衣橱分析 | 衣橱闲置分析（结构诊断/断舍离） | `python3 scripts/home_manager.py sm3-wardrobe` → 穿搭/wardrobe_analyze.html | 否
+R | 94 | 换季 | 换季收纳（季节衣物批量收纳/拿出） | `python3 scripts/home_manager.py sm3-season [--season 夏季\ | 冬季\
+R | 95 | 旅行穿搭 | 旅行穿搭计划（天数+天气·每日组合） | `python3 scripts/home_manager.py sm3-trip-plan [--days N] [--destination X] [--temps N,N]` → 穿搭/trip_outfit_plan.html | 否
+=== 老家 SKILL.md 唤醒词 CLI 映射（行 250-321）===
+M | 唤醒词 | CLI 命令 |
+M |--------|---------|
+M | **居家管家 帮助** | `python3 scripts/home_manager.py help`（生成 HELP HTML） |
+M | 查物品 | `search --name "XX"` 或 `search --location "XX"` 或 `search --tag "XX"` |
+M | 看物品 | `detail --id {ID}` |
+M | 录物品 | `add --name "XX" --category-id N --location "XX"` (category-id 必填,从 categories 表查) |
+M | 拍物品 | 先看图并保存到 `HOME_PHOTOS_DIR` → `add --name "XX" --category-id N --location "XX" --tags "...≥10" --remar…
+M | 改物品 | `update --id {ID}` + 对应参数 |
+M | 移物品 | `update --id {ID} --new-location "新位置" --location "原位置"` |
+M | 补物品 | `update --id {ID} --plus N` |
+M | 减物品 | `update --id {ID} --minus N` |
+M | 标物品 | `update --id {ID} --tags "新标签"` |
+M | 废物品 | `update --id {ID} --location-status "已废弃"` |
+M | 借物品 | `update --id {ID} --location-status "借用中"` |
+M | 修物品 | `update --id {ID} --location-status "维修中"` |
+M | 盘物品 | `inventory --location "位置" [--output PATH]` (--output 走 inventory_check.html) |
+M | 盘全部 | `list`（无筛选条件） |
+M | 穿什么 | `sm3-outfit [--temperature N] [--occasion X] [--limit N]` → 穿搭/outfit_picker.html |
+M | 带物品 | `sm3-trip [--trip-type X] [--days N] [--plan-type X] [--exercises X]` → 穿搭/travel_trip.html |
+M | 归物品 | `sm3-trip --mode return` → 穿搭/travel_trip.html |
+M | 统物品 | `stats --type overview --output`（物品总览 HTML，含状态/分类/位置/价值TOP/高频TOP/趋势） |
+M | 查高频 | `stats --type overview --output`（T5 裁决：并入物品总览高频 TOP 区块） |
+M | 查低频 | `stats --type idle [--days 90] --output`（T5 裁决：语义由闲置检测承接） |
+M | 查闲置 | `stats --type idle [--days 90|180|365] [--category-id N] [--output PATH]` (--output 走 stats/idle.htm…
+M | 查过期 | `stats --type expiring [--days 30] [--expired-only] [--category-id N] [--output PATH]` (--output 走 s…
+M | 盘点统计 | `stats --type inventory-stat [--output PATH]` (--output 走 stats/inventory_stat.html) |
+M | 看标签 | `tag-list` |
+M | 合标签 | `tag-merge --from "旧" --to "新"` |
+M | 查快递 | `python3 scripts/快递购物/cli.py express [--timeout-days 7] [--output PATH]` → 快递购物/express.html（含超时提醒/收…
+M | 购物清单 | `python3 scripts/快递购物/cli.py list`（HTML 视图）\| `list-add --name "XX" --quantity N [--routine 每周\|每月]…
+M | 缺货检测 | `python3 scripts/快递购物/cli.py missing [--category-id N]`（HTML 视图）\| `missing-to-list --ids 1,2` |
+M | 囤货盘点 | `python3 scripts/快递购物/cli.py stock`（HTML 视图）\| `stock-set-threshold --id N --threshold M` \| `stock…
+M | 推位置 | `suggest-locations --category-id N [--with-examples]` |
+M | 找位置 | `find-location --reference "XX"` |
+M | 查账号 | `python3 scripts/票据凭证/cli.py account list [--scene SM6-15]`（清单 HTML·密码脱敏）或 `account show --platform …
+M | 存账号 | `python3 scripts/票据凭证/cli.py account add --platform "XX" --user "XX" --pass "XX" --master-key "XX" […
+M | 改账号 | `python3 scripts/票据凭证/cli.py account update --platform "XX" --master-key "XX" [--user] [--pass] [--t…
+M | 查异常 | `python3 scripts/开始使用/cli.py lint` (数据检查 8 项, 走 开始使用/health_report.html) |
+M | 首次使用 | `python3 scripts/开始使用/cli.py check` → `init`(建库+种子 60 节点)→ `init-status`(幂等) |
+M | 备份导出 | `python3 scripts/开始使用/cli.py backup` / `backup-list` / `export --format json\|csv` |
+M | 导入恢复 | `python3 scripts/开始使用/cli.py import-preview --file X` → `import --file X [--mode skip\|overwrite]` …
+M | 查物品 | `search --name "XX"` 默认输出 HTML |
+M | 看物品 | `detail --id {ID}` 默认输出 HTML |
+M | 统物品 | `list` 默认输出 HTML |
+M | 管位置 | `sm2-manage --action view`（查看）· `--action create --path "XX"`（新建）· `--action rename --old "XX" --new…
+M | 固定位 | `sm2-fixed --action list`（清单）· `--action set --item-id N --location "XX"`（设置）· `--action clear --ite…
+M | 收纳建议 | `sm2-suggest --item-id N`（单件）· `--item-ids "1,2"`（指定多件）· `--batch [--limit N]`（批量:没固定位的常用件） |
+M | 空间视图 | `sm2-view [--path "XX"]`（缺省=顶层） |
+M | 联动总览 | `python3 scripts/联动/cli.py sm9-overview`（能力索引+偏好 HTML；`sm9-prefs --key food\|price --value ask\|rem…
+M | 记到卡路里 | `python3 scripts/联动/cli.py sm9-food --item-id N [--action log\|query]`（log=记到今日饮食, query=查热量） |
+M | 记到记账 | `python3 scripts/联动/cli.py sm9-price --item-id N [--direction expense\|income]`（expense=支出, income=…
+M | 借用 | `family --action borrow-list [--output PATH]`(清单 HTML·双向区隔/超期/催还) · `--action borrow-add --direction …
+M | 家人档案 | `family --action member-list [--output PATH]`(成员 HTML·归属统计) · `--action member-add --name "XX" [--r…
+M | 查购买记录 | `python3 scripts/票据凭证/cli.py purchase list [--item-id N] [--year YYYY] [--month MM] [--scene SM6-1…
+M | 查上月购买 | `python3 scripts/票据凭证/cli.py purchase list --year YYYY --month MM [--scene SM6-2]`（时间预填·零填写） |
+M | 查今年花费 | `python3 scripts/票据凭证/cli.py purchase stats --year YYYY [--scene SM6-3]`（年度统计） |
+M | 查退货窗口 | `python3 scripts/票据凭证/cli.py purchase list --item-id N [--scene SM6-4]`（物品必填·退货截止日） |
+M | 登记购买记录 | `python3 scripts/票据凭证/cli.py purchase add --item-id N --date D [--price X] [--channel] [--scene S…
+M | 查保修状态 | `python3 scripts/票据凭证/cli.py warranty list [--status 在保\|即将到期\|已过\|到期未做\|全部] [--scene SM6-6]`（清单 H…
+M | 登记保修 | `python3 scripts/票据凭证/cli.py warranty register --item-id N --kind 保修 --start-date D --duration-days…
+M | 记录维修 | `python3 scripts/票据凭证/cli.py warranty repair --warranty-id N --date D [--cost X] [--scene SM6-8]`（维…
+M | 设置保养周期 | `python3 scripts/票据凭证/cli.py warranty register --item-id N --kind 保养 --start-date D --duration-da…
+M | 执行保养 | `python3 scripts/票据凭证/cli.py warranty maintain --warranty-id N --date D [--scene SM6-10]`（保养执行·刷新下次…
+M | 查证件到期 | `python3 scripts/票据凭证/cli.py cert list [--scene SM6-11]`（清单 HTML·号码 ****后4位·按到期排序） |
+M | 登记证件 | `python3 scripts/票据凭证/cli.py cert add --type 护照\|身份证\|驾照\|签证\|保险单\|其他 --expires-at D [--holder] [--…
+M | 证件归档 | `python3 scripts/票据凭证/cli.py cert add --photo P [--scene SM6-13]`（照片归档） |
+M | 更新证件 | `python3 scripts/票据凭证/cli.py cert add [--scene SM6-14]`（重登记语义·只改填写字段） |
+M | 账号 | `python3 scripts/票据凭证/cli.py account list [--scene SM6-15]`（清单 HTML·密码 ******·类型分组）· `account init-ma…
+M ---

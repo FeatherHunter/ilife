@@ -4,13 +4,18 @@
 
 > 判定口径（2026-09-11 与用户一轮对齐定案）：**①明确拿到 help HTML 文件 ②用现成通用 help 模板渲染（不看老 HELP 的 UI）**，外加维护者肉眼终审「过」。
 
-## 进度：20%
+## 进度：30%
 
-**画图完成（2026-09-11）**：本图 11 张子票已建、原生子议题边与原生阻塞边已建并逐项校验（expected＝actual）。
+**画图完成（2026-09-11）**：11 张子票 ＋ 原生边（子议题边与阻塞边）逐项校验通过。
 
-**票 1 已关（2026-09-11）**：饼干记账的 HELP 交付实现逐件读懂，报告落 `docs/skills/skill-home/t184-bill-recipe.md`（19 行逐件表／18 条照抄陷阱）；三条硬事实已分别并进票 6（边界名单要移出 `skill-home`）、票 7（看帮助不许把库建出来）、票 9（注入块保检出换行）。
+**票 1、票 3 已关（2026-09-11）**：
 
-下一步：等票 2／票 3 的报告（票 2 第一次派单的子代理跑到上下文用尽，已按「脚本抽取＋分节落盘」重派）；这两张回来后动票 4（决策）；同时票 10（插件侧最小装机）无阻塞，可直接开工。
+- 票 1：报告 `docs/skills/skill-home/t184-bill-recipe.md`（19 行逐件表／18 条照抄陷阱）。三条硬事实已分别并进票 6（边界名单要移出 `skill-home`）、票 7（看帮助不许把库建出来）、票 9（注入块保检出换行）。
+- 票 3：报告 `docs/skills/skill-home/t186-template-contract.md`。走的是 **A 路＝老实物 help 模板**（`base-paint/help-shell`）；`subtitle`／`meta_blocks` 在 A 路不渲染但照传；`groups` 三层形状与二级组 id 通式 `<域id>_<序数>`；`version`＝`'2.0'`；`init_banner` 判法＝DB 文件存在且**不建库**；`recommendations` 不传。取值表已写进票 6 票面，资产形状已写进票 5 票面。
+
+**新出一张票 12（结构设计门，`#195`）**：必报五步的第一／二步要先报用户点头，票 5 与票 6 都卡在它后面（阻塞边已建并校验）。
+
+下一步：等票 2 的报告（第一次派单的子代理跑爆上下文、没落盘，已按「先写抽取脚本＋分节落盘＋禁整读大文件」重派）；票 4（命名落盘归属决策）与票 10（插件侧最小装机）此刻已无阻塞，可开工。
 
 ## Notes
 
@@ -45,21 +50,23 @@
 | 2 | [调查：内容资产对账（老 9 域／30 组／73 场景 ↔ 新表 91 条唤醒词／21 条命令）](https://github.com/FeatherHunter/ilife/issues/185) | research | — |
 | 3 | [调查：通用 help 模板的注入契约＋居家专属取值](https://github.com/FeatherHunter/ilife/issues/186) | research | — |
 | 4 | [决策：命名落盘管线的归属＋缺省出口口径](https://github.com/FeatherHunter/ilife/issues/187) | grilling | [票 1](https://github.com/FeatherHunter/ilife/issues/184) |
-| 5 | [内容资产入库：老骨架 → 仓内 typed const](https://github.com/FeatherHunter/ilife/issues/188) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/185) |
-| 6 | [渲染接线：5 项＋三块可选内容 → 通用 help 模板](https://github.com/FeatherHunter/ilife/issues/189) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/184) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/186) |
+| 5 | [内容资产入库：老骨架 → 仓内 typed const](https://github.com/FeatherHunter/ilife/issues/188) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/185) ＋ [结构设计](https://github.com/FeatherHunter/ilife/issues/195) |
+| 6 | [渲染接线：5 项＋三块可选内容 → 通用 help 模板](https://github.com/FeatherHunter/ilife/issues/189) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/184) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/186) ＋ [结构设计](https://github.com/FeatherHunter/ilife/issues/195) |
 | 7 | [出口与命名落盘：缺省＝HELP 文件，速查走显式参数](https://github.com/FeatherHunter/ilife/issues/190) | task | [票 4](https://github.com/FeatherHunter/ilife/issues/187) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/189) |
 | 8 | [锁：CLI 级用例（真 spawn 出口）](https://github.com/FeatherHunter/ilife/issues/191) | task | [票 7](https://github.com/FeatherHunter/ilife/issues/190) |
 | 9 | [SKILL.md 说明面](https://github.com/FeatherHunter/ilife/issues/192) | task | [票 7](https://github.com/FeatherHunter/ilife/issues/190) |
 | 10 | [插件侧最小装机（技能提供方＋DSH profile；收窄 #58）](https://github.com/FeatherHunter/ilife/issues/193) | task | — |
 | 11 | [真机端到端＋肉眼终审](https://github.com/FeatherHunter/ilife/issues/194) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/191) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/192) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/193) |
+| 12 | [结构设计：新件住哪（必报五步第一／二步，先报用户点头）](https://github.com/FeatherHunter/ilife/issues/195) | grilling | [票 2](https://github.com/FeatherHunter/ilife/issues/185) |
 
-**此刻的 frontier**：[票 2](https://github.com/FeatherHunter/ilife/issues/185)／[票 3](https://github.com/FeatherHunter/ilife/issues/186)（调查票，research 子代理在跑）＋ [票 10](https://github.com/FeatherHunter/ilife/issues/193)（插件侧最小装机）。
+**此刻的 frontier**：[票 2](https://github.com/FeatherHunter/ilife/issues/185)（内容对账，research 子代理在跑）＋ [票 4](https://github.com/FeatherHunter/ilife/issues/187)（命名落盘归属决策）＋ [票 10](https://github.com/FeatherHunter/ilife/issues/193)（插件侧最小装机）。
 
 ## Decisions so far
 
 <!-- 索引：一行一条＝已关的子票 gist ＋ 链接；细节在票里，这里不复述 -->
 
 - [调查：饼干记账的 HELP 交付实现逐件读懂 → 居家照抄清单](https://github.com/FeatherHunter/ilife/issues/184) — 报告 `docs/skills/skill-home/t184-bill-recipe.md`：19 行逐件表判出「照抄 `output.ts`／`helpPaths.ts`／`helpFile.ts` 三件，不抄卡路里的命令名映射与转发件」；两处生成物禁手改（`base-render/src/helpShell.ts`、bill 的 `wake-assets.ts`）；三条会改下游票的硬事实——`tooling/check-boundaries.mjs:37` 名单含 `skill-home`（import `base-paint` 就 FAIL）、`cmd_read.ts:54-56` 的 `dispatch` 第一行就开库（看帮助会建库）、`scripts/build-help.mjs:28` 不保检出换行。
+- [调查：通用 help 模板的注入契约＋居家专属取值](https://github.com/FeatherHunter/ilife/issues/186) — 报告 `docs/skills/skill-home/t186-template-contract.md`：仓内有两套渲染，**居家走 A 路**（`assets/help-template.html` → 生成物 `helpShell.ts` → `base-paint/help-shell`）；`subtitle`／`meta_blocks` 在 A 路**不渲染**但照传（一处算两处用）；资产三层形状与二级组 id 通式 `<域id>_<序数>`；`version`＝`'2.0'`（数据世代非包版本）；`init_banner` 判法＝`existsSync` 判库且**不建库**（居家 `resolveDbPath` 自带 `mkdirSync`，不能直接用）；`recommendations` 不传。
 
 ## Not yet specified
 
