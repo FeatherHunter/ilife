@@ -43,7 +43,7 @@ import {
 } from '../fetch/photos.js';
 import { buildAddReceipt, buildDeleteReceipt, buildTagReceipt } from '../render/photo.js';
 import { addProduct, updateProduct, deprecateProduct } from '../fetch/products.js';
-import { getProfile, setActivityLevel, updateProfile } from '../fetch/profile.js';
+import { getProfile, setActivityLevel, setProfile, updateProfile } from '../fetch/profile.js';
 import type { ProfileRow } from '../fetch/profile.js';
 import { getNutritionGoal, setNutritionGoal, updateWaterGoal } from '../fetch/nutritionGoal.js';
 import { pauseAllGoals, resumeAllGoals, setWeightGoal } from '../fetch/goal.js';
@@ -829,7 +829,9 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         if (!['age', 'gender', 'heightCm', 'activityLevel', 'note'].includes(k)) fail(2, '不支持字段: ' + k);
       }
       if (Object.keys(picked).length === 0) fail(2, '至少传 1 个档案字段');
-      const r = updateProfile(db, picked);
+      // #175 · 两条词分走各自的能力：`设置档案` 是单例 upsert（无行则建行），
+      // `改档案` 只改已有档案（无行时按用户裁定报错，见 fetch/profile.ts 的空库守卫）。
+      const r = isSet ? setProfile(db, picked) : updateProfile(db, picked);
       const after = r.after;
       return out(R(scene, 'update', '已' + scene + '（身高 ' + (after.height_cm ?? '—') + ' · 年龄 ' + (after.age ?? '—') + ' · 活动量 ' + (after.activity_level ?? '—') + '）', wake, 'user_profile (写库回执)', {
         recordId: 1, ids: [1], idSource: 'singleton', writtenFields: Object.keys(picked), noChange: r.changed.length === 0,

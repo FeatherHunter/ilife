@@ -84,8 +84,25 @@ function ensureRow(db: DatabaseSync): void {
   db.prepare('INSERT OR IGNORE INTO user_profile (id) VALUES (1)').run();
 }
 
-/** 设置档案（单例 upsert；至少 1 个字段，否则缺失阻断）。 */
-export function setProfile(db: DatabaseSync, input: SetProfileInput): { before: ProfileRow | null; after: ProfileRow } {
+/** 档案的 CLI 参数名 ↔ 库列名（这份对照由本能力独占：写库的字段集合与「这次改了什么」都据它判）。 */
+const PROFILE_COLUMNS: Record<string, keyof ProfileRow> = {
+  age: 'age', gender: 'gender', heightCm: 'height_cm', activityLevel: 'activity_level', note: 'note',
+};
+
+/** 本次请求的字段里，值真的变了的那些（按 CLI 参数名报，与回执的 `writtenFields` 同口径）。
+ *  库内 NULL 与请求里的 NULL 视为同一个值；没传的字段不算（那些列一个字都没动）。 */
+function changedFields(before: ProfileRow | null, after: ProfileRow, camels: readonly string[]): string[] {
+  return camels.filter((k) => {
+    const col = PROFILE_COLUMNS[k];
+    return col === undefined ? false : (before?.[col] ?? null) !== (after[col] ?? null);
+  });
+}
+
+/** 设置档案（单例 upsert：无行则建行，有行则改；至少 1 个字段，否则缺失阻断）。
+ *  返回值多一个 `changed`（＝本次真的变了的字段，按 CLI 参数名），回执的「无实际变化」据它判。 */
+export function setProfile(db: DatabaseSync, input: SetProfileInput): { before: ProfileRow | null; after: ProfileRow; changed: string[] } {
+  const inputRec = input as Record<string, unknown>;
+  const camels = Object.keys(inputRec).filter((k) => inputRec[k] !== undefined);
   const patch = normalizedPatch(input);
   const keys = Object.keys(patch);
   if (keys.length === 0) throw new FetchError('至少传 1 个档案字段（age/gender/heightCm/activityLevel/note）');
@@ -96,7 +113,7 @@ export function setProfile(db: DatabaseSync, input: SetProfileInput): { before: 
   db.prepare('UPDATE user_profile SET ' + sets + ", updated_at = CURRENT_TIMESTAMP WHERE id = 1").run(...vals);
   const after = getProfile(db);
   if (!after) throw new FetchError('set 后 user_profile#1 缺失');
-  return { before, after };
+  return { before, after, changed: changedFields(before, after, camels) };
 }
 
 /** 单独设活动量（--live-profile-activity 对照）。 */
@@ -113,16 +130,19 @@ export function setActivityLevel(db: DatabaseSync, activityLevel: unknown): { be
 
 export const PROFILE_UPDATABLE = ['age', 'gender', 'heightCm', 'activityLevel', 'note'] as const;
 
-/** 改档案（--live-profile-update 对照：field+value 单字段或 fields 多字段）。 */
+/** 改档案（--live-profile-update 对照：field+value 单字段或 fields 多字段）。
+ *
+ * **空库守卫（#175 · 用户 2026-09-11 裁定：档案不存在时报错即可、不做特殊兜底）**：
+ * 「改」在语义上以「已有一份档案」为前提——无行时抛 `FetchError`（CLI 映射 exit 4、不落盘），
+ * 不再走 `setProfile` 的 `INSERT OR IGNORE` 建行后更新。理由是那样会出一份「改前 → 改后」、
+ * 而改前根本无值的回执，等于替用户编一个改前值。守卫住**能力层**而非命令分派处：
+ * 这是「改」自己的能力前置条件，住在分派处只保护 CLI 这一个调用方。
+ * 校验次序：先查字段合法（坏参 exit 2），再查档案在不在（缺失阻断 exit 4）——参数错比状态缺失更好指出。
+ * 「设置档案」不走这里：它是单例 upsert（无行则建行），走 `setProfile`。 */
 export function updateProfile(db: DatabaseSync, fields: Record<string, unknown>): { before: ProfileRow | null; after: ProfileRow; changed: string[] } {
   const bad = Object.keys(fields).filter((k) => !(PROFILE_UPDATABLE as readonly string[]).includes(k));
   if (bad.length) throw new FetchError('不支持字段: ' + bad.join(', ') + '；支持: ' + PROFILE_UPDATABLE.join(', '));
   if (!Object.keys(fields).length) throw new FetchError('至少传 1 个字段');
-  const before = getProfile(db);
-  const { after } = setProfile(db, fields as SetProfileInput);
-  const changed = Object.keys(fields).filter((k) => {
-    const col = k === 'heightCm' ? 'height_cm' : k === 'activityLevel' ? 'activity_level' : k;
-    return (before as unknown as Record<string, unknown> | null)?.[col] !== (after as unknown as Record<string, unknown>)[col];
-  });
-  return { before, after, changed };
+  if (!getProfile(db)) throw new FetchError('尚无档案（先设置档案，再改）');
+  return setProfile(db, fields as SetProfileInput);
 }

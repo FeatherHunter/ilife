@@ -60,10 +60,11 @@ function assertDocPage(html, what) {
 }
 
 test('#179 三条写入词的回执页一律完整文档（空库一遍 ＋ 已写入档案一遍）', () => {
+  // 空库那一遍没有「改档案」：无档案的改档案自 #175 起是缺失阻断（exit 4、不落盘），
+  // 见 test/profile-guard-175.test.mjs。
   const cases = [
     ['calorie.profile.set', SET_PARAMS, false, '空库'],
     ['calorie.profile.activity', { activityLevel: '活跃' }, false, '空库'],
-    ['calorie.profile.update', { fields: { heightCm: 176, note: '首次' } }, false, '空库'],
     ['calorie.profile.set', SET_PARAMS, true, '已有档案'],
     ['calorie.profile.activity', { activityLevel: '高度活跃' }, true, '已有档案'],
     ['calorie.profile.update', { fields: { heightCm: 174, note: '改过一次' } }, true, '已有档案'],
@@ -97,12 +98,10 @@ test('#179 改档案回执带逐字段对照：字段名／改前值／改后值
   assert.ok(a.file.includes('175 → 174') && a.file.includes('减脂期 → 改过一次'), '对照区没有真内容');
   assert.ok(!a.file.includes('本次回执未带逐字段对照'), '对照区还是空态');
 
-  // 空库：改档案是首次写入，无改前值——如实写「—」，不编数据。
+  // 空库：改档案自 #175 起是缺失阻断——不建行、不落盘、exit 4（守卫本体在 test/profile-guard-175.test.mjs）。
   const b = runCli(mkDb(false), 'calorie.profile.update', { fields: { heightCm: 176 } });
-  assert.equal(b.status, 0, 'stderr=' + b.stderr.slice(-300));
-  const envB = JSON.parse(b.stdout);
-  assert.deepEqual(envB.data.receipt.items, [{ status: 'heightCm', reason: '— → 176' }], '空库没有如实写「无改前值」');
-  assert.ok(b.file.includes('— → 176'));
+  assert.equal(b.status, 4, '空库改档案应缺失阻断（exit 4），实测 ' + b.status + ' stderr=' + b.stderr.slice(-300));
+  assert.equal(b.file, null, '空库改档案不该落盘回执页');
 });
 
 test('#179 查档案结果页是完整文档；空档案仍是缺失阻断（不返空页）', () => {
