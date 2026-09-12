@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>居家管家 HELP · 结构设计待拍板 4 件事（票 #195）</title>
+<style>
+  :root{
+    --ink:#1a1d21; --mute:#5b6672; --line:#e3e7ec; --bg:#f6f8fa; --card:#fff;
+    --rec:#0b7a4b; --rec-bg:#e8f6ef; --warn:#8a5a00; --warn-bg:#fff6e5;
+    --deco:#8a2b2b; --accent:#1a4fa0; --accent-bg:#eef3fc;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+  a{color:var(--accent)}
+  h1{font-size:26px;line-height:1.35;margin:0 0 6px}
+  h2{font-size:19px;margin:0 0 10px}
+  h3{font-size:15px;margin:18px 0 6px;color:var(--mute);letter-spacing:.02em}
+  p{margin:8px 0}
+  .meta{color:var(--mute);font-size:14px;margin:0 0 18px}
+  .ctx{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 18px}
+  .ctx ul{margin:8px 0 0;padding-left:20px}
+  .ctx li{margin:4px 0}
+  .strip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:0 0 22px}
+  .strip div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--mute)}
+  .strip b{display:block;color:var(--ink);font-size:15px;margin-bottom:2px}
+  .quickbar{position:sticky;top:0;z-index:5;background:rgba(246,248,250,.94);backdrop-filter:blur(6px);
+            border-bottom:1px solid var(--line);padding:10px 0;margin:0 0 20px}
+  .quickbar .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+  .qa{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+      border-radius:999px;padding:5px 12px;text-decoration:none;color:var(--ink)}
+  .qa b{color:var(--rec)}
+  .qa:hover{border-color:var(--rec)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:0 0 20px;
+        scroll-margin-top:64px}
+  .badge{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;color:#fff;background:var(--accent);
+         border-radius:6px;padding:3px 9px;margin-bottom:10px}
+  .why{background:var(--accent-bg);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0 16px;font-size:15px}
+  .facts{font-size:15px}
+  .facts li{margin:4px 0}
+  .opt{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+  .opt li{border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .opt li.rec{border-color:var(--rec);background:var(--rec-bg)}
+  .opt .tag{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--rec);border-radius:5px;
+            padding:2px 8px;margin-right:8px;vertical-align:1px}
+  .opt .name{font-weight:700}
+  .opt p{margin:6px 0 0;font-size:14.5px;color:#2b3138}
+  .opt .cost{color:var(--mute)}
+  .ask{margin-top:14px;padding:10px 14px;background:var(--warn-bg);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;font-size:15px}
+  .lock{margin-top:10px;font-size:14px;color:var(--mute)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:0 0 14px}
+  summary{cursor:pointer;font-weight:600}
+  details ol,details ul{margin:10px 0 0;padding-left:22px;font-size:14.5px;color:#2b3138}
+  details li{margin:3px 0}
+  .answer{background:#101418;color:#eef2f6;border-radius:12px;padding:16px 18px;margin-top:24px}
+  .answer code{background:#232a31;padding:2px 8px;border-radius:6px;font-size:15px}
+  .answer p{margin:6px 0;font-size:14.5px;color:#b9c2cc}
+  footer{margin-top:22px;color:var(--mute);font-size:13.5px}
+  @media print{
+    body{background:#fff}.quickbar{position:static}.card,details,.ctx{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>居家管家 HELP · 结构设计待你拍板 4 件事</h1>
+  <p class="meta">地图 <a href="https://github.com/FeatherHunter/ilife/issues/183">#183</a> ·
+     票 <a href="https://github.com/FeatherHunter/ilife/issues/195">#195</a>「新件住哪」 ·
+     2026-09-12 · <b>四条决策已裁决并关票</b> · 依据：8 份事实包 + 3 节设计草稿 + 两轮对抗审查 + 两家同类技能做法取证</p>
+
+  <div class="ctx">
+    <b>这件事的来龙去脉</b>
+    <ul>
+      <li><b>目标</b>：在 DSH 里对 AI 说「居家管家 帮助」→ <b>明确落一份 help HTML 文件</b>（回执绝对路径），页面由仓内<b>已经开发好的通用 help 模板</b>渲染，内容用居家自己的 9 域／30 子功能／73 场景。</li>
+      <li><b>为什么先定这个</b>：本页是「新件住哪、每件对外给什么」的结构设计，属必报五步的第一步与第二步。它一关票，<b>票 5（内容入库）与票 6（渲染接线）</b>——本图最大的两张实施票——才能开工。</li>
+      <li><b>为什么只有 4 件</b>：19 条待定事项里，15 条<b>不影响目标</b>（已按最优解自定，见页尾），6 条属于别的票，都不该占你的时间。只有下面 4 件会真的改变交付物的形状或质量。</li>
+      <li><b>一件被迫动作（无需你选，但请知情）</b>：仓库的边界门禁把 <code>skill-home</code> 列为最后一家冻结包，而通用 help 模板正好在禁止的一侧。要交付就必须<b>摘掉这条名单 + 同批补依赖</b>，否则渲染不了；代价是这道门对该包不再拦越界。</li>
+    </ul>
+  </div>
+
+  <div class="strip">
+    <div><b>票 12（本页）</b>设计已取证完成、双人对抗审查进行中；等你点头即可关票</div>
+    <div><b>票 10 插件侧最小装机</b>实施完成，双人独立复核 88 / 77 分，整改复核进行中</div>
+    <div><b>没动你的运行环境</b>未重启 DSH、未跑全仓构建；装机走可回滚链接</div>
+  </div>
+
+  <nav class="quickbar">
+    <div class="row">
+      <span style="color:var(--mute)">我的推荐：</span>
+      <a class="qa" href="#d1">决策 1 → <b>A</b></a>
+      <a class="qa" href="#d2">决策 2 → <b>A</b></a>
+      <a class="qa" href="#d3">决策 3 → <b>A</b></a>
+      <a class="qa" href="#d4">决策 4 → <b>B</b></a>
+    </div>
+  </nav>
+
+  <article class="card" id="d1">
+    <div class="badge">决策 1</div>
+    <h2>HELP 的内容资产，用什么形态落盘？</h2>
+
+    <div class="why"><b>前因后果</b>：HELP 页面里那 73 个场景（含新表补进来的 20 条）需要有一个<b>仓内事实源</b>。它是什么形态，决定了以后改内容要动几处、改错会不会被发现。这是票 5 内容入库的第一块基石，也决定包里要不要多养一个生成器。</div>
+
+    <h3>关键信息</h3>
+    <ul class="facts">
+      <li>这份资产要装：9 域 ／ 30 子功能 ／ 73 场景 ＋ 补进的 20 条，外加唤醒词与场景 id。</li>
+      <li>两条同类先例都走<b>机器生成</b>：私家大厨的内容资产是机器生成的 <code>.ts</code> ＋ <code>sha256</code> 锁 ＋ <code>--check</code> 门；账单的唤醒词资产同样是生成物、明文禁手改。</li>
+    </ul>
+
+    <ul class="opt">
+      <li class="rec"><span class="tag">推荐</span><span class="name">A · 机器生成 <code>.ts</code> ＋ 摘要锁</span>
+        <p>与大厨、账单逐字同形，有现成先例可照。<br><span class="cost">代价：要养一个生成器脚本；改内容得跑生成，不能直接手改。</span></p></li>
+      <li><span class="name">B · 手写 <code>.ts</code> 常量</span>
+        <p>件数最少、零脚本、改起来最快。<br><span class="cost">代价：73 条靠人眼对账，改错没有任何门会红——内容漂移无声。</span></p></li>
+      <li><span class="name">C · 包内自持 <code>.html</code> 页面</span>
+        <p>可以单独打开预览。<br><span class="cost">代价：页面模板出现<b>第二份真相源</b>，以后每次改通用模板都要改两处；与你「通用模板已经开发好、直接用」的裁定相冲。</span></p></li>
+    </ul>
+
+    <div class="ask"><b>选错的代价</b>：选 B，内容漂移到用户页面上没人发现；选 C，通用模板被架空，以后每改一次模板都要改两处，等于把已经省掉的活重新扛回来。</div>
+    <div class="lock"><b>锁死</b>：票 5 要不要生成器与摘要锁、票 6 的页面走通用模板还是包内自持。</div>
+  </article>
+
+  <article class="card" id="d2">
+    <div class="badge">决策 2</div>
+    <h2>新件目录名，取「老 HELP 域」还是「新命令命名空间」？</h2>
+
+    <div class="why"><b>前因后果</b>：结构纪律要求「目录名取自 HELP 的一级分组、写英文名」，好让人和工具能从 HELP 的一节直接找到对应的目录。但居家有<b>两套英文名</b>：老 HELP 的 9 个域，和新命令命名空间。取证发现两套<b>只有 2 对逐字对上</b>，这条规则在居家第一次出现「选哪套」的问题。</div>
+
+    <h3>关键信息（两套名字的真实差异）</h3>
+    <ul class="facts">
+      <li>老 HELP 9 域：<code>items</code>／<code>space</code>／<code>outfit</code>／<code>stats</code>／<code>express</code>／<code>family</code>／<code>setup</code>／<code>link</code>／<code>receipt</code></li>
+      <li>新命令命名空间：<code>home.item</code>／<code>home.location</code>／<code>home.shopping</code>／<code>home.care</code>／<code>home.ticket</code>…</li>
+      <li>逐字对上的只有 <b>2 对</b>（<code>outfit</code>／<code>stats</code>）；<code>space↔location</code>、<code>express↔shopping</code>、<code>family↔care</code>、<code>receipt↔ticket</code> 是<b>不同词</b>；<code>setup</code>／<code>link</code> 在命令侧无对应。</li>
+      <li>已裁定：<code>link</code> 域（联动 3 条已停用）<b>不建目录</b>，只留登记位。</li>
+    </ul>
+
+    <ul class="opt">
+      <li class="rec"><span class="tag">推荐</span><span class="name">A · 取老 HELP 域 key（8 个目录）</span>
+        <p>目录名与 HELP 一级分组<b>严格一一对应</b>，正是规则要的效果；读者从 HELP 一节直接找到目录。<br><span class="cost">代价：<code>space</code>／<code>express</code>／<code>family</code>／<code>receipt</code> 在命令侧找不到同名出处，查代码时要记住两套词。</span></p></li>
+      <li><span class="name">B · 取新命令名词</span>
+        <p>与 <code>home.*</code> 命令对齐，看代码时和命令一一对上。<br><span class="cost">代价：目录名不再等于 HELP 一级英文名，规则从这 6 个目录起失守，以后每次查目录都要心算映射。</span></p></li>
+    </ul>
+
+    <div class="ask"><b>选错的代价</b>：选 B，等于在居家开一个「目录名≠HELP 一级分组」的先例——本图特意要立的正是这条规矩，等于自己破自己。</div>
+    <div class="lock"><b>锁死</b>：6 个目录的真名与对表方式；票 5 的资产落点。</div>
+  </article>
+
+  <article class="card" id="d3">
+    <div class="badge">决策 3</div>
+    <h2>技能级 HELP 件，住在今天的 <code>src/help/</code> 还是另立位？</h2>
+
+    <div class="why"><b>前因后果</b>：HELP 交付是<b>技能级</b>东西（不属于任何单个能力），而结构纪律管的是「能力目录名取自 HELP 一级分组」。规则管不到它——但两条同类先例恰好<b>做法相反</b>：卡路里把技能级入口放在 <code>src/triggers/</code>，私家大厨把它放在 <code>src/help/</code>。居家今天已经有 <code>src/help/</code>（2 件）。</div>
+
+    <h3>关键信息</h3>
+    <ul class="facts">
+      <li>已判定：<code>src/help/</code> 这种技能级落点<b>不违反</b>结构纪律（有卡路里先例的判据原文：那不是能力里的任何一件，装的是技能级查找入口）。</li>
+      <li>今天 <code>src/</code> 共 21 件，其中 <code>src/help/</code> 只有 2 件（一个纯转发、一个速查实现）。</li>
+    </ul>
+
+    <ul class="opt">
+      <li class="rec"><span class="tag">推荐</span><span class="name">A · 留在 <code>src/help/</code></span>
+        <p>与最新的同类交付（私家大厨）形状一致，<b>零搬迁</b>；只需在包内 <code>AGENTS.md</code> 记一句豁免理由。<br><span class="cost">代价：<code>src/</code> 第一层多一个非能力名目录。</span></p></li>
+      <li><span class="name">B · 挪位或另立目录</span>
+        <p>收益：目录按工种更整齐。<br><span class="cost">代价：源码 2 处、测试 2 件、证据脚本 4 个、一批文档行号全部作废重写，而<b>交付物形状一点不变</b>。</span></p></li>
+    </ul>
+
+    <div class="ask"><b>选错的代价</b>：选 B 是白付一轮搬迁与行号重写，换不到任何功能或质量收益。</div>
+    <div class="lock"><b>锁死</b>：包的目录形状与豁免记录；票 7 的目录级测试落点。</div>
+  </article>
+
+  <article class="card" id="d4">
+    <div class="badge">决策 4</div>
+    <h2>速查列表与 HELP 内容，一份事实源还是各留一份？</h2>
+
+    <div class="why"><b>前因后果</b>：今天对 AI 说「居家管家 帮助」，回给你的是一份<b>速查列表</b>（21 条命令／91 条唤醒词）；这张图要把它升级成<b>落一份 HELP 文件</b>（73 场景的页面）。两者今天数据形状不同，于是产生一个岔口：以后内容改一次，要改一处还是两处。</div>
+
+    <h3>关键信息</h3>
+    <ul class="facts">
+      <li>速查列表的事实源今天在 <code>src/help/lookup.ts</code>；HELP 页面要列的是 9 域 30 子功能 73 场景。</li>
+      <li>两者的内容高度重叠（唤醒词与命令都来自同一批场景），但回执形状不同：速查回的是命令清单，页面要的是场景目录。</li>
+      <li>仓库的「同一个东西只有一个定义地」规矩，指向合一。</li>
+    </ul>
+
+    <ul class="opt">
+      <li><span class="name">A · 各留一份</span>
+        <p>改动最小、风险最低，不动今天能跑的速查。<br><span class="cost">代价：以后「列出的能力」和「页面里写的场景」可能对不上——用户会看到两份不一样的居家能力清单。</span></p></li>
+      <li class="rec"><span class="tag">推荐</span><span class="name">B · 合成一份，两边都从它读</span>
+        <p>内容不可能漂移；符合「一个定义地」的仓库规矩。<br><span class="cost">代价：票 5 要先把两种形状对齐（多一次改造），且速查的回执形状必须保持原样不变（有用例在锁）。</span></p></li>
+    </ul>
+
+    <div class="ask"><b>选错的代价</b>：选 A，页面与速查从此各写各的——这正是本图要根治的「老 HELP 与新表对不齐」老毛病，等于把刚整理好的账又拆成两本。</div>
+    <div class="lock"><b>锁死</b>：内容资产的唯一事实源在哪；票 5 与票 6 都要照它做。</div>
+  </article>
+
+  <details>
+    <summary>已按最优解自定、不需要你花时间的 15 条（展开看）</summary>
+    <ol>
+      <li>通用渲染包的依赖版本取 <code>^0.3.0</code>（照账单先例）。</li>
+      <li>包内用例脚本改为显式列出用例文件（今天只跑仓根 14 行脚手架，包内 5 件根本不跑）。</li>
+      <li>构建脚本加换行探测，把「模板必须全 CRLF」这条硬门在包内当场报出。</li>
+      <li>对外载荷键集不随状态变：首次使用横幅的键常在，显隐只走隐藏位。</li>
+      <li>判「是否已初始化」只看主库文件，不看 WAL 边车。</li>
+      <li>未设数据库路径或读失败一律 fail-open（横幅照显），<b>绝不因此建库或建目录</b>。</li>
+      <li>横幅文案与场景提示单源，照已取证的事实值，不另抄一份。</li>
+      <li>不画步骤卡（老横幅 6 步不搬）。</li>
+      <li>联系方式传老家三项、不含手机号；不传「其他技能」推荐块（通用模板不渲染它）。</li>
+      <li>副标题照传（页面一块内容要用它）。</li>
+      <li>徽章类型词只用通用模板认的 5 个；要用表外词另立票。</li>
+      <li>内容资产里的场景 id 不带老编号，编号形态由票 5 定。</li>
+      <li>出口件本票只抽「看帮助」那一支，分派函数不搬（不提前吃掉票 6／票 7 的活）。</li>
+      <li>顺手修「看帮助也会建库建目录」这处旧毛病，修法照票 6 口径。</li>
+      <li>包内文件长度告警线按大厨同一「数法」重算，数法落进包内 <code>AGENTS.md</code>。</li>
+    </ol>
+  </details>
+
+  <details>
+    <summary>明确留给别的票的 6 项（展开看）</summary>
+    <ul>
+      <li>缺省出口口径（说「帮助」到底是落文件还是回列表）→ 票 4 <a href="https://github.com/FeatherHunter/ilife/issues/187">#187</a></li>
+      <li>HELP 五字段取值与首次使用横幅显隐口径 → 票 6 <a href="https://github.com/FeatherHunter/ilife/issues/189">#189</a></li>
+      <li>内容资产入库、场景 id 编号、类型切分顺序 → 票 5 <a href="https://github.com/FeatherHunter/ilife/issues/188">#188</a></li>
+      <li>联动域「留登记位」的具体文件与字段 → 票 5 <a href="https://github.com/FeatherHunter/ilife/issues/188">#188</a></li>
+      <li>渲染汇总件是否随新件同批新增 → 票 6 <a href="https://github.com/FeatherHunter/ilife/issues/189">#189</a></li>
+      <li>测试件的交叉归属 → 票 5 与票 7 自行对齐</li>
+    </ul>
+  </details>
+
+  <div class="answer">
+    <b>裁决结果（2026-09-12，用户已答）</b>
+    <p>①内容资产形态 → <b>照卡路里、饼干记账的做法</b>：机器生成 <code>.ts</code> ＋生成器（含 <code>--check</code>）＋摘要锁（并补一件两家都没做对的：把生成与校验<b>接进包内门</b>）</p>
+    <p>②目录名 → <b>由编排方按第一性原理裁定</b>：老骨架 9 个域 key（<code>items</code>／<code>space</code>／<code>outfit</code>／<code>stats</code>／<code>express</code>／<code>family</code>／<code>setup</code>／<code>link</code>／<code>receipt</code>），<code>link</code> 只留登记位不入组</p>
+    <p>③技能级落点 → <b>A</b>（留在 <code>src/help/</code>）</p>
+    <p>④速查与 HELP → <b>照两家做法</b>：各留一份事实源 ＋ 一条双向对账锁</p>
+    <p>全档与给票 5／6／7 的七条硬约束：<code>docs/skills/skill-home/t195-decisions-record.md</code></p>
+  </div>
+
+  <footer>
+    完整依据：<code>docs/skills/skill-home/t195-structure-design.md</code>（结构设计定稿，含目录树与四问作答） ·
+    事实包八份在 <code>docs/skills/skill-home/t195-facts/</code> ·
+    本页由编排方汇总，未经你点头前不作为定论。
+  </footer>
+
+</div>
+</body>
+</html>

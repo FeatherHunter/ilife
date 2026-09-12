@@ -4,22 +4,22 @@
 
 > 判定口径（2026-09-11 与用户一轮对齐定案）：**①明确拿到 help HTML 文件 ②用现成通用 help 模板渲染（不看老 HELP 的 UI）**，外加维护者肉眼终审「过」。
 
-## 进度：35%
+## 进度：46%
 
-**口径**：分母＝13 张子票（画图本身不计入分子）；已关 **4** 张（票 1／2／3 三张调查票 ＋ 票 13 内容裁决），其余 9 张未动、含全部实施票。
+**口径**：分母＝13 张子票（画图本身不计入分子）；已关 **6** 张（票 1／2／3 三张调查票 ＋ 票 13 内容裁决 ＋ 票 10 插件侧最小安装 ＋ 票 12 结构设计），其余 7 张未动（含五张实施票）。
 
 **画图完成（2026-09-11）**：13 张子票 ＋ 原生边（子议题边与阻塞边）逐项校验通过。
 
-**四张票已关**：票 1（照抄清单）、票 3（模板契约）、票 2（内容对账）三张调查票，加票 13（内容裁决，五条全部拿到用户答复）。
+**六张票已关**：票 1（照抄清单）、票 3（模板契约）、票 2（内容对账）三张调查票，票 13（内容裁决，五条全部拿到用户答复），票 10（插件侧最小安装），票 12（结构设计，四条决策拿到用户答复）。
 
 - 票 1：报告 `docs/skills/skill-home/t184-bill-recipe.md`。三条硬事实已并进票 6／票 7／票 9。
 - 票 3：报告 `t186-template-contract.md`。走 **A 路＝老实物 help 模板**；`subtitle`／`meta_blocks` 不渲染但照传；`init_banner` 判法＝DB 文件存在且**不建库**；取值表已写进票 6。
 - 票 2：报告 `t185-content-reconcile.md` ＋ 骨架 `t185-skeleton.json`。老 73 场景里 3 条无落点（全在 link），新表要补进 20 条（17 条在老路由表里有出处）；**唤醒词事实源是 `scenarios.yaml` ＋ 老路由表两份**。
 - 票 13：五条裁完并写进票 5／票 6 票面——推位置／找位置留在「位置管理」卡；看标签不独立成卡；3 条 `(HTML)` 不进清单；主数用 73 场景；联动 3 条留登记位、不列、不建目录，**将来的联动设计出本图走 combos 相关票**。计数口径也已确认：**副标题按实际列出派生（70）**，口径区写一行「骨架 73 条，联动 3 条已停用不列」（已写进票 6 票面）。
+- 票 10（[插件侧最小安装](https://github.com/FeatherHunter/ilife/issues/193)，2026-09-12 关，本图第一张实施票）：四件做完——技能提供方＋宿主接线、客户端产物缺陷（`dist/client.js` 837 B 裸 ESM → 3541 B loader 工厂包，门禁 21/0）、`skill-home` 两处断链（`files` 补 `SKILL.md`、补扁平 frontmatter）、profile 装到 agent 读得到的位置（可回滚）。**两名独立对抗审查 88/100 通过、77/100 整改后通过**；整改落实了两条真质量缺口：新增用例原本**不在任何门里**（现已接进 `test`，本包 9/9）、「他错重抛」原本**零锁**（已补并做反例自证：改成吞错 14/2 红、改回 16/0 绿）。**未重启 DSH**（用户正在用当前 GUI），重启后复验归票 11。
+- 票 12（[结构设计](https://github.com/FeatherHunter/ilife/issues/195)，2026-09-12 关）：形状定稿 `t195-structure-design.md` ＋ 决策记录 `t195-decisions-record.md`（含给票 5／6／7 的七条硬约束），事实包十份 `t195-facts/`，两审 75/100（整改后通过）与 68/100（打回，缺陷已全部修订）。四条决策：①内容资产＝**机器生成 typed `.ts`** ＋生成器（含 `--check`）＋摘要锁（照卡路里／账单两家做法，并补两家都没做对的一件：**接进包内门**）②一级分组英文标识＝**老骨架 9 个域 key**（第一性原理：词表必须能完整切分 9 个分组，命令命名空间不满足）③技能级落点**留 `src/help/`** ④速查与 HELP **各留一份事实源**＋双向对账锁。一条审查结论被证伪并如实记录：审查 A 称 `cmd_read.ts` 735 行，三方实测真值 **741 行**。
 
-**新出两张门票（都要先报用户点头）**：票 12（[结构设计](https://github.com/FeatherHunter/ilife/issues/195)，已无阻塞）与票 13（[内容裁决](https://github.com/FeatherHunter/ilife/issues/196)，已关）。
-
-下一步（2026-09-11 收尾，交给新会话）：**先开票 12**（新件住哪：目录树＋每件对外给什么＋共用件被哪两个能力用），拿到用户点头后票 5／票 6 才开工；之后开票 4（命名落盘归属）。票 10（插件侧最小装机）无阻塞、不占用户决策时间，可与票 12 并行交给子代理先做。wayfinder 纪律：一个会话最多关一张非调查票。
+下一步（2026-09-12 收尾，交给新会话）：**此刻 frontier 三张**——票 4（[命名落盘归属＋缺省出口口径](https://github.com/FeatherHunter/ilife/issues/187)）、票 5（[内容资产入库](https://github.com/FeatherHunter/ilife/issues/188)）、票 6（[渲染接线](https://github.com/FeatherHunter/ilife/issues/189)）。票 5／票 6 已由票 12 解阻；开工前照票 12 决策记录第七节执行（**门禁配套动作**：摘掉 `'skill-home'` 名单后必须补等效断言或明确由行为面门禁兜底，否则是假绿；验收判据三条 `check-boundaries`／`snapshot:html:check`／`scaffold` 用例）。wayfinder 纪律：一个会话最多关一张非调查票。
 
 ## Notes
 
@@ -45,7 +45,9 @@
 - **本图产物索引**（新会话接手先看这里）：
   - 调查报告：`t184-bill-recipe.md`（照抄清单）／`t185-content-reconcile.md` ＋ `t185-skeleton.json` ＋ `t185-evidence/`（内容对账）／`t186-template-contract.md`（模板契约）
   - 决议留档：`t184-resolution.md`／`t185-resolution.md`／`t186-resolution.md`／`t196-resolution.md`
-  - 决策页（HTML，给人看的）：`t196-decisions.html`
+  - 票 10 产物（插件侧最小安装）：`t193-install-report.md`（安装＋实测证据＋逐字回滚命令）／`t193-fix-report.md`（整改记录）／`review-t193-A.md`／`review-t193-B.md`（两审）／`t193-client-bundle-defect.md`（客户端产物缺陷配方）
+  - 票 12 产物（结构设计）：`t195-structure-design.md`（形状定稿）／`t195-decisions-record.md`（**四条决策＋给票 5／6／7 的七条硬约束**，下游票开工先读它）／`t195-facts/`（事实包十份）／`t195-part1..6*.md`（分节草稿与审查依据）／`review-t195-A.md`／`review-t195-B.md`（两审）
+  - 决策页（HTML，给人看的）：`t196-decisions.html`／`t195-decisions.html`
   - 接线脚本：`t183-wire-edges.mjs`（票源 `map-183-tickets.json`；重跑即自校验，PASS 才算边齐）
   - 票面正文源：`t<N>-body.md`（改票面一律改文件再 `gh issue edit <n> --body-file`，别内联字符串）
   - 全部在 `docs/skills/skill-home/`
@@ -71,7 +73,7 @@
 | 12 | [结构设计：新件住哪（必报五步第一／二步，先报用户点头）](https://github.com/FeatherHunter/ilife/issues/195) | grilling | [票 2](https://github.com/FeatherHunter/ilife/issues/185) |
 | 13 | [内容裁决：老骨架与新表对不齐的五条（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/196) | grilling | — |
 
-**此刻的 frontier**：[票 4](https://github.com/FeatherHunter/ilife/issues/187)（命名落盘归属决策）／[票 10](https://github.com/FeatherHunter/ilife/issues/193)（插件侧最小装机）／[票 12](https://github.com/FeatherHunter/ilife/issues/195)（结构设计）。
+**此刻的 frontier**：[票 4](https://github.com/FeatherHunter/ilife/issues/187)（命名落盘归属＋缺省出口口径决策）／[票 5](https://github.com/FeatherHunter/ilife/issues/188)（内容资产入库）／[票 6](https://github.com/FeatherHunter/ilife/issues/189)（渲染接线）。票 7 起仍待各自前置票关闭（票 7 待票 4＋票 6，票 8／票 9 待票 7，票 11 待票 8／9／10）。
 
 ## Decisions so far
 
@@ -81,12 +83,14 @@
 - [调查：通用 help 模板的注入契约＋居家专属取值](https://github.com/FeatherHunter/ilife/issues/186) — 报告 `docs/skills/skill-home/t186-template-contract.md`：仓内有两套渲染，**居家走 A 路**（`assets/help-template.html` → 生成物 `helpShell.ts` → `base-paint/help-shell`）；`subtitle`／`meta_blocks` 在 A 路**不渲染**但照传（一处算两处用）；资产三层形状与二级组 id 通式 `<域id>_<序数>`；`version`＝`'2.0'`（数据世代非包版本）；`init_banner` 判法＝`existsSync` 判库且**不建库**（居家 `resolveDbPath` 自带 `mkdirSync`，不能直接用）；`recommendations` 不传。
 - [调查：内容资产对账（老 9 域／30 组／73 场景 ↔ 新表 91 条唤醒词／21 条命令）](https://github.com/FeatherHunter/ilife/issues/185) — 报告 `docs/skills/skill-home/t185-content-reconcile.md` ＋ 骨架 `t185-skeleton.json`：老 73 场景里 **3 条无落点**（全在 link 域）、新表要**补进 20 条**（17 条在老 `SKILL.md` 路由表里有出处，只 3 条真新增）；**唤醒词的事实源是 `scenarios.yaml` ＋ 老路由表两份**；3 条 `(HTML)` 建议不进 HELP 清单、link 3 条留登记位不建域目录、HELP 主数用 73 场景；10 条待裁里真正要用户拍板的五条收成票 13。
 - [内容裁决：老骨架与新表对不齐的五条（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/196) — 用户五条全答 **A**：①推位置／找位置**留在**「位置管理 › 管位置」卡（跟新命令 `home.location.query` 走）②看标签**不独立成卡**（作「管标签」卡附属词，主数保持 73）③3 条 `(HTML)` 兼容词**不进清单**，只在口径区写一行 ④主数用 **73 场景**（21 条命令写口径区）⑤联动 3 条**留登记位**（`status: "deprecated"`）、prompt 不迁、**不列**、**不建域目录**；用户补充原话「我们以后在 combos 相关地方设计」→ 联动将来的设计出本图。五条已写进票 5／票 6 票面。
+- [插件侧最小装机（技能提供方＋DSH profile；收窄 #58）](https://github.com/FeatherHunter/ilife/issues/193) — 交付四件：`skill-provider.ts`（rank 600／单份 `SKILL.md` 按包名解析不复制）＋`dsh-ctx.ts`＋`index.ts` 接线；客户端产物缺陷修好（`dist/client.js` 837 B 裸 ESM → **3541 B loader 工厂包**，`client-bundle-48` 18/3 → **21/0**）；`skill-home` 两处断链（`files` 补 `SKILL.md`、补**扁平** frontmatter，正文未改）；web profile 装齐（`link:` 依赖＋bundles＋两条 Junction＋启动器自管的 `.dsh-module-fallback` 一条，备份与逐字回滚命令在报告 §3.4）。两审 **88/100 通过／77/100 整改后通过**，整改补了两条真缺口：新增用例接进 `test` 门（本包 9/9）、「他错重抛」补锁并反例自证。**未重启 DSH**；#58 已按其收窄留评论（不建阻塞边）。
+- [结构设计：新件住哪（必报五步第一／二步，先报用户点头）](https://github.com/FeatherHunter/ilife/issues/195) — **四条决策**（用户 2026-09-12 裁决，全档见 `t195-decisions-record.md`）：①内容资产＝**机器生成的 typed `.ts`** ＋生成器（含 `--check`）＋摘要锁，生成物禁手改——照卡路里／账单两家做法，并补两家都没做对的一件：**生成与校验必须接进包内门**（两家今天是「禁手改靠自觉」）②一级分组的英文标识＝**老骨架 9 个域 key**（第一性原理：词表必须能**完整切分**这 9 个分组；新命令命名空间最多覆盖 5 个、`快递购物`↔`home.shopping.*` 语义不等同，采用会造多对多映射），`link` 只留登记位不入组不建目录③技能级落点**留 `src/help/`**（不违反铁律四，有先例判据）④速查与 HELP **各留一份事实源** ＋ 一条双向对账锁（照两家做法；编排方原推荐的「合一」被两家实践推翻）。另产出七条硬约束给票 5／6／7，含**门禁配套动作**：摘掉 `'skill-home'` 名单后该脚本对居家会变成**空转仍打印 PASS（假绿）**，必须补等效断言或明确由行为面门禁兜底。两审 75/100（整改后通过）、68/100（打回→缺陷已全部修订）；一条审查结论被**证伪**并记录：`cmd_read.ts` 真值 **741 行**（非 735）。
 
 ## Not yet specified
 
 - 「速查支」的产物名与落点：老家没有这一支（老技能只有一个 HELP），卡路里给了 `卡路里_速查台_<TS>.html`、记账给了 `饼干记账_速查表_<TS>.html`；居家要不要分名、叫什么——等票 4 定了缺省口径才细到能出票。
-- 那 3 条带 `(HTML)` 的唤醒词（查物品(HTML)／看物品(HTML)／统物品(HTML)）与废弃词（记到记账／记到卡路里／联动总览）在 HELP 里的去留——等票 2 的对账表回来才说得准。
-- 首次使用横幅（`init_banner`）的显隐口径：老家是「DB 文件存在＝已初始化」；新仓要不要照搬、要不要「跑完不建库」——等票 3 的取值调查回来。
+
+**毕业说明（2026-09-12）**：原先这里的另外两条已出雾并落定——① 3 条 `(HTML)` 兼容词与联动废弃词在 HELP 里的去留 → 票 13 裁决（不进清单／留登记位）；② 首次使用横幅 `init_banner` 的显隐口径 → 票 3 取证＋票 6 票面（`existsSync` 判库且**不建库**，键常在只切 `hidden`，读失败 fail-open）。
 
 ## Out of scope
 
@@ -125,4 +129,13 @@ Q5 只做居家管家和HELP HTML
 8 (a)＋必报五步全走
 9 a
 Q10 多派research subagent调查你的设计才会更加科学合理
+```
+
+### 票 12 决策回答原话（2026-09-12）
+
+```
+1 学习卡路里、饼干记账技能怎么处理的
+2 从第一性原理出发选择你认可的目录名
+3 A
+4 学习卡路里、饼干记账是怎么处理的
 ```
