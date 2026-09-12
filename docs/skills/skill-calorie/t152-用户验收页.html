@@ -85,14 +85,15 @@
   本机的 <code>SKILLS_DB_PATH</code> 实测＝<code>D:\2Study\StudyNotes\.db</code>，所以真库目录是
   <code>D:\2Study\StudyNotes\.db\calorie_html\</code>。<br>
   <div class="note" style="margin:10px 0">
-    <b>2026-09-13 01:58–01:59 更新（编排者补记——本节其余文字写于这次落盘之前）：</b>五条真产物**已经落到真库目录**，你可以直接双击打开：
-    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\设置档案_回执_20260913_015932.html　—　60,426 字节</span>
-    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\改档案_回执_20260913_015932.html　—　59,209 字节</span>
-    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\设活动量_回执_20260913_015932.html　—　60,169 字节</span>
-    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\档案预检_20260913_015931.html　—　65,438 字节</span>
-    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\档案视图_20260913_015852.html　—　63,838 字节</span>
-    编排者已逐个复核：五条**全部**是完整文档（<code>&lt;!doctype html&gt;</code> ＋ <code>charset="utf-8"</code> ＋ <code>&lt;style&gt;</code> ＋ 有版面），且都带「复制数据」「复制日志」两颗按钮、<b>不含任何 <code>python</code>／<code>mmx</code>／<code>mavis</code> 残留</b>。
-    写入真库时用的是**与当时现值相同的值**，故数据未变——复核：档案行仍为 <code>age 30／male／175／moderate／updated_at 2026-09-12 12:15:41</code>，<code>weight_log</code> 仍 129 行。
+    <b>2026-09-13 02:0x 最终状态（编排者亲验——本节其余文字写于落盘之前）：</b>五条真产物**已在真库目录**，可直接双击：
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\档案预检_20260913_020058.html　—　65,438 字节（过程型：预检确认页）</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\设置档案_回执_20260913_015932.html　—　60,426 字节（结果型：写后回执）</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\改档案_回执_20260913_015932.html　—　59,209 字节（结果型：写后回执，带改前→改后）</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\设活动量_回执_20260913_015932.html　—　60,169 字节（结果型：写后回执）</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\档案视图_20260913_015932.html　—　63,838 字节（结果型：查询结果页）</span>
+    <b>编排者逐个复核（5/5）</b>：完整文档（<code>&lt;!doctype html&gt;</code> ＋ <code>charset="utf-8"</code> ＋ <code>&lt;style&gt;</code> ＋ 有版面）＋ 带「复制数据 ▾」「复制日志」两颗按钮 ＋ 三格式菜单项各 8 处（<code>copy-menu-item</code>，<code>text／json／csv</code>）＋ <b><code>python</code>／<code>mmx</code>／<code>mavis</code> 残留为 0</b>。
+    <br><b>技能装机已修好</b>：DSH 读技能的位置 <code>C:\Users\辰辰洋洋\.agents\skills\skill-calorie</code> 原先是**陈旧拷贝（0.2.2）**，现已是 **Junction 指向本仓（0.2.3）**；旧拷贝改名留存为 <code>skill-calorie.bak-0.2.2-t152</code>（没删，可回滚）。
+    <br><b>数据未变</b>：写命令用的是与当时现值相同的值；档案行逐字段同原值（<code>age 30／male／175／moderate／updated_at 2026-09-12 12:15:41</code>），<code>integrity_check=ok</code>，12 张表逐表对账全等。（文件哈希变了是 SQLite 写后重排页布局所致，非数据差异——已三重对账。）
   </div>
   <b>本次落盘之前的情形（留档，说明「为什么当时没产物」）：</b>该目录里共 <b>328</b> 个 <code>.html</code>；其中与场景 07 有关的只有 1 个早期<b>片段</b>（<code>档案视图_20260911_211158.html</code>，1,358 字节，<code>&lt;section&gt;</code> 开头，早于 #177／#179 收口）——即四条写入命令在真库上从未真跑过。<br>
   手边有的、按新口径落盘的<b>完整文档实物</b>，来自 2026-09-13 01:56 的一次实跑，我复制了一份到本票自己的目录（下面每张卡给绝对路径）。<br>
