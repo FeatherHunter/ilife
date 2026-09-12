@@ -3,9 +3,10 @@
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通 create/update/remove 即真相）。
 import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   HomeFetchError, HomePolicyError,
-  resolveDbPath, openHomeDb, closeHomeDb,
+  resolveDbDir, resolveDbPath, DB_FILENAME, openHomeDb, closeHomeDb,
   addItem, getItemById, listLocationsByItem, listTagsByItem, searchItems, updateItem,
   adjustQuantity, setLocationStatus, moveLocation, setItemTags, listAllTags, mergeTags,
   listCategories, getCategoryById, encryptPassword, decryptPassword, assertMasterKey,
@@ -29,7 +30,10 @@ import {
   buildStatsAlert, buildShoppingList, buildTicketList, buildCareList, buildHelpItems,
   HomeRenderError,
 } from '../render/index.js';
-import { buildHelpLookup } from '../help/index.js';
+import { buildHelpLookup, buildHomeHelpFileData, renderHomeHelpHtml, deliverHomeHelp } from '../help/index.js';
+import type { HomeHtmlDelivery } from '../help/index.js';
+import { HELP_FILE_STEM, HELP_HTML_DIR_NAME, LOOKUP_FILE_STEM } from '../help/manifest.js';
+import { helpReuseWindowOf } from 'base-paint/save-html';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -49,6 +53,63 @@ function asInt(v: unknown, field: string): number | undefined {
   if (v === undefined) return undefined;
   if (!Number.isInteger(v) || (v as number) <= 0) fail(2, field + ' 须为正整数');
   return v as number;
+}
+
+/* ── #190 · 「居家管家HELP」的交付装配（**在开库之前**走，照 skill-bill/src/cli/cmd_read.ts:69-111）────
+ *
+ * 缺省（无 `mode`、无 `q`）＝ 老实物同款 HELP 文件：`<SKILLS_DB_PATH>/home_manager_html/
+ * 居家管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`，独占落盘 ＋ **绝对路径**回执（`delivery` 顶层追加）。
+ * 显式 `mode:"lookup"` ＝ 全量速查表产物（主体 `居家管家_速查表`，与 HELP 文件**分名**）。
+ * 显式 `q` ＝ 现找：只回命中（stdout），语义与本键今天一字不变；三支互斥，非法 `mode` ⇒ `fail(2)`。
+ * 显式 `reuseHours`（小时）＝ 复用窗口：缺省**一天**（24h 内回同一路径、不新建不改写）、
+ * `0`＝每次都落一份新的。换算与坏参判定都在共用件（`helpReuseWindowOf`）⇒ 坏参归出口的 exit 2；
+ * #190 D2：这道换算**抬到三支分派之前单点跑**——同一个坏 `reuseHours` 不许因「走哪支」而隐身或两副面孔。
+ * #190 D1：`q` 给了但**不是字符串**一律 `fail(2)`——不许静默当「没给 q」掉进缺省支白落一份文件。
+ * `--html <路径>` 支**保持原样**（`main` 里那支不动）：它是所有 key 通用的产物出口，HELP 交付不走它。
+ * 落盘只出**意图**（目录 ＋ 文件名主体），时间戳与同秒递补由共用件 `saveHtmlFile` 钉死（见 `help/output.ts`）。
+ *
+ * 全程**不开库**：初始化状态＝「DB 文件**存在**」（判据由 `buildHomeHelpFileData` 吃 `dbPath` 现算，
+ * 见 `src/help/helpFile.ts` 件头），免得「看帮助」把居家库 `new DatabaseSync` 出来并跑 DDL 自愈。
+ * ⚠️ 算这条路径**不许**走 `src/fetch/paths.ts:20-23` 的 `resolveDbPath()`——它自带 `mkdirSync`
+ * ⇒「判一下」就把目录建出来。这里只用只读出口 `resolveDbDir()`（纯取 `SKILLS_DB_PATH`）＋ `DB_FILENAME` 拼。
+ */
+interface DeliverIntent {
+  readonly html?: string;
+  readonly targetDir: string;
+  readonly stem: string;
+  readonly reuseMs?: number;
+}
+interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
+
+/** 复用窗口（毫秒）：坏参抛 `RangeError` ⇒ 交出口的「参数错」那一档（共用件工厂，别家同形）。 */
+const helpWindowOrFail = helpReuseWindowOf((m) => fail(2, m));
+
+function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
+  const dbDir = resolveDbDir();
+  const now = new Date();
+  const mode = params.mode === undefined ? undefined : String(params.mode);
+  if (params.q !== undefined && typeof params.q !== 'string') {
+    fail(2, '参数 q 须为字符串（收到 ' + (Array.isArray(params.q) ? 'array' : typeof params.q) + '）：q＝现找关键词');
+  }
+  const q = params.q as string | undefined;
+  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
+  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本键只认 lookup');
+  // 参数面校验单点（#190 D2）：三支分派**之前**一次过完，坏 `reuseHours` 无论走哪支都同一个 exit 2。
+  const reuseMs = helpWindowOrFail(params);
+  const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
+  if (q !== undefined) return { data: buildHelpItems(all, q) };
+  const targetDir = join(dbDir, HELP_HTML_DIR_NAME);
+  if (mode === 'lookup') {
+    return {
+      data: buildHelpItems(all, undefined),
+      deliver: { targetDir, stem: LOOKUP_FILE_STEM, reuseMs },
+    };
+  }
+  const html = renderHomeHelpHtml(buildHomeHelpFileData(now, { dbPath: join(dbDir, DB_FILENAME) }));
+  return {
+    data: buildHelpItems(all, undefined),
+    deliver: { html, targetDir, stem: HELP_FILE_STEM, reuseMs },
+  };
 }
 
 function dispatch(key: string, params: Record<string, unknown>): unknown {
@@ -671,11 +732,10 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         }
         fail(2, '未知 care kind：' + kind); return null;
       }
-      case 'home.help.lookup': {
-        const q = typeof params.q === 'string' ? params.q : undefined;
-        const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
-        return buildHelpItems(all, q);
-      }
+      case 'home.help.lookup':
+        // #190：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
+        fail(1, '内部错误：home.help.lookup 须走 dispatchHelp（开库之前）');
+        return null;
       default: fail(3, '未知 home key：' + key); return null;
     }
   } finally {
@@ -713,21 +773,38 @@ async function main() {
     process.exit(4);
   }, o.timeout);
   if (typeof timer.unref === 'function') timer.unref();
+  let delivery: HomeHtmlDelivery | undefined;
   try {
-    const data = dispatch(key, params);
-    const env = buildHomeEnvelope(key, data);
+    // #190：`home.help.lookup` 在**开库之前**分派（只读页不建库）；其余 20 键照旧走 dispatch（内部开库）。
+    const help = key === 'home.help.lookup' ? dispatchHelp(params) : null;
+    const env = buildHomeEnvelope(key, help ? help.data : dispatch(key, params));
+    // 分节页（模板填充后）：`--html` 支与速查支共用这一处，不抄第二份。
+    const sectionHtml = (): string => {
+      const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
+      assertHtmlSize(html);
+      return html;
+    };
+    // `--html <路径>` 既有语义**原样保留**（所有 key 通用的产物出口）：写本包 envelope 分节页。
     if (o.html !== undefined) {
       try {
-        const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
-        assertHtmlSize(html);
-        writeFileSync(o.html, html, 'utf8');
+        writeFileSync(o.html, sectionHtml(), 'utf8');
         note('HTML 已写：' + o.html + '（utf8）');
       } catch (e) {
         if (e instanceof HomeRenderError) fail(5, (e as Error).message);
         fail(5, 'HTML 写盘失败：' + o.html + '（' + (e as Error).message + '）');
       }
     }
-    process.stdout.write(JSON.stringify(env) + '\n');
+    // #190：本键的产物（缺省＝HELP 全壳页自带 html；`mode:"lookup"`＝速查表分节页）。
+    if (help?.deliver !== undefined) {
+      const html = help.deliver.html ?? sectionHtml();
+      if (help.deliver.html !== undefined) assertHtmlSize(html);
+      delivery = deliverHomeHelp({
+        targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
+      });
+      note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+    }
+    // #83 口径的顶层追加：`delivery{mode,path,bytes}` **只追加**，既有字段一字不改、序不变。
+    process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
     clearTimeout(timer);
   } catch (e) {
     clearTimeout(timer);

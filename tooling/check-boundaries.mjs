@@ -52,7 +52,16 @@ assert(!grepHit, '装配 owner 归一 render（link-core/combos 无自装配）'
 // 同批给 skill-chef 补上 `"base-paint": "^0.3.0"` 依赖——解冻与加依赖是**同一动作的两半**。
 // chef 自此同样是有意的消费方。断言口径、判定实现与 skill-home 的覆盖面一律未动
 // （仍查依赖闭包＋源码／模板扫描），只是这一份「尚未迁移」名单少最后一个名字。
-const SKILLS_BASE_FROZEN = ['skill-home'];
+// #189 起 skill-home **移出**该名单（上面那句「少最后一个名字」由本行兑现）：地图 #183 已裁
+// 「居家管家 HELP 走共享 help 模板 base-paint/help-shell」（路由与状态见 docs/skills/skill-home/
+// t187-decision.md；渲染接线＝packages/skill-home/src/help/helpFile.ts），同批给 skill-home 补上
+// `"base-paint": "^0.3.0"` 依赖——解冻与加依赖是**同一动作的两半**。居家自此同样是有意的消费方。
+//
+// ⚠️ 名单清空＝上面那两条 for／scan 断言会**空转**（0 命中照样打印 PASS）：本行以下的
+// MIGRATED_HELP_CONSUMERS 就是补的等效断言——**六家**「已迁移」技能（含被摘名的 skill-home）的依赖闭包
+// 必须真的含 base-paint、源码必须**真的** import 它（名单不再变化时，这两条同样不能空转）。
+// 行为面兜底另见 `pnpm snapshot:html:check`（tooling/skill-html-snapshot.mjs）。
+const SKILLS_BASE_FROZEN = [];
 const BASE_RUNTIME = new Set(['base-paint', 'base-render']); // 目录名／包名两种写法都算
 for (const name of SKILLS_BASE_FROZEN) {
   const p = pkg(name);
@@ -60,7 +69,27 @@ for (const name of SKILLS_BASE_FROZEN) {
   const hit = Object.keys(deps).filter((d) => BASE_RUNTIME.has(d));
   assert(hit.length === 0, `${name} 依赖闭包不含 base-*（实得：${hit.join(',') || '无'}）`);
 }
-const SRC_RE = /(?:from|import|require\s*\()\s*['"](?:base-paint|base-render)/;
+// ⚠️ #189 就地修掉这条扫描的**假命中**（不是「多报」问题，而是**少报**：真 import 从 source 里摘掉后，
+// 假命中仍让扫描保持「实得 N 文件」⇒ 下面那条「已迁移消费方」断言变成永真的空转。#189 的负例实测暴露）。
+// 原式 `/(?:from|import|require\s*\()\s*['"](?:base-paint|base-render)/` 有两类假命中：
+//   ① 无词边界：注释里的 `pnpm --filter base-paint gen:help-shell` 被当成 `import 'base-paint…'`；
+//   ② 可跨行：`import … from` 与 `from '<pkg>…'` 之间没有 `;` 时，匹配会越过换行拼到别处的 `from`。
+// 改法：不再用一条大正则，改为**逐行取引号里的模块标识符再逐字比较**——`base-paint-x` 这种前缀相似的
+// 名字也不会被当成 `base-paint`（大正则里的 `[^'"]*` 会回溯出假阳性）。
+const BASE_RUNTIME_MODULES = new Set(['base-paint', 'base-render']);
+const IMPORT_LINE_RE = /(?:^|[\s;{(=,])import\s+(?:type\s+)?(?:[^'"\r\n]*?\sfrom\s*)?(['"])([^'"\r\n]+)\1/;
+const REQUIRE_CALL_RE = /require\s*\(\s*(['"])([^'"\r\n]+)\1\s*\)/;
+/** 模块标识符是否指向 base-* 运行时（`base-paint/help-shell` 这种子路径出口也算）。 */
+const isBaseModule = (spec) => BASE_RUNTIME_MODULES.has(spec.split('/')[0]);
+/** 该源文件是否**真的** import／require 了 base-*（逐行判，不跨行、不比子串）。 */
+function importsBaseRuntime(text) {
+  for (const line of text.split('\n')) {
+    const m = IMPORT_LINE_RE.exec(line) ?? REQUIRE_CALL_RE.exec(line);
+    if (m !== null && isBaseModule(m[2])) return true;
+  }
+  return false;
+}
+const baseImportHits = (dir) => walkSrc(dir).filter((f) => importsBaseRuntime(readFileSync(f, 'utf8')));
 /** 递归列出目录下的 .ts 源文件（无子目录时退化为空）。 */
 function walkSrc(dir) {
   const out = [];
@@ -74,8 +103,28 @@ function walkSrc(dir) {
 const SRC_SCAN = [...SKILLS_BASE_FROZEN.flatMap((n) => walkSrc(join(root, 'packages', n, 'src'))),
   ...SKILLS_BASE_FROZEN.flatMap((n) => readdirSync(join(root, 'packages', n, 'templates'))
     .filter((f) => f.endsWith('.html')).map((f) => join(root, 'packages', n, 'templates', f)))];
-const srcHit = SRC_SCAN.filter((f) => SRC_RE.test(readFileSync(f, 'utf8')));
+const srcHit = SRC_SCAN.filter((f) => importsBaseRuntime(readFileSync(f, 'utf8')));
 assert(srcHit.length === 0, `未迁移技能源码／模板不 import base-*（命中：${srcHit.map((f) => f.slice(root.length + 1)).join(',') || '无'}）`);
+
+// ── 已迁移消费方的**正向**断言（#189 补，承接名单清空）──────────────────────────────
+// 上面两条只证明「名单内没人碰 base-*」；名单空了它们就什么都不证明。这一条反过来钉死：
+// 这几家必须**真的是**消费方（依赖闭包有 base-paint ＋ 源码里真的有 import）——
+// 谁把依赖或 import 摘了，这里就红（照 P4「边界冻结」的原意：既拦误入、也拦悄悄退出）。
+// 名单**含被摘名的 skill-home**（#189 加入）：摘名那一家若不同批纳入这里，「摘名不降级」就是假的。
+const MIGRATED_HELP_CONSUMERS = ['skill-home', 'skill-bill', 'skill-calorie', 'skill-chef', 'skill-memo-ilife', 'skill-schedule'];
+for (const name of MIGRATED_HELP_CONSUMERS) {
+  const deps = { ...(pkg(name).dependencies ?? {}) };
+  assert(deps['base-paint'] !== undefined, `${name} 已迁移消费方：依赖闭包含 base-paint`);
+  const hits = baseImportHits(join(root, 'packages', name, 'src'));
+  assert(hits.length > 0, `${name} 已迁移消费方：源码真的 import base-*（实得 ${hits.length} 文件）`);
+}
+// 兜底：上面那条只看「>0」，若哪天 helpFile 被改名／挪走，断言会在没人 import 时照样绿。
+// 这里钉死它至少得是**真消费 base-paint 的那一件**（居家＝src/help/helpFile.ts）。
+{
+  const hits = baseImportHits(join(root, 'packages', 'skill-home', 'src'))
+    .filter((f) => /[\\/]src[\\/]help[\\/]helpFile\.ts$/.test(f));
+  assert(hits.length === 1, `skill-home 的 HELP 渲染接线（src/help/helpFile.ts）真的 import base-*（实得 ${hits.length}）`);
+}
 
 if (bad) { console.error(`boundaries: ${bad} 处破界`); process.exit(1); }
 console.log('boundaries: PASS');

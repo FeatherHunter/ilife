@@ -22,13 +22,16 @@
     "home-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "base-link-core": "^0.3.0"
+    "base-link-core": "^0.3.0",
+    "base-paint": "^0.3.0"
   },
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc -b && node scripts/build-help.mjs",
-    "test": "node --test ../../test/scaffold.test.mjs"
+    "test": "node --test test/help-assets.test.mjs test/help-delivery-190.test.mjs ../../test/scaffold.test.mjs",
+    "gen:help-assets": "node scripts/gen-help-assets.mjs",
+    "gen:help-assets:check": "node scripts/gen-help-assets.mjs --check"
   }
 }
