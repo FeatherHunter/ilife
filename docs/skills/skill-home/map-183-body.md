@@ -4,19 +4,20 @@
 
 > 判定口径（2026-09-11 与用户一轮对齐定案）：**①明确拿到 help HTML 文件 ②用现成通用 help 模板渲染（不看老 HELP 的 UI）**，外加维护者肉眼终审「过」。
 
-## 进度：40%
+## 进度：50%
 
 **画图完成（2026-09-11）**：11 张子票 ＋ 原生边（子议题边与阻塞边）逐项校验通过。
 
-**三张调查票全关（2026-09-11）**：
+**四张票已关**：票 1（照抄清单）、票 3（模板契约）、票 2（内容对账）三张调查票，加票 13（内容裁决，五条全部拿到用户答复）。
 
-- 票 1：报告 `docs/skills/skill-home/t184-bill-recipe.md`（19 行逐件表／18 条照抄陷阱）。三条硬事实已分别并进票 6（边界名单要移出 `skill-home`）、票 7（看帮助不许把库建出来）、票 9（注入块保检出换行）。
-- 票 3：报告 `docs/skills/skill-home/t186-template-contract.md`。走的是 **A 路＝老实物 help 模板**（`base-paint/help-shell`）；`subtitle`／`meta_blocks` 在 A 路不渲染但照传；`groups` 三层形状与二级组 id 通式 `<域id>_<序数>`；`version`＝`'2.0'`；`init_banner` 判法＝DB 文件存在且**不建库**；`recommendations` 不传。取值表已写进票 6 票面，资产形状已写进票 5 票面。
-- 票 2：报告 `docs/skills/skill-home/t185-content-reconcile.md` ＋ 机器可读骨架 `t185-skeleton.json`（原始输出归 `t185-evidence/`）。老 73 场景里 3 条无落点（全是 link），新表 91 条要补进 20 条（其中 17 条在老 `SKILL.md` 路由表里有出处）；**关键发现：老家的唤醒词事实源是 `scenarios.yaml` ＋ 老路由表两份**。
+- 票 1：报告 `docs/skills/skill-home/t184-bill-recipe.md`。三条硬事实已并进票 6／票 7／票 9。
+- 票 3：报告 `t186-template-contract.md`。走 **A 路＝老实物 help 模板**；`subtitle`／`meta_blocks` 不渲染但照传；`init_banner` 判法＝DB 文件存在且**不建库**；取值表已写进票 6。
+- 票 2：报告 `t185-content-reconcile.md` ＋ 骨架 `t185-skeleton.json`。老 73 场景里 3 条无落点（全在 link），新表要补进 20 条（17 条在老路由表里有出处）；**唤醒词事实源是 `scenarios.yaml` ＋ 老路由表两份**。
+- 票 13：五条裁完并写进票 5／票 6 票面——推位置／找位置留在「位置管理」卡；看标签不独立成卡；3 条 `(HTML)` 不进清单；主数用 73 场景；联动 3 条留登记位、不列、不建目录，**将来的联动设计出本图走 combos 相关票**。
 
-**新出两张门票（都要先报用户点头）**：票 12（[结构设计](https://github.com/FeatherHunter/ilife/issues/195)）与票 13（[内容裁决](https://github.com/FeatherHunter/ilife/issues/196)）；票 5 与票 6 同时卡在这两张后面（阻塞边已建并校验）。
+**新出两张门票（都要先报用户点头）**：票 12（[结构设计](https://github.com/FeatherHunter/ilife/issues/195)，已无阻塞）与票 13（[内容裁决](https://github.com/FeatherHunter/ilife/issues/196)，已关）。
 
-下一步：先开票 13 的一轮 grilling（五条对不齐的逐条定死），再开票 12（形状）；票 4（命名落盘归属）与票 10（插件侧最小装机）也已无阻塞。
+下一步：开票 12 的一轮设计（新件住哪：目录树＋每件对外给什么＋共用件被哪两个能力用），报你点头后票 5／票 6 开工；票 4（命名落盘归属）与票 10（插件侧最小装机）也已无阻塞。
 
 ## Notes
 
@@ -61,7 +62,7 @@
 | 12 | [结构设计：新件住哪（必报五步第一／二步，先报用户点头）](https://github.com/FeatherHunter/ilife/issues/195) | grilling | [票 2](https://github.com/FeatherHunter/ilife/issues/185) |
 | 13 | [内容裁决：老骨架与新表对不齐的五条（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/196) | grilling | — |
 
-**此刻的 frontier**：[票 4](https://github.com/FeatherHunter/ilife/issues/187)（命名落盘归属决策）／[票 10](https://github.com/FeatherHunter/ilife/issues/193)（插件侧最小装机）／[票 12](https://github.com/FeatherHunter/ilife/issues/195)（结构设计）／[票 13](https://github.com/FeatherHunter/ilife/issues/196)（内容裁决）。
+**此刻的 frontier**：[票 4](https://github.com/FeatherHunter/ilife/issues/187)（命名落盘归属决策）／[票 10](https://github.com/FeatherHunter/ilife/issues/193)（插件侧最小装机）／[票 12](https://github.com/FeatherHunter/ilife/issues/195)（结构设计）。
 
 ## Decisions so far
 
@@ -70,6 +71,7 @@
 - [调查：饼干记账的 HELP 交付实现逐件读懂 → 居家照抄清单](https://github.com/FeatherHunter/ilife/issues/184) — 报告 `docs/skills/skill-home/t184-bill-recipe.md`：19 行逐件表判出「照抄 `output.ts`／`helpPaths.ts`／`helpFile.ts` 三件，不抄卡路里的命令名映射与转发件」；两处生成物禁手改（`base-render/src/helpShell.ts`、bill 的 `wake-assets.ts`）；三条会改下游票的硬事实——`tooling/check-boundaries.mjs:37` 名单含 `skill-home`（import `base-paint` 就 FAIL）、`cmd_read.ts:54-56` 的 `dispatch` 第一行就开库（看帮助会建库）、`scripts/build-help.mjs:28` 不保检出换行。
 - [调查：通用 help 模板的注入契约＋居家专属取值](https://github.com/FeatherHunter/ilife/issues/186) — 报告 `docs/skills/skill-home/t186-template-contract.md`：仓内有两套渲染，**居家走 A 路**（`assets/help-template.html` → 生成物 `helpShell.ts` → `base-paint/help-shell`）；`subtitle`／`meta_blocks` 在 A 路**不渲染**但照传（一处算两处用）；资产三层形状与二级组 id 通式 `<域id>_<序数>`；`version`＝`'2.0'`（数据世代非包版本）；`init_banner` 判法＝`existsSync` 判库且**不建库**（居家 `resolveDbPath` 自带 `mkdirSync`，不能直接用）；`recommendations` 不传。
 - [调查：内容资产对账（老 9 域／30 组／73 场景 ↔ 新表 91 条唤醒词／21 条命令）](https://github.com/FeatherHunter/ilife/issues/185) — 报告 `docs/skills/skill-home/t185-content-reconcile.md` ＋ 骨架 `t185-skeleton.json`：老 73 场景里 **3 条无落点**（全在 link 域）、新表要**补进 20 条**（17 条在老 `SKILL.md` 路由表里有出处，只 3 条真新增）；**唤醒词的事实源是 `scenarios.yaml` ＋ 老路由表两份**；3 条 `(HTML)` 建议不进 HELP 清单、link 3 条留登记位不建域目录、HELP 主数用 73 场景；10 条待裁里真正要用户拍板的五条收成票 13。
+- [内容裁决：老骨架与新表对不齐的五条（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/196) — 用户五条全答 **A**：①推位置／找位置**留在**「位置管理 › 管位置」卡（跟新命令 `home.location.query` 走）②看标签**不独立成卡**（作「管标签」卡附属词，主数保持 73）③3 条 `(HTML)` 兼容词**不进清单**，只在口径区写一行 ④主数用 **73 场景**（21 条命令写口径区）⑤联动 3 条**留登记位**（`status: "deprecated"`）、prompt 不迁、**不列**、**不建域目录**；用户补充原话「我们以后在 combos 相关地方设计」→ 联动将来的设计出本图。五条已写进票 5／票 6 票面。
 
 ## Not yet specified
 
@@ -84,6 +86,7 @@
 - `packages/skill-home/src` 整包按 HELP 一级分组重排：出本图目的地（用户 Q8=(a)，另立票）。
 - 发布态（抬版本＋发版＋真 npm 安装验证）：出本图，风险留给发版票。
 - 面板／侧栏的 HELP 入口、插件里「打开文件」的动作：属 #58 那条线。
+- **联动功能那 3 条（联动总览／记到卡路里／记到记账）将来的设计**：用户 2026-09-11 原话「我们以后在 combos 相关地方设计」——出本图目的地，走 combos 相关票。
 
 ## 用户原话采访区（verbatim，一字未改；AI 执行先读这里）
 
