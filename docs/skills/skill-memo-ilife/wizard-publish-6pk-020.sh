@@ -336,17 +336,25 @@ else
 fi
 pause "前置门通过？按回车进入登录"
 
-# ── Stage 2：登录（你扫码） ────────────────────────────────────────────
-stage "2/12 · 登录 npm（你扫码）"
-say "这一步会打印一个浏览器授权链接。"
-step "在浏览器完成登录 ＋ 2FA 审批（扫码/确认），然后回到这个窗口。"
-note "令牌只写本地 npm 配置（~/.npmrc），不会出现在本窗口日志里。"
+# ── Stage 2：登录（已登录则跳过；未登录才走网页授权） ────────────────
+stage "2/12 · 登录 npm（已登录即跳过）"
 note "发布永远只认官方源 —— 你的默认源是镜像，本 wizard 每条命令都显式带 --registry。"
 say "当前默认源：$(npm config get registry)"
-npm login --auth-type=web --registry="$REG"
-say "确认登录成功（必须输出你的用户名）："
-npm whoami --registry="$REG"
-pause "看到用户名了？按回车继续"
+
+CURRENT_USER="$(npm whoami --registry="$REG" 2>/dev/null | tr -d '\r\n ' || true)"
+if [[ -n "$CURRENT_USER" ]]; then
+  say "  已经是登录态：$CURRENT_USER ✓  —— 跳过登录"
+  note "（npm 10.9.2 上 `npm login --auth-type=web` 会退回老式用户名/密码交互、在非密码终端里必然失败；"
+  note "  已登录时重跑它没有意义，反而会卡住。要换账号请先 npm logout。）"
+else
+  warn "  未登录 —— 这一步会打印浏览器授权链接"
+  step "在浏览器完成登录 ＋ 2FA 审批（扫码/确认），然后回到这个窗口。"
+  note "令牌只写本地 npm 配置（~/.npmrc），不会出现在本窗口日志里。"
+  npm login --auth-type=web --registry="$REG"
+  say "确认登录成功（必须输出你的用户名）："
+  npm whoami --registry="$REG"
+  pause "看到用户名了？按回车继续"
+fi
 
 # ── Stage 3：打包预检（自动，不过即停） ────────────────────────────────
 stage "3/12 · 打包预检（自动，不过即停）"
