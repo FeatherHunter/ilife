@@ -11,7 +11,7 @@
 
 前任（#180 收口波上半）已把**快照重算**（已提交 `fd65fab`）与**四处未提交改动**（补偿表清空＋三处测试改写）做对做全；
 本席**接住这四处未提交成果**、补完它没来得及做的**第五处**（`skill-t11.test.mjs:154` 的孪生断言），
-再走完全仓「前提已消失」同类断言扫描（**无第三处漏网**）、全套门禁、变异自证、5 条命令的增量提交与对账源导出。
+再走完全仓「前提已消失」同类断言扫描（**无第三处漏网**）、全套门禁、变异自证、两笔增量提交（5 个代码/测试件一笔，正本＋对账源一笔）与对账源导出。
 全量 `pnpm test` ＝ **1469 测试／1468 通过／1 失败**，唯一红是**议题已登记**的环境时钟项（`fetch-t6:97`），
 其余议题登记的派生常量／基线／smoke 项**本波已随四处改动一起转绿**。
 
@@ -19,7 +19,7 @@
 
 | # | 要求 | 怎么满足 | 证据（file:line） |
 |---|---|---|---|
-| 1 | `HELP_EXEC_OVERRIDES` 无残留 | 值已清成 `{}`（23 条映射全删，`profile_view` 在内）；**导出名保留**的唯一理由是跨层再导出 `src/triggers/index.ts:15` 在同一行同时导出它与 `execCliFor`，该文件不在本波写集内，删名即编译断 → 名字收敛归 **#181** | `packages/skill-calorie/src/triggers/help-lookup.ts:85`；再导出 `packages/skill-calorie/src/triggers/index.ts:15` |
+| 1 | `HELP_EXEC_OVERRIDES` 无残留 | 值已清成 `{}`（**24 条**映射全删——本席按 `7855699` 的 diff 逐行点得 24，派单写 23，见 §10-5；`profile_view` 在内）；**导出名保留**的唯一理由是跨层再导出 `src/triggers/index.ts:15` 在同一行同时导出它与 `execCliFor`，该文件不在本波写集内，删名即编译断 → 名字收敛归 **#181** | `packages/skill-calorie/src/triggers/help-lookup.ts:85`；再导出 `packages/skill-calorie/src/triggers/index.ts:15` |
 | 2 | `routing.ts` 22 串是字面文本，`help-lookup.ts` 不再被它 import | 实测：`routing.ts` 全文 401 处 `calorie-cmd-read` 字面；对 `help-lookup` 的唯一提及是 `:13-14` 的说明注释（无 import 语句）；全仓 import `help-lookup` 的只剩 `src/triggers/index.ts:12`（聚合出口，正当） | `packages/skill-calorie/src/triggers/routing.ts:13-14`（注释即自述）；`packages/skill-calorie/src/triggers/index.ts:12` |
 | 3 | `gen-sot-snapshot.mjs --check` 通过；快照除 `entry_sha` 段外逐字节未变 | 本席复跑 `--check`：`MASK-EQUAL=1`、`RESULT: entries=436 mismatch=0 mode=check`、exit 0；提交 `fd65fab` 自报 `BYTES 32564 -> 32564（DELTA 0）`、`changed=376`。编排者另有独立核验（派单转述）：掩码后结构逐字相同、键顺序未被重排 | 脚本 `packages/skill-calorie/scripts/gen-sot-snapshot.mjs`；快照 `test/calorie-sot.snapshot.json`（现 **32564 B**、6 个顶层键 `sot/total/scene_counts/entry_sha/wake_multiset/summary`、`entry_sha` **436** 键） |
 | 4 | `dead.length` 断言改成 `=== 0` 并绿；`calorie-routing-81` 全绿；`calorie-triggers` 全绿 | 三条断言已改口径并实测绿（见 §2／§3）；三个文件在 §5 的绿态运行里全通过 | `packages/skill-calorie/test/help-center-106.test.mjs:87`；`test/calorie-routing-81.test.mjs`；`test/calorie-triggers.test.mjs` |
@@ -35,7 +35,7 @@
 
 | # | 文件 | 改了什么（实测 diff） | 复核结论 |
 |---|---|---|---|
-| 1 | `packages/skill-calorie/src/triggers/help-lookup.ts`（+101/−…） | ① `HELP_EXEC_OVERRIDES` 23 条映射 → `{}`；② `execCliFor` 退化为**恒等转发**（只回传入的 `fallbackCli`）；③ 新增 `frozenCli(triggers, wakeWord)` 从入参表现找该唤醒词的 `main_prompt.cli`；④ `searchHelp` 命中行 `cli` 直取 `t.main_prompt.cli`；⑤ 两处「合成首命中」从抄表字面改为 `frozenCli` ＋ `null` 则不合成 | **成立**。自洽：`routing.ts` 已不再从它取命令（补丁 2 的前置条件已由上一波完成）；`calorie-c43`／`profile-view-177`／`help-center-106`／`render-t10`／`skill-t11` 全绿 |
+| 1 | `packages/skill-calorie/src/triggers/help-lookup.ts`（+101/−…） | ① `HELP_EXEC_OVERRIDES` **24 条**映射 → `{}`；② `execCliFor` 退化为**恒等转发**（只回传入的 `fallbackCli`，**已无调用点**）；③ 新增 `frozenCli(triggers, wakeWord)` 从入参表现找该唤醒词的 `main_prompt.cli`；④ `searchHelp` 命中行 `cli` 直取 `t.main_prompt.cli`；⑤ 两处「合成首命中」从抄表字面改为 `frozenCli` ＋ `null` 则不合成 | **成立**。自洽：`routing.ts` 已不再从它取命令（补丁 2 的前置条件已由上一波完成）；`calorie-c43`／`profile-view-177`／`help-center-106`／`render-t10`／`skill-t11` 全绿 |
 | 2 | `packages/skill-calorie/test/help-center-106.test.mjs` | `assert.ok(dead.length > 300)` → `assert.equal(dead.length, 0)`；头注释同步（353 → 「#180 之前 353」） | **成立且更强**：原断言的前提（「数据里还有 353 条死命令」）正是本票要消灭的东西；改成 `=0` 后它从「前置鉴别力」变成**残留账目**。源级三字段扫描由 `no-script-commands-180.test.mjs:21,63-97` 独占 |
 | 3 | `packages/skill-calorie/test/render-t10.test.mjs` | 原 `all.every(h => h.legacyCli.startsWith('python scripts/render_'))` → 两条新断言：①`legacyCli` 逐字同源 SoT 命令字段（经 `TRIGGERS` 建 `Map`）；②不得退回脚本形态 | **成立**（派单称其为「标准答案」）。唯一保留意见：`记身材照` 在 SoT 里**不唯一**（×3），按唤醒词建 `Map` 只比最后一条；实测三条 cli 逐字相同，故今天无差（本席在孪生处改成了「同唤醒词全部条目」比对，见 §3） |
 | 4 | `test/calorie-routing-81.test.mjs`（+162/−…） | ① `paramFlipRoutes()`（按命令原文反推，实测 237 条）→ **结构式**判据（覆盖全 341 条 exec：单条命令＋键 token 一致＋需参数带 `--params`），把 legacy（无 key）在 exec 桶里的 **18 条**具名登记为 `legacyCardIdExecZone()`；② `LEGACY_OVERRIDE_EXCEPTIONS`（#152 的 `profile_view` 具名例外）**撤销**，D2⑤ 的「施工前既有入口 43 键」由反推改成冻结字面 `FROZEN_BASELINE_KEYS`；③ FX-81-5 的 smoke 汇总按用户 2026-09-11 甲案**放宽**（数据依赖失败单列登记册，只许登记不许扩，且汇总行与逐条实测自洽） | **成立，且比原判据覆盖面大**（341 > 237）。三条异议点逐条查过：撤销 #152 例外有数据面依据（`calorie.view.profile` 施工前不可达，今天仍由新拟词「看档案视图」承载）；`FROZEN_BASELINE_KEYS` 恰 43 键且无重复；smoke 放宽只松了 `exit`／`envelope` 两列，`cli` 逐字那格没松（`:349`） |
@@ -200,6 +200,7 @@ node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t180-coll
 2. **`d885f081` 是一次自伤**：变异探针 v1 把「该分支不可达 → 不红」当成判据失败并 `exit 2`；v2 改为把不可达写成**显式期望**（`want_red=0`）并加 REACH 度量。产品/测试面零影响。
 3. **不止改派单点名的一处**：派单要求 `skill-t11:154` 照 `render-t10` 的路数改，本席按上下文把「同源」判据从「唤醒词 `Map` 单值」收紧为「同唤醒词**全部** SoT 条目」（理由：`记身材照` 在 SoT 里不唯一）——属**加强**，不是放宽。
 4. **未新增 changeset**：本波是既有票的数据/测试面收口，无包版本语义变化；如需 changeset 由编排者在收口时补（未在派单写集内）。
+5. **派单的两处数字与实测不符，本席按实测记账**：① 派单写「`HELP_EXEC_OVERRIDES` 里 23 条」，按 `7855699` 的 diff 逐行点键得 **24** 条（`profile_view` ＋ `home_*` 9 ＋ `goal_view_*` 12 ＋ `diag_*` 2），本文按 24 记账；② 派单写「`routing.ts` 用了 22 串」，本席只做存在性验证、未逐条复核（见 §11-3）。
 
 ## 11. 未确证项
 
