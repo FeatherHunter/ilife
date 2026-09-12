@@ -316,7 +316,10 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  gap: 8px;',
     '}',
     '.' + p + 'action-row-ghost {',
-    '  grid-template-columns: minmax(0, 1fr);',
+    // 复制按钮那一行**平分整行**（#247 用户 2026-09-12 返修）：两列而不是单列——单列只在「一行一颗」时
+    // 才好看，一旦有第二颗（复制数据 ＋ 复制日志）就变成「一颗铺满、一颗缩成内容宽」。列数取冻结
+    // `ACTION_BAR_DEFAULTS.evenRowPairs`（既有「偶数一行 2 个」的口径，不是新拍的数字）。
+    '  grid-template-columns: repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr));',
     '}',
     '.' + p + 'action-btn {',
     '  display: inline-flex;',
@@ -419,14 +422,17 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     // 14px 是本仓既有卡片圆角（toast 同值），几何其余逐值不动（`bottom`／`right`／`min-width`／
     // `max-width`／`padding`／投影／项内距与字号全取老仓）。
     '.' + p + 'copy-menu-wrap {',
-    // 宽度必须**贴身**：本层落在 `.action-row` 的**网格轨道**里，网格项默认 `justify-self: stretch`
-    // → 会被撑满整条轨道，菜单的 `right: 0` 就贴到整行右端（离按钮远远的）。故显式 `start`。
-    // （`display` 只能写 `flex`：网格项会被块化，`inline-flex` 也算成 `flex`——别指望它贴身。）
+    // 宽度**跟着轨道走**（#247 用户 2026-09-12 返修）：复制数据与复制日志在 ghost 行里**平分整行**
+    // （各占一格，见 `.action-row-ghost` 的两列），两颗宽高一致——不再出现「一颗铺满一行、一颗缩成
+    // 内容宽」的一胖一瘦。故这里**不写** `justify-self: start`（那会让本层缩成内容宽、连带按钮也缩）。
     '  position: relative;',
     '  display: flex;',
-    '  justify-self: start;',
     '  align-items: center;',
-    '  max-width: 100%;',
+    '  width: 100%;',
+    '}',
+    // 开合器按钮铺满自己那一格：菜单的 `right: 0` 才贴着按钮右缘（== 格子右缘），两格时居中偏右。
+    '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn {',
+    '  width: 100%;',
     '}',
     '.' + p + 'copy-menu {',
     '  position: absolute;',
@@ -492,16 +498,13 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  .' + p + 'copy-menu-item {',
     '    min-height: 44px;',
     '  }',
-    // 窄屏改**视口定位**（老仓那句「右对齐视口内,手机不超界」的落法）：`right:0` 贴着按钮算，
-    // 按钮一旦靠左（宽档模板把按钮组压到 max-width:520 并由 margin:auto 居中，窄屏同理靠左），
-    // 200px 的菜单就有一半越到屏幕左外——那时既点不到也看不到。改成「左右各留 16px、贴底一行」
-    // 就恒在视口内（`left/right` 同给 ＋ `min-width:auto` 让宽度随视口），且不参与页面排布
-    // （`fixed` 从常规流里拿掉），开合不重排整页。
+    // 窄屏改**贴按钮算**（老仓那句「右对齐视口内,手机不超界」的落法）：桌面档按钮靠左，200px 的菜单
+    // 贴按钮会有一半越到屏幕左外；窄屏按钮在右半格，故改成
+    // 「宽 = 视口 − 左右各 16px、右缘贴按钮右缘」——既恒在视口内，又跟着按钮（滚动时不漂、不挡按钮），
+    // 也不会像 `position: fixed` 那样把浮层钉在视口底、压住别的正文。
     '  .' + p + 'copy-menu {',
-    '    position: fixed;',
-    '    left: 16px;',
-    '    right: 16px;',
-    '    bottom: calc(16px + env(safe-area-inset-bottom, 0px));',
+    '    left: auto;',
+    '    width: calc(100vw - 32px);',
     '    min-width: 0;',
     '    max-width: none;',
     '  }',

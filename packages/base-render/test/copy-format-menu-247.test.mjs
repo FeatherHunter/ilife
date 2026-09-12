@@ -14,6 +14,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  ACTION_BAR_DEFAULTS,
   ACTION_ID_ATTR,
   COPY_ACTION_IDS,
   COPY_FORMATS,
@@ -342,6 +343,28 @@ describe('#247 三格式菜单 · 产出面', () => {
     // 触控目标：窄屏菜单项抬到 44px（UI 四关之一）。
     assert.ok(CSS.includes('@media (max-width: 820px)'), '缺窄屏档');
     assert.ok(/\.ilife-copy-menu-item \{\s*min-height: 44px;/m.test(CSS) || CSS.includes('min-height: 44px'), '窄屏菜单项缺 44px');
+  });
+
+  it('S9 复制按钮那一行**平分整行**（用户 2026-09-12 返修）：两列等宽 ＋ 两颗按钮都铺满各自那一格', () => {
+    // 反面（返修前的样子）：单列 → 复制数据缩成内容宽（实测 92.6px）、复制日志铺满 520px，一胖一瘦。
+    const row = blocksOf('.' + STYLE_PREFIX + 'action-row-ghost')[0];
+    assert.ok(row !== undefined, '缺 .ilife-action-row-ghost 规则块');
+    assert.equal(declValue(row, 'grid-template-columns'), 'repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr))',
+      'ghost 行必须是两列等宽（列数取冻结 evenRowPairs）——单列会让一颗铺满、一颗缩成内容宽');
+
+    // 菜单包裹层**不写** justify-self：网格项默认 stretch，写 start 会让整颗按钮缩成内容宽。
+    const wrap = blocksOf('.' + STYLE_PREFIX + 'copy-menu-wrap')[0];
+    assert.ok(wrap !== undefined, '缺 .ilife-copy-menu-wrap 规则块');
+    assert.equal(declValue(wrap, 'justify-self'), null, '包裹层不得写 justify-self（写 start 会把按钮收窄）');
+    assert.equal(declValue(wrap, 'width'), '100%', '包裹层必须铺满自己那一格');
+    const opener = blocksOf('.' + STYLE_PREFIX + 'copy-menu-wrap > .' + STYLE_PREFIX + 'copy-btn')[0];
+    assert.ok(opener !== undefined, '缺「包裹层里的开合器」规则块');
+    assert.equal(declValue(opener, 'width'), '100%', '开合器必须铺满自己那一格（否则又是那颗小按钮）');
+
+    // 单格式页（其余 45 张）同一行两颗：两颗都是普通按钮，靠网格项 stretch 自动等宽——无需额外规则。
+    const plain = renderActionBar({ copyData: { actionId: 'cd', text: 'D' }, copyLog: { actionId: 'cl', text: 'L' } });
+    assert.equal((plain.match(/ilife-action-row-ghost/g) ?? []).length, 1, '两颗必须在同一行（一处 ghost 行）');
+    assert.equal((plain.match(/<button/g) ?? []).length, 2);
   });
 
   it('S8 运行时产出：菜单选择器／类名与渲染端逐字同值（不产第二份真相）', () => {
