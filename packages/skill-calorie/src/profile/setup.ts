@@ -10,8 +10,8 @@
  * 取数：档案现值走 `fetch/profile.getProfile`（**不用** `buildProfileView`——它缺档案即抛
  * `missing-data`，会把预检页变成没有产物）；最新体重走同目录 `view.profileSnapshot`
  * 那一份查询（同一个取数不留两处）。页面层不自算口径：活动量系数取
- * `analysis/utils.TDEE_ACTIVITY_FACTORS` 正本，TDEE 走同文件 `calcTdee`（缺身高/年龄/
- * 性别/体重时**不算**，不填默认值冒充）。
+ * `analysis/utils.TDEE_ACTIVITY_FACTORS` 正本，TDEE 走同文件 `energyOf`（缺身高/年龄/
+ * 性别/体重/活动量时**不算**，不填默认值冒充；#177 起这条判据只此一处，看档案结果页同走它）。
  * 未知参数抛 `bad-input`（与 `render/wizardPort.ts` 同字面「不支持字段: 」，出口 exit 2）。
  */
 import type { DatabaseSync } from 'node:sqlite';
@@ -19,9 +19,8 @@ import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm } fro
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
 import type { ProfileRow } from '../fetch/profile.js';
-import { normalizeGender } from '../fetch/profile.js';
 import { ACTIVITY_LEVELS } from '../kcal.js';
-import { ACTIVITY_LEVEL_LABELS, TDEE_ACTIVITY_FACTORS, calcTdee } from '../analysis/utils.js';
+import { ACTIVITY_LEVEL_LABELS, TDEE_ACTIVITY_FACTORS, energyOf } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { nowStamp } from '../render/receipt.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
@@ -107,38 +106,7 @@ function profileField(camel: string, p: ProfileRow | null): string | number | nu
   }
 }
 
-/** 性别归一：认 male/female 与 男/女（正本 `fetch/profile.normalizeGender`），认不出即 null——
- *  宁可不给 TDEE 数字，也不拿另一半的公式算一个出来（`calcTdee` 把非 male 一律当 female）。 */
-function genderOrNull(raw: string | number | null): string | null {
-  try {
-    return normalizeGender(raw);
-  } catch {
-    return null;
-  }
-}
-
-/** TDEE 四要素（身高／年龄／性别／体重）缺哪几项，逐项取自 `pick`；缺项照实写出来，不拿默认值算。 */
-function missingTdeeParts(pick: (camel: string) => string | number | null, latestWeightKg: number | null): string[] {
-  const miss: string[] = [];
-  if (!(Number(pick('heightCm')) > 0)) miss.push('身高');
-  if (!(Number(pick('age')) > 0)) miss.push('年龄');
-  if (genderOrNull(pick('gender')) === null) miss.push('性别');
-  if (latestWeightKg === null) miss.push('体重');
-  return miss;
-}
-
-/** TDEE 影响：四要素齐备才算，缺一即 null——**本文件唯一一份判据**，写前页五档与回执页推荐活动量共用。 */
-function tdeeOrNull(
-  pick: (camel: string) => string | number | null,
-  latestWeightKg: number | null,
-  level: string,
-): number | null {
-  if (missingTdeeParts(pick, latestWeightKg).length > 0) return null;
-  const gender = genderOrNull(pick('gender')) as string;
-  return calcTdee(latestWeightKg, Number(pick('heightCm')), Number(pick('age')), gender, level);
-}
-
-/** 活动量五档：草稿优先于库值；TDEE 影响走 `tdeeOrNull`（四要素缺一即不出数字）。 */
+/** 活动量五档：草稿优先于库值；TDEE 影响走 `energyOf`（#177 起四要素缺一即不出数字的唯一判据）。 */
 function tdeeChoices(
   before: ProfileRow | null,
   draft: ProfileSettingView['draft'],
@@ -149,7 +117,13 @@ function tdeeChoices(
     level,
     label: ACTIVITY_LEVEL_LABELS[level] as string,
     factor: TDEE_ACTIVITY_FACTORS[level] as number,
-    tdee: tdeeOrNull(pick, latestWeightKg, level),
+    tdee: energyOf({
+      weightKg: latestWeightKg,
+      heightCm: pick('heightCm'),
+      age: pick('age'),
+      gender: pick('gender'),
+      activityLevel: level,
+    }).tdee,
   }));
 }
 
@@ -330,10 +304,15 @@ function recommendedActivityText(profile: ProfileRow | null, latestWeightKg: num
   if (level === null || level === '') return '—（档案里没有活动量）';
   const label = (ACTIVITY_LEVEL_LABELS[level] as string | undefined) ?? level;
   const head = label + '（系数 ×' + (TDEE_ACTIVITY_FACTORS[level] ?? '—') + '）';
-  const pick = (camel: string): string | number | null => profileField(camel, profile);
-  const tdee = tdeeOrNull(pick, latestWeightKg, level);
-  if (tdee === null) return head + ' · TDEE 待补（缺' + missingTdeeParts(pick, latestWeightKg).join('／') + '，不算）';
-  return head + ' · TDEE 约 ' + tdee + ' 卡/天（按最近体重 ' + latestWeightKg + ' kg）';
+  const energy = energyOf({
+    weightKg: latestWeightKg,
+    heightCm: profile?.height_cm,
+    age: profile?.age,
+    gender: profile?.gender,
+    activityLevel: level,
+  });
+  if (energy.tdee === null) return head + ' · TDEE 待补（缺' + energy.missing.join('／') + '，不算）';
+  return head + ' · TDEE 约 ' + energy.tdee + ' 卡/天（按最近体重 ' + latestWeightKg + ' kg）';
 }
 
 /** ③ 两条写命令（设置档案／设活动量）的写后回执页；改档案回执页在 `update.ts`（它的对照区不同）。

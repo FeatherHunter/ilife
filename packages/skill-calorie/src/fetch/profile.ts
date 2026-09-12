@@ -17,6 +17,9 @@ export interface ProfileRow {
   height_cm: number | null;
   note: string | null;
   activity_level: string | null;
+  /** 库内原值（SQLite `CURRENT_TIMESTAMP`，UTC）；#177 起看档案结果页要显示这两列。 */
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export const ACTIVITY_ALIASES: Record<string, ActivityLevel> = {
@@ -56,9 +59,9 @@ function toHeightCm(v: unknown): number {
 }
 
 export function getProfile(db: DatabaseSync): ProfileRow | null {
-  const row = db.prepare('SELECT id, age, gender, height_cm, note, activity_level FROM user_profile WHERE id = 1').get() as
-    | ProfileRow
-    | undefined;
+  const row = db.prepare(
+    'SELECT id, age, gender, height_cm, note, activity_level, created_at, updated_at FROM user_profile WHERE id = 1',
+  ).get() as ProfileRow | undefined;
   return row ?? null;
 }
 
