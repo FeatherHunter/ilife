@@ -42,15 +42,14 @@ const ghJson = (...args) => JSON.parse(gh(...args) || '[]');
 /** 数据库 id：阻塞边的形参。 */
 const dbIdOf = (n) => Number(gh('api', `repos/${REPO}/issues/${byN.get(n).issue}`, '--jq', '.id'));
 
-/** 建边：已存在就跳过（脚本可重复跑）。 */
-function ensure(fetchArgs, postPath, field, value, haveOf) {
-  const have = haveOf();
-  if (have.has(value)) return;
+/** 建边：缺哪个补哪个（脚本可重复跑）。haveOf 给的是**号码**集合，故比对的也是号码。 */
+function ensure(missingCheck, postPath, field, value) {
+  if (!missingCheck()) return;
   gh('api', `repos/${REPO}/${postPath}`, '-X', 'POST', '-F', `${field}=${value}`);
 }
 
 function main() {
-  // ── 0. 先钉住每张票的数据库 id ──
+  // ── 0. 先钉住每张票的数据库 id（阻塞边的形参是数据库 id，不是 #号码） ──
   const dbId = new Map();
   for (const t of tickets) dbId.set(t.n, dbIdOf(t.n));
 
@@ -58,14 +57,7 @@ function main() {
   const subNumbers = () =>
     new Set(ghJson('api', `repos/${REPO}/issues/${MAP}/sub_issues`, '--paginate').map((i) => i.number));
   for (const t of tickets) {
-    ensure(
-      null,
-      `issues/${MAP}/sub_issues`,
-      'sub_issue_id',
-      dbId.get(t.n),
-      () => subNumbers(),
-    );
-    // ensure() 每次重取，故上面这行等价于「缺哪个补哪个」
+    ensure(() => !subNumbers().has(t.issue), `issues/${MAP}/sub_issues`, 'sub_issue_id', dbId.get(t.n));
   }
 
   // ── 2. 原生阻塞边 ──
@@ -77,12 +69,12 @@ function main() {
     const child = byN.get(Number(childKey));
     if (!child) throw new Error(`BLOCKED_BY 里的票 ${childKey} 不在 tickets 映射里`);
     for (const b of blockers) {
+      const blockerIssue = byN.get(b).issue;
       ensure(
-        null,
+        () => !blockersOf(child.issue).has(blockerIssue),
         `issues/${child.issue}/dependencies/blocked_by`,
         'issue_id',
         dbId.get(b),
-        () => blockersOf(child.issue),
       );
     }
   }
