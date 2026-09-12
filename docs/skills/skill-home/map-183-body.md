@@ -13,11 +13,11 @@
 - 票 1：报告 `docs/skills/skill-home/t184-bill-recipe.md`。三条硬事实已并进票 6／票 7／票 9。
 - 票 3：报告 `t186-template-contract.md`。走 **A 路＝老实物 help 模板**；`subtitle`／`meta_blocks` 不渲染但照传；`init_banner` 判法＝DB 文件存在且**不建库**；取值表已写进票 6。
 - 票 2：报告 `t185-content-reconcile.md` ＋ 骨架 `t185-skeleton.json`。老 73 场景里 3 条无落点（全在 link），新表要补进 20 条（17 条在老路由表里有出处）；**唤醒词事实源是 `scenarios.yaml` ＋ 老路由表两份**。
-- 票 13：五条裁完并写进票 5／票 6 票面——推位置／找位置留在「位置管理」卡；看标签不独立成卡；3 条 `(HTML)` 不进清单；主数用 73 场景；联动 3 条留登记位、不列、不建目录，**将来的联动设计出本图走 combos 相关票**。
+- 票 13：五条裁完并写进票 5／票 6 票面——推位置／找位置留在「位置管理」卡；看标签不独立成卡；3 条 `(HTML)` 不进清单；主数用 73 场景；联动 3 条留登记位、不列、不建目录，**将来的联动设计出本图走 combos 相关票**。计数口径也已确认：**副标题按实际列出派生（70）**，口径区写一行「骨架 73 条，联动 3 条已停用不列」（已写进票 6 票面）。
 
 **新出两张门票（都要先报用户点头）**：票 12（[结构设计](https://github.com/FeatherHunter/ilife/issues/195)，已无阻塞）与票 13（[内容裁决](https://github.com/FeatherHunter/ilife/issues/196)，已关）。
 
-下一步：开票 12 的一轮设计（新件住哪：目录树＋每件对外给什么＋共用件被哪两个能力用），报你点头后票 5／票 6 开工；票 4（命名落盘归属）与票 10（插件侧最小装机）也已无阻塞。
+下一步（2026-09-11 收尾，交给新会话）：**先开票 12**（新件住哪：目录树＋每件对外给什么＋共用件被哪两个能力用），拿到用户点头后票 5／票 6 才开工；之后开票 4（命名落盘归属）。票 10（插件侧最小装机）无阻塞、不占用户决策时间，可与票 12 并行交给子代理先做。wayfinder 纪律：一个会话最多关一张非调查票。
 
 ## Notes
 
@@ -40,6 +40,13 @@
   4. **整包按 HELP 一级分组重排**不在本图内（另立票）。
 - **用词纪律**：写正文与文档一律照 `docs/agents/wording.md`（不说「壳」，说「help 模板」；`home.help.lookup` 这类叫「命令」，不叫「键」）。
 - **纪律**：只 `git add` 自己的文件；`pnpm test` 会顺手改写其他技能的 `SKILL.md`（已知问题，跑完 `git checkout` 还原）。
+- **本图产物索引**（新会话接手先看这里）：
+  - 调查报告：`t184-bill-recipe.md`（照抄清单）／`t185-content-reconcile.md` ＋ `t185-skeleton.json` ＋ `t185-evidence/`（内容对账）／`t186-template-contract.md`（模板契约）
+  - 决议留档：`t184-resolution.md`／`t185-resolution.md`／`t186-resolution.md`／`t196-resolution.md`
+  - 决策页（HTML，给人看的）：`t196-decisions.html`
+  - 接线脚本：`t183-wire-edges.mjs`（票源 `map-183-tickets.json`；重跑即自校验，PASS 才算边齐）
+  - 票面正文源：`t<N>-body.md`（改票面一律改文件再 `gh issue edit <n> --body-file`，别内联字符串）
+  - 全部在 `docs/skills/skill-home/`
 - **文档与产出落点**（用户 Q9=(a)）：代码与产物落 `packages/skill-home/`，文档落 `docs/skills/skill-home/`。
 
 ## 计划（任务清单）
