@@ -29,9 +29,7 @@
  * 不新增错误类、不改既有导出面），由出口 `cmd_read.ts` 走 exit 5 ＋ stderr 回执。
  */
 import { basename, dirname, join, resolve } from 'node:path';
-import {
-  saveHtmlFile, reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS, type HtmlReceipt,
-} from 'base-paint/save-html';
+import { saveHtmlFile, type HtmlReceipt } from 'base-paint/save-html';
 import { ScheduleRenderError } from '../render/errors.js';
 
 /** 落盘失败一律抛本包渲染层错误（`cause` 保留原始系统错，信息不丢）。 */
@@ -41,14 +39,6 @@ function writeFailed(path: string, e: unknown): never {
   const detail = (e as Error | undefined)?.message ?? String(e);
   throw new ScheduleRenderError('SCHEDULE_HTML_TOO_LARGE',
     '[skill-schedule] HELP 落盘失败：' + path + '（' + (code ? code + '：' : '') + detail + '）');
-}
-
-/** HELP 产物的复用窗口（毫秒）。#245：缺省**一天**（`HELP_REUSE_DEFAULT_HOURS`）——24 小时内反复读
- *  同一份 HELP 产物只留一份、不再新建；`--params` 的 `reuseHours` 可改（`0`＝每次都落新的）。
- *  换算与校验都在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`）⇒ 本函数原样转出去，由出口
- *  归到「参数错」那一档（exit 2），与其余四家同档：坏参绝不静默当 0。 */
-export function helpReuseWindow(params: Record<string, unknown>): number {
-  return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
 }
 
 /** 交付结果（`file` 态唯一；`path` 必为绝对路径；形状＝票面第 2 条的顶层 `delivery{mode,path,bytes}`）。

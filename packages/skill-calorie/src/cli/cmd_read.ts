@@ -113,7 +113,7 @@ import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 import {
-  HTML_DIR_NAME, deliverHtml, resolveReceiptHtmlPath,
+  HTML_DIR_NAME, PHOTO_HELP_FILE_STEM, deliverHtml, resolveReceiptHtmlPath,
 } from '../output.js';
 import type { HtmlLanding } from 'base-paint/save-html';
 import type { CalorieComboKey } from './keys.js';
@@ -814,7 +814,12 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         const hits = photoLookup ? lookupPhotoHelp(q as string) : buildPhotoHelp();
         if (photoLookup && hits.length === 0) throw new CalorieRenderError('missing-data', 'HELP 无命中：' + q);
         const items = hits.map((h) => ({ wakeWord: h.wakeWord, key: h.key, desc: h.desc, exec: h.exec }));
-        return { data: { items, total: items.length }, html: renderPhotoHelpHtml(hits, q) };
+        // #245：给这支**自己的主体**（与主 HELP 分名）⇒ 它这才吃复用窗口，且不与主 HELP／业务命令互相顶掉。
+        return {
+          data: { items, total: items.length },
+          html: renderPhotoHelpHtml(hits, q),
+          target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: PHOTO_HELP_FILE_STEM },
+        };
       }
       const now = new Date();
       if (modeRaw === undefined) {

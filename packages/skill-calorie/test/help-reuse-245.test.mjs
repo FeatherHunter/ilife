@@ -97,6 +97,27 @@ test('#245 ③ 速查台那支也吃窗口：两次 mode:"file" 落同一份', (
   assert.equal(namesOf(dir).length, 1, '目录里只有这一份速查台');
 });
 
+test('#245 ③b 照片 HELP 那支：自己的主体、也吃窗口，且不被主 HELP 顶掉', () => {
+  const dir = mkDb('photo');
+  const p1 = runOk(dir, { q: '记身材照' });
+  const p2 = runOk(dir, { q: '记身材照' });
+  assert.match(basename(p1.env.data.output), /^卡路里_照片HELP_\d{8}_\d{6}(_\d+)?\.html$/,
+    '照片 HELP 有自己的主体名：' + basename(p1.env.data.output));
+  assert.equal(p2.env.data.output, p1.env.data.output, '照片 HELP 第二次复用同一份');
+
+  // 主 HELP 另落一份（两者主体不同 ⇒ 互不顶掉）；再读各自都复用自己那份。
+  const h1 = runOk(dir);
+  assert.match(basename(h1.env.data.output), /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/);
+  assert.notEqual(h1.env.data.output, p1.env.data.output, '两种 HELP 分名');
+  const h2 = runOk(dir);
+  const p3 = runOk(dir, { q: '记身材照' });
+  assert.equal(h2.env.data.output, h1.env.data.output, '主 HELP 仍复用自己那份');
+  assert.equal(p3.env.data.output, p1.env.data.output, '照片 HELP 仍复用自己那份（没被主 HELP 顶掉）');
+  assert.equal(namesOf(dir).length, 2, '目录稳定在两份：主 HELP ＋ 照片 HELP');
+  // 两份内容各不相同（分名不只是改名，是两种产物）。
+  assert.notEqual(readFileSync(h1.env.data.output, 'utf8'), readFileSync(p1.env.data.output, 'utf8'));
+});
+
 test('#245 ④ 窗口可换：3 小时同效；0＝每次都要一份最新的（落新的、不覆盖旧的）', () => {
   const dir = mkDb('hours');
   const a = runOk(dir, { reuseHours: 3 });

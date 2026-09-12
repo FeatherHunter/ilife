@@ -76,9 +76,10 @@ test('#237 ① 子路径出口：base-paint/save-html 真解析；包根不开�
   ].join('\n')], { cwd: CONSUMER, encoding: 'utf8' });
   assert.equal(r.status, 0, 'base-paint/save-html 必须可解析（exports 映射）：' + r.stderr);
   const j = JSON.parse(String(r.stdout));
-  // #245 起这一支多一个函数（`reuseWindowOfHours`）与一个默认窗口常量——「几小时＝多少毫秒」的唯一定义地。
-  assert.deepEqual(j.sub, ['HELP_REUSE_DEFAULT_HOURS', 'reuseWindowOfHours', 'saveHtmlFile'],
-    '子路径运行时出口＝落盘 ＋ 窗口换算 ＋ 默认窗口常量（类型不出现在运行时）');
+  // #245 起这一支多两支（`reuseWindowOfHours` 换算 ＋ `helpReuseWindowOf` 把它接到各家的「参数错」档）
+  // 与一个默认窗口常量——「几小时＝多少毫秒、坏参怎么判」的唯一定义地。
+  assert.deepEqual(j.sub, ['HELP_REUSE_DEFAULT_HOURS', 'helpReuseWindowOf', 'reuseWindowOfHours', 'saveHtmlFile'],
+    '子路径运行时出口＝落盘 ＋ 窗口换算 ＋ 窗口工厂 ＋ 默认窗口常量（类型不出现在运行时）');
   assert.equal(j.rootHas, false, '绝不从包根开（包根出口受 src/spec 契约面锁死）');
 });
 

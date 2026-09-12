@@ -32,7 +32,8 @@ import { buildHelpLookup } from '../help/index.js';
 import { resolveHelpDir } from '../help/helpPaths.js';
 import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
 import { HELP_GROUPS } from '../help/scenes/help-assets.js';
-import { deliverHtml, helpReuseWindow, type HtmlDelivery } from '../help/output.js';
+import { deliverHtml, type HtmlDelivery } from '../help/output.js';
+import { helpReuseWindowOf } from 'base-paint/save-html';
 import type { ScheduleRecord } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -87,14 +88,9 @@ interface DeliverIntent {
 interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
 
 /** HELP 产物吃的复用窗口（毫秒）：缺省**一天**、`reuseHours` 可改（`0`＝每次都落新的）。
- *  坏参在共用件里真抛 `RangeError` ⇒ 这里翻成出口的「参数错」那一档（exit 2），与其余四家同档。 */
-function helpWindowOrFail(params: Record<string, unknown>): number {
-  try {
-    return helpReuseWindow(params);
-  } catch (e) {
-    fail(2, (e as Error).message);
-  }
-}
+ *  换算与坏参判定都在共用件（`helpReuseWindowOf` 把坏参 `RangeError` 交给这里给的处理器）⇒ 归到出口的
+ *  「参数错」那一档（exit 2），与其余四家同档：坏参绝不静默当 0。 */
+const helpWindowOrFail = helpReuseWindowOf((m) => fail(2, m));
 
 /** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized` 与 bill `helpInitialized`）。
  *  判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */

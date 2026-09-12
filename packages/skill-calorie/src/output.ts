@@ -27,7 +27,7 @@
  */
 import { mkdirSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { saveHtmlFile, reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS, type HtmlLanding } from 'base-paint/save-html';
+import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding } from 'base-paint/save-html';
 import { CALORIE_COMBOS } from './cli/keys.js';
 import { CalorieRenderError } from './render/errors.js';
 import { resolveDbDir } from './paths.js';
@@ -36,6 +36,10 @@ import { SHEET_FILE_STEM } from './render/helpPaths.js';
 
 export const HTML_DIR_NAME = 'calorie_html';
 export const HTML_EXT = '.html';
+/** 照片 HELP（`calorie.help.center` 的 `q` 那支）**自己的**产物名主体：与主 HELP（`卡路里_HELP`）分名。
+ *  老命名规则里这支走的是「按 `<中文command>` 自动命名」的兜底（主体＝`看身材照`，与业务命令同名），
+ *  #245 给它钉一个自己的主体——一个主体一种产物，复用窗口才不会把两种内容互相顶掉。 */
+export const PHOTO_HELP_FILE_STEM = '卡路里_照片HELP';
 
 /** 旧版 `_sanitize_filename_part` 逐字复刻：非法字符 → `_`、trim、截断 32 字符（按字符，中文/emoji 安全）。
  *
@@ -182,26 +186,29 @@ export type HtmlDelivery =
   | { readonly mode: 'file'; readonly path: string; readonly bytes: number }
   | { readonly mode: 'inline'; readonly reason: string; readonly bytes: number };
 
-/** 吃复用窗口的 HELP 产物名（本技能自己的两个主体）。#245：判据**按落点名**而不是按 key——
- *  `calorie.help.center` 这个键下挂着两种产物（HELP 文件与速查台），两种都算「反复读的 HELP 产物」；
- *  业务页面（`<中文command>_<类型段>…`）与渲染失败回执（`操作失败`）**不吃窗口**——那是另一次操作的产物，
- *  少一份就等于少一次留档；`--output` 逐字落点也不吃（说哪落哪）。 */
-const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, SHEET_FILE_STEM];
+/** 吃复用窗口的 HELP 产物名（本技能自己的三个主体）。#245：判据**按落点名**而不是按 key——
+ *  `calorie.help.center` 这个键下挂着三种 HELP 产物（HELP 文件／照片 HELP／速查台），三种都算「反复读的
+ *  HELP 产物」；业务页面（`<中文command>_<类型段>…`）与渲染失败回执（`操作失败`）**不吃窗口**——那是
+ *  另一次操作的产物，少一份就等于少一次留档；`--output` 逐字落点也不吃（说哪落哪）。
+ *
+ *  ⚠️ **两种内容不许共用一个主体名**：照片 HELP（`q` 那支）曾走「按 `<中文command>` 自动命名」兜底，
+ *  主体与「看身材照」那条**业务命令**同名（`看身材照`），既与主 HELP 分不开、也让「哪份是哪份」不可辨。
+ *  #245 给它一个**自己的主体**（`卡路里_照片HELP`）：一个主体一种产物，窗口才不会把两种内容互相顶掉。 */
+const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, PHOTO_HELP_FILE_STEM, SHEET_FILE_STEM];
 
 /** 本次交付吃不吃复用窗口 ⇒ 给出窗口毫秒数（不吃 = `undefined`，交付退回「独占创建 ＋ 递补」老口径）。
  *
- *  窗口来自 `--params` 的 `reuseHours`（小时）：不给＝缺省一天（`HELP_REUSE_DEFAULT_HOURS`）、
- *  `0`＝每次都落新的、正数＝该窗口。**只对「按通式算出来的 HELP 落点」生效**：`explicit`（用户逐字指定）
- *  走的是共用件的 `file` 口子，共用件本身就不许 `file` ＋ `reuse` 同给（`EINVAL`）。
- *  换算与校验都在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`）⇒ 本函数翻成渲染层的 `bad-input`
- *  （出口那档＝渲染失败回执，与该层既有口径一致）：坏参绝不静默当 0。 */
+ *  窗口来自 `--params` 的 `reuseHours`（小时）：不给＝缺省一天、`0`＝每次都落新的、正数＝该窗口。
+ *  **只对「按通式算出来的 HELP 落点」生效**：`explicit`（用户逐字指定）走的是共用件的 `file` 口子，
+ *  共用件本身就不许 `file` ＋ `reuse` 同给（`EINVAL`）。坏参由共用件的 `helpReuseWindowOf` 翻成渲染层的
+ *  `bad-input`（出口那档＝渲染失败回执，与该层既有口径一致）：坏参绝不静默当 0。 */
+const windowOf = helpReuseWindowOf((m) => {
+  throw new CalorieRenderError('bad-input', m);
+});
+
 function windowForHelpDelivery(key: string, stem: string, params: Record<string, unknown>): number | undefined {
   if (key !== 'calorie.help.center' || !HELP_REUSE_STEMS.includes(stem)) return undefined;
-  try {
-    return reuseWindowOfHours(params['reuseHours'], HELP_REUSE_DEFAULT_HOURS);
-  } catch (e) {
-    throw new CalorieRenderError('bad-input', (e as Error).message);
-  }
+  return windowOf(params);
 }
 
 /** 交付一次 HTML 产物（**唯一落盘点**）：

@@ -122,6 +122,30 @@ export function reuseWindowOfHours(value: unknown, defaultHours?: number): numbe
   return hours * 3_600_000;
 }
 
+/** 造一个「按本家口径收拾坏参」的换算器：五家技能出口（卡路里／记账／备忘录／作息／大厨）都这么接——
+ *
+ *  ```ts
+ *  const windowOf = helpReuseWindowOf((m) => fail(2, m));   // 出口的「参数错」那一档
+ *  const windowMs = windowOf(params);
+ *  ```
+ *
+ *  为什么要这个工厂：五家原先的写法是「`try { reuseWindowOfHours(…) } catch { fail(2, …) }`」五份逐字
+ *  相同的壳（只有「翻成哪家错误」不同）——那正是仓规铁律二禁止的「同一件事五份实现」。这里只做一件事：
+ *  把 `RangeError` 交给你给的处理器（各家自己决定翻成 `fail(2)` 还是别家错误类型），其余错误原样穿过
+ *  （不吞非预期异常）。 */
+export function helpReuseWindowOf(
+  onBadParam: (message: string) => never,
+): (params: Record<string, unknown>) => number {
+  return (params) => {
+    try {
+      return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
+    } catch (e) {
+      if (e instanceof RangeError) onBadParam(e.message);
+      throw e;
+    }
+  };
+}
+
 /** 去结尾的点与空格（Windows 会把它们吃掉，落盘名与回执名会不一致）。
  *  只用于**主体**——`file` 是逐字落点，含扩展名，结尾的 `.` 属调用者本意，不动。 */
 function stripTail(s: string): string {

@@ -5,7 +5,7 @@
 import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { Envelope } from 'base-link-core';
-import { saveHtmlFile, reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
+import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
 import { openMemoDb, listNotes, getNote, searchNotes, addNote, updateNote, removeNote, larkReady, MemoFetchError } from '../fetch/index.js';
 import { normalizeTop, normalizeSub, normalizeRemindAt, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
 import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, MemoRenderError } from '../render/index.js';
@@ -59,17 +59,11 @@ const HELP_MODE_FILE = 'file' as const;
 interface MemoDeliverIntent { readonly html?: string; readonly landing: HtmlLanding; readonly window?: number; }
 interface MemoHelpDispatch { readonly data: unknown; readonly deliver?: MemoDeliverIntent; }
 
-/** HELP 支的复用窗口（毫秒）。#245：缺省**一天**（`HELP_REUSE_DEFAULT_HOURS`）——24 小时内反复读
+/** HELP 支的复用窗口（毫秒）。#245：缺省**一天**（共用件 `HELP_REUSE_DEFAULT_HOURS`）——24 小时内反复读
  *  同一份 HELP 产物只留一份、不再新建；`--params` 的 `reuseHours` 可改（`0`＝每次都落新的）。
- *  换算与校验都在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`）⇒ 本函数翻成出口的「参数错」
- *  那一档（exit 2），与其余四家同档：坏参绝不静默当 0。 */
-function helpReuseWindow(params: Record<string, unknown>): number {
-  try {
-    return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
-  } catch (e) {
-    fail(2, (e as Error).message);
-  }
-}
+ *  换算与校验都在共用件，坏参抛 `RangeError` ⇒ 用 `helpReuseWindowOf` 翻成出口的「参数错」那一档
+ *  （exit 2），与其余四家同档：坏参绝不静默当 0。 */
+const helpReuseWindow = helpReuseWindowOf((m) => fail(2, m));
 
 /** 缺省交付的落点意图：`<SKILLS_DB_PATH>/<memo_html>/〈主体〉`（目录名与主体是备忘录自己的三个值）。 */
 function landingOf(dbPath: string, stem: string): HtmlLanding {

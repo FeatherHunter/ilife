@@ -31,7 +31,7 @@ import {
   buildHelpLookup, buildChefHelpDelivery, buildChefLookupLanding, deliverChefHelp,
 } from '../help/index.js';
 import type { ChefHtmlDelivery, HtmlLanding } from '../help/index.js';
-import { reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS } from 'base-paint/save-html';
+import { helpReuseWindowOf } from 'base-paint/save-html';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -118,15 +118,9 @@ interface HelpDeliver { readonly html?: string; readonly target: HtmlLanding; re
 interface HelpDispatch { readonly data: unknown; readonly deliver?: HelpDeliver; }
 
 /** HELP 产物吃的复用窗口（毫秒）：缺省**一天**、`reuseHours` 可改（`0`＝每次都落新的）。
- *  换算与校验在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`）⇒ 这里翻成出口的「参数错」那一档
- *  （exit 2），与其余四家同档：坏参绝不静默当 0。 */
-function helpWindowOrFail(params: Record<string, unknown>): number {
-  try {
-    return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
-  } catch (e) {
-    fail(2, (e as Error).message);
-  }
-}
+ *  换算与坏参判定都在共用件（`helpReuseWindowOf` 把坏参 `RangeError` 交给这里给的处理器）⇒ 归到出口的
+ *  「参数错」那一档（exit 2），与其余四家同档：坏参绝不静默当 0。 */
+const helpWindowOrFail = helpReuseWindowOf((m) => fail(2, m));
 
 function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const dbPath = join(resolve(resolveDbDir()), DB_FILENAME);

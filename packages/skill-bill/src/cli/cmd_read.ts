@@ -28,7 +28,7 @@ import {
   BillRenderError,
 } from '../render/index.js';
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
-import { reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS } from 'base-paint/save-html';
+import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup } from '../help/index.js';
 import type { BillRow } from '../fetch/db.js';
 
@@ -93,15 +93,13 @@ const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, LOOKUP_FILE_STEM];
 /** 本次交付吃不吃复用窗口 ⇒ 给出窗口毫秒数（不吃 = `undefined`，交付退回「独占创建 ＋ 递补」老口径）。
  *
  *  窗口来自 `--params` 的 `reuseHours`（小时）：不给＝缺省一天（`HELP_REUSE_DEFAULT_HOURS`）、
- *  `0`＝每次都落新的、正数＝该窗口。换算与校验都在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`），
- *  本函数只把它翻成出口的「参数错」那一档（exit 2）——五家技能同一档，坏参绝不静默当 0。 */
+ *  `0`＝每次都落新的、正数＝该窗口。换算与校验都在共用件，坏参抛 `RangeError` ⇒ 用共用件的
+ *  `helpReuseWindowOf` 把它翻成出口的「参数错」那一档（exit 2）——五家技能同一档，坏参绝不静默当 0。 */
+const windowOf = helpReuseWindowOf((m) => fail(2, m));
+
 function windowForHelpDelivery(stem: string, params: Record<string, unknown>): number | undefined {
   if (!HELP_REUSE_STEMS.includes(stem)) return undefined;
-  try {
-    return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
-  } catch (e) {
-    fail(2, (e as Error).message);
-  }
+  return windowOf(params);
 }
 
 /** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized`）；
