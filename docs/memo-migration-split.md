@@ -13,7 +13,7 @@
 | SKILL | SKILL.md 重写+HELP 互联注入 | 73KB SKILL.md、docs/、references/ | M6 |
 | 收尾 | 10 联动对表+tmp 单测+删 py | tests/ 全量、output/ 产物 | M7 |
 
-## 联动 key×shape 映射（10 处；key 字符串为提案，P8 combos 落表时冻结；analysis/fallback 全 key 可用）
+## 联动 key×shape 映射（11 处；key 字符串为提案，P8 combos 落表时冻结；analysis/fallback 全 key 可用）
 
 ```memo-keys
 memo.search | list
@@ -26,6 +26,7 @@ memo.wish | list
 memo.sync | receipt
 memo.batch | receipt
 memo.stats | stat
+memo.help.lookup | list
 ```
 
 ## 出 scope（不迁）

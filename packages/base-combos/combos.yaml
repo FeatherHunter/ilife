@@ -553,6 +553,11 @@ combos:
     shape: stat
     title: 聚合统计
     cmd: skill-memo-ilife
+  - key: memo.help.lookup
+    skill: memo
+    shape: list
+    title: 备忘录HELP
+    cmd: skill-memo-ilife
 channels:
   # #80：通道 key 一律 registry 点号键（下划线 calorie.view_home 是渲染层内部 VIEW_KEYS，非法 registry 名）。
   - key: calorie.today

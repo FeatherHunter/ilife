@@ -11,8 +11,8 @@ const fence = doc.split('```memo-keys')[1].split('```')[0].trim().split('\n');
 const rows = fence.map((l) => l.split('|').map((s) => s.trim()));
 
 describe('备忘录拆分确认 M1', () => {
-  it('10 联动 key×shape 全合法（命名空间+6 形状）', () => {
-    assert.equal(rows.length, 10);
+  it('11 联动 key×shape 全合法（命名空间+6 形状）', () => {
+    assert.equal(rows.length, 11);
     for (const [key, shape] of rows) {
       assert.equal(parseRegistryKey(key).key, key);
       assert.ok(ENVELOPE_SHAPES.includes(shape), '未知 shape：' + shape);

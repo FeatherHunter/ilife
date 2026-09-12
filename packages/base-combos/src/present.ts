@@ -111,4 +111,5 @@ export const PRESENT_KEYS: string[] = [
   'memo.sync',
   'memo.batch',
   'memo.stats',
+  'memo.help.lookup',
 ];

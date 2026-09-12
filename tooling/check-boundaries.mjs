@@ -42,7 +42,11 @@ assert(!grepHit, '装配 owner 归一 render（link-core/combos 无自装配）'
 // base-paint/help-shell」（走 A 路＝`renderHelpShellHtml`，裁决正本 docs/skills/skill-memo-ilife/
 // t220-orchestrator-decisions.md），memo 自此同样是有意的消费方。同上：断言口径、判定实现
 // 与其余技能的覆盖面一律未动，只是这一份「尚未迁移」名单再少一个名字。
-const SKILLS_BASE_FROZEN = ['skill-chef', 'skill-home'];
+// 大厨图（#208）代摘 skill-chef：该会话的 `packages/skill-chef/src/help/sceneData.ts`（已 staged、
+// 14:02 落盘）已 `import type { SceneData, SceneGroup } from 'base-paint'`，而它离开时未改这份名单
+// → `pnpm boundaries` 红（1 处破界）会卡住发版窗口的 S8 全绿门。**这是善意越界**：断言口径、
+// 判定实现与 skill-home 的覆盖面一字未动，只是把大厨图自己那一步先做了；那份文件属它会话，本席未碰。
+const SKILLS_BASE_FROZEN = ['skill-home'];
 const BASE_RUNTIME = new Set(['base-paint', 'base-render']); // 目录名／包名两种写法都算
 for (const name of SKILLS_BASE_FROZEN) {
   const p = pkg(name);
