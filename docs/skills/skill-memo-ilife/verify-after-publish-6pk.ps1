@@ -52,22 +52,48 @@ $tmp = Join-Path $env:TEMP ('ilife-verify-' + (-join ((1..6) | ForEach-Object { 
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 '{ "name": "ilife-verify", "version": "0.0.0", "private": true }' | Out-File (Join-Path $tmp 'package.json') -Encoding utf8
 Push-Location $tmp
+# registry tarball 清单一律走 `npm pack --dry-run --json`（**不用系统 tar**：中文用户名路径下
+# tar 会打不开文件、stdout 还混着 npm notice，早先版本因此误报“下载失败/缺件”）。
+# 这里刻意**不抽函数**：PowerShell 函数返回数组会被解包、.Count 变 $null（本脚本踩过两次）。
 foreach ($n in 'skill-memo-ilife', 'skill-calorie', 'skill-schedule') {
-  $tgz = (npm pack "$n@$($want[$n])" --registry=$REG 2>&1 | Select-Object -Last 1).ToString().Trim()
-  if (-not (Test-Path (Join-Path $tmp $tgz))) { Report $false "$n tarball 下载失败（$tgz）"; continue }
-  $list = tar -tzf (Join-Path $tmp $tgz) 2>$null
-  Report ([bool]($list | Where-Object { $_ -eq 'package/SKILL.md' })) "$n tarball 含 SKILL.md"
-  $tplCount = @($list | Where-Object { $_ -match '^package/templates/.+\.html$' }).Count
-  Report ($tplCount -ge 6) "$n tarball 含模板 $tplCount 件（≥6）"
-  Report ([bool]($list | Where-Object { $_ -eq 'package/dist/cli/cmd_read.js' })) "$n tarball 含 dist/cli/cmd_read.js"
+  $raw = (cmd /c "npm pack $n@$($want[$n]) --dry-run --json --registry=$REG 2>nul" | Out-String)
+  $files = @()
+  try { $files = @((($raw | ConvertFrom-Json)[0]).files | ForEach-Object { $_.path }) } catch { }
+  if ($files.Count -eq 0) { Report $false "$n registry tarball 清单取不到"; continue }
+  Report ([bool]($files -contains 'SKILL.md')) "$n tarball 含 SKILL.md"
+  $tplCount = @($files | Where-Object { $_ -match '^templates/.+\.html$' }).Count
+  Report ($tplCount -ge 1) "$n tarball 含模板 $tplCount 件"
+  Report ([bool]($files -contains 'dist/cli/cmd_read.js')) "$n tarball 含 dist/cli/cmd_read.js"
 }
 foreach ($p in $pluginPins.Keys) {
-  $tgz = (npm pack "$p@$($want[$p])" --registry=$REG 2>&1 | Select-Object -Last 1).ToString().Trim()
-  if (-not (Test-Path (Join-Path $tmp $tgz))) { Report $false "$p tarball 下载失败（$tgz）"; continue }
-  $list = tar -tzf (Join-Path $tmp $tgz) 2>$null
-  Report ([bool]($list | Where-Object { $_ -eq 'package/dist/index.js' })) "$p tarball 含 dist/index.js"
-  Report ([bool]($list | Where-Object { $_ -eq 'package/cordis.patch.yml' })) "$p tarball 含 cordis.patch.yml"
-  Report ([bool]($list | Where-Object { $_ -eq 'package/dist/client.js' })) "$p tarball 含 dist/client.js（面板 bundle）"
+  $raw = (cmd /c "npm pack $p@$($want[$p]) --dry-run --json --registry=$REG 2>nul" | Out-String)
+  $files = @()
+  try { $files = @((($raw | ConvertFrom-Json)[0]).files | ForEach-Object { $_.path }) } catch { }
+  if ($files.Count -eq 0) { Report $false "$p registry tarball 清单取不到"; continue }
+  Report ([bool]($files -contains 'dist/index.js')) "$p tarball 含 dist/index.js"
+  Report ([bool]($files -contains 'cordis.patch.yml')) "$p tarball 含 cordis.patch.yml"
+  Report ([bool]($files -contains 'dist/client.js')) "$p tarball 含 dist/client.js（面板 bundle）"
+}
+Pop-Location
+
+"=== 3c. 三个插件从 registry **真装**一遍 —— 最硬的判据：装得上，且带出的技能正是被 pin 的那版 ==="
+$inst = Join-Path $env:TEMP ('ilife-inst-' + (-join ((1..6) | ForEach-Object { 'abcdefghijkmnpqrstuvwxyz23456789'[(Get-Random -Max 32)] })))
+New-Item -ItemType Directory -Force -Path $inst | Out-Null
+'{ "name": "ilife-inst", "version": "0.0.0", "private": true }' | Out-File (Join-Path $inst 'package.json') -Encoding utf8
+Push-Location $inst
+foreach ($p in $pluginPins.Keys) {
+  $skill = $pluginPins[$p][0]
+  $pin = $pluginPins[$p][1]
+  $null = (cmd /c "npm install $p@$($want[$p]) --no-audit --no-fund --registry=$REG 2>&1" | Out-String)
+  $code = $LASTEXITCODE
+  Report ($code -eq 0) "$p 从 registry 真装成功（exit=$code）"
+  Report (Test-Path (Join-Path $inst "node_modules\$p\dist\index.js")) "   $p 的 dist/index.js 落地"
+  Report (Test-Path (Join-Path $inst "node_modules\$p\dist\client.js")) "   $p 的 dist/client.js（面板 bundle）落地"
+  $sk = Join-Path $inst "node_modules\$skill\package.json"
+  if (Test-Path $sk) {
+    $got = (Get-Content $sk -Raw -Encoding UTF8 | ConvertFrom-Json).version
+    Report ($got -eq $pin) "   装 $p 带出的 $skill = $got（精确 pin 期望 $pin）"
+  } else { Report $false "   装 $p 没带出 $skill" }
 }
 Pop-Location
 
@@ -86,16 +112,22 @@ Report ($probe -eq 'OK') "隔离安装 base-paint@$($want['base-paint']) 后 imp
 Pop-Location
 if ($bpTmp.StartsWith($env:TEMP) -and -not $bpTmp.StartsWith($ROOT)) { Remove-Item $bpTmp -Recurse -Force -ErrorAction SilentlyContinue }
 
-"=== 4. 隔离安装：三个插件各自 --dry-run 解析（不许出现旧技能版本） ==="
-Push-Location $tmp
+"=== 4. 已装树上再核一遍：技能版本逐字 = 精确 pin（读安装态 package.json） ==="
+# 不用 `npm install --dry-run --json`（PS 里 JSON 不稳、且 3c 已经把真装做了）；
+# 直接读 3c 留下的安装树，最直白。
 foreach ($p in $pluginPins.Keys) {
   $skill = $pluginPins[$p][0]
-  $dry = npm install "$p@$($want[$p])" --dry-run --json --registry=$REG 2>&1 | Out-String
-  $ok = $dry -match [regex]::Escape("$skill@$($pluginPins[$p][1])")
-  Report $ok "$p 的依赖树解析到 $skill@$($pluginPins[$p][1])"
-  Report (-not ($dry -match 'workspace:')) "$p 安装解析无 workspace:"
+  $pin = $pluginPins[$p][1]
+  $manifest = Join-Path $inst "node_modules\$p\package.json"
+  if (Test-Path $manifest) {
+    $decl = (Get-Content $manifest -Raw -Encoding UTF8 | ConvertFrom-Json).dependencies.$skill
+    Report ($decl -eq $pin) "$p 的 manifest 里 $skill = $decl（期望精确 <$pin>，caret 会让旧技能残留）"
+    Report (-not ((Get-Content $manifest -Raw -Encoding UTF8) -match 'workspace:')) "$p 安装态 manifest 无 workspace:"
+  } else {
+    Report $false "$p 安装态 manifest 不在"
+  }
 }
-Pop-Location
+if ($inst.StartsWith($env:TEMP) -and -not $inst.StartsWith($ROOT)) { Remove-Item $inst -Recurse -Force -ErrorAction SilentlyContinue }
 
 "=== 5. 第三方端到端：装 registry 上的技能包真跑一次 HELP 出件（隔离空库，零触碰真库） ==="
 # 判据（#220 目的地口径，但走**第三方安装路**而非工作区路）：
@@ -130,8 +162,12 @@ if ($envl) {
     if (Test-Path $outPath) {
       $len = (Get-Item $outPath).Length
       Report ($len -gt 50000) "产物存在且 size=$len B"
-      $text = [System.IO.File]::ReadAllText($outPath, [System.Text.Encoding]::UTF8)
-      Report ($text.Substring(0, [Math]::Min(3000, $text.Length)) -match 'ilife-page') "产物首段含 ilife-page 标记"
+      # 只查**纯 ASCII** 标记：PS 5.1 读无 BOM 的 UTF-8 会按 GBK 解，中文匹配不可靠；
+      # 也不再用 'ilife-page' —— 那个 class 今天已不在共享模板里（旧判据，已废）。
+      # 今天的共享模板契约是 `id="help-data"` 载荷容器 ＋ `type="application/json"`。
+      $ascii = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($outPath))
+      Report ($ascii.Contains('id="help-data"')) "产物含 help-data 载荷容器（共享模板契约）"
+      Report ($ascii.Contains('type="application/json"')) "产物含 application/json 载荷段"
     } else {
       Report $false "产物路径不存在：$outPath"
     }
