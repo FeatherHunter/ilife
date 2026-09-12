@@ -11,6 +11,8 @@
 
 同时写明技能拷贝的新旧判别口径（`~/.agents/skills/<技能>` 是拷贝不是链接，判新旧只能靠 `SKILL.md` 的哈希）。
 
+**顺带修一处**（票 1 `#184` 查出来）：`packages/skill-home/scripts/build-help.mjs:28` 注入速查块时**不保检出换行**（直接拼 `'\n'`）；bill 那份按检出换行写回（`packages/skill-bill/scripts/build-help.mjs:34-37`），照它改。
+
 ## 进度：0%
 
 下一步：等票 7（出口与命名落盘）关票。

@@ -6,6 +6,11 @@
 - 初始化状态怎么判（照记账：只读页**不建库**，读失败照显）；
 - 显隐走模板自带的开关（记账走 `hidden`，不删字段——payload 形状不随状态变）。
 
+**本票还要同批改边界门**（票 1 `#184` 调查出来的硬事实，照 #145 对 bill 的先例）：
+
+- `tooling/check-boundaries.mjs:37` 的 `SKILLS_BASE_FROZEN` 名单里有 `skill-home`——不移出，一 `import 'base-paint/help-shell'` 就被依赖闭包与源码两道断言拦下（`:39-60`）＝ `pnpm boundaries` FAIL；
+- 移出时在 `:34-37` 同批写注释（那里已有 #145 给 bill 移出的先例注释），并同步 `packages/skill-home/package.json` 的依赖闭包加 `base-paint`（`^0.3.0`；注意目录名 `base-render`／包名 `base-paint`）。
+
 **本票同时要报新架构规则的落点**（用户 Q8=(a)）：
 
 - 新增件住哪个能力目录（目录名取自 HELP 一级分组、写成英文名）、每个文件的公开接口给什么（导出几个、各一句）；共用件要写得出哪两个能力在用；

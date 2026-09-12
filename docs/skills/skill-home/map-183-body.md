@@ -4,11 +4,13 @@
 
 > 判定口径（2026-09-11 与用户一轮对齐定案）：**①明确拿到 help HTML 文件 ②用现成通用 help 模板渲染（不看老 HELP 的 UI）**，外加维护者肉眼终审「过」。
 
-## 进度：10%
+## 进度：20%
 
-**画图完成（2026-09-11）**：本图 11 张子票已建、原生子议题边与原生阻塞边已建并逐项校验（expected＝actual）；3 张调查票同批派出 research 子代理在跑。
+**画图完成（2026-09-11）**：本图 11 张子票已建、原生子议题边与原生阻塞边已建并逐项校验（expected＝actual）。
 
-下一步：等票 1／2／3 的报告回来，再动票 10（插件侧最小装机，唯一无阻塞的实施票）。
+**票 1 已关（2026-09-11）**：饼干记账的 HELP 交付实现逐件读懂，报告落 `docs/skills/skill-home/t184-bill-recipe.md`（19 行逐件表／18 条照抄陷阱）；三条硬事实已分别并进票 6（边界名单要移出 `skill-home`）、票 7（看帮助不许把库建出来）、票 9（注入块保检出换行）。
+
+下一步：等票 2／票 3 的报告（票 2 第一次派单的子代理跑到上下文用尽，已按「脚本抽取＋分节落盘」重派）；这两张回来后动票 4（决策）；同时票 10（插件侧最小装机）无阻塞，可直接开工。
 
 ## Notes
 
@@ -51,13 +53,13 @@
 | 10 | [插件侧最小装机（技能提供方＋DSH profile；收窄 #58）](https://github.com/FeatherHunter/ilife/issues/193) | task | — |
 | 11 | [真机端到端＋肉眼终审](https://github.com/FeatherHunter/ilife/issues/194) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/191) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/192) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/193) |
 
-**此刻的 frontier**：[票 1](https://github.com/FeatherHunter/ilife/issues/184)／[票 2](https://github.com/FeatherHunter/ilife/issues/185)／[票 3](https://github.com/FeatherHunter/ilife/issues/186)（调查票，已派 research 子代理并行跑）＋ [票 10](https://github.com/FeatherHunter/ilife/issues/193)（插件侧最小装机）。
+**此刻的 frontier**：[票 2](https://github.com/FeatherHunter/ilife/issues/185)／[票 3](https://github.com/FeatherHunter/ilife/issues/186)（调查票，research 子代理在跑）＋ [票 10](https://github.com/FeatherHunter/ilife/issues/193)（插件侧最小装机）。
 
 ## Decisions so far
 
 <!-- 索引：一行一条＝已关的子票 gist ＋ 链接；细节在票里，这里不复述 -->
 
-- （尚无——本图刚开）
+- [调查：饼干记账的 HELP 交付实现逐件读懂 → 居家照抄清单](https://github.com/FeatherHunter/ilife/issues/184) — 报告 `docs/skills/skill-home/t184-bill-recipe.md`：19 行逐件表判出「照抄 `output.ts`／`helpPaths.ts`／`helpFile.ts` 三件，不抄卡路里的命令名映射与转发件」；两处生成物禁手改（`base-render/src/helpShell.ts`、bill 的 `wake-assets.ts`）；三条会改下游票的硬事实——`tooling/check-boundaries.mjs:37` 名单含 `skill-home`（import `base-paint` 就 FAIL）、`cmd_read.ts:54-56` 的 `dispatch` 第一行就开库（看帮助会建库）、`scripts/build-help.mjs:28` 不保检出换行。
 
 ## Not yet specified
 
