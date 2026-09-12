@@ -47,9 +47,18 @@
 | 真页实拍 | `.scratch/current/toast-after/shot-toast.png`（`calorie.view.profile` 结果页 ＋ 点「复制日志」出的深色提示）；无脚本报错、无横向溢出 |
 | 影响面 | 跨技能同批生效（calorie／bill／chef／memo／home／schedule 的页面 toast 视觉一起变）——这正是「共享样式区」的定义，用户已看过实物 |
 
-## 五、留给下一半（需用户点头）
+## 五、下一半已落地：三处产出者同形（5a · 2026-09-12 用户裁定「UI 上要统一」）
 
-**运行时提示与老仓还差两处结构**：`buildSharedHelpersJs` 的 `feedback()` 成功／失败**恒用同一个图标 📋**，
-失败时**不带「失败」徽章**；老仓失败提示是「❌ ＋ danger 徽章『失败』＋ 复制失败／长按选择文本手动复制」。
-两侧同形化要动**页面运行时产出文本**（冻结面），且 `test/help-shell-136.test.mjs` 有 HELP 壳整体哈希，
-故本票只改配色、不擅自改结构——是否补，等用户裁。
+用户看过三处实物并列页（桌面 `decision-5-failure-ui.html`）后裁 **5a：统一到老仓形**。已做：
+
+- `buildSharedHelpersJs` 的 `feedback()`（**页面运行时**，也是用户在 46 张页上真正看到的那一处）：
+  - 失败态：图标由恒 📋 改为 **❌**，标题行补**红底「失败」徽章**（文案取 `STATUS_DEFAULT_TEXT.danger`、
+    类名取 `toast-chip` ＋ `toast-chip-danger`，与静态产出器同源，不产第二份真相）；
+  - 成功态：补**详情行「粘贴给 AI」**（`COPY_TEXT_DEFAULTS.okDetail`）；失败详情行仍为 `failDetail`。
+  - 结构化常量替掉原来的单一 `ICON_GLYPH`：`ICON_OK`／`ICON_FAIL`／`OK_DETAIL`／`FAIL_BADGE`／`CHIP_CLASS`／`CHIP_DANGER_CLASS`。
+- 结果：**老仓 / 页面运行时 / 静态 `renderToast` 三处同形**——成功＝📋＋「已复制」＋「粘贴给 AI」；
+  失败＝❌＋红底「失败」＋「复制失败」＋「长按选择文本手动复制」。
+
+**实测读数**（真页面 `calorie.view.profile`）：`packages/base-render` 包内 **508 条全绿**（`help-shell-136` 的壳哈希未受影响）；
+失败态实拍 `.scratch/current/toast-after/after-fail-toast.png`、成功态实拍 `after-ok-toast.png`
+（桌面同名副本 `toast-dark\toast-failure.png`／`toast-success.png`）。
