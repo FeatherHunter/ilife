@@ -8,7 +8,7 @@
 
 | 新增件（`packages/skill-home/` 下） | 一句话职责 | 对外给什么（导出名） | 票 |
 | --- | --- | --- | --- |
-| `src/help/helpPaths.ts` | **只有落点值**：目录名与文件名主体（零 IO 纯常量；通式／递补不在本件） | `HELP_HTML_DIR_NAME`＝`'home_manager_html'`；`LOOKUP_FILE_STEM`＝`'居家管家_速查表'`（票 4 #187 裁决：速查支产物 `居家管家_速查表_<stamp>.html`，与 HELP 分名）；HELP 文件名主体 `居家管家_HELP` 照 bill 仍住 `helpFile.ts` | 票 7 #190 |
+| `src/help/manifest.ts` | **只有落点值**：目录名与文件名主体（零 IO 纯常量；通式／递补不在本件） | `HELP_HTML_DIR_NAME`＝`'home_manager_html'`；`LOOKUP_FILE_STEM`＝`'居家管家_速查表'`（票 4 #187 裁决：速查支产物 `居家管家_速查表_<stamp>.html`，与 HELP 分名）；HELP 文件名主体 `居家管家_HELP` 照 bill 仍住 `helpFile.ts` | 票 7 #190 |
 | `src/help/helpFile.ts` | 内容资产＋派生 → 全量 HELP JSON → 全页 HTML，零 IO、零落盘 | 照 bill 的 21 个导出名单（6 常量＋8 接口＋7 函数），值换居家：`HELP_FILE_STEM`／`HELP_FILE_SKILL_NAME`／`HELP_FILE_TITLE`／`HELP_FILE_VERSION`／`HELP_INIT_SCENE_ID`／`HELP_CONTACT`、`HelpFileData`／`HelpFileOptions`／`HelpMetaBlock`／`HelpInitBanner`／`HelpIndex`／`HelpIndexItem`／`HelpContact*`、`formatHelpMinute`／`deriveSummaryLine`／`buildMetaBlocks`／`buildInitBanner`／`buildHelpFileData`／`renderHelpFileHtml`／`buildHelpIndex` | 票 6 #189 |
 | `src/help/output.ts` | HTML 产物唯一落盘点＝**薄封装**：出口裁决（`explicit` 优先且覆盖写、`target` 缺位即抛）＋委派共用件 `saveHtmlFile`＋写失败 `exit 5`＋顶层追加 `delivery{mode,path,bytes}`；**不自持递补** | `deliverHtml`｜`HtmlDelivery`｜`HtmlLanding`（后两者自 `base-paint/save-html` 再导出） | 票 7 #190 |
 | `src/help/helpAssets.ts`（内容资产，机器生成物，**不搬** `src/triggers/`；事实源＝已入库的 `src/help/scenarios.yaml`） | 生成物：全量 HELP 资产（域／组／场景／唤醒词／场景索引） | 导出名单留给你票 5 定（bill 那份给 `WAKE_GROUPS`／`SCENE_BY_ID`／`HELP_WAKE_WORDS`／`WAKE_ASSETS`） | 票 5 #188 |
@@ -24,9 +24,9 @@
 
 | bill 件（导出名） | 居家对应件 | 保留什么 | 必须改什么 |
 | --- | --- | --- | --- |
-| `packages/skill-bill/src/render/helpPaths.ts`（`HELP_HTML_DIR_NAME`／`LOOKUP_FILE_STEM`） | `src/help/helpPaths.ts` | 零 import、零函数、零类型的纯常量形状（**只有落点值**） | 两常量取值换居家口径（目录名 `home_manager_html`／速查主体 `居家管家_速查表`）；速查支**已按票 4 #187 裁决写死**，不再待定。**通式口径不抄进来**：时间戳通式／`_N` 递补／独占写／复用窗口／绝对路径回执的唯一定义地是共用件 `base-paint/save-html` 的 `saveHtmlFile`（`packages/base-render/src/output/saveHtml.ts:355` 自建落点目录；旁证 `packages/skill-calorie/src/render/helpPaths.ts:6`） |
+| `packages/skill-bill/src/render/helpPaths.ts`（`HELP_HTML_DIR_NAME`／`LOOKUP_FILE_STEM`） | `src/help/manifest.ts` | 零 import、零函数、零类型的纯常量形状（**只有落点值**） | 文件名取 `manifest.ts`——照大厨 `src/help/manifest.ts` 先例（账单那一件叫 `helpPaths.ts`，且它的 `HELP_FILE_STEM` 其实住在 `src/render/helpFile.ts:24`，不是 `helpPaths.ts`——照抄会抄错位）；两常量取值换居家口径（目录名 `home_manager_html`／速查主体 `居家管家_速查表`）；速查支**已按票 4 #187 裁决写死**，不再待定。**通式口径不抄进来**：时间戳通式／`_N` 递补／独占写／复用窗口／绝对路径回执的唯一定义地是共用件 `base-paint/save-html` 的 `saveHtmlFile`（`packages/base-render/src/output/saveHtml.ts:355` 自建落点目录；旁证 `packages/skill-calorie/src/render/helpPaths.ts:6`） |
 | `packages/skill-bill/src/output.ts`（`deliverHtml`／`HtmlDelivery`／`HtmlLanding`） | `src/help/output.ts` | **薄封装形状**（现行件，`packages/skill-bill/src/output.ts:5,24,49,54`）：`explicit` 优先且覆盖写、`target` 缺位即抛、回执 `{ mode:'file', path, bytes }` 且 `path` 恒绝对——两路都只委派 `saveHtmlFile` | 注释里的技能名与报错前缀（`[skill-bill]` → 居家）；`HtmlLanding`／`HtmlReceipt` 仍从 `base-paint/save-html` 取。**删掉旧写法「递补只认 `EEXIST`」**：递补循环已不住 `output.ts`（本件不自持 `nextExclusiveCandidate`／`writeFileExclusiveWithRetry`） |
-| `packages/skill-bill/src/render/helpFile.ts`（21 导出：6 常量＋8 接口＋7 函数） | `src/help/helpFile.ts` | 全量 HELP JSON 形状（`renderHelpFileHtml` 直调 `renderHelpShellHtml`）；三块可选内容字段一律带着、显隐走 `hidden`；域数／场景数／版本计数一律派生；`now` 显式传入 | 六个常量取值（`HELP_FILE_STEM`＝`'居家管家_HELP'` 照 bill 住本件**不**住 `helpPaths.ts`）；`groups` 换成居家内容资产；`init_banner` 的 `prompt` 来源换居家场景 |
+| `packages/skill-bill/src/render/helpFile.ts`（21 导出：6 常量＋8 接口＋7 函数） | `src/help/helpFile.ts` | 全量 HELP JSON 形状（`renderHelpFileHtml` 直调 `renderHelpShellHtml`）；三块可选内容字段一律带着、显隐走 `hidden`；域数／场景数／版本计数一律派生；`now` 显式传入 | 六个常量取值（`HELP_FILE_STEM`＝`'居家管家_HELP'` 照 bill 住本件**不**住 `manifest.ts`）；`groups` 换成居家内容资产；`init_banner` 的 `prompt` 来源换居家场景 |
 | （不抄）`packages/skill-bill/src/render/index.ts` | **不动** `src/render/index.ts` | — | 收进 `src/help/` 后不再有「既有 barrel 上加行」这一条，也免掉 `export *` 重名静默丢名的风险（t187-decision.md 第四节理由 3） |
 
 ## 3. 不许照抄的件（逐条＋一句话理由）
