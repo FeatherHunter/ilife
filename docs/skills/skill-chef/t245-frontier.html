@@ -71,6 +71,15 @@
     <b>一句话结论</b>：票面「已实施」那半<b>只有大厨一家真通了</b>——共用件 <code>{reuse:{byAge}}</code> 与 <code>reuseHours</code> 都在，但其余四家根本没有这个口子，参数被当无关参<b>静默忽略</b>，目录照涨。
   </div>
 
+  <div class="note" style="background:var(--green-bg);border-color:#bfd7c7">
+    <b style="color:var(--green)">收口裁定（2026-09-12，维护者答复）</b><br>
+    <b>Q1</b> ＝「要的效果是 <b>24 小时内只产出 1 个</b>；参数怎么做由实现方定，<b>允许推翻之前的任何决定</b>」⇒ 采用 <b>B（缺省即复用）</b>，票面「缺省态行为不变」与地图 <code>#208</code> 口径① 由本条改写。<br>
+    <b>Q1 补充</b> ＝「<b>HELP HTML 不需要每次刚渲染的</b>；<b>其他 HTML 一般都是新的</b>」⇒ 窗口<b>只给 HELP 类</b>（缺省 HELP 文件／速查表／照片 HELP）；业务页面与失败回执一律新落，<b>不吃窗口</b>。<br>
+    <b>Q2</b> ＝ 由实现方定 ⇒ 取「缺省 HELP 文件 ＋ 两种速查表 ＋ 照片 HELP 吃窗口；<code>q</code> 现找／<code>--output</code>／<code>--html</code>／业务页面／失败回执不吃」。<br>
+    <b>Q3</b> ＝ <b>甲</b> ⇒ 共用件出 <code>reuseWindowOfHours</code> ＋ <code>helpReuseWindowOf</code>，五家各一行装配。<br>
+    <b>Q4</b> ＝ 甲＋乙（同一会话重复读 ＋ 跨会话／跨天重复读）。
+  </div>
+
   <h2>复现实测（缺省连读 2 次 vs 带 reuseHours 连读 2 次）</h2>
   <table>
     <thead><tr><th>技能</th><th>命令</th><th>缺省</th><th>带 reuseHours</th><th>判决</th></tr></thead>
