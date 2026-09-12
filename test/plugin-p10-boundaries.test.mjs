@@ -28,10 +28,10 @@ describe('P10 依赖方向', () => {
     const depBlob = JSON.stringify({ ...m.dependencies, ...m.devDependencies, ...m.peerDependencies });
     for (const n of SINGLE_NPMS) assert.ok(!depBlob.includes(n), '总管不许依赖单品：' + n);
     // #48 样板线：plugin-calorie 总管依赖已转正式版号（B① 全部换已发布号）；#50 首对复制 plugin-chef、home 对 plugin-home-ilife、bill 对 plugin-bill-ilife、schedule 对 plugin-schedule-ilife、memo 对复制 plugin-memo-ilife 同改（见 docs/skill-landing-r2.md）。
-    // #123：卡路里线（本次发版窗口）随三包 0.2.0 升到 ^0.2.0；其余 5 单品不在窗口内，保持 ^0.1.0（复制期各自随发版升级）。
+    // 本批发版窗口扩到备忘录线 → 作息线：总管仍 ^0.2.0，skill 侧按 #129 精确 pin 工作区版本。
     const FORMAL48 = new Set(['plugin-calorie', 'plugin-chef', 'plugin-home-ilife', 'plugin-bill-ilife', 'plugin-schedule-ilife', 'plugin-memo-ilife']);
     const SKILL_OF = { 'plugin-calorie': 'skill-calorie', 'plugin-chef': 'skill-chef', 'plugin-home-ilife': 'skill-home', 'plugin-bill-ilife': 'skill-bill', 'plugin-schedule-ilife': 'skill-schedule', 'plugin-memo-ilife': 'skill-memo-ilife' };
-    const WINDOW123 = { 'plugin-calorie': { 'dsh-life-pack': '^0.2.0', 'skill-calorie': '^0.2.0' } };
+    const WINDOW123 = { 'plugin-calorie': { 'dsh-life-pack': '^0.2.0', 'skill-calorie': '0.2.3' }, 'plugin-memo-ilife': { 'dsh-life-pack': '^0.2.0', 'skill-memo-ilife': '0.2.0' }, 'plugin-schedule-ilife': { 'dsh-life-pack': '^0.2.0', 'skill-schedule': '0.2.0' } };
     const rangeOf = (d, name) => WINDOW123[d]?.[name] ?? '^0.1.0';
     for (const d of SINGLES) {
       const j = pkg(d);
