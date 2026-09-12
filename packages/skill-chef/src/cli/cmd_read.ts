@@ -5,6 +5,7 @@
 // 取数（fetch/db.ts 已落盘，以其签名为准）：openChefDb/closeChefDb/listRecipes/filterRecipes/searchRecipes/getRecipeDetail/addRecipe/updateRecipe/addIngredient(h,recipeId,input)/addStep(h,recipeId,input)/deprecateRecipe/recordHistory/queryHistory(h,recipeId?)/historyStats/buildShoppingList/healthCheck。
 // 口径：policy WriteOp（add/update/deprecate）+ RecipeOp（add/update/discard/add-ingredient/add-step，CLI 兼容 discard=deprecate）；queryHistory 无参返全量；buildShoppingList 合并行含 optional/category 标记。
 import { writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import {
   ChefFetchError, ChefPolicyError,
   openChefDb, closeChefDb,
@@ -14,7 +15,7 @@ import {
   recordHistory, queryHistory, historyStats,
   buildShoppingList, healthCheck,
 } from '../fetch/index.js';
-import { resolveDbPath } from '../fetch/paths.js';
+import { resolveDbPath, resolveDbDir, DB_FILENAME } from '../fetch/paths.js';
 import type { RecipeRow, ChefDb } from '../fetch/db.js';
 import { needName, needNames, validateCategory, validateRating } from '../policy/index.js';
 import {
@@ -22,10 +23,15 @@ import {
   toRecipeItem, recipeDetail, buildRecipeSearch, buildRecipeReceipt,
   buildCookingRun, buildShopping, buildHistoryRecord, buildHistoryQuery,
   toHistoryItem, buildHelpItems,
+  fillTemplate, loadTemplate, templateFor,
   ChefRenderError,
 } from '../render/index.js';
 import type { CookingStep } from '../render/index.js';
-import { buildHelpLookup } from '../help/index.js';
+import {
+  buildHelpLookup, buildChefHelpDelivery, buildChefLookupLanding, deliverChefHelp,
+} from '../help/index.js';
+import type { ChefHtmlDelivery, HtmlLanding } from '../help/index.js';
+import { reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS } from 'base-paint/save-html';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -91,6 +97,56 @@ function pickNum(params: Record<string, unknown>, key: string): number | undefin
   if (typeof v === 'number' && Number.isFinite(v)) return v;
   if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v.trim()))) return Number(v.trim());
   return undefined;
+}
+
+/* ── #215 · 「私家大厨help」的交付装配（**在开库之前**走）────────────────────────────────
+ *
+ * 缺省（不给 `q`／`mode`）＝ 老实物同款 HELP 文件：`<SKILLS_DB_PATH>/cook_html/help/
+ * 私家大厨_HELP_<YYYYMMDD_HHMMSS>[_N].html`，独占落盘 ＋ 绝对路径回执（`delivery` 顶层追加）。
+ * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体 `私家大厨_速查表`，与 HELP 分名——照 #139 判法：
+ * 一个键两种产物就分成两个名字，别让用户按一个名字打开到另一个东西），页面由信封走 `templates/help.html`。
+ * 显式 `q` ＝ 现找：只回命中（stdout），`--html` 给了才落盘（检索式问答不刷目录）。
+ * 显式 `reuseHours`（小时）＝ 复用窗口：`0`＝每次都落新的（要一份最新的）；不给＝**一天**（#245）——
+ * 24 小时内反复读同一份 HELP 产物**只留一份、不再新建**（判据＝落盘名里的时间戳，不看 mtime；
+ * 超龄那份不算命中 ⇒ 与未命中同路落一份新的，旧的留着当留档）。`--html` 那支不吃复用（说哪落哪）。
+ * 落点只出**意图**（目录 ＋ 文件名主体）：时间戳与同秒递补由共用件 `saveHtmlFile` 钉死（裁决 8）。
+ * 全程**不开库、本件自己也不建库目录**：库路径走 `resolveDbDir()`（**不 mkdir**）＋ 文件名拼——`resolveDbPath()`
+ * 会 `mkdirSync`（`src/fetch/paths.ts:21`）。落点目录由落盘件按需递归建出（要落文件就必然建它），
+ * 但要落的是 `<SKILLS_DB_PATH>/cook_html/help/`，**不是** `chef_data.db`。
+ */
+interface HelpDeliver { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number; }
+interface HelpDispatch { readonly data: unknown; readonly deliver?: HelpDeliver; }
+
+/** HELP 产物吃的复用窗口（毫秒）：缺省**一天**、`reuseHours` 可改（`0`＝每次都落新的）。
+ *  换算与校验在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`）⇒ 这里翻成出口的「参数错」那一档
+ *  （exit 2），与其余四家同档：坏参绝不静默当 0。 */
+function helpWindowOrFail(params: Record<string, unknown>): number {
+  try {
+    return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
+  } catch (e) {
+    fail(2, (e as Error).message);
+  }
+}
+
+function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
+  const dbPath = join(resolve(resolveDbDir()), DB_FILENAME);
+  const mode = params.mode === undefined ? undefined : String(params.mode);
+  const q = params.q === undefined ? undefined : String(params.q);
+  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
+  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本键只认 lookup');
+  const reuseMs = helpWindowOrFail(params);
+  if (q !== undefined) return { data: { ...buildHelpItems(buildHelpLookup(), q), mode: 'lookup', query: q } };
+  if (mode === 'lookup') {
+    return {
+      data: { ...buildHelpItems(buildHelpLookup(), undefined), mode: 'lookup' },
+      deliver: { target: buildChefLookupLanding(dbPath), reuseMs },
+    };
+  }
+  const { html, target, index } = buildChefHelpDelivery(dbPath, new Date());
+  return {
+    data: { ...index, mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
+    deliver: { html, target, reuseMs },
+  };
 }
 
 // 八键分发：读走 fetch 读，写走 fetch 写+口径校验；未知键上游已拦，此处再拦一道。
@@ -324,11 +380,10 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         fail(2, 'history.query 只接受 kind=timeline/stats/quality/backup');
         return null;
       }
-      case 'chef.help.lookup': {
-        const all = buildHelpLookup();
-        const q = params.q === undefined ? undefined : String(params.q);
-        return buildHelpItems(all, q);
-      }
+      case 'chef.help.lookup':
+        // #215：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
+        fail(1, '内部错误：chef.help.lookup 须走 dispatchHelp（开库之前）');
+        return null;
       default: fail(3, '未知 chef key：' + key); return null;
     }
   } finally {
@@ -366,10 +421,22 @@ async function main() {
   const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
   timer.unref();
   let env = null;
+  let delivery: ChefHtmlDelivery | undefined;
   try {
-    const data = dispatch(o.key as string, params);
-    env = buildChefEnvelope(o.key as string, data);
-    if (o.html) {
+    // #215：HELP 在开库之前分派（只读页不建库）；其余七键照旧走 dispatch（内部开库）。
+    const help = o.key === 'chef.help.lookup' ? dispatchHelp(params) : null;
+    env = buildChefEnvelope(o.key as string, help ? help.data : dispatch(o.key as string, params));
+    if (help?.deliver !== undefined) {
+      // 本键的产物：缺省＝HELP 全页（自带 html）；`mode:"lookup"`＝速查表页（由信封走本技能模板渲染）。
+      const html = help.deliver.html ?? fillTemplate(loadTemplate(templateFor(o.key as string)), renderEnvelopeHtml(env));
+      assertHtmlSize(html);
+      delivery = deliverChefHelp({
+        explicit: o.html,
+        target: help.deliver.target,
+        html,
+        ...(help.deliver.reuseMs === undefined ? {} : { reuseMs: help.deliver.reuseMs }),
+      });
+    } else if (o.html) {
       const html = renderEnvelopeHtml(env);
       assertHtmlSize(html);
       try { writeFileSync(o.html, html, 'utf8'); }
@@ -379,10 +446,16 @@ async function main() {
     if (e instanceof ChefFetchError) fail(4, '取数失败：' + e.message);
     if (e instanceof ChefPolicyError) fail(2, '口径失败：' + e.message);
     if (e instanceof ChefRenderError) fail(5, '渲染失败：' + e.message);
+    // 落盘失败：共用件 `saveHtmlFile` 的 code（`EEXIST`／`EINVAL`／`EIO`）原样穿过，落到 exit 5。
+    if (/^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException)?.code))) fail(5, '落盘失败：' + ((e as Error).message || String(e)));
     if ((e as Error).message?.includes('SKILLS_DB_PATH')) fail(1, (e as Error).message);
+    // #215：help 支一步取数都没有（只渲染 ＋ 落盘），未知错只可能出在渲染（共享模板抛的普通 Error
+    // 没有 code）或落盘 ⇒ 归 exit 5，不落到「未知失败 4」。其余七键保持原样（取数面宽，无法这样归类）。
+    if (o.key === 'chef.help.lookup') fail(5, '渲染/落盘失败：' + ((e as Error).message || String(e)));
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally { clearTimeout(timer); }
-  process.stdout.write(JSON.stringify(env) + '\n');
+  // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
+  process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
 }
 
 await main();

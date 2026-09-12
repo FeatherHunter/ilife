@@ -33,6 +33,6 @@
   },
   "scripts": {
     "build": "tsc -b && node scripts/build-help.mjs",
-    "test": "node --test ../../test/scaffold.test.mjs ../../test/calorie-triggers.test.mjs test/fetch-t6.test.mjs"
+    "test": "node --test ../../test/scaffold.test.mjs ../../test/calorie-triggers.test.mjs test/fetch-t6.test.mjs test/help-reuse-245.test.mjs"
   }
 }

@@ -16,7 +16,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -130,7 +130,10 @@ test('#91 ①b 速查台＝显式 mode file：完整文档落盘 ＋ 独立命�
   assert.equal(readFileSync(second.env.data.output, 'utf8'), html, '两次调用产物逐字相等');
   const strip = (o) => { const c = { ...o.data }; delete c.output; return JSON.stringify(c); };
   assert.equal(strip(second.env), strip(r.env), '除落点外 data 逐字相等');
-  assert.notEqual(second.env.data.output, d.output, '落点各自独立（同秒冲突加后缀）');
+  // #245：速查台也吃「一天内复用」窗口 ⇒ 第二次调用**复用同一份**（不新建、不改写）。
+  assert.equal(second.env.data.output, d.output, '窗口内复用同一份（#245：一天内只留一份）');
+  assert.equal(statSync(d.output).size, d.bytes, '复用不改写已有那份（字节数不变）');
+  assert.equal(readdirSync(join(dir, 'calorie_html')).length, 1, '目录里只有这一份速查台');
 });
 
 /* ── ② 三态（显式 mode，D6）＋ 三态同源 ＋ inline/text 不入 envelope ───────────── */

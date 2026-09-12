@@ -187,7 +187,8 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 ## HELP 交付与速查台
 
-- **「卡路里HELP」＝老技能同款 HELP 文件**（#139 起）：`calorie-cmd-read calorie.help.center` 缺省即出 `卡路里_HELP_<时间戳>.html`（老命名，V4 三级目录壳，与老技能视觉一致；落 `data.output`，约 300 KB **只落盘**、不进 envelope）。**别再给它加参数**——缺省就是目的地交付物。
+- **「卡路里HELP」＝老技能同款 HELP 文件**（#139 起）：`calorie-cmd-read calorie.help.center` 缺省即出 `卡路里_HELP_<时间戳>.html`（老命名，V4 三级目录壳，与老技能视觉一致；落 `data.output`，约 300 KB **只落盘**、不进 envelope）。**除下面的复用窗口外别再给它加参数**——缺省就是目的地交付物。
+- **反复读不再涨目录（#245）**：HELP 文件与速查台**同一主体一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；`data.output` 给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内已有一份、而你刚改过内容时，那份旧产物**不会自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。业务页面与失败回执**不吃窗口**（每跑一次仍各留一份）。
 - **速查台（#88，须显式要）**：`--params '{"mode":"file"}'` 出完整 HTML 速查台（436 场景／54 子功能／10 分组，卡级复制按钮，约 1 MB，落 `卡路里_速查台_<时间戳>.html`）；`{"mode":"inline"}` 出内嵌片段／`{"mode":"text"}` 出纯文本索引；非法 `mode` 与 `q`＋`mode` 同给一律 exit 2。
 - **照片 10 键走 `q`**（不是 `mode`）：`--params '{"q":"记身材照"}'` 现找、`{"q":""}` 全表，顺序跟 SCENE_09_PHOTO SoT 序；每条命中自带 `exec`（node 一行式，读 SKILLS_DB_PATH 库）+`legacyCli`（老家 python 原命令备查）；模块 `skill-calorie/dist/render/photo.js`，函数须存在（单测逐条 import 断言）。
 - **通用唤醒词现找**：`calorie.help.lookup --params '{"q":"<唤醒词/分类/描述子串>"}'`（436 唤醒词全量，10 场景，空串抛，不返全表冒充命中）。

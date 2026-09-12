@@ -1,18 +1,48 @@
 ---
 name: skill-chef
-description: "「私家大厨HELP」→chef.help.lookup 查怎么办；唯一出口 chef-cmd-read（本地菜谱：搜菜／查看／加菜、跟着做、买菜清单合并、做菜记录与历史、体检排序）。触发词：私家大厨HELP、菜谱HELP、查帮助、能做什么、查看食谱、查看食材、查看步骤、查看营养、查看背景、看菜谱、看菜、查看全部、搜索食谱、搜菜、查食材、筛选菜系、筛选食材、筛选口味、筛选季节、录入食谱、修改食谱、废弃食谱、加菜、做菜模式、开始做菜、继续做菜、完成做菜、生成清单、排除可选、查清单、清空清单、记录做菜、补录做菜、改评分、查看历史、查看统计、体检"
+description: "「私家大厨HELP」→chef.help.lookup 落一份 HELP 文件并回执绝对路径；唯一出口 chef-cmd-read（本地菜谱：搜菜／查看／加菜、跟着做、买菜清单合并、做菜记录与历史、体检排序）。触发词：私家大厨HELP、菜谱HELP、查帮助、能做什么、查看食谱、查看食材、查看步骤、查看营养、查看背景、看菜谱、看菜、查看全部、搜索食谱、搜菜、查食材、筛选菜系、筛选食材、筛选口味、筛选季节、录入食谱、修改食谱、废弃食谱、加菜、做菜模式、开始做菜、继续做菜、完成做菜、生成清单、排除可选、查清单、清空清单、记录做菜、补录做菜、改评分、查看历史、查看统计、体检"
 ---
 # 私家大厨（chef）SKILL
 
-本地菜谱：搜菜/查看/加菜、跟着做（烹饪步骤）、买菜清单合并、做菜记录与历史、体检排序、HELP 现找。唯一出口 `chef-cmd-read <chef.key>`，argv+JSON(stdout)+exit，非 0 走 stderr。写走 receipt（直通即真相）。
+本地菜谱：搜菜/查看/加菜、跟着做（烹饪步骤）、买菜清单合并、做菜记录与历史、体检排序、HELP 交付（落 HTML 文件）。唯一出口 `chef-cmd-read <chef.key>`，argv+JSON(stdout)+exit，非 0 走 stderr。写走 receipt（直通即真相）。
 
 ## 快速开始
 
 ```sh
+chef-cmd-read chef.help.lookup                                 # 缺省＝落 HELP 文件：stdout 的 delivery.path 就是它
+chef-cmd-read chef.help.lookup --params '{"mode":"lookup"}'    # 落速查表文件（与 HELP 分名）
+chef-cmd-read chef.help.lookup --params '{"q":"搜菜"}'         # 现找：只回命中，不落盘
+chef-cmd-read chef.help.lookup --params '{"reuseHours":0}'      # 一定要一份最新的（缺省一天内复用，不新建）
 chef-cmd-read chef.recipe.search --params '{"q":"虾"}'
 chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
-chef-cmd-read chef.help.lookup --params '{"q":"搜菜"}'
 ```
+
+## HELP 交付（「私家大厨HELP」这条命令交什么）
+
+对用户说「私家大厨help」时，**这条命令的缺省行为就是落一份 HELP HTML 文件**，并把绝对路径回执进 stdout：
+
+- **缺省**（不给 `q`／`mode`）：产物落 `<SKILLS_DB_PATH>/cook_html/help/私家大厨_HELP_<YYYYMMDD_HHMMSS>[_N].html`；
+  stdout 顶层多一个 `delivery{mode,path,bytes}`，`path` 恒为**绝对路径** ⇒ **把 `delivery.path` 告诉用户**（他要打开的就是这一份）。
+  文件名主体与老技能逐字相同；**同一主体一天内只留一份**——24 小时内再读就复用已有那份（不新建、不改写），已有那份绝不动。
+- **速查表**（`--params '{"mode":"lookup"}'`）：落 `私家大厨_速查表_<stamp>.html`（与 HELP 文件**分名**——别让用户按一个名字打开到另一个东西），载荷是 37 条短语；同样吃下面的复用窗口。
+- **现找**（`--params '{"q":"搜菜"}'`）：只在 stdout 回命中，**不落盘**（检索式问答不刷目录）。
+- **指定落点**（`--html <路径>`）：逐字落到那个路径（覆盖写），回执同样是绝对路径。
+- **复用窗口**（`--params '{"reuseHours":3}'`）：3 小时内复用同一份；`{"reuseHours":0}`＝**每次都要一份最新的**（缺省窗口就是一天，见上）。窗口内已有一份、而你刚改过 HELP 内容时，旧产物**不会自动刷新**——要新的就带 `reuseHours:0`。
+
+**完成判据**：`delivery.path` 指的文件**存在**，且它的大小 ＝ `delivery.bytes`（两处对不上就是没做完，别把回执当完成）。
+
+两件容易踩的：
+
+- 这条命令**不开库**：跑完不会多出 `chef_data.db`（落文件仍然要求 `SKILLS_DB_PATH` 已设置）。
+- 页面由**通用 help 模板**（`base-paint/help-shell`）渲染，与卡路里／饼干记账／居家管家同款；要动观感就去改模板源再跑它的生成器。
+
+失败口径：参数错（`q` 与 `mode` 互斥、`mode` 只认 `lookup`）走 `exit 2`；渲染或落盘失败走 `exit 5`（stderr 是 `ERR 5: …`），失败路径上 stdout 保持干净。
+
+**本节不管**（各有归属，别在这里找）：页面里的内容（域／组／卡在 `src/help/sceneData.ts` 的内容资产，改内容走 `scripts/gen-help-assets.mjs` 再生成）；名字怎么算（时间戳格式与同秒递补的唯一定义地是共用件 `packages/base-render/src/output/saveHtml.ts`）；把文件送进面板／侧栏（属 #57 那条线）。
+
+## 装出来的那份怎么判新旧
+
+`~/.agents/skills/skill-chef` 在本机实测是 **Junction（目录联接）**，指向仓内这个包 ⇒ 它就是同一份文件，改这里立即生效；`Get-Item <路径> -Force | Select-Object LinkType` 一看便知。若某台机器上它是**拷贝**，那才谈新旧：只能比 `SKILL.md` 的哈希（拷贝里那份与仓里这份哈希不同＝旧的，重新装机）。
 
 ## 口径
 

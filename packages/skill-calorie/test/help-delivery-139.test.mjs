@@ -18,7 +18,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,7 +30,11 @@ const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'n
 const NAME_RE = /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
 
 function mkDir(tag) {
-  return mkdtempSync(join(tmpdir(), 't139-' + tag + '-'));
+  const dir = mkdtempSync(join(tmpdir(), 't139-' + tag + '-'));
+  // HELP 支在开库之前分派，但**库文件得先在**（否则 openDb 现建库路径与并发读撞，实测 exit 4）——
+  // 本行只为本文件后面那组「并发落新」用例备一个已存在的空库。
+  writeFileSync(join(dir, 'calorie_data.db'), '');
+  return dir;
 }
 
 function run(dir, params) {
@@ -45,9 +49,9 @@ function run(dir, params) {
 }
 
 /** 异步版（并发两次用；`spawnSync` 会把并发串成串行，测不出独占）。 */
-function runAsync(dir) {
+function runAsync(dir, args = ['calorie.help.center']) {
   return new Promise((resolve) => {
-    const child = spawn(NODE_BIN, [BIN, 'calorie.help.center'], {
+    const child = spawn(NODE_BIN, [BIN, ...args], {
       env: { ...process.env, SKILLS_DB_PATH: dir },
     });
     let out = '';
@@ -140,26 +144,37 @@ test('#139 ③ 反向：缺省不是速查台（无 ilife-help-shell 锚），�
   assert.ok(sheet.env.data.bytes > 900_000, '速查台量级 ≈1 MB，实际 ' + sheet.env.data.bytes + ' B');
 });
 
-test('#139 ④ 并发两次调用：落点各自独立；同秒则后到者 _2 递补', async () => {
+test('#139 ④ 并发两次调用：不静默覆盖（缺省复用可让两者落同一份）；`reuseHours:0` 则落点互异', async () => {
   const dir = mkDir('collide');
+  // #245：缺省＝一天复用窗口 ⇒ 两进程可能都落在同一份（这是**要**的：目录不涨）；也可能先后都新建（窗口外/并发竞态），
+  // 故这里只锁「不静默覆盖」这条**永远**成立的性质，另用 `reuseHours:0`（每次都落新的）锁独占递补那条老语义。
   const [a, b] = await Promise.all([runAsync(dir), runAsync(dir)]);
   assert.equal(a.status, 0, 'A exit ' + a.status);
   assert.equal(b.status, 0, 'B exit ' + b.status);
   assert.ok(a.env && b.env, '两个 stdout 都须可解析');
   assert.match(basename(a.env.data.output), NAME_RE);
   assert.match(basename(b.env.data.output), NAME_RE);
-  assert.notEqual(b.env.data.output, a.env.data.output, '两次调用落点各自独立');
-  assert.ok(existsSync(a.env.data.output) && existsSync(b.env.data.output), '两份产物都在');
+  assert.ok(existsSync(a.env.data.output) && existsSync(b.env.data.output), '两份回执指的产物都在');
+  const files = readdirSync(join(dir, 'calorie_html'));
+  assert.ok(files.length <= 2, '并发两次最多两件，不许多长：' + JSON.stringify(files));
 
-  const A = stampOf(a.env.data.output);
-  const B = stampOf(b.env.data.output);
-  if (A[1] === B[1]) {
+  const dir2 = mkDir('collide-fresh');
+  const freshArgs = ['calorie.help.center', '--params', JSON.stringify({ reuseHours: 0 })];
+  const [c, d] = await Promise.all([runAsync(dir2, freshArgs), runAsync(dir2, freshArgs)]);
+  assert.equal(c.status, 0, 'C exit ' + c.status);
+  assert.equal(d.status, 0, 'D exit ' + d.status);
+  assert.notEqual(c.env.data.output, d.env.data.output, '`reuseHours:0` ⇒ 落点各自独立');
+  assert.ok(existsSync(c.env.data.output) && existsSync(d.env.data.output), '两份产物都在');
+
+  const C = stampOf(c.env.data.output);
+  const D = stampOf(d.env.data.output);
+  if (C[1] === D[1]) {
     // 同一秒：首候选被 `wx` 占住 → 后到者必须走 `EEXIST` 递补 _2（#128 语义）。
-    assert.ok(A[2] === '2' || B[2] === '2',
-      '同秒必有一方 _2：' + basename(a.env.data.output) + ' / ' + basename(b.env.data.output));
+    assert.ok(C[2] === '2' || D[2] === '2',
+      '同秒必有一方 _2：' + basename(c.env.data.output) + ' / ' + basename(d.env.data.output));
   } else {
     // 跨秒（并发两进程恰被秒边界切开）：各自名下独立落点，同样不覆盖。
-    assert.equal(A[2], undefined);
-    assert.equal(B[2], undefined);
+    assert.equal(C[2], undefined);
+    assert.equal(D[2], undefined);
   }
 });

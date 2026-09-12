@@ -60,9 +60,10 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 
 ## HELP 交付（说「备忘录 HELP」走这里，不分大小写）
 
-- **缺省就是交付物**：`memo-cmd-read memo.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<SKILLS_DB_PATH>/memo_html/备忘录_HELP_<YYYYMMDD_HHMMSS>.html`（扁平落 `memo_html/`，不加 `help/` 一层；8 域／13 二级组／30 场景，走仓内通用 help 模板）。stdout 的 `delivery.path` 是**绝对路径**、`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。同一秒撞名自动递补 `_2`（再撞给 `_3`）。
+- **缺省就是交付物**：`memo-cmd-read memo.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<SKILLS_DB_PATH>/memo_html/备忘录_HELP_<YYYYMMDD_HHMMSS>.html`（扁平落 `memo_html/`，不加 `help/` 一层；8 域／13 二级组／30 场景，走仓内通用 help 模板）。stdout 的 `delivery.path` 是**绝对路径**、`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
   **完成标准**：`delivery.path` 指的那个文件真的存在、大小＝`delivery.bytes`、退出码 0——三条都核过才算交付，核不过就照实说失败。
-- **要速查表才加参数**：`--params '{"mode":"lookup"}'` 落同目录 `备忘录_速查表_<YYYYMMDD_HHMMSS>.html`（28 条唤醒词一行一条：唤醒词／命令／形状／调用形／一句话）。与 HELP 文件**分名**，两份产物不撞车。
+- **反复读不再涨目录（#245）**：同一主体**一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；回执给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内若已有一份、而你刚改过 HELP 内容，那份旧产物**不会被自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。
+- **要速查表才加参数**：`--params '{"mode":"lookup"}'` 落同目录 `备忘录_速查表_<YYYYMMDD_HHMMSS>.html`（28 条唤醒词一行一条：唤醒词／命令／形状／调用形／一句话）。与 HELP 文件**分名**，两份产物不撞车；这一支同样吃上面的复用窗口。
 - **要现找才加参数**：`--params '{"q":"帮我搜备忘"}'` 只回命中条目（JSON），**不落盘**；要落盘再给 `--html`。`q` 与 `mode` 互斥，`mode` 只认 `lookup`，违反即退出码 2。
 - **`--html <路径>`＝显式落点**：逐字用你给的路径、缺父目录自动建、**覆盖写**（不参与同一秒 `_N` 递补）。给 `--html` 时缺省那支落整页 HELP，`q`／`mode:"lookup"` 那两支落该次的分节页。
 - **边界**：看 HELP **不开库、不建库**——跑完 `<SKILLS_DB_PATH>/memo` 仍不存在；这条命令只交页面与索引，不读也不写笔记内容。

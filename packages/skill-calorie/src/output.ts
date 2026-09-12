@@ -27,10 +27,12 @@
  */
 import { mkdirSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { saveHtmlFile, type HtmlLanding } from 'base-paint/save-html';
+import { saveHtmlFile, reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS, type HtmlLanding } from 'base-paint/save-html';
 import { CALORIE_COMBOS } from './cli/keys.js';
 import { CalorieRenderError } from './render/errors.js';
 import { resolveDbDir } from './paths.js';
+import { HELP_FILE_STEM } from './render/helpFile.js';
+import { SHEET_FILE_STEM } from './render/helpPaths.js';
 
 export const HTML_DIR_NAME = 'calorie_html';
 export const HTML_EXT = '.html';
@@ -180,13 +182,42 @@ export type HtmlDelivery =
   | { readonly mode: 'file'; readonly path: string; readonly bytes: number }
   | { readonly mode: 'inline'; readonly reason: string; readonly bytes: number };
 
+/** 吃复用窗口的 HELP 产物名（本技能自己的两个主体）。#245：判据**按落点名**而不是按 key——
+ *  `calorie.help.center` 这个键下挂着两种产物（HELP 文件与速查台），两种都算「反复读的 HELP 产物」；
+ *  业务页面（`<中文command>_<类型段>…`）与渲染失败回执（`操作失败`）**不吃窗口**——那是另一次操作的产物，
+ *  少一份就等于少一次留档；`--output` 逐字落点也不吃（说哪落哪）。 */
+const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, SHEET_FILE_STEM];
+
+/** 本次交付吃不吃复用窗口 ⇒ 给出窗口毫秒数（不吃 = `undefined`，交付退回「独占创建 ＋ 递补」老口径）。
+ *
+ *  窗口来自 `--params` 的 `reuseHours`（小时）：不给＝缺省一天（`HELP_REUSE_DEFAULT_HOURS`）、
+ *  `0`＝每次都落新的、正数＝该窗口。**只对「按通式算出来的 HELP 落点」生效**：`explicit`（用户逐字指定）
+ *  走的是共用件的 `file` 口子，共用件本身就不许 `file` ＋ `reuse` 同给（`EINVAL`）。
+ *  换算与校验都在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`）⇒ 本函数翻成渲染层的 `bad-input`
+ *  （出口那档＝渲染失败回执，与该层既有口径一致）：坏参绝不静默当 0。 */
+function windowForHelpDelivery(key: string, stem: string, params: Record<string, unknown>): number | undefined {
+  if (key !== 'calorie.help.center' || !HELP_REUSE_STEMS.includes(stem)) return undefined;
+  try {
+    return reuseWindowOfHours(params['reuseHours'], HELP_REUSE_DEFAULT_HOURS);
+  } catch (e) {
+    throw new CalorieRenderError('bad-input', (e as Error).message);
+  }
+}
+
 /** 交付一次 HTML 产物（**唯一落盘点**）：
+ *  - `explicit`（`--output`／`--html`，用户逐字指定）→ **覆盖写**（共用件 `onExists:'overwrite'`，语义不变）
+ *    ——**优先级最高**（用户指定胜过默认落点）；**不吃复用窗口**（逐字落点＝说哪落哪）；
  *  - `target`（HELP 文件／速查台／回执的落点意图）→ **独占创建 ＋ 同秒递补**（共用件缺省 `succession`）；
- *    `explicit`（`--output`／`--html`）为用户逐字指定 → **覆盖写**（共用件 `onExists:'overwrite'`，语义不变）；
- *    否则默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html` → **独占创建 ＋ 同秒递补**；
+ *    其中 HELP 产物（`卡路里_HELP`／`卡路里_速查台`）另带**复用窗口**（#245：缺省一天内只留一份，
+ *    窗口由 `--params` 的 `reuseHours` 定）；
+ *  - 两者都没有 → 默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html` → **独占创建 ＋ 同秒递补**；
  *  - 只读类失败 → `{mode:'inline'}`（调用方把产物随 envelope 回传）；其余失败**原样抛出**（走回执）。
  *  落点**解析**与写入同在一个 try 内：`calorie_html` 被同名文件占位等解析期失败同样归类（#87 返修 F4）。
- *  #237：`bytes` 由共用件**写后回读**给出（实际落盘字节数）；`inline` 态无文件可读，仍按 UTF-8 期望值算。 */
+ *  #237：`bytes` 由共用件**写后回读**给出（实际落盘字节数）；`inline` 态无文件可读，仍按 UTF-8 期望值算。
+ *
+ *  ⚠️ #245 修一处静默的优先级反了：原先 `target` 那支先判、直接 return ⇒ 给了 `--output` 的 HELP 键
+ *  （`calorie.help.center` 的缺省／速查台两支都带 `target`）**显式落点被无声忽略**，产物照落 `calorie_html/`。
+ *  这与 `--output`／`--html` 的文档口径（「任意路径，覆盖写」）相反，故把 `explicit` 提到最前。 */
 export function deliverHtml(input: {
   key: string;
   params: Record<string, unknown>;
@@ -195,9 +226,6 @@ export function deliverHtml(input: {
   html: string;
 }): HtmlDelivery {
   try {
-    if (input.target !== undefined) {
-      return saveHtmlFile({ dir: input.target.dir, stem: input.target.stem, html: input.html });
-    }
     if (input.explicit !== undefined) {
       // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--output` 亦文档化为
       // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
@@ -206,6 +234,15 @@ export function deliverHtml(input: {
       const abs = resolve(input.explicit);
       return saveHtmlFile({
         dir: dirname(abs), file: basename(abs), html: input.html, onExists: 'overwrite',
+      });
+    }
+    if (input.target !== undefined) {
+      const reuseMs = windowForHelpDelivery(input.key, input.target.stem, input.params);
+      return saveHtmlFile({
+        dir: input.target.dir,
+        stem: input.target.stem,
+        html: input.html,
+        ...(reuseMs === undefined ? {} : { onExists: { reuse: { byAge: reuseMs } } }),
       });
     }
     const landing = defaultLanding(input.key, {

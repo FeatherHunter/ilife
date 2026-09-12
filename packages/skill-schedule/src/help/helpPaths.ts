@@ -47,3 +47,10 @@ export function buildHelpFileName(stem: string, date: Date, n?: number): string 
 export function resolveStemTarget(dbDir: string, stem: string, now: Date): string {
   return join(resolve(dbDir), ...HELP_HTML_DIR_PARTS, buildHelpFileName(stem, now));
 }
+
+/** 落点**目录**（绝对路径、零 IO，不建目录）：`<dbDir>/schedule_html/help/`。
+ *  #245 起这是交付入口真正吃的东西——给「目录 ＋ 主体」而不是「带戳的初候选路径」，
+ *  免得共用件把时间戳算两遍（`resolveStemTarget` 那份带戳名字只用于**初候选路径**的既有调用方）。 */
+export function resolveHelpDir(dbDir: string): string {
+  return join(resolve(dbDir), ...HELP_HTML_DIR_PARTS);
+}

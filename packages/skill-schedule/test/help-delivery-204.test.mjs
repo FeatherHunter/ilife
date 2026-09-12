@@ -69,9 +69,9 @@ function run(dir, args, tz) {
 }
 
 /** 真 spawn（异步，并发用；`spawnSync` 会把并发串成串行，测不出独占）。 */
-function runAsync(dir) {
+function runAsync(dir, args = [KEY]) {
   return new Promise((resolve) => {
-    const child = spawn(NODE_BIN, [BIN, KEY], { env: { ...process.env, SKILLS_DB_PATH: dir } });
+    const child = spawn(NODE_BIN, [BIN, ...args], { env: { ...process.env, SKILLS_DB_PATH: dir } });
     let out = '';
     child.stdout.on('data', (d) => { out += d; });
     child.on('close', (code) => {
@@ -187,7 +187,7 @@ test('#204 ② 模板前后缀逐字：doctype/charset/title 起、</body></html
 
   const data = JSON.parse(json);
   assert.deepEqual(Object.keys(data), [
-    'skill_name', 'title', 'subtitle', 'contact', 'groups', 'meta_blocks', 'version', 'init_banner',
+    'skill_name', 'title', 'subtitle', 'contact', 'groups', 'version', 'init_banner',
   ], '载荷键序须固定（前后缀之间只有这一段是变量，键序即契约）');
   assert.equal(data.skill_name, '作息管家');
   assert.equal(data.title, '作息管家 · 使用手册(HELP)');
@@ -201,7 +201,7 @@ test('#204 ② 模板前后缀逐字：doctype/charset/title 起、</body></html
   assert.equal(nameOf(r.env.delivery.path).includes('help_center'), false, '不得混进老技能那份独立页面名');
 });
 
-test('#204 ③ 同名递补：同秒的首候选被占 ⇒ 本次落 _2，且占位文件逐字未动', () => {
+test('#204 ③ 同名递补（`reuseHours:0`）：同秒的首候选被占 ⇒ 本次落 _2，且占位文件逐字未动', () => {
   let seen = null;
   for (let attempt = 1; attempt <= 6 && seen === null; attempt++) {
     const dir = mkDir('collide');
@@ -212,7 +212,9 @@ test('#204 ③ 同名递补：同秒的首候选被占 ⇒ 本次落 _2，且占
     const stamps = [localStamp(t0), localStamp(new Date(t0.getTime() + 1000))];
     for (const s of stamps) writeFileSync(join(helpDir, '作息管家_HELP_' + s + '.html'), SENTINEL, 'utf8');
 
-    const r = runOk(dir);
+    // #245：缺省带「一天内复用」窗口 ⇒ 哨兵（几分钟内的名字）会被当复用对象返回，测不到递补；
+    // 故独占递补这条语义用 `reuseHours:0`（每次都落新的）来验。
+    const r = runOk(dir, [KEY, '--params', '{"reuseHours":0}']);
     const stamp = stampOf(r.env.delivery.path);
     if (!stamps.includes(stamp)) continue; // 恰被秒边界切开（子进程落到第三秒）＝本次不作数，下一轮重来
     seen = { dir, helpDir, stamps, r, stamp };
@@ -237,9 +239,12 @@ test('#204 ③ 同名递补：同秒的首候选被占 ⇒ 本次落 _2，且占
     '回执指向的字节数＝本次产物，不是别人的');
 });
 
-test('#204 ③ 真并发两次：落点互不相同、两份都在；同秒则必有一方 _2', async () => {
+test('#204 ③ 真并发两次（`reuseHours:0`）：落点互不相同、两份都在；同秒则必有一方 _2', async () => {
   const dir = mkDir('race');
-  const [a, b] = await Promise.all([runAsync(dir), runAsync(dir)]);
+  const [a, b] = await Promise.all([
+    runAsync(dir, [KEY, '--params', '{"reuseHours":0}']),
+    runAsync(dir, [KEY, '--params', '{"reuseHours":0}']),
+  ]);
   assert.equal(a.status, 0, 'A exit ' + a.status);
   assert.equal(b.status, 0, 'B exit ' + b.status);
   assert.ok(a.env && b.env, '两个 stdout 都须可解析');

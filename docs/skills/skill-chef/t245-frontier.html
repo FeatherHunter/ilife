@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#245 HELP 落盘复用 · 待你裁的四题</title>
+<style>
+  :root{
+    --ink:#14161a; --dim:#5d6673; --line:#e3e6ec; --bg:#f6f7f9; --card:#fff;
+    --red:#c0392b; --red-bg:#fdf1ef; --green:#1e7e46; --green-bg:#eef8f1;
+    --amber:#8a5a00; --amber-bg:#fff6e5; --blue:#1f5fbf; --blue-bg:#eef3fd;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 -apple-system,"Segoe UI","Noto Sans SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:36px 22px 80px}
+  h1{font-size:25px;line-height:1.4;margin:0 0 6px}
+  .sub{color:var(--dim);font-size:13.5px;margin-bottom:26px}
+  .sub code{background:#eceff3;padding:1px 5px;border-radius:4px}
+  h2{font-size:18px;margin:40px 0 10px;padding-left:11px;border-left:4px solid var(--ink)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:18px 20px;margin:14px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .card.q{border-color:#c9d2e2}
+  .card.q > .head{display:flex;gap:10px;align-items:baseline}
+  .card.q .qid{background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;
+    padding:2px 9px;border-radius:20px;letter-spacing:.4px;flex:none;transform:translateY(-2px)}
+  .card.q h3{margin:0;font-size:17px;line-height:1.5}
+  .why{margin:12px 0 0;color:#33393f;font-size:14.3px}
+  .why p{margin:7px 0}
+  .opts{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:9px}
+  .opts li{border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:#fbfcfd}
+  .opts li.rec{border-color:#bfd7c7;background:var(--green-bg)}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px;
+    margin-right:7px;border:1px solid transparent;white-space:nowrap}
+  .tag.a{background:#eef1f5;color:#3a424d;border-color:#dbe0e8}
+  .tag.rec{background:var(--green);color:#fff}
+  .opts .name{font-weight:650}
+  .opts .body{margin:5px 0 0;font-size:13.8px;color:#3a424d}
+  .pro,.con{font-size:13.4px;margin:3px 0 0}
+  .pro::before{content:"利：";color:var(--green);font-weight:700}
+  .con::before{content:"弊：";color:var(--red);font-weight:700}
+  .rec-line{margin:13px 0 0;padding:10px 13px;border-radius:8px;background:var(--green-bg);
+    border:1px solid #bfd7c7;font-size:14.2px}
+  .rec-line b{color:var(--green)}
+  table{width:100%;border-collapse:collapse;font-size:13.8px;margin:8px 0 4px;background:#fff}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f0f2f6;font-weight:650;font-size:13px}
+  tr.bad td{background:var(--red-bg)}
+  tr.good td{background:var(--green-bg)}
+  .b{font-weight:700}
+  .num{font-variant-numeric:tabular-nums;font-weight:700}
+  .bad-t{color:var(--red)} .good-t{color:var(--green)} .warn-t{color:var(--amber)}
+  .note{background:var(--amber-bg);border:1px solid #f0dcae;border-radius:8px;
+    padding:12px 14px;font-size:14px;margin:14px 0}
+  .note b{color:var(--amber)}
+  code{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;font-size:12.8px}
+  .k{background:#eceff3;padding:1px 5px;border-radius:4px}
+  footer{margin-top:46px;color:var(--dim);font-size:12.6px;border-top:1px solid var(--line);padding-top:14px}
+  .legend{font-size:12.6px;color:var(--dim);margin:4px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>#245 · HELP 每读一次就多落一份：四道待你裁的题</h1>
+  <div class="sub">
+    票：<code>FeatherHunter/ilife#245</code>（已认领）· 复现证据：<code>.scratch/t245-repro/repro.mjs</code>（临时库目录，不动生产）· 五家实现已逐个读过
+  </div>
+
+  <div class="note">
+    <b>一句话结论</b>：票面「已实施」那半<b>只有大厨一家真通了</b>——共用件 <code>{reuse:{byAge}}</code> 与 <code>reuseHours</code> 都在，但其余四家根本没有这个口子，参数被当无关参<b>静默忽略</b>，目录照涨。
+  </div>
+
+  <h2>复现实测（缺省连读 2 次 vs 带 reuseHours 连读 2 次）</h2>
+  <table>
+    <thead><tr><th>技能</th><th>命令</th><th>缺省</th><th>带 reuseHours</th><th>判决</th></tr></thead>
+    <tbody>
+      <tr class="good">
+        <td>大厨 chef</td><td><code>chef.help.lookup</code></td>
+        <td class="num">0→2</td><td class="num">2→2</td>
+        <td class="good-t b">✔ 真复用</td>
+      </tr>
+      <tr class="bad">
+        <td>卡路里 calorie</td><td><code>calorie.help.center</code></td>
+        <td class="num">0→2</td><td class="num">2→4</td>
+        <td class="bad-t b">✘ 参数被忽略</td>
+      </tr>
+      <tr class="bad">
+        <td>饼干记账 bill</td><td><code>bill.help.lookup</code></td>
+        <td class="num">0→2</td><td class="num">2→4</td>
+        <td class="bad-t b">✘ 参数被忽略</td>
+      </tr>
+      <tr class="bad">
+        <td>备忘录 memo</td><td><code>memo.help.lookup</code></td>
+        <td class="num">0→2</td><td class="num">2→4</td>
+        <td class="bad-t b">✘ 参数被忽略</td>
+      </tr>
+      <tr class="bad">
+        <td>作息 schedule</td><td><code>schedule.help.lookup</code></td>
+        <td class="num">0→2</td><td class="num">2→4</td>
+        <td class="bad-t b">✘ 参数被忽略</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="legend">「0→2」＝该目录从 0 份变 2 份。生产目录现状：卡路里 323 件／备忘录 216 件／记账 76 件（票面实测）。</div>
+
+  <h2>根因（一行）</h2>
+  <div class="card">
+    <p style="margin:0">共用件 <code>saveHtmlFile</code> 的缺省是 <code>succession</code>＝<b>每次落一份新的</b>；「有就不新建」要靠 <code>onExists:{reuse:…}</code>。<br>
+    四家的落盘入口都只写了 <code>explicit</code>（逐字落点）／<code>target</code>（通式落点）两态，<b>没有第三条带窗口的路</b>：
+    </p>
+    <p class="legend" style="margin-top:8px">
+      <code>skill-calorie/src/output.ts · deliverHtml</code>　|　<code>skill-bill/src/output.ts · deliverHtml</code>　|　<code>skill-memo-ilife/src/cli/cmd_read.ts · deliverMemoHtml</code>　|　<code>skill-schedule/src/help/output.ts · deliverHtml</code>
+    </p>
+  </div>
+
+  <h2>四道题</h2>
+
+  <div class="card q">
+    <div class="head"><span class="qid">Q1</span><h3>那个「反复读」的口子，最终由谁带参数？</h3></div>
+    <div class="why">
+      <p><b>前因后果</b>：票面「完成的样子」自己写着「<b>缺省态行为不变</b>（仍然落一份新产物）」；但同一句 help 无论读几次都走缺省 ⇒ <b>参数永远没人传，目录永远在涨</b>。这两条互相抵消，必须你裁一个。</p>
+      <p><b>还有一条现行约束</b>：<code>packages/skill-calorie/SKILL.md:190</code> 今天逐字写着「<b>别再给它加参数</b>——缺省就是目的地交付物」；地图 <code>#208</code> 判定口径①也是「说一句 help 就该拿到那一份产物」。</p>
+    </div>
+    <ul class="opts">
+      <li class="rec">
+        <span class="tag rec">推荐</span><span class="name">A · 单加口子，缺省仍落新的</span>
+        <p class="body">四家都接 <code>reuseHours</code>（与大厨逐字同形），谁想停谁带参数。</p>
+        <p class="pro">不推翻任何已定口径；票面「缺省态行为不变」这条验收标准原样成立；风险最小。</p>
+        <p class="con">目录<b>今天照涨</b>，只有调用方主动带参数才停——所以必须同时把用法写进各技能 <code>SKILL.md</code>，否则等于没修。</p>
+      </li>
+      <li>
+        <span class="tag a">B</span><span class="name">缺省就在窗口内复用</span>
+        <p class="body">五家缺省自带窗口（如 24h）：同一主体一天内返回同一份，当天第一次落、之后复用。</p>
+        <p class="pro">目录<b>立刻</b>停涨，不用谁记得传参；这才是「1 天内直接返回一份」的字面读法。</p>
+        <p class="con">要<b>推翻</b>地图 <code>#208</code> 口径①与 calorie <code>SKILL.md:190</code> 那句；「说一句 help 拿到新产物」的用户可见行为改变。</p>
+      </li>
+      <li>
+        <span class="tag a">C</span><span class="name">B 的变体：缺省窗口＋「要看最新」才落新</span>
+        <p class="body">与 B 同，但显式给 <code>reuseHours:0</code> 之类即强制落最新的一份。</p>
+        <p class="pro">兼顾「日常不涨目录」与「内容更新后能拿到最新」。</p>
+        <p class="con">要多定一个「怎么要求最新」的语法；语义比 B 多一层，说明面也更长。</p>
+      </li>
+    </ul>
+    <p class="rec-line"><b>我的建议：A ＋ 补说明面</b>——issue 票面自己写的验收标准就是「缺省行为不变」，A 是唯一既让能力就位、又不推翻已定口径的路；再把「反复读带 <code>--params '{"reuseHours":24}'</code>，不涨目录」写进各技能 <code>SKILL.md</code>。<br>
+    若你更想要 B／C：请直接说，我会把票面那条验收标准一并改掉，并在正文写明这是对 <code>#208</code> 口径①的裁决。</p>
+  </div>
+
+  <div class="card q">
+    <div class="head"><span class="qid">Q2</span><h3>接哪几条路？</h3></div>
+    <div class="why">
+      <p><b>前因后果</b>：每个 HELP 命令都不止一条落盘路——缺省 HELP 文件、<code>mode:"lookup"</code> 速查表、卡路里的速查台（<code>mode:"file"</code>，约 1 MB）、以及 <code>--output</code>／<code>--html</code> 逐字落点。大厨现状是<b>只有缺省的 HELP 文件那一路</b>带窗口。</p>
+    </div>
+    <ul class="opts">
+      <li class="rec">
+        <span class="tag rec">推荐</span><span class="name">甲 · 只接缺省 HELP 文件那一路</span>
+        <p class="body">四家与大厨逐字对齐：<code>q</code> 现找不落盘照旧，<code>mode:"lookup"</code> 速查表支不带窗口。</p>
+        <p class="pro">五家一个口径；改动最小；不碰任何「扩大范围」的既有产物。</p>
+        <p class="con">速查表／速查台反复读仍会涨（若它们也在反复读，下一票再收）。</p>
+      </li>
+      <li>
+        <span class="tag a">乙</span><span class="name">所有缺省落盘路都接</span>
+        <p class="body">连 <code>mode:"lookup"</code>／<code>mode:"file"</code> 速查表也带同一窗口。</p>
+        <p class="pro">目录压力一次清干净。</p>
+        <p class="con">动了生产上已上线产物的既有行为，超出票面「其余四家接上」的最小范围。</p>
+      </li>
+      <li>
+        <span class="tag a">丙</span><span class="name">连 --output／--html 也带</span>
+        <p class="body">用户逐字指定的落点也参与复用。</p>
+        <p class="pro">—</p>
+        <p class="con"><b>不可行</b>：逐字落点是「用户说什么就落哪」，共用件本身也禁止 <code>file</code> ＋ <code>reuse</code> 同给（<code>EINVAL</code>）。</p>
+      </li>
+    </ul>
+    <p class="rec-line"><b>我的建议：甲</b>——与大厨先行件逐字同形，五家一个口径；速查表要不要也接属「扩大范围」，等你点头再动。</p>
+  </div>
+
+  <div class="card q">
+    <div class="head"><span class="qid">Q3</span><h3>参数形状钉在谁手里（防五份重复实现）</h3></div>
+    <div class="why">
+      <p><b>前因后果</b>：大厨今天把「小时→毫秒 ＋ 正数校验」写在 <code>skill-chef/src/cli/cmd_read.ts:124-128</code>。照抄四家 ＝ 同一件事<b>五份</b>实现，正是仓规「铁律二」禁止的「同一件事两份实现」。</p>
+    </div>
+    <ul class="opts">
+      <li class="rec">
+        <span class="tag rec">推荐</span><span class="name">甲 · 共用件加一个薄转换器</span>
+        <p class="body"><code>saveHtmlFile</code> 所在件加 <code>reuseWindowOfHours(hours) → 毫秒</code>，坏参抛 <code>EINVAL</code>；五家都调它。</p>
+        <p class="pro">参数名与单位只有一处定义；与 <code>byAge</code> 同源；以后加第六家不用再抄。</p>
+        <p class="con">动共用件的导出面（改动小：一个函数＋一行类型）。</p>
+      </li>
+      <li>
+        <span class="tag a">乙</span><span class="name">五家各抄三行</span>
+        <p class="body">照大厨现状复制。</p>
+        <p class="pro">不动共用件。</p>
+        <p class="con">校验口径迟早分叉（比如一家允许 <code>0</code>、一家不许）。</p>
+      </li>
+    </ul>
+    <p class="rec-line"><b>我的建议：甲</b>——这正是 <code>saveHtmlFile</code> 已经做过的取舍（时间戳／递补／回执都不外放），「几小时＝多少毫秒」该有唯一定义地。</p>
+  </div>
+
+  <div class="card q">
+    <div class="head"><span class="qid">Q4</span><h3>「反复读」到底是谁在读？（影响我怎么验收）</h3></div>
+    <div class="why">
+      <p><b>前因后果</b>：票面已实测<b>否定</b>了插件／面板这条怀疑路（六个 <code>packages/plugin-*/src</code> 里 <code>help</code> 字样命中数为 0）。真正在读的是「技能侧命令调用本身」，但「反复」的粒度你还没说过。</p>
+    </div>
+    <ul class="opts">
+      <li>
+        <span class="tag a">甲</span><span class="name">同一会话里把 help 敲两遍</span>
+        <p class="body">窗口内应返回同一份。</p>
+      </li>
+      <li>
+        <span class="tag a">乙</span><span class="name">不同会话／不同天重复读</span>
+        <p class="body">同一天（或窗口内）仍应只留一份。</p>
+      </li>
+      <li>
+        <span class="tag a">丙</span><span class="name">插件／面板会读</span>
+        <p class="body">票面已实测否定。</p>
+      </li>
+    </ul>
+    <p class="rec-line"><b>我的建议：按甲＋乙理解</b>——不论谁读第二遍，同一主体在窗口内返回同一份。验收我会两条一起测：① 连读 N 次目录文件数<b>不增</b>；② 窗口过期或内容真变更后<b>仍会落新的一份</b>（不会假装已是最新）。</p>
+  </div>
+
+  <footer>
+    这是决策页，不是施工记录：你裁完这四题我才会动 <code>packages/</code>，并把诊断与结论按进度契约写回 <code>#245</code> 正文。<br>
+    源文件：<code>docs/skills/skill-chef/t245-frontier.html</code>
+  </footer>
+</div>
+</body>
+</html>

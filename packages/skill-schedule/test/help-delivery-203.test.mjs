@@ -50,9 +50,9 @@ function run(dir, args) {
 }
 
 /** 异步版（并发两次用；`spawnSync` 会把并发串成串行，测不出独占）。 */
-function runAsync(dir) {
+function runAsync(dir, args = ['schedule.help.lookup']) {
   return new Promise((resolve) => {
-    const child = spawn(NODE_BIN, [BIN, 'schedule.help.lookup'], {
+    const child = spawn(NODE_BIN, [BIN, ...args], {
       env: { ...process.env, SKILLS_DB_PATH: dir },
     });
     let out = '';
@@ -147,9 +147,14 @@ test('#203 ③ 反向锁：缺省产物是 HELP 全壳页，不是 envelope 分�
   assert.ok(html.includes(DATA_OPEN), '缺省产物须是共享 help 模板的全壳页');
 });
 
-test('#203 ④ 同名递补：并发两次落点各自独立；同秒后到者 _2', async () => {
+test('#203 ④ 同名递补（`reuseHours:0`）：并发两次落点各自独立；同秒后到者 _2', async () => {
   const dir = mkDir('collide');
-  const [a, b] = await Promise.all([runAsync(dir), runAsync(dir)]);
+  // #245：缺省带「一天内复用」窗口，故独占递补这条语义用 `reuseHours:0` 验；
+  // 缺省那条（并发也不涨目录／复用同一份）由 ⑤ 与 #245 的复用用例覆盖。
+  const [a, b] = await Promise.all([
+    runAsync(dir, ['schedule.help.lookup', '--params', JSON.stringify({ reuseHours: 0 })]),
+    runAsync(dir, ['schedule.help.lookup', '--params', JSON.stringify({ reuseHours: 0 })]),
+  ]);
   assert.equal(a.status, 0, 'A exit ' + a.status);
   assert.equal(b.status, 0, 'B exit ' + b.status);
   assert.ok(a.env && b.env, '两个 stdout 都须可解析');
@@ -172,15 +177,20 @@ test('#203 ④ 同名递补：并发两次落点各自独立；同秒后到者 _
   assert.equal(readdirSync(join(dir, 'schedule_html', 'help')).length, 2, '快照目录里恰两份产物（无覆盖）');
 });
 
-test('#203 ⑤ 串行两次同名也不覆盖（后到者递补 _2，前份字节不变）', () => {
+test('#203 ⑤ #245 串行二次＝复用同一份（不新建、不改写）；`reuseHours:0` 才是「再落一份」', () => {
   const dir = mkDir('serial');
   const a = runOk(dir);
   const first = a.env.delivery.path;
   const bytesOfFirst = statSync(first).size;
-  const b = runOk(dir);
-  const second = b.env.delivery.path;
+  const b = runOk(dir); // 缺省＝一天窗口 ⇒ 复用
+  assert.equal(b.env.delivery.path, first, '窗口内第二次必须复用同一份（不再涨目录）');
+  assert.equal(statSync(first).size, bytesOfFirst, '那份字节未被改写');
+  assert.equal(readdirSync(join(dir, 'schedule_html', 'help')).length, 1, '目录里仍只有一份');
 
-  assert.notEqual(second, first, '第二次不得覆盖第一次的产物');
+  // 独占递补（后到者 `_2`）那条老语义改用 `reuseHours:0`（每次都落新的）来验。
+  const c = runOk(dir, ['schedule.help.lookup', '--params', JSON.stringify({ reuseHours: 0 })]);
+  const second = c.env.delivery.path;
+  assert.notEqual(second, first, '显式不要复用 ⇒ 落新的一份（不覆盖旧的）');
   assert.ok(existsSync(first) && existsSync(second), '两份产物都在');
   assert.equal(statSync(first).size, bytesOfFirst, '第一份字节未被第二次改写');
   const A = stampOf(first);

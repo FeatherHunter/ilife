@@ -29,10 +29,10 @@ import {
   ScheduleRenderError,
 } from '../render/index.js';
 import { buildHelpLookup } from '../help/index.js';
-import { resolveStemTarget } from '../help/helpPaths.js';
+import { resolveHelpDir } from '../help/helpPaths.js';
 import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
 import { HELP_GROUPS } from '../help/scenes/help-assets.js';
-import { deliverHtml, type HtmlDelivery } from '../help/output.js';
+import { deliverHtml, helpReuseWindow, type HtmlDelivery } from '../help/output.js';
 import type { ScheduleRecord } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -76,9 +76,25 @@ function toISODateTime(date: string, time: string): string {
 // 否则「看帮助」会 `new DatabaseSync` 出来并跑 DDL 自愈，把库建在用户还没开始用的目录里。
 const HELP_MODE_FILE = 'file' as const;
 
-/** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。 */
-interface DeliverIntent { readonly html?: string; readonly target: string; }
+/** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。
+ *  `reuseMs`（#245）＝复用窗口毫秒数：给了就「窗口内已有同一主体的一份 ⇒ 返回它、不新建」。 */
+interface DeliverIntent {
+  readonly html?: string;
+  readonly targetDir: string;
+  readonly stem: string;
+  readonly reuseMs?: number;
+}
 interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
+
+/** HELP 产物吃的复用窗口（毫秒）：缺省**一天**、`reuseHours` 可改（`0`＝每次都落新的）。
+ *  坏参在共用件里真抛 `RangeError` ⇒ 这里翻成出口的「参数错」那一档（exit 2），与其余四家同档。 */
+function helpWindowOrFail(params: Record<string, unknown>): number {
+  try {
+    return helpReuseWindow(params);
+  } catch (e) {
+    fail(2, (e as Error).message);
+  }
+}
 
 /** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized` 与 bill `helpInitialized`）。
  *  判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
@@ -113,11 +129,13 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
     const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
     return { data: { ...buildHelpItems(all, q), mode: 'lookup', query: q } };
   }
+  // #245：HELP 产物吃复用窗口（缺省一天内只留一份，`reuseHours` 可改）；坏参在这里就抛（出口归 exit 2）。
+  const reuseMs = helpWindowOrFail(params);
   const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
   assertHtmlSize(html);
   return {
     data: { ...buildHelpIndex(), mode: HELP_MODE_FILE, bytes: Buffer.byteLength(html, 'utf8') },
-    deliver: { html, target: resolveStemTarget(dbDir, HELP_FILE_STEM, now) },
+    deliver: { html, targetDir: resolveHelpDir(dbDir), stem: HELP_FILE_STEM, reuseMs },
   };
 }
 
@@ -355,7 +373,9 @@ async function main() {
       // 本键的产物：缺省＝HELP 全壳页（自带 html），落盘走本包统一管线（独占 ＋ 同名递补）。
       const html = help.deliver.html ?? sectionHtml();
       if (help.deliver.html !== undefined) assertHtmlSize(html);
-      delivery = deliverHtml({ explicit: o.html, target: help.deliver.target, html });
+      delivery = deliverHtml({
+        explicit: o.html, targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
+      });
       note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
     } else if (o.html !== undefined) {
       delivery = deliverHtml({ explicit: o.html, html: sectionHtml() });

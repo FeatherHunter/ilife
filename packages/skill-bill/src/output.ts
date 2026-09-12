@@ -33,10 +33,17 @@ export type { HtmlLanding };
 /** 交付一次 HTML 产物（**唯一交付入口**）：
  *  - `explicit`（`--html <路径>`，用户逐字指定）→ **覆盖写**（共用件 `onExists:'overwrite'` ＋ `file`：落点逐字）；
  *  - `target`（本次产物按通式算出的落点意图）→ **独占创建 ＋ 递补**（共用件缺省 `succession` ＋ `stem`：文件名主体）；
- *  - 两者都给时 `explicit` 优先（用户指定胜过默认落点）。
+ *  - `target` ＋ `reuseMs`（>0）→ **窗口内复用**（共用件 `{reuse:{byAge}}`）：已有那份不超龄就返回它、不新建；
+ *  - 两者都给时 `explicit` 优先（用户指定胜过默认落点）。**`explicit` 不吃复用**——逐字落点是「说哪落哪」。
  *  `stem` 与 `file` 是共用件上两个正交的口子：#237 之前本件把 `basename(abs)` 当 `stem` 传、
- *  靠 `overwrite` 态把主体解释成完整文件名，一个参数背两个语义；现改为 `file` 走确切文件名。 */
-export function deliverHtml(input: { explicit?: string; target?: HtmlLanding; html: string }): HtmlDelivery {
+ *  靠 `overwrite` 态把主体解释成完整文件名，一个参数背两个语义；现改为 `file` 走确切文件名。
+ *  `reuseMs` 的取值口径（含「几小时＝多少毫秒」）在共用件 `reuseWindowOfHours`，本件不自己算。 */
+export function deliverHtml(input: {
+  explicit?: string;
+  target?: HtmlLanding;
+  html: string;
+  reuseMs?: number;
+}): HtmlDelivery {
   if (input.explicit !== undefined && input.explicit.length > 0) {
     const abs = resolve(input.explicit);
     return saveHtmlFile({ dir: dirname(abs), file: basename(abs), html: input.html, onExists: 'overwrite' });
@@ -44,5 +51,10 @@ export function deliverHtml(input: { explicit?: string; target?: HtmlLanding; ht
   if (input.target === undefined) {
     throw new Error('[skill-bill] deliverHtml 缺落点（`explicit` 与 `target` 至少给一个）');
   }
-  return saveHtmlFile({ dir: input.target.dir, stem: input.target.stem, html: input.html });
+  return saveHtmlFile({
+    dir: input.target.dir,
+    stem: input.target.stem,
+    html: input.html,
+    ...(input.reuseMs === undefined ? {} : { onExists: { reuse: { byAge: input.reuseMs } } }),
+  });
 }

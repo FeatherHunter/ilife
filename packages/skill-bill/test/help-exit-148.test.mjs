@@ -1,7 +1,8 @@
 // #148 · 真出口锁：spawn `bill-cmd-read`（argv＋JSON＋exit），锁四件事——
 //  ① 文件名通式与落点（`饼干记账_HELP_<TS>[_N].html` 落 biscuit_accountant_html，回执绝对路径）；
 //  ② 壳层：产物 = 共享 help 模板前后缀逐字 ＋ `help-data` 载荷（7 域／74 场景／两块 meta）；
-//  ③ 独占与递补：并发调用落点两两不同、内容互不覆盖（同秒时后到者 `_2`）；
+//  ③ 独占与递补（用 `reuseHours:0` 验：并发调用落点两两不同、内容互不覆盖；同秒时后到者 `_2`）
+//     ＋ ③b `#245` 复用（缺省一天：再跑一次复用已有那份，目录不涨、已有文件一字未动）；
 //  ④ 两支产物互不串（缺省 HELP 文件 vs `mode:"lookup"` 速查表）。
 // 课（#139）：模块级测试全绿 ≠ 用户拿到东西，故本文件**只经真 spawn**，不直接调模块。
 import { test } from 'node:test';
@@ -106,9 +107,11 @@ test('#148 ② 壳层锁：产物 = 共享 help 模板前后缀逐字 ＋ help-d
   assert.equal(data.groups[0].subgroups[0].scenes[0].prompt_template.length > 0, true, '场景卡带指令正文');
 });
 
-test('#148 ③ 独占与递补：并发 6 次落点两两不同、内容互不覆盖', async () => {
+test('#148 ③ 独占与递补：并发 6 次内容互不覆盖；`reuseHours:0` ⇒ 6 个互异落点、目录恰 6 份', async () => {
   const dir = mkDir('race');
-  const rs = await Promise.all(Array.from({ length: 6 }, () => runAsync(dir)));
+  // #245：缺省已带「一天内复用」窗口，故「独占递补」这条语义要用 `reuseHours:0`（每次都落新的）来验；
+  // 缺省那条另有一处专门用例（#245 ①：连读 2 次目录不增）。
+  const rs = await Promise.all(Array.from({ length: 6 }, () => runAsync(dir, [KEY, '--params', '{"reuseHours":0}'])));
   for (const r of rs) { assert.equal(r.status, 0); assert.ok(r.env, 'stdout 可解析'); }
   const paths = rs.map((r) => r.env.delivery.path);
   assert.equal(new Set(paths).size, 6, '六次调用六个不同落点：' + JSON.stringify(paths.map((p) => basename(p))));
@@ -127,6 +130,25 @@ test('#148 ③ 独占与递补：并发 6 次落点两两不同、内容互不�
     assert.equal(new Set(slots).size, slots.length, '同秒各次占的槽位互不相同：' + JSON.stringify(slots));
     assert.ok(slots.includes('1'), '同秒内必有一次拿到本体名（无 _N）：' + JSON.stringify(slots));
   }
+});
+
+test('#148 ③b #245 复用：并发后目录不涨（再跑一次复用已有那份，既不新建也不改写）', async () => {
+  const dir = mkDir('race-reuse');
+  await Promise.all(Array.from({ length: 6 }, () => runAsync(dir, [KEY, '--params', '{"reuseHours":0}'])));
+  const before = readdirSync(htmlDirOf(dir)).sort();
+  assert.equal(before.length, 6, '前置：六份都在');
+  const bytesBefore = before.map((n) => statSync(join(htmlDirOf(dir), n)).size);
+
+  const again = runOk(dir, undefined); // 缺省＝一天窗口 ⇒ 必须复用已有那份
+  const reusePath = again.env.delivery.path;
+  const after = readdirSync(htmlDirOf(dir)).sort();
+  assert.equal(after.length, 6, '复用不新建，目录仍是 6 份：' + JSON.stringify(after));
+  assert.deepEqual(after, before, '一份都没多、一份都没少');
+  assert.ok(after.includes(basename(reusePath)), '复用回执指向目录里已有的一份：' + basename(reusePath));
+  assert.deepEqual(before.map((n) => statSync(join(htmlDirOf(dir), n)).size), bytesBefore,
+    '已有那些文件的字节数一字未动（复用＝只读，不改写）');
+  assert.equal(again.env.delivery.bytes, statSync(reusePath).size, '回执的 bytes ＝复用那份的实际字节数');
+  assert.equal(scenesOf(helpData(readFileSync(reusePath, 'utf8'))).length, 74, '复用的那份仍是完整壳');
 });
 
 test('#148 ④ 两支产物互不串：缺省 HELP 文件 vs mode=lookup 速查表', () => {

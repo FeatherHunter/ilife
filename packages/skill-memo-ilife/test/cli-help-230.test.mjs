@@ -135,9 +135,11 @@ test('#230 ② help 模板前后缀逐字：产物＝共享壳前缀（只填标
   assert.equal(scenesOf(data).every((s) => typeof s.prompt_template === 'string' && s.prompt_template.length > 0), true, '场景卡带指令正文');
 });
 
-test('#230 ③ 并发 6 次独占递补：六份产物两两不同、内容互不覆盖、`_N` 从 `_2` 起', async () => {
+test('#230 ③ 并发 6 次独占递补（`reuseHours:0`）：六份产物两两不同、内容互不覆盖、`_N` 从 `_2` 起', async () => {
   const dir = mkDir('race');
-  const rs = await Promise.all(Array.from({ length: 6 }, () => runAsync(dir, [KEY])));
+  // #245：缺省已带「一天内复用」窗口 ⇒ 独占递补这条语义用 `reuseHours:0`（每次都落新的）来验；
+  // 缺省那条（连读不涨目录）由本文件 ③b 锁。
+  const rs = await Promise.all(Array.from({ length: 6 }, () => runAsync(dir, [KEY, '--params', JSON.stringify({ reuseHours: 0 })])));
   for (const r of rs) { assert.equal(r.status, 0, r.stderr); assert.ok(r.env, 'stdout 可解析：' + r.stdout.slice(0, 200)); }
 
   // 本例只锁**独占性与递补**（名字通式归 ①④）⇒ 名字主体被改时本例应仍绿，变异签名才指向唯一一处。
@@ -162,8 +164,34 @@ test('#230 ③ 并发 6 次独占递补：六份产物两两不同、内容互�
   }
 });
 
-test('#230 ④ 三支互不串：缺省 HELP 文件 ／ mode:"lookup" 速查表 ／ q 只回命中不落盘', () => {
-  const dir = mkDir('branches');
+test('#230 ③b #245 缺省复用：连读 6 次只留 1 份、回执同落点、旧产物一字未动；两支都吃窗口', async () => {
+  const dir = mkDir('reuse');
+  const first = runOk(dir, [KEY]);
+  const names0 = readdirSync(htmlDirOf(dir));
+  assert.equal(names0.length, 1, '前置：首跑恰一份');
+
+  for (let i = 0; i < 5; i++) {
+    const r = runOk(dir, [KEY]);
+    assert.equal(r.env.delivery.path, first.env.delivery.path, '窗口内每次复用同一份（第 ' + String(i + 2) + ' 次）');
+  }
+  assert.equal(readdirSync(htmlDirOf(dir)).length, 1, '连读 6 次目录仍只有那一份（不再涨目录）');
+  assert.equal(statSync(first.env.delivery.path).size, first.env.delivery.bytes, '已有那份未被改写');
+
+  // 速查表那支同样吃窗口（同一键两种产物都要停涨）。
+  const sheet1 = runOk(dir, [KEY, '--params', JSON.stringify({ mode: 'lookup' })]);
+  const sheet2 = runOk(dir, [KEY, '--params', JSON.stringify({ mode: 'lookup' })]);
+  assert.equal(sheet2.env.delivery.path, sheet1.env.delivery.path, '速查表第二次复用同一份');
+  assert.equal(readdirSync(htmlDirOf(dir)).length, 2, '目录里：HELP 一份 ＋ 速查表一份');
+
+  // `reuseHours:0` ⇒ 每次都落新的；坏参 ⇒ exit 2（不静默当 0）。
+  const fresh = runOk(dir, [KEY, '--params', JSON.stringify({ reuseHours: 0 })]);
+  assert.notEqual(fresh.env.delivery.path, first.env.delivery.path, '`reuseHours:0` ⇒ 落新的一份');
+  assert.equal(readdirSync(htmlDirOf(dir)).length, 3, '目录里 3 份（旧的留着当留档）');
+  assert.equal(run(dir, [KEY, '--params', JSON.stringify({ reuseHours: -1 })]).status, 2, '负数 ⇒ exit 2');
+  assert.equal(run(dir, [KEY, '--params', JSON.stringify({ reuseHours: '一天' })]).status, 2, '非数 ⇒ exit 2');
+});
+
+test('#230 ④ 三支互不串：缺省 HELP 文件 ／ mode:"lookup" 速查表 ／ q 只回命中不落盘', () => {  const dir = mkDir('branches');
   const help = runOk(dir, [KEY]);
   const sheet = runOk(dir, [KEY, '--params', JSON.stringify({ mode: 'lookup' })]);
   const hp = help.env.delivery.path;

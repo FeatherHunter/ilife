@@ -28,6 +28,7 @@ import {
   BillRenderError,
 } from '../render/index.js';
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
+import { reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS } from 'base-paint/save-html';
 import { buildHelpLookup } from '../help/index.js';
 import type { BillRow } from '../fetch/db.js';
 
@@ -73,12 +74,35 @@ function weekRange(): { start: string; end: string } {
  * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体 `饼干记账_速查表`，与 HELP 分名——照 #139 判法：
  * 一个键两种产物就分成两个名字，别让用户按一个名字打开到另一个东西）。
  * 显式 `q` ＝ 现找：只回命中（stdout），`--html <路径>` 给了才落盘（检索式问答不刷目录）。
+ * 显式 `reuseHours`（小时）＝ 复用窗口：`0`＝每次都落新的（要一份最新的）；不给＝**一天**——
+ * 24 小时内反复读同一份 HELP 产物**只留一份、不再新建**（#245）。判据在共用件里按**落盘名里的
+ * 时间戳**算（不看 mtime），超龄那份不算命中 ⇒ 与未命中同路落一份新的（旧的留着当留档，不清）。
+ * `--html` 那支不吃复用（用户逐字指定的落点＝说哪落哪）。
  * #237 起落点只出**意图**（目录 ＋ 文件名主体）：时间戳与同秒递补由共用件 `saveHtmlFile` 钉死。
  * 全程**不开库**：初始化状态用「DB 文件是否存在」判定（见 render/helpFile.ts 头注释的取舍），
  * 免得「看帮助」把记账库 `new DatabaseSync` 出来并跑 DDL 自愈。
  */
-interface DeliverIntent { readonly html?: string; readonly target: HtmlLanding; }
+interface DeliverIntent { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number; }
 interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
+
+/** 吃复用窗口的 HELP 产物名（本技能自己的两个主体）。#245：判据**按落点名**而不是按 key——
+ *  `bill.help.lookup` 这个键下挂着两种产物（HELP 文件与速查表），两种都算「反复读的 HELP 产物」；
+ *  而 `--html` 那支是用户逐字指定的落点（共用件的 `file` 口子），本来不吃复用。 */
+const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, LOOKUP_FILE_STEM];
+
+/** 本次交付吃不吃复用窗口 ⇒ 给出窗口毫秒数（不吃 = `undefined`，交付退回「独占创建 ＋ 递补」老口径）。
+ *
+ *  窗口来自 `--params` 的 `reuseHours`（小时）：不给＝缺省一天（`HELP_REUSE_DEFAULT_HOURS`）、
+ *  `0`＝每次都落新的、正数＝该窗口。换算与校验都在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`），
+ *  本函数只把它翻成出口的「参数错」那一档（exit 2）——五家技能同一档，坏参绝不静默当 0。 */
+function windowForHelpDelivery(stem: string, params: Record<string, unknown>): number | undefined {
+  if (!HELP_REUSE_STEMS.includes(stem)) return undefined;
+  try {
+    return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
+  } catch (e) {
+    fail(2, (e as Error).message);
+  }
+}
 
 /** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized`）；
  *  判定本身异常 ⇒ `false`＝横幅照显（fail-open，理由见 render/helpFile.ts 头注释）。 */
@@ -99,15 +123,24 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   }
   if (mode === 'lookup') {
     const hits = buildHelpItems(buildHelpLookup(), undefined);
+    const stem = LOOKUP_FILE_STEM;
     return {
       data: { ...hits, mode: 'lookup' },
-      deliver: { target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem: LOOKUP_FILE_STEM } },
+      deliver: {
+        target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem },
+        reuseMs: windowForHelpDelivery(stem, params),
+      },
     };
   }
   const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
+  const stem = HELP_FILE_STEM;
   return {
     data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
-    deliver: { html, target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem: HELP_FILE_STEM } },
+    deliver: {
+      html,
+      target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem },
+      reuseMs: windowForHelpDelivery(stem, params),
+    },
   };
 }
 
@@ -505,7 +538,7 @@ async function main() {
       // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
       const html = help.deliver.html ?? sectionHtml();
       if (help.deliver.html !== undefined) assertHtmlSize(html);
-      delivery = deliverHtml({ explicit: o.html, target: help.deliver.target, html });
+      delivery = deliverHtml({ explicit: o.html, target: help.deliver.target, html, reuseMs: help.deliver.reuseMs });
     } else if (o.html) {
       delivery = deliverHtml({ explicit: o.html, html: sectionHtml() });
     }

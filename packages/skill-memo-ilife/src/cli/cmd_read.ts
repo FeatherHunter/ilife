@@ -3,15 +3,16 @@
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import type { Envelope } from 'base-link-core';
+import { saveHtmlFile, reuseWindowOfHours, HELP_REUSE_DEFAULT_HOURS, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
 import { openMemoDb, listNotes, getNote, searchNotes, addNote, updateNote, removeNote, larkReady, MemoFetchError } from '../fetch/index.js';
 import { normalizeTop, normalizeSub, normalizeRemindAt, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
 import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
-import { HELP_FILE_STEM, LOOKUP_FILE_STEM, resolveStemTarget, deliverMemoHtml, type MemoHtmlDelivery } from '../help/memoOutput.js';
+import { HELP_HTML_DIR_NAME, HELP_FILE_STEM, LOOKUP_FILE_STEM } from '../help/manifest.js';
 import { MemoPolicyError } from '../fetch/errors.js';
 import type { MemoDb, MemoNote } from '../fetch/db.js';
 
@@ -40,14 +41,73 @@ function needStr(params: Record<string, unknown>, name: string): string {
 // （扁平、不加 `help/` 层：裁决 1），独占落盘 ＋ **绝对路径**回执（`delivery` 顶层追加，序在既有五字段之后）。
 // 显式 `mode:"lookup"` ＝ 速查表分名文件（主体 `备忘录_速查表`，裁决 2：一个键两种产物就分两个名字）。
 // 显式 `q` ＝ 现找：只回命中（stdout），给 `--html <路径>` 才落盘（检索式问答不刷目录）。
+// 显式 `reuseHours`（小时）＝ 复用窗口：`0`＝每次都落新的；不给＝**一天**（#245）——24 小时内反复读
+// 同一份 HELP 产物只留一份、不再新建（判据＝落盘名里的时间戳，不看 mtime）。两种 HELP 产物都吃窗口。
 // 全程**不开库**：初始化判据＝「**memo 库目录存在**」（票 6 V4：新库是目录 `<SKILLS_DB_PATH>/memo`，
 // 不是老家的 `memo.db` 文件——本机实测 0 字节空壳 `memo.db` 在、真目录不在，老家口径当场判错），
 // 且**只 stat、绝不建库**：免得「看帮助」把库目录 `mkdir` 出来。
+//
+// #240（欠债清偿）：命名与落盘**不再自持**——时间戳、同秒 `_N` 递补、独占创建、写后回读字节数全在
+// 共用件 `saveHtmlFile`（`base-paint/save-html`，唯一定义地 `packages/base-render/src/output/saveHtml.ts`）。
+// 本文件只出**落点意图**（`{dir, stem}`，主体与目录名取自 `../help/manifest.js` 的三个值），
+// 原先包内那份第 4 份同逻辑实现 `src/help/memoOutput.ts` 已删（裁决 3 挂的债，见 `#240`）。
 const HELP_MODE_FILE = 'file' as const;
 
-/** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。 */
-interface MemoDeliverIntent { readonly html?: string; readonly target: string; }
+/** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。
+ *  `landing` 是**落点意图**——共用件自己的形状 `{dir, stem}`，本包不另立定义。
+ *  `window`（#245）＝复用窗口毫秒数：给了就「窗口内已有同一主体的一份 ⇒ 返回它、不新建」。 */
+interface MemoDeliverIntent { readonly html?: string; readonly landing: HtmlLanding; readonly window?: number; }
 interface MemoHelpDispatch { readonly data: unknown; readonly deliver?: MemoDeliverIntent; }
+
+/** HELP 支的复用窗口（毫秒）。#245：缺省**一天**（`HELP_REUSE_DEFAULT_HOURS`）——24 小时内反复读
+ *  同一份 HELP 产物只留一份、不再新建；`--params` 的 `reuseHours` 可改（`0`＝每次都落新的）。
+ *  换算与校验都在共用件（`reuseWindowOfHours`，坏参抛 `RangeError`）⇒ 本函数翻成出口的「参数错」
+ *  那一档（exit 2），与其余四家同档：坏参绝不静默当 0。 */
+function helpReuseWindow(params: Record<string, unknown>): number {
+  try {
+    return reuseWindowOfHours(params.reuseHours, HELP_REUSE_DEFAULT_HOURS);
+  } catch (e) {
+    fail(2, (e as Error).message);
+  }
+}
+
+/** 缺省交付的落点意图：`<SKILLS_DB_PATH>/<memo_html>/〈主体〉`（目录名与主体是备忘录自己的三个值）。 */
+function landingOf(dbPath: string, stem: string): HtmlLanding {
+  return { dir: join(resolve(dbPath), HELP_HTML_DIR_NAME), stem };
+}
+
+/** 交付一次 HELP 产物（本包**唯一落盘点**）：
+ *  - `explicit`（`--html <路径>`，用户逐字指定）→ **覆盖写**（共用件 `file` ＋ `onExists:'overwrite'`：逐字落点、
+ *    不带时间戳、不递补），与该参数的既有口径一致；**不吃复用窗口**（逐字落点＝说哪落哪）；
+ *  - `landing`（本次产物按通式算出的落点意图）→ **独占创建 ＋ 同秒递补**（共用件缺省 `succession` ＋ `stem`）；
+ *    带 `window`（#245）时改为**窗口内复用**（共用件 `{reuse:{byAge}}`）：已有那份不超龄就返回它、不新建；
+ *  - 两者都给时 `explicit` 优先（用户指定胜过默认落点）。
+ *  命名、独占、回执全在共用件里；本函数只表态「这次落哪个」。写不进去**不静默降级**：共用件的
+ *  `code`（`EEXIST`／`EINVAL`／`EIO`／`ENOTDIR`…）原样穿过，由 main 归到 exit 5（目的地是「明确拿到文件」）。
+ *
+ *  ⚠️ **缺省支那句不许传 `onExists`**：共用件的缺省是 `'succession'`（通式名 ＋ 同秒 `_N` 递补）。
+ *  一旦显式传成 `'overwrite'`，产物就退化成固定名 `备忘录_HELP.html`、同秒连跑互相覆盖——
+ *  `#230` 的 ①③④ 会当场红（本票已用这一步做过变异自证）。 */
+function deliverMemoHtml(input: {
+  explicit?: string;
+  landing?: HtmlLanding;
+  html: string;
+  window?: number;
+}): HtmlReceipt {
+  if (input.explicit !== undefined && input.explicit.length > 0) {
+    const abs = resolve(input.explicit);
+    return saveHtmlFile({ dir: dirname(abs), file: basename(abs), html: input.html, onExists: 'overwrite' });
+  }
+  if (input.landing === undefined) {
+    throw new Error('[skill-memo-ilife] deliverMemoHtml 缺落点（`explicit` 与 `landing` 至少给一个）');
+  }
+  return saveHtmlFile({
+    dir: input.landing.dir,
+    stem: input.landing.stem,
+    html: input.html,
+    ...(input.window === undefined ? {} : { onExists: { reuse: { byAge: input.window } } }),
+  });
+}
 
 /** 初始化状态：memo 库**目录**存在＝已初始化（票 6 V4）。只 `stat`、不建目录；
  *  判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
@@ -73,6 +133,9 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   const initialized = helpInitialized(dbPath);
   if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
   if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + mode + '）：本键只认 lookup');
+  // #245：两种 HELP 产物（缺省 HELP 文件／`mode:"lookup"` 速查表）都吃复用窗口——缺省一天内只留一份。
+  // `q`（现找）那支不落盘，自然不吃；`--html` 逐字落点那支由 `deliverMemoHtml` 另走覆盖写。
+  const window = helpReuseWindow(params);
 
   if (q !== undefined) {
     const items = buildLookupItems().filter((it) => q.includes(String(it.id)));
@@ -82,7 +145,7 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
     const items = buildLookupItems();
     return {
       data: { items, total: items.length, mode: 'lookup' },
-      deliver: { target: resolveStemTarget(dbPath, LOOKUP_FILE_STEM, now) },
+      deliver: { landing: landingOf(dbPath, LOOKUP_FILE_STEM), window },
     };
   }
 
@@ -95,7 +158,7 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   // 索引载荷（`list` 形）：一行一域，计数全派生；`memo.help.lookup`＝HELP 文件的交付索引。
   return {
     data: { ...buildHelpSceneIndex(), mode: HELP_MODE_FILE },
-    deliver: { html, target: resolveStemTarget(dbPath, HELP_FILE_STEM, now) },
+    deliver: { html, landing: landingOf(dbPath, HELP_FILE_STEM), window },
   };
 }
 
@@ -200,7 +263,7 @@ async function main() {
   const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
   timer.unref();
   let env: Envelope | null = null;
-  let delivery: MemoHtmlDelivery | undefined;
+  let delivery: HtmlReceipt | undefined;
   try {
     // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余 10 键照旧走 dispatch（内部开库）。
     const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
@@ -216,7 +279,7 @@ async function main() {
       // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
       const html = help.deliver.html ?? sectionHtml();
       if (help.deliver.html !== undefined) assertHtmlSize(html);
-      delivery = deliverMemoHtml({ explicit: o.html, target: help.deliver.target, html });
+      delivery = deliverMemoHtml({ explicit: o.html, landing: help.deliver.landing, html, window: help.deliver.window });
     } else if (o.html) {
       delivery = deliverMemoHtml({ explicit: o.html, html: sectionHtml() });
     }
