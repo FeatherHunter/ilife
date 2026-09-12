@@ -96,7 +96,8 @@
 ## 5. 门禁（协议 §2.4：一切 build／test 经持锁包装器）
 
 - 包装器：`node tooling/run-locked.mjs --ticket 180 -- <命令…>`；长输出一律落盘 `.scratch/t180-c/*.log`，只读尾 5 行 ＋ 摘要行。
-- 对账窗口：`--since 2026-09-12T19:12:00Z --until 2026-09-12T19:20:30Z`（含），`--ticket 180`。窗口内**恰 8 条** `RUN`，**全部由本正本声明**（下表），故**无需** `--allow-undeclared`。
+- 对账窗口：`--since 2026-09-12T19:12:00Z --until 2026-09-12T19:28:30Z`（含），`--ticket 180`。窗口内**恰 14 条** `RUN`，**全部由本正本声明**（下表），故**无需** `--allow-undeclared`。
+  （窗口**从 19:20:30Z 加宽到 19:28:30Z**：§6 的 MUT-D 补证运行 ＋ 落地本正本的三笔提交 ＋ 两次对账运行都落在原窗口之后；加宽后这些运行同样被逐条声明，避免「声明在窗口外」的对账缺口。加宽前后导出文件的差别只有窗口行与条目数。）
 
 GATE-RUN 声明行（`runId` 抄自 `.scratch/locks/gate-runs.log`；cmd 与日志逐字同）：
 
@@ -108,17 +109,25 @@ GATE-RUN 声明行（`runId` 抄自 `.scratch/locks/gate-runs.log`；cmd 与日�
 - GATE-RUN runId=410f7de3-a61e-40d3-9903-fad45a37b483 cmd=node .scratch/t180-c/mutate-probe.mjs （exit=0，19:17:38Z）← **变异自证 v2**：`PROBE-SUMMARY bad=0 mutations=3`（§6）
 - GATE-RUN runId=3486dbab-f896-46a3-bd98-17c3e3167f70 cmd=node --test packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/render-t10.test.mjs packages/skill-calorie/test/help-center-106.test.mjs packages/skill-calorie/test/no-script-commands-180.test.mjs packages/skill-calorie/test/calorie-c43.test.mjs packages/skill-calorie/test/profile-view-177.test.mjs test/calorie-routing-81.test.mjs test/calorie-triggers.test.mjs （exit=0，19:18:55Z）← **变异还原后的终局绿态**（`56／56／0`，`waitedMs=30027`＝等 t152 的锁，见 §8）
 - GATE-RUN runId=b131ae1f-f38a-45de-9481-2e7d426aa945 cmd=node packages/skill-calorie/scripts/gen-sot-snapshot.mjs --check （exit=0，19:19:47Z）← `MASK-EQUAL=1`、`entries=436 mismatch=0 mode=check`
+- GATE-RUN runId=51489106-3957-43e1-a5d4-fa9176d8d3f9 cmd=node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t180-collection.md --ticket 180 --since 2026-09-12T19:12:00Z --until 2026-09-12T19:20:30Z --allow-nonzero --export docs/skills/skill-calorie/t180-gate-runs.log （exit=0，19:21:41Z）← 首次对账＋导出：`matched=8/8 scoped=8 undeclared=0`
+- GATE-RUN runId=f1b335e6-6b1f-456b-956f-d01131539719 cmd=pwsh -NoProfile -Command "git add packages/skill-calorie/src/triggers/help-lookup.ts packages/skill-calorie/test/help-center-106.test.mjs packages/skill-calorie/test/render-t10.test.mjs packages/skill-calorie/test/skill-t11.test.mjs test/calorie-routing-81.test.mjs; git commit -F .scratch/t180-c/msg-code.txt" （exit=0，19:22:16Z）← 提交 A（`7855699`）
+- GATE-RUN runId=d81a1357-e271-4c5c-93c9-7ca242c1dfb6 cmd=pwsh -NoProfile -Command "git add docs/skills/skill-calorie/t180-collection.md docs/skills/skill-calorie/t180-gate-runs.log; git commit -F .scratch/t180-c/msg-doc.txt" （exit=0，19:22:38Z）← 提交 B（`e3e3ad1`）
+- GATE-RUN runId=c708c505-dd86-4a74-a7b8-fd3eec080809 cmd=node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t180-collection.md --ticket 180 --since 2026-09-12T19:12:00Z --until 2026-09-12T19:20:30Z --allow-nonzero --export docs/skills/skill-calorie/t180-gate-runs.log （exit=0，19:24:05Z）← 勘误后复跑对账（同窗口）
+- GATE-RUN runId=5034a3db-2e84-4336-9dc5-5590334ec90c cmd=pwsh -NoProfile -Command "git add docs/skills/skill-calorie/t180-collection.md docs/skills/skill-calorie/t180-gate-runs.log; git commit -F .scratch/t180-c/msg-doc2.txt" （exit=0，19:24:57Z）← 提交 C（`87a7577`，`waitedMs=20020`＝等 t152 的锁）
+- GATE-RUN runId=ca012033-1e43-490f-b8d0-f9988d646eb3 cmd=node .scratch/t180-c/form-mutant-probe.mjs （exit=0，19:27:24Z）← **MUT-D 补证**（§6）：`FORM-PROBE-SUMMARY bad=0`，形态断言在两个靶文件里各独立红一次，还原 `restore_equal=1`、复绿 `green_exit=0`
 
 - GATE-RELAX flag=--allow-nonzero reason=上表 3 条 exit≠0（`a7d390a9`／`ac4c6122`／`d885f081`）**只作「红在何处」的机读取证**，不作为「门禁通过」的证据；本波的门禁通过证据是 `ade0fa3b`／`4fafed6d`／`410f7de3`／`3486dbab`／`b131ae1f` 五条 exit=0。其中 `ac4c6122` 的唯一红是议题**已登记**的环境时钟项（§7），`d885f081` 是探针脚本自身判据写错（非产品/测试缺陷）。
-- 未使用 `--allow-undeclared`／`--allow-no-claims`／`--allow-no-runid`：窗口内 8 条 `RUN` 全部被本文声明，声明全部引 `runId`，证据里确有声明。
+- 未使用 `--allow-undeclared`／`--allow-no-claims`／`--allow-no-runid`：窗口内 14 条 `RUN` 全部被本文声明，声明全部引 `runId`，证据里确有声明。
 
 对账命令（可复跑）：
 
 ```
 node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t180-collection.md \
-  --ticket 180 --since 2026-09-12T19:12:00Z --until 2026-09-12T19:20:30Z --allow-nonzero \
+  --ticket 180 --since 2026-09-12T19:12:00Z --until 2026-09-12T19:28:30Z --allow-nonzero \
   --export docs/skills/skill-calorie/t180-gate-runs.log
 ```
+
+最终一次对账（加宽窗口后，runId `033def3e-8a79-4047-a64c-2b2f7bf606e7`）：`matched=14/14`、`auditEntries=1271`、`scoped=14`、`undeclared=0` → **`gate-audit: PASS`**；导出文件 `docs/skills/skill-calorie/t180-gate-runs.log` 含 **14** 条 RUN（该次对账自身落在窗口之后，不计入）。
 
 **前序窗口不在本文范围**：#180 上半（数据改写＋快照重算）的运行已在各自正本内对账——
 `docs/skills/skill-calorie/t180-scenes-01-05.md`／`t180-scenes-06-10.md`（窗口 17:59:30Z–18:12:00Z，`matched=14/14`），
@@ -136,6 +145,32 @@ node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t180-coll
 | MUT-B | `dist/triggers/help-lookup.js`：合成首条 `frozenCli(...)` 换成 python 字面 | **预期不红**（该分支已不可达，见 REACH） | `red_exit=0`；`restore_equal=1`；`green_exit=0` ✓（登记为旁证，不算通过） |
 | MUT-C | `dist/triggers/help-lookup.js`：命中行 `cli` 换成 python 字面 | `calorie-c43`＋`profile-view-177` 红（证明补偿表撤了以后「HELP 只许回真命令」仍有人守） | `red_exit=1`（`AssertionError: HELP 查找回的不是真实命令`）；`restore_equal=1`；还原后 `green_exit=0` ✓ |
 | REACH（只读探针） | 量「合成首命中」分支的可达性 | — | `words=434 first_not_exec=103 synth_branch_reachable=0`；四个查询（`主页`／`今日主页`／`减肥`／`目标`）首条**都已是 exec**。即：该分支对唤醒词查询集**已不可达**，`frozenCli` 与退化的 `execCliFor` 一并成为**死代码**（删除归 **#181**，因为要连带动 `index.ts:15` 的再导出） |
+
+### 6.1 MUT-D · 补证：【形态】那条断言此前是未确证项（本节的补做，非原计划）
+
+**问题**：MUT-A 只让 **【同源】**（`legacyCli` 逐字等于 SoT 的 `main_prompt.cli`）抛出，**【形态】**（`legacyCli` 不得退回脚本命令形态）在同一循环里被前置拦截、**从未执行到** → 它此前只有绿态覆盖、没有红证据。
+
+**用了哪种办法：办法 C（改 dist 侧的数据副本），没有用派单推荐的办法 A（临时注释掉【同源】），也没有改任何 `src/`**。理由：
+- 办法 C 让断言在**未被修改的测试文件**里红——证据强度高于「把前一条断掉再跑」；办法 A 的红是改测试改出来的，还要多两处「改了再还原」的文件风险。
+- 办法 C 的隔离条件天然成立：`legacyCli`（`dist/render/help.js` ← `SCENE_09_PHOTO`）与【同源】比较用的 SoT cli（`dist/triggers/index.js` → `TRIGGERS`，`:10,:51` 同一份 `SCENE_09_PHOTO`）**是同一份数据的两个引用**，所以把**那一份数据**改成脚本形态时**两侧一起变 → 【同源】仍真**。
+- 数据改的是 `dist/triggers/scene-09-photo.js`（gitignored 构建产物），**`src/triggers/scene-*.ts` 一个字节未碰**（派单明令禁碰），按字节还原并核 sha256。
+
+**实测（探针 `.scratch/t180-c/form-mutant-probe.mjs`，runId `ca012033…`，日志 `.scratch/t180-c/form-probe.log`）**：
+
+| 相位 | 实测 |
+|---|---|
+| 0 基线（不依赖测试框架的布尔探针） | `rows=10 sameSource_true=10 formOk_true=10` |
+| 1 变异 | 把 3 条 `记身材照` 的命令字段前缀 `calorie-cmd-read calorie.photo.add ` → `python scripts/render_photo.py `（恰 6 处＝`main_prompt.cli`＋`data_source` 各 3，探针断言过计数） |
+| 2 布尔组合（办法 B） | `sameSource_true=10`（**【同源】全真＝隔离成立**）／`formOk_true=7`／**「同源真＋形态假」＝3 条**（反例 cli 见日志） |
+| 3 两个靶文件各独立红一次 | `render-t10`（`HELP：现找直达可执行命令（Q71）`）：`AssertionError: legacyCli 不得退回脚本命令形态：[…]`；`skill-t11`（`T10 照片 HELP：10 条全可执行`）：`AssertionError: legacyCli 不得退回脚本命令形态：python scripts/render_photo.py …` —— **两处红的都是【形态】自己，不是【同源】** |
+| 4 对照 | 同轮里的 `calorie-c43`（与照片命令形态无关）**保持绿**（该轮 `25 tests／23 pass／2 fail`，2 条恰为上面两个靶） |
+| 5 还原 ＋ 复绿 | `sha_before=3b09352d65c72c41`、`sha_mutated=25ff348b36d0a815`、`restore_equal=1`、`sha_restored=3b09352d65c72c41`；还原态复跑 `25／25／0`、`green_exit=0`；`FORM-PROBE-SUMMARY bad=0` |
+
+**定性（这条比「补上一个红」更重要）**：**【形态】是「活的但冗余」的守卫，不是死断言、也不是恒真**——
+- **活的**：存在可达的数据态（SoT 命令字段退回脚本形态）让【同源】为真、【形态】为假，且它在**未改动的测试**里抛出（上表相位 3）。
+- **与【同源】分工不同**：【同源】抓的是 **HELP 层漂移**（`render/help.ts` 自抄一份字面／取错来源，MUT-A 那种）；【形态】抓的是 **数据面退回脚本形态**（HELP 层与数据一致、但数据本身坏）。两者互不蕴含。
+- **冗余**：同一条坏数据**也被数据面账目抓到**——探针相位 4 实测 `help-center-106` 单跑 `exit=1`，报 `SoT 里死命令条数应为 0（#180 清完），实际 3`。即：真实回归（改 `src/triggers/scene-*.ts`）会被 `help-center-106:86-87` 与源级 `no-script-commands-180` 同时抓住；`skill-t11`／`render-t10` 这两条【形态】是**第三处、语义更贴题面的守卫**（它们锁的是 HELP 出口那一行），保留的价值在于就地表达「HELP 不得回脚本命令」这个用户面契约。**本波保留，不删**；是否收敛为单一守卫归 **#181**。
+- 另记：源级防回退断言 `no-script-commands-180.test.mjs` 读的是 **`src/` 原文**，对 dist-only 变异不可见（本探针未跑它，不作证据）；真实回归必经 src，届时它会红。
 
 ## 7. 全量 `pnpm test` 读数与红名单归属
 
@@ -201,6 +236,7 @@ node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t180-coll
 3. **不止改派单点名的一处**：派单要求 `skill-t11:154` 照 `render-t10` 的路数改，本席按上下文把「同源」判据从「唤醒词 `Map` 单值」收紧为「同唤醒词**全部** SoT 条目」（理由：`记身材照` 在 SoT 里不唯一）——属**加强**，不是放宽。
 4. **未新增 changeset**：本波是既有票的数据/测试面收口，无包版本语义变化；如需 changeset 由编排者在收口时补（未在派单写集内）。
 5. **派单的两处数字与实测不符，本席按实测记账**：① 派单写「`HELP_EXEC_OVERRIDES` 里 23 条」，按 `7855699` 的 diff 逐行点键得 **24** 条（`profile_view` ＋ `home_*` 9 ＋ `goal_view_*` 12 ＋ `diag_*` 2），本文按 24 记账；② 派单写「`routing.ts` 用了 22 串」，本席只做存在性验证、未逐条复核（见 §11-3）。
+6. **本报告首版把【形态】断言列为未确证项，已补做**：首版报告里有「MUT-A 只证红【同源】，【形态】被前置拦截、未独立证红」的自认；编排者随后点名补证，本席用**办法 C**（改 dist 数据副本，不动测试、不动 `src`）在 §6.1 MUT-D 里独立证红两次并给出定性（**活的但冗余**）。正本对账窗口为此从 `19:20:30Z` 加宽到 `19:28:30Z`（§5）。
 
 ## 11. 未确证项
 
