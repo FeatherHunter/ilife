@@ -471,6 +471,10 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  pointer-events: auto;',
     '}',
     '.' + p + 'copy-menu-item {',
+    // #152 返修：补最小高——老仓 `.fmt-item` 只写 `padding:10px 12px` ＋ 13px 字，算出来 37px，
+    // 低于本仓同区复制按钮的冻结最小值（`spec/controls.ts:297` 的 40px）。40 不另写一个数，
+    // 引用同一个定义地；窄屏那档仍由下面的 `min-height:44px` 抬起（老仓 `.fmt-item` 是 36px）。
+    '  min-height: ' + ACTION_BAR_DEFAULTS.minHeightPx + 'px;',
     '  display: flex;',
     '  justify-content: space-between;',
     '  gap: 14px;',
@@ -496,8 +500,10 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '}',
     // 用途提示：老仓是 `.fmt-item span`（后代选择器，两项 span 都染 11px 灰）；本仓显式给类名，
     // 标签那半仍取 13px／`--fg`（上一条）。选择器用 `>` ——本仓跨文件交叉检查按**整段选择器**比对。
+    // **返修**：字色由 `--fg3`（#86868b）改为 `--fg2`（#6e6e73）——11px 属正文，AA 要 4.5:1，
+    // 前者对白卡片仅 3.62:1、后者 5.07:1；与同批「12px ＋ `--fg3`」那 7 处改用的是同一个做法（#152）。
     '.' + p + 'copy-menu-item > .' + p + 'copy-menu-hint {',
-    '  color: var(--fg3);',
+    '  color: var(--fg2);',
     '  font-size: 11px;',
     '  white-space: nowrap;',
     '}',

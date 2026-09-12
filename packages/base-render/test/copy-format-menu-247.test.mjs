@@ -349,10 +349,17 @@ describe('#247 三格式菜单 · 产出面', () => {
     const item = blocksOf('.' + STYLE_PREFIX + 'copy-menu-item')[0];
     assert.equal(declValue(item, 'padding'), '10px 12px');
     assert.equal(declValue(item, 'font-size'), '13px');
+    // #152 返修：补最小高。老仓 `.fmt-item` 只有 `padding:10px 12px` ＋ 13px 字 ＝ 实测 37px，
+    // 低于本仓复制按钮的冻结最小值（`ACTION_BAR_DEFAULTS.minHeightPx` ＝ 40）；40 不另写一个数。
+    assert.equal(declValue(item, 'min-height'), ACTION_BAR_DEFAULTS.minHeightPx + 'px',
+      '桌面菜单项必须取冻结最小值 40px（老仓 37px 的算值不达标）');
     const hover = blocksOf('.' + STYLE_PREFIX + 'copy-menu-item:hover')[0];
     assert.equal(declValue(hover, 'background'), 'var(--soft)');
     const hint = blocksOf('.' + STYLE_PREFIX + 'copy-menu-item > .' + STYLE_PREFIX + 'copy-menu-hint')[0];
-    assert.equal(declValue(hint, 'color'), 'var(--fg3)');
+    // #152 返修：字色 `--fg3`（#86868b，对白卡片 3.62:1）→ `--fg2`（#6e6e73，5.07:1）。
+    // 11px 属正文，AA 要 4.5:1；与同批「12px ＋ --fg3」那 7 处改用的是同一个做法。
+    assert.equal(declValue(hint, 'color'), 'var(--fg2)',
+      '说明小字必须达 AA 4.5:1（--fg3 只有 3.62:1，--fg2 是 5.07:1）');
     assert.equal(declValue(hint, 'font-size'), '11px');
     // 触控目标：窄屏菜单项抬到 44px（UI 四关之一）。
     assert.ok(CSS.includes('@media (max-width: 820px)'), '缺窄屏档');
