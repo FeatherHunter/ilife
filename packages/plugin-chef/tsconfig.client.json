@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/client.ts",
+    "src/slot.ts",
+    "src/settings.ts",
+    "src/bridge.ts",
+    "src/dsh-ctx.ts"
+  ]
+}

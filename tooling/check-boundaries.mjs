@@ -46,6 +46,12 @@ assert(!grepHit, '装配 owner 归一 render（link-core/combos 无自装配）'
 // 14:02 落盘）已 `import type { SceneData, SceneGroup } from 'base-paint'`，而它离开时未改这份名单
 // → `pnpm boundaries` 红（1 处破界）会卡住发版窗口的 S8 全绿门。**这是善意越界**：断言口径、
 // 判定实现与 skill-home 的覆盖面一字未动，只是把大厨图自己那一步先做了；那份文件属它会话，本席未碰。
+// #214 起 skill-chef **正式移出**该名单（承接上面那次代摘）：地图 #208 已裁「私家大厨 HELP 走共享
+// help 模板 base-paint/help-shell ＋ 落盘走 base-paint/save-html」，结构裁定正本 docs/skills/skill-chef/
+// t236-structure-design.md §1.2 B4／B7（维护者 2026-09-12 逐项裁决 8 问，用户点头＝该票关票条件），
+// 同批给 skill-chef 补上 `"base-paint": "^0.3.0"` 依赖——解冻与加依赖是**同一动作的两半**。
+// chef 自此同样是有意的消费方。断言口径、判定实现与 skill-home 的覆盖面一律未动
+// （仍查依赖闭包＋源码／模板扫描），只是这一份「尚未迁移」名单少最后一个名字。
 const SKILLS_BASE_FROZEN = ['skill-home'];
 const BASE_RUNTIME = new Set(['base-paint', 'base-render']); // 目录名／包名两种写法都算
 for (const name of SKILLS_BASE_FROZEN) {

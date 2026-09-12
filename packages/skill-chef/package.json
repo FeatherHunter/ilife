@@ -15,13 +15,15 @@
   },
   "files": [
     "dist",
-    "templates/*.html"
+    "templates/*.html",
+    "SKILL.md"
   ],
   "bin": {
     "chef-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "base-link-core": "^0.3.0"
+    "base-link-core": "^0.3.0",
+    "base-paint": "^0.3.0"
   },
   "engines": {
     "node": ">=22.13"

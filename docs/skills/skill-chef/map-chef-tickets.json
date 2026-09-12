@@ -1,0 +1,80 @@
+[
+    {
+        "n": 1,
+        "issue": 209,
+        "type": "research",
+        "title": "私家大厨HELP（1/11）调查：饼干记账的 HELP 交付实现逐件读懂 → 私家大厨照抄清单"
+    },
+    {
+        "n": 2,
+        "issue": 210,
+        "type": "research",
+        "title": "私家大厨HELP（2/11）调查：内容资产对账（老 10 域／33 组／48 场景 ↔ 新表 37 条唤醒词／8 条命令）"
+    },
+    {
+        "n": 3,
+        "issue": 211,
+        "type": "research",
+        "title": "私家大厨HELP（3/11）调查：通用 help 模板的注入契约＋私家大厨专属取值"
+    },
+    {
+        "n": 4,
+        "issue": 212,
+        "type": "grilling",
+        "title": "私家大厨HELP（4/11）决策：命名落盘管线的归属＋缺省出口口径"
+    },
+    {
+        "n": 5,
+        "issue": 213,
+        "type": "task",
+        "title": "私家大厨HELP（5/11）内容资产入库：老骨架 → 仓内 typed const"
+    },
+    {
+        "n": 6,
+        "issue": 214,
+        "type": "task",
+        "title": "私家大厨HELP（6/11）渲染接线：5 项＋三块可选内容 → 通用 help 模板"
+    },
+    {
+        "n": 7,
+        "issue": 215,
+        "type": "task",
+        "title": "私家大厨HELP（7/11）出口与命名落盘：缺省＝HELP 文件，速查走显式参数"
+    },
+    {
+        "n": 8,
+        "issue": 216,
+        "type": "task",
+        "title": "私家大厨HELP（8/11）锁：CLI 级用例（真 spawn 出口）"
+    },
+    {
+        "n": 9,
+        "issue": 217,
+        "type": "task",
+        "title": "私家大厨HELP（9/11）SKILL.md 说明面"
+    },
+    {
+        "n": 10,
+        "issue": 218,
+        "type": "task",
+        "title": "私家大厨HELP（10/11）插件侧最小装机（技能提供方＋DSH profile；收窄 #57）"
+    },
+    {
+        "n": 11,
+        "issue": 219,
+        "type": "task",
+        "title": "私家大厨HELP（11/11）真机端到端＋肉眼终审"
+    },
+    {
+        "n": 12,
+        "issue": 236,
+        "type": "task",
+        "title": "私家大厨HELP 结构设计：新件住哪（必报五步第一／二步，先报用户点头）"
+    },
+    {
+        "n": 13,
+        "issue": 237,
+        "type": "task",
+        "title": "私家大厨HELP（13/13）共用件 saveHtmlFile：新建包 ＋ 卡路里／记账／大厨三家改成走它"
+    }
+]
