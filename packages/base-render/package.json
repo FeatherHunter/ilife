@@ -1,6 +1,6 @@
 {
   "name": "base-paint",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "渲染包：ui+style+injector+渲染契约，装配唯一 owner",
   "type": "module",
   "main": "./dist/index.js",
@@ -9,6 +9,7 @@
     ".": "./dist/index.js",
     "./blocks": "./dist/blocks.js",
     "./help-shell": "./dist/helpShell.js",
+    "./save-html": "./dist/output/saveHtml.js",
     "./package.json": "./package.json"
   },
   "files": [

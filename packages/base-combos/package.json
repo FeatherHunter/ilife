@@ -1,6 +1,6 @@
 {
   "name": "base-combos",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "语义包：combos.yaml 唯一真相源，36 组语义条目",
   "type": "module",
   "main": "./dist/index.js",

@@ -9,7 +9,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -213,6 +213,14 @@ function listDistJs(dir) {
   }
   return out;
 }
+
+/** #237 · base-paint 的**画完落盘层**（`saveHtmlFile`，出口 `base-paint/save-html`）：
+ *  它在 Node 侧跑，正当引 `node:fs`／`node:crypto`／`node:path`，且**从不注入 HTML 页面**。
+ *  纯度门（FX-18 的 `SHARED_HELPERS_JS_RULE`）管的是「会被塞进页面的 JS 文本」，
+ *  故扫描面**恰排除这一子树**——下面另有断言盯住「排除的是它、且它确实是 Node 侧」，
+ *  不是把 `node:` 口径放宽。 */
+const NODE_SIDE_DIST = fileURLToPath(new URL('../dist/output', import.meta.url));
+const isNodeSideDist = (p) => p === NODE_SIDE_DIST || p.startsWith(NODE_SIDE_DIST + sep);
 
 /** 抽出 §2 对照表的数据行。 */
 function section2Rows(text) {
@@ -912,13 +920,24 @@ describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
     assert.equal(SHARED_HELPERS_JS_RULE.domAllowed, true, '共享 JS 允许页面侧 DOM 读取（FX-18②）');
     assert.equal(SHARED_HELPERS_JS_RULE.forbidNodeBuiltins, true);
     assert.equal(SHARED_HELPERS_JS_RULE.forbidGlobalAssignment, true);
-    const files = listDistJs(fileURLToPath(new URL('../dist', import.meta.url)));
+    const all = listDistJs(fileURLToPath(new URL('../dist', import.meta.url)));
+    const files = all.filter((p) => !isNodeSideDist(p)); // #237：排除 Node 侧落盘层（见 isNodeSideDist 注释）
     assert.ok(files.length > 0, 'dist 无 JS 产物');
+    assert.ok(all.length - files.length === readdirSync(fileURLToPath(new URL('../dist/output', import.meta.url))).filter((f) => f.endsWith('.js')).length,
+      '排除面恰为 dist/output/ 的 JS 产物（不多排、不漏扫）');
     assert.ok(files.some((p) => p.includes('spec') && p.endsWith('.js')), '扫描必须覆盖 dist/spec/*.js（FX-18 收窄口径后仍须递归）');
     for (const p of files) {
       const src = readFileSync(p, 'utf8');
       assert.deepEqual(purityViolations(src), [], p + ' 违反纯度口径');
     }
+  });
+
+  it('#237 落盘层是 Node 侧资产（被纯度门排除的恰是它，不是漏扫）', () => {
+    const entry = join(NODE_SIDE_DIST, 'saveHtml.js');
+    assert.ok(existsSync(entry), 'dist/output/saveHtml.js 必须在（子路径出口 base-paint/save-html 的落点）');
+    assert.match(readFileSync(entry, 'utf8'), /node:fs/, '落盘层正当引 node: 内建：这正是它不进页面、被排除的理由');
+    assert.ok(isNodeSideDist(entry), '排除判定必须命中落盘层入口');
+    assert.ok(!isNodeSideDist(join(fileURLToPath(new URL('../dist', import.meta.url)), 'index.js')), '排除判定不得波及包根入口');
   });
 
   it('纯度扫描口径自证（FX-18）：含 DOM 的合法 helpers JS 过门，隐式全局赋值／node: 不过门', () => {
@@ -960,7 +979,8 @@ describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
     // 自证（防恒真）：代码里的 DOM 必须被抓到、字符串里的 DOM 必须被剥离
     assert.ok(stripJsComments(stripJsLiterals('const x = document.body;')).includes('document.'), '自证：代码里的 document. 必须命中');
     assert.ok(!stripJsComments(stripJsLiterals('const s = "document.body";')).includes('document.'), '自证：字符串里的 document. 必须被剥离');
-    const files = listDistJs(fileURLToPath(new URL('../dist', import.meta.url)));
+    // #237：同「browser-safe」口径，扫描面排除 Node 侧落盘层（`dist/output/`，从不注入页面）。
+    const files = listDistJs(fileURLToPath(new URL('../dist', import.meta.url))).filter((p) => !isNodeSideDist(p));
     assert.ok(files.length > 0, 'dist 无 JS 产物');
     for (const p of files) {
       const code = stripJsComments(stripJsLiterals(readFileSync(p, 'utf8')));
@@ -969,7 +989,6 @@ describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
       }
     }
   });
-
   it('src/spec/*.ts 只许 import type（AC-13）＋ 代码不得读写浏览器全局（AC-7）', () => {
     const dir = new URL('../src/spec/', import.meta.url);
     for (const f of readdirSync(dir)) {
