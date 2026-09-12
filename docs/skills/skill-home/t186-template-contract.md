@@ -1,5 +1,7 @@
 # 居家管家 HELP：通用 help 模板的注入契约（票 #186）
 
+> **更正（2026-09-12 补，t202）**：本报告全文凡写「`meta_blocks` 在 A 路**不渲染**／声明即死／读了不渲染」处**均已失效**——共享 help 模板自 t202 起在**分组页页首**按 `m.id === g.key` 条件渲染 `id` 命中该分组的块（`:1786-1789`）。居家若照常不传，或所传块的 `id` 与分组 `id` 零碰撞（记账即如此），输出仍与旧版逐字节相同。契约见 `docs/base/base-render/t202-help-meta-blocks.md`；§1.2 表格里 `meta_blocks` 那行已就地改对。
+
 调查日期 2026-09-12。一切结论以**代码**为准（行号按本仓当前在盘文件实测；老技能基线在 `D:\2Study\StudyNotes\SKILLS\`，只读）。
 
 先说一句最容易踩的：仓内 base-paint 有**两套** help 渲染，不要混。
@@ -43,7 +45,7 @@ A 路是「前缀 ＋ 一段 JSON ＋ 页面运行时」的整页静态文件：
 
 | 字段 | 类型 | 必填 | 渲染落点（A 路） | 出处 |
 | --- | --- | --- | --- | --- |
-| `meta_blocks` | `{id:string; title:string; html:string}[]` | 可选 | **不渲染**。模板只 `var META_BLOCKS = HELP.meta_blocks \|\| []`（`:1651`），此后 `META_BLOCKS` 全模板零引用（实测：全文出现 1 次）。它只进 `help-data` 的 JSON，是给页面外消费的透传位；记账接线就是要这点（`skill-bill/src/render/helpFile.ts:55` 注释「壳不渲染，供外部消费」） | 读：`:1651`；schema：`spec/help.ts:117-125`（`id/title/html` 三个都必填） |
+| `meta_blocks` | `{id:string; title:string; html:string}[]` | 可选 | **按分组 id 条件渲染**（自 t202 起）：模板 `var META_BLOCKS = HELP.meta_blocks \|\| []`（`:1653`）读入后，在**分组页锚点**之后按 `m.id === g.key` 渲同 id 的块（`:1786-1789`；`title` 转义、`html` 原样透传）。**不传即 `[]`，该页输出与旧版逐字节相同**；`id` 不命中任何分组的块不上页（死载荷）。详见 `docs/base/base-render/t202-help-meta-blocks.md`——记账传的两块 id 与它的 7 个分组 id 零碰撞，故记账页上仍**不渲染**（行为同旧版；`skill-bill/src/render/helpFile.ts:55` 注释已同步） | 读：`:1653`；渲染：`:1786-1789`；schema：`spec/help.ts:117-125`（`id/title/html` 三个都必填） |
 | `version` | `string` | 可选 | 页面已编译进「关于」Tab 的「版本」段：`v` ＋ 值 ＋ ` · HELP 模板 v4`（模板原文是 CRLF 折行，拼出的字符串是 `v${version} · HELP 模板 v4`）。整段不判空——不给 `version` 就渲染成 `v · HELP 模板 v4` | 读：`:1654`；渲染：`:1817` |
 | `init_banner` | `{title:string; subtitle?:string; button_text?:string; prompt?:string; steps?:string[]}` ＋ 老运行时额外认的 `closable`／`hidden` | 可选；但从 `:1775` 起**不判空**地读 `INIT_BANNER.title`／`.subtitle`／`.prompt`／`.button_text`／`.closable` | hero 下方首次使用横幅：标题 ＋ 副标题 ＋ 一枚「复制 prompt」按钮（`data-c` 就是 `prompt`）＋ ✕ 关闭按钮（`closable === false` 才不画）；`steps` 非空时横幅内再横排步骤卡（`{title, desc?}` 对象数组——注意模板写的是 `st.title`／`st.desc`，**不是**字符串数组，与 `spec/help.ts:73` 的类型面不一致） | 读：`:1652`；渲染：`:1775-1777`；关闭动作：`:1837-1841`；CSS：`:28-41` |
 | `recommendations`（第四块，票面没点名但模板也读） | 模板读 `{name, desc, wake}` | 可选 | 「关于」Tab 第三段「其他技能」：`name` ＋ `desc` ＋ `wake` 徽章。不给就整段不出现 | 读：`:1656`；渲染：`:1819-1825` |

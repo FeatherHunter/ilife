@@ -52,7 +52,10 @@ export const HELP_CONTACT: HelpContact = Object.freeze({
   copy_all: true as const,
 });
 
-/** 透传信息块（壳不渲染，供外部消费；老契约 `{id,title,html}`）。 */
+/** 透传信息块（老契约 `{id,title,html}`）。**自 t202 起共享 help 模板会渲染它**：块 `id` 逐字命中某个
+ *  一级分组的 `id` 时，该块渲在那个分组页的页首。本件两块（`help_summary`／`help_wake_words`）与 7 个
+ *  分组 id 零碰撞 ⇒ 本件页面上仍**不渲染**（行为同旧版，照旧只作页面外消费的透传位）。
+ *  契约＝`docs/base/base-render/t202-help-meta-blocks.md`。 */
 export interface HelpMetaBlock {
   readonly id: string;
   readonly title: string;

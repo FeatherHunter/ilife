@@ -818,7 +818,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 - **顶层**：`skill_name`（必填）／`title`（必填）／`groups`（必填）／`subtitle?`／`meta_blocks?`／`init_banner?`／`contact?`／`version?`／`recommendations?`。
 - **`groups[]`**：`id`／`label`／`subgroups[]`（必填），`icon?`；**`subgroups[]`**：`id`／`label`／`scenes[]`（必填，非空）。
 - **`scenes[]`**：`id`／`title`／`wake_word`／`status`／`prompt_template`（必填），`types?`／`editable_fields?`；`status ∈ SCENE_STATUS = ['', '【待开发】']`；`id` 全局唯一（重复 → `HelpSchemaError` code `duplicate-id`）；`types` 元素 = 字符串或 `{ text, bg?, fg? }`（非法 → `types-invalid`）；结构不符 → `schema-invalid`。
-- **`meta_blocks[].html`** 为技能方 HTML 原文，Base **原样透传不渲染**（转义由技能方自理，`contract:114,116`）。
+- **`meta_blocks[].html`** 为技能方 HTML 原文，Base **原样透传，不转义、不消毒**（转义由技能方自理，`contract:114,116`）。自 t202 起 A 路模板**有渲染落点**：在**分组页锚点**之后按 `m.id === g.key` 渲 `id` 命中该分组的块（`help-template.html:1786-1789`；`title` 转义、`html` 原样入 DOM），**不传 `meta_blocks` ⇒ 该页输出与旧版逐字节相同**；`id` 不命中任何分组的块不上页。详见 `docs/base/base-render/t202-help-meta-blocks.md`。
 
 #### 3.5.3 HELP 壳接口（B6／Q11，可直接被 #88 复用）
 

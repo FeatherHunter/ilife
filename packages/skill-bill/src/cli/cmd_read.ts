@@ -3,7 +3,7 @@
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通即真相）。
 import { writeFileSync, readFileSync, copyFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, resolve } from 'node:path';
 import {
   BillFetchError, BillPolicyError,
   resolveDbPath, resolveDbDir, resolveGoalsPath, assertWritablePath, openBillDb, closeBillDb,
@@ -23,11 +23,11 @@ import {
   toBillItem, calcKpi, calcCategories, buildRecordToday, buildRecordRange, buildRecordSearch,
   buildRecordDetail, buildRecordReceipt, buildOverview, buildCompare, buildTrend,
   buildGoalQuery, buildAccountQuery, buildHelpItems,
-  buildHelpIndex, buildHelpFileData, renderHelpFileHtml, resolveStemTarget,
-  HELP_FILE_STEM, LOOKUP_FILE_STEM,
+  buildHelpIndex, buildHelpFileData, renderHelpFileHtml,
+  HELP_FILE_STEM, LOOKUP_FILE_STEM, HELP_HTML_DIR_NAME,
   BillRenderError,
 } from '../render/index.js';
-import { deliverHtml, type HtmlDelivery } from '../output.js';
+import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
 import { buildHelpLookup } from '../help/index.js';
 import type { BillRow } from '../fetch/db.js';
 
@@ -73,10 +73,11 @@ function weekRange(): { start: string; end: string } {
  * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体 `饼干记账_速查表`，与 HELP 分名——照 #139 判法：
  * 一个键两种产物就分成两个名字，别让用户按一个名字打开到另一个东西）。
  * 显式 `q` ＝ 现找：只回命中（stdout），`--html <路径>` 给了才落盘（检索式问答不刷目录）。
+ * #237 起落点只出**意图**（目录 ＋ 文件名主体）：时间戳与同秒递补由共用件 `saveHtmlFile` 钉死。
  * 全程**不开库**：初始化状态用「DB 文件是否存在」判定（见 render/helpFile.ts 头注释的取舍），
  * 免得「看帮助」把记账库 `new DatabaseSync` 出来并跑 DDL 自愈。
  */
-interface DeliverIntent { readonly html?: string; readonly target: string; }
+interface DeliverIntent { readonly html?: string; readonly target: HtmlLanding; }
 interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
 
 /** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized`）；
@@ -100,13 +101,13 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
     const hits = buildHelpItems(buildHelpLookup(), undefined);
     return {
       data: { ...hits, mode: 'lookup' },
-      deliver: { target: resolveStemTarget(dbDir, LOOKUP_FILE_STEM, now) },
+      deliver: { target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem: LOOKUP_FILE_STEM } },
     };
   }
   const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
   return {
     data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
-    deliver: { html, target: resolveStemTarget(dbDir, HELP_FILE_STEM, now) },
+    deliver: { html, target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem: HELP_FILE_STEM } },
   };
 }
 
