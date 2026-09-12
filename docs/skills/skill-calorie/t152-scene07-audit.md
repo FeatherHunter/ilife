@@ -12,15 +12,18 @@
 | 设置档案 | `calorie.profile.set` | exit 0 ／ 52,729 B | ✅ `calorie-cmd-read calorie.profile.set --params '{"heightCm":175,…}'` | `C:\Users\辰辰洋洋\Desktop\ilife-scene07\场景样例\设置档案.html` | ✅ 打通 |
 | 设活动量 | `calorie.profile.activity` | exit 0 ／ 52,524 B | ✅ `calorie-cmd-read calorie.profile.activity --params '{"activityLevel":"active"}'` | `C:\Users\辰辰洋洋\Desktop\ilife-scene07\场景样例\设活动量.html` | ✅ 打通 |
 | 改档案 | `calorie.profile.update` | exit 0 ／ 52,509 B | ✅ `calorie-cmd-read calorie.profile.update --params '{"field":"heightCm","value":176}'` | `C:\Users\辰辰洋洋\Desktop\ilife-scene07\场景样例\改档案.html` | ✅ 打通 |
-| 查档案 | `calorie.view.profile` | exit 0 ／ 52,729 B | ❌ **还是老脚本** `python scripts/render_crud_view.py --entity profile --chain "1.识别→2.读DB→3.算TDEE"` | `C:\Users\辰辰洋洋\Desktop\ilife-scene07\场景样例\查档案.html` | ⚠️ **能力在、HELP 没接** |
+| 查档案 | `calorie.view.profile` | exit 0 ／ 52,729 B | ✅ **已修**：`calorie-cmd-read calorie.view.profile`（原为老脚本 `python scripts/render_crud_view.py …`） | `C:\Users\辰辰洋洋\Desktop\ilife-scene07\场景样例\查档案.html` | ✅ 打通 |
 
 **过程型页（不是唤醒词，是本图新增的那条只读命令）**：`calorie.view.profile-wizard`（档案预检）——
 样例：`…\默认命名-有档案\档案预检_20260912_153352.html`（58,854 B）、`…\默认命名-空库\档案预检_20260912_153354.html`（57,579 B）。
 
-## 二、遗漏（4 条）
+## 二、遗漏（4 条，第 1 条已修）
 
-1. **`查档案` 的 HELP 呈现层没接上**（本图内唯一一条）。地图正文原话：「本图只修 `查档案` 那一条」——
-   现在 HELP 里它挂的还是老 python 命令，用户按 HELP 复制到 AI 的是一条跑不起来的命令。属 #180 的数据面。
+1. ~~**`查档案` 的 HELP 呈现层没接上**（本图内唯一一条）~~ → **已修**（2026-09-12，本会话）：
+   `src/triggers/scene-07-profile.ts:8` 的 `main_prompt.cli` 与 `data_source` 由老脚本
+   `python scripts/render_crud_view.py --entity profile --chain "…"` 换成 `calorie-cmd-read calorie.view.profile`。
+   修后实测：`HELP_LOOKUP`／`getHelpCards()`／`searchHelp` 三处都回新命令；**#180 的账目随之 733 → 731**
+   （`main_prompt.cli` 375→374、`data_source` 353→352），全包测试 424 条 423 通过（唯一红仍是 #180 那条有意先红的）。
 2. **#175／#176／#177 三张票仍 OPEN**（写前页 · 设置档案／改档案、写前页 · 设活动量、结果页 · 查档案）：
    它们的实物已由 #179 做出来（预检确认页 ＋ 三条写命令回执 ＋ 查档案结果页），但票没关。
 3. **#178 端到端验收没做**：Destination 的第 ② 条硬指标——用户本人**在全新空白 session** 里跑这 4 条唤醒词。
