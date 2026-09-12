@@ -31,7 +31,7 @@
       "package": "packages/skill-memo-ilife"
     }
   ],
-  "artifactCount": 185,
+  "artifactCount": 186,
   "artifacts": {
     "bill/escape": {
       "src": "packages/skill-bill/src/render/html.ts",
@@ -831,6 +831,12 @@
       "sha256": "dbc6c1901f726a684ff228c64f24be0a",
       "text": "<section data-skill=\"memo\" data-shape=\"detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
     },
+    "memo/frag/memo.help.lookup": {
+      "src": "packages/skill-memo-ilife/src/render/envelope.ts",
+      "bytes": 389,
+      "sha256": "caac0cf65ed2952f204e40e7b4fb679e",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+    },
     "memo/frag/memo.remind": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 389,
@@ -875,9 +881,9 @@
     },
     "memo/keys": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
-      "bytes": 242,
-      "sha256": "6e4da0aac9c7293f3c516f3da1bf688c",
-      "text": "[[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.detail\",\"detail\"],[\"memo.remind\",\"list\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.stats\",\"stat\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
+      "bytes": 270,
+      "sha256": "0f61ef54cd11c4d8f57b50271b4df322",
+      "text": "[[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.detail\",\"detail\"],[\"memo.help.lookup\",\"list\"],[\"memo.remind\",\"list\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.stats\",\"stat\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
     },
     "memo/shape-throw": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",

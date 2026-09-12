@@ -10,7 +10,7 @@
 
 **文件名主体**：文件名里时间戳之前的那一段。`卡路里_HELP_20260910_183829.html` 的主体是 `卡路里_HELP`。老代码／老文档里写的「茎」就是它。
 
-英文标识符沿 Python `pathlib.PurePath.stem` 的官方叫法（`buildHelpFileName(stem, …)`、`HELP_FILE_STEM`），不是黑话，不改名；中文文案一律不写「茎」。
+英文标识符沿 Python `pathlib.PurePath.stem` 的官方叫法（`saveHtmlFile({ stem, … })`、`HELP_FILE_STEM`），不是黑话，不改名；中文文案一律不写「茎」。
 
 ## 卡路里：命令与流程
 
