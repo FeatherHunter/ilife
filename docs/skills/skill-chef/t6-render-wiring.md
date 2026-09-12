@@ -120,8 +120,11 @@ packages/skill-chef/
 
 ### 3. `subtitle` 与 `contact` —— `title` 照老家原文；两项取值照记账
 
-**`title`（票面点名的值）**：老家产物 `<title>私家大厨 HELP · 能力速查</title>`——证据 `.scratch/chef-help/A1-legacy-chef-help-skeleton.md:340`（老产物结构实读）／`:398`（原文建议「`title` 可取页面 `<title>` 的私家大厨 HELP · 能力速查」），`docs/skills/skill-chef/t3-template-contract.md:244` 同；`composeDocTitle`（`packages/base-render/src/helpShell.ts:66-70`）判 `title` 含技能名 ⇒ 走「原样」支，标签页不重复。
+**`title`（本票实际改动的值）**：老家产物 `<title>私家大厨 HELP · 能力速查</title>`——证据 `.scratch/chef-help/A1-legacy-chef-help-skeleton.md:340`（老产物结构实读）／`:398`（原文建议「`title` 可取页面 `<title>` 的私家大厨 HELP · 能力速查」），`docs/skills/skill-chef/t3-template-contract.md:244` 同；`composeDocTitle`（`packages/base-render/src/helpShell.ts:66-70`）判 `title` 含技能名 ⇒ 走「原样」支，标签页不重复。
 ⇒ **就地摆正**：`#213` 交付的是 t2 §七 草案值「私家大厨 · 能力速查」，本票改到生成器声明 `scripts/gen-help-assets.mjs:66` 并**重新生成** `src/help/sceneData.ts:181`；与草案的**有意偏离**在生成器的对账里写死（`:282-284`：仍逐字断言草案原值 ＋ 断言生成件「含技能名」），`test/scene-data.test.mjs:168` 的既有断言不受影响。
+
+> ⚠️ **本段首版的理由写错了，已就地改正（审查席 B 实测）**：首版写「票面点名的值」——`gh issue view 214` 正文**无** `title`／`标题`／`取值` 字样、**0 条评论**，票面**没有**点名这个值。真正的授权链是：`t3-template-contract.md:244`（取值表）＋ `:718`（列为待定项）＋ `:501`（**明写「属票 6 第一／二步要报用户点头的范围」**）⇒ 这一项属本票的「5 项」之一，改在**声明处 ＋ 重新生成 ＋ 对账写死有意偏离**，范围没扩大、可回退。
+> **如实保留的欠账**：`t3:501` 要求的那次**用户点头没有留档**（票面 0 评论、本报告也无记录）。⇒ 不另开一轮打扰，改由**肉眼终审时一并点给维护者看**（页面大标题与标签页都会显示这个值），并把本条写进关票评论。
 
 **`subtitle`**：式子照记账 bill `src/render/helpFile.ts:102-106`（`〈域数〉 功能域 · 〈场景数〉 场景 · 版本 〈version〉 · 更新于 〈本地分钟〉`）；chef 落点 `src/help/helpFile.ts:180-183`，计数全部派生、不写死。实测值：`10 功能域 · 48 场景 · 版本 0.1.0 · 更新于 2026-09-12 14:30`。
 **只数两级（域 ＋ 场景）的理由**：记账那一式同样只数它的两级（`WAKE_GROUPS` 一级域 ＋ `WAKE_ASSETS` 场景），二级层不进摘要行；chef 的 33 组正好是二级层（对应 bill 的 20 个 subgroups）。t3 `§10.2` 第 8 条把「10 功能域 · 48 场景」还是「10 功能域 · 33 组 · 48 场景」列为待定 ⇒ 本票取前者，理由如上，**这是本票的一处自决**。
@@ -249,3 +252,6 @@ node --input-type=module -e "import {writeFileSync} from 'node:fs';import {creat
 2. **本票 `output.ts:41` 的调用点已随共用件整改改成 `file`**：`skill-chef/src/help/output.ts` 的 `explicit` 支从 `stem: basename(abs)` 改为 `file: basename(abs)`（共用件 #237 把「名字怎么给」与「撞名怎么办」拆成两个正交口子，`overwrite` 不再让 `stem` 兼作完整文件名）。行为不变（仍是 `join(dir, basename(abs))` 逐字落、仍覆盖写）。**本票的 `output.ts` 复算命令**：`node node_modules/typescript/bin/tsc --build packages/skill-chef/tsconfig.json` → exit 0；`node --test packages/skill-chef/test/*.test.mjs` → 41/41 绿。
 3. **未核实项如实保留**：本票报的「`t236` §1.2 B2 未照做（出口登记落 `src/help/index.ts` 而非 `src/render/index.ts`）」**编排方接受**——两处都登记才是铁律二禁的「同一个出口两个定义地」；`src/index.ts` 的 `export *` 已让包根可及且有测试锁住。**不补** `render/index.ts`。
 4. **回填 `#236` 的两条预警**（本票 §六 第 6／8 条）：`Array.isArray(readonly T[])` 会把类型收窄成 `any[]` 并触发 TS7006；`first_use` 那张待开发卡是初始化横幅 `prompt` 的单源（页面横幅会指向一张待开发的卡，属基准 3 的如实呈现，不是缺陷）。
+5. **10 个域的 `icon` 判定＝**照老家**（emoji，不改）**：模板 `assets/help-template.html:1742-1746` 的 `tabIconHTML` 对 `icon` **本来就有两支合法输入**——命中 `SVG_ICONS` 出 SVG，不命中当 emoji 出（`<span class="t-emoji">`）。`groups[].icon` 的法源是 `domain.icon`（`t3-template-contract.md` §2.2），老家十份域文件逐字就是 emoji（`scenes\做菜.yaml:39 icon: "🍳"` 等十处，本会话已逐件核过）。`SVG_ICONS` 只有 **6 个** key，覆盖不了 10 个域；硬映射一张没权威出处的对照表＝语义降级 ＋ 违铁律二（概念唯一）⇒ **维持 emoji**，它走的是模板自己留的那一支，不是绕开模板。
+6. **`title` 的授权链已就地改正**（见 §三·3 的改正框）：授权来自 `t3:244／:501／:718`「属票 6 的 5 项之一」，**不是**「票面点名」；`t3:501` 要求的那次用户点头**没有留档**，欠账如实登记、在肉眼终审时点给维护者。
+7. **出口落点正本已就地改**：`t236-structure-design.md` 的 B2 行（`:100`）＋ 目录树（`:147`）＋ 就地摆正表（`:195`）＋ 交付对账（`:226`）四处都从 `src/render/index.ts` 改成 `src/help/index.ts`，并记明「首版写错、经编排方接受改判」——免得下一张照 B2 施工的票真造出第二定义地。

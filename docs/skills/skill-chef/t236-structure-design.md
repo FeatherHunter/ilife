@@ -97,7 +97,7 @@
 | # | 改动件 | 改什么 | 触发的规则 |
 |---|---|---|---|
 | B1 | `src/cli/cmd_read.ts`（**LF 388，已超线**） | 把 `chef.help.lookup` 那段分支**抬到开库之前**，并接上 HELP 交付分支 | 票 1 实测：`:98-99` 在 `:327` 的 help 分支之前就开库 ⇒ **今天说一句 help 就会建库**；第四步当场报警（见 §三） |
-| B2 | `src/render/index.ts` | 出口面收口：新件的公开出口登记 | 今天该文件 7 行导出 20＋ 个名字，是整包存量；本次**只加自己那一行**，不顺手扩大 |
+| B2 | `src/help/index.ts`（**落点经 2026-09-12 改判**，见本行注） | 出口面收口：新件的公开出口登记 | 票面 B 段点名的落点是 `src/help/index.ts`；`src/index.ts:4` 已 `export * from './help/index.js'` ⇒ 包根可及。**首版写 `src/render/index.ts` 是错的**：#214 施工时判定「两处都登记＝同一个出口两个定义地」，撞铁律二；经编排方接受改判，落 `src/help/index.ts`。`src/render/index.ts` 今天 7 行导出 20＋ 个名字，是整包存量，整包收口留重排票 |
 | B3 | `src/policy/wakewords.ts` | HELP 短语（4 条）与 `WAKE_TABLE` 的单一事实源对账 | 铁律二：唤醒词只有一个定义地；A1 从它派生、不落第二份字面量 |
 | B4 | `tooling/check-boundaries.mjs` | `SKILLS_BASE_FROZEN` 里**删掉 `'skill-chef'`** 一项 ＋ 补记移出理由 | 要用共用 help 模板必须先解冻。**实测有两套数字**：`HEAD` 是 **4 项**，工作树／索引已是 **2 项**（`['skill-chef','skill-home']`）——详见 §6.1，两半断言都由这个数组派生，一处改同时解除 |
 | B5 | `src/fetch/db.ts`（**LF 451，已超线**） | **只碰必须碰的**（若 B1 的搬迁连带它） | 第四步当场报警；拆法见 §三 |
@@ -144,7 +144,7 @@ packages/skill-chef/
    ├─ cli/cmd_read.ts           （存量，改：分支抬到开库前 ＋ 接交付，B1／C1）
    ├─ fetch/db.ts               （存量，超线；只碰必须碰的，B5）
    ├─ policy/wakewords.ts       （存量，改：HELP 短语对账，B3）
-   ├─ render/index.ts           （存量，改：登记新出口，B2）
+   ├─ render/index.ts           （存量，**本图未碰**；B2 的出口登记改落 `help/index.ts`，见 §1.2）
    └─ help/                     ← 沿用既有目录（技能级查找入口，非能力目录）
       ├─ lookup.ts              （存量，不动）
       ├─ index.ts               （存量，改：转发新出口）
@@ -192,7 +192,7 @@ chef 出口（cmd_read.ts）
 | 旧件 | 不一致 | 本票的处置 |
 |---|---|---|
 | `src/help/index.ts` | 只有 1 行转发 | **顺手加转发**（B2／`index.ts` 改），不扩大 |
-| `src/render/index.ts` | 7 行导出 20＋ 个名字、含 `CHEF_KEY_SHAPES` 等聚合件 | **只在本次改动里加自己那一行**；整包收口留重排票 |
+| `src/render/index.ts` | 7 行导出 20＋ 个名字、含 `CHEF_KEY_SHAPES` 等聚合件 | **本图未碰**（B2 改落 `help/index.ts`）；整包收口留重排票 |
 | `src/cli/cmd_read.ts` | LF 388 已超线 ＋ help 分支在开库之后 | **两处都就地摆正**（B1／C1）＋ 当场报第四步 |
 | `src/fetch/db.ts` | LF 451 已超线 | **只碰必须碰的**；拆法见 §三 |
 | `packages/skill-chef/SKILL.md` | 说明面缺「HELP 交付」节 | 归票 9（`#217`），不在本票 |
@@ -223,7 +223,7 @@ chef 出口（cmd_read.ts）
 | A2 `src/help/manifest.ts` | 待填 | — |
 | A3 `scripts/gen-help-assets.mjs` | 待填 | — |
 | B1 `src/cli/cmd_read.ts` | 待填 | — |
-| B2 `src/render/index.ts` | 待填 | — |
+| B2 出口登记（落点由 `src/render/index.ts` 改判为 `src/help/index.ts`） | 2 → 6 LF（转发 5 运行名 ＋ 2 类型） | 落点改判，理由见 §1.2 B2 行注 |
 | B3 `src/policy/wakewords.ts` | 待填 | — |
 | B4 `tooling/check-boundaries.mjs` | 待填 | — |
 | B5 `src/fetch/db.ts` | 待填 | — |
