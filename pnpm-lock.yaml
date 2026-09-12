@@ -156,6 +156,9 @@ importers:
       base-link-core:
         specifier: ^0.3.0
         version: link:../base-link-core
+      base-paint:
+        specifier: ^0.3.0
+        version: link:../base-render
 
   packages/skill-home:
     dependencies:

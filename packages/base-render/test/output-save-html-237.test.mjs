@@ -5,7 +5,8 @@
  *     且**包根不开**（`'saveHtmlFile' in base-paint` 为假）＋该子路径的运行时出口**恰一个函数**；
  *  ② 名字通式 `<stem>_<本地 YYYYMMDD_HHMMSS>.html` ＋ 绝对路径 ＋ `bytes`＝**写后回读**的真实字节数；
  *  ③ 同秒递补（本体／`_2`／`_3`，槽位连续）与「绝不静默覆盖」；
- *  ④ `onExists` 四态 ＋ `reuse` 两支（`byDay`／`byContent`）；
+ *  ④ `onExists` 四态 ＋ `reuse` 两支（`byDay`／`byContent`）＋ **两个名字口子 `stem`／`file` 的正交性**
+ *     （互斥、`file` 配 `succession` 阻断、`file` 的扩展名与结尾点不被当主体处理）；
  *  ⑤ 失败**真抛**：落点建不动时进程非 0、占位文件不被改写，且不把 `mkdirSync` 的失败当「候选撞名」空转。
  *
  * 为什么真 spawn：模块内直调测不到「包名子路径出口」这一层（`exports` 映射写错时模块内 import 照样绿）；
@@ -150,11 +151,11 @@ test('#237 ④ onExists:"fail"：撞名即抛 EEXIST，不递补、不改写已�
   assert.equal(r.json.hit.count, 1, 'fail 态不得派生第二份');
 });
 
-test('#237 ④b onExists:"overwrite"：落点＝<dir>/<stem> 逐字（stem 含扩展名），覆盖不递补', () => {
+test('#237 ④b onExists:"overwrite" ＋ file：落点＝<dir>/<file> 逐字，覆盖不递补', () => {
   const dir = mkTmp('over');
   const r = spawnSave(dir, [
-    "const a = saveHtmlFile({ dir: DIR, stem: '我的帮助.html', html: 'X', onExists: 'overwrite' });",
-    "const b = saveHtmlFile({ dir: DIR, stem: '我的帮助.html', html: 'YY', onExists: 'overwrite' });",
+    "const a = saveHtmlFile({ dir: DIR, file: '我的帮助.html', html: 'X', onExists: 'overwrite' });",
+    "const b = saveHtmlFile({ dir: DIR, file: '我的帮助.html', html: 'YY', onExists: 'overwrite' });",
     "send({ a: basename(a.path), b: basename(b.path), body: readFileSync(b.path, 'utf8'), files: readdirSync(DIR) });",
   ].join('\n'));
   assert.equal(r.status, 0, r.stderr);
@@ -162,6 +163,57 @@ test('#237 ④b onExists:"overwrite"：落点＝<dir>/<stem> 逐字（stem 含�
   assert.equal(r.json.b, '我的帮助.html');
   assert.equal(r.json.body, 'YY', '后写覆盖前写');
   assert.deepEqual(r.json.files, ['我的帮助.html'], '不递补、不留第二份');
+});
+
+test('#237 ④b2 stem 与 file 是两个正交的口子：互斥、且 file 不许配 succession', () => {
+  const dir = mkTmp('two-ports');
+  const r = spawnSave(dir, [
+    "const e = (f) => { try { return { ok: f() }; } catch (x) { return { code: x.code, message: String(x.message) }; } };",
+    // 同时给 → 阻断（说不清要落哪个）
+    "const both = e(() => saveHtmlFile({ dir: DIR, stem: '甲_HELP', file: '乙.html', html: 'H', onExists: 'overwrite' }));",
+    // file ＋ succession → 阻断（那一态要加时间戳，与「逐字名字」自相矛盾）
+    "const stamped = e(() => saveHtmlFile({ dir: DIR, file: '丙.html', html: 'H', onExists: 'succession' }));",
+    // 都不给 → 阻断
+    "const none = e(() => saveHtmlFile({ dir: DIR, html: 'H' }));",
+    // overwrite ＋ stem（不带扩展名）→ 本件补 .html，正常落
+    "const stemOnly = saveHtmlFile({ dir: DIR, stem: '丁', html: 'S', onExists: 'overwrite' });",
+    "send({ both, stamped, none, stemName: basename(stemOnly.path), files: readdirSync(DIR) });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.both.code, 'EINVAL', 'stem 与 file 同时给必须阻断');
+  assert.match(r.json.both.message, /只能给一个/);
+  assert.equal(r.json.stamped.code, 'EINVAL', 'file 配 succession 必须阻断');
+  assert.match(r.json.stamped.message, /succession/);
+  assert.equal(r.json.none.code, 'EINVAL', '一个名字都不给必须阻断');
+  assert.equal(r.json.stemName, '丁.html', 'overwrite ＋ stem 时扩展名由本件补');
+  assert.deepEqual(r.json.files, ['丁.html'], '两条阻断路径都不得落盘');
+});
+
+test('#237 ④b3 onExists:"fail" ＋ file：撞名即抛，逐字落点不带时间戳', () => {
+  const dir = mkTmp('fail-file');
+  const r = spawnSave(dir, [
+    "const a = saveHtmlFile({ dir: DIR, file: '定名.html', html: 'A', onExists: 'fail' });",
+    "let hit = null;",
+    "try { saveHtmlFile({ dir: DIR, file: '定名.html', html: 'B', onExists: 'fail' }); } catch (e) { hit = e.code; }",
+    "send({ first: basename(a.path), hit, body: readFileSync(a.path, 'utf8'), count: readdirSync(DIR).length });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.first, '定名.html', 'fail ＋ file：名字逐字、不带时间戳');
+  assert.equal(r.json.hit, 'EEXIST');
+  assert.equal(r.json.body, 'A', '已有那份不得被改写');
+  assert.equal(r.json.count, 1, 'fail 态不派生第二份');
+});
+
+test('#237 ④b4 file 的结尾点与空格不当成主体：逐字落点保留扩展名', () => {
+  const dir = mkTmp('file-tail');
+  const r = spawnSave(dir, [
+    "const x = saveHtmlFile({ dir: DIR, file: '带点.html', html: 'S', onExists: 'overwrite' });",
+    "const y = saveHtmlFile({ dir: DIR, file: 'a/b.html', html: 'S', onExists: 'overwrite' });",
+    "send({ x: basename(x.path), y: basename(y.path) });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.x, '带点.html', 'file 的扩展名不得被当主体结尾的点剥掉');
+  assert.equal(r.json.y, 'a_b.html', '非法字符仍照主体同一套口径洗成 _');
 });
 
 test('#237 ④c reuse:"byDay"：当天已有同一主体的一份 → 返回它，不新建、不改写', () => {

@@ -202,9 +202,10 @@ export function deliverHtml(input: {
       // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--output` 亦文档化为
       // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
       // `bad-input` → **产物已写盘却 exit 2**。共用件回执的 `path` 恒为绝对路径（`resolve(dir)` ＋ 文件名）。
+      // #237：走 `file`（确切文件名）而不是把 `basename(abs)` 当 `stem`——两件事各走各的口子。
       const abs = resolve(input.explicit);
       return saveHtmlFile({
-        dir: dirname(abs), stem: basename(abs), html: input.html, onExists: 'overwrite',
+        dir: dirname(abs), file: basename(abs), html: input.html, onExists: 'overwrite',
       });
     }
     const landing = defaultLanding(input.key, {
