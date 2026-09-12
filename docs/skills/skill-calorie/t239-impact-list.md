@@ -46,7 +46,7 @@ assembleDocPage、promptCopyArea、dataCopyArea、copyArea、copyLog、notice、
 | 导出 | 吃什么 | 出什么 | 关键性质 |
 |---|---|---|---|
 | `copyArea(input)` | 5 个可填位：`title?`／`prompt?`／`data?`／`log?`／`emptyText?` | 一个复制区：0–3 颗按钮；**三样全没给**出一句空态、不出按钮 | `copyArea({title,data})` 与今天的 `dataCopyArea(title,data)` **产物逐字相同**（其余 46 张页可机械替换） |
-| `copyLog(input)` | 本次执行的过程证据：`command`／`table?`／`m5Line?`／`actionAt?`／`version?` | `CopyLogFields`（6 段的第 2–6 段入参，`buildLogText` 的正本入参类型） | 第 5 段缺 `actionAt` 时取 `nowStamp()`（唯一时间戳来源） |
+| `copyLog(input)` | 本次执行的过程证据：`command`／`source?`／`m5Line?`／`actionAt`（必填）／`version?` | `CopyLogFields`（6 段的第 2–6 段入参，`buildLogText` 的正本入参类型） | 时间戳**由页面层供给**（写库页给 `receipt.meta.actionAt`、只读页给渲染时刻 `nowStamp()`）——共用位不反向依赖渲染层的取时件 |
 | `notice(input)` | `msg`／`detail?`／`title?`／`icon?` | toast 形态的静态提示块（`renderFeedbackBlock` ＋ `renderToast`） | 不自造第二条提示通道 |
 
 按钮一律走 `renderCopyBlock`（`dataActionId` 缺省 `ilife-copy-data`、`logActionId` 缺省 `ilife-copy-log`，文案取冻结缺省「复制数据／复制日志」）；序列化走 `buildDataText`／`buildLogText`。**卡路里侧不自造按钮、不自造 id、不自造序列化**。

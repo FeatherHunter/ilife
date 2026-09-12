@@ -16,13 +16,16 @@
  * 对外 5 个名字：`promptCopyArea`／`dataCopyArea`（#90 起既有，签名不动）＋
  * `copyArea`／`copyLog`／`notice`（#239 新增）。入参类型不导出——调用方传字面量即可
  * （同 `docPage.ts` 的 `DocPageInput`）。
+ *
+ * **今天有调用方的是前 4 个**：`promptCopyArea`／`dataCopyArea` 与场景 07 五张页用的
+ * `copyArea`／`copyLog`。`notice` 还没有调用方（场景 07 四张页的反馈面已由页面运行时自带）——
+ * 它是整批按域接线与 #238 返修时的提示出口，见 `docs/skills/skill-calorie/t239-delivery.md`。
  */
 import { renderCopyBlock, renderEmptyBlock, renderFeedbackBlock, renderPreBlock } from 'base-paint/blocks';
 import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, DataTextInput, LogTextInput, ToastIcon } from 'base-paint';
 import { DB_FILENAME } from '../paths.js';
 import { copyActionHtml } from '../render/copy.js';
-import { nowStamp } from '../render/receipt.js';
 
 /** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
 const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
@@ -53,8 +56,9 @@ interface CopyLogInput {
   readonly source?: string;
   /** 写库回执的 M5 整行（第 4 段后半；库里写了哪些字段、影响几行）。 */
   readonly m5Line?: string;
-  /** 写库回执的写入时刻（第 5 段）；缺省＝渲染时刻。 */
-  readonly actionAt?: string;
+  /** 时间戳（第 5 段）：写库页给 `receipt.meta.actionAt`，只读页给渲染时刻 `nowStamp()`。
+   *  **必填，本件不自己取时钟**——共用位不反向依赖渲染层，时间戳由页面层供给。 */
+  readonly actionAt: string;
   /** 文档版本（第 5 段后半）；不给则不写这半句。 */
   readonly version?: string;
 }
@@ -105,14 +109,13 @@ export function dataCopyArea(title: string, input: DataTextInput): string {
   return copyArea({ title, data: input });
 }
 
-/** ④ 复制日志的第 2–6 段入参：本页由哪条命令渲染、写的是哪张表、跑了多少行、什么时候。 */
+/** ④ 复制日志的第 2–6 段入参：本页由哪条命令渲染、数据从哪来、写了多少行、什么时候。 */
 export function copyLog(input: CopyLogInput): CopyLogFields {
-  const stamp = input.actionAt === undefined || input.actionAt === '' ? nowStamp() : input.actionAt;
   return {
     thinking: LOG_THINKING,
     dataStructure: DB_FILENAME + (input.source === undefined || input.source === '' ? '' : ' ｜ ' + input.source),
     callChain: input.m5Line === undefined || input.m5Line === '' ? input.command : input.command + ' ｜ ' + input.m5Line,
-    timestamp: input.version === undefined || input.version === '' ? stamp : stamp + ' · 版本 ' + input.version,
+    timestamp: input.version === undefined || input.version === '' ? input.actionAt : input.actionAt + ' · 版本 ' + input.version,
     exception: LOG_EXCEPTION,
   };
 }

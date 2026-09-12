@@ -88,10 +88,10 @@ test('#239 日志六段：场景标识／思考链／数据结构／调用链（
   assert.ok(text.endsWith('异常\n无'), '第 6 段不是「无」');
   assert.equal(text.includes('(未知)'), false, '六段不得落 (未知) 占位');
 
-  // 只读页不给 actionAt：取渲染时刻（唯一时间戳来源 nowStamp 的格式）。
-  const auto = copyLog({ command: 'calorie-cmd-read calorie.view.profile', version: '0.1.0' });
-  assert.match(auto.timestamp, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} · 版本 0\.1\.0$/, '缺省时间戳不是 nowStamp 格式');
-  assert.equal(buildLogText({ envelope: ENVELOPE, copyLog: auto }).includes('(未知)'), false);
+  // 时间戳由调用方给（本件不自己取时钟——共用位不反向依赖渲染层的取时件），原样落进第 5 段。
+  const explicit = copyLog({ command: 'calorie-cmd-read calorie.view.profile', actionAt: '2026-09-01 08:00:00' });
+  assert.equal(explicit.timestamp, '2026-09-01 08:00:00', '时间戳没照给的值写');
+  assert.equal(buildLogText({ envelope: ENVELOPE, copyLog: explicit }).includes('(未知)'), false);
 });
 
 test('#239 弹提示：notice 走 base-render 的反馈区块（不自造提示通道）', () => {

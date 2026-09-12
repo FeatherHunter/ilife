@@ -18,6 +18,7 @@ import { getNutritionGoal } from '../fetch/nutritionGoal.js';
 import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 
 /** envelope 头（值对齐 `cli/keys.ts` ENVELOPE_VERSION／CALORIE_SKILL）。 */
@@ -34,6 +35,10 @@ export interface ProfileView {
   latestWeightKg: number | null;
   hasGoal: boolean;
 }
+
+/** 本能力的读数据来源（「复制日志」第 3 段后半；写库回执那两页用 `receipt.meta.source` 同形）。
+ *  档案现值与最新体重同出一份查询（`profileSnapshot`），故两个只读页共用这一个说法。 */
+export const PROFILE_SOURCE = 'user_profile ＋ weight_log';
 
 /** 档案现值（可缺）＋ 最新体重：本目录只此一份查询，`buildProfileView` 与写前页共用。 */
 export function profileSnapshot(db: DatabaseSync): { profile: ProfileRow | null; latestWeightKg: number | null } {
@@ -98,7 +103,10 @@ export function buildProfileViewDoc(v: ProfileView): string {
       data: { envelope },
       log: {
         envelope,
-        copyLog: copyLog({ command: 'calorie-cmd-read ' + VIEW_KEY, version: DOC_VERSION }),
+        copyLog: copyLog({
+          command: 'calorie-cmd-read ' + VIEW_KEY, source: PROFILE_SOURCE,
+          actionAt: nowStamp(), version: DOC_VERSION,
+        }),
       },
     }),
   ].join('');

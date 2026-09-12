@@ -235,7 +235,9 @@ function profileDiffItems(before: ProfileRow | null, after: ProfileRow, fields: 
   return fields.map((f) => ({ status: f, reason: profileValue(before, f) + ' → ' + profileValue(after, f) }));
 }
 
-/** 页面「复制日志」第 4 段的命令原文：与 AI 实跑那条同形（含本次 `--params`），可照抄重跑。 */
+/** 页面「复制日志」第 4 段的命令原文：与 AI 实跑那条同形（含本次 `--params`），可照抄重跑。
+ *  参数值里若出现半角单引号，原文会在此处被截断——与 `profile/setup.ts` 的 prompt 写命令同一口径，
+ *  真要照抄重跑请自行把单引号转义（本仓命令原文一贯用单引号包 JSON）。 */
 function commandLine(key: string, params: Record<string, unknown>): string {
   return 'calorie-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";
 }

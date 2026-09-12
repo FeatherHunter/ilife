@@ -18,9 +18,10 @@ import type { ProfileRow } from '../fetch/profile.js';
 import { ACTIVITY_LEVELS } from '../kcal.js';
 import { ACTIVITY_LEVEL_LABELS, TDEE_ACTIVITY_FACTORS, calcTdee } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { nowStamp } from '../render/receipt.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
-import { profileSnapshot } from './view.js';
+import { profileSnapshot, PROFILE_SOURCE } from './view.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -262,7 +263,10 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
       data: { envelope },
       log: {
         envelope,
-        copyLog: copyLog({ command: 'calorie-cmd-read ' + WIZARD_KEY, version: DOC_VERSION }),
+        copyLog: copyLog({
+          command: 'calorie-cmd-read ' + WIZARD_KEY, source: PROFILE_SOURCE,
+          actionAt: nowStamp(), version: DOC_VERSION,
+        }),
       },
     }),
   ].join('');

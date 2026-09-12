@@ -142,6 +142,9 @@ test('#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，�
   assert.deepEqual([...v.file.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]),
     ['ilife-copy-data', 'ilife-copy-log'], '结果页按钮不对');
   assert.ok(v.file.includes('calorie-cmd-read calorie.view.profile'), '结果页日志缺命令原文');
+  assert.ok(v.file.includes('calorie_data.db ｜ user_profile'), '结果页日志第 3 段缺库表名');
+  // 只读页的时间戳＝渲染时刻（页面层用 nowStamp 供给，共用件自己不取时钟）。
+  assert.match(v.file, /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} · 版本 0\.1\.0/, '结果页日志缺时间戳或版本');
 
   // 预检确认页：prompt ＋ 数据 ＋ 日志三颗按钮，id 两两不同（页内唯一）。
   const w = runCli(mkDb(true), 'calorie.view.profile-wizard', {});
@@ -150,6 +153,7 @@ test('#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，�
   assert.deepEqual([...w.file.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]),
     ['ilife-help-copy-prompt', 'ilife-copy-data', 'ilife-copy-log'], '预检确认页按钮不对');
   assert.ok(w.file.includes('calorie-cmd-read calorie.view.profile-wizard'), '预检确认页日志缺命令原文');
+  assert.ok(w.file.includes('calorie_data.db ｜ user_profile'), '预检确认页日志第 3 段缺库表名');
 });
 
 test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）', () => {
