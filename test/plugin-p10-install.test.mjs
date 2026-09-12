@@ -38,14 +38,14 @@ describe('P10 安装验收', () => {
   });
   it('单品 dependencies 硬依赖总管（开发兜底声明仍在）', () => {
     // #48 样板线：plugin-calorie 已转正式版号＋skill 同版本 ^ 声明；#50 首对复制 plugin-chef、home 对 plugin-home-ilife、bill 对 plugin-bill-ilife、schedule 对 plugin-schedule-ilife、memo 对复制 plugin-memo-ilife 同改。
-    // 本批发版窗口扩到备忘录线 → 作息线：总管依赖同步升 ^0.2.0（skill 侧精确 pin 由 plugin-p10-boundaries 断言）。
-    const FORMAL48 = new Set(['plugin-calorie', 'plugin-chef', 'plugin-home-ilife', 'plugin-bill-ilife', 'plugin-schedule-ilife', 'plugin-memo-ilife']);
-    const LIFEPACK123 = { 'plugin-calorie': '^0.2.0', 'plugin-memo-ilife': '^0.2.0', 'plugin-schedule-ilife': '^0.2.0' };
+    // 本批发版窗口扩到备忘录线 → 作息线 → 记账线／大厨线／居家线：总管依赖＝工作区**同版本线 caret**
+    // （期望值现取自工作区，旧实现硬编码 `^0.1.0`，发版即红——#123 口径；skill 侧精确 pin 由 plugin-p10-boundaries 断言）。
+    const packVer = pkg('plugin-manager').version;
     for (const [dir, single] of SINGLES) {
       const j = pkg(dir);
-      assert.equal(j.dependencies?.['dsh-life-pack'], FORMAL48.has(dir) ? (LIFEPACK123[dir] ?? '^0.1.0') : 'workspace:*', single + ' 必须 dependencies 硬依赖总管');
+      assert.equal(j.dependencies?.['dsh-life-pack'], '^' + packVer, single + ' 必须 dependencies 硬依赖总管');
       assert.ok(!(j.peerDependencies?.['dsh-life-pack']), single + ' 不许走 peer');
-      if (FORMAL48.has(dir)) assert.ok(!JSON.stringify(j.dependencies).includes('workspace:'), single + ' 依赖不许外泄 workspace:');
+      assert.ok(!JSON.stringify(j.dependencies).includes('workspace:'), single + ' 依赖不许外泄 workspace:');
     }
   });
   it('装配行双含：cordis.patch.yml insert id/name 与包名一致', () => {

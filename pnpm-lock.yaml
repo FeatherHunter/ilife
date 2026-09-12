@@ -32,8 +32,6 @@ importers:
         specifier: ^0.3.0
         version: link:../base-link-core
 
-  packages/ilife-skills: {}
-
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:

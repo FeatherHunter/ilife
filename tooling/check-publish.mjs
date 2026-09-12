@@ -53,7 +53,7 @@ function rmTmp(p, ownerRoot) { rmSync(assertTmpTarget(p, ownerRoot), { recursive
 const SKILLS = ['skill-calorie', 'skill-chef', 'skill-bill', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
 const PLUGINS = ['dsh-calorie', 'dsh-chef', 'dsh-bill-ilife', 'dsh-home-ilife', 'dsh-memo-ilife', 'dsh-schedule-ilife'];
 const COMBOS = ['base-combos'];
-const PINNED = ['dsh-life-pack', 'base-link-core', 'base-paint', 'ilife-skills'];
+const PINNED = ['dsh-life-pack', 'base-link-core', 'base-paint'];
 const ALL13 = [...COMBOS, ...SKILLS, ...PLUGINS];
 const WITH_TEMPLATES = ['skill-calorie', 'skill-chef', 'skill-bill', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
 // #95：有模板装载器的包，其 templates/ 逐件点名（G2 只断言目录存在会漏「少发几件」）。
@@ -62,7 +62,7 @@ const TEMPLATE_NAMES = {
 };
 const CONTRACT_KEY = { 'dsh-calorie': 'calorie.help.center', 'dsh-chef': 'chef.help.lookup', 'dsh-bill-ilife': 'bill.help.lookup', 'dsh-home-ilife': 'home.help.lookup', 'dsh-memo-ilife': 'memo.stats', 'dsh-schedule-ilife': 'schedule.help.lookup' };
 const PLUGIN_OF = { 'dsh-calorie': 'skill-calorie', 'dsh-chef': 'skill-chef', 'dsh-bill-ilife': 'skill-bill', 'dsh-home-ilife': 'skill-home', 'dsh-memo-ilife': 'skill-memo-ilife', 'dsh-schedule-ilife': 'skill-schedule' };
-const DIRM = { 'dsh-calorie': 'plugin-calorie', 'dsh-chef': 'plugin-chef', 'dsh-bill-ilife': 'plugin-bill-ilife', 'dsh-home-ilife': 'plugin-home-ilife', 'dsh-memo-ilife': 'plugin-memo-ilife', 'dsh-schedule-ilife': 'plugin-schedule-ilife', 'dsh-life-pack': 'plugin-manager', 'skill-calorie': 'skill-calorie', 'skill-chef': 'skill-chef', 'skill-bill': 'skill-bill', 'skill-home': 'skill-home', 'skill-memo-ilife': 'skill-memo-ilife', 'skill-schedule': 'skill-schedule', 'base-combos': 'base-combos', 'base-link-core': 'base-link-core', 'base-paint': 'base-render', 'ilife-skills': 'ilife-skills' };
+const DIRM = { 'dsh-calorie': 'plugin-calorie', 'dsh-chef': 'plugin-chef', 'dsh-bill-ilife': 'plugin-bill-ilife', 'dsh-home-ilife': 'plugin-home-ilife', 'dsh-memo-ilife': 'plugin-memo-ilife', 'dsh-schedule-ilife': 'plugin-schedule-ilife', 'dsh-life-pack': 'plugin-manager', 'skill-calorie': 'skill-calorie', 'skill-chef': 'skill-chef', 'skill-bill': 'skill-bill', 'skill-home': 'skill-home', 'skill-memo-ilife': 'skill-memo-ilife', 'skill-schedule': 'skill-schedule', 'base-combos': 'base-combos', 'base-link-core': 'base-link-core', 'base-paint': 'base-render' };
 const pkgDir = (name) => join(root, 'packages', DIRM[name]);
 const pkgJson = (name) => JSON.parse(readFileSync(join(pkgDir(name), 'package.json'), 'utf8'));
 
@@ -103,7 +103,17 @@ function assertSameVersionLine(dependent, depName, range) {
 }
 
 function gatePre() {
-  const names = SCOPE ? [...SCOPE] : readdirSync(join(root, 'packages'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => JSON.parse(readFileSync(join(root, 'packages', d, 'package.json'), 'utf8'))).filter((j) => j && j.name && !j.private).map((j) => j.name);
+  // 全量分支（不带 --only）此前有两处潜伏毛病（#48 起没人走过这条路，因为 CI 与脚本一直带 --only）：
+  //   ① 把 `Dirent` 当路径传给 `join` ⇒ `ERR_INVALID_ARG_TYPE`；取目录名要 `d.name`。
+  //   ② `packages/` 下还有改名后留下的**构建残留目录**（`plugin-bill`／`plugin-home`／`plugin-memo`／
+  //      `plugin-schedule`／`skill-memo`：无 `package.json`、git 未跟踪）⇒ 必须跳过没有 package.json 的目录。
+  const names = SCOPE ? [...SCOPE] : readdirSync(join(root, 'packages'), { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => join(root, 'packages', d.name, 'package.json'))
+    .filter((p) => existsSync(p))
+    .map((p) => JSON.parse(readFileSync(p, 'utf8')))
+    .filter((j) => j && j.name && !j.private)
+    .map((j) => j.name);
   for (const n of names) {
     if (!DIRM[n]) { fail('作用域含未知包：' + n); continue; }
     const text = readFileSync(join(pkgDir(n), 'package.json'), 'utf8');

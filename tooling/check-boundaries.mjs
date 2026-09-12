@@ -20,7 +20,7 @@ const present = readFileSync(join(root, 'packages/base-combos/src/present.ts'), 
 assert(!present.includes('base-paint') && !/from\s+['"].*(?:render|paint)/.test(present), 'present 只许字符串级引用，禁 import render');
 const tsFiles = readdirSync(join(root, 'packages/base-link-core/src'));
 const coreSrc = tsFiles.map((f) => readFileSync(join(root, 'packages/base-link-core/src', f), 'utf8')).join('\n');
-assert(!/from\s+['"](?:@[A-Za-z_]+\/|base-|skill-|plugin-|ilife-skills|dsh-)/.test(coreSrc), 'link-core 源码不引用任何 workspace 包');
+assert(!/from\s+['"](?:@[A-Za-z_]+\/|base-|skill-|plugin-|dsh-)/.test(coreSrc), 'link-core 源码不引用任何 workspace 包');
 // 装配归一：注册原语只许住 render
 const grepHit = ['base-link-core/src', 'base-combos/src'].some((d) =>
   readdirSync(join(root, 'packages', d)).some((f) =>

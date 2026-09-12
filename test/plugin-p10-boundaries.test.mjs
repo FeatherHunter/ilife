@@ -28,15 +28,15 @@ describe('P10 依赖方向', () => {
     const depBlob = JSON.stringify({ ...m.dependencies, ...m.devDependencies, ...m.peerDependencies });
     for (const n of SINGLE_NPMS) assert.ok(!depBlob.includes(n), '总管不许依赖单品：' + n);
     // #48 样板线：plugin-calorie 总管依赖已转正式版号（B① 全部换已发布号）；#50 首对复制 plugin-chef、home 对 plugin-home-ilife、bill 对 plugin-bill-ilife、schedule 对 plugin-schedule-ilife、memo 对复制 plugin-memo-ilife 同改（见 docs/skill-landing-r2.md）。
-    // 本批发版窗口扩到备忘录线 → 作息线：总管仍 ^0.2.0，skill 侧按 #129 精确 pin 工作区版本。
-    const FORMAL48 = new Set(['plugin-calorie', 'plugin-chef', 'plugin-home-ilife', 'plugin-bill-ilife', 'plugin-schedule-ilife', 'plugin-memo-ilife']);
+    // 本批发版窗口扩到备忘录线 → 作息线 → 记账线／大厨线／居家线：总管＝工作区**同版本线 caret**，
+    // 技能＝**#129 精确 pin**（caret ＋ 存量 lockfile 会让旧 skill 残留）。两个期望值都**现取自工作区**
+    // （#123 口径：断言与版本号解耦——旧实现硬编码 `^0.1.0`，发版即红）。
     const SKILL_OF = { 'plugin-calorie': 'skill-calorie', 'plugin-chef': 'skill-chef', 'plugin-home-ilife': 'skill-home', 'plugin-bill-ilife': 'skill-bill', 'plugin-schedule-ilife': 'skill-schedule', 'plugin-memo-ilife': 'skill-memo-ilife' };
-    const WINDOW123 = { 'plugin-calorie': { 'dsh-life-pack': '^0.2.0', 'skill-calorie': '0.2.3' }, 'plugin-memo-ilife': { 'dsh-life-pack': '^0.2.0', 'skill-memo-ilife': '0.2.0' }, 'plugin-schedule-ilife': { 'dsh-life-pack': '^0.2.0', 'skill-schedule': '0.2.0' } };
-    const rangeOf = (d, name) => WINDOW123[d]?.[name] ?? '^0.1.0';
+    const packVer = pkg('plugin-manager').version;
     for (const d of SINGLES) {
       const j = pkg(d);
-      assert.equal(j.dependencies?.['dsh-life-pack'], FORMAL48.has(d) ? rangeOf(d, 'dsh-life-pack') : 'workspace:*', d + ' 总管硬依赖口径');
-      if (FORMAL48.has(d)) assert.equal(j.dependencies?.[SKILL_OF[d]], rangeOf(d, SKILL_OF[d]), d + ' 须同版本 ^ 声明对应 skill');
+      assert.equal(j.dependencies?.['dsh-life-pack'], '^' + packVer, d + ' 总管硬依赖口径（工作区同版本线 caret）');
+      assert.equal(j.dependencies?.[SKILL_OF[d]], pkg(SKILL_OF[d]).version, d + ' 须精确 pin 工作区技能版本（#129）');
     }
   });
   it('总管不 import 单品（源码级）', () => {

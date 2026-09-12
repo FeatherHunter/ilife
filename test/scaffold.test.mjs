@@ -7,8 +7,4 @@ describe('scaffold', () => {
     execFileSync(process.execPath, ['tooling/check-boundaries.mjs'], { cwd: new URL('..', import.meta.url), stdio: 'pipe' });
     assert.ok(true);
   });
-  it('快照 == 实际拉取版', () => {
-    execFileSync(process.execPath, ['tooling/write-snapshot.mjs', '--check'], { cwd: new URL('..', import.meta.url), stdio: 'pipe' });
-    assert.ok(true);
-  });
 });

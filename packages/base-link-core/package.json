@@ -1,6 +1,6 @@
 {
   "name": "base-link-core",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "联动沉底包：envelope+registry+runner+校验，零依赖",
   "type": "module",
   "main": "./dist/index.js",

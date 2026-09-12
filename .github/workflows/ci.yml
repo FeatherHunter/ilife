@@ -33,8 +33,6 @@ jobs:
       - run: pnpm doctor
       - run: pnpm test
       - run: pnpm boundaries
-      # Q92-①：构建忘写快照致误导 → CI 重 resolve 后 diff，不等 fail
-      - run: pnpm snapshot:check
       # #96：其余 5 技能 HTML 不回归门（per-skill HTML 逐件 sha256；base-* 影响面断言）
       #   本地同口径命令就是这一条：pnpm snapshot:html:check（见 tooling/skill-html-snapshot.mjs）
       - run: pnpm snapshot:html:check
@@ -48,21 +46,6 @@ jobs:
       - name: 取 master 基线
         run: git fetch origin master:master || git fetch origin master
       - run: pnpm changeset:status
-
-  # Q92-②：手改快照 → 快照只许构建写，git 校验拦截
-  snapshot-guard:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: 快照文件只许由构建改（手改即 fail）
-        run: |
-          if git diff --name-only origin/master...HEAD -- packages/ilife-skills/skill.snapshot.json | grep -q .; then
-            node tooling/write-snapshot.mjs --check
-          else
-            echo "snapshot untouched, skip"
-          fi
 
   publish-gates:
     # #48 发布门禁三门（R2 A+B）：G1 禁 workspace 外泄 + G2 tarball 清单 + G3 fresh-tmp 安装态双路
