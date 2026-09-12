@@ -81,7 +81,55 @@ foreach ($p in $pluginPins.Keys) {
 }
 Pop-Location
 
-"=== 5. 清理临时根（守卫：必须在 %TEMP% 下、且不在仓库内） ==="
+"=== 5. 第三方端到端：装 registry 上的技能包真跑一次 HELP 出件（隔离空库，零触碰真库） ==="
+# 判据（#220 目的地口径，但走**第三方安装路**而非工作区路）：
+#   npx 从 registry 装 skill-memo-ilife@期望版 → 跑 memo-cmd-read memo.help.lookup
+#   → exit 0／回执给绝对路径／文件真存在且够大／跑完空库里没有 memo 库目录（全程不开库）
+$smoke = Join-Path $env:TEMP ('ilife-smoke-' + (-join ((1..6) | ForEach-Object { 'abcdefghijkmnpqrstuvwxyz23456789'[(Get-Random -Max 32)] })))
+New-Item -ItemType Directory -Force -Path $smoke | Out-Null
+'{ "name": "ilife-smoke", "version": "0.0.0", "private": true }' | Out-File (Join-Path $smoke 'package.json') -Encoding utf8
+$fakeDb = Join-Path $smoke 'db'
+New-Item -ItemType Directory -Force -Path $fakeDb | Out-Null
+Push-Location $smoke
+$savedDb = $env:SKILLS_DB_PATH
+$savedReg = $env:npm_config_registry
+$env:SKILLS_DB_PATH = $fakeDb
+$env:npm_config_registry = $REG
+$stdout = & { npx --cache (Join-Path $smoke 'npm-cache') -y -p "skill-memo-ilife@$($want['skill-memo-ilife'])" memo-cmd-read memo.help.lookup 2>$null }
+$npxExit = $LASTEXITCODE
+$rawOut = ($stdout | Out-String).Trim()
+Report ($npxExit -eq 0) "第三方 npx 跑 memo.help.lookup exit=$npxExit"
+$envl = $null
+try { $envl = $rawOut | ConvertFrom-Json } catch { }
+if ($envl) {
+  $found = @()
+  foreach ($cand in @('data.output', 'data.delivery.path', 'delivery.path')) {
+    $v = $envl
+    foreach ($seg in $cand.Split('.')) { if ($v) { $v = $v.PSObject.Properties[$seg].Value } }
+    if ($v) { $found += "$cand=$v" }
+  }
+  Report ($found.Count -gt 0) ("回执给了产物路径：" + ($found -join '；'))
+  foreach ($entry in $found) {
+    $outPath = $entry.Split('=', 2)[1]
+    if (Test-Path $outPath) {
+      $len = (Get-Item $outPath).Length
+      Report ($len -gt 50000) "产物存在且 size=$len B"
+      $text = [System.IO.File]::ReadAllText($outPath, [System.Text.Encoding]::UTF8)
+      Report ($text.Substring(0, [Math]::Min(3000, $text.Length)) -match 'ilife-page') "产物首段含 ilife-page 标记"
+    } else {
+      Report $false "产物路径不存在：$outPath"
+    }
+  }
+} else {
+  Report $false "npx 的 stdout 不是可解析 JSON"
+  "    原文前 300 字：" + $rawOut.Substring(0, [Math]::Min(300, $rawOut.Length))
+}
+Report (-not (Test-Path (Join-Path $fakeDb 'memo'))) "跑完隔离库仍无 memo 库目录（不开库＝零触碰）"
+$env:SKILLS_DB_PATH = $savedDb
+if ($null -eq $savedReg) { Remove-Item Env:\npm_config_registry -ErrorAction SilentlyContinue } else { $env:npm_config_registry = $savedReg }
+Pop-Location
+
+"=== 6. 清理临时根（守卫：必须在 %TEMP% 下、且不在仓库内） ==="
 if ($tmp.StartsWith($env:TEMP) -and -not $tmp.StartsWith($ROOT)) {
   Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
   "  已清理 $tmp"
