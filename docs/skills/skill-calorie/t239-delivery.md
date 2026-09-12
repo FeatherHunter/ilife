@@ -55,7 +55,7 @@
 | 三条性质 | `node --test test/copy-component-179.test.mjs` → 5/5 绿（① 逐字相等 ② 第二颗按钮 id／文案／`data-t` ③ 空态无按钮 ＋ prompt-only 不补空态） |
 | 四张页 ＋ 预检确认页 | `node --test test/profile-doc-179.test.mjs` → 5/5 绿（含「其余 32 条写命令仍是原回执片段」的反面断言） |
 | **其余 50 张页逐字节** | `before-239` vs `after-239`：**50／50 哈希相同、字节相同**（`copyArea({title,data})` 与 `dataCopyArea` 逐字相等在产物层成立） |
-| 全包测试 | `node --test packages/skill-calorie/test/*.test.mjs` → **430 条，429 通过，1 失败**；唯一那条是 #180 有意先红的防回退断言（`no-script-commands-180.test.mjs`，账目 733 条） |
+| 全包测试 | `node --test packages/skill-calorie/test/*.test.mjs` → **424 条，423 通过，1 失败**；唯一那条是 #180 有意先红的防回退断言（`no-script-commands-180.test.mjs`，账目 733 条）。**注**：`softdelete-125`（三路径幂等）在并发跑整包时偶发一条红，单跑与重跑都绿——属测试并发噪声，本次没动过它 |
 | 边界检查 | `node tooling/check-boundaries.mjs` → PASS |
 | UI 四关（6 张页 × 390／1440） | ① 横向溢出 0 件（两档全部）② 触控：<40 的 0 个；<44 的只在 1440 桌面档＝3 颗复制按钮（520×40，共享层冻结值，属 #238 待裁的口径冲突）③ 对比度低件 0／正文最小字号问题件 0 ④ 间距集合成体系 |
 | 产物形态 | 10 张页（5 张 × 空库／有档案）exit 0 ＋ `<!doctype html>` ＋ charset ＋ style ＋ 无残留标记；空库查档案仍 exit 4 且不落空页（既有缺失阻断口径） |
