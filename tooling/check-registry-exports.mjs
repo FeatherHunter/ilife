@@ -26,7 +26,7 @@
  * 退出码：0 = registry 安装态 import 得起来；1 = 有子路径缺失（**先补发依赖包再发**）。
  */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -105,9 +105,18 @@ function exportReachable(exports, subpath) {
   return Object.values(exports).some((v) => exportReachable(v, subpath));
 }
 
-/** 扫工作区 dist：收集 `from '<本仓依赖>/<子路径>'` */
+/** 扫工作区 dist：收集**真导入**的 `from '<本仓依赖>/<子路径>'`。
+ *
+ * 只认行首（可缩进）的 import／export 语句与动态 import(...)：
+ * 注释里的路径（例如 `base-paint/save-html` 出现在文档注释中）**不算** —— 早先版本用
+ * 全文正则，把卡路里 `dist/render/helpPaths.js` 注释里那句当成了依赖面，属假阳。
+ * 另跳过 >60 KB 的产物（模板内嵌的压缩 JS，内含大量 `import` 字样，扫它无意义且慢）。
+ */
 function subpathImportsOf(distDir) {
   const found = new Map();
+  const RE_STMT = /^\s*(?:import|export)\b[^;]*?\bfrom\s*['"]([^'".][^'"]*?)['"]/;
+  const RE_SIDE = /^\s*import\s*['"]([^'".][^'"]*?)['"]/;
+  const RE_DYN = /\bimport\s*\(\s*['"]([^'".][^'"]*?)['"]/g;
   const walk = (d) => {
     let entries;
     try { entries = readdirSync(d, { withFileTypes: true }); } catch { return; }
@@ -115,22 +124,35 @@ function subpathImportsOf(distDir) {
       const p = join(d, e.name);
       if (e.isDirectory()) { walk(p); continue; }
       if (!/\.(m?js)$/.test(e.name)) continue;
+      if (statSize(p) > 60_000) continue;
       const text = readFileSync(p, 'utf8');
-      for (const m of text.matchAll(/from\s*['"]([^'".][^'"]*?)['"]|import\s*\(\s*['"]([^'".][^'"]*?)['"]/g)) {
-        const spec = m[1] ?? m[2];
-        if (!spec || spec.startsWith('node:') || spec.startsWith('.')) continue;
+      const specs = [];
+      for (const line of text.split('\n')) {
+        const m = RE_STMT.exec(line) ?? RE_SIDE.exec(line);
+        if (m) specs.push(m[1]);
+        for (const dm of line.matchAll(RE_DYN)) specs.push(dm[1]);
+      }
+      for (const spec of specs) {
+        if (spec.startsWith('node:') || spec.startsWith('.')) continue;
         const parts = spec.split('/');
         const pkg = spec.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
         if (!DIRM[pkg]) continue;
-        const sub = spec.slice(pkg.length);
-        if (!sub) continue;
+        // 归一成 exports 的键形态：'base-paint/blocks' → './blocks'
+        // （不补这个点号就会去查 exports['/blocks']，把本来存在的 ./blocks 误报成缺）
+        const sub = '.' + spec.slice(pkg.length);
+        if (sub === '.') continue;
         if (!found.has(spec)) found.set(spec, new Set());
         found.get(spec).add(e.name);
+        if (process.env.ILIFE_REGEXPORTS_DEBUG) console.log(`    [debug] ${e.name}: ${spec} → sub=${sub}`);
       }
     }
   };
   walk(distDir);
   return found;
+}
+
+function statSize(p) {
+  try { return statSync(p).size; } catch { return 0; }
 }
 
 async function main() {
@@ -173,7 +195,8 @@ async function main() {
       if (!depDir) continue;
       const { version: depRegVer, exports: depExports } = await depExportsOf(dep);
       const wsExports = JSON.parse(readFileSync(join(root, 'packages', depDir, 'package.json'), 'utf8')).exports;
-      const sub = spec.slice(dep.length);
+      // 与扫描端同一口径：'base-paint/blocks' → './blocks'（漏这点号会把存在的子路径误报成缺）
+      const sub = '.' + spec.slice(dep.length);
       if (!exportReachable(depExports, sub)) {
         missing.push({ spec, dep, depRegVersion: depRegVer, workspaceHasIt: exportReachable(wsExports, sub) });
       }
