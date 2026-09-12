@@ -14,7 +14,9 @@ const phrases = [...wakeSrc.matchAll(/\{ phrase: '([^']+)'/g)].map((m) => m[1]);
 if (phrases.length === 0) throw new Error('抽不到唤醒词，检查 wakewords.ts 的写法');
 if (phrases[0] !== '私家大厨HELP') throw new Error('头词应为「私家大厨HELP」，实得：' + phrases[0]);
 
-const HEAD = '「私家大厨HELP」→chef.help.lookup 查怎么办；唯一出口 chef-cmd-read'
+// #215 起 head 改了口径（缺省＝落 HELP 文件，不再是「查怎么办」）：本脚本是这一行的生成地，
+// 与 SKILL.md 的 description 必须逐字同步，否则再跑一次就把说明面回退成旧口径。
+const HEAD = '「私家大厨HELP」→chef.help.lookup 落一份 HELP 文件并回执绝对路径；唯一出口 chef-cmd-read'
   + '（本地菜谱：搜菜／查看／加菜、跟着做、买菜清单合并、做菜记录与历史、体检排序）。触发词：';
 const frontmatter = ['---', 'name: skill-chef', 'description: "' + HEAD + phrases.join('、') + '"', '---', ''].join('\n');
 

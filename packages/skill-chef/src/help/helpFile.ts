@@ -8,9 +8,12 @@
  * ## 三件出口各碰什么（谁碰 IO）
  *
  *  - `buildChefHelpFileData(now, opts)`：**纯函数、零 IO**（`now` 显式传入 ⇒ 同一 `now` 两次调用逐字节一致）；
- *  - `buildChefHelpDelivery(dbPath, now)`：**只读**探针（`existsSync` 一次）＋ 落点意图 `{html, target}`；
+ *  - `buildChefHelpDelivery(dbPath, now)`：**只读**探针（`existsSync` 一次）＋ 交付产物 `{html, target, index}`
+ *    （`index` 是缺省支的信封载荷：域级索引，与页面**同一次装配、同一份资产**算出来，出口不再第二次读资产）；
+ *  - `buildChefLookupLanding(dbPath)`：速查支的落点**意图**（同目录、另一个主体；**不渲染页面**——速查页由
+ *    出口拿信封走本技能自己的 `templates/help.html` 渲染，落点与载荷因此不必互相等）；
  *  - `deliverChefHelp(...)`（`src/help/output.ts`）：唯一落盘点，写盘走共用件 `base-paint/save-html`。
- *  **本票不接 CLI 出口**（`src/cli/cmd_read.ts` 那一处归票 7 #215）。
+ *  CLI 出口（`src/cli/cmd_read.ts` 的 `chef.help.lookup` 分支）由 #215 接上，本件不自持 argv 口径。
  *
  * ## 页面级五项怎么取（裁决 6「逐项照记账」；逐条实测留证）
  *
@@ -56,16 +59,11 @@ import { renderHelpShellHtml } from 'base-paint/help-shell';
 import type { HelpShellData } from 'base-paint/help-shell';
 import type { SceneGroup } from 'base-paint';
 import { buildChefSceneData } from './sceneData.js';
+import { HELP_DIR_SEGMENTS, HELP_FILE_STEM, LOOKUP_FILE_STEM } from './manifest.js';
 import { ChefRenderError } from '../render/errors.js';
 
-/** 落点值（零逻辑）：老 `render_help.py:211-216` 的 `$CHEF_OUTPUT_DIR/help/私家大厨_HELP_<stamp>.html`
- *  在本仓的等价物——目录两段 `cook_html/help`、文件名主体 `私家大厨_HELP`（t236 §1.2 A2 定下的两个值）。
- *
- *  ⚠️ **票 7** 的 `src/help/manifest.ts`（A2）落盘后应由它单一持有、本件改成 `import`；本票不建 A2 件
- *  （按 t236 §1.2 的范围裁剪属票 7），故这两个值先落**这一处**、不落第二处。时间戳格式与同秒递补
- *  一概不在这里（唯一定义地＝共用件 `base-paint/save-html`）。 */
-const HELP_DIR_SEGMENTS = ['cook_html', 'help'] as const;
-const HELP_FILE_STEM = '私家大厨_HELP' as const;
+/** 落点值由 #215 收进 `src/help/manifest.ts`（A2）——本件从它 `import`，**不落第二处**（铁律二）。
+ *  时间戳格式与同秒递补一概不在本件（唯一定义地＝共用件 `base-paint/save-html`）。 */
 
 /** 首次使用横幅的 `prompt` 取自该场景的 `prompt_template`（单源，不抄第二份文案）。 */
 const CHEF_HELP_INIT_SCENE_ID = 'first_use' as const;
@@ -210,17 +208,66 @@ export function renderChefHelpHtml(data: ReturnType<typeof buildChefHelpFileData
   return renderHelpShellHtml(payload);
 }
 
-/** 交付意图：`{ html, target }`——出口拿它去 `deliverChefHelp({ explicit, target, html })`。
+/** 落点目录（两个主体共用一个目录）：`dbPath` 的**父目录** ＋ manifest 的两段，`resolve` 成绝对路径
+ *  （回执路径因此可用）。坏 `dbPath` 即抛，不返空落点。 */
+function chefHelpDir(dbPath: string): string {
+  if (!isNonEmptyString(dbPath)) fail('HELP 落点缺库路径（`dbPath` 须为非空字符串，缺失阻断不返空）。');
+  return resolve(dirname(dbPath), ...HELP_DIR_SEGMENTS);
+}
+
+/** 域级索引条目：`subgroupCount`／`sceneCount` 全是**数出来的**（与页面 `subtitle` 同一路子），
+ *  不写死 33／48——改内容资产即跟变。 */
+interface ChefHelpIndexItem {
+  readonly id: string;
+  readonly icon: string;
+  readonly label: string;
+  readonly subgroupCount: number;
+  readonly sceneCount: number;
+}
+
+/** 缺省支的信封载荷（`list` 形要 `items`）：一行一个功能域，另附三个合计。
+ *  与 `{html, target}` **同一次装配**产出 ⇒ 出口不必为了载荷再读一遍内容资产。 */
+function chefHelpIndex(groups: readonly SceneGroup[]): {
+  readonly items: readonly ChefHelpIndexItem[];
+  readonly total: number;
+  readonly sceneTotal: number;
+  readonly subgroupTotal: number;
+} {
+  let sceneTotal = 0;
+  let subgroupTotal = 0;
+  const items = groups.map((g) => {
+    const sceneCount = g.subgroups.reduce((n, sg) => n + sg.scenes.length, 0);
+    sceneTotal += sceneCount;
+    subgroupTotal += g.subgroups.length;
+    return Object.freeze({
+      id: g.id, icon: g.icon ?? '', label: g.label,
+      subgroupCount: g.subgroups.length, sceneCount,
+    });
+  });
+  return Object.freeze({ items: Object.freeze(items), total: items.length, sceneTotal, subgroupTotal });
+}
+
+/** 交付产物：`{ html, target, index }`——出口拿 `deliverChefHelp({ explicit, target, html })` 落盘，
+ *  拿 `index` 当缺省支的信封载荷（`{...index, mode:'file', bytes}`）。
  *  `target` 是结构上的 `HtmlLanding`（`base-paint/save-html` 的 `{dir, stem}`），时间戳与同秒递补由共用件钉死。
  *  `dbPath` ＝ **DB 文件路径**（`resolveDbPath()` 的返回值）：落点取它的父目录，初始化探针也探它本人。 */
 export function buildChefHelpDelivery(dbPath: string, now: Date): {
   readonly html: string;
   readonly target: { readonly dir: string; readonly stem: string };
+  readonly index: ReturnType<typeof chefHelpIndex>;
 } {
-  if (!isNonEmptyString(dbPath)) fail('HELP 落点缺库路径（`dbPath` 须为非空字符串，缺失阻断不返空）。');
-  const html = renderChefHelpHtml(buildChefHelpFileData(now, { initialized: chefHelpInitialized(dbPath) }));
+  const dir = chefHelpDir(dbPath);
+  const data = buildChefHelpFileData(now, { initialized: chefHelpInitialized(dbPath) });
   return Object.freeze({
-    html,
-    target: Object.freeze({ dir: resolve(dirname(dbPath), ...HELP_DIR_SEGMENTS), stem: HELP_FILE_STEM }),
+    html: renderChefHelpHtml(data),
+    target: Object.freeze({ dir, stem: HELP_FILE_STEM }),
+    index: chefHelpIndex(data.groups),
   });
+}
+
+/** 速查支的落点意图：与 HELP 文件**同目录、另一个主体**（分名，见 `manifest.ts` 的注释）。
+ *  **不渲染页面**——速查页由出口拿信封走本技能自己的 `templates/help.html` 渲染（#215）：
+ *  落点值与载荷因此不必互相等，本件也不预设那个页面的形状。 */
+export function buildChefLookupLanding(dbPath: string): { readonly dir: string; readonly stem: string } {
+  return Object.freeze({ dir: chefHelpDir(dbPath), stem: LOOKUP_FILE_STEM });
 }

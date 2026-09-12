@@ -14,7 +14,7 @@ export function buildHelpBlock() {
   const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
   for (const h of buildHelpLookup()) lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
   lines.push('');
-  lines.push('相关场景：' + keys.join('、') + '（8 联动，key 字符串后续票落表时冻结）。');
+  lines.push('相关场景：' + keys.join('、') + '（' + String(keys.length) + ' 联动，key 字符串后续票落表时冻结）。');
   return lines.join('\n');
 }
 

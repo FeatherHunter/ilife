@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -51,15 +51,38 @@ describe('私家大厨唯一出口 cmd_read（8 键全票）', () => {
     assert.equal(q.status, 0);
     assert.ok(JSON.parse(q.stdout).data.total >= 2);
   });
-  it('history record/query 闭环 + help 现找', () => {
+  it('history record/query 闭环 + help 交付（缺省落 HELP 文件／mode=lookup 落速查表）', () => {
     assert.equal(run(['chef.history.record', '--params', P({ name: '宫保虾球', rating: 5, feedback: '很香' })]).status, 0);
     const h = run(['chef.history.query', '--params', P({ name: '宫保虾球' })]);
     assert.equal(h.status, 0);
     assert.equal(JSON.parse(h.stdout).data.total, 1);
+    // #215：缺省＝落 HELP 文件（`cook_html/help/私家大厨_HELP_<stamp>.html`）＋ 回执绝对路径；
+    // 载荷＝10 个功能域的索引（速查那 37 条改走显式参数）。
     const all = run(['chef.help.lookup']);
     assert.equal(all.status, 0);
-    assert.equal(JSON.parse(all.stdout).data.total, 37);
+    const envAll = JSON.parse(all.stdout);
+    assert.equal(envAll.data.mode, 'file');
+    assert.equal(envAll.data.total, 10, '缺省载荷＝10 个功能域的索引');
+    assert.equal(envAll.data.sceneTotal, 48, '48 张场景卡（#213 资产）');
+    assert.equal(envAll.delivery.mode, 'file');
+    assert.match(envAll.delivery.path, /[\\/]cook_html[\\/]help[\\/]私家大厨_HELP_\d{8}_\d{6}\.html$/);
+    assert.equal(envAll.delivery.path.startsWith(DB), true, '回执是绝对路径');
+    assert.equal(existsSync(envAll.delivery.path), true, '产物必须真落盘');
+    assert.equal(envAll.delivery.bytes, readFileSync(envAll.delivery.path).length, 'bytes ＝实际落盘字节数');
+    // 速查支：显式 `mode:"lookup"`，与 HELP 文件**分名**，载荷＝今日的 37 条短语。
+    const lk = run(['chef.help.lookup', '--params', P({ mode: 'lookup' })]);
+    assert.equal(lk.status, 0);
+    const envLk = JSON.parse(lk.stdout);
+    assert.equal(envLk.data.total, 37);
+    assert.match(envLk.delivery.path, /[\\/]私家大厨_速查表_\d{8}_\d{6}\.html$/);
+    assert.notEqual(envLk.delivery.path, envAll.delivery.path);
+    // 互斥与非法：q 与 mode 不能同时给；mode 只认 lookup。
+    assert.equal(run(['chef.help.lookup', '--params', P({ q: '能做啥', mode: 'lookup' })]).status, 2);
+    assert.equal(run(['chef.help.lookup', '--params', P({ mode: '速查' })]).status, 2);
+    // q ＝现找：只回命中（stdout），不落盘。
     const q = run(['chef.help.lookup', '--params', P({ q: '帮我搜个虾球菜' })]);
+    assert.equal(q.status, 0);
+    assert.equal(JSON.parse(q.stdout).delivery, undefined, '现找不刷目录');
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'chef.recipe.search'));
   });
   it('update 接线 + filter 全维度（含川菜 exit0）', async () => {

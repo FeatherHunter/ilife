@@ -15,7 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import {
   HELP_SHELL_DATA_OPEN, HELP_SHELL_PREFIX, HELP_SHELL_SUFFIX, HELP_SHELL_TITLE_SLOT,
 } from 'base-paint/help-shell';
@@ -111,7 +111,14 @@ test('#214 落盘两态：target 走独占递补（同秒第二份 _2）／expli
     const second = deliverChefHelp({ target: { dir, stem: '私家大厨_HELP' }, html: HTML });
     assert.equal(first.mode, 'file');
     assert.match(first.path, /私家大厨_HELP_\d{8}_\d{6}\.html$/);
-    assert.equal(second.path.endsWith('_2.html'), true, '同秒第二份必须递补 _2（绝不覆盖）');
+    // ⚠️ 两次调用之间**可能跨秒**（各写 127 KB）：跨秒时第二个名字换成新时间戳，那是设计（时间戳到秒）。
+    // #216 轮实测这条断言会偶发红（4 次全包连跑里红 1 次）⇒ 改成「同秒才谈 _2」＋ 另锁一条永恒的「绝不覆盖」。
+    const stampOf = (p) => /^私家大厨_HELP_(\d{8}_\d{6})(?:_(\d+))?\.html$/.exec(basename(p));
+    const s1 = stampOf(first.path);
+    const s2 = stampOf(second.path);
+    assert.ok(s1 && s2, '两个名字都要合通式：' + first.path + ' ／ ' + second.path);
+    assert.notEqual(second.path, first.path, '第二份绝不覆盖第一份（无论是否同秒）');
+    if (s1[1] === s2[1]) assert.equal(s2[2], '2', '同秒第二份必须递补 _2（绝不覆盖）');
     assert.equal(readFileSync(first.path, 'utf8'), HTML, '落盘内容逐字节等于渲染产物');
     assert.equal(first.bytes, Buffer.byteLength(HTML, 'utf8'));
     assert.equal(readFileSync(first.path).length, first.bytes);
