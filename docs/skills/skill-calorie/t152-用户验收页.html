@@ -379,14 +379,13 @@
   <div class="n">1</div>
   <div class="b">
     <h3>先打开现成的 HTML 产物，亲眼看一遍</h3>
-    <p>双击打开下面这些文件（都是完整文档，<code>&lt;!doctype html&gt;</code> 起，有版面）：</p>
-    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\wizard-profile.html　—　预检确认页，65,439 字节</span>
-    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\view-profile.html　—　查档案结果页，63,838 字节</span>
-    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\receipt-set.html　—　设置档案写后回执，60,508 字节</span>
-    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\receipt-update.html　—　改档案写后回执，59,905 字节</span>
-    <span class="path mono">D:\ilife\.scratch\t152-user-accept\samples\receipt-activity.html　—　设活动量写后回执，60,146 字节</span>
-    <p class="dim">对着第 2 块每张卡的「你要看什么」逐条过；顺手把第 3 块的两颗复制按钮也点一下。<br>
-    顺便开一下真库目录，认认落盘位置：<code>D:\2Study\StudyNotes\.db\calorie_html\</code>。</p>
+    <p>双击打开下面这些文件（<b>都在真库位置</b>，都是完整文档，<code>&lt;!doctype html&gt;</code> 起，有版面）：</p>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\档案预检_20260913_020058.html　—　预检确认页，65,438 字节</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\档案视图_20260913_015932.html　—　查档案结果页，63,838 字节</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\设置档案_回执_20260913_015932.html　—　设置档案写后回执，60,426 字节</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\改档案_回执_20260913_015932.html　—　改档案写后回执（带改前→改后），59,209 字节</span>
+    <span class="path mono">D:\2Study\StudyNotes\.db\calorie_html\设活动量_回执_20260913_015932.html　—　设活动量写后回执，60,169 字节</span>
+    <p class="dim">对着第 2 块每张卡的「你要看什么」逐条过；顺手把第 3 块的两颗复制按钮也点一下（点「复制数据」应弹出三格式菜单）。</p>
   </div>
 </div>
 
@@ -401,7 +400,15 @@
       <li>拿到新产物之后，照着第 2 块每张卡的「你要看什么」再对一遍。</li>
     </ul>
     <p class="dim">新产物会落在 <code>D:\2Study\StudyNotes\.db\calorie_html\</code>，文件名形状：写后回执 ＝ <code>设置档案_回执_&lt;时间戳&gt;.html</code>／<code>改档案_回执_&lt;时间戳&gt;.html</code>／<code>设活动量_回执_&lt;时间戳&gt;.html</code>；预检确认页 ＝ <code>档案预检_&lt;时间戳&gt;.html</code>；查询结果页 ＝ <code>档案视图_&lt;时间戳&gt;.html</code>。</p>
-    <p class="dim"><b>特别试这两个现场：</b>①「改档案」在<b>没有档案</b>的新库上，应当报错而不是默默建一条；②「查档案」在<b>空库</b>上，应当报「未设档案」并且<b>不落盘</b>。</p>
+    <p class="dim"><b>特别试这两个现场：</b>①「改档案」在<b>没有档案</b>的新库上，应当报错而不是默默建一条；②「查档案」在<b>空库</b>上，应当报「未设档案」并且<b>不落盘</b>。（这两个现场我已实测通过，你只需在自己环境里复看一次。）</p>
+    <div class="note">
+      <b>如果第一条词就不对劲，先重启 DSH，再重试一次。</b>技能刚被换成指向本仓的联结（原先读的是一份陈旧拷贝 0.2.2，本仓是 0.2.3），而「DSH 会不会热读这个联结」<b>没有在本机实测过</b>——若它不热读，你在重启前看到的仍是旧行为。
+      <br>出现下面任一条，都说明是<b>装机层</b>问题、不是这四条命令的问题，重启后重试即可：
+      <br>· AI 回「没有 calorie.view.profile-wizard 这个命令」或类似「命令不存在」；
+      <br>· AI 给出的命令里还带着 <code>python scripts/…</code>；
+      <br>· 产物没落在 <code>calorie_html\</code> 下、或落成了没有 <code>&lt;!doctype html&gt;</code> 的片段。
+      <br>仍不对就把原话抄下来反馈，我按装机层查。
+    </div>
   </div>
 </div>
 
