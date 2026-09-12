@@ -37,28 +37,34 @@ const LOG = {
 test('#239 ① copyArea({title,data}) 与 dataCopyArea(title,data) 产物逐字相同', () => {
   const viaCopyArea = copyArea({ title: '复制数据', data: DATA });
   const viaDataCopyArea = dataCopyArea('复制数据', DATA);
-  assert.equal(viaCopyArea, viaDataCopyArea, '两处装配走散了，其余 46 张页的机械替换就不能字节不动');
+  assert.equal(viaCopyArea, viaDataCopyArea, '两处装配走散了，46 处调用点就不能共用同一条形态');
   assert.equal(viaCopyArea, dataCopyArea('复制数据', DATA), '同一个入参两次调用也必须同产物');
-  assert.ok(viaCopyArea.includes('ilife-copy-data'), '缺复制数据按钮');
-  assert.ok(viaCopyArea.includes(buildDataText(DATA)), '复制文本不是 buildDataText 的投影');
+  // 数据位恒是**三格式菜单**（#247 定案）：开合器 ＋ 三项，各自的 data-t 是三种格式的投影。
+  assert.ok(viaCopyArea.includes('data-fmt-open="1"'), '缺菜单开合器（数据位应恒出菜单）');
+  assert.deepEqual([...viaCopyArea.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv']);
+  for (const f of ['text', 'json', 'csv']) {
+    assert.ok(viaCopyArea.includes(buildDataText({ ...DATA, format: f }).slice(0, 40).replace(/&/g, '&amp;').replace(/"/g, '&quot;')),
+      '缺 ' + f + ' 格式的文本投影');
+  }
   assert.equal(viaCopyArea.includes('ilife-copy-log'), false, '没给日志却凭空出第二颗按钮');
 });
 
-test('#239 ② 给了 log 出第二颗按钮：id 与文案取冻结表，文本渲染期写进 data-t', () => {
+test('#239 ② 给了 log 出复制日志那颗：id 与文案取冻结表，文本渲染期写进 data-t', () => {
   const html = copyArea({ title: '复制数据', data: DATA, log: LOG });
   const ids = [...html.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(ids, ['ilife-copy-data', 'ilife-copy-log'], '按钮 id 不是冻结表那一对');
-  assert.equal((html.match(/<button/g) ?? []).length, 2, '复制区只该有两颗按钮');
-  assert.ok(html.includes('>复制数据</button>'), '复制数据文案不是冻结缺省');
+  // 数据那颗已并入菜单（不占 data-action-id），故页内只剩复制日志一颗 id。
+  assert.deepEqual(ids, ['ilife-copy-log'], '复制日志的 id 不是冻结表那一颗');
+  assert.equal((html.match(/<button/g) ?? []).length, 5, '开合器 1 ＋ 菜单项 3 ＋ 复制日志 1');
   assert.ok(html.includes('>复制日志</button>'), '复制日志文案不是冻结缺省');
+  assert.ok(html.includes('>复制数据 ▾</button>'), '开合器文案丢了（应是「复制数据 ＋ ▾」）');
   assert.ok(html.includes('data-t="'), '复制文本必须渲染期写死（点开才读＝点了没反应）');
   assert.equal(/<button[^>]*\son[a-z]+\s*=/i.test(html), false, '零内联事件处理器');
 
-  // 预检确认页那种「prompt ＋ 数据 ＋ 日志」三样：3 颗按钮，prompt 那颗走它自己的冻结 id。
+  // 预检确认页那种「prompt ＋ 数据 ＋ 日志」三样：prompt 那颗走它自己的冻结 id。
   const three = copyArea({ title: '复制数据', prompt: 'P', data: DATA, log: LOG });
   const threeIds = [...three.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]);
-  assert.equal(threeIds.length, 3, '预检确认页应出 3 颗按钮');
-  assert.equal(new Set(threeIds).size, 3, '页内 actionId 必须两两不同');
+  assert.equal(threeIds.length, 2, 'prompt ＋ 日志各一颗（数据那颗在菜单里）');
+  assert.equal(new Set(threeIds).size, 2, '页内 actionId 必须两两不同');
   assert.ok(three.startsWith(promptCopyArea('P')), 'prompt 区不是既有那两件');
 });
 
@@ -77,15 +83,18 @@ test('#239 ③ 三样全不给＝出空态一句话、不出按钮', () => {
   assert.equal(copyArea({ prompt: 'P' }), promptCopyArea('P'));
 });
 
-test('#247 ④ 三格式开关：缺省关＝单格式逐字节不变；开了＝菜单；三样全不给时仍不出按钮', () => {
-  // ① 缺省关（**这条是 46 张页不破的判据**）：与 #247 之前逐字节相同。
-  assert.equal(copyArea({ title: '复制数据', data: DATA }), dataCopyArea('复制数据', DATA), '缺省关的产出变了');
-  assert.equal(copyArea({ title: '复制数据', data: DATA }).includes('data-fmt'), false, '缺省关不得出菜单');
-
-  // ② 开了：三种格式各一份文本，各自的 data-t 互不相同；按钮是开合器（不带 data-t）。
-  const html = copyArea({ title: '复制数据', data: DATA, dataFormats: true, log: LOG });
-  assert.deepEqual([...html.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
+test('#247 ④ 数据位恒出三格式菜单；三样全不给时仍不出按钮；hints 可换', () => {
+  // ① **数据位恒出菜单**（新默认，不许被暗改回去）：不给任何开关也是「开合器 ＋ 三项」。
+  const bare = copyArea({ title: '复制数据', data: DATA });
+  assert.equal(bare.includes('data-fmt-open="1"'), true, '数据位不得退回单格式按钮');
+  assert.deepEqual([...bare.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     '菜单不是纯文本／JSON／CSV 三项');
+  assert.equal(bare.includes('data-action-id="ilife-copy-data"'), false, '数据那颗不该再单独占一个 id');
+  // 反向：`dataCopyArea` 这条 46 处调用点走的路，产物与 `copyArea` 逐字相同。
+  assert.equal(bare, dataCopyArea('复制数据', DATA), '46 处调用点与 copyArea 的产物走散了');
+
+  // ② 三种格式各一份文本，各自的 data-t 互不相同；开合器不带 data-t。
+  const html = copyArea({ title: '复制数据', data: DATA, log: LOG });
   const texts = [...html.matchAll(/data-fmt="([^"]+)"[^>]*\sdata-t="([^"]*)"/g)].map((m) => [m[1], m[2]]);
   assert.deepEqual(texts, [
     ['text', buildDataText({ ...DATA, format: 'text' }).replace(/&/g, '&amp;').replace(/"/g, '&quot;')],
@@ -93,10 +102,7 @@ test('#247 ④ 三格式开关：缺省关＝单格式逐字节不变；开了�
     ['csv', buildDataText({ ...DATA, format: 'csv' }).replace(/&/g, '&amp;').replace(/"/g, '&quot;')],
   ], '三项各自的 data-t 不是该格式 buildDataText 的投影');
   assert.equal(new Set(texts.map((t) => t[1])).size, 3, '三份文本居然有重复');
-  assert.ok(html.includes('data-fmt-open="1"'), '缺菜单开合器');
   assert.equal(/data-fmt-open="1"[^>]*\sdata-t=/.test(html), false, '开合器不得带 data-t');
-  assert.deepEqual([...html.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]), ['ilife-copy-log'],
-    '数据那颗已并入菜单，页内只剩复制日志一颗 data-action-id');
 
   // ③ 用途提示：缺省取老仓原样三项（`hints` 可覆盖；不给自己另立一份中文表）。
   for (const hint of ['粘贴给 AI / 自己看', '结构化存档', '表格导入']) {
@@ -106,11 +112,15 @@ test('#247 ④ 三格式开关：缺省关＝单格式逐字节不变；开了�
   assert.ok(custom.includes('>甲</span>') && custom.includes('>丙</span>'), '调用方给的 hints 没生效');
   assert.equal(custom.includes('结构化存档'), false, '给了 hints 就该只用自己的那三条');
 
-  // ④ `dataFormats` 是**开在 `data` 上**的形态开关：没给 data 就与「什么都没给」同口径——
-  //    一句空态、不出死按钮（不会凭空出一颗没有文本的按钮）。
-  const noData = copyArea({ title: '复制数据', dataFormats: true });
+  // ④ 没给 data 就与「什么都没给」同口径——一句空态、不出死按钮（不会凭空出一颗没有文本的按钮）。
+  const noData = copyArea({ title: '复制数据' });
   assert.ok(noData.includes('本页没有可复制的数据'), '没给数据就该说一句');
   assert.equal(noData.includes('<button'), false, '没给数据不得出按钮');
+
+  // ⑤ prompt 位不受影响：只给 prompt 时不出菜单（prompt 是**指令**，只有一种正确表示）。
+  const promptOnly = copyArea({ prompt: 'P' });
+  assert.equal(promptOnly, promptCopyArea('P'), 'prompt 位不该被菜单能力碰到');
+  assert.equal(promptOnly.includes('data-fmt'), false, 'prompt 位不得出菜单');
 });
 
 test('#239 日志六段：场景标识／思考链／数据结构／调用链（命令＋M5 行）／时间戳版本／异常', () => {

@@ -50,8 +50,6 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: stri
     copyArea({
       title: '复制数据',
       data: { envelope },
-      // #247：改档案回执页先开三格式菜单（场景 07 五张页之一）。
-      dataFormats: true,
       log: {
         envelope,
         copyLog: copyLog({
