@@ -160,10 +160,11 @@
 - **类名命名空间**：`ilife-toast`／`ilife-error`（引用 §3 `CONTROL_STYLE_SECTIONS` 的 `toast`／`errorReceipt`）。
 - **必需属性**：toast 必带 `role` 与 `aria-live`（取 `TOAST_DEFAULTS`，§3）；错误回执的复制按钮 actionId 取 `COPY_ACTION_IDS.errorReceipt`（§3）。
 - **数值规格**：toast 时长／栈上限／窄屏栈上限／栈间距取 `TOAST_DEFAULTS`（§3，**不复述**）。
+- **配色（2026-09-12 用户裁定 · 取老技能版）**：**深色毛玻璃卡面**——底 `rgba(28,28,30,.94)` ＋ `backdrop-filter: blur(20px) saturate(180%)`、主字 `#f0f0f0`、副字 `#c8c8cc`、无描边（`0 10px 32px rgba(0,0,0,.32)` ＋ `0 0 0 .5px rgba(255,255,255,.08) inset`）。逐值与理由见 `docs/base/base-render/t246-toast-dark.md`。**本区是唯一不取浅色 token 的区块**（深色面不随浅色 token 变）。
 - **状态**：toast `.show` 控制显隐；错误回执缺 `dataText`／`logText` 时**不渲染**对应复制按钮（容错不抛错）。
 - **证据**：`packages/base-render/src/spec/controls.ts:186-240,318-331,747-765`；`benchmark-visual-spec.md:696`。
 - **可断言形式**：toast 根节点 `role`／`aria-live` 属性等于冻结值；`data-max` 等于栈上限；错误回执在缺文本时按钮计数 = 0。
-- **裁定**：已定（编排者 R35）——数值规格全部引用冻结 `TOAST_DEFAULTS`（不复述）；对应 HELP 尺 H-16／H-18。
+- **裁定**：数值规格全部引用冻结 `TOAST_DEFAULTS`（不复述）；对应 HELP 尺 H-16／H-18。**配色一项原为「视觉取浅色」（t75 · 编排者 R35），2026-09-12 用户看过两版实物后改取老技能深色版 —— 只改配色，几何／寿命／容量／无障碍不动。**
 
 ---
 
