@@ -18,7 +18,13 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 // #47 样板期只收敛卡路里一条线；复制到其余 5 包时扩展此清单。
-const PKGS = ['skill-calorie'];
+// #192 起 skill-home 入列（第二包）；bill／chef／memo-ilife／schedule 四包仍待复制。
+const PKGS = ['skill-calorie', 'skill-home'];
+// 运行时版本钉死：只对**已发布且真装得上**的包断言硬编码版本号；
+// skill-home@0.1.0 虽已发布到 npm（2026-09-07），但依赖里 `base-link-core: workspace:^0.1.0`
+// 未改写 ⇒ 新装必 EUNSUPPORTEDPROTOCOL，故不钉版本，一律走「本仓构建产物」那条路
+//（缘由见 docs/public-installer-47.md「已发布包阻塞」）。
+const NPM_PIN = { 'skill-calorie': '@0.2.3' };
 
 // 最小 frontmatter 解析（无依赖）：文件须以 --- 开头，第二个 --- 前为 key: value 行。
 function parseFrontmatter(text) {
@@ -37,7 +43,7 @@ function parseFrontmatter(text) {
   return { data, rest: lines.slice(end + 1).join('\n') };
 }
 
-describe('#47 skills-cli 导出头（卡路里样板）', () => {
+describe('#47 skills-cli 导出头（卡路里样板 + 居家第二包）', () => {
   for (const pkg of PKGS) {
     it(pkg + '：frontmatter name/description 合法', () => {
       const text = readFileSync(join(ROOT, 'packages', pkg, 'SKILL.md'), 'utf8');
@@ -54,10 +60,13 @@ describe('#47 skills-cli 导出头（卡路里样板）', () => {
       assert.ok(text.includes('## 公共安装器运行时'), '须含运行时小节（dist 不进 git，运行时走 npm）');
       // 版本钉死 @0.2.3 为硬编码（已随本批发版窗口同步）
       // （SKILL.md/docs/测试三处联动，登记见 docs/public-installer-47.md「版本钉死登记」）。
-      assert.ok(text.includes('@0.2.3'), '须钉死 npm 运行时版本（已随 0.2.3 同步）');
+      // 仅「已发布且装得上」的包有版本号可钉；其余（如 skill-home：已发布但 workspace: 未改写）改钉「本仓构建产物」那句。
+      const pin = NPM_PIN[pkg];
+      if (pin) assert.ok(text.includes(pin), '须钉死 npm 运行时版本（已随 ' + pin + ' 同步）');
+      else assert.ok(text.includes('本仓构建产物'), '未钉版本号的包须写明本仓构建产物验证那条路');
     });
   }
-  it('样板清单当前恰为 1 包（复制期扩展即改此断言）', () => {
-    assert.deepEqual(PKGS, ['skill-calorie']);
+  it('样板清单当前恰为 2 包（复制期扩展即改此断言）', () => {
+    assert.deepEqual(PKGS, ['skill-calorie', 'skill-home']);
   });
 });
