@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>作息管家 HELP · 6 条决策待确认</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --fg:#1d1d1f;--fg2:#6e6e73;--fg3:#86868b;--bg:#f5f5f7;--card:#fff;--line:#d2d2d7;
+    --blue:#007aff;--green:#1f9d4d;--green-bg:#e9f8ef;--amber:#b26a00;--amber-bg:#fff6e6;
+    --red:#c8342b;--red-bg:#fdecea;--r:12px;
+  }
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--fg);font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:96px}
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px}
+  header.top{background:var(--card);border-bottom:1px solid var(--line);padding:20px 0 14px}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--blue);text-transform:uppercase}
+  h1{font-size:22px;letter-spacing:-.02em;margin:4px 0 6px}
+  .lead{color:var(--fg2);font-size:13.5px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chip{font-size:11.5px;padding:3px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--fg2)}
+  .chip b{color:var(--fg)}
+  nav.jump{position:sticky;top:0;z-index:20;background:rgba(245,245,247,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:8px 0;margin-bottom:14px}
+  nav.jump .wrap{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  nav.jump .wrap::-webkit-scrollbar{display:none}
+  nav.jump a{flex:0 0 auto;font-size:12.5px;text-decoration:none;color:var(--fg2);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 11px;white-space:nowrap}
+  nav.jump a.done{color:var(--green);border-color:#bfe6cd;background:var(--green-bg)}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
+  .facts li{margin-left:18px;color:var(--fg2);font-size:13.5px}
+  .facts li b{color:var(--fg)}
+  .dhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .qid{font:800 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--fg);color:#fff;border-radius:6px;padding:4px 7px}
+  .dhead h2{font-size:17px;letter-spacing:-.01em}
+  .badge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 8px}
+  .badge.crux{background:var(--amber-bg);color:var(--amber)}
+  .badge.rec{background:var(--green-bg);color:var(--green)}
+  .why{color:var(--fg2);font-size:13.5px;margin:2px 0 10px}
+  .why b{color:var(--fg)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;vertical-align:top;padding:7px 8px;border-top:1px solid var(--line)}
+  thead th{font-size:11.5px;color:var(--fg3);font-weight:700;border-top:0;padding-bottom:4px}
+  td.o{width:29%;font-weight:600}
+  td.pro{width:35.5%}
+  td.con{width:35.5%;color:var(--fg2)}
+  tr.pick{background:var(--green-bg)}
+  tr.pick td{color:var(--fg)}
+  .mk{font-size:10.5px;font-weight:800;color:var(--green);border:1px solid #bfe6cd;background:#fff;border-radius:5px;padding:1px 5px;margin-left:5px}
+  .verdict{margin-top:10px;font-size:13.5px;border-left:3px solid var(--green);background:var(--green-bg);border-radius:0 8px 8px 0;padding:8px 11px}
+  .verdict b{color:var(--green)}
+  .note{font-size:12.5px;color:var(--fg3);margin-top:8px}
+  code{font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  .replybar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 0}
+  .replybar .wrap{display:flex;gap:10px;align-items:center}
+  .replytext{flex:1;min-width:0;font-size:12.5px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  button{font:600 13px/1 inherit;border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:#fff;cursor:pointer}
+  button.ghost{background:var(--card);color:var(--fg);border:1px solid var(--line)}
+  button:active{transform:translateY(1px)}
+  .ok{color:var(--green)}
+  @media (max-width:560px){
+    td.o,td.pro,td.con{width:auto}
+    table,thead,tbody,tr,td{display:block;width:100%}
+    thead{display:none}
+    tr{border-top:1px solid var(--line);padding:8px 0}
+    td{border:0;padding:2px 0}
+    td.pro::before{content:"利 · ";color:var(--green);font-weight:700}
+    td.con::before{content:"弊 · ";color:var(--red);font-weight:700}
+  }
+  @media print{
+    body{background:#fff;padding:0}
+    nav.jump,.replybar{display:none}
+    section.card{break-inside:avoid;border-color:#bbb}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">new wayfinder map · 开工前</p>
+    <h1>作息管家 HELP：6 条决策待你拍板</h1>
+    <p class="lead">照 <code>#131</code>／<code>#143</code> 的配方做「作息管家help」。下面每条只讲必要的因果，选完底部自动生成回话。</p>
+    <div class="chips">
+      <span class="chip">已拍板 <b>16</b> 条</span>
+      <span class="chip">2026-09-12 全部取 <b>A</b></span>
+      <span class="chip">正本：<b>#197</b></span>
+    </div>
+    <p class="lead" style="margin-top:10px;border-left:3px solid var(--green);background:var(--green-bg);border-radius:0 8px 8px 0;padding:8px 11px">
+      <b style="color:var(--green)">已全部拍板（2026-09-12）：Q11=A，Q12=A，Q13=A，Q14=A，Q15=A，Q16=A。</b>
+      下面六张卡保留当时的选项与利弊，作决策留痕；正本已转成地图 <code>#197</code> 与十张子票。
+    </p>
+  </div>
+</header>
+
+<nav class="jump">
+  <div class="wrap">
+    <a href="#facts">背景</a>
+    <a href="#q11">Q11 同款口径</a>
+    <a href="#q12">Q12 内容口径</a>
+    <a href="#q13">Q13 目录名</a>
+    <a href="#q14">Q14 文档落点</a>
+    <a href="#q15">Q15 重排边界</a>
+    <a href="#q16">Q16 票与 #60</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section class="card" id="facts">
+    <div class="dhead"><h2>三句背景</h2></div>
+    <ul class="facts">
+      <li>前两张图的目的地都是两条：<b>①明确拿到 HELP 文件 ②与老技能同款</b>（＝同一 help 模板 ＋ 定制内容）。</li>
+      <li>实测：卡路里、饼干记账的<b>老技能自己就用公共组件模板</b>；<b>作息管家不是</b>——它的老实物自成一族，5 类别／34 唤醒词／85 场景。</li>
+      <li>新仓 <code>skill-schedule</code> 今天说「作息管家help」<b>只回 JSON，不落文件</b>；共享 help 模板被边界门挡着。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="q11" data-q="q11">
+    <div class="dhead"><span class="qid">Q11</span><h2>「与老技能同款」指哪一个款</h2><span class="badge crux">枢纽</span></div>
+    <p class="why">前因：前两张图能同时满足两条判据，是因为那两个老技能自己就是公共组件模板产的。<b>作息管家不是</b>——两条判据在这里第一次分岔，必须先拍。</p>
+    <table>
+      <thead><tr><th>选项</th><th>利</th><th>弊</th></tr></thead>
+      <tbody>
+        <tr class="pick">
+          <td class="o">A 共享 help 模板 ＋ 作息管家内容<span class="mk">推荐</span></td>
+          <td class="pro">合新架构规则；直接用现成的共享渲染；与老仓 HELP 契约的统一方向一致</td>
+          <td class="con">不与老 HELP 文件逐像素一致；第②条判据要改述成「同一 help 模板＋定制内容」</td>
+        </tr>
+        <tr>
+          <td class="o">B 照老实物抄（3 层+工具栏）</td>
+          <td class="pro">与老文件可以逐像素一致，肉眼验收最直接</td>
+          <td class="con">等于把上一代页面抄进新包，形成第二份外观定义</td>
+        </tr>
+        <tr>
+          <td class="o">C 先做 A，另存老实样对照</td>
+          <td class="pro">风险最低</td>
+          <td class="con">多一份对照工作量；分岔没解决，最后仍要在 A／B 里选</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="verdict">➡️ 推荐 <b>A</b>：以共享 help 模板为准，视觉验收对着它，不拿老文件逐像素判红。</div>
+  </section>
+
+  <section class="card" id="q12" data-q="q12">
+    <div class="dhead"><span class="qid">Q12</span><h2>内容口径：85 场景怎么落</h2></div>
+    <p class="why">前因：老 HELP 是<b>能力目录</b>（85 场景）；新仓今天只有 8 条命令。实测缺口只有 5 条老唤醒词（准备消息／同步作息／增量同步／周视图／首次使用），另 1 条老技能自己标着「待开发」。</p>
+    <table>
+      <thead><tr><th>选项</th><th>利</th><th>弊</th></tr></thead>
+      <tbody>
+        <tr class="pick">
+          <td class="o">A 全量落，超出现有命令的标<span class="mk">推荐</span></td>
+          <td class="pro">内容面与老实物对得上；后续补命令时页面已有位置；徽章是老模板自带的说法</td>
+          <td class="con">页面上会出现当前跑不通的条目（已用徽章如实标注）</td>
+        </tr>
+        <tr>
+          <td class="o">B 只落今天跑得通的</td>
+          <td class="pro">页面与实际能力完全一致</td>
+          <td class="con">与老实物的内容面对不上，「与老技能同款」不成立</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="verdict">➡️ 推荐 <b>A</b>：85 场景全量落，5 条缺口条目照老技能标「待开发」。</div>
+  </section>
+
+  <section class="card" id="q13" data-q="q13">
+    <div class="dhead"><span class="qid">Q13</span><h2>新的能力目录叫什么</h2></div>
+    <p class="why">前因：铁律四＝目录名取自 <b>HELP 的一级分组</b>，你又定了代码目录用英文名。老 HELP 的 5 个分组：写入与同步 <code>write</code>、查询与浏览 <code>query</code>、日程与计划 <code>plan</code>、分析与洞察 <code>analyze</code>、辅助与管理 <code>admin</code>。本图只交 HELP 这一件东西。</p>
+    <table>
+      <thead><tr><th>选项</th><th>利</th><th>弊</th></tr></thead>
+      <tbody>
+        <tr class="pick">
+          <td class="o">A 五个域全建目录<span class="mk">已拍板</span></td>
+          <td class="pro">一次把形状定全，后续域有位置</td>
+          <td class="con">本图只交 HELP，其余四个域没有交付物，属预先设计</td>
+        </tr>
+        <tr>
+          <td class="o">B 只落 <code>src/admin/</code><span class="mk">我原推荐</span></td>
+          <td class="pro">名字取自老 HELP 既有说法、不自创；目录里只放本图真交的东西</td>
+          <td class="con">若结构裁定票改判成「技能级入口」，目录名要跟着改一次</td>
+        </tr>
+        <tr>
+          <td class="o">C 另起「HELP 交付」目录</td>
+          <td class="pro">语义最贴切</td>
+          <td class="con"><code>help</code> 不是一级分组里的词，属自创</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="verdict">➡️ 我原推荐 <b>B</b>；<b>已拍板取 A</b>（五个域目录全建）。文件级划分由结构裁定票（序 2）拍定。</div>
+  </section>
+
+  <section class="card" id="q14" data-q="q14">
+    <div class="dhead"><span class="qid">Q14</span><h2>文档与交付物放哪</h2></div>
+    <p class="why">前因：你回了 <code>A</code>；仓规是「件名＝<code>packages/</code> 目录名逐字」，即 <code>docs/skills/skill-schedule/</code>；<code>#143</code> 的先例是交付完在原项目下开一个归档夹。</p>
+    <table>
+      <thead><tr><th>选项</th><th>利</th><th>弊</th></tr></thead>
+      <tbody>
+        <tr class="pick">
+          <td class="o">A 只放仓内 <code>docs/skills/skill-schedule/</code><span class="mk">已拍板</span></td>
+          <td class="pro">单一归属，规矩不动</td>
+          <td class="con">与 <code>#143</code> 已经形成的交付习惯不一致</td>
+        </tr>
+        <tr>
+          <td class="o">B 只放原项目下</td>
+          <td class="pro">资料跟老项目在一起</td>
+          <td class="con">仓里搜不到本次的设计与证据</td>
+        </tr>
+        <tr>
+          <td class="o">C 仓内为主 ＋ 原项目留交付归档副本<span class="mk">我原推荐</span></td>
+          <td class="pro">规矩与先例两头都满足，查阅与交付各得其所</td>
+          <td class="con">两个地点，需要一份索引写清谁是正本</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="verdict">➡️ 我原推荐 <b>C</b>；<b>已拍板取 A</b>：只放仓内 <code>docs/skills/skill-schedule/</code>，不在原项目留副本。</div>
+  </section>
+
+  <section class="card" id="q15" data-q="q15">
+    <div class="dhead"><span class="qid">Q15</span><h2>全包重排做到哪一步</h2></div>
+    <p class="why">前因：你要「尽可能按新架构规则、为未来打好基础」；而结构纪律自己写着「就地摆正 ≠ 顺手扩大范围」。今天整包是工种目录（<code>cli</code>／<code>fetch</code>／<code>policy</code>／<code>render</code>），其中一份 HTML 渲染文件还自带第二份样式定义。</p>
+    <table>
+      <thead><tr><th>选项</th><th>利</th><th>弊</th></tr></thead>
+      <tbody>
+        <tr class="pick">
+          <td class="o">A 只做 HELP 相邻的就地摆正<span class="mk">推荐</span></td>
+          <td class="pro">范围可控、验收面清楚；把「尽可能」用在 HELP 这条链上</td>
+          <td class="con">其余四个工种目录本图结束后仍未合规</td>
+        </tr>
+        <tr>
+          <td class="o">B 本图内把全包一并重排</td>
+          <td class="pro">一次到位，力度最大</td>
+          <td class="con">30～40 个调用点 ＋ 6 个测试文件，与本图目的地无关，会把验收搅浑</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="verdict">➡️ 推荐 <b>A</b>：HELP 相邻的一律就地摆正，其余进「未定」等结构裁定票报代价。</div>
+  </section>
+
+  <section class="card" id="q16" data-q="q16">
+    <div class="dhead"><span class="qid">Q16</span><h2>票怎么切、<code>#60</code> 怎么收口</h2></div>
+    <p class="why">前因：<code>#143</code> 用 8 张票走完全程；本次按新架构多出两张结构票。旧票 <code>#60</code> 的残项实测：插件侧缺技能提供方、装配声明为空、<code>SKILL.md</code> 缺 frontmatter、<code>files</code> 缺 <code>SKILL.md</code>。</p>
+    <table>
+      <thead><tr><th>选项</th><th>利</th><th>弊</th></tr></thead>
+      <tbody>
+        <tr class="pick">
+          <td class="o">A 照 10 票建；<code>#60</code> 关闭并写明交接<span class="mk">推荐</span></td>
+          <td class="pro">与前置两张图同形；残项有着落，不重复劳动</td>
+          <td class="con">票数比前两张图略多</td>
+        </tr>
+        <tr>
+          <td class="o">B 合并两张结构票</td>
+          <td class="pro">少两张票</td>
+          <td class="con">决定与实施混在一票，必报五步说不清</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">10 票：1 调查 · 2 结构裁定 · 3 结构就位＋边界门 · 4 内容资产 · 5 渲染接线 · 6 出口落盘 · 7 CLI 锁 · 8 说明面 · 9 插件装机 · 10 真机＋肉眼。<code>#60</code> 不贴「不修」标签——它是被接走，不是被否决。</p>
+    <div class="verdict">➡️ 推荐 <b>A</b>。</div>
+  </section>
+
+</main>
+
+<div class="replybar">
+  <div class="wrap">
+    <div class="replytext" id="replyText">已选 6／6（全按推荐）</div>
+    <button class="ghost" id="resetBtn">全按推荐</button>
+    <button id="copyBtn">复制回话</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var ids = ['q11', 'q12', 'q13', 'q14', 'q15', 'q16'];
+  var titles = { q11: '同款口径', q12: '内容口径', q13: '目录名', q14: '文档落点', q15: '重排边界', q16: '票与 #60' };
+  var picks = { q11: 'A', q12: 'A', q13: 'A', q14: 'A', q15: 'A', q16: 'A' };
+
+  ids.forEach(function (id) {
+    var rows = document.querySelectorAll('#' + id + ' tbody tr');
+    rows.forEach(function (tr) {
+      var label = tr.querySelector('td.o');
+      if (!label) return;
+      var letter = label.textContent.trim().charAt(0);
+      tr.style.cursor = 'pointer';
+      tr.setAttribute('role', 'button');
+      tr.setAttribute('aria-pressed', letter === picks[id] ? 'true' : 'false');
+      tr.addEventListener('click', function () { setPick(id, letter); });
+    });
+  });
+
+  function setPick(id, letter) {
+    picks[id] = letter;
+    document.querySelectorAll('#' + id + ' tbody tr').forEach(function (tr) {
+      var l = tr.querySelector('td.o').textContent.trim().charAt(0);
+      tr.classList.toggle('pick', l === letter);
+      tr.setAttribute('aria-pressed', l === letter ? 'true' : 'false');
+    });
+    render();
+  }
+
+  function render() {
+    var parts = ids.map(function (id) { return id.toUpperCase() + '=' + picks[id]; });
+    var txt = '作息管家 HELP：' + parts.join('，') + '（其余照推荐）';
+    document.getElementById('replyText').textContent = txt;
+    document.getElementById('replyText').dataset.full = txt;
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    setPick('q11', 'A'); setPick('q12', 'A'); setPick('q13', 'B');
+    setPick('q14', 'C'); setPick('q15', 'A'); setPick('q16', 'A');
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var btn = this;
+    var txt = document.getElementById('replyText').dataset.full || document.getElementById('replyText').textContent;
+    function done() { btn.textContent = '已复制'; btn.classList.add('ok'); setTimeout(function () { btn.textContent = '复制回话'; }, 1400); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function () { fallback(txt, done); });
+    } else { fallback(txt, done); }
+  });
+
+  function fallback(txt, done) {
+    var t = document.createElement('textarea');
+    t.value = txt; t.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); done(); } catch (e) { window.prompt('复制这段回话：', txt); }
+    document.body.removeChild(t);
+  }
+
+  var links = document.querySelectorAll('nav.jump a');
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      links.forEach(function (a) { a.classList.toggle('done', a.getAttribute('href') === '#' + en.target.id); });
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  document.querySelectorAll('main > section').forEach(function (s) { obs.observe(s); });
+
+  render();
+})();
+</script>
+</body>
+</html>
