@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>场景 09 身材照片 · 待定决策 6 项（票 #170）</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink2:#334155; --muted:#64748b; --line:#e2e8f0;
+    --bg:#f6f7f9; --card:#ffffff;
+    --rec:#047857; --rec-bg:#ecfdf5; --rec-line:#a7f3d0;
+    --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fde68a;
+    --bad:#b91c1c; --accent:#4338ca; --accent-bg:#eef2ff;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:940px;margin:0 auto;padding:28px 20px 64px}
+
+  /* ── 页头 ── */
+  .hero{background:linear-gradient(135deg,#1e293b,#0f172a);color:#e2e8f0;border-radius:var(--radius);padding:26px 28px;position:relative}
+  .crumb{font-size:12.5px;color:#94a3b8;letter-spacing:.02em}
+  .crumb a{color:#a5b4fc;text-decoration:none}
+  .hero h1{margin:10px 0 8px;font-size:26px;line-height:1.35;color:#fff}
+  .lede{margin:0;color:#cbd5e1;font-size:14.5px;max-width:62ch}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:4px 12px;font-size:12.5px;color:#e2e8f0}
+  .counter{position:absolute;top:24px;right:26px;font-size:12.5px;color:#94a3b8;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px 12px}
+  .counter b{color:#fff}
+
+  /* ── 通用卡片 ── */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-top:16px}
+  .card > h2{margin:0 0 6px;font-size:17px;letter-spacing:.01em}
+  .card .sub{margin:0 0 14px;color:var(--muted);font-size:13px}
+
+  /* ── 一句话回执 ── */
+  .short{background:var(--accent-bg);border-color:#c7d2fe}
+  .short h2{color:var(--accent)}
+  .short code{background:#fff;border:1px solid #c7d2fe;border-radius:6px;padding:1px 7px;font-size:13.5px;color:#3730a3;font-family:ui-monospace,Consolas,monospace}
+
+  /* ── 实况 ── */
+  .facts{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+  .facts li{display:grid;grid-template-columns:88px 1fr;gap:14px;align-items:start;padding:10px 0;border-top:1px dashed var(--line)}
+  .facts li:first-child{border-top:0;padding-top:0}
+  .facts .k{font-size:12.5px;color:var(--muted);letter-spacing:.03em;padding-top:2px}
+  .facts .v{font-size:14.5px;color:var(--ink2)}
+  .facts strong{color:var(--ink)}
+  .fix{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:14px;color:#78350f}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.03em;background:#fbfcfe}
+  tr:last-child td{border-bottom:0}
+  td.mono,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#475569}
+  .cmp td:first-child{color:var(--muted);font-size:13px;width:150px}
+
+  /* ── 问题卡 ── */
+  .q{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:20px 22px;margin-top:18px;scroll-margin-top:16px}
+  .q.done{box-shadow:0 0 0 3px #dcfce7;border-left-color:var(--rec)}
+  .qhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .num{font:700 13px/1 ui-monospace,Consolas,monospace;color:#fff;background:var(--accent);border-radius:7px;padding:5px 9px}
+  .qhead h2{margin:0;font-size:18px}
+  .tag{font-size:11.5px;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--muted);background:#f8fafc}
+  .tag.heavy{background:#fef2f2;border-color:#fecaca;color:var(--bad)}
+  .q h3{margin:16px 0 4px;font-size:13px;letter-spacing:.04em;color:var(--muted);font-weight:700}
+  .q p{margin:6px 0}
+  .q ul{margin:6px 0;padding-left:20px}
+  .q li{margin:3px 0}
+  .q code{background:#f1f5f9;border-radius:5px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#334155}
+
+  .rec{background:var(--rec-bg);border:1px solid var(--rec-line);border-radius:10px;padding:12px 16px;margin-top:16px}
+  .rec h3{margin:0 0 4px;color:var(--rec);font-size:12.5px;letter-spacing:.05em}
+  .rec p{margin:0;color:#065f46;font-size:14.5px}
+  .rec .why{color:#047857;font-size:13px;margin-top:6px}
+
+  .pick{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  .pick button{font:inherit;font-size:13.5px;border-radius:9px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink2)}
+  .pick button:hover{border-color:#94a3b8}
+  .pick button[aria-pressed="true"]{background:var(--rec);border-color:var(--rec);color:#fff}
+  .pick button[aria-pressed="true"][data-pick="other"]{background:var(--warn);border-color:var(--warn)}
+  .pick .state{margin-left:auto;font-size:12.5px;color:var(--muted)}
+
+  .ok{color:var(--rec);font-weight:600}
+  .no{color:var(--bad);font-weight:600}
+  .dim{color:var(--muted)}
+
+  footer{margin-top:22px;color:var(--muted);font-size:13.5px;text-align:center}
+  footer b{color:var(--ink2)}
+  @media print{.pick,.counter{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="counter">已定 <b id="done">0</b> / 6</div>
+    <div class="crumb">
+      爱生活 · 卡路里 · 图
+      <a href="https://github.com/FeatherHunter/ilife/issues/159">#159 场景 09 身材照片</a>
+      · 票
+      <a href="https://github.com/FeatherHunter/ilife/issues/170">#170 公共层提取与边界</a>
+    </div>
+    <h1>这张图的 6 个决定，等你拍板</h1>
+    <p class="lede">
+      图 #159 现在只有 1 张子票（#170，已认领）。票 #170 的活就是<strong>把边界和公共层定下来，好让这张图的第 2–5 张票建得出来</strong>——
+      也就是你问的「当前图下有哪些 ISSUE」。这 6 个决定定了，我一次性把票建齐、挂好阻塞边、写回地图。
+    </p>
+    <div class="stats">
+      <span class="stat">10 条唤醒词</span>
+      <span class="stat">4 类页面</span>
+      <span class="stat">命令面 0 缺口</span>
+      <span class="stat">已有 2 张预检确认页</span>
+      <span class="stat">真库 22 行 / 65 张图</span>
+    </div>
+  </header>
+
+  <section class="card short">
+    <h2>只想回一句话？</h2>
+    <p class="sub">回「全按推荐」，等于下面 6 条全按我的建议定，我直接开工建票。</p>
+    <p>
+      <code>全按推荐</code>
+      ＝ 设计 #159 的票（Q1）· 照片内嵌进页面（Q2）· GIF 只交规划页、真出 GIF 单列一张票（Q3）·
+      8 条出预检确认页、2 条读类不出（Q4）· 按 9 行草案切票（Q5）· 先做 09、放开空认领（Q6）。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>先把实况说清（这些不用你回答）</h2>
+    <p class="sub">全部来自仓库与真库的实测，不是推断。</p>
+
+    <table>
+      <tr><th>子功能</th><th>唤醒词</th><th>条数</th><th>产出</th><th>老技能模板实物</th></tr>
+      <tr><td>存身材照</td><td>记身材照（单张／带备注／批量）</td><td>3</td><td>回执</td><td class="mono">body_photo_receipt.html</td></tr>
+      <tr><td>看身材照</td><td>查身材照</td><td>1</td><td>结果</td><td class="mono">body_photo_gallery.html</td></tr>
+      <tr><td>比身材照</td><td>对比两张照片 ／ 生成身材照GIF</td><td>2</td><td>结果</td><td class="mono">body_photo_compare / gif_result</td></tr>
+      <tr><td>管身材照</td><td>删身材照 ／ 改·加·删照片标签</td><td>4</td><td>回执</td><td class="mono">body_photo_receipt.html</td></tr>
+    </table>
+
+    <ul class="facts" style="margin-top:16px">
+      <li><span class="k">命令面</span><span class="v">老表 436 条里被判「没有命令可执行」的 95 条，<strong>这个场景一条都没有</strong>；10 条词的命令全在册（<span class="mono">calorie.photo.add / remove / tag / list / detail / compare / gif</span>）。</span></li>
+      <li><span class="k">页面面</span><span class="v">4 类页面现在走 <span class="mono">pageShell()</span>，产出的是<strong>片段</strong>（<span class="mono">&lt;section class="page"&gt;</span>）；本包唯一产完整文档的装配件是 <span class="mono">src/shared/docPage.ts</span> 的 <span class="mono">assembleDocPage()</span>。所以「页面交付」是<strong>把这 4 类接到那一件上</strong>，不是从零设计。</span></li>
+      <li><span class="k">已有件</span><span class="v">本图<strong>已经有 2 张预检确认页、而且已经是完整文档</strong>：<span class="mono">calorie.view.photo-log-wizard</span>（身材照预检）、<span class="mono">calorie.view.gif-planner</span>（GIF 规划，27 个槽位：选片／时长／循环／宽高／水印／转场／输出名）。</span></li>
+      <li><span class="k">照片</span><span class="v">老实物 7 张模板齐全，且老页面里的照片是<strong>内嵌字节</strong>（<span class="mono">photo_data_base64</span>／<span class="mono">gif_data_base64</span>）；新实现<strong>有意不读照片字节</strong>，页面里只有文件名 ＋「文件在不在」的位。本包 dependencies 只有 <span class="mono">base-paint</span>——<strong>没有任何图像依赖</strong>。</span></li>
+      <li><span class="k">真实数据</span><span class="v">真库 <span class="mono">body_photos</span> <strong>22 行</strong>，照片目录 <span class="mono">.db\CalorieHub</span> <strong>65 张图</strong> ⇒ 端到端验收有真材料，不用造数据。</span></li>
+    </ul>
+
+    <div class="fix">
+      <strong>顺带更正地图一处：</strong>地图 Notes 写「前一张图（场景 08）已经立起公共层的一部分」——场景 08 的首发票
+      <a href="https://github.com/FeatherHunter/ilife/issues/169">#169</a> 其实还没做。本图真正能复用的是<strong>场景 07 那条线建的两件</strong>（<span class="mono">shared/docPage.ts</span>、<span class="mono">shared/copyArea.ts</span>）＋ #86 建的那两张预检页。
+    </div>
+  </section>
+
+  <!-- Q1 -->
+  <section class="q" id="q1" data-q>
+    <div class="qhead"><span class="num">Q1</span><h2>这次设计的是哪张图的子票？</h2></div>
+    <h3>为什么问</h3>
+    <p>你给 <span class="mono">/wayfinder</span> 的参数是 <strong>#159（场景 09）</strong>，但正文里点的是 <strong>#152（场景 07 基础信息）</strong>，还说它「已完成主要目标」。我按「参数为准」开工，并已认领 #170。这两张图性质完全不同：一张是收尾，一张是刚开张，所以先确认，避免我把你真正要的东西做偏。</p>
+    <h3>判断依据</h3>
+    <ul>
+      <li>#152 的 Destination 两条<strong>都已达成</strong>：4 条唤醒词全部真跑过、你 2026-09-13 亲口「这个 html 要求的内容都通过」。</li>
+      <li>#152 名下还剩 4 张<strong>不在它收口链上</strong>的子票：<a href="https://github.com/FeatherHunter/ilife/issues/181">#181 命令分派重构</a>（<span class="mono">cmd_read.ts</span> 超告警线）、<a href="https://github.com/FeatherHunter/ilife/issues/182">#182 外部集成与调度类 8 条唤醒词</a>、<a href="https://github.com/FeatherHunter/ilife/issues/238">#238 场景 07 页面文案返修</a>、<a href="https://github.com/FeatherHunter/ilife/issues/250">#250 路由层窗口与命令接错纠正</a>。</li>
+      <li>#159 只有 1 张子票，本页 6 个决定就是它要交的东西。</li>
+    </ul>
+    <table class="cmp">
+      <tr><th></th><th>设计 #159 的子票</th><th>转去处置 #152 余量</th></tr>
+      <tr><td>你能拿到什么</td><td>场景 09 的票一次建齐，可以直接开工</td><td>把 4 张余票挪出/收口，#152 关掉，但 09 继续空着</td></tr>
+      <tr><td>代价</td><td>#152 的 4 张余票继续挂着</td><td>本页讨论作废，#170 认领要撤掉</td></tr>
+    </table>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p>按 #159 办（Q2–Q6 全是场景 09 的）。#152 的 4 张余票<strong>另开一小步处置</strong>：前两张各归自己的线，#238／#250 做完再关 #152。</p>
+      <p class="why">理由：你的参数就指向 09，而 #152 的目标已达成——它缺的是收尾动作，不是设计讨论，塞进本会话会把两件事搅在一起。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 按推荐</button><button data-pick="other">✎ 另定（其实是 #152）</button><span class="state"></span></div>
+  </section>
+
+  <!-- Q2 -->
+  <section class="q" id="q2" data-q>
+    <div class="qhead"><span class="num">Q2</span><h2>照片要不要真的出现在页面里？</h2><span class="tag heavy">最重</span></div>
+    <h3>为什么问</h3>
+    <p>本图三类页面（看身材照／对比两张照片／删身材照快照）<strong>现在一张照片都看不到</strong>，只有文件名和一个「文件在不在」的位。而老技能当年是<strong>内嵌照片字节</strong>的：老模板里写着 <span class="mono">&lt;img src="${p.photo_data_base64}"&gt;</span>、<span class="mono">${g.gif_data_base64}</span>。更关键的是「删身材照」这条词的 prompt 自己就要求「<strong>删除前先给我看这张照片的内容（快照）</strong>」——不内嵌，这个快照根本交不出来。这条决定了本图要不要长出一件新部件，也决定了你的「肉眼验收」到底在验什么。</p>
+    <h3>判断依据</h3>
+    <ul>
+      <li>你的验收方式是「把 HTML 拿到一个目录里双击打开」；交付目录与照片目录同在一棵 <span class="mono">.db</span> 树下（<span class="mono">.db\calorie_html\</span> 与 <span class="mono">.db\CalorieHub\</span>）。</li>
+      <li>本包<strong>没有任何图像依赖</strong>（只有 <span class="mono">base-paint</span>），全仓也没有内嵌图像字节的现成实现 ⇒ 内嵌是一条<strong>新能力</strong>。</li>
+      <li>「不读照片字节」是<strong>有意写下的既有决定</strong>（<span class="mono">render/photo.ts</span>、<span class="mono">render/wizardPort.ts</span> 顶注），要改就是推翻它——这种事按惯例得你裁定。</li>
+    </ul>
+    <table class="cmp">
+      <tr><th></th><th>A 内嵌缩略图（照老实物）</th><th>B 引用照片文件路径</th><th>C 维持现状</th></tr>
+      <tr><td>页面里看得见照片</td><td class="ok">看得见</td><td class="ok">看得见</td><td class="no">看不见</td></tr>
+      <tr><td>拷到交付目录／发飞书</td><td class="ok">照样看得见</td><td class="no">图会丢</td><td class="dim">—</td></tr>
+      <tr><td>「快照」这条要求</td><td class="ok">交得出</td><td>同机交得出</td><td class="no">交不出</td></tr>
+      <tr><td>改动量</td><td>新增一件图像能力（单列票）</td><td class="ok">很小</td><td class="ok">零</td></tr>
+      <tr><td>风险</td><td>页面体积、多一个依赖</td><td>换机／分享即失效</td><td>验收等于没验</td></tr>
+    </table>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p><strong>A：内嵌缩略图</strong>（第 6 张票单列，定体积上限：每张缩略图 ≤120KB、画廊页总量设上限），并把 B 留作退路。</p>
+      <p class="why">理由三条：① 老实物就是内嵌，照实物做不凭空设计；② 你的验收要把 HTML 拷走再开，引用路径的做法一拷就瞎；③「删身材照」的 prompt 自己就要求照片快照。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 按推荐（A）</button><button data-pick="other">✎ 另定（B／C／别的）</button><span class="state"></span></div>
+  </section>
+
+  <!-- Q3 -->
+  <section class="q" id="q3" data-q>
+    <div class="qhead"><span class="num">Q3</span><h2>「生成身材照GIF」算跑到哪一步？</h2></div>
+    <h3>为什么问</h3>
+    <p>这条词现在的命令<strong>只出一段任务描述，不产出 GIF 文件</strong>——页面里写着「GIF 合成由外部按本任务描述执行，本渲染不碰二进制」。而老技能当年是真出 GIF 的。图 #159 的 Destination 只要求「拿到结果型 HTML 落盘」，按这个口径这条词<strong>已经算跑得通</strong>；但你心里要的多半是「真的拿到一个动图」。它和 Q2 还连着：若照片要内嵌，GIF 结果页就得内嵌真 GIF，那就必须先真有文件。</p>
+    <h3>判断依据</h3>
+    <ul>
+      <li>GIF 规划页已经建好且很细（时长／循环／宽高／水印／转场／输出名，27 个槽位），差的只是最后那一步合成。</li>
+      <li>真出 GIF 要新增合成能力（本包无图像依赖），属于<strong>命令补齐</strong>性质，和「页面交付」是两类风险。</li>
+      <li>整批早有裁定：缺命令的唤醒词在各自场景图里<strong>单独列票</strong>，不混进页面改版。</li>
+    </ul>
+    <table class="cmp">
+      <tr><th></th><th>A 只交规划页 ＋ 真出 GIF 单列一票</th><th>B 本图必须真出 GIF</th></tr>
+      <tr><td>本图能不能先收口</td><td class="ok">能，页面票不被合成能力拖着</td><td class="no">不能，合成做完之前都收不了</td></tr>
+      <tr><td>风险</td><td class="ok">两类风险分开，红了知道是谁</td><td class="no">页面问题与合成问题耦在一起</td></tr>
+      <tr><td>一步到位</td><td>差一步</td><td class="ok">直接拿到动图</td></tr>
+    </table>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p><strong>A</strong>：本图按「任务描述页」判这条词跑得通，同时把「真出 GIF 文件」<strong>单列一张命令补齐票放在本图内</strong>。</p>
+      <p class="why">理由：规划页已经现成，差的合成能力是新依赖新风险，独立列票既符合整批裁定，也不拖住这张图的收口。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 按推荐（A）</button><button data-pick="other">✎ 另定（B／不做）</button><span class="state"></span></div>
+  </section>
+
+  <!-- Q4 -->
+  <section class="q" id="q4" data-q>
+    <div class="qhead"><span class="num">Q4</span><h2>哪些词要出预检确认页？</h2></div>
+    <h3>为什么问</h3>
+    <p>写类词的 prompt 自己就要求「先问／先确认」（例：记身材照「标签没说就请问我」；删身材照「先列候选 → 给我看快照 → 再删」；改照片标签「先确认原来的完整标签」）。场景 07 已经定了口径：<strong>写类先出预检确认页，读类不出</strong>。本图要不要照办、以及哪些词合用一张页，决定了页面交付怎么切票。</p>
+    <h3>判断依据</h3>
+    <ul>
+      <li>10 条词：写类 7 条（记身材照 3、删身材照 1、标签 3）＋ 比类 1 条（生成身材照GIF）＋ 读类 2 条（查身材照、对比两张照片）。</li>
+      <li>本图<strong>已有 2 张预检确认页</strong>（身材照预检／GIF 规划），已是完整文档 ⇒ 这是接线活，不是新建活。</li>
+      <li>场景 07 的先例：三条写入词共用<strong>一张</strong>可配置预检页，一条读类词不出。</li>
+    </ul>
+    <table class="cmp">
+      <tr><th></th><th>A 8 条出、2 条不出，删／标签共用一张</th><th>B 逐条各配一张</th></tr>
+      <tr><td>票数</td><td class="ok">少</td><td class="no">多 4–6 张</td></tr>
+      <tr><td>一致性</td><td class="ok">与场景 07 同一套口径</td><td>每张页都要各自定长相</td></tr>
+      <tr><td>词与页的对应</td><td>要在一张页里按词展开不同区</td><td class="ok">一一对应，最直白</td></tr>
+    </table>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p><strong>A</strong>：8 条出预检确认页、2 条读类不出；其中<strong>删身材照与三条标签词共用一张</strong>（形态照老实物 <span class="mono">body_photo_viewer.html</span>：选中一张 → 摆出这张的照片与现有标签 → 复制 prompt）。</p>
+      <p class="why">理由：与场景 07 同一套口径，页面不用翻倍，且这三条写入词要的都是同一件东西——「先看清这一张现在的样子」。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 按推荐（A）</button><button data-pick="other">✎ 另定</button><span class="state"></span></div>
+  </section>
+
+  <!-- Q5 -->
+  <section class="q" id="q5" data-q>
+    <div class="qhead"><span class="num">Q5</span><h2>票怎么切？</h2></div>
+    <h3>为什么问</h3>
+    <p>地图的任务清单只给了 5 行骨架（对账／页面交付／命令补齐／锁／端到端），第 2–5 张<strong>故意留着等你定</strong>——因为「页面到底分几张」「命令补齐是 0 条还是 1 条」要等边界定了才知道。这就是你问的「图下有哪些 ISSUE」的正解。</p>
+    <h3>判断依据</h3>
+    <p>下面是草案（<span class="mono">#</span> 是已存在的票；带 <span class="tag" style="vertical-align:middle">条件</span> 的两张只在 Q2／Q3 选了对应答案时才建）：</p>
+    <table>
+      <tr><th>序</th><th>票（草案名）</th><th>类型</th><th>被谁阻塞</th></tr>
+      <tr><td>1</td><td><a href="https://github.com/FeatherHunter/ilife/issues/170">场景 09：公共层提取与边界</a>（已认领）</td><td>grilling＋task</td><td class="dim">—</td></tr>
+      <tr><td>2</td><td>场景 09：页面装配与共用基础件（4 类页面切完整文档 ＋ 两张预检页接进 prompt）</td><td>task</td><td>1</td></tr>
+      <tr><td>3</td><td>场景 09：回执页 · 存／删／标签（7 条词）</td><td>task</td><td>2</td></tr>
+      <tr><td>4</td><td>场景 09：结果页 · 画廊 ＋ 两张对比</td><td>task</td><td>2</td></tr>
+      <tr><td>5</td><td>场景 09：GIF 结果页</td><td>task</td><td>2</td></tr>
+      <tr><td>6</td><td>卡路里：照片缩略图能力（内嵌）<span class="tag">条件：Q2 选内嵌</span></td><td>task</td><td>1</td></tr>
+      <tr><td>7</td><td>场景 09：命令补齐 · 真出 GIF 文件<span class="tag">条件：Q3 选真出</span></td><td>task</td><td>1</td></tr>
+      <tr><td>8</td><td>场景 09：锁 · 真出口用例（10 条词逐条真跑 ＋ 结构化断言）</td><td>task</td><td>3、4、5、6</td></tr>
+      <tr><td>9</td><td>场景 09：真机端到端 ＋ 肉眼终审</td><td>task</td><td>8 ＋ 装机</td></tr>
+    </table>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p>就按这 9 行切：<strong>页面交付分 4 张</strong>（共用基础件 1 张 ＋ 三类页面各 1 张）、<strong>命令补齐 0 条就不建空票</strong>（第 6／7 张按 Q2／Q3 定）、<strong>锁与端到端各 1 张</strong>。</p>
+      <p class="why">理由：与场景 07 那条线实际长出来的样子一致——那条线也是「1 张共用基础件 ＋ 每类页面各 1 张 ＋ 1 张锁 ＋ 1 张端到端」，节奏已验证过一次。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 按推荐（9 行）</button><button data-pick="other">✎ 另定（3／4／5 并成一张）</button><span class="state"></span></div>
+  </section>
+
+  <!-- Q6 -->
+  <section class="q" id="q6" data-q>
+    <div class="qhead"><span class="num">Q6</span><h2>先做场景 09，还是按顺序先做场景 06？</h2></div>
+    <h3>为什么问</h3>
+    <p>整批定的顺序是 <span class="mono">07 → 06 → 03 → 02 → 04 → 05 → 08 → 09 → 10 → 01</span>，按序下一步该是<strong>场景 06</strong>。但你现在把 09 拿出来了，而 03／02／04／05 的四张首发票<strong>已经挂在你名下、还都没收口</strong>——我从面板上看不出那是「正在做」还是「认领了没做」。这决定了要不要放开认领、以及我要不要提醒你 06 还空着。</p>
+    <h3>判断依据</h3>
+    <ul>
+      <li>场景 06 的首发票 <a href="https://github.com/FeatherHunter/ilife/issues/164">#164</a>：<strong>没人认领</strong>，可以随时开工。</li>
+      <li>已挂名下的四张：<a href="https://github.com/FeatherHunter/ilife/issues/165">#165（03 体重）</a>、<a href="https://github.com/FeatherHunter/ilife/issues/166">#166（02 饮食）</a>、<a href="https://github.com/FeatherHunter/ilife/issues/167">#167（04 运动）</a>、<a href="https://github.com/FeatherHunter/ilife/issues/168">#168（05 健身计划）</a>。</li>
+      <li>并发纪律要求「认领＝正在做」；空认领会让面板显示四条在跑、实际没人跑。</li>
+    </ul>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p>明确一句「<strong>本批先做 09</strong>」（顺序由你定，不必解释），并把那四条空认领放开——只需要你确认一句「那四条没在做」。</p>
+      <p class="why">理由：认领是并发纪律的凭据，名不副实会让别人（和后续会话）误判进度。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 按推荐</button><button data-pick="other">✎ 另定（先做 06／那四条正在做）</button><span class="state"></span></div>
+  </section>
+
+  <footer>
+    答完这 6 条，我会出<b>每张票的 Destination 与 Question 正文</b>、挂<b>原生子议题边与阻塞边</b>，并把结论写回地图 #159。<br>
+    <b>票先不建</b>——等这轮谈完一次性建出来，避免建了又改。
+  </footer>
+
+</div>
+
+<script>
+  const qs = [...document.querySelectorAll('[data-q]')];
+  const doneEl = document.getElementById('done');
+  function refresh(){
+    doneEl.textContent = qs.filter(q => q.dataset.picked).length;
+  }
+  for (const q of qs){
+    const state = q.querySelector('.state');
+    for (const btn of q.querySelectorAll('.pick button')){
+      btn.addEventListener('click', () => {
+        const isSame = btn.getAttribute('aria-pressed') === 'true';
+        for (const b of q.querySelectorAll('.pick button')) b.setAttribute('aria-pressed','false');
+        if (isSame){
+          delete q.dataset.picked;
+          state.textContent = '';
+        } else {
+          btn.setAttribute('aria-pressed','true');
+          q.dataset.picked = btn.dataset.pick;
+          state.textContent = btn.dataset.pick === 'rec' ? '已按推荐定' : '待你补充说明';
+          state.className = 'state ' + (btn.dataset.pick === 'rec' ? 'ok' : 'no');
+        }
+        refresh();
+      });
+    }
+  }
+  refresh();
+</script>
+</body>
+</html>

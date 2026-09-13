@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>场景 06 目标管理 · 票单设计</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink2:#334155; --muted:#64748b; --line:#e2e8f0; --bg:#f6f7f9; --card:#fff;
+    --rec:#047857; --rec-bg:#ecfdf5; --rec-line:#a7f3d0;
+    --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fde68a;
+    --bad:#b91c1c; --bad-bg:#fef2f2; --accent:#4338ca; --accent-bg:#eef2ff;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 64px}
+  .hero{background:linear-gradient(135deg,#1e293b,#0f172a);color:#e2e8f0;border-radius:var(--radius);padding:26px 28px;position:relative}
+  .crumb{font-size:12.5px;color:#94a3b8}
+  .crumb a{color:#a5b4fc;text-decoration:none}
+  .hero h1{margin:10px 0 8px;font-size:25px;line-height:1.35;color:#fff}
+  .lede{margin:0;color:#cbd5e1;font-size:14.5px;max-width:66ch}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:4px 12px;font-size:12.5px}
+  .counter{position:absolute;top:24px;right:26px;font-size:12.5px;color:#94a3b8;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px 12px}
+  .counter b{color:#fff}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-top:16px}
+  .card h2{margin:0 0 8px;font-size:17px}
+  .card .sub{margin:0 0 12px;color:var(--muted);font-size:13px}
+  .short{background:var(--accent-bg);border-color:#c7d2fe}
+  .short h2{color:var(--accent)}
+  .short code{background:#fff;border:1px solid #c7d2fe;border-radius:6px;padding:1px 7px;font-size:13.5px;color:#3730a3;font-family:ui-monospace,Consolas,monospace}
+  .flag{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:13.5px;color:#78350f}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12.5px;color:var(--muted);font-weight:600;background:#fbfcfe}
+  tr:last-child td{border-bottom:0}
+  .mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#475569}
+  .cmp td:first-child{color:var(--muted);font-size:13px;width:132px}
+  .inv td:first-child{width:80px}
+  .inv td:nth-child(2){width:46px;text-align:center}
+  .inv td:last-child{width:170px}
+  .q{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 22px;margin-top:16px}
+  .q.done{box-shadow:0 0 0 3px #dcfce7;border-left-color:var(--rec)}
+  .qhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .num{font:700 13px/1 ui-monospace,Consolas,monospace;color:#fff;background:var(--accent);border-radius:7px;padding:5px 9px}
+  .qhead h2{margin:0;font-size:17px}
+  .tag{font-size:11.5px;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--muted);background:#f8fafc}
+  .q h3{margin:14px 0 4px;font-size:13px;letter-spacing:.04em;color:var(--muted)}
+  .q p{margin:6px 0}
+  .q ul{margin:6px 0;padding-left:20px}
+  .q code{background:#f1f5f9;border-radius:5px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#334155}
+  .rec{background:var(--rec-bg);border:1px solid var(--rec-line);border-radius:10px;padding:12px 16px;margin-top:14px}
+  .rec h3{margin:0 0 4px;color:var(--rec);font-size:12.5px;letter-spacing:.05em}
+  .rec p{margin:0;color:#065f46;font-size:14.5px}
+  .rec .why{color:#047857;font-size:13px;margin-top:6px}
+  .gap{border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:10px;padding:14px 18px;margin-top:12px;background:#fff}
+  .gap h3{margin:0 0 4px;font-size:15px;color:var(--bad)}
+  .gap .was,.gap .now{font-size:13.5px;margin-top:6px}
+  .was b{color:var(--rec)} .now b{color:var(--bad)}
+  .pick{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .pick button{font:inherit;font-size:13.5px;border-radius:9px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink2)}
+  .pick button:hover{border-color:#94a3b8}
+  .pick button[aria-pressed="true"]{background:var(--rec);border-color:var(--rec);color:#fff}
+  .pick button[aria-pressed="true"][data-pick="other"]{background:var(--warn);border-color:var(--warn)}
+  .pick .state{margin-left:auto;font-size:12.5px;color:var(--muted)}
+  .ok{color:var(--rec);font-weight:600} .no{color:var(--bad);font-weight:600}
+  footer{margin-top:22px;color:var(--muted);font-size:13.5px;text-align:center}
+  footer b{color:var(--ink2)}
+  @media print{.pick,.counter{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="counter">已定 <b id="done">0</b> / 4</div>
+    <div class="crumb">
+      爱生活 · 卡路里 · 场景 06 目标管理（25 条唤醒词）· 图
+      <a href="https://github.com/FeatherHunter/ilife/issues/153">#153</a> · 首发票
+      <a href="https://github.com/FeatherHunter/ilife/issues/164">#164</a>
+    </div>
+    <h1>目标管理的票单设计</h1>
+    <p class="lede">
+      目标：<strong>HELP HTML 里目标管理的 25 个场景全部跑得通</strong>——每个场景都能找到它的底层唤醒词，AI 知道该从那条唤醒词的哪一步往下走。
+      按你的三条核心思想（SKILL.md 照 writing-for-agents／目标管理代码从老技能重构／该加唤醒词加唤醒词、该加命令加命令）落成 8 张票。
+    </p>
+    <div class="stats">
+      <span class="stat">25 条唤醒词</span>
+      <span class="stat">5 类页面</span>
+      <span class="stat">3 条必须多步交互</span>
+      <span class="stat">老技能 11 脚本 + 8 模板</span>
+      <span class="stat">新仓 7 个文件 317 行</span>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="flag">
+      <strong>先说一句号：</strong>你说「设计 159 的票」，但 <strong>#159 是场景 09 身材照片</strong>；你三条核心思想说的全是<strong>目标管理</strong>——那是<strong>图 #153（场景 06）</strong>。
+      本页按你写的实质内容做<strong>目标管理</strong>。若你要的其实是 159（身材照片），说一声——它的票单在上一页（6 项决定 ＋ 9 行草案）已经给过，我照那份建。
+    </div>
+  </section>
+
+  <section class="card short">
+    <h2>只想回一句话？</h2>
+    <p class="sub">回「全按推荐」，我就按 8 张票建齐、挂原生阻塞边、写回地图，并开工第一张。</p>
+    <p>
+      <code>全按推荐</code>
+      ＝ 图用 #153（Q1）· 内容与口径逐条对齐老实物、长相用新仓公共层（Q2）·
+      一条页面命令加 mode 参数背 12 个看类场景、每场景一个视图（Q3）· 工作流放包内披露文件、SKILL.md 只留常驻规则＋指针（Q4）。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>判断依据：25 条词的现状</h2>
+    <p class="sub">全部来自仓库实测（<span class="mono">triggers/scene-06-goal.ts</span>、老技能 <span class="mono">SKILL.md:460-519</span>、<span class="mono">templates\</span>、<span class="mono">scene-inventory.md</span>）。</p>
+
+    <table class="inv">
+      <tr><th>子功能</th><th>条数</th><th>唤醒词</th><th>老技能模板</th></tr>
+      <tr><td>定目标</td><td>8</td><td>定营养目标／定营养目标(自动算)／定体重目标／定体重目标(自动算截止)／定体重目标(含起始日)／定饮水目标／定饮水目标(自动算)／一键定全套目标</td><td class="mono">goal_config / goal_recommend / goal_weight</td></tr>
+      <tr><td>看目标</td><td>12</td><td>看今日目标／看本周目标／看营养目标进度／看体重目标进度／看饮水目标进度／看目标对比实际／看目标完成度／看即将到期的目标／看目标完成率(按周)／看目标完成率(按月)／看目标历史完成／看目标预测达成</td><td class="mono">goal_progress</td></tr>
+      <tr><td>改目标</td><td>5</td><td>改营养目标／改体重目标／改饮水目标／暂停所有目标／重启所有目标</td><td class="mono">goal_config / goal_weight / goal_status</td></tr>
+    </table>
+
+    <table class="cmp" style="margin-top:14px">
+      <tr><th></th><th>老技能</th><th>新仓现状</th></tr>
+      <tr><td>实现体量</td><td class="ok">11 个脚本（<span class="mono">render_goal_progress.py</span> 单个 30 KB）＋ 8 张模板（最大 23 KB）</td><td class="no">7 个文件共 317 行</td></tr>
+      <tr><td>看类 12 场景</td><td class="ok">12 个 <span class="mono">--mode</span>，各出各的视图（今日／周／营养／体重／饮水／对比实际／完成度／到期／周率／月率／历史／预测）</td><td class="no">12 条词共用一条 <span class="mono">calorie.view.goal-progress</span>，出的是几块 KPI ＋ 一条 bar</td></tr>
+      <tr><td>写类闭环</td><td class="ok">填 HTML（输入侧）→ 复制 prompt → 写库 → 结果 HTML（输出侧）；速率由页面预计算、极端目标警示、改前/改后对照、BMR 低值提示</td><td class="no">单条写命令直接写库，没有输入侧页、没有结果页</td></tr>
+      <tr><td>自动算 3 条</td><td class="ok">推荐页给依据与理由，用户确认后采纳</td><td class="no">落 <span class="mono">non-exec</span>：AI 跑到这里就断（无预检确认页）</td></tr>
+      <tr><td>工作流</td><td class="ok">老 <span class="mono">SKILL.md</span> 有整节「🎯 目标管理 · 25 场景」＋ 常驻交互规则</td><td class="no">新 <span class="mono">SKILL.md</span>（211 行）没有目标管理的工作流；M6 预检表也不含目标类词</td></tr>
+      <tr><td>页面形态</td><td class="mono">—</td><td class="no">5 类页面都走 <span class="mono">pageShell()</span>，产出片段，不是完整文档</td></tr>
+      <tr><td>数据面</td><td class="ok">老有 <span class="mono">goal_history.py</span></td><td class="no">真库 <span class="mono">daily_goal</span> 只有 1 行、<strong>没有历史表</strong>（历史类场景的数据基础要重定）</td></tr>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>三处最要紧的差异（“残次品”的具体位置）</h2>
+
+    <div class="gap">
+      <h3>① 12 个「看目标」场景塌成一张通用盘</h3>
+      <div class="was"><b>老：</b>12 个 mode，每个 mode 一套字段与版面。</div>
+      <div class="now"><b>新：</b><span class="mono">buildGoalProgress()</span> 对 12 条词返回同一份出参，页面只有「目标完成率」一条 bar ⇒ 用户说「看目标完成率(按月)」和「看目标预测达成」拿到的东西几乎一样。</div>
+    </div>
+
+    <div class="gap">
+      <h3>② 写类词丢了写前页与结果页</h3>
+      <div class="was"><b>老：</b>体重目标闭环 = 填 HTML → 复制 prompt → 写库 → 结果 HTML；速率一律用页面预计算值（AI 禁止自行推算）；建议速率 ≥1.0 kg/周 必须出极端目标警示；改类出改前/改后；营养配置带 BMR 低值提示。</div>
+      <div class="now"><b>新：</b>这四件（输入侧页、速率预计算、极端警示、结果页）在新仓都没有对应物。</div>
+    </div>
+
+    <div class="gap">
+      <h3>③ AI 手上没有「从哪一步往下走」</h3>
+      <div class="was"><b>老：</b>SKILL.md 常驻交互规则（信息缺失才补问／写前给改前改后／自动算先给依据再采纳／看类走 HTML）。</div>
+      <div class="now"><b>新：</b>SKILL.md 只有构建期注入的「唤醒词 → 命令」表；命中「定体重目标」时 AI 只看到一条写命令，不知道要先出页、先算速率、先看警示。</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>票单（8 张，含条件票）</h2>
+    <p class="sub">原生阻塞边：1 → 2／3／4／5；2／3／4 → 7；7 ＋ 装机 → 8。</p>
+    <table>
+      <tr><th>序</th><th>票</th><th>类型</th><th>被谁阻塞</th><th>交付什么</th></tr>
+      <tr><td>1</td><td><a href="https://github.com/FeatherHunter/ilife/issues/164">场景 06 目标管理：公共层提取与边界（防幻觉词对账）</a></td><td>grilling＋task</td><td class="mono">—</td><td><strong>25 场景 × 底层唤醒词 × 命令 × 页面 × 工作流</strong>四列对照表（你要的「每个场景找得到底层唤醒词」的书面依据）；页面归 5 类；公共层增量；把本页 2–8 建出来并挂边</td></tr>
+      <tr><td>2</td><td>场景 06：看类 12 场景各自成页（照老实物重构）</td><td>task</td><td>1</td><td>逐 mode 对齐老实物字段与文案；页面按公共层装配成完整文档；按 Q3 的决定拆命令或加 mode</td></tr>
+      <tr><td>3</td><td>场景 06：写类词的写前页与结果页（体重目标闭环）</td><td>task</td><td>1</td><td>新增写前页与结果页两条只读页面命令；速率由页面预计算、极端目标警示、改前/改后、BMR 低值提示</td></tr>
+      <tr><td>4</td><td>场景 06：自动算三条的预检确认页（并补 M6 表）</td><td>task</td><td>1</td><td>定营养目标(自动算)／定饮水目标(自动算)／一键定全套目标 三条从 <span class="mono">non-exec</span> 变成有页可出、确认后写库</td></tr>
+      <tr><td>5</td><td>场景 06：SKILL.md 补目标管理工作流（按 writing-for-agents）</td><td>task</td><td>1</td><td>SKILL.md 留常驻规则＋指针；25 场景逐词工作流进包内披露文件</td></tr>
+      <tr><td>6</td><td>场景 06：目标数据面与命令补齐</td><td>task</td><td>1</td><td>条件票：按对账结论定——目标变更历史（老 <span class="mono">goal_history.py</span>）在新 schema 无对应表；「一键定全套目标」要不要一条组合写命令</td></tr>
+      <tr><td>7</td><td>场景 06：锁 · 25 条词的真出口用例</td><td>task</td><td>2、3、4</td><td>25 条词逐条真跑：断言落盘、绝对路径、字段、场景可区分（12 条看类不能同形）</td></tr>
+      <tr><td>8</td><td>场景 06：真机端到端 ＋ 肉眼终审</td><td>task</td><td>7 ＋ 装机</td><td>用户在全新空白 session 逐条念，产物进验收目录，肉眼签字</td></tr>
+    </table>
+  </section>
+
+  <section class="q" id="q1" data-q>
+    <div class="qhead"><span class="num">Q1</span><h2>这一版按目标管理（#153）做，对吗？</h2></div>
+    <h3>为什么问</h3>
+    <p>你点名 159，但三条核心思想全指向目标管理。两张图的活完全不同，做错方向代价大。</p>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p>按 #153 目标管理做：我改认领 <a href="https://github.com/FeatherHunter/ilife/issues/164">#164</a>、放开 <a href="https://github.com/FeatherHunter/ilife/issues/170">#170</a>，然后照本页建 8 张票。</p>
+      <p class="why">理由：目标管理本来就是批次顺序里的下一张（07 → <strong>06</strong> → …），这份设计不会白做。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 对，做目标管理</button><button data-pick="other">✎ 不对，还是 159</button><span class="state"></span></div>
+  </section>
+
+  <section class="q" id="q2" data-q>
+    <div class="qhead"><span class="num">Q2</span><h2>「从老技能重构」重构到什么程度？</h2></div>
+    <h3>关键信息</h3>
+    <ul>
+      <li>老实物可照：11 个脚本（口径、算式、极端值判定、mode 分派都在里面）＋ 8 张模板（版面、文案、改前改后、警示区块）。</li>
+      <li>新仓已有公共层：<span class="mono">shared/docPage.ts</span>（整页装配）、<span class="mono">shared/copyArea.ts</span>（复制区＋三格式菜单）——场景 07 那条线建的。</li>
+    </ul>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p><strong>内容与口径逐条对齐老实物，长相按新仓公共层重做</strong>：字段、算式、文案、警示规则、改前改后一律照老实物；配色与版面走 <span class="mono">docPage</span>＋<span class="mono">copyArea</span>，不照搬老 HTML 的皮。</p>
+      <p class="why">理由：老实物里真正值钱的是口径（速率预计算、极端目标、BMR 提示、80%–120% 完成带）；长相照搬会把老仓的散装样式带回来，与新仓其余场景割裂。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 内容照老、长相用公共层</button><button data-pick="other">✎ 长相也照老实物</button><span class="state"></span></div>
+  </section>
+
+  <section class="q" id="q3" data-q>
+    <div class="qhead"><span class="num">Q3</span><h2>12 条看类场景：一条命令加 mode，还是拆成 12 条命令？</h2></div>
+    <h3>关键信息</h3>
+    <ul>
+      <li>老技能就是一条脚本加 <span class="mono">--mode</span>（today／week／nutrition／weight_progress／water／vs_actual／completion／history／predict…）——12 个场景，1 条命令。</li>
+      <li>新仓现在也是 1 条（<span class="mono">calorie.view.goal-progress</span>），但<strong>不分场景</strong>，出同一份东西。</li>
+    </ul>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p><strong>保留 1 条页面命令 ＋ <span class="mono">mode</span> 参数，但每个 mode 出各自视图</strong>（照老 CLI 的分法）。</p>
+      <p class="why">理由：命令面不膨胀、与老技能同形、25 条词仍各走各的口径；拆成 12 条命令只会让命令表变长而能力不变。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 一条命令 ＋ mode</button><button data-pick="other">✎ 拆 12 条命令</button><span class="state"></span></div>
+  </section>
+
+  <section class="q" id="q4" data-q>
+    <div class="qhead"><span class="num">Q4</span><h2>25 场景的工作流写在哪？</h2></div>
+    <h3>关键信息</h3>
+    <ul>
+      <li>SKILL.md 是<strong>每轮都在上下文里</strong>的常驻材料：新仓现在 211 行；老技能那份长到 <strong>158 KB</strong>（把全部场景工作流塞进正文的结果）。</li>
+      <li>writing-for-agents 的做法：常驻只放<strong>常驻规则</strong>＋一条<strong>指针</strong>，逐场景工作流下放成披露文件，命中指针才去读。</li>
+      <li>披露文件必须<strong>随技能包安装</strong>（安装器只装 <span class="mono">packages/skill-calorie/</span> 这一层，<span class="mono">docs/</span> 不进包），否则 AI 够不着。</li>
+    </ul>
+    <div class="rec">
+      <h3>推荐</h3>
+      <p>SKILL.md 只留：目标管理的<strong>常驻交互规则</strong>（信息缺失才补问／写前给改前改后／自动算先给依据／看类走 HTML）＋ 一行指针；<strong>25 场景逐词工作流</strong>放 <span class="mono">packages/skill-calorie/workflows/06-目标管理.md</span>（随包安装）。</p>
+      <p class="why">理由：常驻材料每轮都花代价，逐场景细节只有命中才用得上；分开放同时解决「SKILL.md 太长」与「AI 不知道从哪一步走」。</p>
+    </div>
+    <div class="pick"><button data-pick="rec">✓ 常驻规则＋披露文件</button><button data-pick="other">✎ 全写进 SKILL.md</button><span class="state"></span></div>
+  </section>
+
+  <footer>
+    你答完这 4 条，我就：改认领 → 建 8 张票（原生子议题边 ＋ 阻塞边）→ 写回地图 #153 的 Decisions / Not yet specified。<br>
+    <b>票先不建</b>，等你这一轮话。
+  </footer>
+
+</div>
+<script>
+  const qs=[...document.querySelectorAll('[data-q]')];const doneEl=document.getElementById('done');
+  function refresh(){doneEl.textContent=qs.filter(q=>q.dataset.picked).length;}
+  for(const q of qs){const state=q.querySelector('.state');
+    for(const btn of q.querySelectorAll('.pick button')){
+      btn.addEventListener('click',()=>{
+        const same=btn.getAttribute('aria-pressed')==='true';
+        for(const b of q.querySelectorAll('.pick button'))b.setAttribute('aria-pressed','false');
+        if(same){delete q.dataset.picked;state.textContent='';}
+        else{btn.setAttribute('aria-pressed','true');q.dataset.picked=btn.dataset.pick;
+          state.textContent=btn.dataset.pick==='rec'?'已按推荐定':'待补充说明';
+          state.className='state '+(btn.dataset.pick==='rec'?'ok':'no');}
+        refresh();});}}
+  refresh();
+</script>
+</body>
+</html>

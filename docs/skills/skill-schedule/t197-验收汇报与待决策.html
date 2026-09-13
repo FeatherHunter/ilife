@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>作息管家 HELP · 结项汇报与待决策</title>
+<style>
+  :root{
+    --bg:#0f1216; --card:#171b21; --card2:#1d222a; --fg:#e8ecf1; --fg2:#98a2b3;
+    --blue:#4b8cf7; --green:#31c48d; --amber:#f0a72f; --red:#f26d6d; --line:#262d36;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:28px 20px 64px;background:var(--bg);color:var(--fg);
+    font-family:system-ui,"Segoe UI","Microsoft YaHei",sans-serif;line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 6px}
+  .sub{color:var(--fg2);font-size:13px;margin-bottom:22px}
+  h2{font-size:16px;margin:30px 0 12px;padding-left:10px;border-left:3px solid var(--blue)}
+  h3{font-size:14px;margin:18px 0 8px;color:var(--fg)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+  .card.tight{padding:12px 14px}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .kpi{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi b{display:block;font-size:20px;color:var(--green);margin-bottom:2px}
+  .kpi span{font-size:12.5px;color:var(--fg2)}
+  ul{margin:8px 0 0;padding-left:20px}
+  li{margin:5px 0}
+  .tag{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;margin-right:6px;
+    font-weight:600;vertical-align:1px}
+  .t-ok{background:rgba(49,196,141,.15);color:var(--green)}
+  .t-warn{background:rgba(240,167,47,.15);color:var(--amber)}
+  .t-bad{background:rgba(242,109,109,.15);color:var(--red)}
+  .t-info{background:rgba(75,140,247,.15);color:var(--blue)}
+  .opt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--card2)}
+  .opt.rec{border-color:var(--green);background:rgba(49,196,141,.06)}
+  .opt .hd{font-weight:600;margin-bottom:4px}
+  .opt .pro,.opt .con{font-size:12.8px;color:var(--fg2);margin:3px 0}
+  .opt .pro::before{content:"利 ";color:var(--green);font-weight:700}
+  .opt .con::before{content:"弊 ";color:var(--red);font-weight:700}
+  .alert{border-left:3px solid var(--amber);background:rgba(240,167,47,.07);
+    border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13.5px}
+  .alert.bad{border-left-color:var(--red);background:rgba(242,109,109,.07)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--fg2);font-weight:600;font-size:12px}
+  code{background:#0b0e12;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+  .muted{color:var(--fg2);font-size:12.5px}
+  .foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--fg2);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>作息管家 HELP · 结项汇报与待决策</h1>
+  <div class="sub">地图 <a href="https://github.com/FeatherHunter/ilife/issues/197" style="color:var(--blue)">#197</a>　2026-09-12　已达成并经您认可，剩两项决定</div>
+
+  <h2>一、成果（已完成）</h2>
+  <div class="grid">
+    <div class="kpi"><b>85 / 85</b><span>场景逐条交付，指令与标题／唤醒词／参数说明对旧实物逐字零差异</span></div>
+    <div class="kpi"><b>126 / 126</b><span>与卡路里 HELP 的共享模板 CSS 选择器集合完全相等，双方零独有模块</span></div>
+    <div class="kpi"><b>10 / 10</b><span>子票全部关闭，地图进度 100%</span></div>
+  </div>
+  <div class="card tight">
+    <ul>
+      <li><b>能交付</b>：在 DSH 说「作息管家help」→ 落盘 <code>作息管家_HELP_&lt;时间戳&gt;[_N].html</code> 并回执绝对路径；同名不覆盖（今日已实测两份并存）。</li>
+      <li><b>内容全</b>：5 类别／34 唤醒词／85 场景；离线可打开，无任何外链资源。</li>
+      <li><b>同构</b>：与卡路里／饼干记账同一套模板与模块，只多内容，不多模块。</li>
+      <li><b>有独立背书</b>：全程约 30 个 agent 分头执行＋对抗式审查，关键改动均以真浏览器与逐字节比对取证。</li>
+    </ul>
+  </div>
+
+  <div class="alert">
+    <b>需如实知悉（我的失误，已修复）：</b>收口写地图时踩了编码陷阱，一度把地图正文写残；已从备份恢复并逐项核验通过（23 项关键内容全部到位）。但<b>最初那一版的个别细节行，可能比现在略短</b>。此即下方「决策 B」的由来。
+  </div>
+
+  <div class="alert bad">
+    <b>决策 B 说的失误是什么（说人话）：</b>最后一步要把"结项记录"写进地图正文时，我改写的脚本有毛病，<b>把原来的正文覆盖成了残篇</b>（只剩开头一小段，其中您的采访原话也一起没了）。我从备份把它补了回来，现在正文的<b>章节与您说过的话都在，已逐项核对通过</b>。缺的是<b>最早那版里几条"背景资料"的详细程度</b>——就像档案补回来了、但个别页比原件简略几行。它<b>不影响已经交付给您的 HELP 文件</b>，只影响那份"过程记录"的详尽程度。
+  </div>
+
+  <h2>二、决策：已结项（您的裁定）</h2>
+  <div class="card">
+    <p style="margin:0 0 10px"><span class="tag t-ok">已裁定</span><b>维持现状，不立票、不加新旧标记。</b>您的理由：当前指令拿到的就是最新的 HTML，这是默认效果，不需要额外标记。</p>
+    <p class="muted" style="margin:0">说明：本页曾把"HELP 24 小时复用窗口"列为待办项 ①，经核查——它是 <b>#245 一次性给五个技能同款</b>的机制（不是作息独有），且是<b>你本人当时为"防止 HELP 文件堆爆"所定的口径</b>（HELP 说明书不必每次重新渲染）。既然对您无碍，此项就此关闭并留档，不再动。</p>
+  </div>
+
+  <h3>留档（不立票，仅供日后翻查）</h3>
+  <div class="card">
+    <table>
+      <tr><th>项</th><th>是什么（说人话）</th><th>影响</th></tr>
+      <tr><td>②</td><td><b>新技能不知道该把代码放哪</b>：开发规矩里没写"跨能力共用的件放哪、叫什么名"</td><td>以后每做一个新技能都要重议一次摆放，不影响已交付的 HELP</td></tr>
+      <tr><td>③</td><td><b>报错名不贴切＋大文件无预警</b>：写文件失败时提示借用了"文件太大"的错；本包没定"文件超多少行要提醒"</td><td>将来排查问题易被提示带偏</td></tr>
+      <tr><td>④</td><td><b>两个脚本"一被引入就自动干活"</b>：正常应只在被直接运行时才干活</td><td>别处引用会意外改文件；与您使用无关</td></tr>
+      <tr><td>⑤</td><td><b>那 85 条"预期说明"的数据留不留</b>：页面已不显示，数据仍留在仓库备查</td><td>占空间极小，无功能影响</td></tr>
+      <tr><td>附</td><td><b>居家管家的 HELP 不走共用件</b>（没有复用窗口、每次直接写）——这是本仓<b>真正的不一致</b>之处，方向与原先猜想相反</td><td>属居家管家那条线；如需统一可另议</td></tr>
+    </table>
+  </div>
+
+  <h3>决策 B：地图正文要不要逐字复原？<span class="tag t-ok" style="margin-left:6px">已裁定：维持现状</span></h3>
+  <div class="card">
+    <div class="muted">前因：见上方红框（那份过程记录曾被覆盖成残篇、已补回，但最早版的个别细节行较略）。</div>
+    <div class="opt rec">
+      <div class="hd"><span class="tag t-ok">推荐</span>维持现状，不逐字复原</div>
+      <div class="pro">现版本已含全部章节、您的原话（含"不存在预期"那条裁定）与 100% 进度，信息足够接手。</div>
+      <div class="con">个别"地面真相"细节行比最初略短，属记录损失而非成果损失。</div>
+    </div>
+    <div class="opt">
+      <div class="hd">从备份逐字复原</div>
+      <div class="pro">记录完整度最高。</div>
+      <div class="con">大段文本往返正是刚才出事之处；需再经过带校验的合并，收益低于风险。</div>
+    </div>
+  </div>
+
+  <h2>三、给我的建议（一句话）</h2>
+  <div class="card">
+    <ul>
+      <li><b>决策 A（已按您裁定结项）</b>：不加新旧标记、维持现状——当前指令拿到的就是最新的 HELP，属默认效果，无需额外动作。<b>其余四项留档即可</b>（都不影响已交付的 HELP；其中"居家管家不走共用件"是本仓真正的不一致之处）。</li>
+      <li><b>决策 B 选推荐项</b>：地图不再动（章节与您的原话齐全，缺的只是最初版个别背景行的详细度）。</li>
+      <li>若您认为两项都到此为止，本任务即结项，我不再做任何动作。</li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    产出物：<code>D:\2Study\StudyNotes\.db\schedule_html\help\作息管家_HELP_20260912_194200.html</code>（136,914 B，已获您认可）<br>
+    地图：<a href="https://github.com/FeatherHunter/ilife/issues/197" style="color:var(--blue)">#197</a>　·　本页由总工程师汇总，未含过程细节，如需逐条证据可另开证据索引页。
+  </div>
+
+</div>
+</body>
+</html>

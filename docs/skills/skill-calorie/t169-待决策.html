@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景 08 身体细节 · 待裁定（#169）</title>
+<style>
+  :root{--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#f7f9fc;--rec:#1d4ed8;--recbg:#eff6ff;--cost:#b45309;--costbg:#fffbeb;--ok:#047857;--okbg:#ecfdf5;--miss:#b91c1c;--missbg:#fef2f2}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:26px 20px 56px}
+  h1{font-size:23px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 12px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px}
+  .chip{background:#eef2ff;color:#3730a3;border-radius:999px;padding:3px 11px;font-size:12.5px;text-decoration:none}
+  .chip:hover{background:#e0e7ff}
+  h2{font-size:17px;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0 6px}
+  th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f8fafc;color:#334155;font-weight:600;white-space:nowrap}
+  code{background:#f3f4f6;border:1px solid #eceef1;border-radius:4px;padding:0 4px;font-size:12.5px;font-family:ui-monospace,Consolas,monospace}
+  .stat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
+  .stat>div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat .n{font-size:22px;font-weight:700;line-height:1.2}
+  .stat .t{font-size:12.5px;color:var(--muted)}
+  .stat .t b{color:var(--ink);display:block;font-size:13px}
+  .ok .n{color:var(--ok)} .warn .n{color:var(--cost)} .miss .n{color:var(--miss)}
+  .chain{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px 0 4px}
+  .chain>div{border-radius:10px;padding:10px 12px;font-size:13.5px;border:1px solid var(--line);background:#fff}
+  .chain .good{border-color:#a7f3d0;background:var(--okbg)}
+  .chain .half{border-color:#fde68a;background:var(--costbg)}
+  .chain .bad{border-color:#fecaca;background:var(--missbg)}
+  .chain b{display:block;font-size:13px;margin-bottom:3px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;margin:0 0 16px;overflow:hidden}
+  .card>header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fbfdff;border-bottom:1px solid var(--line)}
+  .num{width:26px;height:26px;border-radius:8px;background:#1e3a8a;color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .card h3{font-size:15.5px;margin:0;flex:1}
+  .tag{font-size:11.5px;border-radius:6px;padding:2px 8px;background:#f1f5f9;color:#475569;flex:none;white-space:nowrap}
+  .tag.scope{background:#fef3c7;color:#92400e}
+  .tag.rule{background:#e0e7ff;color:#3730a3}
+  .tag.work{background:#dcfce7;color:#166534}
+  .body{padding:12px 16px 15px}
+  .lbl{font-size:12px;color:var(--muted);letter-spacing:.06em;margin:12px 0 3px;font-weight:600}
+  .body>.lbl:first-child{margin-top:2px}
+  ul{margin:2px 0 0 18px;padding:0}
+  li{margin:3px 0}
+  .rec{background:var(--recbg);border-left:3px solid var(--rec);border-radius:0 8px 8px 0;padding:9px 12px;font-weight:600;color:#1e3a8a;margin-top:4px}
+  .pros{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .pros>div{border-radius:8px;padding:9px 12px;font-size:13.5px}
+  .pros .good{background:var(--okbg);border:1px solid #a7f3d0}
+  .pros .bad{background:var(--costbg);border:1px solid #fde68a}
+  .pros b{display:block;font-size:12.5px;margin-bottom:3px}
+  .pros .good b{color:var(--ok)} .pros .bad b{color:var(--cost)}
+  .note{background:#fff;border:1px dashed var(--line);border-radius:10px;padding:10px 13px;font-size:13.5px;color:#374151}
+  footer{margin-top:28px;font-size:12.5px;color:var(--muted);line-height:1.8}
+  @media (max-width:720px){.pros,.stat,.chain{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>场景 08 身体细节 · 待裁定</h1>
+  <p class="sub">图「13 条唤醒词能跑通＋出过程型／结果型 HTML」（#158）· 本次收口首发票「公共层提取与边界」（#169）· 2026-09-13</p>
+  <div class="chips">
+    <a class="chip" href="#q1">Q1 图与票</a>
+    <a class="chip" href="#q2">Q2 Destination 改写</a>
+    <a class="chip" href="#q3">Q3 重建口径</a>
+    <a class="chip" href="#q4">Q4 唤醒词与孤儿</a>
+    <a class="chip" href="#q5">Q5 步骤层与两处呈现面</a>
+    <a class="chip" href="#q6">Q6 三处具体设计</a>
+    <a class="chip" href="#q7">Q7 票怎么切</a>
+    <a class="chip" href="#q8">Q8 旧件搬到什么程度</a>
+  </div>
+
+  <h2>一页看懂：这张图今天的样子</h2>
+  <div class="stat">
+    <div class="ok"><div class="n">13</div><div class="t"><b>唤醒词表没问题</b>与老技能权威表逐条 1:1，无幻觉词、无漏抄</div></div>
+    <div class="ok"><div class="n">11</div><div class="t"><b>已有命令可执行</b>缺的是两条对比词（对比体脂／对比围度）</div></div>
+    <div class="miss"><div class="n">0</div><div class="t"><b>HELP 卡片上的命令与流程</b>13/13 有卡，命令字段 0 处</div></div>
+    <div class="miss"><div class="n">7<span style="font-size:14px">/13</span></div><div class="t"><b>写词还在出旧式片段</b>4 条读词已是完整整页</div></div>
+  </div>
+
+  <p class="lbl" style="margin-top:16px">链条断在哪一层（实物核过）</p>
+  <div class="chain">
+    <div class="good"><b>① HELP 场景层 ✔</b>身体细节这个分组在，13 条词卡片逐条都在（实物里 13 处 <code>wake_word</code>）</div>
+    <div class="half"><b>② 底层唤醒词 △</b>11 条在速查台里有「可执行命令」；两条对比词是空白——不是空值，是整行不出现</div>
+    <div class="bad"><b>③ 工作流程 ✘</b>两处 HELP 产物都没有流程槽位；契约里根本没有「步骤」这个字段；新仓源码搜 <code>--chain</code> 命中 0</div>
+  </div>
+  <p class="note">再往下一层，是<b>算层与呈现层的残次品</b>：皮褶 7 点写进库却从不读、从不算（换算不存在）｜「看围度趋势」词不带部位而命令要求部位 → 趋势恒空｜两条对比词既没命令、形状也不是两期窗口（缺变化率）｜删除不取快照、补记不查冲突｜<b>取数信封装不下声明字段</b>（13 条词声明约 47 个字段槽，能取到不足 12 个，因为汇总值只许是数字）。</p>
+
+  <h2>结构落点（按 docs/agents/structure.md）</h2>
+  <p class="sub">本图所有开发都进自己的能力目录；目录名取自 HELP 一级分组，文件名取自下一级子功能；共用件要写得出两个在用能力。</p>
+  <table>
+    <tr><th>落点</th><th>内容</th></tr>
+    <tr><td><code>src/body_detail/</code><br><span class="sub">新建，本图专属</span></td><td>按子功能分件：<code>add.ts</code>（记身体细节）／<code>view.ts</code>（看身体细节）／<code>compare.ts</code>（比身体细节）／<code>remove.ts</code>（删身体细节）／<code>labels.ts</code>（来源与部位名本地化）；一个文件对外给的东西不超过五个</td></tr>
+    <tr><td><code>src/shared/</code><br><span class="sub">共用位</span></td><td>预检确认页／结果展示页／写后回执页三件骨架——写得出两个在用能力：<code>profile</code>（场景 07）＋ <code>body_detail</code>（本图）</td></tr>
+    <tr><td>只许追加的共用面</td><td><code>cli/keys.ts</code>（命令登记，只追加两条对比命令）、<code>triggers/routing.ts</code>（两条词从「没有命令」改成「有命令」）、<code>SKILL.md</code> 与 HELP 资产（呈现面）</td></tr>
+    <tr><td>就地摆正<br><span class="sub">搬进专属目录</span></td><td><code>render/bodyPlate.ts</code>／<code>render/sportDocs.ts</code> 的身体两段／<code>render/wizardPort*.ts</code> 的身体两页／<code>cli/write.ts</code> 的四条写／<code>cli/cmd_read.ts</code> 的两条读与两条预检分派</td></tr>
+    <tr><td>本图另补一件包内缺口</td><td><code>packages/skill-calorie/AGENTS.md</code>：告警线 <b>350 ＋ LF 口径</b>（本包今天没有这个数字，兄弟包都已落；按纪律不落 <code>docs/</code>）</td></tr>
+  </table>
+  <p class="note">每张写代码的票都照「必报五步」走：<b>影响清单</b>与<b>结构设计</b>先报你点头 → 动代码（跨能力只走公开接口、常量只写一处）→ 超告警线当场报 → 交付时报<b>交付对账</b>（与影响清单逐行对，偏差为零）。一行清单只指向一个能力目录；要碰共用面，就写明理由。</p>
+
+  <h2>要你拍的八条</h2>
+
+  <div class="card" id="q1">
+    <header><div class="num">1</div><h3>这张图与这张票</h3><span class="tag scope">范围</span></header>
+    <div class="body">
+      <div class="lbl">前因后果</div>
+      <p style="margin:2px 0">按你「口误」的更正，方向已换回：<b>当前图＝场景 08 身体细节（#158）</b>，本会话收口它的首发票（#169，已重新认领），产出该图第 2–N 张票的设计。场景 06 那张票不归我（它已被另一个会话收口）。</p>
+      <div class="lbl">关键信息</div>
+      <ul>
+        <li>本图：13 条唤醒词、2 条现在没有命令、涉及 5 个模板名。</li>
+        <li>首发票收口前，这张图的后续票不建（全批约定）。</li>
+      </ul>
+      <div class="lbl">推荐</div>
+      <div class="rec">照此走：当前图＝场景 08 身体细节，本会话收口首发票并给出后续票设计。</div>
+      <div class="pros">
+        <div class="good"><b>好处</b>边界、页面归类、公共层当场定下来，后续票立刻能建。</div>
+        <div class="bad"><b>代价</b>另外十张图本会话不动；收口链长（末票要等前几张）。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="q2">
+    <header><div class="num">2</div><h3>Destination 改写成「按 HELP 场景验收」</h3><span class="tag scope">范围</span></header>
+    <div class="body">
+      <div class="lbl">前因后果</div>
+      <p style="margin:2px 0">地图现在写的是「13 条唤醒词都能跑通 ＋ 产物是真实 HTML、你肉眼验收过」——按<b>唤醒词条数</b>验收。你要的是「HELP 里身体细节的每条场景都能找到底层唤醒词，AI 知道从哪段工作流程执行下去」，这句在地图里今天没有落点。另有一个术语要先拧清：HELP 自己把每条唤醒词就叫「场景」（页面上写着「10 分类 · 436 场景」），而地图说的「场景 08」是分类序号——同一句话里两个「场景」差一个量级。</p>
+      <div class="lbl">关键信息</div>
+      <ul>
+        <li>实物 HELP 里 13 条词都有卡片，但整份文件没有一处「可执行命令」、没有一处 <code>calorie-cmd-read</code>。</li>
+        <li>唯一带命令的那份产物（速查台）<b>全盘搜不到一份落盘的</b>——「AI 该走哪条命令」从没呈现给你看过。</li>
+      </ul>
+      <div class="lbl">推荐</div>
+      <div class="rec">Destination 改成两句：① HELP 里身体细节<b>每张场景卡片</b>都能查到它的底层唤醒词与该走的工作流程；② 照该流程真跑一遍，能拿到<b>完整 HTML 产物</b>并由你肉眼验收。</div>
+      <div class="pros">
+        <div class="good"><b>好处</b>验收有抓手：卡片缺命令、词不属于任何场景、流程写不清，都会被这条抓住。</div>
+        <div class="bad"><b>代价</b>要先把「场景」一词在 HELP 与地图两处统一，否则每张图都要再拧一次。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="q3">
+    <header><div class="num">3</div><h3>重建口径：数据层复用，算层与呈现层照老实物重建</h3><span class="tag rule">口径</span></header>
+    <div class="body">
+      <div class="lbl">前因后果</div>
+      <p style="margin:2px 0">你已判定这块是残次品、要照老技能重构。落到范围上就是回答「哪些推倒、哪些留」：留错了把残次算法带进新页面，推多了把已经能出真数的数据层白扔。取证报告给的定性是「<b>数据层照搬、算层整段缺失、呈现层缩水、协议层自认未完成</b>」。</p>
+      <div class="lbl">关键信息（实测）</div>
+      <ul>
+        <li><b>可留</b>：参数校验、写入列、软删、来源兜底——与老实物口径一致。</li>
+        <li><b>必做</b>：皮褶换算（老公式就摆在老模板里）｜两期对比含变化率｜趋势的 KPI 与默认部位｜删除取快照与补记查冲突｜读词取数契约改造（现在数组与字符串一律装不下）｜看体脂的窗口。</li>
+        <li>新仓已有的公共层（整页装配、复制数据三格式菜单、预检确认页形态）保留不动。</li>
+      </ul>
+      <div class="lbl">推荐</div>
+      <div class="rec">数据层复用；<b>算层与呈现层照老实物重建</b>；公共层保留。</div>
+      <div class="pros">
+        <div class="good"><b>好处</b>口径与老技能逐项对得上、可逐条验收；不用重造已经对的数据层。</div>
+        <div class="bad"><b>代价</b>本图工作量集中在这里；取数契约一改，四条读命令与它们已有的测试都要跟着动（按老规矩只许追加、不许乱改）。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="q4">
+    <header><div class="num">4</div><h3>13 条唤醒词名能不能动，以及那 4 条孤儿词</h3><span class="tag rule">口径</span></header>
+    <div class="body">
+      <div class="lbl">前因后果</div>
+      <p style="margin:2px 0">你授权「需要新增唤醒词就新增、需要新增命令就新增、需要改动就改动」。新增与改动我照办；要问清的是<b>已有那 13 条的名字</b>能不能改，以及顺带查出来的 4 条孤儿词怎么办。</p>
+      <div class="lbl">关键信息</div>
+      <ul>
+        <li>13 条与老技能权威表逐条 1:1（双向差集皆空），名字是 HELP 里的入口。</li>
+        <li>孤儿 4 条：看体成分／看围度记录／看围度向导／看体脂向导——只在路由表里，<b>两份 HELP 产物都没有卡片</b>（其中后两条又是页面命令的入口）。</li>
+      </ul>
+      <div class="lbl">推荐</div>
+      <div class="rec">13 条<b>名字逐字不动</b>，只做新增与内部改动；4 条孤儿词在本图一并处置——要么给它们补卡片、要么撤掉，别继续悬着。</div>
+      <div class="pros">
+        <div class="good"><b>好处</b>入口稳定，对账表与验收清单可跨会话复用；孤儿的账也清了。</div>
+        <div class="bad"><b>代价</b>若某条词本身有毛病（例如趋势词不带部位），只能在命令与参数上修，不能靠改名绕开。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="q5">
+    <header><div class="num">5</div><h3>步骤层要新开契约槽位（HELP ＋ SKILL.md 两处呈现面一起做）</h3><span class="tag work">工作件</span></header>
+    <div class="body">
+      <div class="lbl">前因后果</div>
+      <p style="margin:2px 0">你要「AI 知道该从该唤醒词的哪个工作流程执行下去」。查下来这条今天<b>根本没有载体</b>：HELP 卡片的字段是写死的几个键，数据里没有命令栏也没有流程栏；SKILL.md 只给「词→命令」，查看／对比／删除类连步骤都没有。老技能当年靠命令里的 <code>--chain</code> 占位＋表上方的常驻规则承载流程，<b>新仓全部源码搜 <code>--chain</code> 命中 0</b>。</p>
+      <div class="lbl">关键信息</div>
+      <ul>
+        <li>渲染层本来就支持卡片上的「可执行命令」栏，缺的只是把数据投影进去。</li>
+        <li>老技能有一份 <code>docs/scene-prompts/08-身体细节.md</code>（「身体细节 13 场景 · 定稿 prompt 存档」，你逐条确认过、agent 不得单方改动）——<b>新仓没有对应物</b>，而它就是「场景 → 唤醒词 → 工作流程」的原件。</li>
+        <li>新仓 SKILL.md 目标段还有 4 处错行（裸词冒充唤醒词、命令名冒充唤醒词、同字面两行不同含指），根因在生成脚本里；老仓身体细节那一节少了「prompt 定稿见…」那一行。</li>
+      </ul>
+      <div class="lbl">推荐</div>
+      <div class="rec">在本图一起做：HELP 卡片加「底层唤醒词 ＋ 工作流程」两栏（新开契约槽位）＋ SKILL.md 照「写给 agent 读的文档」重写 ＋ 把老仓那份「13 场景定稿」搬进新仓做同构件。</div>
+      <div class="pros">
+        <div class="good"><b>好处</b>「流程」只有一处真源，改一处全生效；agent 每次照同一条路走，不再靠猜。</div>
+        <div class="bad"><b>代价</b>契约一改要同步生成器、模板与两份产物；属数据形态改动，得配对账与回归。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="q6">
+    <header><div class="num">6</div><h3>三处具体设计</h3><span class="tag work">工作件</span></header>
+    <div class="body">
+      <div class="lbl">(a) 皮褶钳的 7 点换算本图补不补</div>
+      <p style="margin:2px 0">这条词的诺言是「按 Jackson-Pollock 7 点法帮我算体脂率」，今天命令只收实测体脂率，7 个皮褶字段写进库后从不被读。</p>
+      <div class="rec">建议补：命令侧收 7 点自动算（男女两套系数，老公式在老模板里），这也是「数据层之外」最容易验收的一条诺言。</div>
+      <div class="lbl" style="margin-top:12px">(b) 结果页照不照老技能「一张页三种模式」／对比命令怎么开</div>
+      <p style="margin:2px 0">老技能里看体脂／看体脂趋势／对比体脂是同一张结果页的三种模式；新仓列表与趋势已是整页，对比既没命令也没页面。</p>
+      <div class="rec">建议：页面照老技能一张结果页三种形态；命令新开两条对比命令（体脂那条连取数口径一起改，围度那条只差接线）。</div>
+      <div class="lbl" style="margin-top:12px">(c) 两张预检确认页要不要升级成场景 07 那套</div>
+      <p style="margin:2px 0">场景 07 已立起「一页承载多条写词 ＋ 复制日志 ＋ 改前→改后」；场景 08 盘上两张预检页仍是「一条词一张页」。</p>
+      <div class="rec">建议升级：体脂页承载 3 条写词、围度页承载 2 条——这是对老技能形态的主动偏离，换来与场景 07 一致。</div>
+    </div>
+  </div>
+
+  <div class="card" id="q7">
+    <header><div class="num">7</div><h3>本图后续票怎么切</h3><span class="tag work">工作件</span></header>
+    <div class="body">
+      <div class="lbl">前因后果</div>
+      <p style="margin:2px 0">地图模板只留四行（页面交付／命令补齐／锁／真机端到端），但实测出「步骤层与投影面」「算层重建」这两块不塞不进去。怎么切决定后面每张票谁改哪些文件。</p>
+      <div class="lbl">推荐（6 张，顺次即依赖；括号内是属主目录）</div>
+      <div class="rec">① 结构落点与步骤层（先报影响清单＋结构设计再动手）：立 <code>src/body_detail/</code> ＋ HELP 卡片加「底层唤醒词＋工作流程」两栏 ＋ 契约开槽 ＋ SKILL.md 重写 ＋ 搬 13 场景定稿 ② 算层重建（皮褶换算、趋势 KPI 与默认部位、删除快照与补记冲突、取数契约改造、看体脂窗口）→ <code>src/body_detail/</code> ③ 命令补齐与两期对比（两条对比命令接线＋两期窗口＋变化率）→ <code>src/body_detail/</code> ＋ <code>cli/keys.ts</code>（只追加）＋ <code>triggers/routing.ts</code> ④ 页面交付（7 条写词回执换整页；预检确认页升级；结果页三模式）→ <code>src/body_detail/</code> ＋ <code>src/shared/</code> ⑤ 锁：真出口用例（现在测试零拦截） ⑥ 真机端到端＋肉眼终审。</div>
+      <div class="pros">
+        <div class="good"><b>好处</b>一类风险一张票，跑红了一眼能看出归属；②③④ 可并行。</div>
+        <div class="bad"><b>代价</b>票多、收口链长；若想更快见到效果，可把 ① 与 ⑤ 合成一轮。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="q8">
+    <header><div class="num">8</div><h3>旧件里的身体实现，搬到什么程度</h3><span class="tag rule">口径</span></header>
+    <div class="body">
+      <div class="lbl">前因后果</div>
+      <p style="margin:2px 0">结构纪律要求「能力自治」（一个能力的代码住在自己目录里）＋「就地摆正」（旧代码与新规矩不一致时，在本次改动里摆正，不另开票、不顺手扩大范围）。身体细节今天的实现是散着的：渲染在 <code>render/</code>、取数在 <code>fetch/</code>、分派在 <code>cli/</code>。这一问决定本图搬多少。</p>
+      <div class="lbl">关键信息</div>
+      <ul>
+        <li>先例已立：场景 07（基础信息）有 <code>src/profile/</code>、场景 06（目标管理）有 <code>src/goal/</code>，文件都按子功能分。</li>
+        <li>要碰的旧件里三件已超告警线（命令分派 1209 行／写命令 900＋ 行／路由表 811 行）；把身体那几段搬走是<b>净减行</b>。</li>
+      </ul>
+      <div class="lbl">推荐</div>
+      <div class="rec">整段搬：把身体细节的渲染、取数、分派分支与页面装配收进 <code>src/body_detail/</code>，旧件只留必要的转发或直接删除；共用面（命令登记／路由表）只做最小改动——该减的减，只许追加的才追加。</div>
+      <div class="pros">
+        <div class="good"><b>好处</b>与场景 07／06 同形，后来人一眼知道身体细节住哪；顺带让三件超线旧件减值。</div>
+        <div class="bad"><b>代价</b>本图改动面变大（要碰几个共用面文件），必须按必报五步先报清单；搬迁期间同一文件不能让两张票并写（并发纪律）。</div>
+      </div>
+      <p class="sub" style="margin-top:8px">另一条路：只有新代码进专属目录，旧件原位不动。改动最小、风险最低；代价是同一件事的实现永久分裂在两个地方，下次改动得两边找。</p>
+    </div>
+  </div>
+
+  <h2>怎么回</h2>
+  <p class="note">直接回「Q1 同意／Q2 同意／Q3 同意／Q4 同意／Q5 同意／Q6 三处按推荐／Q7 同意六张／Q8 整段搬」即可，哪条要改写一句就行。这八条定完，我就把第 2–N 张票建出来（每张票带属主目录与必报五步要求）、挂原生子议题边与阻塞边，并把结论回写地图正文。</p>
+
+  <footer>
+    依据（四份只读取证报告，均在 <code>.scratch/t169/</code>）：<br>
+    <code>repo-state.md</code>（13 条词实况、预检页与场景 07 结构对比、对比能力盘点、缺什么）<br>
+    <code>old-reconcile.md</code>（与老技能权威表逐条对账、两条对比词的老口径、三种去处）<br>
+    <code>defects.md</code>（残次品实证：算层／字段／静默回退／测试零拦截／死件 ＋ 重建范围建议）<br>
+    <code>help-skill.md</code>（HELP 两处产物的卡片与命令现状、步骤层诊断、SKILL.md 新老对照、真源链）
+  </footer>
+</div>
+</body>
+</html>

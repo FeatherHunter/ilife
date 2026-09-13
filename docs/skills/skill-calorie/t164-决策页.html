@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#164 决策页 · 卡路里场景 06 目标管理（地图 #153）</title>
+<style>
+  :root{
+    --ink:#1a1d21; --muted:#5b6470; --faint:#8b949e;
+    --line:#e3e7ec; --bg:#f4f6f8; --card:#fff;
+    --accent:#0b6bcb; --accbg:#eef5fd;
+    --ok:#0f7b46; --okbg:#ecf8f1; --warn:#9a5b00; --warnbg:#fff7ea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  .wrap{max-width:940px;margin:0 auto;padding:28px 20px 150px}
+  h1{font-size:23px;margin:0 0 6px;letter-spacing:-.3px}
+  h2{font-size:17px;margin:0}
+  p{margin:8px 0}
+  a{color:var(--accent)}
+  code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:13px}
+  .lede{color:var(--muted);margin:0 0 18px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 22px}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:999px;
+        padding:3px 11px;font-size:12.5px;color:var(--muted)}
+  .chip b{color:var(--ink)}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin:0 0 22px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi .n{font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1.2}
+  .kpi .l{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  section{margin:0 0 26px}
+  .secttl{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.06em;
+          text-transform:uppercase;margin:0 0 10px}
+
+  ul.facts{margin:0;padding-left:20px}
+  ul.facts li{margin:5px 0}
+  ul.facts li::marker{color:var(--ok)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);
+        border-radius:10px;padding:16px 18px;margin:0 0 16px}
+  .qhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .qid{background:var(--accent);color:#fff;border-radius:6px;font-size:12.5px;font-weight:700;
+       padding:2px 9px}
+  .tag{font-size:12px;color:var(--faint);border:1px solid var(--line);border-radius:999px;padding:1px 9px}
+  .why{margin:10px 0 0;color:var(--muted)}
+  .why b{color:var(--ink)}
+  .info{margin:10px 0 0;padding:10px 13px;background:var(--accbg);border-radius:8px;font-size:14px}
+  .info b{color:#0a4f96}
+  table.opt{width:100%;border-collapse:collapse;margin:12px 0 0;font-size:14px}
+  table.opt th{text-align:left;font-size:12.5px;color:var(--muted);font-weight:600;
+               border-bottom:1px solid var(--line);padding:4px 8px}
+  table.opt td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
+  table.opt tr:last-child td{border-bottom:0}
+  tr.pick{background:var(--okbg)}
+  tr.pick td:first-child{font-weight:600}
+  .badge{display:inline-block;background:var(--ok);color:#fff;font-size:11.5px;font-weight:700;
+         border-radius:5px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+  .cons{color:var(--warn)}
+  .rec{margin:12px 0 0;padding:10px 13px;background:var(--okbg);border-radius:8px;font-size:14px}
+  .rec b{color:var(--ok)}
+  .choose{margin:12px 0 0;display:flex;gap:16px;flex-wrap:wrap;font-size:14px;
+          border-top:1px dashed var(--line);padding-top:11px}
+  .choose label{cursor:pointer;user-select:none}
+  .choose input{margin-right:5px;vertical-align:-1px}
+  details{margin-top:10px;font-size:13.5px;color:var(--muted)}
+  summary{cursor:pointer;color:var(--accent);font-size:13.5px}
+
+  .summary{position:fixed;left:0;right:0;bottom:0;max-width:940px;margin:0 auto;
+           background:rgba(255,255,255,.96);backdrop-filter:blur(6px);
+           border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;
+           padding:12px 16px;box-shadow:0 -3px 16px rgba(0,0,0,.08)}
+  .summary .line{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  #sum{font-family:ui-monospace,Consolas,monospace;font-size:14px;flex:1;min-width:240px}
+  button{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:7px 14px;
+         font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  footer{color:var(--muted);font-size:13.5px;margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>场景 06 目标管理 · 第 1 轮裁定</h1>
+  <p class="lede">地图 <a href="https://github.com/FeatherHunter/ilife/issues/153">#153</a> 的 frontier 票
+     <a href="https://github.com/FeatherHunter/ilife/issues/164">#164</a> 要先把边界与公共层定下来，本图后续票才建得出来。下面 <b>5 件事</b>只有你能裁。</p>
+
+  <div class="chips">
+    <span class="chip">票 <b>#164</b></span>
+    <span class="chip">地图 <b>#153</b></span>
+    <span class="chip">已认领 · 在办</span>
+    <span class="chip">证据 <b>t164-老技能对账表.md</b></span>
+  </div>
+
+  <section>
+    <div class="secttl">现状（已核实，不必再查）</div>
+    <div class="kpis">
+      <div class="kpi"><div class="n">25</div><div class="l">条唤醒词</div></div>
+      <div class="kpi"><div class="n">22</div><div class="l">条已有命令</div></div>
+      <div class="kpi"><div class="n">3</div><div class="l">条无入口（自动算）</div></div>
+      <div class="kpi"><div class="n">13 / 12</div><div class="l">写类 / 查类</div></div>
+      <div class="kpi"><div class="n">5 / 6</div><div class="l">写命令 / 读命令</div></div>
+      <div class="kpi"><div class="n">0</div><div class="l">条要凭空设计</div></div>
+    </div>
+    <ul class="facts">
+      <li><b>没有幻觉词</b>：老表 25 条 ↔ 新仓 25 条，双向差集 0/0，顺序逐位一致。</li>
+      <li><b>本图不补业务写命令</b>：13 条写词已有 5 条命令；12 条查询词已有 6 条命令。缺的是 3 条自动算词的入口与全部页面。</li>
+      <li><b>页面今天都是片段</b>：13 条写词走内联小节（约 200 余字节、无 doctype）；12 条查询词走结果片段；上一张图抽出的整页装配件，goal 域<b>一处都没用</b>。</li>
+      <li><b>3 条自动算词是全批「必须多步交互」5 条里的 3 条</b>（另 2 条在场景 02）。</li>
+      <li><b>老技能有实物可照</b>：体重一族有写前页（4 个模式）与写后回执页；营养/饮水一族有「改前→改后」模式；3 条自动算词有推荐页；12 条查询词共用一张模板靠模式切区块。</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="secttl">要你裁的 5 件事</div>
+
+    <article class="card">
+      <div class="qhead"><span class="qid">Q1</span><h2>本图后续票怎么切</h2><span class="tag">结构</span></div>
+      <p class="why"><b>前因：</b>地图正文原计划 4 张后续票（页面交付／命令补齐／锁／真机端到端），
+        「页面交付」一张要装 25 条词的 3 类页面。<b>后果：</b>上一张图（#152，只有 4 条词）的计划也是 5 行，
+        实际长出 <b>12 张子票</b>，其中「共用基础件」「数据面清理」「复制组件」三张<b>计划里根本没有</b>——
+        没有共用基础件时，后来的页面票各自重造了一遍装配件。</p>
+      <table class="opt">
+        <tr><th style="width:34%">选项</th><th>利</th><th>弊</th></tr>
+        <tr><td><b>A</b> 照原计划 4 张</td><td>票少、结构简单</td><td class="cons">一张票装 25 条词 3 类页面，验收一红分不清归属</td></tr>
+        <tr class="pick"><td><b>B</b> 先立共用基础件 + 按页面类别切<span class="badge">推荐</span></td>
+          <td>每张票有自己的验收面；照 #152 已经走通的路；页面票不重造装配件</td>
+          <td class="cons">票变多（6 张），页面票都要等共用基础件</td></tr>
+        <tr><td><b>C</b> 只先建共用基础件 1 张</td><td>最省、最保守，正是地图正文的原话</td><td class="cons">你看不到全貌，边界结论会被拖到下一轮</td></tr>
+      </table>
+      <p class="rec"><b>推荐 B</b>：6 张 ＝ ①页面装配共用件与预检页命令 ②预检确认页接线 ③写后回执页（13 条写词）
+        ④结果页（12 条查询词）⑤锁：真出口用例 ⑥端到端验收。若嫌多，可把 ⑤ 并进 ②③④ 各自自带的断言 → 5 张。</p>
+      <div class="choose">
+        <label><input type="radio" name="q1" value="A">A</label>
+        <label><input type="radio" name="q1" value="B" checked>B（推荐）</label>
+        <label><input type="radio" name="q1" value="C">C</label>
+        <label><input type="radio" name="q1" value="B5">B 去掉独立的「锁」票</label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="qhead"><span class="qid">Q2</span><h2>预检确认页给哪些写词</h2><span class="tag">范围</span></div>
+      <p class="why"><b>前因：</b>地图 Destination 把「写类流程先出过程型 HTML」写进了目标本身，
+        所以写词之前要先出一张「你可以确认的页面」。<b>判据已有一条客观尺子：</b>prompt 里带空位的就出——
+        上一张图的「设置档案」（4 个空位）出页、「查档案」（0 个空位）不出。</p>
+      <div class="info"><b>关键信息：</b>13 条写词里 <b>11 条带空位</b>，只有「暂停所有目标」「重启所有目标」没有；
+        老技能这一族<b>本来就有写前页实物可照</b>（不是新发明）。</div>
+      <table class="opt">
+        <tr><th style="width:34%">选项</th><th>利</th><th>弊</th></tr>
+        <tr><td><b>(a)</b> 只有 3 条自动算词</td><td>工作量最小</td><td class="cons">定/改营养、定/改体重要一次写多个字段，却看不到「改前 → 改后」</td></tr>
+        <tr class="pick"><td><b>(b)</b> 11 条带空位的写词<span class="badge">推荐</span></td>
+          <td>规则客观（空位＝有东西要用户先确认）；老实物齐全；<b>一张可配置页面按写入词展开</b>，与上一张图的档案预检同款</td>
+          <td class="cons">配置面要覆盖 4 个字段族（营养 5 项／体重 4 项／饮水 1 项／推荐方向）</td></tr>
+        <tr><td><b>(c)</b> 全部 13 条</td><td>口径最统一</td><td class="cons">暂停／重启没有可确认的内容，会造出一张空页</td></tr>
+      </table>
+      <p class="rec"><b>推荐 (b)</b>：空位这条尺子不用猜、可复核，而且老技能对这三族都留下了写前页实物。</p>
+      <div class="choose">
+        <label><input type="radio" name="q2" value="a">(a) 3 条</label>
+        <label><input type="radio" name="q2" value="b" checked>(b) 11 条（推荐）</label>
+        <label><input type="radio" name="q2" value="c">(c) 13 条</label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="qhead"><span class="qid">Q3</span><h2>3 条自动算词怎么算「跑得通」</h2><span class="tag">命令接线</span></div>
+      <p class="why"><b>前因：</b>Destination 第①条要求 25 条都能从头走到尾，而这 3 条今天在路由层判「命中但不执行」。
+        <b>老技能当年是两段式</b>：先出推荐页（带推荐值与依据）→ 用户确认 → 再写库。</p>
+      <table class="opt">
+        <tr><th style="width:34%">选项</th><th>利</th><th>弊</th></tr>
+        <tr class="pick"><td><b>A</b> 新增 1 条只读页面命令出预检页，写库复用既有写命令<span class="badge">推荐</span></td>
+          <td>与老流程一致，用户仍能先看后确认；不给写命令加参数；照上一张图的档案预检做法</td>
+          <td class="cons">新命令要在三处登记，并重跑技能命令表，AI 才知道该跑它</td></tr>
+        <tr><td><b>B</b> 新增一条「推荐 + 写库」的组合写命令</td><td>命令数量少</td>
+          <td class="cons">违背「先给我看结果，等我确认后再采纳」；把计算塞进写命令</td></tr>
+        <tr><td><b>C</b> 只修文案，维持现状</td><td>零成本</td><td class="cons">Destination 第①条达不到</td></tr>
+      </table>
+      <p class="rec"><b>推荐 A</b>：写命令三条全都在、都能跑，缺的只是「先出预检页」这一步的执行入口。</p>
+      <div class="choose">
+        <label><input type="radio" name="q3" value="A" checked>A（推荐）</label>
+        <label><input type="radio" name="q3" value="B">B</label>
+        <label><input type="radio" name="q3" value="C">C</label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="qhead"><span class="qid">Q4</span><h2>上一张图怎么收尾 + 跨图票归哪张图</h2><span class="tag">账目</span></div>
+      <p class="why"><b>前因：</b>你说 #152（场景 07）主要目标已达成，但它<b>还开着</b>，名下还挂 3 张未完子票：
+        外部集成与调度 8 条（属场景 05／10 的活）、场景 07 文案与信息层次返修、路由层窗口与命令接错
+        （这张改的是<b>全批 10 个场景文件</b>）。<b>后果：</b>本批现在是 11 张场景图，这类跨图票没有归属，
+        却挂在场景 07 的名下——下次读图会误判它们属于基础信息。</p>
+      <table class="opt">
+        <tr><th style="width:34%">选项</th><th>利</th><th>弊</th></tr>
+        <tr class="pick"><td><b>A</b> 关 #152 + 另立一张「全批共用」地图承接跨图票<span class="badge">推荐</span></td>
+          <td>读图不会误判归属；跨图票有如实的位置</td>
+          <td class="cons">多一张图要维护；「场景 07 文案返修」要判到 Out of scope</td></tr>
+        <tr><td><b>B</b> 关 #152，跨图票就地散着</td><td>少动结构</td>
+          <td class="cons">跨图票继续挂在场景 07 名下，下次读图还会误判</td></tr>
+        <tr><td><b>C</b> #152 保持开着</td><td>什么都不动</td>
+          <td class="cons">地图状态与 Destination（已达成）不符，验收标准会飘</td></tr>
+      </table>
+      <p class="rec"><b>推荐 A</b>：并行会话已经在跑场景 03／02／05，跨图票越往后挂得越乱，现在归位成本最低。</p>
+      <div class="choose">
+        <label><input type="radio" name="q4" value="A" checked>A（推荐）</label>
+        <label><input type="radio" name="q4" value="B">B</label>
+        <label><input type="radio" name="q4" value="C">C</label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="qhead"><span class="qid">Q5</span><h2>3 条新拟词纳不纳入本图验收面</h2><span class="tag">验收边界</span></div>
+      <p class="why"><b>前因：</b>为了让 3 个命令有入口，仓库新拟了 3 条词（<b>不在 25 条冻结表里</b>）：
+        「看目标推荐」「看目标配置」「看目标状态」。它们的页面正是本图这几族页面。</p>
+      <div class="info"><b>关键信息：</b>「看目标推荐」就是 Q3 那条流程的页面入口——如果它不进验收面，
+        Q3 的接线只验一半。</div>
+      <table class="opt">
+        <tr><th style="width:34%">选项</th><th>利</th><th>弊</th></tr>
+        <tr class="pick"><td><b>纳入</b>（作为清单列出，不占 25 条名额）<span class="badge">推荐</span></td>
+          <td>新命令有人验收；Q3 的接线完整</td><td class="cons">验收清单多 3 行</td></tr>
+        <tr><td><b>不纳入</b></td><td>严格只盯冻结表那 25 条</td><td class="cons">新命令没人验收；Q3 缺一半</td></tr>
+      </table>
+      <p class="rec"><b>推荐：纳入。</b></p>
+      <div class="choose">
+        <label><input type="radio" name="q5" value="纳入" checked>纳入（推荐）</label>
+        <label><input type="radio" name="q5" value="不纳入">不纳入</label>
+      </div>
+    </article>
+  </section>
+
+  <div class="summary">
+    <div class="line">
+      <span style="font-size:13px;color:var(--muted)">你的裁定：</span>
+      <code id="sum">（还没选）</code>
+      <button id="copy">复制</button>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>裁定之后我做什么：</b>按你的选择把 #164 的边界／页面归类／公共层接口三条结论回写地图正文，
+      建出后续票并挂原生阻塞边（先建票、再挂边），然后关 #164。在你给出结论前，不建票、不改代码。</p>
+    <p>本页只装决策所需的要点；逐条对账、老实物形状、可重跑的核对脚本在
+      <code>docs/skills/skill-calorie/t164-老技能对账表.md</code> 与 <code>.scratch/t164/diff-fields.mjs</code>。</p>
+  </footer>
+</div>
+
+<script>
+  var ids = ['q1','q2','q3','q4','q5'];
+  function upd(){
+    var parts = ids.map(function(id){
+      var el = document.querySelector('input[name="'+id+'"]:checked');
+      return el ? id.toUpperCase() + '=' + el.value : null;
+    }).filter(Boolean);
+    document.getElementById('sum').textContent = parts.length === ids.length
+      ? '确认：' + parts.join('　')
+      : '（还差 ' + (ids.length - parts.length) + ' 项）' + parts.join('　');
+  }
+  document.addEventListener('change', upd); upd();
+  document.getElementById('copy').addEventListener('click', async function(){
+    var t = document.getElementById('sum').textContent, b = this;
+    try { await navigator.clipboard.writeText(t); b.textContent = '已复制'; }
+    catch (e) {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById('sum'));
+      var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '请按 Ctrl+C';
+    }
+    setTimeout(function(){ b.textContent = '复制'; }, 2500);
+  });
+</script>
+</body>
+</html>

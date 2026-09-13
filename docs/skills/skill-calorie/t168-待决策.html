@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>场景 05 健身计划 · 待裁四件（票 #168 / 地图 #157）</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#fff; --ink:#131a24; --dim:#5b6675; --line:#e2e7ee;
+    --accent:#2f6fd0; --good:#1c8a4d; --goodbg:#edf9f1; --warn:#a8620a;
+    --mono:"Cascadia Mono",ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:40px 20px 72px; background:var(--bg); color:var(--ink);
+    font:16px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:940px;margin:0 auto}
+
+  header{text-align:center;margin-bottom:34px}
+  .eyebrow{
+    display:inline-block;font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);background:#e8f0fc;border-radius:999px;padding:7px 14px;margin-bottom:16px;
+  }
+  h1{font-size:30px;line-height:1.35;margin:0 0 14px;letter-spacing:-.01em}
+  .lede{max-width:660px;margin:0 auto;color:var(--dim);font-size:15px}
+  .lede b{color:var(--ink)}
+
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:30px 0 38px}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 14px;text-align:center}
+  .fact .n{font:700 30px/1.1 var(--mono);letter-spacing:-.02em}
+  .fact .n.hot{color:var(--warn)}
+  .fact .n.ok{color:var(--good)}
+  .fact .l{font-size:12.5px;color:var(--dim);margin-top:7px;line-height:1.5}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:26px 28px;margin-bottom:20px;box-shadow:0 1px 2px rgba(19,26,36,.04);
+  }
+  .card > h2{
+    font-size:20px;margin:0 0 6px;display:flex;align-items:baseline;gap:10px;line-height:1.4;
+  }
+  .qid{
+    font:700 12px/1 var(--mono);color:#fff;background:var(--accent);
+    border-radius:6px;padding:5px 8px;flex:none;position:relative;top:-2px;
+  }
+  .why{color:var(--dim);font-size:14.5px;margin:0 0 18px;padding-left:2px}
+  .why b{color:var(--ink)}
+  .why code,.k code,td code{font:13px/1.5 var(--mono);background:#eef1f5;border-radius:4px;padding:1.5px 5px}
+
+  .k{margin:0 0 20px;border-left:3px solid #cfd8e3;padding:2px 0 2px 16px}
+  .k h3{font:600 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:0 0 9px}
+  .k ul{margin:0;padding-left:18px;font-size:14.5px}
+  .k li{margin:5px 0}
+  .k .flag{color:var(--warn);font-weight:600}
+
+  .opts{display:flex;flex-direction:column;gap:10px}
+  .opt{border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:#fbfcfd;position:relative}
+  .opt.rec{border-color:#b7e0c6;background:var(--goodbg);box-shadow:inset 3px 0 0 var(--good)}
+  .opt .top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+  .tag{font:700 12.5px/1 var(--mono);background:#e7ebf1;color:#3c4759;border-radius:6px;padding:4px 8px;flex:none}
+  .opt.rec .tag{background:var(--good);color:#fff}
+  .opt .name{font-weight:600;font-size:15px}
+  .badge{margin-left:auto;font:600 12px/1 var(--mono);color:var(--good);border:1px solid #b7e0c6;border-radius:999px;padding:4px 10px;background:#fff;flex:none}
+  .pc{margin:0;font-size:14px;color:#3d4757}
+  .pc .pro::before{content:"＋";color:var(--good);font-weight:700;margin-right:5px}
+  .pc .con::before{content:"−";color:#c0392b;font-weight:700;margin-right:5px}
+  .pc span{display:block;margin:4px 0}
+
+  .note{
+    background:#fff8ec;border:1px solid #f0dcb8;border-radius:14px;padding:20px 24px;margin:24px 0 20px;
+  }
+  .note h2{font-size:17px;margin:0 0 8px;color:#7a4b06}
+  .note p{margin:0 0 10px;font-size:14.5px;color:#5a4622}
+  table{border-collapse:collapse;width:100%;font-size:14px;margin-top:6px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #eeddc2;vertical-align:top}
+  th{font-weight:600;color:#7a4b06;font-size:12.5px;letter-spacing:.04em}
+  td:last-child{white-space:nowrap;color:#7a4b06}
+
+  footer{text-align:center;color:var(--dim);font-size:14px;margin-top:34px;line-height:1.9}
+  footer .path{font:13px/1.7 var(--mono);color:#3d4757;background:#eaeef4;border-radius:8px;padding:9px 14px;display:inline-block;margin-top:8px;word-break:break-all}
+
+  @media (max-width:720px){
+    body{padding:24px 14px 48px}
+    h1{font-size:23px}
+    .facts{grid-template-columns:repeat(2,1fr)}
+    .card{padding:20px 18px;border-radius:14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">票 #168 · 地图 #157</div>
+  <h1>场景 05 健身计划：待裁四件</h1>
+  <p class="lede">
+    地图 <b>#157</b> 的票集由本票产出。证据已齐、票面草稿已备好，
+    <b>只剩四个岔口需要你定</b>；你点完，建票、挂边、回写地图一次做完。
+  </p>
+</header>
+
+<section class="facts">
+  <div class="fact"><div class="n">32</div><div class="l">条唤醒词<br>本图的目标</div></div>
+  <div class="fact"><div class="n hot">23</div><div class="l">条今天没有命令<br>跑不通</div></div>
+  <div class="fact"><div class="n">6</div><div class="l">类页面<br>其中 3 类已是完整文档</div></div>
+  <div class="fact"><div class="n ok">0</div><div class="l">条幻觉词<br>老技能 32/32 都做过</div></div>
+</section>
+
+<!-- Q1 -->
+<article class="card">
+  <h2><span class="qid">Q1</span>本图到底切成几张票？</h2>
+  <p class="why">
+    地图 <b>#157</b> 只开了图——子票今天只有本票 <b>#168</b> 一张。这张票的交付物就是「本图有哪几张票」。
+    地图原稿写的是 4 张（页面交付／命令补齐／锁／真机端到端），但那是<b>边界还没定时的猜测</b>；
+    现在实测下来了：读侧是一条命令加参数的事，写侧是新建 10 条会改数据库的命令，<b>两件事的测试面完全不同</b>。
+  </p>
+  <div class="k">
+    <h3>关键信息</h3>
+    <ul>
+      <li>32 条 = 读 17 ＋ 写 10 ＋ 外部集成 5</li>
+      <li>老技能是<b>一条脚本用旗标分支</b>服务 13 条计划视图词（10 个模式），不是 13 张页</li>
+      <li>6 类页面里 <b>3 类今天已是完整文档</b>，只有 2 条片段要改</li>
+    </ul>
+  </div>
+  <div class="opts">
+    <div class="opt rec">
+      <div class="top"><span class="tag">A</span><span class="name">六张</span><span class="badge">推荐</span></div>
+      <p class="pc">
+        页面交付 ／ 命令补齐·读 ／ 命令补齐·写 ／ 外部集成 ／ 锁 ／ 真机端到端
+        <span class="pro">读与写分开：一红就知道归谁，符合批章「按性质分开列票」的口径</span>
+        <span class="con">票数比原稿多两张，协调稍费事</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">B</span><span class="name">四张（照地图原稿）</span></div>
+      <p class="pc">
+        「命令补齐」合成一张
+        <span class="pro">票最少，一眼看完</span>
+        <span class="con">读是加参数、写是新建会改数据库的命令；混在一张，测试一红分不清归属</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">C</span><span class="name">再拆细</span></div>
+      <p class="pc">
+        写命令拆两张、读的也拆
+        <span class="pro">单张更小</span>
+        <span class="con">把两张各自的收口标准切碎，反而不好判完成</span>
+      </p>
+    </div>
+  </div>
+</article>
+
+<!-- Q2 -->
+<article class="card">
+  <h2><span class="qid">Q2</span>那 5 条要外部系统的词，在本图算什么？</h2>
+  <p class="why">
+    地图 Destination 写着「<b>本图 32 条唤醒词都跑得通</b>」，其中 5 条（落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩）要连外部系统。
+    老技能里它不是一条命令，是一套外部依赖；而且<b>连生产端都没有</b>——进度页在仓里，但没有任何东西喂它。
+    这一条<b>必须有你的原话</b>，因为它决定本图能不能收口。
+  </p>
+  <div class="k">
+    <h3>关键信息</h3>
+    <ul>
+      <li>老技能：<code>sync_plan.py</code> 一条命令串四步，依赖环境变量 <code>XUNJI_TRAINS_KEY</code> ＋ <code>lark-cli</code> 登录，约 <b>3 分钟/天</b></li>
+      <li>老技能这条路 <span class="flag">退出码恒为 0</span>、外部调用没有失败映射——当年是「跑得通但不报错」</li>
+      <li>规格 <code>docs/calorie-architecture.md:60</code> 写「明确不做（训记／落地）」，与你 2026-09-11「不存在没有命令的唤醒词」<span class="flag">相抵</span></li>
+      <li>#182 已立项这 8 条，并要求「在各自场景的图里落成票」</li>
+    </ul>
+  </div>
+  <div class="opts">
+    <div class="opt rec">
+      <div class="top"><span class="tag">A</span><span class="name">立票 ＋ 被 #182 阻塞 ＋ 地图写明「有结局」口径</span><span class="badge">推荐</span></div>
+      <p class="pc">
+        做到跑通，<b>或</b>经你裁定改规格＋改 HELP——两边都算「有结局」
+        <span class="pro">你的「不存在没有命令的唤醒词」不落空；#182 要的去向也有了</span>
+        <span class="pro">加「有结局」这句，本图才不会被一个我们控制不了的外部系统永远卡住</span>
+        <span class="con">本图收口的时点受 #182 牵制</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">B</span><span class="name">从本图划出去</span></div>
+      <p class="pc">
+        Out of scope 一行指向 #182，本图只保证 27 条
+        <span class="pro">本图自足，能独立收口</span>
+        <span class="con">你的「不存在没有命令的唤醒词」在本图落空</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">C</span><span class="name">只登记，不立票</span></div>
+      <p class="pc">
+        地图正文提一句，不建子票
+        <span class="pro">最省事</span>
+        <span class="con">地图上没有块、永远看不见，日后无人认领</span>
+      </p>
+    </div>
+  </div>
+</article>
+
+<!-- Q3 -->
+<article class="card">
+  <h2><span class="qid">Q3</span>场景 05 那 6 条复盘词的窗口错误，谁来改？</h2>
+  <p class="why">
+    这 6 条词的路由文本写死了 <code>2026-09-01~09-07</code>，而且<b>与词面对不上</b>：
+    <b>计划复盘（本月）</b>给的是 7 天、<b>计划复盘（全部）</b>给的是 8 天、
+    <b>看未完成训练</b>与<b>看动作完成率</b>词面写「默认最近 4 周」而路由给 7 天。
+    而专管这件事的 <b>#250</b>（路由层窗口与命令接错纠正）的登记册里，<b>场景 05 一条都没有</b>。
+  </p>
+  <div class="k">
+    <h3>关键信息</h3>
+    <ul>
+      <li><code>routing.ts</code> 现 <b>811 行、已超告警线</b>；并发纪律要求同一批改动不能两个票同时写</li>
+      <li>#250 已经在做全卡路里 <b>245 条写死日期</b>的相对化，场景 05 这 6 条本来就在它的波及面里</li>
+      <li>我的实测结论：这 6 条属于 #250 登记册的 <span class="flag">漏项</span>，不是新工作</li>
+    </ul>
+  </div>
+  <div class="opts">
+    <div class="opt rec">
+      <div class="top"><span class="tag">A</span><span class="name">补进 #250 的登记册，本图以它为前置</span><span class="badge">推荐</span></div>
+      <p class="pc">
+        <span class="pro">一件事一处改，不与 #250 撞同一文件同一批行</span>
+        <span class="pro">窗口口径全卡路里统一，下次不必再问谁说了算</span>
+        <span class="con">本图收口要等 #250</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">B</span><span class="name">本图自己改</span></div>
+      <p class="pc">
+        <span class="pro">本图自足</span>
+        <span class="con">两个票同时改 <code>routing.ts</code> 的同一批行，撞车风险实在</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">C</span><span class="name">本图改，同时从 #250 划掉场景 05</span></div>
+      <p class="pc">
+        <span class="pro">责任单一、不撞车</span>
+        <span class="con">#250 的机械名单仍会扫到这 6 条，边界要在两处维护</span>
+      </p>
+    </div>
+  </div>
+</article>
+
+<!-- Q5 -->
+<article class="card">
+  <h2><span class="qid">Q5</span>新增的命令写进哪里？和 #181 谁先谁后？</h2>
+  <p class="why">
+    本图要新增 <b>10 条会改数据库的命令 ＋ 7 条筛选参数</b>，而 <b>#181</b>
+    （<code>cmd_read.ts</code> 1209 行、超告警线的重构）还开着、0% 进度。<b>命令往哪儿放，就是这次要定的。</b>
+  </p>
+  <div class="k">
+    <h3>关键信息</h3>
+    <ul>
+      <li><code>structure.md</code> 的「就地摆正」原文：旧代码与新规矩不一致时，<b>在本次改动里把它摆正，不另开票，也不顺手扩大范围</b></li>
+      <li>照现状硬加：1209 行会推到<b>约 1500 行</b></li>
+      <li>#181 的票面自述：对外契约一行不改、行为一致——它<b>可以在本图之后做</b></li>
+    </ul>
+  </div>
+  <div class="opts">
+    <div class="opt rec">
+      <div class="top"><span class="tag">A</span><span class="name">落到各自能力目录，<code>cmd_read.ts</code> 只加分派行</span><span class="badge">推荐</span></div>
+      <p class="pc">
+        <span class="pro">正落在「就地摆正」这条上；不再堆高 1209 行</span>
+        <span class="con">等于先做了 #181 的一部分；若 #181 同时动会撞</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">B</span><span class="name">等 #181 先做完</span></div>
+      <p class="pc">
+        <span class="pro">不撞车，一次到位</span>
+        <span class="con">本图无谓等一次全量重构，#181 今天还没开工</span>
+      </p>
+    </div>
+    <div class="opt">
+      <div class="top"><span class="tag">C</span><span class="name">照现状往 <code>cmd_read.ts</code> 里加</span></div>
+      <p class="pc">
+        <span class="pro">最快，改动面最集中</span>
+        <span class="con">明知故犯：把已超告警线的文件再推高约 300 行</span>
+      </p>
+    </div>
+  </div>
+</article>
+
+<!-- Q4 已定 -->
+<div class="note">
+  <h2>这一条不用你裁：模板归类照 #163 的先例办</h2>
+  <p>
+    <code>crud_receipt.html</code> 该不该上移 base，<b>#163 已经对同一张模板裁过一次</b>——留在卡路里公共层，
+    理由是「今天别的技能都没在用 base-paint，跨技能复用目前只是潜在面」。
+    我今天的新事实（它被 <b>4 个不同渲染器</b>共用、49 条词、6 个类目）<b>不推翻那条理由</b>，只加强了「它该是共用件」。
+    所以按先例办，<b>只有你要推翻时才需要说话</b>。
+  </p>
+  <table>
+    <tr><th>老模板名</th><th>本图词数</th><th>合并成哪一类</th><th>归谁管</th></tr>
+    <tr><td>workout_plan_view.html</td><td>13</td><td>计划视图页类</td><td>卡路里公共层</td></tr>
+    <tr><td>crud_receipt.html</td><td>11</td><td>写后回执页类</td><td>卡路里公共层</td></tr>
+    <tr><td>plan_builder_wizard.html</td><td>1（10 条写词共用）</td><td>预检确认页类</td><td>卡路里公共层</td></tr>
+    <tr><td>process_progress.html</td><td>3</td><td>进度型中间反馈页类</td><td>卡路里公共层</td></tr>
+    <tr><td>exercise_review.html</td><td>3</td><td>复盘页类</td><td>卡路里公共层</td></tr>
+    <tr><td>contraindication_report.html</td><td>1</td><td>安全检查报告页类</td><td>就地写（只此一处）</td></tr>
+  </table>
+</div>
+
+<footer>
+  回一句「<b>照推荐办</b>」即可，或逐条点名 Q1／Q2／Q3／Q5。<br>
+  之后我一次做完：建 6 张子票 ＋ 挂原生子议题边与阻塞边 → 把 6 条窗口错写成 #250 的补充登记 → 回写地图正文 → 关闭 #168。
+  <div class="path">D:\ilife\docs\skills\skill-calorie\t168-待决策.html</div>
+</footer>
+
+</div>
+</body>
+</html>
