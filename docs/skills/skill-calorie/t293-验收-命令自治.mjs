@@ -26,6 +26,16 @@
  *     或「裸标识符比较裸数字」的形状（见 `shapeGuard()`）。**按形状与命名判，不按行数判**：④ 有 80 行也照样绿，
  *     只要没有一行是登记样名——行数阈值会把"看得见"换成"永远黄灯"，是比黑洞更坏的失败方向。
  *
+ * 第五版（顺序修正，2026-09-14，独立小改动席 t293v41）——`forced` 只作附注，不再降档（复核 S2-1）：
+ *   · **先判 subject**：主体＝权威总量 ⇒ 一律 ③（或已登记 ②）判红；`forced`（数组下标／`DECLARED_` 形状）
+ *     **只进 `what` 当注**。第四版把 `forced` 放在最前，命中即返 ④ ⇒ 一条真·权威写死
+ *     （`assert.equal(KEYS.length, 101, '分组 [3] 的键数');`）被降进 ④，只靠形状守卫兜。
+ *   · **④ 加"靠近权威"半边**：主体判不出、但行里带权威语汇（`键`／`KEYS`／`声明`／`registry`／`命令`…）
+ *     ⇒ 形状守卫记 `PENDING`（**判不出不是判过**）。第四版的中性名同形状行
+ *     （`assert.equal(specs.length, 101, '分组 [3] 的键数');`）④ ＋ 守卫未命中 ⇒ **P1 静默 PASS**，本版堵掉。
+ *   · 仍留的残余面（**已知边界，不粉饰**）：中性名 ＋ 无权威语汇消息 ＋ 无样名的权威写死
+ *     （`assert.equal(specs.length, 101);`）仍落 ④ 且守卫不命中——那是**没判**不是判过，见证据 §9。
+ *
  * 退出码：有 FAIL → 1；否则 0（PENDING 不算红，但会在摘要行里点名）。
  */
 import { spawnSync } from 'node:child_process';
@@ -412,27 +422,42 @@ function anchorAsOperand(code, value) {
  *
  *  **第四版（消静默）**：原先另有两处 `return null`——`/\[\s*\d/`（数组下标／数组字面量）与 `DECLARED_[A-Z_]+`
  *  （与声明对账的派生量）——连 ④ 都不进，行就没了（复核 V3-4 实测三例：`KEYS.length, 28, '分组 [3] 的键数'`／
- *  `KEYS[0].length`／`DECLARED_KEYS.length`）。现在**一律产出可报账的行**：`subject:'undetermined'` ＋ `forced`
- *  注明是哪个原静默出口，落 ④ 报账；**不再有"无处落账"的行**（"锚不在被比操作数位"这条保留：消息串／注释里的
- *  数字本就不该当操作数看）。落 ④ 的行若带登记样名 ⇒ 形状守卫 `shapeGuard()` 把 P1 记 `PENDING`。 */
+ *  `KEYS[0].length`／`DECLARED_KEYS.length`）。第四版改成**一律产出可报账的行**（`forced` 注明是哪个原静默出口，
+ *  派生的 `subject` 一律 `'undetermined'`），**不再有"无处落账"的行**（"锚不在被比操作数位"这条保留：消息串／注释里的
+ *  数字本就不该当操作数看）。落 ④ 的行若带登记样名 ⇒ 形状守卫 `shapeGuard()` 把 P1 记 `PENDING`。
+ *  **第五版只改顺序、不改"消静默"**：这三例仍然可报账（不再消失），但 `forced` 降为附注、不再改桶（见下）。
+ *
+ *  **第五版（顺序修正，复核 S2-1）**：第四版把 `forced` 判定放在**最前**——命中即返
+ *  `{subject:'undetermined'}`、连主体都不看。两处后果：
+ *   · 一条**真·权威写死**只要形状带 `[数字]` 就被降进 ④（`KEYS.length, 101, '分组 [3] 的键数'`），只剩形状守卫兜；
+ *   · **中性命名**的同形状行（`specs.length, 101, '分组 [3] 的键数'`）连守卫也不命中 ⇒ **P1 静默 PASS**（具体假绿样例）。
+ *  根因：`[数字]`／`DECLARED_` 是**形状线索**，而"数组下标"这条原先吃的是**整行原文**——消息串里的 `[3]`
+ *  也被当成数组下标。线索不能压主体。
+ *  **本版顺序：先判 subject，`forced` 只作附注、不改任何一行的桶**：
+ *   · 主体＝权威总量 ⇒ `authority`（在册记 ②、未登记记 ③ ⇒ P1 判红），`forced` 进 `what` 当注；
+ *   · 主体判不出 ⇒ ④ 报账，`forced` 也在 `what` 里说明"这行形状命中原静默出口"；
+ *   · ④ 里"**靠近权威**"的语汇线索（`键`／`KEYS`／`声明`／`registry`／`命令`…）由 `shapeGuard()` 记 `PENDING`
+ *     ——贴着权威又判不出，只能记未判，不许静默放行。
+ *  `forced` 的**形状口径**：`[数字]` 按**表达式骨架** `code` 判（消息串里的 `[3]` **不是**数组下标，单列成另一条附注）。 */
 export function pinnedCountOfLine(text, value) {
   const { code, strings } = lexAssertionLine(text);
   const other = anchorAsOperand(code, value);
   if (other === null) return null;                    // 不是被比操作数（消息文本／注释里的数字在此出局）
-  // 原两处 `return null`（静默出口）——第四版改成"可报账的 ④"，见上方注释。
-  const forced = /\[\s*\d/.test(text)
+  // 形状附注（**只作附注，不改桶**，见上方第五版注释）：记"这行形状在第四版之前会不会被吞掉"。
+  const forced = /\[\s*\d/.test(code)
     ? '数组下标／数组字面量形状（原 /\\[\\s*\\d/ 静默出口）'
-    : /DECLARED_[A-Z_]+/.test(code)
-      ? '与声明对账的派生量（原 DECLARED_ 静默出口）'
-      : null;
-  if (forced) {
-    return { subject: 'undetermined', forced, other: other.trim(), text: text.trim().slice(0, 150) };
-  }
+    : strings.some((s) => /\[\s*\d/.test(s))
+      ? '消息串里带 `[数字]`（原 /\\[\\s*\\d/ 出口会误吞的形状；按表达式骨架判，它**不是**数组下标）'
+      : /DECLARED_[A-Z_]+/.test(code)
+        ? '与声明对账的派生量（原 DECLARED_ 静默出口）'
+        : null;
+  // **先判 subject**（第五版顺序修正）：主体是权威总量 ⇒ 一律 authority，线索（forced）不参与降档。
   const authority = AUTHORITY_SUBJECT.test(other) || strings.some((s) => AUTHORITY_SOURCE.test(s));
   return {
     subject: authority ? 'authority' : 'undetermined',
     other: other.trim(),
     text: text.trim().slice(0, 150),
+    forced: forced ?? null,
   };
 }
 
@@ -441,15 +466,17 @@ export function pinnedCountOfLine(text, value) {
  *   · 主体判不出 ⇒ ④ 'undetermined'（**只报账、不判红**；锚确在被比操作数位，但既不是权威总量、也算不出属于哪个域）。
  *  登记位只服务 ③ 这一类"必须手改但已被认下"的面：登记是**大声的**——② 逐条打印 reason ＋ 机器守，
  *  登记件进 git，字段齐全 ＋ 指得回当刻代码才算数（缺一即报错 ⇒ 进 ③ ⇒ P1=FAIL）。
- *  第四版起：`h.forced` 非空的行（原先两处静默出口）也归 ④，`what` 里写明它是从哪个静默出口捞出来的。 */
+ *  第四版起：`h.forced` 非空的行（原先两处静默出口）也归 ④，`what` 里写明它是从哪个静默出口捞出来的。
+ *  **第五版起**：`forced` 不再改桶，只进 `what` 当**附注**——主体＝权威总量的行一律 ②／③（判红面），
+ *  主体判不出的落 ④；④ 里"靠近权威"的语汇线索由形状守卫记 `PENDING`（见 `shapeGuard()`）。 */
 export function classifyPinnedHit(h, exemptions) {
   const where = h.file + ':' + h.line;
+  const note = h.forced ? `｜**原静默出口形状**（第五版起只作附注、不再据此降档）：${h.forced}` : '';
   if (h.subject !== 'authority') {
-    const via = h.forced ? `｜**第四版消静默**：本行原先被 ${h.forced} 吞掉（连 ④ 都不进）⇒ 现按可报账行落 ④` : '';
     return {
       bucket: 'undetermined',
       where,
-      what: `主体判不出（另一侧＝${h.other}）：锚撞上了权威总量的**数值**，但这一行既不是权威总量、也算不出属于哪个域 ⇒ 只报账、不判红——${h.text}${via}`,
+      what: `主体判不出（另一侧＝${h.other}）：锚撞上了权威总量的**数值**，但这一行既不是权威总量、也算不出属于哪个域 ⇒ 只报账、不判红——${h.text}${note}`,
       other: h.other,
       text: h.text,
       forced: h.forced ?? null,
@@ -457,8 +484,8 @@ export function classifyPinnedHit(h, exemptions) {
   }
   const what = `钉死${h.what}断言（字面量 ${h.value}）：主体＝权威总量（另一侧＝${h.other}）⇒ 加删一条命令必须手改本行——${h.text}`;
   const reg = exemptions.get(`${h.file}:${h.line}#${h.value}`);
-  if (reg) return { bucket: 'disciplined', where, what: `已认下登记（登记件在册）：${reg.reason}`, enforcer: reg.enforcer };
-  return { bucket: 'unaccounted', where, what: `${what}｜**未登记**：${DISCIPLINE_EXEMPT} 里没有这条 file:line:锚` };
+  if (reg) return { bucket: 'disciplined', where, what: `已认下登记（登记件在册）：${reg.reason}${note}`, enforcer: reg.enforcer };
+  return { bucket: 'unaccounted', where, what: `${what}｜**未登记**：${DISCIPLINE_EXEMPT} 里没有这条 file:line:锚${note}` };
 }
 
 /** ④ 的分组名（**顺序＝判定顺序＝输出顺序**，与验收口径逐字同序：退出码／域内量／域内 metrics／访问器／
@@ -507,23 +534,40 @@ export function groupUndetermined(rows) {
 const REGISTRY_LIKE_CI = /registry|注册表|declared|\bkeys?\b|scenario_keys|未搬迁/i;
 const REGISTRY_LIKE_CS = /\bTOTAL\b|总数|命令总数|权威/;
 
-/** 形状守卫（**纯函数**）：④ 里出现登记样名，或「裸标识符比较裸数字」的形状 ⇒ `pending=true` 并逐条列出。
+/** **靠近权威**的语汇线索（第五版新增，**只喂给守卫**，不参与 `authority` 判定）——两半分工，别混：
+ *   · 主体判据要的是**出处**（`registry`／`注册表`／`声明`／`declared`／`命令`／`权威`…）才判红：
+ *     量纲词 `键`／`KEYS` 单凭自己不够（照片域的"10 键"也带"键"，见 `AUTHORITY_SOURCE` 注释）；
+ *   · 形状守卫吃的是**线索**：一条**判不出主体**的行只要贴着权威语汇（含量纲词），就只能记**未判**
+ *     （`PENDING`）——**判不出不是判过**。第四版的具体假绿样例
+ *     （`assert.equal(specs.length, 101, '分组 [3] 的键数');`：④ ＋ 守卫未命中 ⇒ P1=PASS）就在这条上被堵掉。
+ *  纪律与上面两半**逐条相同**：**不吃文件路径**（`cmd-registry-294` 一类件名会让 P1 永久黄灯）；
+ *  `TOTAL` 只认大写 ⇒ 本常量**不带** `TOTAL`、把大小写口径留给 `REGISTRY_LIKE_CS`（`d.total` 是域内量，不许误伤）。 */
+const NEAR_AUTHORITY_CI = /KEYS|KEY\b|键|声明|declared|coveredKeys|registry|注册表|未搬迁|legacy|COMMAND|命令|receipt|SCENARIO|WRITE|READ|权威|WEIGHT|体重|总数/i;
+
+/** 形状守卫（**纯函数**）：④ 里出现登记样名、**靠近权威的语汇线索**，或「裸标识符比较裸数字」的形状
+ *  ⇒ `pending=true` 并逐条列出（每条写清是哪半边命中的）。
  *  **按形状与命名判，不按行数判**——当刻活树 ④ 有 81 行、没有一行是登记样名 ⇒ 仍然全绿；
  *  反过来，哪怕 ④ 只有 1 行、只要它是 `KEYS.length` 或裸标识符对裸数字，就记 `PENDING`（不判红、也不放行）。
  *  理由：黑洞的危险不在行数，而在"某个真权威锚躲在 ④ 里"。 */
 export function shapeGuard(rows) {
   const flagged = [];
   for (const r of rows) {
-    const ci = REGISTRY_LIKE_CI.test(String(r.other ?? '')) || REGISTRY_LIKE_CI.test(String(r.text ?? ''));
-    const cs = REGISTRY_LIKE_CS.test(String(r.other ?? '')) || REGISTRY_LIKE_CS.test(String(r.text ?? ''));
+    const other = String(r.other ?? '');
+    const text = String(r.text ?? '');
+    const ci = REGISTRY_LIKE_CI.test(other) || REGISTRY_LIKE_CI.test(text);
+    const cs = REGISTRY_LIKE_CS.test(other) || REGISTRY_LIKE_CS.test(text);
+    const near = NEAR_AUTHORITY_CI.test(other) || NEAR_AUTHORITY_CI.test(text);
     const bare = undetGroupOf(r.other) === '裸标识符';
-    if (!ci && !cs && !bare) continue;
+    if (!ci && !cs && !near && !bare) continue;
     const nameWhy = ci || cs
       ? '登记样名（' + [ci ? 'keys／registry／declared 一类' : null, cs ? '权威总量词（大写 TOTAL／总数）' : null].filter(Boolean).join('，') + '）'
       : null;
+    const nearWhy = near && !ci && !cs
+      ? '靠近权威的语汇线索（主体判据没认——它要的是**出处**、不是量纲词；贴着权威又判不出 ⇒ 只记未判）'
+      : null;
     flagged.push({
       where: r.where,
-      why: [nameWhy, bare ? '「裸标识符比较裸数字」形态' : null].filter(Boolean).join(' ＋ '),
+      why: [nameWhy, nearWhy, bare ? '「裸标识符比较裸数字」形态' : null].filter(Boolean).join(' ＋ '),
       other: r.other,
       text: r.text,
     });
@@ -800,8 +844,9 @@ export async function changeSurfaces() {
   } else {
     out.unaccounted.push({ where: P.LEGACY_DIR + '（或 dist/weight/commands.js）', what: '探针失能：拿不到权威总数（' + t.why + '）⇒ 钉死计数扫描跳过。**按 FAIL 记**：读不到权威源不等于"没有手写面"，不许当假绿放行。' });
   }
-  // ④ 的分组与形状守卫（第四版）：分组按「另一侧的形状」；守卫按「登记样名／裸标识符比较裸数字」的形状判，
-  // **不按行数判**。守卫命中 ⇒ 调用方把 P1 记 PENDING（④ 只保证看得见，不保证看得住）。
+  // ④ 的分组与形状守卫（第四版起；第五版加"靠近权威"半边）：分组按「另一侧的形状」；守卫按
+  // 「登记样名／靠近权威的语汇线索／裸标识符比较裸数字」的形状判，**不按行数判**。
+  // 守卫命中 ⇒ 调用方把 P1 记 PENDING（④ 只保证看得见，不保证看得住）。
   out.undeterminedGroups = groupUndetermined(out.undetermined);
   out.undeterminedGuard = shapeGuard(out.undetermined);
   // 路由三面（#313 B 段起）：记录面是**生成物**，声明住能力目录／legacy 分区 ⇒ 归 ① 派生侧。
@@ -896,10 +941,11 @@ async function p1(w) {
     for (const d of g.rows) lines.push(`       · ${d.where}｜${d.what}`);
   }
   const guard = buckets.undeterminedGuard;
-  lines.push(`  ⇒ 形状守卫${guard.pending ? '**命中**' : '未命中'}：登记样名（registry／KEYS／DECLARED_／大写 TOTAL／总数… 一类）落进 ④，
+  lines.push(`  ⇒ 形状守卫${guard.pending ? '**命中**' : '未命中'}：登记样名（registry／KEYS／DECLARED_／大写 TOTAL／总数… 一类）、
+     **靠近权威的语汇线索**（键／KEYS／声明／命令 一类：主体判据没认，但贴着权威判不出 ⇒ 只记未判），
      或出现「裸标识符比较裸数字」的形状 ⇒ **P1 记 PENDING**（不是 FAIL、更不是静默通过）；当刻命中 ${guard.rows.length} 行。`);
   for (const g of guard.rows) lines.push(`     ⚠ ${g.where}｜${g.why}｜另一侧＝${g.other}｜${g.text}`);
-  lines.push('     ④ 只保证看得见，不保证看得住——凡登记样名落进 ④，本判据记 `PENDING`，不静默放行。（**按形状与命名判，不按行数判**：行数阈值会把"看得见"换成"永远黄灯"。）');
+  lines.push('     ④ 只保证看得见，不保证看得住——凡登记样名／靠近权威的语汇落进 ④，本判据记 `PENDING`，不静默放行。（**按形状与命名判，不按行数判**：行数阈值会把"看得见"换成"永远黄灯"。）');
   lines.push(undet
     ? '     ⇒ ④ 非空**不判红**（这些行不随"加一条命令"而变：域内自己的计数／退出码／访问器／不透明变量），但**不许静默**——逐组列出来给人看一眼（复核 S1-1）'
     : '     ⇒ ④ 为空：当刻锚没撞上任何"主体判不出"的断言行');
