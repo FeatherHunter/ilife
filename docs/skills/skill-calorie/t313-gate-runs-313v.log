@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：313v｜since：2026-09-13T09:19:03Z｜until：2026-09-13T09:31:09Z｜条目数：11｜导出时间：2026-09-13T09:31:09.972Z
+> 票号过滤：313v｜since：2026-09-13T09:19:03Z｜until：2026-09-13T09:38:11Z｜条目数：16｜导出时间：2026-09-13T09:38:11.985Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -16,4 +16,9 @@ RUN ticket=313v runId=f8ad3943-5c8f-4ba1-9fd4-21b3731684b7 cmd="git commit -F .s
 RUN ticket=313v runId=e6f316bc-ec2d-488c-88fe-04b34792bf29 cmd="git push origin master" waitedMs=0 exit=0 pid=40496 at=2026-09-13T09:26:22.467Z
 RUN ticket=313v runId=ffb06009-6349-4abb-a570-3b4958d07cc5 cmd="git add -- docs/skills/skill-calorie/t313-routing-oracle.mjs docs/skills/skill-calorie/t313-routing-exec-face-before.json docs/skills/skill-calorie/t313v-*" waitedMs=1 exit=0 pid=52476 at=2026-09-13T09:30:44.350Z
 RUN ticket=313v runId=c61ae032-f2f6-4a3e-888b-561f3ef3713a cmd="git commit -F .scratch/t313v/msg-4.txt" waitedMs=0 exit=0 pid=6548 at=2026-09-13T09:30:44.490Z
+RUN ticket=313v runId=c12ef60a-3e4b-40e8-bc6e-35c5a9257f4d cmd="git add -- docs/skills/skill-calorie/t313v-* docs/skills/skill-calorie/t313-gate-runs-313v.log" waitedMs=0 exit=0 pid=28640 at=2026-09-13T09:32:19.625Z
+RUN ticket=313v runId=7f3c0a1f-0fbc-4a71-aa6c-e8cb239fd387 cmd="git commit -F .scratch/t313v/msg-5.txt" waitedMs=0 exit=0 pid=53024 at=2026-09-13T09:32:19.756Z
+RUN ticket=313v runId=e762d447-e2b2-4339-ae76-d74b2248ff1c cmd="git push origin master" waitedMs=0 exit=0 pid=41452 at=2026-09-13T09:32:22.263Z
+RUN ticket=313v runId=66f7de3e-303d-4006-837d-0837d98b4841 cmd="git add -- docs/skills/skill-calorie/t313-pb-* docs/skills/skill-calorie/t313v-*" waitedMs=0 exit=0 pid=12676 at=2026-09-13T09:37:51.808Z
+RUN ticket=313v runId=c4d1c30e-bc8c-4eb6-8af7-a2137c764366 cmd="git commit -F .scratch/t313v/msg-6.txt" waitedMs=0 exit=0 pid=25484 at=2026-09-13T09:37:51.942Z
 ```
