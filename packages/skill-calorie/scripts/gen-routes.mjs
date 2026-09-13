@@ -117,6 +117,10 @@ function groupDecls(decls) {
       throw new Error('同一个 (list, order) 被声明两次：' + pair + ' ← ' + pairOwner.get(pair) + ' ／ ' + d.__src);
     }
     pairOwner.set(pair, d.__src);
+    // **重复词组必须整组同迁**（同一 `wakeWord` 的多条记录留在同一件里）：同一件内的重复是冻结 SoT 的
+    // 既成事实——如 `记身材照` 在 `list=wake` 内合法出现 3 次（order 250/251/252，同住
+    // `src/cli/legacy/routes/scene-09.ts`）——下面的守卫只拦「同一词组被拆到两件」；把一个词组搬散，
+    // 判据不变、按整组搬即可（否则它会在这里假红）。
     const wordKey = d.list + '\u0000' + d.wakeWord;
     const files = wordFiles.get(wordKey) ?? new Set();
     if (files.size && !files.has(d.__src)) {
