@@ -25,14 +25,11 @@ import {
   DB_FILENAME,
 } from '../paths.js';
 import { FetchError } from '../fetch/errors.js';
-import {
-  buildGoalWeight,
-} from '../render/goalPlate.js';
 
 // #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
 
 // #91 · 全量速查台（Q9）：只读消费 #88 的 `render/helpCenter.js`（三态同源，零改动）。
-import { renderErrorHtml, renderGoalWeightHtml } from '../render/html.js';
+import { renderErrorHtml } from '../render/html.js';
 import { assertStatMetrics, buildDelivery, withDelivery } from '../render/envelope.js';
 import type { Delivery } from '../render/envelope.js';
 import { buildErrorReceipt } from '../render/receipt.js';
@@ -43,7 +40,7 @@ import { CalorieRenderError } from '../render/errors.js';
 // #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 // #294 · 参数读取与窗口口径上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
-import { dayField, defaultRange, fail, nums } from '../shared/params.js';
+import { dayField, fail } from '../shared/params.js';
 import {
   HTML_DIR_NAME,
   deliverHtml,
@@ -147,24 +144,16 @@ function buildEnvelope(key: string, shape: EnvelopeShape, data: Record<string, u
 // 全键分发：读走 render/fetch 读，HELP 走触发词现找；未知键上游已拦，此处再拦一道。
 /** #41 · 测试直调出口（纯 CLI 同逻辑，不经过 argv/spawn；CLI 唯一出口仍为 main）。 */
 export function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): DispatchOut {
-  // #294 · 注册表先行：命中即走能力目录那道门（新增能力／新增命令都不必碰这个文件）；
-  // 未命中的老键照旧落下面这口 switch——两条路各有断言（test/cmd-registry-294）。
+  // #294 · 注册表先行：命中即走能力目录那道门（新增能力／新增命令都不必碰这个文件）。
+  // #320 · 未搬迁清单归零 ⇒ 老路那口按键分派的 switch 已成死代码，整口删除；
+  // 未命中即「这个键不存在」，直接 fail——往分派层加分支这件事已经被棘轮挡在门外。
   const spec = REGISTRY[key];
   if (spec) {
     if (spec.kind !== 'read') fail(3, '写键不走读分派：' + key);
     return spec.run(params, db);
   }
-  switch (key) {
-    case 'calorie.view.goal-weight': {
-      const { start, end } = defaultRange(db, params);
-      const g = buildGoalWeight(db, start, end);
-      const metrics = nums({ weightGoal: g.weightGoal, latestKg: g.latestKg, deltaKg: g.deltaKg, loggedDays: g.loggedDays });
-      return { data: { metrics }, html: renderGoalWeightHtml(g) };
-    }
-    default:
-      fail(3, '未知 calorie key：' + key);
-      throw new Error('unreachable');
-  }
+  fail(3, '未知 calorie key：' + key);
+  throw new Error('unreachable');
 }
 
 /* ── #83 · 三态交付装配（M4 HTML-First ＋ 渲染失败回执） ───────────────────────────────── */

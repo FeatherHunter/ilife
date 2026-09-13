@@ -2,6 +2,10 @@
  *
  * #318 · 从 `src/cli/legacy/scene-06.ts` 搬入（13 条：写 5 ＋ 读 8），**六字段逐字照抄**——
  * 键／形状／标题／代表唤醒词／示例一字未动（纯搬迁；行为不变）。
+ * #320 · 再从 `src/cli/legacy/scene-03.ts` 补搬 1 条读命令（`calorie.view.goal-weight`，共 14 条）：
+ * 它与本能力既有八条同族（键族 `calorie.view.goal*`），且与写命令 `calorie.goal.weight` 同属
+ * 「体重目标」这一件事；六字段同样逐字照抄（`wakeWord` 保持旧值 `定体重目标` ⇒ 生成物 `REPR`
+ * 块与 `SKILL.md` 逐字节不变，搬迁是纯的）。
  *
  * 核验发现（**只记录不在此改**，账见 `docs/skills/skill-calorie/t318-核验补齐-证据.md`）：
  * 三条声明的代表唤醒词在路由表里落的是别的键（#294 的对账口径是「代表唤醒词必须路由回同键」，
@@ -9,14 +13,18 @@
  *   - `calorie.view.goal`：`看今日目标进度` 落 `calorie.view.goal-progress`（键属场景 01 那张票）；
  *   - `calorie.view.goal-config`：`定营养目标` 落 `calorie.goal.set`；
  *   - `calorie.view.goal-recommend`：`定营养目标(自动算)` 落 `calorie.view.goal-wizard`。
- * 三条各有一条**同键**的现成词可换（`看目标完成度`／`看目标配置`／`看目标推荐`，均在路由表内）。
+ *   - `calorie.view.goal-weight`（#320 从 `src/cli/legacy/scene-03.ts` 补搬）：`定体重目标` 落
+ *     `calorie.goal.weight`（**同名写命令**，本能力那一件）。与上面三条同处理：照抄不动。
+ * 四条各有一条**同键**的现成词可换（`看目标完成度`／`看目标配置`／`看目标推荐`／
+ * `对比体重：当前 vs 目标体重`，均在路由表内）。
  * 编排者裁决（六席一致）：**代表唤醒词属产品内容，本票不替产品定**；故一律照抄，留待收口票处置。
  *
  * 子功能与命令的对应（HELP 下一级 → 键）：定目标＝`calorie.goal.set`／`.water`／`.weight`；
- * 改目标＝`calorie.goal.pause`／`.resume`；看目标＝`calorie.view.goal*` 八条。
+ * 改目标＝`calorie.goal.pause`／`.resume`；看目标＝`calorie.view.goal*` 九条（含 #320 补搬的
+ * `view.goal-weight`）。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
-import { viewGoal, viewGoalConfig, viewGoalExpiring, viewGoalPredict, viewGoalRecommend, viewGoalStatus, viewGoalVsActual, viewGoalWizard } from './read.js';
+import { viewGoal, viewGoalConfig, viewGoalExpiring, viewGoalPredict, viewGoalRecommend, viewGoalStatus, viewGoalVsActual, viewGoalWeight, viewGoalWizard } from './read.js';
 import { writeGoalPause, writeGoalResume, writeGoalSet, writeGoalWater, writeGoalWeight } from './write.js';
 
 export const GOAL_COMMANDS = [
@@ -33,4 +41,5 @@ export const GOAL_COMMANDS = [
   { kind: 'read', key: 'calorie.view.goal-status', shape: 'stat', title: '目标状态', wakeWord: '看目标状态', run: viewGoalStatus, example: 'calorie-cmd-read calorie.view.goal-status' },
   { kind: 'read', key: 'calorie.view.goal-vs-actual', shape: 'stat', title: '目标对比实际', wakeWord: '看目标对比实际', run: viewGoalVsActual, example: 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"window":"30d"}\'' },
   { kind: 'read', key: 'calorie.view.goal-wizard', shape: 'stat', title: '目标预检', wakeWord: '看目标预检', run: viewGoalWizard, example: 'calorie-cmd-read calorie.view.goal-wizard' },
+  { kind: 'read', key: 'calorie.view.goal-weight', shape: 'stat', title: '体重目标', wakeWord: '定体重目标', run: viewGoalWeight, example: 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"30d"}\'' },
 ] satisfies readonly CommandSpec[];

@@ -7,6 +7,4 @@
  */
 import type { RouteDecl } from '../../../triggers/routeSpec.js';
 
-export const ROUTES_SCENE_10: readonly RouteDecl[] = [
-  { list: 'wake', order: 373, wakeWord: '我距离目标还差什么', scene: '10', kind: 'exec', key: 'calorie.view.goal-weight', cli: 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"7d"}\'' },
-];
+export const ROUTES_SCENE_10: readonly RouteDecl[] = [];

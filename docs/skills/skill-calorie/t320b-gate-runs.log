@@ -1,0 +1,14 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks-land\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：t320b｜since：2026-09-13T21:58:12Z｜until：（无）｜条目数：6｜导出时间：2026-09-13T22:00:00.439Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=t320b runId=20c2cc2d-e12b-4abb-b144-9317b2469d50 cmd="node node_modules/typescript/bin/tsc -b" waitedMs=0 exit=0 pid=15556 at=2026-09-13T21:58:12.698Z
+RUN ticket=t320b runId=16493d28-b181-45f8-87d4-9b699444f6b2 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=17048 at=2026-09-13T21:58:12.965Z
+RUN ticket=t320b runId=a19d17a4-6250-479f-ac38-6ee9a7b98677 cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=0 exit=0 pid=46232 at=2026-09-13T21:58:17.661Z
+RUN ticket=t320b runId=92aa9da5-1bd6-4b7d-9c8c-bcebf1a309c7 cmd="node --test test/*.test.mjs packages/*/test/*.test.mjs" waitedMs=0 exit=0 pid=42184 at=2026-09-13T21:58:55.667Z
+RUN ticket=t320b runId=426ccb56-c75b-4909-881a-cff16e83b4d5 cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 exit=0 pid=48816 at=2026-09-13T21:58:55.855Z
+RUN ticket=t320b runId=6aa5829f-9fdb-4694-bbd7-76195c2101b6 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=42584 at=2026-09-13T21:58:56.186Z
+```

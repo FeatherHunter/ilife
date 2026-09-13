@@ -7,13 +7,13 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from './goalExtraPlate.js';
-import { buildGoalConfig, buildGoalRecommend, buildGoalStatus } from '../render/goalPlate.js';
+import { buildGoalConfig, buildGoalRecommend, buildGoalStatus, buildGoalWeight } from '../render/goalPlate.js';
 import { buildGoalPredictDoc } from '../render/trendDocs.js';
 import { buildGoalView } from './goalPlate.js';
 import { CalorieRenderError } from '../render/errors.js';
 import {
   renderGoalConfigHtml, renderGoalExpiringHtml, renderGoalHtml, renderGoalRecommendHtml,
-  renderGoalStatusHtml, renderGoalVsActualHtml,
+  renderGoalStatusHtml, renderGoalVsActualHtml, renderGoalWeightHtml,
 } from '../render/html.js';
 import { dayField, defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
@@ -125,4 +125,20 @@ export function viewGoalWizard(params: Record<string, unknown>, db: DatabaseSync
     missingCount: draft.energy.missing.length,
   });
   return { data: { metrics }, html: buildGoalPrecheckDoc(v) };
+}
+
+/* ── #320 · 补搬的最后一条读命令（原住 `src/cli/cmd_read.ts` 的老分派 switch） ──────────────── */
+
+/** `calorie.view.goal-weight` · 体重目标（当前体重 vs 目标体重 ＋ 达成差值／有记录天数）。
+ *
+ *  **原样搬来**：算式仍走 `render/goalPlate.ts::buildGoalWeight`、页面装配仍走
+ *  `render/html.ts::renderGoalWeightHtml`、窗口口径仍走共用位 `defaultRange`／`nums`，
+ *  本件只承接那一层转调（分派层改走 `cli/registry.ts` 查表 ⇒ `commands.ts` 的 `run`）。
+ *  它与本能力既有八条同族（键族 `calorie.view.goal*`），且与写命令 `calorie.goal.weight`
+ *  同属「体重目标」这一件事。 */
+export function viewGoalWeight(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  const { start, end } = defaultRange(db, params);
+  const g = buildGoalWeight(db, start, end);
+  const metrics = nums({ weightGoal: g.weightGoal, latestKg: g.latestKg, deltaKg: g.deltaKg, loggedDays: g.loggedDays });
+  return { data: { metrics }, html: renderGoalWeightHtml(g) };
 }

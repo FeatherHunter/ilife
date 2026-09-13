@@ -49,22 +49,26 @@ import type { WriteOut } from '../shared/commandSpec.js';
 /* -------------------------------------- #179 · 场景 07 三条写入词的回执页（整页装配） */
 /** 三条写入词的回执页换成整页装配；**其余 32 条一律返回 null**，由 `dispatchWrite` 的
  *  `?? res.html` 原样放行——那些命令的产物与 `receiptHtml` 那条片段路径逐字节不变
- *  （分派只认这三个命令名，认不出就不进这条路，也不碰 `receiptHtml` 本身）。
+ *  （本端口只认这三个命令名，认不出就不进这条路，也不碰 `receiptHtml` 本身）。
  *  必须在 `withM5` 之后调用：新页要印 `affectedRows`／`writtenFields`／`m5Line`。
  *  #239：把命令原文一并交给回执页，进「复制日志」第 4 段（key 与 params 都在本处作用域里）。
- *  #175：把 `db` 也交给回执页——设置档案／设活动量那两页要读写后档案现值算性别与推荐活动量。 */
+ *  #175：把 `db` 也交给回执页——设置档案／设活动量那两页要读写后档案现值算性别与推荐活动量。
+ *  #320：这口「按键选回执页」的分派改成**键集查表 ＋ 一次比较**，行为逐字不变——它的形状与
+ *  命令分派无关（不选实现、不取数），但用 `case` 分支的写法会让「分派层不再有按键分支」
+ *  这条终态断言（`test/cmd-registry-294.test.mjs`）数到它，故只换写法、不换语义。 */
+const PROFILE_RECEIPT_KEYS: ReadonlySet<string> = new Set([
+  'calorie.profile.set',
+  'calorie.profile.activity',
+  'calorie.profile.update',
+]);
+
 function profileReceiptDoc(
   key: string, params: Record<string, unknown>, receipt: CrudReceipt, db: DatabaseSync,
 ): string | null {
-  switch (key) {
-    case 'calorie.profile.set':
-    case 'calorie.profile.activity':
-      return buildProfileSettingReceiptDoc(db, receipt, commandLine(key, params));
-    case 'calorie.profile.update':
-      return buildProfileUpdateReceiptDoc(receipt, commandLine(key, params));
-    default:
-      return null;
-  }
+  if (!PROFILE_RECEIPT_KEYS.has(key)) return null;
+  return key === 'calorie.profile.update'
+    ? buildProfileUpdateReceiptDoc(receipt, commandLine(key, params))
+    : buildProfileSettingReceiptDoc(db, receipt, commandLine(key, params));
 }
 
 /** 写分发（唯一出口 cmd_read 内调用；未知键上游已拦，此处再拦一道）。
@@ -74,8 +78,8 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
   if (!isCalorieWriteKey(key)) fail(3, '未知 calorie 写键：' + key);
   const before = totalChanges(db);
   try {
-    // #294 · 注册表先行：命中即走能力目录那道门；未命中的老键照旧落 dispatchInner 的 switch
-    // （两条路各有断言，见 test/cmd-registry-294）。
+    // #294 · 注册表先行：命中即走能力目录那道门（新增能力／新增命令都不必碰这个文件）。
+    // #320 · 未搬迁清单归零 ⇒ 老写键也全在注册表里，`dispatchInner` 只剩「键不存在」这一条兜底。
     const spec = REGISTRY[key];
     const res = spec && spec.kind === 'write' ? spec.run(params, db) : dispatchInner(key, params, db);
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });

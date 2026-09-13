@@ -1,10 +1,11 @@
-/** #294 · 命令登记与分派的**棘轮**＋两条路的活证。
+/** #294 · 命令登记与分派的**棘轮**＋注册表那条路的活证。
  *
  * 三件事：
- *   ① **棘轮**：两个分派文件里的 `case 'calorie.…'` 标签集合**只许从冻结清单里减少**——
- *      清单不许变长、分派文件行数不许变高。手改回「往分派层加一条 case」当场变红。
- *   ② **两条路各有活证**：命中注册表的新路（走能力目录）与未命中注册表的老路（走原 switch）
- *      各真跑一次读、一次写——防「新路通了、老路悄悄断」。
+ *   ① **终态（#320 起）**：分派层（`src/cli` 全目录）里**一条 `case 'calorie.…'` 都不许有**——
+ *      #320 把最后一条老键（`calorie.view.goal-weight`）搬进 `src/weight/`、整口老 switch 删掉之后，
+ *      「往分派层加一条分支」这件事不再有上限可调：空白名单是硬断言，塞一条当场变红。
+ *   ② **注册表那条路的活证**：命中注册表的读键与写键各真跑一次——防「新路通了、悄悄断」。
+ *      （#294 原来还有一条「老路活证」，它用的两个键早已在注册表里；#320 改写成「老路已无活口」的断言。）
  *   ③ **对账**：注册表每条声明的键／形状／标题与 `cli/keys.ts` 的登记逐条对得上，
  *      `kind` 与「是不是写键」等价，代表唤醒词都是 `TRIGGERS` 里真有的唤醒词；
  *      注册表 ⊇ 各能力声明的键集，且每个键都能在某个能力目录的 `commands.ts` 里找到定义地
@@ -12,9 +13,8 @@
  *
  * 冻结口径（写死在下面）：
  *   - 行数＝文件按 `\\n` 切分的物理行数；
- *   - `cmd_read.ts` 冻结 1146 行／`write.ts` 冻结 745 行（本票交付时实测；
- *     票面写的 1140／879 是设计正本撰写时的估值，与实际口径不同，已在交付对账里记账）；
- *   - 标签清单＝去重后的 `case 'calorie.…'` 标签。
+ *   - `cmd_read.ts` 冻结 1146 行／`write.ts` 冻结 745 行（#294 交付时实测；
+ *     票面写的 1140／879 是设计正本撰写时的估值，与实际口径不同，已在交付对账里记账）。
  *
  * 运行：先 `pnpm --filter skill-calorie build`，再跑根 `pnpm test`。
  */
@@ -32,7 +32,7 @@ import { CALORIE_COMBOS, CALORIE_WRITE_COMBOS, isCalorieWriteKey } from '../dist
 import { runWeightView, runWeightWrite, WEIGHT_COMMANDS } from '../dist/weight/index.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
-import { DECLARED_CAPABILITY_KEYS } from './declared.mjs';
+import { DECLARED_CAPABILITY_KEYS, DECLARED_KEYS, LEGACY_COMMANDS } from './declared.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI_DIR = join(HERE, '..', 'src', 'cli');
@@ -42,64 +42,48 @@ const CLI_DIR = join(HERE, '..', 'src', 'cli');
 const FROZEN_READ_LINES = 1146;
 const FROZEN_WRITE_LINES = 745;
 
-const FROZEN_READ_CASES = new Set([
-  'calorie.today', 'calorie.view.home', 'calorie.view.diet', 'calorie.view.exercise',
-  'calorie.view.exercise-strength', 'calorie.view.exercise-cardio', 'calorie.view.exercise-distribution',
-  'calorie.view.exercise-recap', 'calorie.view.exercise-review', 'calorie.view.exercise-trend',
-  'calorie.view.nutrition-ratio', 'calorie.view.nutrition-detail', 'calorie.view.source-stats',
-  'calorie.view.today-water', 'calorie.view.calorie-trend', 'calorie.view.long-trend',
-  'calorie.view.nutrition-analysis', 'calorie.view.six-factors', 'calorie.view.measure-wizard',
-  'calorie.view.composition-wizard', 'calorie.view.photo-log-wizard', 'calorie.view.gif-planner',
-  'calorie.view.profile-wizard', 'calorie.view.goal-wizard', 'calorie.view.lint-health',
-  'calorie.view.batch-import-preview', 'calorie.view.process-progress', 'calorie.view.review-template',
-  'calorie.view.goal', 'calorie.view.goal-config', 'calorie.view.goal-recommend',
-  'calorie.view.goal-weight', 'calorie.view.goal-progress', 'calorie.view.goal-status',
-  'calorie.view.combined', 'calorie.view.deficit', 'calorie.view.diet-review', 'calorie.view.health',
-  'calorie.view.ranking', 'calorie.view.library', 'calorie.view.search', 'calorie.photo.list',
-  'calorie.photo.detail', 'calorie.photo.compare', 'calorie.photo.gif', 'calorie.help.center',
-  'calorie.help.lookup', 'calorie.history', 'calorie.view.body-composition', 'calorie.view.body-measure',
-  'calorie.view.plan', 'calorie.view.plan-wizard', 'calorie.view.exercise-goal',
-  'calorie.view.goal-expiring', 'calorie.view.goal-predict', 'calorie.view.goal-vs-actual',
-  'calorie.view.predict', 'calorie.view.anomaly', 'calorie.view.contraindication',
-  'calorie.view.dedupe', 'calorie.view.profile',
-]);
+/** 分派层两个文件（#320 起：它们只做「注册表先行」，按键分派的老 switch 已整口删除）。 */
+const DISPATCH_FILES = ['cmd_read.ts', 'write.ts'];
 
-const FROZEN_WRITE_CASES = new Set([
-  'calorie.profile.set', 'calorie.profile.activity', 'calorie.profile.update',
-  'calorie.diet.add', 'calorie.diet.update', 'calorie.diet.remove', 'calorie.diet.batch',
-  'calorie.diet.copy', 'calorie.diet.update-by-date', 'calorie.diet.remove-by-date',
-  'calorie.diet.remove-by-range', 'calorie.diet.remove-by-type', 'calorie.water.log',
-  'calorie.exercise.add', 'calorie.exercise.update', 'calorie.exercise.remove',
-  'calorie.photo.add', 'calorie.photo.remove', 'calorie.photo.tag',
-  'calorie.product.add', 'calorie.product.update', 'calorie.product.deprecate',
-  'calorie.goal.set', 'calorie.goal.water', 'calorie.goal.weight', 'calorie.goal.pause',
-  'calorie.goal.resume', 'calorie.body.composition-add', 'calorie.body.composition-remove',
-  'calorie.body.measure-add', 'calorie.body.measure-remove',
-]);
+/** 一段源码里的 `case 'calorie.…'` 标签集（判据本体；对文件与对合成样本用同一个）。 */
+function calorieCaseLabelsOf(text) {
+  return new Set([...text.matchAll(/case '([^']+)'/g)].map((m) => m[1]).filter((k) => k.startsWith('calorie.')));
+}
 
-/** 清单「只许变短」的上限：等于冻结时的条数，长一条即红（改这个数字＝一次显式的加码动作）。 */
-const FROZEN_READ_CASES_MAX = 61;
-const FROZEN_WRITE_CASES_MAX = 31;
+function tsFilesUnder(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) return tsFilesUnder(p);
+    return e.isFile() && e.name.endsWith('.ts') ? [p] : [];
+  });
+}
+
+/** `src/cli` **全目录**（含 `legacy/` 那条过渡期分片）的 `case 'calorie.…'` 标签集。 */
+function cliCaseLabels() {
+  const labels = new Set();
+  for (const f of tsFilesUnder(CLI_DIR)) {
+    for (const k of calorieCaseLabelsOf(readFileSync(f, 'utf8'))) labels.add(k);
+  }
+  return labels;
+}
 
 function caseLabels(file) {
   const src = readFileSync(join(CLI_DIR, file), 'utf8');
-  const all = [...src.matchAll(/case '([^']+)'/g)].map((m) => m[1]).filter((k) => k.startsWith('calorie.'));
-  return { labels: new Set(all), lines: src.split('\n').length - 1 };
+  return { labels: calorieCaseLabelsOf(src), lines: src.split('\n').length - 1 };
 }
 
-/* ── ① 棘轮 ─────────────────────────────────────────────────────────────────────────── */
+/* ── ① 终态：分派层不再有按键分派的 case（#320） ────────────────────────────────────────── */
 
-test('#294 棘轮：分派层的 case 标签只许从冻结清单里减少', () => {
-  const cases = [
-    ['cmd_read.ts', FROZEN_READ_CASES, FROZEN_READ_CASES_MAX],
-    ['write.ts', FROZEN_WRITE_CASES, FROZEN_WRITE_CASES_MAX],
-  ];
-  for (const [file, frozen, max] of cases) {
-    const { labels } = caseLabels(file);
-    for (const k of labels) {
-      assert.ok(frozen.has(k), file + ' 出现清单外的新 case（往分派层加分支＝破坏接缝）：' + k);
-    }
-    assert.ok(frozen.size <= max, file + ' 的冻结清单变长了（加码）：' + frozen.size + ' > ' + max);
+test('#320 终态：分派层（src/cli 全目录）一条 case 标签都没有', () => {
+  // 判据有鉴别力（机比，不是自述）：同一个扫描器喂一条合成的 `case`，必须看得见。
+  const probe = calorieCaseLabelsOf("switch (key) { case 'calorie.x': return null; default: break; }");
+  assert.deepEqual([...probe], ['calorie.x'], '扫描器看不见塞进去的 case（这条终态断言会假绿）');
+
+  const labels = cliCaseLabels();
+  assert.deepEqual([...labels], [],
+    '分派层仍有按键分派的 case 分支（#320 起老路应无活口）：' + [...labels].join('、'));
+  for (const f of DISPATCH_FILES) {
+    assert.deepEqual([...caseLabels(f).labels], [], f + ' 仍有 case 分支：' + [...caseLabels(f).labels].join('、'));
   }
 });
 
@@ -110,7 +94,7 @@ test('#294 棘轮：两个分派文件的行数只许减少', () => {
     'write.ts 行数变高：' + caseLabels('write.ts').lines + ' > ' + FROZEN_WRITE_LINES);
 });
 
-/* ── ② 两条路各有活证 ───────────────────────────────────────────────────────────────── */
+/* ── ② 注册表那条路的活证 ＋ 老路无活口（#320 起） ────────────────────────────────────── */
 
 function mkDb() {
   const dir = mkdtempSync(join(tmpdir(), 't294-'));
@@ -139,19 +123,34 @@ test('#294 新路：注册表命中的体重键走能力目录（读＋写）', 
     const write = dispatchWrite('calorie.weight.log', { kg: 70.0, date: '2026-09-08' }, db);
     assert.equal(write.data.ok, true, '记体重未走通（注册表路径）');
     assert.ok(write.data.receipt.recordId > 0, '记体重回执缺记录号');
+
+    // #320 · 补搬的那条（原住 `cmd_read.ts` 那口老 switch 的最后一条 case）：搬完后照旧从注册表走通。
+    const goalWeight = dispatch('calorie.view.goal-weight', { start: '2026-09-05', end: '2026-09-07' }, db);
+    assert.equal(goalWeight.data.metrics.weightGoal, 65, '体重目标未走通（#320 搬迁后的注册表路径）');
+    assert.ok(goalWeight.html.includes('ilife-page'), '体重目标产物不是整页');
   } finally {
     db.close();
   }
 });
 
-test('#294 老路：未命中注册表的老键照旧落原 switch（读＋写）', () => {
+test('#320 老路已无活口：未搬迁清单是空集，注册表键集即全量声明', () => {
+  // 原 #294 的这条活证取样 `calorie.view.body-composition`（现住 `src/body/commands.ts:25`）与
+  // `calorie.water.log`（现住 `src/diet/commands.ts:61`）——两键当刻都已在注册表里，
+  // 「未命中注册表的老键」这个前提早已不成立；#320 搬走最后一条（`calorie.view.goal-weight`）后，
+  // 老路的活口是**空集**：下一条断言就是它的机比判据。
+  assert.deepEqual(LEGACY_COMMANDS.map((d) => d.key), [],
+    '未搬迁清单不再是空集（老路又长出了活口）：' + LEGACY_COMMANDS.map((d) => d.key).join('、'));
+  assert.deepEqual([...Object.keys(REGISTRY)].sort(), [...DECLARED_KEYS].sort(),
+    '注册表键集 != 全量声明（101 键闭环破了：有键住在两处，或某个声明没有定义地）');
+
+  // 两个「前任老键」照旧真跑一遍——它们当刻走的已是注册表那条路（新路不许断）。
   const db = mkDb();
   try {
     const read = dispatch('calorie.view.body-composition', {}, db);
-    assert.equal(read.data.metrics.total, 2, '体成分读未走通（老 switch 路径）');
+    assert.equal(read.data.metrics.total, 2, '体成分读未走通（注册表路径）');
 
     const write = dispatchWrite('calorie.water.log', { ml: 300, date: '2026-09-08' }, db);
-    assert.equal(write.data.ok, true, '记喝水未走通（老 switch 路径）');
+    assert.equal(write.data.ok, true, '记喝水未走通（注册表路径）');
   } finally {
     db.close();
   }
