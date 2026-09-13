@@ -1,0 +1,12 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：313c｜since：2026-09-13T10:58:45Z｜until：2026-09-13T11:07:00Z｜条目数：4｜导出时间：2026-09-13T11:06:16.955Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=313c runId=28245ebb-6959-47e5-a360-bc605ab3e037 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=51348 at=2026-09-13T10:58:46.335Z
+RUN ticket=313c runId=d385a506-8a4d-410f-b913-2c212490e9ec cmd="pnpm test" waitedMs=0 exit=0 pid=45380 at=2026-09-13T10:59:29.571Z
+RUN ticket=313c runId=8e9feb12-737c-4cb5-addf-c3950123bb1f cmd="pnpm gen:check" waitedMs=0 exit=0 pid=48328 at=2026-09-13T11:00:50.477Z
+RUN ticket=313c runId=5499d6c6-9c92-47d1-b9f2-5028baa867af cmd="pnpm test" waitedMs=0 exit=0 pid=49184 at=2026-09-13T11:01:36.000Z
+```
