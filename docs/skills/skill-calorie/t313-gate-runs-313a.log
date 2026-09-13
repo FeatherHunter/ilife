@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：313a｜since：2026-09-13T09:19:11Z｜until：（无）｜条目数：38｜导出时间：2026-09-13T09:42:05.088Z
+> 票号过滤：313a｜since：2026-09-13T09:19:11Z｜until：（无）｜条目数：39｜导出时间：2026-09-13T09:42:45.165Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -43,4 +43,5 @@ RUN ticket=313a runId=3f813f61-f329-4ffb-8cb8-3a6015c20443 cmd="pnpm build" wait
 RUN ticket=313a runId=c21384e6-3059-41db-bbfb-4e2d040eccfa cmd="pnpm gen:check" waitedMs=0 exit=0 pid=39736 at=2026-09-13T09:38:18.513Z
 RUN ticket=313a runId=39958a48-2270-4028-8292-604f9d53ae6a cmd="pnpm test" waitedMs=0 exit=0 pid=28440 at=2026-09-13T09:39:11.327Z
 RUN ticket=313a runId=4f24ab11-a6fd-4d55-89b6-8e8d2cc81d94 cmd="pwsh -NoProfile -File .scratch/t313/commit-steps-4.ps1" waitedMs=1 exit=0 pid=45132 at=2026-09-13T09:41:42.720Z
+RUN ticket=313a runId=5a614b4d-56a5-4bc3-b439-6c85f48bd95e cmd="pwsh -NoProfile -File .scratch/t313/commit-steps-5.ps1" waitedMs=0 exit=0 pid=33576 at=2026-09-13T09:42:33.510Z
 ```
