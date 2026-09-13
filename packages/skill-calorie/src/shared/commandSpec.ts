@@ -42,8 +42,10 @@ export interface ReadCommandSpec {
   readonly key: string;
   readonly shape: EnvelopeShape;
   readonly title: string;
-  /** 代表唤醒词（生成 SKILL.md 速查表的 `REPR` 用）；必须是 `TRIGGERS` 里真实存在的唤醒词。 */
-  readonly wakeWord: string;
+  /** 代表唤醒词（生成 SKILL.md 速查表的 `REPR` 用）；**可缺**——缺了速查表退回命令名本身
+   *  （与 `cli/legacy/types.ts` 的 `LegacyCommandDecl.wakeWord?` 同口径）；
+   *  给定时必须是 `TRIGGERS` 里真实存在的唤醒词。 */
+  readonly wakeWord?: string;
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
   readonly example: string;
   readonly run: ViewHandler;
@@ -55,7 +57,7 @@ export interface WriteCommandSpec {
   readonly key: string;
   readonly shape: 'receipt';
   readonly title: string;
-  readonly wakeWord: string;
+  readonly wakeWord?: string;
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
   readonly example: string;
   readonly run: WriteHandler;

@@ -79,7 +79,8 @@ async function loadCapability(name) {
   }
   const [exportName, list] = arrays[0];
   for (const spec of list) {
-    for (const field of ['kind', 'key', 'shape', 'title', 'wakeWord', 'example']) {
+    // `wakeWord` **可缺**（缺了速查表退回命令名）；其余五个字段必填。
+    for (const field of ['kind', 'key', 'shape', 'title', 'example']) {
       if (typeof spec?.[field] !== 'string') throw new Error(name + ' 的声明缺 ' + field + '：' + JSON.stringify(spec));
     }
   }

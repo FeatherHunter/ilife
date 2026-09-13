@@ -1,0 +1,13 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：323｜since：2026-09-13T12:33:55.094Z｜until：2026-09-13T12:34:38.257Z｜条目数：5｜导出时间：2026-09-13T12:34:38.690Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=323 runId=e2e18d79-bf21-498c-b45f-2f3dbb8fb36c cmd="pnpm build" waitedMs=0 exit=0 pid=46700 at=2026-09-13T12:33:55.094Z
+RUN ticket=323 runId=932f9ffa-e263-4c7f-82fb-2624593658a2 cmd="pnpm gen" waitedMs=0 exit=0 pid=7156 at=2026-09-13T12:33:56.069Z
+RUN ticket=323 runId=35b8ff3a-16d6-43e8-9905-2c556f563cdd cmd="pnpm gen:check" waitedMs=0 exit=0 pid=31508 at=2026-09-13T12:33:57.110Z
+RUN ticket=323 runId=68d09087-3c32-490d-94b4-7bfe1b787460 cmd="pnpm test" waitedMs=0 exit=0 pid=46732 at=2026-09-13T12:34:35.731Z
+RUN ticket=323 runId=0204dcf3-9e51-460e-bae7-95a8fb21b878 cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=0 exit=0 pid=40128 at=2026-09-13T12:34:38.257Z
+```
