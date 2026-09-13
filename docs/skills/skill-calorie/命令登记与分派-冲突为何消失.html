@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>命令登记与分派：冲突是怎样消失的</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --card2:#1d2129; --line:#2a2f3a;
+    --fg:#e8ecf3; --muted:#9aa4b2; --acc:#5aa9ff; --ok:#3ddc97; --warn:#ffb457; --bad:#ff7a7a;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 90px}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  h1{font-size:25px;margin:0 0 8px}
+  .sub{color:var(--muted);font-size:14px}
+  h2{font-size:19px;margin:36px 0 10px;padding-left:10px;border-left:3px solid var(--acc)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cfd8e6}
+  p{margin:9px 0}
+  code,.mono{font-family:var(--mono);font-size:13px;background:#0b0d11;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#cfe3ff}
+  pre{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow:auto;font-size:13px;line-height:1.6}
+  pre code{background:none;border:none;padding:0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#151922;color:#cfd8e6;font-weight:600}
+  td.c{text-align:center;font-size:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .verdict{background:linear-gradient(0deg,rgba(61,220,151,.08),rgba(61,220,151,.08)),var(--card);
+           border:1px solid rgba(61,220,151,.35);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .verdict b{color:var(--ok)}
+  .warn{background:rgba(255,180,87,.08);border:1px solid rgba(255,180,87,.35);border-radius:10px;padding:14px 16px;margin:14px 0}
+  .bad{color:var(--bad)} .ok{color:var(--ok)} .muted{color:var(--muted)}
+  ul,ol{padding-left:22px} li{margin:5px 0}
+  .hit{background:rgba(255,122,122,.13)}
+  .clean{background:rgba(61,220,151,.10)}
+  .big{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin:16px 0}
+  .big .box{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-align:center}
+  .big .box .n{font-size:32px;font-weight:700;line-height:1.1}
+  .big .arrow{font-size:24px;color:var(--muted)}
+  .lane{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  .lane .s{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14.5px}
+  .lane .s h4{margin:0 0 6px;font-size:14.5px;color:#cfd8e6}
+  .files{margin:0;padding-left:18px}
+  .files li{font-family:var(--mono);font-size:13px;margin:3px 0}
+  .files li.x::marker{color:var(--bad)}
+  .files li.v::marker{color:var(--ok)}
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13.5px}
+  a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+  .tag{display:inline-block;font-size:12px;border-radius:999px;padding:1px 9px;margin-right:6px;
+       background:rgba(90,169,255,.14);border:1px solid rgba(90,169,255,.4);color:#bcdcff}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>冲突是怎样消失的</h1>
+  <div class="sub">对象：<span class="mono">cli/keys.ts</span> · <span class="mono">cli/cmd_read.ts</span> · <span class="mono">cli/write.ts</span>（＋三处同源副本）　｜　配套文档：<span class="mono">命令登记与分派-方案.html</span>　｜　2026-09-13</div>
+</header>
+
+<div class="verdict">
+  <p><b>一句话</b>：这套方案不靠"协调"避免冲突，而是靠<b>把共用文件从改动路径里拿掉</b>——每条命令的事实（叫什么、长什么形状、谁来处理）都住在它自己那个能力的目录里，而所有"汇总表"改由脚本从这些声明<b>确定性生成</b>。没有人写共用文件，就没有可冲突的地方。</p>
+</div>
+
+<h2>一、先看清冲突长什么样</h2>
+
+<p>本仓是<b>单一工作树、单一 master</b>：五张地图的 session 同时在同一个目录里改文件。这种前提下，两个人同时改一个文件不是"git 合并冲突"（那种还能解），而是：</p>
+
+<div class="lane">
+  <div class="s"><h4>情形 A · 交错写入</h4>
+    <p>甲把文件读进内存 → 乙读同一版本 → 甲写回 → 乙写回。乙的写回基于旧版本，<b>甲那一整段改动被无声抹掉</b>。没有报错，没有冲突标记。</p></div>
+  <div class="s"><h4>情形 B · 区域交错</h4>
+    <p>两人改的是同一个大文件的不同段落，看起来"各改各的"，但写回的是<b>整份文件</b>——先写的人的所有改动，对后写的人不存在。</p></div>
+</div>
+
+<p><b>所以真正要消灭的不是"冲突提示"，而是"同一时刻两个 writer 命中同一个文件"这件事本身。</b>锁只能让命中变成排队：概率降低、并行度归零，而且要求每个 writer 都守规矩——它治的是症状。</p>
+
+<h2>二、把冲突面写成一句话</h2>
+
+<div class="card">
+  <p style="margin-top:0"><b>冲突面 ＝ 一次改动要写的文件里，有多少是"别人也可能同时写"的。</b></p>
+  <p style="margin-bottom:0">今天"加一条命令"要写 <b>6 处共用文件</b>（三个 <span class="mono">case</span>／登记文件 ＋ 三处同源副本）。本批并行 5 张图 ⇒ 潜在交叉 <b>6 × C(5,2) = 60 对</b>。只要这个乘积不为零，冲突就只是时间问题。</p>
+</div>
+
+<h3>同一时刻谁在写什么（今天）</h3>
+
+<table>
+  <tr><th>文件</th><th class="c">体重</th><th class="c">目标</th><th class="c">饮食</th><th class="c">运动</th><th>会撞吗</th></tr>
+  <tr class="hit"><td><span class="mono">cli/keys.ts</span>（101 条登记）</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="bad">会：4 人抢同一张表</td></tr>
+  <tr class="hit"><td><span class="mono">cli/cmd_read.ts</span>（66 个 case）</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="bad">会</td></tr>
+  <tr class="hit"><td><span class="mono">cli/write.ts</span>（38 个 case）</td><td class="c">●</td><td class="c">●</td><td class="c">○</td><td class="c">●</td><td class="bad">会</td></tr>
+  <tr class="hit"><td><span class="mono">base-combos/combos.yaml</span>（手写镜像）</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="bad">会</td></tr>
+  <tr class="hit"><td><span class="mono">triggers/routing.ts</span>（498 条路由）</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="bad">会</td></tr>
+  <tr class="hit"><td><span class="mono">SKILL.md</span> 的 <span class="mono">REPR</span> 表</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="bad">会</td></tr>
+  <tr class="hit"><td>钉死计数的断言（9 个测试文件）</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="bad">会——<b>最容易漏的一处</b></td></tr>
+  <tr class="clean"><td><span class="mono">src/weight/**</span></td><td class="c">●</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会</td></tr>
+  <tr class="clean"><td><span class="mono">docs/skills/skill-calorie/t165-*</span></td><td class="c">●</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会</td></tr>
+</table>
+
+<p class="muted">最后两行是关键对照：<b>私有路径从来不冲突</b>。所以方案的全部工作，就是把上面那七行搬进"私有"那一类的形状里。</p>
+
+<h2>三、方案：把七行共用面逐个搬走</h2>
+
+<pre><code>src/weight/commands.ts   ← 权威源：体重全部命令的声明（只有体重这张图改它）
+src/weight/{log,edit,history,curve,volatility,notes,compare,review}.ts
+src/weight/index.ts       ← 对外那道门
+
+src/cli/registry.ts       ← 生成物：key → {shape,title,run}（一能力一行，新能力时自动被扫到）
+src/cli/keys.ts           ← 生成物：CALORIE_COMBOS 等（导出名不变，引用者一行不用改）
+src/cli/cmd_read.ts/write.ts ← 薄分派：查表 → 校验 → 调 handler（1140／879 → 几十行）
+
+scripts/gen-cli.mjs       ← 确定性排序，一次生成 keys.ts ＋ registry.ts ＋ combos.yaml ＋ SKILL 表
+</code></pre>
+
+<pre><code>// src/weight/commands.ts —— “加一条命令”要写的全部就是这一行
+{ key: 'calorie.weight.log', shape: 'receipt', title: '记体重', run: logReceipt },
+</code></pre>
+
+<h2>四、改造之后，同一时刻谁在写什么</h2>
+
+<table>
+  <tr><th>文件</th><th class="c">体重</th><th class="c">目标</th><th class="c">饮食</th><th class="c">运动</th><th>会撞吗</th></tr>
+  <tr class="clean"><td><span class="mono">cli/keys.ts</span></td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会：生成物，永不手改</td></tr>
+  <tr class="clean"><td><span class="mono">cli/registry.ts</span></td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会：同上</td></tr>
+  <tr class="clean"><td><span class="mono">cli/cmd_read.ts</span>／<span class="mono">write.ts</span></td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会：薄分派，无 per-command 分支</td></tr>
+  <tr class="clean"><td><span class="mono">base-combos/combos.yaml</span></td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会：生成物</td></tr>
+  <tr class="clean"><td><span class="mono">triggers/routing.ts</span></td><td class="c">↑自己段</td><td class="c">↑自己段</td><td class="c">↑自己段</td><td class="c">↑自己段</td><td class="ok">不会：按能力分段，汇总生成</td></tr>
+  <tr class="clean"><td><span class="mono">SKILL.md</span></td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会：手写 <span class="mono">REPR</span> 退役，表由声明生成</td></tr>
+  <tr class="clean"><td>钉死计数的断言</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="ok">不会：断言改成"与生成物对账"，不再手改数字</td></tr>
+  <tr class="clean"><td>各自能力目录</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="c">●</td><td class="ok">不会：本来就不冲突</td></tr>
+</table>
+
+<div class="big">
+  <div class="box"><div class="n bad">6</div><div class="muted">今天：一次"加一条命令"要写的共用文件数</div></div>
+  <div class="arrow">→</div>
+  <div class="box"><div class="n ok">0</div><div class="muted">改造后：日常改动要写的共用文件数</div></div>
+</div>
+
+<h2>五、为什么"派生"能把冲突变成不可能</h2>
+
+<div class="card">
+  <p style="margin-top:0"><span class="tag">性质一</span><b>确定性 ⇒ 不需要"谁先谁后"</b><br>
+  生成器的输入是若干份互不相干的声明，输出只由输入决定（按能力名、键名排序）。谁跑、什么时候跑、跑几次，结果逐字节相同。冲突的前提是"两个结果要人挑一个"——确定性让这个前提消失。</p>
+  <p><span class="tag">性质二</span><b>单一权威源 ⇒ 不存在"同一行两个主人"</b><br>
+  命令的每个事实只在一处写下来（那个能力的声明）。别的文件里出现的同一事实都是<b>它的投影</b>。冲突的必要条件是"同一行被两个人写"——权威源让这个条件无法成立。</p>
+  <p style="margin-bottom:0"><span class="tag">性质三</span><b>可验证 ⇒ 派生不会退化成第二份手抄</b><br>
+  配 <span class="mono">pnpm gen:check</span>（生成物 ≠ 生成器输出即红）与哈希锁：手改生成物会被机器当场抓住。少了这一条，生成物就会重新被人手改，冲突只是从"三个原始文件"搬到"三个生成文件"，白折腾。</p>
+</div>
+
+<div class="warn">
+  <b>为什么不是"锁"</b>：锁把"冲突"换成"排队"——概率降低，不归零，还要求每个 writer 都守规矩。而这里的方案不要求任何人的自觉：<b>共用位没有人写，就不存在抢</b>。锁在改造期仍要用（见第七节），但它是过渡，不是答案。
+</div>
+
+<h2>六、诚实的账：还剩哪些共享面</h2>
+
+<table>
+  <tr><th>共享面</th><th>今天</th><th>对策</th><th>之后</th></tr>
+  <tr><td>生成器本身（<span class="mono">gen-cli.mjs</span>）</td><td>不存在</td><td>稀少改动；改它时抢 <span class="mono">gate.lock</span> 并广播</td><td>近似 0（框架级事件）</td></tr>
+  <tr><td>新人第一天可能"顺手手改生成物"</td><td>—</td><td>生成物文件头写"本文件由 … 生成，勿手改"＋<span class="mono">gen:check</span> 在 CI 拦</td><td>被发现即红</td></tr>
+  <tr><td>九张图各自的 <span class="mono">docs/</span> 证据</td><td>按票号前缀</td><td>无（已互斥）</td><td>0</td></tr>
+  <tr><td>同一张图内部的票</td><td>可能同改一个能力目录</td><td>票面声明写集 ＋ 阻塞边（本图：骨架 → 各子功能 → 登记 → 接线）</td><td>0</td></tr>
+</table>
+
+<h2>七、改造期的过渡（三条，今天就能生效）</h2>
+<ol>
+  <li><b>共用位白名单 ＋ 抢锁</b>：<span class="mono">keys.ts</span>／<span class="mono">cmd_read.ts</span>／<span class="mono">write.ts</span>／<span class="mono">combos.yaml</span>／<span class="mono">routing.ts</span>／<span class="mono">SKILL.md</span> 改前抢 <span class="mono">gate.lock</span>，改完立刻 commit ＋ push。</li>
+  <li><b>一次委托</b>：本图建骨架那次就把体重分支改成调 <span class="mono">src/weight/index.ts</span> 那道门 —— 此后第 3–7 张票对共用位接触为 <b>0</b>。</li>
+  <li><b>票面写集</b>：跨图撞车时停下报告，不自行改别人的行。</li>
+</ol>
+
+<h2>八、怎么证明它真的有效（可复跑）</h2>
+<ol>
+  <li><b>写入集合对账</b>：两个 session 各自"加一条命令"，跑完 <span class="mono">git status --short</span> —— 应只见各自的路径，零交集。</li>
+  <li><b>生成物一致</b>：任一 session 跑 <span class="mono">pnpm gen</span> 后 <span class="mono">git diff</span> 为空（确定性）；手改生成物再跑 <span class="mono">gen:check</span> 应变红（鉴别力）。</li>
+  <li><b>既有断言不退化</b>：路由与键的穷举断言（每键恰一次、键集合与路由集合一致）保持绿——它们是把"生成错了"变成"立刻可见"的网。</li>
+</ol>
+
+<h2>九、与本图（#154 场景 03 体重）的关系</h2>
+<ul>
+  <li>第 2 张票（骨架）＝ 建 <span class="mono">src/weight/</span> ＋ 一次委托；第 3–7 张票只在各自子功能文件里干活，<b>共用位零接触</b>。</li>
+  <li>第 8／9 张票只剩 <span class="mono">routing.ts</span> 的体重段与 <span class="mono">SKILL.md</span> 体重侧；改造落地后它们也变成"写自己那一段"。</li>
+  <li>结论：<b>本图不等改造</b>——改造票（并入 #181）与本图的页面／命令开发可以并行，只要在改造落地前守第七节那三条。</li>
+</ul>
+
+<footer>
+  <p>文件位置：<span class="mono">docs/skills/skill-calorie/命令登记与分派-冲突为何消失.html</span>（技能件目录，长期文档用主题名；见 <span class="mono">docs/agents/doc-homes.md</span>）。方案全貌与横向对照见同目录 <span class="mono">命令登记与分派-方案.html</span>；结构纪律出处见 <span class="mono">docs/agents/structure.md</span>（五条铁律、必报五步、350 行告警线）。</p>
+</footer>
+
+</div>
+</body>
+</html>
