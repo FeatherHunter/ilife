@@ -521,6 +521,7 @@ async function main() {
   const pass = ids.filter((i) => R[i].status === 'PASS').length;
   const pending = ids.filter((i) => R[i].status === 'PENDING');
   const report = { repo: REPO, when: new Date().toISOString(), results: {}, summary: {} };
+  for (const id of ids) report.results[id] = { status: R[id].status, lines: R[id].lines, data: R[id].data };
 
   if (!JSON_ONLY) {
     console.log('=== #293 验收探针 · 命令自治（P1–P5） ===');
@@ -529,7 +530,6 @@ async function main() {
       console.log('');
       console.log(`${id}: ${R[id].status}`);
       for (const l of R[id].lines) console.log('  ' + l);
-      report.results[id] = { status: R[id].status, lines: R[id].lines, data: R[id].data };
     }
     console.log('');
   }
