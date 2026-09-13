@@ -10,7 +10,8 @@
  * ＋ `new` 6 条（order 28／34／35／36／37／39）。
  * `calorie.view.exercise`（运动总览）的 19 条记录**不在这里**：那个键的场景分区是 **01 主页**
  * （依据 `docs/skills/skill-calorie/t313a-分区-证据.md`「场景 01（主页，4）… `calorie.view.exercise`」），
- * 归场景 01 那张票，记录仍住 `src/cli/legacy/routes/scene-04.ts`。
+ * 归场景 01 那张票；那 19 条（`order` 150–158／164–167／170–175）随 #314 已搬进主页能力，
+ * 当刻住 `src/home/routes.ts:33-51`（返修当刻实测，BASE `e9dc6523`），本文件里的同名记录 0 条。
  */
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
