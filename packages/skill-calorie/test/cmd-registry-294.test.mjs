@@ -1,9 +1,12 @@
 /** #294 · 命令登记与分派的**棘轮**＋注册表那条路的活证。
  *
  * 三件事：
- *   ① **终态（#320 起）**：分派层（`src/cli` 全目录）里**一条 `case 'calorie.…'` 都不许有**——
- *      #320 把最后一条老键（`calorie.view.goal-weight`）搬进 `src/weight/`、整口老 switch 删掉之后，
+ *   ① **终态（#320 起）**：分派层（`src/cli` 全目录）里**一条按键分派的 `calorie.…` 字面量都不许有**——
+ *      #320 把最后一条老键（`calorie.view.goal-weight`）搬进 `src/goal/`（键族 `view.goal*` 同主人，
+ *      写孪生 `calorie.goal.weight` 也归那一族）、整口老 switch 删掉之后，
  *      「往分派层加一条分支」这件事不再有上限可调：空白名单是硬断言，塞一条当场变红。
+ *      **口径是行为、不是拼写**（#320b 返修 S2-1／S3-2）：`case '…'`／`case "…"`／
+ *      `if (key === '…')`／就地键集查询，四种写法一视同仁——只数单引号 `case` 的门等于没门。
  *   ② **注册表那条路的活证**：命中注册表的读键与写键各真跑一次——防「新路通了、悄悄断」。
  *      （#294 原来还有一条「老路活证」，它用的两个键早已在注册表里；#320 改写成「老路已无活口」的断言。）
  *   ③ **对账**：注册表每条声明的键／形状／标题与 `cli/keys.ts` 的登记逐条对得上，
@@ -45,9 +48,62 @@ const FROZEN_WRITE_LINES = 745;
 /** 分派层两个文件（#320 起：它们只做「注册表先行」，按键分派的老 switch 已整口删除）。 */
 const DISPATCH_FILES = ['cmd_read.ts', 'write.ts'];
 
-/** 一段源码里的 `case 'calorie.…'` 标签集（判据本体；对文件与对合成样本用同一个）。 */
-function calorieCaseLabelsOf(text) {
-  return new Set([...text.matchAll(/case '([^']+)'/g)].map((m) => m[1]).filter((k) => k.startsWith('calorie.')));
+/* ── 判据本体（**行为口径**，不是拼写口径）─────────────────────────────────────────────
+ * 凡 `calorie.…` **字面量**出现在「按键分派」的位置，即算老路活口——不认它用哪种引号，
+ * 也不认它是 `switch` 还是 `if` 阶梯：
+ *   ① `case 'calorie.x':`／`case "calorie.x":`（switch 标号，任意引号）；
+ *   ② `key === 'calorie.x'`／`'calorie.x' === key`（等值比较，两侧皆认，`!=` 系同理）；
+ *   ③ `new Set(['calorie.x']).has(key)`／`['calorie.x'].includes(key)`（**就地**键集查询）。
+ * 不算的形态（数据位，与「按键选实现」无关）：**具名**键集／注册表行／默认值／注释里的字样。
+ * 已知边界（正则门的固有边界，不假装覆盖）：拼串（`'calorie.' + x`）、模板串插值、
+ * 对象字面量当键集、`switch (true)`，以及「往具名键集里偷偷加一条老键」（那属命令登记纪律的
+ * 注册表对账面，不是本件射程）。放宽边界须改本件，不许在别处降级。
+ * 对文件与对合成样本用**同一个**扫描器（鉴别力自证见下面那条终态断言）。 */
+const QUOTE_CHARS = new Set(["'", '"', '`']);
+const CMP_BEFORE = /(?:\bcase\s*|(?:===|!==|==|!=)\s*)$/;
+const CMP_AFTER = /^\s*(?:===|!==|==|!=)/;
+const INLINE_QUERY_AFTER = /^\s*\)?\s*\.\s*(?:has|includes|indexOf|get)\s*\(/;
+
+function calorieDispatchLiteralsOf(text) {
+  const found = new Set();
+  const brackets = []; // 未闭合的 `[`：其内出现过的键（就地查询时连坐）
+  let code = ''; // 已扫过的**非注释**文本：用来判字面量的前缀
+  for (let i = 0; i < text.length;) {
+    const two = text.slice(i, i + 2);
+    if (two === '//') {
+      const nl = text.indexOf('\n', i);
+      i = nl < 0 ? text.length : nl;
+      continue;
+    }
+    if (two === '/*') {
+      const end = text.indexOf('*/', i + 2);
+      i = end < 0 ? text.length : end + 2;
+      continue;
+    }
+    const c = text[i];
+    if (QUOTE_CHARS.has(c)) {
+      let j = i + 1;
+      while (j < text.length && text[j] !== c) j += text[j] === '\\' ? 2 : 1;
+      const lit = text.slice(i + 1, j);
+      if (lit.startsWith('calorie.')) {
+        if (CMP_BEFORE.test(code) || CMP_AFTER.test(text.slice(j + 1, j + 33))) found.add(lit);
+        for (const b of brackets) b.push(lit);
+      }
+      code += text.slice(i, Math.min(j + 1, text.length));
+      i = j + 1;
+      continue;
+    }
+    if (c === '[') brackets.push([]);
+    if (c === ']') {
+      const b = brackets.pop();
+      if (b && b.length > 0 && INLINE_QUERY_AFTER.test(text.slice(i + 1, i + 25))) {
+        for (const k of b) found.add(k);
+      }
+    }
+    code += c;
+    i += 1;
+  }
+  return found;
 }
 
 function tsFilesUnder(dir) {
@@ -58,40 +114,59 @@ function tsFilesUnder(dir) {
   });
 }
 
-/** `src/cli` **全目录**（含 `legacy/` 那条过渡期分片）的 `case 'calorie.…'` 标签集。 */
-function cliCaseLabels() {
-  const labels = new Set();
+/** `src/cli` **全目录**（含 `legacy/` 那条过渡期分片）的按键分派字面量集。 */
+function cliDispatchLiterals() {
+  const literals = new Set();
   for (const f of tsFilesUnder(CLI_DIR)) {
-    for (const k of calorieCaseLabelsOf(readFileSync(f, 'utf8'))) labels.add(k);
+    for (const k of calorieDispatchLiteralsOf(readFileSync(f, 'utf8'))) literals.add(k);
   }
-  return labels;
+  return literals;
 }
 
-function caseLabels(file) {
+function scanDispatchFile(file) {
   const src = readFileSync(join(CLI_DIR, file), 'utf8');
-  return { labels: calorieCaseLabelsOf(src), lines: src.split('\n').length - 1 };
+  return { literals: calorieDispatchLiteralsOf(src), lines: src.split('\n').length - 1 };
 }
 
 /* ── ① 终态：分派层不再有按键分派的 case（#320） ────────────────────────────────────────── */
 
-test('#320 终态：分派层（src/cli 全目录）一条 case 标签都没有', () => {
-  // 判据有鉴别力（机比，不是自述）：同一个扫描器喂一条合成的 `case`，必须看得见。
-  const probe = calorieCaseLabelsOf("switch (key) { case 'calorie.x': return null; default: break; }");
-  assert.deepEqual([...probe], ['calorie.x'], '扫描器看不见塞进去的 case（这条终态断言会假绿）');
+test('#320 终态：分派层（src/cli 全目录）没有按键分派的 calorie. 字面量', () => {
+  // 判据有鉴别力（机比，不是自述）：同一个扫描器喂**三种写法**的合成样本，都得数出来——
+  // 只认单引号 `case` 的门，双引号或 `if (key === '…')` 就能整口绕过去（#320r 复核席 S2-1／S3-2 探针）。
+  const probes = [
+    ["switch (key) { case 'calorie.zz': { fail(3, 'zz'); } }", 'calorie.zz', '单引号 case'],
+    ['switch (key) { case "calorie.zz": { fail(3, "zz"); } }', 'calorie.zz', '双引号 case'],
+    ["if (key === 'calorie.yy') fail(3, 'yy');", 'calorie.yy', 'if 阶梯（=== 比较）'],
+    ["if (new Set(['calorie.ww']).has(key)) fail(3, 'ww');", 'calorie.ww', '就地键集查询'],
+  ];
+  for (const [src, key, what] of probes) {
+    assert.deepEqual([...calorieDispatchLiteralsOf(src)], [key], '扫描器看不见' + what + '（这条终态断言会假绿）');
+  }
+  // 反向自证：数据位（具名键集／默认值）与注释里的字样不许被数出来——判据是「按键分派」，
+  // 不是「grep calorie.」（后者会把注册表、键集数据与文档一起算进去，红得没有意义）。
+  const benign = [
+    "const S = new Set(['calorie.profile.set']); // 具名键集＝数据位，不算分派",
+    "const key = given ?? 'calorie.help.center';",
+    "// 原先这里写 case 'calorie.view.home'（#320 已删）",
+  ];
+  for (const src of benign) {
+    assert.deepEqual([...calorieDispatchLiteralsOf(src)], [], '数据位／注释被误判为按键分派：' + src);
+  }
 
-  const labels = cliCaseLabels();
-  assert.deepEqual([...labels], [],
-    '分派层仍有按键分派的 case 分支（#320 起老路应无活口）：' + [...labels].join('、'));
+  const literals = cliDispatchLiterals();
+  assert.deepEqual([...literals], [],
+    '分派层仍有按键分派（#320 起老路应无活口）：' + [...literals].join('、'));
   for (const f of DISPATCH_FILES) {
-    assert.deepEqual([...caseLabels(f).labels], [], f + ' 仍有 case 分支：' + [...caseLabels(f).labels].join('、'));
+    const found = scanDispatchFile(f).literals;
+    assert.deepEqual([...found], [], f + ' 仍有按键分派：' + [...found].join('、'));
   }
 });
 
 test('#294 棘轮：两个分派文件的行数只许减少', () => {
-  assert.ok(caseLabels('cmd_read.ts').lines <= FROZEN_READ_LINES,
-    'cmd_read.ts 行数变高：' + caseLabels('cmd_read.ts').lines + ' > ' + FROZEN_READ_LINES);
-  assert.ok(caseLabels('write.ts').lines <= FROZEN_WRITE_LINES,
-    'write.ts 行数变高：' + caseLabels('write.ts').lines + ' > ' + FROZEN_WRITE_LINES);
+  assert.ok(scanDispatchFile('cmd_read.ts').lines <= FROZEN_READ_LINES,
+    'cmd_read.ts 行数变高：' + scanDispatchFile('cmd_read.ts').lines + ' > ' + FROZEN_READ_LINES);
+  assert.ok(scanDispatchFile('write.ts').lines <= FROZEN_WRITE_LINES,
+    'write.ts 行数变高：' + scanDispatchFile('write.ts').lines + ' > ' + FROZEN_WRITE_LINES);
 });
 
 /* ── ② 注册表那条路的活证 ＋ 老路无活口（#320 起） ────────────────────────────────────── */

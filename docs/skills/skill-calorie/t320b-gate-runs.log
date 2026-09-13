@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks-land\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：t320b｜since：2026-09-13T21:58:12Z｜until：（无）｜条目数：6｜导出时间：2026-09-13T22:00:00.439Z
+> 票号过滤：（无）｜since：2026-09-13T21:58:12Z｜until：（无）｜条目数：31｜导出时间：2026-09-13T22:31:33.884Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -11,4 +11,29 @@ RUN ticket=t320b runId=a19d17a4-6250-479f-ac38-6ee9a7b98677 cmd="node docs/skill
 RUN ticket=t320b runId=92aa9da5-1bd6-4b7d-9c8c-bcebf1a309c7 cmd="node --test test/*.test.mjs packages/*/test/*.test.mjs" waitedMs=0 exit=0 pid=42184 at=2026-09-13T21:58:55.667Z
 RUN ticket=t320b runId=426ccb56-c75b-4909-881a-cff16e83b4d5 cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 exit=0 pid=48816 at=2026-09-13T21:58:55.855Z
 RUN ticket=t320b runId=6aa5829f-9fdb-4694-bbd7-76195c2101b6 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=42584 at=2026-09-13T21:58:56.186Z
+RUN ticket=t320b-audit runId=d2a66257-0108-4173-b3fa-63c893224df6 cmd="node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t320-收口-证据2.md --ticket t320b --since 2026-09-13T21:58:12Z --log .scratch/locks-land/gate-runs.log --export docs/skills/skill-calorie/t320b-gate-runs.log" waitedMs=0 exit=0 pid=45792 at=2026-09-13T22:00:00.456Z
+RUN ticket=t320b-audit2 runId=90f4d733-77d9-4202-8ff3-a85ed34385ab cmd="node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t320-收口-证据2.md --ticket t320b --log docs/skills/skill-calorie/t320b-gate-runs.log" waitedMs=0 exit=0 pid=18180 at=2026-09-13T22:00:13.821Z
+RUN ticket=t320b-audit3 runId=3ae2ae04-24fa-45c3-b3ed-8c08ce254db9 cmd="node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t320-收口-证据2.md --ticket t320b --log docs/skills/skill-calorie/t320b-gate-runs.log" waitedMs=0 exit=0 pid=47556 at=2026-09-13T22:00:31.802Z
+RUN ticket=t320r runId=4f2d0be1-a8d2-458a-bc21-787fce292e38 cmd="node node_modules/typescript/bin/tsc -b" waitedMs=0 exit=0 pid=45388 at=2026-09-13T22:05:02.202Z
+RUN ticket=t320r runId=dbc112fc-ae28-4489-8b6c-1f822262a572 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=17324 at=2026-09-13T22:05:02.460Z
+RUN ticket=t320r runId=ab960c77-222b-4871-bab6-6ca734d04aaa cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=0 exit=0 pid=51516 at=2026-09-13T22:05:07.244Z
+RUN ticket=t320r runId=88a61b78-930a-4ae5-aafc-f8f6d61c23b0 cmd="node --test test/*.test.mjs packages/*/test/*.test.mjs" waitedMs=0 exit=0 pid=45540 at=2026-09-13T22:05:45.406Z
+RUN ticket=t320r runId=2d9f60a4-2c93-48ef-96d7-ee1fe517fe89 cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 exit=0 pid=28548 at=2026-09-13T22:05:45.584Z
+RUN ticket=t320r runId=339c02da-75c1-4527-a5aa-c65bf412b070 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=51852 at=2026-09-13T22:05:45.891Z
+RUN ticket=t320r runId=87798201-5db3-4e8f-88a7-32a569394c21 cmd="node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t320-收口-证据2.md --log docs/skills/skill-calorie/t320b-gate-runs.log --ticket t320b --since 2026-09-13T21:58:12Z" waitedMs=0 exit=0 pid=50428 at=2026-09-13T22:07:06.164Z
+RUN ticket=t320r runId=08936c8e-b8c0-454f-ab74-c22f2abfbb5e cmd="node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t320-收口-证据2.md --log .scratch/locks-land/gate-runs.log --ticket t320b --since 2026-09-13T21:58:12Z --until 2026-09-13T22:00:00Z" waitedMs=0 exit=0 pid=38192 at=2026-09-13T22:07:06.332Z
+RUN ticket=t320r-mut runId=b24f6df2-a540-4590-af16-b7c05108d9c0 cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=1 pid=51980 at=2026-09-13T22:08:03.655Z
+RUN ticket=t320r-probe runId=e2d3f0ac-8418-46e9-9067-5103a3fd4a52 cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=0 pid=26520 at=2026-09-13T22:08:32.027Z
+RUN ticket=t320r-probe2 runId=72fe95f6-f100-4bb4-b5ed-91179c4901ab cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=0 pid=28156 at=2026-09-13T22:08:54.031Z
+RUN ticket=t320b2-explore runId=63e4fc7c-55d3-4237-bb80-b07d08d17a21 cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=0 pid=33836 at=2026-09-13T22:17:18.318Z
+RUN ticket=t320b2 runId=88e72580-776d-46ed-9bf1-611e2cae013f cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=1 pid=28348 at=2026-09-13T22:17:34.740Z
+RUN ticket=t320b2 runId=0cdf6ac8-75ab-4b21-a9fc-223ff79537af cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=1 pid=37236 at=2026-09-13T22:19:44.939Z
+RUN ticket=t320b2 runId=70d001ae-7343-4071-9d13-8d620797392c cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=1 pid=18012 at=2026-09-13T22:21:53.889Z
+RUN ticket=t320b2 runId=767d7c29-b5f5-4444-92b0-3446066ff6ac cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=0 exit=0 pid=45892 at=2026-09-13T22:24:06.186Z
+RUN ticket=t320b2 runId=6dcd58ee-6106-4136-bfe8-2811fcc00f5d cmd="node packages/skill-calorie/scripts/gen-cli.mjs --stamp" waitedMs=0 exit=0 pid=38948 at=2026-09-13T22:24:06.346Z
+RUN ticket=t320b2 runId=1bb4a405-546a-4ba5-b703-0e2785d16a40 cmd="node --test packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=1 exit=0 pid=36796 at=2026-09-13T22:27:18.919Z
+RUN ticket=t320b2 runId=9e5a30da-8988-480c-87e1-106d446577fd cmd="node --test test/*.test.mjs packages/*/test/*.test.mjs" waitedMs=0 exit=0 pid=3716 at=2026-09-13T22:27:57.387Z
+RUN ticket=t320b2 runId=236862e6-1eaa-436d-8451-3a27c7880934 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=16876 at=2026-09-13T22:28:04.851Z
+RUN ticket=t320b2 runId=54827954-b442-437a-8efe-c32be07fcb6d cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=49552 at=2026-09-13T22:28:05.102Z
+RUN ticket=t320b2 runId=83142ed7-dc88-45f6-ab37-e2bbdb4f61ae cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=1 exit=0 pid=37652 at=2026-09-13T22:28:21.778Z
 ```

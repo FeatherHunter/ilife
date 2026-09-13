@@ -55,18 +55,23 @@ import type { WriteOut } from '../shared/commandSpec.js';
  *  #175：把 `db` 也交给回执页——设置档案／设活动量那两页要读写后档案现值算性别与推荐活动量。
  *  #320：这口「按键选回执页」的分派改成**键集查表 ＋ 一次比较**，行为逐字不变——它的形状与
  *  命令分派无关（不选实现、不取数），但用 `case` 分支的写法会让「分派层不再有按键分支」
- *  这条终态断言（`test/cmd-registry-294.test.mjs`）数到它，故只换写法、不换语义。 */
+ *  这条终态断言（`test/cmd-registry-294.test.mjs`）数到它，故只换写法、不换语义。
+ *  #320b：该断言升到**行为口径**（`case`／等值比较／就地键集查询一律算）后，那「一次比较」
+ *  正是同一处漏门——两个键集都具名（数据位），查表一律 `.has(key)`，本文件再无键字面量比较。 */
 const PROFILE_RECEIPT_KEYS: ReadonlySet<string> = new Set([
   'calorie.profile.set',
   'calorie.profile.activity',
   'calorie.profile.update',
 ]);
 
+/** 改档案那三条里只有 `update` 用「改档案」页，另两条走「设置／活动量」页；具名键集，不写字面量比较。 */
+const PROFILE_UPDATE_KEYS: ReadonlySet<string> = new Set(['calorie.profile.update']);
+
 function profileReceiptDoc(
   key: string, params: Record<string, unknown>, receipt: CrudReceipt, db: DatabaseSync,
 ): string | null {
   if (!PROFILE_RECEIPT_KEYS.has(key)) return null;
-  return key === 'calorie.profile.update'
+  return PROFILE_UPDATE_KEYS.has(key)
     ? buildProfileUpdateReceiptDoc(receipt, commandLine(key, params))
     : buildProfileSettingReceiptDoc(db, receipt, commandLine(key, params));
 }
