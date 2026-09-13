@@ -1,0 +1,30 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：295｜since：2026-09-13T06:47:45Z｜until：（无）｜条目数：22｜导出时间：2026-09-13T06:57:20.874Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=295 runId=8ca2364d-2490-4d0f-bbb2-253e6ac85bc2 cmd="pnpm gen" waitedMs=0 exit=0 pid=8456 at=2026-09-13T06:47:52.902Z
+RUN ticket=295 runId=5348aea4-dcfc-4f23-bc88-facc49e621ae cmd="pnpm gen:check" waitedMs=0 exit=0 pid=6312 at=2026-09-13T06:47:58.544Z
+RUN ticket=295 runId=b948d8ce-9688-4ff2-ae12-ad2df425a8b1 cmd="node packages/base-combos/scripts/gen-present.mjs" waitedMs=0 exit=0 pid=6916 at=2026-09-13T06:47:58.689Z
+RUN ticket=295 runId=46a5dfdd-ffcc-4f5a-9638-bd2971d00eff cmd="pnpm --filter skill-calorie... build" waitedMs=0 exit=0 pid=53012 at=2026-09-13T06:48:04.995Z
+RUN ticket=295 runId=6b649592-af90-4981-a342-273293610b05 cmd="node --test test/combos-p8.test.mjs test/combos-42.test.mjs test/combos-help-80.test.mjs test/calorie-routing-81.test.mjs packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=0 exit=0 pid=38088 at=2026-09-13T06:48:14.221Z
+RUN ticket=295 runId=aa304efc-51ec-45d8-9a19-2fc25b9d7af4 cmd="pnpm test" waitedMs=0 exit=0 pid=46840 at=2026-09-13T06:49:28.601Z
+RUN ticket=295 runId=ba357448-c6bc-4b14-95f4-86d00a1e3a42 cmd="pwsh -NoProfile -Command \"git add package.json packages/base-combos/combos.yaml packages/base-combos/src/present.ts packages/skill-calorie/SKILL.md packages/skill-calorie/scripts/build-help.mjs packages/skill-calorie/scripts/gen-cli.mjs packages/skill-calorie/src/cli/keys.ts packages/skill-calorie/src/cli/registry.ts packages/skill-calorie/src/cli/legacyCommands.ts; git commit -F .scratch/t295/commit-step1.txt\"" waitedMs=0 exit=0 pid=24136 at=2026-09-13T06:49:53.740Z
+RUN ticket=295 runId=949ed476-e8c2-4e36-9225-452618c4ed4b cmd="pnpm test" waitedMs=0 exit=1 pid=50428 at=2026-09-13T06:51:58.395Z
+RUN ticket=295 runId=5d376727-14b7-47e4-9bca-c0dcf83a8ca8 cmd="node --test packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=0 exit=1 pid=7936 at=2026-09-13T06:52:11.287Z
+RUN ticket=295 runId=8c808893-0d8e-48fc-8b85-78e777c8ebd4 cmd="pnpm test" waitedMs=1 exit=0 pid=46204 at=2026-09-13T06:53:28.782Z
+RUN ticket=295 runId=68c25a32-2400-45d1-8b00-a1a82f48d9a3 cmd="pwsh -NoProfile -Command \"git add .github/workflows/ci.yml packages/skill-calorie/test/declared.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs packages/skill-calorie/test/cmd-write-40.test.mjs packages/skill-calorie/test/db-readonly-93.test.mjs packages/skill-calorie/test/output-naming-119.test.mjs packages/skill-calorie/test/output-naming-87.test.mjs packages/skill-calorie/test/render-t41.test.mjs packages/skill-calorie/test/skill-t11.test.mjs test/combos-42.test.mjs test/calorie-routing-81.test.mjs; git commit -F .scratch/t295/commit-step2.txt\"" waitedMs=0 exit=0 pid=42124 at=2026-09-13T06:53:43.686Z
+RUN ticket=295 runId=c80ecf39-5402-46b6-b713-f663ba86fb87 cmd="pnpm doctor" waitedMs=0 exit=0 pid=28268 at=2026-09-13T06:53:52.770Z
+RUN ticket=295 runId=9603d21c-896d-4dd9-be60-d274ac35c797 cmd="pnpm help:examples:check" waitedMs=0 exit=1 pid=45468 at=2026-09-13T06:54:13.099Z
+RUN ticket=295 runId=bcc467e4-2b47-40ed-bc21-4cb98b8de867 cmd="pnpm boundaries" waitedMs=0 exit=0 pid=51260 at=2026-09-13T06:54:14.051Z
+RUN ticket=295 runId=4fc14039-70fb-459e-a1c1-0ba34bb5c05c cmd="pnpm snapshot:html:check" waitedMs=1 exit=0 pid=42148 at=2026-09-13T06:54:15.286Z
+RUN ticket=295 runId=ad22e3e4-c8d1-4bf2-95ba-c5ba7fbd1e74 cmd="pnpm help:examples:check" waitedMs=0 exit=1 pid=28580 at=2026-09-13T06:55:14.815Z
+RUN ticket=295 runId=d716ad8e-bda7-4f59-a05f-a2f1d9e72450 cmd="pnpm gen:check" waitedMs=1 exit=1 pid=48100 at=2026-09-13T06:55:39.006Z
+RUN ticket=295 runId=d704740c-3933-4007-99b4-260d6160047f cmd="pnpm gen:check" waitedMs=0 exit=0 pid=41488 at=2026-09-13T06:55:39.974Z
+RUN ticket=295 runId=f597dab1-a6be-4a9d-b13c-edd60509f97b cmd="pnpm exec tsc -b" waitedMs=0 exit=0 pid=42080 at=2026-09-13T06:55:41.317Z
+RUN ticket=295 runId=1e16cf96-8d86-46d3-b131-27dc000b5efc cmd="node --test packages/skill-calorie/test/render-t41.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs" waitedMs=0 exit=1 pid=38800 at=2026-09-13T06:55:47.647Z
+RUN ticket=295 runId=0edd05d7-18ac-4575-b3a3-96e2005a37a3 cmd="pnpm exec tsc -b" waitedMs=0 exit=0 pid=27192 at=2026-09-13T06:55:48.954Z
+RUN ticket=295 runId=8ce70b60-519d-462a-9c44-343de823988e cmd="node --test packages/skill-calorie/test/render-t41.test.mjs packages/skill-calorie/test/cmd-read-t11.test.mjs" waitedMs=0 exit=0 pid=31868 at=2026-09-13T06:55:55.225Z
+```
