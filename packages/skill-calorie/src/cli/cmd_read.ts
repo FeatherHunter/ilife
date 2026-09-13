@@ -118,6 +118,11 @@ import { shiftISODate, todayISO } from '../analysis/utils.js';
 // #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
 import { applyOffset, resolveDay, resolveWindow, resolveCompareWindow } from '../analysis/series.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
+// #294 · 参数读取与窗口口径上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
+import {
+  anchorOf, assertISO, dayField, defaultRange, fail, latestFoodDate, needDay, needStr, nums, optNum,
+  optStr, windowRange,
+} from '../shared/params.js';
 import {
   HTML_DIR_NAME, PHOTO_HELP_FILE_STEM, deliverHtml, resolveReceiptHtmlPath,
 } from '../output.js';
@@ -141,10 +146,6 @@ export interface DispatchOut {
   target?: HtmlLanding;
 }
 
-function fail(code: number, msg: string): never {
-  console.error('ERR ' + code + ': ' + msg);
-  process.exit(code);
-}
 function toast(msg: string): void {
   console.error('TOAST: ' + msg);
 }
@@ -183,113 +184,9 @@ function parseArgs(a: string[]): ReadArgs {
   return o;
 }
 
-function needStr(params: Record<string, unknown>, name: string): string {
-  const v = params[name];
-  if (typeof v !== 'string' || v.length === 0) fail(2, '缺参数 ' + name);
-  return v as string;
-}
-
-function optStr(params: Record<string, unknown>, name: string): string | undefined {
-  const v = params[name];
-  if (v === undefined || v === null) return undefined;
-  if (typeof v !== 'string') fail(2, '参数 ' + name + ' 须为字符串');
-  return v as string;
-}
-
-function optNum(params: Record<string, unknown>, name: string): number | undefined {
-  const v = params[name];
-  if (v === undefined || v === null) return undefined;
-  if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, '参数 ' + name + ' 须为有限 number');
-  return v as number;
-}
-
-function assertISO(v: string, field: string): void {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) fail(2, field + ' 非法（须 YYYY-MM-DD）：' + v);
-}
-
-function latestFoodDate(db: DatabaseSync): string | null {
-  try {
-    const row = db.prepare('SELECT MAX(date) AS m FROM food_log').get() as { m: string | null } | undefined;
-    return row?.m ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/** #250 · 锚点：`today` 可显式传入（演示／测试／面板用来复现固定日）；缺省＝**真实今天**（语义正确）。
- *  窗口与相对词都相对它解析——不再把「库内最新数据日」悄悄当成今天。 */
-function anchorOf(params: Record<string, unknown>): string {
-  const t = optStr(params, 'today');
-  if (!t) return todayISO();
-  const d = resolveDay(t, todayISO());
-  assertISO(d, 'today');
-  return d;
-}
-
-/** #250 · 窗口：`window`（今日／本周／最近 Nd／custom…）＋ `offset`（整体平移 ±Nd/±Nw/±Nm/±Ny）。
- *  给了 `window` 就以它为准；**显式 start+end 仍然优先**（历史口径：明确起止比窗口词更具体，
- *  `custom` 除外——它本来就用这对日期）；两样都没有则回 null，由各命令沿用旧口径。 */
-function windowRange(params: Record<string, unknown>): { start: string; end: string } | null {
-  const w = optStr(params, 'window');
-  if (!w) return null;
-  const s0 = optStr(params, 'start');
-  const e0 = optStr(params, 'end');
-  if (w !== 'custom' && s0 && e0) return null;
-  let s: string;
-  let e: string;
-  try {
-    // 窗口词／偏移是**参数**错（用法错），统一报 bad-input（exit 2）；别混进「取数失败」那一档。
-    [s, e] = applyOffset(resolveWindow(w, s0, e0, anchorOf(params)), optStr(params, 'offset'));
-  } catch (err) {
-    throw new CalorieRenderError('bad-input', err instanceof Error ? err.message : String(err));
-  }
-  assertISO(s, 'start');
-  assertISO(e, 'end');
-  if (s > e) fail(2, 'start 不得晚于 end');
-  return { start: s, end: e };
-}
-
-/** #250 · 单日字段：`date`／`from`／`to` 这类「一个日」可写相对词（今日／昨日／前天），并吃 `offset` 平移。 */
-function dayField(params: Record<string, unknown>, field: string): string | null {
-  const raw = optStr(params, field);
-  if (!raw) return null;
-  const anchor = anchorOf(params);
-  const shifted = applyOffset([resolveDay(raw, anchor), resolveDay(raw, anchor)], optStr(params, 'offset'))[0];
-  assertISO(shifted, field);
-  return shifted;
-}
-
-/** 单日字段（必填）：相对词与显式日期都收；缺则按用法报 exit 2。 */
-function needDay(params: Record<string, unknown>, field: string): string {
-  const v = dayField(params, field);
-  if (!v) fail(2, '缺参数 ' + field);
-  return v as string;
-}
-
 /** 闭区间天数（含首末日）。 */
 function daysIn(range: { start: string; end: string }): number {
   return Math.round((Date.parse(range.end) - Date.parse(range.start)) / 86400000) + 1;
-}
-
-function defaultRange(db: DatabaseSync, params: Record<string, unknown>, defDays = 7): { start: string; end: string } {
-  const win = windowRange(params);
-  if (win) return win;
-  let end = dayField(params, 'end') ?? dayField(params, 'date') ?? dayField(params, 'today') ?? undefined;
-  let start = dayField(params, 'start') ?? undefined;
-  if (end) assertISO(end, 'end');
-  if (start) assertISO(start, 'start');
-  if (start && end) {
-    if (start > end) fail(2, 'start 不得晚于 end');
-    return { start, end };
-  }
-  const latest = latestFoodDate(db) ?? todayISO();
-  end = end ?? latest;
-  assertISO(end, 'end');
-  if (start) {
-    if (start > (end as string)) fail(2, 'start 不得晚于 end');
-    return { start, end: end as string };
-  }
-  return { start: shiftISODate(end as string, -(defDays - 1)), end: end as string };
 }
 
 /** 本地 envelope 形状校验（镜像 link-core assertShapeData，不运行时 import）。 */
@@ -333,15 +230,6 @@ function assertEnvelopeData(shape: EnvelopeShape, data: Record<string, unknown>)
 function buildEnvelope(key: string, shape: EnvelopeShape, data: Record<string, unknown>): Record<string, unknown> {
   assertEnvelopeData(shape, data);
   return { version: ENVELOPE_VERSION, skill: CALORIE_SKILL, shape, key, data };
-}
-
-/** 非空数挑拣：null/undefined/NaN/Infinity 一律丢弃（stat.metrics 须全有限 number）。 */
-function nums(input: Record<string, number | null | undefined>): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(input)) {
-    if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
-  }
-  return out;
 }
 
 function photosDirOf(params: Record<string, unknown>): string | undefined {

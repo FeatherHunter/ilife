@@ -53,127 +53,25 @@ import {
 } from '../fetch/body.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import type { SourceChoice } from '../kcal.js';
-import { buildCrudReceipt, withM5 } from '../render/receipt.js';
-import type { CrudReceipt, M5IdSource } from '../render/receipt.js';
+import { withM5 } from '../render/receipt.js';
+import type { CrudReceipt } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
-// #250 · 时间说法只有一处定义地：写命令的日期位经 wday／needWday 走 analysis/series.ts 的相对词解析。
-import { applyOffset, resolveDay } from '../analysis/series.js';
+
 // #179 · 场景 07 三条写入词的回执页：整页装配住在能力目录 `src/profile/`（写前页在 setup.ts）。
 import { buildProfileSettingReceiptDoc } from '../profile/setup.js';
 import { buildProfileUpdateReceiptDoc } from '../profile/update.js';
 import { isCalorieWriteKey } from './keys.js';
 
-export type WriteOut = { data: { ok: boolean; message: string; receipt: CrudReceipt }; html: string };
-
-function fail(code: number, msg: string): never {
-  console.error('ERR ' + code + ': ' + msg);
-  process.exit(code);
-}
-
-function needStr(params: Record<string, unknown>, name: string): string {
-  const v = params[name];
-  if (typeof v !== 'string' || v.length === 0) fail(2, '缺参数 ' + name);
-  return v as string;
-}
-
-/** #250 · 写命令的日期位与读命令**同一套时间说法**：显式 ISO 日照旧，另收相对词（今日／昨日／前天）
- *  与 `offset` 平移（±Nd／±Nw／±Nm／±Ny）——「补记昨天的饮食」这类话不必由 AI 自己算日期。
- *  非日期值原样返回（本函数只做「相对词 → 具体日」的翻译，不认识的值交给各自的校验）。 */
-function wday(params: Record<string, unknown>, field: string): string | undefined {
-  const raw = optStr(params, field);
-  if (!raw) return undefined;
-  const anchor = resolveDay(optStr(params, 'today') ?? todayISO(), todayISO());
-  return applyOffset([resolveDay(raw, anchor), resolveDay(raw, anchor)], optStr(params, 'offset'))[0];
-}
-
-/** 写命令的必填日期位（语义同 `wday`）。 */
-function needWday(params: Record<string, unknown>, field: string): string {
-  const v = wday(params, field);
-  if (!v) fail(2, '缺参数 ' + field);
-  return v as string;
-}
-
-function optStr(params: Record<string, unknown>, name: string): string | undefined {
-  const v = params[name];
-  if (v === undefined || v === null) return undefined;
-  if (typeof v !== 'string') fail(2, '参数 ' + name + ' 须为字符串');
-  return v as string;
-}
-
-function needNum(params: Record<string, unknown>, name: string): number {
-  const v = params[name];
-  if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, '缺参数 ' + name + '（须为有限 number）');
-  return v as number;
-}
-
-function optNum(params: Record<string, unknown>, name: string): number | undefined {
-  const v = params[name];
-  if (v === undefined || v === null) return undefined;
-  if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, '参数 ' + name + ' 须为有限 number');
-  return v as number;
-}
-
-function optInt(params: Record<string, unknown>, name: string): number | undefined {
-  const v = optNum(params, name);
-  if (v === undefined) return undefined;
-  if (!Number.isInteger(v)) fail(2, '参数 ' + name + ' 须为整数');
-  return v as number;
-}
-
-function needId(params: Record<string, unknown>, name = 'id'): number {
-  const v = params[name];
-  if (typeof v !== 'number' || !Number.isInteger(v) || (v as number) <= 0) fail(2, '缺参数 ' + name + '（正整数记录 id）');
-  return v as number;
-}
-
-function needArr(params: Record<string, unknown>, name: string): unknown[] {
-  const v = params[name];
-  if (!Array.isArray(v) || v.length === 0) fail(2, '缺参数 ' + name + '（非空数组）');
-  return v as unknown[];
-}
-
-function assertISO(v: string, field: string): void {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) fail(2, field + ' 非法（须 YYYY-MM-DD）：' + v);
-}
-
-function esc(s: unknown): string {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-/** #101 · 删除口径单一来源（prose 词条 ＋ `items[].status` 状态串同源派生）。
- * `recoverable` 恒 false：全仓 77 键 0 个 restore/undo/recover 入口，故不得出现「可恢复」承诺。 */
-const SOFT_EXCLUDED_INNER = '软删除：行保留，已从查询与统计中排除；暂无恢复入口';
-const SOFT_EXCLUDED = '（' + SOFT_EXCLUDED_INNER + '）';
-const HARD_INNER = '硬删除，不可恢复';
-const HARD_WORDING = '（' + HARD_INNER + '）';
-
-/** 状态串与 prose 同源：kind 决定「软/硬」，两者一律带「不可恢复」。 */
-function deleteStatus(kind: 'soft' | 'hard', base = '已删除'): string {
-  return base + (kind === 'soft' ? '（软，不可恢复）' : '（硬，不可恢复）');
-}
-
-/* ------------------------------------------------ #97 · M5 回执契约（追加字段，正本 t97-m5-contract.md） */
-
-/** 影响行数来源：SQLite `total_changes()` 在本键写库前后的增量。
- * 真实库行数（INSERT／UPDATE／DELETE／软删标记一律计；`INSERT OR REPLACE` 命中已有行＝1，
- * `INSERT OR IGNORE` 命中已有行＝0——实测 node:sqlite v24），非自报。 */
-function totalChanges(db: DatabaseSync): number {
-  const row = db.prepare('SELECT total_changes() AS n').get() as { n?: number } | undefined;
-  return row && typeof row.n === 'number' ? Number(row.n) : 0;
-}
-
-/** 写入字段摘要（CLI 参数名口径）：create 键＝该键写入字段全集（缺省值也算写入）；
- * update 键＝本次实际变更字段；delete 键＝空数组（无写入字段，旧版同样只印 id/日期/影响）。 */
-const F = {
-  diet: ['foodName', 'calories', 'protein', 'carbs', 'fat', 'grams', 'note', 'date', 'time'],
-  water: ['ml', 'note', 'date', 'time'],
-  weight: ['kg', 'note', 'date', 'time'],
-  weightBatch: ['kg', 'date'],
-  exercise: ['type', 'calories', 'minutes', 'date', 'time', 'note', 'reps', 'category', 'difficulty', 'distance', 'heartRate', 'maxHeartRate', 'steps', 'setIndex', 'loadKg', 'backfill'],
-  photo: ['srcPaths', 'tag', 'note', 'date', 'time'],
-  product: ['productName', 'brand', 'calories', 'protein', 'fat', 'saturatedFat', 'carbohydrates', 'sugar', 'dietaryFiber', 'sodium', 'note'],
-} as const;
+// #294 · 参数读取与回执底座上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
+import {
+  assertISO, fail, needArr, needId, needNum, needStr, needWday, optInt, optNum, optStr, wday,
+} from '../shared/params.js';
+import {
+  F, HARD_INNER, HARD_WORDING, SOFT_EXCLUDED, SOFT_EXCLUDED_INNER, R, cliNames, commandLine,
+  definedKeys, deleteStatus, out, provided, receiptHtml, totalChanges,
+} from '../shared/writeParts.js';
+import type { WriteOut } from '../shared/commandSpec.js';
 
 /** `calorie.goal.set` 本次**实际被 SET 的列** → CLI 参数名（正本 §3.4「update 键＝本次实际变更字段」）。
  * 与 `fetch/nutritionGoal.ts` 的两条 UPSERT 同源（#127 已改）：传 `water` 走 6 列
@@ -185,52 +83,9 @@ const F = {
 const goalSetWrittenFields = (hasWater: boolean): string[] =>
   ['calorie', 'protein', 'carbs', 'fat', ...(hasWater ? ['water'] : [])];
 
-/** 库列名 → CLI 参数名（update 键按实际变更列回报写入字段摘要）。 */
-const COL_CLI: Record<string, string> = {
-  food_name: 'foodName', grams: 'grams', calories: 'calories', protein: 'protein', carbs: 'carbs',
-  fat: 'fat', note: 'note', date: 'date', time: 'time',
-  exercise_type: 'type', calories_burned: 'calories', duration_minutes: 'minutes', category: 'category',
-  difficulty: 'difficulty', distance_km: 'distance', avg_heart_rate: 'heartRate',
-  max_heart_rate: 'maxHeartRate', steps: 'steps', reps: 'reps', load_kg: 'loadKg',
-  set_index: 'setIndex', is_backfill: 'backfill',
-  product_name: 'productName', brand: 'brand', saturated_fat: 'saturatedFat', carbohydrates: 'carbohydrates',
-  sugar: 'sugar', dietary_fiber: 'dietaryFiber', sodium: 'sodium',
-};
-
-const cliNames = (cols: readonly string[]): string[] => cols.map((c) => COL_CLI[c] ?? c);
-
-/** 只取「实际提供」的参数名（写入字段摘要；`undefined` 不算写入）。 */
-function provided(params: Record<string, unknown>, names: readonly string[]): string[] {
-  return names.filter((n) => params[n] !== undefined);
-}
-
-/** `input` 里实际有值的键（体脂／围度等动态字段表）。 */
-function definedKeys(input: Record<string, unknown>): string[] {
-  return Object.keys(input).filter((k) => input[k] !== undefined);
-}
-
 /** 围度库列名 → CLI 参数名（`MEASURE_CAMEL` 反向；写入字段摘要统一走 CLI 名口径）。 */
 function measureCliNames(keys: string[]): string[] {
   return keys.map((k) => Object.keys(MEASURE_CAMEL).find((c) => MEASURE_CAMEL[c] === k) ?? k);
-}
-
-/** M5 追加补丁：ids／idSource／writtenFields（`affectedRows` 由 dispatchWrite 统一注入）。 */
-type M5Patch = { ids?: number[]; idSource?: M5IdSource; writtenFields?: string[] };
-
-/** C6 #43 · 写收据 HTML 结构化分项：摘要 + 操作元 + items 逐条（id/日期/状态/原因/明细）。 */
-function receiptHtml(scene: string, summary: string, op: string, recordId: number | null, items?: CrudReceipt['items']): string {
-  const list = (items ?? []).length > 0
-    ? '<ul>' + (items ?? []).map((it) => '<li>#' + esc(it.id ?? '') + (it.date ? ' ' + esc(it.date) : '') + ' ' + esc(it.status) + (it.reason ? '（' + esc(it.reason) + '）' : '') + (it.detail ? ' · ' + esc(it.detail) : '') + '</li>').join('') + '</ul>'
-    : '';
-  return '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:receipt"><h1>' + esc(scene) + '</h1>' +
-    '<div class="ilife-item"><b>' + esc(summary) + '</b><div>op=' + esc(op) + (recordId === null ? '' : ' · id=' + esc(recordId)) + '</div>' + list + '</div></section>';
-}
-
-function out(receipt: CrudReceipt): WriteOut {
-  return {
-    data: { ok: true, message: receipt.summary, receipt },
-    html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items),
-  };
 }
 
 /* -------------------------------------- #179 · 场景 07 三条写入词的回执页（整页装配） */
@@ -254,12 +109,6 @@ function profileDiffItems(before: ProfileRow | null, after: ProfileRow, fields: 
   return fields.map((f) => ({ status: f, reason: profileValue(before, f) + ' → ' + profileValue(after, f) }));
 }
 
-/** 页面「复制日志」第 4 段的命令原文：与 AI 实跑那条同形（含本次 `--params`），可照抄重跑。
- *  参数值里若出现半角单引号，原文会在此处被截断——与 `profile/setup.ts` 的 prompt 写命令同一口径，
- *  真要照抄重跑请自行把单引号转义（本仓命令原文一贯用单引号包 JSON）。 */
-function commandLine(key: string, params: Record<string, unknown>): string {
-  return 'calorie-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";
-}
 
 /** 三条写入词的回执页换成整页装配；**其余 32 条一律返回 null**，由 `dispatchWrite` 的
  *  `?? res.html` 原样放行——那些命令的产物与 `receiptHtml` 那条片段路径逐字节不变
@@ -281,14 +130,6 @@ function profileReceiptDoc(
   }
 }
 
-const R = (
-  scene: string, op: CrudReceipt['op'], summary: string, wakeWord: string, source: string,
-  extra?: Partial<Pick<CrudReceipt, 'recordId' | 'items' | 'tagDiff' | 'distance' | 'noChange' | 'action'>> & M5Patch,
-): CrudReceipt =>
-  buildCrudReceipt({
-    scene, action: scene, op, recordId: null, summary, items: [], wakeWord, source,
-    ...(extra ?? {}),
-  });
 
 function photosDirOf(params: Record<string, unknown>): string {
   return resolvePhotosDir(optStr(params, 'photosDir') ?? null);
