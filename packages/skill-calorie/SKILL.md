@@ -171,11 +171,11 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看每日六因素 | calorie.view.six-factors | stat | `calorie-cmd-read calorie.view.six-factors --params '{"date":"今日"}'` |
 | 看食品来源统计 | calorie.view.source-stats | stat | `calorie-cmd-read calorie.view.source-stats` |
 | 看今日喝水 | calorie.view.today-water | stat | `calorie-cmd-read calorie.view.today-water --params '{"date":"今日"}'` |
-| calorie.view.volatility | calorie.view.volatility | stat | `calorie-cmd-read calorie.view.volatility --params '{"window":"7d"}'` |
-| calorie.view.weight | calorie.view.weight | stat | `calorie-cmd-read calorie.view.weight` |
-| calorie.view.weight-compare | calorie.view.weight-compare | stat | `calorie-cmd-read calorie.view.weight-compare --params '{"window":"30d","compareWindow":"prev"}'` |
-| calorie.view.weight-history | calorie.view.weight-history | stat | `calorie-cmd-read calorie.view.weight-history --params '{"days":7}'` |
-| calorie.view.weight-review | calorie.view.weight-review | stat | `calorie-cmd-read calorie.view.weight-review` |
+| 看体重稳不稳（增强版） | calorie.view.volatility | stat | `calorie-cmd-read calorie.view.volatility --params '{"window":"7d"}'` |
+| 看今日体重 | calorie.view.weight | stat | `calorie-cmd-read calorie.view.weight` |
+| 对比体重：本月 vs 上月 | calorie.view.weight-compare | stat | `calorie-cmd-read calorie.view.weight-compare --params '{"window":"30d","compareWindow":"prev"}'` |
+| 看本周体重 | calorie.view.weight-history | stat | `calorie-cmd-read calorie.view.weight-history --params '{"days":7}'` |
+| 看体重复核 | calorie.view.weight-review | stat | `calorie-cmd-read calorie.view.weight-review` |
 | 记喝水 | calorie.water.log | receipt | `calorie-cmd-read calorie.water.log --params '{"ml":300}'` |
 | 批量补录体重 | calorie.weight.batch | receipt | `calorie-cmd-read calorie.weight.batch --params '{"items":[{"date":"<日期>","kg":70.5}]}'` |
 | 记体重 | calorie.weight.log | receipt | `calorie-cmd-read calorie.weight.log --params '{"kg":70.5}'` |

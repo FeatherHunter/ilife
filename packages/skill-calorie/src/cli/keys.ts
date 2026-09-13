@@ -1,11 +1,13 @@
-/** T11 #30 + #41 · cmd_read 组合键表（registry 合法命名，点式分隔；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
- * #40 追加 35 写键（CALORIE_WRITE_COMBOS，一律 receipt 形）：单条 CRUD 可执行入口，命名对照旧 CLI；
- * CALORIE_COMBOS 为读 65 + 写 35 全量注册表（skilllink 登记与 HELP 注入的上游）。
+/** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * 背景：VIEW_KEYS/PHOTO_VIEW_KEYS 用 calorie.view_home / calorie.photo_list（下划线），
- * 过不了 link-core registry（KEY_RE 只许 [a-z0-9-.]，下划线非法）。T11 出口复用“同一语义”，
- * 分隔符下划线→点（calorie.view.home），registry 合法，skilllink 登记可用；内部渲染仍走原 VIEW_KEYS。
- * 仅 type-only 消费 link-core（零运行时依赖，沿 T8 前例）；envelope 手工装配，字段对齐 link-core 0.1.0。
+ * registry 合法键表：写 35 ＋ 读 66 ＝ 101 条。
+ * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
+ * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
+ *
+ * 键序＝写键（键名升序）在前、读键（键名升序）在后（确定性排序，见生成器）。
+ * 背景照旧：VIEW_KEYS/PHOTO_VIEW_KEYS 用下划线键，过不了 link-core registry（KEY_RE 只许
+ * [a-z0-9-.]），T11 出口把下划线改成点（calorie.view.home）复用同一语义。
+ * 仅 type-only 消费 link-core（零运行时依赖）；envelope 手工装配，字段对齐 link-core 0.1.0。
  * 缺失阻断不返空：未知键抛，调用方 exit 3。
  */
 import type { EnvelopeShape } from 'base-link-core';
@@ -18,41 +20,41 @@ export const CALORIE_SKILL = 'calorie' as const;
 export const COMBO_KEY_RE = /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9-.]*$/;
 
 export const CALORIE_WRITE_COMBOS = {
-  'calorie.diet.add': { shape: 'receipt' as EnvelopeShape, title: '记一餐' },
-  'calorie.diet.update': { shape: 'receipt' as EnvelopeShape, title: '改饮食' },
-  'calorie.diet.remove': { shape: 'receipt' as EnvelopeShape, title: '删饮食' },
-  'calorie.diet.batch': { shape: 'receipt' as EnvelopeShape, title: '批量记饮食' },
-  'calorie.diet.copy': { shape: 'receipt' as EnvelopeShape, title: '复制饮食' },
-  'calorie.diet.update-by-date': { shape: 'receipt' as EnvelopeShape, title: '按日改饮食' },
-  'calorie.diet.remove-by-date': { shape: 'receipt' as EnvelopeShape, title: '按日删饮食' },
-  'calorie.diet.remove-by-range': { shape: 'receipt' as EnvelopeShape, title: '按范围删饮食' },
-  'calorie.diet.remove-by-type': { shape: 'receipt' as EnvelopeShape, title: '按餐别删饮食' },
-  'calorie.water.log': { shape: 'receipt' as EnvelopeShape, title: '记喝水' },
-  'calorie.weight.log': { shape: 'receipt' as EnvelopeShape, title: '记体重' },
-  'calorie.weight.update': { shape: 'receipt' as EnvelopeShape, title: '改体重' },
-  'calorie.weight.remove': { shape: 'receipt' as EnvelopeShape, title: '删体重' },
-  'calorie.weight.batch': { shape: 'receipt' as EnvelopeShape, title: '批量记体重' },
-  'calorie.exercise.add': { shape: 'receipt' as EnvelopeShape, title: '记运动' },
-  'calorie.exercise.update': { shape: 'receipt' as EnvelopeShape, title: '改运动' },
-  'calorie.exercise.remove': { shape: 'receipt' as EnvelopeShape, title: '删运动' },
-  'calorie.photo.add': { shape: 'receipt' as EnvelopeShape, title: '记身材照' },
-  'calorie.photo.remove': { shape: 'receipt' as EnvelopeShape, title: '删身材照' },
-  'calorie.photo.tag': { shape: 'receipt' as EnvelopeShape, title: '改照片标签' },
-  'calorie.product.add': { shape: 'receipt' as EnvelopeShape, title: '存食品' },
-  'calorie.product.update': { shape: 'receipt' as EnvelopeShape, title: '改食品' },
-  'calorie.product.deprecate': { shape: 'receipt' as EnvelopeShape, title: '下架食品' },
-  'calorie.profile.set': { shape: 'receipt' as EnvelopeShape, title: '设置档案' },
-  'calorie.profile.activity': { shape: 'receipt' as EnvelopeShape, title: '设活动量' },
-  'calorie.profile.update': { shape: 'receipt' as EnvelopeShape, title: '改档案' },
-  'calorie.goal.set': { shape: 'receipt' as EnvelopeShape, title: '定营养目标' },
-  'calorie.goal.water': { shape: 'receipt' as EnvelopeShape, title: '定饮水目标' },
-  'calorie.goal.weight': { shape: 'receipt' as EnvelopeShape, title: '定体重目标' },
-  'calorie.goal.pause': { shape: 'receipt' as EnvelopeShape, title: '暂停目标' },
-  'calorie.goal.resume': { shape: 'receipt' as EnvelopeShape, title: '重启目标' },
   'calorie.body.composition-add': { shape: 'receipt' as EnvelopeShape, title: '记体脂' },
   'calorie.body.composition-remove': { shape: 'receipt' as EnvelopeShape, title: '删体脂' },
   'calorie.body.measure-add': { shape: 'receipt' as EnvelopeShape, title: '记围度' },
   'calorie.body.measure-remove': { shape: 'receipt' as EnvelopeShape, title: '删围度' },
+  'calorie.diet.add': { shape: 'receipt' as EnvelopeShape, title: '记一餐' },
+  'calorie.diet.batch': { shape: 'receipt' as EnvelopeShape, title: '批量记饮食' },
+  'calorie.diet.copy': { shape: 'receipt' as EnvelopeShape, title: '复制饮食' },
+  'calorie.diet.remove': { shape: 'receipt' as EnvelopeShape, title: '删饮食' },
+  'calorie.diet.remove-by-date': { shape: 'receipt' as EnvelopeShape, title: '按日删饮食' },
+  'calorie.diet.remove-by-range': { shape: 'receipt' as EnvelopeShape, title: '按范围删饮食' },
+  'calorie.diet.remove-by-type': { shape: 'receipt' as EnvelopeShape, title: '按餐别删饮食' },
+  'calorie.diet.update': { shape: 'receipt' as EnvelopeShape, title: '改饮食' },
+  'calorie.diet.update-by-date': { shape: 'receipt' as EnvelopeShape, title: '按日改饮食' },
+  'calorie.exercise.add': { shape: 'receipt' as EnvelopeShape, title: '记运动' },
+  'calorie.exercise.remove': { shape: 'receipt' as EnvelopeShape, title: '删运动' },
+  'calorie.exercise.update': { shape: 'receipt' as EnvelopeShape, title: '改运动' },
+  'calorie.goal.pause': { shape: 'receipt' as EnvelopeShape, title: '暂停目标' },
+  'calorie.goal.resume': { shape: 'receipt' as EnvelopeShape, title: '重启目标' },
+  'calorie.goal.set': { shape: 'receipt' as EnvelopeShape, title: '定营养目标' },
+  'calorie.goal.water': { shape: 'receipt' as EnvelopeShape, title: '定饮水目标' },
+  'calorie.goal.weight': { shape: 'receipt' as EnvelopeShape, title: '定体重目标' },
+  'calorie.photo.add': { shape: 'receipt' as EnvelopeShape, title: '记身材照' },
+  'calorie.photo.remove': { shape: 'receipt' as EnvelopeShape, title: '删身材照' },
+  'calorie.photo.tag': { shape: 'receipt' as EnvelopeShape, title: '改照片标签' },
+  'calorie.product.add': { shape: 'receipt' as EnvelopeShape, title: '存食品' },
+  'calorie.product.deprecate': { shape: 'receipt' as EnvelopeShape, title: '下架食品' },
+  'calorie.product.update': { shape: 'receipt' as EnvelopeShape, title: '改食品' },
+  'calorie.profile.activity': { shape: 'receipt' as EnvelopeShape, title: '设活动量' },
+  'calorie.profile.set': { shape: 'receipt' as EnvelopeShape, title: '设置档案' },
+  'calorie.profile.update': { shape: 'receipt' as EnvelopeShape, title: '改档案' },
+  'calorie.water.log': { shape: 'receipt' as EnvelopeShape, title: '记喝水' },
+  'calorie.weight.batch': { shape: 'receipt' as EnvelopeShape, title: '批量记体重' },
+  'calorie.weight.log': { shape: 'receipt' as EnvelopeShape, title: '记体重' },
+  'calorie.weight.remove': { shape: 'receipt' as EnvelopeShape, title: '删体重' },
+  'calorie.weight.update': { shape: 'receipt' as EnvelopeShape, title: '改体重' },
 } as const;
 
 export type CalorieWriteKey = keyof typeof CALORIE_WRITE_COMBOS;
@@ -63,85 +65,72 @@ export function isCalorieWriteKey(key: string): key is CalorieWriteKey {
 
 export const CALORIE_COMBOS = {
   ...(CALORIE_WRITE_COMBOS as unknown as Record<string, { shape: EnvelopeShape; title: string }>),
-  'calorie.today': { shape: 'list' as EnvelopeShape, title: '今日饮食' },
-  'calorie.view.home': { shape: 'stat' as EnvelopeShape, title: '今日总览' },
-  'calorie.view.diet': { shape: 'stat' as EnvelopeShape, title: '饮食总览' },
-  'calorie.view.exercise': { shape: 'stat' as EnvelopeShape, title: '运动总览' },
-  'calorie.view.goal': { shape: 'stat' as EnvelopeShape, title: '目标分析' },
-  'calorie.view.goal-config': { shape: 'stat' as EnvelopeShape, title: '目标配置' },
-  'calorie.view.goal-recommend': { shape: 'stat' as EnvelopeShape, title: '目标推荐' },
-  'calorie.view.goal-weight': { shape: 'stat' as EnvelopeShape, title: '体重目标' },
-  'calorie.view.goal-progress': { shape: 'stat' as EnvelopeShape, title: '目标进度' },
-  'calorie.view.goal-status': { shape: 'stat' as EnvelopeShape, title: '目标状态' },
-  'calorie.view.combined': { shape: 'stat' as EnvelopeShape, title: '组合分析' },
-  'calorie.view.deficit': { shape: 'stat' as EnvelopeShape, title: '热量缺口' },
-  'calorie.view.diet-review': { shape: 'stat' as EnvelopeShape, title: '饮食复盘' },
-  'calorie.view.health': { shape: 'stat' as EnvelopeShape, title: '健康盘' },
-  'calorie.view.ranking': { shape: 'stat' as EnvelopeShape, title: '食品排行' },
-  'calorie.view.library': { shape: 'stat' as EnvelopeShape, title: '食品库' },
-  'calorie.view.search': { shape: 'stat' as EnvelopeShape, title: '查食品' },
-  'calorie.photo.list': { shape: 'list' as EnvelopeShape, title: '看身材照' },
-  'calorie.photo.detail': { shape: 'detail' as EnvelopeShape, title: '查身材照' },
-  'calorie.photo.compare': { shape: 'list' as EnvelopeShape, title: '对比照片' },
-  'calorie.photo.gif': { shape: 'analysis' as EnvelopeShape, title: '生成GIF' },
   'calorie.help.center': { shape: 'list' as EnvelopeShape, title: '身材照HELP' },
   'calorie.help.lookup': { shape: 'list' as EnvelopeShape, title: '唤醒词HELP' },
   'calorie.history': { shape: 'list' as EnvelopeShape, title: '热量历史' },
-  'calorie.view.weight': { shape: 'stat' as EnvelopeShape, title: '体重盘' },
-  'calorie.view.weight-history': { shape: 'stat' as EnvelopeShape, title: '体重历史' },
-  'calorie.view.weight-compare': { shape: 'stat' as EnvelopeShape, title: '体重对比' },
-  'calorie.view.weight-review': { shape: 'stat' as EnvelopeShape, title: '体重复核' },
-  'calorie.view.volatility': { shape: 'stat' as EnvelopeShape, title: '波动分析' },
+  'calorie.photo.compare': { shape: 'list' as EnvelopeShape, title: '对比照片' },
+  'calorie.photo.detail': { shape: 'detail' as EnvelopeShape, title: '查身材照' },
+  'calorie.photo.gif': { shape: 'analysis' as EnvelopeShape, title: '生成GIF' },
+  'calorie.photo.list': { shape: 'list' as EnvelopeShape, title: '看身材照' },
+  'calorie.today': { shape: 'list' as EnvelopeShape, title: '今日饮食' },
+  'calorie.view.anomaly': { shape: 'stat' as EnvelopeShape, title: '异常诊断' },
+  'calorie.view.batch-import-preview': { shape: 'stat' as EnvelopeShape, title: '批量导入预览' },
   'calorie.view.body-composition': { shape: 'stat' as EnvelopeShape, title: '体成分看' },
   'calorie.view.body-measure': { shape: 'stat' as EnvelopeShape, title: '围度看' },
-  'calorie.view.plan': { shape: 'stat' as EnvelopeShape, title: '训练计划看' },
-  'calorie.view.plan-wizard': { shape: 'stat' as EnvelopeShape, title: '构建向导' },
-  'calorie.view.exercise-goal': { shape: 'stat' as EnvelopeShape, title: '运动目标视图' },
-  'calorie.view.goal-expiring': { shape: 'stat' as EnvelopeShape, title: '即将到期目标' },
-  'calorie.view.goal-predict': { shape: 'stat' as EnvelopeShape, title: '目标预测达成' },
-  'calorie.view.goal-vs-actual': { shape: 'stat' as EnvelopeShape, title: '目标对比实际' },
-  'calorie.view.predict': { shape: 'stat' as EnvelopeShape, title: '体重预测' },
-  'calorie.view.anomaly': { shape: 'stat' as EnvelopeShape, title: '异常诊断' },
+  'calorie.view.calorie-trend': { shape: 'stat' as EnvelopeShape, title: '热量趋势' },
+  'calorie.view.combined': { shape: 'stat' as EnvelopeShape, title: '组合分析' },
+  'calorie.view.composition-wizard': { shape: 'stat' as EnvelopeShape, title: '体脂向导' },
   'calorie.view.contraindication': { shape: 'stat' as EnvelopeShape, title: '禁忌扫描' },
   'calorie.view.dedupe': { shape: 'stat' as EnvelopeShape, title: '去重报告' },
-  'calorie.view.profile': { shape: 'stat' as EnvelopeShape, title: '档案视图' },
-  // #111 · 运动移植 6 键（D2 只许追加：读 42→48，共 83；t71 需移植 exercise_* 六模板）。
-  'calorie.view.exercise-strength': { shape: 'stat' as EnvelopeShape, title: '力量训练总览' },
+  'calorie.view.deficit': { shape: 'stat' as EnvelopeShape, title: '热量缺口' },
+  'calorie.view.diet': { shape: 'stat' as EnvelopeShape, title: '饮食总览' },
+  'calorie.view.diet-review': { shape: 'stat' as EnvelopeShape, title: '饮食复盘' },
+  'calorie.view.exercise': { shape: 'stat' as EnvelopeShape, title: '运动总览' },
   'calorie.view.exercise-cardio': { shape: 'stat' as EnvelopeShape, title: '有氧训练总览' },
   'calorie.view.exercise-distribution': { shape: 'stat' as EnvelopeShape, title: '运动类型分布' },
+  'calorie.view.exercise-goal': { shape: 'stat' as EnvelopeShape, title: '运动目标视图' },
   'calorie.view.exercise-recap': { shape: 'stat' as EnvelopeShape, title: '运动复盘' },
   'calorie.view.exercise-review': { shape: 'stat' as EnvelopeShape, title: '计划复盘' },
+  'calorie.view.exercise-strength': { shape: 'stat' as EnvelopeShape, title: '力量训练总览' },
   'calorie.view.exercise-trend': { shape: 'stat' as EnvelopeShape, title: '运动趋势' },
-  // #112 · 营养移植 4 键（D2 只许追加：读 48→52，共 87；t71 需移植 nutrition_ratio／
-  // nutrition_detail／source_stats／today_water 四模板；#108 R4 记账来源表、lint／六因子／批量导入归 #113）。
-  'calorie.view.nutrition-ratio': { shape: 'stat' as EnvelopeShape, title: '营养配比' },
-  'calorie.view.nutrition-detail': { shape: 'stat' as EnvelopeShape, title: '营养素深度' },
-  'calorie.view.source-stats': { shape: 'stat' as EnvelopeShape, title: '食品来源统计' },
-  'calorie.view.today-water': { shape: 'stat' as EnvelopeShape, title: '今日饮水' },
-  // #113 · 趋势 2＋其他 6 移植 8 键（D2 只许追加：读 52→60，共 95；t71 需移植
-  // batch_import_preview／calorie_trend／lint_health／long_trend／nutrition_analysis／
-  // process_progress／review_template／six_factors 八模板；计数 6＋4＋8＝18 闭合）。
-  'calorie.view.batch-import-preview': { shape: 'stat' as EnvelopeShape, title: '批量导入预览' },
-  'calorie.view.calorie-trend': { shape: 'stat' as EnvelopeShape, title: '热量趋势' },
+  'calorie.view.gif-planner': { shape: 'stat' as EnvelopeShape, title: 'GIF规划器' },
+  'calorie.view.goal': { shape: 'stat' as EnvelopeShape, title: '目标分析' },
+  'calorie.view.goal-config': { shape: 'stat' as EnvelopeShape, title: '目标配置' },
+  'calorie.view.goal-expiring': { shape: 'stat' as EnvelopeShape, title: '即将到期目标' },
+  'calorie.view.goal-predict': { shape: 'stat' as EnvelopeShape, title: '目标预测达成' },
+  'calorie.view.goal-progress': { shape: 'stat' as EnvelopeShape, title: '目标进度' },
+  'calorie.view.goal-recommend': { shape: 'stat' as EnvelopeShape, title: '目标推荐' },
+  'calorie.view.goal-status': { shape: 'stat' as EnvelopeShape, title: '目标状态' },
+  'calorie.view.goal-vs-actual': { shape: 'stat' as EnvelopeShape, title: '目标对比实际' },
+  'calorie.view.goal-weight': { shape: 'stat' as EnvelopeShape, title: '体重目标' },
+  'calorie.view.goal-wizard': { shape: 'stat' as EnvelopeShape, title: '目标预检' },
+  'calorie.view.health': { shape: 'stat' as EnvelopeShape, title: '健康盘' },
+  'calorie.view.home': { shape: 'stat' as EnvelopeShape, title: '今日总览' },
+  'calorie.view.library': { shape: 'stat' as EnvelopeShape, title: '食品库' },
   'calorie.view.lint-health': { shape: 'stat' as EnvelopeShape, title: '数据健康检查' },
   'calorie.view.long-trend': { shape: 'stat' as EnvelopeShape, title: '整体趋势' },
-  'calorie.view.nutrition-analysis': { shape: 'stat' as EnvelopeShape, title: '营养分析' },
-  'calorie.view.process-progress': { shape: 'stat' as EnvelopeShape, title: '落地训练进度' },
-  'calorie.view.review-template': { shape: 'stat' as EnvelopeShape, title: '复盘报告' },
-  'calorie.view.six-factors': { shape: 'stat' as EnvelopeShape, title: '每日六因素' },
-  // #86 · wizard 4 页复刻 D1（D2 只许追加：读 60→64，共 99；t71 #4/#6/#11/#9；
-  // #52 明确不做、#54 新版已有不碰；静态 HTML＋copyText，不碰 client 控件）。
   'calorie.view.measure-wizard': { shape: 'stat' as EnvelopeShape, title: '围度向导' },
-  'calorie.view.composition-wizard': { shape: 'stat' as EnvelopeShape, title: '体脂向导' },
+  'calorie.view.nutrition-analysis': { shape: 'stat' as EnvelopeShape, title: '营养分析' },
+  'calorie.view.nutrition-detail': { shape: 'stat' as EnvelopeShape, title: '营养素深度' },
+  'calorie.view.nutrition-ratio': { shape: 'stat' as EnvelopeShape, title: '营养配比' },
   'calorie.view.photo-log-wizard': { shape: 'stat' as EnvelopeShape, title: '身材照向导' },
-  'calorie.view.gif-planner': { shape: 'stat' as EnvelopeShape, title: 'GIF规划器' },
-  // #179 · 场景 07 基础信息写前预检页（D2 只许追加：读 64→65，共 100；一条只读页面命令
-  // 承载三条写入词「设置档案／改档案／设活动量」的字段与槽位，写仍由三条写命令承接）。
+  'calorie.view.plan': { shape: 'stat' as EnvelopeShape, title: '训练计划看' },
+  'calorie.view.plan-wizard': { shape: 'stat' as EnvelopeShape, title: '构建向导' },
+  'calorie.view.predict': { shape: 'stat' as EnvelopeShape, title: '体重预测' },
+  'calorie.view.process-progress': { shape: 'stat' as EnvelopeShape, title: '落地训练进度' },
+  'calorie.view.profile': { shape: 'stat' as EnvelopeShape, title: '档案视图' },
   'calorie.view.profile-wizard': { shape: 'stat' as EnvelopeShape, title: '档案预检' },
-  // #251 · 场景 06 目标管理写前预检页（D2 只许追加：读 65→66；一条只读页面命令承载 13 条写入词
-  // 「定营养目标／定营养目标(自动算)／定体重目标／…／改饮水目标」的现值、推荐值与要填的项，
-  // 写仍由 5 条既有写命令承接）。
-  'calorie.view.goal-wizard': { shape: 'stat' as EnvelopeShape, title: '目标预检' },
+  'calorie.view.ranking': { shape: 'stat' as EnvelopeShape, title: '食品排行' },
+  'calorie.view.review-template': { shape: 'stat' as EnvelopeShape, title: '复盘报告' },
+  'calorie.view.search': { shape: 'stat' as EnvelopeShape, title: '查食品' },
+  'calorie.view.six-factors': { shape: 'stat' as EnvelopeShape, title: '每日六因素' },
+  'calorie.view.source-stats': { shape: 'stat' as EnvelopeShape, title: '食品来源统计' },
+  'calorie.view.today-water': { shape: 'stat' as EnvelopeShape, title: '今日饮水' },
+  'calorie.view.volatility': { shape: 'stat' as EnvelopeShape, title: '波动分析' },
+  'calorie.view.weight': { shape: 'stat' as EnvelopeShape, title: '体重盘' },
+  'calorie.view.weight-compare': { shape: 'stat' as EnvelopeShape, title: '体重对比' },
+  'calorie.view.weight-history': { shape: 'stat' as EnvelopeShape, title: '体重历史' },
+  'calorie.view.weight-review': { shape: 'stat' as EnvelopeShape, title: '体重复核' },
 } as const;
 
 export type CalorieComboKey = keyof typeof CALORIE_COMBOS;

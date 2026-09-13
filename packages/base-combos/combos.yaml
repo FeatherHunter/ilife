@@ -3,350 +3,31 @@
 # 内容一期不议不记录（l6_slots 只许 id+reserved，多一字段校验即挂）；HELP 互联区见 HELP.md，构建期注入静态文本，
 # 不进运行时；以后每加一条只加配置（本文件加一行 + 过 tooling/check-combos.mjs，不改代码）。
 combos:
-  - key: calorie.today
+# -- GEN-CLI-START calorie 段（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）
+  - key: calorie.body.composition-add
     skill: calorie
-    shape: list
-    title: 今日饮食
+    shape: receipt
+    title: 记体脂
     cmd: skill-calorie
-  - key: calorie.view.home
+  - key: calorie.body.composition-remove
     skill: calorie
-    shape: stat
-    title: 今日总览
+    shape: receipt
+    title: 删体脂
     cmd: skill-calorie
-  - key: calorie.view.diet
+  - key: calorie.body.measure-add
     skill: calorie
-    shape: stat
-    title: 饮食总览
+    shape: receipt
+    title: 记围度
     cmd: skill-calorie
-  - key: calorie.view.exercise
+  - key: calorie.body.measure-remove
     skill: calorie
-    shape: stat
-    title: 运动总览
-    cmd: skill-calorie
-  - key: calorie.view.goal
-    skill: calorie
-    shape: stat
-    title: 目标分析
-    cmd: skill-calorie
-  - key: calorie.view.goal-config
-    skill: calorie
-    shape: stat
-    title: 目标配置
-    cmd: skill-calorie
-  - key: calorie.view.goal-recommend
-    skill: calorie
-    shape: stat
-    title: 目标推荐
-    cmd: skill-calorie
-  - key: calorie.view.goal-weight
-    skill: calorie
-    shape: stat
-    title: 体重目标
-    cmd: skill-calorie
-  - key: calorie.view.goal-progress
-    skill: calorie
-    shape: stat
-    title: 目标进度
-    cmd: skill-calorie
-  - key: calorie.view.goal-status
-    skill: calorie
-    shape: stat
-    title: 目标状态
-    cmd: skill-calorie
-  - key: calorie.view.combined
-    skill: calorie
-    shape: stat
-    title: 组合分析
-    cmd: skill-calorie
-  - key: calorie.view.deficit
-    skill: calorie
-    shape: stat
-    title: 热量缺口
-    cmd: skill-calorie
-  - key: calorie.view.diet-review
-    skill: calorie
-    shape: stat
-    title: 饮食复盘
-    cmd: skill-calorie
-  - key: calorie.view.health
-    skill: calorie
-    shape: stat
-    title: 健康盘
-    cmd: skill-calorie
-  - key: calorie.view.ranking
-    skill: calorie
-    shape: stat
-    title: 食品排行
-    cmd: skill-calorie
-  - key: calorie.view.library
-    skill: calorie
-    shape: stat
-    title: 食品库
-    cmd: skill-calorie
-  - key: calorie.view.search
-    skill: calorie
-    shape: stat
-    title: 查食品
-    cmd: skill-calorie
-  - key: calorie.photo.list
-    skill: calorie
-    shape: list
-    title: 看身材照
-    cmd: skill-calorie
-  - key: calorie.photo.detail
-    skill: calorie
-    shape: detail
-    title: 查身材照
-    cmd: skill-calorie
-  - key: calorie.photo.compare
-    skill: calorie
-    shape: list
-    title: 对比照片
-    cmd: skill-calorie
-  - key: calorie.photo.gif
-    skill: calorie
-    shape: analysis
-    title: 生成GIF
-    cmd: skill-calorie
-  - key: calorie.help.center
-    skill: calorie
-    shape: list
-    title: 身材照HELP
-    cmd: skill-calorie
-  - key: calorie.help.lookup
-    skill: calorie
-    shape: list
-    title: 唤醒词HELP
-    cmd: skill-calorie
-  - key: calorie.history
-    skill: calorie
-    shape: list
-    title: 热量历史
-    cmd: skill-calorie
-  - key: calorie.view.weight
-    skill: calorie
-    shape: stat
-    title: 体重盘
-    cmd: skill-calorie
-  - key: calorie.view.weight-history
-    skill: calorie
-    shape: stat
-    title: 体重历史
-    cmd: skill-calorie
-  - key: calorie.view.weight-compare
-    skill: calorie
-    shape: stat
-    title: 体重对比
-    cmd: skill-calorie
-  - key: calorie.view.weight-review
-    skill: calorie
-    shape: stat
-    title: 体重复核
-    cmd: skill-calorie
-  - key: calorie.view.volatility
-    skill: calorie
-    shape: stat
-    title: 波动分析
-    cmd: skill-calorie
-  - key: calorie.view.body-composition
-    skill: calorie
-    shape: stat
-    title: 体成分看
-    cmd: skill-calorie
-  - key: calorie.view.body-measure
-    skill: calorie
-    shape: stat
-    title: 围度看
-    cmd: skill-calorie
-  - key: calorie.view.plan
-    skill: calorie
-    shape: stat
-    title: 训练计划看
-    cmd: skill-calorie
-  - key: calorie.view.plan-wizard
-    skill: calorie
-    shape: stat
-    title: 构建向导
-    cmd: skill-calorie
-  - key: calorie.view.exercise-goal
-    skill: calorie
-    shape: stat
-    title: 运动目标视图
-    cmd: skill-calorie
-  - key: calorie.view.goal-expiring
-    skill: calorie
-    shape: stat
-    title: 即将到期目标
-    cmd: skill-calorie
-  - key: calorie.view.goal-predict
-    skill: calorie
-    shape: stat
-    title: 目标预测达成
-    cmd: skill-calorie
-  - key: calorie.view.goal-vs-actual
-    skill: calorie
-    shape: stat
-    title: 目标对比实际
-    cmd: skill-calorie
-  - key: calorie.view.predict
-    skill: calorie
-    shape: stat
-    title: 体重预测
-    cmd: skill-calorie
-  - key: calorie.view.anomaly
-    skill: calorie
-    shape: stat
-    title: 异常诊断
-    cmd: skill-calorie
-  - key: calorie.view.contraindication
-    skill: calorie
-    shape: stat
-    title: 禁忌扫描
-    cmd: skill-calorie
-  - key: calorie.view.dedupe
-    skill: calorie
-    shape: stat
-    title: 去重报告
-    cmd: skill-calorie
-  - key: calorie.view.profile
-    skill: calorie
-    shape: stat
-    title: 档案视图
-    cmd: skill-calorie
-  - key: calorie.view.exercise-strength
-    skill: calorie
-    shape: stat
-    title: 力量训练总览
-    cmd: skill-calorie
-  - key: calorie.view.exercise-cardio
-    skill: calorie
-    shape: stat
-    title: 有氧训练总览
-    cmd: skill-calorie
-  - key: calorie.view.exercise-distribution
-    skill: calorie
-    shape: stat
-    title: 运动类型分布
-    cmd: skill-calorie
-  - key: calorie.view.exercise-recap
-    skill: calorie
-    shape: stat
-    title: 运动复盘
-    cmd: skill-calorie
-  - key: calorie.view.exercise-review
-    skill: calorie
-    shape: stat
-    title: 计划复盘
-    cmd: skill-calorie
-  - key: calorie.view.exercise-trend
-    skill: calorie
-    shape: stat
-    title: 运动趋势
-    cmd: skill-calorie
-  - key: calorie.view.nutrition-ratio
-    skill: calorie
-    shape: stat
-    title: 营养配比
-    cmd: skill-calorie
-  - key: calorie.view.nutrition-detail
-    skill: calorie
-    shape: stat
-    title: 营养素深度
-    cmd: skill-calorie
-  - key: calorie.view.source-stats
-    skill: calorie
-    shape: stat
-    title: 食品来源统计
-    cmd: skill-calorie
-  - key: calorie.view.today-water
-    skill: calorie
-    shape: stat
-    title: 今日饮水
-    cmd: skill-calorie
-  - key: calorie.view.batch-import-preview
-    skill: calorie
-    shape: stat
-    title: 批量导入预览
-    cmd: skill-calorie
-  - key: calorie.view.calorie-trend
-    skill: calorie
-    shape: stat
-    title: 热量趋势
-    cmd: skill-calorie
-  - key: calorie.view.lint-health
-    skill: calorie
-    shape: stat
-    title: 数据健康检查
-    cmd: skill-calorie
-  - key: calorie.view.long-trend
-    skill: calorie
-    shape: stat
-    title: 整体趋势
-    cmd: skill-calorie
-  - key: calorie.view.nutrition-analysis
-    skill: calorie
-    shape: stat
-    title: 营养分析
-    cmd: skill-calorie
-  - key: calorie.view.process-progress
-    skill: calorie
-    shape: stat
-    title: 落地训练进度
-    cmd: skill-calorie
-  - key: calorie.view.review-template
-    skill: calorie
-    shape: stat
-    title: 复盘报告
-    cmd: skill-calorie
-  - key: calorie.view.six-factors
-    skill: calorie
-    shape: stat
-    title: 每日六因素
-    cmd: skill-calorie
-  - key: calorie.view.measure-wizard
-    skill: calorie
-    shape: stat
-    title: 围度向导
-    cmd: skill-calorie
-  - key: calorie.view.composition-wizard
-    skill: calorie
-    shape: stat
-    title: 体脂向导
-    cmd: skill-calorie
-  - key: calorie.view.photo-log-wizard
-    skill: calorie
-    shape: stat
-    title: 身材照向导
-    cmd: skill-calorie
-  - key: calorie.view.gif-planner
-    skill: calorie
-    shape: stat
-    title: GIF规划器
-    cmd: skill-calorie
-  - key: calorie.view.profile-wizard
-    skill: calorie
-    shape: stat
-    title: 档案预检
-    cmd: skill-calorie
-  - key: calorie.view.goal-wizard
-    skill: calorie
-    shape: stat
-    title: 目标预检
+    shape: receipt
+    title: 删围度
     cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt
     title: 记一餐
-    cmd: skill-calorie
-  - key: calorie.diet.update
-    skill: calorie
-    shape: receipt
-    title: 改饮食
-    cmd: skill-calorie
-  - key: calorie.diet.remove
-    skill: calorie
-    shape: receipt
-    title: 删饮食
     cmd: skill-calorie
   - key: calorie.diet.batch
     skill: calorie
@@ -358,10 +39,10 @@ combos:
     shape: receipt
     title: 复制饮食
     cmd: skill-calorie
-  - key: calorie.diet.update-by-date
+  - key: calorie.diet.remove
     skill: calorie
     shape: receipt
-    title: 按日改饮食
+    title: 删饮食
     cmd: skill-calorie
   - key: calorie.diet.remove-by-date
     skill: calorie
@@ -378,45 +59,55 @@ combos:
     shape: receipt
     title: 按餐别删饮食
     cmd: skill-calorie
-  - key: calorie.water.log
+  - key: calorie.diet.update
     skill: calorie
     shape: receipt
-    title: 记喝水
+    title: 改饮食
     cmd: skill-calorie
-  - key: calorie.weight.log
+  - key: calorie.diet.update-by-date
     skill: calorie
     shape: receipt
-    title: 记体重
-    cmd: skill-calorie
-  - key: calorie.weight.update
-    skill: calorie
-    shape: receipt
-    title: 改体重
-    cmd: skill-calorie
-  - key: calorie.weight.remove
-    skill: calorie
-    shape: receipt
-    title: 删体重
-    cmd: skill-calorie
-  - key: calorie.weight.batch
-    skill: calorie
-    shape: receipt
-    title: 批量记体重
+    title: 按日改饮食
     cmd: skill-calorie
   - key: calorie.exercise.add
     skill: calorie
     shape: receipt
     title: 记运动
     cmd: skill-calorie
+  - key: calorie.exercise.remove
+    skill: calorie
+    shape: receipt
+    title: 删运动
+    cmd: skill-calorie
   - key: calorie.exercise.update
     skill: calorie
     shape: receipt
     title: 改运动
     cmd: skill-calorie
-  - key: calorie.exercise.remove
+  - key: calorie.goal.pause
     skill: calorie
     shape: receipt
-    title: 删运动
+    title: 暂停目标
+    cmd: skill-calorie
+  - key: calorie.goal.resume
+    skill: calorie
+    shape: receipt
+    title: 重启目标
+    cmd: skill-calorie
+  - key: calorie.goal.set
+    skill: calorie
+    shape: receipt
+    title: 定营养目标
+    cmd: skill-calorie
+  - key: calorie.goal.water
+    skill: calorie
+    shape: receipt
+    title: 定饮水目标
+    cmd: skill-calorie
+  - key: calorie.goal.weight
+    skill: calorie
+    shape: receipt
+    title: 定体重目标
     cmd: skill-calorie
   - key: calorie.photo.add
     skill: calorie
@@ -438,76 +129,387 @@ combos:
     shape: receipt
     title: 存食品
     cmd: skill-calorie
-  - key: calorie.product.update
-    skill: calorie
-    shape: receipt
-    title: 改食品
-    cmd: skill-calorie
   - key: calorie.product.deprecate
     skill: calorie
     shape: receipt
     title: 下架食品
     cmd: skill-calorie
-  - key: calorie.profile.set
+  - key: calorie.product.update
     skill: calorie
     shape: receipt
-    title: 设置档案
+    title: 改食品
     cmd: skill-calorie
   - key: calorie.profile.activity
     skill: calorie
     shape: receipt
     title: 设活动量
     cmd: skill-calorie
+  - key: calorie.profile.set
+    skill: calorie
+    shape: receipt
+    title: 设置档案
+    cmd: skill-calorie
   - key: calorie.profile.update
     skill: calorie
     shape: receipt
     title: 改档案
     cmd: skill-calorie
-  - key: calorie.goal.set
+  - key: calorie.water.log
     skill: calorie
     shape: receipt
-    title: 定营养目标
+    title: 记喝水
     cmd: skill-calorie
-  - key: calorie.goal.water
+  - key: calorie.weight.batch
     skill: calorie
     shape: receipt
-    title: 定饮水目标
+    title: 批量记体重
     cmd: skill-calorie
-  - key: calorie.goal.weight
+  - key: calorie.weight.log
     skill: calorie
     shape: receipt
-    title: 定体重目标
+    title: 记体重
     cmd: skill-calorie
-  - key: calorie.goal.pause
+  - key: calorie.weight.remove
     skill: calorie
     shape: receipt
-    title: 暂停目标
+    title: 删体重
     cmd: skill-calorie
-  - key: calorie.goal.resume
+  - key: calorie.weight.update
     skill: calorie
     shape: receipt
-    title: 重启目标
+    title: 改体重
     cmd: skill-calorie
-  - key: calorie.body.composition-add
+  - key: calorie.help.center
     skill: calorie
-    shape: receipt
-    title: 记体脂
+    shape: list
+    title: 身材照HELP
     cmd: skill-calorie
-  - key: calorie.body.composition-remove
+  - key: calorie.help.lookup
     skill: calorie
-    shape: receipt
-    title: 删体脂
+    shape: list
+    title: 唤醒词HELP
     cmd: skill-calorie
-  - key: calorie.body.measure-add
+  - key: calorie.history
     skill: calorie
-    shape: receipt
-    title: 记围度
+    shape: list
+    title: 热量历史
     cmd: skill-calorie
-  - key: calorie.body.measure-remove
+  - key: calorie.photo.compare
     skill: calorie
-    shape: receipt
-    title: 删围度
+    shape: list
+    title: 对比照片
     cmd: skill-calorie
+  - key: calorie.photo.detail
+    skill: calorie
+    shape: detail
+    title: 查身材照
+    cmd: skill-calorie
+  - key: calorie.photo.gif
+    skill: calorie
+    shape: analysis
+    title: 生成GIF
+    cmd: skill-calorie
+  - key: calorie.photo.list
+    skill: calorie
+    shape: list
+    title: 看身材照
+    cmd: skill-calorie
+  - key: calorie.today
+    skill: calorie
+    shape: list
+    title: 今日饮食
+    cmd: skill-calorie
+  - key: calorie.view.anomaly
+    skill: calorie
+    shape: stat
+    title: 异常诊断
+    cmd: skill-calorie
+  - key: calorie.view.batch-import-preview
+    skill: calorie
+    shape: stat
+    title: 批量导入预览
+    cmd: skill-calorie
+  - key: calorie.view.body-composition
+    skill: calorie
+    shape: stat
+    title: 体成分看
+    cmd: skill-calorie
+  - key: calorie.view.body-measure
+    skill: calorie
+    shape: stat
+    title: 围度看
+    cmd: skill-calorie
+  - key: calorie.view.calorie-trend
+    skill: calorie
+    shape: stat
+    title: 热量趋势
+    cmd: skill-calorie
+  - key: calorie.view.combined
+    skill: calorie
+    shape: stat
+    title: 组合分析
+    cmd: skill-calorie
+  - key: calorie.view.composition-wizard
+    skill: calorie
+    shape: stat
+    title: 体脂向导
+    cmd: skill-calorie
+  - key: calorie.view.contraindication
+    skill: calorie
+    shape: stat
+    title: 禁忌扫描
+    cmd: skill-calorie
+  - key: calorie.view.dedupe
+    skill: calorie
+    shape: stat
+    title: 去重报告
+    cmd: skill-calorie
+  - key: calorie.view.deficit
+    skill: calorie
+    shape: stat
+    title: 热量缺口
+    cmd: skill-calorie
+  - key: calorie.view.diet
+    skill: calorie
+    shape: stat
+    title: 饮食总览
+    cmd: skill-calorie
+  - key: calorie.view.diet-review
+    skill: calorie
+    shape: stat
+    title: 饮食复盘
+    cmd: skill-calorie
+  - key: calorie.view.exercise
+    skill: calorie
+    shape: stat
+    title: 运动总览
+    cmd: skill-calorie
+  - key: calorie.view.exercise-cardio
+    skill: calorie
+    shape: stat
+    title: 有氧训练总览
+    cmd: skill-calorie
+  - key: calorie.view.exercise-distribution
+    skill: calorie
+    shape: stat
+    title: 运动类型分布
+    cmd: skill-calorie
+  - key: calorie.view.exercise-goal
+    skill: calorie
+    shape: stat
+    title: 运动目标视图
+    cmd: skill-calorie
+  - key: calorie.view.exercise-recap
+    skill: calorie
+    shape: stat
+    title: 运动复盘
+    cmd: skill-calorie
+  - key: calorie.view.exercise-review
+    skill: calorie
+    shape: stat
+    title: 计划复盘
+    cmd: skill-calorie
+  - key: calorie.view.exercise-strength
+    skill: calorie
+    shape: stat
+    title: 力量训练总览
+    cmd: skill-calorie
+  - key: calorie.view.exercise-trend
+    skill: calorie
+    shape: stat
+    title: 运动趋势
+    cmd: skill-calorie
+  - key: calorie.view.gif-planner
+    skill: calorie
+    shape: stat
+    title: GIF规划器
+    cmd: skill-calorie
+  - key: calorie.view.goal
+    skill: calorie
+    shape: stat
+    title: 目标分析
+    cmd: skill-calorie
+  - key: calorie.view.goal-config
+    skill: calorie
+    shape: stat
+    title: 目标配置
+    cmd: skill-calorie
+  - key: calorie.view.goal-expiring
+    skill: calorie
+    shape: stat
+    title: 即将到期目标
+    cmd: skill-calorie
+  - key: calorie.view.goal-predict
+    skill: calorie
+    shape: stat
+    title: 目标预测达成
+    cmd: skill-calorie
+  - key: calorie.view.goal-progress
+    skill: calorie
+    shape: stat
+    title: 目标进度
+    cmd: skill-calorie
+  - key: calorie.view.goal-recommend
+    skill: calorie
+    shape: stat
+    title: 目标推荐
+    cmd: skill-calorie
+  - key: calorie.view.goal-status
+    skill: calorie
+    shape: stat
+    title: 目标状态
+    cmd: skill-calorie
+  - key: calorie.view.goal-vs-actual
+    skill: calorie
+    shape: stat
+    title: 目标对比实际
+    cmd: skill-calorie
+  - key: calorie.view.goal-weight
+    skill: calorie
+    shape: stat
+    title: 体重目标
+    cmd: skill-calorie
+  - key: calorie.view.goal-wizard
+    skill: calorie
+    shape: stat
+    title: 目标预检
+    cmd: skill-calorie
+  - key: calorie.view.health
+    skill: calorie
+    shape: stat
+    title: 健康盘
+    cmd: skill-calorie
+  - key: calorie.view.home
+    skill: calorie
+    shape: stat
+    title: 今日总览
+    cmd: skill-calorie
+  - key: calorie.view.library
+    skill: calorie
+    shape: stat
+    title: 食品库
+    cmd: skill-calorie
+  - key: calorie.view.lint-health
+    skill: calorie
+    shape: stat
+    title: 数据健康检查
+    cmd: skill-calorie
+  - key: calorie.view.long-trend
+    skill: calorie
+    shape: stat
+    title: 整体趋势
+    cmd: skill-calorie
+  - key: calorie.view.measure-wizard
+    skill: calorie
+    shape: stat
+    title: 围度向导
+    cmd: skill-calorie
+  - key: calorie.view.nutrition-analysis
+    skill: calorie
+    shape: stat
+    title: 营养分析
+    cmd: skill-calorie
+  - key: calorie.view.nutrition-detail
+    skill: calorie
+    shape: stat
+    title: 营养素深度
+    cmd: skill-calorie
+  - key: calorie.view.nutrition-ratio
+    skill: calorie
+    shape: stat
+    title: 营养配比
+    cmd: skill-calorie
+  - key: calorie.view.photo-log-wizard
+    skill: calorie
+    shape: stat
+    title: 身材照向导
+    cmd: skill-calorie
+  - key: calorie.view.plan
+    skill: calorie
+    shape: stat
+    title: 训练计划看
+    cmd: skill-calorie
+  - key: calorie.view.plan-wizard
+    skill: calorie
+    shape: stat
+    title: 构建向导
+    cmd: skill-calorie
+  - key: calorie.view.predict
+    skill: calorie
+    shape: stat
+    title: 体重预测
+    cmd: skill-calorie
+  - key: calorie.view.process-progress
+    skill: calorie
+    shape: stat
+    title: 落地训练进度
+    cmd: skill-calorie
+  - key: calorie.view.profile
+    skill: calorie
+    shape: stat
+    title: 档案视图
+    cmd: skill-calorie
+  - key: calorie.view.profile-wizard
+    skill: calorie
+    shape: stat
+    title: 档案预检
+    cmd: skill-calorie
+  - key: calorie.view.ranking
+    skill: calorie
+    shape: stat
+    title: 食品排行
+    cmd: skill-calorie
+  - key: calorie.view.review-template
+    skill: calorie
+    shape: stat
+    title: 复盘报告
+    cmd: skill-calorie
+  - key: calorie.view.search
+    skill: calorie
+    shape: stat
+    title: 查食品
+    cmd: skill-calorie
+  - key: calorie.view.six-factors
+    skill: calorie
+    shape: stat
+    title: 每日六因素
+    cmd: skill-calorie
+  - key: calorie.view.source-stats
+    skill: calorie
+    shape: stat
+    title: 食品来源统计
+    cmd: skill-calorie
+  - key: calorie.view.today-water
+    skill: calorie
+    shape: stat
+    title: 今日饮水
+    cmd: skill-calorie
+  - key: calorie.view.volatility
+    skill: calorie
+    shape: stat
+    title: 波动分析
+    cmd: skill-calorie
+  - key: calorie.view.weight
+    skill: calorie
+    shape: stat
+    title: 体重盘
+    cmd: skill-calorie
+  - key: calorie.view.weight-compare
+    skill: calorie
+    shape: stat
+    title: 体重对比
+    cmd: skill-calorie
+  - key: calorie.view.weight-history
+    skill: calorie
+    shape: stat
+    title: 体重历史
+    cmd: skill-calorie
+  - key: calorie.view.weight-review
+    skill: calorie
+    shape: stat
+    title: 体重复核
+    cmd: skill-calorie
+# -- GEN-CLI-END calorie 段
   - key: home.help.lookup
     skill: home
     shape: list
