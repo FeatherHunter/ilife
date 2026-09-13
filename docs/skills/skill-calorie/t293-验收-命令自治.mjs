@@ -175,17 +175,21 @@ const sandboxShaLegacy = () => LEGACY_FILES.map((p) => sandboxSha(p) ?? 'MISSING
 // ─────────────────────────────────────────────────────────────────────────────
 // P1 · 自治：加一条命令，除能力目录里的声明与生成物外，还要手改哪些文件
 //
-// 判据分三桶（#295 红队审查 5af4dd1 指出：只数生成器输出面会报假绿——同一个
-// build-help.mjs 里还有第二处手写的「一条命令的事实」（exampleFor 的逐键 case），
-// 另有若干钉死计数的断言也不在派生面上）：
+// 判据分**四档**（① ② ③ 是判红面，④ 是"只报账"面）——#295 红队审查 5af4dd1 指出：只数生成器输出面会报假绿
+// （同一个 build-help.mjs 里还有第二处手写的「一条命令的事实」（exampleFor 的逐键 case），
+//  另有若干钉死计数的断言也不在派生面上）：
 //   ① DERIVED            不用手改（生成物＋分派＋已对账的断言＋路由声明面）
 //   ② DISCIPLINED-SHARED 必须手改、但已被认下登记（**登记位＝`docs/skills/skill-calorie/t293-纪律豁免.json`**：
-//                         登记项字段齐全、且指得回当刻代码才算生效，缺字段即 P1=FAIL）——只有**主体＝权威总量**
-//                         的命中才谈得上"认下"（`主体` 的准入见 pinnedCountOfLine；**域内计数一律不报**）
+//                         登记项字段齐全、且指得回当刻代码才算生效，缺字段即 P1=FAIL）。**登记件唯一能压的就是
+//                         ③ 这一类（主体＝权威总量）的命中** ⇒ 复核登记件时**必须逐条核 reason 真伪**：
+//                         机器守得住"字段齐全 ＋ 指得回当刻代码"，守不住"理由成立"
 //                         （**#313 B 段起路由已不在这一桶**：声明住能力目录／`legacy/routes/scene-NN.ts`，
 //                          汇总位 `src/triggers/routes.generated.ts` 是生成物——归类判据见 routeSurfaces()）
-//   ③ UNACCOUNTED        必须手改、既没派生也没纪律登记 ⇒ 有它就 P1=FAIL
-//                        （准入＝**断言主体就是权威总量**：域内计数／退出码／消息串／注释里的数字都不算）
+//   ③ UNACCOUNTED        主体＝权威总量、既没派生也没登记 ⇒ 有它就 P1=FAIL
+//                        （准入见 pinnedCountOfLine：锚必须在**被比操作数位**）
+//   ④ ? UNDETERMINED-SUBJECT  **只报账、不判红**（复核 S1-1 必改）：锚确在被比操作数位，但主体判不出
+//                        （域内自己的计数 `xs.length, 10`／退出码 `r.status, 4`／不透明变量 `n, 28`）
+//                        ⇒ 逐条列出让人看见；**静默比噪声更坏**——"不报"不等于"没问题"
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 现行权威总量（键／写／读／体重）：既要报账，也当"钉死计数"断言的搜索锚。 */
@@ -279,11 +283,14 @@ function assertCalls(code) {
 
 /** 取**被比操作数对**：只认两种形态，宁缺勿滥——
  *   · `assert.<equals|equal|strictEqual|notStrictEqual|notEqual|deepEqual|notDeepEqual>(A, B[, 消息…])` ⇒ [A, B]
+ *   · `assert.<equals|equal|strictEqual|notStrictEqual|notEqual|deepEqual|notDeepEqual|deepStrictEqual|notDeepStrictEqual>(A, B[, 消息…])` ⇒ [A, B]
  *   · `assert.ok(A === B)`／`assert(A === B)`（含 == !== !=）                                                 ⇒ [A, B]
  *  其余（`assert.match(k, /re/)`、`assert.ok(x > 10, 消息)`、`assert.ok(k.includes('10'))`）不认。
- *  一行有多个 assert 时，取**第一个能给出操作数对**的那个（够用：本探针只问"这一行有没有把锚当被比操作数"）。 */
+ *  一行有多个 assert 时，取**第一个能给出操作数对**的那个（够用：本探针只问"这一行有没有把锚当被比操作数"）。
+ *  已知边界（复核 S2-2，见证据 §9）：**跨行的 assert 调用**（`assert.equal(\n  n,\n  28,\n)`）逐行看不出——
+ *  `assertCalls()` 遇未闭合括号即放弃该行，锚那一行又没有 assert 面 ⇒ 两边都不报，属未覆盖面（不是"判过"。 */
 function comparedOperands(code) {
-  const EQ = /^(equals|equal|strictEqual|notStrictEqual|notEqual|deepEqual|notDeepEqual)$/;
+  const EQ = /^(equals|equal|strictEqual|notStrictEqual|notEqual|deepEqual|notDeepEqual|deepStrictEqual|notDeepStrictEqual)$/;
   for (const call of assertCalls(code)) {
     if (call.method !== null && call.method !== 'ok') {
       if (!EQ.test(call.method)) continue;
@@ -315,24 +322,33 @@ function anchorAsOperand(code, value) {
  *   ② 主体讲**权威总量**——另一侧操作数带 keys／键／声明／registry／未搬迁／命令…，或消息串**点名权威出处**；
  *   ③ ①② 都成立 ⇒ 命中（`subject:'authority'`）⇒ 再看登记位：在册记 ②，未登记记 ③。
  *  **域内计数一律不报**（`xs.length, 10`／`r.total, 4`／`s.size, 6` 一类，形状见 DOMAIN_COUNT_SHAPES）：
- *  它们不随别域命令迁移而变，值撞锚纯属巧合（#318 实测：未搬迁清单 19→1、锚变 10/4/6 后"小数字遍地撞"，
- *  13 处全是巧合）；报它们只会把 ③ 与登记件变成一张**无穷巧合表**。
- *  退出码（`r.status`）／差值／布尔／餐别名同理不认。 */
+ *  它们不随别域命令迁移而变，值撞锚纯属巧合（#318 实测：未搬迁清单 19→1、锚变 10/4/6 后"小数字遍地撞"）；
+ *  但**不许静默**（复核 S1-1：静默比噪声更坏——"不报"不等于"没问题"）⇒ 它们落 **④ ? UNDETERMINED-SUBJECT**：只报账、不判红。
+ *  退出码（`r.status`）／差值／布尔／餐别名同理归 ④。 */
 export function pinnedCountOfLine(text, value) {
   const { code, strings } = lexAssertionLine(text);
   const other = anchorAsOperand(code, value);
   if (other === null) return null;                    // 不是被比操作数（消息文本／注释里的数字在此出局）
   if (/\[\s*\d/.test(text)) return null;              // 数组字面量（[3, 9, 8…]）
   if (/DECLARED_[A-Z_]+/.test(code)) return null;     // 已与声明对账 → 算派生（#295 的 467cf64）
-  if (!AUTHORITY_SUBJECT.test(other) && !strings.some((s) => AUTHORITY_SOURCE.test(s))) return null;
-  return { subject: 'authority', other: other.trim(), text: text.trim().slice(0, 150) };
+  const authority = AUTHORITY_SUBJECT.test(other) || strings.some((s) => AUTHORITY_SOURCE.test(s));
+  return {
+    subject: authority ? 'authority' : 'undetermined',
+    other: other.trim(),
+    text: text.trim().slice(0, 150),
+  };
 }
 
-/** 归类（**纯函数**）：命中（主体＝权威总量）⇒ 登记在册记 ② 'disciplined'，没登记记 ③ 'unaccounted'。
- *  登记位只服务这一类"必须手改但已被认下"的面：登记是**大声的**——② 逐条打印 reason ＋ 机器守，
+/** 归类（**纯函数**）——三档归属：
+ *   · 主体＝权威总量 ⇒ 登记在册记 ② 'disciplined'，没登记记 ③ 'unaccounted'（**③ 非空 ⇒ P1=FAIL**）；
+ *   · 主体判不出 ⇒ ④ 'undetermined'（**只报账、不判红**；锚确在被比操作数位，但既不是权威总量、也算不出属于哪个域）。
+ *  登记位只服务 ③ 这一类"必须手改但已被认下"的面：登记是**大声的**——② 逐条打印 reason ＋ 机器守，
  *  登记件进 git，字段齐全 ＋ 指得回当刻代码才算数（缺一即报错 ⇒ 进 ③ ⇒ P1=FAIL）。 */
 export function classifyPinnedHit(h, exemptions) {
   const where = h.file + ':' + h.line;
+  if (h.subject !== 'authority') {
+    return { bucket: 'undetermined', where, what: `主体判不出（另一侧＝${h.other}）：锚撞上了权威总量的**数值**，但这一行既不是权威总量、也算不出属于哪个域 ⇒ 只报账、不判红——${h.text}` };
+  }
   const what = `钉死${h.what}断言（字面量 ${h.value}）：主体＝权威总量（另一侧＝${h.other}）⇒ 加删一条命令必须手改本行——${h.text}`;
   const reg = exemptions.get(`${h.file}:${h.line}#${h.value}`);
   if (reg) return { bucket: 'disciplined', where, what: `已认下登记（登记件在册）：${reg.reason}`, enforcer: reg.enforcer };
@@ -394,10 +410,16 @@ export function loadExemptions(file = DISCIPLINE_EXEMPT) {
     if (!e || typeof e !== 'object') { errors.push(`${at} 不是对象`); return; }
     const miss = EXEMPT_FIELDS.filter((f) => e[f] === undefined || e[f] === null || String(e[f]).trim() === '');
     if (miss.length) { errors.push(`${at} 缺字段：${miss.join('／')}（必填 ${EXEMPT_FIELDS.join('／')}）`); return; }
-    const line = Number(e.line);
-    const anchor = Number(e.anchor);
-    if (!Number.isInteger(line) || line <= 0) { errors.push(`${at} 的 line 不是正整数：${e.line}`); return; }
-    if (!Number.isInteger(anchor)) { errors.push(`${at} 的 anchor 不是整数：${e.anchor}`); return; }
+    // line／anchor 必须是**数字**（复核 S3-1：`"28"` 这种数字字符串以前被 Number() 收下 ⇒ 口径不一，一律拒收）
+    if (typeof e.line !== 'number' || !Number.isInteger(e.line) || e.line <= 0) { errors.push(`${at} 的 line 必须是正整数（不许字符串）：${JSON.stringify(e.line)}`); return; }
+    if (typeof e.anchor !== 'number' || !Number.isInteger(e.anchor)) { errors.push(`${at} 的 anchor 必须是整数（不许字符串）：${JSON.stringify(e.anchor)}`); return; }
+    const line = e.line;
+    const anchor = e.anchor;
+    const key = `${e.file}:${line}#${anchor}`;
+    if (entries.has(key) || list.filter((x) => x && x.file === e.file && x.line === line && x.anchor === anchor).length > 1) {
+      errors.push(`${at} 重复登记：${key} 在登记件里出现多次（去重是静默的 ⇒ 口径不明；请合并成一条）`);   // 复核 S3-2
+      return;
+    }
     const src = read(String(e.file));
     if (src === null) { errors.push(`${at} 指的文件读不到：${e.file}`); return; }
     const lineText = src.split('\n')[line - 1];
@@ -406,7 +428,7 @@ export function loadExemptions(file = DISCIPLINE_EXEMPT) {
       errors.push(`${at} 指不回当刻代码：${e.file}:${line} 已不再把 ${anchor} 当被比操作数（登记项作废，请重登或删）`);
       return;
     }
-    entries.set(`${e.file}:${line}#${anchor}`, {
+    entries.set(key, {
       where: `${e.file}:${line}`,
       anchor,
       reason: String(e.reason),
@@ -543,13 +565,14 @@ function routeSurfaces() {
   };
 }
 
-/** 三桶：加一条命令必须手改的面，逐处分桶。 */
+/** 四桶（子类）＋一项报账：加一条命令必须手改的面逐处分桶；主体判不出的行只报账（不判红）。 */
 export async function changeSurfaces() {
   const t = await authorityTotals();
   const out = {
     derived: [],
     disciplined: [],
     unaccounted: [],
+    undetermined: [],
     incomplete: [],
     exempts: 0,
     totals: t.ok ? { total: t.total, writes: t.writes, reads: t.reads, weight: t.weight } : null,
@@ -584,6 +607,7 @@ export async function changeSurfaces() {
     for (const h of pinnedCountSurfaces(t)) {
       const c = classifyPinnedHit(h, ex.entries);
       if (c.bucket === 'disciplined') out.disciplined.push({ where: c.where, what: c.what, enforcer: c.enforcer });
+      else if (c.bucket === 'undetermined') out.undetermined.push({ where: c.where, what: c.what });   // ④ 只报账、不判红
       else out.unaccounted.push({ where: c.where, what: c.what });
     }
   } else {
@@ -652,22 +676,32 @@ async function p1(w) {
   const regFirst = /const spec = REGISTRY\[key\]/.test(readSrc) && /const spec = REGISTRY\[key\]/.test(writeSrc);
   lines.push('两个分派文件 registry 先行（命中即走能力目录，不必再手加 case）：' + regFirst);
 
-  // ⑦ 手写面三桶（红队 5af4dd1 补的那几处：exampleFor ＋ 钉死计数；routing.ts 归纪律桶）。
+  // ⑦ 手写面四档（红队 5af4dd1 补的那几处：exampleFor ＋ 钉死计数；routing.ts 归纪律桶；④ 是复核 S1-1 要的报账档）。
   const buckets = await changeSurfaces();
   const unacct = buckets.unaccounted.length;
-  lines.push('── 手写面三桶（"加一条命令"必须手改的面，逐处）──');
+  const undet = buckets.undetermined.length;
+  lines.push('── 手写面四档（"加一条命令"必须手改的面，逐处；④ 只报账不判红）──');
   lines.push(`  ① DERIVED（不用手改，${buckets.derived.length} 类）：`);
   for (const d of buckets.derived) lines.push('     · ' + d);
   lines.push(`  ② DISCIPLINED-SHARED（主体＝权威总量、已认下登记，${buckets.disciplined.length} 处命中／登记件 ${buckets.exempts} 条）：`);
   for (const d of buckets.disciplined) lines.push(`     · ${d.where}｜${d.what}｜机器守：${d.enforcer}`);
   if (!buckets.disciplined.length) {
     const tot = buckets.totals ? `${buckets.totals.total}/${buckets.totals.writes}/${buckets.totals.reads}/${buckets.totals.weight}` : '（失能）';
-    lines.push('     （当刻 0 处命中：准入＝**断言主体就是权威总量**（域内计数「xs.length, N」／「r.total, N」／「s.size, N」一类**一律不报**）；');
+    lines.push('     （当刻 0 处命中：准入＝**断言主体就是权威总量**；主体判不出的行不在这里——它们落 ④ 报账，见下）');
     lines.push(`       登记位＝${DISCIPLINE_EXEMPT}（字段齐全 ＋ 指得回当刻代码才生效，缺字段即 P1=FAIL）；当刻锚 ${tot} 下没有"主体＝权威总量"的钉死字面量）`);
   }
   lines.push(`  ③ UNACCOUNTED（主体＝权威总量、既没派生也没登记，${unacct} 处）：`);
   for (const d of buckets.unaccounted) lines.push(`     · ${d.where}｜${d.what}${d.coverage ? '｜' + d.coverage : ''}`);
   lines.push(unacct ? '  ⇒ UNACCOUNTED 非空 ⇒ P1=FAIL（返修席的目标：把它们移进 ① 派生 或 ② 纪律）' : '  ⇒ UNACCOUNTED 为空 ⇒ 手写面已全部落在 ①/② 内');
+  if (buckets.exempts > buckets.disciplined.length) {
+    const idle = buckets.exempts - buckets.disciplined.length;
+    lines.push(`     （登记件 ${buckets.exempts} 条里有 ${idle} 条当刻**不命中**：历史条目／未与当刻锚相撞——不算"生效"，只是留档，逐条见登记件 status 字段）`);
+  }
+  lines.push(`  ④ ? UNDETERMINED-SUBJECT（主体判不出：锚确在被比操作数位，但既不是权威总量、也算不出属于哪个域，${undet} 处）：`);
+  for (const d of buckets.undetermined) lines.push(`     · ${d.where}｜${d.what}`);
+  lines.push(undet
+    ? `  ⇒ ④ 非空**不判红**（这些行不随"加一条命令"而变：域内自己的计数／退出码／不透明变量），但**不许静默**——拿出来给人看一眼（复核 S1-1）`
+    : '  ⇒ ④ 为空：当刻锚没撞上任何"主体判不出"的断言行');
   if (buckets.incomplete.length) {
     lines.push(`  ⚠ 树自相矛盾（${buckets.incomplete.length} 条）：`);
     for (const d of buckets.incomplete) lines.push('     · ' + d);
@@ -770,7 +804,7 @@ async function p1(w) {
   }
   lines.push('已清理临时根：' + cleanupTmp());
   const ok = staticBase && dynOk && unacct === 0 && buckets.incomplete.length === 0;
-  set('P1', verdict(dynOk), ...lines, `动态（派生桶）证据齐=${dynOk}；UNACCOUNTED=${unacct} 处；树自相矛盾=${buckets.incomplete.length} 处` + (unacct ? ' ⇒ P1=FAIL：这些面既没派生也没纪律覆盖' : buckets.incomplete.length ? ' ⇒ P1=PENDING：返修在途，生成物未重生成' : ok ? '' : ' ⇒ P1=FAIL：静态/动态判据未过'));
+  set('P1', verdict(dynOk), ...lines, `动态（派生桶）证据齐=${dynOk}；UNACCOUNTED=${unacct} 处；④ 主体判不出=${undet} 处（只报账、不判红）；树自相矛盾=${buckets.incomplete.length} 处` + (unacct ? ' ⇒ P1=FAIL：这些面既没派生也没纪律覆盖' : buckets.incomplete.length ? ' ⇒ P1=PENDING：返修在途，生成物未重生成' : ok ? '' : ' ⇒ P1=FAIL：静态/动态判据未过'));
   data('P1', { dynamic: true, targetPaths, inputs, got, untouched, dupCaught, buckets, ok });
 }
 
