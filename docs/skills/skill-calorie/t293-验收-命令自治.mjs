@@ -537,10 +537,23 @@ async function p1(w) {
   mkdirSync(join(TMP_ROOT, 'packages/skill-calorie/dist/fakecap2'), { recursive: true });
   const legacyKeys = (readLegacy() ?? '').matchAll(/kind:\s*'(read|write)',\s*key:\s*'([^']+)'/g);
   const legacyKeyList = [...legacyKeys].map((m) => m[2]);
-  const dupKey = legacyKeyList[0];
+  // #322 收口补：未搬迁清单**搬空后的终态**（#319 清空 scene-10 之后）不许让探针失能，也不许退回字面量键。
+  // 这时改从沙箱里**已搬迁能力目录**的声明取一条真键：撞键守卫（`gen-cli.mjs` 的 `merge()`）对
+  // 「老清单 ↔ 能力目录」与「能力目录 ↔ 能力目录」是同一条判断，撞哪一边都证明守卫还在。
+  // 本步自己造的假能力（fakecap＊）排在后面：优先拿真实能力目录的键。
+  const capKeyDirs = readdirSync(join(TMP_ROOT, 'packages/skill-calorie/src'), { withFileTypes: true })
+    .filter((e) => e.isDirectory() && !e.name.startsWith('.') && existsSync(join(TMP_ROOT, 'packages/skill-calorie/src', e.name, 'commands.ts')))
+    .map((e) => e.name);
+  const keysOfCapDirs = (dirs) => dirs.flatMap((d) => [...readFileSync(
+    join(TMP_ROOT, 'packages/skill-calorie/src', d, 'commands.ts'), 'utf8',
+  ).matchAll(/key:\s*'([^']+)'/g)].map((m) => m[1]));
+  const realCapKeys = keysOfCapDirs(capKeyDirs.filter((n) => !/^fakecap/.test(n)));
+  const capKeyList = realCapKeys.length ? realCapKeys : keysOfCapDirs(capKeyDirs);
+  const dupKey = legacyKeyList[0] ?? capKeyList[0];
+  const dupFromCapability = legacyKeyList.length === 0;
   let dupCaught = false;
   if (!dupKey) {
-    lines.push('  迁移撞键探针**失能**：未搬迁清单里一个键都没读到（' + P.LEGACY_DIR + '/scene-NN.ts）⇒ 判红。'
+    lines.push('  迁移撞键探针**失能**：未搬迁清单与各能力目录的声明里一个键都没读到 ⇒ 判红。'
       + '不去退回字面量键：那会变成"没撞上键"的假绿，见 docs/skills/skill-calorie/t313b3-*.md。');
     dynOk = false;
   } else {
@@ -550,7 +563,10 @@ async function p1(w) {
     const g2 = gen('write');
     // 真撞键判据：生成期非 0 ＋ 报的是"同键重复登记"＋ 报错里点的正是这个键（少了第三条就可能撞在别的键上）。
     dupCaught = g2.status !== 0 && /命令键重复登记/.test(g2.out) && g2.out.includes(dupKey);
-    lines.push(`  迁移撞键（假能力声明一条仍在未搬迁清单里的键 ${dupKey}，共 ${legacyKeyList.length} 条候选）→ gen exit=${g2.status}，报「命令键重复登记」=${dupCaught}`);
+    const from = dupFromCapability
+      ? `已在能力目录里的键（未搬迁清单已空 ⇒ 走能力目录候选 ${capKeyList.length} 条）`
+      : `仍在未搬迁清单里的键（${legacyKeyList.length} 条候选）`;
+    lines.push(`  迁移撞键（假能力声明一条${from}：${dupKey}）→ gen exit=${g2.status}，报「命令键重复登记」=${dupCaught}`);
     if (g2.status !== 0 && !dupCaught) lines.push('     （exit≠0 但撞的不是这个键：' + g2.out.split('\n').filter(Boolean).slice(0, 2).join(' / ').slice(0, 200) + '）');
     dynOk = dynOk && dupCaught;
   }
@@ -813,9 +829,11 @@ async function p5() {
     lines.push(`  ${hit.length ? '✓' : '✗'} ${f}（${why}）命中行 ${hit.slice(0, 6).join(',') || '—'}`);
     detail.push({ file: f, ok: hit.length > 0, hits: hit.length, lines: hit.slice(0, 6) });
   }
-  lines.push('判据：守"体重产物逐条不变"的第一条（sport-homogeneity-109）必须在，且合计命中 ≥ 5 处；本探针不自己重算一份 parity。');
+  lines.push('判据：7 条**全部命中**，且守"体重产物逐条不变"的第一条（sport-homogeneity-109）必须在；本探针不自己重算一份 parity。'
+    + '（#322 起收紧：原口径是「合计 ≥ 5 处」，复核席 #322r 实测「删掉其中一条（含新正则指向的那条）仍然 PASS」'
+    + '⇒ 太松，不能当「四条新断言都在」的证明，故提到全命中。）');
   const primary = detail[0].ok;
-  const ok = primary && found >= 5;
+  const ok = primary && found >= PARITY.length;
   set('P5', ok ? 'PASS' : 'FAIL', ...lines, `守 parity 的既有断言命中 ${found}/${PARITY.length}（主守 sport-homogeneity-109 存在=${primary}）`);
   data('P5', { guards: detail });
 }

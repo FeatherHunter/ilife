@@ -72,24 +72,42 @@ function baselineKeys() {
 
 /* ── ① 跨场景同键即抛（守卫在生成器里） ─────────────────────────────────────────────────── */
 
+/** 守卫用例的**假样本**：与清单内容无关（#322 收口补 —— 原来写死 `SCENES['01'][0]`，
+ * 场景 01 整片搬空（＝#314 的完成判据）后它就是 `undefined`，守卫读到 `undefined.key` 抛 TypeError
+ * （消息不含「命令键重复登记」）⇒ 两条 `assert.throws` 变红；#319 清空全部场景后同理）。
+ * 键取一个**永不登记进任何清单**的名字，并由下面第一条断言钉住这一点。 */
+const FAKE_DUP_DECL = {
+  kind: 'read',
+  key: 'calorie.fake.dup-guard',
+  shape: 'stat',
+  title: '假样本（守卫用例用，不进任何清单）',
+  example: 'calorie-cmd-read calorie.fake.dup-guard',
+};
+
 test('#313 跨场景同键即抛：两个场景文件声明同一个键时，合流守卫必须抛', () => {
   // 守卫可用：正常输入返回全量（不误抛）。
   const parts = Object.keys(SCENES).sort().map((s) => ({ name: 'scene-' + s + '.ts', list: SCENES[s] }));
   const all = mergeLegacyPartition(parts);
   assert.deepEqual(all.map((d) => d.key), LEGACY_COMMANDS.map((d) => d.key),
     '合流守卫在没有重复键时也改变了声明集合');
+  // 假样本自身的守卫：它不得与任何真实声明撞键（否则下面的两条变异其实是在拿真键做实验）。
+  assert.ok(!LEGACY_COMMANDS.some((d) => d.key === FAKE_DUP_DECL.key),
+    '假样本的键与未搬迁清单撞了（换一个假键）：' + FAKE_DUP_DECL.key);
 
-  // 变异：把 01 场景的第一条再声明一次（换成另一个场景文件的名义）→ 必须抛，且报出两个文件。
-  const dup = SCENES['01'][0];
+  // 变异①：同一个假键在"两个场景文件"里各声明一次 → 必须抛，且报出两个文件。
   assert.throws(
-    () => mergeLegacyPartition([...parts, { name: 'scene-02.ts', list: [dup] }]),
-    (err) => /命令键重复登记/.test(err.message) && err.message.includes(dup.key),
+    () => mergeLegacyPartition([
+      ...parts,
+      { name: 'scene-fake-a.ts', list: [FAKE_DUP_DECL] },
+      { name: 'scene-fake-b.ts', list: [FAKE_DUP_DECL] },
+    ]),
+    (err) => /命令键重复登记/.test(err.message) && err.message.includes(FAKE_DUP_DECL.key),
     '跨场景重复声明同一个键没有抛（分区后一个键仍可能住两处＝铁律二被破）',
   );
 
-  // 同场景内重复也必须抛（同一个文件里写两遍同样是两个定义地）。
+  // 变异②：同一个文件里写两遍也必须抛（同一个文件里写两遍同样是两个定义地）。
   assert.throws(
-    () => mergeLegacyPartition([{ name: 'scene-01.ts', list: [SCENES['01'][0], SCENES['01'][0]] }]),
+    () => mergeLegacyPartition([{ name: 'scene-fake-a.ts', list: [FAKE_DUP_DECL, FAKE_DUP_DECL] }]),
     /命令键重复登记/,
     '同一个场景文件内重复声明同一个键没有抛',
   );
