@@ -40,9 +40,9 @@ import {
 } from '../render/goalPlate.js';
 import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
 import { buildGoalPrecheckDoc } from '../goal/precheck.js';
-import { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from '../render/planPlate.js';
+import { buildExerciseGoalView } from '../render/planPlate.js';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
-import { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from '../render/insightPlate.js';
+import { buildPredictView, buildAnomalyView, buildDedupeView } from '../render/insightPlate.js';
 // #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
 import { buildProfileView, buildProfileViewDoc } from '../profile/view.js';
 import { buildProfileSettingDoc, buildProfileSettingView } from '../profile/setup.js';
@@ -298,16 +298,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       });
       return { data: { metrics }, html: buildRecapDoc(v) };
     }
-    case 'calorie.view.exercise-review': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildReviewView(db, start, end);
-      const metrics = nums({
-        plannedSessions: v.plannedSessions, hitSessions: v.hitSessions,
-        completionPct: v.completionPct, plannedMovements: v.plannedMovements,
-        hitMovements: v.hitMovements, movementPct: v.movementPct,
-      });
-      return { data: { metrics }, html: buildReviewDoc(v) };
-    }
     case 'calorie.view.exercise-trend': {
       const { start, end } = defaultRange(db, params);
       const v = buildTrendView(db, start, end);
@@ -458,16 +448,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         total: v.total, matched: v.matched, missing: v.missing, totalCalorie: v.totalCalorie,
       });
       return { data: { metrics }, html: buildBatchImportPreviewDoc(v) };
-    }
-    case 'calorie.view.process-progress': {
-      const end = optStr(params, 'end') ?? latestFoodDate(db) ?? todayISO();
-      assertISO(end, 'end');
-      const v = buildProcessProgressView(db, end);
-      const metrics = nums({
-        hasPlan: v.hasPlan ? 1 : 0, plannedDays: v.plannedDays,
-        sessions7d: v.sessions7d, minutes7d: v.minutes7d,
-      });
-      return { data: { metrics }, html: buildProcessProgressDoc(v) };
     }
     case 'calorie.view.review-template': {
       const { start, end } = defaultRange(db, params);
@@ -627,19 +607,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' 卡 · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
       return { data: { items, total: items.length }, html };
     }
-    case 'calorie.view.plan': {
-      const v = buildPlanView(db);
-      const metrics = nums({ totalSessions: v.totalSessions, totalMovements: v.totalMovements, totalWeeks: v.totalWeeks });
-      return { data: { metrics }, html: renderPlanHtml(v) };
-    }
-    case 'calorie.view.plan-wizard': {
-      const plan = params['plan'];
-      if (typeof plan !== 'object' || plan === null || Array.isArray(plan)) fail(2, '缺参数 plan（PlanInput 对象）');
-      const catalog = params['catalog'];
-      const v = buildPlanWizardView(plan, (catalog as string[] | undefined) ?? undefined);
-      const metrics = nums({ errorCount: v.errorCount, warningCount: v.warningCount, checkedSessions: v.checkedSessions });
-      return { data: { metrics }, html: renderPlanWizardHtml(v) };
-    }
     case 'calorie.view.exercise-goal': {
       const { start, end } = defaultRange(db, params);
       const v = buildExerciseGoalView(db, start, end);
@@ -684,12 +651,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const v = buildAnomalyView(db, kind, start, end);
       const metrics = nums({ findingCount: v.findingCount, days: v.diagnosis.days, degraded: v.diagnosis.degraded ? 1 : 0 });
       return { data: { metrics }, html: buildAnomalyDoc(v) };
-    }
-    case 'calorie.view.contraindication': {
-      const part = optStr(params, 'part') ?? 'all';
-      const v = buildContraView(db, part);
-      const metrics = nums({ scannedSessions: v.scannedSessions, scannedMovements: v.scannedMovements, errorCount: v.errorCount, warnCount: v.warnCount, infoCount: v.infoCount });
-      return { data: { metrics }, html: buildContraDoc(v) };
     }
     case 'calorie.view.dedupe': {
       const v = buildDedupeView(db);

@@ -11,12 +11,14 @@ import { BODY_COMMANDS } from '../body/index.js';
 import { HOME_COMMANDS } from '../home/index.js';
 import { PHOTO_COMMANDS } from '../photo/index.js';
 import { WEIGHT_COMMANDS } from '../weight/index.js';
+import { WORKOUT_COMMANDS } from '../workout/index.js';
 
 const SOURCES: readonly (readonly CommandSpec[])[] = [
   BODY_COMMANDS,
   HOME_COMMANDS,
   PHOTO_COMMANDS,
   WEIGHT_COMMANDS,
+  WORKOUT_COMMANDS,
 ];
 
 /** 汇总各家声明；同键两个人声明即抛（只在代码缺陷时触发，生成期已先拦一道）。 */
