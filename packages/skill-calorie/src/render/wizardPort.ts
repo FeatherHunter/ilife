@@ -5,7 +5,7 @@
  * 形态＝静态 HTML ＋ copyText（B7 边界：B-09 表单零 JS，行为归宿主；
  * formPrompt／selectList／smartSelect 一律不用，复制走 Base P0 双通道）。
  *
- * 数据源全复用既有取数层（fetch/body.ts、fetch/photos.ts），不自算：
+ * 数据源全复用既有取数层（fetch/body.ts、photo/photos.ts），不自算：
  * 围度 recent＝listMeasurements(limit 1)；体脂 recent＝listCompositions(limit 1)；
  * 身材照 wizard 纯配置（老家 render_body_photo_log_wizard.py 无数据源）不读库；
  * GIF 框选＝listPhotos(tag/365 天窗）＋ toCard 文件名引用＋存在位（T10 二进制铁则，
@@ -21,8 +21,8 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { listCompositions, listMeasurements, CALIPER_FIELDS } from '../fetch/body.js';
-import { listPhotos } from '../fetch/photos.js';
-import { toCard } from './photo.js';
+import { listPhotos } from '../photo/photos.js';
+import { toCard } from '../photo/photo.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import { GENDER_LABELS, todayISO } from '../analysis/utils.js';
 import { CalorieRenderError } from './errors.js';

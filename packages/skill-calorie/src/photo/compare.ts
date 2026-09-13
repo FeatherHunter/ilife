@@ -4,7 +4,7 @@
  * 老口径照旧：GIF 这条只出**任务描述**（`buildGifTask`），不生成也不搬运二进制。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { buildCompareData, buildGifTask } from '../render/photo.js';
+import { buildCompareData, buildGifTask } from './photo.js';
 import { renderCompareHtml, renderGifHtml } from '../render/html.js';
 import { dayField, fail, needStr, optNum, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';

@@ -19,7 +19,7 @@ import {
   HELP_SHELL_SUFFIX,
   renderHelpShellHtml,
 } from '../dist/render/helpShell.js';
-import { buildHelpFileData, renderHelpFileHtml } from '../dist/render/helpFile.js';
+import { buildHelpFileData, renderHelpFileHtml } from '../dist/photo/helpFile.js';
 import { CalorieRenderError } from '../dist/render/errors.js';
 
 /** 本地 2026-09-06 22:07:26（与老实物 subtitle 分钟同源，便于肉眼并排）。 */

@@ -8,7 +8,7 @@
  *   applyMigrations 收敛单线，口径以现行代码为准）。
  * - 关键口径取数以现行代码为准：总热量排除饮水（analysis/series.ts WATER_NAME +
  *   fetch/diet.ts WATER_NAME，render/diet.ts 同口径）；体重 COUNT+SUM（fetch/weight.ts
- *   weight_log）；照片 COUNT（fetch/photos.ts body_photos）。
+ *   weight_log）；照片 COUNT（photo/photos.ts body_photos）。
  *
  * 原则：
  * - 只读 src（DatabaseSync readOnly 打开，从不对其 exec 写；前后 stat 大小/mtime 记入报告）。

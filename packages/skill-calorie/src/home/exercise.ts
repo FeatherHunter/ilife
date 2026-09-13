@@ -10,7 +10,7 @@ import type { DaySeries } from '../analysis/series.js';
 import { buildExerciseReview } from '../analysis/exerciseReview.js';
 import type { ExerciseReview } from '../analysis/exerciseReview.js';
 import { FetchError } from '../fetch/errors.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 export interface ExerciseView {
   start: string;

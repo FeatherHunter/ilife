@@ -17,7 +17,7 @@ import { buildPhotoHelp, CALORIE_TEMPLATES, loadTemplate, CalorieRenderError } f
 import {
   HELP_VIEW_ENTRIES_META_ID, HELP_VIEW_ENTRIES_META_TITLE,
   buildHelpViewEntries, renderHelpCenterHtml, renderViewEntriesHtml,
-} from '../dist/render/helpCenter.js';
+} from '../dist/photo/helpCenter.js';
 
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skill = readFileSync(join(pkgDir, 'SKILL.md'), 'utf8');

@@ -4,8 +4,8 @@
  * 用户给的照片目录里。`case` 逐字搬自旧分派层 `cli/write.ts`（#314 纯搬迁，行为不变）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { addPhotos, daysSinceTagPhoto } from '../fetch/photos.js';
-import { buildAddReceipt } from '../render/photo.js';
+import { addPhotos, daysSinceTagPhoto } from './photos.js';
+import { buildAddReceipt } from './photo.js';
 import { withM5 } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { todayISO } from '../analysis/utils.js';

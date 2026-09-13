@@ -24,7 +24,7 @@ import {
   parseTags, serializeTags, validateTags, tagsContain, resolvePhotosDir,
   getPhotoRow, listPhotos, daysSinceTagPhoto, addPhotos, deletePhoto,
   updateTag, tagAdd, tagRemove, planGif,
-} from '../dist/fetch/photos.js';
+} from '../dist/photo/photos.js';
 
 const tmpDb = () => {
   const db = openDb(join(mkdtempSync(join(tmpdir(), 't23-')), 't.db'));

@@ -1,7 +1,7 @@
 /** #40 · 卡路里写键分发（单条 CRUD 可执行链）：唯一出口 cmd_read 的写分支（memo.create/update/remove 范式）。
  *
  * 35 写键一律 receipt 形：先调现行 fetch 层库函数写库，再用 render/receipt.ts（T10）
- * buildCrudReceipt（照片键用 render/photo.ts 三回执）组装回执；envelope 数据为
+ * buildCrudReceipt（照片键用 photo/photo.ts 三回执）组装回执；envelope 数据为
  * { ok: true, message, receipt }（ok/message 过 envelope 全字段，receipt carry T10 形状）。
  * 本文件不写 render/ 新视图、不碰 envelope 键表（#41 边界）；HTML 为 dispatch 内联
  * receipt 小节（沿 cmd_read history/help 内联先例，不新增模板）——**唯一例外**是
@@ -25,7 +25,7 @@
  * 依据：fetch 层 delete* 实测（`exercise/exerciseStore.ts:216-238` 软删／`fetch/diet.ts:153-161` 硬删／
  * `fetch/weight.ts:148-178` 硬删／`fetch/body.ts:144-148,207-211` 软删）＋ 审计
  * `docs/research/t67-key-audit.md:246` ＋ 复跑证据 `docs/research/t120-probe-softdelete.mjs`。
- * 照片键文案在 `render/photo.ts:buildDeleteReceipt`。
+ * 照片键文案在 `photo/photo.ts:buildDeleteReceipt`。
  */
 import type { DatabaseSync } from 'node:sqlite';
 

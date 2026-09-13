@@ -14,7 +14,7 @@ import { getNutritionGoal } from '../fetch/nutritionGoal.js';
 import { listCompletedGoals } from '../fetch/goalHistory.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { round2 } from '../kcal.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 export interface HomeData {
   date: string;

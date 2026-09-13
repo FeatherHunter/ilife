@@ -32,12 +32,12 @@ import { dataCopyArea } from '../shared/copyArea.js';
 import type { DataTableColumn } from 'base-paint/blocks';
 import type { DaySeries } from '../analysis/series.js';
 import { inferCategory } from '../exercise/exerciseStore.js';
-import type { ExerciseView } from './exercise.js';
+import type { ExerciseView } from '../home/exercise.js';
 import type { ExerciseGoalView } from './planPlate.js';
 import type {
   BodyCompositionView,
   BodyMeasureView,
-} from './bodyPlate.js';
+} from '../body/bodyPlate.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';

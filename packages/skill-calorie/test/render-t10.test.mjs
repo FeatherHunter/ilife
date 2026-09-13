@@ -12,7 +12,7 @@ import { TRIGGERS } from '../dist/triggers/index.js';
 import {
   addPhotos, getPhotoRow, deletePhoto, updateTag, tagAdd, tagRemove,
   daysSinceTagPhoto,
-} from '../dist/fetch/photos.js';
+} from '../dist/photo/photos.js';
 import {
   buildAddReceipt, buildDeleteReceipt, buildTagReceipt,
   buildGalleryData, buildCompareData, buildViewerData, buildGifTask,
@@ -179,7 +179,7 @@ test('HELP：现找直达可执行命令（Q71）', async () => {
   assert.equal(hits.length, 3);
   assert.ok(hits.every((h) => h.exec.startsWith('node ') && h.exec.includes(h.fn)));
   // #180 前提已变（原断言：`all.every(h => h.legacyCli.startsWith('python scripts/render_'))`）：
-  // `legacyCli` 取的就是该唤醒词 SoT 的 `main_prompt.cli`（`src/render/help.ts:61`），#180 已把 10 个场景
+  // `legacyCli` 取的就是该唤醒词 SoT 的 `main_prompt.cli`（`src/photo/helpLookup.ts:61`），#180 已把 10 个场景
   // 文件的三个命令字段全量改写成 `calorie-cmd-read calorie.*`（源级扫描见 no-script-commands-180.test.mjs，
   // 命中 0），故「老家 python 原命令备查」这个前提**不存在了**。改口径而不删断言：
   // ① 钉新形态前提——不得退回脚本命令形态；② 钉它仍与 SoT 同源（防「改了数据忘了 HELP」）。

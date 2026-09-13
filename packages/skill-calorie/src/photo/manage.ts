@@ -5,8 +5,8 @@
  * 标签命令一个键承载三种动作（`op` = set／add／remove），回执场景名随之分三种。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { deletePhoto, getPhotoRow, parseTags, serializeTags, tagAdd, tagRemove, updateTag } from '../fetch/photos.js';
-import { buildDeleteReceipt, buildTagReceipt } from '../render/photo.js';
+import { deletePhoto, getPhotoRow, parseTags, serializeTags, tagAdd, tagRemove, updateTag } from './photos.js';
+import { buildDeleteReceipt, buildTagReceipt } from './photo.js';
 import { withM5 } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { receiptHtml } from '../shared/writeParts.js';

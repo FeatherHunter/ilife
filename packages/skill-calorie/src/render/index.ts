@@ -1,12 +1,12 @@
 /** T8 #27 + T9 #28 + T10 #29 + #41 · 渲染出口：四主视图 + 目标分析盘 + 身体照片 + 读链补齐（体重/身体/计划/目标扩展/分析长尾/档案）。 */
 export { CalorieRenderError } from './errors.js';
 export type { CalorieRenderErrorCode } from './errors.js';
-export { buildHomeData } from './home.js';
-export type { HomeData } from './home.js';
+export { buildHomeData } from '../home/home.js';
+export type { HomeData } from '../home/home.js';
 export { MEAL_BUCKETS, buildMealDistribution, zeroMealDistribution, buildDietOverview } from './diet.js';
 export type { MealBucket, MealSlice, MealDistribution, DietOverview } from './diet.js';
-export { buildExerciseView } from './exercise.js';
-export type { ExerciseView } from './exercise.js';
+export { buildExerciseView } from '../home/exercise.js';
+export type { ExerciseView } from '../home/exercise.js';
 export { buildGoalView } from '../goal/goalPlate.js';
 export type { GoalView } from '../goal/goalPlate.js';
 export { buildGoalConfig, buildGoalRecommend, buildGoalProgress, buildGoalStatus, buildGoalWeight } from './goalPlate.js';
@@ -24,8 +24,8 @@ export { renderHomeHtml, renderDietHtml, renderExerciseHtml, renderGoalHtml } fr
 // 既有调用方（`test/render-t41`）导入面不变——照 #179 档案读链的先例。
 export { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from '../weight/plate.js';
 export type { WeightDashboard, WeightHistoryView, WeightCompareView, WeightReviewView, VolatilityView } from '../weight/plate.js';
-export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasureView, buildBodyMeasureCompare } from './bodyPlate.js';
-export type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
+export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasureView, buildBodyMeasureCompare } from '../body/bodyPlate.js';
+export type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
 export { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from './planPlate.js';
 export type { PlanView, PlanWizardView, ExerciseGoalView } from './planPlate.js';
 export { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../goal/goalExtraPlate.js';
@@ -83,12 +83,12 @@ export type {
 export {
   toCard, buildGalleryData, buildCompareData, buildViewerData, buildGifTask,
   buildAddReceipt, buildDeleteReceipt, buildTagReceipt, GIF_PASSTHROUGH_NOTE,
-} from './photo.js';
+} from '../photo/photo.js';
 export type {
   PhotoCard, GalleryFilter, GalleryData, CompareData, ViewerData, GifTask, AddedPhoto,
-} from './photo.js';
-export { buildPhotoHelp, lookupPhotoHelp, PHOTO_HELP_MODULE } from './help.js';
-export type { PhotoHelpHit } from './help.js';
+} from '../photo/photo.js';
+export { buildPhotoHelp, lookupPhotoHelp, PHOTO_HELP_MODULE } from '../photo/helpLookup.js';
+export type { PhotoHelpHit } from '../photo/helpLookup.js';
 export {
   photoCardHtml, renderPhotoReceiptHtml, renderGalleryHtml, renderCompareHtml,
   renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml, renderErrorHtml,
@@ -100,7 +100,7 @@ export {
   HELP_CONTACT, HELP_CENTER_MODES, HELP_GROUPS, HELP_LEGACY_CATEGORY, HELP_LEGACY_SUBGROUP,
   HELP_SKILL_NAME, HELP_SUBFUNC_ORDER, HELP_TITLE, HELP_TYPE_BADGES,
   buildHelpSceneData, helpCenterAssets, renderHelpCenterHtml,
-} from './helpCenter.js';
-export type { HelpCenterMode, HelpCenterRenderOptions, HelpCenterRenderResult, HelpSceneDataOptions } from './helpCenter.js';
+} from '../photo/helpCenter.js';
+export type { HelpCenterMode, HelpCenterRenderOptions, HelpCenterRenderResult, HelpSceneDataOptions } from '../photo/helpCenter.js';
 export { PHOTO_VIEW_KEYS, PHOTO_VIEW_SHAPES, photoShapeFor } from './envelope.js';
 export type { PhotoViewName } from './envelope.js';

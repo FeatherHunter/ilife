@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { HELP_HTML_DIR_NAME, HELP_HTML_EXT, SHEET_FILE_STEM } from '../dist/render/helpPaths.js';
+import { HELP_HTML_DIR_NAME, HELP_HTML_EXT, SHEET_FILE_STEM } from '../dist/photo/helpPaths.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');

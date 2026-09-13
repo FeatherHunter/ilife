@@ -9,18 +9,18 @@
  *  1. 资产：`WAKE_GROUPS` 直转 5 键 HELP JSON（`skill_name/title/subtitle/contact/groups`，
  *     老实物 `卡路里_HELP_20260906_220726.html:195` 口径；`subtitle` 沿老
  *     `render_help_center.py:182-186` 公式 `〈组数〉 分类 · 〈场景数〉 场景 · 更新于 〈本地分钟〉`；
- *     `contact` 与 `render/helpCenter.ts:HELP_CONTACT` 同源（实物 2 项逐字）；
+ *     `contact` 与 `photo/helpCenter.ts:HELP_CONTACT` 同源（实物 2 项逐字）；
  *     `init_banner/version/recommendations` 为模板侧可选能力，本接线**不传**——传了即
  *     第二真相源，漂移面无收益）。
  *  2. 渲染：`renderHelpFileHtml` → `base-paint/help-shell:renderHelpShellHtml`
  *     （模板唯一实现＝verbatim 老实物；空分组抛 `missing-data`，调用方 exit 5；
  *     模板源在 `packages/base-render/assets/help-template.html`，改动走 `gen:help-shell`）。
  */
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 import { HELP_CONTACT } from './helpCenter.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import type { WakeGroupAsset } from '../triggers/wake-assets.js';
-import { renderHelpShellHtml } from './helpShell.js';
+import { renderHelpShellHtml } from '../render/helpShell.js';
 
 /** 「卡路里help」交付文件的文件名主体（接线层写死；调用方不接受外部传入，S3-3）。 */
 export const HELP_FILE_STEM = '卡路里_HELP' as const;

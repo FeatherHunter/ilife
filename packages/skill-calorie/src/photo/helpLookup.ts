@@ -6,9 +6,9 @@
  * 备查。lookupPhotoHelp 按唤醒词/键/描述子串现找。
  */
 import { SCENE_09_PHOTO } from '../triggers/scene-09-photo.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
-export const PHOTO_HELP_MODULE = 'skill-calorie/dist/render/photo.js' as const;
+export const PHOTO_HELP_MODULE = 'skill-calorie/dist/photo/photo.js' as const;
 
 export interface PhotoHelpHit {
   wakeWord: string;

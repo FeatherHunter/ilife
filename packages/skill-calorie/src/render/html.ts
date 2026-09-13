@@ -12,18 +12,18 @@
  * 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64。
  */
 import { cx, escapeHtml, token } from 'base-paint';
-import type { HomeData } from './home.js';
+import type { HomeData } from '../home/home.js';
 import type { DietOverview, MealDistribution } from './diet.js';
-import type { ExerciseView } from './exercise.js';
+import type { ExerciseView } from '../home/exercise.js';
 import type { GoalView } from '../goal/goalPlate.js';
-import type { CompareData, GalleryData, GifTask, PhotoCard, ViewerData } from './photo.js';
-import { GIF_PASSTHROUGH_NOTE } from './photo.js';
+import type { CompareData, GalleryData, GifTask, PhotoCard, ViewerData } from '../photo/photo.js';
+import { GIF_PASSTHROUGH_NOTE } from '../photo/photo.js';
 import type { CrudReceipt, ErrorReceipt } from './receipt.js';
-import type { PhotoHelpHit } from './help.js';
+import type { PhotoHelpHit } from '../photo/helpLookup.js';
 import { copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
 import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
-import type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
+import type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanWizardView } from './planPlate.js';
 import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';

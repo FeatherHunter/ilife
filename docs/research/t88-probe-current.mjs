@@ -2,7 +2,7 @@
 const out = [];
 function say(s) { out.push(s); }
 
-const help = await import('../../packages/skill-calorie/dist/render/help.js');
+const help = await import('../../packages/skill-calorie/dist/photo/helpLookup.js');
 const html = await import('../../packages/skill-calorie/dist/render/html.js');
 const trig = await import('../../packages/skill-calorie/dist/triggers/index.js');
 const routing = await import('../../packages/skill-calorie/dist/triggers/routing.js');

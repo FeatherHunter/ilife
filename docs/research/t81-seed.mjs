@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb, DB_FILENAME } from '../../packages/skill-calorie/dist/index.js';
-import { addPhotos } from '../../packages/skill-calorie/dist/fetch/photos.js';
+import { addPhotos } from '../../packages/skill-calorie/dist/photo/photos.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');

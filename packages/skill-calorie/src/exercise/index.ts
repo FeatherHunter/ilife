@@ -5,7 +5,7 @@
  *   ② `runExerciseView(key, params, db)`——读命令入口（查不到运动键即抛，不当静默兜底）；
  *   ③ `runExerciseWrite(key, params, db)`——写命令入口（同上）。
  *
- * 域内的取数与页面装配（`exercise/exerciseStore.ts`／`render/exercise.ts`／`render/exercisePort.ts`／
+ * 域内的取数与页面装配（`exercise/exerciseStore.ts`／`home/exercise.ts`／`render/exercisePort.ts`／
  * `render/sportDocs.ts`／`render/sportPortDocs.ts`）**仍住原处**：它们是既有的取数与移植层，
  * 别的场景（01／05／10）也在用，搬进来会连带改它们的调用方（本票车道外，见证据 §偏离 1）。
  * 本目录只搬**命令声明与分派**，处理逻辑一律经那些件已公开的接口调用（铁律一）。

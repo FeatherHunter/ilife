@@ -31,8 +31,8 @@ import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding } from 'base-paint/sa
 import { CALORIE_COMBOS } from './cli/keys.js';
 import { CalorieRenderError } from './render/errors.js';
 import { resolveDbDir } from './paths.js';
-import { HELP_FILE_STEM } from './render/helpFile.js';
-import { SHEET_FILE_STEM } from './render/helpPaths.js';
+import { HELP_FILE_STEM } from './photo/helpFile.js';
+import { SHEET_FILE_STEM } from './photo/helpPaths.js';
 
 export const HTML_DIR_NAME = 'calorie_html';
 export const HTML_EXT = '.html';

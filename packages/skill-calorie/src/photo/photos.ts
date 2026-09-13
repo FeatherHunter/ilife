@@ -7,7 +7,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
-import { FetchError } from './errors.js';
+import { FetchError } from '../fetch/errors.js';
 
 export const TAG_SEP = ',';
 export const TAG_MAX_LEN = 20;

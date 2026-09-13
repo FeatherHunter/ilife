@@ -4,7 +4,7 @@
  * 照片目录走本能力内部件 `dir.ts` 的**读侧口径**（缺目录不抛，视图照常出）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { buildGalleryData, buildViewerData } from '../render/photo.js';
+import { buildGalleryData, buildViewerData } from './photo.js';
 import { renderGalleryHtml, renderViewerHtml } from '../render/html.js';
 import { dayField, fail } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';

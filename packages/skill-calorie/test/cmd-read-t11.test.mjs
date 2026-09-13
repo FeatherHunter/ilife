@@ -193,7 +193,7 @@ test('T10 照片 parity：画廊/单图/对比/动图/HELP + 二进制不内嵌'
   const dir = mkEnv();
   const { photosDir, src } = seedPhotos(dbOpen(dir));
   function dbOpen(d) { return openDb(join(d, 'calorie_data.db')); }
-  const { addPhotos } = await import('../dist/fetch/photos.js');
+  const { addPhotos } = await import('../dist/photo/photos.js');
   const db = dbOpen(dir);
   const added = addPhotos(db, photosDir, { srcPaths: [src('a.jpg'), src('b.jpg')], tag: '正面', today: d(6), nowTime: '08:00:00' });
   db.close();

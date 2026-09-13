@@ -9,7 +9,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { compareCompositions, compareMeasurements, listCompositions, listMeasurements, trendComposition, trendMeasurement } from '../fetch/body.js';
 import { FetchError } from '../fetch/errors.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 export interface BodyCompositionView {
   source: string | null;

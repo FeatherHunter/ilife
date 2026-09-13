@@ -15,7 +15,7 @@
 import { strict as assert } from 'node:assert';
 import {
   buildHelpSceneData, helpSceneCli, renderHelpCenterHtml,
-} from '../../packages/skill-calorie/dist/render/helpCenter.js';
+} from '../../packages/skill-calorie/dist/photo/helpCenter.js';
 import { TRIGGERS } from '../../packages/skill-calorie/dist/triggers/index.js';
 import { routesFor } from '../../packages/skill-calorie/dist/triggers/routing.js';
 import { isExecCli } from '../../packages/skill-calorie/dist/triggers/help-lookup.js';

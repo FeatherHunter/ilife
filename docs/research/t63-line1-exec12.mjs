@@ -17,7 +17,7 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb, DB_FILENAME } from '../../packages/skill-calorie/dist/index.js';
-import { addPhotos } from '../../packages/skill-calorie/dist/fetch/photos.js';
+import { addPhotos } from '../../packages/skill-calorie/dist/photo/photos.js';
 import { WAKE_ROUTES } from '../../packages/skill-calorie/dist/triggers/routing.js';
 import { PLACEHOLDER_SUBSTITUTIONS, seedFull } from './t81-seed.mjs';
 

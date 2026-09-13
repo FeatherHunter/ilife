@@ -12,10 +12,10 @@ import { basename, join } from 'node:path';
 import {
   getPhotoRow, listPhotos, planGif, tagsContain,
   type PhotoRow,
-} from '../fetch/photos.js';
+} from './photos.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
-import { CalorieRenderError } from './errors.js';
-import { buildCrudReceipt, type CrudReceipt, type PhotoDistance } from './receipt.js';
+import { CalorieRenderError } from '../render/errors.js';
+import { buildCrudReceipt, type CrudReceipt, type PhotoDistance } from '../render/receipt.js';
 
 export interface PhotoCard {
   id: number;

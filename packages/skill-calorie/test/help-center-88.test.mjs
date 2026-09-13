@@ -26,7 +26,7 @@ import {
 import { CATEGORIES, TRIGGERS } from '../dist/triggers/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SRC_HELP_CENTER = readFileSync(join(HERE, '..', 'src', 'render', 'helpCenter.ts'), 'utf8');
+const SRC_HELP_CENTER = readFileSync(join(HERE, '..', 'src', 'photo', 'helpCenter.ts'), 'utf8');
 
 const count = (haystack, needle) => haystack.split(needle).length - 1;
 const flat = (data) => data.groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
@@ -310,6 +310,6 @@ test('守卫③ 技能侧零复制实现：helpCenter.ts 源码不含复制通�
   for (const needle of ['navigator.clipboard', 'execCommand', 'onclick=', 'document.createElement']) {
     assert.equal(count(SRC_HELP_CENTER, needle), 0, 'helpCenter.ts 不得出现 ' + needle);
   }
-  assert.ok(SRC_HELP_CENTER.includes("from './copy.js'"), '页面运行时必须取 copy.ts 的冻结常量');
+  assert.ok(SRC_HELP_CENTER.includes("from '../render/copy.js'"), '页面运行时必须取 copy.ts 的冻结常量');
   assert.ok(SRC_HELP_CENTER.includes('renderHelpShell'), '壳必须走 base-paint 冻结入口');
 });

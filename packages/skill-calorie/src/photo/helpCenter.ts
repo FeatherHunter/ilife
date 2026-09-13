@@ -44,9 +44,9 @@ import type {
 import { TRIGGERS } from '../triggers/index.js';
 import type { SceneTrigger, Trigger } from '../triggers/index.js';
 import { routesFor } from '../triggers/routing.js';
-import { COPY_RUNTIME_JS } from './copy.js';
-import { CalorieRenderError } from './errors.js';
-import { CALORIE_TEMPLATES, loadTemplate } from './templates.js';
+import { COPY_RUNTIME_JS } from '../render/copy.js';
+import { CalorieRenderError } from '../render/errors.js';
+import { CALORIE_TEMPLATES, loadTemplate } from '../render/templates.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面 `\n`）。 */
 const LF = String.fromCharCode(10);

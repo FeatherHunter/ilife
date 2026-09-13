@@ -26,12 +26,12 @@ import { test } from 'node:test';
 import { SPEC_FROZEN_SURFACE, SCENE_DATA_SCHEMA } from 'base-paint';
 import {
   HELP_CLI_FIELD_LABEL, HELP_CLI_FIELD_NAME, buildHelpSceneData, helpSceneCli, renderHelpCenterHtml,
-} from '../dist/render/helpCenter.js';
+} from '../dist/photo/helpCenter.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SRC = readFileSync(join(HERE, '..', 'src', 'render', 'helpCenter.ts'), 'utf8');
+const SRC = readFileSync(join(HERE, '..', 'src', 'photo', 'helpCenter.ts'), 'utf8');
 
 const count = (haystack, needle) => haystack.split(needle).length - 1;
 const flat = (data) => data.groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));

@@ -1,6 +1,6 @@
 /** #139 · 「卡路里help」**真出口**锁（CLI 级，不是模块级）。
  *
- * 病根（#139 诊断，实测复现）：T2-②b 的接线件 `render/helpFile.ts:runHelpFile` 只被自己的
+ * 病根（#139 诊断，实测复现）：T2-②b 的接线件 `photo/helpFile.ts:runHelpFile` 只被自己的
  * 单测调用，`cli/cmd_read.ts`（唯一出口）全文没 import → **单测全绿，而 live 出口产的是
  * M-era 的 `身材照HELP_*.html`**（速查台内容）。故本文件只跑真出口
  * （spawn `dist/cli/cmd_read.js`，argv＋JSON＋exit），锁四件事：
