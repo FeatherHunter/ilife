@@ -1,0 +1,19 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：295｜since：2026-09-13T07:19:00Z｜until：2026-09-13T07:30:34Z｜条目数：11｜导出时间：2026-09-13T07:41:53.021Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=295 runId=f9236b35-3b14-40a4-beca-39afc74a4506 cmd="pwsh -NoProfile -Command \"pnpm build; if ( -eq 0) { pnpm gen }; if ( -eq 0) { pnpm build }; if ( -eq 0) { pnpm help:build }\"" waitedMs=0 exit=1 pid=9220 at=2026-09-13T07:19:00.755Z
+RUN ticket=295 runId=0e20526c-83c8-457f-8db3-77ed00a2aeb5 cmd="pnpm build" waitedMs=0 exit=0 pid=37808 at=2026-09-13T07:19:10.087Z
+RUN ticket=295 runId=471b4c89-5b9d-4297-9154-e2744b703acf cmd="pnpm gen" waitedMs=0 exit=0 pid=48368 at=2026-09-13T07:19:16.653Z
+RUN ticket=295 runId=fd67e012-2e41-49e5-a827-8b71b37eaeff cmd="pnpm help:build" waitedMs=0 exit=0 pid=50184 at=2026-09-13T07:19:22.869Z
+RUN ticket=295 runId=b325105d-a7e9-4c65-9358-c1ead9117d87 cmd="node --test test/ci-gates-295.test.mjs packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs packages/skill-calorie/test/m5-receipt-97.test.mjs packages/skill-calorie/test/cmd-write-40-persist.test.mjs packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=0 exit=1 pid=38388 at=2026-09-13T07:22:03.884Z
+RUN ticket=295 runId=d33d64c4-c497-4935-ae0f-83b4921ff47d cmd="node --test test/ci-gates-295.test.mjs packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs packages/skill-calorie/test/m5-receipt-97.test.mjs packages/skill-calorie/test/cmd-write-40-persist.test.mjs packages/skill-calorie/test/skill-t11.test.mjs" waitedMs=0 exit=0 pid=38868 at=2026-09-13T07:22:53.997Z
+RUN ticket=295 runId=17154fb4-9f30-46b3-ba4c-1e0b3ea63206 cmd="pwsh -NoProfile -Command \"pnpm build; pnpm gen:check; pnpm test\"" waitedMs=0 exit=0 pid=49916 at=2026-09-13T07:24:03.777Z
+RUN ticket=295 runId=09400bd6-c917-41cf-b523-509cf505ddce cmd="node --test packages/skill-calorie/test/output-naming-119.test.mjs test/ci-gates-295.test.mjs" waitedMs=1 exit=0 pid=25040 at=2026-09-13T07:25:11.918Z
+RUN ticket=295 runId=52a1f14e-44b1-4414-8343-f921fcf68470 cmd="pwsh -NoProfile -Command \"git add .github/workflows/ci.yml package.json packages/skill-calorie/scripts/build-help.mjs packages/skill-calorie/scripts/gen-cli.mjs packages/skill-calorie/src/cli/legacyCommands.ts packages/skill-calorie/src/shared/commandSpec.ts packages/skill-calorie/src/weight/commands.ts packages/skill-calorie/test/declared.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs packages/skill-calorie/test/cmd-write-40-persist.test.mjs packages/skill-calorie/test/m5-receipt-97.test.mjs packages/skill-calorie/test/output-naming-119.test.mjs packages/skill-calorie/test/legacy-ratchet-295.test.mjs test/ci-gates-295.test.mjs; git status --short; git commit -F .scratch/t295-rework/commit1.txt\"" waitedMs=0 exit=0 pid=42672 at=2026-09-13T07:25:34.791Z
+RUN ticket=295 runId=beab2be1-d0bd-4181-8a71-fe2e9c7690f2 cmd="git push origin master" waitedMs=0 exit=0 pid=34036 at=2026-09-13T07:25:40.874Z
+RUN ticket=295 runId=4f0dcba6-b8a5-4062-a1d7-46f70905c4e8 cmd="pwsh -NoProfile -Command \"pnpm build; pnpm gen:check; pnpm test; pnpm doctor; pnpm boundaries; pnpm snapshot:html:check; pnpm help:examples:check\"" waitedMs=0 exit=1 pid=44900 at=2026-09-13T07:30:33.889Z
+```
