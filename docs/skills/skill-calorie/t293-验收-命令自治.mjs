@@ -29,7 +29,7 @@ const P = {
   GEN: 'packages/skill-calorie/scripts/gen-cli.mjs',
   KEYS: 'packages/skill-calorie/src/cli/keys.ts',
   REG: 'packages/skill-calorie/src/cli/registry.ts',
-  LEGACY: 'packages/skill-calorie/src/cli/legacyCommands.ts',
+  LEGACY_DIR: 'packages/skill-calorie/src/cli/legacy',
   WEIGHT_DECL: 'packages/skill-calorie/src/weight/commands.ts',
   SPEC: 'packages/skill-calorie/src/shared/commandSpec.ts',
   READ: 'packages/skill-calorie/src/cli/cmd_read.ts',
@@ -42,6 +42,13 @@ const P = {
   PKG: 'package.json',
 };
 const BASE_COMMIT = '1396d67'; // 棘轮基线（#294 交付点）
+
+/**
+ * 未搬迁清单的**场景分区**（`#313` A 段起）：旧单一清单 `src/cli/legacyCommands.ts` 已按完成判据删除，
+ * 现值＝ `src/cli/legacy/scene-01.ts`…`scene-10.ts`（一条命令的键恰住一处，按场景分片）。
+ * 名单只此一处；少一片 `readLegacy()` 即返回 null，调用方按「探针失能」报红——**不许静默当空清单**。
+ */
+const LEGACY_FILES = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'].map((n) => P.LEGACY_DIR + '/scene-' + n + '.ts');
 
 const R = {}; // id -> { status, lines: [], data }
 function set(id, status, ...lines) {
@@ -59,6 +66,11 @@ function read(p) {
   } catch {
     return null;
   }
+}
+/** 读未搬迁清单（场景分片逐片读并拼接）。任一片读不到 ⇒ null：调用方按「探针失能」判红，不许当空清单。 */
+function readLegacy() {
+  const parts = LEGACY_FILES.map((p) => read(p));
+  return parts.some((t) => t === null) ? null : parts.join('\n');
 }
 function run(cmd, args, cwd) {
   const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', shell: false, maxBuffer: 1 << 28 });
@@ -140,6 +152,8 @@ const sandboxSha = (rel) => {
   const p = join(TMP_ROOT, rel);
   return existsSync(p) ? createHash('sha256').update(readFileSync(p)).digest('hex').slice(0, 12) : null;
 };
+/** 未搬迁清单（十个场景分区）在沙箱里的指纹：逐片取 sha 后拼接（缺片记 MISSING，不静默跳过）。 */
+const sandboxShaLegacy = () => LEGACY_FILES.map((p) => sandboxSha(p) ?? 'MISSING').join('|');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // P1 · 自治：加一条命令，除能力目录里的声明与生成物外，还要手改哪些文件
@@ -155,7 +169,8 @@ const sandboxSha = (rel) => {
 /** 现行权威总量（键／写／读／体重）：既要报账，也当"钉死计数"断言的搜索锚。 */
 async function authorityTotals() {
   const wd = await weightDecls();
-  const legacySrc = read(P.LEGACY) || '';
+  const legacySrc = readLegacy();
+  if (legacySrc === null) return { ok: false, why: '未搬迁清单读不到（缺 ' + P.LEGACY_DIR + '/scene-NN.ts 之一）', legacy: [] };
   const legacy = [...legacySrc.matchAll(/kind:\s*'(read|write)',\s*key:\s*'([^']+)'/g)].map((m) => ({ kind: m[1], key: m[2] }));
   if (!wd.ok) return { ok: false, why: wd.why, legacy };
   const all = [...legacy, ...wd.list.map((c) => ({ kind: c.kind, key: c.key }))];
@@ -289,7 +304,7 @@ async function changeSurfaces() {
       out.unaccounted.push({ where: h.file + ':' + h.line, what: `钉死${h.what}断言（字面量 ${h.value}）：加删一条命令就必须手改本行——${h.text}` });
     }
   } else {
-    out.unaccounted.push({ where: '（未判）', what: '钉死计数扫描跳过：' + t.why });
+    out.unaccounted.push({ where: P.LEGACY_DIR + '（或 dist/weight/commands.js）', what: '探针失能：拿不到权威总数（' + t.why + '）⇒ 钉死计数扫描跳过。**按 FAIL 记**：读不到权威源不等于"没有手写面"，不许当假绿放行。' });
   }
   const rs = routingSurface();
   out.disciplined.push({
@@ -308,7 +323,7 @@ async function p1(w) {
   const inputs = [];
   if (/scanCapabilityNames/.test(genSrc)) inputs.push('src/*/commands.ts（扫描能力目录声明）');
   if (/DIST_DIR,\s*name,\s*'commands\.js'|join\(DIST_DIR, name, "commands\.js"\)/.test(genSrc) || /commands\.js/.test(genSrc)) inputs.push('dist/<能力>/commands.js（编译后的声明模块）');
-  if (/legacyCommands\.js/.test(genSrc)) inputs.push(P.LEGACY + '（未搬迁清单，编译后 dist/cli/legacyCommands.js）');
+  if (/scanLegacySceneNames/.test(genSrc) || /'cli',\s*'legacy'/.test(genSrc)) inputs.push(P.LEGACY_DIR + '（未搬迁清单的场景分区 scene-NN.ts，编译后 dist/cli/legacy/scene-NN.js）');
   if (/COMBO_YAML/.test(genSrc)) inputs.push(P.YAML + '（只重写标记块）');
   if (/BUILD_HELP/.test(genSrc)) inputs.push(P.BUILD_HELP + '（只重写 REPR 标记块）');
   const lines = [];
@@ -334,9 +349,9 @@ async function p1(w) {
   const regSrc = read(P.REG) || '';
   const importFromIndex = /from '\.\.\/[a-z0-9-]+\/index\.js'/.test(regSrc);
   lines.push('生成的 registry 从 ../<能力>/index.js 取声明数组（故能力目录还需 index.ts 再导出）：' + importFromIndex);
-  // ④ 静态：迁移一条老键必须同步从 legacyCommands.ts 删行（重复键在生成期就抛）。
+  // ④ 静态：迁移一条老键必须同步从自己那一份场景分区删行（重复键在生成期就抛）。
   const dupThrow = /命令键重复登记/.test(genSrc);
-  lines.push('生成期对"同键两处声明"抛错（故迁移老键必须手删 legacyCommands.ts 那行）：' + dupThrow);
+  lines.push('生成期对"同键两处声明"抛错（故迁移老键必须手删自己场景分区 ' + P.LEGACY_DIR + '/scene-NN.ts 里那行）：' + dupThrow);
   // ⑤ 静态：分派层不再需要分支（registry 先行）。
   const readSrc = read(P.READ) || '';
   const writeSrc = read(P.WRITE) || '';
@@ -392,7 +407,7 @@ async function p1(w) {
   writeFileSync(join(TMP_ROOT, dirs[0], 'commands.ts'), 'export const FAKE_COMMANDS = [\n  ' + FAKE.join(',\n  ') + ',\n] as const;\n');
   writeFileSync(join(TMP_ROOT, dirs[0], 'index.ts'), "export { FAKE_COMMANDS } from './commands.js';\n");
   writeFileSync(join(TMP_ROOT, dirs[1], 'commands.js'), 'export const FAKE_COMMANDS = [\n  ' + FAKE.join(',\n  ') + ',\n];\n');
-  const before = { read: sandboxSha(P.READ), write: sandboxSha(P.WRITE), legacy: sandboxSha(P.LEGACY) };
+  const before = { read: sandboxSha(P.READ), write: sandboxSha(P.WRITE), legacy: sandboxShaLegacy() };
   const g = gen('write');
   const got = {
     scanned: g.out.includes('fakecap'),
@@ -403,26 +418,35 @@ async function p1(w) {
     reprHas: (readFileSync(join(TMP_ROOT, P.BUILD_HELP), 'utf8')).includes("'记假数据'"),
     exampleHas: (readFileSync(join(TMP_ROOT, P.BUILD_HELP), 'utf8')).includes("'calorie.fake.demo': 'calorie-cmd-read calorie.fake.demo"),
   };
-  const untouched = { read: sandboxSha(P.READ) === before.read, write: sandboxSha(P.WRITE) === before.write, legacy: sandboxSha(P.LEGACY) === before.legacy };
+  const untouched = { read: sandboxSha(P.READ) === before.read, write: sandboxSha(P.WRITE) === before.write, legacy: sandboxShaLegacy() === before.legacy };
   lines.push('动态：加假能力后 `gen` exit=' + g.status + '；生成器扫到=' + got.scanned + '（输出含 fakecap=' + got.scanned + '）');
   lines.push('  假事实自动流进：registry=' + got.registryImports + ' keys(写)=' + got.keysHasWrite + ' keys(读)=' + got.keysHasRead + ' combos 镜像=' + got.yamlHas + ' REPR=' + got.reprHas + ' EXAMPLE 表=' + got.exampleHas);
-  lines.push('  分派两文件 + legacyCommands 逐字节未动=' + JSON.stringify(untouched));
+  lines.push('  分派两文件 + 未搬迁清单十片（legacy/scene-NN.ts）逐字节未动=' + JSON.stringify(untouched));
   let dynOk = g.status === 0 && Object.values(got).every(Boolean) && Object.values(untouched).every(Boolean);
   // 迁移冲突：假能力声明一条**仍在**未搬迁清单里的老键 → 生成期必须抛（"必须手删那行"的机器证据）。
   // 注意：声明字段随契约走（#295 返修 A3 起 `example` 是必填），漏字段会让 gen 因别的原因红——那是假证据。
+  // 清单读不到时**不许**退回一个字面量键（那会造出不撞键的假绿）：本探针直接判红。
   mkdirSync(join(TMP_ROOT, 'packages/skill-calorie/src/fakecap2'), { recursive: true });
   mkdirSync(join(TMP_ROOT, 'packages/skill-calorie/dist/fakecap2'), { recursive: true });
-  const legacySrc = read(P.LEGACY) || '';
-  const legacyKeys = [...legacySrc.matchAll(/kind:\s*'(read|write)',\s*key:\s*'([^']+)'/g)].map((m) => m[2]);
-  const dupKey = legacyKeys[0] || 'calorie.diet.add';
-  const dupDecl = `{ kind: 'write', key: '${dupKey}', shape: 'receipt', title: '撞键', wakeWord: '撞词', example: 'calorie-cmd-read ${dupKey}' }`;
-  writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/src/fakecap2/commands.ts'), `export const DUP = [${dupDecl}];\n`);
-  writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/dist/fakecap2/commands.js'), `export const DUP = [${dupDecl}];\n`);
-  const g2 = gen('write');
-  const dupCaught = g2.status !== 0 && /命令键重复登记/.test(g2.out);
-  lines.push(`  迁移撞键（假能力声明一条仍在未搬迁清单里的键 ${dupKey}，共 ${legacyKeys.length} 条候选）→ gen exit=${g2.status}，报「命令键重复登记」=${dupCaught}`);
-  if (g2.status !== 0 && !dupCaught) lines.push('     （exit≠0 但不是撞键报错，说明沙箱里另有失败原因：' + g2.out.split('\n').filter(Boolean).slice(0, 2).join(' / ').slice(0, 200) + '）');
-  dynOk = dynOk && dupCaught;
+  const legacyKeys = (readLegacy() ?? '').matchAll(/kind:\s*'(read|write)',\s*key:\s*'([^']+)'/g);
+  const legacyKeyList = [...legacyKeys].map((m) => m[2]);
+  const dupKey = legacyKeyList[0];
+  let dupCaught = false;
+  if (!dupKey) {
+    lines.push('  迁移撞键探针**失能**：未搬迁清单里一个键都没读到（' + P.LEGACY_DIR + '/scene-NN.ts）⇒ 判红。'
+      + '不去退回字面量键：那会变成"没撞上键"的假绿，见 docs/skills/skill-calorie/t313b3-*.md。');
+    dynOk = false;
+  } else {
+    const dupDecl = `{ kind: 'write', key: '${dupKey}', shape: 'receipt', title: '撞键', wakeWord: '撞词', example: 'calorie-cmd-read ${dupKey}' }`;
+    writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/src/fakecap2/commands.ts'), `export const DUP = [${dupDecl}];\n`);
+    writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/dist/fakecap2/commands.js'), `export const DUP = [${dupDecl}];\n`);
+    const g2 = gen('write');
+    // 真撞键判据：生成期非 0 ＋ 报的是"同键重复登记"＋ 报错里点的正是这个键（少了第三条就可能撞在别的键上）。
+    dupCaught = g2.status !== 0 && /命令键重复登记/.test(g2.out) && g2.out.includes(dupKey);
+    lines.push(`  迁移撞键（假能力声明一条仍在未搬迁清单里的键 ${dupKey}，共 ${legacyKeyList.length} 条候选）→ gen exit=${g2.status}，报「命令键重复登记」=${dupCaught}`);
+    if (g2.status !== 0 && !dupCaught) lines.push('     （exit≠0 但撞的不是这个键：' + g2.out.split('\n').filter(Boolean).slice(0, 2).join(' / ').slice(0, 200) + '）');
+    dynOk = dynOk && dupCaught;
+  }
   lines.push('已清理临时根：' + cleanupTmp());
   const ok = staticBase && dynOk && unacct === 0 && buckets.incomplete.length === 0;
   set('P1', verdict(dynOk), ...lines, `动态（派生桶）证据齐=${dynOk}；UNACCOUNTED=${unacct} 处；树自相矛盾=${buckets.incomplete.length} 处` + (unacct ? ' ⇒ P1=FAIL：这些面既没派生也没纪律覆盖' : buckets.incomplete.length ? ' ⇒ P1=PENDING：返修在途，生成物未重生成' : ok ? '' : ' ⇒ P1=FAIL：静态/动态判据未过'));
@@ -434,7 +458,7 @@ async function p1(w) {
 // ─────────────────────────────────────────────────────────────────────────────
 const CLASS = [
   [/^packages\/skill-calorie\/src\/weight\/commands\.ts$/, 'AUTHORITY（权威声明）'],
-  [/^packages\/skill-calorie\/src\/cli\/legacyCommands\.ts$/, 'AUTHORITY②（未搬迁清单，键恰住一处）'],
+  [/^packages\/skill-calorie\/src\/cli\/legacy\/scene-\d\d\.ts$/, 'AUTHORITY②（未搬迁清单的场景分区，键恰住一处）'],
   [/^packages\/skill-calorie\/src\/cli\/(keys|registry)\.ts$/, 'DERIVED（gen-cli 生成物）'],
   [/^packages\/base-combos\/combos\.yaml$/, 'DERIVED（gen-cli 镜像段）'],
   [/^packages\/skill-calorie\/scripts\/build-help\.mjs$/, 'DERIVED（gen-cli 写 REPR 块）'],
@@ -502,9 +526,12 @@ async function p2(w) {
     summary.push({ key: k.key, hits: hits.length, classes: Object.fromEntries(classes), pairs: pairClasses.size ? Object.fromEntries(pairClasses) : {}, authority: auth });
   }
   // 已搬迁的键不许仍留在未搬迁清单里（"搬走一条＝从这里删一行"的机器证据）。
-  const legacyTxt = read(P.LEGACY) || '';
-  const stillLegacy = keys.filter((k) => new RegExp(escapeRe(k.key) + '([^a-z0-9.-]|$)').test(legacyTxt)).map((k) => k.key);
-  lines.push('体重 9 键仍留在 legacyCommands.ts 里的：' + (stillLegacy.length ? stillLegacy.join('、') : '0 处（随搬迁已删净）'));
+  const legacyTxt = readLegacy();
+  if (legacyTxt === null) {
+    lines.push('体重 9 键是否仍留在未搬迁清单里：**读不到清单**（' + P.LEGACY_DIR + '/scene-NN.ts 缺片）⇒ 本条判红，不去当成"0 处"放行');
+  }
+  const stillLegacy = legacyTxt === null ? keys.map((k) => k.key) : keys.filter((k) => new RegExp(escapeRe(k.key) + '([^a-z0-9.-]|$)').test(legacyTxt)).map((k) => k.key);
+  if (legacyTxt !== null) lines.push('体重 9 键仍留在未搬迁清单（legacy/scene-NN.ts）里的：' + (stillLegacy.length ? stillLegacy.join('、') : '0 处（随搬迁已删净）'));
   lines.push('结论口径：权威声明恰 1 处 ＝ 单一源；事实对只许落在 FROZEN-PARITY／ROUTE／TEST／DOC／DERIVED（冻结副本有 parity 断言守，见 P5）；出现 UNCLASSIFIED 即"还有手写副本没清"。');
   const ok = authorityHits === keys.length && unexplained === 0 && pairUnexplained === 0 && stillLegacy.length === 0;
   set('P2', ok ? 'PASS' : 'FAIL', ...lines, `权威声明齐=${authorityHits}/${keys.length}；未归类的可疑副本=${unexplained}；未归类的事实对=${pairUnexplained}；仍留在未搬迁清单=${stillLegacy.length}；冻结事实对=${frozenPair}（由 P5 的 parity 断言守）`);
