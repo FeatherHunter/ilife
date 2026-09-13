@@ -5,7 +5,7 @@
  * 不 print，失败抛 FetchError；writePlan 有 errors 回 failed（老家同形状）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { FetchError } from './errors.js';
+import { FetchError } from '../fetch/errors.js';
 
 export const LEVEL_CONFIG: Record<string, { maxPerPartPerDay: number; maxPerPartPerWeek: number; restHours: number }> = {
   '新手': { maxPerPartPerDay: 6, maxPerPartPerWeek: 10, restHours: 72 },

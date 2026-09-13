@@ -9,7 +9,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { inferCategory, listWindow } from '../exercise/exerciseStore.js';
 import type { ExerciseRow } from '../exercise/exerciseStore.js';
-import { getPlan } from '../fetch/plan.js';
+import { getPlan } from '../workout/planStore.js';
 import { buildSeries } from '../analysis/series.js';
 import { shiftISODate } from '../analysis/utils.js';
 import { round2 } from '../kcal.js';

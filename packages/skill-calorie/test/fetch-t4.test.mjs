@@ -15,7 +15,7 @@ import {
 import {
   validatePlan, writePlan, getPlan, updateConfig, addSession, updateSession, deleteSession,
   copyWeek, deleteWeek, insertWeek, deletePlan, copyPlan, deleteDay,
-} from '../dist/fetch/plan.js';
+} from '../dist/workout/planStore.js';
 import {
   addProduct, searchProducts, updateProduct, deprecateProduct, listProducts,
   listProductsByCategory, sourceStats,

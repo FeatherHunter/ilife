@@ -3,7 +3,7 @@
  * **不是**「定训练计划」这个写场景本身——那句词的执行层不承接（见 `src/workout/routes.ts` 里
  * 该词的非执行记录与理由）。本键只把候选计划送进校验器出报告：错误／警告逐条与逐场检查数。
  *
- * 校验口径住视图层 `render/planPlate.ts` 的 `buildPlanWizardView`（内部经 `fetch/plan.ts` 的
+ * 校验口径住视图层 `render/planPlate.ts` 的 `buildPlanWizardView`（内部经 `workout/planStore.ts` 的
  * `validatePlan`），整页模板住 `render/html.ts` 的 `renderPlanWizardHtml`；本能力只调公开函数。
  */
 import type { DatabaseSync } from 'node:sqlite';

@@ -1,14 +1,14 @@
 /** #41 · 训练计划读链 render 数据（计划看/构建向导/运动目标视图）。
  *
  * 数据源全复用既有取数层：
- * 计划看=fetch/plan.getPlan（无配置且无会话即 missing）；
- * 构建向导=fetch/plan.validatePlan 纯校验 dryRun（不写库，写链归 #40）；
+ * 计划看=workout/planStore.getPlan（无配置且无会话即 missing）；
+ * 构建向导=workout/planStore.validatePlan 纯校验 dryRun（不写库，写链归 #40）；
  * 运动目标= daily_goal.exercise_goal（日耗目标，未设即 missing）+ analysis/exerciseReview。
  * 缺失阻断不返空；plan JSON 非法走 bad-input。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getPlan, validatePlan } from '../fetch/plan.js';
-import type { PlanInput, PlanSessionRow } from '../fetch/plan.js';
+import { getPlan, validatePlan } from '../workout/planStore.js';
+import type { PlanInput, PlanSessionRow } from '../workout/planStore.js';
 import { buildExerciseReview } from '../analysis/exerciseReview.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from './errors.js';
