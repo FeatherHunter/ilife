@@ -14,16 +14,22 @@
 //   ⑤ `scripts/build-help.mjs` 的 `EXAMPLE` 表（标记块；#295 返修 A3——原先这里有 101 条手写 `case`，
 //      是同一文件里第二处手写「一条命令的事实」：加一条命令不补 case 就 `default: throw`，SKILL.md 停更）。
 //
-// 新鲜度（#295 返修 A4）：生成器读的是**编译后**的声明模块，所以在读之前先查「声明比 `dist/` 新没有」——
-// 只改 `src/` 不 `pnpm build` 时，旧 `dist/` 会让 `gen`／`gen:check` 双双按旧声明判绿（假绿，P4 实测）。
-// 查到陈旧即大声失败并叫人先 `pnpm build`，不静默按旧 dist 出结论。
+// 新鲜度（#295 返修 A4 立、返修第二轮 N1 改成**内容**判据）：生成器读的是**编译后**的声明模块，所以在读之前
+// 先查「`dist/` 是不是这些声明的内容产物」——只改 `src/` 不 `pnpm build` 时，旧 `dist/` 会让 `gen`／`gen:check`
+// 双双按旧声明判绿（假绿，P4 实测）。查法是**内容印记**（`dist/.gen-inputs.json`：声明源逐文件 sha256，
+// 由 `pnpm build` 在 `tsc -b` 之后调本脚本的 `--stamp` 写入），**不看时间戳**：
+//   · 源的内容没变（`git checkout -- .`／`touch` 只动 mtime）⇒ 印记相符 ⇒ 放行（mtime 判据会在这里假红）；
+//   · 源的内容真变了又没重建 ⇒ 印记不符 ⇒ 大声失败并叫人 `pnpm build`（这句医嘱**可执行**：build 必重打印记）。
+// 为什么不能只看 mtime（旧判据的死结）：`tsc -b` 在 emit 与现有 `dist/` 逐字节相同时**不重写文件**，
+// 于是源 mtime 被正常动作刷新后 dist 的 mtime 永远追不平 —— 门恒红而 `pnpm build` 解不开，`gen` 一并被挡死。
 //
 // 确定性：键序＝**写键（键名升序）在前、读键（键名升序）在后**；能力名与键名一一对应，
 // 故同一份输入必得逐字节同一份输出（判据不是「用了生成器」，而是「确定性 ＋ 生成物入库 ＋ CI 校验」）。
 //
 // 用法：`pnpm gen`（写盘）／`pnpm gen:check`（只比对，不等即 exit 1）。二者都需先 `pnpm build`
 // 出 `dist/`——生成器读的是编译后的声明模块（TS 不能直接被 node 引）。
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+// `--stamp` 是给 `pnpm build` 用的第三个模式（不是给人手敲的）：只给声明源打内容印记（见下「新鲜度」）。
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -34,6 +40,7 @@ const SRC_DIR = join(PKG_DIR, 'src');
 const DIST_DIR = join(PKG_DIR, 'dist');
 const REPO_ROOT = join(PKG_DIR, '..', '..');
 const CHECK = process.argv.includes('--check');
+const STAMP_ONLY = process.argv.includes('--stamp');
 
 const BANNER = '本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。';
 const COMBO_YAML = join(REPO_ROOT, 'packages', 'base-combos', 'combos.yaml');
@@ -44,6 +51,10 @@ const REPR_START = '// -- GEN-CLI-START REPR 表（由 packages/skill-calorie/sc
 const REPR_END = '// -- GEN-CLI-END REPR 表';
 const EXAMPLE_START = '// -- GEN-CLI-START EXAMPLE 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）';
 const EXAMPLE_END = '// -- GEN-CLI-END EXAMPLE 表';
+/** #295 返修第二轮 N1 · 内容印记：声明源逐文件的 sha256，由 `pnpm build`（`tsc -b` 之后）调 `--stamp` 写入。
+ * 住 `dist/` 里（与 dist 同生共死，且 `pnpm gen:check` 在仓外沙箱跑时随 dist 一起被复制）。 */
+const STAMP = join(DIST_DIR, '.gen-inputs.json');
+const STAMP_VERSION = 1;
 
 /** 读一个能力目录的声明：扫 `src/*&#47;commands.ts` 定名，引编译后模块取那个唯一的数组导出。 */
 async function loadCapability(name) {
@@ -251,22 +262,82 @@ function replaceBlock(text, start, end, block, path) {
   return text.slice(0, si) + block + text.slice(ei + end.length);
 }
 
-/** #295 返修 A4 · 新鲜度守卫：声明比 `dist/` 新 ⇒ 生成器读到的是旧声明，`gen`／`gen:check` 都会给假绿。
- * 查的是**生成器的两个输入**（各能力 `commands.ts` 与 `legacyCommands.ts`）与它们编译后的模块，
- * 不查生成物自己（`src/cli/keys.ts` 是生成物，刚 `pnpm gen` 写完本来就比 `dist/` 新）。返回逐条陈旧说明。 */
-function staleDeclarations(names) {
-  const pairs = [
-    { src: join(SRC_DIR, 'cli', 'legacyCommands.ts'), dist: join(DIST_DIR, 'cli', 'legacyCommands.js') },
-    ...names.map((n) => ({ src: join(SRC_DIR, n, 'commands.ts'), dist: join(DIST_DIR, n, 'commands.js') })),
+/** 生成器的两个输入（声明源）：未搬迁清单 ＋ 每个能力目录的声明。印记与判陈旧都以它们为准。 */
+function declarationSources(names) {
+  return [
+    join(SRC_DIR, 'cli', 'legacyCommands.ts'),
+    ...names.map((n) => join(SRC_DIR, n, 'commands.ts')),
   ];
+}
+
+/** 声明源 → 它编译后的模块路径（印记与陈旧判定都按「源 → dist」配对，一对一路径推导）。 */
+function distOf(src) {
+  return join(DIST_DIR, relative(SRC_DIR, src).replace(/\\/g, '/').replace(/\.ts$/, '.js'));
+}
+
+/** 源在印记里的键：相对 `src/` 的 posix 路径（与仓库绝对位置无关，仓外沙箱复制后仍对得上）。 */
+function stampKey(src) {
+  return relative(SRC_DIR, src).replace(/\\/g, '/');
+}
+
+/** #295 返修第二轮 N1 · `--stamp`：给声明源打内容印记。由 **`pnpm build`** 在 `tsc -b` 之后调用——
+ * 只有「刚构建完」这一时刻才有资格宣称「dist/ 是这些声明的内容产物」，所以写印记的入口挂 build，不挂 gen。 */
+function writeStamp(names) {
+  const files = {};
+  for (const src of declarationSources(names)) {
+    if (!existsSync(src)) continue;
+    files[stampKey(src)] = sha256(readFileSync(src, 'utf8'));
+  }
+  mkdirSync(DIST_DIR, { recursive: true });
+  writeFileSync(
+    STAMP,
+    JSON.stringify(
+      {
+        version: STAMP_VERSION,
+        note: '生成器输入（声明源）的内容印记，由 `pnpm build` 调 `node packages/skill-calorie/scripts/gen-cli.mjs --stamp` 写入；`pnpm gen`／`pnpm gen:check` 按它判陈旧——内容判据，不看时间戳。',
+        files,
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  console.log('GEN-STAMP ok ' + relative(REPO_ROOT, STAMP) + '：声明源 ' + Object.keys(files).length + ' 件（' + Object.keys(files).join('／') + '）');
+}
+
+/** #295 返修第二轮 N1 · 新鲜度守卫：**内容**判据，不看时间戳。返回逐条说明（空数组＝新鲜）。
+ * 三件事各司其职：① 缺编译产物 ⇒ 报「先 build」；② 印记里没有这条（新文件／仓外沙箱里的假能力）⇒ 无对照，放行；
+ * ③ 印记与现内容不符 ⇒ 源的内容真变了而没重建 ⇒ 报陈旧。印记整个缺失（没 `pnpm build` 过、或 dist 是别处拷来的）
+ * ⇒ **不判陈旧**并打一行告警：无从判断的状态不当红用，宁可少拦一次也不重演「假红＋自锁」。 */
+function staleDeclarations(names) {
   const stale = [];
-  for (const p of pairs) {
-    if (!existsSync(p.dist)) {
-      stale.push('缺 ' + relative(REPO_ROOT, p.dist) + '（源：' + relative(REPO_ROOT, p.src) + '）');
+  let files = null;
+  try {
+    const raw = JSON.parse(readFileSync(STAMP, 'utf8'));
+    if (raw && raw.version === STAMP_VERSION && raw.files && typeof raw.files === 'object') files = raw.files;
+  } catch {
+    files = null;
+  }
+  if (files === null) {
+    console.error(
+      'GEN-STAMP WARN：没有可用的内容印记 ' + relative(REPO_ROOT, STAMP) +
+        '（`pnpm build` 会写），本次只查编译产物在不在、不判陈旧。',
+    );
+  }
+  for (const src of declarationSources(names)) {
+    const dist = distOf(src);
+    if (!existsSync(dist)) {
+      stale.push('缺 ' + relative(REPO_ROOT, dist) + '（源：' + relative(REPO_ROOT, src) + '）');
       continue;
     }
-    if (statSync(p.dist).mtimeMs < statSync(p.src).mtimeMs) {
-      stale.push(relative(REPO_ROOT, p.dist) + ' 比 ' + relative(REPO_ROOT, p.src) + ' 旧');
+    if (files === null) continue;
+    const recorded = files[stampKey(src)];
+    if (typeof recorded !== 'string') continue;
+    const now = sha256(readFileSync(src, 'utf8'));
+    if (recorded !== now) {
+      stale.push(
+        relative(REPO_ROOT, src) + ' 的内容与上次 `pnpm build` 时不同（印记 ' + recorded.slice(0, 12) +
+          '… ≠ 现 ' + now.slice(0, 12) + '…）',
+      );
     }
   }
   return stale;
@@ -278,10 +349,16 @@ function sha256(text) {
 
 async function main() {
   const names = scanCapabilityNames();
+  if (STAMP_ONLY) {
+    writeStamp(names);
+    return;
+  }
   const stale = staleDeclarations(names);
   if (stale.length) {
     const cmd = CHECK ? 'pnpm gen:check' : 'pnpm gen';
-    console.error('GEN-STALE FAIL：dist/ 不是这些声明的产物，继续跑会把旧声明当成事实（假绿）。先 `pnpm build` 再 `' + cmd + '`。');
+    console.error(
+      'GEN-STALE FAIL：dist/ 不是这些声明**现在的内容**的产物，继续跑会把旧声明当成事实（假绿）。先 `pnpm build`（重建 dist 并重打内容印记）再 `' + cmd + '`。',
+    );
     for (const s of stale) console.error('  ' + s);
     console.error('  （扫到能力目录 ' + names.length + ' 个：' + (names.join('／') || '无') + '）');
     process.exitCode = 1;

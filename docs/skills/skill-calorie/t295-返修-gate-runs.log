@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：295｜since：2026-09-13T07:19:00Z｜until：2026-09-13T07:30:34Z｜条目数：11｜导出时间：2026-09-13T07:41:53.021Z
+> 票号过滤：295｜since：2026-09-13T07:19:00Z｜until：2026-09-13T08:15:00Z｜条目数：30｜导出时间：2026-09-13T08:17:27.099Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -16,4 +16,23 @@ RUN ticket=295 runId=09400bd6-c917-41cf-b523-509cf505ddce cmd="node --test packa
 RUN ticket=295 runId=52a1f14e-44b1-4414-8343-f921fcf68470 cmd="pwsh -NoProfile -Command \"git add .github/workflows/ci.yml package.json packages/skill-calorie/scripts/build-help.mjs packages/skill-calorie/scripts/gen-cli.mjs packages/skill-calorie/src/cli/legacyCommands.ts packages/skill-calorie/src/shared/commandSpec.ts packages/skill-calorie/src/weight/commands.ts packages/skill-calorie/test/declared.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs packages/skill-calorie/test/cmd-write-40-persist.test.mjs packages/skill-calorie/test/m5-receipt-97.test.mjs packages/skill-calorie/test/output-naming-119.test.mjs packages/skill-calorie/test/legacy-ratchet-295.test.mjs test/ci-gates-295.test.mjs; git status --short; git commit -F .scratch/t295-rework/commit1.txt\"" waitedMs=0 exit=0 pid=42672 at=2026-09-13T07:25:34.791Z
 RUN ticket=295 runId=beab2be1-d0bd-4181-8a71-fe2e9c7690f2 cmd="git push origin master" waitedMs=0 exit=0 pid=34036 at=2026-09-13T07:25:40.874Z
 RUN ticket=295 runId=4f0dcba6-b8a5-4062-a1d7-46f70905c4e8 cmd="pwsh -NoProfile -Command \"pnpm build; pnpm gen:check; pnpm test; pnpm doctor; pnpm boundaries; pnpm snapshot:html:check; pnpm help:examples:check\"" waitedMs=0 exit=1 pid=44900 at=2026-09-13T07:30:33.889Z
+RUN ticket=295 runId=02aa247b-d080-4dfe-8fb6-e6ad6029d5a3 cmd="pwsh -NoProfile -Command \"git add docs/skills/skill-calorie/t295-返修证据.md docs/skills/skill-calorie/t295-返修-gate-runs.log; git commit -F .scratch/t295-rework/commit2.txt; git push origin master\"" waitedMs=1 exit=0 pid=10828 at=2026-09-13T07:42:12.575Z
+RUN ticket=295 runId=d673d00e-417c-4f84-b378-0645a9e42052 cmd="pwsh -NoProfile -Command \"git add docs/skills/skill-calorie/t295-返修证据.md; git commit -F .scratch/t295-rework/commit3.txt; git push origin master\"" waitedMs=1 exit=0 pid=46772 at=2026-09-13T07:43:25.102Z
+RUN ticket=295 runId=506e2b6a-54f1-489a-a460-83ecbf059454 cmd="node D:\\_t295rr\\probe.mjs base" waitedMs=0 exit=0 pid=44684 at=2026-09-13T07:49:23.643Z
+RUN ticket=295 runId=9917711b-b628-44e5-8f1d-c545dc419a86 cmd="pwsh -NoProfile -Command \"cd D:\\_t295rr\\repo; git checkout -- .; node D:\\_t295rr\\probe.mjs add-read; git checkout -- .; node D:\\_t295rr\\probe.mjs del; git checkout -- .; node D:\\_t295rr\\probe.mjs add-write; git checkout -- .; node D:\\_t295rr\\probe.mjs a4; git checkout -- .; node D:\\_t295rr\\probe.mjs a5; git checkout -- .; node D:\\_t295rr\\probe.mjs redline2; git checkout -- .\"" waitedMs=0 exit=0 pid=8528 at=2026-09-13T07:51:56.373Z
+RUN ticket=295 runId=b5cf61c4-aac6-4108-bf7d-78bfb14d3998 cmd="pwsh -NoProfile -Command \"cd D:\\_t295rr\\repo; git checkout -- .; node D:\\_t295rr\\probe2.mjs base2; git checkout -- .; node D:\\_t295rr\\probe2.mjs add-read; git checkout -- .; node D:\\_t295rr\\probe2.mjs del-legacy; git checkout -- .; node D:\\_t295rr\\probe2.mjs redline2; git checkout -- .; node D:\\_t295rr\\probe2.mjs a4; git checkout -- .; node D:\\_t295rr\\probe2.mjs a5; git checkout -- .; node D:\\_t295rr\\probe2.mjs add-write; git checkout -- .\"" waitedMs=0 exit=0 pid=42092 at=2026-09-13T07:55:17.133Z
+RUN ticket=295 runId=d565101e-6e72-4b2b-8310-d11db760b174 cmd="pnpm build" waitedMs=100066 exit=0 pid=10204 at=2026-09-13T07:55:23.523Z
+RUN ticket=295 runId=27f0f8d0-4f5c-49ad-b763-db00200e384f cmd="pnpm gen:check" waitedMs=0 exit=0 pid=51180 at=2026-09-13T07:55:24.509Z
+RUN ticket=295 runId=6be3f862-cb7e-4db7-ae18-c6e700d0d827 cmd="pwsh -NoProfile -Command \"cd D:\\_t295rr\\repo; git checkout -- .; node D:\\_t295rr\\probe3.mjs add-read2; git checkout -- .; node D:\\_t295rr\\probe3.mjs del-legacy2; git checkout -- .; node D:\\_t295rr\\probe3.mjs add-write2; git checkout -- .\"" waitedMs=0 exit=0 pid=49520 at=2026-09-13T07:57:16.136Z
+RUN ticket=295 runId=8a372004-d9ff-4db1-a09d-801d64e0c974 cmd="pwsh -NoProfile -File D:\\_t295rr\\gates.ps1" waitedMs=0 exit=0 pid=46628 at=2026-09-13T07:58:52.495Z
+RUN ticket=295 runId=2c4046a1-ca1b-49dc-94f4-817300543f71 cmd="git add docs/skills/skill-calorie/t295-复审-蓝队.md" waitedMs=60080 exit=0 pid=27084 at=2026-09-13T07:59:01.242Z
+RUN ticket=295 runId=7e099ccb-7a0f-4868-b791-36e3f9872a16 cmd="git commit -c i18n.commitEncoding=utf-8 -F .scratch/t295-rereview-blue-msg.txt" waitedMs=0 exit=128 pid=42296 at=2026-09-13T07:59:05.977Z
+RUN ticket=295 runId=4c616060-62c9-4ec1-8966-3cc2b6a7a1e0 cmd="git commit -c i18n.commitEncoding=utf-8 -F .scratch/t295-rereview-blue-msg.txt" waitedMs=0 exit=128 pid=40836 at=2026-09-13T07:59:09.273Z
+RUN ticket=295 runId=284f67fb-4d22-4c47-8e10-1767f98681a4 cmd="git -c i18n.commitEncoding=utf-8 commit -F .scratch/t295-rereview-blue-msg.txt" waitedMs=0 exit=0 pid=44816 at=2026-09-13T07:59:13.265Z
+RUN ticket=295 runId=8048add8-a9fc-41d2-8226-1b53ac1db5fb cmd="git push origin master" waitedMs=0 exit=0 pid=29552 at=2026-09-13T07:59:19.207Z
+RUN ticket=295 runId=4d2e7100-c70a-447e-88c8-612647d60bf3 cmd="pwsh -NoProfile -Command \"git add docs/skills/skill-calorie/t295-复审-红队.md; git status --short; git commit -F D:\\_t295rr\\rr-commit.txt; git log --oneline -1; git push origin master\"" waitedMs=1 exit=0 pid=51980 at=2026-09-13T07:59:37.490Z
+RUN ticket=295 runId=7ca660b1-2fcd-47e3-b5f1-00b3ccfd21bc cmd="pwsh -NoProfile -Command \"git add docs/skills/skill-calorie/t295-复审-红队.md; git commit -F C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\rr-commit2.txt; git log --oneline -1; git push origin master\"" waitedMs=0 exit=0 pid=50248 at=2026-09-13T08:01:26.185Z
+RUN ticket=295 runId=67326d26-d4b4-4f2c-8597-3954d1a281e7 cmd="pwsh -NoProfile -File D:\\_t295n1\\gates.ps1" waitedMs=0 exit=0 pid=43680 at=2026-09-13T08:13:11.348Z
+RUN ticket=295 runId=6b4ddf22-2705-44c9-9389-cd87206ef87c cmd="node D:\\_t295n1\\n1-verify-locked.mjs" waitedMs=0 exit=0 pid=37096 at=2026-09-13T08:14:06.764Z
+RUN ticket=295 runId=267a985e-f48c-4b2c-b5af-60f383c51c7d cmd="pwsh -NoProfile -File D:\\_t295n1\\probe-locked.ps1" waitedMs=0 exit=0 pid=40132 at=2026-09-13T08:14:43.840Z
 ```
