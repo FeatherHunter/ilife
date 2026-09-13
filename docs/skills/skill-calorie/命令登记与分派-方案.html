@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>命令登记与分派：并发冲突的最佳解法（第一性原理分析）</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --card2:#1d2129; --line:#2a2f3a;
+    --fg:#e8ecf3; --muted:#9aa4b2; --acc:#5aa9ff; --ok:#3ddc97; --warn:#ffb457; --bad:#ff7a7a;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 90px}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  h1{font-size:25px;margin:0 0 8px}
+  .sub{color:var(--muted);font-size:14px}
+  h2{font-size:19px;margin:34px 0 10px;padding-left:10px;border-left:3px solid var(--acc)}
+  h3{font-size:16px;margin:22px 0 8px;color:#cfd8e6}
+  p{margin:9px 0}
+  code,.mono{font-family:var(--mono);font-size:13px;background:#0b0d11;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#cfe3ff}
+  pre{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow:auto;font-size:13px;line-height:1.6}
+  pre code{background:none;border:none;padding:0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#151922;color:#cfd8e6;font-weight:600}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .verdict{background:linear-gradient(0deg,rgba(61,220,151,.08),rgba(61,220,151,.08)),var(--card);
+           border:1px solid rgba(61,220,151,.35);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .verdict b{color:var(--ok)}
+  .warn{background:rgba(255,180,87,.08);border:1px solid rgba(255,180,87,.35);border-radius:10px;padding:14px 16px;margin:14px 0}
+  .bad{color:var(--bad)} .ok{color:var(--ok)} .muted{color:var(--muted)}
+  ul,ol{padding-left:22px} li{margin:5px 0}
+  .law{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:8px;padding:12px 15px;margin:10px 0}
+  .law b{color:var(--acc)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:820px){.grid{grid-template-columns:1fr}}
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13.5px}
+  a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+  .tag{display:inline-block;font-size:12px;border-radius:999px;padding:1px 9px;margin-right:6px;
+       background:rgba(90,169,255,.14);border:1px solid rgba(90,169,255,.4);color:#bcdcff}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>命令登记与分派：并发冲突的最佳解法</h1>
+  <div class="sub">对象：<span class="mono">packages/skill-calorie/src/cli/keys.ts</span> · <span class="mono">cli/cmd_read.ts</span> · <span class="mono">cli/write.ts</span>　｜　方法：第一性原理推导 ＋ 与成熟 TS 项目横向对照　｜　2026-09-13</div>
+</header>
+
+<div class="verdict">
+  <p><b>结论（一句话）</b>：在这套仓库的既定约束下——<b>单一工作树、单一 master、多张地图的 session 同时开工</b>——唯一能把冲突降到零的做法是「<b>命令的声明与实现搬回各自能力的目录</b>（第一级）＋ <b>把所有汇总改成由声明确定性生成</b>（第二级）」。第一级是行业标准形状（VS Code 同形）；第二级在常规仓库里可选，在这里是<b>必需</b>，因为常规仓库靠的「分支 ＋ 合并队列」在本仓不存在。</p>
+</div>
+
+<h2>一、问题：这三个文件为什么必然冲突</h2>
+
+<p>它们今天都是<b>手工维护的巨型枚举</b>，而且同一件事实在太多地方各写一遍：</p>
+
+<table>
+  <tr><th>文件</th><th>今天的形状</th><th>谁要改它</th></tr>
+  <tr><td><span class="mono">cli/keys.ts</span></td><td>101 条命令登记（key／形状／标题），手写</td><td>每加一条命令的每一张图</td></tr>
+  <tr><td><span class="mono">cli/cmd_read.ts</span></td><td>66 个 <span class="mono">case</span> 的巨型 switch，1140 行</td><td>同上</td></tr>
+  <tr><td><span class="mono">cli/write.ts</span></td><td>38 个 <span class="mono">case</span>，879 行</td><td>同上</td></tr>
+</table>
+
+<p>再加两处<b>同一事实的副本</b>：<span class="mono">packages/base-combos/combos.yaml</span>（手写的键镜像）与 <span class="mono">scripts/build-help.mjs</span> 的 <span class="mono">REPR</span> 表（key → 代表唤醒词）。也就是说「一条命令叫什么、长什么形状、谁处理它、代表哪条唤醒词」这一组事实，今天有<b>三到四份手写副本</b>。</p>
+
+<p><b>判据只有两个量</b>：① 一次改动要写<b>几个文件</b>；② 这条事实<b>归谁</b>。写的人越多、文件越共用，冲突面越大；归属错了，就是多个人抢同一支笔。在单一工作树里，两个 session 同时写一个文件不是「git 合并冲突」（那还能解），而是<b>后写覆盖、编辑交错</b>。</p>
+
+<h2>二、方案：两级阶梯</h2>
+
+<h3>第一级 · 能力自治（命令的声明与实现搬回能力目录）</h3>
+
+<pre><code>packages/skill-calorie/src/
+├── weight/
+│   ├── commands.ts   ← 权威源：体重全部命令的声明（只有体重这张图改它）
+│   ├── index.ts      ← 对外那道门
+│   └── log.ts / edit.ts / history.ts / curve.ts / volatility.ts / notes.ts / compare.ts / review.ts
+├── goal/commands.ts  ← 目标线的权威源（只有目标线改）
+└── …
+├── cli/
+│   ├── registry.ts   ← 索引：一能力一行（只在“新增能力”时改一行）
+│   ├── cmd_read.ts   ← 薄分派：查表 → 校验 → 调 handler（1140 → 几十行）
+│   ├── write.ts      ← 薄分派：同上（879 → 几十行）
+│   └── keys.ts       ← 第二步后改为生成物
+</code></pre>
+
+<pre><code>// src/weight/commands.ts —— “加一条命令”要写的全部就是这一行
+export const COMMANDS = [
+  { key: 'calorie.weight.log',          shape: 'receipt', title: '记体重',   run: logReceipt  },
+  { key: 'calorie.view.weight-history', shape: 'stat',    title: '体重历史', run: historyDoc },
+] satisfies readonly CommandSpec[];
+</code></pre>
+
+<h3>第二级 · 汇总改为生成（消灭最后的手工面与所有副本）</h3>
+
+<p><span class="mono">scripts/gen-cli.mjs</span> 扫各能力 <span class="mono">commands.ts</span> → <b>确定性排序</b>生成 <span class="mono">keys.ts</span>（导出名不变）、<span class="mono">registry.ts</span>、<span class="mono">combos.yaml</span> 镜像、<span class="mono">SKILL.md</span> 的速查表（<span class="mono">REPR</span> 手写表退役）。生成属于构建动作，本来就在 gate 锁里；配 <span class="mono">pnpm gen:check</span>（生成物 ≠ 生成器输出即红），手改生成物会被机器抓住。</p>
+
+<h3>冲突面对账</h3>
+
+<table>
+  <tr><th>情形</th><th>今天要改</th><th>第一级后</th><th>第二级后</th></tr>
+  <tr><td>加／改一条命令</td><td><span class="mono">keys.ts</span> ＋ <span class="mono">cmd_read.ts</span>（＋<span class="mono">write.ts</span>）＝ 3 处共用</td><td>自己能力目录里的 1 个文件</td><td>同左（且 <span class="mono">keys.ts</span> 变生成物）</td></tr>
+  <tr><td>新增一个能力（新场景／新图）</td><td>3 处共用 ＋ <span class="mono">combos.yaml</span> ＋ <span class="mono">routing.ts</span></td><td>索引 1 行 ＋ 自己的路由段</td><td><b>0</b>（自动被扫到）</td></tr>
+  <tr><td>同一事实的副本数</td><td>3–4 份手写</td><td>2 份（声明 ＋ 索引）</td><td><b>1 份</b>（其余皆派生）</td></tr>
+  <tr><td>超告警线的文件</td><td><span class="mono">cmd_read.ts</span> 1140／<span class="mono">write.ts</span> 879／<span class="mono">routing.ts</span> 814 行</td><td>两个分派层降到几十行</td><td>同样在线内</td></tr>
+</table>
+
+<h2>三、第一性原理：为什么只能是这个方向</h2>
+
+<p>把「避免冲突」这件事推到不能再推，只剩四条定律。</p>
+
+<div class="law"><b>定律一 · 归属</b>：一个事实只能有一个主人，别人只能读。<br>
+命令的 key／形状／标题／处理函数，是<b>某个能力的事实</b>（体重的事实在体重那儿）。它今天住在通用分派文件里，就是归属错位——五个图的 session 抢同一支笔是这条的直接后果。</div>
+
+<div class="law"><b>定律二 · 汇总</b>：若一个文件的内容是若干<b>各自独立拥有</b>的事实的汇总，那它必须是<b>派生的</b>，不能手工维护。<br>
+这一点是纯逻辑：独立拥有意味着这些事实之间没有需要人协商的关系，那么把它们写下来的动作就是机械的；机械的动作交给脚本，写的人就不必是唯一的那个人。</div>
+
+<div class="law"><b>定律三 · 少写者</b>：一次改动要写的文件数，就是它的冲突面。<br>
+把「加一条命令」从「写 3 个共用文件」压到「写 1 个私有文件」，冲突概率不是变小，而是<b>结构性归零</b>——因为两个人不可能同时改各自的私有文件。</div>
+
+<div class="law"><b>定律四 · 可验证</b>：派生必须能被机器验真，否则它会退化成第二份手抄。<br>
+确定性排序（同一份输入必然同一份输出）＋ 哈希锁 ＋ CI 检查（<span class="mono">gen:check</span>）三件配套是<b>成立要件</b>，不是装饰：少掉任何一件，「生成的」文件就会重新被人手改，于是又回到定律二被违反的状态。</div>
+
+<p><b>由四条定律得到的必然结论</b>：① 命令的声明与实现必须搬回能力目录（定律一）；② 共用位必须是派生的（定律二）；③ 这件事的目标是把每次改动的写入集合压到 1 个私有文件（定律三）；④ 派生要配确定性 ＋ 哈希锁 ＋ CI（定律四）。<b>所以本方案不是若干做法的组合里挑一个，而是这四条定律的唯一解</b>。</p>
+
+<h2>四、横向对照：成熟 TS 项目怎么做，我们能照搬哪一层</h2>
+
+<table>
+  <tr><th>项目</th><th>做法</th><th>它凭什么可以这么做</th><th>我们照搬哪一层</th></tr>
+  <tr>
+    <td><b>VS Code</b></td>
+    <td>一个功能一个 <span class="mono">src/vs/workbench/contrib/&lt;feature&gt;/</span> 目录，功能<b>自己</b>注册命令与动作（<span class="mono">registerAction2</span>／<span class="mono">CommandsRegistry</span>）；扩展则在新版 <span class="mono">package.json</span> 里<b>声明式</b>贡献命令（<span class="mono">contributes.commands</span>）</td>
+    <td>有分支 ＋ PR 合并队列；聚合处的「贡献清单」即便有冲突，也能在合并时解掉</td>
+    <td><b>第一级全照搬</b>：一能力一目录、自己拥有命令与实现、分派层变薄。第二级他们没做（也不需要）。</td>
+  </tr>
+  <tr>
+    <td><b>TypeScript 编译器</b></td>
+    <td>诊断信息写在 <span class="mono">diagnosticMessages.json</span>，脚本生成 <span class="mono">diagnosticInformationMap.generated.ts</span>，<b>生成物入库、CI 校验</b></td>
+    <td>单一主人（维护者少）、生成器稳定</td>
+    <td><b>第二级的模板</b>：权威数据 → 生成物 → 哈希锁 ＋ CI 校验。我们只是把权威数据从 JSON 换成各能力的 TS 声明。</td>
+  </tr>
+  <tr>
+    <td><b>ESLint</b></td>
+    <td>一条规则一个文件，外加<b>手写索引</b> <span class="mono">lib/rules/index.js</span></td>
+    <td>索引只在「加规则」时动；冲突靠 PR 与评审消化</td>
+    <td>照搬「一文件一单元」；索引这一层我们用生成替换——因为我们的索引有三份副本、且没有人给它们做评审门禁。</td>
+  </tr>
+  <tr>
+    <td><b>tRPC ／ NestJS</b></td>
+    <td>组合根：<span class="mono">appRouter</span> 一行挂一个子路由；Nest 用装饰器 ＋ 模块发现</td>
+    <td>子路由各自独立，组合根只在新增模块时动</td>
+    <td>我们的 <span class="mono">registry.ts</span> 同形；差别是它由生成器写，连「新增模块」那一行也不需要人加。</td>
+  </tr>
+  <tr>
+    <td><b>yargs</b>（<span class="mono">commandDir()</span>）</td>
+    <td>扫目录自动装载命令模块，不写索引</td>
+    <td>运行时扫描；代价是丢掉静态可枚举</td>
+    <td>思想照搬（用目录当注册表），但改成<b>构建期</b>扫描生成静态表——因为我们的测试要穷举全部键（99／100 的计数断言）。</td>
+  </tr>
+  <tr>
+    <td><b>行业主流（一般 TS 仓库）</b></td>
+    <td>分支 ＋ PR ＋ 合并队列；共用文件冲突在合并时解决</td>
+    <td>工作树隔离</td>
+    <td><b>不可用</b>：本仓是单一工作树、单一 master，没有隔离设施。这正是第二级在这里从「可选」变成「必需」的原因。</td>
+  </tr>
+</table>
+
+<h2>五、那么，它是 TS 项目的最佳方案吗？—— 条件化结论</h2>
+
+<div class="grid">
+  <div class="card">
+    <p><span class="tag">是</span><b>当「多写入者 ＋ 单一工作树」成立时</b></p>
+    <p>此时没有任何机制能在<b>写入时刻</b>隔离两个 session 改同一文件，所以唯一出路是让共用文件<b>退出改动路径</b>。锁只是排队（降低概率、牺牲并行）；分支在这里不存在。<b>派生聚合是唯一解</b>。</p>
+  </div>
+  <div class="card">
+    <p><span class="tag">部分</span><b>常规仓库（有分支与 PR）</b></p>
+    <p>第一级（能力自治 ＋ 薄分派）仍是行业标准形状（VS Code 同形），值得做；第二级<b>可选</b>——它的价值从「避免冲突」变成「消灭三份手抄副本」（<span class="mono">keys.ts</span>／<span class="mono">combos.yaml</span>／<span class="mono">REPR</span>）。这也是 ESLint 至今保留手写索引而 TS 编译器选择生成的原因：看的是副本数与单一主人，不是并发。</p>
+  </div>
+  <div class="card">
+    <p><span class="tag">不适合</span><b>命令面极小的项目</b></p>
+    <p>像 <span class="mono">tsc</span> 只有一组选项：<b>一张中心数据表 ＋ 通用解析</b>最省。要注意：我们的问题从来不是「表」，而是「表有多个主人」——所以不能照抄「一张中心表」。</p>
+  </div>
+  <div class="card">
+    <p><span class="tag bad">反例</span><b>什么情况下这套会变糟</b></p>
+    <p>① 生成器本身被频繁改（不稳定源）；② 生成物没有 CI 校验（于是被手改，退化成第四份手抄）；③ 跨能力共享了本该私有的东西（生成器变成新的争抢点）。<b>三条都要在落地时堵住</b>。</p>
+  </div>
+</div>
+
+<div class="warn">
+  <b>一句话判据</b>：这套方案的成立要件不是「用了生成器」，而是三条同时为真——<b>确定性输出</b>、<b>哈希锁</b>、<b>CI 校验</b>。缺任何一条，它就从「最佳方案」变成「多了一层会骗人的中间产物」。
+</div>
+
+<h2>六、落地顺序与代价</h2>
+
+<table>
+  <tr><th>步骤</th><th>内容</th><th>代价／风险</th></tr>
+  <tr><td>过渡（今天可用）</td><td>① 六个共用文件（两处 <span class="mono">cli</span> 两个分派 ＋ <span class="mono">keys.ts</span> ＋ <span class="mono">combos.yaml</span> ＋ <span class="mono">routing.ts</span> ＋ <span class="mono">SKILL.md</span>）列入「共用位白名单」：改前抢 <span class="mono">gate.lock</span>、改完立刻 commit ＋ push；② 各图在票面声明写集，撞车时停下报告</td><td>跨 session 排队，慢但零风险</td></tr>
+  <tr><td>第一级</td><td>建 <span class="mono">src/&lt;能力&gt;/commands.ts</span>、搬处理函数、分派层改成查表</td><td>动 10 个 src 引用点；测试的<b>形状</b>断言不变</td></tr>
+  <tr><td>第二级</td><td>写 <span class="mono">gen-cli.mjs</span>、<span class="mono">keys.ts</span> 转生成物、<span class="mono">combos.yaml</span> 与 <span class="mono">REPR</span> 归并、接 <span class="mono">gen:check</span></td><td>动 <b>9 个钉死计数的断言</b>（99→100 那批，只改数字）；需要一次「冻结三处 ＋ 广播」</td></tr>
+</table>
+
+<p class="muted">顺带解掉的账：<span class="mono">cmd_read.ts</span> 1140 行、<span class="mono">write.ts</span> 879 行、<span class="mono">routing.ts</span> 814 行全部超过本包 350 行的告警线——它们变薄、变生成物之后自然回到线内。这条改造与既有的 <b>#181「命令分派重构」</b>是同一条线，建议并入 #181，由一条 session 独占。</p>
+
+<h2>七、与地图 #154（场景 03 体重）的关系</h2>
+
+<ul>
+  <li>本图第 3–7 张票（量体重／改体重记录、看体重明细／曲线、对比体重、体重复盘、看体重稳不稳）<b>本来就只在 <span class="mono">src/weight/</span> 里干活</b>——第一级落地后，它们对共用位的接触是 <b>0</b>。</li>
+  <li>第 2 张票（骨架）做一次「委托」：把体重的分支改成调 <span class="mono">src/weight/index.ts</span> 那道门；此后第 8／9 张只剩 <span class="mono">routing.ts</span> 的几十行与 <span class="mono">SKILL.md</span> 体重侧。</li>
+  <li>结论：<b>本图不等改造</b>——改造票（并入 #181）与各能力目录里的开发可以并行，只要在改造落地前遵守「共用位白名单 ＋ 抢锁」这条过渡纪律。</li>
+</ul>
+
+<footer>
+  <p><b>参考</b>：VS Code 的动作注册演进（<span class="mono">registerAction2</span> 取代 <span class="mono">registerWorkbenchAction</span>）见 <a href="https://github.com/microsoft/vscode/commit/3002f23f15aba87f45e39bf5e302763c9c22c136">microsoft/vscode@3002f23</a>；扩展的命令以声明式贡献点写在 <span class="mono">package.json</span> 的 <span class="mono">contributes.commands</span>（<a href="https://code.visualstudio.com/api/references/contribution-points">Contribution Points</a>）；TypeScript 诊断信息的「JSON 权威源 → 生成物 → CI 校验」见 <a href="https://deepwiki.com/microsoft/TypeScript/9.1-diagnostic-messages-authoring-and-generation">Diagnostic Messages Authoring and Generation</a> 与 <a href="https://github.com/microsoft/TypeScript/pull/17463/files">PR #17463</a>；<span class="mono">yargs</span> 的目录自动装载见 <a href="https://github.com/yargs/yargs/pull/1613/files"><span class="mono">commandDir()</span> 文档 PR</a>。ESLint 的手写规则索引（<span class="mono">lib/rules/index.js</span>）与 tRPC 的组合根属于公开源码里可核的通行做法。</p>
+  <p>文件位置：<span class="mono">docs/skills/skill-calorie/命令登记与分派-方案.html</span>（技能件目录；长期文档用主题名，见 <span class="mono">docs/agents/doc-homes.md</span>）。</p>
+</footer>
+
+</div>
+</body>
+</html>
