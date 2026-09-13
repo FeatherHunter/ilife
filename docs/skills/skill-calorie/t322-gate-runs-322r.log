@@ -1,0 +1,11 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：322r｜since：2026-09-13T20:03:45+08:00｜until：2026-09-13T20:14:00+08:00｜条目数：3｜导出时间：2026-09-13T12:15:56.054Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=322r runId=bbc47334-b53a-4f7d-a88a-051862873d98 cmd="pwsh -NoProfile -File .scratch/t322r/s1-count.ps1" waitedMs=0 exit=0 pid=3144 at=2026-09-13T12:03:53.736Z
+RUN ticket=322r runId=2aee2330-a706-4fef-af74-ba16a9ff7e2f cmd="pwsh -NoProfile -File .scratch/t322r/s2-frozen.ps1" waitedMs=1 exit=0 pid=24524 at=2026-09-13T12:04:31.979Z
+RUN ticket=322r runId=14d28619-b191-4ed6-9ccf-da25fdbcd2c8 cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=0 exit=0 pid=51888 at=2026-09-13T12:13:44.095Z
+```
