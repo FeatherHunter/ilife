@@ -31,6 +31,7 @@ const P = {
   REG: 'packages/skill-calorie/src/cli/registry.ts',
   LEGACY: 'packages/skill-calorie/src/cli/legacyCommands.ts',
   WEIGHT_DECL: 'packages/skill-calorie/src/weight/commands.ts',
+  SPEC: 'packages/skill-calorie/src/shared/commandSpec.ts',
   READ: 'packages/skill-calorie/src/cli/cmd_read.ts',
   WRITE: 'packages/skill-calorie/src/cli/write.ts',
   YAML: 'packages/base-combos/combos.yaml',
@@ -142,7 +143,163 @@ const sandboxSha = (rel) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // P1 · 自治：加一条命令，除能力目录里的声明与生成物外，还要手改哪些文件
+//
+// 判据分三桶（#295 红队审查 5af4dd1 指出：只数生成器输出面会报假绿——同一个
+// build-help.mjs 里还有第二处手写的「一条命令的事实」（exampleFor 的逐键 case），
+// 另有若干钉死计数的断言也不在派生面上）：
+//   ① DERIVED            不用手改（生成物＋分派＋已对账的断言）
+//   ② DISCIPLINED-SHARED 必须手改，但已被认下并写进 #296「照抄说明」第②项（routing.ts）
+//   ③ UNACCOUNTED        必须手改、既没派生也没纪律覆盖 ⇒ 有它就 P1=FAIL
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** 现行权威总量（键／写／读／体重）：既要报账，也当"钉死计数"断言的搜索锚。 */
+async function authorityTotals() {
+  const wd = await weightDecls();
+  const legacySrc = read(P.LEGACY) || '';
+  const legacy = [...legacySrc.matchAll(/kind:\s*'(read|write)',\s*key:\s*'([^']+)'/g)].map((m) => ({ kind: m[1], key: m[2] }));
+  if (!wd.ok) return { ok: false, why: wd.why, legacy };
+  const all = [...legacy, ...wd.list.map((c) => ({ kind: c.kind, key: c.key }))];
+  const writes = all.filter((c) => c.kind === 'write').length;
+  return { ok: true, total: all.length, writes, reads: all.length - writes, weight: wd.list.length, legacy, wd };
+}
+
+/** 钉死计数：断言行里直接写死命令/键的数字——加删一条命令就必须手改那一行。 */
+function pinnedCountSurfaces(t) {
+  const anchors = [
+    { v: t.total, re: /KEYS|KEY\b|键|coveredKeys|COMMAND|声明/i, what: '总键数' },
+    { v: t.writes, re: /WRITE|SCENARIO|receipt|写|键/i, what: '写键数' },
+    { v: t.reads, re: /READ|读|KEYS|键/i, what: '读键数' },
+    { v: t.weight, re: /WEIGHT|体重/i, what: '体重键数' },
+  ];
+  const hits = [];
+  const seen = new Set();
+  for (const a of anchors) {
+    const g = git('grep', '-n', '-E', '-e', '\\b' + a.v + '\\b', '--', 'packages/skill-calorie/test', 'test');
+    if (g.status !== 0 && !g.out.trim()) continue;
+    for (const raw of g.out.split('\n').filter(Boolean)) {
+      const i1 = raw.indexOf(':');
+      const i2 = raw.indexOf(':', i1 + 1);
+      if (i1 < 0 || i2 < 0) continue;
+      const file = raw.slice(0, i1).replace(/\\/g, '/');
+      const line = Number(raw.slice(i1 + 1, i2));
+      const text = raw.slice(i2 + 1).trim();
+      const k = file + ':' + line;
+      if (seen.has(k)) continue;
+      if (!/assert|equal|===|deepEqual|ok\(/.test(text)) continue; // 只认断言行
+      if (!a.re.test(text)) continue;                              // 只认"命令数"语境
+      if (/\[\s*\d/.test(text)) continue;                           // 排掉数组字面量（[3, 9, 8…]）
+      // 排掉小数点里的数字（22.9 里的 9 不是计数）
+      if (!new RegExp('\\b' + a.v + '\\b').test(text.replace(/\d+\.\d+/g, '·'))) continue;
+      seen.add(k);
+      if (/DECLARED_[A-Z_]+/.test(text)) continue;                  // 已与声明对账 → 算派生
+      hits.push({ file, line, what: a.what, value: a.v, text: text.slice(0, 150) });
+    }
+  }
+  return hits;
+}
+
+/** exampleFor：判它是**派生**（读生成表）还是**手写**（逐键一条 case）。两种形态都见过：
+ *   · 返修前：函数体里 101 条 `case '<key>':` ＋ `default: throw`（＝同一文件里第二处手写的事实表）；
+ *   · 返修后（#295 A3）：函数体读 gen-cli.mjs 生成的 EXAMPLE 标记块（示例住声明的 `example` 字段）。
+ *  形态不认识 ⇒ 按"未认下"记（宁可报红，不报假绿）。 */
+function exampleForSurface() {
+  const bh = read(P.BUILD_HELP);
+  if (bh === null) return { ok: false, why: '缺 ' + P.BUILD_HELP };
+  const idx = bh.indexOf('function exampleFor(');
+  if (idx < 0) return { ok: false, why: P.BUILD_HELP + ' 里找不到示例函数 exampleFor（若又改形态，请更新本探针）' };
+  const cut = bh.indexOf('\n}', idx);
+  const bodyEnd = cut > idx ? cut : bh.length;
+  const body = bh.slice(idx, bodyEnd);
+  const cases = [...body.matchAll(/case '([^']+)':/g)].map((m) => m[1]);
+  const startLine = bh.slice(0, idx).split('\n').length;
+  const endLine = bh.slice(0, bodyEnd).split('\n').length;
+  const rest = bh.slice(idx);
+  const dflt = rest.match(/default:\s*throw|throw new Error\('exampleFor 缺 case/);
+  const base = { ok: true, cases, startLine, endLine, defLine: dflt ? bh.slice(0, idx + rest.indexOf(dflt[0])).split('\n').length : null };
+  if (cases.length) return { ...base, kind: 'handwritten' };
+  const ms = bh.lastIndexOf('// -- GEN-CLI-START EXAMPLE', idx);
+  const me = bh.lastIndexOf('// -- GEN-CLI-END EXAMPLE', idx);
+  const table = ms >= 0 && me > ms ? bh.slice(ms, me) : null;
+  if (!table) return { ...base, kind: 'unknown', why: '函数体既没有逐键 case，也不见 gen-cli 的 EXAMPLE 标记块' };
+  const nm = /const\s+([A-Za-z_$][\w$]*)\s*=\s*\{/.exec(table);
+  const readTable = nm && new RegExp('\\b' + nm[1] + '\\s*\\[').test(body) ? nm[1] : null;
+  if (!readTable) return { ...base, kind: 'unknown', why: '有 EXAMPLE 标记块，但函数体没读那张表' };
+  const spec = read(P.SPEC) || '';
+  return {
+    ...base,
+    kind: 'derived',
+    table: readTable,
+    tableEntries: (table.match(/^\s*'[^']+':/gm) || []).length,
+    specHasExample: /readonly example/.test(spec) || /\bexample\??:\s*string/.test(spec),
+  };
+}
+
+/** routing.ts：手写路由表（新键要能被唤醒词命中就得加一条 exec 路由），有机器守。 */
+function routingSurface() {
+  const r81 = read('test/calorie-routing-81.test.mjs');
+  const line = r81 ? r81.split('\n').findIndex((l) => /coveredKeys:\s*DECLARED_KEYS\.length/.test(l)) + 1 : null;
+  const t = read(P.ROUTING);
+  let keys = null;
+  if (t) {
+    // 去掉注释行再解析：每条 exec 记录带一个 key（记录可能跨行，故按 kind 位置向后取最近一个 key）。
+    const code = t.split('\n').filter((l) => !/^\s*(\*|\/\/)/.test(l)).join('\n');
+    const s = new Set();
+    for (const m of code.matchAll(/kind:\s*'exec'/g)) {
+      const k = code.slice(m.index, m.index + 400).match(/key:\s*'([^']+)'/);
+      if (k) s.add(k[1]);
+    }
+    keys = s.size;
+  }
+  return { enforcer: line > 0 ? line : null, keys };
+}
+
+/** 三桶：加一条命令必须手改的面，逐处分桶。 */
+async function changeSurfaces() {
+  const t = await authorityTotals();
+  const out = {
+    derived: [],
+    disciplined: [],
+    unaccounted: [],
+    incomplete: [],
+    totals: t.ok ? { total: t.total, writes: t.writes, reads: t.reads, weight: t.weight } : null,
+  };
+  out.derived.push('四件生成物：src/cli/keys.ts／src/cli/registry.ts／packages/base-combos/combos.yaml 镜像段／scripts/build-help.mjs 的 REPR 块（pnpm gen 重生成，pnpm gen:check 守）');
+  out.derived.push('两个分派文件 src/cli/cmd_read.ts／write.ts（registry 先行，体重 9 键零分支）');
+  out.derived.push('已改成与权威声明对账的计数断言（import test/declared.mjs 的那批，#295 的 467cf64）');
+  const ef = exampleForSurface();
+  if (!ef.ok || ef.kind === 'unknown') {
+    out.unaccounted.push({ where: P.BUILD_HELP, what: 'exampleFor 形态不认识 ⇒ 按未认下记：' + (ef.why || '判定失败') });
+  } else if (ef.kind === 'handwritten') {
+    const missing = t.ok ? t.wd.list.map((c) => c.key).filter((k) => !ef.cases.includes(k)) : [];
+    out.unaccounted.push({
+      where: `${P.BUILD_HELP}:${ef.startLine}-${ef.endLine}` + (ef.defLine ? `（default 抛在 :${ef.defLine}）` : ''),
+      what: `exampleFor：逐键一条 case（现 ${ef.cases.length} 条）＋ 缺键即抛——同一文件里第二处手写「一条命令的事实」（每键的示例参数／可执行样例）。新键必手添一条。`,
+      coverage: t.ok ? `权威 ${t.total} 键 vs exampleFor ${ef.cases.length} 条 case` + (missing.length ? `，缺 ${missing.length} 条：${missing.slice(0, 8).join('、')}` : '（当下齐，但新键必手改）') : '权威键数未知',
+    });
+  } else {
+    out.derived.push(
+      `${P.BUILD_HELP}:${ef.startLine} 的 exampleFor 读生成表 ${ef.table}（gen-cli 的 EXAMPLE 标记块）——示例住声明的 example 字段（CommandSpec 带 example=${ef.specHasExample}）；新键不必手改本文件`,
+    );
+    if (t.ok && ef.tableEntries < t.total) {
+      out.incomplete.push(`生成表 ${ef.table} 现有 ${ef.tableEntries} 条 < 权威 ${t.total} 键 ⇒ 返修在途／生成物未重生成（此刻 pnpm build 必挂）——本条判据在此状态不可判`);
+    }
+  }
+  if (t.ok) {
+    for (const h of pinnedCountSurfaces(t)) {
+      out.unaccounted.push({ where: h.file + ':' + h.line, what: `钉死${h.what}断言（字面量 ${h.value}）：加删一条命令就必须手改本行——${h.text}` });
+    }
+  } else {
+    out.unaccounted.push({ where: '（未判）', what: '钉死计数扫描跳过：' + t.why });
+  }
+  const rs = routingSurface();
+  out.disciplined.push({
+    where: P.ROUTING + (rs.keys !== null ? `（手写 exec 路由覆盖 ${rs.keys} 键）` : ''),
+    what: '新键要能被唤醒词命中就必须往路由表加一条 exec 路由（手写表，键必在键表内）——已被认下：处置＝写进 #296「照抄说明」第②项，且动前抢锁。',
+    enforcer: rs.enforcer ? `test/calorie-routing-81.test.mjs:${rs.enforcer} coveredKeys = DECLARED_KEYS.length（新键不加路由 ⇒ 覆盖数 ≠ 声明数）` : '未见 coveredKeys 对账断言',
+  });
+  return out;
+}
+
 async function p1(w) {
   const genSrc = read(P.GEN);
   if (!genSrc) return set('P1', 'PENDING', '缺生成器 ' + P.GEN + '，无法判定自治面。');
@@ -156,6 +313,10 @@ async function p1(w) {
   if (/BUILD_HELP/.test(genSrc)) inputs.push(P.BUILD_HELP + '（只重写 REPR 标记块）');
   const lines = [];
   lines.push('生成器输出面（' + targetPaths.length + ' 处）：' + targetPaths.join(' ; '));
+  // 输出面判据：不许变窄（四件必须仍在），也不假定永远只有四件（#295 返修 A3 就加了第五件 EXAMPLE 表）。
+  const targetJoin = targetPaths.join(' ');
+  const targetsOk = targetPaths.length >= 4 && /keys\.ts/.test(targetJoin) && /registry\.ts/.test(targetJoin) && /COMBO_YAML/.test(targetJoin) && /BUILD_HELP/.test(targetJoin);
+  lines.push('输出面没变窄（keys／registry／combos 镜像／build-help 至少这四件仍在）：' + targetsOk);
   lines.push('生成器输入面：' + inputs.join(' ; '));
   // ② 静态：生成物必须自证是派生（横幅／标记块），否则"生成物"这句话本身不成立。
   const derived = [];
@@ -182,28 +343,55 @@ async function p1(w) {
   const regFirst = /const spec = REGISTRY\[key\]/.test(readSrc) && /const spec = REGISTRY\[key\]/.test(writeSrc);
   lines.push('两个分派文件 registry 先行（命中即走能力目录，不必再手加 case）：' + regFirst);
 
-  // ⑥ 动态：仓外临时根真跑——加一条假命令，看生成器能不能扫到、要不要碰分派文件。
+  // ⑦ 手写面三桶（红队 5af4dd1 补的那几处：exampleFor ＋ 钉死计数；routing.ts 归纪律桶）。
+  const buckets = await changeSurfaces();
+  const unacct = buckets.unaccounted.length;
+  lines.push('── 手写面三桶（"加一条命令"必须手改的面，逐处）──');
+  lines.push(`  ① DERIVED（不用手改，${buckets.derived.length} 类）：`);
+  for (const d of buckets.derived) lines.push('     · ' + d);
+  lines.push(`  ② DISCIPLINED-SHARED（必须手改，已认下 → #296「照抄说明」第②项，${buckets.disciplined.length} 处）：`);
+  for (const d of buckets.disciplined) lines.push(`     · ${d.where}｜${d.what}｜机器守：${d.enforcer}`);
+  lines.push(`  ③ UNACCOUNTED（必须手改、既没派生也没纪律覆盖，${unacct} 处）：`);
+  for (const d of buckets.unaccounted) lines.push(`     · ${d.where}｜${d.what}${d.coverage ? '｜' + d.coverage : ''}`);
+  lines.push(unacct ? '  ⇒ UNACCOUNTED 非空 ⇒ P1=FAIL（返修席的目标：把它们移进 ① 派生 或 ② 纪律）' : '  ⇒ UNACCOUNTED 为空 ⇒ 手写面已全部落在 ①/② 内');
+  if (buckets.incomplete.length) {
+    lines.push(`  ⚠ 树自相矛盾（${buckets.incomplete.length} 条）：`);
+    for (const d of buckets.incomplete) lines.push('     · ' + d);
+  }
+  // 状态口径：UNACCOUNTED 非空 ⇒ FAIL；否则树上自相矛盾（返修在途）⇒ PENDING；否则按静态/动态判定。
+  const staticBase = targetsOk && inputs.length >= 5 && derived.every((d) => d.includes('有派生标记')) && importFromIndex && dupThrow && regFirst;
+  const verdict = (dynOk) => {
+    if (unacct) return 'FAIL';
+    if (buckets.incomplete.length) return 'PENDING';
+    const dyn = dynOk === undefined ? true : dynOk;
+    return staticBase && dyn ? 'PASS' : 'FAIL';
+  };
+
+  // ⑧ 动态：仓外临时根真跑——加一条假命令，看生成器能不能扫到、要不要碰分派文件。
   const sb = buildSandbox();
   if (sb) {
     lines.push('动态实验未跑：' + sb.why);
-    const staticOk = targetPaths.length === 4 && inputs.length === 5 && derived.every((d) => d.includes('有派生标记')) && importFromIndex && dupThrow && regFirst;
-    set('P1', staticOk ? 'PASS' : 'FAIL', ...lines, '（仅静态判定：动态实验缺条件）');
-    data('P1', { dynamic: false, targetPaths, inputs });
+    set('P1', verdict(true), ...lines, '（静态判定见上；动态实验缺条件；三桶判定不依赖动态）');
+    data('P1', { dynamic: false, targetPaths, inputs, buckets });
     return;
   }
   const base = gen('check');
   if (base.status !== 0) {
     lines.push('动态实验未跑：临时根里 `gen:check` 基线不为 0（exit ' + base.status + '），沙箱本身不干净。');
-    set('P1', 'PENDING', ...lines, '（静态判定见上；沙箱基线脏，动态部分未判）');
-    data('P1', { dynamic: false, targetPaths, inputs });
+    set('P1', unacct ? 'FAIL' : 'PENDING', ...lines, unacct ? '（三桶判定独立于动态实验：UNACCOUNTED 非空即 FAIL）' : '（静态判定见上；沙箱基线脏，动态部分未判）');
+    data('P1', { dynamic: false, targetPaths, inputs, buckets });
     return;
   }
   // 假能力：目录里只写声明（＋ index 再导出），dist 侧用"编译产物等价物"顶替（生成器读编译模块）。
   const dirs = ['packages/skill-calorie/src/fakecap', 'packages/skill-calorie/dist/fakecap'];
   for (const d of dirs) mkdirSync(join(TMP_ROOT, d), { recursive: true });
-  writeFileSync(join(TMP_ROOT, dirs[0], 'commands.ts'), "export const FAKE_COMMANDS = [\n  { kind: 'write', key: 'calorie.fake.demo', shape: 'receipt', title: '假写键', wakeWord: '记假数据' },\n  { kind: 'read', key: 'calorie.fake.view', shape: 'stat', title: '假读键', wakeWord: '看假数据' },\n] as const;\n");
+  const FAKE = [
+    "{ kind: 'write', key: 'calorie.fake.demo', shape: 'receipt', title: '假写键', wakeWord: '记假数据', example: 'calorie-cmd-read calorie.fake.demo --params \\'{\"kg\":1}\\'' }",
+    "{ kind: 'read', key: 'calorie.fake.view', shape: 'stat', title: '假读键', wakeWord: '看假数据', example: 'calorie-cmd-read calorie.fake.view' }",
+  ];
+  writeFileSync(join(TMP_ROOT, dirs[0], 'commands.ts'), 'export const FAKE_COMMANDS = [\n  ' + FAKE.join(',\n  ') + ',\n] as const;\n');
   writeFileSync(join(TMP_ROOT, dirs[0], 'index.ts'), "export { FAKE_COMMANDS } from './commands.js';\n");
-  writeFileSync(join(TMP_ROOT, dirs[1], 'commands.js'), "export const FAKE_COMMANDS = [\n  { kind: 'write', key: 'calorie.fake.demo', shape: 'receipt', title: '假写键', wakeWord: '记假数据' },\n  { kind: 'read', key: 'calorie.fake.view', shape: 'stat', title: '假读键', wakeWord: '看假数据' },\n];\n");
+  writeFileSync(join(TMP_ROOT, dirs[1], 'commands.js'), 'export const FAKE_COMMANDS = [\n  ' + FAKE.join(',\n  ') + ',\n];\n');
   const before = { read: sandboxSha(P.READ), write: sandboxSha(P.WRITE), legacy: sandboxSha(P.LEGACY) };
   const g = gen('write');
   const got = {
@@ -213,27 +401,32 @@ async function p1(w) {
     keysHasRead: (readFileSync(join(TMP_ROOT, P.KEYS), 'utf8')).includes("'calorie.fake.view'"),
     yamlHas: (readFileSync(join(TMP_ROOT, P.YAML), 'utf8')).includes('key: calorie.fake.demo'),
     reprHas: (readFileSync(join(TMP_ROOT, P.BUILD_HELP), 'utf8')).includes("'记假数据'"),
+    exampleHas: (readFileSync(join(TMP_ROOT, P.BUILD_HELP), 'utf8')).includes("'calorie.fake.demo': 'calorie-cmd-read calorie.fake.demo"),
   };
   const untouched = { read: sandboxSha(P.READ) === before.read, write: sandboxSha(P.WRITE) === before.write, legacy: sandboxSha(P.LEGACY) === before.legacy };
   lines.push('动态：加假能力后 `gen` exit=' + g.status + '；生成器扫到=' + got.scanned + '（输出含 fakecap=' + got.scanned + '）');
-  lines.push('  假事实自动流进：registry=' + got.registryImports + ' keys(写)=' + got.keysHasWrite + ' keys(读)=' + got.keysHasRead + ' combos 镜像=' + got.yamlHas + ' REPR=' + got.reprHas);
+  lines.push('  假事实自动流进：registry=' + got.registryImports + ' keys(写)=' + got.keysHasWrite + ' keys(读)=' + got.keysHasRead + ' combos 镜像=' + got.yamlHas + ' REPR=' + got.reprHas + ' EXAMPLE 表=' + got.exampleHas);
   lines.push('  分派两文件 + legacyCommands 逐字节未动=' + JSON.stringify(untouched));
   let dynOk = g.status === 0 && Object.values(got).every(Boolean) && Object.values(untouched).every(Boolean);
-  // 迁移冲突：假能力声明一条已搬迁清单里的老键 → 生成期必须抛（这就是"必须手删那行"的机器证据）。
+  // 迁移冲突：假能力声明一条**仍在**未搬迁清单里的老键 → 生成期必须抛（"必须手删那行"的机器证据）。
+  // 注意：声明字段随契约走（#295 返修 A3 起 `example` 是必填），漏字段会让 gen 因别的原因红——那是假证据。
   mkdirSync(join(TMP_ROOT, 'packages/skill-calorie/src/fakecap2'), { recursive: true });
   mkdirSync(join(TMP_ROOT, 'packages/skill-calorie/dist/fakecap2'), { recursive: true });
-  writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/src/fakecap2/commands.ts'), "export const DUP = [{ kind: 'write', key: 'calorie.diet.add', shape: 'receipt', title: '撞键', wakeWord: '记一餐' }];\n");
-  const legacyFirst = (read(`${P.LEGACY}`) || '').match(/key:\s*'([^']+)'/);
-  const dupKey = legacyFirst ? legacyFirst[1] : 'calorie.diet.add';
-  writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/dist/fakecap2/commands.js'), "export const DUP = [{ kind: 'write', key: '" + dupKey + "', shape: 'receipt', title: '撞键', wakeWord: '撞词' }];\n");
+  const legacySrc = read(P.LEGACY) || '';
+  const legacyKeys = [...legacySrc.matchAll(/kind:\s*'(read|write)',\s*key:\s*'([^']+)'/g)].map((m) => m[2]);
+  const dupKey = legacyKeys[0] || 'calorie.diet.add';
+  const dupDecl = `{ kind: 'write', key: '${dupKey}', shape: 'receipt', title: '撞键', wakeWord: '撞词', example: 'calorie-cmd-read ${dupKey}' }`;
+  writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/src/fakecap2/commands.ts'), `export const DUP = [${dupDecl}];\n`);
+  writeFileSync(join(TMP_ROOT, 'packages/skill-calorie/dist/fakecap2/commands.js'), `export const DUP = [${dupDecl}];\n`);
   const g2 = gen('write');
-  const dupCaught = g2.status !== 0 && g2.out.includes('命令键重复登记');
-  lines.push('  迁移撞键（假能力声明一条仍在 legacyCommands.ts 的键 ' + dupKey + '）→ gen exit=' + g2.status + '，报「命令键重复登记」=' + dupCaught);
+  const dupCaught = g2.status !== 0 && /命令键重复登记/.test(g2.out);
+  lines.push(`  迁移撞键（假能力声明一条仍在未搬迁清单里的键 ${dupKey}，共 ${legacyKeys.length} 条候选）→ gen exit=${g2.status}，报「命令键重复登记」=${dupCaught}`);
+  if (g2.status !== 0 && !dupCaught) lines.push('     （exit≠0 但不是撞键报错，说明沙箱里另有失败原因：' + g2.out.split('\n').filter(Boolean).slice(0, 2).join(' / ').slice(0, 200) + '）');
   dynOk = dynOk && dupCaught;
   lines.push('已清理临时根：' + cleanupTmp());
-  const ok = targetPaths.length === 4 && inputs.length === 5 && derived.every((d) => d.includes('有派生标记')) && importFromIndex && dupThrow && regFirst && dynOk;
-  set('P1', ok ? 'PASS' : 'FAIL', ...lines);
-  data('P1', { dynamic: true, targetPaths, inputs, got, untouched, dupCaught });
+  const ok = staticBase && dynOk && unacct === 0 && buckets.incomplete.length === 0;
+  set('P1', verdict(dynOk), ...lines, `动态（派生桶）证据齐=${dynOk}；UNACCOUNTED=${unacct} 处；树自相矛盾=${buckets.incomplete.length} 处` + (unacct ? ' ⇒ P1=FAIL：这些面既没派生也没纪律覆盖' : buckets.incomplete.length ? ' ⇒ P1=PENDING：返修在途，生成物未重生成' : ok ? '' : ' ⇒ P1=FAIL：静态/动态判据未过'));
+  data('P1', { dynamic: true, targetPaths, inputs, got, untouched, dupCaught, buckets, ok });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
