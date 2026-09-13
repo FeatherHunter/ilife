@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>场景 04 运动 · 待决策清单（#167）</title>
+<style>
+:root{
+  --fg:#1d1d1f; --fg2:#6e6e73; --fg3:#8a8a8e;
+  --bg:#f5f5f7; --card:#fff; --line:#e3e3e6; --line2:#d2d2d7;
+  --blue:#007aff; --blue-soft:#eef5ff;
+  --ok:#1c8c4a; --ok-soft:#eaf7ef;
+  --warn:#b25000; --warn-soft:#fff5e9;
+  --bad:#c0392b; --bad-soft:#fdeeec;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 28px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px 80px}
+
+header.top{
+  background:linear-gradient(180deg,#fff 0%,#fbfbfd 100%);
+  border-bottom:1px solid var(--line);
+  padding:30px 0 24px; margin-bottom:22px;
+}
+header.top .wrap{padding-bottom:0}
+.eyebrow{font-size:12.5px;color:var(--fg3);letter-spacing:.06em;margin:0 0 8px}
+h1{font-size:25px;line-height:1.3;margin:0 0 10px;letter-spacing:-.01em}
+.lede{margin:0;color:var(--fg2);font-size:14.5px}
+.lede b{color:var(--fg)}
+
+.band{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0 26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;box-shadow:var(--shadow)}
+.stat .n{font-size:27px;font-weight:650;letter-spacing:-.02em;line-height:1.1}
+.stat .n.bad{color:var(--bad)} .stat .n.warn{color:var(--warn)} .stat .n.ok{color:var(--ok)}
+.stat .t{font-size:13px;color:var(--fg2);margin-top:5px}
+.stat .k{font-size:11.5px;color:var(--fg3);margin-top:2px}
+
+nav.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px}
+nav.chips a{
+  font-size:13px;text-decoration:none;color:var(--fg2);background:var(--card);
+  border:1px solid var(--line2);border-radius:999px;padding:5px 12px;white-space:nowrap;
+}
+nav.chips a:hover{border-color:var(--blue);color:var(--blue)}
+
+h2.sec{font-size:13px;letter-spacing:.08em;color:var(--fg3);margin:34px 0 12px;font-weight:600}
+
+details.facts{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:8px}
+details.facts>summary{cursor:pointer;padding:14px 18px;font-weight:600;font-size:14.5px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px}
+details.facts>summary::-webkit-details-marker{display:none}
+details.facts>summary::after{content:"展开";font-size:12.5px;color:var(--blue);font-weight:500}
+details.facts[open]>summary::after{content:"收起"}
+details.facts .body{padding:0 18px 18px;border-top:1px solid var(--line)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--fg3);font-weight:600;letter-spacing:.03em;background:#fafafc}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;background:#f2f2f5;padding:1px 5px;border-radius:5px}
+.ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+
+.q{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin:0 0 16px;overflow:hidden}
+.q>.head{padding:16px 18px 14px;border-bottom:1px solid var(--line);background:#fcfcfe}
+.q .tag{display:inline-block;font-size:11.5px;font-weight:700;color:var(--blue);background:var(--blue-soft);border-radius:6px;padding:2px 8px;margin-bottom:8px;letter-spacing:.04em}
+.q h3{font-size:16.5px;margin:0;line-height:1.4;letter-spacing:-.005em}
+.q .why{margin:9px 0 0;font-size:13.5px;color:var(--fg2)}
+.q>.body{padding:16px 18px 18px}
+.lbl{font-size:12px;letter-spacing:.06em;color:var(--fg3);font-weight:600;margin:0 0 7px}
+.q ul.pts{margin:0 0 14px;padding-left:19px;font-size:13.5px}
+.q ul.pts li{margin:3px 0}
+
+.opts{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
+.opt{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}
+.opt .letter{font-weight:700;color:var(--fg3);font-size:13px;padding-top:1px}
+.opt .txt{font-size:13.5px}
+.opt .pc{font-size:12.5px;margin-top:5px;color:var(--fg2)}
+.opt .pc span.p{color:var(--ok)} .opt .pc span.c{color:var(--bad)}
+.opt.pick{border-color:var(--ok);background:var(--ok-soft);border-width:1.5px}
+.opt.pick .letter{color:var(--ok)}
+
+.rec{display:flex;gap:10px;align-items:flex-start;background:var(--blue-soft);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:11px 13px;font-size:13.5px}
+.rec .mark{font-weight:700;color:var(--blue);white-space:nowrap}
+.rec b{color:var(--fg)}
+.note{margin:12px 0 0;font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:9px;padding:9px 12px}
+
+footer.end{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+footer.end h3{margin:0 0 8px;font-size:15px}
+footer.end ol{margin:0;padding-left:20px;font-size:13.5px;color:var(--fg2)}
+footer.end li{margin:4px 0}
+.meta{margin-top:16px;font-size:12px;color:var(--fg3);text-align:center}
+
+@media (max-width:720px){
+  .band{grid-template-columns:repeat(2,1fr)}
+  h1{font-size:21px}
+}
+@media print{
+  body{background:#fff} nav.chips{display:none}
+  .q,details.facts,footer.end,.stat{box-shadow:none}
+  details.facts{page-break-inside:avoid} .q{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <p class="eyebrow">地图 #156 · 票 #167「公共层提取与边界」 · 2026-09-13 · <strong style="color:var(--ok)">已拍定</strong></p>
+  <h1>场景 04 运动 · 8 个决定（已定，票已建）</h1>
+  <p class="lede">39 条唤醒词在<strong>老技能里 39/39 全都做过</strong>。今天真正的欠账只有 4 处，本图是 <strong>5 张票</strong>的活。<br>下面每条都给了前因、关键数字、选项利弊与推荐；<strong>8 条已按推荐拍定</strong>，落点见下方「拍定结果」。</p>
+</div></header>
+
+<div class="wrap">
+
+  <div class="band">
+    <div class="stat"><div class="n bad">13</div><div class="t">条写类的产物还是片段</div><div class="k">252／282／335 字节</div></div>
+    <div class="stat"><div class="n bad">7</div><div class="t">条读类命令指错页</div><div class="k">专面页其实已经存在</div></div>
+    <div class="stat"><div class="n warn">5</div><div class="t">条词缺「记录级明细」</div><div class="k">今日／昨日／三种筛选</div></div>
+    <div class="stat"><div class="n warn">1</div><div class="t">条词没有命令可执行</div><div class="k">看运动记录（有备注）</div></div>
+  </div>
+
+  <nav class="chips">
+    <a href="#q1">Q1 欠账清单</a>
+    <a href="#q2">Q2 票怎么切</a>
+    <a href="#q3">Q3 回执做到哪一层</a>
+    <a href="#q4">Q4 运动记录页</a>
+    <a href="#q5">Q5 页面内容核不核</a>
+    <a href="#q6">Q6 模板归类</a>
+    <a href="#q7">Q7 39 条怎么验</a>
+    <a href="#q8">Q8 六个幽灵词</a>
+  </nav>
+
+  <details class="facts" open>
+    <summary>事实底稿：这些决定是基于什么查出来的</summary>
+    <div class="body">
+      <table>
+        <tr><th>查了什么</th><th>结果</th></tr>
+        <tr><td>跟老技能对账（436 条权威词表）</td><td>本图 39 条<strong>逐字逐序相同</strong>，命令编号 0 差异；老技能 <strong>39/39 全都做过</strong>，没有「从来没做过」的词</td></tr>
+        <tr><td>真出口实跑（临时库，12 条命令，退出码全 0）</td><td>22 条读类页面<strong>已经是完整文档</strong>（62,937–69,230 字节，doctype＋样式＋复制区齐）</td></tr>
+        <tr><td>同上</td><td>13 条写类回执<strong>还是片段</strong>（252／282／335 字节，无 doctype、无样式、无复制区）</td></tr>
+        <tr><td>命令与页面对账</td><td>7 条词指到「运动总览」，而它们各自的页面<strong>已经存在且能出完整文档</strong>（分布 67,617／趋势 68,577／复盘 65,795 字节）</td></tr>
+        <tr><td>老技能实现方式</td><td>「看运动记录（…）」是一族同一个脚本同一个模式（<code>--mode records</code> ＋ 三种筛选）；<strong>「看今日运动」「看昨日运动」旧实现也是明细模式</strong></td></tr>
+        <tr><td>老模板实物</td><td>8 个模板<strong>全部存在</strong>（回执 26,279／汇总 11,856／复盘 6,652／对照目标 7,662／分布 13,875／力量 6,302／有氧 5,003／趋势 7,117 字节）</td></tr>
+        <tr><td>装机</td><td>已就绪：DSH 读技能的位置是指向本仓的 Junction</td></tr>
+      </table>
+      <p class="lbl" style="margin-top:16px">另外两处查出来的错位（影响 Q2／Q8）</p>
+      <table>
+        <tr><td>路由层给场景 04 标了 <strong>45</strong> 条，不是 39 条</td><td>多出 6 个词<strong>只存在于路由层</strong>，不在任何场景文件、也不在老技能 436 词表里 —— 它们是当年为「每条命令都可达」新拟的入口</td></tr>
+        <tr><td>该走专面页的 6 个新词<strong>全指对了</strong></td><td>而该走专面页的 <strong>7 个老词全指错</strong>（分布／趋势／复盘）—— 看着像是当年接了一半</td></tr>
+        <tr><td>降采样没有实现</td><td>老技能 180 天／365 天用降采样参数，新仓只有提示词里写着「降采样」，代码里没有</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <h2 class="sec">需要你拍板的决定</h2>
+
+  <div class="q" id="result" style="border-color:var(--ok);border-width:1.5px">
+    <div class="head" style="background:var(--ok-soft)">
+      <span class="tag" style="color:var(--ok);background:#dff2e6">拍定结果 · 2026-09-13</span>
+      <h3>8 条已按推荐定下，票已建并挂好原生边</h3>
+      <p class="why">票 #167 已收口。交付物：<code>t167-老技能对账表.md</code>（39 条逐词对账）、<code>t167-边界与公共层.md</code>（边界／页面归类／公共层接口）、<code>.scratch/t167/probe-live.mjs</code>（临时库实跑探针）。</p>
+    </div>
+    <div class="body">
+      <table>
+        <tr><th>决定</th><th>拍定</th><th>落在哪</th></tr>
+        <tr><td>Q1 欠账清单</td><td>认可那 4 处；记录级明细与「没有命令可执行」那 1 条合成一票</td><td>—</td></tr>
+        <tr><td>Q2 票怎么切</td><td><strong>5 张票</strong>，页面内容核并进页面票</td><td>#264–#268</td></tr>
+        <tr><td>Q3 回执做到哪一层</td><td><strong>走公共出口</strong>（该出口服务全批 35 条写命令，只剩 3 条整页化）</td><td>#264</td></tr>
+        <tr><td>Q4 记录页定形</td><td>合成一张 ＋ <strong>新增 1 条只读命令</strong> <code>calorie.view.exercise-records</code></td><td>#265</td></tr>
+        <tr><td>Q5 内容逐项核</td><td>要核，<strong>含降采样</strong>（180／365 天两条词）</td><td>#264／#265</td></tr>
+        <tr><td>Q6 模板归类</td><td>3 类，<strong>全留卡路里公共层</strong>，不上移 base</td><td>已写进地图</td></tr>
+        <tr><td>Q7 39 条怎么验</td><td>按页面类别抽验约 10 张，窗口差异走程序断言</td><td>#267／#268</td></tr>
+        <tr><td>Q8 六个幽灵词</td><td><strong>清掉</strong>，「每条命令可达」不掉</td><td>#265</td></tr>
+      </table>
+      <p class="lbl" style="margin-top:16px">新建的 5 张票</p>
+      <table>
+        <tr><th>票</th><th>阻塞于</th></tr>
+        <tr><td><strong>#264</strong> 写后回执页整页化 · 13 条写词（公共出口）</td><td class="ok">— 可开工</td></tr>
+        <tr><td><strong>#265</strong> 读类页面归位 · 7 条指错页 ＋ 5 条记录明细页 ＋ 6 条幽灵词</td><td class="ok">— 可开工</td></tr>
+        <tr><td><strong>#266</strong> 唤醒词与工作流程接线（HELP HTML ＋ <code>SKILL.md</code>）</td><td>#264、#265</td></tr>
+        <tr><td><strong>#267</strong> 锁 · 真出口用例（结构化断言）</td><td>#264、#265</td></tr>
+        <tr><td><strong>#268</strong> 端到端验收（用户亲自在全新空白 session 跑）</td><td>#267</td></tr>
+      </table>
+      <p class="note">#152（场景 07 基础信息）按你的裁定<b>只作参照、不处理那张图的账</b>；本图正文里那句从 #152 抄来的「<code>goal_config.html</code> 找不到」已勘误作废。</p>
+    </div>
+  </div>
+
+  <h2 class="sec">决定原文（逐条留存）</h2>
+
+  <div class="q" id="q1">
+    <div class="head">
+      <span class="tag">Q1</span>
+      <h3>本图的欠账清单，就这 4 项吗？</h3>
+      <p class="why">本图的终点是「39 条词都能从头走到尾，产物是真实 HTML、由你肉眼验收」。探针跑下来，真正没达标的只有下面 4 处 —— 先确认清单，后面 7 个决定都挂在这张清单上。</p>
+    </div>
+    <div class="body">
+      <ul class="pts">
+        <li><strong>(a)</strong> 13 条写类的写后回执是片段，不是完整文档</li>
+        <li><strong>(b)</strong> 7 条读类的命令指错页（类型分布 1／运动趋势 1／运动复盘 5）</li>
+        <li><strong>(c)</strong> 「记录级明细」这一页本仓没有，牵动 5 条词（看今日运动／看昨日运动／看运动记录（有备注）／（按力量筛选）／（按有氧筛选）），<strong>并且把「没有命令可执行」的那 1 条一起吃掉</strong></li>
+        <li><strong>(d)</strong> 读类页面的<strong>内容</strong>够不够（见 Q5）</li>
+      </ul>
+      <div class="rec"><span class="mark">推荐</span><span>认可这 4 项，<b>(c) 与那 1 条没有命令可执行的词合成一张票</b>，不单列「命令补齐」票 —— 那 1 条要的其实就是这一页。若你认为还有漏的或不该算的，直接说。</span></div>
+    </div>
+  </div>
+
+  <div class="q" id="q2">
+    <div class="head">
+      <span class="tag">Q2</span>
+      <h3>本图建几张票、怎么切？</h3>
+      <p class="why">地图原来的表是五行（边界／页面交付／命令补齐／锁／真机端到端）。按现在查清的事实重排。参照上一张图（场景 07）的经验：不单建「锁」票，每张页面票自带真出口用例。</p>
+    </div>
+    <div class="body">
+      <ul class="pts">
+        <li><strong>① 回执整页化</strong> —— 13 条写类（公共层，见 Q3）</li>
+        <li><strong>② 运动记录页</strong> —— 记录级明细 ＋ 三种筛选，5 条词（见 Q4）</li>
+        <li><strong>③ 读类指错页纠正</strong> —— 7 条词 ＋ 6 个幽灵词的去留（见 Q8）</li>
+        <li><strong>④ 真机端到端 ＋ 肉眼终审</strong> —— 收口用</li>
+      </ul>
+      <p class="lbl">阻塞关系</p>
+      <ul class="pts">
+        <li>①②③ <strong>互不阻塞</strong>（写集不同，可并行）</li>
+        <li>④ 被 ①②③ 阻塞</li>
+      </ul>
+      <div class="rec"><span class="mark">推荐</span><span><b>4 张票</b>，页面内容核对（Q5）<b>并进 ②③ 里做</b>，不单开票。</span></div>
+      <p class="note">更正：我上一轮里 Q2 和 Q5 的推荐自相矛盾（Q2 说内容核对要单建第 5 张，Q5 又说并进 ②③）。以 Q5 的写法为准，就是 4 张。若你希望内容核对独立成票，那就是 5 张。</p>
+    </div>
+  </div>
+
+  <div class="q" id="q3">
+    <div class="head">
+      <span class="tag">Q3</span>
+      <h3>写后回执整页化，做到哪一层？</h3>
+      <p class="why">这条出口不是场景 04 专用的。<code>src/cli/write.ts:202-208</code> 的 <code>receiptHtml()</code> 服务<strong>全批 35 条会改数据库的命令</strong>。上一张图（场景 07）是就地绕过它：那 3 条写词自己装了整页，代码注释写明「其余 32 条一律返回 null，产物逐字节不变」。</p>
+    </div>
+    <div class="body">
+      <p class="lbl">关键数字</p>
+      <ul class="pts">
+        <li>全批 <strong>35</strong> 条写命令，已整页化 <strong>3</strong> 条（场景 07 的），<strong>还剩 32 条是片段</strong></li>
+        <li>场景 04 占其中 <strong>3</strong> 条命令（记运动／改运动记录／删运动记录），服务本图 <strong>13</strong> 条唤醒词</li>
+        <li>这条出口<strong>只服务卡路里一个技能</strong>，6 个场景全在你这批 11 张图里</li>
+      </ul>
+      <div class="opts">
+        <div class="opt pick"><div class="letter">A</div><div class="txt"><strong>直接在公共出口整页化</strong>
+          <div class="pc"><span class="p">利</span> 一次改动覆盖全批 6 个场景 32 条命令；不留尾巴 <span class="c">弊</span> 公共出口产物到处会变，须跑全量测试</div></div></div>
+        <div class="opt"><div class="letter">B</div><div class="txt"><strong>照场景 07 的就地路数，再补 3 条</strong>
+          <div class="pc"><span class="p">利</span> 只覆盖本图 13 条词，范围小 <span class="c">弊</span> 尾巴还剩 29 条，而且同一件事会在多张图里各写一遍</div></div></div>
+        <div class="opt"><div class="letter">C</div><div class="txt"><strong>提出公共层部件，本图先用，出口切换留给后面的图</strong>
+          <div class="pc"><span class="p">利</span> 部件先立起来 <span class="c">弊</span> 等于还是 B 的产物，32 条欠账继续挂着</div></div></div>
+      </div>
+      <div class="rec"><span class="mark">推荐 A</span><span>你的裁定本来就是「<b>只要有可能被多个场景用到，就提取到公共层</b>」。这里不是「可能」—— 32 条命令今天全都吐片段，而且全在你自己的 11 张图里，一次性收掉最省钱。</span></div>
+    </div>
+  </div>
+
+  <div class="q" id="q4">
+    <div class="head">
+      <span class="tag">Q4</span>
+      <h3>「看运动记录（…）」那族词出什么页？</h3>
+      <p class="why">这 5 条词现在各有各的命：3 条没有命令可执行或指错页，2 条（今日／昨日）词面写的是「看明细」，拿到的却是汇总页。老技能里它们本来就是<strong>同一个脚本同一个模式</strong>，只是筛选参数不同。</p>
+    </div>
+    <div class="body">
+      <p class="lbl">关键信息</p>
+      <ul class="pts">
+        <li>老实现：<code>render_exercise_summary.py --mode records</code> ● <code>--has-note</code>（有备注）／<code>--category 力量</code>／<code>--category 有氧</code>／<code>--today</code>／<code>--yesterday</code></li>
+        <li>新仓：记录级取数（<code>listPortRows</code>）<strong>已经现成</strong>，缺的是「页」和「命令参数」这一段</li>
+      </ul>
+      <div class="opts">
+        <div class="opt pick"><div class="letter">A</div><div class="txt"><strong>合成一张「运动记录页」</strong>：记录级列表 ＋ 三种筛选，由一条只读命令带参数产出，5 条词共用
+          <div class="pc"><span class="p">利</span> 跟老实现同形；一次跑通 5 条词，含那 1 条今天没有命令可执行的 <span class="c">弊</span> 要动一条命令的参数面与取数</div></div></div>
+        <div class="opt"><div class="letter">B</div><div class="txt"><strong>保持现状语义</strong>：力量／有氧仍出各自的「总览」聚合页，只给「有备注」补一条
+          <div class="pc"><span class="p">利</span> 改动最小 <span class="c">弊</span> 今日／昨日仍是汇总页而非明细，词面承诺没兑现；与老技能不一致</div></div></div>
+        <div class="opt"><div class="letter">C</div><div class="txt"><strong>三条筛选词各出一张专用页</strong>
+          <div class="pc"><span class="p">利</span> 页页分明 <span class="c">弊</span> 三张页内容九成相同，日后改一处要改三遍</div></div></div>
+      </div>
+      <div class="rec"><span class="mark">推荐 A</span><span>旧实现本来就是一张页带筛选参数；取数也已现成，缺的只是页与参数。这一张页同时把<b>「没有命令可执行」那 1 条</b>解决掉。</span></div>
+    </div>
+  </div>
+
+  <div class="q" id="q5">
+    <div class="head">
+      <span class="tag">Q5</span>
+      <h3>读类页面的内容，要不要按老规格逐项核？</h3>
+      <p class="why">页面「出得来」不等于「内容齐全」。上一张图（场景 07）就是先发现页面少了几项、再逐项补齐的。我只看了标题层，已经看到对不上的地方。</p>
+    </div>
+    <div class="body">
+      <p class="lbl">已经看到的出入</p>
+      <ul class="pts">
+        <li><strong>运动复盘页</strong>只出「每日消耗趋势」一节，词的规格是 6 项（时长／消耗／频次／类型分布／趋势／头部动作）</li>
+        <li><strong>看力量训练总览</strong>只出「重量轨迹」，规格是按动作聚合的 4 项（组数／总重／次数／重量趋势）</li>
+        <li><strong>降采样没实现</strong>：看最近 180 天／365 天两条词写着「降采样」，代码里没有</li>
+      </ul>
+      <div class="opts">
+        <div class="opt pick"><div class="letter">A</div><div class="txt"><strong>要核，并进 ②③ 两张票里做</strong>
+          <div class="pc"><span class="p">利</span> 先把「页面对不对」摆正，再补「页面够不够」；不增加票数 <span class="c">弊</span> 两张票会大一些</div></div></div>
+        <div class="opt"><div class="letter">B</div><div class="txt"><strong>不核</strong>：只要页面能打开、肉眼看着像样就算过
+          <div class="pc"><span class="p">利</span> 本图最快收口 <span class="c">弊</span> 你自己看过就会问到；与老技能的实际产出不一致</div></div></div>
+        <div class="opt"><div class="letter">C</div><div class="txt"><strong>单独建第 5 张票</strong>专做内容补齐
+          <div class="pc"><span class="p">利</span> 账目清楚 <span class="c">弊</span> 与 ②③ 改同一批文件，容易撞车</div></div></div>
+      </div>
+      <div class="rec"><span class="mark">推荐 A</span><span>你早先定的三档就是「文件存在 → 程序；内容与字段正确 → 程序；<b>视觉 → 你肉眼看</b>」。内容属于中间那一档，应该按老规格逐项核。</span></div>
+    </div>
+  </div>
+
+  <div class="q" id="q6">
+    <div class="head">
+      <span class="tag">Q6</span>
+      <h3>本图 8 个老模板名，归成几类、归谁管？</h3>
+      <p class="why">按你早先的裁定（Q4 答 B）：各图自己归类，全批最后人工收口。本图的 8 个名字归成 3 类。</p>
+    </div>
+    <div class="body">
+      <table>
+        <tr><th>类</th><th>模板名（条数）</th><th>归谁管</th><th>状态</th></tr>
+        <tr><td>写后回执页</td><td><code>crud_receipt</code>（13）</td><td>卡路里公共层</td><td class="bad">本图要动它</td></tr>
+        <tr><td>运动汇总与对照目标页</td><td><code>exercise_summary</code>（15）<br><code>exercise_goal_view</code>（2）</td><td>卡路里公共层</td><td class="ok">已现成</td></tr>
+        <tr><td>按类别分开的列表页</td><td><code>exercise_distribution／strength／cardio／trend／recap</code>（5）</td><td>卡路里公共层</td><td class="ok">已现成</td></tr>
+      </table>
+      <div class="rec"><span class="mark">推荐</span><span>就按这 3 类写进地图的「已定的决定」。<b>三类都留在卡路里公共层，不上移到 base-render</b> —— 照上一张图的判法：今天别的技能都还没在用那个公共层。</span></div>
+      <p class="note">顺手修正：地图正文现在写着「<code>goal_config.html</code> 找不到、这一类要新设计」—— 那是从场景 07 抄过来的，本图 8 个名字里根本没有它，我会清掉。</p>
+    </div>
+  </div>
+
+  <div class="q" id="q7">
+    <div class="head">
+      <span class="tag">Q7</span>
+      <h3>39 条词，怎么验收？</h3>
+      <p class="why">上一张图只有 4 条词，所以条条肉眼。本图 39 条里，12 条只差时间窗、5 条复盘只差周期 —— 条条肉眼是重复劳动。</p>
+    </div>
+    <div class="body">
+      <div class="opts">
+        <div class="opt pick"><div class="letter">A</div><div class="txt"><strong>按页面类别抽验</strong>：9 类页面各看 1–2 张代表（约 10 张），类别内的差异（时间窗、周期）交给程序断言
+          <div class="pc"><span class="p">利</span> 你只需看约 10 张；重复的窗口差异由程序保证 <span class="c">弊</span> 需要把「窗口对不对」写成可靠的断言</div></div></div>
+        <div class="opt"><div class="letter">B</div><div class="txt"><strong>39 条条条肉眼</strong>
+          <div class="pc"><span class="p">利</span> 最踏实 <span class="c">弊</span> 你要看 39 张高度重复的页</div></div></div>
+        <div class="opt"><div class="letter">C</div><div class="txt"><strong>全部走程序断言，你只看一张清单页</strong>
+          <div class="pc"><span class="p">利</span> 你几乎不用看 <span class="c">弊</span> 视觉问题程序看不出来，违背你自己定的第三档</div></div></div>
+      </div>
+      <div class="rec"><span class="mark">推荐 A</span><span>这就是你定的三档的照搬：<b>存在与内容交给程序，视觉交给你</b>。视觉部分按类别抽验，类别内的差别交给断言。</span></div>
+    </div>
+  </div>
+
+  <div class="q" id="q8">
+    <div class="head">
+      <span class="tag">Q8</span>
+      <h3>那 6 个「只在路由层存在的词」怎么办？</h3>
+      <p class="why">把 7 条老词指回专面页之后，「看运动分类占比」和「看运动类型分布」就变成同一个命令的两个唤醒词了。</p>
+    </div>
+    <div class="body">
+      <p class="lbl">关键信息</p>
+      <ul class="pts">
+        <li>这 6 个词（看运动目标／看力量总览／看有氧总览／看运动分类占比／看运动复盘／看运动消耗趋势）<strong>只存在于路由层</strong>，不在任何场景文件、也不在老技能 436 词表里</li>
+        <li>现在它们已经进了 <code>SKILL.md</code> 的命令表和两处测试 —— 也就是说 <strong>AI 现在看到的入口是这几个新拟词</strong>，而不是你在老技能里用的那批词</li>
+        <li>测试里有一条强制断言：词表 436 条必须与全部场景文件的唤醒词<strong>逐字相等</strong> —— 证明这 6 个词确实不是唤醒词资产，只是路由层给自己开的旁门</li>
+        <li>清掉它们 <strong>不会</strong>让「每条命令都可达」掉下来：它们覆盖的三条命令（分布／复盘／趋势）正好被那 7 条老词接住，另三条（目标／力量／有氧）本来就有老词覆盖</li>
+        <li>但会连锁改动：新拟入口 <strong>57 → 51</strong>、可执行记录数 <strong>399 → 393</strong>，以及路由快照要重生成</li>
+      </ul>
+      <div class="opts">
+        <div class="opt pick"><div class="letter">A</div><div class="txt"><strong>清掉 6 个</strong>，命令由老词承担
+          <div class="pc"><span class="p">利</span> 词表与路由层对齐，用户说的词（老技能那批）重新成为正式入口 <span class="c">弊</span> 要同步改命令表与两处测试</div></div></div>
+        <div class="opt"><div class="letter">B</div><div class="txt"><strong>留着</strong>（它们是 AI 现在唯一的入口）
+          <div class="pc"><span class="p">利</span> 不动任何测试 <span class="c">弊</span> 一个命令两个唤醒词；用户说的老词继续得不到对的页面</div></div></div>
+        <div class="opt"><div class="letter">C</div><div class="txt"><strong>留着，但不再与老词近义打架</strong>
+          <div class="pc"><span class="p">利</span> 保留可达入口 <span class="c">弊</span> 只是把矛盾描述得更含蓄，不解决入口归属</div></div></div>
+      </div>
+      <div class="rec"><span class="mark">推荐 A</span><span>并进票 ③ 一起做，<b>不单开票</b> —— 两件事是同一处代码、同一个决定：<b>谁是这个命令的正式唤醒词</b>。</span></div>
+    </div>
+  </div>
+
+  <footer class="end">
+    <h3>你答完这 8 条之后，我会做</h3>
+    <ol>
+      <li>把对账表与现况表落进 <code>docs/skills/skill-calorie/</code></li>
+      <li>把结论写回地图的「已定的决定」，清掉两处从别的图抄来的错话</li>
+      <li>按你定的切法建第 2–N 张票，挂好原生子议题边与阻塞边</li>
+      <li><strong>本轮不碰任何源码</strong> —— 本票只出决定，不动代码</li>
+    </ol>
+    <p class="meta">票 #167「卡路里场景 04 运动：公共层提取与边界（防幻觉词对账）」 · 地图 #156 · 2026-09-13</p>
+  </footer>
+
+</div>
+</body>
+</html>
