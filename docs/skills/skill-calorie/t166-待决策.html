@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>场景 02 饮食 · 待拍板的 6 件事（票 #166）</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#fff; --ink:#16181d; --ink2:#4a5262; --ink3:#78808f;
+    --line:#e3e6eb; --blue:#2563eb; --blue-bg:#eff4ff; --green:#0a7d55; --green-bg:#eaf7f1;
+    --amber:#a35a06; --amber-bg:#fdf4e6; --red:#b42318; --red-bg:#fdf1f0;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.7 -apple-system,"SF Pro Text","Segoe UI","Noto Sans SC","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:940px;margin:0 auto;padding:32px 20px 72px}
+  header.top{margin-bottom:22px}
+  h1{font-size:27px;line-height:1.35;margin:0 0 10px;letter-spacing:-.2px}
+  .meta{color:var(--ink3);font-size:13.5px}
+  .meta a{color:var(--blue);text-decoration:none}
+  .meta a:hover{text-decoration:underline}
+  .lede{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--blue);
+    border-radius:10px;padding:14px 16px;margin:18px 0 8px;color:var(--ink2);font-size:15px}
+  .lede b{color:var(--ink)}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 26px}
+  .strip div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .strip .n{font-size:24px;font-weight:700;letter-spacing:-.5px;display:block;line-height:1.2}
+  .strip .l{font-size:12.5px;color:var(--ink3);display:block;margin-top:3px}
+  h2{font-size:19px;margin:34px 0 14px;letter-spacing:-.2px}
+  table.sum{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;font-size:14.5px}
+  table.sum th{background:#f0f2f5;text-align:left;padding:10px 12px;font-weight:600;color:var(--ink2);font-size:13px}
+  table.sum td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:top}
+  table.sum td:first-child{width:31%}
+  table.sum a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--ink3)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12.5px;font-weight:600;white-space:nowrap}
+  .pill.rec{background:var(--green-bg);color:var(--green);border:1px solid #bfe3d3}
+  .pill.warn{background:var(--amber-bg);color:var(--amber);border:1px solid #efd7ab}
+  .pill.info{background:var(--blue-bg);color:var(--blue);border:1px solid #c9daff}
+  section.q{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;margin:16px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  section.q h3{font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  .num{background:var(--ink);color:#fff;border-radius:7px;font-size:13px;padding:2px 8px;font-weight:700}
+  .sub{color:var(--ink3);font-size:13.5px;margin:0 0 14px}
+  .why{background:#fafbfc;border:1px solid var(--line);border-radius:9px;padding:12px 14px;font-size:14.5px;color:var(--ink2)}
+  .why b{color:var(--ink)}
+  .why p{margin:6px 0 0}
+  ul.facts{margin:14px 0 0;padding-left:0;list-style:none;font-size:14.5px}
+  ul.facts li{padding:7px 0 7px 24px;position:relative;border-bottom:1px dashed var(--line)}
+  ul.facts li:last-child{border-bottom:0}
+  ul.facts li::before{content:"";position:absolute;left:6px;top:15px;width:7px;height:7px;
+    border-radius:2px;background:var(--blue)}
+  ul.facts code{background:#f0f2f5;border-radius:4px;padding:1px 5px;font-size:13px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 0}
+  .opts.two{grid-template-columns:1fr 1fr}
+  .opts > .opt:last-child:nth-child(odd){grid-column:1/-1}
+  .opt{border:1px solid var(--line);border-radius:10px;padding:13px 15px;background:#fdfdfe}
+  .opt.rec{border-color:#bfe3d3;background:linear-gradient(#f7fdfa,#fff);box-shadow:0 0 0 1px #dff1e8 inset}
+  .opt h4{margin:0 0 8px;font-size:15px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .pl,.mi{margin:0 0 6px;font-size:13.8px;padding-left:20px;position:relative;color:var(--ink2)}
+  .pl::before{content:"利";position:absolute;left:0;color:var(--green);font-weight:700}
+  .mi::before{content:"弊";position:absolute;left:0;color:var(--red);font-weight:700}
+  .verdict{margin-top:16px;background:var(--green-bg);border:1px solid #bfe3d3;border-radius:10px;
+    padding:12px 15px;font-size:14.5px;color:#0b4f37}
+  .verdict b{color:#073e2b}
+  .verdict .need{display:block;margin-top:6px;font-size:13.5px;color:#276b52}
+  details{margin-top:12px;font-size:13.8px;color:var(--ink2)}
+  details summary{cursor:pointer;color:var(--blue);font-weight:600;outline:none}
+  details p{margin:8px 0 0}
+  footer{margin-top:30px;font-size:13.8px;color:var(--ink2)}
+  footer ol{margin:8px 0 0;padding-left:22px}
+  .tag{font-size:12.5px;color:var(--ink3)}
+  @media (max-width:760px){.strip{grid-template-columns:1fr 1fr}.opts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>场景 02 饮食 · 待你拍板的 7 件事</h1>
+  <div class="meta">
+    地图 <a href="https://github.com/FeatherHunter/ilife/issues/155">卡路里场景 02 饮食：70 条唤醒词能跑通＋出过程型／结果型 HTML</a>
+    ｜本票 <a href="https://github.com/FeatherHunter/ilife/issues/166">公共层提取与边界（防幻觉词对账）</a>
+    ｜事实底座 <code>docs/skills/skill-calorie/t166-scene02-reconcile.md</code>
+  </div>
+</header>
+
+<div class="lede">
+  <b>一句话结论：</b>本图不是「把片段拼成整页」，而是四件事 ——
+  <b>① 15 条写命令的回执切整页装配</b>（它们是片段）<b>② 6 条命令补齐 ③ 路由接对 4 处 ④ 48 条读页面照老实物对齐内容</b>。
+  下面 7 个决定，答完我就建票、挂原生子议题边与阻塞边、写好决议并收口本票。
+</div>
+
+<div class="strip">
+  <div><span class="n">70</span><span class="l">本图唤醒词<br>（老表逐字一致，差异 0 条）</span></div>
+  <div><span class="n">64 / 6</span><span class="l">有命令 / 没有命令<br>（有命令的，命令全部在册）</span></div>
+  <div><span class="n">16</span><span class="l">没有整页装配的条数<br>（15 条写命令 ＋ 1 条接错）</span></div>
+  <div><span class="n">48</span><span class="l">已有整页装配的读页面<br>（内容是否对齐老实物待审）</span></div>
+</div>
+
+<h2>决策速览</h2>
+<table class="sum">
+  <tr><th>问题</th><th>我的建议</th><th>影响面</th></tr>
+  <tr>
+    <td><a href="#q1">Q1 页面类怎么归、归谁管</a></td>
+    <td><span class="pill rec">7 类都留卡路里公共层，不上移 base</span></td>
+    <td>本图 15 个模板名的归属</td>
+  </tr>
+  <tr>
+    <td><a href="#q2">Q2 <code>拍营养表</code> 那 2 条做不做</a></td>
+    <td><span class="pill rec">甲：做出来（另开一张票）</span></td>
+    <td>地图 Destination 是 70 条还是 68＋2</td>
+  </tr>
+  <tr>
+    <td><a href="#q3">Q3 批量导入的写入口用哪个形态</a></td>
+    <td><span class="pill rec">甲：新增一条会改数据库的命令</span></td>
+    <td>命令册 100→101，要同步计数断言</td>
+  </tr>
+  <tr>
+    <td><a href="#q4">Q4 饮食域页面模块要不要搬进能力目录</a></td>
+    <td><span class="pill rec">甲：跟着本图就地摆正</span></td>
+    <td>页面票的影响清单会变大</td>
+  </tr>
+  <tr>
+    <td><a href="#q5">Q5 与 <code>#250</code> 的 4 处重叠怎么办</a></td>
+    <td><span class="pill rec">甲：本图做 4 处，不挂阻塞</span></td>
+    <td>场景 02 的验收不必等跨 10 场景的大票</td>
+  </tr>
+  <tr>
+    <td><a href="#q6">Q6 票单怎么切</a></td>
+    <td><span class="pill rec">甲：11 张，读类按页面类切</span></td>
+    <td>本图的可并行度与返修成本</td>
+  </tr>
+  <tr>
+    <td><a href="#q7">Q7 <code>#152</code> 那张图要不要收口</a></td>
+    <td><span class="pill warn">建议关图（写清 5 张后续票）</span></td>
+    <td>面板上「已完成的主目标」不再挂着</td>
+  </tr>
+</table>
+
+<!-- ============ Q1 ============ -->
+<section class="q" id="q1">
+  <h3><span class="num">Q1</span>15 个模板名归成几类、每类归谁管</h3>
+  <p class="sub">决定本图往公共层放什么，以及「Decisions so far」怎么写。</p>
+
+  <div class="why"><b>前因。</b>
+    地图正文要求本图自己把用到的 15 个模板名归好类（用户 Q4 答 B：各图自己归类，全批最后人工收口）。
+    你给公共层定的规矩是「只要分析下来<b>可能</b>被多个场景用到，就提到公共层，不等已经有第二个场景在用」，
+    但仓库结构纪律另有一条相反的话：<b>共用位是从第二个用法里长出来的，不是预先设计的</b>。
+    <p>场景 02 的特殊之处在于：15 个模板名里 <b>只有 <code>crud_receipt.html</code> 真的跨场景</b>（饮食 15／运动 13／健身计划 11／体重 5／基础信息 3／身体细节 2 ＝ 49 条），其余 14 个今天只服务场景 02。</p>
+  </div>
+
+  <ul class="facts">
+    <li><b>我提的 7 类：</b>① 写后回执页（<code>crud_receipt</code>，15 条）② 条目列表页（<code>today_meals</code> 8 ＋ <code>today_diet</code> 3）③ 横向排行榜页（<code>food_ranking</code>，21 条）④ 复盘／餐别分布页（<code>diet_review</code> 5 ＋ <code>meal_distribution</code> 5）⑤ 食品库类页（<code>food_search</code> 2 ＋ <code>dedupe_report</code> 1 ＋ <code>source_stats</code> 1）⑥ 营养／饮水／总览页（<code>nutrition_ratio</code>／<code>nutrition_detail</code>／<code>diet_overview</code>／<code>today_water</code> 各 1）⑦ 预检确认页（新，<code>batch_import_preview</code> 2 ＋ <code>nutrition_label_wizard</code> 2）</li>
+    <li><b>区块不用重造：</b><code>packages/base-render</code> 已经有 KPI／表格／列表／图表／折叠／复制区这些块（<code>blocks.ts</code>／<code>charts.ts</code>／<code>controls.ts</code>），卡路里侧的 7 个 <code>*Docs.ts</code> 已经在用它们。</li>
+    <li><b>今天别的技能没有在用 <code>packages/base-render</code> 的页面层</b>（另外 5 个技能走的是自己那条线）。</li>
+  </ul>
+
+  <div class="opts">
+    <article class="opt rec">
+      <h4>甲 · 7 类都留卡路里公共层，本图不上移 base <span class="pill rec">建议</span></h4>
+      <p class="pl">与场景 07 那次裁定一致，不会出现两套口径；回执页改一处覆盖 6 个场景；不引入跨包耦合。</p>
+      <p class="mi">将来真有别的技能要用，还得再搬一次（今天没有这个用法）。</p>
+    </article>
+    <article class="opt">
+      <h4>乙 · 回执页现在就上移到 <code>packages/base-render</code></h4>
+      <p class="pl">一次到位，跨技能复用不用改两次。</p>
+      <p class="mi">与本批「公共层跟着场景一集一集长」的裁定相冲；今天写不出第二个技能在用，违结构纪律的共用位判据。</p>
+    </article>
+  </div>
+
+  <div class="verdict"><b>我的建议：采纳甲。</b>15 个模板名 → 7 类，全部留卡路里公共层（<code>src/shared/</code> ＋ 域内 <code>*Docs.ts</code>），
+    区块继续用 <code>packages/base-render</code> 现有件；模板名与类的对应写进地图的 Decisions so far，等全批收口时再谈上移。
+    <span class="need">需要你点头的是：7 类这个切法本身（要不要合并或再拆）。</span></div>
+</section>
+
+<!-- ============ Q2 ============ -->
+<section class="q" id="q2">
+  <h3><span class="num">Q2</span><code>拍营养表</code> 那 2 条到底做不做</h3>
+  <p class="sub">这是本图正文里的一处自相矛盾，必须由你裁定。</p>
+
+  <div class="why"><b>前因。</b>
+    地图的 Destination 写着「<b>本图 70 条唤醒词都跑得通</b>」，而同一张图的 Out of scope 又写着「新架构规格明确不做的 10 条（含拍营养表 2 条）」——
+    <b>两条对不上</b>，场景 07 那张图 4 条词 0 条跑不通，所以这个问题从没露出来过。
+    <p>另有三条事实指向「可以做」：① 你 2026-09-11 裁定过<b>「不存在没有命令的唤醒词，如果有就是出现了问题，我们需要纠正、优化或者开发」</b>；
+    ② 老技能当年<b>真的实现了</b>它（<code>render_nutrition_label.py</code>，含采纳／修改后复制两个按钮）；
+    ③ <code>#180</code> 已把它判成 <b>「优化」</b>：识别在模型侧（本仓 <code>vision|mmx|ocr</code> 命中 0），缺的只是「营养表 → <code>calorie.diet.add</code> 参数」的映射说明 ＋ 一张识别结果确认页。</p>
+  </div>
+
+  <ul class="facts">
+    <li><b>老实物照得到：</b><code>templates/nutrition_label_wizard.html</code>（22.8 KB），区块是「营养成分确认／基本信息／营养成分(每 100g)／份量与备注／<b>确认后操作</b>」。</li>
+    <li><b>这两条是 process 形态</b>（<code>output_type=process</code>），也就是「先给你看识别结果，你确认后我再写入」——正是本批要立的那类预检确认页。</li>
+    <li><b>地图 Out of scope 留了话：</b>「这是新架构主动划出去的，<b>你可以推翻</b>——要推翻请另开票，不在本图内悄悄做」。</li>
+  </ul>
+
+  <div class="opts">
+    <article class="opt rec">
+      <h4>甲 · 推翻规格，做出来（另开一张票） <span class="pill rec">建议</span></h4>
+      <p class="pl">与你的裁定一致；<code>#180</code> 已查明只需「优化」，改动面小；70 条分母保持完整，地图 Destination 不用改；老实物可照。</p>
+      <p class="mi">要单开一张票（不在本图悄悄做），确认页是新建的一张页面。</p>
+    </article>
+    <article class="opt">
+      <h4>乙 · 保持不做</h4>
+      <p class="pl">尊重架构规格，本图的工作面更小。</p>
+      <p class="mi">地图 Destination 必须改成「68 条跑通 ＋ 2 条只保证命中与文案」；与你「不存在没有命令的唤醒词」的裁定相冲；你说这两条词时没有命令可跑。</p>
+    </article>
+    <article class="opt">
+      <h4>丙 · 只做「拍完写入」的写侧，不做确认页</h4>
+      <p class="pl">比乙多一点：至少这条词能落到库里。</p>
+      <p class="mi">丢了老技能的核心交互（先看识别结果再确认），与本批「写前先给用户看」的方向相反。</p>
+    </article>
+  </div>
+
+  <div class="verdict"><b>我的建议：甲。</b>把「拍营养表 2 条」同时写进本票决议（作为本图范围内要做的第 4 件补齐）与地图的 Decisions so far，另开一张票承接它的实现。
+    <span class="need">需要你点头的是：是否推翻架构规格。点头后我会把地图 Destination 的措辞一并钉死，不留两套说法。</span></div>
+</section>
+
+<!-- ============ Q3 ============ -->
+<section class="q" id="q3">
+  <h3><span class="num">Q3</span>批量导入的写入口用哪个形态</h3>
+  <p class="sub"><code>#180</code> 留给本图的一个明确待决项。</p>
+
+  <div class="why"><b>前因。</b>
+    这条唤醒词是「<b>先给我看导入预览，我确认后再写入</b>」两段式。今天的状态是：查询命令 <code>calorie.view.batch-import-preview</code> 已在册（只预览，
+    <code>keys.ts:124</code>），写库函数也在（<code>fetch/batch.ts:136</code> 的 <code>importProducts</code>），<b>缺的是「写入」这一段的入口</b>。
+    <p><code>#180</code> 把处置判成「优化」的理由是「加参数即可覆盖」，但它同时留了一句：查询命令带写副作用与仓库既有的<b>读写分家</b>约定不一致，动手前要先定形态。</p>
+  </div>
+
+  <ul class="facts">
+    <li><b>命令册现状：</b>100 条命令 ＝ 35 条会改数据库的命令 ＋ 65 条查询命令；有一条测试专门钉「查询命令只读」（<code>test/db-readonly-93.test.mjs</code> 的 <code>READ_KEYS</code>）。</li>
+    <li><b>加一条命令的代价有先例：</b>场景 07 加 <code>calorie.view.profile-wizard</code> 时，同步了 9 个测试文件的计数断言（99→100／398→399／64→65 等），一步到位不难，但要记得。</li>
+    <li><b>老技能是两个动作：</b><code>render_batch_import.py --input preview.json</code> → 确认后 <code>batch_import.py import &lt;file.jsonl&gt;</code>。</li>
+  </ul>
+
+  <div class="opts">
+    <article class="opt rec">
+      <h4>甲 · 新增一条会改数据库的命令 <span class="pill rec">建议</span></h4>
+      <p class="pl">读写分开，与 35 条会改数据库的命令同一条门禁管；预览页与写入各归各的语义；AI 的两步很清楚。</p>
+      <p class="mi">命令册 100→101，要同步计数断言（有先例，机械活）。</p>
+    </article>
+    <article class="opt">
+      <h4>乙 · 给查询命令 <code>batch-import-preview</code> 加写参数</h4>
+      <p class="pl">不加命令，计数断言一条都不用动。</p>
+      <p class="mi">破了「查询命令不写库」的既有约定，那条只读测试要放宽——等于给所有查询命令开了口子。</p>
+    </article>
+    <article class="opt">
+      <h4>丙 · 给 <code>calorie.product.add</code> 加批量入参</h4>
+      <p class="pl">复用现成写命令，命令册不变。</p>
+      <p class="mi">语义混：单条存食品与批量导入是两种交互（后者带预览与逐行失败明细），挂在一起页面归属也乱。</p>
+    </article>
+  </div>
+
+  <div class="verdict"><b>我的建议：甲。</b>新增一条会改数据库的命令（名字从 HELP 的现成说法取，中文「导入食品」），
+    <code>calorie.view.batch-import-preview</code> 保持只读；<code>校验批量导入</code> 那一条按 <code>#180</code> 的判定直接接回它（属「纠正」，不改参数面）。
+    <span class="need">需要你点头的是：写入口的形态。定了它，第 10 张票（预检确认页）才有写侧可接。</span></div>
+</section>
+
+<!-- ============ Q4 ============ -->
+<section class="q" id="q4">
+  <h3><span class="num">Q4</span>饮食域的页面模块要不要跟着本图搬进能力目录</h3>
+  <p class="sub">纯结构问题，但它决定每张页面票的影响清单有多大。</p>
+
+  <div class="why"><b>前因。</b>
+    仓库结构纪律要求 <code>src/</code> 第一层必须是<b>能力名</b>，不能是工种名。饮食页面今天住在
+    <code>src/render/dietDocs.ts</code>（工种名目录）与 <code>src/render/trendMiscPortDocs.ts</code>（杂项名）里；
+    场景 07 已经开了先例：新件落能力目录 <code>src/profile/</code>，共用件落 <code>src/shared/</code>。
+    <p>结构纪律里还有一条「<b>就地摆正</b>」：旧代码与新规矩不一致时，在本次改动里摆正，不另开票，也不顺手扩大范围。</p>
+  </div>
+
+  <ul class="facts">
+    <li><b>要搬的量：</b><code>dietDocs.ts</code>（26 KB）＋ <code>trendMiscPortDocs.ts</code>（17 KB）里属于饮食域的那几页，加配套取数。</li>
+    <li><b>共用件已经收好过一次：</b>整页装配收成了唯一一份 <code>src/shared/docPage.ts</code> 的 <code>assembleDocPage</code>（今天 60 处在用），复制区收成了 <code>src/shared/copyArea.ts</code> —— 搬页面模块不会再动这两件。</li>
+    <li><b>另一条结构线同时开着：</b>票 <a href="https://github.com/FeatherHunter/ilife/issues/181">结构重组与死代码拆除</a>（<code>routing.ts</code> 811 行／<code>cmd_read.ts</code> 1209 行／<code>write.ts</code> 961 行），今天没有人在做。</li>
+  </ul>
+
+  <div class="opts">
+    <article class="opt rec">
+      <h4>甲 · 跟着本图的页面票就地摆正（建 <code>src/diet/</code>） <span class="pill rec">建议</span></h4>
+      <p class="pl">照纪律办事，不欠债；饮食是最大的一域，摆正后后面 9 张图都受益；与 <code>#181</code>（管的是三个超线大文件）不同文件，撞车面小。</p>
+      <p class="mi">页面票的影响清单变大；搬动与内容对齐同批做，交付时要逐行对账（必报五步的第三步到第五步）。</p>
+    </article>
+    <article class="opt">
+      <h4>乙 · 只改内容，结构留给 <code>#181</code> 那条线</h4>
+      <p class="pl">页面票最大程度聚焦「内容对齐老实物」；结构一次动到位。</p>
+      <p class="mi">违「就地摆正」；饮食域会继续往工种名目录里加代码，债往后滚。</p>
+    </article>
+  </div>
+
+  <div class="verdict"><b>我的建议：甲</b>，但只摆正本图四条写路径真正碰到的文件，不为「整齐」扩大范围。
+    <span class="need">需要你点头的是：建能力目录 <code>src/diet/</code> 这件事本身（建目录按纪律要你点头）。</span></div>
+</section>
+
+<!-- ============ Q5 ============ -->
+<section class="q" id="q5">
+  <h3><span class="num">Q5</span>与 <a href="https://github.com/FeatherHunter/ilife/issues/250">路由层窗口与命令接错纠正</a>（#250）的 4 处重叠怎么办</h3>
+  <p class="sub">决定场景 02 的验收要不要等一张跨 10 个场景的票。</p>
+
+  <div class="why"><b>前因。</b>
+    场景 02 有 4 处缺陷压在<b>已经跑得通的那 64 条</b>里（不是那 6 条没有命令的）：
+    ① <code>看本周饮食</code> 窗口只有 1 天（词面是「本周」，同表「上周」族都是 7 天）；② <code>饮食复盘（本周）</code> 同样是 1 天；
+    ③ <code>看食品来源统计</code> 接错命令（接了分类食品列表，专面命令 <code>calorie.view.source-stats</code> 被别人占着）；
+    ④ <code>看今日喝水</code> 接的是总览命令，专面命令有整页装配却没人用；⑤ 5 条餐别词（早／午／晚／加餐／全部）接同一条命令、<b>餐别参数整个丢失</b>，餐别分布页做不出来。
+    <p>其中的①②③ <b>已经登记在 <code>#250</code> 的账上</b>——那张票 <code>Part of #152</code>、内容横跨 10 个场景、今天没开工。</p>
+  </div>
+
+  <ul class="facts">
+    <li><b><code>#250</code> 的完整范围：</b>245 条可执行路由带写死的种子日期（<code>2026-09-xx</code>）＋ 窗口错 10 条真错（场景 02 占 2 条）＋ 命令接错 1 条（就是场景 02 那条）＋ 22 处 HELP 引用搬家。</li>
+    <li><b>它没覆盖的两处：</b>5 条餐别词的餐别参数、<code>看今日喝水</code> 的接法（登记册里属「口径偏松」，纯记账）。</li>
+    <li><b>同一个文件：</b>本图的「路由接对」票与 <code>#250</code> 都要改 <code>src/triggers/routing.ts</code> —— 同文件同产物必须排队，不能并行。</li>
+  </ul>
+
+  <div class="opts">
+    <article class="opt rec">
+      <h4>甲 · 本图做这 4 处，不挂阻塞 <span class="pill rec">建议</span></h4>
+      <p class="pl">场景 02 的验收不被跨 10 场景的大票拖住；本图能把 70 条自己跑到尾。</p>
+      <p class="mi">与 <code>#250</code> 同改一个文件，需要写集互斥（本图先改这几行，并在 <code>#250</code> 票面留一条说明，请它收口时跳过这几行）。</p>
+    </article>
+    <article class="opt">
+      <h4>乙 · 挂在 <code>#250</code> 后面（<code>Blocked by: #250</code>）</h4>
+      <p class="pl">口径一次定死，不会有「本图改一次、它再改一次」的返工；同文件天然不撞车。</p>
+      <p class="mi">场景 02 的页面交付要等一张横跨 10 个场景的票；它今天没开工，本图会被堵住。</p>
+    </article>
+  </div>
+
+  <div class="verdict"><b>我的建议：甲。</b>本图的「路由接对」票做 4 处（含那 5 条餐别词的参数），票面写明它与 <code>#250</code> 的分工与写集；
+    <code>#250</code> 继续管 245 条种子日期、其余 8 条窗口错与 HELP 引用搬家。
+    <span class="need">需要你点头的是：场景 02 自己动 <code>routing.ts</code> 的这几行，不排队等 <code>#250</code>。</span></div>
+</section>
+
+<!-- ============ Q6 ============ -->
+<section class="q" id="q6">
+  <h3><span class="num">Q6</span>票单怎么切</h3>
+  <p class="sub">你定的规矩是「一张图可以拆 5 张、10 张票，分门别类推进」；场景 07 是 4 条词拆 5 张。</p>
+
+  <div class="why"><b>前因。</b>
+    本图 70 条词、15 个模板名、7 类产物，工作面比场景 07 大两个量级。切法只有两条路：<b>按页面类切</b>（票多、边界清、可并行）或<b>按「读／写」两大块切</b>（票少、协调少，但一张票里混好几种页面形状）。
+  </div>
+
+  <details>
+    <summary>展开：11 张票的清单（甲案）</summary>
+    <p>
+      1 本票（边界与公共层）｜2 回执页 15 条切整页装配｜3 命令补齐 6 条｜4 路由接对 4 处｜
+      5 条目列表页类（11 条）｜6 排行榜页类（21 条）｜7 复盘／餐别分布页类（10 条）｜8 食品库类页（4 条）｜
+      9 营养／饮水／总览页类（4 条）｜10 预检确认页（批量导入 ＋ 营养表，4 条）｜11 真出口用例锁｜12 真机端到端 ＋ 肉眼终审。
+      <br><span class="tag">（序号 11／12 即地图原来写的「锁：真出口用例」与「真机端到端 ＋ 肉眼终审」。）</span>
+    </p>
+  </details>
+
+  <div class="opts">
+    <article class="opt rec">
+      <h4>甲 · 11 张，读类按页面类切 <span class="pill rec">建议</span></h4>
+      <p class="pl">每类的老实物形状不同、验收面不同；可以并行推进；返修时只动那一张票。</p>
+      <p class="mi">票多，创建与挂边的一次性成本高（机械活，我来做）。</p>
+    </article>
+    <article class="opt">
+      <h4>乙 · 8 张，读类合成 2 张（明细＋复盘／餐别 21 条，排行榜＋食品库＋营养饮水 29 条）</h4>
+      <p class="pl">票少、协调少。</p>
+      <p class="mi">一张票里混 3–4 种页面形状，交付对账与用户肉眼验收都要分批做；返修成本高。</p>
+    </article>
+  </div>
+
+  <div class="verdict"><b>我的建议：甲（11 张）。</b>
+    <span class="need">需要你点头的是：票数与切法；认了我就建齐并挂原生子议题边与阻塞边（面板上能看到块状图）。</span></div>
+</section>
+
+<!-- ============ Q7 ============ -->
+<section class="q" id="q7">
+  <h3><span class="num">Q7</span><a href="https://github.com/FeatherHunter/ilife/issues/152">卡路里场景 07 基础信息</a>那张图要不要收口</h3>
+  <p class="sub">你说它「4 条唤醒词全部跑通、主目标已完成」——票面确实是这个状态，但 issue 还开着。</p>
+
+  <div class="why"><b>前因。</b>
+    那张图正文标着「进度：100%」，Destination 两条都达成（你 2026-09-13 的原话「这个 html 要求的内容都通过」）。
+    但它还开着，因为底下挂着 5 张<b>不在本图收口链上</b>的子票：
+    <a href="https://github.com/FeatherHunter/ilife/issues/181">结构重组与死代码拆除</a>、
+    <a href="https://github.com/FeatherHunter/ilife/issues/182">外部集成与调度 8 条</a>、
+    <a href="https://github.com/FeatherHunter/ilife/issues/238">页面文案返修</a>、
+    <a href="https://github.com/FeatherHunter/ilife/issues/239">复制组件</a>、
+    <a href="https://github.com/FeatherHunter/ilife/issues/250">路由层窗口与命令接错纠正</a>。
+  </div>
+
+  <ul class="facts">
+    <li><b>关图不会让这 5 张消失</b>：它们是独立议题，关掉父图后仍开着、仍能被本图引用。</li>
+    <li><b>不关的代价：</b>面板上「已完成」的图一直挂着，下一张图（本图）的上下文要靠人肉记；而且 <code>#250</code> 与 <code>#239</code> 正好压着本图。</li>
+    <li><b>其中两张与本图直接相关：</b><code>#250</code>（见 Q5）与 <code>#239</code> 复制组件（本图页面都要带复制区）。</li>
+  </ul>
+
+  <div class="opts">
+    <article class="opt rec">
+      <h4>甲 · 关图，并写一条收口决议列出 5 张后续票 <span class="pill warn">建议</span></h4>
+      <p class="pl">面板干净、口径清楚：主目标已达成的那张图不再占位；5 张后续票各自独立可推进。</p>
+      <p class="mi">需要一次人工确认：你点头后我才关，不自己关。</p>
+    </article>
+    <article class="opt">
+      <h4>乙 · 先挂着，等那 5 张各自收口</h4>
+      <p class="pl">不用做任何决定。</p>
+      <p class="mi">挂多久不确定；「图已完成但还开着」会让后来的人误判这张图还在施工。</p>
+    </article>
+  </div>
+
+  <div class="verdict"><b>我的建议：甲</b>（写清 5 张后续票的去向后关闭）。
+    <span class="need">需要你点头的是：关不关那张图——这是你的图，我不自己动。</span></div>
+</section>
+
+<footer>
+  <b>答完之后我会做的事（本票 #166 的收口动作）：</b>
+  <ol>
+    <li>建齐第 2–12 张票，挂原生子议题边与原生阻塞边（面板上能看到块状图）；</li>
+    <li>把决议写进 <a href="https://github.com/FeatherHunter/ilife/issues/166">#166</a> 的决议评论：70 条逐条去处、7 类页面与归属、公共层增量、与 <code>#250</code> 的分工；</li>
+    <li>回写地图：Decisions so far 加索引行、Not yet specified 清掉已说清的两条、把 <code>goal_config.html</code> 那句（属场景 06）从本图清掉；</li>
+    <li>关掉 <code>#166</code>（本票），不动地图本身（图刚开就关等于假完成）。</li>
+  </ol>
+  <p class="tag">本页只列决定与依据，全量事实在 <code>docs/skills/skill-calorie/t166-scene02-reconcile.md</code>（70 条逐条对账 ＋ 70 条执行状态 ＋ 老模板实物形状）。</p>
+</footer>
+
+</div>
+</body>
+</html>
