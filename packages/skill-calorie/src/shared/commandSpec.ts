@@ -1,4 +1,4 @@
-/** 命令声明的形状（**唯一定义地**）：一条命令的事实——键／形状／标题／代表唤醒词／处理函数。
+/** 命令声明的形状（**唯一定义地**）：一条命令的事实——键／形状／标题／代表唤醒词／可执行示例／处理函数。
  *
  * 谁在用（写得出哪两个在用）：
  *   ① 各能力目录的声明文件（本票：`src/weight/commands.ts`）——命令事实的**唯一权威源**；
@@ -44,6 +44,8 @@ export interface ReadCommandSpec {
   readonly title: string;
   /** 代表唤醒词（生成 SKILL.md 速查表的 `REPR` 用）；必须是 `TRIGGERS` 里真实存在的唤醒词。 */
   readonly wakeWord: string;
+  /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
+  readonly example: string;
   readonly run: ViewHandler;
 }
 
@@ -54,6 +56,8 @@ export interface WriteCommandSpec {
   readonly shape: 'receipt';
   readonly title: string;
   readonly wakeWord: string;
+  /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
+  readonly example: string;
   readonly run: WriteHandler;
 }
 

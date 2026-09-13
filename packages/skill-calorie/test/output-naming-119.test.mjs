@@ -51,7 +51,7 @@ function runOk(dir, args) {
 }
 
 // ---------------------------------------------------------------- ① 类型段：写键一律 receipt，视图键不加段
-test('#119 ① sceneTypeFor：35 写键一律 receipt（旧 render_*_receipt 全走 html_scene_path receipt）', () => {
+test('#119 ① sceneTypeFor：写键一律 receipt（旧 render_*_receipt 全走 html_scene_path receipt）', () => {
   assert.deepEqual(OUTPUT_TYPE_LABELS, { process: '过程', result: '结果', receipt: '回执' });
   const keys = Object.keys(CALORIE_COMBOS);
   assert.deepEqual([...keys].sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
@@ -64,7 +64,9 @@ test('#119 ① sceneTypeFor：35 写键一律 receipt（旧 render_*_receipt 全
       assert.equal(sceneTypeFor(k), null, k + ' 视图键默认不加类型段');
     }
   }
-  assert.equal(receiptCount, 35, 'receipt 形写键须为 35 个');
+  // 数字不手写：receipt 形键数 == 权威声明里的写键数（写命令一律 receipt 形），加／删一条命令本行不动。
+  assert.equal(receiptCount, DECLARED_WRITE_KEYS.length,
+    'receipt 形写键须逐条对上权威声明的写键（' + DECLARED_WRITE_KEYS.length + ' 个），不再手写数字');
 });
 
 // ---------------------------------------------------------------- ② 旧命令名覆盖：ranking 食物≠食品

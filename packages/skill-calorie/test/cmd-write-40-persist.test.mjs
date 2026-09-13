@@ -23,6 +23,7 @@ import { openDbReadOnly } from '../dist/db/readonly.js';
 import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
 import { WATER_NAME } from '../dist/fetch/diet.js';
 import { buildSeries } from '../dist/analysis/series.js';
+import { DECLARED_WRITE_KEYS } from './declared.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -746,11 +747,12 @@ test('口径 · 删除回执可恢复性：文案与库内语义一致（软删�
 
 // ---------------------------------------------------------------- 覆盖门
 
-test('覆盖门 · 35 写键逐键落库断言（每键 ≥1 次真实只读查询，缺键/空转即红）', () => {
-  assert.equal(WRITE_KEYS.length, 35);
+test('覆盖门 · 全部写键逐键落库断言（每键 ≥1 次真实只读查询，缺键/空转即红）', () => {
+  // 写键表 == 权威声明（未搬迁清单 ＋ 各能力）：加／删一条写命令时这条断言不用改数字（见 test/declared.mjs）。
+  assert.deepEqual([...WRITE_KEYS].sort(), DECLARED_WRITE_KEYS, '写键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
   const missing = WRITE_KEYS.filter((k) => !(readsByKey.get(k) >= 1));
   assert.deepEqual(missing, [], '以下写键没有「写后 SELECT 回读」断言（或断言被掏空）：' + missing.join('、'));
-  assert.equal(readsByKey.size, 35, '落库断言覆盖键数 ' + readsByKey.size + '/35');
+  assert.equal(readsByKey.size, WRITE_KEYS.length, '落库断言覆盖键数 ' + readsByKey.size + '/' + WRITE_KEYS.length);
   const total = [...readsByKey.values()].reduce((a, b) => a + b, 0);
-  assert.ok(total >= 35, '真实只读查询总次数 ' + total + ' 少于键数');
+  assert.ok(total >= WRITE_KEYS.length, '真实只读查询总次数 ' + total + ' 少于键数');
 });

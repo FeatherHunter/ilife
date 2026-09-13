@@ -21,6 +21,10 @@ export const DECLARED_KEYS = DECLARED.map((d) => d.key);
 export const DECLARED_WRITE_KEYS = DECLARED.filter((d) => d.kind === 'write').map((d) => d.key);
 export const DECLARED_READ_KEYS = DECLARED.filter((d) => d.kind !== 'write').map((d) => d.key);
 
+/** 已搬到能力目录的那一批键（＝生成物 `cli/registry.ts` 的键集合）。
+ * 用途：钉「某能力声明的条数 == 已搬迁声明的键数」这类**计数**断言——加／删一条命令时两边一起动，断言不必手改。 */
+export const DECLARED_CAPABILITY_KEYS = Object.keys(REGISTRY);
+
 /** 一句话说明本轮对账的分母，失败信息里带上它，看日志不必再回源码。 */
 export const DECLARED_NOTE =
   '声明数＝未搬迁 ' + LEGACY_COMMANDS.length + ' ＋ 各能力 ' + Object.keys(REGISTRY).length;

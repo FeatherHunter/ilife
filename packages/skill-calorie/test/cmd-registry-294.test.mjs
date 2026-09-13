@@ -30,6 +30,7 @@ import { CALORIE_COMBOS, CALORIE_WRITE_COMBOS, isCalorieWriteKey } from '../dist
 import { runWeightView, runWeightWrite, WEIGHT_COMMANDS } from '../dist/weight/index.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
+import { DECLARED_CAPABILITY_KEYS } from './declared.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI_DIR = join(HERE, '..', 'src', 'cli');
@@ -190,7 +191,9 @@ test('#294 对账：注册表每条声明与 cli/keys.ts 的登记逐条一致',
   // 本票只搬了体重：注册表当前恰好是体重那 9 条。
   assert.deepEqual([...REGISTRY_KEYS].sort(), WEIGHT_COMMANDS.map((c) => c.key).sort(),
     '注册表当前应恰为体重 9 条（别的场景随各自的票搬）');
-  assert.equal(WEIGHT_COMMANDS.length, 9, '体重命令数变了（加命令要一并更新本断言）');
+  // 计数不手写：两边都从权威声明算出来（加／删一条命令时本行不动，见 test/declared.mjs）。
+  assert.equal(WEIGHT_COMMANDS.length, DECLARED_CAPABILITY_KEYS.length,
+    '体重声明条数 == 各能力目录声明的键数（权威声明算出来的，不再手写数字）');
 });
 
 test('#294 对账：每条声明的代表唤醒词都是真唤醒词，且路由落回同一个键', () => {

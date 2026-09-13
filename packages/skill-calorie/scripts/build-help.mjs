@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 // HELP 构建期注入（T11，照 M6 范式；#40 追加 35 写键）：CALORIE_COMBOS 全量键 + 代表唤醒词→速查表→SKILL.md 互联区；只重写标记块，其余不动。无标记即大声失败。
+//
+// 入口：`pnpm help:build`（= 跑本文件）。本文件里**没有一条命令的手写事实**：
+//   REPR 表与 EXAMPLE 表都是 `scripts/gen-cli.mjs` 的标记块生成物，其余从 `dist/cli/keys.js` 读。
+// 重生成 SKILL.md 的正确顺序（少一步就会得到「键数停在旧的」这种静默结果）：
+//   `pnpm build` → `pnpm gen` → `pnpm build`（把生成出来的 `src/cli/keys.ts` 编进 `dist/`）→ `pnpm help:build`
+//   → 需要 `combos.yaml` 的镜像连带时再 `node packages/base-combos/scripts/gen-present.mjs`。
+// `pnpm gen:check`（CI 一道门）比对的是**生成物 == 生成器输出**，不含 SKILL.md 本身；
+// 本文件的产物新鲜度由 `pnpm help:examples:check` 的「AUTO 块 == renderSkillMd 输出」那一条盯。
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -105,118 +113,122 @@ const REPR = {
 };
 // -- GEN-CLI-END REPR 表
 
+// -- GEN-CLI-START EXAMPLE 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）
+// 每键一行「照抄即能跑」的示例：住声明的 `example` 字段（各能力 `commands.ts`／`legacyCommands.ts`）。
+// 无 `--params` 的写法照抄即 exit 2／4——所以新键必须自带可执行示例（#99 生成期结构断言的来意）。
+const EXAMPLES = {
+  'calorie.body.composition-add': 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5}\'',
+  'calorie.body.composition-remove': 'calorie-cmd-read calorie.body.composition-remove --params \'{"id":1}\'',
+  'calorie.body.measure-add': 'calorie-cmd-read calorie.body.measure-add --params \'{"waistCm":85}\'',
+  'calorie.body.measure-remove': 'calorie-cmd-read calorie.body.measure-remove --params \'{"id":1}\'',
+  'calorie.diet.add': 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35}\'',
+  'calorie.diet.batch': 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'',
+  'calorie.diet.copy': 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\'',
+  'calorie.diet.remove': 'calorie-cmd-read calorie.diet.remove --params \'{"id":1}\'',
+  'calorie.diet.remove-by-date': 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"<日期>"}\'',
+  'calorie.diet.remove-by-range': 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"<日期>","end":"<日期>"}\'',
+  'calorie.diet.remove-by-type': 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"mealType":"早餐","date":"<日期>"}\'',
+  'calorie.diet.update': 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'',
+  'calorie.diet.update-by-date': 'calorie-cmd-read calorie.diet.update-by-date --params \'{"note":"食堂","date":"<日期>"}\'',
+  'calorie.exercise.add': 'calorie-cmd-read calorie.exercise.add --params \'{"type":"慢跑","calories":320,"minutes":30}\'',
+  'calorie.exercise.remove': 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'',
+  'calorie.exercise.update': 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":40}\'',
+  'calorie.goal.pause': 'calorie-cmd-read calorie.goal.pause',
+  'calorie.goal.resume': 'calorie-cmd-read calorie.goal.resume',
+  'calorie.goal.set': 'calorie-cmd-read calorie.goal.set --params \'{"calorie":1800,"protein":150,"carbs":200,"fat":50}\'',
+  'calorie.goal.water': 'calorie-cmd-read calorie.goal.water --params \'{"water":2000}\'',
+  'calorie.goal.weight': 'calorie-cmd-read calorie.goal.weight --params \'{"kg":68}\'',
+  'calorie.photo.add': 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'',
+  'calorie.photo.remove': 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'',
+  'calorie.photo.tag': 'calorie-cmd-read calorie.photo.tag --params \'{"id":1,"op":"add","tag":"晨起"}\'',
+  'calorie.product.add': 'calorie-cmd-read calorie.product.add --params \'{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}\'',
+  'calorie.product.deprecate': 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'',
+  'calorie.product.update': 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'',
+  'calorie.profile.activity': 'calorie-cmd-read calorie.profile.activity --params \'{"activityLevel":"active"}\'',
+  'calorie.profile.set': 'calorie-cmd-read calorie.profile.set --params \'{"heightCm":175,"activityLevel":"moderate"}\'',
+  'calorie.profile.update': 'calorie-cmd-read calorie.profile.update --params \'{"field":"heightCm","value":176}\'',
+  'calorie.water.log': 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'',
+  'calorie.weight.batch': 'calorie-cmd-read calorie.weight.batch --params \'{"items":[{"date":"<日期>","kg":70.5}]}\'',
+  'calorie.weight.log': 'calorie-cmd-read calorie.weight.log --params \'{"kg":70.5}\'',
+  'calorie.weight.remove': 'calorie-cmd-read calorie.weight.remove --params \'{"id":1}\'',
+  'calorie.weight.update': 'calorie-cmd-read calorie.weight.update --params \'{"id":1,"kg":70.2}\'',
+  'calorie.help.center': 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'',
+  'calorie.help.lookup': 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'',
+  'calorie.history': 'calorie-cmd-read calorie.history --params \'{"days":7}\'',
+  'calorie.photo.compare': 'calorie-cmd-read calorie.photo.compare --params \'{"id1":1,"id2":2}\'',
+  'calorie.photo.detail': 'calorie-cmd-read calorie.photo.detail --params \'{"id":1}\'',
+  'calorie.photo.gif': 'calorie-cmd-read calorie.photo.gif --params \'{"tag":"正面"}\'',
+  'calorie.photo.list': 'calorie-cmd-read calorie.photo.list --params \'{"tag":"正面"}\'',
+  'calorie.today': 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'',
+  'calorie.view.anomaly': 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"weight_volatility","window":"90d"}\'',
+  'calorie.view.batch-import-preview': 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'',
+  'calorie.view.body-composition': 'calorie-cmd-read calorie.view.body-composition',
+  'calorie.view.body-measure': 'calorie-cmd-read calorie.view.body-measure --params \'{"metric":"waist_cm"}\'',
+  'calorie.view.calorie-trend': 'calorie-cmd-read calorie.view.calorie-trend --params \'{"window":"7d"}\'',
+  'calorie.view.combined': 'calorie-cmd-read calorie.view.combined --params \'{"pair":"weight_calorie","window":"7d"}\'',
+  'calorie.view.composition-wizard': 'calorie-cmd-read calorie.view.composition-wizard',
+  'calorie.view.contraindication': 'calorie-cmd-read calorie.view.contraindication --params \'{"part":"all"}\'',
+  'calorie.view.dedupe': 'calorie-cmd-read calorie.view.dedupe',
+  'calorie.view.deficit': 'calorie-cmd-read calorie.view.deficit --params \'{"window":"7d"}\'',
+  'calorie.view.diet': 'calorie-cmd-read calorie.view.diet --params \'{"window":"今日"}\'',
+  'calorie.view.diet-review': 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\'',
+  'calorie.view.exercise': 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今日"}\'',
+  'calorie.view.exercise-cardio': 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"window":"7d"}\'',
+  'calorie.view.exercise-distribution': 'calorie-cmd-read calorie.view.exercise-distribution --params \'{"window":"7d"}\'',
+  'calorie.view.exercise-goal': 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"今日"}\'',
+  'calorie.view.exercise-recap': 'calorie-cmd-read calorie.view.exercise-recap --params \'{"window":"7d"}\'',
+  'calorie.view.exercise-review': 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本周"}\'',
+  'calorie.view.exercise-strength': 'calorie-cmd-read calorie.view.exercise-strength --params \'{"window":"7d"}\'',
+  'calorie.view.exercise-trend': 'calorie-cmd-read calorie.view.exercise-trend --params \'{"window":"7d"}\'',
+  'calorie.view.gif-planner': 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'',
+  'calorie.view.goal': 'calorie-cmd-read calorie.view.goal --params \'{"window":"7d"}\'',
+  'calorie.view.goal-config': 'calorie-cmd-read calorie.view.goal-config',
+  'calorie.view.goal-expiring': 'calorie-cmd-read calorie.view.goal-expiring',
+  'calorie.view.goal-predict': 'calorie-cmd-read calorie.view.goal-predict --params \'{"window":"14d"}\'',
+  'calorie.view.goal-progress': 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\'',
+  'calorie.view.goal-recommend': 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'',
+  'calorie.view.goal-status': 'calorie-cmd-read calorie.view.goal-status',
+  'calorie.view.goal-vs-actual': 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"window":"30d"}\'',
+  'calorie.view.goal-weight': 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"30d"}\'',
+  'calorie.view.goal-wizard': 'calorie-cmd-read calorie.view.goal-wizard',
+  'calorie.view.health': 'calorie-cmd-read calorie.view.health --params \'{"window":"本周"}\'',
+  'calorie.view.home': 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'',
+  'calorie.view.library': 'calorie-cmd-read calorie.view.library',
+  'calorie.view.lint-health': 'calorie-cmd-read calorie.view.lint-health',
+  'calorie.view.long-trend': 'calorie-cmd-read calorie.view.long-trend --params \'{"group":"weight_calorie","window":"30d"}\'',
+  'calorie.view.measure-wizard': 'calorie-cmd-read calorie.view.measure-wizard',
+  'calorie.view.nutrition-analysis': 'calorie-cmd-read calorie.view.nutrition-analysis --params \'{"window":"7d"}\'',
+  'calorie.view.nutrition-detail': 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\'',
+  'calorie.view.nutrition-ratio': 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"window":"7d"}\'',
+  'calorie.view.photo-log-wizard': 'calorie-cmd-read calorie.view.photo-log-wizard',
+  'calorie.view.plan': 'calorie-cmd-read calorie.view.plan',
+  'calorie.view.plan-wizard': 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\'',
+  'calorie.view.predict': 'calorie-cmd-read calorie.view.predict --params \'{"horizonDays":7,"window":"14d"}\'',
+  'calorie.view.process-progress': 'calorie-cmd-read calorie.view.process-progress',
+  'calorie.view.profile': 'calorie-cmd-read calorie.view.profile',
+  'calorie.view.profile-wizard': 'calorie-cmd-read calorie.view.profile-wizard',
+  'calorie.view.ranking': 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\'',
+  'calorie.view.review-template': 'calorie-cmd-read calorie.view.review-template --params \'{"window":"7d"}\'',
+  'calorie.view.search': 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'',
+  'calorie.view.six-factors': 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"今日"}\'',
+  'calorie.view.source-stats': 'calorie-cmd-read calorie.view.source-stats',
+  'calorie.view.today-water': 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\'',
+  'calorie.view.volatility': 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d"}\'',
+  'calorie.view.weight': 'calorie-cmd-read calorie.view.weight',
+  'calorie.view.weight-compare': 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\'',
+  'calorie.view.weight-history': 'calorie-cmd-read calorie.view.weight-history --params \'{"days":7}\'',
+  'calorie.view.weight-review': 'calorie-cmd-read calorie.view.weight-review',
+};
+// -- GEN-CLI-END EXAMPLE 表
+
+/** 逐键取示例：住声明的 `example` 字段，由 `gen-cli.mjs` 落成上面那张表（#295 返修 A3）。
+ * 表里没有＝声明漏了 `example`（`CommandSpec` 的必填字段，tsc 与生成器各拦一道）——大声失败，不静默降级。 */
 function exampleFor(key) {
-  switch (key) {
-    case 'calorie.today': return 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\''
-    case 'calorie.view.home': return 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\''
-    case 'calorie.view.diet': return 'calorie-cmd-read calorie.view.diet --params \'{"window":"今日"}\''
-    case 'calorie.view.exercise': return 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今日"}\''
-    case 'calorie.view.goal': return 'calorie-cmd-read calorie.view.goal --params \'{"window":"7d"}\''
-    case 'calorie.view.goal-config': return 'calorie-cmd-read calorie.view.goal-config';
-    case 'calorie.view.goal-recommend': return 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'';
-    case 'calorie.view.goal-weight': return 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"30d"}\''
-    case 'calorie.view.goal-progress': return 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\''
-    case 'calorie.view.goal-status': return 'calorie-cmd-read calorie.view.goal-status';
-    case 'calorie.view.combined': return 'calorie-cmd-read calorie.view.combined --params \'{"pair":"weight_calorie","window":"7d"}\'';
-    case 'calorie.view.deficit': return 'calorie-cmd-read calorie.view.deficit --params \'{"window":"7d"}\''
-    case 'calorie.view.diet-review': return 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\''
-    case 'calorie.view.health': return 'calorie-cmd-read calorie.view.health --params \'{"window":"本周"}\''
-    case 'calorie.view.exercise-strength': return 'calorie-cmd-read calorie.view.exercise-strength --params \'{"window":"7d"}\''
-    case 'calorie.view.exercise-cardio': return 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"window":"7d"}\''
-    case 'calorie.view.exercise-distribution': return 'calorie-cmd-read calorie.view.exercise-distribution --params \'{"window":"7d"}\''
-    case 'calorie.view.exercise-recap': return 'calorie-cmd-read calorie.view.exercise-recap --params \'{"window":"7d"}\''
-    case 'calorie.view.exercise-review': return 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本周"}\''
-    case 'calorie.view.exercise-trend': return 'calorie-cmd-read calorie.view.exercise-trend --params \'{"window":"7d"}\''
-    case 'calorie.view.nutrition-ratio': return 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"window":"7d"}\''
-    case 'calorie.view.nutrition-detail': return 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\''
-    case 'calorie.view.source-stats': return 'calorie-cmd-read calorie.view.source-stats';
-    case 'calorie.view.today-water': return 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\''
-    case 'calorie.view.batch-import-preview': return 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\''
-    case 'calorie.view.calorie-trend': return 'calorie-cmd-read calorie.view.calorie-trend --params \'{"window":"7d"}\''
-    case 'calorie.view.lint-health': return 'calorie-cmd-read calorie.view.lint-health';
-    case 'calorie.view.long-trend': return 'calorie-cmd-read calorie.view.long-trend --params \'{"group":"weight_calorie","window":"30d"}\'';
-    case 'calorie.view.nutrition-analysis': return 'calorie-cmd-read calorie.view.nutrition-analysis --params \'{"window":"7d"}\''
-    case 'calorie.view.process-progress': return 'calorie-cmd-read calorie.view.process-progress';
-    case 'calorie.view.review-template': return 'calorie-cmd-read calorie.view.review-template --params \'{"window":"7d"}\''
-    case 'calorie.view.six-factors': return 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"今日"}\''
-    case 'calorie.view.measure-wizard': return 'calorie-cmd-read calorie.view.measure-wizard';
-    case 'calorie.view.composition-wizard': return 'calorie-cmd-read calorie.view.composition-wizard';
-    case 'calorie.view.photo-log-wizard': return 'calorie-cmd-read calorie.view.photo-log-wizard';
-    case 'calorie.view.gif-planner': return 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'';
-    case 'calorie.view.profile-wizard': return 'calorie-cmd-read calorie.view.profile-wizard';
-    // #251 的目标预检页（同形：无参可跑；本行由 #250 补，见上 REPR 同名注释）。
-    case 'calorie.view.goal-wizard': return 'calorie-cmd-read calorie.view.goal-wizard';
-    case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\''
-    case 'calorie.view.library': return 'calorie-cmd-read calorie.view.library';
-    case 'calorie.view.search': return 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'';
-
-    // #99：#41 的 18 个 view 键补齐（此前落到 default → 无 --params → 照抄即 exit 2／4）。
-    // 参数取值逐字来自 packages/skill-calorie/test/cli-smoke-t41.test.mjs 的 CASES（同一验收口径）。
-    case 'calorie.view.weight': return 'calorie-cmd-read calorie.view.weight'
-    case 'calorie.view.weight-history': return 'calorie-cmd-read calorie.view.weight-history --params \'{"days":7}\'';
-    case 'calorie.view.weight-compare': return 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\''
-    case 'calorie.view.weight-review': return 'calorie-cmd-read calorie.view.weight-review'
-    case 'calorie.view.volatility': return 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d"}\''
-    case 'calorie.view.body-composition': return 'calorie-cmd-read calorie.view.body-composition';
-    case 'calorie.view.body-measure': return 'calorie-cmd-read calorie.view.body-measure --params \'{"metric":"waist_cm"}\'';
-    case 'calorie.view.plan': return 'calorie-cmd-read calorie.view.plan';
-    case 'calorie.view.plan-wizard': return 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\''
-    case 'calorie.view.exercise-goal': return 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"今日"}\''
-    case 'calorie.view.goal-expiring': return 'calorie-cmd-read calorie.view.goal-expiring'
-    case 'calorie.view.goal-predict': return 'calorie-cmd-read calorie.view.goal-predict --params \'{"window":"14d"}\''
-    case 'calorie.view.goal-vs-actual': return 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"window":"30d"}\''
-    case 'calorie.view.predict': return 'calorie-cmd-read calorie.view.predict --params \'{"horizonDays":7,"window":"14d"}\''
-    case 'calorie.view.anomaly': return 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"weight_volatility","window":"90d"}\''
-    case 'calorie.view.contraindication': return 'calorie-cmd-read calorie.view.contraindication --params \'{"part":"all"}\'';
-    case 'calorie.view.dedupe': return 'calorie-cmd-read calorie.view.dedupe';
-    case 'calorie.view.profile': return 'calorie-cmd-read calorie.view.profile';
-    case 'calorie.photo.list': return 'calorie-cmd-read calorie.photo.list --params \'{"tag":"正面"}\'';
-    case 'calorie.photo.detail': return 'calorie-cmd-read calorie.photo.detail --params \'{"id":1}\'';
-    case 'calorie.photo.compare': return 'calorie-cmd-read calorie.photo.compare --params \'{"id1":1,"id2":2}\'';
-    case 'calorie.photo.gif': return 'calorie-cmd-read calorie.photo.gif --params \'{"tag":"正面"}\'';
-    case 'calorie.help.center': return 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'';
-    case 'calorie.help.lookup': return 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'';
-    case 'calorie.history': return 'calorie-cmd-read calorie.history --params \'{"days":7}\'';
-    case 'calorie.diet.add': return 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35}\'';
-    case 'calorie.diet.update': return 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'';
-    case 'calorie.diet.remove': return 'calorie-cmd-read calorie.diet.remove --params \'{"id":1}\'';
-    case 'calorie.diet.batch': return 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'';
-    case 'calorie.diet.copy': return 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\''
-    case 'calorie.diet.update-by-date': return 'calorie-cmd-read calorie.diet.update-by-date --params \'{"note":"食堂","date":"<日期>"}\''
-    case 'calorie.diet.remove-by-date': return 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"<日期>"}\''
-    case 'calorie.diet.remove-by-range': return 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"<日期>","end":"<日期>"}\''
-    case 'calorie.diet.remove-by-type': return 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"mealType":"早餐","date":"<日期>"}\''
-    case 'calorie.water.log': return 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'';
-    case 'calorie.weight.log': return 'calorie-cmd-read calorie.weight.log --params \'{"kg":70.5}\'';
-    case 'calorie.weight.update': return 'calorie-cmd-read calorie.weight.update --params \'{"id":1,"kg":70.2}\'';
-    case 'calorie.weight.remove': return 'calorie-cmd-read calorie.weight.remove --params \'{"id":1}\'';
-    case 'calorie.weight.batch': return 'calorie-cmd-read calorie.weight.batch --params \'{"items":[{"date":"<日期>","kg":70.5}]}\''
-    case 'calorie.exercise.add': return 'calorie-cmd-read calorie.exercise.add --params \'{"type":"慢跑","calories":320,"minutes":30}\'';
-    case 'calorie.exercise.update': return 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":40}\'';
-    case 'calorie.exercise.remove': return 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'';
-    case 'calorie.photo.add': return 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'';
-    case 'calorie.photo.remove': return 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'';
-    case 'calorie.photo.tag': return 'calorie-cmd-read calorie.photo.tag --params \'{"id":1,"op":"add","tag":"晨起"}\'';
-    case 'calorie.product.add': return 'calorie-cmd-read calorie.product.add --params \'{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}\'';
-    case 'calorie.product.update': return 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'';
-    case 'calorie.product.deprecate': return 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'';
-    case 'calorie.profile.set': return 'calorie-cmd-read calorie.profile.set --params \'{"heightCm":175,"activityLevel":"moderate"}\'';
-    case 'calorie.profile.activity': return 'calorie-cmd-read calorie.profile.activity --params \'{"activityLevel":"active"}\'';
-    case 'calorie.profile.update': return 'calorie-cmd-read calorie.profile.update --params \'{"field":"heightCm","value":176}\'';
-    case 'calorie.goal.set': return 'calorie-cmd-read calorie.goal.set --params \'{"calorie":1800,"protein":150,"carbs":200,"fat":50}\'';
-    case 'calorie.goal.water': return 'calorie-cmd-read calorie.goal.water --params \'{"water":2000}\'';
-    case 'calorie.goal.weight': return 'calorie-cmd-read calorie.goal.weight --params \'{"kg":68}\'';
-    case 'calorie.goal.pause': return 'calorie-cmd-read calorie.goal.pause';
-    case 'calorie.goal.resume': return 'calorie-cmd-read calorie.goal.resume';
-    case 'calorie.body.composition-add': return 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5}\'';
-    case 'calorie.body.composition-remove': return 'calorie-cmd-read calorie.body.composition-remove --params \'{"id":1}\'';
-    case 'calorie.body.measure-add': return 'calorie-cmd-read calorie.body.measure-add --params \'{"waistCm":85}\'';
-    case 'calorie.body.measure-remove': return 'calorie-cmd-read calorie.body.measure-remove --params \'{"id":1}\'';
-
-    // #99 生成期结构断言：新键必须自带可执行示例。落 default 的旧写法会生成
-    // `calorie-cmd-read <key>`（无 --params）——照抄即 exit 2／4，且 SKILL.md 看不出来。
-    default: throw new Error('exampleFor 缺 case：' + key + '（新增键必须补可执行示例，不得落 default）');
+  const hit = EXAMPLES[key];
+  if (hit === undefined) {
+    throw new Error('exampleFor 缺 case：' + key + '（新增键必须在声明里带 example，不得落 default）');
   }
+  return hit;
 }
 
 export function buildHelpBlock() {

@@ -20,6 +20,7 @@ import { openDb } from '../dist/index.js';
 import { openDbReadOnly } from '../dist/db/readonly.js';
 import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
 import { SCENARIOS, checkM5 } from '../../../docs/research/t97-probe-receipts.mjs';
+import { DECLARED_WRITE_KEYS } from './declared.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -90,11 +91,12 @@ function readOnly(dir, fn) {
 const countOf = (dir, table, where = '1=1') =>
   readOnly(dir, (db) => Number(db.prepare('SELECT COUNT(*) AS n FROM ' + table + ' WHERE ' + where).get().n));
 
-// ------------------------------------------------------------------ 一、35 键逐键四要素
+// ------------------------------------------------------------------ 一、全部写键逐键四要素
 
-test('#97 · 场景表覆盖 35 写键（与 CALORIE_WRITE_COMBOS 一一对应）', () => {
-  assert.equal(WRITE_KEYS.length, 35);
-  assert.equal(SCENARIOS.length, 35);
+test('#97 · 场景表覆盖全部写键（与 CALORIE_WRITE_COMBOS 一一对应）', () => {
+  // 数字不手写：写键表 == 权威声明（未搬迁清单 ＋ 各能力），场景表条数 == 写键数（见 test/declared.mjs）。
+  assert.deepEqual([...WRITE_KEYS].sort(), DECLARED_WRITE_KEYS, '写键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
+  assert.equal(SCENARIOS.length, WRITE_KEYS.length, '场景表条数 == 写键数');
   assert.deepEqual(SCENARIOS.map((s) => s.key).sort(), [...WRITE_KEYS].sort());
 });
 
