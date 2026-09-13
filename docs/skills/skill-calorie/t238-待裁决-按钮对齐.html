@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#238 待裁决一项：复制按钮与内容左界对齐</title>
+<style>
+  :root{
+    --fg:#1d1d1f; --fg2:#52525b; --fg3:#8a8a8e; --line:#e4e4e7; --bg:#f6f6f7; --card:#fff;
+    --blue:#0071e3; --blue-bg:#eef5ff; --green:#1a7f37; --green-bg:#eaf7ee; --red:#b42318; --red-bg:#fdeceb;
+    --amber:#8a5a00; --amber-bg:#fff6e5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:15px/1.72 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:36px 22px 72px}
+  h1{font-size:26px;line-height:1.3;margin:0 0 6px;letter-spacing:-.02em}
+  h2{font-size:17px;margin:34px 0 10px;padding-left:10px;border-left:3px solid var(--blue)}
+  h3{font-size:15px;margin:0 0 8px}
+  p{margin:0 0 10px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+  .pill{font-size:12.5px;padding:3px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--fg2)}
+  .pill.warn{background:var(--amber-bg);border-color:#f0d9a8;color:var(--amber)}
+  .pill.ok{background:var(--green-bg);border-color:#c9e8d2;color:var(--green)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 14px}
+  .lead{font-size:15.5px;color:var(--fg)}
+  .lead b{background:linear-gradient(transparent 62%,#ffe9a8 62%)}
+  ul{margin:6px 0 0;padding-left:22px}
+  li{margin:5px 0}
+  code{background:#f3f4f6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;
+       font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  figure{margin:0 0 6px}
+  figure img{width:100%;border:1px solid var(--line);border-radius:10px;display:block}
+  figcaption{font-size:12.5px;color:var(--fg3);margin-top:8px}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:700px){.facts{grid-template-columns:1fr}}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .fact .k{font-size:12.5px;color:var(--fg3);margin-bottom:4px}
+  .fact .v{font-size:14px}
+  .opt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:12px;position:relative}
+  .opt.pick{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,113,227,.10)}
+  .opt h3{display:flex;align-items:center;gap:10px}
+  .tag{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px}
+  .tag.rec{background:var(--blue);color:#fff}
+  .tag.alt{background:#eef0f3;color:var(--fg2)}
+  .pro,.con{font-size:14px;margin:6px 0 0;padding:8px 12px;border-radius:10px}
+  .pro{background:var(--green-bg);color:#14432a}
+  .pro b{color:var(--green)}
+  .con{background:var(--red-bg);color:#5a1a14}
+  .con b{color:var(--red)}
+  .reply{background:var(--blue-bg);border:1px solid #cfe2ff;border-radius:14px;padding:16px 20px}
+  .reply ol{margin:8px 0 0;padding-left:22px}
+  .foot{margin-top:26px;font-size:12.5px;color:var(--fg3)}
+</style>
+</head>
+<body>
+<!-- #238 决策页：清单第 9 条② 待裁决；截图取自 .scratch/t238/shots-after/改档案回执-1440.png -->
+<div class="wrap">
+
+  <h1>#238 待裁决一项：复制按钮与内容左界对齐</h1>
+  <div class="meta">
+    <span class="pill warn">待你裁 1 条</span>
+    <span class="pill ok">其余 14 条已做完并验过</span>
+    <span class="pill">票 #238 · 进度 95% · 未关闭</span>
+    <span class="pill">提交 2e6bf81</span>
+  </div>
+
+  <div class="card">
+    <p class="lead" style="margin:0">清单 15 条里 <b>14 条已经做完</b>（技术词、英文枚举、双重否定、M5 行、空值、眉标、五档表、复制区标题、页名……），390／1440 两档 16 张图逐张看过，四关读数全 0，测试 1469 绿。<b>只剩这一条没做</b>，因为它要改的是别的技能也在用的共享样式，而这张票自己写明「不动共享层数值」——得你拍一下。</p>
+  </div>
+
+  <h2>前因：清单第 9 条的第 ② 问</h2>
+  <p>你当时看场景 07 的截图，指出复制区有三处问题：①标题与按钮同名「复制数据」；②桌面端表格从左边起，按钮却居中，两边对不齐；③预检确认页两个复制区两套规格、三种叫法。</p>
+  <p><b>① 和 ③ 已经修好</b>（去掉与按钮同名的大标题；预检确认页统一成「复制指令／复制数据／复制日志」三个按钮、不再多一行小标题）。<b>② 卡住了</b>：它是共享层的固定排版，不是这一页写出来的字。</p>
+
+  <h2>它长什么样（改档案回执 · 1440 实测）</h2>
+  <figure>
+    <img src="data:image/png;base64,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" alt="改档案回执 1440：对账信息一行左界 x=240，两颗复制按钮居中（x≈460 起、宽 520）">
+    <figcaption>截自「改档案回执」的桌面档：上面那一行「对账信息」的左界在 <b>x=240</b>（与卡片、表格同一条线），下面两颗按钮却居中——<b>x≈460 起、520 宽</b>。不齐就是在这一屏里看出来的。</figcaption>
+  </figure>
+
+  <h2>做决定要看的事实</h2>
+  <div class="facts">
+    <div class="fact">
+      <div class="k">这一行是谁给的</div>
+      <div class="v">共享层 <code>packages/base-render/src/style.ts:303-312</code> 的 <code>.ilife-action-bar</code>：<code>max-width:520px</code> ＋ 左右 <code>auto</code> 外边距＝居中。<b>全仓所有带复制按钮的页面都用它</b>。</div>
+    </div>
+    <div class="fact">
+      <div class="k">老技能当年也这样</div>
+      <div class="v">老实物 <code>base.css:81-91</code> 就是 <code>max-width:520px; margin:0 auto</code>。居中不是新架构引入的毛病，是老技能原样搬过来的。</div>
+    </div>
+    <div class="fact">
+      <div class="k">它被一条冻结断言钉住</div>
+      <div class="v"><code>packages/base-render/test/style.test.mjs:515-526</code> 专门断言动作条必须有 <code>max-width: 520px</code>（注释写着「两处同源」）。改对齐要先和这条断言商量。</div>
+    </div>
+    <div class="fact">
+      <div class="k">这张票自己划的边界</div>
+      <div class="v">票面「关键事实」：<b>本票只改技能侧喂进去的文案与摆法，不动共享层数值</b>。同一段还举了「复制按钮 40px 是冻结值」当例子。</div>
+    </div>
+  </div>
+
+  <h2>三条出路</h2>
+
+  <div class="opt pick">
+    <h3>甲 · 沿用老实物，保持居中 <span class="tag rec">推荐</span><span class="tag alt">零风险</span></h3>
+    <p style="margin:0">把清单 9② 判成「改口径」：桌面端按钮居中就是老技能的排版，不是缺陷。</p>
+    <p class="pro"><b>利：</b>不动共享层，与票面边界一致；与老实物逐字一致；不用重跑别家页面。</p>
+    <p class="con"><b>弊：</b>桌面端按钮与表格左界仍不齐（就是上图那个观感），清单 9② 的字面要求不作数。</p>
+  </div>
+
+  <div class="opt">
+    <h3>乙 · 另立一张共享层票 <span class="tag alt">干净</span></h3>
+    <p style="margin:0">这一条从 #238 挪出去，改共享层对齐的事单独一票做（会牵动全仓的复制按钮，值得单独验）。</p>
+    <p class="pro"><b>利：</b>本票按现状收口，跨仓的视觉改动有自己的验收；责任清楚。</p>
+    <p class="con"><b>弊：</b>多一张票；这条对齐问题在 #238 范围内算「没做」。</p>
+  </div>
+
+  <div class="opt">
+    <h3>丙 · 本票内就改 <span class="tag alt">一次做完</span></h3>
+    <p style="margin:0">先撤掉「不动共享层数值」这条约束，我改 <code>style.ts</code> 的动作条（去掉两个 <code>auto</code> 外边距、保住 <code>max-width:520px</code>），再同批重跑样式断言与全仓页面读数。</p>
+    <p class="pro"><b>利：</b>一次做完，桌面端按钮与内容左界直接对齐。</p>
+    <p class="con"><b>弊：</b>改的是别家页面也在用的样式——要重跑 base-render 的样式断言与全仓页面读数；与老实物分道，图中这条对齐以后就与老技能不一样了。</p>
+  </div>
+
+  <h2>怎么回复我</h2>
+  <div class="reply">
+    <p style="margin:0"><b>回一行字就行：甲／乙／丙。</b></p>
+    <ol>
+      <li><b>甲</b> 或 <b>乙</b>：我把 #238 收 <b>100% ＋ 关闭</b>，并在所属地图 #152 的 Decisions so far 追加一行（票名 ＋ 链接 ＋ 一句话结论）。</li>
+      <li><b>丙</b>：我在本票内改共享层，重跑样式断言与 390／1440 读数后再收口。</li>
+    </ol>
+  </div>
+
+  <p class="foot">其余交付与账目：<code>docs/skills/skill-calorie/t238-delivery.md</code>（影响清单／超线报警／逐条对账／四关读数／测试账）· 票面：<code>github.com/FeatherHunter/ilife/issues/238</code> · 截图：<code>.scratch/t238/shots-after/</code>（16 张，不入库）。</p>
+</div>
+</body>
+</html>
