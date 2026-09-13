@@ -59,7 +59,7 @@ import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
 // #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 // #294 · 参数读取与窗口口径上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
-import { anchorOf, dayField, defaultRange, fail, nums, optNum, optStr, windowRange } from '../shared/params.js';
+import { dayField, defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
 import {
   HTML_DIR_NAME,
   deliverHtml,
