@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#152 场景 07 · 四条唤醒词验证一页纸（三份独立扫描）</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a20; --panel2:#1b2028; --line:#2a303a;
+    --fg:#e9eef5; --fg2:#a9b3c1; --fg3:#7b8593;
+    --ok:#3fb950; --warn:#d29922; --bad:#f85149; --info:#58a6ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px 20px 64px;background:var(--bg);color:var(--fg);
+    font:14px/1.75 "Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:23px;margin:0 0 6px;line-height:1.4}
+  h2{font-size:18px;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  p{margin:8px 0}
+  .sub{color:var(--fg2)} .dim{color:var(--fg3);font-size:13px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .verdict{border-left:4px solid var(--ok);background:#121a13}
+  .verdict.warn{border-left-color:var(--warn);background:#1a1508}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;word-break:break-word}
+  th{background:#1b1f26;color:var(--fg2);font-weight:600;font-size:12.5px}
+  td.n{text-align:right;white-space:nowrap;font-family:Consolas,monospace}
+  code{background:#0b0d11;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#d7e2f0;
+    font:12.5px Consolas,"Cascadia Mono",monospace;word-break:break-all}
+  ul{margin:8px 0 8px 2px;padding-left:20px} li{margin:5px 0}
+  .ok{color:var(--ok);font-weight:600} .no{color:var(--bad);font-weight:600} .mid{color:var(--warn);font-weight:600}
+  .foot{margin-top:34px;border-top:1px solid var(--line);padding-top:12px;color:var(--fg3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>场景 07「基础信息」· 四条唤醒词验证一页纸</h1>
+<p class="sub">议题 <b>#152</b>（地图）／<b>#178</b>（端到端验收）· 2026-09-13 · 本页汇总<b>三份相互独立</b>的实测读数</p>
+
+<div class="panel verdict">
+  <p><b>结论：四条唤醒词在代码与数据层都已跑得通，产物是完整 HTML 文档。</b>
+  三项独立实跑（编排者探针 19 条命令／既有审查矩阵 10 用例／编排者回归 5 条）全部 exit 0，
+  且清掉补偿表后 <b>HELP 查找仍逐条回本仓命令</b>。</p>
+  <p><b>唯一未完成项与代码无关：</b>地图要求「产物由<b>你</b>肉眼验收过」。这一项只能你本人完成——
+  见 <code>t152-用户验收页.html</code>（含逐字 prompt 与产物路径）。</p>
+</div>
+
+<h2>一、四条唤醒词 → 命令 → 痕迹</h2>
+<table>
+  <tr><th>唤醒词</th><th>命令</th><th>HELP 查找实跑</th><th>产物（真机位置）</th><th class="n">字节</th></tr>
+  <tr><td>设置档案</td><td><code>calorie.profile.set</code></td><td class="ok">✅ 回本仓命令，脚本残留 0</td>
+      <td><code>…\calorie_html\设置档案_回执_20260913_015932.html</code></td><td class="n">60,426</td></tr>
+  <tr><td>改档案</td><td><code>calorie.profile.update</code></td><td class="ok">✅ 同上</td>
+      <td><code>…\calorie_html\改档案_回执_20260913_015932.html</code></td><td class="n">59,209</td></tr>
+  <tr><td>设活动量</td><td><code>calorie.profile.activity</code></td><td class="ok">✅ 同上</td>
+      <td><code>…\calorie_html\设活动量_回执_20260913_015932.html</code></td><td class="n">60,169</td></tr>
+  <tr><td>查档案</td><td><code>calorie.view.profile</code></td><td class="ok">✅ 同上</td>
+      <td><code>…\calorie_html\档案视图_20260913_015932.html</code></td><td class="n">63,838</td></tr>
+  <tr><td colspan="5" class="dim">预检确认页（三条写入词共用）：<code>calorie.view.profile-wizard</code> →
+      <code>…\calorie_html\档案预检_20260913_020058.html</code> · 65,438 字节</td></tr>
+</table>
+<p class="dim">五条产物均由编排者逐条复核：<code>&lt;!doctype html&gt;</code> ＋ <code>charset="utf-8"</code> ＋
+<code>&lt;style&gt;</code> ＋ 有版面 ＋ 两颗复制按钮（「复制数据 ▾」「复制日志」）＋ 三格式菜单项各 8 处 ＋
+<b>脚本命令残留 0</b>。真库目录：<code>D:\2Study\StudyNotes\.db\calorie_html\</code>。</p>
+
+<h2>二、数据清理（#180）到底做净了没有</h2>
+<table>
+  <tr><th>检查项</th><th>口径</th><th class="n">读数</th><th>来源</th></tr>
+  <tr><td>三字段脚本命令残留</td><td><code>main_prompt.cli</code>／<code>data_source</code>／<code>variants[].cli</code>，全 436 条</td>
+      <td class="n">0</td><td>编排者 ＋ 审查者两方各扫一遍</td></tr>
+  <tr><td>更宽口径（含 <code>npx</code>／<code>.mjs</code>／<code>node xx.js</code>）</td><td>同上，防漏网</td>
+      <td class="n">0</td><td>审查者探针</td></tr>
+  <tr><td>路由层命令文本含脚本词</td><td>全 494 条路由的 exec 通路</td><td class="n">0</td><td>审查者探针（源码＋dist 双查）</td></tr>
+  <tr><td><code>data_source</code> 与 <code>cli</code> 是否同值</td><td>414 条有该字段的条目</td>
+      <td class="n">SAME=414<br>DIFF=0<br>MISSING=22</td><td>审查者探针（22 条 legacy 本就缺该字段）</td></tr>
+  <tr><td>改动是否只动字段、不动结构</td><td>378 条改动记录的字段分布</td>
+      <td class="n">纯字段级<br>结构变动=0</td><td>审查者探针</td></tr>
+  <tr><td>「逐字相同」断言的鉴别力</td><td>进入断言分支的条数</td>
+      <td class="n">321 条<br>逐字全等</td><td>审查者探针（证明断言非恒真）</td></tr>
+</table>
+
+<h2>三、门禁与测试</h2>
+<table>
+  <tr><th>门</th><th>命令</th><th>读数</th></tr>
+  <tr><td>构建</td><td><code>pnpm build</code></td><td class="ok">exit 0</td></tr>
+  <tr><td>快照一致性</td><td><code>gen-sot-snapshot.mjs --check</code></td>
+      <td class="ok">exit 0 · <code>MASK-EQUAL=1</code> · <code>entries=436 mismatch=0</code></td></tr>
+  <tr><td>全量测试</td><td><code>pnpm test</code></td>
+      <td class="mid">1469 测试 / 1468 通过 / <b>1 失败</b></td></tr>
+  <tr><td>门禁对账</td><td><code>check-gate-audit</code></td>
+      <td class="ok">PASS · <code>matched=8/8 scoped=8 undeclared=0</code></td></tr>
+</table>
+<p><b>那 1 条遗留失败与本事无关</b>：<code>fetch-t6.test.mjs:97</code> 用<b>真实时钟</b>取窗口（样例日期 09-04／09-05，今天 09-13），
+同用例里锚定日期的断言是绿的。属议题已登记的环境时钟项，不由 #180 引入。</p>
+<p class="dim">上一轮全量是 <b>8 红</b>，本轮降到 <b>1 红</b>——7 条转绿的逐条对应表在
+<code>docs/skills/skill-calorie/t180-collection.md</code> §7。</p>
+
+<h2>四、已知遗留（都记账了，都不挡你的验收）</h2>
+<ul>
+  <li><b>写死的种子日期</b>：路由层 245 条带 <code>2026-09-xx</code>，其中 115 条已随数据改写冻进数据。后果具体：
+      用户对「看本周饮食」类词点复制，会复制出 <code>--start 2026-09-01 --end 2026-09-07</code>（过期窗口）。
+      根因在路由层窗口文本，已单列 <b>#250</b>，本图不在此收口。</li>
+  <li><b>两条语义错窗口</b>：<code>看健康报告(本周)</code>（<code>routing.ts:483</code>）与 <code>本周复盘</code>（<code>:584</code>）
+      都只给 <b>1 天</b>——用户念「本周」会拿到「今天」的数据。同属 #250。</li>
+  <li><b>「逐字相同」断言非全覆盖</b>：22 条 legacy（<code>#415–#436</code>）路由是 exec 但数据写自然语言，
+      进不了该断言分支；另 2 条被 <code>SPECIAL_FLIP_WORDS</code> 排除于两处断言之外。已有别的断言覆盖，
+      属 S3 记账（<code>ESTOP</code> 由实施方与审查方各自登记）。</li>
+  <li><b>死代码</b>：<code>help-lookup.ts</code> 的 <code>execCliFor</code> 已零调用点，<code>frozenCli</code> 的合成分支不可达。
+      拆除归 <b>#181</b>（会牵 <code>triggers/index.ts:15</code> 的再导出）。</li>
+  <li><b>超告警线</b>：<code>routing.ts</code> 814 行／<code>helpCenter.ts</code> 485 行／<code>cli/write.ts</code> 961 行，
+      均超 350 行告警线；拆法归 <b>#181</b>，本波有意不拆。</li>
+</ul>
+
+<h2>五、要你做的（也是本图唯一的门）</h2>
+<ol>
+  <li>双击打开上面那五个 HTML，照着 <code>t152-用户验收页.html</code> 第 2 块每张卡的「你要看什么」过一遍。</li>
+  <li>再拿第 2 块里<b>逐字</b>的 prompt，去一个<b>全新空白 session</b> 里念四条，拿到新产物后再看。</li>
+  <li>回一句：<b>四条全过</b>，或<b>哪条不过</b>（看到的 vs 期望的）。</li>
+</ol>
+<p class="dim">若第一条词就不对劲：技能刚被换成指向本仓的联结（原先读的是陈旧拷贝 0.2.2，本仓 0.2.3），
+而「DSH 是否热读该联结」未在本机实测 → <b>先重启 DSH 再重试一次</b>。
+识别「装机层问题」的三个特征见验收页第 2 步的排查框。</p>
+
+<div class="foot">
+  证据出处：<code>docs/skills/skill-calorie/t152-acceptance-probe.md</code>（探针 19 条命令）·
+  <code>.scratch/t152-review/</code>（既有审查矩阵 10 用例 ＋ 12 张两档截图）·
+  <code>.scratch/t152-regress/</code>（编排者回归 5 条）·
+  <code>docs/skills/skill-calorie/t180-collection.md</code>（收口波正本）·
+  <code>.scratch/t180-review-a/probe*.log</code>（审查者探针）·
+  <code>docs/skills/skill-calorie/t152-deploy.md</code>（装机与产物落地）。
+</div>
+
+</div>
+</body>
+</html>
