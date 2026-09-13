@@ -22,7 +22,7 @@ import type { CrudReceipt, ErrorReceipt } from './receipt.js';
 import type { PhotoHelpHit } from './help.js';
 import { copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
 import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
-import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from './weightPlate.js';
+import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 import type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanWizardView } from './planPlate.js';
 import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from './goalExtra.js';

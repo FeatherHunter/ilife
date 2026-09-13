@@ -1,7 +1,7 @@
-/** 取数层 barrel：T3 饮食 / 体重 / 运动 / 身体 / envelope 结构段 + T6 导入 / 历史 / 跨技能只读。 */
+/** 取数层 barrel：T3 饮食 / 运动 / 身体 / envelope 结构段 + T6 导入 / 历史 / 跨技能只读。
+ *  #294：体重取数已搬进能力目录 `src/weight/records.ts`（归属律）——共用位里不再出现能力名。 */
 export { FetchError } from './errors.js';
 export * from './diet.js';
-export * from './weight.js';
 export * from './exercise.js';
 export * from './body.js';
 export { CALORIE_SKILL, calorieKey, fetchPayload, KEYS } from './shapes.js';

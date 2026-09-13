@@ -4,8 +4,8 @@
  * 删除为硬删除（老家语义）；失败抛 FetchError。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import type { SQLInputValue } from './db.js';
-import { FetchError } from './errors.js';
+import type { SQLInputValue } from '../fetch/db.js';
+import { FetchError } from '../fetch/errors.js';
 
 export const NOTE_TAGS = ['晨起空腹', '运动后', '睡前', '餐前', '餐后', '晨起', '空腹', '早起', '运动前', '生理期'];
 

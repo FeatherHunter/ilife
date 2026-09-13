@@ -32,9 +32,6 @@ import {
   WATER_NAME, MEALS, MEAL_WINDOWS, addMeal, updateMeal, deleteMeal, copyMeals, addMealsBatch,
   updateMealsByDate, deleteMealsByDate, deleteMealsByRange, deleteMealsByType, getDailySummary,
 } from '../fetch/diet.js';
-import {
-  logWeight, updateWeight, updateWeightByDate, deleteWeight, deleteWeightByDate, deleteWeightRange, batchLogWeight,
-} from '../fetch/weight.js';
 import { addRecord, updateRecord, updateDay, deleteRecord, deleteDay, deleteRange, batchAdd, copyYesterday } from '../fetch/exercise.js';
 import type { ExerciseRecordInput } from '../fetch/exercise.js';
 import {
@@ -62,6 +59,8 @@ import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { buildProfileSettingReceiptDoc } from '../profile/setup.js';
 import { buildProfileUpdateReceiptDoc } from '../profile/update.js';
 import { isCalorieWriteKey } from './keys.js';
+// #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落下面的 dispatchInner switch。
+import { REGISTRY } from './registry.js';
 
 // #294 · 参数读取与回执底座上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
 import {
@@ -209,7 +208,10 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
   if (!isCalorieWriteKey(key)) fail(3, '未知 calorie 写键：' + key);
   const before = totalChanges(db);
   try {
-    const res = dispatchInner(key, params, db);
+    // #294 · 注册表先行：命中即走能力目录那道门；未命中的老键照旧落 dispatchInner 的 switch
+    // （两条路各有断言，见 test/cmd-registry-294）。
+    const spec = REGISTRY[key];
+    const res = spec && spec.kind === 'write' ? spec.run(params, db) : dispatchInner(key, params, db);
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
     return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? res.html };
   } catch (e) {
@@ -383,84 +385,6 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       return out(R('记喝水', 'create', '已记喝水 ' + ml + ' ml（' + day + ' 累计 ' + sum.waterMl + ' ml）', '记喝水', 'food_log (写库回执)', {
         recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.water],
         items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: ml + 'ml' }],
-      }));
-    }
-    case 'calorie.weight.log': {
-      const kg = needNum(params, 'kg');
-      if (!(kg > 0) || kg > 500) fail(2, 'kg 须为 0..500');
-      const date = wday(params, 'date');
-      if (date) assertISO(date, 'date');
-      const r = logWeight(db, kg, optStr(params, 'note') ?? '', date, optStr(params, 'time'));
-      const bmiText = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
-      return out(R('记体重', 'create', '已记体重 ' + r.kg + ' kg（' + bmiText + ' · ' + r.date + ' ' + r.time + '）', '记体重', 'weight_log (写库回执)', {
-        recordId: r.id, ids: [r.id], writtenFields: [...F.weight],
-        items: [{ id: r.id, date: r.date, status: '成功', reason: '', detail: r.kg + 'kg' }],
-      }));
-    }
-    case 'calorie.weight.update': {
-      const id = optNum(params, 'id');
-      const date = wday(params, 'date');
-      const kg = optNum(params, 'kg');
-      const note = optStr(params, 'note');
-      if (kg !== undefined && (!(kg > 0) || kg > 500)) fail(2, 'kg 须为 0..500');
-      if (id !== undefined) {
-        if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
-        const r = updateWeight(db, id, kg, note);
-        const bmiTextU = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
-        return out(R('改体重记录', 'update', '已更新体重 #' + id + '：' + r.oldWeight + '→' + r.newWeight + ' kg（' + bmiTextU + '）', '改体重记录', 'weight_log (写库回执)', {
-          recordId: id, ids: [id], writtenFields: [...(kg !== undefined ? ['kg'] : []), ...(note !== undefined ? ['note'] : [])],
-          items: [{ id, status: '已更新', reason: '' }],
-        }));
-      }
-      if (date !== undefined) {
-        assertISO(date, 'date');
-        const r = updateWeightByDate(db, date, kg, note);
-        return out(R('改某日体重', 'update', '已更新 ' + date + ' 体重 ' + r.hitCount + ' 条', '改某日体重', 'weight_log (写库回执)', {
-          ids: [], idSource: 'condition', writtenFields: [...(kg !== undefined ? ['kg'] : []), ...(note !== undefined ? ['note'] : [])],
-        }));
-      }
-      fail(2, '缺参数 id 或 date（二选一）');
-      throw new Error('unreachable');
-    }
-    case 'calorie.weight.remove': {
-      const id = optNum(params, 'id');
-      const date = wday(params, 'date');
-      const start = wday(params, 'start');
-      const end = wday(params, 'end');
-      if (id !== undefined) {
-        if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
-        const r = deleteWeight(db, id);
-        return out(R('删体重记录', 'delete', '已删除体重 #' + id + '（' + r.date + ' ' + r.weight_kg + ' kg · ' + HARD_INNER + '）', '删体重记录', 'weight_log (写库回执)', {
-          recordId: id, ids: [id], writtenFields: [], items: [{ id, status: deleteStatus('hard'), reason: '' }],
-        }));
-      }
-      if (date !== undefined) {
-        assertISO(date, 'date');
-        const r = deleteWeightByDate(db, date);
-        return out(R('删某日体重', 'delete', '已删除 ' + date + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '删某日体重', 'weight_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
-      }
-      if (start !== undefined || end !== undefined) {
-        if (start === undefined || end === undefined) fail(2, '按范围删须同时传 start/end');
-        assertISO(start as string, 'start');
-        assertISO(end as string, 'end');
-        if ((start as string) > (end as string)) fail(2, 'start 不得晚于 end');
-        const r = deleteWeightRange(db, start as string, end as string);
-        return out(R('批量删体重', 'delete', '已删除 ' + start + '~' + end + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '批量删体重', 'weight_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
-      }
-      fail(2, '缺参数 id/date/start+end（三选一）');
-      throw new Error('unreachable');
-    }
-    case 'calorie.weight.batch': {
-      const items = needArr(params, 'items');
-      if (items.length > 365) fail(2, 'items 至多 365 条');
-      const r = batchLogWeight(db, items.map((e) => {
-        const o = (e ?? {}) as Record<string, unknown>;
-        return { date: o['date'] === undefined ? undefined : String(o['date']), kg: o['kg'] as number | undefined };
-      }));
-      return out(R('批量补录体重', 'create', '批量记体重：写入 ' + r.wrote + '，跳过 ' + r.skipped + '，失败 ' + r.failed, '批量补录体重', 'weight_log (写库回执)', {
-        noChange: r.wrote === 0, ids: [], idSource: 'condition',
-        writtenFields: r.wrote > 0 ? [...F.weightBatch] : [],
-        items: r.items.filter((x) => x.status === '失败').slice(0, 20).map((x) => ({ status: '失败', reason: x.reason, detail: String(x.date) })),
       }));
     }
     case 'calorie.exercise.add': {

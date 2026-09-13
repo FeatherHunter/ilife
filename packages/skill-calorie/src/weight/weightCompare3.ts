@@ -5,7 +5,7 @@
  */
 import { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { EX_ALIVE, todayISO } from './utils.js';
+import { EX_ALIVE, todayISO } from '../analysis/utils.js';
 import { sameDayCompare, scenarioA1, scenarioA2, scenarioA3, scenarioA4, scenarioA5, scenarioB1 } from './weightCompare.js';
 import type { ScenarioOpts, ScenarioResult } from './weightCompare.js';
 import { scenarioB8, scenarioE1, scenarioE2, scenarioE3, scenarioE5, scenarioE6 } from './weightCompare2.js';

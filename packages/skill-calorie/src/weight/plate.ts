@@ -9,15 +9,15 @@
  * 缺失阻断不返空：空窗/无目标一律 CalorieRenderError missing-data；日期非法 bad-input。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getWeightGoalInfo, weightCompare, weightMilestone, weightTrend } from '../analysis/weight.js';
-import type { WeightCompare, WeightMilestone, WeightTrend } from '../analysis/weight.js';
-import { getWeightHistory } from '../fetch/weight.js';
-import type { WeightHistory } from '../fetch/weight.js';
-import { weightVolatilityV2 } from '../analysis/volatility.js';
-import type { BaselineMode, VolatilityV2 } from '../analysis/volatility.js';
+import { getWeightGoalInfo, weightCompare, weightMilestone, weightTrend } from './figures.js';
+import type { WeightCompare, WeightMilestone, WeightTrend } from './figures.js';
+import { getWeightHistory } from './records.js';
+import type { WeightHistory } from './records.js';
+import { weightVolatilityV2 } from './volatility.js';
+import type { BaselineMode, VolatilityV2 } from './volatility.js';
 import type { AnalysisResult } from '../analysis/result.js';
 import { FetchError } from '../fetch/errors.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {

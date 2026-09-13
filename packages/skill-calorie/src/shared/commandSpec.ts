@@ -13,13 +13,17 @@ import type { EnvelopeShape } from 'base-link-core';
 import type { HtmlLanding } from 'base-paint/save-html';
 import type { CrudReceipt } from '../render/receipt.js';
 
+/** 该次产物的种类：`html`＝HTML 产物（模板／壳渲染），`text`＝结构化文本（渲染层已定文本交付）。 */
+export type DeliveryKind = 'html' | 'text';
+
 /** 读命令的产物：`data` 过 envelope 形状守卫，`html` 为产物（可为空串＝无模板，允许文字答）。 */
 export interface ViewOut {
   data: Record<string, unknown>;
   html: string;
-  /** `html`＝HTML 产物（模板／壳渲染），`text`＝结构化文本（渲染层已定文本交付）。 */
-  deliveryKind?: 'html' | 'text';
-  /** 该次产物的落点**意图**（目录 ＋ 文件名主体）：给定时绕过 `<中文command>` 命名。 */
+  deliveryKind?: DeliveryKind;
+  /** #139 · 该次产物的落点**意图**（目录 ＋ 文件名主体）：给定时绕过 `<中文command>` 命名
+   *  （`output.ts:deliverHtml`），仍走 `wx` 独占＋同秒递补（#237 起由共用件 `base-paint/save-html` 仲裁）；
+   *  一个 key 出多种产物（HELP 文件／速查台／回执）时用它分开命名。 */
   target?: HtmlLanding;
 }
 

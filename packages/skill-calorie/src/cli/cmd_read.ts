@@ -32,7 +32,6 @@ import { buildGoalView } from '../render/goal.js';
 import { buildGoalConfig, buildGoalRecommend, buildGoalWeight, buildGoalProgress, buildGoalStatus } from '../render/goalPlate.js';
 import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
 import { buildGoalPrecheckDoc } from '../goal/precheck.js';
-import { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from '../render/weightPlate.js';
 import { buildBodyCompositionView, buildBodyMeasureView } from '../render/bodyPlate.js';
 import { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from '../render/planPlate.js';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
@@ -48,8 +47,6 @@ import {
 } from '../render/dietDocs.js';
 import {
   buildBodyCompositionDoc, buildBodyMeasureDoc, buildExerciseDoc, buildExerciseGoalDoc,
-  buildVolatilityDoc, buildWeightCompareDoc, buildWeightDoc, buildWeightHistoryDoc,
-  buildWeightReviewDoc,
 } from '../render/sportDocs.js';
 import {
   buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildReviewDoc,
@@ -130,21 +127,17 @@ import type { HtmlLanding } from 'base-paint/save-html';
 import type { CalorieComboKey } from './keys.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
+// #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落本文件的 switch。
+import { REGISTRY } from './registry.js';
+import type { DeliveryKind, ViewOut } from '../shared/commandSpec.js';
 import type { EnvelopeShape } from 'base-link-core';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
-/** #83 · 该次分发的产物种类：`html`＝HTML 产物（模板／壳渲染），`text`＝结构化文本（渲染层已定文本交付）。 */
-export type DeliveryKind = 'html' | 'text';
-export interface DispatchOut {
-  data: Record<string, unknown>;
-  html: string;
-  deliveryKind?: DeliveryKind;
-  /** #139 · 该次产物的落点**意图**（目录 ＋ 文件名主体）：给定时绕过 `<中文command>` 命名（`output.ts:deliverHtml`），
-   *  仍走 `wx` 独占＋同秒递补（#237 起由共用件 `base-paint/save-html` 仲裁）；一个 key 出多种产物
-   *  （HELP 文件／速查台／回执）时用它分开命名。 */
-  target?: HtmlLanding;
-}
+/** #294 · 读命令产物的形状（含交付种类）唯一定义地已上移 `shared/commandSpec.ts`：
+ *  能力目录与分派层共用一份，本文件只按原名转出，既有调用方导入面不变。 */
+export type DispatchOut = ViewOut;
+export type { DeliveryKind } from '../shared/commandSpec.js';
 
 function toast(msg: string): void {
   console.error('TOAST: ' + msg);
@@ -270,6 +263,13 @@ function helpCenterIndex(data: ReturnType<typeof buildHelpSceneData>): {
 // 全键分发：读走 render/fetch 读，HELP 走触发词现找；未知键上游已拦，此处再拦一道。
 /** #41 · 测试直调出口（纯 CLI 同逻辑，不经过 argv/spawn；CLI 唯一出口仍为 main）。 */
 export function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): DispatchOut {
+  // #294 · 注册表先行：命中即走能力目录那道门（新增能力／新增命令都不必碰这个文件）；
+  // 未命中的老键照旧落下面这口 switch——两条路各有断言（test/cmd-registry-294）。
+  const spec = REGISTRY[key];
+  if (spec) {
+    if (spec.kind !== 'read') fail(3, '写键不走读分派：' + key);
+    return spec.run(params, db);
+  }
   switch (key) {
     case 'calorie.today': {
       const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
@@ -858,76 +858,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:history"><h1>热量历史（最近' + h.days + '天）</h1>' +
         items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' 卡 · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
       return { data: { items, total: items.length }, html };
-    }
-    case 'calorie.view.weight': {
-      const { start, end } = defaultRange(db, params);
-      const w = buildWeightDashboard(db, start, end);
-      const metrics = nums({
-        recordCount: w.trend.recordCount, avgWeight: w.trend.avgWeight,
-        maxWeight: w.trend.maxWeight, minWeight: w.trend.minWeight,
-        firstWeight: w.trend.firstWeight, lastWeight: w.trend.lastWeight,
-        changeKg: w.trend.changeKg, dailyChangeG: w.trend.dailyChangeG,
-        weightGoal: w.weightGoal, gapKg: w.gapKg,
-      });
-      return { data: { metrics }, html: buildWeightDoc(w) };
-    }
-    case 'calorie.view.weight-history': {
-      const startDate = optStr(params, 'startDate') ?? optStr(params, 'start');
-      const endDate = optStr(params, 'endDate') ?? optStr(params, 'end');
-      const days = optNum(params, 'days');
-      let h;
-      if (startDate && endDate) h = buildWeightHistoryView(db, { startDate, endDate });
-      else if (startDate && !endDate) h = buildWeightHistoryView(db, { startDate });
-      else if (days !== undefined) h = buildWeightHistoryView(db, { days });
-      else h = buildWeightHistoryView(db, {});
-      const metrics = nums({
-        rows: h.rows.length,
-        spanDays: h.change?.spanDays, first: h.change?.first, last: h.change?.last,
-        delta: h.change?.delta, dailyAvg: h.change?.dailyAvg,
-      });
-      return { data: { metrics }, html: buildWeightHistoryDoc(h) };
-    }
-    case 'calorie.view.weight-compare': {
-      // #250 · 主窗口与对比窗口各收一套相对窗口：`window`／`offset` 与 `compareWindow`／`compareOffset`
-      //（对比侧另收 `prev`＝紧邻主窗口之前的等长窗口）。显式四个日期照旧可用。
-      const anchor = anchorOf(params);
-      const main = windowRange(params) ?? { start: needStr(params, 'start'), end: needStr(params, 'end') };
-      const cmpSpec = optStr(params, 'compareWindow');
-      const [cStart, cEnd] = cmpSpec
-        ? applyOffset(
-            resolveCompareWindow(cmpSpec, [main.start, main.end], optStr(params, 'compareStart') ?? null, optStr(params, 'compareEnd') ?? null, anchor),
-            optStr(params, 'compareOffset'),
-          )
-        : [needDay(params, 'compareStart'), needDay(params, 'compareEnd')];
-      const v = buildWeightCompareView(db, main.start, main.end, cStart, cEnd);
-      const metrics = nums({
-        avgDiff: v.compare.avgDiff,
-        currentAvg: v.compare.currentPeriod.avgWeight, compareAvg: v.compare.comparePeriod.avgWeight,
-        currentChange: v.compare.currentPeriod.changeKg, compareChange: v.compare.comparePeriod.changeKg,
-      });
-      return { data: { metrics }, html: buildWeightCompareDoc(v) };
-    }
-    case 'calorie.view.weight-review': {
-      const today = dayField(params, 'today') ?? dayField(params, 'date');
-      const v = buildWeightReviewView(db, today ?? undefined);
-      const metrics = nums({
-        currentWeight: v.milestone.currentWeight, weightGoal: v.milestone.weightGoal,
-        gapKg: v.milestone.gapKg, actualDailyChangeKg: v.milestone.actualDailyChangeKg,
-        estDays: v.milestone.estDays, calorieAdjustment: v.milestone.calorieAdjustment,
-      });
-      return { data: { metrics }, html: buildWeightReviewDoc(v) };
-    }
-    case 'calorie.view.volatility': {
-      const { start, end } = defaultRange(db, params);
-      const mode = (optStr(params, 'baselineMode') ?? optStr(params, 'mode') ?? 'rolling') as 'rolling' | 'goal';
-      const v = buildVolatilityView(db, start, end, mode);
-      const metrics = nums({
-        baselineValue: v.volatility.baselineValue, baselineSigma: v.volatility.baselineSigma,
-        yellow: v.volatility.thresholds.yellow, red: v.volatility.thresholds.red,
-        points: v.volatility.points.length, anomalies: v.volatility.recentAnomalies.length,
-        deviationKg: v.volatility.earlyWarning.deviationKg,
-      });
-      return { data: { metrics }, html: buildVolatilityDoc(v) };
     }
     case 'calorie.view.body-composition': {
       const days = optNum(params, 'days') ?? 90;

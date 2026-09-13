@@ -31,7 +31,7 @@ import { query5dims } from '../dist/analysis/review.js';
 import { dietDeficitAnalysis } from '../dist/analysis/diet.js';
 import { analyzePair } from '../dist/analysis/cross.js';
 import { exerciseRows } from '../dist/analysis/anomaly/common.js';
-import { scenarioC5 } from '../dist/analysis/weightCompare3.js';
+import { scenarioC5 } from '../dist/weight/weightCompare3.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');

@@ -7,7 +7,8 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { dietCalorieTrend, dietDeficitAnalysis } from './diet.js';
 import { exerciseTrend } from './exercise.js';
-import { weightTrend } from './weight.js';
+// #294 · 体重趋势算式已搬进能力目录 `src/weight/`：健康盘是汇总件，按铁律五只调对方的**公开接口**。
+import { weightTrend } from '../weight/index.js';
 import { parseDate, shiftISODate } from './utils.js';
 import { FetchError } from '../fetch/errors.js';
 import type { AnalysisResult } from './result.js';

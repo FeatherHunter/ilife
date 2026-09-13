@@ -15,7 +15,8 @@ import { buildSeries } from '../analysis/series.js';
 import { weightTarget } from '../analysis/simulate.js';
 import { buildTrendData } from '../analysis/trend.js';
 import type { TrendData } from '../analysis/trend.js';
-import { getWeightGoalInfo } from '../analysis/weight.js';
+// #294 · 体重目标的取数已搬进能力目录 `src/weight/`：走它对外那道门（不再直取别人的内部件）。
+import { getWeightGoalInfo } from '../weight/index.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from './errors.js';
 

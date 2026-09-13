@@ -20,8 +20,10 @@ export type { AllRankings, RankCategory } from './ranking.js';
 export { buildProductLibrary, buildProductSearch, buildProductStats } from './library.js';
 export type { ProductLibrary, ProductSearch, ProductStats } from './library.js';
 export { renderHomeHtml, renderDietHtml, renderExerciseHtml, renderGoalHtml } from './html.js';
-export { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from './weightPlate.js';
-export type { WeightDashboard, WeightHistoryView, WeightCompareView, WeightReviewView, VolatilityView } from './weightPlate.js';
+// #294 · 体重视图／取数已搬进能力目录 `src/weight/`（归属律）；本汇总出口按原样转出，
+// 既有调用方（`test/render-t41`）导入面不变——照 #179 档案读链的先例。
+export { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from '../weight/plate.js';
+export type { WeightDashboard, WeightHistoryView, WeightCompareView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasureView, buildBodyMeasureCompare } from './bodyPlate.js';
 export type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
 export { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from './planPlate.js';

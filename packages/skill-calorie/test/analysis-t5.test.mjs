@@ -12,9 +12,9 @@ import { resolveWindow, buildSeries, seriesAvg, seriesSum, seriesCount, seriesDe
 import { TDEE_ACTIVITY_FACTORS, calcTdee, getActivityFactor } from '../dist/analysis/utils.js';
 import { dietCalorieTrend, dietMacroRatio, dietFoodRanking, dietDeficitAnalysis } from '../dist/analysis/diet.js';
 import { exerciseTrend, exerciseTypeBreakdown, exerciseDeficitContribution, exerciseReview } from '../dist/analysis/exercise.js';
-import { weightTrend, weightCompare, weightMilestone, weightVolatility, getWeightGoalInfo, stdev, weekKey } from '../dist/analysis/weight.js';
-import { weightVolatilityV2 } from '../dist/analysis/volatility.js';
-import { runScenario, SCENARIO_LABELS } from '../dist/analysis/weightCompare3.js';
+import { weightTrend, weightCompare, weightMilestone, weightVolatility, getWeightGoalInfo, stdev, weekKey } from '../dist/weight/figures.js';
+import { weightVolatilityV2 } from '../dist/weight/volatility.js';
+import { runScenario, SCENARIO_LABELS } from '../dist/weight/weightCompare3.js';
 import { pearson, linearRegression, analyzePair, PAIRS } from '../dist/analysis/cross.js';
 import { weightForecast, weightTarget } from '../dist/analysis/simulate.js';
 import { weightSimCut, weightSimTarget, calorieForecast, calorieGoalEta, calorieDeficitEta, calorieStability } from '../dist/analysis/simulate2.js';

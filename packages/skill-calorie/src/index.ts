@@ -7,6 +7,16 @@ export {
 } from './kcal.js';
 export type { SourceChoice, ActivityLevel } from './kcal.js';
 export * from './fetch/index.js';
+// #294 · 体重取数已搬进能力目录 `src/weight/records.ts`（归属律：只属体重的东西住体重目录）；
+// 包级出口按原样转出，既有调用方（`test/fetch`）导入面不变。
+export {
+  NOTE_TAGS, noteTag, batchLogWeight, deleteWeight, deleteWeightByDate, deleteWeightRange,
+  deltaLast, fetchWeightLogs, getWeightGoalValue, getWeightHistory, goalDiff, logWeight,
+  updateWeight, updateWeightByDate,
+} from './weight/records.js';
+export type {
+  BatchWeightItem, LogWeightResult, UpdateWeightResult, WeightHistory, WeightLogItem, WeightRow,
+} from './weight/records.js';
 export { KCAL_PER_KG, WEEKDAY_NAMES, weekdayName, buildDeficitData } from './analysis/deficit.js';
 export type { DeficitDay, DeficitSummary, DeficitData } from './analysis/deficit.js';
 export { buildTrendData } from './analysis/trend.js';

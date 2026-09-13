@@ -6,10 +6,15 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { parseDate, shiftISODate } from './utils.js';
-import { stdev } from './weight.js';
-import { ok } from './result.js';
-import type { AnalysisResult } from './result.js';
+import { parseDate, shiftISODate } from '../analysis/utils.js';
+import { stdev } from './figures.js';
+import { ok } from '../analysis/result.js';
+import type { AnalysisResult } from '../analysis/result.js';
+// #294 · 命令层依赖：窗口／参数口径走共用位，页面装配走本能力内部件。
+import { defaultRange, nums, optStr } from '../shared/params.js';
+import type { ViewOut } from '../shared/commandSpec.js';
+import { buildVolatilityView } from './plate.js';
+import { buildVolatilityDoc } from './plateDocs.js';
 
 const YELLOW_SIGMA = 1.5;
 const RED_SIGMA = 2.0;
@@ -105,4 +110,22 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
     earlyWarning: { date: lastDate, kg: lastKg, deviationKg: round2(lastDev), level: ewLevel, message: ewMsg },
     baselineToggleLabel: toggleLabel,
   }, '波动分析完成:baseline=' + baselineValue.toFixed(1) + 'kg,σ=' + baselineSigma.toFixed(2) + 'kg');
+}
+
+/* ── 命令层（#294）：看体重稳不稳＝HELP 场景 03「体重」下一级 ──────────────────────────────
+ * 算式与命令住同一处（变化频率同批）；取数／窗口口径走共用位，页面装配走本能力内部件。
+ */
+
+/** `calorie.view.volatility` · 波动分析（rolling／goal 双基线，1.5σ 黄 / 2.0σ 红）。 */
+export function viewVolatility(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  const { start, end } = defaultRange(db, params);
+  const mode = (optStr(params, 'baselineMode') ?? optStr(params, 'mode') ?? 'rolling') as BaselineMode;
+  const v = buildVolatilityView(db, start, end, mode);
+  const metrics = nums({
+    baselineValue: v.volatility.baselineValue, baselineSigma: v.volatility.baselineSigma,
+    yellow: v.volatility.thresholds.yellow, red: v.volatility.thresholds.red,
+    points: v.volatility.points.length, anomalies: v.volatility.recentAnomalies.length,
+    deviationKg: v.volatility.earlyWarning.deviationKg,
+  });
+  return { data: { metrics }, html: buildVolatilityDoc(v) };
 }

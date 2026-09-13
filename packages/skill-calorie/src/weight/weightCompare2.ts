@@ -1,7 +1,7 @@
 /** T5 #24 · 体重对比续（b8 平台期/e/c5/d4/分发，对照老家 weight_compare.py）。 */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { shiftISODate, todayISO } from './utils.js';
+import { shiftISODate, todayISO } from '../analysis/utils.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;

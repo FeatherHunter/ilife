@@ -6,7 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { shiftISODate, todayISO } from './utils.js';
+import { shiftISODate, todayISO } from '../analysis/utils.js';
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
