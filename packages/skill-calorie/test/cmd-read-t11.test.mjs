@@ -20,7 +20,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 /* #326 · `CALORIE_TODAY`（见 `analysis/utils.ts`）只钉 `todayISO()`，而 `calorie.history` 的窗口锚
- * 取的是 `fetch/history.ts` 里的 `new Date()`——该键的「最近 N 天」因此与当刻日期绑定，
+ * 取的是 `analysis/historyStore.ts` 里的 `new Date()`——该键的「最近 N 天」因此与当刻日期绑定，
  * 种子锚一旦滑出窗口，这道门跨午夜即确定性变红（不是回归）。本文件用 `--require` 预载把「当刻」
  * 钉死（写法沿 `docs/research/t63-line1-review-dateshift.mjs`），只钉时钟、**断言一字不改**。
  * `freeze-clock.cjs` 不匹配 `test/*.test.mjs`，故不改变全量条数基线。 */
@@ -28,7 +28,7 @@ const CLOCK_PRELOAD = join(HERE, 'freeze-clock.cjs');
 /** #326 · 整份用例的日期基准：种子数据与「当刻」同时按它平移，**默认 0 ＝ 逐字沿用原日期**。
  *  设成别的值（如 30）即把「种子 ＋ 当刻」整体挪到另一段时间轴，用来自证「换个日期照样绿」。 */
 const OFFSET_DAYS = 0;
-/** 按**本地日**平移（同 `fetch/history.ts` 的 `fmtDate` 口径）：这里刻意不走 `toISOString()`，
+/** 按**本地日**平移（同 `analysis/historyStore.ts` 的 `fmtDate` 口径）：这里刻意不走 `toISOString()`，
  *  否则东八区会整体退一天，种子与「当刻」锚就对不上了。 */
 const shiftDay = (iso) => {
   const parts = iso.split('-').map(Number);

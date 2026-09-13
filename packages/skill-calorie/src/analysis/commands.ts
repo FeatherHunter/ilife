@@ -17,7 +17,7 @@
  *   `view.review-template` 与通用入口 `help.lookup`／`history`），故按移植来源分段，不自造名。
  *
  * 处理逻辑一律**只经视图层的公开接口**调用（`render/trendMiscPort.ts`／`trendDocs.ts`／
- * `insightPlate.ts`／`analysisPlate.ts`／`health.ts`／`dietDocs.ts`／`html.ts`）——不在这里重写算式。
+ * `insightPlate.ts`／`analysisPlate.ts`／`analysis/healthPlate.ts`／`dietDocs.ts`／`html.ts`）——不在这里重写算式。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { getCalorieHistory } from './historyStore.js';

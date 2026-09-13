@@ -2,7 +2,7 @@
  * #326 · 测试用「钉住时钟」预载件（`node --require` 载入，**不是**测试件故不匹配 `test/*.test.mjs`）。
  *
  * 为什么需要：`calorie.history` 的窗口是「最近 N 天」，锚点＝进程内的 `new Date()`
- * （`fetch/history.ts` 的 `fmtDate` 取**本地**日，`viewHistory` 只传 `days`）。
+ * （`analysis/historyStore.ts` 的 `fmtDate` 取**本地**日，`viewHistory` 只传 `days`）。
  * 种子历史锚在固定两条日，只要真实当刻日期往前走出窗口，该门就由绿变红——
  * 这不是回归而是**与墙钟耦合**。测试用本件把「当刻」钉到固定时刻，判据即与当刻日期无关。
  *
