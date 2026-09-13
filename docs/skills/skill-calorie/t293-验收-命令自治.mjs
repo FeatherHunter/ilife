@@ -14,6 +14,18 @@
  *   · 例外（#313 B-3 证据 §⑥1）：**沙箱基线 `gen:check` 非 0 不记 PENDING 而显式判红**——临时根是仓内
  *     现树的副本，基线红即仓内事实（生成物与生成器不一致／声明改了没 build），不是"未判"。
  *
+ * 第四版（探针精度 v4，2026-09-14，独立改动席 t293v4）——消两处静默出口 ＋ ④ 分组 ＋ 形状守卫：
+ *   · **消静默**：`pinnedCountOfLine()` 原先把「数组下标／数组字面量」（`/\[\s*\d/`）与「与声明对账的派生量」
+ *     （`DECLARED_`）两处写成 `return null`——连 ④ 都不进，行就没了。现改为**一律产出可报账的行落进 ④**：
+ *     除"锚不在被比操作数位"（消息串／注释里的数字）这一条，不再有任何"无处落账"的行。
+ *   · **④ 分组**：④ 的行按「另一侧的形状」分组输出（退出码／差值 · **访问器调用** · 域内量 · 域内 metrics ·
+ *     **裸标识符** · 其它，顺序见 `UNDET_GROUPS`＝判定顺序＝输出顺序），每组给计数（空组也发，计数 0 是
+ *     "这一形状被查过"的证据）；**裸标识符组单列**——整条另一侧就是一个标识符，它最可能藏"权威总量的别名"。
+ *   · **形状守卫**：④ 只保证看得见，不保证看得住——凡登记样名落进 ④，本判据记 `PENDING`，不静默放行。
+ *     登记样名＝`registry`／`KEYS`／`DECLARED_`／`TOTAL`（大写）／`总数`／`命令总数`／`权威`／`未搬迁` 一类，
+ *     或「裸标识符比较裸数字」的形状（见 `shapeGuard()`）。**按形状与命名判，不按行数判**：④ 有 80 行也照样绿，
+ *     只要没有一行是登记样名——行数阈值会把"看得见"换成"永远黄灯"，是比黑洞更坏的失败方向。
+ *
  * 退出码：有 FAIL → 1；否则 0（PENDING 不算红，但会在摘要行里点名）。
  */
 import { spawnSync } from 'node:child_process';
@@ -192,16 +204,88 @@ const sandboxShaLegacy = () => LEGACY_FILES.map((p) => sandboxSha(p) ?? 'MISSING
 //                        ⇒ 逐条列出让人看见；**静默比噪声更坏**——"不报"不等于"没问题"
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 现行权威总量（键／写／读／体重）：既要报账，也当"钉死计数"断言的搜索锚。 */
+/** 能力目录里带 `commands.ts` 的目录名（升序）——**与生成器 `scanCapabilityNames()` 同一条判据**：
+ *  `src/` 下的目录、不以 `_`／`.` 开头、且含 `commands.ts`。按目录枚举，不写死名单（新能力自动进面）。 */
+function capabilityDeclDirs() {
+  const base = abs(CAP_SRC_DIR);
+  if (!existsSync(base)) return null;
+  return readdirSync(base, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && !d.name.startsWith('_') && !d.name.startsWith('.'))
+    .map((d) => d.name)
+    .filter((n) => has(CAP_SRC_DIR + '/' + n + '/commands.ts'))
+    .sort();
+}
+
+/** 从一份声明源正文里取「kind ＋ key」对（生成器读的是编译产物，本探针读同一份**源**：
+ *  声明源＝事实的家，编译产物只是它的搬运；判据只要 kind／key 两个字段，故源码文本足够且免掉一次 build）。 */
+function declPairsOf(src) {
+  return [...src.matchAll(/kind:\s*'(read|write)'\s*,\s*key:\s*'([^']+)'/g)].map((m) => ({ kind: m[1], key: m[2] }));
+}
+
+/** 现行权威总量（键／写／读／体重）：**与生成器同源**——不是"残留未搬迁清单＋体重"那种推不出全量的
+ *  残量，而是遍历生成器自己那两个声明源：`src/<能力>/commands.ts`（能力名升序）＋ `src/cli/legacy/scene-NN.ts`
+ *  （文件名升序，跳过 `index.ts`／`types.ts`），按 `key` 合流（同键两处声明即报红，同 `gen-cli.mjs` 的 `merge()`）。
+ *
+ *  **为什么必须同源**（复核 318 追加裁决）：旧实现只拿「残留未搬迁清单 ＋ 体重声明」当锚集，锚值退化到
+ *  `10/4/6/9`，而真实权威是 `101/35/66/9`。后果两条、都不轻：① 真被写死的权威总量（例如 `101`）**连扫都
+ *  扫不到**——它等于给这条验收线挖了一个"看不见"的洞；② 剩下的小数字（4／6／9／10）遍地撞，④ 里塞满
+ *  退出码之类的噪声，噪声又诱出「④ ≥ N 就记 PENDING」这种把验收线永久黄灯的错药。锚集同源之后两条一起消。
+ *  生成器的同源性由 `pnpm gen:check` 守（能力声明与 `keys.ts` 不一致即红），故本函数与生成物同源。 */
 async function authorityTotals() {
   const wd = await weightDecls();
   const legacySrc = readLegacy();
   if (legacySrc === null) return { ok: false, why: '未搬迁清单读不到（缺 ' + P.LEGACY_DIR + '/scene-NN.ts 之一）', legacy: [] };
-  const legacy = [...legacySrc.matchAll(/kind:\s*'(read|write)',\s*key:\s*'([^']+)'/g)].map((m) => ({ kind: m[1], key: m[2] }));
+  const capDirs = capabilityDeclDirs();
+  if (capDirs === null) return { ok: false, why: '能力目录读不到：' + CAP_SRC_DIR, legacy: [] };
+  if (capDirs.length === 0) return { ok: false, why: CAP_SRC_DIR + ' 下一个带 commands.ts 的能力目录都没有（生成器同样会扫空）', legacy: [] };
+  // 场景分区逐片（文件名升序，与生成器 scanLegacySceneNames() 同序）；缺失片已在 readLegacy() 出局。
+  const legacy = [];
+  const seen = new Map();
+  const dup = [];
+  for (const [from, src] of [
+    ...LEGACY_FILES.map((p) => [p, read(p)]),
+    ...capDirs.map((n) => [CAP_SRC_DIR + '/' + n + '/commands.ts', read(CAP_SRC_DIR + '/' + n + '/commands.ts')]),
+  ]) {
+    if (src === null) return { ok: false, why: '声明源读不到：' + from, legacy };
+    for (const d of declPairsOf(src)) {
+      if (seen.has(d.key)) { dup.push(`${d.key}（${seen.get(d.key)} 与 ${from}）`); continue; }
+      seen.set(d.key, from);
+      legacy.push({ ...d, from });
+    }
+  }
+  if (dup.length) {
+    return { ok: false, why: `同键两处声明（生成器 merge() 在这一步就抛）：${dup.slice(0, 8).join('；')}${dup.length > 8 ? `…共 ${dup.length} 条` : ''}`, legacy };
+  }
   if (!wd.ok) return { ok: false, why: wd.why, legacy };
-  const all = [...legacy, ...wd.list.map((c) => ({ kind: c.kind, key: c.key }))];
-  const writes = all.filter((c) => c.kind === 'write').length;
-  return { ok: true, total: all.length, writes, reads: all.length - writes, weight: wd.list.length, legacy, wd };
+  if (legacy.length === 0) return { ok: false, why: '两份声明源一条声明都没读到（生成器同样会出声为空）', legacy };
+  const writes = legacy.filter((c) => c.kind === 'write').length;
+  // 体重声明也是**同源**读的（能力目录里的 weight/commands.ts 就在上面那批里）；wd 仍从编译产物读，
+  // 供 ② 桶的 exampleFor 对账用（`t.wd.list`），两条口径在 `gen:check` 下必须一致。
+  const weight = legacy.filter((c) => c.from === CAP_SRC_DIR + '/weight/commands.ts').length;
+  if (weight !== wd.list.length) {
+    return { ok: false, why: `体重口径不一致：声明源 ${weight} 条 vs 编译产物 ${wd.list.length} 条（生成物与生成器不一致 ⇒ 先 pnpm build／pnpm gen:check）`, legacy };
+  }
+  // **同源的机器自证**：拿生成物的键表反查上面这份锚集。声明源与生成物不一致 ⇒ 锚集不可信 ⇒ 判失能，
+  // **不许拿一份算错的锚去扫**（那正是"锚集与权威脱节"这个缺陷的复发位）。生成物里写键表单独一块、
+  // 读键表在另一块（写键表用展开并入），故两块分别数：写 35 ＋ 读 66 ＝ 101。
+  const keysSrc = read(P.KEYS);
+  if (keysSrc === null) return { ok: false, why: '生成物读不到：' + P.KEYS + '（锚集拿不到同源对照物）', legacy };
+  const wAt = keysSrc.indexOf('CALORIE_WRITE_COMBOS = {');
+  const cAt = keysSrc.indexOf('CALORIE_COMBOS = {');
+  if (wAt < 0 || cAt < wAt) {
+    return { ok: false, why: P.KEYS + ' 的键表块变了形状（找不到 CALORIE_WRITE_COMBOS／CALORIE_COMBOS 块）⇒ 锚集拿不到同源对照', legacy };
+  }
+  const genWrites = (keysSrc.slice(wAt, cAt).match(/^\s*'[^']+':/gm) || []).length;
+  const genReads = (keysSrc.slice(cAt).match(/^\s*'[^']+':/gm) || []).length;
+  if (genWrites !== writes || genWrites + genReads !== legacy.length) {
+    return {
+      ok: false,
+      why: `锚集与生成物不一致：声明源 ${legacy.length} 条（写 ${writes}）vs 生成物 ${P.KEYS} ${genWrites + genReads} 条（写 ${genWrites}）`
+        + ' ⇒ 锚集不可信（先 pnpm build／pnpm gen:check；**别拿错锚去扫**）',
+      legacy,
+    };
+  }
+  return { ok: true, total: legacy.length, writes, reads: legacy.length - writes, weight, legacy, wd, capDirs, genKeys: { writes: genWrites, reads: genReads } };
 }
 
 /** ② 桶的登记位：纪律豁免登记件（本探针只读它，不写）。 */
@@ -324,13 +408,26 @@ function anchorAsOperand(code, value) {
  *  **域内计数一律不报**（`xs.length, 10`／`r.total, 4`／`s.size, 6` 一类，形状见 DOMAIN_COUNT_SHAPES）：
  *  它们不随别域命令迁移而变，值撞锚纯属巧合（#318 实测：未搬迁清单 19→1、锚变 10/4/6 后"小数字遍地撞"）；
  *  但**不许静默**（复核 S1-1：静默比噪声更坏——"不报"不等于"没问题"）⇒ 它们落 **④ ? UNDETERMINED-SUBJECT**：只报账、不判红。
- *  退出码（`r.status`）／差值／布尔／餐别名同理归 ④。 */
+ *  退出码（`r.status`）／差值／布尔／餐别名同理归 ④。
+ *
+ *  **第四版（消静默）**：原先另有两处 `return null`——`/\[\s*\d/`（数组下标／数组字面量）与 `DECLARED_[A-Z_]+`
+ *  （与声明对账的派生量）——连 ④ 都不进，行就没了（复核 V3-4 实测三例：`KEYS.length, 28, '分组 [3] 的键数'`／
+ *  `KEYS[0].length`／`DECLARED_KEYS.length`）。现在**一律产出可报账的行**：`subject:'undetermined'` ＋ `forced`
+ *  注明是哪个原静默出口，落 ④ 报账；**不再有"无处落账"的行**（"锚不在被比操作数位"这条保留：消息串／注释里的
+ *  数字本就不该当操作数看）。落 ④ 的行若带登记样名 ⇒ 形状守卫 `shapeGuard()` 把 P1 记 `PENDING`。 */
 export function pinnedCountOfLine(text, value) {
   const { code, strings } = lexAssertionLine(text);
   const other = anchorAsOperand(code, value);
   if (other === null) return null;                    // 不是被比操作数（消息文本／注释里的数字在此出局）
-  if (/\[\s*\d/.test(text)) return null;              // 数组字面量（[3, 9, 8…]）
-  if (/DECLARED_[A-Z_]+/.test(code)) return null;     // 已与声明对账 → 算派生（#295 的 467cf64）
+  // 原两处 `return null`（静默出口）——第四版改成"可报账的 ④"，见上方注释。
+  const forced = /\[\s*\d/.test(text)
+    ? '数组下标／数组字面量形状（原 /\\[\\s*\\d/ 静默出口）'
+    : /DECLARED_[A-Z_]+/.test(code)
+      ? '与声明对账的派生量（原 DECLARED_ 静默出口）'
+      : null;
+  if (forced) {
+    return { subject: 'undetermined', forced, other: other.trim(), text: text.trim().slice(0, 150) };
+  }
   const authority = AUTHORITY_SUBJECT.test(other) || strings.some((s) => AUTHORITY_SOURCE.test(s));
   return {
     subject: authority ? 'authority' : 'undetermined',
@@ -343,16 +440,104 @@ export function pinnedCountOfLine(text, value) {
  *   · 主体＝权威总量 ⇒ 登记在册记 ② 'disciplined'，没登记记 ③ 'unaccounted'（**③ 非空 ⇒ P1=FAIL**）；
  *   · 主体判不出 ⇒ ④ 'undetermined'（**只报账、不判红**；锚确在被比操作数位，但既不是权威总量、也算不出属于哪个域）。
  *  登记位只服务 ③ 这一类"必须手改但已被认下"的面：登记是**大声的**——② 逐条打印 reason ＋ 机器守，
- *  登记件进 git，字段齐全 ＋ 指得回当刻代码才算数（缺一即报错 ⇒ 进 ③ ⇒ P1=FAIL）。 */
+ *  登记件进 git，字段齐全 ＋ 指得回当刻代码才算数（缺一即报错 ⇒ 进 ③ ⇒ P1=FAIL）。
+ *  第四版起：`h.forced` 非空的行（原先两处静默出口）也归 ④，`what` 里写明它是从哪个静默出口捞出来的。 */
 export function classifyPinnedHit(h, exemptions) {
   const where = h.file + ':' + h.line;
   if (h.subject !== 'authority') {
-    return { bucket: 'undetermined', where, what: `主体判不出（另一侧＝${h.other}）：锚撞上了权威总量的**数值**，但这一行既不是权威总量、也算不出属于哪个域 ⇒ 只报账、不判红——${h.text}` };
+    const via = h.forced ? `｜**第四版消静默**：本行原先被 ${h.forced} 吞掉（连 ④ 都不进）⇒ 现按可报账行落 ④` : '';
+    return {
+      bucket: 'undetermined',
+      where,
+      what: `主体判不出（另一侧＝${h.other}）：锚撞上了权威总量的**数值**，但这一行既不是权威总量、也算不出属于哪个域 ⇒ 只报账、不判红——${h.text}${via}`,
+      other: h.other,
+      text: h.text,
+      forced: h.forced ?? null,
+    };
   }
   const what = `钉死${h.what}断言（字面量 ${h.value}）：主体＝权威总量（另一侧＝${h.other}）⇒ 加删一条命令必须手改本行——${h.text}`;
   const reg = exemptions.get(`${h.file}:${h.line}#${h.value}`);
   if (reg) return { bucket: 'disciplined', where, what: `已认下登记（登记件在册）：${reg.reason}`, enforcer: reg.enforcer };
   return { bucket: 'unaccounted', where, what: `${what}｜**未登记**：${DISCIPLINE_EXEMPT} 里没有这条 file:line:锚` };
+}
+
+/** ④ 的分组名（**顺序＝判定顺序＝输出顺序**，与验收口径逐字同序：退出码／域内量／域内 metrics／访问器／
+ *  **裸标识符**／其它）。「裸标识符」单列且排在「其它」之前：整条另一侧就是一个标识符
+ *  （`n`／`total`／`count`／`cnt`／`REGISTRY_TOTAL`）——这是**最可能藏"权威总量别名"**的形状。
+ *  **顺序是口径的一部分，不是排版**：判定按序短路，换序会静默改掉既有行的组别。当刻活树唯一两侧都成立的
+ *  形状是「调用后取量」（`buildPhotoHelp().length`）：既像"访问器"又像"域内量"。本判据先判**调用形状**
+ *  （`()` 后取成员／整条就是一个调用）⇒ 它留在**访问器**组——与第三版逐行一致（第三版 4 行归组不变，
+ *  见证据表）。判序写进本常量，故"输出顺序"与"判定顺序"永远同一份事实，不会各行其是。 */
+export const UNDET_GROUPS = ['退出码／差值', '访问器调用', '域内量', '域内 metrics', '裸标识符', '其它'];
+
+/** 按「另一侧的形状」定组（**纯函数**，只吃另一侧操作数文本）。判定顺序即 `UNDET_GROUPS` 顺序，逐条可复算：
+ *   · 退出码／差值：`.status`／`…exit`／`…delta`（含 `run(…).status` 这类调用链——**先于**"访问器"判）；
+ *   · 访问器调用：调用后取成员（`buildPhotoHelp().length`）或整条就是一个调用（`countOf(html,'…')`）；
+ *   · 域内量：`.length`／`.size`／`.total`／`.count`（`d.total`／`names.size`）；
+ *   · 域内 metrics：`.metrics.` 路径（`out.data.metrics.meals`）；
+ *   · 裸标识符：整条就是一个标识符（无点、无调用、无运算）；
+ *   · 其它：其余（算术式、字面量、数组…）。 */
+export function undetGroupOf(other) {
+  const s = String(other ?? '').trim();
+  if (/\.status\b|exit\b|delta/i.test(s)) return '退出码／差值';
+  if (/\)\s*[.[]/.test(s) || /^[A-Za-z_$][\w$]*\s*\(/.test(s)) return '访问器调用';
+  if (/\.(length|size|total|count)\b/.test(s) || /\btotal\b/.test(s)) return '域内量';
+  if (/\.metrics\./.test(s)) return '域内 metrics';
+  if (/^[A-Za-z_$][\w$]*$/.test(s)) return '裸标识符';
+  return '其它';
+}
+
+/** ④ 分组（**纯函数**）：每组给计数，行随组。**空组也输出**——计数 0 是"这一形状被查过"的证据，
+ *  不发出来就会被读成"没查"。 */
+export function groupUndetermined(rows) {
+  const by = new Map(UNDET_GROUPS.map((g) => [g, []]));
+  for (const r of rows) {
+    const g = undetGroupOf(r.other);
+    by.get(g).push(r);
+  }
+  return UNDET_GROUPS.map((name) => ({ name, count: by.get(name).length, rows: by.get(name) }));
+}
+
+/** 登记样名（形状守卫的正例）——**分大小写两半**，理由可复算：
+ *   · 不分大小写那一半：`registry`／`注册表`／`declared`／钥匙词 `keys?`／`SCENARIO_KEYS`／`未搬迁`；
+ *   · 只认大写那一半：`TOTAL`／`总数`／`命令总数`／`权威`——`d.total`／`out.data.total` 是**域内量**（小写属性名），
+ *     把它们当登记样名会让 ④ 里凡带 `.total` 的行永久黄灯（当刻活树就有 3 行），不是本守卫要抓的东西。
+ *  **只吃「另一侧操作数」与「整行原文」，不吃文件名**：文件名带 `legacy`／`registry` 的是分区／注册表测试，
+ *  不证明这一行是登记样名；把路径计进来同样会让 P1 永久黄灯（当刻活树就有 1 行落在 legacy-partition 件里）。 */
+const REGISTRY_LIKE_CI = /registry|注册表|declared|\bkeys?\b|scenario_keys|未搬迁/i;
+const REGISTRY_LIKE_CS = /\bTOTAL\b|总数|命令总数|权威/;
+
+/** 形状守卫（**纯函数**）：④ 里出现登记样名，或「裸标识符比较裸数字」的形状 ⇒ `pending=true` 并逐条列出。
+ *  **按形状与命名判，不按行数判**——当刻活树 ④ 有 81 行、没有一行是登记样名 ⇒ 仍然全绿；
+ *  反过来，哪怕 ④ 只有 1 行、只要它是 `KEYS.length` 或裸标识符对裸数字，就记 `PENDING`（不判红、也不放行）。
+ *  理由：黑洞的危险不在行数，而在"某个真权威锚躲在 ④ 里"。 */
+export function shapeGuard(rows) {
+  const flagged = [];
+  for (const r of rows) {
+    const ci = REGISTRY_LIKE_CI.test(String(r.other ?? '')) || REGISTRY_LIKE_CI.test(String(r.text ?? ''));
+    const cs = REGISTRY_LIKE_CS.test(String(r.other ?? '')) || REGISTRY_LIKE_CS.test(String(r.text ?? ''));
+    const bare = undetGroupOf(r.other) === '裸标识符';
+    if (!ci && !cs && !bare) continue;
+    const nameWhy = ci || cs
+      ? '登记样名（' + [ci ? 'keys／registry／declared 一类' : null, cs ? '权威总量词（大写 TOTAL／总数）' : null].filter(Boolean).join('，') + '）'
+      : null;
+    flagged.push({
+      where: r.where,
+      why: [nameWhy, bare ? '「裸标识符比较裸数字」形态' : null].filter(Boolean).join(' ＋ '),
+      other: r.other,
+      text: r.text,
+    });
+  }
+  return { pending: flagged.length > 0, rows: flagged };
+}
+
+/** P1 状态口径（**纯函数**）：形状守卫命中 ⇒ `'PENDING'`；未命中 ⇒ `null`（不参与 P1 状态判定）。
+ *  **PENDING＝未判**：不是 FAIL（登记样名落进 ④ 本身还不是"漏了一条权威断言"的证据），
+ *  更不是静默通过（`PENDING` 会进摘要行的 `（PENDING：…）`，也拿不到"5/5"里的那一分）。
+ *  这就是「④ 只保证看得见，不保证看得住」在状态机里的落点——把守卫的 `pending` 接进 P1 的 `verdict()`，
+ *  而不是只把守卫**打印**出来（打印不等于拦截：只打印＝看得见，接进状态＝看得住）。 */
+export function undetVerdict(guard) {
+  return guard && guard.pending ? 'PENDING' : null;
 }
 
 /** 钉死计数扫描：本函数只负责**找行**（`git grep` 出"含锚"的候选行），判据全在 pinnedCountOfLine。
@@ -573,6 +758,8 @@ export async function changeSurfaces() {
     disciplined: [],
     unaccounted: [],
     undetermined: [],
+    undeterminedGroups: [],
+    undeterminedGuard: { pending: false, rows: [] },
     incomplete: [],
     exempts: 0,
     totals: t.ok ? { total: t.total, writes: t.writes, reads: t.reads, weight: t.weight } : null,
@@ -607,12 +794,16 @@ export async function changeSurfaces() {
     for (const h of pinnedCountSurfaces(t)) {
       const c = classifyPinnedHit(h, ex.entries);
       if (c.bucket === 'disciplined') out.disciplined.push({ where: c.where, what: c.what, enforcer: c.enforcer });
-      else if (c.bucket === 'undetermined') out.undetermined.push({ where: c.where, what: c.what });   // ④ 只报账、不判红
+      else if (c.bucket === 'undetermined') out.undetermined.push({ where: c.where, what: c.what, other: c.other, text: c.text, forced: c.forced });   // ④ 只报账、不判红
       else out.unaccounted.push({ where: c.where, what: c.what });
     }
   } else {
     out.unaccounted.push({ where: P.LEGACY_DIR + '（或 dist/weight/commands.js）', what: '探针失能：拿不到权威总数（' + t.why + '）⇒ 钉死计数扫描跳过。**按 FAIL 记**：读不到权威源不等于"没有手写面"，不许当假绿放行。' });
   }
+  // ④ 的分组与形状守卫（第四版）：分组按「另一侧的形状」；守卫按「登记样名／裸标识符比较裸数字」的形状判，
+  // **不按行数判**。守卫命中 ⇒ 调用方把 P1 记 PENDING（④ 只保证看得见，不保证看得住）。
+  out.undeterminedGroups = groupUndetermined(out.undetermined);
+  out.undeterminedGuard = shapeGuard(out.undetermined);
   // 路由三面（#313 B 段起）：记录面是**生成物**，声明住能力目录／legacy 分区 ⇒ 归 ① 派生侧。
   // 但归类本身由机械判据钉住：判据任一不成立 ⇒ 整面落进 ③ UNACCOUNTED（P1=FAIL），不许硬写「它已生成」。
   const rs = routeSurfaces();
@@ -697,19 +888,32 @@ async function p1(w) {
     const idle = buckets.exempts - buckets.disciplined.length;
     lines.push(`     （登记件 ${buckets.exempts} 条里有 ${idle} 条当刻**不命中**：历史条目／未与当刻锚相撞——不算"生效"，只是留档，逐条见登记件 status 字段）`);
   }
-  lines.push(`  ④ ? UNDETERMINED-SUBJECT（主体判不出：锚确在被比操作数位，但既不是权威总量、也算不出属于哪个域，${undet} 处）：`);
-  for (const d of buckets.undetermined) lines.push(`     · ${d.where}｜${d.what}`);
+  lines.push(`  ④ ? UNDETERMINED-SUBJECT（主体判不出：锚确在被比操作数位，但既不是权威总量、也算不出属于哪个域，${undet} 处）——按「另一侧的形状」分组；**裸标识符单列**：
+`);
+  for (const g of buckets.undeterminedGroups) {
+    const tag = g.name === '裸标识符' ? '（单列：最可能藏权威总量别名的形状）' : '';
+    lines.push(`     [${g.name}] ${g.count} 处${tag}`);
+    for (const d of g.rows) lines.push(`       · ${d.where}｜${d.what}`);
+  }
+  const guard = buckets.undeterminedGuard;
+  lines.push(`  ⇒ 形状守卫${guard.pending ? '**命中**' : '未命中'}：登记样名（registry／KEYS／DECLARED_／大写 TOTAL／总数… 一类）落进 ④，
+     或出现「裸标识符比较裸数字」的形状 ⇒ **P1 记 PENDING**（不是 FAIL、更不是静默通过）；当刻命中 ${guard.rows.length} 行。`);
+  for (const g of guard.rows) lines.push(`     ⚠ ${g.where}｜${g.why}｜另一侧＝${g.other}｜${g.text}`);
+  lines.push('     ④ 只保证看得见，不保证看得住——凡登记样名落进 ④，本判据记 `PENDING`，不静默放行。（**按形状与命名判，不按行数判**：行数阈值会把"看得见"换成"永远黄灯"。）');
   lines.push(undet
-    ? `  ⇒ ④ 非空**不判红**（这些行不随"加一条命令"而变：域内自己的计数／退出码／不透明变量），但**不许静默**——拿出来给人看一眼（复核 S1-1）`
-    : '  ⇒ ④ 为空：当刻锚没撞上任何"主体判不出"的断言行');
+    ? '     ⇒ ④ 非空**不判红**（这些行不随"加一条命令"而变：域内自己的计数／退出码／访问器／不透明变量），但**不许静默**——逐组列出来给人看一眼（复核 S1-1）'
+    : '     ⇒ ④ 为空：当刻锚没撞上任何"主体判不出"的断言行');
   if (buckets.incomplete.length) {
     lines.push(`  ⚠ 树自相矛盾（${buckets.incomplete.length} 条）：`);
     for (const d of buckets.incomplete) lines.push('     · ' + d);
   }
-  // 状态口径：UNACCOUNTED 非空 ⇒ FAIL；否则树上自相矛盾（返修在途）⇒ PENDING；否则按静态/动态判定。
+  // 状态口径：UNACCOUNTED 非空 ⇒ FAIL；形状守卫命中 ⇒ PENDING（未判）；否则树上自相矛盾（返修在途）⇒ PENDING；
+  // 否则按静态/动态判定。守卫**先于**静态判定：④ 里有登记样名时，静态面再多绿点也不足以放行（"看得见 ≠ 看得住"）。
+  const guardVerdict = undetVerdict(buckets.undeterminedGuard);
   const staticBase = targetsOk && inputs.length >= 5 && derived.every((d) => d.includes('有派生标记')) && importFromIndex && dupThrow && regFirst;
   const verdict = (dynOk) => {
     if (unacct) return 'FAIL';
+    if (guardVerdict) return guardVerdict;
     if (buckets.incomplete.length) return 'PENDING';
     const dyn = dynOk === undefined ? true : dynOk;
     return staticBase && dyn ? 'PASS' : 'FAIL';
