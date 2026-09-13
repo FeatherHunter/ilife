@@ -36,6 +36,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { renderRoutesGenerated, routeDeclarationSources } from './gen-routes.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = join(HERE, '..');
@@ -331,12 +332,15 @@ function replaceBlock(text, start, end, block, path) {
   return text.slice(0, si) + block + text.slice(ei + end.length);
 }
 
-/** 生成器的两个输入（声明源）：未搬迁清单的场景分区（`src/cli/legacy/*.ts`，文件名升序）
- * ＋ 每个能力目录的声明。印记与判陈旧都以它们为准。 */
+/** 生成器的输入（声明源）：未搬迁清单的场景分区（`src/cli/legacy/*.ts`，文件名升序）
+ * ＋ 每个能力目录的声明 ＋ 路由声明（`src/cli/legacy/routes/*.ts` 与各能力 `routes.ts`——它们住
+ * 子目录／不在命令声明扫描面内，必须**显式**纳入，否则「改了路由声明没 build」会被直接放行）。
+ * 印记与判陈旧都以它们为准。 */
 function declarationSources(names) {
   return [
     ...legacySources(),
     ...names.map((n) => join(SRC_DIR, n, 'commands.ts')),
+    ...routeDeclarationSources(),
   ];
 }
 
@@ -461,6 +465,8 @@ async function main() {
         BUILD_HELP,
       ),
     },
+    // 路由声明（`src/cli/legacy/routes/*.ts` ＋ 各能力 `routes.ts`）派生件：与上面同批写盘／比对。
+    { path: join(SRC_DIR, 'triggers', 'routes.generated.ts'), text: await renderRoutesGenerated() },
   ];
 
   const declared = entries.filter((e) => e.from !== 'legacy scene 分区').length;
