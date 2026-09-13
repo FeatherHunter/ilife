@@ -19,7 +19,7 @@
  * 运行：先 `pnpm build`（读 `dist/`），再跑根 `pnpm test`。
  */
 import { strict as assert } from 'node:assert';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
@@ -139,7 +139,10 @@ test('#313 文件级隔离：生成器输入恰为 src/cli/legacy/*.ts，印记�
     '内容印记仍在给旧单文件打指纹（应已不存在）');
 
   // 旧单文件（源与其编译产物）必须都不在：不留第三处清单。
-  assert.ok(!files.includes('legacyCommands.ts'), 'src/cli/legacyCommands.ts 仍在（应已删除）');
+  // 两条都要查：只查 dist 会漏掉「源还在、只是没编译」的情形（`gen:check` 也不会因此变红——它只读分片）。
+  assert.ok(!existsSync(join(PKG, 'src', 'cli', 'legacyCommands.ts')),
+    'src/cli/legacyCommands.ts 仍在（分区后它不该存在：权威已搬到 src/cli/legacy/scene-NN.ts）');
+  assert.ok(!files.includes('legacyCommands.ts'), 'src/cli/legacy/ 下不该有 legacyCommands.ts');
   assert.ok(!readdirSync(join(PKG, 'dist', 'cli')).includes('legacyCommands.js'),
     'dist/cli/legacyCommands.js 仍在（旧编译产物没清干净，会误导读者以为还有单文件清单）');
 });
