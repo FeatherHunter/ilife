@@ -1,0 +1,105 @@
+# #313 B2 · 门禁运行记录（票号 313b2）
+
+工具：所有命令在 better sidebar 终端（`313b2-生成器`）内顺序执行；`build／tsc／test／git add／git commit`
+一律经 `node tooling/run-locked.mjs --ticket 313b2 -- <命令>`。长输出落 `.scratch/t313b2/*.log`，此处只留摘要。
+
+## 0. 改前基线
+
+    node docs/skills/skill-calorie/t313-routing-oracle.mjs     # 改造前，dist 为改造前构建
+    RESULT: SUMMARY faces=16 diffFaces=0 diffs=0 surfaceMissing=0 surfaceExtra=0 DEEP-EQUAL=yes SNAPSHOT-SHA=d4da337219ea DIST-SHA=cf9b15a42f83
+    exit=0
+
+    node --input-type=module -e "…import dist/triggers/routing.js…"
+    ROUTING_EXPORTS=15   # ALL_ROUTES COVERAGE_REPAIR_ROUTES EXEC_ROUTES EXEC_ROUTE_BY_KEY HIT_NOT_EXEC_ROUTES
+                         # NEW_KEY_ROUTES NON_EXEC_REASONS OUT_OF_SCOPE_ROUTES ROUTES_BY_WAKE_WORD T71_DIFFS
+                         # TWIN_WAKE_WORDS WAKE_ROUTES execCliForKey routesFor routingSummary
+
+声明层事实（`.scratch/t313b2/precheck2.log`，只读**叶子**声明件）：
+
+    scene-01..10 ＋ weight/routes.js：ROUTES_SCENE_01..10 ＋ WEIGHT_ROUTES=44；DECL 合计=495
+    (list,order) 重复处=0
+    LIST wake   n=436 orderUniq=436 orderGap=0 list内重复wakeWord=1（记身材照×3，同在 scene-09.ts）→ 与 dist.WAKE_ROUTES JSON等=true
+    LIST new    n=58  orderUniq=58  orderGap=0 list内重复wakeWord=0 → 与 dist.NEW_KEY_ROUTES JSON等=true
+    LIST repair n=1   orderUniq=1   orderGap=0 list内重复wakeWord=0 → 与 dist.COVERAGE_REPAIR_ROUTES JSON等=true
+    dist 键序形状：{wakeWord,scene,kind,key,cli}→344/58/1 ｜ {wakeWord,scene,kind,bucket,reason}→92
+
+生成物出盘后、**build 之前**的等值探针（`.scratch/t313b2/parity.log`）：
+
+    OK WAKE_ROUTES 生成=436 dist=436 ／ OK NEW_KEY_ROUTES 58／58 ／ OK COVERAGE_REPAIR_ROUTES 1／1 ／ OK ALL_ROUTES 495／495
+    PARITY=yes
+
+## 1. build（build 会重打内容印记）
+
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm build > .scratch/t313b2/build-1.log 2>&1
+    exit=0
+    GEN-STAMP ok packages/skill-calorie/dist/.gen-inputs.json：声明源 23 件
+      （…／cli/legacy/routes/index.ts ／ cli/legacy/routes/scene-01.ts ／ … ／ scene-10.ts ／ weight/routes.ts 在内）
+
+## 2. gen（写盘，生成物入库）
+
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm gen > .scratch/t313b2/gen-run.log 2>&1
+    exit=0
+    gen 完成：键 101（写 35 ＋ 读 66）；能力 1 个（weight）声明 9 条，未搬迁清单 92 条
+      packages\skill-calorie\src\triggers\routes.generated.ts  sha256=e9ea993518ec33e3a69575dac1d8abf4a5e4c12e277b4c2d215ae3e5d339d7e9
+
+（单独跑 `node packages/skill-calorie/scripts/gen-routes.mjs` 得同一 sha256 ⇒ 确定性。）
+
+## 3. gen:check
+
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm gen:check > .scratch/t313b2/gencheck-1.log 2>&1
+    exit=0
+    GEN-CHECK ok packages\skill-calorie\src\triggers\routes.generated.ts sha256=e9ea9935…
+    GEN-CHECK PASS：键 101（写 35 ＋ 读 66）；能力 1 个（weight）声明 9 条，未搬迁清单 92 条
+
+## 4. 全量 test
+
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm test > .scratch/t313b2/test-1.log 2>&1
+    exit=0
+    ℹ tests 1492 ／ suites 160 ／ pass 1492 ／ fail 0 ／ cancelled 0 ／ skipped 0 ／ duration_ms 43531.67
+
+## 5. 对照物（先 build）
+
+    node docs/skills/skill-calorie/t313-routing-oracle.mjs > .scratch/t313b2/oracle-1.log 2>&1
+    exit=0
+    RESULT: SUMMARY faces=16 diffFaces=0 diffs=0 surfaceMissing=0 surfaceExtra=0 DEEP-EQUAL=yes
+            SNAPSHOT-SHA=d4da337219ea DIST-SHA=4602f79d6927
+    （分面：EXEC_ROUTES 344／HIT_NOT_EXEC 92／OUT_OF_SCOPE 10／TWIN_WAKE_WORDS 24／T71_DIFFS 7／
+      NON_EXEC_REASONS 23／ROUTES_BY_WAKE_WORD 493／EXEC_ROUTE_BY_KEY 101／ROUTING_SUMMARY 8／
+      DIRECT_API_PROBES 10／RECORD_SHAPES 7 —— 全部 DEEP-EQUAL=yes）
+    DIST-SHA 由 cf9b15a42f83 变为 4602f79d6927（源码重组，非语义变化）；对照物按**面**判等价，不看 dist 字节。
+
+## 6. P-A ·「改了声明没 build」必须红
+
+    node .scratch/t313b2/mutate.mjs pa apply       # 改 scene-10.ts 首条声明记录的唤醒词（源码级）
+    APPLIED pa → packages/skill-calorie/src/cli/legacy/routes/scene-10.ts
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm gen:check > .scratch/t313b2/pa-gencheck.log 2>&1
+    exit=1   ⇒  GEN-STALE FAIL：dist/ 不是这些声明**现在的内容**的产物 …
+    node .scratch/t313b2/mutate.mjs pa restore
+    RESTORED pa → packages/skill-calorie/src/cli/legacy/routes/scene-10.ts
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm gen:check > .scratch/t313b2/pa-restore.log 2>&1
+    exit=0   ⇒  GEN-CHECK PASS
+
+## 7. 变异① · 手改生成物必须红
+
+    node .scratch/t313b2/mutate.mjs m1 apply       # 改 routes.generated.ts 首条记录的唤醒词
+    APPLIED m1 → packages/skill-calorie/src/triggers/routes.generated.ts
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm gen:check > .scratch/t313b2/m1-gencheck.log 2>&1
+    exit=1   ⇒  GEN-CHECK FAIL：packages\skill-calorie\src\triggers\routes.generated.ts 与生成器输出不一致（第 12 行起）
+    node .scratch/t313b2/mutate.mjs m1 restore → exit=0 ⇒ GEN-CHECK PASS
+
+## 8. 变异② · 另一份声明里重复一条已存在的 wakeWord ⇒ 生成器抛
+
+靶子在**编译后的**声明（生成器按设计读 dist；源码级重复会先被第 6 条的内容印记拦下）：
+
+    node .scratch/t313b2/mutate.mjs m2 apply       # 往 dist/cli/legacy/routes/scene-03.js 数组尾注入 查高蛋白榜（order 900）
+    APPLIED m2 → packages/skill-calorie/dist/cli/legacy/routes/scene-03.js
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm gen > .scratch/t313b2/m2-gen.log 2>&1
+    exit=1   ⇒  Error: 同一 list 内同 wakeWord 跨件重复（wake · "查高蛋白榜"）：
+                packages/skill-calorie/src/cli/legacy/routes/scene-03.ts ／ …/scene-10.ts
+    node .scratch/t313b2/mutate.mjs m2 restore → exit=0 ⇒ GEN-CHECK PASS ＋ 对照物 DEEP-EQUAL=yes
+
+## 9. 收尾复核
+
+    node tooling/run-locked.mjs --ticket 313b2 -- pnpm gen:check > .scratch/t313b2/final-gencheck.log 2>&1   # exit=0 GEN-CHECK PASS
+    node docs/skills/skill-calorie/t313-routing-oracle.mjs > .scratch/t313b2/final-oracle.log 2>&1            # exit=0 DEEP-EQUAL=yes surfaceMissing=0
+    git status --porcelain    # 空（三处变异全部还原成提交态，逐字节）
