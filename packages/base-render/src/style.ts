@@ -306,12 +306,18 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  gap: 8px;',
     '  box-sizing: border-box;',
     '  margin: 12px 0;',
+    // 旧层冻结值（旧 `base.css:81-91`）。它只在**窄档**用得上：窄屏内容列本来就不到 520px，这条不生效；
+    // 桌面档由下方那条媒体查询放开到内容列宽（#238 用户 2026-09-13 二次裁定）。
     '  max-width: 520px;',
-    // #238（用户 2026-09-13 裁定：本票内改）——**左界与内容对齐**，不再左右 `auto` 居中：
-    // 桌面档内容列 960px 时，居中的按钮行两边各空 220px，与上方卡片／表格的左界不齐（用户
-    // 原话「两个按钮很丑陋」）。窄屏不受影响：内容列本身不到 520px，`auto` 外边距本来就解析成 0。
-    // `max-width: 520px` 是旧层冻结值（旧 `base.css:81-91`），照留——`style.test.mjs` 的
-    // 「两处同源」断言钉的就是它。
+    '}',
+    // #238（用户 2026-09-13 二次裁定「两个按钮平分宽度」）：桌面档**铺满内容列**，动作条里的整行
+    // （`.action-row-ghost` 的 `repeat(2, minmax(0, 1fr))`）随之按内容列平分——两颗按钮各占一半。
+    // 断点用样式表里既有的移动档分界 `TOAST_DEFAULTS.mobileMaxPx`（与 #249 那两处同源），
+    // 故 ≤820 的窄档逐像素不动。
+    '@media (min-width: ' + (TOAST_DEFAULTS.mobileMaxPx + 1) + 'px) {',
+    '  .' + p + 'action-bar {',
+    '    max-width: none;',
+    '  }',
     '}',
     '.' + p + 'action-row {',
     '  display: grid;',

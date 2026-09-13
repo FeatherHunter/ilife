@@ -93,7 +93,9 @@ test('#108 域内唤醒词命中：代表词→饮食域 8 键（路由不断）
     ['看全部排行榜', 'calorie.view.ranking'],
     ['查食品', 'calorie.view.search'],
     ['查食品（按分类）', 'calorie.view.library'],
-    ['看食品来源统计', 'calorie.view.library'],
+    // #250 · 命令接错改正：该词要的是「按来源分组的统计」（`data_fields=[source,count,pct,total]`），
+    // 专面键是 `view.source-stats`（原先错接「分类食品列表」`view.library`，正是登记册 §4.2 记的那一条）。
+    ['看食品来源统计', 'calorie.view.source-stats'],
     ['看食品库（去重）', 'calorie.view.dedupe'],
     ['看健康报告(最近 7 天)', 'calorie.view.health'],
   ];

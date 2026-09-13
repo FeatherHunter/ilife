@@ -19,7 +19,8 @@ import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { fieldLabel, localizeEnums } from './labels.js';
-import { reconcileDisclosure, statusCard } from './setup.js';
+import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
+import { PROFILE_WRITTEN_DETAIL } from './setup.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -52,7 +53,7 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: stri
   };
   const content = [
     renderKpiGrid([
-      statusCard(receipt),
+      statusCard(receipt, PROFILE_WRITTEN_DETAIL),
       { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
       {
         label: '改动字段',

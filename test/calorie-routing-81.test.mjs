@@ -45,7 +45,7 @@ const frozenKeyOf = (t) => ('key' in t && typeof t.key === 'string' ? t.key : nu
 const calorieKeyOf = (cli) => String(cli).split(' ')[1];
 // FX-81-5／FX-81-7 唯一例外：语义上必须多步交互（先预览／确认再写库，归 #86）的词保留 non-exec。
 // 判据见 docs/research/t81-route-evidence.md §2.2；其余「能做的」词一律已入 exec 桶（FX-81-7）。
-const WIZARD_WORDS = new Set(['定营养目标(自动算)', '定饮水目标(自动算)', '一键定全套目标', '批量导入食品', '校验批量导入']);
+const WIZARD_WORDS = new Set(['批量导入食品', '校验批量导入']);
 const allExec = () => [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES].filter((r) => r.kind === 'exec');
 /** FX-81-7 家族里形态特殊、单独改写的两条词：`记体脂（皮褶钳）` 的冻结示例缺 7 个皮褶参数、
  * `看目标预测达成` 的冻结示例窗口 <14 天（该能力要求 ≥14 天）——路由层各用完整参数／足窗（见下方逐条断言）。
@@ -74,7 +74,7 @@ const smokeSection = (md, heading) => {
 const unquote = (s) => String(s).replace(/`/g, '');
 
 describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
-  it('D2① 436 条逐条恰一个桶（可执行 341 ／ 命中但不执行 95，#113 促进 4 词）', () => {
+  it('D2① 436 条逐条恰一个桶（可执行 344 ／ 命中但不执行 92，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行）', () => {
     assert.equal(WAKE_ROUTES.length, 436);
     assert.equal(EXEC_ROUTES.length + HIT_NOT_EXEC_ROUTES.length, 436);
     const buckets = { exec: 0, 'non-exec': 0 };
@@ -92,13 +92,13 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         assert.ok(Object.values(NON_EXEC_REASONS).includes(r.reason), r.wakeWord);
       }
     }
-    assert.deepEqual(buckets, { exec: 341, 'non-exec': 95 });
+    assert.deepEqual(buckets, { exec: 344, 'non-exec': 92 });
     assert.deepEqual(routingSummary(), {
       total: 436,
-      exec: 341,
-      nonExec: 95,
+      exec: 344,
+      nonExec: 92,
       outOfScope: 10,
-      legacyChain: 85,
+      legacyChain: 82,
       newEntries: 58,
       repairEntries: 1,
       coveredKeys: 101,
@@ -163,7 +163,9 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     assert.ok(win, '看目标预测达成 的 cli 应带相对窗口（window:"<N>d"）');
     const winDays = Number(win[1]);
     assert.ok(winDays >= 14, `看目标预测达成 窗口应 ≥14 天（实测 ${winDays} 天）`);
-    assert.equal(WIZARD_WORDS.size, 5);
+    // #252：目标管理 3 条「自动算」词改成 exec（命令文本＝工作流程第一步＝预检确认页），
+    // 故多步交互词从 5 条降到 2 条（余下两条属场景 02，归饮食那张图）。
+    assert.equal(WIZARD_WORDS.size, 2);
     for (let i = 0; i < TRIGGERS.length; i += 1) {
       const t = TRIGGERS[i];
       const r = WAKE_ROUTES[i];
@@ -226,7 +228,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         `${r.wakeWord} cli 键 token 与 key 不一致：${r.cli}`,
       );
     }
-    assert.equal(EXEC_ROUTES.length, 341, 'FX-81-7 结构式判据覆盖面（全 exec 记录）');
+    assert.equal(EXEC_ROUTES.length, 344, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入）');
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
@@ -287,15 +289,12 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     assert.equal(COVERAGE_REPAIR_ROUTES.length, 1);
     // 修复入口的键＝「降级后失去唯一可跑入口」的键（从冻结表 ＋ 路由层派生，非手写清单）。
     // #180 重导：补偿表清空后取值只由冻结命令字段派生（原第二条来源 `HELP_EXEC_OVERRIDES` 已删）。
-    const downgradedKeys = new Set();
-    for (const w of WIZARD_WORDS) {
-      const t = TRIGGERS.find((x) => x.wake_word === w);
-      assert.ok(t, `冻结表无此词：${w}`);
-      const cli = t.main_prompt.cli;
-      if (cli.startsWith('calorie-cmd-read calorie.')) downgradedKeys.add(calorieKeyOf(cli));
-    }
+    // #252 重导：原先这份清单由 `WIZARD_WORDS` 的冻结命令派生——目标管理 3 条「自动算」词转 exec 后
+    // 该派生结果变空，而 `calorie.view.goal-recommend` 仍需要一条可执行入口。判据改为**本义**：
+    // 「除修复入口外没有任何可执行路由的键」。仍具鉴别力——漏一条修复入口则本集合变大；
+    // 给已有可执行路由的键多插一条修复入口则两边不等。
     const repairSet = new Set(COVERAGE_REPAIR_ROUTES);
-    const orphaned = [...downgradedKeys].filter(
+    const orphaned = KEY_LIST.filter(
       (key) => !ALL_ROUTES.some((r) => r.kind === 'exec' && r.key === key && !repairSet.has(r)),
     ).sort();
     assert.deepEqual(COVERAGE_REPAIR_ROUTES.map((r) => r.key).sort(), orphaned);
@@ -317,7 +316,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
   it('FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 0 ＋ 已登记的数据依赖失败单列 ＋ 需参数键必须带 --params）', () => {
     const md = readFileSync(SMOKE_MD, 'utf8');
     const execAll = allExec();
-    assert.equal(execAll.length, 400, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页）');
+    assert.equal(execAll.length, 403, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec）');
     // ① 快照汇总：非零只许是**已登记的数据依赖失败**（用户 2026-09-11 裁定取甲：把「命令坏了」与
     // 「数据依赖的失败」分开统计；判据是快照自己 :7-9 写的「数据依赖失败（空库 exit 4）不算 cli 缺陷」，
     // 改断言＝把断言对齐判据）。

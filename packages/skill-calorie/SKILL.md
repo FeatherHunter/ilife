@@ -141,12 +141,12 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看GIF规划器 | calorie.view.gif-planner | stat | `calorie-cmd-read calorie.view.gif-planner --params '{"tag":"正面"}'` |
 | 看今日目标进度 | calorie.view.goal | stat | `calorie-cmd-read calorie.view.goal --params '{"window":"7d"}'` |
 | 定营养目标 | calorie.view.goal-config | stat | `calorie-cmd-read calorie.view.goal-config` |
-| calorie.view.goal-expiring | calorie.view.goal-expiring | stat | `calorie-cmd-read calorie.view.goal-expiring` |
-| calorie.view.goal-predict | calorie.view.goal-predict | stat | `calorie-cmd-read calorie.view.goal-predict --params '{"window":"14d"}'` |
+| 看即将到期的目标 | calorie.view.goal-expiring | stat | `calorie-cmd-read calorie.view.goal-expiring` |
+| 看目标预测达成 | calorie.view.goal-predict | stat | `calorie-cmd-read calorie.view.goal-predict --params '{"window":"14d"}'` |
 | 看今日目标进度 | calorie.view.goal-progress | stat | `calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'` |
 | 定营养目标(自动算) | calorie.view.goal-recommend | stat | `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'` |
 | 看目标状态 | calorie.view.goal-status | stat | `calorie-cmd-read calorie.view.goal-status` |
-| calorie.view.goal-vs-actual | calorie.view.goal-vs-actual | stat | `calorie-cmd-read calorie.view.goal-vs-actual --params '{"window":"30d"}'` |
+| 看目标对比实际 | calorie.view.goal-vs-actual | stat | `calorie-cmd-read calorie.view.goal-vs-actual --params '{"window":"30d"}'` |
 | 定体重目标 | calorie.view.goal-weight | stat | `calorie-cmd-read calorie.view.goal-weight --params '{"window":"30d"}'` |
 | 看目标预检 | calorie.view.goal-wizard | stat | `calorie-cmd-read calorie.view.goal-wizard` |
 | 看健康盘 | calorie.view.health | stat | `calorie-cmd-read calorie.view.health --params '{"window":"本周"}'` |

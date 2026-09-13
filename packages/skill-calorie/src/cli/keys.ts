@@ -138,6 +138,10 @@ export const CALORIE_COMBOS = {
   // #179 · 场景 07 基础信息写前预检页（D2 只许追加：读 64→65，共 100；一条只读页面命令
   // 承载三条写入词「设置档案／改档案／设活动量」的字段与槽位，写仍由三条写命令承接）。
   'calorie.view.profile-wizard': { shape: 'stat' as EnvelopeShape, title: '档案预检' },
+  // #251 · 场景 06 目标管理写前预检页（D2 只许追加：读 65→66；一条只读页面命令承载 13 条写入词
+  // 「定营养目标／定营养目标(自动算)／定体重目标／…／改饮水目标」的现值、推荐值与要填的项，
+  // 写仍由 5 条既有写命令承接）。
+  'calorie.view.goal-wizard': { shape: 'stat' as EnvelopeShape, title: '目标预检' },
 } as const;
 
 export type CalorieComboKey = keyof typeof CALORIE_COMBOS;

@@ -278,13 +278,13 @@ test('#93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接�
 });
 
 // ---------------------------------------------------------------- 验收 ①：读键全部可用 ＋ 接线等价
-test('#93 ① 65 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4／#179 +1）', () => {
+test('#93 ① 66 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4／#179 +1／#251 +1）', () => {
   const tpl = makeTemplate();
   const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--sweep', tpl], { encoding: 'utf8' });
   assert.equal(r.status, 0, 'sweep 子进程必须正常退出：' + String(r.stderr).slice(0, 400));
   const lines = String(r.stdout).split('\n').filter((s) => s.startsWith('{')).map((s) => JSON.parse(s));
   const started = String(r.stdout).split('\n').filter((s) => s.startsWith('START ')).map((s) => s.slice(6));
-  assert.equal(READ_KEYS.length, 65, '读键应为 65 个（100 组合键 − 35 写键）');
+  assert.equal(READ_KEYS.length, 66, '读键应为 66 个（101 组合键 − 35 写键）');
   assert.equal(WRITE_KEYS.length, 35);
   assert.deepEqual(started, READ_KEYS, '每个读键都跑到（缺失＝该键把进程 exit 掉了，参数不全）');
   assert.equal(lines.length, READ_KEYS.length);

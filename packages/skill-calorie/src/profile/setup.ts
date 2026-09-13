@@ -36,6 +36,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { nowStamp } from '../render/receipt.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { activityLabel, fieldLabel, genderLabel, localizeEnums } from './labels.js';
 import { profileSnapshot, PROFILE_SOURCE } from './view.js';
 
@@ -44,6 +45,9 @@ const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·档案预检';
 /** 本页由哪条命令产出（写进「复制日志」第 4 段，可照抄重跑）。 */
 const WIZARD_KEY = 'calorie.view.profile-wizard';
+
+/** 首格状态卡的「写入去向」一句（#251 起由共用件收参数，本域说法只此一处定义）。 */
+export const PROFILE_WRITTEN_DETAIL = '已写入档案';
 
 /** 三条写入词（HELP `scene-07-profile.ts` 的 name，逐字）。 */
 const SET_WORD = '设置档案';
@@ -350,32 +354,9 @@ function openFor(v: ProfileSettingView, wakeWord: string): boolean {
   return v.wakeWord === wakeWord;
 }
 
-/** 页尾「对账信息」折叠区（#238 清单 1、5、12 条）：三张写后回执同一位置、同一份内容。
- *  收的是这次写入的**可核对信息**——记录编号／写入时间／回执格式；影响行数与写入字段已在卡片上，
- *  这里不重写。原来的 `M5 契约 v1`（眉标）与 `M5 整行（旧版等价物）`（页尾代码块）都收进这一处，
- *  且不再原样印那行机器文本（`id=… | 字段 heightCm,note` 是给机器看的，页面上只留人话）。 */
-export function reconcileDisclosure(receipt: CrudReceipt): string {
-  return renderDisclosure({
-    title: '对账信息',
-    contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-      rows: [
-        { k: '记录编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
-        { k: '写入时间', v: receipt.meta.actionAt },
-        { k: '回执格式', v: 'v' + receipt.m5Contract + '（写库回执）' },
-      ],
-    }),
-  });
-}
-
-/** 一格的状态值（#238 清单 3、4 条）：首卡承接原「无变化 否」那个双重否定，一页只出现这一处。 */
-export function statusCard(receipt: CrudReceipt): KpiCardInput {
-  return {
-    label: '状态',
-    value: receipt.noChange ? '无改动' : '已改动',
-    detail: receipt.noChange ? '值与改前一致' : '已写入档案',
-  };
-}
+/* 页尾「对账信息」折叠区与首格状态卡自 #251 起上移到共用位 `../shared/receiptParts.js`
+ * （目标管理域是第二个用法，故跟它一起上移）。本文件与 `update.ts` 都从那里取用；
+ * 「写入去向」那句说明按本域措辞传入，见上方 `PROFILE_WRITTEN_DETAIL`。 */
 
 /** 「推荐活动量」一格：档位 ＋ 系数 ＋ 每日消耗影响（四要素缺哪项就写哪项，不算数字）。
  *  推荐口径＝按「日常活动情况」在五档里判定的档位（老技能推荐规则），本次入库即该档；
@@ -406,7 +387,7 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
   };
   const content = [
     renderKpiGrid([
-      statusCard(receipt),
+      statusCard(receipt, PROFILE_WRITTEN_DETAIL),
       { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
       {
         label: '写入字段',

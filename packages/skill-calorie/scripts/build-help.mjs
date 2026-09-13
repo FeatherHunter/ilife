@@ -20,6 +20,11 @@ const REPR = {
   'calorie.view.goal-weight': '定体重目标',
   'calorie.view.goal-progress': '看今日目标进度',
   'calorie.view.goal-status': '看目标状态',
+  // #252 · 目标管理三条「首列是命令名」补齐（此前 REPR 无条目 → 静默退回命令名，AI 在命令表上看不到
+  // 这三条词）。首列取自路由层里**确实指向该键**的唤醒词。同类缺口全仓还有 12 处，各自归其场景图。
+  'calorie.view.goal-expiring': '看即将到期的目标',
+  'calorie.view.goal-predict': '看目标预测达成',
+  'calorie.view.goal-vs-actual': '看目标对比实际',
   'calorie.view.combined': '看体重 vs 摄入(最近 7 天)',
   'calorie.view.deficit': '看热量缺口',
   'calorie.view.diet-review': '今日复盘',

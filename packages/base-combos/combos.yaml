@@ -328,6 +328,11 @@ combos:
     shape: stat
     title: 档案预检
     cmd: skill-calorie
+  - key: calorie.view.goal-wizard
+    skill: calorie
+    shape: stat
+    title: 目标预检
+    cmd: skill-calorie
   - key: calorie.diet.add
     skill: calorie
     shape: receipt
