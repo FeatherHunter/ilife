@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：313a｜since：2026-09-13T09:19:11Z｜until：（无）｜条目数：30｜导出时间：2026-09-13T09:33:25.577Z
+> 票号过滤：313a｜since：2026-09-13T09:19:11Z｜until：（无）｜条目数：38｜导出时间：2026-09-13T09:42:05.088Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -35,4 +35,12 @@ RUN ticket=313a runId=7e5d5274-91a4-4a64-97d1-33b566a73267 cmd="pnpm changeset:s
 RUN ticket=313a runId=7a2ce3f3-cae2-461f-9598-53d9860c7191 cmd="pwsh -NoProfile -File .scratch/t313/commit-steps-2.ps1" waitedMs=0 exit=0 pid=43396 at=2026-09-13T09:32:09.857Z
 RUN ticket=313a runId=0262ae96-bcd0-450f-82db-0fbccfccbd32 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=10001 exit=0 pid=51088 at=2026-09-13T09:32:30.069Z
 RUN ticket=313a runId=4346393b-38e6-4f67-ac4b-3bd97cb4a7db cmd="node docs/skills/skill-calorie/t313a-分区-重核.mjs" waitedMs=0 exit=0 pid=46292 at=2026-09-13T09:32:30.222Z
+RUN ticket=313a runId=0bbedd2f-0c18-4ed4-8a13-411893a0b0c1 cmd="pwsh -NoProfile -File .scratch/t313/commit-steps-3.ps1" waitedMs=0 exit=0 pid=33656 at=2026-09-13T09:34:38.864Z
+RUN ticket=313a runId=4868db50-6cc6-4a5e-973f-768616a33c8d cmd="pnpm build" waitedMs=0 exit=0 pid=39752 at=2026-09-13T09:37:08.534Z
+RUN ticket=313a runId=efd210a4-3d8b-4952-99da-50b4b9814185 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs" waitedMs=0 exit=0 pid=49464 at=2026-09-13T09:37:08.810Z
+RUN ticket=313a runId=fd8491ae-fe08-48c1-8e5a-0669e4799c98 cmd="node --test packages/skill-calorie/test/legacy-partition-313.test.mjs" waitedMs=1 exit=0 pid=19184 at=2026-09-13T09:37:20.830Z
+RUN ticket=313a runId=3f813f61-f329-4ffb-8cb8-3a6015c20443 cmd="pnpm build" waitedMs=0 exit=0 pid=42972 at=2026-09-13T09:38:17.499Z
+RUN ticket=313a runId=c21384e6-3059-41db-bbfb-4e2d040eccfa cmd="pnpm gen:check" waitedMs=0 exit=0 pid=39736 at=2026-09-13T09:38:18.513Z
+RUN ticket=313a runId=39958a48-2270-4028-8292-604f9d53ae6a cmd="pnpm test" waitedMs=0 exit=0 pid=28440 at=2026-09-13T09:39:11.327Z
+RUN ticket=313a runId=4f24ab11-a6fd-4d55-89b6-8e8d2cc81d94 cmd="pwsh -NoProfile -File .scratch/t313/commit-steps-4.ps1" waitedMs=1 exit=0 pid=45132 at=2026-09-13T09:41:42.720Z
 ```
