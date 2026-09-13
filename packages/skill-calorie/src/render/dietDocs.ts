@@ -45,7 +45,7 @@ import type { FoodRanking, MacroRatio } from '../diet/dietEngine.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { DietReview } from './analysisPlate.js';
 import type { AllRankings } from '../diet/rankingPlate.js';
-import type { HealthPlate } from './health.js';
+import type { HealthPlate } from '../analysis/healthPlate.js';
 import type { DedupeView } from './insightPlate.js';
 import type { ProductLibrary, ProductSearch } from '../diet/libraryPlate.js';
 

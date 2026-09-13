@@ -12,7 +12,7 @@ import { openDb } from '../schema.js';
 import { assertWritablePath, resolveDbPath } from '../paths.js';
 import { dedupeReport, exportBySource, importProducts, validateFile } from './batch.js';
 import type { DuplicatePolicy } from './batch.js';
-import { getCalorieHistory } from './history.js';
+import { getCalorieHistory } from '../analysis/historyStore.js';
 import { auditPlanNames } from './audit.js';
 import { loadCatalog, verifyMovementName } from './xunji-catalog.js';
 

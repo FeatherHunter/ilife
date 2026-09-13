@@ -20,11 +20,11 @@
  * `insightPlate.ts`／`analysisPlate.ts`／`health.ts`／`dietDocs.ts`／`html.ts`）——不在这里重写算式。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getCalorieHistory } from '../fetch/history.js';
+import { getCalorieHistory } from './historyStore.js';
 import { buildCombinedAnalysis, buildDeficitPlate } from '../render/analysisPlate.js';
 import { buildHealthDoc } from '../render/dietDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { buildHealthPlate } from '../render/health.js';
+import { buildHealthPlate } from './healthPlate.js';
 import { renderHelpLookupHtml } from '../render/html.js';
 import { buildAnomalyView, buildPredictView } from '../render/insightPlate.js';
 import { buildAnomalyDoc, buildCombinedDoc, buildDeficitDoc, buildPredictDoc } from '../render/trendDocs.js';

@@ -2,7 +2,7 @@
  * 目标值经 T4 getNutritionGoal 单源读取。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getNutritionGoal } from './nutritionGoal.js';
+import { getNutritionGoal } from '../fetch/nutritionGoal.js';
 
 export interface DayIntake {
   date: string;

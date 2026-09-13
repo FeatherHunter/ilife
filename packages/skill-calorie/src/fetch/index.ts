@@ -19,8 +19,8 @@ export {
   exportBySource,
 } from './batch.js';
 export type { DuplicatePolicy, ImportStats, ImportResult, ImportFailure, ImportOptions } from './batch.js';
-export { getCalorieHistory, weightSeries } from './history.js';
-export type { DayIntake, CalorieHistory } from './history.js';
+export { getCalorieHistory, weightSeries } from '../analysis/historyStore.js';
+export type { DayIntake, CalorieHistory } from '../analysis/historyStore.js';
 export { readSkill, requireOk } from './cross-skill.js';
 export type { SkillEnvelope, ReadSkillOptions } from './cross-skill.js';
 export { getProfile, setProfile, setActivityLevel, updateProfile, normalizeActivityLevel, normalizeGender, PROFILE_UPDATABLE, ACTIVITY_ALIASES } from './profile.js';

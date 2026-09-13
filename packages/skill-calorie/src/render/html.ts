@@ -31,7 +31,7 @@ import type { ProfileView } from '../profile/view.js';
 import type { CombinedAnalysis, DietReview } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { FoodRanking } from '../diet/dietEngine.js';
-import type { HealthPlate } from './health.js';
+import type { HealthPlate } from '../analysis/healthPlate.js';
 import type { AllRankings } from '../diet/rankingPlate.js';
 import type { ProductLibrary, ProductSearch, ProductStats } from '../diet/libraryPlate.js';
 

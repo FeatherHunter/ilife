@@ -11,7 +11,7 @@ import type { AnalysisResult } from '../analysis/result.js';
 import { buildSeries, seriesAvg, seriesCount } from '../analysis/series.js';
 import type { DaySeries } from '../analysis/series.js';
 import { FetchError } from '../fetch/errors.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 export interface HealthPlate {
   start: string;

@@ -13,8 +13,8 @@ export { buildGoalConfig, buildGoalRecommend, buildGoalProgress, buildGoalStatus
 export type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
 export { COMBINED_PAIRS, buildCombinedAnalysis, buildDeficitPlate, buildDietReview, buildTrendPlate } from './analysisPlate.js';
 export type { CombinedAnalysis, DietReview, ReviewMealSlice } from './analysisPlate.js';
-export { buildHealthPlate } from './health.js';
-export type { HealthPlate } from './health.js';
+export { buildHealthPlate } from '../analysis/healthPlate.js';
+export type { HealthPlate } from '../analysis/healthPlate.js';
 export { RANK_CATEGORIES, buildAllRankings, buildFoodRankingPlate } from '../diet/rankingPlate.js';
 export type { AllRankings, RankCategory } from '../diet/rankingPlate.js';
 export { buildProductLibrary, buildProductSearch, buildProductStats } from '../diet/libraryPlate.js';
