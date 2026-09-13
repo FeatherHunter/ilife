@@ -100,7 +100,11 @@ describe('#96 per-skill HTML 回归门工具自证', () => {
     assert.deepEqual(ids, [...ids].sort(), '产物 id 必须有序');
     assert.equal(new Set(ids).size, ids.length, '产物 id 必须唯一');
 
-    const EXPECT_KEYS = { bill: 16, chef: 8, home: 21, schedule: 8, memo: 10 };
+    // #309：memo 的 key 片段数 = memo/keys 里的键数（第 11 键 memo.wish 于 1fca032／#220 落地）。
+    //   复算口径（不看时间戳、不看人手抄）：受跟踪正本 tooling/skill-html.snapshot.json 的 artifacts 里
+    //   memo/frag/* 实测 11 条，且 artifactCount 186 = 5*(4+6+1) + (16+8+21+8+11) + (16+8+21+8+6) + 4*2 自洽。
+    //   改前 10 是第 11 键落地前的过期值——门没错，是期望值没跟。
+    const EXPECT_KEYS = { bill: 16, chef: 8, home: 21, schedule: 8, memo: 11 };
     const EXPECT_TPL = { bill: 16, chef: 8, home: 21, schedule: 8, memo: 6 };
     for (const s of SKILLS) {
       const mine = ids.filter((id) => id.startsWith(s.id + '/'));
