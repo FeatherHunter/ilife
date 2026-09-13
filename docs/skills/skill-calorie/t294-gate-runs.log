@@ -1,0 +1,13 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：294｜since：2026-09-13T06:00:20Z｜until：（无）｜条目数：5｜导出时间：2026-09-13T06:03:02.128Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=294 runId=ddbc981d-c578-4097-bd07-d1d82dfdb72a cmd="pnpm --filter skill-calorie... build" waitedMs=0 exit=0 pid=52660 at=2026-09-13T06:00:22.192Z
+RUN ticket=294 runId=0c571600-f284-4568-aecc-b4bc85d919ca cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/src packages/skill-calorie/test/analysis-t5.test.mjs packages/skill-calorie/test/softdelete-120.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs; git commit -F .scratch/t294/commit-step2.txt\"" waitedMs=0 exit=0 pid=41344 at=2026-09-13T06:00:46.340Z
+RUN ticket=294 runId=61e19b2a-b690-4df9-bd16-5307f34b6bc9 cmd="pwsh -NoProfile -File .scratch\\t294\\mutation.ps1" waitedMs=0 exit=0 pid=34968 at=2026-09-13T06:01:09.559Z
+RUN ticket=294 runId=0d7c951c-55d9-4fb5-9d6f-a3c09a7fc932 cmd="pnpm --filter skill-calorie... build" waitedMs=0 exit=0 pid=37800 at=2026-09-13T06:01:19.035Z
+RUN ticket=294 runId=8ae5fe97-9195-4d9b-98eb-37af010cd7fe cmd="pnpm test" waitedMs=0 exit=0 pid=49472 at=2026-09-13T06:01:57.424Z
+```
