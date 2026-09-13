@@ -75,6 +75,12 @@ jobs:
   publish-gates:
     # #48 发布门禁三门（R2 A+B）：G1 禁 workspace 外泄 + G2 tarball 清单 + G3 fresh-tmp 安装态双路
     # 样板期仅卡路里线 --only；复制到其余 5 对后去掉 --only 跑全量 13 包
+    #
+    # #311：照 #295 返修 A8 的同款口径，**每道门各带 `if: always()`**——任一步红不得把其后步骤判成
+    #   skipped。实测（run 34761515902）：第 9 步 `pnpm publish:fresh` 一红，其后「模板资产门」「打包实证
+    #   与清理守卫自证」两步在 CI 里**一次都没跑过**。红仍然是红：这些步没有 `continue-on-error`，
+    #   作业整体照旧 failure——这不是把红变绿，是让「哪几道门真跑了」在 CI 里看得见。
+    #   判据由 `test/ci-gates-295.test.mjs` 机器盯着（#311 已把本作业五道门入册）。
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,18 +94,23 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm publish:pre
+        if: always()
       - run: pnpm publish:tarball
+        if: always()
       - run: pnpm publish:fresh
+        if: always()
       # #95：模板资产门（单包显式复跑，不吃 --only 全量口径的漂移）
       #   G2：tarball 清单逐件含 templates/*.html；G3：fresh 安装态 loadTemplate 真读 6 件
       #   返修（A1-1／A1-2／A2-1）：临时根必须在仓库之外（协议 §2.1）＋ 门必须说真话（逐件／未跑记账）
       - name: 模板资产门（skill-calorie）
+        if: always()
         run: |
           node tooling/check-publish.mjs --tarball --only skill-calorie
           node tooling/check-publish.mjs --fresh-tmp --only skill-calorie
           node tooling/check-publish.mjs --tmp-hygiene
           node docs/research/t95-g3-honesty.mjs
       - name: 打包实证与清理守卫自证（#95 返修）
+        if: always()
         run: |
           node docs/research/t95-publish-evidence.mjs
           node docs/research/t95-publish-evidence.mjs --mutate
