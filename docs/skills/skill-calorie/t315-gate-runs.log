@@ -1,15 +1,9 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks-land\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：315-land｜since：2026-09-13T14:55:46.185Z｜until：2026-09-13T15:08:14.835Z｜条目数：7｜导出时间：2026-09-13T15:08:14.921Z
+> 票号过滤：315-land｜since：2026-09-13T15:05:24.536Z｜until：2026-09-13T15:06:22.779Z｜条目数：1｜导出时间：2026-09-13T15:09:08.673Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
-RUN ticket=315-land runId=3871783c-db5a-46ff-bbbb-95aa7f471950 cmd="pwsh -NoProfile -File .scratch/t315/land.ps1" waitedMs=110095 exit=9 pid=36636 at=2026-09-13T14:55:46.185Z
-RUN ticket=315-land runId=cc2c4776-4521-49eb-b6be-fd51812f98ee cmd="pwsh -NoProfile -File .scratch/t315/land.ps1" waitedMs=0 exit=9 pid=37492 at=2026-09-13T14:56:03.858Z
-RUN ticket=315-land runId=637a4e71-cb9d-4a6d-8025-62bd5bebc724 cmd="pwsh -NoProfile -File .scratch/t315/land.ps1" waitedMs=1 exit=9 pid=25084 at=2026-09-13T14:56:21.459Z
-RUN ticket=315-land runId=46ea9ec9-56c8-41c4-91b3-9587a4efd97b cmd="pwsh -NoProfile -File .scratch/t315/land.ps1" waitedMs=0 exit=1 pid=52420 at=2026-09-13T14:56:39.953Z
-RUN ticket=315-land runId=271c78e4-b995-4e2e-88c8-60106af7c3b1 cmd="pwsh -NoProfile -File .scratch/t315/land.ps1" waitedMs=350305 exit=1 pid=48508 at=2026-09-13T15:04:13.490Z
 RUN ticket=315-land runId=0e418f44-fd2d-45ab-9cb5-3b672840a56c cmd="pwsh -NoProfile -File .scratch/t315/land.ps1" waitedMs=0 exit=0 pid=49376 at=2026-09-13T15:06:21.779Z
-RUN ticket=315-land runId=4606c900-5a1a-41be-b5f7-a0082de2dc96 cmd="pwsh -NoProfile -File .scratch/t315/land2.ps1" waitedMs=0 exit=0 pid=30492 at=2026-09-13T15:06:48.106Z
 ```
