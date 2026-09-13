@@ -2,7 +2,7 @@
  *
  * 复核口径（目标 vs 实际、预计达成日）住同目录 `figures.ts` 的 `weightMilestone`；
  * 「体重目标取数」`getWeightGoalInfo` 也住那里——本能力对外那道门（`index.ts`）把它转给
- * 目标管理那侧（`render/goalExtra.ts`）用，免得同一件事有两份取数。
+ * 目标管理那侧（`goal/goalExtraPlate.ts`）用，免得同一件事有两份取数。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { dayField, nums } from '../shared/params.js';

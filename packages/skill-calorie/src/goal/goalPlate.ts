@@ -17,7 +17,7 @@ import type { DeficitData } from '../analysis/deficit.js';
 import { buildTrendData } from '../analysis/trend.js';
 import type { TrendData } from '../analysis/trend.js';
 import { round2 } from '../kcal.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 export interface GoalView {
   start: string;

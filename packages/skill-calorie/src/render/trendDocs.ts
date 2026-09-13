@@ -31,7 +31,7 @@ import { dataCopyArea } from '../shared/copyArea.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { AnomalyView, ContraView, PredictView } from './insightPlate.js';
-import type { GoalPredictView } from './goalExtra.js';
+import type { GoalPredictView } from '../goal/goalExtraPlate.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';

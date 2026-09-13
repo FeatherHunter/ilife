@@ -36,7 +36,7 @@ import {
 } from '../fetch/profile.js';
 import type { ProfileRow } from '../fetch/profile.js';
 import { getNutritionGoal, setNutritionGoal, updateWaterGoal } from '../fetch/nutritionGoal.js';
-import { pauseAllGoals, resumeAllGoals, setWeightGoal } from '../fetch/goal.js';
+import { pauseAllGoals, resumeAllGoals, setWeightGoal } from '../goal/goalStore.js';
 import {
   ValidationError,
 } from '../fetch/body.js';

@@ -5,7 +5,7 @@
  * TS 线先 ensureGoalRow（INSERT OR IGNORE 默认行），崩溃转显式可运行语义。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { FetchError } from './errors.js';
+import { FetchError } from '../fetch/errors.js';
 
 export interface PausedState {
   paused: boolean;

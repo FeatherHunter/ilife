@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
-import { getPausedState, pauseAllGoals, resumeAllGoals } from '../dist/fetch/goal.js';
+import { getPausedState, pauseAllGoals, resumeAllGoals } from '../dist/goal/goalStore.js';
 import { listCompletedGoals } from '../dist/fetch/goalHistory.js';
 import {
   getNutritionGoal, setNutritionGoal, recommendNutritionGoal, recommendWaterGoal, updateWaterGoal,

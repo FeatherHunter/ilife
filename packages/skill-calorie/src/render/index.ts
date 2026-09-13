@@ -7,8 +7,8 @@ export { MEAL_BUCKETS, buildMealDistribution, zeroMealDistribution, buildDietOve
 export type { MealBucket, MealSlice, MealDistribution, DietOverview } from './diet.js';
 export { buildExerciseView } from './exercise.js';
 export type { ExerciseView } from './exercise.js';
-export { buildGoalView } from './goal.js';
-export type { GoalView } from './goal.js';
+export { buildGoalView } from '../goal/goalPlate.js';
+export type { GoalView } from '../goal/goalPlate.js';
 export { buildGoalConfig, buildGoalRecommend, buildGoalProgress, buildGoalStatus, buildGoalWeight } from './goalPlate.js';
 export type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
 export { COMBINED_PAIRS, buildCombinedAnalysis, buildDeficitPlate, buildDietReview, buildTrendPlate } from './analysisPlate.js';
@@ -28,8 +28,8 @@ export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasure
 export type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
 export { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from './planPlate.js';
 export type { PlanView, PlanWizardView, ExerciseGoalView } from './planPlate.js';
-export { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from './goalExtra.js';
-export type { GoalExpiringView, GoalPredictView, GoalVsActualView } from './goalExtra.js';
+export { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../goal/goalExtraPlate.js';
+export type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 export { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from './insightPlate.js';
 export type { PredictView, AnomalyView, ContraView, DedupeView } from './insightPlate.js';
 // #179 · 档案读链取数已搬进能力目录 `src/profile/view.ts`（同一个取数不留两处）；

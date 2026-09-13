@@ -4,7 +4,7 @@
  *   ① `WEIGHT_COMMANDS`——命令声明（权威源在 `commands.ts`，这里只是转出）；
  *   ② `runWeightView(key, params, db)`——读命令入口（查不到体重键即抛，不当静默兜底）；
  *   ③ `runWeightWrite(key, params, db)`——写命令入口（同上）；
- *   ④ `getWeightGoalInfo`——「体重目标」取数：目标管理那侧（`render/goalExtra.ts`）在用；
+ *   ④ `getWeightGoalInfo`——「体重目标」取数：目标管理那侧（`goal/goalExtraPlate.ts`）在用；
  *   ⑤ `weightTrend`——「体重趋势」算式：健康盘那侧（`analysis/dashboard.ts`）在用。
  *  ④⑤ 都按铁律一「要用别的能力的东西走它对外那道门」转出，免得同一件事有两份取数／两份算式。
  *

@@ -9,7 +9,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { getNutritionGoal, recommendNutritionGoal, recommendWaterGoal } from '../fetch/nutritionGoal.js';
 import type { NutriProfile, NutritionGoalRow, RecommendResult } from '../fetch/nutritionGoal.js';
-import { getPausedState } from '../fetch/goal.js';
+import { getPausedState } from '../goal/goalStore.js';
 import { listCompletedGoals } from '../fetch/goalHistory.js';
 import type { GoalHistory } from '../fetch/goalHistory.js';
 import { buildDeficitData } from '../analysis/deficit.js';

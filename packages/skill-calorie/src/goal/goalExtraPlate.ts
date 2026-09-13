@@ -18,7 +18,7 @@ import type { TrendData } from '../analysis/trend.js';
 // #294 · 体重目标的取数已搬进能力目录 `src/weight/`：走它对外那道门（不再直取别人的内部件）。
 import { getWeightGoalInfo } from '../weight/index.js';
 import { FetchError } from '../fetch/errors.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {

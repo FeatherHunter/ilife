@@ -15,7 +15,7 @@ import { cx, escapeHtml, token } from 'base-paint';
 import type { HomeData } from './home.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { ExerciseView } from './exercise.js';
-import type { GoalView } from './goal.js';
+import type { GoalView } from '../goal/goalPlate.js';
 import type { CompareData, GalleryData, GifTask, PhotoCard, ViewerData } from './photo.js';
 import { GIF_PASSTHROUGH_NOTE } from './photo.js';
 import type { CrudReceipt, ErrorReceipt } from './receipt.js';
@@ -25,7 +25,7 @@ import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } 
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 import type { BodyCompositionView, BodyMeasureView } from './bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanWizardView } from './planPlate.js';
-import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from './goalExtra.js';
+import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';
 import type { ProfileView } from '../profile/view.js';
 import type { CombinedAnalysis, DietReview } from './analysisPlate.js';

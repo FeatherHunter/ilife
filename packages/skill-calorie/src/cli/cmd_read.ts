@@ -25,7 +25,7 @@ import {
   DB_FILENAME,
 } from '../paths.js';
 import { FetchError } from '../fetch/errors.js';
-import { buildGoalView } from '../render/goal.js';
+import { buildGoalView } from '../goal/goalPlate.js';
 import {
   buildGoalConfig,
   buildGoalRecommend,
@@ -34,7 +34,7 @@ import {
 } from '../render/goalPlate.js';
 import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
 import { buildGoalPrecheckDoc } from '../goal/precheck.js';
-import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
+import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../goal/goalExtraPlate.js';
 
 // #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
 import { buildProfileView, buildProfileViewDoc } from '../profile/view.js';
