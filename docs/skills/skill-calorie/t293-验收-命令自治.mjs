@@ -11,12 +11,14 @@
  *     删除前做路径守卫（必须在自己的临时根下，且路径不含 node_modules／packages／docs／test／
  *     tooling／.git 任何一段）。唯一例外：把机器可读报告落到 `.scratch/t293-accept/`。
  *   · 缺文件／缺脚本不抛栈：该条报 PENDING 并写明缺什么。
+ *   · 例外（#313 B-3 证据 §⑥1）：**沙箱基线 `gen:check` 非 0 不记 PENDING 而显式判红**——临时根是仓内
+ *     现树的副本，基线红即仓内事实（生成物与生成器不一致／声明改了没 build），不是"未判"。
  *
  * 退出码：有 FAIL → 1；否则 0（PENDING 不算红，但会在摘要行里点名）。
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -38,6 +40,9 @@ const P = {
   BUILD_HELP: 'packages/skill-calorie/scripts/build-help.mjs',
   RATCHET: 'packages/skill-calorie/test/cmd-registry-294.test.mjs',
   ROUTING: 'packages/skill-calorie/src/triggers/routing.ts',
+  ROUTES_GEN: 'packages/skill-calorie/src/triggers/routes.generated.ts',
+  ROUTE_DECL_DIR: 'packages/skill-calorie/src/cli/legacy/routes',
+  GEN_ROUTES: 'packages/skill-calorie/scripts/gen-routes.mjs',
   CI: '.github/workflows/ci.yml',
   PKG: 'package.json',
 };
@@ -49,6 +54,18 @@ const BASE_COMMIT = '1396d67'; // 棘轮基线（#294 交付点）
  * 名单只此一处；少一片 `readLegacy()` 即返回 null，调用方按「探针失能」报红——**不许静默当空清单**。
  */
 const LEGACY_FILES = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'].map((n) => P.LEGACY_DIR + '/scene-' + n + '.ts');
+
+/**
+ * 路由三面（`#313` B 段起）：记录面＝生成物 `src/triggers/routes.generated.ts`；
+ * 声明权威源＝`src/cli/legacy/routes/scene-NN.ts`（未搬迁清单，一场景一件；另有汇总件 `index.ts`）
+ * ＋ 各能力 `src/<能力>/routes.ts`（已搬迁键）；类型唯一处＝`src/triggers/routeSpec.ts`。
+ * 声明源名单只此一处，缺件即判红（见 `routeSurfaces()`；不许静默少一条）。
+ */
+const ROUTE_DECL_SCENES = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'].map((n) => P.ROUTE_DECL_DIR + '/scene-' + n + '.ts');
+const ROUTE_DECL_AGG = P.ROUTE_DECL_DIR + '/index.ts';
+const CAP_SRC_DIR = 'packages/skill-calorie/src';
+/** 生成 banner：生成物自证「我是派生件」的那句话（`gen-routes.mjs` 出声时写在头一行）。 */
+const ROUTE_BANNER = /本文件由\s*`scripts\/gen-routes\.mjs`\s*生成/;
 
 const R = {}; // id -> { status, lines: [], data }
 function set(id, status, ...lines) {
@@ -161,8 +178,10 @@ const sandboxShaLegacy = () => LEGACY_FILES.map((p) => sandboxSha(p) ?? 'MISSING
 // 判据分三桶（#295 红队审查 5af4dd1 指出：只数生成器输出面会报假绿——同一个
 // build-help.mjs 里还有第二处手写的「一条命令的事实」（exampleFor 的逐键 case），
 // 另有若干钉死计数的断言也不在派生面上）：
-//   ① DERIVED            不用手改（生成物＋分派＋已对账的断言）
-//   ② DISCIPLINED-SHARED 必须手改，但已被认下并写进 #296「照抄说明」第②项（routing.ts）
+//   ① DERIVED            不用手改（生成物＋分派＋已对账的断言＋路由声明面）
+//   ② DISCIPLINED-SHARED 必须手改，但已被认下并写进 #296「照抄说明」第②项
+//                         （**#313 B 段起路由已不在这一桶**：声明住能力目录／`legacy/routes/scene-NN.ts`，
+//                          汇总位 `src/triggers/routes.generated.ts` 是生成物——归类判据见 routeSurfaces()）
 //   ③ UNACCOUNTED        必须手改、既没派生也没纪律覆盖 ⇒ 有它就 P1=FAIL
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -249,23 +268,93 @@ function exampleForSurface() {
   };
 }
 
-/** routing.ts：手写路由表（新键要能被唤醒词命中就得加一条 exec 路由），有机器守。 */
-function routingSurface() {
+/** `gen-cli.mjs` 的 `targets` 数组（`pnpm gen:check` 逐件比对的输出面）：从生成器源码里切出来，不靠自述。 */
+function genTargetsBlock() {
+  const src = read(P.GEN);
+  if (src === null) return null;
+  const i = src.indexOf('const targets = [');
+  if (i < 0) return null;
+  const j = src.indexOf('\n  ];', i);
+  return j < 0 ? src.slice(i) : src.slice(i, j);
+}
+
+/** 能力目录里的路由声明面（`src/<能力>/routes.ts`）：按目录枚举，不写死名单（新能力自动进面）。 */
+function capabilityRouteDecls() {
+  const base = abs(CAP_SRC_DIR);
+  if (!existsSync(base)) return null;
+  return readdirSync(base, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => CAP_SRC_DIR + '/' + d.name + '/routes.ts')
+    .filter((p) => has(p))
+    .sort();
+}
+
+/** 路由三面（`#313` B 段起）：**记录面＝生成物**，不是手写表。
+ *
+ * 「`routing.ts`（路由）归派生侧」这句**不许硬写**：下面五条机械判据各有 FAIL 分支，任一条不成立就把
+ * 路由整面移进 ③ UNACCOUNTED（⇒ P1=FAIL）——即「归类」本身是被判据钉住的（变异可打红，见
+ * `docs/skills/skill-calorie/t313b4-变异自证.mjs`）：
+ *   a) 生成物在，且带生成 banner（「本文件由 `scripts/gen-routes.mjs` 生成」）；
+ *   b) 生成物**在 `gen-cli.mjs` 的 `targets` 数组里**（`pnpm gen:check` 逐件比对 targets ⇒ 这门真覆盖它）；
+ *   c) `gen-routes.mjs` 出声靠 `routeDeclarationSources()`（声明源清单），不是内置表；
+ *   d) 声明源齐：`legacy/routes/scene-01..10.ts` 十片全在 ＋ 至少一件能力 `routes.ts`；
+ *   e) 记录面真落在这里：生成物有记录（exec > 0），且 `routing.ts` 自身已不带 `kind:'exec'` 记录。
+ */
+function routeSurfaces() {
   const r81 = read('test/calorie-routing-81.test.mjs');
-  const line = r81 ? r81.split('\n').findIndex((l) => /coveredKeys:\s*DECLARED_KEYS\.length/.test(l)) + 1 : null;
-  const t = read(P.ROUTING);
-  let keys = null;
-  if (t) {
-    // 去掉注释行再解析：每条 exec 记录带一个 key（记录可能跨行，故按 kind 位置向后取最近一个 key）。
-    const code = t.split('\n').filter((l) => !/^\s*(\*|\/\/)/.test(l)).join('\n');
-    const s = new Set();
-    for (const m of code.matchAll(/kind:\s*'exec'/g)) {
-      const k = code.slice(m.index, m.index + 400).match(/key:\s*'([^']+)'/);
-      if (k) s.add(k[1]);
-    }
-    keys = s.size;
+  const enforcer = r81 ? r81.split('\n').findIndex((l) => /coveredKeys:\s*DECLARED_KEYS\.length/.test(l)) + 1 : null;
+  const gen = read(P.ROUTES_GEN);
+  const routing = read(P.ROUTING);
+  const genCliSrc = read(P.GEN) || '';
+  const genRoutesSrc = read(P.GEN_ROUTES);
+  const block = genTargetsBlock();
+  const missingScenes = ROUTE_DECL_SCENES.filter((p) => !has(p));
+  const caps = capabilityRouteDecls();
+  const fails = [];
+
+  // a) 生成物 ＋ 生成 banner
+  const banner = gen !== null && ROUTE_BANNER.test(gen);
+  if (gen === null) fails.push({ where: P.ROUTES_GEN, what: '生成物不在 ⇒ 记录面没有落点，「归派生侧」无从成立（先看 gen-cli 的 targets 与 gen-routes 是否还在）' });
+  else if (!banner) fails.push({ where: P.ROUTES_GEN, what: '生成物没有生成 banner（应含「本文件由 `scripts/gen-routes.mjs` 生成」）⇒ 它自证不了是派生件，归类不成立' });
+
+  // b) 它在 gen-cli 的 targets 数组里 ⇒ `pnpm gen:check` 真覆盖它
+  const inTargets = block !== null && block.includes('routes.generated.ts');
+  if (!inTargets) fails.push({ where: P.GEN, what: '生成物不在 gen-cli 的 `targets` 数组里（或 targets 数组切不出来）⇒ `pnpm gen:check` 不比对它 ⇒ 这条派生没有门守' });
+  if (!/from '\.\/gen-routes\.mjs'/.test(genCliSrc)) fails.push({ where: P.GEN, what: 'gen-cli 没引 `./gen-routes.mjs` ⇒ 生成物不是它出声的（或出声道换了，本探针要跟着改）' });
+
+  // c) gen-routes 出声靠声明源清单
+  if (genRoutesSrc === null) fails.push({ where: P.GEN_ROUTES, what: '缺生成器 gen-routes.mjs ⇒ 记录面是谁出声的未知' });
+  else if (!/routeDeclarationSources\s*\(/.test(genRoutesSrc)) fails.push({ where: P.GEN_ROUTES, what: 'gen-routes 里不见 `routeDeclarationSources(` ⇒ 出声不靠声明源清单（改了声明也没人发现）' });
+
+  // d) 声明源齐
+  if (missingScenes.length) fails.push({ where: missingScenes.join('、'), what: '路由声明缺件：未搬迁清单的场景分片 scene-01..10 少 ' + missingScenes.length + ' 片' });
+  if (caps === null || caps.length === 0) fails.push({ where: CAP_SRC_DIR + '/*/routes.ts', what: '一件能力路由声明都没有（`src/<能力>/routes.ts`）⇒ 已搬迁键的记录面没有权威源' });
+  if (!has(ROUTE_DECL_AGG)) fails.push({ where: ROUTE_DECL_AGG, what: '缺路由声明汇总件（十片拼接）' });
+
+  // e) 记录面真落在这里：生成物有记录，且 routing.ts 自身不再带记录
+  const recs = gen === null ? null : {
+    total: (gen.match(/^ {2}\{ wakeWord: /gm) || []).length,
+    exec: (gen.match(/^ {2}\{ wakeWord: .*kind: 'exec'/gm) || []).length,
+    // 逐列表条数（只作报账：与票面数字 WAKE_ROUTES／ALL_ROUTES 对得上；判据用上面两个总计数）
+    byList: Object.fromEntries(
+      [...gen.matchAll(/export const (\w+)[^=\n]*= \[\n([\s\S]*?)\n\];/g)]
+        .map((m) => [m[1], (m[2].match(/^ {2}\{ wakeWord: /gm) || []).length]),
+    ),
+  };
+  if (recs && (recs.total === 0 || recs.exec === 0)) {
+    fails.push({ where: P.ROUTES_GEN, what: '生成物里记录 ' + recs.total + ' 条（exec ' + recs.exec + ' 条）⇒ 记录面没落在这里（空壳生成物）' });
   }
-  return { enforcer: line > 0 ? line : null, keys };
+  const routingCode = routing === null ? null : routing.split('\n').filter((l) => !/^\s*(\*|\/\/)/.test(l)).join('\n');
+  const stillOwnRecords = routingCode !== null && /kind:\s*'exec'/.test(routingCode);
+  if (stillOwnRecords) {
+    fails.push({ where: P.ROUTING, what: "`routing.ts` 自身仍带 `kind:'exec'` 记录 ⇒ 两个记录面并存，「记录面＝生成物」不成立（本判据随 #313 B 段落地而改）" });
+  }
+
+  return {
+    enforcer, recs, banner, inTargets, missingScenes, stillOwnRecords, fails,
+    caps: caps ?? [],
+    declFiles: [...ROUTE_DECL_SCENES, ROUTE_DECL_AGG, ...(caps ?? [])],
+  };
 }
 
 /** 三桶：加一条命令必须手改的面，逐处分桶。 */
@@ -306,12 +395,23 @@ async function changeSurfaces() {
   } else {
     out.unaccounted.push({ where: P.LEGACY_DIR + '（或 dist/weight/commands.js）', what: '探针失能：拿不到权威总数（' + t.why + '）⇒ 钉死计数扫描跳过。**按 FAIL 记**：读不到权威源不等于"没有手写面"，不许当假绿放行。' });
   }
-  const rs = routingSurface();
-  out.disciplined.push({
-    where: P.ROUTING + (rs.keys !== null ? `（手写 exec 路由覆盖 ${rs.keys} 键）` : ''),
-    what: '新键要能被唤醒词命中就必须往路由表加一条 exec 路由（手写表，键必在键表内）——已被认下：处置＝写进 #296「照抄说明」第②项，且动前抢锁。',
-    enforcer: rs.enforcer ? `test/calorie-routing-81.test.mjs:${rs.enforcer} coveredKeys = DECLARED_KEYS.length（新键不加路由 ⇒ 覆盖数 ≠ 声明数）` : '未见 coveredKeys 对账断言',
-  });
+  // 路由三面（#313 B 段起）：记录面是**生成物**，声明住能力目录／legacy 分区 ⇒ 归 ① 派生侧。
+  // 但归类本身由机械判据钉住：判据任一不成立 ⇒ 整面落进 ③ UNACCOUNTED（P1=FAIL），不许硬写「它已生成」。
+  const rs = routeSurfaces();
+  if (rs.fails.length) {
+    for (const f of rs.fails) {
+      out.unaccounted.push({ where: f.where, what: '路由归类判据不成立 ⇒ 路由整面按未认下记：' + f.what });
+    }
+  } else {
+    out.derived.push(
+      `路由三面：① 记录面＝生成物 ${P.ROUTES_GEN}（${Object.entries(rs.recs.byList).map(([k, v]) => k + ' ' + v + ' 条').join(' ＋ ') || '逐列表条数未解析'} ＝ ${rs.recs.total} 条记录／exec ${rs.recs.exec} 条；` +
+        `带生成 banner=${rs.banner}，在 gen-cli 的 targets 数组里=${rs.inTargets} ⇒ \`pnpm gen:check\` 逐件比对它）；` +
+        `② 声明权威源＝${rs.declFiles.length} 件（${P.ROUTE_DECL_DIR}/scene-01..10.ts ＋ index.ts ＋ ${rs.caps.join('、')}），` +
+        `由 ${P.GEN_ROUTES} 的 \`routeDeclarationSources()\` 出声，声明源另进 build 的内容印记（改声明不 build ⇒ GEN-STALE FAIL）；` +
+        `③ ${P.ROUTING} 只再导出记录与类型（自身带 exec 记录=${rs.stillOwnRecords}）——加一条命令＝在能力目录补一条路由声明，` +
+        `汇总位与路由层都不必手改；唤醒词覆盖仍由 test/calorie-routing-81.test.mjs:${rs.enforcer} 的 \`coveredKeys = DECLARED_KEYS.length\` 对账（新键不加声明 ⇒ 覆盖数 ≠ 声明数）`,
+    );
+  }
   return out;
 }
 
@@ -366,6 +466,7 @@ async function p1(w) {
   for (const d of buckets.derived) lines.push('     · ' + d);
   lines.push(`  ② DISCIPLINED-SHARED（必须手改，已认下 → #296「照抄说明」第②项，${buckets.disciplined.length} 处）：`);
   for (const d of buckets.disciplined) lines.push(`     · ${d.where}｜${d.what}｜机器守：${d.enforcer}`);
+  if (!buckets.disciplined.length) lines.push('     （0 处：#313 B 段起路由不在这一桶——声明住能力目录／legacy 分区，汇总位是生成物，见 ① 的路由三面）');
   lines.push(`  ③ UNACCOUNTED（必须手改、既没派生也没纪律覆盖，${unacct} 处）：`);
   for (const d of buckets.unaccounted) lines.push(`     · ${d.where}｜${d.what}${d.coverage ? '｜' + d.coverage : ''}`);
   lines.push(unacct ? '  ⇒ UNACCOUNTED 非空 ⇒ P1=FAIL（返修席的目标：把它们移进 ① 派生 或 ② 纪律）' : '  ⇒ UNACCOUNTED 为空 ⇒ 手写面已全部落在 ①/② 内');
@@ -392,9 +493,15 @@ async function p1(w) {
   }
   const base = gen('check');
   if (base.status !== 0) {
-    lines.push('动态实验未跑：临时根里 `gen:check` 基线不为 0（exit ' + base.status + '），沙箱本身不干净。');
-    set('P1', unacct ? 'FAIL' : 'PENDING', ...lines, unacct ? '（三桶判定独立于动态实验：UNACCOUNTED 非空即 FAIL）' : '（静态判定见上；沙箱基线脏，动态部分未判）');
-    data('P1', { dynamic: false, targetPaths, inputs, buckets });
+    // #313 B-3 证据 §⑥1：这条原先**静默降级为 PENDING**（＝未判）。临时根是**仓内现树**的最小副本
+    // （src＋dist＋scripts＋combos），它的基线红只可能来自仓内事实（生成物与生成器不一致；或声明改了
+    // 没 build ⇒ 仓内 `pnpm gen:check` 同样红）⇒ 改成显式判红：探针自身失能也记红，不报"未判"。
+    lines.push('动态实验未跑：临时根里 `gen:check` 基线不为 0（exit ' + base.status + '）⇒ 沙箱＝仓内现树的副本 ⇒ **判红**'
+      + '（原先降级为 PENDING＝未判，见 docs/skills/skill-calorie/t313b3-文档与验收-证据.md §⑥1）。');
+    lines.push('  先看仓内 `pnpm gen:check`：它报的 GEN-STALE／GEN-CHECK FAIL 就是这条红的由来（`pnpm build` 后重跑或改回声明）。');
+    lines.push('  基线输出头两行：' + base.out.split('\n').filter(Boolean).slice(0, 2).join(' / ').slice(0, 300));
+    set('P1', 'FAIL', ...lines, unacct ? '（三桶判定独立于动态实验：UNACCOUNTED 非空即 FAIL）' : '（静态判定见上；沙箱基线脏 ⇒ 显式判红，不再记"未判"）');
+    data('P1', { dynamic: false, baselineDirty: true, targetPaths, inputs, buckets });
     return;
   }
   // 假能力：目录里只写声明（＋ index 再导出），dist 侧用"编译产物等价物"顶替（生成器读编译模块）。
@@ -459,6 +566,8 @@ async function p1(w) {
 const CLASS = [
   [/^packages\/skill-calorie\/src\/weight\/commands\.ts$/, 'AUTHORITY（权威声明）'],
   [/^packages\/skill-calorie\/src\/cli\/legacy\/scene-\d\d\.ts$/, 'AUTHORITY②（未搬迁清单的场景分区，键恰住一处）'],
+  [/^packages\/skill-calorie\/src\/cli\/legacy\/routes\/scene-\d\d\.ts$/, 'ROUTE/AUTHORITY②（路由声明，键恰住一处）'],
+  [/^packages\/skill-calorie\/src\/cli\/legacy\/routes\/index\.ts$/, 'ROUTE/AUTHORITY②（路由声明汇总件，十片拼接）'],
   [/^packages\/skill-calorie\/src\/cli\/(keys|registry)\.ts$/, 'DERIVED（gen-cli 生成物）'],
   [/^packages\/base-combos\/combos\.yaml$/, 'DERIVED（gen-cli 镜像段）'],
   [/^packages\/skill-calorie\/scripts\/build-help\.mjs$/, 'DERIVED（gen-cli 写 REPR 块）'],
@@ -466,11 +575,13 @@ const CLASS = [
   [/^packages\/skill-calorie\/SKILL\.md$/, 'DERIVED（构建期注入区）'],
   [/^packages\/skill-calorie\/src\/triggers\/scene-/, 'FROZEN-PARITY（冻结唤醒词表，sha parity 锁）'],
   [/^packages\/skill-calorie\/src\/triggers\/(wake-assets|index|help-lookup)\.ts$/, 'FROZEN-PARITY／查找层'],
-  [/^packages\/skill-calorie\/src\/triggers\/routing\.ts$/, 'ROUTE（唤醒词路由表，手写）'],
+  [/^packages\/skill-calorie\/src\/triggers\/routing\.ts$/, 'DERIVED（路由层：记录面是 routes.generated.ts，本件只再导出）'],
+  [/^packages\/skill-calorie\/src\/triggers\/routes\.generated\.ts$/, 'DERIVED（路由记录面，gen-routes 生成）'],
   [/^packages\/skill-calorie\/src\/cli\/(cmd_read|write)\.ts$/, 'SWITCH（老键分派 switch，手写）'],
   [/(^|\/)test\//, 'TEST（断言）'],
   [/\.test\.mjs$/, 'TEST（断言）'],
   [/^docs\//, 'DOC（文档）'],
+  [/^packages\/skill-calorie\/src\/[a-z0-9-]+\/routes\.ts$/, 'ROUTE/AUTHORITY②（能力路由声明，键恰住一处）'],
   [/^packages\/skill-calorie\/src\/weight\//, 'CAPABILITY（能力目录实现）'],
   [/^packages\/skill-calorie\/src\//, 'CAPABILITY／共用源码'],
   [/^packages\/base-combos\//, 'CAPABILITY／共用源码'],
@@ -532,7 +643,7 @@ async function p2(w) {
   }
   const stillLegacy = legacyTxt === null ? keys.map((k) => k.key) : keys.filter((k) => new RegExp(escapeRe(k.key) + '([^a-z0-9.-]|$)').test(legacyTxt)).map((k) => k.key);
   if (legacyTxt !== null) lines.push('体重 9 键仍留在未搬迁清单（legacy/scene-NN.ts）里的：' + (stillLegacy.length ? stillLegacy.join('、') : '0 处（随搬迁已删净）'));
-  lines.push('结论口径：权威声明恰 1 处 ＝ 单一源；事实对只许落在 FROZEN-PARITY／ROUTE／TEST／DOC／DERIVED（冻结副本有 parity 断言守，见 P5）；出现 UNCLASSIFIED 即"还有手写副本没清"。');
+  lines.push('结论口径：权威声明恰 1 处 ＝ 单一源；事实对（键＋代表唤醒词／标题）只许落在 FROZEN-PARITY／ROUTE/AUTHORITY②／DERIVED／CAPABILITY／TEST／DOC（冻结副本有 parity 断言守，见 P5）；出现 UNCLASSIFIED 即"还有手写副本没清"。');
   const ok = authorityHits === keys.length && unexplained === 0 && pairUnexplained === 0 && stillLegacy.length === 0;
   set('P2', ok ? 'PASS' : 'FAIL', ...lines, `权威声明齐=${authorityHits}/${keys.length}；未归类的可疑副本=${unexplained}；未归类的事实对=${pairUnexplained}；仍留在未搬迁清单=${stillLegacy.length}；冻结事实对=${frozenPair}（由 P5 的 parity 断言守）`);
   data('P2', { keys: summary });
@@ -586,10 +697,14 @@ function p3DynamicSandbox(env) {
   if (sb) return { ok: false, pending: true, lines: ['动态未跑：' + sb.why] };
   const lines = [];
   const b = gen('check');
-  lines.push('沙箱基线 `gen:check` exit=' + b.status + (b.status === 0 ? '（绿）' : '（沙箱不干净，动态部分不判）'));
+  lines.push('沙箱基线 `gen:check` exit=' + b.status + (b.status === 0 ? '（绿）' : '（沙箱＝仓内现树的副本 ⇒ 基线红是仓内事实，判红不判"未判"）'));
   if (b.status !== 0) {
+    // #313 B-3 证据 §⑥1：原先 `pending: true` 静默降级为 PENDING；改成显式判红（P3=FAIL）。
+    lines.push('  ⇒ 这条红的意思是仓内 `pnpm gen:check` 此刻也红（生成物与生成器不一致／声明改了没 build）：'
+      + '先修仓内基线，门外这条动态判据才有意义——不许把它读成"门没坏"。');
+    lines.push('  基线输出头两行：' + b.out.split('\n').filter(Boolean).slice(0, 2).join(' / ').slice(0, 300));
     lines.push('已清理临时根：' + cleanupTmp());
-    return { ok: false, pending: true, lines };
+    return { ok: false, pending: false, selfRed: true, lines };
   }
   const keysPath = join(TMP_ROOT, P.KEYS);
   const orig = readFileSync(keysPath, 'utf8');
