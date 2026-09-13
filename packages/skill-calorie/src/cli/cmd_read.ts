@@ -21,18 +21,25 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDb } from '../schema.js';
-import { DB_FILENAME, resolveDbDir } from '../paths.js';
+import {
+  DB_FILENAME,
+} from '../paths.js';
 import { listMeals } from '../fetch/diet.js';
 import { getCalorieHistory } from '../fetch/history.js';
 import { FetchError } from '../fetch/errors.js';
-import { buildHomeData } from '../render/home.js';
-import { buildDietOverview, buildMealDistribution, zeroMealDistribution } from '../render/diet.js';
-import { buildExerciseView } from '../render/exercise.js';
+import {
+  buildDietOverview,
+  buildMealDistribution,
+} from '../render/diet.js';
 import { buildGoalView } from '../render/goal.js';
-import { buildGoalConfig, buildGoalRecommend, buildGoalWeight, buildGoalProgress, buildGoalStatus } from '../render/goalPlate.js';
+import {
+  buildGoalConfig,
+  buildGoalRecommend,
+  buildGoalWeight,
+  buildGoalStatus,
+} from '../render/goalPlate.js';
 import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
 import { buildGoalPrecheckDoc } from '../goal/precheck.js';
-import { buildBodyCompositionView, buildBodyMeasureView } from '../render/bodyPlate.js';
 import { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from '../render/planPlate.js';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
 import { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from '../render/insightPlate.js';
@@ -42,11 +49,17 @@ import { buildProfileSettingDoc, buildProfileSettingView } from '../profile/setu
 import { buildCombinedAnalysis, buildDeficitPlate, buildDietReview } from '../render/analysisPlate.js';
 import { dietFoodRanking, dietMacroRatio } from '../analysis/diet.js';
 import {
-  buildAllRankingsDoc, buildDedupeDoc, buildDietReviewDoc, buildHealthDoc, buildLibraryDoc,
-  buildRankingDoc, buildSearchDoc, buildTodayDietDoc, buildViewDietDoc,
+  buildAllRankingsDoc,
+  buildDedupeDoc,
+  buildDietReviewDoc,
+  buildHealthDoc,
+  buildLibraryDoc,
+  buildRankingDoc,
+  buildSearchDoc,
+  buildTodayDietDoc,
 } from '../render/dietDocs.js';
 import {
-  buildBodyCompositionDoc, buildBodyMeasureDoc, buildExerciseDoc, buildExerciseGoalDoc,
+  buildExerciseGoalDoc,
 } from '../render/sportDocs.js';
 import {
   buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildReviewDoc,
@@ -75,32 +88,24 @@ import {
   buildReviewTemplateDoc, buildSixFactorsDoc,
 } from '../render/trendMiscPortDocs.js';
 import {
-  buildCompositionWizardView, buildGifPlannerView, buildMeasureWizardView, buildPhotoLogWizardView,
-} from '../render/wizardPort.js';
-import {
-  buildCompositionWizardDoc, buildGifPlannerDoc, buildMeasureWizardDoc, buildPhotoLogWizardDoc,
-} from '../render/wizardPortDocs.js';
-import {
   buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
   buildGoalPredictDoc, buildPredictDoc,
 } from '../render/trendDocs.js';
 import { buildHealthPlate } from '../render/health.js';
 import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
 import { buildProductLibrary, buildProductSearch, buildProductStats } from '../render/library.js';
-import { buildCompareData, buildGalleryData, buildGifTask, buildViewerData } from '../render/photo.js';
-import { buildPhotoHelp, lookupPhotoHelp } from '../render/help.js';
 // #91 · 全量速查台（Q9）：只读消费 #88 的 `render/helpCenter.js`（三态同源，零改动）。
-import { HELP_CENTER_MODES, buildHelpSceneData, renderHelpCenterHtml } from '../render/helpCenter.js';
-import type { HelpCenterMode } from '../render/helpCenter.js';
-import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from '../render/helpFile.js';
-import { SHEET_FILE_STEM, HELP_HTML_DIR_NAME } from '../render/helpPaths.js';
 import {
-  renderGalleryHtml, renderCompareHtml, renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml,
+  renderHelpLookupHtml,
   renderErrorHtml,
-  renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalProgressHtml,
-  renderGoalStatusHtml, renderGoalHtml, renderHomeHtml,
+  renderGoalConfigHtml,
+  renderGoalRecommendHtml,
+  renderGoalWeightHtml,
+  renderGoalStatusHtml,
+  renderGoalHtml,
   renderPlanHtml,
-  renderPlanWizardHtml, renderGoalExpiringHtml,
+  renderPlanWizardHtml,
+  renderGoalExpiringHtml,
   renderGoalVsActualHtml,
 } from '../render/html.js';
 import { assertStatMetrics, buildDelivery, withDelivery } from '../render/envelope.js';
@@ -111,20 +116,30 @@ import { buildDataText } from 'base-paint';
 import { CalorieRenderError } from '../render/errors.js';
 import { TRIGGERS, searchHelp } from '../triggers/index.js';
 import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
-import { shiftISODate, todayISO } from '../analysis/utils.js';
+import {
+  todayISO,
+} from '../analysis/utils.js';
 // #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
-import { applyOffset, resolveDay, resolveWindow, resolveCompareWindow } from '../analysis/series.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 // #294 · 参数读取与窗口口径上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
 import {
-  anchorOf, assertISO, dayField, defaultRange, fail, latestFoodDate, needDay, needStr, nums, optNum,
-  optStr, windowRange,
+  anchorOf,
+  assertISO,
+  dayField,
+  defaultRange,
+  fail,
+  latestFoodDate,
+  needStr,
+  nums,
+  optNum,
+  optStr,
+  windowRange,
 } from '../shared/params.js';
 import {
-  HTML_DIR_NAME, PHOTO_HELP_FILE_STEM, deliverHtml, resolveReceiptHtmlPath,
+  HTML_DIR_NAME,
+  deliverHtml,
+  resolveReceiptHtmlPath,
 } from '../output.js';
-import type { HtmlLanding } from 'base-paint/save-html';
-import type { CalorieComboKey } from './keys.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { dispatchWrite } from './write.js';
 // #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落本文件的 switch。
@@ -177,10 +192,6 @@ function parseArgs(a: string[]): ReadArgs {
   return o;
 }
 
-/** 闭区间天数（含首末日）。 */
-function daysIn(range: { start: string; end: string }): number {
-  return Math.round((Date.parse(range.end) - Date.parse(range.start)) / 86400000) + 1;
-}
 
 /** 本地 envelope 形状校验（镜像 link-core assertShapeData，不运行时 import）。 */
 function assertEnvelopeData(shape: EnvelopeShape, data: Record<string, unknown>): void {
@@ -225,40 +236,7 @@ function buildEnvelope(key: string, shape: EnvelopeShape, data: Record<string, u
   return { version: ENVELOPE_VERSION, skill: CALORIE_SKILL, shape, key, data };
 }
 
-function photosDirOf(params: Record<string, unknown>): string | undefined {
-  const p = optStr(params, 'photosDir');
-  if (p) return p;
-  const e = process.env.CALORIE_PHOTOS_DIR;
-  return e ? e : undefined;
-}
 
-/** #91 · 全量速查台的信封载荷：**10 分组索引**（不把 1 MB 产物塞进 envelope）。
- *
- *  `items` 恒为 10 条分组（`total` = `items.length`，与 `list` 形语义一致）；
- *  `sceneTotal`／`subgroupTotal` 把「436 场景／54 子功能」如实回传，避免只报 10 丢掉全量口径。
- */
-function helpCenterIndex(data: ReturnType<typeof buildHelpSceneData>): {
-  items: Record<string, unknown>[];
-  total: number;
-  sceneTotal: number;
-  subgroupTotal: number;
-} {
-  let sceneTotal = 0;
-  let subgroupTotal = 0;
-  const items = data.groups.map((group) => {
-    const sceneCount = group.subgroups.reduce((n, sub) => n + sub.scenes.length, 0);
-    sceneTotal += sceneCount;
-    subgroupTotal += group.subgroups.length;
-    return {
-      id: group.id,
-      icon: typeof group.icon === 'string' ? group.icon : '',
-      label: group.label,
-      subgroupCount: group.subgroups.length,
-      sceneCount,
-    };
-  });
-  return { items, total: items.length, sceneTotal, subgroupTotal };
-}
 
 // 全键分发：读走 render/fetch 读，HELP 走触发词现找；未知键上游已拦，此处再拦一道。
 /** #41 · 测试直调出口（纯 CLI 同逻辑，不经过 argv/spawn；CLI 唯一出口仍为 main）。 */
@@ -282,72 +260,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       // #108 · 今日饮食全文档（餐次进度＋营养配比＋今日明细；配比无数据即 skip，不编数）。
       const mt = dietMacroRatio(db, date, date);
       return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null }) };
-    }
-    case 'calorie.view.home': {
-      const win = windowRange(params);
-      const date = win?.end ?? dayField(params, 'date') ?? dayField(params, 'today') ?? latestFoodDate(db) ?? todayISO();
-      assertISO(date, 'date');
-      const windowDays = win ? daysIn(win) : (optNum(params, 'windowDays') ?? 7);
-      if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 90) fail(2, 'windowDays 须为 1..90 整数');
-      const h = buildHomeData(db, date, windowDays as number);
-      const metrics = nums({
-        calorieGoal: h.calorieGoal, waterGoal: h.waterGoal, caloriePct: h.caloriePct, proteinPct: h.proteinPct,
-        waterPct: h.waterPct, deficitToday: h.deficitToday, streakDays: h.streakDays,
-        intakeCal: h.daily.totals.cal, proteinG: h.daily.totals.pro, carbsG: h.daily.totals.carbs, fatG: h.daily.totals.fat,
-        waterMl: h.daily.waterMl, entryCount: h.daily.entryCount, avgIntake: h.week.avgIntake, avgDeficit: h.week.avgDeficit,
-        loggedDays: h.week.loggedDays,
-      });
-      return { data: { metrics }, html: renderHomeHtml(h) };
-    }
-    case 'calorie.view.diet': {
-      const { start, end } = defaultRange(db, params);
-      const date = optStr(params, 'date') ?? end;
-      assertISO(date as string, 'date');
-      const o = buildDietOverview(db, start, end);
-      // C4 #43 · 尾日空回零（窗内有数不掀整窗 missing；窗全空由上行 overview 抛 missing-data）。
-      let dist;
-      try {
-        dist = buildMealDistribution(db, date as string);
-      } catch (e) {
-        if (e instanceof CalorieRenderError && e.code === 'missing-data') dist = zeroMealDistribution(date as string);
-        else throw e;
-      }
-      // #108 · 窗口明细（逐日 listMeals 去水，上限 100 条并明示截断；单日失败跳过）。
-      const mealRows: Array<{ date: string; time: string | null; food_name: string; grams: number; calories: number; protein: number; carbs: number; fat: number }> = [];
-      for (const d of o.series) {
-        try {
-          for (const r of listMeals(db, d.date)) {
-            if (r.food_name !== '💧水') mealRows.push(r);
-          }
-        } catch {
-          continue;
-        }
-      }
-      const MEAL_CAP = 100;
-      const mealTotal = mealRows.length;
-      const mealSlice = mealRows.slice(0, MEAL_CAP);
-      const metrics = nums({
-        totalCalories: o.totalCalories, avgCalories: o.avgCalories, calorieGoal: o.calorieGoal,
-        loggedDays: o.loggedDays, days: o.days, distTotal: dist.totalCalories,
-        'meal.早餐': dist.slices.find((s) => s.meal === '早餐')?.calories,
-        'meal.午餐': dist.slices.find((s) => s.meal === '午餐')?.calories,
-        'meal.晚餐': dist.slices.find((s) => s.meal === '晚餐')?.calories,
-        'meal.加餐': dist.slices.find((s) => s.meal === '加餐')?.calories,
-      });
-      return { data: { metrics }, html: buildViewDietDoc({
-        overview: o, dist, distDate: date as string, days: o.series,
-        meals: mealSlice, mealTotal, mealsTruncated: mealTotal > MEAL_CAP,
-      }) };
-    }
-    case 'calorie.view.exercise': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildExerciseView(db, start, end);
-      const metrics = nums({
-        totalBurned: v.review.totalBurned, totalMinutes: v.review.totalMinutes, sessions: v.review.sessions,
-        activeDays: v.review.activeDays, totalBurnedSeries: v.totalBurnedSeries,
-        avgBurnedPerLoggedDay: v.avgBurnedPerLoggedDay, seriesActiveDays: v.activeDays,
-      });
-      return { data: { metrics }, html: buildExerciseDoc(v) };
     }
     // #111 · 运动移植 6 键（t71 需移植 exercise_*；envelope stat metrics 只收确定数字）。
     case 'calorie.view.exercise-strength': {
@@ -495,37 +407,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       });
       return { data: { metrics }, html: buildSixFactorsDoc(v) };
     }
-    case 'calorie.view.measure-wizard': {
-      const v = buildMeasureWizardView(db, params);
-      const metrics = nums({
-        filledCount: v.filledCount, hasRecent: v.recent ? 1 : 0,
-      });
-      return { data: { metrics }, html: buildMeasureWizardDoc(v) };
-    }
-    case 'calorie.view.composition-wizard': {
-      const v = buildCompositionWizardView(db, params);
-      const metrics = nums({
-        filledCount: (v.source ? 1 : 0) + (v.bodyFatPct === null ? 0 : 1) + v.calipers.length,
-        caliperCount: v.calipers.length, sum7: v.sum7, hasRecent: v.recent ? 1 : 0,
-      });
-      return { data: { metrics }, html: buildCompositionWizardDoc(v) };
-    }
-    case 'calorie.view.photo-log-wizard': {
-      const v = buildPhotoLogWizardView(params);
-      const metrics = nums({
-        fileCount: v.srcPaths.length, hasTag: v.tag ? 1 : 0,
-      });
-      return { data: { metrics }, html: buildPhotoLogWizardDoc(v) };
-    }
-    case 'calorie.view.gif-planner': {
-      const dir = photosDirOf(params);
-      const v = buildGifPlannerView(db, params, dir ?? null);
-      const metrics = nums({
-        photoCount: v.photos.length, selectedCount: v.selectedIds.length,
-        missingCount: v.missingIds.length, cropCount: v.photos.filter((p) => p.crop).length,
-      });
-      return { data: { metrics }, html: buildGifPlannerDoc(v) };
-    }
     case 'calorie.view.profile-wizard': {
       const v = buildProfileSettingView(db, params);
       const metrics = nums({
@@ -638,19 +519,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const metrics = nums({ weightGoal: g.weightGoal, latestKg: g.latestKg, deltaKg: g.deltaKg, loggedDays: g.loggedDays });
       return { data: { metrics }, html: renderGoalWeightHtml(g) };
     }
-    case 'calorie.view.goal-progress': {
-      const { start, end } = defaultRange(db, params);
-      const historyDays = optNum(params, 'historyDays') ?? 30;
-      if (!Number.isInteger(historyDays) || (historyDays as number) < 1 || (historyDays as number) > 365) fail(2, 'historyDays 须为 1..365 整数');
-      const g = buildGoalProgress(db, start, end, historyDays as number);
-      const metrics = nums({
-        calorie_goal: g.nutrition.calorie_goal, completionPct: g.completionPct,
-        weeklyDeficit: g.deficit.summary.weeklyDeficit, predictedLossKg: g.deficit.summary.predictedLossKg,
-        avgDeficit: g.deficit.summary.avgDeficit, trendAvg: g.trend.summary.avg,
-        completedCount: g.history.completedCount, incompleteCount: g.history.incompleteCount,
-      });
-      return { data: { metrics }, html: renderGoalProgressHtml(g) };
-    }
     case 'calorie.view.goal-status': {
       const g = buildGoalStatus(db);
       const metrics = nums({ paused: g.paused ? 1 : 0, calorie_goal: g.nutrition.calorie_goal, water_goal: g.nutrition.water_goal });
@@ -734,106 +602,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const metrics = nums({ total: s.total, limit: limit as number });
       return { data: { metrics }, html: buildSearchDoc(s) };
     }
-    case 'calorie.photo.list': {
-      const dir = photosDirOf(params);
-      const filter: Record<string, unknown> = {};
-      for (const k of ['tag', 'dateFrom', 'dateTo', 'days', 'limit', 'today'] as const) {
-        if (params[k] === undefined) continue;
-        // #250 · 三个日期位与其余命令同义：可写相对词（今日／昨日／前天）并吃 offset。
-        const rel = k === 'dateFrom' || k === 'dateTo' || k === 'today' ? dayField(params, k) : null;
-        (filter as Record<string, unknown>)[k] = rel ?? params[k];
-      }
-      const g = buildGalleryData(db, filter as never, dir ?? null);
-      const items = g.photos.map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: p.tagList, fileExists: p.fileExists }));
-      return { data: { items, total: g.totalCount }, html: renderGalleryHtml(g) };
-    }
-    case 'calorie.photo.detail': {
-      const id = params['id'];
-      if (typeof id !== 'number' || !Number.isInteger(id)) fail(2, '缺参数 id（整数照片 id）');
-      const dir = photosDirOf(params);
-      const v = buildViewerData(db, id as number, dir ?? null);
-      return { data: { item: { id: v.photo.id, date: v.photo.date, photoPath: v.photo.photoPath, tagList: v.photo.tagList } }, html: renderViewerHtml(v) };
-    }
-    case 'calorie.photo.compare': {
-      const id1 = params['id1'];
-      const id2 = params['id2'];
-      if (typeof id1 !== 'number' || !Number.isInteger(id1)) fail(2, '缺参数 id1（整数）');
-      if (typeof id2 !== 'number' || !Number.isInteger(id2)) fail(2, '缺参数 id2（整数）');
-      const dir = photosDirOf(params);
-      const c = buildCompareData(db, id1 as number, id2 as number, dir ?? null);
-      const items = [c.photo1, c.photo2].map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: p.tagList }));
-      return { data: { items, total: 2 }, html: renderCompareHtml(c) };
-    }
-    case 'calorie.photo.gif': {
-      const tag = needStr(params, 'tag');
-      const gif = buildGifTask(db, {
-        tag, dateFrom: dayField(params, 'dateFrom'),
-        dateTo: (optStr(params, 'dateTo') ?? null) as string | null,
-        days: (optNum(params, 'days') ?? 90) as number,
-      });
-      return { data: { summary: 'GIF 任务：标签 ' + gif.tag + ' 共 ' + gif.photoCount + ' 张（' + (gif.firstDate ?? '—') + ' ~ ' + (gif.lastDate ?? '—') + '）· ' + gif.note }, html: renderGifHtml(gif) };
-    }
-    case 'calorie.help.center': {
-      // #139 · 本键出**两种产物**，靠 `mode` 分流（旧地图口径「缺省＝速查台」已被 #131 新图准则覆盖：
-      // Q2「整个卡路里只有一个 HELP」＋ Q17「比对以老实物为准」）：
-      //   缺省（不给 `mode`）＝「卡路里help」的交付物：老实物同款 V4 三级目录 HELP 文件
-      //     （`卡路里_HELP_<TS>.html`，与老技能同名同视觉——地图目的地①②就落在这一支）；
-      //   显式 `mode`＝#88 全量速查台三态（`file`／`inline`／`text`，内容与语义逐字不变），
-      //     落 `卡路里_速查台_<TS>.html`（与 HELP 文件分名，两份产物不撞车）。
-      // D6：`mode` 不靠猜、不从别的参数推，非法值即 exit 2；`q`＝照片 10 键现找（既有语义逐字不变）。
-      const q = optStr(params, 'q') ?? optStr(params, 'keyword') ?? undefined;
-      const modeRaw = optStr(params, 'mode');
-      const photoLookup = q !== undefined && q !== '';
-      if (photoLookup && modeRaw !== undefined) {
-        fail(2, '参数 q 与 mode 互斥：q＝照片 HELP 现找（10 键），mode＝全量速查台交付形态（'
-          + HELP_CENTER_MODES.join('／') + '）');
-      }
-      if (q !== undefined && modeRaw === undefined) {
-        // 照片路径（原样保留）：非空 q ＝ 现找（无命中 exit 4）；`q:""` ＝ 全量 10 键。
-        const hits = photoLookup ? lookupPhotoHelp(q as string) : buildPhotoHelp();
-        if (photoLookup && hits.length === 0) throw new CalorieRenderError('missing-data', 'HELP 无命中：' + q);
-        const items = hits.map((h) => ({ wakeWord: h.wakeWord, key: h.key, desc: h.desc, exec: h.exec }));
-        // #245：给这支**自己的主体**（与主 HELP 分名）⇒ 它这才吃复用窗口，且不与主 HELP／业务命令互相顶掉。
-        return {
-          data: { items, total: items.length },
-          html: renderPhotoHelpHtml(hits, q),
-          target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: PHOTO_HELP_FILE_STEM },
-        };
-      }
-      const now = new Date();
-      if (modeRaw === undefined) {
-        // 缺省：老实物同款 HELP 文件（5 键 JSON → V4 三级目录壳）。落点走 `target`——本键的
-        // <中文command>（注册表 title）另有其物，不能拿来命名这份产物。
-        const html = renderHelpFileHtml(buildHelpFileData(now));
-        const data: Record<string, unknown> = {
-          ...helpCenterIndex(buildHelpSceneData()),
-          mode: 'file' as const,
-          bytes: Buffer.byteLength(html, 'utf8'),
-        };
-        return {
-          data, html,
-          target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: HELP_FILE_STEM },
-        };
-      }
-      // 全量速查台：须显式 `mode`；`text` 态把文本一并回传（file／inline 只回落点，不塞 1 MB）。
-      const mode = modeRaw as HelpCenterMode;
-      if (!(HELP_CENTER_MODES as readonly string[]).includes(mode)) {
-        fail(2, '参数 mode 非法（' + String(mode) + '）：须为 ' + HELP_CENTER_MODES.join('／'));
-      }
-      const sceneData = buildHelpSceneData();
-      const rendered = renderHelpCenterHtml({ mode, sceneData });
-      const data: Record<string, unknown> = {
-        ...helpCenterIndex(sceneData),
-        mode,
-        bytes: Buffer.byteLength(rendered.html, 'utf8'),
-      };
-      if (mode === 'text') data['text'] = rendered.html;
-      // #83 · 渲染层已定文本交付：产物即文本（③ 文本态之一），交付装配层据此走文本通道。
-      return {
-        data, html: rendered.html, deliveryKind: mode === 'text' ? 'text' : 'html',
-        target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: SHEET_FILE_STEM },
-      };
-    }
     case 'calorie.help.lookup': {
       const q = needStr(params, 'q');
       // C2/C3 #43 · 唯一搜索入口 searchHelp：别名感知 + 可执行排前 + 高频词合成首条（去legacy首命中）。
@@ -858,24 +626,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:history"><h1>热量历史（最近' + h.days + '天）</h1>' +
         items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' 卡 · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
       return { data: { items, total: items.length }, html };
-    }
-    case 'calorie.view.body-composition': {
-      const days = optNum(params, 'days') ?? 90;
-      const source = optStr(params, 'source');
-      const limit = optNum(params, 'limit') ?? 20;
-      const v = buildBodyCompositionView(db, { days: days as number, source: source ?? undefined, limit: limit as number });
-      const metrics = nums({ total: v.total, latestPct: v.latestPct, trendDays: v.trend.length });
-      return { data: { metrics }, html: buildBodyCompositionDoc(v) };
-    }
-    case 'calorie.view.body-measure': {
-      const metric = optStr(params, 'metric');
-      const days = optNum(params, 'days') ?? 90;
-      const limit = optNum(params, 'limit') ?? 20;
-      const dateFrom = dayField(params, 'dateFrom');
-      const dateTo = dayField(params, 'dateTo');
-      const v = buildBodyMeasureView(db, { metric: metric ?? undefined, days: days as number, limit: limit as number, dateFrom: dateFrom ?? undefined, dateTo: dateTo ?? undefined });
-      const metrics = nums({ total: v.total, latestVal: v.latestVal, trendDays: v.trend.length });
-      return { data: { metrics }, html: buildBodyMeasureDoc(v) };
     }
     case 'calorie.view.plan': {
       const v = buildPlanView(db);

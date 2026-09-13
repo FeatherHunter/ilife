@@ -7,9 +7,15 @@
  * **新加一个能力＝建它的 `commands.ts`**（扫到即自动进来）；新加一条命令＝改它的声明，本文件不动。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
+import { BODY_COMMANDS } from '../body/index.js';
+import { HOME_COMMANDS } from '../home/index.js';
+import { PHOTO_COMMANDS } from '../photo/index.js';
 import { WEIGHT_COMMANDS } from '../weight/index.js';
 
 const SOURCES: readonly (readonly CommandSpec[])[] = [
+  BODY_COMMANDS,
+  HOME_COMMANDS,
+  PHOTO_COMMANDS,
   WEIGHT_COMMANDS,
 ];
 

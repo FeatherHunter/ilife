@@ -34,22 +34,18 @@ import {
 } from '../fetch/diet.js';
 import { addRecord, updateRecord, updateDay, deleteRecord, deleteDay, deleteRange, batchAdd, copyYesterday } from '../fetch/exercise.js';
 import type { ExerciseRecordInput } from '../fetch/exercise.js';
-import {
-  addPhotos, deletePhoto, updateTag, tagAdd, tagRemove, getPhotoRow, resolvePhotosDir, daysSinceTagPhoto,
-  parseTags, serializeTags,
-} from '../fetch/photos.js';
-import { buildAddReceipt, buildDeleteReceipt, buildTagReceipt } from '../render/photo.js';
 import { addProduct, updateProduct, deprecateProduct } from '../fetch/products.js';
-import { getProfile, setActivityLevel, setProfile, updateProfile } from '../fetch/profile.js';
+import {
+  setActivityLevel,
+  setProfile,
+  updateProfile,
+} from '../fetch/profile.js';
 import type { ProfileRow } from '../fetch/profile.js';
 import { getNutritionGoal, setNutritionGoal, updateWaterGoal } from '../fetch/nutritionGoal.js';
 import { pauseAllGoals, resumeAllGoals, setWeightGoal } from '../fetch/goal.js';
 import {
-  CALIPER_FIELDS, MEASUREMENT_FIELDS, ValidationError, addComposition, addMeasurement,
-  deleteComposition, deleteMeasurement,
+  ValidationError,
 } from '../fetch/body.js';
-import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
-import type { SourceChoice } from '../kcal.js';
 import { withM5 } from '../render/receipt.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -64,11 +60,30 @@ import { REGISTRY } from './registry.js';
 
 // #294 · 参数读取与回执底座上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
 import {
-  assertISO, fail, needArr, needId, needNum, needStr, needWday, optInt, optNum, optStr, wday,
+  assertISO,
+  fail,
+  needArr,
+  needId,
+  needNum,
+  needStr,
+  needWday,
+  optNum,
+  optStr,
+  wday,
 } from '../shared/params.js';
 import {
-  F, HARD_INNER, HARD_WORDING, SOFT_EXCLUDED, SOFT_EXCLUDED_INNER, R, cliNames, commandLine,
-  definedKeys, deleteStatus, out, provided, receiptHtml, totalChanges,
+  F,
+  HARD_INNER,
+  HARD_WORDING,
+  SOFT_EXCLUDED,
+  SOFT_EXCLUDED_INNER,
+  R,
+  cliNames,
+  commandLine,
+  deleteStatus,
+  out,
+  provided,
+  totalChanges,
 } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 
@@ -82,10 +97,6 @@ import type { WriteOut } from '../shared/commandSpec.js';
 const goalSetWrittenFields = (hasWater: boolean): string[] =>
   ['calorie', 'protein', 'carbs', 'fat', ...(hasWater ? ['water'] : [])];
 
-/** 围度库列名 → CLI 参数名（`MEASURE_CAMEL` 反向；写入字段摘要统一走 CLI 名口径）。 */
-function measureCliNames(keys: string[]): string[] {
-  return keys.map((k) => Object.keys(MEASURE_CAMEL).find((c) => MEASURE_CAMEL[c] === k) ?? k);
-}
 
 /* -------------------------------------- #179 · 场景 07 三条写入词的回执页（整页装配） */
 
@@ -130,36 +141,10 @@ function profileReceiptDoc(
 }
 
 
-function photosDirOf(params: Record<string, unknown>): string {
-  return resolvePhotosDir(optStr(params, 'photosDir') ?? null);
-}
 
-const SOURCE_ALIASES: Record<string, SourceChoice> = { '家测皮褶钳': 'home_caliper', '医院测': 'hospital', '健身房测': 'gym', '健身房': 'gym', '医院': 'hospital', '皮褶钳': 'home_caliper' };
 
-function normSource(v: unknown): SourceChoice {
-  const s = String(v ?? '').trim();
-  if ((SOURCE_CHOICES as readonly string[]).includes(s)) return s as SourceChoice;
-  const hit = SOURCE_ALIASES[s];
-  if (hit) return hit;
-  fail(2, '缺参数 source（' + SOURCE_CHOICES.join('/') + ' 或中文 ' + Object.keys(SOURCE_ALIASES).join('/') + '）');
-  throw new Error('unreachable');
-}
 
-function normSex(v: unknown): string | undefined {
-  if (v === undefined || v === null) return undefined;
-  const s = String(v).trim();
-  if (s === 'male' || s === 'female') return s;
-  if (s === '男') return 'male';
-  if (s === '女') return 'female';
-  fail(2, '参数 sex 非法（male/female 或 男/女）：' + s);
-  throw new Error('unreachable');
-}
 
-const MEASURE_CAMEL: Record<string, string> = {
-  chestCm: 'chest_cm', waistCm: 'waist_cm', abdomenCm: 'abdomen_cm', hipCm: 'hip_cm', shoulderCm: 'shoulder_cm',
-  leftThighCm: 'left_thigh_cm', rightThighCm: 'right_thigh_cm', leftCalfCm: 'left_calf_cm', rightCalfCm: 'right_calf_cm',
-  leftArmCm: 'left_arm_cm', rightArmCm: 'right_arm_cm', leftForearmCm: 'left_forearm_cm', rightForearmCm: 'right_forearm_cm',
-};
 
 const EX_CAMEL: Record<string, string> = {
   type: 'exercise_type', exerciseType: 'exercise_type', calories: 'calories_burned', caloriesBurned: 'calories_burned',
@@ -487,66 +472,6 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       fail(2, '缺参数 id/date/from+to（三选一）');
       throw new Error('unreachable');
     }
-    case 'calorie.photo.add': {
-      const raw = params['srcPaths'] ?? params['srcPath'];
-      const srcPaths = (Array.isArray(raw) ? raw : [raw]).filter((s) => typeof s === 'string' && (s as string).length > 0) as string[];
-      if (srcPaths.length === 0) fail(2, '缺参数 srcPaths（照片源文件路径数组）');
-      if (srcPaths.length > 20) fail(2, 'srcPaths 至多 20 张');
-      const tag = needStr(params, 'tag');
-      const dir = photosDirOf(params);
-      const today = wday(params, 'date') ?? todayISO();
-      assertISO(today, 'date');
-      const added = addPhotos(db, dir, { srcPaths, tag, note: optStr(params, 'note'), today, nowTime: optStr(params, 'time') });
-      if (added.length === 0) throw new CalorieRenderError('missing-data', '照片源文件均不存在，未存入');
-      let distance = null;
-      try {
-        const days = daysSinceTagPhoto(db, tag, today);
-        distance = days === null ? null : { tag, days };
-      } catch {
-        distance = null;
-      }
-      const receipt = withM5(buildAddReceipt(added, { tag, note: optStr(params, 'note'), distance, failedCount: srcPaths.length - added.length || undefined }), {
-        ids: added.map((a) => a.id), writtenFields: [...F.photo],
-      });
-      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
-    }
-    case 'calorie.photo.remove': {
-      const id = needId(params);
-      const dir = photosDirOf(params);
-      const snap = getPhotoRow(db, id);
-      if (!snap) throw new CalorieRenderError('missing-data', '身材照 #' + id + ' 不存在');
-      deletePhoto(db, dir, id);
-      const receipt = withM5(buildDeleteReceipt(snap), { ids: [id], writtenFields: [] });
-      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
-    }
-    case 'calorie.photo.tag': {
-      const id = needId(params);
-      const op = needStr(params, 'op');
-      if (op !== 'set' && op !== 'add' && op !== 'remove') fail(2, 'op 须为 set/add/remove：' + op);
-      const row = getPhotoRow(db, id);
-      if (!row) throw new CalorieRenderError('missing-data', '身材照 #' + id + ' 不存在');
-      const before = [...row.tag_list];
-      let scene: '改照片标签' | '加照片标签' | '删照片标签';
-      if (op === 'set') {
-        const raw = params['tags'] ?? params['tag'];
-        const tags = Array.isArray(raw) ? (raw as unknown[]).map(String) : parseTags(typeof raw === 'string' ? raw : '');
-        if (tags.length === 0) fail(2, '缺参数 tags（新标签全量）');
-        updateTag(db, id, serializeTags(tags));
-        scene = '改照片标签';
-      } else if (op === 'add') {
-        const tag = needStr(params, 'tag');
-        tagAdd(db, id, tag);
-        scene = '加照片标签';
-      } else {
-        const tag = needStr(params, 'tag');
-        if (parseTags(tag).length !== 1) fail(2, '删标签一次只删 1 个');
-        tagRemove(db, id, tag);
-        scene = '删照片标签';
-      }
-      const after = getPhotoRow(db, id)?.tag_list ?? before;
-      const receipt = withM5(buildTagReceipt(id, before, after, scene), { ids: [id], writtenFields: op === 'set' ? ['tags'] : ['tag'] });
-      return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
-    }
     case 'calorie.product.add': {
       const productName = (optStr(params, 'productName') ?? optStr(params, 'product_name') ?? '');
       if (!productName.trim()) fail(2, '缺参数 productName');
@@ -681,61 +606,6 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       const r = resumeAllGoals(db);
       return out(R('重启所有目标', 'update', '已重启所有目标（恢复正常）', '重启所有目标', 'daily_goal (写库回执)', {
         recordId: r.id, ids: [r.id], idSource: 'singleton', writtenFields: ['goal_paused'],
-      }));
-    }
-    case 'calorie.body.composition-add': {
-      const date = wday(params, 'date') ?? todayISO();
-      assertISO(date, 'date');
-      const source = normSource(params['source']);
-      const input: Record<string, unknown> = {
-        date, source, bodyFatPct: params['bodyFatPct'], note: optStr(params, 'note'),
-        age: optInt(params, 'age'), sex: normSex(params['sex']),
-      };
-      for (const f of CALIPER_FIELDS) {
-        const v = optNum(params, f);
-        if (v !== undefined) input[f] = v;
-      }
-      if (input['bodyFatPct'] === undefined) fail(2, '缺参数 bodyFatPct（皮褶→体脂自动换算未移植，直传实测值）');
-      const r = addComposition(db, input as unknown as Parameters<typeof addComposition>[1]);
-      const label = SOURCE_LABELS[source] ?? source;
-      return out(R('记体脂', 'create', '已记体脂：' + date + ' ' + label + ' ' + r.bodyFatPct + '%', '记体脂', 'body_composition (写库回执)', {
-        recordId: r.id, ids: [r.id], writtenFields: definedKeys(input),
-        items: [{ id: r.id, date, status: '成功', reason: '', detail: r.bodyFatPct + '%' }],
-      }));
-    }
-    case 'calorie.body.composition-remove': {
-      const id = needId(params);
-      deleteComposition(db, id);
-      return out(R('删体脂', 'delete', '已删除体脂记录 #' + id + SOFT_EXCLUDED, '删体脂', 'body_composition (写库回执)', {
-        recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
-      }));
-    }
-    case 'calorie.body.measure-add': {
-      const date = wday(params, 'date') ?? todayISO();
-      assertISO(date, 'date');
-      const input: Record<string, unknown> = { date, note: optStr(params, 'note') };
-      for (const [camel, col] of Object.entries(MEASURE_CAMEL)) {
-        const v = optNum(params, camel);
-        if (v !== undefined) input[col] = v;
-      }
-      for (const k of Object.keys(params)) {
-        if (!(k in MEASURE_CAMEL) && k !== 'date' && k !== 'note' && k !== 'key') fail(2, '不支持字段: ' + k);
-      }
-      const r = addMeasurement(db, input as unknown as Parameters<typeof addMeasurement>[1]);
-      const filledCn = r.filled.map((f) => {
-        const camel = Object.keys(MEASURE_CAMEL).find((c) => MEASURE_CAMEL[c] === f) ?? f;
-        return camel + ' ' + String((input as Record<string, unknown>)[f]);
-      }).join('、');
-      return out(R('记围度', 'create', '已记围度：' + date + '（' + filledCn + '）', '记围度', 'body_measurements (写库回执)', {
-        recordId: r.id, ids: [r.id], writtenFields: measureCliNames(definedKeys(input)),
-        items: [{ id: r.id, date, status: '成功', reason: '', detail: filledCn }],
-      }));
-    }
-    case 'calorie.body.measure-remove': {
-      const id = needId(params);
-      deleteMeasurement(db, id);
-      return out(R('删围度', 'delete', '已删除围度记录 #' + id + SOFT_EXCLUDED, '删围度', 'body_measurements (写库回执)', {
-        recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
       }));
     }
     default:

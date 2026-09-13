@@ -1,0 +1,61 @@
+/** #314 · 主页能力**已搬迁键**的路由声明（键属 `dist/home/commands.js` 的 `HOME_ROUTES` 声明键集）。
+ *
+ * 搬迁口径（编排者 #314 裁决）：**记录归属＝它 `key` 的所有者**——同一个键的记录可能散在多片
+ * （实测本族来自 `routes/scene-01.ts`／`routes/scene-02.ts`／`routes/scene-04.ts`／`routes/scene-06.ts`／`routes/scene-10.ts`），一律按 key 归到本件，而不是按记录自己的 `scene` 字段留片。
+ * 字段与语义**一字不动**，只换住处：`order` 仍是原列表内 0 基位次（生成器按 `(list, order)` 复原
+ * 三个列表，故按 key 搬家不打乱顺序）。无 `key` 的 `non-exec` 记录没有归属者，按 `scene` 留在原片。
+ */
+import type { RouteDecl } from '../triggers/routeSpec.js';
+
+export const HOME_ROUTES: readonly RouteDecl[] = [
+  { list: 'wake', order: 0, wakeWord: '看今日主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'' },
+  { list: 'wake', order: 1, wakeWord: '看今日饮食概览', scene: '01', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"今日"}\'' },
+  { list: 'wake', order: 2, wakeWord: '看今日运动概览', scene: '01', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今日"}\'' },
+  { list: 'wake', order: 4, wakeWord: '看今日目标进度', scene: '01', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\'' },
+  { list: 'wake', order: 5, wakeWord: '看本周主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"windowDays":7,"date":"今日"}\'' },
+  { list: 'wake', order: 6, wakeWord: '看本月主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"windowDays":30,"date":"今日"}\'' },
+  { list: 'wake', order: 7, wakeWord: '看连续记录天数', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'' },
+  { list: 'wake', order: 8, wakeWord: '看今日热量预算', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'' },
+  { list: 'wake', order: 24, wakeWord: '看昨日饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"昨日"}\'' },
+  { list: 'wake', order: 25, wakeWord: '看本周饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"本周"}\'' },
+  { list: 'wake', order: 26, wakeWord: '看上周饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"上周"}\'' },
+  { list: 'wake', order: 27, wakeWord: '看本月饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"本月"}\'' },
+  { list: 'wake', order: 28, wakeWord: '看上月饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"上月"}\'' },
+  { list: 'wake', order: 29, wakeWord: '看最近 7 天饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 30, wakeWord: '看最近 30 天饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 31, wakeWord: '看某段时间饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
+  { list: 'wake', order: 45, wakeWord: '看饮食总览', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 73, wakeWord: '看早餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 74, wakeWord: '看午餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 75, wakeWord: '看晚餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 76, wakeWord: '看加餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 77, wakeWord: '看全部餐别分布（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 150, wakeWord: '看今日运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今日"}\'' },
+  { list: 'wake', order: 151, wakeWord: '看昨日运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"昨日"}\'' },
+  { list: 'wake', order: 152, wakeWord: '看本周运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"本周"}\'' },
+  { list: 'wake', order: 153, wakeWord: '看上周运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"上周"}\'' },
+  { list: 'wake', order: 154, wakeWord: '看本月运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"本月"}\'' },
+  { list: 'wake', order: 155, wakeWord: '看上月运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"上月"}\'' },
+  { list: 'wake', order: 156, wakeWord: '看最近 7 天运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 157, wakeWord: '看最近 30 天运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 158, wakeWord: '看某段时间运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
+  { list: 'wake', order: 164, wakeWord: '看最近 60 天运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"60d"}\'' },
+  { list: 'wake', order: 165, wakeWord: '看最近 180 天运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"180d"}\'' },
+  { list: 'wake', order: 166, wakeWord: '看最近 365 天运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"365d"}\'' },
+  { list: 'wake', order: 167, wakeWord: '看运动类型分布', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 170, wakeWord: '看运动趋势', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 171, wakeWord: '运动复盘（本周）', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"本周"}\'' },
+  { list: 'wake', order: 172, wakeWord: '运动复盘（本月）', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"本月"}\'' },
+  { list: 'wake', order: 173, wakeWord: '运动复盘（最近 90 天）', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"90d"}\'' },
+  { list: 'wake', order: 174, wakeWord: '运动复盘（今年）', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今年"}\'' },
+  { list: 'wake', order: 175, wakeWord: '运动复盘（自定义时间）', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
+  { list: 'wake', order: 216, wakeWord: '看今日目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\'' },
+  { list: 'wake', order: 217, wakeWord: '看本周目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"本周"}\'' },
+  { list: 'wake', order: 218, wakeWord: '看营养目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 220, wakeWord: '看饮水目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\'' },
+  { list: 'wake', order: 224, wakeWord: '看目标完成率(按周)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 225, wakeWord: '看目标完成率(按月)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 372, wakeWord: '我的减肥策略对吗', scene: '10', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 429, wakeWord: '查运动分布', scene: '10', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 430, wakeWord: '查运动贡献', scene: '10', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"7d"}\'' },
+];
