@@ -1,0 +1,33 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`.scratch/locks-land/gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：319-land｜since：
+2026-09-13T15:26:25Z
+｜窗口 BASE：`
+130eacb
+`｜导出时间：
+2026-09-13T15:28:19Z
+> 为什么要换口径：编排者 2026-09-13 新硬规矩「窗口内门禁一律直接调用、不得嵌套 `run-locked`」⇒
+> 默认闸锁里不再有 `RUN ticket=319 …` 条目，留痕由**外层落点锁这一次窗口**的 `START/RUN ticket=319-land` 条目
+> ＋ 下表（窗口自己的日志，逐文件可查）承担。
+> 复核用法（窗口退出后 RUN 行才存在）：`node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t319-搬迁-证据.md --log .scratch/locks-land/gate-runs.log --ticket 319-land --since 
+2026-09-13T15:26:25Z
+`
+
+```text
+START ticket=319-land runId=614d7913-df65-4508-a1ca-0ca6f813e3ca cmd="pwsh -NoProfile -File .scratch/t319/land.ps1" waitedMs=0 pid=29844 at=2026-09-13T15:27:21.468Z
+```
+
+## 窗口内门禁步骤（直接调用，逐条实测 exit）
+
+| 步 | 命令 | exit | 日志 |
+|---|---|---|---|
+| 4 build | `pnpm build` | 0 | `.scratch/t319/logs/04-build.log` |
+| 5 gen | `pnpm gen` | 0 | `.scratch/t319/logs/05-gen.log` |
+| 7 build（gen 只写 src ⇒ 重建配平 dist 与内容印记） | `pnpm build` | 0 | `.scratch/t319/logs/07-build.log` |
+| 8 gen:check | `pnpm gen:check` | 0 | `.scratch/t319/logs/08-gencheck.log` |
+| 9 test | `pnpm test` | 0 | `.scratch/t319/logs/09-test.log` |
+| 9b 快照 | `pnpm snapshot:html:check` | 0 | `.scratch/t319/logs/09b-snapshot.log` |
+| 10b-1 变异 | `pnpm gen:check` | 1 | `.scratch/t319/logs/10b-mutation.log` |
+| 10b-2 变异复原 | `pnpm gen:check` | 0 | `.scratch/t319/logs/10b-mutation-restore.log` |
+

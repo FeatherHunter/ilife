@@ -24,7 +24,6 @@ import { openDb } from '../schema.js';
 import {
   DB_FILENAME,
 } from '../paths.js';
-import { getCalorieHistory } from '../fetch/history.js';
 import { FetchError } from '../fetch/errors.js';
 import { buildGoalView } from '../render/goal.js';
 import {
@@ -35,65 +34,32 @@ import {
 } from '../render/goalPlate.js';
 import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
 import { buildGoalPrecheckDoc } from '../goal/precheck.js';
-
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
-import { buildPredictView, buildAnomalyView } from '../render/insightPlate.js';
+
 // #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
 import { buildProfileView, buildProfileViewDoc } from '../profile/view.js';
 import { buildProfileSettingDoc, buildProfileSettingView } from '../profile/setup.js';
-import { buildCombinedAnalysis, buildDeficitPlate } from '../render/analysisPlate.js';
-import { buildHealthDoc } from '../render/dietDocs.js';
-
 import { buildReviewDoc } from '../render/sportPortDocs.js';
 import { buildReviewView } from '../render/exercisePort.js';
-import { buildCalorieTrendView, buildLintHealthView, buildLongTrendView, buildNutritionAnalysisView, buildProcessProgressView, buildReviewTemplateView, buildSixFactorsView } from '../render/trendMiscPort.js';
-import { buildCalorieTrendDoc, buildLintHealthDoc, buildLongTrendDoc, buildNutritionAnalysisDoc, buildProcessProgressDoc, buildReviewTemplateDoc, buildSixFactorsDoc } from '../render/trendMiscPortDocs.js';
-import {
-  buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
-  buildGoalPredictDoc, buildPredictDoc,
-} from '../render/trendDocs.js';
-import { buildHealthPlate } from '../render/health.js';
+import { buildProcessProgressView } from '../render/trendMiscPort.js';
+import { buildProcessProgressDoc } from '../render/trendMiscPortDocs.js';
+import { buildContraDoc, buildGoalPredictDoc } from '../render/trendDocs.js';
+
 // #91 · 全量速查台（Q9）：只读消费 #88 的 `render/helpCenter.js`（三态同源，零改动）。
-import {
-  renderHelpLookupHtml,
-  renderErrorHtml,
-  renderGoalConfigHtml,
-  renderGoalRecommendHtml,
-  renderGoalWeightHtml,
-  renderGoalStatusHtml,
-  renderGoalHtml,
-  renderPlanHtml,
-  renderPlanWizardHtml,
-  renderGoalExpiringHtml,
-  renderGoalVsActualHtml,
-} from '../render/html.js';
+import { renderErrorHtml, renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalStatusHtml, renderGoalHtml, renderPlanHtml, renderPlanWizardHtml, renderGoalExpiringHtml, renderGoalVsActualHtml } from '../render/html.js';
 import { assertStatMetrics, buildDelivery, withDelivery } from '../render/envelope.js';
 import type { Delivery } from '../render/envelope.js';
 import { buildErrorReceipt } from '../render/receipt.js';
 import type { ErrorReceipt } from '../render/receipt.js';
 import { buildDataText } from 'base-paint';
 import { CalorieRenderError } from '../render/errors.js';
-import { TRIGGERS, searchHelp } from '../triggers/index.js';
+import { TRIGGERS } from '../triggers/index.js';
 import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
-import {
-  todayISO,
-} from '../analysis/utils.js';
+
 // #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 // #294 · 参数读取与窗口口径上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
-import {
-  anchorOf,
-  assertISO,
-  dayField,
-  defaultRange,
-  fail,
-  latestFoodDate,
-  needStr,
-  nums,
-  optNum,
-  optStr,
-  windowRange,
-} from '../shared/params.js';
+import { anchorOf, dayField, defaultRange, fail, nums, optNum, optStr, windowRange } from '../shared/params.js';
 import {
   HTML_DIR_NAME,
   deliverHtml,
@@ -151,7 +117,6 @@ function parseArgs(a: string[]): ReadArgs {
   return o;
 }
 
-
 /** 本地 envelope 形状校验（镜像 link-core assertShapeData，不运行时 import）。 */
 function assertEnvelopeData(shape: EnvelopeShape, data: Record<string, unknown>): void {
   switch (shape) {
@@ -195,8 +160,6 @@ function buildEnvelope(key: string, shape: EnvelopeShape, data: Record<string, u
   return { version: ENVELOPE_VERSION, skill: CALORIE_SKILL, shape, key, data };
 }
 
-
-
 // 全键分发：读走 render/fetch 读，HELP 走触发词现找；未知键上游已拦，此处再拦一道。
 /** #41 · 测试直调出口（纯 CLI 同逻辑，不经过 argv/spawn；CLI 唯一出口仍为 main）。 */
 export function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): DispatchOut {
@@ -208,55 +171,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     return spec.run(params, db);
   }
   switch (key) {
-    // #113 · 趋势 2＋其他 6 移植 8 键（t71 需移植八模板；envelope stat metrics 只收确定数字）。
-    case 'calorie.view.calorie-trend': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildCalorieTrendView(db, start, end);
-      const s = v.data.summary;
-      const metrics = nums({
-        avg: s.avg, target: s.target, trendValue: s.trendValue,
-        startAvg: s.startAvg, endAvg: s.endAvg, weekdayAvg: s.weekdayAvg,
-        weekendAvg: s.weekendAvg, weekendDiff: s.weekendDiff,
-        compliantDays: s.compliantDays, complianceRate: s.complianceRate,
-      });
-      return { data: { metrics }, html: buildCalorieTrendDoc(v) };
-    }
-    case 'calorie.view.long-trend': {
-      const end = windowRange(params)?.end ?? dayField(params, 'end') ?? latestFoodDate(db) ?? todayISO();
-      assertISO(end, 'end');
-      const v = buildLongTrendView(db, optStr(params, 'group'), optStr(params, 'window'), end);
-      const metrics = nums({
-        windowDays: v.windowDays, avgCalorie: v.avgCalorie, weightChange: v.weightChange,
-      });
-      return { data: { metrics }, html: buildLongTrendDoc(v) };
-    }
-    case 'calorie.view.nutrition-analysis': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildNutritionAnalysisView(db, start, end);
-      const metrics = nums({
-        days: v.days, totalCalorie: v.totalCalorie,
-        proteinG: v.proteinG, proteinPct: v.proteinPct,
-        carbG: v.carbG, carbPct: v.carbPct, fatG: v.fatG, fatPct: v.fatPct,
-        fiberAvg: v.fiberAvg, sodiumAvg: v.sodiumAvg, sugarAvg: v.sugarAvg,
-        adviceCount: v.advice.length,
-      });
-      return { data: { metrics }, html: buildNutritionAnalysisDoc(v) };
-    }
-    case 'calorie.view.six-factors': {
-      const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
-      assertISO(date, 'date');
-      const v = buildSixFactorsView(db, date);
-      const metrics = nums({
-        score: v.score,
-        calorie: v.factors[0]?.ok ? 1 : 0,
-        protein: v.factors[1]?.ok ? 1 : 0,
-        water: v.factors[2]?.ok ? 1 : 0,
-        exercise: v.factors[3]?.ok ? 1 : 0,
-        weigh: v.factors[4]?.ok ? 1 : 0,
-        meals: v.factors[5]?.ok ? 1 : 0,
-      });
-      return { data: { metrics }, html: buildSixFactorsDoc(v) };
-    }
     case 'calorie.view.profile-wizard': {
       const v = buildProfileSettingView(db, params);
       const metrics = nums({
@@ -290,27 +204,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         missingCount: draft.energy.missing.length,
       });
       return { data: { metrics }, html: buildGoalPrecheckDoc(v) };
-    }
-    case 'calorie.view.lint-health': {
-      const v = buildLintHealthView(db);
-      const metrics = nums({
-        issueCount: v.issueCount,
-        unmatched: v.checks[0]?.count,
-        badCalorie: v.checks[1]?.count,
-        future: v.checks[2]?.count,
-        duplicate: v.checks[3]?.count,
-      });
-      return { data: { metrics }, html: buildLintHealthDoc(v) };
-    }
-    case 'calorie.view.review-template': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildReviewTemplateView(db, start, end);
-      const metrics = nums({
-        days: v.days, meals: v.meals, avgCalorie: v.avgCalorie,
-        sessions: v.sessions, minutes: v.minutes, weightChange: v.weightChange,
-        points: v.points.length,
-      });
-      return { data: { metrics }, html: buildReviewTemplateDoc(v) };
     }
     case 'calorie.view.goal': {
       const { start, end } = defaultRange(db, params);
@@ -357,63 +250,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const metrics = nums({ paused: g.paused ? 1 : 0, calorie_goal: g.nutrition.calorie_goal, water_goal: g.nutrition.water_goal });
       return { data: { metrics }, html: renderGoalStatusHtml(g) };
     }
-    case 'calorie.view.combined': {
-      const pair = optStr(params, 'pair') ?? 'weight_calorie';
-      const window = optStr(params, 'window') ?? '7d';
-      const win = windowRange(params);
-      const today = anchorOf(params);
-      // #250 · 给了窗口就把解析出的区间交给它（analyzePair 仍收到原始窗口词，口径不变）。
-      const c = buildCombinedAnalysis(db, pair, window, win?.start ?? optStr(params, 'start') ?? null, win?.end ?? optStr(params, 'end') ?? null, today);
-      const metrics = nums({
-        aAvg: c.analysis.aAvg, bAvg: c.analysis.bAvg, aDelta: c.analysis.aDelta, bDelta: c.analysis.bDelta,
-        aCount: c.analysis.aCount, bCount: c.analysis.bCount,
-        correlationR: c.analysis.correlation.r, correlationN: c.analysis.correlation.n, days: c.analysis.days,
-        seriesDays: c.series.length,
-      });
-      return { data: { metrics }, html: buildCombinedDoc(c) };
-    }
-    case 'calorie.view.deficit': {
-      const { start, end } = defaultRange(db, params);
-      const d = buildDeficitPlate(db, start, end);
-      const metrics = nums({
-        avgIntake: d.summary.avgIntake, avgBurn: d.summary.avgBurn, avgExerciseBurn: d.summary.avgExerciseBurn,
-        avgDeficit: d.summary.avgDeficit, weeklyDeficit: d.summary.weeklyDeficit, predictedLossKg: d.summary.predictedLossKg,
-        days: d.meta.days, weekdayCount: d.meta.weekdayCount, weekendCount: d.meta.weekendCount,
-        targetIntake: d.target.intake, targetTdee: d.target.tdee,
-      });
-      return { data: { metrics }, html: buildDeficitDoc(d) };
-    }
-    case 'calorie.view.health': {
-      const { start, end } = defaultRange(db, params);
-      const h = buildHealthPlate(db, start, end);
-      const metrics = nums({ loggedDays: h.loggedDays, avgIntake: h.avgIntake, avgDeficit: h.avgDeficit });
-      return { data: { metrics }, html: buildHealthDoc(h) };
-    }
-    case 'calorie.help.lookup': {
-      const q = needStr(params, 'q');
-      // C2/C3 #43 · 唯一搜索入口 searchHelp：别名感知 + 可执行排前 + 高频词合成首条（去legacy首命中）。
-      const found = searchHelp(TRIGGERS, q);
-      if (found.length === 0) throw new CalorieRenderError('missing-data', '唤醒词无命中：' + q);
-      const sceneToCategory: Record<string, string> = { '01': '主页', '02': '饮食', '03': '体重', '04': '运动', '05': '健身计划', '06': '目标管理', '07': '基础信息', '08': '身体细节', '09': '身材照片', '10': '分析' };
-      const hits = found.map((h) => {
-        const src = TRIGGERS.find((t) => t.wake_word === h.wake_word && ('key' in t ? String((t as { key?: unknown }).key ?? '') : '') === String(h.key ?? ''));
-        const category = src ? src.category : (sceneToCategory[h.scene] ?? h.scene);
-        return { wake_word: h.wake_word, category, key: String(h.key ?? ''), cli: h.cli, desc: h.desc };
-      });
-      // #90 · 渲染收敛到 render/html.ts 的 renderHelpLookupHtml（每行复制按钮 ＋ 页尾注入双通道运行时）。
-      const html = renderHelpLookupHtml(hits, q);
-      return { data: { items: hits, total: hits.length }, html };
-    }
-    case 'calorie.history': {
-      const days = optNum(params, 'days') ?? 7;
-      if (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 365) fail(2, 'days 须为 1..365 整数');
-      const h = getCalorieHistory(db, days as number);
-      if (h.rows.length === 0) throw new CalorieRenderError('missing-data', '最近' + String(days) + '天无记录');
-      const items = h.rows.map((r) => ({ date: r.date, calories: r.calories, protein: r.protein, status: r.status }));
-      const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:history"><h1>热量历史（最近' + h.days + '天）</h1>' +
-        items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' 卡 · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
-      return { data: { items, total: items.length }, html };
-    }
     case 'calorie.view.goal-expiring': {
       const withinDays = optNum(params, 'withinDays') ?? optNum(params, 'days') ?? 14;
       const today = dayField(params, 'today') ?? dayField(params, 'date');
@@ -437,21 +273,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         completionPct: v.completionPct, trendAvg: v.trendAvg, calorieGoal: v.calorieGoal,
       });
       return { data: { metrics }, html: renderGoalVsActualHtml(v) };
-    }
-    case 'calorie.view.predict': {
-      // #103 G2 · 同 goal-predict：默认 14 天，否则缺省调用恒走 missing-data。
-      const { start, end } = defaultRange(db, params, 14);
-      const horizonDays = optNum(params, 'horizonDays') ?? optNum(params, 'days') ?? 30;
-      const v = buildPredictView(db, start, end, horizonDays as number);
-      const metrics = nums({ current: v.current, ratePerWeek: v.ratePerWeek, forecastValue: v.forecastValue, forecastLo: v.forecastLo, forecastHi: v.forecastHi, horizonDays: v.horizonDays });
-      return { data: { metrics }, html: buildPredictDoc(v) };
-    }
-    case 'calorie.view.anomaly': {
-      const kind = needStr(params, 'kind');
-      const { start, end } = defaultRange(db, params);
-      const v = buildAnomalyView(db, kind, start, end);
-      const metrics = nums({ findingCount: v.findingCount, days: v.diagnosis.days, degraded: v.diagnosis.degraded ? 1 : 0 });
-      return { data: { metrics }, html: buildAnomalyDoc(v) };
     }
     case 'calorie.view.profile': {
       const v = buildProfileView(db);

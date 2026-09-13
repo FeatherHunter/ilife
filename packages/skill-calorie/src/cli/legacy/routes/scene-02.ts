@@ -21,6 +21,4 @@ export const ROUTES_SCENE_02: readonly RouteDecl[] = [
   { list: 'wake', order: 40, wakeWord: '批量导入食品', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：需多步交互（wizard）——先预览／确认再写库，非单条命令可达成（归 #86）。' },
   { list: 'wake', order: 41, wakeWord: '校验批量导入', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：需多步交互（wizard）——先预览／确认再写库，非单条命令可达成（归 #86）。' },
   { list: 'wake', order: 78, wakeWord: '看「有备注」的饮食记录', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无「备注」筛选参数（饮食／体重／运动三面的备注均非任何键的筛选维度），单命令不可达成（逐条见 docs/research/t81-route-evidence.md §2.3）。' },
-  { list: 'new', order: 48, wakeWord: '看营养分析', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-analysis', cli: 'calorie-cmd-read calorie.view.nutrition-analysis --params \'{"window":"7d"}\'' },
-  { list: 'new', order: 51, wakeWord: '看每日六因素', scene: '02', kind: 'exec', key: 'calorie.view.six-factors', cli: 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"今日"}\'' },
 ];
