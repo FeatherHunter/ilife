@@ -4,12 +4,12 @@
  * （含文件内的 `oneExercise` 参数装配）——**纯搬迁，行为不变**。单条／`items` 批量／`copyFrom` 复制三形态
  * 仍在这一个键下面，没有拆键。
  *
- * 取数走既有的 `fetch/exercise.ts`（本目录不搬它：别的场景与 `analysis/**` 也在用，见 `index.ts` 头注）。
+ * 取数走本目录的 `exercise/exerciseStore.ts`（本窗才搬入：别的场景与 `analysis/**` 也在用，见 `index.ts` 头注）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { todayISO } from '../analysis/utils.js';
-import { addRecord, batchAdd, copyYesterday } from '../fetch/exercise.js';
-import type { ExerciseRecordInput } from '../fetch/exercise.js';
+import { addRecord, batchAdd, copyYesterday } from './exerciseStore.js';
+import type { ExerciseRecordInput } from './exerciseStore.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { assertISO, fail, needArr, wday } from '../shared/params.js';
 import { F, R, out } from '../shared/writeParts.js';

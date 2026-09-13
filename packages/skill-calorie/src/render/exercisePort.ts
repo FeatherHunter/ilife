@@ -7,8 +7,8 @@
  * 本层只做取数＋聚合，不组 HTML（组装归 `render/sportPortDocs.ts`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { inferCategory, listWindow } from '../fetch/exercise.js';
-import type { ExerciseRow } from '../fetch/exercise.js';
+import { inferCategory, listWindow } from '../exercise/exerciseStore.js';
+import type { ExerciseRow } from '../exercise/exerciseStore.js';
 import { getPlan } from '../fetch/plan.js';
 import { buildSeries } from '../analysis/series.js';
 import { shiftISODate } from '../analysis/utils.js';

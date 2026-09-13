@@ -8,7 +8,7 @@
 
 /** #120 · 软删过滤谓词（唯一来源）：`exercise_log` 软删行（`is_deleted=1`）不计入任何用户可见统计。
  *
- * 与 fetch 层 `listWindow`（`fetch/exercise.ts:280`）同口径；analysis 层 11 处查询统一内联，
+ * 与 fetch 层 `listWindow`（`exercise/exerciseStore.ts:280`）同口径；analysis 层 11 处查询统一内联，
  * 避免出现 `is_deleted = 0` 这类漏 NULL 的写法（历史行该列可为 NULL）。
  * 口径依据：`docs/research/t120-softdelete-filter.md`（编排者裁定方向 1）。
  */
@@ -21,7 +21,7 @@ export const EX_ALIVE = 'COALESCE(is_deleted, 0) = 0';
  * 故用 `COALESCE` 而非 `is_deprecated = 0`（后者会静默排除 NULL 活行）。
  * 与 `nutrition_products` 口径对齐：该列 `NOT NULL`，`= 0` ≡ `COALESCE(...) = 0`。
  * analysis 层（`series.ts`／`cross.ts`）统一内联本谓词；fetch 层
- * （`fetch/body.ts`）内联同字面（fetch 不反向依赖 analysis，沿 `fetch/exercise.ts`
+ * （`fetch/body.ts`）内联同字面（fetch 不反向依赖 analysis，沿 `exercise/exerciseStore.ts`
  * `listWindow` 的内联惯例）。口径依据：`docs/research/t126-deprecated-null.md`。
  */
 export const BODY_ALIVE = 'COALESCE(is_deprecated, 0) = 0';

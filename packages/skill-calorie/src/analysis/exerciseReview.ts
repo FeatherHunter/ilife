@@ -7,7 +7,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { round2 } from '../kcal.js';
-import { estimateCaloriesMet, inferCategory, listWindow } from '../fetch/exercise.js';
+import { estimateCaloriesMet, inferCategory, listWindow } from '../exercise/exerciseStore.js';
 
 export interface ExerciseTypeStat {
   type: string; sessions: number; burned: number; minutes: number;

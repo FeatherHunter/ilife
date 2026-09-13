@@ -2,7 +2,7 @@
  *  #294：体重取数已搬进能力目录 `src/weight/records.ts`（归属律）——共用位里不再出现能力名。 */
 export { FetchError } from './errors.js';
 export * from './diet.js';
-export * from './exercise.js';
+export * from '../exercise/exerciseStore.js';
 export * from './body.js';
 export { CALORIE_SKILL, calorieKey, fetchPayload, KEYS } from './shapes.js';
 export type { FetchPayload } from './shapes.js';

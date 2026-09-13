@@ -5,7 +5,7 @@
  * 删除仍是**软删**（`exercise_log.is_deleted`，见 `src/cli/write.ts` 文件头那份口径）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { deleteDay, deleteRange, deleteRecord, updateDay, updateRecord } from '../fetch/exercise.js';
+import { deleteDay, deleteRange, deleteRecord, updateDay, updateRecord } from './exerciseStore.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { assertISO, fail, optNum, optStr, wday } from '../shared/params.js';
 import { R, SOFT_EXCLUDED, cliNames, deleteStatus, out } from '../shared/writeParts.js';

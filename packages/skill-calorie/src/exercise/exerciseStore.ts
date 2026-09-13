@@ -4,9 +4,9 @@
  * 失败抛 FetchError；MET 关键词表与公式逐字对照老家（含 '中' 原样口径）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { sql } from './db.js';
-import type { SQLInputValue } from './db.js';
-import { FetchError } from './errors.js';
+import { sql } from '../fetch/db.js';
+import type { SQLInputValue } from '../fetch/db.js';
+import { FetchError } from '../fetch/errors.js';
 
 function todayStr(): string { return new Date().toISOString().slice(0, 10); }
 function nowTime(): string { return new Date().toTimeString().slice(0, 8); }

@@ -31,7 +31,7 @@ import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import type { DataTableColumn } from 'base-paint/blocks';
 import type { DaySeries } from '../analysis/series.js';
-import { inferCategory } from '../fetch/exercise.js';
+import { inferCategory } from '../exercise/exerciseStore.js';
 import type { ExerciseView } from './exercise.js';
 import type { ExerciseGoalView } from './planPlate.js';
 import type {

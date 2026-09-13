@@ -22,7 +22,7 @@
  *   → 「（软删除：行保留，已从查询与统计中排除；暂无恢复入口）」
  * - 硬删除（行删除、不可恢复）：`food_log`／`weight_log`／`body_photos`（`DELETE FROM`）→ 「（硬删除，不可恢复）」
  * `items[].status` 结构化字段与 prose **同源**（同一口径常量派生，软/硬 ＋ 不可恢复）。
- * 依据：fetch 层 delete* 实测（`fetch/exercise.ts:216-238` 软删／`fetch/diet.ts:153-161` 硬删／
+ * 依据：fetch 层 delete* 实测（`exercise/exerciseStore.ts:216-238` 软删／`fetch/diet.ts:153-161` 硬删／
  * `fetch/weight.ts:148-178` 硬删／`fetch/body.ts:144-148,207-211` 软删）＋ 审计
  * `docs/research/t67-key-audit.md:246` ＋ 复跑证据 `docs/research/t120-probe-softdelete.mjs`。
  * 照片键文案在 `render/photo.ts:buildDeleteReceipt`。
