@@ -1,9 +1,9 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks-land\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：324-land-W1｜since：2026-09-13T18:32:00Z｜until：2026-09-13T18:33:00Z｜条目数：1｜导出时间：2026-09-13T19:13:47.455Z
+> 票号过滤：324-land-W3｜since：2026-09-13T17:00:00Z｜until：2026-09-13T17:01:00Z｜条目数：1｜导出时间：2026-09-13T19:13:47.637Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
-RUN ticket=324-land-W1 runId=7435228e-93d6-428c-a741-e3503904e335 cmd="pwsh -NoProfile -File .scratch/t324/w1.ps1" waitedMs=0 exit=0 pid=24408 at=2026-09-13T18:32:29.575Z
+RUN ticket=324-land-W3 runId=9923c998-1ea2-416c-a470-e850144fe7fa cmd="pwsh -NoProfile -File .scratch/t324/w3.ps1" waitedMs=0 exit=0 pid=33816 at=2026-09-13T17:00:19.784Z
 ```
