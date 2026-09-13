@@ -1,0 +1,18 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：322｜since：2026-09-13T19:25:01+08:00｜until：2026-09-13T19:59:00+08:00｜条目数：10｜导出时间：2026-09-13T11:59:49.836Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=322 runId=2ab52b9c-1071-4fc6-8abd-75f8cc32b13b cmd="pwsh -NoProfile -Command \"git show 1396d67:packages/skill-calorie/test/cmd-registry-294.test.mjs > .scratch/t322/base-cmd-registry-294.test.mjs\"" waitedMs=1 exit=0 pid=28844 at=2026-09-13T11:25:01.875Z
+RUN ticket=322 runId=2373311d-259a-47c0-873c-2c2a5e0b2af0 cmd="pnpm build" waitedMs=0 exit=0 pid=42996 at=2026-09-13T11:30:12.558Z
+RUN ticket=322 runId=7a57bb30-edae-439c-a151-c65228430ea0 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=47620 at=2026-09-13T11:30:22.005Z
+RUN ticket=322 runId=c19c5c50-9950-4b28-951b-24ccda97854b cmd="pnpm test" waitedMs=0 exit=0 pid=40004 at=2026-09-13T11:31:29.395Z
+RUN ticket=322 runId=80b2f3e7-28ea-44e9-b765-86d0d9e574da cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=0 exit=0 pid=39660 at=2026-09-13T11:41:29.170Z
+RUN ticket=322 runId=36db01f3-35c9-4bd2-86ef-c38e4ee02ee3 cmd="pwsh -NoProfile -File .scratch/t322/sim-run.ps1" waitedMs=0 exit=0 pid=4048 at=2026-09-13T11:49:01.393Z
+RUN ticket=322 runId=efbc583d-7fe9-4677-b046-7e6892876e00 cmd="pwsh -NoProfile -File .scratch/t322/sim-run.ps1" waitedMs=0 exit=0 pid=43972 at=2026-09-13T11:51:28.185Z
+RUN ticket=322 runId=7f3def02-df6a-4195-abe2-e78655175ced cmd="pwsh -NoProfile -File .scratch/t322/sim2-all.ps1" waitedMs=0 exit=0 pid=52892 at=2026-09-13T11:53:58.976Z
+RUN ticket=322 runId=e5637787-d799-4e78-a004-f866049f67d1 cmd="pwsh -NoProfile -File .scratch/t322/sim3.ps1" waitedMs=0 exit=0 pid=38760 at=2026-09-13T11:55:47.236Z
+RUN ticket=322 runId=44df26db-f6a7-4b13-a89b-ac025acedbcb cmd="pwsh -NoProfile -File .scratch/t322/sim4.ps1" waitedMs=0 exit=0 pid=29960 at=2026-09-13T11:58:07.151Z
+```
