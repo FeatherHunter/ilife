@@ -8,12 +8,14 @@
  *   ① **跨场景同键即抛**：两个场景文件声明同一个键 = 一个键两个定义地（铁律二）＝生成期必须抛。
  *      判据用的是生成器自己的守卫 `mergeLegacyPartition()`（`scripts/gen-cli.mjs` 导出），
  *      不是本文件另写一份判断——铁律二同样管测试。
- *   ② **键集与分区前一致**：分区是**纯搬迁**，不许顺手增删命令。对照＝**版本库内的**
- *      `./legacy-frozen-295.mjs` 的 `FROZEN_LEGACY_KEYS`——分区前 92 键的唯一一份冻结定义，
+ *   ② **未搬迁清单 ⊆ 冻结键集，且冻结集里的键都还有定义地**：分区是**纯搬迁**，不许顺手增删命令。
+ *      对照＝**版本库内的** `./legacy-frozen-295.mjs` 的 `FROZEN_LEGACY_KEYS`——分区前 92 键的唯一一份冻结定义，
  *      与 `legacy-ratchet-295.test.mjs` 用的是同一条来源（铁律二：一个概念一个定义地）。
  *      （#313 A 段整改：此前这里读 `.scratch/t313/legacy-baseline-keys.json`，那份在 gitignore 下，
  *      干净 clone／CI 上必然红；现在那份 JSON 只是工作草稿，**不再进任何判据**。）
- *      将来搬走一条命令时：改 `legacy-frozen-295.mjs`（键 ＋ 上限），再删它那一片里的那一行。
+ *      #322 预热整改：此处原为「现行键集与冻结键集**逐字相等**」＋「条数 == 上限」两条等号，
+ *      六票每搬一条命令都要回头改本件；改成「⊆ ＋ 零丢失（清单 ∪ 已搬迁 ＝ 冻结）」＋「≤」后，
+ *      搬迁票**不必**再动本件（搬走一条＝键从清单与冻结集各去掉、同时进 REGISTRY ⇒ 两种中间态都绿）。
  *   ③ **文件级隔离可机械判定**：生成器的输入恰为 `src/cli/legacy/*.ts`（文件名升序）＋
  *      `src/<能力>/commands.ts`；内容印记 `dist/.gen-inputs.json` 覆盖这些分片；
  *      旧单文件 `src/cli/legacyCommands.ts` 与其编译产物都不再存在（避免长出第三处清单）。
@@ -36,7 +38,7 @@ import { LEGACY_SCENE_08 } from '../dist/cli/legacy/scene-08.js';
 import { LEGACY_SCENE_09 } from '../dist/cli/legacy/scene-09.js';
 import { LEGACY_SCENE_10 } from '../dist/cli/legacy/scene-10.js';
 import { mergeLegacyPartition } from '../scripts/gen-cli.mjs';
-import { LEGACY_COMMANDS } from './declared.mjs';
+import { LEGACY_COMMANDS, DECLARED_CAPABILITY_KEYS } from './declared.mjs';
 import { FROZEN_LEGACY_KEYS, FROZEN_LEGACY_MAX } from './legacy-frozen-295.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -58,10 +60,13 @@ const SCENES = {
   '10': LEGACY_SCENE_10,
 };
 
-/** 分区前的 92 键（冻结基线唯一一份定义，在版本库内）。 */
+/** 分区前的 92 键（冻结基线唯一一份定义，在版本库内）。
+ * 口径（#322 预热）：冻结集与上限的关系是「≤」而不是「==」——两边都只许下降，脚本不再要求
+ * 「减一个键」与「下调上限」同时落地（对齐 `legacy-ratchet-295.test.mjs:69-70` 的 `<=` 口径）。 */
 function baselineKeys() {
   const keys = [...FROZEN_LEGACY_KEYS];
-  assert.equal(keys.length, FROZEN_LEGACY_MAX, '冻结键集条数与冻结上限不等（冻结面自相矛盾）');
+  assert.ok(keys.length <= FROZEN_LEGACY_MAX,
+    '冻结键集条数超过了冻结上限（冻结面自相矛盾）：' + keys.length + ' > ' + FROZEN_LEGACY_MAX);
   return keys;
 }
 
@@ -90,21 +95,32 @@ test('#313 跨场景同键即抛：两个场景文件声明同一个键时，合
   );
 });
 
-/* ── ② 键集与分区前一致（纯搬迁的机器判据） ──────────────────────────────────────────────── */
+/* ── ② 清单 ⊆ 冻结集 ＋ 零丢失（纯搬迁的机器判据；#322 预热前是「与冻结集逐字相等」） ─────────── */
 
-test('#313 纯搬迁：分区后的键集与分区前的冻结键集逐字一致', () => {
+test('#313 纯搬迁：未搬迁清单 ⊆ 冻结键集，且冻结集里的键都还有定义地', () => {
   const now = Object.keys(SCENES).sort().flatMap((s) => SCENES[s].map((d) => d.key));
   const expected = baselineKeys();
-  assert.deepEqual([...now].sort(), [...expected].sort(),
-    '分区后的键集与分区前不一致（分区是纯搬迁，不许增删命令）');
+  // ① 只进不出：现行清单的每个键都必须在冻结集里（清单外的新键即红——与 ratchet 同口径）。
+  //    #322 预热：原为「与冻结集逐字相等」，搬迁时两边一起动才绿；改成 ⊆ 后搬一条命令不必回头改本件。
+  const intruders = now.filter((k) => !FROZEN_LEGACY_KEYS.has(k));
+  assert.deepEqual(intruders, [],
+    '未搬迁清单出现了冻结集之外的键（这里只进不出）：' + intruders.join('、'));
   assert.equal(new Set(now).size, now.length, '分区后出现重复键');
+  // ② 零丢失：冻结集里的每条命令都必须仍有定义地——未搬迁清单里，或已搬进能力目录（生成物 REGISTRY）。
+  //    搬迁一条＝它从清单与冻结集里各去掉、同时进 REGISTRY ⇒ 两边都动也对、只动清单（冻结集没跟上）也对，
+  //    所以「搬一条命令要不要改本件」的答案是：不必。
+  const stillDeclared = new Set([...now, ...DECLARED_CAPABILITY_KEYS]);
+  const lost = [...expected].filter((k) => !stillDeclared.has(k));
+  assert.deepEqual(lost, [],
+    '冻结集里的命令既不在未搬迁清单、也不在能力目录（被静默删掉了一条命令）：' + lost.join('、'));
   // 声明字段逐条存在（不许顺手漏字段；`wakeWord` 按契约可缺，缺了速查表退回命令名）。
   for (const d of LEGACY_COMMANDS) {
     for (const f of ['kind', 'key', 'shape', 'title', 'example']) {
       assert.equal(typeof d[f], 'string', '分区后声明缺字段 ' + f + '：' + JSON.stringify(d.key));
     }
   }
-  assert.equal(LEGACY_COMMANDS.length, FROZEN_LEGACY_MAX, '分区后声明条数与冻结上限不等');
+  assert.ok(LEGACY_COMMANDS.length <= FROZEN_LEGACY_MAX,
+    '分区后声明条数超过了冻结上限：' + LEGACY_COMMANDS.length + ' > ' + FROZEN_LEGACY_MAX);
 });
 
 /* ── ③ 文件级隔离：生成器输入恰为场景分片，旧单文件不复存在 ───────────────────────────────── */

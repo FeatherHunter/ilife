@@ -6,7 +6,9 @@
  *   ② **两条路各有活证**：命中注册表的新路（走能力目录）与未命中注册表的老路（走原 switch）
  *      各真跑一次读、一次写——防「新路通了、老路悄悄断」。
  *   ③ **对账**：注册表每条声明的键／形状／标题与 `cli/keys.ts` 的登记逐条对得上，
- *      `kind` 与「是不是写键」等价，代表唤醒词都是 `TRIGGERS` 里真有的唤醒词。
+ *      `kind` 与「是不是写键」等价，代表唤醒词都是 `TRIGGERS` 里真有的唤醒词；
+ *      注册表 ⊇ 各能力声明的键集，且每个键都能在某个能力目录的 `commands.ts` 里找到定义地
+ *      （#322 预热：这三条与「搬了几家能力」无关，搬一条老命令不必回头改本文件）。
  *
  * 冻结口径（写死在下面）：
  *   - 行数＝文件按 `\\n` 切分的物理行数；
@@ -17,7 +19,7 @@
  * 运行：先 `pnpm --filter skill-calorie build`，再跑根 `pnpm test`。
  */
 import { strict as assert } from 'node:assert';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -188,12 +190,31 @@ test('#294 对账：注册表每条声明与 cli/keys.ts 的登记逐条一致',
     }
     assert.equal(typeof spec.run, 'function', '声明缺处理函数：' + key);
   }
-  // 本票只搬了体重：注册表当前恰好是体重那 9 条。
-  assert.deepEqual([...REGISTRY_KEYS].sort(), WEIGHT_COMMANDS.map((c) => c.key).sort(),
-    '注册表当前应恰为体重 9 条（别的场景随各自的票搬）');
-  // 计数不手写：两边都从权威声明算出来（加／删一条命令时本行不动，见 test/declared.mjs）。
-  assert.equal(WEIGHT_COMMANDS.length, DECLARED_CAPABILITY_KEYS.length,
-    '体重声明条数 == 各能力目录声明的键数（权威声明算出来的，不再手写数字）');
+  // #322 预热 · 口径与「搬了几家能力」无关：别的场景随各自的票搬进来时，本段一行不必改
+  // （改写前这里是两条等号：`REGISTRY 恰为体重 9 条`＋`条数 == DECLARED_CAPABILITY_KEYS.length`，
+  //  第一条命令搬进新能力目录即红 ⇒ 六票都来改同一处。改成 ⊇／≤ 后仍是原判据，只是不再钉住搬家进度。）
+  const registryKeys = new Set(REGISTRY_KEYS);
+  const weightKeys = WEIGHT_COMMANDS.map((c) => c.key);
+  assert.equal(new Set(weightKeys).size, weightKeys.length, '体重声明出现重复键');
+  // ① 注册表 ⊇ 体重声明的键集（注册表是生成物、体重声明是权威源）：搬迁不许把体重这几条弄丢。
+  const missingInRegistry = weightKeys.filter((k) => !registryKeys.has(k));
+  assert.deepEqual(missingInRegistry, [],
+    '注册表缺了体重声明的键（生成物落后于权威源？）：' + missingInRegistry.join('、'));
+  // ② 定义地：注册表里的每个键都能在某个能力目录的 `commands.ts` 里找到（不许有只活在生成物里的键）。
+  const srcDir = join(HERE, '..', 'src');
+  const capabilityDirs = readdirSync(srcDir, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && existsSync(join(srcDir, e.name, 'commands.ts')))
+    .map((e) => e.name)
+    .sort();
+  const declaredByCapabilities = new Set(capabilityDirs.flatMap((d) =>
+    [...readFileSync(join(srcDir, d, 'commands.ts'), 'utf8').matchAll(/key: '([^']+)'/g)]
+      .map((m) => m[1]).filter((k) => k.startsWith('calorie.'))));
+  const withoutSite = [...registryKeys].filter((k) => !declaredByCapabilities.has(k));
+  assert.deepEqual(withoutSite, [], '注册表的键在各能力目录的声明里找不到定义地：' + withoutSite.join('、'));
+  // ③ 计数不手写：两边都从权威声明算出来（加／删一条命令时本行不动，见 test/declared.mjs）；
+  //    口径是「≤」而非「==」——搬走一条命令时本行也不必改。
+  assert.ok(weightKeys.length <= DECLARED_CAPABILITY_KEYS.length,
+    '体重声明条数多于各能力目录声明的键数：' + weightKeys.length + ' > ' + DECLARED_CAPABILITY_KEYS.length);
 });
 
 test('#294 对账：每条声明的代表唤醒词都是真唤醒词，且路由落回同一个键', () => {

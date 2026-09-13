@@ -788,7 +788,7 @@ async function p4() {
 // ─────────────────────────────────────────────────────────────────────────────
 const PARITY = [
   ['packages/skill-calorie/test/sport-homogeneity-109.test.mjs', /view\.weight-history/, '运动/身体域 9 键同质：唤醒词命中 ＋ HTML 同质 ＋ 无假数据（含 view.weight／weight-history／weight-compare／weight-review／volatility）'],
-  ['packages/skill-calorie/test/cmd-registry-294.test.mjs', /WEIGHT_COMMANDS\.length,\s*9/, '注册表恰为体重 9 条 ＋ 每条声明形状/标题/写键表与 registry 对账'],
+  ['packages/skill-calorie/test/cmd-registry-294.test.mjs', /weightKeys\.filter\(\(k\) => !registryKeys\.has\(k\)\)/, '注册表 ⊇ 体重声明的键集（#322 预热：搬迁无关口径，原 /WEIGHT_COMMANDS\\.length,\\s*9/ 已 0 命中）＋ 每条声明形状/标题/写键表与 registry 对账'],
   ['packages/skill-calorie/test/cmd-write-40-persist.test.mjs', /weight\.log/, '写链落库列逐列（weight.log 的 bmi 等）'],
   ['packages/skill-calorie/test/cmd-write-40.test.mjs', /weight\.log/, '写链 parity 抽查（体重写键）'],
   ['packages/skill-calorie/test/render-t41.test.mjs', /weight-history/, '渲染锚点（ilife:calorie:weight-history）'],
