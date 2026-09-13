@@ -1,6 +1,8 @@
 // #201 · 作息 HELP 内容资产锁：旧 HELP 85 条场景逐字 ＋ 三层分组对账 ＋ 待开发标记 ＋ 可重跑。
-// 事实源在 `.scratch/`（工作副本，不入库），故「逐条对账」与「可重跑」在源不在盘时跳过；
-// 源不在盘时改由摘要锁钉住内容（改一个字即变红）。
+// #312：事实源＝**受跟踪 fixture** `test/fixtures/t198-old-scenarios.json`（与受跟踪正本
+// `docs/skills/skill-schedule/t198-old-help-truth.md` 同源）。改前读的是不入库的工作副本
+// `.scratch/t198/old-scenarios.json`（`.gitignore:5`），CI 上恒缺 ⇒ 4 条对账用例**静默 skipped**：
+// 报告是绿的、覆盖却少一块。现在 fixture 缺了就是仓库坏了——直接红，不再有「跳过也算过」的路。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -14,11 +16,9 @@ import {
 import { NO_COMMAND_WAKE_WORDS } from '../scripts/gen-help-assets.mjs';
 
 const PKG_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = join(PKG_DIR, '..', '..', '.scratch', 't198', 'old-scenarios.json');
+const SRC = join(PKG_DIR, 'test', 'fixtures', 't198-old-scenarios.json');
 const ASSET = join(PKG_DIR, 'src', 'help', 'scenes', 'help-assets.ts');
 const GEN = join(PKG_DIR, 'scripts', 'gen-help-assets.mjs');
-const HAS_SOURCE = existsSync(SRC);
-const SKIP_NO_SOURCE = HAS_SOURCE ? false : '事实源不在盘上（.scratch 不入库）';
 
 /** `status` 的两值（契约 `SCENE_STATUS`）。 */
 const PENDING = '【待开发】';
@@ -50,7 +50,9 @@ function sourceScenes(payload) {
   return payload.categories.flatMap((c) => c.wake_words.flatMap((w) => w.scenarios));
 }
 
+/** 读事实源。**fixture 缺了即红**（#312：受跟踪件丢了就是仓库坏了，不许退化成「跳过也算绿」）。 */
 function sourcePayload() {
+  assert.ok(existsSync(SRC), '受跟踪事实源缺失：' + SRC + '（#312：不许静默跳过）');
   return JSON.parse(readFileSync(SRC, 'utf8'));
 }
 
@@ -96,7 +98,7 @@ describe('#201 作息 HELP 内容资产', () => {
     }
   });
 
-  it(`逐条对账：与源数据 ${HELP_GROUPS.length} 个分组／${HELP_GROUPS.flatMap((g) => g.subgroups).length} 条唤醒词／${HELP_ASSETS.length} 条场景逐条对得上`, { skip: SKIP_NO_SOURCE }, () => {
+  it(`逐条对账：与源数据 ${HELP_GROUPS.length} 个分组／${HELP_GROUPS.flatMap((g) => g.subgroups).length} 条唤醒词／${HELP_ASSETS.length} 条场景逐条对得上`, () => {
     const payload = sourcePayload();
     const groups = payload.categories;
     assert.equal(HELP_GROUPS.length, groups.length, '一级分组数不符');
@@ -139,7 +141,7 @@ describe('#201 作息 HELP 内容资产', () => {
     assert.equal(Object.keys(HELP_GROUP_NOTES).length, HELP_GROUPS.length, '分组说明条数不符');
   });
 
-  it(`${HELP_ASSETS.length} 条 prompt 零差异：逐条逐字节比`, { skip: SKIP_NO_SOURCE }, () => {
+  it(`${HELP_ASSETS.length} 条 prompt 零差异：逐条逐字节比`, () => {
     const scenes = sourceScenes(sourcePayload());
     assert.equal(HELP_ASSETS.length, scenes.length);
     scenes.forEach((s, i) => {
@@ -156,14 +158,13 @@ describe('#201 作息 HELP 内容资产', () => {
     const text = readFileSync(ASSET, 'utf8');
     assert.ok(!text.includes('\uFFFD'), '资产出现替换字符（UTF-8 写入坏了）');
     assert.ok(!text.includes('\r'), '资产不得带回车（仓库口径 LF）');
-    if (HAS_SOURCE) {
-      const scenes = sourceScenes(sourcePayload());
-      assert.equal(digest(scenes.map((s) => s.prompt).join('\n')), DIGEST_PROMPTS,
-        '源侧算出的 prompt 摘要与锁不符——源或资产被改过');
-    }
+    // #312：源侧也各算一遍。改前这整块挂在一个「源在盘才跑」的条件上，源不在盘时静默省掉。
+    const scenes = sourceScenes(sourcePayload());
+    assert.equal(digest(scenes.map((s) => s.prompt).join('\n')), DIGEST_PROMPTS,
+      '源侧算出的 prompt 摘要与锁不符——源或 fixture 被改过');
   });
 
-  it(`待开发标记：源自标项 ＋ 无命令唤醒词下辖项，共 ${HELP_ASSETS.filter((s) => s.status !== '').length} 条`, { skip: SKIP_NO_SOURCE }, () => {
+  it(`待开发标记：源自标项 ＋ 无命令唤醒词下辖项，共 ${HELP_ASSETS.filter((s) => s.status !== '').length} 条`, () => {
     const scenes = sourceScenes(sourcePayload());
     const expected = scenes.filter((s) => expectedStatus(s) !== '').map((s) => s.scenario_id).sort();
     const actual = HELP_ASSETS.filter((s) => s.status !== '').map((s) => s.id).sort();
@@ -178,7 +179,7 @@ describe('#201 作息 HELP 内容资产', () => {
     }
   });
 
-  it('可重跑：生成器 --check 与仓库内资产字节一致', { skip: SKIP_NO_SOURCE }, () => {
+  it('可重跑：生成器 --check 与仓库内资产字节一致', () => {
     const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
     assert.match(out, /一致：/);
     assert.doesNotMatch(out, /不一致/);

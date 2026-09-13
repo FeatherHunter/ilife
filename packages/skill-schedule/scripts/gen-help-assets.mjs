@@ -12,8 +12,8 @@
  *   node packages/skill-schedule/scripts/gen-help-assets.mjs --check         # 只比对，不一致 exit 1
  *   node packages/skill-schedule/scripts/gen-help-assets.mjs --src <源.json> --out <目标.ts>
  *
- * 事实源在 `.scratch/`（工作副本，不入库），故 `--check` 只在源在盘的机器上可跑；源不在盘即大声失败，
- * 不许拿空内容当「一致」。
+ * 事实源：**优先受跟踪 fixture** `test/fixtures/t198-old-scenarios.json`（#312 起的入库正本，
+ * 与 `.scratch` 工作副本逐字节相同），退化到工作副本；两份都不在盘即大声失败，不许拿空内容当「一致」。
  *
  * 三处「非纯搬运」都写在本文件里、可复核（生成文件头注释同步声明）：
  *   ① 源 `dimensions`（参数名 → 说明）→ 契约 `editable_fields`（形状转换，见 `toField`）；
@@ -33,7 +33,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = join(HERE, '..');
 const REPO_DIR = join(PKG_DIR, '..', '..');
-const DEFAULT_SRC = join(REPO_DIR, '.scratch', 't198', 'old-scenarios.json');
+/** 事实源：**优先受跟踪 fixture**（入库正本，CI 上必在），退化到 `.scratch` 工作副本。
+ *  #312：原先只认不入库的工作副本 ⇒ 新鲜 clone／CI 上「源不在盘」时生成器不产出一致行，
+ *  依赖它的用例只能整条跳过（报告绿、覆盖少一块）。两份内容逐字节相同。 */
+const SRC_FIXTURE = join(PKG_DIR, 'test', 'fixtures', 't198-old-scenarios.json');
+const SRC_WORKCOPY = join(REPO_DIR, '.scratch', 't198', 'old-scenarios.json');
+const DEFAULT_SRC = existsSync(SRC_FIXTURE) ? SRC_FIXTURE : SRC_WORKCOPY;
 const DEFAULT_OUT = join(PKG_DIR, 'src', 'help', 'scenes', 'help-assets.ts');
 
 /** 源场景字段闭集（多一个键就说明有信息会静默丢掉，故 fail-closed）。 */
