@@ -1,0 +1,38 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：313a｜since：2026-09-13T09:19:11Z｜until：（无）｜条目数：30｜导出时间：2026-09-13T09:33:25.577Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=313a runId=cdd2d7e9-bec5-4fbd-a283-c0c48700a7b6 cmd="pnpm test" waitedMs=0 exit=0 pid=34732 at=2026-09-13T09:21:37.173Z
+RUN ticket=313a runId=acb50c17-b7d2-4291-a673-b62d3edbc653 cmd="pnpm build" waitedMs=0 exit=0 pid=34684 at=2026-09-13T09:23:42.568Z
+RUN ticket=313a runId=a56050f2-3bfb-4b84-89e1-ac35d6ec1596 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=1 exit=1 pid=40840 at=2026-09-13T09:24:08.179Z
+RUN ticket=313a runId=d3315d95-d93e-47ec-a1d4-50ae72e81a45 cmd="pnpm build" waitedMs=0 exit=0 pid=30656 at=2026-09-13T09:24:58.744Z
+RUN ticket=313a runId=3b2951ae-38e7-4fdc-8da3-c973dd762d12 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=1 pid=38212 at=2026-09-13T09:24:59.669Z
+RUN ticket=313a runId=4b83d2ef-a6b7-4ba0-8094-ca9a18710bd5 cmd="pnpm build" waitedMs=0 exit=1 pid=29404 at=2026-09-13T09:25:37.917Z
+RUN ticket=313a runId=d01c440a-d8c4-4efc-afe0-de0d3750fe8d cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=1 pid=33340 at=2026-09-13T09:25:38.792Z
+RUN ticket=313a runId=cb18dba5-ca2d-4cdc-93dd-9c2403cdd11e cmd="pnpm build" waitedMs=1 exit=0 pid=34368 at=2026-09-13T09:25:54.365Z
+RUN ticket=313a runId=2a00a820-4d83-475e-a814-c73ecf6a52d6 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=1 pid=45100 at=2026-09-13T09:25:55.284Z
+RUN ticket=313a runId=f312c465-1983-4034-bab5-cd0b331ee4b1 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=0 exit=0 pid=40316 at=2026-09-13T09:26:44.389Z
+RUN ticket=313a runId=e9da5967-e6fc-46d8-b385-f1d870684a9d cmd="pnpm gen:check" waitedMs=0 exit=0 pid=19536 at=2026-09-13T09:26:45.344Z
+RUN ticket=313a runId=8ce3c253-d12b-455e-9d93-d0de828c5853 cmd="pwsh -NoProfile -File .scratch/t313/commit-steps.ps1" waitedMs=0 exit=0 pid=9940 at=2026-09-13T09:27:48.447Z
+RUN ticket=313a runId=6f153f0b-7015-43a5-aaf3-7790957dad69 cmd="pnpm build" waitedMs=1 exit=0 pid=31968 at=2026-09-13T09:28:08.771Z
+RUN ticket=313a runId=042e4ba5-9a91-4b0d-9946-6e7f6ad1c385 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs" waitedMs=0 exit=1 pid=5008 at=2026-09-13T09:28:09.019Z
+RUN ticket=313a runId=7a4c9e80-529d-48c8-bf56-56e37428a8e8 cmd="pnpm build" waitedMs=0 exit=0 pid=19144 at=2026-09-13T09:28:29.591Z
+RUN ticket=313a runId=24d365f5-1092-4df8-aa27-d1c0be502661 cmd="node packages/skill-calorie/scripts/gen-cli.mjs" waitedMs=1 exit=1 pid=29272 at=2026-09-13T09:28:29.759Z
+RUN ticket=313a runId=93a9a4ca-8e5a-45e6-aba1-d65e9b063491 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs" waitedMs=1 exit=1 pid=37000 at=2026-09-13T09:28:30.062Z
+RUN ticket=313a runId=1d0b7bd5-751f-4b28-bdab-0ba3b280c3a4 cmd="pnpm build" waitedMs=0 exit=0 pid=12192 at=2026-09-13T09:28:32.207Z
+RUN ticket=313a runId=08e70a21-139d-43de-b258-5797396d213d cmd="node packages/skill-calorie/scripts/gen-cli.mjs" waitedMs=0 exit=0 pid=3940 at=2026-09-13T09:28:32.392Z
+RUN ticket=313a runId=b9fe9012-ce66-442a-9bbe-ea987367d210 cmd="pnpm test" waitedMs=0 exit=0 pid=25984 at=2026-09-13T09:29:23.975Z
+RUN ticket=313a runId=03ea7b5e-7447-436a-977d-08131984e18a cmd="pnpm gen:check" waitedMs=0 exit=0 pid=40156 at=2026-09-13T09:29:24.981Z
+RUN ticket=313a runId=30fb2d40-112e-4408-8c38-50a3509f2838 cmd="pnpm boundaries" waitedMs=1 exit=0 pid=22764 at=2026-09-13T09:29:25.972Z
+RUN ticket=313a runId=4c0b6407-f4e0-4e95-b240-b166d1b29197 cmd="pnpm doctor" waitedMs=0 exit=0 pid=42300 at=2026-09-13T09:29:37.660Z
+RUN ticket=313a runId=93897f04-44ef-43ee-9caf-cfc3f5f983d9 cmd="pnpm snapshot:html:check" waitedMs=0 exit=0 pid=30024 at=2026-09-13T09:29:38.713Z
+RUN ticket=313a runId=9613ce55-384e-48ad-96c7-0f3eed3a7af1 cmd="node --test test/ci-gates-295.test.mjs" waitedMs=0 exit=0 pid=15424 at=2026-09-13T09:29:50.283Z
+RUN ticket=313a runId=dc32c6ac-1968-4c08-93cb-d20db0ab18ab cmd="pnpm chat-not-used" waitedMs=1 exit=1 pid=29716 at=2026-09-13T09:30:03.892Z
+RUN ticket=313a runId=7e5d5274-91a4-4a64-97d1-33b566a73267 cmd="pnpm changeset:status" waitedMs=0 exit=0 pid=34684 at=2026-09-13T09:30:05.191Z
+RUN ticket=313a runId=7a2ce3f3-cae2-461f-9598-53d9860c7191 cmd="pwsh -NoProfile -File .scratch/t313/commit-steps-2.ps1" waitedMs=0 exit=0 pid=43396 at=2026-09-13T09:32:09.857Z
+RUN ticket=313a runId=0262ae96-bcd0-450f-82db-0fbccfccbd32 cmd="node --test packages/skill-calorie/test/legacy-ratchet-295.test.mjs packages/skill-calorie/test/legacy-partition-313.test.mjs packages/skill-calorie/test/cmd-registry-294.test.mjs" waitedMs=10001 exit=0 pid=51088 at=2026-09-13T09:32:30.069Z
+RUN ticket=313a runId=4346393b-38e6-4f67-ac4b-3bd97cb4a7db cmd="node docs/skills/skill-calorie/t313a-分区-重核.mjs" waitedMs=0 exit=0 pid=46292 at=2026-09-13T09:32:30.222Z
+```
