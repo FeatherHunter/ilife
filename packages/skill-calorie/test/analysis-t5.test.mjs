@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { resolveWindow, buildSeries, seriesAvg, seriesSum, seriesCount, seriesDelta } from '../dist/analysis/series.js';
 import { TDEE_ACTIVITY_FACTORS, calcTdee, getActivityFactor } from '../dist/analysis/utils.js';
-import { dietCalorieTrend, dietMacroRatio, dietFoodRanking, dietDeficitAnalysis } from '../dist/analysis/diet.js';
+import { dietCalorieTrend, dietMacroRatio, dietFoodRanking, dietDeficitAnalysis } from '../dist/diet/dietEngine.js';
 import { exerciseTrend, exerciseTypeBreakdown, exerciseDeficitContribution, exerciseReview } from '../dist/analysis/exercise.js';
 import { weightTrend, weightCompare, weightMilestone, weightVolatility, getWeightGoalInfo, stdev, weekKey } from '../dist/weight/figures.js';
 import { weightVolatilityV2 } from '../dist/weight/volatility.js';

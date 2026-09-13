@@ -6,14 +6,14 @@
  * 两条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { dietMacroRatio } from '../analysis/diet.js';
+import { dietMacroRatio } from './dietEngine.js';
 import { todayISO } from '../analysis/utils.js';
 import { listMeals } from '../fetch/diet.js';
 import { buildDietOverview, buildMealDistribution } from '../render/diet.js';
 import { buildTodayDietDoc } from '../render/dietDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { buildTodayWaterView } from '../render/nutritionPort.js';
-import { buildTodayWaterDoc } from '../render/nutritionPortDocs.js';
+import { buildTodayWaterView } from './nutritionPort.js';
+import { buildTodayWaterDoc } from './nutritionPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { assertISO, dayField, latestFoodDate, nums, windowRange } from '../shared/params.js';
 

@@ -7,9 +7,9 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { EX_ALIVE, getActivityFactor, parseDate } from './utils.js';
-import { ok, rejection } from './result.js';
-import type { AnalysisResult } from './result.js';
+import { EX_ALIVE, getActivityFactor, parseDate } from '../analysis/utils.js';
+import { ok, rejection } from '../analysis/result.js';
+import type { AnalysisResult } from '../analysis/result.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;

@@ -5,10 +5,10 @@
  * keyword 空串即 bad-input；limit 范围 1..100。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { listProducts, listProductsByCategory, searchProducts, sourceStats } from '../fetch/products.js';
-import type { ProductRow } from '../fetch/products.js';
+import { listProducts, listProductsByCategory, searchProducts, sourceStats } from './productStore.js';
+import type { ProductRow } from './productStore.js';
 import { FetchError } from '../fetch/errors.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 export interface ProductSearch {
   keyword: string;

@@ -15,10 +15,10 @@ export { COMBINED_PAIRS, buildCombinedAnalysis, buildDeficitPlate, buildDietRevi
 export type { CombinedAnalysis, DietReview, ReviewMealSlice } from './analysisPlate.js';
 export { buildHealthPlate } from './health.js';
 export type { HealthPlate } from './health.js';
-export { RANK_CATEGORIES, buildAllRankings, buildFoodRankingPlate } from './ranking.js';
-export type { AllRankings, RankCategory } from './ranking.js';
-export { buildProductLibrary, buildProductSearch, buildProductStats } from './library.js';
-export type { ProductLibrary, ProductSearch, ProductStats } from './library.js';
+export { RANK_CATEGORIES, buildAllRankings, buildFoodRankingPlate } from '../diet/rankingPlate.js';
+export type { AllRankings, RankCategory } from '../diet/rankingPlate.js';
+export { buildProductLibrary, buildProductSearch, buildProductStats } from '../diet/libraryPlate.js';
+export type { ProductLibrary, ProductSearch, ProductStats } from '../diet/libraryPlate.js';
 export { renderHomeHtml, renderDietHtml, renderExerciseHtml, renderGoalHtml } from './html.js';
 // #294 · 体重视图／取数已搬进能力目录 `src/weight/`（归属律）；本汇总出口按原样转出，
 // 既有调用方（`test/render-t41`）导入面不变——照 #179 档案读链的先例。

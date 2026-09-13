@@ -14,9 +14,9 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { WATER_NAME, readGoal } from '../fetch/diet.js';
-import { sourceStats } from '../fetch/products.js';
+import { sourceStats } from './productStore.js';
 import { shiftISODate } from '../analysis/utils.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 function assertRange(start: string, end: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {

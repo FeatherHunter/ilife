@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import type { DatabaseSync } from 'node:sqlite';
 import { validateRecord } from './validate.js';
 import { FetchError } from './errors.js';
-import { deprecateProduct } from './products.js';
+import { deprecateProduct } from '../diet/productStore.js';
 
 export type DuplicatePolicy = 'overwrite' | 'skip' | 'deprecate';
 

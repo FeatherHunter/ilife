@@ -5,7 +5,7 @@
  * 不 print，返回数据；失败抛 FetchError。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { FetchError } from './errors.js';
+import { FetchError } from '../fetch/errors.js';
 
 export interface ProductRow {
   id: number;

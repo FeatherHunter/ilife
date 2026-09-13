@@ -5,7 +5,7 @@
  * 三条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { addProduct, deprecateProduct, updateProduct } from '../fetch/products.js';
+import { addProduct, deprecateProduct, updateProduct } from './productStore.js';
 import { CalorieRenderError } from '../render/errors.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { fail, needId, needNum, optNum, optStr } from '../shared/params.js';

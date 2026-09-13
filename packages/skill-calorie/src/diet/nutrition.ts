@@ -5,8 +5,8 @@
  * 三条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { buildNutritionDetailView, buildNutritionRatioView } from '../render/nutritionPort.js';
-import { buildNutritionDetailDoc, buildNutritionRatioDoc } from '../render/nutritionPortDocs.js';
+import { buildNutritionDetailView, buildNutritionRatioView } from './nutritionPort.js';
+import { buildNutritionDetailDoc, buildNutritionRatioDoc } from './nutritionPortDocs.js';
 import { buildBatchImportPreviewView } from '../render/trendMiscPort.js';
 import { buildBatchImportPreviewDoc } from '../render/trendMiscPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';

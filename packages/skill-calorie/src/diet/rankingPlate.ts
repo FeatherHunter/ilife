@@ -5,10 +5,10 @@
  * topN 范围 1..50（触发词默认 10，本票上限 50 防大页）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { dietFoodRanking } from '../analysis/diet.js';
-import type { FoodRanking } from '../analysis/diet.js';
+import { dietFoodRanking } from './dietEngine.js';
+import type { FoodRanking } from './dietEngine.js';
 import { FetchError } from '../fetch/errors.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 export const RANK_CATEGORIES = ['high_calorie', 'low_calorie', 'frequent', 'high_carb', 'high_protein'] as const;
 export type RankCategory = (typeof RANK_CATEGORIES)[number];

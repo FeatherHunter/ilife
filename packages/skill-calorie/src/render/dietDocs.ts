@@ -41,13 +41,13 @@ export interface DietMealRow {
   readonly note?: string | null;
 }
 import type { DaySeries } from '../analysis/series.js';
-import type { FoodRanking, MacroRatio } from '../analysis/diet.js';
+import type { FoodRanking, MacroRatio } from '../diet/dietEngine.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { DietReview } from './analysisPlate.js';
-import type { AllRankings } from './ranking.js';
+import type { AllRankings } from '../diet/rankingPlate.js';
 import type { HealthPlate } from './health.js';
 import type { DedupeView } from './insightPlate.js';
-import type { ProductLibrary, ProductSearch } from './library.js';
+import type { ProductLibrary, ProductSearch } from '../diet/libraryPlate.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';

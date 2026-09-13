@@ -6,7 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildAllRankingsDoc, buildRankingDoc } from '../render/dietDocs.js';
-import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
+import { buildAllRankings, buildFoodRankingPlate } from './rankingPlate.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
 

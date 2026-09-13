@@ -8,9 +8,9 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { buildDedupeDoc, buildLibraryDoc, buildSearchDoc } from '../render/dietDocs.js';
 import { buildDedupeView } from '../render/insightPlate.js';
-import { buildProductLibrary, buildProductSearch, buildProductStats } from '../render/library.js';
-import { buildSourceStatsView } from '../render/nutritionPort.js';
-import { buildSourceStatsDoc } from '../render/nutritionPortDocs.js';
+import { buildProductLibrary, buildProductSearch, buildProductStats } from './libraryPlate.js';
+import { buildSourceStatsView } from './nutritionPort.js';
+import { buildSourceStatsDoc } from './nutritionPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { fail, needStr, nums, optNum, optStr } from '../shared/params.js';
 

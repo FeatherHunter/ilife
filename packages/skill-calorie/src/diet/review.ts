@@ -6,7 +6,7 @@
  * 一条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { dietFoodRanking } from '../analysis/diet.js';
+import { dietFoodRanking } from './dietEngine.js';
 import { buildDietReview } from '../render/analysisPlate.js';
 import { buildDietReviewDoc } from '../render/dietDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';

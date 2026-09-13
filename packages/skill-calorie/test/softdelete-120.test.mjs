@@ -28,7 +28,7 @@ import { openDbReadOnly } from '../dist/db/readonly.js';
 import { buildSeries, seriesAvg } from '../dist/analysis/series.js';
 import { exerciseTrend, exerciseTypeBreakdown, exerciseDeficitContribution, exerciseReview } from '../dist/analysis/exercise.js';
 import { query5dims } from '../dist/analysis/review.js';
-import { dietDeficitAnalysis } from '../dist/analysis/diet.js';
+import { dietDeficitAnalysis } from '../dist/diet/dietEngine.js';
 import { analyzePair } from '../dist/analysis/cross.js';
 import { exerciseRows } from '../dist/analysis/anomaly/common.js';
 import { scenarioC5 } from '../dist/weight/weightCompare3.js';

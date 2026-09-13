@@ -27,7 +27,7 @@ import { openDbReadOnly } from '../../packages/skill-calorie/dist/db/readonly.js
 import { buildSeries, seriesAvg } from '../../packages/skill-calorie/dist/analysis/series.js';
 import { exerciseTrend, exerciseTypeBreakdown, exerciseDeficitContribution, exerciseReview } from '../../packages/skill-calorie/dist/analysis/exercise.js';
 import { query5dims } from '../../packages/skill-calorie/dist/analysis/review.js';
-import { dietDeficitAnalysis } from '../../packages/skill-calorie/dist/analysis/diet.js';
+import { dietDeficitAnalysis } from '../../packages/skill-calorie/dist/diet/dietEngine.js';
 import { analyzePair } from '../../packages/skill-calorie/dist/analysis/cross.js';
 import { exerciseRows } from '../../packages/skill-calorie/dist/analysis/anomaly/common.js';
 import { scenarioC5 } from '../../packages/skill-calorie/dist/analysis/weightCompare3.js';

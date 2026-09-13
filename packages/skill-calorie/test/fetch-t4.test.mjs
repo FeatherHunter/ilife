@@ -19,7 +19,7 @@ import {
 import {
   addProduct, searchProducts, updateProduct, deprecateProduct, listProducts,
   listProductsByCategory, sourceStats,
-} from '../dist/fetch/products.js';
+} from '../dist/diet/productStore.js';
 import {
   parseTags, serializeTags, validateTags, tagsContain, resolvePhotosDir,
   getPhotoRow, listPhotos, daysSinceTagPhoto, addPhotos, deletePhoto,
