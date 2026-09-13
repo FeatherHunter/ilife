@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#165 待你拍板 · 卡路里场景 03 体重（58 条唤醒词）</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --card2:#1d2129; --line:#2a2f3a;
+    --fg:#e8ecf3; --muted:#9aa4b2; --acc:#5aa9ff; --ok:#3ddc97; --warn:#ffb457; --bad:#ff7a7a;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:16px/1.7 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
+  h1{font-size:26px;margin:0 0 8px;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:14px}
+  h2{font-size:16px;margin:28px 0 10px;color:var(--muted);font-weight:600;letter-spacing:.4px}
+  p{margin:8px 0}
+  .muted{color:var(--muted)}
+  .mono{font-family:var(--mono);font-size:13px;background:#0b0d11;border:1px solid var(--line);
+        border-radius:4px;padding:1px 5px;color:#cfe3ff;white-space:nowrap}
+
+  /* 背景块 */
+  .ctx{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--acc);
+       border-radius:8px;padding:16px 18px}
+  .ctx p{margin:6px 0}
+
+  /* 事实带 */
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:8px 0 4px}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .fact b{display:block;font-size:20px;line-height:1.3}
+  .fact span{font-size:13px;color:var(--muted)}
+
+  /* 索引 */
+  ol.idx{columns:2;column-gap:24px;margin:8px 0 0;padding-left:22px}
+  ol.idx li{margin:2px 0}
+  a{color:var(--acc);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* 决策卡 */
+  .q{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:16px 0}
+  .q h3{margin:0 0 4px;font-size:18px}
+  .q h3 .n{color:var(--acc);font-family:var(--mono);margin-right:6px}
+  .why{color:var(--fg);border-left:2px solid var(--line);padding-left:12px;margin:12px 0}
+  .why .lbl{color:var(--muted);font-size:12px;letter-spacing:.6px;display:block}
+  .info{background:#0b0d11;border:1px dashed var(--line);border-radius:8px;padding:12px 14px;margin:12px 0;font-size:14.5px}
+  .info ul{margin:6px 0 0;padding-left:20px}
+  .info li{margin:4px 0}
+  .opt{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+  @media (max-width:760px){.opt{grid-template-columns:1fr}.facts{grid-template-columns:1fr 1fr}}
+  .o{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14.5px}
+  .o.rec{border-color:var(--ok);box-shadow:0 0 0 1px rgba(61,220,151,.25) inset}
+  .o .tag{display:inline-block;font-size:12px;border-radius:999px;padding:1px 8px;margin-bottom:6px}
+  .o.rec .tag{background:rgba(61,220,151,.15);color:var(--ok);border:1px solid rgba(61,220,151,.4)}
+  .o .tag.alt{background:rgba(154,164,178,.12);color:var(--muted);border:1px solid var(--line)}
+  .pro,.con{margin:6px 0 0;padding-left:18px}
+  .pro li::marker{color:var(--ok)}
+  .con li::marker{color:var(--bad)}
+  .rec-line{margin-top:12px;padding:10px 12px;border-radius:8px;background:rgba(90,169,255,.10);
+            border:1px solid rgba(90,169,255,.35);font-size:14.5px}
+  .rec-line b{color:var(--acc)}
+  footer{margin-top:28px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:14px}
+  .pick{font-size:13px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>#165 待你拍板 · 卡路里场景 03「体重」</h1>
+  <div class="sub">地图 <a href="https://github.com/FeatherHunter/ilife/issues/154">#154</a> 的首发票 <a href="https://github.com/FeatherHunter/ilife/issues/165">#165</a>（公共层提取与边界）· 2026-09-13 · 八个决策</div>
+</header>
+
+<div class="ctx">
+  <p><b>为什么有这一页</b>：仓库把 436 条唤醒词按 10 个场景拆成 11 张地图，场景 03「体重」是第三张（共 58 条词）。本图的第一张票 #165 只做一件事——<b>把边界和公共层定下来</b>，因为后面几张票（页面交付／命令补齐／锁／验收）长什么样，全由它决定。</p>
+  <p><b>本图要交的货</b>：58 条唤醒词在 DSH 里都能从头走到尾——说唤醒词 → 复制 prompt → AI 用命令执行 → 拿到<b>真实的 HTML 文件</b>（能双击打开、有版面），并由你肉眼验收。</p>
+  <p><b>这一页只讲 8 个决策</b>。事实取证已经完成四件，入仓在 <span class="mono">docs/skills/skill-calorie/t165-*.md</span>，每张卡下方都点到具体出处。</p>
+</div>
+
+<h2>关键事实（决策依据）</h2>
+<div class="facts">
+  <div class="fact"><b>0 / 0</b><span>与老技能对账的双向差集——没有幻觉词，也没有漏抄</span></div>
+  <div class="fact"><b>40 + 18</b><span>58 条里已有命令的条数／现在没有命令的条数</span></div>
+  <div class="fact"><b>9</b><span>40 条已接通的词只落在 9 条命令上</span></div>
+  <div class="fact"><b>8 → 6</b><span>8 个老模板名，全部有实物可照，归成 6 类页面</span></div>
+  <div class="fact"><b>10 条</b><span>今天产出的是「片段」而不是完整文档（9 条写类 + 1 条读类）</span></div>
+  <div class="fact"><b>装机已办</b><span>技能位已是 Junction 指向本仓，无需重装</span></div>
+</div>
+
+<h2>八张决策卡</h2>
+<ol class="idx">
+  <li><a href="#q1">页面归 6 类、放在哪一层</a></li>
+  <li><a href="#q2">页面交付切几张票</a></li>
+  <li><a href="#q3">命令补齐切几张票</a></li>
+  <li><a href="#q4">两张票谁先谁后</a></li>
+  <li><a href="#q5">体重复盘走哪张页</a></li>
+  <li><a href="#q6">跨场景那条词谁负责</a></li>
+  <li><a href="#q7">要不要写前确认页</a></li>
+  <li><a href="#q8">锁与验收的口径</a></li>
+</ol>
+
+<!-- Q1 -->
+<section class="q" id="q1">
+  <h3><span class="n">Q1</span>页面归 6 类、全留卡路里公共层，对吗？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    58 条词当年分布在 8 个老模板名上；后面的「页面交付」票要按类干活，所以先定类。同时要定这些页面件放哪一层——别的技能也可能用（比如曲线页、对比页），放错层以后搬一次要动很多处。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>6 类：① 曲线／明细 18 词 ② 两段对比 18 ③ 复盘 7 ④ 波动 5 ⑤ 今日体重盘 1 ⑥ 写后回执 9（含 3 个变体）。</li>
+      <li>①—⑤ 今天<b>已经是完整文档</b>，装配件在 <span class="mono">src/render/sportDocs.ts</span>；⑥ 今天只有一份通用回执，<b>而且是片段</b>。</li>
+      <li>别的技能今天只用了 base-paint 的 HELP 与落盘两件，<b>没有任何技能用页面件</b>。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>6 类，全留卡路里公共层</b>
+      <ul class="pro"><li>老实物一张不缺，逐类照着做</li><li>改一处，本场景 58 条词都受益</li><li>不动 base-paint 主出口的冻结锁</li></ul>
+      <ul class="con"><li>别的技能要用时得再搬一次（今天没有这样的消费方）</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>把曲线／对比／波动上移 base-render</b>
+      <ul class="pro"><li>以后别的技能可以直接复用</li></ul>
+      <ul class="con"><li>今天没有第二个消费方，白付搬迁成本</li><li>会把卡路里的页面调整变成跨包改动，还要同步冻结锁</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>再并类（如把「今日体重盘」并进曲线页）</b>
+      <ul class="pro"><li>类更少</li></ul>
+      <ul class="con"><li>老实物本就是两张页，并了要重定义形态，反而多一次争议</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：6 类全部留卡路里公共层——老实物有得照，别的技能暂时用不上（这条与场景 07 当年「不上移」的裁定一致）。</div>
+</section>
+
+<!-- Q2 -->
+<section class="q" id="q2">
+  <h3><span class="n">Q2</span>页面交付切几张票？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    页面交付 = 把 6 类页面做到与老实物对齐；其中写后回执还要把「片段」造成完整文档。怎么切，决定能并行多少、会不会两边改同一批文件。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>读类页面住在 <span class="mono">sportDocs.ts</span> ＋ <span class="mono">weightPlate.ts</span>；写后回执住在 <span class="mono">receipt.ts</span> ＋ <span class="mono">cli/write.ts</span>。<b>两组写集不重叠</b>。</li>
+      <li>写后回执要动一条钉死的断言：<span class="mono">test/profile-doc-179.test.mjs:216-231</span> 现在明确断言「其余 32 条命令保持片段」——改口径必须改这条，属于要单独讲清的动作。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>两张票：读类一张／写后回执一张</b>
+      <ul class="pro"><li>写集不冲突，可以并行，总时长更短</li><li>回执票的「片段→完整文档」是独立口径，单独一张好审查</li></ul>
+      <ul class="con"><li>多一张票的交接成本</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>合成一张票</b>
+      <ul class="pro"><li>少一次交接</li></ul>
+      <ul class="con"><li>一个执行者要同时动两片不相干的文件</li><li>口径改动会被混进页面票，出错时分不清归属</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>按 6 类拆成多张</b>
+      <ul class="pro"><li>单张最小</li></ul>
+      <ul class="con"><li>多数类都住 <span class="mono">sportDocs.ts</span> 同一个文件，只能串行，等于更慢</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：两张——读类五张页面一张，写后回执（3 个变体）一张。</div>
+</section>
+
+<!-- Q3 -->
+<section class="q" id="q3">
+  <h3><span class="n">Q3</span>命令补齐切几张票？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    18 条词现在没有命令（老技能当年都有，只是新仓没接通）。好消息是这 18 条<b>全是给三条现成命令加参数</b>，不是造新命令。切票方式决定能不能并行。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>分组：曲线标注 3 条、备注筛选 1 条、锚点对比 8 条（平台期首日／历史最低／历史最高／里程碑日／入夏最低／入冬最低／运动极端月）、期间复盘 5 条、里程碑回溯 1 条。</li>
+      <li>零件都已存在、有的零调用：<span class="mono">analysis/weightCompare2.ts</span>（各锚点函数）、<span class="mono">weightCompare3.ts:171 runScenario</span>（全仓零调用）、<span class="mono">analysis/volatility.ts</span>、<span class="mono">render/insightPlate.ts:86</span>。</li>
+      <li>不管怎么切，都要改同一批文件：<span class="mono">triggers/routing.ts</span>、<span class="mono">cli/cmd_read.ts</span> 与相关断言。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>一张票（18 条）</b>
+      <ul class="pro"><li>登记点同住一批文件，一张票改完，不用为了躲撞车而排队</li><li>18 条口径一致，验收一次跑完</li></ul>
+      <ul class="con"><li>票偏大，验证要分批做</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>按命令面切三张</b>
+      <ul class="pro"><li>单张更小</li></ul>
+      <ul class="con"><li>三张都要改 routing.ts 与 cmd_read.ts → 必须串行，比一张更慢</li><li>票间要传递口径，容易走样</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>按「标注／锚点／窗口」切两张</b>
+      <ul class="pro"><li>比三张稍好</li></ul>
+      <ul class="con"><li>仍然要串行改同一批文件，收益有限</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：一张「命令补齐（18 条）」——全是加参数，登记点共用，分票只会为了躲撞车而排队。</div>
+</section>
+
+<!-- Q4 -->
+<section class="q" id="q4">
+  <h3><span class="n">Q4</span>页面交付与命令补齐，谁先谁后？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    新参数产生的数据要填进页面的位置里。顺序定错，两边会互相返工：页面刚定好，命令又改；或者命令先做，页面没有位置可填。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>页面交付要改 <span class="mono">sportDocs.ts</span>；命令补齐为了把新数据画出来，也会碰这批页面文件。</li>
+      <li>两张页面票之间互不冲突（写集分开），但它们与命令补齐票之间存在重叠。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>命令补齐排在两张页面票之后（挂原生阻塞边）</b>
+      <ul class="pro"><li>页面先定「有哪些位置可以填」，命令再把数据填进去，零返工</li><li>两张票不同时改同一个页面文件</li></ul>
+      <ul class="con"><li>命令补齐开工时间推后（本图总时长不变）</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>三张一起开工</b>
+      <ul class="pro"><li>看起来最快</li></ul>
+      <ul class="con"><li>两边同改页面文件，撞车后返工，实际更慢</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>命令补齐先做</b>
+      <ul class="pro"><li>先把数据打通</li></ul>
+      <ul class="con"><li>页面还没有可填位置，数据结构容易白定一晚</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：命令补齐挂原生阻塞边，排在两张页面交付票之后。</div>
+</section>
+
+<!-- Q5 -->
+<section class="q" id="q5">
+  <h3><span class="n">Q5</span>体重复盘 5 条走「体重专面」还是「通用复盘页」？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    这 5 条（本周／本月／最近 90 天／今年／自定义）要的是「期间复盘」形态。仓库今天另有一张<b>通用复盘页</b>（属于场景 10 分析的地盘），窗内也有体重变化与要点，所以存在「直接用它」的可能。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>老实物是 <span class="mono">weight_review.html</span>：体重趋势图 ＋ 里程碑表 ＋ 结论；字段是 期间变化／均值／与上期对比／趋势。</li>
+      <li>通用复盘页 <span class="mono">render/trendMiscPort.ts:419 buildReviewTemplateView</span> 的字段是通用「变化 ＋ 要点」，与老体重复盘的字段不是一套。</li>
+      <li>体重专面今天的形态是「目标复核」（当前／目标／差距／预计达成），<b>缺期间复盘</b>。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>体重专面：给体重复核命令加窗口参数</b>
+      <ul class="pro"><li>老实物有得照，字段与体重域一致</li><li>不动别的场景的页面</li></ul>
+      <ul class="con"><li>将来别场景也做复盘时可能出现两张相似页（这类收口留给全批最后人工收口）</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>并到通用复盘页</b>
+      <ul class="pro"><li>不新增页面</li></ul>
+      <ul class="con"><li>字段对不上，等于本图去改别的场景的页面</li><li>老体重复盘的「里程碑回溯」在通用页里没有落点</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>两张都做</b>
+      <ul class="pro"><li>将来谁都能用</li></ul>
+      <ul class="con"><li>为尚不存在的需求付两遍成本</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：走体重专面；通用复盘页的跨场景收口留给全批。</div>
+</section>
+
+<!-- Q6 -->
+<section class="q" id="q6">
+  <h3><span class="n">Q6</span>「对比体重：当前 vs 目标体重」——本图补，还是转给场景 06 的图？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    它是 58 条里<b>唯一跨场景</b>的一条：走的是场景 06「目标管理」的命令。而那张页今天出的是<b>片段</b>（不是完整文档）。本图的交货物要求「产物是真实 HTML 文件、能双击打开」，所以它今天达不到这条。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>今天的页：<span class="mono">render/html.ts:296</span> → <span class="mono">pageShell:38</span>，首段是 <span class="mono">&lt;section …&gt;</span>，没有 doctype。</li>
+      <li>它是 58 条里唯一「结果型却给片段」的读命令；其余 4 条读命令都已是完整文档。</li>
+      <li>如果转出去，本图 Destination 的那一条会一直差一口气，本图无法收口。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>本图补：把这页做成完整文档（必要时补「当前 vs 目标」对比形态），命令归属不动</b>
+      <ul class="pro"><li>本图 58 条真的齐，能收口</li><li>命令仍属场景 06，边界干净</li></ul>
+      <ul class="con"><li>会动到场景 06 域下的页面文件，需要在票面写明与那张图的约定</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>转给场景 06 的图</b>
+      <ul class="pro"><li>归属最干净</li></ul>
+      <ul class="con"><li>本图永远差一条，无法收口</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>本图让它改走两段对比页</b>
+      <ul class="pro"><li>页面形态统一</li></ul>
+      <ul class="con"><li>改的是命令归属与路由，动了别的场景的能力，影响面比 A 大</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：本图只补页面（片段 → 完整文档），不改命令归属。</div>
+</section>
+
+<!-- Q7 -->
+<section class="q" id="q7">
+  <h3><span class="n">Q7</span>要不要写前确认页（过程型页面）？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    本图有 9 条写类词（记体重／补录／批量补录／改／删）。写类流程可以选择「先出一张确认页，我确认后再写入」。老技能当年<b>没这么做</b>：这 9 条给的都是写后回执。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>老表里这 9 条的产物都是写后回执（<span class="mono">weight_log_receipt</span>／<span class="mono">weight_batch_receipt</span>／<span class="mono">crud_receipt</span>）。</li>
+      <li>老目录里另有一张 <span class="mono">weight_batch_delete.html</span>（批量删专用页），但老表里<b>没有任何唤醒词引用它</b>——当年就没接通。</li>
+      <li>「批量导入食品」那种预览页是场景 02 的东西，本场景没有。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>本图不做写前确认页；把这件事记进「尚未定」</b>
+      <ul class="pro"><li>照老实物与老表办，不扩大范围</li><li>本图 9 条写类词一条都不缺命令，做了也不影响「跑得通」</li></ul>
+      <ul class="con"><li>批量删／批量补录没有写前确认（如你要，全批统一加）</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>给批量类补写前确认页</b>
+      <ul class="pro"><li>破坏性操作更稳</li></ul>
+      <ul class="con"><li>老技能没这么做；这是 10 个场景共有的问题，单在本场景定会与别场景不一致</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>照老实物把 <span class="mono">weight_batch_delete</span> 救回来</b>
+      <ul class="pro"><li>老实物现成</li></ul>
+      <ul class="con"><li>老表当年就没接通它，救回来等于新增一条无人引用的页面</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：本图不做，记进「尚未定」，全批再定。</div>
+</section>
+
+<!-- Q8 -->
+<section class="q" id="q8">
+  <h3><span class="n">Q8</span>「锁：真出口用例」和「端到端验收」照这个口径办吗？</h3>
+  <div class="why"><span class="lbl">前因后果</span>
+    本仓判分有三档：① 文件存在（程序判）② 内容与字段正确（程序判）③ 视觉（你肉眼判）。「锁」是用例把前两档钉死，防止以后改坏；「验收」是端到端 ＋ 你亲自跑一遍。</div>
+  <div class="info"><b>关键信息</b>
+    <ul>
+      <li>装机已办：技能位 <span class="mono">C:\Users\辰辰洋洋\.agents\skills\skill-calorie</span> 已是 <b>Junction → 本仓</b>，增量构建即生效（场景 07 当年是陈旧拷贝，本图没这个问题）。</li>
+      <li>先例：场景 07 的验收是「交付目录 ＋ 你亲自在全新空白 session 跑 ＋ 肉眼终审」。</li>
+      <li>仓库已有同类断言可照：<span class="mono">test/help-delivery-139.test.mjs</span>、<span class="mono">test/sport-homogeneity-109.test.mjs</span>。</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <div class="o rec"><span class="tag">推荐 A</span><b>锁票覆盖 58 条各自的命令逐条真跑；验收照场景 07 的路数，不单列装机票</b>
+      <ul class="pro"><li>与「58 条都跑得通」这条交货物字面一致</li><li>与场景 07 同口径，两图可直接比较</li></ul>
+      <ul class="con"><li>58 条逐条真跑比抽样慢</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">B</span><b>每类页面抽样 1–2 条</b>
+      <ul class="pro"><li>快</li></ul>
+      <ul class="con"><li>与你定的交货物不符；没抽到的那些条无法证明跑得通</li></ul>
+    </div>
+    <div class="o"><span class="tag alt">C</span><b>只做文件存在（第一档），内容与字段靠人工看</b>
+      <ul class="pro"><li>最省事</li></ul>
+      <ul class="con"><li>字段错漏不会有任何程序发现；后面每改一次都要你重看一遍</li></ul>
+    </div>
+  </div>
+  <div class="rec-line"><b>建议 A</b>：锁票 58 条逐条真跑（含 18 条新参数），断言落盘／绝对路径／完整文档／关键字段，再加 6 类页面各一条结构化断言；验收票照场景 07 路数，不单列装机票。</div>
+</section>
+
+<footer>
+  <p><b>你答完这八条，我会接着做</b>：建票（两张页面交付 ＋ 命令补齐 ＋ 锁 ＋ 验收）→ 挂原生子议题边与阻塞边 → 写 #165 的收口评论并关票 → 回写地图 #154（Decisions so far／清掉「尚未定」／任务清单换成真票号）。</p>
+  <p class="pick">取证依据：<span class="mono">docs/skills/skill-calorie/t165-老技能对账表.md</span> · <span class="mono">t165-新仓现状.md</span> · <span class="mono">t165-公共层盘点.md</span> · <span class="mono">t165-老页面实物结构.md</span></p>
+</footer>
+
+</div>
+</body>
+</html>
