@@ -1,0 +1,12 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：313v｜since：2026-09-13T09:19:03Z｜until：2026-09-13T09:24:28Z｜条目数：4｜导出时间：2026-09-13T09:24:28.402Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=313v runId=6eb0e561-4704-4852-92e4-44d5f006a0b2 cmd="pnpm build" waitedMs=0 exit=0 pid=32380 at=2026-09-13T09:19:51.927Z
+RUN ticket=313v runId=94871588-d4b2-49f4-a6f9-4a55a5f4c3a3 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=37396 at=2026-09-13T09:21:42.063Z
+RUN ticket=313v runId=cffad656-f756-4f2c-9bce-4a3a86d87b26 cmd="git add -- docs/skills/skill-calorie/t313-routing-oracle.mjs docs/skills/skill-calorie/t313-routing-exec-face-before.json docs/skills/skill-calorie/t313v-*" waitedMs=0 exit=0 pid=48232 at=2026-09-13T09:23:52.369Z
+RUN ticket=313v runId=d64d4db8-a9a8-4073-b138-7c3c5c8a0f74 cmd="git commit -F .scratch/t313v/msg-1.txt" waitedMs=0 exit=0 pid=31772 at=2026-09-13T09:23:52.511Z
+```
