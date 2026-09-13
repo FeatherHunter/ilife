@@ -25,41 +25,25 @@ import {
   DB_FILENAME,
 } from '../paths.js';
 import { FetchError } from '../fetch/errors.js';
-import { buildGoalView } from '../goal/goalPlate.js';
 import {
-  buildGoalConfig,
-  buildGoalRecommend,
   buildGoalWeight,
-  buildGoalStatus,
 } from '../render/goalPlate.js';
-import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
-import { buildGoalPrecheckDoc } from '../goal/precheck.js';
-import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../goal/goalExtraPlate.js';
 
 // #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
-import { buildProfileView, buildProfileViewDoc } from '../profile/view.js';
-import { buildProfileSettingDoc, buildProfileSettingView } from '../profile/setup.js';
-import { buildReviewDoc } from '../render/sportPortDocs.js';
-import { buildReviewView } from '../render/exercisePort.js';
-import { buildProcessProgressView } from '../render/trendMiscPort.js';
-import { buildProcessProgressDoc } from '../render/trendMiscPortDocs.js';
-import { buildContraDoc, buildGoalPredictDoc } from '../render/trendDocs.js';
 
 // #91 · 全量速查台（Q9）：只读消费 #88 的 `render/helpCenter.js`（三态同源，零改动）。
-import { renderErrorHtml, renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalWeightHtml, renderGoalStatusHtml, renderGoalHtml, renderPlanHtml, renderPlanWizardHtml, renderGoalExpiringHtml, renderGoalVsActualHtml } from '../render/html.js';
+import { renderErrorHtml, renderGoalWeightHtml } from '../render/html.js';
 import { assertStatMetrics, buildDelivery, withDelivery } from '../render/envelope.js';
 import type { Delivery } from '../render/envelope.js';
 import { buildErrorReceipt } from '../render/receipt.js';
 import type { ErrorReceipt } from '../render/receipt.js';
 import { buildDataText } from 'base-paint';
 import { CalorieRenderError } from '../render/errors.js';
-import { TRIGGERS } from '../triggers/index.js';
-import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
 
 // #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 // #294 · 参数读取与窗口口径上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
-import { dayField, defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
+import { dayField, defaultRange, fail, nums } from '../shared/params.js';
 import {
   HTML_DIR_NAME,
   deliverHtml,
@@ -171,118 +155,11 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     return spec.run(params, db);
   }
   switch (key) {
-    case 'calorie.view.profile-wizard': {
-      const v = buildProfileSettingView(db, params);
-      const metrics = nums({
-        filledCount: v.filledCount, hasProfile: v.before ? 1 : 0,
-        latestWeightKg: v.latestWeightKg, activityLevels: v.activityChoices.length,
-      });
-      return { data: { metrics }, html: buildProfileSettingDoc(v) };
-    }
-    case 'calorie.view.goal-wizard': {
-      // #251 · 目标管理写前预检页：`profile`（选填）决定算不算推荐，`wake`（选填）决定本页展开哪条写词。
-      const profileRaw = optStr(params, 'profile');
-      if (profileRaw !== undefined && !isGoalProfile(profileRaw)) {
-        throw new CalorieRenderError('bad-input', 'profile 非法（cut/maintain/bulk）: ' + profileRaw);
-      }
-      const wakeWord = optStr(params, 'wake') ?? null;
-      const draft = buildGoalDraft(db, { profile: profileRaw === undefined ? null : profileRaw });
-      const hit = wakeWord === null ? null : TRIGGERS.find((t) => t.wake_word === wakeWord) ?? null;
-      const v = {
-        wakeWord,
-        draft,
-        prompt: hit !== null && 'prompt_template' in hit ? String(hit.prompt_template ?? '') : '',
-        // 该写词要跑的命令：先取它的可执行路由；三条自动算词今天还没有可执行路由，
-        // 回落它自己的 `main_prompt.cli`（那串「先算 → 确认后写」的两段式）——执行接线归 #252。
-        command: (wakeWord === null ? '' : routeWakeword(wakeWord)?.cli ?? '')
-          || (hit !== null && 'main_prompt' in hit ? hit.main_prompt.cli : '')
-          || execCliFor(null, 'calorie-cmd-read calorie.view.goal-wizard'),
-      };
-      const metrics = nums({
-        hasGoal: draft.current === null ? 0 : 1,
-        recommendReady: draft.recommend === null ? 0 : 1,
-        missingCount: draft.energy.missing.length,
-      });
-      return { data: { metrics }, html: buildGoalPrecheckDoc(v) };
-    }
-    case 'calorie.view.goal': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildGoalView(db, start, end);
-      const metrics = nums({
-        calorie_goal: v.nutrition.calorie_goal, protein_goal: v.nutrition.protein_goal,
-        carbs_goal: v.nutrition.carbs_goal, fat_goal: v.nutrition.fat_goal, water_goal: v.nutrition.water_goal,
-        completionPct: v.completionPct, weeklyDeficit: v.deficit.summary.weeklyDeficit,
-        predictedLossKg: v.deficit.summary.predictedLossKg, avgDeficit: v.deficit.summary.avgDeficit,
-        avgIntake: v.deficit.summary.avgIntake, trendAvg: v.trend.summary.avg,
-        completedCount: v.history.completedCount, incompleteCount: v.history.incompleteCount,
-      });
-      return { data: { metrics }, html: renderGoalHtml(v) };
-    }
-    case 'calorie.view.goal-config': {
-      const g = buildGoalConfig(db);
-      const metrics = nums({
-        calorie_goal: g.nutrition.calorie_goal, protein_goal: g.nutrition.protein_goal,
-        carbs_goal: g.nutrition.carbs_goal, fat_goal: g.nutrition.fat_goal, water_goal: g.nutrition.water_goal,
-        diffKcal: g.diffKcal, consistent: g.consistent ? 1 : 0, paused: g.paused ? 1 : 0,
-      });
-      return { data: { metrics }, html: renderGoalConfigHtml(g) };
-    }
-    case 'calorie.view.goal-recommend': {
-      const profile = optStr(params, 'profile') ?? 'cut';
-      if (!['cut', 'maintain', 'bulk'].includes(profile)) fail(2, 'profile 非法（cut/maintain/bulk）：' + profile);
-      const g = buildGoalRecommend(db, profile);
-      const metrics = nums({
-        calorieGoal: g.recommend.calorieGoal, proteinGoal: g.recommend.proteinGoal, carbsGoal: g.recommend.carbsGoal,
-        fatGoal: g.recommend.fatGoal, waterGoal: g.recommend.waterGoal, tdee: g.recommend.tdee, bmr: g.recommend.bmr,
-        weeklyRateKg: g.recommend.weeklyRateKg, weightKg: g.recommend.basis.weightKg,
-        recommendedWaterMl: g.water.recommendedWaterMl, mlPerKg: g.water.mlPerKg,
-      });
-      return { data: { metrics }, html: renderGoalRecommendHtml(g) };
-    }
     case 'calorie.view.goal-weight': {
       const { start, end } = defaultRange(db, params);
       const g = buildGoalWeight(db, start, end);
       const metrics = nums({ weightGoal: g.weightGoal, latestKg: g.latestKg, deltaKg: g.deltaKg, loggedDays: g.loggedDays });
       return { data: { metrics }, html: renderGoalWeightHtml(g) };
-    }
-    case 'calorie.view.goal-status': {
-      const g = buildGoalStatus(db);
-      const metrics = nums({ paused: g.paused ? 1 : 0, calorie_goal: g.nutrition.calorie_goal, water_goal: g.nutrition.water_goal });
-      return { data: { metrics }, html: renderGoalStatusHtml(g) };
-    }
-    case 'calorie.view.goal-expiring': {
-      const withinDays = optNum(params, 'withinDays') ?? optNum(params, 'days') ?? 14;
-      const today = dayField(params, 'today') ?? dayField(params, 'date');
-      const v = buildGoalExpiringView(db, withinDays as number, today ?? undefined);
-      const metrics = nums({ daysLeft: v.daysLeft, withinDays: v.withinDays, expiring: v.expiring ? 1 : 0, weightGoal: v.weightGoal, calorieGoal: v.calorieGoal });
-      return { data: { metrics }, html: renderGoalExpiringHtml(v) };
-    }
-    case 'calorie.view.goal-predict': {
-      // #103 G2 · 目标预测需 ≥14 条体重记录（simulate SIM_MIN_DAYS=14），7 天默认窗结构性不可达 → 默认 14 天。
-      const { start, end } = defaultRange(db, params, 14);
-      const v = buildGoalPredictView(db, start, end);
-      const metrics = nums({ targetKg: v.targetKg, current: v.current, daysLeft: v.daysLeft, ratePerWeek: v.ratePerWeek, feasible: v.feasible ? 1 : 0 });
-      return { data: { metrics }, html: buildGoalPredictDoc(v) };
-    }
-    case 'calorie.view.goal-vs-actual': {
-      const { start, end } = defaultRange(db, params);
-      const historyDays = optNum(params, 'historyDays') ?? 30;
-      const v = buildGoalVsActualView(db, start, end, historyDays as number);
-      const metrics = nums({
-        completedCount: v.completedCount, incompleteCount: v.incompleteCount,
-        completionPct: v.completionPct, trendAvg: v.trendAvg, calorieGoal: v.calorieGoal,
-      });
-      return { data: { metrics }, html: renderGoalVsActualHtml(v) };
-    }
-    case 'calorie.view.profile': {
-      const v = buildProfileView(db);
-      const metrics = nums({
-        age: v.profile.age, heightCm: v.profile.height_cm,
-        hasGoal: v.hasGoal ? 1 : 0, latestWeightKg: v.latestWeightKg,
-        calorieGoal: v.nutrition?.calorie_goal,
-      });
-      // #179 · 结果页换整页装配（原 `renderProfileHtml` 只出 `<section>` 片段，双击打不开）。
-      return { data: { metrics }, html: buildProfileViewDoc(v) };
     }
     default:
       fail(3, '未知 calorie key：' + key);

@@ -11,8 +11,10 @@ import { ANALYSIS_COMMANDS } from '../analysis/index.js';
 import { BODY_COMMANDS } from '../body/index.js';
 import { DIET_COMMANDS } from '../diet/index.js';
 import { EXERCISE_COMMANDS } from '../exercise/index.js';
+import { GOAL_COMMANDS } from '../goal/index.js';
 import { HOME_COMMANDS } from '../home/index.js';
 import { PHOTO_COMMANDS } from '../photo/index.js';
+import { PROFILE_COMMANDS } from '../profile/index.js';
 import { WEIGHT_COMMANDS } from '../weight/index.js';
 import { WORKOUT_COMMANDS } from '../workout/index.js';
 
@@ -21,8 +23,10 @@ const SOURCES: readonly (readonly CommandSpec[])[] = [
   BODY_COMMANDS,
   DIET_COMMANDS,
   EXERCISE_COMMANDS,
+  GOAL_COMMANDS,
   HOME_COMMANDS,
   PHOTO_COMMANDS,
+  PROFILE_COMMANDS,
   WEIGHT_COMMANDS,
   WORKOUT_COMMANDS,
 ];

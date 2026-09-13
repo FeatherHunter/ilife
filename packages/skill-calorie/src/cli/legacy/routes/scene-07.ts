@@ -8,10 +8,4 @@
 import type { RouteDecl } from '../../../triggers/routeSpec.js';
 
 export const ROUTES_SCENE_07: readonly RouteDecl[] = [
-  { list: 'wake', order: 233, wakeWord: '设置档案', scene: '07', kind: 'exec', key: 'calorie.profile.set', cli: 'calorie-cmd-read calorie.profile.set --params \'{"heightCm":175,"age":30,"gender":"male","activityLevel":"moderate"}\'' },
-  { list: 'wake', order: 234, wakeWord: '设活动量', scene: '07', kind: 'exec', key: 'calorie.profile.activity', cli: 'calorie-cmd-read calorie.profile.activity --params \'{"activityLevel":"active"}\'' },
-  { list: 'wake', order: 235, wakeWord: '改档案', scene: '07', kind: 'exec', key: 'calorie.profile.update', cli: 'calorie-cmd-read calorie.profile.update --params \'{"field":"heightCm","value":176}\'' },
-  { list: 'wake', order: 236, wakeWord: '查档案', scene: '07', kind: 'exec', key: 'calorie.view.profile', cli: 'calorie-cmd-read calorie.view.profile' },
-  { list: 'new', order: 33, wakeWord: '看档案视图', scene: '07', kind: 'exec', key: 'calorie.view.profile', cli: 'calorie-cmd-read calorie.view.profile' },
-  { list: 'new', order: 56, wakeWord: '看档案预检', scene: '07', kind: 'exec', key: 'calorie.view.profile-wizard', cli: 'calorie-cmd-read calorie.view.profile-wizard' },
 ];
