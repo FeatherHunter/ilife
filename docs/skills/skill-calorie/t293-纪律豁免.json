@@ -1,45 +1,49 @@
 {
-  "note": "② DISCIPLINED-SHARED 的登记位（#293 验收探针 t293-验收-命令自治.mjs 只读它，不写）。用途：把「域内钉死计数」——合法但**不可能**派生的计数断言——登记在册，使它们不落 ③ UNACCOUNTED（P1=FAIL），同时不放松对**权威总量**写死的抓取（主体＝权威总量的命中**必进 ③**，登记压不住）。机器校验（探针 loadExemptions）三条：① 登记件读得到且是合法 JSON；② 每条字段齐全（缺一条即报错 ⇒ 登记不生效 ⇒ P1=FAIL）；③ 每条**指得回当刻代码**（该行确实把 anchor 当被比操作数，改／删过那行 ⇒ 登记作废报错）。前两条是当刻锚（28／12／16／9）下真命中的域内计数；后两条是 #318 席实测的相撞形（total=10 时才会命中）——四条都经 ③ 的机器校验，其中前两条另经临时副本对照（见 docs/skills/skill-calorie/t293-探针精度-证据.md）。",
+  "note": "② DISCIPLINED-SHARED 的登记位（#293 验收探针 t293-验收-命令自治.mjs **只读**它，不写）。**第二轮收紧后的口径**：③ 的准入＝「**断言主体就是权威总量**」——另一侧操作数带 keys／键／声明／registry／未搬迁／命令…，或消息串点名这些权威出处；**域内计数（`.length`／`.total`／`.size` 一类）一律不报**。因此本登记位现在只服务一类面：**主体＝权威总量、但已被认下**（加命令确实要手改本行，可是有写明的纪律／机器守兜着，不按未认下记红）。登记是**大声的**：② 逐条打印 reason ＋ 机器守，登记件进 git。机器校验（探针 loadExemptions）三条：① 读得到且是合法 JSON；② 每条字段齐全（file／line／anchor／reason／enforcer／owner／date，缺一条即报错 ⇒ 登记不生效 ⇒ P1=FAIL）；③ 每条**指得回当刻代码**（该行确实把 anchor 当被比操作数，改／删过那行 ⇒ 登记作废报错）。**当下 4 条全是历史条目**（见各条 status）：它们都是「域内计数」，在收紧后的准入下**已不再会命中**；保留为历史证据 ＋ 防回归（准入若被放宽回「值撞锚」，这 4 条会立刻重新进 ② 并逐条打印，提醒复核席）。",
   "exemptions": [
     {
       "file": "test/bill-split.test.mjs",
       "line": 15,
       "anchor": 16,
+      "status": "历史（收紧后不再需要）：域内计数，准入已不认 ⇒ 当刻既不进 ② 也不进 ③；留作防回归",
       "reason": "非权威总量（本探针的权威总量＝卡路里＋体重 28 键）：16 是**饼干记账**迁移拆分文档 `docs/bill-migration-split.md` 的 `bill-keys` 段行数（测试名「16 联动 key×shape」；`rows` 由该文档 fence 切出）——是 bill 域自己的计数，与卡路里读键数 16 只是数值巧合。加删卡路里命令不必手改本行。",
       "enforcer": "本探针 ② 桶对账：登记件字段齐全 ＋ 该行仍把 16 当被比操作数才算生效（缺一即 P1=FAIL）；条数本身由 bill-split 自己守着（`rows` 逐行 parseRegistryKey ＋ shape 白名单）。",
       "owner": "t293 验收探针精度修复席（第二任）",
       "date": "2026-09-13",
-      "evidence": "当刻树实命中（原进 ③）：`assert.equal(rows.length, 16);`；数据源＝docs/bill-migration-split.md 的 ```bill-keys``` 段（test/bill-split.test.mjs:9-11）。"
+      "evidence": "第一轮实命中（当时进 ③，登记后进 ②）：`assert.equal(rows.length, 16);`；数据源＝docs/bill-migration-split.md 的 ```bill-keys``` 段（test/bill-split.test.mjs:9-11）。"
     },
     {
       "file": "test/calorie-routing-81.test.mjs",
       "line": 342,
       "anchor": 9,
-      "reason": "非权威总量：9 是**smoke 快照 §1 的表格列数**（`c` 是 `rows1[i]`──`smokeSection(md, '## 1. ')` 切出的一行，消息自述「smoke §1 列数异常」），与体重键数 9 只是数值巧合。加删命令会改的是**行数**（`rows1.length` 与路由层对账，:338），不是列数。**本件冻结**（D 段不许碰）⇒ 不许改它、也不该报它，登记位正是给这种件用的。",
+      "status": "历史（收紧后不再需要）：域内计数，准入已不认 ⇒ 当刻既不进 ② 也不进 ③；留作防回归",
+      "reason": "非权威总量：9 是**smoke 快照 §1 的表格列数**（`c` 是 `rows1[i]`──`smokeSection(md, '## 1. ')` 切出的一行，消息自述「smoke §1 列数异常」），与体重键数 9 只是数值巧合。加删命令会改的是**行数**（`rows1.length` 与路由层对账，:338），不是列数。**本件冻结**（D 段不许碰）。",
       "enforcer": "本探针 ② 桶对账（同上：字段齐全 ＋ 该行仍把 9 当被比操作数）；列数本身由 calorie-routing-81 自己的快照断言守（:342 与 :338 的行数对账同处）。",
       "owner": "t293 验收探针精度修复席（第二任）",
       "date": "2026-09-13",
-      "evidence": "当刻树实命中（原进 ③）：`assert.equal(c.length, 9, \\`smoke §1 列数异常…\\`);`（test/calorie-routing-81.test.mjs:337-342 的上下文：rows1＝§1 段各行）。"
+      "evidence": "第一轮实命中（当时进 ③，登记后进 ②）：`assert.equal(c.length, 9, \\`smoke §1 列数异常…\\`);`（test/calorie-routing-81.test.mjs:337-342 的上下文：rows1＝§1 段各行）。"
     },
     {
       "file": "packages/skill-calorie/test/help-center-91.test.mjs",
       "line": 204,
       "anchor": 10,
+      "status": "历史（收紧后不再需要）：域内计数，准入已不认 ⇒ 当刻既不进 ② 也不进 ③；留作防回归（#318 席实测证据）",
       "reason": "非权威总量：这是**照片域渲染侧 HELP 条目数**（`buildPhotoHelp()` 的 10 条：body_photo_add_single 等），与「命令／键总数」只是数值巧合——当刻锚为 28／12／16／9、不相撞；#318 席那组锚（total=10）才撞上。加删**照片域**命令要手改本行，加删别域命令不必。",
       "enforcer": "本探针 ② 桶对账（同上：字段齐全 ＋ 该行仍把 10 当被比操作数）；条数本身由 help-center-91 的渲染面断言互守（:204 与 cmd-read-t11:221 同断言、:94／:219 守 HELP 中心 items 分组）。",
       "owner": "t293 验收探针精度修复席（第二任）",
       "date": "2026-09-13",
-      "evidence": "#318 实测：全仓声明源里含 \"photo\" 的键只有 8 条（7 条 calorie.photo.* ＋ 1 条 calorie.view.photo-log-wizard），calorie.body-photo.* 0 条 ⇒ 10 条 HELP 条目 ≠ 命令键集合，不可能是派生量。相撞行为另经临时副本对照（ctl.mjs 的 d1 样例）。"
+      "evidence": "#318 实测：全仓声明源里含 \"photo\" 的键只有 8 条（7 条 calorie.photo.* ＋ 1 条 calorie.view.photo-log-wizard），calorie.body-photo.* 0 条 ⇒ 10 条 HELP 条目 ≠ 命令键集合，不可能是派生量。"
     },
     {
       "file": "packages/skill-calorie/test/help-center-91.test.mjs",
       "line": 219,
       "anchor": 10,
+      "status": "历史（收紧后不再需要）：域内计数，准入已不认 ⇒ 当刻既不进 ② 也不进 ③；留作防回归（#318 席实测证据）",
       "reason": "同上一条事实的另一处：`all.env.data.total` ＝ HELP 中心 q:\"\" 查询回执的**照片域条目数**（渲染侧 10 条），口径是渲染条目、不是命令键总数。它必须手改的场合＝照片域 HELP 条目表变更，与「加一条命令」无关。",
       "enforcer": "本探针 ② 桶对账（同上：字段齐全 ＋ 该行仍把 10 当被比操作数）；同类互守见 help-center-91:94（items＝10 分组）。",
       "owner": "t293 验收探针精度修复席（第二任）",
       "date": "2026-09-13",
-      "evidence": "与 :204 同源同数（照片域 10 条）；相撞行为另经临时副本对照（ctl.mjs 的 d2 样例：同一处未登记时照旧进 ③）。"
+      "evidence": "与 :204 同源同数（照片域 10 条）。"
     }
   ]
 }
