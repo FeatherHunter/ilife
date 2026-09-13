@@ -40,7 +40,7 @@ import {
 } from '../render/goalPlate.js';
 import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
 import { buildGoalPrecheckDoc } from '../goal/precheck.js';
-import { buildExerciseGoalView } from '../render/planPlate.js';
+
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
 import { buildPredictView, buildAnomalyView, buildDedupeView } from '../render/insightPlate.js';
 // #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
@@ -58,17 +58,9 @@ import {
   buildSearchDoc,
   buildTodayDietDoc,
 } from '../render/dietDocs.js';
-import {
-  buildExerciseGoalDoc,
-} from '../render/sportDocs.js';
-import {
-  buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildReviewDoc,
-  buildStrengthDoc, buildTrendDoc,
-} from '../render/sportPortDocs.js';
-import {
-  buildCardioView, buildDistributionView, buildRecapView, buildReviewView,
-  buildStrengthView, buildTrendView,
-} from '../render/exercisePort.js';
+
+import { buildReviewDoc } from '../render/sportPortDocs.js';
+import { buildReviewView } from '../render/exercisePort.js';
 import {
   buildNutritionDetailView, buildNutritionRatioView, buildSourceStatsView,
   buildTodayWaterView,
@@ -261,52 +253,8 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const mt = dietMacroRatio(db, date, date);
       return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null }) };
     }
-    // #111 · 运动移植 6 键（t71 需移植 exercise_*；envelope stat metrics 只收确定数字）。
-    case 'calorie.view.exercise-strength': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildStrengthView(db, start, end);
-      const metrics = nums({
-        movementCount: v.movementCount, totalSets: v.totalSets,
-        totalVolumeKg: v.totalVolumeKg, totalReps: v.totalReps,
-      });
-      return { data: { metrics }, html: buildStrengthDoc(v) };
-    }
-    case 'calorie.view.exercise-cardio': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildCardioView(db, start, end);
-      const metrics = nums({
-        sessions: v.sessions, totalMinutes: v.totalMinutes,
-        totalDistanceKm: v.totalDistanceKm, avgPaceMinPerKm: v.avgPaceMinPerKm,
-      });
-      return { data: { metrics }, html: buildCardioDoc(v) };
-    }
-    case 'calorie.view.exercise-distribution': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildDistributionView(db, start, end);
-      const metrics = nums({
-        sessions: v.sessions, activeDays: v.activeDays, days: v.days, totalBurned: v.totalBurned,
-        intakeCal: v.intakeCal, tdeeTotal: v.tdeeTotal, deficit: v.deficit,
-      });
-      return { data: { metrics }, html: buildDistributionDoc(v) };
-    }
-    case 'calorie.view.exercise-recap': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildRecapView(db, start, end);
-      const metrics = nums({
-        sessions: v.sessions, totalMinutes: v.totalMinutes, totalBurned: v.totalBurned,
-        activeDays: v.activeDays, days: v.days,
-      });
-      return { data: { metrics }, html: buildRecapDoc(v) };
-    }
-    case 'calorie.view.exercise-trend': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildTrendView(db, start, end);
-      const metrics = nums({
-        activeDays: v.activeDays, totalMinutes: v.totalMinutes,
-        totalBurned: v.totalBurned, peakBurned: v.peak?.burned,
-      });
-      return { data: { metrics }, html: buildTrendDoc(v) };
-    }
+    // #111 · 运动移植 6 键（其中 5 键已随 #316 搬进 `src/exercise/`，本处只剩计划复盘那一条；
+    // envelope stat metrics 只收确定数字）。
     // #112 · 营养移植 4 键（t71 需移植 nutrition_*／source_stats／today_water；envelope stat metrics 只收确定数字）。
     case 'calorie.view.nutrition-ratio': {
       const { start, end } = defaultRange(db, params);
@@ -606,12 +554,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:history"><h1>热量历史（最近' + h.days + '天）</h1>' +
         items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' 卡 · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
       return { data: { items, total: items.length }, html };
-    }
-    case 'calorie.view.exercise-goal': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildExerciseGoalView(db, start, end);
-      const metrics = nums({ dailyGoal: v.dailyGoal, goalTotal: v.goalTotal, actual: v.actual, pct: v.pct, gap: v.gap, achieved: v.achieved ? 1 : 0, days: v.days });
-      return { data: { metrics }, html: buildExerciseGoalDoc(v) };
     }
     case 'calorie.view.goal-expiring': {
       const withinDays = optNum(params, 'withinDays') ?? optNum(params, 'days') ?? 14;

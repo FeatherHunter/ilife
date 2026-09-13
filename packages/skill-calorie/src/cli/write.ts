@@ -32,8 +32,7 @@ import {
   WATER_NAME, MEALS, MEAL_WINDOWS, addMeal, updateMeal, deleteMeal, copyMeals, addMealsBatch,
   updateMealsByDate, deleteMealsByDate, deleteMealsByRange, deleteMealsByType, getDailySummary,
 } from '../fetch/diet.js';
-import { addRecord, updateRecord, updateDay, deleteRecord, deleteDay, deleteRange, batchAdd, copyYesterday } from '../fetch/exercise.js';
-import type { ExerciseRecordInput } from '../fetch/exercise.js';
+
 import { addProduct, updateProduct, deprecateProduct } from '../fetch/products.js';
 import {
   setActivityLevel,
@@ -97,7 +96,6 @@ import type { WriteOut } from '../shared/commandSpec.js';
 const goalSetWrittenFields = (hasWater: boolean): string[] =>
   ['calorie', 'protein', 'carbs', 'fat', ...(hasWater ? ['water'] : [])];
 
-
 /* -------------------------------------- #179 · 场景 07 三条写入词的回执页（整页装配） */
 
 /** 档案库列名 ↔ CLI 参数名（逐字段对照只用这 5 项，与 `PROFILE_UPDATABLE` 同集）。 */
@@ -119,7 +117,6 @@ function profileDiffItems(before: ProfileRow | null, after: ProfileRow, fields: 
   return fields.map((f) => ({ status: f, reason: profileValue(before, f) + ' → ' + profileValue(after, f) }));
 }
 
-
 /** 三条写入词的回执页换成整页装配；**其余 32 条一律返回 null**，由 `dispatchWrite` 的
  *  `?? res.html` 原样放行——那些命令的产物与 `receiptHtml` 那条片段路径逐字节不变
  *  （分派只认这三个命令名，认不出就不进这条路，也不碰 `receiptHtml` 本身）。
@@ -138,52 +135,6 @@ function profileReceiptDoc(
     default:
       return null;
   }
-}
-
-
-
-
-
-
-
-const EX_CAMEL: Record<string, string> = {
-  type: 'exercise_type', exerciseType: 'exercise_type', calories: 'calories_burned', caloriesBurned: 'calories_burned',
-  minutes: 'duration_minutes', durationMinutes: 'duration_minutes', note: 'note', category: 'category', difficulty: 'difficulty',
-  distance: 'distance_km', distanceKm: 'distance_km', heartRate: 'avg_heart_rate', avgHeartRate: 'avg_heart_rate',
-  maxHeartRate: 'max_heart_rate', steps: 'steps', reps: 'reps', loadKg: 'load_kg', setIndex: 'set_index',
-  date: 'date', time: 'time', backfill: 'is_backfill', isBackfill: 'is_backfill',
-};
-
-function oneExercise(item: Record<string, unknown>, i: string): ExerciseRecordInput {
-  const g = (k: string): unknown => item[k];
-  const type = g('type') ?? g('exerciseType');
-  if (typeof type !== 'string' || !type.trim()) fail(2, '运动 type 必填' + i);
-  const cal = g('calories') ?? g('caloriesBurned');
-  if (typeof cal !== 'number' || !Number.isFinite(cal) || cal < 0) fail(2, '运动 calories 必填（≥0 number）' + i);
-  const date = (g('date') as string | undefined) ?? todayISO();
-  assertISO(date, 'date');
-  const numOrNull = (k: string): number | null | undefined => {
-    const v = g(k);
-    if (v === undefined || v === null) return undefined;
-    if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, '运动参数 ' + k + ' 须为 number' + i);
-    return v as number;
-  };
-  const strOrUndef = (k: string): string | undefined => {
-    const v = g(k);
-    if (v === undefined || v === null) return undefined;
-    if (typeof v !== 'string') fail(2, '运动参数 ' + k + ' 须为字符串' + i);
-    return v as string;
-  };
-  return {
-    date, exerciseType: (type as string).trim(), caloriesBurned: cal as number,
-    minutes: numOrNull('minutes') ?? null, timeStr: strOrUndef('time'), note: strOrUndef('note'),
-    reps: numOrNull('reps') ?? null, category: strOrUndef('category') ?? null,
-    difficulty: strOrUndef('difficulty') ?? null, distance: numOrNull('distance') ?? numOrNull('distanceKm') ?? null,
-    heartRate: numOrNull('heartRate') ?? numOrNull('avgHeartRate') ?? null,
-    maxHeartRate: numOrNull('maxHeartRate') ?? null, steps: numOrNull('steps') ?? null,
-    setIndex: numOrNull('setIndex') ?? null, loadKg: numOrNull('loadKg') ?? null,
-    isBackfill: (g('backfill') ?? g('isBackfill')) === true,
-  };
 }
 
 /** 写分发（唯一出口 cmd_read 内调用；未知键上游已拦，此处再拦一道）。
@@ -371,106 +322,6 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
         recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.water],
         items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: ml + 'ml' }],
       }));
-    }
-    case 'calorie.exercise.add': {
-      if (params['copyFrom'] !== undefined) {
-        if (params['copyFrom'] !== 'yesterday') fail(2, 'copyFrom 只支持 yesterday');
-        const target = wday(params, 'date') ?? wday(params, 'targetDate') ?? todayISO();
-        assertISO(target, 'date');
-        const r = copyYesterday(db, target);
-        if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '昨日无运动记录可复制');
-        return out(R('复制昨日运动', 'create', '已复制昨日运动→' + target + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日运动', 'exercise_log (写库回执)', {
-          noChange: r.copied === 0, ids: [], idSource: 'condition',
-          writtenFields: r.copied > 0 ? [...F.exercise] : [],
-        }));
-      }
-      if (params['items'] !== undefined) {
-        const items = needArr(params, 'items');
-        if (items.length > 200) fail(2, 'items 至多 200 条');
-        const r = batchAdd(db, items.map((e, i) => oneExercise((e ?? {}) as Record<string, unknown>, '（第' + i + '条）')));
-        return out(R('记运动', 'create', '批量记运动：新增 ' + r.added + ' 条', '批量补记运动', 'exercise_log (写库回执)', {
-          recordId: r.ids[0] ?? null, ids: r.ids, idSource: r.ids.length > 0 ? 'record' : 'condition',
-          writtenFields: r.added > 0 ? [...F.exercise] : [],
-        }));
-      }
-      const input = oneExercise(params, '');
-      const r = addRecord(db, input);
-      return out(R('记运动', 'create', '已记运动：' + input.exerciseType + ' ' + input.caloriesBurned + ' 卡' + (input.minutes ? ' · ' + input.minutes + ' 分钟' : '') + '（' + input.date + '）', '记运动', 'exercise_log (写库回执)', {
-        recordId: r.id, ids: [r.id], writtenFields: [...F.exercise],
-        items: [{ id: r.id, date: input.date, status: '成功', reason: '', detail: input.exerciseType }],
-      }));
-    }
-    case 'calorie.exercise.update': {
-      const id = optNum(params, 'id');
-      const date = wday(params, 'date');
-      const fields: Record<string, unknown> = {};
-      for (const [camel, col] of Object.entries(EX_CAMEL)) {
-        if (camel === 'type' || camel === 'exerciseType' || camel === 'calories' || camel === 'caloriesBurned') continue;
-        if (params[camel] !== undefined) fields[col] = params[camel];
-      }
-      const t = optStr(params, 'type') ?? optStr(params, 'exerciseType');
-      if (t !== undefined) {
-        if (!t.trim()) fail(2, 'type 不得为空');
-        fields['exercise_type'] = t.trim();
-      }
-      const cal = optNum(params, 'calories') ?? optNum(params, 'caloriesBurned');
-      if (cal !== undefined) {
-        if (cal < 0) fail(2, 'calories 不得为负');
-        fields['calories_burned'] = cal;
-      }
-      for (const k of Object.keys(params)) {
-        if (!(k in EX_CAMEL) && k !== 'id' && k !== 'key') fail(2, '不支持字段: ' + k);
-      }
-      if (Object.keys(fields).length === 0) fail(2, '至少传 1 个待改字段');
-      if (typeof fields['date'] === 'string') assertISO(fields['date'] as string, 'date');
-      if (id !== undefined) {
-        if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
-        updateRecord(db, id, fields);
-        return out(R('改运动记录', 'update', '已更新运动 #' + id + '（' + Object.keys(fields).join('、') + '）', '改运动记录', 'exercise_log (写库回执)', {
-          recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)),
-          items: [{ id, status: '已更新', reason: '' }],
-        }));
-      }
-      if (date !== undefined) {
-        assertISO(date, 'date');
-        const r = updateDay(db, date, fields);
-        if (r.matched === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-        return out(R('改某日运动', 'update', '已更新 ' + date + ' 运动 ' + r.matched + ' 条', '改某日运动', 'exercise_log (写库回执)', {
-          ids: [], idSource: 'condition', writtenFields: cliNames(Object.keys(fields)),
-        }));
-      }
-      fail(2, '缺参数 id 或 date（二选一）');
-      throw new Error('unreachable');
-    }
-    case 'calorie.exercise.remove': {
-      const id = optNum(params, 'id');
-      const date = wday(params, 'date');
-      const from = wday(params, 'from');
-      const to = wday(params, 'to');
-      if (id !== undefined) {
-        if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
-        deleteRecord(db, id);
-        return out(R('删运动记录', 'delete', '已删除运动 #' + id + SOFT_EXCLUDED, '删运动记录', 'exercise_log (写库回执)', {
-          recordId: id, ids: [id], writtenFields: ['is_deleted'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
-        }));
-      }
-      if (date !== undefined) {
-        assertISO(date, 'date');
-        const n = deleteDay(db, date);
-        if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-        return out(R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '删某日运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
-      }
-      if (from !== undefined || to !== undefined) {
-        if (from === undefined || to === undefined) fail(2, '按范围删须同时传 from/to');
-        assertISO(from as string, 'from');
-        assertISO(to as string, 'to');
-        if ((from as string) > (to as string)) fail(2, 'from 不得晚于 to');
-        const n = deleteRange(db, from as string, to as string);
-        if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + from + '~' + to + '）');
-        return out(R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '批量删运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] }));
-      }
-      fail(2, '缺参数 id/date/from+to（三选一）');
-      throw new Error('unreachable');
     }
     case 'calorie.product.add': {
       const productName = (optStr(params, 'productName') ?? optStr(params, 'product_name') ?? '');

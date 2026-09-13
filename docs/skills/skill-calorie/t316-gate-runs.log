@@ -1,0 +1,23 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：316｜since：2026-09-13T14:01:29.801Z｜until：2026-09-13T14:02:33.324Z｜条目数：15｜导出时间：2026-09-13T14:02:33.458Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=316 runId=286bbcda-f698-48dc-9ddc-6523527e054e cmd="pnpm build" waitedMs=0 exit=0 pid=38776 at=2026-09-13T14:01:33.025Z
+RUN ticket=316 runId=93e00525-2d0e-4f49-a5a0-f708d51d0070 cmd="pnpm gen" waitedMs=0 exit=0 pid=48476 at=2026-09-13T14:01:34.148Z
+RUN ticket=316 runId=5d91a1dd-40e6-41f6-81fc-4aa9848d6c89 cmd="pnpm build" waitedMs=0 exit=0 pid=42716 at=2026-09-13T14:01:36.040Z
+RUN ticket=316 runId=d74ab7fd-f844-4875-a1c4-9d0c055ab9e2 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=33184 at=2026-09-13T14:01:37.096Z
+RUN ticket=316 runId=3e19b5c8-8f6f-4ba6-9374-303642738d15 cmd="pnpm test" waitedMs=0 exit=0 pid=46788 at=2026-09-13T14:02:17.718Z
+RUN ticket=316 runId=4846eab1-e3de-456b-89d4-7ec037fa936b cmd="node .scratch/t316/run-t293.mjs" waitedMs=0 exit=0 pid=41008 at=2026-09-13T14:02:21.580Z
+RUN ticket=316 runId=12735a13-d078-4b08-933a-72ed4c35cba9 cmd="pnpm gen:check" waitedMs=0 exit=1 pid=53048 at=2026-09-13T14:02:23.074Z
+RUN ticket=316 runId=028d55fb-e56f-4882-b98f-4baae55ce8ef cmd="pnpm gen" waitedMs=1 exit=0 pid=52188 at=2026-09-13T14:02:24.101Z
+RUN ticket=316 runId=84b74baa-1b2a-40ec-94b6-1f6f4d881a8e cmd="pnpm gen:check" waitedMs=0 exit=0 pid=49588 at=2026-09-13T14:02:25.146Z
+RUN ticket=316 runId=da25d8be-9b79-40d5-8466-fceeb3348f5d cmd="pnpm gen:check" waitedMs=0 exit=1 pid=26884 at=2026-09-13T14:02:26.383Z
+RUN ticket=316 runId=d06c6108-9d51-4c4b-a090-3b7a0b056874 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=44400 at=2026-09-13T14:02:27.404Z
+RUN ticket=316 runId=059ef078-47db-4fba-a598-f41e403d4e55 cmd="pnpm build" waitedMs=0 exit=0 pid=41144 at=2026-09-13T14:02:29.155Z
+RUN ticket=316 runId=439f5850-93a7-4b87-af75-9cdc2ce588fc cmd="pnpm gen" waitedMs=0 exit=1 pid=49472 at=2026-09-13T14:02:30.445Z
+RUN ticket=316 runId=8ec7e843-e15c-444b-b897-e252b5007ac3 cmd="pnpm build" waitedMs=0 exit=0 pid=29884 at=2026-09-13T14:02:32.202Z
+RUN ticket=316 runId=5500da00-3f20-440b-9b15-4044d2045e15 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=11572 at=2026-09-13T14:02:33.229Z
+```
