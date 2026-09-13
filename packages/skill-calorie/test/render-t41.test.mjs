@@ -4,6 +4,7 @@
  * 说明：真 CLI spawn 覆盖见 test/cli-smoke-t41.test.mjs（18 新键串行 spawn：Windows 并行
  * spawn 配额抖动，故严格串行；B 已验证串行 20/20 可行）；本文件保留同 dispatch 直调断言。
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { strict as assert } from 'node:assert';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -67,8 +68,8 @@ function seedFull(db) {
   db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('米饭', '测试', 130, 2.7, 0.3, 28, 1, '主食', '测试')").run();
 }
 
-test('#41 键表：101 组合（读 66 + 写 35，#113 +8／#86 +4／#179 +1／#251 目标预检 +1）registry 合法 + 新增 18 stat', () => {
-  assert.equal(Object.keys(CALORIE_COMBOS).length, 101);
+test('#41 键表：全量组合（读／写合计 == 权威声明）registry 合法 + 新增 18 stat', () => {
+  assert.deepEqual(Object.keys(CALORIE_COMBOS).sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
   const added = ['calorie.view.weight', 'calorie.view.weight-history', 'calorie.view.weight-compare', 'calorie.view.weight-review', 'calorie.view.volatility', 'calorie.view.body-composition', 'calorie.view.body-measure', 'calorie.view.plan', 'calorie.view.plan-wizard', 'calorie.view.exercise-goal', 'calorie.view.goal-expiring', 'calorie.view.goal-predict', 'calorie.view.goal-vs-actual', 'calorie.view.predict', 'calorie.view.anomaly', 'calorie.view.contraindication', 'calorie.view.dedupe', 'calorie.view.profile'];
   for (const k of added) {
     assert.ok(CALORIE_COMBOS[k], '缺新键 ' + k);

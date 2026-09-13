@@ -3,6 +3,7 @@
  * + T10（照片画廊/对比/单图/动图/HELP）+ CLI 契约（argv+JSON+exit：缺 key 2/未知 3/缺失 4/预检 1）+ envelope 全字段 + --html 落盘。
  * 运行：先 pnpm build，再 node --test packages/skill-calorie/test/cmd-read-t11.test.mjs
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
@@ -76,8 +77,8 @@ function runOk(dir, key, params, extra) {
   return env;
 }
 
-test('键表：101 组合（读 66 + 写 35，#113 趋势2+其他6移植 +8／#86 wizard 4 页 +4／#179 档案预检 +1／#251 目标预检 +1）registry 合法 + 形状对齐 envelope 全字段', () => {
-  assert.equal(Object.keys(CALORIE_COMBOS).length, 101);
+test('键表：全量组合（读／写合计 == 权威声明）registry 合法 + 形状对齐 envelope 全字段', () => {
+  assert.deepEqual(Object.keys(CALORIE_COMBOS).sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
   for (const [k, v] of Object.entries(CALORIE_COMBOS)) {
     assert.match(k, /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9-.]*$/);
     assert.ok(['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'].includes(v.shape));

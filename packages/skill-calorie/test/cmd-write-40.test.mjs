@@ -3,6 +3,7 @@
  * （缺参 2/未知键 3/缺失阻断 4/预检 1）+ --html 落盘 + skilllink 登记抽查。
  * 运行：先 pnpm build，再 node --test packages/skill-calorie/test/cmd-write-40.test.mjs
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
@@ -67,9 +68,9 @@ function runWrite(dir, key, params, extra) {
   return env;
 }
 
-test('写键表：35 键一律 receipt + registry 合法 + 全量 101（#113 +8／#86 +4／#179 +1／#251 目标预检 +1）', () => {
-  assert.equal(WRITE_KEYS.length, 35);
-  assert.equal(Object.keys(CALORIE_COMBOS).length, 101);
+test('写键表：全量写命令一律 receipt + registry 合法 + 全量组合 == 权威声明', () => {
+  assert.deepEqual([...WRITE_KEYS].sort(), DECLARED_WRITE_KEYS, '写键表 == 权威声明里的写命令，不再手写数字');
+  assert.deepEqual(Object.keys(CALORIE_COMBOS).sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
   for (const k of WRITE_KEYS) {
     assert.match(k, /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9-.]*$/);
     assert.equal(CALORIE_WRITE_COMBOS[k].shape, 'receipt');

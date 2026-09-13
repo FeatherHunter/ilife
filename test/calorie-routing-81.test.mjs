@@ -1,3 +1,4 @@
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from '../packages/skill-calorie/test/declared.mjs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -101,7 +102,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       legacyChain: 82,
       newEntries: 58,
       repairEntries: 1,
-      coveredKeys: 101,
+      coveredKeys: DECLARED_KEYS.length,
     });
   });
 
@@ -115,11 +116,11 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     }
   });
 
-  it('D2③ 101 键全部有可执行入口（436 条 ＋ 58 条新拟入口，#113 +8／#86 +4／#179 +1／#251 +1）', () => {
+  it('D2③ 全量键（条数 == 权威声明）全部有可执行入口（436 条 ＋ 58 条新拟入口）', () => {
     const covered = new Set(ALL_ROUTES.filter((r) => r.kind === 'exec').map((r) => r.key));
     assert.deepEqual([...covered].sort(), [...KEY_LIST].sort());
-    assert.equal(covered.size, 101);
-    assert.equal(Object.keys(EXEC_ROUTE_BY_KEY).length, 101);
+    assert.equal(covered.size, DECLARED_KEYS.length, '键覆盖数 == 权威声明');
+    assert.equal(Object.keys(EXEC_ROUTE_BY_KEY).length, DECLARED_KEYS.length, '可执行入口索引键数 == 权威声明');
     for (const key of KEY_LIST) {
       assert.ok(execCliForKey(key), key);
       assert.match(execCliForKey(key), new RegExp('^calorie-cmd-read ' + key.replace(/\./g, '\\.')));

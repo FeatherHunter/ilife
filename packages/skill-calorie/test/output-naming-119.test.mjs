@@ -7,6 +7,7 @@
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/output-naming-119.test.mjs`
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -53,7 +54,7 @@ function runOk(dir, args) {
 test('#119 ① sceneTypeFor：35 写键一律 receipt（旧 render_*_receipt 全走 html_scene_path receipt）', () => {
   assert.deepEqual(OUTPUT_TYPE_LABELS, { process: '过程', result: '结果', receipt: '回执' });
   const keys = Object.keys(CALORIE_COMBOS);
-  assert.equal(keys.length, 101);
+  assert.deepEqual([...keys].sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
   let receiptCount = 0;
   for (const k of keys) {
     if (calorieShapeFor(k) === 'receipt') {

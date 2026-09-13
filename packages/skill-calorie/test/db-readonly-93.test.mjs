@@ -12,6 +12,7 @@
  *
  * 运行：node --test packages/skill-calorie/test/db-readonly-93.test.mjs
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -284,8 +285,8 @@ test('#93 ① 66 读键在只读句柄上逐个可用，且与可写句柄 data/
   assert.equal(r.status, 0, 'sweep 子进程必须正常退出：' + String(r.stderr).slice(0, 400));
   const lines = String(r.stdout).split('\n').filter((s) => s.startsWith('{')).map((s) => JSON.parse(s));
   const started = String(r.stdout).split('\n').filter((s) => s.startsWith('START ')).map((s) => s.slice(6));
-  assert.equal(READ_KEYS.length, 66, '读键应为 66 个（101 组合键 − 35 写键）');
-  assert.equal(WRITE_KEYS.length, 35);
+  assert.deepEqual([...READ_KEYS].sort(), DECLARED_READ_KEYS, '读键 == 权威声明里的读命令，不再手写数字');
+  assert.deepEqual([...WRITE_KEYS].sort(), DECLARED_WRITE_KEYS, '写键 == 权威声明里的写命令，不再手写数字');
   assert.deepEqual(started, READ_KEYS, '每个读键都跑到（缺失＝该键把进程 exit 掉了，参数不全）');
   assert.equal(lines.length, READ_KEYS.length);
 

@@ -27,6 +27,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # #295：命令汇总位（keys／registry／combos 镜像／REPR）改由各能力声明确定性生成后，
+      #   生成物 ≠ 生成器输出即红——设计正本《命令登记与分派-方案.html》把「确定性 ＋ 哈希锁 ＋ CI 校验」
+      #   列为这套方案的成立要件，缺这条生成物就会被人手改、退化成第四份手抄。
+      #   需先 build 出 dist/：生成器读的是编译后的声明模块（TS 不能直接被 node 引）。
+      - run: pnpm gen:check
       # #99：SKILL.md「例」列逐行可执行门（99 行 spawn 真 CLI 断言 exit 0；需先 build 出 dist/）
       #   判据与 #81「exec ⟺ exit 0」同源：同一份标准种子库 docs/research/t81-seed.mjs
       - run: pnpm help:examples:check

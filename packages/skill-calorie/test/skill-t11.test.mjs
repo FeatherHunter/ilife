@@ -3,6 +3,7 @@
  * #107：6 件模板**不再存在「存在但零引用」**——逐件被 HELP 速查台渲染进「看板页入口」
  * （`buildHelpViewEntries` → `meta_blocks`），故断言从「文件存在」升级为「存在 ＋ 真被渲染」。
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
@@ -47,10 +48,10 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
       assert.ok(skill.includes(s), 'M6 正文缺：' + s);
     }
   });
-  it('互联区新鲜（构建期注入可复现，101 键全对齐 combos（#113 +8／#86 +4／#179 +1／#251 目标预检 +1））', () => {
+  it('互联区新鲜（构建期注入可复现，全量键对齐 combos，条数 == 权威声明）', () => {
     const si = skill.indexOf(START), ei = skill.indexOf(END);
     assert.equal(skill.slice(si + START.length + 1, ei - 1), buildHelpBlock());
-    assert.equal(Object.keys(CALORIE_COMBOS).length, 101);
+    assert.deepEqual(Object.keys(CALORIE_COMBOS).sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
     for (const k of Object.keys(CALORIE_COMBOS)) assert.ok(skill.includes(k), '缺键 ' + k);
   });
   it('模板 6 件经 loader 装载（#95：dist/render 上溯两级取包根 templates/）', () => {

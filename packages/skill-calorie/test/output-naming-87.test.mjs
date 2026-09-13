@@ -6,6 +6,7 @@
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/output-naming-87.test.mjs`
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -106,9 +107,9 @@ test('#87 ② 时间戳：YYYYMMDD_HHMMSS 零填充 ＋ 本地时区', () => {
 });
 
 // ---------------------------------------------------------------- ③ <中文command> 真值来源
-test('#87 ③ <中文command> 真值 = CALORIE_COMBOS[key].title（101 键全量，#113 +8／#86 +4／#179 +1／#251 目标预检 +1），且清洗为恒等）', () => {
+test('#87 ③ <中文command> 真值 = CALORIE_COMBOS[key].title（全量键，条数 == 权威声明），且清洗为恒等）', () => {
   const keys = Object.keys(CALORIE_COMBOS);
-  assert.equal(keys.length, 101);
+  assert.deepEqual([...keys].sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
   for (const k of keys) {
     const title = CALORIE_COMBOS[k].title;
     assert.ok(typeof title === 'string' && title.length > 0, k + ' 缺 title');

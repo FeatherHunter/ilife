@@ -4,6 +4,7 @@
  * Windows 并行 spawn 配额抖动）。种子与 packages/skill-calorie/test/cli-smoke-t41.test.mjs seedFull 同构
  * （测试文件间不互 import，避免重复注册用例）。
  */
+import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from '../packages/skill-calorie/test/declared.mjs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -142,7 +143,7 @@ describe('#42 combos 补登记 18 新读键（skilllink 可读）', () => {
   it('CALORIE_COMBOS 全量 ⊆ combos.yaml（形状/标题/出口逐键对齐，漏登记即挂）', () => {
     const rows = loadCombos();
     const byKey = new Map(rows.map((r) => [r.key, r]));
-    assert.equal(Object.keys(CALORIE_COMBOS).length, 101);
+    assert.deepEqual(Object.keys(CALORIE_COMBOS).sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
     assert.equal(READ18.length, 18);
     for (const [key, meta] of Object.entries(CALORIE_COMBOS)) {
       const hit = byKey.get(key);
