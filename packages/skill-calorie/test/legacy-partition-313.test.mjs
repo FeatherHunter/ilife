@@ -8,10 +8,12 @@
  *   ① **跨场景同键即抛**：两个场景文件声明同一个键 = 一个键两个定义地（铁律二）＝生成期必须抛。
  *      判据用的是生成器自己的守卫 `mergeLegacyPartition()`（`scripts/gen-cli.mjs` 导出），
  *      不是本文件另写一份判断——铁律二同样管测试。
- *   ② **键集与分区前一致**：分区是**纯搬迁**，不许顺手增删命令。对照＝分区前实测的冻结基线
- *      `.scratch/t313/legacy-baseline-keys.json`（由证据脚本 `.scratch/t313/build-partition.mjs`
- *      从分区前的清单源文算出）。将来搬走一条命令时，**同时**改这份基线与
- *      `legacy-ratchet-295.test.mjs` 的 `FROZEN_LEGACY_KEYS`——两处一起变小才是搬迁。
+ *   ② **键集与分区前一致**：分区是**纯搬迁**，不许顺手增删命令。对照＝**版本库内的**
+ *      `./legacy-frozen-295.mjs` 的 `FROZEN_LEGACY_KEYS`——分区前 92 键的唯一一份冻结定义，
+ *      与 `legacy-ratchet-295.test.mjs` 用的是同一条来源（铁律二：一个概念一个定义地）。
+ *      （#313 A 段整改：此前这里读 `.scratch/t313/legacy-baseline-keys.json`，那份在 gitignore 下，
+ *      干净 clone／CI 上必然红；现在那份 JSON 只是工作草稿，**不再进任何判据**。）
+ *      将来搬走一条命令时：改 `legacy-frozen-295.mjs`（键 ＋ 上限），再删它那一片里的那一行。
  *   ③ **文件级隔离可机械判定**：生成器的输入恰为 `src/cli/legacy/*.ts`（文件名升序）＋
  *      `src/<能力>/commands.ts`；内容印记 `dist/.gen-inputs.json` 覆盖这些分片；
  *      旧单文件 `src/cli/legacyCommands.ts` 与其编译产物都不再存在（避免长出第三处清单）。
@@ -35,12 +37,12 @@ import { LEGACY_SCENE_09 } from '../dist/cli/legacy/scene-09.js';
 import { LEGACY_SCENE_10 } from '../dist/cli/legacy/scene-10.js';
 import { mergeLegacyPartition } from '../scripts/gen-cli.mjs';
 import { LEGACY_COMMANDS } from './declared.mjs';
+import { FROZEN_LEGACY_KEYS, FROZEN_LEGACY_MAX } from './legacy-frozen-295.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
 const SRC_LEGACY = join(PKG, 'src', 'cli', 'legacy');
 const DIST_LEGACY = join(PKG, 'dist', 'cli', 'legacy');
-const BASELINE = join(PKG, '..', '..', '.scratch', 't313', 'legacy-baseline-keys.json');
 
 /** 场景分片（键＝场景号，来源＝编译后的场景文件）。 */
 const SCENES = {
@@ -56,12 +58,11 @@ const SCENES = {
   '10': LEGACY_SCENE_10,
 };
 
-/** 分区前的 92 键（冻结基线；来源文件带 sha256 自证）。 */
+/** 分区前的 92 键（冻结基线唯一一份定义，在版本库内）。 */
 function baselineKeys() {
-  const raw = JSON.parse(readFileSync(BASELINE, 'utf8'));
-  assert.ok(raw.fileSha256 && /^[0-9A-F]{64}$/.test(raw.fileSha256), '基线文件缺分区前清单的 sha256');
-  assert.ok(Array.isArray(raw.keys) && raw.keys.length === 92, '基线文件的键数不是 92');
-  return raw.keys;
+  const keys = [...FROZEN_LEGACY_KEYS];
+  assert.equal(keys.length, FROZEN_LEGACY_MAX, '冻结键集条数与冻结上限不等（冻结面自相矛盾）');
+  return keys;
 }
 
 /* ── ① 跨场景同键即抛（守卫在生成器里） ─────────────────────────────────────────────────── */
@@ -91,18 +92,19 @@ test('#313 跨场景同键即抛：两个场景文件声明同一个键时，合
 
 /* ── ② 键集与分区前一致（纯搬迁的机器判据） ──────────────────────────────────────────────── */
 
-test('#313 纯搬迁：分区后的键集与分区前的冻结基线逐字一致', () => {
+test('#313 纯搬迁：分区后的键集与分区前的冻结键集逐字一致', () => {
   const now = Object.keys(SCENES).sort().flatMap((s) => SCENES[s].map((d) => d.key));
   const expected = baselineKeys();
   assert.deepEqual([...now].sort(), [...expected].sort(),
     '分区后的键集与分区前不一致（分区是纯搬迁，不许增删命令）');
   assert.equal(new Set(now).size, now.length, '分区后出现重复键');
-  // 声明的其余字段也必须逐条原样（不许顺手改形状／标题／代表唤醒词／示例）。
-  const baselineFields = [...new Set(now)].map((k) => {
-    const d = LEGACY_COMMANDS.find((x) => x.key === k);
-    return [d.kind, d.key, d.shape, d.title, d.wakeWord ?? '', d.example].join('|');
-  });
-  assert.equal(baselineFields.length, 92, '分区后声明条数不是 92');
+  // 声明字段逐条存在（不许顺手漏字段；`wakeWord` 按契约可缺，缺了速查表退回命令名）。
+  for (const d of LEGACY_COMMANDS) {
+    for (const f of ['kind', 'key', 'shape', 'title', 'example']) {
+      assert.equal(typeof d[f], 'string', '分区后声明缺字段 ' + f + '：' + JSON.stringify(d.key));
+    }
+  }
+  assert.equal(LEGACY_COMMANDS.length, FROZEN_LEGACY_MAX, '分区后声明条数与冻结上限不等');
 });
 
 /* ── ③ 文件级隔离：生成器输入恰为场景分片，旧单文件不复存在 ───────────────────────────────── */

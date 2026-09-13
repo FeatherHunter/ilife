@@ -33,6 +33,7 @@ import { LEGACY_SCENE_09 } from '../dist/cli/legacy/scene-09.js';
 import { LEGACY_SCENE_10 } from '../dist/cli/legacy/scene-10.js';
 import { REGISTRY } from '../dist/cli/registry.js';
 import { LEGACY_COMMANDS, LEGACY_SCENES, DECLARED_KEYS } from './declared.mjs';
+import { FROZEN_LEGACY_KEYS, FROZEN_LEGACY_MAX, FROZEN_LEGACY_LINES } from './legacy-frozen-295.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const LEGACY_DIR = join(HERE, '..', 'src', 'cli', 'legacy');
@@ -51,42 +52,10 @@ const SCENES = {
   '10': LEGACY_SCENE_10,
 };
 
-/* ── 冻结基线（#295 交付时的值，只许变短） ─────────────────────────────────────────────── */
-
-const FROZEN_LEGACY_KEYS = new Set([
-  'calorie.body.composition-add', 'calorie.body.composition-remove', 'calorie.body.measure-add', 'calorie.body.measure-remove',
-  'calorie.diet.add', 'calorie.diet.batch', 'calorie.diet.copy', 'calorie.diet.remove',
-  'calorie.diet.remove-by-date', 'calorie.diet.remove-by-range', 'calorie.diet.remove-by-type', 'calorie.diet.update',
-  'calorie.diet.update-by-date', 'calorie.exercise.add', 'calorie.exercise.remove', 'calorie.exercise.update',
-  'calorie.goal.pause', 'calorie.goal.resume', 'calorie.goal.set', 'calorie.goal.water',
-  'calorie.goal.weight', 'calorie.help.center', 'calorie.help.lookup', 'calorie.history',
-  'calorie.photo.add', 'calorie.photo.compare', 'calorie.photo.detail', 'calorie.photo.gif',
-  'calorie.photo.list', 'calorie.photo.remove', 'calorie.photo.tag', 'calorie.product.add',
-  'calorie.product.deprecate', 'calorie.product.update', 'calorie.profile.activity', 'calorie.profile.set',
-  'calorie.profile.update', 'calorie.today', 'calorie.view.anomaly', 'calorie.view.batch-import-preview',
-  'calorie.view.body-composition', 'calorie.view.body-measure', 'calorie.view.calorie-trend', 'calorie.view.combined',
-  'calorie.view.composition-wizard', 'calorie.view.contraindication', 'calorie.view.dedupe', 'calorie.view.deficit',
-  'calorie.view.diet', 'calorie.view.diet-review', 'calorie.view.exercise', 'calorie.view.exercise-cardio',
-  'calorie.view.exercise-distribution', 'calorie.view.exercise-goal', 'calorie.view.exercise-recap', 'calorie.view.exercise-review',
-  'calorie.view.exercise-strength', 'calorie.view.exercise-trend', 'calorie.view.gif-planner', 'calorie.view.goal',
-  'calorie.view.goal-config', 'calorie.view.goal-expiring', 'calorie.view.goal-predict', 'calorie.view.goal-progress',
-  'calorie.view.goal-recommend', 'calorie.view.goal-status', 'calorie.view.goal-vs-actual', 'calorie.view.goal-weight',
-  'calorie.view.goal-wizard', 'calorie.view.health', 'calorie.view.home', 'calorie.view.library',
-  'calorie.view.lint-health', 'calorie.view.long-trend', 'calorie.view.measure-wizard', 'calorie.view.nutrition-analysis',
-  'calorie.view.nutrition-detail', 'calorie.view.nutrition-ratio', 'calorie.view.photo-log-wizard', 'calorie.view.plan',
-  'calorie.view.plan-wizard', 'calorie.view.predict', 'calorie.view.process-progress', 'calorie.view.profile',
-  'calorie.view.profile-wizard', 'calorie.view.ranking', 'calorie.view.review-template', 'calorie.view.search',
-  'calorie.view.six-factors', 'calorie.view.source-stats', 'calorie.view.today-water', 'calorie.water.log',
-]);
-
-/** 只许变短的上限：条数上限与行数上限，各等于 #295 交付时的值（长一点即红）。
- * `FROZEN_LEGACY_LINES` 量的是 `src/cli/legacy/scene-*.ts` 里**声明行的行数之和**（每行一条声明）。
- * **上限数字一字未动**（仍是 #295 对单文件实测的 92／119）；分区只是换了量法的分母：
- * 拆成 10 个文件必然多出 9 份文件头（说明与 import，不是声明），故「物理行数」这个分母不再可比，
- * 改用「声明行数之和」——92 条声明仍是 92 行，一个文件时代与分区时代同一个数，
- * 「搬走一条即少一行」的牙齿照旧。 */
-const FROZEN_LEGACY_MAX = 92;
-const FROZEN_LEGACY_LINES = 119;
+/* ── 冻结基线（#295 交付时的值，只许变短） ───────────────────────────────────────────────
+ * 键集与两个上限的**唯一一份定义**住 `./legacy-frozen-295.mjs`（#313 A 段整改：此前这里有一份、
+ * 分区测试里还有一份、外加一份 gitignored 的 `.scratch/t313/legacy-baseline-keys.json`——
+ * 一个概念三个定义地，且那份 JSON 不在版本库里）。 */
 
 /* ── 棘轮 ─────────────────────────────────────────────────────────────────────────────── */
 
