@@ -1,7 +1,7 @@
 /** 饮食能力的子功能「看营养」（HELP 场景 02「饮食」下一级 diet_5）：营养配比／营养素深度／批量导入预览。
  *
  * #315 纯搬迁：三个处理体**逐字搬自** `src/cli/cmd_read.ts` 的对应 `case`（语义不动，只换住处）。
- * 取数走 `render/nutritionPort.ts`／`render/trendMiscPort.ts`，装配走同名 `*Docs.ts` 的公开接口。
+ * 取数走 `diet/nutritionPort.ts`／`render/trendMiscPort.ts`，装配走同名 `*Docs.ts` 的公开接口。
  * 三条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';

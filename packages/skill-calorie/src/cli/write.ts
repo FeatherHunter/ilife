@@ -18,7 +18,7 @@
  *   「仍计入历史统计」口径**，见 `docs/research/t120-softdelete-filter.md`）／
  *   `body_composition`／`body_measurements`（`is_deprecated`，读层 `fetch/body.ts:131,197,155,166`
  *   ＋ `analysis/series.ts:119,122`／`cross.ts:144-145` 均带 `is_deprecated = 0`）／
- *   `nutrition_products`（`fetch/products.ts:72,108,114,120`）
+ *   `nutrition_products`（`diet/productStore.ts:72,108,114,120`）
  *   → 「（软删除：行保留，已从查询与统计中排除；暂无恢复入口）」
  * - 硬删除（行删除、不可恢复）：`food_log`／`weight_log`／`body_photos`（`DELETE FROM`）→ 「（硬删除，不可恢复）」
  * `items[].status` 结构化字段与 prose **同源**（同一口径常量派生，软/硬 ＋ 不可恢复）。

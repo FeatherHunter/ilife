@@ -1,8 +1,8 @@
 /** 饮食能力的子功能「看饮食」（HELP 场景 02「饮食」下一级 diet_3）：今日饮食／今日饮水。
  *
  * #315 纯搬迁：两个处理体**逐字搬自** `src/cli/cmd_read.ts` 的对应 `case`（语义不动，只换住处）。
- * 取数走 `fetch/diet.ts`、装配走 `render/diet.ts`／`render/dietDocs.ts`／`render/nutritionPort(Docs).ts`、
- * 配比算式走 `analysis/diet.ts` 的公开接口——本件不重写任何别人的算式。
+ * 取数走 `fetch/diet.ts`、装配走 `render/diet.ts`／`render/dietDocs.ts`／`diet/nutritionPort(Docs).ts`、
+ * 配比算式走 `diet/dietEngine.ts` 的公开接口——本件不重写任何别人的算式。
  * 两条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';

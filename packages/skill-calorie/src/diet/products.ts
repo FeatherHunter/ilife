@@ -1,7 +1,7 @@
 /** 饮食能力的子功能「查食品·写」（HELP 场景 02「饮食」下一级 diet_4）：存食品／改食品／下架食品。
  *
  * #315 纯搬迁：三个处理体**逐字搬自** `src/cli/write.ts` 的对应 `case`（语义不动，只换住处）。
- * 取数走 `fetch/products.ts` 的公开接口，删除措辞与回执底座走共用位 `shared/writeParts.ts`。
+ * 取数走 `diet/productStore.ts` 的公开接口，删除措辞与回执底座走共用位 `shared/writeParts.ts`。
  * 三条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';

@@ -1,8 +1,8 @@
 /** 饮食能力的子功能「查食品·读」（HELP 场景 02「饮食」下一级 diet_4）：查食品／查食品库／看去重报告／看食品来源统计。
  *
  * #315 纯搬迁：四个处理体**逐字搬自** `src/cli/cmd_read.ts` 的对应 `case`（语义不动，只换住处）。
- * 取数走 `render/library.ts`、装配走 `render/dietDocs.ts`／`render/insightPlate.ts`／
- * `render/nutritionPort(Docs).ts` 的公开接口——本件不重写任何别人的算式。
+ * 取数走 `diet/libraryPlate.ts`、装配走 `render/dietDocs.ts`／`render/insightPlate.ts`／
+ * `diet/nutritionPort(Docs).ts` 的公开接口——本件不重写任何别人的算式。
  * 四条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';

@@ -15,7 +15,7 @@
  * sharedCss = buildStyleSheet().css + blocksCss()，不走 extraCss；
  * 图表页另加 CHARTS-HELPERS＋buildChartsHelpersJs，图表 CSS 由其运行时注入）。
  * 复制文本一律 buildDataText（#77 契约）：stat 投影 metrics 只收确定数字。
- * 本层不做取数（数据由 render/nutritionPort.ts 备齐），不返空（缺失由数据层抛 missing-data）。
+ * 本层不做取数（数据由 diet/nutritionPort.ts 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
   renderChartBlock,

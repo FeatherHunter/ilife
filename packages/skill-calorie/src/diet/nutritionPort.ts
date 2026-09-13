@@ -10,7 +10,7 @@
  * - R11 收敛：today-water 的 7 天窗＝date 当天往前 6 个自然日（沿旧“含今天，
  *   最早 6 天前”），不做周一派生（周一口径是计划会话域口径，不扩散到本域）。
  * 缺失阻断不返空：窗内无行／库空／目标缺失可展示即 `missing-data`（G5 #100 口径）；
- * 日期非法即 `bad-input`。本层只做取数＋聚合，不组 HTML（组装归 `render/nutritionPortDocs.ts`）。
+ * 日期非法即 `bad-input`。本层只做取数＋聚合，不组 HTML（组装归 `diet/nutritionPortDocs.ts`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { WATER_NAME, readGoal } from '../fetch/diet.js';

@@ -1,7 +1,7 @@
 /** 饮食能力的子功能「看排行」（HELP 场景 02「饮食」下一级 diet_6）：食品排行（高热量／低热量／频繁吃／高碳水／高蛋白）。
  *
  * #315 纯搬迁：一个处理体**逐字搬自** `src/cli/cmd_read.ts` 的 `case`（语义不动，只换住处）。
- * 取数走 `render/ranking.ts`、装配走 `render/dietDocs.ts` 的公开接口。
+ * 取数走 `diet/rankingPlate.ts`、装配走 `render/dietDocs.ts` 的公开接口。
  * 一条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
