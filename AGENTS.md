@@ -27,3 +27,7 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 ### Domain docs
 
 Single-context (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
+
+### 命令登记
+
+一条命令的事实只住它自己的能力目录（`src/<能力>/commands.ts`），汇总位一律由 `pnpm gen` 派生、`pnpm gen:check` 守。改命令、搬老命令、碰共用位前读 `docs/agents/命令登记纪律.md`。
