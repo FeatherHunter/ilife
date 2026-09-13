@@ -99,9 +99,9 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       nonExec: 95,
       outOfScope: 10,
       legacyChain: 85,
-      newEntries: 57,
+      newEntries: 58,
       repairEntries: 1,
-      coveredKeys: 100,
+      coveredKeys: 101,
     });
   });
 
@@ -115,11 +115,11 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     }
   });
 
-  it('D2③ 100 键全部有可执行入口（436 条 ＋ 57 条新拟入口，#113 +8／#86 +4／#179 +1）', () => {
+  it('D2③ 101 键全部有可执行入口（436 条 ＋ 58 条新拟入口，#113 +8／#86 +4／#179 +1／#251 +1）', () => {
     const covered = new Set(ALL_ROUTES.filter((r) => r.kind === 'exec').map((r) => r.key));
     assert.deepEqual([...covered].sort(), [...KEY_LIST].sort());
-    assert.equal(covered.size, 100);
-    assert.equal(Object.keys(EXEC_ROUTE_BY_KEY).length, 100);
+    assert.equal(covered.size, 101);
+    assert.equal(Object.keys(EXEC_ROUTE_BY_KEY).length, 101);
     for (const key of KEY_LIST) {
       assert.ok(execCliForKey(key), key);
       assert.match(execCliForKey(key), new RegExp('^calorie-cmd-read ' + key.replace(/\./g, '\\.')));
@@ -153,14 +153,15 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       TRIGGERS.filter((t) => t.main_prompt.cli.includes('"source":"home_caliper"')).map((t) => t.wake_word),
       ['记体脂（皮褶钳）'],
     );
-    // `看目标预测达成` 的窗口判据（#180 重导：原判据读 `HELP_EXEC_OVERRIDES.goal_view_predict` 的 <14 天示例，
-    // 补偿表随本波清空、示例亦随数据重写消失）——该能力要求 ≥14 天窗口，路由 cli 必须满足；窗口不足会让
-    // 该词恒 exit 4（FX-81-7 当年正是据此改写的）。
+    // `看目标预测达成` 的窗口判据（#250 重导）：该能力要求 ≥14 天**外推基线**，路由 cli 必须给足。
+    // 旧判据从 cli 里抠 `"start"/"end"` 两个日期（种子日期写死的时代）；本票把窗口改成相对形态后，
+    // 判据改读窗口词本身——解析口径仍由 `analysis/series.ts:resolveWindow` 一处给（命令层 `defaultRange`
+    // 的缺省窗也是 14 天，两处同值）。判据强度不变：窗口不足照样变红。
     const predict = routesFor('看目标预测达成').find((r) => r.kind === 'exec');
     assert.ok(predict, '看目标预测达成 应有 exec 路由');
-    const win = /"start":"(\d{4}-\d{2}-\d{2})","end":"(\d{4}-\d{2}-\d{2})"/.exec(predict.cli);
-    assert.ok(win, '看目标预测达成 的 cli 应带 start/end');
-    const winDays = (Date.parse(win[2]) - Date.parse(win[1])) / 86400000 + 1;
+    const win = /"window":"([0-9]+)d"/.exec(predict.cli);
+    assert.ok(win, '看目标预测达成 的 cli 应带相对窗口（window:"<N>d"）');
+    const winDays = Number(win[1]);
     assert.ok(winDays >= 14, `看目标预测达成 窗口应 ≥14 天（实测 ${winDays} 天）`);
     assert.equal(WIZARD_WORDS.size, 5);
     for (let i = 0; i < TRIGGERS.length; i += 1) {
@@ -229,15 +230,15 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
-      494,
+      495, // #251 +1（看目标预检，新拟入口 → 多一条路由记录）
     );
     for (const w of new Set(WAKE_ROUTES.map((r) => r.wakeWord))) {
       assert.ok(routesFor(w).length >= 1, w);
     }
   });
 
-  it('D2⑤ 新增入口（57 键，#113 +8／#86 +4／#179 +1）与施工前既有入口零重复', () => {
-    assert.equal(NEW_KEY_ROUTES.length, 57);
+  it('D2⑤ 新增入口（58 键，#113 +8／#86 +4／#179 +1／#251 +1）与施工前既有入口零重复', () => {
+    assert.equal(NEW_KEY_ROUTES.length, 58);
     // 「施工前既有入口」＝#81 施工点上冻结表可达的 **43 键**（冻结直连 cli 33 键 ＋ 当时补偿表 22 条映射出的
     // 10 个新键）。#180 把 375 条命令字段逐字改写成路由层命令后，这层基线**已无法从冻结表反推**——反推得
     // 75 键，其中 32 键正是 #81 新拟入口本尊（自己与自己比，判据失去鉴别力）→ 按议题《影响清单第一步补记》
@@ -278,11 +279,11 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       assert.match(r.cli, /^calorie-cmd-read calorie\./);
       assert.equal(/python/i.test(r.cli), false);
     }
-    assert.equal(newKeys.size, 57);
-    assert.equal(newWords.size, 57);
+    assert.equal(newKeys.size, 58);
+    assert.equal(newWords.size, 58);
   });
 
-  it('FX-81-5 覆盖修复：wizard 降级词失去的唯一入口由 1 条单命令入口承接（100 键不放宽，#113 +8／#86 +4／#179 +1）', () => {
+  it('FX-81-5 覆盖修复：wizard 降级词失去的唯一入口由 1 条单命令入口承接（101 键不放宽，#113 +8／#86 +4／#179 +1／#251 +1）', () => {
     assert.equal(COVERAGE_REPAIR_ROUTES.length, 1);
     // 修复入口的键＝「降级后失去唯一可跑入口」的键（从冻结表 ＋ 路由层派生，非手写清单）。
     // #180 重导：补偿表清空后取值只由冻结命令字段派生（原第二条来源 `HELP_EXEC_OVERRIDES` 已删）。
@@ -316,7 +317,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
   it('FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 0 ＋ 已登记的数据依赖失败单列 ＋ 需参数键必须带 --params）', () => {
     const md = readFileSync(SMOKE_MD, 'utf8');
     const execAll = allExec();
-    assert.equal(execAll.length, 399, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页）');
+    assert.equal(execAll.length, 400, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页）');
     // ① 快照汇总：非零只许是**已登记的数据依赖失败**（用户 2026-09-11 裁定取甲：把「命令坏了」与
     // 「数据依赖的失败」分开统计；判据是快照自己 :7-9 写的「数据依赖失败（空库 exit 4）不算 cli 缺陷」，
     // 改断言＝把断言对齐判据）。
@@ -325,7 +326,13 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     // 登记册（只许登记、不许扩；每条都要求 exit 码 ＋ key ＋ envelope 空 ＋ cli 逐字四项同时成立）：
     //   `复制昨日运动`（key `calorie.exercise.add`）：标准种子库「昨日无运动记录可复制」→ exit 4、
     //   envelope `—`。出处 `docs/research/t81-exec-smoke.md:147`／`:541`。
-    const DATA_DEPENDENT_FAILURES = new Map([['复制昨日运动', { exit: '4', key: 'calorie.exercise.add' }]]);
+    //   `计划复盘（本周）`（key `calorie.view.exercise-review`）：#250 起「本周」＝本周一..今日（自然周），
+    //   种子库的数据日是周一 ⇒ 窗只 1 天；那天没有计划会话 ⇒ exit 4、envelope `—`。
+    //   这是**数据依赖**失败（词与窗口都对：真用户的计划周一有会话就跑得通），故登记而不改判。
+    const DATA_DEPENDENT_FAILURES = new Map([
+      ['复制昨日运动', { exit: '4', key: 'calorie.exercise.add' }],
+      ['计划复盘（本周）', { exit: '4', key: 'calorie.view.exercise-review' }],
+    ]);
     // ② 快照逐条：exit 全 0（登记项除外）＋ envelope key 与路由 key 一致（登记项除外）＋ 条数与路由层一致。
     const rows1 = smokeSection(md, '## 1. ');
     assert.equal(rows1.length, execAll.length, 'smoke 快照 exec 条数与路由层不一致（快照未重生成？）');
@@ -365,9 +372,11 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       checked += 1;
     }
     // #112 校准：112 为 #81 旧值；#111 regen 后实为 106（6 条记录的键转为裸跑可跑，
-    // 被 R17 零检掩盖而未察觉）。本票 regen 前后均为 106（HEAD md 实测 106→本票 md 106，
-    // 本票 5 条增量键全裸跑可跑），故断言取真值 106；待 R17 修复票解零检后本行即生效。
-    assert.equal(checked, 107, '需参数键的 exec 记录数（结构性断言覆盖面）');
+    // 被 R17 零检掩盖而未察觉）。#250 把「今天」钉到种子数据日（`CALORIE_TODAY`）后重跑裸探针，
+    // 实测仍是 **106**——本行原写 107 是 R17 零检掩盖下的旧值，本票按实测真值收正。
+    // 翻面 1 条已核：`calorie.diet.copy` 裸跑由「失败」转为「可跑」（裸跑取「昨日」＝种子写的 09-06 有数据；
+    // 钉钟前按机器当天取窗，落在种子数据外）。明细见 `docs/skills/skill-calorie/t250-*`。
+    assert.equal(checked, 106, '需参数键的 exec 记录数（结构性断言覆盖面）');
   });
 
   it('A7 明确不做桶按架构规格 :60 建立，t71 差异逐条登记（两处出处）', () => {

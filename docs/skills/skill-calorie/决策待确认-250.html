@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>#250 待裁定 6 件事 · 卡路里路由层窗口与命令接错纠正</title>
+<style>
+  :root{
+    --ink:#1a1d21; --sub:#5b6470; --line:#e3e6ea; --bg:#f6f7f9;
+    --rec:#0f7b52; --recbg:#eaf7f1; --warn:#a8541a; --warnbg:#fdf3e8;
+    --bad:#b3261e; --badbg:#fdeceb; --code:#f2f4f7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 72px}
+  header{border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:8px}
+  .kicker{color:var(--sub);font-size:13px;letter-spacing:.04em}
+  h1{font-size:23px;margin:6px 0 4px}
+  h2{font-size:17px;margin:30px 0 10px;padding-left:9px;border-left:4px solid var(--ink)}
+  h3{font-size:15px;margin:0 0 6px}
+  p{margin:6px 0}
+  .sub{color:var(--sub)}
+  .lead{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+  .lead b{background:#fff3bf;padding:0 3px;border-radius:3px}
+  nav{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+  nav a{font-size:13px;text-decoration:none;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+  nav a:hover{border-color:var(--ink)}
+  .grid{display:grid;gap:12px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:760px){.g4,.g3{grid-template-columns:1fr 1fr}}
+  .num{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .num b{display:block;font-size:26px;line-height:1.25}
+  .num span{color:var(--sub);font-size:12.5px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card+.card{margin-top:12px}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;
+    vertical-align:1px;margin-right:6px}
+  .t-rec{background:var(--recbg);color:var(--rec);border:1px solid #bfe3d2}
+  .t-warn{background:var(--warnbg);color:var(--warn);border:1px solid #f0d9c0}
+  .t-bad{background:var(--badbg);color:var(--bad);border:1px solid #f3cfcc}
+  .t-mut{background:#eef0f3;color:var(--sub);border:1px solid var(--line)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;
+    padding:10px 12px;overflow-x:auto;font:12.5px/1.6 ui-monospace,Consolas,monospace;margin:8px 0}
+  code{background:var(--code);border-radius:4px;padding:1px 4px;font:12.5px ui-monospace,Consolas,monospace}
+  .del{color:var(--bad);text-decoration:line-through}
+  .add{color:var(--rec);font-weight:700}
+  .q{background:#fff;border:1px solid var(--line);border-left:5px solid var(--rec);
+    border-radius:10px;padding:14px 16px;margin:14px 0}
+  .q h3{display:flex;gap:8px;align-items:baseline}
+  .q h3 em{font-style:normal;color:var(--sub);font-size:12.5px;font-weight:400}
+  .why{color:var(--sub);font-size:13.5px;border-left:2px solid var(--line);padding-left:10px;margin:8px 0}
+  .opts{display:grid;gap:10px;margin-top:10px}
+  .opt{display:block;border:1px solid var(--line);border-radius:9px;padding:11px 13px;cursor:pointer;background:#fcfcfd}
+  .opt:hover{border-color:#9aa4b0}
+  .opt.rec{border-color:#bfe3d2;background:var(--recbg)}
+  .opt input{margin-right:7px}
+  .opt b{font-size:14.5px}
+  .opt .pl,.opt .mi{display:block;font-size:13px;margin:5px 0 0;padding-left:2px}
+  .opt .pl::before{content:"利 ";color:var(--rec);font-weight:700}
+  .opt .mi::before{content:"弊 ";color:var(--bad);font-weight:700}
+  .opt .mi{color:#6a4a48}
+  table{border-collapse:collapse;width:100%;background:#fff;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#f0f2f5;font-weight:600}
+  details{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600;font-size:14px}
+  details>*:not(summary){margin-top:8px}
+  .foot{margin-top:34px;border-top:1px solid var(--line);padding-top:12px;color:var(--sub);font-size:12.5px}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 0}
+  button{font:inherit;font-size:13.5px;border:1px solid var(--ink);background:var(--ink);color:#fff;
+    border-radius:8px;padding:6px 14px;cursor:pointer}
+  button:hover{opacity:.88}
+  #reply{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">FeatherHunter/ilife · issue #250 · 地图 #152 子票 · 2026-09-13 · 票由 AI 开出，本页补齐前因后果</div>
+  <h1>卡路里：路由层窗口与命令接错纠正 —— 待你裁定 6 件事</h1>
+  <div class="sub">已认领、已诊断，未动任何源码。你回完这 6 条，我按裁定实施并收尾。</div>
+  <nav>
+    <a href="#what">① 这是什么问题</a>
+    <a href="#facts">② 实数</a>
+    <a href="#find">③ 三处意外</a>
+    <a href="#q1">Q1 本周怎么算</a>
+    <a href="#q2">Q2 落地机制</a>
+    <a href="#q3">Q3 锚点</a>
+    <a href="#q4">Q4 写命令日期</a>
+    <a href="#q5">Q5 错项范围</a>
+    <a href="#q6">Q6 HELP 成品面</a>
+    <a href="#todo">⑤ 裁定后做什么</a>
+    <a href="#reply">⑥ 回复模板</a>
+  </nav>
+</header>
+
+<h2 id="what">① 这是什么问题（一句话 + 一个例子）</h2>
+<div class="lead">
+  每个唤醒词（如「看本周饮食」）背后有一条<b>可被用户和 AI 照抄执行的命令</b>。今天这些命令把「查哪一天／哪一周／哪一月」<b>写死在种子数据那一天（2026-09-07）</b>：
+  命令文本本身是过期日期，数据往后长、窗口也不跟着走，念「看上周／看本月」拿到的是 2026-09 的那一段。
+  本票＝把这些窗口改成<b>相对窗口</b>（今日／本周／最近 7 天这类），由命令在运行时解析。
+</div>
+
+<pre>现状 <span class="del">calorie-cmd-read calorie.view.diet --params '{"start":"2026-09-07","end":"2026-09-07"}'</span>
+目标 <span class="add">calorie-cmd-read calorie.view.diet --params '{"window":"本周"}'</span></pre>
+
+<div class="card">
+  <b>为什么这不是洁癖，而是用户真的会碰到：</b>
+  <ul style="margin:6px 0 0;padding-left:20px">
+    <li>HELP 回条里，命令原文渲染成 <code>&lt;pre&gt;</code>，<b>紧挨一个「照原样复制」的按钮</b>（<code>render/html.ts:226-227</code>）。</li>
+    <li>速查台里，老卡把命令原文当<b>卡面 id 回显</b>（<code>render/helpCenter.ts:244</code>）。</li>
+    <li>写后回执页的「复制日志」里，第 4 段就是命令原文。</li>
+  </ul>
+</div>
+
+<h2 id="facts">② 已确认的实数（我复跑过，不引票面）</h2>
+<div class="grid g4">
+  <div class="num"><b>245</b><span>条 exec 路由写死 <code>2026-09-xx</code></span></div>
+  <div class="num"><b>200</b><span>处数据字段（9 个场景文件）同批日期</span></div>
+  <div class="num"><b>3</b><span>处与「登记册」不一致（见下）</span></div>
+  <div class="num"><b>1</b><span>个快照必须重生成（测试逐字断言）</span></div>
+</div>
+<details>
+  <summary>实数明细（可展开）</summary>
+  <table>
+    <tr><th>面</th><th>数量</th><th>说明</th></tr>
+    <tr><td><code>src/triggers/routing.ts</code></td><td>245</td><td>读窗口 219 ／ 写命令示例 23 ／ 目标截止 2 ／ 计划参数 1</td></tr>
+    <tr><td><code>src/triggers/scene-*.ts</code></td><td>200</td><td>02→51、10→56、03→34、04→29、06→12、01→8、05→6、08→4（07／09 为 0）</td></tr>
+    <tr><td><code>SKILL.md</code> ＋ <code>scripts/build-help.mjs</code></td><td>43 ＋ 42</td><td>AI 读 HELP 的入口（SKILL.md 由该脚本生成）</td></tr>
+    <tr><td><code>docs/research/t81-exec-smoke.md</code></td><td>239</td><td>399 条 exec 的实跑快照，测试 <code>:348</code> 逐字比对</td></tr>
+    <tr><td><code>routing.ts</code> 行数</td><td>782</td><td>超本包 350 行告警线 → 本次只改值不拆，拆分归 #181</td></tr>
+  </table>
+</details>
+
+<h2 id="find">③ 三处意外（两处推翻票面、一处补漏）</h2>
+<div class="grid g3">
+  <div class="card">
+    <span class="tag t-warn">影响 Q1</span><h3>「本周」族的「错」算错了星期</h3>
+    <p class="sub">登记册说这 9 条「应为 7 天」。但锚点是 <b>2026-09-07＝周一</b>（9/13 是周日），登记册把「本周一」算成 9/01，<b>差 6 天</b>。老技能原义是自然周：<code>看本周饮食</code>＝<code>--week current</code>＋文案「本周(周一到今天)」；<code>看本周体重</code>＝「自然周,周一开始」，而路由里「上周」＝08-31~09-06 正是上一自然周。⇒ 自然周语义下「本周＝1 天」是对的，真正的问题只是「写死」。</p>
+  </div>
+  <div class="card">
+    <span class="tag t-mut">无需你裁</span><h3>反斜杠「缺陷」不存在</h3>
+    <p class="sub">票面评论要求裁定「<code>\"</code> 是数据侧转义问题还是渲染侧该还原」。实测运行时值里<b>没有反斜杠</b>（dist 与 src 两路 <code>含反斜杠=false</code>，场景 06 的 25 条 0 命中）——源码里的 <code>\"</code> 就是普通 JS 转义。⇒ 两侧都不改，按「登记册错项」记账。</p>
+  </div>
+  <div class="card">
+    <span class="tag t-warn">并入改正</span><h3>登记册漏了「3 天族」10 条</h3>
+    <p class="sub">10 条词现按 <code>09-05~09-07</code>（3 天）执行，与词面／老技能不符：<code>查热量缺口</code> 老技能是 <code>--days 7</code>、<code>我的减肥策略对吗</code> 是 <code>--window 30d</code>、<code>查高热量榜</code> 分类文档记「最近 7 天」。两份登记册都没记。</p>
+  </div>
+</div>
+
+<h2>④ 请裁 6 件事</h2>
+
+<section class="q" id="q1">
+  <h3><span class="tag t-rec">Q1</span>「本周」族 9 条的跨度怎么算 <em>影响 9 条唤醒词的用户可见结果</em></h3>
+  <p class="why">前因：9 条词（看本周饮食／看本周体重／看本周运动／本周复盘／看健康报告(本周)…）现在都按 1 天执行。登记册判它「应为 7 天」，但那个判据的星期算错了（见 ③）。所以要么承认「自然周」原义、要么按登记册改成滚动 7 天——这是产品语义，得你定。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q1" value="甲 自然周" checked>
+      <span class="tag t-rec">推荐</span><b>甲 · 自然周（老技能原义）</b>
+      <span class="pl">与老技能逐字同义；与现存「上周＝7 天自然周」自洽；与仓库已支持的 <code>week_cur</code> 同一套词汇；锚点正好是周一，改后 9 条结果不变，只把「写死」换成「相对」。</span>
+      <span class="mi">在周一这一天念「看本周」，窗口只有 1 天（周一到今天）——数字上看不「满一周」。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q1" value="乙 最近 7 天">
+      <b>乙 · 最近 7 天（登记册主张）</b>
+      <span class="pl">「看本周」永远给你一整周的量，体感更满。</span>
+      <span class="mi">与老技能语义分家；与仍是自然周的「上周」不对称（本周 7 天 vs 上周 7 天，但起点规则不同）；等于把 9 条的跨度真的改掉。</span>
+    </label>
+  </div>
+</section>
+
+<section class="q" id="q2">
+  <h3><span class="tag t-rec">Q2</span>相对窗口怎么落地 <em>这题同时是「可以碰 3 个能力」的点头</em></h3>
+  <p class="why">前因：命令里的日期来自 <code>routing.ts</code> 的路由文本，而 CLI 读命令今天只认 <code>start</code>／<code>end</code> 具体日期（<code>cmd_read.ts:214</code> 的 <code>defaultRange</code>），只有 <code>view.combined</code> 已经支持相对窗口 <code>--params '{"window":"7d"}'</code>。要让「看本周」真的查本周，就得让窗口在运行时解析——有三种做法。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q2" value="A 相对窗口 + CLI 运行时解析" checked>
+      <span class="tag t-rec">推荐</span><b>A · 路由写 <code>window</code>，CLI 运行时解析</b>
+      <span class="pl">老技能本来就是相对窗口（<code>--week current</code>／<code>--days 7</code>／<code>--window week_cur</code>）；仓库已有唯一的「窗口」定义地 <code>analysis/series.ts</code> 的 <code>resolveWindow</code>，A 只是把它接到读命令入口，<b>不新造第二套日期口径</b>；一处改动覆盖 20 余个读命令。</span>
+      <span class="mi">要动 3 个能力（<code>triggers</code>／<code>cli</code>／<code>analysis</code>），属 CLI 行为新增，需要你点头。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q2" value="B 占位符">
+      <b>B · 保留日期参数，但写成占位符 <code>&lt;开始日期&gt;</code></b>
+      <span class="pl">完全不动 CLI，改动只在数据面。</span>
+      <span class="mi">命令退化成模板，粘贴前必须自己填；「今日／本周」该填哪天由 AI 猜，仍可能错。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q2" value="C 渲染时替换">
+      <b>C · 回条渲染时把日期替换成当天</b>
+      <span class="pl">CLI 不动。</span>
+      <span class="mi">HELP 卡片、SKILL.md、速查台里仍是写死日期；要改多处渲染且各页口径易走散。</span>
+    </label>
+  </div>
+</section>
+
+<section class="q" id="q3">
+  <h3><span class="tag t-rec">Q3</span>相对窗口以哪一天为锚点 <em>决定「看今日」是哪一天</em></h3>
+  <p class="why">前因：窗口要变成相对的，就必须先回答「相对谁」。今天库内最新数据日是 2026-09-07，而机器上的真实日期是 2026-09-13。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q3" value="甲 库内最新数据日" checked>
+      <span class="tag t-rec">推荐</span><b>甲 · 库内最新数据日（＝2026-09-07）</b>
+      <span class="pl">与现有 <code>defaultRange</code>／<code>view.combined</code> 的口径一致（它们本来就以「最新数据日」兜底）；种子库跑得通、验收可复现。</span>
+      <span class="mi">「今天」在库里没有新数据时，指向的是「有数据的那天」而不是日历上的今天。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q3" value="乙 真实今天">
+      <b>乙 · 真实今天（＝2026-09-13）</b>
+      <span class="pl">语义最直白：今天就是今天。</span>
+      <span class="mi">种子数据止于 09-07，多数唤醒词会当场报「无数据」（exit 4）；本票验收与实跑证据都会变得难做。</span>
+    </label>
+  </div>
+</section>
+
+<section class="q" id="q4">
+  <h3><span class="tag t-rec">Q4</span>写命令示例里的日期（23 条）改成什么 <em>补记饮食／改某日体重／删一餐／补记体脂…</em></h3>
+  <p class="why">前因：这些词是「往库里写」的示例，里面带着种子日期与实际值（米饭 500 卡、70.5 kg、备注…）。读命令可以用相对窗口，写命令的日期得由用户给，所以形态要单独定。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q4" value="甲 占位符 <日期>" checked>
+      <span class="tag t-rec">推荐</span><b>甲 · 占位符 <code>&lt;日期&gt;</code>／<code>&lt;时间&gt;</code></b>
+      <span class="pl">老技能逐字同款（当年就是 <code>--date &lt;日期&gt;</code>）；照抄执行会得到明确的参数错，<b>不会静默写进错日期</b>。</span>
+      <span class="mi">示例不再是「可以直接跑」的完整串，AI 需要先问用户。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q4" value="乙 相对词">
+      <b>乙 · 相对词（<code>"date":"昨天"</code>）</b>
+      <span class="pl">读起来自然。</span>
+      <span class="mi">「补记」类本来指任意过去某天，钉成「昨天」是另一种写死。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q4" value="丙 删参数">
+      <b>丙 · 删掉该参数</b>
+      <span class="pl">最短。</span>
+      <span class="mi">写命令的参数没有缺省值，删掉即报错；用户复制的示例也失去形状。</span>
+    </label>
+  </div>
+</section>
+
+<section class="q" id="q5">
+  <h3><span class="tag t-rec">Q5</span>「错项」的范围 <em>哪些本票修、哪些另立票</em></h3>
+  <p class="why">前因：两份对账正本里除了「窗口错」，还记着别的项：① 命令接错 <code>看食品来源统计</code>（现接「分类食品列表」，专面命令 <code>view.source-stats</code> 被近义词占着）② 06-10 另记的 <code>看营养建议</code>（要从「不可执行」翻成「可执行」，连带数据回抄、可执行条数 399→400）③ 口径偏松 4 条（<code>看今日喝水</code> 走总览而非专面、餐别参数缺失 5 条等）。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q5" value="甲 只修窗口族 + 看食品来源统计" checked>
+      <span class="tag t-rec">推荐</span><b>甲 · 只做「窗口错」＋ <code>看食品来源统计</code></b>
+      <span class="pl">与本票标题「窗口与命令接错纠正」逐字对齐；①②③ 里属于「接线变更／新增命令参数」的部分不混进来，测试一红就分得清归属（这正是票面当初把它拆出来的理由）。</span>
+      <span class="mi">「看营养建议」等已知缺口继续留在票面上，需要另开票处理。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q5" value="乙 全并入本票">
+      <b>乙 · 把 <code>看营养建议</code> 与口径偏松 4 条一并做掉</b>
+      <span class="pl">同类缺陷一次清完，不留尾巴。</span>
+      <span class="mi">本票从「改值」变成「改行为」：翻转 non-exec、补餐别参数都是接线改动，票面边界与测试归属都会被搅浑。</span>
+    </label>
+  </div>
+</section>
+
+<section class="q" id="q6">
+  <h3><span class="tag t-rec">Q6</span>HELP 成品面要不要同批清 <em>SKILL.md 43 处 ＋ 生成脚本 42 处</em></h3>
+  <p class="why">前因：<code>SKILL.md</code>（AI 读技能时看的说明书）里有一张「键 → 可执行命令」示例表，<b>同一批过期日期也在里面</b>；票面判据 1 只点了 <code>routing.ts</code>。</p>
+  <div class="opts">
+    <label class="opt rec"><input type="radio" name="q6" value="甲 同批清" checked>
+      <span class="tag t-rec">推荐</span><b>甲 · 同批清</b>
+      <span class="pl">同一类缺陷、同一次生成就能带走；验收标准里有一条是「用户／AI 看到的 HELP 里窗口不再是过期日期」，漏了它这条不成立。</span>
+      <span class="mi">写集多两个文件（含一个生成物）；SKILL.md 属受跟踪文件，需重新生成而非手改。</span>
+    </label>
+    <label class="opt"><input type="radio" name="q6" value="乙 本次不动">
+      <b>乙 · 本次不动，只改 routing.ts ＋ 数据</b>
+      <span class="pl">写集最小，严格照票面判据 1。</span>
+      <span class="mi">SKILL.md 里仍是过期日期；追这张票时大概率要再开一张「SKILL.md 示例表」票。</span>
+    </label>
+  </div>
+</section>
+
+<h2 id="todo">⑤ 裁定后我会做什么（写集预览）</h2>
+<table>
+  <tr><th>#</th><th>文件</th><th>一句话</th></tr>
+  <tr><td>1</td><td><code>src/triggers/routing.ts</code></td><td>245 条 exec 路由的 cli 改成相对窗口形态（<b>已超告警线</b>：782 行 &gt; 350 行 →「已超线，需要根据规则进行重构。」本次只改值不拆，拆分归 #181）</td></tr>
+  <tr><td>2</td><td><code>src/triggers/scene-{01,02,03,04,05,06,08,10}.ts</code></td><td>与路由逐字同源的 200 处字段值同批回抄（测试 <code>:180</code> 的「逐字相同」是硬约束）</td></tr>
+  <tr><td>3</td><td><code>src/cli/cmd_read.ts</code> ＋ <code>src/analysis/series.ts</code></td><td>仅当 Q2 选 A：<code>defaultRange</code> 认 <code>window</code>、<code>resolveWindow</code> 补「今日／昨日」别名</td></tr>
+  <tr><td>4</td><td><code>scripts/build-help.mjs</code> ＋ <code>SKILL.md</code></td><td>仅当 Q6 选甲：示例表改相对形态并重新生成标记块</td></tr>
+  <tr><td>5</td><td><code>docs/research/t81-exec-smoke.md</code></td><td>399 条 exec 实跑快照按新 cli 重生成（测试逐字比对，<b>必须</b>）</td></tr>
+  <tr><td>6</td><td><code>test/calorie-routing-81.test.mjs</code> ＋ <code>test/calorie-sot.snapshot.json</code></td><td>按新 cli 重导派生常量（含「看目标预测达成 ≥14 天」那条判据）</td></tr>
+  <tr><td>7</td><td><code>docs/skills/skill-calorie/t250-*.md</code></td><td>逐条改正表（唤醒词｜现状｜正确｜依据）＋ 实跑证据 ＋ 三处意外发现的账</td></tr>
+</table>
+<p class="sub" style="font-size:13px">暂不改：<code>routing.ts</code> 的结构拆分（#181）、历史证据文档（只被注释引用、无测试依赖）、<code>wake-assets.ts</code>（0 处命中）。<br>
+收尾：全量 <code>pnpm test</code> 通过 → 票面进度置 100%、close → 在地图 #152 的 Decisions so far 追加一行。</p>
+
+<h2 id="reply">⑥ 怎么回我（点选上面的选项，生成一句话回复）</h2>
+<div class="bar">
+  <button id="gen">生成回复</button>
+  <span class="sub" style="font-size:13px">默认已勾选我的推荐，直接生成即可；想改哪条就点哪条。</span>
+</div>
+<pre id="reply">（点「生成回复」）</pre>
+
+<div class="foot">
+  本页＝#250 的裁定请求页，落在技能自己的文档位（<code>docs/skills/skill-calorie/</code>，与 <code>决策待确认-179-180.html</code> 同一惯例）。<br>
+  证据可复核：分析脚本在 <code>.scratch/t250/</code>（<code>classify.mjs</code> 分类 245 条、<code>escape-check.mjs</code> 复现反斜杠结论、<code>old-lookup.mjs</code> 取老技能原文）；票面与两份对账正本见 <code>t180-scenes-01-05.md</code>《路由窗口与接错的登记册》与 <code>t180-scenes-06-10.md</code> §8。
+</div>
+
+</div>
+<script>
+(function () {
+  const ids = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'];
+  const gen = document.getElementById('gen');
+  const out = document.getElementById('reply');
+  gen.addEventListener('click', function () {
+    const lines = ids.map(function (id) {
+      const el = document.querySelector('input[name="' + id + '"]:checked');
+      const box = document.getElementById(id);
+      const title = box ? box.querySelector('h3').textContent.replace(/^Q\d\s*/, '') : id;
+      return '· ' + id.toUpperCase() + '（' + title.split('影响')[0].trim() + '）：' + (el ? el.value : '（未选）');
+    });
+    out.textContent = '【#250 裁定】\n' + lines.join('\n') +
+      '\n（其余按你的说明事项执行）';
+  });
+})();
+</script>
+</body>
+</html>

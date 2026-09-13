@@ -239,11 +239,11 @@ test('#110 无假数据：6 键空库一律 exit 4 且 stdout 纯净', () => {
   }
 });
 
-test('#110 combined 窗口白名单：99d 拒收 exit 2（#103 G4，不静默回退）', () => {
+test('#110 combined 窗口：未知窗拒收 exit 2（#103 G4 / #250 契约：收任意 Nd，仍拒未知值）', () => {
   const { dir } = mkTrendDb();
-  const r = run(BIN, 'calorie.view.combined', { pair: 'weight_calorie', window: '99d' }, { SKILLS_DB_PATH: dir });
-  assert.equal(r.status, 2, '非法窗未拒收（status=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 200) + '）');
-  assert.equal(r.stdout, '', '非法窗 stdout 非空');
+  const r = run(BIN, 'calorie.view.combined', { pair: 'weight_calorie', window: '99x' }, { SKILLS_DB_PATH: dir });
+  assert.equal(r.status, 2, '未知窗未拒收（status=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 200) + '）');
+  assert.equal(r.stdout, '', '未知窗 stdout 非空');
 });
 
 test('#110 多配对同键直出：weight_deficit 分桶节＋custom 窗（子集→同质）', () => {

@@ -127,7 +127,14 @@ export function energyOf(parts: EnergyParts): EnergyResult {
   };
 }
 
+/** 「今天」的**唯一出处**（本地口径：UTC 日，与 T3/T4 同口径）。
+ *
+ *  #250 · `CALORIE_TODAY`（YYYY-MM-DD）可把「今天」钉到某一天：相对窗口（今日／本周／最近 N 天…）都由它派生，
+ *  演示、实跑快照与测试用它把窗口对到种子库的数据日；真实使用**不设**该变量，即按机器时钟。
+ *  显式锚点（命令参数 `today`）优先于它，仍由各命令自行传入 `resolveWindow`。 */
 export function todayISO(): string {
+  const pin = process.env['CALORIE_TODAY'];
+  if (pin !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(pin)) return pin;
   return new Date().toISOString().slice(0, 10);
 }
 

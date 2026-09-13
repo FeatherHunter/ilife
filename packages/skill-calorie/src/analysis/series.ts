@@ -33,45 +33,133 @@ export interface DaySeries {
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
-/** 窗口选择器：Nd / 本周/上周/今年…（老家别名 week_cur 等一并支持）/ custom / 默认 30d。
+/** 窗口词汇与解析的**唯一定义地**（#250 重做）。
  *
- * #103 G4 · window 白名单：Nd 仅收唤醒词契约的 7 档（7/15/30/60/90/180/365），
- * 具名仅收显式分支（week_cur/week_prev/month_cur/month_prev/year_cur/custom＋中文别名）；
- * 其余（`99d`、未知串）一律抛 FetchError（上层转 bad-input），不再静默生效/静默回退 30d。 */
-export const COMBINED_WINDOW_DAYS = [7, 15, 30, 60, 90, 180, 365];
+ * #250 · 按用户 2026-09-13 的两条要求重做：
+ *   ① **语义正确**——「今日／本周／本月／今年」一律按**自然周期**解析（本周＝本周一..锚点日，
+ *      与老技能 `--week current` 同义）；锚点缺省＝真实今天，可由调用方显式传入（演示与测试用它复现固定日）。
+ *   ② **接口全面**——`Nd` 不再限于 #103 G4 的 7 档白名单（那条契约是当时「只做组合分析」留下的限制），
+ *      改收任意正整数（上限 `MAX_WINDOW_DAYS`，只挡笔误）；另加两件正交能力：
+ *      `offset`（窗口整体平移 ±Nd／±Nw／±Nm／±Ny，用来表达「一年前今天」这类）与
+ *      `compareWindow`（对比侧窗口，同一套词表，另收 `prev`＝紧邻主窗口之前的等长窗口）。
+ *
+ * 未知值一律抛 FetchError（上层转 bad-input），不静默回退。 */
+export const WINDOW_WORDS = [
+  '今日', '昨日', '本周', '上周', '下周', '本月', '上月', '今年', '去年', '工作日', '周末', 'custom',
+] as const;
+/** 可接受的窗口写法（说明性清单：词表 ＋ Nd 族 ＋ 老家别名），报错文本与文档引用它。 */
 export const COMBINED_WINDOWS = [
-  '7d', '15d', '30d', '60d', '90d', '180d', '365d',
-  'week_cur', 'week_prev', 'month_cur', 'month_prev', 'year_cur', 'custom',
-  '本周', '上周', '本月', '上月', '今年',
+  ...WINDOW_WORDS,
+  'Nd', '7d', '15d', '30d', '60d', '90d', '180d', '365d',
+  'week_cur', 'week_prev', 'week_next', 'month_cur', 'month_prev', 'year_cur', 'year_prev',
+  'today', 'yesterday', 'prev',
 ];
+/** Nd 的跨度上限（约十年）：只挡笔误，不挡真实用法。 */
+export const MAX_WINDOW_DAYS = 3650;
+const DAY_MS = 86400000;
+
+/** 相对词与 Nd 的解析：返回 [start, end]（闭区间，ISO 日）。
+ *  `today` ＝锚点（缺省真实今天）；`custom` 走调用方给的 start/end，缺省＝近 30 天。 */
 export function resolveWindow(window: string, start?: string | null, end?: string | null, today: string = todayISO()): [string, string] {
   const t = Date.parse(today + 'T12:00:00Z');
   if (Number.isNaN(t)) throw new FetchError('日期非法: ' + today);
-  const weekday = Math.floor(((t / 86400000) + 3) % 7);
+  const weekday = Math.floor(((t / DAY_MS) + 3) % 7);
   const mondayOffset = -weekday;
-  if (window === 'custom') {
+  const w = String(window ?? '').trim();
+  if (w === 'custom') {
     if (start && end) return [start, end];
     return [shiftISODate(today, -30), shiftISODate(today, -1)];
   }
-  const m = /^([0-9]+)d$/.exec(window);
-  if (m) {
-    const n = Number(m[1]);
-    if (!(COMBINED_WINDOW_DAYS as number[]).includes(n)) {
-      throw new FetchError('window 非法（Nd 仅收 ' + COMBINED_WINDOW_DAYS.map((d) => d + 'd').join('/') + '）：' + window);
+  const md = /^([0-9]+)d$/.exec(w);
+  if (md) {
+    const n = Number(md[1]);
+    if (!(n >= 1 && n <= MAX_WINDOW_DAYS)) {
+      throw new FetchError('window 非法（Nd 须 1..' + MAX_WINDOW_DAYS + '）：' + w);
     }
     return [shiftISODate(today, -(n - 1)), today];
   }
-  if (window === '本周' || window === 'week_cur') return [shiftISODate(today, mondayOffset), today];
-  if (window === '上周' || window === 'week_prev') return [shiftISODate(today, mondayOffset - 7), shiftISODate(today, mondayOffset - 1)];
-  if (window === '本月' || window === 'month_cur') return [today.slice(0, 8) + '01', today];
-  if (window === '上月' || window === 'month_prev') {
+  if (w === '今日' || w === 'today') return [today, today];
+  if (w === '昨日' || w === 'yesterday') return [shiftISODate(today, -1), shiftISODate(today, -1)];
+  if (w === '本周' || w === 'week_cur') return [shiftISODate(today, mondayOffset), today];
+  if (w === '上周' || w === 'week_prev') return [shiftISODate(today, mondayOffset - 7), shiftISODate(today, mondayOffset - 1)];
+  if (w === '下周' || w === 'week_next') return [shiftISODate(today, mondayOffset + 7), shiftISODate(today, mondayOffset + 13)];
+  if (w === '本月' || w === 'month_cur') return [today.slice(0, 8) + '01', today];
+  if (w === '上月' || w === 'month_prev') {
     const firstThis = today.slice(0, 8) + '01';
     const lastLast = shiftISODate(firstThis, -1);
     return [lastLast.slice(0, 8) + '01', lastLast];
   }
-  if (window === '今年' || window === 'year_cur') return [today.slice(0, 4) + '-01-01', today];
-  // #103 G4 · 未知值不再静默回退 30d：显式拒绝，上层转 bad-input（exit 2）。
-  throw new FetchError('window 非法，可选: ' + COMBINED_WINDOWS.join(', '));
+  if (w === '今年' || w === 'year_cur') return [today.slice(0, 4) + '-01-01', today];
+  if (w === '去年' || w === 'year_prev') {
+    const y = Number(today.slice(0, 4)) - 1;
+    return [y + '-01-01', y + '-12-31'];
+  }
+  // 工作日／周末：#250 定为「最近一个已经过完或正在过的周六–周日」＋「紧邻它之前的周一–周五」。
+  // （锚点常是周一，本周六日还在未来——那样取到的窗是空的；按「最近的那对」取，任何锚点都落在过去、可比较。）
+  if (w === '工作日' || w === '周末') {
+    const dow = (weekday + 1) % 7; // 0=周日，1=周一，…，6=周六
+    const satOffset = dow === 0 ? -1 : dow === 6 ? 0 : -(dow + 1);
+    if (w === '周末') return [shiftISODate(today, satOffset), shiftISODate(today, satOffset + 1)];
+    const fri = satOffset - 1;
+    return [shiftISODate(today, fri - 4), shiftISODate(today, fri)];
+  }
+  throw new FetchError('window 非法，可选: ' + WINDOW_WORDS.join('／') + '，或 Nd（1..' + MAX_WINDOW_DAYS + '）');
+}
+
+/** 单日相对词：`date`／`from`／`to` 这类「一个日」的字段与窗口共用同一套说法。
+ *  收 ISO 日、今日／昨日／前天（today／yesterday），其余原样交回由调用方校验（未知值不静默生效）。 */
+export function resolveDay(token: string, today: string = todayISO()): string {
+  const d = String(token ?? '').trim();
+  if (d === '今日' || d === 'today') return today;
+  if (d === '昨日' || d === 'yesterday') return shiftISODate(today, -1);
+  if (d === '前天') return shiftISODate(today, -2);
+  return d;
+}
+
+/** 窗口平移：`±Nd`（天）／`±Nw`（周＝7 天）／`±Nm`（按日历进退 N 月）／`±Ny`（按日历进退 N 年）。
+ *  例：「一年前今天」＝`window:今日` ＋ `offset:-1y`；「最近 30 天 vs 之前 30 天」＝`compareWindow:prev`。 */
+export function applyOffset(range: readonly [string, string], offset?: string | null): [string, string] {
+  const o = String(offset ?? '').trim();
+  if (!o) return [range[0], range[1]];
+  const m = /^([+-])([0-9]+)([dwmy])$/.exec(o);
+  if (!m) throw new FetchError('offset 非法（须 ±Nd／±Nw／±Nm／±Ny）：' + o);
+  const sign = m[1] === '-' ? -1 : 1;
+  const n = Number(m[2]) * sign;
+  const shift = (iso: string): string => {
+    if (m[3] === 'd') return shiftISODate(iso, n);
+    if (m[3] === 'w') return shiftISODate(iso, n * 7);
+    return shiftMonthsISO(iso, m[3] === 'y' ? n * 12 : n);
+  };
+  const [s, e] = [shift(range[0]), shift(range[1])];
+  if (s > e) throw new FetchError('offset 后窗口倒置: ' + s + '..' + e);
+  return [s, e];
+}
+
+/** 对比侧窗口：词表与主窗口同源；`prev` ＝紧邻主窗口之前的**等长**窗口（「近 N 天 vs 之前 N 天」）。 */
+export function resolveCompareWindow(
+  spec: string,
+  main: readonly [string, string],
+  start?: string | null,
+  end?: string | null,
+  today: string = todayISO(),
+): [string, string] {
+  const w = String(spec ?? '').trim();
+  if (w === 'prev') {
+    const days = (Date.parse(main[1]) - Date.parse(main[0])) / DAY_MS + 1;
+    return [shiftISODate(main[0], -days), shiftISODate(main[0], -1)];
+  }
+  return resolveWindow(w, start, end, today);
+}
+
+/** 按日历进退 N 月（日号超出该月末则收到月末）。 */
+function shiftMonthsISO(iso: string, months: number): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const total = y * 12 + (m - 1) + months;
+  const ny = Math.floor(total / 12);
+  const nm = ((total % 12) + 12) % 12 + 1;
+  const lastDay = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
+  const nd = Math.min(d, lastDay);
+  return ny + '-' + String(nm).padStart(2, '0') + '-' + String(nd).padStart(2, '0');
 }
 
 interface ProfileRow {

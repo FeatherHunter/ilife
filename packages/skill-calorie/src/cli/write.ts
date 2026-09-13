@@ -57,6 +57,8 @@ import { buildCrudReceipt, withM5 } from '../render/receipt.js';
 import type { CrudReceipt, M5IdSource } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
+// #250 · 时间说法只有一处定义地：写命令的日期位经 wday／needWday 走 analysis/series.ts 的相对词解析。
+import { applyOffset, resolveDay } from '../analysis/series.js';
 // #179 · 场景 07 三条写入词的回执页：整页装配住在能力目录 `src/profile/`（写前页在 setup.ts）。
 import { buildProfileSettingReceiptDoc } from '../profile/setup.js';
 import { buildProfileUpdateReceiptDoc } from '../profile/update.js';
@@ -72,6 +74,23 @@ function fail(code: number, msg: string): never {
 function needStr(params: Record<string, unknown>, name: string): string {
   const v = params[name];
   if (typeof v !== 'string' || v.length === 0) fail(2, '缺参数 ' + name);
+  return v as string;
+}
+
+/** #250 · 写命令的日期位与读命令**同一套时间说法**：显式 ISO 日照旧，另收相对词（今日／昨日／前天）
+ *  与 `offset` 平移（±Nd／±Nw／±Nm／±Ny）——「补记昨天的饮食」这类话不必由 AI 自己算日期。
+ *  非日期值原样返回（本函数只做「相对词 → 具体日」的翻译，不认识的值交给各自的校验）。 */
+function wday(params: Record<string, unknown>, field: string): string | undefined {
+  const raw = optStr(params, field);
+  if (!raw) return undefined;
+  const anchor = resolveDay(optStr(params, 'today') ?? todayISO(), todayISO());
+  return applyOffset([resolveDay(raw, anchor), resolveDay(raw, anchor)], optStr(params, 'offset'))[0];
+}
+
+/** 写命令的必填日期位（语义同 `wday`）。 */
+function needWday(params: Record<string, unknown>, field: string): string {
+  const v = wday(params, field);
+  if (!v) fail(2, '缺参数 ' + field);
   return v as string;
 }
 
@@ -374,7 +393,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       }
       const grams0 = optNum(params, 'grams');
       if (grams0 !== undefined && grams0 <= 0) fail(2, 'grams 必须为正');
-      const date = optStr(params, 'date');
+      const date = wday(params, 'date');
       if (date) assertISO(date, 'date');
       const meal = optStr(params, 'meal') ?? optStr(params, 'mealOverride');
       if (meal !== undefined && !(MEALS as readonly string[]).includes(meal)) fail(2, '--meal 须为 ' + MEALS.join('、'));
@@ -447,8 +466,8 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     }
     case 'calorie.diet.copy': {
       const today = todayISO();
-      const from = optStr(params, 'from') ?? optStr(params, 'fromDate') ?? shiftISODate(today, -1);
-      const to = optStr(params, 'to') ?? optStr(params, 'toDate') ?? today;
+      const from = wday(params, 'from') ?? wday(params, 'fromDate') ?? shiftISODate(today, -1);
+      const to = wday(params, 'to') ?? wday(params, 'toDate') ?? today;
       assertISO(from, 'from');
       assertISO(to, 'to');
       const r = copyMeals(db, from, to);
@@ -459,7 +478,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       }));
     }
     case 'calorie.diet.update-by-date': {
-      const date = needStr(params, 'date');
+      const date = needWday(params, 'date');
       assertISO(date, 'date');
       const fields: Record<string, unknown> = {};
       const name = optStr(params, 'foodName') ?? optStr(params, 'food_name');
@@ -476,15 +495,15 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       }));
     }
     case 'calorie.diet.remove-by-date': {
-      const date = needStr(params, 'date');
+      const date = needWday(params, 'date');
       assertISO(date, 'date');
       const r = deleteMealsByDate(db, date);
       if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
       return out(R('删某日饮食', 'delete', '已删除 ' + date + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '删某日饮食', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
     }
     case 'calorie.diet.remove-by-range': {
-      const start = needStr(params, 'start');
-      const end = needStr(params, 'end');
+      const start = needWday(params, 'start');
+      const end = needWday(params, 'end');
       assertISO(start, 'start');
       assertISO(end, 'end');
       if (start > end) fail(2, 'start 不得晚于 end');
@@ -493,7 +512,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       return out(R('批量删饮食', 'delete', '已删除 ' + start + '~' + end + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '批量删饮食', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
     }
     case 'calorie.diet.remove-by-type': {
-      const date = needStr(params, 'date');
+      const date = needWday(params, 'date');
       assertISO(date, 'date');
       const mealType = needStr(params, 'mealType');
       if (!Object.prototype.hasOwnProperty.call(MEAL_WINDOWS, mealType)) fail(2, 'mealType 须为 ' + Object.keys(MEAL_WINDOWS).join('/') + '：' + mealType);
@@ -504,7 +523,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     case 'calorie.water.log': {
       const ml = needNum(params, 'ml');
       if (!(ml > 0) || ml > 10000) fail(2, 'ml 须为 0..10000 毫升');
-      const date = optStr(params, 'date');
+      const date = wday(params, 'date');
       if (date) assertISO(date, 'date');
       const r = addMeal(db, {
         foodName: WATER_NAME, calories: 0, protein: 0, grams: ml,
@@ -528,7 +547,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     case 'calorie.weight.log': {
       const kg = needNum(params, 'kg');
       if (!(kg > 0) || kg > 500) fail(2, 'kg 须为 0..500');
-      const date = optStr(params, 'date');
+      const date = wday(params, 'date');
       if (date) assertISO(date, 'date');
       const r = logWeight(db, kg, optStr(params, 'note') ?? '', date, optStr(params, 'time'));
       const bmiText = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
@@ -539,7 +558,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     }
     case 'calorie.weight.update': {
       const id = optNum(params, 'id');
-      const date = optStr(params, 'date');
+      const date = wday(params, 'date');
       const kg = optNum(params, 'kg');
       const note = optStr(params, 'note');
       if (kg !== undefined && (!(kg > 0) || kg > 500)) fail(2, 'kg 须为 0..500');
@@ -564,9 +583,9 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     }
     case 'calorie.weight.remove': {
       const id = optNum(params, 'id');
-      const date = optStr(params, 'date');
-      const start = optStr(params, 'start');
-      const end = optStr(params, 'end');
+      const date = wday(params, 'date');
+      const start = wday(params, 'start');
+      const end = wday(params, 'end');
       if (id !== undefined) {
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         const r = deleteWeight(db, id);
@@ -606,7 +625,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     case 'calorie.exercise.add': {
       if (params['copyFrom'] !== undefined) {
         if (params['copyFrom'] !== 'yesterday') fail(2, 'copyFrom 只支持 yesterday');
-        const target = optStr(params, 'date') ?? optStr(params, 'targetDate') ?? todayISO();
+        const target = wday(params, 'date') ?? wday(params, 'targetDate') ?? todayISO();
         assertISO(target, 'date');
         const r = copyYesterday(db, target);
         if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '昨日无运动记录可复制');
@@ -633,7 +652,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     }
     case 'calorie.exercise.update': {
       const id = optNum(params, 'id');
-      const date = optStr(params, 'date');
+      const date = wday(params, 'date');
       const fields: Record<string, unknown> = {};
       for (const [camel, col] of Object.entries(EX_CAMEL)) {
         if (camel === 'type' || camel === 'exerciseType' || camel === 'calories' || camel === 'caloriesBurned') continue;
@@ -675,9 +694,9 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
     }
     case 'calorie.exercise.remove': {
       const id = optNum(params, 'id');
-      const date = optStr(params, 'date');
-      const from = optStr(params, 'from');
-      const to = optStr(params, 'to');
+      const date = wday(params, 'date');
+      const from = wday(params, 'from');
+      const to = wday(params, 'to');
       if (id !== undefined) {
         if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
         deleteRecord(db, id);
@@ -710,7 +729,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       if (srcPaths.length > 20) fail(2, 'srcPaths 至多 20 张');
       const tag = needStr(params, 'tag');
       const dir = photosDirOf(params);
-      const today = optStr(params, 'date') ?? todayISO();
+      const today = wday(params, 'date') ?? todayISO();
       assertISO(today, 'date');
       const added = addPhotos(db, dir, { srcPaths, tag, note: optStr(params, 'note'), today, nowTime: optStr(params, 'time') });
       if (added.length === 0) throw new CalorieRenderError('missing-data', '照片源文件均不存在，未存入');
@@ -900,7 +919,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       }));
     }
     case 'calorie.body.composition-add': {
-      const date = optStr(params, 'date') ?? todayISO();
+      const date = wday(params, 'date') ?? todayISO();
       assertISO(date, 'date');
       const source = normSource(params['source']);
       const input: Record<string, unknown> = {
@@ -927,7 +946,7 @@ function dispatchInner(key: string, params: Record<string, unknown>, db: Databas
       }));
     }
     case 'calorie.body.measure-add': {
-      const date = optStr(params, 'date') ?? todayISO();
+      const date = wday(params, 'date') ?? todayISO();
       assertISO(date, 'date');
       const input: Record<string, unknown> = { date, note: optStr(params, 'note') };
       for (const [camel, col] of Object.entries(MEASURE_CAMEL)) {

@@ -18,6 +18,12 @@ import { dispatch } from '../dist/cli/cmd_read.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL } from '../dist/cli/keys.js';
 import { routesFor } from '../dist/triggers/routing.js';
 
+// #250 · 路由层窗口自本票起是**相对窗口**（今日／本周／最近 Nd…）：把「今天」钉到种子数据日，
+// 这些用例在种子库上才跑得通（与 `docs/research/t81-exec-smoke.mjs` 的快照同锚点）。
+// 真实使用不设 `CALORIE_TODAY`，按机器时钟。
+process.env.CALORIE_TODAY = '2026-09-07';
+
+
 /** 全量 436 路由查词（#81 SoT）：取首个 exec 项。 */
 function execRoute(word) {
   const hits = routesFor(word).filter((r) => r.kind === 'exec');

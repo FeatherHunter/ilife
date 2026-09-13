@@ -47,6 +47,7 @@ const REPR = {
   'calorie.view.photo-log-wizard': '看身材照向导',
   'calorie.view.gif-planner': '看GIF规划器',
   'calorie.view.profile-wizard': '看档案预检',
+  'calorie.view.goal-wizard': '看目标预检', // #251 新增键（本行由 #250 补：缺它就是 exampleFor 抛错、SKILL.md 无法重生成）
   'calorie.view.ranking': '查高热量排行',
   'calorie.view.library': '查食品库',
   'calorie.view.search': '查食品',
@@ -96,64 +97,66 @@ const REPR = {
 
 function exampleFor(key) {
   switch (key) {
-    case 'calorie.today': return 'calorie-cmd-read calorie.today --params \'{"date":"2026-09-07"}\'';
-    case 'calorie.view.home': return 'calorie-cmd-read calorie.view.home --params \'{"date":"2026-09-07"}\'';
-    case 'calorie.view.diet': return 'calorie-cmd-read calorie.view.diet --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
-    case 'calorie.view.exercise': return 'calorie-cmd-read calorie.view.exercise --params \'{"start":"2026-09-06","end":"2026-09-07"}\'';
-    case 'calorie.view.goal': return 'calorie-cmd-read calorie.view.goal --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
+    case 'calorie.today': return 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\''
+    case 'calorie.view.home': return 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\''
+    case 'calorie.view.diet': return 'calorie-cmd-read calorie.view.diet --params \'{"window":"今日"}\''
+    case 'calorie.view.exercise': return 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今日"}\''
+    case 'calorie.view.goal': return 'calorie-cmd-read calorie.view.goal --params \'{"window":"7d"}\''
     case 'calorie.view.goal-config': return 'calorie-cmd-read calorie.view.goal-config';
     case 'calorie.view.goal-recommend': return 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'';
-    case 'calorie.view.goal-weight': return 'calorie-cmd-read calorie.view.goal-weight --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.goal-progress': return 'calorie-cmd-read calorie.view.goal-progress --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
+    case 'calorie.view.goal-weight': return 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"30d"}\''
+    case 'calorie.view.goal-progress': return 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\''
     case 'calorie.view.goal-status': return 'calorie-cmd-read calorie.view.goal-status';
     case 'calorie.view.combined': return 'calorie-cmd-read calorie.view.combined --params \'{"pair":"weight_calorie","window":"7d"}\'';
-    case 'calorie.view.deficit': return 'calorie-cmd-read calorie.view.deficit --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
-    case 'calorie.view.diet-review': return 'calorie-cmd-read calorie.view.diet-review --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
-    case 'calorie.view.health': return 'calorie-cmd-read calorie.view.health --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
-    case 'calorie.view.exercise-strength': return 'calorie-cmd-read calorie.view.exercise-strength --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.exercise-cardio': return 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.exercise-distribution': return 'calorie-cmd-read calorie.view.exercise-distribution --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.exercise-recap': return 'calorie-cmd-read calorie.view.exercise-recap --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.exercise-review': return 'calorie-cmd-read calorie.view.exercise-review --params \'{"start":"2026-08-31","end":"2026-09-07"}\'';
-    case 'calorie.view.exercise-trend': return 'calorie-cmd-read calorie.view.exercise-trend --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.nutrition-ratio': return 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.nutrition-detail': return 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.deficit': return 'calorie-cmd-read calorie.view.deficit --params \'{"window":"7d"}\''
+    case 'calorie.view.diet-review': return 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\''
+    case 'calorie.view.health': return 'calorie-cmd-read calorie.view.health --params \'{"window":"本周"}\''
+    case 'calorie.view.exercise-strength': return 'calorie-cmd-read calorie.view.exercise-strength --params \'{"window":"7d"}\''
+    case 'calorie.view.exercise-cardio': return 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"window":"7d"}\''
+    case 'calorie.view.exercise-distribution': return 'calorie-cmd-read calorie.view.exercise-distribution --params \'{"window":"7d"}\''
+    case 'calorie.view.exercise-recap': return 'calorie-cmd-read calorie.view.exercise-recap --params \'{"window":"7d"}\''
+    case 'calorie.view.exercise-review': return 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本周"}\''
+    case 'calorie.view.exercise-trend': return 'calorie-cmd-read calorie.view.exercise-trend --params \'{"window":"7d"}\''
+    case 'calorie.view.nutrition-ratio': return 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"window":"7d"}\''
+    case 'calorie.view.nutrition-detail': return 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\''
     case 'calorie.view.source-stats': return 'calorie-cmd-read calorie.view.source-stats';
-    case 'calorie.view.today-water': return 'calorie-cmd-read calorie.view.today-water --params \'{"date":"2026-09-07"}\'';
-    case 'calorie.view.batch-import-preview': return 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"2026-09-06"}]}\'';
-    case 'calorie.view.calorie-trend': return 'calorie-cmd-read calorie.view.calorie-trend --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.today-water': return 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\''
+    case 'calorie.view.batch-import-preview': return 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\''
+    case 'calorie.view.calorie-trend': return 'calorie-cmd-read calorie.view.calorie-trend --params \'{"window":"7d"}\''
     case 'calorie.view.lint-health': return 'calorie-cmd-read calorie.view.lint-health';
     case 'calorie.view.long-trend': return 'calorie-cmd-read calorie.view.long-trend --params \'{"group":"weight_calorie","window":"30d"}\'';
-    case 'calorie.view.nutrition-analysis': return 'calorie-cmd-read calorie.view.nutrition-analysis --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.nutrition-analysis': return 'calorie-cmd-read calorie.view.nutrition-analysis --params \'{"window":"7d"}\''
     case 'calorie.view.process-progress': return 'calorie-cmd-read calorie.view.process-progress';
-    case 'calorie.view.review-template': return 'calorie-cmd-read calorie.view.review-template --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
-    case 'calorie.view.six-factors': return 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"2026-09-07"}\'';
+    case 'calorie.view.review-template': return 'calorie-cmd-read calorie.view.review-template --params \'{"window":"7d"}\''
+    case 'calorie.view.six-factors': return 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"今日"}\''
     case 'calorie.view.measure-wizard': return 'calorie-cmd-read calorie.view.measure-wizard';
     case 'calorie.view.composition-wizard': return 'calorie-cmd-read calorie.view.composition-wizard';
     case 'calorie.view.photo-log-wizard': return 'calorie-cmd-read calorie.view.photo-log-wizard';
     case 'calorie.view.gif-planner': return 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'';
     case 'calorie.view.profile-wizard': return 'calorie-cmd-read calorie.view.profile-wizard';
-    case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
+    // #251 的目标预检页（同形：无参可跑；本行由 #250 补，见上 REPR 同名注释）。
+    case 'calorie.view.goal-wizard': return 'calorie-cmd-read calorie.view.goal-wizard';
+    case 'calorie.view.ranking': return 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\''
     case 'calorie.view.library': return 'calorie-cmd-read calorie.view.library';
     case 'calorie.view.search': return 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'';
 
     // #99：#41 的 18 个 view 键补齐（此前落到 default → 无 --params → 照抄即 exit 2／4）。
     // 参数取值逐字来自 packages/skill-calorie/test/cli-smoke-t41.test.mjs 的 CASES（同一验收口径）。
-    case 'calorie.view.weight': return 'calorie-cmd-read calorie.view.weight --params \'{"start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.weight': return 'calorie-cmd-read calorie.view.weight'
     case 'calorie.view.weight-history': return 'calorie-cmd-read calorie.view.weight-history --params \'{"days":7}\'';
-    case 'calorie.view.weight-compare': return 'calorie-cmd-read calorie.view.weight-compare --params \'{"start":"2026-09-01","end":"2026-09-07","compareStart":"2026-08-23","compareEnd":"2026-08-29"}\'';
-    case 'calorie.view.weight-review': return 'calorie-cmd-read calorie.view.weight-review --params \'{"today":"2026-09-07"}\'';
-    case 'calorie.view.volatility': return 'calorie-cmd-read calorie.view.volatility --params \'{"start":"2026-08-23","end":"2026-09-07"}\'';
+    case 'calorie.view.weight-compare': return 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\''
+    case 'calorie.view.weight-review': return 'calorie-cmd-read calorie.view.weight-review'
+    case 'calorie.view.volatility': return 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d"}\''
     case 'calorie.view.body-composition': return 'calorie-cmd-read calorie.view.body-composition';
     case 'calorie.view.body-measure': return 'calorie-cmd-read calorie.view.body-measure --params \'{"metric":"waist_cm"}\'';
     case 'calorie.view.plan': return 'calorie-cmd-read calorie.view.plan';
-    case 'calorie.view.plan-wizard': return 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"t","start_date":"2026-09-01","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"a","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\'';
-    case 'calorie.view.exercise-goal': return 'calorie-cmd-read calorie.view.exercise-goal --params \'{"start":"2026-09-06","end":"2026-09-07"}\'';
-    case 'calorie.view.goal-expiring': return 'calorie-cmd-read calorie.view.goal-expiring --params \'{"withinDays":150,"today":"2026-09-07"}\'';
-    case 'calorie.view.goal-predict': return 'calorie-cmd-read calorie.view.goal-predict --params \'{"start":"2026-08-23","end":"2026-09-07"}\'';
-    case 'calorie.view.goal-vs-actual': return 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"start":"2026-09-05","end":"2026-09-07"}\'';
-    case 'calorie.view.predict': return 'calorie-cmd-read calorie.view.predict --params \'{"start":"2026-08-23","end":"2026-09-07","horizonDays":30}\'';
-    case 'calorie.view.anomaly': return 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"diet_over","start":"2026-09-01","end":"2026-09-07"}\'';
+    case 'calorie.view.plan-wizard': return 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\''
+    case 'calorie.view.exercise-goal': return 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"今日"}\''
+    case 'calorie.view.goal-expiring': return 'calorie-cmd-read calorie.view.goal-expiring'
+    case 'calorie.view.goal-predict': return 'calorie-cmd-read calorie.view.goal-predict --params \'{"window":"14d"}\''
+    case 'calorie.view.goal-vs-actual': return 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"window":"30d"}\''
+    case 'calorie.view.predict': return 'calorie-cmd-read calorie.view.predict --params \'{"horizonDays":7,"window":"14d"}\''
+    case 'calorie.view.anomaly': return 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"weight_volatility","window":"90d"}\''
     case 'calorie.view.contraindication': return 'calorie-cmd-read calorie.view.contraindication --params \'{"part":"all"}\'';
     case 'calorie.view.dedupe': return 'calorie-cmd-read calorie.view.dedupe';
     case 'calorie.view.profile': return 'calorie-cmd-read calorie.view.profile';
@@ -168,16 +171,16 @@ function exampleFor(key) {
     case 'calorie.diet.update': return 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'';
     case 'calorie.diet.remove': return 'calorie-cmd-read calorie.diet.remove --params \'{"id":1}\'';
     case 'calorie.diet.batch': return 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'';
-    case 'calorie.diet.copy': return 'calorie-cmd-read calorie.diet.copy --params \'{"from":"2026-09-06"}\'';
-    case 'calorie.diet.update-by-date': return 'calorie-cmd-read calorie.diet.update-by-date --params \'{"date":"2026-09-06","note":"食堂"}\'';
-    case 'calorie.diet.remove-by-date': return 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"2026-09-06"}\'';
-    case 'calorie.diet.remove-by-range': return 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"2026-09-01","end":"2026-09-02"}\'';
-    case 'calorie.diet.remove-by-type': return 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"date":"2026-09-06","mealType":"早餐"}\'';
+    case 'calorie.diet.copy': return 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\''
+    case 'calorie.diet.update-by-date': return 'calorie-cmd-read calorie.diet.update-by-date --params \'{"note":"食堂","date":"<日期>"}\''
+    case 'calorie.diet.remove-by-date': return 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"<日期>"}\''
+    case 'calorie.diet.remove-by-range': return 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"<日期>","end":"<日期>"}\''
+    case 'calorie.diet.remove-by-type': return 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"mealType":"早餐","date":"<日期>"}\''
     case 'calorie.water.log': return 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'';
     case 'calorie.weight.log': return 'calorie-cmd-read calorie.weight.log --params \'{"kg":70.5}\'';
     case 'calorie.weight.update': return 'calorie-cmd-read calorie.weight.update --params \'{"id":1,"kg":70.2}\'';
     case 'calorie.weight.remove': return 'calorie-cmd-read calorie.weight.remove --params \'{"id":1}\'';
-    case 'calorie.weight.batch': return 'calorie-cmd-read calorie.weight.batch --params \'{"items":[{"date":"2026-09-06","kg":70.5}]}\'';
+    case 'calorie.weight.batch': return 'calorie-cmd-read calorie.weight.batch --params \'{"items":[{"date":"<日期>","kg":70.5}]}\''
     case 'calorie.exercise.add': return 'calorie-cmd-read calorie.exercise.add --params \'{"type":"慢跑","calories":320,"minutes":30}\'';
     case 'calorie.exercise.update': return 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":40}\'';
     case 'calorie.exercise.remove': return 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'';

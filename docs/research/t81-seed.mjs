@@ -17,8 +17,17 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const CLI = join(ROOT, 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js');
 
-/** 占位符 → 临时真实文件（示例 cli 用占位符，冻结 SoT 同风格；E-4 裁定：证据表注明需真实路径）。 */
-export const PLACEHOLDER_SUBSTITUTIONS = new Map([['<照片路径>', null]]);
+/** 占位符 → 临时真实文件／种子日期（示例 cli 用占位符，冻结 SoT 同风格；E-4 裁定：证据表注明需真实路径）。
+ *  #250 · 日期占位符也走这张表：**自定义区间**与**写命令**的日期由用户给，示例里是占位符；
+ *  跑快照时按种子库的日子替换成真实日期（与 `CALORIE_TODAY` 同锚点），判据「exec ⟺ 实跑 exit 0」才成立。 */
+export const PLACEHOLDER_SUBSTITUTIONS = new Map([
+  ['<照片路径>', null],
+  ['<开始日期>', '2026-09-01'],
+  ['<结束日期>', '2026-09-07'],
+  ['<对比开始日期>', '2026-08-23'],
+  ['<对比结束日期>', '2026-08-29'],
+  ['<日期>', '2026-09-06'],
+]);
 /** 占位符位于 JSON 字符串内，替换值须 JSON 转义（Windows 路径含反斜杠）。 */
 const jsonEscape = (s) => JSON.stringify(String(s)).slice(1, -1);
 
@@ -33,6 +42,9 @@ function nodeBin() {
   return process.execPath;
 }
 const NODE = nodeBin();
+
+/** 种子库的数据日（＝跑快照时钉住的「今天」，见 runCli 的 `CALORIE_TODAY`）。 */
+export const SEED_TODAY = '2026-09-07';
 
 /** 标准种子库（覆盖被跑键所需数据区间；只写系统 tmp）。 */
 export function seedFull(db) {
@@ -147,7 +159,9 @@ export function createHarness() {
     const toks = tokenize(effective);
     const r = spawnSync(NODE, [CLI, ...toks.slice(1)], {
       encoding: 'utf8',
-      env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_PHOTOS_DIR: photosDir },
+      // #250 · 把「今天」钉到种子库的数据日：路由表的窗口自本票起是**相对窗口**（今日／本周／最近 N 天…），
+      // 不钉时钟就按机器当天取窗（落在种子数据之外）→ 全线路 missing-data，判据失去意义。
+      env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_PHOTOS_DIR: photosDir, CALORIE_TODAY: SEED_TODAY },
     });
     let envelopeKey = null;
     try { envelopeKey = JSON.parse(String(r.stdout || '').trim()).key ?? null; } catch { envelopeKey = null; }

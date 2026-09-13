@@ -30,6 +30,8 @@ import { buildDietOverview, buildMealDistribution, zeroMealDistribution } from '
 import { buildExerciseView } from '../render/exercise.js';
 import { buildGoalView } from '../render/goal.js';
 import { buildGoalConfig, buildGoalRecommend, buildGoalWeight, buildGoalProgress, buildGoalStatus } from '../render/goalPlate.js';
+import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
+import { buildGoalPrecheckDoc } from '../goal/precheck.js';
 import { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from '../render/weightPlate.js';
 import { buildBodyCompositionView, buildBodyMeasureView } from '../render/bodyPlate.js';
 import { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from '../render/planPlate.js';
@@ -111,7 +113,10 @@ import type { ErrorReceipt } from '../render/receipt.js';
 import { buildDataText } from 'base-paint';
 import { CalorieRenderError } from '../render/errors.js';
 import { TRIGGERS, searchHelp } from '../triggers/index.js';
+import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
+// #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
+import { applyOffset, resolveDay, resolveWindow, resolveCompareWindow } from '../analysis/series.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL, calorieShapeFor, isCalorieWriteKey } from './keys.js';
 import {
   HTML_DIR_NAME, PHOTO_HELP_FILE_STEM, deliverHtml, resolveReceiptHtmlPath,
@@ -211,9 +216,66 @@ function latestFoodDate(db: DatabaseSync): string | null {
   }
 }
 
+/** #250 · 锚点：`today` 可显式传入（演示／测试／面板用来复现固定日）；缺省＝**真实今天**（语义正确）。
+ *  窗口与相对词都相对它解析——不再把「库内最新数据日」悄悄当成今天。 */
+function anchorOf(params: Record<string, unknown>): string {
+  const t = optStr(params, 'today');
+  if (!t) return todayISO();
+  const d = resolveDay(t, todayISO());
+  assertISO(d, 'today');
+  return d;
+}
+
+/** #250 · 窗口：`window`（今日／本周／最近 Nd／custom…）＋ `offset`（整体平移 ±Nd/±Nw/±Nm/±Ny）。
+ *  给了 `window` 就以它为准；**显式 start+end 仍然优先**（历史口径：明确起止比窗口词更具体，
+ *  `custom` 除外——它本来就用这对日期）；两样都没有则回 null，由各命令沿用旧口径。 */
+function windowRange(params: Record<string, unknown>): { start: string; end: string } | null {
+  const w = optStr(params, 'window');
+  if (!w) return null;
+  const s0 = optStr(params, 'start');
+  const e0 = optStr(params, 'end');
+  if (w !== 'custom' && s0 && e0) return null;
+  let s: string;
+  let e: string;
+  try {
+    // 窗口词／偏移是**参数**错（用法错），统一报 bad-input（exit 2）；别混进「取数失败」那一档。
+    [s, e] = applyOffset(resolveWindow(w, s0, e0, anchorOf(params)), optStr(params, 'offset'));
+  } catch (err) {
+    throw new CalorieRenderError('bad-input', err instanceof Error ? err.message : String(err));
+  }
+  assertISO(s, 'start');
+  assertISO(e, 'end');
+  if (s > e) fail(2, 'start 不得晚于 end');
+  return { start: s, end: e };
+}
+
+/** #250 · 单日字段：`date`／`from`／`to` 这类「一个日」可写相对词（今日／昨日／前天），并吃 `offset` 平移。 */
+function dayField(params: Record<string, unknown>, field: string): string | null {
+  const raw = optStr(params, field);
+  if (!raw) return null;
+  const anchor = anchorOf(params);
+  const shifted = applyOffset([resolveDay(raw, anchor), resolveDay(raw, anchor)], optStr(params, 'offset'))[0];
+  assertISO(shifted, field);
+  return shifted;
+}
+
+/** 单日字段（必填）：相对词与显式日期都收；缺则按用法报 exit 2。 */
+function needDay(params: Record<string, unknown>, field: string): string {
+  const v = dayField(params, field);
+  if (!v) fail(2, '缺参数 ' + field);
+  return v as string;
+}
+
+/** 闭区间天数（含首末日）。 */
+function daysIn(range: { start: string; end: string }): number {
+  return Math.round((Date.parse(range.end) - Date.parse(range.start)) / 86400000) + 1;
+}
+
 function defaultRange(db: DatabaseSync, params: Record<string, unknown>, defDays = 7): { start: string; end: string } {
-  let end = optStr(params, 'end') ?? optStr(params, 'date') ?? optStr(params, 'today') ?? undefined;
-  let start = optStr(params, 'start') ?? undefined;
+  const win = windowRange(params);
+  if (win) return win;
+  let end = dayField(params, 'end') ?? dayField(params, 'date') ?? dayField(params, 'today') ?? undefined;
+  let start = dayField(params, 'start') ?? undefined;
   if (end) assertISO(end, 'end');
   if (start) assertISO(start, 'start');
   if (start && end) {
@@ -322,7 +384,7 @@ function helpCenterIndex(data: ReturnType<typeof buildHelpSceneData>): {
 export function dispatch(key: string, params: Record<string, unknown>, db: DatabaseSync): DispatchOut {
   switch (key) {
     case 'calorie.today': {
-      const date = optStr(params, 'date') ?? latestFoodDate(db) ?? todayISO();
+      const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
       assertISO(date, 'date');
       const rows = listMeals(db, date).filter((r) => r.food_name !== '💧水');
       if (rows.length === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
@@ -334,9 +396,10 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null }) };
     }
     case 'calorie.view.home': {
-      const date = optStr(params, 'date') ?? optStr(params, 'today') ?? latestFoodDate(db) ?? todayISO();
+      const win = windowRange(params);
+      const date = win?.end ?? dayField(params, 'date') ?? dayField(params, 'today') ?? latestFoodDate(db) ?? todayISO();
       assertISO(date, 'date');
-      const windowDays = optNum(params, 'windowDays') ?? 7;
+      const windowDays = win ? daysIn(win) : (optNum(params, 'windowDays') ?? 7);
       if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 90) fail(2, 'windowDays 须为 1..90 整数');
       const h = buildHomeData(db, date, windowDays as number);
       const metrics = nums({
@@ -487,7 +550,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { metrics }, html: buildSourceStatsDoc(v) };
     }
     case 'calorie.view.today-water': {
-      const date = optStr(params, 'date') ?? latestFoodDate(db) ?? todayISO();
+      const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
       assertISO(date, 'date');
       const v = buildTodayWaterView(db, date);
       const metrics = nums({
@@ -509,7 +572,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { metrics }, html: buildCalorieTrendDoc(v) };
     }
     case 'calorie.view.long-trend': {
-      const end = optStr(params, 'end') ?? latestFoodDate(db) ?? todayISO();
+      const end = windowRange(params)?.end ?? dayField(params, 'end') ?? latestFoodDate(db) ?? todayISO();
       assertISO(end, 'end');
       const v = buildLongTrendView(db, optStr(params, 'group'), optStr(params, 'window'), end);
       const metrics = nums({
@@ -530,7 +593,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { metrics }, html: buildNutritionAnalysisDoc(v) };
     }
     case 'calorie.view.six-factors': {
-      const date = optStr(params, 'date') ?? latestFoodDate(db) ?? todayISO();
+      const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
       assertISO(date, 'date');
       const v = buildSixFactorsView(db, date);
       const metrics = nums({
@@ -582,6 +645,32 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
         latestWeightKg: v.latestWeightKg, activityLevels: v.activityChoices.length,
       });
       return { data: { metrics }, html: buildProfileSettingDoc(v) };
+    }
+    case 'calorie.view.goal-wizard': {
+      // #251 · 目标管理写前预检页：`profile`（选填）决定算不算推荐，`wake`（选填）决定本页展开哪条写词。
+      const profileRaw = optStr(params, 'profile');
+      if (profileRaw !== undefined && !isGoalProfile(profileRaw)) {
+        throw new CalorieRenderError('bad-input', 'profile 非法（cut/maintain/bulk）: ' + profileRaw);
+      }
+      const wakeWord = optStr(params, 'wake') ?? null;
+      const draft = buildGoalDraft(db, { profile: profileRaw === undefined ? null : profileRaw });
+      const hit = wakeWord === null ? null : TRIGGERS.find((t) => t.wake_word === wakeWord) ?? null;
+      const v = {
+        wakeWord,
+        draft,
+        prompt: hit !== null && 'prompt_template' in hit ? String(hit.prompt_template ?? '') : '',
+        // 该写词要跑的命令：先取它的可执行路由；三条自动算词今天还没有可执行路由，
+        // 回落它自己的 `main_prompt.cli`（那串「先算 → 确认后写」的两段式）——执行接线归 #252。
+        command: (wakeWord === null ? '' : routeWakeword(wakeWord)?.cli ?? '')
+          || (hit !== null && 'main_prompt' in hit ? hit.main_prompt.cli : '')
+          || execCliFor(null, 'calorie-cmd-read calorie.view.goal-wizard'),
+      };
+      const metrics = nums({
+        hasGoal: draft.current === null ? 0 : 1,
+        recommendReady: draft.recommend === null ? 0 : 1,
+        missingCount: draft.energy.missing.length,
+      });
+      return { data: { metrics }, html: buildGoalPrecheckDoc(v) };
     }
     case 'calorie.view.lint-health': {
       const v = buildLintHealthView(db);
@@ -682,10 +771,10 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     case 'calorie.view.combined': {
       const pair = optStr(params, 'pair') ?? 'weight_calorie';
       const window = optStr(params, 'window') ?? '7d';
-      const start = optStr(params, 'start') ?? null;
-      const end = optStr(params, 'end') ?? null;
-      const today = optStr(params, 'today') ?? latestFoodDate(db) ?? todayISO();
-      const c = buildCombinedAnalysis(db, pair, window, start, end, today);
+      const win = windowRange(params);
+      const today = anchorOf(params);
+      // #250 · 给了窗口就把解析出的区间交给它（analyzePair 仍收到原始窗口词，口径不变）。
+      const c = buildCombinedAnalysis(db, pair, window, win?.start ?? optStr(params, 'start') ?? null, win?.end ?? optStr(params, 'end') ?? null, today);
       const metrics = nums({
         aAvg: c.analysis.aAvg, bAvg: c.analysis.bAvg, aDelta: c.analysis.aDelta, bDelta: c.analysis.bDelta,
         aCount: c.analysis.aCount, bCount: c.analysis.bCount,
@@ -761,7 +850,10 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const dir = photosDirOf(params);
       const filter: Record<string, unknown> = {};
       for (const k of ['tag', 'dateFrom', 'dateTo', 'days', 'limit', 'today'] as const) {
-        if (params[k] !== undefined) (filter as Record<string, unknown>)[k] = params[k];
+        if (params[k] === undefined) continue;
+        // #250 · 三个日期位与其余命令同义：可写相对词（今日／昨日／前天）并吃 offset。
+        const rel = k === 'dateFrom' || k === 'dateTo' || k === 'today' ? dayField(params, k) : null;
+        (filter as Record<string, unknown>)[k] = rel ?? params[k];
       }
       const g = buildGalleryData(db, filter as never, dir ?? null);
       const items = g.photos.map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: p.tagList, fileExists: p.fileExists }));
@@ -787,7 +879,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     case 'calorie.photo.gif': {
       const tag = needStr(params, 'tag');
       const gif = buildGifTask(db, {
-        tag, dateFrom: (optStr(params, 'dateFrom') ?? null) as string | null,
+        tag, dateFrom: dayField(params, 'dateFrom'),
         dateTo: (optStr(params, 'dateTo') ?? null) as string | null,
         days: (optNum(params, 'days') ?? 90) as number,
       });
@@ -908,11 +1000,18 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { metrics }, html: buildWeightHistoryDoc(h) };
     }
     case 'calorie.view.weight-compare': {
-      const start = needStr(params, 'start');
-      const end = needStr(params, 'end');
-      const compareStart = needStr(params, 'compareStart');
-      const compareEnd = needStr(params, 'compareEnd');
-      const v = buildWeightCompareView(db, start, end, compareStart, compareEnd);
+      // #250 · 主窗口与对比窗口各收一套相对窗口：`window`／`offset` 与 `compareWindow`／`compareOffset`
+      //（对比侧另收 `prev`＝紧邻主窗口之前的等长窗口）。显式四个日期照旧可用。
+      const anchor = anchorOf(params);
+      const main = windowRange(params) ?? { start: needStr(params, 'start'), end: needStr(params, 'end') };
+      const cmpSpec = optStr(params, 'compareWindow');
+      const [cStart, cEnd] = cmpSpec
+        ? applyOffset(
+            resolveCompareWindow(cmpSpec, [main.start, main.end], optStr(params, 'compareStart') ?? null, optStr(params, 'compareEnd') ?? null, anchor),
+            optStr(params, 'compareOffset'),
+          )
+        : [needDay(params, 'compareStart'), needDay(params, 'compareEnd')];
+      const v = buildWeightCompareView(db, main.start, main.end, cStart, cEnd);
       const metrics = nums({
         avgDiff: v.compare.avgDiff,
         currentAvg: v.compare.currentPeriod.avgWeight, compareAvg: v.compare.comparePeriod.avgWeight,
@@ -921,7 +1020,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       return { data: { metrics }, html: buildWeightCompareDoc(v) };
     }
     case 'calorie.view.weight-review': {
-      const today = optStr(params, 'today') ?? optStr(params, 'date');
+      const today = dayField(params, 'today') ?? dayField(params, 'date');
       const v = buildWeightReviewView(db, today ?? undefined);
       const metrics = nums({
         currentWeight: v.milestone.currentWeight, weightGoal: v.milestone.weightGoal,
@@ -954,8 +1053,8 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const metric = optStr(params, 'metric');
       const days = optNum(params, 'days') ?? 90;
       const limit = optNum(params, 'limit') ?? 20;
-      const dateFrom = optStr(params, 'dateFrom');
-      const dateTo = optStr(params, 'dateTo');
+      const dateFrom = dayField(params, 'dateFrom');
+      const dateTo = dayField(params, 'dateTo');
       const v = buildBodyMeasureView(db, { metric: metric ?? undefined, days: days as number, limit: limit as number, dateFrom: dateFrom ?? undefined, dateTo: dateTo ?? undefined });
       const metrics = nums({ total: v.total, latestVal: v.latestVal, trendDays: v.trend.length });
       return { data: { metrics }, html: buildBodyMeasureDoc(v) };
@@ -981,7 +1080,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     }
     case 'calorie.view.goal-expiring': {
       const withinDays = optNum(params, 'withinDays') ?? optNum(params, 'days') ?? 14;
-      const today = optStr(params, 'today');
+      const today = dayField(params, 'today') ?? dayField(params, 'date');
       const v = buildGoalExpiringView(db, withinDays as number, today ?? undefined);
       const metrics = nums({ daysLeft: v.daysLeft, withinDays: v.withinDays, expiring: v.expiring ? 1 : 0, weightGoal: v.weightGoal, calorieGoal: v.calorieGoal });
       return { data: { metrics }, html: renderGoalExpiringHtml(v) };

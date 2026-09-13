@@ -94,7 +94,9 @@ test('history：按日聚合倒序 + 目标状态 + 空库空行', () => {
   assert.deepEqual([h.rows[0].remaining, h.rows[0].status], [0, '达标']);
   assert.deepEqual([h.rows[1].remaining, h.rows[1].status], [1300, '+1300卡']);
   db.prepare('DELETE FROM daily_goal').run();
-  assert.equal(getCalorieHistory(db, 7).rows[0].status, '未设目标');
+  // #250 · 这里原先省了 `now`，于是按**机器当天**取 7 天窗——机器日期一过 09-06，样例数据就落到窗外，
+  // 本行变成 `rows[0]` undefined（#180 报告里点名的「环境时钟被动过期」红）。与上面 :91 同源：锚定样例日。
+  assert.equal(getCalorieHistory(db, 7, new Date('2026-09-06T12:00:00')).rows[0].status, '未设目标');
   db.close();
 });
 

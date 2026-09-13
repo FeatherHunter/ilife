@@ -73,7 +73,9 @@ test('① 341/436 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由�
     assert.ok(expected.startsWith('calorie-cmd-read calorie.'), '唯一出口形态：' + expected);
   }
   // 去重事实（台账：261 条唯一 → 不能塞进 `Scene.id`，那会触发 duplicate-id）
-  assert.equal(new Set(withCli.map((s) => helpSceneCli(s.wake_word))).size, 261, '唯一 CLI 261 条');
+  // #250 重算：窗口自本票起是**相对窗口**（今日／本周／最近 Nd…），同 key 的词不再共用同一串日期 ⇒
+  // 唯一 CLI 由 261 升到 **290**（对卡面 id 的重复风险只会更低；判据本身不放宽：仍逐条等于路由层）。
+  assert.equal(new Set(withCli.map((s) => helpSceneCli(s.wake_word))).size, 290, '唯一 CLI 290 条');
 });
 
 test('① 死命令零泄漏：任何 CLI 值都不是 python／mavis／mmx 原文（红点：改回 main_prompt.cli 原文）', () => {

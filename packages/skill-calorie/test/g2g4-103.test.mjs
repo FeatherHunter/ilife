@@ -66,28 +66,35 @@ test('#103 G3：view.anomaly 23 kind 参数化（render 层逐个可用）', () 
   db.close();
 });
 
-test('#103 G4：view.combined window 白名单（拒 99d／未知值）', () => {
+test('#103 G4 → #250：view.combined window 词表（收任意 Nd，仍拒未知值／越界）', () => {
   const db = tmpDb();
   seedFull(db);
   assert.ok(COMBINED_WINDOWS.includes('7d') && COMBINED_WINDOWS.includes('custom'));
-  for (const w of ['7d', '15d', '30d', '60d', '90d', '180d', '365d', 'week_cur', 'month_cur', 'custom']) {
+  for (const w of ['7d', '15d', '30d', '60d', '90d', '180d', '365d', 'week_cur', 'month_cur', 'custom', '今日', '本周', '本月', '今年']) {
     const [s, e] = resolveWindow(w, null, null, '2026-09-20');
     assert.ok(s <= e, w + ' 窗口倒置');
   }
-  assert.throws(() => resolveWindow('99d', null, null, '2026-09-20'), /window 非法/);
-  assert.throws(() => resolveWindow('45d', null, null, '2026-09-20'), /window 非法/);
+  // #250 契约变动（用户 2026-09-13 要求②「接口层面要全面」）：`Nd` 不再限于 7 档白名单，
+  // 改收任意正整数（上限 MAX_WINDOW_DAYS）；**拒收口径不变**——未知词与越界值照样 exit 2，不静默回退。
+  assert.deepEqual(resolveWindow('99d', null, null, '2026-09-20'), ['2026-06-14', '2026-09-20']);
+  assert.equal(resolveWindow('45d', null, null, '2026-09-20')[0], '2026-08-07');
+  assert.throws(() => resolveWindow('0d', null, null, '2026-09-20'), /window 非法/);
+  assert.throws(() => resolveWindow('4000d', null, null, '2026-09-20'), /window 非法/);
+  assert.throws(() => resolveWindow('99x', null, null, '2026-09-20'), /window 非法/);
   assert.throws(() => resolveWindow('bogus', null, null, '2026-09-20'), /window 非法/);
   const bad = (fn) => {
     try { fn(); } catch (e) { return e; }
     assert.fail('应抛 bad-input');
   };
-  assert.equal(bad(() => dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: '99d' }, db)).code, 'bad-input');
   assert.equal(bad(() => dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: 'bogus' }, db)).code, 'bad-input');
-  assert.ok(bad(() => dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: '99d' }, db)) instanceof CalorieRenderError);
-  // 白名单内仍可用：默认 7d 与具名窗。
+  assert.equal(bad(() => dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: '4000d' }, db)).code, 'bad-input');
+  assert.ok(bad(() => dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: 'bogus' }, db)) instanceof CalorieRenderError);
+  // 词表与 Nd 内仍可用：默认 7d、具名窗、以及新收的今日／本周。
   const ok7 = dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: '7d' }, db);
   assert.ok(typeof ok7.data.metrics.aCount === 'number');
   const okm = dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: 'month_cur' }, db);
   assert.ok(typeof okm.data.metrics.aCount === 'number');
+  const ok99 = dispatchRead('calorie.view.combined', { pair: 'weight_calorie', window: '99d' }, db);
+  assert.ok(typeof ok99.data.metrics.aCount === 'number');
   db.close();
 });
