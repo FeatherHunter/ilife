@@ -24,13 +24,8 @@ import { openDb } from '../schema.js';
 import {
   DB_FILENAME,
 } from '../paths.js';
-import { listMeals } from '../fetch/diet.js';
 import { getCalorieHistory } from '../fetch/history.js';
 import { FetchError } from '../fetch/errors.js';
-import {
-  buildDietOverview,
-  buildMealDistribution,
-} from '../render/diet.js';
 import { buildGoalView } from '../render/goal.js';
 import {
   buildGoalConfig,
@@ -42,50 +37,22 @@ import { buildGoalDraft, isGoalProfile } from '../goal/set.js';
 import { buildGoalPrecheckDoc } from '../goal/precheck.js';
 
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../render/goalExtra.js';
-import { buildPredictView, buildAnomalyView, buildDedupeView } from '../render/insightPlate.js';
+import { buildPredictView, buildAnomalyView } from '../render/insightPlate.js';
 // #179 · 档案读链取数搬进能力目录 `src/profile/`（同一个取数不留两处）。
 import { buildProfileView, buildProfileViewDoc } from '../profile/view.js';
 import { buildProfileSettingDoc, buildProfileSettingView } from '../profile/setup.js';
-import { buildCombinedAnalysis, buildDeficitPlate, buildDietReview } from '../render/analysisPlate.js';
-import { dietFoodRanking, dietMacroRatio } from '../analysis/diet.js';
-import {
-  buildAllRankingsDoc,
-  buildDedupeDoc,
-  buildDietReviewDoc,
-  buildHealthDoc,
-  buildLibraryDoc,
-  buildRankingDoc,
-  buildSearchDoc,
-  buildTodayDietDoc,
-} from '../render/dietDocs.js';
+import { buildCombinedAnalysis, buildDeficitPlate } from '../render/analysisPlate.js';
+import { buildHealthDoc } from '../render/dietDocs.js';
 
 import { buildReviewDoc } from '../render/sportPortDocs.js';
 import { buildReviewView } from '../render/exercisePort.js';
-import {
-  buildNutritionDetailView, buildNutritionRatioView, buildSourceStatsView,
-  buildTodayWaterView,
-} from '../render/nutritionPort.js';
-import {
-  buildNutritionDetailDoc, buildNutritionRatioDoc, buildSourceStatsDoc,
-  buildTodayWaterDoc,
-} from '../render/nutritionPortDocs.js';
-import {
-  buildBatchImportPreviewView, buildCalorieTrendView, buildLintHealthView,
-  buildLongTrendView, buildNutritionAnalysisView, buildProcessProgressView,
-  buildReviewTemplateView, buildSixFactorsView,
-} from '../render/trendMiscPort.js';
-import {
-  buildBatchImportPreviewDoc, buildCalorieTrendDoc, buildLintHealthDoc,
-  buildLongTrendDoc, buildNutritionAnalysisDoc, buildProcessProgressDoc,
-  buildReviewTemplateDoc, buildSixFactorsDoc,
-} from '../render/trendMiscPortDocs.js';
+import { buildCalorieTrendView, buildLintHealthView, buildLongTrendView, buildNutritionAnalysisView, buildProcessProgressView, buildReviewTemplateView, buildSixFactorsView } from '../render/trendMiscPort.js';
+import { buildCalorieTrendDoc, buildLintHealthDoc, buildLongTrendDoc, buildNutritionAnalysisDoc, buildProcessProgressDoc, buildReviewTemplateDoc, buildSixFactorsDoc } from '../render/trendMiscPortDocs.js';
 import {
   buildAnomalyDoc, buildCombinedDoc, buildContraDoc, buildDeficitDoc,
   buildGoalPredictDoc, buildPredictDoc,
 } from '../render/trendDocs.js';
 import { buildHealthPlate } from '../render/health.js';
-import { buildAllRankings, buildFoodRankingPlate } from '../render/ranking.js';
-import { buildProductLibrary, buildProductSearch, buildProductStats } from '../render/library.js';
 // #91 · 全量速查台（Q9）：只读消费 #88 的 `render/helpCenter.js`（三态同源，零改动）。
 import {
   renderHelpLookupHtml,
@@ -241,61 +208,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
     return spec.run(params, db);
   }
   switch (key) {
-    case 'calorie.today': {
-      const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
-      assertISO(date, 'date');
-      const rows = listMeals(db, date).filter((r) => r.food_name !== '💧水');
-      if (rows.length === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-      const items = rows.map((r) => ({ id: r.id, date: r.date, time: r.time, food_name: r.food_name, grams: r.grams, calories: r.calories, protein: r.protein, carbs: r.carbs, fat: r.fat }));
-      const o = buildDietOverview(db, date, date);
-      const dist = buildMealDistribution(db, date);
-      // #108 · 今日饮食全文档（餐次进度＋营养配比＋今日明细；配比无数据即 skip，不编数）。
-      const mt = dietMacroRatio(db, date, date);
-      return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null }) };
-    }
-    // #111 · 运动移植 6 键（其中 5 键已随 #316 搬进 `src/exercise/`，本处只剩计划复盘那一条；
-    // envelope stat metrics 只收确定数字）。
-    // #112 · 营养移植 4 键（t71 需移植 nutrition_*／source_stats／today_water；envelope stat metrics 只收确定数字）。
-    case 'calorie.view.nutrition-ratio': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildNutritionRatioView(db, start, end);
-      const metrics = nums({
-        totalCalorie: v.totalCalorie, proteinG: v.proteinG, proteinPct: v.proteinPct,
-        carbG: v.carbG, carbPct: v.carbPct, fatG: v.fatG, fatPct: v.fatPct,
-        targetProteinG: v.targetProteinG, targetCarbG: v.targetCarbG, targetFatG: v.targetFatG,
-      });
-      return { data: { metrics }, html: buildNutritionRatioDoc(v) };
-    }
-    case 'calorie.view.nutrition-detail': {
-      const { start, end } = defaultRange(db, params);
-      const v = buildNutritionDetailView(db, start, end);
-      const metrics = nums({
-        days: v.days,
-        matchedMeals: v.matchedMeals,
-        missingFoods: v.missingFoods.length,
-        fiberAvg: v.items[0]?.avg,
-        sodiumAvg: v.items[1]?.avg,
-        sugarAvg: v.items[2]?.avg,
-        fiberPct: v.items[0]?.pct,
-        sodiumPct: v.items[1]?.pct,
-        sugarPct: v.items[2]?.pct,
-      });
-      return { data: { metrics }, html: buildNutritionDetailDoc(v) };
-    }
-    case 'calorie.view.source-stats': {
-      const v = buildSourceStatsView(db);
-      const metrics = nums({ total: v.total, sources: v.sources });
-      return { data: { metrics }, html: buildSourceStatsDoc(v) };
-    }
-    case 'calorie.view.today-water': {
-      const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
-      assertISO(date, 'date');
-      const v = buildTodayWaterView(db, date);
-      const metrics = nums({
-        todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
-      });
-      return { data: { metrics }, html: buildTodayWaterDoc(v) };
-    }
     // #113 · 趋势 2＋其他 6 移植 8 键（t71 需移植八模板；envelope stat metrics 只收确定数字）。
     case 'calorie.view.calorie-trend': {
       const { start, end } = defaultRange(db, params);
@@ -390,13 +302,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       });
       return { data: { metrics }, html: buildLintHealthDoc(v) };
     }
-    case 'calorie.view.batch-import-preview': {
-      const v = buildBatchImportPreviewView(db, params['items']);
-      const metrics = nums({
-        total: v.total, matched: v.matched, missing: v.missing, totalCalorie: v.totalCalorie,
-      });
-      return { data: { metrics }, html: buildBatchImportPreviewDoc(v) };
-    }
     case 'calorie.view.review-template': {
       const { start, end } = defaultRange(db, params);
       const v = buildReviewTemplateView(db, start, end);
@@ -478,57 +383,11 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       });
       return { data: { metrics }, html: buildDeficitDoc(d) };
     }
-    case 'calorie.view.diet-review': {
-      const { start, end } = defaultRange(db, params);
-      const r = buildDietReview(db, start, end);
-      const metrics = nums({
-        loggedDays: r.loggedDays,
-        'meal.早餐': r.byMeal.find((s) => s.meal === '早餐')?.totalCalories,
-        'meal.午餐': r.byMeal.find((s) => s.meal === '午餐')?.totalCalories,
-        'meal.晚餐': r.byMeal.find((s) => s.meal === '晚餐')?.totalCalories,
-        'meal.加餐': r.byMeal.find((s) => s.meal === '加餐')?.totalCalories,
-      });
-      // #108 · 复盘全文档（趋势折线＋配比环＋高频 TOP5＋按餐汇总；TOP5 取数失败即空态，不编数）。
-      const fr = dietFoodRanking(db, start, end, 'frequent', 5);
-      return { data: { metrics }, html: buildDietReviewDoc(r, fr.status === 'ok' ? (fr.data ?? null) : null) };
-    }
     case 'calorie.view.health': {
       const { start, end } = defaultRange(db, params);
       const h = buildHealthPlate(db, start, end);
       const metrics = nums({ loggedDays: h.loggedDays, avgIntake: h.avgIntake, avgDeficit: h.avgDeficit });
       return { data: { metrics }, html: buildHealthDoc(h) };
-    }
-    case 'calorie.view.ranking': {
-      const { start, end } = defaultRange(db, params);
-      const category = optStr(params, 'category');
-      const topN = optNum(params, 'topN') ?? 5;
-      if (!Number.isInteger(topN) || (topN as number) < 1 || (topN as number) > 50) fail(2, 'topN 须为 1..50 整数');
-      if (category) {
-        const one = buildFoodRankingPlate(db, start, end, category, topN as number);
-        const top = one.items[0];
-        const metrics = nums({ total: one.items.length, topN: one.topN, topCal: top?.totalCal, topCnt: top?.cnt, topRank: top?.rank });
-        return { data: { metrics }, html: buildRankingDoc(one) };
-      }
-      const all = buildAllRankings(db, start, end, topN as number);
-      const metrics = nums({ okCount: all.okCount, topN: all.topN });
-      return { data: { metrics }, html: buildAllRankingsDoc(all) };
-    }
-    case 'calorie.view.library': {
-      const category = optStr(params, 'category') ?? null;
-      const limit = optNum(params, 'limit') ?? 50;
-      if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 100) fail(2, 'limit 须为 1..100 整数');
-      const lib = buildProductLibrary(db, category, limit as number);
-      const stats = buildProductStats(db);
-      const metrics = nums({ total: lib.total, statsTotal: stats.total });
-      return { data: { metrics }, html: buildLibraryDoc(lib, stats.total) };
-    }
-    case 'calorie.view.search': {
-      const keyword = needStr(params, 'keyword');
-      const limit = optNum(params, 'limit') ?? 20;
-      if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 100) fail(2, 'limit 须为 1..100 整数');
-      const s = buildProductSearch(db, keyword, limit as number);
-      const metrics = nums({ total: s.total, limit: limit as number });
-      return { data: { metrics }, html: buildSearchDoc(s) };
     }
     case 'calorie.help.lookup': {
       const q = needStr(params, 'q');
@@ -593,11 +452,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
       const v = buildAnomalyView(db, kind, start, end);
       const metrics = nums({ findingCount: v.findingCount, days: v.diagnosis.days, degraded: v.diagnosis.degraded ? 1 : 0 });
       return { data: { metrics }, html: buildAnomalyDoc(v) };
-    }
-    case 'calorie.view.dedupe': {
-      const v = buildDedupeView(db);
-      const metrics = nums({ groupCount: v.groupCount, rowCount: v.rowCount, totalProducts: v.totalProducts });
-      return { data: { metrics }, html: buildDedupeDoc(v) };
     }
     case 'calorie.view.profile': {
       const v = buildProfileView(db);

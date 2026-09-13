@@ -1,80 +1,26 @@
 /** #313 B 段 · 场景 02 的路由声明（**未搬迁**的记录：键不属任何已搬迁能力件）。
  *
+ * #315 起：属于饮食 24 键的记录已搬进 `src/diet/routes.ts`（记录归属＝它 `key` 的所有者）；
+ * 本件余下的都是**仍未搬迁**的记录——6 条 non-exec（拍营养表 2／有备注 2／批量导入 wizard 2）
+ * ＋ 若干条键住别的场景分片的记录（`calorie.view.diet` ／ `calorie.view.nutrition-analysis` ／
+ * `calorie.view.six-factors`），它们由各自的所有者在自己的窗口里定点搬走。
+ *
+ * `order` 是记录在**原列表内**的 0 基位次（顺序权威），**原值照抄、不重排**——生成器按全表
+ * `(list, order)` 复原三个列表，跨件搬家不打乱顺序。本件只许随搬迁变短，不许凭空新增记录。
+ *
  * 由 `.scratch/t313b1/dump-routes.mjs` 从 #81 运行时事实（`dist/triggers/routing.js`）机械搬迁：语义不动、
- * 只换住处。记录形状见 `src/triggers/routeSpec.ts`；`order` 是该记录在**原列表内**的 0 基位次（顺序权威，
- * 生成器按 `(list, order)` 复原三个列表）。本件住 `routes/` 子目录：`gen-cli.mjs` 扫 `src/cli/legacy/` 时
- * 只收 `isFile()`，故路由声明不会被当成命令清单捡走。重生成／校验：先 `pnpm build`，再跑该脚本。
+ * 只换住处。记录形状见 `src/triggers/routeSpec.ts`；本件住 `routes/` 子目录：`gen-cli.mjs` 扫
+ * `src/cli/legacy/` 时只收 `isFile()`，故路由声明不会被当成命令清单捡走。
  */
 import type { RouteDecl } from '../../../triggers/routeSpec.js';
 
 export const ROUTES_SCENE_02: readonly RouteDecl[] = [
-  { list: 'wake', order: 9, wakeWord: '记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35}\'' },
-  { list: 'wake', order: 10, wakeWord: '记一餐（含备注）', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35,"note":"加了辣酱"}\'' },
-  { list: 'wake', order: 11, wakeWord: '补记饮食', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"米饭","calories":500,"protein":10,"time":"12:30:00","date":"<日期>"}\'' },
-  { list: 'wake', order: 12, wakeWord: '批量补记饮食', scene: '02', kind: 'exec', key: 'calorie.diet.batch', cli: 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },
   { list: 'wake', order: 13, wakeWord: '拍营养表记一餐', scene: '02', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：营养表）；词只保证命中与文案，执行层不承接（t71 O4 同项）。' },
   { list: 'wake', order: 14, wakeWord: '拍营养表补记一餐', scene: '02', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：营养表）；词只保证命中与文案，执行层不承接（t71 O4 同项）。' },
-  { list: 'wake', order: 15, wakeWord: '记喝水', scene: '02', kind: 'exec', key: 'calorie.water.log', cli: 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'' },
-  { list: 'wake', order: 16, wakeWord: '复制昨日饮食', scene: '02', kind: 'exec', key: 'calorie.diet.copy', cli: 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\'' },
-  { list: 'wake', order: 17, wakeWord: '改饮食记录', scene: '02', kind: 'exec', key: 'calorie.diet.update', cli: 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'' },
-  { list: 'wake', order: 18, wakeWord: '改某日饮食', scene: '02', kind: 'exec', key: 'calorie.diet.update-by-date', cli: 'calorie-cmd-read calorie.diet.update-by-date --params \'{"note":"食堂","date":"<日期>"}\'' },
-  { list: 'wake', order: 19, wakeWord: '删饮食记录', scene: '02', kind: 'exec', key: 'calorie.diet.remove', cli: 'calorie-cmd-read calorie.diet.remove --params \'{"id":1}\'' },
-  { list: 'wake', order: 20, wakeWord: '删一餐', scene: '02', kind: 'exec', key: 'calorie.diet.remove-by-type', cli: 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"mealType":"早餐","date":"<日期>"}\'' },
-  { list: 'wake', order: 21, wakeWord: '删某日饮食', scene: '02', kind: 'exec', key: 'calorie.diet.remove-by-date', cli: 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"<日期>"}\'' },
-  { list: 'wake', order: 22, wakeWord: '批量删饮食', scene: '02', kind: 'exec', key: 'calorie.diet.remove-by-range', cli: 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"<日期>","end":"<日期>"}\'' },
-  { list: 'wake', order: 23, wakeWord: '看今日饮食', scene: '02', kind: 'exec', key: 'calorie.today', cli: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
-  { list: 'wake', order: 32, wakeWord: '看今日喝水', scene: '02', kind: 'exec', key: 'calorie.view.today-water', cli: 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\'' },
   { list: 'wake', order: 33, wakeWord: '看有备注的饮食记录', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无「备注」筛选参数（饮食／体重／运动三面的备注均非任何键的筛选维度），单命令不可达成（逐条见 docs/research/t81-route-evidence.md §2.3）。' },
-  { list: 'wake', order: 34, wakeWord: '查食品', scene: '02', kind: 'exec', key: 'calorie.view.search', cli: 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'' },
-  { list: 'wake', order: 35, wakeWord: '查食品（按分类）', scene: '02', kind: 'exec', key: 'calorie.view.library', cli: 'calorie-cmd-read calorie.view.library --params \'{"category":"蛋白类"}\'' },
-  { list: 'wake', order: 36, wakeWord: '存食品', scene: '02', kind: 'exec', key: 'calorie.product.add', cli: 'calorie-cmd-read calorie.product.add --params \'{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}\'' },
-  { list: 'wake', order: 37, wakeWord: '改食品', scene: '02', kind: 'exec', key: 'calorie.product.update', cli: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
-  { list: 'wake', order: 38, wakeWord: '下架食品', scene: '02', kind: 'exec', key: 'calorie.product.deprecate', cli: 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'' },
-  { list: 'wake', order: 39, wakeWord: '看食品库（去重）', scene: '02', kind: 'exec', key: 'calorie.view.dedupe', cli: 'calorie-cmd-read calorie.view.dedupe' },
   { list: 'wake', order: 40, wakeWord: '批量导入食品', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：需多步交互（wizard）——先预览／确认再写库，非单条命令可达成（归 #86）。' },
   { list: 'wake', order: 41, wakeWord: '校验批量导入', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：需多步交互（wizard）——先预览／确认再写库，非单条命令可达成（归 #86）。' },
-  { list: 'wake', order: 42, wakeWord: '看食品来源统计', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
-  { list: 'wake', order: 43, wakeWord: '看营养结构', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\'' },
-  { list: 'wake', order: 44, wakeWord: '看今日营养', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日"}\'' },
-  { list: 'wake', order: 46, wakeWord: '看营养素深度', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\'' },
-  { list: 'wake', order: 47, wakeWord: '看高热量榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\'' },
-  { list: 'wake', order: 48, wakeWord: '看低热量榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"low_calorie","topN":10,"window":"7d"}\'' },
-  { list: 'wake', order: 49, wakeWord: '看频繁吃榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"frequent","topN":10,"window":"7d"}\'' },
-  { list: 'wake', order: 50, wakeWord: '看高碳水榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_carb","topN":10,"window":"7d"}\'' },
-  { list: 'wake', order: 51, wakeWord: '看高蛋白榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_protein","topN":10,"window":"7d"}\'' },
-  { list: 'wake', order: 52, wakeWord: '看全部排行榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"topN":10,"window":"7d"}\'' },
-  { list: 'wake', order: 53, wakeWord: '看高热量榜（最近 30 天）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"30d"}\'' },
-  { list: 'wake', order: 54, wakeWord: '看高热量榜（本月）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"本月"}\'' },
-  { list: 'wake', order: 55, wakeWord: '看高热量榜（自定义）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
-  { list: 'wake', order: 56, wakeWord: '看低热量榜（最近 30 天）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"low_calorie","topN":10,"window":"30d"}\'' },
-  { list: 'wake', order: 57, wakeWord: '看低热量榜（本月）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"low_calorie","topN":10,"window":"本月"}\'' },
-  { list: 'wake', order: 58, wakeWord: '看低热量榜（自定义）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"low_calorie","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
-  { list: 'wake', order: 59, wakeWord: '看频繁吃榜（最近 30 天）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"frequent","topN":10,"window":"30d"}\'' },
-  { list: 'wake', order: 60, wakeWord: '看频繁吃榜（本月）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"frequent","topN":10,"window":"本月"}\'' },
-  { list: 'wake', order: 61, wakeWord: '看频繁吃榜（自定义）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"frequent","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
-  { list: 'wake', order: 62, wakeWord: '看高碳水榜（最近 30 天）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_carb","topN":10,"window":"30d"}\'' },
-  { list: 'wake', order: 63, wakeWord: '看高碳水榜（本月）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_carb","topN":10,"window":"本月"}\'' },
-  { list: 'wake', order: 64, wakeWord: '看高碳水榜（自定义）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_carb","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
-  { list: 'wake', order: 65, wakeWord: '看高蛋白榜（最近 30 天）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_protein","topN":10,"window":"30d"}\'' },
-  { list: 'wake', order: 66, wakeWord: '看高蛋白榜（本月）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_protein","topN":10,"window":"本月"}\'' },
-  { list: 'wake', order: 67, wakeWord: '看高蛋白榜（自定义）', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_protein","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
-  { list: 'wake', order: 68, wakeWord: '饮食复盘（本周）', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"本周"}\'' },
-  { list: 'wake', order: 69, wakeWord: '饮食复盘（本月）', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"本月"}\'' },
-  { list: 'wake', order: 70, wakeWord: '饮食复盘（最近 90 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"90d"}\'' },
-  { list: 'wake', order: 71, wakeWord: '饮食复盘（今年）', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今年"}\'' },
-  { list: 'wake', order: 72, wakeWord: '饮食复盘（自定义时间）', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
   { list: 'wake', order: 78, wakeWord: '看「有备注」的饮食记录', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无「备注」筛选参数（饮食／体重／运动三面的备注均非任何键的筛选维度），单命令不可达成（逐条见 docs/research/t81-route-evidence.md §2.3）。' },
-  { list: 'new', order: 3, wakeWord: '看今日饮食记录', scene: '02', kind: 'exec', key: 'calorie.today', cli: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
-  { list: 'new', order: 8, wakeWord: '看饮食复盘', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日"}\'' },
-  { list: 'new', order: 10, wakeWord: '查高热量排行', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"window":"7d"}\'' },
-  { list: 'new', order: 11, wakeWord: '查食品库', scene: '02', kind: 'exec', key: 'calorie.view.library', cli: 'calorie-cmd-read calorie.view.library' },
-  { list: 'new', order: 12, wakeWord: '搜食品', scene: '02', kind: 'exec', key: 'calorie.view.search', cli: 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'' },
-  { list: 'new', order: 32, wakeWord: '看去重报告', scene: '02', kind: 'exec', key: 'calorie.view.dedupe', cli: 'calorie-cmd-read calorie.view.dedupe' },
-  { list: 'new', order: 40, wakeWord: '查营养配比', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-ratio', cli: 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"window":"7d"}\'' },
-  { list: 'new', order: 41, wakeWord: '看营养素明细', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\'' },
-  { list: 'new', order: 42, wakeWord: '看食品来源分布', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
-  { list: 'new', order: 43, wakeWord: '看今日饮水', scene: '02', kind: 'exec', key: 'calorie.view.today-water', cli: 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\'' },
-  { list: 'new', order: 44, wakeWord: '看批量导入预览', scene: '02', kind: 'exec', key: 'calorie.view.batch-import-preview', cli: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },
   { list: 'new', order: 48, wakeWord: '看营养分析', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-analysis', cli: 'calorie-cmd-read calorie.view.nutrition-analysis --params \'{"window":"7d"}\'' },
   { list: 'new', order: 51, wakeWord: '看每日六因素', scene: '02', kind: 'exec', key: 'calorie.view.six-factors', cli: 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"今日"}\'' },
 ];

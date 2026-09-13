@@ -28,12 +28,7 @@
  * 照片键文案在 `render/photo.ts:buildDeleteReceipt`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import {
-  WATER_NAME, MEALS, MEAL_WINDOWS, addMeal, updateMeal, deleteMeal, copyMeals, addMealsBatch,
-  updateMealsByDate, deleteMealsByDate, deleteMealsByRange, deleteMealsByType, getDailySummary,
-} from '../fetch/diet.js';
 
-import { addProduct, updateProduct, deprecateProduct } from '../fetch/products.js';
 import {
   setActivityLevel,
   setProfile,
@@ -48,7 +43,6 @@ import {
 import { withM5 } from '../render/receipt.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { shiftISODate, todayISO } from '../analysis/utils.js';
 
 // #179 · 场景 07 三条写入词的回执页：整页装配住在能力目录 `src/profile/`（写前页在 setup.ts）。
 import { buildProfileSettingReceiptDoc } from '../profile/setup.js';
@@ -58,32 +52,8 @@ import { isCalorieWriteKey } from './keys.js';
 import { REGISTRY } from './registry.js';
 
 // #294 · 参数读取与回执底座上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
-import {
-  assertISO,
-  fail,
-  needArr,
-  needId,
-  needNum,
-  needStr,
-  needWday,
-  optNum,
-  optStr,
-  wday,
-} from '../shared/params.js';
-import {
-  F,
-  HARD_INNER,
-  HARD_WORDING,
-  SOFT_EXCLUDED,
-  SOFT_EXCLUDED_INNER,
-  R,
-  cliNames,
-  commandLine,
-  deleteStatus,
-  out,
-  provided,
-  totalChanges,
-} from '../shared/writeParts.js';
+import { fail, needNum, needStr, optNum, optStr } from '../shared/params.js';
+import { SOFT_EXCLUDED, R, commandLine, out, provided, totalChanges } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 
 /** `calorie.goal.set` 本次**实际被 SET 的列** → CLI 参数名（正本 §3.4「update 键＝本次实际变更字段」）。
@@ -158,219 +128,6 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
 
 function dispatchInner(key: string, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   switch (key) {
-    case 'calorie.diet.add': {
-      const foodName = (optStr(params, 'foodName') ?? optStr(params, 'food_name') ?? '');
-      if (!foodName.trim()) fail(2, '缺参数 foodName');
-      const calories = needNum(params, 'calories');
-      const protein = needNum(params, 'protein');
-      for (const [k, v] of [['calories', calories], ['protein', protein]] as const) {
-        if (v < 0) fail(2, k + ' 不能为负');
-      }
-      for (const k of ['carbs', 'fat'] as const) {
-        const v = optNum(params, k);
-        if (v !== undefined && v < 0) fail(2, k + ' 不能为负');
-      }
-      const grams0 = optNum(params, 'grams');
-      if (grams0 !== undefined && grams0 <= 0) fail(2, 'grams 必须为正');
-      const date = wday(params, 'date');
-      if (date) assertISO(date, 'date');
-      const meal = optStr(params, 'meal') ?? optStr(params, 'mealOverride');
-      if (meal !== undefined && !(MEALS as readonly string[]).includes(meal)) fail(2, '--meal 须为 ' + MEALS.join('、'));
-      const r = addMeal(db, {
-        foodName: foodName.trim(), calories, protein,
-        carbs: optNum(params, 'carbs') ?? 0, fat: optNum(params, 'fat') ?? 0,
-        grams: optNum(params, 'grams') ?? 100, note: optStr(params, 'note'),
-        date, time: optStr(params, 'time'), mealOverride: meal,
-      });
-      if (r.duplicate) {
-        return out(R('记一餐', 'create', String(r.message ?? '重复记录已跳过'), '记一餐', 'food_log (写库回执)', {
-          recordId: r.dupId ?? null, noChange: true,
-          ids: r.dupId ? [r.dupId] : [], idSource: r.dupId ? 'record' : 'none', writtenFields: [],
-        }));
-      }
-      const remain = r.remainingCal === null || r.remainingCal === undefined ? '' : ' · 今日剩 ' + r.remainingCal + ' 卡';
-      return out(R('记一餐', 'create', '已记一餐：' + r.food_name + ' ' + r.date + ' ' + r.time + '（' + r.meal + '）' + remain, '记一餐', 'food_log (写库回执)', {
-        recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.diet],
-        items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: r.food_name }],
-      }));
-    }
-    case 'calorie.diet.update': {
-      const id = needId(params);
-      const fields: Record<string, unknown> = {};
-      const name = optStr(params, 'foodName') ?? optStr(params, 'food_name');
-      if (name !== undefined) fields['food_name'] = name;
-      for (const k of ['grams', 'calories', 'protein', 'carbs', 'fat'] as const) {
-        const v = optNum(params, k);
-        if (v !== undefined) fields[k] = v;
-      }
-      for (const k of ['note', 'date', 'time'] as const) {
-        const v = optStr(params, k);
-        if (v !== undefined) fields[k] = v;
-      }
-      if (Object.keys(fields).length === 0) fail(2, '至少传 1 个待改字段');
-      if (typeof fields['date'] === 'string') assertISO(fields['date'] as string, 'date');
-      const r = updateMeal(db, id, fields);
-      return out(R('改饮食记录', 'update', '已更新饮食 #' + id + '（' + (r.changed.length ? r.changed.join('、') : '无实际变化') + '）', '改饮食记录', 'food_log (写库回执)', {
-        recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)), noChange: r.changed.length === 0,
-        items: [{ id, status: '已更新', reason: '', detail: r.changed.join(',') || '无变化' }],
-      }));
-    }
-    case 'calorie.diet.remove': {
-      const id = needId(params);
-      const r = deleteMeal(db, id);
-      return out(R('删饮食记录', 'delete', '已删除饮食 #' + id + '（' + r.food_name + ' ' + r.calories + ' 卡 · ' + HARD_INNER + '）', '删饮食记录', 'food_log (写库回执)', {
-        recordId: id, ids: [id], writtenFields: [], items: [{ id, status: deleteStatus('hard'), reason: '', detail: r.food_name }],
-      }));
-    }
-    case 'calorie.diet.batch': {
-      const items = needArr(params, 'items');
-      if (items.length > 200) fail(2, 'items 至多 200 条');
-      const r = addMealsBatch(db, items.map((e) => {
-        const o = (e ?? {}) as Record<string, unknown>;
-        const food = o['foodName'] ?? o['food_name'];
-        return {
-          date: o['date'] === undefined ? undefined : String(o['date']),
-          time: o['time'] === undefined ? undefined : String(o['time']),
-          food_name: food === undefined ? undefined : String(food),
-          grams: o['grams'] as number | undefined, calories: o['calories'] as number | undefined,
-          protein: o['protein'] as number | undefined, carbs: o['carbs'] as number | undefined,
-          fat: o['fat'] as number | undefined, note: o['note'] === undefined ? undefined : String(o['note']),
-        };
-      }));
-      return out(R('批量补记饮食', 'create', '批量记饮食：新增 ' + r.added + '，跳过 ' + r.skipped + '，失败 ' + r.failed, '批量补记饮食', 'food_log (写库回执)', {
-        noChange: r.added === 0, ids: [], idSource: 'condition',
-        writtenFields: r.added > 0 ? [...F.diet] : [],
-        items: r.failures.slice(0, 20).map(([idx, reason]) => ({ status: '失败', reason, detail: '第' + idx + '条' })),
-      }));
-    }
-    case 'calorie.diet.copy': {
-      const today = todayISO();
-      const from = wday(params, 'from') ?? wday(params, 'fromDate') ?? shiftISODate(today, -1);
-      const to = wday(params, 'to') ?? wday(params, 'toDate') ?? today;
-      assertISO(from, 'from');
-      assertISO(to, 'to');
-      const r = copyMeals(db, from, to);
-      if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '来源无饮食记录（' + from + '）');
-      return out(R('复制昨日饮食', 'create', '已复制饮食 ' + from + '→' + to + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日饮食', 'food_log (写库回执)', {
-        noChange: r.copied === 0, ids: [], idSource: 'condition',
-        writtenFields: r.copied > 0 ? [...F.diet] : [],
-      }));
-    }
-    case 'calorie.diet.update-by-date': {
-      const date = needWday(params, 'date');
-      assertISO(date, 'date');
-      const fields: Record<string, unknown> = {};
-      const name = optStr(params, 'foodName') ?? optStr(params, 'food_name');
-      if (name !== undefined) fields['food_name'] = name;
-      for (const k of ['grams', 'calories', 'protein', 'carbs', 'fat', 'note', 'time'] as const) {
-        const v = k === 'note' || k === 'time' ? optStr(params, k) : optNum(params, k);
-        if (v !== undefined) fields[k] = v;
-      }
-      if (Object.keys(fields).length === 0) fail(2, '至少传 1 个待改字段');
-      const r = updateMealsByDate(db, date, fields);
-      if (r.matched === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-      return out(R('改某日饮食', 'update', '已更新 ' + date + ' 饮食 ' + r.updated + ' 条（' + r.changedFields.join('、') + '）', '改某日饮食', 'food_log (写库回执)', {
-        ids: [], idSource: 'condition', writtenFields: cliNames(r.changedFields),
-      }));
-    }
-    case 'calorie.diet.remove-by-date': {
-      const date = needWday(params, 'date');
-      assertISO(date, 'date');
-      const r = deleteMealsByDate(db, date);
-      if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-      return out(R('删某日饮食', 'delete', '已删除 ' + date + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '删某日饮食', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
-    }
-    case 'calorie.diet.remove-by-range': {
-      const start = needWday(params, 'start');
-      const end = needWday(params, 'end');
-      assertISO(start, 'start');
-      assertISO(end, 'end');
-      if (start > end) fail(2, 'start 不得晚于 end');
-      const r = deleteMealsByRange(db, start, end);
-      if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + start + '~' + end + '）');
-      return out(R('批量删饮食', 'delete', '已删除 ' + start + '~' + end + ' 饮食 ' + r.deleted + ' 条' + HARD_WORDING, '批量删饮食', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
-    }
-    case 'calorie.diet.remove-by-type': {
-      const date = needWday(params, 'date');
-      assertISO(date, 'date');
-      const mealType = needStr(params, 'mealType');
-      if (!Object.prototype.hasOwnProperty.call(MEAL_WINDOWS, mealType)) fail(2, 'mealType 须为 ' + Object.keys(MEAL_WINDOWS).join('/') + '：' + mealType);
-      const r = deleteMealsByType(db, date, mealType);
-      if (r.deleted === 0) throw new CalorieRenderError('missing-data', date + ' 无' + mealType + '记录');
-      return out(R('删一餐', 'delete', '已删除 ' + date + ' ' + mealType + ' ' + r.deleted + ' 条' + HARD_WORDING, '删一餐', 'food_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: [] }));
-    }
-    case 'calorie.water.log': {
-      const ml = needNum(params, 'ml');
-      if (!(ml > 0) || ml > 10000) fail(2, 'ml 须为 0..10000 毫升');
-      const date = wday(params, 'date');
-      if (date) assertISO(date, 'date');
-      const r = addMeal(db, {
-        foodName: WATER_NAME, calories: 0, protein: 0, grams: ml,
-        note: optStr(params, 'note'), date, time: optStr(params, 'time'),
-      });
-      if (r.duplicate) {
-        // 与 `calorie.diet.add` 同口径（§3.3 `record`）：重复跳过的原 id 由 fetch 回传（`fetch/diet.ts:96`），
-        // 拿得到就报 `record`＋`ids=[dupId]`，拿不到才退 `none`（返修 R-3／蓝队 D-3 统一）。
-        return out(R('记喝水', 'create', String(r.message ?? '重复记录已跳过'), '记喝水', 'food_log (写库回执)', {
-          recordId: r.dupId ?? null, noChange: true,
-          ids: r.dupId ? [r.dupId] : [], idSource: r.dupId ? 'record' : 'none', writtenFields: [],
-        }));
-      }
-      const day = date ?? todayISO();
-      const sum = getDailySummary(db, day);
-      return out(R('记喝水', 'create', '已记喝水 ' + ml + ' ml（' + day + ' 累计 ' + sum.waterMl + ' ml）', '记喝水', 'food_log (写库回执)', {
-        recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.water],
-        items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: ml + 'ml' }],
-      }));
-    }
-    case 'calorie.product.add': {
-      const productName = (optStr(params, 'productName') ?? optStr(params, 'product_name') ?? '');
-      if (!productName.trim()) fail(2, '缺参数 productName');
-      const r = addProduct(db, {
-        productName: productName.trim(), brand: optStr(params, 'brand'),
-        calories: needNum(params, 'calories'), protein: needNum(params, 'protein'), fat: needNum(params, 'fat'),
-        saturatedFat: optNum(params, 'saturatedFat'), carbohydrates: needNum(params, 'carbohydrates'),
-        sugar: optNum(params, 'sugar'), dietaryFiber: optNum(params, 'dietaryFiber'),
-        sodium: needNum(params, 'sodium'), note: optStr(params, 'note'),
-      });
-      return out(R('存食品', 'create', '已存食品 #' + r.id + '（' + productName.trim() + '）', '存食品', 'nutrition_products (写库回执)', {
-        recordId: r.id, ids: [r.id], writtenFields: [...F.product],
-        items: [{ id: r.id, status: '成功', reason: '', detail: productName.trim() }],
-      }));
-    }
-    case 'calorie.product.update': {
-      const id = needId(params);
-      const map: Record<string, string> = {
-        productName: 'product_name', brand: 'brand', calories: 'calories', protein: 'protein', fat: 'fat',
-        saturatedFat: 'saturated_fat', carbohydrates: 'carbohydrates', sugar: 'sugar',
-        dietaryFiber: 'dietary_fiber', sodium: 'sodium', note: 'note', category: 'category',
-      };
-      const fields: Record<string, string | number | null> = {};
-      for (const [camel, col] of Object.entries(map)) {
-        if (params[camel] !== undefined) fields[col] = params[camel] as string | number | null;
-      }
-      for (const k of Object.keys(params)) {
-        if (!(k in map) && k !== 'id' && k !== 'key') fail(2, '不支持字段: ' + k);
-      }
-      if (Object.keys(fields).length === 0) fail(2, '至少传 1 个待改字段');
-      const r = updateProduct(db, id, fields);
-      if (!r.updated) throw new CalorieRenderError('missing-data', '食品 #' + id + ' 不存在');
-      return out(R('改食品', 'update', '已更新食品 #' + id + '（' + Object.keys(fields).join('、') + '）', '改食品', 'nutrition_products (写库回执)', {
-        recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)),
-        items: [{ id, status: '已更新', reason: '' }],
-      }));
-    }
-    case 'calorie.product.deprecate': {
-      const id = needId(params);
-      const r = deprecateProduct(db, id);
-      if (!r.ok) {
-        if (/not found/.test(String(r.error ?? ''))) throw new CalorieRenderError('missing-data', '食品 #' + id + ' 不存在');
-        fail(2, String(r.error ?? '废弃失败'));
-      }
-      return out(R('下架食品', 'update', '已下架食品 #' + id + '（' + (r.name ?? '') + ' · ' + SOFT_EXCLUDED_INNER + '）', '下架食品', 'nutrition_products (写库回执)', {
-        recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft', '已下架'), reason: '' }],
-      }));
-    }
     case 'calorie.profile.set':
     case 'calorie.profile.update': {
       const isSet = key === 'calorie.profile.set';
