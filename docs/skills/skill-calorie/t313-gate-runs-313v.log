@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：313v｜since：2026-09-13T09:19:03Z｜until：2026-09-13T09:24:28Z｜条目数：4｜导出时间：2026-09-13T09:24:28.402Z
+> 票号过滤：313v｜since：2026-09-13T09:19:03Z｜until：2026-09-13T09:31:09Z｜条目数：11｜导出时间：2026-09-13T09:31:09.972Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -9,4 +9,11 @@ RUN ticket=313v runId=6eb0e561-4704-4852-92e4-44d5f006a0b2 cmd="pnpm build" wait
 RUN ticket=313v runId=94871588-d4b2-49f4-a6f9-4a55a5f4c3a3 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=37396 at=2026-09-13T09:21:42.063Z
 RUN ticket=313v runId=cffad656-f756-4f2c-9bce-4a3a86d87b26 cmd="git add -- docs/skills/skill-calorie/t313-routing-oracle.mjs docs/skills/skill-calorie/t313-routing-exec-face-before.json docs/skills/skill-calorie/t313v-*" waitedMs=0 exit=0 pid=48232 at=2026-09-13T09:23:52.369Z
 RUN ticket=313v runId=d64d4db8-a9a8-4073-b138-7c3c5c8a0f74 cmd="git commit -F .scratch/t313v/msg-1.txt" waitedMs=0 exit=0 pid=31772 at=2026-09-13T09:23:52.511Z
+RUN ticket=313v runId=e754cdf6-fb49-4041-944d-a97ff0b7fd09 cmd="git add -- docs/skills/skill-calorie/t313v-* docs/skills/skill-calorie/t313-gate-runs-313v.log" waitedMs=0 exit=0 pid=28224 at=2026-09-13T09:25:08.718Z
+RUN ticket=313v runId=f808f2f4-1b3d-41b1-9141-743dcdf97cae cmd="git commit -F .scratch/t313v/msg-2.txt" waitedMs=0 exit=0 pid=7524 at=2026-09-13T09:25:08.860Z
+RUN ticket=313v runId=001e8b30-2a39-4d8b-86cd-46491ce453ee cmd="git add -- docs/skills/skill-calorie/t313v-*" waitedMs=1 exit=0 pid=30352 at=2026-09-13T09:25:59.276Z
+RUN ticket=313v runId=f8ad3943-5c8f-4ba1-9fd4-21b3731684b7 cmd="git commit -F .scratch/t313v/msg-3.txt" waitedMs=0 exit=0 pid=48116 at=2026-09-13T09:25:59.420Z
+RUN ticket=313v runId=e6f316bc-ec2d-488c-88fe-04b34792bf29 cmd="git push origin master" waitedMs=0 exit=0 pid=40496 at=2026-09-13T09:26:22.467Z
+RUN ticket=313v runId=ffb06009-6349-4abb-a570-3b4958d07cc5 cmd="git add -- docs/skills/skill-calorie/t313-routing-oracle.mjs docs/skills/skill-calorie/t313-routing-exec-face-before.json docs/skills/skill-calorie/t313v-*" waitedMs=1 exit=0 pid=52476 at=2026-09-13T09:30:44.350Z
+RUN ticket=313v runId=c61ae032-f2f6-4a3e-888b-561f3ef3713a cmd="git commit -F .scratch/t313v/msg-4.txt" waitedMs=0 exit=0 pid=6548 at=2026-09-13T09:30:44.490Z
 ```
