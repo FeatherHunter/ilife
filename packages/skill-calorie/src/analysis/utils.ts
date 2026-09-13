@@ -42,6 +42,14 @@ export const ACTIVITY_LEVEL_LABELS: Record<string, string> = {
   very_active: '高度活跃',
 };
 
+/** #238 · 性别中文说法（唯一来源）：界面自己写「性别（男/女）」，出页就不该回 `male`／`female`。
+ *  **只认库内两条归一值**；认不出的原样露出，不猜（写库那侧的归一正本是 `fetch/profile.normalizeGender`，
+ *  本表只负责把它翻成人话）。页面层「男的显示值」同 `ACTIVITY_LEVEL_LABELS` 一样只此一处。 */
+export const GENDER_LABELS: Record<string, string> = {
+  male: '男',
+  female: '女',
+};
+
 export function getActivityFactor(level?: string | null): number {
   if (!level) return TDEE_ACTIVITY_FACTORS.moderate as number;
   return TDEE_ACTIVITY_FACTORS[String(level).toLowerCase()] ?? (TDEE_ACTIVITY_FACTORS.moderate as number);

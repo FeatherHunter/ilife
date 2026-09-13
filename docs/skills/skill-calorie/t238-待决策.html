@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#238 待决策 · 场景 07 页面文案返修</title>
+<style>
+  :root{
+    --ink:#1d1d1f; --ink2:#494b50; --ink3:#7a7d84;
+    --line:#e3e5e9; --bg:#f4f5f7; --card:#fff;
+    --blue:#0b63c5; --blue-bg:#eef4fc;
+    --ok:#1a7f37; --ok-bg:#eaf6ec;
+    --warn:#a35500; --warn-bg:#fdf3e6;
+    --bad:#b42318; --bad-bg:#fdecea;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .page{max-width:960px;margin:0 auto;padding:28px 20px 64px}
+
+  header{margin-bottom:22px}
+  .eyebrow{font-size:12px;letter-spacing:.06em;color:var(--ink3);text-transform:uppercase}
+  h1{font-size:23px;line-height:1.4;margin:6px 0 8px;letter-spacing:-.01em}
+  .meta{font-size:13px;color:var(--ink3)}
+  .meta a{color:var(--blue);text-decoration:none}
+
+  .verdict{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--blue);
+    border-radius:var(--r);padding:16px 18px;margin:18px 0 26px}
+  .verdict p{margin:0 0 8px;color:var(--ink2);font-size:14px}
+  .verdict p.lead{font-size:17px;font-weight:650;line-height:1.55;color:var(--ink)}
+  .verdict p:last-child{margin-bottom:0}
+
+  h2{font-size:13px;letter-spacing:.06em;color:var(--ink3);text-transform:uppercase;
+    margin:32px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px 18px;margin-bottom:12px}
+  .card.dim{background:#fbfbfc}
+
+  ul{margin:8px 0 0;padding-left:20px}
+  li{margin:5px 0}
+  code{font:12.5px/1.5 ui-monospace,Consolas,monospace;background:#eef0f3;
+    padding:1.5px 5px;border-radius:5px;color:#333}
+
+  /* 三层归因 */
+  .layer{display:grid;grid-template-columns:44px 1fr;gap:14px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;margin-bottom:10px}
+  .layer .n{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:14px;background:#eef0f3;color:var(--ink2)}
+  .layer.fault .n{background:var(--bad-bg);color:var(--bad)}
+  .layer.ok .n{background:var(--ok-bg);color:var(--ok)}
+  .layer h3{font-size:15.5px;margin:0 0 6px}
+  .layer p{margin:0 0 6px;font-size:14px;color:var(--ink2)}
+  .layer p:last-child{margin-bottom:0}
+  .layer .verdictline{font-size:13.5px;font-weight:600;color:var(--ink)}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--r);overflow:hidden;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#fafbfc;font-size:12px;letter-spacing:.03em;color:var(--ink3);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  td.f{font:12.5px/1.5 ui-monospace,Consolas,monospace;color:#333;white-space:nowrap}
+  .hot{background:var(--bad-bg)}
+
+  .q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:18px;margin-bottom:14px}
+  .q.primary{border-left:4px solid var(--blue)}
+  .q.settled{border-left:4px solid var(--ok)}
+  .qhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px}
+  .qid{font-size:12px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--ink);
+    padding:3px 8px;border-radius:6px}
+  .q.primary .qid{background:var(--blue)}
+  .q.settled .qid{background:var(--ok)}
+  .qtitle{font-size:16.5px;font-weight:650}
+  .ctx{color:var(--ink2);font-size:14px;margin:0 0 14px}
+
+  .opts{display:grid;gap:9px}
+  .opt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fcfcfd}
+  .opt.rec{border-color:#9ec4ea;background:var(--blue-bg)}
+  .optline{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .tag{font-size:11.5px;font-weight:600;padding:2.5px 8px;border-radius:999px;
+    background:#e9ebef;color:var(--ink2)}
+  .opt.rec .tag{background:var(--blue);color:#fff}
+  .optname{font-weight:620;font-size:14.5px}
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;margin-top:7px;font-size:13px}
+  .pc div{display:flex;gap:6px}
+  .pc b{flex:0 0 auto;font-weight:600}
+  .pro{color:var(--ok)} .con{color:var(--bad)}
+
+  .rec-note{margin-top:11px;font-size:13.5px;color:var(--ink2);
+    background:var(--ok-bg);border-radius:9px;padding:10px 13px}
+  .rec-note b{color:var(--ok)}
+
+  .before-after{display:grid;grid-template-columns:1fr 26px 1fr;gap:8px;align-items:center;
+    margin:10px 0;font-size:13.5px}
+  .ba{border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:#fcfcfd}
+  .ba.bad{border-color:#f2cfcb;background:var(--bad-bg)}
+  .ba.good{border-color:#bfe0c7;background:var(--ok-bg)}
+  .ba b{display:block;font-size:11.5px;color:var(--ink3);font-weight:600;margin-bottom:3px;letter-spacing:.03em}
+  .arrow{text-align:center;color:var(--ink3);font-size:16px}
+
+  .next{background:#1d1d1f;color:#f2f3f5;border-radius:var(--r);padding:16px 18px;margin-top:12px}
+  .next b{color:#fff}
+  .next ol{margin:8px 0 0;padding-left:20px}
+  .next li{margin:4px 0;font-size:14px;color:#d6d8dc}
+  .ask{background:var(--warn-bg);border:1px solid #f0d9b8;border-radius:var(--r);
+    padding:14px 17px;margin-top:14px;font-size:14.5px;color:#6b3d00}
+  .ask b{color:var(--warn)}
+
+  @media (max-width:680px){
+    .pc,.before-after{grid-template-columns:1fr}
+    .arrow{display:none}
+    td.f{white-space:normal}
+    .layer{grid-template-columns:34px 1fr;gap:10px}
+    .layer .n{width:34px;height:34px;font-size:12.5px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow">已裁定 · 前置两步已执行</div>
+    <h1>#238 卡路里：场景 07 页面文案与信息层次返修</h1>
+    <div class="meta">
+      地图 <a href="https://github.com/FeatherHunter/ilife/issues/152">#152 场景 07 基础信息</a>
+      · 本票 <a href="https://github.com/FeatherHunter/ilife/issues/238">#238</a>
+      · 2026-09-13 01:20 · 诊断全文 <code>.scratch\t238\audit.md</code>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <p class="lead">四条裁定已全部落定：Q1 选 (a) 先挂阻塞边、等三票收口；Q2 就地修改；Q3 不动共享样式；Q4 页名改中文。</p>
+    <p><b>2026-09-13 已执行前置两步</b>（只动 issue 文字，未碰代码）：① 本票挂上原生阻塞边 <code>blocked_by #175／#176／#177</code>，并补进 #152 任务清单表（序 9）；② #175／#176／#177 三张票正文的门槛文字已改成「窄屏 ≥44px／桌面 ≥40px」。</p>
+    <p>本票<b>进度仍 0%</b>：清单 15 条逐条核过源码——14 条成立、1 条已由 #239／#247 做掉。撞车根因见下一节。</p>
+  </div>
+
+  <h2>核心问题 · 为什么会撞车？</h2>
+  <p class="ctx">分四层看。前三层是「本该拦住却没拦」，第四层是这次真正松掉的地方。</p>
+
+  <div class="layer ok">
+    <div class="n">1</div>
+    <div>
+      <h3>代码层：该共用的地方共用，是对的 ✓</h3>
+      <p>场景 07 的三处配置（设置档案／改档案／设活动量）<b>本来就共用同一张预检确认页</b>，所以它们住同一个 <code>profile/setup.ts</code>。这是 <code>docs/agents/structure.md</code> 铁律二（同一个东西只有一个定义地）与铁律五（接口小、里面厚）的要求——按文件把它们仨拆开，等于把同一张页面撕成三份。</p>
+      <p class="verdictline">→ 这里没有解耦失败。拆代码是错的方向。</p>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="n">2</div>
+    <div>
+      <h3>票层：切法按「唤醒词」，代码按「页面」，两者天生不重合</h3>
+      <p>#175／#176／#177 是按唤醒词切的（设置档案＋改档案／设活动量／查档案），而页面是按「一页服务三处配置」存在的。<b>所以「四张票写同一批文件」是切法的必然结果，不是谁手滑。</b></p>
+      <p class="verdictline">→ 这层改不了，只能靠第 4 层的闸拦。</p>
+    </div>
+  </div>
+
+  <div class="layer fault">
+    <div class="n">3</div>
+    <div>
+      <h3>并发协议层：仓里早就有正本，但这次没挂上 ✗</h3>
+      <p>正本 <code>docs/subagent-concurrency-protocol.md</code> 写得很死：</p>
+      <ul>
+        <li><b>§1 路径所有权（硬约束）</b>：「每票在开工前必须<b>声明自己会写的路径集合</b>（文件级，写进派单），只允许写这些路径。禁止修改其他票已声明占用的路径。需要跨票改动时：<b>停下来报告</b>，不要自己动手。」</li>
+        <li><b>§4 生效条件</b>：「<b>每个派单必须附带『先读本文件并逐条遵守』的要求，否则本协议不自动生效。</b>」</li>
+      </ul>
+      <p>这次三个派单谁都没带写集声明，于是 #175 与 #238 的写集事实上重叠（<code>profile/setup.ts</code>、<code>cli/write.ts</code>）。协议按自己的 §4，<b>没生效</b>。</p>
+      <p class="verdictline">→ 这是第一道松掉的闸：写集没声明、没比对。</p>
+    </div>
+  </div>
+
+  <div class="layer fault">
+    <div class="n">4</div>
+    <div>
+      <h3>地图层：阻塞边没挂，地图把 #238 误判成「可开工」 ✗</h3>
+      <p>wayfinder 判 <b>frontier</b> 的三条是「open ＋ 无未关闭阻塞 ＋ 无 assignee」——#238 三条全占，所以在地图看来它是可开工的。但事实上：</p>
+      <ul>
+        <li>#152 的 Notes 早排好序：<code>#179 → #180 → #175／#176／#177 → #178</code>。<b>#238 不在那条链上</b>——它是 #179 会话后补的子票，正文只写了 <code>Part of #152</code>。</li>
+        <li>它<b>没进地图的任务清单表</b>，也<b>没挂原生阻塞边</b>（<code>blocked_by = 0</code>）。</li>
+      </ul>
+      <p class="verdictline">→ 这是第二道松掉的闸：票与票之间的写集冲突没被记成阻塞关系。</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <p style="margin:0 0 8px"><b>所以答案是一句话：</b>不是「架构要求充分解耦」没做到，而是<b>并发协议 §1 的写集声明 ＋ wayfinder 的原生阻塞边</b>这两道闸这次都没上。要修的是这两条规矩的执行，不是把页面拆开。</p>
+    <p style="margin:0;color:var(--ink2);font-size:13.5px">立刻可做的收口：给 #238 挂 <code>blocked_by #175／#176／#177</code>，并把它补进 #152 的任务清单表（标注被谁阻塞）。这样地图的 frontier 会自己显示正确顺序，下次不会再误派。</p>
+  </div>
+
+  <h2>冲突面（现场证据）</h2>
+  <p class="ctx"><b>现场（2026-09-13 01:20 取，01:26 复核）</b>：<code>D:\ilife</code> 下三个会话在跑：<code>session-d0dee380</code>＝#175、<code>session-17fa279b</code>＝#179、<code>session-5d4c1937</code>＝#238（本会话）。写这份时 #175 <b>活着且正在编辑源文件</b>（未提交）。<b>01:26 复核的变化</b>：#179 已关闭；#175 已提交 <code>e9d7e66</code>；#176／#177 已认领并在途（新测试文件正在写）——恰好印证了「等它们」这个决定。</p>
+  <table>
+    <thead><tr><th>文件</th><th>本票要改什么</th><th>谁正在同一处改</th></tr></thead>
+    <tbody>
+      <tr class="hot"><td class="f">profile/setup.ts</td><td>预检确认页 ＋ 两条回执页的文案与摆法（清单 1–5、7–13 的主要落点）</td><td><b>#175 正在编辑</b>（未提交）</td></tr>
+      <tr><td class="f">profile/update.ts</td><td>改档案回执页（清单 1、3、4、5、8）</td><td>#175（补 改前→改后 卡）</td></tr>
+      <tr><td class="f">profile/view.ts</td><td>查档案结果页（清单 1、2、4、7、8、9、14）</td><td>#177（补 BMI／BMR／TDEE／活动系数）</td></tr>
+      <tr class="hot"><td class="f">cli/write.ts</td><td>三条写命令的摘要文本与逐字段对照的字段名（清单 1、2）</td><td><b>#175 未提交改动</b></td></tr>
+      <tr><td class="f">test/profile-doc-179.test.mjs</td><td>同批更新被钉死的旧文案断言</td><td>无（安全）</td></tr>
+    </tbody>
+  </table>
+  <div class="card dim" style="margin-top:12px">
+    <p style="margin:0;font-size:13.5px;color:var(--ink2)">旁证：#179 会话自己出具的验收材料 <code>.scratch\t179-accept\comment.md</code> 写着「设置档案回执缺『性别』『推荐活动量』→ #175（在途）」「设活动量回执缺『活动系数』『TDEE 影响』→ #176」「查档案结果页缺 BMI／BMR／TDEE／活动系数 → #177」。<b>这三票补的，正是本票要「统一摆法、统一说法」的那些卡与表行。</b></p>
+  </div>
+
+  <h2>待你定的一条 ＋ 已定 / 已解释的三条</h2>
+
+  <div class="q primary">
+    <div class="qhead"><span class="qid">Q1</span><span class="qtitle">排序：本票现在动，还是等 #175／#176／#177 落地？</span></div>
+    <p class="ctx">唯一会改变下一步动作的问题。三条路的代价：</p>
+    <div class="opts">
+      <div class="opt rec">
+        <div class="optline"><span class="tag">推荐</span><span class="optname">(a) 先挂阻塞边，等这三票收口后再做本票</span></div>
+        <div class="pc">
+          <div><b class="pro">利</b>一次改干净，验收图一次拍准；不污染别人的提交与验收材料；顺带把上面第 4 层那道闸补上</div>
+          <div><b class="con">弊</b>本票要等：#175 已在收尾，#176／#177 尚未开工</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="optline"><span class="tag">立即推进</span><span class="optname">(b) 现在就做，接受两条后果</span></div>
+        <div class="pc">
+          <div><b class="pro">利</b>本票立刻有进展，不用等</div>
+          <div><b class="con">弊</b>改到一半的文字被卷进 #175 的提交与验收材料；#175 验证会看到半成品报假红；三票落地后本票大概率整轮返工</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="optline"><span class="tag">隔离</span><span class="optname">(c) 开一个 git worktree 干本票，做完再合</span></div>
+        <div class="pc">
+          <div><b class="pro">利</b>完全不碰共享工作树，现在就能动手</div>
+          <div><b class="con">弊</b>要多搭一层环境；三票落地后仍要解一次冲突</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec-note"><b>推荐 (a)。</b>本票的交付物是「五张页的文案与信息层次」，而这三票正在往同一批页面上补卡与表行——地基还在浇。先等最紧的 #175 收口，再决定要不要连 #176／#177 一起等。</div>
+  </div>
+
+  <div class="q settled">
+    <div class="qhead"><span class="qid">Q2</span><span class="qtitle">门槛口径冲突 → 已定：就地修改</span></div>
+    <p class="ctx" style="margin-bottom:8px">你已裁定「就地修改」。落点已查清：这段「UI 硬门槛（本图统一口径）」的原文<b>逐字重复在 #175、#176、#177 三张票的正文里</b>（#152 地图正文里没有）。</p>
+    <div class="before-after">
+      <div class="ba bad"><b>现在（三张票各一份）</b>横向溢出 0、<b>触控目标 ≥44px</b>、对比度达 AA…</div>
+      <div class="arrow">→</div>
+      <div class="ba good"><b>改成</b>横向溢出 0、<b>触控目标：窄屏 ≥44px／桌面 ≥40px</b>、对比度达 AA…</div>
+    </div>
+    <p class="ctx" style="margin:0"><b>一个提醒：</b>这三张票此刻正被别的会话持有（#175 在途）。改它们的正文属于「跨票改动」——按协议 §1 应当先报告。所以我把它并进 Q1 的顺序里一起执行，不单独抢先改。</p>
+  </div>
+
+  <div class="q">
+    <div class="qhead"><span class="qid">Q3</span><span class="qtitle">眉标全大写 —— 说人话版</span></div>
+    <p class="ctx"><b>「眉标」是什么：</b>页面大标题<b>上面</b>那一行灰色小字。预检确认页那行现在写的是：</p>
+    <div class="ba bad" style="margin:0 0 10px"><b>页面上的样子</b>基础信息 · 写前预检（填表→复制 <b>PROMPT</b>→AI 写库）</div>
+    <p class="ctx"><b>问题在哪：</b>源码里写的是小写 <code>prompt</code>，但共享样式表里有一条 <code>text-transform: uppercase</code>，会把英文单词整词变大写 → 屏幕上蹦出一个全大写英文词，夹在中文里像开发日志。</p>
+    <p class="ctx"><b>要你定的就一件事：动不动那张共享样式表？</b></p>
+    <div class="opts">
+      <div class="opt rec">
+        <div class="optline"><span class="tag">推荐</span><span class="optname">路 A：不动共享样式，只把这行小字改写成纯中文</span></div>
+        <div class="pc">
+          <div><b class="pro">利</b>零外溢；改成「基础信息 · 预检确认」后，里面没有英文了，大写规则自然咬不着它</div>
+          <div><b class="con">弊</b>共享样式对中英混排仍会抬大写，留一条尾巴（但本票页面上已看不出）</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="optline"><span class="tag">另一条路</span><span class="optname">路 B：去改共享样式表里的 <code>text-transform: uppercase</code></span></div>
+        <div class="pc">
+          <div><b class="pro">利</b>根上解决，中英混排都不再被抬大写</div>
+          <div><b class="con">弊</b>那张样式表<b>所有技能</b>的页面共用，改动会牵动别的技能页面 → 超出本票范围</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q">
+    <div class="qhead"><span class="qid">Q4</span><span class="qtitle">复制文本里的页名 —— 说人话版</span></div>
+    <p class="ctx"><b>说的是哪段字：</b>你点页面上「复制数据」按钮时，进剪贴板的那段文本，<b>第一行是页名</b>。它只在你粘贴出去之后才看得到，页面上看不见——所以原票把它标成「低优先、待定」。</p>
+    <table style="font-size:13.5px;margin:10px 0">
+      <thead><tr><th>哪一页</th><th>复制出去的第一行</th></tr></thead>
+      <tbody>
+        <tr><td>设置档案 ／ 设活动量 ／ 改档案 三张回执</td><td><code>【calorie · 设置档案】</code> ✓ 已经是中文</td></tr>
+        <tr class="hot"><td>查档案结果页</td><td><code>【calorie · calorie.view.profile】</code> ✗ 内部命令名</td></tr>
+        <tr class="hot"><td>预检确认页</td><td><code>【calorie · calorie.view.profile-wizard】</code> ✗ 内部命令名</td></tr>
+      </tbody>
+    </table>
+    <p class="ctx"><b>要你定的是：现在顺手把它也改成中文吗？</b>改法很小——复制数据时多传一个中文页名字段（<code>buildDataText</code> 的 <code>title</code> 位给了就整行替换）。</p>
+    <div class="opts">
+      <div class="opt rec">
+        <div class="optline"><span class="tag">推荐</span><span class="optname">改：页名统一写中文（查档案／档案预检）</span></div>
+        <div class="pc">
+          <div><b class="pro">利</b>一处一个参数；五张页页名成一体，不留尾巴</div>
+          <div><b class="con">弊</b>要同批补一条断言</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="optline"><span class="tag">留</span><span class="optname">不改：内部命令名对排查有用，保留原样</span></div>
+        <div class="pc">
+          <div><b class="pro">利</b>粘出去的文本里能直接看出是哪条命令产出的</div>
+          <div><b class="con">弊</b>五张页两种写法，用户看到内部命令名没有意义</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>三票收口后我接着做什么</h2>
+  <div class="next">
+    <ol>
+      <li>给 #238 挂原生阻塞边 <code>blocked_by #175／#176／#177</code>，并把它补进 #152 的任务清单表（补上第 4 层那道闸）</li>
+      <li>按 Q2 就地改 #175／#176／#177 正文里的门槛文字为「窄屏 ≥44px／桌面 ≥40px」</li>
+      <li>把性别／活动量／档案字段的中文映射收到一处，四处页面与写命令摘要引用它</li>
+      <li>逐个文件改文案与摆法：查档案结果页 → 改档案回执 → 预检确认页 ＋ 两条回执 → 写命令摘要</li>
+      <li>同批更新被钉死的旧文案断言，不放宽、不删用例；构建 ＋ 跑测试全绿</li>
+      <li>390／1440 两档重拍六张页，逐张亲眼看过，四关读数写进票</li>
+      <li>写回 #238 逐条对账；通过则 100% ＋ close，并在 #152 追加 Decisions so far 一行</li>
+    </ol>
+  </div>
+
+  <div class="ask" style="background:var(--ok-bg);border-color:#bfe0c7;color:#14532d">
+    <b>当前状态：</b>#238 停在 0%，被 <b>#175／#176／#177</b> 阻塞（三张均已认领、在途）。<b>三票全部关闭后开工</b>，按上面 1–7 步走。
+    已留痕：本票正文写入「诊断 ＋ 四条裁定 ＋ 下一步」并留了一条会话评论；地图 <code>#152</code> 同步补了任务清单第 9 行与 2026-09-13 裁定段。
+  </div>
+
+</div>
+</body>
+</html>

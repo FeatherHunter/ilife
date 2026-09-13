@@ -14,6 +14,11 @@
  * 六项里 BMR／TDEE 走 `analysis/utils.energyOf`（四要素缺一即不出数字的唯一判据）；
  * BMI 取最近一条体重记录里存的值（记体重那条命令按当时身高考算的同一个数），本页不另算；
  * 创建／更新取库内原值。空库仍是既有缺失阻断口径（exit 4、不落盘），本页不新造空库态。
+ *
+ * #238 返修：英文枚举与库列名不再上页——性别／活动量走同目录 `labels.ts` 的中文说法，档案现值表
+ * 的表题不再写 `user_profile#1 单例行`、表说也不再写 `weight_log.bmi` 这类库名；「没有值」这一页
+ * 只有一个词（`未设置`；正在算而缺项的仍写「— ＋ 缺哪项」）；首卡不再与页标题同名；复制区不再出
+ * 与按钮同名的大标题，粘贴出去的页名写中文（`【calorie · 查档案】`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderKpiGrid, renderDisclosure, renderDataTable } from 'base-paint/blocks';
@@ -28,6 +33,7 @@ import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { activityLabel, genderLabel } from './labels.js';
 
 /** envelope 头（值对齐 `cli/keys.ts` ENVELOPE_VERSION／CALORIE_SKILL）。 */
 const DOC_VERSION = '0.1.0';
@@ -114,19 +120,6 @@ export function buildProfileView(db: DatabaseSync): ProfileView {
   };
 }
 
-/** 性别显示值：库内两条归一说成中文，别的原样露出（不认识的绝不猜成男）。 */
-function genderText(raw: string | null): string {
-  if (raw === 'male') return '男';
-  if (raw === 'female') return '女';
-  return raw ?? '—';
-}
-
-/** 档位显示值：正本 `ACTIVITY_LEVEL_LABELS`；认不出的档位原样露出。 */
-function activityText(level: string | null): string {
-  if (level === null || level === '') return '—';
-  return (ACTIVITY_LEVEL_LABELS[level] as string | undefined) ?? level;
-}
-
 /** BMI 分级（页面文案，非业务口径）：18.5 以下偏轻、18.5–24 正常、24 以上超重。 */
 function bmiGrade(bmi: number): string {
   if (bmi < 18.5) return '偏轻';
@@ -144,19 +137,28 @@ function missText(missing: readonly string[]): string {
   return missing.length === 0 ? '' : '缺' + missing.join('／');
 }
 
-/** 活动系数说明（五档）：本档标出来，口径一句话写在表说里。 */
+/** 活动系数说明（五档）：本档标出来，口径一句话写在表说里。
+ *  #238 清单 15 条同一条口径：不出「入库值」那一列（列里是库内英文枚举 `moderate` 这类字，
+ *  用户拿它没用——老实物选项也只给中文 label），档位标签就是给人看的那一份。 */
 function factorTable(current: string | null): string {
   const known = current !== null && current !== '' ? (TDEE_ACTIVITY_FACTORS[current] ?? null) : null;
   return renderDataTable({
-    columns: [{ key: 'label', label: '档位' }, { key: 'level', label: '入库值' }, { key: 'factor', label: '系数' }],
+    columns: [{ key: 'label', label: '档位' }, { key: 'factor', label: '系数' }],
     rows: ACTIVITY_LEVELS.map((level) => ({
       label: (ACTIVITY_LEVEL_LABELS[level] as string) + (level === current ? '（本档）' : ''),
-      level,
       factor: '×' + String(TDEE_ACTIVITY_FACTORS[level]),
     })),
-    caption: 'TDEE ＝ BMR × 活动系数（运动消耗另计，不进这个数）；本档＝'
-      + (known === null ? '档案里没有活动量，系数不取默认档' : activityText(current) + ' ×' + known),
+    caption: '每日预计消耗 ＝ 基础代谢 × 活动系数（运动消耗另计，不算进这个数）；本档＝'
+      + (known === null ? '档案里没有活动量，系数不取默认档' : activityLabel(current) + ' ×' + known),
   });
+}
+
+/** 档案现值表里的一格：空值统一写「未设置」；性别与活动量走中文说法（#238 清单 2、7 条）。 */
+function profileCell(kind: 'gender' | 'activity' | 'plain', raw: string | number | null): string {
+  if (raw === null || raw === undefined || raw === '') return '未设置';
+  if (kind === 'gender') return genderLabel(String(raw));
+  if (kind === 'activity') return activityLabel(String(raw));
+  return String(raw);
 }
 
 /** ② 结果页整页：七张 KPI ＋ 档案现值表 ＋ 六项度量表 ＋ 活动系数说明 ＋ 营养目标 ＋ 复制区。 */
@@ -174,14 +176,15 @@ export function buildProfileViewDoc(v: ProfileView): string {
     },
   };
   const weightDetail = v.latestWeight === null
-    ? '无记录'
+    ? '还没有记过体重'
     : v.latestWeight.date + (v.latestWeight.time === null ? '' : ' ' + v.latestWeight.time);
   const content = [
     // KPI 的 value 槽是给一个**短值**的（28px 粗体）：分级与单位一律落 12px 的 detail，
     // 否则 390px 下「22.9（正常）」会折成两行、把整排卡片一起拉高（#179 同款排版口径）。
     renderKpiGrid([
-      { label: '档案视图', value: genderText(p.gender) + ' ' + (p.age ?? '—') + '岁', detail: '身高 ' + (p.height_cm ?? '—') + ' cm' },
-      { label: '活动量', value: activityText(p.activity_level), detail: m.factor === null ? '系数待补' : '系数 ×' + m.factor },
+      // 首卡不再叫「档案视图」——那与页标题是同一句（#238 清单 4 条）；这一格说的是「这是谁」。
+      { label: '本人', value: profileCell('gender', p.gender) + ' ' + profileCell('plain', p.age) + '岁', detail: '身高 ' + profileCell('plain', p.height_cm) + ' cm' },
+      { label: '活动量', value: profileCell('activity', p.activity_level), detail: m.factor === null ? '系数待补' : '系数 ×' + m.factor },
       {
         label: '最近 BMI',
         value: m.bmi === null ? '—' : String(m.bmi),
@@ -201,23 +204,23 @@ export function buildProfileViewDoc(v: ProfileView): string {
       },
       {
         label: '最近体重',
-        value: v.latestWeightKg === null ? '—' : v.latestWeightKg + ' kg',
+        value: v.latestWeightKg === null ? '未设置' : v.latestWeightKg + ' kg',
         detail: weightDetail,
       },
-      { label: '目标', value: v.hasGoal ? '已设' : '未设', detail: v.nutrition ? v.nutrition.calorie_goal + ' 卡' : '未定营养目标' },
+      { label: '目标', value: v.hasGoal ? '已设置' : '未设置', detail: v.nutrition ? v.nutrition.calorie_goal + ' 卡' : '还没有定营养目标' },
     ]),
     renderDataTable({
       columns: [{ key: 'field', label: '字段' }, { key: 'value', label: '现值' }],
       rows: [
-        { field: '身高(cm)', value: p.height_cm ?? '—' },
-        { field: '年龄', value: p.age ?? '—' },
-        { field: '性别', value: p.gender ?? '—' },
-        { field: '活动量', value: p.activity_level ?? '—' },
-        { field: '备注', value: p.note ?? '—' },
-        { field: '档案创建', value: p.created_at ?? '—' },
-        { field: '档案更新', value: p.updated_at ?? '—' },
+        { field: '身高(cm)', value: profileCell('plain', p.height_cm) },
+        { field: '年龄', value: profileCell('plain', p.age) },
+        { field: '性别', value: profileCell('gender', p.gender) },
+        { field: '活动量', value: profileCell('activity', p.activity_level) },
+        { field: '备注', value: profileCell('plain', p.note) },
+        { field: '档案创建', value: profileCell('plain', p.created_at) },
+        { field: '档案更新', value: profileCell('plain', p.updated_at) },
       ],
-      caption: '档案现值（user_profile#1 单例行）；末两行＝创建时间／更新时间，库内原值（SQLite CURRENT_TIMESTAMP，UTC）',
+      caption: '档案现值；末两行＝创建时间／更新时间（库内按 UTC 记下的原值）',
     }),
     renderDataTable({
       // 两列（口径挪进表说）：390px 下三列的「值」会被挤成一字一行，而口径本来就是一段话。
@@ -228,21 +231,21 @@ export function buildProfileViewDoc(v: ProfileView): string {
         { item: 'TDEE', value: m.tdee === null ? '—（' + missText(m.missing) + '，不算）' : m.tdee + ' 卡/天' },
         { item: '活动系数', value: m.factor === null ? '—' : '×' + m.factor },
       ],
-      caption: '档案度量（BMI／BMR／TDEE／活动系数）：BMI 取 weight_log.bmi（记体重时按当时身高考算，本页不另算）；'
-        + 'BMR ＝ Mifflin-St Jeor（10×体重 ＋ 6.25×身高 − 5×年龄 ＋ 性别项）；TDEE ＝ BMR × 活动系数'
+      caption: '档案度量（BMI／BMR／TDEE／活动系数）：BMI 取最近一条体重记录里算好的值（记体重时按当时身高考算，本页不另算）；'
+        + 'BMR 按身高／体重／年龄／性别算（Mifflin-St Jeor）；TDEE ＝ BMR × 活动系数'
         + (m.factor === null ? '（系数待补）' : '（' + m.factor + '，运动消耗另计）')
         + (m.missing.length === 0 ? '' : '；本次' + missText(m.missing) + '，缺项一律不编默认值'),
     }),
     renderDisclosure({ title: '活动系数说明（五档）', contentHtml: factorTable(p.activity_level) }),
     renderDisclosure({
-      title: '营养目标（' + (v.hasGoal ? '已设' : '未设') + '）',
+      title: '营养目标（' + (v.hasGoal ? '已设置' : '未设置') + '）',
       contentHtml: v.nutrition
         ? '热量 ' + v.nutrition.calorie_goal + ' 卡 · 蛋白 ' + v.nutrition.protein_goal + ' · 碳水 ' + v.nutrition.carbs_goal + ' · 脂肪 ' + v.nutrition.fat_goal
-        : '未设营养目标（定营养目标后可在此看到口径）',
+        : '还没有定营养目标（定好之后这里会显示口径）',
     }),
     copyArea({
-      title: '复制数据',
-      data: { envelope },
+      // 粘贴出去的页名写中文（#238 清单 13 条 / 票面裁定 3）：内部命令名对用户没有意义。
+      data: { envelope, title: '【calorie · 查档案】' },
       log: {
         envelope,
         copyLog: copyLog({
@@ -256,7 +259,7 @@ export function buildProfileViewDoc(v: ProfileView): string {
     docTitle: DOC_TITLE,
     title: '档案视图',
     eyebrow: '基础信息 · 看档案',
-    subtitle: '档案现值 ＋ 最近体重（档案缺失即阻断，不返空页）',
+    subtitle: '你的档案现值与最近一次体重',
     content,
   });
 }

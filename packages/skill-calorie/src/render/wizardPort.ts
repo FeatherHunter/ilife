@@ -24,7 +24,7 @@ import { listCompositions, listMeasurements, CALIPER_FIELDS } from '../fetch/bod
 import { listPhotos } from '../fetch/photos.js';
 import { toCard } from './photo.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
-import { todayISO } from '../analysis/utils.js';
+import { GENDER_LABELS, todayISO } from '../analysis/utils.js';
 import { CalorieRenderError } from './errors.js';
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -187,7 +187,7 @@ export function buildCompositionWizardPrompt(v: {
   }
   return '请帮我记一条' + (isCaliper ? '体脂钳测' : '外部测量') + '结果到卡路里\n\n参数:\n- 日期:' + v.date +
     '\n- 来源:' + v.source + (v.age !== null ? '\n- 年龄:' + v.age : '') +
-    (v.sex ? '\n- 性别:' + (v.sex === 'male' ? '男' : '女') : '') + '\n' + textBody +
+    (v.sex ? '\n- 性别:' + (GENDER_LABELS[v.sex] ?? v.sex) : '') + '\n' + textBody +
     '- 体脂率:' + v.bodyFatPct + '%' + (v.note ? '\n- 备注:' + v.note : '');
 }
 

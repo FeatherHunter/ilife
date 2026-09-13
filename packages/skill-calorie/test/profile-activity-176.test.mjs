@@ -88,12 +88,16 @@ function assertDocPage(html, what) {
   assert.ok(!html.includes('<!--'), what + ' 有残留标记');
 }
 
-/** 活动量五档表里某一档那条 `<tr>` 的全部格子（末格＝TDEE 影响）。 */
+/** 活动量五档表里某一档那条 `<tr>` 里，档位列之后的格子。
+ *  #238 起表只有「档位／系数／预计每日消耗」三列，且缺数据时**整列收起**——故 `tdee` 可能缺席。
+ *  只在五档那张表里找（同一档位名在「档案现值」表里也有，别抓错表）。 */
 function activityCells(html, label) {
-  const m = new RegExp('<td[^>]*>' + label + '</td>((?:\\s*<td[^>]*>[^<]*</td>)+)').exec(html);
+  const start = html.indexOf('设活动量 5 档（');
+  const scope = start === -1 ? html : html.slice(start);
+  const m = new RegExp('<td[^>]*>' + label + '</td>((?:\\s*<td[^>]*>[^<]*</td>)+)').exec(scope);
   if (m === null) return null;
   const cells = [...m[1].matchAll(/<td[^>]*>([^<]*)<\/td>/g)].map((x) => x[1]);
-  return { level: cells[0], factor: cells[1], tdee: cells[2] };
+  return { factor: cells[0], tdee: cells[1] };
 }
 
 /** 某个折叠区是不是展开的（按标题找 `<details …><summary>标题`）。 */
@@ -133,21 +137,23 @@ test('#176 设活动量那处配置：prompt 单空位 ＋ 5 档系数与 TDEE �
   assert.equal(isOpen(r.file, '设置档案 4 项'), false, '说「设活动量」时设置档案那处不该展开');
   assert.equal(isOpen(r.file, '改档案 5 项'), false, '说「设活动量」时改档案那处不该展开');
 
-  // 五档：档位／入库值／冻结系数／TDEE 影响，逐档与独立重算对账
+  // 五档：档位／冻结系数／预计每日消耗，逐档与独立重算对账；库内英文枚举不上页（#238 清单 2、15 条）
   for (const [label, level, factor] of ACTIVITY_ROWS) {
     const c = activityCells(r.file, label);
     assert.ok(c !== null, '五档表缺「' + label + '」');
-    assert.equal(c.level, level, label + ' 的入库值不对');
     assert.equal(c.factor, factor, label + ' 的系数不是冻结值');
-    assert.equal(c.tdee, expectedTdee(Number(factor)), label + ' 的 TDEE 影响与独立重算不一致');
+    assert.equal(c.tdee, expectedTdee(Number(factor)), label + ' 的预计每日消耗与独立重算不一致');
+    assert.equal(r.file.includes('>' + level + '<'), false, label + ' 的内库存值 ' + level + ' 出现在页面上');
   }
+  assert.equal(r.file.includes('入库值'), false, '页面上还有「入库值」这个列头（#238 清单 15 条）');
   // 五档必须是五个**不同**的数（同一个数＝拿默认值冒充，见 `calcTdee` 的 1800 分支）
   const nums = ACTIVITY_ROWS.map(([, , f]) => activityCells(r.file, expectedLabelOf(f)).tdee);
-  assert.equal(new Set(nums).size, 5, '五档的 TDEE 影响不是五个不同的数：' + JSON.stringify(nums));
+  assert.equal(new Set(nums).size, 5, '五档的预计每日消耗不是五个不同的数：' + JSON.stringify(nums));
 
   // 复制 prompt：单空位（活动量）＋ 五档对照表就在本页
   assert.ok(r.file.includes('ilife-help-copy-prompt'), '缺复制 prompt 按钮');
-  assert.ok(r.file.includes('设活动量 5 档：TDEE ＝ 基础代谢（Mifflin-St Jeor）× 系数'), '缺五档对照表说明');
+  assert.ok(r.file.includes('预计每日消耗 ＝ 基础代谢 × 活动系数'), '缺五档对照表说明');
+  assert.equal(r.file.includes('TDEE ＝ 基础代谢（Mifflin-St Jeor）'), false, '页面上还有那句公式原样');
 });
 
 /** 冻结表里系数 → 档位标签（重算对账时按系数找回那一档）。 */
@@ -182,11 +188,11 @@ test('#176 档案不齐时页面上没有任何 TDEE 数字，只写缺哪几项
     assert.equal(r.status, 0, what + ' 开页应 exit 0，实测 ' + r.status + ' stderr=' + r.stderr.slice(-200));
     assertDocPage(r.file, '档案预检（' + what + '）');
     assert.deepEqual(tdeeNumbers(r.file), [], what + ' 的页面上出现了 TDEE 数字：' + JSON.stringify(tdeeNumbers(r.file)));
-    for (const [label] of ACTIVITY_ROWS) {
+    for (const [label, , factor] of ACTIVITY_ROWS) {
       const c = activityCells(r.file, label);
       assert.ok(c !== null, what + ' 缺「' + label + '」这一档');
-      assert.equal(c.factor, (ACTIVITY_ROWS.find(([l]) => l === label) ?? [])[2], what + ' 的系数也一并没了（系数与体重无关，本该照列）');
-      assert.match(c.tdee, /^—（/, what + ' 的 TDEE 影响不是「—」而写成了：' + c.tdee);
+      assert.equal(c.factor, factor, what + ' 的系数也一并没了（系数与体重无关，本该照列）');
+      assert.equal(c.tdee, undefined, what + ' 的「预计每日消耗」那一列该整列收起，实测：' + c.tdee);
     }
     assert.ok(r.file.includes('不算'), what + ' 缺「不算」的说明');
     assert.equal(/TDEE 约 \d/.test(r.file), false, what + ' 仍印了「TDEE 约 N」');

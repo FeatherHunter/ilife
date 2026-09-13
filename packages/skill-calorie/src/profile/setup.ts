@@ -1,8 +1,18 @@
 /** #179 · 「设置资料」：设置档案／设活动量／改档案三条写入词共用的写前页（预检确认页）。
  *
  * #175 补齐（本文件第三节）：两条写入词的**写后回执页**除摘要外，还摆出写后档案的
- * 性别、推荐活动量（档位 ＋ 系数 ＋ TDEE 影响）与设置时间；推荐口径取自库内现值与
+ * 性别、推荐活动量（档位 ＋ 系数 ＋ 每日消耗影响）与设置时间；推荐口径取自库内现值与
  * 最近体重，**不进写命令参数**（写命令的字段允许清单只有 age/gender/heightCm/activityLevel/note）。
+ *
+ * #238 返修（清单 1–5、7–13 条）：这一页与两条回执页全部改成**用户视角**——库列名、SQL 函数名、
+ * 内部编号、英文枚举、双重否定一律不再上页。三件东西落在这里：
+ *   ① 中文说法走同目录 `labels.ts`（`fieldLabel`／`genderLabel`／`activityLabel`／`localizeEnums`），
+ *      页面自己不再各写一套映射（上方卡片与下方表里对同一份数据说同一个词）；
+ *   ② 页尾一个**对账信息**折叠区（`reconcileDisclosure`，`update.ts` 也用这一件）：原来摆在页尾的
+ *      `M5 整行（旧版等价物）` 与眉标里的 `M5 契约 v1` 收进这里，不再占副标题与眉标；
+ *   ③ 「没有值」这一页只有一个词（`未设置`）：卡片、表行、空态说明都用它。
+ *  复制区（#238 清单 9 条）：不再出与按钮同名的「复制数据」大标题，按钮自成一行；预检确认页的
+ *  指令块也不再挂「复制 prompt（必走）」小标题——那一页三个按钮就叫「复制指令／复制数据／复制日志」。
  *
  * 一页一事：字段面（身高／年龄／性别／活动量／备注）就是本子功能的题目，
  * 故这一页住本文件，`update.ts` 要用就从同目录取用（设计 §一，铁律五不另起转手件）。
@@ -16,15 +26,17 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
+import type { KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
 import type { ProfileRow } from '../fetch/profile.js';
 import { ACTIVITY_LEVELS } from '../kcal.js';
-import { ACTIVITY_LEVEL_LABELS, TDEE_ACTIVITY_FACTORS, energyOf } from '../analysis/utils.js';
+import { TDEE_ACTIVITY_FACTORS, energyOf } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { nowStamp } from '../render/receipt.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { activityLabel, fieldLabel, genderLabel, localizeEnums } from './labels.js';
 import { profileSnapshot, PROFILE_SOURCE } from './view.js';
 
 const DOC_VERSION = '0.1.0';
@@ -39,11 +51,12 @@ const ACTIVITY_WORD = '设活动量';
 const UPDATE_WORD = '改档案';
 const WAKE_WORDS: readonly string[] = [SET_WORD, ACTIVITY_WORD, UPDATE_WORD];
 
-/** 设置档案 4 项（`scene-07-profile.ts:5` 的 data_fields）；参数名与写命令同形。 */
+/** 设置档案 4 项（`scene-07-profile.ts:5` 的 data_fields）；参数名与写命令同形。
+ *  性别那一格的括注照 HELP 的 prompt 写「男/女」（#238：不再写 `male/female`）。 */
 const SET_FIELDS: readonly { camel: string; label: string }[] = [
   { camel: 'heightCm', label: '身高（cm）' },
   { camel: 'age', label: '年龄' },
-  { camel: 'gender', label: '性别（male/female 或 男/女）' },
+  { camel: 'gender', label: '性别（男/女）' },
   { camel: 'activityLevel', label: '活动量（久坐/轻度/中度/活跃/高度活跃）' },
 ];
 /** 改档案 5 项（单列，含备注；`scene-07-profile.ts:7`）。 */
@@ -59,8 +72,8 @@ export interface ProfileSettingView {
   /** 参数预填的草稿（AI 已收集的值）。 */
   draft: { camel: string; label: string; value: string }[];
   filledCount: number;
-  /** 活动量五档：档位／入库值／系数／TDEE 影响（四要素齐备才算，否则 null）。 */
-  activityChoices: { level: string; label: string; factor: number; tdee: number | null }[];
+  /** 活动量五档：档位／入库值／系数／每日消耗影响（四要素齐备才算，否则 null）＋缺哪几项。 */
+  activityChoices: { level: string; label: string; factor: number; tdee: number | null; missing: string[] }[];
   latestWeightKg: number | null;
   prompt: string;
 }
@@ -106,6 +119,14 @@ function profileField(camel: string, p: ProfileRow | null): string | number | nu
   }
 }
 
+/** 一格的显示值（#238 清单 7 条）：「没有值」这一页只有一个词＝`未设置`；性别／活动量走中文说法。 */
+function cellOf(camel: string, raw: string | number | null | undefined): string {
+  if (raw === null || raw === undefined || raw === '') return '未设置';
+  if (camel === 'gender') return genderLabel(String(raw));
+  if (camel === 'activityLevel') return activityLabel(String(raw));
+  return String(raw);
+}
+
 /** 活动量五档：草稿优先于库值；TDEE 影响走 `energyOf`（#177 起四要素缺一即不出数字的唯一判据）。 */
 function tdeeChoices(
   before: ProfileRow | null,
@@ -113,18 +134,22 @@ function tdeeChoices(
   latestWeightKg: number | null,
 ): ProfileSettingView['activityChoices'] {
   const pick = (camel: string): string | number | null => draft.find((d) => d.camel === camel)?.value ?? profileField(camel, before);
-  return ACTIVITY_LEVELS.map((level) => ({
-    level,
-    label: ACTIVITY_LEVEL_LABELS[level] as string,
-    factor: TDEE_ACTIVITY_FACTORS[level] as number,
-    tdee: energyOf({
+  return ACTIVITY_LEVELS.map((level) => {
+    const energy = energyOf({
       weightKg: latestWeightKg,
       heightCm: pick('heightCm'),
       age: pick('age'),
       gender: pick('gender'),
       activityLevel: level,
-    }).tdee,
-  }));
+    });
+    return {
+      level,
+      label: activityLabel(level),
+      factor: TDEE_ACTIVITY_FACTORS[level] as number,
+      tdee: energy.tdee,
+      missing: energy.missing,
+    };
+  });
 }
 
 /** 该写入词要写的字段（设置档案不含备注；设活动量只写活动量）。 */
@@ -142,17 +167,26 @@ function writeCommand(wakeWord: string, picked: Record<string, unknown>): string
   return 'calorie-cmd-read calorie.profile.set --params \'' + json + '\'';
 }
 
+/** 复制给 AI 的第一句话（#238 清单 14 条：自然句 ＋ 标点统一用全角）。
+ *  这一句是用户要粘给 AI 的原话，不能写成「请帮我改档案到卡路里」这种内部说法。 */
+function askSentence(wakeWord: string | null, hasDraft: boolean): string {
+  if (wakeWord === ACTIVITY_WORD) return '请帮我把卡路里里的活动量改成下面这一项';
+  if (wakeWord === SET_WORD && hasDraft) return '请帮我把卡路里里的基础档案设置成下面这些值';
+  if (wakeWord === UPDATE_WORD && hasDraft) return '请帮我把卡路里里的基础档案改成下面这些值';
+  return '请帮我把卡路里里的基础档案写成下面这些值';
+}
+
 function settingPrompt(wakeWord: string | null, draft: ProfileSettingView['draft'], before: ProfileRow | null): string {
   if (draft.length === 0) {
     return '// 请至少填 1 项（设置档案 4 项：身高/年龄/性别/活动量；改档案 5 项另含备注；设活动量 5 档见下方对照表）';
   }
-  const lines = draft.map((d) => '- ' + d.label.replace(/（.*）$/, '') + ':' + d.value);
-  const head = '请帮我' + (wakeWord ?? '写档案') + '到卡路里\n\n参数:'
-    + (wakeWord ? '\n- 写入词:' + wakeWord : '')
+  const lines = draft.map((d) => '- ' + d.label.replace(/（.*）$/, '') + '：' + d.value);
+  const head = askSentence(wakeWord, true) + '\n\n参数：'
+    + (wakeWord ? '\n- 写入词：' + wakeWord : '')
     + '\n' + lines.join('\n');
   const beforeNote = before
-    ? '\n\n改前值已在页面「档案现值（改前值）」区列出；写库前与库内现值核对，不一致停下问我。'
-    : '\n\n库内还没有档案（空库）：本次是首次设置，无改前值可比对。';
+    ? '\n\n改前值已在页面「档案现值（改前值）」一节列出；写入前请与库内现值核对，对不上就停下来问我。'
+    : '\n\n库内还没有档案：本次是首次设置，没有改前值可比对。';
   if (!wakeWord) return head + beforeNote;
   const keep = fieldsForWord(wakeWord).map((f) => f.camel);
   const picked: Record<string, unknown> = {};
@@ -161,7 +195,7 @@ function settingPrompt(wakeWord: string | null, draft: ProfileSettingView['draft
     picked[d.camel] = d.camel === 'note' ? d.value : (NUM_FIELDS.includes(d.camel) ? Number(d.value) : d.value);
   }
   if (Object.keys(picked).length === 0) return head + beforeNote;
-  return head + beforeNote + '\n\n命令:\n```bash\n' + writeCommand(wakeWord, picked) + '\n```\n完成后返回写库回执。';
+  return head + beforeNote + '\n\n命令：\n```bash\n' + writeCommand(wakeWord, picked) + '\n```\n完成后返回写库回执。';
 }
 
 /** ① 取数：改前值（`getProfile`，可缺）＋ 待写草稿＋活动量五档＋最近体重＋复制 prompt。 */
@@ -194,25 +228,35 @@ function beforeTable(v: ProfileSettingView): string {
     columns: [{ key: 'field', label: '字段' }, { key: 'before', label: '改前值' }, { key: 'after', label: '本次拟写' }],
     rows: UPDATE_FIELDS.map((f) => {
       const hit = v.draft.find((d) => d.camel === f.camel);
-      const prev = profileField(f.camel, b);
-      return { field: f.label.replace(/（.*）$/, ''), before: prev ?? '—', after: hit ? hit.value : '（未改）' };
+      return {
+        field: f.label.replace(/（.*）$/, ''),
+        before: cellOf(f.camel, profileField(f.camel, b)),
+        after: hit ? cellOf(f.camel, hit.value) : '（未改）',
+      };
     }),
-    caption: '改档案 5 项：改前 → 改后对照（改前值取自 user_profile#1）',
+    caption: '改档案 5 项：改前 → 改后对照',
   });
 }
 
+/** 活动量五档表（#238 清单 15 条）：列头改人话、公式不占表题、缺数据时整列收起改一句话说明。
+ *  五档的系数与体重无关，缺项时照列；「预计每日消耗」缺四要素就不出数字（`energyOf` 的判据）。 */
 function activityTable(v: ProfileSettingView): string {
+  const first = v.activityChoices[0];
+  const missing = first?.missing ?? [];
+  const hasEnergy = v.activityChoices.some((c) => c.tdee !== null);
+  const caption = hasEnergy
+    ? '预计每日消耗 ＝ 基础代谢 × 活动系数，运动消耗另计；体重取最近一次 ' + v.latestWeightKg + ' kg'
+    : '预计每日消耗要身高／年龄／性别／体重齐备才算；本次缺' + (missing.join('／') || '数据')
+      + '，不算（系数与体重无关，照列）';
+  const columns = hasEnergy
+    ? [{ key: 'label', label: '档位' }, { key: 'factor', label: '系数' }, { key: 'tdee', label: '预计每日消耗' }]
+    : [{ key: 'label', label: '档位' }, { key: 'factor', label: '系数' }];
   return renderDataTable({
-    columns: [
-      { key: 'label', label: '档位' }, { key: 'level', label: '入库值' },
-      { key: 'factor', label: '系数' }, { key: 'tdee', label: 'TDEE 影响' },
-    ],
+    columns,
     rows: v.activityChoices.map((c) => ({
-      label: c.label, level: c.level, factor: c.factor,
-      tdee: c.tdee === null ? '—（缺身高/年龄/性别/体重，不算）' : c.tdee + ' 卡',
+      label: c.label, factor: c.factor, tdee: c.tdee === null ? '未设置' : c.tdee + ' 卡',
     })),
-    caption: '设活动量 5 档：TDEE ＝ 基础代谢（Mifflin-St Jeor）× 系数'
-      + (v.latestWeightKg === null ? '；最近体重缺，故只列系数' : '；体重取最近一次 ' + v.latestWeightKg + ' kg'),
+    caption,
   });
 }
 
@@ -227,7 +271,8 @@ function formOf(v: ProfileSettingView, fields: readonly { camel: string; label: 
 
 /** ② 写前页整页：三条写入词各自的字段与槽位 ＋ 改前→改后对照 ＋ 复制 prompt。
  *
- *  复制区（#239）：prompt／数据／日志三样一个 `copyArea` 出——复制 prompt 区与今天逐字相同，
+ *  复制区（#239）：prompt／数据／日志三样一个 `copyArea` 出——指令块与三个按钮一个叫法
+ *  （复制指令／复制数据／复制日志），不再给按钮配一个同名大标题（#238 清单 9 条）。
  *  数据区多接一颗「复制日志」（日志里写的是产出本页那条命令，本页不写库）。 */
 export function buildProfileSettingDoc(v: ProfileSettingView): string {
   const current = v.before?.activity_level ?? null;
@@ -244,28 +289,42 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
       }),
     },
   };
-  const content = [
-    renderKpiGrid([
-      // #179 内容级排版：KPI 卡的 value 槽是给一个**短值**的（28px 粗体），19 字长句塞进去
-      // 在 390px 下会折成 4 行、把整排卡片一起拉高 → 值只写入词本身，长句落 12px 的 detail。
+  // 空库时那两张卡（当前活动量／最近体重）本来只有占位，改成一句空态说明并进「改前值」卡
+  // （#238 清单 11 条）。**不挂 `notice()` 的提示块**：共享 toast 的关闭按钮实测 60×25、对比度
+  // 2.22，上页即让本票的门槛四关红两项（触控 + AA），而这一句本来就是卡片小字要说的事。
+  const cards: KpiCardInput[] = [
+    { label: '写入词', value: v.wakeWord ?? '三条全列', detail: v.wakeWord ? '填好表再复制指令' : '设置档案／改档案／设活动量' },
+    { label: '已填', value: v.filledCount + ' 项', detail: '至少填 1 项才能出指令' },
+    {
+      label: '改前值',
+      value: v.before ? '有' : '未设置',
+      detail: v.before ? '档案已在库' : '空库：本次是首次设置，当前活动量与最近体重也还没有值',
+    },
+  ];
+  if (v.before) {
+    cards.push(
+      { label: '当前活动量', value: activityLabel(current), detail: currentRow ? '系数 ×' + currentRow.factor : '' },
       {
-        label: '写入词',
-        value: v.wakeWord ?? '三条全列',
-        detail: v.wakeWord ? '填表 → 复制 prompt → AI 写库' : '设置档案／改档案／设活动量',
+        label: '最近体重',
+        value: v.latestWeightKg === null ? '未设置' : v.latestWeightKg + ' kg',
+        detail: '推荐活动量与每日消耗按它算',
       },
-      { label: '已填', value: v.filledCount + ' 项', detail: '至少 1 项才有 prompt' },
-      { label: '改前值', value: v.before ? '有' : '无', detail: v.before ? '档案已在库' : '空库：首次设置' },
-      { label: '当前活动量', value: current ? (currentRow?.label ?? current) : '—', detail: current && currentRow ? '系数 ' + currentRow.factor : '' },
-      { label: '最近体重', value: v.latestWeightKg === null ? '—' : v.latestWeightKg + ' kg', detail: '推荐活动量与 TDEE 用它' },
-    ]),
-    renderDisclosure({ title: '档案现值（改前值，user_profile#1）', contentHtml: beforeTable(v), open: true }),
+    );
+  }
+  const content = [
+    renderKpiGrid(cards),
+    renderDisclosure({ title: '档案现值（改前值）', contentHtml: beforeTable(v), open: true }),
     renderDisclosure({ title: '设置档案 4 项（身高／年龄／性别／活动量）', contentHtml: formOf(v, SET_FIELDS), open: openFor(v, SET_WORD) }),
-    renderDisclosure({ title: '改档案 5 项（另含备注；空库无改前值）', contentHtml: formOf(v, UPDATE_FIELDS), open: openFor(v, UPDATE_WORD) }),
-    renderDisclosure({ title: '设活动量 5 档（系数与 TDEE 影响）', contentHtml: activityTable(v), open: openFor(v, ACTIVITY_WORD) }),
+    // 空库才写「空库无改前值」——有档案时那句话与上面的卡片互相打架（#238 清单 10 条）。
+    renderDisclosure({
+      title: '改档案 5 项（另含备注' + (v.before ? '' : '；空库无改前值') + '）',
+      contentHtml: formOf(v, UPDATE_FIELDS), open: openFor(v, UPDATE_WORD),
+    }),
+    renderDisclosure({ title: '设活动量 5 档（系数与预计每日消耗）', contentHtml: activityTable(v), open: openFor(v, ACTIVITY_WORD) }),
     copyArea({
-      title: '复制数据',
-      prompt: v.prompt,
-      data: { envelope },
+      prompt: { text: v.prompt, label: null },
+      // 粘贴出去的页名写中文（#238 清单 13 条 / 票面裁定 3）：内部命令名对用户没有意义。
+      data: { envelope, title: '【calorie · 档案预检】' },
       log: {
         envelope,
         copyLog: copyLog({
@@ -278,8 +337,8 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '档案预检',
-    eyebrow: '基础信息 · 写前预检（填表→复制 prompt→AI 写库）',
-    subtitle: '改前值取自库内现值；写入仍走三条写命令，本页不写库',
+    eyebrow: '基础信息 · 预检确认',
+    subtitle: '这一页只做预检、不写档案；确认下面的值无误后，把指令复制给 AI 执行',
     content,
   });
 }
@@ -291,19 +350,40 @@ function openFor(v: ProfileSettingView, wakeWord: string): boolean {
   return v.wakeWord === wakeWord;
 }
 
-/** 一格的展示值：空值一律写「—」，不编数据。 */
-function cellText(v: string | number | null | undefined): string {
-  return v === null || v === undefined || v === '' ? '—' : String(v);
+/** 页尾「对账信息」折叠区（#238 清单 1、5、12 条）：三张写后回执同一位置、同一份内容。
+ *  收的是这次写入的**可核对信息**——记录编号／写入时间／回执格式；影响行数与写入字段已在卡片上，
+ *  这里不重写。原来的 `M5 契约 v1`（眉标）与 `M5 整行（旧版等价物）`（页尾代码块）都收进这一处，
+ *  且不再原样印那行机器文本（`id=… | 字段 heightCm,note` 是给机器看的，页面上只留人话）。 */
+export function reconcileDisclosure(receipt: CrudReceipt): string {
+  return renderDisclosure({
+    title: '对账信息',
+    contentHtml: renderDataTable({
+      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      rows: [
+        { k: '记录编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
+        { k: '写入时间', v: receipt.meta.actionAt },
+        { k: '回执格式', v: 'v' + receipt.m5Contract + '（写库回执）' },
+      ],
+    }),
+  });
 }
 
-/** 「推荐活动量」一格：档位 ＋ 系数 ＋ TDEE 影响（四要素缺哪项就写哪项，不算数字）。
+/** 一格的状态值（#238 清单 3、4 条）：首卡承接原「无变化 否」那个双重否定，一页只出现这一处。 */
+export function statusCard(receipt: CrudReceipt): KpiCardInput {
+  return {
+    label: '状态',
+    value: receipt.noChange ? '无改动' : '已改动',
+    detail: receipt.noChange ? '值与改前一致' : '已写入档案',
+  };
+}
+
+/** 「推荐活动量」一格：档位 ＋ 系数 ＋ 每日消耗影响（四要素缺哪项就写哪项，不算数字）。
  *  推荐口径＝按「日常活动情况」在五档里判定的档位（老技能推荐规则），本次入库即该档；
  *  它由页面按**库内现值 ＋ 最近体重**算出（不是写命令参数——字段允许清单里没有这一项）。 */
 function recommendedActivityText(profile: ProfileRow | null, latestWeightKg: number | null): string {
   const level = profile?.activity_level ?? null;
-  if (level === null || level === '') return '—（档案里没有活动量）';
-  const label = (ACTIVITY_LEVEL_LABELS[level] as string | undefined) ?? level;
-  const head = label + '（系数 ×' + (TDEE_ACTIVITY_FACTORS[level] ?? '—') + '）';
+  if (level === null || level === '') return '未设置（档案里没有活动量）';
+  const head = activityLabel(level) + '（系数 ×' + (TDEE_ACTIVITY_FACTORS[level] ?? '未设置') + '）';
   const energy = energyOf({
     weightKg: latestWeightKg,
     heightCm: profile?.height_cm,
@@ -326,33 +406,27 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
   };
   const content = [
     renderKpiGrid([
-      { label: '动作', value: receipt.scene, detail: 'op=' + receipt.op },
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: receipt.affectedRowsSource },
-      { label: '写入字段', value: receipt.writtenFields.length + ' 项', detail: receipt.writtenFields.join('、') || '—' },
+      statusCard(receipt),
+      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      {
+        label: '写入字段',
+        value: receipt.writtenFields.length + ' 项',
+        detail: receipt.writtenFields.map(fieldLabel).join('、') || '未设置',
+      },
     ]),
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: [
-        { k: '身高(cm)', v: cellText(profile?.height_cm) },
-        { k: '年龄', v: cellText(profile?.age) },
-        { k: '性别', v: cellText(profile?.gender) },
+        { k: '身高(cm)', v: cellOf('heightCm', profile?.height_cm) },
+        { k: '年龄', v: cellOf('age', profile?.age) },
+        { k: '性别', v: genderLabel(profile?.gender) },
         { k: '推荐活动量', v: recommendedActivityText(profile, latestWeightKg) },
         { k: '设置时间', v: receipt.meta.actionAt },
       ],
-      caption: '写后档案（user_profile#1 单例行）：推荐活动量＝按日常活动情况在五档里判定的档位，系数与 TDEE 影响同写前页口径',
+      caption: '写后档案：推荐活动量＝按日常活动情况在五档里判定的档位，算法与预检页一致',
     }),
-    renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-      rows: [
-        { k: '摘要', v: receipt.summary },
-        { k: '记录 id', v: receipt.recordId === null ? 'n/a' : String(receipt.recordId) },
-        { k: 'id 口径', v: receipt.idSource },
-        { k: '无变化', v: receipt.noChange ? '是' : '否' },
-      ],
-      caption: receipt.meta.entityType + '（写库回执）',
-    }),
+    reconcileDisclosure(receipt),
     copyArea({
-      title: '复制数据',
       data: { envelope },
       log: {
         envelope,
@@ -366,8 +440,8 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: receipt.scene + ' · 回执',
-    eyebrow: '基础信息 · 写后回执（M5 契约 v' + receipt.m5Contract + '）',
-    subtitle: receipt.m5Line,
+    eyebrow: '基础信息 · 写后回执',
+    subtitle: localizeEnums(receipt.summary),
     content,
   });
 }

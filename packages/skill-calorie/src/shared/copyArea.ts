@@ -48,8 +48,10 @@ const MENU_HINTS: readonly string[] = ['粘贴给 AI / 自己看', '结构化存
 interface CopyAreaInput {
   /** 区块标题；不给＝不出标题（同 `renderCopyBlock` 口径）。 */
   readonly title?: string;
-  /** 给了就出「prompt 预览块 ＋ 复制指令」（逐字复用今天 `promptCopyArea` 那两件）。 */
-  readonly prompt?: string;
+  /** 给了就出「prompt 预览块 ＋ 复制指令」（逐字复用今天 `promptCopyArea` 那两件）。
+   *  给对象时 `label` 决定预览块的小标题：不给／`null` ＝ **不出小标题**（#238 场景 07 预检确认页：
+   *  那里与复制按钮同一个叫法，不再多一行小标题）。 */
+  readonly prompt?: string | { readonly text: string; readonly label?: string | null };
   /** 给了就出「复制数据」（**三格式菜单**，见下），内部走 `buildDataText`。 */
   readonly data?: DataTextInput;
   /** **只用来换菜单里的用途提示**（#247）：数据位**恒**出「复制数据 ▾ ＋ 三选一菜单」
@@ -88,9 +90,14 @@ interface NoticeInput {
   readonly icon?: ToastIcon;
 }
 
-/** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋复制按钮（旧模板 prompt-box＋btn-copy 的同形）。 */
-export function promptCopyArea(prompt: string): string {
-  return renderPreBlock({ label: '复制 prompt（必走）', command: prompt }) + copyActionHtml(prompt);
+/** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋复制按钮（旧模板 prompt-box＋btn-copy 的同形）。
+ *  第二参可选：不给 ＝ 老样子（小标题「复制 prompt（必走）」）；`null` ＝ 不出小标题；给字符串就用它。 */
+export function promptCopyArea(prompt: string, label?: string | null): string {
+  const heading = label === undefined ? '复制 prompt（必走）' : label;
+  const pre = heading === null
+    ? renderPreBlock({ command: prompt })
+    : renderPreBlock({ label: heading, command: prompt });
+  return pre + copyActionHtml(prompt);
 }
 
 /** ② 复制区：prompt／数据／日志给了什么出什么；三样全不给＝一句空态、**不出按钮**。
@@ -104,7 +111,12 @@ export function copyArea(input: CopyAreaInput): string {
   const data = input.data;
   const log = input.log;
   const parts: string[] = [];
-  if (input.prompt !== undefined && input.prompt !== '') parts.push(promptCopyArea(input.prompt));
+  const prompt = input.prompt;
+  if (typeof prompt === 'string') {
+    if (prompt !== '') parts.push(promptCopyArea(prompt));
+  } else if (prompt !== undefined && prompt.text !== '') {
+    parts.push(promptCopyArea(prompt.text, prompt.label ?? null));
+  }
   if (data !== undefined || log !== undefined) {
     parts.push(renderCopyBlock({
       ...(input.title === undefined ? {} : { title: input.title }),

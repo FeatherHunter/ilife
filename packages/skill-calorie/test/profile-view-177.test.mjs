@@ -68,6 +68,17 @@ function assertDocPage(html, what) {
   assert.ok(!html.includes('<!--'), what + ' 有残留标记');
 }
 
+/** 页面**可见文案**（去 script／style、去标签、还原实体）：断言「某个词没上页」时看这一层——
+ *  整份文件里还住着共享样式与 helpers，`active`／`prompt` 这类字在 CSS 类名里本来就有。 */
+function visibleText(html) {
+  return html.slice(html.indexOf('<body>'))
+    .replace(/<script[\s\S]*?<\/script>/g, '')
+    .replace(/<style[\s\S]*?<\/style>/g, '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
 test('#177 查档案结果页：六项指标齐全的完整文档（BMI／BMR／TDEE／活动系数／创建时间／更新时间）', () => {
   const r = runCli(mkDb(true, true), 'calorie.view.profile', {});
   assert.equal(r.status, 0, 'exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
@@ -91,12 +102,16 @@ test('#177 查档案结果页：六项指标齐全的完整文档（BMI／BMR／
   assert.ok(r.file.includes('末两行＝创建时间／更新时间'), '档案现值表没写明末两行就是创建／更新时间');
   assert.ok(r.file.includes('活动系数说明（五档）'), '缺系数说明');
   assert.ok(r.file.includes('本档＝中度活动 ×1.55'), '系数说明没标出本档');
-  for (const level of ['sedentary', 'light', 'moderate', 'active', 'very_active']) {
-    assert.ok(r.file.includes(level), '系数说明缺档位 ' + level);
+  // #238：五档照列，但列的是中文档位；库内英文枚举与「入库值」列头不上页（清单 2、15 条）。
+  for (const level of ['久坐', '轻度活动', '中度活动', '活跃', '高度活跃']) {
+    assert.ok(r.file.includes(level + '（本档）') || r.file.includes('>' + level + '<'), '系数说明缺档位 ' + level);
+  }
+  for (const gone of ['sedentary', 'light', 'moderate', 'active', 'very_active', '入库值', 'male']) {
+    assert.equal(visibleText(r.file).includes(gone), false, '结果页可见文案里还有库内英文枚举或技术列头：' + gone);
   }
   // 口径写在页上：BMR 那条列了口径，创建／更新写明是库内 UTC 原值。
   assert.ok(r.file.includes('Mifflin-St Jeor'), 'BMR 行缺口径');
-  assert.ok(r.file.includes('库内原值（SQLite CURRENT_TIMESTAMP，UTC）'), '创建/更新缺口径');
+  assert.ok(r.file.includes('库内按 UTC 记下的原值'), '创建/更新缺口径');
   // 复制数据（#247 三格式）里也带上六项里的四个数，AI 复制即拿到。
   for (const pair of ['bmi: 22.9', 'bmr: 1651', 'tdee: 2559', 'activityFactor: 1.55']) {
     assert.ok(r.file.includes(pair), '复制数据缺 ' + pair);

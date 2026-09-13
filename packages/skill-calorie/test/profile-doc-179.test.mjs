@@ -74,7 +74,11 @@ test('#179 三条写入词的回执页一律完整文档（空库一遍 ＋ 已�
     assert.equal(r.status, 0, label + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
     assertDocPage(r.file, label);
     assert.ok(r.file.includes('基础信息 · 写后回执'), label + ' 缺场景 07 眉标');
-    assert.ok(r.file.includes('M5 契约 v1'), label + ' 缺 M5 契约版本');
+    // #238：眉标里不再写 `M5 契约 v1`（那行字收进页尾「对账信息」折叠区，写成人话）。
+    assert.ok(r.file.includes('对账信息'), label + ' 缺页尾对账折叠区');
+    assert.ok(r.file.includes('v1（写库回执）'), label + ' 缺回执格式那一行');
+    assert.equal(r.file.includes('M5 契约'), false, label + ' 眉标/页面上还有「M5 契约」字样');
+    assert.equal(r.file.includes('M5 整行'), false, label + ' 页面上还有「M5 整行（旧版等价物）」代码块');
     assert.ok(r.file.includes('ilife-copy-log'), label + ' 缺「复制日志」按钮（#239）');
     assert.ok(r.file.length > 10000, label + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
   }
@@ -111,10 +115,43 @@ test('#179 查档案结果页是完整文档；空档案仍是缺失阻断（不
   const v = runCli(mkDb(true), 'calorie.view.profile', {});
   assert.equal(v.status, 0, 'stderr=' + v.stderr.slice(-300));
   assertDocPage(v.file, 'calorie.view.profile');
-  assert.ok(v.file.includes('档案现值（user_profile#1 单例行）'), '结果页缺档案现值表');
+  assert.ok(v.file.includes('档案现值；末两行＝创建时间／更新时间'), '结果页缺档案现值表');
   assert.ok(v.file.includes('基础信息 · 看档案'), '结果页缺场景 07 眉标');
   assert.ok(v.file.includes('ilife-copy-log'), '结果页缺「复制日志」按钮（#239）');
   assert.equal(JSON.parse(v.stdout).data.metrics.hasGoal, 0);
+  // #238 裁定 3：复制出去的文本里页名写中文（内部命令名对用户没有意义）。
+  assert.ok(v.file.includes('data-t="【calorie · 查档案】'), '结果页复制文本的页名不是中文');
+  assert.equal(v.file.includes('data-t="【calorie · calorie.view.profile】'), false, '结果页复制文本还在写内部命令名');
+});
+
+/** 页面**可见文案**（去 script／style、去标签、还原实体）：断言「某个词没上页」时看这一层——
+ *  整份文件里还住着共享样式与 helpers，`prompt`／`active` 这类字在 CSS 类名里本来就有。 */
+function visibleText(html) {
+  return html.slice(html.indexOf('<body>'))
+    .replace(/<script[\s\S]*?<\/script>/g, '')
+    .replace(/<style[\s\S]*?<\/style>/g, '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
+test('#238 五张页的去技术词与中文页名：库列名／内部编号／英文枚举／同名复制标题一律不上页', () => {
+  const wizard = runCli(mkDb(true), 'calorie.view.profile-wizard', {});
+  assert.equal(wizard.status, 0, 'stderr=' + wizard.stderr.slice(-300));
+  assert.ok(wizard.file.includes('data-t="【calorie · 档案预检】'), '预检确认页复制文本的页名不是中文');
+  // 眉标只写这一页属于哪个功能，流程说明与版本号不再挂眉标（#238 清单 12 条）。
+  assert.ok(wizard.file.includes('基础信息 · 预检确认<'), '预检确认页眉标不对');
+  for (const gone of ['op=', 'sqlite:total_changes', 'singleton', 'user_profile#1', 'id 口径',
+    'age,gender,heightCm,activityLevel', 'male/female', 'M5 契约', '入库值', 'TDEE 影响',
+    'TDEE ＝ 基础代谢（Mifflin-St Jeor）']) {
+    assert.equal(visibleText(wizard.file).includes(gone), false, '预检确认页可见文案里还有技术词：' + gone);
+  }
+  // 复制区不再出与按钮同名的大标题（#238 清单 9 条）：预检确认页那两个复制区只由按钮表意。
+  assert.equal(/<h2[^>]*ilife-block-copy-block-title/.test(wizard.file), false, '预检确认页还有复制区大标题');
+  assert.equal(wizard.file.includes('复制 prompt（必走）'), false, '预检确认页指令块还挂着「复制 prompt（必走）」小标题');
+  for (const btn of ['复制指令', '复制数据 ▾', '复制日志']) {
+    assert.ok(wizard.file.includes('>' + btn + '<'), '预检确认页缺按钮：' + btn);
+  }
 });
 
 test('#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，照抄可重跑', () => {

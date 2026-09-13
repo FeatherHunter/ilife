@@ -82,10 +82,15 @@ function diffRow(html, field) {
   return m ? { before: m[1], after: m[2] } : null;
 }
 
-/** 活动量五档表里某一档的后三格（入库值／系数／TDEE 影响）。 */
+/** 活动量五档表里某一档那条 `<tr>` 里，档位列之后的格子（#238 起：系数 ＋ 预计每日消耗，后者缺数据整列收）。
+ *  只在五档那张表里找（同一档位名在「档案现值」表里也有，别抓错表）。 */
 function activityCells(html, label) {
-  const m = new RegExp('<td[^>]*>' + label + '</td>\\s*<td[^>]*>([^<]*)</td>\\s*<td[^>]*>([^<]*)</td>\\s*<td[^>]*>([^<]*)</td>').exec(html);
-  return m ? { level: m[1], factor: m[2], tdee: m[3] } : null;
+  const start = html.indexOf('设活动量 5 档（');
+  const scope = start === -1 ? html : html.slice(start);
+  const m = new RegExp('<td[^>]*>' + label + '</td>((?:\\s*<td[^>]*>[^<]*</td>)+)').exec(scope);
+  if (m === null) return null;
+  const cells = [...m[1].matchAll(/<td[^>]*>([^<]*)<\/td>/g)].map((x) => x[1]);
+  return { factor: cells[0], tdee: cells[1] };
 }
 
 /** 某个折叠区是不是展开的（按标题找 `<details …><summary>标题`）。 */
@@ -106,14 +111,16 @@ test('#175 设置档案回执补 3 项：性别／推荐活动量／设置时间
   assert.equal(r.envelope.data.output, r.out, '信封里的交付路径不是本次 --html 那一份');
   assert.ok(isAbsolute(r.envelope.data.output), '交付路径不是绝对路径');
 
-  // ① 性别 ② 推荐活动量 ③ 设置时间
-  assert.equal(kv(r.file, '性别'), 'male', '回执没摆出性别');
+  // ① 性别 ② 推荐活动量 ③ 设置时间（#238：性别走中文说法，库内英文枚举不上页）
+  assert.equal(kv(r.file, '性别'), '男', '回执没摆出性别（或又回了 male）');
   const activity = kv(r.file, '推荐活动量');
   assert.ok(activity !== null, '回执没摆出推荐活动量');
   assert.match(activity, /^中度活动（系数 ×1\.55） · TDEE 约 \d+ 卡\/天（按最近体重 70\.2 kg）$/,
-    '推荐活动量那一格不是「档位 ＋ 系数 ＋ TDEE 影响」：' + activity);
+    '推荐活动量那一格不是「档位 ＋ 系数 ＋ 每日消耗影响」：' + activity);
   assert.equal(kv(r.file, '设置时间'), r.envelope.data.receipt.meta.actionAt, '设置时间与信封里的写入时刻不一致');
-  assert.ok(r.file.includes('写后档案（user_profile#1 单例行）'), '回执缺写后档案表');
+  assert.ok(r.file.includes('写后档案：推荐活动量＝按日常活动情况在五档里判定的档位'), '回执缺写后档案表');
+  assert.equal(r.file.includes('male'), false, '页面上还有 male 这类库内枚举');
+  assert.equal(r.file.includes('user_profile#1'), false, '页面上还有 user_profile#1 这类表名');
 });
 
 test('#175 推荐活动量的 TDEE 与写前页同一口径；五档系数取冻结值；性别认「男／女」', () => {
@@ -127,8 +134,8 @@ test('#175 推荐活动量的 TDEE 与写前页同一口径；五档系数取冻
   for (const [label, level, factor] of ACTIVITY_ROWS) {
     const c = activityCells(wizard.file, label);
     assert.ok(c !== null, '写前页缺「' + label + '」这一档');
-    assert.equal(c.level, level, label + ' 的入库值不对');
     assert.equal(c.factor, factor, label + ' 的系数不是老技能冻结值');
+    assert.equal(wizard.file.includes('>' + level + '<'), false, label + ' 的内库存值 ' + level + ' 出现在页面上');
     if (label === '中度活动') moderate = c.tdee;
   }
   const fromReceipt = /TDEE 约 (\d+) 卡\/天/.exec(kv(receipt.file, '推荐活动量'));
@@ -176,13 +183,13 @@ test('#175 写前确认页两处配置：设置档案 4 项＋五档推荐辅助
   const set = runCli(dir, 'calorie.view.profile-wizard', { wakeWord: '设置档案', ...SET_PARAMS }, 'wizard-set');
   assert.equal(set.status, 0, 'stderr=' + set.stderr.slice(-300));
   assertDocPage(set.file, '档案预检（设置档案）');
-  for (const label of ['身高（cm）', '年龄', '性别（male/female 或 男/女）', '活动量（久坐/轻度/中度/活跃/高度活跃）']) {
+  for (const label of ['身高（cm）', '年龄', '性别（男/女）', '活动量（久坐/轻度/中度/活跃/高度活跃）']) {
     assert.ok(set.file.includes('>' + label + '</span>'), '写前页缺字段位：' + label);
   }
   assert.ok(set.file.includes('ilife-help-copy-prompt'), '缺复制 prompt 按钮');
   assert.ok(set.file.includes('calorie-cmd-read calorie.profile.set --params'),
     '复制 prompt 里没有可照跑的命令（采访补齐后要能直接跑写命令）');
-  assert.ok(set.file.includes('设活动量 5 档：TDEE ＝ 基础代谢（Mifflin-St Jeor）× 系数'),
+  assert.ok(set.file.includes('预计每日消耗 ＝ 基础代谢 × 活动系数'),
     '写前页缺活动量五档推荐辅助');
   assert.equal(isOpen(set.file, '设置档案 4 项'), true, '说「设置档案」时 4 项那处配置没展开');
   assert.equal(isOpen(set.file, '改档案 5 项'), false, '说「设置档案」时改档案那处不该展开');
