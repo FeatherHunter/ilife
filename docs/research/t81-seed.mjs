@@ -110,7 +110,13 @@ export function seedFull(db) {
     db.prepare('INSERT INTO body_measurements (date, waist_cm, hip_cm) VALUES (?, ?, ?)').run(d, waist, hip);
   }
   db.prepare("INSERT OR REPLACE INTO workout_plan_config (id, title, version, description, total_weeks, start_date) VALUES (1, 'seed计划', 'v1', 'desc', 4, '2026-09-01')").run();
-  db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (1, 1, 1, ?, ?)').run('上肢', JSON.stringify([{ name: '硬拉', part: '背', type: '力量', sets: [] }]));
+  // #308：会话日期是**算出来的**（不是存的）：sessionDate = mondayOf(planStart) + (week-1)*7 + (day-1)
+  //   （packages/skill-calorie/src/render/exercisePort.ts）。planStart='2026-09-01'（周二）⇒ mondayOf=08-31；
+  //   第 1 周第 1 天原落在 08-31，而 SEED_TODAY='2026-09-07'（周一）下「本周」＝单日窗 09-07~09-07
+  //   ⇒ calorie.view.exercise-review --params '{"window":"本周"}' 窗内无计划会话，取数失败（exit 4）。
+  //   改成**第 2 周第 1 天** ⇒ 08-31 + 7 = 09-07，正好落进「本周」窗；第 1 周第 3 天（09-02）不动。
+  //   走的是「只改种子库」这条：示例口径（src/workout/commands.ts ＋ scripts/build-help.mjs ＋ SKILL.md）一字未动。
+  db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (2, 1, 1, ?, ?)').run('上肢', JSON.stringify([{ name: '硬拉', part: '背', type: '力量', sets: [] }]));
   db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (1, 3, 1, ?, ?)').run('下肢', JSON.stringify([{ name: '深蹲', part: '腿', type: '力量', sets: [] }]));
   db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('鸡胸肉', '测试', 165, 31, 3.6, 0, 70, '蛋白类', '测试')").run();
   db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('鸡胸肉', '测试', 170, 30, 4, 0, 72, '蛋白类', '测试')").run();
