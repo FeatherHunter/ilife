@@ -1,10 +1,16 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：314｜since：2026-09-13T12:51:43.368Z｜until：（无）｜条目数：6｜导出时间：2026-09-13T12:52:45.529Z
+> 票号过滤：314｜since：2026-09-13T12:45:00.000Z｜until：2026-09-13T13:05:00.000Z｜条目数：12｜导出时间：2026-09-13T13:32:34.691Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
+RUN ticket=314 runId=b212cef4-8019-47a9-a166-46c67badd6cb cmd="pnpm build" waitedMs=0 exit=0 pid=17232 at=2026-09-13T12:47:07.638Z
+RUN ticket=314 runId=68545756-7df3-448d-ba3a-ec5f0d688703 cmd="pnpm gen" waitedMs=0 exit=0 pid=38100 at=2026-09-13T12:47:08.700Z
+RUN ticket=314 runId=95fce68b-164b-41bb-b48d-cb9931487179 cmd="pnpm build" waitedMs=0 exit=0 pid=14580 at=2026-09-13T12:47:10.546Z
+RUN ticket=314 runId=84c3d88c-4e8b-4370-b26a-907b93203987 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=40528 at=2026-09-13T12:47:11.578Z
+RUN ticket=314 runId=c8549c53-0157-442a-a7bb-a88d8ebb8c2c cmd="pnpm gen:check" waitedMs=0 exit=0 pid=47236 at=2026-09-13T12:47:12.823Z
+RUN ticket=314 runId=c0c920b9-ed40-452e-b6cc-1e9a39aa5a12 cmd="pnpm test" waitedMs=1 exit=0 pid=41512 at=2026-09-13T12:48:17.101Z
 RUN ticket=314 runId=3bdacce9-f58e-4d97-937c-93dffc1ce81a cmd="pnpm build" waitedMs=0 exit=0 pid=10844 at=2026-09-13T12:51:45.364Z
 RUN ticket=314 runId=735e2636-84df-4e36-bbd2-bb898512bb9d cmd="pnpm gen" waitedMs=0 exit=0 pid=6960 at=2026-09-13T12:51:46.406Z
 RUN ticket=314 runId=fe146148-468a-4b73-9a24-3f397e6dd2f8 cmd="pnpm build" waitedMs=0 exit=0 pid=35872 at=2026-09-13T12:51:48.020Z
