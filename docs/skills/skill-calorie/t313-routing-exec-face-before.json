@@ -1,11 +1,12 @@
 {
+  "selfSha256": "b1376cba41a5a07e1cc8e92aa3eb5331c38db4c991a4d401cfaf155fbfde9dd2",
   "generatedBy": "docs/skills/skill-calorie/t313-routing-oracle.mjs",
   "ticket": "313v",
   "purpose": "#313 路由层执行面「改造前」冻结快照：B 段（routing.ts 手写→生成物）必须逐字段等价。",
-  "frozen": "本文件写入后不许再改；后续任何差异不许靠改它抹平。",
-  "compare": "顺序敏感结构式深比对；meta 段不参与比对。",
+  "frozen": "本文件写入后不许再改；后续任何差异不许靠改它抹平（载入时校验头部 selfSha256，不符即 SNAPSHOT-TAMPERED FAIL）。",
+  "compare": "顺序敏感结构式深比对；meta 段与 selfSha256 不参与比对；导出面清点按 SURFACE_FACE 专门口径（少＝红／多＝警告）。",
   "meta": {
-    "generatedAt": "2026-09-13T09:21:10.389Z",
+    "generatedAt": "2026-09-13T09:28:10.381Z",
     "dist": "packages/skill-calorie/dist/triggers/routing.js",
     "distSha256": "cf9b15a42f832cd67227f7e2d7da1479a0caf7a33898c1c13df5ecb836d3edbc",
     "src": "packages/skill-calorie/src/triggers/routing.ts",
@@ -25,7 +26,8 @@
       "EXEC_ROUTE_BY_KEY",
       "ROUTING_SUMMARY",
       "DIRECT_API_PROBES",
-      "RECORD_SHAPES"
+      "RECORD_SHAPES",
+      "EXPORT_SURFACE"
     ],
     "faceSizes": {
       "WAKE_ROUTES": 436,
@@ -42,7 +44,8 @@
       "EXEC_ROUTE_BY_KEY": 101,
       "ROUTING_SUMMARY": 8,
       "DIRECT_API_PROBES": 10,
-      "RECORD_SHAPES": 7
+      "RECORD_SHAPES": 7,
+      "EXPORT_SURFACE": 15
     }
   },
   "faces": {
@@ -15648,6 +15651,23 @@
         },
         "wakeWords": 10
       }
-    }
+    },
+    "EXPORT_SURFACE": [
+      "ALL_ROUTES",
+      "COVERAGE_REPAIR_ROUTES",
+      "EXEC_ROUTES",
+      "EXEC_ROUTE_BY_KEY",
+      "HIT_NOT_EXEC_ROUTES",
+      "NEW_KEY_ROUTES",
+      "NON_EXEC_REASONS",
+      "OUT_OF_SCOPE_ROUTES",
+      "ROUTES_BY_WAKE_WORD",
+      "T71_DIFFS",
+      "TWIN_WAKE_WORDS",
+      "WAKE_ROUTES",
+      "execCliForKey",
+      "routesFor",
+      "routingSummary"
+    ]
   }
 }
