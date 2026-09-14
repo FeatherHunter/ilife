@@ -17,11 +17,11 @@
       "line": 350,
       "anchor": 9,
       "status": "历史（收紧后不再需要）：域内计数，准入已不认 ⇒ 当刻既不进 ② 也不进 ③；留作防回归",
-      "reason": "非权威总量：9 是**smoke 快照 §1 的表格列数**（`c` 是 `rows1[i]`──`smokeSection(md, '## 1. ')` 切出的一行，消息自述「smoke §1 列数异常」），与体重键数 9 只是数值巧合。加删命令会改的是**行数**（`rows1.length` 与路由层对账，:338），不是列数。**本件冻结**（D 段不许碰）。",
-      "enforcer": "本探针 ② 桶对账（同上：字段齐全 ＋ 该行仍把 9 当被比操作数）；列数本身由 calorie-routing-81 自己的快照断言守（:342 与 :338 的行数对账同处）。",
+      "reason": "非权威总量：9 是**smoke 快照 §1 的表格列数**（`c` 是 `rows1[i]`──`smokeSection(md, '## 1. ')` 切出的一行，消息自述「smoke §1 列数异常」），与体重键数 9 只是数值巧合。加删命令会改的是**行数**（`rows1.length` 与路由层对账，:346），不是列数。**本件冻结**（D 段不许碰）。",
+      "enforcer": "本探针 ② 桶对账（同上：字段齐全 ＋ 该行仍把 9 当被比操作数）；列数本身由 calorie-routing-81 自己的快照断言守（:350 与 :346 的行数对账同处）。",
       "owner": "t293 验收探针精度修复席（第二任）",
       "date": "2026-09-13",
-      "evidence": "第一轮实命中（当时进 ③，登记后进 ②）：`assert.equal(c.length, 9, \\`smoke §1 列数异常…\\`);`（test/calorie-routing-81.test.mjs:337-342 的上下文：rows1＝§1 段各行）。"
+      "evidence": "第一轮实命中（当时进 ③，登记后进 ②）：`assert.equal(c.length, 9, \\`smoke §1 列数异常…\\`);`（test/calorie-routing-81.test.mjs:345-350 的上下文：rows1＝§1 段各行）。"
     },
     {
       "file": "packages/skill-calorie/test/help-center-91.test.mjs",
