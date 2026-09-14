@@ -134,6 +134,11 @@ combos:
     shape: receipt
     title: 下架食品
     cmd: skill-calorie
+  - key: calorie.product.import
+    skill: calorie
+    shape: receipt
+    title: 批量导入食品
+    cmd: skill-calorie
   - key: calorie.product.update
     skill: calorie
     shape: receipt
@@ -284,10 +289,20 @@ combos:
     shape: stat
     title: 体成分看
     cmd: skill-calorie
+  - key: calorie.view.body-composition-compare
+    skill: calorie
+    shape: stat
+    title: 体脂对比
+    cmd: skill-calorie
   - key: calorie.view.body-measure
     skill: calorie
     shape: stat
     title: 围度看
+    cmd: skill-calorie
+  - key: calorie.view.body-measure-compare
+    skill: calorie
+    shape: stat
+    title: 围度对比
     cmd: skill-calorie
   - key: calorie.view.calorie-trend
     skill: calorie
@@ -353,6 +368,11 @@ combos:
     skill: calorie
     shape: stat
     title: 运动复盘
+    cmd: skill-calorie
+  - key: calorie.view.exercise-records
+    skill: calorie
+    shape: stat
+    title: 运动记录
     cmd: skill-calorie
   - key: calorie.view.exercise-review
     skill: calorie
@@ -454,6 +474,11 @@ combos:
     shape: stat
     title: 围度向导
     cmd: skill-calorie
+  - key: calorie.view.multi-trend
+    skill: calorie
+    shape: stat
+    title: 多指标趋势
+    cmd: skill-calorie
   - key: calorie.view.nutrition-analysis
     skill: calorie
     shape: stat
@@ -473,6 +498,11 @@ combos:
     skill: calorie
     shape: stat
     title: 身材照向导
+    cmd: skill-calorie
+  - key: calorie.view.photo-picker
+    skill: calorie
+    shape: list
+    title: 删照候选
     cmd: skill-calorie
   - key: calorie.view.plan
     skill: calorie

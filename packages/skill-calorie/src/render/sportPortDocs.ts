@@ -446,7 +446,9 @@ export function buildReviewDoc(v: ReviewView): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '计划复盘 ' + v.start + ' ~ ' + v.end,
-    eyebrow: 'calorie.view.exercise-review · 运动移植域',
+    // T351 肉眼修复（order201–206）：眉标首段原露英文命令键，改该键既有中文 title
+    // （`cli/keys.ts` 的 `CALORIE_COMBOS['calorie.view.exercise-review'].title`＝「计划复盘」），不新增概念。
+    eyebrow: '计划复盘 · 运动移植域',
     subtitle: v.planTitle + '（会话完成＝当日有记录；动作完成＝计划名与实做双向子串命中）',
     content: parts.join(''),
     charts,

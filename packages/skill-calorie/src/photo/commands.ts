@@ -15,6 +15,7 @@ import { viewPhotoCompare, viewPhotoGif } from './compare.js';
 import { viewPhotoHelpCenter } from './help.js';
 import { viewPhotoDetail, viewPhotoList } from './gallery.js';
 import { writePhotoRemove, writePhotoTag } from './manage.js';
+import { viewPhotoPicker } from './picker.js';
 import { writePhotoAdd } from './store.js';
 import { viewGifPlanner, viewPhotoLogWizard } from './wizard.js';
 
@@ -29,4 +30,5 @@ export const PHOTO_COMMANDS = [
   { kind: 'write', key: 'calorie.photo.tag', shape: 'receipt', title: '改照片标签', wakeWord: '改照片标签', run: writePhotoTag, example: 'calorie-cmd-read calorie.photo.tag --params \'{"id":1,"op":"add","tag":"晨起"}\'' },
   { kind: 'read', key: 'calorie.view.gif-planner', shape: 'stat', title: 'GIF规划器', wakeWord: '看GIF规划器', run: viewGifPlanner, example: 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'' },
   { kind: 'read', key: 'calorie.view.photo-log-wizard', shape: 'stat', title: '身材照向导', wakeWord: '看身材照向导', run: viewPhotoLogWizard, example: 'calorie-cmd-read calorie.view.photo-log-wizard' },
+  { kind: 'read', key: 'calorie.view.photo-picker', shape: 'list', title: '删照候选', wakeWord: '选身材照', run: viewPhotoPicker, example: 'calorie-cmd-read calorie.view.photo-picker' },
 ] satisfies readonly CommandSpec[];

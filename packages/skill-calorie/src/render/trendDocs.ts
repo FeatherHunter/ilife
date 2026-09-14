@@ -70,16 +70,15 @@ const CONTRA_STATUS_ZH: Record<string, string> = { ok: '通过', warn: '有警�
 
 export function buildCombinedDoc(c: CombinedAnalysis): string {
   const a = c.analysis;
+  const windowHuman = /^(\d+)d$/.test(c.window) ? '近' + c.window.slice(0, -1) + '天' : (c.window === 'week_cur' ? '本周' : (c.window === 'month_cur' ? '本月' : c.window));
+  const stripUnit = (s: string): string => s.replace(/\(.*?\)/g, '').replace(/（.*?）/g, '') || s;
+  const aShort = stripUnit(a.labels.a);
+  const bShort = stripUnit(a.labels.b);
+  const techNote = '<!-- 配对' + c.pair + ' 窗口' + c.window + ' 11配对白名单窗口 非法窗exit2 不静默回退 数列唯一源buildSeries 最小形态 空窗阻断 不编数 -->';
+  const metaLeft = windowHuman + ' · ' + a.labels.a + '与' + a.labels.b + ' · ' + c.start + '~' + c.end;
+  const summary = a.insight !== '' ? a.insight : ('共' + a.days + '天，对齐' + a.correlation.n + '天，' + corrInterp(a.correlation.r));
   const parts: string[] = [
-    renderParamForm({
-      fields: [
-        { name: 'pair', label: '配对', value: c.pair },
-        { name: 'window', label: '窗口', value: c.window },
-        { name: 'start', label: '开始', value: c.start },
-        { name: 'end', label: '结束', value: c.end },
-      ],
-      description: '11 配对×白名单窗口（Nd 仅收 7/15/30/60/90/180/365d，另收本周/上周/本月/上月/今年/custom；99d 等非法窗直接 exit 2，不静默回退）',
-    }),
+    techNote,
     renderKpiGrid([
       { label: '相关系数 r', value: a.correlation.r === null ? '—' : String(a.correlation.r), detail: corrInterp(a.correlation.r) },
       { label: 'A 均值（' + a.labels.a + '）', value: fmt(a.aAvg), detail: 'Δ ' + fmt(a.aDelta) + ' · ' + a.aCount + ' 天' },
@@ -199,9 +198,12 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
   }));
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '组合分析 ' + a.labels.a + ' vs ' + a.labels.b,
-    eyebrow: 'calorie.view.combined · 趋势分析域',
-    subtitle: a.insight || null,
+    title: '看' + aShort + '与' + bShort,
+    eyebrow: '',
+    subtitle: null,
+    metaLeft,
+    badge: '卡路里 · 分析',
+    summary,
     content: parts.join(''),
     charts,
   });
@@ -421,7 +423,9 @@ export function buildContraDoc(v: ContraView): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '禁忌扫描（' + v.part + '）',
-    eyebrow: 'calorie.view.contraindication · 趋势分析域',
+    // T351 肉眼修复（order207）：眉标首段原露英文命令键，改该键既有中文 title
+    // （`cli/keys.ts` 的 `CALORIE_COMBOS['calorie.view.contraindication'].title`＝「禁忌扫描」），不新增概念。
+    eyebrow: '禁忌扫描 · 趋势分析域',
     subtitle: null,
     content: parts.join(''),
     charts: false,

@@ -1,27 +1,26 @@
 /** 健身计划结果/过程整页装配（T351 重做「看完整计划」·实施兵）。
  *
  * 计划查看页（order176–185 共用本件）照规格 `docs/skills/skill-calorie/t351-redesign-184-spec.md` 重做：
- * 页头（大标题「健身计划」＋版本/周数/起日）→ 指标卡（总场次／总动作／总周数）→ 每周一个原生
- * `<details open>`（纯 HTML、零内联脚本，替代老页 JS 页签）→ 周内每场一张会话卡（周X · 时段 · label
- * · 组数）→ 卡内六列动作明细表（动作／部位／类型／组数×次数／重量／备注；老页的休息列库里无字段，
- * 列位让给备注）→ 空窗出完整空页（不返白页）→ 底部「复制数据／复制日志」双按钮。
- * 复制数据载荷不照抄老页 `scene.snapshot`：计划数据投影成信封 `list` 形（`items` 逐周一行、
- * `total` 记会话数），日志用 `CopyLogFields` 五键。
+ * 页头（大标题「健身计划」＋说明/版本/周数/起日）→ 指标卡（总场次／总动作／总周数）→ 每周一个原生
+ * `<details open>`（纯 HTML、零内联脚本，替代老页 JS 页签）→ 周内每场一张会话卡（周X · 时段 · label · 组数）
+ * → 卡内六列动作明细表（动作／部位／类型／组数×次数／重量／备注；老页的休息列库里无字段，列位让给备注）
+ * → 空窗出完整空页（不返白页）→ 底部「复制数据／复制日志」双按钮。
  *
- * 只读既有取数层（`PlanView`／`WritePreview`），不跨能力取数；动作字段形状的唯一出处是
- * `workout/planStore.ts` 的 `PlanMovement`，本层只按它收窄消费，不另立概念。页面只用共用位
- *（`shared/docPage` ＋ `base-paint/blocks` 的页面壳／指标卡／表格／折叠／空态），不新增样式、
- * 不新增公共层件。过程型两页（写前预览／构建向导，order186–190）仍走原五段式，本次不动。
+ * 复制数据载荷不照抄老页 `scene.snapshot`：计划数据投影成信封 `list` 形（`items` 逐周一行、`total` 记会话数），
+ * 日志用 `CopyLogFields` 五键；底部复制区走共用件 `./planCopyBlock.js`。只读既有取数层（`PlanView`／
+ * `WritePreview`），不跨能力取数；动作字段形状的唯一出处是 `workout/planStore.ts` 的 `PlanMovement`。
+ * 页面只用共用位（`shared/docPage` ＋ `base-paint/blocks` 的整页版式／指标卡／表格／折叠／空态）。
+ * 过程型两页走原五段式，页底加本写词的逐字 prompt（预检确认页要能复制 prompt 回给 AI）。
  */
 import type { SerializableEnvelope } from 'base-paint';
-import { buildDataText, buildLogText } from 'base-paint';
-import { renderCopyBlock, renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
+import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import { nowStamp } from './receipt.js';
+import { planCopyBlock } from './planCopyBlock.js';
 import type { PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
 import type { PlanMovement, PlanSessionRow } from '../workout/planStore.js';
 import type { WritePreview } from '../workout/write.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { copyArea, copyLog } from '../shared/copyArea.js';
+import { copyLog } from '../shared/copyArea.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -48,34 +47,28 @@ interface PlanDocOpts {
   readonly key: string;
   readonly command: string;
   readonly wakeWord?: string;
+  /** 该写词的逐字 prompt（预检确认页「复制 prompt」那一路）；结果页不传。 */
+  readonly prompt?: string;
 }
 
-/** 复制区（计划查看页）：单格式数据文本 ＋ 日志文本直挂冻结双按钮（与 201–207 同形：
- *  无三格式菜单、无英文菜单项、无与按钮同名的大标题），按钮 id 补成冻结表那两颗。 */
-function planCopyBlock(envelope: SerializableEnvelope, title: string, command: string, source: string): string {
-  return renderCopyBlock({
-    dataText: buildDataText({ envelope, title }),
-    logText: buildLogText({
-      envelope,
-      copyLog: copyLog({ command, source, actionAt: nowStamp(), version: DOC_VERSION }),
-    }),
-  })
-    .replace('data-action-id="ilife-copy-data"', 'id="ilife-copy-data" data-action-id="ilife-copy-data"')
-    .replace('data-action-id="ilife-copy-log"', 'id="ilife-copy-log" data-action-id="ilife-copy-log"');
-}
-
-/** 复制区（过程型两页，本次不动）：复制数据（三格式菜单）＋复制日志双按钮。 */
-function dualCopy(key: string, command: string, source: string, metrics: Record<string, number | null | undefined>): string {
+/** 复制区（过程型两页）：与结果页同形——冻结双按钮，并前置本写词的逐字 prompt（预检确认页的核心是
+ *  「复制 prompt 回给 AI」，顺序照 `copyArea` 的 prompt 在前；两段的装配住 `./planCopyBlock.js`）。
+ *  `dataTitle` 为必填的中文标题：不给时 `buildDataText` 回落到信封 `key`，页面上就会
+ *  出现英文命令键（如 `calorie.view.plan-write-preview`）——负责人已明令中文单语，别退回去。 */
+function dualCopy(input: {
+  readonly key: string; readonly command: string; readonly source: string;
+  readonly dataTitle: string; readonly prompt: string; readonly metrics: Record<string, number | null | undefined>;
+}): string {
   const envelope: SerializableEnvelope = {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key,
-    data: { metrics: metricsOf(metrics) },
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: input.key,
+    data: { metrics: metricsOf(input.metrics) },
   };
-  return copyArea({
-    data: { envelope },
-    log: {
-      envelope,
-      copyLog: copyLog({ command, source, actionAt: nowStamp(), version: DOC_VERSION }),
-    },
+  return planCopyBlock({
+    envelope, dataTitle: input.dataTitle, prompt: input.prompt,
+    log: copyLog({
+      command: input.command, source: input.source,
+      actionAt: nowStamp(), version: DOC_VERSION,
+    }),
   });
 }
 
@@ -104,6 +97,10 @@ function weightText(m: PlanMovement): string {
   return weights.join('／') + unit;
 }
 
+/** 休息日卡的会话名：空 label 与「休息」都写「休息日」；已含「休息日」的（库中休息日行就这样）不追加。 */
+const restLabel = (raw: string): string =>
+  raw === '' || raw === '休息' ? '休息日' : raw.includes('休息日') ? raw : raw + '（休息日）';
+
 /** 会话卡（原生 `<details open>`）：标题「周X · 时段 · 会话名 · N 组」＋卡内六列动作明细表；
  *  休息日不出表，出一句「不排训练动作」。 */
 function sessionCard(s: PlanSessionRow): string {
@@ -111,9 +108,7 @@ function sessionCard(s: PlanSessionRow): string {
   const rest = s.is_rest_day === 1;
   const setsCount = s.total_sets ?? moves.reduce((n, m) => n + (m.sets ?? []).length, 0);
   const raw = s.session_label ?? '';
-  const label = rest
-    ? (raw === '' || raw === '休息' ? '休息日' : raw + '（休息日）')
-    : (raw === '' ? '训练' : raw);
+  const label = rest ? restLabel(raw) : (raw === '' ? '训练' : raw);
   const start = s.time_start;
   const time = start === null || start === undefined || start === ''
     ? ''
@@ -173,10 +168,8 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
     renderKpiGrid([
       { label: '总场次', value: String(v.totalSessions), unit: '场' },
       { label: '总动作', value: String(v.totalMovements), unit: '个' },
-      {
-        label: '总周数', value: String(weeks.length), unit: '周有安排',
-        detail: v.totalWeeks === null ? '计划未标总周数' : '计划共 ' + v.totalWeeks + ' 周',
-      },
+      { label: '总周数', value: String(v.totalWeeks ?? weeks.length), unit: '周',
+        detail: '周有安排 ' + weeks.length + ' 周' + (v.totalWeeks === null ? '（计划未标总周数）' : '') },
     ]),
   ];
   if (weeks.length === 0) {
@@ -190,26 +183,32 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
       contentHtml: list.map(sessionCard).join(''),
     }));
   }
-  parts.push(planCopyBlock(
-    {
+  parts.push(planCopyBlock({
+    envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
       data: { items: weeks.map((wn) => weekLine(wn, byWeek.get(wn) ?? [])), total: v.totalSessions },
     },
-    '【calorie · 训练计划查看】',
-    opts.command,
-    'workout_plans（训练计划，只读）',
-  ));
+    dataTitle: '【calorie · 训练计划查看】',
+    log: copyLog({
+      command: opts.command,
+      source: 'workout_plans（训练计划，只读）',
+      actionAt: nowStamp(), version: DOC_VERSION,
+    }),
+  }));
   const meta = [
     v.version === null || v.version === '' ? '' : '版本 ' + v.version,
     v.totalWeeks === null ? '' : '共 ' + v.totalWeeks + ' 周',
     v.startDate === null || v.startDate === '' ? '' : '起日 ' + v.startDate,
   ].filter((t) => t !== '').join(' · ');
   const head = opts.wakeWord ? opts.wakeWord + ' · ' : '';
+  // 副标题＝计划名 ＋ 计划说明（`config.description`，有则印、无则省）＋ 版本/总周数/起日。
+  const desc = v.description === null || v.description === undefined || v.description === '' ? '' : v.description;
+  const subtitle = head + planName + (desc === '' ? '' : ' · ' + desc) + (meta === '' ? '' : ' · ' + meta);
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '健身计划',
     eyebrow: '训练计划查看',
-    subtitle: head + planName + (meta === '' ? '' : ' · ' + meta),
+    subtitle,
     content: parts.join(''),
   });
 }
@@ -241,18 +240,21 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
       caption: '逐日对照（' + v.start + ' ~ ' + v.end + '）',
       emptyText: '范围内无计划或实绩数据',
     }),
-    planCopyBlock(
-      {
+    planCopyBlock({
+      envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
         data: {
           items: rows.map((r) => r.date + ' · 计划 ' + r.plan + ' · 完成 ' + r.done + ' · ' + r.miss),
           total: v.plannedCount,
         },
       },
-      '【calorie · 计划对比实际】',
-      opts.command,
-      'workout_plans ＋ exercise_log（计划对比实际，只读）',
-    ),
+      dataTitle: '【calorie · 计划对比实际】',
+      log: copyLog({
+        command: opts.command,
+        source: 'workout_plans ＋ exercise_log（计划对比实际，只读）',
+        actionAt: nowStamp(), version: DOC_VERSION,
+      }),
+    }),
   ];
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -287,7 +289,7 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
       emptyText: '改后为空',
     }),
     renderDisclosure({
-      title: '确认说明',
+      title: '确认说明', open: true,
       contentHtml: renderListRows({
         items: [
           { left: '方式', main: '复制指令后执行写命令', right: '' },
@@ -295,8 +297,10 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
         ],
       }),
     }),
-    dualCopy(opts.key, opts.command, 'workout_plans（写前预览，只读）', {
-      beforeLines: v.before.length, afterLines: v.after.length,
+    dualCopy({
+      key: opts.key, command: opts.command, source: 'workout_plans（写前预览，只读）',
+      dataTitle: '【calorie · 写前预览】', prompt: opts.prompt ?? '',
+      metrics: { beforeLines: v.before.length, afterLines: v.after.length },
     }),
   ];
   return assembleDocPage({
@@ -316,24 +320,22 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: PlanDocOpts): string
       { label: '构建向导', value: ok ? '可落地' : '有硬止', status: ok ? 'ok' : 'warn' },
       { label: '错误', value: v.errorCount + ' 项' },
       { label: '警告', value: v.warningCount + ' 项' },
-      { label: '已检查', value: '已检查 ' + v.checkedSessions + ' 个会话' + (v.errorCount > 0 ? '（' + v.errorCount + '硬止）' : ''), detail: '纯校验，不写库' },
+      { label: '已检查', value: v.checkedSessions + ' 个会话' + (v.errorCount > 0 ? '（' + v.errorCount + '硬止）' : ''), detail: '纯校验，不写库' },
     ]),
-    renderDisclosure({
-      title: '硬止错误（' + v.errors.length + ' 条）',
-      contentHtml: renderListRows({
-        items: v.errors.map((e, i) => ({ left: '错误' + (i + 1), main: e, right: '' })),
-        emptyText: '无硬止错误',
-      }),
-    }),
-    renderDisclosure({
+    // 零条时不出折叠块：KPI 卡已出「错误 0 项／警告 0 项」，两块空折叠是噪声（展开也无内容）。
+    // 有硬止时那两块就是「为什么不能写」的正据，默认展开；警告是次要面，仍折叠。
+    ...(v.errors.length === 0 ? [] : [renderDisclosure({
+      title: '硬止错误（' + v.errors.length + ' 条）', open: true,
+      contentHtml: renderListRows({ items: v.errors.map((e, i) => ({ left: '错误' + (i + 1), main: e, right: '' })) }),
+    })]),
+    ...(v.warnings.length === 0 ? [] : [renderDisclosure({
       title: '警告（' + v.warnings.length + ' 条）',
-      contentHtml: renderListRows({
-        items: v.warnings.map((w, i) => ({ left: '警告' + (i + 1), main: w, right: '' })),
-        emptyText: '无警告',
-      }),
-    }),
-    dualCopy(opts.key, opts.command, 'planStore 校验（构建向导，纯校验）', {
-      errorCount: v.errorCount, warningCount: v.warningCount, checkedSessions: v.checkedSessions,
+      contentHtml: renderListRows({ items: v.warnings.map((w, i) => ({ left: '警告' + (i + 1), main: w, right: '' })) }),
+    })]),
+    dualCopy({
+      key: opts.key, command: opts.command, source: 'planStore 校验（构建向导，纯校验）',
+      dataTitle: '【calorie · 构建向导】', prompt: opts.prompt ?? '',
+      metrics: { errorCount: v.errorCount, warningCount: v.warningCount, checkedSessions: v.checkedSessions },
     }),
   ];
   return assembleDocPage({

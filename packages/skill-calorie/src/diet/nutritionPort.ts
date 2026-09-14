@@ -1,6 +1,9 @@
 /** #112 · 营养移植 4 键取数（t71 需移植 nutrition_ratio／nutrition_detail／
  * source_stats／today_water 四模板的数据面）。
  *
+ * #275 追加：`buildDietOverviewView`（饮食总览两周累计）——服务 `calorie.view.diet` 的
+ * 「看饮食总览」区块，作者＝#271；老脚本口径住 `scripts/render_diet_overview.py`（只读）。
+ *
  * 口径（旧脚本逐行对照，见证据 t112 §1）：
  * - 窗查询一律 food_log（水行按新侧约定以 WATER_NAME 排除；水行宏量全 0，
  *   排除与否数值无差）／nutrition_products（is_deprecated＝0，沿旧 product_library）。
@@ -33,6 +36,11 @@ function assertISODate(v: string, field: string): void {
 
 function daysBetween(start: string, end: string): number {
   return Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
+}
+
+/** 一位小数（老 Python `round(x, 1)` 口径；本域只此一处定义）。 */
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
 }
 
 /* ── 营养配比（nutrition_ratio：蛋白/碳水/脂肪克数＋热量占比＋目标＋推荐范围） ── */
@@ -174,7 +182,6 @@ export function buildNutritionDetailView(db: DatabaseSync, start: string, end: s
     matched += 1;
   }
   const days = Math.max(1, daysBetween(start, end));
-  const round1 = (n: number): number => Math.round(n * 10) / 10;
   // 命中 0 亦渲染（缺数据盒明示，不编数）；连一餐都没有才 missing（上游已拦）。
   const items: NutrientItem[] = DRI.map((spec) => {
     const val = round1(totals[spec.key as keyof typeof totals]);
@@ -228,6 +235,82 @@ export function buildSourceStatsView(db: DatabaseSync): SourceStatsView {
     items: [...merged.entries()]
       .map(([source, v]) => ({ source, ...v }))
       .sort((a, b) => b.count - a.count),
+  };
+}
+
+/* ── 饮食总览（diet_overview：本周累计／本月累计两段同形，都统计到昨日） ── */
+
+export interface OverviewDay { date: string; calorie: number }
+
+/** 一段周期累计（老 `render_diet_overview.py::_aggregate` 的字段逐字）。 */
+export interface DietOverviewPeriod {
+  start: string;
+  end: string;
+  /** 窗内自然日数（老 `days`；`start > end` 即 0——今天正好是窗口首日时出现）。 */
+  days: number;
+  /** 有记录天数（老 `with_data_days`，逐日 GROUP BY 的行数）。 */
+  loggedDays: number;
+  totalCalorie: number;
+  /** 日均＝总热量 ÷ max(1, 自然日数)（老口径：分母是窗口天数，不是有记录天数）。 */
+  avgCalorie: number;
+  totalProtein: number;
+  /** 逐日序列（含无记录日，值 0；老 `#44` 补全完整窗口那条）。 */
+  daily: OverviewDay[];
+}
+
+export interface DietOverviewView {
+  today: string;
+  week: DietOverviewPeriod;
+  month: DietOverviewPeriod;
+}
+
+/** 周一（老 `date.weekday()`：周一＝0）。按 UTC 取星期，避开时区把日期挪一天。 */
+function mondayOf(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const weekday = new Date(Date.UTC(y as number, (m as number) - 1, d as number)).getUTCDay();
+  return shiftISODate(date, -((weekday + 6) % 7));
+}
+
+/** 当月 1 日（老 `today.replace(day=1)`）。 */
+function monthFirstOf(date: string): string {
+  return date.slice(0, 7) + '-01';
+}
+
+function overviewPeriod(db: DatabaseSync, start: string, end: string): DietOverviewPeriod {
+  const days = start <= end ? daysBetween(start, end) : 0;
+  const daily: OverviewDay[] = [];
+  if (days > 0) {
+    const by = new Map<string, number>();
+    const rows = db.prepare(
+      `SELECT date, COALESCE(SUM(calories), 0) AS cal, COALESCE(SUM(protein), 0) AS pro
+         FROM food_log WHERE date BETWEEN ? AND ? AND food_name != ? GROUP BY date ORDER BY date`,
+    ).all(start, end, WATER_NAME) as { date: string; cal: number; pro: number }[];
+    for (const r of rows) by.set(String(r.date), Number(r.cal) || 0);
+    for (let i = 0; i < days; i += 1) {
+      const d = shiftISODate(start, i);
+      daily.push({ date: d, calorie: by.get(d) ?? 0 });
+    }
+    const totalCal = round1(rows.reduce((a, r) => a + (Number(r.cal) || 0), 0));
+    const totalPro = round1(rows.reduce((a, r) => a + (Number(r.pro) || 0), 0));
+    return {
+      start, end, days, loggedDays: rows.length, totalCalorie: totalCal,
+      avgCalorie: round1(totalCal / Math.max(1, days)), totalProtein: totalPro, daily,
+    };
+  }
+  return { start, end, days: 0, loggedDays: 0, totalCalorie: 0, avgCalorie: 0, totalProtein: 0, daily };
+}
+
+/** 饮食总览取数（服务 `calorie.view.diet` 的「看饮食总览」区块，作者＝#271）：
+ *  **不含今日**（老脚本 2026-08-01 对抗审查修复那条：今日由主页「看今日饮食概览」承接）；
+ *  **不抛 missing-data**——它是宿主页面里的一块，缺失阻断由宿主按自己的窗口做，本层给零值 ＋
+ *  `loggedDays` 让块自己出「无记录」空态（不编数）。 */
+export function buildDietOverviewView(db: DatabaseSync, date: string): DietOverviewView {
+  assertISODate(date, 'date');
+  const yesterday = shiftISODate(date, -1);
+  return {
+    today: date,
+    week: overviewPeriod(db, mondayOf(date), yesterday),
+    month: overviewPeriod(db, monthFirstOf(date), yesterday),
   };
 }
 

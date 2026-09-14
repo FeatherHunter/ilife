@@ -68,3 +68,64 @@
   ` id="ilife-copy-data"` 7、` id="ilife-copy-log"` 7、
   `data-action-id="ilife-copy-data"` 7、`data-action-id="ilife-copy-log"` 7，
   即每份双 `id` 各一且与原 `data-action-id` 双通道并存。
+
+## 六、面包屑修复兵：眉标首段改中文（order201–207）
+
+判定：order201–207 七份的眉标（面包屑行，B-01 壳的 `<p class="ilife-block-page-shell-eyebrow">`）
+首段原露英文命令键；本次改成该命令**已有的**中文 title，零新概念。176–185（`workoutPlanDocs.ts`）
+与 195 一字未动；他票文件、issue、命令登记未动。
+
+定位：渲染点＝`src/shared/docPage.ts` 的 `assembleDocPage({ eyebrow })` → `base-paint/blocks` 的
+`renderPageShell`（眉标只此一处落笔）。201–206 走 `sportPortDocs.ts` 的 `buildReviewDoc`，
+207 走 `trendDocs.ts` 的 `buildContraDoc`。
+
+| 渲染点 | 改前 | 改后 | 中文名来源 |
+|---|---|---|---|
+| `sportPortDocs.ts` `buildReviewDoc` | `calorie.view.exercise-review · 运动移植域` | `计划复盘 · 运动移植域` | `cli/keys.ts` 生成件的 `CALORIE_COMBOS['calorie.view.exercise-review'].title` |
+| `trendDocs.ts` `buildContraDoc` | `calorie.view.contraindication · 趋势分析域` | `禁忌扫描 · 趋势分析域` | 同上，`CALORIE_COMBOS['calorie.view.contraindication'].title` |
+
+改法：每处只换眉标字符串一行，另加两行说明注释（`trendDocs.ts` 其余在飞改动非本兵所写，未碰）。
+中文名不另立来源：命令名的中文真值本就是 `CALORIE_COMBOS[key].title`（`output.ts:73` 同口径）。
+
+机器证据：
+
+- 类型检查：`pnpm exec tsc -b packages/skill-calorie` 连跑三次，**本票两件零诊断**；
+  包级 exit 1，三次的唯一红全在 `packages/skill-calorie/src/weight/compare.ts`
+  （行号 151／201／212… → 247／294 → 258 逐轮漂移，mtime 15:00:57 晚于本兵改动 15:00:29），
+  属并发在飞的他票件（`docs/skills/skill-calorie/t377-配对页-证据.md` 同批），非本票文件，按红线未碰。
+- 收尾复跑（同一条命令，第四读）：`exit 0`、零 error——上面那件在飞的他票文件已由对方改完落定；
+  本票两件四次连跑始终零诊断，`dist/render/` 两份也已按新眉标出件（`sportPortDocs.js:419`／`trendDocs.js:399`）。
+- 持锁复跑（口径照 `run-201-207.mjs`，产物另落 `final-v2/201-207/`）：
+  `node tooling/run-locked.mjs --ticket 351 -- node .scratch/t351-fix/run-201-207-v2.mjs`
+  → `waitedMs=0`，`{"total":7,"fails":[],"breadcrumbs":["201=计划复盘 · 运动移植域",…,"207=禁忌扫描 · 趋势分析域"]}`。
+- 机检：`node .scratch/t351-fix/check-201-207-v2.mjs` → `ALL7 PASS`（双按钮 ＋ 冻结 id ＋
+  正文区零 `copy-menu`／`data-fmt`／`▾` ＋ 可见正文零裸字段名 ＋ 零内联事件属性 ＋ **眉标无 ASCII 字母**）。
+
+逐份读数（`node .scratch/t351-fix/readout-201-207-v2.mjs`）：
+
+| order | 路径 | 字节 | 眉标 | 复制数据／复制日志按钮 | `id="ilife-copy-data"`／`-log` |
+|---|---|---|---|---|---|
+| 201 | `D:\ilife\.scratch\t351-fix\final-v2\201-207\order201-result.html` | 63850 | 计划复盘 · 运动移植域 | 1／1 | 1／1 |
+| 202 | `D:\ilife\.scratch\t351-fix\final-v2\201-207\order202-result.html` | 64928 | 计划复盘 · 运动移植域 | 1／1 | 1／1 |
+| 203 | `D:\ilife\.scratch\t351-fix\final-v2\201-207\order203-result.html` | 65421 | 计划复盘 · 运动移植域 | 1／1 | 1／1 |
+| 204 | `D:\ilife\.scratch\t351-fix\final-v2\201-207\order204-result.html` | 64620 | 计划复盘 · 运动移植域 | 1／1 | 1／1 |
+| 205 | `D:\ilife\.scratch\t351-fix\final-v2\201-207\order205-result.html` | 64620 | 计划复盘 · 运动移植域 | 1／1 | 1／1 |
+| 206 | `D:\ilife\.scratch\t351-fix\final-v2\201-207\order206-result.html` | 64620 | 计划复盘 · 运动移植域 | 1／1 | 1／1 |
+| 207 | `D:\ilife\.scratch\t351-fix\final-v2\201-207\order207-result.html` | 60813 | 禁忌扫描 · 趋势分析域 | 1／1 | 1／1 |
+
+抽查 order201（`node .scratch/t351-fix/spot-201-207-v2.mjs`）：眉标 `计划复盘 · 运动移植域`，无 ASCII；
+`>复制数据</button>`／`>复制日志</button>` 各 1；命令键 `calorie.view.exercise-review` 在页内仅剩
+两处，均在复制日志的承载属性 `data-t`（「场景标识」「调用链」两段），属复制契约（复制日志要能照抄重跑），
+不在面包屑里。order207 同读法一致（眉标 `禁忌扫描 · 趋势分析域`）。
+
+未做：176–185／195、他票在飞件（`weight/compare.ts` 等）、路由与 issue；
+同两件里其余页（strength／cardio／distribution／recap／trend、predict／anomaly 等）眉标仍为英文键，
+属别的 order 段，不在本票范围，留给对应票。
+
+超线报警：本次改动后 `sportPortDocs.ts` 533 行、`trendDocs.ts` 816 行（各 ＋2 行注释），
+均仍超 350 线（LF 口径）。已超线，需要根据规则进行重构。超因与拆法见本文件第 24–26 行旧节；
+本次先不拆：本票限定眉标一处，拆分属另票。
+
+新增件（全在 `.scratch/t351-fix/`，不动早前 `run-201-207.mjs`／`check-201-207.mjs`／顶层 7 份）：
+`run-201-207-v2.mjs`（复跑，产物落 `final-v2/201-207/`）、`check-201-207-v2.mjs`（判据机检）、
+`spot-201-207-v2.mjs`（201／207 逐处抽查）、`readout-201-207-v2.mjs`（逐份读数）。

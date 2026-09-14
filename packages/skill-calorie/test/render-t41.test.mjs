@@ -140,7 +140,7 @@ test('#41 计划三盘 + HTML 字段断言', () => {
   assert.equal(plan.totalSessions, 2);
   assert.equal(plan.totalMovements, 2);
   let html = renderPlanHtml(plan);
-  assert.match(html, /训练计划看/);
+  assert.match(html, /训练计划查看/); // T351 视觉修复：标题补“查”（旧“训练计划看”缺字）
   assert.match(html, /test计划/);
   const wiz = buildPlanWizardView({ config: { title: 't', start_date: '2026-09-01', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: 'a', movements: [{ name: '俯卧撑', part: '胸', type: '力量', sets: [] }] }] }] }] });
   assert.equal(wiz.errorCount, 0);
