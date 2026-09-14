@@ -22,7 +22,7 @@
 
 `73 + 2 + 2 + 2 = 79`。
 
-不计：`<root>\.scratch\`（897 件，历史垃圾产物）、`<root>\tests\`（49 件，用例产物／`_plan_*.html`／`test_*.py`）。
+不计：`<root>\.scratch\`（**历史草稿区**，含大量 html 快照，**不作为真模板计入**；其件数随会话增长、**不列具体数**，见第 10 节存疑 9）、`<root>\tests\`（49 件，用例产物／`_plan_*.html`／`test_*.py`）。
 
 口径裁决与分族差异：A 侧「范围与计数」与 B 侧「范围与计数」结论一致（均 79，均排除 `.bak`）；两处差异仅两小项，**以本节为准**：① A 未给 `tests\` 件数（只写「忽略」），B 记 49 件；② A 按目录内文件总数（74/2/3/2）列出「其中 `*.html`」交叉核对，B 直接列 4 个目录的件数与文件名明细。两件的 79 与路径归属无冲突。
 
@@ -30,32 +30,37 @@
 
 ## 与本图相关的件（清单表）
 
-「服务票号」栏中「—」表示该件模板内未见票号标注，仅有 `srcLine` 出处命令。
+**两栏语义**（原「服务票号」栏语义含混，已拆为两栏，不得互推）：
 
-| 件名 | 字节 | 标题 | 服务票号 | 类别 |
-| --- | --- | --- | --- | --- |
-| `templates\health_report.html` | 18023 | 卡路里 · 健康报告（`h1#title` 随 `kind` 变） | #317 | 报告（★core，#384 正主，9 kind 多态） |
-| `templates\predict_report.html` | 9783 | 卡路里 · 预测模拟 | #317（图表迁移注释） | 预测（★core，#383） |
-| `templates\calorie_deficit.html` | 10631 | 卡路里 · 热量缺口 | — | 缺口（★core，#385） |
-| `templates\combined_analysis.html` | 12726 | 卡路里 · 组合分析 | #317（图表迁移注释） | 报告（场景10 分析主模板 → #384） |
-| `templates\calorie_trend.html` | 10254 | 卡路里 · 热量趋势 | — | 报告（→ #383／#384） |
-| `templates\long_trend.html` | 8333 | 卡路里 · 整体趋势 | — | 报告（→ #376 拆A对照） |
-| `templates\review_template.html` | 15639 | 卡路里复盘报告 | — | 报告（8 dim 结构 → #384） |
-| `templates\anomaly_report.html` | 5972 | 卡路里 · 自动分析诊断 | — | 邻近族·仅作融合素材·不在本图范围（降级与复制素材源） |
-| `templates\process_progress.html` | 18835 | 流程进度 · 卡路里 | — | 过程型（复制继续链条参照） |
-| `templates\cron_setup.html` | 8357 | 卡路里 · 定时复盘配置 | — | 过程型（配置→prompt→复制 单向漏斗参照） |
-| `templates\临时样例\统一主面板_视觉标杆.html` | 23444 | 统一主面板 · 视觉标杆 | — | 视觉标杆（浅色 token 主源，静态样张） |
-| `templates\临时样例\沉浸主面板_视觉标杆v2.html` | 29644 | 沉浸主面板 · 视觉标杆 v2 | — | 视觉标杆（深色 Hero ／三环／时间轴） |
-| `templates\设计审查报告.html` | 40574 | 设计审查报告（元件，非模板） | — | 报告（只取结论：P0-P3 ＋ 视觉标杆配方） |
-| `templates\health_dashboard.html` | 12895 | 健康仪表盘 · 卡路里 | #39 | 邻近族·仅作融合素材·不在本图范围（取「今日该做什么」＋「复制回 AI」） |
-| `templates\contraindication_report.html` | 22654 | 禁忌扫描报告 v2 · 卡路里 | #39 | 邻近族·仅作融合素材·不在本图范围（取交互与 CSS 资产，不取业务） |
-| `templates\nutrition_analysis.html` | 12467 | 卡路里 · 营养分析 | #317 | 邻近族·仅作融合素材·不在本图范围 |
-| `templates\nutrition_detail.html` | 6147 | 卡路里 · 营养素深度 | #44 | 邻近族·仅作融合素材·不在本图范围 |
-| `templates\nutrition_ratio.html` | 12604 | 卡路里 · 营养配比 | #44、#317 | 邻近族·仅作融合素材·不在本图范围 |
-| `templates\six_factors.html` | 8381 | 卡路里 · 每日 6 因素综合 | #317、#356 | 邻近族·仅作融合素材·不在本图范围 |
-| `templates\goal_progress.html` | 17521 | 目标进度 · 卡路里 | #66、#317 | 邻近族·仅作融合素材·不在本图范围 |
-| `templates\diet_overview.html` | 7682 | 卡路里 · 饮食总览 | #44 | 邻近族·仅作融合素材·不在本图范围 |
-| `templates\meal_distribution.html` | 11004 | 卡路里 · 餐别分布 | #44 | 邻近族·仅作融合素材·不在本图范围 |
+- **服务本图票**：该件在本图（MAP #161）里为哪张团队票服务。取值＝`#383` 预测／`#385` 缺口／`#384` 报告／`#376` 拆A对照／`邻近素材·不在范围`；另两类非票归属记作「三页共用参照（非票）」。
+- **文件内老侧票号引用（实测）**：用正则 `(?<!&)#\d{1,4}`（后随字符非 hex 字母）在该件模板内实测到的**老侧票号**，逐条给行号；真无则写「无」。HTML 实体（如 `&#39;` ＝撇号）与 CSS 十六进制色值（如 `#0071e3`、`#34c759`）均已在正则层排除，不构成命中。
+
+**覆盖面口径**：本表只登记 **22 件**（`templates\` 根 20 件 ＋ `templates\临时样例\` 2 件）；`templates\` 内其余 **53 件**与本图无关，仅计数不列名（该目录另有 `cropperjs\` 2 件第三方库与 1 件 `.bak`，按第 2 节口径不进 79）；`calorie_html\` 与 `html\` 各 2 件亦未登记。合计未登记 **57 件**（79 − 22）。
+
+| 件名 | 字节 | 标题 | 服务本图票 | 文件内老侧票号引用（实测） | 类别 |
+| --- | --- | --- | --- | --- | --- |
+| `templates\health_report.html` | 18023 | 卡路里 · 健康报告（`h1#title` 随 `kind` 变） | #384 报告（正主） | #317（141、157） | 报告（★core，9 kind 多态） |
+| `templates\predict_report.html` | 9783 | 卡路里 · 预测模拟 | #383 预测（正主） | #317（113） | 预测（★core） |
+| `templates\calorie_deficit.html` | 10631 | 卡路里 · 热量缺口 | #385 缺口（正主） | #317（148） | 缺口（★core） |
+| `templates\combined_analysis.html` | 12726 | 卡路里 · 组合分析 | #384 报告 | #317（140、156、184）、#356（146） | 报告（场景10 分析主模板） |
+| `templates\calorie_trend.html` | 10254 | 卡路里 · 热量趋势 | #383 预测／#384 报告 | #317（149） | 报告 |
+| `templates\long_trend.html` | 8333 | 卡路里 · 整体趋势 | #376 拆A对照 | #317（108）、#356（113） | 报告（拆A对照件） |
+| `templates\review_template.html` | 15639 | 卡路里复盘报告 | #384 报告 | 无 | 报告（8 dim 结构） |
+| `templates\anomaly_report.html` | 5972 | 卡路里 · 自动分析诊断 | 邻近素材·不在范围 | 无 | 邻近族·仅作融合素材·不在本图范围（降级与复制素材源） |
+| `templates\process_progress.html` | 18835 | 流程进度 · 卡路里 | 三页共用参照（非票） | 无（只有 BUG #1／#3／#4 修复注释，非票号） | 过程型（复制继续链条参照） |
+| `templates\cron_setup.html` | 8357 | 卡路里 · 定时复盘配置 | 三页共用参照（非票） | 无 | 过程型（配置→prompt→复制 单向漏斗参照） |
+| `templates\临时样例\统一主面板_视觉标杆.html` | 23444 | 统一主面板 · 视觉标杆 | 三页共用形态参照（非票） | 无 | 视觉标杆（浅色 token 主源，静态样张） |
+| `templates\临时样例\沉浸主面板_视觉标杆v2.html` | 29644 | 沉浸主面板 · 视觉标杆 v2 | 三页共用形态参照（非票） | 无 | 视觉标杆（深色 Hero ／三环／时间轴） |
+| `templates\设计审查报告.html` | 40574 | 设计审查报告（元件，非模板） | 三页共用（非票） | 无 | 报告（只取结论：P0-P3 ＋ 视觉标杆配方） |
+| `templates\health_dashboard.html` | 12895 | 健康仪表盘 · 卡路里 | 邻近素材·不在范围 | 无（`&#39;`@206 为 HTML 实体撇号，非票号） | 邻近族·仅作融合素材·不在本图范围（取「今日该做什么」＋「复制回 AI」） |
+| `templates\contraindication_report.html` | 22654 | 禁忌扫描报告 v2 · 卡路里 | 邻近素材·不在范围 | 无（`&#39;`@378 为 HTML 实体撇号；另有 BUG #2／#3 修复注释） | 邻近族·仅作融合素材·不在本图范围（取交互与 CSS 资产，不取业务） |
+| `templates\nutrition_analysis.html` | 12467 | 卡路里 · 营养分析 | 邻近素材·不在范围 | #317（154、188、198） | 邻近族·仅作融合素材·不在本图范围 |
+| `templates\nutrition_detail.html` | 6147 | 卡路里 · 营养素深度 | 邻近素材·不在范围 | #44（25、26、29、34、43、48、51、93） | 邻近族·仅作融合素材·不在本图范围 |
+| `templates\nutrition_ratio.html` | 12604 | 卡路里 · 营养配比 | 邻近素材·不在范围 | #44（57、66、71、73、77、83、154、197）、#317（164） | 邻近族·仅作融合素材·不在本图范围 |
+| `templates\six_factors.html` | 8381 | 卡路里 · 每日 6 因素综合 | 邻近素材·不在范围 | #317（110、120）、#356（113） | 邻近族·仅作融合素材·不在本图范围 |
+| `templates\goal_progress.html` | 17521 | 目标进度 · 卡路里 | 邻近素材·不在范围 | #66（57、58）、#317（183）、`#8`（235「对齐 #8」，性质待核） | 邻近族·仅作融合素材·不在本图范围 |
+| `templates\diet_overview.html` | 7682 | 卡路里 · 饮食总览 | 邻近素材·不在范围 | #44（36、41、44、50、120、127） | 邻近族·仅作融合素材·不在本图范围 |
+| `templates\meal_distribution.html` | 11004 | 卡路里 · 餐别分布 | 邻近素材·不在范围 | #44（33、56、61、65、67、88、159） | 邻近族·仅作融合素材·不在本图范围 |
 
 邻近族共 10 件（`contraindication_report.html` ＋ 另 9 件：`health_dashboard`／`nutrition_analysis`／`nutrition_detail`／`nutrition_ratio`／`six_factors`／`anomaly_report`／`goal_progress`／`diet_overview`／`meal_distribution`），**仅作融合素材，不在本图范围**，本表只登记不派生开发任务。
 
@@ -67,27 +72,27 @@
 
 ### 1. `templates\health_report.html` ★core（出处：B §1，细节更全）
 
-路径｜字节：`templates\health_report.html` ｜ 18023B。标题：`卡路里 · 健康报告`（`<title>`）；页内 `h1#title` 由 `D.kind` 决定，`titles` 表在 128-131 行，取值 9 个：`full`／`bmi`／`tdee`／`bmr`／`protein`／`water`／`score`／`trend`／`compare`。章节骨架：`meta-bar`（左日期区间·天数／右 `type-badge` 健康报告）→ `h1#title` → `p.sub`（窗口）→「fullBlock」／「singleBlock」二选一 → `div.insight` → `footer.src`；`fullBlock` 内含 `kpi-grid#fullKpis` →「各维度走势(摄入/运动/体重/饮水/缺口)」＋5 色 `legend` →「异常天标注」`#anomalyList` →「建议」`#suggestion`；`singleBlock` 内含 `kpi-grid#singleKpis` →「历史轨迹」`#singleChart`（可隐）→ `#singleTableTitle`／`#singleTableHead`／`#singleTable`（可隐）→「分类里程碑」`#milestoneList`（可隐）。关键数据字段：`kind`、`window`、`start`、`end`、`days`、`insight`、`kpis`〔label/value/delta〕、`series`〔date/calories/exercise_kcal/weight_kg/water_ml/deficit〕、`anomaly_days`〔date/notes[]〕、`suggestion`；单类分支另有 `current/category/height/history[]/milestones[]`（bmi）、`tdee/factor/cal_avg/deficit`（tdee）、`bmr/tdee/factor/under_bmr_days/under_bmr_list[][]`（bmr）、`avg/target/rate/p_goal/series[]`（protein）、`avg/goal/days_ok/days/rate/series[]`（water）、`total/items{}/history[]`（score）、`direction/first_half/second_half/inflections[]/trend[]`（trend）、`prev_start/prev_end/top3[]/deltas[]`（compare）。图表：`window.charts.line`——`full` 走 5 序列归一化多线（`series` 选项），bmi／protein／water／score／trend 各走单线，protein／water 带 `markLine` 目标线。交互：无 tab、无折叠；唯一按钮位是共享 `actionBar` 注入区 `#actionbar-zone`。CSS 组织：模板自带 `<style>` ＋ `<!--SHARED-CSS-->` 占位，`:root` 变量 `--fg --fg2 --fg3 --bg --card --border --accent --good --warn --bad --soft`，`max-width:920px`，`@media (max-width:640px)` 下 KPI 4 列→2 列。服务票号：`#317`（141-142、157 三处注释记图表偏离）。**本件是全族枢纽**：一个模板承担 9 种报告形态，是 #384 多态底座的直接实物依据。
+路径｜字节：`templates\health_report.html` ｜ 18023B。标题：`卡路里 · 健康报告`（`<title>`）；页内 `h1#title` 由 `D.kind` 决定，`titles` 表在 128-131 行，取值 9 个：`full`／`bmi`／`tdee`／`bmr`／`protein`／`water`／`score`／`trend`／`compare`。章节骨架：`meta-bar`（左日期区间·天数／右 `type-badge` 健康报告）→ `h1#title` → `p.sub`（窗口）→「fullBlock」／「singleBlock」二选一 → `div.insight` → `footer.src`；`fullBlock` 内含 `kpi-grid#fullKpis` →「各维度走势(摄入/运动/体重/饮水/缺口)」＋5 色 `legend` →「异常天标注」`#anomalyList` →「建议」`#suggestion`；`singleBlock` 内含 `kpi-grid#singleKpis` →「历史轨迹」`#singleChart`（可隐）→ `#singleTableTitle`／`#singleTableHead`／`#singleTable`（可隐）→「分类里程碑」`#milestoneList`（可隐）。关键数据字段：`kind`、`window`、`start`、`end`、`days`、`insight`、`kpis`〔label/value/delta〕、`series`〔date/calories/exercise_kcal/weight_kg/water_ml/deficit〕、`anomaly_days`〔date/notes[]〕、`suggestion`；单类分支另有 `current/category/height/history[]/milestones[]`（bmi）、`tdee/factor/cal_avg/deficit`（tdee）、`bmr/tdee/factor/under_bmr_days/under_bmr_list[][]`（bmr）、`avg/target/rate/p_goal/series[]`（protein）、`avg/goal/days_ok/days/rate/series[]`（water）、`total/items{}/history[]`（score）、`direction/first_half/second_half/inflections[]/trend[]`（trend）、`prev_start/prev_end/top3[]/deltas[]`（compare）。图表：`window.charts.line`——`full` 走 5 序列归一化多线（`series` 选项），bmi／protein／water／score／trend 各走单线，protein／water 带 `markLine` 目标线。交互：无 tab、无折叠；唯一按钮位是共享 `actionBar` 注入区 `#actionbar-zone`。CSS 组织：模板自带 `<style>` ＋ `<!--SHARED-CSS-->` 占位，`:root` 变量 `--fg --fg2 --fg3 --bg --card --border --accent --good --warn --bad --soft`，`max-width:920px`，`@media (max-width:640px)` 下 KPI 4 列→2 列。服务票号（实测）：`#317`（141-142、157 两处注释记图表偏离）。**本件是全族枢纽**：一个模板承担 9 种报告形态，是 #384 多态底座的直接实物依据。
 
 ### 2. `templates\predict_report.html` ★core（出处：A §1）
 
-路径｜字节：`templates\predict_report.html` ｜ 9783B。标题：`卡路里 · 预测模拟`。章节骨架：`meta-bar` → `h1#title` → `.sub#sub` → `.degrade`（降级横幅，默认隐藏）→ `#content`【`kpi-grid#kpis`；`预测/模拟轨迹`（#chart ＋ 单行 legend）；`假设说明`（`.assume#assume`）】→ `.insight#insight` → `.footer`（srcLine）。关键数据字段：`title`、`sub→rate_note`、`assumption`、`insight`；时间轴 `start/end/days`；降级 `degraded/degrade_msg`；轨迹 `forecast.points[]={date,value,lo,hi}`；体重族 `current/rate_per_week/rate_note`；目标族 `eta/days_left/feasible`；模拟切片 `cut_kcal/new_deficit/weekly_loss`；模拟目标 `target_loss/days_target/weekly_rate/needed_deficit`；热量族 `current/daily_rate/goal`；目标族 `avg/gap/on_target`；缺口族 `avg_deficit/weekly_loss`；稳定族 `avg/sigma/stable`。**一件覆盖 8 种 kind**（`weight_forecast`／`weight_target`／`weight_sim_cut`／`weight_sim_target`／`calorie_forecast`／`calorie_goal`／`calorie_deficit`／`calorie_stability`），每 kind 有各自 KPI 四格（文案与阈值字面见 A 侧表格，A §1 逐 kind 列出）；分支写在展示层 `if/else if` 串到 155 行。图表：单系列折线（`pts.map(p => ({label: p.date.slice(5), value: p.value}))`），opts `{height:260, labels:'select', format: v=>Number(v).toFixed(1), tooltip:true}`；点数 <2 渲染灰字占位「预测点数不足」。交互：降级横幅（`degraded` 为真时显示橙色横幅并隐藏 `#content` 与 `#insight`）；`actionbar-zone` 注入按钮条；底部 srcLine 带出处命令 `render_analysis.py --view predict`。CSS 组织：`<style>` 段 8-51 行，`:root` 12 个变量（fg/fg2/fg3/bg/card/border/accent/good/warn/bad/soft），`.kpi-grid` 四列网格、`.kpi/.section/.legend/.assume/.insight/.degrade/.meta-bar/.btn`，`@media(max-width:640px)` 把 KPI 改两列。**最关键的一行注释（A §1 记 `predict_report.html:113`）**：`// #317 迁 Base charts.line: 置信带(hi/lo band)无接口 → 只画预测值主线的最近近似(记偏离)`——KPI 里仍显示 `lo~hi` 置信带数字，图上画不出来，是「模型有、图没有」的能力缺口，也是新模板可直接超车处。
+路径｜字节：`templates\predict_report.html` ｜ 9783B。标题：`卡路里 · 预测模拟`。章节骨架：`meta-bar` → `h1#title` → `.sub#sub` → `.degrade`（降级横幅，默认隐藏）→ `#content`【`kpi-grid#kpis`；`预测/模拟轨迹`（#chart ＋ 单行 legend）；`假设说明`（`.assume#assume`）】→ `.insight#insight` → `.footer`（srcLine）。关键数据字段：`title`、`sub→rate_note`、`assumption`、`insight`；时间轴 `start/end/days`；降级 `degraded/degrade_msg`；轨迹 `forecast.points[]={date,value,lo,hi}`；体重族 `current/rate_per_week/rate_note`；目标族 `eta/days_left/feasible`；模拟切片 `cut_kcal/new_deficit/weekly_loss`；模拟目标 `target_loss/days_target/weekly_rate/needed_deficit`；热量族 `current/daily_rate/goal`；目标族 `avg/gap/on_target`；缺口族 `avg_deficit/weekly_loss`；稳定族 `avg/sigma/stable`。**一件覆盖 8 种 kind**（`weight_forecast`／`weight_target`／`weight_sim_cut`／`weight_sim_target`／`calorie_forecast`／`calorie_goal`／`calorie_deficit`／`calorie_stability`），每 kind 有各自 KPI 四格（文案与阈值字面见 A 侧表格，A §1 逐 kind 列出）；分支写在展示层 `if/else if` 串到 155 行。图表：单系列折线（`pts.map(p => ({label: p.date.slice(5), value: p.value}))`），opts `{height:260, labels:'select', format: v=>Number(v).toFixed(1), tooltip:true}`；点数 <2 渲染灰字占位「预测点数不足」。交互：降级横幅（`degraded` 为真时显示橙色横幅并隐藏 `#content` 与 `#insight`）；`actionbar-zone` 注入按钮条；底部 srcLine 带出处命令 `render_analysis.py --view predict`。CSS 组织：`<style>` 段 8-51 行，`:root` **11 个变量**（`templates\predict_report.html:10-14`；`--fg/--fg2/--fg3/--bg` 在 `:11`＋`--card/--border/--accent` 在 `:12`＋`--good/--warn/--bad/--soft` 在 `:13`，4＋3＋4＝11；原记 12 有误，其自列名单也只有 11 个），`.kpi-grid` 四列网格、`.kpi/.section/.legend/.assume/.insight/.degrade/.meta-bar/.btn`，`@media(max-width:640px)` 把 KPI 改两列。**最关键的一行注释（A §1 记 `predict_report.html:113`）**：`// #317 迁 Base charts.line: 置信带(hi/lo band)无接口 → 只画预测值主线的最近近似(记偏离)`——KPI 里仍显示 `lo~hi` 置信带数字，图上画不出来，是「模型有、图没有」的能力缺口，也是新模板可直接超车处。
 
 ### 3. `templates\calorie_deficit.html` ★core（出处：A §2）
 
-路径｜字节：`templates\calorie_deficit.html` ｜ 10631B。标题：`卡路里 · 热量缺口`。章节骨架：`meta-bar`（badge＝报告型 · 摄入 vs 消耗）→ `h1>⚖️ 热量缺口` → `kpi-grid` → section`每日摄入 vs 消耗`（#chart ＋ 三行 legend）→ section`缺口明细`（`.table-wrap>table`：#table ＋ `tfoot#tfoot`）→ `.footer`。关键数据字段：payload 形状 `D.data = {summary, series, target, meta}`，并有 `D.status !== 'ok'` 兜底；`summary`＝`avg_intake/avg_burn/avg_exercise_burn/avg_deficit/predicted_loss_kg/weekly_deficit/trend('loss'|'gain'|持平)`；`series[]={date,intake,burn,deficit}`；`target={intake,tdee,weekly_deficit_per_day}`（常量 7700 卡/kg）。图表：**双系列折线 ＋ markLine**——`[{name:'摄入', items:[…intake]}, {name:'消耗', items:[…burn], dashed:true}]`，共享 Y 域，`markLine:{value: target.intake, label:'摄入目标 X'}`；实线＝摄入、虚线＝消耗、目标用基准横线。交互：`dailyTable` 每行右侧 `window.statusBadge(...)` 给「✓ 达标／⚠ 偏低」；表格底部 `tfoot` 汇总行（总摄入/总消耗/总缺口，缺口正负用 `.deficit-pos/.deficit-neg` 双色）；小屏 `.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}` 横滚。CSS 组织：比预测页多两个语义色 `--intake:#5856d6`（紫）、`--burn:#34c759`（绿），让「摄入 vs 消耗」有稳定专色；`.num{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}`；`.deficit-pos{--good}/.deficit-neg{--bad}/.deficit-zero{--fg3}` 三态。服务票号：未见。**本件是缺口页最直的近亲**：KPI 名、表格列、判定阈值（7700 卡/kg、每周口径）可整段搬。
+路径｜字节：`templates\calorie_deficit.html` ｜ 10631B。标题：`卡路里 · 热量缺口`。章节骨架：`meta-bar`（badge＝报告型 · 摄入 vs 消耗）→ `h1>⚖️ 热量缺口` → `kpi-grid` → section`每日摄入 vs 消耗`（#chart ＋ 三行 legend）→ section`缺口明细`（`.table-wrap>table`：#table ＋ `tfoot#tfoot`）→ `.footer`。关键数据字段：payload 形状 `D.data = {summary, series, target, meta}`，并有 `D.status !== 'ok'` 兜底；`summary`＝`avg_intake/avg_burn/avg_exercise_burn/avg_deficit/predicted_loss_kg/weekly_deficit/trend('loss'|'gain'|持平)`；`series[]={date,intake,burn,deficit}`；`target={intake,tdee,weekly_deficit_per_day}`（常量 7700 卡/kg）。图表：**双系列折线 ＋ markLine**——`[{name:'摄入', items:[…intake]}, {name:'消耗', items:[…burn], dashed:true}]`，共享 Y 域，`markLine:{value: target.intake, label:'摄入目标 X'}`；实线＝摄入、虚线＝消耗、目标用基准横线。交互：`dailyTable` 每行右侧 `window.statusBadge(...)` 给「✓ 达标／⚠ 偏低」；表格底部 `tfoot` 汇总行（总摄入/总消耗/总缺口，缺口正负用 `.deficit-pos/.deficit-neg` 双色）；小屏 `.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}` 横滚。CSS 组织：比预测页多两个语义色 `--intake:#5856d6`（紫）、`--burn:#34c759`（绿），让「摄入 vs 消耗」有稳定专色；`.num{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}`；`.deficit-pos{--good}/.deficit-neg{--bad}/.deficit-zero{--fg3}` 三态（实测 `calorie_deficit.html:50-52`）。服务票号（实测）：`#317`（148）。**本件是缺口页最直的近亲**：KPI 名、表格列、判定阈值（7700 卡/kg、每周口径）可整段搬。
 
 ### 4. `templates\combined_analysis.html`（出处：A §3）
 
-路径｜字节：`templates\combined_analysis.html` ｜ 12726B。标题：`卡路里 · 组合分析`。章节骨架：`meta-bar`（badge＝组合分析 · 双轴+相关）→ `h1#title` → `.sub` → `kpi-grid`（**相关系数 r 排第一格**／A 均值／B 均值／对齐样本 N）→ section`双轴走势`（#dualChart ＋ 双行 legend）→ section`相关性与回归`（#scatterChart）→ section`延迟相关性(前 N 天 B 值 vs 当日 A 值)`（#lagTable）→ section`分层对比`（#stratTable，列＝分组/天数/A 净变化/B 均值）→ `.insight`。关键数据字段：payload **直接展开**（非 `D.data`）：`labels:{a,b}`、`pair`、`start/end/days/window/insight`；`correlation:{r,n}`、`regression:{slope,intercept}`；`a_avg/a_delta/a_count/b_avg/b_delta/b_count`；`line[]/scatter[]/lag[]/strat{}/over_limit_days[]/deficit_buckets[]`。图表：两处 `window.charts.line` 调用——`dualChart` 用「各轴独立 min-max → 归一化共享 0-100 域」近似双轴；`scatterChart` 承载散点 ＋ 回归线（读 `D.regression.slope/intercept`，叠 `correlation.r`）。交互：两个 section 带 `id`（`lagSection`／`stratSection`）便于按数据有无隐藏；`actionbar-zone`；srcLine 带 `render_analysis.py --view combo`。CSS 组织：与预测页同源，多一个 `--b:#ff9500`（B 轴专色），A 轴用 `--accent`。服务票号：`#317`（第 140、144 行两处「记偏离」注释：`// #317 迁 Base charts.line 双系列: 各轴独立 min-max → 归一化共享 0-100 域近似 (charts.line 无双轴独立刻度 — 记偏离)`）——老侧**想要真双轴但图表层给不了**，只能归一化，是新模板第二个可超车点。
+路径｜字节：`templates\combined_analysis.html` ｜ 12726B。标题：`卡路里 · 组合分析`。章节骨架：`meta-bar`（badge＝组合分析 · 双轴+相关）→ `h1#title` → `.sub` → `kpi-grid`（**相关系数 r 排第一格**／A 均值／B 均值／对齐样本 N）→ section`双轴走势`（#dualChart ＋ 双行 legend）→ section`相关性与回归`（#scatterChart）→ section`延迟相关性(前 N 天 B 值 vs 当日 A 值)`（#lagTable）→ section`分层对比`（#stratTable，列＝分组/天数/A 净变化/B 均值）→ `.insight`。关键数据字段：payload **直接展开**（非 `D.data`）：`labels:{a,b}`、`pair`、`start/end/days/window/insight`；`correlation:{r,n}`、`regression:{slope,intercept}`；`a_avg/a_delta/a_count/b_avg/b_delta/b_count`；`line[]/scatter[]/lag[]/strat{}/over_limit_days[]/deficit_buckets[]`。图表：两处 `window.charts.line` 调用——`dualChart` 用「各轴独立 min-max → 归一化共享 0-100 域」近似双轴；`scatterChart` 承载散点 ＋ 回归线（读 `D.regression.slope/intercept`，叠 `correlation.r`）。交互：两个 section 带 `id`（`lagSection`／`stratSection`）便于按数据有无隐藏；`actionbar-zone`；srcLine 带 `render_analysis.py --view combo`。CSS 组织：与预测页同源，多一个 `--b:#ff9500`（B 轴专色），A 轴用 `--accent`。服务票号（实测）：`#317`（140、156、184 三处注释）、`#356`（146）（140 行原文：`// #317 迁 Base charts.line 双系列: 各轴独立 min-max → 归一化共享 0-100 域近似`，141 行为其续行 `// (charts.line 无双轴独立刻度 — 记偏离)`）——老侧**想要真双轴但图表层给不了**，只能归一化，是新模板第二个可超车点。
 
 ### 5. `templates\calorie_trend.html`（出处：A §5）
 
-路径｜字节：`templates\calorie_trend.html` ｜ 10254B。标题：`卡路里 · 热量趋势`；badge 自称 `报告型 · 7 dim`。章节骨架：`meta-bar` → `h1>🔥 热量趋势`（**emoji 进标题**）→ `kpi-grid`（日均热量／7 天变化／工作日 vs 周末／合规率）→ section`每日热量 (含目标线)`（#chart ＋ 三行 legend：日热量／目标／超标警告）→ section`每日明细`（表格列＝日期/类型/实际/目标/偏差/状态）→ `.footer`。关键数据字段：`D.data = {summary, series, meta}`；`summary`＝`avg/target/trend('down'|'up'|持平)/trend_value/start_avg/end_avg/weekend_diff/weekday_avg/weekend_avg/compliance_rate/compliant_days`；`series[]={date,calorie}`。图表：单系列折线 ＋ `markLine:{value: summary.target, label:'目标 X'}` ＋ area 填充。交互：KPI 值**按语义染色**（趋势为正染 `--bad`、为负染 `--good`；日均偏差 > 目标 5% 染 `--bad`）；表格行按偏差分档给 `statusBadge`：◐ 进行中／✗ 严重超／⚠ 超（阈值 ±5%、+10%）＋ `--good`；超标日在 legend 区用 `warnSpan` 汇总（`⚠ MM-DD 严重超标 +X%(N 卡)`）。CSS 组织：`--accent:#0071e3`；`td.num,th.num{font-variant-numeric:tabular-nums}`；`.section h2` 18px（本族最大）。服务票号：未见。可搬家产出：**合规率／工作日 vs 周末／偏差分档**三件分析指标，预测页与缺口页都能直接用。
+路径｜字节：`templates\calorie_trend.html` ｜ 10254B。标题：`卡路里 · 热量趋势`；badge 自称 `报告型 · 7 dim`。章节骨架：`meta-bar` → `h1>🔥 热量趋势`（**emoji 进标题**）→ `kpi-grid`（日均热量／7 天变化／工作日 vs 周末／合规率）→ section`每日热量 (含目标线)`（#chart ＋ 三行 legend：日热量／目标／超标警告）→ section`每日明细`（表格列＝日期/类型/实际/目标/偏差/状态）→ `.footer`。关键数据字段：`D.data = {summary, series, meta}`；`summary`＝`avg/target/trend('down'|'up'|持平)/trend_value/start_avg/end_avg/weekend_diff/weekday_avg/weekend_avg/compliance_rate/compliant_days`；`series[]={date,calorie}`。图表：单系列折线 ＋ `markLine:{value: summary.target, label:'目标 X'}` ＋ area 填充。交互：KPI 值**按语义染色**（趋势为正染 `--bad`、为负染 `--good`；日均偏差 > 目标 5% 染 `--bad`）；表格行按偏差分档给 `statusBadge`：◐ 进行中／✗ 严重超／⚠ 超（阈值 ±5%、+10%）＋ `--good`；超标日在 legend 区用 `warnSpan` 汇总（`⚠ MM-DD 严重超标 +X%(N 卡)`）。CSS 组织：`--accent:#0071e3`；`td.num,th.num{font-variant-numeric:tabular-nums}`；`.section h2` 18px（本族最大）。服务票号（实测）：`#317`（149）。可搬家产出：**合规率／工作日 vs 周末／偏差分档**三件分析指标，预测页与缺口页都能直接用。
 
 ### 6. `templates\long_trend.html`（出处：A §6）
 
-路径｜字节：`templates\long_trend.html` ｜ 8333B。标题：`卡路里 · 整体趋势`。章节骨架：`meta-bar` → `h1#title`（渲染成 `看整体趋势(<group_label>)`）→ `.sub`（`多指标归一化同图 · <window> 窗口`）→ `kpi-grid`（由 `D.metrics` 动态生成为每指标一格）→ section`多指标同图(归一化 0-100)`（#chart ＋ 动态 legend）→ section`周期对比`（`#periodSection`，默认 `display:none`，有数据才显）→ `.insight` → `.footer`。关键数据字段：`start/end/days/group_label/window/insight/metrics[]/stats{field:{}}/monthly[]|norm[]/period_compare`；每 metric `{field,label}`。图表：`window.charts.line`，多序列**共享 0-100 归一化域**（注释：`多序列(共享 Y 域 0-100 归一化天然吻合)`）；事件型指标特判 `EX_FIELDS = ['exercise_kcal','strength_kcal','cardio_kcal']`，缺日补 0（休息日 0 基线）而非断点；legend 颜色按 `colors[j % 6]` 轮转，`<i style="background:...">` 动态填色。CSS 组织：与其他同族一致，`:root` 与 `calorie_trend` 同。服务票号：未见。**与拆A的分工**：本件是「多指标同图」的对照物——拆A 若做趋势，本件给出「归一化 ＋ 缺日补 0 ＋ 动态 legend」三件可复用件（但归一化本身按裁决 4／裁决 7 **不继承**，见第 8、9 节）。
+路径｜字节：`templates\long_trend.html` ｜ 8333B。标题：`卡路里 · 整体趋势`。章节骨架：`meta-bar` → `h1#title`（渲染成 `看整体趋势(<group_label>)`）→ `.sub`（`多指标归一化同图 · <window> 窗口`）→ `kpi-grid`（由 `D.metrics` 动态生成为每指标一格）→ section`多指标同图(归一化 0-100)`（#chart ＋ 动态 legend）→ section`周期对比`（`#periodSection`，默认 `display:none`，有数据才显）→ `.insight` → `.footer`。关键数据字段：`start/end/days/group_label/window/insight/metrics[]/stats{field:{}}/monthly[]|norm[]/period_compare`；每 metric `{field,label}`。图表：`window.charts.line`，多序列**共享 0-100 归一化域**（注释：`多序列(共享 Y 域 0-100 归一化天然吻合)`）；事件型指标特判 `EX_FIELDS = ['exercise_kcal','strength_kcal','cardio_kcal']`，缺日补 0（休息日 0 基线）而非断点；legend 颜色按 `colors[j % 6]` 轮转，`<i style="background:...">` 动态填色。CSS 组织：与其他同族一致，`:root` 与 `calorie_trend` 同。服务票号（实测）：`#317`（108）、`#356`（113）。**与拆A的分工**：本件是「多指标同图」的对照物——拆A 若做趋势，本件给出「归一化 ＋ 缺日补 0 ＋ 动态 legend」三件可复用件（但归一化本身按裁决 4／裁决 7 **不继承**，见第 8、9 节）。
 
 ### 7. `templates\review_template.html`（出处：A §7）
 
@@ -126,11 +131,11 @@
 
 ### 14. `templates\health_dashboard.html`（出处：B §2 · 邻近族）
 
-路径｜字节：`templates\health_dashboard.html` ｜ 12895B。标题：`健康仪表盘 · 卡路里`；`h1#title` 文案写死「综合健康报告」。章节骨架：`header.hero`（`h1#title` ＋ `div.sub#subtitle` ＋ `#statusArea`）→「🎯 今日该做什么」（`action` 行列表：`icon` ＋ `text strong`／`small`）→ 4 张维度卡（`head` ＋ `h3` ＋ `badge`）：🔥 摄入／🏃 运动／⚖️ 体重／📉 缺口 → `copy-section`「📤 复制回 AI（让 AI 帮你规划）」`pre`。关键数据字段：未见 `D.*` 取值（变量名非 `D`，直读 `__P__`）；模板内出现 `e.coverage_pct`、`w.trend`、`w.trend_label`、`calBadge`、`deficitBadge`。图表：无 canvas／svg／charts 调用，纯卡片 ＋ 徽章。交互：`copy-section` ＋ `pre` 承载可复制文本；`.btn.copied` 提供复制态反馈（绿底）。CSS 组织：`<style>` ＋ 共享占位；`:root` 更丰富——`--accent --accent-soft --bg --border --card --fg --fg2 --fg3 --green --green-soft --orange --orange-soft --red --red-soft --shadow`；含 `hero`／`status.ok`／`status.warn`／`action`／`copy-section` 专有块。服务票号：`#39`。**本图定位**：邻近族·仅作融合素材·不在本图范围；按裁决 1 取其两件独有资产——「今日该做什么」动作列表 ＋「复制回 AI」块。
+路径｜字节：`templates\health_dashboard.html` ｜ 12895B。标题：`健康仪表盘 · 卡路里`；`h1#title` 文案写死「综合健康报告」。章节骨架：`header.hero`（`h1#title` ＋ `div.sub#subtitle` ＋ `#statusArea`）→「🎯 今日该做什么」（`action` 行列表：`icon` ＋ `text strong`／`small`）→ 4 张维度卡（`head` ＋ `h3` ＋ `badge`）：🔥 摄入／🏃 运动／⚖️ 体重／📉 缺口 → `copy-section`「📤 复制回 AI（让 AI 帮你规划）」`pre`。关键数据字段：未见 `D.*` 取值（变量名非 `D`，直读 `__P__`）；模板内出现 `e.coverage_pct`、`w.trend`、`w.trend_label`、`calBadge`、`deficitBadge`。图表：无 canvas／svg／charts 调用，纯卡片 ＋ 徽章。交互：`copy-section` ＋ `pre` 承载可复制文本；`.btn.copied` 提供复制态反馈（绿底）。CSS 组织：`<style>` ＋ 共享占位；`:root` 更丰富——`--accent --accent-soft --bg --border --card --fg --fg2 --fg3 --green --green-soft --orange --orange-soft --red --red-soft --shadow`；含 `hero`／`status.ok`／`status.warn`／`action`／`copy-section` 专有块。服务票号（实测）：无——`#39` 是实体假命中：本件 `&#39;` 出现于 206 行 `escapeHTML` 表的撇号项（`"'":'&#39;'`），不是票号。**本图定位**：邻近族·仅作融合素材·不在本图范围；按裁决 1 取其两件独有资产——「今日该做什么」动作列表 ＋「复制回 AI」块。
 
 ### 15. `templates\contraindication_report.html` ★core（出处：B §8 · 邻近族）
 
-路径｜字节：`templates\contraindication_report.html` ｜ 22654B（报告族分派内最大）。标题：`禁忌扫描报告 v2 · 卡路里`；`h1#title` 写死「健身计划禁忌扫描」。章节骨架：`eyebrow` ＋ `h1`／`sub` → `kpi-grid` 6 张（`sessions/movements/safe/errors/warns/hits`，各带顶部语义色）→ `pills` 筛选区 →「扫描概览」→ 命中列表（`section-title` ＋ `part-group`／`part-header` ＋ `hit` 卡：`hit-header/hit-tag/hit-name/hit-rule/hit-reason/hit-usedin` ＋ `alternatives` 替代区）→「已选替代 (N)」`selected-area`／`selected-list`／`selected-item` →「复制修改指令」`copy-preview` ＋ `btn-row`〔📋 复制修改指令／📊 完整报告／↺ 清空选择〕。关键数据字段：`SUMMARY`〔`scanned_sessions/scanned_movements/safe_skipped/by_severity.error/by_severity.warn/total_hits`〕、`HITS`〔`movement_name/rule_name/reason/used_in/severity/error/warn`〕、`alt.selected`。图表：无。交互：族内最重——severity 筛选 pills、「已选替代」多选状态机（`selected-area`／`count`／`clearAll()`）、**二段复制**（`copyModify()` 只出修改指令 ／ `copyFull()` 出完整报告，605／613 行）、`.btn:disabled` 禁用态、`.btn.copied` 绿底态。CSS 组织：**独立设计体系**（与前族不同）：`--ink --ink2 --ink3 --line --bg-soft --bg-section --card --accent --green/orange/red-soft --gray --shadow --shadow-sm --r --r-sm --r-lg`（圆角也变量化）。服务票号：`#39`。**本图定位**：邻近族·仅作融合素材·不在本图范围——它是健身计划禁忌扫描（`SUMMARY.scanned_sessions`／`movements`），属训练计划族，与 8 条报告唤醒词无对应；**只取交互与样式资产，不取业务**。
+路径｜字节：`templates\contraindication_report.html` ｜ 22654B（报告族分派内最大）。标题：`禁忌扫描报告 v2 · 卡路里`；`h1#title` 写死「健身计划禁忌扫描」。章节骨架：`eyebrow` ＋ `h1`／`sub` → `kpi-grid` 6 张（`sessions/movements/safe/errors/warns/hits`，各带顶部语义色）→ `pills` 筛选区 →「扫描概览」→ 命中列表（`section-title` ＋ `part-group`／`part-header` ＋ `hit` 卡：`hit-header/hit-tag/hit-name/hit-rule/hit-reason/hit-usedin` ＋ `alternatives` 替代区）→「已选替代 (N)」`selected-area`／`selected-list`／`selected-item` →「复制修改指令」`copy-preview` ＋ `btn-row`〔📋 复制修改指令／📊 完整报告／↺ 清空选择〕。关键数据字段：`SUMMARY`〔`scanned_sessions/scanned_movements/safe_skipped/by_severity.error/by_severity.warn/total_hits`〕、`HITS`〔`movement_name/rule_name/reason/used_in/severity/error/warn`〕、`alt.selected`。图表：无。交互：族内最重——severity 筛选 pills、「已选替代」多选状态机（`selected-area`／`count`／`clearAll()`）、**二段复制**（`copyModify()` 只出修改指令 ／ `copyFull()` 出完整报告，605／613 行）、`.btn:disabled` 禁用态、`.btn.copied` 绿底态。CSS 组织：**独立设计体系**（与前族不同）：`--ink --ink2 --ink3 --line --bg-soft --bg-section --card --accent --green/orange/red-soft --gray --shadow --shadow-sm --r --r-sm --r-lg`（圆角也变量化）。服务票号（实测）：无——`#39` 是实体假命中：本件 `&#39;` 出现于 378 行 `escapeHTML` 表的撇号项（`"'":'&#39;'`），不是票号；另 385／470／559 行有 BUG #2／#3 修复注释（BUG 编号，非票号）。**本图定位**：邻近族·仅作融合素材·不在本图范围——它是健身计划禁忌扫描（`SUMMARY.scanned_sessions`／`movements`），属训练计划族，与 8 条报告唤醒词无对应；**只取交互与样式资产，不取业务**。
 
 ### 16. `templates\nutrition_analysis.html`（出处：B §3 · 邻近族）
 
@@ -150,7 +155,7 @@
 
 ### 20. `templates\goal_progress.html`（出处：B §9 · 邻近族）
 
-路径｜字节：`templates\goal_progress.html` ｜ 17521B。标题：`目标进度 · 卡路里`。章节骨架：`hero`（`eyebrow` ＋ `h1#title` ＋ `sub`）→ `paused-banner`（`paused-icon`／`paused-title`／`paused-sub` ＋ `btn-restart`）→ `kpis` → `section`「目标 vs 实际」（`row`：`name`／`num`／`bar-bg`／`bar-fg`／`badge`）→ `section.vs-chart`「目标线 vs 实际线」（近 N 天）→ `section` 明细表 → `copy-row` ＋ `guide`（`guide-step`／`guide-no`）。关键数据字段：`meta/title/subtitle/mode/kpis/context_kpis/items/itemsTitle/itemsHint/table{title/hint/cols}/summary/paused_summary/guide/empty`。图表：`charts.line`（`vs-chart` 段内联生成）。交互：**暂停横幅**（仅提示、数据照常）＋ 重启复制按钮 `btn-restart`（`copied` 绿底态）；`copy-row` 复制区；小屏下 `row` 改 2 行网格、表格用 `:has()` 按列数自适应列宽（87 行整段）。CSS 组织：`--ink --ink2 --ink3 --line --bg --card --accent --accent-soft --green --green-soft --orange --orange-soft --red --red-soft --shadow`；按钮 999px 胶囊 ＋ `min-height:44px`。服务票号：`#66`（2026-08-04 暂停横幅 ＋ 重启复制按钮）、`#317`。**本图定位**：邻近族·仅作融合素材·不在本图范围；其「提示与数据解耦」的暂停横幅与 `:has()` 表格自适应是最省代码的两处资产。
+路径｜字节：`templates\goal_progress.html` ｜ 17521B。标题：`目标进度 · 卡路里`。章节骨架：`hero`（`eyebrow` ＋ `h1#title` ＋ `sub`）→ `paused-banner`（`paused-icon`／`paused-title`／`paused-sub` ＋ `btn-restart`）→ `kpis` → `section`「目标 vs 实际」（`row`：`name`／`num`／`bar-bg`／`bar-fg`／`badge`）→ `section.vs-chart`「目标线 vs 实际线」（近 N 天）→ `section` 明细表 → `copy-row` ＋ `guide`（`guide-step`／`guide-no`）。关键数据字段：`meta/title/subtitle/mode/kpis/context_kpis/items/itemsTitle/itemsHint/table{title/hint/cols}/summary/paused_summary/guide/empty`。图表：`charts.line`（`vs-chart` 段内联生成）。交互：**暂停横幅**（仅提示、数据照常）＋ 重启复制按钮 `btn-restart`（`copied` 绿底态）；`copy-row` 复制区；小屏下 `row` 改 2 行网格、表格用 `:has()` 按列数自适应列宽（87 行整段）。CSS 组织：`--ink --ink2 --ink3 --line --bg --card --accent --accent-soft --green --green-soft --orange --orange-soft --red --red-soft --shadow`；按钮 999px 胶囊 ＋ `min-height:44px`。服务票号（实测）：`#66`（57、58）、`#317`（183）、`#8`（235「对齐 #8」，性质待核）。**本图定位**：邻近族·仅作融合素材·不在本图范围；其「提示与数据解耦」的暂停横幅与 `:has()` 表格自适应是最省代码的两处资产。
 
 ### 21. `templates\diet_overview.html`（出处：B §10 · 邻近族）
 
@@ -189,7 +194,7 @@
 
 合并 A 侧 19 条与 B 侧 13 条，去重后按「通用底座／图表／交互／文案契约／安全护栏」归组。每条给：出自哪件哪行 ＋ 为什么值得吸收 ＋ 对应新页面。
 
-**统一纠正（裁决 9，取代 A 侧原表述）**：A 侧原文写「老侧那套 token（`--ink/--ink2/--ink3`、`--r-sm/--r/--r-lg`、三档 `--shadow`、`--ease/--ease-spring`）`@import` 即可」——**此表述作废**。老侧那套 token 名在本仓**零命中**，本仓样式唯一真相源是 `packages/base-render/`（包名 `base-paint`）的 `src/spec/style.ts:12` `CSS_VAR_TOKENS`（11 个，冻结）＋ 产出器 `src/style.ts:1291 buildStyleSheet()`；红线逐字「不得自造第二份表」。故本清单凡涉老侧 token，一律改为：**「老侧这套仅作设计意图参考（圆角梯度／三档阴影／弹簧缓动）；本仓缺对应 token，若确需，属公共层能力，另立票，不在 #383／#384／#385 内自造」**。A 侧的 token 相关条目按此降级保留。
+**统一纠正（裁决 9，取代 A 侧原表述）**：A 侧原文写「老侧那套 token（`--ink/--ink2/--ink3`、`--r-sm/--r/--r-lg`、三档 `--shadow`、`--ease/--ease-spring`）`@import` 即可」——**此表述作废**。老侧那套 token 名在本仓**零命中**，本仓样式唯一真相源是 `packages/base-render/`（包名 `base-paint`）的 `src/spec/style.ts:12` `CSS_VAR_TOKENS`（11 个，冻结）＋ 产出器 `src/style.ts:1291 buildStyleSheet()`；红线**原意**「不自造第二份表」——原文见 `packages/base-render/src/style.ts:10`（「`:root` 的 11 个 token 逐值取 `CSS_VAR_TOKENS`（doc:273-289），**不自造第二份表**（doc:303）」）与 `docs/base-paint-contract.md:303`（「**不得**因此自造第二份 token 表或样式常量（§4.3 第 6 条）」）。故本清单凡涉老侧 token，一律改为：**「老侧这套仅作设计意图参考（圆角梯度／三档阴影／弹簧缓动）；本仓缺对应 token，若确需，属公共层能力，另立票，不在 #383／#384／#385 内自造」**。A 侧的 token 相关条目按此降级保留。
 
 ### 通用底座
 
@@ -205,7 +210,7 @@
 
 8. **`charts.line` 全手写 SVG、零重库** —— 出处 `predict_report.html:116`／`calorie_deficit.html:151`／`combined_analysis.html:173,185`／`calorie_trend.html:152`／`long_trend.html:135`（8 件模板统一调用）；`nutrition_ratio.html` 另有 `charts.donut`；两件标杆的三环与趋势图全手写；设计审查明确把「零 Chart.js/ECharts 重库」列为「已经做对的事」。为什么值得吸收：单文件 HTML 报告的体积与离线可用性靠这个，引入重库一次就推翻全库最省的优点。对应新页面：三页全部——但**必须先补 `charts.line` 的能力缺口**（置信带／真双轴／缺口面积，见第 9 节），否则只会再「记一次偏离」。
 9. **`markLine` 目标线 ＋ 达标三件套** —— 出处 `health_report.html:241,256`（蛋白／水分折线画目标值）＋ `229-258`（日均／目标／达标天数／达标率 四 KPI）＋ `calorie_deficit.html:151`（摄入目标横线）＋ `calorie_trend.html:152`（`markLine:{value: summary.target}` ＋ area 填充）。为什么值得吸收：把「目标」从数值变成图形，一眼可判，且四件套只靠同一 `markLine` 能力。对应新页面：#383（预测轨迹 vs 目标）、#385（摄入目标线）、#384（蛋白／水分报告，可推广到 TDEE／BMR）。
-10. **KPI 语义染色** —— 出处 `calorie_trend.html:134-137`（`dAvg>target*0.05` 染 `--bad`；`trend_value<=0` 染 `--good`）＋ `calorie_deficit.html:84` 三态 `.deficit-pos/.deficit-neg/.deficit-zero`。为什么值得吸收：数字按「这个方向是好是坏」上色，是产品语义最省字的表达，写成一行三元、零结构成本。对应新页面：#383（速率正负）、#385（缺口正负）、#384（趋势方向）。
+10. **KPI 语义染色** —— 出处 `calorie_trend.html:134-137`（`dAvg>target*0.05` 染 `--bad`；`trend_value<=0` 染 `--good`）＋ `calorie_deficit.html:50-52` 三态 `.deficit-pos/.deficit-neg/.deficit-zero`（实测三态定义在 :50-52，渲染取值在 :173；:84 实为 `<h1>⚖️ 热量缺口</h1>`，原记行号有误）。为什么值得吸收：数字按「这个方向是好是坏」上色，是产品语义最省字的表达，写成一行三元、零结构成本。对应新页面：#383（速率正负）、#385（缺口正负）、#384（趋势方向）。
 11. **环形进度（`ring`）＋ 图下数字条 ＋ 大数字** —— 出处 v1 `:621` 88×88 单环（`stroke-dasharray="238.76" stroke-dashoffset="43"` ＋ 中心 `.pct`）、v2 `:721` 200×200 三环（Move/Exercise/Stand，半径 85/65/45、线宽 16、`stroke-linecap:round`，每环＝半透明轨道圈 ＋ 实色进度圈）；`.lead-stat` 大数字（v2 `:785` 区）＋ `.trend-stats`/`.trend-stat` 图下数字条（v1 `:660` 区）；设计审查「视觉标杆配方」明确要求保留 `ring 进度`，并点名 `today_water` 的 ring 是「全库最克制有效的可视化」，`weight_log_receipt` 的 64px 大数字是其位列 TOP2 的核心原因。为什么值得吸收：环形进度在一屏内同时表达「达成率」和「还没完成的量」；图表给形状、数字给结论，贴在一起省掉「看图—读表」的折返。对应新页面：#385（当日缺口占目标缺口的达成率）、#383（预测终点大数字 ＋ 对目标完成度环）。
 12. **目标线 vs 实际线双线图** —— 出处 `goal_progress.html:57-67`（`vs-chart` 段内联 `charts.line`）。为什么值得吸收：与 `markLine` 同类但系列化，适合「计划 vs 实绩」这种两元素长期对比。对应新页面：#383 预测页（预测线 vs 实际线）、#385（摄入 vs 消耗，老侧 `calorie_deficit` 已实装双系列 ＋ 虚线区分）。
 
@@ -293,23 +298,24 @@
 
 **裁决 1 · 看健康报告对齐 `health_report.html`**：看健康报告对齐 `health_report.html`（`kind=full`／`compare`）；`health_dashboard.html` 作素材（取「今日该做什么」＋「复制回 AI」块）。理由：词面与新侧冻结表一致，且它是 A2 十九场景正主；两件同名属历史命名撞车。出处：https://github.com/FeatherHunter/ilife/issues/384#issuecomment-5662155707
 
-**裁决 2 · 计数口径**：只计 `*.html`，**排除 `.bak`**——`templates\` 73 ＋ `templates\临时样例\` 2 ＋ `calorie_html\` 2 ＋ `html\` 2 ＝ **79 件**；`help_center_v2_4_12.html.bak`（17696B）排除并注明；`.scratch\`（897）与 `tests\`（49）不计（前者垃圾产物、后者用例产物）。同第 2 节。
+**裁决 2 · 计数口径**：只计 `*.html`，**排除 `.bak`**——`templates\` 73 ＋ `templates\临时样例\` 2 ＋ `calorie_html\` 2 ＋ `html\` 2 ＝ **79 件**；`help_center_v2_4_12.html.bak`（17696B）排除并注明；`.scratch\`（历史草稿区，件数不列，见第 10 节存疑 9）与 `tests\`（49）不计（前者历史草稿、后者用例产物）。同第 2 节。
 
 **裁决 3 · #384 形状**：命令层 8 条独立、渲染层 1 个多态底座；判定线采纳 300 行；先验顺序＝先跑通「看BMI报告」这一 `kind` 再铺其余 7 条。同 #384 节。
 
 **裁决 4 · 老侧图表缺陷不可继承**：老侧「无双轴独立刻度、五维各维独立 min-max 归一化到 0-100 共享域」「`six_factors` Y 轴刻度文字缺失」记为**已知老侧缺陷，不是可继承的优秀点**；新侧须重决策（2-3 个候选作图方案及代价见第 9 节）。
 
-**裁决 5（新增）· 五维走势作图**：采 **A 方案（小倍数图）** 为主、**C 方案（保留归一化但诚实标注）** 为空间受限降级；**B 方案（真多轴）否决**（为五维开五轴不可读且须动公共层）。理由：A 零公共层改动、表达诚实、可移动端纵向滚动；C 保证极端场景不空白。
+**裁决 5（新增）· 五维走势作图**：采 **A 方案（小倍数图）** 为主、**C 方案（保留归一化但诚实标注）** 为空间受限降级；**B 方案（真多轴）否决**（为五维开五轴不可读且须动公共层）。理由：A 零公共层改动、表达诚实、可移动端纵向滚动；C 保证极端场景不空白。**出处**：编排者裁决（本会话 2026-09-14）；细则见交接文档 `.scratch/handoff/20260914-173837-卡路里场景10B推进.md` 第 7 节。
 
-**裁决 6（新增）· 本图不改公共层契约**：actionBar 沿用既有能力（复制数据／复制日志）；老侧「场景按钮写死空数组」这一事实记录在案；新侧若日后要三档动作引导，另立票处理，不塞进 #383／#384／#385。
+**裁决 6（新增）· 本图不改公共层契约**：actionBar 沿用既有能力（复制数据／复制日志）；老侧「场景按钮写死空数组」这一事实记录在案；新侧若日后要三档动作引导，另立票处理，不塞进 #383／#384／#385。**出处**：编排者裁决（本会话 2026-09-14）；细则见交接文档 `.scratch/handoff/20260914-173837-卡路里场景10B推进.md` 第 7 节（该节硬约束 2）。
 
-**裁决 7（新增）· 不可继承清单**：① 恒定值归一化给 50 的边界 hack（老侧已分叉两次）② 老侧两套 CSS 命名并存的现状（新侧以本仓既有约定为准）③ 老侧报告页空的 actionBar 场景按钮 ④ 老侧 `charts.line` 无双轴独立刻度的表达方式。
+**裁决 7（新增）· 不可继承清单**：① 恒定值归一化给 50 的边界 hack（老侧已分叉两次）② 老侧两套 CSS 命名并存的现状（新侧以本仓既有约定为准）③ 老侧报告页空的 actionBar 场景按钮 ④ 老侧 `charts.line` 无双轴独立刻度的表达方式。**出处**：编排者裁决（本会话 2026-09-14）；细则见交接文档 `.scratch/handoff/20260914-173837-卡路里场景10B推进.md` 第 7 节（该节硬约束 3 末句）。
 
-**裁决 8（新增）· 主色**：本仓新技能主色**已是 `#007aff`**，token 名 `--blue`，唯一真相源 `packages/base-render/src/spec/style.ts:19`（同文件 `:11` 注释「与 Q12 锁定的 B1 主色一致」；`:20` `--blue2:#0a63ce` 为按压态）。`#0071e3` 在**源文件零命中**（全仓仅 dist 旧产物 1 处）；`--accent`／`--ink`／`--r-sm`／`--ease` 四个名字**本仓根本不存在**。⇒ 第 11 节由「待裁决」改写为「已裁决：主色＝`#007aff`／token `--blue`，既有令牌，**不改值、不新增表**」。HELP 壳自有配色（`helpShell.ts` 117 处 `#0a63ce` 系、`assets/help-template.html` 两处 `:root` 值不一致、被 `help-center-88`／`help-shell-134` 测试字节锁住）**不在本图范围**，记为「全仓统一另立票」（见第 10 节存疑）。
+**裁决 8（新增）· 主色**：本仓新技能主色**已是 `#007aff`**，token 名 `--blue`，唯一真相源 `packages/base-render/src/spec/style.ts:19`（同文件 `:11` 注释「与 Q12 锁定的 B1 主色一致」；`:20` `--blue2:#0a63ce` 为按压态）。`#0071e3` 在**源文件零命中**（全仓仅 dist 旧产物 1 处）；`--accent`／`--ink`／`--r-sm`／`--ease` 四个名字**本仓根本不存在**。⇒ 第 11 节由「待裁决」改写为「已裁决：主色＝`#007aff`／token `--blue`，既有令牌，**不改值、不新增表**」。HELP 壳自有配色（`helpShell.ts` 117 处 `#0a63ce` 系、`assets/help-template.html` 两处 `:root` 值不一致、被 `help-center-88`／`help-shell-134` 测试字节锁住）**不在本图范围**，记为「全仓统一另立票」（见第 10 节存疑）。**出处**：编排者裁决（本会话 2026-09-14）；细则见交接文档 `.scratch/handoff/20260914-173837-卡路里场景10B推进.md` 第 7 节（该节硬约束 3 末句「主色已裁决」）。
+  **历史取值差异（原第 11 节正文，去重后并入此处）**：① 设计审查 P0 要求 `#007aff`（A 侧引 `设计审查报告.html` P0 条）：统一到 A 系 `#007aff` ＋ `--ink/--ink2/--ink3` ＋ `--lineS` ＋ SF Pro Display，理由是 `#007aff` 是 iOS System Blue 官方值；② 老侧最新一代 6 件真模板用 `#0071e3`（A 侧实测）：`predict_report`／`calorie_deficit`／`combined_analysis`／`calorie_trend`／`long_trend`／`cron_setup`，即带 `SHARED-CSS` ＋ `payload` 注入位的那一批；③ 两件视觉标杆用 `#007aff`（A 侧实测）：`统一主面板_视觉标杆.html`（`--accent:#007aff`）与 `沉浸主面板_视觉标杆v2.html`（浅色层 `#007aff`，深色层 `#0a84ff`）。三处差异**不再具有决策意义**，仅作历史记录（本会核实测补充：`--accent:#0071e3` 是全族默认值，`templates\` 递归 52 件命中，不止上述 6 件；老侧文件本图不改）。
 
-**裁决 9（新增）· 必须纠正 A 侧一条结论**：A 侧所写「老侧 token（`--ink/--ink2/--ink3`、`--r-sm/--r/--r-lg`、三档 `--shadow`、`--ease/--ease-spring`）**`@import` 即可**」**是错的**，照搬会踩红线。事实：① 老侧那套 token 名在本仓**零命中**；② 本仓样式唯一真相源是 `packages/base-render/`（npm 包名 `base-paint`）的 `src/spec/style.ts:12` `CSS_VAR_TOKENS`（11 个，冻结），产出器 `src/style.ts:1291 buildStyleSheet()`；③ 红线逐字「不得自造第二份表」，`extraCss` 三禁（`:root` 改写／Q14 禁入项／深色区）**抛错**；④ 技能侧 `templates/*.html` 与 `src/render/*.ts` 的颜色字面量计数**全为 0**，样式靠 `<!--SHARED-CSS-->` 槽内联注入。⇒ 第 6 节与第 7 节所有「移植／`@import` 老侧 token」的措辞已统一改为：「老侧这套**仅作设计意图参考**（圆角梯度／三档阴影／弹簧缓动）；本仓缺对应 token，若确需，属**公共层能力**，另立票，**不在 #383／#384／#385 内自造**」。**本纠正显式取代 A 侧原表述**，不作静默改写。
+**裁决 9（新增）· 必须纠正 A 侧一条结论**：A 侧所写「老侧 token（`--ink/--ink2/--ink3`、`--r-sm/--r/--r-lg`、三档 `--shadow`、`--ease/--ease-spring`）**`@import` 即可**」**是错的**，照搬会踩红线。事实：① 老侧那套 token 名在本仓**零命中**；② 本仓样式唯一真相源是 `packages/base-render/`（npm 包名 `base-paint`）的 `src/spec/style.ts:12` `CSS_VAR_TOKENS`（11 个，冻结），产出器 `src/style.ts:1291 buildStyleSheet()`；③ 红线**原意**「不自造第二份表」（不是逐字引语）：`packages/base-render/src/style.ts:10` 写作「**不自造第二份表**」，`docs/base-paint-contract.md:303` 写作「**不得**因此自造第二份 token 表或样式常量」；`extraCss` 三禁（`:root` 改写／Q14 禁入项／深色区）**抛错**；④ 技能侧 `templates/*.html` 与 `src/render/*.ts` 的颜色字面量计数**全为 0**，样式靠 `<!--SHARED-CSS-->` 槽内联注入。⇒ 第 6 节与第 7 节所有「移植／`@import` 老侧 token」的措辞已统一改为：「老侧这套**仅作设计意图参考**（圆角梯度／三档阴影／弹簧缓动）；本仓缺对应 token，若确需，属**公共层能力**，另立票，**不在 #383／#384／#385 内自造**」。**本纠正显式取代 A 侧原表述**，不作静默改写。**出处**：编排者裁决（本会话 2026-09-14）；细则见交接文档 `.scratch/handoff/20260914-173837-卡路里场景10B推进.md` 第 7 节（该节硬约束 3）。
 
-**裁决 10（新增）· 实现路径硬约束**：新页样式一律走 `buildStyleSheet().css + blocksCss()`（**不走 `extraCss`**，旁证 `src/body/bodyDocs.ts:5`、`src/diet/nutritionPortDocs.ts:23`）；模板侧只留注入槽，不写颜色字面量。技能侧 6 件 `templates/*.html` 是**死模板**（`helpCenter.ts:282` 注释逐字），不是新页样式来源。第 7 节开头已落「实现硬约束」段。
+**裁决 10（新增）· 实现路径硬约束**：新页样式一律走 `buildStyleSheet().css + blocksCss()`（**不走 `extraCss`**，旁证 `src/body/bodyDocs.ts:5`、`src/diet/nutritionPortDocs.ts:23`）；模板侧只留注入槽，不写颜色字面量。技能侧 6 件 `templates/*.html` 是**死模板**（`helpCenter.ts:282` 注释逐字），不是新页样式来源。第 7 节开头已落「实现硬约束」段。**出处**：编排者裁决（本会话 2026-09-14）；细则见交接文档 `.scratch/handoff/20260914-173837-卡路里场景10B推进.md` 第 7 节（该节硬约束 2）。
 
 ## 已知老侧缺口（新侧必须重决策）
 
@@ -362,29 +368,24 @@
 合并 A／B 两份存疑并去重；已由裁决闭合的条目保留编号并标注「已闭合」。
 
 1. **视觉标杆的归属地址与任务书不符**（A 存疑 1）。任务书写在 `<root>\templates\` 下，实测在 `<root>\templates\临时样例\` 下，字节数一致（23444B／29644B），应为同两件，已按 `临时样例` 口径记录。残余问题：「真模板 73 件」是否已含这两件（按第 2 节口径，79 ＝ 73 ＋ 2 ＋ 2 ＋ 2，两件标杆**不在** 73 之内）。
-2. **~~主色取向~~** —— **已由裁决 8 闭合**：本仓主色＝`#007aff`／token `--blue`，既有令牌，不改值不新增表。老侧三处取值打架的事实保留在第 11 节作历史记录。
+2. **~~主色取向~~** —— **已由裁决 8 闭合**：本仓主色＝`#007aff`／token `--blue`，既有令牌，不改值不新增表。老侧三处取值打架的事实已并入**第 8 节裁决 8** 作历史记录（原第 11 节正文与之重复，已去重移入）。
 3. **`calorie_trend.html` 自称 `报告型 · 7 dim`，但页面上只有 4 格 KPI ＋ 一张图 ＋ 一张表**（A 存疑 3），7 dim 无处对应；疑似 badge 文案复制自 `review` 系 8-dim 体系后未改。需与数据侧核对：是文案错，还是本来有 7 项分析被砍到 4 项。
 4. **双断点覆盖互相打架**（A 件内部）：A §183 引设计审查记 `weight_history` 有 640px ＋ 400px 双断点，A §303 又称双断点与 `env(safe-area-inset-bottom)` 全库只有 `help_center` 一处。两处都是引述，**未实地复核**；#385 移动端方案落地前须实测。
 5. **两件视觉标杆是静态样张**（A 存疑 4）：无 `#payload`、无 `__P__`，数据硬编码（`onclick="copyCmd(this,'记吃了 鸡胸肉沙拉 300克')"` 里写死命令文本）。其「UI 优秀点」是**设计意图**而非运行时可证的实现；若要吸收，需要重新接数据。本清单按设计意图记录，**未验证其可移植性**。
 6. **`predict_report.html` 的 `forecast.points[].lo/hi` 在 KPI 里被显示、在图上画不出**（A 存疑 5）：需确认真实影响的 kind——至少 `weight_forecast` 一格（`kpi('置信带', lo~hi, '95%')`）处于「图缺带、数有带」的不一致状态。
 7. **设计审查报告只读了骨架与结论**（A 存疑 6），约 40KB 中的标题层 ＋ 一句话总结 ＋ 优点 ＋ P0-P3 ＋ TOP/BOTTOM3 ＋ 视觉标杆配方 ＋ 私人想法；未逐条读三个对照对与两份清单（「AI 味」清单、「工具感」清单）明细。若融合设计需要「哪些文件犯了什么错」的逐条证据，需补读该件 373-585 行。
 8. **`设计审查报告.html:655-679` 原文「去金铜铜」疑为笔误**（A 存疑 7），推测原意为「去金/铜质感」或「去金属渐变」。**未核实，引用时不要照抄这三字。**
-9. **`.scratch/`（897 件）与 `tests/`（49 件）未读**（A 存疑 8）：按口径忽略。若后续发现预测族或缺口族有实物只存在于 `.scratch/`（例如被废弃的交叉表模板），本清单需补一条反向说明——但按纪律未扫。
+9. **`.scratch/` 与 `tests/` 未读**（A 存疑 8）：`.scratch/` 原记「897 件」**数字来源可疑、不可复现**——本会话对同一根目录复测：递归全部 **1676** 件／其中 `*.html` **844** 件／顶层 **93** 件（复核员独立复测同值），故**已改为不列具体数**（该目录件数随会话增长，写死必错）；`tests/` 49 件照记。两者按口径忽略。若后续发现预测族或缺口族有实物只存在于 `.scratch/`（例如被废弃的交叉表模板），本清单需补一条反向说明——但按纪律未扫。
 10. **`contraindication_report.html` 与本族关系**（B 存疑 3）：它是**健身计划禁忌扫描**（`SUMMARY.scanned_sessions`／`movements`），属训练计划族，与 8 条报告唤醒词**无任何对应**，不在 #384 范围；只取交互与样式资产，不取业务。
 11. **不属于 8 条唤醒词、已归邻近族的件**（B 存疑 4）：`health_dashboard`／`nutrition_analysis`／`nutrition_detail`／`nutrition_ratio`／`six_factors`／`goal_progress`／`diet_overview`／`meal_distribution` 均不在 #384 的 8 条内，只作融合素材来源（各件实际对应唤醒词见 B 侧 §存疑 4）。
 12. **恒定值归一化补丁**（B 存疑 6）：`health_report.html:157-160` 在 `mx === mn` 时给 50，属边界 hack；按裁决 7 ① 不继承，新侧换图库或改数据契约后整体重估。
 13. **两套 CSS 命名并存**（B 存疑 8）：`contraindication_report.html` 用 `--ink/--line/--r`，其余 10 件用 `--fg/--border`；老侧未统一。**按裁决 7 ② 与裁决 9**：新侧以本仓既有约定为准，不跟随任一套、不自造表、不要求老侧迁移；是否为有意为之（禁忌扫描页可能是更新设计线）**已无决策价值，不再追问**。
 14. **HELP 壳自有配色是否纳入全仓统一**（裁决 8 附带）：`helpShell.ts` 117 处 `#0a63ce` 系、`assets/help-template.html` 两处 `:root` 值不一致，且被 `help-center-88`／`help-shell-134` 测试字节锁住。三种取值与主色 `#007aff` 不一致，但**不在本图范围**——记为「全仓统一另立票」，须由编排者另开票处理，**不得在本图三票内顺手改**。
 15. **已闭合项**（B 存疑 1、2、9）：`templates\` 计数已由裁决 2 闭合；「查／看健康报告」双承担件已由裁决 1 闭合；`contraindication_report.html` 的 `part-group` 分组渲染与 `pills` 筛选交互级精读按令省略（若日后需要该页交互复刻，另开票补读）。
+16. **范围外两条实测记录（不改，仅登记）**：① `process_progress.html` 内**只有 BUG 编号注释**（`BUG #1`@371／`BUG #3`@311／`BUG #4`@311、358），**无任何票号引用**——原表该行记「—」在结果上等价于「无」，但成因是「只有 BUG 编号」，不是「有 `srcLine` 无票号」，故新表写「无（只有 BUG #1／#3／#4 修复注释）」；② 老侧 `--accent:#0071e3` 实为**全族默认值**（实测 `templates\` 递归 **52 件**命中），第 6 节末「一处必须顶住的不一致」登记的三件（`predict_report`／`combined_analysis`／`long_trend`）仍在其中，**本图不改老侧文件、保持原状**。
 
 ## 已裁决：主色取值
 
-（原「待裁决：主色取值」——编排者已派实测确认，本节已改写为已裁决。）
+**结论一行**：新侧主色＝本仓既有令牌 `--blue`（`#007aff`），**不改值、不新增表**。
 
-三处打架的历史事实（记录在案，供理解为何曾经存疑）：
-
-1. **设计审查 P0 要求 `#007aff`**（A 侧引 `设计审查报告.html` P0 条）：统一到 A 系 `#007aff` ＋ `--ink/--ink2/--ink3` ＋ `--lineS` ＋ SF Pro Display，理由是 `#007aff` 是 iOS System Blue 官方值。
-2. **老侧最新一代 6 件真模板用 `#0071e3`**（A 侧实测）：`predict_report`／`calorie_deficit`／`combined_analysis`／`calorie_trend`／`long_trend`／`cron_setup`，即带 `SHARED-CSS` ＋ `payload` 注入位的那一批。
-3. **两件视觉标杆用 `#007aff`**（A 侧实测）：`统一主面板_视觉标杆.html`（`--accent:#007aff`）与 `沉浸主面板_视觉标杆v2.html`（浅色层 `#007aff`，深色层 `#0a84ff`）。
-
-**裁决 8 · 主色结论（实测已回）**：本仓新技能主色**已是 `#007aff`**，token 名 `--blue`，唯一真相源 `packages/base-render/src/spec/style.ts:19`（同文件 `:11` 注释「与 Q12 锁定的 B1 主色一致」；`:20` `--blue2:#0a63ce` 为按压态）。`#0071e3` 在**源文件零命中**（全仓仅 dist 旧产物 1 处）；`--accent`／`--ink`／`--r-sm`／`--ease` 四个名字**本仓根本不存在**。⇒ 新侧一律用既有令牌 `--blue`（`#007aff`），**不改值、不新增表**；老侧三处取值差异不再具有决策意义，仅作历史记录。HELP 壳自有配色不在本图范围，另立票（见第 10 节存疑 14）。
+完整裁决、唯一真相源与老侧三处取值差异的历史记录**统一见第 8 节「裁决 8」**；本节不再重复正文（原正文与裁决 8 重复，已去重）。
