@@ -35,6 +35,15 @@
 - 运动相关全绿：`运动记/改/删/批量/复制 + 字段白名单` ✔；M5 `exercise.add`／`update`／`remove` ✔；`softdelete-125` 4 条 ✔；`cmd-registry-294` 全 ✔。
 - 2 红与本票无关（他人在途件）：① `m5 45!==46`（`diet/commands.ts` 新增 `product.import` 键，场景表未跟）；② `profile-doc-179 反面 water.log 已是整页`（`diet/receipt.ts`＋`write.ts` 钩子正是在途饮食票的产出）。反面清单不含运动键，本票未碰 `water`／键表。
 
+## 提交与推送
+
+- commit f7d5d90「feat(264): 运动写回执切完整文档＋13词测试全绿（receipt/log/edit＋断言助手＋证据）」：7 文件（上文实现 3＋测试 2＋本证据＋changeset），`git diff --cached --name-only` 复核仅此 7 件。
+  GATE-RUN runId=19438da4-3354-4278-ae74-45f451113d56 cmd=git add（7 件） exit=0；
+  GATE-RUN runId=3d1d294a-b4a7-4090-a4a3-d71934b85dcf cmd=git diff --cached --name-only exit=0（3 件实现）；
+  GATE-RUN runId=20f28cac-b851-4d0c-8db8-583b8cdb04ce cmd=git commit exit=0。
+- 已推送：`git ls-remote origin master`=1be7858，`merge-base --is-ancestor f7d5d90 origin/master` exit=0（他人随后推送时一并带上远端；本票 push runId=154238af-9883-455f-ba86-1cb97775bef8 exit=0 up-to-date）。
+- 插曲：第一次 `git add` 后暂存被他人并行流程清空（文件无丢失），已重加并提交；以后每次提交前都重做 `diff --cached` 复核。
+
 ## 未做项与下一手缺什么
 
 - 未跑通 `pnpm build`（他人树红，`diet/routes.ts:36`＋`photo/gif.ts:263`；本票 `exercise` 零错误，`tsc -p` 可 emit，测试全绿）。下一手：待饮食／照片票把树修绿后重跑 `pnpm build`＋本测试即可，无需改本票代码。
