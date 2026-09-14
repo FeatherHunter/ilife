@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 46 ＋ 读 73 ＝ 119 条。
+ * registry 合法键表：写 46 ＋ 读 81 ＝ 127 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -83,6 +83,14 @@ export const CALORIE_COMBOS = {
   'calorie.photo.detail': { shape: 'detail' as EnvelopeShape, title: '查身材照' },
   'calorie.photo.gif': { shape: 'analysis' as EnvelopeShape, title: '生成GIF' },
   'calorie.photo.list': { shape: 'list' as EnvelopeShape, title: '看身材照' },
+  'calorie.report.bmi': { shape: 'stat' as EnvelopeShape, title: 'BMI 报告' },
+  'calorie.report.bmr': { shape: 'stat' as EnvelopeShape, title: 'BMR 报告' },
+  'calorie.report.compare': { shape: 'stat' as EnvelopeShape, title: '健康报告(含对比)' },
+  'calorie.report.protein': { shape: 'stat' as EnvelopeShape, title: '蛋白质摄入报告' },
+  'calorie.report.score': { shape: 'stat' as EnvelopeShape, title: '综合评分' },
+  'calorie.report.tdee': { shape: 'stat' as EnvelopeShape, title: 'TDEE 报告' },
+  'calorie.report.trend': { shape: 'stat' as EnvelopeShape, title: '健康趋势' },
+  'calorie.report.water': { shape: 'stat' as EnvelopeShape, title: '水分摄入报告' },
   'calorie.today': { shape: 'list' as EnvelopeShape, title: '今日饮食' },
   'calorie.view.anomaly': { shape: 'stat' as EnvelopeShape, title: '异常诊断' },
   'calorie.view.batch-import-preview': { shape: 'stat' as EnvelopeShape, title: '批量导入预览' },
