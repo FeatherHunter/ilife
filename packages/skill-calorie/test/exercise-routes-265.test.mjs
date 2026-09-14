@@ -37,9 +37,10 @@ const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'n
 const DB_FILENAME = 'calorie_data.db';
 
 /** 7 条词 → 期望键／页名／眉标（分布 1＋趋势 1＋复盘 5）。
- *  #465：版式换过后题面不再连写窗口，页身份改认「眉标逐字 ＋ 载荷头页名」（两处都是人话）。 */
+ *  #465：版式换过后题面不再连写窗口，页身份改认「眉标逐字 ＋ 载荷头页名」（两处都是人话）。
+ *  #475：`titleExact`＝该页题面**逐字页名**（分布页，窗口住「窗口」卡）；缺省＝题面连写窗口（趋势／复盘）。 */
 const CASES = [
-  { word: '看运动类型分布', key: 'calorie.view.exercise-distribution', page: '运动类型分布', eyebrow: '运动 · 类型分布' },
+  { word: '看运动类型分布', key: 'calorie.view.exercise-distribution', page: '运动类型分布', eyebrow: '运动 · 类型分布', titleExact: true },
   { word: '看运动趋势', key: 'calorie.view.exercise-trend', page: '运动趋势', eyebrow: '运动 · 趋势' },
   { word: '运动复盘（本周）', key: 'calorie.view.exercise-recap', page: '运动复盘', eyebrow: '运动 · 复盘' },
   { word: '运动复盘（本月）', key: 'calorie.view.exercise-recap', page: '运动复盘', eyebrow: '运动 · 复盘' },
@@ -149,6 +150,12 @@ test('#265 逐条按路由 cli 实跑是各自那一页、不是运动总览', (
     assert.ok(isAbsolute(r.envelope.data.output), c.word + ' 交付路径不是绝对路径');
     assert.equal(eyebrow(r.file), c.eyebrow, c.word + ' 眉标不是各自那一页：' + eyebrow(r.file));
     assert.ok(r.file.includes(c.page), c.word + ' 缺题面 ' + c.page);
+    // #475 补硬：页题认**页题节点**的文本（旧写法 `r.file.includes(c.page)` 会被 `<title>`／复制载荷代跑，
+    // 页题节点本身改成别的字样也不红）。分布页题面逐字页名——连写窗口即红。
+    const t = /<h1 class="ilife-block-page-shell-title">([^<]*)<\/h1>/.exec(r.file);
+    assert.ok(t !== null, c.word + ' 产物里读不到页题节点（ilife-block-page-shell-title）');
+    assert.ok(c.titleExact === true ? t[1] === c.page : t[1].startsWith(c.page + ' '),
+      c.word + ' 页题节点不是本页题面：' + JSON.stringify(t[1]));
     // #465 口径：页的「身份」认人话两面 —— 可见面（眉标逐字）＋载荷面（复制头「技能 · 页名」）；
     // 命令键一次都不许印出来（旧断言 `r.file.includes(c.key)` 要产物含命令键，与新口径正面冲突）。
     assert.ok(!r.file.includes('calorie.view.'), c.word + ' 产物里出现命令键 calorie.view.*');

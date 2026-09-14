@@ -127,6 +127,42 @@ function visibleText(html) {
 }
 
 const WIN = { start: '2026-09-05', end: '2026-09-07' };
+const WIN_TEXT = WIN.start + ' ~ ' + WIN.end;
+
+/** ── #475 版式针补硬：题面／窗口／块名／来源各认**自己的落点**的逐字文本 ──
+ *  旧写法是「整档 `includes` 一锅端」：题面连写窗口、块名换回旧字样、来源换写法**都不红**
+ *  （#465 审查 D1 当场证）。下面四个取节点的小工具把这四处各钉一处；读不到节点即 fail
+ *  （形制换了要当面红，不静默放过）。逐条「旧断言 → 新断言 → 改坏必红读数」见
+ *  `docs/skills/skill-calorie/t475-版式针补硬.md`。 */
+function nodeText(html, re, what) {
+  const m = re.exec(html);
+  assert.ok(m !== null, '产物里读不到' + what);
+  return m[1];
+}
+
+/** 页题节点（`<h1 class="ilife-block-page-shell-title">`）的逐字文本。 */
+function pageTitle(html) {
+  return nodeText(html, /<h1 class="ilife-block-page-shell-title">([^<]*)<\/h1>/, '页题节点（ilife-block-page-shell-title）');
+}
+
+/** 某一 `<section id="…">` 整段（本族区段不嵌套，切到下一个 `</section>` 即可）。 */
+function sectionText(html, id) {
+  const i = html.indexOf('id="' + id + '"');
+  assert.ok(i !== -1, '产物里读不到区段 ' + id);
+  const j = html.indexOf('</section>', i);
+  assert.ok(j !== -1, '区段 ' + id + ' 没有闭合');
+  return html.slice(i, j);
+}
+
+/** 该区段里数据表 caption 的逐字文本。 */
+function captionText(html, id) {
+  return nodeText(sectionText(html, id), /<caption class="ilife-block-data-table-caption">([^<]*)<\/caption>/, id + ' 的数据表 caption');
+}
+
+/** 该区段里来源行（口径行 `ilife-block-caliber`）的逐字文本。 */
+function sourceText(html, id) {
+  return nodeText(sectionText(html, id), /<p class="ilife-block-caliber">([^<]*)<\/p>/, id + ' 的来源行');
+}
 
 test('#111 域内唤醒词命中：16 词→运动移植 6 键（促进 10＋新拟 6）', () => {
   const pairs = [
@@ -187,6 +223,20 @@ test('#111 力量总览：按动作聚合＋重量轨迹＋逐条记录', () => 
       assert.ok(out.html.includes(needle), 'strength 缺：' + needle);
     }
     assert.ok(out.html.includes('totalVolumeKg'), 'strength 复制文本缺指标');
+    // #475 补硬（②）：题面一处——页题节点逐字＝页名，连写窗口即红（旧写法只 `includes`，连写不红）。
+    assert.equal(pageTitle(out.html), '力量训练总览',
+      'strength 页题不是逐字页名（连写了窗口？）：' + JSON.stringify(pageTitle(out.html)));
+    // #475 补硬（②）：窗口一处——窗口只认自己的落点（窗口卡两格 ＋ 按动作聚合表 caption）；
+    // 窗口卡里的窗口摘掉、或 caption 里的窗口摘掉，这条都红（KPI 卡 detail 那份窗口不代跑）。
+    assert.ok(sectionText(out.html, 'sec-window').includes('value="' + WIN.start + '"')
+      && sectionText(out.html, 'sec-window').includes('value="' + WIN.end + '"')
+      && captionText(out.html, 'sec-table').includes(WIN_TEXT),
+      'strength 窗口未写在自己的落点（窗口卡两格／聚合表 caption）：' + JSON.stringify(captionText(out.html, 'sec-table')));
+    // #475 补硬：来源写法——逐字（旧写法没有来源这一针，来源名换另一种写法不红）。
+    // `exercise_log` 是 #465 已登记的可见面例外（§6.2 登记属实）；本针钉的就是这条来源句的登记写法。
+    assert.equal(sourceText(out.html, 'sec-source'),
+      '数据来源 · exercise_log（本窗未删除的力量行） · ' + WIN.start + ' → ' + WIN.end + ' · 共 2 条',
+      'strength 来源句不是登记写法：' + JSON.stringify(sourceText(out.html, 'sec-source')));
   } finally {
     db.close();
   }
@@ -204,6 +254,13 @@ test('#111 有氧总览：按类型聚合＋配速＋逐条记录', () => {
     for (const needle of ['有氧训练总览', '2026-09-05 ~ 2026-09-07', '4.78 分/公里', '跑步', '骑行', '按类型聚合', '逐条记录', '复制数据']) {
       assert.ok(out.html.includes(needle), 'cardio 缺：' + needle);
     }
+    // #475 补硬（③）：题面一处 ＋ 窗口一处（与 ② 同两条口径）。
+    assert.equal(pageTitle(out.html), '有氧训练总览',
+      'cardio 页题不是逐字页名（连写了窗口？）：' + JSON.stringify(pageTitle(out.html)));
+    assert.ok(sectionText(out.html, 'sec-window').includes('value="' + WIN.start + '"')
+      && sectionText(out.html, 'sec-window').includes('value="' + WIN.end + '"')
+      && captionText(out.html, 'sec-table').includes(WIN_TEXT),
+      'cardio 窗口未写在自己的落点（窗口卡两格／聚合表 caption）：' + JSON.stringify(captionText(out.html, 'sec-table')));
   } finally {
     db.close();
   }
@@ -222,6 +279,14 @@ test('#111 类型分布：分类占比双 bar＋摄入/TDEE 联动', () => {
     for (const needle of ['运动类型分布', '2026-09-05 ~ 2026-09-07', '按分类热量分布', '分类占比', '分类明细', '摄入/TDEE 联动', '柔韧', '复制数据']) {
       assert.ok(out.html.includes(needle), 'distribution 缺：' + needle);
     }
+    // #475 补硬（④）：题面一处 ＋ 窗口一处。本页窗口卡是「开始／结束」两格、**不产** `A ~ B`——
+    // 全文那一份 `A ~ B` 住明细表 caption；两处各钉一处，任一处被摘掉即红。
+    assert.equal(pageTitle(out.html), '运动类型分布',
+      'distribution 页题不是逐字页名（连写了窗口？）：' + JSON.stringify(pageTitle(out.html)));
+    assert.ok(sectionText(out.html, 'sec-window').includes('value="' + WIN.start + '"')
+      && sectionText(out.html, 'sec-window').includes('value="' + WIN.end + '"')
+      && captionText(out.html, 'sec-table').includes(WIN_TEXT),
+      'distribution 窗口未写在自己的落点（窗口卡两格／明细表 caption）：' + JSON.stringify(captionText(out.html, 'sec-table')));
   } finally {
     db.close();
   }
@@ -239,6 +304,10 @@ test('#111 运动复盘：KPI＋分类＋TOP5＋日趋势＋一句话', () => {
     for (const needle of ['运动复盘 2026-09-05 ~ 2026-09-07', '每日消耗趋势', '高频运动', '跑步', '6 次', '累计消耗 1320 卡', '复制数据']) {
       assert.ok(out.html.includes(needle), 'recap 缺：' + needle);
     }
+    // #475 补硬（⑤）：块名逐字——认**页内导航里 `#sec-badges` 那一条**的逐字文本。
+    // 旧写法只 `includes('高频运动')`，页内副题里同字也命中 → 块名改回旧字样「高频 TOP5」不红。
+    const badgeLabel = nodeText(out.html, /<a href="#sec-badges">([^<]*)<\/a>/, '页内导航里 #sec-badges 的块名');
+    assert.equal(badgeLabel, '高频运动', 'recap 块名不是逐字「高频运动」：' + JSON.stringify(badgeLabel));
   } finally {
     db.close();
   }
@@ -362,6 +431,12 @@ test('#111 可见面零工程话：整份产物零命令键／票号／工序词
     assert.ok(!/\bt\d{3}\b/i.test(visible), '可见面出现票号样式');
     // 全份产物（含载荷）也不许有命令键：本页入口是唤醒词，命令键一次都不该印出来。
     assert.ok(!out.html.includes('calorie.view.'), '产物任意一面出现命令键 calorie.view.*');
+    // #475（D4）测试名说「整份产物零命令键／票号／工序词」，旧写法只有 `calorie.view.` 一条判整份——
+    // 另三类只判了可见面。这里把三类各补一条到**整份产物**面，名字与内容对齐（当刻五页这四类各 0）。
+    for (const [what, hit] of [['命令键', 'calorie.exercise.'], ['工序词「移植」', '移植']]) {
+      assert.ok(!out.html.includes(hit), '产物任意一面出现' + what + '：' + hit);
+    }
+    assert.ok(!/\bt\d{3}\b/i.test(out.html), '产物任意一面出现票号样式');
   } finally {
     db.close();
   }
