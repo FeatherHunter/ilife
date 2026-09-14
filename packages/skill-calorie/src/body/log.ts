@@ -9,9 +9,14 @@
  * #357（A 段）：皮褶钳来源的皮褶→体脂换算搬进本文件（`jp7BodyFatPct`，口径照老技能，见该函数注释）；
  * 缺性别／年龄时**拦而不猜**（#358：缺项一次报齐，AI 一轮问全）；页面里「先问、答完再进表」的交互归 #366。
  * 原「换算未移植、调用方算好直传」的形态到此结束。
+ *
+ * #363：两条写命令各自**写前**查同日既有记录（取数走 `fetch/body.ts` 的 `compositionsOnDate`／
+ * `measurementsOnDate`），回执**先把既有那条的字段值摆出来**再给本次写库结论（唤醒词「补记体脂」／
+ * 「补记围度」的需求原文）；可见文本缺项写 `—`，写库行为本身一行未动（补记照写）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { BODY_FAT_PCT_MAX, BODY_FAT_PCT_MIN, CALIPER_FIELDS, MEASUREMENT_FIELDS, addComposition, addMeasurement, measureCamelName } from '../fetch/body.js';
+import { BODY_FAT_PCT_MAX, BODY_FAT_PCT_MIN, CALIPER_FIELDS, MEASUREMENT_FIELDS, MEASUREMENT_ZH, addComposition, addMeasurement, compositionsOnDate, measureCamelName, measurementsOnDate } from '../fetch/body.js';
+import { CALIPER_SITE_LABELS } from './bodyPlate.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import type { SourceChoice } from '../kcal.js';
 import { todayISO } from '../analysis/utils.js';
@@ -102,6 +107,69 @@ function caliperBodyFatPct(input: Record<string, unknown>, source: string, age: 
   return JP7_METHOD + '：7 点合计 ' + Math.round(sumMm * 10) / 10 + 'mm ＋ 年龄 ' + age + ' ＋ ' + (sex === 'male' ? '男' : '女');
 }
 
+/** #363 · 补记查冲突：同日已有记录时**先把既有那条的字段值摆出来**再让用户确认
+ *  （两条唤醒词「补记体脂」／「补记围度」的需求原文：如果那天已有记录，请先告诉我冲突再确认）。
+ *
+ *  两套口径分开（`docs/skills/skill-calorie/t395-融合基准.md`  §四 裁定 2）：
+ *   ① **可见文本**里的缺项一律写 `—`（不许留空串）——回显既有记录与本次写入的回执同一口径；
+ *   ② **原始空值**留在取数层与库内（`compositionsOnDate`／`measurementsOnDate` 返回 `null`，
+ *      本次写入也照 `null` 落库），可见文本的 `—` 不回写、不互染。
+ *  写库行为本身**不动**：冲突只是先摆既有值，本次补记照写（不拦、不覆盖、不合并）。
+ */
+const MISSING = '—';
+
+/** 冲突行的结构化状态串（回执 `items[].status`；与可见文本的「冲突」同源）。 */
+const CONFLICT_STATUS = '同日已有记录（冲突）';
+
+/** 单个值的可见文本：缺项（`null`／`undefined`／空串）一律 `—`。 */
+function val(v: unknown): string {
+  return v === null || v === undefined || v === '' ? MISSING : String(v);
+}
+
+/** 数值 ＋ 单位：缺项写 `—`（连单位一起省掉，不留 `—%` 这种半截写法）。 */
+function numLine(v: unknown, unit: string): string {
+  return v === null || v === undefined ? MISSING : String(v) + unit;
+}
+
+/** 一条记录的字段逐项文本（`标签 值`；项间「、」）。 */
+function fieldLine(pairs: [string, unknown][]): string {
+  return pairs.map(([label, v]) => label + ' ' + val(v)).join('、');
+}
+
+/** 体脂既有记录的字段值（来源／体脂率／皮褶 7 点／备注；7 点站名取 `bodyPlate.ts` 的唯一来源）。 */
+function compositionRowText(r: Record<string, unknown>): string {
+  const src = String(r['source']);
+  return '来源 ' + (SOURCE_LABELS[src as SourceChoice] ?? src)
+    + '；体脂率 ' + numLine(r['body_fat_pct'], '%')
+    + '；皮褶 7 点 ' + fieldLine(CALIPER_FIELDS.map((f, i) => [CALIPER_SITE_LABELS[i] ?? f, r[f]]))
+    + '；备注 ' + val(r['note']);
+}
+
+/** 围度既有记录的字段值（13 部位逐项 ＋ 备注；中文名取 `MEASUREMENT_ZH` 的唯一来源）。 */
+function measureRowText(r: Record<string, unknown>): string {
+  return fieldLine(MEASUREMENT_FIELDS.map((f) => [MEASUREMENT_ZH[f], r[f]])) + '；备注 ' + val(r['note']);
+}
+
+/** 冲突段（可见文本）：`冲突：<日> 已有 N 条<表名>记录 #id（<既有值>）…`。
+ *  **没有既有记录就返回空串**——不许恒打（换一天补记时这句一个字都不出现）。 */
+function conflictLine(what: string, date: string, rows: Record<string, unknown>[], rowText: (r: Record<string, unknown>) => string): string {
+  if (rows.length === 0) return '';
+  return '冲突：' + date + ' 已有 ' + rows.length + ' 条' + what + '记录 '
+    + rows.map((r) => '#' + String(r['id']) + '（' + rowText(r) + '）').join('；');
+}
+
+/** 冲突行的结构化载荷：既有记录的 `id`／`date` 照原始值给（既有行本次一行未动）。 */
+function conflictItems(rows: Record<string, unknown>[], date: string, rowText: (r: Record<string, unknown>) => string): {
+  id: number; date: string; status: string; reason: string; detail: string;
+}[] {
+  return rows.map((r) => ({ id: Number(r['id']), date, status: CONFLICT_STATUS, reason: '', detail: rowText(r) }));
+}
+
+/** 完整回执句：冲突段在前（先把既有值摆出来），本次写库结论在后；无冲突时只有后者。 */
+function withConflict(conflict: string, done: string): string {
+  return (conflict === '' ? '' : conflict + '。') + done;
+}
+
 /** `calorie.body.composition-add` · 记体脂（皮褶钳 7 处自动换算或外部测量直传）。 */
 export function writeCompositionAdd(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const date = wday(params, 'date') ?? todayISO();
@@ -118,12 +186,14 @@ export function writeCompositionAdd(params: Record<string, unknown>, db: Databas
   }
   // 体脂率缺席：皮褶钳来源照 JP7 换算（缺项即拦），其余来源没有 7 点可算，直传实测值。
   const method = input['bodyFatPct'] === undefined ? caliperBodyFatPct(input, source, age, sex) : '';
+  // #363 · **写前**查同日既有记录（写在后面的话，本次这条也会被当成「既有」）。
+  const existing = compositionsOnDate(db, date);
   const r = addComposition(db, input as unknown as Parameters<typeof addComposition>[1]);
   const label = SOURCE_LABELS[source] ?? source;
   const from = method === '' ? '' : '（' + method + '）';
-  return out(R('记体脂', 'create', '已记体脂：' + date + ' ' + label + ' ' + r.bodyFatPct + '%' + from, '记体脂', 'body_composition (写库回执)', {
+  return out(R('记体脂', 'create', withConflict(conflictLine('体脂', date, existing, compositionRowText), '已记体脂：' + date + ' ' + label + ' ' + r.bodyFatPct + '%' + from), '记体脂', 'body_composition (写库回执)', {
     recordId: r.id, ids: [r.id], writtenFields: definedKeys(input),
-    items: [{ id: r.id, date, status: '成功', reason: '', detail: r.bodyFatPct + '%' + from }],
+    items: [...conflictItems(existing, date, compositionRowText), { id: r.id, date, status: '成功', reason: '', detail: r.bodyFatPct + '%' + from }],
   }));
 }
 
@@ -139,13 +209,15 @@ export function writeMeasureAdd(params: Record<string, unknown>, db: DatabaseSyn
   for (const k of Object.keys(params)) {
     if (!(k in MEASURE_CAMEL) && k !== 'date' && k !== 'note' && k !== 'key') fail(2, '不支持字段: ' + k);
   }
+  // #363 · **写前**查同日既有记录（口径同体脂那条）。
+  const existing = measurementsOnDate(db, date);
   const r = addMeasurement(db, input as unknown as Parameters<typeof addMeasurement>[1]);
   const filledCn = r.filled.map((f) => {
     const camel = Object.keys(MEASURE_CAMEL).find((c) => MEASURE_CAMEL[c] === f) ?? f;
     return camel + ' ' + String((input as Record<string, unknown>)[f]);
   }).join('、');
-  return out(R('记围度', 'create', '已记围度：' + date + '（' + filledCn + '）', '记围度', 'body_measurements (写库回执)', {
+  return out(R('记围度', 'create', withConflict(conflictLine('围度', date, existing, measureRowText), '已记围度：' + date + '（' + filledCn + '）'), '记围度', 'body_measurements (写库回执)', {
     recordId: r.id, ids: [r.id], writtenFields: measureCliNames(definedKeys(input)),
-    items: [{ id: r.id, date, status: '成功', reason: '', detail: filledCn }],
+    items: [...conflictItems(existing, date, measureRowText), { id: r.id, date, status: '成功', reason: '', detail: filledCn }],
   }));
 }

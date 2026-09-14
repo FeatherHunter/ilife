@@ -239,6 +239,26 @@ export function compareMeasurements(db: DatabaseSync, date1: string, date2: stri
   return { date1, date2, deltas, nCompared: Object.keys(deltas).length };
 }
 
+// ---- #363 · 补记查冲突：同一天既有记录 ----
+
+/** #363 · 同日既有记录的**唯一取数口**：`date = ?` 且未废弃，按 `id ASC`（同日多条全给，不取首条）。
+ *  返回值是**原始列值**（缺项 `null`／备注 `''`）——可见文本的 `—` 由命令层写，取数层不代字。
+ */
+function sameDay(db: DatabaseSync, table: string, cols: string[], date: string): Record<string, unknown>[] {
+  return db.prepare(`SELECT ${['id', 'date', ...cols].join(', ')} FROM ${table}
+    WHERE COALESCE(is_deprecated, 0) = 0 AND date = ? ORDER BY id ASC`).all(date) as unknown as Record<string, unknown>[];
+}
+
+/** 同一天已有的体成分记录（列序同 `listCompositions`）。 */
+export function compositionsOnDate(db: DatabaseSync, date: string): Record<string, unknown>[] {
+  return sameDay(db, 'body_composition', ['source', 'body_fat_pct', ...CALIPER_FIELDS, 'note'], date);
+}
+
+/** 同一天已有的围度记录（列序同 `listMeasurements`）。 */
+export function measurementsOnDate(db: DatabaseSync, date: string): Record<string, unknown>[] {
+  return sameDay(db, 'body_measurements', [...MEASUREMENT_FIELDS, 'note'], date);
+}
+
 // ---- body_composition ----
 
 export function addComposition(db: DatabaseSync, input: CompositionInput): { id: number; date: string; bodyFatPct: number } {
