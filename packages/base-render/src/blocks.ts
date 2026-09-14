@@ -1110,6 +1110,21 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-page-shell-body {',
     '  display: block;',
+    // #457 顶层区块统一间隔：正文里每个区块（非首个）上方恒 16px。此前各区块根规则各自给上下
+    // 外边距，`dataTable`／`listRows` 两条**一条都没给**，于是「表接表」实测间距 0 —— 两张表的
+    // 1px 边框贴在一起，看不出是两块（267 页「延迟相关性」与「分层对比」）。
+    // 写在**一处**、用相邻兄弟收口，而不是给 12 个区各补一条上下边距：相邻两块的边距会折叠，
+    // 既有的 12／16 都不超过 16，折叠后恒为 16，不需要改各区的既有值。
+    // 作用域限死在本区正文的直接子级，两条都在防误伤：① `.ilife-block-kpi-card` 也是 `.ilife-block`，
+    // 若全局写 `.ilife-block + .ilife-block`，KPI 卡网格里第 2 张起会各被推下 16px（同排错位、网格失效）；
+    // ② 选择器只用 `.ilife-block` 作「后一块」，不给非区块元素（口径行／图例）加边距，也不动嵌在
+    // 折叠区里的块（它不是正文的直接子级）。
+    // **与 #154「各区自补 16px」重叠（同一根因的另一处补法）**：那批区间给 `dataTable`／`listRows`／
+    // `kpiCardGrid` 各补了 `margin: 16px 0`，与本条命中同一处时两边同值、走 margin 折叠，恒 16px、
+    // 不翻倍（实测 regen-262：表接表 16px）。两票都落地后由后续票收敛成单一落点，本票不撤。
+    '.' + p + 'block-page-shell-body > * + .' + p + 'block {',
+    '  margin-top: 16px;',
+    '}',
     '  margin-top: 16px;',
     '}',
     '@media (max-width: 640px) {',
@@ -1372,6 +1387,34 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-data-table-cell-center {',
     '  text-align: center;',
+    '}',
+    // #457 手机端（≤640px）紧凑形态：不靠左右滑动看全。桌面段一字未动；窄屏只做三件事——
+    // 收字号（表头 12→11px、单元格 13→12px）、收内边距（10/14→6/8、12/14→7/8）、
+    // 放开 `th` 的 `white-space: nowrap`（这是表宽唯一的硬来源：表头不换行 → 最小宽度＝各列整词宽之和）。
+    // `td` 另给 `overflow-wrap: anywhere`：它同时把单元格的最小内容宽度压到 1 字符，
+    // 长日期串（`2024-09-08`）与长数字列因此可断行，7 列表在 390 宽里放得下。
+    // 容器仍留 `overflow-x: auto` 作兜底（列数极多的表仍可滑），但常态不再触发。
+    // **与 #154 给本区根补的 `margin: 16px 0` 不冲突**：窄屏段只碰字号／内距／换行，不碰边距；
+    // 边距那处重叠见本文件 pageShell 区同口径注释（待后续票收敛成单一落点）。
+    '@media (max-width: 640px) {',
+    '  .' + p + 'block-data-table-table {',
+    '    font-size: 12px;',
+    '  }',
+    '  .' + p + 'block-data-table-caption {',
+    '    padding: 8px 10px;',
+    '    font-size: 12px;',
+    '  }',
+    '  .' + p + 'block-data-table th {',
+    '    padding: 6px 8px;',
+    '    font-size: 11px;',
+    '    letter-spacing: 0;',
+    '    white-space: normal;',
+    '  }',
+    '  .' + p + 'block-data-table td {',
+    '    padding: 7px 8px;',
+    '    font-size: 12px;',
+    '    overflow-wrap: anywhere;',
+    '  }',
     '}',
     '.' + p + 'block-data-table-cell-right {',
     '  text-align: right;',

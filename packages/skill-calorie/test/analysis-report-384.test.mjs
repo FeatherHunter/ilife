@@ -1,0 +1,208 @@
+/** #384 · 8 报告子形态页：冻结表 order 331–338 接住命令（先验 BMI，再铺其余 7 条）。
+ *
+ * 照抄：packages/skill-calorie/test/analysis-predict-383.test.mjs（同族姊妹票）
+ * ＋ trend-misc-port-113.test.mjs（唤醒词命中＋CLI 落盘＋完整文档断言）。
+ * 运行：先 pnpm build，再 node packages/skill-calorie/test/analysis-report-384.test.mjs
+ * （门禁全链见票面：pnpm build && pnpm gen && pnpm build && pnpm help:build／pnpm gen:check）。
+ *
+ * 判据先行（开工前实测，必须红）：8 条词当刻 `routesFor` 全指 `kind:'non-exec'`、
+ * 没有 `exec` 记录 ⇒ 第一条断言「唤醒词没有命令可执行」当场红。
+ *
+ * 形状（编排者裁决 3，票面明令）：命令层 8 条独立命令、渲染层 1 个多态底座。
+ * 一词一条命令 ⇒ 8 个键；不向 `calorie.view.health` 塞形态参数。
+ * 命令名取 HELP 下一级＝「报告」：`calorie.report.<形态>`（形态名逐字来自老侧
+ * `render_analysis.py` 的 `--kind` 表 bmi/tdee/bmr/protein/water/score/trend/compare）。
+ *
+ * 唤起窗口（老侧 `data_source` 自带缺省）：BMI 90 天、TDEE/BMR/评分 30 天、
+ * 蛋白/水分 30 天、趋势 90 天、对比 本期 7 天 vs 紧邻前 7 天。命令一律**不要求**参数
+ * （照抄即能跑），`window` 可覆盖。
+ *
+ * 各自字段（票面点名）：BMI＝逐日体重与 BMI 列表；TDEE＝每日总消耗与活动量系数；
+ * BMR＝基础代谢与低于基础代谢的天数；蛋白＝每日蛋白量与达标率；水分＝每日饮水量与达成率；
+ * 评分＝综合评分与评分历史；趋势＝评分序列与变化方向；对比＝两期变化量与前 3 项。
+ *
+ * 变异证据（源码级，票面 §自证两行）见 `.scratch/t384/` 证据件。
+ */
+import { strict as assert } from 'node:assert';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, isAbsolute, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { test } from 'node:test';
+import { openDb } from '../dist/index.js';
+import { routesFor } from '../dist/triggers/routing.js';
+
+process.env.CALORIE_TODAY = '2026-09-07';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
+const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
+const DB_FILENAME = 'calorie_data.db';
+
+/** 8 条：唤醒词 → 键 ＋ 参数 ＋ 该页必须出现的 metrics 键与正文文案。 */
+const CASES = [
+  {
+    word: '看BMI报告', key: 'calorie.report.bmi', kind: 'bmi', title: 'BMI 报告', params: {},
+    metrics: ['bmi', 'heightCm', 'weightKg', 'points'],
+    html: ['BMI 分级', '偏瘦', '正常', '超重', '肥胖', '逐日体重与 BMI'],
+  },
+  {
+    word: '看TDEE报告', key: 'calorie.report.tdee', kind: 'tdee', title: 'TDEE 报告', params: {},
+    metrics: ['tdee', 'avgIntake', 'deficit', 'activityFactor'],
+    html: ['每日总消耗', '活动量系数', 'Mifflin-St Jeor'],
+  },
+  {
+    word: '看BMR报告', key: 'calorie.report.bmr', kind: 'bmr', title: 'BMR 报告', params: {},
+    metrics: ['bmr', 'tdee', 'underBmrDays'],
+    html: ['基础代谢', '低于基础代谢', '危险'],
+  },
+  {
+    word: '看蛋白质摄入报告', key: 'calorie.report.protein', kind: 'protein', title: '蛋白质摄入报告', params: {},
+    metrics: ['avgProtein', 'proteinGoal', 'hitDays', 'hitRate'],
+    html: ['每日蛋白量', '达标率'],
+  },
+  {
+    word: '看水分摄入报告', key: 'calorie.report.water', kind: 'water', title: '水分摄入报告', params: {},
+    metrics: ['avgWater', 'waterGoal', 'hitDays', 'hitRate'],
+    html: ['每日饮水量', '达成率'],
+  },
+  {
+    word: '看综合评分', key: 'calorie.report.score', kind: 'score', title: '综合评分', params: {},
+    metrics: ['score', 'historyDays', 'weakest'],
+    html: ['综合评分', '评分历史'],
+  },
+  {
+    word: '看健康趋势', key: 'calorie.report.trend', kind: 'trend', title: '健康趋势', params: {},
+    metrics: ['seriesDays', 'earlyAvg', 'lateAvg', 'turns'],
+    html: ['评分序列', '变化方向', '前段均分', '后段均分'],
+  },
+  {
+    word: '看健康报告(含对比)', key: 'calorie.report.compare', kind: 'compare', title: '健康报告(含对比)', params: {},
+    metrics: ['days', 'tdee', 'weightKg', 'deltaTdee', 'deltaWeightKg'],
+    html: ['两期变化量', '对比期'],
+  },
+];
+
+function seed384(db) {
+  db.prepare("INSERT OR REPLACE INTO user_profile (id, age, gender, height_cm, activity_level) VALUES (1, 30, 'male', 175, 'moderate')").run();
+  db.prepare('INSERT OR REPLACE INTO daily_goal (id, calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal) VALUES (1, 1800, 150, 200, 50, 2000)').run();
+  // 100 天窗：覆盖 BMI(90)／趋势(90)／对比(7d vs prev 7d) 与全部 30 天窗。
+  for (let i = 0; i < 100; i++) {
+    const d = new Date(Date.parse('2026-05-31T12:00:00Z') + i * 86400000).toISOString().slice(0, 10);
+    db.prepare('INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(d, '12:00:00', '米饭', 200, 1750, 140, 200, 60);
+    db.prepare('INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(d, '15:00:00', '💧水', 2100, 0, 0, 0, 0);
+    db.prepare('INSERT INTO weight_log (date, time, weight_kg) VALUES (?, ?, ?)').run(d, '07:00:00', Math.round((72.0 - i * 0.05) * 100) / 100);
+    db.prepare('INSERT INTO exercise_log (date, exercise_type, duration_minutes, calories_burned, category) VALUES (?, ?, ?, ?, ?)').run(d, '跑步', 30, 300, '有氧');
+  }
+  // 「低于基础代谢的天数」：窗口里挑 4 天给极低摄入，BMR 危险信号必须触发。
+  for (const d of ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04']) {
+    db.prepare("UPDATE food_log SET calories = 900 WHERE date = ? AND food_name = '米饭'").run(d);
+  }
+}
+
+function mkSeededDir() {
+  const dir = mkdtempSync(join(tmpdir(), 't384-'));
+  const db = openDb(join(dir, DB_FILENAME));
+  seed384(db);
+  db.close();
+  return dir;
+}
+
+/** 真跑：键 ＋ params ＋ --html 落点（照 383 同款）。 */
+function runKey(key, params, htmlPath, dir) {
+  return spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params), '--html', htmlPath], {
+    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+  });
+}
+
+function assertFullDoc(html, what) {
+  assert.ok(html.startsWith('<!doctype html>'), what + ' 缺 doctype');
+  assert.ok(html.includes('charset="utf-8"'), what + ' 缺 charset');
+  assert.ok(html.includes('<style>'), what + ' 缺 style');
+  assert.ok(html.includes('<script>'), what + ' 缺 helpers');
+  assert.ok(html.includes('ilife-page'), what + ' 缺 page');
+  assert.ok(!html.includes('<!--'), what + ' 有残留标记');
+  assert.ok(html.includes('复制数据'), what + ' 缺复制区');
+  assert.ok(html.includes('data-fmt-open="1"'), what + ' 缺三格式菜单开合器');
+  assert.deepEqual([...html.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'], what + ' 三格式菜单缺项');
+}
+
+test('#384 判据：8 条词各有命令可执行（routesFor exec＋键逐条对得上）', () => {
+  for (const c of CASES) {
+    const hits = routesFor(c.word).filter((r) => r.kind === 'exec');
+    assert.ok(hits.length > 0, '唤醒词没有命令可执行：' + c.word);
+    assert.equal(hits[0].key, c.key, '唤醒词错键：' + c.word);
+  }
+});
+
+test('#384 8 条逐条跑通：exit 0＋绝对路径＋完整文档＋各自字段', () => {
+  const dir = mkSeededDir();
+  let i = 0;
+  for (const c of CASES) {
+    i += 1;
+    const out = join(dir, 't384-' + i + '.html');
+    const r = runKey(c.key, c.params, out, dir);
+    assert.equal(r.status, 0, c.word + ' 非 exit 0：status=' + r.status + ' stderr=' + String(r.stderr || '').slice(-500));
+    const env = JSON.parse(String(r.stdout));
+    assert.ok(typeof env.data.output === 'string', c.word + ' 缺 data.output');
+    assert.ok(isAbsolute(env.data.output), c.word + ' data.output 非绝对路径：' + env.data.output);
+    assert.equal(env.data.output, out, c.word + ' 落点不是本次 --html');
+    assert.ok(existsSync(out), c.word + ' 产物不在盘上');
+    const html = readFileSync(out, 'utf8');
+    assertFullDoc(html, c.word);
+    for (const k of c.metrics) {
+      assert.ok(typeof env.data.metrics[k] === 'number', c.word + ' 缺 metrics.' + k + '（实得 ' + JSON.stringify(env.data.metrics) + '）');
+    }
+    for (const needle of c.html) {
+      assert.ok(html.includes(needle), c.word + ' 产物缺字段文案：' + needle);
+    }
+    // 拿错页即红：8 页各有自己那一页的形态名（`KIND_LABELS`），不许落回 full 健康盘。
+    assert.ok(html.includes('卡路里·' + c.title), c.word + ' 缺页面标题（疑似落回 full 健康盘）');
+    assert.ok(html.includes('卡路里 · 报告'), c.word + ' 缺类型徽标');
+    assert.ok(html.includes('calorie.report.' + c.kind), c.word + ' 缺本形态命令回执行');
+  }
+});
+
+test('#384 拿错页即红：8 条产物互不相同，且都不是 full 健康盘', () => {
+  const dir = mkSeededDir();
+  const docs = new Map();
+  for (const c of CASES) {
+    const out = join(dir, 't384-uniq-' + c.key + '.html');
+    const r = runKey(c.key, c.params, out, dir);
+    assert.equal(r.status, 0, c.word + ' 非 exit 0');
+    docs.set(c.key, readFileSync(out, 'utf8'));
+  }
+  const v = [...docs.values()];
+  for (let a = 0; a < v.length; a++) {
+    for (let b = a + 1; b < v.length; b++) {
+      assert.notEqual(v[a], v[b], '两张报告产物逐字节相同（形状没分开）：' + CASES[a].word + ' vs ' + CASES[b].word);
+    }
+  }
+});
+
+test('#384 回归：full 健康盘 11 条窗口词行为不变（`calorie.view.health`）', () => {
+  // 窗口逐字照冻结表；「自定义」那条表里是 `<开始日期>`／`<结束日期>` 占位，真跑换成实日期
+  // （其余 10 条照抄即能跑，故照抄执行）。
+  const cases = [
+    ['看健康报告(本周)', { window: '本周' }], ['看健康报告(上周)', { window: '上周' }],
+    ['看健康报告(最近 7 天)', { window: '7d' }], ['看健康报告(最近 30 天)', { window: '30d' }],
+    ['看健康报告(最近 90 天)', { window: '90d' }], ['看健康报告(最近 180 天)', { window: '180d' }],
+    ['看健康报告(最近 365 天)', { window: '365d' }], ['看健康报告(本月)', { window: '本月' }],
+    ['看健康报告(上月)', { window: '上月' }], ['看健康报告(今年)', { window: '今年' }],
+    ['看健康报告(自定义)', { window: 'custom', start: '2026-08-01', end: '2026-09-07' }],
+  ];
+  const dir = mkSeededDir();
+  let i = 0;
+  for (const [w, params] of cases) {
+    i += 1;
+    const hits = routesFor(w).filter((r) => r.kind === 'exec');
+    assert.ok(hits.length > 0, '回归词没有命令可执行：' + w);
+    assert.equal(hits[0].key, 'calorie.view.health', '回归词错键：' + w);
+    const out = join(dir, 't384-reg-' + i + '.html');
+    const r = runKey('calorie.view.health', params, out, dir);
+    assert.equal(r.status, 0, w + ' 回归红：status=' + r.status + ' stderr=' + String(r.stderr || '').slice(-400));
+    const html = readFileSync(out, 'utf8');
+    assertFullDoc(html, '回归 ' + w);
+  }
+});

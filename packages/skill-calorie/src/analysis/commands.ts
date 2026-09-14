@@ -43,7 +43,11 @@ import type { CommandSpec, ViewOut } from '../shared/commandSpec.js';
 import { searchHelp, TRIGGERS } from '../triggers/index.js';
 import { buildMultiTrendView } from './multiTrend.js';
 import { buildMultiTrendDoc } from './multiTrendPage.js';
-import { todayISO } from './utils.js';
+import { buildReportDoc } from './reportDoc.js';
+import { REPORT_DEFAULT_WINDOW, buildReportPlate } from './reportPlate.js';
+import type { ReportKind, ReportPlate } from './reportPlate.js';
+import { seriesAvg } from './series.js';
+import { shiftISODate, todayISO } from './utils.js';
 
 /* ── 多指标趋势族（#113 「趋势 2＋其他 6」里的趋势两支） ─────────────────────────────────── */
 
@@ -301,6 +305,110 @@ function viewHistory(params: Record<string, unknown>, db: DatabaseSync): ViewOut
   return { data: { items, total: items.length }, html };
 }
 
+/* ── 报告族（#384 · 8 条报告子形态页；命令层 8 条独立、渲染层 1 个多态底座） ────────────────
+ * 一词一条命令，不向 `calorie.view.health` 塞形态参数；命令名取 HELP 下一级「健康报告」
+ * ＋ 老侧 `render_analysis.py --kind` 的形态名（bmi／tdee／bmr／protein／water／score／trend／compare）。
+ * 窗口缺省逐字照老侧 `data_source` 自带的口径（`REPORT_DEFAULT_WINDOW`），命令不传 `window` 即用它。
+ * 取数与页面装配住 `./reportPlate.ts`＋四个渲染分片，本文件只做薄转调（铁律五）。
+ *
+ * 为什么是 8 个具名处理函数而不是一个工厂：生成器的**现场配对门**只剥「标识符形态」的
+ * `run:` 值（`gen-cli.mjs` 的 `evalDeclArrayText`），写成 `reportView('bmi')` 会让它静态求值失败
+ * 并报 `GEN-PAIR FAIL`。故这里 8 个薄壳各转调同一个实现，声明表里全是裸函数名。 */
+
+function viewReport(kind: ReportKind, params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  const range = reportRange(params, kind);
+  const plate = buildReportPlate(db, kind, range.start, range.end);
+  const p = plate.fourPiece;
+  const t = plate.trend;
+  const weakest = plate.items[0];
+  // 窗口里最近一次称重：BMI 形态直接取逐日点，其余形态（对比页没有逐日 BMI 点）退回日序列末个非空值。
+  // 两处共用同一个「体重」概念，故只在这里取一次，不在各形态里各算一份。
+  const weightKg = plate.bandPoints.length > 0
+    ? latestNumber(plate.bandPoints.map((x) => x.kg))
+    : latestNumber(plate.base.series.map((s) => s.weightKg));
+  return {
+    data: {
+      metrics: nums({
+        days: plate.base.days,
+        // BMI 形态
+        bmi: latestNumber(plate.bandPoints.map((x) => x.bmi)),
+        heightCm: plate.base.profile.heightCm,
+        weightKg,
+        points: plate.bandPoints.length,
+        // 能耗形态
+        bmr: plate.base.profile.bmr,
+        tdee: plate.base.profile.tdee,
+        activityFactor: plate.base.profile.activityFactor,
+        avgIntake: seriesAvg(plate.base.series, 'calories'),
+        deficit: seriesAvg(plate.base.series, 'deficit'),
+        underBmrDays: plate.bmrDanger?.underDays.length,
+        // 目标追踪形态
+        avgProtein: seriesAvg(plate.base.series, 'protein'),
+        proteinGoal: plate.base.goals.proteinG,
+        avgWater: seriesAvg(plate.base.series, 'waterMl'),
+        waterGoal: plate.base.goals.waterMl,
+        hitDays: p?.hitDays,
+        hitRate: p?.hitRate,
+        // 评分／趋势形态
+        score: t?.lateAvg,
+        historyDays: plate.scores.length,
+        seriesDays: plate.scores.length,
+        earlyAvg: t?.earlyAvg,
+        lateAvg: t?.lateAvg,
+        turns: t?.turns,
+        // 最低分项＝该项命中率（0–100）。**不是一个数**：`items` 已按命中率升序，故 `items[0]` 就是最低项。
+        weakest: weakest === undefined ? undefined : weakest.rate,
+        // 对比形态
+        deltaTdee: deltaOf(plate, '日均总消耗'),
+        deltaWeightKg: deltaOf(plate, '日均体重'),
+        deltaCalorie: deltaOf(plate, '日均摄入'),
+      }),
+    },
+    html: buildReportDoc(plate, commandOf(kind, range.start, range.end)),
+  };
+}
+
+const viewReportBmi = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('bmi', p, db);
+const viewReportTdee = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('tdee', p, db);
+const viewReportBmr = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('bmr', p, db);
+const viewReportProtein = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('protein', p, db);
+const viewReportWater = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('water', p, db);
+const viewReportScore = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('score', p, db);
+const viewReportTrend = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('trend', p, db);
+const viewReportCompare = (p: Record<string, unknown>, db: DatabaseSync): ViewOut => viewReport('compare', p, db);
+
+/** 报告窗口：给了 `window`（或 `start`／`end`）就以它为准，否则用该形态的缺省窗口词。 */
+function reportRange(params: Record<string, unknown>, kind: ReportKind): { start: string; end: string } {
+  const win = windowRange(params);
+  if (win !== null) return win;
+  const def = REPORT_DEFAULT_WINDOW[kind];
+  const days = Number(/^([0-9]+)d$/.exec(def)?.[1] ?? 30);
+  const end = dayField(params, 'end') ?? anchorOf(params);
+  assertISO(end, 'end');
+  return { start: shiftISODate(end, -(days - 1)), end };
+}
+
+/** 对比页取某一项的 Δ（取不到即不进投影，不编 0）。 */
+function deltaOf(plate: ReportPlate, label: string): number | undefined {
+  const r = plate.compare?.rows.find((x) => x.label === label);
+  return r?.delta ?? undefined;
+}
+
+function latestNumber(xs: readonly (number | null)[]): number | undefined {
+  for (let i = xs.length - 1; i >= 0; i--) {
+    const v = xs[i];
+    if (v !== null && v !== undefined) return v;
+  }
+  return undefined;
+}
+
+/** 页面底部回执行的命令原文（照抄即能跑）。 */
+function commandOf(kind: ReportKind, start: string, end: string): string {
+  const days = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
+  const window = REPORT_DEFAULT_WINDOW[kind] === '7d' && days !== 7 ? days + 'd' : REPORT_DEFAULT_WINDOW[kind];
+  return 'calorie-cmd-read calorie.report.' + kind + ' --params \'{"window":"' + window + '"}\'';
+}
+
 /* ── 声明表（**唯一权威源**；前 13 条六字段逐字照抄未搬迁清单，第 14 条为 #376 新增） ────────
  * `calorie.view.anomaly`／`calorie.view.predict` 在本件里**照旧不写 `wakeWord`**：未搬迁清单里这两条
  * 本来就没有代表唤醒词（速查表退回键名），搬迁不替产品定内容。原先 `shared/commandSpec.ts` 与
@@ -321,4 +429,15 @@ export const ANALYSIS_COMMANDS = [
   { kind: 'read', key: 'calorie.help.lookup', shape: 'list', title: '唤醒词HELP', wakeWord: '看今日主页', run: viewHelpLookup, example: 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'' },
   { kind: 'read', key: 'calorie.history', shape: 'list', title: '热量历史', wakeWord: '查热量历史', run: viewHistory, example: 'calorie-cmd-read calorie.history --params \'{"days":7}\'' },
   { kind: 'read', key: 'calorie.view.multi-trend', shape: 'stat', title: '多指标趋势', wakeWord: '看整体趋势(含目标对比)', run: viewMultiTrend, example: 'calorie-cmd-read calorie.view.multi-trend --params \'{"window":"90d","compare":"target"}\'' },
+  // #384 · 报告族 8 条（冻结表 order 331–338 由 non-exec 转 exec）。一词一条命令；
+  // 六件事：kind＝read／key＝`calorie.report.<形态>`／shape＝stat／title＝HELP 下一级的词面
+  // ／wakeWord＝真词（冻结表逐字）／example＝照抄即能跑（缺省窗口来自老侧 `data_source`）。
+  { kind: 'read', key: 'calorie.report.bmi', shape: 'stat', title: 'BMI 报告', wakeWord: '看BMI报告', run: viewReportBmi, example: 'calorie-cmd-read calorie.report.bmi --params \'{"window":"90d"}\'' },
+  { kind: 'read', key: 'calorie.report.tdee', shape: 'stat', title: 'TDEE 报告', wakeWord: '看TDEE报告', run: viewReportTdee, example: 'calorie-cmd-read calorie.report.tdee --params \'{"window":"30d"}\'' },
+  { kind: 'read', key: 'calorie.report.bmr', shape: 'stat', title: 'BMR 报告', wakeWord: '看BMR报告', run: viewReportBmr, example: 'calorie-cmd-read calorie.report.bmr --params \'{"window":"30d"}\'' },
+  { kind: 'read', key: 'calorie.report.protein', shape: 'stat', title: '蛋白质摄入报告', wakeWord: '看蛋白质摄入报告', run: viewReportProtein, example: 'calorie-cmd-read calorie.report.protein --params \'{"window":"30d"}\'' },
+  { kind: 'read', key: 'calorie.report.water', shape: 'stat', title: '水分摄入报告', wakeWord: '看水分摄入报告', run: viewReportWater, example: 'calorie-cmd-read calorie.report.water --params \'{"window":"30d"}\'' },
+  { kind: 'read', key: 'calorie.report.score', shape: 'stat', title: '综合评分', wakeWord: '看综合评分', run: viewReportScore, example: 'calorie-cmd-read calorie.report.score --params \'{"window":"30d"}\'' },
+  { kind: 'read', key: 'calorie.report.trend', shape: 'stat', title: '健康趋势', wakeWord: '看健康趋势', run: viewReportTrend, example: 'calorie-cmd-read calorie.report.trend --params \'{"window":"90d"}\'' },
+  { kind: 'read', key: 'calorie.report.compare', shape: 'stat', title: '健康报告(含对比)', wakeWord: '看健康报告(含对比)', run: viewReportCompare, example: 'calorie-cmd-read calorie.report.compare --params \'{"window":"7d"}\'' },
 ] satisfies readonly CommandSpec[];

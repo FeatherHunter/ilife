@@ -9,6 +9,9 @@
  *
  * `order` 是该记录在**原列表内**的 0 基位次（顺序权威，生成器按 `(list, order)` 复原三个列表）：
  * 只换住处、不重排 ⇒ `src/triggers/routes.generated.ts` 逐字节不变。
+ *
+ * #384 改动：`order 331–338`（8 条报告唤醒词）由 `non-exec` 转 `exec`，各指一条自己的命令
+ * （`calorie.report.<形态>`）；位次不动（不重排），故本件条数不变、「没有命令可执行」的记录由 42 条减到 34 条。
  */
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
@@ -84,14 +87,14 @@ export const ANALYSIS_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 328, wakeWord: '看健康报告(上月)', scene: '10', kind: 'exec', key: 'calorie.view.health', cli: 'calorie-cmd-read calorie.view.health --params \'{"window":"上月"}\'' },
   { list: 'wake', order: 329, wakeWord: '看健康报告(今年)', scene: '10', kind: 'exec', key: 'calorie.view.health', cli: 'calorie-cmd-read calorie.view.health --params \'{"window":"今年"}\'' },
   { list: 'wake', order: 330, wakeWord: '看健康报告(自定义)', scene: '10', kind: 'exec', key: 'calorie.view.health', cli: 'calorie-cmd-read calorie.view.health --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
-  { list: 'wake', order: 331, wakeWord: '看BMI报告', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
-  { list: 'wake', order: 332, wakeWord: '看TDEE报告', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
-  { list: 'wake', order: 333, wakeWord: '看BMR报告', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
-  { list: 'wake', order: 334, wakeWord: '看蛋白质摄入报告', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
-  { list: 'wake', order: 335, wakeWord: '看水分摄入报告', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
-  { list: 'wake', order: 336, wakeWord: '看综合评分', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
-  { list: 'wake', order: 337, wakeWord: '看健康趋势', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
-  { list: 'wake', order: 338, wakeWord: '看健康报告(含对比)', scene: '10', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：旧链 report --kind 的 BMI／TDEE／BMR／蛋白／水分／评分／趋势／对比属「报告子形态」，95 键内无同形报告键（view.health 只有 full 健康盘；TDEE／BMR 仅作为 view.goal-recommend 推荐盘的依据字段出现，非报告产物）。' },
+  { list: 'wake', order: 331, wakeWord: '看BMI报告', scene: '10', kind: 'exec', key: 'calorie.report.bmi', cli: 'calorie-cmd-read calorie.report.bmi --params \'{"window":"90d"}\'' },
+  { list: 'wake', order: 332, wakeWord: '看TDEE报告', scene: '10', kind: 'exec', key: 'calorie.report.tdee', cli: 'calorie-cmd-read calorie.report.tdee --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 333, wakeWord: '看BMR报告', scene: '10', kind: 'exec', key: 'calorie.report.bmr', cli: 'calorie-cmd-read calorie.report.bmr --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 334, wakeWord: '看蛋白质摄入报告', scene: '10', kind: 'exec', key: 'calorie.report.protein', cli: 'calorie-cmd-read calorie.report.protein --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 335, wakeWord: '看水分摄入报告', scene: '10', kind: 'exec', key: 'calorie.report.water', cli: 'calorie-cmd-read calorie.report.water --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 336, wakeWord: '看综合评分', scene: '10', kind: 'exec', key: 'calorie.report.score', cli: 'calorie-cmd-read calorie.report.score --params \'{"window":"30d"}\'' },
+  { list: 'wake', order: 337, wakeWord: '看健康趋势', scene: '10', kind: 'exec', key: 'calorie.report.trend', cli: 'calorie-cmd-read calorie.report.trend --params \'{"window":"90d"}\'' },
+  { list: 'wake', order: 338, wakeWord: '看健康报告(含对比)', scene: '10', kind: 'exec', key: 'calorie.report.compare', cli: 'calorie-cmd-read calorie.report.compare --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 339, wakeWord: '看整体趋势(体重+摄入+运动)', scene: '10', kind: 'exec', key: 'calorie.view.multi-trend', cli: 'calorie-cmd-read calorie.view.multi-trend --params \'{"window":"90d","group":"g1","compare":"target"}\'' },
   { list: 'wake', order: 340, wakeWord: '看整体趋势(体重+体脂+围度)', scene: '10', kind: 'exec', key: 'calorie.view.multi-trend', cli: 'calorie-cmd-read calorie.view.multi-trend --params \'{"window":"90d","group":"g2","compare":"target"}\'' },
   { list: 'wake', order: 341, wakeWord: '看整体趋势(饮食+蛋白+纤维)', scene: '10', kind: 'exec', key: 'calorie.view.multi-trend', cli: 'calorie-cmd-read calorie.view.multi-trend --params \'{"window":"90d","group":"g3","compare":"target"}\'' },
