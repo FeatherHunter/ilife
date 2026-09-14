@@ -20,7 +20,7 @@ import { weightCompare } from './figures.js';
 import type { CompareSide, WeightCompare } from './figures.js';
 import { assertRange } from './plate.js';
 import type { WeightCompareView } from './plate.js';
-import { renderChartBlock, renderDataTable, renderDisclosure, renderKpiGrid, renderListRows } from 'base-paint/blocks';
+import { renderCaliberLine, renderChartBlock, renderDataTable, renderDisclosure, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
@@ -252,15 +252,14 @@ function premiseNotice(a: CompareSegment, b: CompareSegment, anchorMiss: boolean
 }
 
 /** 页脚来源行（§5.5：哪张库／哪个窗口／多少条；有缺口当场注明，缺的日期不补 0）。
- *  同样拆两行：`msg` 报「哪张库 ＋ 哪张表」，`detail` 报窗口与条数。 */
-function sourceText(a: CompareSegment, b: CompareSegment): { msg: string; detail: string } {
+ *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`：页脚来源是「口径行」不是提示，
+ *  故不用深色 toast 卡（#340 裁定）；本函数给的是这一句的整句文案。 */
+function sourceText(a: CompareSegment, b: CompareSegment): string {
   const gaps = [b, a].filter((s) => gapDaysOf(s) > 0)
     .map((s) => s.label + '区间内 ' + gapDaysOf(s) + ' 天无记录（不计入均值，不补 0）');
-  return {
-    msg: '📊 数据来源:' + DB_FILENAME + ' · weight_log',
-    detail: b.label + ' ' + rangeText(b) + '（' + b.count + ' 条）／' + a.label + ' ' + rangeText(a) + '（' + a.count + ' 条）'
-      + (gaps.length > 0 ? ' · ' + gaps.join('；') : ' · 区间内记录齐'),
-  };
+  return '📊 数据来源:' + DB_FILENAME + ' · weight_log · '
+    + b.label + ' ' + rangeText(b) + '（' + b.count + ' 条）／' + a.label + ' ' + rangeText(a) + '（' + a.count + ' 条）'
+    + (gaps.length > 0 ? ' · ' + gaps.join('；') : ' · 区间内记录齐');
 }
 
 /* ── 两段表／结论／复制载荷（两面共用） ── */
@@ -428,8 +427,7 @@ function renderComparePage(core: CompareCore): string {
   }
   if (core.curve) parts.push(renderCurveBlock(core.curve));
   parts.push(conclusionBlock(conclusion));
-  const src = sourceText(a, b);
-  parts.push(notice({ icon: 'info', msg: src.msg, detail: src.detail }));
+  parts.push(renderCaliberLine(sourceText(a, b)));
   parts.push(compareCopyArea(a, b, delta, rhythm, conclusion, core.command));
   return assembleDocPage({
     docTitle: DOC_TITLE,

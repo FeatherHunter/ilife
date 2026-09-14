@@ -13,7 +13,7 @@
  * 本页不吃老实物三项短板：手写 canvas／Y 轴无数值／单点口径分歧
  * （`weight_volatility_v2.html` 全篇 `<canvas>`；6 张全部没传 `yTicks`；两页单点一个出图一个不出）。
  */
-import { renderChartBlock, renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderChartBlock, renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
@@ -202,15 +202,14 @@ function sigmaChart(o: VolatilityV2): string {
   });
 }
 
-/** 页脚数据来源行（§5.5：哪张库／哪个窗口／多少条；有缺口当场注明，缺的天不补 0）。 */
+/** 页脚数据来源行（§5.5：哪张库／哪个窗口／多少条；有缺口当场注明，缺的天不补 0）。
+ *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`：页脚来源是「口径行」不是提示，
+ *  故不用深色 toast 卡（#340 裁定）。 */
 function sourceLine(o: VolatilityV2, start: string, end: string): string {
   const gap = o.days - o.warnDays;
-  return notice({
-    icon: 'info',
-    msg: '📊 数据来源:' + DB_FILENAME + ' · weight_log · 窗口 ' + start + ' ~ ' + end
-      + '（' + o.days + ' 天 · ' + o.warnDays + ' 条记录'
-      + (gap > 0 ? ' · ' + gap + ' 天无记录，不计入基线、不补 0' : ' · 窗口内记录齐') + '）',
-  });
+  return renderCaliberLine('📊 数据来源:' + DB_FILENAME + ' · weight_log · 窗口 ' + start + ' ~ ' + end
+    + '（' + o.days + ' 天 · ' + o.warnDays + ' 条记录'
+    + (gap > 0 ? ' · ' + gap + ' 天无记录，不计入基线、不补 0' : ' · 窗口内记录齐') + '）');
 }
 
 /** 页顶前提提示（§5.6：样本不足不拒绝渲染，走 `warn` 写清「几条／门槛几条／为什么仍可看」）。 */

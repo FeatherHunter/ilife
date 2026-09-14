@@ -39,6 +39,7 @@ import type { WeightHistoryView } from './plate.js';
 import { scenarioE3 } from './weightCompare2.js';
 import { weightVolatilityV2 } from './volatility.js';
 import {
+  renderCaliberLine,
   renderChartBlock,
   renderDataTable,
   renderDisclosure,
@@ -457,17 +458,14 @@ function sourceTextOf(h: WeightHistoryView, extra: HistoryDocExtra): string {
 }
 
 /** 页脚数据来源行（§5.5：哪张库／哪张表／哪个窗口／多少条；窗内有缺口时同一行补一句口径）。
- *  标题只留「库 · 表」这一短句，窗口与条数进 `detail`（toast 的标题行右侧有「知道了」按钮，
- *  长标题会顶到按钮下面——正文行才放得下长文本）。 */
+ *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`（12px `--fg2`）：页脚的来源是「口径行」，
+ *  不是需要注意的提示，故不用深色 toast 卡（#340 裁定）；原 toast 的「标题 ＋ detail」两行合成这一句。 */
 function sourceLine(h: WeightHistoryView, extra: HistoryDocExtra): string {
   const gap = gapNoteOf(h, extra);
-  return notice({
-    icon: 'info',
-    msg: '📊 数据来源:' + DB_FILENAME + ' · weight_log',
-    detail: h.range + ' · 共 ' + h.rows.length + ' 条'
-      + (extra.noteOnly ? '（只取有备注的）' : '')
-      + (gap === null ? '' : '；' + gap),
-  });
+  return renderCaliberLine('📊 数据来源:' + DB_FILENAME + ' · weight_log · ' + h.range
+    + ' · 共 ' + h.rows.length + ' 条'
+    + (extra.noteOnly ? '（只取有备注的）' : '')
+    + (gap === null ? '' : '；' + gap));
 }
 
 /** 窗内缺口（§3 第 15 条：缺多少天要写清；缺值按断点画、不补 0）。给了区间串才数得出来。 */

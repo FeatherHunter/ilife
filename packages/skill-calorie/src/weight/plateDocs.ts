@@ -10,11 +10,11 @@
  */
 import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
-import { renderDisclosure } from 'base-paint/blocks';
+import { renderCaliberLine, renderDisclosure } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
-import { copyArea, copyLog, notice } from '../shared/copyArea.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
 import { statusCard } from '../shared/receiptParts.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
@@ -67,7 +67,8 @@ export function envelopeOf(receipt: CrudReceipt, message: string): SerializableE
 }
 
 /** 复制区（数据＋日志，日志第 3 段是渲染命令原文）＋页末数据来源行
- *  （来源行写法照 `diet/nutritionPortDocs.ts:58-61`：哪张库／哪个窗口／多少条）。 */
+ *  （来源行写法照 `diet/nutritionPortDocs.ts:58-61`：哪张库／哪个窗口／多少条；形态走 #420
+ *  浅色口径行 `renderCaliberLine`——页脚来源是口径行，不是需要注意的提示，故不用深色 toast 卡）。 */
 export function deliveryBlocks(
   envelope: SerializableEnvelope, receipt: CrudReceipt, command: string, sourceText: string,
 ): string {
@@ -80,7 +81,7 @@ export function deliveryBlocks(
         actionAt: receipt.meta.actionAt, version: DOC_VERSION,
       }),
     },
-  }) + notice({ icon: 'info', msg: '📊 数据来源:' + sourceText });
+  }) + renderCaliberLine('📊 数据来源:' + sourceText);
 }
 
 /** 写后回执整页壳（标题三件套＋区块）：整页模板恒由 `assembleDocPage` 一处产出。 */

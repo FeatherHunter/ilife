@@ -28,7 +28,7 @@
  *      持平或无对照 empty；「无基线」与「持平 0.0」是两件事，分文写清；
  *   ④ 复制数据＝所见：载荷把窗口／首末／覆盖天数／最高最低／逐条里程碑／结论原句都带上，
  *      数字走 `metricsOf` 冻结投影（缺值不当 0），另有 `copyLog` 六段日志位（命令原文可照抄重跑）；
- *   ⑤ 页脚一行 `notice` 数据来源（哪张库／哪个窗口／多少条，有缺口写「缺 M−N 天」），
+ *   ⑤ 页脚一行 #420 浅色口径行 `renderCaliberLine` 数据来源（哪张库／哪个窗口／多少条，有缺口写「缺 M−N 天」），
  *      样本不足走页顶 `notice({ icon: 'warn' })`、不拒绝渲染也不静默照画。
  *   总减重显示走 `lossPhrase`（正数＝已减），与载荷 `totalLoss` 的正负语义一致。
  */
@@ -44,6 +44,7 @@ import { getWeightHistory } from './records.js';
 import { assertDate, assertRange } from './plate.js';
 import type { WeightReviewView } from './plate.js';
 import {
+  renderCaliberLine,
   renderChartBlock,
   renderDataTable,
   renderDisclosure,
@@ -362,11 +363,8 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
   }
   /* 结论块唯一形态：折叠区（§5.3），句子是取数层原话（`weightMilestone.status`），页面不做自然语言解析。 */
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + m.status + '</p>', open: true }));
-  parts.push(notice({
-    icon: 'info',
-    msg: '📊 数据来源:weight_log ｜ 复核日 ' + v.today + ' ｜ 当前 ' + m.currentWeight
-      + ' kg vs 目标 ' + m.weightGoal + ' kg' + (daily === null ? ' ｜ 日均变化未算' : ''),
-  }));
+  parts.push(renderCaliberLine('📊 数据来源:weight_log ｜ 复核日 ' + v.today + ' ｜ 当前 ' + m.currentWeight
+    + ' kg vs 目标 ' + m.weightGoal + ' kg' + (daily === null ? ' ｜ 日均变化未算' : '')));
   const metrics: Record<string, number | string | null> = {
     ...milestoneNumsOf(m),
     '日期': m.currentDate, '状态': m.status, '截止': m.deadline, '预计达成日': m.estDate,
@@ -492,11 +490,8 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
   }
   /* 结论块唯一形态：折叠区，全页「结论」恰一处（§5.3）。 */
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + v.summary + '</p>', open: true }));
-  parts.push(notice({
-    icon: 'info',
-    msg: '📊 数据来源:weight_log ｜ 窗口 ' + v.start + ' ~ ' + v.end + ' ｜ ' + n + ' 条'
-      + (v.gapDays > 0 ? ' ｜ 缺 ' + v.gapDays + ' 天' : ''),
-  }));
+  parts.push(renderCaliberLine('📊 数据来源:weight_log ｜ 窗口 ' + v.start + ' ~ ' + v.end + ' ｜ ' + n + ' 条'
+    + (v.gapDays > 0 ? ' ｜ 缺 ' + v.gapDays + ' 天' : '')));
   const metrics: Record<string, number | string | null> = {
     ...periodNums(v),
     '窗口': v.start + ' ~ ' + v.end,
@@ -557,10 +552,7 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
     emptyText: '尚未达成任何减重里程碑',
   }));
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + v.summary + '</p>', open: true }));
-  parts.push(notice({
-    icon: 'info',
-    msg: '📊 数据来源:weight_log ｜ 全量至 ' + v.currentDate + ' ｜ ' + v.rows + ' 条',
-  }));
+  parts.push(renderCaliberLine('📊 数据来源:weight_log ｜ 全量至 ' + v.currentDate + ' ｜ ' + v.rows + ' 条'));
   const metrics: Record<string, number | string | null> = {
     ...milestoneNums(v),
     '当前日期': v.currentDate, '总减重': lossPhrase(v.totalLoss),

@@ -24,6 +24,7 @@ import type { WeightTrend } from './figures.js';
 import { assertRange, weightCurvePlan } from './plate.js';
 import type { WeightDashboard } from './plate.js';
 import {
+  renderCaliberLine,
   renderChartBlock,
   renderDataTable,
   renderEmptyBlock,
@@ -32,7 +33,7 @@ import {
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { copyArea, copyLog, notice } from '../shared/copyArea.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, conclusionBlock, signed } from './plateDocs.js';
 import { batchLogWeight, logWeight } from './records.js';
@@ -156,7 +157,9 @@ function weightConclusion(w: WeightDashboard): string {
   return bits.join('；') + '。';
 }
 
-/** 复制区（数据＋日志）＋页末数据来源行：来源行写法照 `diet/nutritionPortDocs.ts:58-61`。 */
+/** 复制区（数据＋日志）＋页末数据来源行：来源行写法照 `diet/nutritionPortDocs.ts:58-61`，
+ *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`（12px `--fg2`）——页脚来源是「口径行」，
+ *  不是需要注意的提示，故不走深色 toast 卡（#340 裁定；`notice` 仍服务于真正的提示）。 */
 function deliveryBlocks(envelope: SerializableEnvelope, command: string, sourceText: string): string {
   return copyArea({
     data: { envelope },
@@ -164,7 +167,7 @@ function deliveryBlocks(envelope: SerializableEnvelope, command: string, sourceT
       envelope,
       copyLog: copyLog({ command, actionAt: nowStamp(), version: DOC_VERSION }),
     },
-  }) + notice({ icon: 'info', msg: '📊 数据来源:' + sourceText });
+  }) + renderCaliberLine('📊 数据来源:' + sourceText);
 }
 
 function weightEnvelope(w: WeightDashboard): SerializableEnvelope {
