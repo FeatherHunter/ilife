@@ -1,13 +1,22 @@
 // #421 页面融合四件（公共层增量）：占比迷你条 `renderMiniBar` ／ 分布条行 `renderDistributionRows` ／
 // 徽章 `renderChips` ／ 字段变更行 `renderChangeRows`。
 //
-// 判据（逐条对票面 #421「验收命令」）：
-//   1. 四个渲染函数的产物各含票面类名；`rows`／`items` 为空 → 空串。
+// 判据（逐条对票面 #421「验收命令」；#431 按甲法改口径并加硬，见 docs/base/base-render/t431-四件判据补硬.md）：
+//   1. 四个渲染函数的产物各含票面类名；`rows`／`items` 空数组 → 空串。
 //   2. `renderMiniBar({ pct: 76 })` 的填充内联宽 `76%`；`120` 夹到 `100%`、`-5` 夹到 `0%`；
 //      非数（`NaN`）按本文件既有 `badInput` 口径抛 `bad-input`。
-//   3. 四件产物里不出现色值字面量（颜色只从入参来）。
+//   3. 色值口径（甲法，与 `src/blocks.ts`「色值口径（#431 定稿）」注释同口径）：**缺省调用产物里不含色值
+//      字面量**；**缺省填充色走冻结 token**（样式段两条 `-fill` 规则的 `background: var(--blue)` 兜底）。
+//      两句不互斥：区块自身不写死色值字面量，缺省色的来源是冻结 token 而不是「没有色」。
+//   3a. 入参色值**逐字透传**：`#f00`／`#ff0000`／`rgb()`／`rgba()`／`var(--<冻结 token>)`／CSS 具名色；
+//      清单外（`;`／`expression(`／`url(`／未定义 token 名）一律 `bad-input`（S3-6）。
 //   4. `arrow: false` 的行含箭头位且带可见性占位（栏位与 `arrow: true` 的行不塌）。
 //   5. 公共层零领域词（力量／有氧／柔韧／日常）；11 键 token 闭集与 12 区样式闭集都不动。
+//   6. 四件样式鉴别力（S2-3）：13 条规则各「至少 N 条声明」（N＝实测向下留 2）＋关键属性快照
+//      （宽高／栏宽／字号／缺省色逐条锚住），删任一条即红。
+//   7. a11y（S3-4）：迷你条 `role="img"` ＋ `aria-label="<pct>%"`、变更行箭头 `aria-hidden="true"`
+//      逐条断言；分布条行与徽章**不产** `role`／`aria-*`（零读数写死）。
+//   8. 空态口径写死（S3-5）：空数组 → 空串；缺失（`undefined`）→ `bad-input`（两者不同口径）。
 // 纪律（与 blocks.test.mjs 同口径）：断言只读冻结常量与产物字面量，不硬编码第二份 token 值；
 //   类名一律按整词比对（防 `-fill` 之类子串把根类断言误满足）。
 import { describe, it } from 'node:test';
@@ -71,16 +80,42 @@ function colorLiterals(html) {
   return [...html.matchAll(/#[0-9a-fA-F]{3,8}\b|rgba?\(/g)].map((m) => m[0]);
 }
 
+/** 缺省填充色：样式段两条 `-fill` 规则的 `background` 取同一冻结 token（与 `src/blocks.ts` 注释同口径）。 */
+const DEFAULT_FILL_VAR = 'var(--blue)';
+
+/** `blocksCss()` 里某类名的规则体（`{` 与 `}` 之间），供声明计数与关键属性快照读。 */
+function ruleBody(css, cls) {
+  const hit = new RegExp('\\.' + cls + ' \\{([^}]*)\\}').exec(css);
+  assert.ok(hit !== null, '缺规则块：.' + cls);
+  return hit[1];
+}
+
+/** 某类名规则体逐条声明（`color: var(--fg2)` 这样一条一项）。 */
+function ruleDecls(css, cls) {
+  return ruleBody(css, cls).split(';').map((decl) => decl.trim()).filter((decl) => decl !== '');
+}
+
+/** 某类名规则体里某条声明的值（没有则 undefined）。 */
+function ruleDecl(css, cls, prop) {
+  const hit = ruleDecls(css, cls).find((decl) => decl.startsWith(prop + ':'));
+  return hit === undefined ? undefined : hit.slice(prop.length + 1).trim();
+}
+
+/** 产物里的 a11y 属性（`role=`／`aria-*=`），零读数＝这件的产物不带 a11y 属性。 */
+function a11yAttrs(html) {
+  return [...html.matchAll(/\s(?:role|aria-[a-z-]+)="[^"]*"/g)].map((m) => m[0].trim());
+}
+
 describe('#421 占比迷你条 renderMiniBar', () => {
   it('根类＋填充类各一；pct 逐字写进填充的内联宽度，入参色落在填充上', () => {
-    const html = renderMiniBar({ pct: 76, color: 'var(--accent)' });
+    const html = renderMiniBar({ pct: 76, color: 'var(--ok)' });
     const roots = tagsWithClass(html, MINI_BAR);
     const fills = tagsWithClass(html, MINI_BAR_FILL);
     assert.equal(roots.length, 1, '根类恰一个：' + html);
     assert.equal(fills.length, 1, '填充类恰一个：' + html);
     assert.ok(html.startsWith('<span '), '载体是行内 span（与数字同格并排）：' + html.slice(0, 20));
     assert.equal(declOf(fills[0], 'width'), '76%', '填充宽度必须逐字 76%：' + fills[0]);
-    assert.equal(declOf(fills[0], 'background'), 'var(--accent)', '入参色必须落在填充上：' + fills[0]);
+    assert.equal(declOf(fills[0], 'background'), 'var(--ok)', '入参色必须落在填充上：' + fills[0]);
     assert.equal(declsOf(fills[0]).length, 2, '填充只许宽度与入参色两条声明：' + fills[0]);
   });
 
@@ -106,27 +141,67 @@ describe('#421 占比迷你条 renderMiniBar', () => {
     assertBadInput(() => renderMiniBar(), '缺 input');
   });
 
-  it('不给色值 → 填充只有宽度一条声明；产物零色值字面量（区块不自带色）', () => {
+  it('不给色值 → 填充只有宽度一条声明；产物零色值字面量，缺省填充色走样式段冻结 token', () => {
     const html = renderMiniBar({ pct: 42 });
     const fills = tagsWithClass(html, MINI_BAR_FILL);
-    assert.deepEqual(declsOf(fills[0]), ['width:42%'], '不给色值时不得自带背景：' + fills[0]);
-    assert.deepEqual(colorLiterals(html), [], '产物自带色值字面量：' + html);
+    assert.deepEqual(declsOf(fills[0]), ['width:42%'], '不给色值时不得自带内联背景：' + fills[0]);
+    assert.deepEqual(colorLiterals(html), [], '缺省产物自带色值字面量：' + html);
+    // 缺省填充色的来源就是样式段：冻结 token（不是字面量、也不是「没有色」——与 src/blocks.ts 注释同口径）。
+    const css = blocksCss();
+    assert.equal(ruleDecl(css, MINI_BAR_FILL, 'background'), DEFAULT_FILL_VAR, '迷你条填充缺省色须是冻结 token');
+    assert.equal(ruleDecl(css, DIST_FILL, 'background'), DEFAULT_FILL_VAR, '分布条填充缺省色须是冻结 token');
+    assert.ok(Object.hasOwn(CSS_VAR_TOKENS, '--blue'), '--blue 必须在 11 个冻结 token 内');
   });
 
-  it('颜色两种写法都收：token 名（`--accent`）自动包 var()、色值逐字透传；非法色值 → bad-input', () => {
+  it('颜色两种写法都收：token 名（`--ok`）自动包 var()、色值逐字透传；非法色值 → bad-input', () => {
     const bg = (color) => declOf(tagsWithClass(renderMiniBar({ pct: 42, color }), MINI_BAR_FILL)[0], 'background');
-    assert.equal(bg('--accent'), 'var(--accent)', 'token 名须包成 var()');
+    assert.equal(bg('--ok'), 'var(--ok)', '冻结 token 名须包成 var()');
     assert.equal(bg('#ff0000'), '#ff0000', '色值须逐字透传（色只从入参来）');
     assert.equal(bg('var(--soft)'), 'var(--soft)', '整条 var() 原样');
     assertBadInput(() => renderMiniBar({ pct: 42, color: '' }), '空串色值');
     assertBadInput(() => renderMiniBar({ pct: 42, color: 7 }), '非串色值');
   });
+
+  // #431 增补一（逐字透传）：清单内六种写法各一条，值一律逐字进内联 `background`，不加壳不换写。
+  it('入参色值逐字透传：#f00／#ff0000／rgb()／rgba()／var(--冻结 token)／CSS 具名色', () => {
+    const bg = (color) => declOf(tagsWithClass(renderMiniBar({ pct: 42, color }), MINI_BAR_FILL)[0], 'background');
+    assert.equal(bg('#f00'), '#f00', '#rgb 逐字');
+    assert.equal(bg('#ff0000'), '#ff0000', '#rrggbb 逐字');
+    assert.equal(bg('rgb(1,2,3)'), 'rgb(1,2,3)', 'rgb() 逐字');
+    assert.equal(bg('rgba(1,2,3,.5)'), 'rgba(1,2,3,.5)', 'rgba() 逐字');
+    assert.equal(bg('var(--blue)'), 'var(--blue)', 'var() 引用冻结 token 逐字');
+    assert.equal(bg('tomato'), 'tomato', 'CSS 具名色逐字');
+    assert.equal(bg('--blue2'), 'var(--blue2)', '裸冻结 token 名仍按既有口径包成 var()');
+    assert.deepEqual(declsOf(tagsWithClass(renderMiniBar({ pct: 42, color: 'tomato' }), MINI_BAR_FILL)[0]),
+      ['width:42%', 'background:tomato'], '入参色只多一条声明、不加第三条');
+  });
+
+  // #431 增补二（允许清单）：清单外一律 `bad-input`，`;` 不得穿进内联声明列表。
+  it('清单外色值一律 bad-input（`;`／`expression(`／`url(`／未定义 token 名）', () => {
+    const cases = [
+      ['分号注入', 'red;background:url(https://x/a.png)'],
+      ['expression(', 'expression(alert(1))'],
+      ['url(', 'url(https://x/a.png)'],
+      ['未定义 token 名', '--nope'],
+      ['未定义 token 名的 var()', 'var(--nope)'],
+      ['具名色带尾注', 'tomato/*'],
+      ['八位十六进制（清单只收 #rgb／#rrggbb）', '#ff000080'],
+      ['数字串', '7'],
+    ];
+    for (const [label, color] of cases) {
+      assertBadInput(() => renderMiniBar({ pct: 42, color }), label + '：' + color);
+    }
+    // 同一把尺子也守分布条行的逐行色值（字段路径 input.rows[i].color）。
+    assertBadInput(() => renderDistributionRows({
+      rows: [{ label: '甲', value: '1', pct: 10, color: '--nope' }],
+    }), '分布条行的未定义 token 名');
+  });
 });
 
 describe('#421 分布条行 renderDistributionRows', () => {
   const ROWS = [
-    { label: '甲', value: '12.5', pct: 52, color: 'var(--accent)' },
-    { label: '乙', value: 3, pct: 8, color: '--accent2', labelClass: 'demo-hot' },
+    { label: '甲', value: '12.5', pct: 52, color: 'var(--ok)' },
+    { label: '乙', value: 3, pct: 8, color: '--blue2', labelClass: 'demo-hot' },
   ];
 
   it('逐行四栏：行根类＋-name／-bar／-fill／-val；行即件（无外层容器类）', () => {
@@ -145,9 +220,9 @@ describe('#421 分布条行 renderDistributionRows', () => {
     const html = renderDistributionRows({ rows: ROWS });
     const fills = tagsWithClass(html, DIST_FILL);
     assert.equal(declOf(fills[0], 'width'), '52%', '第 1 行宽度：' + fills[0]);
-    assert.equal(declOf(fills[0], 'background'), 'var(--accent)', '第 1 行色：' + fills[0]);
+    assert.equal(declOf(fills[0], 'background'), 'var(--ok)', '第 1 行色：' + fills[0]);
     assert.equal(declOf(fills[1], 'width'), '8%', '第 2 行宽度：' + fills[1]);
-    assert.equal(declOf(fills[1], 'background'), 'var(--accent2)', '第 2 行 token 名包 var()：' + fills[1]);
+    assert.equal(declOf(fills[1], 'background'), 'var(--blue2)', '第 2 行 token 名包 var()：' + fills[1]);
   });
 
   it('越界 pct 同行夹取口径（120 → 100%、-5 → 0%）', () => {
@@ -265,9 +340,9 @@ describe('#421 公共层纪律（色值／token 闭集／样式落盘／领域�
     renderChangeRows({ rows: [{ label: '甲', before: '1', after: '2' }] }),
   ];
 
-  it('四件产物零色值字面量（颜色只从入参来）', () => {
+  it('四件缺省产物零色值字面量（缺省色走样式段冻结 token，区块不写死色值）', () => {
     for (const html of samples()) {
-      assert.deepEqual(colorLiterals(html), [], '产物自带色值字面量：' + html);
+      assert.deepEqual(colorLiterals(html), [], '缺省产物自带色值字面量：' + html);
     }
   });
 
@@ -296,5 +371,72 @@ describe('#421 公共层纪律（色值／token 闭集／样式落盘／领域�
     for (const word of ['力量', '有氧', '柔韧', '日常']) {
       assert.ok(!src.includes(word), '公共层出现领域词：' + word);
     }
+  });
+
+  // #431 增补三（S2-3 样式鉴别力）：声明数下限是粗锚，关键属性快照是细锚——删任一条声明即红。
+  it('四件样式鉴别力：13 条规则各至少 N 条声明（N＝实测向下留 2）＋关键属性快照', () => {
+    const css = blocksCss();
+    // [类名, 改前实测声明数, 下限 N]。N＝实测 - 2；`-label`（实测 3）与 `-old`（实测 2）再留 2 会归零、
+    // 下限失去意义，故这两条与实测 3 的 `-new` 一并取 1（余量 1-2），细锚由下面的快照承接。
+    const counts = [
+      [MINI_BAR, 7, 5], [MINI_BAR_FILL, 4, 2],
+      [DIST_ROW, 6, 4], [DIST_NAME, 4, 2], [DIST_BAR, 5, 3], [DIST_FILL, 4, 2], [DIST_VAL, 4, 2],
+      [CHIP, 10, 8],
+      [CHANGE_ROW, 6, 4], [CHANGE_LABEL, 3, 1], [CHANGE_OLD, 2, 1], [CHANGE_ARROW, 4, 2], [CHANGE_NEW, 3, 1],
+    ];
+    for (const [cls, measured, floor] of counts) {
+      const decls = ruleDecls(css, cls);
+      assert.ok(decls.length >= floor, '.' + cls + ' 声明数 ' + decls.length + ' < ' + floor
+        + '（实测 ' + measured + '）：' + ruleBody(css, cls));
+    }
+    // 关键属性快照：宽高／栏宽／字号／缺省色逐条锚住。
+    const snapshot = [
+      [MINI_BAR, 'width', '72px'], [MINI_BAR, 'height', '6px'],
+      [MINI_BAR_FILL, 'height', '100%'], [MINI_BAR_FILL, 'background', DEFAULT_FILL_VAR],
+      [DIST_ROW, 'grid-template-columns', 'minmax(0, 6em) minmax(0, 1fr) auto'], [DIST_ROW, 'font-size', '13px'],
+      [DIST_BAR, 'height', '8px'], [DIST_FILL, 'height', '100%'], [DIST_FILL, 'background', DEFAULT_FILL_VAR],
+      [CHIP, 'font-size', '12px'], [CHIP, 'background', 'var(--soft)'],
+      [CHANGE_ROW, 'font-size', '14px'], [CHANGE_LABEL, 'flex', '1'],
+      [CHANGE_OLD, 'text-decoration', 'line-through'], [CHANGE_OLD, 'color', 'var(--fg2)'],
+      [CHANGE_ARROW, 'min-width', '1.2em'], [CHANGE_NEW, 'font-weight', '600'],
+    ];
+    for (const [cls, prop, want] of snapshot) {
+      assert.equal(ruleDecl(css, cls, prop), want, '.' + cls + ' 的 ' + prop + ' 快照不符');
+    }
+    // 四件 13 条规则体内零色值字面量：缺省色与线色都只走冻结 token（全表零色值见票面遗留出口，不在本票）。
+    for (const [cls] of counts) {
+      assert.deepEqual(colorLiterals(ruleBody(css, cls)), [], '.' + cls + ' 规则体出现色值字面量：' + ruleBody(css, cls));
+    }
+  });
+
+  // #431 增补四（S3-4 a11y）：有则逐条断言，没有则写死零读数。
+  it('a11y 逐条：迷你条 role="img"＋aria-label＝pct；变更行箭头 aria-hidden；分布行与徽章读数为零', () => {
+    const bar = renderMiniBar({ pct: 42 });
+    const barRoot = tagsWithClass(bar, MINI_BAR)[0];
+    assert.ok(barRoot.includes('role="img"'), '迷你条根须带 role="img"：' + barRoot);
+    assert.ok(barRoot.includes('aria-label="42%"'), '迷你条根须带 aria-label＝pct：' + barRoot);
+    assert.deepEqual(a11yAttrs(bar), ['role="img"', 'aria-label="42%"'], '迷你条 a11y 属性逐条：' + bar);
+    assert.ok(renderMiniBar({ pct: 120 }).includes('aria-label="100%"'), '夹取后 aria-label 同口径（120 → 100%）');
+    for (const arrow of [undefined, true, false]) {
+      const html = renderChangeRows({ rows: [{ label: '甲', before: '1', after: '2', arrow }] });
+      const arrowTag = tagsWithClass(html, CHANGE_ARROW)[0];
+      assert.ok(arrowTag.includes('aria-hidden="true"'), '箭位是装饰字形，须 aria-hidden，arrow=' + String(arrow));
+      assert.deepEqual(a11yAttrs(html), ['aria-hidden="true"'], '变更行 a11y 属性逐条：' + html);
+    }
+    assert.deepEqual(a11yAttrs(renderDistributionRows({ rows: [{ label: '甲', value: '1', pct: 42 }] })), [],
+      '分布条行不产 role／aria-*（读数：零）');
+    assert.deepEqual(a11yAttrs(renderChips({ items: [{ text: '甲' }] })), [],
+      '徽章不产 role／aria-*（读数：零）');
+  });
+
+  // #431 增补五（S3-5 空态口径）：空数组与缺失是两种口径，都要写死。
+  it('空态口径写死：空数组 → 空串；缺失（undefined）→ bad-input', () => {
+    assert.equal(renderDistributionRows({ rows: [] }), '', '分布行 [] → 空串');
+    assert.equal(renderChips({ items: [] }), '', '徽章 [] → 空串');
+    assert.equal(renderChangeRows({ rows: [] }), '', '变更行 [] → 空串');
+    assertBadInput(() => renderDistributionRows({ rows: undefined }), '分布行 undefined ≠ []');
+    assertBadInput(() => renderChips({ items: undefined }), '徽章 undefined ≠ []');
+    assertBadInput(() => renderChangeRows({ rows: undefined }), '变更行 undefined ≠ []');
+    assertBadInput(() => renderMiniBar(), '迷你条缺 input（无空态分支）');
   });
 });

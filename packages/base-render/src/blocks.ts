@@ -280,17 +280,72 @@ function reqPct(value: unknown, field: string): number {
   return Math.min(100, Math.max(0, value as number));
 }
 
-/** 填充条的内联声明（#421）：宽度恒有；**背景只在调用方给了颜色时才出现**（区块不自带色值）。 */
+/** 填充条的内联声明（#421／#431）：宽度恒有；**背景只在调用方给了颜色时才出现**——不给时不落内联色，
+ *  填充色由样式段两条 `-fill` 规则里的**冻结 token** `var(--blue)` 兜底（缺省色走冻结 token，
+ *  区块自身不写死任何色值字面量；判据见 `test/page-viz-421.test.mjs`「缺省色走冻结 token」一条）。 */
 function fillDecls(pct: number, color: string | undefined): string {
   return 'width:' + String(pct) + '%' + (color === undefined ? '' : ';background:' + color);
 }
 
-/** 颜色入参（#421）：`undefined` 透传（用样式里的缺省色）；token 名（`--x`）包成 `var()`，其余色值逐字透传。 */
+/** 冻结 token 名（#431）：色值入参里 `var()` 只许引用 `CSS_VAR_TOKENS` 的 11 个名字——公共层只定义
+ *  这 11 个，引用没定义的名字会让填充的 `background` 变成 guaranteed-invalid（条静默变透明、不报错），
+ *  故清单外一律 `bad-input`（与 `blocksCss` 的「`var()` 引用必须是冻结 token」同一条纪律）。 */
+function isFrozenToken(name: string): boolean {
+  return Object.hasOwn(CSS_VAR_TOKENS, name);
+}
+
+/** CSS 具名色全表（#431 色值允许清单第四支）：CSS Color Level 4「Named colors」的 148 个具名色。
+ *  这里只管**收不收**（比对时大小写不敏感），取值由浏览器定、本仓不写第二份。`transparent` 与
+ *  `currentColor` 是关键字不是具名色，不在表内。 */
+const CSS_NAMED_COLORS: ReadonlySet<string> = new Set(
+  ('aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown'
+    + ' burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan'
+    + ' darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid'
+    + ' darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet'
+    + ' deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro'
+    + ' ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki'
+    + ' lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow'
+    + ' lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray'
+    + ' lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine'
+    + ' mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise'
+    + ' mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab'
+    + ' orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru'
+    + ' pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown'
+    + ' seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan'
+    + ' teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen').split(' '),
+);
+
+/** `rgb()`／`rgba()` 形态（#431）：分量只许数字（可带 `%`），逗号或空格分隔、alpha 可用 `/` 引。
+ *  只校验形态、不校验取值范围（越界由 CSS 自己夹取）；`expression(`／`url(` 这类带字母的实参在此挡下。 */
+function isRgbFunction(raw: string): boolean {
+  const hit = /^rgba?\(\s*([^)]*)\)$/i.exec(raw);
+  if (hit === null) return false;
+  const parts = hit[1].split(/[,/]|\s+/).filter((part) => part !== '');
+  return (parts.length === 3 || parts.length === 4)
+    && parts.every((part) => /^\d*\.?\d+%?$/.test(part));
+}
+
+/** 色值入参（#421／#431）：`undefined` 透传（缺省色走样式段的冻结 token）；清单内的写法**逐字透传**
+ *  （裸 token 名 `--x` 包成 `var(--x)`）。允许清单＝`#rgb`／`#rrggbb`／`rgb()`／`rgba()`／
+ *  `var(--<冻结 token 名>)`／CSS 具名色；**清单外一律 `bad-input`**——`;`／`expression(`／`url(` 这类
+ *  注入形态在这一步挡住，不让 `;` 穿进内联声明列表（审查 S3-6）。 */
 function optColor(value: unknown, field: string): string | undefined {
   if (value === undefined) return undefined;
-  if (typeof value !== 'string' || value.trim() === '') badInput(field + ' 必须是非空字符串（token 名或色值）');
+  if (typeof value !== 'string' || value.trim() === '') badInput(field + ' 必须是非空字符串（冻结 token 名或色值）');
   const raw = value.trim();
-  return /^--[A-Za-z0-9-]+$/.test(raw) ? 'var(' + raw + ')' : raw;
+  if (/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw)) return raw;
+  if (isRgbFunction(raw)) return raw;
+  const tokenRef = /^var\(\s*(--[A-Za-z0-9-]+)\s*\)$/.exec(raw);
+  if (tokenRef !== null) {
+    if (!isFrozenToken(tokenRef[1])) badInput(field + ' 引用了未冻结的 token（只许 11 个冻结 token）：' + tokenRef[1]);
+    return raw;
+  }
+  if (/^--[A-Za-z0-9-]+$/.test(raw)) {
+    if (!isFrozenToken(raw)) badInput(field + ' 引用了未冻结的 token（只许 11 个冻结 token）：' + raw);
+    return 'var(' + raw + ')';
+  }
+  if (CSS_NAMED_COLORS.has(raw.toLowerCase())) return raw;
+  badInput(field + ' 不在色值允许清单里（#rgb／#rrggbb／rgb()／rgba()／var(--<冻结 token>)／CSS 具名色）：' + raw);
 }
 
 /** 附加类名（#421）：`undefined` 透传；给了须是空格分隔的类名（调用方按域标色，区块不认领域）。 */
@@ -316,7 +371,8 @@ const CHANGE_ARROW_GLYPH = '\u2192';
 export interface MiniBarInput {
   /** 占比：0–100 的有限数，越界夹取。 */
   readonly pct: number;
-  /** 填充色：token 名（`--x`）或色值；不给则用样式里的缺省色。 */
+  /** 填充色：冻结 token 名（`--blue`，自动包 `var()`）／`var(--<冻结 token>)`／`#rgb`／`#rrggbb`／
+   *  `rgb()`／`rgba()`／CSS 具名色；不给＝用样式段的缺省色（冻结 token `var(--blue)`）。清单外抛 `bad-input`。 */
   readonly color?: string;
 }
 
@@ -339,7 +395,8 @@ export interface DistributionRowInput {
   readonly value: string | number | null;
   /** 占比：0–100 的有限数，越界夹取。 */
   readonly pct: number;
-  /** 填充色：token 名（`--x`）或色值；不给则用样式里的缺省色。 */
+  /** 填充色：冻结 token 名（`--blue`，自动包 `var()`）／`var(--<冻结 token>)`／`#rgb`／`#rrggbb`／
+   *  `rgb()`／`rgba()`／CSS 具名色；不给＝用样式段的缺省色（冻结 token `var(--blue)`）。清单外抛 `bad-input`。 */
   readonly color?: string;
   /** 名称栏的附加类名（空格分隔）：调用方按域标色，区块不认领域。 */
   readonly labelClass?: string;
@@ -1095,8 +1152,10 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     // #421 页面融合四件的样式随本区落盘（同 #420 处置：四件都是页面级、不属 12 区块，
     // `BLOCK_STYLE_SECTIONS` 由 `test/blocks.test.mjs` 钉死 12 项，故不新增样式区、不新增 token）。
-    // **色值一律由调用方给**：样式里只出现冻结 token（`--line` 底槽、`--blue` 填充缺省），
-    // 区块自身不写任何领域色；填充宽由产物的内联 `width` 撑。
+    // **色值口径（#431 定稿）**：区块自身不写死任何色值字面量——样式里只出现冻结 token。不给 `color`
+    // 时填充色的兜底就是下面两条 `-fill` 规则里的冻结 token `var(--blue)`（缺省色走冻结 token，不是
+    // 字面量，也不是「没有色」）；调用方给的色值由 `optColor` 按允许清单收下、逐字进产物的内联
+    // `background`。三处说法（本条注释／证据件／判据名）同口径。
     '.' + p + 'block-mini-bar {',
     '  display: inline-block;',
     '  overflow: hidden;',
