@@ -7,7 +7,8 @@
 - 老技能根目录：`D:\2Study\StudyNotes\SKILLS\卡路里`。全程只读，未改老技能与本仓的任何源码。
 - 唤醒词权威表：`scripts/_triggers.py`（436 条）。老模板目录：`templates/`（73 张 `.html`）。
 - 本图这 9 条唤醒词各自交付一张结果型 HTML；9 张全部由同一张模板装出来。
-- 路径写法：老技能内部路径统一用正斜杠（`templates/home_dashboard.html`）。
+- 同一条事实在新仓的落点：9 条已散到 5 个命令（`calorie.view.home` order 0／5／6／7／8、`calorie.view.diet` order 1、`calorie.view.exercise` order 2、`calorie.view.goal-progress` order 4、`calorie.view.weight` order 3）—— 老侧「9 条合装 1 张模板」与新侧「9 条散在 5 个命令」的落差，逐条对在 `docs/skills/skill-calorie/scene01-新侧优秀件清单.md` 的「四、本图 9 条在新仓的命令归属」。
+- 路径写法：老技能内部路径统一用正斜杠（`templates/home_dashboard.html`）；老共享层「公共组件」的路径是绝对路径（见第三节）。
 - 行号口径：指本件落笔时的老技能文件内容。老技能是只读快照，行号可复现。
 
 ## 一、9 条唤醒词 → 老模板 → 字段
@@ -39,7 +40,7 @@
 | 3 | 看今日运动概览 | `["exercise_burn", "exercise_duration", "exercise_goal", "exercise_vs_target"]` | `exercise.burn`／`exercise.minutes`／`exercise.count`／`exercise.goal`／`exercise.pct`（:451-457） |
 | 4 | 看今日体重概览 | `["latest_weight", "weight_goal_gap", "weight_delta_7d"]` | `weight.latest_kg`／`weight.goal_kg`／`weight.goal_diff`／`weight.delta_7d`（:460-465） |
 | 5 | 看今日目标进度 | `["goal_calorie_pct", "goal_protein_pct", "goal_water_pct", "goal_exercise_pct"]` | `goals.items[]`（每项 `label`／`goal`／`actual`／`pct`）＋`goals.summary`；目标暂停时另加 `goals.paused`＋`goals.paused_summary`（:470-499） |
-| 6 | 看本周主页 | `["week_diet_total", "week_exercise_total", "week_weight_trend"]` | `period.diet_calories`／`diet_protein`／`diet_days`／`exercise_burn`／`exercise_days`／`weight_start`／`weight_end`／`weight_change`，外加 `period.period`／`start`／`end`（:191-217、:500-505） |
+| 6 | 看本周主页 | `["week_diet_total", "week_exercise_total", "week_weight_trend"]` | `period.diet_calories`／`diet_protein`／`diet_days`／`exercise_burn`／`exercise_minutes`／`exercise_days`／`weight_start`／`weight_end`／`weight_change`，外加 `period.period`／`start`／`end`（:191-217、:500-505）。`exercise_minutes` 由 `_period_summary` 产出（:215），模板侧未读到 —— 登记里也没有这个名字 |
 | 7 | 看本月主页 | `["month_diet_total", "month_exercise_total", "month_weight_trend"]` | 同第 6 条（week 与 month 共用一套字段，只换窗口；`_period_range` :179-188） |
 | 8 | 看连续记录天数 | `["streak_current", "streak_longest"]` | `streak.current`／`streak.longest`／`streak.summary`（:124-160、:506-514） |
 | 9 | 看今日热量预算 | `["tdee", "exercise_burn", "intake_today", "remaining_calories", "goal_gap"]` | `budget.tdee`／`budget.exercise_burn`／`budget.intake`／`budget.remaining`／`budget.summary`（:220-237、:515-524）。登记里的 `intake_today`／`remaining_calories`／`goal_gap` 三个名字在脚本里都不存在 |
@@ -58,7 +59,7 @@
 
 | 序 | 区块 | 结构标记 | 行号 | 出什么 |
 |---:|---|---|---|---|
-| 1 | 头部三件套 | `.hero`／`#eyebrow`／`#heroTitle`／`#heroSub`／`#statusPill` | 607-613 | 眉标「卡路里」＋大标题（默认「今日概况」）＋副标题（日期 · 卡路里主面板）＋待办徽章 |
+| 1 | 头部三件套 | `.hero`／`#eyebrow`／`#heroTitle`／`#heroSub`／`#statusPill` | 608-613 | 眉标「卡路里」＋大标题（默认「今日概况」）＋副标题（日期 · 卡路里主面板）＋待办徽章 |
 | 2 | KPI 卡片格（6 张） | `#kpiGrid`／`.kpi-grid` | 615-616 | 饮食／运动／体重／目标／进度／连续，一张一个读数 |
 | 3 | 趋势小图（最近 7 天） | `#trendChart`／`.trend-chart` | 618-619 | 折线＋底部一行日期标签 |
 | 4 | 七个分视图区块（一次只显一块） | `#secDiet`／`#secExercise`／`#secWeight`／`#secGoals`／`#secStreak`／`#secBudget`／`#secPeriod` | 621-649 | 每块＝标题＋右侧灰色提示语＋一个 `.mini-view` 小卡网格 |
@@ -104,14 +105,47 @@
 - **进度条**：三色阈值写在一处 `barClass()` —— ≥90 走 good、≥60 走 warn、其余走 bad（:726-731）。KPI 卡与分视图小卡共用它。
 - **百分比徽章**：KPI 卡标签右侧的圆形百分比（:899）。
 - **图表**：`window.charts.line`（公共层图表脚本），7 天折线，高 60，带数据点，不画坐标轴文字，日期另排一行（:907-924）。
-- **复制按钮组**：页尾由 `actionBar()` 注入，固定两颗「复制数据」／「复制日志」，可另加场景按钮（公共组件 `assets/base.js:304-315`）。
+- **复制按钮组**：页尾由 `actionBar()` 注入，固定两颗「复制数据」／「复制日志」，可另加场景按钮（`D:\2Study\StudyNotes\SKILLS\公共组件\assets\base.js:304-315`；复制文本形状见第三节）。
 - **条件复制按钮**：目标已暂停时出「🔄 重启所有目标」，点下去把一段中文指令写进剪贴板，按钮文案变「✓ 重启指令已复制」（:801-806、:1032-1037）。
 - **回到顶部**：右下角 `#backTop` 锚点（:700）。
 - **空态**：饮食／运动列表为空时出 `window.emptyState`（:1008、:1022）。
 - **错误态**：数据状态不是 ok 时整页换成 `window.errorReceipt`（:859-862）。
 - **没有的东西**：tab、折叠、排序、筛选，以及页内的视图切换控件一个都没有 —— 看哪个视图只能由命令开关决定，页面上切不了。
 
-## 三、同族相邻模板
+## 三、公共组件（老共享层）
+
+老技能自带的公共层不挂在技能根下：技能根 `D:\2Study\StudyNotes\SKILLS\卡路里` 里**没有**同名目录，公共层与卡路里平级，住 `D:\2Study\StudyNotes\SKILLS\公共组件`。本节两件实物都从那里读：
+
+| 实物 | 路径 | 实测大小 |
+|---|---|---|
+| 公共脚本 | `D:\2Study\StudyNotes\SKILLS\公共组件\assets\base.js` | 46,892 字节 |
+| HELP 页面模板 | `D:\2Study\StudyNotes\SKILLS\公共组件\assets\help_template.html` | 40,927 字节 |
+
+按老技能根目录去找这两件会落空 —— 这是本图 9 条与「公共组件」有关的一切引用的路径口径。
+
+### 1. 提示出口 `window.toast`（本页不用，但同族老模板在用）
+
+`window.toast(msg, detail, options)` 定在 `base.js:185`，出口形状是三参数：一句话、详情、选项。实现是栈式的（多条同时在场会叠起来），默认存活 4,500ms，仓里另有 304 号验收页专验这个堆叠。
+
+- **老模板 13 张在调它**：`body_composition_wizard.html`、`body_measurements_wizard.html`、`body_photo_gif_planner.html`、`body_photo_log_wizard.html`、`cron_setup.html`、`crud_receipt.html`、`diet_overview.html`、`diet_review.html`、`food_library.html`、`nutrition_label_wizard.html`、`profile_setup.html`、`today_meals.html`、`weight_batch_delete.html`。
+- **`templates/home_dashboard.html`（本图唯一命中的那张）不用它**：整页搜不到 `window.toast`；本页的页面级提示只有四条别的路 —— `#statusPill` 待办徽章（:882）、`.view-summary` 结论句（:758-762）、`window.errorReceipt` 错误回执（:860）、`window.emptyState` 空态（:1008、:1022）。
+- 对本图的意义：新侧主页那条**提示条（toast 形态）不是凭空来的**，老共享层早有这个出口，只是本页模板没调；融合时「新侧提示条 ↔ 老侧 `window.toast`」这一个对照要写进设计。
+
+### 2. 复制区的老正本（三格式文本 ＋ 六段日志）
+
+老侧复制按钮的**按钮**由 `actionBar(p, extra, opts)`（`base.js:304-326`）注入，两颗文案恒定为「复制数据」／「复制日志」；这两颗按钮点下去剪贴板里那段文本，才是复制区的正本，也在同一个文件里。
+
+**`buildDataText(p, format)`（`base.js:230-264`）—— 数据侧三格式。** `format` 三选一，缺省 `text`：
+
+- `json`：整个 `data.scene.snapshot` 缩进两份直出。
+- `csv`：第一行标题，第二行摘要行（用分号加空格连接），往后每个区块一行 `[标题]`、每条记录一行，整个列表用换行符拼起来。
+- `text`（中文形，老仓默认那一种）：首行「【技能名 · 命令名】」→「场景: 命令名(场景号) · 唤醒词「…」」→「时间: …」→ 摘要行逐行 → 每区块「▍区块标题」＋每条「  · 行文本」。
+
+**`buildLogText(p, format)`（`base.js:267-295`）—— 六段日志。** 段落顺序与标题逐字写在代码里：① 场景标识（命令／唤醒词／场景名）② AI 思考链（缺省写「本地渲染 · 无 AI 链」）③ 底层数据结构（缺省写「只读查询」）④ 调用链（缺省写「未知」）⑤ 时间戳 ＋ 版本（本地时间／版本各一行）⑥ 异常信息（缺省写「无」）。
+
+- 对本图的意义：新侧 `shared/copyArea.ts` 的**三格式菜单**与**日志六段入参**，正文这一份就在老共享层；老新两边的段数一致，差别只在取值来源。
+
+## 四、同族相邻模板
 
 本图 9 条用不到、但同属主页族主题（今日／本周／本月／连续／预算／体重／饮食／运动／目标进度）的老模板，各记一行。「唤醒词条数」指登记里指名这张模板的条数。
 
@@ -150,7 +184,7 @@
 
 **连续族没有独立模板。** 「看连续记录天数」只在 `home_dashboard.html` 的 `#secStreak` 出两块放大数字卡；`templates/` 73 张里没有一张 streak 专门页。
 
-## 四、值得学 / 值得弃
+## 五、值得学 / 值得弃
 
 ### 值得学
 
@@ -161,7 +195,7 @@
 3. **进度条口径写死在一个函数里。** `barClass()` 定 90／60 两档（:726-731），KPI 卡与分视图小卡共用 —— 达标／接近／偏低一眼可分，且只有一处判据。
 4. **只造卡一个函数。** `card(label, value, unit, sub, pct)`（:733-740）出「小标签＋大数字＋单位＋进度条＋说明」，六个分视图全部走它。形状统一，调样式只改一处。
 5. **空态与错误态都有统一出口。** 列表为空走 `window.emptyState`（:1008、:1022），整页数据不对走 `window.errorReceipt` 换掉整份 body（:859-862）。看下来不会出现空板或白页。
-6. **复制按钮交给公共层出，页面不自己拼。** 页尾只留一个 `#actionbar-zone`（:1044-1045），两颗按钮由 `actionBar()` 注入、文案恒定（公共组件 `assets/base.js:313-314`）。页面侧零复制逻辑。
+6. **复制按钮交给公共层出，页面不自己拼。** 页尾只留一个 `#actionbar-zone`（:1044-1045），两颗按钮由 `actionBar()` 注入、文案恒定（`D:\2Study\StudyNotes\SKILLS\公共组件\assets\base.js:313-314`）。页面侧零复制逻辑。
 7. **「最想看的那个数」单列一类放大样式。** 连续记录用 `.streak-num`、预算的剩余可吃用 `.budget-remaining`（:814-838），把小卡里的主数字放大到 44／48px，和普通小卡拉开层次。
 
 **`templates/goal_progress.html`**
@@ -197,19 +231,20 @@
 2. **`templates/weight_compare.html` 的 h1 是「对比体重」，与 HELP 里的唤醒词同名**，同样属于「标题用命令语」这一类。
 3. **「与按钮同名的标题」在 73 张里按逐字比对只命中 1 处**：`templates/body_photo_log_wizard.html` 的区块标题与按钮都叫「📋 复制 prompt 给 AI」。主页族这几张没有这个问题（复制按钮统一由 `actionBar()` 出，本身不带标题）—— 但同族的写前页有，新仓的复制区标题去重口径要继续守。比对做法：抽出每张模板的 `h1`／`h2`／`h3` 文案与 `button` 文案，逐字求交集。
 
-## 五、缺失件
+## 六、缺失件
 
 1. **`templates/goal_config.html` —— 登记指名它，文件已不在盘上。** 4 条唤醒词（定营养目标／定饮水目标／改营养目标／改饮水目标）的 `html_template` 都写它。老技能自己的决定记录 `docs/adr/0009-template-split-principle.md` 写明：2026-08-04 把它拆成 `templates/goal_config_nutrition.html`（23,191 字节）与 `templates/goal_config_water.html`（14,012 字节），「旧 `templates/goal_config.html` 退役删除」，渲染脚本 `scripts/render_goal_config.py` 按 mode 选新模板（:31-32）。两张新模板都在盘上，但登记里没有一条唤醒词写它们 —— **登记没跟着改**。这 4 条都不在本图 9 条里，主页族不受影响。
-2. **`templates/help_center.html` —— 老技能文档与决定记录把它当唤醒词表在页面侧的权威，文件已不在 `templates/`。** 例如 `.scratch/research/01-主页-研究报告.md:253` 写「主页 SoT ＝ `scripts/_triggers.py`（数据）＋ `templates/help_center.html`（呈现）」，`03-体重-研究报告.md:721` 写「新增唤醒词必须三处一致：`_triggers.py` / `SKILL.md` / `templates/help_center.html`」。今天这份 HELP 由 `scripts/render_help_center.py` 走 `公共组件/assets/help_template.html` 出（该文件在盘，40,927 字节）。文档里的路径是旧的。
+2. **`templates/help_center.html` —— 老技能文档与决定记录把它当唤醒词表在页面侧的权威，文件已不在 `templates/`。** 例如 `.scratch/research/01-主页-研究报告.md:253` 写「主页 SoT ＝ `scripts/_triggers.py`（数据）＋ `templates/help_center.html`（呈现）」，`03-体重-研究报告.md:721` 写「新增唤醒词必须三处一致：`_triggers.py` / `SKILL.md` / `templates/help_center.html`」。今天这份 HELP 由 `scripts/render_help_center.py` 走老共享层的 `D:\2Study\StudyNotes\SKILLS\公共组件\assets\help_template.html` 出（该文件在盘，40,927 字节）。文档里的路径是旧的。
 3. **老一代条目 22 条没有登记模板。** `_triggers.py` 里 436 条中 414 条带 `html_template`，另 22 条是上一代的写法：只写命令（`main_prompt.cli`）与提示语，没有 `html_template`／`key`／`subfunction` 三样。这 22 条的实物其实大多在盘上，例如查热量趋势 → `templates/calorie_trend.html`（`render_calorie_trend.py:21`）、查健康报告 → `templates/health_dashboard.html`（`render_health_dashboard.py:28`）。**这 22 条都不在本图 9 条里**，主页族不受影响。
 4. **有实物但登记里没有任何 `html_template` 指向它 —— 23 张。** 与本图同主题的有：`calorie_trend.html`、`health_dashboard.html`、`health_report.html`、`long_trend.html`、`six_factors.html`、`nutrition_analysis.html`、`predict_report.html`、`anomaly_report.html`、`goal_config_nutrition.html`、`goal_config_water.html`、`goal_weight_result.html`、`weight_batch_delete.html`。其中前两张其实还能通过老一代条目的命令走到，剩下的是真没人引用。与本图主题无关的另 11 张：`profile_setup.html`、`food_library.html`、`error_receipt.html`、`cron_setup.html`、`cross_skill_sleep.html`、`lint_health.html`、`review_template.html`、`body_photo_gif_planner.html`、`body_photo_log_wizard.html`、`body_photo_viewer.html`、`设计审查报告.html`。
 5. **`goal_config.html` 那 4 条唤醒词今天点下去会怎样，本件没验。** 本件只做实物盘点，跑不跑得通由跑通类的票去看。
 
-## 六、取证方式
+## 七、取证方式
 
 - 模板清单与字节数：`Get-ChildItem templates -Filter *.html`（73 张）。
 - 唤醒词逐条：`scripts/_triggers.py` 按 `'category':` 切块后逐块取 `wake_word`／`key`／`subfunction`／`html_template`／`data_fields`，得 436 条，其中 9 条的 `subfunction` 属于主页族（看今日主页／看周期主页／看今日成就）。
 - 视图与字段：`scripts/render_home.py` 的 `build_data()`（:369-525）与各 `_xxx()`（:124-237）；模板侧 `render()`（:858-878）与 `renderSection()`（:742-855）。
-- 复制按钮来源：公共组件 `assets/base.js` 的 `actionBar()`（:304-326）。
+- 复制按钮来源：`D:\2Study\StudyNotes\SKILLS\公共组件\assets\base.js` 的 `actionBar()`（:304-326）；复制文本正本同文件 `buildDataText`（:230-264）与 `buildLogText`（:267-295）；提示出口 `window.toast`（:185）。
+- 老共享层大小与路径：`Get-Item` 实测 `base.js` 46,892 字节、`help_template.html` 40,927 字节；技能根 `D:\2Study\StudyNotes\SKILLS\卡路里\公共组件` 不存在。老模板调 `window.toast` 的张数：73 张里逐张搜 `window.toast(` 命中 13 张，`home_dashboard.html` 不在其中。
 - 老技能自述：`docs/scene-prompts/01-主页.md`（9 条定稿提示语）与 `.scratch/research/01-主页-研究报告.md`。
 - 单张模板均未整份通读；引用均按区块标记行附近的内容核对过。

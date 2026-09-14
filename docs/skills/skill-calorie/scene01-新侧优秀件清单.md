@@ -13,7 +13,7 @@
 
 拿到的数据是 `HomeData`（`src/home/home.ts:19`）：`date`／`daily`（今日摄入合计与水量）／三个目标与完成度（`calorieGoal`／`waterGoal`／`caloriePct`／`proteinPct`／`waterPct`）／今日缺口 `deficitToday`／本周窗口（`week.start`／`week.end`／`week.series`／`avgIntake`／`avgDeficit`／`loggedDays`）／连续记录 `streakDays`。
 
-按区块顺序，它今天摆了四块：
+按区块顺序，它今天摆了五块：
 
 | 序 | 区块 | 吃什么数据 | 出处 |
 |---|---|---|---|
@@ -23,11 +23,13 @@
 | 4 | 提示条（toast 形态） | 一句话「今日已超热量目标」或「热量在目标内」，详情写摄入／目标／缺口 | `homeDocs.ts:127-130` |
 | 5 | 复制区 | 数据位（envelope＋度量投影）＋日志位（命令原文／数据来源／时间戳／版本）；不给区块标题 | `homeDocs.ts:131-164` |
 
-头部三件套（标题／眉标／副标题）由 `assembleDocPage` 出：标题「今日总览 ＋ 日期」，眉标「calorie.view.home · 主页」，副标题写窗口、连续天数与有记录天数占比（`homeDocs.ts:165-172`）。5 条唤醒词（`src/home/routes.ts` 的 order 0／5／6／7／8）都落到同一条命令 `calorie.view.home`，区别只在窗口大小。
+头部三件套（标题／眉标／副标题）由 `assembleDocPage` 出：标题「今日总览 ＋ 日期」，眉标「calorie.view.home · 主页」，副标题写窗口、连续天数与有记录天数占比（`homeDocs.ts:165-172`）。本图 9 条里落在这份主页文档上的**只有 5 条**（`src/home/routes.ts` 的 order 0／5／6／7／8），另 4 条各住别的命令，逐条对照见第三节。
 
 同件里另有一份**旧片段** `renderHomeHtml`（:56 起）：它自拼 `pageShell`（:23）＋自写 KPI（:32）＋完成度条（:41），走深色 token 内联样式（`base-paint` 的 `STYLE_TOKENS`，紫调强调色）；今天不走 live 出口，只被 `render-t8` 锁形状。
 
 ## 二、可直接取用的组件
+
+本节表格的规模口径：**26 行**是表里逐行数出来的组件件数，**43 个导出名**是每行第一列里 `renderXxx`／`xxxYyy` 这类名字的总数（一行写两个名字的行按两个算，只有 `export` 出去、页面能直接 import 的才计入）。
 
 件名前缀：区块层是 `base-paint/blocks`（源 `packages/base-render/src/blocks.ts`），控件层是 `base-paint` 主入口（源 `controls.ts`／`style.ts`／`text.ts`／`charts.ts`），整页与复制区是 `packages/skill-calorie/src/shared/` 两件。
 
@@ -60,13 +62,33 @@
 | `charts`／`buildChartsHelpersJs` | 八种图表的产出与图表运行脚本（图表页必须带） | 见图表区块一格 | `charts.ts`，`index.ts:37` |
 | `nowStamp`／`buildErrorReceipt`／`statusCard`／`reconcileDisclosure` | 渲染时刻戳／失败回执整页数据／回执状态格／页尾对账折叠区 | 见各函数签名 | `src/render/receipt.ts:155`、`:212`；`src/shared/receiptParts.ts` |
 
-## 三、已被裁定过的界面约定
+## 三、本图 9 条在新仓的命令归属
+
+老侧这 9 条唤醒词装在同一张模板里（见 `docs/skills/skill-calorie/scene01-老HTML清单.md`），新仓不是——**9 条已被拆到 5 个命令上**，每行唤醒词逐条指一条命令。这是「老 9 合 1 ↔ 新 5 个命令」对照的关键事实，融合设计要先引这一节。
+
+| 唤醒词 | 新仓住哪条命令 | 路由声明 |
+|---|---|---|
+| 看今日主页 | `calorie.view.home` | `src/home/routes.ts:11`（order 0） |
+| 看本周主页 | `calorie.view.home` | `src/home/routes.ts:15`（order 5） |
+| 看本月主页 | `calorie.view.home` | `src/home/routes.ts:16`（order 6） |
+| 看连续记录天数 | `calorie.view.home` | `src/home/routes.ts:17`（order 7） |
+| 看今日热量预算 | `calorie.view.home` | `src/home/routes.ts:18`（order 8） |
+| 看今日饮食概览 | `calorie.view.diet` | `src/home/routes.ts:12`（order 1） |
+| 看今日运动概览 | `calorie.view.exercise` | `src/home/routes.ts:13`（order 2） |
+| 看今日目标进度 | `calorie.view.goal-progress` | `src/home/routes.ts:14`（order 4） |
+| 看今日体重概览 | `calorie.view.weight` | `src/weight/routes.ts:8`（order 3） |
+
+- 住 `calorie.view.home` 的 5 条（order 0／5／6／7／8）共用 `buildHomeDoc` 那一组装配，差别只在窗口；宿主文档件是 `src/home/homeDocs.ts:89-173`。
+- 另 4 条**不在主页命令上**：`diet`（order 1）／`exercise`（order 2）／`goal-progress`（order 4）三条的声明跟主页同住 `src/home/routes.ts`（`:12-14`），命令本体在各自能力目录；`weight`（order 3）的声明住 `src/weight/routes.ts:8`，命令本体在 `src/weight/`。
+- 9 条的命令名与 order 一并看，就是老侧「1 张模板 9 条唤醒词」在新仓的落点全貌；做融合设计时，「哪几条还在同一个命令上」和「哪几条已经分家」要分开写。
+
+## 四、已被裁定过的界面约定
 
 以下每条都是**用户或编排者已经拍过板的口径**，主页照做即可，不必重新发明。
 
-1. **一页复制区恒为「复制数据 ＋ 复制日志」两颗**，日志里带能照抄重跑的渲染命令。老技能当年也是一颗组件（`actionBar` 出两颗按钮）；本仓收在 `shared/copyArea.ts`。出处：#239（`docs/skills/skill-calorie/t239-delivery.md`）、#154 融合规范第 7 条（`t154-体重页面-老新融合规范.md`）。
+1. **一页复制区恒为「复制数据 ＋ 复制日志」两颗**，日志里带能照抄重跑的渲染命令。老技能当年也是一颗组件（`actionBar` 出两颗按钮，源 `D:\2Study\StudyNotes\SKILLS\公共组件\assets\base.js:304-326`，复制文本正本 `buildDataText` 三格式与 `buildLogText` 六段日志同文件 `:230-264`／`:267-295`）；本仓收在 `shared/copyArea.ts`。出处：#239（`docs/skills/skill-calorie/t239-delivery.md`）、#154 融合规范**第 6 条**（`t154-体重页面-老新融合规范.md:84`；第 7 条是「情景结论块」，不是这一条）。
 2. **数据位的复制按钮是三格式菜单**：点开是纯文本／JSON／CSV 三选一，三项用途提示逐字取老仓（「粘贴给 AI / 自己看」「结构化存档」「表格导入」）。裁定出处：**#247**（用户 2026-09-12 决策 4A「恢复老仓原样」，`t247-delivery.md:4`）。同一份数据的三种合法表示由共用件序列化，页面只递一份数据。
-3. **同一条约定的另一面（T351）**：「复制数据 ▾ ＋ 三选一菜单」不许带英文菜单项、不许把指标写成可见裸文本；融合方案明写要改成「复制数据／复制日志」双按钮，**以单格式数据文本落承载属性**。出处：**#351**（`t351-visual-fix-plan-20260914.md:12`、`:26`、`:67`）。今天页面上两种形态并存（走数据位的出菜单，直挂单格式文本的出双按钮），做主页时要挑定一种并记账。
+3. **同一条约定的另一面（T351）**：「复制数据 ▾ ＋ 三选一菜单」不许带英文菜单项、不许把指标写成可见裸文本；融合方案明写要改成「复制数据／复制日志」双按钮，**以单格式数据文本落承载属性**。出处：**#351**（`t351-visual-fix-plan-20260914.md:12`、`:26`）。今天页面上两种形态并存（走数据位的出菜单，直挂单格式文本的出双按钮），做主页时要挑定一种并记账。
 4. **与按钮同名的区块标题一律不出**（只留动作不留说明文本）。这条有两个落点：共用件侧 `copyArea` 的标题去重（`copyArea.ts:97`、`:127`），公共层侧 `renderCopyBlock` 的兜底（`blocks.ts:636-637`）。出处：**#238**（`t238-delivery.md:63` 清单 9①）、#179 与 #336 的续案。
 5. **缺值的可见文本一律写 `—`**；复制出去的数据保留原始空值（显示层与数据层两套口径，不许互相污染）。这条同时覆盖 KPI 位、表格单元、首条无基线时的差值。出处：**#395** 融合基准裁定 2（`t395-融合基准.md:83-90`，老正本 `body_composition_view.html:133-134`／`:342`）。
 6. **空态不许只写「无数据」**：要带「怎么记第一条」的引导句。出处：**#395** 融合基准第二节序 6（`t395-融合基准.md:35`，老正本 `body_composition_view.html:354-356`）。
@@ -76,7 +98,7 @@
 10. **图表页必须在整页装配时声明图表标志**，否则文档缺图表运行脚本；折线上的参考线走图表入参的参考线字段（主页的「周均」就是它）。出处：`docPage.ts:31`、`:84`、`homeDocs.ts:108`。
 11. **空窗口／空库不返空页**：数据层一律抛缺失阻断，页面层不许拿空数组冒充正常。出处：**#395** 新保留清单第 7 条（`t395-融合基准.md:66`）；主页的落点是 `home.ts:57-59`。
 
-## 四、新侧短板
+## 五、新侧短板
 
 同一份主页上「该有的东西没有」的逐条，一句话一条。
 
@@ -84,9 +106,9 @@
 2. **首屏没有「还剩多少」**：KPI 有「今日缺口」并靠「正=缺口」解释符号（`homeDocs.ts:96`），却没有「今日剩余预算」这一格——预算页最常用的读数要用户自己减。
 3. **超目标这件事只有一条静态提示条**：`notice` 是静态块，不带状态徽章；KPI 有 `status` 位却一处没用（`homeDocs.ts:92-99` 六张全空）。
 4. **提示块的解释位是空的**：`notice` 的区块标题位没给（`homeDocs.ts:127`），一句话与详情悬在页中段，没有落点说明它评的是哪一格。
-5. **失败面缺整页**：数据层抛缺失阻断时（`home.ts:57-59`），主页没有接 `renderErrorReceipt`／`buildErrorReceipt`，跑不通只剩命令行报错，没有失败回执整页（对照身体细节各页的用法）。
-6. **窗口在页面上不可调**：主页不动 `renderParamForm` 的窗口表单，窗口只能靠命令参数或唤醒词换（`routes.ts` 的 order 5／6／7／8 落在窗口 7／30），结果页上看不出、也改不了 `windowDays`。
-7. **30 天档的长表没有截断明示**：按日汇总表对窗口长度零上限（`windowDays` 限 1..90，`home.ts:50`），不像运动各页先写 100 条截断常量再进表。
+5. **失败面缺整页**：数据层抛缺失阻断时（`home.ts:57-59`），主页没有接 `renderErrorReceipt`／`buildErrorReceipt`，跑不通只剩命令行报错，没有失败回执整页。这一格属**新造、非复用**：`renderErrorReceipt` 只躺在公共层（`packages/base-render/src/controls.ts:1443-1470`），全仓 `src` 里**没有任何一处调它**（只有类型名、注册表与测试）；现有唯一失败出口是 `cmd_read.ts:120-123` —— `missing-data` 走 `fail(4)`、`bad-input` 走 `fail(2)`，只有其它渲染错才 `failWithReceipt`（`delivery.ts:134-149`）。主页要出失败整页，得从这一页起新建。
+6. **窗口在页面上不可调**：主页不动 `renderParamForm` 的窗口表单，窗口只能靠命令参数或唤醒词换（`home/routes.ts:15-16` 的 order 5／6 分别写死 7 与 30 天），结果页上看不出、也改不了 `windowDays`。
+7. **30 天档的长表没有截断明示**：按日汇总表对窗口长度零上限（`windowDays` 限 1..90，`home.ts:50`），不像本仓已经拍板过的**分段表**先例——体重明细超 30 条就切成「最近 30 条」＋「其余 N 条」两张表，各带表注（`weight/history.ts:509-522`，裁定在 #154 融合规范第 10 条，`t154-体重页面-老新融合规范.md:88`）。本仓现用的截断标志（`MEAL_CAP = 100`）也把「截了多少」写进表注（`today.ts:68-81`、`dietDocs.ts:138`、`:145`）。
 8. **数值单元没写 `—`**：表格单元由公共层把空值渲染成空串（`blocks.ts:253-259`），与「缺值可见文本一律 `—`」的裁定不一致；同一页里 KPI 用 `fmt` 写 `—`、表格留白，两套口径同页并存。
 9. **表格数字列没有对齐与等宽数字保证**：五档列都只标了右对齐字段（`homeDocs.ts:113-120`），表体没有表注之外的读数辅助。
 10. **没有当前锚点**：首屏没有「最新一条／窗口峰值」这类锚点行，KPI 六格全是窗口统计量，读数口径与「结果页首屏＝锚点」的老页约定相反。
