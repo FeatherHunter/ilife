@@ -13,13 +13,14 @@ import { buildGoalView } from './goalPlate.js';
 import { CalorieRenderError } from '../render/errors.js';
 import {
   renderGoalConfigHtml, renderGoalExpiringHtml, renderGoalHtml, renderGoalRecommendHtml,
-  renderGoalStatusHtml, renderGoalVsActualHtml, renderGoalWeightHtml,
+  renderGoalStatusHtml, renderGoalVsActualHtml,
 } from '../render/html.js';
 import { dayField, defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { TRIGGERS } from '../triggers/index.js';
 import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
 import { buildGoalPrecheckDoc } from './precheck.js';
+import { buildGoalWeightDoc } from './goalWeightDoc.js';
 import { buildGoalDraft, isGoalProfile } from './set.js';
 
 /** `calorie.view.goal` · 目标分析（完成度 ＋ 缺口 ＋ 趋势 ＋ 历史）。 */
@@ -131,14 +132,18 @@ export function viewGoalWizard(params: Record<string, unknown>, db: DatabaseSync
 
 /** `calorie.view.goal-weight` · 体重目标（当前体重 vs 目标体重 ＋ 达成差值／有记录天数）。
  *
- *  **原样搬来**：算式仍走 `render/goalPlate.ts::buildGoalWeight`、页面装配仍走
- *  `render/html.ts::renderGoalWeightHtml`、窗口口径仍走共用位 `defaultRange`／`nums`，
- *  本件只承接那一层转调（分派层改走 `cli/registry.ts` 查表 ⇒ `commands.ts` 的 `run`）。
+ *  **原样搬来**：算式仍走 `render/goalPlate.ts::buildGoalWeight`、窗口口径仍走共用位
+ *  `defaultRange`／`nums`，本件只承接那一层转调（分派层改走 `cli/registry.ts` 查表 ⇒
+ *  `commands.ts` 的 `run`）。
  *  它与本能力既有八条同族（键族 `calorie.view.goal*`），且与写命令 `calorie.goal.weight`
- *  同属「体重目标」这一件事。 */
+ *  同属「体重目标」这一件事。
+ *  #390 整页化：页面装配改走本目录 `goalWeightDoc.ts::buildGoalWeightDoc`
+ * （`compare.ts` 同形：KPI＋表＋复制双钮＋结论；旧 `renderGoalWeightHtml` 片段保留，
+ *  他票在途不碰）。 */
 export function viewGoalWeight(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const g = buildGoalWeight(db, start, end);
   const metrics = nums({ weightGoal: g.weightGoal, latestKg: g.latestKg, deltaKg: g.deltaKg, loggedDays: g.loggedDays });
-  return { data: { metrics }, html: renderGoalWeightHtml(g) };
+  const command = 'calorie-cmd-read calorie.view.goal-weight --params \'{"start":"' + start + '","end":"' + end + '"}\'';
+  return { data: { metrics }, html: buildGoalWeightDoc(g, command) };
 }
