@@ -187,7 +187,7 @@ test('#109 体重盘：首末＋均值＋变化＋曲线＋记录表', () => {
     assert.equal(out.data.metrics.changeKg, -0.4);
     assert.equal(out.data.metrics.recordCount, 3);
     assertDoc(out.html, 'view.weight');
-    for (const needle of ['体重盘 2026-09-05 ~ 2026-09-07', '70.5 → 70.1', '70.3', '下降', '65', '体重曲线', '晨起', '复制数据']) {
+    for (const needle of ['体重总览', '2026-09-05 ~ 2026-09-07', '从 70.5 kg 到 70.1 kg', '70.3', '下降', '65', '体重曲线', '晨起', '复制数据']) {
       assert.ok(out.html.includes(needle), 'view.weight 缺：' + needle);
     }
   } finally {
@@ -227,7 +227,7 @@ test('#109 对比＋复核＋波动：两期表＋里程碑＋基线预警', () 
     const v = dispatch('calorie.view.volatility', { start: '2026-09-05', end: '2026-09-07' }, db);
     assert.equal(v.data.metrics.points, 3);
     assertDoc(v.html, 'volatility');
-    for (const needle of ['波动分析', '基线', '阈值', '预警', '近期异常', '偏离基线', '复制数据']) {
+    for (const needle of ['波动分析', '平均线', '波动带', '警戒线', '今日偏离', '每天离平均线多远', '复制数据']) {
       assert.ok(v.html.includes(needle), 'volatility 缺：' + needle);
     }
   } finally {
