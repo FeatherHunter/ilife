@@ -32,7 +32,7 @@
 | 件 | 挂号值 | 当场实测 | 结论 |
 |---|---|---|---|
 | `src/triggers/wake-assets.ts` | — | 4747 | 超因：全量唤醒词资产（逐字落地老实物 HELP 的 typed TS module，见件头「唯一事实源」）与代码同处一件，数据面占了绝大多数行。 |
-| `src/render/trendDocs.ts` | — | 816 | 超因：趋势／分析域同质文档装配（数据→区块→填充器）全挤在一件里。 |
+| `src/render/trendDocs.ts` | — | 818 | 超因：趋势／分析域同质文档装配（数据→区块→填充器）全挤在一件里。 |
 | `scripts/gen-cli.mjs` | 729 | 754 | 「#354 挂号原文」超因：命令汇总派生与生成物写回同处一个一次性脚本；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。 |
 | `src/weight/history.ts` | — | 670 | 超因：「看体重明细」与「看体重曲线」在命令面上是同一个命令，两条子功能共用一件。 |
 | `src/render/html.ts` | — | 647 | 超因：T8～T10 的多套 HTML 串模板（饮食／总览／照片层等）同处一件。 |
@@ -48,6 +48,7 @@
 | `src/render/trendMiscPort.ts` | — | 456 | 超因：#113 八模板取数（计数 6＋4＋8 闭合）同处一件。 |
 | `src/profile/setup.ts` | — | 428 | 超因：#179 三条写入词共用的写前页与 #175 补的写后回执页同处一件。 |
 | `src/diet/nutritionPortDocs.ts` | — | 423 | 超因：#112 营养 4 页的全文档装配（数据→区块→填充器）同处一件。 |
+| `src/analysis/reportPlate.ts` | — | 411 | 已超线，需要根据规则进行重构。超因：（**#384 在途件**）报告子形态的取数与聚合（1 个多态底座 9 个 kind：bmi／tdee／bmr／protein／water／score／trend／compare）与页面装配同处一件；本次先不拆：本票（#445）只做告警线门与台账对齐、不改任何件源码，拆法待该件归属票认领。 |
 | `src/fetch/body.ts` | 369 | 382 | 「#398 挂号原文」超因：读侧来源词（`SOURCE_FILTER_ALL`／`SourceFilter`／`assertSourceFilter`）与按来源分组取数（`trendCompositionBySource`／`compositionSourceCount`），与既有写侧校验（`validateCompositionInput`）＋围度取数同处一件；#398 先不拆：拆分不在该票写集，拆法待后续票（按「写侧校验／围度取数／体成分取数」切姊妹件）。**该件在 #445 当场实测比挂号值又涨；本行「当场实测」列随实况改，挂号值 369 不回改。** |
 | `src/workout/planStore.ts` | — | 369 | 超因：T4 计划取数＋写数（校验三硬止＋两软提示、全量覆盖写）同处一件。 |
 | `src/diet/nutritionPort.ts` | — | 367 | 超因：#112 营养 4 键取数与 #275 追加的「看饮食总览」视图同处一件。 |
