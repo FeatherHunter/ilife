@@ -10,13 +10,17 @@
  *      冻结挂号值 `src/render/wizardPort.ts｜457`、`scripts/gen-cli.mjs｜729`。
  *
  * 夹具＝`mkdtempSync` 出来的独占小包根（自带 `src/`＋`scripts/`＋`AGENTS.md`），全部走
- * `--root`／`--agents` 两个夹具入口；**真实门禁读一份**（无参运行，读本包真台账）。夹具用完即删，
- * 删除前过 §2.1-3 路径守卫；不碰真库、不碰任何源码件。
+ * `--root`／`--agents` 两个夹具入口；**真实门禁读两份**（无参运行读本包真台账：T5 绿、T9 同步器零改动）。
+ * 夹具用完即删，删除前过 §2.1-3 路径守卫；不碰真库、不碰任何源码件。
  *
  * 改坏必红实证（每条断言都附）：
  *   · 漏报：夹具多一件 360 行的 `src/surprise.ts` → T2 当场断言那一条 RED（把门弄瞎才会失败）；
  *   · 陈化：夹具台账把 `src/over.ts` 的当场实测写成 999 → T3 当场断言 `台账陈化` 那条 RED；
  *   · 缩面：同一棵探针树上「缩面 stub 绿（exit 0）／扩面真门红（exit 1）」→ T4 两条一起断言；
+ *   · 生成物判据：T6 生成器声明过的 360 行生成物不挂号也不报漏报；T7 把输出声明改成判据认不出的
+ *     写法 → `RED 生成物判据自证` ＋ 生成物掉回扫描面被点名（判据不许静默失效）；
+ *   · 同步器：T8 `--sync --dry` 报计划但**不改文件**、`--sync` 落盘后门回绿且台账块外一字不动、
+ *     冻结挂号值不被改写；T9 真包 `--sync --dry` 零改动且不动文件；
  *   · 真台账陈化往返（真 `AGENTS.md` 改坏→红→逐字节还原→绿）：持锁另做，读数见
  *     `docs/skills/skill-calorie/t445-告警线门证据.md` 的 F1／F2。
  *
@@ -49,7 +53,12 @@ function makeFixture() {
   mkdirSync(path.join(dir, 'src', 'render'), { recursive: true });
   mkdirSync(path.join(dir, 'scripts'), { recursive: true });
   // 两个冻结挂号件：行数与冻结值一起写死，⑦（挂号台账两行齐全）才不是夹具自己造的假绿。
-  for (const [rel, lf] of FROZEN) writeFileSync(path.join(dir, rel), body(lf), 'utf8');
+  // `scripts/gen-cli.mjs` 的名字对得上生成器判据 ⇒ 夹具里也给它一条输出声明：否则
+  // 「有生成器却一条输出声明都抽不到」会红——那是真包该红的情形，不是夹具该背的。
+  for (const [rel, lf] of FROZEN) {
+    const head = rel === 'scripts/gen-cli.mjs' ? "const OUT = join(SRC_DIR, 'cli', 'keys.ts');\n" : '';
+    writeFileSync(path.join(dir, rel), head + body(lf - (head ? 1 : 0)), 'utf8');
+  }
   writeFileSync(path.join(dir, 'src', 'over.ts'), body(360), 'utf8');
   writeFileSync(path.join(dir, 'src', 'small.ts'), body(10), 'utf8');
   return { dir, agents: path.join(dir, 'AGENTS.md') };
@@ -176,4 +185,100 @@ test('T5 真包门禁：无参运行读真台账 → PASS（台账与当刻实�
   const m = g.text.match(/RESULT: (\d+)\/(\d+)/);
   assert.ok(m, `缺 RESULT 摘要行\n${g.text}`);
   assert.equal(m[1], m[2], `RESULT 不是 n/n：${m[0]}`);
+});
+
+/** 生成器夹具：输出声明写法＝判据认的那种（`const OUT = join(SRC_DIR, …)`）。 */
+const genSource = (decl) => [
+  "import { writeFileSync } from 'node:fs';",
+  "const SRC_DIR = 'src';",
+  decl,
+  "writeFileSync(OUT, '/** 本文件由 `scripts/gen-x.mjs` 生成，勿手改。 */');",
+].join('\n');
+
+test('T6 生成物剔除：生成器声明过的件不挂号也不算漏报（名单来自生成器自己的输出声明）', () => {
+  const fx = makeFixture();
+  try {
+    writeLedger(fx);
+    writeFileSync(path.join(fx.dir, 'scripts', 'gen-x.mjs'),
+      genSource("const OUT = join(SRC_DIR, 'triggers', 'big.generated.ts');"), 'utf8');
+    const gen = path.join(fx.dir, 'src', 'triggers', 'big.generated.ts');
+    mkdirSync(path.dirname(gen), { recursive: true });
+    // 生成物 360 行（超线）＋件头「勿手改」印记：既不许挂号、也不许算漏报
+    writeFileSync(gen, '/** 本文件由 `scripts/gen-x.mjs` 生成，勿手改。 */\n' + body(359), 'utf8');
+    const g = runGate(['--root', fx.dir, '--agents', fx.agents]);
+    assert.match(g.text, /GENERATED-SKIP src\/triggers\/big\.generated\.ts LF=360/);
+    assert.equal(g.exit, 0, `生成物剔掉后应绿，实际 exit=${g.exit}\n${g.text}`);
+    assert.match(g.text, /PASS: 告警线台账齐全且与实况一致/);
+  } finally {
+    cleanup(fx.dir);
+  }
+});
+
+test('T7 生成物判据自证必红：生成器改写法后抽不到目标 → 红，且生成物掉回扫描面被点名', () => {
+  const fx = makeFixture();
+  try {
+    writeLedger(fx);
+    const gen = path.join(fx.dir, 'src', 'triggers', 'big.generated.ts');
+    mkdirSync(path.dirname(gen), { recursive: true });
+    writeFileSync(gen, '/** 本文件由 `scripts/gen-x.mjs` 生成，勿手改。 */\n' + body(359), 'utf8');
+    // 改坏：输出声明写成判据认不出的形式（拼接而非纯字面量）→ 一条目标都抽不到
+    // （夹具里的 `scripts/gen-cli.mjs` 也是生成器，一并退回没有输出声明的写法）
+    writeFileSync(path.join(fx.dir, 'scripts', 'gen-x.mjs'),
+      genSource("const OUT = join(SRC_DIR, 'triggers', 'big.generated' + '.ts');"), 'utf8');
+    writeFileSync(path.join(fx.dir, 'scripts', 'gen-cli.mjs'), body(729), 'utf8');
+    const g = runGate(['--root', fx.dir, '--agents', fx.agents]);
+    assert.notEqual(g.exit, 0, `判据失效必须红，实际 exit=0\n${g.text}`);
+    assert.match(g.text, /RED 生成物判据自证/);
+    assert.match(g.text, /RED 漏报（台账没有）：src\/triggers\/big\.generated\.ts LF=360/);
+  } finally {
+    cleanup(fx.dir);
+  }
+});
+
+const LEDGER_BEGIN = '<!-- warning-line-ledger:begin -->';
+const LEDGER_END = '<!-- warning-line-ledger:end -->';
+/** 台账块之外的部分（「块外一字不动」判据用）。 */
+const outside = (s) => [s.slice(0, s.indexOf(LEDGER_BEGIN) + LEDGER_BEGIN.length), s.slice(s.indexOf(LEDGER_END))];
+
+test('T8 同步器：--dry 不改文件且报计划，--sync 回绿且只动台账块', () => {
+  const fx = makeFixture();
+  try {
+    writeLedger(fx, { 'src/over.ts': 999 }); // 改坏：台账陈化
+    const before = readFileSync(fx.agents, 'utf8');
+    const dry = runGate(['--sync', '--dry', '--root', fx.dir, '--agents', fx.agents]);
+    assert.equal(dry.exit, 0, `--dry 应只演练并报计划，实际 exit=${dry.exit}\n${dry.text}`);
+    assert.match(dry.text, /SYNC-PLAN mode=dry 行=\d+ 改=1 增=0 删=0/);
+    assert.match(dry.text, /SYNC-CHANGE src\/over\.ts 台账=999 实况=360/);
+    assert.match(dry.text, /SYNC-DRY ok/);
+    assert.equal(readFileSync(fx.agents, 'utf8'), before, '--dry 不许改文件');
+    // 漏报也能补：加一个未挂号的 360 行件，再演练一次仍不落盘
+    writeFileSync(path.join(fx.dir, 'src', 'surprise.ts'), body(360), 'utf8');
+    const dry2 = runGate(['--sync', '--dry', '--root', fx.dir, '--agents', fx.agents]);
+    assert.match(dry2.text, /SYNC-CHANGE src\/over\.ts 台账=999 实况=360/);
+    assert.match(dry2.text, /SYNC-ADD src\/surprise\.ts LF=360/);
+    assert.equal(readFileSync(fx.agents, 'utf8'), before, '--dry 不许改文件（第二回）');
+    // 真同步：落盘 → SYNC-VERIFY → 门回绿
+    const w = runGate(['--sync', '--root', fx.dir, '--agents', fx.agents]);
+    assert.equal(w.exit, 0, `--sync 后应绿，实际 exit=${w.exit}\n${w.text}`);
+    assert.match(w.text, /SYNC-WRITE .*AGENTS\.md/);
+    assert.match(w.text, /SYNC-VERIFY ok/);
+    const after = readFileSync(fx.agents, 'utf8');
+    assert.notEqual(after, before, '--sync 应当改到台账');
+    assert.deepEqual(outside(after), outside(before), '台账块之外一个字都不许动');
+    assert.match(after, /\| `src\/render\/wizardPort\.ts` \| 457 \| /, '冻结挂号值不许被同步器改写');
+    const g = runGate(['--root', fx.dir, '--agents', fx.agents]);
+    assert.equal(g.exit, 0, `同步后门应绿，实际 exit=${g.exit}\n${g.text}`);
+  } finally {
+    cleanup(fx.dir);
+  }
+});
+
+test('T9 真包台账与当刻实况一致：--sync --dry 零改动且不动文件', () => {
+  const agentsAbs = path.join(PKG, 'AGENTS.md');
+  const before = readFileSync(agentsAbs, 'utf8');
+  const g = runGate(['--sync', '--dry']);
+  assert.equal(g.exit, 0, `真包 --sync --dry 应绿，实际 exit=${g.exit}\n${g.text}`);
+  assert.match(g.text, /SYNC-PLAN mode=dry 行=\d+ 改=0 增=0 删=0/);
+  assert.match(g.text, /SYNC-DRY ok/);
+  assert.equal(readFileSync(agentsAbs, 'utf8'), before, '真包 --dry 不许改文件');
 });
