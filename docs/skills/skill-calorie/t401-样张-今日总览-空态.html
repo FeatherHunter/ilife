@@ -3,17 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>样张 · 看今日热量预算（融合设计，不进生产）</title>
+<title>样张 · 今日总览 · 空态（融合设计，不进生产）</title>
 <!--
-  这是 #401 融合设计的样张乙「看今日热量预算」（唤醒词 order 8，同走 calorie.view.home）。单文件、双击即看、不读库、无外部引用。
-  换题理由（设计第五节乙）：原「今日目标进度」属场景 06，它的页面装配住 packages/skill-calorie/src/render/html.ts 的
-  renderGoalProgressHtml，照原稿做必然撞本图红线；改成同属场景 01、同走 calorie.view.home 的这一页。
-  数据口径：固定种子库 SEED_TODAY=2026-09-07 的真实读数（今日与 30d 两个窗口取 .scratch/t375/products 的实测产品；
-  本周与 7d 两个窗口没有实测产品，一律走 — 与空态提示，不编数）。
-  样式口径：标记与类名逐字取已实施件——title 三件套／KPI 卡／空态走 packages/base-render/src/blocks.ts，
-  复制两颗按钮与菜单走 packages/base-render/src/controls.ts，页级基座与 token 块走 packages/skill-calorie/src/shared/docPage.ts。
-  样式段分两截，边界同生产：①共享样式段（token 块＋区块与控件规则）出配色与字号；②区块排布段只写框内排布。
-  本页不出深底常驻横幅，不出 @media print，不出与按钮同字的标题。
+  这是 #401 融合设计的样张甲的**空态件**（同一个「看今日主页」＝calorie.view.home，同一套版式，换空库读数）。
+    单文件、双击即看、不读库、无外部引用。不出窗口切换按钮，也不出第二套版式
+    （设计第三节冲突 3：一条命令一份装配，所以一份版式 ＋ 一个空态件对照看）。
+  区块顺序照样张甲 t401-样张-今日总览.html 逐块相同：页头 → 结论小字 → 页内导航 → KPI 六张 →
+    空态块 → 复制区 → 来源脚注。样式段与内联脚本与样张甲逐字同源，只换可见文案与载荷。
+  折线块与按日表在空窗口不出：设计第五节甲第 4 项「本窗口一条记录也没有时整块不出」，
+    第 5 项「空窗走空态」——空态由本页唯一的空态块承载，所以本页不画空折线、不画空表，
+    页内导航也不列这两块的锚点。
+  设计依据：docs/skills/skill-calorie/t401-融合设计.md 第五节「样张甲」九项与两张共同的硬约束。
+  数据口径：空库／新用户态——food_log 与 exercise_log 一条记录都没有，daily_goal 也没有设过目标；
+    日期与窗口跟样张甲同取 2026-09-07，好让两件并排比对。
+  空态口径：值位一律写 —（不写 0、不拿缺省值顶替，照 #395 的空态口径）；复制数据保留原始空值
+    （本页写 null），不把 — 写进载荷。目标为空的卡走专门空态：值位 —、副行一句引导句，
+    不画空条、不写 0%。
+  样式口径：标记与类名逐字取已实施件——title 三件套／KPI 卡／折线块／表格／空态走
+    packages/base-render/src/blocks.ts，复制两颗按钮与菜单走 packages/base-render/src/controls.ts，
+    页级基座与 token 块走 packages/skill-calorie/src/shared/docPage.ts（现由 base 件承载）。
+  样式段分两截，边界同生产：
+    ①「共享样式段」＝token 块（逐值取 packages/base-render/src/spec/style.ts 的 CSS_VAR_TOKENS）
+       ＋ 区块与控件规则，与共享样式资产同一份，页面不许在别处再写配色与字号；
+    ②「区块排布段」只写框内排布（grid、间距、边框样式），一个色值一个字号都不写。
+  字号：本页每一条 font-size 都在①共享样式段里（②段与行内一条都没有），逐值抄自共享样式资产
+    packages/base-render/src/style.ts。样张内只为演示，实施时字号一律由公共层样式段给出，页面本地不写。
+    其中 12.5px 是共享样式资产自己的读数（style.ts:141／:187 的 toast 卡），本页照抄、不就地改档——
+    要动这个半档就得动公共层，不在本票范围。
+  完成度条（样张甲里给出的形状位：热量／蛋白／饮水三张，档位 90／60，判定照老侧 barClass()）：
+    条内填充在样张甲取①共享样式段里肉眼可辨的 var(--blue)，**只作可辨识占位——档位色待 #418 定**；
+    实施后档位判定与档位色只在公共层一处，页面不写色值、不重定义条形类名，也不产 .ilife-bar 这类
+    闭集外类名。本空态件里三张卡都没有目标，照「无目标走专门空态」的画法，条一条都不画、0% 不写。
+  下面几段是给实施者的交底，页面可见文案里一条都不出现：
+    · 热量目标为空时（calorie_goal 可空）：「今天还能吃多少」与「今天热量预算」两处共用同一条兜底——
+      值位写 —，副行给一句引导句（去说「定营养目标」），不画空条、不写 0、不拿缺省值顶替。
+      本件第 4 张卡就是这个兜底的实物。
+    · 「热量缺口（TDEE 口径）」与「今天还能吃多少」并排，算式各写一行，免得目标与缺口两个基准
+      并列被读成减法。
+    · 折线块的周均参考线在样张甲取 var(--fg2)（生产此处是橙色字面量），故样张甲的说明行只写「虚线」、
+      不带颜色词：页面里一行色值都不许写，宁可说明行少一个颜色词，也不让图文不符。本件折线块不出。
+  本页不比设计多：深底常驻横幅不出（设计已裁决撤掉，改成标题下一行的结论小字）；@media print 不出。
 -->
 <style>
 /* ═══ ① 共享样式段（token 块 ＋ 区块与控件规则；配色与字号只在这里出现） ═══ */
@@ -39,6 +68,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
+/* 页级基座＋标题三件套 */
 .ilife-block-page-shell {
   display: block;
   max-width: 960px;
@@ -71,6 +101,7 @@ body {
   display: block;
   margin-top: 16px;
 }
+/* KPI 卡 */
 .ilife-block-kpi-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -114,6 +145,76 @@ body {
   font-size: 12px;
   overflow-wrap: anywhere;
 }
+/* 折线块 */
+.ilife-block-chart-block {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+.ilife-block-chart-block-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.ilife-block-chart-block-canvas {
+  padding: 0;
+}
+/* 图表（运行时由 base 件的图表样式区注入同款规则） */
+.ilife-charts{position:relative;margin:0;padding:0;box-sizing:border-box;font-family:inherit;color:var(--fg,#1d1d1f);--ilife-charts-dot:9px}
+.ilife-charts *{box-sizing:border-box}
+.ilife-charts-svg{display:block;width:100%;height:auto;overflow:visible}
+.ilife-charts-dot{pointer-events:none}
+.ilife-charts-xlabel{font-size:10px}
+.ilife-charts-marktext{font-size:10px}
+.ilife-charts-line .ilife-charts-svg{max-width:480px;margin:0 auto}
+/* 表格 */
+.ilife-block-data-table {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+.ilife-block-data-table-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.ilife-block-data-table-caption {
+  padding: 10px 14px;
+  color: var(--fg2);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+.ilife-block-data-table th {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background-color: transparent;
+  color: var(--fg2);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.ilife-block-data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(210, 210, 215, .6);
+  color: var(--fg2);
+  font-size: 13px;
+}
+.ilife-block-data-table tr:last-child td {
+  border-bottom: none;
+}
+.ilife-block-data-table-cell-left {
+  text-align: left;
+}
+.ilife-block-data-table-cell-right {
+  text-align: right;
+}
+/* 空态与复制区 */
 .ilife-empty {
   padding: 48px 20px;
   border: 1px solid var(--line);
@@ -251,6 +352,7 @@ body {
   font-size: 11px;
   white-space: nowrap;
 }
+/* 复制结果提示（复制动作自带的那一声报数） */
 .ilife-toast-stack {
   position: fixed;
   left: 50%;
@@ -287,21 +389,16 @@ body {
   font-size: 12.5px;
   cursor: pointer;
 }
-/* ═══ ② 区块排布段（只写框内排布；配色与字号一律不写） ═══ */
+/* ═══ ② 区块排布段（只写框内排布：grid、间距、边框样式；配色与字号一律不写） ═══ */
 .ilife-block {
   display: block;
   margin: 16px 0;
 }
-/* 预算主卡一张（剩余预算）＋ 收支小卡五张：主卡在前，窄屏落一列 */
+/* 「今日还能吃多少」与「热量缺口（TDEE 口径）」并排：等宽两列，窄屏落一列 */
 .ilife-block-page-shell-body > .ilife-block-kpi-card-grid {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
-/* 窗口切换（今日／本周／7d／30d）借用既有的卡片网格：四张等宽格，沿用同一条按钮底色 */
-.ilife-block-page-shell-body > #sec-window {
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  max-width: 520px;
-}
-/* 完成度条的形状位（实施归 #418 公共层增量；本页只给槽位，不给色值） */
+/* 完成度条的形状位；填充取共享 token，档位色的出处见文件头注释 */
 .ilife-block-kpi-card-bar {
   margin-top: 8px;
   height: 6px;
@@ -321,18 +418,16 @@ body {
 <body>
 <div class="wrap ilife-page">
 <section class="ilife-block ilife-block-page-shell">
-  <p class="ilife-block-page-shell-eyebrow">calorie.view.home · 看今日热量预算</p>
-  <h1 class="ilife-block-page-shell-title">今日热量预算 2026-09-07</h1>
-  <p class="ilife-block-page-shell-subtitle">窗口 2026-09-01 ~ 2026-09-07 · 唤醒词 order 8 · 命令 calorie-cmd-read calorie.view.home --params '{"date":"今日"}'</p>
+  <p class="ilife-block-page-shell-eyebrow">calorie.view.home · 主页 · 看今日主页</p>
+  <h1 class="ilife-block-page-shell-title">今日总览 2026-09-07</h1>
+  <p class="ilife-block-page-shell-subtitle">窗口 2026-09-01 ~ 2026-09-07 · 连续记录天数 — · 0/7 天有记录</p>
 
-  <!-- 结论小字：紧贴标题下的普通小字，一行说清今天剩多少（或已超多少）＋一句口径 -->
-  <p class="ilife-block-page-shell-subtitle" id="sec-summary">💡 今天还能吃 611 卡（＝ 热量目标 1800 − 已摄入 1189）；今天热量缺口 1687 卡，走另一条口径（＝ TDEE 2556 ＋ 运动 320 − 摄入 1189），两条不混着读。</p>
+  <!-- 结论小字：紧贴标题下的普通小字（设计第五节甲第 2 项）。空库里没有可判的数，这一行只说「还没有记录」 -->
+  <p class="ilife-block-page-shell-subtitle" id="sec-summary">💡 还没有记录 —— 今天一条也没记；热量在不在目标内，等第一条记录之后再判</p>
 
   <nav class="ilife-block-page-shell-subtitle" aria-label="页内导航">
     页内导航：
-    <a href="#sec-budget">预算主卡</a> ·
-    <a href="#sec-window">窗口切换</a> ·
-    <a href="#sec-nogoal">无目标兜底</a> ·
+    <a href="#sec-kpi">KPI 六张</a> ·
     <a href="#sec-empty">空态</a> ·
     <a href="#sec-copy">复制区</a> ·
     <a href="#sec-src">来源</a>
@@ -340,87 +435,48 @@ body {
 
   <div class="ilife-block-page-shell-body">
 
-    <div class="ilife-block-kpi-card-grid" id="sec-budget">
+    <div class="ilife-block-kpi-card-grid" id="sec-kpi">
       <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">剩余预算</div>
-        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">611</span><span class="ilife-block-kpi-card-unit">卡</span></div>
-        <div class="ilife-block-kpi-card-detail">＝ 热量目标 1800 − 已摄入 1189</div>
-        <div class="ilife-block-kpi-card-bar" role="img" aria-label="已用预算 66.06%，中档" title="已用预算 66.06% · 档位 60（中档）"><div class="ilife-block-kpi-card-bar-fill" style="width:66.06%;background:var(--soft)"></div></div>
+        <div class="ilife-block-kpi-card-label">今日摄入</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">还没有饮食记录</div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">已摄入</div>
-        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1189</span><span class="ilife-block-kpi-card-unit">卡</span></div>
-        <div class="ilife-block-kpi-card-detail">＝ 当日饮食记录合计（food_log）</div>
+        <div class="ilife-block-kpi-card-label">蛋白</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span><span class="ilife-block-kpi-card-unit">g</span></div>
+        <div class="ilife-block-kpi-card-detail">还没有饮食记录</div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">热量目标</div>
-        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1800</span><span class="ilife-block-kpi-card-unit">卡</span></div>
-        <div class="ilife-block-kpi-card-detail">＝ daily_goal 的热量目标（可空，空时走下面「无目标兜底」）</div>
+        <div class="ilife-block-kpi-card-label">饮水</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span><span class="ilife-block-kpi-card-unit">ml</span></div>
+        <div class="ilife-block-kpi-card-detail">还没有饮水记录</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">今天还能吃多少</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">还没有设热量目标 —— 去说「定营养目标」，设好再回来看这里</div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
         <div class="ilife-block-kpi-card-label">热量缺口（TDEE 口径）</div>
-        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1687</span><span class="ilife-block-kpi-card-unit">卡</span></div>
-        <div class="ilife-block-kpi-card-detail">＝ TDEE 2556 ＋ 运动 320 − 摄入 1189</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">＝ TDEE ＋ 运动 − 摄入</div>
+        <div class="ilife-block-kpi-card-detail">档案里还没有读数 —— 去说「设置档案」，有读数再看这里</div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">运动支出</div>
-        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">320</span><span class="ilife-block-kpi-card-unit">卡</span></div>
-        <div class="ilife-block-kpi-card-detail">＝ exercise_log 合计；今天有记录，取当日读数</div>
-      </div>
-      <div class="ilife-block ilife-block-kpi-card" style="border-style:dashed">
-        <div class="ilife-block-kpi-card-label">TDEE</div>
-        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">2556</span><span class="ilife-block-kpi-card-unit">卡</span></div>
-        <div class="ilife-block-kpi-card-detail">＝ 基础消耗 ＋ 活动消耗（当日档案读数）</div>
+        <div class="ilife-block-kpi-card-label">连续记录</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span></div>
+        <div class="ilife-block-kpi-card-detail">窗口 0/7 天有记录</div>
       </div>
     </div>
-
-    <p class="ilife-block-page-shell-subtitle">两条算式各自标清基准，并排各写一行：剩余预算＝热量目标 − 已摄入；热量缺口（TDEE 口径）＝ TDEE ＋ 运动 − 摄入。两者不是同一把尺子（1800 与 1687 并列时别读成 611）。运动支出目前在本页无独立数据源：营养目标行只有热量／蛋白／碳水／脂肪／饮水（饮水本身还可空），故该卡值位给 — 并把「怎么有数」写在副行，不画空条。</p>
-
-    <div class="ilife-block-kpi-card-grid" id="sec-window">
-      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="今日" aria-pressed="true">今日</button>
-      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="本周" aria-pressed="false">本周</button>
-      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="7d" aria-pressed="false">7d</button>
-      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="30d" aria-pressed="false">30d</button>
-    </div>
-    <p class="ilife-block-page-shell-subtitle">窗口由参数定，标题与结论句的窗口字面照参数写：今日＝<code>{"date":"今日"}</code>；本周＝<code>{"windowDays":7,"date":"今日"}</code>；30d＝<code>{"windowDays":30,"date":"今日"}</code>。取数接口与主页同一处（buildHomeDoc）。下面这张表里，今日与 30d 是种子库实测读数；本周与 7d 没有实测产品，一律写 — 并把「换个窗口再跑」写进副行，不编数。</p>
-
-    <div class="ilife-block ilife-block-kpi-card-grid" id="sec-windows">
-      <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">今日（{"date":"今日"}）</div>
-        <div class="ilife-block-kpi-card-detail">窗口 2026-09-07 · 剩余预算 611 卡 · 已摄入 1189 卡 · 目标 1800 卡 · 缺口 1687 卡</div>
-      </div>
-      <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">本周（{"windowDays":7,"date":"今日"}）</div>
-        <div class="ilife-block-kpi-card-detail">窗口 2026-09-01 ~ 2026-09-07 · 剩余预算 — · 已摄入 — · 缺口 —（没实测产品，值位写 —）</div>
-      </div>
-      <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">7d（{"windowDays":7,"date":"今日"}）</div>
-        <div class="ilife-block-kpi-card-detail">窗口 2026-09-01 ~ 2026-09-07 · 剩余预算 — · 已摄入 — · 缺口 —（没实测产品，值位写 —）</div>
-      </div>
-      <div class="ilife-block ilife-block-kpi-card">
-        <div class="ilife-block-kpi-card-label">30d（{"windowDays":30,"date":"今日"}）</div>
-        <div class="ilife-block-kpi-card-detail">窗口 2026-08-09 ~ 2026-09-07 · 9/30 天有记录 · 周均摄入 525.3 卡 · 缺口 1687 卡（当日读数）</div>
-      </div>
-    </div>
-
-    <section class="ilife-block ilife-block-empty-block" id="sec-nogoal">
-      <h2 class="ilife-block-empty-block-title">热量目标为空时（无目标兜底）</h2>
-      <div class="ilife-empty">
-        <div class="ilife-empty-icon" aria-hidden="true">🎯</div>
-        <div class="ilife-empty-text">还没设热量目标</div>
-        <div class="ilife-empty-hint">剩余预算这一格写 —，不画空条、不写 0、不拿缺省值顶替。去说一句「定营养目标」，设完再回来说「看今日热量预算」。</div>
-      </div>
-      <p class="ilife-block-page-shell-subtitle">这条兜底对主页同款：热量目标可为空（daily_goal 的热量目标本就允许空），空时走专门空态。热量目标在时又一条记录也没记：值位写 —、副行写「今天还没记」，同样不画 0% 的条。</p>
-    </section>
 
     <section class="ilife-block ilife-block-empty-block" id="sec-empty">
-      <h2 class="ilife-block-empty-block-title">一项都没记时（空态）</h2>
+      <h2 class="ilife-block-empty-block-title">没有记录时（空态）</h2>
       <div class="ilife-empty">
         <div class="ilife-empty-icon" aria-hidden="true">🧭</div>
         <div class="ilife-empty-text">窗口内一条记录也没有</div>
-        <div class="ilife-empty-hint">已摄入／剩余预算／缺口一律写 —，不画进度条、不用 0 顶位；热量目标本身不为空时照写它的读数。复制数据保留原始空值，不把 — 写进载荷。</div>
+        <div class="ilife-empty-hint">摄入／缺口／完成度一律写 —；复制数据保留原始空值，不把 — 写进载荷。</div>
       </div>
-      <p class="ilife-block-page-shell-subtitle">怎么记第一条：说「记一餐 燕麦 100 克」，或说「记喝水 250 毫升」；补昨天的就说「补记饮食 2026-09-06 燕麦 100 克」。记完再回来说「看今日热量预算」。</p>
+      <p class="ilife-block-page-shell-subtitle">怎么记第一条：说「记一餐 燕麦 100 克」，或说「记喝水 250 毫升」；补昨天的就说「补记饮食 2026-09-06 燕麦 100 克」。记完再回来说「看今日主页」。</p>
     </section>
 
     <section class="ilife-block ilife-block-copy-block" id="sec-copy">
@@ -429,16 +485,23 @@ body {
           <div class="ilife-copy-menu-wrap">
             <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false">复制数据 ▾</button>
             <div class="ilife-copy-menu" role="menu">
-              <button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.home 看今日热量预算】
-calorieGoal: 1800
-intakeCal: 1189
-remainingBudget: 611
-deficitToday: 1687
-exerciseCal: 320
-tdee: 2556
-window: 今日
-windowDays: 7
-loggedDays: 5"><span class="ilife-copy-menu-label">text</span><span class="ilife-copy-menu-hint">粘贴给 AI / 自己看</span></button>
+              <button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.home】
+calorieGoal: null
+waterGoal: null
+caloriePct: null
+proteinPct: null
+waterPct: null
+deficitToday: null
+streakDays: 0
+intakeCal: null
+proteinG: null
+carbsG: null
+fatG: null
+waterMl: null
+entryCount: 0
+avgIntake: null
+avgDeficit: null
+loggedDays: 0"><span class="ilife-copy-menu-label">text</span><span class="ilife-copy-menu-hint">粘贴给 AI / 自己看</span></button>
               <button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
   &quot;version&quot;: &quot;0.1.0&quot;,
   &quot;skill&quot;: &quot;calorie&quot;,
@@ -446,30 +509,46 @@ loggedDays: 5"><span class="ilife-copy-menu-label">text</span><span class="ilife
   &quot;key&quot;: &quot;calorie.view.home&quot;,
   &quot;data&quot;: {
     &quot;metrics&quot;: {
-      &quot;calorieGoal&quot;: 1800,
-      &quot;intakeCal&quot;: 1189,
-      &quot;remainingBudget&quot;: 611,
-      &quot;deficitToday&quot;: 1687,
-      &quot;exerciseCal&quot;: 320,
-      &quot;tdee&quot;: 2556,
-      &quot;windowDays&quot;: 7,
-      &quot;loggedDays&quot;: 5
+      &quot;calorieGoal&quot;: null,
+      &quot;waterGoal&quot;: null,
+      &quot;caloriePct&quot;: null,
+      &quot;proteinPct&quot;: null,
+      &quot;waterPct&quot;: null,
+      &quot;deficitToday&quot;: null,
+      &quot;streakDays&quot;: 0,
+      &quot;intakeCal&quot;: null,
+      &quot;proteinG&quot;: null,
+      &quot;carbsG&quot;: null,
+      &quot;fatG&quot;: null,
+      &quot;waterMl&quot;: null,
+      &quot;entryCount&quot;: 0,
+      &quot;avgIntake&quot;: null,
+      &quot;avgDeficit&quot;: null,
+      &quot;loggedDays&quot;: 0
     }
   }
 }"><span class="ilife-copy-menu-label">json</span><span class="ilife-copy-menu-hint">结构化存档</span></button>
               <button type="button" class="ilife-copy-menu-item" data-fmt="csv" data-t="section,row
-metrics,calorieGoal: 1800
-metrics,intakeCal: 1189
-metrics,remainingBudget: 611
-metrics,deficitToday: 1687
-metrics,exerciseCal: 320
-metrics,tdee: 2556
-metrics,windowDays: 7
-metrics,loggedDays: 5"><span class="ilife-copy-menu-label">csv</span><span class="ilife-copy-menu-hint">表格导入</span></button>
+metrics,calorieGoal: null
+metrics,waterGoal: null
+metrics,caloriePct: null
+metrics,proteinPct: null
+metrics,waterPct: null
+metrics,deficitToday: null
+metrics,streakDays: 0
+metrics,intakeCal: null
+metrics,proteinG: null
+metrics,carbsG: null
+metrics,fatG: null
+metrics,waterMl: null
+metrics,entryCount: 0
+metrics,avgIntake: null
+metrics,avgDeficit: null
+metrics,loggedDays: 0"><span class="ilife-copy-menu-label">csv</span><span class="ilife-copy-menu-hint">表格导入</span></button>
             </div>
           </div>
           <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
-calorie.calorie.view.home（stat · 看今日热量预算）
+calorie.calorie.view.home（stat）
 AI 思考链
 本页由本地 CLI 渲染，无 AI 链
 数据结构
@@ -479,10 +558,10 @@ calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot
 时间戳版本
 2026-09-14 17:31:00 · 版本 0.1.0
 异常
-无">复制日志</button>
+没有记录：food_log 与 exercise_log 都没有行，daily_goal 也没有设过热量目标与饮水目标">复制日志</button>
         </div>
       </div>
-      <p class="ilife-block-page-shell-subtitle">两颗按钮各行其道：数据按钮开三格式菜单（纯文本／JSON／CSV），日志按钮一次复制六段；两处都不出与按钮同字的标题。第 3 段是能照抄重跑的命令原文；窗口非缺省时把窗口写全，例如 calorie-cmd-read calorie.view.home --params '{&quot;windowDays&quot;:30,&quot;date&quot;:&quot;今日&quot;}'。</p>
+      <p class="ilife-block-page-shell-subtitle">两颗按钮各行其道：数据按钮开三格式菜单（纯文本／JSON／CSV），日志按钮一次复制六段；两处都不出与按钮同字的标题。窗口非缺省时，第 3 段「调用链」把窗口写全，例如 calorie-cmd-read calorie.view.home --params '{&quot;windowDays&quot;:30,&quot;date&quot;:&quot;今日&quot;}'。</p>
     </section>
 
     <p class="ilife-block-page-shell-subtitle" id="sec-src">📊 来源：calorie_data.db（food_log ＋ exercise_log ＋ daily_goal，只读）· 由 calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot;}' 生成 · 2026-09-14 17:31:00 · 版本 0.1.0</p>
@@ -490,8 +569,8 @@ calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot
 </section>
 </div>
 <script>
-/* 样张内联脚本：窗口切换（今日／本周／7d／30d，与命令参数一一对应）、开合三格式菜单、两颗按钮各自复制、报一句结果。
-   无持久化、不读库、无外部引用。与生产同一套标记：开合器 data-fmt-open、菜单项 data-fmt、载荷 data-t、开合类 copy-menu-open。 */
+/* 样张内联脚本：开合三格式菜单、把两颗按钮各自的载荷复制走、报一句结果。无持久化、不读库、无外部引用。
+   与生产同一套标记：开合器 data-fmt-open、菜单项 data-fmt、载荷 data-t、开合类 copy-menu-open。 */
 (function () {
   'use strict';
   var MENU_OPEN_CLASS = 'copy-menu-open';
@@ -501,24 +580,6 @@ calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot
   var LOG_MSG = '已复制';
   var FAIL_MSG = '复制失败';
   var FAIL_DETAIL = '长按选择文本手动复制';
-  var WINDOW_TITLE = {
-    '今日': '今日热量预算 2026-09-07',
-    '本周': '本周热量预算 2026-09-01 ~ 2026-09-07',
-    '7d': '最近 7 天热量预算 2026-09-01 ~ 2026-09-07',
-    '30d': '最近 30 天热量预算 2026-08-09 ~ 2026-09-07'
-  };
-  var WINDOW_CMD = {
-    '今日': '{"date":"今日"}',
-    '本周': '{"windowDays":7,"date":"今日"}',
-    '7d': '{"windowDays":7,"date":"今日"}',
-    '30d': '{"windowDays":30,"date":"今日"}'
-  };
-  var WINDOW_NOTE = {
-    '今日': '窗口 2026-09-01 ~ 2026-09-07 · 唤醒词 order 8 · 命令 calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'',
-    '本周': '窗口 2026-09-01 ~ 2026-09-07 · 命令 calorie-cmd-read calorie.view.home --params \'{"windowDays":7,"date":"今日"}\'',
-    '7d': '窗口 2026-09-01 ~ 2026-09-07 · 命令 calorie-cmd-read calorie.view.home --params \'{"windowDays":7,"date":"今日"}\'',
-    '30d': '窗口 2026-08-09 ~ 2026-09-07 · 命令 calorie-cmd-read calorie.view.home --params \'{"windowDays":30,"date":"今日"}\''
-  };
 
   function addClass(el, name) {
     if ((' ' + el.className + ' ').indexOf(' ' + name + ' ') > -1) return;
@@ -590,29 +651,11 @@ calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot
     if (done) markCopied(btn);
     feedback(done ? msg : FAIL_MSG, !done);
   }
-  /* 窗口切换：只换标题、副题行与结论句的窗口字面；数字不编——没有实测产品的窗口保留 —。 */
-  function switchWindow(name) {
-    var h1 = document.querySelector('.ilife-block-page-shell-title');
-    var subs = document.querySelectorAll('.ilife-block-page-shell-subtitle');
-    if (h1 && WINDOW_TITLE[name]) h1.textContent = WINDOW_TITLE[name];
-    if (subs.length > 1 && WINDOW_NOTE[name]) subs[1].textContent = WINDOW_NOTE[name];
-    var btns = document.querySelectorAll('[data-window]');
-    for (var i = 0; i < btns.length; i++) {
-      var on = btns[i].getAttribute('data-window') === name;
-      btns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-    var logBtn = document.querySelector('[data-action-id="ilife-copy-log"]');
-    if (logBtn && WINDOW_CMD[name]) {
-      logBtn.setAttribute('data-t', logBtn.getAttribute('data-t').replace(/--params '[^']*'/, "--params '" + WINDOW_CMD[name] + "'"));
-    }
-  }
   document.addEventListener('click', function (ev) {
     var node = ev.target;
     if (!node || typeof node.closest !== 'function') return;
     var close = node.closest('.ilife-toast-close');
     if (close && close.parentNode && close.parentNode.parentNode) { close.parentNode.parentNode.removeChild(close.parentNode); return; }
-    var win = node.closest('[data-window]');
-    if (win) { switchWindow(win.getAttribute('data-window')); return; }
     var opener = node.closest('[data-fmt-open="1"]');
     if (opener) {
       var wrap = opener.closest('.ilife-copy-menu-wrap');

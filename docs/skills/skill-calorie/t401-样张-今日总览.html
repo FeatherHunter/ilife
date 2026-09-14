@@ -15,7 +15,22 @@
     ①「共享样式段」＝token 块（逐值取 packages/base-render/src/spec/style.ts 的 CSS_VAR_TOKENS）
        ＋ 区块与控件规则，与共享样式资产同一份，页面不许在别处再写配色与字号；
     ②「区块排布段」只写框内排布（grid、间距、边框样式），一个色值一个字号都不写。
-  本页不比设计多：深底常驻横幅不出（设计已裁决撤掉，改成标题下一行的结论句）；@media print 不出。
+  字号：本页每一条 font-size 都在①共享样式段里（②段与行内一条都没有），逐值抄自共享样式资产
+    packages/base-render/src/style.ts。样张内只为演示，实施时字号一律由公共层样式段给出，页面本地不写。
+    其中 12.5px 是共享样式资产自己的读数（style.ts:141／:187 的 toast 卡），本页照抄、不就地改档——
+    要动这个半档就得动公共层，不在本票范围。
+  完成度条（本页给出的形状位：热量／蛋白／饮水三张，档位 90／60，判定照老侧 barClass()）：
+    条内填充取①共享样式段里肉眼可辨的 var(--blue)，**只作可辨识占位——档位色待 #418 定**；
+    实施后档位判定与档位色只在公共层一处，本页不写色值、不重定义条形类名，
+    也不产 .ilife-bar 这类闭集外类名。三档（90／60／低）现在同色，只为让条看得见。
+  下面几段是给实施者的交底，页面可见文案里一条都不出现：
+    · 热量目标为空时（calorie_goal 可空）：「今天还能吃多少」与「今天热量预算」两处共用同一条兜底——
+      值位写 —，副行给一句引导句（去说「定营养目标」），不画空条、不写 0、不拿缺省值顶替。
+    · 「热量缺口（TDEE 口径）」与「今天还能吃多少」并排，算式各写一行，免得目标 1800 与缺口 1687
+      并列被读成 611。
+    · 折线块的周均参考线本页取 var(--fg2)（生产此处是橙色字面量），故说明行只写「虚线」、不带颜色词：
+      页面里一行色值都不许写，宁可说明行少一个颜色词，也不让图文不符。
+  本页不比设计多：深底常驻横幅不出（设计已裁决撤掉，改成标题下一行的结论小字）；@media print 不出。
 -->
 <style>
 /* ═══ ① 共享样式段（token 块 ＋ 区块与控件规则；配色与字号只在这里出现） ═══ */
@@ -371,7 +386,7 @@ body {
 .ilife-block-page-shell-body > .ilife-block-kpi-card-grid {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
-/* 完成度条的形状位（实施归 #418 公共层增量；本页只给槽位，不给色值） */
+/* 完成度条的形状位；填充取共享 token，档位色的出处见文件头注释 */
 .ilife-block-kpi-card-bar {
   margin-top: 8px;
   height: 6px;
@@ -415,31 +430,30 @@ body {
         <div class="ilife-block-kpi-card-label">今日摄入</div>
         <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1189</span><span class="ilife-block-kpi-card-unit">卡</span></div>
         <div class="ilife-block-kpi-card-detail">目标 1800 卡 · 完成度 66.06%</div>
-        <div class="ilife-block-kpi-card-bar" role="img" aria-label="完成度 66.06%，中档" title="完成度 66.06% · 档位 60（中档）"><div class="ilife-block-kpi-card-bar-fill" style="width:66.06%;background:var(--soft)"></div></div>
+        <div class="ilife-block-kpi-card-bar" role="img" aria-label="完成度 66.06%，中档" title="完成度 66.06% · 档位 60（中档）"><div class="ilife-block-kpi-card-bar-fill" style="width:66.06%;background:var(--blue)"></div></div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
         <div class="ilife-block-kpi-card-label">蛋白</div>
         <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">59</span><span class="ilife-block-kpi-card-unit">g</span></div>
         <div class="ilife-block-kpi-card-detail">目标 150 g · 完成度 39.33%</div>
-        <div class="ilife-block-kpi-card-bar" role="img" aria-label="完成度 39.33%，低档" title="完成度 39.33% · 档位 60 以下（低档）"><div class="ilife-block-kpi-card-bar-fill" style="width:39.33%;background:var(--soft)"></div></div>
+        <div class="ilife-block-kpi-card-bar" role="img" aria-label="完成度 39.33%，低档" title="完成度 39.33% · 档位 60 以下（低档）"><div class="ilife-block-kpi-card-bar-fill" style="width:39.33%;background:var(--blue)"></div></div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
         <div class="ilife-block-kpi-card-label">饮水</div>
         <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">2000</span><span class="ilife-block-kpi-card-unit">ml</span></div>
         <div class="ilife-block-kpi-card-detail">目标 2000 ml · 完成度 100%</div>
-        <div class="ilife-block-kpi-card-bar" role="img" aria-label="完成度 100%，达标" title="完成度 100% · 档位 90（达标）"><div class="ilife-block-kpi-card-bar-fill" style="width:100%;background:var(--soft)"></div></div>
+        <div class="ilife-block-kpi-card-bar" role="img" aria-label="完成度 100%，达标" title="完成度 100% · 档位 90（达标）"><div class="ilife-block-kpi-card-bar-fill" style="width:100%;background:var(--blue)"></div></div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
         <div class="ilife-block-kpi-card-label">今天还能吃多少</div>
         <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">611</span><span class="ilife-block-kpi-card-unit">卡</span></div>
         <div class="ilife-block-kpi-card-detail">＝ 目标 1800 − 已摄入 1189</div>
-        <div class="ilife-block-kpi-card-detail">热量目标为空时：值位写 —，本行改引导句「去说『定营养目标』」，不画空条、不写 0。</div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
         <div class="ilife-block-kpi-card-label">热量缺口（TDEE 口径）</div>
         <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1687</span><span class="ilife-block-kpi-card-unit">卡</span></div>
         <div class="ilife-block-kpi-card-detail">＝ TDEE 2556 ＋ 运动 320 − 摄入 1189</div>
-        <div class="ilife-block-kpi-card-detail">正数＝缺口，负数＝盈余。与「还能吃多少」并排，算式各写一行，免得 1800 与 1687 并列被读成 611。</div>
+        <div class="ilife-block-kpi-card-detail">正数＝缺口，负数＝盈余。</div>
       </div>
       <div class="ilife-block ilife-block-kpi-card">
         <div class="ilife-block-kpi-card-label">连续记录</div>
@@ -447,11 +461,6 @@ body {
         <div class="ilife-block-kpi-card-detail">窗口 5/7 天有记录</div>
       </div>
     </div>
-
-    <!-- 完成度条的依赖与颜色单源：形状位是本页给的槽位，实施归 #418（公共层 KPI 卡增量）。
-         本页一个色值都没写（条形填充取 var(--soft) 只是占位，等 #418 定档位色），
-         也不自造 .ilife-bar 这类闭集外类名。 -->
-    <p class="ilife-block-page-shell-subtitle">完成度条（热量／蛋白／饮水三张，档位 90／60）：形状位在本页给出，实施归 #418 公共层 KPI 卡增量——档位判定与档位色只在公共层一处；本页不写色值、不重定义条形类名，条内填充现取 var(--soft) 占位，待 #418 定档位色。</p>
 
     <section class="ilife-block ilife-block-chart-block" id="sec-chart">
       <h2 class="ilife-block-chart-block-title">每日摄入</h2>
@@ -474,7 +483,7 @@ body {
           </svg>
         </div>
       </div>
-      <p class="ilife-block-page-shell-subtitle">周均摄入 667.8 卡 · 周均缺口 2168.2 卡（窗口 2026-09-01 ~ 2026-09-07）。橙虚线＝窗口周均参考线。09-03／09-04 无记录，留空不断 0，折线在缺记录处断开；窗口内一条记录也没有时，这一块整块不出。</p>
+      <p class="ilife-block-page-shell-subtitle">周均摄入 667.8 卡 · 周均缺口 2168.2 卡（窗口 2026-09-01 ~ 2026-09-07）。虚线＝窗口周均参考线。09-03／09-04 无记录，留空不断 0，折线在缺记录处断开；窗口内一条记录也没有时，这一块整块不出。</p>
     </section>
 
     <div class="ilife-block ilife-block-data-table" id="sec-table">
@@ -507,12 +516,10 @@ body {
       <div class="ilife-empty">
         <div class="ilife-empty-icon" aria-hidden="true">🧭</div>
         <div class="ilife-empty-text">窗口内一条记录也没有</div>
-        <div class="ilife-empty-hint">摄入／缺口／完成度一律写 —，不画进度条、不用 0 顶位；复制数据保留原始空值，不把 — 写进载荷。</div>
+        <div class="ilife-empty-hint">摄入／缺口／完成度一律写 —；复制数据保留原始空值，不把 — 写进载荷。</div>
       </div>
       <p class="ilife-block-page-shell-subtitle">怎么记第一条：说「记一餐 燕麦 100 克」，或说「记喝水 250 毫升」；补昨天的就说「补记饮食 2026-09-06 燕麦 100 克」。记完再回来说「看今日主页」。</p>
     </section>
-
-    <p class="ilife-block-page-shell-subtitle" style="border-style:dashed">「今天还能吃多少」与「今天热量预算」两处共用同一条无目标兜底：热量目标为空时值位写 —，副行给一句引导句（去说「定营养目标」），不画空条、不写 0、不拿缺省值顶替。</p>
 
     <section class="ilife-block ilife-block-copy-block" id="sec-copy">
       <div class="ilife-action-bar">
