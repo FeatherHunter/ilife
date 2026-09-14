@@ -124,13 +124,20 @@ describe('#420 可打印版式 renderPageShell({ printable })', () => {
 });
 
 describe('#420 blocksCss 打印段（作用域纪律）', () => {
-  it('含 @media print 与 @page，且隐藏页内导航与复制区', () => {
+  it('含 @media print 与具名 @page，且隐藏页内导航与复制区', () => {
     const css = blocksCss();
     assert.ok(css.includes('@media print'), '缺 @media print');
-    assert.ok(css.includes('@page'), '缺 @page 规则');
+    assert.ok(css.includes('@page printable'), '缺具名页规则（@page printable）');
     const section = printSection(css);
+    assert.ok(new RegExp('\\.ilife-page-printable\\s+\\{[^}]*page:\\s*printable').test(section), '打印页名必须由 .ilife-page-printable 绑定');
     assert.ok(new RegExp('\\.ilife-page-printable\\s+\\.ilife-block-toc\\s*\\{[^}]*display:\\s*none').test(section), '打印时必须隐藏页内导航');
     assert.ok(new RegExp('\\.ilife-page-printable\\s+\\.ilife-block-copy-block\\s*\\{[^}]*display:\\s*none').test(section), '打印时必须隐藏复制区');
+  });
+
+  it('不得出现裸 @page（全局规则会让全部页面吃这 12mm 页边距）', () => {
+    const css = blocksCss();
+    assert.ok(!/@page\s*\{/.test(css), '裸 @page 是全局规则，不得出现');
+    assert.ok(!/@page\s*:\s*/.test(css), '@page 不得带伪类选择器（全局面）');
   });
 
   it('打印段每条选择器都在 .ilife-page-printable 作用域下（无裸 body{／裸 .wrap）', () => {

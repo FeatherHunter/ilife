@@ -156,6 +156,10 @@ function blockPart(section: BlockStyleSection, part: string): string {
  *  由 `test/blocks.test.mjs` 钉死 12 项，故样式落在 `pageShell` 区，仅作页面级开关。 */
 const PRINTABLE_SLUG = 'page-printable';
 
+/** 打印页名（#420）：`.ilife-page-printable` 用 `page: printable` 绑到具名页 `@page printable` 上。
+ *  裸 `@page` 是**全局规则**（CSS 没法把它绑到类上：任何页一打印就吃它），具名页才落在类作用域内。 */
+const PRINTABLE_PAGE_NAME = 'printable';
+
 /** 页面级区块类（#420：页内导航／口径说明行）：`ilife-block-<name>`。
  *  与 12 区同命名空间、同 `ilife-block-` 前缀，但不进 `BLOCK_STYLE_SECTIONS`（样式仍落 `pageShell` 区）。 */
 function pageLevelBlock(name: string): string {
@@ -836,10 +840,13 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     // #420-3 打印段：**必须显式打开**——只有 `renderPageShell({ printable: true })` 的页才带
     // `.ilife-page-printable`；不给的调用点类名不出现，规则虽在样式段里但一律不命中（逐字零变）。
-    // 打印段里**每条选择器**都挂在该类名下（不出现裸 `body`／裸 `.wrap`）：样式表是共享资产、
-    // 注入到全部页面，裸选择器会在别的页上生效。页面留白交给 `@page`，屏幕上那 32px 留白在纸上没有意义。
+    // 打印段里**每条规则**都挂在该类作用域下（不出现裸 `body`／裸 `.wrap`）：样式表是共享资产、
+    // 注入到全部页面，裸选择器会在别的页上生效。页面留白交给**具名页** `@page printable`
+    // （`.ilife-page-printable { page: printable }` 绑定；裸 `@page` 会让全部页面吃这 12mm）。
+    // 屏幕上那 32px 留白在纸上没有意义，故打印时清零、改由页边距承担。
     '@media print {',
     '  .' + p + PRINTABLE_SLUG + ' {',
+    '    page: ' + PRINTABLE_PAGE_NAME + ';',
     '    max-width: none;',
     '    padding: 0;',
     '  }',
@@ -849,7 +856,7 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  .' + p + PRINTABLE_SLUG + ' .' + p + 'block-copy-block {',
     '    display: none;',
     '  }',
-    '  @page {',
+    '  @page ' + PRINTABLE_PAGE_NAME + ' {',
     '    margin: 12mm;',
     '  }',
     '}',
