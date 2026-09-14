@@ -4,7 +4,7 @@
 
 审查对象：提交 `875375d`（实现 `packages/skill-calorie/src/exercise/records.ts` 303 LF／13918 字节、
 判据 `packages/skill-calorie/test/exercise-records-fusion-451.test.mjs` 342 行、证据 `docs/skills/skill-calorie/t451-明细族融合.md` 93 行）。
-本席只读这三件 ＋ 冻结表 ＋ `AGENTS.md` 台账 ＋ 交付物目录，未读全仓。
+本席只读：被审三件 ＋ `scene-04-exercise.ts`（冻结表）＋ `test/doc-page-assert.mjs` ＋ `packages/skill-calorie/AGENTS.md` 台账 ＋ `t422-融合共用件.md` §七 ＋ 交付物目录 ＋ `base-render/src/blocks.ts` 的可打印段，未读全仓。
 
 ## 一、机器证据（每条给 runId 与读数）
 
@@ -19,7 +19,7 @@
      两件都是**别席在途件**；随后别席同步台账，复跑 `runId=a47ad367` **exit 0／RESULT: 58/58／PASS**。
 2. **自设变异两处**（四步序：变异→定向编译→判据红→写回原字节＋刷 mtime→编译→判据绿；判据读 `dist/`，两次都重编译）：
    - A「表标题去上限明示」：变异 `sha256=4D38E215…`→编译 exit 0→判据 **exit 1**（前三处红：`✖ 看今日运动`／`✖ 看昨日运动`／`✖ 看记录（有备注）`，共 6 条）；写回后 `sha256=B318105B…`（与变异前同值，13918 字节）→编译 exit 0→判据 **exit 0**（`runId=3aa8eb62`）。
-   - B「八列表头换序（距离／心率对调）」：变异 `sha256=C7291DBC…`→编译 exit 0→判据 **exit 1**（7 条红）；写回后同值 `B318105B…`→编译 exit 0→判据 **exit 0**（`runId=ccd3cc7f` 段内）。
+   - B「八列表头换序（距离／心率对调）」：变异 `sha256=C7291DBC…`→编译 exit 0→判据 **exit 1**（7 条红）；写回后同值 `B318105B…`→编译 exit 0→判据 **exit 0**（同在 `runId=ccd3cc7f` 段内，还原后 8／8 全绿）。
      还原只写回本席另存原字节（`writeFileSync(备份)`），未用 `git checkout --`／整目录还原。
 3. **本席自设探针** `docs/skills/skill-calorie/t451-review-probe.mjs`（`runId=1eaa0c45` exit 1 为探针自身写法缺陷、修正后 `runId=a5327bb9` **exit 0／122 项全 PROBE-OK**）：
    - **P1**：冻结表 39 行解出；五条词各唯一、主命令都＝`calorie.view.exercise-records`、参数逐字对上（`{"window":"今日"}`／`{"window":"昨日"}`／`{"window":"7d","hasNote":true}`／`{"window":"7d","category":"力量"}`／`{"window":"7d","category":"有氧"}`），
@@ -40,7 +40,7 @@
 - **S1：无**（不改判）。
 - **S3（本票范围）①**：证据件第五节告警线读数「56/56、台账 25 行、超线 24 件」已成陈化读数——复跑当刻是 **58/58、26 行、25 件**（台账由别席同步、本票件 `records.ts` 303 < 350 不入表）。读数本身可信，缺一句「同刻复跑」的对账。
 - **S3（本票范围）②**：证据件写「样例 7 件」，当刻 `.scratch/t451/out/` 为 **11 件**（多出 seed-0/1/2 与 08-empty-blocked 的 0 字节产物）——多出的是复跑新增、口径不变，缺一句计数说明。
-- **S3（范围外，注记不判）**：空态在真正交付出口被缺失阻断（exit 4），空页只能装配层构造——同一口径 #423 样板 §已记（`exercise-receipt-fusion-423.test.mjs:350`），本票不必处理。
+- **S3（范围外，注记不判）**：空态在真正交付出口被缺失阻断（exit 4），空页只能装配层构造——同一口径 #423 样板已记（`packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs:350`），本票不必处理。
 - **已裁定口径复核**：① 可见标签直写中文、未调 `shared/fieldLabel.ts`——探针 P2 复核「可见文本无 `snake_case`」，**通过**；② 来源脚注 `exercise_log` 是数据来源名，**通过**。两条都不当缺陷判。
 - **器件归类复核**：不接四态头与变更卡载具的声明**有据**——`docs/skills/skill-calorie/t422-融合共用件.md` §七 表第 1 行把 `operationHead` 划给 `#423` 回执族，本族只读页。
 
