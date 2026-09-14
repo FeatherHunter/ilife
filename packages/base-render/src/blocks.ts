@@ -262,6 +262,189 @@ export function renderCaliberLine(text: string): string {
 }
 
 /* ══════════════════════════════════════════════════════════════
+ * #421 页面融合四件（与领域无关：文案／数值／颜色全由调用方给）
+ *   占比迷你条／分布条行＝「数字＋图形同格」；徽章＝并列小标签；字段变更行＝改前改后对照。
+ *   四件都是页面级（不属 12 区块），样式随 `pageShell` 区落盘（同 #420 处置：不新增样式区）。
+ * ══════════════════════════════════════════════════════════════ */
+
+/** 页面级子件类（#421）：`ilife-block-<名>-<件>`（与 `pageLevelBlock` 同命名空间，不进 12 区闭集）。 */
+function pageLevelPart(name: string, part: string): string {
+  return pageLevelBlock(name) + '-' + part;
+}
+
+/** 百分比（#421）：只收有限数，两端都夹到 0–100（越界夹取是本条唯一口径；非数走 `badInput`）。 */
+function reqPct(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    badInput(field + ' 必须是 0–100 的有限数（越界夹取）');
+  }
+  return Math.min(100, Math.max(0, value as number));
+}
+
+/** 填充条的内联声明（#421）：宽度恒有；**背景只在调用方给了颜色时才出现**（区块不自带色值）。 */
+function fillDecls(pct: number, color: string | undefined): string {
+  return 'width:' + String(pct) + '%' + (color === undefined ? '' : ';background:' + color);
+}
+
+/** 颜色入参（#421）：`undefined` 透传（用样式里的缺省色）；token 名（`--x`）包成 `var()`，其余色值逐字透传。 */
+function optColor(value: unknown, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || value.trim() === '') badInput(field + ' 必须是非空字符串（token 名或色值）');
+  const raw = value.trim();
+  return /^--[A-Za-z0-9-]+$/.test(raw) ? 'var(' + raw + ')' : raw;
+}
+
+/** 附加类名（#421）：`undefined` 透传；给了须是空格分隔的类名（调用方按域标色，区块不认领域）。 */
+function optExtraClass(value: unknown, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || value.trim() === '') badInput(field + ' 必须是非空字符串');
+  const names = value.trim().split(/\s+/);
+  for (const name of names) {
+    if (!/^-?[A-Za-z_][A-Za-z0-9_-]*$/.test(name)) badInput(field + ' 只许空格分隔的类名：' + name);
+  }
+  return names.join(' ');
+}
+
+/** #421 四件的类名主体（`pageLevelBlock(名)` → `ilife-block-<名>`）。 */
+const MINI_BAR_NAME = 'mini-bar';
+const DIST_ROW_NAME = 'dist-row';
+const CHIP_NAME = 'chip';
+const CHANGE_ROW_NAME = 'change-row';
+
+/** 箭头字形（#421-4）：`arrow: false` 靠可见性占位，字形逐字保留（栏位不塌）。 */
+const CHANGE_ARROW_GLYPH = '\u2192';
+
+export interface MiniBarInput {
+  /** 占比：0–100 的有限数，越界夹取。 */
+  readonly pct: number;
+  /** 填充色：token 名（`--x`）或色值；不给则用样式里的缺省色。 */
+  readonly color?: string;
+}
+
+/** #421-1 占比迷你条（「数字＋图形同格」的图形侧）：一截横条按 `pct` 撑宽。
+ *  只表达「一眼看出差距」，不替代图表——精确读数（坐标／悬停）仍走 `renderChartBlock` 的共享图表。 */
+export function renderMiniBar(input: MiniBarInput): string {
+  assertPlainObject(input, 'renderMiniBar: input');
+  assertNoInlineHandler(input, 'renderMiniBar: input');
+  const bar = input as MiniBarInput;
+  const pct = reqPct(bar.pct, 'renderMiniBar: input.pct');
+  const color = optColor(bar.color, 'renderMiniBar: input.color');
+  return '<span class="' + pageLevelBlock(MINI_BAR_NAME) + '" role="img" aria-label="' + String(pct) + '%">'
+    + '<span class="' + pageLevelPart(MINI_BAR_NAME, 'fill') + '" style="' + esc(fillDecls(pct, color)) + '"></span>'
+    + '</span>';
+}
+
+export interface DistributionRowInput {
+  readonly label: string;
+  /** 显示值（`null`／`undefined` 置空；转义与 `renderDataTable` 的单元格同口径）。 */
+  readonly value: string | number | null;
+  /** 占比：0–100 的有限数，越界夹取。 */
+  readonly pct: number;
+  /** 填充色：token 名（`--x`）或色值；不给则用样式里的缺省色。 */
+  readonly color?: string;
+  /** 名称栏的附加类名（空格分隔）：调用方按域标色，区块不认领域。 */
+  readonly labelClass?: string;
+}
+
+export interface DistributionRowsInput {
+  readonly rows: readonly DistributionRowInput[];
+}
+
+/** #421-2 分布条行：`名称 ｜ 条 ｜ 数值` 一格三栏，逐行拼出（行即件，不另加容器类）。
+ *  `rows: []` ＝ 空串（与「没内容不留空壳」同口径）；行内校验逐条 fail-fast。 */
+export function renderDistributionRows(input: DistributionRowsInput): string {
+  assertPlainObject(input, 'renderDistributionRows: input');
+  assertNoInlineHandler(input, 'renderDistributionRows: input');
+  const block = input as DistributionRowsInput;
+  if (!Array.isArray(block.rows)) badInput('renderDistributionRows: input.rows 必须是数组');
+  if (block.rows.length === 0) return '';
+  return block.rows.map((row, i) => {
+    const field = 'renderDistributionRows: input.rows[' + i + ']';
+    assertPlainObject(row, field);
+    assertNoInlineHandler(row as unknown as object, field);
+    const item = row as DistributionRowInput;
+    const label = reqText(item.label, field + '.label');
+    const pct = reqPct(item.pct, field + '.pct');
+    const color = optColor(item.color, field + '.color');
+    const extra = optExtraClass(item.labelClass, field + '.labelClass');
+    return '<div class="' + pageLevelBlock(DIST_ROW_NAME) + '">'
+      + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'name') + (extra === undefined ? '' : ' ' + extra) + '">'
+      + esc(label) + '</span>'
+      + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'bar') + '">'
+      + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'fill') + '" style="' + esc(fillDecls(pct, color)) + '"></span>'
+      + '</span>'
+      + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'val') + '">'
+      + cellText(item.value, field + '.value') + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+export interface ChipItemInput {
+  readonly text: string;
+}
+
+export interface ChipsInput {
+  readonly items: readonly ChipItemInput[];
+}
+
+/** #421-3 徽章（并列小标签，如分类／标签这类短词并排）：逐项 `<span class="ilife-block-chip">`。
+ *  项即件（不另加容器类）；`items: []` ＝ 空串。 */
+export function renderChips(input: ChipsInput): string {
+  assertPlainObject(input, 'renderChips: input');
+  assertNoInlineHandler(input, 'renderChips: input');
+  const block = input as ChipsInput;
+  if (!Array.isArray(block.items)) badInput('renderChips: input.items 必须是数组');
+  if (block.items.length === 0) return '';
+  return block.items.map((entry, i) => {
+    const field = 'renderChips: input.items[' + i + ']';
+    assertPlainObject(entry, field);
+    assertNoInlineHandler(entry as unknown as object, field);
+    return '<span class="' + pageLevelBlock(CHIP_NAME) + '">'
+      + esc(reqText((entry as ChipItemInput).text, field + '.text')) + '</span>';
+  }).join('');
+}
+
+export interface ChangeRowInput {
+  readonly label: string;
+  /** 改前（不给／`null` ＝ 空槽；转义与 `renderDataTable` 的单元格同口径）。 */
+  readonly before?: string | number | null;
+  /** 改后（同上）。 */
+  readonly after?: string | number | null;
+  /** 箭头位（缺省为真）。为假时**仍占箭位**（可见性占位），左右两栏与真行不塌。 */
+  readonly arrow?: boolean;
+}
+
+export interface ChangeRowsInput {
+  readonly rows: readonly ChangeRowInput[];
+}
+
+/** #421-4 字段变更行（回执页「改前 → 改后」对照）：`字段名 ｜ 改前 ｜ 箭头 ｜ 改后`。
+ *  `arrow: false` 只把字形藏起来、不删栏位（与老技能同一手法：左右栏靠箭位对齐）；
+ *  `rows: []` ＝ 空串。 */
+export function renderChangeRows(input: ChangeRowsInput): string {
+  assertPlainObject(input, 'renderChangeRows: input');
+  assertNoInlineHandler(input, 'renderChangeRows: input');
+  const block = input as ChangeRowsInput;
+  if (!Array.isArray(block.rows)) badInput('renderChangeRows: input.rows 必须是数组');
+  if (block.rows.length === 0) return '';
+  return block.rows.map((row, i) => {
+    const field = 'renderChangeRows: input.rows[' + i + ']';
+    assertPlainObject(row, field);
+    assertNoInlineHandler(row as unknown as object, field);
+    const item = row as ChangeRowInput;
+    const label = reqText(item.label, field + '.label');
+    return '<div class="' + pageLevelBlock(CHANGE_ROW_NAME) + '">'
+      + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'label') + '">' + esc(label) + '</span>'
+      + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'old') + '">'
+      + cellText(item.before, field + '.before') + '</span>'
+      + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'arrow') + '" aria-hidden="true"'
+      + (item.arrow === false ? ' style="visibility:hidden"' : '') + '>' + CHANGE_ARROW_GLYPH + '</span>'
+      + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'new') + '">'
+      + cellText(item.after, field + '.after') + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
  * B-02 KPI 卡（四槽 label／value／unit／detail ＋ STATUS_KINDS 徽章）
  * ══════════════════════════════════════════════════════════════ */
 
@@ -909,6 +1092,102 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  color: var(--fg2);',
     '  font-size: 12px;',
     '  line-height: 1.5;',
+    '}',
+    // #421 页面融合四件的样式随本区落盘（同 #420 处置：四件都是页面级、不属 12 区块，
+    // `BLOCK_STYLE_SECTIONS` 由 `test/blocks.test.mjs` 钉死 12 项，故不新增样式区、不新增 token）。
+    // **色值一律由调用方给**：样式里只出现冻结 token（`--line` 底槽、`--blue` 填充缺省），
+    // 区块自身不写任何领域色；填充宽由产物的内联 `width` 撑。
+    '.' + p + 'block-mini-bar {',
+    '  display: inline-block;',
+    '  overflow: hidden;',
+    '  width: 72px;',
+    '  height: 6px;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--line);',
+    '  vertical-align: middle;',
+    '}',
+    '.' + p + 'block-mini-bar-fill {',
+    '  display: block;',
+    '  height: 100%;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--blue);',
+    '}',
+    '.' + p + 'block-dist-row {',
+    '  display: grid;',
+    '  grid-template-columns: minmax(0, 6em) minmax(0, 1fr) auto;',
+    '  align-items: center;',
+    '  gap: 8px;',
+    '  padding: 5px 0;',
+    '  font-size: 13px;',
+    '}',
+    // 13px 小字压白底：`--fg2`（4.94:1）达 AA；`--fg3`（3.62:1）不到，不用（#179 口径）。
+    '.' + p + 'block-dist-row-name {',
+    '  color: var(--fg2);',
+    '  overflow: hidden;',
+    '  text-overflow: ellipsis;',
+    '  white-space: nowrap;',
+    '}',
+    '.' + p + 'block-dist-row-bar {',
+    '  display: block;',
+    '  overflow: hidden;',
+    '  height: 8px;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--line);',
+    '}',
+    '.' + p + 'block-dist-row-fill {',
+    '  display: block;',
+    '  height: 100%;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--blue);',
+    '}',
+    '.' + p + 'block-dist-row-val {',
+    '  color: var(--fg);',
+    '  font-weight: 600;',
+    '  font-variant-numeric: tabular-nums;',
+    '  text-align: right;',
+    '}',
+    // 12px 小字取 `--blue2`（压 `--soft` 约 5.4:1）；`--blue` 4.02:1 不到 AA 的 4.5:1（#179 口径）。
+    '.' + p + 'block-chip {',
+    '  display: inline-block;',
+    '  margin: 0 6px 6px 0;',
+    '  padding: 2px 8px;',
+    '  border: 1px solid var(--line);',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--soft);',
+    '  color: var(--blue2);',
+    '  font-size: 12px;',
+    '  font-weight: 600;',
+    '  line-height: 1.5;',
+    '}',
+    '.' + p + 'block-change-row {',
+    '  display: flex;',
+    '  align-items: baseline;',
+    '  gap: 8px;',
+    '  padding: 6px 0;',
+    '  border-top: 1px solid var(--line);',
+    '  font-size: 14px;',
+    '}',
+    '.' + p + 'block-change-row-label {',
+    '  flex: 1;',
+    '  min-width: 0;',
+    '  color: var(--fg2);',
+    '}',
+    // 改前＝灰字加删除线；改后＝正文字重 600（层次靠字重与线，不靠更浅的灰，同 #179 口径）。
+    '.' + p + 'block-change-row-old {',
+    '  color: var(--fg2);',
+    '  text-decoration: line-through;',
+    '}',
+    // 箭位恒占宽：`arrow: false` 只加内联 `visibility: hidden`，栏宽与真行逐字同（`display: none` 会塌）。
+    '.' + p + 'block-change-row-arrow {',
+    '  flex: 0 0 auto;',
+    '  min-width: 1.2em;',
+    '  color: var(--fg2);',
+    '  text-align: center;',
+    '}',
+    '.' + p + 'block-change-row-new {',
+    '  color: var(--fg);',
+    '  font-weight: 600;',
+    '  font-variant-numeric: tabular-nums;',
     '}',
     // #420-3 打印段：**必须显式打开**——只有 `renderPageShell({ printable: true })` 的页才带
     // `.ilife-page-printable`；不给的调用点类名不出现，规则虽在样式段里但一律不命中（逐字零变）。
