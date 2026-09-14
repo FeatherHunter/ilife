@@ -1,4 +1,4 @@
-/** #97 · M5 写库回执契约回归（35 写键 × 四要素 ＋ 追加字段零回归 ＋ 库内独立复核）。
+/** #97 · M5 写库回执契约回归（全部写命令 × 四要素 ＋ 追加字段零回归 ＋ 库内独立复核）。
  *
  * 口径正本：`docs/research/t97-m5-contract.md`。与既有测试的分工：
  * - `cmd-write-40.test.mjs`：写键可执行性／exit 契约／回执行存在；
@@ -19,13 +19,21 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { openDbReadOnly } from '../dist/db/readonly.js';
 import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
-import { SCENARIOS, checkM5 } from '../../../docs/research/t97-probe-receipts.mjs';
+import { SCENARIOS as PROBE_SCENARIOS, checkM5 } from '../../../docs/research/t97-probe-receipts.mjs';
 import { DECLARED_WRITE_KEYS } from './declared.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const WRITE_KEYS = Object.keys(CALORIE_WRITE_COMBOS);
+
+/** 场景表 = 探针表（住 `docs/research/t97-probe-receipts.mjs`）＋ 后加写命令的场景行。
+ * 探针表是历史归档件、不在本票声明路径内，故新增行住本件；形状照表内既有行（`{ key, params }`），
+ * 两边相并即写命令全量（#276 加 `calorie.product.import` 那一行）。 */
+const SCENARIOS = [
+  ...PROBE_SCENARIOS,
+  { key: 'calorie.product.import', params: { items: [{ productName: '测试导入燕麦', calories: 389, protein: 13, fat: 7, carbohydrates: 66, sodium: 5 }] } },
+];
 
 /** 既有字段（#97 前就在的 10 个）——只追加纪律：本清单一个都不能少，也不能改名。 */
 const BASE_KEYS = ['scene', 'action', 'op', 'recordId', 'summary', 'items', 'tagDiff', 'distance', 'noChange', 'meta'];
@@ -225,7 +233,7 @@ test('#97 · 重复跳过：affectedRows=0 且写入字段摘要为空（无写�
   assert.ok(rc.idSource === 'record' || rc.idSource === 'none');
 });
 
-test('#97 · idSource 三值（record／singleton／condition）在 35 键内全部出现', () => {
+test('#97 · idSource 三值（record／singleton／condition）在全部写命令内全部出现', () => {
   const seen = new Set();
   for (const sc of SCENARIOS) seen.add(runScenario(sc).env.data.receipt.idSource);
   assert.deepEqual([...seen].sort(), ['condition', 'record', 'singleton']);

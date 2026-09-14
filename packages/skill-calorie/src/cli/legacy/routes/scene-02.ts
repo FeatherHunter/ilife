@@ -16,5 +16,4 @@
 import type { RouteDecl } from '../../../triggers/routeSpec.js';
 
 export const ROUTES_SCENE_02: readonly RouteDecl[] = [
-  { list: 'wake', order: 40, wakeWord: '批量导入食品', scene: '02', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：需多步交互（wizard）——先预览／确认再写库，非单条命令可达成（归 #86）。' },
 ];

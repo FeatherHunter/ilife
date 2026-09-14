@@ -1,4 +1,4 @@
-/** #101 · 写链**落库断言**（40 写键逐键「写后 SELECT 回读」）＋ 删除回执可恢复性口径。
+/** #101 · 写链**落库断言**（全部写命令逐键「写后 SELECT 回读」）＋ 删除回执可恢复性口径。
  *
  * 与 `cmd-write-40.test.mjs` 的分工：那份只断言 stdout envelope／回执行字串与 exit 契约，
  * 本份**只认库内行**——每个写键跑完 CLI（独立进程，`SKILLS_DB_PATH` 指向 tmp 库）后，
@@ -7,7 +7,7 @@
  *
  * 覆盖门（#101 返修 H2）：**不再自报**。`withRead(dir, key, fn)` 必须声明所校验的写键，
  * 且内部用 Proxy 统计真实 `prepare()` 次数——某键的 SELECT 块被删空即 `reads = 0` 直接抛，
- * 覆盖门再断言 40 键**每键 ≥1 次真实只读查询**（删断言而保留登记不会变绿）。
+ * 覆盖门再断言全部写命令**每键 ≥1 次真实只读查询**（删断言而保留登记不会变绿）。
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/cmd-write-40-persist.test.mjs`
  */
@@ -435,6 +435,32 @@ test('落库 · 食品 add/update/deprecate：营养列逐列回读 + 软删标�
     const row = q1(db, 'SELECT is_deprecated FROM nutrition_products WHERE id = ?', id);
     assert.ok(row, 'product.deprecate 后行应保留（软删），实测已消失');
     assert.equal(row.is_deprecated, 1, 'product.deprecate 未把 is_deprecated 置 1');
+  });
+});
+
+test('落库 · 食品 product.import（批量导入）：逐列回读 ＋ 重复项跳过不落第二行', () => {
+  const dir = mkEnv();
+  const items = [{ productName: '测试导入燕麦', calories: 389, protein: 13, fat: 7, carbohydrates: 66, sodium: 5 }];
+  const w = runWrite(dir, 'calorie.product.import', { items });
+  const id = w.data.receipt.recordId;
+  assert.ok(Number.isInteger(id) && id > 0, 'product.import 回执须给正整数 recordId');
+  withRead(dir, 'calorie.product.import', (db) => {
+    const row = q1(db, 'SELECT product_name, calories, protein, fat, carbohydrates, sodium, is_deprecated FROM nutrition_products WHERE id = ?', id);
+    assert.ok(row, 'product.import 落库行缺失');
+    assert.equal(row.product_name, '测试导入燕麦');
+    assert.equal(row.calories, 389);
+    assert.equal(row.protein, 13);
+    assert.equal(row.fat, 7);
+    assert.equal(row.carbohydrates, 66);
+    assert.equal(row.sodium, 5);
+    assert.equal(row.is_deprecated, 0);
+    assert.equal(qn(db, "SELECT id FROM nutrition_products WHERE product_name = '测试导入燕麦'").length, 1, '同一条导入落了多行');
+  });
+  // 复跑同一条：按 product_name ＋ brand 去重，`onDuplicate` 缺省 skip → 不落第二行
+  const again = runWrite(dir, 'calorie.product.import', { items });
+  assert.match(again.data.message, /跳过 1/, '重复项应跳过：' + again.data.message);
+  withRead(dir, 'calorie.product.import', (db) => {
+    assert.equal(q1(db, "SELECT COUNT(*) AS n FROM nutrition_products WHERE product_name = '测试导入燕麦'").n, 1, '重复导入落了第二行');
   });
 });
 
