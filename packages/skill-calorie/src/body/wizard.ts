@@ -2,11 +2,12 @@
  *  体脂向导 ＋ 围度向导两条读命令——填表前的取数与预检页。
  *
  * 两条 `case` 逐字搬自旧分派层 `cli/cmd_read.ts`（#314 纯搬迁，行为不变）；
- * 视图数据与整页文档走共用件 `render/wizardPort.ts`／`render/wizardPortDocs.ts`。
+ * 视图数据与整页文档走本能力内部件 `body/wizardPlate.ts`／`body/wizardDocs.ts`
+ * （#353 自 `render/wizardPort.ts`／`render/wizardPortDocs.ts` 原样迁入）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { buildCompositionWizardView, buildMeasureWizardView } from '../render/wizardPort.js';
-import { buildCompositionWizardDoc, buildMeasureWizardDoc } from '../render/wizardPortDocs.js';
+import { buildCompositionWizardView, buildMeasureWizardView } from './wizardPlate.js';
+import { buildCompositionWizardDoc, buildMeasureWizardDoc } from './wizardDocs.js';
 import { nums } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 

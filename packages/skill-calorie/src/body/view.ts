@@ -1,11 +1,12 @@
 /** 看身体细节（HELP 一级分组「身体细节」下一级）：体成分看 ＋ 围度看两条读命令。
  *
  * 两条 `case` 逐字搬自旧分派层 `cli/cmd_read.ts`（#314 纯搬迁，行为不变）；
- * 取数与页面装配走共用件 `body/bodyPlate.ts`（视图数据）＋ `render/sportDocs.ts`（整页文档）。
+ * 取数与页面装配走本能力内部件 `body/bodyPlate.ts`（视图数据）＋ `body/bodyDocs.ts`（整页文档，
+ * #353 自 `render/sportDocs.ts` 原样迁入）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildBodyCompositionView, buildBodyMeasureView } from './bodyPlate.js';
-import { buildBodyCompositionDoc, buildBodyMeasureDoc } from '../render/sportDocs.js';
+import { buildBodyCompositionDoc, buildBodyMeasureDoc } from './bodyDocs.js';
 import { dayField, nums, optNum, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 
