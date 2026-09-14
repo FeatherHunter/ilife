@@ -20,14 +20,18 @@
  */
 import {
   renderChartBlock,
+  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
   renderParamForm,
 } from 'base-paint/blocks';
+import { buildDataText, buildLogText } from 'base-paint';
+import type { DataTextInput } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { dataCopyArea } from '../shared/copyArea.js';
+import { copyLog, dataCopyArea } from '../shared/copyArea.js';
+import { nowStamp } from './receipt.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { AnomalyView, ContraView, PredictView } from './insightPlate.js';
@@ -336,6 +340,39 @@ export function buildAnomalyDoc(v: AnomalyView): string {
 
 /* ── 禁忌扫描（contraindication_report.html 对照：扫描概览＋命中表＋替代建议＋复制修改指令） ── */
 
+/** T351 肉眼修复（order207）：复制区＝「复制数据／复制日志」双按钮。
+ * 单格式数据文本＋日志文本直挂承载属性，共用页面双通道运行时，零内联脚本；
+ * 无三格式菜单、无 text/json/csv 英文菜单项。块标题保留既有中文「复制修改指令」
+ * （与按钮不同名，且单测钉死该串）。概览/命中表/替代建议不动。本函数不导出。 */
+function contraCopyBlock(v: ContraView): string {
+  const data: DataTextInput = {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.contraindication',
+      data: {
+        metrics: metricsOf({
+          scannedSessions: v.scannedSessions, scannedMovements: v.scannedMovements,
+          errorCount: v.errorCount, warnCount: v.warnCount, infoCount: v.infoCount,
+        }),
+      },
+    },
+    title: '【calorie · 禁忌扫描】',
+    format: 'text',
+  };
+  return renderCopyBlock({
+    title: '复制修改指令',
+    dataText: buildDataText(data),
+    logText: buildLogText({
+      envelope: data.envelope,
+      copyLog: copyLog({
+        command: 'calorie-cmd-read calorie.view.contraindication',
+        source: 'workout_plans（只读）',
+        actionAt: nowStamp(), version: DOC_VERSION,
+      }),
+    }),
+  }).replace('data-action-id="ilife-copy-data"', 'id="ilife-copy-data" data-action-id="ilife-copy-data"')
+    .replace('data-action-id="ilife-copy-log"', 'id="ilife-copy-log" data-action-id="ilife-copy-log"');
+}
+
 export function buildContraDoc(v: ContraView): string {
   const s = v.scan;
   const parts: string[] = [
@@ -380,17 +417,7 @@ export function buildContraDoc(v: ContraView): string {
       emptyText: '无替代建议',
     }));
   }
-  parts.push(dataCopyArea('复制修改指令', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.contraindication',
-      data: {
-        metrics: metricsOf({
-          scannedSessions: v.scannedSessions, scannedMovements: v.scannedMovements,
-          errorCount: v.errorCount, warnCount: v.warnCount, infoCount: v.infoCount,
-        }),
-      },
-    },
-  }));
+  parts.push(contraCopyBlock(v));
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '禁忌扫描（' + v.part + '）',

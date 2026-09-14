@@ -20,14 +20,18 @@
  */
 import {
   renderChartBlock,
+  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
   renderParamForm,
 } from 'base-paint/blocks';
+import { buildDataText, buildLogText } from 'base-paint';
+import type { DataTextInput } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { dataCopyArea } from '../shared/copyArea.js';
+import { copyLog, dataCopyArea } from '../shared/copyArea.js';
+import { nowStamp } from './receipt.js';
 import type {
   CardioView,
   DistributionView,
@@ -347,6 +351,39 @@ export function buildRecapDoc(v: RecapView): string {
 
 /* ── 计划复盘（exercise_review.html 对照：计划 vs 实绩＋完成率＋未完成清单） ── */
 
+/** T351 肉眼修复（order201–206）：复制区＝「复制数据／复制日志」双按钮。
+ * 单格式数据文本＋日志文本直挂承载属性，共用页面双通道运行时（剪贴板→命令兜底＋
+ * 已复制态＋提示），零内联脚本；无三格式菜单、无 text/json/csv 英文菜单项、无同名
+ * 块标题（R2②）。头部/KPI/图表/明细不动。本函数不导出（接口零增长）。 */
+function reviewCopyBlock(v: ReviewView): string {
+  const data: DataTextInput = {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-review',
+      data: {
+        metrics: metricsOf({
+          plannedSessions: v.plannedSessions, hitSessions: v.hitSessions,
+          completionPct: v.completionPct, plannedMovements: v.plannedMovements,
+          hitMovements: v.hitMovements, movementPct: v.movementPct,
+        }),
+      },
+    },
+    title: '【calorie · 计划复盘】',
+    format: 'text',
+  };
+  return renderCopyBlock({
+    dataText: buildDataText(data),
+    logText: buildLogText({
+      envelope: data.envelope,
+      copyLog: copyLog({
+        command: 'calorie-cmd-read calorie.view.exercise-review',
+        source: 'workout_plans ＋ exercise_log（只读）',
+        actionAt: nowStamp(), version: DOC_VERSION,
+      }),
+    }),
+  }).replace('data-action-id="ilife-copy-data"', 'id="ilife-copy-data" data-action-id="ilife-copy-data"')
+    .replace('data-action-id="ilife-copy-log"', 'id="ilife-copy-log" data-action-id="ilife-copy-log"');
+}
+
 export function buildReviewDoc(v: ReviewView): string {
   const parts: string[] = [
     windowForm(v.start, v.end, '计划来源＝workout_plans（会话日期按周一口径由 start_date 派生；休息日不计）'),
@@ -405,18 +442,7 @@ export function buildReviewDoc(v: ReviewView): string {
       }),
     }));
   }
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-review',
-      data: {
-        metrics: metricsOf({
-          plannedSessions: v.plannedSessions, hitSessions: v.hitSessions,
-          completionPct: v.completionPct, plannedMovements: v.plannedMovements,
-          hitMovements: v.hitMovements, movementPct: v.movementPct,
-        }),
-      },
-    },
-  }));
+  parts.push(reviewCopyBlock(v));
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '计划复盘 ' + v.start + ' ~ ' + v.end,
