@@ -32,31 +32,32 @@
 | 件 | 挂号值 | 当场实测 | 结论 |
 |---|---|---|---|
 | `src/triggers/wake-assets.ts` | — | 4747 | 超因：全量唤醒词资产（逐字落地老实物 HELP 的 typed TS module，见件头「唯一事实源」）与代码同处一件，数据面占了绝大多数行。 |
-| `src/render/trendDocs.ts` | — | 826 | 超因：趋势／分析域同质文档装配（数据→区块→填充器）全挤在一件里。 |
+| `src/render/trendDocs.ts` | — | 892 | 已超线，需要根据规则进行重构。超因：趋势／分析域同质文档装配（数据→区块→填充器）全挤在一件里——组合配对 11 键与缺口／异常／禁忌／预测共 12 个薄页同住一件；**#160 文本返工在场**（826→892，＋66 行，其中十余行是「被删掉的技术口径改住 HTML 注释」＋图例／表名／口径卡的逐块注释）。本次先不拆：拆分不在 #160 写集（该票只动可见文本，结构重排归结构票），拆法＝按页族切两件——`buildCombinedDoc`（组合配对，11 配对共用一种版式）留本件，后 12 个预测／诊断薄页（deficit／anomaly／contraindication／predict 族／goal-predict）切姊妹件 `trendPredictDocs.ts`；`DOC_TITLE`／`DOC_VERSION`／`fmt`／`unitOf`／`deltaHuman`／`corrLevel` 提为两族共件，出口经本件薄转出。 |
 | `scripts/gen-cli.mjs` | 729 | 754 | 「#354 挂号原文」超因：命令汇总派生与生成物写回同处一个一次性脚本；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。 |
-| `src/weight/history.ts` | — | 683 | 超因：「看体重明细」与「看体重曲线」在命令面上是同一个命令，两条子功能共用一件。 |
+| `src/weight/history.ts` | — | 742 | 超因：「看体重明细」与「看体重曲线」在命令面上是同一个命令，两条子功能共用一件。 |
 | `src/render/sportPortDocs.ts` | — | 666 | 已超线，需要根据规则进行重构。超因：#111 运动移植 6 键的全文档装配（数据→区块→填充器）同处一件——#453 把分布／力量／有氧三键换成融合版式（卡清单逐卡判空＋页内导航＋口径行＋来源脚注＋三格式复制区＋空态指引），单件继续变长。本次先不拆：本票（#453）只做这三页版式，同件的趋势／复盘两支是第 5 票（#454）的地盘、一行不碰；拆法＝第 5 票落地后按页族切姊妹件（分布／力量／有氧一族 与 趋势／复盘一族分住两件），把两族共用的卡装配、导航、色映射提为一件共件，出口留本件薄转出。**T351-v7 已走完这条拆法的「复盘」那一半**：计划复盘（`calorie.view.exercise-review`，order201–206）整支搬进姊妹件 `src/render/reviewDocs.ts`（页内样式另立 `reviewDocsCss.ts`，两件均在 350 以内），本件 760→666，只剩「分布／力量／有氧／运动复盘／趋势」五键；剩下那一半（分布／力量／有氧 与 趋势／运动复盘 两族仍同件）待收口票。 |
 | `src/render/html.ts` | — | 647 | 超因：T8～T10 的多套 HTML 串模板（饮食／总览／照片层等）同处一件。 |
-| `src/weight/review.ts` | — | 600 | 超因：体重复盘三形态的判别式与页面装配同处一件。 |
-| `src/render/trendMiscPortDocs.ts` | — | 571 | 超因：#113「趋势 2＋其他 6」共 8 键的 HTML 填充器同处一件。 |
+| `src/weight/review.ts` | — | 647 | 超因：体重复盘三形态的判别式与页面装配同处一件。 |
+| `src/render/trendMiscPortDocs.ts` | — | 592 | 超因：#113「趋势 2＋其他 6」共 8 键的 HTML 填充器同处一件。 |
+| `src/weight/compare.ts` | — | 572 | 超因：对比体重的主窗口／对比窗口两套参数与对比算式同处一件（算式另有姊妹件 `weightCompare*.ts`）。 |
 | `src/workout/write.ts` | — | 570 | 超因：训练计划 10 个写处理函数（创建类 5＋变更类 5）同处一件。 |
-| `src/weight/compare.ts` | — | 558 | 超因：对比体重的主窗口／对比窗口两套参数与对比算式同处一件（算式另有姊妹件 `weightCompare*.ts`）。 |
 | `src/render/exercisePort.ts` | — | 544 | 超因：#111 运动移植 6 键取数（行源＋分类口径）同处一件。 |
+| `src/analysis/multiTrendPage.ts` | — | 511 | 超因：通用分析页最小形态的整页装配与图／表／复制区调用同处一件。 |
 | `src/migrate/migrate.ts` | — | 494 | 超因：老库到新 schema 的一次性迁移（13 表重建口径）全在一件里。 |
-| `src/analysis/multiTrendPage.ts` | — | 490 | 超因：通用分析页最小形态的整页装配与图／表／复制区调用同处一件。 |
 | `src/photo/helpCenter.ts` | — | 485 | 超因：#88 HELP 速查台的数据模型与页面装配同处一件。 |
 | `src/render/trendMiscPort.ts` | — | 456 | 超因：#113 八模板取数（计数 6＋4＋8 闭合）同处一件。 |
+| `src/fetch/body.ts` | 369 | 455 | 「#398 挂号原文」超因：读侧来源词（`SOURCE_FILTER_ALL`／`SourceFilter`／`assertSourceFilter`）与按来源分组取数（`trendCompositionBySource`／`compositionSourceCount`），与既有写侧校验（`validateCompositionInput`）＋围度取数同处一件；#398 先不拆：拆分不在该票写集，拆法待后续票（按「写侧校验／围度取数／体成分取数」切姊妹件）。**该件在 #445 当场实测比挂号值又涨；本行「当场实测」列随实况改，挂号值 369 不回改。** |
 | `src/analysis/commands.ts` | — | 443 | 已超线，需要根据规则进行重构。超因：（**#376～#378 引入**）分析域 14 个键的**声明**与按子功能分段的**处理函数**同处一件——本票给分析域加了 `calorie.view.multi-trend` 的声明与薄转调（取数 `multiTrend.ts`／装配 `multiTrendPage.ts` 已分住姊妹件），声明面仍集中在本件；本次先不拆：拆分不在 #376～#381 写集，拆法待后续票——把处理函数按子功能切成姊妹件（组合分析／整体趋势／对照），声明面留本件，出口经 `analysis/index.ts` 转出。 |
 | `src/profile/setup.ts` | — | 428 | 超因：#179 三条写入词共用的写前页与 #175 补的写后回执页同处一件。 |
-| `src/fetch/body.ts` | 369 | 426 | 「#398 挂号原文」超因：读侧来源词（`SOURCE_FILTER_ALL`／`SourceFilter`／`assertSourceFilter`）与按来源分组取数（`trendCompositionBySource`／`compositionSourceCount`），与既有写侧校验（`validateCompositionInput`）＋围度取数同处一件；#398 先不拆：拆分不在该票写集，拆法待后续票（按「写侧校验／围度取数／体成分取数」切姊妹件）。**该件在 #445 当场实测比挂号值又涨；本行「当场实测」列随实况改，挂号值 369 不回改。** |
 | `src/diet/nutritionPortDocs.ts` | — | 423 | 超因：#112 营养 4 页的全文档装配（数据→区块→填充器）同处一件。 |
 | `src/analysis/reportPlate.ts` | — | 406 | 已超线，需要根据规则进行重构。超因：（**#384 在途件**）报告子形态的取数与聚合（1 个多态底座 9 个 kind：bmi／tdee／bmr／protein／water／score／trend／compare）与页面装配同处一件；本次先不拆：本票（#445）只做告警线门与台账对齐、不改任何件源码，拆法待该件归属票认领。 |
 | `src/workout/planStore.ts` | — | 369 | 超因：T4 计划取数＋写数（校验三硬止＋两软提示、全量覆盖写）同处一件。 |
 | `src/diet/nutritionPort.ts` | — | 367 | 超因：#112 营养 4 键取数与 #275 追加的「看饮食总览」视图同处一件。 |
 | `scripts/build-help.mjs` | — | 362 | 已超线，需要根据规则进行重构。超因与拆法待补（本行由 `--sync` 自动补出，请补写超因与拆法）。 |
 | `scripts/check-warning-line.mjs` | — | 356 | 已超线，需要根据规则进行重构。超因：（**#445 引入**）本件由 80 行的「`REQUIRED` 硬清单存在性」扩成「扫描面 ＋ 台账逐件对账 ＋ 生成物按生成器声明剔除 ＋ 仓内同步器（`--sync`／`--sync --dry`）」，判据由 4 条涨到 9 条、另加两条自证；本次先不拆：拆分不在 #445 写集，拆法＝按判据族切姊妹件（① 扫描面遍历与生成物剔除 ② 台账解析与逐件对账 ③ 同步器与同步断言 ④ 主入口与报告），出口留本件薄转出。 |
+| `src/photo/photo.ts` | — | 355 | 已超线，需要根据规则进行重构。超因：（**#476 引入，越过 350**）这一件同时住着三组活——照片行的写口与卡片映射（`toCard`／`addPhotos`／`deletePhoto`／`updateTag`／`tagAdd`／`tagRemove` 等）＋四条读口的取数（`buildGalleryData`／`buildCompareData`／`buildViewerData`／`buildGifTask`）＋三条写后回执的数据面（`buildAddReceipt`／`buildDeleteReceipt`／`buildTagReceipt`）；#476 为「失败张逐张上页」在 `buildAddReceipt` 里补了缺源复算与逐条 items（＋件头与函数注释），LF 328→355。本次先不拆：拆分不在 #476 写集（本票只许动 `photo/receipt.ts`／`photo/photo.ts`／`store.ts` 三件的文本与装配），拆法＝按场景把这一件切两件姊妹件：①「读口取数」（看身材照／对比两张照片／查身材照／生成身材照GIF 四个 `build*Data` 搬去与同族的 `gallery.ts`／`gif.ts`／`compare.ts` 并排）②「回执数据面」（三条 `build*Receipt` 随 `store.ts`／`manage.ts` 的写口族走）；照片卡类型 `PhotoCard` 与 `toCard` 提为两族共用的卡件；出口经 `photo/index.ts` 薄转出；待收口票认领。 |
 | `src/render/sportDocs.ts` | — | 351 | 已超线，需要根据规则进行重构。超因：（**#452 引入，越过 350**）运动两页（汇总 `calorie.view.exercise`／对照目标 `calorie.view.exercise-goal`）的融合版式装配同处一件——四态页头、页内导航、四块逐卡判空、逐日表截断口径、目标环卡与判决胶囊两态、两页空态、来源脚注与三格式复制区全挤在一件里；本票进场时该件已 346 行（`f743995` 版 171 行 ＋ 在途融合改动净增 175 行），为落「可见文本零 snake_case」（来源名换成读者看得懂的「运动记录／每日目标 ＋ 运动记录」）再添 5 行，到 351 越线。本次先不拆：拆分不在 #452 写集（票面只许动本件版面，出口位与调用方归结构票），拆法＝按页切两件姊妹件（`sportSummaryDocs.ts` 汇总页／`sportGoalDocs.ts` 目标页），把件头现共用的页卡、导航、复制区、来源脚注、截断口径提为一件共件（`sportPageParts.ts`），出口经本件薄转出。 |
-| `src/render/wizardPort.ts` | 457 | 265 | 「#354 挂号原文」超因：预检确认页装配与结果型页面装配同处一处；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。**#445 当场实测已落回 350 以内，挂号行保留（457 是历史事实、不回改），本行不再触发第四步。** |
+| `src/render/wizardPort.ts` | 457 | 277 | 「#354 挂号原文」超因：预检确认页装配与结果型页面装配同处一处；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。**#445 当场实测已落回 350 以内，挂号行保留（457 是历史事实、不回改），本行不再触发第四步。** |
 <!-- warning-line-ledger:end -->
 
 ## 本包现状（2026-09-14 #445 当场扫描）
