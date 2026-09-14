@@ -7,9 +7,37 @@
  * 空库一律 missing-data，不返空数组冒充正常。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { compareCompositions, compareMeasurements, listCompositions, listMeasurements, trendComposition, trendMeasurement } from '../fetch/body.js';
+import { CALIPER_FIELDS, compareCompositions, compareMeasurements, listCompositions, listMeasurements, trendComposition, trendMeasurement } from '../fetch/body.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
+
+/** #359 · 7 点站点标签：**次序与 `CALIPER_FIELDS` 逐位对齐**；标签原文照老技能向导页
+ *  `D:\2Study\StudyNotes\SKILLS\卡路里\templates\body_composition_wizard.html:515`
+ *  「胸 ／ 腹 ／ 大腿 ／ 三头肌 ／ 肩胛下 ／ 髂上 ／ 腋中线」。本表只供页面认位，不含任何换算。 */
+export const CALIPER_SITE_LABELS = ['胸', '腹', '大腿', '三头肌', '肩胛下', '髂上', '腋中线'] as const;
+
+/** 一条记录的 7 个皮褶槽（缺槽位如实给 `null`，不补默认值、不求和）。 */
+export interface CaliperEcho {
+  date: string;
+  sites: { key: string; label: string; mm: number | null }[];
+}
+
+/** 取「最近一条有皮褶数据的记录」的 7 槽原始值：按 listCompositions 的既有次序（date DESC, id DESC）
+ *  逐条找，第一条至少有一个皮褶值非空者即回显；全无皮褶数据（如健身房 InBody）→ `null`（页面不渲染 7 点表）。 */
+function caliperEchoOf(items: Record<string, unknown>[]): CaliperEcho | null {
+  for (const item of items) {
+    if (!CALIPER_FIELDS.some((f) => typeof item[f] === 'number')) continue;
+    return {
+      date: typeof item['date'] === 'string' ? (item['date'] as string) : '',
+      sites: CALIPER_FIELDS.map((f, i) => ({
+        key: f,
+        label: CALIPER_SITE_LABELS[i] ?? f,
+        mm: typeof item[f] === 'number' ? (item[f] as number) : null,
+      })),
+    };
+  }
+  return null;
+}
 
 export interface BodyCompositionView {
   source: string | null;
@@ -17,6 +45,8 @@ export interface BodyCompositionView {
   total: number;
   trend: { date: string; avgPct: number; n: number }[];
   latestPct: number | null;
+  /** #359 · 7 点皮褶回显（最近一条有皮褶数据的记录；没有＝null）。 */
+  calipers: CaliperEcho | null;
 }
 
 export function buildBodyCompositionView(
@@ -38,7 +68,7 @@ export function buildBodyCompositionView(
     const first = items[0] as { body_fat_pct?: unknown; source?: unknown };
     const latestPct = typeof first?.body_fat_pct === 'number' ? (first.body_fat_pct as number) : null;
     const source = typeof first?.source === 'string' ? (first.source as string) : (opts.source ?? null);
-    return { source, items, total: items.length, trend, latestPct };
+    return { source, items, total: items.length, trend, latestPct, calipers: caliperEchoOf(items) };
   } catch (e) {
     if (e instanceof CalorieRenderError) throw e;
     if (e instanceof FetchError) throw new CalorieRenderError('missing-data', e.message);

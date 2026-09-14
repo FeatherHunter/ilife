@@ -194,7 +194,10 @@ export function addComposition(db: DatabaseSync, input: CompositionInput): { id:
 }
 
 export function listCompositions(db: DatabaseSync, opts: { dateFrom?: string; dateTo?: string; days?: number; source?: string; limit?: number } = {}): Record<string, unknown>[] {
-  let sql = 'SELECT id, date, source, body_fat_pct, note FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0';
+  // #359 · 读侧放行 7 点皮褶：原 5 列不含 CALIPER_FIELDS，看体脂页读不到当初填的 7 个数。
+  // 形状照下方 listMeasurements 的既有写法（cols 数组）；只放行列，不动筛选与排序，更不在读侧算任何东西。
+  const cols = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note'];
+  let sql = 'SELECT ' + cols.join(', ') + ' FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0';
   const params: SQLInputValue[] = [];
   if (opts.source) { sql += ' AND source = ?'; params.push(opts.source); }
   if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }

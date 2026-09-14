@@ -67,6 +67,21 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
     caption: '体成分记录（共 ' + v.total + ' 条）',
     emptyText: '无体成分记录',
   }));
+  // #359 · 7 点皮褶回显：最近一条有皮褶数据的记录，7 个槽位逐点成行（部位 ↔ 值 一一对上，不看合计）。
+  // 值取库内原始 mm（`bodyPlate` 已备齐），本层不换算、不四舍五入；缺槽位如实写「—」。
+  const echo = v.calipers;
+  if (echo) {
+    parts.push(renderDataTable({
+      columns: [
+        { key: 'site', label: '部位' },
+        { key: 'mm', label: '皮褶(mm)', align: 'right' },
+        { key: 'date', label: '日期' },
+      ],
+      rows: echo.sites.map((s) => ({ site: s.label, mm: s.mm === null ? '—' : s.mm, date: echo.date })),
+      caption: '皮褶 7 点原始值（' + echo.date + ' · 单位 mm · 共 ' + echo.sites.length + ' 点）',
+      emptyText: '该记录无皮褶 7 点数据',
+    }));
+  }
   parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.body-composition',
