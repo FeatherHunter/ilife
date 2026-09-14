@@ -152,8 +152,10 @@ function isStatusKind(value: unknown): value is StatusKind {
 
 /* ── toast（`renderToast` ＋ `createToastController`） ─────────────────── */
 
-/** 图标字形：`TOAST_ICONS` 是**冻结的枚举名**（不是字形），字形属文档未规定项（旧层 `base.js:74` 同值）。 */
-const TOAST_ICON_GLYPHS: Readonly<Record<ToastIcon, string>> = Object.freeze({
+/** 图标字形：`TOAST_ICONS` 是**冻结的枚举名**（不是字形），字形属文档未规定项（旧层 `base.js:74` 同值）。
+ *  **导出（#154）**：区块层 B-12 的「页内静态提示」形态要把同一个图标放进浅色块里，
+ *  字形只此一份（`blocks.ts` 引用本表，不另抄）；本表**不进** `src/index.ts` 出口面。 */
+export const TOAST_ICON_GLYPHS: Readonly<Record<ToastIcon, string>> = Object.freeze({
   copy: '📋',
   ok: '✅',
   warn: '⚠️',

@@ -46,7 +46,8 @@ const MENU_HINTS: readonly string[] = ['粘贴给 AI / 自己看', '结构化存
 
 /** `copyArea` 的 6 个可填位：给了什么出什么，0–3 颗按钮。 */
 interface CopyAreaInput {
-  /** 区块标题；不给＝不出标题（同 `renderCopyBlock` 口径）。 */
+  /** 区块标题；不给＝不出标题（同 `renderCopyBlock` 口径）。
+   *  与复制按钮同名（「复制数据」）＝不出标题（只留动作不留说明文本）。 */
   readonly title?: string;
   /** 给了就出「prompt 预览块 ＋ 复制指令」（逐字复用今天 `promptCopyArea` 那两件）。
    *  给对象时 `label` 决定预览块的小标题：不给／`null` ＝ **不出小标题**（#238 场景 07 预检确认页：
@@ -90,6 +91,11 @@ interface NoticeInput {
   readonly icon?: ToastIcon;
 }
 
+/** 复制区口径：只留动作不留说明文本——`title` 与复制按钮同名时只留按钮、不出标题。
+ *  （`dataCopyArea('复制数据', …)` 的 40 余处调用因此不再产出与按钮同字的 `<h2>`；
+ *  与按钮不同名的标题如「复制榜单」保持原样。） */
+const COPY_TITLE_DUP_OF_BUTTON = '复制数据';
+
 /** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋复制按钮（旧模板 prompt-box＋btn-copy 的同形）。
  *  第二参可选：不给 ＝ 老样子（小标题「复制 prompt（必走）」）；`null` ＝ 不出小标题；给字符串就用它。 */
 export function promptCopyArea(prompt: string, label?: string | null): string {
@@ -117,9 +123,11 @@ export function copyArea(input: CopyAreaInput): string {
   } else if (prompt !== undefined && prompt.text !== '') {
     parts.push(promptCopyArea(prompt.text, prompt.label ?? null));
   }
+  // 口径：与按钮同名的标题只留按钮（`renderCopyBlock` 不见该标题，按钮与逻辑不变）。
+  const title = input.title === COPY_TITLE_DUP_OF_BUTTON ? undefined : input.title;
   if (data !== undefined || log !== undefined) {
     parts.push(renderCopyBlock({
-      ...(input.title === undefined ? {} : { title: input.title }),
+      ...(title === undefined ? {} : { title }),
       ...(data === undefined ? {} : { dataFormats: formatsOf(data, input.dataFormats) }),
       ...(log === undefined ? {} : { logText: buildLogText(log) }),
     }));
@@ -127,7 +135,7 @@ export function copyArea(input: CopyAreaInput): string {
   }
   if (parts.length > 0) return parts.join('');
   return renderEmptyBlock({
-    ...(input.title === undefined ? {} : { title: input.title }),
+    ...(title === undefined ? {} : { title }),
     text: input.emptyText ?? COPY_EMPTY_TEXT,
   });
 }
@@ -166,10 +174,15 @@ export function copyLog(input: CopyLogInput): CopyLogFields {
   };
 }
 
-/** ⑤ 静态提示块：toast 形态的一句话（走 `renderFeedbackBlock` ＋ `renderToast`，不自造提示通道）。 */
+/** ⑤ 静态提示块：**浅色页内提示**（走 `renderFeedbackBlock` ＋ `staticNotice: true` 的静态形态，不自造提示通道）。
+ *
+ *  `staticNotice` 是公共层 #154 新加的形态开关：浅底＋细描边、**不出「知道了」按钮**
+ *  （静态提示不该能被点掉——那颗按钮在 helpers 里是文档级委派，点了会把整块从页面移除）。
+ *  复制成功／失败的**瞬时反馈**仍走深色 toast（那是用户 2026-09-12 亲自裁定的卡面），本函数不碰它。 */
 export function notice(input: NoticeInput): string {
   return renderFeedbackBlock({
     ...(input.title === undefined ? {} : { title: input.title }),
+    staticNotice: true,
     toast: {
       icon: input.icon ?? 'info',
       msg: input.msg,

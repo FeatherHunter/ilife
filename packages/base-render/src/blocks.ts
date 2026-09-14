@@ -30,7 +30,7 @@
  */
 
 import { charts } from './charts.js';
-import { renderActionBar, renderEmptyState, renderErrorReceipt, renderStatusBadge, renderToast } from './controls.js';
+import { renderActionBar, renderEmptyState, renderErrorReceipt, renderStatusBadge, renderToast, TOAST_ICON_GLYPHS } from './controls.js';
 import { BODY_FONT_STACK } from './font.js';
 import {
   ACTION_BAR_DEFAULTS,
@@ -1014,9 +1014,61 @@ export interface FeedbackBlockInput {
   readonly title?: string;
   readonly toast?: ToastInput;
   readonly error?: ErrorReceiptInput;
+  /** **页内静态提示形态（#154）**：显式置 `true` 时，`toast` 不再走冻结 `renderToast`
+   *  （深色毛玻璃卡 ＋「✓ 知道了」关闭按钮），改渲染为**浅色静态提示**——
+   *  `var(--soft)` 底 ＋ 1px `var(--line)` 描边 ＋ 圆角 14px，**不带关闭按钮**、不进 toast 栈、
+   *  不自动消失（页内静态提示不该能被点掉；点击委派也点不到它）。图标取同源 `TOAST_ICON_GLYPHS`，
+   *  语义色按 `toast.icon`（`ToastIcon` 五值）落在图标底盘上。
+   *
+   *  **缺省值口径（逐字节）**：不给／给 `false`／给任何非 `true` 值 → 老行为一行不差
+   *  （`renderToast` 逐字组合，见 `test/blocks.test.mjs` 与新证据件 t154）。
+   *  开法：`renderFeedbackBlock({ toast: { msg, detail, icon }, staticNotice: true })`。 */
+  readonly staticNotice?: boolean;
 }
 
-/** B-12：反馈区块（冻结 `renderToast` 和／或 `renderErrorReceipt`；两者至少其一）。 */
+/** 页内静态提示**不出**的内容（#154，fail-fast 而非静默丢）：可点控件在静态提示里没有行为位，
+ *  徽章／计数是 toast 卡头部的配件。给了就抛 `bad-input`（要这些就用 toast 形态：不传 `staticNotice`）。
+ *  寿命字段（`timeoutMs`／`maxStack`）只关乎 toast 栈，静态形态下**无意义、静默忽略**。 */
+const STATIC_NOTICE_REJECTED_FIELDS = ['actions', 'badge', 'count'] as const;
+
+/** B-12 的浅色形态产出器（#154）：结构 = 图标 ＋ 正文（标题／详情／多行／代码块）。
+ *  与 `renderToast` **同源不重述**：图标字形、`icon` 非法回落、转义表都取既有唯一产出者／冻结表。 */
+function renderStaticNotice(toast: ToastInput): string {
+  assertPlainObject(toast, 'renderFeedbackBlock: input.toast');
+  if (typeof toast.msg !== 'string') badInput('renderFeedbackBlock: input.toast.msg 必须是字符串');
+  for (const field of STATIC_NOTICE_REJECTED_FIELDS) {
+    const value = toast[field];
+    if (value !== undefined && value !== null) {
+      badInput('renderFeedbackBlock: staticNotice 形态不出可点控件／徽章／计数，input.toast.'
+        + field + ' 不得给（要这些就传 toast 形态：去掉 staticNotice）');
+    }
+  }
+  const icon = typeof toast.icon === 'string' && toast.icon in TOAST_ICON_GLYPHS
+    ? toast.icon
+    : TOAST_DEFAULTS.defaultIcon;
+  const parts: string[] = [
+    '<div class="' + blockPart('feedbackBlock', 'note') + '">',
+    '<span class="' + blockPart('feedbackBlock', 'note-icon') + ' '
+      + blockPart('feedbackBlock', 'note-icon-' + icon) + '" aria-hidden="true">' + TOAST_ICON_GLYPHS[icon] + '</span>',
+    '<div class="' + blockPart('feedbackBlock', 'note-body') + '">',
+    '<div class="' + blockPart('feedbackBlock', 'note-title') + '">' + esc(toast.msg) + '</div>',
+  ];
+  if (typeof toast.detail === 'string' && toast.detail !== '') {
+    parts.push('<div class="' + blockPart('feedbackBlock', 'note-detail') + '">' + esc(toast.detail) + '</div>');
+  }
+  if (Array.isArray(toast.lines) && toast.lines.length > 0) {
+    parts.push('<div class="' + blockPart('feedbackBlock', 'note-lines') + '">'
+      + toast.lines.map((line) => esc(String(line))).join('<br>') + '</div>');
+  }
+  if (typeof toast.code === 'string' && toast.code !== '') {
+    parts.push('<pre class="' + blockPart('feedbackBlock', 'note-code') + '">' + esc(toast.code) + '</pre>');
+  }
+  parts.push('</div>', '</div>');
+  return parts.join('');
+}
+
+/** B-12：反馈区块（冻结 `renderToast` 和／或 `renderErrorReceipt`；两者至少其一）。
+ *  `staticNotice === true` 时 `toast` 改走浅色静态形态（#154），其余逐字照旧。 */
 export function renderFeedbackBlock(input: FeedbackBlockInput): string {
   assertPlainObject(input, 'renderFeedbackBlock: input');
   assertNoInlineHandler(input, 'renderFeedbackBlock: input');
@@ -1025,9 +1077,12 @@ export function renderFeedbackBlock(input: FeedbackBlockInput): string {
     badInput('renderFeedbackBlock: input.toast 与 input.error 至少其一');
   }
   const title = optText(block.title);
+  const toastHtml = block.toast === undefined
+    ? ''
+    : (block.staticNotice === true ? renderStaticNotice(block.toast) : renderToast(block.toast));
   return '<section class="' + blockRoot('feedbackBlock') + '">'
     + (title === undefined ? '' : '<h2 class="' + blockPart('feedbackBlock', 'title') + '">' + esc(title) + '</h2>')
-    + (block.toast === undefined ? '' : renderToast(block.toast))
+    + toastHtml
     + (block.error === undefined ? '' : renderErrorReceipt(block.error))
     + '</section>';
 }
@@ -1110,6 +1165,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-page-shell-body {',
     '  display: block;',
+    '  margin-top: 16px;',
+    '}',
     // #457 顶层区块统一间隔：正文里每个区块（非首个）上方恒 16px。此前各区块根规则各自给上下
     // 外边距，`dataTable`／`listRows` 两条**一条都没给**，于是「表接表」实测间距 0 —— 两张表的
     // 1px 边框贴在一起，看不出是两块（267 页「延迟相关性」与「分层对比」）。
@@ -1123,8 +1180,6 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // `kpiCardGrid` 各补了 `margin: 16px 0`，与本条命中同一处时两边同值、走 margin 折叠，恒 16px、
     // 不翻倍（实测 regen-262：表接表 16px）。两票都落地后由后续票收敛成单一落点，本票不撤。
     '.' + p + 'block-page-shell-body > * + .' + p + 'block {',
-    '  margin-top: 16px;',
-    '}',
     '  margin-top: 16px;',
     '}',
     '@media (max-width: 640px) {',
@@ -1292,10 +1347,22 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // `block-kpi-*`，而 `blockPart('kpiCard', …)` 真产出的是 `block-kpi-card-*`
     // → label／value-row／value／unit／detail／badge **6 条全部落空**（computed 实测：值 16px/400
     // 普通正文色，不是设计的 28px/700）。本区逐条改回真产出的类名，并把说明落在每条前面。
+    // #154（2026-09-14 交付页返工）① 区块间距：本区此前**块级一条 margin 都没有**，与同族区块
+    // （`chartBlock`／`detailSection`／`emptyBlock`／`copyBlock`／`feedbackBlock` 都是 `margin: 16px 0`）
+    // 不一致 ⇒ 交付页实测「KPI 网格与上下卡片贴死」。取同族值 `16px 0`（相邻外边距自然折叠，不翻倍）。
+    // 与 #457 的 `.ilife-block-page-shell-body > * + .ilife-block`（相邻兄弟补上边距）**互补不冲突**：
+    // 那条匹配不到本网格——网格根类是 `block-kpi-card-grid`，**不带** `ilife-block` 类；
+    // 两处都命中同一条边距时同值（16px）且折叠，不会翻倍。
+    // ② 四张卡等高：`auto-fit` 网格**逐行各自量高**，第一行若有一张卡的值长（如日期区间
+    // `2026-08-09 ~ 2026-09-07`）折成 2~3 行，就把那一行撑高、同行另一张被拉长，第二行又是另一个高度。
+    // `grid-auto-rows: 1fr` 让全部隐式行取同一个高（fr 轨道先取各自 max-content，余量均分 ⇒ 行行等高），
+    // 网格项默认 `stretch`，四张卡因此看起来一样高（用户原话要求）。
     '.' + p + 'block-kpi-card-grid {',
     '  display: grid;',
     '  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));',
+    '  grid-auto-rows: 1fr;',
     '  gap: 12px;',
+    '  margin: 16px 0;',
     '}',
     '.' + p + 'block-kpi-card {',
     '  padding: 14px;',
@@ -1319,7 +1386,11 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '.' + p + 'block-kpi-card-value {',
     '  min-width: 0;',
     '  color: var(--fg);',
-    '  font-size: 28px;',
+    // #154（2026-09-14 交付页返工）③ 主数字收一号：用户原话「内容太大了」。28px → 22px。
+    // 22 是**阶梯里还站得住**的一档：22 − 17（`detail-section-title`／`h2`）＝ 5px ≥ 4px（C1:349
+    // 「相邻级差 ≥4px」）；对 `unit` 13px 仍大 9px ≥ 8px（本尺 B-02「unit 比 value 小 ≥8px」）。
+    // `overflow-wrap: anywhere` 保留（防长串溢出）——字号小了之后长值折行显著变少。
+    '  font-size: 22px;',
     '  font-weight: 700;',
     '  line-height: 1.2;',
     '  overflow-wrap: anywhere;',
@@ -1343,7 +1414,11 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
   ].join(LF),
 
   dataTable: (p) => [
+    // #154（2026-09-14 交付页返工）① 区块间距：本区块级此前**一条 margin 都没有**（只有 caption／th／td
+    // 的内距），与同族区块的 `margin: 16px 0` 不一致 ⇒ 交付页实测「表格和上下卡片完全贴在一起」。
+    // 取同族值 `16px 0`；与 #457 的相邻兄弟规则同值时折叠为 16px，不翻倍。
     '.' + p + 'block-data-table {',
+    '  margin: 16px 0;',
     '  overflow-x: auto;',
     '  border: 1px solid var(--line);',
     '  border-radius: ' + RADIUS_MD + 'px;',
@@ -1388,6 +1463,9 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '.' + p + 'block-data-table-cell-center {',
     '  text-align: center;',
     '}',
+    '.' + p + 'block-data-table-cell-right {',
+    '  text-align: right;',
+    '}',
     // #457 手机端（≤640px）紧凑形态：不靠左右滑动看全。桌面段一字未动；窄屏只做三件事——
     // 收字号（表头 12→11px、单元格 13→12px）、收内边距（10/14→6/8、12/14→7/8）、
     // 放开 `th` 的 `white-space: nowrap`（这是表宽唯一的硬来源：表头不换行 → 最小宽度＝各列整词宽之和）。
@@ -1416,9 +1494,6 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '    overflow-wrap: anywhere;',
     '  }',
     '}',
-    '.' + p + 'block-data-table-cell-right {',
-    '  text-align: right;',
-    '}',
   ].join(LF),
 
   chartBlock: (p) => [
@@ -1440,7 +1515,10 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
   ].join(LF),
 
   listRows: (p) => [
+    // #154（2026-09-14 交付页返工）① 区块间距：同 dataTable——本区块级此前一条 margin 都没有
+    // （只有 row 的内距），与同族区块的 `margin: 16px 0` 不一致。取同族值（折叠后与 #457 那条同值 16px）。
     '.' + p + 'block-list-rows {',
+    '  margin: 16px 0;',
     '  border: 1px solid var(--line);',
     '  border-radius: ' + RADIUS_MD + 'px;',
     '  background: var(--card);',
@@ -1671,6 +1749,98 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  margin: 0 0 8px;',
     '  font-size: 15px;',
     '  font-weight: 700;',
+    '}',
+    // ── #154 页内静态提示（浅色形态）─────────────────────────────────────────────
+    // 2026-09-14 用户返工：「顶部有个奇怪的弹窗这是什么？」——页顶那条「本窗只有 1 条记录…」由
+    // `renderFeedbackBlock` 经冻结 `renderToast` 产出，穿的是**深色毛玻璃卡 ＋「✓ 知道了」**的
+    // 弹窗外衣，而它是页面流里的一段静态块（t375 证据件：整份产物 `position: fixed` 出现 0 次、
+    // 没有遮罩与焦点陷阱）。深色卡面是**运行时瞬时 toast** 的形态（2026-09-12 用户亲自裁定），
+    // 两者不是一回事：本形态只在 `staticNotice === true` 时出现（缺省逐字节不变）。
+    // 浅底／描边／圆角逐值取本文件里既有口径：底 `var(--soft)`、描边 1px `var(--line)`、
+    // 圆角 `RADIUS_MD`（14px，闭集 {8,14,20,999} 内）；**不带关闭按钮**（静态提示不该能被点掉）。
+    '.' + p + 'block-feedback-block-note {',
+    '  display: flex;',
+    '  align-items: flex-start;',
+    '  gap: 10px;',
+    '  margin: 16px 0;',
+    '  padding: 12px 14px;',
+    '  border: 1px solid var(--line);',
+    '  border-radius: ' + RADIUS_MD + 'px;',
+    '  background: var(--soft);',
+    '  color: var(--fg2);',
+    '  font-size: 13px;',
+    '  line-height: 1.5;',
+    '}',
+    // 图标底盘：`kind` 的语义色落在**底盘底色＋字色**上。字形是 emoji（`TOAST_ICON_GLYPHS`，
+    // 与 toast 同源），彩色 emoji 的 `color` 对它无效——语义色因此由底盘承担，`color` 只对
+    // 无彩色字形（等宽／降级字体）生效，两处都写着，缺一不可。
+    '.' + p + 'block-feedback-block-note-icon {',
+    '  display: inline-flex;',
+    '  flex: 0 0 auto;',
+    '  align-items: center;',
+    '  justify-content: center;',
+    '  width: 22px;',
+    '  height: 22px;',
+    '  border-radius: ' + RADIUS_SM + 'px;',
+    '  background: var(--card);',
+    '  color: var(--fg2);',
+    '  font-size: 13px;',
+    '  line-height: 1;',
+    '}',
+    // 三档实色**逐值取同仓既有的状态徽章**（`src/style.ts` 的 `statusBadge` 区：ok `#e6f7ec`／`#1f8c3d`、
+    // warn `#fff5e0`／`#a25b00`、danger `#fff0ee`／`#a83228`，原样取自旧层 `.hm-status.*`）——
+    // 不发明新色值；`info`／`copy` 两档走冻结 token（`--card`／`--blue2`／`--fg2`），也不发明。
+    '.' + p + 'block-feedback-block-note-icon-ok {',
+    '  background: #e6f7ec;',
+    '  color: #1f8c3d;',
+    '}',
+    '.' + p + 'block-feedback-block-note-icon-warn {',
+    '  background: #fff5e0;',
+    '  color: #a25b00;',
+    '}',
+    '.' + p + 'block-feedback-block-note-icon-danger {',
+    '  background: #fff0ee;',
+    '  color: #a83228;',
+    '}',
+    '.' + p + 'block-feedback-block-note-icon-info {',
+    '  background: var(--card);',
+    '  color: var(--blue2);',
+    '}',
+    '.' + p + 'block-feedback-block-note-icon-copy {',
+    '  background: var(--card);',
+    '  color: var(--fg2);',
+    '}',
+    '.' + p + 'block-feedback-block-note-body {',
+    '  flex: 1 1 auto;',
+    '  min-width: 0;',
+    '}',
+    // 正文＝正文字色 ＋ 600 字重（与 `.toast-title` 的层级口径一致，但取浅色面 token）。
+    '.' + p + 'block-feedback-block-note-title {',
+    '  color: var(--fg);',
+    '  font-weight: 600;',
+    '}',
+    '.' + p + 'block-feedback-block-note-detail {',
+    '  margin-top: 2px;',
+    '  color: var(--fg2);',
+    '}',
+    '.' + p + 'block-feedback-block-note-lines {',
+    '  margin-top: 2px;',
+    '  color: var(--fg2);',
+    '  white-space: pre-wrap;',
+    '}',
+    // 代码块：与 `preBlock`／help 的等宽口径同族（12px／1.55／pre-wrap／overflow-x:auto），
+    // 但浅色面用 `var(--card)` 抬一级底色（`var(--soft)` 上再放浅底会糊成一片）。
+    '.' + p + 'block-feedback-block-note-code {',
+    '  margin: 6px 0 0;',
+    '  padding: 8px 10px;',
+    '  border-radius: ' + RADIUS_SM + 'px;',
+    '  background: var(--card);',
+    '  color: var(--fg2);',
+    '  font-family: "SF Mono", monospace;',
+    '  font-size: 12px;',
+    '  line-height: 1.55;',
+    '  white-space: pre-wrap;',
+    '  overflow-x: auto;',
     '}',
   ].join(LF),
 };
