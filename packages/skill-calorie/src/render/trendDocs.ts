@@ -31,6 +31,11 @@ import { dataCopyArea } from '../shared/copyArea.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { AnomalyView, ContraView, PredictView } from './insightPlate.js';
+import type { WeightTarget } from '../analysis/simulate.js';
+import type {
+  CalorieDeficitEta, CalorieForecast, CalorieGoalEta, CalorieStability,
+  WeightSimCut, WeightSimTarget,
+} from '../analysis/simulate2.js';
 import type { GoalPredictView } from '../goal/goalExtraPlate.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
@@ -429,6 +434,310 @@ export function buildPredictDoc(v: PredictView): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '体重预测（' + v.horizonDays + ' 天）',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
+}
+
+/* ── #383 · 预测体重(自定义目标)（weightTarget：预计达成日＋可行性；只改本图会碰到的预测段） ── */
+
+export function buildPredictTargetDoc(v: WeightTarget): string {
+  const parts: string[] = [
+    renderParamForm({
+      fields: [
+        { name: 'start', label: '开始', value: v.start ?? '' },
+        { name: 'end', label: '结束', value: v.end ?? '' },
+        { name: 'target', label: '目标体重', value: String(v.target ?? '') },
+      ],
+      description: '按当前趋势预测达成目标体重的日期；需≥14 天体重记录，否则 missing-data，不编预测',
+    }),
+    renderKpiGrid([
+      { label: '当前', value: String(v.current), unit: 'kg' },
+      { label: '目标', value: String(v.target), unit: 'kg' },
+      { label: '预计达成', value: String(v.eta), detail: '剩余 ' + String(v.daysLeft) + ' 天' },
+      { label: '可行性', value: v.feasible ? '可行' : '超范围', detail: '速率 ' + String(v.ratePerWeek) + ' kg/周' },
+    ]),
+  ];
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
+      data: {
+        metrics: metricsOf({
+          target: v.target, days_left: v.daysLeft, feasible: v.feasible ? 1 : 0,
+          current: v.current, ratePerWeek: v.ratePerWeek,
+        }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '预测体重(自定义目标)',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
+}
+
+/* ── #383 · 模拟减重(每天多减 cutKcal 卡)（每周掉重＋可行性；只改本图会碰到的预测段） ── */
+
+export function buildSimCutDoc(v: WeightSimCut): string {
+  const parts: string[] = [
+    renderParamForm({
+      fields: [
+        { name: 'start', label: '开始', value: v.start ?? '' },
+        { name: 'end', label: '结束', value: v.end ?? '' },
+        { name: 'cut_kcal', label: '每天多减', value: String(v.cutKcal ?? '') },
+      ],
+      description: '模拟每天多减 cut_kcal 卡的减重效果（KCAL_PER_KG=7700 折周掉重）；90 天轨迹见下',
+    }),
+    renderKpiGrid([
+      { label: '当前', value: String(v.current), unit: 'kg' },
+      { label: '每天多减', value: String(v.cutKcal), unit: '卡' },
+      { label: '每周掉重', value: String(v.weeklyLoss), unit: 'kg/周', detail: v.feasible ? '可行' : '超范围' },
+      { label: '可行性', value: v.feasible ? '可行' : '超范围', detail: String(v.assumption ?? '') },
+    ]),
+  ];
+  if (v.forecast && v.forecast.points.length > 0) {
+    const shown = v.forecast.points.slice(0, 14);
+    parts.push(renderDataTable({
+      columns: [
+        { key: 'date', label: '日期' },
+        { key: 'weight', label: '模拟体重', align: 'right' },
+      ],
+      rows: shown.map((p) => ({ date: p.date, weight: p.value })),
+      caption: '模拟轨迹（' + v.forecast.horizonDays + ' 天，每周一点）',
+      emptyText: '无模拟轨迹',
+    }));
+  }
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
+      data: {
+        metrics: metricsOf({
+          cut_kcal: v.cutKcal, weekly_loss: v.weeklyLoss, feasible: v.feasible ? 1 : 0,
+          current: v.current,
+        }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '模拟减重(每天-' + String(v.cutKcal) + '卡)',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
+}
+
+/* ── #383 · 模拟减重(自定天数减 Xkg)（所需每日缺口＋可行性；只改本图会碰到的预测段） ── */
+
+export function buildSimTargetDoc(v: WeightSimTarget): string {
+  const parts: string[] = [
+    renderParamForm({
+      fields: [
+        { name: 'start', label: '开始', value: v.start ?? '' },
+        { name: 'end', label: '结束', value: v.end ?? '' },
+        { name: 'target_loss', label: '想减', value: String(v.targetLoss ?? '') },
+        { name: 'days_target', label: '天数', value: String(v.daysTarget ?? '') },
+      ],
+      description: '模拟自定天数减 Xkg 所需的每日缺口（KCAL_PER_KG=7700 反推）；可行性按每周 0.5–1.0 kg',
+    }),
+    renderKpiGrid([
+      { label: '当前', value: String(v.current), unit: 'kg' },
+      { label: '所需缺口', value: String(v.neededDeficit), unit: '卡/天', detail: String(v.daysTarget) + ' 天减 ' + String(v.targetLoss) + ' kg' },
+      { label: '每周掉重', value: String(v.weeklyRate), unit: 'kg/周' },
+      { label: '可行性', value: v.feasible ? '可行' : '超范围', detail: String(v.assumption ?? '') },
+    ]),
+  ];
+  if (v.forecast && v.forecast.points.length > 0) {
+    const shown = v.forecast.points.slice(0, 14);
+    parts.push(renderDataTable({
+      columns: [
+        { key: 'date', label: '日期' },
+        { key: 'weight', label: '模拟体重', align: 'right' },
+      ],
+      rows: shown.map((p) => ({ date: p.date, weight: p.value })),
+      caption: '模拟轨迹（' + v.forecast.horizonDays + ' 天，每周一点）',
+      emptyText: '无模拟轨迹',
+    }));
+  }
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
+      data: {
+        metrics: metricsOf({
+          target_loss: v.targetLoss, days_target: v.daysTarget,
+          needed_deficit: v.neededDeficit, feasible: v.feasible ? 1 : 0, current: v.current,
+        }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '模拟减重(' + String(v.daysTarget) + '天减' + String(v.targetLoss) + 'kg)',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
+}
+
+/* ── #383 · 摄入预测(按当前速率)（日均摄入外推＋目标对照；只改本图会碰到的预测段） ── */
+
+export function buildCalorieForecastDoc(v: CalorieForecast): string {
+  const parts: string[] = [
+    renderParamForm({
+      fields: [
+        { name: 'start', label: '开始', value: v.start ?? '' },
+        { name: 'end', label: '结束', value: v.end ?? '' },
+        { name: 'horizonDays', label: '预测天数', value: String(v.forecast?.horizonDays ?? '') },
+      ],
+      description: '按当前速率预测未来日均摄入；需≥14 天摄入记录，否则 missing-data，不编预测',
+    }),
+    renderKpiGrid([
+      { label: '当前摄入', value: String(v.current), unit: '卡', detail: '日均' },
+      { label: '目标', value: String(v.goal ?? '—'), unit: '卡' },
+      { label: '日变化', value: String(v.dailyRate ?? '—'), unit: '卡/天' },
+      { label: '摄入预测', value: String(v.forecast?.points[v.forecast.points.length - 1]?.value ?? '—'), unit: '卡' },
+    ]),
+  ];
+  if (v.forecast && v.forecast.points.length > 0) {
+    const shown = v.forecast.points.slice(0, 14);
+    parts.push(renderDataTable({
+      columns: [
+        { key: 'date', label: '日期' },
+        { key: 'intake', label: '预测摄入', align: 'right' },
+      ],
+      rows: shown.map((p) => ({ date: p.date, intake: p.value })),
+      caption: '摄入预测轨迹（' + v.forecast.horizonDays + ' 天，每周一点）',
+      emptyText: '无预测轨迹',
+    }));
+  }
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
+      data: {
+        metrics: metricsOf({
+          calories: v.current, goal: v.goal ?? undefined,
+          horizonDays: v.forecast?.horizonDays,
+        }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '摄入预测(按当前速率 ' + String(v.forecast?.horizonDays ?? '') + ' 天)',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
+}
+
+/* ── #383 · 摄入预测(营养目标达成预测)（均值／目标／缺口／是否在轨；只改预测段） ── */
+
+export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
+  const parts: string[] = [
+    renderParamForm({
+      fields: [
+        { name: 'start', label: '开始', value: v.start ?? '' },
+        { name: 'end', label: '结束', value: v.end ?? '' },
+      ],
+      description: '预测营养目标能否达成（达成判定＝日均偏离 ≤10%）；需≥14 天摄入记录',
+    }),
+    renderKpiGrid([
+      { label: '均值', value: String(v.avg), unit: '卡' },
+      { label: '目标', value: String(v.goal), unit: '卡' },
+      { label: '缺口', value: String(v.gap), unit: '卡' },
+      { label: '是否在轨', value: v.onTarget ? '在轨' : '偏离', detail: v.onTarget ? '已在目标 ±10% 内' : '超出目标 ±10%' },
+    ]),
+  ];
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
+      data: {
+        metrics: metricsOf({
+          avg: v.avg, goal: v.goal, gap: v.gap, on_target: v.onTarget ? 1 : 0,
+        }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '摄入预测(营养目标达成预测)',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
+}
+
+/* ── #383 · 摄入预测(卡路里缺口预测)（平均缺口＋每周掉重；只改预测段） ── */
+
+export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
+  const parts: string[] = [
+    renderParamForm({
+      fields: [
+        { name: 'start', label: '开始', value: v.start ?? '' },
+        { name: 'end', label: '结束', value: v.end ?? '' },
+      ],
+      description: '预测卡路里缺口：缺口＝(TDEE＋运动消耗)−摄入；每 7700 卡 ≈ 1 kg',
+    }),
+    renderKpiGrid([
+      { label: '平均缺口', value: String(v.avgDeficit), unit: '卡/天' },
+      { label: '每周掉重', value: String(v.weeklyLoss), unit: 'kg/周' },
+    ]),
+  ];
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
+      data: {
+        metrics: metricsOf({ avg_deficit: v.avgDeficit, weekly_loss: v.weeklyLoss }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '摄入预测(卡路里缺口预测)',
+    eyebrow: 'calorie.view.predict · 趋势分析域',
+    subtitle: v.insight || null,
+    content: parts.join(''),
+    charts: false,
+  });
+}
+
+/* ── #383 · 摄入预测(摄入稳定性预测)（均值／波动＋是否稳定；只改预测段） ── */
+
+export function buildCalorieStabilityDoc(v: CalorieStability): string {
+  const parts: string[] = [
+    renderParamForm({
+      fields: [
+        { name: 'start', label: '开始', value: v.start ?? '' },
+        { name: 'end', label: '结束', value: v.end ?? '' },
+      ],
+      description: '预测摄入稳定性（σ ≤ 300 卡＝稳定）；需≥14 天摄入记录',
+    }),
+    renderKpiGrid([
+      { label: '均值', value: String(v.avg), unit: '卡' },
+      { label: '波动', value: String(v.sigma), unit: '卡', detail: 'σ' },
+      { label: '是否稳定', value: v.stable ? '稳定' : '波动大', detail: v.stable ? 'σ ≤ 300 卡' : 'σ ＞ 300 卡' },
+    ]),
+  ];
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
+      data: {
+        metrics: metricsOf({ avg: v.avg, sigma: v.sigma, stable: v.stable ? 1 : 0 }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '摄入预测(摄入稳定性预测)',
     eyebrow: 'calorie.view.predict · 趋势分析域',
     subtitle: v.insight || null,
     content: parts.join(''),

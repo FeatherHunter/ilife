@@ -8,7 +8,16 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildSeries } from '../analysis/series.js';
-import { weightForecast } from '../analysis/simulate.js';
+import { weightForecast, weightTarget } from '../analysis/simulate.js';
+import type { WeightTarget } from '../analysis/simulate.js';
+import {
+  calorieDeficitEta, calorieForecast, calorieGoalEta, calorieStability,
+  weightSimCut, weightSimTarget,
+} from '../analysis/simulate2.js';
+import type {
+  CalorieDeficitEta, CalorieForecast, CalorieGoalEta, CalorieStability,
+  WeightSimCut, WeightSimTarget,
+} from '../analysis/simulate2.js';
 import { DIAGNOSE_KINDS, diagnose } from '../analysis/anomaly/index.js';
 import type { DaySeries, Diagnosis } from '../analysis/anomaly/index.js';
 import { scanPlan } from '../analysis/contraindications.js';
@@ -63,6 +72,146 @@ export function buildPredictView(
     forecastHi: last.hi,
     insight: fc.insight,
   };
+}
+
+/** #383 · 自定义目标分支：按当前趋势预测达成目标体重的日期（预计达成日＋可行性）。
+ * 参数名照冻结表 data_fields（target）；不足 14 天／平台期／方向相反一律 missing-data（口径不变）。 */
+export function buildPredictTargetView(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+  targetKg: number,
+): WeightTarget {
+  assertDate(start);
+  assertDate(end);
+  if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
+  if (typeof targetKg !== 'number' || !Number.isFinite(targetKg) || targetKg < 30 || targetKg > 200) {
+    throw new CalorieRenderError('bad-input', 'target 须为 30..200 的体重 kg 数');
+  }
+  const series = buildSeries(db, start, end);
+  const t = weightTarget(series, targetKg, '预测体重(自定义目标)');
+  if (t.degraded || t.current === undefined || t.target === undefined || t.eta === undefined) {
+    throw new CalorieRenderError('missing-data', t.degradeMsg || '数据不足，无法预测（需≥14 天体重记录）');
+  }
+  return t;
+}
+
+/** #383 · 模拟减重分支（每天多减 cutKcal 卡：每周掉重＋可行性）。参数名照 data_fields（cut_kcal）。 */
+export function buildSimCutView(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+  cutKcal: number,
+): WeightSimCut {
+  assertDate(start);
+  assertDate(end);
+  if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
+  if (typeof cutKcal !== 'number' || !Number.isFinite(cutKcal) || cutKcal < 50 || cutKcal > 2000) {
+    throw new CalorieRenderError('bad-input', 'cut_kcal 须为 50..2000 的整数卡数');
+  }
+  const series = buildSeries(db, start, end);
+  const r = weightSimCut(series, Math.round(cutKcal), '模拟减重(每天-' + Math.round(cutKcal) + '卡)');
+  if (r.degraded || r.current === undefined || r.weeklyLoss === undefined) {
+    throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法模拟（需至少 1 条体重记录）');
+  }
+  return r;
+}
+
+/** #383 · 模拟减重分支（daysTarget 天减 targetLoss kg：所需每日缺口＋可行性）。参数名照 data_fields。 */
+export function buildSimTargetView(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+  targetLossKg: number,
+  daysTarget: number,
+): WeightSimTarget {
+  assertDate(start);
+  assertDate(end);
+  if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
+  if (typeof targetLossKg !== 'number' || !Number.isFinite(targetLossKg) || targetLossKg < 0.5 || targetLossKg > 30) {
+    throw new CalorieRenderError('bad-input', 'target_loss 须为 0.5..30 的 kg 数');
+  }
+  if (!Number.isInteger(daysTarget) || daysTarget < 7 || daysTarget > 365) {
+    throw new CalorieRenderError('bad-input', 'days_target 须为 7..365 整数天数');
+  }
+  const series = buildSeries(db, start, end);
+  const r = weightSimTarget(series, targetLossKg, daysTarget, '模拟减重(' + daysTarget + '天减' + targetLossKg + 'kg)');
+  if (r.degraded || r.current === undefined || r.neededDeficit === undefined) {
+    throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法模拟（需至少 1 条体重记录）');
+  }
+  return r;
+}
+
+/** #383 · 摄入预测分支（按当前速率外推 horizonDays 天的日均摄入）。参数名沿 horizonDays 原口径。 */
+export function buildCalorieForecastView(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+  horizonDays = 30,
+): CalorieForecast {
+  assertDate(start);
+  assertDate(end);
+  if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
+  if (!Number.isInteger(horizonDays) || horizonDays < 7 || horizonDays > 180) {
+    throw new CalorieRenderError('bad-input', 'horizonDays 须为 7..180 整数');
+  }
+  const series = buildSeries(db, start, end);
+  const r = calorieForecast(series, horizonDays, '摄入预测(按当前速率 ' + horizonDays + ' 天)');
+  if (r.degraded || r.current === undefined || !r.forecast) {
+    throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入记录）');
+  }
+  return r;
+}
+
+/** #383 · 营养目标达成预测分支（均值／目标／缺口／是否在轨）。参数名照 data_fields。 */
+export function buildCalorieGoalView(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+): CalorieGoalEta {
+  assertDate(start);
+  assertDate(end);
+  if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
+  const series = buildSeries(db, start, end);
+  const r = calorieGoalEta(series, '摄入预测(营养目标达成预测)');
+  if (r.degraded || r.avg === undefined || r.goal === undefined) {
+    throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入记录）');
+  }
+  return r;
+}
+
+/** #383 · 卡路里缺口预测分支（平均缺口＋每周掉重）。参数名照 data_fields。 */
+export function buildCalorieDeficitView(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+): CalorieDeficitEta {
+  assertDate(start);
+  assertDate(end);
+  if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
+  const series = buildSeries(db, start, end);
+  const r = calorieDeficitEta(series, '摄入预测(卡路里缺口预测)');
+  if (r.degraded || r.avgDeficit === undefined || r.weeklyLoss === undefined) {
+    throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入+运动记录）');
+  }
+  return r;
+}
+
+/** #383 · 摄入稳定性预测分支（均值／波动＋是否稳定）。参数名照 data_fields。 */
+export function buildCalorieStabilityView(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+): CalorieStability {
+  assertDate(start);
+  assertDate(end);
+  if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
+  const series = buildSeries(db, start, end);
+  const r = calorieStability(series, '摄入预测(摄入稳定性预测)');
+  if (r.degraded || r.avg === undefined || r.sigma === undefined) {
+    throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入记录）');
+  }
+  return r;
 }
 
 export interface AnomalyView {
