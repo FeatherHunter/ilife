@@ -1,14 +1,17 @@
 /** #370 · 主页整页装配的归位件（HELP 一级分组「主页」下一级「看今日主页」）。
  *
  * 自 `src/render/html.ts` **逐字迁入** `renderHomeHtml`（纯搬迁，行为不变）；
- * `src/render/html.ts` 里那一段已删。仍出片段（`<section>`，无 `<!doctype html>`）——
- * 片段→完整文档是 #371 整页化那张票的事，本票不做。
+ * `src/render/html.ts` 里那一段已删。
  *
- * 过渡态说明：底下 `pageShell`／`kpi`／`bar`／`fmt` 四个小函数是 `html.ts` 同名函数的逐字拷贝
- * （`fmt` 的逐文件拷贝本包已有六处先例）。#371 会把本件改写成 `assembleDocPage` 形状，
- * 届时这四份拷贝随片段实现一起消失；在此之前不提取到共用位（共用位从第二个**长期**用法里长出来）。
+ * #371 · 今日总览族 5 词切完整文档：新增 `buildHomeDoc`（结果型完整文档，
+ * 经 `assembleDocPage` 包裹，复用 `copyArea`，不自造模板）；live 出口
+ * （`src/home/today.ts` 的 `calorie.view.home`）改走 `buildHomeDoc`。
+ * 旧 `renderHomeHtml` 片段保留：`render-t8` 锁定旧片段形状，不走 live 出口。
  */
 import { cx, escapeHtml, token } from 'base-paint';
+import { renderChartBlock, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { dataCopyArea, notice } from '../shared/copyArea.js';
 import type { HomeData } from './home.js';
 
 function pageShell(skill: string, slot: string, title: string, body: string): string {
@@ -60,4 +63,86 @@ export function renderHomeHtml(d: HomeData): string {
       ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">今日已超热量目标</div>'
       : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">热量在目标内</div>');
   return pageShell('calorie', 'ilife:calorie', '今日总览 ' + d.date, body);
+}
+
+/* ── #371 · 主页完整文档（今日总览族 5 词共用同一组装配） ── */
+
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
+const DOC_TITLE = '卡路里·主页';
+
+/** envelope 头（值冻结对齐 `cli/keys.ts` ENVELOPE_VERSION 与 CALORIE_SKILL）。 */
+const DOC_VERSION = '0.1.0';
+const DOC_SKILL = 'calorie';
+
+function pctText(pct: number | null | undefined): string {
+  if (pct === null || pct === undefined) return '未设目标';
+  return String(pct) + '%';
+}
+
+/** `calorie.view.home` · 今日总览族 5 词的结果型完整文档（`<!doctype html>` 起）。 */
+export function buildHomeDoc(d: HomeData): string {
+  const t = d.daily.totals;
+  const windowDays = d.week.series.length;
+  const parts: string[] = [renderKpiGrid([
+    { label: '今日摄入', value: fmt(t.cal), unit: '卡', detail: '目标 ' + fmt(d.calorieGoal, ' 卡') + ' · 完成度 ' + pctText(d.caloriePct) },
+    { label: '蛋白', value: fmt(t.pro), unit: 'g', detail: '完成度 ' + pctText(d.proteinPct) },
+    { label: '饮水', value: fmt(d.daily.waterMl), unit: 'ml', detail: '目标 ' + fmt(d.waterGoal, ' ml') + ' · 完成度 ' + pctText(d.waterPct) },
+    { label: '今日缺口', value: fmt(d.deficitToday), unit: '卡', detail: '正=缺口（TDEE＋运动－摄入）' },
+    { label: '连续记录', value: String(d.streakDays), unit: '天', detail: '窗口 ' + d.week.loggedDays + '/' + windowDays + ' 天有记录' },
+    { label: '周均摄入', value: fmt(d.week.avgIntake), unit: '卡', detail: d.week.start + ' ~ ' + d.week.end },
+  ])];
+  let charts = false;
+  const loggedDays = d.week.series.filter((s) => s.calories !== null && s.calories !== undefined);
+  if (loggedDays.length > 0) {
+    parts.push(renderChartBlock({
+      kind: 'line',
+      title: '每日摄入',
+      input: {
+        items: d.week.series.map((s) => ({ label: s.date.slice(5), value: s.calories })),
+        options: { markLine: { value: d.week.avgIntake ?? undefined, label: '周均' } },
+      },
+    }));
+    charts = true;
+  }
+  parts.push(renderDataTable({
+    columns: [
+      { key: 'date', label: '日期' },
+      { key: 'cal', label: '摄入', align: 'right' },
+      { key: 'deficit', label: '缺口', align: 'right' },
+      { key: 'tdee', label: 'TDEE', align: 'right' },
+      { key: 'goal', label: '目标', align: 'right' },
+    ],
+    rows: d.week.series.map((s) => ({
+      date: s.date, cal: s.calories, deficit: s.deficit, tdee: s.tdee, goal: s.calorieGoal,
+    })),
+    caption: '按日汇总（' + d.week.start + ' ~ ' + d.week.end + '，无记录日留空，不断 0）',
+    emptyText: '本窗无按日汇总',
+  }));
+  parts.push(notice({
+    msg: d.daily.overCal ? '今日已超热量目标' : '热量在目标内',
+    detail: '摄入 ' + fmt(t.cal, ' 卡') + ' · 目标 ' + fmt(d.calorieGoal, ' 卡') + ' · 缺口 ' + fmt(d.deficitToday, ' 卡'),
+  }));
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.home',
+      data: {
+        metrics: metricsOf({
+          calorieGoal: d.calorieGoal, waterGoal: d.waterGoal,
+          caloriePct: d.caloriePct, proteinPct: d.proteinPct, waterPct: d.waterPct,
+          deficitToday: d.deficitToday, streakDays: d.streakDays,
+          intakeCal: t.cal, proteinG: t.pro, carbsG: t.carbs, fatG: t.fat,
+          waterMl: d.daily.waterMl, entryCount: d.daily.entryCount,
+          avgIntake: d.week.avgIntake, avgDeficit: d.week.avgDeficit, loggedDays: d.week.loggedDays,
+        }),
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '今日总览 ' + d.date,
+    eyebrow: 'calorie.view.home · 主页',
+    subtitle: d.week.start + ' ~ ' + d.week.end + ' · 连续 ' + d.streakDays + ' 天 · ' + d.week.loggedDays + '/' + windowDays + ' 天有记录',
+    content: parts.join(''),
+    charts,
+  });
 }

@@ -1,7 +1,7 @@
 /** 看今日主页（HELP 一级分组「主页」下一级）：dashboard 的四块卡片读命令。
  *
  * 本文件是这四条命令**事实的住处**：改一条命令只改这里＋`commands.ts`，共用位一行不动。
- * 取数与页面装配都走本能力目录之外的既有共用件（`render/`／`fetch/`），没有跨能力引用。
+ * 取数走本能力目录之外的既有共用件（`render/`／`fetch/`），主页页面装配走本能力目录 `homeDocs`（归位件），没有跨能力引用。
  * 四个处理函数逐字搬自旧分派层 `cli/cmd_read.ts` 的同名 `case`（#314 纯搬迁，行为不变）；
  * 唯一的形状改动是签名收成 `(params, db)`——旧 `case` 里的 `params`／`db` 即这两个入参。
  */
@@ -13,7 +13,7 @@ import { buildViewDietDoc } from '../render/dietDocs.js';
 import { buildExerciseView } from './exercise.js';
 import { buildGoalProgress } from '../render/goalPlate.js';
 import { buildHomeData } from './home.js';
-import { renderHomeHtml } from './homeDocs.js';
+import { buildHomeDoc } from './homeDocs.js';
 import { renderGoalProgressHtml } from '../render/html.js';
 import { buildExerciseDoc } from '../render/sportDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -37,7 +37,7 @@ export function viewHomeToday(params: Record<string, unknown>, db: DatabaseSync)
     waterMl: h.daily.waterMl, entryCount: h.daily.entryCount, avgIntake: h.week.avgIntake, avgDeficit: h.week.avgDeficit,
     loggedDays: h.week.loggedDays,
   });
-  return { data: { metrics }, html: renderHomeHtml(h) };
+  return { data: { metrics }, html: buildHomeDoc(h) };
 }
 
 /** `calorie.view.diet` · 饮食总览：窗口汇总 ＋ 餐别分布 ＋ 窗口明细（上限 100 条并明示截断）。 */
