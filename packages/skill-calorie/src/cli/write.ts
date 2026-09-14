@@ -33,48 +33,20 @@ import {
   ValidationError,
 } from '../fetch/body.js';
 import { withM5 } from '../render/receipt.js';
-import type { CrudReceipt } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 
 // #179 · 场景 07 三条写入词的回执页：整页装配住在能力目录 `src/profile/`（写前页在 setup.ts）。
-import { buildProfileSettingReceiptDoc, buildProfileUpdateReceiptDoc } from '../profile/index.js';
+// #330 · 按命令选整页的端口也住能力目录（`src/profile/receipt.ts`，经 `src/profile/index.ts` 转出）：
+// 分派层只调门，不再写任何命令名字面量。
+import { profileReceiptDoc } from '../profile/index.js';
 import { isCalorieWriteKey } from './keys.js';
 // #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落下面的 dispatchInner switch。
 import { REGISTRY } from './registry.js';
 
 // #294 · 参数读取与回执底座上移共用位：能力目录里的命令与分派层用同一套口径（唯一定义地）。
 import { fail } from '../shared/params.js';
-import { commandLine, totalChanges } from '../shared/writeParts.js';
+import { totalChanges } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
-/* -------------------------------------- #179 · 场景 07 三条写入词的回执页（整页装配） */
-/** 三条写入词的回执页换成整页装配；**其余 32 条一律返回 null**，由 `dispatchWrite` 的
- *  `?? res.html` 原样放行——那些命令的产物与 `receiptHtml` 那条片段路径逐字节不变
- *  （本端口只认这三个命令名，认不出就不进这条路，也不碰 `receiptHtml` 本身）。
- *  必须在 `withM5` 之后调用：新页要印 `affectedRows`／`writtenFields`／`m5Line`。
- *  #239：把命令原文一并交给回执页，进「复制日志」第 4 段（key 与 params 都在本处作用域里）。
- *  #175：把 `db` 也交给回执页——设置档案／设活动量那两页要读写后档案现值算性别与推荐活动量。
- *  #320：这口「按键选回执页」的分派改成**键集查表 ＋ 一次比较**，行为逐字不变——它的形状与
- *  命令分派无关（不选实现、不取数），但用 `case` 分支的写法会让「分派层不再有按键分支」
- *  这条终态断言（`test/cmd-registry-294.test.mjs`）数到它，故只换写法、不换语义。
- *  #320b：该断言升到**行为口径**（`case`／等值比较／就地键集查询一律算）后，那「一次比较」
- *  正是同一处漏门——两个键集都具名（数据位），查表一律 `.has(key)`，本文件再无键字面量比较。 */
-const PROFILE_RECEIPT_KEYS: ReadonlySet<string> = new Set([
-  'calorie.profile.set',
-  'calorie.profile.activity',
-  'calorie.profile.update',
-]);
-
-/** 改档案那三条里只有 `update` 用「改档案」页，另两条走「设置／活动量」页；具名键集，不写字面量比较。 */
-const PROFILE_UPDATE_KEYS: ReadonlySet<string> = new Set(['calorie.profile.update']);
-
-function profileReceiptDoc(
-  key: string, params: Record<string, unknown>, receipt: CrudReceipt, db: DatabaseSync,
-): string | null {
-  if (!PROFILE_RECEIPT_KEYS.has(key)) return null;
-  return PROFILE_UPDATE_KEYS.has(key)
-    ? buildProfileUpdateReceiptDoc(receipt, commandLine(key, params))
-    : buildProfileSettingReceiptDoc(db, receipt, commandLine(key, params));
-}
 
 /** 写分发（唯一出口 cmd_read 内调用；未知键上游已拦，此处再拦一道）。
  * #97 · M5：`affectedRows` 在此统一注入——写库前后各取一次 SQLite `total_changes()`，

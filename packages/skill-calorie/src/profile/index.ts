@@ -1,13 +1,14 @@
-/** 基础信息能力对外的门（HELP 场景 07「基础信息」）：命令分派两件 ＋ 两处跨层取用。
+/** 基础信息能力对外的门（HELP 场景 07「基础信息」）：命令分派两件 ＋ 整页回执端口一件 ＋ 命令声明一件。
  *
- * 对外五件（铁律五「不多于五个」，正好用满）：
+ * 对外四件（铁律五「不多于五个」）：
  *   ① `PROFILE_COMMANDS`——命令声明（权威源在 `commands.ts`，这里只是转出）；
  *   ② `runProfileView`／③ `runProfileWrite`——读／写命令入口（查不到档案键即抛，不当静默兜底）；
- *   ④ `buildProfileSettingReceiptDoc`／⑤ `buildProfileUpdateReceiptDoc`——档案写命令整页回执的装配：
- *      分派层（`src/cli/write.ts`）在用。④⑤ 按铁律一「要用别的能力的东西走它对外那道门」转出，
- *      免得同一件回执页有两份装配（#318 起：分派层不再直接摸本目录内部件）。
+ *   ④ `profileReceiptDoc`——档案写命令整页回执的端口：分派层（`src/cli/write.ts`）在用。
+ *      两页装配（`setup.ts`／`update.ts` 的两函数）是本目录内件，由 `receipt.ts` 直引，
+ *      不再经这道门转出（#330 起：免得同一件回执页有两份出口）。
  *
- * 域内其他件（取数 `view.ts`、写链 `setup.ts`／`update.ts`／`labels.ts`、读写入口 `read.ts`／`write.ts`）
+ * 域内其他件（取数 `view.ts`、写链 `setup.ts`／`update.ts`／`labels.ts`、读写入口 `read.ts`／`write.ts`、
+ * 回执端口实现 `receipt.ts` 的键集数据位）
  * **不出这个目录**，故不在这里转出；`src/index.ts`／`src/render/index.ts` 另按原样转出「档案视图」，
  * 既有调用方导入面不变。
  */
@@ -17,8 +18,7 @@ import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import { PROFILE_COMMANDS } from './commands.js';
 
 export { PROFILE_COMMANDS } from './commands.js';
-export { buildProfileSettingReceiptDoc } from './setup.js';
-export { buildProfileUpdateReceiptDoc } from './update.js';
+export { profileReceiptDoc } from './receipt.js';
 
 const BY_KEY = new Map(PROFILE_COMMANDS.map((c) => [c.key, c]));
 
