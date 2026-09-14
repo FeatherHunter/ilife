@@ -124,8 +124,8 @@ fd23aa8ffb663068c41939aee68170d9855dcad1  src/workout/wizard.ts
 
 1. **共享编译产物被并发写坏**（`dist/analysis/multiTrendPage.js` 里 `const weighed` 声明 3 次、359/360 紧挨重复拼接，源件只有 2 处、分属两个不同函数）⇒ 任何 CLI 调用都起不来。**本票引入 0 条**，已由重编自愈（`GATE-RUN runId=87349328-63e5-41ea-84c4-e784ff5cb7b1 cmd="pnpm test:types"` 起 exit 回到 0）。
 2. **他席在途件互撞致整树 `tsc -b` 红**：`src/weight/receipt.ts`（`rows` 传具名类型 `ChangeRow` 无索引签名，撞 `renderDataTable` 的 `readonly Readonly<Record<string, unknown>>[]`）与 `src/photo/pickerDoc.ts`（`selectedId` 不在 `SerializableEnvelope.data` 的联合里）。**本票引入 0 条**；两件当时都是未提交修改中，处置＝记账＋继续自己范围内的活，未碰。
-3. **`packages/skill-calorie/test/render-t41.test.mjs:158`**：断言 `/已检查 1 个会话（\d+硬止）/` 要求 KPI 卡 label 与 value 连成一句。按视觉反馈把「已检查」从 value 移回 label 后，页上读作 label『已检查』＋ value『1 个会话（1硬止）』，两句之间隔着标签结构，该正则不再命中 ⇒ **该测试转红**（`GATE-RUN runId=dbbcece7-6e58-4f5e-ad33-5db912abe631 cmd="node --test packages/skill-calorie/test/render-t41.test.mjs"` exit=1；同文件另 9 条绿）。
-   该件是**他席在途件**（未提交修改中）且属 `test/**`，本执行者按路径所有权**不碰**；建议转票给该件主，把第 158 行收紧为 `assert.match(badHtml, /1 个会话（\d+硬止）/)`（第 152 行靠副标题「可落地 · 已检查 1 个会话」仍命中，无需改）。
+3. **`packages/skill-calorie/test/render-t41.test.mjs:158`**：断言 `/已检查 1 个会话（\d+硬止）/` 要求 KPI 卡 label 与 value 连成一句。按视觉反馈把「已检查」从 value 移回 label 后，页上读作 label『已检查』＋ value『1 个会话（1硬止）』，两句之间隔着标签结构，而 `assert.match` 匹配的是 **HTML 串**不是 `textContent` ⇒ 该正则过期而红（`GATE-RUN runId=dbbcece7-6e58-4f5e-ad33-5db912abe631 cmd="node --test packages/skill-calorie/test/render-t41.test.mjs"` exit=1）。
+   **已在本票收口**（编排者裁定该红由本票渲染变更直接造成，不挂转票）：第 158 行收紧为 `assert.match(badHtml, /1 个会话（\d+硬止）/)`；第 152 行靠副标题仍命中，未动；同次提交一并收入第 143 行他席的在途改动。详见 §八.2。
 4. `render/workoutPlanDocs.ts` 的过程落地文案「可落地」（构建向导卡值）属用词纪律里「落地作实施讲」的范围，但 `render-t41.test.mjs:151` 冻结了它、且不在本票范围，**未改**，转票备忘。
 
 ## 六、加锁运行声明（§2.4 第 2 条）
@@ -143,7 +143,7 @@ GATE-RUN runId=d2915361-0ba0-44aa-b5b4-653eb47f077d cmd="node .scratch/t351-fix/
 GATE-RUN runId=04c54b1f-4337-46e2-89b1-9a7d346dec7b cmd="pnpm test:types"                                   exit=0
 GATE-RUN runId=3fd00dcf-ff52-416a-92ad-91b153efc85e cmd="pnpm test:types"                                   exit=0
 GATE-RUN runId=260b9714-f63e-488c-8b7d-6aedfcd00abf cmd="node --test test/scene05-*.test.mjs"               exit=0
-GATE-RUN runId=dbbcece7-6e58-4f5e-ad33-5db912abe631 cmd="node --test packages/skill-calorie/test/render-t41.test.mjs" exit=1  # 见 §五.3
+GATE-RUN runId=dbbcece7-6e58-4f5e-ad33-5db912abe631 cmd="node --test packages/skill-calorie/test/render-t41.test.mjs" exit=1  # 见 §五.3（已收口）
 GATE-RUN runId=2bf06549-0808-46ff-8d6a-0e08bb5c0857 cmd="node .scratch/t351-fix/final-v3/run-176-207-v3.mjs" exit=0  # 重跑 r3（51/51）
 GATE-RUN runId=a57f096b-7e57-4b76-8bf2-a00c183811bb cmd="pnpm test:types"                                   exit=2  # 见 §五.2（他席在途件）
 GATE-RUN runId=581fdfb1-ad33-4054-a30c-dc3590840a6e cmd="pnpm test:types"                                   exit=2  # 同上
@@ -188,6 +188,11 @@ GATE-RUN runId=5e6d8f2d-1c80-42ce-9284-02d68acd7767 cmd="node .scratch/t351-fix/
 ## 八、未做项与下一手缺什么
 
 1. **196–200（外部 5 条）**：`routes.ts` 记 `kind:'non-exec'`／`bucket:'out-of-scope'`，词只保证命中与文案，本票不承接、**无产物**（重跑脚本如实记录，未硬造）。
-2. **`render-t41.test.mjs:158` 一条红**：见 §五.3，属他席在途件 ＋ `test/**`，本执行者不碰，**需转票**。
+2. **`render-t41.test.mjs:158` 一条红 —— 已在本票收口**（原记「需转票」，编排者裁定该红是本票渲染变更直接造成的，故本票收口，不挂转票）。
+   改法：`assert.match(badHtml, /已检查 1 个会话（\d+硬止）/)` → `assert.match(badHtml, /1 个会话（\d+硬止）/)`。根因：改前 value 自带全串「已检查 1 个会话（N硬止）」；按视觉反馈把计数交回 label 后，label 与 value 分处两个元素，而 `assert.match` 匹配的是 **HTML 串**不是 `textContent` ⇒ 该正则过期。这是**有意的渲染变更带来的断言过期**，改断言正确，不是「改测试迁就实现」；第 152 行靠副标题「可落地 · 已检查 1 个会话」仍命中，未动。
+   同次提交一并收入**第 143 行他席的在途改动**（`/训练计划看/` → `/训练计划查看/`，属 T351 标题补字，避免它继续悬在树里）；提交消息里已分列两处来源。
+   读数：`GATE-RUN runId=179bdc89-a6ca-43a8-a5c2-8d72ebfe06f5 cmd="node --test packages/skill-calorie/test/render-t41.test.mjs"` —— `ℹ pass 9 / ℹ fail 1`，**但那条 fail 不是这一件**（见下面第 5 条）；`#41 计划三盘 + HTML 字段断言`（含改后的 158 行）已转绿。
 3. **`write.ts`(570)／`html.ts`(647) 超线与 `AGENTS.md` 台账不符**：见 §四.4，**需转票**（本票只读，未改其行数口径）。
 4. **`planCopyBlock.ts` 的落点**：现在 `render/`，若后续有第二个包外场景要用同一形状，才谈提取到公共层；**当前只有本包用，不动**。
+5. **范围外新红：`render-t41.test.mjs:239`** —— `assert.throws(() => buildVolatilityView(db, …), /记录不足|无体重/)` 报 `Missing expected exception`。空库探针实测「`buildVolatilityView` 没抛」，该抛点由**他席提交 `379b5d2`（#336 波动页老新融合，19:03:58）**改掉（`weight/volatility.ts` 即在该提交里）。**本票引入 0 条**（本票未碰 `weight/**`，且本执行者 18:29 那次跑同一支时该条是绿的、当时这两个件还没动）。**需转票**，本执行者不碰。
+

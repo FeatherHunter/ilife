@@ -140,7 +140,7 @@ test('#41 计划三盘 + HTML 字段断言', () => {
   assert.equal(plan.totalSessions, 2);
   assert.equal(plan.totalMovements, 2);
   let html = renderPlanHtml(plan);
-  assert.match(html, /训练计划看/);
+  assert.match(html, /训练计划查看/); // T351 视觉修复：标题补“查”（旧“训练计划看”缺字）
   assert.match(html, /test计划/);
   const wiz = buildPlanWizardView({ config: { title: 't', start_date: '2026-09-01', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: 'a', movements: [{ name: '俯卧撑', part: '胸', type: '力量', sets: [] }] }] }] }] });
   assert.equal(wiz.errorCount, 0);
@@ -155,7 +155,7 @@ test('#41 计划三盘 + HTML 字段断言', () => {
   assert.equal(bad.checkedSessions, 1); // #102 G15：坏计划也计 N（已检查≠已通过）
   const badHtml = renderPlanWizardHtml(bad);
   assert.match(badHtml, /有硬止/);
-  assert.match(badHtml, /已检查 1 个会话（\d+硬止）/);
+  assert.match(badHtml, /1 个会话（\d+硬止）/); // T351：已检查计数由 label 承担，value 只留「N 个会话（M硬止）」
   const goal = buildExerciseGoalView(db, '2026-09-06', '2026-09-07');
   assert.equal(goal.dailyGoal, 300);
   assert.equal(goal.actual, 620);
