@@ -92,7 +92,7 @@ export function buildLogReceiptDoc(
     { k: '近 30 天趋势', v: trendCn === null ? '—' : trendCn + (two ? '' : '（单点无变化）') },
     { k: '备注', v: f.note ?? '—' },
   ];
-  const conclusion = '结论：' + (f.kg === null ? '回执未带本次体重' : '本次记 ' + f.kg + ' kg（' + f.date + ' ' + f.time + '）')
+  const conclusion = (f.kg === null ? '回执未带本次体重' : '本次记 ' + f.kg + ' kg（' + f.date + ' ' + f.time + '）')
     + (delta === null ? '；库里没有更早的记录，暂无较上次对照' : '；较上次 ' + signed(delta))
     + (gap === null ? '；未设体重目标' : '；距目标 ' + signed(gap))
     + (two ? '；近 30 天均值 ' + avg + ' kg、趋势' + trendCn : '；近 30 天不足两条，趋势待补一条')
@@ -160,7 +160,7 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
   const skipped = count('跳过');
   const failed = count('失败');
   const top = failed > 0 ? '失败' : skipped > 0 ? '跳过' : wrote > 0 ? '写入' : '无改动';
-  const conclusion = '结论：本次批量 ' + items.length + ' 条，写入 ' + wrote + ' 条、跳过 ' + skipped + ' 条、失败 ' + failed + ' 条'
+  const conclusion = '本次批量 ' + items.length + ' 条，写入 ' + wrote + ' 条、跳过 ' + skipped + ' 条、失败 ' + failed + ' 条'
     + '；跳过＝该日已有记录（不覆盖），失败＝日期格式或体重非法（原因见逐条明细）。';
   const rows = items.map((it) => ({
     date: cell(it.date),

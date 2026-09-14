@@ -37,7 +37,7 @@ function buildUpdateReceiptDoc(receipt: CrudReceipt, command: string): string {
     note: it.detail === undefined || it.detail === '' ? '—' : it.detail,
   }));
   const changed = rows.filter((r) => r.change !== '—').length;
-  const conclusion = '结论：本次改动 ' + receipt.items.length + ' 条记录、写入 ' + receipt.writtenFields.length + ' 个字段'
+  const conclusion = '本次改动 ' + receipt.items.length + ' 条记录、写入 ' + receipt.writtenFields.length + ' 个字段'
     + (changed < rows.length ? '；有 ' + (rows.length - changed) + ' 条只改了备注（体重那一侧写 `—`）' : '')
     + '；改错可按上表「改前」原值再改一次。';
   const payload = [conclusion, ...rows.map((r) => r.record
@@ -92,7 +92,7 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
   const span = snap.length >= 2 && fw !== null && lw !== null ? round1(lw - fw) : null;
   const dir = span === null ? '' : span > 0 ? '上升' : span < 0 ? '下降' : '持平';
   const latest = latestWeightAfter(db);
-  const conclusion = '结论：本次删除 ' + snap.length + ' 条'
+  const conclusion = '本次删除 ' + snap.length + ' 条'
     + (span === null ? '' : '，区间 ' + fw + ' → ' + lw + ' kg（' + signed(span) + '，' + dir + '）')
     + '；' + (latest === null ? '删除后库里已无体重记录' : '删除后最新体重 ' + latest.kg + ' kg（' + latest.date + '）')
     + '。删除不可恢复，要还原请照上表快照原值重新记。';

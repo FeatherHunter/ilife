@@ -144,8 +144,8 @@ function plateCards(w: WeightDashboard): KpiCardInput[] {
 function weightConclusion(w: WeightDashboard): string {
   const t = w.trend;
   const bits = [w.curve.single
-    ? '结论：' + w.start + ' ~ ' + w.end + ' 只有 1 条记录（' + t.lastWeight + ' kg），单点看不出变化，再记一条就能比较'
-    : '结论：' + w.start + ' ~ ' + w.end + ' 共 ' + t.recordCount + ' 条，首 ' + t.firstWeight + ' → ' + t.lastWeight
+    ? w.start + ' ~ ' + w.end + ' 只有 1 条记录（' + t.lastWeight + ' kg），单点看不出变化，再记一条就能比较'
+    : w.start + ' ~ ' + w.end + ' 共 ' + t.recordCount + ' 条，首 ' + t.firstWeight + ' → ' + t.lastWeight
       + ' kg（' + signed(t.changeKg) + '，趋势' + t.trendCn + '，日均 ' + t.dailyChangeG + ' g）'];
   if (t.recordCount >= 2) bits.push('均值 ' + t.avgWeight + ' kg');
   if (w.gapKg === null) {
@@ -250,7 +250,7 @@ function buildWeightEmptyDoc(start: string, end: string, command: string): strin
       text: '本窗无体重记录（' + start + ' ~ ' + end + '）',
       hint: '说「记体重」记一条，曲线就有第一个点',
     }),
-    conclusionBlock('结论：' + start + ' ~ ' + end + ' 无体重记录，先记一条再看。'),
+    conclusionBlock(start + ' ~ ' + end + ' 无体重记录，先记一条再看。'),
     deliveryBlocks(envelope, command, sourceText),
   ];
   return assembleDocPage({

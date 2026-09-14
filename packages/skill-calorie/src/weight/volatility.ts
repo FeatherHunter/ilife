@@ -195,8 +195,15 @@ export function buildVolatilityView(
     throw e;
   }
   if (res.status !== 'ok' || !res.data) {
-    // 算式侧只剩「真取不到数」这一种失败（0／1 条已由空态与单点口径承担），仍是页首错误态。
+    // 算式侧只剩「真取不到数」这一种失败（1 条已由单点口径承担），仍是页首错误态。
     throw new CalorieRenderError('missing-data', res.message || ('取不到波动数据（' + start + ' ~ ' + (end ?? start) + '）'));
+  }
+  if (res.data.points.length === 0) {
+    // #41 的登记契约：空库／空窗一律 missing-data 阻断、**不返空**（`render-t41.test.mjs:239` 逐字钉着
+    // 「buildVolatilityView(db, …) 抛 /记录不足|无体重/」）。§5.6 的「数据型空态写本窗无体重记录」说的是
+    // **已有数据的页面上某个区块**的空态，不是「把 0 条的整页当正常返回」——两者的分界已记进
+    // `docs/skills/skill-calorie/t154-体重页面-老新融合规范.md` §9，要改契约请走那张票。
+    throw new CalorieRenderError('missing-data', '本窗无体重记录（' + start + ' ~ ' + (end ?? start) + '）');
   }
   return { start, end: end ?? start, baselineMode, volatility: res.data };
 }
