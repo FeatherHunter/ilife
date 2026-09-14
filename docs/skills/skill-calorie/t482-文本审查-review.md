@@ -136,7 +136,7 @@
 - **编译**（`node tooling/run-locked.mjs --ticket 482 -- npx tsc -b packages/skill-calorie`）：
   - 本票改动首次全绿：`RESULT: ticket=482 runId=05e01603-6081-433d-97dd-2e6c45cde498 waitedMs=0 exit=0`。
   - 其后三次为红（`2c7a0d81`／`6a6dda7e`／`fda01cf6`），红点**全在别席在途件**（`src/weight/logReceipt.ts`／`src/weight/receipt.ts`／`src/weight/volatilityDoc.ts`，多为 `TS2554 Expected 2 arguments, but got 4` 与 `TS2304 Cannot find name 'reconcileDisclosure'`），本票文件零错误；TS 仍 emit，故上方页面与用例读数有效（字节变化可核对）。
-- **GATE-RUN 声明（窗口 `2026-09-14T17:40:00Z` ~ `2026-09-14T17:55:00Z`，ticket=482 共 11 条 `RUN`，逐条登记）**：
+- **GATE-RUN 声明（窗口 `2026-09-14T17:40:00Z` ~ `2026-09-14T17:51:00Z`，ticket=482 共 11 条 `RUN`，逐条登记；三段提交步骤（add／commit／push）都在窗口之后，按对账口径「提交后的 git 条目不受影响」不入窗）**：
 
 GATE-RUN runId=6128eea5-d374-49a5-80ea-1c07e3c1604b cmd="node --test packages/skill-calorie/test/weight-review-335.test.mjs"
 GATE-RUN runId=df2a89dc-82f8-475b-98a2-519a7fbe1551 cmd="npx tsc -b packages/skill-calorie"
@@ -152,7 +152,8 @@ GATE-RUN runId=e99ec6d1-e7c4-48bc-8c34-b33402acfc0d cmd="node --test packages/sk
 
 GATE-RELAX flag=--allow-nonzero reason=窗口内 6 条 exit≠0 如实登记不隐藏：`df2a89dc`／`2c7a0d81`／`6a6dda7e`／`fda01cf6` 是别席在途件把 `npx tsc -b packages/skill-calorie` 弄红（`logReceipt.ts`／`receipt.ts`／`volatilityDoc.ts`，非本票文件）；`3cdc3403` 是本票新用例自身的种子 bug（富种子到 09-06 为止，我把「本周」当天写成 09-07 走了空窗阻断，当场修好）；`d2ec3d4c` 是变异自证故意改坏（已还原，见上）。
 
-- **格式门自检**：`node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t482-文本审查-review.md --ticket 482 --log .scratch/locks/gate-runs.log --since 2026-09-14T17:40:00Z --until 2026-09-14T17:55:00Z --allow-nonzero` → `EXIT=0`、`RESULT: matched=11/11 auditEntries=4630 scoped=11 undeclared=0`、`gate-audit: PASS`。
+- **格式门自检**：`node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t482-文本审查-review.md --ticket 482 --log .scratch/locks/gate-runs.log --since 2026-09-14T17:40:00Z --until 2026-09-14T17:51:00Z --allow-nonzero` → `EXIT=0`、`RESULT: matched=11/11 auditEntries=4639 scoped=11 undeclared=0`、`gate-audit: PASS`。
+  窗口口径的来历（如实登记两次读数）：先用 `--until 2026-09-14T17:55:00Z` 跑过一次，`RESULT: matched=11/11 scoped=14 undeclared=3`、`FAIL: 反向对账：窗口内有 3 条无人声明的 RUN 条目`——那 3 条正是**三段提交步骤**（`git add`／`git commit`／`git push`）；提交步骤不是 build／test 门，按对账口径「提交后的 git 条目不受影响」，把窗口收到提交前一刻（`17:51:00Z`）后 11/11 全中、零未声明。
 
 ## 五、未做项与下一手缺什么
 
