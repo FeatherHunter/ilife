@@ -344,6 +344,50 @@ describe('B-09 表单', () => {
   });
 });
 
+describe('B-09 表单只读与步进约束（#397）', () => {
+  it('readonly:true 落 readonly；缺省无 readonly', () => {
+    const html = renderParamForm({ fields: [{ name: 'bf', label: '体脂率', readonly: true }] });
+    assert.ok(html.includes(' readonly'), '只读落属性');
+    const plain = renderParamForm({ fields: [{ name: 'bf', label: '体脂率' }] });
+    assert.ok(!plain.includes('readonly'), '缺省无只读');
+  });
+
+  it('step／min／max 落数字约束（皮褶口径 0.1／0／100）', () => {
+    const html = renderParamForm({
+      fields: [{ name: 'chest', label: '胸', step: '0.1', min: '0', max: '100' }],
+    });
+    assert.ok(html.includes('step="0.1"'), '步长');
+    assert.ok(html.includes('min="0"'), '下界');
+    assert.ok(html.includes('max="100"'), '上界');
+    assert.ok(html.includes('type="number"'), '数字约束带 number 类型');
+  });
+
+  it('非法值抛 bad-input：step 非数字串／min 大于 max', () => {
+    assertBadInput(() => renderParamForm({ fields: [{ name: 'n', label: 'L', step: 'abc' }] }), 'step 非数字串');
+    assertBadInput(() => renderParamForm({ fields: [{ name: 'n', label: 'L', min: '10', max: '5' }] }), 'min>max');
+    assertBadInput(() => renderParamForm({ fields: [{ name: 'n', label: 'L', options: [] }] }), 'options 空数组');
+  });
+
+  it('options 渲染 select 候选＋命中 selected（零 JS）', () => {
+    const html = renderParamForm({
+      fields: [{ name: 'source', label: '来源', value: 'gym', options: ['home_caliper', 'gym', 'hospital'] }],
+    });
+    assert.ok(html.includes('<select'), '下拉');
+    assert.ok(html.includes('<option value="gym" selected>gym</option>'), '命中选中');
+    assert.ok(html.includes('<option value="home_caliper">home_caliper</option>'), '候选齐全');
+    assert.ok(!html.includes('<script'), '零 JS');
+  });
+
+  it('旧调用产物不变：不传新字段无新增属性', () => {
+    const html = renderParamForm({
+      fields: [{ name: 'n', label: 'L', value: 'v', hint: 'H', required: true }],
+    });
+    assert.ok(!html.includes('readonly'), '无只读');
+    assert.ok(!html.includes('step=') && !html.includes('min=') && !html.includes('max='), '无步进约束');
+    assert.ok(!html.includes('<select'), '无下拉');
+  });
+});
+
 describe('B-10 空态／B-11 复制区／B-12 反馈区（组合冻结控件）', () => {
   it('B-10：冻结 emptyState 逐字内嵌＋可选标题', () => {
     const inner = renderEmptyState({ text: '空', hint: 'h' });
