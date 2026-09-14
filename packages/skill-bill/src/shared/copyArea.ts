@@ -18,9 +18,10 @@
  *   - 日志第 3 段的库文件名**由调用方给**（`CopyLogInput.source`），共用件不取本包文件名
  *     （`docs/skills/skill-bill/t406-共用件依赖与提升改造清单.md` 第二节 `DB_FILENAME` 行）。
  */
-import { renderCopyBlock, renderEmptyBlock, renderPreBlock } from 'base-paint/blocks';
+import { renderCaliberLine, renderCopyBlock, renderEmptyBlock, renderPreBlock } from 'base-paint/blocks';
 import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, DataTextInput, LogTextInput } from 'base-paint';
+import { commandLine } from './writeParts.js';
 
 /** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
 const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
@@ -57,13 +58,20 @@ interface CopyLogInput {
   readonly version?: string;
 }
 
+/** 复制 prompt 区那段 prompt 的复制按钮动作号（固定一枚：同页只出一次 prompt 区）。 */
+const PROMPT_COPY_ACTION = 'ilife-copy-prompt';
+
 /** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋ 它自带的复制按钮。
+ *  **`actionId` 必给**：公共层的 `renderPreBlock` 只在给了 `actionId` 时才渲染复制按钮
+ *  （`packages/base-render/src/blocks.ts:729-736`），只给 `copyText` 会出一个「写着复制、其实没有按钮」的空壳
+ *  ——那正是本票线上实测发现的一处空壳，本件补齐。
  *  第二参可选：不给＝小标题「复制 prompt（必走）」；`null`＝不出小标题；给字符串就用它。 */
 export function promptCopyArea(prompt: string, label?: string | null): string {
   const heading = label === undefined ? '复制 prompt（必走）' : label;
   return renderPreBlock({
     ...(heading === null ? {} : { label: heading }),
     command: prompt,
+    actionId: PROMPT_COPY_ACTION,
     copyText: prompt,
     copyLabel: '复制 prompt',
   });
@@ -113,4 +121,24 @@ export function copyLog(input: CopyLogInput): CopyLogFields {
     timestamp: input.version === undefined || input.version === '' ? input.actionAt : input.actionAt + ' · 版本 ' + input.version,
     exception: LOG_EXCEPTION,
   };
+}
+
+/** 退出口那枚可复制按钮的动作号（与数据位／日志位分开，免得同页两处撞同一个号）。 */
+const EXIT_COPY_ACTION = 'ilife-exit-undo-copy';
+/** 退出口那枚危险色出口标记的动作号。**故意不绑动作**：动作条场景按钮不带 `data-t`，点了不复制也不写库。 */
+const EXIT_MARK_ACTION = 'ilife-exit-undo';
+
+/** ④ 回执页退出口：危险色出口标记 ＋ 一枚真的能复制的撤销指令（带该记录编号）。
+ *  两枚按钮同一区并列：危险色那枚让人一眼认出「这一步可退」，撤销指令挂在旁边那枚「复制数据」上。
+ *  为什么不一枚到底：公共层的动作条场景按钮（`primary`／`red`／`ghost`）**不带**复制文本，
+ *  能带文本的只有复制位那两枚（`packages/base-render/src/controls.ts:1307-1316`）；要「危险色 ＋ 能复制」
+ *  得等公共层补这一档，本票记成遗留（见证据件第五节）。 */
+export function undoExit(recordId: number): string {
+  const command = commandLine('bill.record.update', { op: 'undo', id: recordId });
+  return renderCopyBlock({
+    title: '退出口（撤销这一笔）',
+    buttons: [{ label: '↩︎ 撤销这一笔（危险色出口）', kind: 'red', actionId: EXIT_MARK_ACTION }],
+    dataText: command,
+    dataActionId: EXIT_COPY_ACTION,
+  }) + renderCaliberLine('撤销指令挂在同区那颗「复制数据」上（撤销＝软删打标，行还在，恢复走 restore）。');
 }

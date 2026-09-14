@@ -6,22 +6,28 @@
  *   出口分派 `src/cli/cmd_read.ts` 只查注册表再调 `runRecordWrite`，不再认这两个命令名。
  *
  * 两支的分岔口径（本票的新规矩）：
- *   **必需槽位缺失不再报参数错退出**，改出过程型采集页（`./collect.ts`），退出码 0、`ok:false`、不写库；
- *   必需槽位齐全照旧写库，出结果型回执整页（`./receipt.ts`）。
+ *   **有阻断项不再报参数错退出**，改出过程型采集页（`./collect.ts`），退出码 0、`ok:false`、不写库；
+ *   阻断项＝必需的槽位没给（`./collect.ts` 的 `missingSlots`）**或**金额符号与这一型的方向不符
+ *   （`../shared/blockedSlots.ts` 的 `blockedItems`：记支出要负数、记收入要正数）。两件都由 `blockedItems`
+ *   合成一张表，**非空即不进写库那一步**——这就是「真阻断」的根，页上那条阻断条只是它的影子。
+ *   阻断项清空照旧写库，出结果型回执整页（`./receipt.ts`）。
  *   必需槽位是哪些住 `./collect.ts` 的 `RECORD_SLOTS`（唯一定义地）；真值校验仍走 `src/policy`
  *   （`validateAddInput`／`validateUpdateInput`／`needId`／`parseRecordOp`），取数写库仍走 `src/fetch`
  *   （`addBill`／`updateBill`／`undoBill`／`restoreBill`），本文件只做编排与回执事实装配。
  * 写入字段口径：记一笔写整列全集（含缺省值列）；改字段＝本次实际变更的列；撤销／恢复写的是 `deleted_at`。
  */
-import { addBill, updateBill, undoBill, restoreBill, getById, DB_FILENAME } from '../fetch/index.js';
+import { addBill, updateBill, undoBill, restoreBill, getById, listRecent, DB_FILENAME } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { needId, parseRecordOp, validateAddInput, validateUpdateInput } from '../policy/index.js';
 import type { RecordOp } from '../policy/record.js';
 import { buildRecordReceipt } from '../render/views.js';
 import type { WriteOut } from '../shared/commandSpec.js';
+import { blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import type { BlockedItem } from '../shared/blockedSlots.js';
+import type { SummaryFacts } from '../shared/summaryRow.js';
 import { totalChanges } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
-import { RECORD_SLOTS, missingSlotMessage, missingSlots, recordCollectDoc } from './collect.js';
+import { RECORD_SLOTS, missingSlots, recordCollectDoc } from './collect.js';
 import type { RecordSlot } from './collect.js';
 import { recordReceiptDoc } from './receipt.js';
 
@@ -29,12 +35,22 @@ import { recordReceiptDoc } from './receipt.js';
  *  （缺省值列也算写入：时间／账户／账本／币种都带缺省）。名单只有 `./collect.ts` 的 `RECORD_SLOTS` 一处。 */
 const ADD_FIELDS: readonly string[] = RECORD_SLOTS['bill.record.add'].map((s) => s.name);
 
-/** 本次数据来源（复制日志第 3 段）；库文件名逐字取本包常量，共用件不取。 */
-const SOURCE = DB_FILENAME + ' · bills（写库回执）';
+/** 近期记录的回看天数（预填标注／重复检测／三枚选择器的候选都取这一段）。 */
+const RECENT_WINDOW_DAYS = 90;
+
+/** 本次数据来源（复制日志第 3 段）；库文件名逐字取本包常量，共用件不取。**两页各一句**：
+ *  回执页那句说的是写库回执，采集页不写库，不许沿用回执页那句（改前两页共用一句，采集页照抄了「写库回执」）。 */
+const SOURCE_RECEIPT = DB_FILENAME + ' · bills（写库回执）';
+const SOURCE_COLLECT = DB_FILENAME + ' · bills（只读：本页不写库，只采集）';
 
 /** 本地时钟时刻串（写入时间与复制日志时间戳）。**取时钟在写体，不在共用位**。 */
 function nowStamp(): string {
   return new Date().toISOString().slice(0, 19).replace('T', ' ') + '（本地时钟）';
+}
+
+/** 本页执行那天（`YYYY-MM-DD`）：缺省时间的取值与重复检测的比对面用它。 */
+function todayOf(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 /** 明细表的一行。 */
@@ -64,14 +80,36 @@ function preValue(pre: BillRow, column: string): string | number | null | undefi
   return Object.prototype.hasOwnProperty.call(pre, column) ? pre[column as keyof BillRow] : undefined;
 }
 
-/** 必需槽位缺失时的那一支：出过程型采集页、不写库、`ok:false`。 */
-function collectOut(
-  key: string, params: Record<string, unknown>, slots: readonly RecordSlot[], missing: readonly RecordSlot[],
-): WriteOut {
-  const message = missingSlotMessage(missing);
+/** 摘要行的事实：回执页取**库内那一行**（不是拿 params 顶——回执报的是库里的真值）。 */
+function rowFacts(r: BillRow): SummaryFacts {
+  return { amount: r.amount, category: r.category, account: r.account, ledger: r.ledger, time: r.time };
+}
+
+/** 有阻断项时的那一支：出过程型采集页（不写库、`ok:false`）。
+ *  取数只此一处：`listRecent` 取回的近期记录，预填标注／重复检测／三枚选择器的候选三处共用。 */
+function collectOut(input: {
+  readonly key: string;
+  readonly params: Record<string, unknown>;
+  readonly slots: readonly RecordSlot[];
+  readonly missing: readonly RecordSlot[];
+  readonly blocked: readonly BlockedItem[];
+  readonly db: BillDb;
+}): WriteOut {
+  const message = blockedMessage(input.missing, input.blocked);
+  const today = todayOf();
+  const anchor = typeof input.params['time'] === 'string' ? String(input.params['time']) : today;
   return {
     data: { ok: false, message },
-    html: recordCollectDoc({ key, params, slots, missing, source: SOURCE, actionAt: nowStamp() }),
+    html: recordCollectDoc({
+      key: input.key,
+      params: input.params,
+      slots: input.slots,
+      missing: input.missing,
+      source: SOURCE_COLLECT,
+      actionAt: nowStamp(),
+      today,
+      recent: listRecent(input.db, anchor, RECENT_WINDOW_DAYS),
+    }),
   };
 }
 
@@ -96,7 +134,7 @@ function finish(input: {
     affectedRows: totalChanges(input.db.db) - input.before,
     writtenFields: input.fields,
     noChange: input.noChange,
-    source: SOURCE,
+    source: SOURCE_RECEIPT,
     actionAt: nowStamp(),
   };
   return {
@@ -104,20 +142,23 @@ function finish(input: {
     html: recordReceiptDoc({
       key: input.key, params: input.params, receipt,
       writtenDetail: input.writtenDetail, detail: input.detail,
+      facts: rowFacts(input.row),
+      recent: listRecent(input.db, input.row.time, RECENT_WINDOW_DAYS),
     }),
   };
 }
 
-/** `bill.record.add`（记一笔）：缺分类或金额即出采集页，齐全即写库出回执整页。 */
+/** `bill.record.add`（记一笔）：有阻断项（缺分类或金额／金额符号与这一型不符）即出采集页，清空即写库出回执整页。 */
 export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): WriteOut {
   const key = 'bill.record.add';
   const slots = RECORD_SLOTS[key];
   const missing = missingSlots(params, slots);
-  if (missing.length > 0) return collectOut(key, params, slots, missing);
+  const kind = typeof params.kind === 'string' ? params.kind : '';
+  const blocked = blockedItems({ params, missing, kind });
+  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db });
   const before = totalChanges(db.db);
   const input = validateAddInput(params);
   const r = addBill(db, input);
-  const kind = typeof params.kind === 'string' ? params.kind : '';
   const extra = kind === 'photo'
     ? '（拍账单图片识别以外置为准）'
     : kind === 'batch' ? '（批量逐笔校验其一）' : kind ? `（${kind}）` : '';
@@ -129,12 +170,13 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): Wri
   });
 }
 
-/** `bill.record.update`（改记录）：缺 `id` 即出采集页；op 决定改字段／撤销／恢复三支。 */
+/** `bill.record.update`（改记录）：有阻断项（缺 `id`）即出采集页；op 决定改字段／撤销／恢复三支。 */
 export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): WriteOut {
   const key = 'bill.record.update';
   const slots = RECORD_SLOTS[key];
   const missing = missingSlots(params, slots);
-  if (missing.length > 0) return collectOut(key, params, slots, missing);
+  const blocked = blockedItems({ params, missing, kind: typeof params.kind === 'string' ? params.kind : '' });
+  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db });
   const op = parseRecordOp(params);
   const before = totalChanges(db.db);
   if (op === 'undo') {

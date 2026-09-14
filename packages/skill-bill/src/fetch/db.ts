@@ -109,6 +109,20 @@ export function listRange(h: BillDb, start: string, end: string): BillRow[] {
   return fetchAll(h, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59' });
 }
 
+/** 近期记录（按时间倒序，最近在先）：预填标注、重复检测、三枚选择器的候选三处共用同一份取数。
+ *  `aroundTime` 可以是时刻串或日期串；解析不出日期就按今天算——采集页本来就是「信息还不全」那一支，
+ *  这里不抛错（真值校验归 `src/policy`）。软删记录不取：它既不进候选，也不参与重复检测。 */
+export function listRecent(h: BillDb, aroundTime: string, windowDays = 90): BillRow[] {
+  const head = typeof aroundTime === 'string' ? aroundTime.slice(0, 10) : '';
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(head) ? head : new Date().toISOString().slice(0, 10);
+  const span = (typeof windowDays === 'number' && windowDays > 0 ? Math.floor(windowDays) : 90) * 86400000;
+  const base = new Date(day + 'T00:00:00Z').getTime();
+  const from = new Date(base - span).toISOString().slice(0, 10);
+  const to = new Date(base + span).toISOString().slice(0, 10);
+  return all(h, 'SELECT * FROM bills WHERE deleted_at IS NULL AND time >= ? AND time <= ? ORDER BY time DESC, id DESC',
+    [from + ' 00:00:00', to + ' 23:59:59']);
+}
+
 export function getById(h: BillDb, id: number): BillRow {
   const rows = all(h, 'SELECT * FROM bills WHERE id = ? AND deleted_at IS NULL', [id]);
   if (!rows.length) throw new BillFetchError('BILL_RECORD_NOT_FOUND', '无此账单：' + id);

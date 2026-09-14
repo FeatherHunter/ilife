@@ -31,7 +31,7 @@ interface DocPageInput {
 /** 整页模板（裸标记＋CONTENT 槽；`wrap ilife-page` 兼容既有 `--html` 断言）。
  *  标记不得预包裹：资产由 `fillTemplate` 按 `ASSET_WRAPPERS` 自己包。 */
 function docShell(docTitle: string): string {
-  return '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
+  return '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
     + '<title>' + docTitle + '</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n'
     + '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n'

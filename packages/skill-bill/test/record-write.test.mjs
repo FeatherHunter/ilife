@@ -218,3 +218,117 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.match(r.stderr, /口径失败/);
   });
 });
+
+// t407：写入域页面积木 ＋ 三个缺口块（缺项阻断条／重复检测提示条／预填标注）＋ 记支出代表页两张。
+// 与上面两段隔离：本段用自己那套临时库与目录，免得共用一条记录把「撞单」判成两条。
+describe('t407 · 记支出代表页（页面积木与三个缺口块）', () => {
+  const D2 = mkdtempSync(join(tmpdir(), 'bill407-db-'));
+  const H2 = mkdtempSync(join(tmpdir(), 'bill407-html-'));
+  const SEED = { category: '餐饮/外卖/午餐', amount: -12.5, time: '2026-09-14 12:00:00', account: '支付宝', ledger: '生活', note: '午饭' };
+  function run2(args) {
+    return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: D2 } });
+  }
+  function rowsAt(date) {
+    return envOf(run2(['bill.record.today', '--params', JSON.stringify({ date })])).data.items.length;
+  }
+  /** 页上所有可复制文本（`data-t`）：用来核「该给的给、该拦的拦」。 */
+  function copyTexts(text) {
+    return [...text.matchAll(/data-t="([^"]*)"/g)].map((m) => m[1]);
+  }
+
+  before(() => {
+    const r = run2(['bill.record.add', '--params', JSON.stringify(SEED)]);
+    assert.equal(r.status, 0, '铺底那笔须成功：' + r.stderr);
+    assert.equal(envOf(r).data.receipt.recordId, 1);
+  });
+
+  it('采集页九块齐全：类型徽章／摘要行／重复检测条／预填标注／缺项阻断条／表单三枚选择器／prompt 区／复制区', () => {
+    const before = rowsAt('2026-09-14');
+    const file = join(H2, 'collect.html');
+    const r = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 12:30:00"}', '--html', file]);
+    assert.equal(r.status, 0, 'stderr=' + r.stderr);
+    const env = envOf(r);
+    assert.equal(env.data.ok, false, '采集页不写库，载荷照实说');
+    assert.equal(env.data.receipt, undefined, '采集页没有回执事实');
+    const text = pageOf(file);
+    for (const needle of [
+      'data-slot="ilife:bill:collect"', '记支出 · 支出（金额取负数） · bill.record.add',
+      '缺项阻断条', '写库已阻断', '⛔ 先补齐（1 项）', 'ilife-action-btn ilife-action-btn-ghost',
+      '重复检测提示条', '预填标注', '来自记录编号 1', 'ilife-block-param-form',
+      '复制 prompt', 'ilife-block-copy-block', '写库：未发生',
+    ]) {
+      assert.ok(text.includes(needle), '采集页缺：' + needle);
+    }
+    assert.equal((text.match(/<select/g) ?? []).length, 3, '分类／账户／账本三枚选择器');
+  });
+
+  it('缺项阻断条真阻断：含占位符的写库指令只给看不给复制（任何 data-t 都不含它）', () => {
+    const file = join(H2, 'collect-block.html');
+    const r = run2(['bill.record.add', '--params', '{"kind":"expense"}', '--html', file]);
+    assert.equal(r.status, 0, 'stderr=' + r.stderr);
+    assert.equal(envOf(r).data.message, '缺必需槽位：category、amount（已出采集页，补齐后重跑同一条命令）');
+    const text = pageOf(file);
+    assert.ok(text.includes('⛔ 先补齐（2 项）'), '置灰按钮须报出缺几项');
+    assert.ok(text.includes('&lt;分类&gt;') && text.includes('&lt;金额&gt;'), '补齐后要跑的写库指令须给看');
+    for (const t of copyTexts(text)) {
+      assert.ok(!t.includes('&lt;'), '含占位符的写库指令不得可复制，却出现在 data-t：' + t.slice(0, 60));
+    }
+    assert.ok(copyTexts(text).some((t) => t.includes('这一页只采集、不写库')),
+      'prompt 区拷的是叙述句（不是可跑的写库指令）');
+  });
+
+  it('重复检测提示条：同日同额同分类出现；换一天不出现', () => {
+    const hit = join(H2, 'dup-hit.html');
+    const h = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 13:00:00","category":"餐饮/外卖/午餐"}', '--html', hit]);
+    assert.equal(h.status, 0, 'stderr=' + h.stderr);
+    assert.equal(envOf(h).data.ok, true, JSON.stringify(envOf(h).data));
+    const hitText = pageOf(hit);
+    assert.ok(hitText.includes('重复检测提示条'), '同日同额同分类须报疑似重复');
+    assert.ok(hitText.includes('记录编号 1'), '提示条须报出撞上的是哪几笔');
+    assert.ok(!hitText.includes('记录编号 ' + envOf(h).data.receipt.recordId + ' · ' + '2026-09-14 13:00:00'),
+      '本次自己那条不进提示条');
+    const other = join(H2, 'dup-miss.html');
+    const m = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-15 13:00:00","account":"支付宝"}', '--html', other]);
+    assert.equal(m.status, 0, 'stderr=' + m.stderr);
+    assert.ok(!pageOf(other).includes('重复检测提示条'), '换一天不该报重复');
+  });
+
+  it('方向不符（记支出给正数）⇒ 阻断、不写库、栏上写清方向', () => {
+    const before = rowsAt('2026-09-14');
+    const file = join(H2, 'bad-direction.html');
+    const r = run2(['bill.record.add', '--params', '{"kind":"expense","category":"餐饮/外卖/午餐","amount":35,"time":"2026-09-14 14:00:00"}', '--html', file]);
+    assert.equal(r.status, 0, '不报参数错，出采集页：' + r.stderr);
+    const env = envOf(r);
+    assert.equal(env.data.ok, false);
+    assert.match(env.data.message, /方向不符：记支出要负数/, env.data.message);
+    const text = pageOf(file);
+    assert.ok(text.includes('方向不符：记支出要负数，给的是 35.00'), '阻断条须说清方向');
+    assert.equal(rowsAt('2026-09-14'), before, '阻断这一笔不得落库');
+  });
+
+  it('回执页：退出口／对账折叠区／复制区三件齐全，复制日志无双前缀，数据结构仍说写库回执', () => {
+    const file = join(H2, 'receipt407.html');
+    const r = run2(['bill.record.add', '--params', JSON.stringify({ ...SEED, kind: 'expense', time: '2026-09-14 12:40:00' }), '--html', file]);
+    assert.equal(r.status, 0, 'stderr=' + r.stderr);
+    const env = envOf(r);
+    assert.equal(env.data.ok, true);
+    const text = pageOf(file);
+    for (const needle of ['data-slot="ilife:bill:receipt"', '退出口', '对账信息', '重复检测提示条', '复制数据', '复制日志', '记支出 · 支出（金额取负数）']) {
+      assert.ok(text.includes(needle), '回执页缺：' + needle);
+    }
+    assert.ok(text.includes('class="ilife-action-btn ilife-action-btn-red"'), '退出口须有危险色按钮');
+    assert.ok(text.includes('ilife-exit-undo-copy'), '撤销指令须有可复制位');
+    assert.ok(text.includes('bill.record.add（receipt）'), '日志场景标识须是 技能.本地名');
+    assert.ok(!text.includes('bill.bill'), '双前缀不得再出现');
+    assert.ok(text.includes('bills（写库回执）'), '回执页数据结构照实说写库');
+  });
+
+  it('采集页的数据结构不许照抄回执页那句（写库回执）', () => {
+    const file = join(H2, 'collect-source.html');
+    const r = run2(['bill.record.add', '--params', '{"kind":"expense"}', '--html', file]);
+    assert.equal(r.status, 0, 'stderr=' + r.stderr);
+    const text = pageOf(file);
+    assert.ok(text.includes('bills（只读：本页不写库，只采集）'), '采集页数据结构须说清不写库');
+    assert.ok(!text.includes('bills（写库回执）'), '采集页不得照抄回执页那句');
+  });
+});
