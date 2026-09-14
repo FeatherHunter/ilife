@@ -95,12 +95,17 @@
 
 | 件 | LF | 说明 |
 |---|---:|---|
-| `src/workout/write.ts` | 570 | 交接文档的另票清单里漏了这一件，本次补挂 |
 | `src/render/trendDocs.ts` | 816 | 已在册 |
-| `src/render/sportPortDocs.ts` | 533 | 已在册 |
-| `src/render/wizardPort.ts` | 457 | 本包 `AGENTS.md` 已挂（#354 登记） |
-| `src/workout/planStore.ts` | 369 | 已在册 |
 | `scripts/gen-cli.mjs` | 729 | 本包 `AGENTS.md` 已挂（#354 登记） |
+| `src/render/html.ts` | 647 | **交接文档与 `AGENTS.md` 台账均未挂号**，本次补挂 |
+| `src/workout/write.ts` | 570 | 交接文档的另票清单里漏了这一件，本次补挂 |
+| `src/render/sportPortDocs.ts` | 533 | 已在册 |
+| `src/workout/planStore.ts` | 369 | 已在册 |
+
+**另有两处台账与事实不符，需订正**：
+
+1. `packages/skill-calorie/AGENTS.md` 写「其余件均在 350 以内（本次只挂号超线件两件）」——**实测有六件超线**（上表），该句不成立。
+2. 同一份台账把 `src/render/wizardPort.ts` 记为 **457**（超线），**实测现为 265**——已被重构降到线内，该行已过期。按铁律二的清单规矩，这行的数字该改成重测口径或指针，不该留着过期数。
 
 本图动过的件全部在 350 以内：`render/workoutPlanDocs.ts` 348、`render/planCopyBlock.ts` 61、`workout/precheckPrompt.ts` 38、`workout/plan.ts` 54、`workout/receipt.ts` 120。
 
