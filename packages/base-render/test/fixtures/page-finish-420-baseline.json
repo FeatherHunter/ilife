@@ -1,0 +1,47 @@
+{
+  "note": "判据基线夹具：真值取自 dc16ba1^ 的编译产物，生成器 .scratch/t428/gen-baseline.mjs（落点窗口内直调）。",
+  "baselineCommit": "2ef942bf0c844102fafd5f97034f2569fec97b40",
+  "baselineCommitSubject": "docs(161): 总清单裁决6/8出处与helpShell断言校正（117处口径/--accent限定）",
+  "sourcePath": "packages/base-render/src/blocks.ts",
+  "sourceBlobSha256": "be1affb194ea7b38462d9c635b056438428d4aeeb68f63bc4f7a4d052261cc2b",
+  "sourceBlobSha1": "1e07526ce11e2cd7c780aaf21f463829d5aec60d",
+  "takenAt": "2026-09-14T11:20:41.475Z",
+  "cases": [
+    {
+      "label": "标题＋正文",
+      "input": {
+        "title": "T",
+        "content": "C"
+      },
+      "html": "<section class=\"ilife-block ilife-block-page-shell\"><h1 class=\"ilife-block-page-shell-title\">T</h1><div class=\"ilife-block-page-shell-body\">C</div></section>"
+    },
+    {
+      "label": "三件套",
+      "input": {
+        "title": "T",
+        "content": "C",
+        "eyebrow": "E",
+        "subtitle": "S"
+      },
+      "html": "<section class=\"ilife-block ilife-block-page-shell\"><p class=\"ilife-block-page-shell-eyebrow\">E</p><h1 class=\"ilife-block-page-shell-title\">T</h1><p class=\"ilife-block-page-shell-subtitle\">S</p><div class=\"ilife-block-page-shell-body\">C</div></section>"
+    },
+    {
+      "label": "受信正文＋转义标题",
+      "input": {
+        "title": "<b>&",
+        "content": "<i>x</i>",
+        "subtitle": "\"q\""
+      },
+      "html": "<section class=\"ilife-block ilife-block-page-shell\"><h1 class=\"ilife-block-page-shell-title\">&lt;b&gt;&amp;</h1><p class=\"ilife-block-page-shell-subtitle\">&quot;q&quot;</p><div class=\"ilife-block-page-shell-body\"><i>x</i></div></section>"
+    },
+    {
+      "label": "printable 给假",
+      "input": {
+        "title": "T",
+        "content": "C",
+        "printable": false
+      },
+      "html": "<section class=\"ilife-block ilife-block-page-shell\"><h1 class=\"ilife-block-page-shell-title\">T</h1><div class=\"ilife-block-page-shell-body\">C</div></section>"
+    }
+  ]
+}
