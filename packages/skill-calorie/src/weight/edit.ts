@@ -21,7 +21,7 @@ export function writeWeightUpdate(params: Record<string, unknown>, db: DatabaseS
     if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
     const r = updateWeight(db, id, kg, note);
     const bmiTextU = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
-    return out(R('改体重记录', 'update', '已更新体重 #' + id + '：' + r.oldWeight + '→' + r.newWeight + ' kg（' + bmiTextU + '）', '改体重记录', 'weight_log (写库回执)', {
+    return out(R('改体重记录', 'update', '已更新体重 #' + id + '：' + r.oldWeight + ' kg → ' + r.newWeight + ' kg（' + bmiTextU + '）', '改体重记录', 'weight_log (写库回执)', {
       recordId: id, ids: [id], writtenFields: [...(kg !== undefined ? ['kg'] : []), ...(note !== undefined ? ['note'] : [])],
       // 整页回执的对照表吃改前 → 改后（摘要口径一字不动；按 id 改拿不到改前备注，那一侧留空）。
       items: [{
