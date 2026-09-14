@@ -6,7 +6,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { buildGalleryData, buildViewerData } from './photo.js';
 import { buildPhotoListDoc } from './galleryDoc.js';
-import { renderViewerHtml } from '../render/html.js';
+import { buildPhotoViewerDoc } from './viewerDoc.js';
 import { dayField, fail } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { photoDir } from './dir.js';
@@ -28,11 +28,15 @@ export function viewPhotoList(params: Record<string, unknown>, db: DatabaseSync)
   return { data: { items, total: g.totalCount }, html: buildPhotoListDoc(g, dir ?? null) };
 }
 
-/** `calorie.photo.detail` · 查身材照：`id` 须为整数，查不到即 missing-data。 */
+/** `calorie.photo.detail` · 查身材照：`id` 须为整数，查不到即 missing-data。
+ *
+ * #281 · 单张页与票 1 同形＝完整文档（doctype 起）＋内嵌照片＋复制区，同时兼任
+ * 「删身材照」流程的快照：取数仍走 `buildViewerData`，呈现走本能力内 `viewerDoc`
+ *（`html.ts` 只读，不碰）。 */
 export function viewPhotoDetail(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const id = params['id'];
   if (typeof id !== 'number' || !Number.isInteger(id)) fail(2, '缺参数 id（整数照片 id）');
   const dir = photoDir(params);
   const v = buildViewerData(db, id as number, dir ?? null);
-  return { data: { item: { id: v.photo.id, date: v.photo.date, photoPath: v.photo.photoPath, tagList: v.photo.tagList } }, html: renderViewerHtml(v) };
+  return { data: { item: { id: v.photo.id, date: v.photo.date, photoPath: v.photo.photoPath, tagList: v.photo.tagList } }, html: buildPhotoViewerDoc(v, dir ?? null) };
 }
