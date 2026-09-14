@@ -64,10 +64,20 @@ function fullDetrendedSigma(w: number[]): number {
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 
-/** 偏离量的页上写法（`±` ＋ 绝对值）：预警句与「预警」卡的值槽共用这一处，
- *  免得同一个量在句子与值槽里各印一个精度（值槽那张卡的值必须与复制载荷的 `最新偏离kg` 同数）。 */
+/** 偏离量的**值槽**写法（带符号、不带单位）：「今日偏离」卡的值槽与复制载荷的 `最新偏离kg` 同数同精度。
+ *  #485 数字纪律：差值一律带符号（`+0.13`／`-0.1`），零差值写 `0`（不写 `+0`）。
+ *  句子里的写法走 `baselineDeltaText`——它多给方向词与单位，两处别各写一套。 */
 export function deviationText(deviationKg: number): string {
-  return '±' + Math.abs(round2(deviationKg));
+  const v = round2(deviationKg);
+  return v > 0 ? '+' + v : String(v);
+}
+
+/** 偏离量进**句子**的读者写法（方向 ＋ 数 ＋ 单位）：结论句与「今日偏离」卡的副说明共用这一处，
+ *  免得同一个量在页面两处各印一套说法。零差值不写「高 0 kg」，写「正好在平均线上」。 */
+export function baselineDeltaText(deviationKg: number): string {
+  const v = round2(deviationKg);
+  if (v === 0) return '正好在平均线上';
+  return '比平均线' + (v > 0 ? '高' : '低') + ' ' + Math.abs(v) + ' kg';
 }
 
 export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?: string | null, baselineMode: BaselineMode = 'rolling'): AnalysisResult<VolatilityV2> {
@@ -97,12 +107,12 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
   if (baselineMode === 'goal' && goalWeight) {
     baselineValue = goalWeight;
     baselineSigma = fullDetrendedSigma(weights);
-    toggleLabel = 'vs 目标 ' + goalWeight + 'kg';
+    toggleLabel = '目标体重 ' + goalWeight + ' kg';
   } else {
     const recent30 = weights.length >= 30 ? weights.slice(-30) : weights;
     baselineValue = recent30.reduce((a, b) => a + b, 0) / recent30.length;
     baselineSigma = rollingSigma7d(weights);
-    toggleLabel = 'vs 近 ' + Math.min(30, weights.length) + ' 天均值';
+    toggleLabel = '近 ' + Math.min(30, weights.length) + ' 天平均体重';
   }
   const sigmaForThresholds = baselineSigma > 0 ? baselineSigma : 0.5;
   const thresholds = { yellow: round3(YELLOW_SIGMA * sigmaForThresholds), red: round3(RED_SIGMA * sigmaForThresholds) };
@@ -125,9 +135,13 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
   const lastDev = lastKg - baselineValue;
   const lastAbs = Math.abs(lastDev);
   const ewLevel = levelFor(lastAbs);
+  // #485 人话改写：`2sigma 红线／1.5sigma 黄线` 读者看不懂，改成「超过警戒线／注意线」
+  // 并带上那条线的数（读者要的是「越过多少算报警」）。方向词由 `baselineDeltaText` 一处给。
   const ewMsg = ewLevel === 'red'
-    ? '今偏离 ' + deviationText(lastDev) + 'kg 超过 2sigma 红线，谨紧张'
-    : ewLevel === 'yellow' ? '今天偏离 ' + deviationText(lastDev) + 'kg 超过 1.5sigma 黄线，注意' : '今天在正常范围内(' + deviationText(lastDev) + 'kg)';
+    ? '今天' + baselineDeltaText(lastDev) + '，超过警戒线 ±' + thresholds.red + ' kg，请留意'
+    : ewLevel === 'yellow'
+      ? '今天' + baselineDeltaText(lastDev) + '，超过注意线 ±' + thresholds.yellow + ' kg，请留意'
+      : '今天' + baselineDeltaText(lastDev) + '，在正常范围内';
   return ok({
     baselineMode,
     baselineValue: round2(baselineValue),
@@ -216,11 +230,11 @@ export function buildVolatilityView(
 
 /* ── 页内共用口径（装配层 `volatilityDoc.ts` 与别的页共用：单一出处，不各写一份） ── */
 
-/** 异常原因句（老 `_augment_kpis` 的异常说明口径）。 */
-export function anomalyReason(p: VolPoint, o: VolatilityV2): string {
-  const dir = p.deviationKg >= 0 ? '+' : '';
-  const line = p.level === 'red' ? '超过 2σ 红线' : '超过 1.5σ 黄线';
-  return '偏离基线 ' + dir + p.deviationKg + 'kg，' + line + '（黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + '）';
+/** 异常原因句（老 `_augment_kpis` 的异常说明口径）。
+ *  #485：只说「越了哪条线」——阈值数字已在「波动带」卡与复制载荷各一处，
+ *  行内再印一遍就是同一组数字的第四次重复（90 天页里这行要重复 5 次）。 */
+export function anomalyReason(p: VolPoint): string {
+  return p.level === 'red' ? '超过警戒线' : '超过注意线';
 }
 
 /** 结论句（由取数层数字拼，页面不做自然语言解析；§5.3）。 */
@@ -235,8 +249,12 @@ export function volatilitySummary(o: VolatilityV2): string {
   const red = o.recentAnomalies.filter((a) => a.level === 'red').length;
   const std2 = (Math.round(overall * 100) / 100).toFixed(2);
   const dd3 = (Math.round(dailyAvg * 1000) / 1000).toFixed(3);
-  if (o.points.length === 1) return '单点记录：本窗只有 1 条体重 ' + o.baselineValue + 'kg，标准差无从计算';
-  if (overall < 0.3 && o.recentAnomalies.length === 0) return '体重很稳：标准差 ' + std2 + 'kg，无异常点，日均波动 ' + dd3 + 'kg';
-  if (overall < 0.5) return '体重基本稳定：标准差 ' + std2 + 'kg，异常 ' + o.recentAnomalies.length + ' 次（黄 ' + yellow + '/红 ' + red + '）';
-  return '体重波动较大：标准差 ' + std2 + 'kg，异常 ' + o.recentAnomalies.length + ' 次（黄 ' + yellow + '/红 ' + red + '），建议关注饮食与饮水';
+  if (o.points.length === 1) return '只有 1 条记录：本窗只有一天体重 ' + o.baselineValue + ' kg，看不出波动';
+  if (overall < 0.3 && o.recentAnomalies.length === 0) {
+    return '体重很稳：波动幅度 ' + std2 + ' kg，没有异常点，最近 7 天平均每天变化 ' + dd3 + ' kg';
+  }
+  const head = '波动幅度 ' + std2 + ' kg，近 7 天有 ' + o.recentAnomalies.length + ' 天超过波动带（注意线 '
+    + yellow + ' 天／警戒线 ' + red + ' 天）';
+  if (overall < 0.5) return '体重基本稳定：' + head;
+  return '体重波动较大：' + head + '，建议关注饮食与饮水';
 }

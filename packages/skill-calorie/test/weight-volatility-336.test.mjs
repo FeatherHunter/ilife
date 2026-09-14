@@ -66,12 +66,12 @@ test('#336 只看异常点：不含曲线段、含异常点与原因', () => {
   seedVol(db);
   const full = viewVolatility({ window: '30d', today: '2026-08-18' }, db);
   const only = viewVolatility({ window: '30d', today: '2026-08-18', view: 'anomalies-only' }, db);
-  assert.ok(full.html.includes('偏离基线（黄±'), '整图含曲线段');
-  assert.ok(full.html.includes('σ 趋势'), '整图含 σ 趋势');
-  assert.ok(!only.html.includes('偏离基线（黄±'), '只看异常点不出曲线段');
+  assert.ok(full.html.includes('每天离平均线多远'), '整图含曲线段');
+  assert.ok(full.html.includes('波动幅度趋势'), '整图含波动幅度趋势');
+  assert.ok(!only.html.includes('每天离平均线多远'), '只看异常点不出曲线段');
   const charts = (html) => (html.match(/ilife-block-chart-block"/g) || []).length;
   assert.equal(charts(only.html), 0, '只看异常点一张图都不出（判据从文案改成图表区块计数）');
-  assert.ok(charts(full.html) >= 2, '整图至少两段（偏离基线＋σ 趋势）');
+  assert.ok(charts(full.html) >= 2, '整图至少两段（离平均线＋波动幅度趋势）');
   assert.ok(only.html.includes('波动异常点'), '只看异常点标题');
   assert.ok(only.html.includes('原因'), '只看异常点含原因列');
   assert.ok(only.html.includes('共 ') && only.html.includes('个'), '只看异常点含计数');
@@ -83,10 +83,10 @@ test('#336 融合（§5 七组）：图表 options／徽章／结论块／页脚
   seedVol(db);
   const full = viewVolatility({ window: '30d', today: '2026-08-18' }, db).html;
   const only = viewVolatility({ window: '30d', today: '2026-08-18', view: 'anomalies-only' }, db).html;
-  for (const n of ['ilife-charts-tick', 'ilife-charts-markline', 'status-badge', '📊 数据来源:', '复制日志', '<details', '结论']) {
+  for (const n of ['ilife-charts-tick', 'ilife-charts-markline', 'status-badge', '📊 数据来源：', '复制日志', '<details', '结论']) {
     assert.ok(full.includes(n), '整图面缺：' + n);
   }
-  for (const n of ['只看异常点', 'status-badge', '📊 数据来源:', '复制日志', '结论']) {
+  for (const n of ['只看异常点', 'status-badge', '📊 数据来源：', '复制日志', '结论']) {
     assert.ok(only.includes(n), '只看异常点面缺：' + n);
   }
   assert.equal((full.match(/<summary[^>]*>结论<\/summary>/g) || []).length, 1, '结论块一页最多一块');
@@ -94,13 +94,19 @@ test('#336 融合（§5 七组）：图表 options／徽章／结论块／页脚
   db.close();
 });
 
-test('#336 页面补齐：阈值与预警＋异常列表计数＋σ趋势＋结论句', () => {
+test('#336 页面补齐：波动带与今日偏离＋异常列表计数＋波动幅度趋势＋结论句（#485 换词后同步收紧）', () => {
   const db = tmpDb();
   seedVol(db);
   const v = buildVolatilityView(db, '2026-07-20', '2026-08-18', 'rolling');
   const html = buildVolatilityDoc(v, 'full');
-  for (const needle of ['基线', '黄±', '红±', '预警', '近期异常', 'σ 趋势', '体重很稳|体重基本稳定|体重波动较大']) {
+  for (const needle of ['平均线', '注意线', '警戒线', '今日偏离', '近期异常', '波动幅度趋势', '体重很稳|体重基本稳定|体重波动较大']) {
     assert.match(html, new RegExp(needle), '补齐含 ' + needle);
+  }
+  // #485 文本审查：旧术语句命中数必须为 0（`基线` 不在本清单——复制载荷的中文**键名**仍有 `基线kg`，
+  // 页上可见文本里已经没有它；载荷键名归 #41 登记册的 `render-t41.test.mjs:113` 断 `/基线/` 复用）。
+  for (const gone of ['偏离基线', '黄±', '红±', '阈值', '标准差', 'σ 趋势', '2sigma', '1.5sigma',
+    'vs 近', '档位「', '📊 数据来源:', 'rolling 基线', '黄/红阈上']) {
+    assert.equal(html.split(gone).length - 1, 0, '旧术语句残留：' + gone);
   }
   db.close();
 });

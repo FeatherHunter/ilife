@@ -23,12 +23,12 @@ import { DB_FILENAME } from '../paths.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
 import { weightCurvePlan } from './plate.js';
 import type { VolatilityView } from './plate.js';
-import { anomalyReason, deviationText, volatilitySummary } from './volatility.js';
+import { anomalyReason, baselineDeltaText, deviationText, volatilitySummary } from './volatility.js';
 import type { VolatilityV2, VolatilityViewMode, VolLevel } from './volatility.js';
 
 const CMD_KEY = 'calorie.view.volatility';
 /** 复制日志第 3 段后半（哪张库／哪个窗口）。 */
-const COPY_SOURCE = DB_FILENAME + ' ｜ weight_log（本窗体重波动）';
+const COPY_SOURCE = DB_FILENAME + ' ｜ 体重记录（本窗体重波动）';
 
 /** 渲染本页的命令原文（复制日志第 3 段）：照抄可重跑。 */
 export function volatilityCommandOf(params: Record<string, unknown>): string {
@@ -38,8 +38,9 @@ export function volatilityCommandOf(params: Record<string, unknown>): string {
 /** 缺值统一「—」（页上可见文本的占位符；**不进复制载荷**，见 `t395-融合基准.md` 裁定 2）。
  *  本页 KPI／表格的数都由算式层保证在场；这一份留给后续补位用，别把 `—` 写进载荷。 */
 const MISSING = '—';
-/** 档位词：数据层的 `normal`／`yellow`／`red` 不动，只在显示层翻成这一套词（全页同一套）。 */
-const LEVEL_WORD: Readonly<Record<VolLevel, string>> = { normal: '正常', yellow: '黄', red: '红' };
+/** 档位词：数据层的 `normal`／`yellow`／`red` 不动，只在显示层翻成这一套词（全页同一套）。
+ *  #485：颜色词（黄／红）换成线的名字——与卡副说明、表列、结论句同词，读者不用在两种记法间翻译。 */
+const LEVEL_WORD: Readonly<Record<VolLevel, string>> = { normal: '正常', yellow: '注意', red: '警戒' };
 /** σ 要有像样的对照至少要 3 个点（与 `volatility.ts` 的 `rollingSigma7d`／`fullDetrendedSigma` 门槛同值）。 */
 const SAMPLE_MIN = 3;
 
@@ -47,15 +48,16 @@ const levelWord = (l: VolLevel): string => LEVEL_WORD[l] ?? MISSING;
 
 /** 结论句（唯一形态：`renderDisclosure({title:'结论'})` 的正文）。
  *  不含「结论：」前缀——折叠区标题已经是「结论」。
- *  `only`（只看异常点读法）不提 σ 趋势：本读法没画那张图，结论也不该引它。 */
+ *  `only`（只看异常点读法）不提波动幅度趋势：本读法没画那张图，结论也不该引它。
+ *  #485：`标准差／档位／σ` 全换人话——波动幅度／「比平均线高多少，越没越线」。 */
 function volatilityConclusion(o: VolatilityV2, only = false): string {
   const s = volatilitySummary(o);
-  const word = levelWord(o.earlyWarning.level);
   const since = only ? ''
-    : o.sigmaTrend.length > 0 ? '（σ 趋势 ' + o.sigmaTrend.length + ' 点）' : '（样本不足，不出 σ 趋势）';
-  return o.points.length === 1
-    ? s + '；本窗只有 1 条记录，单点无波动对照' + since + '。'
-    : s + '；' + o.earlyWarning.date + ' 偏离基线 ' + o.earlyWarning.deviationKg + 'kg，档位「' + word + '」' + since + '。';
+    : o.sigmaTrend.length > 0 ? '（波动幅度趋势 ' + o.sigmaTrend.length + ' 个点）' : '（记录太少，画不出波动幅度趋势）';
+  if (o.points.length === 1) return s + '；本窗只有 1 条记录，看不出波动对照' + since + '。';
+  const level = o.earlyWarning.level;
+  const tail = level === 'red' ? '，超过警戒线' : level === 'yellow' ? '，超过注意线' : '，在正常范围内';
+  return s + '；' + o.earlyWarning.date + ' ' + baselineDeltaText(o.earlyWarning.deviationKg) + tail + since + '。';
 }
 
 /** 复制载荷（`stat` 形，键写中文）：页上读数 ＋ 异常明细整表 ＋ 结论原句。
@@ -78,8 +80,8 @@ function volatilityCopyPayload(o: VolatilityV2): SerializableEnvelope {
     '结论': volatilityConclusion(o),
     '异常明细': o.recentAnomalies.length === 0
       ? '无'
-      : o.recentAnomalies.map((p) => [p.date, String(p.kg) + 'kg', String(p.deviationKg) + 'kg',
-        levelWord(p.level), anomalyReason(p, o)].join(' ｜ ')).join('；'),
+      : o.recentAnomalies.map((p) => [p.date, String(p.kg) + ' kg', deviationText(p.deviationKg) + ' kg',
+        levelWord(p.level), anomalyReason(p)].join(' ｜ ')).join('；'),
   };
   return {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: CMD_KEY, data: { metrics },
@@ -90,7 +92,7 @@ function volatilityCopyPayload(o: VolatilityV2): SerializableEnvelope {
 const ANOMALY_COLUMNS: DataTableColumn[] = [
   { key: 'date', label: '日期' },
   { key: 'kg', label: '体重', align: 'right' },
-  { key: 'dev', label: '偏离', align: 'right' },
+  { key: 'dev', label: '偏离平均线', align: 'right' },
   { key: 'level', label: '级别' },
   { key: 'reason', label: '原因' },
 ];
@@ -101,26 +103,27 @@ function anomalyTable(o: VolatilityV2, view: VolatilityViewMode): string {
   return renderDataTable({
     columns: ANOMALY_COLUMNS,
     rows: o.recentAnomalies.map((p) => ({
-      date: p.date, kg: String(p.kg) + ' kg', dev: String(p.deviationKg) + ' kg',
-      level: levelWord(p.level), reason: anomalyReason(p, o),
+      date: p.date, kg: String(p.kg) + ' kg', dev: deviationText(p.deviationKg) + ' kg',
+      level: levelWord(p.level), reason: anomalyReason(p),
     })),
     caption: only
-      ? '波动异常点（共 ' + o.recentAnomalies.length + ' 个，只看异常点）'
-      : '近 7 天异常点（共 ' + o.recentAnomalies.length + ' 个，黄/红阈上）',
-    emptyText: '近期无异常点（基线 ' + o.baselineValue + ' kg，黄±' + o.thresholds.yellow
-      + ' 红±' + o.thresholds.red + '）',
+      ? '波动异常点（共 ' + o.recentAnomalies.length + ' 个）'
+      : '近 7 天异常点（共 ' + o.recentAnomalies.length + ' 个，超过波动带的点）',
+    emptyText: '近期没有异常点（平均线 ' + o.baselineValue + ' kg）',
   });
 }
 
 /** 四张 KPI 卡与徽章：状态词只在这里出现一次，档位词恒取 `LEVEL_WORD`。
- *  `only`（只看异常点读法）不出整图，故阈值卡也不提 σ 趋势——本读法不提没画出来的东西。
+ *  两种读法（整图／只看异常点）共用同一组卡——#485 之后卡面不再提波动幅度趋势，故不收读法参数。
  *
  *  **值槽只放一个数与单位**（t154 用户读数：值槽里塞长文本或颜色词，卡会被断行撑高、四张不等高）：
- *  ① 基线值进值槽，「基线」这两个字进 `detail`；
- *  ② 阈值只放**红线**那一个数——两条阈值线图上都画了并带标注（图题 `黄±X 红±Ykg`、红线 `红线 ±Ykg`），
- *     黄线与 σ 口径进 `detail`；颜色的语义交给徽章与图上标注，不进值槽；
- *  ③ 预警卡放「当前偏离」这个数，档位词（正常／黄／红）交给徽章。 */
-function kpiCards(o: VolatilityV2, only: boolean): KpiCardInput[] {
+ *  ① 平均线值进值槽，线是什么线由页副标题（`以…为参照`）一处说清，卡副说明只报记录齐不齐；
+ *  ② 波动带卡的值槽放**警戒线**那一个数，注意线的数与波动幅度进 `detail`（值槽里的数由 `detail` 认领）；
+ *  ③ 今日偏离卡放「当前偏离」这个数（带符号），越没越线交给徽章与副说明。
+ *
+ *  #485 文本审查：①`波动分析` 卡名与页标题同字（冗余）→`平均线`；②`阈值／黄线／红线／σ` 全换人话；
+ *  ③徽章只留状态（记录齐全／记录不齐／兜底值／无异常点），不再抄副说明的数字。 */
+function kpiCards(o: VolatilityV2): KpiCardInput[] {
   const single = o.points.length === 1;
   const gap = o.days - o.warnDays;
   const level = o.earlyWarning.level;
@@ -128,45 +131,45 @@ function kpiCards(o: VolatilityV2, only: boolean): KpiCardInput[] {
   const redN = o.recentAnomalies.filter((a) => a.level === 'red').length;
   return [
     {
-      label: '波动分析', value: String(o.baselineValue), unit: 'kg',
-      detail: '基线 ' + o.baselineToggleLabel + ' · ' + o.warnDays + '/' + o.days + ' 天有记录'
-        + (gap > 0 ? '（缺 ' + gap + ' 天）' : ''),
+      label: o.baselineMode === 'goal' ? '目标体重' : '平均线', value: String(o.baselineValue), unit: 'kg',
+      detail: o.warnDays + '/' + o.days + ' 天有记录' + (gap > 0 ? '（缺 ' + gap + ' 天）' : ''),
       status: single ? 'empty' : gap > 0 ? 'warn' : 'ok',
-      statusText: single ? '单点' : gap > 0 ? '稀疏 ' + o.warnDays + ' 条' : '共 ' + o.warnDays + ' 条',
+      statusText: single ? '只有一天' : gap > 0 ? '记录不齐' : '记录齐全',
     },
     {
-      label: '阈值', value: '±' + o.thresholds.red, unit: 'kg',
-      detail: '黄线 ±' + o.thresholds.yellow + 'kg · σ=' + o.baselineSigma + 'kg · ' + o.baselineMode + ' 基线'
-        + (only ? '' : ' · ' + (o.sigmaTrend.length > 0 ? 'σ 对照 ' + o.sigmaTrend.length + ' 点' : '样本不足，不出 σ 趋势')),
-      // 只有 1 个点时 σ 取兜底值 0.5，阈值不是从本窗数据推出来的——徽章要如实说。
-      status: single ? 'empty' : o.sigmaTrend.length > 0 ? 'ok' : 'warn',
-      statusText: single ? '单点阈值（兜底 σ）' : o.sigmaTrend.length > 0 ? '正常对照' : '样本不足',
+      label: '波动带', value: '±' + o.thresholds.red, unit: 'kg',
+      detail: '警戒线 ±' + o.thresholds.red + ' kg · 注意线 ±' + o.thresholds.yellow + ' kg · 波动幅度 '
+        + o.baselineSigma + ' kg',
+      // 只有 1 个点、或点数不到门槛时，波动幅度取兜底值 0.5，两条线不是从本窗数据推出来的——徽章要如实说。
+      status: single || o.sigmaTrend.length === 0 ? 'warn' : 'ok',
+      statusText: single || o.sigmaTrend.length === 0 ? '兜底值' : '按本窗数据',
     },
     {
-      label: '预警', value: deviationText(o.earlyWarning.deviationKg), unit: 'kg',
+      label: '今日偏离', value: deviationText(o.earlyWarning.deviationKg), unit: 'kg',
       detail: o.earlyWarning.message,
       status: level === 'red' ? 'danger' : level === 'yellow' ? 'warn' : 'ok',
       statusText: levelWord(level),
     },
     {
       label: '近期异常', value: String(o.recentAnomalies.length), unit: '个',
-      // 颜色不写成裸字（用户 2026-09-14 读数：阈值卡把「黄／红」当文字塞进值槽很怪）——
-      // 这里虽是副说明与徽章、不在值槽，仍与图上标注同词，读作「黄线级几个点、红线级几个点」。
-      detail: '黄线 ' + yellowN + ' · 红线 ' + redN + ' · 共 ' + o.points.length + ' 点',
+      // #485：只说「近 7 天里有几天越了哪条线」——异常点按近 7 天取（`cutoff`），
+      // 写成「共 N 点」会被读成本窗全覆盖（90／180 天窗口尤其误导）。
+      detail: '近 7 天：超过注意线 ' + yellowN + ' 天 · 超过警戒线 ' + redN + ' 天',
       status: o.recentAnomalies.length === 0 ? 'ok' : redN > 0 ? 'danger' : 'warn',
-      statusText: o.recentAnomalies.length === 0 ? '无异常点' : '黄线 ' + yellowN + ' / 红线 ' + redN,
+      statusText: o.recentAnomalies.length === 0 ? '无异常点' : '有异常点',
     },
   ];
 }
 
-/** 偏离基线折线：**量程把两条阈值线也算进去**（算进去才画得住，§2 第 1 条「不许画了读不到」），
- *  `markLine` 只画红线那一条主阈值（图表契约一次只收一条水平线），黄线口径在标题与 KPI 里读。 */
+/** 偏离折线：**量程把两条线也算进去**（算进去才画得住，§2 第 1 条「不许画了读不到」），
+ *  `markLine` 只画警戒线那一条主阈值（图表契约一次只收一条水平线），注意线的数在波动带卡里读。
+ *  #485：图题里的两个阈值数字删掉（同一组数字在波动带卡、图上标注各一处已够）——图题只说这张图在问什么。 */
 function deviationChart(o: VolatilityV2): string {
   const budget = o.thresholds.red > 0 ? o.thresholds.red : 0.5;
   const plan = weightCurvePlan(o.points.map((p) => p.deviationKg), budget);
   return renderChartBlock({
     kind: 'line',
-    title: '偏离基线（黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + 'kg）',
+    title: '每天离平均线多远',
     input: {
       items: o.points.map((p) => ({
         label: p.date.slice(5), value: p.deviationKg, anomaly: p.level !== 'normal',
@@ -181,7 +184,7 @@ function deviationChart(o: VolatilityV2): string {
         height: 180,
         markLine: {
           value: o.thresholds.red, color: '#ff3b30',
-          label: '红线 ±' + o.thresholds.red + 'kg',
+          label: '警戒线 ±' + o.thresholds.red + ' kg',
         },
         emptyText: '本窗无体重记录',
       },
@@ -189,12 +192,12 @@ function deviationChart(o: VolatilityV2): string {
   });
 }
 
-/** σ 趋势折线：量程只按 σ 序列算（阈值线不属于这张图的量程），刻度恒显式给。 */
+/** 波动幅度折线：量程只按波动幅度序列算（两条线不属于这张图的量程），刻度恒显式给。 */
 function sigmaChart(o: VolatilityV2): string {
   const plan = weightCurvePlan(o.sigmaTrend.map((s) => s.sigmaKg), null);
   return renderChartBlock({
     kind: 'line',
-    title: 'σ 趋势',
+    title: '波动幅度趋势',
     input: {
       items: o.sigmaTrend.map((s) => ({ label: s.dateStart.slice(5), value: s.sigmaKg })),
       options: {
@@ -205,7 +208,7 @@ function sigmaChart(o: VolatilityV2): string {
         format: (n: number): string => n.toFixed(2) + ' kg',
         showDots: true,
         height: 180,
-        emptyText: '点数不足，出不了 σ 趋势（要 ≥' + SAMPLE_MIN + ' 条记录）',
+        emptyText: '记录太少，画不出波动幅度趋势（每段时间至少 ' + SAMPLE_MIN + ' 条记录才看得出差别）',
       },
     },
   });
@@ -213,29 +216,32 @@ function sigmaChart(o: VolatilityV2): string {
 
 /** 页脚数据来源行（§5.5：哪张库／哪个窗口／多少条；有缺口当场注明，缺的天不补 0）。
  *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`：页脚来源是「口径行」不是提示，
- *  故不用深色 toast 卡（#340 裁定）。 */
+ *  故不用深色 toast 卡（#340 裁定）。
+ *  #485：句式与全族统一（`口径.md` §3.1）——全角冒号、库表名进括号、三段用 `｜` 分、末段恒为「共 N 条」；
+ *  「体重记录」是读者话（`weight_log` 只留在括号里的库表名与复制日志第 4 段）。 */
 function sourceLine(o: VolatilityV2, start: string, end: string): string {
   const gap = o.days - o.warnDays;
-  return renderCaliberLine('📊 数据来源:' + DB_FILENAME + ' · weight_log · 窗口 ' + start + ' ~ ' + end
-    + '（' + o.days + ' 天 · ' + o.warnDays + ' 条记录'
-    + (gap > 0 ? ' · ' + gap + ' 天无记录，不计入基线、不补 0' : ' · 窗口内记录齐') + '）');
+  return renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + start + ' ~ ' + end
+    + ' ｜ 共 ' + o.warnDays + ' 条'
+    + (gap > 0 ? ' ｜ 缺 ' + gap + ' 天没记' : ''));
 }
 
-/** 页顶前提提示（§5.6：样本不足不拒绝渲染，走 `warn` 写清「几条／门槛几条／为什么仍可看」）。 */
+/** 页顶前提提示（§5.6：记录太少不拒绝渲染，走 `warn` 写清「几条／门槛几条／为什么仍可看」）。
+ *  #485：`样本／σ／阈值／兜底值` 换人话（记录太少／波动幅度／两条线／兜底值）。 */
 function premiseNotice(o: VolatilityV2): string | null {
   if (o.points.length === 0) return null;
   if (o.points.length === 1) {
     return notice({
-      title: '样本与口径', icon: 'warn',
-      msg: '本窗只有 1 条体重记录：基线就是这一条读数，偏离恒为 0，σ 与阈值取兜底值 '
-        + '0.5kg 档，照常出页，但这一条不代表趋势。',
+      title: '记录太少', icon: 'warn',
+      msg: '本窗只有 1 条体重记录：平均线就是这一条读数，离平均线的距离必然是 0；波动幅度与两条线取兜底值 '
+        + '0.5 kg 档，照常出页，但一天看不出趋势。',
     });
   }
   if (o.sigmaTrend.length === 0) {
     return notice({
-      title: '样本与口径', icon: 'warn',
-      msg: '本窗只有 ' + o.warnDays + ' 条记录，低于 σ 对照门槛 ' + SAMPLE_MIN
-        + ' 条：偏离曲线与异常表照常给，但 σ 趋势不出，阈值用兜底值读，当参考值看。',
+      title: '记录太少', icon: 'warn',
+      msg: '本窗只有 ' + o.warnDays + ' 条记录，少于 ' + SAMPLE_MIN
+        + ' 条：曲线与异常表照常给，但波动幅度趋势画不出来，两条线用兜底值读，当参考值看。',
     });
   }
   return null;
@@ -246,13 +252,14 @@ function premiseNotice(o: VolatilityV2): string | null {
 export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode, command: string): string {
   const o = v.volatility;
   const only = view === 'anomalies-only';
-  const subtitle = only
-    ? '本读法只列越阈异常点，不出偏离曲线（要看整图请说「看体重稳不稳（增强版）」）'
-    : '窗口 ' + v.start + ' ~ ' + v.end + ' · ' + o.warnDays + ' 条记录 · 基线 ' + o.baselineValue + ' kg';
+  // #485 副标题：窗口与条数已由标题（H1）和页脚来源行各说一处，这里三说一句是百分百冗余；
+  // 副标题只留整页唯一的「参照是谁」——`平均线` 这个词后面图表与结论句反复用，头一次见要有人话解释。
+  // （只看异常点读法原来那句「本读法只列越阈异常点…」与页顶提示同字，删掉，读法说明只留页顶一处。）
+  const subtitle = '以' + o.baselineToggleLabel + '为参照';
   if (o.points.length === 0) {
     // 数据型空态（§5.6）：页照常是一张完整的页——标题、空态句、页脚来源行、复制区都在。
     const empty: string[] = [
-      notice({ title: '本窗无体重记录', icon: 'warn', msg: '窗口 ' + v.start + ' ~ ' + v.end + ' 内没有 weight_log 记录，出不了基线与阈值。' }),
+      notice({ title: '本窗无体重记录', icon: 'warn', msg: '窗口 ' + v.start + ' ~ ' + v.end + ' 内没有体重记录，出不了平均线与波动带。' }),
       sourceLine(o, v.start, v.end),
       copySection(volatilityCopyPayload(o), command),
     ];
@@ -268,14 +275,14 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
   const parts: string[] = [];
   if (only) {
     parts.push(notice({
-      title: '本读法只看异常点', icon: 'info',
-      msg: '这一页只列「偏离基线超过黄／红阈值」的点（共 ' + o.recentAnomalies.length + ' 个），'
-        + '不出偏离曲线与 σ 趋势两张图；要看整图请说「看体重稳不稳（增强版）」。',
+      title: '这一页只看异常点', icon: 'info',
+      msg: '这一页只列超过波动带的点（共 ' + o.recentAnomalies.length + ' 个），'
+        + '不出两张曲线图；要看整图请说「看体重稳不稳（增强版）」。',
     }));
   }
   const premise = premiseNotice(o);
   if (premise !== null) parts.push(premise);
-  parts.push(renderKpiGrid(kpiCards(o, only)));
+  parts.push(renderKpiGrid(kpiCards(o)));
   let charts = false;
   if (!only) {
     parts.push(deviationChart(o));
