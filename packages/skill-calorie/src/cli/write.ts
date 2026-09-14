@@ -10,7 +10,8 @@
  * #269 接线的饮食 13 条：回执页换成能力目录 `src/diet/receipt.ts` 整页装配；
  * #337 接线的体重 4 条：回执页换成能力目录 `src/weight/receipt.ts` 整页装配。
  * T351 接线的训练计划 10 条：回执页换成能力目录 `src/workout/receipt.ts` 整页装配。
- * 其余 5 条（35 − 3 − 13 − 4 − 10）一字不改，仍是原回执片段。
+ * #365 接线的身体细节 4 条（覆盖七条写词）：回执页换成能力目录 `src/body/receipt.ts` 整页装配。
+ * 其余 1 条（35 − 3 − 13 − 4 − 10 − 4）一字不改，仍是原回执片段。
  * 退出码沿 T11 冻结：缺参/坏参 fail(2)；未知键上游拦（exit 3）；缺失阻断 fail(4)；
  * envelope/落盘 fail(5)。库函数 FetchError 透传（main 映射 exit 4）；body.ts
  * ValidationError 在此转 bad-input（exit 2）。
@@ -52,6 +53,9 @@ import { weightReceiptDoc } from '../weight/index.js';
 // T351 视觉修复·实施兵B · 训练计划 10 条会改数据库的命令的回执页：整页装配住能力目录 `src/workout/receipt.ts`
 //（经本文件直引，不经 `src/workout/index.ts` 转出；与饮食 13 条同形）。
 import { workoutReceiptDoc } from '../workout/receipt.js';
+// #365 · 身体细节 7 条写词的回执页：整页装配住能力目录 `src/body/receipt.ts`
+//（经 `src/body/index.ts` 转出；与体重 4 条同形，接成链上第五个装配口）。
+import { bodyReceiptDoc } from '../body/index.js';
 import { isCalorieWriteKey } from './keys.js';
 // #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落下面的 dispatchInner switch。
 import { REGISTRY } from './registry.js';
@@ -77,7 +81,8 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
     // #276 插入点：如需新增命令的整页分派，在本行下方按 `?? 下一个Doc(...)` 续接（本票留空）。
     // #337 · 体重 4 条切整页装配（与档案 3 条、饮食 13 条同路；具名键集在 `src/weight/receipt.ts`）。
     // T351 视觉修复·实施兵B · 训练计划 10 条切整页装配（与饮食 13 条同路；具名键集在 `src/workout/receipt.ts`）。
-    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? dietReceiptDoc(key, params, receipt, db) ?? weightReceiptDoc(key, params, receipt, db) ?? workoutReceiptDoc(key, params, receipt, db) ?? res.html };
+    // #365 · 身体细节 7 条切整页装配（链上第五个装配口；具名键集在 `src/body/receipt.ts`）。
+    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? dietReceiptDoc(key, params, receipt, db) ?? weightReceiptDoc(key, params, receipt, db) ?? workoutReceiptDoc(key, params, receipt, db) ?? bodyReceiptDoc(key, params, receipt, db) ?? res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;
