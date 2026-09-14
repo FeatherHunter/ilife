@@ -498,7 +498,15 @@ describe('B LineChartOptions', () => {
      *  但**调用方自己的虚线序列**（ownScale 跨轴那条，如配对页）不进——那是它自己的图例活。 */
     const legend = (extra) => legendTextsOf(charts.line({ items, options: { ...fixed, legend: true, ...extra } }).html);
     assert.deepEqual(legend({}), ['3 天均线'], '均线条目名按 avgWindow 生成');
-    assert.deepEqual(legend({ avgLine: 7 }), ['7 天均线'], '窗口 7 →「7 天均线」（调用点变量窗口的另一档）');
+    /* 标签跟**生效窗口**走：本用例只有 5 点，窗口 7 被 items.length 收敛成 5 →「5 天均线」。
+     * 想看「7 天均线」得给够长的序列（下面用 10 点）。 */
+    assert.deepEqual(legend({ avgLine: 7 }), ['5 天均线'], '窗口 7 被 items.length(5) 收敛 →「5 天均线」');
+    const ten = Array.from({ length: 10 }, (_, i) => ({ label: String(i), value: i + 1 }));
+    assert.deepEqual(
+      legendTextsOf(charts.line({ items: ten, options: { ...fixed, legend: true, avgLine: 7 } }).html),
+      ['7 天均线'],
+      '10 点序列 + 窗口 7 →「7 天均线」（调用点变量窗口的那一档）',
+    );
     assert.deepEqual(legend({ series: [{ name: '甲', items }] }), ['甲', '3 天均线'], '主序列名在前、均线在后');
     assert.deepEqual(
       legend({ series: [{ name: '甲', items }, { name: '乙', items, dashed: true, ownScale: true }] }),
