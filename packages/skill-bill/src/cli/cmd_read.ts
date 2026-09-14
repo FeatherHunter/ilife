@@ -8,10 +8,10 @@ import {
   BillFetchError, BillPolicyError,
   resolveDbPath, resolveDbDir, resolveGoalsPath, assertWritablePath, openBillDb, closeBillDb,
   fetchAll, listToday, listRange, getById, searchKeyword, listByTag,
-  addBill, updateBill, undoBill, restoreBill, loadGoals, saveGoals,
+  addBill, loadGoals, saveGoals,
 } from '../fetch/index.js';
 import {
-  validateAddInput, validateUpdateInput, needId, parseRecordOp,
+  needId,
   resolveQueryDate, resolveRange, parseOverviewKind, parseCompareKind, parseTrendKind,
   parseGoalOp, validateSetBudget, validateSetSaving,
   parseAccountOp, needName, validateTransfer, TRANSFER_OUT_CATEGORY, TRANSFER_IN_CATEGORY, TRANSFER_LEDGER,
@@ -30,6 +30,9 @@ import {
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup } from '../help/index.js';
+import { REGISTRY } from './registry.js';
+import { runRecordWrite } from '../record/index.js';
+import type { WriteOut } from '../shared/commandSpec.js';
 import type { BillRow } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -142,41 +145,33 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   };
 }
 
+/** 迁移过的写命令入口（记一笔／改记录）：查注册表命中即走能力目录。
+ *  开库／关库与写前置守卫与老路同一套；这两条命令的整页（采集页／回执页）住 `src/record/`，
+ *  故 `dispatch` 的 switch 里**不再有**它们的 case（一个命令恰住一处）。 */
+function runRegistered(key: string, params: Record<string, unknown>): WriteOut {
+  const dbPath = resolveDbPath();
+  assertWritablePath(dbPath);
+  const handle = openBillDb(dbPath);
+  try {
+    if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
+    return runRecordWrite(key, params, handle);
+  } finally {
+    try { closeBillDb(handle); } catch { /* ignore */ }
+  }
+}
+
 // 十六键分发：读走 fetch 读，写走 fetch 写+policy 校验；未知键上游已拦，此处再拦一道。
 function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const goalsPath = resolveGoalsPath();
   // 写键前置守卫（B6）：非 tmp 写库须 BILL_FORCE_PROD=1；读键不受影响。
-  if (key === 'bill.record.add' || key === 'bill.record.update') assertWritablePath(dbPath);
+  // 记一笔／改记录已迁进能力目录（走上面的 `runRegistered`），守卫也跟着搬过去了。
   if (key === 'bill.goal.write') assertWritablePath(goalsPath);
   if (key === 'bill.account.write') { assertWritablePath(dbPath); assertWritablePath(goalsPath); }
   const handle = openBillDb(dbPath);
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
     switch (key) {
-      case 'bill.record.add': {
-        const input = validateAddInput(params);
-        const r = addBill(handle, input);
-        const kind = typeof params.kind === 'string' ? params.kind : '';
-        const extra = kind === 'photo' ? '（拍账单图片识别以外置为准）' : kind === 'batch' ? '（批量逐笔校验其一）' : kind ? `（${kind}）` : '';
-        return buildRecordReceipt(`已记录：${r.category} ${r.amount.toFixed(2)}${extra}（id=${r.id}，账单回执可复制 prompt）`);
-      }
-      case 'bill.record.update': {
-        const op = parseRecordOp(params);
-        if (op === 'undo') {
-          const id = needId(params);
-          const r = undoBill(handle, id);
-          return buildRecordReceipt(`已撤销：${r.id}（软删，恢复走 restore）`);
-        }
-        if (op === 'restore') {
-          const id = needId(params);
-          const r = restoreBill(handle, id);
-          return buildRecordReceipt(`已恢复：${r.id}`);
-        }
-        const { id, patch } = validateUpdateInput(params);
-        const r = updateBill(handle, id, patch as Partial<BillRow>);
-        return buildRecordReceipt(`已修改：${r.id}（${Object.keys(patch).join('/')}）`);
-      }
       case 'bill.record.today': {
         if (params.recent === true) {
           const limit = params.limit === undefined ? 10 : params.limit;
@@ -522,12 +517,15 @@ async function main() {
   let env = null;
   let delivery: HtmlDelivery | undefined;
   try {
-    // #144：HELP 在开库之前分派（只读页不建库）；其余 15 键照旧走 dispatch（内部开库）。
+    // #144：HELP 在开库之前分派（只读页不建库）；迁移过的写命令先查注册表走能力目录；其余照旧走 dispatch。
     const help = key === 'bill.help.lookup' ? dispatchHelp(params) : null;
-    const built = buildBillEnvelope(key, help ? help.data : dispatch(key, params));
+    const writeOut = help === null && REGISTRY[key] !== undefined ? runRegistered(key, params) : null;
+    const built = buildBillEnvelope(key, writeOut ? writeOut.data : (help ? help.data : dispatch(key, params)));
     env = built;
     // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
+    // 迁移过的写命令另有整页（采集页／回执页住 `src/record/`），不再套老模板。
     const sectionHtml = (): string => {
+      if (writeOut) { assertHtmlSize(writeOut.html); return writeOut.html; }
       const full = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
       assertHtmlSize(full);
       return full;

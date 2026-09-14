@@ -67,7 +67,11 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     assert.equal(run(['bill.record.update', '--params', P({ id, note: '晚饭v2' })]).status, 0);
     assert.equal(run(['bill.record.update', '--params', P({ op: 'undo', id })]).status, 0);
     assert.equal(run(['bill.record.update', '--params', P({ op: 'restore', id })]).status, 0);
-    assert.equal(run(['bill.record.update', '--params', P({})]).status, 2);
+    // t406 新规矩：缺必需槽位（这里缺 id）不再报参数错退出，改出过程型采集页 —— 退出码 0、不写库。
+    const form = run(['bill.record.update', '--params', P({})]);
+    assert.equal(form.status, 0, '缺 id 出采集页：' + form.stderr);
+    assert.equal(JSON.parse(form.stdout).data.ok, false);
+    assert.match(JSON.parse(form.stdout).data.message, /缺必需槽位：id/);
   });
   it('analysis 三键：overview stat + compare/trend analysis', () => {
     const o = run(['bill.analysis.overview', '--params', P({ month: '2026-09' })]);

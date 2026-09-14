@@ -1,0 +1,44 @@
+/** 写后回执页与采集页的两块共用件：状态卡 ＋ 页尾「对账信息」折叠区。
+ *
+ * 谁在用（两个调用点，指名）：
+ *   ① `src/record/receipt.ts`——结果型回执整页：`receiptStatusCard`（已改动／无改动）＋ `reconcileDisclosure`；
+ *   ② `src/record/collect.ts`——过程型采集页：`statusCard`（那一格写「待补槽位」）。
+ *
+ * 口径出处：照 `packages/skill-calorie/src/shared/receiptParts.ts` 的两块（状态卡＋页尾对账折叠区），
+ *   分「块」与「整页」的分工也照它：整页装配住同目录 `docPage.ts`，本文件只出页内的两块。
+ * 一处由调用方给的措辞：**写入去向那句说明**（`writtenDetail`）——记一笔写的是账单、改记录改的是同一条，
+ *   两边说法不同，故它是必填参数，不给默认值，免得哪张页悄悄用了别处的说法。
+ */
+import { renderDataTable, renderDisclosure } from 'base-paint/blocks';
+import type { KpiCardInput } from 'base-paint/blocks';
+import type { BillReceipt } from './writeParts.js';
+import { RECEIPT_FORMAT } from './writeParts.js';
+
+/** 一格的状态值：值 ＋ 一句说明（说明由调用方按本页措辞传入）。 */
+export function statusCard(value: string, detail: string): KpiCardInput {
+  return { label: '状态', value, detail };
+}
+
+/** 回执页的状态卡：无改动／已改动 ＋ 一句写入去向的说明。 */
+export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string): KpiCardInput {
+  return statusCard(
+    receipt.noChange ? '无改动' : '已改动',
+    receipt.noChange ? '值与改前一致' : writtenDetail,
+  );
+}
+
+/** 页尾「对账信息」折叠区：本次写入的**可核对信息**——记录编号／写入时间／回执格式。
+ *  影响行数与写入字段已在上方卡片上，这里不重写。 */
+export function reconcileDisclosure(receipt: BillReceipt): string {
+  return renderDisclosure({
+    title: '对账信息',
+    contentHtml: renderDataTable({
+      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      rows: [
+        { k: '记录编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
+        { k: '写入时间', v: receipt.actionAt },
+        { k: '回执格式', v: RECEIPT_FORMAT },
+      ],
+    }),
+  });
+}
