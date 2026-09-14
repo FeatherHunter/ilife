@@ -117,6 +117,28 @@ function optText(value: unknown): string | undefined {
   return typeof value === 'string' && value !== '' ? value : undefined;
 }
 
+/** 可选数字约束（#397）：`undefined` 透传；数字收 `String(value)`，字串须非空非空白且 `Number()` 有限。 */
+function optNumeric(value: unknown, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) badInput(field + ' 必须是数字串或有限数');
+    return String(value);
+  }
+  if (typeof value !== 'string' || value.trim() === '') badInput(field + ' 必须是数字串或有限数');
+  if (!Number.isFinite(Number(value))) badInput(field + ' 必须是数字串或有限数');
+  return value;
+}
+
+/** 候选项（#397）：`undefined` 透传；给了须是非空数组且逐项非空字串。 */
+function optOptions(value: unknown, field: string): readonly string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length === 0) badInput(field + ' 必须是非空数组');
+  value.forEach((opt, j) => {
+    if (typeof opt !== 'string' || opt === '') badInput(field + '[' + j + '] 必须是非空字符串');
+  });
+  return value as readonly string[];
+}
+
 /* ── 区块样式区闭集（DB-2：新增闭集，不改 CONTROL_STYLE_SECTIONS） ── */
 
 /** 12 区块样式区（DB-1 清单的代码落点；顺序即 B-01…B-12）。 */
@@ -577,6 +599,17 @@ export interface ParamFieldInput {
   readonly value?: string;
   readonly hint?: string;
   readonly required?: boolean;
+  /** 只读（#397）：`true` 时 `<input>` 落裸 `readonly`；`options` 下拉（`select` 无 `readonly`）落裸 `disabled`。 */
+  readonly readonly?: boolean;
+  /** 数字步长（#397）：数字串或有限数，须大于 0；任一数字约束出现即 `type="number"`。 */
+  readonly step?: string | number;
+  /** 数字下界（#397）：数字串或有限数。 */
+  readonly min?: string | number;
+  /** 数字上界（#397）：数字串或有限数，须大于等于 `min`。 */
+  readonly max?: string | number;
+  /** 候选项（#397）：非空字符串数组；给了即渲染 `<select>` 代替 `<input>`，
+   *  `value` 命中的一项落 `selected`，`hint` 化作首项占位（`value=""` 禁选）。 */
+  readonly options?: readonly string[];
 }
 
 export interface ParamFormInput {
@@ -586,7 +619,11 @@ export interface ParamFormInput {
   readonly previewText?: string;
 }
 
-/** B-09：参数表单（`placeholder = hint`；`required` 落 `data-required` 供宿主拦截；零 JS）。 */
+/** B-09：参数表单（`placeholder = hint`；`required` 落 `data-required` 供宿主拦截；零 JS）。
+ *  #397 可选约束：`readonly` 落裸 `readonly`；`step／min／max` 落同名属性（任一出现即
+ *  `type="number"`，`step` 须大于 0，`min` 不得大于 `max`，非法一律 `bad-input`）；
+ *  `options` 给了即渲染 `<select>`（`value` 命中项 `selected`，`hint` 化作首项占位，
+ *  `readonly` 化作 `disabled`，与 `step／min／max` 互斥）。全不传时产物与旧调用逐字节一致。 */
 export function renderParamForm(input: ParamFormInput): string {
   assertPlainObject(input, 'renderParamForm: input');
   assertNoInlineHandler(input, 'renderParamForm: input');
@@ -609,13 +646,48 @@ export function renderParamForm(input: ParamFormInput): string {
     const hint = optText(item.hint);
     const value = typeof item.value === 'string' ? item.value : '';
     const required = item.required === true;
+    const readonly = item.readonly === true;
+    const step = optNumeric(item.step, path + '.step');
+    const min = optNumeric(item.min, path + '.min');
+    const max = optNumeric(item.max, path + '.max');
+    if (step !== undefined && !(Number(step) > 0)) badInput(path + '.step 必须是大于 0 的数字');
+    if (min !== undefined && max !== undefined && Number(min) > Number(max)) {
+      badInput(path + '.min 不得大于 ' + path + '.max');
+    }
+    const options = optOptions(item.options, path + '.options');
+    if (options !== undefined && (step !== undefined || min !== undefined || max !== undefined)) {
+      badInput(path + '.options 与 step／min／max 互斥');
+    }
+    if (options !== undefined) {
+      parts.push('<label class="' + blockPart('paramForm', 'field') + '">'
+        + '<span class="' + blockPart('paramForm', 'label') + '">' + esc(label)
+        + (required ? '<span class="' + blockPart('paramForm', 'required') + '" aria-hidden="true"> *</span>' : '')
+        + '</span>'
+        + '<select class="' + blockPart('paramForm', 'input') + '" name="' + esc(name) + '"'
+        + (required ? ' data-required="1" required' : '')
+        + (readonly ? ' disabled' : '')
+        + '>'
+        + (hint === undefined ? '' : '<option value="" disabled' + (options.includes(value) ? '' : ' selected') + '>'
+          + esc(hint) + '</option>')
+        + options.map((opt) => '<option value="' + esc(opt) + '"'
+          + (value === opt ? ' selected' : '') + '>' + esc(opt) + '</option>').join('')
+        + '</select>'
+        + '</label>');
+      return;
+    }
     parts.push('<label class="' + blockPart('paramForm', 'field') + '">'
       + '<span class="' + blockPart('paramForm', 'label') + '">' + esc(label)
       + (required ? '<span class="' + blockPart('paramForm', 'required') + '" aria-hidden="true"> *</span>' : '')
       + '</span>'
-      + '<input class="' + blockPart('paramForm', 'input') + '" name="' + esc(name) + '" value="' + esc(value) + '"'
+      + '<input class="' + blockPart('paramForm', 'input') + '"'
+      + (step === undefined && min === undefined && max === undefined ? '' : ' type="number"')
+      + ' name="' + esc(name) + '" value="' + esc(value) + '"'
       + (hint === undefined ? '' : ' placeholder="' + esc(hint) + '"')
       + (required ? ' data-required="1" required' : '')
+      + (readonly ? ' readonly' : '')
+      + (step === undefined ? '' : ' step="' + esc(step) + '"')
+      + (min === undefined ? '' : ' min="' + esc(min) + '"')
+      + (max === undefined ? '' : ' max="' + esc(max) + '"')
       + ' />'
       + '</label>');
   });
