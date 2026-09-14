@@ -27,18 +27,30 @@ export interface PlanView {
   totalMovements: number;
 }
 
-export function buildPlanView(db: DatabaseSync): PlanView {
+export function buildPlanView(db: DatabaseSync, opts: { dateISO?: string } = {}): PlanView {
   const plan = getPlan(db);
   if (!plan.config && plan.sessions.length === 0) {
     throw new CalorieRenderError('missing-data', '无训练计划（先定训练计划）');
   }
+  let sessions = plan.sessions;
+  if (opts.dateISO !== undefined) {
+    const start = plan.config?.start_date ?? null;
+    if (!start) throw new CalorieRenderError('bad-input', '计划缺开始日期，无法定位该日是第几周第几天');
+    const toDay = (s: string): number => Date.parse(s + 'T12:00:00Z');
+    const diff = Math.round((toDay(opts.dateISO as string) - toDay(start)) / 86400000);
+    const startMon0 = (new Date(toDay(start)).getUTCDay() + 6) % 7;
+    const idx = startMon0 + diff;
+    const week = Math.floor(idx / 7) + 1;
+    const dow = idx - (week - 1) * 7 + 1;
+    sessions = sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
+  }
   let movements = 0;
-  for (const s of plan.sessions) movements += Array.isArray(s.movements) ? s.movements.length : 0;
+  for (const s of sessions) movements += Array.isArray(s.movements) ? s.movements.length : 0;
   return {
     title: plan.config?.title ?? null,
     totalWeeks: plan.config?.total_weeks ?? null,
-    sessions: plan.sessions,
-    totalSessions: plan.sessions.length,
+    sessions,
+    totalSessions: sessions.length,
     totalMovements: movements,
   };
 }

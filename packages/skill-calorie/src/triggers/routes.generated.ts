@@ -189,7 +189,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '看下周计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
   { wakeWord: '看上周计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
   { wakeWord: '看指定周计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
-  { wakeWord: '看今天练什么', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
+  { wakeWord: '看今天练什么', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"date":"今日"}\'' },
   { wakeWord: '看某动作安排', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
   { wakeWord: '看某天练什么', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
   { wakeWord: '看计划概览', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan' },

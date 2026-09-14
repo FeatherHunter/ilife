@@ -18,7 +18,7 @@ import { viewExerciseReview } from './review.js';
 import { viewPlanWizard } from './wizard.js';
 
 export const WORKOUT_COMMANDS = [
-  { kind: 'read', key: 'calorie.view.plan', shape: 'stat', title: '训练计划看', run: viewPlan, example: 'calorie-cmd-read calorie.view.plan' },
+  { kind: 'read', key: 'calorie.view.plan', shape: 'stat', title: '训练计划看', wakeWord: '看计划概览', run: viewPlan, example: 'calorie-cmd-read calorie.view.plan --params \'{"date":"今日"}\'' },
   { kind: 'read', key: 'calorie.view.plan-wizard', shape: 'stat', title: '构建向导', run: viewPlanWizard, example: 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\'' },
   { kind: 'read', key: 'calorie.view.exercise-review', shape: 'stat', title: '计划复盘', wakeWord: '计划复盘（本周）', run: viewExerciseReview, example: 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本周"}\'' },
   { kind: 'read', key: 'calorie.view.contraindication', shape: 'stat', title: '禁忌扫描', run: viewContraindication, example: 'calorie-cmd-read calorie.view.contraindication --params \'{"part":"all"}\'' },

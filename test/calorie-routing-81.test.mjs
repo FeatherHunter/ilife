@@ -75,7 +75,7 @@ const smokeSection = (md, heading) => {
 const unquote = (s) => String(s).replace(/`/g, '');
 
 describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
-  it('D2① 436 条逐条恰一个桶（可执行 344 ／ 命中但不执行 92，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行）', () => {
+  it('D2① 436 条逐条恰一个桶（可执行 345 ／ 命中但不执行 91，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行 ＋ #346 看今天练什么转入可执行）', () => {
     assert.equal(WAKE_ROUTES.length, 436);
     assert.equal(EXEC_ROUTES.length + HIT_NOT_EXEC_ROUTES.length, 436);
     const buckets = { exec: 0, 'non-exec': 0 };
@@ -93,13 +93,13 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         assert.ok(Object.values(NON_EXEC_REASONS).includes(r.reason), r.wakeWord);
       }
     }
-    assert.deepEqual(buckets, { exec: 344, 'non-exec': 92 });
+    assert.deepEqual(buckets, { exec: 345, 'non-exec': 91 });
     assert.deepEqual(routingSummary(), {
       total: 436,
-      exec: 344,
-      nonExec: 92,
+      exec: 345,
+      nonExec: 91,
       outOfScope: 10,
-      legacyChain: 82,
+      legacyChain: 81,
       newEntries: 58,
       repairEntries: 1,
       coveredKeys: DECLARED_KEYS.length,
@@ -229,7 +229,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         `${r.wakeWord} cli 键 token 与 key 不一致：${r.cli}`,
       );
     }
-    assert.equal(EXEC_ROUTES.length, 344, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入）');
+    assert.equal(EXEC_ROUTES.length, 345, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入 ＋ #346 看今天练什么转入）');
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
@@ -317,7 +317,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
   it('FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 0 ＋ 已登记的数据依赖失败单列 ＋ 需参数键必须带 --params）', () => {
     const md = readFileSync(SMOKE_MD, 'utf8');
     const execAll = allExec();
-    assert.equal(execAll.length, 403, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec）');
+    assert.equal(execAll.length, 404, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec；#346 +1：看今天练什么转入 exec）');
     // ① 快照汇总：非零只许是**已登记的数据依赖失败**（用户 2026-09-11 裁定取甲：把「命令坏了」与
     // 「数据依赖的失败」分开统计；判据是快照自己 :7-9 写的「数据依赖失败（空库 exit 4）不算 cli 缺陷」，
     // 改断言＝把断言对齐判据）。

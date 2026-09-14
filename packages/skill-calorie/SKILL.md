@@ -159,7 +159,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看营养素深度 | calorie.view.nutrition-detail | stat | `calorie-cmd-read calorie.view.nutrition-detail --params '{"window":"7d"}'` |
 | 查营养配比 | calorie.view.nutrition-ratio | stat | `calorie-cmd-read calorie.view.nutrition-ratio --params '{"window":"7d"}'` |
 | 看身材照向导 | calorie.view.photo-log-wizard | stat | `calorie-cmd-read calorie.view.photo-log-wizard` |
-| calorie.view.plan | calorie.view.plan | stat | `calorie-cmd-read calorie.view.plan` |
+| 看计划概览 | calorie.view.plan | stat | `calorie-cmd-read calorie.view.plan --params '{"date":"今日"}'` |
 | calorie.view.plan-wizard | calorie.view.plan-wizard | stat | `calorie-cmd-read calorie.view.plan-wizard --params '{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}'` |
 | calorie.view.predict | calorie.view.predict | stat | `calorie-cmd-read calorie.view.predict --params '{"horizonDays":7,"window":"14d"}'` |
 | 看落地训练进度 | calorie.view.process-progress | stat | `calorie-cmd-read calorie.view.process-progress` |

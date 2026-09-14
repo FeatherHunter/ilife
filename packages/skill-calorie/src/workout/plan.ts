@@ -8,11 +8,11 @@ import type { DatabaseSync } from 'node:sqlite';
 import { renderPlanHtml } from '../render/html.js';
 import { buildPlanView } from '../render/planPlate.js';
 import type { ViewOut } from '../shared/commandSpec.js';
-import { nums } from '../shared/params.js';
+import { dayField, nums } from '../shared/params.js';
 
-/** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率）。 */
-export function viewPlan(_params: Record<string, unknown>, db: DatabaseSync): ViewOut {
-  const v = buildPlanView(db);
+/** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率；带 `date` 即只看该日）。 */
+export function viewPlan(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  const v = buildPlanView(db, { dateISO: dayField(params, 'date') ?? undefined });
   const metrics = nums({ totalSessions: v.totalSessions, totalMovements: v.totalMovements, totalWeeks: v.totalWeeks });
   return { data: { metrics }, html: renderPlanHtml(v) };
 }
