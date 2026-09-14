@@ -21,11 +21,13 @@ import { planCopyBlock } from './planCopyBlock.js';
 import { planViewCss } from './workoutPlanCss.js';
 import { DOW, planWeeksHtml } from './workoutPlanLook.js';
 import type { PlanWeek } from './workoutPlanLook.js';
+import { weekOfDate } from './planPlate.js';
 import type { PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
 import type { PlanSessionRow } from '../workout/planStore.js';
 import type { WritePreview } from '../workout/write.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
+import { todayISO } from '../analysis/utils.js';
 import { DASH } from './workoutMovementTable.js';
 
 const DOC_VERSION = '0.1.0';
@@ -86,7 +88,9 @@ function weekLine(wn: number, list: readonly PlanSessionRow[]): string {
 }
 
 /** 结果/读验证（order176–184）：页头＋指标卡＋两级页签（周／日）＋场次卡四列明细＋空态＋复制区。
- *  首屏「全部周次／全部」默认选中 ⇒ 各周各日的场次全展开，查找与打印都拿得到全文（内容都在 DOM 里）。 */
+ *  T351-v6：两级页签各钉一个**默认选中项**——周＝**本周**（按计划起始日与今天算出，`weekOfDate` 是周次
+ *  换算的唯一出处；算不出或那一周不在本页时由 `planWeeksHtml` 兜底选第 1 周），日＝周一（住
+ *  `./workoutPlanLook.ts`）。页签里不再有「全部周次／全部」两枚（负责人裁定去掉）。 */
 export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
   const byWeek = new Map<number, PlanSessionRow[]>();
   for (const s of v.sessions) {
@@ -97,6 +101,9 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
   const weeks: PlanWeek[] = [...byWeek.keys()].sort((a, b) => a - b)
     .map((week) => ({ week, sessions: byWeek.get(week) ?? [] }));
   const planName = v.title === null || v.title === '' ? '未命名计划' : v.title;
+  // 周页签的默认选中项＝**本周**：计划起始日与今天都齐才算得出（`weekOfDate` 按「起始日那一周的周一为
+  // 第 1 周」口径给周次号，与计划库 `day_of_week` 同源）；缺起始日 ⇒ 算不出 ⇒ 传 null 让它兜底第 1 周。
+  const currentWeek = v.startDate === null || v.startDate === '' ? null : weekOfDate(v.startDate, todayISO()).week;
   const parts: string[] = [
     renderKpiGrid([
       { label: '总场次', value: String(v.totalSessions), unit: '场' },
@@ -106,7 +113,7 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
     ]),
     weeks.length === 0
       ? renderEmptyBlock({ title: '训练安排', text: '这一周没有训练安排（换一周看，或先定训练计划）' })
-      : planWeeksHtml(weeks),
+      : planWeeksHtml(weeks, currentWeek),
     planCopyBlock({
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
@@ -120,15 +127,13 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
       }),
     }),
   ];
-  const meta = [
-    v.version === null || v.version === '' ? '' : '版本 ' + v.version,
-    v.totalWeeks === null ? '' : '共 ' + v.totalWeeks + ' 周',
-    v.startDate === null || v.startDate === '' ? '' : '起日 ' + v.startDate,
-  ].filter((t) => t !== '').join(' · ');
-  const head = opts.wakeWord ? opts.wakeWord + ' · ' : '';
-  // 副标题＝计划名 ＋ 计划说明（`config.description`，有则印、无则省）＋ 版本/总周数/起日。
+  // 副标题只留三项：计划名 · 计划说明（`config.description`，有则印、无则省）· 起日。
+  // T351-v6 砍掉两项冗余（负责人裁定）：`版本 v1` 对用户无用；`共 4 周` 与指标卡「总周数」重复。
+  // 两项仍可在库与复制区载荷里拿到，只是不再上页头（正文更短，页头不必两行）。
+  const startText = v.startDate === null || v.startDate === '' ? '' : '起日 ' + v.startDate;
   const desc = v.description === null || v.description === undefined || v.description === '' ? '' : v.description;
-  const subtitle = head + planName + (desc === '' ? '' : ' · ' + desc) + (meta === '' ? '' : ' · ' + meta);
+  const head = opts.wakeWord ? opts.wakeWord + ' · ' : '';
+  const subtitle = head + planName + (desc === '' ? '' : ' · ' + desc) + (startText === '' ? '' : ' · ' + startText);
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '健身计划',

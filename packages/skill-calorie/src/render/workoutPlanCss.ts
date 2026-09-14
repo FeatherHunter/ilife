@@ -102,10 +102,14 @@ const STATIC_CSS = [
     + 'color:var(--ink3);background:var(--bg);padding:3px 8px;border-radius:5px}',
   '.ilw-sess-name{font-size:17px;font-weight:600;color:var(--ink)}',
   '.ilw-sess-meta{margin-left:auto;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink3)}',
-  '/* 老表：动作列加粗加宽、表头小字、数值列右对齐（右对齐由共享表的 align 给） */',
+  '/* 老表：动作列加粗加宽、表头小字、数值列右对齐。**表头与表体的对齐同出一处**——`renderDataTable` 给',
+  '   `th` 与 `td` 盖的是同一个 `ilife-block-data-table-cell-<align>` 类（见 `base-render/src/blocks.ts`），',
+  '   本页不再给 `th` 写死 `text-align`（v5 那句 `text-align:left` 会把右对齐列的表头摁回左边 ⇒ 表头与',
+  '   表体在纵轴上错开，负责人附图点名）；横向内距也与 `td` 同值（右 10px／左 0），故同一列的**单元格边界',
+  '   与文字边界都逐列相等**（同一张 `<table>` 共用一个格网，列宽不需要第二套规则）。 */',
   '.ilw-session .ilife-block-data-table{border:0;border-radius:0;background:transparent}',
-  '.ilw-session th{padding:8px 12px 8px 0;border-bottom:1px solid var(--lineS);color:var(--ink3);'
-    + 'font-size:11px;font-weight:500;letter-spacing:.06em;text-align:left;white-space:nowrap}',
+  '.ilw-session th{padding:8px 10px 8px 0;border-bottom:1px solid var(--lineS);color:var(--ink3);'
+    + 'font-size:11px;font-weight:500;letter-spacing:.06em;white-space:nowrap}',
   '.ilw-session td{padding:12px 10px 12px 0;border-bottom:1px solid var(--lineS);color:var(--ink2);'
     + 'font-size:13px;vertical-align:top}',
   '.ilw-session tr:last-child td{border-bottom:0}',
@@ -131,7 +135,8 @@ const STATIC_CSS = [
   '.ilw-sess-meta{width:100%;margin-left:0;gap:8px}',
   '.ilw-tab{padding:9px 12px;font-size:13px}',
   '.ilw-day-tab{padding:5px 10px;font-size:12px}',
-  '.ilw-session td{padding:10px 4px;font-size:12px}',
+  '.ilw-session td{padding:10px 4px 10px 0;font-size:12px}',
+  '.ilw-session th{padding:6px 4px 6px 0}',
   '.ilw-session td:first-child{min-width:120px}',
   '.ilife-block-kpi-card-grid{grid-template-columns:repeat(2,1fr)}',
   '.ilife-block-kpi-card-grid>.ilife-block-kpi-card:nth-child(odd):last-child{grid-column:span 2}',
@@ -148,10 +153,12 @@ function badgeCss(): string {
 
 /** 页内样式块（含 `<style>` 包裹，照包内先例 `FOOD_CSS`／`MEASURE_CSS` 直插正文）：静态段 ＋
  *  按周数生成的页签规则（零脚本页签的另一半）。`weekCount` ＝ 页内周区块数
- *  （0 ＝ 无周区块，两层页签都不出现，此处只出静态段）。 */
+ *  （0 ＝ 无周区块，两层页签都不出现，此处只出静态段）。
+ *  v6：两级页签里没有「全部周次」／「全部」两枚（负责人裁定去掉），各层恒有且只有一枚默认选中，
+ *  故收放规则只剩「先全收、再放选中的那一枚」这半边——没有「放全部」的规则了。 */
 export function planViewCss(weekCount: number): string {
   const n = Number.isFinite(weekCount) && weekCount > 0 ? Math.floor(weekCount) : 0;
-  const wkIds = ['ilw-wk-all', ...Array.from({ length: n }, (_, i) => 'ilw-wk-' + i)];
+  const wkIds = Array.from({ length: n }, (_, i) => 'ilw-wk-' + i);
   const dyn: string[] = [
     '.ilw-pb{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;'
       + 'white-space:nowrap}',
@@ -163,20 +170,18 @@ export function planViewCss(weekCount: number): string {
       + 'background:var(--accent);border-radius:1px}',
     rule(stateSel(wkIds, 'focus-visible', 'ilw-tabs', 'ilw-tab'), 'outline:2px solid var(--accent);'
       + 'outline-offset:2px'),
-    '/* 周面板：任一周页签被选中先全收，再放选中的那一个；「全部周次」放全部 */',
+    '/* 周面板：任一周页签被选中先全收，再放选中的那一个（默认选中项由装配件钉在「本周」上） */',
     '.ilw-wkr:checked~.ilw-week{display:none}',
-    '#ilw-wk-all:checked~.ilw-week{display:block}',
     ...Array.from({ length: n }, (_, i) => '#ilw-wk-' + i + ':checked~.ilw-week[data-wk="' + i + '"]{display:block}'),
   ];
   for (let i = 0; i < n; i += 1) {
-    const dyIds = ['ilw-dy-' + i + '-all', ...Array.from({ length: 7 }, (_, d) => 'ilw-dy-' + i + '-' + (d + 1))];
+    const dyIds = Array.from({ length: 7 }, (_, d) => 'ilw-dy-' + i + '-' + (d + 1));
     dyn.push('/* 第 ' + (i + 1) + ' 组日页签：激活态深底白字（老 .day-tab.active）＋面板收放 */');
     dyn.push(rule(stateSel(dyIds, 'checked', 'ilw-day-tabs', 'ilw-day-tab'),
       'background:var(--ink);border-color:var(--ink);color:#fff'));
     dyn.push(rule(stateSel(dyIds, 'focus-visible', 'ilw-day-tabs', 'ilw-day-tab'),
       'outline:2px solid var(--accent);outline-offset:2px'));
     dyn.push('.ilw-dyr:checked~.ilw-day{display:none}');
-    dyn.push('#ilw-dy-' + i + '-all:checked~.ilw-day:not(.ilw-day-empty){display:block}');
     for (let d = 1; d <= 7; d += 1) {
       dyn.push('#ilw-dy-' + i + '-' + d + ':checked~.ilw-day[data-dow="' + d + '"]{display:block}');
     }
