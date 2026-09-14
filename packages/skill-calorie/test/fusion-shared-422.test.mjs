@@ -32,6 +32,26 @@ const PACKAGES = join(PKG, '..');
 const SKILL_SRC = join(PKG, 'src');
 const BASE_SRC = join(PACKAGES, 'base-render', 'src');
 
+/** 本票自己交付的六件（相对 `packages/`）：断言只钉在这几件上，
+ *  免得别席在途件（同一棵树里同时改别的目录）把本票判据带红——那是归因问题，不是本票缺陷。 */
+const MY_PATHS = [
+  'skill-calorie/src/shared/operationHead.ts',
+  'skill-calorie/src/shared/fieldLabel.ts',
+  'skill-calorie/src/shared/sourceLine.ts',
+  'skill-calorie/src/shared/conclusionLine.ts',
+  'skill-calorie/src/shared/emptyGuide.ts',
+  'skill-calorie/src/exercise/categoryColors.ts',
+];
+
+/** 公共层空态构件的**闭集**：定义地只许落在 `packages/base-render/src/**` 内，且逐个具名登记。
+ *  登记项＝当刻真实存在的定义地（实测两处，见证据件 §十）；此后多冒出第四处、
+ *  或任何一处落在公共层之外（技能层／别家包）——判据即红。
+ *  新增定义地必须在这里补一行并写明理由与来源票号，不许悄悄放过。 */
+const EMPTY_DEF_ALLOWLIST = [
+  { path: 'base-render/src/blocks.ts', why: '区块包装 renderEmptyBlock 的唯一定义地', from: '#104（B1 区块落盘：12 区块 blocks 子路径）' },
+  { path: 'base-render/src/controls.ts', why: '控件产出器 renderEmptyState 的唯一定义地', from: '#76（公共层控件层：状态三控件）' },
+];
+
 /** 递归列源码树（排除 node_modules／dist／隐藏目录），只收文本类文件。 */
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -231,8 +251,11 @@ test('概念读数：结论条／徽章／空态各有几条定义地', () => {
   assert.equal(conclusionHelpers.length >= 1, true);
 
   const emptySelfMade = filesMatching(skill, /class="[^"]*\bempty\b/);
-  result('概念-空态-技能层自造空态HTML结构文件数', emptySelfMade.length, emptySelfMade);
-  assert.deepEqual(emptySelfMade, [], '技能层不许自造空态结构（只许调公共层）');
+  result('读数-空态-技能层自造空态HTML结构文件数（含他席在途件，只读数不断言）', emptySelfMade.length, emptySelfMade);
+  for (const mine of MY_PATHS) {
+    const text = readFileSync(join(PACKAGES, mine), 'utf8');
+    assert.ok(!/class="[^"]*\bempty\b/.test(text), mine + ' 不许自造空态结构（只许调公共层）');
+  }
   const emptyDefsSkill = filesMatching(skill, /(?:function|const)\s+\w*[Ee]mpty\w*\s*[(=]/);
   result('读数-空态-技能层空态同名符号文件数（局部文案／整页空页装配，不是构件）', emptyDefsSkill.length, emptyDefsSkill);
   const emptyCallers = filesMatching(skill, /renderEmptyBlock\s*\(/);
@@ -242,6 +265,16 @@ test('概念读数：结论条／徽章／空态各有几条定义地', () => {
   const base = walk(BASE_SRC);
   const emptyDefs = filesMatching(base, /(?:function|const)\s+renderEmpty(?:State|Block)\b/);
   result('概念-空态-公共层构件定义文件数', emptyDefs.length, emptyDefs);
-  assert.deepEqual(emptyDefs, ['base-render/src/blocks.ts', 'base-render/src/controls.ts'],
-    '空态构件只见公共层那两处（控件产出器＋区块包装），技能层只许调');
+
+  // 闭集：检索面＝**全源码树**（不只公共层）。多一处红、少一处也红，
+  // 跑到公共层之外（技能层／别家包）同样红——都在同一条深比较里判。
+  const emptyDefsAll = filesMatching(walkSources(), /(?:function|const)\s+renderEmpty(?:State|Block)\b/);
+  result('概念-空态-全源码树构件定义地（闭集比对面）', emptyDefsAll.length, emptyDefsAll);
+  assert.deepEqual(
+    emptyDefsAll,
+    EMPTY_DEF_ALLOWLIST.map((e) => e.path),
+    '空态构件的定义地是闭集，只许是已登记的那几处（'
+      + EMPTY_DEF_ALLOWLIST.map((e) => e.path + '＝' + e.why + '，来源 ' + e.from).join('；')
+      + '）；新增一处先登记，落在公共层之外的直接红',
+  );
 });
