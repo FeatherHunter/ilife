@@ -1,4 +1,4 @@
-/** 命令声明的形状（**唯一定义地**）：一条命令的事实——键／形状／标题／代表唤醒词／可执行示例／处理函数。
+/** 命令声明的形状（**唯一定义地**）：一条命令的事实——键／形状／标题／代表唤醒词／工作流程名／可执行示例／处理函数。
  *
  * 谁在用（写得出哪两个在用）：
  *   ① 各能力目录的声明文件（本票：`src/weight/commands.ts`）——命令事实的**唯一权威源**；
@@ -46,6 +46,13 @@ export interface ReadCommandSpec {
    *  （与 `cli/legacy/types.ts` 的 `LegacyCommandDecl.wakeWord?` 同口径）；
    *  给定时必须是 `TRIGGERS` 里真实存在的唤醒词。 */
   readonly wakeWord?: string;
+  /** #338 · 这条命令服务的**工作流程名**（零条或多条），取值是一张**封闭**表：帮助面场景 03 的
+   *  八个下一级分组名（量体重／改体重记录／看体重明细／看体重曲线／看体重稳不稳／看体重备注／对比体重／体重复盘）。
+   *  为什么是表而不是一个值：一个键可以服务多条流程——`calorie.view.weight-history` 同时服务
+   *  看体重明细（7 条词）／看体重曲线（10 条）／看体重备注（1 条）。
+   *  名字的事实住这里（能力目录），SKILL.md 的「场景 03 体重工作流程」各写一次步骤、不另存清单；
+   *  名字不在名单里时 `pnpm gen` 与 `pnpm help:build` 当场抛，不静默漏一列。 */
+  readonly flows?: readonly string[];
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
   readonly example: string;
   readonly run: ViewHandler;
@@ -58,6 +65,8 @@ export interface WriteCommandSpec {
   readonly shape: 'receipt';
   readonly title: string;
   readonly wakeWord?: string;
+  /** #338 · 这条命令服务的工作流程名（口径、取值与「为什么是表」见 `ReadCommandSpec.flows`）。 */
+  readonly flows?: readonly string[];
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
   readonly example: string;
   readonly run: WriteHandler;

@@ -2,7 +2,9 @@
 // HELP 构建期注入（T11，照 M6 范式；#40 追加 35 写键）：CALORIE_COMBOS 全量键 + 代表唤醒词→速查表→SKILL.md 互联区；只重写标记块，其余不动。无标记即大声失败。
 //
 // 入口：`pnpm help:build`（= 跑本文件）。本文件里**没有一条命令的手写事实**：
-//   REPR 表与 EXAMPLE 表都是 `scripts/gen-cli.mjs` 的标记块生成物，其余从 `dist/cli/keys.js` 读。
+//   REPR 表、EXAMPLE 表与 FLOW 表（#338）都是 `scripts/gen-cli.mjs` 的标记块生成物，其余从 `dist/cli/keys.js` 读。
+//   工作流程名的唯一住处是命令声明上的可选 `flow`（`src/shared/commandSpec.ts`）；本文件只列名单（`BODY_HELP_FLOWS`
+//   ＝帮助面场景 03 的八个下一级分组名），声明里出现名单外的名字即抛。
 // 重生成 SKILL.md 的正确顺序（少一步就会得到「键数停在旧的」这种静默结果）：
 //   `pnpm build` → `pnpm gen` → `pnpm build`（把生成出来的 `src/cli/keys.ts` 编进 `dist/`）→ `pnpm help:build`
 //   → 需要 `combos.yaml` 的镜像连带时再 `node packages/base-combos/scripts/gen-present.mjs`。
@@ -132,6 +134,10 @@ const REPR = {
 };
 // -- GEN-CLI-END REPR 表
 
+// #338 · 帮助面场景 03（体重）工作流程名的**名单**：与「帮助面八个下一级分组」一一对应。
+// 名字的事实住命令声明（`src/weight/commands.ts` 的 `flow`），这里只列合法取值、当校验表用。
+export const BODY_HELP_FLOWS = ['量体重', '改体重记录', '看体重明细', '看体重曲线', '看体重稳不稳', '看体重备注', '对比体重', '体重复盘'];
+
 // -- GEN-CLI-START EXAMPLE 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）
 // 每键一行「照抄即能跑」的示例：住声明的 `example` 字段（各能力 `commands.ts`／`legacyCommands.ts`）。
 // 无 `--params` 的写法照抄即 exit 2／4——所以新键必须自带可执行示例（#99 生成期结构断言的来意）。
@@ -258,6 +264,22 @@ const EXAMPLES = {
 };
 // -- GEN-CLI-END EXAMPLE 表
 
+// -- GEN-CLI-START FLOW 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）
+// #338 · 命令 → 工作流程名（读声明上的可选 `flows`；缺的键此处没有行，不补默认值）。
+const FLOW = {
+  'calorie.weight.batch': ['量体重'],
+  'calorie.weight.log': ['量体重'],
+  'calorie.weight.remove': ['改体重记录'],
+  'calorie.weight.update': ['改体重记录'],
+  'calorie.view.goal-weight': ['对比体重'],
+  'calorie.view.volatility': ['看体重稳不稳'],
+  'calorie.view.weight': ['量体重', '体重复盘'],
+  'calorie.view.weight-compare': ['对比体重'],
+  'calorie.view.weight-history': ['看体重明细', '看体重曲线', '看体重备注'],
+  'calorie.view.weight-review': ['体重复盘'],
+};
+// -- GEN-CLI-END FLOW 表
+
 /** 逐键取示例：住声明的 `example` 字段，由 `gen-cli.mjs` 落成上面那张表（#295 返修 A3）。
  * 表里没有＝声明漏了 `example`（`CommandSpec` 的必填字段，tsc 与生成器各拦一道）——大声失败，不静默降级。 */
 function exampleFor(key) {
@@ -268,15 +290,34 @@ function exampleFor(key) {
   return hit;
 }
 
+/** #338 · 声明里的工作流程名只许取 `BODY_HELP_FLOWS` 里的取值：名字写错即抛（不静默少一列）。
+ *  一个键可以服务多条流程（`calorie.view.weight-history`＝明细／曲线／备注），故值是「／」连的一份表。 */
+function flowFor(key) {
+  const flows = FLOW[key];
+  if (!Array.isArray(flows) || flows.length === 0) return '';
+  for (const f of flows) {
+    if (!BODY_HELP_FLOWS.includes(f)) {
+      throw new Error('流程名不在名单里：' + key + ' → ' + f + '（合法取值见 BODY_HELP_FLOWS）');
+    }
+  }
+  return flows.join('／');
+}
+
 export function buildHelpBlock() {
   const keys = Object.keys(CALORIE_COMBOS).sort();
-  const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
+  const lines = ['| 唤醒词 | key | shape | 流程 | 例 |', '|---|---|---|---|---|'];
   for (const k of keys) {
     const shape = CALORIE_COMBOS[k].shape;
     const wake = REPR[k] || k;
-    lines.push('| ' + wake + ' | ' + k + ' | ' + shape + ' | \u0060' + exampleFor(k) + '\u0060 |');
+    lines.push('| ' + wake + ' | ' + k + ' | ' + shape + ' | ' + flowFor(k) + ' | \u0060' + exampleFor(k) + '\u0060 |');
   }
   lines.push('');
+  lines.push('体重一族 58 条唤醒词各归**一条**工作流程（八条流程的步骤与逐条对照见「场景 03 体重工作流程」一节与'
+    + ' `docs/skills/skill-calorie/t338-流程接线-证据.md` §3）；流程名的事实住命令声明（`src/weight/commands.ts` 与'
+    + ' `src/goal/commands.ts` 的 `flows`），本表由 `pnpm help:build` 生成。');
+  lines.push('上表「流程」列按**命令**列：一个键服务多条流程时用「／」列全（`calorie.view.weight-history`＝看体重明细／看体重曲线／看体重备注），'
+    + '首项是「唤醒词」列那条代表词所在的流程；「唤醒词」列是该键的代表词，个别键的代表词取自别的场景清单'
+    + '（如 `calorie.view.weight-review` 一行的「看体重复核」）。');
   lines.push('相关场景：' + keys.join('、') + '（' + keys.length + ' 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。');
   lines.push('身材照片 HELP 模块：skill-calorie/photo/photo＋skill-calorie/photo/photos（gallery/compare/viewer/gif/picker + buildPhotoHelp/lookupPhotoHelp，现找直达可执行 exec）。');
   return lines.join('\n');

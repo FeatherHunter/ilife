@@ -8,14 +8,15 @@
 //      此前是单一清单 `src/cli/legacyCommands.ts`）。扫描口径＝**按文件名升序**（确定性），
 //      所以「删一个场景的清单」只动它自己那个文件，与别的场景零交集。
 //   扫描顺序不影响产物：`merge()` 最后按键排序（写键在前、读键在后），故与写入次序无关。
-// 一条命令的事实（键／形状／标题／代表唤醒词／可执行示例）全在两处声明里，没有第三处。
+// 一条命令的事实（键／形状／标题／代表唤醒词／工作流程名／可执行示例）全在两处声明里，没有第三处。
 // 输出（每个文件头一句「本文件由 scripts/gen-cli.mjs 生成，勿手改」）：
 //   ① `src/cli/keys.ts`（导出名不变，调用方导入面不动）；
 //   ② `src/cli/registry.ts`（一能力一行，由扫描得出，人工不必再碰）；
 //   ③ `packages/base-combos/combos.yaml` 的 calorie 镜像段（标记块）；
 //   ④ `scripts/build-help.mjs` 的 `REPR` 表（标记块；手写表退役）；
 //   ⑤ `scripts/build-help.mjs` 的 `EXAMPLE` 表（标记块；#295 返修 A3——原先这里有 101 条手写 `case`，
-//      是同一文件里第二处手写「一条命令的事实」：加一条命令不补 case 就 `default: throw`，SKILL.md 停更）。
+//      是同一文件里第二处手写「一条命令的事实」：加一条命令不补 case 就 `default: throw`，SKILL.md 停更）；
+//   ⑥ `scripts/build-help.mjs` 的 `FLOW` 表（标记块；#338——命令 → 工作流程名，源是声明上的可选 `flow`）。
 //
 // 新鲜度（#295 返修 A4 立、第二轮 N1 换成**内容**判据、#325 补成**配对**判据）：生成器读的是**编译后**
 // 的声明模块，所以在读之前先查「`dist/` 是不是这些声明的内容产物」——只改 `src/` 不 `pnpm build` 时，
@@ -59,6 +60,8 @@ const REPR_START = '// -- GEN-CLI-START REPR 表（由 packages/skill-calorie/sc
 const REPR_END = '// -- GEN-CLI-END REPR 表';
 const EXAMPLE_START = '// -- GEN-CLI-START EXAMPLE 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）';
 const EXAMPLE_END = '// -- GEN-CLI-END EXAMPLE 表';
+const FLOW_START = '// -- GEN-CLI-START FLOW 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）';
+const FLOW_END = '// -- GEN-CLI-END FLOW 表';
 /** #295 返修第二轮 N1 · 内容印记，#325 升到 v2（配对）：每条声明源记一对哈希
  * `{src, dist}`＝源文本 sha256 ＋ 它编译产物 `.js` 文本 sha256（编译产物缺席记 `dist: null`），
  * 由 `pnpm build`（`tsc -b` 之后）调 `--stamp` 写入。住 `dist/` 里（与 dist 同生共死，且
@@ -179,6 +182,7 @@ function merge(legacy, capabilities) {
       shape: decl.shape,
       title: decl.title,
       wakeWord: typeof decl.wakeWord === 'string' ? decl.wakeWord : undefined,
+      flows: Array.isArray(decl.flows) ? decl.flows : undefined,
       example: decl.example,
       from,
     });
@@ -305,7 +309,7 @@ function renderYamlBlock(entries) {
   return L.join('\n');
 }
 
-function renderReprBlock(entries) {
+function renderReprBlock(entries, flows) {
   const L = [REPR_START];
   L.push('// 每组合键一行代表唤醒词（优先真实 TRIGGERS 短语，照片 HELP 10 键原样，通用 HELP 走 lookup）。');
   L.push('const REPR = {');
@@ -315,6 +319,20 @@ function renderReprBlock(entries) {
   }
   L.push('};');
   L.push(REPR_END);
+  return L.join('\n');
+}
+
+/** #338 · 命令 → 工作流程名（源＝声明上的可选 `flows`）。*/
+function renderFlowBlock(entries) {
+  const L = [FLOW_START];
+  L.push('// #338 · 命令 → 工作流程名（读声明上的可选 `flows`；缺的键此处没有行，不补默认值）。');
+  L.push('const FLOW = {');
+  for (const e of entries) {
+    if (!Array.isArray(e.flows) || e.flows.length === 0) continue;
+    L.push('  ' + q(e.key) + ': [' + e.flows.map((f) => q(f)).join(', ') + '],');
+  }
+  L.push('};');
+  L.push(FLOW_END);
   return L.join('\n');
 }
 
@@ -670,10 +688,16 @@ async function main() {
     {
       path: BUILD_HELP,
       text: replaceBlock(
-        replaceBlock(readFileSync(BUILD_HELP, 'utf8'), REPR_START, REPR_END, renderReprBlock(entries), BUILD_HELP),
-        EXAMPLE_START,
-        EXAMPLE_END,
-        renderExampleBlock(entries),
+        replaceBlock(
+          replaceBlock(readFileSync(BUILD_HELP, 'utf8'), REPR_START, REPR_END, renderReprBlock(entries), BUILD_HELP),
+          EXAMPLE_START,
+          EXAMPLE_END,
+          renderExampleBlock(entries),
+          BUILD_HELP,
+        ),
+        FLOW_START,
+        FLOW_END,
+        renderFlowBlock(entries),
         BUILD_HELP,
       ),
     },
@@ -719,6 +743,7 @@ async function main() {
     process.exitCode = 1;
     return;
   }
+
   console.log('GEN-CHECK PASS：' + summary);
 }
 

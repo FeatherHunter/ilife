@@ -8,6 +8,12 @@
  * 子功能与命令的对应（HELP 下一级 → 键）：量体重＝`view.weight` ＋ `weight.log`／`weight.batch`；
  * 改体重记录＝`weight.update`／`weight.remove`；看体重明细／看体重曲线＝`view.weight-history`（同一个键）；
  * 看体重稳不稳＝`view.volatility`；对比体重＝`view.weight-compare`；体重复盘＝`view.weight-review`。
+ *
+ * `flows`（#338）：这条命令服务的**工作流程名**（零条或多条），取值是一张封闭表，逐字如下八条——
+ * 量体重／改体重记录／看体重明细／看体重曲线／看体重稳不稳／看体重备注／对比体重／体重复盘。
+ * 一个名字对应帮助面场景 03 的一个下一级分组；一个键服务多条流程时列全（`view.weight-history`
+ * 同时服务明细／曲线／备注三条）。名字的事实住这里，SKILL.md 的场景 03 体重工作流程各写一次步骤、
+ * 不另存清单，`pnpm gen` 与 `pnpm help:build` 见名单外的名字即抛。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewWeightCompare } from './compare.js';
@@ -18,13 +24,13 @@ import { viewWeightReview } from './review.js';
 import { viewVolatility } from './volatility.js';
 
 export const WEIGHT_COMMANDS = [
-  { kind: 'read', key: 'calorie.view.weight', shape: 'stat', title: '体重盘', wakeWord: '看今日体重', run: viewWeight, example: 'calorie-cmd-read calorie.view.weight' },
-  { kind: 'read', key: 'calorie.view.weight-history', shape: 'stat', title: '体重历史', wakeWord: '看本周体重', run: viewWeightHistory, example: 'calorie-cmd-read calorie.view.weight-history --params \'{"days":7}\'' },
-  { kind: 'read', key: 'calorie.view.weight-compare', shape: 'stat', title: '体重对比', wakeWord: '对比体重：本月 vs 上月', run: viewWeightCompare, example: 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\'' },
-  { kind: 'read', key: 'calorie.view.weight-review', shape: 'stat', title: '体重复核', wakeWord: '看体重复核', run: viewWeightReview, example: 'calorie-cmd-read calorie.view.weight-review' },
-  { kind: 'read', key: 'calorie.view.volatility', shape: 'stat', title: '波动分析', wakeWord: '看体重稳不稳（增强版）', run: viewVolatility, example: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d"}\'' },
-  { kind: 'write', key: 'calorie.weight.log', shape: 'receipt', title: '记体重', wakeWord: '记体重', run: writeWeightLog, example: 'calorie-cmd-read calorie.weight.log --params \'{"kg":70.5}\'' },
-  { kind: 'write', key: 'calorie.weight.update', shape: 'receipt', title: '改体重', wakeWord: '改体重记录', run: writeWeightUpdate, example: 'calorie-cmd-read calorie.weight.update --params \'{"id":1,"kg":70.2}\'' },
-  { kind: 'write', key: 'calorie.weight.remove', shape: 'receipt', title: '删体重', wakeWord: '删体重记录', run: writeWeightRemove, example: 'calorie-cmd-read calorie.weight.remove --params \'{"id":1}\'' },
-  { kind: 'write', key: 'calorie.weight.batch', shape: 'receipt', title: '批量记体重', wakeWord: '批量补录体重', run: writeWeightBatch, example: 'calorie-cmd-read calorie.weight.batch --params \'{"items":[{"date":"<日期>","kg":70.5}]}\'' },
+  { kind: 'read', key: 'calorie.view.weight', shape: 'stat', title: '体重盘', wakeWord: '看今日体重', flows: ['量体重', '体重复盘'], run: viewWeight, example: 'calorie-cmd-read calorie.view.weight' },
+  { kind: 'read', key: 'calorie.view.weight-history', shape: 'stat', title: '体重历史', wakeWord: '看本周体重', flows: ['看体重明细', '看体重曲线', '看体重备注'], run: viewWeightHistory, example: 'calorie-cmd-read calorie.view.weight-history --params \'{"days":7}\'' },
+  { kind: 'read', key: 'calorie.view.weight-compare', shape: 'stat', title: '体重对比', wakeWord: '对比体重：本月 vs 上月', flows: ['对比体重'], run: viewWeightCompare, example: 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\'' },
+  { kind: 'read', key: 'calorie.view.weight-review', shape: 'stat', title: '体重复核', wakeWord: '看体重复核', flows: ['体重复盘'], run: viewWeightReview, example: 'calorie-cmd-read calorie.view.weight-review' },
+  { kind: 'read', key: 'calorie.view.volatility', shape: 'stat', title: '波动分析', wakeWord: '看体重稳不稳（增强版）', flows: ['看体重稳不稳'], run: viewVolatility, example: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d"}\'' },
+  { kind: 'write', key: 'calorie.weight.log', shape: 'receipt', title: '记体重', wakeWord: '记体重', flows: ['量体重'], run: writeWeightLog, example: 'calorie-cmd-read calorie.weight.log --params \'{"kg":70.5}\'' },
+  { kind: 'write', key: 'calorie.weight.update', shape: 'receipt', title: '改体重', wakeWord: '改体重记录', flows: ['改体重记录'], run: writeWeightUpdate, example: 'calorie-cmd-read calorie.weight.update --params \'{"id":1,"kg":70.2}\'' },
+  { kind: 'write', key: 'calorie.weight.remove', shape: 'receipt', title: '删体重', wakeWord: '删体重记录', flows: ['改体重记录'], run: writeWeightRemove, example: 'calorie-cmd-read calorie.weight.remove --params \'{"id":1}\'' },
+  { kind: 'write', key: 'calorie.weight.batch', shape: 'receipt', title: '批量记体重', wakeWord: '批量补录体重', flows: ['量体重'], run: writeWeightBatch, example: 'calorie-cmd-read calorie.weight.batch --params \'{"items":[{"date":"<日期>","kg":70.5}]}\'' },
 ] satisfies readonly CommandSpec[];

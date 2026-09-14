@@ -41,5 +41,5 @@ export const GOAL_COMMANDS = [
   { kind: 'read', key: 'calorie.view.goal-status', shape: 'stat', title: '目标状态', wakeWord: '看目标状态', run: viewGoalStatus, example: 'calorie-cmd-read calorie.view.goal-status' },
   { kind: 'read', key: 'calorie.view.goal-vs-actual', shape: 'stat', title: '目标对比实际', wakeWord: '看目标对比实际', run: viewGoalVsActual, example: 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"window":"30d"}\'' },
   { kind: 'read', key: 'calorie.view.goal-wizard', shape: 'stat', title: '目标预检', wakeWord: '看目标预检', run: viewGoalWizard, example: 'calorie-cmd-read calorie.view.goal-wizard' },
-  { kind: 'read', key: 'calorie.view.goal-weight', shape: 'stat', title: '体重目标', wakeWord: '定体重目标', run: viewGoalWeight, example: 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"30d"}\'' },
+  { kind: 'read', key: 'calorie.view.goal-weight', shape: 'stat', title: '体重目标', wakeWord: '定体重目标', flows: ['对比体重'], run: viewGoalWeight, example: 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"30d"}\'' },
 ] satisfies readonly CommandSpec[];
