@@ -52,7 +52,7 @@ function seedFull(db) {
 
 /** 18 条＝唤醒词 → cli 参数 → 期望区间（硬编码，逐日种子独立可算）→ 期望行数。 */
 const CASES = [
-  ['看本周体重', { window: '本周' }, '2026-09-07 ~ 2026-09-07', 1],
+  ['看本周体重', { window: '本周' }, '2026-09-07', 1],
   ['看上周体重', { window: '上周' }, '2026-08-31 ~ 2026-09-06', 7],
   ['看本月体重', { window: '本月' }, '2026-09-01 ~ 2026-09-07', 7],
   ['看上月体重', { window: '上月' }, '2026-08-01 ~ 2026-08-31', 31],
@@ -103,7 +103,9 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     const html = readFileSync(htmlPath, 'utf8');
     assert.ok(html.startsWith('<!doctype html>'), word + ' 非完整文档');
     assert.ok(html.includes('ilife-page'), word + ' 缺页面壳');
-    assert.ok(html.includes('体重历史 ' + range), word + ' 区间与语义不一致（要 ' + range + '）');
+    // 区间逐字比 h1（单日窗的区间串＝那一天本身，口径在 `records.ts:98`）；用 includes 会被前缀骗过。
+    const h1 = /<h1[^>]*>([^<]*)<\/h1>/.exec(html)?.[1] ?? '';
+    assert.equal(h1, '体重历史 ' + range, word + ' 区间与语义不一致（要 ' + range + '，实测 ' + h1 + '）');
     assert.ok(html.includes('备注'), word + ' 缺备注列');
     if (word === '看体重曲线（带目标）') assert.ok(html.includes('目标线') && html.includes('68'), word + ' 缺目标标注');
     if (word === '看体重曲线（带里程碑）') assert.ok(html.includes('里程碑') && html.includes('减重 5kg 那天'), word + ' 缺里程碑标注');
