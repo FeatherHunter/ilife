@@ -7,7 +7,8 @@
  * （`docs/agents/structure.md` 铁律一）。
  *
  * #357（A 段）：皮褶钳来源的皮褶→体脂换算搬进本文件（`jp7BodyFatPct`，口径照老技能，见该函数注释）；
- * 缺性别／年龄时**拦而不猜**，交互归 #358。原「换算未移植、调用方算好直传」的形态到此结束。
+ * 缺性别／年龄时**拦而不猜**（#358：缺项一次报齐，AI 一轮问全）；页面里「先问、答完再进表」的交互归 #366。
+ * 原「换算未移植、调用方算好直传」的形态到此结束。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { BODY_FAT_PCT_MAX, BODY_FAT_PCT_MIN, CALIPER_FIELDS, addComposition, addMeasurement } from '../fetch/body.js';
@@ -82,9 +83,16 @@ function caliperBodyFatPct(input: Record<string, unknown>, source: string, age: 
     fail(2, '缺参数 bodyFatPct（' + source + ' 来源没有 7 点皮褶，直传实测值）');
   }
   const missing = CALIPER_FIELDS.filter((f) => input[f] === undefined);
-  if (missing.length > 0) fail(2, '缺参数 ' + missing.join('/') + '（皮褶钳来源 7 点必填：换算按 7 点合计，缺项不补默认值）');
-  if (age === undefined) fail(2, '缺参数 age（皮褶→体脂换算要用年龄：先问用户，不许用默认值算）');
-  if (sex === undefined) fail(2, '缺参数 sex（皮褶→体脂换算要用性别：先问用户，不许用默认值算）');
+  // 缺项**一次报齐**（7 点 ＋ 年龄 ＋ 性别，缺谁报谁）：老页面同款是「要人补」的口径
+  // （`body_composition_wizard.html:470` 要 7 点全填／`:473` 同时要「年龄」和「性别」），
+  // 命令一次问全，AI 不必问一个撞一次。各句与 #357 逐字相同（文案好恶不进本票）。
+  if (missing.length > 0 || age === undefined || sex === undefined) {
+    const asks: string[] = [];
+    if (missing.length > 0) asks.push('缺参数 ' + missing.join('/') + '（皮褶钳来源 7 点必填：换算按 7 点合计，缺项不补默认值）');
+    if (age === undefined) asks.push('缺参数 age（皮褶→体脂换算要用年龄：先问用户，不许用默认值算）');
+    if (sex === undefined) asks.push('缺参数 sex（皮褶→体脂换算要用性别：先问用户，不许用默认值算）');
+    fail(2, asks.join('；'));
+  }
   const sumMm = CALIPER_FIELDS.reduce((s, f) => s + (input[f] as number), 0);
   const pct = jp7BodyFatPct(sumMm, age, sex);
   if (pct === null) fail(2, '皮褶→体脂换算得不出合法值（BD ≤ 0）：7 点合计 ' + sumMm + 'mm');
