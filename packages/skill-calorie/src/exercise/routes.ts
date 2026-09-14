@@ -1,12 +1,12 @@
 /** #316 · exercise 能力**已搬迁键**的路由声明（键属 `src/exercise/commands.ts` 的 `EXERCISE_COMMANDS`
- * 声明键集，9 键）。
+ * 声明键集，10 键）。
  *
  * 搬迁口径与 `src/weight/routes.ts` 同：记录从 `src/cli/legacy/routes/scene-04.ts` 机械搬出，
  * **语义不动**——`list`／`order`／`wakeWord`／`scene`／`kind`／`key`／`cli` 逐字照抄，
  * `order` 仍是原列表内 0 基位次（顺序权威，生成器按 `(list, order)` 复原三个列表；换住处不打乱顺序）。
  *
- * 本文件收 **26 条**：`wake` 20 条（order 137–149／159–163／168–169，含 1 条 `non-exec`
- * 「看运动记录（有备注）」——`non-exec` 记录没有 `key`，按**场景归属**跟着走，理由逐字未改）
+ * 本文件收 **26 条**：`wake` 20 条（order 137–149／159–163／168–169，#342 起 0 条 `non-exec`：
+ * 「看运动记录（有备注）」已由新命令 `calorie.view.exercise-records` 承接，`non-exec` 记录清零）
  * ＋ `new` 6 条（order 28／34／35／36／37／39）。
  * `calorie.view.exercise`（运动总览）的 19 条记录**不在这里**：那个键的场景分区是 **01 主页**
  * （依据 `docs/skills/skill-calorie/t313a-分区-证据.md`「场景 01（主页，4）… `calorie.view.exercise`」），
@@ -31,9 +31,9 @@ export const EXERCISE_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 149, wakeWord: '批量删运动', scene: '04', kind: 'exec', key: 'calorie.exercise.remove', cli: 'calorie-cmd-read calorie.exercise.remove --params \'{"from":"<日期>","to":"<日期>"}\'' },
   { list: 'wake', order: 159, wakeWord: '看今日运动（vs 目标）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-goal', cli: 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"今日"}\'' },
   { list: 'wake', order: 160, wakeWord: '看本周运动（vs 目标）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-goal', cli: 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"本周"}\'' },
-  { list: 'wake', order: 161, wakeWord: '看运动记录（有备注）', scene: '04', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无「备注」筛选参数（饮食／体重／运动三面的备注均非任何键的筛选维度），单命令不可达成（逐条见 docs/research/t81-route-evidence.md §2.3）。' },
-  { list: 'wake', order: 162, wakeWord: '看运动记录（按力量筛选）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-strength', cli: 'calorie-cmd-read calorie.view.exercise-strength --params \'{"window":"7d"}\'' },
-  { list: 'wake', order: 163, wakeWord: '看运动记录（按有氧筛选）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-cardio', cli: 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"window":"7d"}\'' },
+  { list: 'wake', order: 161, wakeWord: '看运动记录（有备注）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-records', cli: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"7d","hasNote":true}\'' },
+  { list: 'wake', order: 162, wakeWord: '看运动记录（按力量筛选）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-records', cli: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"7d","category":"力量"}\'' },
+  { list: 'wake', order: 163, wakeWord: '看运动记录（按有氧筛选）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-records', cli: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"7d","category":"有氧"}\'' },
   { list: 'wake', order: 168, wakeWord: '看力量训练总览', scene: '04', kind: 'exec', key: 'calorie.view.exercise-strength', cli: 'calorie-cmd-read calorie.view.exercise-strength --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 169, wakeWord: '看有氧训练总览', scene: '04', kind: 'exec', key: 'calorie.view.exercise-cardio', cli: 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"window":"7d"}\'' },
   { list: 'new', order: 28, wakeWord: '看运动目标', scene: '04', kind: 'exec', key: 'calorie.view.exercise-goal', cli: 'calorie-cmd-read calorie.view.exercise-goal' },
