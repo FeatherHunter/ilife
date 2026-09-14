@@ -56,7 +56,7 @@ function candidateListHtml(cands: PhotoCard[], photosDir: string | null, today: 
     const key = p.photoPath.split('/').pop()?.split('\\').pop() ?? p.photoPath;
     const e = byName.get(key);
     const img = e?.dataUri
-      ? '<img src="' + e.dataUri + '" alt="身材照#' + p.id + '" />'
+      ? '<img src="' + e.dataUri + '" alt="身材照#' + p.id + '" style="max-width:100%;max-height:160px;height:auto;object-fit:cover" />'
       : '<div>照片没放进这一页（' + escapeHtml(e?.missing ?? '未知原因') + '）</div>';
     const bad = p.fileExists === false
       ? ' ' + renderStatusBadge({ status: 'danger', text: '找不到文件' })
@@ -73,8 +73,10 @@ function snapshotHtml(sel: PhotoCard | null, photosDir: string | null): string {
     return renderEmptyBlock({ text: '还没说要删哪张：把上面某个 #号说给我（例如 #19），我放大给你看' });
   }
   const e = embedPhoto(photosDir, sel.photoPath);
+  // #484：快照是「放大给你看」的那一张（页内文案就这么写的），故上限取**跟详情页同族的 60vh**，
+  // 不跟着候选缩略图一起收到 160px——收到那个数就把「放大」两字说反了。
   const img = e.dataUri !== null
-    ? '<img src="' + e.dataUri + '" alt="快照#' + sel.id + '" />'
+    ? '<img src="' + e.dataUri + '" alt="快照#' + sel.id + '" style="max-width:100%;max-height:60vh;height:auto;object-fit:contain" />'
     : '<div>这张图放不进这一页（' + escapeHtml(e.missing ?? '未知原因') + '）</div>';
   return '<figure data-snapshot="' + sel.id + '">' + img +
     '<figcaption>快照 #' + sel.id + ' ' + escapeHtml(sel.date) + ' ' + escapeHtml(sel.time ?? '') +

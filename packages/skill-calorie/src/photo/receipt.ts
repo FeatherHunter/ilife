@@ -234,7 +234,8 @@ function photoFigureOf(
   const media = failed
     ? '<div>这张没有存进来</div>'
     : (e && e.dataUri !== null
-      ? '<img src="' + e.dataUri + '" alt="身材照#' + (it.id ?? '') + '" />'
+      // #484：图给宽度约束＋缩略级上限（存照回执可一次带多张，图别把页撑破）。
+      ? '<img src="' + e.dataUri + '" alt="身材照#' + (it.id ?? '') + '" style="max-width:100%;max-height:240px;height:auto" />'
       : '<div>照片未内嵌（' + escapeHtml(e?.missing ?? '未知原因') + '）</div>');
   const line1 = '<div>' + (it.id === undefined || it.id === null ? '没有编号' : '#' + it.id)
     + ' · ' + escapeHtml(opts.date) + ' '
@@ -303,7 +304,7 @@ export function buildPhotoRemoveDoc(
   const it = receipt.items[0];
   const e = opts.embed;
   const img = e && e.dataUri !== null
-    ? '<img src="' + e.dataUri + '" alt="身材照#' + (it?.id ?? '') + '" />'
+    ? '<img src="' + e.dataUri + '" alt="身材照#' + (it?.id ?? '') + '" style="max-width:100%;max-height:240px;height:auto" />'
     : '<div>照片未内嵌（' + escapeHtml(e?.missing ?? '文件已随删除移除，快照仅保留文字行') + '）</div>';
   const meta = '#' + (it?.id ?? '—') + ' · ' + (it?.date ?? '—') + ' · ' + tagText(it?.tagList ?? [])
     + ' · ' + (it?.photoPath ?? e?.fileName ?? '—');

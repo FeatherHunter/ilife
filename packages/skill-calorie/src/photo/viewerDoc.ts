@@ -60,14 +60,18 @@ function whenText(p: PhotoCard, today: string): string {
 }
 
 /** 上一张／下一张（老页 `:74-77` 链接＋`:137`／`:142` 置灰）：有邻即锚点，无邻即一句人话
- *  （无空 href，不出坏链；不写「翻页禁用」这种系统口吻）。 */
+ *  （无空 href，不出坏链；不写「翻页禁用」这种系统口吻）。
+ *  #484：裸 `<a>` 在手机上只有 20px 高（低于 44px 下限）——给足触摸区（`min-height:44px` ＋
+ *  行内 flex 居中），两邻共用同一条约束。 */
+const NAV_LINK_STYLE = 'min-height:44px;display:inline-flex;align-items:center';
+
 function navHtml(v: ViewerData): string {
   const prev = v.prevId === null
     ? '<span aria-disabled="true">已是第一张</span>'
-    : '<a href="#photo-' + v.prevId + '" data-command="' + escapeHtml(detailCommand(v.prevId)) + '">← 上一张 #' + v.prevId + '</a>';
+    : '<a style="' + NAV_LINK_STYLE + '" href="#photo-' + v.prevId + '" data-command="' + escapeHtml(detailCommand(v.prevId)) + '">← 上一张 #' + v.prevId + '</a>';
   const next = v.nextId === null
     ? '<span aria-disabled="true">已是最后一张</span>'
-    : '<a href="#photo-' + v.nextId + '" data-command="' + escapeHtml(detailCommand(v.nextId)) + '">下一张 #' + v.nextId + ' →</a>';
+    : '<a style="' + NAV_LINK_STYLE + '" href="#photo-' + v.nextId + '" data-command="' + escapeHtml(detailCommand(v.nextId)) + '">下一张 #' + v.nextId + ' →</a>';
   return '<div data-nav>' + prev + ' · ' + next + '</div>';
 }
 

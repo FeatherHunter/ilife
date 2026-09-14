@@ -62,13 +62,16 @@ function whenText(p: PhotoCard, today: string): string {
 }
 
 /** 单卡：内嵌图（`data:image/`）或缺失句（超预算弃嵌另注原因，正常照片不受牵连）；
- *  图注同详情页口径——什么时候 ＋ 标签 ＋ 文件名小字块（chip），文件只在缺失时提示。 */
+ *  图注同详情页口径——什么时候 ＋ 标签 ＋ 文件名小字块（chip），文件只在缺失时提示。
+ *  #484：图加宽度约束；卡本身是**可折行**的 flex 项（宽屏并排、窄屏自动上下排列）——
+ *  `flex:1 1 240px` ＋ `min-width:0` 是让卡能被压窄的关键（少了 `min-width:0`，flex 项
+ *  的下限仍是内容宽，窄屏照样撑破）。 */
 function cardHtml(p: PhotoCard, e: PhotoEmbed | undefined, dropped: boolean, today: string): string {
   const img = !dropped && e?.dataUri
-    ? '<img src="' + e.dataUri + '" alt="身材照#' + p.id + '" />'
+    ? '<img src="' + e.dataUri + '" alt="身材照#' + p.id + '" style="max-width:100%;height:auto" />'
     : '<div>照片没显示（' + escapeHtml(dropped ? '太大放不下：' + (e?.fileName ?? fileKeyOf(p.photoPath)) : (e?.missing ?? '未知原因')) + '）</div>';
   const gone = p.fileExists === false ? ' · 文件缺失' : '';
-  return '<figure data-id="' + p.id + '">' + img +
+  return '<figure data-id="' + p.id + '" style="flex:1 1 240px;min-width:0">' + img +
     '<figcaption>#' + p.id + ' ' + whenText(p, today) + ' ' + tagsText(p) +
     ' · ' + renderChips({ items: [{ text: fileKeyOf(p.photoPath) }] }) + gone + '</figcaption></figure>';
 }
@@ -104,7 +107,8 @@ function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: Reado
     parts.push('<div>超预算横幅：已嵌入 ' + okCount + ' 张，还有 ' + dropped.size +
       ' 张未嵌入（单页上限 1 MiB）· 替代操作：改查单张详情分看，或换小图后重跑</div>');
   }
-  parts.push('<div>' + [c.photo1, c.photo2].map((p) =>
+  // #484：两张并排（宽屏）／上下排列（窄屏）——折行容器＋可压窄的卡，两卡都放得下才不溢出。
+  parts.push('<div style="display:flex;flex-wrap:wrap;gap:12px">' + [c.photo1, c.photo2].map((p) =>
     cardHtml(p, byName.get(fileKeyOf(p.photoPath)), dropped.has(fileKeyOf(p.photoPath)), today),
   ).join('') + '</div>');
   parts.push(renderDataTable({

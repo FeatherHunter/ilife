@@ -151,7 +151,11 @@ function stageHtml(s: Synth, embed: boolean): string {
       + String(s.bytes) + ' 字节）</div>';
   }
   const uri = 'data:image/gif;base64,' + Buffer.from(readFileSync(s.path)).toString('base64');
-  return '<div data-gif-stage><img src="' + uri + '" alt="身材变化 GIF" /></div>';
+  // #484：GIF 现在只有 64×64（占屏约 16%，太小）——舞台给一个**有上限的放大**：
+  //  `min(320px,100%)` 宽屏放到 320、窄屏随容器收；`image-rendering:pixelated` 让放大后的
+  //  方帧保持锐边（不插值糊成一片）。**不动 `gif.ts` 的 `maxEdge`**：那会改产物体积与既有断言。
+  return '<div data-gif-stage><img src="' + uri + '" alt="身材变化 GIF"'
+    + ' style="width:min(320px,100%);height:auto;image-rendering:pixelated" /></div>';
 }
 
 function detailRows(cards: readonly PhotoCard[], s: Synth): Array<Record<string, unknown>> {

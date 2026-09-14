@@ -73,7 +73,7 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string 
   const tags = p.tagList.length > 0 ? p.tagList.map(escapeHtml).join('、') : '无标签';
   const fileName = e?.fileName ?? fileNameOf(p.photoPath);
   const img = e?.dataUri != null
-    ? '<img src="' + e.dataUri + '" alt="身材照#' + p.id + '" />'
+    ? '<img src="' + e.dataUri + '" alt="身材照#' + p.id + '" style="max-width:100%;height:auto" />'
     : '<div>' + escapeHtml(notShownReason(e, skipReason)) + '</div>';
   const caption = [escapeHtml(p.date) + (p.time === null ? '' : ' ' + escapeHtml(p.time.slice(0, 5))),
     tags, relativeDays(p.date, today)].filter((s) => s !== '').join(' · ');
