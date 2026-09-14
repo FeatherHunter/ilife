@@ -82,7 +82,7 @@ export function weightTrend(db: DatabaseSync, startDate: string, endDate?: strin
   }, '体重趋势 ' + rows.length + ' 条记录，趋势 ' + trendCn);
 }
 
-export interface CompareSide { start: string; end: string; avgWeight: number; firstWeight: number | null; firstDate: string | null; lastWeight: number | null; changeKg: number }
+export interface CompareSide { start: string; end: string; avgWeight: number; firstWeight: number | null; firstDate: string | null; lastWeight: number | null; changeKg: number; count?: number }
 export interface WeightCompare { avgDiff: number; direction: 'up' | 'down'; speedLabel: string; currentPeriod: CompareSide; comparePeriod: CompareSide }
 
 function periodAvg(db: DatabaseSync, s: string, e: string): number | null {
