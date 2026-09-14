@@ -18,6 +18,7 @@
   "files": [
     "dist",
     "SKILL.md",
+    "workflows/*.md",
     "templates/*.html"
   ],
   "dependencies": {

@@ -1,0 +1,31 @@
+# t450 收口席窗口内运行条目导出（源：.scratch/locks/gate-runs.log，未受版本控制）
+# 导出时刻：2026-09-14T13:28Z（本文件末条 RUN＝13:27:14Z，即守卫探针）。本席窗口共 10 次运行：5 步生成链 ＋ 3 组测试 ＋ 1 次预置红门 ＋ 1 次守卫探针，逐条在证据 §3.1／§3.2／§3.6 声明
+START ticket=450 runId=e0a3fb90-4b76-4ac1-aa47-a721d149ba10 cmd="pnpm build" waitedMs=0 pid=10264 at=2026-09-14T13:25:39.154Z
+RUN ticket=450 runId=e0a3fb90-4b76-4ac1-aa47-a721d149ba10 cmd="pnpm build" waitedMs=0 exit=0 pid=10264 at=2026-09-14T13:25:41.713Z
+START ticket=450 runId=6bee6520-19df-4751-88dd-8aca89440724 cmd="pnpm gen" waitedMs=0 pid=12492 at=2026-09-14T13:25:41.793Z
+RUN ticket=450 runId=6bee6520-19df-4751-88dd-8aca89440724 cmd="pnpm gen" waitedMs=0 exit=0 pid=12492 at=2026-09-14T13:25:42.405Z
+START ticket=450 runId=8b2e27e3-9a3b-4885-bbcc-0b068130688d cmd="pnpm build" waitedMs=1 pid=50412 at=2026-09-14T13:25:42.479Z
+RUN ticket=450 runId=8b2e27e3-9a3b-4885-bbcc-0b068130688d cmd="pnpm build" waitedMs=1 exit=0 pid=50412 at=2026-09-14T13:25:44.439Z
+START ticket=450 runId=73db8f14-209c-482c-a20b-95a8ad4585eb cmd="pnpm help:build" waitedMs=0 pid=15580 at=2026-09-14T13:25:44.517Z
+RUN ticket=450 runId=73db8f14-209c-482c-a20b-95a8ad4585eb cmd="pnpm help:build" waitedMs=0 exit=0 pid=15580 at=2026-09-14T13:25:44.960Z
+START ticket=450 runId=f869fe7d-1b4d-44eb-8a87-299d94507905 cmd="pnpm gen:check" waitedMs=1 pid=14308 at=2026-09-14T13:25:45.036Z
+RUN ticket=450 runId=f869fe7d-1b4d-44eb-8a87-299d94507905 cmd="pnpm gen:check" waitedMs=1 exit=0 pid=14308 at=2026-09-14T13:25:45.630Z
+START ticket=450 runId=a680c969-d1b4-4252-9855-30a67c3dafc2 cmd="node --test packages/skill-calorie/test/wizard-86.test.mjs packages/skill-calorie/test/skill-md-photo-285.test.mjs packages/skill-calorie/test/photo-picker-283.test.mjs packages/skill-calorie/test/photo-help-flow-345.test.mjs packages/skill-calorie/test/photo-shape-341.test.mjs packages/skill-calorie/test/photo-budget-438.test.mjs packages/skill-calorie/test/photo-gif-page-352.test.mjs" waitedMs=0 pid=49544 at=2026-09-14T13:26:05.809Z
+RUN ticket=450 runId=a680c969-d1b4-4252-9855-30a67c3dafc2 cmd="node --test packages/skill-calorie/test/wizard-86.test.mjs packages/skill-calorie/test/skill-md-photo-285.test.mjs packages/skill-calorie/test/photo-picker-283.test.mjs packages/skill-calorie/test/photo-help-flow-345.test.mjs packages/skill-calorie/test/photo-shape-341.test.mjs packages/skill-calorie/test/photo-budget-438.test.mjs packages/skill-calorie/test/photo-gif-page-352.test.mjs" waitedMs=0 exit=0 pid=49544 at=2026-09-14T13:26:09.053Z
+START ticket=450 runId=dc50f1af-5abe-4409-9c7a-27f8c53471fb cmd="node --test packages/skill-calorie/test/photo-receipt-docs-282.test.mjs" waitedMs=0 pid=41424 at=2026-09-14T13:26:09.135Z
+RUN ticket=450 runId=dc50f1af-5abe-4409-9c7a-27f8c53471fb cmd="node --test packages/skill-calorie/test/photo-receipt-docs-282.test.mjs" waitedMs=0 exit=0 pid=41424 at=2026-09-14T13:26:12.106Z
+START ticket=450 runId=8b941c13-39e8-459e-89c2-8753ea06aa36 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=1 pid=38216 at=2026-09-14T13:26:12.181Z
+RUN ticket=450 runId=8b941c13-39e8-459e-89c2-8753ea06aa36 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=1 exit=1 pid=38216 at=2026-09-14T13:26:12.504Z
+START ticket=450 runId=b115122e-1795-41a8-8a75-599d3719e994 cmd="pnpm help:examples:check" waitedMs=0 pid=40112 at=2026-09-14T13:26:12.577Z
+RUN ticket=450 runId=b115122e-1795-41a8-8a75-599d3719e994 cmd="pnpm help:examples:check" waitedMs=0 exit=1 pid=40112 at=2026-09-14T13:26:13.431Z
+START ticket=450 runId=c9f67a6b-49f3-4b83-a70d-7fbfcc1aac2d cmd="pwsh -NoProfile -File .scratch/t450/probe-line72.ps1" waitedMs=0 pid=18932 at=2026-09-14T13:27:10.818Z
+RUN ticket=450 runId=c9f67a6b-49f3-4b83-a70d-7fbfcc1aac2d cmd="pwsh -NoProfile -File .scratch/t450/probe-line72.ps1" waitedMs=0 exit=0 pid=18932 at=2026-09-14T13:27:14.306Z
+# ── 第二窗口（#450 落地席）：重生成后生成物仍含 #384 增量 → 先按硬闸停手上报，经编排裁定走 B 快路径由本票代带落库 ──
+# 复合脚本：node tooling/run-locked.mjs --ticket 450 -- pwsh -NoProfile -File .scratch/t450/30-regate.ps1（runId=05e4c797-a048-4e17-b081-0515e7a66e27）
+# 包装器 exit=0 是复合脚本整体退出码；逐步读数见下两行之后的 STEP 行，逐步日志 .scratch/t450/31..36-regen-*.log
+START ticket=450 runId=05e4c797-a048-4e17-b081-0515e7a66e27 cmd="pwsh -NoProfile -File .scratch/t450/30-regate.ps1" waitedMs=0 pid=8460 at=2026-09-14T15:10:13.099Z
+RUN ticket=450 runId=05e4c797-a048-4e17-b081-0515e7a66e27 cmd="pwsh -NoProfile -File .scratch/t450/30-regate.ps1" waitedMs=0 exit=0 pid=8460 at=2026-09-14T15:10:28.228Z
+STEP pnpm-gen exit=0（键 127）／pnpm-build exit=0／pnpm-help:build exit=0／pnpm-gen:check exit=0（GEN-CHECK PASS 键 127）／targeted-8 exit=0（tests 52／pass 52／fail 0）／routing-81 exit=1（tests 8／pass 4／fail 4：D2① D2④ FX-81-5 A7，四条全属他席在途）
+# 障碍：a18a289 只落 5 个 gen 目标中的 3 个（keys.ts／routes.generated.ts／SKILL.md，HEAD 命中 8／8／9）；
+# combos.yaml（+40 行＝#384 八键各 5 行，属 450 的行 0）与 scripts/build-help.mjs（+18/-5：+16 行属 #384、-5/+2 行属 450）仍是未入库派生面。
+# 判据：第二步「生成物 diff 不得含 calorie.report.* 八键新增量」不成立（worktree 命中 combos.yaml=8、build-help.mjs=16；HEAD=0／0）→ 停手上报；经编排（总工程师）裁定 B 快路径：本提交代带这两件，提交正文如实登记夹带。

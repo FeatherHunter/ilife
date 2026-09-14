@@ -16,6 +16,7 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { dispatch } from '../dist/cli/cmd_read.js';
 import { CALORIE_COMBOS } from '../dist/cli/keys.js';
+import { PHOTO_COMMANDS } from '../dist/photo/commands.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { MEASUREMENT_FIELDS, CALIPER_FIELDS } from '../dist/fetch/body.js';
 import { WIZARD_MEASURE_CAMEL } from '../dist/render/wizardPort.js';
@@ -65,12 +66,13 @@ const WIZ_KEYS = [
   'calorie.view.gif-planner',
 ];
 
-test('#86 域内唤醒词命中：4 新拟词→wizard 4 键', () => {
+test('#86 域内唤醒词命中：2 条真词→wizard 命令；2 个照片流程内页无代表唤醒词', () => {
+  // #159 词表订正：身材照片那两个页面是老技能场景 09 的**流程内页**，老技能没有给它们唤醒词
+  // （场景 09 只有 8 个词，对账读数见 `docs/skills/skill-calorie/t450-词表订正.md`），
+  // 故不再把「看身材照向导」「看GIF规划器」当入口词断言；身体细节两个真词照旧。
   const pairs = [
     ['看围度向导', 'calorie.view.measure-wizard'],
     ['看体脂向导', 'calorie.view.composition-wizard'],
-    ['看身材照向导', 'calorie.view.photo-log-wizard'],
-    ['看GIF规划器', 'calorie.view.gif-planner'],
   ];
   for (const [word, key] of pairs) {
     const hit = execRoute(word);
@@ -79,6 +81,14 @@ test('#86 域内唤醒词命中：4 新拟词→wizard 4 键', () => {
     assert.ok(String(hit.cli).startsWith('calorie-cmd-read ' + key), '唤醒词 cli 不同步：' + word);
     assert.ok(CALORIE_COMBOS[key], '键未登记：' + key);
     assert.equal(CALORIE_COMBOS[key].shape, 'stat', 'wizard 键须为 stat 形：' + key);
+  }
+  // 两个照片流程内页：命令仍登记（stat 形），但声明里已无代表唤醒词（改回即红）。
+  for (const key of ['calorie.view.photo-log-wizard', 'calorie.view.gif-planner']) {
+    assert.ok(CALORIE_COMBOS[key], '键未登记：' + key);
+    assert.equal(CALORIE_COMBOS[key].shape, 'stat', 'wizard 键须为 stat 形：' + key);
+    const spec = PHOTO_COMMANDS.find((c) => c.key === key);
+    assert.ok(spec, '照片命令声明缺：' + key);
+    assert.equal(spec.wakeWord, undefined, '流程内页不该有代表唤醒词：' + key);
   }
 });
 

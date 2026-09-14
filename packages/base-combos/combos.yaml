@@ -269,6 +269,46 @@ combos:
     shape: list
     title: 看身材照
     cmd: skill-calorie
+  - key: calorie.report.bmi
+    skill: calorie
+    shape: stat
+    title: BMI 报告
+    cmd: skill-calorie
+  - key: calorie.report.bmr
+    skill: calorie
+    shape: stat
+    title: BMR 报告
+    cmd: skill-calorie
+  - key: calorie.report.compare
+    skill: calorie
+    shape: stat
+    title: 健康报告(含对比)
+    cmd: skill-calorie
+  - key: calorie.report.protein
+    skill: calorie
+    shape: stat
+    title: 蛋白质摄入报告
+    cmd: skill-calorie
+  - key: calorie.report.score
+    skill: calorie
+    shape: stat
+    title: 综合评分
+    cmd: skill-calorie
+  - key: calorie.report.tdee
+    skill: calorie
+    shape: stat
+    title: TDEE 报告
+    cmd: skill-calorie
+  - key: calorie.report.trend
+    skill: calorie
+    shape: stat
+    title: 健康趋势
+    cmd: skill-calorie
+  - key: calorie.report.water
+    skill: calorie
+    shape: stat
+    title: 水分摄入报告
+    cmd: skill-calorie
   - key: calorie.today
     skill: calorie
     shape: list
