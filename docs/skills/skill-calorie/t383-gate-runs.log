@@ -46,3 +46,15 @@ START ticket=383 runId=cda9796c-231e-4bfc-a62e-451aed0cbe3f cmd="git commit -F .
 RUN ticket=383 runId=cda9796c-231e-4bfc-a62e-451aed0cbe3f cmd="git commit -F .scratch/t383/commitmsg-1.txt -- packages/skill-calorie/src/render/insightPlate.ts packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/test/analysis-predict-383.test.mjs .changeset/t383-predict-params.md docs/skills/skill-calorie/t383-evidence.md" waitedMs=0 exit=0 pid=45328 at=2026-09-14T04:51:33.069Z
 START ticket=383 runId=85d0dd16-9cd2-4e19-b46b-c83d626cd882 cmd="pnpm build" waitedMs=0 pid=42776 at=2026-09-14T04:51:46.789Z
 RUN ticket=383 runId=85d0dd16-9cd2-4e19-b46b-c83d626cd882 cmd="pnpm build" waitedMs=0 exit=2 pid=42776 at=2026-09-14T04:51:48.610Z
+START ticket=383 runId=f74a2d2b-83bc-465a-b1a1-290545b82aba cmd="git add docs/skills/skill-calorie/t383-evidence.md docs/skills/skill-calorie/t383-gate-runs.log" waitedMs=0 pid=42788 at=2026-09-14T04:52:51.762Z
+RUN ticket=383 runId=f74a2d2b-83bc-465a-b1a1-290545b82aba cmd="git add docs/skills/skill-calorie/t383-evidence.md docs/skills/skill-calorie/t383-gate-runs.log" waitedMs=0 exit=0 pid=42788 at=2026-09-14T04:52:51.806Z
+START ticket=383 runId=7da32ca2-7e4b-4eb3-b4a4-0602b3809c72 cmd="git commit -F .scratch/t383/commitmsg-2.txt -- docs/skills/skill-calorie/t383-evidence.md docs/skills/skill-calorie/t383-gate-runs.log" waitedMs=0 pid=36388 at=2026-09-14T04:52:57.338Z
+RUN ticket=383 runId=7da32ca2-7e4b-4eb3-b4a4-0602b3809c72 cmd="git commit -F .scratch/t383/commitmsg-2.txt -- docs/skills/skill-calorie/t383-evidence.md docs/skills/skill-calorie/t383-gate-runs.log" waitedMs=0 exit=0 pid=36388 at=2026-09-14T04:52:57.415Z
+START ticket=383 runId=b8489ba2-39d5-4645-a748-c26acfca677e cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 pid=51736 at=2026-09-14T04:57:39.611Z
+RUN ticket=383 runId=b8489ba2-39d5-4645-a748-c26acfca677e cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=1 pid=51736 at=2026-09-14T04:57:39.817Z
+START ticket=383 runId=6765b3cc-1764-4569-9393-c7112cb70cda cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 pid=1208 at=2026-09-14T04:59:40.121Z
+RUN ticket=383 runId=6765b3cc-1764-4569-9393-c7112cb70cda cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=1 pid=1208 at=2026-09-14T04:59:40.406Z
+START ticket=383 runId=9087cb61-49a7-4ce2-a6fb-b809b1b73083 cmd="git add test/calorie-routing-81.test.mjs" waitedMs=0 pid=49552 at=2026-09-14T05:00:34.197Z
+RUN ticket=383 runId=9087cb61-49a7-4ce2-a6fb-b809b1b73083 cmd="git add test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=49552 at=2026-09-14T05:00:34.254Z
+START ticket=383 runId=760b6885-70cf-4fc8-a95e-ce65f75da862 cmd="git commit -F .scratch/t383/commitmsg-3.txt -- test/calorie-routing-81.test.mjs" waitedMs=30003 pid=24524 at=2026-09-14T05:01:08.640Z
+RUN ticket=383 runId=760b6885-70cf-4fc8-a95e-ce65f75da862 cmd="git commit -F .scratch/t383/commitmsg-3.txt -- test/calorie-routing-81.test.mjs" waitedMs=30003 exit=0 pid=24524 at=2026-09-14T05:01:08.715Z
