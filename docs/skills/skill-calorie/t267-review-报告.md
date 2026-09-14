@@ -15,7 +15,7 @@
 
 ## 二 · 逐条路径
 
-**1 复跑三段**　见表。全部在 `node tooling/run-locked.mjs --ticket 267 -- …` 内跑；未持锁那一次我复现过「半写 dist」假红，故读数只取锁内。
+**1 复跑三段**　见表。判据跑动一律在 `node tooling/run-locked.mjs --ticket 267 -- …` 内跑；即便持锁，我也撞到过一次 `dist/fetch/body.js` 取不到（他席在重写构建产物），故读数只取完整构建之后那几轮。
 
 **2 G1 起点真是唤醒词**　`src/triggers/help-lookup.ts:34-57`：速查表以 `t.wake_word`（＋aliases）为键、值取该行自己的 `main_prompt.cli`，`lookupWake` 就是 `map[word] ?? []`——不是从命令表反查。我的探针反证：键数=440、拿 `calorie.view.exercise` 当查询词**命中 0 条**、汇总键下 10 条词命令文本互不相同（反查则必相同）。自选 3 词各走一遍独立脚本（自建索引 → `lookupWake` → 路由层 → 真跑）：**看运动类型分布** 74338 B／**记力量训练** 69356 B／**看某段时间运动** 95485 B——三条 exit 0、绝对路径、`delivery.bytes`＝盘上字节＝读回字节、完整文档、自定义起止逐字在产物里。
 
@@ -26,7 +26,7 @@
 **4 自设新探针**（`docs/skills/skill-calorie/t267-review-probe.mjs`，与实施席判据件不共用一行）
 - **双向对账**：直读源码文本，`39 ＝ exercise/routes.ts(29) ＋ home/routes.ts(10)`，双向无孤儿无缺词、逐条 cli 与冻结表逐字相同 ⇒ 没有漏掉分区。
 - **读类 7 条**：零命令键=7、完整文档=7、字节域=[71468,93218]（我自己的种子库）；全 39 条=[65200,97454] 与其一致。
-- **它没覆盖的幂等**：同一词两跑 sha256 相同；**本票范围内没有两条词共用同一条命令文本**（重复组=0，如实记账）；同键异窗口 `add:8→8／records:5→5／recap:5→5／exercise:10→9`——第 9 对正是遗留③「周一 本周＝今日」的目标词对，窗口参数确实进了产物。
+- **它没覆盖的幂等**：同一词两跑 sha256 相同；**本票范围内没有两条词共用同一条命令文本**（重复组=0，如实记账）；同键异窗口产物分布 `add:8→8／records:5→5／recap:5→5／exercise:10→9／exercise-goal:2→1`——`exercise-goal` 那 1 处与实施席遗留③「周一 本周＝今日」读数一致，汇总键也塌 1 处（我未逐对定位，只记账）。窗口参数确实进了产物。
 
 **5 真库只读复核**（我自己算）　跑前／跑后（其间含两次变异与全部 build／判据跑动）`sha256=57ce9d87f5f232822332d7057c2ae8411d99ba7fdecea289f2028e19fc3ffc15`、3072000 B、mtime `2026-09-14T05:53:37.729Z` 全同（只读打开前后也全同）；`integrity_check=ok`、表数=11、逐表行数 `body_composition=0 body_measurements=1 body_photos=22 daily_goal=1 exercise_log=8297 food_log=562 nutrition_products=1931 user_profile=1 weight_log=129 workout_plan_config=1 workout_plans=100`——与实施席声明**逐字相同**。
 
