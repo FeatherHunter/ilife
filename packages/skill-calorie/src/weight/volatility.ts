@@ -13,8 +13,17 @@ import type { AnalysisResult } from '../analysis/result.js';
 // #294 · 命令层依赖：窗口／参数口径走共用位，页面装配走本能力内部件。
 import { defaultRange, nums, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
-import { buildVolatilityView } from './plate.js';
-import { buildVolatilityDoc } from './plateDocs.js';
+import { CalorieRenderError } from '../render/errors.js';
+import { assertDate } from './plate.js';
+import type { VolatilityView } from './plate.js';
+import {
+  renderChartBlock,
+  renderDataTable,
+  renderKpiGrid,
+} from 'base-paint/blocks';
+import { assembleDocPage } from '../shared/docPage.js';
+import { dataCopyArea } from '../shared/copyArea.js';
+import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
 
 const YELLOW_SIGMA = 1.5;
 const RED_SIGMA = 2.0;
@@ -128,4 +137,89 @@ export function viewVolatility(params: Record<string, unknown>, db: DatabaseSync
     deviationKg: v.volatility.earlyWarning.deviationKg,
   });
   return { data: { metrics }, html: buildVolatilityDoc(v) };
+}
+
+/* ── 视图模型（#332 自 `plate.ts` 原样迁入：波动＝analysis/volatilityV2 双基线） ── */
+
+export function buildVolatilityView(
+  db: DatabaseSync,
+  start: string,
+  end: string | null | undefined,
+  baselineMode: BaselineMode = 'rolling',
+): VolatilityView {
+  assertDate(start);
+  if (end !== null && end !== undefined) assertDate(end);
+  if (baselineMode !== 'rolling' && baselineMode !== 'goal') {
+    throw new CalorieRenderError('bad-input', 'baselineMode 非法（rolling/goal）：' + String(baselineMode));
+  }
+  let res: AnalysisResult<VolatilityV2>;
+  try {
+    res = weightVolatilityV2(db, start, end ?? null, baselineMode);
+  } catch (e) {
+    if (e instanceof FetchError) throw new CalorieRenderError('bad-input', e.message);
+    throw e;
+  }
+  if (res.status !== 'ok' || !res.data) {
+    throw new CalorieRenderError('missing-data', res.message || ('记录不足（' + start + ' ~ ' + (end ?? start) + '），需要至少2条记录'));
+  }
+  return { start, end: end ?? start, baselineMode, volatility: res.data };
+}
+
+/* ── 整页装配（#332 自 `plateDocs.ts` 原样迁入：weight_volatility_v2.html 对照） ── */
+
+export function buildVolatilityDoc(v: VolatilityView): string {
+  const o = v.volatility;
+  const parts: string[] = [renderKpiGrid([
+    { label: '波动分析', value: '基线 ' + o.baselineValue + ' kg', detail: o.baselineToggleLabel },
+    {
+      label: '阈值', value: '黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + ' kg',
+      detail: 'σ=' + o.baselineSigma + 'kg · ' + v.baselineMode + '基线',
+    },
+    { label: '预警', value: o.earlyWarning.level, detail: o.earlyWarning.message },
+    {
+      label: '近期异常', value: String(o.recentAnomalies.length), unit: '个',
+      detail: '共 ' + o.points.length + ' 点',
+    },
+  ])];
+  let charts = false;
+  if (o.points.length > 0) {
+    parts.push(renderChartBlock({
+      kind: 'line',
+      title: '偏离基线',
+      input: { items: o.points.map((p) => ({ label: p.date.slice(5), value: p.deviationKg })) },
+    }));
+    charts = true;
+  }
+  parts.push(renderDataTable({
+    columns: [
+      { key: 'date', label: '日期' },
+      { key: 'kg', label: '体重', align: 'right' },
+      { key: 'dev', label: '偏离', align: 'right' },
+      { key: 'level', label: '级别' },
+    ],
+    rows: o.recentAnomalies.map((p) => ({ date: p.date, kg: p.kg, dev: p.deviationKg, level: p.level })),
+    caption: '近期异常点（共 ' + o.recentAnomalies.length + ' 个，黄/红阈上）',
+    emptyText: '近期无异常点（基线 ' + o.baselineValue + ' kg，黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + '）',
+  }));
+  parts.push(dataCopyArea('复制数据', {
+    envelope: {
+      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.volatility',
+      data: {
+        metrics: {
+          baselineValue: o.baselineValue, baselineSigma: o.baselineSigma,
+          yellow: o.thresholds.yellow, red: o.thresholds.red,
+          points: o.points.length, anomalies: o.recentAnomalies.length,
+          deviationKg: o.earlyWarning.deviationKg,
+        },
+      },
+    },
+  }));
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: '波动分析 ' + v.start + ' ~ ' + v.end,
+    eyebrow: 'calorie.view.volatility · 运动身体域',
+    subtitle: o.earlyWarning.message,
+    content: parts.join(''),
+    charts,
+  });
 }

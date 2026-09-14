@@ -19,10 +19,18 @@ export { RANK_CATEGORIES, buildAllRankings, buildFoodRankingPlate } from '../die
 export type { AllRankings, RankCategory } from '../diet/rankingPlate.js';
 export { buildProductLibrary, buildProductSearch, buildProductStats } from '../diet/libraryPlate.js';
 export type { ProductLibrary, ProductSearch, ProductStats } from '../diet/libraryPlate.js';
-export { renderHomeHtml, renderDietHtml, renderExerciseHtml, renderGoalHtml } from './html.js';
+export { renderDietHtml, renderExerciseHtml, renderGoalHtml } from './html.js';
+// #370 · 主页装配已归位 `src/home/homeDocs.ts`（纯搬迁）；本 barrel 按原样转出，调用方导入面不变
+// （同本文件 `buildHomeData` 转出 `../home/home.js` 的先例）。
+export { renderHomeHtml } from '../home/homeDocs.js';
 // #294 · 体重视图／取数已搬进能力目录 `src/weight/`（归属律）；本汇总出口按原样转出，
 // 既有调用方（`test/render-t41`）导入面不变——照 #179 档案读链的先例。
-export { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, buildWeightReviewView, buildVolatilityView } from '../weight/plate.js';
+// #332 · 五个视图模型按 HELP 下一级归位：对外名字不变，只改转出源。
+export { buildWeightDashboard } from '../weight/log.js';
+export { buildWeightHistoryView } from '../weight/history.js';
+export { buildWeightCompareView } from '../weight/compare.js';
+export { buildWeightReviewView } from '../weight/review.js';
+export { buildVolatilityView } from '../weight/volatility.js';
 export type { WeightDashboard, WeightHistoryView, WeightCompareView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasureView, buildBodyMeasureCompare } from '../body/bodyPlate.js';
 export type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
