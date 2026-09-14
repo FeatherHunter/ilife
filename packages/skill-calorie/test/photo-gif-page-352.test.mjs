@@ -11,12 +11,19 @@
  * 另加：老页 `body_photo_gif_result.html:99-101` 的过大降级（不内嵌时给本地路径提示，不空白）
  * ＋ `:104-107` 的缺值 `—` ＋ 未配照片目录时的「未合成＋原因＋替代操作」。
  *
+ * #472（读侧 A 组）追加的可见文本判据：眉标那句内部命令名＋内部词「域」0 命中；KPI 收到三格
+ * （合成／尺寸／文件），与副标题重复的时间跨度／首张／末张／标签四格下屏；`cs` 单位与
+ * 「上限 512000B」「画布边上限 64px」这类技术参数下屏（改「每帧停 0.5 秒」「大小 0.4 KB」）；
+ * 文件位置只显文件名（整条临时目录路径只留在「复制路径」的复制载荷里）；窗口区间串一页只留
+ * 副标题一处；状态列「已用上／找不到文件」；表注「合成用到的照片（按时间从上到下，就是动画顺序）」；
+ * 副标题如实说「N 张里挑出 M 张能用的合成（X 张找不到文件）」（旧句「N 张照片合成」与 KPI 打架）。
+ *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/photo-gif-page-352.test.mjs`
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { test } from 'node:test';
@@ -25,6 +32,7 @@ import { addPhotos } from '../dist/photo/photos.js';
 import { GIF_LIMITS, countGifFrames } from '../dist/photo/gif.js';
 import { buildPhotoGifPage } from '../dist/photo/gifDoc.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from '../dist/photo/galleryDoc.js';
+import { rangeOccurrences, visibleText } from './visible-text-probe.mjs';
 
 const BIN = join(import.meta.dirname, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
@@ -143,28 +151,69 @@ test('③ 页内嵌的字节与盘上 .gif 同源（长度／sha256 一致）', 
   console.log('352-SAME-SOURCE bytes=' + onDisk.length + ' sha256=' + sha(onDisk).slice(0, 16) + '… path=' + gifPath);
 });
 
-test('页口径：老页七项读数 ＋ 帧序明细 ＋ 缺值 — ＋ 复制数据保原始空值', () => {
+test('页口径：#472 三格读数 ＋ 帧序明细 ＋ 缺值 — ＋ 复制数据保原始空值', () => {
   const iso = seedIso();
   const env = runOk(iso, { tag: '正面' });
   const html = readFileSync(assertDocOutput(env), 'utf8');
-  for (const label of ['合成照片总数', '帧数', '时间跨度', '首张日期', '末张日期', '标签', '文件位置', '画布', '体积', '内嵌']) {
-    assert.ok(html.includes(label), '读数缺失：' + label);
+  // #472：KPI 从十格收到三格（合成／尺寸／文件）——格数本身就是判据。
+  assert.equal((html.match(/ilife-block-kpi-card-value"/g) ?? []).length, 3, 'KPI 须正好三格');
+  for (const label of ['合成', '尺寸', '文件']) {
+    assert.ok(html.includes('>' + label + '</div>'), '读数缺失：' + label);
   }
+  for (const gone of ['合成照片总数', '时间跨度', '首张日期', '末张日期', '画布', '体积', '文件位置']) {
+    assert.equal(html.includes(gone), false, '与副标题重复／技术口径的读数须下屏：' + gone);
+  }
+  // 技术参数下屏、人话上屏。
+  assert.match(html, /每帧停 0\.5 秒/, '帧延时须写人话「每帧停 0.5 秒」');
+  assert.equal(html.includes(GIF_LIMITS.delayCs + 'cs'), false, '内部单位 cs 须下屏');
+  assert.equal(html.includes('循环播放'), false, '「循环播放」须下屏（动图本来就会循环）');
+  assert.equal(html.includes('画布边上限'), false, '「画布边上限 64px」须下屏');
+  assert.equal(html.includes('上限 ' + GIF_LIMITS.maxBytes), false, '体积上限须下屏');
+  assert.equal(html.includes('页内嵌字节与盘上文件同源'), false, '内部验收口径须下屏');
+  assert.match(html, new RegExp(env.data.gif.width + '×' + env.data.gif.height), '尺寸读数缺失');
+  assert.match(html, new RegExp('大小 ' + (env.data.gif.bytes / 1024).toFixed(1) + ' KB'), '大小读数缺失');
+  // 文件位置：只显文件名；整条路径只在「复制路径」的复制载荷里（可见文本 0 命中）。
+  assert.ok(html.includes(env.data.gif.fileName), '文件名读数缺失');
+  assert.match(html, /复制路径/, '「复制路径」小块缺失');
+  assert.equal(visibleText(html).includes(iso.photosDir), false, '整条路径不许上屏（只留复制载荷）');
+  // 窗口区间串一页只留副标题一处（可见文本口径：复制载荷不算）。
+  assert.equal(rangeOccurrences(html, '2026-09-04', '2026-09-07'), 1, '窗口区间串须一页只留一处（副标题）');
   assert.equal(env.data.photoCount, 4, '正面 4 张入片');
   assert.equal(env.data.gif.frames, 4, '帧数＝入片张数');
   assert.equal(env.data.firstDate, '2026-09-04', '首张日期');
   assert.equal(env.data.lastDate, '2026-09-07', '末张日期');
-  assert.ok(html.includes('2026-09-04 ~ 2026-09-07'), '时间跨度与首末日期不一致');
   assert.ok(html.includes('4 帧'), '帧数读数缺失');
+  // 副标题如实说明挑了几张（4 张全在，故无「找不到文件」尾注）。
+  assert.match(html, /4 张里挑出 4 张能用的合成/, '副标题须说清「N 张里挑出 M 张能用的合成」');
+  assert.equal(html.includes('4 张照片合成'), false, '旧副标题句（与 KPI 打架）须下屏');
   // 帧序＝日期正序：明细首行是最早那张（#1），侧面那张不入片。
-  assert.match(html, /入片明细（按帧顺序/, '明细表标题缺失（须标帧序）');
+  assert.match(html, /合成用到的照片（按时间从上到下，就是动画顺序）/, '明细表标题缺失（须标帧序）');
   assert.ok(html.indexOf('#1') < html.indexOf('#4'), '明细未按帧序（#1 应在 #4 之前）');
   assert.ok(!html.includes('侧面'), '非本标签照片不许进本页');
+  // 状态列人话：用上的写「已用上」，「入片／未校验」下屏。
+  assert.match(html, /已用上/, '状态列须写「已用上」');
+  assert.equal(html.includes('入片'), false, '内部说法「入片」须下屏');
+  assert.equal(html.includes('未校验'), false, '内部说法「未校验」须下屏');
   // 缺值口径：读数齐全的正常页不出缺值单元格 `>—<`（降级页出，见下一条用例）。
   assert.doesNotMatch(html, />—</, '正常页读数齐全，不该出现缺值单元格');
   assert.equal(env.data.photoIds.length, 4, 'photoIds 须 4 个');
   assert.equal(env.data.gif.embedded, true, '本页须已内嵌');
   assert.equal(env.data.gif.note, null, '正常路径 note 须为 null');
+});
+
+test('#472 副标题与状态列如实：少一张时「4 张里挑出 3 张能用的合成（1 张找不到文件）」', () => {
+  const iso = seedIso();
+  // 删掉 2026-09-06 那张的本体（库行保留）：入片 3 张、缺 1 张。
+  const gone = join(iso.photosDir, '2026-09-06_001.png');
+  assert.ok(existsSync(gone), '种子照片不在盘上：' + gone);
+  rmSync(gone);
+  const env = runOk(iso, { tag: '正面' });
+  const html = readFileSync(assertDocOutput(env), 'utf8');
+  assert.match(html, /4 张里挑出 3 张能用的合成（1 张找不到文件）/, '副标题须如实报挑出几张、缺几张');
+  assert.equal(env.data.gif.frames, 3, '帧数＝真用上的张数');
+  assert.match(html, /找不到文件/, '状态列须写「找不到文件」');
+  assert.match(html, /data:image\/gif;base64,/, '三张仍须合成出可播放 GIF');
+  console.log('352-MISMATCH frames=' + env.data.gif.frames + ' subtitle ok');
 });
 
 test('④ 无匹配照片仍 exit 4，GIF 与页面都不落盘', () => {

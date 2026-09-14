@@ -18,6 +18,13 @@
  * 降级：合成不成就出页面明示原因与替代操作（不中断命令、不落半张 GIF）；整页字节超 1048576
  * 即不内嵌、改出本地路径提示（老页 `body_photo_gif_result.html:99-101` 同义机制，阈值按本仓 1 MiB）。
  * `src/render/html.ts` 只读不加行：本件不调它的照片段（老裸片段 `renderGifHtml` 已不被本命令调用）。
+ *
+ * #472（读侧 A 组）· 文本与展示：眉标（内部命令名＋内部词「域」）整行去掉；十格 KPI 收到三格
+ * （「合成／尺寸／文件」），与副标题重复的时间跨度、首张、末张、标签四格删；`cs` 这类内部单位与
+ * 「上限 512000B」「画布边上限 64px」这类技术参数下屏（改「每帧停 0.5 秒」「尺寸 64×64 · 大小 0.4 KB」）；
+ * 文件位置只显文件名＋一个「复制路径」小块；状态列「入片／未校验／文件缺失」改「已用上／未核对／
+ * 找不到文件」；表注改「合成用到的照片（按时间从上到下，就是动画顺序）」；副标题如实说明
+ * 「N 张里挑出 M 张能用的合成」（不再出现「N 张照片合成」与 KPI 打架）。取值口径与复制数据一字未改。
  */
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -25,6 +32,7 @@ import { escapeHtml } from 'base-paint';
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
+import { CALORIE_COPY_ACTION, copyActionHtml } from '../render/copy.js';
 import { GIF_LIMITS, countGifFrames, synthesizeGifFromPhotos } from './gif.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import type { GifTask, PhotoCard } from './photo.js';
@@ -150,7 +158,9 @@ function detailRows(cards: readonly PhotoCard[], s: Synth): Array<Record<string,
   return cards.map((c) => ({
     id: c.id, date: c.date, time: c.time ?? DASH, tags: c.tagList.join('、') || DASH,
     note: c.note ?? DASH, file: c.photoPath,
-    status: s.taken.includes(c) ? '入片' : (c.fileExists === null ? '未校验' : '文件缺失'),
+    // #472 人话：用上的写「已用上」，文件名找不到写「找不到文件」；`fileExists === null`
+    // （没配照片目录，压根没核过）单独一档——把它写成「找不到文件」是把没核过的说成没有。
+    status: s.taken.includes(c) ? '已用上' : (c.fileExists === null ? '未核对' : '找不到文件'),
   }));
 }
 
@@ -200,21 +210,28 @@ function pageDataOf(task: GifTask, s: Synth, embedded: boolean, note: string | n
   };
 }
 
-function contentOf(task: GifTask, cards: readonly PhotoCard[], s: Synth, embed: boolean, data: GifPageData): string {
-  const span = task.firstDate === null && task.lastDate === null
-    ? DASH : dash(task.firstDate) + ' ~ ' + dash(task.lastDate);
+/** 三格 KPI ＋ 文件块（#472）：合成几张／几帧／每帧停多久、多大一张、文件叫什么。
+ *  上限（`GIF_LIMITS.maxEdge`／`maxBytes`）是能力边界、不是用户读数，下屏；「页内嵌字节与盘上
+ *  文件同源」是内部验收口径，也下屏（页里看得见 GIF 本身就说明内嵌成功）。 */
+function contentOf(cards: readonly PhotoCard[], s: Synth, embed: boolean, data: GifPageData): string {
   const parts: string[] = [renderKpiGrid([
-    { label: '合成照片总数', value: task.photoCount + ' 张', detail: '入片 ' + s.taken.length + ' 张 · 缺文件 ' + s.missing.length + ' 张' },
-    { label: '帧数', value: s.frames === null ? DASH : s.frames + ' 帧', detail: s.frames === null ? '未产出' : '帧延时 ' + GIF_LIMITS.delayCs + 'cs · 循环播放' },
-    { label: '时间跨度', value: span },
-    { label: '首张日期', value: dash(task.firstDate) },
-    { label: '末张日期', value: dash(task.lastDate) },
-    { label: '标签', value: task.tag },
-    { label: '画布', value: s.width === null || s.height === null ? DASH : s.width + '×' + s.height + ' px', detail: '画布边上限 ' + GIF_LIMITS.maxEdge + 'px' },
-    { label: '体积', value: s.bytes === null ? DASH : kbText(s.bytes), detail: s.bytes === null ? '未产出' : s.bytes + ' 字节 · 上限 ' + GIF_LIMITS.maxBytes + 'B' },
-    { label: '文件位置', value: s.path === null ? DASH : s.path, detail: s.path === null ? '未产出' : '重跑同标签同跨度即刷新此文件（同名覆盖）' },
-    { label: '内嵌', value: embed ? '1/1 已内嵌' : '0/1 未内嵌', detail: embed ? '页内嵌字节与盘上文件同源' : (data.gif.note ?? '超单页上限 1 MiB') },
+    {
+      label: '合成', value: s.frames === null ? DASH : s.frames + ' 张',
+      detail: s.frames === null ? 'GIF 没合成出来' : s.frames + ' 帧 · 每帧停 ' + (GIF_LIMITS.delayCs / 100) + ' 秒',
+    },
+    {
+      label: '尺寸',
+      value: s.width === null || s.height === null ? DASH : s.width + '×' + s.height,
+      ...(s.bytes === null ? {} : { detail: '大小 ' + kbText(s.bytes) }),
+    },
+    {
+      label: '文件', value: data.gif.fileName ?? DASH,
+      ...(s.path === null ? {} : { detail: '重跑同标签同跨度会覆盖这个文件' }),
+    },
   ])];
+  if (s.path !== null) {
+    parts.push('<div>' + copyActionHtml(s.path, { actionId: CALORIE_COPY_ACTION.actionId, label: '复制路径' }) + '</div>');
+  }
   parts.push(stageHtml(s, embed));
   parts.push(renderDataTable({
     columns: [
@@ -227,7 +244,7 @@ function contentOf(task: GifTask, cards: readonly PhotoCard[], s: Synth, embed: 
       { key: 'status', label: '状态' },
     ],
     rows: detailRows(cards, s),
-    caption: '入片明细（按帧顺序）',
+    caption: '合成用到的照片（按时间从上到下，就是动画顺序）',
     emptyText: '无入片明细',
   }));
   parts.push(dataCopyArea('复制数据', {
@@ -236,12 +253,24 @@ function contentOf(task: GifTask, cards: readonly PhotoCard[], s: Synth, embed: 
   return parts.join('');
 }
 
-function shellOf(task: GifTask, content: string): string {
+/** 副标题（#472）：窗口区间在这里**只说一处**（原先 KPI 另有时间跨度／首张／末张三格），
+ *  并如实说明「N 张里挑出 M 张能用的合成」——旧句「N 张照片合成」与「实际只用 M 张」打架。 */
+function subtitleOf(task: GifTask, s: Synth): string {
+  const span = task.firstDate === null && task.lastDate === null
+    ? '' : ' · ' + dash(task.firstDate) + ' ~ ' + dash(task.lastDate);
+  const head = '标签「' + task.tag + '」' + span;
+  if (s.taken.length === 0) return head + ' · ' + task.photoCount + ' 张照片都没用上（原因见下）';
+  return head + ' · ' + task.photoCount + ' 张里挑出 ' + s.taken.length + ' 张能用的合成'
+    + (s.missing.length === 0 ? '' : '（' + s.missing.length + ' 张找不到文件）');
+}
+
+/** 页头（#472：眉标整行去掉——`calorie.photo.gif · 身材照片域` 是内部命令名＋内部词）。 */
+function shellOf(task: GifTask, s: Synth, content: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '生成身材照 GIF',
-    eyebrow: 'calorie.photo.gif · 身材照片域',
-    subtitle: '标签「' + task.tag + '」 · ' + task.photoCount + ' 张照片合成',
+    eyebrow: '',
+    subtitle: subtitleOf(task, s),
     content,
     charts: false,
   });
@@ -252,7 +281,7 @@ export function buildPhotoGifPage(input: GifPageInput): GifPageResult {
   const ordered = byFrameOrder(input.cards);
   const s = synthOf(input.task, ordered, input.photosDir);
   const render = (embed: boolean, note: string | null): string =>
-    shellOf(input.task, contentOf(input.task, ordered, s, embed, pageDataOf(input.task, s, embed, note)));
+    shellOf(input.task, s, contentOf(ordered, s, embed, pageDataOf(input.task, s, embed, note)));
   let embed = s.path !== null;
   let note = s.reason;
   let html = render(embed, note);
