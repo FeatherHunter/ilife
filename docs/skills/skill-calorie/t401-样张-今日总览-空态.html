@@ -175,6 +175,13 @@ body {
 .ilife-charts-xlabel{font-size:10px}
 .ilife-charts-marktext{font-size:10px}
 .ilife-charts-line .ilife-charts-svg{max-width:480px;margin:0 auto}
+/* 公共层 charts.ts:1772-1777 的窄屏那一档（断点 720 取 CHART_BREAKPOINTS.mobileMaxPx，charts.ts:228）：
+   手机档折线图定高 150px、点径收到 8px —— 不按 viewBox 比例往下缩，横向撑满内容列。
+   空态页不出图表，这条与甲样张的共享样式段逐字相同，留着供两张样张对照。 */
+@media (max-width:720px){
+  .ilife-charts{--ilife-charts-dot:8px}
+  .ilife-charts-line .ilife-charts-svg{height:150px}
+}
 /* 表格 */
 .ilife-block-data-table {
   overflow-x: auto;
@@ -251,15 +258,35 @@ body {
   gap: 8px;
   box-sizing: border-box;
   margin: 12px 0;
+  /* 逐值照公共层 packages/base-render/src/style.ts:311 的冻结值 520（旧层 base.css:81-91）：
+     窄档内容列本来就不到 520px，这条用不上；桌面档由下面那条媒体查询放开。 */
   max-width: 520px;
+}
+/* 公共层 style.ts:317-321（#238 用户 2026-09-13 二次裁定）：桌面档铺满内容列。
+   本样张原先缺这一条，动作条被钉在 520px 贴左 —— 1920 下量到 x=20 宽 520，
+   右边空 440px，就是「复制数据／复制日志看着靠左」那件事。 */
+@media (min-width: 821px) {
+  .ilife-action-bar {
+    max-width: none;
+  }
 }
 .ilife-action-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
+/* 复制行两列平分整行：逐值照公共层 style.ts:327-332（#247 用户 2026-09-12 返修口径
+   「复制数据与复制日志在 ghost 行里平分整行」），故不写 justify-self: start。 */
 .ilife-action-row-ghost {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+/* 公共层没有这一档（style.ts 全文只有 820px 一条断点，ghost 行恒两列）：手机档两颗按钮各占
+   175px，12px 小字加左右各 14px 内距已贴边。窄屏改为上下各占整行，触控目标也够。
+   公共层缺此断点，已在 #427 开票，请公共层跟进；本样张先用同一套类名与 640 分界。 */
+@media (max-width: 640px) {
+  .ilife-action-row-ghost {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .ilife-copy-btn {
   display: inline-flex;
@@ -400,6 +427,12 @@ body {
   display: block;
   margin: 16px 0;
 }
+/* 页身不吃区块间距：`.ilife-block`（本节在 ① 段之后）与 ① 段的 `.ilife-block-page-shell`
+   同权重、靠后的赢，会把页身 ① 段的 `margin: 0 auto` 顶成 0 ⇒ 桌面量到页身左缘贴 x=0。
+   这里显式把页身从区块间距里摘出来，居中仍由 ① 段那条决定。 */
+.ilife-block-page-shell {
+  margin: 0 auto;
+}
 /* KPI 六张固定三列两行：六张一样宽、行行都满，任何屏宽都不留单张孤行。
    页身最宽 960px，六列至少要约 1152px 才排得下，逐列自适应必然甩出一张，故列数写死。 */
 .ilife-block-page-shell-body > .ilife-block-kpi-card-grid {
@@ -415,10 +448,24 @@ body {
 .ilife-block-kpi-card-bar-fill {
   height: 100%;
 }
-@media (max-width: 640px) {
-  /* 窄屏落两列三行：六张仍两两成行，也不留孤行 */
-  .ilife-block-kpi-card-grid {
+/* ── 中屏与手机（取值照公共层 style.ts:1167-1177 那一档）──────────────────────────── */
+@media (max-width: 820px) {
+  /* 中屏落两列三行：六张仍两两成行，也不留孤行 */
+  .ilife-block-page-shell-body > .ilife-block-kpi-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  /* 页身内距与标题字号逐值照公共层 style.ts:1168-1173（20px 16px 60px／26px） */
+  .ilife-block-page-shell {
+    padding: 20px 16px 60px;
+  }
+  .ilife-block-page-shell-title {
+    font-size: 26px;
+  }
+  /* 手机落一列：六张上下顺读；空态每张卡的提示句比甲样张更长，一列才读得下来 */
+  .ilife-block-page-shell-body > .ilife-block-kpi-card-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>
