@@ -69,10 +69,28 @@ test('#336 只看异常点：不含曲线段、含异常点与原因', () => {
   assert.ok(full.html.includes('偏离基线（黄±'), '整图含曲线段');
   assert.ok(full.html.includes('σ 趋势'), '整图含 σ 趋势');
   assert.ok(!only.html.includes('偏离基线（黄±'), '只看异常点不出曲线段');
-  assert.ok(!only.html.includes('σ 趋势'), '只看异常点不出 σ 趋势');
+  const charts = (html) => (html.match(/ilife-block-chart-block"/g) || []).length;
+  assert.equal(charts(only.html), 0, '只看异常点一张图都不出（判据从文案改成图表区块计数）');
+  assert.ok(charts(full.html) >= 2, '整图至少两段（偏离基线＋σ 趋势）');
   assert.ok(only.html.includes('波动异常点'), '只看异常点标题');
   assert.ok(only.html.includes('原因'), '只看异常点含原因列');
   assert.ok(only.html.includes('共 ') && only.html.includes('个'), '只看异常点含计数');
+  db.close();
+});
+
+test('#336 融合（§5 七组）：图表 options／徽章／结论块／页脚来源行／复制双钮', () => {
+  const db = tmpDb();
+  seedVol(db);
+  const full = viewVolatility({ window: '30d', today: '2026-08-18' }, db).html;
+  const only = viewVolatility({ window: '30d', today: '2026-08-18', view: 'anomalies-only' }, db).html;
+  for (const n of ['ilife-charts-tick', 'ilife-charts-markline', 'status-badge', '📊 数据来源:', '复制日志', '<details', '结论']) {
+    assert.ok(full.includes(n), '整图面缺：' + n);
+  }
+  for (const n of ['只看异常点', 'status-badge', '📊 数据来源:', '复制日志', '结论']) {
+    assert.ok(only.includes(n), '只看异常点面缺：' + n);
+  }
+  assert.equal((full.match(/<summary[^>]*>结论<\/summary>/g) || []).length, 1, '结论块一页最多一块');
+  assert.ok(!full.includes('>normal<') && !full.includes('>yellow<') && !full.includes('>red<'), '档位不出现英文裸值');
   db.close();
 });
 
