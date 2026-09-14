@@ -16,7 +16,10 @@
 | 5 | `fa86d6f7-f316-418d-9e4c-fe019aa4b482` | `node .scratch/t276/real-db-import.mjs` | 0 | 90024ms | 真库实跑 `calorie.product.import`：新增 1 行、库内回读一致 |
 | 6 | `e4adcfa6-a432-436c-9049-2bde50e71207` | `node .scratch/t276/mutate-and-verify.mjs` | 1 | 0ms | **作废**：变异脚本自身的 sha 比较写错（把改坏后的值当改前值），三条「还原一致」误报；脚本修好后重跑 |
 | 7 | `515264d6-fd87-468f-a64b-7bdf4cb0de18` | `node .scratch/t276/mutate-and-verify.mjs` | 0 | 20002ms | 变异自证三轮（改坏必红／还原必绿／sha 一致）＋ `pnpm gen` ＋ `pnpm gen:check` PASS |
-| 8 | `3541c59e-a67c-47f7-bca2-05e0740a4467` | `node .scratch/t276/run-full.mjs` | 0 | 90012ms | 全量测试读数（**说明**：本脚本按设计只报读数不传播退出码，故记账为 0；`pnpm test` 自身 exit=1，读数 tests 1616／pass 1588／fail 28，逐条归因见证据件 §5.7） |
+| 8 | `3541c59e-a67c-47f7-bca2-05e0740a4467` | `node .scratch/t276/run-full.mjs` | 0 | 90012ms | 全量测试读数（**说明**：本脚本按设计只报读数不传播退出码，故记账为 0；`pnpm test` 自身 exit=1，读数 tests 1616／pass 1588／fail 28，逐条归因见证据件 §5.6） |
+| 9 | `c16743c7-b9f0-4b77-a20c-0b315f4c74cc` | `node .scratch/t276/commit-p2.mjs` | 1 | 10001ms | **未提交**：守卫「看共用索引」被他席暂存件触发假阳性；**未动他人索引**，脚本改为「看这一笔实际提交了什么」后重开窗 |
+| 10 | `9eefc93e-2bec-44a9-97c0-f85fd2770fe9` | `node .scratch/t276/commit-p2.mjs` | 0 | 110010ms | **提交并推送成功**：`bf274e6`（`b646d6f..bf274e6 master -> master`），入账恰 7 件，经 `git show --name-only bf274e6` 复核 |
+| 11 | （见第二笔） | `node .scratch/t276/commit-p2b.mjs` | 0 | — | 证据件回填提交（§5.8 sha 与共享索引说明、本表第 9／10 行） |
 
 ## 二、一阶段（前席窗口，UTC 04:03—05:06；已在其证据件 §三 报告）
 
@@ -37,5 +40,6 @@
 | `ef6209b8-9fb0-4ba3-8f98-f9d728a2274f` | `pnpm build`（重编＋打印记）→ `pnpm gen` → `pnpm build` → `pnpm help:build` | `.scratch/t276/p2-build1.log`／`p2-gen1.log`／`p2-build2.log`／`p2-help1.log` |
 | `515264d6-fd87-468f-a64b-7bdf4cb0de18` | `pnpm gen` → 三轮变异（各含 `node --test` 与 `pnpm build`）→ `pnpm gen:check` | `.scratch/t276/gencheck2.log`（另有各轮 `pnpm build` 输出按脚本内联入窗口日志） |
 | `3541c59e-a67c-47f7-bca2-05e0740a4467` | `pnpm test`（全量） | `.scratch/t276/full-test.log` |
+| `c16743c7-b9f0-4b77-a20c-0b315f4c74cc`／`9eefc93e-2bec-44a9-97c0-f85fd2770fe9` | `pnpm help:examples:check` → `git add` 逐条点名 → `git diff --cached --name-only` 量现场 → `git commit -F … -- <7 路径>` → `git show --name-only HEAD` 复核 → `git push` | `.scratch/t276/examples-check.log` |
 
-提交与推送（本次二阶段）：见证据件 §5.8 的提交清单；其运行标识在下一轮导出时补记。
+提交与推送（本次二阶段）：`bf274e6` 已在 `origin/master`（`git branch -r --contains bf274e6` → `origin/master`）；第二笔为证据件回填。
