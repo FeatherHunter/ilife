@@ -10,6 +10,15 @@ export type BillL1 = (typeof ALL_L1)[number];
 
 export const DEFAULTS = { account: '', ledger: '生活', currency: '人民币', note: '' } as const;
 
+/** 只给日期不给时分秒时的缺省时刻（**唯一定义地**）：`validateTime` 补出整串，页面侧的预填标注引这一份。
+ *  改这一条就是改全仓的缺省时刻，别处不得再写第二份 `12:00:00` 字面量。 */
+export const DEFAULT_TIME_SUFFIX = '12:00:00';
+
+/** 缺省时刻的整串形态：`YYYY-MM-DD` ＋ 上面那份（页面文案与库内取值同一句）。 */
+export function defaultTimeOn(date: string): string {
+  return date + ' ' + DEFAULT_TIME_SUFFIX;
+}
+
 export function l1Of(category: string): string {
   return category.split('/')[0].trim();
 }
@@ -64,7 +73,7 @@ export function validateTime(raw: unknown): string {
   if (!m) throw new BillPolicyError('POLICY_BAD_TIME', 'time 格式非法');
   const y = Number(m[1]); const mo = Number(m[2]); const d = Number(m[3]);
   if (!realDate(y, mo, d)) throw new BillPolicyError('POLICY_BAD_TIME', 'time 非真实日期');
-  if (m[4] === undefined) return s + ' 12:00:00';
+  if (m[4] === undefined) return defaultTimeOn(s);
   const hh = Number(m[4]); const mm = Number(m[5]); const ss = Number(m[6]);
   if (hh > 23 || mm > 59 || ss > 59) throw new BillPolicyError('POLICY_BAD_TIME', 'time 时分秒非法');
   return s;
@@ -99,7 +108,7 @@ export function validateRecord(raw: Record<string, unknown>): BillRecordInput {
   const category = validateCategory(raw.category);
   const amount = validateAmount(raw.amount);
   const time = raw.time === undefined || raw.time === null || raw.time === ''
-    ? new Date().toISOString().slice(0, 10) + ' 12:00:00'
+    ? defaultTimeOn(new Date().toISOString().slice(0, 10))
     : validateTime(raw.time);
   const str = (v: unknown, name: string): string => {
     if (v === undefined || v === null) return '';

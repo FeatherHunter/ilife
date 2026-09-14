@@ -4,9 +4,15 @@
  *   ① `src/record/collect.ts`——过程型采集页：事实取自本次 `--params`（缺的槽位写「未给」）；
  *   ② `src/record/receipt.ts`——结果型回执整页：事实取自写库后库内那一行（`BillRow`）。
  *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
+ *  本票实测：本包 `src/` 下真引用本件的是上面两个调用点，再无第三处。
  *
- * 两件出去：`moneyDirection`（符号即方向那句话的唯一定义地）＋ `summaryRow`（那几格卡）。
- *  分两件是因为方向那句话在采集页的阻断条、回执页的状态卡上都要引用同一份措辞，别处不许各写一句。
+ * 四件事一处定义（别处不许再写第二条）：
+ *   - **符号即方向**：`moneyDirection` 与 `directionOf`（取值源是件内的 `DIRECTION` 表）——摘要行的方向格、
+ *     采集页与回执页的类型徽章那句「…要负数／要正数」、阻断条的方向判定与文案，都走这一份；
+ *   - **金额两位小数文本**：`money2`——摘要行、重复检测的比对与列示、阻断条的方向文案共引这一份；
+ *   - **缺省时刻**：引 `src/policy/category.ts` 的 `DEFAULT_TIME_SUFFIX`（真源在口径层，本件不留第二份）；
+ *   - **缺省值**（账本「生活」／币种「人民币」）：引 `src/policy/category.ts` 的 `DEFAULTS`，本件不另立一份。
+ *  分两件出去（`moneyDirection` 与 `summaryRow`）是因为方向那句话在采集页的徽章与阻断条上都要引同一份措辞。
  *
  * 口径出处：`docs/skills/skill-bill/t407-页面块清单-16词.md` 第一节第 3 行（`renderKpiCard` ＋ `renderKpiGrid`
  *  ＋ `renderCaliberLine`）。三级分类的一级取自 `src/policy/category.ts` 的 `l1Of`（分类口径的唯一真相源），
@@ -14,19 +20,29 @@
  */
 import { renderCaliberLine, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
-import { l1Of } from '../policy/category.js';
+import { DEFAULT_TIME_SUFFIX, l1Of } from '../policy/category.js';
 
-/** 摘要行的事实：六格取值。`amount` 用 `null` 表示「还没给」（0 是给了，但本仓不记零）。 */
-export interface SummaryFacts {
-  readonly amount: number | null;
-  readonly category: string;
-  readonly account: string;
-  readonly ledger: string;
-  readonly time: string;
+/** 一型的方向口径（**唯一定义地**，四处引用都走这里）：
+ *  `sign`＝这一型要的金额符号（`Math.sign` 的值），`require`＝「这一型为什么得是这个符号」那一句，
+ *  `word`＝这一型的方向词（摘要行与组合徽章共用）。 */
+export interface DirectionRule {
+  readonly word: string;
+  readonly sign: number;
+  readonly require: string;
 }
 
-/** 金额一律两位小数；`null`＝未给。 */
-function moneyText(amount: number | null): string {
+const DIRECTION: Record<string, DirectionRule> = {
+  expense: { word: '支出', sign: -1, require: '记支出要负数' },
+  income: { word: '收入', sign: 1, require: '记收入要正数' },
+};
+
+/** 一型的方向口径（没有这一型＝返回 `undefined`，调用方照实当「本型不管方向」）。 */
+export function directionOf(kind: string): DirectionRule | undefined {
+  return DIRECTION[kind];
+}
+
+/** 金额一律两位小数（**唯一定义地**，比对与展示同一份口径）。`null`＝未给；`+` 只给正数。 */
+export function money2(amount: number | null): string {
   if (amount === null || !Number.isFinite(amount)) return '未给';
   return (amount > 0 ? '+' : '') + amount.toFixed(2);
 }
@@ -39,12 +55,21 @@ export function moneyDirection(amount: number | null): string {
   return '零（本仓不记零）';
 }
 
+/** 摘要行的事实：六格取值。`amount` 用 `null` 表示「还没给」（0 是给了，但本仓不记零）。 */
+export interface SummaryFacts {
+  readonly amount: number | null;
+  readonly category: string;
+  readonly account: string;
+  readonly ledger: string;
+  readonly time: string;
+}
+
 /** 结论摘要行的几格（**唯一定义地**）：采集页直接出网格，回执页把它们并进自己那张网格里。
- *  `amount` 未给时那一格写「未给」，不拿 0 顶替。 */
+ *  `amount` 未给时那一格写「未给」，不拿 0 顶替。时间缺省那句取口径层的缺省时刻，本件不抄第二份。 */
 export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
   const l1 = facts.category.trim() === '' ? '' : l1Of(facts.category);
   return [
-    { label: '金额', value: moneyText(facts.amount), detail: moneyDirection(facts.amount) },
+    { label: '金额', value: money2(facts.amount), detail: moneyDirection(facts.amount) },
     {
       label: '分类',
       value: facts.category.trim() === '' ? '未给' : facts.category,
@@ -52,7 +77,7 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
     },
     { label: '账户', value: facts.account.trim() === '' ? '未给' : facts.account, detail: '缺省＝默认账户' },
     { label: '账本', value: facts.ledger.trim() === '' ? '未给' : facts.ledger, detail: '缺省＝默认账本' },
-    { label: '时间', value: facts.time.trim() === '' ? '未给' : facts.time, detail: '缺省＝今天 12:00:00' },
+    { label: '时间', value: facts.time.trim() === '' ? '未给' : facts.time, detail: '缺省＝今天 ' + DEFAULT_TIME_SUFFIX },
   ];
 }
 

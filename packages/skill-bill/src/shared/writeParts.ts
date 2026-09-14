@@ -58,16 +58,20 @@ export function commandLine(key: string, params: Record<string, unknown>): strin
   return 'bill-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";
 }
 
-/** 写域页面的 `<section>` 段：四个机器标记 ＋ 正文。
+/** 写域页面的 `<section>` 段：五个机器标记 ＋ 正文。
  *  标记：`data-skill`（技能名，取值同页标识）／`data-slot`（`receipt`＝结果型回执整页、`collect`＝过程型采集页）
- *  ／`data-shape`（＝本次 envelope 的形状，与老回执页同一枚）／`data-key`（命令名）。
+ *  ／`data-shape`（＝本次 envelope 的形状，与老回执页同一枚，**是契约、不随页型改**）
+ *  ／`data-page`（**选页用这一枚**：`collect`／`receipt`；两者共用 `shape=receipt`，靠 shape 选页会选错）
+ *  ／`data-key`（命令名）。
  *  H1 与副标题**不在这里**：那是页面模板（`base-paint/blocks` 的 `renderPageShell`）的活，一处只出一次。 */
 export function writeSection(input: {
   readonly slot: 'receipt' | 'collect';
+  readonly page: 'receipt' | 'collect';
   readonly shape: string;
   readonly key: string;
   readonly content: string;
 }): string {
   return '<section class="ilife-write" data-skill="' + DOC_SKILL + '" data-slot="ilife:bill:' + input.slot
-    + '" data-shape="' + esc(input.shape) + '" data-key="' + esc(input.key) + '">' + input.content + '</section>';
+    + '" data-page="' + input.page + '" data-shape="' + esc(input.shape) + '" data-key="' + esc(input.key) + '">'
+    + input.content + '</section>';
 }

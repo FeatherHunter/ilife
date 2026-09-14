@@ -4,15 +4,15 @@
  *   ① `src/record/write.ts` 的 `writeRecordAdd`——记一笔写库成功后出本页；
  *   ② `src/record/write.ts` 的 `writeRecordUpdate`（改字段／撤销／恢复三支共用）——改记录写库成功后出本页。
  *
- * 页内块按第一节的页面积木拼，一件不自造：类型徽章（`pageFrame` 的 `typeBadge`）／结论摘要行
+ * 页内块按第一节的页面积木拼，一件不自造：类型徽章（`src/shared/typeBadge.ts` 的 `typeBadge`）／结论摘要行
  *   `src/shared/summaryRow.ts` 的 `summaryCards`（与状态卡、影响行数、写入字段并进同一张网格）／
  *   重复检测提示条 `src/shared/duplicateNote.ts`（写完再报一次，排除本次这条编号）／明细表 `renderDataTable`／
  *   页尾对账折叠区与状态卡 `src/shared/receiptParts.ts`／退出口与复制区三件 `src/shared/copyArea.ts`／
- *   整页包裹 `src/shared/pageFrame.ts`。
+ *   整页包裹 `src/shared/pageShell.ts`。
  * 页标题由回执事实的 `op` 派生（**唯一来源**）：一次写库只有 add／update／undo／restore 四种，页面名跟着它走，
  *   不另立一张「命令名 → 页标题」的表。
  * 未用到的 base 组件（记成遗留，不硬塞）：`renderEmptyBlock`——回执页恒有数据；失败那一面走
- *   `src/shared/failureReceipt.ts`，它的整页替换落点是后票的事（见该文件头）。
+ *   `src/shared/errorReceipt.ts`（共用位内部件），它的整页替换落点是后票的事（见该文件头）。
  */
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
@@ -21,11 +21,12 @@ import type { RecordOp } from '../policy/record.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
-import { pageFrame, typeBadge } from '../shared/pageFrame.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
+import { typeBadge } from '../shared/typeBadge.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 
@@ -109,11 +110,12 @@ export function recordReceiptDoc(input: ReceiptInput): string {
       },
     }),
   ].join('');
-  return pageFrame({
+  return pageShell({
     docTitle: DOC_TITLE + '·写库回执',
     title: PAGE_TITLES[receipt.op],
     subtitle: receipt.summary,
     slot: 'receipt',
+    page: 'receipt',
     shape: envelope.shape,
     key,
     content,

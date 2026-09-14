@@ -10,6 +10,8 @@
  *   阻断项＝必需的槽位没给（`./collect.ts` 的 `missingSlots`）**或**金额符号与这一型的方向不符
  *   （`../shared/blockedSlots.ts` 的 `blockedItems`：记支出要负数、记收入要正数）。两件都由 `blockedItems`
  *   合成一张表，**非空即不进写库那一步**——这就是「真阻断」的根，页上那条阻断条只是它的影子。
+ *   **方向判定只服务录入路径**：`writeRecordAdd`（`bill.record.add`）那一支传 `kind` 才判方向；
+ *   `writeRecordUpdate`（改字段／撤销／恢复三支）不传方向，那三支只按「缺的必需槽位」阻断。
  *   阻断项清空照旧写库，出结果型回执整页（`./receipt.ts`）。
  *   必需槽位是哪些住 `./collect.ts` 的 `RECORD_SLOTS`（唯一定义地）；真值校验仍走 `src/policy`
  *   （`validateAddInput`／`validateUpdateInput`／`needId`／`parseRecordOp`），取数写库仍走 `src/fetch`
@@ -148,7 +150,8 @@ function finish(input: {
   };
 }
 
-/** `bill.record.add`（记一笔）：有阻断项（缺分类或金额／金额符号与这一型不符）即出采集页，清空即写库出回执整页。 */
+/** `bill.record.add`（记一笔，**录入路径**）：有阻断项（缺分类或金额／金额符号与这一型不符）即出采集页，
+ *  清空即写库出回执整页。方向判定只在这一支传 `kind`。 */
 export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): WriteOut {
   const key = 'bill.record.add';
   const slots = RECORD_SLOTS[key];
@@ -170,12 +173,13 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): Wri
   });
 }
 
-/** `bill.record.update`（改记录）：有阻断项（缺 `id`）即出采集页；op 决定改字段／撤销／恢复三支。 */
+/** `bill.record.update`（改记录）：有阻断项（缺 `id`）即出采集页；op 决定改字段／撤销／恢复三支。
+ *  **这一支不判金额方向**：撤销／恢复本来就不带 `kind`＋`amount`，带上也不该被方向判定拦下、改出采集页。 */
 export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): WriteOut {
   const key = 'bill.record.update';
   const slots = RECORD_SLOTS[key];
   const missing = missingSlots(params, slots);
-  const blocked = blockedItems({ params, missing, kind: typeof params.kind === 'string' ? params.kind : '' });
+  const blocked = blockedItems({ params, missing, kind: '' });
   if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db });
   const op = parseRecordOp(params);
   const before = totalChanges(db.db);

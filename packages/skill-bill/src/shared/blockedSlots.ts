@@ -3,7 +3,8 @@
  * 谁在用（两个调用点，指名）：
  *   ① `src/record/collect.ts`——过程型采集页：判定 ＋ 阻断条都在这里出；
  *   ② `src/record/write.ts`——两条写命令的处理体：判定为「有阻断项」时不进写库那一步（拿 `blockedItems` 的空／非空当闸门）。
- *  第二个消费者：`src/record/receipt.ts` 与以后 15 张页（记收入、拍账单…各按自己的缺项列调同一个判定）。
+ *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，同一套采集页／回执页／复制区要同一条判定）。
+ *  本票实测：本包 `src/` 下真引用本件的就是上面两个调用点，再无第三处。
  *
  * 真阻断**怎么真**（三处，缺一处就是提示而不是阻断）：
  *   ① 写库那一半由 `src/record/write.ts` 拦：判定非空即不进 `addBill`／`updateBill`，库里行数一行不变；
@@ -14,10 +15,16 @@
  *
  * 判定两件事（都住本件，一处定义）：**槽位没给** ＋ **金额符号与这一型的方向不符**（记支出要负数、记收入要正数）。
  *  分类三级未填＝`category` 没给，已含在第一件里；方向不符那种「值给了但方向反了」不算缺槽位，故单列一件。
+ *
+ * **方向判定只服务录入路径**（`bill.record.add`；记支出／记收入这两条命令的采集页）：
+ *  调用方只在录入那一支传 `kind`；`bill.record.update` 的改字段／撤销／恢复三支**不传**方向（`write.ts:178`）。
+ *  带 `kind`＋`amount` 的撤销／恢复本来也可能被这条判定拦下、改出采集页，收窄后不再管它们。
+ *  方向那句话的取值（要负数／要正数）不在这里另写一份：走 `./summaryRow.ts` 的 `directionOf`。
  */
 import { renderActionBar } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderPreBlock } from 'base-paint/blocks';
-import { failureReceipt } from './failureReceipt.js';
+import { directionOf, money2 } from './summaryRow.js';
+import { errorReceipt } from './errorReceipt.js';
 
 /** 一个阻断项：哪个槽位／中文名／为什么挡住。 */
 export interface BlockedItem {
@@ -26,18 +33,13 @@ export interface BlockedItem {
   readonly why: string;
 }
 
-/** 判定入参：本次参数 ＋ 必需槽位里缺的那些 ＋ 本型（`params.kind`，空串＝记一笔不论方向）。 */
+/** 判定入参：本次参数 ＋ 必需槽位里缺的那些 ＋ 本型（`params.kind`，空串＝本支不判方向）。 */
 interface BlockedProbe {
   readonly params: Record<string, unknown>;
   readonly missing: readonly { readonly name: string; readonly label: string }[];
+  /** 录入路径给这一型（`expense`／`income`）；其余支不给＝本支不管方向。 */
   readonly kind: string;
 }
-
-/** 一型要哪个方向的金额：支出要负数、收入要正数；其余型（拍账单／批量／借贷…）不在本件管方向。 */
-const DIRECTION: Record<string, { readonly want: number; readonly text: string }> = {
-  expense: { want: -1, text: '记支出要负数' },
-  income: { want: 1, text: '记收入要正数' },
-};
 
 /** 金额解析：认数字与非空数字串；解析不了就不在这里判方向（那是 `src/policy` 的活，报错不静默）。 */
 function amountOf(raw: unknown): number | null {
@@ -46,13 +48,13 @@ function amountOf(raw: unknown): number | null {
   return n;
 }
 
-/** 判定：缺的必需槽位 ＋ 方向不符的金额。**空数组＝可以往下走写库那一步**。 */
+/** 判定：缺的必需槽位 ＋ 方向不符的金额（**方向只服务录入路径**，见件头）。**空数组＝可以往下走写库那一步**。 */
 export function blockedItems(input: BlockedProbe): BlockedItem[] {
   const items: BlockedItem[] = input.missing.map((s) => ({ name: s.name, label: s.label, why: '没给' }));
-  const d = DIRECTION[input.kind];
+  const d = directionOf(input.kind);
   const amount = amountOf(input.params['amount']);
-  if (d !== undefined && amount !== null && amount !== 0 && Math.sign(amount) !== d.want) {
-    items.push({ name: 'amount', label: '金额', why: '方向不符：' + d.text + '，给的是 ' + amount.toFixed(2) });
+  if (d !== undefined && amount !== null && amount !== 0 && Math.sign(amount) !== d.sign) {
+    items.push({ name: 'amount', label: '金额', why: '方向不符：' + d.require + '，给的是 ' + money2(amount) });
   }
   return items;
 }
@@ -86,7 +88,7 @@ const BLOCKED_WRITE_ACTION = 'ilife-blocked-write';
 export function blockedBar(input: BlockedBarInput): string {
   const n = input.items.length;
   if (n === 0) return '';
-  return failureReceipt({
+  return errorReceipt({
     title: '缺项阻断条（写库已阻断）',
     message: '写库已阻断 · 还缺 ' + n + ' 项：' + input.items.map((i) => i.label + '（' + i.name + '）').join('、'),
     retryPrompt: '补齐后重跑同一条命令',

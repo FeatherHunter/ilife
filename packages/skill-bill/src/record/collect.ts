@@ -7,11 +7,13 @@
  *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
  *
  * 槽位表与探针同住本件（**唯一定义地**）：「一条命令要哪些槽位、哪个必需」与「表单怎么摆」是同一件事的两面。
- *  `missingSlots` 只做「在不在」的探针；方向不符那一半住 `../shared/blockedSlots.ts` 的 `blockedItems`；
+ *  `missingSlots` 只做「在不在」的探针；方向不符那一半住 `../shared/blockedSlots.ts` 的 `blockedItems`，
+ *  **只服务录入路径**（`bill.record.add` 采集页传 `kind`；`bill.record.update` 那一支不判方向，见该件头）；
  *  真值校验仍走 `src/policy` 的 `validateAddInput`／`validateUpdateInput`（阻断项清空后才走到那一步）。
  *
  * 信息层次（第一节的页面积木按序拼，一件不自造）：
- *   类型徽章 → 结论摘要行 → 重复检测提示条 → 预填标注 → 缺项阻断条 → 选择器空态 → 采集表单 → 复制 prompt 区 → 复制区。
+ *   类型徽章 → 结论摘要行 → 复制日志那行「写库：未发生」→ 重复检测提示条 → 预填标注 → 缺项阻断条
+ *   → 选择器空态 → 采集表单 → 复制 prompt 区 → 复制区（共十块）。
  *  复制 prompt 区那段话里**没有可跑的写库指令**（写库指令只在缺项阻断条里、且不给复制按钮）——
  *  这就是「缺项即不出复制指令」那条口径；本页**不写库**：写库那一半在 `src/record/write.ts`，
  *  落点是结果型回执整页（`src/record/receipt.ts`）。
@@ -26,12 +28,13 @@ import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
 import { emptyNote } from '../shared/emptyNote.js';
-import { pageFrame, typeBadge } from '../shared/pageFrame.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { pageShell } from '../shared/pageShell.js';
 import { prefillHint, prefillNote, prefillOf } from '../shared/prefillNote.js';
 import type { PrefillMark } from '../shared/prefillNote.js';
 import { summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
+import { typeBadge } from '../shared/typeBadge.js';
 import { commandLine } from '../shared/writeParts.js';
 
 /** 一个槽位：参数名／中文名／怎么给／是否必需。 */
@@ -180,7 +183,7 @@ interface CollectInput {
   readonly recent: readonly BillRow[];
 }
 
-/** 过程型采集页整页：九块按序拼（见文件头信息层次）。 */
+/** 过程型采集页整页：十块按序拼（见文件头信息层次）。 */
 export function recordCollectDoc(input: CollectInput): string {
   const { key, params, slots, missing } = input;
   const kind = textOf(params.kind);
@@ -248,11 +251,12 @@ export function recordCollectDoc(input: CollectInput): string {
       },
     }),
   ].join('');
-  return pageFrame({
+  return pageShell({
     docTitle: DOC_TITLE + '·补齐槽位',
     title: '补齐槽位',
     subtitle: message,
     slot: 'collect',
+    page: 'collect',
     shape: envelope.shape,
     key,
     content,

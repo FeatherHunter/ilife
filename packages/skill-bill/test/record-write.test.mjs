@@ -212,6 +212,22 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     }
   });
 
+  it('撤销带方向不合的 kind＋amount 也照撤销（方向判定只服务录入路径）', () => {
+    // 本票收窄那条口径：`blockedItems` 的方向判定只服务 `bill.record.add` 录入路径；
+    // 撤销／恢复带上 kind＋amount 时不得被方向判定拦下、改出采集页。
+    const seeded = run(['bill.record.add', '--params', JSON.stringify({ category: '餐饮', amount: -20, time: '2026-09-14 20:00:00' })]);
+    assert.equal(seeded.status, 0, '铺底那笔须成功：' + seeded.stderr);
+    const newId = envOf(seeded).data.receipt.recordId;
+    const file = join(HTML, 'undo-directed.html');
+    const r = run(['bill.record.update', '--params', JSON.stringify({ op: 'undo', id: newId, kind: 'expense', amount: 35 }), '--html', file]);
+    assert.equal(r.status, 0, 'stderr=' + r.stderr);
+    const env = envOf(r);
+    assert.equal(env.data.ok, true, '方向判定不得管撤销：' + JSON.stringify(env.data));
+    assert.equal(env.data.receipt.op, 'undo');
+    assert.ok(!env.data.message.includes('方向不符'), '撤销页不得报方向不符：' + env.data.message);
+    assert.ok(pageOf(file).includes('data-page="receipt"'), '撤销走回执页，不是采集页');
+  });
+
   it('id 有值但不是记录编号 → 仍走口径失败（不静默兜底成采集页）', () => {
     const r = run(['bill.record.update', '--params', '{"id":"abc","note":"改过"}']);
     assert.equal(r.status, 2, 'stderr=' + r.stderr);
@@ -242,7 +258,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(envOf(r).data.receipt.recordId, 1);
   });
 
-  it('采集页九块齐全：类型徽章／摘要行／重复检测条／预填标注／缺项阻断条／表单三枚选择器／prompt 区／复制区', () => {
+  it('采集页十块齐全：类型徽章／摘要行／重复检测条／预填标注／缺项阻断条／表单三枚选择器／prompt 区／复制区', () => {
     const before = rowsAt('2026-09-14');
     const file = join(H2, 'collect.html');
     const r = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 12:30:00"}', '--html', file]);
@@ -252,9 +268,9 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(env.data.receipt, undefined, '采集页没有回执事实');
     const text = pageOf(file);
     for (const needle of [
-      'data-slot="ilife:bill:collect"', '记支出 · 支出（金额取负数） · bill.record.add',
+      'data-slot="ilife:bill:collect"', 'data-page="collect"', '记支出 · 支出（金额取负数） · bill.record.add',
       '缺项阻断条', '写库已阻断', '⛔ 先补齐（1 项）', 'ilife-action-btn ilife-action-btn-ghost',
-      '重复检测提示条', '预填标注', '来自记录编号 1', 'ilife-block-param-form',
+      '预填标注', '来自记录编号 1', 'ilife-block-param-form',
       '复制 prompt', 'ilife-block-copy-block', '写库：未发生',
     ]) {
       assert.ok(text.includes(needle), '采集页缺：' + needle);
@@ -277,7 +293,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
       'prompt 区拷的是叙述句（不是可跑的写库指令）');
   });
 
-  it('重复检测提示条：同日同额同分类出现；换一天不出现', () => {
+  it('重复检测提示条：已给分类＋同日同额出现；分类未给不出条；换一天不出现', () => {
     const hit = join(H2, 'dup-hit.html');
     const h = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 13:00:00","category":"餐饮/外卖/午餐"}', '--html', hit]);
     assert.equal(h.status, 0, 'stderr=' + h.stderr);
@@ -293,6 +309,18 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.ok(!pageOf(other).includes('重复检测提示条'), '换一天不该报重复');
   });
 
+  it('分类未给 ⇒ 不出重复检测提示条（同日同额也不报，宁可漏提示不误报）', () => {
+    // 本例那条真跑：同日同额（库里已有 -12.5 一笔）、分类没给——本票裁定不出条。
+    const file = join(H2, 'dup-nocat.html');
+    const r = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 12:30:00","account":"支付宝"}', '--html', file]);
+    assert.equal(r.status, 0, 'stderr=' + r.stderr);
+    assert.equal(envOf(r).data.ok, false, '这一条缺分类，出采集页');
+    const text = pageOf(file);
+    assert.ok(text.includes('缺项阻断条'), '这一页仍出缺项阻断条');
+    assert.ok(!/记录编号 1\b/.test(text), '提示条里不得列出同日同额的旧记录');
+    assert.ok(!text.includes('重复检测提示条'), '分类未给时不得出重复检测提示条');
+  });
+
   it('方向不符（记支出给正数）⇒ 阻断、不写库、栏上写清方向', () => {
     const before = rowsAt('2026-09-14');
     const file = join(H2, 'bad-direction.html');
@@ -302,7 +330,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(env.data.ok, false);
     assert.match(env.data.message, /方向不符：记支出要负数/, env.data.message);
     const text = pageOf(file);
-    assert.ok(text.includes('方向不符：记支出要负数，给的是 35.00'), '阻断条须说清方向');
+    assert.ok(text.includes('方向不符：记支出要负数，给的是 +35.00'), '阻断条须说清方向');
     assert.equal(rowsAt('2026-09-14'), before, '阻断这一笔不得落库');
   });
 
@@ -313,9 +341,12 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const env = envOf(r);
     assert.equal(env.data.ok, true);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', '退出口', '对账信息', '重复检测提示条', '复制数据', '复制日志', '记支出 · 支出（金额取负数）']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '退出口', '对账信息', '重复检测提示条', '复制数据', '复制日志', '记支出 · 支出（金额取负数）']) {
       assert.ok(text.includes(needle), '回执页缺：' + needle);
     }
+    // 选页那两枚标记分家：data-shape 是信封形状契约（两页同为 receipt），data-page 才是哪一张页。
+    assert.ok(!text.includes('data-page="collect"'), '回执页不得带采集页的 data-page');
+    assert.equal((text.match(/data-page=/g) ?? []).length, 1, '整页只有一枚 data-page');
     assert.ok(text.includes('class="ilife-action-btn ilife-action-btn-red"'), '退出口须有危险色按钮');
     assert.ok(text.includes('ilife-exit-undo-copy'), '撤销指令须有可复制位');
     assert.ok(text.includes('bill.record.add（receipt）'), '日志场景标识须是 技能.本地名');
