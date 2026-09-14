@@ -1,25 +1,35 @@
-/** 运动（HELP 场景 04「运动」下一级 · 记运动／改运动）· 写后回执页装配（#264）。
+/** 运动（HELP 场景 04「运动」下一级 · 记运动／改运动／删运动）· 写后回执页装配。
  *
- * 形状照抄场景 07 `src/profile/setup.ts` 的 `buildProfileSettingReceiptDoc` 与
- * `src/profile/update.ts` 的 `buildProfileUpdateReceiptDoc`（同一份 `assembleDocPage`、
- * 同一组 `copyArea`／`copyLog`、同一对 `statusCard`／`reconcileDisclosure`），只换内容：
- * 运动回执摆“本次明细”（单条项／值表）与“逐条明细／改前→改后／批量计数”（老实物
- * `crud_receipt.html` 的三块：`diff-card`／`items-card`／写入跳过失败数），不摆档案字段。
- * 老实物 `ctx-card`（今日累计）只在单条与复制下落“目标日累计”一行，其余批量多日不算。
+ * #264 建的形状（`assembleDocPage` 整页、`statusCard`／`reconcileDisclosure`、`copyArea` 三格式恒开、
+ * 当日累计走 `analysis/utils.ts` 的 `EX_ALIVE` 活行口径、中文列名只此一处）本票不动；#423 换版式：
+ * 照地图 #156 融合设计（`docs/skills/skill-calorie/t156-融合设计.md`，样张 `t156-样张-写后回执.html`）
+ * 把回执页做成**页面族的样板**，八条——① 四态头走 #422 `shared/operationHead.ts`（三张表只一处定义）；
+ * ② 字段变更卡共用一张（改＝旧→新、删＝快照、增＝新增内容，同一行类，箭位可见性占位），零行＝整卡不出现；
+ * ③ 四张卡（状态／变更／当日累计／明细）各自判空——不留空壳、不印空标题；④ 撤销入口只在收到撤销指令时出；
+ * ⑤ 来源脚注走 #422 `shared/sourceLine.ts`（老回执页缺这一行）；⑥ 明细列按运动口径（日期／类型／时长／消耗／
+ * 备注），不再露饮食口径的「克」；⑦ 页内导航＋可打印＋口径行（#420 三件）；⑧ 三格式复制走既有 `shared/copyArea.ts`。
+ * 页头写人话：`<title>` 与眉标里不出现命令键、票号与工序词。
  *
- * 对外 2 件（铁律五「不多于五个」）：
- *   ① `buildExerciseReceiptDoc`——三条写命令共用的整页装配；
- *   ② `ExerciseReceiptDetail`——随行的明细载荷（单条行／批量行／改前改后对／复制计数）。
- * 取数不自算口径：当日累计走 `analysis/utils.ts` 的 `EX_ALIVE` 活行口径，字段中文说法只此一处。
+ * 对外 2 件（铁律五）：① `buildExerciseReceiptDoc`——三条写命令共用的整页装配；
+ * ② `ExerciseReceiptDetail`——随行明细载荷（单条行／批量行／改前改后对／复制计数／撤销指令）。
+ * 取数不自算口径：当日累计走 `EX_ALIVE`；删除措辞读 `shared/writeParts.ts` 的单源。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import {
+  renderCaliberLine, renderChangeRows, renderDataTable, renderDisclosure, renderKpiGrid, renderPreBlock, renderTocBlock,
+} from 'base-paint/blocks';
+import type { ChangeRowInput, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
 import { EX_ALIVE } from '../analysis/utils.js';
+import { CALORIE_COPY_ACTION } from '../render/copy.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { operationHead } from '../shared/operationHead.js';
+import type { ReceiptOp } from '../shared/operationHead.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
+import { sourceLine } from '../shared/sourceLine.js';
+import { SOFT_EXCLUDED } from '../shared/writeParts.js';
 import type { ExerciseRow } from './exerciseStore.js';
 
 const DOC_VERSION = '0.1.0';
@@ -36,27 +46,21 @@ export interface ExerciseReceiptDetail {
   readonly skipped?: number;
   /** 复制／单条的目标日期（当日累计按它算；不给即按首行日期）。 */
   readonly targetDate?: string;
+  /** 本次写操作的撤销指令（有才出撤销入口；全仓今天没有命令带它，故页面恒不出——第 4 条）。 */
+  readonly undoCli?: string;
 }
 
 /** 库列名 → 中文列名（老实物 `crud_receipt.html` 的 `FIELD_LABELS` 运动那半，中文面只此一处）。 */
 const FIELD_LABELS: Record<string, string> = {
-  exercise_type: '运动类型',
-  date: '日期',
-  time: '时间',
-  duration_minutes: '时长',
-  calories_burned: '消耗',
-  category: '分类',
-  difficulty: '强度',
-  distance_km: '距离',
-  avg_heart_rate: '平均心率',
-  max_heart_rate: '最高心率',
-  steps: '步数',
-  reps: '次数',
-  load_kg: '重量',
-  set_index: '组号',
-  is_backfill: '补录',
-  note: '备注',
+  exercise_type: '运动类型', date: '日期', time: '时间', duration_minutes: '时长', calories_burned: '消耗',
+  category: '分类', difficulty: '强度', distance_km: '距离', avg_heart_rate: '平均心率', max_heart_rate: '最高心率',
+  steps: '步数', reps: '次数', load_kg: '重量', set_index: '组号', is_backfill: '补录', note: '备注',
 };
+
+/** 快照／新增内容要逐个摆出来看的列（按人读的顺序；值没有就不摆这一行）。 */
+const SNAPSHOT_COLS = ['exercise_type', 'date', 'time', 'duration_minutes', 'calories_burned', 'category', 'difficulty', 'distance_km', 'avg_heart_rate', 'max_heart_rate', 'steps', 'reps', 'load_kg', 'set_index', 'is_backfill', 'note'];
+
+const SKIP_COLS = new Set(['id', 'created_at', 'updated_at', 'is_deleted']);
 
 function fieldLabel(col: string): string {
   return FIELD_LABELS[col] ?? col;
@@ -64,10 +68,8 @@ function fieldLabel(col: string): string {
 
 /** 给人看的格值：没有值只写「未设置」（与场景 07 同词）。 */
 function cellText(v: unknown, unit?: string): string {
-  if (v === null || v === undefined) return '未设置';
-  const s = String(v).trim();
-  if (s === '') return '未设置';
-  return unit === undefined || unit === '' ? s : s + ' ' + unit;
+  const s = v === null || v === undefined ? '' : String(v).trim();
+  return s === '' ? '未设置' : (unit === undefined || unit === '' ? s : s + ' ' + unit);
 }
 
 function rowText(row: ExerciseRow, col: string): string {
@@ -86,92 +88,172 @@ function rowText(row: ExerciseRow, col: string): string {
   }
 }
 
-/** 单条明细（项／值两列；老实物 `diff-card` 新增态那半的人话版）。 */
-function singleTable(row: ExerciseRow): string {
-  const cols = ['exercise_type', 'date', 'time', 'duration_minutes', 'calories_burned', 'category', 'note', 'distance_km', 'avg_heart_rate', 'max_heart_rate', 'steps', 'reps', 'load_kg', 'set_index'];
-  return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-    rows: cols.map((c) => ({ k: fieldLabel(c), v: rowText(row, c) })),
-    caption: '本次明细（写后现值）',
-  });
+/** 这个字段有没有值得摆出来的值（空／0／无意义的假值不摆，免得快照满屏「未设置」）。 */
+function hasValue(row: ExerciseRow, col: string): boolean {
+  const v: unknown = row[col];
+  if (v === null || v === undefined || v === '') return false;
+  if (v === 0 || v === false) return false;
+  return true;
 }
 
-/** 逐条明细（老实物 `items-card` 那块：批量／复制／删除的每条一行）。 */
-function itemsTable(rows: readonly ExerciseRow[]): string {
-  return renderDataTable({
-    columns: [
-      { key: 'id', label: '编号' },
-      { key: 'type', label: '类型' },
-      { key: 'date', label: '日期' },
-      { key: 'minutes', label: '时长' },
-      { key: 'calories', label: '消耗' },
-      { key: 'note', label: '备注' },
-    ],
-    rows: rows.map((r) => ({
-      id: cellText(r['id']),
-      type: cellText(r['exercise_type']),
-      date: cellText(r['date']),
-      minutes: rowText(r, 'duration_minutes'),
-      calories: rowText(r, 'calories_burned'),
-      note: cellText(r['note']),
-    })),
-    caption: '逐条明细（共 ' + rows.length + ' 条）',
-    emptyText: '本次没有逐条明细',
-  });
+/** 页内一张卡（`id` 即页内导航的锚点，导航项按同一份清单生成）；卡外壳＝锚点 id ＋ 区块 HTML。 */
+interface Card { readonly id: string; readonly label: string; readonly html: string }
+
+function shell(card: Card): string {
+  return '<section id="' + card.id + '">' + card.html + '</section>';
+}
+/* ───────────────────────────── ② 字段变更卡（共用一张） ───────────────────────────── */
+
+/** 一条多记录场景下的前缀（多对／多条时带记录号，不丢行）。 */
+function idPrefix(rows: number, row: ExerciseRow | undefined): string {
+  if (rows <= 1 || row === undefined) return '';
+  return '#' + cellText(row['id']) + ' ';
 }
 
-/** 批量计数（老实物写入／跳过／失败三数；运动批量今天只产写入，其余如实写 0）。 */
-function batchTable(added: number): string {
-  return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-    rows: [
-      { k: '写入', v: added + ' 条' },
-      { k: '跳过', v: '0 条' },
-      { k: '失败', v: '0 条' },
-    ],
-    caption: '批量计数：写入／跳过／失败',
-  });
-}
-
-/** 改前→改后（老实物 `diff-card` 修改态那半；多对时带编号前缀，不丢行）。 */
-function diffTable(pairs: readonly { readonly old: ExerciseRow; readonly new: ExerciseRow }[]): string {
-  const skip = new Set(['id', 'created_at', 'updated_at']);
-  const rows: { field: string; change: string }[] = [];
-  for (const p of pairs) {
-    const id = cellText(p.new['id'] ?? p.old['id']);
-    const prefix = pairs.length > 1 ? '#' + id + ' ' : '';
-    const keys = new Set([...Object.keys(p.old), ...Object.keys(p.new)]);
-    for (const k of keys) {
-      if (skip.has(k)) continue;
-      const a = p.old[k];
-      const b = p.new[k];
-      if (String(a ?? '') === String(b ?? '')) continue;
-      rows.push({ field: prefix + fieldLabel(k), change: cellText(a) + ' → ' + cellText(b) });
+/** 字段变更卡的内容：改＝旧→新对照；删＝删除前快照；增＝新增内容。零行 → `''`（整卡不出现）。 */
+function changeCard(op: ReceiptOp, rows: readonly ExerciseRow[], pairs: readonly { readonly old: ExerciseRow; readonly new: ExerciseRow }[]): Card | null {
+  const items: ChangeRowInput[] = [];
+  if (op === 'update') {
+    for (const pair of pairs) {
+      const keys = new Set([...Object.keys(pair.old), ...Object.keys(pair.new)]);
+      for (const col of keys) {
+        if (SKIP_COLS.has(col)) continue;
+        const before = pair.old[col];
+        const after = pair.new[col];
+        if (String(before ?? '') === String(after ?? '')) continue;
+        items.push({ label: idPrefix(pairs.length, pair.new) + fieldLabel(col), before: rowText(pair.old, col), after: rowText(pair.new, col) });
+      }
+    }
+  } else if (op === 'delete') {
+    for (const row of rows) {
+      for (const col of SNAPSHOT_COLS) {
+        if (!hasValue(row, col)) continue;
+        items.push({ label: idPrefix(rows.length, row) + fieldLabel(col), before: rowText(row, col), arrow: false });
+      }
+    }
+  } else {
+    for (const row of rows) {
+      for (const col of SNAPSHOT_COLS) {
+        if (!hasValue(row, col)) continue;
+        items.push({ label: idPrefix(rows.length, row) + fieldLabel(col), after: rowText(row, col), arrow: false });
+      }
     }
   }
-  return renderDataTable({
-    columns: [{ key: 'field', label: '字段' }, { key: 'change', label: '改前 → 改后' }],
-    rows,
-    caption: '改前 → 改后对照（共 ' + pairs.length + ' 条记录）',
-    emptyText: '本次回执未带逐字段对照',
-  });
+  if (items.length === 0) return null;
+  const title = op === 'update' ? '改前 → 改后对照（共 ' + pairs.length + ' 条记录）'
+    : op === 'delete' ? '删除前快照（共 ' + rows.length + ' 条）'
+      : '本次明细（新增内容' + (rows.length > 1 ? '，共 ' + rows.length + ' 条' : '') + '）';
+  return { id: 'sec-change', label: '字段变更', html: renderDisclosure({ title, contentHtml: renderChangeRows({ rows: items }), open: true }) };
+}
+/* ───────────────────────────── ③ 明细卡（运动口径列） ───────────────────────────── */
+
+/** 明细列＝运动口径（日期／类型／时长／消耗／备注；#423 第 6 条：不再露饮食口径的「克」）。 */
+const DETAIL_COLUMNS = ['日期', '类型', '时长', '消耗', '备注'] as const;
+
+function detailCard(rows: readonly ExerciseRow[]): Card | null {
+  if (rows.length === 0) return null;
+  return {
+    id: 'sec-detail',
+    label: '逐条明细',
+    html: renderDataTable({
+      columns: DETAIL_COLUMNS.map((label) => ({ key: label, label })),
+      rows: rows.map((r) => ({
+        日期: cellText(r['date']),
+        类型: cellText(r['exercise_type']),
+        时长: rowText(r, 'duration_minutes'),
+        消耗: rowText(r, 'calories_burned'),
+        备注: cellText(r['note']),
+      })),
+      caption: '逐条明细（共 ' + rows.length + ' 条）',
+    }),
+  };
+}
+/* ───────────────────────── 计数卡 ／ 当日累计卡 ／ 来源脚注 ／ 口径行 ───────────────────────── */
+
+function countCard(caption: string, rows: readonly (readonly [string, string])[]): Card {
+  return {
+    id: 'sec-count',
+    label: '本次写入',
+    html: renderDataTable({
+      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      rows: rows.map(([k, v]) => ({ k, v })),
+      caption,
+    }),
+  };
 }
 
-/** 目标日累计（老实物 `ctx-card` 那块；写后现值，活行口径，不过滤即错）。 */
-function dayTable(db: DatabaseSync, date: string): string {
+/** 某天活行数（`EX_ALIVE` 活行口径：软删除的行不计；0 即不出当日累计卡）。 */
+function aliveCount(db: DatabaseSync, date: string): number {
+  const r = db.prepare('SELECT COUNT(*) AS n FROM exercise_log WHERE date = ? AND ' + EX_ALIVE).get(date) as { n: number };
+  return r.n;
+}
+
+/** 当日累计卡（老实物 `ctx-card`；写后现值，活行口径，不过滤即错）。空即整卡不出现。 */
+function dayCard(db: DatabaseSync, date: string): Card | null {
+  if (date === '' || aliveCount(db, date) === 0) return null;
   const r = db.prepare(
     'SELECT COUNT(*) AS n, COALESCE(SUM(calories_burned), 0) AS kcal, COALESCE(SUM(duration_minutes), 0) AS mins FROM exercise_log WHERE date = ? AND ' + EX_ALIVE,
   ).get(date) as { n: number; kcal: number; mins: number };
-  return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-    rows: [
-      { k: '日期', v: date },
-      { k: '运动条数', v: String(r.n) + ' 条' },
-      { k: '消耗累计', v: String(r.kcal) + ' 卡' },
-      { k: '时长累计', v: String(r.mins) + ' 分钟' },
-    ],
-    caption: '当日累计（写后现值）',
+  return {
+    id: 'sec-day',
+    label: '当日累计',
+    html: renderDataTable({
+      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      rows: [
+        { k: '日期', v: date },
+        { k: '运动条数', v: String(r.n) + ' 条' },
+        { k: '消耗累计', v: String(r.kcal) + ' 卡' },
+        { k: '时长累计', v: String(r.mins) + ' 分钟' },
+      ],
+      caption: '当日累计（写后现值）',
+    }),
+  };
+}
+
+/** 来源脚注（#422 `sourceLine`）：窗口用本次回执自己的日期区间，条数＝本次回执的记录数。 */
+function sourceCard(receipt: CrudReceipt, dates: readonly string[], count: number, fallback: string): Card | null {
+  const window = dates.length > 0 ? [...dates].sort() : (fallback === '' ? [] : [fallback]);
+  if (window.length === 0) return null;
+  return {
+    id: 'sec-source',
+    label: '数据来源',
+    html: sourceLine({ source: receipt.meta.source, start: window[0] ?? '', end: window[window.length - 1] ?? '', count }),
+  };
+}
+
+/** 口径行（#420 `renderCaliberLine`）：页内数字怎么来的，写在页面上。 */
+function caliberText(hasDay: boolean): string {
+  const parts = ['影响行数＝本次写库前后 total_changes 增量'];
+  if (hasDay) parts.push('当日累计只数未删除的行（软删除的行不计）');
+  parts.push('时长＝分钟、消耗＝卡');
+  return '口径：' + parts.join('；');
+}
+
+/** 撤销入口（第 4 条）：给了撤销指令才出——可复制的指令块，不是点了没反应的死按钮。
+ *  全仓今天 0 个 restore/undo 入口，故这条分支在真出口上恒不命中（产物里连「撤销」二字都没有）。 */
+function undoBlock(undoCli: unknown): string {
+  if (typeof undoCli !== 'string' || undoCli.trim() === '') return '';
+  return renderPreBlock({
+    label: '撤销指令（可复制重跑）',
+    command: undoCli.trim(),
+    actionId: CALORIE_COPY_ACTION.actionId,
+    copyLabel: CALORIE_COPY_ACTION.label,
   });
+}
+
+/** 可打印版面（#420 第 7 条）：`renderPageShell({ printable: true })` 把类加在版面根上，打印规则
+ *  （隐藏页内导航与区块形态复制区、具名页 `@page printable`）只挂在它名下。
+ *  本票整页仍走唯一一份文档壳 `assembleDocPage`（`docShell` 只此一处，不许第二份），而该件今天
+ *  没有把 `printable` 透传下来，故装配后对版面根做**定点**加类：锚点必须恰好命中一次，否则抛错
+ *  （形状变了要立刻知道，别静默产出一份没打印样式的页）。#420 审查探针（`t420-review-probe.mjs`）
+ *  取证可打印页用的就是这条单点插入；要收掉它，需 `src/shared/docPage.ts` 增 `printable` 透传位。 */
+const PAGE_SHELL_ROOT = '<section class="ilife-block ilife-block-page-shell">';
+const PRINTABLE_ROOT = '<section class="ilife-block ilife-block-page-shell ilife-page-printable">';
+
+function withPrintableRoot(html: string): string {
+  const hits = html.split(PAGE_SHELL_ROOT).length - 1;
+  if (hits !== 1) throw new Error('运动回执页版面根锚点命中 ' + hits + ' 次（应恰 1 次）：base-render 的页壳形状变了');
+  return html.replace(PAGE_SHELL_ROOT, PRINTABLE_ROOT);
 }
 
 function writtenDetailOf(key: string): string {
@@ -180,7 +262,7 @@ function writtenDetailOf(key: string): string {
   return '已写入运动记录';
 }
 
-/** 三条写命令共用的写后回执整页：状态 ＋ 明细／对照／计数 ＋ 对账 ＋ 复制区。
+/** 三条写命令共用的写后回执整页：四态头 ＋ 计数／变更／明细／当日累计 ＋ 来源 ＋ 对账 ＋ 复制区。
  *  `command` ＝ AI 真跑那条写命令的原文，进「复制日志」第 4 段。 */
 export function buildExerciseReceiptDoc(
   db: DatabaseSync,
@@ -196,54 +278,54 @@ export function buildExerciseReceiptDoc(
   const rows = detail.rows ?? [];
   const pairs = detail.pairs ?? [];
   const wake = receipt.meta.wakeWord;
-  const blocks: string[] = [];
-  if (key === 'calorie.exercise.add' && wake === '批量补记运动') {
-    blocks.push(batchTable(rows.length));
-    blocks.push(itemsTable(rows));
-  } else if (key === 'calorie.exercise.add' && wake === '复制昨日运动') {
-    const target = detail.targetDate ?? (rows.length > 0 ? String(rows[0]?.['date'] ?? '') : '');
-    blocks.push(renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-      rows: [
-        { k: '复制', v: String(rows.length) + ' 条' },
-        { k: '跳过', v: String(detail.skipped ?? 0) + ' 条' },
-        { k: '目标日期', v: target === '' ? '未设置' : target },
-      ],
-      caption: '批量计数：复制／跳过',
-    }));
-    blocks.push(itemsTable(rows));
-    if (target !== '') blocks.push(dayTable(db, target));
-  } else if (key === 'calorie.exercise.add') {
-    if (rows.length > 0 && rows[0]) blocks.push(singleTable(rows[0] as ExerciseRow));
-    else blocks.push(itemsTable(rows));
-    const d = detail.targetDate ?? (rows.length > 0 ? String(rows[0]?.['date'] ?? '') : '');
-    if (d !== '') blocks.push(dayTable(db, d));
-  } else if (key === 'calorie.exercise.update') {
-    blocks.push(renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-      rows: [{ k: '命中条数', v: String(pairs.length) + ' 条' }],
-      caption: '批量计数：命中',
-    }));
-    blocks.push(diffTable(pairs));
-  } else {
-    blocks.push(renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-      rows: [{ k: '删除条数', v: String(rows.length) + ' 条' }],
-      caption: '批量计数：删除（软删除：行保留，已从查询与统计中排除；暂无恢复入口）',
-    }));
-    blocks.push(itemsTable(rows));
+  const op: ReceiptOp = receipt.op;
+  const isAdd = key === 'calorie.exercise.add';
+  const isBatch = isAdd && wake === '批量补记运动';
+  const isCopy = isAdd && wake === '复制昨日运动';
+  const target = detail.targetDate ?? (rows.length > 0 ? String(rows[0]?.['date'] ?? '') : '');
+  const dates = [...new Set([
+    ...rows.map((r) => String(r['date'] ?? '')),
+    ...pairs.map((p) => String(p.new['date'] ?? p.old['date'] ?? '')),
+  ])].filter((d) => d !== '');
+
+  // ① 计数卡：四种写的数（批量／复制／命中／删除）都在这一张，口径与 #264 逐字一致。
+  const countRows: (readonly [string, string])[] = isBatch
+    ? [['写入', rows.length + ' 条'], ['跳过', '0 条'], ['失败', '0 条']]
+    : isCopy
+      ? [['复制', rows.length + ' 条'], ['跳过', String(detail.skipped ?? 0) + ' 条'], ['目标日期', target === '' ? '未设置' : target]]
+      : op === 'update'
+        ? [['命中条数', pairs.length + ' 条']]
+        : [['删除条数', rows.length + ' 条']];
+  const countCaption = isBatch
+    ? '批量计数：写入／跳过／失败'
+    : isCopy
+      ? '批量计数：复制／跳过'
+      : op === 'update' ? '批量计数：命中' : '批量计数：删除' + SOFT_EXCLUDED;
+  const counts = countCard(countCaption, countRows);
+  // ② 变更卡（共用一张）／③ 明细卡（运动口径，只有逐条形态才摆）／④ 当日累计卡（活行口径、空即不出）。
+  const change = changeCard(op, rows, pairs);
+  const detailRows = detailCard(op === 'delete' || isBatch || isCopy ? rows : []);
+  const day = dayCard(db, detail.targetDate ?? (dates.length === 1 ? (dates[0] ?? '') : ''));
+  const source = sourceCard(receipt, dates, Math.max(rows.length, pairs.length), target);
+
+  // 状态卡判空：没有写入、没有改动、也不是「无改动」这一态时，整块 KPI 不出现（不留空壳）。
+  const kpi: KpiCardInput[] = [];
+  if (receipt.affectedRows > 0 || receipt.writtenFields.length > 0 || receipt.noChange) {
+    kpi.push(statusCard(receipt, writtenDetailOf(key)));
   }
+  if (receipt.affectedRows > 0) kpi.push({ label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' });
+  if (receipt.writtenFields.length > 0) {
+    kpi.push({ label: '写入字段', value: receipt.writtenFields.length + ' 项', detail: receipt.writtenFields.join('、') || '未设置' });
+  }
+
+  const cards = [counts, change, detailRows, day, source].filter((c): c is Card => c !== null);
   const content = [
-    renderKpiGrid([
-      statusCard(receipt, writtenDetailOf(key)),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
-      {
-        label: '写入字段',
-        value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.join('、') || '未设置',
-      },
-    ]),
-    ...blocks,
+    renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
+    operationHead({ op, title: wake, recordId: receipt.recordId, actionAt: receipt.meta.actionAt, source: receipt.meta.source }),
+    kpi.length > 0 ? renderKpiGrid(kpi) : '',
+    renderCaliberLine(caliberText(day !== null)),
+    cards.map(shell).join(''),
+    undoBlock(detail.undoCli),
     reconcileDisclosure(receipt),
     copyArea({
       data: { envelope },
@@ -256,11 +338,11 @@ export function buildExerciseReceiptDoc(
       },
     }),
   ].join('');
-  return assembleDocPage({
+  return withPrintableRoot(assembleDocPage({
     docTitle: DOC_TITLE,
     title: receipt.scene + ' · 回执',
     eyebrow: '运动 · 写后回执',
     subtitle: receipt.summary,
     content,
-  });
+  }));
 }
