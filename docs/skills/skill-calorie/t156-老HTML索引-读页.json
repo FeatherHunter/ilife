@@ -1,0 +1,211 @@
+{
+  "ticket": "156-old-w2",
+  "scope": "卡路里场景 04 运动 · 老技能 HTML 盘点（老技能根只读）；本席覆盖 类型分布／趋势／复盘／力量总览／有氧总览 5 件 ＋ 候选判定 10 项",
+  "sourceRoot": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里",
+  "checkedCommit": "abb7c5c9e695abdd39651b8a818664f229f2a521",
+  "sourceReadOnly": true,
+  "lineCountBasis": "老技能侧行号＝原文件 1 基行号（与前席提取件同口径）；本仓侧行号（packages\\...）取自读出时点",
+  "encodingNote": "前席提取件 d_dist_trend.txt／d_recap_goal.txt／d_cardio_strength.txt 是 UTF-16，读前须按 UTF-16 解码；body_exercise_*.txt 是 UTF-8",
+  "reasonCodes": {
+    "IN_FAMILY": "本席 5 件，服务本图 39 条唤醒词，纳入",
+    "OUT_OTHER_SCENE": "模板实物，但服务别的场景的词（不在本图 39 词内）",
+    "OUT_MAP_SCOPE": "模板实物，但地图 #156 Out of scope 明文划出（此地为『落地 3』点名 render_plan_builder.py）",
+    "NOT_TEMPLATE_PRODUCT": "非模板实物：无 <!--INJECT-DATA--> 占位、自备数据的产物／旧交付件",
+    "NOT_TEMPLATE_DOC": "非模板实物：技能文档／清单表"
+  },
+  "templateSignatures": {
+    "模板实物": "住在 templates\\（该目录共 73 件）＋ 带 <!--INJECT-DATA--> 占位（多数并带 <!--SHARED-HELPERS-->）＋ 有专属渲染脚本或文档登记",
+    "产物": "以上三条不成立，页面自带数据"
+  },
+  "items": [
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_distribution.html",
+      "bytes": 13875, "lines": 268, "kind": "模板实物",
+      "pageFamily": "类型分布", "title": "🏃 运动分布",
+      "renderScripts": ["scripts\\render_exercise_distribution.py"],
+      "sections": ["head 本地 style(8-79)", "script#payload INJECT-DATA/SHARED-HELPERS/CHARTS-HELPERS(83)", "meta-bar#metaLeft#modeBadge(85-88)", "h1#h1Title 运动分布(90)", "p.sub#sub(91)", "kpi-grid 4 格(93-98)", "section 运动分类占比(100-114)", "pie-pair 按类型占比(104-107)", "pie-pair 按热量分布(109-112)", "section 运动明细 表(116-122)", "footer/src(124-127)", "actionbar-zone(264)"],
+      "includedInMap156": true, "reasonCode": "IN_FAMILY",
+      "wakeWords": ["看运动类型分布"],
+      "commandKey": "calorie.view.exercise-distribution",
+      "evidence": ["templates\\exercise_distribution.html:83", "templates\\exercise_distribution.html:144", "templates\\exercise_distribution.html:172", "templates\\exercise_distribution.html:177-181", "templates\\exercise_distribution.html:219", "templates\\exercise_distribution.html:265"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_trend.html",
+      "bytes": 7117, "lines": 144, "kind": "模板实物",
+      "pageFamily": "趋势", "title": "📈 运动趋势",
+      "renderScripts": ["scripts\\render_exercise_trend.py"],
+      "sections": ["head 本地 style(8-48)", "script#payload(53)", "meta-bar(55)", "h1 运动趋势(56)", "p.sub#subTitle(57)", "kpi-grid#kpiGrid 空容器(59)", "card 每日消耗(卡)(61-65)", "card 每周运动频次(次)(67-70)", "footer(72)", "actionbar-zone(140)"],
+      "includedInMap156": true, "reasonCode": "IN_FAMILY",
+      "wakeWords": ["看运动趋势"],
+      "commandKey": "calorie.view.exercise-trend",
+      "evidence": ["templates\\exercise_trend.html:63", "templates\\exercise_trend.html:82-87", "templates\\exercise_trend.html:109-114", "templates\\exercise_trend.html:134"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_recap.html",
+      "bytes": 6652, "lines": 138, "kind": "模板实物",
+      "pageFamily": "复盘", "title": "📊 运动复盘",
+      "renderScripts": ["scripts\\render_exercise_recap.py"],
+      "sections": ["head 本地 style(8-55)", "script#payload(58)", "meta-bar(60)", "h1 运动复盘(61)", "p.sub#subTitle(62)", "one-line#oneLine(64)", "kpi-grid#kpiGrid(66)", "card 类型分布(68-71)", "card 高频运动(73-76)", "card 每日消耗趋势(78-81)", "footer(83)", "actionbar-zone(134)"],
+      "includedInMap156": true, "reasonCode": "IN_FAMILY",
+      "wakeWords": ["运动复盘（本周）", "运动复盘（本月）", "运动复盘（最近 90 天）", "运动复盘（今年）", "运动复盘（自定义时间）"],
+      "commandKey": "calorie.view.exercise-recap",
+      "evidence": ["templates\\exercise_recap.html:90", "templates\\exercise_recap.html:92", "templates\\exercise_recap.html:107", "templates\\exercise_recap.html:114", "templates\\exercise_recap.html:121-125"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_strength.html",
+      "bytes": 6302, "lines": 134, "kind": "模板实物",
+      "pageFamily": "力量总览", "title": "💪 力量训练总览",
+      "renderScripts": ["scripts\\render_exercise_strength.py"],
+      "sections": ["head 本地 style(8-51)", "script#payload(54)", "meta-bar(56)", "h1 力量训练总览(57)", "p.sub#subTitle(58)", "kpi-grid#kpiGrid(60)", "card 按动作聚合 表(62-68)", "card 重量轨迹(70-73)", "footer(75)", "actionbar-zone(130)"],
+      "includedInMap156": true, "reasonCode": "IN_FAMILY",
+      "wakeWords": ["看力量训练总览"],
+      "commandKey": "calorie.view.exercise-strength",
+      "evidence": ["templates\\exercise_strength.html:35", "templates\\exercise_strength.html:71", "templates\\exercise_strength.html:93", "templates\\exercise_strength.html:100", "templates\\exercise_strength.html:104-121"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_cardio.html",
+      "bytes": 5003, "lines": 102, "kind": "模板实物",
+      "pageFamily": "有氧总览", "title": "🏃 有氧训练总览",
+      "renderScripts": ["scripts\\render_exercise_cardio.py"],
+      "sections": ["head 本地 style(8-46)", "script#payload(49)", "meta-bar(51)", "h1 有氧训练总览(52)", "p.sub#subTitle(53)", "kpi-grid#kpiGrid(55)", "card 按类型聚合 表(57-63)", "footer(65)", "actionbar-zone(98)"],
+      "includedInMap156": true, "reasonCode": "IN_FAMILY",
+      "wakeWords": ["看有氧训练总览"],
+      "commandKey": "calorie.view.exercise-cardio",
+      "evidence": ["templates\\exercise_cardio.html:41", "templates\\exercise_cardio.html:82", "templates\\exercise_cardio.html:87-88", "templates\\exercise_cardio.html:91"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_review.html",
+      "bytes": 21742, "lines": 553, "kind": "模板实物",
+      "pageFamily": "计划复盘（健身计划类，非本图）", "title": "🏋️ 训练复盘",
+      "renderScripts": ["scripts\\render_exercise_review_html.py"],
+      "sections": ["h1 训练复盘(203)", "h2 每日完成率热力图(210)", "h2 周训练容量 · 计划 vs 实做(221)", "h2 主项动作负荷趋势(227)", "h2 每日明细(234)", "actionbar-zone(549)"],
+      "includedInMap156": false, "reasonCode": "OUT_OTHER_SCENE",
+      "wakeWords": ["计划复盘（本周）", "计划复盘（本月）", "计划复盘（全部）"],
+      "evidence": ["scripts\\_triggers.py:2171", "scripts\\_triggers.py:2177", "scripts\\_triggers.py:2187", "scripts\\_triggers.py:2197", "references\\html_templates.md:14", "地图 #156 Out of scope：其余 9 个场景各归自己的图"],
+      "note": "地图点名的『定时复盘 3 条』模板是 templates/cron_setup.html（SKILL.md:188），与本件无关；html_templates.md 记 15 KB，实物 21742 B，文档漂移"
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\workout_plan_view.html",
+      "bytes": 36485, "lines": 722, "kind": "模板实物",
+      "pageFamily": "健身计划（13 词，非本图）", "title": "健身计划",
+      "renderScripts": ["scripts\\render_workout_plan.py"],
+      "sections": ["h1#planTitle 健身计划(161)", "h2 今日复盘(224)", "h2 周期进度(311)", "h2 每周完成率(337)", "h2 本周完成度(361)", "h2 计划 vs 实际(380)", "h2 动作级对比(386)", "h2 每周完成率趋势(410)", "h2 未完成训练(432)", "h2 动作完成率 TOP(456)", "h2 计划中出现的位置(521)", "actionbar-zone(718)"],
+      "includedInMap156": false, "reasonCode": "OUT_OTHER_SCENE",
+      "wakeWords": ["看本周计划", "看下周计划", "看上周计划", "看指定周计划", "看今天练什么", "看某动作安排", "看某天练什么", "看计划概览", "看完整计划", "看计划 vs 实际", "看计划完成率", "看未完成训练", "看动作完成率"],
+      "evidence": ["scripts\\_triggers.py:1927", "scripts\\_triggers.py:1997", "SKILL.md:122", "references\\html_templates.md:11"],
+      "note": "html_templates.md 记 12 KB，实物 36485 B，文档漂移"
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\plan_builder_wizard.html",
+      "bytes": 38186, "lines": 1061, "kind": "模板实物",
+      "pageFamily": "定训练计划／落地（采访式向导，地图外）", "title": "8 周增肌计划",
+      "renderScripts": ["scripts\\render_plan_builder.py", "scripts\\render_plan_receipt.py"],
+      "sections": ["h1#title 8 周增肌计划(455)", "h2 计划偏好(463)", "h2 计划详情(472)", "h2 复制确认指令(484)", "actionbar-zone(1057)"],
+      "includedInMap156": false, "reasonCode": "OUT_MAP_SCOPE",
+      "wakeWords": ["定训练计划"],
+      "evidence": ["scripts\\_triggers.py:2019", "scripts\\_triggers.py:2027", "地图 #156 Out of scope：新架构不做的 10 条含『落地 3』并点名 render_plan_builder.py"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\review_template.html",
+      "bytes": 15639, "lines": 424, "kind": "模板实物",
+      "pageFamily": "复盘 6 词（跨域，非本图）", "title": "复盘报告",
+      "renderScripts": ["scripts\\render_review.py"],
+      "sections": ["h1#hero-title 复盘报告(185)", "h2 ⚠️ 异常天(194)", "h3 体重趋势", "h3 Top 5 食物", "h3 复制回 AI", "actionbar-zone(421)"],
+      "includedInMap156": false, "reasonCode": "OUT_OTHER_SCENE",
+      "wakeWords": ["复盘", "今日复盘", "本周复盘", "本月复盘", "本年复盘", "复盘日期范围"],
+      "evidence": ["scripts\\render_review.py:10", "SKILL.md:121", "scripts\\_triggers.py:4306", "scripts\\_triggers.py:4348", "references\\html_templates.md:10"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\review_template.html",
+      "bytes": 25160, "lines": 604, "kind": "旧交付件（无占位符）",
+      "pageFamily": "复盘（旧版，非本图）", "title": "卡路里周复盘",
+      "renderScripts": [],
+      "sections": ["h1 本周复盘", "h2 总结 3 亮点 + 3 问题 + 3 建议", "h3 3 亮点", "h3 3 问题", "h3 3 建议"],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["根 review_template.html：INJECT-DATA 0 处、SHARED-HELPERS 0 处，mtime 2026-08-04；templates\\ 下的同名件 15639 B／mtime 2026-08-13，两件不可混算"],
+      "note": "与 templates\\review_template.html 同名不同物"
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\健身计划.html",
+      "bytes": 101615, "lines": 300, "kind": "单文件产物（无占位符）",
+      "pageFamily": "健身计划族（非本图）", "title": "健身计划",
+      "renderScripts": [],
+      "sections": ["h1 健身计划", "h2 今日复盘 · ${t.date || ''}", "h3 ${DAY_LABELS[dow]} · 休息日"],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["健身计划.html:6", "健身计划.html:9", "健身计划.html 与 templates\\workout_plan_view.html:224 的脚本模板串逐字同形"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\calorie_html\\卡路里_HELP_20260730_130429.html",
+      "bytes": 65366, "kind": "产物（无占位符）",
+      "pageFamily": "HELP 速查台（非本图）", "title": "📚 卡路里 · 唤醒词速查台",
+      "renderScripts": [], "sections": [],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["文件名带日期时间戳；INJECT-DATA 0 处"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\calorie_html\\卡路里_HELP_20260731_201530.html",
+      "bytes": 73811, "kind": "产物（无占位符）",
+      "pageFamily": "HELP 速查台（非本图）", "title": "📚 卡路里 · 唤醒词速查台",
+      "renderScripts": [], "sections": [],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["文件名带日期时间戳；INJECT-DATA 0 处"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\calorie_html\\process_progress_input_20260730.json",
+      "bytes": 2318, "kind": "过程件",
+      "pageFamily": "无（数据输入件）",
+      "renderScripts": [], "sections": [],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["同目录两件 HELP 产物的同行过程件"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\html\\tm_db.html",
+      "bytes": 13275, "lines": 173, "kind": "临时产物（无占位符）",
+      "pageFamily": "饮食（吃的记录，非本图）", "title": "卡路里 · 吃的记录",
+      "renderScripts": [], "sections": ["h1 🍱 吃的记录", "h2 每日明细"],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["tm_ 前缀；INJECT-DATA 0 处；mtime 2026-08-04 22:59"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\html\\tm_mock.html",
+      "bytes": 10950, "lines": 173, "kind": "临时产物（无占位符）",
+      "pageFamily": "饮食（吃的记录，非本图）", "title": "卡路里 · 吃的记录",
+      "renderScripts": [], "sections": ["h1 🍱 吃的记录", "h2 每日明细"],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["tm_ 前缀；INJECT-DATA 0 处；mtime 2026-08-04 22:59"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\卡路里.html",
+      "bytes": 302820, "lines": 2049, "kind": "原型聚合件（无占位符）",
+      "pageFamily": "HELP 原型", "title": "HELP 原型 · V4 三级目录版",
+      "renderScripts": [], "sections": ["h1（脚本模板串）", "h2 顺路提醒"],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_PRODUCT",
+      "evidence": ["卡路里.html:6", "全文两个 <h1> 都落在 JS 模板串里；INJECT-DATA 0 处"]
+    },
+    {
+      "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\SKILL.md",
+      "bytes": 158005, "lines": 2195, "kind": "技能文档",
+      "pageFamily": "全技能正本（文档）", "title": "卡路里（front matter）",
+      "renderScripts": [],
+      "sections": ["front matter(1-2)", "模板|唤醒词|数据源|渲染器 对照表(118-121)"],
+      "includedInMap156": false, "reasonCode": "NOT_TEMPLATE_DOC",
+      "evidence": ["SKILL.md:1-2", "SKILL.md:118", "SKILL.md:121", "SKILL.md:122", "SKILL.md:188"]
+    }
+  ],
+  "directories": {
+    "calorie_html": { "count": 3, "kind": "产物目录（HELP 速查台落盘件）", "note": "模板实物不在这个目录，在 templates\\" },
+    "html": { "count": 2, "kind": "临时产物目录（tm_ 前缀，饮食域）" },
+    "templates": { "count": 73, "kind": "模板实物目录（本席 5 件 ＋ 候选 4 件都在此）" }
+  },
+  "familyMapping": [
+    { "template": "exercise_distribution.html", "pageFamily": "类型分布", "commandKey": "calorie.view.exercise-distribution", "tickets": ["265", "394"], "wakeWord": "看运动类型分布", "newRepoLine": "packages\\skill-calorie\\src\\exercise\\routes.ts:42" },
+    { "template": "exercise_strength.html", "pageFamily": "力量总览", "commandKey": "calorie.view.exercise-strength", "tickets": ["394"], "wakeWord": "看力量训练总览", "newRepoLine": "packages\\skill-calorie\\src\\exercise\\routes.ts:43" },
+    { "template": "exercise_cardio.html", "pageFamily": "有氧总览", "commandKey": "calorie.view.exercise-cardio", "tickets": ["394"], "wakeWord": "看有氧训练总览", "newRepoLine": "packages\\skill-calorie\\src\\exercise\\routes.ts:44" },
+    { "template": "exercise_trend.html", "pageFamily": "趋势", "commandKey": "calorie.view.exercise-trend", "tickets": ["265", "394"], "wakeWord": "看运动趋势", "newRepoLine": "packages\\skill-calorie\\src\\exercise\\routes.ts:45" },
+    { "template": "exercise_recap.html", "pageFamily": "复盘", "commandKey": "calorie.view.exercise-recap", "tickets": ["265", "394"], "wakeWord": "运动复盘（本周／本月／最近 90 天／今年／自定义时间）", "newRepoLine": "packages\\skill-calorie\\src\\exercise\\routes.ts:46-50" }
+  ],
+  "outputs": [
+    "docs/skills/skill-calorie/t156-老HTML盘点-读页.md",
+    "docs/skills/skill-calorie/t156-老HTML索引-读页.json"
+  ]
+}
