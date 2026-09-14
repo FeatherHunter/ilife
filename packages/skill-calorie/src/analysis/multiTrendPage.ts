@@ -263,6 +263,9 @@ function buildBDoc(v: MultiTrendView): string {
           labels: 'select',
           yMin: calorieAxis.yMin,
           yMax: calorieAxis.yMax,
+          /* #160：空白日不补 0、只连线——没有记录的日期在数列里是 null，公共层折线默认在 null 处断线，
+           * 稀疏记录会只剩孤点（用户肉眼反馈「点之间总是没有线」）。 */
+          connectNulls: true,
           ...(v.target.calorieGoal === null ? {} : { markLine: { value: v.target.calorieGoal, label: '目标' } }),
         },
       },
@@ -402,6 +405,8 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
           yMin: calorieAxis.yMin,
           yMax: calorieAxis.yMax,
           emptyText: '暂无数据，换个窗口试试',
+          /* #160：同 A 组——空白日不补 0、只连线。 */
+          connectNulls: true,
           ...(v.target.calorieGoal === null ? {} : { markLine: { value: v.target.calorieGoal, label: '目标' } }),
         },
       },

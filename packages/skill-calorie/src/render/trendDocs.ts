@@ -76,7 +76,13 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
   const bShort = stripUnit(a.labels.b);
   const techNote = '<!-- 配对' + c.pair + ' 窗口' + c.window + ' 11配对白名单窗口 非法窗exit2 不静默回退 数列唯一源buildSeries 最小形态 空窗阻断 不编数 -->';
   const metaLeft = windowHuman + ' · ' + a.labels.a + '与' + a.labels.b + ' · ' + c.start + '~' + c.end;
-  const summary = a.insight !== '' ? a.insight : ('共' + a.days + '天，对齐' + a.correlation.n + '天，' + corrInterp(a.correlation.r));
+  /* #160 肉眼返工：对齐样本太少（<3 天）时，散点／延迟相关／分层对比三节摆出来只会是一堆「—」与空图，
+   *  改为**不摆空节**，把话说到摘要行里（用户反馈「表格也没什么数据」）。 */
+  const alignedDays = a.correlation.n;
+  const lowSample = alignedDays < 3;
+  const lowSampleNote = windowHuman + '里两项都齐全的只有 ' + alignedDays + ' 天（共 ' + a.days + ' 天有记录），'
+    + '样本太少、看不出关联，先攒几天数据再看。';
+  const summary = lowSample ? lowSampleNote : (a.insight !== '' ? a.insight : ('共' + a.days + '天，对齐' + a.correlation.n + '天，' + corrInterp(a.correlation.r)));
   const parts: string[] = [
     techNote,
     renderKpiGrid([
@@ -92,10 +98,12 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
     const bItems = a.line.map((p) => ({ label: p.date.slice(5), value: p.b }));
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '双轴走势（' + a.labels.a + '实线 · ' + a.labels.b + '虚线独立刻度；空缺断点不断 0）',
+      title: a.labels.a + '与' + a.labels.b + '随日期变化（' + a.labels.a + '用实线、' + a.labels.b + '用虚线，两条各自一个刻度）',
       input: {
         items: aItems,
         options: {
+          /* #160：空白日不补 0、只连线——没有记录的日期是 null，折线默认在 null 处断线，稀疏记录会只剩孤点。 */
+          connectNulls: true,
           series: [
             { name: a.labels.a, items: aItems },
             { name: a.labels.b, items: bItems, dashed: true, ownScale: true },
@@ -105,7 +113,7 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
     }));
     charts = true;
   }
-  if (a.scatter.length > 0) {
+  if (a.scatter.length > 0 && !lowSample) {
     parts.push(renderChartBlock({
       kind: 'scatter',
       title: '相关性与回归' + (a.regression ? '（斜率 ' + a.regression.slope + '，n=' + a.regression.n + '）' : '（样本不足未拟合）'),
@@ -116,7 +124,7 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
     }));
     charts = true;
   }
-  if (a.lag.length > 0) {
+  if (a.lag.length > 0 && !lowSample) {
     parts.push(renderDataTable({
       columns: [
         { key: 'lag', label: '滞后天数' },
@@ -132,7 +140,7 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
       emptyText: '无延迟相关数据',
     }));
   }
-  if (a.strat.rows.length > 0) {
+  if (a.strat.rows.length > 0 && !lowSample) {
     parts.push(renderDataTable({
       columns: [
         { key: 'label', label: '分组' },

@@ -130,7 +130,7 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
     ]),
     renderChartBlock({
       kind: 'line',
-      title: '每日热量',
+      title: '每日热量（没记录的日子不算 0、只连线）',
       input: {
         items: v.data.series.map((d) => ({ label: d.date.slice(5), value: d.calorie })),
         /* #424：纵轴刻度 3 条（与公共层 GRID_LINES=3 叠合）、标签带单位、横轴首＋峰＋尾。 */
@@ -141,10 +141,13 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
           format: calorieAxis.format,
           yMin: calorieAxis.yMin,
           yMax: calorieAxis.yMax,
+          /* #160：日序列里有没记录的天（值 null）。老技能口径＝只把有数据的天喂给图、点与点总有线；
+           * 公共层折线默认在 null 处断线（connectNulls 默认 false），稀疏记录只剩孤点 → 这里显式跨空连线。 */
+          connectNulls: true,
         },
       },
     }),
-    '<div class="legend"><span><i class="b"></i>目标' + s.target + '卡</span></div>',
+    '<div class="legend"><span><i class="b"></i>目标' + s.target + '卡</span><span>没记录的日子不算 0，相邻两次记录之间照常连线</span></div>',
     dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.calorie-trend',
@@ -192,25 +195,28 @@ export function buildLongTrendDoc(v: LongTrendView): string {
     ]),
     renderChartBlock({
       kind: 'line',
-      title: '每日热量（' + v.windowDays + ' 天）',
+      title: '每日热量（' + v.windowDays + ' 天，没记录的日子不算 0、只连线）',
       input: {
         items: v.days.map((d) => ({ label: d.date.slice(5), value: d.calorie })),
         /* #424：纵轴刻度 3 条（与公共层 GRID_LINES=3 叠合）、标签带单位、横轴首＋峰＋尾。 */
+        /* #160：跨空白日连线（不补 0），见同件 `connectNulls` 说明。 */
         options: {
           yTicks: 3,
           format: calorieAxis.format,
           labels: 'select',
           yMin: calorieAxis.yMin,
           yMax: calorieAxis.yMax,
+          connectNulls: true,
         },
       },
     }),
+    '<div class="legend"><span>没记录的日子不算 0，相邻两次记录之间照常连线</span></div>',
   ];
   let charts = true;
   if (weighed.length > 0 && weightAxis !== null) {
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '体重轨迹（共 ' + weighed.length + ' 次称重）',
+      title: '体重轨迹（共 ' + weighed.length + ' 次称重，缺称的日子不补点、两端直接连线）',
       input: {
         items: weighed.map((d) => ({ label: d.date.slice(5), value: d.weightKg })),
         options: {
@@ -219,6 +225,8 @@ export function buildLongTrendDoc(v: LongTrendView): string {
           labels: 'select',
           yMin: weightAxis.yMin,
           yMax: weightAxis.yMax,
+          /* #160：跨空白日连线（不补 0），见同件 `connectNulls` 说明。 */
+          connectNulls: true,
           highlightLast: true,
           legend: true,
           ...(weighed.length >= 2 ? { avgLine: 7 } : {}),
