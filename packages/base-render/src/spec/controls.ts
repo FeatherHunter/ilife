@@ -288,6 +288,10 @@ export interface ActionBarInput {
   readonly copyData?: CopyButtonInput;
   readonly copyLog?: CopyButtonInput;
 }
+/* #336 双按钮一行（base 侧兜底，实现见 `src/controls.ts` 的 `renderActionBar`）：
+ *  有数据位（`copyData` 在场）无日志位时自动补一颗禁用态复制日志（沿用 `ACTION_BAR_DEFAULTS`
+ *  双 label ＋ `COPY_ACTION_IDS.actionBar.copyLog`，无 `data-t` ＋ `disabled`，互不串味）；
+ *  两边都在场／两边都不在场／仅日志位在场照旧。 */
 
 export const ACTION_BAR_DEFAULTS = Object.freeze({
   copyDataLabel: '复制数据',

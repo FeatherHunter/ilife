@@ -604,7 +604,10 @@ export interface CopyBlockInput {
 }
 
 /** B-11：复制区块（冻结 `renderActionBar`；id 缺省取 `COPY_ACTION_IDS.actionBar.*`，调用方须保页内唯一）。
- *  `dataFormats` 给三格式形态（`dataText` 单格式），两者同给 → `bad-input`。 */
+ *  `dataFormats` 给三格式形态（`dataText` 单格式），两者同给 → `bad-input`。
+ *  标题去重（#336 base 侧兜底，与 `copyArea` 的 `COPY_TITLE_DUP_OF_BUTTON` 同口径）：
+ *  `title` 与复制数据按钮同名（`ACTION_BAR_DEFAULTS.copyDataLabel`＝「复制数据」）时不出 `<h2>`
+ *  （只留动作不留说明文本）；其他标题照旧。 */
 export function renderCopyBlock(input: CopyBlockInput): string {
   assertPlainObject(input, 'renderCopyBlock: input');
   assertNoInlineHandler(input, 'renderCopyBlock: input');
@@ -629,7 +632,9 @@ export function renderCopyBlock(input: CopyBlockInput): string {
       ...(block.logText === undefined ? {} : { text: block.logText }),
     };
   }
-  const title = optText(block.title);
+  const rawTitle = optText(block.title);
+  // #336：与按钮同名的标题只留按钮（`copyArea` 去重口径的 base 侧兜底，直调本函数同样生效）。
+  const title = rawTitle === ACTION_BAR_DEFAULTS.copyDataLabel ? undefined : rawTitle;
   return '<section class="' + blockRoot('copyBlock') + '">'
     + (title === undefined ? '' : '<h2 class="' + blockPart('copyBlock', 'title') + '">' + esc(title) + '</h2>')
     + renderActionBar(bar)

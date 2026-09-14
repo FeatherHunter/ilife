@@ -307,23 +307,26 @@ describe('#247 三格式菜单 · 产出面', () => {
     }
   });
 
-  it('S6 无菜单时产出**逐字节不变**（其余 46 张页不许被这次改动碰到）', () => {
-    // 单格式的复制区块：与 #247 之前的产出逐字相同（这两条是本票的「不破」判据）。
+  it('S6 无菜单时产出（#336 起两处有意变更，其余逐字节不变）', () => {
+    // #336① 标题「复制数据」与按钮同名 → 不出 h2（base 侧兜底，与 copyArea 同口径）；
+    // #336② 数据位单传 → 自动补禁用态复制日志（同一 ghost 行）。这两条是本次有意变更，
+    // 其余 46 张页的双位齐全形态逐字节不变。
     assert.equal(
       renderCopyBlock({ title: '复制数据', dataText: 'D', logText: 'L' }),
-      '<section class="ilife-block ilife-block-copy-block"><h2 class="ilife-block-copy-block-title">复制数据</h2>'
+      '<section class="ilife-block ilife-block-copy-block">'
         + '<div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost">'
         + '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-data" data-t="D">复制数据</button>'
         + '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="L">复制日志</button>'
         + '</div></div></section>',
-      '单格式复制区块的产出变了（46 张页会跟着变）',
+      '同名标题必须不出 h2（#336），双按钮照出',
     );
     assert.equal(
       renderActionBar({ copyData: { actionId: 'cd', text: 'D' } }),
       '<div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost">'
         + '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="cd" data-t="D">复制数据</button>'
+        + '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" disabled>复制日志</button>'
         + '</div></div>',
-      '单格式 actionBar 的产出变了',
+      '数据位单传必须补禁用态复制日志（#336 同一行）',
     );
   });
 

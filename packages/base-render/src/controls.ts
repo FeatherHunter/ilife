@@ -1211,6 +1211,8 @@ interface NormalizedCopyButton {
   readonly text: string | undefined;
   /** 三格式形态（#247）：给了就出「菜单开合器 ＋ 格式菜单」，`text` 恒缺。 */
   readonly formats?: { readonly texts: readonly string[]; readonly hints: readonly string[] };
+  /** #336 缺位占位：有数据位无日志位时自动补的禁用态（无 `data-t`、点不动，只占 ghost 行第二格）。 */
+  readonly disabled?: boolean;
 }
 
 function normalizeButtons(buttons: ActionBarInput['buttons']): ActionBarButton[] {
@@ -1309,8 +1311,9 @@ function sceneButtonHtml(button: ActionBarButton): string {
 
 function copyButtonHtml(button: NormalizedCopyButton): string {
   const textAttr = button.text === undefined ? '' : ' ' + DEFAULT_DATA_ATTR + '="' + esc(button.text) + '"';
+  const disabledAttr = button.disabled === true ? ' disabled' : '';
   return '<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost" '
-    + ACTION_ID_ATTR + '="' + esc(button.actionId) + '"' + textAttr + '>' + esc(button.label) + '</button>';
+    + ACTION_ID_ATTR + '="' + esc(button.actionId) + '"' + textAttr + disabledAttr + '>' + esc(button.label) + '</button>';
 }
 
 /** 复制数据的**三格式形态**（#247）：`<div class="ilife-copy-menu-wrap">` 里一颗开合器 ＋ 一个菜单。
@@ -1349,13 +1352,26 @@ function copyControlHtml(button: NormalizedCopyButton): string {
  *  （`ACTION_BAR_DEFAULTS.ghostOwnRow`）；复制文本渲染期写入 `DEFAULT_DATA_ATTR`、id 写入 `ACTION_ID_ATTR`，
  *  零内联脚本。缺 `actionId`／空串／同次渲染内重复 → `ControlsError` code `bad-input`。
  *  逐区尺寸（`minHeightPx`／`fontSizePx`／`fontWeight`／`ghostBorderAlpha`／`evenRowPairs`）由 #75 的
- *  共享样式区消费（本文件不产样式常量）。 */
+ *  共享样式区消费（本文件不产样式常量）。
+ *
+ *  #336 双按钮一行（base 侧兜底）：有数据位（`copyData` 在场）无日志位时自动补一颗禁用态复制日志
+ *  （文案／id 沿用 `ACTION_BAR_DEFAULTS.copyLogLabel`／`COPY_ACTION_IDS.actionBar.copyLog`，
+ *  无 `data-t` ＋ `disabled`，只占 ghost 行第二格，点不动、互不串味）。两边都在场／两边都不在场照旧；
+ *  仅日志位在场不补数据位。补位同样参与同次渲染内 id 唯一校验。 */
 export const renderActionBar: RenderActionBar = (input) => {
   assertPlainObject(input, 'renderActionBar: input');
   const bar = input as ActionBarInput;
   const buttons = normalizeButtons(bar.buttons);
   const copyData = normalizeCopyButton(bar.copyData, ACTION_BAR_DEFAULTS.copyDataLabel, 'copyData');
-  const copyLog = normalizeCopyButton(bar.copyLog, ACTION_BAR_DEFAULTS.copyLogLabel, 'copyLog');
+  let copyLog = normalizeCopyButton(bar.copyLog, ACTION_BAR_DEFAULTS.copyLogLabel, 'copyLog');
+  if (copyData !== null && copyLog === null) {
+    copyLog = {
+      label: ACTION_BAR_DEFAULTS.copyLogLabel,
+      actionId: COPY_ACTION_IDS.actionBar.copyLog,
+      text: undefined,
+      disabled: true,
+    };
+  }
 
   const ids = new Set<string>();
   for (const button of buttons) {
