@@ -1,0 +1,19 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：398｜since：2026-09-14T12:33:45Z｜until：2026-09-14T12:36:00Z｜条目数：11｜导出时间：2026-09-14T12:37:34.512Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=398 runId=6dedf52b-4aa0-40e6-b29f-078856537ac2 cmd="npx tsc -b packages/skill-calorie" waitedMs=20018 exit=0 pid=42580 at=2026-09-14T12:33:47.295Z
+RUN ticket=398 runId=74f34f5d-34b1-4c63-9278-c0b7bdc8ae0b cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs" waitedMs=0 exit=0 pid=40848 at=2026-09-14T12:33:48.749Z
+RUN ticket=398 runId=a34d8b0a-32e6-4ea9-bf39-df58d049b3d0 cmd="npx tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=51468 at=2026-09-14T12:33:50.284Z
+RUN ticket=398 runId=65938188-7aae-416c-83ab-ce0ba3ef07e4 cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs" waitedMs=1 exit=1 pid=27524 at=2026-09-14T12:33:51.508Z
+RUN ticket=398 runId=b8572cfb-edef-4aea-8ab7-bf9cdb2c33ef cmd="npx tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=42948 at=2026-09-14T12:33:53.127Z
+RUN ticket=398 runId=9755f644-7a01-44dc-9702-e896086f6c4b cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs" waitedMs=1 exit=0 pid=12172 at=2026-09-14T12:33:54.422Z
+RUN ticket=398 runId=3b5bd56f-51c8-4cec-ac55-f811f9faa07e cmd="npx tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=27112 at=2026-09-14T12:33:56.679Z
+RUN ticket=398 runId=ecc5ade2-e7e4-4fa9-96c7-cbbf7d076001 cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs" waitedMs=30010 exit=1 pid=52208 at=2026-09-14T12:34:28.372Z
+RUN ticket=398 runId=f2270339-ea86-4c1d-b308-12a422c5d710 cmd="npx tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=30456 at=2026-09-14T12:34:29.987Z
+RUN ticket=398 runId=18da80ca-3938-4137-bf32-67c1f26527be cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs" waitedMs=0 exit=0 pid=13588 at=2026-09-14T12:34:31.381Z
+RUN ticket=398 runId=1fb1c60f-3348-4be1-b3b1-afe71403e19a cmd="npx tsc -b packages/skill-calorie" waitedMs=10008 exit=0 pid=32840 at=2026-09-14T12:34:58.545Z
+```
