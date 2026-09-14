@@ -71,3 +71,18 @@ RUN ticket=269 runId=t269f-window2 cmd="cmd /c .scratch\\t269-final\\g10-window.
 RUN ticket=269 runId=t269f-windowA cmd="cmd /c .scratch\\t269-final\\g11-windowA.cmd" waitedMs=40009 exit=0 pid=48988 at=2026-09-14T06:14:29.619Z
 RUN ticket=269 runId=t269f-windowB1 cmd="cmd /c .scratch\\t269-final\\g12-windowB1.cmd" waitedMs=50008 exit=0 pid=26824 at=2026-09-14T06:17:03.773Z
 ```
+
+## 追加：运行时终验与漏改修补这一段（2026-09-14T06:18:49.420Z）
+
+> 导出时刻见本行上方时间戳；源 `.scratch/locks/gate-runs.log`。`START` 行略去，只列 `RUN` 行（一对一）。
+> 逐条声明与判据见 `t269-final-verify.md` 第七节。
+
+| 运行标识 | 命令 | 退出码 | 证据作用 |
+|---|---|---|---|
+| t269f-commit | `cmd /c .scratch\\t269-final\\g13-commit.cmd` | 0 | 门禁：`git add` 点名 14 件 → 复核暂存集 → `git commit -F … -- <14 件>` → 回读提交范围 → `git push` |
+
+原文逐行（`RUN`）：
+
+```text
+RUN ticket=269 runId=t269f-commit cmd="cmd /c .scratch\\t269-final\\g13-commit.cmd" waitedMs=10001 exit=0 pid=11784 at=2026-09-14T06:18:29.268Z
+```
