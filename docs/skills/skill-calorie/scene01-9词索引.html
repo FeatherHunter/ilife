@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>场景 01 主页 · 9 条唤醒词索引（点路径即开产物）</title>
+<style>
+  /* 颜色 token 逐值照 packages/base-render/src/spec/style.ts:12-24 的 11 个冻结项。
+     取值一律用 rgb() 记法写出（与 token 的 hex 逐字节等价），目的是让本页**零 hex 色值**：
+     全页只有下面这一个 token 定义块，其余规则只写 var(--…)。
+     字号只留四档：--fs-1（附注／按钮／代码）／--fs-2（正文）／--fs-3（小标题）／--fs-4（页标题）。 */
+  :root{
+    --fg:rgb(29, 29, 31);
+    --fg2:rgb(110, 110, 115);
+    --fg3:rgb(134, 134, 139);
+    --bg:rgb(245, 245, 247);
+    --card:rgb(255, 255, 255);
+    --line:rgb(210, 210, 215);
+    --blue:rgb(0, 122, 255);
+    --blue2:rgb(10, 99, 206);
+    --soft:rgb(245, 248, 255);
+    --ok:rgb(52, 199, 89);
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 12px 36px rgba(0,0,0,.06);
+    --fs-1:12.5px;
+    --fs-2:15px;
+    --fs-3:17px;
+    --fs-4:26px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--fg);
+    font:var(--fs-2)/1.72 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 64px}
+  h1{font-size:var(--fs-4);line-height:1.3;margin:0 0 8px;letter-spacing:-.02em}
+  h2{font-size:var(--fs-3);margin:30px 0 10px;padding-left:10px;border-left:3px solid var(--blue)}
+  p{margin:0 0 10px}
+  .meta{font-size:var(--fs-1);color:var(--fg2);margin:0 0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 14px;box-shadow:var(--shadow)}
+  .card p:last-child{margin-bottom:0}
+  .flow{margin:6px 0 12px;padding-left:22px}
+  .flow li{margin:4px 0}
+  b{font-weight:600}
+  code{
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:var(--fs-1);
+    background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere;
+  }
+  .tw{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:auto}
+  table.index{width:100%;border-collapse:collapse}
+  table.index th{
+    font-size:var(--fs-1);font-weight:600;color:var(--fg2);text-align:left;
+    padding:10px 12px;background:var(--soft);border-bottom:1px solid var(--line);white-space:nowrap;
+  }
+  table.index td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.index tbody tr:last-child td{border-bottom:0}
+  .c-n{width:44px;color:var(--fg2);font-size:var(--fs-1)}
+  .c-w{width:150px}
+  .c-w .word{white-space:nowrap;font-weight:600}
+  .c-prompt{min-width:300px}
+  .c-cmd{min-width:260px}
+  .c-path{min-width:280px}
+  .c-shape{width:170px;white-space:nowrap}
+  .prompt p{margin:0 0 6px}
+  .prompt p:last-child{margin-bottom:0}
+  button.cp{
+    font:inherit;font-size:var(--fs-1);line-height:1.5;margin-top:10px;
+    border:1px solid var(--blue2);color:var(--blue2);background:var(--card);
+    border-radius:8px;padding:5px 12px;cursor:pointer;
+  }
+  button.cp:hover{background:var(--soft)}
+  button.cp.bad{border-color:var(--fg2);color:var(--fg2)}
+  button.cp:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  a.p{color:var(--blue2);text-decoration:none;overflow-wrap:anywhere}
+  a.p:hover{text-decoration:underline}
+  .tag{
+    display:inline-block;font-size:var(--fs-1);line-height:1.6;padding:1px 9px;border-radius:999px;
+    border:1px solid var(--line);background:var(--card);color:var(--fg2);white-space:nowrap;
+  }
+  .tag.frag{border-color:var(--blue2);background:var(--soft);color:var(--blue2)}
+  .bytes{display:block;font-size:var(--fs-1);color:var(--fg2);margin-top:4px}
+  ul.plain{margin:6px 0 0;padding-left:22px}
+  ul.plain li{margin:6px 0}
+  ul.plain .bytes{display:inline;margin:0}
+  .offscreen{position:fixed;top:-1000px;left:-1000px;width:1px;height:1px;opacity:0}
+  #say{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  /* 窄屏（≤900px）改卡片式：一列一卡，不横向挤压、不叠字 */
+  @media (max-width:900px){
+    .wrap{padding:24px 14px 48px}
+    .tw{border:0;border-radius:0;background:transparent;overflow:visible}
+    table.index,table.index tbody,table.index tr,table.index td{display:block;width:auto;min-width:0}
+    table.index thead{display:none}
+    table.index tr{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 12px}
+    table.index td{border:0;padding:6px 0}
+    table.index td::before{content:attr(data-l);display:block;font-size:var(--fs-1);color:var(--fg3);margin:0 0 2px}
+    .c-shape{white-space:normal}
+  }
+table.index{width:100%}
+table.index th,table.index td{overflow-wrap:anywhere;word-break:break-word;vertical-align:top}
+@media (max-width:900px){.tw{overflow-x:auto;overflow-y:visible}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>场景 01 主页 · 9 条唤醒词索引</h1>
+  <p class="meta">地图 #162 ／ 票 #375 的交付说明件：<code>docs/skills/skill-calorie/scene01-9词交付说明.md</code>（提交 <code>5f1441e</code>，读数当刻 2026-09-14）。本页 9 行的字节数与磁盘实测逐份一致。路径列的文字本身就是链接：<b>点它即在浏览器打开产物</b>；<b>选中它可复制，粘到地址栏也能打开</b>。</p>
+
+  <div class="card">
+    <p><b>这 9 条是同一个形状，只有命令不同。</b>走法四步：</p>
+    <ol class="flow">
+      <li>你对 AI 说唤醒词（或者点下表里的「复制 prompt」，把该词的 prompt 原文整段带走）；</li>
+      <li>把 prompt 原文发给 AI；</li>
+      <li>AI 按 <code>SKILL.md</code> 场景 01 的工作流程，用该词对应的那条 <code>calorie-cmd-read …</code> 命令去取数；</li>
+      <li>命令生成一份结果型 HTML 写到磁盘，回执里 <code>data.output</code> 给出这份 HTML 的<b>绝对路径</b>；你双击那个路径就能在浏览器里看版面。</li>
+    </ol>
+    <p><b>本图 0 条过程型（预检确认页）。</b>理由与出处：9 条唤醒词的 <code>output_type</code> 全是 <code>result</code>，没有一条是 <code>process</code> —— 出处 <code>packages/skill-calorie/src/triggers/scene-01-home.ts:5-13</code>（<code>Select-String output_type</code> 计数 9，逐条读值无例外）。这 9 条都是查询命令，没有会改数据库的命令，所以一条都不需要先出过程型页面。</p>
+  </div>
+
+  <h2>9 条链路（点路径即开产物）</h2>
+  <div class="tw">
+    <table class="index">
+      <thead>
+        <tr>
+          <th>#</th><th>唤醒词</th><th>prompt 原文（可复制）</th><th>命令（整句）</th><th>产物绝对路径（可点开）</th><th>形态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c-n" data-l="序号">1</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看今日主页</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看今日主页」。</p>
+              <p>我想看今天的主页 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.home --params '{"date":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看今日主页.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看今日主页.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">69225 字节</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">2</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看今日饮食概览</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看今日饮食概览」。</p>
+              <p>我想看今天饮食 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.diet --params '{"window":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看今日饮食概览.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看今日饮食概览.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">69543 字节</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">3</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看今日运动概览</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看今日运动概览」。</p>
+              <p>我想看今天运动 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.exercise --params '{"window":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看今日运动概览.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看今日运动概览.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">66670 字节</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">4</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看今日体重概览</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看今日体重概览」。</p>
+              <p>我想看今天体重 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.weight</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看今日体重概览.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看今日体重概览.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">67553 字节</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">5</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看今日目标进度</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看今日目标进度」。</p>
+              <p>我想看今天 4 项目标(热量/蛋白/饮水/运动)完成度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看今日目标进度.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看今日目标进度.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag frag">片段</span><span class="bytes">1666 字节 · 归场景 06</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">6</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看本周主页</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看本周主页」。</p>
+              <p>我想看本周 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.home --params '{"windowDays":7,"date":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看本周主页.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看本周主页.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">69225 字节</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">7</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看本月主页</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看本月主页」。</p>
+              <p>我想看本月 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.home --params '{"windowDays":30,"date":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看本月主页.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看本月主页.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">76593 字节</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">8</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看连续记录天数</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看连续记录天数」。</p>
+              <p>我想看我的连续记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.home --params '{"date":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看连续记录天数.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看连续记录天数.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">69225 字节</span></td>
+        </tr>
+        <tr>
+          <td class="c-n" data-l="序号">9</td>
+          <td class="c-w" data-l="唤醒词"><span class="word">看今日热量预算</span></td>
+          <td class="c-prompt" data-l="prompt 原文（可复制）">
+            <div class="prompt" data-prompt>
+              <p>请你加载技能 卡路里,执行唤醒词「看今日热量预算」。</p>
+              <p>我想看今天还能吃多少。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</p>
+            </div>
+            <button type="button" class="cp" data-copy-prompt data-label="复制 prompt">复制 prompt</button>
+          </td>
+          <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.home --params '{"date":"今日"}'</code></td>
+          <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看今日热量预算.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看今日热量预算.html</a></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">69225 字节</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>新 UI 样张（待点头）</h2>
+  <div class="card">
+    <p>下面两张是 <b>#401 融合设计的样张</b>。它们与上面 9 份产物的区别只有一条：上面 9 份是<b>当前的生产产物，出的是旧 UI</b>；这两张是<b>待你点头的新 UI，还没有实施</b>——在 <code>packages/skill-calorie/src/</code> 里搜 <code>t401</code> 命中 0，样张没有接进任何代码。</p>
+    <ul class="plain">
+      <li><a class="p" href="file:///D:/ilife/docs/skills/skill-calorie/t401-样张-今日总览.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\docs\skills\skill-calorie\t401-样张-今日总览.html</a> <span class="bytes">34862 字节 · 样张甲</span></li>
+      <li><a class="p" href="file:///D:/ilife/docs/skills/skill-calorie/t401-样张-今日总览-空态.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\docs\skills\skill-calorie\t401-样张-今日总览-空态.html</a> <span class="bytes">28801 字节 · 样张乙（空态）</span></li>
+    </ul>
+  </div>
+
+  <h2>已知缺口</h2>
+  <div class="card">
+    <ul class="plain">
+      <li><b>#401 UI 返修未实施（OPEN）</b>：上面 9 份产物出的都还是旧 UI；#401 到当刻只交出设计件与两张样张，还没有实施到生产产物上，卡在等你点头。</li>
+      <li><b>#427 手机适配缺口（OPEN，公共层）</b>：影响所有卡路里结果型页面，含本图 9 份——641–820 这一档动作条钉死在 520px 且贴左、动作条 ghost 行没有窄屏档、手机档 KPI 卡片没有单列规则；归公共层另立票，本图不动它。</li>
+      <li><b>#399 跨家三页的「复制日志」点不动（OPEN）</b>：看今日饮食概览／看今日运动概览／看今日体重概览这三页的「复制日志」是禁用态；总览族 5 词已在 #375 内修好，两族形状目前不一致。</li>
+      <li><b>#396 缺口口径与老技能不一致，且展示会误读（OPEN）</b>：影响总览族 5 份产物的横幅提示条——本日 TDEE 2556 ＋ 运动 320 − 摄入 1189 = 1687，而老技能 ADR-0013 §2 的主页缺口公式条走 BMR 口径 = 780；同一页还把「目标 1800 卡」与「缺口 1687 卡」并排，两个数基准不同，人会先做 1800 − 1189 = 611；等你裁决用哪个口径。</li>
+      <li><b>「看今日目标进度」的产物是片段，不是整页（本图裁决：归场景 06）</b>：1666 字节，无 <code>&lt;!doctype html&gt;</code>，以 <code>&lt;section</code> 起；本图只核验它跑得通、能取到数，做成完整文档归场景 06 的图。</li>
+      <li><b>5 条主页词里 4 条的产物实质是同一份，待你裁决（A 接受同页／B 补专门视图）</b>：看今日主页／看本周主页／看连续记录天数／看今日热量预算四件同为 69225 字节，逐行比对只在生成时间戳那一行不同（标题与 h1 四件相同）；原因是 <code>packages/skill-calorie/src/home/today.ts:30</code> 的 <code>windowDays ?? 7</code>，只有「看本月主页」（30 天，76593 字节）不同。</li>
+    </ul>
+  </div>
+
+  <p id="say" role="status" aria-live="polite"></p>
+</div>
+
+<script>
+(function () {
+  var say = document.getElementById('say');
+
+  function feedback(btn, ok) {
+    var label = btn.getAttribute('data-label') || '复制 prompt';
+    btn.textContent = ok ? '已复制' : '复制失败，请手动选中';
+    btn.className = ok ? 'cp' : 'cp bad';
+    say.textContent = ok ? '已复制到剪贴板' : '复制失败，请手动选中后按 Ctrl+C';
+    if (btn.__t) { window.clearTimeout(btn.__t); }
+    btn.__t = window.setTimeout(function () {
+      btn.textContent = label;
+      btn.className = 'cp';
+    }, 1800);
+  }
+
+  /* 回退通道：隐藏 textarea ＋ document.execCommand('copy') */
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.className = 'offscreen';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  /* 两条通道都失败时，把该段 prompt 选中，方便手动复制 */
+  function selectNode(el) {
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) {}
+  }
+
+  function copyPrompt(el, btn) {
+    var text = Array.prototype.map.call(el.querySelectorAll('p'), function (p) {
+      return p.textContent.trim();
+    }).join('\n\n');
+    var viaLegacy = function () {
+      var ok = legacyCopy(text);
+      if (!ok) { selectNode(el); }
+      feedback(btn, ok);
+    };
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(function () { feedback(btn, true); }, viaLegacy);
+    } else {
+      viaLegacy();
+    }
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-prompt]'), function (el) {
+    var btn = el.parentNode.querySelector('[data-copy-prompt]');
+    if (!btn) { return; }
+    btn.addEventListener('click', function () { copyPrompt(el, btn); });
+  });
+})();
+</script>
+</body>
+</html>
