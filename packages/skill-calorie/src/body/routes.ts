@@ -8,7 +8,7 @@
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
 export const BODY_ROUTES: readonly RouteDecl[] = [
-  { list: 'wake', order: 237, wakeWord: '记体脂（皮褶钳）', scene: '08', kind: 'exec', key: 'calorie.body.composition-add', cli: 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"home_caliper","bodyFatPct":18.5,"caliper_chest_mm":10,"caliper_abdominal_mm":12,"caliper_thigh_mm":14,"caliper_tricep_mm":11,"caliper_subscapular_mm":13,"caliper_suprailiac_mm":12,"caliper_midaxillary_mm":10,"date":"<日期>"}\'' },
+  { list: 'wake', order: 237, wakeWord: '记体脂（皮褶钳）', scene: '08', kind: 'exec', key: 'calorie.body.composition-add', cli: 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"home_caliper","sex":"male","age":30,"caliper_chest_mm":10,"caliper_abdominal_mm":12,"caliper_thigh_mm":14,"caliper_tricep_mm":11,"caliper_subscapular_mm":13,"caliper_suprailiac_mm":12,"caliper_midaxillary_mm":10,"date":"<日期>"}\'' },
   { list: 'wake', order: 238, wakeWord: '记体脂（外部测量）', scene: '08', kind: 'exec', key: 'calorie.body.composition-add', cli: 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5,"date":"<日期>"}\'' },
   { list: 'wake', order: 239, wakeWord: '记围度', scene: '08', kind: 'exec', key: 'calorie.body.measure-add', cli: 'calorie-cmd-read calorie.body.measure-add --params \'{"waistCm":85,"hipCm":95}\'' },
   { list: 'wake', order: 240, wakeWord: '补记体脂', scene: '08', kind: 'exec', key: 'calorie.body.composition-add', cli: 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":19,"date":"<日期>"}\'' },
