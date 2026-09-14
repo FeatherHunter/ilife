@@ -2,7 +2,7 @@
  *
  * 期望值来源（t169 只认三样，不拿新输出当期望）：
  *   ① 手算：冻结种子（相对日，防墙钟滑出 90 天窗；t360 同款 `dayBefore` 手法）——
- *     R0 ＝ 6 天前：只填肩宽 44（note='r0'；库触发器禁全空行，故单填一行验「只列已填项」）；
+ *     R0 ＝ 6 天前：只填肩围 44（note='r0'；库触发器禁全空行，故单填一行验「只列已填项」）；
  *     R1 ＝ 5 天前：13 项全填（胸95/腰80/腹78/臀92/左大腿55/右大腿55.5/左小腿36/右小腿36.2/
  *       左上臂32/右上臂32.1/左前臂26/右前臂26.3/肩45，note='r1'）；
  *     R2 ＝ 4 天前：腰围与右小腿缺（其余胸95.5/腹78.5/臀92.2/左大腿55.2/右大腿55.6/左小腿36.1/
@@ -15,10 +15,10 @@
  *     `chest_cm`（`latestMeasurementMetric` 平局口径）；胸围趋势序列 [95, 95.5, 96] ⇒ 点数 3、
  *     均值 95.5、最小 95、最大 96、变化量 +1、最新 96。
  *   ③ 需求原文：13 个部位名取老正本 `render_body_measurements_view.py:41-48 METRIC_LABELS`
- *     与新侧 `bodyDocs.ts:104-109 MEASURE_ZH`（12/13 同字；肩：老 py 写「肩围」，
- *     新侧向导页＋本页＋#360 趋势图题一律「肩宽」，本票认新侧冻结口径「肩宽」，差异见证据）。
+ *     与新侧 `bodyDocs.ts` 的 `MEASUREMENT_ZH`（#440 起两处 13/13 同字：肩部旧用词已按
+ *     「软尺环绕量」裁定统一为「肩围」，本件的期望字串随票同改；口径差异见证据）。
  * 负向对照（源码级变异，持锁另做，机器读数见证据）：
- *   M1 删掉一列（如肩宽列）→ 13 名断言必红；还原 → 必绿。
+ *   M1 删掉一列（如肩围列）→ 13 名断言必红；还原 → 必绿。
  *   M2 复制 payload 把空写成「—」→ 载荷断言必红；还原 → 必绿。
  * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
  *   那条会重注入他席 SKILL.md），再 `node --test packages/skill-calorie/test/t361-measure-full-table.test.mjs`。
@@ -54,7 +54,7 @@ const SEED_13 = [
   ['left_calf_cm', '左小腿'], ['right_calf_cm', '右小腿'],
   ['left_arm_cm', '左上臂'], ['right_arm_cm', '右上臂'],
   ['left_forearm_cm', '左前臂'], ['right_forearm_cm', '右前臂'],
-  ['shoulder_cm', '肩宽'],
+  ['shoulder_cm', '肩围'],
 ];
 
 /** 冻结种子（行由早到晚；null＝该格缺值，手算期望的唯一依据）。 */
@@ -215,9 +215,9 @@ test('#361 裁定 2 表体：缺值格可见「—」，且无连续空单元', 
   assert.equal(r2[col('胸围')], '95.5', 'R2 胸围有值格应原样印 95.5');
   const r0 = byDate[dayBefore(6)];
   assert.ok(r0, '应有 R0 行');
-  assert.equal(r0[col('肩宽')], '44', 'R0 行肩宽有值格应原样印 44');
+  assert.equal(r0[col('肩围')], '44', 'R0 行肩围有值格应原样印 44');
   for (const [, zh] of SEED_13) {
-    if (zh === '肩宽') continue;
+    if (zh === '肩围') continue;
     assert.equal(r0[col(zh)], '—', 'R0 行「' + zh + '」缺值格应为「—」');
   }
   for (const r of body) {
@@ -265,13 +265,13 @@ test('#361 窄屏卡片：与宽表同一份数据，只列已填项，全空行
   const r3 = cardOf(html, dayBefore(1));
   assert.ok(r3.includes('腰围'), 'R3 卡片应列腰围（已填项）');
   assert.ok(r3.includes('81cm'), 'R3 卡片腰围值应为 81cm');
-  assert.ok(r3.includes('肩宽'), 'R3 卡片应列肩宽（13 项全列，已填即展示）');
+  assert.ok(r3.includes('肩围'), 'R3 卡片应列肩围（13 项全列，已填即展示）');
   const r2 = cardOf(html, dayBefore(4));
   assert.equal(r2.includes('msr-k">腰围'), false, 'R2 卡片不得列腰围（缺项不出，老 :393-395 filter 口径）');
   assert.ok(r2.includes('胸围'), 'R2 卡片应列胸围（已填项）');
   const r0 = cardOf(html, dayBefore(6));
-  assert.ok(r0.includes('肩宽'), 'R0 卡片应列肩宽（唯一已填项）');
-  assert.ok(r0.includes('44cm'), 'R0 卡片肩宽值应为 44cm');
+  assert.ok(r0.includes('肩围'), 'R0 卡片应列肩围（唯一已填项）');
+  assert.ok(r0.includes('44cm'), 'R0 卡片肩围值应为 44cm');
   assert.equal(r0.includes('msr-k">腰围'), false, 'R0 卡片不得列腰围（缺项不出）');
   assert.equal(r0.includes('未填围度'), false, 'R0 有已填项，不得出「未填围度」');
 });

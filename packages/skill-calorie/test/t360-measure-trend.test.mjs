@@ -221,7 +221,7 @@ test('#360 样本不足兜底：无数据部位 → KPI 三格「—」＋ 图�
   const env = JSON.parse(r.stdout);
   const html = readFileSync(env.data.output, 'utf8');
   const text = visibleText(html);
-  assert.ok(text.includes('肩宽趋势'), '图注仍写该部位（裁定 4 反向）');
+  assert.ok(text.includes('肩围趋势'), '图注仍写该部位（裁定 4 反向）');
   assert.ok(text.includes('该部位暂无趋势数据'), '图区应是空态句');
   assert.ok(!html.includes('<svg'), '兜底页不应有趋势 svg');
   assert.match(text, /均值\s*—/, '均值格「—」');

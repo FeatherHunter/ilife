@@ -22,14 +22,27 @@ export const CALIPER_FIELDS = [
   'caliper_midaxillary_mm',
 ];
 
-export const MEASUREMENT_FIELDS = [
-  'chest_cm', 'waist_cm', 'abdomen_cm', 'hip_cm',
-  'left_thigh_cm', 'right_thigh_cm',
-  'left_calf_cm', 'right_calf_cm',
-  'left_arm_cm', 'right_arm_cm',
-  'left_forearm_cm', 'right_forearm_cm',
-  'shoulder_cm',
+/** #440 · 13 部位的**唯一来源**：一处给全「列名 ＋ 中文名」，其次序即列序。
+ *  展示层（`body/bodyDocs.ts`／`body/compare.ts`／`body/wizardPlate.ts`／`analysis/cross.ts`）
+ *  与写侧参数映射（`body/log.ts`）一律引用本表，不得再自持第二份中文名或第二份键表。
+ *  用词：肩部一向是**软尺环绕量**（库内现值 110cm），中文名按此取词（#440 裁定）。 */
+const MEASURE_DEFS: [string, string][] = [
+  ['chest_cm', '胸围'], ['waist_cm', '腰围'], ['abdomen_cm', '腹围'], ['hip_cm', '臀围'],
+  ['left_thigh_cm', '左大腿'], ['right_thigh_cm', '右大腿'], ['left_calf_cm', '左小腿'], ['right_calf_cm', '右小腿'],
+  ['left_arm_cm', '左上臂'], ['right_arm_cm', '右上臂'], ['left_forearm_cm', '左前臂'], ['right_forearm_cm', '右前臂'],
+  ['shoulder_cm', '肩围'],
 ];
+
+/** 列序权威（键序＝`MEASURE_DEFS` 次序；SQL 列序、全量表列序都认它）。 */
+export const MEASUREMENT_FIELDS: string[] = MEASURE_DEFS.map(([field]) => field);
+
+/** 部位中文名（#440 起的唯一来源；键＝`MEASUREMENT_FIELDS` 列名）。 */
+export const MEASUREMENT_ZH: Record<string, string> = Object.fromEntries(MEASURE_DEFS);
+
+/** 库列名 ↔ CLI camel 参数名换算（`left_forearm_cm` → `leftForearmCm`）：调用方据此引用上面两张表。 */
+export function measureCamelName(field: string): string {
+  return field.split('_').map((s, i) => (i === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1))).join('');
+}
 
 export const MEASUREMENT_BOUNDS: Record<string, [number, number]> = {
   chest_cm: [20, 200], waist_cm: [20, 200], abdomen_cm: [20, 200], hip_cm: [20, 200],

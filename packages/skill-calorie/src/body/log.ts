@@ -11,7 +11,7 @@
  * 原「换算未移植、调用方算好直传」的形态到此结束。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { BODY_FAT_PCT_MAX, BODY_FAT_PCT_MIN, CALIPER_FIELDS, addComposition, addMeasurement } from '../fetch/body.js';
+import { BODY_FAT_PCT_MAX, BODY_FAT_PCT_MIN, CALIPER_FIELDS, MEASUREMENT_FIELDS, addComposition, addMeasurement, measureCamelName } from '../fetch/body.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import type { SourceChoice } from '../kcal.js';
 import { todayISO } from '../analysis/utils.js';
@@ -43,12 +43,11 @@ function normSex(v: unknown): string | undefined {
   throw new Error('unreachable');
 }
 
-/** 围度 CLI 参数名 → 库列名（14 项，与 `fetch/body.ts` 的 `MEASUREMENT_FIELDS` 同面）。 */
-const MEASURE_CAMEL: Record<string, string> = {
-  chestCm: 'chest_cm', waistCm: 'waist_cm', abdomenCm: 'abdomen_cm', hipCm: 'hip_cm', shoulderCm: 'shoulder_cm',
-  leftThighCm: 'left_thigh_cm', rightThighCm: 'right_thigh_cm', leftCalfCm: 'left_calf_cm', rightCalfCm: 'right_calf_cm',
-  leftArmCm: 'left_arm_cm', rightArmCm: 'right_arm_cm', leftForearmCm: 'left_forearm_cm', rightForearmCm: 'right_forearm_cm',
-};
+/** 围度 CLI 参数名 → 库列名（与 `fetch/body.ts` 的 `MEASUREMENT_FIELDS` 同面）：
+ *  #440 起由唯一来源换算（`MEASUREMENT_FIELDS` ＋ `measureCamelName`），本件不再手抄第二份键表。 */
+const MEASURE_CAMEL: Record<string, string> = Object.fromEntries(
+  MEASUREMENT_FIELDS.map((f) => [measureCamelName(f), f]),
+);
 
 /** 围度库列名 → CLI 参数名（`MEASURE_CAMEL` 反向；写入字段摘要统一走 CLI 名口径）。 */
 function measureCliNames(keys: string[]): string[] {

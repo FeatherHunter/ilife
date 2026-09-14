@@ -20,7 +20,7 @@ import {
 } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
-import { avgCompositionInRange, MEASUREMENT_FIELDS } from '../fetch/body.js';
+import { avgCompositionInRange, MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
 import { buildBodyMeasureCompare } from './bodyPlate.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -34,14 +34,8 @@ const DOC_SKILL = 'calorie';
 /** 本文件各页共用的 head 标题（与 bodyDocs.ts 同值，同域同标题）。 */
 const DOC_TITLE = '卡路里·运动身体';
 
-/** 围度 13 项中文名（展示用；英文列序以 `fetch/body.ts` 的 `MEASUREMENT_FIELDS` 为准，
- * 中文与 `body/bodyDocs.ts` 的 `MEASURE_ZH` 同字，权威列序只认 fetch 那一份）。 */
-const MEASURE_ZH: Record<string, string> = {
-  chest_cm: '胸围', waist_cm: '腰围', abdomen_cm: '腹围', hip_cm: '臀围',
-  left_thigh_cm: '左大腿', right_thigh_cm: '右大腿', left_calf_cm: '左小腿', right_calf_cm: '右小腿',
-  left_arm_cm: '左上臂', right_arm_cm: '右上臂', left_forearm_cm: '左前臂', right_forearm_cm: '右前臂',
-  shoulder_cm: '肩宽',
-};
+/* 围度 13 项中文名：一律取 `fetch/body.ts` 的 `MEASUREMENT_ZH`（#440 前本件自持过一份同字表，同源已收）；
+ * 英文列序以 `fetch/body.ts` 的 `MEASUREMENT_FIELDS` 为准。 */
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -223,12 +217,12 @@ export function viewBodyMeasureCompare(params: Record<string, unknown>, db: Data
     const hit = cmp.deltas[f];
     if (!hit) {
       return {
-        field: f, zh: MEASURE_ZH[f] ?? f, before: null, after: null, delta: null, ratePct: null,
+        field: f, zh: MEASUREMENT_ZH[f] ?? f, before: null, after: null, delta: null, ratePct: null,
       };
     }
     const ratePct = hit.before === 0 ? null : round2((hit.delta / hit.before) * 100);
     return {
-      field: f, zh: MEASURE_ZH[f] ?? f,
+      field: f, zh: MEASUREMENT_ZH[f] ?? f,
       before: hit.before, after: hit.after, delta: hit.delta, ratePct,
     };
   });

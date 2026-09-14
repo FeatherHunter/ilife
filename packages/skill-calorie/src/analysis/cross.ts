@@ -6,8 +6,17 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
+import { MEASUREMENT_ZH } from '../fetch/body.js';
 import type { DaySeries } from './series.js';
 import { BODY_ALIVE, EX_ALIVE } from './utils.js';
+
+/** #440 · 围度各部位在「变化 TOP」里的列序（**只定序**，不改行为：并列时按此取前 3）。
+ *  中文名一律从 `fetch/body.ts` 的 `MEASUREMENT_ZH` 取，本处不自持第二份名表。 */
+const WAIST_DIVERGENCE_ORDER: readonly string[] = [
+  'chest_cm', 'waist_cm', 'abdomen_cm', 'hip_cm', 'shoulder_cm',
+  'left_thigh_cm', 'right_thigh_cm', 'left_calf_cm', 'right_calf_cm',
+  'left_arm_cm', 'right_arm_cm', 'left_forearm_cm', 'right_forearm_cm',
+];
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -135,7 +144,7 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
     const wv = series.map((s) => s.weightKg).filter((v): v is number => v !== null && v !== undefined);
     const wDelta = delta(wv);
     extra.push(wDelta !== null ? '体重净变化 ' + (wDelta >= 0 ? '+' : '') + wDelta.toFixed(2) + ' kg' : '体重样本不足');
-    const cols: Array<[string, string]> = [['chest_cm', '胸围'], ['waist_cm', '腰围'], ['abdomen_cm', '腹围'], ['hip_cm', '臀围'], ['shoulder_cm', '肩围'], ['left_thigh_cm', '左大腿'], ['right_thigh_cm', '右大腿'], ['left_calf_cm', '左小腿'], ['right_calf_cm', '右小腿'], ['left_arm_cm', '左上臂'], ['right_arm_cm', '右上臂'], ['left_forearm_cm', '左前臂'], ['right_forearm_cm', '右前臂']];
+    const cols: Array<[string, string]> = WAIST_DIVERGENCE_ORDER.map((f) => [f, MEASUREMENT_ZH[f] ?? f]);
     if (db && series.length > 0) {
       try {
         const start = (series[0] as DaySeries).date;

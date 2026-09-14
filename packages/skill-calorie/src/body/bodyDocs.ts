@@ -12,7 +12,7 @@ import {
   renderKpiGrid,
   renderParamForm,
 } from 'base-paint/blocks';
-import { MEASUREMENT_FIELDS } from '../fetch/body.js';
+import { MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import type {
@@ -103,15 +103,9 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
 
 /* ── 围度（body_measurements_view.html 对照：项目筛选＋趋势＋记录表＋复制，13 项） ── */
 
-const MEASURE_ZH: Record<string, string> = {
-  chest_cm: '胸围', waist_cm: '腰围', abdomen_cm: '腹围', hip_cm: '臀围',
-  left_thigh_cm: '左大腿', right_thigh_cm: '右大腿', left_calf_cm: '左小腿', right_calf_cm: '右小腿',
-  left_arm_cm: '左上臂', right_arm_cm: '右上臂', left_forearm_cm: '左前臂', right_forearm_cm: '右前臂',
-  shoulder_cm: '肩宽',
-};
-
 /** #361 · 全量 13 项列序：直引 `fetch/body.ts` 的 `MEASUREMENT_FIELDS`
- *（与 `compare.ts` 同一来源；本文件不定序，中文名复用上表 `MEASURE_ZH`）。 */
+ *（与 `compare.ts` 同一来源；本文件不定序也不定中文名——中文名一律取 `fetch/body.ts` 的 `MEASUREMENT_ZH`，
+ * #440 前本文件自持过一份 `MEASURE_ZH`，同源已收）。 */
 const MEASURE_FIELDS: readonly string[] = MEASUREMENT_FIELDS;
 
 /** #361 · 窄屏卡片样式（页内 CSS；`libraryDocs.ts` 的 `FOOD_CSS` 同形先例，不碰共用层）。
@@ -143,7 +137,7 @@ function renderMeasureCards(items: readonly Record<string, unknown>[]): string {
     const cells = MEASURE_FIELDS
       .filter((f) => typeof r[f] === 'number')
       .map((f) => '<div class="msr-item"><span class="msr-k">'
-        + escapeHtml(MEASURE_ZH[f] ?? f) + '</span><span class="msr-v">'
+        + escapeHtml(MEASUREMENT_ZH[f] ?? f) + '</span><span class="msr-v">'
         + escapeHtml(String(r[f])) + 'cm</span></div>')
       .join('');
     return '<div class="msr-card"><div class="msr-head"><span class="msr-date">'
@@ -160,7 +154,7 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
   // #360 · 趋势部位：带部位用所传部位，不带部位用自动挑的最近有数据部位（`autoMetric`）；
   // #361 · 全量表分支（`metric` 为空）：未过滤列表印全量 13 项（宽表＋窄屏卡同源），趋势闸门与 KPI 逻辑保持 #360 原样。
   const trendMetric = v.metric ?? v.autoMetric;
-  const trendZh = trendMetric ? (MEASURE_ZH[trendMetric] ?? trendMetric) : '';
+  const trendZh = trendMetric ? (MEASUREMENT_ZH[trendMetric] ?? trendMetric) : '';
   const cm = (n: number | null): string => (n === null ? '—' : String(n) + 'cm');
   // 趋势点 0（样本不足）时写「—」不带单位（照老 `:491／:496／:507` 全落「—」）。
   const trendPointCard = v.kpi.count === 0
@@ -172,7 +166,7 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
       description: '13 围度项按名筛选（空=全部并自动挑最近有数据部位出趋势；两期对比归组合分析）',
     }),
     renderKpiGrid([
-      { label: '围度看', value: v.metric ? (MEASURE_ZH[v.metric] ?? v.metric) : '全部围度', detail: '共 ' + v.total + ' 条' },
+      { label: '围度看', value: v.metric ? (MEASUREMENT_ZH[v.metric] ?? v.metric) : '全部围度', detail: '共 ' + v.total + ' 条' },
       { label: '最新', value: v.latestVal === null ? '—' : String(v.latestVal) + 'cm', detail: trendZh },
       trendPointCard,
       { label: '均值', value: cm(v.kpi.avg), detail: trendZh },
@@ -199,7 +193,7 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
     parts.push(renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
-        { key: 'val', label: (MEASURE_ZH[mkey] ?? mkey) + '(cm)', align: 'right' },
+        { key: 'val', label: (MEASUREMENT_ZH[mkey] ?? mkey) + '(cm)', align: 'right' },
         { key: 'note', label: '备注' },
       ],
       rows: v.items.map((r) => {
@@ -211,7 +205,7 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
           note: typeof r['note'] === 'string' ? (r['note'] as string) : '',
         };
       }),
-      caption: (MEASURE_ZH[mkey] ?? mkey) + '记录（共 ' + v.total + ' 条）',
+      caption: (MEASUREMENT_ZH[mkey] ?? mkey) + '记录（共 ' + v.total + ' 条）',
       emptyText: '该项目无记录',
     }));
   } else {
@@ -223,7 +217,7 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
     const fullTable = renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
-        ...MEASURE_FIELDS.map((f) => ({ key: f, label: MEASURE_ZH[f] ?? f, align: 'right' as const })),
+        ...MEASURE_FIELDS.map((f) => ({ key: f, label: MEASUREMENT_ZH[f] ?? f, align: 'right' as const })),
         { key: 'note', label: '备注' },
       ],
       rows: v.items.map((r) => {

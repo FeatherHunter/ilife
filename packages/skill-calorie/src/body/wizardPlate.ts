@@ -12,7 +12,7 @@
  * 未知字段 fail(2)（与 cli/write.ts 同字面「不支持字段: 」，防拼写漂移）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { listCompositions, listMeasurements, CALIPER_FIELDS } from '../fetch/body.js';
+import { listCompositions, listMeasurements, CALIPER_FIELDS, MEASUREMENT_FIELDS, MEASUREMENT_ZH, measureCamelName } from '../fetch/body.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import { GENDER_LABELS, todayISO } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -39,18 +39,16 @@ function strOrUndef(raw: unknown, field: string): string | undefined {
   return s === '' ? undefined : s;
 }
 
-/** 写命令 camel 口径镜像（cli/write.ts MEASURE_CAMEL；测试钉死键集一致）。 */
-export const WIZARD_MEASURE_CAMEL: Record<string, string> = {
-  chestCm: 'chest_cm', waistCm: 'waist_cm', abdomenCm: 'abdomen_cm', hipCm: 'hip_cm', shoulderCm: 'shoulder_cm',
-  leftThighCm: 'left_thigh_cm', rightThighCm: 'right_thigh_cm', leftCalfCm: 'left_calf_cm', rightCalfCm: 'right_calf_cm',
-  leftArmCm: 'left_arm_cm', rightArmCm: 'right_arm_cm', leftForearmCm: 'left_forearm_cm', rightForearmCm: 'right_forearm_cm',
-};
+/** 写命令 camel 口径镜像（cli/write.ts 的围度参数名；测试钉死键集一致）：
+ *  #440 起由 `fetch/body.ts` 唯一来源换算（`MEASUREMENT_FIELDS` ＋ `measureCamelName`），不再手抄第二份键表。 */
+export const WIZARD_MEASURE_CAMEL: Record<string, string> = Object.fromEntries(
+  MEASUREMENT_FIELDS.map((f) => [measureCamelName(f), f]),
+);
 
-export const WIZARD_MEASURE_LABELS: Record<string, string> = {
-  chestCm: '胸围', waistCm: '腰围', abdomenCm: '腹围', hipCm: '臀围', shoulderCm: '肩围',
-  leftThighCm: '左大腿', rightThighCm: '右大腿', leftCalfCm: '左小腿', rightCalfCm: '右小腿',
-  leftArmCm: '左上臂', rightArmCm: '右上臂', leftForearmCm: '左前臂', rightForearmCm: '右前臂',
-};
+/** 部位中文名：#440 起同取唯一来源 `MEASUREMENT_ZH`（旧版是本件自持的一份 camel 键名表）。 */
+export const WIZARD_MEASURE_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(WIZARD_MEASURE_CAMEL).map(([camel, field]) => [camel, MEASUREMENT_ZH[field] ?? field]),
+);
 
 const MEASURE_UPPER = ['chestCm', 'waistCm', 'abdomenCm', 'hipCm', 'shoulderCm'];
 const MEASURE_LOWER = ['leftThighCm', 'rightThighCm', 'leftCalfCm', 'rightCalfCm'];
