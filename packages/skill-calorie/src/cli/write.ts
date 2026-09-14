@@ -39,6 +39,9 @@ import { CalorieRenderError } from '../render/errors.js';
 // #330 · 按命令选整页的端口也住能力目录（`src/profile/receipt.ts`，经 `src/profile/index.ts` 转出）：
 // 分派层只调门，不再写任何命令名字面量。
 import { profileReceiptDoc } from '../profile/index.js';
+// #269 · 饮食 13 条会改数据库的命令的回执页：整页装配住能力目录 `src/diet/receipt.ts`
+//（经本文件直引，不经 `src/diet/index.ts` 转出；#276 需要的新增分支由本票留空）。
+import { dietReceiptDoc } from '../diet/receipt.js';
 import { isCalorieWriteKey } from './keys.js';
 // #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落下面的 dispatchInner switch。
 import { REGISTRY } from './registry.js';
@@ -60,7 +63,9 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
     const spec = REGISTRY[key];
     const res = spec && spec.kind === 'write' ? spec.run(params, db) : dispatchInner(key, params, db);
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
-    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? res.html };
+    // #269 · 饮食 13 条切整页装配（`assembleDocPage`，与档案 3 条同路）；其余键原样放行。
+    // #276 插入点：如需新增命令的整页分派，在本行下方按 `?? 下一个Doc(...)` 续接（本票留空）。
+    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? dietReceiptDoc(key, params, receipt, db) ?? res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;
