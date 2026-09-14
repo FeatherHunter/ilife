@@ -550,9 +550,11 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
   const tables = segmentTables(h, extra);
   for (const t of tables) parts.push(t);
   // 备注标签也走列表行区块，空时同样有一句（不许「没标签就整块不出现」）。
+  // 标签名进 `main`（宽列）——`left` 只有 44px，是给 ▲／▼／— 这类标记用的，4 字标签塞进去会被挤成两行。
+  // `left: ''` 是**占位**：列表行的栅格是 `44px / 1fr / auto` 自动排布，省略 `left` 会让 `main` 落进 44px 那列。
   const tags = tagDist(h.rows);
   parts.push(renderListRows({
-    items: Object.entries(tags).map(([k, v]) => ({ left: k, main: '备注标签', right: String(v) + ' 条' })),
+    items: Object.entries(tags).map(([k, v]) => ({ left: '', main: k, right: String(v) + ' 条' })),
     emptyText: '无备注标签',
   }));
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + conclusionOf(h, extra, avg) + '</p>', open: true }));

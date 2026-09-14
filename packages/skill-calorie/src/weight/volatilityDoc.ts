@@ -150,9 +150,11 @@ function kpiCards(o: VolatilityV2, only: boolean): KpiCardInput[] {
     },
     {
       label: '近期异常', value: String(o.recentAnomalies.length), unit: '个',
-      detail: '黄 ' + yellowN + ' · 红 ' + redN + ' · 共 ' + o.points.length + ' 点',
+      // 颜色不写成裸字（用户 2026-09-14 读数：阈值卡把「黄／红」当文字塞进值槽很怪）——
+      // 这里虽是副说明与徽章、不在值槽，仍与图上标注同词，读作「黄线级几个点、红线级几个点」。
+      detail: '黄线 ' + yellowN + ' · 红线 ' + redN + ' · 共 ' + o.points.length + ' 点',
       status: o.recentAnomalies.length === 0 ? 'ok' : redN > 0 ? 'danger' : 'warn',
-      statusText: o.recentAnomalies.length === 0 ? '无异常点' : '黄 ' + yellowN + ' / 红 ' + redN,
+      statusText: o.recentAnomalies.length === 0 ? '无异常点' : '黄线 ' + yellowN + ' / 红线 ' + redN,
     },
   ];
 }
