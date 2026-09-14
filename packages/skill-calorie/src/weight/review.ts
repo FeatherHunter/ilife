@@ -399,8 +399,9 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
   }
   /* 结论块唯一形态：折叠区（§5.3），句子是取数层原话（`weightMilestone.status`），页面不做自然语言解析。 */
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + m.status + '</p>', open: true }));
-  parts.push(renderCaliberLine('📊 数据来源:weight_log ｜ 复核日 ' + v.today + ' ｜ 当前 ' + m.currentWeight
-    + ' kg vs 目标 ' + m.weightGoal + ' kg' + (daily === null ? ' ｜ 日均变化未算' : '')));
+  parts.push(renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 复核日 ' + v.today
+    + ' ｜ 当前 ' + m.currentWeight + ' kg vs 目标 ' + m.weightGoal + ' kg'
+    + (daily === null ? ' ｜ 日均变化未算' : '')));
   const metrics: Record<string, number | string | null> = {
     ...milestoneNumsOf(m),
     '日期': m.currentDate, '状态': m.status, '截止': m.deadline, '预计达成日': m.estDate,
