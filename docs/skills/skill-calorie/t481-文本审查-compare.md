@@ -171,6 +171,8 @@
 
 ## 五、机器读数
 
+- **提交**：`14eb13e`（`feat(481): 对比族 17 词可见文本审查…`，6 件 ＋348／−84；add／commit／push 在**同一条持锁命令**里做完，
+  runId=b78cadf4-e3b5-4be8-a3bb-f6836d53b4e9）；本证据件自身的收尾改动随 `docs(481)` 第二笔提交落盘。
 - **编译（持锁）**：`node tooling/run-locked.mjs --ticket 481 -- npx tsc -b packages/skill-calorie`
   - `runId=a5028041-…` 之后的最后一次为 **exit=0**；此前三次红**全部来自别席在途件**（本票四件零命中）：
     `src/weight/volatilityDoc.ts`＋`volatility.ts`（#485 改 `deviationText` 签名）／`src/weight/logReceipt.ts`＋`receipt.ts`（另一席在途）。
