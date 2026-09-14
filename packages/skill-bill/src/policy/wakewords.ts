@@ -12,7 +12,12 @@ export type BillKey =
   | 'bill.help.lookup';
 
 export interface WakeRoute { key: BillKey; params: Record<string, unknown>; }
-export interface WakeEntry { phrase: string; key: BillKey; needs?: string[]; preset?: Record<string, unknown>; }
+/** `needs`＝必需槽位（给不出就在路由层报错）；`carries`＝**不拦**、只是上下文里给了就随命令带下去的槽位。
+ *  分两格的理由：改记录／撤销／恢复三条词「缺 `id`」不该在路由层报错（施工图第二节那两行把「在路由层直接报错」
+ *  记成要修的缺陷），但上下文里真给了 `id` 时仍要带进命令——两件事塞进 `needs` 一格就只剩「报错」这一种结果。 */
+export interface WakeEntry {
+  phrase: string; key: BillKey; needs?: string[]; carries?: string[]; preset?: Record<string, unknown>;
+}
 
 // 全量唤醒词表（HELP 速查唯一上游；改这里，HELP 构建期跟进）。
 export const WAKE_TABLE: WakeEntry[] = [
@@ -36,9 +41,13 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '记分期', key: 'bill.record.add', preset: { kind: 'installment' } },
   { phrase: '记一笔', key: 'bill.record.add' },
   // record.update 3（#23/#24/#25：改/撤销/恢复）。
-  { phrase: '改记录', key: 'bill.record.update', needs: ['id'] },
-  { phrase: '撤销', key: 'bill.record.update', preset: { op: 'undo' }, needs: ['id'] },
-  { phrase: '恢复', key: 'bill.record.update', preset: { op: 'restore' }, needs: ['id'] },
+  // 这三条**不写 `needs`**（t407 批量与修正族改的口径）：原先写 `needs:['id']`，路由层就抛「缺槽位 id」，
+  // 到不了采集页那一支——用户只说「撤销」得到的是一个错误。改后只说唤醒词也出采集页，
+  // 由候选记录列表（`src/shared/recordPicker.ts`）让用户挑一条，挑完仍走同一条写命令。
+  // `id` 挪到 `carries`：不拦，但上下文里给了就照旧带进命令（HELP 速查表里那一格示例也照旧给得出）。
+  { phrase: '改记录', key: 'bill.record.update', carries: ['id'] },
+  { phrase: '撤销', key: 'bill.record.update', preset: { op: 'undo' }, carries: ['id'] },
+  { phrase: '恢复', key: 'bill.record.update', preset: { op: 'restore' }, carries: ['id'] },
   // record.today 5（#51~#54：今天/昨天/某天/最近 + 查账单通用别名；查账单详情走 detail 最长匹配）。
   { phrase: '查今天', key: 'bill.record.today' },
   { phrase: '查昨天', key: 'bill.record.today', preset: { date: 'yesterday' } },
@@ -123,11 +132,11 @@ export function routeWakeword(text: string, ctx: Record<string, unknown> = {}): 
       throw new BillPolicyError('POLICY_MISSING_SLOT', '缺槽位 ' + s + '：' + hit.phrase);
     }
   }
-  return { key: hit.key, params: { ...(hit.preset || {}), ...pickCtx(ctx, hit.needs || []) } };
+  return { key: hit.key, params: { ...(hit.preset || {}), ...pickCtx(ctx, [...(hit.needs || []), ...(hit.carries || [])]) } };
 }
 
-function pickCtx(ctx: Record<string, unknown>, needs: string[]): Record<string, unknown> {
+function pickCtx(ctx: Record<string, unknown>, names: string[]): Record<string, unknown> {
   const o: Record<string, unknown> = {};
-  for (const k of needs) o[k] = ctx[k];
+  for (const k of names) if (ctx[k] !== undefined) o[k] = ctx[k];
   return o;
 }

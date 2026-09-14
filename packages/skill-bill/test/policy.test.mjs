@@ -38,7 +38,12 @@ describe('饼干口径 policy', () => {
     assert.equal(routeWakeword('帮我查账单').key, 'bill.record.today');
     assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail');
     assert.throws(() => routeWakeword('同步记账到云端'), /无命中/);
-    assert.throws(() => routeWakeword('改记录'), /缺槽位 id/);
+    // 三条修正词（改记录／撤销／恢复）在 t407 批量与修正族改了口径：**不再由路由层报「缺槽位 id」**——
+    // 只说唤醒词也落采集页，由候选记录列表让用户挑一条（施工图第二节「撤销」「恢复」两行的缺项阻断那条
+    // 把「在路由层直接报错」记为要修的缺陷；落点见 `src/record/scene-update.ts` 件头与 `src/shared/recordPicker.ts`）。
+    assert.equal(routeWakeword('改记录').key, 'bill.record.update');
+    assert.equal(routeWakeword('撤销').key, 'bill.record.update');
+    assert.equal(routeWakeword('恢复').key, 'bill.record.update');
     assert.equal(routeWakeword('改记录', { id: 3 }).params.id, 3);
   });
   it('错误皆为 BillPolicyError', () => {

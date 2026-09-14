@@ -4,15 +4,16 @@ import { BILL_KEY_SHAPES } from '../render/index.js';
 
 export interface HelpHit { phrase: string; key: BillKey; shape: string; cli: string; desc: string; }
 
-function exampleParams(key: BillKey, e: { needs?: string[]; preset?: Record<string, unknown> }): string {
+function exampleParams(key: BillKey, e: { needs?: string[]; carries?: string[]; preset?: Record<string, unknown> }): string {
   const p: Record<string, unknown> = { ...(e.preset || {}) };
-  // B2：record.add 示例须可直跑——补最小槽位 category/amount/note（kind preset 仅路由提示，校验忽略未知键）。
+  // B2：record.add 示例须可直跑——补最小槽位 category/amount/note（kind preset 仅路由提示，校验忽略未认的名字）。
   if (key === 'bill.record.add') {
     if (p.category === undefined) p.category = '餐饮';
     if (p.amount === undefined) p.amount = -35;
     if (p.note === undefined) p.note = '午饭';
   }
-  for (const n of e.needs || []) {
+  // `carries` 与 `needs` 一样进示例：改记录／撤销／恢复的 `id` 不拦，但示例里要给出「这一格填哪」那一眼。
+  for (const n of [...(e.needs || []), ...(e.carries || [])]) {
     if (p[n] === undefined) p[n] = n === 'id' ? 1 : n === 'date' ? '2026-09-06' : n === 'start' || n === 'end' ? '2026-09-01' : n === 'month' ? '2026-09' : n === 'amount' ? 35 : n === 'q' ? '午饭' : n === 'tag' ? '旅行' : n === 'category' ? '餐饮' : n === 'account' ? '支付宝' : n === 'ledger' ? '生活' : n === 'name' ? '招行卡' : n === 'from' ? '支付宝' : n === 'to' ? '招行卡' : n === 'file' ? 'bills.csv' : '<值>';
   }
   const keys = Object.keys(p);
