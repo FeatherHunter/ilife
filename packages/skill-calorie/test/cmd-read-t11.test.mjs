@@ -189,7 +189,7 @@ test('T9 目标分析盘 parity：12 键抽查 stat + 缺失阻断', () => {
   }
 });
 
-test('T10 照片 parity：画廊/单图/对比/动图/HELP + 二进制不内嵌', async () => {
+test('T10 照片 parity：画廊/单图/对比/动图/HELP + 只内嵌图片', async () => {
   const dir = mkEnv();
   const { photosDir, src } = seedPhotos(dbOpen(dir));
   function dbOpen(d) { return openDb(join(d, 'calorie_data.db')); }
@@ -216,7 +216,15 @@ test('T10 照片 parity：画廊/单图/对比/动图/HELP + 二进制不内嵌'
   assert.equal(r.status, 0);
   const html = readFileSync(p, 'utf8');
   assert.match(html, /看身材照/);
-  assert.doesNotMatch(html, /base64/);
+  /* #439 · 内嵌口径已改，旧断言作废：看身材照页按 #341（老技能已核准决定 D1）内嵌照片，
+   * 字节形如 `data:image/…;base64,`，故 T10 时代的「整页不含 base64」与之互斥——该断言
+   * 在 HEAD 上即红（页面已由 `viewPhotoList` 传目录进整页装配），非本票回归。
+   * 这里保留原用意的**牙齿**，只把口径收窄成「只许内嵌图片」：
+   *   ① 页面必须真内嵌了照片（缺 `data:image/…` 即红，防「退让成不嵌」）；
+   *   ② 页面里除图片外不许出现别的二进制 `data:` URI（夹带 `data:application/…` 即红）。 */
+  const dataUris = [...html.matchAll(/data:([^;,)"'\s]*)/gi)].map((m) => m[1].toLowerCase());
+  assert.ok(dataUris.some((m) => m.startsWith('image/')), '画廊页应内嵌照片，缺 data:image/…');
+  assert.deepEqual(dataUris.filter((m) => !m.startsWith('image/')), [], '页面只许内嵌图片，发现非图片 data URI');
   assert.throws(() => lookupPhotoHelp(''), /必填/);
   assert.equal(buildPhotoHelp().length, 10);
 });
