@@ -1,0 +1,205 @@
+/** 通用采集页装配体（**本票的通用形态**）：有阻断项时出这一页（**只采集、不写库**）。
+ *
+ * 谁在用（本票实数）：
+ *   ① `src/record/scene-*.ts` 的 16 件场景件都指它——`Scene.collect` 这一格现在是本件；
+ *   ② `src/record/collect.ts`——分派位只取件、不自己装配，故不直接引本件。
+ *  后续三族窗口填各自那张页时，把**那件场景件**的 `collect` 换成自己的装配体即可，本件一行不动。
+ *
+ * 这一段是从拆件前的 `src/record/collect.ts` 原样搬来的（同一段代码、同一串块、同一句文案），
+ *  搬的理由：`collect.ts` 要收成「按 kind／op 取件」的分派位，装配体不能再住分派位里。
+ *
+ * 信息层次（施工图第一节的页面积木按序拼，一件不自造）：
+ *   类型徽章 → 结论摘要行 → 复制日志那行「写库：未发生」→ 重复检测提示条 → 预填标注 → 缺项阻断条
+ *   → 选择器空态 → 采集表单 → 复制 prompt 区 → 复制区（共十块）。
+ *  复制 prompt 区那段话里**没有可跑的写库指令**（写库指令只在缺项阻断条里、且不给复制按钮）——
+ *  这就是「缺项即不出复制指令」那条口径；本页**不写库**：写库那一半在 `src/record/write.ts`，
+ *  落点是结果型回执整页（`./receiptBody.ts`）。
+ */
+import { renderCaliberLine, renderParamForm } from 'base-paint/blocks';
+import type { ParamFieldInput } from 'base-paint/blocks';
+import type { SerializableEnvelope } from 'base-paint';
+import type { BillRow } from '../fetch/db.js';
+import { ALL_L1, DEFAULTS, EXPENSE_L1 } from '../policy/category.js';
+import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
+import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
+import type { DuplicateProbe } from '../shared/duplicateNote.js';
+import { emptyNote } from '../shared/emptyNote.js';
+import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { pageShell } from '../shared/pageShell.js';
+import { prefillHint, prefillNote, prefillOf } from '../shared/prefillNote.js';
+import type { PrefillMark } from '../shared/prefillNote.js';
+import { summaryRow } from '../shared/summaryRow.js';
+import type { SummaryFacts } from '../shared/summaryRow.js';
+import { typeBadge } from '../shared/typeBadge.js';
+import { commandLine } from '../shared/writeParts.js';
+import type { CollectInput } from './scene.js';
+import { isGiven } from './slots.js';
+import type { RecordSlot } from './slots.js';
+
+/** 候选选择器的取数上限（三枚选择器：分类／账户／账本）。 */
+const PICK_LIMIT = 12;
+
+/** 一个值的字符串形态（非字符串按空串用；数字写成十进制串）。 */
+function textOf(v: unknown): string {
+  if (typeof v === 'string') return v.trim();
+  return typeof v === 'number' ? String(v) : '';
+}
+
+/** 近期记录里某个字段的取值（按最近在先去重，取前 `PICK_LIMIT` 个）——三枚选择器的候选。 */
+function distinct(recent: readonly BillRow[], field: 'category' | 'account' | 'ledger'): string[] {
+  const out: string[] = [];
+  for (const r of recent) {
+    const v = textOf(r[field]);
+    if (v !== '' && !out.includes(v)) out.push(v);
+    if (out.length >= PICK_LIMIT) break;
+  }
+  return out;
+}
+
+/** 三枚选择器的候选：分类（近期有历史就用历史，一条历史都没有就退到 L1 名单）／账户／账本（缺省「生活」）。 */
+function pickOf(recent: readonly BillRow[], kind: string): Record<string, readonly string[]> {
+  const category = distinct(recent, 'category');
+  const account = distinct(recent, 'account');
+  const ledger = distinct(recent, 'ledger');
+  return {
+    category: category.length > 0 ? category : (kind === 'expense' ? EXPENSE_L1 : ALL_L1),
+    account,
+    ledger: ledger.length > 0 ? ledger : [DEFAULTS.ledger],
+  };
+}
+
+/** 一个字段的选项：选择器候选 ＋ 本次已给的值（已给的值不在候选里时并到队首，免得表单把它显示没了）。 */
+function optionsFor(
+  pick: Record<string, readonly string[]>,
+  name: string,
+  value: string,
+): readonly string[] | undefined {
+  const list = pick[name];
+  if (list === undefined || list.length === 0) return undefined;
+  return value !== '' && !list.includes(value) ? [value, ...list] : [...list];
+}
+
+/** 采集表单的七槽：字段一律由 `renderParamForm` 出（标签与控件配对、每格带 `name`）。 */
+function formFields(input: {
+  readonly slots: readonly RecordSlot[];
+  readonly params: Record<string, unknown>;
+  readonly marks: readonly PrefillMark[];
+  readonly pick: Record<string, readonly string[]>;
+}): ParamFieldInput[] {
+  return input.slots.map((s) => {
+    const mark = input.marks.find((m) => m.name === s.name);
+    const value = isGiven(input.params[s.name]) ? String(input.params[s.name]) : (mark?.value ?? '');
+    const options = optionsFor(input.pick, s.name, value);
+    return {
+      name: s.name,
+      label: s.label,
+      hint: prefillHint(input.marks, s.name) ?? s.hint,
+      ...(options === undefined ? {} : { options }),
+      ...(s.required ? { required: true } : {}),
+      ...(value === '' ? {} : { value }),
+    };
+  });
+}
+
+/** 复制 prompt 区那段 prompt：说清缺什么、这一页不写库、补齐后重跑哪条命令。
+ *  **不给可跑的写库指令**（那条在缺项阻断条里、且不给复制按钮）——缺项即不出复制指令。 */
+function promptOf(
+  key: string,
+  blocked: readonly { readonly label: string; readonly name: string; readonly why: string }[],
+): string {
+  return '这一笔还差 ' + blocked.length + ' 项：'
+    + blocked.map((i) => i.label + '（' + i.name + '：' + i.why + '）').join('、')
+    + '。\n这一页只采集、不写库；补齐后重跑同一条命令 ' + key + '。';
+}
+
+/** 缺项时那条写库指令原文：缺的值留成尖括号占位符，**只给看不给复制**（复制按钮在阻断条里被拿掉）。 */
+function commandLineOf(
+  key: string,
+  params: Record<string, unknown>,
+  blocked: readonly { readonly name: string; readonly label: string }[],
+): string {
+  const filled: Record<string, unknown> = { ...params };
+  for (const b of blocked) filled[b.name] = '<' + b.label + '>';
+  return commandLine(key, filled);
+}
+
+/** 通用采集页整页：十块按序拼（见文件头信息层次）。 */
+export function collectBody(input: CollectInput): string {
+  const { key, params, slots, missing } = input;
+  const kind = textOf(params.kind);
+  const blocked = blockedItems({ params, missing, kind });
+  const message = blockedMessage(missing, blocked);
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: sceneKeyOf(key),
+    data: { ok: false, message },
+  };
+  const prefill = prefillOf({ params, recent: input.recent, today: input.today });
+  const amount = isGiven(params.amount) ? Number(params.amount) : null;
+  const probe: DuplicateProbe = {
+    amount: amount !== null && Number.isFinite(amount) ? amount : null,
+    category: textOf(params.category),
+    date: textOf(params.time) === '' ? input.today : textOf(params.time),
+    account: textOf(params.account),
+  };
+  const facts: SummaryFacts = {
+    amount: probe.amount,
+    category: probe.category,
+    account: textOf(params.account),
+    ledger: textOf(params.ledger),
+    time: textOf(params.time),
+  };
+  const pick = pickOf(input.recent, kind);
+  const empties: string[] = [];
+  if (pick.account.length === 0) {
+    empties.push(emptyNote({
+      title: '没有可选的历史账户',
+      text: '库里还没有带账户的记录，账户这一格没有候选可以挑。',
+      next: '账户留空即落默认账户；想选就先给一笔带账户的记录（例如 支付宝）。',
+    }));
+  }
+  const content = [
+    typeBadge({
+      kind,
+      key,
+      status: 'danger',
+      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+    }),
+    summaryRow(facts),
+    renderCaliberLine('写库：未发生——这一页只采集、不碰库；补齐后重跑同一条命令才会写。'),
+    duplicateNote(findDuplicates(input.recent, probe), probe),
+    prefillNote(prefill),
+    blockedBar({ items: blocked, command: commandLineOf(key, params, blocked) }),
+    empties.join(''),
+    renderParamForm({
+      description: '填好必需槽位后重跑同一条命令；这一步不写库。分类／账户／账本三格是选择器，候选取自近期记录。',
+      fields: formFields({ slots, params, marks: prefill, pick }),
+    }),
+    promptCopyArea(promptOf(key, blocked), '复制 prompt（补齐后重跑）'),
+    copyArea({
+      data: { envelope },
+      log: {
+        envelope,
+        copyLog: copyLog({
+          // 日志第 4 段是**本次真跑的那条**（不是补齐后那条带占位符的）：过程证据要照实记，
+          // 带占位符的写库指令只在上面阻断条里给看不给复制。
+          command: commandLine(key, params),
+          source: input.source,
+          detail: '未写库（采集页）',
+          actionAt: input.actionAt,
+          version: DOC_VERSION,
+        }),
+      },
+    }),
+  ].join('');
+  return pageShell({
+    docTitle: DOC_TITLE + '·补齐槽位',
+    title: '补齐槽位',
+    subtitle: message,
+    slot: 'collect',
+    page: 'collect',
+    shape: envelope.shape,
+    key,
+    content,
+  });
+}
