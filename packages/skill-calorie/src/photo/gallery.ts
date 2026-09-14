@@ -5,7 +5,8 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildGalleryData, buildViewerData } from './photo.js';
-import { renderGalleryHtml, renderViewerHtml } from '../render/html.js';
+import { buildPhotoListDoc } from './galleryDoc.js';
+import { renderViewerHtml } from '../render/html.js';
 import { dayField, fail } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { photoDir } from './dir.js';
@@ -22,7 +23,9 @@ export function viewPhotoList(params: Record<string, unknown>, db: DatabaseSync)
   }
   const g = buildGalleryData(db, filter as never, dir ?? null);
   const items = g.photos.map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: p.tagList, fileExists: p.fileExists }));
-  return { data: { items, total: g.totalCount }, html: renderGalleryHtml(g) };
+  // #341 · 看身材照出口＝完整文档（doctype 起、charset、版面、复制区）＋内嵌照片：
+  // 取数仍走 buildGalleryData，呈现改走本能力内 galleryDoc（html.ts 只读，不碰）。
+  return { data: { items, total: g.totalCount }, html: buildPhotoListDoc(g, dir ?? null) };
 }
 
 /** `calorie.photo.detail` · 查身材照：`id` 须为整数，查不到即 missing-data。 */
