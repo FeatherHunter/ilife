@@ -75,7 +75,7 @@ const smokeSection = (md, heading) => {
 const unquote = (s) => String(s).replace(/`/g, '');
 
 describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
-  it('D2① 436 条逐条恰一个桶（可执行 390 ／ 命中但不执行 46，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行 ＋ #346 看今天练什么转入可执行 ＋ #347 读筛选 7 条转入可执行 ＋ #348 写创建类 5 条转入可执行 ＋ #333 页面① 4 条转入可执行 ＋ #335 页面③ 6 条转入可执行 ＋ #376 整体趋势目标对比 1 条转入可执行 ＋ #383 预测模拟 15 条转入可执行 ＋ 他席在途约 7 条转入可执行）', () => {
+  it('D2① 436 条逐条恰一个桶（可执行 419 ／ 命中但不执行 17，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行 ＋ #346 看今天练什么转入可执行 ＋ #347 读筛选 7 条转入可执行 ＋ #348 写创建类 5 条转入可执行 ＋ #333 页面① 4 条转入可执行 ＋ #335 页面③ 6 条转入可执行 ＋ #334 页面② 8 条锚点对比转入可执行 ＋ #376 整体趋势目标对比 1 条转入可执行 ＋ #383 预测模拟 15 条转入可执行 ＋ 他席在途转入可执行若干）', () => {
     assert.equal(WAKE_ROUTES.length, 436);
     assert.equal(EXEC_ROUTES.length + HIT_NOT_EXEC_ROUTES.length, 436);
     const buckets = { exec: 0, 'non-exec': 0 };
@@ -93,15 +93,17 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         assert.ok(Object.values(NON_EXEC_REASONS).includes(r.reason), r.wakeWord);
       }
     }
-    // #383 时点值（2026-09-14T05:0xZ，dist 口径）：390＝367＋#383十五条（order398–412：预测体重自定义目标1＋模拟减重7＋摄入预测7）＋#376一条（order353 看整体趋势含目标对比）＋他席在途约七条（拍营养表×2 等，票号待主人认领）。
-    assert.deepEqual(buckets, { exec: 390, 'non-exec': 46 });
+    // 2026-09-14T10:4xZ 实测（dist 口径，#332 共享面收口提交当刻）：419 ＝ 436 − 17；非 exec 17 ＝ legacy-chain 9 ＋ out-of-scope 8。
+    // 相对 #383 时点值 390／46 的 +29：本图 #335 六条（期间复盘 order131–136）＋ 本图 #334 八条（锚点对比 order121–128）
+    // ＋ 他席在途十五条（看整体趋势组 order339–353 等，声明住未提交的 `src/analysis/routes.ts`，票号待主人认领）。
+    assert.deepEqual(buckets, { exec: 419, 'non-exec': 17 });
     assert.deepEqual(routingSummary(), {
       total: 436,
-      exec: 390,
-      nonExec: 46,
+      exec: 419,
+      nonExec: 17,
       outOfScope: 8,
-      legacyChain: 38,
-      newEntries: 68,
+      legacyChain: 9,
+      newEntries: 69,
       repairEntries: 1,
       coveredKeys: DECLARED_KEYS.length,
     });
@@ -117,7 +119,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     }
   });
 
-  it('D2③ 全量键（条数 == 权威声明）全部有可执行入口（436 条 ＋ 68 条新拟入口）', () => {
+  it('D2③ 全量键（条数 == 权威声明）全部有可执行入口（436 条 ＋ 69 条新拟入口）', () => {
     const covered = new Set(ALL_ROUTES.filter((r) => r.kind === 'exec').map((r) => r.key));
     assert.deepEqual([...covered].sort(), [...KEY_LIST].sort());
     assert.equal(covered.size, DECLARED_KEYS.length, '键覆盖数 == 权威声明');
@@ -219,8 +221,9 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     }
     assert.equal(twinFlips, 26, 'FX-81-2 孪生词转 exec 条数');
     // legacy ∩ exec 登记（#180 新增）：命令字段写自然语言是**卡面 id 约束**的产物（见 help-center-106），
-    // 因此「逐字相同」按设计不覆盖这 18 条；把规模与成员身份钉死，防静默扩张。
-    assert.equal(legacyCardIdExecZone().length, 18, 'legacy 卡面 id 在 exec 桶里的条数');
+    // 因此「逐字相同」按设计不覆盖这一区；把规模与成员身份钉死，防静默扩张。
+    // 2026-09-14T10:4xZ 实测 19（原 18）：+1 系他席在途声明把一条冻结表无 key 的词转入 exec（票号待主人认领）。
+    assert.equal(legacyCardIdExecZone().length, 19, 'legacy 卡面 id 在 exec 桶里的条数');
     // FX-81-7（同 key 可参数化）结构式判据（#180 重导，覆盖全 341 条 exec）：一律**单条命令**、
     // 键 token 与 r.key 一致、需参数的键带 --params（逐条映射与实跑见证据表 §2.3／smoke §1）。
     for (const r of EXEC_ROUTES) {
@@ -230,20 +233,20 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         `${r.wakeWord} cli 键 token 与 key 不一致：${r.cli}`,
       );
     }
-    assert.equal(EXEC_ROUTES.length, 390, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入 ＋ #346 看今天练什么转入 ＋ #347 读筛选 7 条转入 ＋ #348 写创建类 5 条转入 ＋ #333 页面① 4 条转入 ＋ #335 页面③ 6 条转入 ＋ #376 整体趋势目标对比 1 条 ＋ #383 预测模拟 15 条 ＋ 他席在途约 7 条）');
+    assert.equal(EXEC_ROUTES.length, 419, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入 ＋ #346 看今天练什么转入 ＋ #347 读筛选 7 条转入 ＋ #348 写创建类 5 条转入 ＋ #333 页面① 4 条转入 ＋ #335 页面③ 6 条转入 ＋ #334 页面② 8 条锚点对比转入 ＋ #376 整体趋势目标对比 1 条 ＋ #383 预测模拟 15 条 ＋ 他席在途若干）');
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
-      505, // #251 +1（看目标预检）＋ #348 +5（训练计划确认执行入口）＋ 他席在途新键 +5（#383 时点值，见 D2⑤）
+      506, // #251 +1（看目标预检）＋ #348 +5（训练计划确认执行入口）＋ 他席在途新键 +5（#383 时点值，见 D2⑤）＋ #283 +1（删照候选 order=68）
     );
     for (const w of new Set(WAKE_ROUTES.map((r) => r.wakeWord))) {
       assert.ok(routesFor(w).length >= 1, w);
     }
   });
 
-  it('D2⑤ 新增入口（68 键，#113 +8／#86 +4／#179 +1／#251 +1／#348 +5 训练计划确认执行入口 ＋ 他席在途新键 +5）与施工前既有入口零重复', () => {
-    // ＋5 系他席新键（NEW_KEY_ROUTES 实测 68；key 前缀多为 photo／goal／plan 系，票号待主人认领；以主人版为准重改）。
-    assert.equal(NEW_KEY_ROUTES.length, 68);
+  it('D2⑤ 新增入口（69 键，#113 +8／#86 +4／#179 +1／#251 +1／#348 +5 训练计划确认执行入口 ＋ 他席在途新键 +5 ＋ #283 +1 删照候选）与施工前既有入口零重复', () => {
+    // ＋5 系他席新键（NEW_KEY_ROUTES 实测 68；key 前缀多为 photo／goal／plan 系，票号待主人认领；以主人版为准重改）＋ #283 1 键（photo-picker／选身材照／order=68，69＝68＋1）。
+    assert.equal(NEW_KEY_ROUTES.length, 69);
     // 「施工前既有入口」＝#81 施工点上冻结表可达的 **43 键**（冻结直连 cli 33 键 ＋ 当时补偿表 22 条映射出的
     // 10 个新键）。#180 把 375 条命令字段逐字改写成路由层命令后，这层基线**已无法从冻结表反推**——反推得
     // 75 键，其中 32 键正是 #81 新拟入口本尊（自己与自己比，判据失去鉴别力）→ 按议题《影响清单第一步补记》
@@ -284,8 +287,8 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       assert.match(r.cli, /^calorie-cmd-read calorie\./);
       assert.equal(/python/i.test(r.cli), false);
     }
-    assert.equal(newKeys.size, 68); // #383 时点值：63＋他席在途新键 5（见 D2⑤；以主人版为准重改）。
-    assert.equal(newWords.size, 68); // 同上（新拟唤醒词与键一一对应）。
+    assert.equal(newKeys.size, 69); // #383 时点值：63＋他席在途新键 5（见 D2⑤；以主人版为准重改）＋ #283 +1。
+    assert.equal(newWords.size, 69); // 同上（新拟唤醒词与键一一对应）。
   });
 
   it('FX-81-5 覆盖修复：wizard 降级词失去的唯一入口由 1 条单命令入口承接（101 键不放宽，#113 +8／#86 +4／#179 +1／#251 +1）', () => {
@@ -319,7 +322,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
   it('FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 0 ＋ 已登记的数据依赖失败单列 ＋ 需参数键必须带 --params）', () => {
     const md = readFileSync(SMOKE_MD, 'utf8');
     const execAll = allExec();
-    assert.equal(execAll.length, 459, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec；#346 +1：看今天练什么转入 exec；#347 +7：读筛选 7 条转入 exec；#348 +5：写创建类 5 条转入 exec ＋ 5 条确认执行新拟入口；#333 +4：页面① 4 条由 non-exec 转入 exec；#335 +6：页面③ 6 条由 non-exec 转入 exec；#376 +1：整体趋势目标对比转入 exec；#383 +15：预测模拟 order398–412 转入 exec；他席在途约 +7（拍营养表×2 等）＋新拟入口 +5）');
+    assert.equal(execAll.length, 489, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec；#346 +1：看今天练什么转入 exec；#347 +7：读筛选 7 条转入 exec；#348 +5：写创建类 5 条转入 exec ＋ 5 条确认执行新拟入口；#333 +4：页面① 4 条由 non-exec 转入 exec；#335 +6：页面③ 6 条由 non-exec 转入 exec；#334 +8：页面② 8 条锚点对比由 non-exec 转入 exec；#376 +1：整体趋势目标对比转入 exec；#383 +15：预测模拟 order398–412 转入 exec；他席在途若干 ＋新拟入口）');
     // ① 快照汇总：非零只许是**已登记的数据依赖失败**（用户 2026-09-11 裁定取甲：把「命令坏了」与
     // 「数据依赖的失败」分开统计；判据是快照自己 :7-9 写的「数据依赖失败（空库 exit 4）不算 cli 缺陷」，
     // 改断言＝把断言对齐判据）。
@@ -335,11 +338,16 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     //   标准种子库体重记录无备注 ⇒ exit 4、envelope `—`。词与窗口都对（种子库有备注即跑得通），故登记。
     //   `看里程碑回溯`（key `calorie.view.weight-review`）：#335 回溯要求有已达成里程碑，
     //   标准种子库 75.0→70.6kg 未满 5kg ⇒ exit 4、envelope `—`。词与窗口都对（种子库没有那份数据），故登记。
+    //   `对比体重：减重 5kg 那天 vs 今天`／`减重 10kg 那天 vs 今天`（key `calorie.view.weight-compare`）：
+    //   #334 的锚点对比由算式自己派生锚点日期；标准种子库 75.0→70.6kg（距历史最高减 4.4kg），
+    //   5kg／10kg 里程碑从未达成 ⇒ exit 4、envelope `—`。词与参数都对（种子库有那段数据即跑得通），故登记。
     const DATA_DEPENDENT_FAILURES = new Map([
       ['复制昨日运动', { exit: '4', key: 'calorie.exercise.add' }],
       ['计划复盘（本周）', { exit: '4', key: 'calorie.view.exercise-review' }],
       ['看「有备注」的体重记录', { exit: '4', key: 'calorie.view.weight-history' }],
       ['看里程碑回溯', { exit: '4', key: 'calorie.view.weight-review' }],
+      ['对比体重：减重 5kg 那天 vs 今天', { exit: '4', key: 'calorie.view.weight-compare' }],
+      ['对比体重：减重 10kg 那天 vs 今天', { exit: '4', key: 'calorie.view.weight-compare' }],
     ]);
     // ② 快照逐条：exit 全 0（登记项除外）＋ envelope key 与路由 key 一致（登记项除外）＋ 条数与路由层一致。
     const rows1 = smokeSection(md, '## 1. ');
@@ -384,7 +392,9 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     // 实测仍是 **106**——本行原写 107 是 R17 零检掩盖下的旧值，本票按实测真值收正。
     // 翻面 1 条已核：`calorie.diet.copy` 裸跑由「失败」转为「可跑」（裸跑取「昨日」＝种子写的 09-06 有数据；
     // 钉钟前按机器当天取窗，落在种子数据外）。明细见 `docs/skills/skill-calorie/t250-*`。
-    assert.equal(checked, 115, '需参数键的 exec 记录数（结构性断言覆盖面）');
+    // 2026-09-14T10:5xZ 实测 **139**（原 115）：随 exec 桶扩充而变大——#334/#335 体重两条线 ＋ 他席在途新转 exec 的词。
+    // 本数是**派生读数**（＝exec 记录里键落在「裸跑失败」集合内的条数），不写死结构性名单。
+    assert.equal(checked, 139, '需参数键的 exec 记录数（结构性断言覆盖面）');
   });
 
   it('A7 明确不做桶按架构规格 :60 建立，t71 差异逐条登记（两处出处）', () => {
