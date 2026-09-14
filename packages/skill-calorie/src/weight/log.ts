@@ -92,23 +92,35 @@ export function buildWeightDashboard(db: DatabaseSync, start: string, end: strin
 
 /* ── 整页装配（#332 自 `plateDocs.ts` 原样迁入：weight_dashboard.html 对照） ── */
 
-/** 今日卡与较上次卡（老实物 `weight_dashboard.html` 的 todayKg／todayDate／todayDelta）。 */
-function todayCards(t: WeightTrend, single: boolean): KpiCardInput[] {
+/** 窗口写法（一天就写那一天，不再写 `X ~ X`）：副标题、页脚、结论共用一处。 */
+function rangeTextOf(start: string, end: string): string {
+  return start === end ? start : start + ' ~ ' + end;
+}
+
+/** 日均变化的人话写法（口径：全族统一用「克」，不出现 `g/天`，零变化说「基本没变」）。 */
+function dailyGram(g: number): string {
+  return g === 0 ? '基本没变' : '平均每天约 ' + (g > 0 ? '+' : '') + g + ' 克';
+}
+
+/** 最新一条卡与较上次卡（老实物 `weight_dashboard.html` 的 todayKg／todayDate／todayDelta）。
+ *  徽章只说状态，不重复卡上的数：窗口条数住在页头副标题与页脚来源行，卡片不再报一遍。 */
+function todayCards(t: WeightTrend, w: WeightDashboard): KpiCardInput[] {
   const last = t.logs[t.logs.length - 1];
   const prevW = t.logs.length >= 2 ? t.logs[t.logs.length - 2]?.weightKg ?? null : null;
   const delta = prevW === null || last === undefined ? null : Math.round((last.weightKg - prevW) * 10) / 10;
   return [
     {
-      label: '今日体重', value: last === undefined ? '—' : String(last.weightKg), unit: 'kg',
-      detail: last === undefined ? '本窗无记录' : last.date,
+      label: w.start === w.end ? '今日体重' : '最新体重',
+      value: last === undefined ? '—' : String(last.weightKg), unit: 'kg',
+      detail: last === undefined ? '这段时间没有记录' : last.date,
       status: last === undefined ? 'empty' : 'ok',
-      statusText: last === undefined ? '本窗无记录' : '已记 ' + t.recordCount + ' 条',
+      statusText: last === undefined ? '没有记录' : '已记录',
     },
     {
-      label: '较上次', value: delta === null ? '—' : signed(delta),
-      detail: prevW === null ? (single ? '单点无变化' : '暂无上次记录') : '上次 ' + prevW + ' kg',
+      label: '较上次', value: delta === null ? '—' : delta === 0 ? '0 kg' : signed(delta),
+      ...(prevW === null ? {} : { detail: '上次 ' + prevW + ' kg' }),
       status: delta === null ? 'empty' : delta > 0 ? 'warn' : delta < 0 ? 'ok' : 'empty',
-      statusText: delta === null ? (single ? '单点无变化' : '无对照') : delta > 0 ? '上升' : delta < 0 ? '下降' : '持平',
+      statusText: delta === null ? '无可比' : delta > 0 ? '上升' : delta < 0 ? '下降' : '持平',
     },
   ];
 }
@@ -126,44 +138,44 @@ function plateCards(w: WeightDashboard): KpiCardInput[] {
   const single = w.curve.single;
   return [
     {
-      label: '体重盘', value: String(windowDays(w)), unit: '天',
-      detail: '首 ' + t.firstWeight + ' → 末 ' + t.lastWeight + ' kg · ' + t.firstDate + ' ~ ' + t.lastDate,
-      status: 'ok', statusText: '共 ' + t.recordCount + ' 条',
+      label: '窗口', value: String(windowDays(w)), unit: '天',
+      detail: single ? t.firstDate : '首 ' + t.firstWeight + ' → 末 ' + t.lastWeight + ' kg',
     },
     {
       label: '均值', value: t.avgWeight + ' kg',
-      detail: single ? '单点无均值对照' : '共 ' + t.recordCount + ' 条 · 极值 ' + t.minWeight + '~' + t.maxWeight,
-      status: single ? 'empty' : 'ok', statusText: single ? '无对照' : '首末对照',
+      ...(single ? {} : { detail: '最低 ' + t.minWeight + ' kg · 最高 ' + t.maxWeight + ' kg' }),
+      ...(single ? { status: 'empty' as const, statusText: '无对照' } : {}),
     },
     {
-      label: '变化', value: signed(t.changeKg),
-      detail: '趋势' + t.trendCn + ' · 日均 ' + t.dailyChangeG + ' g',
+      label: '变化', value: t.changeKg === 0 ? '0 kg' : signed(t.changeKg),
+      ...(single ? {} : { detail: '趋势' + t.trendCn + ' · ' + dailyGram(t.dailyChangeG) }),
       status: single ? 'empty' : t.changeKg < 0 ? 'ok' : t.changeKg > 0 ? 'warn' : 'empty',
-      statusText: single ? '单点无变化' : t.trendCn,
+      statusText: single ? '看不出变化' : t.trendCn,
     },
     {
-      label: '距目标', value: w.gapKg === null ? '—' : signed(w.gapKg),
+      label: '距目标', value: w.gapKg === null ? '—' : w.gapKg === 0 ? '0 kg' : signed(w.gapKg),
       detail: w.weightGoal === null ? '未设体重目标 · 说「定体重目标」后可叠目标线'
         : '目标 ' + w.weightGoal + ' kg' + (w.deadline ? ' · 截止 ' + w.deadline : '')
-          + (w.curve.targetInRange ? '' : '（线在量程外，不画）'),
+          + (w.curve.targetInRange ? '' : ' · 目标线超出刻度，图上没画'),
       status: w.gapKg === null ? 'empty' : w.gapKg <= 0 ? 'ok' : 'warn',
-      statusText: w.gapKg === null ? '未设目标' : w.gapKg <= 0 ? '已达目标' : '还差 ' + w.gapKg + ' kg',
+      statusText: w.gapKg === null ? '未设目标' : w.gapKg <= 0 ? '已达目标' : '未达成',
     },
   ];
 }
 
-/** 结论句（引用取数层字段，不做自然语言解析；单点、未设目标各有各的说法）。 */
+/** 结论句（引用取数层字段，不做自然语言解析；单点、未设目标各有各的说法）。
+ *  窗口与条数住在页头副标题与页脚来源行，本句只说「变了多少、还算不算好」——同一屏不报第二遍。 */
 function weightConclusion(w: WeightDashboard): string {
   const t = w.trend;
   const bits = [w.curve.single
-    ? w.start + ' ~ ' + w.end + ' 只有 1 条记录（' + t.lastWeight + ' kg），单点看不出变化，再记一条就能比较'
-    : w.start + ' ~ ' + w.end + ' 共 ' + t.recordCount + ' 条，首 ' + t.firstWeight + ' → ' + t.lastWeight
-      + ' kg（' + signed(t.changeKg) + '，趋势' + t.trendCn + '，日均 ' + t.dailyChangeG + ' g）'];
-  if (t.recordCount >= 2) bits.push('均值 ' + t.avgWeight + ' kg');
+    ? rangeTextOf(w.start, w.end) + ' 只有 1 条记录（' + t.lastWeight + ' kg），看不出变化，再记一条就能比较'
+    : '这段时间从 ' + t.firstWeight + ' kg 到 ' + t.lastWeight + ' kg，累计 ' + signed(t.changeKg)
+      + '（趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) + '）'];
+  if (t.recordCount >= 2) bits.push('平均 ' + t.avgWeight + ' kg');
   if (w.gapKg === null) {
     bits.push(w.weightGoal === null ? '未设体重目标' : '目标 ' + w.weightGoal + ' kg（差值暂缺）');
   } else if (w.gapKg > 0) bits.push('目标 ' + w.weightGoal + ' kg，还差 ' + w.gapKg + ' kg');
-  else if (w.gapKg < 0) bits.push('目标 ' + w.weightGoal + ' kg，已低于目标 ' + Math.abs(w.gapKg) + ' kg');
+  else if (w.gapKg < 0) bits.push('目标 ' + w.weightGoal + ' kg，已比目标低 ' + Math.abs(w.gapKg) + ' kg');
   else bits.push('目标 ' + w.weightGoal + ' kg，已达目标');
   return bits.join('；') + '。';
 }
@@ -178,7 +190,7 @@ function deliveryBlocks(envelope: SerializableEnvelope, command: string, sourceT
       envelope,
       copyLog: copyLog({ command, actionAt: nowStamp(), version: DOC_VERSION }),
     },
-  }) + renderCaliberLine('📊 数据来源:' + sourceText);
+  }) + renderCaliberLine('📊 数据来源：' + sourceText);
 }
 
 function weightEnvelope(w: WeightDashboard): SerializableEnvelope {
@@ -199,14 +211,16 @@ function weightEnvelope(w: WeightDashboard): SerializableEnvelope {
 export function buildWeightDoc(w: WeightDashboard, command: string): string {
   const t = w.trend;
   const spanDays = windowDays(w);
-  const sourceText = DB_FILENAME + ' · weight_log ｜ 窗口 ' + w.start + ' ~ ' + w.end + ' ｜ ' + t.recordCount + ' 条';
+  const rangeText = rangeTextOf(w.start, w.end);
+  const sourceText = '体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + rangeText
+    + ' ｜ 共 ' + t.recordCount + ' 条';
   const parts: string[] = [
-    renderKpiGrid(todayCards(t, w.curve.single)),
+    renderKpiGrid(todayCards(t, w)),
     renderKpiGrid(plateCards(w)),
     // 老实物 weight_dashboard.html 的 h2 最近 7 天趋势：7 天内即近 7 天小图，否则全窗曲线。
     renderChartBlock({
       kind: 'line',
-      title: spanDays <= 7 ? '近 7 天体重曲线' : '体重曲线',
+      title: spanDays === 1 ? '今日体重曲线' : spanDays <= 7 ? '近 7 天体重曲线' : '体重曲线',
       input: {
         items: t.logs.map((l) => ({ label: l.date.slice(5), value: l.weightKg })),
         options: {
@@ -233,15 +247,16 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
       { key: 'note', label: '备注' },
     ],
     rows: t.logs.map((l) => ({ date: l.date, kg: l.weightKg, note: l.note })),
-    caption: '体重记录（' + t.firstDate + ' ~ ' + t.lastDate + '，共 ' + t.recordCount + ' 条）',
-    emptyText: '本窗无体重记录（' + w.start + ' ~ ' + w.end + '）',
+    caption: '体重记录',
+    emptyText: '这段时间还没有体重记录',
   }));
   parts.push(deliveryBlocks(weightEnvelope(w), command, sourceText));
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '体重盘 ' + w.start + ' ~ ' + w.end,
+    title: spanDays === 1 ? '今日体重' : '体重总览',
     eyebrow: 'calorie.view.weight · 运动身体域',
-    subtitle: '趋势' + t.trendCn + '｜' + w.start + ' ~ ' + w.end + '｜共 ' + t.recordCount + ' 条',
+    subtitle: rangeText + ' · '
+      + (w.curve.single ? '只有一条记录，还看不出趋势' : '共 ' + t.recordCount + ' 条 · 趋势' + t.trendCn),
     content: parts.join(''),
     charts: true,
   });
@@ -249,29 +264,31 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
 
 /** 空窗整页（§5.7 肉眼验收）：标题、空态句、结论、复制区、数据来源行一件不少，不出图表空壳。 */
 function buildWeightEmptyDoc(start: string, end: string, command: string): string {
-  const sourceText = DB_FILENAME + ' · weight_log ｜ 窗口 ' + start + ' ~ ' + end + ' ｜ 0 条';
+  const rangeText = rangeTextOf(start, end);
+  const spanDays = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
+  const sourceText = '体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + rangeText + ' ｜ 共 0 条';
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: VIEW_KEY,
     data: { metrics: metricsOf({ recordCount: 0 }) },
   };
   const parts: string[] = [
     renderKpiGrid([
-      { label: '今日体重', value: '—', unit: 'kg', detail: start + ' ~ ' + end + ' 无记录', status: 'empty', statusText: '本窗无记录' },
-      { label: '较上次', value: '—', detail: '本窗无记录 · 无对照', status: 'empty', statusText: '无对照' },
+      { label: '今日体重', value: '—', unit: 'kg', detail: '这段时间没有记录', status: 'empty', statusText: '没有记录' },
+      { label: '较上次', value: '—', detail: '没有记录，也没有上一次可比', status: 'empty', statusText: '无可比' },
     ]),
     renderEmptyBlock({
       title: '体重曲线',
-      text: '本窗无体重记录（' + start + ' ~ ' + end + '）',
+      text: '这段时间还没有体重记录',
       hint: '说「记体重」记一条，曲线就有第一个点',
     }),
-    conclusionBlock(start + ' ~ ' + end + ' 无体重记录，先记一条再看。'),
+    conclusionBlock('这段时间还没有体重记录，先记一条再看。'),
     deliveryBlocks(envelope, command, sourceText),
   ];
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '体重盘 ' + start + ' ~ ' + end,
+    title: spanDays === 1 ? '今日体重' : '体重总览',
     eyebrow: 'calorie.view.weight · 运动身体域',
-    subtitle: '本窗无体重记录',
+    subtitle: '这段时间还没有体重记录',
     content: parts.join(''),
   });
 }
