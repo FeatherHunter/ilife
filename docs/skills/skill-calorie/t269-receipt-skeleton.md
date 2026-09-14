@@ -21,7 +21,7 @@
 - `assembleDocPage`（`src/shared/docPage.ts`）：已在用（基础信息 `src/profile/`、饮食域已有读页 `src/diet/nutritionPortDocs.ts` 等、运动／分析各域），本票新增饮食回执是第 N 个用法，只引用不改动。
 - `copyArea`／`copyLog`（`src/shared/copyArea.ts`）：已在用（基础信息＋七个页域文档），本票只引用不改动。
 - `statusCard`／`reconcileDisclosure`（`src/shared/receiptParts.ts`）：已在用（基础信息＋目标管理），本票只引用不改动。
-- 写后回执“按命令名选整页”的分派：今天住 `src/profile/receipt.ts`（`profileReceiptDoc`，具名键集数据位）。若把它提进 `src/shared/`，共享件将反向引用 `src/profile/` 与 `src/diet/` 两个能力目录，违反 `docs/agents/structure.md`“共用位里不许出现任何一个能力的名字／能力只往下用”。故本票不新建共享分派件；`src/cli/write.ts` 分派层按序试 `profileReceiptDoc` 与 `dietReceiptDoc`（两处都是能力目录的公开端口，分派层只调门）。对地图目标的帮助：同一条真出口保持单一路，HELP 与产物口径不分裂，且不给后续 7 类页面票埋反向依赖。
+- 写后回执“按命令名选整页”的分派：今天住 `src/profile/receipt.ts`（`profileReceiptDoc`，具名命令集数据位）。若把它提进 `src/shared/`，共享件将反向引用 `src/profile/` 与 `src/diet/` 两个能力目录，违反 `docs/agents/structure.md`“共用位里不许出现任何一个能力的名字／能力只往下用”。故本票不新建共享分派件；`src/cli/write.ts` 分派层按序试 `profileReceiptDoc` 与 `dietReceiptDoc`（两处都是能力目录的公开端口，分派层只调门）。对地图目标的帮助：同一条真出口保持单一路，HELP 与产物口径不分裂，且不给后续 7 类页面票埋反向依赖。
 
 ## 基线（变更前冻结，不得改口径）
 
@@ -45,7 +45,7 @@
 | calorie.diet.copy | 60660 | 01c4ce0c360c | 是 |
 | calorie.diet.remove | 60801 | a0ef42771c9b | 是 |
 | calorie.diet.remove-by-date | 60446 | 7b65cc2facea | 是 |
-| calorie.diet.remove-by-range | 60531 | af51e4d0e1d5 | 是 |
+| calorie.diet.remove-by-range | 60531 | af3ad404bb25 | 是 |
 | calorie.diet.remove-by-type | 60462 | 59879a7e8e89 | 是 |
 | calorie.diet.update | 60648 | de6cff27244d | 是 |
 | calorie.diet.update-by-date | 60396 | af51e4d0e1d5 | 是 |
@@ -57,11 +57,11 @@
 ### 其余命令形状（after2.json）
 
 - 档案 3 条完整文档（形状未变）；体重 4、目标 5、身体 4、照片 3（`photo.tag` 需真文件，本快照用临时文件跑通）、训练计划 10 仍片段且可跑（`photo`／`workout` 参数照测试真例）；运动 3 条因第三方半成品抛错（`out is not defined`），现场 `git status` 可见 `src/exercise/` 为他人未提交。
-- 逐字节“前后不变”的真 before 快照需绿树（当前树被第三方 weight／exercise 半成品染红，`tsc -b` 19 处皆在他域）。本票的构造证明：基线 `HEAD:src/cli/write.ts` 为 `profileReceiptDoc(...) ?? res.html`，本票改为 `profileReceiptDoc(...) ?? dietReceiptDoc(...) ?? res.html`，而 `dietReceiptDoc` 对非饮食 13 条一律返回 null（具名键集数据位，`src/diet/receipt.ts:29`），故非饮食键走原 `res.html` 原样放行。树绿后终验时重跑本脚本即得 before／after 两份 sha256（脚本与参数已冻结在 `.scratch/t269/verify.mjs`）。
+- 逐字节“前后不变”的真 before 快照需绿树（当前树被第三方 weight／exercise 半成品染红，`tsc -b` 19 处皆在他域）。本票的构造证明：基线 `HEAD:src/cli/write.ts` 为 `profileReceiptDoc(...) ?? res.html`，本票改为 `profileReceiptDoc(...) ?? dietReceiptDoc(...) ?? res.html`，而 `dietReceiptDoc` 对非饮食 13 条一律返回 null（具名命令集数据位，`src/diet/receipt.ts:29`），故非饮食命令走原 `res.html` 原样放行。**这两行的构造证明已由终验证实替换为真机读数**（同一棵树、只把饮食端口按“未接线”置空：33/33 条非饮食命令产物归一后 sha256 逐条不变），见 `t269-final-verify.md`。
 
 ## 第二步·结构设计（新增目录树与公开接口）
 
-- 不新增目录层级（`src/diet/` 已存在），只新增一件 `src/diet/receipt.ts`（142 行，告警线 350 行内；未超线）。
+- 不新增目录层级（`src/diet/` 已存在），只新增一件 `src/diet/receipt.ts`（151 行，告警线 350 行内；未超线）。
 - `src/diet/receipt.ts` 职责：饮食 13 条会改数据库的命令的回执内容装配（状态＋影响行数＋写入字段＋写后累计＋对照＋对账＋复制区）；公开接口 1 个：`dietReceiptDoc`（其余构造器不导出，目录内用）。对地图目标的帮助：7 类页面票后续只改内容块，不再动分派，70 条的回执形状一次立住。
 - `src/cli/write.ts` 职责不变（登记点）：按序试 `profileReceiptDoc` 与 `dietReceiptDoc`，命中即整页，未命中原样放行；不写任何 `calorie.*` 字面量比较（棘轮 `cmd-registry-294` 行为口径仍为零字面量）。对地图目标的帮助：同一份 `assembleDocPage` 让档案 3 条与饮食 13 条同路，真出口落盘即完整文档。
 - `src/shared/` 不动：`docPage.ts`／`copyArea.ts`／`receiptParts.ts` 只引用不改动（三个已有两个以上能力在用）。对地图目标的帮助：不造第二份装配，HELP 与产物口径保持单一。
@@ -69,13 +69,13 @@
 ## 第四步·超线报警
 
 - 口径：`packages/skill-calorie/AGENTS.md`（本包落点）：**告警线＝350 行，LF 口径**（范围 `src/**/*.ts`＋`scripts/*.mjs`）。本包现状超线两件（`src/render/wizardPort.ts` 457、`scripts/gen-cli.mjs` 729），皆非本票波及面。
-- 本票所碰源码：`src/diet/receipt.ts` 142 行、`src/cli/write.ts` 76→81 行，均在线内，未超线。
+- 本票所碰源码：`src/diet/receipt.ts` 151 行、`src/cli/write.ts` 76→81 行，均在线内，未超线。
 
 ## 交付对账（第五步，实际碰到的目录逐行与第一步对，偏差为零）
 
 | 第一步行 | 实际 | 结论 |
 |---|---|---|
-| 1 `src/diet/receipt.ts`（新建） | 新建 142 行，导出 1 个（`dietReceiptDoc`） | 落定 |
+| 1 `src/diet/receipt.ts`（新建） | 新建 151 行（LF 口径），导出 1 个（`dietReceiptDoc`） | 落定 |
 | 2 `src/cli/write.ts`（分派分支） | 加导入 3 行＋注释 2 行＋分派 1 行（`?? dietReceiptDoc(...)`），零 `calorie.*` 字面量 | 落定 |
 | 3 `src/shared/`（不动） | 零改动（`git status` 无 `src/shared/` 行） | 落定 |
 | 4 `docs/skills/skill-calorie/t269-*` | 本件＋`t269-handover-276.md` | 落定 |

@@ -7,7 +7,7 @@
 - 文件：`packages/skill-calorie/src/cli/write.ts`
 - 导入区锚点：第 44 行 `import { dietReceiptDoc } from '../diet/receipt.js';` 的下一行。#276 如需新增能力目录的整页端口，在此按同形状加一行直引（例如 `import { xxxReceiptDoc } from '../xxx/receipt.js';`），不经能力 `index.ts` 转出亦可（本票未动 `src/diet/index.ts` 即为先例）。
 - 分派锚点：第 68 行 `return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? dietReceiptDoc(key, params, receipt, db) ?? res.html };`。#276 在 `dietReceiptDoc(...)` 与 `res.html` 之间按 `?? 下一个Doc(key, params, receipt, db)` 续接（第 67 行注释即此意）。对地图目标的帮助：同一条真出口保持“按序试门、未命中放行”，新增命令的回执页与饮食 13 条同路，不另起第二条出口。
-- 禁止：不要在本文件写任何 `calorie.*` 字面量比较（`case`／`===`／就地键集查询一律不写；棘轮 `test/cmd-registry-294.test.mjs` 按行为口径数，塞一条当场变红）。具名键集住各自能力目录的 `receipt.ts` 数据位。
+- 禁止：不要在本文件写任何 `calorie.*` 字面量比较（`case`／`===`／就地命令集查询一律不写；棘轮 `test/cmd-registry-294.test.mjs` 按行为口径数，塞一条当场变红）。具名命令集住各自能力目录的 `receipt.ts` 数据位。
 
 ## 本票已交付形状（供合并时核对）
 

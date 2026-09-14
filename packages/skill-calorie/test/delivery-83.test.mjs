@@ -310,12 +310,23 @@ test('#83 delivery 契约单元：闭集校验／绝对路径／bytes／产物�
 
 test('#83 写键同样有 delivery（receipt 产物族）', () => {
   const dir = mkDb('write');
+  // #269 口径变更（有意改，票面与提交信息写清）：饮食这一族的 13 条回执已从片段切成整页文档
+  // ⇒ 产物族按本文件上面那条单元断言钉住的判定次序（DOCTYPE 先于 shape）判成 `doc-shell`；
+  // envelope 的 `shape` 仍是 `receipt`。反面同时钉住：未切整页的命令仍是 `receipt` 片段族。
   const r = runOk(dir, 'calorie.water.log', { ml: 300 });
   assert.equal(r.env.shape, 'receipt');
   assert.equal(r.env.delivery.mode, 'file');
-  assert.equal(r.env.delivery.template, 'receipt');
+  assert.equal(r.env.delivery.template, 'doc-shell', '饮食整页回执的产物族');
+  assert.ok(readFileSync(r.env.delivery.path, 'utf8').startsWith('<!doctype html>'), '整页回执以 doctype 开头');
   assert.ok(existsSync(r.env.delivery.path));
   assert.equal(r.env.delivery.bytes, statSync(r.env.delivery.path).size);
+
+  const frag = runOk(dir, 'calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50 });
+  assert.equal(frag.env.shape, 'receipt');
+  assert.equal(frag.env.delivery.mode, 'file');
+  assert.equal(frag.env.delivery.template, 'receipt', '未切整页的命令仍是片段族');
+  assert.ok(readFileSync(frag.env.delivery.path, 'utf8').startsWith('<section class="ilife-page"'), '片段族以 section 开头');
+  assert.equal(frag.env.delivery.bytes, statSync(frag.env.delivery.path).size);
 });
 
 /* ── ⑥ 返修 R-1（红队 S1）：相对落点不得把「写盘成功」报成参数失败 ───────────────────────────
@@ -364,6 +375,8 @@ test('#83 ⑥ 相对 SKILLS_DB_PATH ＋ 写键：exit 0（库已写入不得报�
   const env = JSON.parse(String(r.stdout));
   assert.equal(env.data.ok, true);
   assert.equal(env.delivery.mode, 'file');
-  assert.equal(env.delivery.template, 'receipt');
+  // #269：`calorie.water.log` 的回执已是整页文档 ⇒ 产物族 `doc-shell`（判定次序 DOCTYPE 先于 shape）。
+  assert.equal(env.delivery.template, 'doc-shell', '饮食整页回执的产物族');
+  assert.ok(readFileSync(env.delivery.path, 'utf8').startsWith('<!doctype html>'), '整页回执以 doctype 开头');
   assert.ok(existsSync(env.delivery.path));
 });

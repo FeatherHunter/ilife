@@ -30,3 +30,44 @@ RUN ticket=269 runId=t269-commit-2 cmd="git commit -F .scratch/t269/commit-msg-1
 RUN ticket=269 runId=t269-commit-3 cmd="git add <5 件>" waitedMs=1 exit=0 pid=47124 at=2026-09-14T04:17:32.070Z
 RUN ticket=269 runId=t269-commit-4 cmd="git commit -F .scratch/t269/commit-msg-1.txt -- <5 件>" waitedMs=0 exit=0 pid=32220 at=2026-09-14T04:17:45.606Z
 ```
+
+## 追加：运行时终验与漏改修补这一段（2026-09-14T06:17:45.272Z）
+
+> 导出时刻见本行上方时间戳；源 `.scratch/locks/gate-runs.log`。`START` 行略去，只列 `RUN` 行（一对一）。
+> 逐条声明与判据见 `t269-final-verify.md` 第七节。
+
+| 运行标识 | 命令 | 退出码 | 证据作用 |
+|---|---|---|---|
+| t269f-build | `cmd /c .scratch\\t269-final\\g1-build.cmd` | 0 | 门禁：`pnpm build`（tsc -b ＋ 生成命令表 ＋ 客户端构建） |
+| t269f-targeted-before | `cmd /c .scratch\\t269-final\\g2-targeted.cmd` | 1 | 诊断：修补前靶向三件（5 红，本票 4 ＋ 他席 #239 1） |
+| t269f-probe-shapes | `cmd /c .scratch\\t269-final\\g3-probe.cmd` | 0 | 探针：选断言锚点（产物形状与可见文案） |
+| t269f-verify-first | `cmd /c .scratch\\t269-final\\g4-verify.cmd` | 1 | 诊断：前后比对第一跑（时刻归一缺口，`others_changed=1` 假红） |
+| t269f-probe-exercise | `cmd /c .scratch\\t269-final\\g5-exercise.cmd` | 0 | 探针：定位上述假红（时刻单列一格） |
+| t269f-ex2 | `cmd /c .scratch\\t269-final\\g6-ex2.cmd` | 0 | 探针：假红原件与逐字节对照（`fc /b` 一处 1 字节） |
+| t269f-verify-2 | `cmd /c .scratch\\t269-final\\g4-verify.cmd` | 0 | 门禁：前后逐条比对（`others_same=33/33`，`RESULT: PASS`） |
+| t269f-cli13 | `cmd /c .scratch\\t269-final\\g7-cli13.cmd` | 0 | 门禁：13 条写命令逐条实跑真出口（`RUN13 ok=13/13 doc=13/13`） |
+| t269f-full-before | `cmd /c .scratch\\t269-final\\g8-full-before.cmd` | 1 | 诊断：全量测试自测基线（tests 1608／fail 28） |
+| t269f-targeted-after | `cmd /c .scratch\\t269-final\\g9-targeted-after.cmd` | 1 | 诊断：修补后靶向三件（只剩他席 #239 一红） |
+| t269f-window | `cmd /c .scratch\\t269-final\\g10-window.cmd` | 20 | 诊断：变异自检判据写错的第一轮（未跑全量，exit=20） |
+| t269f-window2 | `cmd /c .scratch\\t269-final\\g10-window.cmd` | 1 | 诊断：变异电池 exit=0 ＋ 全量测试（tests 1616／fail 28） |
+| t269f-windowA | `cmd /c .scratch\\t269-final\\g11-windowA.cmd` | 0 | 门禁：变异电池 ＋ 入仓脚本复跑 ＋ 13 条实跑 ＋ gen:check（窗口内三步骤皆 exit=0） |
+| t269f-windowB1 | `cmd /c .scratch\\t269-final\\g12-windowB1.cmd` | 0 | （未登记作用） |
+
+原文逐行（`RUN`）：
+
+```text
+RUN ticket=269 runId=t269f-build cmd="cmd /c .scratch\\t269-final\\g1-build.cmd" waitedMs=0 exit=0 pid=17020 at=2026-09-14T05:43:48.906Z
+RUN ticket=269 runId=t269f-targeted-before cmd="cmd /c .scratch\\t269-final\\g2-targeted.cmd" waitedMs=0 exit=1 pid=43556 at=2026-09-14T05:44:16.496Z
+RUN ticket=269 runId=t269f-probe-shapes cmd="cmd /c .scratch\\t269-final\\g3-probe.cmd" waitedMs=10002 exit=0 pid=26520 at=2026-09-14T05:45:08.947Z
+RUN ticket=269 runId=t269f-verify-first cmd="cmd /c .scratch\\t269-final\\g4-verify.cmd" waitedMs=10001 exit=1 pid=44536 at=2026-09-14T05:46:52.269Z
+RUN ticket=269 runId=t269f-probe-exercise cmd="cmd /c .scratch\\t269-final\\g5-exercise.cmd" waitedMs=0 exit=0 pid=45712 at=2026-09-14T05:47:07.631Z
+RUN ticket=269 runId=t269f-ex2 cmd="cmd /c .scratch\\t269-final\\g6-ex2.cmd" waitedMs=1 exit=0 pid=27924 at=2026-09-14T05:47:46.816Z
+RUN ticket=269 runId=t269f-verify-2 cmd="cmd /c .scratch\\t269-final\\g4-verify.cmd" waitedMs=1 exit=0 pid=43048 at=2026-09-14T05:48:13.775Z
+RUN ticket=269 runId=t269f-cli13 cmd="cmd /c .scratch\\t269-final\\g7-cli13.cmd" waitedMs=0 exit=0 pid=50340 at=2026-09-14T05:48:48.050Z
+RUN ticket=269 runId=t269f-full-before cmd="cmd /c .scratch\\t269-final\\g8-full-before.cmd" waitedMs=160032 exit=1 pid=6568 at=2026-09-14T05:53:35.209Z
+RUN ticket=269 runId=t269f-targeted-after cmd="cmd /c .scratch\\t269-final\\g9-targeted-after.cmd" waitedMs=50003 exit=1 pid=4048 at=2026-09-14T06:05:41.663Z
+RUN ticket=269 runId=t269f-window cmd="cmd /c .scratch\\t269-final\\g10-window.cmd" waitedMs=10002 exit=20 pid=52832 at=2026-09-14T06:07:43.903Z
+RUN ticket=269 runId=t269f-window2 cmd="cmd /c .scratch\\t269-final\\g10-window.cmd" waitedMs=60006 exit=1 pid=41332 at=2026-09-14T06:11:34.618Z
+RUN ticket=269 runId=t269f-windowA cmd="cmd /c .scratch\\t269-final\\g11-windowA.cmd" waitedMs=40009 exit=0 pid=48988 at=2026-09-14T06:14:29.619Z
+RUN ticket=269 runId=t269f-windowB1 cmd="cmd /c .scratch\\t269-final\\g12-windowB1.cmd" waitedMs=50008 exit=0 pid=26824 at=2026-09-14T06:17:03.773Z
+```

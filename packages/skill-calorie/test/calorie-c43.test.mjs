@@ -142,6 +142,12 @@ test('C6 写收据HTML结构化分项', () => {
   assert.equal(env.shape, 'receipt');
   assert.ok(env.data.receipt.items.length >= 1);
   const html = readFileSync(htmlFile, 'utf8');
-  assert.match(html, /<li>/);
+  // #269 口径变更（有意改，票面与提交信息写清）：`calorie.diet.add` 的回执从
+  // `<ul><li>` 片段切成整页文档（`src/diet/receipt.ts` 的 `dietReceiptDoc`），
+  // 分项改落进 `ilife-block-data-table` 的单元格 —— 断言按**新形状的结构**钉，
+  // 不再找 `<li>`；产物仍必须是带 charset 的完整文档，且分项仍须落在表格单元格里。
+  assert.ok(html.startsWith('<!doctype html>'), 'C6：饮食写命令的回执已是整页文档');
+  assert.ok(html.includes('charset="utf-8"'), 'C6：整页文档缺 charset');
+  assert.match(html, /改动字段对照[\s\S]{0,600}?<td[^>]*>鸡胸<\/td>/, 'C6：改动分项没有落进结构化表格的单元格');
   assert.match(html, /鸡胸/);
 });

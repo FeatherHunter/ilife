@@ -4,6 +4,9 @@
  * `calorie.profile.update` 的回执页 ＋ `calorie.view.profile` 的结果页。
  * 同批钉住反面：其余会改数据库的命令**仍是原回执片段**（`<section …ilife:calorie:receipt>`），
  * 一刀切换页会被这一条测出来。
+ * 反面那张抽样表随各场景各自切整页而**收窄**：#337 把场景 03 体重 4 条拿走、
+ * #269 把场景 02 饮食 13 条（含 `calorie.water.log`／`calorie.product.add`）拿走，
+ * 两条的整页断言各自钉在本文件的下一条；剩下的仍逐字钉片段形状。
  * 运行：先 pnpm build，再 node --test packages/skill-calorie/test/profile-doc-179.test.mjs
  */
 import { strict as assert } from 'node:assert';
@@ -255,22 +258,53 @@ test('#247 场景 07 五张页的复制数据是「三格式三选一」菜单�
  * #337 口径变更（有意改，票面与提交信息写清）：场景 03 的 4 条体重写命令
  * （`calorie.weight.log`／`batch`／`update`／`remove`）已从这一堆里拿出来，
  * 切整页装配（`src/weight/receipt.ts`，见下条测试）；本条只钉剩下的抽样，
- * 不断言也不跳过体重键（体重键的整页断言见下条）。
+ * 不断言也不跳过体重命令（体重命令的整页断言见下条）。
+ *
+ * #269 口径变更（有意改，票面与提交信息写清）：场景 02 饮食这一族的 13 条
+ * （9 条饮食记录 ＋ 3 条食品库 ＋ 1 条饮水）同样从这一堆里拿出来，切整页装配
+ * （`src/diet/receipt.ts` 的 `dietReceiptDoc`，见下下条测试）；本条抽样改为
+ * 目标域与身体域这三条，仍是逐字钉片段形状。
  */
 test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）', () => {
   const dir = mkDb(true);
   const cases = [
-    ['calorie.water.log', { ml: 300, date: '2026-09-06', time: '09:00:00' }],
-    ['calorie.product.add', { productName: '燕麦片', calories: 389, protein: 13, fat: 7, carbohydrates: 66, sodium: 5 }],
     ['calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50 }],
+    ['calorie.goal.water', { water: 2000 }],
+    ['calorie.body.measure-add', { waistCm: 85, date: '2026-09-06' }],
   ];
   for (const [key, params] of cases) {
     const r = runCli(dir, key, params);
     assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
     assert.ok(r.file !== null, key + ' 未落盘');
     assert.ok(r.file.startsWith('<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:receipt">'),
-      key + ' 的产物不再是原回执片段（这 32 条本不该变）：' + r.file.slice(0, 80));
+      key + ' 的产物不再是原回执片段（本条钉住的命令尚未切整页）：' + r.file.slice(0, 80));
     assert.ok(!r.file.startsWith('<!doctype html>'), key + ' 意外变成了整页文档');
+  }
+});
+
+/** #269 场景 02 饮食这一族的写命令已是完整文档（从上条那张片段表里拿出来）。
+ *
+ * 口径变更说明：#179 当年断言「其余仍是原回执片段」，本票把饮食这一族的 13 条
+ * 切成整页回执（`src/diet/receipt.ts` 的 `dietReceiptDoc`，与场景 07 的
+ * `profileReceiptDoc` 同一份 `assembleDocPage`），故上条抽样不再含饮食命令；
+ * 本条把其中两条钉死（另外 11 条的整页与逐条实跑见同目录
+ * `t269-verify-final.mjs` 的 13/13；不断言＝口径无锚，跳过＝放宽，都不许）。
+ */
+test('#269 饮食写命令已是完整文档（从「其余仍是片段」那张表里拿出来）', () => {
+  const dir = mkDb(true);
+  const cases = [
+    ['calorie.water.log', { ml: 300, date: '2026-09-06', time: '09:00:00' }, '已写入饮水记录'],
+    ['calorie.product.add', { productName: '燕麦片', calories: 389, protein: 13, fat: 7, carbohydrates: 66, sodium: 5 }, '已写入食品库'],
+  ];
+  for (const [key, params, written] of cases) {
+    const r = runCli(dir, key, params);
+    assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
+    assertDocPage(r.file, key);
+    assert.ok(r.file.includes('饮食 · 写后回执'), key + ' 缺场景 02 眉标');
+    assert.ok(r.file.includes('改动字段对照'), key + ' 缺改动分项表');
+    assert.ok(r.file.includes(written), key + ' 缺写入去向那一行：' + written);
+    assert.ok(r.file.includes('ilife-copy-log'), key + ' 缺「复制日志」按钮（#239）');
+    assert.ok(r.file.length > 10000, key + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
   }
 });
 
