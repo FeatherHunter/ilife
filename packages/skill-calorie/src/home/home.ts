@@ -25,7 +25,13 @@ export interface HomeData {
   proteinPct: number | null;
   waterPct: number | null;
   deficitToday: number | null;
-  week: { start: string; end: string; series: DaySeries[]; avgIntake: number | null; avgDeficit: number | null; loggedDays: number };
+  week: {
+    start: string; end: string; series: DaySeries[]; avgIntake: number | null;
+    avgDeficit: number | null; loggedDays: number;
+    /** 本页窗口的自然天数（＝`windowDays` 入参）：页头「今日／本周／本月」按它取词，
+     *  不按 `series.length` 现算——两者同值，但窗口名只该有一个算处。 */
+    windowDays: number;
+  };
   streakDays: number;
 }
 
@@ -87,6 +93,7 @@ export function buildHomeData(db: DatabaseSync, date?: string, windowDays = 7): 
       avgIntake: seriesAvg(series, 'calories'),
       avgDeficit: seriesAvg(series, 'deficit'),
       loggedDays,
+      windowDays,
     },
   };
 }

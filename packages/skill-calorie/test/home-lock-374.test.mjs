@@ -8,6 +8,11 @@
  * 视觉留 #375 肉眼，本文件不做视觉判断。
  * 变异：`T374_BREAK=1` 给首条加一处必 miss 的针，必红；去掉必绿。
  * 运行：`node --test packages/skill-calorie/test/home-lock-374.test.mjs`
+ *
+ * #401c · 针位收一号：`HOME` 首针原为「今日总览」（h1 里那个整串），现改「总览」——
+ * #401c 照审计工单把页名改成如实反映**本唤醒词的窗口**（今日／近 7 天／近 30 天），
+ * 同一命令键（`calorie.view.home`）带不同 `windowDays` 不再四页共用一个「今日总览」。
+ * 针的**本意**是「h1 位有内容且是这一族的话」，故取共有的「总览」二字；其余针一字未动。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
@@ -26,7 +31,7 @@ const { openDb, DB_FILENAME } = await import(pathToFileURL(join(ROOT, 'packages'
 const { seedFull, SEED_TODAY } = await import(pathToFileURL(join(ROOT, 'docs', 'research', 't81-seed.mjs')).href);
 const { assertDocPage } = await import(pathToFileURL(join(HERE, 'doc-page-assert.mjs')).href);
 
-const HOME = ['今日总览', '今日摄入', '蛋白', '饮水', '今日缺口', '连续记录', '周均摄入', '复制数据'];
+const HOME = ['总览', '今日摄入', '蛋白', '饮水', '今日缺口', '连续记录', '周均摄入', '复制数据'];
 const CASES = [
   { wake: '看今日主页', key: 'calorie.view.home', cli: `calorie-cmd-read calorie.view.home --params '{"date":"今日"}'`, shape: 'doc', needles: [...HOME, 'calorie.view.home'] },
   { wake: '看今日饮食概览', key: 'calorie.view.diet', cli: `calorie-cmd-read calorie.view.diet --params '{"window":"今日"}'`, shape: 'doc', needles: ['累计', '日均', '目标', '趋势', '按日汇总', '蛋白', 'calorie.view.diet'] },
