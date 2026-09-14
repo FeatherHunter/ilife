@@ -832,6 +832,65 @@ test('落库 · 训练计划 set/copy/set-week/add-movement/set-rest：回执与
   }
 });
 
+test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete：回执与库内行', () => {
+  // update：配置字段改前改后落库
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-update', { title: '新标题' });
+    withRead(dir, 'calorie.workout.plan-update', (db) => {
+      assert.equal(q1(db, 'SELECT title FROM workout_plan_config WHERE id = 1').title, '新标题', 'plan-update 未落库');
+    });
+    const bad = run('calorie.workout.plan-update', { totalWeeks: 9 }, { SKILLS_DB_PATH: dir });
+    assert.equal(bad.status, 2, 'plan-update 改总周数应 exit 2，实测 ' + bad.status);
+  }
+  // update-day：时段改名落库
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-update-day', { week: 1, dayOfWeek: 3, newLabel: '腿部日' });
+    withRead(dir, 'calorie.workout.plan-update-day', (db) => {
+      assert.equal(q1(db, 'SELECT session_label FROM workout_plans WHERE week_number = 1 AND day_of_week = 3').session_label, '腿部日', 'plan-update-day 未落库');
+    });
+  }
+  // delete-day：整天硬删，行消失
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-delete-day', { week: 1, dayOfWeek: 3 });
+    withRead(dir, 'calorie.workout.plan-delete-day', (db) => {
+      assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plans WHERE week_number = 1 AND day_of_week = 3').n, 0, 'plan-delete-day 未删行');
+      assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plans').n, 1, 'plan-delete-day 多删了别天的行');
+    });
+  }
+  // update-movement：动作名替换落库
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-update-movement', { oldMovement: '俯卧撑', newMovement: { name: '钻石俯卧撑' } });
+    withRead(dir, 'calorie.workout.plan-update-movement', (db) => {
+      const row = q1(db, 'SELECT movements FROM workout_plans WHERE week_number = 1 AND day_of_week = 1');
+      assert.ok(String(row.movements).includes('钻石俯卧撑'), 'plan-update-movement 新名未落库');
+      assert.ok(!String(row.movements).includes('"俯卧撑"'), 'plan-update-movement 旧名残留');
+    });
+  }
+  // delete：整份硬删（须 confirm；无 confirm 即 exit 2）
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const bare = run('calorie.workout.plan-delete', {}, { SKILLS_DB_PATH: dir });
+    assert.equal(bare.status, 2, 'plan-delete 无确认应 exit 2，实测 ' + bare.status);
+    withRead(dir, 'calorie.workout.plan-delete', (db) => {
+      assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plan_config').n, 1, 'plan-delete 裸调不应写库');
+    });
+    runWrite(dir, 'calorie.workout.plan-delete', { confirm: true });
+    withRead(dir, 'calorie.workout.plan-delete', (db) => {
+      assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plan_config').n, 0, 'plan-delete 未删配置');
+      assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plans').n, 0, 'plan-delete 未删会话行');
+    });
+  }
+});
+
 // ---------------------------------------------------------------- 覆盖门
 
 test('覆盖门 · 全部写键逐键落库断言（每键 ≥1 次真实只读查询，缺键/空转即红）', () => {

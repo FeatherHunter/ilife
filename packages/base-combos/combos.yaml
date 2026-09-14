@@ -189,6 +189,16 @@ combos:
     shape: receipt
     title: 复制训练计划
     cmd: skill-calorie
+  - key: calorie.workout.plan-delete
+    skill: calorie
+    shape: receipt
+    title: 撤销训练计划
+    cmd: skill-calorie
+  - key: calorie.workout.plan-delete-day
+    skill: calorie
+    shape: receipt
+    title: 删某天训练
+    cmd: skill-calorie
   - key: calorie.workout.plan-set
     skill: calorie
     shape: receipt
@@ -203,6 +213,21 @@ combos:
     skill: calorie
     shape: receipt
     title: 定一周计划
+    cmd: skill-calorie
+  - key: calorie.workout.plan-update
+    skill: calorie
+    shape: receipt
+    title: 改训练计划
+    cmd: skill-calorie
+  - key: calorie.workout.plan-update-day
+    skill: calorie
+    shape: receipt
+    title: 改某天训练
+    cmd: skill-calorie
+  - key: calorie.workout.plan-update-movement
+    skill: calorie
+    shape: receipt
+    title: 改动作
     cmd: skill-calorie
   - key: calorie.help.center
     skill: calorie

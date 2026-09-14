@@ -3,7 +3,7 @@
  * 权威是声明层：`src/cli/legacy/routes/scene-NN.ts`（未搬迁清单，一场景一件）与各能力
  * `src/<能力>/routes.ts`（已搬迁键，一能力一件）。本件只做「按 `list` 分组、按 `order` 升序」的
  * 排序与拼接，不含任何顺序知识——顺序事实只住声明的 `order` 字段，换文件搬动不会打乱顺序。
- * 本次生成：WAKE_ROUTES 436 条 ＋ NEW_KEY_ROUTES 63 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 500 条（与声明逐条自洽：`pnpm gen:check` 验真）。
+ * 本次生成：WAKE_ROUTES 436 条 ＋ NEW_KEY_ROUTES 68 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 505 条（与声明逐条自洽：`pnpm gen:check` 验真）。
  */
 import type { ExecWakeRoute, WakeRoute } from './routeSpec.js';
 
@@ -200,11 +200,11 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '定休息日', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"set-rest","week":1,"dayOfWeek":3}\'' },
   { wakeWord: '加训练动作', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"add-movement","week":1,"dayOfWeek":1,"movement":{"name":"硬拉"}}\'' },
   { wakeWord: '定一周计划', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"set-week","week":1}\'' },
-  { wakeWord: '改训练计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },
-  { wakeWord: '改某天训练', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },
-  { wakeWord: '删某天训练', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },
-  { wakeWord: '改动作', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },
-  { wakeWord: '撤销训练计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },
+  { wakeWord: '改训练计划', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"update","title":"示例改名"}\'' },
+  { wakeWord: '改某天训练', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"update-day","week":1,"dayOfWeek":3,"newLabel":"下肢＋核心"}\'' },
+  { wakeWord: '删某天训练', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"delete-day","week":1,"dayOfWeek":3}\'' },
+  { wakeWord: '改动作', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"update-movement","oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
+  { wakeWord: '撤销训练计划', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"delete"}\'' },
   { wakeWord: '落地训练', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
   { wakeWord: '落地到本周末', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
   { wakeWord: '落地到本月底', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
@@ -447,7 +447,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '查高蛋白榜', scene: '10', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_protein","topN":10,"window":"7d"}\'' },
 ];
 
-/** 63 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
+/** 68 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
 export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '存身材照', scene: '09', kind: 'exec', key: 'calorie.photo.add', cli: 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'' },
   { wakeWord: '移除身材照', scene: '09', kind: 'exec', key: 'calorie.photo.remove', cli: 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'' },
@@ -512,6 +512,11 @@ export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '确认定一周计划', scene: '05', kind: 'exec', key: 'calorie.workout.plan-set-week', cli: 'calorie-cmd-read calorie.workout.plan-set-week --params \'{"week":1,"days":[{"dayOfWeek":1,"sessionLabel":"上肢","movements":[{"name":"俯卧撑"}]}]}\'' },
   { wakeWord: '确认加训练动作', scene: '05', kind: 'exec', key: 'calorie.workout.plan-add-movement', cli: 'calorie-cmd-read calorie.workout.plan-add-movement --params \'{"week":1,"dayOfWeek":1,"movement":{"name":"深蹲"}}\'' },
   { wakeWord: '确认定休息日', scene: '05', kind: 'exec', key: 'calorie.workout.plan-set-rest', cli: 'calorie-cmd-read calorie.workout.plan-set-rest --params \'{"week":1,"dayOfWeek":3}\'' },
+  { wakeWord: '确认改训练计划', scene: '05', kind: 'exec', key: 'calorie.workout.plan-update', cli: 'calorie-cmd-read calorie.workout.plan-update --params \'{"title":"示例改名"}\'' },
+  { wakeWord: '确认改某天训练', scene: '05', kind: 'exec', key: 'calorie.workout.plan-update-day', cli: 'calorie-cmd-read calorie.workout.plan-update-day --params \'{"week":1,"dayOfWeek":3,"newLabel":"下肢＋核心"}\'' },
+  { wakeWord: '确认删某天训练', scene: '05', kind: 'exec', key: 'calorie.workout.plan-delete-day', cli: 'calorie-cmd-read calorie.workout.plan-delete-day --params \'{"week":1,"dayOfWeek":3}\'' },
+  { wakeWord: '确认改动作', scene: '05', kind: 'exec', key: 'calorie.workout.plan-update-movement', cli: 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
+  { wakeWord: '确认撤销训练计划', scene: '05', kind: 'exec', key: 'calorie.workout.plan-delete', cli: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
 ];
 
 /** 1 条覆盖修复入口（FX-81-5：键失去唯一可跑入口时补的单命令入口） */
@@ -519,5 +524,5 @@ export const COVERAGE_REPAIR_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看目标推荐', scene: '06', kind: 'exec', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
 ];
 
-/** 全量路由（436 条 SoT ＋ 63 条新拟 ＋ 1 条覆盖修复） */
+/** 全量路由（436 条 SoT ＋ 68 条新拟 ＋ 1 条覆盖修复） */
 export const ALL_ROUTES: readonly WakeRoute[] = [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES];

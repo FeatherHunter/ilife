@@ -20,9 +20,14 @@ import { viewPlanWizard } from './wizard.js';
 import {
   writePlanAddMovement,
   writePlanCopy,
+  writePlanDelete,
+  writePlanDeleteDay,
   writePlanSet,
   writePlanSetRest,
   writePlanSetWeek,
+  writePlanUpdate,
+  writePlanUpdateDay,
+  writePlanUpdateMovement,
 } from './write.js';
 
 export const WORKOUT_COMMANDS = [
@@ -38,4 +43,9 @@ export const WORKOUT_COMMANDS = [
   { kind: 'write', key: 'calorie.workout.plan-set-week', shape: 'receipt', title: '定一周计划', wakeWord: '定一周计划', run: writePlanSetWeek, example: 'calorie-cmd-read calorie.workout.plan-set-week --params \'{"week":1,"days":[{"dayOfWeek":1,"sessionLabel":"上肢","movements":[{"name":"俯卧撑"}]}]}\'' },
   { kind: 'write', key: 'calorie.workout.plan-add-movement', shape: 'receipt', title: '加训练动作', wakeWord: '加训练动作', run: writePlanAddMovement, example: 'calorie-cmd-read calorie.workout.plan-add-movement --params \'{"week":1,"dayOfWeek":1,"movement":{"name":"深蹲"}}\'' },
   { kind: 'write', key: 'calorie.workout.plan-set-rest', shape: 'receipt', title: '定休息日', wakeWord: '定休息日', run: writePlanSetRest, example: 'calorie-cmd-read calorie.workout.plan-set-rest --params \'{"week":1,"dayOfWeek":3}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-update', shape: 'receipt', title: '改训练计划', wakeWord: '改训练计划', run: writePlanUpdate, example: 'calorie-cmd-read calorie.workout.plan-update --params \'{"title":"示例改名"}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-update-day', shape: 'receipt', title: '改某天训练', wakeWord: '改某天训练', run: writePlanUpdateDay, example: 'calorie-cmd-read calorie.workout.plan-update-day --params \'{"week":1,"dayOfWeek":3,"newLabel":"下肢＋核心"}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-delete-day', shape: 'receipt', title: '删某天训练', wakeWord: '删某天训练', run: writePlanDeleteDay, example: 'calorie-cmd-read calorie.workout.plan-delete-day --params \'{"week":1,"dayOfWeek":3}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-update-movement', shape: 'receipt', title: '改动作', wakeWord: '改动作', run: writePlanUpdateMovement, example: 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-delete', shape: 'receipt', title: '撤销训练计划', wakeWord: '撤销训练计划', run: writePlanDelete, example: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
 ] satisfies readonly CommandSpec[];

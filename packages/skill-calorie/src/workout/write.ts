@@ -1,4 +1,4 @@
-/** 训练计划写命令（HELP 场景 05「健身计划」下一级「定训练计划」）：5 个创建类写处理函数。
+/** 训练计划写命令（HELP 场景 05「健身计划」下一级「定训练计划／改训练计划」）：创建类 5 个＋变更类 5 个写处理函数。
  *
  * 照 `body/log.ts` 的形状：参数先验后写（用法错 exit 2、目标缺失 exit 4），回执经共用
  * `shared/writeParts.ts` 的 `R`／`out`（`ok`／`message`／`receipt` 三件），库函数复用
@@ -18,7 +18,11 @@ import {
   clearWeek,
   copyPlan,
   copyWeek,
+  deleteDay,
+  deletePlan,
+  deleteSession,
   getPlan,
+  updateConfig,
   updateSession,
   writePlan,
 } from './planStore.js';
@@ -282,14 +286,88 @@ const PREVIEW_BY_OP: Record<string, (params: Record<string, unknown>, db: Databa
   'set-week': previewSetWeek,
   'add-movement': previewAddMovement,
   'set-rest': previewSetRest,
+  update: previewUpdate,
+  'update-day': previewUpdateDay,
+  'delete-day': previewDeleteDay,
+  'update-movement': previewUpdateMovement,
+  delete: previewDelete,
 };
 
 /** 预览分发（`view.plan-write-preview` 经它走；未知 op 即 exit 2）。 */
 export function previewWrite(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
   const op = optStr(params, 'op');
   const fn = (op !== undefined ? PREVIEW_BY_OP[op] : undefined);
-  if (!fn) fail(2, '缺参数 op（copy／set-week／add-movement／set-rest 四选一）');
+  if (!fn) fail(2, '缺参数 op（copy／set-week／add-movement／set-rest／update／update-day／delete-day／update-movement／delete 九选一）');
   return (fn as (params: Record<string, unknown>, db: DatabaseSync) => WritePreview)(params, db);
+}
+
+export function previewUpdate(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
+  const plan = getPlan(db);
+  if (!plan.config) fail(4, '无训练计划可改（先定训练计划）');
+  const keys = Object.keys(CONFIG_LABEL).filter((k) => optStr(params, k) !== undefined);
+  if (keys.length === 0) fail(2, '缺参数（title／version／description／start_date 至少给一个）');
+  const cur: Record<string, unknown> = {
+    title: plan.config.title, version: plan.config.version,
+    description: plan.config.description, start_date: plan.config.start_date,
+  };
+  const before = keys.map((k) => String(CONFIG_LABEL[k]) + '：' + String(cur[k] ?? '（空）'));
+  const after = keys.map((k) => String(CONFIG_LABEL[k]) + '：' + String(optStr(params, k)));
+  return { op: 'update', title: '改训练计划配置', before, after, note: '确认后写入计划库' };
+}
+
+export function previewUpdateDay(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
+  const { wn, dn } = resolveDayTarget(params, db);
+  const plan = getPlan(db);
+  const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
+  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可改');
+  const before = daySessions.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const changes: string[] = [];
+  for (const k of ['newLabel', 'timeStart', 'timeEnd', 'rest', 'movements']) {
+    if (params[k] !== undefined) changes.push(k + ' → ' + JSON.stringify(params[k]));
+  }
+  const after = changes.length === 0 ? ['（改项未给出：页上补填后再确认）'] : before.map((b) => b + ' 改：' + changes.join('、'));
+  return { op: 'update-day', title: '改第' + wn + '周周' + dn + '训练', before, after, note: '确认后写入计划库' };
+}
+
+export function previewDeleteDay(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
+  const { wn, dn } = resolveDayTarget(params, db);
+  const si = optInt(params, 'sessionIndex');
+  const plan = getPlan(db);
+  const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
+  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可删');
+  const before = daySessions.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const after = si === undefined ? ['第' + wn + '周周' + dn + '整天删除（硬删除，不可恢复）'] :
+    ['第' + wn + '周周' + dn + '第' + si + '段删除（硬删除，不可恢复），其余保留'];
+  return { op: 'delete-day', title: '删第' + wn + '周周' + dn + '训练', before, after, note: '快照如上；确认后删除，不可恢复' };
+}
+
+export function previewUpdateMovement(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
+  const oldName = optStr(params, 'oldMovement');
+  if (!oldName) fail(2, '缺参数 oldMovement（原动作名）');
+  const week = optInt(params, 'week');
+  const plan = getPlan(db);
+  const hits = plan.sessions.filter((s) => (week === undefined || s.week_number === week) &&
+    (s.movements ?? []).some((m) => m.name === oldName));
+  if (hits.length === 0) fail(4, '没有找到动作「' + String(oldName) + '」');
+  const before = hits.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const newName = typeof params['newMovement'] === 'object' && params['newMovement'] !== null
+    ? String(((params['newMovement'] as Record<string, unknown>)['name'] ?? '（新动作未具名）')) : '（新动作为给出：页上补填后再确认）';
+  return {
+    op: 'update-movement', title: '把「' + String(oldName) + '」换成「' + newName + '」（' + hits.length + ' 段）',
+    before, after: before.map((b) => b + ' 换：' + newName), note: '确认后写入计划库',
+  };
+}
+
+export function previewDelete(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
+  void params;
+  const plan = getPlan(db);
+  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划可撤销');
+  return {
+    op: 'delete', title: '撤销整份训练计划',
+    before: ['「' + String(plan.config?.title ?? '未命名') + '」共 ' + plan.sessions.length + ' 场'],
+    after: ['配置＋全部会话删除（硬删除，不可恢复）'],
+    note: '确认后删除；删完需重定计划',
+  };
 }
 /** `calorie.workout.plan-set-rest` · 定休息日（date 与 week＋dayOfWeek 二选一；缺省标休息）。 */
 export function writePlanSetRest(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
@@ -323,5 +401,170 @@ export function writePlanSetRest(params: Record<string, unknown>, db: DatabaseSy
   return out(R('定休息日', daySessions.length === 0 ? 'create' : 'update', summary, '定休息日', 'workout_plans（休息标记）', {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'rest']),
     items: [{ status: '成功', reason: '', detail: summary }],
+  }));
+}
+
+/* ------------------------------------------------ 变更类（#349） */
+
+const CONFIG_LABEL: Record<string, string> = { title: '标题', version: '版本', description: '描述', start_date: '开始日期' };
+
+/** `calorie.workout.plan-update` · 改训练计划（配置字段；总周数由行数决定，不直接改）。 */
+export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  if (params['totalWeeks'] !== undefined || params['total_weeks'] !== undefined) {
+    fail(2, '总周数由会话行数决定，不直接改（增删周用定一周计划／删某天训练）');
+  }
+  const fields: Partial<Record<'title' | 'version' | 'description' | 'start_date', string>> = {};
+  for (const k of Object.keys(CONFIG_LABEL)) {
+    const v = optStr(params, k);
+    if (v !== undefined) {
+      if (v === '') fail(2, k + ' 不得为空');
+      (fields as Record<string, string>)[k] = v;
+    }
+  }
+  if (Object.keys(fields).length === 0) fail(2, '缺参数（title／version／description／start_date 至少给一个）');
+  const plan = getPlan(db);
+  if (!plan.config) fail(4, '无训练计划可改（先定训练计划）');
+  const before = (Object.keys(fields) as Array<keyof typeof fields>)
+    .map((k) => String(CONFIG_LABEL[k]) + '：' + String(plan.config?.[k] ?? '（空）')).join('、');
+  const ok = updateConfig(db, fields);
+  if (!ok) fail(4, '改训练计划未命中行');
+  const after = (Object.keys(fields) as Array<keyof typeof fields>)
+    .map((k) => String(CONFIG_LABEL[k]) + '：' + String(fields[k])).join('、');
+  const summary = '已改训练计划（' + after + '）';
+  return out(R('改训练计划', 'update', summary, '改训练计划', 'workout_plan_config（配置字段）', {
+    recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['title', 'version', 'description', 'start_date']),
+    items: [{ status: '成功', reason: '', detail: '改前 ' + before + ' → 改后 ' + after }],
+  }));
+}
+
+function resolveDayTarget(params: Record<string, unknown>, db: DatabaseSync): { wn: number; dn: number } {
+  let week = optInt(params, 'week');
+  let dow = optInt(params, 'dayOfWeek');
+  if (optStr(params, 'date') !== undefined) {
+    const date = dayField(params, 'date');
+    if (!date) fail(2, 'date 非法');
+    const plan = getPlan(db);
+    const start = plan.config?.start_date ?? null;
+    if (!start) fail(2, '计划缺开始日期，无法定位周次');
+    assertISO(date as string, 'date');
+    const w = weekOfDate(start, date as string);
+    week = w.week;
+    dow = w.dow;
+  }
+  return { wn: needWeek(week, 'week（或 date）'), dn: needDow(dow, 'dayOfWeek（或 date）') };
+}
+
+/** `calorie.workout.plan-update-day` · 改某天训练（时段定位：sessionIndex／单段直改／多段必须点名）。 */
+export function writePlanUpdateDay(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  const { wn, dn } = resolveDayTarget(params, db);
+  const plan = getPlan(db);
+  const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
+  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可改');
+  const si = optInt(params, 'sessionIndex');
+  let target = daySessions;
+  if (si !== undefined) {
+    target = daySessions.filter((s) => s.session_index === si);
+    if (target.length === 0) fail(4, '第' + wn + '周周' + dn + '没有第' + si + '段');
+  } else if (daySessions.length > 1 && optStr(params, 'sessionLabel') === undefined) {
+    fail(2, '第' + wn + '周周' + dn + '有 ' + daySessions.length + ' 段，给 sessionIndex 或 sessionLabel 指定改哪段');
+  } else if (optStr(params, 'sessionLabel') !== undefined) {
+    target = daySessions.filter((s) => s.session_label === optStr(params, 'sessionLabel'));
+    if (target.length === 0) fail(4, '第' + wn + '周周' + dn + '没有时段「' + String(optStr(params, 'sessionLabel')) + '」');
+  }
+  const patch: { sessionLabel?: string; timeStart?: string | null; timeEnd?: string | null; isRestDay?: boolean; movements?: PlanMovement[] } = {};
+  const label = optStr(params, 'sessionLabel');
+  // sessionLabel 既做定位又做改名：定位命中后若同时给 newLabel 则改名，否则只定位
+  const newLabel = optStr(params, 'newLabel');
+  if (newLabel !== undefined) {
+    if (newLabel === '') fail(2, 'newLabel 不得为空');
+    patch.sessionLabel = newLabel;
+  } else if (label !== undefined && si === undefined && daySessions.length === 1) {
+    patch.sessionLabel = label;
+  }
+  if (optStr(params, 'timeStart') !== undefined) patch.timeStart = optStr(params, 'timeStart') ?? null;
+  if (optStr(params, 'timeEnd') !== undefined) patch.timeEnd = optStr(params, 'timeEnd') ?? null;
+  if (typeof params['rest'] === 'boolean') patch.isRestDay = params['rest'] as boolean;
+  if (params['movements'] !== undefined) {
+    if (!Array.isArray(params['movements'])) fail(2, 'movements 须为数组（整段替换）');
+    patch.movements = (params['movements'] as unknown[]).map(asMovement);
+  }
+  if (Object.keys(patch).length === 0) fail(2, '缺参数（newLabel／timeStart／timeEnd／rest／movements 至少给一个）');
+  let n = 0;
+  for (const s of target) {
+    if (updateSession(db, wn, dn, s.session_index, patch)) n += 1;
+  }
+  if (n === 0) fail(4, '改某天训练未命中行');
+  const summary = '已改第' + wn + '周周' + dn + '训练（' + n + ' 段）';
+  return out(R('改某天训练', 'update', summary, '改某天训练', 'workout_plans（某天时段）', {
+    recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'sessionIndex', 'sessionLabel', 'newLabel', 'timeStart', 'timeEnd', 'rest', 'movements']),
+    items: [{ status: '成功', reason: '', detail: summary }],
+  }));
+}
+
+/** `calorie.workout.plan-delete-day` · 删某天训练（硬删除，不可恢复；过程页先给快照）。 */
+export function writePlanDeleteDay(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  const { wn, dn } = resolveDayTarget(params, db);
+  const si = optInt(params, 'sessionIndex');
+  const plan = getPlan(db);
+  const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
+  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可删');
+  const snapshot = daySessions.map((s) => s.session_label || '训练').join('、');
+  if (si !== undefined) {
+    const hit = daySessions.filter((s) => s.session_index === si);
+    if (hit.length === 0) fail(4, '第' + wn + '周周' + dn + '没有第' + si + '段');
+    deleteSession(db, wn, dn, si);
+    const summary = '已删第' + wn + '周周' + dn + '第' + si + '段（硬删除，不可恢复）';
+    return out(R('删某天训练', 'delete', summary, '删某天训练', 'workout_plans（删时段）', {
+      recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'sessionIndex']),
+      items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: '快照：' + snapshot + ' → ' + summary }],
+    }));
+  }
+  const r = deleteDay(db, wn, dn);
+  const summary = '已删第' + wn + '周周' + dn + '训练（' + r.deletedSessions + ' 段，硬删除，不可恢复）';
+  return out(R('删某天训练', 'delete', summary, '删某天训练', 'workout_plans（删整天）', {
+    recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek']),
+    items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: '快照：' + snapshot + ' → ' + summary }],
+  }));
+}
+
+/** `calorie.workout.plan-update-movement` · 改动作（按名替换；week 缺省＝所有周）。 */
+export function writePlanUpdateMovement(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  const oldName = optStr(params, 'oldMovement');
+  if (!oldName) fail(2, '缺参数 oldMovement（原动作名）');
+  const newMove = asMovement(params['newMovement']);
+  const week = optInt(params, 'week');
+  if (week !== undefined) needWeek(week, 'week');
+  const plan = getPlan(db);
+  const cands = plan.sessions.filter((s) => week === undefined || s.week_number === week);
+  let n = 0;
+  const where: string[] = [];
+  for (const s of cands) {
+    const moves = s.movements ?? [];
+    if (!moves.some((m) => m.name === oldName)) continue;
+    const next = moves.map((m) => (m.name === oldName ? { ...m, ...newMove } : m));
+    if (updateSession(db, s.week_number, s.day_of_week, s.session_index, { movements: next })) {
+      n += 1;
+      where.push('第' + s.week_number + '周周' + s.day_of_week);
+    }
+  }
+  if (n === 0) fail(4, '没有找到动作「' + String(oldName) + '」' + (week === undefined ? '' : '（第' + week + '周）'));
+  const summary = '已把「' + String(oldName) + '」换成「' + String(newMove.name) + '」（' + n + ' 段：' + where.slice(0, 4).join('、') + (where.length > 4 ? '…' : '') + '）';
+  return out(R('改动作', 'update', summary, '改动作', 'workout_plans（动作替换）', {
+    recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'oldMovement', 'newMovement']),
+    items: [{ status: '成功', reason: '', detail: summary }],
+  }));
+}
+
+/** `calorie.workout.plan-delete` · 撤销训练计划（整份硬删除，不可恢复；须带 confirm:true，
+ * 该确认只能来自写前预览页——裸调一律 exit 2，防一次误调清空整份计划）。 */
+export function writePlanDelete(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  if (params['confirm'] !== true) fail(2, '撤销整份计划须确认：先走写前预览（op=delete），确认后带 confirm:true 再调');
+  const plan = getPlan(db);
+  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划可撤销');
+  const r = deletePlan(db);
+  const summary = '已撤销训练计划「' + String(r.planSummary.title ?? '未命名') + '」（配置＋' + r.deletedRows + ' 场，硬删除，不可恢复）';
+  return out(R('撤销训练计划', 'delete', summary, '撤销训练计划', 'workout_plan_config＋workout_plans（整份删除）', {
+    recordId: null, ids: [], idSource: 'condition', writtenFields: ['confirm'],
+    items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: summary }],
   }));
 }

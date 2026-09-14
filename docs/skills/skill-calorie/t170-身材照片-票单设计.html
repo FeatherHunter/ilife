@@ -3,252 +3,195 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>场景 09 身材照片 · 票单设计</title>
+<title>场景 09 身材照片 · MAP 设计（定版）</title>
 <style>
   :root{
     --ink:#0f172a; --ink2:#334155; --muted:#64748b; --line:#e2e8f0; --bg:#f6f7f9; --card:#fff;
-    --rec:#047857; --rec-bg:#ecfdf5; --rec-line:#a7f3d0;
-    --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fde68a;
+    --rec:#047857; --rec-bg:#ecfdf5; --rec-line:#a7f3d0; --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fde68a;
     --bad:#b91c1c; --accent:#4338ca; --accent-bg:#eef2ff; --radius:14px;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
     font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 64px}
-  .hero{background:linear-gradient(135deg,#1e293b,#0f172a);color:#e2e8f0;border-radius:var(--radius);padding:26px 28px;position:relative}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 20px 64px}
+  .hero{background:linear-gradient(135deg,#1e293b,#0f172a);color:#e2e8f0;border-radius:var(--radius);padding:26px 28px}
   .crumb{font-size:12.5px;color:#94a3b8}
   .crumb a{color:#a5b4fc;text-decoration:none}
   .hero h1{margin:10px 0 8px;font-size:25px;line-height:1.35;color:#fff}
-  .lede{margin:0;color:#cbd5e1;font-size:14.5px;max-width:66ch}
+  .lede{margin:0;color:#cbd5e1;font-size:14.5px;max-width:70ch}
   .stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
   .stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:4px 12px;font-size:12.5px}
-  .counter{position:absolute;top:24px;right:26px;font-size:12.5px;color:#94a3b8;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px 12px}
-  .counter b{color:#fff}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-top:16px}
   .card h2{margin:0 0 8px;font-size:17px}
   .card .sub{margin:0 0 12px;color:var(--muted);font-size:13px}
   .short{background:var(--accent-bg);border-color:#c7d2fe}
   .short h2{color:var(--accent)}
-  .short code{background:#fff;border:1px solid #c7d2fe;border-radius:6px;padding:1px 7px;font-size:13.5px;color:#3730a3;font-family:ui-monospace,Consolas,monospace}
+  code{background:#f1f5f9;border-radius:5px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#334155}
+  .short code{background:#fff;border-color:#c7d2fe;color:#3730a3}
   table{width:100%;border-collapse:collapse;font-size:14px}
   th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
   th{font-size:12.5px;color:var(--muted);font-weight:600;background:#fbfcfe}
   tr:last-child td{border-bottom:0}
   .mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#475569}
-  .cmp td:first-child{color:var(--muted);font-size:13px;width:122px}
-  .inv td:first-child{width:92px} .inv td:nth-child(2){width:46px;text-align:center} .inv td:last-child{width:168px}
-  .gap{border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:10px;padding:14px 18px;margin-top:12px;background:#fff}
-  .gap h3{margin:0 0 4px;font-size:15px;color:var(--bad)}
-  .gap .was,.gap .now{font-size:13.5px;margin-top:6px}
-  .was b{color:var(--rec)} .now b{color:var(--bad)}
-  .q{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 22px;margin-top:16px}
-  .q.done{box-shadow:0 0 0 3px #dcfce7;border-left-color:var(--rec)}
-  .qhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-  .num{font:700 13px/1 ui-monospace,Consolas,monospace;color:#fff;background:var(--accent);border-radius:7px;padding:5px 9px}
-  .qhead h2{margin:0;font-size:17px}
-  .tag{font-size:11.5px;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--muted);background:#f8fafc}
-  .tag.heavy{background:#fef2f2;border-color:#fecaca;color:var(--bad)}
-  .q h3{margin:14px 0 4px;font-size:13px;letter-spacing:.04em;color:var(--muted)}
-  .q p{margin:6px 0}
-  .q ul{margin:6px 0;padding-left:20px}
-  .q code{background:#f1f5f9;border-radius:5px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#334155}
-  .rec{background:var(--rec-bg);border:1px solid var(--rec-line);border-radius:10px;padding:12px 16px;margin-top:14px}
-  .rec h3{margin:0 0 4px;color:var(--rec);font-size:12.5px;letter-spacing:.05em}
-  .rec p{margin:0;color:#065f46;font-size:14.5px}
-  .rec .why{color:#047857;font-size:13px;margin-top:6px}
-  .pick{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-  .pick button{font:inherit;font-size:13.5px;border-radius:9px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink2)}
-  .pick button:hover{border-color:#94a3b8}
-  .pick button[aria-pressed="true"]{background:var(--rec);border-color:var(--rec);color:#fff}
-  .pick button[aria-pressed="true"][data-pick="other"]{background:var(--warn);border-color:var(--warn)}
-  .pick .state{margin-left:auto;font-size:12.5px;color:var(--muted)}
+  .cmp td:first-child{color:var(--muted);font-size:13px;width:104px}
   .ok{color:var(--rec);font-weight:600} .no{color:var(--bad);font-weight:600}
+  .f{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:12px 16px;margin-top:10px;background:#fff}
+  .f b{color:var(--accent)}
+  .f .fix{color:var(--rec);font-size:13.5px;margin-top:4px}
+  .base{border-left:4px solid var(--rec)}
   footer{margin-top:22px;color:var(--muted);font-size:13.5px;text-align:center}
   footer b{color:var(--ink2)}
-  @media print{.pick,.counter{display:none}body{background:#fff}}
+  @media print{body{background:#fff}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header class="hero">
-    <div class="counter">已定 <b id="done">0</b> / 4</div>
     <div class="crumb">
-      爱生活 · 卡路里 · 场景 09 身材照片（10 条唤醒词）· 图
-      <a href="https://github.com/FeatherHunter/ilife/issues/159">#159</a> · 首发票
-      <a href="https://github.com/FeatherHunter/ilife/issues/170">#170</a>（已认领）
+      爱生活 · 卡路里 · 场景 09 身材照片 · 图
+      <a href="https://github.com/FeatherHunter/ilife/issues/159">#159</a>
+      · MAP 设计定版（2026-09-13 · 只做设计，不执行）
     </div>
-    <h1>身材照片的票单设计</h1>
+    <h1>身材照片 · MAP 设计（对抗式审查后定版）</h1>
     <p class="lede">
-      目标：<strong>HELP HTML 里身材照片的 10 个场景全部跑得通</strong>——每个场景找得到它的底层唤醒词，AI 知道该从那条唤醒词的哪一步往下走。
-      按你的三条核心思想落成 8 张票：SKILL.md 照 writing-for-agents（票 6）／这些代码从老技能重构（票 2、3、4、5）／该加命令加命令（票 4、5）。
+      目标句不改：<strong>10 条唤醒词在 DSH 里都能从头走到尾：说唤醒词 →（写类流程先出过程型 HTML）→ 复制 prompt → AI 用命令执行 → 拿到结果型 HTML 落盘、回执给绝对路径</strong>；
+      ① 10 条都跑得通 ② 产物是真实 HTML、能打开、由用户肉眼验收过。
+      过程决策由编排方自定，但每一条都经过对抗式审查：<em>它是否帮助达成目标？有没有更省事又同样达标的做法？</em>
     </p>
     <div class="stats">
-      <span class="stat">10 条唤醒词 / 4 子功能</span>
-      <span class="stat">4 类页面</span>
-      <span class="stat">命令面 0 缺口</span>
-      <span class="stat">老技能 8 脚本 + 7 模板</span>
-      <span class="stat">真库 22 行 / 65 张图</span>
+      <span class="stat">9 张票</span>
+      <span class="stat">4 环缺口</span>
+      <span class="stat">17 条审查发现</span>
+      <span class="stat">基线 5 条</span>
+      <span class="stat">自评 95／100</span>
     </div>
   </header>
 
   <section class="card short">
-    <h2>只想回一句话？</h2>
-    <p class="sub">回「全按推荐」，我就把 8 张票建齐（原生子议题边 ＋ 阻塞边）、写回地图，并开工票 2。</p>
-    <p>
-      <code>全按推荐</code>
-      ＝ 照片内嵌进页面（Q1）· 真出 GIF 单列一张票（Q2）· SKILL.md 留常驻规则＋指针、逐词工作流放包内披露文件（Q3）· 票单按 8 张切（Q4）。
+    <h2>第一性原理：目标拆成四环，缺一即不达成</h2>
+    <p class="sub">把目标句拆成用户实际会走的链，再问「每一环今天在不在」——四环的缺口互相独立，正好是切票边界。</p>
+    <table>
+      <tr><th>环</th><th>必要条件</th><th>今天在不在（实测）</th></tr>
+      <tr><td>① 入口可找</td><td>HELP 里每个场景带着自己的唤醒词与一条能跑的命令</td><td><span class="no">残缺</span>：写类缺「先出过程型页」指示，10 条里 <code>记身材照</code>／<code>查身材照</code>／<code>加照片标签</code>／<code>删照片标签</code> 4 条完全没有流程字样</td></tr>
+      <tr><td>② 过程型页</td><td>写类词先出页，页上给可复制 prompt</td><td><span class="no">残缺</span>：两张预检页已是完整文档；删与标签三条没有页（候选／快照缺）</td></tr>
+      <tr><td>③ 结果型产物</td><td>完整文档、双击能开、<strong>看得见照片</strong>、绝对路径回执</td><td><span class="no">不达标</span>：四类页面是片段；页面里没有任何照片</td></tr>
+      <tr><td>④ 说明面</td><td>AI 命中后知道从哪一步走</td><td><span class="no">缺失</span>：SKILL.md 里身材照片无工作流</td></tr>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>对抗式审查：7 条发现（对我自己上一版设计的证伪）</h2>
+    <p class="sub">发现 → 处置；全文见 <code>docs/skills/skill-calorie/t159-map-design.md</code>。</p>
+    <div class="f"><b>F1 形状验证票验的不是最险的一刀</b>：上一版只验「页面＝完整文档」，而真正的未知是<strong>照片字节进页面</strong>（读字节／缩放／内嵌／体积）——票 1 绿了也可能在票 2 撞墙。
+      <div class="fix">→ 票 1 并进内嵌：一条命令 → 完整文档 ＋ 内嵌照片 ＋ 复制区。</div></div>
+    <div class="f"><b>F2 基线今天判不了真假</b>：B4 的动作依赖一个还没写的脚本，基线只是写在纸上。
+      <div class="fix">→ 票 1 <strong>第一步先落十页基线</strong>，脚本与数字随票入仓。</div></div>
+    <div class="f"><b>F3 目标链的第一跳没人管</b>：HELP 侧 prompt 有没有指示「先出过程型页」，不在任何票的判据里。
+      <div class="fix">→ 新增票 #345，判据落在<strong>交付的 HELP HTML</strong> 上（不看源码）。</div></div>
+    <div class="f"><b>F4 GIF 可能在最后一步炸</b>：本包零图像依赖，合成＝解码＋缩放＋编码。
+      <div class="fix">→ GIF 票先证<strong>最小可行性</strong>（2 张照片 → 能播放的 .gif），选型写死纯 JS 不引原生库；证伪就停下重切，不静默降级。</div></div>
+    <div class="f"><b>F5 撤掉汇总锁票后总门是谁</b>。
+      <div class="fix">→ 总门＝命令自治探针（P1 <code>UNACCOUNTED</code> 必须为空）＋ 每票的变异自证。</div></div>
+    <div class="f"><b>F6 内嵌的边界条件没进判据</b>（体积、缺文件、未给照片目录）。
+      <div class="fix">→ 票 1／2 判据里加两条可判事实：缺照片<strong>明示哪张</strong>、单页体积上限写死。</div></div>
+    <div class="f"><b>F7 老协议 D7 没有落点判据</b>（跑完主动把 HTML 交给用户，不只给路径）。
+      <div class="fix">→ 并入 SKILL.md 票的判据（机制按本环境：把文件交给用户）。</div></div>
+  </section>
+
+  <section class="card">
+    <h2>第二轮审查：10 条（专挑判据假绿／风险没前置／验收走过场）</h2>
+    <div class="f"><b>F8 #345 的判据是软的</b>：「读得出从哪一步走」不是机器可判的事实。
+      <div class="fix">→ 改成四条机械断言：逐字唤醒词命中／命令 ∈ 键集／写类点名那张过程型页且该命令存在／变异必红。</div></div>
+    <div class="f"><b>F9 目标句里「落盘、回执给绝对路径」没人验</b>。
+      <div class="fix">→ 每张票的用例都加一条：<code>data.output</code> 是绝对路径且文件在盘上。</div></div>
+    <div class="f"><b>F10 #283 没验「复制 prompt」</b>——过程型页的价值就在那一下复制。
+      <div class="fix">→ 用例加：页上有可复制 prompt，且复制的就是写命令的照抄即跑形状。</div></div>
+    <div class="f"><b>F11 #285 有返工风险</b>（披露文件要点名那条新命令）。
+      <div class="fix">→ 补真依赖 <code>#285 ← #283</code>。</div></div>
+    <div class="f"><b>F12 端到端可能假绿</b>：agent 若读到 npm 旧包／陈旧拷贝，10 条照样「跑得通」。
+      <div class="fix">→ #287 加前置：装机位置与本仓 SKILL.md 逐字／印记比对，不过不许开验。</div></div>
+    <div class="f"><b>F13「肉眼验收」会退化成一句「还行」</b>。
+      <div class="fix">→ #287 加：验收页附老实物页面作对照 ＋ 逐条打勾判据。</div></div>
+    <div class="f"><b>F14 十页基线可能做不出来</b>（页面里有时间戳／产物名，sha 不稳）。
+      <div class="fix">→ 口径写死：固定时钟 ＋ 固定种子库 ＋ 固定照片目录，比规范化正文 sha；不确定内容当场记票，不静默放宽。</div></div>
+    <div class="f"><b>F15 三处命令可能漂移</b>（HELP / 页上复制的 prompt / <code>commands.ts</code> 的 example）。
+      <div class="fix">→ 并进 #345 判据：三处同源，任一处漂移即红。</div></div>
+    <div class="f"><b>F16 验收会改真库</b>。
+      <div class="fix">→ #287 加：跑前备份 ＋ 只用可回滚数据。</div></div>
+    <div class="f"><b>F17 #284 与 #341 串行是错的</b>：GIF 合成是第二大未知，却排在形状票后面。
+      <div class="fix">→ 拆两张：<code>#284 合成可行性</code>（无依赖，与 #341 并行先跑）＋ <code>#352 结果页内嵌</code>。</div></div>
+  </section>
+
+  <section class="card">
+    <h2>自评（100 分制，90 以上即设计达标）</h2>
+    <table>
+      <tr><th>维度</th><th>权重</th><th>自评</th><th>依据 ／ 扣分理由</th></tr>
+      <tr><td>目标可达（四环齐全）</td><td>20</td><td class="ok">19</td><td>四环各有票无漏环；扣 1：环③「能打开」的机器侧只是代理指标，真判据在人眼</td></tr>
+      <tr><td>切法（一条判据／独立红绿／一窗粒度）</td><td>15</td><td class="ok">14</td><td>9 张票各一条判据；扣 1：#282 七条回执页一窗偏满</td></tr>
+      <tr><td>判据鉴别力（变异必红、无软判据）</td><td>15</td><td class="ok">14</td><td>每票机械断言＋变异自证；扣 1：GIF「能播放」对人眼仍有残余依赖</td></tr>
+      <tr><td>基线冻结</td><td>10</td><td class="ok">9</td><td>B1–B5 各有动作；扣 1：B4 效力随页面改完递减</td></tr>
+      <tr><td>依赖与风险前置</td><td>15</td><td class="ok">15</td><td>两个最大未知都在 frontier 并行先跑；去掉一条伪依赖、补上两条真依赖</td></tr>
+      <tr><td>可执行性（票面自足、五段齐、落点明确）</td><td>10</td><td class="ok">10</td><td>9 张票五段齐；落点、抢锁、生成链、棘轮纪律写死</td></tr>
+      <tr><td>验收可达（人眼那关不走过场）</td><td>10</td><td class="ok">9</td><td>装机真实性＋对照物＋数据安全已补；扣 1：验收本身依赖用户</td></tr>
+      <tr><td>无浪费（没有跑不红的票）</td><td>5</td><td class="ok">5</td><td>汇总锁票已撤</td></tr>
+      <tr><td><strong>合计</strong></td><td><strong>100</strong></td><td><strong>95</strong></td><td>保守区间 <strong>91–95</strong></td></tr>
+    </table>
+    <p class="sub" style="margin-top:10px">
+      <strong>残余风险（设计已尽量压、无法归零）</strong>：① GIF 纯 JS 可行性若被证伪 —— 唯一可能动到票单结构的单点（替代方案已写进 #284）；② 内嵌体积／性能先撞真实照片尺寸（票 1 已写死上限与明示口径）；③ 验收环节依赖用户，设计只能把它做扎实（对照物＋逐条判据＋装机真实性＋跑前备份）。
     </p>
   </section>
 
   <section class="card">
-    <h2>判断依据：这 10 个场景的现状</h2>
-    <p class="sub">全部来自仓库与老技能实测（<span class="mono">triggers/scene-09-photo.ts</span>、老 <span class="mono">SKILL.md:1185-1272</span>、<span class="mono">templates\</span>、<span class="mono">render/photo.ts</span>）。</p>
-
-    <table class="inv">
-      <tr><th>子功能</th><th>条数</th><th>唤醒词</th><th>产出页面</th></tr>
-      <tr><td>存身材照</td><td>3</td><td>记身材照（单张）／记身材照（含备注）／记身材照（批量）</td><td class="mono">回执页</td></tr>
-      <tr><td>看身材照</td><td>1</td><td>查身材照</td><td class="mono">画廊页</td></tr>
-      <tr><td>比身材照</td><td>2</td><td>对比两张照片／生成身材照GIF</td><td class="mono">对比页／GIF 结果页</td></tr>
-      <tr><td>管身材照</td><td>4</td><td>删身材照／改照片标签／加照片标签／删照片标签</td><td class="mono">回执页（＋快照）</td></tr>
-    </table>
-
-    <table class="cmp" style="margin-top:14px">
-      <tr><th></th><th>老技能（有实物可照）</th><th>新仓现状</th></tr>
-      <tr><td>实现体量</td><td class="ok">8 个脚本约 78 KB（<span class="mono">body_photo_tracker.py</span> 单个 25 KB）＋ 7 张模板（最大 26.9 KB）</td><td class="no"><span class="mono">render/photo.ts</span> 299 ＋ <span class="mono">fetch/photos.ts</span> 213 ＋ <span class="mono">render/help.ts</span> 62</td></tr>
-      <tr><td>照片可见性</td><td class="ok">「HTML 默认 base64 嵌图（PIL 缩放到 800×1200 · q85），飞书／IM／任意环境打开都能看照片，不被本地路径限制」</td><td class="no">「照片只 render 文件名 ＋ fileExists 位，不嵌 base64」⇒ 页面里一张照片都看不到</td></tr>
-      <tr><td>删身材照</td><td class="ok">先列候选 → <strong>快照确认</strong> → 回执</td><td class="no">一条写命令直接删，无候选列表、无快照</td></tr>
-      <tr><td>标签模型</td><td class="ok">标签硬规则必填、缺标签逐张追问；单张 ≤10 个、单个 ≤20 字；改＝覆盖整套／加＝追加判重／删＝移除（至少保留 1 个）</td><td class="no">命令有 <span class="mono">op=set/add/remove</span>，但 SKILL.md 里这些规则一条都没有</td></tr>
-      <tr><td>录入方式</td><td class="ok">手机／飞书发图与路径双模式；文字与图片分离到达的处理规则；同轮所有图片＝本次要存的照片</td><td class="no">SKILL.md 无录入规则</td></tr>
-      <tr><td>GIF</td><td class="ok">真出 GIF（页面内嵌 <span class="mono">gif_data_base64</span>）；规划页带框选＋ <span class="mono">--crops</span> 坐标 schema</td><td class="no">只出任务描述：「GIF 合成由外部执行，本渲染不碰二进制」</td></tr>
-      <tr><td>页面形态</td><td class="ok">7 张老模板有实物可照</td><td class="no">4 类页面走 <span class="mono">pageShell()</span>，产出片段，不是完整文档</td></tr>
-      <tr><td>工作流</td><td class="ok">老 SKILL.md 整节：逐词表 ＋ 录入规则 ＋ 标签模型 ＋ crops schema ＋ 交付协议</td><td class="no">新 SKILL.md 无身材照片工作流（只有命令表 ＋ 两张预检页的一行）</td></tr>
-    </table>
-  </section>
-
-  <section class="card">
-    <h2>三处最要紧的差距（“残次品”的具体位置）</h2>
-    <div class="gap">
-      <h3>① 页面里没有照片</h3>
-      <div class="was"><b>老：</b>明确要求内嵌，理由写在技能里——「不被本地路径限制，飞书／IM 打开都能看」。</div>
-      <div class="now"><b>新：</b>只出文件名 ＋「文件在不在」的位。连带后果：删身材照那条词自己要求「删除前先给我看这张照片的内容（快照）」，现在<strong>根本交不出快照</strong>。</div>
-    </div>
-    <div class="gap">
-      <h3>② 录入与标签的硬规则不见了</h3>
-      <div class="was"><b>老：</b>标签必填、缺标签逐张追问；改／加／删三词语义分层；至少保留 1 个；发图双模式与分离到达。</div>
-      <div class="now"><b>新：</b>AI 手上只有「唤醒词 → 命令」一行，命中「加照片标签」时不知道要先看原标签、不知道判重与保留 1 个的规矩。</div>
-    </div>
-    <div class="gap">
-      <h3>③ GIF 停在描述，不出文件</h3>
-      <div class="was"><b>老：</b>真出 GIF，页面内嵌。</div>
-      <div class="now"><b>新：</b>只出一段任务描述。规划页（含框选与坐标 schema）都已现成，差的只是最后一步合成。</div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>票单（8 张）</h2>
-    <p class="sub">原生阻塞边：1 → 2／3／4／5；2／3／4／6 → 7；7 ＋ 装机 → 8。</p>
+    <h2>定版票单（9 张：一条判据一张票，票面五段）</h2>
+    <p class="sub">五段＝目标／验收命令／不许动的东西／交付物路径／遗留出口。阻塞边：形状验证 → 读侧／回执侧／候选页／GIF；候选页 → 入口对齐；以上全部 → 端到端。</p>
     <table>
-      <tr><th>序</th><th>票</th><th>类型</th><th>被谁阻塞</th><th>交付什么</th></tr>
-      <tr><td>1</td><td><a href="https://github.com/FeatherHunter/ilife/issues/170">场景 09：公共层提取与边界（防幻觉词对账）</a></td><td>grilling＋task</td><td class="mono">—</td><td><strong>10 场景 × 底层唤醒词 × 命令 × 页面 × 工作流</strong>四列对照表（你要的「每个场景找得到底层唤醒词」的书面依据）；页面归 4 类；公共层增量；把 2–8 建出来挂边</td></tr>
-      <tr><td>2</td><td>场景 09：照片进页面（内嵌缩略图能力）</td><td>task</td><td>1</td><td>照老技能：读字节 → 缩放 → 内嵌 base64；新件住能力目录 <span class="mono">src/body_photo/</span>（<strong>第二个用法出现才上移</strong>）；定体积上限</td></tr>
-      <tr><td>3</td><td>场景 09：4 类页面交付（片段 → 完整文档 ＋ 复制区）</td><td>task</td><td>1</td><td>回执页（7 条词）／画廊页／对比页／GIF 结果页切到 <span class="mono">assembleDocPage()</span> ＋ <span class="mono">copyArea</span>；照老实物 7 张模板对齐字段与文案</td></tr>
-      <tr><td>4</td><td>场景 09：写类词的工作流（候选／快照／原标签）</td><td>task</td><td>1</td><td>记身材照 3 变体接已有的照片预检页；<strong>删身材照补候选列表＋快照确认</strong>；改／加／删标签先显示现有标签（保留 1 个）；可能新增一条「照片选择页」只读命令</td></tr>
-      <tr><td>5</td><td>场景 09：真出 GIF（命令补齐）</td><td>task</td><td>1</td><td>把「只出任务描述」变成真出 GIF 文件并内嵌进结果页（框选与坐标 schema 已现成）</td></tr>
-      <tr><td>6</td><td>场景 09：SKILL.md 补身材照片工作流（按 writing-for-agents）</td><td>task</td><td>1</td><td>常驻规则回 SKILL.md（标签必填逐张追问／改加删语义／保留 1 个／发图双模式与分离到达／删的候选与快照）；逐词工作流进包内披露文件 <span class="mono">workflows/09-身材照片.md</span></td></tr>
-      <tr><td>7</td><td>场景 09：锁 · 10 条词真出口用例</td><td>task</td><td>2、3、4、6</td><td>10 条词逐条真跑：断言落盘、绝对路径、字段、<strong>照片在页面里真的看得见</strong>、快照存在</td></tr>
-      <tr><td>8</td><td>场景 09：真机端到端 ＋ 肉眼终审</td><td>task</td><td>7 ＋ 装机</td><td>你在全新空白 session 逐条念，产物进验收目录，肉眼签字</td></tr>
+      <tr><th>票</th><th>一条判据（能跑出真假）</th><th>阻塞</th></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/341">#341</a> <strong>形状验证</strong>：看身材照 → 完整文档 ＋ <strong>内嵌照片</strong> ＋ 复制区（十页基线先落）</td><td>真跑 <code>photo.list</code> 断言文档头／<code>data:image/</code>／复制区；其余 9 页 sha256 不变</td><td class="ok">— 可开工</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/281">#281</a> 读侧铺开：对比两张照片 ＋ 查身材照（兼删除快照）</td><td>两条读命令产物同形</td><td>#341</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/282">#282</a> 回执侧铺开：7 条写入类场景的回执页</td><td>7 条逐条产物都是完整文档 ＋ 内嵌快照</td><td>#341</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/283">#283</a> 删身材照的候选与快照（新增一条只读命令）</td><td>新命令产出含候选与 <code>data:image/</code>；<code>gen:check</code> 绿、探针空</td><td>#341</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/284">#284</a> 合成可行性：2 张真照片 → 一个能播放的 GIF（纯 JS）</td><td>魔数正确、帧数 ≥ 2、非空；变异必红</td><td class="ok">— 可开工</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/352">#352</a> GIF 结果页内嵌</td><td>真出口产物含 <code>data:image/gif</code> 且与盘上文件同源</td><td>#341、#284</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/345">#345</a> 入口与工作流对齐：HELP 里每个场景读得出「唤醒词 ＋ 从哪一步走」</td><td>10 条机械断言：唤醒词／命令 ∈ 键集／写类点名过程型页／三处同源</td><td>#283</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/285">#285</a> SKILL.md 常驻规则 ＋ 包内工作流披露文件</td><td>指针行在 ＋ 披露文件 10 场景在册 ＋ D7 那条在</td><td>#283</td></tr>
+      <tr><td><a href="https://github.com/FeatherHunter/ilife/issues/287">#287</a> 真机端到端 ＋ 肉眼终审</td><td>用户在全新空白 session 逐条念，产物肉眼过（装机真实性＋对照物＋备份先行）</td><td>#281–#285、#345、#352</td></tr>
+    </table>
+    <p class="sub" style="margin-top:12px">
+      变动脉络：<a href="https://github.com/FeatherHunter/ilife/issues/286">#286</a>（锁 · 真出口用例）<strong>已撤</strong>——判据与自证随票走，总门由命令自治探针承担；#341 由「只验页面」扩成「含内嵌 ＋ 基线先落」；#281／#282 按读侧／回执侧重切；<strong>#345</strong>（入口与工作流对齐）与 <strong>#352</strong>（GIF 结果页内嵌）为本轮新增；<strong>#284</strong> 由「真出 GIF 一整块」拆成纯可行性探针（取消它对 #341 的伪依赖，与形状验证并行先跑）。
+    </p>
+  </section>
+
+  <section class="card base">
+    <h2>基线（先冻住，每条配一个能判真假的动作）</h2>
+    <table>
+      <tr><th>#</th><th>冻住什么</th><th>动作</th></tr>
+      <tr><td>B1</td><td>10 条命令的键／形状／代表唤醒词／示例</td><td class="mono">pnpm gen:check 绿 ＋ 探针 P1 UNACCOUNTED 空</td></tr>
+      <tr><td>B2</td><td>路由映射（唤醒词 → 命令）一格不动</td><td class="mono">test/cmd-registry-294 ＋ test/calorie-routing-81</td></tr>
+      <tr><td>B3</td><td>会改数据库的命令的落库与回执三件</td><td class="mono">test/cmd-write-40-persist</td></tr>
+      <tr><td>B4</td><td>其余 9 条命令的页面产物</td><td class="mono">十页基线 --check（票 1 里先落，落之前不算已冻）</td></tr>
+      <tr><td>B5</td><td><strong>有意变更，别当回归</strong>：照片从「只登记文件名」改成页面内嵌</td><td>收在票 1／2／3；出现内嵌照片是<strong>成功</strong></td></tr>
     </table>
   </section>
 
-  <section class="q" id="q1" data-q>
-    <div class="qhead"><span class="num">Q1</span><h2>照片要不要真的出现在页面里？</h2><span class="tag heavy">最重</span></div>
-    <h3>为什么问</h3>
-    <p>这不只是好看不好看：老技能写死「HTML 默认 base64 嵌图，飞书／IM／任意环境打开都能看照片」，而你验收的方式是把 HTML 拷到交付目录双击打开——引用文件路径的做法一拷就瞎。删身材照的「快照确认」也必须有照片才成立。反过来，本包现在<strong>没有任何图像依赖</strong>，内嵌是一条新能力。</p>
-    <h3>判断依据</h3>
-    <ul>
-      <li>老实物是内嵌的（<span class="mono">photo_data_base64</span>／<span class="mono">gif_data_base64</span>，PIL 800×1200 q85）。</li>
-      <li>「不读照片字节」是新仓有意写下的决定（<span class="mono">render/photo.ts</span>、<span class="mono">render/wizardPort.ts</span> 顶注）——要改就是推翻它，按惯例由你裁定。</li>
-      <li>真库有货：22 行身材照、65 张图 ⇒ 验收有真材料。</li>
-    </ul>
+  <section class="card">
+    <h2>架构合规（代码侧）</h2>
     <table class="cmp">
-      <tr><th></th><th>A 内嵌缩略图（照老技能）</th><th>B 引用照片文件</th><th>C 维持现状</th></tr>
-      <tr><td>页面里看得见</td><td class="ok">看得见</td><td class="ok">看得见</td><td class="no">看不见</td></tr>
-      <tr><td>拷走／发飞书</td><td class="ok">照样看得见</td><td class="no">图会丢</td><td class="dim">—</td></tr>
-      <tr><td>快照要求</td><td class="ok">交得出</td><td>同机交得出</td><td class="no">交不出</td></tr>
-      <tr><td>代价</td><td>新增一件图像能力＋体积上限</td><td class="ok">很小</td><td class="ok">零</td></tr>
+      <tr><th></th><th>规矩</th><th>本图怎么落</th></tr>
+      <tr><td>命令登记</td><td>一条命令的事实只有一个定义地</td><td>权威源 <code>src/photo/commands.ts</code>；共用位由 <code>pnpm gen</code> 派生、<code>pnpm gen:check</code> 守</td></tr>
+      <tr><td>新增命令</td><td>改两处声明 ＋ 走生成链</td><td><code>commands.ts</code> ＋ <code>routes.ts</code>（都含可执行 <code>example</code>）→ <code>build → gen → build → help:build</code></td></tr>
+      <tr><td>不碰的</td><td>legacy 清单、记录面、棘轮</td><td><code>src/cli/legacy/**</code> 与 <code>routing.ts</code> 零接触；棘轮<strong>不加 case</strong></td></tr>
+      <tr><td>目录</td><td>能力目录名取自 HELP 一级分组</td><td>不新建——<code>src/photo/</code> 已在；本图只在其内加件／改件</td></tr>
+      <tr><td>共用位</td><td>从第二个用法长出来</td><td>缩略图／合成先住 <code>src/photo/</code>；出现第二个用法才上移</td></tr>
+      <tr><td>锁</td><td>动路由声明前抢锁</td><td><code>node tooling/run-locked.mjs --ticket &lt;票号&gt; -- …</code> ＋ 广播</td></tr>
     </table>
-    <div class="rec">
-      <h3>推荐</h3>
-      <p><strong>A 内嵌缩略图</strong>，单列成票 2（定体积上限：每张 ≤120KB、画廊页总量设上限），B 留作退路。</p>
-      <p class="why">理由：老技能的理由（换环境也能看）正好命中你的验收方式；且不内嵌，删身材照的快照这一条永远交不出。</p>
-    </div>
-    <div class="pick"><button data-pick="rec">✓ 按推荐（A）</button><button data-pick="other">✎ 另定（B／C）</button><span class="state"></span></div>
-  </section>
-
-  <section class="q" id="q2" data-q>
-    <div class="qhead"><span class="num">Q2</span><h2>「生成身材照GIF」算跑到哪一步？</h2></div>
-    <h3>为什么问</h3>
-    <p>这条词的命令现在只出一段任务描述，页面里没有 GIF；老技能是真出 GIF 的。图的 Destination 只要求「拿到结果型 HTML 落盘」，按这个口径它<strong>已经算跑得通</strong>——但你心里要的多半是「真的拿到一个动图」。</p>
-    <div class="rec">
-      <h3>推荐</h3>
-      <p>本图按「任务描述页」判它跑得通，同时把<strong>真出 GIF 单列成票 5</strong>（规划页与坐标 schema 都现成，差的只是合成这一步）。</p>
-      <p class="why">理由：合成要引入图像依赖，属命令补齐性质的新风险；与页面改版分开，红了知道是谁。</p>
-    </div>
-    <div class="pick"><button data-pick="rec">✓ 按推荐（单列票 5）</button><button data-pick="other">✎ 另定（本图不真出）</button><span class="state"></span></div>
-  </section>
-
-  <section class="q" id="q3" data-q>
-    <div class="qhead"><span class="num">Q3</span><h2>10 个场景的工作流写在哪？（你的核心思想 1）</h2></div>
-    <h3>关键信息</h3>
-    <ul>
-      <li>SKILL.md 是<strong>每轮都在上下文里</strong>的常驻材料：新仓现在 211 行；老技能那份长到 <strong>158 KB</strong>（把所有场景工作流都塞进正文的结果）。</li>
-      <li>writing-for-agents 的做法：常驻只放<strong>常驻规则 ＋ 一条指针</strong>，逐场景细节下放成披露文件，命中指针才读。</li>
-      <li>披露文件必须<strong>随技能包安装</strong>（安装器只装 <span class="mono">packages/skill-calorie/</span> 这一层，<span class="mono">docs/</span> 进不了 agent 读得到的范围）。</li>
-    </ul>
-    <div class="rec">
-      <h3>推荐</h3>
-      <p>SKILL.md 只留常驻规则（标签必填逐张追问／改加删语义／保留 1 个／发图双模式与分离到达／删的候选与快照）＋ 一行指针；<strong>10 个场景的逐词工作流</strong>放 <span class="mono">packages/skill-calorie/workflows/09-身材照片.md</span>。</p>
-      <p class="why">理由：常驻材料每轮都花代价；分开放同时解决「SKILL.md 越来越长」与「AI 不知道从哪一步走」。<strong>老技能的 HTML 交付协议（必须主动 send 到飞书）不继承</strong>——新仓口径是落盘 ＋ 回执绝对路径（场景 07 就是这么验收的），send 归桥／面板那条线。</p>
-    </div>
-    <div class="pick"><button data-pick="rec">✓ 常驻规则＋披露文件</button><button data-pick="other">✎ 全写进 SKILL.md</button><span class="state"></span></div>
-  </section>
-
-  <section class="q" id="q4" data-q>
-    <div class="qhead"><span class="num">Q4</span><h2>票单按 8 张切，可以吗？</h2></div>
-    <h3>关键信息</h3>
-    <ul>
-      <li>地图原任务清单只给 5 行骨架（对账／页面交付／命令补齐／锁／端到端），第 2–5 张留着等你定——这就是「图下有哪些 ISSUE」的正解。</li>
-      <li>我这版把「页面交付」拆成 3 张（照片进页面／4 类页面／写类工作流）＋ 新增「真出 GIF」与「SKILL.md 工作流」两张，与场景 07 那条线实际长出来的节奏一致。</li>
-    </ul>
-    <div class="rec">
-      <h3>推荐</h3>
-      <p>就按 8 张切（票 1 已存在并已认领）。若你嫌细，可把票 2 并进票 3。</p>
-      <p class="why">理由：每张票的验收判据都能独立说清（照片看得见／页面是完整文档／候选与快照在／GIF 有文件／工作流找得到），混在一起红了分不清归属。</p>
-    </div>
-    <div class="pick"><button data-pick="rec">✓ 按 8 张切</button><button data-pick="other">✎ 调整（并票／拆票）</button><span class="state"></span></div>
   </section>
 
   <footer>
-    你答完这 4 条，我就：建 8 张票（原生子议题边 ＋ 阻塞边）→ 写回地图 #159 的 Decisions／Not yet specified → 开工票 2。<br>
-    票已建齐：<a href="https://github.com/FeatherHunter/ilife/issues/281">#281</a>～<a href="https://github.com/FeatherHunter/ilife/issues/287">#287</a>，父议题边＋阻塞边已挂；对账与结构落点成文 <span class="mono">docs/skills/skill-calorie/t170-scene09-reconcile.md</span>。此刻可开工：#281／#284／#285。目标管理那页留着，做到 #153 时直接用。
+    权威索引住地图 <a href="https://github.com/FeatherHunter/ilife/issues/159">#159</a>（任务清单 ＋ 基线 ＋ Decisions so far）；设计正本 <b>docs/skills/skill-calorie/t159-map-design.md</b>；对账 <b>t170-scene09-reconcile.md</b>。<br>
+    本次<strong>只做设计，不执行</strong>：未改源码、未跑生成链、未动验收目录。下一步等你说开工：<b>#341</b>（形状验证）与 <b>#284</b>（合成可行性）——本图两个最大未知，并行先跑。
   </footer>
 
 </div>
-<script>
-  const qs=[...document.querySelectorAll('[data-q]')];const doneEl=document.getElementById('done');
-  function refresh(){doneEl.textContent=qs.filter(q=>q.dataset.picked).length;}
-  for(const q of qs){const state=q.querySelector('.state');
-    for(const btn of q.querySelectorAll('.pick button')){
-      btn.addEventListener('click',()=>{
-        const same=btn.getAttribute('aria-pressed')==='true';
-        for(const b of q.querySelectorAll('.pick button'))b.setAttribute('aria-pressed','false');
-        if(same){delete q.dataset.picked;state.textContent='';}
-        else{btn.setAttribute('aria-pressed','true');q.dataset.picked=btn.dataset.pick;
-          state.textContent=btn.dataset.pick==='rec'?'已按推荐定':'待补充说明';
-          state.className='state '+(btn.dataset.pick==='rec'?'ok':'no');}
-        refresh();});}}
-  refresh();
-</script>
 </body>
 </html>

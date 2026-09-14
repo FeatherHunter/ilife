@@ -45,23 +45,29 @@
 | 预检确认页（已建） | 1、2、3（照片预检）／4、6（GIF 规划） | `body_photo_log_wizard.html`（11.3 KB）／`body_photo_gif_planner.html`（26.9 KB） | 卡里公共层（预检类） |
 | 选择／快照页（本图新建） | 7、8、9、10 | `body_photo_viewer.html`（8.0 KB） | 卡路里公共层（预检类） |
 
-## 四、结构落点（照 `docs/agents/structure.md`）
+## 四、结构落点（2026-09-13 重写：底座已换形状，#293 收口）
 
-- **能力目录**：`packages/skill-calorie/src/body_photo/` —— 目录名取 HELP 一级分组的英文名（`render/helpCenter.ts:73` 与 `triggers/index.ts:30` 都是 `body_photo`）；先例 `src/profile/` ← 基础信息。**建目录与它的第一件真实代码同一次提交**（不建空目录／占位）。
-- **文件名取自下一级（子功能／命令操作码）**：`add.ts`／`list.ts`／`detail.ts`／`compare.ts`／`gif.ts`／`remove.ts`／`tag.ts`（照 `calorie.photo.*` 命令段，同 `src/profile/` 的 `setup.ts`／`update.ts`／`view.ts`）。英文名一律照仓内既有说法取，不自创。
-- **就地摆正**：`fetch/photos.ts`、`render/photo.ts`、`render/html.ts` 的照片页面段、`render/help.ts` 的照片现找段、`render/wizardPort.ts` 两张照片预检页 —— 随各自票搬进 `src/body_photo/` 并改写引用（逐票在第一步报影响清单）。
-- **技能级件不挪**：`src/triggers/help-lookup.ts`（技能级查找入口）与 `render/helpCenter.ts` 的 HELP 数据段 —— 铁律四管不到技能级落点，留给整包重排那张票。
-- **共用件**：照片缩略图／GIF 合成先住 `src/body_photo/` 内；**等第二个用法出现再上移**（铁律：共用位是从第二个用法里长出来的，不是预先设计的）。
-- **每票必报五步**：第一步影响清单／第二步结构设计（**新建目录层级要用户点头**）／第三步写代码／第四步超线报警／第五步交付对账。
-- **其余落点**：跟票的文档住本目录（`docs/skills/skill-calorie/`）；过程草稿住 `.scratch/t170/`；包内一次性脚本住 `packages/skill-calorie/scripts/`。
+**底座这一版把「命令登记与分派」整段做完了**（#294 接缝／#295 生成物／#313 路由声明／#314 场景搬迁）。本图在此基础上做，**不新建能力目录**：
 
-## 五、本图票单
+- **能力目录已存在**：`packages/skill-calorie/src/photo/`（16 件）。目录名＝HELP 一级分组英文名（`render/helpCenter.ts:73`／`triggers/index.ts:30` 同说法）；参考实现 `src/weight/`。
+- **命令已搬完**：`src/photo/commands.ts` 10 条声明（**权威源**，六字段含必填 `example`）；`src/photo/routes.ts` 路由声明；对外门 `src/photo/index.ts` 出三件（命令声明 ＋ 读入口 ＋ 写入口）。`src/cli/legacy/scene-09.ts` 与 `legacy/routes/scene-09.ts` 均已清空（**只搬空、不删文件**）。
+- **本图只在 `src/photo/` 内加件／改件**，文件名取子功能／操作码（既有：`store`／`gallery`／`compare`／`manage`／`wizard`／`dir`／`photo`／`photos`／`help*`）。
+- **新增命令**＝改两处：`src/photo/commands.ts` ＋ `src/photo/routes.ts`（都要含可执行 `example`），再走生成链 `pnpm build → pnpm gen → pnpm build → pnpm help:build`；`src/cli/legacy/**` 与 `src/triggers/routing.ts` **零接触**；棘轮文件**不加 case**（新增命令住能力目录）。动路由声明前抢 `gate.lock` 并广播。
+- **共用件**：整页装配 `src/shared/docPage.ts`、复制区 `src/shared/copyArea.ts`（已在用）；新的照片缩略图件**先住 `src/photo/`**，第二个用法出现再上移。
+- **技能级件不挪**：`src/triggers/help-lookup.ts` 一类技能级入口留给整包重排那张票。
+- **每票必报五步**；**票面五段固定**（目标／验收命令／不许动的东西／交付物路径／遗留出口）。
+- **其余落点**：跟票文档住 `docs/skills/skill-calorie/`；过程草稿住 `.scratch/t170/`；包内一次性脚本住 `packages/skill-calorie/scripts/`。
 
-1. [#170 公共层提取与边界（本文件）](https://github.com/FeatherHunter/ilife/issues/170)
-2. 照片进页面（内嵌缩略图）— `src/body_photo/`
-3. 4 类页面交付（片段 → 完整文档 ＋ 复制区）
-4. 写入类场景的工作流（候选／快照／原标签）
-5. 真出 GIF（规划页 → 合成 → 结果页内嵌）
-6. SKILL.md 补身材照片工作流（常驻规则 ＋ 包内披露文件）
-7. 锁 · 10 条场景真出口用例
-8. 真机端到端 ＋ 肉眼终审
+## 五、本图票单（2026-09-13 按新底座重切：按判据切，不按目录／功能块切）
+
+| 序 | 票 | 一条判据（能跑出真假） | 被谁阻塞 |
+|---|---|---|---|
+| 0 | 形状验证（最小票）：`看身材照` 一条命令切成完整文档 ＋ 复制区，其余 9 条产物不变 | 真跑 `calorie.photo.list` 断言文档头／复制区，且九页 sha256 不变 | — |
+| 1 | 照片进页面（内嵌缩略图） | 三类页面 HTML 里出现 `data:image/` | 票 0 |
+| 2 | 其余页面铺开（对比／GIF 结果／回执 7 条场景） | 10 条命令逐条产物都是完整文档 | 票 0、票 1 |
+| 3 | 删身材照的候选与快照（新增一条只读命令） | 新命令产出含候选与 `data:image/` 的页面；`gen:check` 绿、探针 `UNACCOUNTED` 空 | 票 0、票 1 |
+| 4 | 真出 GIF | 跑完磁盘多一个非空 `.gif` 且页面里嵌着它 | 票 0 |
+| 5 | SKILL.md 补身材照片工作流（常驻规则 ＋ 包内披露文件） | 指针行在 ＋ 披露文件 10 个场景在册 | — |
+| 6 | 真机端到端 ＋ 肉眼终审 | 用户在全新空白 session 逐条念，产物肉眼过 | 票 1–5 ＋ 装机 |
+
+旧的「锁 · 真出口用例」一票不再单列：判据与自证随每张票走（编排纪律：要自证不要自述），另以命令自治探针为总门。

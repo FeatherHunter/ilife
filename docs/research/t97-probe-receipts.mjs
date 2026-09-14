@@ -123,6 +123,11 @@ export const SCENARIOS = [
   { key: 'calorie.workout.plan-set-week', params: { week: 1, days: [{ dayOfWeek: 1, sessionLabel: '上肢', movements: [{ name: '俯卧撑' }] }] } },
   { key: 'calorie.workout.plan-add-movement', params: { week: 1, dayOfWeek: 2, movement: { name: '深蹲' } } },
   { key: 'calorie.workout.plan-set-rest', params: { week: 1, dayOfWeek: 3 } },
+  { key: 'calorie.workout.plan-update', pre: [['calorie.workout.plan-set', { plan: { config: { title: 't97计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }] }] }] } }]], params: { title: 't97改名' } },
+  { key: 'calorie.workout.plan-update-day', pre: [['calorie.workout.plan-set', { plan: { config: { title: 't97计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }] }] }] } }]], params: { week: 1, dayOfWeek: 1, newLabel: 't97时段' } },
+  { key: 'calorie.workout.plan-delete-day', pre: [['calorie.workout.plan-set', { plan: { config: { title: 't97计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }] }] }] } }]], params: { week: 1, dayOfWeek: 1 } },
+  { key: 'calorie.workout.plan-update-movement', pre: [['calorie.workout.plan-set', { plan: { config: { title: 't97计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }] }] }] } }]], params: { oldMovement: '俯卧撑', newMovement: { name: 't97动作' } } },
+  { key: 'calorie.workout.plan-delete', pre: [['calorie.workout.plan-set', { plan: { config: { title: 't97计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }] }] }] } }]], params: { confirm: true } },
 ];
 
 function main() {

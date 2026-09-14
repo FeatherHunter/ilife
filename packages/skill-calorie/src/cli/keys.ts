@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 40 ＋ 读 68 ＝ 108 条。
+ * registry 合法键表：写 45 ＋ 读 68 ＝ 113 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -57,9 +57,14 @@ export const CALORIE_WRITE_COMBOS = {
   'calorie.weight.update': { shape: 'receipt' as EnvelopeShape, title: '改体重' },
   'calorie.workout.plan-add-movement': { shape: 'receipt' as EnvelopeShape, title: '加训练动作' },
   'calorie.workout.plan-copy': { shape: 'receipt' as EnvelopeShape, title: '复制训练计划' },
+  'calorie.workout.plan-delete': { shape: 'receipt' as EnvelopeShape, title: '撤销训练计划' },
+  'calorie.workout.plan-delete-day': { shape: 'receipt' as EnvelopeShape, title: '删某天训练' },
   'calorie.workout.plan-set': { shape: 'receipt' as EnvelopeShape, title: '定训练计划' },
   'calorie.workout.plan-set-rest': { shape: 'receipt' as EnvelopeShape, title: '定休息日' },
   'calorie.workout.plan-set-week': { shape: 'receipt' as EnvelopeShape, title: '定一周计划' },
+  'calorie.workout.plan-update': { shape: 'receipt' as EnvelopeShape, title: '改训练计划' },
+  'calorie.workout.plan-update-day': { shape: 'receipt' as EnvelopeShape, title: '改某天训练' },
+  'calorie.workout.plan-update-movement': { shape: 'receipt' as EnvelopeShape, title: '改动作' },
 } as const;
 
 export type CalorieWriteKey = keyof typeof CALORIE_WRITE_COMBOS;
