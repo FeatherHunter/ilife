@@ -37,7 +37,7 @@ test('b1 整页：完整文档＋KPI/表/复制双钮/结论四件套', () => {
   db.close();
 });
 
-test('b1 度量零 churn：metrics 四键与片段时代一致', () => {
+test('b1 度量零 churn：metrics 四项度量与片段时代一致', () => {
   const db = tmpDb();
   seedMain(db);
   const r = run(db, { start: '2026-08-09', end: '2026-09-07' });
