@@ -2,13 +2,14 @@
  *
  * 计划查看页（order176–185 共用本件）照规格 `docs/skills/skill-calorie/t351-redesign-184-spec.md` 重做：
  * 页头（大标题「健身计划」＋说明/版本/周数/起日）→ 指标卡（总场次／总动作／总周数）→ 每周一个原生
- * `<details open>`（纯 HTML、零内联脚本，替代老页 JS 页签）→ 周内每场一张会话卡（周X · 时段 · label · 组数）
- * → 卡内六列动作明细表（动作／部位／类型／组数×次数／重量／备注；老页的休息列库里无字段，列位让给备注）
+ * `<details open>`（纯 HTML、零内联脚本，替代老页 JS 页签）→ 周内每场一张会话卡（周X · 时段 · label ·
+ * 组数 · 节奏）→ 卡内四列动作明细表（动作＋副行／部位／组数×次数／重量；表住 `./workoutMovementTable.js`）
  * → 空窗出完整空页（不返白页）→ 底部「复制数据／复制日志」双按钮。
  *
  * 复制数据载荷不照抄老页 `scene.snapshot`：计划数据投影成信封 `list` 形（`items` 逐周一行、`total` 记会话数），
  * 日志用 `CopyLogFields` 五键；底部复制区走共用件 `./planCopyBlock.js`。只读既有取数层（`PlanView`／
- * `WritePreview`），不跨能力取数；动作字段形状的唯一出处是 `workout/planStore.ts` 的 `PlanMovement`。
+ * `WritePreview`），不跨能力取数；动作字段形状的唯一出处是 `workout/planStore.ts` 的 `PlanMovement`
+ * （本件只由会话卡经 `./workoutMovementTable.js` 用它的取数口径，不再自己认字段）。
  * 页面只用共用位（`shared/docPage` ＋ `base-paint/blocks` 的整页版式／指标卡／表格／折叠／空态）。
  * 过程型两页走原五段式，页底加本写词的逐字 prompt（预检确认页要能复制 prompt 回给 AI）。
  */
@@ -17,18 +18,17 @@ import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, ren
 import { nowStamp } from './receipt.js';
 import { planCopyBlock } from './planCopyBlock.js';
 import type { PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
-import type { PlanMovement, PlanSessionRow } from '../workout/planStore.js';
+import type { PlanSessionRow } from '../workout/planStore.js';
 import type { WritePreview } from '../workout/write.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
+import { DASH, movementTableHtml, tempoOf } from './workoutMovementTable.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·健身计划';
 
 const DOW = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-/** 库里缺的字段一律写短横线，不印空白格（老页同口径）。 */
-const DASH = '—';
 
 /** 写前预览操作的中文名（老 `process_progress` 复制区同口径，页上不出现英文 `op`）。 */
 const OP_ZH: Record<string, string> = {
@@ -72,37 +72,13 @@ function dualCopy(input: {
   });
 }
 
-/** 单元格文本：库里缺字段或空串写短横线。 */
-function cell(value: string | undefined): string {
-  return value === undefined || value === '' ? DASH : value;
-}
-
-/** 组数×次数（组数＝`sets.length`，次数＝`sets[].reps`）：同重复数写「3组×12次」，
- *  逐组不同写「3组×10／12次」；库里没有 `sets` 写短横线。 */
-function setsText(m: PlanMovement): string {
-  const sets = m.sets ?? [];
-  if (sets.length === 0) return DASH;
-  const reps = [...new Set(sets.map((s) => s.reps))];
-  return sets.length + '组×' + reps.join('／') + '次';
-}
-
-/** 重量（重量＝`sets[].weight` ＋ `unit`）：逐组同一写「35kg」，逐组不同写「30／35kg」；
- *  逐组都没有正数重量时，单位是 `kg`／`自重` 写「自重」、其余写短横线（老页同口径）。 */
-function weightText(m: PlanMovement): string {
-  const sets = m.sets ?? [];
-  if (sets.length === 0) return DASH;
-  const unit = sets[0].unit;
-  const weights = [...new Set(sets.map((s) => s.weight))];
-  if (!weights.some((w) => w > 0)) return unit === 'kg' || unit === '自重' ? '自重' : DASH;
-  return weights.join('／') + unit;
-}
-
 /** 休息日卡的会话名：空 label 与「休息」都写「休息日」；已含「休息日」的（库中休息日行就这样）不追加。 */
 const restLabel = (raw: string): string =>
   raw === '' || raw === '休息' ? '休息日' : raw.includes('休息日') ? raw : raw + '（休息日）';
 
-/** 会话卡（原生 `<details open>`）：标题「周X · 时段 · 会话名 · N 组」＋卡内六列动作明细表；
- *  休息日不出表，出一句「不排训练动作」。 */
+/** 会话卡（原生 `<details open>`）：标题「周X · 时段 · 会话名 · N 组 · 节奏 …」＋卡内四列动作明细表
+ * （表住 `./workoutMovementTable.js`）；休息日不出表也不加节奏，出一句「不排训练动作」。
+ *  节奏取该场动作备注里方括号内逗号之后那段——同一场内恒定，摆在表里就是整列重复，故只上标题行。 */
 function sessionCard(s: PlanSessionRow): string {
   const moves = Array.isArray(s.movements) ? s.movements : [];
   const rest = s.is_rest_day === 1;
@@ -113,33 +89,20 @@ function sessionCard(s: PlanSessionRow): string {
   const time = start === null || start === undefined || start === ''
     ? ''
     : (s.time_end === null || s.time_end === undefined || s.time_end === '' || s.time_end === start ? start : start + '–' + s.time_end);
+  const tempo = rest ? '' : tempoOf(moves);
   const title = [
     DOW[s.day_of_week] ?? '周' + s.day_of_week,
     time,
     label,
     rest || setsCount === 0 ? '' : setsCount + ' 组',
+    tempo === '' ? '' : '节奏 ' + tempo,
   ].filter((t) => t !== '').join(' · ');
-  if (rest) {
-    return renderDisclosure({ title, open: true, contentHtml: renderEmptyBlock({ text: '休息日，本场不排训练动作' }) });
-  }
   return renderDisclosure({
     title,
     open: true,
-    contentHtml: renderDataTable({
-      columns: [
-        { key: 'move', label: '动作' },
-        { key: 'part', label: '部位' },
-        { key: 'type', label: '类型' },
-        { key: 'sets', label: '组数×次数', align: 'right' },
-        { key: 'weight', label: '重量', align: 'right' },
-        { key: 'note', label: '备注' },
-      ],
-      rows: moves.map((m) => ({
-        move: cell(m.name), part: cell(m.part), type: cell(m.type),
-        sets: setsText(m), weight: weightText(m), note: cell(m.note),
-      })),
-      emptyText: '本场无动作明细',
-    }),
+    contentHtml: rest
+      ? renderEmptyBlock({ text: '休息日，本场不排训练动作' })
+      : movementTableHtml(moves),
   });
 }
 
