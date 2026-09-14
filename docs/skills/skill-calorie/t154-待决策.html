@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>地图 #154 · 待你拍板的 4 件</title>
+<style>
+  :root{
+    --ink:#1b1f24; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --rec:#0f766e; --recbg:#ecfdf5; --warn:#b45309; --warnbg:#fffbeb; --bad:#b91c1c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 20px 64px}
+  header.top{background:#111827;color:#fff;border-radius:14px;padding:22px 26px}
+  header.top h1{margin:0 0 6px;font-size:21px;letter-spacing:.3px}
+  header.top p{margin:0;color:#cbd5e1;font-size:13.5px}
+  .strip{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 26px}
+  .pill{background:#fff;border:1px solid var(--line);border-radius:999px;
+        padding:6px 13px;font-size:13px;color:var(--muted)}
+  .pill b{color:var(--ink)}
+  .pill.hot{background:var(--warnbg);border-color:#fcd34d;color:var(--warn);font-weight:600}
+  h2.sec{font-size:15px;color:var(--muted);font-weight:600;letter-spacing:.6px;
+         margin:30px 0 12px;text-transform:uppercase}
+  article{background:var(--card);border:1px solid var(--line);border-radius:14px;
+          padding:22px 24px;margin-bottom:20px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .head{display:flex;gap:12px;align-items:flex-start;margin-bottom:6px}
+  .no{flex:0 0 30px;height:30px;border-radius:9px;background:#111827;color:#fff;
+      display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .head h3{margin:0;font-size:18px;line-height:30px}
+  .ctx{color:#374151;font-size:14.5px;margin:10px 0 0}
+  .ctx em{font-style:normal;background:#eef2ff;padding:0 4px;border-radius:4px}
+  .facts{background:#f9fafb;border-left:3px solid #94a3b8;border-radius:0 8px 8px 0;
+         padding:12px 16px;margin:16px 0;font-size:14px}
+  .facts h4{margin:0 0 6px;font-size:12.5px;letter-spacing:.6px;color:var(--muted);font-weight:700}
+  .facts ul{margin:0;padding-left:18px}
+  .facts li{margin:3px 0}
+  code{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:5px;
+       padding:1px 5px;font-size:12.5px;font-family:"Cascadia Mono",Consolas,monospace}
+  table{width:100%;border-collapse:collapse;margin:12px 0 4px;font-size:14px}
+  th{text-align:left;color:var(--muted);font-size:12.5px;font-weight:700;
+     letter-spacing:.5px;border-bottom:1px solid var(--line);padding:7px 10px}
+  td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+  tr.pick td{background:var(--recbg)}
+  tr.pick td:first-child{border-left:3px solid var(--rec)}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;
+       padding:2px 9px;margin-left:7px;vertical-align:1px}
+  .tag.ok{background:var(--rec);color:#fff}
+  .tag.no{background:#e5e7eb;color:#4b5563}
+  .verdict{margin-top:16px;padding:13px 16px;border-radius:10px;
+           background:var(--recbg);border:1px solid #99f6e4;font-size:14.5px}
+  .verdict b{color:var(--rec)}
+  .warn{margin-top:12px;padding:11px 15px;border-radius:10px;background:var(--warnbg);
+        border:1px solid #fde68a;font-size:13.5px;color:#78350f}
+  details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:12px}
+  details summary{cursor:pointer;font-weight:600;font-size:14.5px}
+  details p,details ul{font-size:14px;color:#374151}
+  footer{margin-top:34px;padding-top:20px;border-top:1px dashed var(--line);
+         color:var(--muted);font-size:13px}
+  .tpl{background:#111827;color:#e5e7eb;border-radius:12px;padding:16px 18px;
+       font-family:"Cascadia Mono",Consolas,monospace;font-size:13px;white-space:pre-wrap;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>地图 #154 · 场景 03 体重 — 待你拍板的 4 件</h1>
+  <p>2026-09-14 · 地图设计已收官（九张票 #332–#340、边、正文全部落定）· <b>源码一行未动</b></p>
+</header>
+
+<div class="strip">
+  <span class="pill">你说过：<b>目标不变</b>，你只做最终验收</span>
+  <span class="pill">细节我裁，<b>每个决策过对抗式审查</b></span>
+  <span class="pill hot">只有下面 4 件需要你说话</span>
+</div>
+
+<h2 class="sec">要你拍板的</h2>
+
+<!-- 1 -->
+<article>
+  <div class="head"><div class="no">1</div><h3>「这条词走哪条流程」这个事实，放哪儿</h3></div>
+  <p class="ctx">
+    <b>前因：</b>地图目标要求「AI 拿到一条唤醒词，知道先出哪张页 → 再跑哪条命令 → 交付什么」。今天这一层<em>全仓 0/58 成立</em>——没有任何一处说明。
+    <b>后果：</b>补它得先定「流程名」这个事实住哪。而它是<em>全部 11 张场景图都要的东西</em>，谁先落、怎么落，会决定其余 10 张图能不能照抄。
+  </p>
+  <div class="facts">
+    <h4>关键事实</h4>
+    <ul>
+      <li>候选只有三处：命令声明（<code>src/shared/commandSpec.ts</code>，现 6 个字段）／SKILL.md 手写段／路由记录（<code>RouteDecl</code>）。</li>
+      <li>AI 侧真正读到的是 <b>SKILL.md</b>（命令表由生成器出）；路由表是判定面，AI 读不到。</li>
+      <li>动命令声明或路由记录＝<b>类型形状变更＝框架级</b>：要抢锁 ＋ 广播，且必须一条 session 先落、其余继承。</li>
+    </ul>
+  </div>
+  <table>
+    <tr><th style="width:34%">选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="pick"><td><b>A 落命令声明</b>，生成器渲进 SKILL.md<span class="tag ok">推荐</span></td>
+        <td>单一来源；与「命令事实住能力目录」同精神；11 张图照抄即可</td>
+        <td>动框架，要先抢锁广播；#338 要等这条落地才开工</td></tr>
+    <tr><td><b>B SKILL.md 手写段</b> ＋ 58 行对账表<span class="tag no">次选</span></td>
+        <td>零框架改动，当轮就能做完 #338</td>
+        <td>同一个事实两个定义地（表与 SKILL.md 迟早走散）；11 张图各写各的</td></tr>
+    <tr><td><b>C 落路由记录</b></td><td>最贴近「词」这一层</td>
+        <td>同样是框架级，且 AI 读不到路由表——等于做了但用不上</td></tr>
+  </table>
+  <div class="verdict"><b>我推荐 A。</b>理由：这是「命令的事实住能力目录」那条纪律的自然延伸，而且 11 张图都要它——一次投入换十一次照抄。B 只是把账推给下游。</div>
+  <div class="warn">不定会怎样：#338 的前半段一直卡着；其余 10 张图也开不了这一层。</div>
+</article>
+
+<!-- 2 -->
+<article>
+  <div class="head"><div class="no">2</div><h3>写后回执「片段 → 完整文档」的公共口径</h3></div>
+  <p class="ctx">
+    <b>前因：</b>目标要求产物是「真实 HTML 文件、双击能打开」。但场景 03 的 9 条写词，产物首段是 <code>&lt;section class="ilife-page"&gt;</code>——<em>是片段，不是完整文档</em>。另外 32 条会改数据库的命令同样如此。
+    <b>后果：</b>场景 02／04／06／09 各有自己的写后回执票，<em>四张图都要这一步</em>；口径由先落的一张定。
+  </p>
+  <div class="facts">
+    <h4>关键事实</h4>
+    <ul>
+      <li>已有跑通的形状可抄：场景 07 的「每能力一只整页回执端口」（<code>src/profile/receipt.ts</code>，经本能力 <code>index.ts</code> 转出），分派层只调门（<code>src/cli/write.ts:63</code>）。</li>
+      <li>代价点：每多一个能力，<code>write.ts</code> 就要加一行——它现在 76 行，还有余量。</li>
+      <li>有一条钉死的断言说明「其余 32 条仍是片段」，改口径必须<b>收窄到本图这 9 条</b>，不许整条推翻。</li>
+    </ul>
+  </div>
+  <table>
+    <tr><th style="width:34%">选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="pick"><td><b>A 沿用「每能力一只端口」</b>，本图落 <code>src/weight/receipt.ts</code><span class="tag ok">推荐</span></td>
+        <td>照抄既有形状、零框架风险、当轮可做；#337 能按原样开工</td>
+        <td><code>write.ts</code> 随图数增长（当前余量够）</td></tr>
+    <tr><td><b>B 做成通用端口注册表</b>（框架级）</td><td>一次投入，11 张图零改动</td>
+        <td>抢锁广播；要改分派层与类型；<b>#337 卡住等它</b></td></tr>
+    <tr><td><b>C 本图不动</b>，等别人先落</td><td>不重复造</td>
+        <td>#337 交不出完整文档 → 本图目标达不到</td></tr>
+  </table>
+  <div class="verdict"><b>我推荐 A。</b>理由：先例已经跑通、判据现成；B 是「更好的架构」，但它把本图最重的一张票（#337）变成别人的从属。</div>
+  <div class="warn">#337 是本图风险最大的一张（唯一动共用位 ＋ 一条口径变更）。票面里已备「切两半」的退路，不必靠定 B 来解风险。</div>
+</article>
+
+<!-- 3 -->
+<article>
+  <div class="head"><div class="no">3</div><h3>9 条写词要不要先出一张「过程型 HTML」页</h3></div>
+  <p class="ctx">
+    <b>前因：</b>地图目标句里有一句「<em>（写类流程先出过程型 HTML）</em>」。场景 07 当年把它当硬目标，专门做了 3 张预检确认页；场景 04 的图主做过同样判断后，写成「本图 0 条需要」并记账。
+    <b>后果：</b>我按同样口径裁定「本图 0 条」，并写进地图正文免得后人当成漏项——但这句话是你写的，<b>请你点头或否决</b>。
+  </p>
+  <div class="facts">
+    <h4>关键事实（逐条读出来的）</h4>
+    <ul>
+      <li>9 条写词的 prompt：<b>没有一条</b>写着「先问／先确认／确认后再写」；全是「填空 → 给命令 → 出结果页」的单跳。</li>
+      <li>老技能在这 9 条上<b>也没有过程型产物</b>——场景 03 用到的 8 个模板名，全是结果型。</li>
+      <li>「必须多步交互」的那一批（全批 5 条）不在场景 03 里。</li>
+    </ul>
+  </div>
+  <table>
+    <tr><th style="width:34%">选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="pick"><td><b>A 0 条需要，记账不占票</b><span class="tag ok">推荐</span></td>
+        <td>目标句不改、不给本图加票；与场景 04 同判；不造老技能没有的东西</td>
+        <td>若你的本意是「每条写词都先给一张页」，这一步要在下游补回来</td></tr>
+    <tr><td><b>B 补第 10 张票</b>，做 3 张写词过程型页</td>
+        <td>目标句逐字满足</td>
+        <td>多一张票 ＋ 一个窗口；<b>老技能没有实物可照</b>（要新设计），风险是做出来不是你要的</td></tr>
+  </table>
+  <div class="verdict"><b>我推荐 A。</b>证据在上面三条里：这批词的写法本身不需要「先确认」，强行加页会多一次点击而不多一分信息。先例（场景 04）走的是同一条。</div>
+</article>
+
+<!-- 4 -->
+<article>
+  <div class="head"><div class="no">4</div><h3>#310「CI 恒红」怎么处置</h3></div>
+  <p class="ctx">
+    <b>前因：</b>你问过「310 是谁开的票」。它是执行 #293 那条 session 顺手开的「票外既有 CI 红」——<em>无认领、无人作业</em>。本地 Windows 全绿，CI 三平台全红。
+    <b>后果：</b>所有图的「测试全绿」这条判定都建在它上面；「CI 绿」这句话今天不可用。
+  </p>
+  <div class="facts">
+    <h4>关键事实</h4>
+    <ul>
+      <li>两个成因：① 插件 client 产物在 CI 里没人构建；② 两条 Windows 语义的用例在 Linux／macOS 必红。</li>
+      <li><b>工作区里已有人在改</b>（根 <code>build</code> 已挂 <code>build:client</code>、<code>plugin-bill-ilife</code> 的 tsconfig／index.ts、那两条用例都改了）——<b>都还没提交</b>。</li>
+      <li>诊断与分步方案已写好：<code>docs/skills/skill-calorie/t310-CI恒红定界-证据.md</code>（S-A／S-B 两段）。</li>
+    </ul>
+  </div>
+  <table>
+    <tr><th style="width:34%">选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="pick"><td><b>A 派一条 session 按 S-A／S-B 收口</b><span class="tag ok">推荐</span></td>
+        <td>CI 绿 → 所有图的判定面干净；顺手把在飞的那堆改动收编</td>
+        <td>牵到 #241 与共用件的截断口径，不是小活</td></tr>
+    <tr><td><b>B 先不动</b>，等在飞的改动自己提上来</td><td>不重复造</td>
+        <td>不知何时落地；而且没人认领，可能一直躺在工作区</td></tr>
+    <tr><td><b>C 判超范围关掉</b></td><td>省事</td>
+        <td>「CI 绿」继续不可用；#320 五条绿线里那条等于没执行</td></tr>
+  </table>
+  <div class="verdict"><b>我推荐 A。</b>理由：改动已经在工作区里躺着（B 的实际形态就是「等人」），而 S-A／S-B 已经把路铺好了——派一张票的边际成本最低。</div>
+</article>
+
+<h2 class="sec">另外两件小事（一句话就能定）</h2>
+<details><summary>prompt 模板优化的成品，至今只活在对话里 —— 要不要单独落一份文件？</summary>
+  <p>那版「请重审你当前场景 Map 的 ISSUE 设计」的优化稿只存在于对话中，别的 session 拿不到。落一份进 <code>docs/agents/</code> 或 <code>docs/skills/skill-calorie/</code> 就能复用。<b>我推荐：落。</b></p></details>
+<details><summary>这份对齐记录住在 <code>.scratch/</code>，而它被 gitignore —— 要不要也入仓一份？</summary>
+  <p>文件在 <code>D:\ilife\.scratch\alignment\20260914-111309-154地图对齐.md</code>，索引在地图 #154 的 Notes 上（GitHub 侧在）。<code>.scratch/</code> 不进 git，工作区丢了它就没了。<b>我推荐：入仓一份到 <code>docs/skills/skill-calorie/</code>。</b></p></details>
+
+<h2 class="sec">已经定了、不用你管</h2>
+<details><summary>九张票、切法与两轮对抗式审查（点开看摘要）</summary>
+  <ul>
+    <li><b>#332</b> 页面装配与视图模型按子功能归位（纯搬迁，产物逐字节相同）— 先验形状票，其余五张等它。</li>
+    <li><b>#333 / #334 / #335 / #336 / #337</b> 五个页面类：① 曲线明细备注 18 词 ② 两段对比 18 词 ③ 体重复盘 6 词 ④ 体重波动 5 词 ⑤⑥ 体重盘与写后回执 11 词。</li>
+    <li><b>#338</b> 58 条执行流程接线 ＋ <b>#339</b> 58 条真出口用例 ＋ <b>#340</b> 端到端验收（你亲手跑）。</li>
+    <li>对抗式审查两轮共查出 8 个洞并全部闭环；其中最要命的一个：<b>AI 侧的命令来源是冻结表（不是路由表）</b>——只改路由会让测试全绿而用户念了词仍拿不到命令。</li>
+    <li>设计正本：<code>docs/skills/skill-calorie/t154-重切-设计.md</code></li>
+  </ul></details>
+
+<footer>
+  <p><b>回复模板</b>（直接改数字，贴回来即可）：</p>
+  <div class="tpl">1. 流程名住处：A / B / C
+2. 写后回执口径：A / B / C
+3. 过程型页：A（0 条，维持）/ B（补第 10 张票）
+4. #310：A（派票收口）/ B（等）/ C（关掉）
+小事：prompt 成品落盘 = 是/否 ；对齐记录入仓 = 是/否</div>
+  <p style="margin-top:14px">正本索引：地图 #154 Notes → <code>.scratch/alignment/20260914-111309-154地图对齐.md</code>　·　票级成果：各票正文「## 对齐成果」节</p>
+</footer>
+
+</div>
+</body>
+</html>
