@@ -30,8 +30,6 @@ export const HOME_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 75, wakeWord: '看晚餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 76, wakeWord: '看加餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 77, wakeWord: '看全部餐别分布（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
-  { list: 'wake', order: 150, wakeWord: '看今日运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今日"}\'' },
-  { list: 'wake', order: 151, wakeWord: '看昨日运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"昨日"}\'' },
   { list: 'wake', order: 152, wakeWord: '看本周运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"本周"}\'' },
   { list: 'wake', order: 153, wakeWord: '看上周运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"上周"}\'' },
   { list: 'wake', order: 154, wakeWord: '看本月运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"本月"}\'' },

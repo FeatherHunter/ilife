@@ -5,14 +5,16 @@
  * **语义不动**——`list`／`order`／`wakeWord`／`scene`／`kind`／`key`／`cli` 逐字照抄，
  * `order` 仍是原列表内 0 基位次（顺序权威，生成器按 `(list, order)` 复原三个列表；换住处不打乱顺序）。
  *
- * 本文件收 **33 条**：`wake` 27 条（order 137–149／159–163／167–175，其中 167／170–175
+ * 本文件收 **35 条**：`wake` 29 条（order 137–151／159–163／167–175，其中 167／170–175
  * 系 #265 自 `src/home/routes.ts` 搬回：改指 `calorie.view.exercise-distribution`／`-trend`／`-recap`
+ * 后键属运动，记录随键归位，`order` 仍是原列表内 0 基位次，换住处不打乱顺序；
+ * 其中 150／151 系 #342 自 `src/home/routes.ts` 搬回：改指 `calorie.view.exercise-records`
  * 后键属运动，记录随键归位，`order` 仍是原列表内 0 基位次，换住处不打乱顺序）
  * ＋ `new` 6 条（order 28／34／35／36／37／39）。
- * `calorie.view.exercise`（运动总览）的其余 12 条记录**不在这里**：那个键的场景分区是 **01 主页**
+ * `calorie.view.exercise`（运动总览）的其余 10 条记录**不在这里**：那个键的场景分区是 **01 主页**
  * （依据 `docs/skills/skill-calorie/t313a-分区-证据.md`「场景 01（主页，4）… `calorie.view.exercise`」），
- * 归场景 01 那张票；那 12 条（`order` 150–158／164–166）仍住 `src/home/routes.ts`，
- * 本票只搬走其中已改指的 7 条（`order` 167／170–175），其余 12 条窗口词一字不动。
+ * 归场景 01 那张票；那 10 条（`order` 152–158／164–166）仍住 `src/home/routes.ts`，
+ * 本票只搬走其中已改指的 9 条（`order` 150–151／167／170–175），其余 10 条窗口词一字不动。
  */
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
@@ -30,6 +32,8 @@ export const EXERCISE_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 147, wakeWord: '删运动记录', scene: '04', kind: 'exec', key: 'calorie.exercise.remove', cli: 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'' },
   { list: 'wake', order: 148, wakeWord: '删某日运动', scene: '04', kind: 'exec', key: 'calorie.exercise.remove', cli: 'calorie-cmd-read calorie.exercise.remove --params \'{"date":"<日期>"}\'' },
   { list: 'wake', order: 149, wakeWord: '批量删运动', scene: '04', kind: 'exec', key: 'calorie.exercise.remove', cli: 'calorie-cmd-read calorie.exercise.remove --params \'{"from":"<日期>","to":"<日期>"}\'' },
+  { list: 'wake', order: 150, wakeWord: '看今日运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise-records', cli: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"今日"}\'' },
+  { list: 'wake', order: 151, wakeWord: '看昨日运动', scene: '04', kind: 'exec', key: 'calorie.view.exercise-records', cli: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"昨日"}\'' },
   { list: 'wake', order: 159, wakeWord: '看今日运动（vs 目标）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-goal', cli: 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"今日"}\'' },
   { list: 'wake', order: 160, wakeWord: '看本周运动（vs 目标）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-goal', cli: 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"本周"}\'' },
   { list: 'wake', order: 161, wakeWord: '看运动记录（有备注）', scene: '04', kind: 'exec', key: 'calorie.view.exercise-records', cli: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"7d","hasNote":true}\'' },

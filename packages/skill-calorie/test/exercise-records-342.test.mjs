@@ -12,9 +12,9 @@
  *  2. `routesFor('看运动记录（有备注）')` 有 `exec` 记录，实跑产物是这一页（含备注列）；
  *  3. `看运动记录（按力量筛选）`／`（按有氧筛选）` 的 `routesFor` 指向新命令，
  *     实跑分别是力量／有氧子集；
- *  4. 新命令直跑 `window 今日`／`昨日`（`看今日运动`／`看昨日运动` 的参数形状）
- *     即记录级明细——路由层那 2 条当刻仍住 `src/home/routes.ts`（场景 01 地盘，
- *     本票禁写，待跨图搬迁），本条只证命令侧已就绪，不证路由已改指。
+ *  4. `看今日运动`／`看昨日运动`（`order 150／151`，已自 `src/home/routes.ts` 搬进
+ *     `src/exercise/routes.ts` 并改指新命令）的 `routesFor` 指向新命令，
+ *     实跑分别是今日／昨日窗口的记录级明细。
  *
  * 变异证据（自证两行，机器读数见 `docs/skills/skill-calorie/t342-*.md`）：
  * - 变异红：把 `src/exercise/records.ts` 的记录表标题 `运动记录明细` 改字
@@ -159,9 +159,14 @@ test('#342 按有氧筛选指新命令且实跑是有氧子集', () => {
   assert.ok(!r.file.includes('卧推'), '有氧子集不应含力量行');
 });
 
-test('#342 新命令直跑今日／昨日窗口（看今日／昨日运动的参数形状已就绪）', () => {
+test('#342 看今日／昨日运动路由指新命令且实跑是记录页（order 150／151 已搬）', () => {
+  for (const w of ['看今日运动', '看昨日运动']) {
+    const routes = routesFor(w);
+    const exec = routes.filter((x) => x.kind === 'exec');
+    assert.ok(exec.some((x) => x.key === NEW_KEY), w + '应指新命令，实测 ' + JSON.stringify(exec));
+  }
   const dir = mkDir();
-  const { today, d1 } = seedThree(dir);
+  const { today } = seedThree(dir);
   const yesterday = shiftISO(today, -1);
   const rToday = runCli(dir, NEW_KEY, { window: '今日' }, 'records-today');
   assertRecordsPage(rToday, '今日窗口');
@@ -169,5 +174,5 @@ test('#342 新命令直跑今日／昨日窗口（看今日／昨日运动的参
   const rY = runCli(dir, NEW_KEY, { window: '昨日' }, 'records-yesterday');
   assertRecordsPage(rY, '昨日窗口');
   assert.ok(rY.file.includes(yesterday), '昨日页缺昨日日期 ' + yesterday);
-  assert.ok(d1 !== undefined, '种子日期占位');
+  assert.ok(today !== undefined, '种子日期占位');
 });
