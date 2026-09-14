@@ -9,11 +9,14 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { todayISO } from '../analysis/utils.js';
 import { addRecord, batchAdd, copyYesterday } from './exerciseStore.js';
-import type { ExerciseRecordInput } from './exerciseStore.js';
+import type { ExerciseRecordInput, ExerciseRow } from './exerciseStore.js';
+import { withM5 } from '../render/receipt.js';
+import type { CrudReceipt } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { assertISO, fail, needArr, wday } from '../shared/params.js';
-import { F, R, out } from '../shared/writeParts.js';
+import { F, R, commandLine, totalChanges } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
+import { buildExerciseReceiptDoc } from './receipt.js';
 
 /** 一条运动输入：类型／热量必填，其余按库里那几列可选；`date` 缺省今天。 */
 function oneExercise(item: Record<string, unknown>, i: string): ExerciseRecordInput {
@@ -48,32 +51,60 @@ function oneExercise(item: Record<string, unknown>, i: string): ExerciseRecordIn
   };
 }
 
-/** `calorie.exercise.add` · 记运动：单条／批量补记／复制昨日运动（三形态同一个键）。 */
+/** `calorie.exercise.add` · 记运动：单条／批量补记／复制昨日运动（三形态同一个键）。
+ *
+ * 产物（#264）：三形态一律完整文档（`./receipt.js` 装配，与场景 07 同形）；行为不动——
+ * 写库口径与回执数据（`recordId`／`ids`／`writtenFields`／`items`／摘要）与搬迁前逐字一致，
+ * `affectedRows` 由本件按 `total_changes()` 增量自算（与分派层 `dispatchWrite` 同口径，
+ * 故页内影响行数与信封一致），`command` 照抄实跑原文进复制日志。
+ */
 export function writeExerciseLog(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  const key = 'calorie.exercise.add';
+  const command = commandLine(key, params);
+  const before = totalChanges(db);
   if (params['copyFrom'] !== undefined) {
     if (params['copyFrom'] !== 'yesterday') fail(2, 'copyFrom 只支持 yesterday');
     const target = wday(params, 'date') ?? wday(params, 'targetDate') ?? todayISO();
     assertISO(target, 'date');
     const r = copyYesterday(db, target);
     if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '昨日无运动记录可复制');
-    return out(R('复制昨日运动', 'create', '已复制昨日运动→' + target + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日运动', 'exercise_log (写库回执)', {
+    const base = R('复制昨日运动', 'create', '已复制昨日运动→' + target + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日运动', 'exercise_log (写库回执)', {
       noChange: r.copied === 0, ids: [], idSource: 'condition',
       writtenFields: r.copied > 0 ? [...F.exercise] : [],
-    }));
+    });
+    const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
+    return done(db, key, command, receipt, { rows: r.rows, skipped: r.skipped, targetDate: target });
   }
   if (params['items'] !== undefined) {
     const items = needArr(params, 'items');
     if (items.length > 200) fail(2, 'items 至多 200 条');
     const r = batchAdd(db, items.map((e, i) => oneExercise((e ?? {}) as Record<string, unknown>, '（第' + i + '条）')));
-    return out(R('记运动', 'create', '批量记运动：新增 ' + r.added + ' 条', '批量补记运动', 'exercise_log (写库回执)', {
+    const rows = r.ids.map((id) => db.prepare('SELECT * FROM exercise_log WHERE id = ?').get(id) as ExerciseRow);
+    const base = R('记运动', 'create', '批量记运动：新增 ' + r.added + ' 条', '批量补记运动', 'exercise_log (写库回执)', {
       recordId: r.ids[0] ?? null, ids: r.ids, idSource: r.ids.length > 0 ? 'record' : 'condition',
       writtenFields: r.added > 0 ? [...F.exercise] : [],
-    }));
+    });
+    const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
+    return done(db, key, command, receipt, { rows });
   }
   const input = oneExercise(params, '');
   const r = addRecord(db, input);
-  return out(R('记运动', 'create', '已记运动：' + input.exerciseType + ' ' + input.caloriesBurned + ' 卡' + (input.minutes ? ' · ' + input.minutes + ' 分钟' : '') + '（' + input.date + '）', '记运动', 'exercise_log (写库回执)', {
+  const row = db.prepare('SELECT * FROM exercise_log WHERE id = ?').get(r.id) as ExerciseRow;
+  const base = R('记运动', 'create', '已记运动：' + input.exerciseType + ' ' + input.caloriesBurned + ' 卡' + (input.minutes ? ' · ' + input.minutes + ' 分钟' : '') + '（' + input.date + '）', '记运动', 'exercise_log (写库回执)', {
     recordId: r.id, ids: [r.id], writtenFields: [...F.exercise],
     items: [{ id: r.id, date: input.date, status: '成功', reason: '', detail: input.exerciseType }],
-  }));
+  });
+  const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
+  return done(db, key, command, receipt, { rows: [row], targetDate: input.date });
+}
+
+/** 回执装配收口：数据与整页同源（同一份 `receipt`），页面只读装配不改数据。 */
+function done(
+  db: DatabaseSync, key: string, command: string, receipt: CrudReceipt,
+  detail: { rows?: readonly ExerciseRow[]; skipped?: number; targetDate?: string },
+): WriteOut {
+  return {
+    data: { ok: true, message: receipt.summary, receipt },
+    html: buildExerciseReceiptDoc(db, key, receipt, command, detail),
+  };
 }
