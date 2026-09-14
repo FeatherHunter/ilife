@@ -32,21 +32,21 @@
 | 件 | 挂号值 | 当场实测 | 结论 |
 |---|---|---|---|
 | `src/triggers/wake-assets.ts` | — | 4747 | 超因：全量唤醒词资产（逐字落地老实物 HELP 的 typed TS module，见件头「唯一事实源」）与代码同处一件，数据面占了绝大多数行。 |
-| `src/render/trendDocs.ts` | — | 824 | 超因：趋势／分析域同质文档装配（数据→区块→填充器）全挤在一件里。 |
+| `src/render/trendDocs.ts` | — | 826 | 超因：趋势／分析域同质文档装配（数据→区块→填充器）全挤在一件里。 |
 | `scripts/gen-cli.mjs` | 729 | 754 | 「#354 挂号原文」超因：命令汇总派生与生成物写回同处一个一次性脚本；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。 |
-| `src/weight/history.ts` | — | 670 | 超因：「看体重明细」与「看体重曲线」在命令面上是同一个命令，两条子功能共用一件。 |
+| `src/weight/history.ts` | — | 681 | 超因：「看体重明细」与「看体重曲线」在命令面上是同一个命令，两条子功能共用一件。 |
 | `src/render/html.ts` | — | 647 | 超因：T8～T10 的多套 HTML 串模板（饮食／总览／照片层等）同处一件。 |
-| `src/weight/review.ts` | — | 590 | 超因：体重复盘三形态的判别式与页面装配同处一件。 |
+| `src/weight/review.ts` | — | 599 | 超因：体重复盘三形态的判别式与页面装配同处一件。 |
 | `src/render/trendMiscPortDocs.ts` | — | 571 | 超因：#113「趋势 2＋其他 6」共 8 键的 HTML 填充器同处一件。 |
 | `src/workout/write.ts` | — | 570 | 超因：训练计划 10 个写处理函数（创建类 5＋变更类 5）同处一件。 |
-| `src/weight/compare.ts` | — | 547 | 超因：对比体重的主窗口／对比窗口两套参数与对比算式同处一件（算式另有姊妹件 `weightCompare*.ts`）。 |
+| `src/weight/compare.ts` | — | 555 | 超因：对比体重的主窗口／对比窗口两套参数与对比算式同处一件（算式另有姊妹件 `weightCompare*.ts`）。 |
 | `src/render/exercisePort.ts` | — | 541 | 超因：#111 运动移植 6 键取数（行源＋分类口径）同处一件。 |
 | `src/render/sportPortDocs.ts` | — | 531 | 超因：#111 运动移植 6 键的全文档装配（数据→区块→填充器）同处一件。 |
 | `src/migrate/migrate.ts` | — | 494 | 超因：老库到新 schema 的一次性迁移（13 表重建口径）全在一件里。 |
 | `src/analysis/multiTrendPage.ts` | — | 490 | 超因：通用分析页最小形态的整页装配与图／表／复制区调用同处一件。 |
 | `src/photo/helpCenter.ts` | — | 485 | 超因：#88 HELP 速查台的数据模型与页面装配同处一件。 |
 | `src/render/trendMiscPort.ts` | — | 456 | 超因：#113 八模板取数（计数 6＋4＋8 闭合）同处一件。 |
-| `src/analysis/commands.ts` | — | 437 | 已超线，需要根据规则进行重构。超因：（**#376～#378 引入**）分析域 14 个键的**声明**与按子功能分段的**处理函数**同处一件——本票给分析域加了 `calorie.view.multi-trend` 的声明与薄转调（取数 `multiTrend.ts`／装配 `multiTrendPage.ts` 已分住姊妹件），声明面仍集中在本件；本次先不拆：拆分不在 #376～#381 写集，拆法待后续票——把处理函数按子功能切成姊妹件（组合分析／整体趋势／对照），声明面留本件，出口经 `analysis/index.ts` 转出。 |
+| `src/analysis/commands.ts` | — | 443 | 已超线，需要根据规则进行重构。超因：（**#376～#378 引入**）分析域 14 个键的**声明**与按子功能分段的**处理函数**同处一件——本票给分析域加了 `calorie.view.multi-trend` 的声明与薄转调（取数 `multiTrend.ts`／装配 `multiTrendPage.ts` 已分住姊妹件），声明面仍集中在本件；本次先不拆：拆分不在 #376～#381 写集，拆法待后续票——把处理函数按子功能切成姊妹件（组合分析／整体趋势／对照），声明面留本件，出口经 `analysis/index.ts` 转出。 |
 | `src/profile/setup.ts` | — | 428 | 超因：#179 三条写入词共用的写前页与 #175 补的写后回执页同处一件。 |
 | `src/diet/nutritionPortDocs.ts` | — | 423 | 超因：#112 营养 4 页的全文档装配（数据→区块→填充器）同处一件。 |
 | `src/fetch/body.ts` | 369 | 406 | 「#398 挂号原文」超因：读侧来源词（`SOURCE_FILTER_ALL`／`SourceFilter`／`assertSourceFilter`）与按来源分组取数（`trendCompositionBySource`／`compositionSourceCount`），与既有写侧校验（`validateCompositionInput`）＋围度取数同处一件；#398 先不拆：拆分不在该票写集，拆法待后续票（按「写侧校验／围度取数／体成分取数」切姊妹件）。**该件在 #445 当场实测比挂号值又涨；本行「当场实测」列随实况改，挂号值 369 不回改。** |

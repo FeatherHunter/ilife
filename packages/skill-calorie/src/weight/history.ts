@@ -72,15 +72,19 @@ export interface HistoryDocExtra {
   command?: string;
 }
 
-/** KPI 卡（`base-paint` 的 B-02：四槽＋状态徽章；组件与样式已齐，本页只传值）。 */
+/** KPI 卡（`base-paint` 的 B-02：四槽＋状态徽章；组件与样式已齐，本页只传值）。
+ *  值槽只放**短数字或数字＋单位**：单位走 `unit` 槽（小字），长信息一律进 `detail`。 */
 interface KpiCard {
-  label: string; value: string; detail: string;
+  label: string; value: string; unit?: string; detail: string;
   status?: StatusKind; statusText?: string;
 }
 
 function isOverlay(v: string | undefined): v is HistoryOverlay {
   return v === 'target' || v === 'milestone' || v === 'anomaly';
 }
+
+/** 里程碑门槛（减重 kg）：`overlay='milestone'` 的取数与「里程碑」卡的门槛口径同出一处。 */
+const MILESTONE_KG: readonly number[] = [5, 10];
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -168,7 +172,7 @@ export function viewWeightHistory(params: Record<string, unknown>, db: DatabaseS
   if (overlay === 'milestone') {
     const hits: Array<{ label: string; date: string; kg: number }> = [];
     const miss: string[] = [];
-    for (const delta of [5, 10]) {
+    for (const delta of MILESTONE_KG) {
       try {
         const r = scenarioE3(db, delta);
         hits.push({ label: '减重 ' + delta + 'kg 那天', date: r.segA.range, kg: r.segA.avg as number });
@@ -330,7 +334,8 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
   if (extra.overlay === 'target') {
     const goal = extra.goal;
     if (goal === null || goal === undefined) {
-      return { label: '目标', value: '未设目标', detail: '说「定体重目标」后可叠目标线', status: 'empty', statusText: '未设目标' };
+      // 值槽只放数：空态不把「未设目标」四个字当大数字，判断词进 `detail` 与徽章。
+      return { label: '目标', value: '—', detail: '未设目标 · 说「定体重目标」后可叠目标线', status: 'empty', statusText: '未设目标' };
     }
     const d = goal.diffKg;
     if (d === null) {
@@ -347,10 +352,12 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
   }
   if (extra.overlay === 'milestone') {
     const n = extra.milestones?.length ?? 0;
-    const detail = n > 0
+    const hit = n > 0
       ? (extra.milestones as Array<{ label: string; date: string }>).map((m) => m.label + ' ' + m.date).join('；')
       : (extra.milestoneMiss ?? []).join('；');
-    return { label: '里程碑', value: n + '／2 达成', detail: detail || '暂无里程碑', status: n > 0 ? 'ok' : 'empty', statusText: n > 0 ? '达成 ' + n + ' 个' : '未达成' };
+    // 值槽只放「达成几个」这一个数；「／2」的分母改成 `detail` 里的门槛口径，判词进徽章。
+    const detail = '门槛 减重 ' + MILESTONE_KG.join('kg／') + 'kg' + (hit === '' ? '' : ' · ' + hit);
+    return { label: '里程碑', value: String(n), unit: '个', detail, status: n > 0 ? 'ok' : 'empty', statusText: n > 0 ? '达成 ' + n + ' 个' : '未达成' };
   }
   if (extra.overlay === 'anomaly') {
     const n = extra.anomalies?.length ?? 0;
@@ -375,8 +382,12 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
   const asc = [...h.rows].reverse();
   const c = h.change;
   return [
+    /* 值槽只放「本窗条数」这一个数：区间串（`2026-08-09 ~ 2026-09-07`，23 字）在 28px 且
+     * `overflow-wrap: anywhere` 的值槽里会被断成 2~3 行，是四张卡不等高的直接成因（t154 用户读数）。
+     * 区间挪进 `detail`（副说明行）——页题 `<h1>`、副标题与页脚来源行各还有一份，信息不丢。 */
     {
-      label: '体重历史', value: h.range, detail: '共 ' + h.rows.length + ' 条',
+      label: '体重历史', value: String(h.rows.length), unit: '条',
+      detail: '本窗 ' + h.range + (extra.noteOnly ? '（只取有备注的）' : ''),
       status: h.rows.length >= 2 ? 'ok' : 'empty',
       statusText: h.rows.length >= 2 ? '样本 ' + h.rows.length + ' 条' : h.rows.length === 1 ? '单点数据' : '本窗无记录',
     },

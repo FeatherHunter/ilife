@@ -169,6 +169,9 @@ function gapDaysOf(s: CompareSegment): number {
   return span === null ? 0 : Math.max(0, span + 1 - s.count);
 }
 
+/** 日均速率的页上写法（g／天）：节奏判语与节奏卡的值槽共用一处定义。 */
+const perDayG = (r: number): string => (r >= 0 ? '+' : '') + Math.round(r * 1000) + ' g/天';
+
 /** 节奏判语：**两段日均速率的幅度差**（不是净变化之差——两段不等长时净变化之差不是速率）。
  *
  * 词里不出现「上升／下降」，故与方向判语不可能在同一句里互相打脸（#334 修的那个缺陷）。
@@ -177,9 +180,8 @@ interface Rhythm { readonly word: string; readonly detail: string; readonly comp
 function rhythmOf(a: CompareSegment, b: CompareSegment): Rhythm {
   const ra = rateOf(a);
   const rb = rateOf(b);
-  const perDay = (r: number): string => (r >= 0 ? '+' : '') + Math.round(r * 1000) + ' g/天';
   const segText = (s: CompareSegment, r: number | null): string =>
-    s.label + ' ' + fmtDelta(s.changeKg) + (r === null ? '' : '（日均 ' + perDay(r) + '）');
+    s.label + ' ' + fmtDelta(s.changeKg) + (r === null ? '' : '（日均 ' + perDayG(r) + '）');
   if (ra === null || rb === null) {
     const why = isSingleDay(a) || isSingleDay(b) ? '单日段没有跨天跨度，读不出速率' : '记录不足 2 条，读不出速率';
     return { word: '无从对照', detail: b.label + ' ' + fmtDelta(b.changeKg) + ' vs ' + a.label + ' ' + fmtDelta(a.changeKg) + '：' + why, comparable: false };
@@ -220,11 +222,15 @@ const deltaOf = (a: CompareSegment, b: CompareSegment): number | null => {
   return av === null || pv === null ? null : round2(av - pv);
 };
 
-/** 节奏卡：能对照＝ok，读不出速率＝empty，任一段样本不足＝warn（与两段卡的警示色同一个词）。 */
+/** 节奏卡：能对照＝ok，读不出速率＝empty，任一段样本不足＝warn（与两段卡的警示词同一个）。
+ *  **值槽只放本期日均速率这一个数**（数字＋单位 g／天）；判语词（幅度更大／更小／相当／无从对照）
+ *  进 `detail` 与徽章——值槽里不放词（t154 用户读数：值槽塞长文本或颜色词会把卡断行撑高）。 */
 const rhythmCard = (r: Rhythm, a: CompareSegment, b: CompareSegment): KpiCardInput => {
   const thin = a.count < SAMPLE_MIN || b.count < SAMPLE_MIN;
+  const rb = rateOf(b);
   return {
-    label: '节奏', value: r.word, detail: r.detail,
+    label: '节奏', value: rb === null ? MISSING : perDayG(rb),
+    detail: r.comparable ? r.word + ' · ' + r.detail : r.detail,
     status: !r.comparable ? 'empty' : thin ? 'warn' : 'ok',
     statusText: !r.comparable ? '无从对照' : thin ? '样本不足' : '日均速率对照',
   };
@@ -532,9 +538,11 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
     subtitle: v.scenarioLabel + ' · ' + a.label + ' ' + rangeText(a) + ' vs ' + b.label + ' ' + rangeText(b),
     caption: (delta, r) => v.scenarioLabel + '（差值 ' + fmtDelta(delta) + ' '
       + (delta === null ? '· ' : arrowOf(delta) + ' ' + directionWord(delta) + ' · ') + '节奏' + r.word + '）',
+    /* 值槽只放差值这一个数；情景名（`对比体重：当前 vs 平台期首日`，15~21 字）进 `detail`
+     * ——它是句短语，进值槽会被断成两三行（t154 用户读数）。 */
     lead: {
-      label: '对比情景', value: v.scenarioLabel,
-      detail: '差值 ' + fmtDelta(delta) + (delta === null ? '' : ' ' + arrowOf(delta)),
+      label: '对比情景', value: fmtDelta(delta),
+      detail: v.scenarioLabel,
       status: anchorMiss ? 'empty' : 'ok', statusText: anchorMiss ? '锚点未命中' : '锚点已命中',
     },
     a, b,

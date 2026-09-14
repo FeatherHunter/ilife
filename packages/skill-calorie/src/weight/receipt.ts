@@ -106,11 +106,13 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
     ]),
     renderKpiGrid([
       {
+        /* 值槽只放区间净变化这一个数（数字＋单位）；首末对（`72.5 → 70.1 kg`，14 字）进 `detail`
+         * ——它是区间串，进值槽会被断行撑高（t154 用户读数）。 */
         label: '区间变化',
-        value: span === null ? '—' : fw + ' → ' + lw + ' kg',
+        value: span === null ? '—' : signed(span),
         detail: span === null
           ? (snap.length > 0 ? '删除不足两条，区间变化无从计算' : '本次没有删除快照行，区间变化无从计算')
-          : signed(span) + '，' + dir + '（删前最早 → 最晚）',
+          : '首 ' + fw + ' → 末 ' + lw + ' kg（删前最早 → 最晚）· ' + dir,
         status: span === null ? 'empty' : 'warn',
         statusText: span === null ? '无区间' : dir,
       },

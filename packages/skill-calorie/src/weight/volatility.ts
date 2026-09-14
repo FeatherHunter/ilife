@@ -64,6 +64,12 @@ function fullDetrendedSigma(w: number[]): number {
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 
+/** 偏离量的页上写法（`±` ＋ 绝对值）：预警句与「预警」卡的值槽共用这一处，
+ *  免得同一个量在句子与值槽里各印一个精度（值槽那张卡的值必须与复制载荷的 `最新偏离kg` 同数）。 */
+export function deviationText(deviationKg: number): string {
+  return '±' + Math.abs(round2(deviationKg));
+}
+
 export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?: string | null, baselineMode: BaselineMode = 'rolling'): AnalysisResult<VolatilityV2> {
   const start = parseDate(startDate);
   if (!start) throw new FetchError('起始日期非法: ' + String(startDate));
@@ -120,8 +126,8 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
   const lastAbs = Math.abs(lastDev);
   const ewLevel = levelFor(lastAbs);
   const ewMsg = ewLevel === 'red'
-    ? '今偏离 ±' + lastAbs.toFixed(1) + 'kg 超过 2sigma 红线，谨紧张'
-    : ewLevel === 'yellow' ? '今天偏离 ±' + lastAbs.toFixed(1) + 'kg 超过 1.5sigma 黄线，注意' : '今天在正常范围内(±' + lastAbs.toFixed(1) + 'kg)';
+    ? '今偏离 ' + deviationText(lastDev) + 'kg 超过 2sigma 红线，谨紧张'
+    : ewLevel === 'yellow' ? '今天偏离 ' + deviationText(lastDev) + 'kg 超过 1.5sigma 黄线，注意' : '今天在正常范围内(' + deviationText(lastDev) + 'kg)';
   return ok({
     baselineMode,
     baselineValue: round2(baselineValue),

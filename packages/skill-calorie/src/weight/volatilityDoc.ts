@@ -23,7 +23,7 @@ import { DB_FILENAME } from '../paths.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
 import { weightCurvePlan } from './plate.js';
 import type { VolatilityView } from './plate.js';
-import { anomalyReason, volatilitySummary } from './volatility.js';
+import { anomalyReason, deviationText, volatilitySummary } from './volatility.js';
 import type { VolatilityV2, VolatilityViewMode, VolLevel } from './volatility.js';
 
 const CMD_KEY = 'calorie.view.volatility';
@@ -113,7 +113,13 @@ function anomalyTable(o: VolatilityV2, view: VolatilityViewMode): string {
 }
 
 /** 四张 KPI 卡与徽章：状态词只在这里出现一次，档位词恒取 `LEVEL_WORD`。
- *  `only`（只看异常点读法）不出整图，故阈值卡也不提 σ 趋势——本读法不提没画出来的东西。 */
+ *  `only`（只看异常点读法）不出整图，故阈值卡也不提 σ 趋势——本读法不提没画出来的东西。
+ *
+ *  **值槽只放一个数与单位**（t154 用户读数：值槽里塞长文本或颜色词，卡会被断行撑高、四张不等高）：
+ *  ① 基线值进值槽，「基线」这两个字进 `detail`；
+ *  ② 阈值只放**红线**那一个数——两条阈值线图上都画了并带标注（图题 `黄±X 红±Ykg`、红线 `红线 ±Ykg`），
+ *     黄线与 σ 口径进 `detail`；颜色的语义交给徽章与图上标注，不进值槽；
+ *  ③ 预警卡放「当前偏离」这个数，档位词（正常／黄／红）交给徽章。 */
 function kpiCards(o: VolatilityV2, only: boolean): KpiCardInput[] {
   const single = o.points.length === 1;
   const gap = o.days - o.warnDays;
@@ -122,22 +128,23 @@ function kpiCards(o: VolatilityV2, only: boolean): KpiCardInput[] {
   const redN = o.recentAnomalies.filter((a) => a.level === 'red').length;
   return [
     {
-      label: '波动分析', value: '基线 ' + o.baselineValue + ' kg',
-      detail: o.baselineToggleLabel + ' · ' + o.warnDays + '/' + o.days + ' 天有记录'
+      label: '波动分析', value: String(o.baselineValue), unit: 'kg',
+      detail: '基线 ' + o.baselineToggleLabel + ' · ' + o.warnDays + '/' + o.days + ' 天有记录'
         + (gap > 0 ? '（缺 ' + gap + ' 天）' : ''),
       status: single ? 'empty' : gap > 0 ? 'warn' : 'ok',
       statusText: single ? '单点' : gap > 0 ? '稀疏 ' + o.warnDays + ' 条' : '共 ' + o.warnDays + ' 条',
     },
     {
-      label: '阈值', value: '黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + ' kg',
-      detail: 'σ=' + o.baselineSigma + 'kg · ' + o.baselineMode + '基线'
+      label: '阈值', value: '±' + o.thresholds.red, unit: 'kg',
+      detail: '黄线 ±' + o.thresholds.yellow + 'kg · σ=' + o.baselineSigma + 'kg · ' + o.baselineMode + ' 基线'
         + (only ? '' : ' · ' + (o.sigmaTrend.length > 0 ? 'σ 对照 ' + o.sigmaTrend.length + ' 点' : '样本不足，不出 σ 趋势')),
       // 只有 1 个点时 σ 取兜底值 0.5，阈值不是从本窗数据推出来的——徽章要如实说。
       status: single ? 'empty' : o.sigmaTrend.length > 0 ? 'ok' : 'warn',
       statusText: single ? '单点阈值（兜底 σ）' : o.sigmaTrend.length > 0 ? '正常对照' : '样本不足',
     },
     {
-      label: '预警', value: levelWord(level), detail: o.earlyWarning.message,
+      label: '预警', value: deviationText(o.earlyWarning.deviationKg), unit: 'kg',
+      detail: o.earlyWarning.message,
       status: level === 'red' ? 'danger' : level === 'yellow' ? 'warn' : 'ok',
       statusText: levelWord(level),
     },

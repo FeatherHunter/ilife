@@ -83,10 +83,15 @@ function signed1(v: number): string {
   return Math.abs(v) < ZERO_EPS_KG ? '0.0' : (v > 0 ? '+' : '') + (Math.round(v * 10) / 10).toFixed(1);
 }
 
-/** 总减重短语（正数＝已减；负数是往回长，也照实写）——与载荷 `totalLoss` 正负语义一致。 */
+/** 总减重方向词（正数＝已减；负数是往回长，也照实写）——与载荷 `totalLoss` 正负语义一致。 */
+function lossWord(kgLoss: number): '已减' | '回涨' | '持平' {
+  return Math.abs(kgLoss) < ZERO_EPS_KG ? '持平' : kgLoss > 0 ? '已减' : '回涨';
+}
+
+/** 总减重短语（载荷与结论句用；页上 KPI 的**值槽只放数字**，方向词在 `detail` 与徽章里）。 */
 function lossPhrase(kgLoss: number): string {
-  if (Math.abs(kgLoss) < ZERO_EPS_KG) return '与历史最高持平';
-  return kgLoss > 0 ? '已减 ' + kgLoss + ' kg' : '回涨 ' + Math.abs(kgLoss) + ' kg';
+  const word = lossWord(kgLoss);
+  return word === '持平' ? '与历史最高持平' : word + ' ' + Math.abs(kgLoss) + ' kg';
 }
 
 /** 变化方向（体重增减口径：负＝减重）：同一状态同一个词（§5.2），页面不做自然语言解析。 */
@@ -333,10 +338,13 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
       statusText: m.gapKg > ZERO_EPS_KG ? '还差' : '已达标',
     },
     {
-      label: '预计达成', value: m.estDate ?? '—',
+      /* 值槽只放天数（数字＋单位）；预计达成日（`2026-12-31`，10 字）进 `detail`
+       * ——日期串进值槽会被断行撑高（t154 用户读数）。 */
+      label: '预计达成',
+      value: m.estDays === null || m.estDays === undefined ? '—' : String(m.estDays) + ' 天',
       status: m.estDate === null ? 'empty' : 'ok',
       statusText: m.estDate === null ? '未算' : '在轨',
-      detail: m.estDays === null || m.estDays === undefined ? m.status : m.estDays + ' 天 · ' + m.status,
+      detail: (m.estDate === null ? '' : '预计 ' + m.estDate + ' · ') + m.status,
     },
   ])];
   parts.push(renderListRows({
@@ -537,7 +545,8 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
       statusText: Math.abs(v.totalLoss) < ZERO_EPS_KG ? '持平' : '已减',
     },
     {
-      label: '总减重', value: lossPhrase(v.totalLoss), detail: '距历史最高',
+      /* 值槽只放数字（载荷 `totalLoss` 同一个数）；方向词（已减／回涨／持平）进 `detail` 与徽章。 */
+      label: '总减重', value: String(v.totalLoss) + ' kg', detail: '距历史最高 · ' + lossWord(v.totalLoss),
       status: Math.abs(v.totalLoss) < ZERO_EPS_KG ? 'empty' : v.totalLoss > 0 ? 'ok' : 'warn',
       statusText: Math.abs(v.totalLoss) < ZERO_EPS_KG ? '持平' : v.totalLoss > 0 ? '减重' : '回涨',
     },

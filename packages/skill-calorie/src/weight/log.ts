@@ -113,12 +113,23 @@ function todayCards(t: WeightTrend, single: boolean): KpiCardInput[] {
   ];
 }
 
-/** 体重盘四卡（首末／均值／变化／距目标）；单点在读数里写「单点无均值对照」。 */
+/** 窗口覆盖天数（含首末两天）：整页副标题与「体重盘」卡的值槽共用一处口径。 */
+function windowDays(w: WeightDashboard): number {
+  return Math.round((Date.parse(w.end) - Date.parse(w.start)) / 86400000) + 1;
+}
+
+/** 体重盘四卡（窗口天数／均值／变化／距目标）；单点在读数里写「单点无均值对照」。
+ *  **值槽只放一个数与单位**：首末对（`70.1 → 70.4 kg`，14 字）挪进 `detail`
+ *  ——它是区间串，进值槽会被断行撑高（t154 用户读数）。 */
 function plateCards(w: WeightDashboard): KpiCardInput[] {
   const t = w.trend;
   const single = w.curve.single;
   return [
-    { label: '体重盘', value: t.firstWeight + ' → ' + t.lastWeight + ' kg', detail: t.firstDate + ' ~ ' + t.lastDate, status: 'ok', statusText: '共 ' + t.recordCount + ' 条' },
+    {
+      label: '体重盘', value: String(windowDays(w)), unit: '天',
+      detail: '首 ' + t.firstWeight + ' → 末 ' + t.lastWeight + ' kg · ' + t.firstDate + ' ~ ' + t.lastDate,
+      status: 'ok', statusText: '共 ' + t.recordCount + ' 条',
+    },
     {
       label: '均值', value: t.avgWeight + ' kg',
       detail: single ? '单点无均值对照' : '共 ' + t.recordCount + ' 条 · 极值 ' + t.minWeight + '~' + t.maxWeight,
@@ -187,7 +198,7 @@ function weightEnvelope(w: WeightDashboard): SerializableEnvelope {
 
 export function buildWeightDoc(w: WeightDashboard, command: string): string {
   const t = w.trend;
-  const spanDays = Math.round((Date.parse(w.end) - Date.parse(w.start)) / 86400000) + 1;
+  const spanDays = windowDays(w);
   const sourceText = DB_FILENAME + ' · weight_log ｜ 窗口 ' + w.start + ' ~ ' + w.end + ' ｜ ' + t.recordCount + ' 条';
   const parts: string[] = [
     renderKpiGrid(todayCards(t, w.curve.single)),
