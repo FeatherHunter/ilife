@@ -17,6 +17,8 @@ import { openDb } from '../dist/index.js';
 import { dispatch } from '../dist/cli/cmd_read.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL } from '../dist/cli/keys.js';
 import { routesFor } from '../dist/triggers/routing.js';
+import { resolveWindow } from '../dist/analysis/series.js';
+import { pinClockTo } from './pin-clock.mjs';
 
 /** 全量 436 路由查词（#81 SoT）：取首个 exec 项。 */
 function execRoute(word) {
@@ -28,6 +30,15 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const DB_FILENAME = 'calorie_data.db';
+/** 种子锚点＝本件 fixture 的「今天」（种子末日 2026-09-07）。 */
+const SEED_TODAY = '2026-09-07';
+
+// 本件整件跑在**种子锚点**这一天（日期腐坏修复 · #326 同款手法）：本件种子是**绝对日**
+// 2026-08-05 ~ 2026-09-07，而路由 cli 带的是**相对窗**（`本周`／`30d`），体成分／围度的缺省
+// 更是「近 90 天」，锚点＝进程内「当刻」。不钉锚，墙钟一滑过种子末日（或滑出 90 天窗），
+// 窗口就整个落到种子之外 → `missing-data`（exit 4）。
+// 机制、为何钉 `Date` 而不钉 `CALORIE_TODAY`、为何另起一件，见 `pin-clock.mjs` 头注。
+pinClockTo(SEED_TODAY);
 
 function seedSport(db) {
   db.prepare('INSERT OR REPLACE INTO daily_goal (id, calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal, weight_goal, goal_deadline, exercise_goal) VALUES (1, 1800, 150, 200, 50, 2000, 65, \'2026-10-01\', 300)').run();
@@ -119,6 +130,10 @@ test('#109 域内唤醒词命中：代表词→运动/身体域 9 键（路由�
 test('#109 唤醒词→key→HTML 链：路由 cli 直跑产出对应全文档', () => {
   const { db } = mkSportDb();
   try {
+    // 钉锚生效自证：本链两条相对窗在钉锚下＝种子窗。锚若没钉住，这里会算出当刻窗而红——
+    // 故此断言不是空转，它把「窗口由钉住的锚点算出」钉成判据。
+    assert.deepEqual(resolveWindow('本周'), ['2026-09-07', '2026-09-07'], '钉锚未生效：本周 非种子窗');
+    assert.deepEqual(resolveWindow('30d'), ['2026-08-09', '2026-09-07'], '钉锚未生效：30d 非种子窗');
     for (const word of ['看本周运动', '看体重曲线', '看体脂']) {
       const hit = execRoute(word);
       assert.ok(hit, '唤醒词未命中：' + word);
