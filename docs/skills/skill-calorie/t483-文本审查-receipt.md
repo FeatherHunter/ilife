@@ -147,6 +147,13 @@
 
 GATE-RELAX flag=--allow-nonzero reason=前三条测试运行（f2429c68／9a3aa08e／95c474da）是「断言收紧前」的红读数、7ab2920d 是票面要求的变异红读数，都是本票交付过程的一部分，必须逐条声明，故对账时放宽 exit 口径。
 
+**门禁对账自跑**：`node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t483-文本审查-receipt.md --ticket 483 --allow-nonzero`
+→ `RESULT: matched=9/9 auditEntries=4700 scoped=9 undeclared=0` ＋ `gate-audit: PASS`。
+
+**提交与推送**：提交 `473dd15a23240483ed26c9a0fe788974b8ee2c88`（`feat(483): …`，按路径 6 件：4 源码 ＋ 1 测试 ＋ 本证据件）；
+推送 `a150df9..473dd15  master -> master`（`git push` 持锁 runId=ed35c152-a5d6-4e6f-b0f0-d8ef5cb4d316 exit=0`）。
+落盘卫生：6 件均 UTF-8 无 BOM、无 CRLF、无字面 `\n`（`.scratch/t154/text-review/b483/check-clean.py` 读数）。
+
 ## 六、未做项与下一手缺什么
 
 1. **`edit.ts` 的 5 处摘要串未改**（`R(...)` 第 3 参）：`已删除体重 #1（… · 硬删除，不可恢复）`／`已删除 2026-09-06 体重 1 条（硬删除，不可恢复）`／`批量删体重 …（硬删除，不可恢复）`。它们**同时是 CLI 信封 `data.message`（机器面）与页面副标题（可见文本）**——票面「机器面 payload 一字不动」，故本票未动。结果：可见文本里该措辞由原来 5 处收到 **2 处**（副标题＋结论句）。要再收需要跨族裁定（要么副标题与机器消息解耦，要么口径改写「摘要一律不算可见文本」）。
