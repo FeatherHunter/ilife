@@ -1,0 +1,1029 @@
+{
+ "schema": "t156-old-html-index/1",
+ "map": 156,
+ "map_title": "卡路里场景 04 运动",
+ "seat": "W1",
+ "seat_scope": "写后回执页／运动汇总／对照目标（3 件老模板，30 条唤醒词）",
+ "generated_at": "2026-09-14 14:55 +0800",
+ "old_skill_root": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里",
+ "old_skill_root_writable": false,
+ "markdown_sibling": "docs/skills/skill-calorie/t156-老HTML盘点-写与汇总.md",
+ "fact_sources": [
+  ".scratch/t156-old/scene04_39.json（本图 39 条唤醒词＋字段）",
+  ".scratch/t156-old/scan1_refs.json（脚本→模板引用）",
+  ".scratch/t156-old/scan2_templates.json（模板字节／行数／区块／id／类名／CSS 变量）",
+  ".scratch/t156-old/body_crud_receipt.txt｜body_exercise_summary.txt｜body_exercise_goal_view.txt（正文提取件）",
+  ".scratch/t156-old/t264.json｜t265.json｜t342.json（票面）"
+ ],
+ "coverage": {
+  "templates_covered": 3,
+  "wake_words_covered": 30,
+  "map_total_templates": 8,
+  "map_total_wake_words": 39,
+  "not_covered_templates": [
+   "templates/exercise_distribution.html",
+   "templates/exercise_strength.html",
+   "templates/exercise_cardio.html",
+   "templates/exercise_trend.html",
+   "templates/exercise_recap.html"
+  ]
+ },
+ "templates": [
+  {
+   "relative_path": "templates/crud_receipt.html",
+   "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\crud_receipt.html",
+   "bytes": 26279,
+   "bytes_recheck": 26279,
+   "lines": 466,
+   "sha256": "54b9a6974095b50fd6bff62ad8530b846609bdb0d80d6819484106b0e1ba272d",
+   "placeholders": [],
+   "inject_markers": [
+    {
+     "line": 4,
+     "marker": "<!--SHARED-CSS-->"
+    },
+    {
+     "line": 133,
+     "marker": "<!--INJECT-DATA-->"
+    },
+    {
+     "line": 133,
+     "marker": "<!--SHARED-HELPERS-->"
+    }
+   ],
+   "page_family": [
+    "写后回执页"
+   ],
+   "map_group": {
+    "写后回执页": 13
+   },
+   "kind": "receipt（写后回执）",
+   "tickets": [
+    {
+     "number": 264,
+     "title": "写后回执页（13 条写词的产物出完整文档）",
+     "state_note": "地图 #156 正文记「已关」",
+     "material": ".scratch/t156-old/t264.json"
+    }
+   ],
+   "referencing_scripts": [
+    {
+     "script": "scripts/render_exercise_receipt.py",
+     "script_bytes": 24072,
+     "ref_lines": [
+      17,
+      32
+     ]
+    },
+    {
+     "script": "scripts/render_plan_receipt.py",
+     "script_bytes": 26252,
+     "ref_lines": [
+      40,
+      77
+     ]
+    }
+   ],
+   "sections": [
+    "SHARED-CSS 样式段",
+    "INJECT-DATA ＋ SHARED-HELPERS 注入段",
+    "meta-bar 页眉",
+    "h1 操作回执 ＋ sub 状态徽章",
+    "id-card 操作卡",
+    "kpi-grid 指标卡",
+    "diff-card 字段变更卡",
+    "ctx-card 今日累计卡",
+    "items-card 复制明细卡",
+    "footer 撤销按钮组",
+    "主渲染脚本段",
+    "actionbar-zone 复制区"
+   ],
+   "section_nodes": [
+    {
+     "line": 4,
+     "name": "CMT SHARED-CSS"
+    },
+    {
+     "line": 133,
+     "name": "CMT INJECT-DATA"
+    },
+    {
+     "line": 133,
+     "name": "CMT SHARED-HELPERS"
+    },
+    {
+     "line": 140,
+     "name": "H1 ✅ 操作回执"
+    },
+    {
+     "line": 156,
+     "name": "H2 📋 字段变更"
+    },
+    {
+     "line": 161,
+     "name": "H2 📊 今日累计"
+    },
+    {
+     "line": 166,
+     "name": "H2 📋 复制明细"
+    }
+   ],
+   "tables": [],
+   "css_vars": {
+    "--fg": {
+     "value": "#1d1d1d",
+     "line": 11
+    },
+    "--fg2": {
+     "value": "#6e6e73",
+     "line": 11
+    },
+    "--fg3": {
+     "value": "#86868b",
+     "line": 11
+    },
+    "--bg": {
+     "value": "#fafafa",
+     "line": 11
+    },
+    "--card": {
+     "value": "#fff",
+     "line": 12
+    },
+    "--border": {
+     "value": "#d2d2d7",
+     "line": 12
+    },
+    "--accent": {
+     "value": "#0071e3",
+     "line": 12
+    },
+    "--good": {
+     "value": "#34c759",
+     "line": 13
+    },
+    "--warn": {
+     "value": "#ff9500",
+     "line": 13
+    },
+    "--bad": {
+     "value": "#ff3b30",
+     "line": 13
+    },
+    "--soft": {
+     "value": "#f5f5f7",
+     "line": 13
+    }
+   },
+   "style_notes": {
+    "print_styles": false,
+    "responsive": [
+     "@media (max-width:640px):113/114/121",
+     "@media (hover:none):104"
+    ],
+    "max_width_px": 780,
+    "diff_old_style": ".diff-old #ffeaea/#c7254e/line-through @64",
+    "diff_new_style": ".diff-new rgba(52,199,89,.15)/var(--good) @65"
+   },
+   "interactions": [
+    "复制按钮（actionbar-zone 注入，462-463）",
+    "复制数据 payloadData() 结构化六键（436-457）",
+    "撤销按钮（仅 meta.undo_cli 存在时显示，414-429）",
+    "四卡按 op 与数据有无条件显隐（302-410）",
+    "备注行走 .note-line（224-230）"
+   ],
+   "counts": {
+    "ids": 20,
+    "classes": 48,
+    "tables": 0
+   },
+   "wake_words": [
+    {
+     "key": "exercise_update",
+     "wake": "改运动记录",
+     "group": "改运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "id",
+      "old_record",
+      "new_record"
+     ],
+     "order": 0
+    },
+    {
+     "key": "exercise_update_day",
+     "wake": "改某日运动",
+     "group": "改运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "date",
+      "matched_count",
+      "old_record",
+      "new_record"
+     ],
+     "order": 1
+    },
+    {
+     "key": "exercise_delete",
+     "wake": "删运动记录",
+     "group": "改运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "id",
+      "snapshot"
+     ],
+     "order": 2
+    },
+    {
+     "key": "exercise_delete_day",
+     "wake": "删某日运动",
+     "group": "改运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "date",
+      "deleted_count"
+     ],
+     "order": 3
+    },
+    {
+     "key": "exercise_delete_range",
+     "wake": "批量删运动",
+     "group": "改运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "deleted_count"
+     ],
+     "order": 4
+    },
+    {
+     "key": "exercise_add",
+     "wake": "记运动",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "exercise_type",
+      "duration_minutes",
+      "calories_burned",
+      "time",
+      "is_estimated"
+     ],
+     "order": 0
+    },
+    {
+     "key": "exercise_add_note",
+     "wake": "记运动（含备注）",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "exercise_type",
+      "duration_minutes",
+      "calories_burned",
+      "note",
+      "time"
+     ],
+     "order": 1
+    },
+    {
+     "key": "exercise_add_strength",
+     "wake": "记力量训练",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "exercise_type",
+      "set_index",
+      "load_kg",
+      "reps",
+      "calories_burned"
+     ],
+     "order": 2
+    },
+    {
+     "key": "exercise_add_cardio",
+     "wake": "记有氧运动",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "exercise_type",
+      "duration_minutes",
+      "distance_km",
+      "avg_heart_rate",
+      "max_heart_rate",
+      "pace"
+     ],
+     "order": 3
+    },
+    {
+     "key": "exercise_add_daily",
+     "wake": "记日常活动",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "exercise_type",
+      "steps",
+      "period",
+      "duration_minutes",
+      "calories_burned"
+     ],
+     "order": 4
+    },
+    {
+     "key": "exercise_backfill",
+     "wake": "补记运动",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "date",
+      "exercise_type",
+      "duration_minutes",
+      "calories_burned",
+      "is_backfill"
+     ],
+     "order": 5
+    },
+    {
+     "key": "exercise_batch_add",
+     "wake": "批量补记运动",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "written_count",
+      "skipped_count",
+      "failed_count",
+      "failures"
+     ],
+     "order": 6
+    },
+    {
+     "key": "exercise_copy",
+     "wake": "复制昨日运动",
+     "group": "记运动",
+     "tpl": "templates/crud_receipt.html",
+     "fields": [
+      "copied_count",
+      "skipped_count",
+      "target_date"
+     ],
+     "order": 7
+    }
+   ]
+  },
+  {
+   "relative_path": "templates/exercise_summary.html",
+   "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_summary.html",
+   "bytes": 11856,
+   "bytes_recheck": 11856,
+   "lines": 228,
+   "lines_note": "scan2_templates.json 记 228 行；读取器按末尾空行口径报 227 行",
+   "sha256": "42e724c022279f800ab1e133ccf92d0126669bba99ddbd57aa990622ea399c0b",
+   "placeholders": [],
+   "inject_markers": [
+    {
+     "line": 4,
+     "marker": "<!--SHARED-CSS-->"
+    },
+    {
+     "line": 72,
+     "marker": "<!--INJECT-DATA-->"
+    },
+    {
+     "line": 72,
+     "marker": "<!--SHARED-HELPERS-->"
+    },
+    {
+     "line": 72,
+     "marker": "<!--CHARTS-HELPERS-->"
+    }
+   ],
+   "page_family": [
+    "运动汇总",
+    "记录级明细"
+   ],
+   "map_group": {
+    "运动汇总": 10,
+    "记录级明细": 5
+   },
+   "kind": "result（读类结果页，四模式一模板）",
+   "modes": {
+    "default": "records",
+    "all": [
+     "records",
+     "summary",
+     "stats",
+     "trend"
+    ],
+    "titles_line": "121-127"
+   },
+   "tickets": [
+    {
+     "number": 342,
+     "title": "记录级明细（运动记录这一族 ＋ 接住没有命令的那 1 条词）",
+     "covers": "mode=records 的 5 条词",
+     "material": ".scratch/t156-old/t342.json"
+    }
+   ],
+   "tickets_note": "mode=summary 的 10 条窗口词在本席手上三张票面（t264／t265／t342）里未见对口票",
+   "referencing_scripts": [
+    {
+     "script": "scripts/render_exercise_summary.py",
+     "script_bytes": 15837,
+     "ref_lines": [
+      21,
+      35
+     ]
+    }
+   ],
+   "sections": [
+    "SHARED-CSS 样式段",
+    "INJECT-DATA／SHARED-HELPERS／CHARTS-HELPERS 注入段",
+    "meta-bar 页眉＋模式徽章",
+    "h1 运动报表 ＋ sub",
+    "kpi-grid 四卡",
+    "chart-section 图表区（默认隐藏）",
+    "table-section 明细区（表头由数据注入）",
+    "footer 来源脚注",
+    "主渲染脚本段",
+    "actionbar-zone 复制区"
+   ],
+   "section_nodes": [
+    {
+     "line": 4,
+     "name": "CMT SHARED-CSS"
+    },
+    {
+     "line": 72,
+     "name": "CMT INJECT-DATA"
+    },
+    {
+     "line": 72,
+     "name": "CMT SHARED-HELPERS"
+    },
+    {
+     "line": 72,
+     "name": "CMT CHARTS-HELPERS"
+    },
+    {
+     "line": 79,
+     "name": "H1 🏃 运动报表"
+    },
+    {
+     "line": 90,
+     "name": "H2 "
+    },
+    {
+     "line": 96,
+     "name": "H2 明细"
+    }
+   ],
+   "tables": [
+    {
+     "line": 97,
+     "role": "唯一表格",
+     "columns_stats": [
+      "类别",
+      "次数",
+      "热量",
+      "占比（含 .bar-wrap 迷你条）",
+      "时长",
+      "组数"
+     ],
+     "columns_records": [
+      "日期",
+      "时间",
+      "类型",
+      "时长",
+      "热量",
+      "组数"
+     ],
+     "header_source": "summary.table_header 注入（:179）"
+    }
+   ],
+   "css_vars": {
+    "--fg": {
+     "value": "#1d1d1d",
+     "line": 11
+    },
+    "--fg2": {
+     "value": "#6e6e73",
+     "line": 11
+    },
+    "--fg3": {
+     "value": "#86868b",
+     "line": 11
+    },
+    "--bg": {
+     "value": "#fafafa",
+     "line": 11
+    },
+    "--card": {
+     "value": "#fff",
+     "line": 12
+    },
+    "--border": {
+     "value": "#d2d2d7",
+     "line": 12
+    },
+    "--accent": {
+     "value": "#0071e3",
+     "line": 12
+    },
+    "--good": {
+     "value": "#34c759",
+     "line": 13
+    },
+    "--warn": {
+     "value": "#ff9500",
+     "line": 13
+    },
+    "--bad": {
+     "value": "#ff3b30",
+     "line": 13
+    },
+    "--soft": {
+     "value": "#f5f5f7",
+     "line": 13
+    },
+    "--strength": {
+     "value": "#5856d6",
+     "line": 14
+    },
+    "--cardio": {
+     "value": "#0071e3",
+     "line": 14
+    },
+    "--flex": {
+     "value": "#34c759",
+     "line": 14
+    },
+    "--daily": {
+     "value": "#ff9500",
+     "line": 14
+    }
+   },
+   "style_notes": {
+    "print_styles": false,
+    "responsive": [
+     "@media (max-width:640px):56-62（表格不改版，.table-wrap 横向滚动:64）"
+    ],
+    "max_width_px": 920,
+    "category_colors_line": "14（--strength/--cardio/--flex/--daily）"
+   },
+   "interactions": [
+    "四模式分支（records/summary/stats/trend）",
+    "图表按需出现（trend→charts.line:144-156；stats→charts.bar:157-175）",
+    "复制按钮（actionbar-zone 注入，224-225）",
+    "记录列表截断前 50 条（:206）"
+   ],
+   "counts": {
+    "ids": 26,
+    "classes": 19,
+    "tables": 1
+   },
+   "wake_words": [
+    {
+     "key": "exercise_view_today",
+     "wake": "看今日运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "exercise_goal"
+     ],
+     "order": 0
+    },
+    {
+     "key": "exercise_view_yesterday",
+     "wake": "看昨日运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "exercise_goal"
+     ],
+     "order": 1
+    },
+    {
+     "key": "exercise_view_week",
+     "wake": "看本周运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 2
+    },
+    {
+     "key": "exercise_view_last_week",
+     "wake": "看上周运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 3
+    },
+    {
+     "key": "exercise_view_month",
+     "wake": "看本月运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 4
+    },
+    {
+     "key": "exercise_view_last_month",
+     "wake": "看上月运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 5
+    },
+    {
+     "key": "exercise_view_7d",
+     "wake": "看最近 7 天运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 6
+    },
+    {
+     "key": "exercise_view_30d",
+     "wake": "看最近 30 天运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 7
+    },
+    {
+     "key": "exercise_view_range",
+     "wake": "看某段时间运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "records",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 8
+    },
+    {
+     "key": "exercise_view_notes",
+     "wake": "看运动记录（有备注）",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "records",
+      "note"
+     ],
+     "order": 11
+    },
+    {
+     "key": "exercise_view_strength",
+     "wake": "看运动记录（按力量筛选）",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "records",
+      "set_index",
+      "load_kg",
+      "reps"
+     ],
+     "order": 12
+    },
+    {
+     "key": "exercise_view_cardio",
+     "wake": "看运动记录（按有氧筛选）",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "records",
+      "distance_km",
+      "pace"
+     ],
+     "order": 13
+    },
+    {
+     "key": "exercise_view_60d",
+     "wake": "看最近 60 天运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "daily_rows",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 14
+    },
+    {
+     "key": "exercise_view_180d",
+     "wake": "看最近 180 天运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "downsample_rows",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 15
+    },
+    {
+     "key": "exercise_view_365d",
+     "wake": "看最近 365 天运动",
+     "group": "看运动",
+     "tpl": "templates/exercise_summary.html",
+     "fields": [
+      "start_date",
+      "end_date",
+      "downsample_rows",
+      "total_calories",
+      "total_minutes",
+      "daily_avg",
+      "active_days"
+     ],
+     "order": 16
+    }
+   ]
+  },
+  {
+   "relative_path": "templates/exercise_goal_view.html",
+   "path": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里\\templates\\exercise_goal_view.html",
+   "bytes": 7662,
+   "bytes_recheck": 7662,
+   "lines": 138,
+   "sha256": "30bae370c502409c4b3d2b3e454f13b8e4666cb2d36702256d06402efd32d10d",
+   "placeholders": [],
+   "inject_markers": [
+    {
+     "line": 4,
+     "marker": "<!--SHARED-CSS-->"
+    },
+    {
+     "line": 58,
+     "marker": "<!--INJECT-DATA-->"
+    },
+    {
+     "line": 58,
+     "marker": "<!--SHARED-HELPERS-->"
+    },
+    {
+     "line": 58,
+     "marker": "<!--CHARTS-HELPERS-->"
+    }
+   ],
+   "page_family": [
+    "对照目标"
+   ],
+   "map_group": {
+    "对照目标": 2
+   },
+   "kind": "result（读类结果页，单目标对照）",
+   "periods": [
+    "today",
+    "week"
+   ],
+   "tickets": [],
+   "tickets_note": "本席手上三张票面（t264／t265／t342）未见覆盖对照目标一族的票；t265 的 7 条词是分布／趋势／复盘",
+   "referencing_scripts": [
+    {
+     "script": "scripts/render_exercise_goal_view.py",
+     "script_bytes": 6365,
+     "ref_lines": [
+      8,
+      27
+     ]
+    }
+   ],
+   "sections": [
+    "SHARED-CSS 样式段",
+    "INJECT-DATA／SHARED-HELPERS／CHARTS-HELPERS 注入段",
+    "meta-bar 页眉",
+    "h1 运动目标达成 ＋ sub",
+    "emptyBox 空态（默认隐藏）",
+    "content 内容区（默认隐藏）",
+    "ring-card 进度环卡",
+    "kpi-grid 四卡（目标／实际消耗／距目标／区间）",
+    "summary-card 一句话卡",
+    "footer 空壳",
+    "主渲染脚本段",
+    "actionbar-zone 复制区"
+   ],
+   "section_nodes": [
+    {
+     "line": 4,
+     "name": "CMT SHARED-CSS"
+    },
+    {
+     "line": 58,
+     "name": "CMT INJECT-DATA"
+    },
+    {
+     "line": 58,
+     "name": "CMT SHARED-HELPERS"
+    },
+    {
+     "line": 58,
+     "name": "CMT CHARTS-HELPERS"
+    },
+    {
+     "line": 61,
+     "name": "H1 🎯 运动目标达成"
+    }
+   ],
+   "tables": [],
+   "css_vars": {
+    "--fg": {
+     "value": "#1d1d1d",
+     "line": 10
+    },
+    "--fg2": {
+     "value": "#6e6e73",
+     "line": 10
+    },
+    "--fg3": {
+     "value": "#86868b",
+     "line": 10
+    },
+    "--bg": {
+     "value": "#fafafa",
+     "line": 10
+    },
+    "--card": {
+     "value": "#fff",
+     "line": 11
+    },
+    "--border": {
+     "value": "#d2d2d7",
+     "line": 11
+    },
+    "--accent": {
+     "value": "#0071e3",
+     "line": 11
+    },
+    "--good": {
+     "value": "#34c759",
+     "line": 12
+    },
+    "--warn": {
+     "value": "#ff9500",
+     "line": 12
+    },
+    "--bad": {
+     "value": "#ff3b30",
+     "line": 12
+    },
+    "--soft": {
+     "value": "#f5f5f7",
+     "line": 12
+    }
+   },
+   "style_notes": {
+    "print_styles": false,
+    "responsive": [
+     "@media (max-width:640px):45-49（环 220→180）"
+    ],
+    "max_width_px": 780,
+    "ring_hardcoded_colors": {
+     "achieved": "#34c759",
+     "not_achieved": "#0071e3",
+     "line": 112
+    }
+   },
+   "interactions": [
+    "空态与内容区互斥显隐（goal==null → emptyState:101-105）",
+    "进度环 charts.donut 单段（:111-113）",
+    "判决胶囊 ok／no 两态（:117）",
+    "复制按钮（actionbar-zone 注入，134-135）"
+   ],
+   "counts": {
+    "ids": 20,
+    "classes": 16,
+    "tables": 0
+   },
+   "wake_words": [
+    {
+     "key": "exercise_view_today_vs_goal",
+     "wake": "看今日运动（vs 目标）",
+     "group": "看运动",
+     "tpl": "templates/exercise_goal_view.html",
+     "fields": [
+      "exercise_goal",
+      "actual",
+      "completion_pct",
+      "gap",
+      "achieved",
+      "summary"
+     ],
+     "order": 9
+    },
+    {
+     "key": "exercise_view_week_vs_goal",
+     "wake": "看本周运动（vs 目标）",
+     "group": "看运动",
+     "tpl": "templates/exercise_goal_view.html",
+     "fields": [
+      "exercise_goal",
+      "week_goal",
+      "actual",
+      "completion_pct",
+      "gap",
+      "achieved",
+      "summary"
+     ],
+     "order": 10
+    }
+   ]
+  }
+ ],
+ "ticket_materials": [
+  {
+   "number": 264,
+   "file": ".scratch/t156-old/t264.json",
+   "bytes": 4972,
+   "topic": "13 条写词的产物换成完整文档的写后回执页"
+  },
+  {
+   "number": 265,
+   "file": ".scratch/t156-old/t265.json",
+   "bytes": 5543,
+   "topic": "7 条读类词归位（分布／趋势／复盘；不属本席模板）"
+  },
+  {
+   "number": 342,
+   "file": ".scratch/t156-old/t342.json",
+   "bytes": 5845,
+   "topic": "记录级明细（exercise_summary 的 mode=records 5 条词）"
+  }
+ ],
+ "wake_word_ledger": {
+  "total_in_map": 39,
+  "covered_by_seat": 30,
+  "per_template": {
+   "templates/crud_receipt.html": 13,
+   "templates/exercise_summary.html": 15,
+   "templates/exercise_goal_view.html": 2
+  }
+ }
+}
