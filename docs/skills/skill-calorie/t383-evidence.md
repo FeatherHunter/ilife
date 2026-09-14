@@ -69,7 +69,35 @@
 - 票面全链：build `chain-build1` DONE:0 → gen `chain-gen` DONE:0 → build `chain-build2` DONE:0 → help:build `chain-help` DONE:0。
 - `pnpm gen:check`：`runId=6050e8dc-31b1-4bf8-817a-c8eb9159cebb exit=0`（GEN-CHECK PASS 键117）＋复核 `chain-gencheck` DONE:0。
 - 新测试首绿：`tests 3／pass 3／fail 0`，`runId=315a093d-4ed6-4b0d-b4a7-42a1551a5ec1 exit=0`（`.scratch/t383/green-run.log`）。
+- 单条先验（自定义目标 138）：`PROBE138 RESULT: PASS/1-1`（routes-exec=1，exit=0，metrics target=65／days_left=36／feasible=0，12 项全 1）。
+- 生成链：gen `runId=46b5ba94-2781-445b-a80c-4e2e2b1ad2fd exit=0`（键117，GENExec=15/15）→ gen:check `runId=6050e8dc exit=0` → help:build `runId=75060509 exit=0`。
+- 变异后重编＋复绿：mut-build-green DONE:0 → `tests 3／pass 3／fail 0 runId=4bf1c28f exit=0`（`.scratch/t383/mut-green.log`）。
+- 增量提交：`74b2793e7fafee4548fb6689c6176a6631c50c77`（5 件：insightPlate／trendDocs／新测试／变更集／本证据；中文信息回读正常）。
+- 阻塞中重试：r5 `runId=95406dd2 exit=2`（scene-03-weight.ts 行59语法错，他席在途）；r6 `runId=85d0dd16 exit=2`（同文件行62语法错）。gen:check r2 因他人改 scene-03.ts／weight/routes.ts 致印记 stale（`runId=5dd176e5 exit=1`），非本票。
 - 路由冻结对账 `test/calorie-routing-81.test.mjs`：见十三节。
+
+## 十三、冻结对账归因（`test/calorie-routing-81.test.mjs` 现红，非本票）
+
+`runId=57e8bf45-12ef-425a-bff5-31aaf83b2097 exit=1`，`tests 8／pass 3／fail 5`（`.scratch/t383/routing81.log`）：
+
+| # | 断言 | 实际 vs 期望 | 归因 |
+|---|---|---|---|
+| D2① | exec／non-exec 计数 | 390／46 vs 361／75（＋29／−29） | 本票＋15（138–152 翻 exec）＋他席约＋14（multi-trend、body 对比等在途翻转） |
+| D2④ | 冻结逐条对齐 | 卡在“拍营养表记一餐”（他席词） | 非本票；本票 15 条对账 `PARITY PASS/15-15` |
+| D2⑤ | 新增入口 63 | 实际 68 | 他席新键 |
+| FX-81-5 | exec 快照 425 | 实际 459 | 同 D2①（含他席） |
+| A7 | 明确不做 10 | 实际 8 | 他席 2 条转出 |
+
+本票不改该冻结件（非本票路径；计数涉他席翻转，待编排者统一收口）。
+
+## 十四、未提交移交（他席在途 hunk 共存，按批准持有）
+
+以下 3 件含他席在途 hunk，本票只做定点追加、经 hunk-guard 证零触碰，收工时保持未提交，由编排者协调合流顺序（不许把他人 hunk 带入本票 commit）：
+
+- `packages/skill-calorie/src/analysis/commands.ts`（sha `d16fa683…`）：#376 `multi-trend` 第 14 键 hunk（markers `1aa59d9f…` 全程一致）＋本票 imports／`viewPredict` 15 分支。
+- `packages/skill-calorie/src/analysis/routes.ts`（sha `55d01018…`）：#376 order353 翻 exec hunk＋本票 398–412 十五条翻 exec（`order` 不动）。
+- `packages/skill-calorie/src/triggers/scene-10-analysis.ts`（sha `ae4ed258…`）：line95 他席 hunk＋本票 138–152 十五条真命令形态（与路由逐字一致，`order`／`data_fields` 不动）。
+- 生成物（`routes.generated.ts`／`keys.ts`／`SKILL.md` 等）随 src 合流后重跑生成链，不在本票单独提交。
 
 ## 十一、变异自证（源码级，两行）
 

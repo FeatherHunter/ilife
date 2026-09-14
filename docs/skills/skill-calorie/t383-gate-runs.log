@@ -1,0 +1,48 @@
+START ticket=383 runId=a5329592-0923-4296-b93b-eb3408569342 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 pid=40584 at=2026-09-14T04:34:04.284Z
+RUN ticket=383 runId=a5329592-0923-4296-b93b-eb3408569342 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 exit=1 pid=40584 at=2026-09-14T04:34:06.098Z
+START ticket=383 runId=2f83c18b-d9f7-4988-8dc1-b572176e75b9 cmd="pnpm build" waitedMs=40003 pid=28836 at=2026-09-14T04:39:27.522Z
+RUN ticket=383 runId=2f83c18b-d9f7-4988-8dc1-b572176e75b9 cmd="pnpm build" waitedMs=40003 exit=2 pid=28836 at=2026-09-14T04:39:29.739Z
+START ticket=383 runId=b592d1fe-5ea8-4a1d-a0a8-15df138780c7 cmd="pnpm build" waitedMs=0 pid=47472 at=2026-09-14T04:42:41.427Z
+RUN ticket=383 runId=b592d1fe-5ea8-4a1d-a0a8-15df138780c7 cmd="pnpm build" waitedMs=0 exit=2 pid=47472 at=2026-09-14T04:42:43.643Z
+START ticket=383 runId=8b19b7ec-536b-4ba8-a4ac-1b8f1759989b cmd="pnpm build" waitedMs=0 pid=23420 at=2026-09-14T04:44:55.611Z
+RUN ticket=383 runId=8b19b7ec-536b-4ba8-a4ac-1b8f1759989b cmd="pnpm build" waitedMs=0 exit=2 pid=23420 at=2026-09-14T04:44:59.020Z
+START ticket=383 runId=46b5ba94-2781-445b-a80c-4e2e2b1ad2fd cmd="pnpm gen" waitedMs=0 pid=47708 at=2026-09-14T04:45:18.691Z
+RUN ticket=383 runId=46b5ba94-2781-445b-a80c-4e2e2b1ad2fd cmd="pnpm gen" waitedMs=0 exit=0 pid=47708 at=2026-09-14T04:45:19.697Z
+START ticket=383 runId=6050e8dc-31b1-4bf8-817a-c8eb9159cebb cmd="pnpm gen:check" waitedMs=0 pid=36576 at=2026-09-14T04:45:37.279Z
+RUN ticket=383 runId=6050e8dc-31b1-4bf8-817a-c8eb9159cebb cmd="pnpm gen:check" waitedMs=0 exit=0 pid=36576 at=2026-09-14T04:45:38.278Z
+START ticket=383 runId=75060509-1267-4a20-a1d2-198a4851b5cb cmd="pnpm help:build" waitedMs=1 pid=49988 at=2026-09-14T04:45:47.761Z
+RUN ticket=383 runId=75060509-1267-4a20-a1d2-198a4851b5cb cmd="pnpm help:build" waitedMs=1 exit=0 pid=49988 at=2026-09-14T04:45:48.636Z
+START ticket=383 runId=31575150-ea46-4d0d-851f-7d145a3873fe cmd="pnpm build" waitedMs=0 pid=48312 at=2026-09-14T04:46:07.729Z
+RUN ticket=383 runId=31575150-ea46-4d0d-851f-7d145a3873fe cmd="pnpm build" waitedMs=0 exit=0 pid=48312 at=2026-09-14T04:46:10.825Z
+START ticket=383 runId=200c0003-1e01-4e42-8bbd-266b96c70127 cmd="pnpm build" waitedMs=1 pid=41620 at=2026-09-14T04:46:20.973Z
+RUN ticket=383 runId=200c0003-1e01-4e42-8bbd-266b96c70127 cmd="pnpm build" waitedMs=1 exit=0 pid=41620 at=2026-09-14T04:46:23.639Z
+START ticket=383 runId=24a666cb-c38c-4b04-950e-8b5bc7a0b554 cmd="pnpm gen" waitedMs=1 pid=47628 at=2026-09-14T04:46:26.808Z
+RUN ticket=383 runId=24a666cb-c38c-4b04-950e-8b5bc7a0b554 cmd="pnpm gen" waitedMs=1 exit=0 pid=47628 at=2026-09-14T04:46:27.857Z
+START ticket=383 runId=7abca7ec-1118-4fa1-9798-2602dae3b1fa cmd="pnpm build" waitedMs=1 pid=34124 at=2026-09-14T04:46:34.355Z
+RUN ticket=383 runId=7abca7ec-1118-4fa1-9798-2602dae3b1fa cmd="pnpm build" waitedMs=1 exit=0 pid=34124 at=2026-09-14T04:46:37.084Z
+START ticket=383 runId=548da628-0d8c-497e-8cf6-e2b0980611be cmd="pnpm help:build" waitedMs=0 pid=47212 at=2026-09-14T04:46:42.199Z
+RUN ticket=383 runId=548da628-0d8c-497e-8cf6-e2b0980611be cmd="pnpm help:build" waitedMs=0 exit=0 pid=47212 at=2026-09-14T04:46:43.124Z
+START ticket=383 runId=1a96092b-9ead-4595-8837-71db2569c1e0 cmd="pnpm gen:check" waitedMs=0 pid=37200 at=2026-09-14T04:46:46.963Z
+RUN ticket=383 runId=1a96092b-9ead-4595-8837-71db2569c1e0 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=37200 at=2026-09-14T04:46:48.011Z
+START ticket=383 runId=315a093d-4ed6-4b0d-b4a7-42a1551a5ec1 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 pid=22632 at=2026-09-14T04:46:50.377Z
+RUN ticket=383 runId=315a093d-4ed6-4b0d-b4a7-42a1551a5ec1 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 exit=0 pid=22632 at=2026-09-14T04:46:55.574Z
+START ticket=383 runId=e293943a-1cad-40f1-a573-475ff2206f50 cmd="pnpm build" waitedMs=0 pid=33476 at=2026-09-14T04:47:24.847Z
+RUN ticket=383 runId=e293943a-1cad-40f1-a573-475ff2206f50 cmd="pnpm build" waitedMs=0 exit=0 pid=33476 at=2026-09-14T04:47:27.952Z
+START ticket=383 runId=4cd4fd90-4314-4cf0-b70c-f16b77c79245 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 pid=29148 at=2026-09-14T04:47:31.465Z
+RUN ticket=383 runId=4cd4fd90-4314-4cf0-b70c-f16b77c79245 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 exit=1 pid=29148 at=2026-09-14T04:47:33.334Z
+START ticket=383 runId=f42c4275-f4ec-40c9-96a1-6054a1304616 cmd="pnpm build" waitedMs=1 pid=32792 at=2026-09-14T04:47:53.610Z
+RUN ticket=383 runId=f42c4275-f4ec-40c9-96a1-6054a1304616 cmd="pnpm build" waitedMs=1 exit=0 pid=32792 at=2026-09-14T04:47:56.708Z
+START ticket=383 runId=4bf1c28f-0aa2-422f-98fe-ef354d50cbc1 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 pid=15768 at=2026-09-14T04:48:04.696Z
+RUN ticket=383 runId=4bf1c28f-0aa2-422f-98fe-ef354d50cbc1 cmd="node --test packages/skill-calorie/test/analysis-predict-383.test.mjs" waitedMs=0 exit=0 pid=15768 at=2026-09-14T04:48:10.296Z
+START ticket=383 runId=57e8bf45-12ef-425a-bff5-31aaf83b2097 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=1 pid=13148 at=2026-09-14T04:48:47.787Z
+RUN ticket=383 runId=57e8bf45-12ef-425a-bff5-31aaf83b2097 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=1 exit=1 pid=13148 at=2026-09-14T04:48:48.081Z
+START ticket=383 runId=5dd176e5-7dd0-4996-816f-f7246c69fff7 cmd="pnpm gen:check" waitedMs=0 pid=51444 at=2026-09-14T04:49:58.102Z
+RUN ticket=383 runId=5dd176e5-7dd0-4996-816f-f7246c69fff7 cmd="pnpm gen:check" waitedMs=0 exit=1 pid=51444 at=2026-09-14T04:49:59.365Z
+START ticket=383 runId=95406dd2-04c4-49ef-9d73-fa2162a977ab cmd="pnpm build" waitedMs=30005 pid=41048 at=2026-09-14T04:50:46.504Z
+RUN ticket=383 runId=95406dd2-04c4-49ef-9d73-fa2162a977ab cmd="pnpm build" waitedMs=30005 exit=2 pid=41048 at=2026-09-14T04:50:48.460Z
+START ticket=383 runId=2f875b3e-d2c1-4fed-807d-c248a5c20d5a cmd="git add packages/skill-calorie/src/render/insightPlate.ts packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/test/analysis-predict-383.test.mjs .changeset/t383-predict-params.md docs/skills/skill-calorie/t383-evidence.md" waitedMs=0 pid=31192 at=2026-09-14T04:51:25.245Z
+RUN ticket=383 runId=2f875b3e-d2c1-4fed-807d-c248a5c20d5a cmd="git add packages/skill-calorie/src/render/insightPlate.ts packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/test/analysis-predict-383.test.mjs .changeset/t383-predict-params.md docs/skills/skill-calorie/t383-evidence.md" waitedMs=0 exit=0 pid=31192 at=2026-09-14T04:51:25.295Z
+START ticket=383 runId=cda9796c-231e-4bfc-a62e-451aed0cbe3f cmd="git commit -F .scratch/t383/commitmsg-1.txt -- packages/skill-calorie/src/render/insightPlate.ts packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/test/analysis-predict-383.test.mjs .changeset/t383-predict-params.md docs/skills/skill-calorie/t383-evidence.md" waitedMs=0 pid=45328 at=2026-09-14T04:51:32.974Z
+RUN ticket=383 runId=cda9796c-231e-4bfc-a62e-451aed0cbe3f cmd="git commit -F .scratch/t383/commitmsg-1.txt -- packages/skill-calorie/src/render/insightPlate.ts packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/test/analysis-predict-383.test.mjs .changeset/t383-predict-params.md docs/skills/skill-calorie/t383-evidence.md" waitedMs=0 exit=0 pid=45328 at=2026-09-14T04:51:33.069Z
+START ticket=383 runId=85d0dd16-9cd2-4e19-b46b-c83d626cd882 cmd="pnpm build" waitedMs=0 pid=42776 at=2026-09-14T04:51:46.789Z
+RUN ticket=383 runId=85d0dd16-9cd2-4e19-b46b-c83d626cd882 cmd="pnpm build" waitedMs=0 exit=2 pid=42776 at=2026-09-14T04:51:48.610Z
