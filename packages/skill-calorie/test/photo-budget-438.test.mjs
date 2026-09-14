@@ -1,0 +1,269 @@
+/** #438 · 场景 09 看身材照页体积退让（按预算截断内嵌＋横幅明示）。
+ *
+ * 背景：`galleryDoc.ts:25` 的 `PHOTO_LIST_PAGE_MAX_BYTES`（1 MiB）此前从未被渲染路径引用，
+ * 真库 14 张可内嵌照片（含 4 张 2.8–3.1 MB 原图）算出的页约 17.9 MiB。本票让渲染期逐张试嵌。
+ *
+ * 隔离：每用例新鲜临时库＋新鲜照片目录（`SKILLS_DB_PATH`／`CALORIE_PHOTOS_DIR` 指向 tmp），
+ * 真库零触碰；页面产物落 tmp 的 `calorie_html/`。真跑 `calorie-cmd-read calorie.photo.list`。
+ *
+ * 断言（票面六条）：
+ *  ① 产物字节 ≤ `PHOTO_LIST_PAGE_MAX_BYTES`（且无预算版**确实**超限，证明用例在超限区）；
+ *  ② 横幅句含 N／M（已嵌 N 张／还有 M 张未嵌入）；
+ *  ③ 超出项占位原因正确（体积预算那条），与文件缺失／读取失败三态各有归属；
+ *  ④ 复制数据（envelope）行数＝库内行数（不是内嵌行数）——只截断内嵌，不截断数据；
+ *  ⑤ 变异自证「改坏必红、改回必绿」两行机器读数（改坏点＝横幅触发条件：还原成旧口径必红）；
+ *  ⑥ 每条用例另断言 `data.output` 是绝对路径且该文件在盘上。
+ *
+ * #438 整改自查（横幅两态口径）：横幅触发与 M 只按**预算跳过计数**，文件缺失不进横幅 —
+ * ① 仅缺失、无预算跳过 → 不出横幅；② 纯预算超限 → N／M 正确（用例一）；③ 混合 → M＝预算
+ * 跳过数（不含缺失数）。上面六条判据一字未松，整改只加断言不加宽。
+ *
+ * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/photo-budget-438.test.mjs`
+ */
+import { strict as assert } from 'node:assert';
+import { spawnSync } from 'node:child_process';
+import { Buffer } from 'node:buffer';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { isAbsolute, join } from 'node:path';
+import { test } from 'node:test';
+import { openDb } from '../dist/index.js';
+import { addPhotos } from '../dist/photo/photos.js';
+import { PHOTO_LIST_PAGE_MAX_BYTES } from '../dist/photo/galleryDoc.js';
+import { embedPhotos } from '../dist/photo/photoThumb.js';
+import { buildGalleryData } from '../dist/photo/photo.js';
+
+const BIN = join(import.meta.dirname, '..', 'dist', 'cli', 'cmd_read.js');
+const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
+const MIB = 1024 * 1024;
+
+const TINY_PNG_B64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+/** 有效 PNG（魔数起、IEND 收）＋填充，控制到约 `size` 字节（PNG 不压缩填充，故可控）。 */
+function pngOfSize(size) {
+  const head = Buffer.from(TINY_PNG_B64, 'base64').subarray(0, 8);
+  const tail = Buffer.from('0000000049454E44AE426082', 'hex');
+  return Buffer.concat([head, Buffer.alloc(size - head.length - tail.length, 0x33), tail]);
+}
+
+/** 4 张 560KB 照片：单张内嵌约 764KB，1 MiB 预算只容 1 张，其余 3 张必走预算占位。
+ *  `size` 可调：#438 整改自查用 4KB 小图造「全嵌得下」的窗（缺失态与预算态分开验）。 */
+function seedIso(size = 560 * 1024) {
+  const root = mkdtempSync(join(tmpdir(), 't438-'));
+  const dbDir = join(root, 'db');
+  const photosDir = join(root, 'photos');
+  const srcDir = join(root, 'src');
+  mkdirSync(dbDir, { recursive: true });
+  mkdirSync(photosDir, { recursive: true });
+  mkdirSync(srcDir, { recursive: true });
+  const db = openDb(join(dbDir, 'calorie_data.db'));
+  const days = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'];
+  days.forEach((day, i) => {
+    const src = join(srcDir, 's' + (i + 1) + '.png');
+    writeFileSync(src, pngOfSize(size));
+    addPhotos(db, photosDir, { srcPaths: [src], tag: '正面', today: day, nowTime: '08:00:00' });
+  });
+  db.close();
+  return { root, dbDir, photosDir };
+}
+
+function runList(iso, params) {
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.photo.list', '--params', JSON.stringify(params)], {
+    encoding: 'utf8',
+    env: { ...process.env, SKILLS_DB_PATH: iso.dbDir, CALORIE_PHOTOS_DIR: iso.photosDir },
+  });
+  assert.equal(r.status, 0, 'CLI exit 非 0：' + String(r.stderr ?? '').slice(0, 500));
+  return JSON.parse(String(r.stdout).trim());
+}
+
+function assertOutputOnDisk(env) {
+  const out = env?.data?.output;
+  assert.equal(typeof out, 'string', 'data.output 缺失');
+  assert.ok(isAbsolute(out), 'data.output 非绝对路径：' + out);
+  assert.ok(existsSync(out), 'data.output 不在盘上：' + out);
+  return out;
+}
+
+/** 横幅读数：已嵌 N 张／还有 M 张未嵌入（无横幅即 N/M 取不到，直接红）。 */
+function bannerOf(html) {
+  const m = /已嵌 (\d+) 张／还有 (\d+) 张未嵌入/.exec(html);
+  assert.ok(m !== null, '横幅句缺失（须含「已嵌 N 张／还有 M 张未嵌入」）');
+  return { embedded: Number(m[1]), skipped: Number(m[2]) };
+}
+
+/** #438 整改口径：横幅只由**预算跳过**触发，文件缺失不得进横幅（缺失走缺失明示行）。 */
+function assertNoBudgetBanner(html) {
+  assert.equal(/budget-banner/.test(html), false, '仅文件缺失时不该出体积横幅（缺失不进横幅）');
+  assert.equal(/已嵌 \d+ 张／还有 \d+ 张未嵌入/.test(html), false, '仅文件缺失时不该有 N／M 横幅句');
+}
+
+/** 形状总闸：完整文档＋复制区＋体积退让；变异体走此闸必红（`budget: false` 只关体积那条，
+ *  供方差自证把「横幅／原因」单独打出来）。 */
+function assertBudgetPageShape(html, opts = {}) {
+  assert.ok(html.toLowerCase().startsWith('<!doctype html>'), '文档头缺失（须以 <!doctype html> 起）');
+  assert.match(html, /<meta charset/i, 'charset 缺失');
+  assert.match(html, /复制数据/, '复制区标记缺失');
+  assert.match(html, /data:image\//, '内嵌照片缺失（须含 data:image/）');
+  const bytes = Buffer.byteLength(html, 'utf8');
+  if (opts.budget !== false) {
+    assert.ok(bytes <= PHOTO_LIST_PAGE_MAX_BYTES, '单页体积超限：' + bytes + ' > ' + PHOTO_LIST_PAGE_MAX_BYTES);
+  }
+  const b = bannerOf(html);
+  assert.ok(b.embedded >= 1 && b.skipped >= 1, '横幅读数须两数非零：' + JSON.stringify(b));
+  assert.match(html, /替代操作/, '横幅须给替代操作（筛选分次看）');
+  // 原因须落在**占位句**上：页面别处（横幅／齐全句）也含「体积预算」四字，只做全页匹配
+  // 会把「占位原因换空话」这种改坏放过（本票首版变异二即栽在此处）。
+  const placeholders = [...html.matchAll(/照片未内嵌（([^）]*)）/g)];
+  assert.ok(placeholders.length > 0, '占位态缺失（未嵌入的张须走占位并写明原因）');
+  for (const f of placeholders) {
+    assert.match(f[1], /体积预算/, '占位原因须是体积预算：' + f[1]);
+  }
+  const okFigures = (html.match(/<figure[^>]*>\s*<img /g) ?? []).length;
+  assert.equal(okFigures, b.embedded, '横幅「已嵌 N」与实际内嵌 figure 数不符');
+  const rows = (html.match(/<tr/g) ?? []).length;
+  assert.equal(rows, b.embedded + b.skipped + 1, '明细表行数 ≠ 内嵌＋未嵌入＋表头（数据不许被截断）');
+  return bytes;
+}
+
+/** 全量内嵌时的内嵌字节合计（不经预算挑选）：本用例真在超限区的机器读数。 */
+function fullEmbedBytes(g, photosDir) {
+  return embedPhotos(photosDir, g.photos)
+    .reduce((sum, e) => sum + (e.dataUri === null ? 0 : Buffer.byteLength(e.dataUri, 'utf8')), 0);
+}
+
+test('① ② ③ ④ ⑥ 真跑：超预算库 → 页 ≤ 1 MiB＋横幅 N／M＋占位原因＋复制数据全量', async () => {
+  const iso = seedIso();
+  const env = runList(iso, { tag: '正面' });
+  const out = assertOutputOnDisk(env);
+  const html = readFileSync(out, 'utf8');
+  const bytes = assertBudgetPageShape(html);
+  assert.ok(bytes > 500, '页面过小，不像含内嵌照片：' + bytes);
+
+  // ① 本用例真在超限区：同一批照片全量内嵌的字节合计就已超上限（退让前实测页约 3.1 MiB）。
+  const db = openDb(join(iso.dbDir, 'calorie_data.db'));
+  const g = buildGalleryData(db, { tag: '正面', days: 36500 }, iso.photosDir);
+  db.close();
+  const over = fullEmbedBytes(g, iso.photosDir);
+  assert.ok(over > PHOTO_LIST_PAGE_MAX_BYTES, '本用例须真在超限区（全量内嵌 ' + over + ' ≤ 上限）');
+
+  // ② 横幅两数与库内行数对得上。
+  const b = bannerOf(html);
+  assert.equal(b.embedded + b.skipped, g.photos.length, 'N＋M 须等于本窗行数：' + JSON.stringify(b));
+  assert.equal(b.embedded, 1, '1 MiB 预算 + 560KB 单张：应只嵌 1 张，实得 ' + b.embedded);
+
+  // ③ 占位原因正确：每张未嵌入的 figure 都写着体积预算原因。
+  const placeholderFigures = (html.match(/<figure[^>]*>\s*<div>照片未内嵌（([^）]*)）/g) ?? []);
+  assert.equal(placeholderFigures.length, b.skipped, '占位 figure 数 ≠ 横幅 M');
+  for (const f of html.matchAll(/照片未内嵌（([^）]*)）/g)) {
+    assert.match(f[1], /体积预算/, '占位原因须是体积预算：' + f[1]);
+  }
+
+  // ④ 复制数据（envelope）仍是全量行：行数＝库内行数（4），不是内嵌行数（1）。
+  assert.equal(env.data.items.length, 4, '复制数据行数 ≠ 库内行数（' + env.data.items.length + '）');
+  assert.equal(env.data.total, 4, 'data.total ≠ 库内行数');
+  assert.equal(env.data.items.length, b.embedded + b.skipped, '复制数据行数 ≠ 内嵌＋未嵌入');
+  // 明细表也须是全量行（4 行，不是 1 行）。
+  assert.equal((html.match(/<tr/g) ?? []).length, 5, '明细表行数 ≠ 4 ＋ 表头');
+});
+
+test('缺失与预算各归各位：坏图明示文件缺失，正常张仍按预算内嵌', async () => {
+  const iso = seedIso();
+  // 删一张已入库照片的本体（库行保留 → 该张须走文件缺失，不是体积预算）。
+  const gone = join(iso.photosDir, '2026-09-01_001.png');
+  assert.ok(existsSync(gone), '种子照片不在盘上：' + gone);
+  rmSync(gone);
+  const env = runList(iso, { tag: '正面' });
+  const html = readFileSync(assertOutputOnDisk(env), 'utf8');
+  assert.match(html, /2026-09-01_001\.png/, '缺失文件名未明示');
+  assert.match(html, /文件缺失：2026-09-01_001\.png/, '缺失原因未明示（须写文件缺失＋文件名）');
+  assert.match(html, /data:image\//, '正常照片应仍内嵌');
+  const bytes = Buffer.byteLength(html, 'utf8');
+  assert.ok(bytes <= PHOTO_LIST_PAGE_MAX_BYTES, '缺一张后仍须 ≤ 上限：' + bytes);
+});
+
+test('#438 整改自查：横幅只按预算跳过计数（缺失不进横幅、M 不含缺失数）', async () => {
+  // ① 仅缺失、无预算跳过（4 张小图，删第 1 张本体）：不得出横幅，缺失由缺失明示行承担。
+  const iso1 = seedIso(4 * 1024);
+  const gone1 = join(iso1.photosDir, '2026-09-01_001.png');
+  assert.ok(existsSync(gone1), '种子照片不在盘上：' + gone1);
+  rmSync(gone1);
+  const env1 = runList(iso1, { tag: '正面' });
+  const html1 = readFileSync(assertOutputOnDisk(env1), 'utf8');
+  assertNoBudgetBanner(html1);
+  assert.match(html1, /缺失照片 1 张/, '缺失张数未明示（缺失态须由明示行承担）');
+  assert.match(html1, /文件缺失：2026-09-01_001\.png/, '缺失文件名未明示');
+  assert.equal((html1.match(/照片未内嵌（体积预算/g) ?? []).length, 0, '无预算跳过却出现预算占位');
+  assert.equal((html1.match(/<figure[^>]*>\s*<img /g) ?? []).length, 3, '3 张正常照应全部内嵌');
+  assert.equal(env1.data.items.length, 4, '复制数据仍须是库内 4 行');
+  assert.ok(Buffer.byteLength(html1, 'utf8') <= PHOTO_LIST_PAGE_MAX_BYTES, '仅缺失时仍须 ≤ 上限');
+
+  // ③ 混合（4 张 560KB，删第 1 张本体）：1 张内嵌、2 张预算跳过、1 张缺失；M 须＝2。
+  const iso3 = seedIso();
+  const gone3 = join(iso3.photosDir, '2026-09-01_001.png');
+  assert.ok(existsSync(gone3), '种子照片不在盘上：' + gone3);
+  rmSync(gone3);
+  const env3 = runList(iso3, { tag: '正面' });
+  const html3 = readFileSync(assertOutputOnDisk(env3), 'utf8');
+  const b3 = bannerOf(html3);
+  assert.equal(b3.embedded, 1, 'N 须＝真内嵌 figure 数 1：' + JSON.stringify(b3));
+  assert.equal(b3.skipped, 2, 'M 须＝预算跳过数 2（缺失那张不计入）：' + JSON.stringify(b3));
+  assert.equal((html3.match(/照片未内嵌（体积预算未内嵌）/g) ?? []).length, b3.skipped, '预算占位数 ≠ 横幅 M');
+  assert.equal((html3.match(/照片未内嵌（文件缺失/g) ?? []).length, 1, '缺失占位数 ≠ 1');
+  assert.match(html3, /文件缺失：2026-09-01_001\.png/, '缺失那一张仍未明示');
+  assert.equal(env3.data.items.length, 4, '复制数据仍须是库内 4 行');
+  assert.equal((html3.match(/<tr/g) ?? []).length, 5, '明细表仍须 4 行＋表头');
+  assert.ok(Buffer.byteLength(html3, 'utf8') <= PHOTO_LIST_PAGE_MAX_BYTES, '混合场景仍须 ≤ 上限');
+});
+
+test('⑤ 变异自证：改坏必红、改回必绿（两行机器读数）', async () => {
+  const iso = seedIso();
+  const env = runList(iso, { tag: '正面' });
+  const good = readFileSync(assertOutputOnDisk(env), 'utf8');
+  assertBudgetPageShape(good); // 改回必绿（先立绿线）
+
+  let redLine = '';
+  // 变异一：删掉横幅（退让仍在，但用户看不见 N／M）→ 必红。
+  const noBanner = good.replace(/<div class="budget-banner">[\s\S]*?<\/div>/, '');
+  assert.notEqual(noBanner, good, '变异一未生效（横幅没删掉）');
+  try {
+    assertBudgetPageShape(noBanner);
+    assert.fail('变异一（删横幅）未红');
+  } catch (e) {
+    redLine = String(e.message).split('\n')[0];
+    assert.match(redLine, /横幅句缺失/, '变异一红的理由不对：' + redLine);
+  }
+  // 变异二：把占位原因换成空话（未嵌入但不说为什么）→ 必红（只关体积那条，专打原因）。
+  const vague = good.replace(/照片未内嵌（[^）]*）/g, '照片未内嵌（原因见别处）');
+  assert.notEqual(vague, good, '变异二未生效（占位原因没换掉）');
+  try {
+    assertBudgetPageShape(vague, { budget: false });
+    assert.fail('变异二（占位原因换成空话）未红');
+  } catch (e) {
+    redLine += ' | ' + String(e.message).split('\n')[0];
+    assert.match(String(e.message), /体积预算/, '变异二红的理由不对');
+  }
+  // 变异三（#438 整改）：把横幅**触发条件**还原成旧口径（按本窗总张数判，文件缺失也算进
+  // 横幅）→ 必红。旧口径产物＝在「仅缺失、无预算跳过」页上多一个预算横幅；此处就注入那一段。
+  const isoGap = seedIso(4 * 1024);
+  const goneGap = join(isoGap.photosDir, '2026-09-01_001.png');
+  assert.ok(existsSync(goneGap), '种子照片不在盘上：' + goneGap);
+  rmSync(goneGap);
+  const gap = readFileSync(assertOutputOnDisk(runList(isoGap, { tag: '正面' })), 'utf8');
+  assertNoBudgetBanner(gap); // 改回必绿（整改后的口径线）
+  const oldTrigger = gap.replace('<figure', '<div class="budget-banner">照片较多：已嵌 3 张／还有 1 张未嵌入' +
+    '（按体积预算，单页上限 ' + PHOTO_LIST_PAGE_MAX_BYTES + ' 字节）。替代操作：用「标签」或日期筛选分次查看。</div><figure');
+  assert.notEqual(oldTrigger, gap, '变异三未生效（旧口径横幅没注入）');
+  try {
+    assertNoBudgetBanner(oldTrigger);
+    assert.fail('变异三（横幅触发条件还原旧口径）未红');
+  } catch (e) {
+    redLine += ' | ' + String(e.message).split('\n')[0];
+    assert.match(String(e.message), /缺失不进横幅/, '变异三红的理由不对');
+  }
+  // 改回必绿：同一条闸门再走原页。
+  const bytes = assertBudgetPageShape(good);
+  assertNoBudgetBanner(gap);
+  console.log('MUTATION-RED 变异一/二/三（删横幅／占位原因换空话／触发条件还原旧口径）＝' + redLine);
+  console.log('MUTATION-GREEN 改回必绿 bytes=' + bytes + ' limit=' + PHOTO_LIST_PAGE_MAX_BYTES);
+});

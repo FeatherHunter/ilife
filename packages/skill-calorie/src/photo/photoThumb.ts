@@ -59,3 +59,59 @@ export function embedPhotos(
 ): PhotoEmbed[] {
   return photos.map((p) => embedPhoto(photosDir, p.photoPath));
 }
+
+/** 按字节预算挑选的结果：内嵌张数 ＋ 因预算未嵌入的张数 ＋ 逐张原因（键＝文件名）。 */
+export interface PhotoEmbedPicks {
+  readonly embeds: PhotoEmbed[];
+  readonly embeddedCount: number;
+  readonly budgetSkippedCount: number;
+  /** 预算未嵌的逐张原因句（键＝文件名；其余张不在表内）。调用方可再补记（页面兜底轮）。 */
+  readonly skipReason: Map<string, string>;
+}
+
+/** 预算未嵌的原因句（老正本口径：`embed_skipped` 前端显示「未嵌入(体积超限)」）。 */
+export const EMBED_BUDGET_REASON = '体积预算未内嵌';
+
+/** 按预算挑选要内嵌的哪些张：`baseBytes` 是**不含任何内嵌字节**的页面底子大小，
+ *  逐张按顺序试着加（`embeds` 与入参同序，故内嵌集恒是原序的一个子序列），
+ *  单张内嵌字节 ＋ 该张版面开销不超过剩余预算就嵌，否则去掉内嵌字节并标预算未嵌
+ *  （结果集里那张的 `dataUri` 恒为 null，装配处照 `skipReason` 印占位句）。
+ *  一张太大不牵连后面的小图（缺失／预算均逐张独立）。已缺失的张按原样透传。 */
+export function embedPhotosWithinBudget(
+  photosDir: string | null | undefined,
+  photos: ReadonlyArray<{ readonly photoPath: string }>,
+  baseBytes: number,
+  maxPageBytes: number,
+): PhotoEmbedPicks {
+  let account = baseBytes;
+  const embeds: PhotoEmbed[] = [];
+  const skipReason = new Map<string, string>();
+  for (const p of photos) {
+    const e = embedPhoto(photosDir, p.photoPath);
+    if (e.dataUri === null) {
+      embeds.push(e);
+      continue;
+    }
+    const uriBytes = Buffer.byteLength(e.dataUri, 'utf8');
+    // 逐张版面开销（figure 与 figcaption 文本）按文件名长约估，宁可少嵌不多嵌。
+    const overhead = OVERHEAD_BASE_BYTES + e.fileName.length * 4;
+    if (account + uriBytes + overhead > maxPageBytes) {
+      // 预算未嵌的**必须去掉内嵌字节**再入集：留着 dataUri 会让装配处照样印 <img>，
+      // 退让就白做了（本票首版即栽在此处）。字节数留着，供兜底轮挑最大者。
+      skipReason.set(e.fileName, EMBED_BUDGET_REASON);
+      embeds.push(withoutDataUri(e));
+      continue;
+    }
+    account += uriBytes + overhead;
+    embeds.push(e);
+  }
+  return { embeds, embeddedCount: embeds.length - skipReason.size, budgetSkippedCount: skipReason.size, skipReason };
+}
+
+/** 单张 figure 的固定版面开销（标签／图注／花括号；宁可多估，故取 200）。 */
+const OVERHEAD_BASE_BYTES = 200;
+
+/** 去掉逐张 data URI 的副本（只留承载：文件名／字节／失败句），供预算挑选后的页面拼装。 */
+export function withoutDataUri(e: PhotoEmbed): PhotoEmbed {
+  return e.dataUri === null ? e : { ...e, dataUri: null };
+}
