@@ -7,11 +7,17 @@
  * 经 `assembleDocPage` 包裹，复用 `copyArea`，不自造模板）；live 出口
  * （`src/home/today.ts` 的 `calorie.view.home`）改走 `buildHomeDoc`。
  * 旧 `renderHomeHtml` 片段保留：`render-t8` 锁定旧片段形状，不走 live 出口。
+ *
+ * #375 · 横幅通知条返修（只动本文件横幅两段，其余装配与接线口径不动）：
+ * 提示 toast 保持原样（dismiss 走 `✓ 知道了`）；其下复制区去掉与按钮同字的
+ * 标题（只留动作不留说明文本），并补上 `log` 使「复制数据 ▾ ＋ 复制日志」
+ * 双按钮同行（此前无 `log`，日志位是点不动的禁用态）；日志里的命令补全窗口参数。
  */
 import { cx, escapeHtml, token } from 'base-paint';
 import { renderChartBlock, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { dataCopyArea, notice } from '../shared/copyArea.js';
+import { copyArea, copyLog, notice } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import type { HomeData } from './home.js';
 
 function pageShell(skill: string, slot: string, title: string, body: string): string {
@@ -122,19 +128,38 @@ export function buildHomeDoc(d: HomeData): string {
     msg: d.daily.overCal ? '今日已超热量目标' : '热量在目标内',
     detail: '摄入 ' + fmt(t.cal, ' 卡') + ' · 目标 ' + fmt(d.calorieGoal, ' 卡') + ' · 缺口 ' + fmt(d.deficitToday, ' 卡'),
   }));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.home',
-      data: {
-        metrics: metricsOf({
-          calorieGoal: d.calorieGoal, waterGoal: d.waterGoal,
-          caloriePct: d.caloriePct, proteinPct: d.proteinPct, waterPct: d.waterPct,
-          deficitToday: d.deficitToday, streakDays: d.streakDays,
-          intakeCal: t.cal, proteinG: t.pro, carbsG: t.carbs, fatG: t.fat,
-          waterMl: d.daily.waterMl, entryCount: d.daily.entryCount,
-          avgIntake: d.week.avgIntake, avgDeficit: d.week.avgDeficit, loggedDays: d.week.loggedDays,
-        }),
+  // #375 · 横幅下复制区：不给 `title`（与按钮同字的标题不出，只留动作）；
+  // `data`（业务数据文本）＋ `log`（运行日志文本）双双在场＝双按钮同行。
+  // 日志第 3 段写「本页命令原文」：窗口非缺省 7 天时把窗口写全，照抄重跑得到同一张页
+  // （命令行形状逐字照 `home/routes.ts` 里本族 3 条唤醒词）。
+  const homeCmd = windowDays === 7
+    ? 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\''
+    : 'calorie-cmd-read calorie.view.home --params \'{"windowDays":' + windowDays + ',"date":"今日"}\'';
+  const homeMetrics = metricsOf({
+    calorieGoal: d.calorieGoal, waterGoal: d.waterGoal,
+    caloriePct: d.caloriePct, proteinPct: d.proteinPct, waterPct: d.waterPct,
+    deficitToday: d.deficitToday, streakDays: d.streakDays,
+    intakeCal: t.cal, proteinG: t.pro, carbsG: t.carbs, fatG: t.fat,
+    waterMl: d.daily.waterMl, entryCount: d.daily.entryCount,
+    avgIntake: d.week.avgIntake, avgDeficit: d.week.avgDeficit, loggedDays: d.week.loggedDays,
+  });
+  parts.push(copyArea({
+    data: {
+      envelope: {
+        version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.home',
+        data: { metrics: homeMetrics },
       },
+    },
+    log: {
+      envelope: {
+        version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.home',
+        data: { metrics: homeMetrics },
+      },
+      copyLog: copyLog({
+        command: homeCmd,
+        source: 'food_log＋exercise_log＋daily_goal（只读）',
+        actionAt: nowStamp(), version: DOC_VERSION,
+      }),
     },
   }));
   return assembleDocPage({
