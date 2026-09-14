@@ -22,6 +22,10 @@ function assertDate(s: string): void {
 
 export interface PlanView {
   title: string | null;
+  /** 计划版本（`workout_plan_config.version`）；库列为空即 null，页头按缺项不印。 */
+  version: string | null;
+  /** 计划起始日（`workout_plan_config.start_date`）；同上。 */
+  startDate: string | null;
   totalWeeks: number | null;
   sessions: PlanSessionRow[];
   totalSessions: number;
@@ -78,6 +82,8 @@ export function buildPlanView(db: DatabaseSync, opts: PlanFilter = {}): PlanView
   for (const s of sessions) movements += Array.isArray(s.movements) ? s.movements.length : 0;
   return {
     title: plan.config?.title ?? null,
+    version: plan.config?.version ?? null,
+    startDate: plan.config?.start_date ?? null,
     totalWeeks: plan.config?.total_weeks ?? null,
     sessions,
     totalSessions: sessions.length,

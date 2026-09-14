@@ -36,7 +36,10 @@ export interface PlanMovement {
   name?: string;
   part?: string;
   type?: string;
-  sets?: unknown[];
+  /** 动作备注（movements JSON 的第五键；老页动作表副行用它，`asMovement` 不回写，见票面注）。 */
+  note?: string;
+  /** 每组一行（组数＝`sets.length`；`unit` 如 `kg`／`自重`）。 */
+  sets?: { reps: number; weight: number; unit: string }[];
 }
 
 export interface PlanSessionInput {
