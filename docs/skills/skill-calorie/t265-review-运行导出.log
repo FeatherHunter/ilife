@@ -1,0 +1,72 @@
+# t265-review 运行导出（干净 worktree @8908144，ticket=265-review 持锁 13 次）
+
+worktree：`.scratch/t265-review/wt-8908144`（detached 8908144e）；锁日志主仓
+`.scratch/locks/gate-runs.log` 中 `ticket=265-review` 26 行（13 START＋13 RUN）。
+原始全量日志（未入仓）：`.scratch/t265-review/` 内 build1/gen1/build2/helpbuild/
+gencheck/main-test/regress18/routing81/routing81b/probe.log。
+
+## 1. 构建链（worktree 包装器持锁，cwd=worktree）
+
+BUILD1=2（pristine 首 build 红，见 §4）/ GEN1=0 / BUILD2=0 / HELP=0 / GENCHECK=0。
+`gencheck.log` 尾：
+GEN-CHECK PASS：键 117（写 46 ＋ 读 71）；能力 10 个
+（analysis／body／diet／exercise／goal／home／photo／profile／weight／workout）
+声明 117 条，未搬迁清单 0 条
+（实施证据称 118＝写46＋读72，系其脏树他席声明所致，见报告注1）
+
+## 2. 主测试 `main-test.log`（exit 0）
+
+✔ #265 7 条词 routesFor 分别指 distribution/trend/recap
+✔ #265 逐条按路由 cli 实跑是各自那一页、不是运动总览
+✔ #265 冻结表 7 条 cli/data_source 与路由逐字一致
+ℹ tests 3 / pass 3 / fail 0
+
+## 3. 回归 18 `regress18.log`（`node --test` 342＋294＋295，exit 0）
+
+342×5（记录明细／有备注／力量筛选／有氧筛选／今日昨日窗）✔
+294×7（#320分派终态／行数棘轮／体重键新路／老路无活口／能力门／注册表对账×2）✔
+295×6（未搬清单／条数行数／一处一键／#313分片和／源文件面／生成器输入）✔
+ℹ tests 18 / pass 18 / fail 0
+
+## 4. pristine 首 build 红（BUILD1=2，非本票行）
+
+packages/skill-calorie/src/body/routes.ts(20,76): error TS2820:
+ Type '"calorie.view.body-composition-compare"' is not assignable to type 'RouteKey…'
+packages/skill-calorie/src/body/routes.ts(21,76): error TS2820: '…body-measure-compare'…
+packages/skill-calorie/src/exercise/routes.ts(35,82)/(36,84)/(37,84): error TS2820:
+ Type '"calorie.view.exercise-records"' … Did you mean '"calorie.view.exercise-recap"'?
+（#265 自身 7 行 0 报错；`pnpm gen` 重导 keys.ts 后 BUILD2=0。）
+
+## 5. routing-81 受跟踪位 `routing81b.log`（`node --test test/calorie-routing-81.test.mjs`，exit 1）
+
+ℹ tests 8 / pass 2 / fail 6；通过：D2②／D2⑤。
+6 红：D2①（桶计数，他席在途约7条）／D2③（全量键条数）／D2④
+（首错 `#13 拍营养表记一餐 命令字段非命令形态时路由层应判 non-exec`，饮食域）／
+FX-81-5 覆盖修复／FX-81-5 exec⟺exit0／A7（营养表）。
+受审文件全文无 7 词及 distribution/trend/recap 字样（grep 0 中）。
+
+## 6. 自设探针 `probe.log`（exit 0；脚本见 `t265-review-probe.mjs`）
+
+GREEN P0-route/no-stale/order/frozen ×7（28 行，全过；order 取声明层，
+home 零残留）；
+RED P1-recap-revert-1（5/5 改回即红）／RED P2-order-swap（170/171 打乱被检出）／
+RED P3-frozen-miss-1（7/7 少同步即咬）／RED P4-widen-1（看最近30天运动改指即报警）；
+GREEN P1-recap-true／P2-order-true／P3-frozen-true／P4-narrow-true（窗口12/12仍指旧键）。
+小结 GREEN过 32 / GREEN败 0 / RED咬住 4 / RED漏网 0。
+
+## 7. 静态佐证（只读 git 对象）
+
+- merge-base：`git merge-base HEAD 8908144`＝8908144（已推祖先）。
+- 父 c7a3518 home/routes.ts 含 7 词旧键行（order 167/170-175×7，判据先行红的静态形状）；
+  8908144 同文件 0 行；冻结旧键行 19→12（差值恰 7）。
+- 提交文件：`git show 8908144 --name-status`＝A×3（changeset／证据／新测试）＋M×3
+  （exercise/routes＋7／home/routes－7／scene-04 双字段×7），无他物。
+
+## 8. 先前误跑声明（审计诚实）
+
+`ticket=265-review` 前 4 次运行（build/gen/build/help:build，
+runId 570d8332／93875385／3fa245d2／8a408b5d）因误调主仓包装器（`cwd` 被锁
+定到其脚本所在仓根），实际执行于主仓脏树而非 worktree，读数作废；
+本导出 §1–§6 均为更正后的 worktree 包装器运行。误跑未改主仓受跟踪内容
+（前后 `git status` 比对：新增 `M goal/read.ts` 与单测增删系并发他席所为，
+ GEN/HELP 系确定性重导；SKILL.md 等 M 态先于误跑已存在）。
