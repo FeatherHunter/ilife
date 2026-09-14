@@ -1317,7 +1317,7 @@ describe('G ScatterChartOptions', () => {
     const css = buildChartsHelpersJs();
     assert.ok(css.includes('--ilife-charts-dot:8px'), '移动端点直径取冻结常量');
     assert.ok(css.includes('@media (max-width:720px)'), '断点用**字面量** needle（常量自证无鉴别力，R2-M7）');
-    assert.ok(css.includes('height:150px'), '移动端折线高度用**字面量** needle');
+    assert.ok(css.includes('height:auto'), '移动端折线高度按 viewBox 比例派生（#424 返工：不再钉死 150px，三种 viewBox 一律等比）');
   });
 
   it('G.yTicks 缺省：scatter 渲染 4 条 Y 轴刻度（旧 charts.js:854,884-893）', () => {
@@ -1441,7 +1441,7 @@ describe('H 常量与规则', () => {
     const css = buildChartsHelpersJs();
     assert.ok(css.includes('max-width:720px'));
     assert.ok(css.includes('--' + P + 'charts-dot:8px'));
-    assert.ok(css.includes('height:150px'));
+    assert.ok(css.includes('height:auto'), '折线移动端高度按 viewBox 比例派生（#424 返工）');
     const grouped = charts.bar({
       items: [{ label: 'A', values: [1, 2], value: 3 }],
       options: { grouped: true, labels: 'none', showValues: false, grid: false },
@@ -1475,7 +1475,7 @@ describe('H 常量与规则', () => {
     assert.equal(aspectOf(charts.donut({ items: [{ label: 'A', value: 1 }] }).html), 'xMidYMid meet', 'donut 等比缩放');
     assert.equal(aspectOf(charts.gauge({ pct: 50 }).html), 'xMidYMid meet', 'gauge 等比缩放');
     assert.equal(aspectOf(charts.sparkline({ items: [{ label: 'A', value: 1 }, { label: 'B', value: 2 }] }).html), 'xMidYMid meet', 'sparkline 等比缩放');
-    assert.ok(buildChartsHelpersJs().includes('.ilife-charts-line .ilife-charts-svg{height:150px}'), '移动端固定高度规则仍在（字面量 needle，W7）');
+    assert.ok(buildChartsHelpersJs().includes('.ilife-charts-line .ilife-charts-svg{height:auto}'), '移动端折线高度按 viewBox 比例派生（#424 返工后逐字，字面量 needle）');
     /* #424：桌面等比上限 `max-width:480px`（t-chartfix #160 补丁）撤销——折线 viewBox 已放大到
      * 580×260，靠 viewBox 自身就能把 930px 卡片下的图内字号压在 15–16px；留着它只会让图占卡片一半宽。
      * 这里断「CSS 里不再有 charts-svg 的 max-width」，防它被顺手加回来。 */
@@ -1544,7 +1544,7 @@ describe('H 常量与规则', () => {
     assert.ok(all.includes('ilife-charts-empty'), '空态子类逐字');
     assert.ok(css.includes('.ilife-charts{position:relative;margin:0;padding:0;'), 'CSS 根类规则逐字');
     assert.ok(css.includes('.ilife-charts-scatter .ilife-charts-dot{r:calc(var(--ilife-charts-dot) / 2)}'), 'CSS scatter 点半径规则逐字');
-    assert.ok(css.includes('.ilife-charts-line .ilife-charts-svg{height:150px}'), 'CSS 移动端折线高度规则逐字');
+    assert.ok(css.includes('.ilife-charts-line .ilife-charts-svg{height:auto}'), 'CSS 移动端折线高度规则逐字（#424 返工：按 viewBox 比例）');
     assert.ok(css.includes('--ilife-charts-dot:8px'), 'CSS 变量逐字');
   });
 

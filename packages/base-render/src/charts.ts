@@ -379,17 +379,22 @@ function insetsFor(common: ResolvedCommon, opts: {
   };
 }
 
-/** #424 返工：移动端（≤720px）折线的字号（**用户单位**）。媒体查询把折线 svg 盒高钉成 150px，
- *  `preserveAspectRatio="none"` 下 580×260 的 viewBox 被压到 scale≈0.58（390px 手机容器）——
- *  桌面档 9.5–10.5 单位实测只剩 5.4px。这里提到 1/0.58 倍，实渲回到 ~10px。
+/** #424 返工：移动端（≤720px）折线的字号（**用户单位**）。
+ *  viewBox 580×260 在 390px 手机上按宽度缩到 scale≈0.57（`width:100%` + 按 viewBox 比例算高，
+ *  见 `chartsCss` 的 ≤720px 段）——桌面档 9.5–10.5 单位实渲只剩 5.4px，肉眼不可读。
+ *  这里按 1/0.57≈1.75 倍提到 20 单位，实渲回到 ≈11.3px。
  *  同一份数字既进 `chartsCss` 的媒体查询，也用来估留白（留白双端共用 → 取更大的这一档）。 */
-const LINE_TEXT_MOBILE = { tick: 17, xlabel: 18, value: 17, last: 18, mark: 17 } as const;
+const LINE_TEXT_MOBILE = { tick: 20, xlabel: 20, value: 20, last: 20, mark: 20 } as const;
 
-/** 折线 X 标签行相对绘图区底边（`frame.y1`）的间距（用户单位）。最低那条刻度文字以 `ty + 3` 为基线，
- *  17 单位字号的降部到 y1+6.6；X 标签（18 单位）帽高顶在 y1+gap−13 —— gap ≥ 21.6 才不相撞。 */
-const LINE_LABEL_GAP = 22;
-/** 折线绘图区底留白下限：容下 `LINE_LABEL_GAP` + X 标签降部（18×0.25）。 */
-const LINE_BOTTOM_MIN = 28;
+/** 折线 X 标签行相对绘图区底边（`frame.y1`）的间距（用户单位）。最低那条刻度文字已抬到轴线上方
+ *  （见 `ticksSvg` 的 `labelDy`），其文字盒下沿到 y1 附近；X 标签（20 单位）文字盒上沿顶在
+ *  y1+gap−21 附近 —— gap ≥ 33 才不相撞（实测 gap 34 时 390px 下余 ≈4.5 用户单位）。 */
+const LINE_LABEL_GAP = 34;
+/** 折线绘图区底留白下限：容下 `LINE_LABEL_GAP` + X 标签降部（20×0.25）。 */
+const LINE_BOTTOM_MIN = 40;
+/** 末值标签相对末点的抬升（用户单位）：文字盒高随字号走（移动端 20 单位那一档），抬 6 单位时
+ *  390px 下标签盒底与数据线只余 0.4px、15 个折线顶点落在盒内 —— 按 0.7×字号 抬开。 */
+const LINE_LAST_LABEL_LIFT = 14;
 
 /** 文字宽度估值（用户单位）：ASCII ≈0.62em、CJK 全角 ≈1em。刻度留白按它算——留白必须容下
  *  **移动端那一档字号**，否则 390px 下「70.5kg」会顶出 viewBox 左沿（`overflow:visible` 也救不了，
@@ -469,10 +474,14 @@ function ticksSvg(frame: Frame, lo: number, hi: number, count: number, format: (
   for (let i = 0; i < count; i += 1) {
     const tv = lo + ((hi - lo) * i) / (count - 1);
     const ty = yAt(frame, tv, lo, hi);
+    /* #424 返工：最低那条刻度与绘图区底边同高（`lo` 就是下界），它的文字盒会探进 X 标签那一行。
+     *  移动端字号提到 20 单位后两者只余 0.3px（实测）——最低那条改到轴线上方 1 单位起基线，
+     *  其余刻度保持旧口径 `ty + 3`（旧 `charts.js` 字面值不动）。 */
+    const labelDy = i === 0 ? -1 : 3;
     out += '<line class="' + STYLE_PREFIX + 'charts-ytick" x1="' + n1(frame.x0 - 5) + '" y1="' + n1(ty)
       + '" x2="' + n1(frame.x0) + '" y2="' + n1(ty) + '" stroke="' + GRID_COLOR
       + '" stroke-width="1" vector-effect="non-scaling-stroke"/>'
-      + '<text class="' + STYLE_PREFIX + 'charts-tick" x="' + n1(frame.x0 - 7) + '" y="' + n1(ty + 3)
+      + '<text class="' + STYLE_PREFIX + 'charts-tick" x="' + n1(frame.x0 - 7) + '" y="' + n1(ty + labelDy)
       + '" text-anchor="end" fill="' + MUTED_COLOR + '">' + esc(fmtValue(round2(tv), format)) + '</text>';
   }
   return out;
@@ -1047,7 +1056,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
         const lastAnchor = edgeRatio > 0.94 ? 'end' : edgeRatio < 0.06 ? 'start' : 'middle';
         const lastX = edgeRatio > 0.94 ? p[0] - 4 : edgeRatio < 0.06 ? p[0] + 4 : p[0];
         valuesSvg += '<text class="' + STYLE_PREFIX + 'charts-value ' + STYLE_PREFIX + 'charts-value-last" x="' + n1(lastX)
-          + '" y="' + n1(p[1] - 6) + '" text-anchor="' + lastAnchor + '" fill="var(--fg,#1d1d1f)">'
+          + '" y="' + n1(p[1] - LINE_LAST_LABEL_LIFT) + '" text-anchor="' + lastAnchor + '" fill="var(--fg,#1d1d1f)">'
           + esc(fmtValue(main.items[last].value as number, line.format)) + '</text>';
       }
     }
@@ -1817,7 +1826,9 @@ export const charts: ChartsApi = new Proxy(CHART_DISPATCH, {
 /* ── 图表 CSS 文本（R12：唯一产出者 = 本文件内部常量/函数；#75 复用同一份） ── */
 
 /** 图表样式文本（**唯一一份**）：类名走 `prefix` 命名空间；容器零 padding；
- *  断点数值逐值取 `CHART_BREAKPOINTS`（`mobileMaxPx`／`dotSizeMobilePx`／`lineHeightMobilePx`）。
+ *  断点数值逐值取 `CHART_BREAKPOINTS`（`mobileMaxPx`／`dotSizeMobilePx`）。
+ *  （`lineHeightMobilePx` 自 #424 返工起不再进 CSS：折线在移动端改按 viewBox 长宽比派生高度，
+ *  见下方 ≤720px 段的注释；该常量仍留在冻结的 `CHART_BREAKPOINTS` 里不动。）
  *
  *  **#75 复用点**：`buildStyleSheet()` 的 `charts` 样式区直接引用本函数产出，
  *  **不得**在别处重述图表 CSS 文本（#78 结论，违反即 S1）。
@@ -1827,7 +1838,6 @@ export function chartsCss(prefix: string): string {
   const p = prefix;
   const mobile = CHART_BREAKPOINTS.mobileMaxPx;
   const dotMobile = CHART_BREAKPOINTS.dotSizeMobilePx;
-  const lineHeightMobile = CHART_BREAKPOINTS.lineHeightMobilePx;
   return [
     '.' + p + 'charts{position:relative;margin:0;padding:0;box-sizing:border-box;font-family:inherit;color:var(--fg,#1d1d1f);--' + p + 'charts-dot:' + SCATTER_DOT_DEFAULT_PX + 'px}',
     '.' + p + 'charts *{box-sizing:border-box}',
@@ -1862,6 +1872,10 @@ export function chartsCss(prefix: string): string {
     '.' + p + 'charts-xlabel{font-size:10px}',
     '.' + p + 'charts-value{font-size:10px}',
     '.' + p + 'charts-value-last{font-size:10.5px;font-weight:700}',
+    /* #424 返工：末值标签与末点同高、常与折线／均线交叠（390px 下实测线从标签盒里穿过）。
+     *  给折线族的末值加白色描边（`paint-order:stroke` 先描边后填充），压在线上也读得清；
+     *  不新增变量名——`--bg` 是本仓既有 token，缺省回退白。 */
+    '.' + p + 'charts-line .' + p + 'charts-value-last{paint-order:stroke;stroke:var(--bg,#fff);stroke-width:3px;stroke-linejoin:round}',
     '.' + p + 'charts-marktext{font-size:10px}',
     '.' + p + 'charts-marktext-v{font-size:10px}',
     '.' + p + 'charts-mptext{font-size:10.5px;font-weight:700}',
@@ -1880,7 +1894,12 @@ export function chartsCss(prefix: string): string {
      *  留着它反而把图钉死在卡片中缝（930 里 480，左右各空 225px）。 */
     '@media (max-width:' + mobile + 'px){'
       + '.' + p + 'charts{--' + p + 'charts-dot:' + dotMobile + 'px}'
-      + '.' + p + 'charts-line .' + p + 'charts-svg{height:' + lineHeightMobile + 'px}'
+      /* #424 返工：原来这里把折线 svg 盒高钉成 `lineHeightMobilePx`（150px），而折线是
+       *  `preserveAspectRatio="none"` 的满宽拉伸族 —— 580×260／580×300／580×180 三种 viewBox
+       *  被压进同一个 150px 高，横向 0.57、纵向 0.50／0.83 → 圆点变椭圆、字被压扁（实测失真比
+       *  1.13／0.68）。改成按 viewBox 长宽比派生高度（`height:auto`，与 `.charts-svg` 基规则同款），
+       *  三种 viewBox 一律等比缩放；字号补偿见 `LINE_TEXT_MOBILE`。 */
+      + '.' + p + 'charts-line .' + p + 'charts-svg{height:auto}'
       + '.' + p + 'charts-bar .' + p + 'charts-xlabel{font-size:9.5px}'
       + '.' + p + 'charts-legend{font-size:11.5px}'
       /* #424 返工（移动端折线文字不可读）：上面那条把折线 svg 盒高钉成 150px，580×260 的 viewBox
