@@ -6,7 +6,7 @@
  * 四条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { buildDedupeDoc, buildLibraryDoc, buildSearchDoc } from '../render/dietDocs.js';
+import { buildDedupeDoc, buildLibraryDoc, buildSearchDoc } from './libraryDocs.js';
 import { buildDedupeView } from '../render/insightPlate.js';
 import { buildProductLibrary, buildProductSearch, buildProductStats } from './libraryPlate.js';
 import { buildSourceStatsView } from './nutritionPort.js';

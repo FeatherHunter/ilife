@@ -8,7 +8,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { dietFoodRanking } from './dietEngine.js';
 import { buildDietReview } from '../render/analysisPlate.js';
-import { buildDietReviewDoc } from '../render/dietDocs.js';
+import { buildDietReviewDoc } from './reviewDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { defaultRange, nums } from '../shared/params.js';
 

@@ -1,0 +1,9 @@
+{
+  "buildTodayDietDoc": "./render/dietDocs.js",
+  "buildDietReviewDoc": "./render/dietDocs.js",
+  "buildRankingDoc": "./render/dietDocs.js",
+  "buildAllRankingsDoc": "./render/dietDocs.js",
+  "buildSearchDoc": "./render/dietDocs.js",
+  "buildLibraryDoc": "./render/dietDocs.js",
+  "buildDedupeDoc": "./render/dietDocs.js"
+}

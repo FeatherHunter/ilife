@@ -10,7 +10,7 @@ import { dietMacroRatio } from './dietEngine.js';
 import { todayISO } from '../analysis/utils.js';
 import { listMeals } from '../fetch/diet.js';
 import { buildDietOverview, buildMealDistribution } from '../render/diet.js';
-import { buildTodayDietDoc } from '../render/dietDocs.js';
+import { buildTodayDietDoc } from './todayDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { buildTodayWaterView } from './nutritionPort.js';
 import { buildTodayWaterDoc } from './nutritionPortDocs.js';

@@ -1,0 +1,16 @@
+﻿START ticket=393 runId=73c7960e-fe7b-459d-b070-ea83e49ff6f8 cmd="pwsh -NoProfile -File .scratch/t393/window1.ps1" waitedMs=20001 pid=42460 at=2026-09-14T05:50:45.259Z
+RUN ticket=393 runId=73c7960e-fe7b-459d-b070-ea83e49ff6f8 cmd="pwsh -NoProfile -File .scratch/t393/window1.ps1" waitedMs=20001 exit=0 pid=42460 at=2026-09-14T05:52:04.169Z
+START ticket=393 runId=bd7f3707-1fa1-4536-a831-ab7ec08ac223 cmd="pwsh -NoProfile -Command \"node .scratch/t393/probe.mjs --map .scratch/t393/map-before.json --state before --out .scratch/t393/before.json 2>&1 | Tee-Object -FilePath .scratch/t393/probe-before.log\"" waitedMs=90023 pid=41584 at=2026-09-14T05:54:02.268Z
+RUN ticket=393 runId=bd7f3707-1fa1-4536-a831-ab7ec08ac223 cmd="pwsh -NoProfile -Command \"node .scratch/t393/probe.mjs --map .scratch/t393/map-before.json --state before --out .scratch/t393/before.json 2>&1 | Tee-Object -FilePath .scratch/t393/probe-before.log\"" waitedMs=90023 exit=0 pid=41584 at=2026-09-14T05:54:04.761Z
+START ticket=393 runId=3f7414d6-351d-458e-b427-41298a28451d cmd="node .scratch/t393/split.mjs" waitedMs=80006 pid=52740 at=2026-09-14T05:59:54.178Z
+RUN ticket=393 runId=3f7414d6-351d-458e-b427-41298a28451d cmd="node .scratch/t393/split.mjs" waitedMs=80006 exit=1 pid=52740 at=2026-09-14T05:59:54.266Z
+START ticket=393 runId=821e757f-1aa1-4937-9f74-17f66abb09d4 cmd="node .scratch/t393/split.mjs" waitedMs=550047 pid=47872 at=2026-09-14T06:09:18.330Z
+RUN ticket=393 runId=821e757f-1aa1-4937-9f74-17f66abb09d4 cmd="node .scratch/t393/split.mjs" waitedMs=550047 exit=1 pid=47872 at=2026-09-14T06:09:18.419Z
+START ticket=393 runId=b3252cca-8270-4bea-a8e2-0cf0f260fc64 cmd="pwsh -NoProfile -File .scratch/t393/window2b.ps1" waitedMs=190015 pid=49864 at=2026-09-14T06:15:18.982Z
+RUN ticket=393 runId=b3252cca-8270-4bea-a8e2-0cf0f260fc64 cmd="pwsh -NoProfile -File .scratch/t393/window2b.ps1" waitedMs=190015 exit=0 pid=49864 at=2026-09-14T06:16:34.654Z
+START ticket=393 runId=3bf3b750-da9c-47fc-abd2-70d56f0f5262 cmd="pwsh -NoProfile -File .scratch/t393/window3.ps1" waitedMs=0 pid=13308 at=2026-09-14T06:17:54.997Z
+RUN ticket=393 runId=3bf3b750-da9c-47fc-abd2-70d56f0f5262 cmd="pwsh -NoProfile -File .scratch/t393/window3.ps1" waitedMs=0 exit=0 pid=13308 at=2026-09-14T06:18:06.035Z
+START ticket=393 runId=745790aa-082d-4cc5-8e73-8e7a60731335 cmd="pwsh -NoProfile -File .scratch/t393/window4.ps1" waitedMs=0 pid=43864 at=2026-09-14T06:19:18.050Z
+RUN ticket=393 runId=745790aa-082d-4cc5-8e73-8e7a60731335 cmd="pwsh -NoProfile -File .scratch/t393/window4.ps1" waitedMs=0 exit=0 pid=43864 at=2026-09-14T06:19:27.150Z
+START ticket=393 runId=ab11468f-f2a1-4c70-ac3c-bf6d9597bde4 cmd="pwsh -NoProfile -File .scratch/t393/window5.ps1" waitedMs=0 pid=52724 at=2026-09-14T06:20:22.377Z
+RUN ticket=393 runId=ab11468f-f2a1-4c70-ac3c-bf6d9597bde4 cmd="pwsh -NoProfile -File .scratch/t393/window5.ps1" waitedMs=0 exit=0 pid=52724 at=2026-09-14T06:20:48.319Z

@@ -1,0 +1,28 @@
+{
+  "state": "mutant",
+  "map": ".scratch/t393/map-after.json",
+  "cases": {
+    "buildTodayDietDoc#case1": "ok:a7e1cc065d6319b1176e0d6c74063b7f692612398e1129215ab6544458ab20be",
+    "buildTodayDietDoc#case2": "ok:02ada70a27f446d7df8de1beb73751fa7bd66928850258390823fe3b7104e101",
+    "buildTodayDietDoc#case3": "ok:7ddebf1a28b6f8ac2e7289f23b3c3de7b321e0d27e4313f9eff354cf42864399",
+    "buildDietReviewDoc#case4": "ok:6ad36d604cb4cf183ed1642ee091f4f1bed96e50fe09e70d4f7661c516bc6255",
+    "buildDietReviewDoc#case5": "ok:f0ff8f9f8444c6652e3c0c7b0f795541e5a947efee62fe50ad59f29dbeea1480",
+    "buildDietReviewDoc#case6": "ok:a46381ee1b754971b9a2c177278c5076b75b97dee010dd6e80d2b355c6affa45",
+    "buildRankingDoc#case7": "ok:573e424303eb9099d0b496a8c230f80152c9ffedaab37e9db15baec44da984e6",
+    "buildRankingDoc#case8": "ok:9564a87a0d89c364f72c84aa2c26e257024b23054b2674b0e98a154e04b86004",
+    "buildRankingDoc#case9": "ok:5c39969c8795f3533c76af7e092196ec810134dc692c5c36b2957158fc770073",
+    "buildAllRankingsDoc#case10": "ok:a76152949f073091c9ac0c984a45904e6ec7b6b90215379160fa0b676d011759",
+    "buildAllRankingsDoc#case11": "ok:26d88c4b6ad0018c455cbd36677486d9f362e09d37229f72d11541cb2e4c7433",
+    "buildAllRankingsDoc#case12": "ok:47620f3a811e0cfd132f8f190ed96303f3781c18ae0a54a7f6b087ab85d7cf70",
+    "buildSearchDoc#case13": "ok:1213a5064541e6600cfcff574efe56220fb2aec7c618e36e9ced2390604fde6d",
+    "buildSearchDoc#case14": "ok:2b0102ebd686738dd773ed8d717557e9508c8cca0d889549a2a78cf2b8956425",
+    "buildSearchDoc#case15": "ok:297540406004791505292b466fd5fdc70617c14193829d18566a3308ebe10700",
+    "buildLibraryDoc#case16": "ok:7263d399b71c96497a85647dd23d5b1e40e5ce226108e69e30d52c28e0e9d902",
+    "buildLibraryDoc#case17": "ok:01fd961dcd81e1fc9b60ac201491928bdca77758e112c3b25ba61e538e43293e",
+    "buildLibraryDoc#case18": "ok:88d0d958396aad10fb1a8f5f9901e4e2cd0d37c91400b805b74260a3ddbe4fae",
+    "buildLibraryDoc#case19": "throw:BlocksError:renderKpiCard: input.value 必须是非空字符串",
+    "buildDedupeDoc#case20": "ok:30467931ba96eca737150e97779b22df80e3d579cba1784cef9b212f13fee9df",
+    "buildDedupeDoc#case21": "ok:0009cdcdfb487d3c76b6989efdb1b1aaa36ab682d3027daf2cf9460c3f30d7a0",
+    "buildDedupeDoc#case22": "ok:f7484d420fab669efef3abe8bbae223808c2dc0b1737f59973212a698b94e470"
+  }
+}

@@ -5,7 +5,7 @@
  * 一条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { buildAllRankingsDoc, buildRankingDoc } from '../render/dietDocs.js';
+import { buildAllRankingsDoc, buildRankingDoc } from './rankingDocs.js';
 import { buildAllRankings, buildFoodRankingPlate } from './rankingPlate.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
