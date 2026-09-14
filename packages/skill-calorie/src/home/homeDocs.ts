@@ -12,11 +12,18 @@
  * 提示 toast 保持原样（dismiss 走 `✓ 知道了`）；其下复制区去掉与按钮同字的
  * 标题（只留动作不留说明文本），并补上 `log` 使「复制数据 ▾ ＋ 复制日志」
  * 双按钮同行（此前无 `log`，日志位是点不动的禁用态）；日志里的命令补全窗口参数。
+ *
+ * #401 · 两处返修（照 `docs/skills/skill-calorie/t401-融合设计.md` 第三节冲突 4 的裁决）：
+ * 1. **深底提示条退场**：不再调 `notice()`（它出的是瞬时浮层形态的提示条，当常驻块用就是错位）；
+ *    那句结论保留，改成紧贴副题行的一行结论小字（类名取共享页面模板里副题行同一个，
+ *    字号与颜色都在公共层，页面本地不写），读序＝标题 → 一句结论 → 数字卡。
+ * 2. **折线跨空白日连线**：`options` 补 `connectNulls: true`（与 #160／`0da6472` 另外 4 处同口径）；
+ *    无记录日仍是 `null`、不补 0，只是抬笔处不再断段。
  */
 import { cx, escapeHtml, token } from 'base-paint';
 import { renderChartBlock, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { copyArea, copyLog, notice } from '../shared/copyArea.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import type { HomeData } from './home.js';
 
@@ -85,18 +92,40 @@ function pctText(pct: number | null | undefined): string {
   return String(pct) + '%';
 }
 
+/** #401 · 结论小字整句（文案逐字照样张 `t401-样张-今日总览.html` 的 `#sec-summary`）：
+ *  判定一句 ＋ 摄入／目标／还能吃三个数与算式。**「目标」不与「缺口」并排**（口径归 #396，
+ *  两个数基准不同，并排会被先做减法）；「还能吃」恒按「目标 − 已摄入」算，超了改写成「已超」。
+ *  热量目标可空（`home.ts:63` 的三段兜底）⇒ 缺目标时不硬凑算式，只写判定与摄入。 */
+function conclusionText(d: HomeData): string {
+  const cal = d.daily.totals.cal;
+  const goal = d.calorieGoal;
+  const head = '💡 ' + (d.daily.overCal ? '今日已超热量目标' : '热量在目标内')
+    + ' —— 摄入 ' + fmt(cal, ' 卡') + ' · 目标 ' + fmt(goal, ' 卡');
+  if (goal === null || goal === undefined) return head;
+  const left = goal - cal;
+  return left < 0
+    ? head + ' · 已超 ' + -left + ' 卡（＝ 已摄入 ' + cal + ' − 目标 ' + goal + '）'
+    : head + ' · 还能吃 ' + left + ' 卡（＝ 目标 ' + goal + ' − 已摄入 ' + cal + '）';
+}
+
 /** `calorie.view.home` · 今日总览族 5 词的结果型完整文档（`<!doctype html>` 起）。 */
 export function buildHomeDoc(d: HomeData): string {
   const t = d.daily.totals;
   const windowDays = d.week.series.length;
-  const parts: string[] = [renderKpiGrid([
-    { label: '今日摄入', value: fmt(t.cal), unit: '卡', detail: '目标 ' + fmt(d.calorieGoal, ' 卡') + ' · 完成度 ' + pctText(d.caloriePct) },
-    { label: '蛋白', value: fmt(t.pro), unit: 'g', detail: '完成度 ' + pctText(d.proteinPct) },
-    { label: '饮水', value: fmt(d.daily.waterMl), unit: 'ml', detail: '目标 ' + fmt(d.waterGoal, ' ml') + ' · 完成度 ' + pctText(d.waterPct) },
-    { label: '今日缺口', value: fmt(d.deficitToday), unit: '卡', detail: '正=缺口（TDEE＋运动－摄入）' },
-    { label: '连续记录', value: String(d.streakDays), unit: '天', detail: '窗口 ' + d.week.loggedDays + '/' + windowDays + ' 天有记录' },
-    { label: '周均摄入', value: fmt(d.week.avgIntake), unit: '卡', detail: d.week.start + ' ~ ' + d.week.end },
-  ])];
+  const parts: string[] = [
+    /* #401 · 结论小字排在最前（读序＝标题 → 一句结论 → 数字卡）。类名与共享页面模板里副题行那行
+       同源（`blocks.ts:173` 的 `blockPart('pageShell','subtitle')`）：字号与颜色都随公共层，页面本地不写。
+       副题位（`assembleDocPage` 的 `subtitle`）已被窗口那行占用，故取页身内最近的同一档小字位。 */
+    '<p class="' + cx('block-page-shell-subtitle') + '">' + escapeHtml(conclusionText(d)) + '</p>',
+    renderKpiGrid([
+      { label: '今日摄入', value: fmt(t.cal), unit: '卡', detail: '目标 ' + fmt(d.calorieGoal, ' 卡') + ' · 完成度 ' + pctText(d.caloriePct) },
+      { label: '蛋白', value: fmt(t.pro), unit: 'g', detail: '完成度 ' + pctText(d.proteinPct) },
+      { label: '饮水', value: fmt(d.daily.waterMl), unit: 'ml', detail: '目标 ' + fmt(d.waterGoal, ' ml') + ' · 完成度 ' + pctText(d.waterPct) },
+      { label: '今日缺口', value: fmt(d.deficitToday), unit: '卡', detail: '正=缺口（TDEE＋运动－摄入）' },
+      { label: '连续记录', value: String(d.streakDays), unit: '天', detail: '窗口 ' + d.week.loggedDays + '/' + windowDays + ' 天有记录' },
+      { label: '周均摄入', value: fmt(d.week.avgIntake), unit: '卡', detail: d.week.start + ' ~ ' + d.week.end },
+    ]),
+  ];
   let charts = false;
   const loggedDays = d.week.series.filter((s) => s.calories !== null && s.calories !== undefined);
   if (loggedDays.length > 0) {
@@ -105,7 +134,12 @@ export function buildHomeDoc(d: HomeData): string {
       title: '每日摄入',
       input: {
         items: d.week.series.map((s) => ({ label: s.date.slice(5), value: s.calories })),
-        options: { markLine: { value: d.week.avgIntake ?? undefined, label: '周均' } },
+        options: {
+          /* #401：空白日不补 0、只连线——没有记录的日期是 `null`，折线默认在 `null` 处抬笔断段，
+             稀疏记录会只剩孤点（口径同 #160／`0da6472` 另外 4 处调用点）。 */
+          connectNulls: true,
+          markLine: { value: d.week.avgIntake ?? undefined, label: '周均' },
+        },
       },
     }));
     charts = true;
@@ -124,11 +158,9 @@ export function buildHomeDoc(d: HomeData): string {
     caption: '按日汇总（' + d.week.start + ' ~ ' + d.week.end + '，无记录日留空，不断 0）',
     emptyText: '本窗无按日汇总',
   }));
-  parts.push(notice({
-    msg: d.daily.overCal ? '今日已超热量目标' : '热量在目标内',
-    detail: '摄入 ' + fmt(t.cal, ' 卡') + ' · 目标 ' + fmt(d.calorieGoal, ' 卡') + ' · 缺口 ' + fmt(d.deficitToday, ' 卡'),
-  }));
-  // #375 · 横幅下复制区：不给 `title`（与按钮同字的标题不出，只留动作）；
+  // #401 · 这里原有一条 `notice({…})` 深底提示条，已撤（裁决见件头与
+  // `docs/skills/skill-calorie/t401-融合设计.md` 第三节冲突 4）：结论句改由页首那行结论小字说。
+  // #375 · 复制区：不给 `title`（与按钮同字的标题不出，只留动作）；
   // `data`（业务数据文本）＋ `log`（运行日志文本）双双在场＝双按钮同行。
   // 日志第 3 段写「本页命令原文」：窗口非缺省 7 天时把窗口写全，照抄重跑得到同一张页
   // （命令行形状逐字照 `home/routes.ts` 里本族 3 条唤醒词）。
