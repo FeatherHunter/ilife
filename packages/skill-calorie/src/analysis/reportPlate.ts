@@ -76,6 +76,24 @@ function loadProfile(db: DatabaseSync): ProfileRow {
   }
 }
 
+/** 窗口口径的能耗度量（BMR／TDEE／系数）：档案四要素 ＋ **该窗口内最后一次称重**。
+ *
+ *  #384f · 修 S1「日均总消耗恒定 +79」：`buildSeries` 的 `tdee` 恒为 `loadProfileTdee`
+ *  （体重恒 70.0 parity，`./series.ts:172-176` 的既有设计，序列里的 deficit 全窗口静态值也依赖它），
+ *  故**对比期不能拿序列的 `tdee` 当对比值**——那是与用户真实体重无关的常量，两期相减恒 +79。
+ *  把「档案 ＋ 末次体重」的取法收在本函数一处（底座与对比期共用同一个 `energyOf` 调用口），
+ *  本期＝底座窗口、对比期＝对比期窗口 ⇒ 两期同源，Δ 随窗口／真实体重变化。 */
+function energyOfWindow(prof: ProfileRow, series: readonly DaySeries[]) {
+  const weightKg = series.reduce<number | null>((acc, s) => (s.weightKg === null ? acc : s.weightKg), null);
+  return energyOf({
+    weightKg,
+    heightCm: prof.height_cm,
+    age: prof.age,
+    gender: prof.gender,
+    activityLevel: prof.activity_level,
+  });
+}
+
 export interface WeightBmiPoint {
   readonly date: string;
   readonly kg: number;
@@ -113,14 +131,7 @@ export function buildReportBase(db: DatabaseSync, kind: ReportKind, start: strin
   const rows = fetchWeightLogs(db, start, end);
   const weightPoints: WeightBmiPoint[] = rows.map((r) => ({ date: r.date, kg: r.kg, bmi: r.bmi }));
   const prof = loadProfile(db);
-  const latest = series.reduce<number | null>((acc, s) => (s.weightKg === null ? acc : s.weightKg), null);
-  const e = energyOf({
-    weightKg: latest,
-    heightCm: prof.height_cm,
-    age: prof.age,
-    gender: prof.gender,
-    activityLevel: prof.activity_level,
-  });
+  const e = energyOfWindow(prof, series);
   const goal = readGoal(db);
   return {
     kind, start, end, days: series.length, series, weightPoints,
@@ -363,9 +374,11 @@ function comparePlate(db: DatabaseSync, base: ReportBase): Pick<ReportPlate, 'co
   // 对比期也走同一条缺失阻断口径（缺则抛，不静默出半页）。
   buildHealthPlate(db, prevStart, prevEnd);
   const prevSeries = buildSeries(db, prevStart, prevEnd);
+  // 日均总消耗两期同源：本期＝底座档案口径（窗口内末次体重），对比期＝同一算式套对比期窗口末次体重。
+  // **不读 `prevSeries` 的 `tdee` 字段**——那是 70 kg parity 常量（见 `energyOfWindow` 说明）。
   const rows: CompareRow[] = [
     row('日均摄入', seriesAvg(base.series, 'calories'), seriesAvg(prevSeries, 'calories'), '卡'),
-    row('日均总消耗', base.profile.tdee ?? seriesAvg(base.series, 'tdee'), seriesAvg(prevSeries, 'tdee'), '卡'),
+    row('日均总消耗', base.profile.tdee, energyOfWindow(loadProfile(db), prevSeries).tdee, '卡'),
     row('日均缺口', seriesAvg(base.series, 'deficit'), seriesAvg(prevSeries, 'deficit'), '卡'),
     row('日均体重', seriesAvg(base.series, 'weightKg'), seriesAvg(prevSeries, 'weightKg'), 'kg'),
     row('日均蛋白', seriesAvg(base.series, 'protein'), seriesAvg(prevSeries, 'protein'), 'g'),

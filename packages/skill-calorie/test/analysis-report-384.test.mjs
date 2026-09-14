@@ -116,6 +116,11 @@ function runKey(key, params, htmlPath, dir) {
   });
 }
 
+/** ISO 日 ±N 天（测试自用，与页面 `shiftISODate` 同口径）。 */
+function shift(iso, n) {
+  return new Date(Date.parse(iso + 'T12:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+}
+
 function assertFullDoc(html, what) {
   assert.ok(html.startsWith('<!doctype html>'), what + ' 缺 doctype');
   assert.ok(html.includes('charset="utf-8"'), what + ' 缺 charset');
@@ -179,6 +184,65 @@ test('#384 拿错页即红：8 条产物互不相同，且都不是 full 健康�
       assert.notEqual(v[a], v[b], '两张报告产物逐字节相同（形状没分开）：' + CASES[a].word + ' vs ' + CASES[b].word);
     }
   }
+});
+
+test('#384f 日均总消耗两期同源真体重：Δ 随窗口变，不再是与体重无关的常量', () => {
+  const dir = mkSeededDir();
+  // 对账口径＝**权威声明**（`src/analysis/utils.ts:59-63`）：Mifflin-St Jeor
+  // （10w ＋ 6.25h − 5×age ＋ 5（男））× 活动系数（`TDEE_ACTIVITY_FACTORS`，moderate = 1.55）；
+  // 体重取该期窗口**最后一次称重**（＝页面口径注「该期窗口内最后一次称重」）。
+  // 不手写 2635／2639 这类计数，只把权威算式在测试里再算一遍，与页面读数对账。
+  // （身高／年龄／性别／系数取自本夹具的档案 `seed384`：175 cm／30 岁／male／moderate。）
+  const TO_TDEE = (kg) => Math.round((10 * kg + 6.25 * 175 - 5 * 30 + 5) * 1.55);
+  const lastWeightIn = (start, end) => {
+    const db = openDb(join(dir, DB_FILENAME));
+    const rows = db.prepare(
+      'SELECT weight_kg FROM weight_log WHERE date BETWEEN ? AND ? ORDER BY date ASC, time ASC, id ASC',
+    ).all(start, end);
+    db.close();
+    assert.ok(rows.length > 0, '夹具缺称重：' + start + ' ~ ' + end);
+    return rows[rows.length - 1].weight_kg;
+  };
+  const tableRow = (html, label) => {
+    const tr = [...html.matchAll(/<tr>[\s\S]*?<\/tr>/g)].map((m) => m[0])
+      .find((s) => s.includes('>' + label + '<'));
+    assert.ok(tr !== undefined, '逐项 Δ 表里没有「' + label + '」行');
+    return tr.replace(/<[^>]+>/g, '|').replace(/\|+/g, '|').split('|').map((s) => s.trim()).filter((s) => s !== '');
+  };
+  const seen = [];
+  const rowsOf = {};
+  for (const win of ['7d', '30d']) {
+    const out = join(dir, 't384f-' + win + '.html');
+    const r = runKey('calorie.report.compare', { window: win }, out, dir);
+    assert.equal(r.status, 0, win + ' 非 exit 0：' + String(r.stderr || '').slice(-400));
+    const env = JSON.parse(String(r.stdout));
+    const html = readFileSync(out, 'utf8');
+    const cells = tableRow(html, '日均总消耗');   // [label, cur, prev, delta, dir]
+    const days = Number(/^([0-9]+)d$/.exec(win)[1]);
+    // 窗口不自己算：取**页面自述的两期**（KPI 卡「本期」＝cur.start ~ cur.end，「对比期」＝prev.start ~ prev.end）
+    const spans = [...new Set([...html.matchAll(/(\d{4}-\d{2}-\d{2}) ~ (\d{4}-\d{2}-\d{2})/g)].map((m) => m[1] + '~' + m[2]))];
+    assert.equal(spans.length, 2, win + ' 页面没给出两期窗口：' + JSON.stringify(spans));
+    const [curStart, curEnd] = spans[0].split('~');
+    const [prevStart, prevEnd] = [shift(curStart, -days), shift(curStart, -1)];
+    assert.equal(spans[1], prevStart + '~' + prevEnd, win + ' 对比期不是紧邻本期的等长窗口：' + spans[1]);
+    const prevTdee = TO_TDEE(lastWeightIn(prevStart, prevEnd));   // 对比期：真体重档，独立复算
+    const curTdee = TO_TDEE(lastWeightIn(curStart, curEnd));      // 本期：同源口径，独立复算
+    assert.equal(env.data.metrics.tdee, curTdee,
+      win + ' 本期总消耗不等于「档案 ＋ 本期窗口末次体重」：metrics.tdee=' + env.data.metrics.tdee + ' 期望=' + curTdee);
+    const expected = Math.round((curTdee - prevTdee) * 10) / 10;  // Δ＝本期 − 对比期（页面自述契约）
+    assert.equal(env.data.metrics.deltaTdee, expected,
+      win + ' Δ 不等于「本期总消耗 − 对比期（真体重）总消耗」：deltaTdee=' + env.data.metrics.deltaTdee + ' 期望=' + expected);
+    assert.notEqual(env.data.metrics.deltaTdee, 79, win + ' 仍是以 70 kg 常量算出的恒定 Δ=+79');
+    // 表与投影同一份读数：表格单元格对得上 metrics，方向也随 Δ 同号
+    assert.equal(Number(cells[3]), env.data.metrics.deltaTdee, win + ' 逐项 Δ 表与 metrics.deltaTdee 不一致：' + JSON.stringify(cells));
+    assert.equal(cells[4], expected > 0 ? '上升' : expected < 0 ? '下降' : '持平', win + ' 方向与 Δ 不同号：' + JSON.stringify(cells));
+    seen.push(env.data.metrics.deltaTdee);
+    rowsOf[win] = { cells, prevTdee, curTdee, expected, prevStart, prevEnd };
+  }
+  // 页头摘要不得再出现「由 70 kg 常量产生的恒定 Δ」：两窗读数必须不同（本期与对比期都随窗口变）
+  assert.notEqual(seen[0], seen[1], '7d 与 30d 的 Δ 相同（仍不随窗口变化）：' + JSON.stringify(seen));
+  assert.notEqual(rowsOf['7d'].prevTdee, rowsOf['30d'].prevTdee,
+    '两窗对比期总消耗相同（仍是常量口径）：' + JSON.stringify([rowsOf['7d'].prevTdee, rowsOf['30d'].prevTdee]));
 });
 
 test('#384 回归：full 健康盘 11 条窗口词行为不变（`calorie.view.health`）', () => {
