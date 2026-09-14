@@ -122,7 +122,9 @@ test('#398 改前基线读数：同一命令改前 exit=4 走 missing-data（冻
 
 test('#398 改后：source=all 取数 exit 0，行数与窗口手算一致（窗外 1 条不入读数）', () => {
   const dir = mkTmpDb();
-  const r = runRead(dir, { source: 'all' });
+  // #362 起「不传窗口参数＝全部历史」（`body/view.ts` 的默认窗不再兜 90 天），本条的**窗口**语义
+  // 所以必须显式传：`{"source":"all"}` 现在＝全部来源 ＋ 全部历史，不再是「三值筛选 ＋ 90 天窗」。
+  const r = runRead(dir, { source: 'all', days: WINDOW_DAYS });
   assert.equal(r.status, 0, 'exit=' + r.status + ' stderr=' + String(r.stderr || '').slice(-400));
   const env = JSON.parse(r.stdout);
   assert.equal(env.key, KEY);

@@ -10,11 +10,14 @@ import {
   renderDataTable,
   renderEmptyBlock,
   renderKpiGrid,
+  renderListRows,
   renderParamForm,
 } from 'base-paint/blocks';
 import { MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
+import { SOURCE_LABELS } from '../kcal.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
+import { compositionWindowLabel } from './bodyPlate.js';
 import type {
   BodyCompositionView,
   BodyMeasureView,
@@ -27,36 +30,95 @@ const DOC_SKILL = 'calorie';
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
 const DOC_TITLE = '卡路里·运动身体';
 
-/* ── 体成分（body_composition_view.html 对照：来源筛选＋趋势＋记录表＋复制） ── */
+/* ── 体成分（body_composition_view.html 对照：锚点大数字＋来源面＋趋势＋记录表＋复制） ── */
+
+/** 序 5（老正本 `:141`）：`source=all` 时必出的「来源不可直接对比」提示句——只提示，不拦截。 */
+const SOURCE_TIP = '来源不可直接对比：皮褶钳（家测）与健身房 InBody／医院设备口径不同，趋势请在单一来源内看。';
+
+/** 来源中文名：唯一定义地是 `kcal.ts` 的 `SOURCE_LABELS`（老正本 `:332`／`:366` 同口径），本层不自持名表。 */
+function srcZh(source: string | null): string {
+  return source === null ? '' : ((SOURCE_LABELS as Record<string, string>)[source] ?? source);
+}
+
+/** 图的点（`renderChartBlock` 的 `value` 只许 number）：非有限值不画也不计 ⇒ KPI「趋势点」与图**同源**。 */
+function chartPoints(points: readonly { date: string; avgPct: number }[]): { label: string; value: number }[] {
+  return points.filter((p) => typeof p.avgPct === 'number' && Number.isFinite(p.avgPct))
+    .map((p) => ({ label: p.date.slice(5), value: p.avgPct }));
+}
 
 export function buildBodyCompositionDoc(v: BodyCompositionView): string {
+  /** 窗口口径句（页面可见文本的唯一定义地，`#362` 判据认这一句；老正本 `:433` 也自报窗口）。 */
+  const win = '窗口：' + compositionWindowLabel(v.window);
+  const grouped = v.sourceCount > 0;
+  const d = v.delta;
+  // 序 8（老正本 `:339-340`／`:344`）：比较对象与间隔天数都写出来；无基线只写「暂无对比基线」。
+  const deltaNote = d === null
+    ? '首条记录，暂无对比基线'
+    : '距上次测量 ' + d.gapDays + ' 天（' + d.prevDate + '）· 体脂率 '
+      + (d.diffPct > 0 ? '上升' : d.diffPct < 0 ? '下降' : '持平') + ' ' + Math.abs(d.diffPct) + '%'
+      + (d.prevSource !== null && d.prevSource !== (v.anchor?.source ?? null) ? '（上次来源 ' + srcZh(d.prevSource) + '）' : '');
+  const single = chartPoints(v.trend);
+  const groups = v.sourceSeries.map((s) => ({ source: s.source, latest: s.latestDate, points: chartPoints(s.points) }));
+  // KPI「趋势点」＝图上真正画出来的点数（分组态＝各来源点数之和）⇒ 不可能出现「有图＋趋势点 0 天」。
+  const trendDays = grouped ? groups.reduce((n, g) => n + g.points.length, 0) : single.length;
   const parts: string[] = [
     renderParamForm({
-      fields: [{ name: 'source', label: '来源', value: v.source ?? '' }],
-      description: '按来源筛选体成分（空=全部；趋势默认最近来源；对比两期归组合分析）',
+      fields: [{ name: 'source', label: '来源', value: v.sourceParam ?? '' }],
+      description: '按来源筛选体成分（不传＝不限来源，趋势按最近来源；all＝全部来源并按来源分组展示；对比两期归组合分析）· ' + win,
     }),
-    renderKpiGrid([
-      { label: '体成分看', value: v.source ?? '全部来源', detail: '共 ' + v.total + ' 条' },
-      { label: '最新体脂', value: v.latestPct === null ? '—' : String(v.latestPct) + '%' },
-      { label: '趋势点', value: String(v.trend.length), unit: '天' },
-    ]),
   ];
+  if (grouped) parts.push(renderListRows({ items: [{ main: SOURCE_TIP }] }));
+  const cards = [
+    // 序 9（老正本 `:155` 锚点区）：首屏读数＝**最新一条**（`anchor`），不是窗口均值；徽标「最新」照老 `:333`。
+    {
+      label: '体成分看',
+      value: grouped ? '全部来源' : (v.source === null ? '全部来源' : srcZh(v.source)),
+      detail: '共 ' + v.total + ' 条 · ' + win,
+    },
+    {
+      label: '最新体脂',
+      value: v.anchor === null || v.anchor.pct === null ? '—' : String(v.anchor.pct) + '%',
+      ...(v.anchor === null ? {} : { detail: v.anchor.date + (v.anchor.source === null ? '' : ' · ' + srcZh(v.anchor.source)) }),
+      status: 'ok' as const,
+      statusText: '最新',
+    },
+    { label: '距上次 Δ', value: d === null ? '—' : (d.diffPct > 0 ? '+' : '') + d.diffPct + '%', detail: deltaNote },
+    {
+      label: '趋势点',
+      value: String(trendDays),
+      unit: '天',
+      detail: win + (grouped ? ' · ' + v.sourceCount + ' 组分别成线' : (v.source === null ? '' : ' · 来源 ' + srcZh(v.source))),
+    },
+  ];
+  if (grouped) cards.push({ label: '来源分组', value: String(v.sourceCount), unit: '组', detail: win });
+  parts.push(renderKpiGrid(cards));
   let charts = false;
-  if (v.trend.length > 0) {
-    parts.push(renderChartBlock({
-      kind: 'line',
-      title: '体脂趋势',
-      input: { items: v.trend.map((t) => ({ label: t.date.slice(5), value: t.avgPct })) },
+  if (grouped) {
+    // 裁定 5：来源之间**不合并**成一条线（数据层的 `sourceSeries` 已经分好），逐来源一图。
+    parts.push(renderDataTable({
+      columns: [{ key: 'source', label: '来源' }, { key: 'points', label: '点数', align: 'right' }, { key: 'latest', label: '最新日期' }],
+      rows: groups.map((g) => ({ source: srcZh(g.source), points: g.points.length, latest: g.latest })),
+      caption: '来源分组（' + v.sourceCount + ' 组 · ' + win + '）',
+      emptyText: '窗口内无来源分组',
     }));
+    for (const g of groups) {
+      if (g.points.length === 0) continue;
+      parts.push(renderChartBlock({ kind: 'line', title: '体脂趋势 · ' + srcZh(g.source) + '（' + win + '）', input: { items: g.points } }));
+      charts = true;
+    }
+  } else if (single.length > 0) {
+    parts.push(renderChartBlock({ kind: 'line', title: '体脂趋势（' + win + '）', input: { items: single } }));
     charts = true;
   }
+  if (!charts) parts.push(renderEmptyBlock({ title: '体脂趋势', text: '窗口内暂无趋势点' }));
+  // 裁定 2 · 可见文本：缺值一律「—」（老 `:342`／`:347-352`）；复制 payload（下 `items`）保留原始空值，两套口径不互染。
   const rows = v.items.map((r) => {
-    const d = r as { date?: unknown; body_fat_pct?: unknown; source?: unknown; note?: unknown };
+    const x = r as { date?: unknown; body_fat_pct?: unknown; source?: unknown; note?: unknown };
     return {
-      date: typeof d.date === 'string' ? d.date : '',
-      pct: typeof d.body_fat_pct === 'number' ? d.body_fat_pct : '',
-      source: typeof d.source === 'string' ? d.source : '',
-      note: typeof d.note === 'string' ? d.note : '',
+      date: typeof x.date === 'string' ? x.date : '—',
+      pct: typeof x.body_fat_pct === 'number' ? String(x.body_fat_pct) + '%' : '—',
+      source: typeof x.source === 'string' ? srcZh(x.source) : '—',
+      note: typeof x.note === 'string' ? x.note : '',
     };
   });
   parts.push(renderDataTable({
@@ -67,8 +129,10 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
       { key: 'note', label: '备注' },
     ],
     rows,
-    caption: '体成分记录（共 ' + v.total + ' 条）',
-    emptyText: '无体成分记录',
+    // `limit` 只截显示：窗口内还有多少条**写在标题里**（不静默截断）。
+    caption: '体成分记录（' + win + ' · 共 ' + v.total + ' 条'
+      + (v.windowTotal > v.total ? '，窗口内另有 ' + (v.windowTotal - v.total) + ' 条，本页只列最近 ' + v.total + ' 条' : '') + '）',
+    emptyText: '无体成分记录 → 记体脂：皮褶钳或外部测量，第一条就是基线',
   }));
   // #359 · 7 点皮褶回显：最近一条有皮褶数据的记录，7 个槽位逐点成行（部位 ↔ 值 一一对上，不看合计）。
   // 值取库内原始 mm（`bodyPlate` 已备齐），本层不换算、不四舍五入；缺槽位如实写「—」。
@@ -88,7 +152,8 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
   parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.body-composition',
-      data: { items: rows, total: v.total },
+      // 裁定 2 · 复制数据＝**库内原始行原样透传**（含 7 个皮褶槽与 `null`），不写「—」、不四舍五入、不换名词。
+      data: { items: v.items.map((r) => ({ ...r })), total: v.total },
     },
   }));
   return assembleDocPage({

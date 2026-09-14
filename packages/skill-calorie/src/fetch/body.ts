@@ -253,18 +253,37 @@ export function addComposition(db: DatabaseSync, input: CompositionInput): { id:
   return { id: Number(info.lastInsertRowid), date: input.date, bodyFatPct: input.bodyFatPct as number };
 }
 
+/** #362 · 体成分读侧的**窗口**：本票起「不传 ＝ 全部历史」，不再兜 90 天。
+ *
+ * `{days}`＝近 N 天（`date >= 今天-N`，含界）；`{dateFrom, dateTo}`＝闭区间（**两个都**给才生效，
+ * 只给一个由调用方拦成用法错）；`{}`／`undefined`＝**全部历史**（不加任何日期谓词）。
+ * 第二参数位另收 `number`（＝`{days}`）：#398 与既有三处调用（`t398-*`／`fetch.test.mjs`／
+ * `deprecated-126.test.mjs`）照旧原样通过，行为逐字不变。
+ */
+export type CompositionWindowInput = number | { days?: number; dateFrom?: string; dateTo?: string } | undefined;
+
+/** 窗口 → 日期谓词：列表、两条趋势、组数四条取数**共用这一条口径**（区间优先于天数，与既有次序同）。 */
+function windowClause(win: CompositionWindowInput): { sql: string; params: SQLInputValue[] } {
+  const w = typeof win === 'number' ? { days: win } : win;
+  if (w?.dateFrom && w?.dateTo) return { sql: ' AND date >= ? AND date <= ?', params: [w.dateFrom, w.dateTo] };
+  if (w?.days !== undefined) return { sql: ' AND date >= ?', params: [daysAgo(w.days)] };
+  return { sql: '', params: [] };  // 全部历史：一条日期谓词都不加（本票正题：不许静默按 90 天截断）
+}
+
 export function listCompositions(db: DatabaseSync, opts: { dateFrom?: string; dateTo?: string; days?: number; source?: string; limit?: number } = {}): Record<string, unknown>[] {
   // #359 · 读侧放行 7 点皮褶：原 5 列不含 CALIPER_FIELDS，看体脂页读不到当初填的 7 个数。
   // 形状照下方 listMeasurements 的既有写法（cols 数组）；只放行列，不动筛选与排序，更不在读侧算任何东西。
   // #398 · `source` 三值照旧按字面过滤；`all`（读侧筛选词）＝**不按来源过滤**，行形状与次序一律不变。
   //        其它字面值 ⇒ 报错（原来的「静默当来源名用、空结果」口径已收）。
+  // #362 · 日期窗口改走 `windowClause`（同一条口径的四条取数之一）；三样都不给＝全部历史，`limit` 仍可截行。
   if (opts.source !== undefined) assertSourceFilter(opts.source);
   const cols = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note']; // M1-ANCHOR
   let sql = 'SELECT ' + cols.join(', ') + ' FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0';
   const params: SQLInputValue[] = [];
   if (opts.source && opts.source !== SOURCE_FILTER_ALL) { sql += ' AND source = ?'; params.push(opts.source); }
-  if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }
-  else if (opts.days !== undefined) { sql += ' AND date >= ?'; params.push(daysAgo(opts.days)); }
+  const win = windowClause(opts);
+  sql += win.sql;
+  params.push(...win.params);
   sql += ' ORDER BY date DESC, id DESC';
   if (opts.limit) { sql += ' LIMIT ?'; params.push(opts.limit); }
   return db.prepare(sql).all(...params) as unknown as Record<string, unknown>[];
@@ -282,14 +301,19 @@ export function latestSource(db: DatabaseSync): string | null {
   return row?.source ?? null;
 }
 
-/** 单来源趋势：一天一个点（窗口内 `date >= 今天-N 天`，`AVG` 取当天均值）。 */
-export function trendComposition(db: DatabaseSync, days: number, source?: string): { date: string; avgPct: number; n: number }[] {
+/** 单来源趋势：一天一个点（`AVG` 取当天均值）。
+ *
+ * #362 · 窗口位放开为 `CompositionWindowInput`（天数／闭区间／**不传＝全部历史**）：页面「看体脂」的 KPI 与图
+ * 必须与列表同批定，趋势不能再恒按 90 天取。窗口位原样收 `number`（＝`{days}`），旧调用不变。
+ */
+export function trendComposition(db: DatabaseSync, win: CompositionWindowInput, source?: string): { date: string; avgPct: number; n: number }[] {
   if (source !== undefined) assertSourceFilter(source);
   const all = source === SOURCE_FILTER_ALL;
   const src = all ? null : (source ?? latestSource(db) ?? 'home_caliper');
+  const clause = windowClause(win);
   let sql = `SELECT date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ?`;
-  const params: SQLInputValue[] = [daysAgo(days)];
+    WHERE COALESCE(is_deprecated, 0) = 0` + clause.sql;
+  const params: SQLInputValue[] = [...clause.params];
   // #398 · `all` ⇒ 不加 `AND source = ?`（不按来源过滤）；具体来源与缺省（`latestSource`）照旧恒带该过滤。
   if (src !== null) { sql += ' AND source = ?'; params.push(src); }
   sql += ' GROUP BY date ORDER BY date ASC';
@@ -312,10 +336,11 @@ export interface SourceSeries {
   latestDate: string;
 }
 
-export function trendCompositionBySource(db: DatabaseSync, days: number): SourceSeries[] {
+export function trendCompositionBySource(db: DatabaseSync, win: CompositionWindowInput): SourceSeries[] {
+  const clause = windowClause(win); // #362 · 与列表同一条窗口口径（不传＝全部历史）
   const rows = db.prepare(`SELECT source, date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ?
-    GROUP BY source, date ORDER BY date ASC`).all(daysAgo(days)) as unknown as // M2-ANCHOR
+    WHERE COALESCE(is_deprecated, 0) = 0` + clause.sql + `
+    GROUP BY source, date ORDER BY date ASC`).all(...clause.params) as unknown as // M2-ANCHOR
     { source: string; date: string; avg_pct: number; n: number }[];
   const bySource = new Map<string, { date: string; avgPct: number; n: number }[]>();
   for (const r of rows) {
@@ -334,16 +359,15 @@ export function trendCompositionBySource(db: DatabaseSync, days: number): Source
  *  `SELECT COUNT(DISTINCT source) FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0`
  *  （同窗口）**恒等**——它就是同一句聚合，只是把窗口参数与「跳过废弃」写成与列表同一套写法。
  *  给「按来源分组取数」一条可独立取的读数（页面文本不参与判据）。
+ *  #362 · 窗口谓词改走 `windowClause`（同一条口径）；`{}`＝全部历史，读数与不带窗口的同一句 SQL 恒等。
  */
 export function compositionSourceCount(
   db: DatabaseSync,
   opts: { days?: number; dateFrom?: string; dateTo?: string } = {},
 ): number {
-  let sql = `SELECT COUNT(DISTINCT source) AS n FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0`;
-  const params: SQLInputValue[] = [];
-  if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }
-  else if (opts.days !== undefined) { sql += ' AND date >= ?'; params.push(daysAgo(opts.days)); }
-  const row = db.prepare(sql).get(...params) as { n: number };
+  const clause = windowClause(opts);
+  const sql = `SELECT COUNT(DISTINCT source) AS n FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0` + clause.sql;
+  const row = db.prepare(sql).get(...clause.params) as { n: number };
   return row.n;
 }
 

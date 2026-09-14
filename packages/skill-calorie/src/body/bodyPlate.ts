@@ -40,12 +40,64 @@ function caliperEchoOf(items: Record<string, unknown>[]): CaliperEcho | null {
   return null;
 }
 
+/** #362 · 体成分看页的**窗口**（页面裁决后的三态；取数侧的入参类型是 `fetch/body.ts` 的
+ *  `CompositionWindowInput`——同形两层的分工：那里收「天数／区间／不给」，这里记「裁决出的是哪一种」）。
+ *  不传窗口参数＝`all`（**全部历史**，本票正题）；`days`＝近 N 天；两个日期都给＝闭区间。 */
+export type CompositionWindow =
+  | { kind: 'all' }
+  | { kind: 'days'; days: number }
+  | { kind: 'range'; from: string; to: string };
+
+/** 窗口口径句（页面可见文本的**唯一出处**，判据「两次跑的这句随参数变」认这一句）：
+ *  `全部历史`／`近 N 天`／`A → B`。 */
+export function compositionWindowLabel(w: CompositionWindow): string {
+  if (w.kind === 'days') return '近 ' + w.days + ' 天';
+  if (w.kind === 'range') return w.from + ' → ' + w.to;
+  return '全部历史';
+}
+
+/** 窗口 → 取数位入参：`{}`＝全部历史（`windowClause` 不加日期谓词）。 */
+function windowInput(w: CompositionWindow): { days?: number; dateFrom?: string; dateTo?: string } {
+  if (w.kind === 'days') return { days: w.days };
+  if (w.kind === 'range') return { dateFrom: w.from, dateTo: w.to };
+  return {};
+}
+
+/** #362 · 锚点 Δ（老正本 `body_composition_view.html:327-328` 的 `rows[1]` 口径，**逐字移植**）：
+ *  比较对象＝记录列表里的**上一条**（不按来源另挑；来源不同时页面在注里点名）。
+ *  上一条缺席或体脂缺席 ⇒ `null`（页面写「暂无对比基线」）。间隔天数＝日历差（老 `daysBetween` 同式）。 */
+function compositionDelta(items: Record<string, unknown>[]): {
+  prevDate: string; prevSource: string | null; gapDays: number; diffPct: number;
+} | null {
+  const cur = items[0] as { date?: unknown; body_fat_pct?: unknown } | undefined;
+  const prev = items[1] as { date?: unknown; body_fat_pct?: unknown; source?: unknown } | undefined;
+  if (!cur || !prev) return null;
+  if (typeof cur.body_fat_pct !== 'number' || typeof prev.body_fat_pct !== 'number') return null;
+  if (typeof cur.date !== 'string' || typeof prev.date !== 'string') return null;
+  return {
+    prevDate: prev.date,
+    prevSource: typeof prev.source === 'string' ? prev.source : null,
+    gapDays: Math.round((Date.parse(cur.date) - Date.parse(prev.date)) / 86400000),
+    diffPct: Math.round((cur.body_fat_pct - prev.body_fat_pct) * 100) / 100,
+  };
+}
+
 export interface BodyCompositionView {
   source: string | null;
+  /** #362 · 读命令**实际收到的** `source` 参数（页面表单回显用；`null`＝没传，不是「全部来源」的别名）。 */
+  sourceParam: string | null;
   items: Record<string, unknown>[];
   total: number;
   trend: { date: string; avgPct: number; n: number }[];
   latestPct: number | null;
+  /** #362 · 本页窗口（页面必须把 `compositionWindowLabel(window)` 写进可见文本）。 */
+  window: CompositionWindow;
+  /** #362 · 窗口内**总条数**（不受 `limit` 影响）：`total` 是显示出来的行数，这一项让「窗口内共几条」可判、不静默截断。 */
+  windowTotal: number;
+  /** #362 · 锚点大数字的数据（老正本 `:74-84`／`:155`）：读数＝**最新一条**（列表首行），不是窗口均值。 */
+  anchor: { date: string; pct: number | null; source: string | null } | null;
+  /** #362 · Δ 与间隔天数（老正本 `:339-340`）；无基线 ⇒ `null`。 */
+  delta: { prevDate: string; prevSource: string | null; gapDays: number; diffPct: number } | null;
   /** #359 · 7 点皮褶回显（最近一条有皮褶数据的记录；没有＝null）。 */
   calipers: CaliperEcho | null;
   /** #398 · 按来源分组（仅 `source=all` 时非空）：每个来源一条序列，来源之间不合并。 */
@@ -56,35 +108,58 @@ export interface BodyCompositionView {
 
 export function buildBodyCompositionView(
   db: DatabaseSync,
-  opts: { days?: number; source?: SourceFilter; limit?: number } = {},
+  opts: { days?: number; dateFrom?: string; dateTo?: string; source?: SourceFilter; limit?: number } = {},
 ): BodyCompositionView {
-  const days = opts.days ?? 90;
-  if (!Number.isInteger(days) || days < 1 || days > 365) {
+  const days = opts.days;
+  if (days !== undefined && (!Number.isInteger(days) || days < 1 || days > 365)) {
     throw new CalorieRenderError('bad-input', 'days 须为 1..365 整数');
   }
   const limit = opts.limit ?? 20;
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
     throw new CalorieRenderError('bad-input', 'limit 须为 1..100 整数');
   }
+  // #362 · 窗口裁决：两个日期都给 ⇒ 闭区间（优先于 `days`）；只给一个 ⇒ 用法错（不许静默忽略参数）；
+  // 给了 `days` ⇒ 近 N 天；都不给 ⇒ **全部历史**（原状是兜 90 天，本票正题）。
+  const { dateFrom, dateTo } = opts;
+  if ((dateFrom === undefined) !== (dateTo === undefined)) {
+    throw new CalorieRenderError('bad-input', 'dateFrom 与 dateTo 须成对给（区间窗口）');
+  }
+  if (dateFrom !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) throw new CalorieRenderError('bad-input', 'dateFrom 非法：' + dateFrom);
+  if (dateTo !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) throw new CalorieRenderError('bad-input', 'dateTo 非法：' + dateTo);
+  const window: CompositionWindow = dateFrom !== undefined && dateTo !== undefined
+    ? { kind: 'range', from: dateFrom, to: dateTo }
+    : days !== undefined ? { kind: 'days', days } : { kind: 'all' };
+  const win = windowInput(window);
   try {
-    const items = listCompositions(db, { days, source: opts.source, limit });
-    if (items.length === 0) throw new CalorieRenderError('missing-data', '无体成分记录（近' + days + '天）');
-    const trend = trendComposition(db, days, opts.source);
-    const first = items[0] as { body_fat_pct?: unknown; source?: unknown };
+    // #362 · 先把窗口内的**全部**行取出来（`limit` 只截显示、不再截窗口）：`windowTotal` 即「窗口内共几条」。
+    const rows = listCompositions(db, { ...win, source: opts.source });
+    if (rows.length === 0) {
+      // 序 6（老 `:355`）：空态句必须带「怎么记第一条」的指引，不许只写「无数据」；同时把窗口口径写进这句。
+      throw new CalorieRenderError('missing-data',
+        '无体成分记录（窗口：' + compositionWindowLabel(window) + '）→ 记体脂：皮褶钳或外部测量，第一条就是基线');
+    }
+    const items = rows.slice(0, limit);
+    const trend = trendComposition(db, win, opts.source);
+    const first = items[0] as { date?: unknown; body_fat_pct?: unknown; source?: unknown };
     const latestPct = typeof first?.body_fat_pct === 'number' ? (first.body_fat_pct as number) : null;
-    const source = typeof first?.source === 'string' ? (first.source as string) : (opts.source ?? null);
+    const firstSource = typeof first?.source === 'string' ? (first.source as string) : null;
     // #398 · `source=all`：分组序列与组数由数据层备齐（不按来源过滤、按来源分组）。
     // 组数取 `compositionSourceCount` 的读数，与 `SELECT COUNT(DISTINCT source)…`（同窗口）恒等。
     const grouped = opts.source === 'all';
     return {
-      source,
+      source: firstSource ?? (opts.source ?? null),
+      sourceParam: opts.source ?? null,
       items,
       total: items.length,
+      window,
+      windowTotal: rows.length,
       trend,
       latestPct,
+      anchor: first === undefined ? null : { date: typeof first.date === 'string' ? first.date : '', pct: latestPct, source: firstSource },
+      delta: compositionDelta(items),
       calipers: caliperEchoOf(items),
-      sourceSeries: grouped ? trendCompositionBySource(db, days) : [],
-      sourceCount: grouped ? compositionSourceCount(db, { days }) : 0,
+      sourceSeries: grouped ? trendCompositionBySource(db, win) : [],
+      sourceCount: grouped ? compositionSourceCount(db, win) : 0,
     };
   } catch (e) {
     if (e instanceof CalorieRenderError) throw e;
