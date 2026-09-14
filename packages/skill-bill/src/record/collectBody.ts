@@ -19,7 +19,7 @@ import { renderCaliberLine, renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { BillRow } from '../fetch/db.js';
-import { ALL_L1, DEFAULTS, EXPENSE_L1 } from '../policy/category.js';
+import { ALL_L1, EXPENSE_L1 } from '../policy/category.js';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
@@ -29,6 +29,7 @@ import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIde
 import { pageShell } from '../shared/pageShell.js';
 import { prefillHint, prefillNote, prefillOf } from '../shared/prefillNote.js';
 import type { PrefillMark } from '../shared/prefillNote.js';
+import { optionsFor, pickOf as pickValues, textOf } from '../shared/recentPicks.js';
 import { summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
 import { typeBadge } from '../shared/typeBadge.js';
@@ -37,47 +38,11 @@ import type { CollectInput } from './scene.js';
 import { isGiven } from './slots.js';
 import type { RecordSlot } from './slots.js';
 
-/** 候选选择器的取数上限（三枚选择器：分类／账户／账本）。 */
-const PICK_LIMIT = 12;
-
-/** 一个值的字符串形态（非字符串按空串用；数字写成十进制串）。 */
-function textOf(v: unknown): string {
-  if (typeof v === 'string') return v.trim();
-  return typeof v === 'number' ? String(v) : '';
-}
-
-/** 近期记录里某个字段的取值（按最近在先去重，取前 `PICK_LIMIT` 个）——三枚选择器的候选。 */
-function distinct(recent: readonly BillRow[], field: 'category' | 'account' | 'ledger'): string[] {
-  const out: string[] = [];
-  for (const r of recent) {
-    const v = textOf(r[field]);
-    if (v !== '' && !out.includes(v)) out.push(v);
-    if (out.length >= PICK_LIMIT) break;
-  }
-  return out;
-}
-
-/** 三枚选择器的候选：分类（近期有历史就用历史，一条历史都没有就退到 L1 名单）／账户／账本（缺省「生活」）。 */
+/** 三枚选择器的候选（**转发到共用位 `src/shared/recentPicks.ts`，本件不另写一份取数**）：
+ *  通用采集页的 `kind` 只有「支出」与「其余」两档，支出落支出侧名单、其余两侧都给。
+ *  本次整改把原先住在本件的 `PICK_LIMIT`／`textOf`／`distinct`／`optionsFor` 一并交出，只留这一行转发。 */
 function pickOf(recent: readonly BillRow[], kind: string): Record<string, readonly string[]> {
-  const category = distinct(recent, 'category');
-  const account = distinct(recent, 'account');
-  const ledger = distinct(recent, 'ledger');
-  return {
-    category: category.length > 0 ? category : (kind === 'expense' ? EXPENSE_L1 : ALL_L1),
-    account,
-    ledger: ledger.length > 0 ? ledger : [DEFAULTS.ledger],
-  };
-}
-
-/** 一个字段的选项：选择器候选 ＋ 本次已给的值（已给的值不在候选里时并到队首，免得表单把它显示没了）。 */
-function optionsFor(
-  pick: Record<string, readonly string[]>,
-  name: string,
-  value: string,
-): readonly string[] | undefined {
-  const list = pick[name];
-  if (list === undefined || list.length === 0) return undefined;
-  return value !== '' && !list.includes(value) ? [value, ...list] : [...list];
+  return pickValues(recent, kind === 'expense' ? EXPENSE_L1 : ALL_L1);
 }
 
 /** 采集表单的七槽：字段一律由 `renderParamForm` 出（标签与控件配对、每格带 `name`）。 */

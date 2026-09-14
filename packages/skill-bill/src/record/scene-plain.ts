@@ -10,7 +10,7 @@
  * 本件的场景差异（施工图 `docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「记一笔」那一行）：
  *   ① **方向按金额符号判**：没有 preset，支出负数、收入正数都由金额本身说；
  *     徽章那句「按金额符号判支出／收入」走 `../shared/typeBadge.ts`（`kind` 给空串时的缺省那句话）；
- *   ② **分类两侧都给**：一条历史都没有时，分类候选不偏向支出或收入（`../shared/photoEscape.ts` 的 `pickOf`，`kind` 给空串）；
+ *   ② **分类两侧都给**：一条历史都没有时，分类候选不偏向支出或收入（`../shared/photoEscape.ts` 的 `valuesOf`，`kind` 给空串）；
  *   ③ **符号与方向不符要当面问清**：`kind` 空时本件不替用户定方向——给成什么符号就记什么方向，
  *     这句话写在口径行里，结论摘要行的方向也照实报。
  *
@@ -29,7 +29,7 @@ import type { DuplicateProbe } from '../shared/duplicateNote.js';
 import { emptyNote } from '../shared/emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
-import { commandsOf, factsOf, fieldCardOf, pickOf, probeOf, promptOf } from '../shared/photoEscape.js';
+import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
 import { prefillNote, prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
@@ -74,9 +74,8 @@ function collectPlain(input: CollectInput): string {
   const blocked = blockedItems({ params, missing: input.missing, kind: KIND });
   const message = blockedMessage(input.missing, blocked);
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
-  const probe = probeOf({ params, today: input.today });
-  const facts = factsOf({ params, date: input.today });
-  const pick = pickOf(input.recent, KIND);
+  const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: KIND, today: input.today });
+  const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
   const envelope = envelopeOf(input.key, false, message);
   const empties: string[] = [];
   if (pick.account.length === 0) {
@@ -102,7 +101,7 @@ function collectPlain(input: CollectInput): string {
     prefillNote(marks),
     blockedBar({
       items: blocked,
-      command: commandsOf(input.key, params, blocked, REPLACES),
+      command: bp.command,
       note: '金额与分类三级补齐之后重跑同一条命令才会写库；分类候选取自近期记录，'
         + '一条历史都没有时支出侧与收入侧的一级名目都给。',
     }),
@@ -115,7 +114,7 @@ function collectPlain(input: CollectInput): string {
       marks,
       pick,
     }),
-    promptCopyArea(promptOf(input.key, blocked), '复制 prompt（补齐后重跑）'),
+    promptCopyArea(bp.prompt, '复制 prompt（补齐后重跑）'),
     copyArea({
       data: { envelope },
       log: {

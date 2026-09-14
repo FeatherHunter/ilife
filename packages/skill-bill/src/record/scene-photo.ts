@@ -8,8 +8,8 @@
  *  ＋第三节「图片识别入口」那一行，缺陷见第四节第 7 条）：
  *   ① **识别在本仓之外办**：本仓不装识别引擎、也不做上传控件（老侧同样没有，只有一行「已收到 N 张账单图片」）。
  *     页上那条通道只做一件事——把「已收到几张图／三要素还缺哪样／补齐后照抄哪条命令」讲清并给成可复制的一段
- *     （`../shared/photoEscape.ts` 的 `imageNote`／`escapeCard`／`escapePrompt`，口径只有那一处定义）；
- *   ② **文字三要素填空**：金额／分类／时间三格，名字取自 `../shared/photoEscape.ts` 的 `ESCAPE_FIELDS`
+ *     （`../shared/outsideScan.ts` 的 `imageNote`／`escapeCard`／`escapePrompt`，口径只有那一处定义）；
+ *   ② **文字三要素填空**：金额／分类／时间三格，名字取自 `../shared/outsideScan.ts` 的 `ESCAPE_FIELDS`
  *     （**唯一定义地**），表单、明示表、提示话术三处都引它，本件不另抄一份；
  *   ③ **缺一不许写库**：三要素缺哪样，阻断条就报哪样，缺项时不出可跑的写库指令（不给复制按钮）。
  *     也不替用户猜三要素里缺的值。
@@ -32,10 +32,9 @@ import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
-import {
-  ESCAPE_FIELDS, commandsOf, escapeCard, escapePrompt, factsOf, fieldCardOf, imageNote, pickOf, probeOf, promptOf,
-} from '../shared/photoEscape.js';
-import type { FieldSlot, PhotoScale } from '../shared/photoEscape.js';
+import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
+import { ESCAPE_FIELDS, escapeCard, escapePrompt, imageNote } from '../shared/outsideScan.js';
+import type { PhotoScale } from '../shared/outsideScan.js';
 import { prefillNote, prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
@@ -56,8 +55,8 @@ const REPLACES: Readonly<Record<string, string>> = {
   time: '<账单上的时间，如 2026-09-14>',
 };
 
-/** 三要素的字段卡（名字与提示取自 `ESCAPE_FIELDS`，本件只补「必需」这一格）。 */
-const ESCAPE_SLOTS: readonly FieldSlot[] = ESCAPE_FIELDS.map((f) => ({
+/** 三要素的字段卡格（名字与提示取自 `ESCAPE_FIELDS`，本件只补「必需」这一格；形状照 `fieldCardOf` 要的那一格给）。 */
+const ESCAPE_SLOTS = ESCAPE_FIELDS.map((f) => ({
   name: f.name,
   label: f.label,
   hint: f.hint,
@@ -103,9 +102,8 @@ function collectPhoto(input: CollectInput): string {
   const blocked = blockedItems({ params, missing: input.missing, kind: KIND });
   const message = blockedMessage(input.missing, blocked);
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
-  const probe = probeOf({ params, today: input.today });
-  const facts = factsOf({ params, date: input.today });
-  const pick = pickOf(input.recent, KIND);
+  const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: KIND, today: input.today });
+  const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
   const scale = scaleOf(params);
   const envelope = envelopeOf(input.key, false, message);
   const content = [
@@ -125,7 +123,7 @@ function collectPhoto(input: CollectInput): string {
     prefillNote(marks),
     blockedBar({
       items: blocked,
-      command: commandsOf(input.key, params, blocked, REPLACES),
+      command: bp.command,
       note: '三要素（金额／分类／时间）缺一不许写库，也不替用户猜缺的那一格；'
         + '补齐之后重跑同一条命令才会写库。',
     }),

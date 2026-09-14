@@ -143,7 +143,12 @@ function collectPage(input: CollectInput): string {
       badge: { text: '期数角标', type: 'warn' },
     }),
     preview.html,
-    preview.err === '' ? '' : renderCaliberLine('分摊没算出来：' + preview.err + '（照实报错，不静默当空）。'),
+    preview.html === ''
+      ? renderCaliberLine(
+        '补齐总价／期数／首期日后，本页显示分摊预览（每期金额与日期）。'
+        + (preview.err === '' ? '' : '分摊没算出来：' + preview.err + '（照实报错，不静默当空）。'),
+      )
+      : '',
     blockedBar({ items: blocked, command: commandLine(key, filled) }),
     copyArea({
       prompt: { text: prompt, label: blocked.length === 0 ? '复制 prompt（照这个口径逐期落库）' : '复制 prompt（补齐后重跑）' },

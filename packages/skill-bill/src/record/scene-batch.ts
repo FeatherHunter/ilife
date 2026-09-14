@@ -124,7 +124,9 @@ function collectOf(input: CollectInput): string {
         + (blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库'),
     }),
     summaryRow(factsOf(params)),
-    renderCaliberLine('本批现阶段单笔化：一次只落一笔（多笔同屏那张表还没接），表里一屏一行、逐行可编辑。'),
+    renderCaliberLine('本批现阶段单笔化：一次只落一笔，表里一屏 ' + rows.length + ' 行、逐行可编辑。'
+      + '多行待接：这一页会把一屏里的多行都铺出来给你改，但「一屏多行一次落库」这一段还没接，'
+      + '眼下一次只落一笔——要落多笔，就按行一笔一笔重跑同一条命令（重跑时只带那一行要的值）。'),
     renderCaliberLine('写库：未发生——这一页只采集、不碰库；补齐后重跑同一条命令才会写。'),
     blockedBar({ items: blocked, command: blockedCommand(key, params, blocked) }),
     rowEditorTable({

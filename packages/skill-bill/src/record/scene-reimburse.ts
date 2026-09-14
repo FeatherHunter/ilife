@@ -6,7 +6,8 @@
  * 待哪一族窗口来填：特殊收支族（本件＝那一族的交付，本族只认领 9 条里的这一条）。
  *
  * 本件的场景差异（施工图 `t407-页面块清单-16词.md` 第二节「记报销」那一行）：
- *   ① **支出型**：金额取负数（支出侧的分类候选，`../shared/photoEscape.ts` 的 `categorySideOf`）；
+ *   ① **支出型**：金额取负数（支出侧的分类候选：侧别判定 `../shared/photoEscape.ts` 件内的 `categorySideOf`，
+ *     取值口径 `../shared/recentPicks.ts`，本件经 `valuesOf` 的 `pick` 拿到）；
  *   ② **靠 `#待报销` 标记流转**：落库时在备注里带上 `#待报销`，后续「报销到账」按这个标签找它；
  *      **打标提示条与来源提示条各占独立一块**（老侧 `expense_form.html:150-154` 两提示共一个容器互相覆盖，
  *      是施工图第四节第 9 条点名的缺陷，本件修法就是分成两块）；
@@ -26,7 +27,7 @@ import type { DuplicateProbe } from '../shared/duplicateNote.js';
 import { emptyNote } from '../shared/emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
-import { commandsOf, factsOf, fieldCardOf, pickOf, probeOf, promptOf } from '../shared/photoEscape.js';
+import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
 import { prefillNote, prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
@@ -103,9 +104,8 @@ function collectReimburse(input: CollectInput): string {
   const blocked = blockedItems({ params, missing: input.missing, kind: 'reimburse' });
   const message = blockedMessage(input.missing, blocked);
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
-  const probe = probeOf({ params, today: input.today });
-  const facts = factsOf({ params, date: input.today });
-  const pick = pickOf(input.recent, 'reimburse');
+  const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: 'reimburse', today: input.today });
+  const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
   const envelope = envelopeOf(input.key, false, message);
   const empties: string[] = [];
   if (pick.account.length === 0) {
@@ -130,7 +130,7 @@ function collectReimburse(input: CollectInput): string {
     prefillNote(marks),
     blockedBar({
       items: blocked,
-      command: commandsOf(input.key, params, blocked, REPLACES),
+      command: bp.command,
       note: '报销这几格补齐之后重跑同一条命令才会写库；'
         + '备注里带上 ' + TAG + ' 才算打了标，之后「报销到账」按它找这一笔。',
     }),
@@ -143,7 +143,7 @@ function collectReimburse(input: CollectInput): string {
       marks,
       pick,
     }),
-    promptCopyArea(promptOf(input.key, blocked), '复制 prompt（补齐后重跑）'),
+    promptCopyArea(bp.prompt, '复制 prompt（补齐后重跑）'),
     copyArea({
       data: { envelope },
       log: {

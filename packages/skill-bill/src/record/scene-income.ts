@@ -8,7 +8,9 @@
  * 本件的场景差异（施工图 `t407-页面块清单-16词.md` 第二节「记收入」那一行 ＋ `../shared/summaryRow.ts` 的方向表）：
  *   ① **金额正数**：方向口径在 `summaryRow.ts` 的 `DIRECTION.income`（`sign: 1`、`require: '记收入要正数'`），
  *     负号交上来时由 `../shared/blockedSlots.ts` 的 `blockedItems` 拦下、只出采集页（不写库）；
- *   ② **分类落收入侧**：一条历史都没有时，分类候选退到收入 L1 名单（`../shared/photoEscape.ts` 的 `categorySideOf`）；
+ *   ② **分类落收入侧**：一条历史都没有时，分类候选退到收入 L1 名单——侧别判定住在
+ *     `../shared/photoEscape.ts` 的件内判定 `categorySideOf`（不外给），取值口径住在
+ *     `../shared/recentPicks.ts`，本件经 `valuesOf` 的 `pick` 拿到；
  *   ③ 标题与话术按收入说：徽章那句「收入（金额取正数）」仍走 `typeBadge`（方向取自 `DIRECTION`，本件不抄第二份）。
  *
  * 必有块（逐块在这里落点，核对见证据件第三节）：
@@ -26,7 +28,7 @@ import type { DuplicateProbe } from '../shared/duplicateNote.js';
 import { emptyNote } from '../shared/emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
-import { commandsOf, factsOf, fieldCardOf, pickOf, probeOf, promptOf } from '../shared/photoEscape.js';
+import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
 import { prefillNote, prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
@@ -68,9 +70,8 @@ function collectIncome(input: CollectInput): string {
   const blocked = blockedItems({ params, missing: input.missing, kind: 'income' });
   const message = blockedMessage(input.missing, blocked);
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
-  const probe = probeOf({ params, today: input.today });
-  const facts = factsOf({ params, date: input.today });
-  const pick = pickOf(input.recent, 'income');
+  const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: 'income', today: input.today });
+  const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
   const envelope = envelopeOf(input.key, false, message);
   const empties: string[] = [];
   if (pick.account.length === 0) {
@@ -94,7 +95,7 @@ function collectIncome(input: CollectInput): string {
     prefillNote(marks),
     blockedBar({
       items: blocked,
-      command: commandsOf(input.key, params, blocked, REPLACES),
+      command: bp.command,
       note: '收入这几格补齐之后重跑同一条命令才会写库；分类候选取自近期记录，一条历史都没有时给收入侧的一级名目。',
     }),
     empties.join(''),
@@ -106,7 +107,7 @@ function collectIncome(input: CollectInput): string {
       marks,
       pick,
     }),
-    promptCopyArea(promptOf(input.key, blocked), '复制 prompt（补齐后重跑）'),
+    promptCopyArea(bp.prompt, '复制 prompt（补齐后重跑）'),
     copyArea({
       data: { envelope },
       log: {
