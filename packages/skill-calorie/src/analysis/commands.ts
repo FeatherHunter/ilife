@@ -1,18 +1,18 @@
-/** 分析的命令声明（**权威源**，HELP 场景 10「分析」）：13 键，全部读命令。
+/** 分析的命令声明（**权威源**，HELP 场景 10「分析」）：14 键，全部读命令。
  *
  * 加一条命令＝只改这个文件；`cli/` 里的索引与分派层一行不动。
  * 每条声明六件事：键（`cli/keys.ts` 登记的那个）／形状／标题（用户看到的中文名）／
  * 代表唤醒词（生成 SKILL.md 速查表用，必须是 `TRIGGERS` 里真有的唤醒词）／
  * 可执行示例（生成 SKILL.md 速查表「例」列用，照抄即能跑）／处理函数。
  *
- * 处理函数**住本文件**：本目录（`src/analysis/`）是既有目录，本票按派单「只加 `commands.ts`／
- * `routes.ts`／扩 `index.ts`」办，故不新开子功能文件（`src/weight/` 那种 `log.ts`／`history.ts` 分层
- * 留给后续票；本件按子功能分段，段名逐字取自 HELP 的下一级）。
+ * 处理函数住本能力目录：既有键的处理函数住本文件（按子功能分段，段名逐字取自 HELP 的下一级）；
+ * `view.multi-trend`（整体趋势，多指标趋势形态，#376）住 `./multiTrend.ts`（取数）＋
+ * `./multiTrendPage.ts`（通用分析页最小形态装配），本文件只做声明与薄转调。
  *
  * 子功能（HELP 下一级）→ 键：
  *   组合分析＝`view.combined`；缺口分析＝`view.deficit`；营养分析＝`view.nutrition-analysis`；
  *   单点分析＝`view.six-factors`；健康报告＝`view.health`；预测模拟＝`view.predict`；
- *   自动分析＝`view.anomaly`。余下 6 键在 HELP 里没有下一级分组（它们是 #113 移植的
+ *   自动分析＝`view.anomaly`；整体趋势＝`view.multi-trend`（多指标趋势形态，#376）。余下 6 键在 HELP 里没有下一级分组（它们是 #113 移植的
  *   「趋势 2＋其他 6」那一批：`view.calorie-trend`／`view.long-trend`／`view.lint-health`／
  *   `view.review-template` 与通用入口 `help.lookup`／`history`），故按移植来源分段，不自造名。
  *
@@ -26,8 +26,8 @@ import { buildHealthDoc } from '../render/dietDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { buildHealthPlate } from './healthPlate.js';
 import { renderHelpLookupHtml } from '../render/html.js';
-import { buildAnomalyView, buildPredictView } from '../render/insightPlate.js';
-import { buildAnomalyDoc, buildCombinedDoc, buildDeficitDoc, buildPredictDoc } from '../render/trendDocs.js';
+import { buildAnomalyView, buildCalorieDeficitView, buildCalorieForecastView, buildCalorieGoalView, buildCalorieStabilityView, buildPredictTargetView, buildPredictView, buildSimCutView, buildSimTargetView } from '../render/insightPlate.js';
+import { buildAnomalyDoc, buildCalorieDeficitDoc, buildCalorieForecastDoc, buildCalorieGoalDoc, buildCalorieStabilityDoc, buildCombinedDoc, buildDeficitDoc, buildPredictDoc, buildPredictTargetDoc, buildSimCutDoc, buildSimTargetDoc } from '../render/trendDocs.js';
 import {
   buildCalorieTrendView, buildLintHealthView, buildLongTrendView,
   buildNutritionAnalysisView, buildReviewTemplateView, buildSixFactorsView,
@@ -41,6 +41,8 @@ import {
 } from '../shared/params.js';
 import type { CommandSpec, ViewOut } from '../shared/commandSpec.js';
 import { searchHelp, TRIGGERS } from '../triggers/index.js';
+import { buildMultiTrendView } from './multiTrend.js';
+import { buildMultiTrendDoc } from './multiTrendPage.js';
 import { todayISO } from './utils.js';
 
 /* ── 多指标趋势族（#113 「趋势 2＋其他 6」里的趋势两支） ─────────────────────────────────── */
@@ -66,6 +68,27 @@ function viewLongTrend(params: Record<string, unknown>, db: DatabaseSync): ViewO
     windowDays: v.windowDays, avgCalorie: v.avgCalorie, weightChange: v.weightChange,
   });
   return { data: { metrics }, html: buildLongTrendDoc(v) };
+}
+
+/* ── 整体趋势族（#376 多指标趋势形态，先验 1 条含目标对比） ─────────────────────────────── */
+
+function viewMultiTrend(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  const v = buildMultiTrendView(db, {
+    window: optStr(params, 'window'),
+    group: optStr(params, 'group'),
+    compare: optStr(params, 'compare'),
+    today: optStr(params, 'today'),
+    start: optStr(params, 'start'),
+    end: optStr(params, 'end'),
+  });
+  const s = v.summary;
+  const metrics = nums({
+    days: s.days, loggedDays: s.loggedDays, avgCalorie: s.avgCalorie,
+    weightChange: s.weightChange, avgExercise: s.avgExercise, avgProtein: s.avgProtein,
+    avgDeficit: s.avgDeficit, complianceRate: s.complianceRate,
+    targetCalorie: v.target.calorieGoal, weightGoal: v.target.weightGoal,
+  });
+  return { data: { metrics }, html: buildMultiTrendDoc(v) };
 }
 
 /* ── 营养分析族 ─────────────────────────────────────────────────────────────────────── */
@@ -168,6 +191,69 @@ function viewSixFactors(params: Record<string, unknown>, db: DatabaseSync): View
 /* ── 预测模拟族 ────────────────────────────────────────────────────────────────────── */
 
 function viewPredict(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  // #383 · 15 条参数分支（order138–152）：按参数存在性分发，不新增命令，不碰原外推口径。
+  // target→自定义目标；cut_kcal→模拟减重(每天)；target_loss→模拟减重(Xkg)；
+  // kind=calorie_*→摄入预测四形态；都不带→原体重外推（133–137 回归口径）。
+  const targetKg = optNum(params, 'target');
+  if (targetKg !== undefined) {
+    const { start, end } = defaultRange(db, params, 14);
+    const t = buildPredictTargetView(db, start, end, targetKg as number);
+    const metrics = nums({
+      target: t.target, days_left: t.daysLeft, feasible: t.feasible ? 1 : 0,
+      current: t.current, ratePerWeek: t.ratePerWeek,
+    });
+    return { data: { metrics }, html: buildPredictTargetDoc(t) };
+  }
+  const cutKcal = optNum(params, 'cut_kcal');
+  if (cutKcal !== undefined) {
+    const { start, end } = defaultRange(db, params, 14);
+    const r = buildSimCutView(db, start, end, cutKcal as number);
+    const metrics = nums({
+      cut_kcal: r.cutKcal, weekly_loss: r.weeklyLoss, feasible: r.feasible ? 1 : 0,
+      current: r.current,
+    });
+    return { data: { metrics }, html: buildSimCutDoc(r) };
+  }
+  const targetLoss = optNum(params, 'target_loss');
+  if (targetLoss !== undefined) {
+    const daysTarget = optNum(params, 'days_target');
+    if (daysTarget === undefined) fail(2, '缺参数 days_target（模拟减重 Xkg 须给天数）');
+    const { start, end } = defaultRange(db, params, 14);
+    const r = buildSimTargetView(db, start, end, targetLoss as number, daysTarget as number);
+    const metrics = nums({
+      target_loss: r.targetLoss, days_target: r.daysTarget,
+      needed_deficit: r.neededDeficit, feasible: r.feasible ? 1 : 0, current: r.current,
+    });
+    return { data: { metrics }, html: buildSimTargetDoc(r) };
+  }
+  const kind = optStr(params, 'kind');
+  if (kind === 'calorie_forecast') {
+    const { start, end } = defaultRange(db, params, 14);
+    const horizonDays = optNum(params, 'horizonDays') ?? optNum(params, 'days') ?? 30;
+    const r = buildCalorieForecastView(db, start, end, horizonDays as number);
+    const metrics = nums({
+      calories: r.current, goal: r.goal ?? undefined, horizonDays: r.forecast?.horizonDays,
+    });
+    return { data: { metrics }, html: buildCalorieForecastDoc(r) };
+  }
+  if (kind === 'calorie_goal') {
+    const { start, end } = defaultRange(db, params, 30);
+    const r = buildCalorieGoalView(db, start, end);
+    const metrics = nums({ avg: r.avg, goal: r.goal, gap: r.gap, on_target: r.onTarget ? 1 : 0 });
+    return { data: { metrics }, html: buildCalorieGoalDoc(r) };
+  }
+  if (kind === 'calorie_deficit') {
+    const { start, end } = defaultRange(db, params, 30);
+    const r = buildCalorieDeficitView(db, start, end);
+    const metrics = nums({ avg_deficit: r.avgDeficit, weekly_loss: r.weeklyLoss });
+    return { data: { metrics }, html: buildCalorieDeficitDoc(r) };
+  }
+  if (kind === 'calorie_stability') {
+    const { start, end } = defaultRange(db, params, 30);
+    const r = buildCalorieStabilityView(db, start, end);
+    const metrics = nums({ avg: r.avg, sigma: r.sigma, stable: r.stable ? 1 : 0 });
+    return { data: { metrics }, html: buildCalorieStabilityDoc(r) };
+  }
   // #103 G2 · 同 goal-predict：默认 14 天，否则缺省调用恒走 missing-data。
   const { start, end } = defaultRange(db, params, 14);
   const horizonDays = optNum(params, 'horizonDays') ?? optNum(params, 'days') ?? 30;
@@ -215,7 +301,7 @@ function viewHistory(params: Record<string, unknown>, db: DatabaseSync): ViewOut
   return { data: { items, total: items.length }, html };
 }
 
-/* ── 声明表（**唯一权威源**；六字段逐字照抄未搬迁清单里那 13 条） ───────────────────────
+/* ── 声明表（**唯一权威源**；前 13 条六字段逐字照抄未搬迁清单，第 14 条为 #376 新增） ────────
  * `calorie.view.anomaly`／`calorie.view.predict` 在本件里**照旧不写 `wakeWord`**：未搬迁清单里这两条
  * 本来就没有代表唤醒词（速查表退回键名），搬迁不替产品定内容。原先 `shared/commandSpec.ts` 与
  * `gen-cli.mjs` 的 `loadCapability()` 把它当必填，**#323** 已把这两处改成可缺（六票共同前置），
@@ -234,4 +320,5 @@ export const ANALYSIS_COMMANDS = [
   { kind: 'read', key: 'calorie.view.anomaly', shape: 'stat', title: '异常诊断', run: viewAnomaly, example: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"weight_volatility","window":"90d"}\'' },
   { kind: 'read', key: 'calorie.help.lookup', shape: 'list', title: '唤醒词HELP', wakeWord: '看今日主页', run: viewHelpLookup, example: 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'' },
   { kind: 'read', key: 'calorie.history', shape: 'list', title: '热量历史', wakeWord: '查热量历史', run: viewHistory, example: 'calorie-cmd-read calorie.history --params \'{"days":7}\'' },
+  { kind: 'read', key: 'calorie.view.multi-trend', shape: 'stat', title: '多指标趋势', wakeWord: '看整体趋势(含目标对比)', run: viewMultiTrend, example: 'calorie-cmd-read calorie.view.multi-trend --params \'{"window":"90d","compare":"target"}\'' },
 ] satisfies readonly CommandSpec[];

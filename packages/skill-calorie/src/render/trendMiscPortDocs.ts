@@ -49,24 +49,102 @@ function windowForm(start: string, end: string, extra: string): string {
   });
 }
 
+/* ── 纵轴量程与刻度（#424）：刻度条数恒 3，与公共层 `GRID_LINES = 3` 的网格线叠合。
+ *  量程贴着数据（体重 90 天只走 1.1kg，量程给宽了曲线就是平线）。 ── */
+
+/** 「整齐数上界」：把 v **向上**收到 1／2／2.5／5／10 的整数倍（返回值恒 ≥ v）。
+ *  #424 返工：原 `niceRound(v, 5)` 判据 `scaled <= choice * k` 却返回 `choice * base`，
+ *  `v=1800` 返回 1000 —— 上界低于数据峰值与目标值，点出盒、线穿卡片、目标虚线消失。 */
+function niceCeil(v: number): number {
+  const base = Math.pow(10, Math.floor(Math.log10(Math.abs(v))));
+  const scaled = v / base;
+  for (const choice of [1, 2, 2.5, 5, 10]) {
+    if (scaled <= choice) return choice * base;
+  }
+  return 10 * base;
+}
+
+/** 三件套：上下界＋刻度文案（步长 <1 留 1 位小数，否则取整；`unit` 空串则不带单位）。 */
+function axisOf(yMin: number, yMax: number, unit: string): {
+  readonly yMin: number;
+  readonly yMax: number;
+  readonly format: (value: number) => string;
+} {
+  const print = (yMax - yMin) / 2 < 1 ? 1 : 0;
+  return { yMin, yMax, format: (value: number) => value.toFixed(print) + unit };
+}
+
+/** 体重类小区间：数据各留 12.5% 余量（最小跨度 0.4kg），两端收到 0.1 的整数倍；刻度 3 条与网格同域。 */
+function weightAxisOf(values: readonly number[]): {
+  readonly yMin: number;
+  readonly yMax: number;
+  readonly format: (value: number) => string;
+} | null {
+  const raw = values.filter((v) => typeof v === 'number' && Number.isFinite(v));
+  if (raw.length === 0) return null;
+  const dataLo = Math.min(...raw);
+  const dataHi = Math.max(...raw);
+  const span = Math.max(dataHi - dataLo, 0.4);
+  const half = (span * 1.25) / 2;
+  const center = (dataLo + dataHi) / 2;
+  const yMin = Math.round((center - half) * 10) / 10;
+  const top = Math.round((center + half) * 10) / 10;
+  return axisOf(yMin, top > yMin ? top : Math.round((yMin + 0.4) * 10) / 10, 'kg');
+}
+
+/** 热量类：0 起，上界向外收到整齐数（恒 ≥ 峰值，含并入的目标值）。 */
+function calorieAxisOf(peak: number | null): {
+  readonly yMin: number;
+  readonly yMax: number;
+  readonly format: (value: number) => string;
+} | null {
+  if (peak === null || !Number.isFinite(peak) || peak <= 0) return null;
+  return axisOf(0, niceCeil(peak), '卡');
+}
+
 /* ── 热量趋势（calorie_trend：T7 口径日序列＋达标统计） ── */
 
 export function buildCalorieTrendDoc(v: CalorieTrendView): string {
   const s = v.data.summary;
-  const trendLabel = s.trend === 'down' ? '↓ 下降' : (s.trend === 'up' ? '↑ 上升' : '→ 平稳');
+  const n = v.data.series.length;
+  const trendHuman = s.trend === 'down' ? '呈下降' : (s.trend === 'up' ? '呈上升' : '基本平稳');
+  const techNote = '<!-- calorie.view.calorie-trend window ' + v.start + ' ' + v.end + ' T5 buildSeries 唯一源（水已排除） 达标＝单日≤目标×1.05 最小形态 空窗阻断 不编数 -->';
+  const metaLeft = '近' + n + '天 · 默认组 · 对照目标值 · ' + v.start + '~' + v.end;
+  const summary = '日均' + s.avg + '卡（目标' + s.target + '卡）· ' + trendHuman + ' · 达标' + s.compliantDays + '天（达标率' + Math.round(s.complianceRate * 100) + '%）';
+  // #424：目标值并入纵轴量程（目标线不越界），上界收到整齐数，刻度 3 条带单位「卡」。
+  let peak: number | null = s.target;
+  for (const d of v.data.series) {
+    const c = d.calorie;
+    if (typeof c === 'number' && Number.isFinite(c)) {
+      if (peak === null || c > peak) peak = c;
+    }
+  }
+  const calorieAxis = calorieAxisOf(peak) ?? axisOf(0, 1, '卡');
   const parts: string[] = [
-    windowForm(v.start, v.end, 'T5 buildSeries 唯一源（水已排除）；达标＝单日≤目标×1.05'),
+    techNote,
     renderKpiGrid([
       { label: '日均', value: String(s.avg), unit: '卡', detail: '目标 ' + s.target + '卡' },
-      { label: '趋势', value: trendLabel, detail: '窗首 ' + s.startAvg + ' → 窗尾 ' + s.endAvg + '（差 ' + s.trendValue + '）' },
+      { label: '趋势', value: trendHuman, detail: '窗首 ' + s.startAvg + ' → 窗尾 ' + s.endAvg + '（差 ' + s.trendValue + '）' },
       { label: '达标天数', value: String(s.compliantDays), unit: '天', detail: '达标率 ' + Math.round(s.complianceRate * 100) + '%' },
       { label: '周末−工作日', value: String(s.weekendDiff), unit: '卡', detail: '工作日 ' + s.weekdayAvg + '／周末 ' + s.weekendAvg },
     ]),
     renderChartBlock({
       kind: 'line',
       title: '每日热量',
-      input: { items: v.data.series.map((d) => ({ label: d.date.slice(5), value: d.calorie })) },
+      input: {
+        items: v.data.series.map((d) => ({ label: d.date.slice(5), value: d.calorie })),
+        /* #424：纵轴刻度 3 条（与公共层 GRID_LINES=3 叠合）、标签带单位、横轴首＋峰＋尾。 */
+        options: {
+          markLine: { value: s.target, label: '目标' },
+          yTicks: 3,
+          labels: 'select',
+          format: calorieAxis.format,
+          yMin: calorieAxis.yMin,
+          yMax: calorieAxis.yMax,
+        },
+      },
     }),
+    '<div class="legend"><span><i class="b"></i>目标' + s.target + '卡</span></div>',
     dataCopyArea('复制数据', {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.calorie-trend',
@@ -83,9 +161,12 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
   ];
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '热量趋势 ' + v.start + ' ~ ' + v.end,
-    eyebrow: 'calorie.view.calorie-trend · 趋势其他移植域',
-    subtitle: '日序列＋趋势方向＋达标统计（空窗阻断，不编数）',
+    title: '热量趋势',
+    eyebrow: '',
+    subtitle: null,
+    metaLeft,
+    badge: '卡路里 · 分析',
+    summary,
     content: parts.join(''),
     charts: true,
   });
@@ -94,6 +175,11 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
 /* ── 整体趋势（long_trend：体重＋热量双序列） ── */
 
 export function buildLongTrendDoc(v: LongTrendView): string {
+  /* #424：两张图的纵轴都给「三刻度＋单位」；热量从 0 起，体重贴数据。 */
+  const calorieAxis = calorieAxisOf(v.days.reduce((peak, d) => (d.calorie > peak ? d.calorie : peak), 0))
+    ?? axisOf(0, 1, '卡');
+  const weighed = v.days.filter((d) => d.weightKg !== null);
+  const weightAxis = weightAxisOf(weighed.map((d) => d.weightKg as number));
   const parts: string[] = [
     renderKpiGrid([
       { label: '日均热量', value: String(v.avgCalorie), unit: '卡', detail: v.start + ' ~ ' + v.end },
@@ -107,16 +193,40 @@ export function buildLongTrendDoc(v: LongTrendView): string {
     renderChartBlock({
       kind: 'line',
       title: '每日热量（' + v.windowDays + ' 天）',
-      input: { items: v.days.map((d) => ({ label: d.date.slice(5), value: d.calorie })) },
+      input: {
+        items: v.days.map((d) => ({ label: d.date.slice(5), value: d.calorie })),
+        /* #424：纵轴刻度 3 条（与公共层 GRID_LINES=3 叠合）、标签带单位、横轴首＋峰＋尾。 */
+        options: {
+          yTicks: 3,
+          format: calorieAxis.format,
+          labels: 'select',
+          yMin: calorieAxis.yMin,
+          yMax: calorieAxis.yMax,
+        },
+      },
     }),
   ];
   let charts = true;
-  const weighed = v.days.filter((d) => d.weightKg !== null);
-  if (weighed.length > 0) {
+  if (weighed.length > 0 && weightAxis !== null) {
     parts.push(renderChartBlock({
       kind: 'line',
       title: '体重轨迹（共 ' + weighed.length + ' 次称重）',
-      input: { items: weighed.map((d) => ({ label: d.date.slice(5), value: d.weightKg })) },
+      input: {
+        items: weighed.map((d) => ({ label: d.date.slice(5), value: d.weightKg })),
+        options: {
+          yTicks: 3,
+          format: weightAxis.format,
+          labels: 'select',
+          yMin: weightAxis.yMin,
+          yMax: weightAxis.yMax,
+          highlightLast: true,
+          legend: true,
+          ...(weighed.length >= 2 ? { avgLine: 7 } : {}),
+          series: [
+            { name: '每次称重', items: weighed.map((d) => ({ label: d.date.slice(5), value: d.weightKg })) },
+          ],
+        },
+      },
     }));
   }
   parts.push(renderDataTable({
