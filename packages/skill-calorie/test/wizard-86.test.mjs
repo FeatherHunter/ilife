@@ -8,7 +8,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -163,13 +163,38 @@ test('#86 身材照 wizard：纯配置＋新 CLI 命令段', () => {
   try {
     const bare = dispatch('calorie.view.photo-log-wizard', {}, db);
     assert.equal(bare.data.metrics.fileCount, 0);
-    assert.ok(bare.html.includes('请先填照片'), '空页 prompt 应先要照片');
+    // #474：缺项占位句去参数名（旧句「请先填照片文件路径（srcPaths…）」不再出现）。
+    assert.ok(bare.html.includes('还没填照片路径'), '空页 prompt 应先要照片');
+    assert.ok(!bare.html.includes('（srcPaths'), '#474：参数名不许进可见文本的括号解释里');
     assertDoc(bare.html, 'photo-log-wizard 空页');
-    const v = dispatch('calorie.view.photo-log-wizard', { srcPaths: ['/tmp/a.jpg', '/tmp/b.jpg'], tag: '正面', note: '晨起' }, db);
+    const v = dispatch('calorie.view.photo-log-wizard', { srcPaths: ['D:\\照片\\正面1.jpg', 'D:\\照片\\侧面1.jpg'], tag: '正面', note: '晨起' }, db);
     assert.equal(v.data.metrics.fileCount, 2);
     assert.ok(v.html.includes('calorie-cmd-read calorie.photo.add'), '命令段应为新 CLI 同形（禁 python）');
     assert.ok(!v.html.includes('python scripts'), '不得出现旧 py 命令');
-    assert.ok(v.html.includes('正面'), '命令段应带 tag');
+    // #474：tag 的值仍在参数段（拆行是呈现层的事，不牵连机器段）。
+    assert.ok(v.html.includes('- tag:正面'), '命令段应带 tag');
+    // #474 展示升级：示例换 Windows 真路径、限制写进字段名（旧 hint 填过就看不见）。
+    assert.ok(v.html.includes('照片文件路径（最多 20 张；如 D:\\照片\\正面1.jpg，多张换行或逗号分隔）'),
+      '#474：照片路径字段名须带 Windows 真路径示例与张数上限');
+    assert.ok(v.html.includes('标签（最多 20 个字）'), '#474：标签字段名须写「最多 20 个字」');
+    // #474（审查整改 2）：「最多 20 张」一页只留一处（照片路径字段名里那处）。
+    assert.equal((v.html.match(/最多 20 张/g) ?? []).length, 1,
+      '#474：`最多 20 张` 须恰 1 处（KPI 明细不再与字段名重复）');
+    // #474（审查整改 3c）：表单上方那句「改了不会自动生效」恰 1 次，且在字段之前。
+    assert.equal((v.html.match(/这些是 AI 已经用的值；改了不会自动生效——要改就直接跟 AI 说一句。/g) ?? []).length, 1,
+      '#474：记身材照页须恰 1 处「改了不会自动生效」告知句');
+    assert.ok(v.html.indexOf('这些是 AI 已经用的值') < v.html.indexOf('name="srcPaths"'),
+      '#474：告知句须在表单**上方**（字段之前）');
+    assert.ok(!v.html.includes('≤20 字符'), '#474：旧限制句须 0 命中');
+    assert.ok(!v.html.includes('照片源文件路径（每行 1 个，或逗号分隔）'), '#474：复述字段名的旧说明须删');
+    // #474 复制区引导＋小标题（调用点传参，公共层缺省不动）。
+    assert.ok(v.html.includes('下面这段是给 AI 的指令：整段复制粘过去就行，英文命令不用看懂'),
+      '#474：复制区段前引导句缺失');
+    assert.ok(v.html.includes('给 AI 的指令（复制这一段）'), '#474：复制区小标题缺失');
+    assert.ok(!v.html.includes('复制 prompt（必走）'), '#474：公共层缺省小标题不该再出现');
+    // #474 折叠标题改人话，8 个词仍可见。
+    assert.ok(v.html.includes('常用标签（点一个填上去）'), '#474：折叠标题须改人话');
+    assert.ok(v.html.includes('正面自然光') && v.html.includes('腿部'), '#474：8 个常用标签须仍可见');
     assert.throws(() => dispatch('calorie.view.photo-log-wizard', { tag: '123456789012345678901' }, db), /至多 20/, '超长 tag 应拦');
   } finally {
     db.close();
@@ -189,6 +214,47 @@ test('#86 GIF 框选器：列表＋框选＋裁剪＋命令段（无 cropper.js�
     assertDoc(v.html, 'gif-planner 页');
     const rows = v.data.metrics;
     assert.equal(rows.missingCount, 0);
+    // #474 展示升级：两组数字分名（框选缺 ID ≠ 文件找不到），并给出四张 KPI 卡。
+    assert.ok(v.html.includes('框选里没有的 ID'), '#474：缺 ID 那格须与「文件找不到」分开命名');
+    assert.ok(v.html.includes('>要用</div>') && v.html.includes('>库里共 2 张</div>'), '#474：要用／库里共两张读数缺失');
+    assert.ok(v.html.includes('>GIF 输出</div>') && v.html.includes('500ms/帧 · 无限循环'), '#474：GIF 输出格读数缺失');
+    assert.ok(!v.html.includes('文件丢失'), '#474：旧「文件丢失」须 0 命中');
+    // #474 表：正常行不喊存在／未校验，异常才出声。
+    assert.ok(v.html.includes('>照片文件</th>') && v.html.includes('>裁剪</th>'), '#474：表头须改「照片文件」「裁剪」');
+    assert.ok(v.html.includes('>已裁剪</td>') === false, '#474：无裁剪的行不该印已裁剪');
+    assert.ok(v.html.includes('>整图</td>'), '#474：未裁剪的行应印「整图」');
+    assert.ok(!v.html.includes('>存在</td>') && !v.html.includes('>未校验</td>') && !v.html.includes('>缺失</td>'),
+      '#474：正常行不该喊存在／未校验／缺失');
+    // #474 表单：限制进字段名、数字框带上下限、两个枚举改下拉、坐标 JSON 那栏真撤掉。
+    assert.ok(!v.html.includes('{"12":[x1,y1,x2,y2]}'), '#474：坐标 JSON 那栏须撤掉');
+    assert.ok(!v.html.includes('name="crops"'), '#474（审查整改 3a）：crops 那一栏须真撤掉（不留空框）');
+    assert.ok(!v.html.includes('要裁剪哪几张？'), '#474：裁剪栏连字段名一起走');
+    assert.ok(!v.html.includes('50..5000，默认 500') && !v.html.includes('0/1/3/5（0=无限）'),
+      '#474：看不见的 placeholder 限制句须 0 命中');
+    assert.ok(!v.html.includes('cut / fade / dissolve'), '#474：英文过渡码须 0 命中');
+    // #474（审查整改 1）：下拉的 `option value` 是机器真值、显示文本是中文；
+    //  **当前值那一条必须带 `selected`**（先前拿中文当值 → 恒被「选一个」占位顶住，页上看不到当前值）。
+    assert.equal((v.html.match(/<option value="0"( selected)?>无限<\/option>/g) ?? []).length, 1, '#474：循环下拉缺「机器值 0 ＋ 无限」项');
+    assert.equal((v.html.match(/<option value="1"( selected)?>1 次<\/option>/g) ?? []).length, 1, '#474：循环下拉缺「机器值 1 ＋ 1 次」项');
+    assert.equal((v.html.match(/<option value="3"( selected)?>3 次<\/option>/g) ?? []).length, 1, '#474：循环下拉缺「机器值 3 ＋ 3 次」项');
+    assert.equal((v.html.match(/<option value="5"( selected)?>5 次<\/option>/g) ?? []).length, 1, '#474：循环下拉缺「机器值 5 ＋ 5 次」项');
+    assert.equal((v.html.match(/<option value="cut"( selected)?>硬切<\/option>/g) ?? []).length, 1, '#474：切换效果下拉缺「机器值 cut ＋ 硬切」项');
+    assert.equal((v.html.match(/<option value="fade"( selected)?>淡入淡出<\/option>/g) ?? []).length, 1, '#474：切换效果下拉缺「机器值 fade ＋ 淡入淡出」项');
+    assert.equal((v.html.match(/<option value="dissolve"( selected)?>溶解<\/option>/g) ?? []).length, 1, '#474：切换效果下拉缺「机器值 dissolve ＋ 溶解」项');
+    assert.match(v.html, /<option value="0" selected>无限<\/option>/, '#474：当刻 loop=0 那条须落 selected');
+    assert.match(v.html, /<option value="cut" selected>硬切<\/option>/, '#474：当刻 transition=cut 那条须落 selected');
+    assert.equal((v.html.match(/<option value="" disabled( selected)?>选一个<\/option>/g) ?? []).length, 2,
+      '#474：两个下拉的占位项须都在（且在默认值下都不带 selected）');
+    assert.ok(!v.html.includes('<option value="" disabled selected>选一个</option>'),
+      '#474：视图真值在场时，占位项不该再被 selected 占住');
+    assert.ok(v.html.includes('每帧多久（毫秒）') && v.html.includes('宽（像素）'), '#474：数字字段须带单位');
+    assert.ok(v.html.includes('type="number"') && v.html.includes('max="5000"') && v.html.includes('min="50"'),
+      '#474：毫秒字段须是带上下限的数字框');
+    // #474（审查整改 3c）：表单上方那句「改了不会自动生效」——两个过程型页各恰 1 次。
+    assert.equal((v.html.match(/这些是 AI 已经用的值；改了不会自动生效——要改就直接跟 AI 说一句。/g) ?? []).length, 1,
+      '#474：GIF 规划器页须恰 1 处「改了不会自动生效」告知句');
+    assert.ok(v.html.indexOf('这些是 AI 已经用的值') < v.html.indexOf('name="duration"'),
+      '#474：告知句须在表单**上方**（字段之前）');
     const sel = dispatch('calorie.view.gif-planner', {
       tag: '正面', photoIds: [1], crops: { 1: [10, 20, 110, 220] }, duration: 300, loop: 3, transition: 'fade',
     }, db);
@@ -196,14 +262,49 @@ test('#86 GIF 框选器：列表＋框选＋裁剪＋命令段（无 cropper.js�
     assert.equal(sel.data.metrics.cropCount, 1);
     assert.ok(sel.html.includes('裁剪(每张单独)'), '裁剪应进 prompt');
     assert.ok(sel.html.includes('300ms/帧'), '细节应进 prompt');
+    // #474（审查整改 1）：视图值一变，`selected` 跟着挪到那一条上（不是恒在占位项）。
+    assert.match(sel.html, /<option value="3" selected>3 次<\/option>/, '#474：loop=3 时那条须落 selected');
+    assert.match(sel.html, /<option value="fade" selected>淡入淡出<\/option>/, '#474：transition=fade 时那条须落 selected');
+    assert.ok(!sel.html.includes('<option value="0" selected>') && !sel.html.includes('<option value="cut" selected>'),
+      '#474：默认值那两条不许再带 selected');
+    // #474（审查整改 2）：指令与下拉说同一个词（中文词），机器面参数不动。
+    //  提示行住在 `data-t` 属性里（属性值走了 HTML 转义），判据先反转义再判。
+    const unescaped = sel.html.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    assert.match(unescaped, /- 过渡:淡入淡出/, '#474：指令的过渡行须与下拉同一个词');
+    assert.match(unescaped, /- 循环:3 次循环/, '#474：指令的循环行须与下拉同一个词');
+    assert.ok(!/- 过渡:(cut|fade|dissolve)/.test(unescaped), '#474：指令里不该再出现英文过渡码');
+    assert.ok(unescaped.includes('calorie.photo.gif'), '命令段仍在');
+    // #474：有裁剪的那张在本页表格印「已裁剪」（与整图分开）。
+    assert.ok(sel.html.includes('>已裁剪</td>'), '#474：裁剪过的行应印「已裁剪」');
     const miss = dispatch('calorie.view.gif-planner', { tag: '正面', photoIds: [9999] }, db);
     assert.equal(miss.data.metrics.missingCount, 1);
     assert.equal(miss.data.metrics.selectedCount, 0);
+    assert.ok(miss.html.includes('已跳过 9999'), '#474：缺 ID 那格须列出被跳过的编号');
     assert.ok(miss.html.includes('未选中任何照片'), '全丢 ID 应给空态 prompt');
     const none = dispatch('calorie.view.gif-planner', { tag: '不存在的标签' }, db);
     assert.equal(none.data.metrics.photoCount, 0);
+    assert.ok(none.html.includes('这个标签／时间窗里没有照片'), '#474：空表须给指到操作的空态句');
     assert.throws(() => dispatch('calorie.view.gif-planner', { transition: 'spin' }, db), /transition/, '非法过渡应拦');
     assert.throws(() => dispatch('calorie.view.gif-planner', { crops: { 1: [5, 5, 1, 1] } }, db), /x2>x1/, '非法裁剪应拦');
+  } finally {
+    db.close();
+  }
+});
+
+test('#474 文件找不到与框选缺 ID 各归各位：异常行出声、KPI 出徽标', () => {
+  const dir = mkdtempSync(join(tmpdir(), 't474-gif-'));
+  const db = openDb(join(dir, DB_FILENAME));
+  seedWizard(db);
+  try {
+    // 照片目录是空的：库里两张都登记着，但磁盘上一张也没有 → 两张都「找不到（会跳过）」。
+    const v = dispatch('calorie.view.gif-planner', { tag: '正面', photosDir: join(dir, 'photos') }, db);
+    const html = v.html;
+    assert.equal((html.match(/找不到（会跳过）<\/td>/g) ?? []).length, 2, '两张找不到的照片都应逐行出声');
+    assert.ok(html.includes('status-badge') && html.includes('会跳过'), '#474：异常格须挂状态徽标');
+    assert.ok(html.includes('>框选里没有的 ID</div>'), '#474：缺 ID 那格须仍在（本用例为 0）');
+    assert.ok(html.includes('>文件找不到</div>') && html.includes('>2</span>'), '#474：文件找不到那格须报 2 张');
+    assert.ok(!html.includes('>文件丢失</div>'), '#474：旧「文件丢失」格须 0 命中');
+    assert.ok(!html.includes('>存在</td>'), '#474：没有一张正常，仍不许印「存在」');
   } finally {
     db.close();
   }

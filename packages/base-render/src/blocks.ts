@@ -130,13 +130,24 @@ function optNumeric(value: unknown, field: string): string | undefined {
 }
 
 /** 候选项（#397）：`undefined` 透传；给了须是非空数组且逐项非空字串。 */
-function optOptions(value: unknown, field: string): readonly string[] | undefined {
+function optOptions(value: unknown, field: string): readonly (string | ParamOption)[] | undefined {
   if (value === undefined) return undefined;
   if (!Array.isArray(value) || value.length === 0) badInput(field + ' 必须是非空数组');
   value.forEach((opt, j) => {
-    if (typeof opt !== 'string' || opt === '') badInput(field + '[' + j + '] 必须是非空字符串');
+    if (typeof opt === 'string') {
+      if (opt === '') badInput(field + '[' + j + '] 必须是非空字符串');
+      return;
+    }
+    // 值＋标签对照项（#474 追加）：`value` 是**机器值**（下拉选中后递给宿主的还是它），
+    //  `label` 只是给人看的显示文本；全仓只有「机器码 + 中文词」这一种用法。
+    if (opt === null || typeof opt !== 'object' || Array.isArray(opt)) {
+      badInput(field + '[' + j + '] 必须是非空字符串或 { value, label } 对象');
+    }
+    const entry = opt as { value?: unknown; label?: unknown };
+    if (typeof entry.value !== 'string' || entry.value === '') badInput(field + '[' + j + '].value 必须是非空字符串');
+    if (typeof entry.label !== 'string' || entry.label === '') badInput(field + '[' + j + '].label 必须是非空字符串');
   });
-  return value as readonly string[];
+  return value as readonly (string | ParamOption)[];
 }
 
 /* ── 区块样式区闭集（DB-2：新增闭集，不改 CONTROL_STYLE_SECTIONS） ── */
@@ -838,6 +849,13 @@ export function renderDisclosure(input: DisclosureInput): string {
  * B-09 表单／参数区（静态 label＋input；行为归宿主，模块只留 data-* 约定）
  * ══════════════════════════════════════════════════════════════ */
 
+/** 下拉候选项（#474 追加 · 加法式）：字符串项＝值即文本（旧行为逐字节不变）；
+ *  对象项＝`value` 走机器面、`label` 走显示面（如 `{ value: 'fade', label: '淡入淡出' }`）。 */
+export interface ParamOption {
+  readonly value: string;
+  readonly label: string;
+}
+
 export interface ParamFieldInput {
   readonly name: string;
   readonly label: string;
@@ -852,9 +870,9 @@ export interface ParamFieldInput {
   readonly min?: string | number;
   /** 数字上界（#397）：数字串或有限数，须大于等于 `min`。 */
   readonly max?: string | number;
-  /** 候选项（#397）：非空字符串数组；给了即渲染 `<select>` 代替 `<input>`，
-   *  `value` 命中的一项落 `selected`，`hint` 化作首项占位（`value=""` 禁选）。 */
-  readonly options?: readonly string[];
+  /** 候选项（#397；#474 追加对象项）：非空项数组；给了即渲染 `<select>` 代替 `<input>`，
+   *  `value` 命中的一项落 `selected`（对象项按 `value` 比机器值），`hint` 化作首项占位（`value=""` 禁选）。 */
+  readonly options?: readonly (string | ParamOption)[];
 }
 
 export interface ParamFormInput {
@@ -868,7 +886,9 @@ export interface ParamFormInput {
  *  #397 可选约束：`readonly` 落裸 `readonly`；`step／min／max` 落同名属性（任一出现即
  *  `type="number"`，`step` 须大于 0，`min` 不得大于 `max`，非法一律 `bad-input`）；
  *  `options` 给了即渲染 `<select>`（`value` 命中项 `selected`，`hint` 化作首项占位，
- *  `readonly` 化作 `disabled`，与 `step／min／max` 互斥）。全不传时产物与旧调用逐字节一致。 */
+ *  `readonly` 化作 `disabled`，与 `step／min／max` 互斥）。
+ *  #474 追加：`options` 收 `{ value, label }` 对象项——`value` 是机器值（`selected` 按它比）、
+ *  `label` 是显示文本；字符串项走原路，全字符串调用方的产物**逐字节不变**。 */
 export function renderParamForm(input: ParamFormInput): string {
   assertPlainObject(input, 'renderParamForm: input');
   assertNoInlineHandler(input, 'renderParamForm: input');
@@ -904,6 +924,10 @@ export function renderParamForm(input: ParamFormInput): string {
       badInput(path + '.options 与 step／min／max 互斥');
     }
     if (options !== undefined) {
+      // #474：对象项按**机器值**比 `selected`，显示文本取 `label`；字符串项与旧行为逐字节一致。
+      const entries = options.map((opt) => (typeof opt === 'string' ? { value: opt, label: opt } : opt));
+      const optionHtml = entries.map((opt) => '<option value="' + esc(opt.value) + '"'
+        + (value === opt.value ? ' selected' : '') + '>' + esc(opt.label) + '</option>').join('');
       parts.push('<label class="' + blockPart('paramForm', 'field') + '">'
         + '<span class="' + blockPart('paramForm', 'label') + '">' + esc(label)
         + (required ? '<span class="' + blockPart('paramForm', 'required') + '" aria-hidden="true"> *</span>' : '')
@@ -912,10 +936,9 @@ export function renderParamForm(input: ParamFormInput): string {
         + (required ? ' data-required="1" required' : '')
         + (readonly ? ' disabled' : '')
         + '>'
-        + (hint === undefined ? '' : '<option value="" disabled' + (options.includes(value) ? '' : ' selected') + '>'
+        + (hint === undefined ? '' : '<option value="" disabled' + (entries.some((opt) => opt.value === value) ? '' : ' selected') + '>'
           + esc(hint) + '</option>')
-        + options.map((opt) => '<option value="' + esc(opt) + '"'
-          + (value === opt ? ' selected' : '') + '>' + esc(opt) + '</option>').join('')
+        + optionHtml
         + '</select>'
         + '</label>');
       return;

@@ -75,8 +75,9 @@ function normSrcPaths(raw: unknown): string[] {
 }
 
 export function buildPhotoLogWizardPrompt(srcPaths: string[], tag: string | null, note: string | null): string {
-  if (srcPaths.length === 0) return '// 请先填照片文件路径（srcPaths，至多 20 张）';
-  if (!tag) return '// 请填 tag（建议：正面/背面/侧面，同一类用同一 tag）';
+  // #474：两处缺项占位句去参数名、说人话（用户看不出 `srcPaths`／`tag` 指的是哪一栏）。
+  if (srcPaths.length === 0) return '// 还没填照片路径：把照片的完整路径粘到上面那一栏（最多 20 张）';
+  if (!tag) return '// 还没填标签：从上面的常用标签里点一个（同一类照片用同一个）';
   const files = srcPaths.map((f) => '"' + f + '"').join(' ');
   const params = { srcPaths, tag, ...(note ? { note } : {}) };
   return '请帮我记录 ' + srcPaths.length + ' 张身材照到卡路里\n\n参数:\n- 照片文件:' + files +
@@ -98,6 +99,13 @@ export function buildPhotoLogWizardView(raw: Record<string, unknown>): PhotoLogW
 }
 
 /* ── 4. GIF 框选器（body_photo_gif_planner.html 复刻，无 cropper.js） ── */
+
+/** 过渡效果的中文词（#474）：表单下拉的 `option` 文本与 prompt 里的「- 过渡:」共用这一份，
+ *  两处不许走散；**机器值仍是 `cut/fade/dissolve`**（命令段与校验口径一字未改）。 */
+export function transitionText(transition: string): string {
+  const map: Record<string, string> = { cut: '硬切', fade: '淡入淡出', dissolve: '溶解' };
+  return map[transition] ?? transition;
+}
 
 export interface GifPlannerPhoto {
   id: number;
@@ -183,10 +191,14 @@ export function buildGifPlannerPrompt(v: {
     lines.push('- 裁剪:无(整图)');
   }
   lines.push('- 速度:' + v.duration + 'ms/帧');
-  lines.push('- 循环:' + (v.loop === 0 ? '无限' : v.loop + ' 次'));
+  lines.push('- 循环:' + (v.loop === 0 ? '无限循环' : v.loop + ' 次循环'));
   lines.push('- 尺寸:' + v.width + '×' + v.height);
   if (v.watermark) lines.push('- 水印:"' + v.watermark + '"');
-  lines.push('- 过渡:' + v.transition);
+  // #474（审查整改 2）·「指令与下拉用同一个词」：这里落**下拉选项文本**（硬切／淡入淡出／溶解），
+  //  与表单所见同一份词（`transitionText` 是两处唯一的措辞出处）。
+  //  机器面一字未改：命令段 `--params` 与表单 `option value` 仍是 `cut`／`fade`／`dissolve`——
+  //  参数字符串才是程序读的那面，`- 过渡:` 这行是给读者看的。
+  lines.push('- 过渡:' + transitionText(v.transition));
   if (v.output) lines.push('- 输出:' + v.output);
   lines.push('');
   lines.push('命令:');

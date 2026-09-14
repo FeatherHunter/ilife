@@ -74,21 +74,23 @@ function optLimit(raw: unknown): number {
   return raw as number;
 }
 
-/** prompt 预览：有已选 ID 即 bash 可执行 CLI；缺项即指到步骤的占位句（t400 裁定 2）。 */
+/** prompt 预览：有已选 ID 即 bash 可执行 CLI；缺项即指到步骤的占位句（t400 裁定 2）。
+ *  人话口径（#474）：命令段本身（`calorie-cmd-read …` 与 `--params` JSON）是给 AI 的机器内容，
+ *  一律不改；只改**对着用户说的那几句**。 */
 export function buildPhotoPickerPrompt(input: {
   selectedId: number | null; action: PickerAction; op: PickerTagOp | null; newTag: string | null;
 }): string {
   const { selectedId, action, op, newTag } = input;
   if (selectedId === null) {
-    return '// 请先在候选列表中选定一张照片（记下它的 #ID，再带上 {"id": <ID>} 重跑本命令）';
+    return '// 还没选照片：把候选列表里那个 #号说给我（例如 #19），我再把要执行的指令写出来';
   }
   if (action === 'remove') {
-    return '请帮我删除身材照 #' + selectedId + '（硬删除，不可恢复，跑之前请先核对本页快照）' +
+    return '请帮我删除身材照 #' + selectedId + '（删了就找不回来，先看上面那张是不是它）' +
       '\n\n命令:\n```bash\ncalorie-cmd-read calorie.photo.remove --params \'' +
       JSON.stringify({ id: selectedId }) + '\'\n```\n\n完成后返回写库回执。';
   }
   if (op === null || newTag === null) {
-    return '// 已选 #' + selectedId + '：请再给 op（set 全量替换／add 追加／remove 移除）与 newTag（新标签）后重跑本命令';
+    return '// 已选 #' + selectedId + '：还差两样——要把标签换成、加上，还是去掉哪个；换成／加上／去掉的标签叫什么';
   }
   return '请帮我改照片标签 #' + selectedId + '（先核对本页快照里的原标签）' +
     '\n\n命令:\n```bash\ncalorie-cmd-read calorie.photo.tag --params \'' +
