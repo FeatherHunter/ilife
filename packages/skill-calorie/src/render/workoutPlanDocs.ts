@@ -1,34 +1,36 @@
 /** 健身计划结果/过程整页装配（T351 重做「看完整计划」·实施兵）。
  *
- * 计划查看页（order176–185 共用本件）照规格 `docs/skills/skill-calorie/t351-redesign-184-spec.md` 重做：
- * 页头（大标题「健身计划」＋说明/版本/周数/起日）→ 指标卡（总场次／总动作／总周数）→ 每周一个原生
- * `<details open>`（纯 HTML、零内联脚本，替代老页 JS 页签）→ 周内每场一张会话卡（周X · 时段 · label ·
- * 组数 · 节奏）→ 卡内四列动作明细表（动作＋副行／部位／组数×次数／重量；表住 `./workoutMovementTable.js`）
- * → 空窗出完整空页（不返白页）→ 底部「复制数据／复制日志」双按钮。
+ * 计划查看页（order176–185 共用本件）照规格 `docs/skills/skill-calorie/t351-redesign-184-spec.md` 重做，
+ * T351-v5 起整页穿**老模板观感**（`D:\2Study\StudyNotes\SKILLS\卡路里\templates\workout_plan_view.html`）：
+ * 页头（大标题「健身计划」＋说明/版本/周数/起日）→ 指标卡 → **周次页签 ＋ 日页签两级导航**（纯 CSS 选钮式，
+ * 零内联脚本；装配住 `./workoutPlanLook.ts`、规则住 `./workoutPlanCss.ts`）→ 周区块内逐日**场次卡**
+ * （头行「周X ｜ 场次名 ｜ 时段 ｜ 共 N 组 ｜ 节奏」＋卡内四列动作明细表，部位出彩色徽章；表住
+ * `./workoutMovementTable.ts`）→ 空窗出完整空页（不返白页）→ 底部「复制数据／复制日志」双按钮。
  *
- * 复制数据载荷不照抄老页 `scene.snapshot`：计划数据投影成信封 `list` 形（`items` 逐周一行、`total` 记会话数），
+ * 复制数据载荷不照抄老页 `scene.snapshot`：计划数据投影成信封 `list` 形（`items` 逐周一行、`total` 记场数），
  * 日志用 `CopyLogFields` 五键；底部复制区走共用件 `./planCopyBlock.js`。只读既有取数层（`PlanView`／
  * `WritePreview`），不跨能力取数；动作字段形状的唯一出处是 `workout/planStore.ts` 的 `PlanMovement`
- * （本件只由会话卡经 `./workoutMovementTable.js` 用它的取数口径，不再自己认字段）。
- * 页面只用共用位（`shared/docPage` ＋ `base-paint/blocks` 的整页版式／指标卡／表格／折叠／空态）。
- * 过程型两页走原五段式，页底加本写词的逐字 prompt（预检确认页要能复制 prompt 回给 AI）。
+ * （本件不认动作字段，全部经 `./workoutPlanLook.js` 与 `./workoutMovementTable.js`）。
+ * 内容只用共用位（`shared/docPage` ＋ `base-paint/blocks` 的整页版式／指标卡／表格／折叠／空态）＋本族页内样式。
+ * 过程型两页走原五段式（本轮不动），页底加本写词的逐字 prompt（预检确认页要能复制 prompt 回给 AI）。
  */
 import type { SerializableEnvelope } from 'base-paint';
 import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import { nowStamp } from './receipt.js';
 import { planCopyBlock } from './planCopyBlock.js';
+import { planViewCss } from './workoutPlanCss.js';
+import { DOW, planWeeksHtml } from './workoutPlanLook.js';
+import type { PlanWeek } from './workoutPlanLook.js';
 import type { PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
 import type { PlanSessionRow } from '../workout/planStore.js';
 import type { WritePreview } from '../workout/write.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
-import { DASH, movementTableHtml, tempoOf } from './workoutMovementTable.js';
+import { DASH } from './workoutMovementTable.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·健身计划';
-
-const DOW = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 /** 写前预览操作的中文名（老 `process_progress` 复制区同口径，页上不出现英文 `op`）。 */
 const OP_ZH: Record<string, string> = {
@@ -72,41 +74,7 @@ function dualCopy(input: {
   });
 }
 
-/** 休息日卡的会话名：空 label 与「休息」都写「休息日」；已含「休息日」的（库中休息日行就这样）不追加。 */
-const restLabel = (raw: string): string =>
-  raw === '' || raw === '休息' ? '休息日' : raw.includes('休息日') ? raw : raw + '（休息日）';
-
-/** 会话卡（原生 `<details open>`）：标题「周X · 时段 · 会话名 · N 组 · 节奏 …」＋卡内四列动作明细表
- * （表住 `./workoutMovementTable.js`）；休息日不出表也不加节奏，出一句「不排训练动作」。
- *  节奏取该场动作备注里方括号内逗号之后那段——同一场内恒定，摆在表里就是整列重复，故只上标题行。 */
-function sessionCard(s: PlanSessionRow): string {
-  const moves = Array.isArray(s.movements) ? s.movements : [];
-  const rest = s.is_rest_day === 1;
-  const setsCount = s.total_sets ?? moves.reduce((n, m) => n + (m.sets ?? []).length, 0);
-  const raw = s.session_label ?? '';
-  const label = rest ? restLabel(raw) : (raw === '' ? '训练' : raw);
-  const start = s.time_start;
-  const time = start === null || start === undefined || start === ''
-    ? ''
-    : (s.time_end === null || s.time_end === undefined || s.time_end === '' || s.time_end === start ? start : start + '–' + s.time_end);
-  const tempo = rest ? '' : tempoOf(moves);
-  const title = [
-    DOW[s.day_of_week] ?? '周' + s.day_of_week,
-    time,
-    label,
-    rest || setsCount === 0 ? '' : setsCount + ' 组',
-    tempo === '' ? '' : '节奏 ' + tempo,
-  ].filter((t) => t !== '').join(' · ');
-  return renderDisclosure({
-    title,
-    open: true,
-    contentHtml: rest
-      ? renderEmptyBlock({ text: '休息日，本场不排训练动作' })
-      : movementTableHtml(moves),
-  });
-}
-
-/** 复制数据的一行＝一周：周次 ＋ 场数 ＋ 逐场「周X 会话名 N 个动作」。 */
+/** 复制数据的一行＝一周：周次 ＋ 场数 ＋ 逐场「周X 场次名 N 个动作」。 */
 function weekLine(wn: number, list: readonly PlanSessionRow[]): string {
   const brief = list.map((s) => {
     const dow = DOW[s.day_of_week] ?? '周' + s.day_of_week;
@@ -117,7 +85,8 @@ function weekLine(wn: number, list: readonly PlanSessionRow[]): string {
   return '第 ' + wn + ' 周 · ' + list.length + ' 场 · ' + brief.join(' · ');
 }
 
-/** 结果/读验证（order176–184）：页头＋指标卡＋每周折叠＋会话卡六列明细＋空态＋复制区。 */
+/** 结果/读验证（order176–184）：页头＋指标卡＋两级页签（周／日）＋场次卡四列明细＋空态＋复制区。
+ *  首屏「全部周次／全部」默认选中 ⇒ 各周各日的场次全展开，查找与打印都拿得到全文（内容都在 DOM 里）。 */
 export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
   const byWeek = new Map<number, PlanSessionRow[]>();
   for (const s of v.sessions) {
@@ -125,7 +94,8 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
     list.push(s);
     byWeek.set(s.week_number, list);
   }
-  const weeks = [...byWeek.keys()].sort((a, b) => a - b);
+  const weeks: PlanWeek[] = [...byWeek.keys()].sort((a, b) => a - b)
+    .map((week) => ({ week, sessions: byWeek.get(week) ?? [] }));
   const planName = v.title === null || v.title === '' ? '未命名计划' : v.title;
   const parts: string[] = [
     renderKpiGrid([
@@ -134,30 +104,22 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
       { label: '总周数', value: String(v.totalWeeks ?? weeks.length), unit: '周',
         detail: '周有安排 ' + weeks.length + ' 周' + (v.totalWeeks === null ? '（计划未标总周数）' : '') },
     ]),
-  ];
-  if (weeks.length === 0) {
-    parts.push(renderEmptyBlock({ title: '训练安排', text: '本窗无训练安排（换一周，或先定训练计划）' }));
-  }
-  for (const wn of weeks) {
-    const list = byWeek.get(wn) ?? [];
-    parts.push(renderDisclosure({
-      title: '第 ' + wn + ' 周 · ' + list.length + ' 场',
-      open: true,
-      contentHtml: list.map(sessionCard).join(''),
-    }));
-  }
-  parts.push(planCopyBlock({
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
-      data: { items: weeks.map((wn) => weekLine(wn, byWeek.get(wn) ?? [])), total: v.totalSessions },
-    },
-    dataTitle: '【calorie · 训练计划查看】',
-    log: copyLog({
-      command: opts.command,
-      source: 'workout_plans（训练计划，只读）',
-      actionAt: nowStamp(), version: DOC_VERSION,
+    weeks.length === 0
+      ? renderEmptyBlock({ title: '训练安排', text: '这一周没有训练安排（换一周看，或先定训练计划）' })
+      : planWeeksHtml(weeks),
+    planCopyBlock({
+      envelope: {
+        version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
+        data: { items: weeks.map((w) => weekLine(w.week, w.sessions)), total: v.totalSessions },
+      },
+      dataTitle: '【calorie · 训练计划查看】',
+      log: copyLog({
+        command: opts.command,
+        source: 'workout_plans（训练计划，只读）',
+        actionAt: nowStamp(), version: DOC_VERSION,
+      }),
     }),
-  }));
+  ];
   const meta = [
     v.version === null || v.version === '' ? '' : '版本 ' + v.version,
     v.totalWeeks === null ? '' : '共 ' + v.totalWeeks + ' 周',
@@ -172,7 +134,9 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
     title: '健身计划',
     eyebrow: '训练计划查看',
     subtitle,
-    content: parts.join(''),
+    // 页内样式（本族唯一产出者，见 `./workoutPlanCss.ts`）随正文进内容区：晚于 head 的共享样式表，
+    // 同特异性下本页胜；只作用本页（样式块不在别的页上）。
+    content: planViewCss(weeks.length) + parts.join(''),
   });
 }
 

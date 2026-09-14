@@ -1,0 +1,6 @@
+START ticket=351 runId=t351-v5-window1 cmd="node .scratch/t351-fix/v5/locked-window.mjs" waitedMs=0 pid=44484 at=2026-09-14T13:36:15.957Z
+RUN ticket=351 runId=t351-v5-window1 cmd="node .scratch/t351-fix/v5/locked-window.mjs" waitedMs=0 exit=0 pid=44484 at=2026-09-14T13:36:17.703Z
+START ticket=351 runId=t351-v5-window2 cmd="node .scratch/t351-fix/v5/locked-window.mjs" waitedMs=0 pid=44176 at=2026-09-14T13:37:49.852Z
+RUN ticket=351 runId=t351-v5-window2 cmd="node .scratch/t351-fix/v5/locked-window.mjs" waitedMs=0 exit=0 pid=44176 at=2026-09-14T13:38:44.779Z
+START ticket=351 runId=t351-v5-restore-b cmd="node .scratch/t351-fix/v5/run-176-207-v5.mjs --out .scratch/t351-fix/v5/restore-b" waitedMs=0 pid=41008 at=2026-09-14T13:40:25.815Z
+RUN ticket=351 runId=t351-v5-restore-b cmd="node .scratch/t351-fix/v5/run-176-207-v5.mjs --out .scratch/t351-fix/v5/restore-b" waitedMs=0 exit=0 pid=41008 at=2026-09-14T13:40:35.939Z
