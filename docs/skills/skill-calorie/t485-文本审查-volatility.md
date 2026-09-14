@@ -113,23 +113,28 @@
    `b485/after-volatility.md`（改后版式槽位清单）＋ `b485/after-pages/*.txt`（改后逐页可见文本），与 `text-review/inventory/volatility.md`／`pages/*.txt`（改前基线）逐条对照。
    清单里 `空态句: A ／ A` 是抽槽脚本同一节点取两次的产物：HTML 里 `近期没有异常点` 实测**恰 1 处**（`([regex]::Matches(...)).Count`）。
 3. **靶向用例**：`node tooling/run-locked.mjs --ticket 485 -- node --test packages/skill-calorie/test/weight-volatility-336.test.mjs`
-   → `RESULT: ticket=485 runId=496dcd65-a0cf-40ac-a523-7c9b13092946 waitedMs=0 exit=0`，`ℹ tests 7 ／ ℹ pass 7 ／ ℹ fail 0`。
+   → 首跑 `RESULT: ticket=485 runId=496dcd65-a0cf-40ac-a523-7c9b13092946 waitedMs=0 exit=0`，`ℹ tests 7 ／ ℹ pass 7 ／ ℹ fail 0`；
+   收紧「旧术语零命中」清单后再跑一次：`runId=50ec9973-1bdc-4fbf-a5b0-6e2a37de9272 waitedMs=30020 exit=0`，`ℹ tests 7 ／ ℹ pass 7 ／ ℹ fail 0`（末次＝交付态读数）。
 4. **变异自证（两行机器读数）**：
    - 变异红：把页脚来源行改回半角冒号（`📊 数据来源:`）→ `runId=e2f7ef31-3599-42b4-a331-fecf6fe1384c exit=1`，`ℹ pass 5 ／ ℹ fail 2`，断言 `AssertionError: 整图面缺：📊 数据来源：`；
    - 还原绿：改回全角冒号 → `runId=5c4c3bf5-b25a-4cd4-9892-5ae5c62a6373 exit=0`，`ℹ pass 7 ／ ℹ fail 0`。
 5. **编译**：`node tooling/run-locked.mjs --ticket 485 -- npx tsc -b packages/skill-calorie`
    首跑 `runId=3e30f146-c8ff-4450-a139-ccc2b53a0795 exit=1`，5 条错误全在**别席在途件**（`weight/log.ts`、`weight/logReceipt.ts`、`weight/receipt.ts`），本族两件零错误（emit 正常，故出页不受阻）；
    后续两跑 `runId=a8cfb320-5ff1-4273-8253-262a18434901 exit=0`、`runId=9b42398c-19b4-43cb-9281-79ea0695dbba exit=0`（别席已收口）。
-6. **GATE-RUN**：`.scratch/locks/gate-runs.log` 内 `ticket=485` 的 START/RUN 记录 8 条（含上述 4 个 runId），持锁口径无绕过；等待最长 `waitedMs=10004`。
-7. **术语命中数**（页 20 全 HTML，含复制载荷；`b485` 探针）：
+6. **GATE-RUN**：`.scratch/locks/gate-runs.log` 内 `ticket=485` 的 START/RUN 记录 **20 条**（编译 3／用例 4／出页外的 git add·commit·push 各 1，含上述 runId；`git push` 那条 `waitedMs=90029` 是等锁等满 90 秒后拿到，未绕过锁）。
+   提交：`44fc25c feat(485): 波动族 5 页文本审查——删冗余·换人话·页脚句式统一`（4 文件，＋267／−90），已随 `origin/master` 生效（`git branch -r --contains 44fc25c` → `origin/master`）。
+7. **包内告警线门（只读跑，非本票交付面）**：`node packages/skill-calorie/scripts/check-warning-line.mjs` → `exit=1`、`RESULT: 58/60`，
+   两条 RED 都是**别席在途件**的陈化（`src/render/trendMiscPortDocs.ts` 台账 592／实况 595；`src/analysis/multiTrendPage.ts` 台账 511／实况 516）；
+   本族两件（`volatility.ts` 260、`volatilityDoc.ts` 317）**都在 350 线内、不在台账表里**，与本次结论无关。
+8. **术语命中数**（页 20 全 HTML，含复制载荷；`b485` 探针）：
    `阈值=0`、`偏离基线=0`；新词 `平均线=8`、`注意线=6`、`警戒线=32`、`波动带=6`。
    载荷键名仍含 `基线kg`（3 处，均在复制菜单按钮的 `data-t` 属性里，**非正文**，见 §五 第 2 条）。
-8. **载荷 ↔ 页面对账**（页 20 复制菜单 text 段）：`基线kg 70.27`／`基线σkg 0.049`／`黄线kg 0.073`／`红线kg 0.098`／`窗口天数 90`／`有记录天数 90`／`缺口天数 0`／`点数 90`／`σ趋势点数 88`／`近期异常数 5`／`最新偏离kg 0.13`／`基线口径 近 30 天平均体重`／`预警档位 警戒`
+9. **载荷 ↔ 页面对账**（页 20 复制菜单 text 段）：`基线kg 70.27`／`基线σkg 0.049`／`黄线kg 0.073`／`红线kg 0.098`／`窗口天数 90`／`有记录天数 90`／`缺口天数 0`／`点数 90`／`σ趋势点数 88`／`近期异常数 5`／`最新偏离kg 0.13`／`基线口径 近 30 天平均体重`／`预警档位 警戒`
    ↔ 页面卡①`70.27`、卡②`±0.098／±0.073／0.049`、卡③`+0.13`、卡④`5`、页脚`90 条`、结论`88 个点`：逐个对得上。
-9. **看图**（`node .scratch/t154/shoot.mjs …` → `shots-volatility/`，`read_image` 真看了 3 张：20／27／34 全页）：
-   四张卡的副说明无省略号截断、值槽未被长句撑高、四卡等高；值槽 `70.27 kg` 的数字与单位之间有间隔（`renderKpiCard` 的 `value-row` 是 `flex` ＋ `gap:6px`，故值槽不必另塞空格符）。
-   两处既有毛病（**改前就有**，已用改前产物 `b485/pre-shots/20-…png` 对比确认，非本票引入）：图①横向虚线右端标注与右端异常点重叠；图②横轴标签 `06-10/06-16` 粘连。
-10. **跨票守门（只读跑，不改）**：`test/render-t41.test.mjs` → `exit=0`，`ℹ pass 10 ／ ℹ fail 0`（#41 登记册一条判据都没放宽；
+10. **看图**（`node .scratch/t154/shoot.mjs …` → `shots-volatility/`，`read_image` 真看了 3 张：20／27／34 全页）：
+    四张卡的副说明无省略号截断、值槽未被长句撑高、四卡等高；值槽 `70.27 kg` 的数字与单位之间有间隔（`renderKpiCard` 的 `value-row` 是 `flex` ＋ `gap:6px`，故值槽不必另塞空格符）。
+    两处既有毛病（**改前就有**，已用改前产物 `b485/pre-shots/20-…png` 对比确认，非本票引入）：图①横向虚线右端标注与右端异常点重叠；图②横轴标签 `06-10/06-16` 粘连。
+11. **跨票守门（只读跑，不改）**：`test/render-t41.test.mjs` → `exit=0`，`ℹ pass 10 ／ ℹ fail 0`（#41 登记册一条判据都没放宽；
     它断的 `/基线/`、`/预警/` 仍由复制载荷的中文键名满足）。
 
 ## 五、未做项与下一手缺什么
