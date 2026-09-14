@@ -207,6 +207,97 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - **通用唤醒词现找**：`calorie.help.lookup --params '{"q":"<唤醒词/分类/描述子串>"}'`（436 唤醒词全量，10 场景，空串抛，不返全表冒充命中）。
 - 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64；GIF 只出任务描述不碰二进制。
 
+## 场景 01 主页工作流程（9 条查询命令）
+
+- 工作流程（读类直出）：用户说唤醒词 → 复制下面对应的 prompt → AI 用命令执行 → 结果型 HTML 落盘，`data.output` 回绝对路径。本图 9 条全是查询命令，没有会改数据库的命令；写类流程的过程型 HTML 在本图是 0 条（记账，不占票）。
+- 对账口径：下表 `cli` 与路由层 `main_prompt.cli`、场景数据 `data_source` 逐字相同（对账脚本 `.scratch/t373/align-9.mjs`）；`看今日体重概览` 的命令住 `src/weight/`（跨家，本图只接线不实现）。
+
+| 唤醒词 | 命令 | 参数 | 从哪一步走（cli＝data_source＝路由 cli） |
+|---|---|---|---|
+| 看今日主页 | calorie.view.home | `{"date":"今日"}` | `calorie-cmd-read calorie.view.home --params '{"date":"今日"}'` |
+| 看今日饮食概览 | calorie.view.diet | `{"window":"今日"}` | `calorie-cmd-read calorie.view.diet --params '{"window":"今日"}'` |
+| 看今日运动概览 | calorie.view.exercise | `{"window":"今日"}` | `calorie-cmd-read calorie.view.exercise --params '{"window":"今日"}'` |
+| 看今日体重概览 | calorie.view.weight | （无） | `calorie-cmd-read calorie.view.weight` |
+| 看今日目标进度 | calorie.view.goal-progress | `{"window":"今日"}` | `calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'` |
+| 看本周主页 | calorie.view.home | `{"windowDays":7,"date":"今日"}` | `calorie-cmd-read calorie.view.home --params '{"windowDays":7,"date":"今日"}'` |
+| 看本月主页 | calorie.view.home | `{"windowDays":30,"date":"今日"}` | `calorie-cmd-read calorie.view.home --params '{"windowDays":30,"date":"今日"}'` |
+| 看连续记录天数 | calorie.view.home | `{"date":"今日"}` | `calorie-cmd-read calorie.view.home --params '{"date":"今日"}'` |
+| 看今日热量预算 | calorie.view.home | `{"date":"今日"}` | `calorie-cmd-read calorie.view.home --params '{"date":"今日"}'` |
+
+### 9 条 prompt 原文（逐字同场景数据与 HELP 资产）
+
+看今日主页：
+
+```
+请你加载技能 卡路里,执行唤醒词「看今日主页」。
+
+我想看今天的主页 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看今日饮食概览：
+
+```
+请你加载技能 卡路里,执行唤醒词「看今日饮食概览」。
+
+我想看今天饮食 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看今日运动概览：
+
+```
+请你加载技能 卡路里,执行唤醒词「看今日运动概览」。
+
+我想看今天运动 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看今日体重概览：
+
+```
+请你加载技能 卡路里,执行唤醒词「看今日体重概览」。
+
+我想看今天体重 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看今日目标进度：
+
+```
+请你加载技能 卡路里,执行唤醒词「看今日目标进度」。
+
+我想看今天 4 项目标(热量/蛋白/饮水/运动)完成度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看本周主页：
+
+```
+请你加载技能 卡路里,执行唤醒词「看本周主页」。
+
+我想看本周 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看本月主页：
+
+```
+请你加载技能 卡路里,执行唤醒词「看本月主页」。
+
+我想看本月 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看连续记录天数：
+
+```
+请你加载技能 卡路里,执行唤醒词「看连续记录天数」。
+
+我想看我的连续记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
+看今日热量预算：
+
+```
+请你加载技能 卡路里,执行唤醒词「看今日热量预算」。
+
+我想看今天还能吃多少。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+```
+
 ## 环境与出 scope
 
 - SKILLS_DB_PATH（必设，无默认值）+ CALORIE_PHOTOS_DIR（照片存在位校验用，缺则记 null）；真实 DB 禁迁，测试 tmp 隔离；老家只读对照。
