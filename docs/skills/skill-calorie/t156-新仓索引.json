@@ -1,0 +1,459 @@
+{
+  "ticket": "156-new",
+  "scope": "卡路里场景 04 运动 · 新仓 HTML 盘点（新仓侧事实，只读）",
+  "checkedCommit": "b549002f36db8feb1634b330f5e66b41bd5c9042",
+  "readOnly": true,
+  "lineCountBasis": "LF 数（节点口径 split('\\n').length - 1）；引用行号取自读出时点",
+  "driftWarning": "盘点期间 render/exercisePort.ts(534→541) 等件正被他人改，同件行号可能漂移几行",
+  "shared": [
+    {
+      "path": "packages/skill-calorie/src/shared/docPage.ts",
+      "lines": 70,
+      "exports": ["assembleDocPage", "metricsOf"],
+      "exportCount": 2,
+      "pageFamily": "全仓所有文档页（唯一整页装配入口）",
+      "keyFunctions": [
+        { "name": "assembleDocPage", "line": 47, "note": "区块 HTML ＋ 标题三件套 → 完整文档" },
+        { "name": "metricsOf", "line": 64, "note": "null／undefined 不进投影（stat 冻结口径）" },
+        { "name": "docShell", "line": 36, "note": "整页模板（唯一一份；doctype:38 / charset:39 / viewport:39 / ilife-page:41）" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/receiptParts.ts",
+      "lines": 43,
+      "exports": ["statusCard", "reconcileDisclosure"],
+      "exportCount": 2,
+      "pageFamily": "写后回执页（档案／目标／运动）",
+      "keyFunctions": [
+        { "name": "statusCard", "line": 21, "note": "无改动／已改动 ＋ 调用方给的写入去向措辞" },
+        { "name": "reconcileDisclosure", "line": 31, "note": "页尾「对账信息」折叠区（记录编号／写入时间／回执格式，行 34-41）" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/copyArea.ts",
+      "lines": 187,
+      "exports": ["promptCopyArea", "copyArea", "dataCopyArea", "copyLog", "notice"],
+      "exportCount": 5,
+      "pageFamily": "全仓页面（复制区 ＋ 复制日志 ＋ 提示块）",
+      "keyFunctions": [
+        { "name": "promptCopyArea", "line": 101 },
+        { "name": "copyArea", "line": 116, "note": "数据位恒出三格式菜单（口径注释 111-113）" },
+        { "name": "formatsOf", "line": 146, "note": "三格式序列化，走 buildDataText（154-156）" },
+        { "name": "dataCopyArea", "line": 162 },
+        { "name": "copyLog", "line": 167, "note": "复制日志第 2–6 段" },
+        { "name": "notice", "line": 178 }
+      ],
+      "menuHintsLiteralFromOldRepo": { "line": 45, "values": ["粘贴给 AI / 自己看", "结构化存档", "表格导入"] }
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/contentSuffix.ts",
+      "lines": 118,
+      "exports": ["writeSuffixFor"],
+      "exportCount": 1,
+      "pageFamily": "不产页面（落盘文件名的内容标识段）",
+      "keyFunctions": [{ "name": "writeSuffixFor", "line": 16 }]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/params.ts",
+      "lines": 180,
+      "exports": [
+        "fail", "needStr", "optStr", "needNum", "optNum", "optInt", "needId", "needArr", "assertISO",
+        "nums", "anchorOf", "windowRange", "dayField", "needDay", "wday", "needWday", "daysIn",
+        "latestFoodDate", "defaultRange"
+      ],
+      "exportCount": 19,
+      "pageFamily": "全仓页面（取数窗口）；不产 HTML",
+      "keyFunctions": [
+        { "name": "fail", "line": 18, "note": "退出码沿 T11 冻结（1 预检／2 用法／3 key／4 取数／5 渲染）" },
+        { "name": "nums", "line": 73, "note": "非空数挑拣（stat.metrics 须全有限 number）" },
+        { "name": "windowRange", "line": 93 },
+        { "name": "defaultRange", "line": 161, "note": "运动六键薄壳统一用它取窗" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/commandSpec.ts",
+      "lines": 66,
+      "exports": ["DeliveryKind", "ViewOut", "WriteOut", "ViewHandler", "WriteHandler", "ReadCommandSpec", "WriteCommandSpec", "CommandSpec"],
+      "exportCount": 8,
+      "pageFamily": "不产页面（命令事实的唯一定义地）",
+      "keyFunctions": [
+        { "name": "ViewOut", "line": 20, "note": "读产物：data ＋ html（＋deliveryKind／target）" },
+        { "name": "WriteOut", "line": 31, "note": "写产物：ok／message／receipt ＋ html" },
+        { "name": "CommandSpec", "line": 66, "note": "kind 判别式；'write' 与 shape 'receipt' 测试里钉死等价（9 行注释）" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/writeParts.ts",
+      "lines": 113,
+      "exports": [
+        "SOFT_EXCLUDED_INNER", "SOFT_EXCLUDED", "HARD_INNER", "HARD_WORDING", "deleteStatus", "esc",
+        "totalChanges", "F", "COL_CLI", "cliNames", "provided", "definedKeys", "M5Patch", "receiptHtml",
+        "out", "commandLine", "R"
+      ],
+      "exportCount": 17,
+      "pageFamily": "写后回执（信封 ＋ 复制日志第 4 段）",
+      "keyFunctions": [
+        { "name": "totalChanges", "line": 38, "note": "影响行数＝SQLite total_changes() 增量" },
+        { "name": "F", "line": 45, "note": "写入字段摘要（exercise 一项在 50 行）" },
+        { "name": "receiptHtml", "line": 83 },
+        { "name": "commandLine", "line": 101 },
+        { "name": "R", "line": 106 }
+      ]
+    }
+  ],
+  "exercise": [
+    {
+      "path": "packages/skill-calorie/src/exercise/receipt.ts",
+      "lines": 266,
+      "exports": ["buildExerciseReceiptDoc", "ExerciseReceiptDetail"],
+      "exportCount": 2,
+      "pageFamily": "写后回执（记／改／删三条写命令共用一张）",
+      "keyFunctions": [
+        { "name": "buildExerciseReceiptDoc", "line": 185, "note": "整页装配，assembleDocPage 在 259" },
+        { "name": "dayTable", "line": 161, "note": "目标日累计（活行口径 EX_ALIVE，163）" },
+        { "name": "writtenDetailOf", "line": 177 },
+        { "name": "diffTable", "line": 152 },
+        { "name": "reconcileDisclosure 调用", "line": 247 },
+        { "name": "copyArea 调用", "line": 248 }
+      ],
+      "blocksOrder": "KPI 三格(237-245) → 分支明细块(200-235) → 对账折叠(247) → 复制区(248-257)"
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/records.ts",
+      "lines": 199,
+      "exports": ["RecordsView", "buildRecordsDoc", "viewExerciseRecords"],
+      "exportCount": 3,
+      "pageFamily": "记录级明细页（窗口＋分类＋备注筛选）",
+      "keyFunctions": [
+        { "name": "RecordsView", "line": 30 },
+        { "name": "modeText", "line": 115 },
+        { "name": "buildRecordsDoc", "line": 125, "note": "参数表单 130／KPI 四格 137／八列表 143／复制数据 167／整页 179" },
+        { "name": "viewExerciseRecords", "line": 189 }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/log.ts",
+      "lines": 110,
+      "exports": ["writeExerciseLog"],
+      "exportCount": 1,
+      "pageFamily": "写命令（出回执，不产独立页）",
+      "keyFunctions": [
+        { "name": "writeExerciseLog", "line": 61, "note": "三形态：复制昨日 65-77／批量 78-89／单条 90-98" },
+        { "name": "done", "line": 102 }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/edit.ts",
+      "lines": 134,
+      "exports": ["writeExerciseUpdate", "writeExerciseRemove"],
+      "exportCount": 2,
+      "pageFamily": "写命令（出回执）",
+      "keyFunctions": [
+        { "name": "writeExerciseUpdate", "line": 43 },
+        { "name": "writeExerciseRemove", "line": 94 }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/index.ts",
+      "lines": 38,
+      "exports": ["EXERCISE_COMMANDS", "runExerciseView", "runExerciseWrite"],
+      "exportCount": 3,
+      "pageFamily": "不产页面（域门）",
+      "keyFunctions": [
+        { "name": "BY_KEY", "line": 20 },
+        { "name": "runExerciseView", "line": 23, "note": "全仓零调用方（见 improvements.域门冗余）" },
+        { "name": "runExerciseWrite", "line": 32, "note": "全仓零调用方" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/commands.ts",
+      "lines": 35,
+      "exports": ["EXERCISE_COMMANDS"],
+      "exportCount": 1,
+      "pageFamily": "不产页面（命令事实权威源，10 键）",
+      "keyFunctions": [{ "name": "EXERCISE_COMMANDS", "line": 24, "note": "keeps read 7 + write 3，声明行 25-34" }]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/routes.ts",
+      "lines": 57,
+      "exports": ["EXERCISE_ROUTES"],
+      "exportCount": 1,
+      "pageFamily": "不产页面（唤醒词路由）",
+      "keyFunctions": [{ "name": "EXERCISE_ROUTES", "line": 21, "note": "42 条：wake 29 ＋ new 13（行 22-56）" }]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/strength.ts",
+      "lines": 22,
+      "exports": ["viewExerciseStrength"],
+      "exportCount": 1,
+      "pageFamily": "力量训练总览（页面由旧渲染层装配）",
+      "keyFunctions": [
+        { "name": "viewExerciseStrength", "line": 14 },
+        { "name": "buildStrengthView", "line": 107, "in": "packages/skill-calorie/src/render/exercisePort.ts" },
+        { "name": "buildStrengthDoc", "line": 76, "in": "packages/skill-calorie/src/render/sportPortDocs.ts" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/cardio.ts",
+      "lines": 22,
+      "exports": ["viewExerciseCardio"],
+      "exportCount": 1,
+      "pageFamily": "有氧训练总览",
+      "keyFunctions": [
+        { "name": "viewExerciseCardio", "line": 14 },
+        { "name": "buildCardioView", "line": 179, "in": "packages/skill-calorie/src/render/exercisePort.ts" },
+        { "name": "buildCardioDoc", "line": 147, "in": "packages/skill-calorie/src/render/sportPortDocs.ts" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/distribution.ts",
+      "lines": 22,
+      "exports": ["viewExerciseDistribution"],
+      "exportCount": 1,
+      "pageFamily": "运动类型分布",
+      "keyFunctions": [
+        { "name": "viewExerciseDistribution", "line": 14 },
+        { "name": "buildDistributionView", "line": 249, "in": "packages/skill-calorie/src/render/exercisePort.ts" },
+        { "name": "buildDistributionDoc", "line": 218, "in": "packages/skill-calorie/src/render/sportPortDocs.ts" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/trend.ts",
+      "lines": 22,
+      "exports": ["viewExerciseTrend"],
+      "exportCount": 1,
+      "pageFamily": "运动趋势",
+      "keyFunctions": [
+        { "name": "viewExerciseTrend", "line": 14 },
+        { "name": "buildTrendView", "line": 484, "in": "packages/skill-calorie/src/render/exercisePort.ts" },
+        { "name": "buildTrendDoc", "line": 458, "in": "packages/skill-calorie/src/render/sportPortDocs.ts" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/recap.ts",
+      "lines": 22,
+      "exports": ["viewExerciseRecap"],
+      "exportCount": 1,
+      "pageFamily": "运动复盘",
+      "keyFunctions": [
+        { "name": "viewExerciseRecap", "line": 14 },
+        { "name": "buildRecapView", "line": 316, "in": "packages/skill-calorie/src/render/exercisePort.ts" },
+        { "name": "buildRecapDoc", "line": 292, "in": "packages/skill-calorie/src/render/sportPortDocs.ts" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/goal.ts",
+      "lines": 18,
+      "exports": ["viewExerciseGoal"],
+      "exportCount": 1,
+      "pageFamily": "运动目标视图",
+      "keyFunctions": [
+        { "name": "viewExerciseGoal", "line": 14 },
+        { "name": "buildExerciseGoalView", "line": 199, "in": "packages/skill-calorie/src/render/planPlate.ts" },
+        { "name": "buildExerciseGoalDoc", "line": 135, "in": "packages/skill-calorie/src/render/sportDocs.ts" }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/exerciseStore.ts",
+      "lines": 288,
+      "exports": [
+        "lookupMet", "inferCategory", "estimateCaloriesMet", "estimateDifficultyMet", "parseUserDifficulty",
+        "combinedCalories", "estimateCaloriesFromTraining", "convertLoadKg", "WindowName", "resolveWindow",
+        "parseTimeStr", "ExerciseRecordInput", "ExerciseRow", "addRecord", "updateRecord", "deleteRecord",
+        "deleteDay", "deleteRange", "updateDay", "copyYesterday", "batchAdd", "listWindow"
+      ],
+      "exportCount": 22,
+      "pageFamily": "不产页面（取数与写入）",
+      "keyFunctions": [
+        { "name": "lookupMet", "line": 37 },
+        { "name": "resolveWindow", "line": 119 },
+        { "name": "addRecord", "line": 169 },
+        { "name": "updateRecord", "line": 196 },
+        { "name": "deleteRecord", "line": 225 },
+        { "name": "copyYesterday", "line": 251 },
+        { "name": "batchAdd", "line": 278 },
+        { "name": "listWindow", "line": 284 }
+      ]
+    }
+  ],
+  "legacyRenderLayer": [
+    {
+      "path": "packages/skill-calorie/src/render/exercisePort.ts",
+      "lines": 541,
+      "exports": [
+        "effectiveCategory", "PortRow", "listPortRows", "StrengthByMovement", "StrengthView", "buildStrengthView",
+        "CardioByType", "CardioView", "buildCardioView", "DistributionBucket", "DistributionView",
+        "buildDistributionView", "RecapView", "buildRecapView", "PlannedSession", "ReviewView",
+        "buildReviewView", "TrendView", "buildTrendView"
+      ],
+      "exportCount": 19,
+      "role": "运动取数与聚合（新家仍在用）",
+      "keyFunctions": [
+        { "name": "listPortRows", "line": 68 },
+        { "name": "buildStrengthView", "line": 107 },
+        { "name": "buildCardioView", "line": 179 },
+        { "name": "buildDistributionView", "line": 249 },
+        { "name": "buildRecapView", "line": 316 },
+        { "name": "buildReviewView", "line": 407 },
+        { "name": "buildTrendView", "line": 484 }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/render/sportPortDocs.ts",
+      "lines": 531,
+      "exports": ["buildStrengthDoc", "buildCardioDoc", "buildDistributionDoc", "buildRecapDoc", "buildReviewDoc", "buildTrendDoc"],
+      "exportCount": 6,
+      "role": "运动六页整页装配（新家仍在用）",
+      "keyFunctions": [
+        { "name": "windowForm", "line": 64 },
+        { "name": "buildStrengthDoc", "line": 76 },
+        { "name": "buildCardioDoc", "line": 147 },
+        { "name": "buildDistributionDoc", "line": 218 },
+        { "name": "buildRecapDoc", "line": 292 },
+        { "name": "buildReviewDoc", "line": 387 },
+        { "name": "buildTrendDoc", "line": 458 }
+      ],
+      "constants": [
+        { "name": "DOC_TITLE", "line": 49, "value": "卡路里·运动移植" },
+        { "name": "RECORD_CAP", "line": 62, "value": 100 }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/render/sportDocs.ts",
+      "lines": 171,
+      "exports": ["buildExerciseDoc", "buildExerciseGoalDoc"],
+      "exportCount": 2,
+      "role": "运动总览 ＋ 运动目标视图装配",
+      "keyFunctions": [
+        { "name": "buildExerciseDoc", "line": 47 },
+        { "name": "buildExerciseGoalDoc", "line": 135 }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/render/html.ts",
+      "lines": 645,
+      "exports": [],
+      "exportCount": 55,
+      "role": "老式 renderXxxHtml 一族（另一条老装配路）",
+      "keyFunctions": [{ "name": "renderExerciseHtml", "line": 90 }],
+      "gap": "未逐页比对与 *Docs 路是否逐字等价（见 md §8 缺口 2）"
+    }
+  ],
+  "pageShell": {
+    "packageName": "base-paint",
+    "packageNameRealPath": "packages/base-render",
+    "nameDeclaredAt": { "path": "packages/base-render/package.json", "line": 2 },
+    "exportsMap": { "path": "packages/base-render/package.json", "line": 8 },
+    "blocks": {
+      "path": "packages/base-render/src/blocks.ts",
+      "lines": 1153,
+      "renderers": [
+        { "name": "renderPageShell", "line": 168 },
+        { "name": "renderKpiGrid", "line": 226 },
+        { "name": "renderKpiCard", "line": 199 },
+        { "name": "renderDataTable", "line": 262 },
+        { "name": "renderChartBlock", "line": 315 },
+        { "name": "renderListRows", "line": 360 },
+        { "name": "renderPreBlock", "line": 401 },
+        { "name": "renderDetailSection", "line": 448 },
+        { "name": "renderDisclosure", "line": 501 },
+        { "name": "renderParamForm", "line": 533 },
+        { "name": "renderEmptyBlock", "line": 582 },
+        { "name": "renderCopyBlock", "line": 611 },
+        { "name": "renderFeedbackBlock", "line": 651 }
+      ]
+    },
+    "style": {
+      "path": "packages/base-render/src/style.ts",
+      "lines": 1310,
+      "tokens": { "path": "packages/base-render/src/spec/style.ts", "line": 12, "count": 11, "sheetId": "ilife-base" },
+      "forbiddenTokens": { "path": "packages/base-render/src/spec/style.ts", "line": 46, "values": ["--r-xl", "--pink"] },
+      "focusRing": { "path": "packages/base-render/src/style.ts", "line": 91 },
+      "extraCssConstraint": { "path": "packages/base-render/src/spec/style.ts", "line": 52 }
+    },
+    "controls": {
+      "path": "packages/base-render/src/controls.ts",
+      "lines": 1470,
+      "copyMenuAria": { "line": 1339 },
+      "helpShellPrefix": { "path": "packages/base-render/src/helpShell.ts", "line": 42 },
+      "helpShellSuffix": { "path": "packages/base-render/src/helpShell.ts", "line": 45 }
+    }
+  },
+  "styleSources": [
+    { "source": "buildStyleSheet().css", "from": "base-paint", "concatAt": "packages/skill-calorie/src/shared/docPage.ts:50" },
+    { "source": "blocksCss()", "from": "base-paint/blocks", "concatAt": "packages/skill-calorie/src/shared/docPage.ts:50" },
+    { "source": "buildSharedHelpersJs()", "from": "base-paint", "slot": "<!--SHARED-HELPERS-->", "at": "packages/skill-calorie/src/shared/docPage.ts:51" },
+    { "source": "buildChartsHelpersJs()", "from": "base-paint", "slot": "<!--CHARTS-HELPERS-->", "at": "packages/skill-calorie/src/shared/docPage.ts:53" },
+    { "source": "extraCss", "used": false, "note": "不走 extraCss（docPage.ts:8）" }
+  ],
+  "interactions": {
+    "copyFormats": {
+      "formats": ["text", "json", "csv"],
+      "constantAt": "packages/base-render/src/spec/text.ts:12",
+      "alwaysOn": { "path": "packages/skill-calorie/src/shared/copyArea.ts", "line": 111 },
+      "serializer": { "name": "formatsOf", "line": 146 },
+      "hints": { "path": "packages/skill-calorie/src/shared/copyArea.ts", "line": 45 },
+      "menuAria": { "path": "packages/base-render/src/controls.ts", "line": 1339 }
+    },
+    "disclosure": {
+      "mechanism": "原生 details/summary，交互态 CSS-only",
+      "at": "packages/base-render/src/blocks.ts:490",
+      "calorieUsage": "packages/skill-calorie/src/exercise/receipt.ts:247"
+    },
+    "anchors": { "present": false, "evidence": "全仓 grep href=\"#\" / id=\"sec / renderToc / renderAnchor 零命中" },
+    "scriptSegment": { "present": true, "source": "buildSharedHelpersJs()", "at": "packages/skill-calorie/src/shared/docPage.ts:51" },
+    "printable": { "present": false, "evidence": "packages/base-render/src 无 @media print" }
+  },
+  "assertions": {
+    "path": "packages/skill-calorie/test/doc-page-assert.mjs",
+    "lines": 20,
+    "function": "assertDocPage",
+    "at": 12,
+    "checks": ["not-null", "doctype", "charset utf-8", "style", "script", "ilife-page", "no-residual-marker"],
+    "referencingTests": [
+      "packages/skill-calorie/test/exercise-receipt-264.test.mjs:26",
+      "packages/skill-calorie/test/exercise-routes-265.test.mjs:29",
+      "packages/skill-calorie/test/exercise-records-342.test.mjs:35",
+      "packages/skill-calorie/test/home-lock-374.test.mjs:27",
+      "packages/skill-calorie/test/weight-receipt-337.test.mjs:27"
+    ],
+    "localDuplicatesUnconverted": [
+      "packages/skill-calorie/test/profile-view-177.test.mjs:61",
+      "packages/skill-calorie/test/profile-doc-179.test.mjs:55",
+      "packages/skill-calorie/test/profile-activity-176.test.mjs:81",
+      "packages/skill-calorie/test/goal-wizard-251.test.mjs:56",
+      "packages/skill-calorie/test/profile-receipt-175.test.mjs:63"
+    ]
+  },
+  "strengths": [
+    { "id": "single-doc-shell", "evidence": "packages/skill-calorie/src/shared/docPage.ts:5,36", "summary": "整页模板唯一一份（#179 前在 7 个 *Docs.ts 各抄一份）" },
+    { "id": "unified-assembly", "evidence": "packages/skill-calorie/src/render/**:85 处 assembleDocPage；运动回执 packages/skill-calorie/src/exercise/receipt.ts:259", "summary": "统一装配入口，无一页例外" },
+    { "id": "three-format-copy", "evidence": "packages/skill-calorie/src/shared/copyArea.ts:43,111,146", "summary": "三格式菜单恒开，提示逐字取老仓" },
+    { "id": "assertion-parity", "evidence": "packages/skill-calorie/test/doc-page-assert.mjs:12", "summary": "五连断言与生成一致性，含无残留标记" },
+    { "id": "generated-not-handwritten", "evidence": "packages/skill-calorie/src/cli/registry.ts:1,39", "summary": "registry 由 pnpm gen 派生，同键重复即抛" },
+    { "id": "no-dead-button-no-silent-truncation", "evidence": "packages/skill-calorie/src/shared/copyArea.ts:40; packages/skill-calorie/src/render/sportPortDocs.ts:121,509", "summary": "空态不出按钮；100 条截断在 caption 明示" },
+    { "id": "a11y-baseline", "evidence": "packages/base-render/src/controls.ts:236,1339; packages/base-render/src/style.ts:91", "summary": "menu aria ＋ toast aria-live ＋ 全局焦点环" },
+    { "id": "frozen-style-single-source", "evidence": "packages/base-render/src/spec/style.ts:7,12,46", "summary": "11 个 token 逐值冻结，禁入 token 名单，样式只抖 base-paint" },
+    { "id": "write-accounting-single-source", "evidence": "packages/skill-calorie/src/shared/writeParts.ts:19,38", "summary": "删除措辞单源；affectedRows 按 total_changes() 增量" }
+  ],
+  "improvements": [
+    { "id": "mobile-single-breakpoint", "axis": "移动端", "evidence": "packages/base-render/src/blocks.ts:746", "summary": "仅一处 @media 640px，只改 padding／H1 字号；表格不转卡片，仅 overflow-x（blocks.ts:813,939）" },
+    { "id": "desktop-whitespace-single-column", "axis": "版式精细度", "evidence": "packages/base-render/src/blocks.ts:715,717,763", "summary": "max-width 960px ＋ 32/20/80 留白；KPI 之外无栅格分栏，一律单列堆叠" },
+    { "id": "kpi-field-poverty", "axis": "视觉信息密度", "evidence": "packages/base-render/src/blocks.ts:189; packages/skill-calorie/src/render/sportPortDocs.ts:466", "summary": "KPI 仅 label/value/unit/detail 四位，无环比／趋势位；峰值只能塞一句 detail" },
+    { "id": "no-in-page-nav", "axis": "交互丰富度", "evidence": "全仓零 grep 命中锚点／目录", "summary": "长页（趋势＝折线＋柱图＋100 行表）无页内导航；折叠区仅回执页一处" },
+    { "id": "not-printable", "axis": "可打印", "evidence": "packages/base-render/src 无 @media print", "summary": "产物无打印分页／去装饰定制" },
+    { "id": "aria-label-gaps", "axis": "无障碍", "evidence": "packages/base-render/src/controls.ts:1339", "summary": "格式按钮有 aria-haspopup／expanded；原始按钮组未逐颗 aria-label" },
+    { "id": "copy-drift-yizhi", "axis": "文案", "evidence": "packages/skill-calorie/src/render/sportPortDocs.ts:49,138,283", "summary": "「运动移植」为过程词，新家既成事实后对用户是噪音" },
+    { "id": "unused-domain-gate-exports", "axis": "死代码", "evidence": "packages/skill-calorie/src/exercise/index.ts:23,32；真分派 cli/cmd_read.ts:58／cli/write.ts:73", "summary": "runExerciseView／Write 全仓零调用方；9 个能力目录同形冗余" }
+  ],
+  "gaps": [
+    { "id": "no-live-run", "detail": "树上有 40 处他人在途脏文件，未构建、未实跑样例；无本席实跑证据", "evidence": "git status --porcelain（含 packages/skill-calorie/src/shared/copyArea.ts 已改）" },
+    { "id": "old-html-path-not-fully-diffed", "detail": "render/html.ts 老装配路未逐页比对是否与 *Docs 路逐字等价" },
+    { "id": "no-old-skill-comparison", "detail": "老技能侧优点／缺点由另席盘点，本席不重复" },
+    { "id": "no-visual-measurement", "detail": "视觉结论来自 CSS 声明与区块字段面，未在浏览器量过实际渲染" }
+  ],
+  "outputs": [
+    "docs/skills/skill-calorie/t156-新仓HTML盘点.md",
+    "docs/skills/skill-calorie/t156-新仓索引.json"
+  ]
+}
