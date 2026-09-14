@@ -9,6 +9,13 @@
  * 运动分析＝`view.exercise-strength`／`-cardio`／`-distribution`／`-trend`；运动复盘＝`view.exercise-recap`。
  * （`calorie.view.exercise`「运动总览」与 `calorie.view.exercise-review`「计划复盘」不属本场景分区——
  * 前者归场景 01 主页、后者归场景 05 健身计划，住别处的清单。）
+ *
+ * #266：代表唤醒词一律取冻结的 436 条词表（`src/triggers/wake-assets.ts` 的 `WAKE_ASSETS`）里的真词，
+ * 于是 HELP 场景页（场景页同源那张表）与速查台（本文件的 `wakeWord` 派生）对同一场景列出同一批词。
+ * 实测只改 4 处：`-distribution`（看运动分类占比→看运动类型分布）／`-trend`（看运动消耗趋势→看运动趋势）／
+ * `-recap`（看运动复盘→运动复盘（本周））原来用的是新拟入口词，`-goal` 原来**没有这个字段**（速查表退回列命令键）。
+ * `-strength`（看力量训练总览）／`-cardio`（看有氧训练总览）／`-records`（看运动记录（有备注））三条原本就是真词，未动；
+ * 票面六行表里 `-strength`／`-cardio` 那两行的新拟词（看力量总览／看有氧总览）住 `routes.ts` 的 `new` 表，不在本文件。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewExerciseCardio } from './cardio.js';
@@ -23,12 +30,12 @@ import { viewExerciseTrend } from './trend.js';
 
 export const EXERCISE_COMMANDS = [
   { kind: 'read', key: 'calorie.view.exercise-cardio', shape: 'stat', title: '有氧训练总览', wakeWord: '看有氧训练总览', run: viewExerciseCardio, example: 'calorie-cmd-read calorie.view.exercise-cardio --params \'{"window":"7d"}\'' },
-  { kind: 'read', key: 'calorie.view.exercise-distribution', shape: 'stat', title: '运动类型分布', wakeWord: '看运动分类占比', run: viewExerciseDistribution, example: 'calorie-cmd-read calorie.view.exercise-distribution --params \'{"window":"7d"}\'' },
-  { kind: 'read', key: 'calorie.view.exercise-goal', shape: 'stat', title: '运动目标视图', run: viewExerciseGoal, example: 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"今日"}\'' },
-  { kind: 'read', key: 'calorie.view.exercise-recap', shape: 'stat', title: '运动复盘', wakeWord: '看运动复盘', run: viewExerciseRecap, example: 'calorie-cmd-read calorie.view.exercise-recap --params \'{"window":"7d"}\'' },
+  { kind: 'read', key: 'calorie.view.exercise-distribution', shape: 'stat', title: '运动类型分布', wakeWord: '看运动类型分布', run: viewExerciseDistribution, example: 'calorie-cmd-read calorie.view.exercise-distribution --params \'{"window":"7d"}\'' },
+  { kind: 'read', key: 'calorie.view.exercise-goal', shape: 'stat', title: '运动目标视图', wakeWord: '看今日运动（vs 目标）', run: viewExerciseGoal, example: 'calorie-cmd-read calorie.view.exercise-goal --params \'{"window":"今日"}\'' },
+  { kind: 'read', key: 'calorie.view.exercise-recap', shape: 'stat', title: '运动复盘', wakeWord: '运动复盘（本周）', run: viewExerciseRecap, example: 'calorie-cmd-read calorie.view.exercise-recap --params \'{"window":"7d"}\'' },
   { kind: 'read', key: 'calorie.view.exercise-records', shape: 'stat', title: '运动记录', wakeWord: '看运动记录（有备注）', run: viewExerciseRecords, example: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"7d"}\'' },
   { kind: 'read', key: 'calorie.view.exercise-strength', shape: 'stat', title: '力量训练总览', wakeWord: '看力量训练总览', run: viewExerciseStrength, example: 'calorie-cmd-read calorie.view.exercise-strength --params \'{"window":"7d"}\'' },
-  { kind: 'read', key: 'calorie.view.exercise-trend', shape: 'stat', title: '运动趋势', wakeWord: '看运动消耗趋势', run: viewExerciseTrend, example: 'calorie-cmd-read calorie.view.exercise-trend --params \'{"window":"7d"}\'' },
+  { kind: 'read', key: 'calorie.view.exercise-trend', shape: 'stat', title: '运动趋势', wakeWord: '看运动趋势', run: viewExerciseTrend, example: 'calorie-cmd-read calorie.view.exercise-trend --params \'{"window":"7d"}\'' },
   { kind: 'write', key: 'calorie.exercise.add', shape: 'receipt', title: '记运动', wakeWord: '记运动', run: writeExerciseLog, example: 'calorie-cmd-read calorie.exercise.add --params \'{"type":"慢跑","calories":320,"minutes":30}\'' },
   { kind: 'write', key: 'calorie.exercise.remove', shape: 'receipt', title: '删运动', wakeWord: '删运动记录', run: writeExerciseRemove, example: 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'' },
   { kind: 'write', key: 'calorie.exercise.update', shape: 'receipt', title: '改运动', wakeWord: '改运动记录', run: writeExerciseUpdate, example: 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":40}\'' },
