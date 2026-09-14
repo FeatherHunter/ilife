@@ -389,7 +389,9 @@ test('#237 ⑤ 文件名安全化：Windows 非法字符→_、去结尾点与�
   const dir = mkTmp('sanitize');
   const r = spawnSave(dir, [
     "const x = saveHtmlFile({ dir: DIR, stem: 'a/b:c*d?e\"f<g>h|i. ', html: 'S' });",
-    "const long = saveHtmlFile({ dir: DIR, stem: '长'.repeat(300), html: 'S' });",
+    // 混合 300 码点（20 中文＋280 ASCII）：截断到 180 码点（20 中文＋160 ASCII ≈ 241 字节，
+    // 含时间戳与扩展名，Linux 单段 255 字节上限下可落）；截断边界与多字节共存，断言仍锁 180。
+    "const long = saveHtmlFile({ dir: DIR, stem: '长'.repeat(20) + 'a'.repeat(280), html: 'S' });",
     "send({ name: basename(x.path), longLen: [...basename(long.path).replace(/_[0-9]{8}_[0-9]{6}\\.html$/, '')].length });",
   ].join('\n'));
   assert.equal(r.status, 0, r.stderr);

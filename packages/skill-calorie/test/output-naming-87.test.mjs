@@ -9,7 +9,7 @@
 import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -183,10 +183,17 @@ test('#87 ④b 同秒计数大小写不敏感（旧 glob 在 Windows 走 normcas
   // 命令名含 ASCII 时同样不敏感（title 如「生成GIF」）
   writeFileSync(join(dir, '生成gif_20260726_123000.html'), 'x');
   assert.equal(htmlFileName('生成GIF', { dir, now }), '生成GIF_20260726_123000_2.html', '命令名段大小写不敏感');
-  // CLI 端到端：预置 10 个大写扩展名 → 落点 _2，种子内容不变，目录条目 = 种子 10 ＋ 产物 1
+  // CLI 端到端：预置 10 个大写扩展名 → 落点后缀跟文件系统能力，种子内容不变，目录条目 = 种子 10 ＋ 产物 1。
+  // 单测段（上）锁命名口径（跨平台一致的大小写不敏感计数），本段锁真实落盘实效：大小写不敏感
+  // （Windows）上 `wx` 建小写同名即 EEXIST → 递补 `_2`；大小写敏感（Linux）上小写名是另一个
+  // 目录项 → 一次成功、无后缀。两种都是对的，各自严格断言（不放宽）。
   const cliDir = tmpDbDir('case-cli');
   const html = join(cliDir, HTML_DIR_NAME);
   mkdirSync(html, { recursive: true });
+  const probe = join(html, 'CaSePrObE.tmp');
+  writeFileSync(probe, 'x');
+  const caseInsensitive = existsSync(join(html, 'caseprobe.tmp'));
+  unlinkSync(probe);
   const seeds = [];
   for (let i = 0; i < 10; i++) {
     const s = formatStamp(new Date(Date.now() + i * 1000));
@@ -195,7 +202,10 @@ test('#87 ④b 同秒计数大小写不敏感（旧 glob 在 Windows 走 normcas
   }
   const env = runOk(cliDir, [KEY, '--params', JSON.stringify(PARAMS)]);
   const name = basename(env.data.output);
-  assert.match(name, new RegExp('^' + TITLE + '_' + STAMP_RE + '_2\\.html$'), '实际落点：' + name);
+  assert.match(name, caseInsensitive
+    ? new RegExp('^' + TITLE + '_' + STAMP_RE + '_2\\.html$')
+    : new RegExp('^' + TITLE + '_' + STAMP_RE + '\\.html$'),
+  '实际落点：' + name + '（文件系统大小写' + (caseInsensitive ? '不' : '') + '敏感）');
   const stamp = name.slice(TITLE.length + 1, TITLE.length + 16);
   assert.ok(seeds.includes(stamp), '落点秒须在预置窗口内：' + name);
   assert.equal(readFileSync(join(html, TITLE + '_' + stamp + '.HTML'), 'utf8'), 'SEED', '大写种子不得被覆盖');
