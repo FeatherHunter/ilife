@@ -6,6 +6,8 @@
  *
  * 版式（照老页 `workout_plan_view.html` 那套行内排版，规格 `docs/skills/skill-calorie/t351-redesign-184-spec.md` §二）：
  *   动作（加粗动作名 ＋ 块级副行小字「部位细化词 · 主要／孤立」）｜部位｜组数×次数｜重量
+ * 副行第一段（部位细化词）里若混着类型裸词（生产库 24 个动作写成 `背 iso 主`／`背 iso 补充`，与该行
+ * `type=iso` 同值），按 `detailWord()` 中文化并去掉与第二段同字的那个词——页面上不出现 `main`／`iso`。
  * 节奏不进表：生产库 96 个有动作的场次**场内节奏 96/96 恒定**，摆成列就是整列重复，故由 `tempoOf()`
  * 交给会话标题行（休息日无表、无节奏）。
  *
@@ -66,11 +68,24 @@ function splitNote(note: string | undefined): { detail: string; tempo: string } 
   return { detail: bracket[1].trim(), tempo: comma === -1 ? '' : bracket[2].slice(comma + 1).trim() };
 }
 
+/** 部位细化词里的类型裸词：生产库确有备注写成 `背 iso 主`／`背 iso 补充`（24 个动作，24/24 与该行
+ *  `type=iso` 同值）——那截里的裸词跟副行第二段的类型是**同一件事**，照原样印既出英文又重复。
+ *  处置：先把裸词按同一张表中文化，再删掉那个与第二段**同字**的词；其余逐字保留、不吞。
+ *  例：`背 iso 主` → `背 主`（副行读作「背 主 · 孤立」）；`背 iso 补充` → `背 补充`；`胸整体` 一字不动。 */
+function detailWord(raw: string, typeZh: string): string {
+  const words = raw.split(/\s+/).filter((w) => w !== '').map((w) => TYPE_ZH[w] ?? w);
+  if (typeZh !== '') {
+    const dup = words.indexOf(typeZh);
+    if (dup >= 0) words.splice(dup, 1);
+  }
+  return words.join(' ');
+}
+
 /** 副行：部位细化词 · 类型中文化（两项都空就不出副行）；块级小字走共用位的口径说明行。 */
 function subLine(m: PlanMovement): string {
   const type = cell(m.type);
   const zh = type === DASH ? '' : TYPE_ZH[type] ?? type;
-  const bits = [splitNote(m.note).detail, zh].filter((t) => t !== '');
+  const bits = [detailWord(splitNote(m.note).detail, zh), zh].filter((t) => t !== '');
   return bits.length === 0 ? '' : renderCaliberLine(bits.join(' · '));
 }
 

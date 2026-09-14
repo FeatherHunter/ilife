@@ -29,6 +29,7 @@
 - **节奏上移会话标题行**（不进表）：老页 `:2062` 把 `note` 整条塞进副行，本轮把备注拆三段——方括号**前**那截（形如 `胸整体`）＝部位细化词进副行；方括号**内**逗号**之后**那截（形如 `20-30 RPM(2-2.5秒/次)`）＝节奏，上移到该场 `<summary>` 尾部，读作 `周一 · 10:00–11:30 · 上午·胸·3角度 · 13 组 · 节奏 20-30 RPM(2-2.5秒/次)`；方括号**内**逗号**之前**那截（形如 `W1 10reps×35.0kg`）**丢掉**。没有方括号的备注整条作部位细化词；备注为空或 `—` 时副行只留类型中文化那一项。休息日没有动作表，标题不加节奏。
 - 拆两段的依据（生产库 `workout_plans.movements` 264 个动作全量实测，两条都是 **264/264**）：① 方括号内逗号之前那截与**同行** `sets` 逐字一致 ⇒ 丢了不丢信息；② 方括号内的 `W<n>` **恒等于**该行所在周次（分布 66／66／66／66）⇒ 丢了也不丢信息。**节奏摆成一列会整列重复**：96 个有动作的场次里**场内节奏 96/96 恒定**（全库只有 3 种取值），故只上会话标题行。
 - 类型中文化：`type` 取值域只有两种（生产库实测 `iso`×204 →「孤立」、`main`×60 →「主要」），页面上不出现英文原值；清单外的值原样输出，不吞。
+- **细化词里混着类型裸词时**（生产库实测 24 个动作写成 `背 iso 主`／`背 iso 补充`，24/24 与该行 `type=iso` 同值）：先把裸词按同一张表中文化，再删掉那个与副行第二段**同字**的词，其余逐字保留 ⇒ 副行读作 `背 主 · 孤立`／`背 补充 · 孤立`。依据是同一句话不许印两遍英文原值（正文零 `main`／`iso` 裸词）。
 - 交互态：周页签激活＝主色＋下划线（`:523-526`）；日页签激活＝深底白字（`:554-556`）；`.week` 非激活隐藏（`:527-529`）。
 - 区块接口：标题 `renderPageShell`、指标 `renderKpiGrid`、表 `renderDataTable`（`align:'right'`）、折叠 `renderDisclosure`、副行小字 `renderCaliberLine`（共用位现成的 12px ＋ `--fg2`，达 AA 对比度；原型里的 `#86868b` 正文小字因 3.62:1 不达标，已被共用样式表否掉）。部位色块与混排单元格共享区块无接口 → 本轮降级为纯文本，或另立公共层票。
 
@@ -65,10 +66,10 @@
 | `movements[].name` | `PlanMovement.name`（`:36`） | 一致 |
 | `movements[].part` | `PlanMovement.part`（`:37`） | 一致 |
 | `movements[].type` | `PlanMovement.type`（`:38`） | 一致 |
-| `movements[].note` | 缺（`PlanMovement` 未声明，`:35-40`） | 缺 |
+| `movements[].note` | `PlanMovement.note?: string`（`planStore:39-40`） | 一致（方括号拆段见 §二） |
 | `movements[].rest` | 缺（老页载荷亦无此键） | 缺 |
-| `movements[].sets[]`（长度即组数） | `PlanMovement.sets?: unknown[]`（`:39`） | 一致（未类型化） |
-| `sets[].reps`／`weight`／`unit` | 缺（`sets` 元素无字段类型，须渲染层收窄） | 缺 |
+| `movements[].sets[]`（长度即组数） | `PlanMovement.sets?: { reps; weight; unit }[]`（`planStore:41-42`） | 一致（已类型化） |
+| `sets[].reps`／`weight`／`unit` | `sets` 元素三键（`planStore:42`） | 一致（「组数×次数」「重量」两列用它） |
 | `data.current_week` | 缺（可用 `weekOfDate(start_date, 今天)` 自算，`planPlate:32`） | 缺 |
 | `data.mode` | 缺（新侧由命令决定，不进载荷） | 缺 |
 | `data.meta.source`／`wake_word`／`generated_at` | 缺（页脚来源行改由 `opts.key`／`command`／`wakeWord` 与 `nowStamp()` 拼，`workoutPlanDocs:114-119`） | 缺 |
@@ -76,4 +77,4 @@
 | `data.scene.snapshot.*` | 缺（复制数据载荷，见 §4） | 缺 |
 | `data.copy_log.*` | `CopyLogFields` 可映射（见 §4） | 可映射 |
 
-**「缺」字段清单**：`config.version`、`config.description`、`config.start_date`、`days[].day_label`、`movements[].note`、`movements[].rest`、`sets[].reps`、`sets[].weight`、`sets[].unit`、`current_week`、`mode`、`meta.source`／`meta.wake_word`／`meta.generated_at`、`review.today.*`、`scene.snapshot.*`。
+**「缺」字段清单**：`config.version`、`config.description`、`config.start_date`、`days[].day_label`、`movements[].rest`、`current_week`、`mode`、`meta.source`／`meta.wake_word`／`meta.generated_at`、`review.today.*`、`scene.snapshot.*`。
