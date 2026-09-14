@@ -17,6 +17,8 @@ export const BODY_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 243, wakeWord: '看体脂趋势', scene: '08', kind: 'exec', key: 'calorie.view.body-composition', cli: 'calorie-cmd-read calorie.view.body-composition --params \'{"days":90}\'' },
   { list: 'wake', order: 244, wakeWord: '看围度', scene: '08', kind: 'exec', key: 'calorie.view.body-measure', cli: 'calorie-cmd-read calorie.view.body-measure' },
   { list: 'wake', order: 245, wakeWord: '看围度趋势', scene: '08', kind: 'exec', key: 'calorie.view.body-measure', cli: 'calorie-cmd-read calorie.view.body-measure --params \'{"days":90}\'' },
+  { list: 'wake', order: 246, wakeWord: '对比体脂', scene: '08', kind: 'exec', key: 'calorie.view.body-composition-compare', cli: 'calorie-cmd-read calorie.view.body-composition-compare --params \'{"period1Start":"2026-09-05","period1End":"2026-09-05","period2Start":"2026-09-07","period2End":"2026-09-07"}\'' },
+  { list: 'wake', order: 247, wakeWord: '对比围度', scene: '08', kind: 'exec', key: 'calorie.view.body-measure-compare', cli: 'calorie-cmd-read calorie.view.body-measure-compare --params \'{"date1":"2026-09-05","date2":"2026-09-07"}\'' },
   { list: 'wake', order: 248, wakeWord: '删体脂', scene: '08', kind: 'exec', key: 'calorie.body.composition-remove', cli: 'calorie-cmd-read calorie.body.composition-remove --params \'{"id":1}\'' },
   { list: 'wake', order: 249, wakeWord: '删围度', scene: '08', kind: 'exec', key: 'calorie.body.measure-remove', cli: 'calorie-cmd-read calorie.body.measure-remove --params \'{"id":1}\'' },
   { list: 'new', order: 24, wakeWord: '看体成分', scene: '08', kind: 'exec', key: 'calorie.view.body-composition', cli: 'calorie-cmd-read calorie.view.body-composition' },

@@ -7,15 +7,16 @@
  *   记身体细节＝`calorie.body.composition-add`／`calorie.body.measure-add`；
  *   看身体细节＝`calorie.view.body-composition`／`calorie.view.body-measure`；
  *   删身体细节＝`calorie.body.composition-remove`／`calorie.body.measure-remove`；
- *   向导（看体脂向导／看围度向导）＝`calorie.view.composition-wizard`／`calorie.view.measure-wizard`。
- * 「对比身体细节」那一组的唤醒词（对比体脂／对比围度）今天**没有**单命令同形（渲染层有对比页、CLI 侧未接线），
- * 故不在这里声明——它们的路由记录仍整组迁进本能力的 `routes.ts`，逐字保留 `non-exec` 口径。
+ *   向导（看体脂向导／看围度向导）＝`calorie.view.composition-wizard`／`calorie.view.measure-wizard`；
+ *   比身体细节（#355 接线）＝`calorie.view.body-composition-compare`／`calorie.view.body-measure-compare`
+ *  （取数走 `body/compare.ts`，路由 `order 246/247` 由 `non-exec` 转 `exec`）。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { writeCompositionAdd, writeMeasureAdd } from './log.js';
 import { writeCompositionRemove, writeMeasureRemove } from './remove.js';
 import { viewBodyComposition, viewBodyMeasure } from './view.js';
 import { viewCompositionWizard, viewMeasureWizard } from './wizard.js';
+import { viewBodyCompositionCompare, viewBodyMeasureCompare } from './compare.js';
 
 export const BODY_COMMANDS = [
   { kind: 'write', key: 'calorie.body.composition-add', shape: 'receipt', title: '记体脂', wakeWord: '记体脂', run: writeCompositionAdd, example: 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5}\'' },
@@ -26,4 +27,6 @@ export const BODY_COMMANDS = [
   { kind: 'read', key: 'calorie.view.body-measure', shape: 'stat', title: '围度看', run: viewBodyMeasure, example: 'calorie-cmd-read calorie.view.body-measure --params \'{"metric":"waist_cm"}\'' },
   { kind: 'read', key: 'calorie.view.composition-wizard', shape: 'stat', title: '体脂向导', wakeWord: '看体脂向导', run: viewCompositionWizard, example: 'calorie-cmd-read calorie.view.composition-wizard' },
   { kind: 'read', key: 'calorie.view.measure-wizard', shape: 'stat', title: '围度向导', wakeWord: '看围度向导', run: viewMeasureWizard, example: 'calorie-cmd-read calorie.view.measure-wizard' },
+  { kind: 'read', key: 'calorie.view.body-composition-compare', shape: 'stat', title: '体脂对比', wakeWord: '对比体脂', run: viewBodyCompositionCompare, example: 'calorie-cmd-read calorie.view.body-composition-compare --params \'{"period1Start":"2026-09-05","period1End":"2026-09-05","period2Start":"2026-09-07","period2End":"2026-09-07"}\'' },
+  { kind: 'read', key: 'calorie.view.body-measure-compare', shape: 'stat', title: '围度对比', wakeWord: '对比围度', run: viewBodyMeasureCompare, example: 'calorie-cmd-read calorie.view.body-measure-compare --params \'{"date1":"2026-09-05","date2":"2026-09-07"}\'' },
 ] satisfies readonly CommandSpec[];

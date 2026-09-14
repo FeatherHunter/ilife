@@ -236,3 +236,24 @@ export function compareCompositions(db: DatabaseSync, fromDate: string, toDate: 
     ? Math.round((after.avg_pct - before.avg_pct) * 100) / 100 : null;
   return { source: src, before, after, delta };
 }
+
+/** #355 · 体脂显式区间均值（对比体脂两段各调一次，与 `compareCompositions` 同一表同一口径）。
+ *
+ * 只做一件事：闭区间 `[start, end]` 内 `AVG/MIN/COUNT`；`source` 给了即按源滤，
+ * 不给即全源（对比页调用方显式传源或缺省全源，不沿用 `latestSource` 暗口径）。
+ */
+export function avgCompositionInRange(
+  db: DatabaseSync,
+  start: string,
+  end: string,
+  source?: string,
+): { avg_pct: number | null; min_pct: number | null; n: number } {
+  const base = `SELECT AVG(body_fat_pct) AS avg_pct,
+    MIN(body_fat_pct) AS min_pct, COUNT(*) AS n FROM body_composition
+    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ? AND date <= ?`;
+  if (source === undefined) {
+    return db.prepare(base).get(start, end) as { avg_pct: number | null; min_pct: number | null; n: number };
+  }
+  return db.prepare(base + ' AND source = ?').get(start, end, source) as
+    { avg_pct: number | null; min_pct: number | null; n: number };
+}
