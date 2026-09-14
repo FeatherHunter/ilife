@@ -427,10 +427,10 @@ function renderComparePage(core: CompareCore): string {
   parts.push(renderSegmentsTable(a, b, core.caption(delta, rhythm)));
   if (core.extraRows.length > 0) {
     // 标签进 `main`（宽列）、值进 `right`：`left` 只有 44px（给 ▲／▼／— 这类标记用），
-    // 「历史平均突破耗时」这类标签塞进去会逐字换行。`left: ''` 占位——列表行栅格是
-    // `44px / 1fr / auto` 自动排布，省略 `left` 会让 `main` 落进 44px 那列。
+    // 「历史平均突破耗时」这类标签塞进去会逐字换行。**不给 `left`**——组件会给这类行加
+    // `-no-left` 修饰类、那一列不占位。
     parts.push(renderListRows({
-      items: core.extraRows.map((e) => ({ left: '', main: e.label, right: e.value })),
+      items: core.extraRows.map((e) => ({ main: e.label, right: e.value })),
       emptyText: '无补充对照',
     }));
   }

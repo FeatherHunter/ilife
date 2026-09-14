@@ -691,9 +691,14 @@ export function renderListRows(input: ListRowsInput): string {
     const row = item as ListRowInput;
     const main = reqText(row.main, field + '.main');
     const done = row.done === true;
-    const cls = blockPart('listRows', 'row') + (done ? ' ' + blockPart('listRows', 'row-done') : '');
     const left = optText(row.left);
     const right = optText(row.right);
+    // 没给 `left` 时**不占那一列**：`44px` 那列是给 `▲`／`▼`／`—` 这类标记用的，而栅格是自动排布——
+    // 若仍按三列排，`main` 会落进 44px 那列、被 `nowrap` ＋ `ellipsis` 截断（#154 实测：备注标签
+    // 「晨起空腹」显示成「晨起…」）。修饰类只改列定义，不动任何既有行。
+    const cls = blockPart('listRows', 'row')
+      + (done ? ' ' + blockPart('listRows', 'row-done') : '')
+      + (left === undefined ? ' ' + blockPart('listRows', 'row-no-left') : '');
     return '<div class="' + cls + '">'
       + (left === undefined ? '' : '<span class="' + blockPart('listRows', 'left') + '">' + esc(left) + '</span>')
       + '<span class="' + blockPart('listRows', 'main') + '">' + esc(main) + '</span>'
@@ -1534,6 +1539,11 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-list-rows-row:first-child {',
     '  border-top: 0;',
+    '}',
+    // 没给 `left` 的行：#154 加的形态——**不占标记列**（`44px` 是给 `▲`／`▼`／`—` 用的）。
+    // 不给这条规则的话，缺 `left` 的行里 `main` 会落进 44px、被 `nowrap` ＋ `ellipsis` 截断。
+    '.' + p + 'block-list-rows-row-no-left {',
+    '  grid-template-columns: minmax(0, 1fr) auto;',
     '}',
     '.' + p + 'block-list-rows-left {',
     '  color: var(--fg3);',

@@ -553,11 +553,9 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
   ])];
   /* 一行一条读法走列表行区块（§2 #14），不再用数据表；空句自带口径。 */
   // `left` 只有 44px（是给 ▲／▼／— 这类标记用的），10 个字符的日期塞进去会被挤成两行 ⇒
-  // 日期并进 `main`（宽列）当行首，`left: ''` 占位（列表行栅格 `44px / 1fr / auto` 自动排布，
-  // 省略 `left` 会让 `main` 落进 44px 那列）。
+  // 日期并进 `main`（宽列）当行首，**不给 `left`**（组件给这类行加 `-no-left` 修饰类、那一列不占位）。
   parts.push(renderListRows({
     items: v.hits.map((m) => ({
-      left: '',
       main: m.date + ' · ' + m.name + ' · ' + m.kg + ' kg',
       right: '距首条 ' + m.elapsedDays + ' 天',
     })),
