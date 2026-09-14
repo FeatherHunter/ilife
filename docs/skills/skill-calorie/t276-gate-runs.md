@@ -19,7 +19,7 @@
 | 8 | `3541c59e-a67c-47f7-bca2-05e0740a4467` | `node .scratch/t276/run-full.mjs` | 0 | 90012ms | 全量测试读数（**说明**：本脚本按设计只报读数不传播退出码，故记账为 0；`pnpm test` 自身 exit=1，读数 tests 1616／pass 1588／fail 28，逐条归因见证据件 §5.6） |
 | 9 | `c16743c7-b9f0-4b77-a20c-0b315f4c74cc` | `node .scratch/t276/commit-p2.mjs` | 1 | 10001ms | **未提交**：守卫「看共用索引」被他席暂存件触发假阳性；**未动他人索引**，脚本改为「看这一笔实际提交了什么」后重开窗 |
 | 10 | `9eefc93e-2bec-44a9-97c0-f85fd2770fe9` | `node .scratch/t276/commit-p2.mjs` | 0 | 110010ms | **提交并推送成功**：`bf274e6`（`b646d6f..bf274e6 master -> master`），入账恰 7 件，经 `git show --name-only bf274e6` 复核 |
-| 11 | （见第二笔） | `node .scratch/t276/commit-p2b.mjs` | 0 | — | 证据件回填提交（§5.8 sha 与共享索引说明、本表第 9／10 行） |
+| 11 | `1ed12204-9d1b-4353-80c3-8c09690ec40d` | `node .scratch/t276/commit-p2b.mjs` | 0 | 50004ms | 第二笔：证据件回填（`3e33048`，`bf274e6..3e33048 master -> master`），入账 2 件 |
 
 ## 二、一阶段（前席窗口，UTC 04:03—05:06；已在其证据件 §三 报告）
 
