@@ -241,22 +241,47 @@ export interface AddedPhoto {
   file: string;
 }
 
-/** 存照片回执：单张/含备注/批量（items 逐张状态由调用方按 T4 addPhotos 结果组装）。 */
+/** 没落库的源文件：`addPhotos` 跳过不存在的源文件（`photos.ts:155` 同一判据，装配当刻按同一
+ *  条件复算），故逐张失败行能点名是哪一个文件、为什么没进来。 */
+function missingSourcesOf(srcPaths: readonly string[] | undefined): string[] {
+  if (srcPaths === undefined || srcPaths.length === 0) return [];
+  return srcPaths.filter((p) => {
+    try {
+      return !existsSync(p);
+    } catch {
+      return true;
+    }
+  });
+}
+
+/** 存照片回执：单张/含备注/批量（items 逐张状态由调用方按 T4 addPhotos 结果组装）。
+ *
+ * #476 两处修正：
+ * - **失败张逐张上页**：以前失败的不进 `items`（`addPhotos` 直接跳过），逐张状态恒「成功」，
+ *   页面只在摘要给个数字——现在按 `srcPaths` 复算缺哪些，逐条以 `status:'失败'` ＋ `reason`
+ *   入 items（点名源文件），页面逐张印出。
+ * - **`distance` 真传进回执**：原来只在摘要里印，`buildCrudReceipt` 没收到这一位，专用卡恒是死支。
+ *   摘要里那句同时删掉（同一件事不再印两遍），改由页面上的独立小卡说。 */
 export function buildAddReceipt(
   added: AddedPhoto[],
-  opts: { tag: string; note?: string; distance?: PhotoDistance | null; failedCount?: number },
+  opts: { tag: string; note?: string; distance?: PhotoDistance | null; failedCount?: number; srcPaths?: readonly string[] },
 ): CrudReceipt {
   const scene = added.length > 1 ? '批量存照片' : (opts.note ? '存照片（含备注）' : '存一张照片');
+  const missing = missingSourcesOf(opts.srcPaths);
+  const failedCount = missing.length > 0 ? missing.length : (opts.failedCount ?? 0);
   let summary = '已存入 ' + added.length + ' 张身材照';
-  if (opts.distance) summary += '；距上次「' + opts.distance.tag + '」照已隔 ' + opts.distance.days + ' 天';
-  if (opts.failedCount) summary += '，' + opts.failedCount + ' 张未存入';
+  if (failedCount > 0) summary += '，' + failedCount + ' 张未存入';
   return buildCrudReceipt({
     scene,
     action: 'add',
     op: 'create',
     recordId: added.length > 0 ? (added[0]?.id ?? null) : null,
     summary,
-    items: added.map((a) => ({ id: a.id, file: a.file, status: '成功', reason: '' })),
+    items: [
+      ...added.map((a) => ({ id: a.id, file: a.file, status: '成功', reason: '' })),
+      ...missing.map((p) => ({ file: basename(p), status: '失败', reason: '源文件不存在（或读不到）' })),
+    ],
+    distance: opts.distance ?? null,
     wakeWord: '记身材照',
     source: 'body_photos (写库回执)',
   });
@@ -267,6 +292,10 @@ export function buildAddReceipt(
  * #101 删除可恢复性口径：`body_photos` 走 `DELETE FROM` ＋ 删文件，属**硬删除**，
  * 故文案必须显式标注「硬删除，不可恢复」；软删除键（行保留）一律**不承诺可恢复**
  * （全仓 0 个 restore/undo/recover 入口），词条与 `items[].status` 同源。
+ *
+ * #476：这两串是**机器口径**——写链三源一致判据钉着它们（`cmd-write-40-persist` 比
+ * prose／items[].status／库内行三处），本票一字不改；页面可见文本改词「永久删除，无法恢复」
+ * 且全页只留 1 处，由 `receipt.ts` 自写副标题与状态句承担（页面不再直接印这两串）。
  */
 export function buildDeleteReceipt(snapshot: PhotoRow): CrudReceipt {
   const tags = [...snapshot.tag_list].join('、') || '无标签';

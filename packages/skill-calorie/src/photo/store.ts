@@ -37,7 +37,8 @@ export function writePhotoAdd(params: Record<string, unknown>, db: DatabaseSync)
   } catch {
     distance = null;
   }
-  const receipt = withM5(buildAddReceipt(added, { tag, note, distance, failedCount: srcPaths.length - added.length || undefined }), {
+  // #476：把源文件清单交给回执层——失败张要点名上页（原来只传个数，页上看不见是哪张）。
+  const receipt = withM5(buildAddReceipt(added, { tag, note, distance, srcPaths }), {
     ids: added.map((a) => a.id), writtenFields: [...F.photo],
     affectedRows: totalChanges(db) - before,
   });
