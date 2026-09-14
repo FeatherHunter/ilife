@@ -6,7 +6,9 @@
  *     （`卡路里_HELP_<TS>.html`，与老技能同名同视觉——地图目的地①②就落在这一支）；
  *   显式 `mode`＝#88 全量速查台三态（`file`／`inline`／`text`，内容与语义逐字不变），
  *     落 `卡路里_速查台_<TS>.html`（与 HELP 文件分名，两份产物不撞车）。
- * D6：`mode` 不靠猜、不从别的参数推，非法值即 exit 2；`q`＝照片 10 键现找（既有语义逐字不变）。
+ * D6：`mode` 不靠猜、不从别的参数推，非法值即 exit 2；`q`＝照片 10 键现找（命中口径与信封一字不变）。
+ * #488：`q` 支的**装配**换成整页件 `photo/helpDoc.ts`（改前走 `render/html.ts:215` 的老片段：
+ * 无 doctype／无样式段／裸 `<pre>`，三档横向溢出 +844／+1636／+964）；`data` 与 `target` 不动。
  * 本件与同目录 `wizard.ts`／`gallery.ts` 等一样是纯搬迁：`case` 与局部函数 `helpCenterIndex`
  * 逐字搬自旧分派层 `cli/cmd_read.ts`（#314，行为不变），只换了住处。
  */
@@ -19,7 +21,7 @@ import { HELP_CENTER_MODES, buildHelpSceneData, renderHelpCenterHtml } from './h
 import type { HelpCenterMode } from './helpCenter.js';
 import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from './helpFile.js';
 import { HELP_HTML_DIR_NAME, SHEET_FILE_STEM } from './helpPaths.js';
-import { renderPhotoHelpHtml } from '../render/html.js';
+import { buildPhotoHelpDoc } from './helpDoc.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { fail, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
@@ -67,9 +69,11 @@ export function viewPhotoHelpCenter(params: Record<string, unknown>): ViewOut {
     if (photoLookup && hits.length === 0) throw new CalorieRenderError('missing-data', 'HELP 无命中：' + q);
     const items = hits.map((h) => ({ wakeWord: h.wakeWord, key: h.key, desc: h.desc, exec: h.exec }));
     // #245：给这支**自己的主体**（与主 HELP 分名）⇒ 它这才吃复用窗口，且不与主 HELP／业务命令互相顶掉。
+    // #488：装配改走整页件 `photo/helpDoc.ts`（改前是 `render/html.ts:215` 的老片段——
+    // 无 doctype／无样式段／裸 `<pre>`，三档横向溢出 +844／+1636／+964）。信封与落点**一字不动**。
     return {
       data: { items, total: items.length },
-      html: renderPhotoHelpHtml(hits, q),
+      html: buildPhotoHelpDoc(hits, q),
       target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: PHOTO_HELP_FILE_STEM },
     };
   }

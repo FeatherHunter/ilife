@@ -8,6 +8,10 @@
  *     口径；速查台本体（#88／#106／#107）内容与三态语义一字未动，只是不再占缺省位。
  *  ② 照片 10 键不回归：`q` 非空＝现找（3 命中）、`q:""`＝全量 10 键，`data` 键集恒 `items/total`（＋落点），
  *     落盘产物仍带复制按钮与页面运行时（#90 接线未被本票破坏）。
+ *     **#488 口径变更（2026-09-15）**：该支产物由**片段**切成**整页**（`assembleDocPage`：doctype ＋
+ *     样式段 ＋ 脚本段），页尾多一颗复制区按钮——故下文「按钮数＝命中数」改成「命中数 ＋ 复制区那一颗」，
+ *     「页里没有 `<!DOCTYPE`」改成「页是完整文档」。改前那两条锁的是老片段形状（#341 起整页化是既定方向，
+ *     见 `docs/skills/skill-calorie/t341-页面形状.md`），本票按新口径改写并留负向牙齿。
  *  ③ envelope 全字段＝`version/skill/shape/key/data`（**无 `status`**，Q8），`data` 只回索引＋落点＋字节数，
  *     不把 1 MB 产物塞进 envelope（`inline` 片段亦不入 envelope）。
  *  ④ 参数纪律：`q` 与 `mode` 互斥（exit 2）、`mode` 非法／非字符串 exit 2（D6 显式且被校验）。
@@ -209,11 +213,21 @@ test('#91 ③ 照片 10 键兼容：q 现找／q:"" 全量，data 键集与产�
   assert.deepEqual(Object.keys(lookup.env.data), ['items', 'total', 'output'], '照片路径 data 键集不回归（output 由出口追加）');
   assert.deepEqual(Object.keys(lookup.env.data.items[0]), ['wakeWord', 'key', 'desc', 'exec']);
   const photoHtml = readFileSync(lookup.env.data.output, 'utf8');
-  assert.equal(countOf(photoHtml, 'data-action-id="'), lookup.env.data.total, '每行一个复制按钮');
+  // #488 口径变更：该产物已是整页（改前是片段），页尾多一颗复制区按钮。
+  // 新口径＝「每条命中一颗可复制命令块按钮 ＋ 复制区一颗」；负向牙齿见下两行（摘掉一行命中即不等）。
+  const buttonCount = (html) => countOf(html, 'data-action-id="');
+  const expectedButtons = lookup.env.data.total + 1;
+  assert.equal(buttonCount(photoHtml), expectedButtons, '每条命中一颗复制按钮 ＋ 复制区一颗');
+  const oneRowLess = photoHtml.replace(/<li data-help-row[\s\S]*?<\/li>/, '');
+  assert.notEqual(oneRowLess, photoHtml, '负向自查未生效（没摘掉命中行）');
+  assert.notEqual(buttonCount(oneRowLess), expectedButtons, '负向牙齿失效：摘掉一行命中后按钮数竟然不变');
   assert.ok(photoHtml.includes(COPY_RUNTIME_JS), '页面运行时仍在（#90 接线）');
   const exec = buildPhotoHelp().find((h) => h.wakeWord === '记身材照').exec;
   assert.ok(decodeEntities(photoHtml).includes(exec), 'data-t 逐字等于该行 CLI');
-  assert.equal(countOf(photoHtml, '<!DOCTYPE'), 0, '照片页仍是片段（形态不回归）');
+  // #488 口径变更：改前这里断言「照片页仍是片段（`<!DOCTYPE` 计数 0）」；整页装配后反了过来。
+  assert.ok(photoHtml.startsWith('<!doctype html>'), '#488：照片页应是整页（改前断言它「仍是片段」）');
+  assert.match(photoHtml, /<style[\s\S]*?<\/style>/i, '#488：整页须带样式段');
+  assert.match(photoHtml, /<script[\s\S]*?<\/script>/i, '#488：整页须带脚本段');
 
   const all = runOk(dir, { q: '' });
   assert.equal(all.env.data.total, 10, 'q:"" ＝照片全量 10 键');
