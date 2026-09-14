@@ -9,16 +9,16 @@
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
 export const WORKOUT_ROUTES: readonly RouteDecl[] = [
-  { list: 'wake', order: 176, wakeWord: '看本周计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
-  { list: 'wake', order: 177, wakeWord: '看下周计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
-  { list: 'wake', order: 178, wakeWord: '看上周计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
-  { list: 'wake', order: 179, wakeWord: '看指定周计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
+  { list: 'wake', order: 176, wakeWord: '看本周计划', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"weekOffset":0}\'' },
+  { list: 'wake', order: 177, wakeWord: '看下周计划', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"weekOffset":1}\'' },
+  { list: 'wake', order: 178, wakeWord: '看上周计划', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"weekOffset":-1}\'' },
+  { list: 'wake', order: 179, wakeWord: '看指定周计划', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"week":1}\'' },
   { list: 'wake', order: 180, wakeWord: '看今天练什么', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"date":"今日"}\'' },
-  { list: 'wake', order: 181, wakeWord: '看某动作安排', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
-  { list: 'wake', order: 182, wakeWord: '看某天练什么', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
+  { list: 'wake', order: 181, wakeWord: '看某动作安排', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"movement":"硬拉"}\'' },
+  { list: 'wake', order: 182, wakeWord: '看某天练什么', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan --params \'{"date":"今日"}\'' },
   { list: 'wake', order: 183, wakeWord: '看计划概览', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan' },
   { list: 'wake', order: 184, wakeWord: '看完整计划', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan' },
-  { list: 'wake', order: 185, wakeWord: '看计划 vs 实际', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。' },
+  { list: 'wake', order: 185, wakeWord: '看计划 vs 实际', scene: '05', kind: 'exec', key: 'calorie.view.plan-vs-actual', cli: 'calorie-cmd-read calorie.view.plan-vs-actual --params \'{"window":"本周"}\'' },
   { list: 'wake', order: 186, wakeWord: '定训练计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },
   { list: 'wake', order: 187, wakeWord: '复制训练计划', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },
   { list: 'wake', order: 188, wakeWord: '定休息日', scene: '05', kind: 'non-exec', bucket: 'legacy-chain', reason: '命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。' },

@@ -26,8 +26,8 @@ export { buildWeightDashboard, buildWeightHistoryView, buildWeightCompareView, b
 export type { WeightDashboard, WeightHistoryView, WeightCompareView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasureView, buildBodyMeasureCompare } from '../body/bodyPlate.js';
 export type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
-export { buildPlanView, buildPlanWizardView, buildExerciseGoalView } from './planPlate.js';
-export type { PlanView, PlanWizardView, ExerciseGoalView } from './planPlate.js';
+export { buildPlanView, buildPlanWizardView, buildExerciseGoalView, buildPlanVsActualView } from './planPlate.js';
+export type { PlanView, PlanWizardView, ExerciseGoalView, PlanVsActualView } from './planPlate.js';
 export { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../goal/goalExtraPlate.js';
 export type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 export { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from './insightPlate.js';
@@ -59,6 +59,7 @@ export {
   renderBodyCompositionHtml,
   renderBodyMeasureHtml,
   renderPlanHtml,
+  renderPlanVsActualHtml,
   renderPlanWizardHtml,
   renderExerciseGoalHtml,
   renderGoalExpiringHtml,

@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 35 ＋ 读 66 ＝ 101 条。
+ * registry 合法键表：写 35 ＋ 读 67 ＝ 102 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -115,6 +115,7 @@ export const CALORIE_COMBOS = {
   'calorie.view.nutrition-ratio': { shape: 'stat' as EnvelopeShape, title: '营养配比' },
   'calorie.view.photo-log-wizard': { shape: 'stat' as EnvelopeShape, title: '身材照向导' },
   'calorie.view.plan': { shape: 'stat' as EnvelopeShape, title: '训练计划看' },
+  'calorie.view.plan-vs-actual': { shape: 'stat' as EnvelopeShape, title: '计划比实际' },
   'calorie.view.plan-wizard': { shape: 'stat' as EnvelopeShape, title: '构建向导' },
   'calorie.view.predict': { shape: 'stat' as EnvelopeShape, title: '体重预测' },
   'calorie.view.process-progress': { shape: 'stat' as EnvelopeShape, title: '落地训练进度' },

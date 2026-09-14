@@ -9,6 +9,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { getPlan, validatePlan } from '../workout/planStore.js';
 import type { PlanInput, PlanSessionRow } from '../workout/planStore.js';
+import { listWindow } from '../exercise/exerciseStore.js';
 import { buildExerciseReview } from '../analysis/exerciseReview.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from './errors.js';
@@ -27,22 +28,51 @@ export interface PlanView {
   totalMovements: number;
 }
 
-export function buildPlanView(db: DatabaseSync, opts: { dateISO?: string } = {}): PlanView {
+/** 日期 →（周,日）：周从 1 起，日 1＝周一..7＝周日（与计划库 day_of_week 同口径）。 */
+export function weekOfDate(startISO: string, dateISO: string): { week: number; dow: number } {
+  const toDay = (s: string): number => Date.parse(s + 'T12:00:00Z');
+  const diff = Math.round((toDay(dateISO) - toDay(startISO)) / 86400000);
+  const startMon0 = (new Date(toDay(startISO)).getUTCDay() + 6) % 7;
+  const idx = startMon0 + diff;
+  const week = Math.floor(idx / 7) + 1;
+  return { week, dow: idx - (week - 1) * 7 + 1 };
+}
+
+export interface PlanFilter {
+  dateISO?: string;
+  week?: number;
+  weekOffset?: number;
+  anchorISO?: string;
+  movement?: string;
+}
+
+export function buildPlanView(db: DatabaseSync, opts: PlanFilter = {}): PlanView {
   const plan = getPlan(db);
   if (!plan.config && plan.sessions.length === 0) {
     throw new CalorieRenderError('missing-data', '无训练计划（先定训练计划）');
   }
   let sessions = plan.sessions;
-  if (opts.dateISO !== undefined) {
+  if (opts.dateISO !== undefined || opts.week !== undefined || opts.weekOffset !== undefined) {
     const start = plan.config?.start_date ?? null;
-    if (!start) throw new CalorieRenderError('bad-input', '计划缺开始日期，无法定位该日是第几周第几天');
-    const toDay = (s: string): number => Date.parse(s + 'T12:00:00Z');
-    const diff = Math.round((toDay(opts.dateISO as string) - toDay(start)) / 86400000);
-    const startMon0 = (new Date(toDay(start)).getUTCDay() + 6) % 7;
-    const idx = startMon0 + diff;
-    const week = Math.floor(idx / 7) + 1;
-    const dow = idx - (week - 1) * 7 + 1;
-    sessions = sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
+    if (!start) throw new CalorieRenderError('bad-input', '计划缺开始日期，无法定位周次');
+    let week: number;
+    let dow: number | null = null;
+    if (opts.dateISO !== undefined) {
+      const w = weekOfDate(start, opts.dateISO);
+      week = w.week;
+      dow = w.dow;
+    } else if (opts.week !== undefined) {
+      week = opts.week;
+    } else {
+      week = weekOfDate(start, opts.anchorISO ?? start).week + (opts.weekOffset ?? 0);
+    }
+    sessions = sessions.filter((s) => s.week_number === week && (dow === null || s.day_of_week === dow));
+  }
+  if (opts.movement !== undefined && opts.movement !== '') {
+    const q = opts.movement;
+    sessions = sessions.filter((s) =>
+      (s.movements ?? []).some((m) => typeof m.name === 'string' && (m.name.includes(q) || q.includes(m.name))),
+    );
   }
   let movements = 0;
   for (const s of sessions) movements += Array.isArray(s.movements) ? s.movements.length : 0;
@@ -52,6 +82,73 @@ export function buildPlanView(db: DatabaseSync, opts: { dateISO?: string } = {})
     sessions,
     totalSessions: sessions.length,
     totalMovements: movements,
+  };
+}
+
+export interface PlanVsActualDay {
+  date: string;
+  planned: string[];
+  logged: string[];
+  missed: string[];
+  extra: string[];
+}
+
+export interface PlanVsActualView {
+  start: string;
+  end: string;
+  plannedCount: number;
+  doneCount: number;
+  completionRate: number | null;
+  days: PlanVsActualDay[];
+}
+
+/** 计划 vs 实际（口径唯一处）：同窗内，计划动作名与当日运动记录 `exercise_type` 双向包含即算命中；
+ * 范围超过 92 天拒收（逐日展开，防无界计算）。 */
+export function buildPlanVsActualView(
+  db: DatabaseSync,
+  range: { start: string; end: string },
+): PlanVsActualView {
+  const plan = getPlan(db);
+  if (!plan.config && plan.sessions.length === 0) {
+    throw new CalorieRenderError('missing-data', '无训练计划（先定训练计划）');
+  }
+  const start0 = plan.config?.start_date ?? null;
+  if (!start0) throw new CalorieRenderError('bad-input', '计划缺开始日期，无法定位周次');
+  const toDay = (s: string): number => Date.parse(s + 'T12:00:00Z');
+  const span = Math.round((toDay(range.end) - toDay(range.start)) / 86400000);
+  if (span < 0 || span > 92) throw new CalorieRenderError('bad-input', '对比范围须在 92 天内');
+  const loggedByDate = new Map<string, string[]>();
+  for (const r of listWindow(db, range.start, range.end)) {
+    const d = typeof r.date === 'string' ? r.date : null;
+    const t = typeof r.exercise_type === 'string' ? r.exercise_type : null;
+    if (!d || !t) continue;
+    if (!loggedByDate.has(d)) loggedByDate.set(d, []);
+    (loggedByDate.get(d) as string[]).push(t);
+  }
+  const days: PlanVsActualDay[] = [];
+  let plannedCount = 0;
+  let doneCount = 0;
+  for (let i = 0; i <= span; i += 1) {
+    const d = new Date(toDay(range.start) + i * 86400000).toISOString().slice(0, 10);
+    const { week, dow } = weekOfDate(start0, d);
+    const planned = plan.sessions
+      .filter((s) => s.week_number === week && s.day_of_week === dow)
+      .flatMap((s) => (s.movements ?? []).map((m) => m.name).filter((n): n is string => typeof n === 'string' && n !== ''));
+    const logged = loggedByDate.get(d) ?? [];
+    const hit = (name: string): boolean => logged.some((t) => t.includes(name) || name.includes(t));
+    const missed = planned.filter((n) => !hit(n));
+    const extra = logged.filter((t) => !planned.some((n) => t.includes(n) || n.includes(t)));
+    plannedCount += planned.length;
+    doneCount += planned.length - missed.length;
+    days.push({ date: d, planned, logged, missed, extra });
+  }
+  return {
+    start: range.start,
+    end: range.end,
+    plannedCount,
+    doneCount,
+    completionRate: plannedCount === 0 ? null : Math.round((doneCount / plannedCount) * 1000) / 10,
+    days,
   };
 }
 

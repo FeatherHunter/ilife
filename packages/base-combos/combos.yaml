@@ -429,6 +429,11 @@ combos:
     shape: stat
     title: 训练计划看
     cmd: skill-calorie
+  - key: calorie.view.plan-vs-actual
+    skill: calorie
+    shape: stat
+    title: 计划比实际
+    cmd: skill-calorie
   - key: calorie.view.plan-wizard
     skill: calorie
     shape: stat

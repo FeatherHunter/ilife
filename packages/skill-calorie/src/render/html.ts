@@ -24,7 +24,7 @@ import { copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
 import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 import type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
-import type { ExerciseGoalView, PlanView, PlanWizardView } from './planPlate.js';
+import type { ExerciseGoalView, PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
 import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';
 import type { ProfileView } from '../profile/view.js';
@@ -537,6 +537,23 @@ export function renderPlanHtml(v: PlanView): string {
     kpi('会话', v.totalSessions + ' 个', '动作 ' + v.totalMovements + ' 个') +
     '</div><div class="' + cx('grid') + '">' + sessions + '</div>';
   return pageShell('calorie', 'ilife:calorie:plan', '训练计划看', body);
+}
+
+export function renderPlanVsActualHtml(v: PlanVsActualView): string {
+  const rows = v.days
+    .filter((d) => d.planned.length > 0 || d.logged.length > 0)
+    .slice(0, 14)
+    .map((d) =>
+      kpi(d.date, '计划 ' + d.planned.length + ' 命中 ' + (d.planned.length - d.missed.length),
+        d.missed.length === 0 ? '全命中' : '漏 ' + d.missed.slice(0, 3).join('、')),
+    )
+    .join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('计划比实际', v.start + ' ~ ' + v.end, '完成 ' + v.doneCount + '/' + v.plannedCount) +
+    kpi('完成率', v.completionRate === null ? '—' : v.completionRate + '%', v.plannedCount === 0 ? '窗内无计划' : '') +
+    '</div><div class="' + cx('grid') + '">' + rows + '</div>';
+  return pageShell('calorie', 'ilife:calorie:plan-vs-actual', '计划比实际', body);
 }
 
 export function renderPlanWizardHtml(v: PlanWizardView): string {
