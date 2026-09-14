@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>样张 · 看今日热量预算（融合设计，不进生产）</title>
+<!--
+  这是 #401 融合设计的样张乙「看今日热量预算」（唤醒词 order 8，同走 calorie.view.home）。单文件、双击即看、不读库、无外部引用。
+  换题理由（设计第五节乙）：原「今日目标进度」属场景 06，它的页面装配住 packages/skill-calorie/src/render/html.ts 的
+  renderGoalProgressHtml，照原稿做必然撞本图红线；改成同属场景 01、同走 calorie.view.home 的这一页。
+  数据口径：固定种子库 SEED_TODAY=2026-09-07 的真实读数（今日与 30d 两个窗口取 .scratch/t375/products 的实测产品；
+  本周与 7d 两个窗口没有实测产品，一律走 — 与空态提示，不编数）。
+  样式口径：标记与类名逐字取已实施件——title 三件套／KPI 卡／空态走 packages/base-render/src/blocks.ts，
+  复制两颗按钮与菜单走 packages/base-render/src/controls.ts，页级基座与 token 块走 packages/skill-calorie/src/shared/docPage.ts。
+  样式段分两截，边界同生产：①共享样式段（token 块＋区块与控件规则）出配色与字号；②区块排布段只写框内排布。
+  本页不出深底常驻横幅，不出 @media print，不出与按钮同字的标题。
+-->
+<style>
+/* ═══ ① 共享样式段（token 块 ＋ 区块与控件规则；配色与字号只在这里出现） ═══ */
+:root {
+  --fg: #1d1d1f;
+  --fg2: #6e6e73;
+  --fg3: #86868b;
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --line: #d2d2d7;
+  --blue: #007aff;
+  --blue2: #0a63ce;
+  --soft: #f5f8ff;
+  --ok: #34c759;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 36px rgba(0,0,0,.06);
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.ilife-block-page-shell {
+  display: block;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+  color: var(--fg);
+  font-feature-settings: "tnum";
+}
+.ilife-block-page-shell-eyebrow {
+  margin: 0;
+  color: var(--blue2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.ilife-block-page-shell-title {
+  margin: 6px 0 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -.4px;
+  line-height: 1.2;
+}
+.ilife-block-page-shell-subtitle {
+  margin: 6px 0 0;
+  color: var(--fg2);
+  font-size: 15px;
+}
+.ilife-block-page-shell-body {
+  display: block;
+  margin-top: 16px;
+}
+.ilife-block-kpi-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.ilife-block-kpi-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.ilife-block-kpi-card-label {
+  color: var(--fg2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ilife-block-kpi-card-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 4px;
+}
+.ilife-block-kpi-card-value {
+  min-width: 0;
+  color: var(--fg);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.ilife-block-kpi-card-unit {
+  color: var(--fg2);
+  font-size: 13px;
+}
+.ilife-block-kpi-card-detail {
+  margin-top: 4px;
+  color: var(--fg2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.ilife-empty {
+  padding: 48px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  text-align: center;
+  color: var(--fg2);
+}
+.ilife-empty-icon {
+  font-size: 40px;
+  line-height: 1.2;
+  opacity: .5;
+}
+.ilife-empty-text {
+  margin-top: 8px;
+  color: var(--fg);
+  font-size: 17px;
+  font-weight: 600;
+}
+.ilife-empty-hint {
+  margin-top: 4px;
+  color: var(--fg3);
+  font-size: 13px;
+}
+.ilife-action-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  margin: 12px 0;
+  max-width: 520px;
+}
+.ilife-action-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ilife-action-row-ghost {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ilife-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--blue);
+  color: var(--card);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
+}
+.ilife-copy-btn-ghost {
+  border-color: rgba(0, 122, 255, 0.38);
+  background: var(--card);
+  color: var(--blue2);
+}
+.ilife-copy-btn.copied {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: var(--card);
+}
+.ilife-copy-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+@media (max-width: 820px) {
+  .ilife-copy-btn {
+    min-height: 44px;
+  }
+}
+.ilife-copy-menu-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.ilife-copy-menu-wrap > .ilife-copy-btn {
+  width: 100%;
+}
+.ilife-copy-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  min-width: 200px;
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .14);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .16s ease-out, visibility .16s ease-out;
+}
+.copy-menu-open.ilife-copy-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.ilife-copy-menu-item {
+  min-height: 40px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.ilife-copy-menu-item:hover {
+  background: var(--soft);
+}
+.ilife-copy-menu-item > .ilife-copy-menu-label {
+  color: var(--fg);
+  font-size: 13px;
+}
+.ilife-copy-menu-item > .ilife-copy-menu-hint {
+  color: var(--fg2);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.ilife-toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+.ilife-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-sizing: border-box;
+  min-width: 240px;
+  max-width: 480px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(28, 28, 30, .94);
+  color: #f0f0f0;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .32);
+  font-size: 12.5px;
+  line-height: 1.4;
+  pointer-events: auto;
+}
+.ilife-toast-close {
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+/* ═══ ② 区块排布段（只写框内排布；配色与字号一律不写） ═══ */
+.ilife-block {
+  display: block;
+  margin: 16px 0;
+}
+/* 预算主卡一张（剩余预算）＋ 收支小卡五张：主卡在前，窄屏落一列 */
+.ilife-block-page-shell-body > .ilife-block-kpi-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+/* 窗口切换（今日／本周／7d／30d）借用既有的卡片网格：四张等宽格，沿用同一条按钮底色 */
+.ilife-block-page-shell-body > #sec-window {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  max-width: 520px;
+}
+/* 完成度条的形状位（实施归 #418 公共层增量；本页只给槽位，不给色值） */
+.ilife-block-kpi-card-bar {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.ilife-block-kpi-card-bar-fill {
+  height: 100%;
+}
+@media (max-width: 640px) {
+  .ilife-block-kpi-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+</style>
+</head>
+<body>
+<div class="wrap ilife-page">
+<section class="ilife-block ilife-block-page-shell">
+  <p class="ilife-block-page-shell-eyebrow">calorie.view.home · 看今日热量预算</p>
+  <h1 class="ilife-block-page-shell-title">今日热量预算 2026-09-07</h1>
+  <p class="ilife-block-page-shell-subtitle">窗口 2026-09-01 ~ 2026-09-07 · 唤醒词 order 8 · 命令 calorie-cmd-read calorie.view.home --params '{"date":"今日"}'</p>
+
+  <!-- 结论小字：紧贴标题下的普通小字，一行说清今天剩多少（或已超多少）＋一句口径 -->
+  <p class="ilife-block-page-shell-subtitle" id="sec-summary">💡 今天还能吃 611 卡（＝ 热量目标 1800 − 已摄入 1189）；今天热量缺口 1687 卡，走另一条口径（＝ TDEE 2556 ＋ 运动 320 − 摄入 1189），两条不混着读。</p>
+
+  <nav class="ilife-block-page-shell-subtitle" aria-label="页内导航">
+    页内导航：
+    <a href="#sec-budget">预算主卡</a> ·
+    <a href="#sec-window">窗口切换</a> ·
+    <a href="#sec-nogoal">无目标兜底</a> ·
+    <a href="#sec-empty">空态</a> ·
+    <a href="#sec-copy">复制区</a> ·
+    <a href="#sec-src">来源</a>
+  </nav>
+
+  <div class="ilife-block-page-shell-body">
+
+    <div class="ilife-block-kpi-card-grid" id="sec-budget">
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">剩余预算</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">611</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">＝ 热量目标 1800 − 已摄入 1189</div>
+        <div class="ilife-block-kpi-card-bar" role="img" aria-label="已用预算 66.06%，中档" title="已用预算 66.06% · 档位 60（中档）"><div class="ilife-block-kpi-card-bar-fill" style="width:66.06%;background:var(--soft)"></div></div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">已摄入</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1189</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">＝ 当日饮食记录合计（food_log）</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">热量目标</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1800</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">＝ daily_goal 的热量目标（可空，空时走下面「无目标兜底」）</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">热量缺口（TDEE 口径）</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1687</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">＝ TDEE 2556 ＋ 运动 320 − 摄入 1189</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">运动支出</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">320</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">＝ exercise_log 合计；今天有记录，取当日读数</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card" style="border-style:dashed">
+        <div class="ilife-block-kpi-card-label">TDEE</div>
+        <div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">2556</span><span class="ilife-block-kpi-card-unit">卡</span></div>
+        <div class="ilife-block-kpi-card-detail">＝ 基础消耗 ＋ 活动消耗（当日档案读数）</div>
+      </div>
+    </div>
+
+    <p class="ilife-block-page-shell-subtitle">两条算式各自标清基准，并排各写一行：剩余预算＝热量目标 − 已摄入；热量缺口（TDEE 口径）＝ TDEE ＋ 运动 − 摄入。两者不是同一把尺子（1800 与 1687 并列时别读成 611）。运动支出目前在本页无独立数据源：营养目标行只有热量／蛋白／碳水／脂肪／饮水（饮水本身还可空），故该卡值位给 — 并把「怎么有数」写在副行，不画空条。</p>
+
+    <div class="ilife-block-kpi-card-grid" id="sec-window">
+      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="今日" aria-pressed="true">今日</button>
+      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="本周" aria-pressed="false">本周</button>
+      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="7d" aria-pressed="false">7d</button>
+      <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-window="30d" aria-pressed="false">30d</button>
+    </div>
+    <p class="ilife-block-page-shell-subtitle">窗口由参数定，标题与结论句的窗口字面照参数写：今日＝<code>{"date":"今日"}</code>；本周＝<code>{"windowDays":7,"date":"今日"}</code>；30d＝<code>{"windowDays":30,"date":"今日"}</code>。取数接口与主页同一处（buildHomeDoc）。下面这张表里，今日与 30d 是种子库实测读数；本周与 7d 没有实测产品，一律写 — 并把「换个窗口再跑」写进副行，不编数。</p>
+
+    <div class="ilife-block ilife-block-kpi-card-grid" id="sec-windows">
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">今日（{"date":"今日"}）</div>
+        <div class="ilife-block-kpi-card-detail">窗口 2026-09-07 · 剩余预算 611 卡 · 已摄入 1189 卡 · 目标 1800 卡 · 缺口 1687 卡</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">本周（{"windowDays":7,"date":"今日"}）</div>
+        <div class="ilife-block-kpi-card-detail">窗口 2026-09-01 ~ 2026-09-07 · 剩余预算 — · 已摄入 — · 缺口 —（没实测产品，值位写 —）</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">7d（{"windowDays":7,"date":"今日"}）</div>
+        <div class="ilife-block-kpi-card-detail">窗口 2026-09-01 ~ 2026-09-07 · 剩余预算 — · 已摄入 — · 缺口 —（没实测产品，值位写 —）</div>
+      </div>
+      <div class="ilife-block ilife-block-kpi-card">
+        <div class="ilife-block-kpi-card-label">30d（{"windowDays":30,"date":"今日"}）</div>
+        <div class="ilife-block-kpi-card-detail">窗口 2026-08-09 ~ 2026-09-07 · 9/30 天有记录 · 周均摄入 525.3 卡 · 缺口 1687 卡（当日读数）</div>
+      </div>
+    </div>
+
+    <section class="ilife-block ilife-block-empty-block" id="sec-nogoal">
+      <h2 class="ilife-block-empty-block-title">热量目标为空时（无目标兜底）</h2>
+      <div class="ilife-empty">
+        <div class="ilife-empty-icon" aria-hidden="true">🎯</div>
+        <div class="ilife-empty-text">还没设热量目标</div>
+        <div class="ilife-empty-hint">剩余预算这一格写 —，不画空条、不写 0、不拿缺省值顶替。去说一句「定营养目标」，设完再回来说「看今日热量预算」。</div>
+      </div>
+      <p class="ilife-block-page-shell-subtitle">这条兜底对主页同款：热量目标可为空（daily_goal 的热量目标本就允许空），空时走专门空态。热量目标在时又一条记录也没记：值位写 —、副行写「今天还没记」，同样不画 0% 的条。</p>
+    </section>
+
+    <section class="ilife-block ilife-block-empty-block" id="sec-empty">
+      <h2 class="ilife-block-empty-block-title">一项都没记时（空态）</h2>
+      <div class="ilife-empty">
+        <div class="ilife-empty-icon" aria-hidden="true">🧭</div>
+        <div class="ilife-empty-text">窗口内一条记录也没有</div>
+        <div class="ilife-empty-hint">已摄入／剩余预算／缺口一律写 —，不画进度条、不用 0 顶位；热量目标本身不为空时照写它的读数。复制数据保留原始空值，不把 — 写进载荷。</div>
+      </div>
+      <p class="ilife-block-page-shell-subtitle">怎么记第一条：说「记一餐 燕麦 100 克」，或说「记喝水 250 毫升」；补昨天的就说「补记饮食 2026-09-06 燕麦 100 克」。记完再回来说「看今日热量预算」。</p>
+    </section>
+
+    <section class="ilife-block ilife-block-copy-block" id="sec-copy">
+      <div class="ilife-action-bar">
+        <div class="ilife-action-row ilife-action-row-ghost">
+          <div class="ilife-copy-menu-wrap">
+            <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false">复制数据 ▾</button>
+            <div class="ilife-copy-menu" role="menu">
+              <button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.home 看今日热量预算】
+calorieGoal: 1800
+intakeCal: 1189
+remainingBudget: 611
+deficitToday: 1687
+exerciseCal: 320
+tdee: 2556
+window: 今日
+windowDays: 7
+loggedDays: 5"><span class="ilife-copy-menu-label">text</span><span class="ilife-copy-menu-hint">粘贴给 AI / 自己看</span></button>
+              <button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
+  &quot;version&quot;: &quot;0.1.0&quot;,
+  &quot;skill&quot;: &quot;calorie&quot;,
+  &quot;shape&quot;: &quot;stat&quot;,
+  &quot;key&quot;: &quot;calorie.view.home&quot;,
+  &quot;data&quot;: {
+    &quot;metrics&quot;: {
+      &quot;calorieGoal&quot;: 1800,
+      &quot;intakeCal&quot;: 1189,
+      &quot;remainingBudget&quot;: 611,
+      &quot;deficitToday&quot;: 1687,
+      &quot;exerciseCal&quot;: 320,
+      &quot;tdee&quot;: 2556,
+      &quot;windowDays&quot;: 7,
+      &quot;loggedDays&quot;: 5
+    }
+  }
+}"><span class="ilife-copy-menu-label">json</span><span class="ilife-copy-menu-hint">结构化存档</span></button>
+              <button type="button" class="ilife-copy-menu-item" data-fmt="csv" data-t="section,row
+metrics,calorieGoal: 1800
+metrics,intakeCal: 1189
+metrics,remainingBudget: 611
+metrics,deficitToday: 1687
+metrics,exerciseCal: 320
+metrics,tdee: 2556
+metrics,windowDays: 7
+metrics,loggedDays: 5"><span class="ilife-copy-menu-label">csv</span><span class="ilife-copy-menu-hint">表格导入</span></button>
+            </div>
+          </div>
+          <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
+calorie.calorie.view.home（stat · 看今日热量预算）
+AI 思考链
+本页由本地 CLI 渲染，无 AI 链
+数据结构
+calorie_data.db ｜ food_log＋exercise_log＋daily_goal（只读）
+调用链
+calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot;}'
+时间戳版本
+2026-09-14 17:31:00 · 版本 0.1.0
+异常
+无">复制日志</button>
+        </div>
+      </div>
+      <p class="ilife-block-page-shell-subtitle">两颗按钮各行其道：数据按钮开三格式菜单（纯文本／JSON／CSV），日志按钮一次复制六段；两处都不出与按钮同字的标题。第 3 段是能照抄重跑的命令原文；窗口非缺省时把窗口写全，例如 calorie-cmd-read calorie.view.home --params '{&quot;windowDays&quot;:30,&quot;date&quot;:&quot;今日&quot;}'。</p>
+    </section>
+
+    <p class="ilife-block-page-shell-subtitle" id="sec-src">📊 来源：calorie_data.db（food_log ＋ exercise_log ＋ daily_goal，只读）· 由 calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot;}' 生成 · 2026-09-14 17:31:00 · 版本 0.1.0</p>
+  </div>
+</section>
+</div>
+<script>
+/* 样张内联脚本：窗口切换（今日／本周／7d／30d，与命令参数一一对应）、开合三格式菜单、两颗按钮各自复制、报一句结果。
+   无持久化、不读库、无外部引用。与生产同一套标记：开合器 data-fmt-open、菜单项 data-fmt、载荷 data-t、开合类 copy-menu-open。 */
+(function () {
+  'use strict';
+  var MENU_OPEN_CLASS = 'copy-menu-open';
+  var COPIED_CLASS = 'copied';
+  var COPIED_MS = 450;
+  var OK_MSG = '数据复制成功';
+  var LOG_MSG = '已复制';
+  var FAIL_MSG = '复制失败';
+  var FAIL_DETAIL = '长按选择文本手动复制';
+  var WINDOW_TITLE = {
+    '今日': '今日热量预算 2026-09-07',
+    '本周': '本周热量预算 2026-09-01 ~ 2026-09-07',
+    '7d': '最近 7 天热量预算 2026-09-01 ~ 2026-09-07',
+    '30d': '最近 30 天热量预算 2026-08-09 ~ 2026-09-07'
+  };
+  var WINDOW_CMD = {
+    '今日': '{"date":"今日"}',
+    '本周': '{"windowDays":7,"date":"今日"}',
+    '7d': '{"windowDays":7,"date":"今日"}',
+    '30d': '{"windowDays":30,"date":"今日"}'
+  };
+  var WINDOW_NOTE = {
+    '今日': '窗口 2026-09-01 ~ 2026-09-07 · 唤醒词 order 8 · 命令 calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'',
+    '本周': '窗口 2026-09-01 ~ 2026-09-07 · 命令 calorie-cmd-read calorie.view.home --params \'{"windowDays":7,"date":"今日"}\'',
+    '7d': '窗口 2026-09-01 ~ 2026-09-07 · 命令 calorie-cmd-read calorie.view.home --params \'{"windowDays":7,"date":"今日"}\'',
+    '30d': '窗口 2026-08-09 ~ 2026-09-07 · 命令 calorie-cmd-read calorie.view.home --params \'{"windowDays":30,"date":"今日"}\''
+  };
+
+  function addClass(el, name) {
+    if ((' ' + el.className + ' ').indexOf(' ' + name + ' ') > -1) return;
+    el.className = el.className ? el.className + ' ' + name : name;
+  }
+  function removeClass(el, name) {
+    if (!el.className) return;
+    var kept = [];
+    var parts = el.className.split(' ');
+    for (var i = 0; i < parts.length; i++) { if (parts[i] && parts[i] !== name) kept.push(parts[i]); }
+    el.className = kept.join(' ');
+  }
+  function closeMenu(wrap) {
+    if (!wrap) return;
+    var opener = wrap.querySelector('[data-fmt-open="1"]');
+    var menu = wrap.querySelector('.ilife-copy-menu');
+    if (!menu) return;
+    removeClass(menu, MENU_OPEN_CLASS);
+    if (opener) opener.setAttribute('aria-expanded', 'false');
+  }
+  function feedback(msg, bad) {
+    var host = document.querySelector('.ilife-toast-stack');
+    if (!host) {
+      host = document.createElement('div');
+      host.className = 'ilife-toast-stack';
+      document.body.appendChild(host);
+    }
+    while (host.firstChild) host.removeChild(host.firstChild);
+    var box = document.createElement('div');
+    box.className = 'ilife-toast';
+    box.setAttribute('role', 'status');
+    box.setAttribute('aria-live', 'polite');
+    var text = document.createElement('span');
+    text.textContent = bad ? msg + '（' + FAIL_DETAIL + '）' : msg;
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'ilife-toast-close';
+    close.textContent = '✓ 知道了';
+    box.appendChild(text);
+    box.appendChild(close);
+    host.appendChild(box);
+    setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 2400);
+  }
+  function markCopied(btn) {
+    if (!btn) return;
+    addClass(btn, COPIED_CLASS);
+    setTimeout(function () { removeClass(btn, COPIED_CLASS); }, COPIED_MS);
+  }
+  function copy(text, btn, msg) {
+    var clip = navigator.clipboard;
+    if (clip && typeof clip.writeText === 'function') {
+      clip.writeText(text).then(function () { markCopied(btn); feedback(msg, false); }, function () { fallback(text, btn, msg); });
+      return;
+    }
+    fallback(text, btn, msg);
+  }
+  function fallback(text, btn, msg) {
+    var sink = document.createElement('textarea');
+    sink.value = text;
+    sink.setAttribute('readonly', 'readonly');
+    sink.setAttribute('aria-hidden', 'true');
+    sink.style.position = 'fixed';
+    sink.style.left = '-9999px';
+    document.body.appendChild(sink);
+    sink.select();
+    var done = false;
+    try { done = document.execCommand('copy'); } catch (err) { done = false; }
+    if (sink.parentNode) sink.parentNode.removeChild(sink);
+    if (done) markCopied(btn);
+    feedback(done ? msg : FAIL_MSG, !done);
+  }
+  /* 窗口切换：只换标题、副题行与结论句的窗口字面；数字不编——没有实测产品的窗口保留 —。 */
+  function switchWindow(name) {
+    var h1 = document.querySelector('.ilife-block-page-shell-title');
+    var subs = document.querySelectorAll('.ilife-block-page-shell-subtitle');
+    if (h1 && WINDOW_TITLE[name]) h1.textContent = WINDOW_TITLE[name];
+    if (subs.length > 1 && WINDOW_NOTE[name]) subs[1].textContent = WINDOW_NOTE[name];
+    var btns = document.querySelectorAll('[data-window]');
+    for (var i = 0; i < btns.length; i++) {
+      var on = btns[i].getAttribute('data-window') === name;
+      btns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    var logBtn = document.querySelector('[data-action-id="ilife-copy-log"]');
+    if (logBtn && WINDOW_CMD[name]) {
+      logBtn.setAttribute('data-t', logBtn.getAttribute('data-t').replace(/--params '[^']*'/, "--params '" + WINDOW_CMD[name] + "'"));
+    }
+  }
+  document.addEventListener('click', function (ev) {
+    var node = ev.target;
+    if (!node || typeof node.closest !== 'function') return;
+    var close = node.closest('.ilife-toast-close');
+    if (close && close.parentNode && close.parentNode.parentNode) { close.parentNode.parentNode.removeChild(close.parentNode); return; }
+    var win = node.closest('[data-window]');
+    if (win) { switchWindow(win.getAttribute('data-window')); return; }
+    var opener = node.closest('[data-fmt-open="1"]');
+    if (opener) {
+      var wrap = opener.closest('.ilife-copy-menu-wrap');
+      var menu = wrap ? wrap.querySelector('.ilife-copy-menu') : null;
+      if (!menu) return;
+      if ((' ' + menu.className + ' ').indexOf(' ' + MENU_OPEN_CLASS + ' ') > -1) { closeMenu(wrap); return; }
+      addClass(menu, MENU_OPEN_CLASS);
+      opener.setAttribute('aria-expanded', 'true');
+      return;
+    }
+    var item = node.closest('[data-fmt]');
+    if (item) {
+      var label = item.querySelector('.ilife-copy-menu-label');
+      copy(item.getAttribute('data-t') || '', item, OK_MSG + (label ? '（' + label.textContent + '）' : ''));
+      closeMenu(item.closest('.ilife-copy-menu-wrap'));
+      return;
+    }
+    var logBtn = node.closest('[data-action-id="ilife-copy-log"]');
+    if (logBtn) { copy(logBtn.getAttribute('data-t') || '', logBtn, LOG_MSG + '（复制日志 · 六段）'); return; }
+    var open = document.querySelector('.' + MENU_OPEN_CLASS);
+    if (open) closeMenu(open.parentNode);
+  });
+})();
+</script>
+</body>
+</html>
