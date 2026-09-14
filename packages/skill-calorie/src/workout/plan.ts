@@ -9,43 +9,35 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { renderPlanHtml, renderPlanVsActualHtml, renderPlanWritePreviewHtml } from '../render/html.js';
 import { buildPlanView, buildPlanVsActualView } from '../render/planPlate.js';
-import { CalorieRenderError } from '../render/errors.js';
-import { buildPlanDeleteVerifyDoc } from '../render/planDeleteVerifyDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { anchorOf, assertISO, dayField, fail, nums, optInt, optStr, windowRange } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
+import { previewPrompt } from './precheckPrompt.js';
 import { previewWrite } from './write.js';
 
-/** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率；带筛选即看该粒度）。 */
+/** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率；带筛选即看该粒度）。
+ *  无计划（空库／撤销后）就照 `buildPlanView` 的缺失阻断抛 `missing-data`（调用方走 fallback，不静默空页）：
+ *  读命令要能区分「没有计划」与「有计划」，不许用 catch 把它吞成一张好看的空态页。 */
 export function viewPlan(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
-  try {
-    const v = buildPlanView(db, {
-      dateISO: dayField(params, 'date') ?? undefined,
-      week: optInt(params, 'week') ?? undefined,
-      weekOffset: optInt(params, 'weekOffset') ?? undefined,
-      anchorISO: anchorOf(params),
-      movement: optStr(params, 'movement') || undefined,
-    });
-    const metrics = nums({ totalSessions: v.totalSessions, totalMovements: v.totalMovements, totalWeeks: v.totalWeeks });
-    return { data: { metrics }, html: renderPlanHtml(v, { key: 'calorie.view.plan', command: commandLine('calorie.view.plan', params) }) };
-  } catch (e) {
-    if (!(e instanceof CalorieRenderError) || e.code !== 'missing-data') throw e;
-    const deletedTitle = optStr(params, 'deletedTitle') || null;
-    const deletedSessions = optInt(params, 'deletedSessions') ?? 0;
-    const metrics = nums({ totalSessions: 0, totalMovements: 0, totalWeeks: 0 });
-    const html = buildPlanDeleteVerifyDoc(
-      { deletedTitle, deletedSessions },
-      { key: 'calorie.view.plan', command: commandLine('calorie.view.plan', params) },
-    );
-    return { data: { metrics }, html };
-  }
+  const v = buildPlanView(db, {
+    dateISO: dayField(params, 'date') ?? undefined,
+    week: optInt(params, 'week') ?? undefined,
+    weekOffset: optInt(params, 'weekOffset') ?? undefined,
+    anchorISO: anchorOf(params),
+    movement: optStr(params, 'movement') || undefined,
+  });
+  const metrics = nums({ totalSessions: v.totalSessions, totalMovements: v.totalMovements, totalWeeks: v.totalWeeks });
+  return { data: { metrics }, html: renderPlanHtml(v, { key: 'calorie.view.plan', command: commandLine('calorie.view.plan', params) }) };
 }
 
-/** `calorie.view.plan-write-preview` · 写前预览（只读：改前 → 改后，不写库；与写实现同一定位规则）。 */
+/** `calorie.view.plan-write-preview` · 写前预览（只读：改前 → 改后，不写库；与写实现同一定位规则）。
+ *  页面底部还要「复制 prompt」那一段：prompt 原文按 op 认领本写词，逐字取自 `precheckPrompt.ts`
+ *  （读 `prompt_template` 的活留在命令层，`render/` 不 import `triggers/`）。 */
 export function viewPlanWritePreview(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const v = previewWrite(params, db);
   const metrics = nums({ beforeLines: v.before.length, afterLines: v.after.length });
-  return { data: { metrics }, html: renderPlanWritePreviewHtml(v, { key: 'calorie.view.plan-write-preview', command: commandLine('calorie.view.plan-write-preview', params) }) };
+  const opts = { key: 'calorie.view.plan-write-preview', command: commandLine('calorie.view.plan-write-preview', params), prompt: previewPrompt(v.op) };
+  return { data: { metrics }, html: renderPlanWritePreviewHtml(v, opts) };
 }
 /** `calorie.view.plan-vs-actual` · 计划比实际（窗内计划动作 × 运动记录逐日命中；缺 `window` 即本周）。 */
 export function viewPlanVsActual(params: Record<string, unknown>, db: DatabaseSync): ViewOut {

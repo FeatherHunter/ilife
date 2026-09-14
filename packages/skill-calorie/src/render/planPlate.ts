@@ -24,6 +24,8 @@ export interface PlanView {
   title: string | null;
   /** 计划版本（`workout_plan_config.version`）；库列为空即 null，页头按缺项不印。 */
   version: string | null;
+  /** 计划说明（`workout_plan_config.description`）；同上。 */
+  description: string | null;
   /** 计划起始日（`workout_plan_config.start_date`）；同上。 */
   startDate: string | null;
   totalWeeks: number | null;
@@ -83,6 +85,7 @@ export function buildPlanView(db: DatabaseSync, opts: PlanFilter = {}): PlanView
   return {
     title: plan.config?.title ?? null,
     version: plan.config?.version ?? null,
+    description: plan.config?.description ?? null,
     startDate: plan.config?.start_date ?? null,
     totalWeeks: plan.config?.total_weeks ?? null,
     sessions,

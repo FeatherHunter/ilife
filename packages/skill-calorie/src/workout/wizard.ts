@@ -5,12 +5,15 @@
  *
  * 校验口径住视图层 `render/planPlate.ts` 的 `buildPlanWizardView`（内部经 `workout/planStore.ts` 的
  * `validatePlan`），整页模板住 `render/html.ts` 的 `renderPlanWizardHtml`；本能力只调公开函数。
+ * 页面底部「复制 prompt」那一段的原文同样在命令层取（`precheckPrompt.ts` 认领「定训练计划」这条词）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderPlanWizardHtml } from '../render/html.js';
 import { buildPlanWizardView } from '../render/planPlate.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { fail, nums } from '../shared/params.js';
+import { commandLine } from '../shared/writeParts.js';
+import { WIZARD_WAKE_WORD, workoutPrompt } from './precheckPrompt.js';
 
 /** `calorie.view.plan-wizard` · 构建向导（把一份计划候选跑一遍校验：错误／警告／场次数）。 */
 export function viewPlanWizard(params: Record<string, unknown>, _db: DatabaseSync): ViewOut {
@@ -19,5 +22,9 @@ export function viewPlanWizard(params: Record<string, unknown>, _db: DatabaseSyn
   const catalog = params['catalog'];
   const v = buildPlanWizardView(plan, (catalog as string[] | undefined) ?? undefined);
   const metrics = nums({ errorCount: v.errorCount, warningCount: v.warningCount, checkedSessions: v.checkedSessions });
-  return { data: { metrics }, html: renderPlanWizardHtml(v) };
+  const opts = {
+    key: 'calorie.view.plan-wizard', command: commandLine('calorie.view.plan-wizard', params),
+    prompt: workoutPrompt(WIZARD_WAKE_WORD),
+  };
+  return { data: { metrics }, html: renderPlanWizardHtml(v, opts) };
 }
