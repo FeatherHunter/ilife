@@ -1,0 +1,270 @@
+{
+  "ticket": "156-new-photo",
+  "scope": "卡路里场景 09 身材照片 · 新仓 HTML 盘点（新仓侧事实，只读）",
+  "checkedCommit": "bee145175d43200ffddff74ccc34fb13d6a0250d",
+  "readOnly": true,
+  "lineCountBasis": "LF 数（readFileSync(f,'utf8').split('\\n').length - 1）；引用行号取自读出时点",
+  "driftWarning": "packages/skill-calorie/src/render/html.ts 盘点期间被他席改动（git status 显示 M）：两次读数 636 / 645 行，终值 645；t341-页面形状.md:61 记的 680 行是旧快照",
+  "shared": [
+    {
+      "path": "packages/skill-calorie/src/shared/docPage.ts",
+      "lines": 113,
+      "exports": ["assembleDocPage", "metricsOf"],
+      "exportCount": 2,
+      "pageFamily": "全仓所有文档页（唯一整页装配入口）",
+      "keyFunctions": [
+        { "name": "assembleDocPage", "line": 77, "note": "区块 HTML ＋ 标题三件套 → 完整文档" },
+        { "name": "docShell", "line": 64, "note": "整页模板唯一一份：doctype:66 / charset:67 / viewport:67 / title:68 / SHARED-CSS:68 / wrap ilife-page:69 / SHARED-HELPERS:69 / CHARTS-HELPERS:65,70" },
+        { "name": "metricsOf", "line": 107, "note": "null／undefined 不进投影（stat 冻结口径）" },
+        { "name": "BLINE_CSS", "line": 41, "note": "B 线老 A 壳补丁样式（meta-bar／type-badge／page-shell-title）" }
+      ],
+      "photoDomainUsage": [
+        { "path": "packages/skill-calorie/src/photo/galleryDoc.ts", "line": 92 },
+        { "path": "packages/skill-calorie/src/render/wizardPortDocs.ts", "line": 66 },
+        { "path": "packages/skill-calorie/src/render/wizardPortDocs.ts", "line": 139 }
+      ]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/copyArea.ts",
+      "lines": 187,
+      "exports": ["promptCopyArea", "copyArea", "dataCopyArea", "copyLog", "notice"],
+      "exportCount": 5,
+      "pageFamily": "全仓页面（复制区 ＋ 复制日志 ＋ 提示块）",
+      "keyFunctions": [
+        { "name": "promptCopyArea", "line": 101 },
+        { "name": "copyArea", "line": 116, "note": "数据位恒出三格式菜单（口径注释 111-113）" },
+        { "name": "formatsOf", "line": 146 },
+        { "name": "dataCopyArea", "line": 162 },
+        { "name": "copyLog", "line": 167 },
+        { "name": "notice", "line": 178 }
+      ],
+      "menuHintsLiteralFromOldRepo": { "line": 45, "values": ["粘贴给 AI / 自己看", "结构化存档", "表格导入"] },
+      "photoDomainUsage": {
+        "dataCopyArea": ["packages/skill-calorie/src/photo/galleryDoc.ts:83", "packages/skill-calorie/src/render/wizardPortDocs.ts:59", "packages/skill-calorie/src/render/wizardPortDocs.ts:126"],
+        "promptCopyArea": ["packages/skill-calorie/src/render/wizardPortDocs.ts:58", "packages/skill-calorie/src/render/wizardPortDocs.ts:125"],
+        "notice": [],
+        "copyLog": []
+      }
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/writeParts.ts",
+      "lines": 113,
+      "exports": ["receiptHtml", "out", "R", "totalChanges", "F", "COL_CLI", "commandLine", "SOFT_EXCLUDED", "HARD_WORDING", "deleteStatus"],
+      "exportCount": 17,
+      "pageFamily": "写命令回执底座（信封 ＋ 复制日志第 4 段）",
+      "keyFunctions": [
+        { "name": "receiptHtml", "line": 83, "note": "只出 <section class=ilife-page data-slot=ilife:calorie:receipt>＋h1＋摘要＋op/id＋逐条 ul（:85-88）：无 doctype／无样式段／无复制区" },
+        { "name": "totalChanges", "line": 38 },
+        { "name": "commandLine", "line": 101 }
+      ],
+      "photoDomainUsage": ["packages/skill-calorie/src/photo/store.ts:39", "packages/skill-calorie/src/photo/manage.ts:25", "packages/skill-calorie/src/photo/manage.ts:55"]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/receiptParts.ts",
+      "lines": 43,
+      "exports": ["statusCard", "reconcileDisclosure"],
+      "exportCount": 2,
+      "pageFamily": "写后回执页（档案／目标／运动／饮食／体重／训练计划）",
+      "photoDomainUsage": [],
+      "note": "照片域零用——三条写命令没接整页回执，故状态卡与对账折叠区都用不上"
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/params.ts",
+      "lines": 180,
+      "exportCount": 20,
+      "pageFamily": "全仓页面（取数窗口）",
+      "photoDomainUsage": ["packages/skill-calorie/src/photo/store.ts:13", "packages/skill-calorie/src/photo/manage.ts:13", "packages/skill-calorie/src/photo/gallery.ts:10", "packages/skill-calorie/src/photo/compare.ts:9", "packages/skill-calorie/src/photo/wizard.ts:11"]
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/commandSpec.ts",
+      "lines": 66,
+      "exportCount": 8,
+      "pageFamily": "不产页面（命令事实的形状）"
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/contentSuffix.ts",
+      "lines": 118,
+      "exportCount": 1,
+      "pageFamily": "不产页面（落盘文件名的内容标识段）"
+    }
+  ],
+  "photo": [
+    { "path": "packages/skill-calorie/src/photo/commands.ts", "lines": 32, "exportCount": 1, "pageFamily": "不产页面（命令事实权威源，10 键）", "keyFunctions": [{ "name": "PHOTO_COMMANDS", "line": 21, "note": "声明 :22-31" }] },
+    { "path": "packages/skill-calorie/src/photo/routes.ts", "lines": 31, "exportCount": 1, "pageFamily": "不产页面（唤醒词路由）", "keyFunctions": [{ "name": "PHOTO_ROUTES", "line": 10, "note": "20 条：wake 10（:11-20）＋ new 10（:21-30）" }] },
+    { "path": "packages/skill-calorie/src/photo/index.ts", "lines": 35, "exportCount": 3, "pageFamily": "不产页面（域门）", "keyFunctions": [{ "name": "runPhotoView", "line": 20 }, { "name": "runPhotoWrite", "line": 29 }, { "name": "BY_KEY", "line": 17 }] },
+    { "path": "packages/skill-calorie/src/photo/dir.ts", "lines": 22, "exportCount": 2, "pageFamily": "不产页面（照片目录解析）", "keyFunctions": [{ "name": "photoDir", "line": 12, "note": "读侧容缺" }, { "name": "photoDirOrThrow", "line": 20, "note": "写侧缺即抛" }] },
+    { "path": "packages/skill-calorie/src/photo/photo.ts", "lines": 326, "exportCount": 12, "pageFamily": "取数与视图数据（不产 HTML）", "keyFunctions": [{ "name": "toCard", "line": 31 }, { "name": "buildGalleryData", "line": 80 }, { "name": "buildCompareData", "line": 131 }, { "name": "buildViewerData", "line": 160 }, { "name": "buildGifTask", "line": 192 }, { "name": "GIF_PASSTHROUGH_NOTE", "line": 189 }, { "name": "buildAddReceipt", "line": 245 }, { "name": "buildDeleteReceipt", "line": 271 }, { "name": "buildTagReceipt", "line": 295 }] },
+    { "path": "packages/skill-calorie/src/photo/photos.ts", "lines": 239, "exportCount": 15, "pageFamily": "取数与写库（不产 HTML）", "keyFunctions": [{ "name": "resolvePhotosDir", "line": 48 }, { "name": "listPhotos", "line": 98, "note": "缺省 limit 100（:119）；gallery 传 500" }, { "name": "addPhotos", "line": 146, "note": "cpSync 原图入库（:158），无缩略" }, { "name": "deletePhoto", "line": 168, "note": "硬删：DELETE ＋ rmSync" }, { "name": "planGif", "line": 229 }] },
+    { "path": "packages/skill-calorie/src/photo/gallery.ts", "lines": 38, "exportCount": 2, "pageFamily": "看身材照整页 ＋ 查详情片段", "keyFunctions": [{ "name": "viewPhotoList", "line": 15, "note": "整页出口 :28（buildPhotoListDoc(g, dir)）" }, { "name": "viewPhotoDetail", "line": 32, "note": "片段出口 :37（renderViewerHtml）" }] },
+    {
+      "path": "packages/skill-calorie/src/photo/galleryDoc.ts",
+      "lines": 100,
+      "exportCount": 2,
+      "pageFamily": "看身材照整页（照片域唯一完整文档）",
+      "keyFunctions": [
+        { "name": "buildPhotoListDoc", "line": 42 },
+        { "name": "PHOTO_LIST_PAGE_MAX_BYTES", "line": 25, "value": 1048576, "note": "只在测试被引用，渲染路径无强制" },
+        { "name": "figureHtml", "line": 27 }
+      ],
+      "blocksOrder": "KPI 四格(47-52) → 内嵌照片块(53-56) → 缺失明示行(57-67) → 明细表五列(68-82) → dataCopyArea(83-91) → assembleDocPage(92-99, charts:false)",
+      "knownGaps": ["无分页／无截断明示（:42-99）", "照片与嵌入按 basename 匹配（:44／:54／:58）", "KPI「共 N 张」取截断后行数（:48 用 g.totalCount，见 photo.ts:114）"]
+    },
+    { "path": "packages/skill-calorie/src/photo/photoThumb.ts", "lines": 61, "exportCount": 3, "pageFamily": "供 galleryDoc 内嵌照片字节", "keyFunctions": [{ "name": "PHOTO_EMBED_MAX_BYTES", "line": 20, "value": 4194304 }, { "name": "embedPhoto", "line": 37, "note": "缺目录 :41／缺文件 :47／超大 :50；data URI :52" }, { "name": "embedPhotos", "line": 56 }] },
+    { "path": "packages/skill-calorie/src/photo/store.ts", "lines": 40, "exportCount": 1, "pageFamily": "存身材照回执（片段）", "keyFunctions": [{ "name": "writePhotoAdd", "line": 18, "note": "回执 :36-38；出口 :39" }] },
+    { "path": "packages/skill-calorie/src/photo/manage.ts", "lines": 56, "exportCount": 2, "pageFamily": "移除身材照／设置照片标签回执（片段）", "keyFunctions": [{ "name": "writePhotoRemove", "line": 18, "note": "快照 :21 → 删 :23 → 出口 :25" }, { "name": "writePhotoTag", "line": 29, "note": "op 三态 :32-52；出口 :55" }] },
+    { "path": "packages/skill-calorie/src/photo/compare.ts", "lines": 34, "exportCount": 2, "pageFamily": "对比页片段 ＋ GIF 页片段", "keyFunctions": [{ "name": "viewPhotoCompare", "line": 14, "note": "出口 :22" }, { "name": "viewPhotoGif", "line": 26, "note": "出口 :33，只出任务描述" }] },
+    { "path": "packages/skill-calorie/src/photo/wizard.ts", "lines": 33, "exportCount": 2, "pageFamily": "身材照向导整页 ＋ GIF 规划器整页", "keyFunctions": [{ "name": "viewPhotoLogWizard", "line": 16 }, { "name": "viewGifPlanner", "line": 25 }] },
+    { "path": "packages/skill-calorie/src/photo/gif.ts", "lines": 273, "exportCount": 3, "pageFamily": "零生产调用（只测试引用）", "keyFunctions": [{ "name": "GIF_LIMITS", "line": 15, "note": "minFrames 2／maxBytes 512000／maxEdge 64" }, { "name": "synthesizeGifFromPhotos", "note": "帧数下限 :161；体积上限 :222；落盘 :226" }, { "name": "countGifFrames" }], "onlyCaller": "packages/skill-calorie/test/photo-gif-capability-284.test.mjs:16" },
+    { "path": "packages/skill-calorie/src/photo/help.ts", "lines": 109, "exportCount": 1, "pageFamily": "身材照HELP（q 片段／V4 整页／速查台三态）", "keyFunctions": [{ "name": "viewPhotoHelpCenter", "line": 56, "note": "q 路径 :64-75（出口 :72）；缺省 HELP 文件 :77-90；速查台 :91-108" }] },
+    { "path": "packages/skill-calorie/src/photo/helpLookup.ts", "lines": 74, "exportCount": 4, "pageFamily": "不产页面（10 键现找）", "keyFunctions": [{ "name": "buildPhotoHelp", "line": 52 }, { "name": "lookupPhotoHelp", "line": 70 }] },
+    { "path": "packages/skill-calorie/src/photo/helpCenter.ts", "lines": 485, "pageFamily": "全量速查台（场景 02／09／10 共用）", "warningLine": "485 > 350：已超线，需要根据规则进行重构；且不在 packages/skill-calorie/AGENTS.md 台账" },
+    { "path": "packages/skill-calorie/src/photo/helpFile.ts", "lines": 73, "pageFamily": "卡路里help V4 三级目录 HELP 文件（整页）" },
+    { "path": "packages/skill-calorie/src/photo/helpPaths.ts", "lines": 23, "pageFamily": "不产页面（HELP 落点名）" }
+  ],
+  "pages": [
+    { "n": 1, "wake": "看身材照", "key": "calorie.photo.list", "shape": "list", "format": "完整文档", "bytes": 60840, "bytesBasis": "2 张 1×1 小图（t341 记 60798）", "assembler": "packages/skill-calorie/src/photo/galleryDoc.ts:42", "evidence": ["packages/skill-calorie/src/photo/gallery.ts:28"] },
+    { "n": 2, "wake": "看身材照向导", "key": "calorie.view.photo-log-wizard", "shape": "stat", "format": "完整文档", "bytes": 59497, "assembler": "packages/skill-calorie/src/render/wizardPortDocs.ts:40", "evidence": ["packages/skill-calorie/src/photo/wizard.ts:21"] },
+    { "n": 3, "wake": "看GIF规划器", "key": "calorie.view.gif-planner", "shape": "stat", "format": "完整文档", "bytes": 67402, "bytesBasis": "19 张候选、不嵌图", "assembler": "packages/skill-calorie/src/render/wizardPortDocs.ts:116", "evidence": ["packages/skill-calorie/src/photo/wizard.ts:32"] },
+    { "n": 4, "wake": "看身材照HELP（缺省）", "key": "calorie.help.center", "shape": "list", "format": "完整文档", "bytes": 299582, "assembler": "packages/skill-calorie/src/photo/helpFile.ts", "evidence": ["packages/skill-calorie/src/photo/help.ts:80-89"] },
+    { "n": 5, "wake": "看身材照HELP（q 支，routes 指向的这条）", "key": "calorie.help.center", "shape": "list", "format": "片段", "bytes": 36339, "assembler": "packages/skill-calorie/src/render/html.ts:215", "evidence": ["packages/skill-calorie/src/photo/help.ts:72", "packages/skill-calorie/src/photo/routes.ts:28"] },
+    { "n": 6, "wake": "存身材照", "key": "calorie.photo.add", "shape": "receipt", "format": "片段", "bytes": 244, "assembler": "packages/skill-calorie/src/shared/writeParts.ts:83", "evidence": ["packages/skill-calorie/src/photo/store.ts:39"] },
+    { "n": 7, "wake": "移除身材照", "key": "calorie.photo.remove", "shape": "receipt", "format": "片段", "bytes": 317, "assembler": "packages/skill-calorie/src/shared/writeParts.ts:83", "evidence": ["packages/skill-calorie/src/photo/manage.ts:25"] },
+    { "n": 8, "wake": "设置照片标签", "key": "calorie.photo.tag", "shape": "receipt", "format": "片段", "bytes": 225, "note": "不含 tagDiff（receiptHtml 不印 diff）", "assembler": "packages/skill-calorie/src/shared/writeParts.ts:83", "evidence": ["packages/skill-calorie/src/photo/manage.ts:55"] },
+    { "n": 9, "wake": "查身材照详情", "key": "calorie.photo.detail", "shape": "detail", "format": "片段", "bytes": 680, "assembler": "packages/skill-calorie/src/render/html.ts:180", "evidence": ["packages/skill-calorie/src/photo/gallery.ts:37"] },
+    { "n": 10, "wake": "对比身材照", "key": "calorie.photo.compare", "shape": "list", "format": "片段", "bytes": 1340, "assembler": "packages/skill-calorie/src/render/html.ts:170", "evidence": ["packages/skill-calorie/src/photo/compare.ts:22"] },
+    { "n": 11, "wake": "做身材照GIF", "key": "calorie.photo.gif", "shape": "analysis", "format": "片段", "bytes": 1154, "note": "只出任务描述（GIF_PASSTHROUGH_NOTE photo.ts:189）", "assembler": "packages/skill-calorie/src/render/html.ts:186", "evidence": ["packages/skill-calorie/src/photo/compare.ts:33"] }
+  ],
+  "byteBasis": {
+    "shellEmptyContent": 55109,
+    "method": "node --input-type=module -e 直调 packages/skill-calorie/dist/** 的产出函数，Buffer.byteLength(html,'utf8')；未跑 CLI 落盘",
+    "realPhotos": { "dir": "D:\\2Study\\StudyNotes\\.db\\CalorieHub", "count": 16, "totalBytes": 14058630, "bigFour": [2848489, 3008549, 3134155, 3136723] },
+    "listPageByInput": [
+      { "input": "2 张小图", "photosRaw": 10, "pageBytes": 60840, "over1MiB": false },
+      { "input": "1 张 2.99 MB", "photosRaw": 3136723, "pageBytes": 4241906, "over1MiB": true },
+      { "input": "4 张 2.8~3.1 MB", "photosRaw": 12127916, "pageBytes": 16233824, "over1MiB": true },
+      { "input": "全库 16 张", "photosRaw": 14058630, "pageBytes": 18822796, "over1MiB": true }
+    ]
+  },
+  "pageShell": {
+    "packageName": "base-paint",
+    "packageNameRealPath": "packages/base-render",
+    "blocks": {
+      "path": "packages/base-render/src/blocks.ts",
+      "lines": 1153,
+      "renderers": [
+        { "name": "renderPageShell", "line": 168 },
+        { "name": "renderKpiCard", "line": 199 },
+        { "name": "renderKpiGrid", "line": 226 },
+        { "name": "renderDataTable", "line": 262 },
+        { "name": "renderChartBlock", "line": 315 },
+        { "name": "renderListRows", "line": 360 },
+        { "name": "renderPreBlock", "line": 401 },
+        { "name": "renderDetailSection", "line": 448 },
+        { "name": "renderDisclosure", "line": 501 },
+        { "name": "renderParamForm", "line": 533 },
+        { "name": "renderEmptyBlock", "line": 582 },
+        { "name": "renderCopyBlock", "line": 611 },
+        { "name": "renderFeedbackBlock", "line": 651 }
+      ]
+    },
+    "style": { "path": "packages/base-render/src/style.ts", "lines": 1310, "tokens": { "path": "packages/base-render/src/spec/style.ts", "line": 12, "count": 11 }, "forbiddenTokens": { "path": "packages/base-render/src/spec/style.ts", "line": 46 } },
+    "controls": { "path": "packages/base-render/src/controls.ts", "lines": 1470 },
+    "missingAbilities": [
+      { "what": "图片元件（<img>／figure／thumbnail／aspect-ratio／lightbox）", "evidence": "packages/base-render/src 全目录 grep 各零命中" },
+      { "what": "页内锚点导航", "evidence": "packages/base-render/src 全目录 grep href=\"#//renderToc//renderAnchor 零命中" },
+      { "what": "@media print", "evidence": "packages/base-render/src 全目录 grep 零命中" }
+    ]
+  },
+  "styleSources": [
+    { "source": "buildStyleSheet().css", "from": "base-paint", "concatAt": "packages/skill-calorie/src/shared/docPage.ts:81" },
+    { "source": "blocksCss()", "from": "base-paint/blocks", "concatAt": "packages/skill-calorie/src/shared/docPage.ts:81" },
+    { "source": "buildSharedHelpersJs()", "from": "base-paint", "slot": "<!--SHARED-HELPERS-->", "at": "packages/skill-calorie/src/shared/docPage.ts:82" },
+    { "source": "buildChartsHelpersJs()", "from": "base-paint", "slot": "<!--CHARTS-HELPERS-->", "at": "packages/skill-calorie/src/shared/docPage.ts:84", "photoDomain": "十页全不用（galleryDoc.ts:98 显式 charts:false）" },
+    { "source": "extraCss", "used": false }
+  ],
+  "interactions": {
+    "copyFormats": { "formats": ["text", "json", "csv"], "constantAt": "packages/base-render/src/spec/text.ts:12", "alwaysOn": { "path": "packages/skill-calorie/src/shared/copyArea.ts", "line": 111 } },
+    "disclosure": { "mechanism": "原生 details/summary，交互纯 CSS", "at": "packages/base-render/src/blocks.ts:490-510", "photoUsage": "packages/skill-calorie/src/render/wizardPortDocs.ts:46" },
+    "promptCopy": { "at": "packages/skill-calorie/src/shared/copyArea.ts:101", "photoUsage": ["packages/skill-calorie/src/render/wizardPortDocs.ts:58", "packages/skill-calorie/src/render/wizardPortDocs.ts:125"] },
+    "anchors": { "present": false },
+    "printable": { "present": false }
+  },
+  "assertions": {
+    "docPage": { "path": "packages/skill-calorie/test/doc-page-assert.mjs", "lines": 20, "at": 12, "checks": ["doctype", "charset utf-8", "style", "script", "ilife-page", "no-residual-marker"] },
+    "photoShape": {
+      "path": "packages/skill-calorie/test/photo-shape-341.test.mjs",
+      "lines": 129,
+      "checks": ["doctype 起（:72）", "charset（:73）", "含『复制数据』（:74）", "含 data:image/（:75）", "字节 ≤ PHOTO_LIST_PAGE_MAX_BYTES（:77、:111）", "缺照片明示文件名＋缺失（:99-102）", "变异自证（:114-129）"],
+      "blindSpot": "种子照片是 1×1 PNG（:28-31），体积断言永不触及真实原图；常量只在测试被引用（:23）"
+    },
+    "gifCapability": { "path": "packages/skill-calorie/test/photo-gif-capability-284.test.mjs", "lines": 73, "note": "GIF 合成能力的唯一调用方（:16）" }
+  },
+  "legacyRenderLayer": [
+    { "path": "packages/skill-calorie/src/render/html.ts", "lines": 645, "bytes": 36007, "exportCount": 55, "role": "老式 renderXxxHtml 一族（另一条老装配路：pageShell:39 ＋ 内联 token() 样式，不产完整文档）", "photoRenderers": [
+      { "name": "photoCardHtml", "line": 132, "used": "packages/skill-calorie/src/render/html.ts:176,183" },
+      { "name": "renderPhotoReceiptHtml", "line": 141, "used": "dead（仅 test/render-t10.test.mjs:22,56,73,79 与转出位 render/index.ts:103）" },
+      { "name": "renderGalleryHtml", "line": 159, "used": "dead（仅 test/render-t10.test.mjs:22,108）" },
+      { "name": "renderCompareHtml", "line": 170, "used": "packages/skill-calorie/src/photo/compare.ts:22" },
+      { "name": "renderViewerHtml", "line": 180, "used": "packages/skill-calorie/src/photo/gallery.ts:37" },
+      { "name": "renderGifHtml", "line": 186, "used": "packages/skill-calorie/src/photo/compare.ts:33" },
+      { "name": "renderPhotoHelpHtml", "line": 215, "used": "packages/skill-calorie/src/photo/help.ts:72" },
+      { "name": "renderHelpLookupHtml", "line": 225, "used": "唤醒词速查台（非场景 09 十页）" }
+    ], "warningLine": "645 > 350：已超线，需要根据规则进行重构（拆法：按域拆出 photoHtml.ts 等；本席只读不加行）" },
+    { "path": "packages/skill-calorie/src/render/wizardPort.ts", "lines": 265, "exportCount": 6, "role": "身材照／GIF 两页视图数据与 prompt（新家仍在用）" },
+    { "path": "packages/skill-calorie/src/render/wizardPortDocs.ts", "lines": 146, "exportCount": 2, "role": "两页整页装配（新家仍在用）" },
+    { "path": "packages/skill-calorie/src/weight/plateDocs.ts", "lines": 14, "exportCount": 3, "role": "只剩 DOC_* 三常量（#332 归位后）；体重鲜活样板是 weight/figures.ts 等" }
+  ],
+  "oldSkill": {
+    "root": "D:\\2Study\\StudyNotes\\SKILLS\\卡路里",
+    "templates": [
+      { "file": "templates/body_photo_gallery.html", "lines": 219, "bytes": 11196 },
+      { "file": "templates/body_photo_viewer.html", "lines": 168, "bytes": 8000 },
+      { "file": "templates/body_photo_compare.html", "lines": 144, "bytes": 7119 },
+      { "file": "templates/body_photo_receipt.html", "lines": 242, "bytes": 12500 },
+      { "file": "templates/body_photo_gif_planner.html", "lines": 596, "bytes": 26875 },
+      { "file": "templates/body_photo_gif_result.html", "lines": 120, "bytes": 6035 },
+      { "file": "templates/body_photo_log_wizard.html", "lines": 285, "bytes": 11287 }
+    ],
+    "sharedAssets": { "root": "D:\\2Study\\StudyNotes\\SKILLS\\公共组件", "baseJs": 949, "baseCss": 495, "chartsJs": 933, "helpTemplateHtml": 40927 },
+    "embed": { "impl": "scripts/render_body_photo_gif_planner.py:44 embed_photo_as_base64", "resize": ":79 LANCZOS", "save": ":82 JPEG quality=75", "maxDimByPage": { "gallery": 500, "compare": 800, "receiptThumb": 500, "receiptSnapshot": 800, "viewer": 800, "planner": 500 }, "budgetOnlyIn": "scripts/render_body_photo_gallery.py:64 MAX_EMBED_BYTES=4MiB，:86-105 累计扣减 → embed_skipped" },
+    "sharedLayer": { "path": "packages/skill-calorie/src/shared/", "note": "老技能照片域的两处口径（渲染数据装配 ↔ 字节内嵌）在新仓分别住 photo.ts 与 photoThumb.ts，均未被第二域用" }
+  },
+  "strengths": [
+    { "id": "single-doc-shell", "evidence": "packages/skill-calorie/src/shared/docPage.ts:64-72", "summary": "整页模板唯一一份（#179 前 7 处各抄一份）" },
+    { "id": "unified-assembly", "evidence": "src/** 130 处 assembleDocPage；照片域只有 1 处（photo/galleryDoc.ts:92）", "summary": "统一装配入口，但照片域 9/10 页不在册" },
+    { "id": "three-format-copy", "evidence": "packages/skill-calorie/src/shared/copyArea.ts:111-113,43-45,146-159", "summary": "三格式菜单恒开，提示逐字取老仓" },
+    { "id": "photo-bytes-in-page", "evidence": "packages/skill-calorie/src/photo/photoThumb.ts:37-53", "summary": "照片字节进页面这条险已过，缺失不抛、逐张明示" },
+    { "id": "structure-assert", "evidence": "packages/skill-calorie/test/doc-page-assert.mjs:12-20", "summary": "六项结构断言（含无残留标记）" },
+    { "id": "page-size-limit-first-defined", "evidence": "packages/skill-calorie/src/photo/galleryDoc.ts:22-25；docs/skills/skill-calorie/t341-页面形状.md:17,24-26", "summary": "上限首定并写进同步清单（改值须同改四处）" },
+    { "id": "wizard-pre-fill-and-copy", "evidence": "packages/skill-calorie/src/render/wizardPortDocs.ts:50-64,99-137", "summary": "两份向导的预填表单＋prompt 复制＋三格式数据闭环" },
+    { "id": "data-presentation-split", "evidence": "packages/skill-calorie/src/photo/photo.ts（取数）↔ galleryDoc.ts（装配）", "summary": "取数与呈现分离" },
+    { "id": "command-route-derivable", "evidence": "packages/skill-calorie/src/photo/commands.ts:21；routes.ts:10-30", "summary": "命令事实单点定义，汇总位由 pnpm gen 派生" },
+    { "id": "no-dead-button", "evidence": "packages/skill-calorie/src/shared/copyArea.ts:40-41,137-140；render/wizardPortDocs.ts:78-80", "summary": "空态不出死按钮、空窗出空态句" }
+  ],
+  "improvements": [
+    { "id": "five-of-ten-are-bare-fragments", "axis": "形态完整性", "evidence": "packages/skill-calorie/src/shared/writeParts.ts:83-89；packages/skill-calorie/src/output.ts:242-259（原样落盘）", "summary": "存／移除／设置标签（225-317B）＋详情（680B）＋对比（1340B）＋GIF（1154B）＋身材照HELP q 支（36339B）都没有 doctype／样式段／脚本段" },
+    { "id": "size-limit-not-enforced", "axis": "体积", "evidence": "packages/skill-calorie/src/photo/galleryDoc.ts:25,42-99（无分页分支）", "summary": "上限只在测试被引用；真实照片页实测 4.24 MB–18.8 MB" },
+    { "id": "no-downscale", "axis": "体积", "evidence": "packages/skill-calorie/src/photo/photoThumb.ts:49-52（只判 4MiB）", "summary": "原图直嵌、无缩放；老技能是长边 500/800＋q75 后再嵌" },
+    { "id": "no-thumbnail-on-disk", "axis": "体积", "evidence": "全仓无 thumbnail 实现；docs/skills/skill-calorie/t341-页面形状.md:22 的「分页或缩略」今天一条未落", "summary": "超限策略未实施" },
+    { "id": "no-anchor-no-print-no-image-block", "axis": "交互与打印", "evidence": "packages/base-render/src 全目录 grep 零命中", "summary": "无页内导航、无 @media print、无共享图元件" },
+    { "id": "gif-page-detached-from-capability", "axis": "功能", "evidence": "packages/skill-calorie/src/render/html.ts:186-194；packages/skill-calorie/src/photo/gif.ts:15-21,161,222,226；test/photo-gif-capability-284.test.mjs:16", "summary": "结果页只出任务描述，而 GIF 合成能力零生产调用" },
+    { "id": "three-fragments-lack-copy-area-and-source-line", "axis": "交互", "evidence": "packages/skill-calorie/src/photo/compare.ts:22,33；gallery.ts:37", "summary": "对比／GIF／详情三页无复制区、无数据来源行、无口径句" },
+    { "id": "viewer-nav-is-text", "axis": "交互", "evidence": "packages/skill-calorie/src/render/html.ts:181-182", "summary": "上一张／下一张只是 #id 数字，不是链接（老实物是带边界置灰的链接）" },
+    { "id": "list-cap-not-flagged", "axis": "口径", "evidence": "packages/skill-calorie/src/photo/photos.ts:119；photo/photo.ts:101,114；photo/galleryDoc.ts:48", "summary": "500 张截断后 KPI 仍写「共 N 张」，无「还有 M 张」" },
+    { "id": "warning-line-ledger-incomplete", "axis": "结构纪律", "evidence": "packages/skill-calorie/src/photo/helpCenter.ts 485 行；packages/skill-calorie/scripts/check-warning-line.mjs:33-36（REQUIRED 只两件）", "summary": "第三件超线件不在台账，检查脚本无感：已超线，需要根据规则进行重构" },
+    { "id": "two-dead-photo-renderers", "axis": "死码", "evidence": "packages/skill-calorie/src/render/html.ts:141,159（生产零调用）", "summary": "超线件里还挂着两个死渲染件" },
+    { "id": "copy-drift-titles", "axis": "文案", "evidence": "packages/skill-calorie/src/photo/commands.ts:24（title「对比照片」对唤醒词「对比身材照」）；photo/galleryDoc.ts:95（眉标含内部词「域」）", "summary": "标题与唤醒词不同名、眉标残留内部词" }
+  ],
+  "gaps": [
+    { "id": "no-cli-end-to-end", "detail": "未构建、未跑 calorie-cmd-read 落盘；字节数为 dist 直调的模块级实测，不含落盘信封" },
+    { "id": "no-visual-measurement", "detail": "「片段无样式」由「无 style/link」推得，未在浏览器看过" },
+    { "id": "legacy-path-not-fully-diffed", "detail": "render/html.ts 老装配路未逐页比对是否与整页路逐字等价" },
+    { "id": "old-help-template-not-read", "detail": "老仓 公共组件/assets/help_template.html 未逐行盘点，老 HELP 页版块与交互未验证" },
+    { "id": "gif-output-quality-unverified", "detail": "未跑 photo/gif.ts，未看合成产物" },
+    { "id": "readonly-real-db", "detail": "只读真库照片目录的目录与字节，未读库、未写真库" }
+  ],
+  "outputs": [
+    "docs/skills/skill-calorie/t156-新仓HTML盘点-身材照片.md",
+    "docs/skills/skill-calorie/t156-新仓索引-身材照片.json"
+  ]
+}
