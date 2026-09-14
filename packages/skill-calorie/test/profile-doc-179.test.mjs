@@ -250,11 +250,17 @@ test('#247 场景 07 五张页的复制数据是「三格式三选一」菜单�
 });
 
 
+/** #179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）。
+ *
+ * #337 口径变更（有意改，票面与提交信息写清）：场景 03 的 4 条体重写命令
+ * （`calorie.weight.log`／`batch`／`update`／`remove`）已从这一堆里拿出来，
+ * 切整页装配（`src/weight/receipt.ts`，见下条测试）；本条只钉剩下的抽样，
+ * 不断言也不跳过体重键（体重键的整页断言见下条）。
+ */
 test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）', () => {
   const dir = mkDb(true);
   const cases = [
     ['calorie.water.log', { ml: 300, date: '2026-09-06', time: '09:00:00' }],
-    ['calorie.weight.log', { kg: 70.2, date: '2026-09-06', time: '07:00:00' }],
     ['calorie.product.add', { productName: '燕麦片', calories: 389, protein: 13, fat: 7, carbohydrates: 66, sodium: 5 }],
     ['calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50 }],
   ];
@@ -265,5 +271,45 @@ test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切
     assert.ok(r.file.startsWith('<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:receipt">'),
       key + ' 的产物不再是原回执片段（这 32 条本不该变）：' + r.file.slice(0, 80));
     assert.ok(!r.file.startsWith('<!doctype html>'), key + ' 意外变成了整页文档');
+  }
+});
+
+/** #337 场景 03 的 4 条体重写命令已是完整文档（从上条的片段堆里拿出来）。
+ *
+ * 口径变更说明：#179 当年断言「其余 32 条仍是原回执片段」，本票把其中场景 03
+ * 的 4 条（记体重／批量补录／改体重／删体重，对应 9 个写唤醒词）切成整页回执
+ * （`src/weight/receipt.ts` 三变体：单条／批量／改删），故上条抽样不再含体重键；
+ * 本条把体重 4 键的整页与三变体关键字段钉死（不断言＝口径无锚，跳过＝放宽，都不许）。
+ */
+test('#337 场景 03 四条体重写命令已是完整文档（三变体字段齐）', () => {
+  const dir = mkDb(true);
+  const log = runCli(dir, 'calorie.weight.log', { kg: 70.2, date: '2026-09-06', time: '07:00:00' }, 'w337-log');
+  assert.equal(log.status, 0, 'weight.log exit ' + log.status + ' stderr=' + log.stderr.slice(-300));
+  assertDocPage(log.file, 'weight.log');
+  for (const needle of ['体重 · 写后回执', '本次体重', '70.2', '2026-09-06', '对账信息']) {
+    assert.ok(log.file.includes(needle), 'weight.log 缺：' + needle);
+  }
+  const id = JSON.parse(log.stdout).data.receipt.recordId;
+  assert.ok(id > 0, 'weight.log 回执缺记录号');
+
+  const batch = runCli(dir, 'calorie.weight.batch', { items: [{ date: '2026-09-04', kg: 70.8 }, { date: '2026-09-05', kg: 70.5 }, { date: 'xx', kg: 1 }] }, 'w337-batch');
+  assert.equal(batch.status, 0, 'weight.batch exit ' + batch.status + ' stderr=' + batch.stderr.slice(-300));
+  assertDocPage(batch.file, 'weight.batch');
+  for (const needle of ['批量计数', '写入', '跳过', '失败', '逐条明细']) {
+    assert.ok(batch.file.includes(needle), 'weight.batch 缺：' + needle);
+  }
+
+  const upd = runCli(dir, 'calorie.weight.update', { id, kg: 70 }, 'w337-update');
+  assert.equal(upd.status, 0, 'weight.update exit ' + upd.status + ' stderr=' + upd.stderr.slice(-300));
+  assertDocPage(upd.file, 'weight.update');
+  for (const needle of ['改前 → 改后', '70.2', '70']) {
+    assert.ok(upd.file.includes(needle), 'weight.update 缺：' + needle);
+  }
+
+  const del = runCli(dir, 'calorie.weight.remove', { id }, 'w337-remove');
+  assert.equal(del.status, 0, 'weight.remove exit ' + del.status + ' stderr=' + del.stderr.slice(-300));
+  assertDocPage(del.file, 'weight.remove');
+  for (const needle of ['删除快照', '硬删除，不可恢复']) {
+    assert.ok(del.file.includes(needle), 'weight.remove 缺：' + needle);
   }
 });

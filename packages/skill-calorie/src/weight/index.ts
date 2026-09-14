@@ -7,6 +7,8 @@
  *   ④ `getWeightGoalInfo`——「体重目标」取数：目标管理那侧（`goal/goalExtraPlate.ts`）在用；
  *   ⑤ `weightTrend`——「体重趋势」算式：健康盘那侧（`analysis/dashboard.ts`）在用。
  *  ④⑤ 都按铁律一「要用别的能力的东西走它对外那道门」转出，免得同一件事有两份取数／两份算式。
+ *   ⑥ `weightReceiptDoc`——体重写命令整页回执的端口：分派层（`src/cli/write.ts`）在用
+ *      （#337 经本门转出，分派层只调门；本门 5→6 件，口径见证据 `t337-体重盘与回执-证据.md`）。
  *
  * 域内其他件（取数 `records.ts`、算式 `figures.ts`、页装配 `plate.ts`／`plateDocs.ts`、
  * 对比场景 `weightCompare*.ts`）**不出这个目录**，故不在这里转出；包级出口
@@ -18,6 +20,7 @@ import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import { WEIGHT_COMMANDS } from './commands.js';
 
 export { WEIGHT_COMMANDS } from './commands.js';
+export { weightReceiptDoc } from './receipt.js';
 export { getWeightGoalInfo, weightTrend } from './figures.js';
 export type { WeightGoalInfo, WeightTrend } from './figures.js';
 

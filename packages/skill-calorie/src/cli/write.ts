@@ -6,7 +6,10 @@
  * 本文件不写 render/ 新视图、不碰 envelope 键表（#41 边界）；HTML 为 dispatch 内联
  * receipt 小节（沿 cmd_read history/help 内联先例，不新增模板）——**唯一例外**是
  * #179 接线的场景 07 三条写入词（设置档案／设活动量／改档案）：它们的回执页换成
- * 能力目录 `src/profile/` 那两页整页装配（见 `profileReceiptDoc`），其余 32 条一字不改。
+ * 能力目录 `src/profile/` 那两页整页装配（见 `profileReceiptDoc`）；
+ * #269 接线的饮食 13 条：回执页换成能力目录 `src/diet/receipt.ts` 整页装配；
+ * #337 接线的体重 4 条：回执页换成能力目录 `src/weight/receipt.ts` 整页装配。
+ * 其余 15 条（35 − 3 − 13 − 4）一字不改，仍是原回执片段。
  * 退出码沿 T11 冻结：缺参/坏参 fail(2)；未知键上游拦（exit 3）；缺失阻断 fail(4)；
  * envelope/落盘 fail(5)。库函数 FetchError 透传（main 映射 exit 4）；body.ts
  * ValidationError 在此转 bad-input（exit 2）。
@@ -42,6 +45,9 @@ import { profileReceiptDoc } from '../profile/index.js';
 // #269 · 饮食 13 条会改数据库的命令的回执页：整页装配住能力目录 `src/diet/receipt.ts`
 //（经本文件直引，不经 `src/diet/index.ts` 转出；#276 需要的新增分支由本票留空）。
 import { dietReceiptDoc } from '../diet/receipt.js';
+// #337 · 体重 4 条会改数据库的命令的回执页：整页装配住能力目录 `src/weight/receipt.ts`
+//（经 `src/weight/index.ts` 转出；与档案 3 条、饮食 13 条同形）。
+import { weightReceiptDoc } from '../weight/index.js';
 import { isCalorieWriteKey } from './keys.js';
 // #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落下面的 dispatchInner switch。
 import { REGISTRY } from './registry.js';
@@ -65,7 +71,8 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
     // #269 · 饮食 13 条切整页装配（`assembleDocPage`，与档案 3 条同路）；其余键原样放行。
     // #276 插入点：如需新增命令的整页分派，在本行下方按 `?? 下一个Doc(...)` 续接（本票留空）。
-    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? dietReceiptDoc(key, params, receipt, db) ?? res.html };
+    // #337 · 体重 4 条切整页装配（与档案 3 条、饮食 13 条同路；具名键集在 `src/weight/receipt.ts`）。
+    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? dietReceiptDoc(key, params, receipt, db) ?? weightReceiptDoc(key, params, receipt, db) ?? res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;

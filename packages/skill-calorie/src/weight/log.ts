@@ -64,7 +64,21 @@ export function buildWeightDashboard(db: DatabaseSync, start: string, end: strin
 
 export function buildWeightDoc(w: WeightDashboard): string {
   const t = w.trend;
+  // 今日卡（老实物 weight_dashboard.html 的今日卡：todayKg／todayDate／todayDelta）——
+  // 取窗内最后一条为今日值，较上次＝与窗内上一条之差（只有一条时暂无上次）。
+  const last = t.logs[t.logs.length - 1];
+  const prevW = t.logs.length >= 2 ? t.logs[t.logs.length - 2]?.weightKg ?? null : null;
+  const todayDelta = prevW === null || last === undefined
+    ? null
+    : Math.round((last.weightKg - prevW) * 10) / 10;
   const parts: string[] = [renderKpiGrid([
+    { label: '今日体重', value: last === undefined ? '—' : last.weightKg + ' kg', detail: last === undefined ? '本窗无记录' : last.date },
+    {
+      label: '较上次', value: todayDelta === null ? '—' : (todayDelta >= 0 ? '+' : '') + todayDelta + ' kg',
+      detail: prevW === null ? '暂无上次记录' : '上次 ' + prevW + ' kg',
+    },
+  ])];
+  parts.push(renderKpiGrid([
     { label: '体重盘', value: t.firstWeight + ' → ' + t.lastWeight + ' kg', detail: t.firstDate + ' ~ ' + t.lastDate },
     { label: '均值', value: String(t.avgWeight), unit: 'kg', detail: '共 ' + t.recordCount + ' 条 · 极值 ' + t.minWeight + '~' + t.maxWeight },
     {
@@ -75,16 +89,30 @@ export function buildWeightDoc(w: WeightDashboard): string {
       label: '距目标', value: w.gapKg === null ? '—' : (w.gapKg >= 0 ? '+' : '') + w.gapKg + ' kg',
       detail: w.weightGoal === null ? '未设体重目标' : '目标 ' + w.weightGoal + ' kg' + (w.deadline ? ' · 截止 ' + w.deadline : ''),
     },
-  ])];
+  ]));
   let charts = false;
   if (t.logs.length > 0) {
+    // 老实物 weight_dashboard.html 的 h2 最近 7 天趋势：7 天内即近 7 天小图，否则全窗曲线。
+    const spanDays = Math.round((Date.parse(w.end) - Date.parse(w.start)) / 86400000) + 1;
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '体重曲线',
+      title: spanDays <= 7 ? '近 7 天体重曲线' : '体重曲线',
       input: { items: t.logs.map((l) => ({ label: l.date.slice(5), value: l.weightKg })) },
     }));
     charts = true;
   }
+  // 结论卡（老实物 weight_dashboard.html 的 summaryCard／summaryText）：趋势＋距目标一句。
+  parts.push(renderDataTable({
+    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    rows: [
+      { k: '结论', v: '近 ' + t.recordCount + ' 条，趋势' + t.trendCn + '（' + t.firstWeight + ' → ' + t.lastWeight + ' kg）' },
+      {
+        k: '距目标',
+        v: w.gapKg === null ? '未设体重目标' : '目标 ' + w.weightGoal + ' kg，还差 ' + (w.gapKg >= 0 ? '+' : '') + w.gapKg + ' kg',
+      },
+    ],
+    caption: '结论',
+  }));
   parts.push(renderDataTable({
     columns: [
       { key: 'date', label: '日期' },
@@ -144,6 +172,10 @@ export function writeWeightBatch(params: Record<string, unknown>, db: DatabaseSy
   return out(R('批量补录体重', 'create', '批量记体重：写入 ' + r.wrote + '，跳过 ' + r.skipped + '，失败 ' + r.failed, '批量补录体重', 'weight_log (写库回执)', {
     noChange: r.wrote === 0, ids: [], idSource: 'condition',
     writtenFields: r.wrote > 0 ? [...F.weightBatch] : [],
-    items: r.items.filter((x) => x.status === '失败').slice(0, 20).map((x) => ({ status: '失败', reason: x.reason, detail: String(x.date) })),
+    // 整页回执的明细表吃全量逐条（写入／跳过／失败三态，失败原因照旧；摘要与计数口径一字不动）。
+    items: r.items.map((x) => ({
+      date: x.date, status: x.status, reason: x.reason,
+      detail: x.kg === undefined ? '' : String(x.kg) + 'kg',
+    })),
   }));
 }
