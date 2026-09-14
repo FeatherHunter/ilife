@@ -133,7 +133,10 @@ describe('A 通用选项 ChartCommonOptions', () => {
       Object.fromEntries(Object.entries(defaults).map(([k, html]) => [k, viewBoxOf(html)])),
       {
         bar: '0 0 320.0 170.0',
-        line: '0 0 320.0 210.0',
+        /* #424：折线缺省 320×210 → 580×260。旧值配 `max-width:480px` 补丁（t-chartfix #160）
+         * 才能在 930px 卡片里把字号压回 15px——代价是图只占卡片一半宽。#424 改 viewBox 自身放大，
+         * 上限撤销：930px 卡 → scale 1.6 → 图内 9.5–10px 文字渲染 15.2–16px，图占满卡片。 */
+        line: '0 0 580.0 260.0',
         donut: '0 0 150.0 150.0',
         progress: '0 0 100.0 8.0',
         combo: '0 0 320.0 170.0',
@@ -216,6 +219,13 @@ describe('A 通用选项 ChartCommonOptions', () => {
     assert.deepEqual(labels('edge'), ['A', 'E']);
     assert.deepEqual(labels('none'), []);
     assert.deepEqual(labels('select'), ['A', 'C', 'E'], 'select = 首 + 峰值 + 尾（旧 charts.js:655）');
+    /* #424：峰值落在端点时（单调序列必然如此），首＋峰＋尾去重只剩 2 个 → 补一个离首点最远的中间点，
+     * 横轴中段不至于没有时间参照。判据：≥3 点且去重后 <3 个。 */
+    const mono = [{ label: 'A', value: 9 }, { label: 'B', value: 5 }, { label: 'C', value: 1 }];
+    assert.deepEqual(textsOf(lineHtml({ labels: 'select' }, mono), P + 'charts-xlabel'), ['A', 'B', 'C'], '峰值=首点：补中间点，仍 3 个标签');
+    const monoRise = [{ label: 'A', value: 1 }, { label: 'B', value: 5 }, { label: 'C', value: 9 }];
+    assert.deepEqual(textsOf(lineHtml({ labels: 'select' }, monoRise), P + 'charts-xlabel'), ['A', 'B', 'C'], '峰值=尾点：同上');
+    assert.deepEqual(textsOf(lineHtml({ labels: 'select' }, [{ label: 'A', value: 1 }, { label: 'B', value: 2 }]), P + 'charts-xlabel'), ['A', 'B'], '2 点不补（无可补的中间点）');
   });
 
   it('A.showValues：true / edge / false 改变数值标签集合', () => {
@@ -317,7 +327,7 @@ describe('B LineChartOptions', () => {
     );
   });
 
-  it('B.showDots / B.dotSize / B.dotStyle：点开关 / 半径 / 样式', () => {
+  it('B.showDots / B.dotSize / B.dotStyle：点开关 / 半径 / 样式 / 密集点抽稀', () => {
     assert.equal(dotsOf(lineHtml()).length, 3);
     assert.equal(dotsOf(lineHtml({ showDots: false })).length, 0);
     assert.deepEqual(dotsOf(lineHtml({ dotSize: 12 })).map((d) => d.r), ['6', '6', '6']);
@@ -325,6 +335,28 @@ describe('B LineChartOptions', () => {
     const styled = dotsOf(lineHtml({ dotStyle: 'opacity:.4' }))[0];
     assert.equal(styled.style, 'opacity:.4');
     assert.equal(dotsOf(lineHtml())[0].style, undefined);
+  });
+
+  it('B.密集点抽稀（#424）：showDots 未显式给且点数 > 30 → 隔 k 个画一个；显式给则一律照办', () => {
+    /* 判据来自「毛毛虫」现场：90 点全画圆、点距 6.1 单位 < 圆径 7 → 叠成一团。
+     * 抽稀判据只用**点数与 showDots 是否显式给**，与域/宽度无关（最小意外）。 */
+    const n = (k) => Array.from({ length: k }, (_, i) => ({ label: 'P' + i, value: 74 - i * 0.01 }));
+    const html = (k, extra = {}) => charts.line({ items: n(k), options: { ...LINE_FIXED, ...extra } }).html;
+
+    assert.equal(dotsOf(html(7)).length, 7, '7 点（稀疏图）逐点画圆：抽稀不生效');
+    assert.equal(dotsOf(html(30)).length, 30, '30 点 = 阈值，逐点画圆（边界闭在下侧）');
+    assert.equal(dotsOf(html(31)).length, 16, '31 点超阈值 → k=2 → 16 个（i%2==0）');
+    assert.equal(dotsOf(html(60)).length, 30, '60 点 → k=2 → 30 个');
+    assert.equal(dotsOf(html(90)).length, 30, '90 点 → k=3 → 30 个（首点在，末点不补）');
+    assert.deepEqual(dotsOf(html(90)).map((d) => d['data-i']).slice(0, 3), ['0', '3', '6'], '抽稀从首点起、步长固定');
+    assert.equal(dotsOf(html(90)).map((d) => d['data-i']).includes('89'), false, '末点不额外补圆（末点高亮由 highlightLast 负责）');
+
+    assert.equal(dotsOf(html(90, { showDots: true })).length, 90, '显式 showDots:true → 一格不抽');
+    assert.equal(dotsOf(html(90, { showDots: false })).length, 0, '显式 showDots:false → 一个不画');
+    /* 末点高亮圈不受抽稀影响：它走的是 highlightLast 分支，不是 dots 分支。 */
+    const last = html(90, { highlightLast: true });
+    assert.equal(countOf(last, P + 'charts-dot-last'), 1, 'highlightLast 仍画末点实心圈');
+    assert.equal(attrsOf(last, 'circle', P + 'charts-dot-last')[0]['data-i'], '89', '末点圈锚在最后一个有效点');
   });
 
   it('B.area / B.areaOpacity：面积填充与透明度', () => {
@@ -441,7 +473,7 @@ describe('B LineChartOptions', () => {
     assert.equal(countOf(lineHtml(), P + 'charts-dot-last'), 0);
   });
 
-  it('B.avgLine：均线序列（窗口收敛 3..items.length）', () => {
+  it('B.avgLine：均线序列（窗口收敛 3..items.length；与 series 可共存）', () => {
     const items = [1, 2, 3, 4, 5].map((v, i) => ({ label: String(i), value: v }));
     const fixed = { ...LINE_FIXED, yMin: 1, yMax: 5, avgLine: 3 };
     const d = pathD(charts.line({ items, options: fixed }).html, P + 'charts-avg');
@@ -453,12 +485,41 @@ describe('B LineChartOptions', () => {
     assert.equal(avg['stroke-dasharray'], '6 5');
     assert.equal(avg.stroke, 'var(--fg3,#86868b)');
     assert.equal(countOf(lineHtml(), P + 'charts-avg'), 0);
-    /* 传了 `series` 就不叠加均线（旧 `charts.js:414` `if(opt.avgLine&&!opt.series)`）：判据是
-     * 「调用方是否传 series」，不是「series 长度是否为 1」——单条 series 同样不叠加（R2-N6）。 */
+    /* #424：旧口径「传了 series 就不叠加均线」（`charts.js:414`）放开。调用点要**同时**要
+     * 「主序列在图例里有名字（每次称重）」和「7 天均线」——图例条目只能来自 series（均线是引擎
+     * 现算的，调用方拿不到它的数据），所以两者必须能共存：主序列恒 series[0]，均线追加在末尾。 */
     const withOneSeries = charts.line({ items, options: { ...fixed, series: [{ name: '甲', items }] } }).html;
-    assert.equal(countOf(withOneSeries, P + 'charts-avg'), 0, 'series 存在（哪怕只有 1 条）不得叠加均线');
-    assert.equal(attrsOf(withOneSeries, 'path', P + 'charts-line').length, 1, '只剩主序列一条折线路径');
-    assert.equal(charts.line({ items, options: { ...fixed, series: [{ name: '甲', items }] } }).points, 5);
+    assert.equal(countOf(withOneSeries, P + 'charts-avg'), 1, 'series 存在时仍叠加均线（#424 放开旧互斥）');
+    assert.equal(attrsOf(withOneSeries, 'path', P + 'charts-line').length, 2, '主序列 + 均线各一条折线路径');
+    assert.equal(pathD(withOneSeries, P + 'charts-avg'), d, '叠加位置不受 series 影响（同一份 items）');
+    assert.equal(charts.line({ items, options: { ...fixed, series: [{ name: '甲', items }] } }).points, 5, 'points 不把均线算进去');
+    /* 图例：#424 起均线序列名进图例（调用方不必自己拼虚线条目）；#424 返工：条目名 = **实际窗口**
+     *  + 「 天均线」——本用例窗口 3 →「3 天均线」（写死「7 天均线」在变量窗口下是错的）。
+     *  但**调用方自己的虚线序列**（ownScale 跨轴那条，如配对页）不进——那是它自己的图例活。 */
+    const legend = (extra) => legendTextsOf(charts.line({ items, options: { ...fixed, legend: true, ...extra } }).html);
+    assert.deepEqual(legend({}), ['3 天均线'], '均线条目名按 avgWindow 生成');
+    assert.deepEqual(legend({ avgLine: 7 }), ['7 天均线'], '窗口 7 →「7 天均线」（调用点变量窗口的另一档）');
+    assert.deepEqual(legend({ series: [{ name: '甲', items }] }), ['甲', '3 天均线'], '主序列名在前、均线在后');
+    assert.deepEqual(
+      legend({ series: [{ name: '甲', items }, { name: '乙', items, dashed: true, ownScale: true }] }),
+      ['甲', '3 天均线', '各指标独立刻度'],
+      '调用方自己的虚线序列（乙）不进图例，均线条目与 ownScale 提示照旧',
+    );
+    /* #424 返工：均线身份只看**显式标记**（注入时 `avg: true`），不再用「虚线＋非独立刻度＋末位」猜
+     *  ——旧口径会把调用方自己的**虚线末位序列**误判成均线：错加 `charts-avg` 类、不画点、不计 points。 */
+    const ownSeries = [{ name: '甲', items }, { name: '乙', items, dashed: true }];
+    const ownHtml = charts.line({ items, options: { ...fixed, showDots: true, series: ownSeries } }).html;
+    assert.equal(countOf(ownHtml, P + 'charts-avg'), 1, '只有引擎注入的均线带 charts-avg（乙 不再被误判）');
+    assert.equal(attrsOf(ownHtml, 'path', P + 'charts-line').length, 3, '甲／乙／均线 = 三条折线路径');
+    assert.equal(
+      attrsOf(ownHtml, 'circle', P + 'charts-dot').filter((d) => d['data-s'] === '1').length, 5,
+      '乙 的数据点照画（旧口径下整条被当成均线跳过）',
+    );
+    assert.equal(charts.line({ items, options: { ...fixed, series: ownSeries } }).points, 10, 'points = 甲 5 + 乙 5（乙 不再被剔）');
+    assert.equal(
+      charts.line({ items, options: { ...fixed, series: [{ name: '乙', items, dashed: true }] } }).points, 5,
+      '单条调用方虚线序列 = 主序列，points 照数',
+    );
   });
 
   it('B.markLine.value：水平阈值虚线 + 文字', () => {
@@ -1259,7 +1320,7 @@ describe('G ScatterChartOptions', () => {
     assert.deepEqual(textsOf(html, P + 'charts-tick'), ['-0.12', '0.63', '1.37', '2.12']);
     assert.deepEqual(textsOf(charts.scatter({ items: [{ x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }], options: SCATTER_FIXED }).html, P + 'charts-tick'), ['0.76', '2.25', '3.75', '5.24'], '刻度随 Y 域变化');
     assert.deepEqual(textsOf(charts.scatter({ items: LINE_PTS, options: { ...SCATTER_FIXED, yMin: 0, yMax: 3 } }).html, P + 'charts-tick'), ['0', '1', '2', '3'], '显式 yMin/yMax 优先');
-    assert.equal(countOf(lineHtml(), P + 'charts-tick'), 0, 'line 的 yTicks 缺省仍 false（不受影响）');
+    assert.equal(countOf(lineHtml(), P + 'charts-tick'), 0, 'line 的 yTicks 缺省仍 false（不受影响，#424 由调用点显式给）');
   });
 
   it('G.ScatterItem.x/y 非法：抛 structure-invalid', () => {
@@ -1407,6 +1468,11 @@ describe('H 常量与规则', () => {
     assert.equal(aspectOf(charts.gauge({ pct: 50 }).html), 'xMidYMid meet', 'gauge 等比缩放');
     assert.equal(aspectOf(charts.sparkline({ items: [{ label: 'A', value: 1 }, { label: 'B', value: 2 }] }).html), 'xMidYMid meet', 'sparkline 等比缩放');
     assert.ok(buildChartsHelpersJs().includes('.ilife-charts-line .ilife-charts-svg{height:150px}'), '移动端固定高度规则仍在（字面量 needle，W7）');
+    /* #424：桌面等比上限 `max-width:480px`（t-chartfix #160 补丁）撤销——折线 viewBox 已放大到
+     * 580×260，靠 viewBox 自身就能把 930px 卡片下的图内字号压在 15–16px；留着它只会让图占卡片一半宽。
+     * 这里断「CSS 里不再有 charts-svg 的 max-width」，防它被顺手加回来。 */
+    assert.equal(/charts-svg[^{]*\{[^}]*max-width/.test(buildChartsHelpersJs()), false, '桌面折线不得再有 charts-svg 宽度上限（#424 撤销 480px 补丁）');
+    assert.equal(buildChartsHelpersJs().includes('max-width:480px'), false, '480px 字面量不得回潮');
     /* FX-78-V3-07：`role="img" focusable="false"` 删掉后旧断言全绿 → 逐 kind 断 `<svg>` 开标签。 */
     const svgTags = {
       bar: charts.bar({ items: [{ label: 'A', value: 1 }] }).html,
@@ -1785,7 +1851,7 @@ describe('H 常量与规则', () => {
     const titles = [...source.matchAll(/^[ \t]*it\((["'])(.*?)\1/gm)].map((m) => m[2]);
     /* FX-78-V2a-3：`>= 60` 是宽松下界（删掉若干用例仍可绿）→ 精确条数。
      * 口径：本文件磁盘上的 `it(...)` 标题条数。**改实现/改矩阵（增删用例）须同步此值**。 */
-    assert.equal(titles.length, 87, '用例条数精确值（实读 ' + titles.length + ' 条）');
+    assert.equal(titles.length, 88, '用例条数精确值（实读 ' + titles.length + ' 条）');
     const tokens = Object.values(FIELD_TITLES).flatMap((fields) => Object.values(fields));
     assert.equal(new Set(tokens).size, tokens.length, '每个字段必须绑定互不相同的用例标题 token');
     const hitTitles = [...new Set(titles.filter((title) => tokens.some((token) => title.includes(token))))];

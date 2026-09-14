@@ -144,6 +144,9 @@ const MUTED_COLOR = 'var(--fg3,#86868b)';
 const DOT_FACE_COLOR = 'var(--card,#ffffff)';
 const DOT_DEFAULT_PX = 7;
 const SCATTER_DOT_DEFAULT_PX = 9;
+/** 折线数据点抽稀上限（#424）：`showDots` **未显式给**且点数超过它时不逐点画圆——
+ *  逐点画必重叠成一团（90 点 / 580 单位宽 → 点距 6.1，圆径 7）。显式 `showDots` 一律照办。 */
+const DOT_STRIDE_MAX = 30;
 /** scatter 缺省 Y 轴刻度条数（旧 `charts.js:854` `yTicks:4`；冻结 `ScatterChartOptions` 无该字段，
  *  故按**缺省行为**渲染 4 条、不新增可关闭开关——登记为契约缺口，归后续票，R2-G1 裁定）。 */
 const SCATTER_Y_TICKS = 4;
@@ -354,16 +357,47 @@ function makeFrame(common: ResolvedCommon, insets: Insets): Frame {
   return { x0, x1, y0, y1, w: x1 - x0, h: y1 - y0 };
 }
 
-/** 留白进 viewBox（容器零 padding）：左留白含刻度文字宽度。 */
-function insetsFor(common: ResolvedCommon, opts: { tickWidth: number; labelHeight: number; valueHeight: number }): Insets {
+/** 留白进 viewBox（容器零 padding）：左留白含刻度文字宽度。
+ *
+ *  `minLeft`／`minBottom`（#424 返工）：折线的留白必须能容下**移动端**那一档字号——媒体查询把
+ *  折线文字放大到 17–18 用户单位（见 `chartsCss` 的 ≤720px 段与 `LINE_TEXT_MOBILE`），留白却是
+ *  双端共用的用户单位 → 只按桌面 9.5–10.5 估会让 390px 下的「70.5kg」顶出 viewBox 左沿。 */
+function insetsFor(common: ResolvedCommon, opts: {
+  tickWidth: number;
+  labelHeight: number;
+  valueHeight: number;
+  minLeft?: number;
+  minBottom?: number;
+}): Insets {
   const padX = common.compact ? 6 : 14;
   const padY = common.compact ? 4 : 8;
   return {
-    left: padX + opts.tickWidth,
+    left: Math.max(padX + opts.tickWidth, opts.minLeft ?? 0),
     right: padX,
     top: padY + (common.showValues === false ? 0 : opts.valueHeight),
-    bottom: padY + opts.labelHeight,
+    bottom: Math.max(padY + opts.labelHeight, opts.minBottom ?? 0),
   };
+}
+
+/** #424 返工：移动端（≤720px）折线的字号（**用户单位**）。媒体查询把折线 svg 盒高钉成 150px，
+ *  `preserveAspectRatio="none"` 下 580×260 的 viewBox 被压到 scale≈0.58（390px 手机容器）——
+ *  桌面档 9.5–10.5 单位实测只剩 5.4px。这里提到 1/0.58 倍，实渲回到 ~10px。
+ *  同一份数字既进 `chartsCss` 的媒体查询，也用来估留白（留白双端共用 → 取更大的这一档）。 */
+const LINE_TEXT_MOBILE = { tick: 17, xlabel: 18, value: 17, last: 18, mark: 17 } as const;
+
+/** 折线 X 标签行相对绘图区底边（`frame.y1`）的间距（用户单位）。最低那条刻度文字以 `ty + 3` 为基线，
+ *  17 单位字号的降部到 y1+6.6；X 标签（18 单位）帽高顶在 y1+gap−13 —— gap ≥ 21.6 才不相撞。 */
+const LINE_LABEL_GAP = 22;
+/** 折线绘图区底留白下限：容下 `LINE_LABEL_GAP` + X 标签降部（18×0.25）。 */
+const LINE_BOTTOM_MIN = 28;
+
+/** 文字宽度估值（用户单位）：ASCII ≈0.62em、CJK 全角 ≈1em。刻度留白按它算——留白必须容下
+ *  **移动端那一档字号**，否则 390px 下「70.5kg」会顶出 viewBox 左沿（`overflow:visible` 也救不了，
+ *  卡片会裁）。 */
+function textWidthUnits(text: string, size: number): number {
+  let em = 0;
+  for (const ch of text) em += (ch.codePointAt(0) ?? 0) > 0x2e7f ? 1 : 0.62;
+  return em * size;
 }
 
 function xAt(frame: Frame, index: number, count: number): number {
@@ -446,7 +480,11 @@ function ticksSvg(frame: Frame, lo: number, hi: number, count: number, format: (
 
 /** X 轴标签集合：`'all'` 全量／`'edge'` 首尾／`'select'` 首＋峰值＋尾（line 口径）
  *  ／`'none'` 无。`select='edge'` 时 `'select'` 退化为首尾——**bar 口径**：
- *  旧 bar 的 `'select'` 只显示首尾（`charts.js:385-388`），与 line 的「首＋峰值＋尾」不同（R2-N7）。 */
+ *  旧 bar 的 `'select'` 只显示首尾（`charts.js:385-388`），与 line 的「首＋峰值＋尾」不同（R2-N7）。
+ *
+ *  #424 补一条下限（只对 line 的 `'select'`）：**峰值落在端点时首＋峰＋尾去重后只剩 2 个标签**
+ *  （单调下降的体重曲线必然如此，峰值就是首日），横轴中段又变成没有时间参照。故去重后不足 3 个、
+ *  且点数 ≥3 时，补一个**离首点最远的中间点**——仍满足「首＋峰＋尾」，顺带给出中段参照。 */
 function labelIndexes(mode: LabelsMode, items: readonly ChartItem[], select: 'peak' | 'edge' = 'peak'): readonly number[] {
   const n = items.length;
   if (mode === 'none' || n === 0) return [];
@@ -460,7 +498,13 @@ function labelIndexes(mode: LabelsMode, items: readonly ChartItem[], select: 'pe
       peak = i;
     }
   });
-  return Array.from(new Set<number>([0, peak, n - 1])).sort((a, b) => a - b);
+  const picked = Array.from(new Set<number>([0, peak, n - 1])).sort((a, b) => a - b);
+  if (picked.length < 3 && n >= 3) {
+    const mid = Math.round((n - 1) / 2);
+    const extra = [mid, n - 1 - mid, 1, n - 2].find((i) => i > 0 && i < n - 1 && !picked.includes(i));
+    if (extra !== undefined) picked.splice(1, 0, extra);
+  }
+  return picked;
 }
 
 /* t-chartfix：X 标签的 x 标度缺省与折线点同一 `xAt` 点标度；柱族（bar／combo）
@@ -472,9 +516,10 @@ function xLabelsSvg(
   items: readonly ChartItem[],
   select: 'peak' | 'edge' = 'peak',
   xOf: (index: number, count: number) => number = (i, n) => xAt(frame, i, n),
+  gap?: number,
 ): string {
   if (common.labels === 'none') return '';
-  const baseY = frame.y1 + (common.compact ? 9 : 12);
+  const baseY = frame.y1 + (gap ?? (common.compact ? 9 : 12));
   return labelIndexes(common.labels, items, select).map((i) => {
     const x = xOf(i, items.length);
     const rotate = common.labelRotate === 0 ? '' : ' transform="rotate(' + common.labelRotate + ' ' + n1(x) + ' ' + n1(baseY) + ')"';
@@ -526,6 +571,10 @@ interface ResolvedLineSeries {
   readonly smooth: boolean;
   readonly area: boolean;
   readonly ownScale: boolean;
+  /** #424 返工：**引擎注入的均线序列**的显式标记。禁止再用「虚线 + 非独立刻度 + 末位」猜哪条是均线
+   *  ——那会把调用方自己的虚线末位序列（配对页 cross 轴那条）误判成均线：既不进图例、不画点、
+   *  不算 points，还错加 `charts-avg` 类。 */
+  readonly avg: boolean;
 }
 
 function resolveLineSeries(raw: unknown, mainItems: readonly ChartItem[], line: ResolvedLineOptions): ResolvedLineSeries[] {
@@ -539,6 +588,7 @@ function resolveLineSeries(raw: unknown, mainItems: readonly ChartItem[], line: 
       smooth: line.smooth,
       area: line.area,
       ownScale: false,
+      avg: false,
     }];
   }
   return list.map((entry, i) => {
@@ -553,6 +603,7 @@ function resolveLineSeries(raw: unknown, mainItems: readonly ChartItem[], line: 
       smooth: series.smooth === undefined ? line.smooth : series.smooth === true,
       area: series.area === true,
       ownScale: series.ownScale === true,
+      avg: false,
     };
   });
 }
@@ -680,9 +731,27 @@ function resolveMarkPoint(raw: unknown): ChartMarkPoint | true | undefined {
   return undefined;
 }
 
+/** 折线默认 viewBox：320×210 → 580×260（#424）。
+ *
+ *  `svgOpen(line, …, 'none')` 的非等比拉伸下，SVG 的**盒尺寸**仍按 viewBox 长宽比算
+ *  （`width:100%` ＋ `height:auto`），所以 320×210 塞进 930px 卡片时会被拉到 2.91 倍
+ *  ——10px 图内文字渲染 29px、点径 20px（t-chartfix #160 的实测）。#160 用
+ *  `max-width:480px` 压回 1.5 倍，代价是图只占卡片一半宽（930 里居中的 480，左右各空 225）。
+ *
+ *  #424 改从源头修：viewBox 放到真实卡片量级（580×260 ≈ 930×417 的 0.62 相似形）。
+ *  卡片越宽、图越大、字越大：930px 卡 → scale 1.6 → 图内 9.5–10px 文字渲染 15.2–16px。
+ *  于是 `max-width` 上限不再需要（见 `chartsCss`，桌面规则已撤）。 */
+const LINE_DEFAULT_WIDTH = 580;
+const LINE_DEFAULT_HEIGHT = 260;
+
 function renderLine(raw: LineChartInput): ChartOutput {
   const input = requireObject(raw, 'charts.line: input');
-  const common = resolveCommon(input.options, { width: 320, height: 210, labels: 'edge', showValues: false });
+  const common = resolveCommon(input.options, {
+    width: LINE_DEFAULT_WIDTH,
+    height: LINE_DEFAULT_HEIGHT,
+    labels: 'edge',
+    showValues: false,
+  });
   const opts = isPlainObject(input.options) ? (input.options as LineChartOptions) : undefined;
   const line: ResolvedLineOptions = {
     ...common,
@@ -691,6 +760,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
     smooth: opts !== undefined && opts.smooth === true,
     step: opts !== undefined && opts.step === true,
     showDots: opts === undefined || opts.showDots !== false,
+    showDotsExplicit: opts !== undefined && opts.showDots !== undefined,
     dotSize: numOr(opts === undefined ? undefined : opts.dotSize, DOT_DEFAULT_PX),
     dotStyle: opts !== undefined && typeof opts.dotStyle === 'string' && opts.dotStyle !== '' ? opts.dotStyle : undefined,
     area: opts !== undefined && opts.area === true,
@@ -711,6 +781,12 @@ function renderLine(raw: LineChartInput): ChartOutput {
   };
   const items = normalizeItems(input.items, 'line', true);
   if (items.length === 0) return emptyOutput('line', input.options);
+  /* 点密度（#424）：`showDots` 未显式给且点数超上限 → 隔 k 个画一个（n=90 → k=3 → 30 个）。
+   *  末点**只按 stride 命中**时才画：`highlightLast` 会另外补一个实心末点圈（同 x，r 大 1），
+   *  两条路都无条件画会叠出「双圈」——所以末点改由 `highlightLast` 单独负责（调用方开它）。 */
+  const dotStride = line.showDotsExplicit || line.dotSize <= 0 || items.length <= DOT_STRIDE_MAX
+    ? 1
+    : Math.ceil(items.length / DOT_STRIDE_MAX);
   const series = resolveLineSeries(input.options, items, line);
   const main = series[0];
 
@@ -740,10 +816,19 @@ function renderLine(raw: LineChartInput): ChartOutput {
   const [lo, hi] = domainOf(sharedValues, line.yMin, line.yMax, false);
 
   const tickN = tickCount(line.yTicks);
+  /* 刻度留白按**移动端字号**估（`LINE_TEXT_MOBILE.tick`）：留白是双端共用的用户单位，桌面档估算
+   *  在 390px 下会漏 —— 见 `insetsFor` 的 `minLeft`。 */
+  let tickTextW = 0;
+  for (let i = 0; i < tickN; i += 1) {
+    const tv = lo + ((hi - lo) * i) / (tickN - 1);
+    tickTextW = Math.max(tickTextW, textWidthUnits(fmtValue(round2(tv), line.format), LINE_TEXT_MOBILE.tick));
+  }
   const frame = makeFrame(line, insetsFor(line, {
     tickWidth: tickN === 0 ? 0 : (line.compact ? 16 : 22),
     labelHeight: line.labels === 'none' ? 0 : (line.compact ? 10 : 14),
     valueHeight: line.compact ? 9 : 12,
+    minLeft: tickN === 0 ? 0 : Math.ceil(tickTextW) + 9,
+    minBottom: line.labels === 'none' ? 0 : LINE_BOTTOM_MIN,
   }));
 
   const ownDoms = series.map((s) => {
@@ -763,9 +848,12 @@ function renderLine(raw: LineChartInput): ChartOutput {
   };
   const seriesPts = series.map((s, si) => ptsOf(s, si));
 
-  /* avgLine：均线序列（窗口收敛 3..items.length）；**仅当调用方未传 `series`** 时叠加
-   *  （旧 `charts.js:414` `if(opt.avgLine&&!opt.series)`；传了 `series` 就由调用方自己管序列，R2-N6）。 */
-  const avgWindow = line.avgLine === undefined || line.series !== undefined
+  /* avgLine：均线序列（窗口收敛 3..items.length）。旧版 `charts.js:414` 是 `if(opt.avgLine&&!opt.series)`
+   *  ——传了 `series` 就不叠加（R2-N6，调用方自己管序列）。#424 放开这条互斥：`series` 同时用于给**主序列**
+   *  起图例名（旧壳 `chart-multi-v2` 的图例写「每次称重／7 天均线」，均线是引擎现算的、调用方拿不到它的
+   *  数据）——两种用法合并，叠加均线仍由 `avgLine` 决定。主序列恒 `series[0]`、均线恒追加在末尾，
+   *  「只看第一条」的逻辑（`highlightLast`／`markPoint`）不受影响。 */
+  const avgWindow = line.avgLine === undefined
     ? undefined
     : Math.max(3, Math.min(items.length, Math.round(line.avgLine || 7)));
   if (avgWindow !== undefined && items.length >= 2) {
@@ -782,7 +870,18 @@ function renderLine(raw: LineChartInput): ChartOutput {
       }
       return { label: item.label, value: n === 0 ? null : round2(sum / n) };
     });
-    series.push({ name: '均线', items: avgItems, color: MUTED_COLOR, dashed: true, smooth: line.smooth, area: false, ownScale: false });
+    series.push({
+      /* #424 返工：条目名按**实际窗口**生成（调用点传的是变量窗口，如 `reviewDocs.ts:52` 的
+       *  `avgLine: win`）——写死「7 天均线」在窗口 ≠7 时是错的。 */
+      name: avgWindow + ' 天均线',
+      items: avgItems,
+      color: MUTED_COLOR,
+      dashed: true,
+      smooth: line.smooth,
+      area: false,
+      ownScale: false,
+      avg: true,
+    });
     seriesPts.push(avgItems.map((item, i) => [
       xAt(frame, i, avgItems.length),
       item.value === null ? 0 : yAt(frame, item.value, lo, hi),
@@ -840,7 +939,9 @@ function renderLine(raw: LineChartInput): ChartOutput {
   series.forEach((s, si) => {
     if (s.ownScale) anyOwnScale = true;
     const pts = seriesPts[si];
-    const isAvg = s.name === '均线' && avgWindow !== undefined && si === series.length - 1;
+    /* #424 返工：均线身份**只看显式标记**（注入时置 `avg: true`），不再靠「虚线＋非独立刻度＋末位」
+     *  猜——调用方自己的虚线末位序列从此不再被误判。 */
+    const isAvg = s.avg;
     const color = s.color ?? line.color ?? CHART_PALETTE[si % CHART_PALETTE.length];
     if (s.area && !isAvg) {
       const d = areaPath(pts, line.connectNulls, frame.y1, s.smooth && !line.step, line.step);
@@ -856,11 +957,16 @@ function renderLine(raw: LineChartInput): ChartOutput {
         + '" stroke-width="' + line.lineWidth + '" stroke-linejoin="round" stroke-linecap="round"'
         + (s.dashed ? ' stroke-dasharray="6 5"' : '') + ' vector-effect="non-scaling-stroke"/>';
     }
-    if (line.legend && !isAvg && s.name !== '') legendEntries.push({ name: s.name, color });
+    /* 图例条目（#424 起均线条目也算一条）：均线是引擎注入的序列（`avg: true`），名字按窗口生成、
+     *  进图例；调用方自己的**虚线序列**（配对页 cross 轴那条）不进图例——那是调用方图例的事。 */
+    if (line.legend && s.name !== '' && (s.avg || !(avgWindow !== undefined && s.dashed))) {
+      legendEntries.push({ name: s.name, color });
+    }
     if (isAvg) return;
     if (line.showDots) {
       pts.forEach((p, i) => {
         if (p[2]) return;
+        if (dotStride > 1 && (i % dotStride) !== 0) return;
         const item = s.items[i];
         const anomaly = item.anomaly === true;
         const dotClass = STYLE_PREFIX + 'charts-dot' + (anomaly ? ' ' + STYLE_PREFIX + 'charts-dot-anomaly' : '')
@@ -933,10 +1039,15 @@ function renderLine(raw: LineChartInput): ChartOutput {
       marksSvg += '<circle class="' + STYLE_PREFIX + 'charts-dot-last" data-i="' + last + '" cx="' + n1(p[0])
         + '" cy="' + n1(p[1]) + '" r="' + (line.dotSize / 2 + 1) + '" fill="' + esc(color) + '" stroke="' + esc(color)
         + '" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
-      /* 末值文本受 `showValues`／`labels:'select'` 门控（旧 `charts.js:619-621`）；高亮圈无条件。 */
+      /* 末值文本受 `showValues`／`labels:'select'` 门控（旧 `charts.js:619-621`）；高亮圈无条件。
+       * #424：末值常落在绘图区**右边缘**（末点就在 `frame.x1` 上），`middle` 锚会让文字一半探出图外
+       *  （实测「70.6kg」右半截贴到卡片边）。距边不足 6% 宽时改 `end`／`start` 锚并收进 4 单位。 */
       if (line.showValues !== false || line.labels === 'select') {
-        valuesSvg += '<text class="' + STYLE_PREFIX + 'charts-value ' + STYLE_PREFIX + 'charts-value-last" x="' + n1(p[0])
-          + '" y="' + n1(p[1] - 6) + '" text-anchor="middle" fill="var(--fg,#1d1d1f)">'
+        const edgeRatio = (p[0] - frame.x0) / frame.w;
+        const lastAnchor = edgeRatio > 0.94 ? 'end' : edgeRatio < 0.06 ? 'start' : 'middle';
+        const lastX = edgeRatio > 0.94 ? p[0] - 4 : edgeRatio < 0.06 ? p[0] + 4 : p[0];
+        valuesSvg += '<text class="' + STYLE_PREFIX + 'charts-value ' + STYLE_PREFIX + 'charts-value-last" x="' + n1(lastX)
+          + '" y="' + n1(p[1] - 6) + '" text-anchor="' + lastAnchor + '" fill="var(--fg,#1d1d1f)">'
           + esc(fmtValue(main.items[last].value as number, line.format)) + '</text>';
       }
     }
@@ -953,7 +1064,9 @@ function renderLine(raw: LineChartInput): ChartOutput {
         + '" x2="' + n1(frame.x1) + '" y2="' + n1(my) + '" stroke="' + esc(color)
         + '" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>'
         + '<text class="' + STYLE_PREFIX + 'charts-marktext" x="' + n1(frame.x1 - 2) + '" y="' + n1(my - 4)
-        + '" text-anchor="end" fill="' + esc(color) + '">'
+        /* t-chartfix #160：标签恒用静音灰 `--fg3,#86868b`（老壳 `公共组件/assets/charts.js:87`
+         * 同款），**线**仍跟序列色／`mark.color`——线色由 3 条测试锁，标签色不锁。 */
+        + '" text-anchor="end" fill="' + MUTED_COLOR + '">'
         + esc(mark.label !== undefined && mark.label !== null ? String(mark.label) : String(mark.value)) + '</text>';
     }
     if (mark.xValue !== undefined && mark.xValue !== null) {
@@ -980,7 +1093,8 @@ function renderLine(raw: LineChartInput): ChartOutput {
           + '" x2="' + n1(mx) + '" y2="' + n1(frame.y1) + '" stroke="' + esc(color)
           + '" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>'
           + '<text class="' + STYLE_PREFIX + 'charts-marktext-v" x="' + n1(labelX) + '" y="' + n1(frame.y0 - 4)
-          + '" text-anchor="' + anchor + '" fill="' + esc(color) + '">'
+          /* t-chartfix #160：同上——垂直线标签也走 `MUTED_COLOR`，线 stroke 不变。 */
+          + '" text-anchor="' + anchor + '" fill="' + MUTED_COLOR + '">'
           + esc(mark.label !== undefined && mark.label !== null ? String(mark.label) : items[idx].label) + '</text>';
       }
     }
@@ -1025,10 +1139,9 @@ function renderLine(raw: LineChartInput): ChartOutput {
     }
   }
 
-  const points = series.reduce((sum, s, si) => {
-    if (avgWindow !== undefined && si === series.length - 1) return sum;
-    return sum + s.items.filter((item) => item.value !== null).length;
-  }, 0);
+  const points = series.reduce((sum, s) => (
+    s.avg ? sum : sum + s.items.filter((item) => item.value !== null).length
+  ), 0);
 
   const html = containerOpen('line', line, STYLE_PREFIX + 'charts-line')
     + legendHtml(legendEntries)
@@ -1042,7 +1155,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
     + marksSvg
     + valuesSvg
     + markPointSvg
-    + xLabelsSvg(line, frame, items)
+    + xLabelsSvg(line, frame, items, 'peak', undefined, LINE_LABEL_GAP)
     + '</svg></div>';
   return { kind: 'line', html, empty: points === 0, points };
 }
@@ -1053,6 +1166,8 @@ interface ResolvedLineOptions extends ResolvedCommon {
   readonly smooth: boolean;
   readonly step: boolean;
   readonly showDots: boolean;
+  /** `showDots` 是否由调用方**显式**给出（缺省 `undefined` 才算未给：#424 抽稀只作用于未给时）。 */
+  readonly showDotsExplicit: boolean;
   readonly dotSize: number;
   readonly dotStyle: string | undefined;
   readonly area: boolean;
@@ -1759,11 +1874,25 @@ export function chartsCss(prefix: string): string {
     '.' + p + 'charts-center-value{font-size:13px;font-weight:700}',
     '.' + p + 'charts-gauge-value{font-size:26px;font-weight:800}',
     '.' + p + 'charts-gauge-label{font-size:11px}',
+    /* t-chartfix #160 的桌面等比上限 `max-width:480px`（＝320×1.5）在 #424 撤销：
+     *  折线 viewBox 已放大到 580×260（`LINE_DEFAULT_WIDTH/HEIGHT`），930px 卡片下 scale≈1.6
+     *  ——图内 9.5–10px 文字渲染 15.2–16px，靠 viewBox 自身就压住了字号，不再需要砍宽度。
+     *  留着它反而把图钉死在卡片中缝（930 里 480，左右各空 225px）。 */
     '@media (max-width:' + mobile + 'px){'
       + '.' + p + 'charts{--' + p + 'charts-dot:' + dotMobile + 'px}'
       + '.' + p + 'charts-line .' + p + 'charts-svg{height:' + lineHeightMobile + 'px}'
       + '.' + p + 'charts-bar .' + p + 'charts-xlabel{font-size:9.5px}'
       + '.' + p + 'charts-legend{font-size:11.5px}'
+      /* #424 返工（移动端折线文字不可读）：上面那条把折线 svg 盒高钉成 150px，580×260 的 viewBox
+       *  在 390px 手机上被压到 scale≈0.58（`preserveAspectRatio="none"`）——图内 9.5/10 单位实测
+       *  只有 5.4/5.7px。这里只对**折线族**按 1/0.58≈1.75 倍提字号，把实渲拉回 ~10px；字号常量与
+       *  留白估算同源（`LINE_TEXT_MOBILE`），留白已按这一档放大，文字不会再顶出 viewBox。 */
+      + '.' + p + 'charts-line .' + p + 'charts-tick{font-size:' + LINE_TEXT_MOBILE.tick + 'px}'
+      + '.' + p + 'charts-line .' + p + 'charts-xlabel{font-size:' + LINE_TEXT_MOBILE.xlabel + 'px}'
+      + '.' + p + 'charts-line .' + p + 'charts-value{font-size:' + LINE_TEXT_MOBILE.value + 'px}'
+      + '.' + p + 'charts-line .' + p + 'charts-value-last{font-size:' + LINE_TEXT_MOBILE.last + 'px}'
+      + '.' + p + 'charts-line .' + p + 'charts-marktext{font-size:' + LINE_TEXT_MOBILE.mark + 'px}'
+      + '.' + p + 'charts-line .' + p + 'charts-marktext-v{font-size:' + LINE_TEXT_MOBILE.mark + 'px}'
       + '}',
   ].join(LF);
 }
