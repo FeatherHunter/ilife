@@ -22,17 +22,20 @@
  * 卡清单（`Card`）各自判空＋`renderTocBlock` 页内导航＋`renderCaliberLine` 口径行＋
  * `shared/sourceLine.ts` 来源脚注＋`assembleDocPage({printable:true})`（#448 透传位）＋
  * `shared/copyArea.ts` 三格式复制＋`shared/emptyGuide.ts` 空态带下一句；类别色只走
- * `exercise/categoryColors.ts` 的 `categoryColor()`。**趋势（`buildTrendDoc`）与复盘
- * （`buildRecapDoc`／`buildReviewDoc`）三支本票一行不碰**（第 5 票 #454 的地盘）。
- * 本族不接四态头与变更卡载具（那是写操作器件，只读页硬套会印出与事实不符的态标签）。
+ * `exercise/categoryColors.ts` 的 `categoryColor()`。**#454（第 5 票）把趋势（`buildTrendDoc`）
+ * 与复盘（`buildRecapDoc`）两支也换成同一套融合版式**（卡清单逐卡判空＋五窗同版＋逐日表截断明示）；
+ * `buildReviewDoc`（计划复盘）仍走老版式。本族不接四态头与变更卡载具（那是写操作器件，
+ * 只读页硬套会印出与事实不符的态标签）。
  */
 import {
   renderCaliberLine,
   renderChartBlock,
+  renderChips,
   renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderDistributionRows,
+  renderFeedbackBlock,
   renderKpiGrid,
   renderListRows,
   renderParamForm,
@@ -458,65 +461,90 @@ export function buildDistributionDoc(v: DistributionView): string {
   });
 }
 
-/* ── 运动复盘（exercise_recap.html 对照：KPI＋分类＋TOP5＋日趋势＋一句话） ── */
+/* ── 运动复盘（exercise_recap.html 对照：#454 融合版式：一句话结论＋类型分布＋高频徽章＋每日消耗） ── */
 
+/** 复盘页的来源句（读页自己的取数面）。 */
+const RECAP_SOURCE = 'exercise_log（本窗未删除的行）';
+
+/** 复盘页口径行（页内数字怎么来的，写在页面上）。 */
+const RECAP_CALIBER = '口径：结论句按本窗记录算（频次＝记录条数）；分布条占比＝该类次数÷本窗次数'
+  + '（条色＝该类别的固定色）；徽章＝本窗次数前 5 的运动；折线按窗口每一天画点'
+  + '（没有记录的日子留空，不断 0）；时长＝分钟、消耗＝卡。';
+
+/** 五个时间窗（本周／本月／最近 90 天／今年／自定义时间）共用这一个装配：窗口只从数据侧进，
+ *  模板零分支——同一组锚点 id 与区块类名，差异只在文本与数据；`sessions === 0` 才改走空态。 */
 export function buildRecapDoc(v: RecapView): string {
-  const parts: string[] = [
-    windowForm(v.start, v.end, '复盘窗＝调用方给 start/end（旧 period week/month/90d/year/range 逐一映射；多窗各直出一页）'),
-    renderKpiGrid([
-      { label: '总时长', value: fmt(v.totalMinutes), unit: '分钟', detail: v.start + ' ~ ' + v.end },
-      { label: '总消耗', value: String(v.totalBurned), unit: '卡' },
-      { label: '频次', value: String(v.sessions), unit: '次', detail: '活跃 ' + v.activeDays + ' / ' + v.days + ' 天' },
-      { label: '覆盖分类', value: String(v.byCategory.length), unit: '类' },
-    ]),
-  ];
-  let charts = false;
-  if (v.daily.some((d) => d.burned !== null)) {
-    parts.push(renderChartBlock({
-      kind: 'line',
-      title: '每日消耗趋势（空缺断点不断 0，沿 t110 R1）',
-      input: { items: v.daily.map((d) => ({ label: d.date.slice(5), value: d.burned })) },
-    }));
-    charts = true;
-  }
-  parts.push(renderDataTable({
-    columns: [
-      { key: 'category', label: '分类' },
-      { key: 'sessions', label: '次数', align: 'right' },
-      { key: 'burned', label: '消耗', align: 'right' },
-    ],
-    rows: v.byCategory.map((b) => ({ category: b.category, sessions: b.sessions, burned: b.burned })),
-    caption: '类型分布（按分类）',
-    emptyText: '本窗无分类分布',
-  }));
-  parts.push(renderDataTable({
-    columns: [
-      { key: 'type', label: '高频运动' },
-      { key: 'sessions', label: '次数', align: 'right' },
-      { key: 'burned', label: '消耗', align: 'right' },
-    ],
-    rows: v.top5.map((t) => ({ type: t.type, sessions: t.sessions, burned: t.burned })),
-    caption: '高频 TOP5（旧截断沿袭：只列前 5，明细见运动总览全量表）',
-    emptyText: '本窗无高频运动',
-  }));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-recap',
-      data: {
-        metrics: metricsOf({
-          sessions: v.sessions, totalMinutes: v.totalMinutes, totalBurned: v.totalBurned,
-          activeDays: v.activeDays, days: v.days,
-        }),
-      },
+  const hasRows = v.sessions > 0;
+  const cards: Card[] = [
+    windowCard(v.start, v.end, '复盘窗＝调用方给 start/end（旧 period week/month/90d/year/range 逐一映射；多窗各直出一页）'),
+    {
+      id: 'sec-conclusion',
+      label: '一句话结论',
+      // 结论条＝页内静态提示形态（浅色、不可点掉），一句话由数据侧给，页面不另编措辞。
+      html: renderFeedbackBlock({
+        staticNotice: true,
+        toast: { msg: v.summary, icon: hasRows ? 'ok' : 'info' },
+      }),
     },
-  }));
+    {
+      id: 'sec-figures',
+      label: '核心数字',
+      html: renderKpiGrid([
+        { label: '总时长', value: numUnit(v.totalMinutes, '分钟'), detail: v.start + ' ~ ' + v.end },
+        { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
+        { label: '频次', value: String(v.sessions), unit: '次', detail: '活跃 ' + v.activeDays + ' / ' + v.days + ' 天' },
+        { label: '覆盖分类', value: String(v.byCategory.length), unit: '类' },
+      ]),
+    },
+  ];
+  if (hasRows) {
+    // 类型分布条：条色只走 `categoryColor()` 的 hex；占比按次数（与结论句同一口径）。
+    cards.push({
+      id: 'sec-category',
+      label: '类型分布',
+      html: renderDistributionRows({
+        rows: v.byCategory.map((b) => ({
+          label: b.category,
+          value: b.sessions + ' 次 · ' + b.burned + ' 卡',
+          pct: Math.round((b.sessions / v.sessions) * 1000) / 10,
+          ...colorOf(b.category),
+        })),
+      }),
+    });
+    // 高频运动徽章：本窗次数前 5（次数并列时取并到的顺手序，页面不另排序）。
+    cards.push({
+      id: 'sec-badges',
+      label: '高频运动',
+      html: renderChips({ items: v.top5.map((t) => ({ text: t.type + ' ×' + t.sessions })) }),
+    });
+    cards.push({
+      id: 'sec-daily',
+      label: '每日消耗趋势',
+      html: renderChartBlock({
+        kind: 'line',
+        title: '每日消耗趋势（空缺断点不断 0）',
+        input: { items: v.daily.map((d) => ({ label: d.date.slice(5), value: d.burned })) },
+      }),
+    });
+  } else {
+    cards.push({
+      id: 'sec-empty',
+      label: '类型分布',
+      html: emptyGuide({ icon: '📊', text: '本窗还没有运动记录', hint: '说「记运动」就能记下第一条' }),
+    });
+  }
+  cards.push(sourceCard(RECAP_SOURCE, v.start, v.end, v.sessions));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里·运动复盘',
     title: '运动复盘 ' + v.start + ' ~ ' + v.end,
-    eyebrow: 'calorie.view.exercise-recap · 运动移植域',
-    subtitle: v.summary,
-    content: parts.join(''),
-    charts,
+    eyebrow: '运动 · 复盘',
+    subtitle: '结论一句话 ＋ 类型分布 ＋ 高频运动 ＋ 每日消耗趋势',
+    content: finishPage(cards, RECAP_CALIBER, '运动复盘', {
+      sessions: v.sessions, totalMinutes: v.totalMinutes, totalBurned: v.totalBurned,
+      activeDays: v.activeDays, days: v.days,
+    }),
+    charts: hasRows,
+    printable: true,
   });
 }
 
@@ -624,79 +652,109 @@ export function buildReviewDoc(v: ReviewView): string {
   });
 }
 
-/* ── 运动趋势（exercise_trend.html 对照：日序列＋周频次＋峰值） ── */
+/* ── 运动趋势（exercise_trend.html 对照：#454 融合版式：每日折线＋每周柱图＋逐日表） ── */
+
+/** 趋势页的来源句（读页自己的取数面）。 */
+const TREND_SOURCE = 'exercise_log（本窗未删除的行）';
+
+/** 逐日表上限：超出即印截断（页眉条数与可见行数同口径，沿 R3 的截断明示）。 */
+const TREND_ROWS_CAP = 100;
 
 export function buildTrendDoc(v: TrendView): string {
-  const parts: string[] = [
-    windowForm(v.start, v.end, '时序视角（旧 --days 30 默认；本键 start/end 显式窗）'),
-    renderKpiGrid([
-      { label: '运动天数', value: String(v.activeDays), unit: '天', detail: v.start + ' ~ ' + v.end },
-      { label: '总时长', value: fmt(v.totalMinutes), unit: '分钟' },
-      { label: '总消耗', value: String(v.totalBurned), unit: '卡' },
-      {
-        label: '峰值', value: v.peak ? String(v.peak.burned) : '—', unit: '卡',
-        detail: v.peak ? '单日最高 ' + v.peak.date : undefined,
-      },
-    ]),
+  const hasRows = v.activeDays > 0;
+  const shown = Math.min(v.days.length, TREND_ROWS_CAP);
+  const truncated = v.days.length > TREND_ROWS_CAP;
+  const sessions = v.days.reduce((n, d) => n + d.sessions, 0);
+  const cards: Card[] = [
+    windowCard(v.start, v.end, '时序视角（旧 --days 30 默认；本键 start/end 显式窗）'),
+    {
+      id: 'sec-figures',
+      label: '核心数字',
+      html: renderKpiGrid([
+        { label: '运动天数', value: String(v.activeDays), unit: '天', detail: v.start + ' ~ ' + v.end },
+        { label: '总时长', value: numUnit(v.totalMinutes, '分钟') },
+        { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
+        {
+          label: '峰值',
+          value: v.peak === null ? '—' : numUnit(v.peak.burned, '卡'),
+          detail: v.peak === null ? '本窗无记录' : '单日最高 ' + v.peak.date,
+        },
+      ]),
+    },
   ];
-  let charts = false;
-  if (v.days.some((d) => d.burned !== null)) {
+  if (hasRows) {
+    // 每日消耗折线：消耗实线（共享刻度）＋时长虚线（`ownScale` 独立刻度，两套刻度互不压平）；
+    // 没有记录的日子当场是 `null`（不是 0），点自然断开——「空缺断点不断 0」由数据结构保证。
     const burnItems = v.days.map((d) => ({ label: d.date.slice(5), value: d.burned }));
     const minItems = v.days.map((d) => ({ label: d.date.slice(5), value: d.minutes }));
-    parts.push(renderChartBlock({
-      kind: 'line',
-      title: '每日消耗＋时长（消耗实线 · 时长虚线独立刻度；空缺断点不断 0，沿 t110 R1）',
-      input: {
-        items: burnItems,
-        options: {
-          series: [
-            { name: '消耗(卡)', items: burnItems },
-            { name: '时长(分)', items: minItems, dashed: true, ownScale: true },
-          ],
+    cards.push({
+      id: 'sec-line',
+      label: '每日消耗折线',
+      html: renderChartBlock({
+        kind: 'line',
+        title: '每日消耗＋时长（消耗实线 · 时长虚线，两套刻度）',
+        input: {
+          items: burnItems,
+          options: {
+            series: [
+              { name: '消耗(卡)', items: burnItems },
+              { name: '时长(分)', items: minItems, dashed: true, ownScale: true },
+            ],
+          },
         },
-      },
-    }));
-    charts = true;
+      }),
+    });
+    cards.push({
+      id: 'sec-weekly',
+      label: '每周频次',
+      html: renderChartBlock({
+        kind: 'bar',
+        title: '每周运动频次',
+        input: { items: v.weekly.map((w) => ({ label: w.weekStart.slice(5) + '周', value: w.sessions })) },
+      }),
+    });
+    cards.push({
+      id: 'sec-daily',
+      label: '逐日明细',
+      html: renderDataTable({
+        columns: [
+          { key: 'date', label: '日期' },
+          { key: 'sessions', label: '次数', align: 'right' },
+          { key: 'minutes', label: '时长', align: 'right' },
+          { key: 'burned', label: '消耗', align: 'right' },
+        ],
+        // 空缺日（窗内没有记录的那天）一律「—」：0 次／0 卡都不是那天的实话。
+        rows: v.days.slice(0, TREND_ROWS_CAP).map((d) => ({
+          date: d.date,
+          sessions: d.sessions === 0 ? '—' : d.sessions + ' 次',
+          minutes: numUnit(d.minutes, '分钟'),
+          burned: numUnit(d.burned, '卡'),
+        })),
+        caption: '逐日明细（共 ' + v.days.length + ' 天；本表列出 ' + shown + ' 天'
+          + (truncated ? '——已截断，只列前 ' + TREND_ROWS_CAP + ' 天' : '，未截断')
+          + '；空缺日「—」不断 0）',
+      }),
+    });
+  } else {
+    cards.push({
+      id: 'sec-empty',
+      label: '逐日明细',
+      html: emptyGuide({ icon: '📈', text: '本窗还没有运动记录', hint: '说「记运动」就能记下第一笔' }),
+    });
   }
-  if (v.weekly.length > 0) {
-    parts.push(renderChartBlock({
-      kind: 'bar',
-      title: '每周运动频次',
-      input: { items: v.weekly.map((w) => ({ label: w.weekStart.slice(5) + '周', value: w.sessions })) },
-    }));
-    charts = true;
-  }
-  const TREND_CAP = 100;
-  const trendTotal = v.days.length;
-  const trendSlice = v.days.slice(0, TREND_CAP);
-  parts.push(renderDataTable({
-    columns: [
-      { key: 'date', label: '日期' },
-      { key: 'sessions', label: '次数', align: 'right' },
-      { key: 'minutes', label: '时长', align: 'right' },
-      { key: 'burned', label: '消耗', align: 'right' },
-    ],
-    rows: trendSlice.map((d) => ({ date: d.date, sessions: d.sessions, minutes: d.minutes, burned: d.burned })),
-    caption: '逐日明细（共 ' + trendTotal + ' 天' + (trendTotal > TREND_CAP ? '，仅列前 ' + TREND_CAP + ' 天' : '') + '；空日“—”不断 0）',
-    emptyText: '本窗无逐日明细',
-  }));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-trend',
-      data: {
-        metrics: metricsOf({
-          activeDays: v.activeDays, totalMinutes: v.totalMinutes,
-          totalBurned: v.totalBurned, peakBurned: v.peak?.burned,
-        }),
-      },
-    },
-  }));
+  cards.push(sourceCard(TREND_SOURCE, v.start, v.end, sessions));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里·运动趋势',
     title: '运动趋势 ' + v.start + ' ~ ' + v.end,
-    eyebrow: 'calorie.view.exercise-trend · 运动移植域',
-    subtitle: '日序列＋周频次＋峰值（空日断点，不断 0）',
-    content: parts.join(''),
-    charts,
+    eyebrow: '运动 · 趋势',
+    subtitle: '每日消耗与时长 ＋ 每周频次 ＋ 逐日明细（空缺日留空，不补 0）',
+    content: finishPage(cards, '口径：折线与逐日表按窗口每一天画一行（没有记录的日子留空「—」，不补 0）；'
+      + '次数＝本窗记录条数；时长＝分钟、消耗＝卡；逐日表最多列 ' + TREND_ROWS_CAP + ' 天，超出即印截断'
+      + '（页眉的天数与表里可见行数同口径）。', '运动趋势', {
+      activeDays: v.activeDays, totalMinutes: v.totalMinutes,
+      totalBurned: v.totalBurned, peakBurned: v.peak === null ? null : v.peak.burned,
+    }),
+    charts: hasRows,
+    printable: true,
   });
 }
