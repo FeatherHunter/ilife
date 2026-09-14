@@ -6,28 +6,66 @@
 
 **告警线＝350 行。数法：LF 口径，只数 `\n`。**
 
-- 范围：本包 `src/**/*.ts` 与包内 `scripts/*.mjs`。
+- 范围：本包 `src/**/*.ts` 与包内 `scripts/**/*.mjs`。
 - 不算：`templates/*.html`（页面模板）、`SKILL.md`（说明面）、`test/*.mjs`（测试文件）、`dist/` 与 `.tsbuildinfo`（构建产物）——`structure.md` 的「管辖」一节已把它们划在外面。
 - 超线即触发必报五步的**第四步**：当场报一句「已超线，需要根据规则进行重构。」，后头接一句为什么超，再给拆法或说明这次为什么先不拆。**超线是报警，不是拦路。**
 
 口径出处：**用户答复**（私家大厨那张图的 Q4b，逐字「`350 ＋ LF 口径，写进packages/skill-chef/AGENTS.md`」，载 `docs/skills/skill-chef/map-chef-body.md:197`／`:212`）。同数、同落点的兄弟件是 `packages/skill-chef/AGENTS.md`（本文件与它同数、同落点）。`structure.md` 要求这条数字写在各包自己的地方。
 
-## 本包现状（2026-09-14 #354 实测 ＋ #398 补记一行，超线件逐件挂号）
+## 台账两种口径（别混用）
 
-行数口径一律节点口径 `readFileSync(f,'utf8').split('\n').length - 1`。
+- **挂号值**＝**第一次挂号时**写的 LF。它是历史事实（那时确实超线），**永不回改**；需求原文里的冻结值是 `src/render/wizardPort.ts｜457`、`scripts/gen-cli.mjs｜729`（来源＝`docs/skills/skill-calorie/t169-设计定稿.md` 票 2 票面）。检查脚本只核对这两个冻结值**没被改写**，不拿它们跟实况比。从未挂号过的件记 `—`。
+- **当场实测**＝**当刻盘上**数出来的 LF，节点口径 `readFileSync(f,'utf8').split('\n').length - 1`。台账表里**只有这一列**是 `check-warning-line.mjs` 拿来对实况的：与实况不等即红（这就是「台账陈化」）。
+- 某个件的 LF 掉回 350 以内：**挂号行不删**（挂号值仍是历史事实），但「当场实测」列要跟着实况改，结论列写明「已落回线内、不再触发第四步」。
 
-| 件 | LF | 结论 |
-|---|---|---|
-| `src/render/wizardPort.ts` | 457 | 已超线，需要根据规则进行重构。超因：预检确认页装配与结果型页面装配同处一处；本次先不拆：拆分本身不在本票（#354 只登记），拆法待后续票确定 |
-| `scripts/gen-cli.mjs` | 729 | 已超线，需要根据规则进行重构。超因：命令汇总派生与生成物写回同处一个一次性脚本；本次先不拆：拆分本身不在本票（#354 只登记），拆法待后续票确定 |
-| `src/fetch/body.ts` | 369 | 已超线，需要根据规则进行重构。超因：（**#398 引入**）新增读侧来源词（`SOURCE_FILTER_ALL`／`SourceFilter`／`assertSourceFilter`）与按来源分组取数（`trendCompositionBySource`／`compositionSourceCount`），与既有的写侧校验（`validateCompositionInput`）＋围度取数同处一件；本次先不拆：拆分不在 #398 写集（该票写集只有 `fetch/body.ts`／必要时 `bodyPlate.ts`／测试／证据），**拆法待后续票**——按「写侧校验／围度取数／体成分取数」三面切成同目录姊妹件，出口由 `fetch/index.ts` 的 `export *` 转出，调用方导入面不变 |
+## 台账（`check-warning-line.mjs` 的解析源）
 
-其余**逐件**在 350 以内（本次只挂号超线件三件；#398 之前「其余件均在 350 以内」的整句写法已不再成立，改为逐件口径，
-下列行数为 2026-09-14 #398 当场实测 LF 值）：`src/body/bodyPlate.ts` 227 行、`src/body/view.ts` 40 行、
-`src/body/bodyDocs.ts` 255 行、`src/kcal.ts` 32 行，均在线内。
+下表是本包告警线的**唯一台账**：`件`＝扫描面内的文件；`挂号值`＝首次挂号时的 LF（从未挂号记 `—`）；`当场实测`＝本表成文当刻的 LF（脚本核对的就是这一列）；`结论`＝超线原话＋超因＋拆法或「本次先不拆」的理由。**改这张表就是改台账；表外别处不再写行数**（免得两处走散）。
 
-台账前两行的行数（457／729）是 #354 的**冻结挂号值**，也是 `check-warning-line.mjs` 的检查口径；
-2026-09-14 #398 当场实测另得 `src/render/wizardPort.ts` 265 行、`scripts/gen-cli.mjs` 754 行
-—— 两者仍超线，行数漂移不改挂号结论，检查脚本口径未动（改脚本不在 #398 写集）。
+<!-- warning-line-ledger:begin -->
+| 件 | 挂号值 | 当场实测 | 结论 |
+|---|---|---|---|
+| `src/triggers/wake-assets.ts` | — | 4747 | 超因：全量唤醒词资产（逐字落地老实物 HELP 的 typed TS module，见件头「唯一事实源」）与代码同处一件，数据面占了绝大多数行。 |
+| `src/render/trendDocs.ts` | — | 816 | 超因：趋势／分析域同质文档装配（数据→区块→填充器）全挤在一件里。 |
+| `scripts/gen-cli.mjs` | 729 | 754 | 「#354 挂号原文」超因：命令汇总派生与生成物写回同处一个一次性脚本；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。 |
+| `src/weight/history.ts` | — | 670 | 超因：「看体重明细」与「看体重曲线」在命令面上是同一个命令，两条子功能共用一件。 |
+| `src/render/html.ts` | — | 647 | 超因：T8～T10 的多套 HTML 串模板（饮食／总览／照片层等）同处一件。 |
+| `src/weight/review.ts` | — | 590 | 超因：体重复盘三形态的判别式与页面装配同处一件。 |
+| `src/workout/write.ts` | — | 570 | 超因：训练计划 10 个写处理函数（创建类 5＋变更类 5）同处一件。 |
+| `src/render/trendMiscPortDocs.ts` | — | 563 | 超因：#113「趋势 2＋其他 6」共 8 键的 HTML 填充器同处一件。 |
+| `src/weight/compare.ts` | — | 547 | 超因：对比体重的主窗口／对比窗口两套参数与对比算式同处一件（算式另有姊妹件 `weightCompare*.ts`）。 |
+| `src/render/exercisePort.ts` | — | 541 | 超因：#111 运动移植 6 键取数（行源＋分类口径）同处一件。 |
+| `src/render/sportPortDocs.ts` | — | 533 | 超因：#111 运动移植 6 键的全文档装配（数据→区块→填充器）同处一件。 |
+| `src/triggers/routes.generated.ts` | — | 529 | **生成物**：由 `scripts/gen-routes.mjs` 生成（件头「勿手改」，`pnpm gen` 重生成）。挂号只为「扫描面看得见它」；本行**不触发**第四步改造——结构纪律「不管生成的资产」。重新生成后若行数变了，本行「当场实测」列要跟着改，否则本门必红。 |
+| `src/migrate/migrate.ts` | — | 494 | 超因：老库到新 schema 的一次性迁移（13 表重建口径）全在一件里。 |
+| `src/analysis/multiTrendPage.ts` | — | 485 | 超因：通用分析页最小形态的整页装配与图／表／复制区调用同处一件。 |
+| `src/photo/helpCenter.ts` | — | 485 | 超因：#88 HELP 速查台的数据模型与页面装配同处一件。 |
+| `src/render/trendMiscPort.ts` | — | 456 | 超因：#113 八模板取数（计数 6＋4＋8 闭合）同处一件。 |
+| `src/profile/setup.ts` | — | 428 | 超因：#179 三条写入词共用的写前页与 #175 补的写后回执页同处一件。 |
+| `src/diet/nutritionPortDocs.ts` | — | 423 | 超因：#112 营养 4 页的全文档装配（数据→区块→填充器）同处一件。 |
+| `src/fetch/body.ts` | 369 | 382 | 「#398 挂号原文」超因：读侧来源词（`SOURCE_FILTER_ALL`／`SourceFilter`／`assertSourceFilter`）与按来源分组取数（`trendCompositionBySource`／`compositionSourceCount`），与既有写侧校验（`validateCompositionInput`）＋围度取数同处一件；#398 先不拆：拆分不在该票写集，拆法待后续票（按「写侧校验／围度取数／体成分取数」切姊妹件）。**该件在 #445 当场实测比挂号值又涨；本行「当场实测」列随实况改，挂号值 369 不回改。** |
+| `src/workout/planStore.ts` | — | 369 | 超因：T4 计划取数＋写数（校验三硬止＋两软提示、全量覆盖写）同处一件。 |
+| `src/diet/nutritionPort.ts` | — | 367 | 超因：#112 营养 4 键取数与 #275 追加的「看饮食总览」视图同处一件。 |
+| `src/render/wizardPort.ts` | 457 | 265 | 「#354 挂号原文」超因：预检确认页装配与结果型页面装配同处一处；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。**#445 当场实测已落回 350 以内，挂号行保留（457 是历史事实、不回改），本行不再触发第四步。** |
+<!-- warning-line-ledger:end -->
 
-检查脚本：`packages/skill-calorie/scripts/check-warning-line.mjs`（删台账任意一行必红）。
+## 本包现状（2026-09-14 #445 当场扫描）
+
+`#445` 把检查脚本从「`REQUIRED` 硬清单存在性」扩成「扫描面＋台账逐件对账」之后，当场扫描发现**超线件远不止 #354 在册的三件**：多出来的那些此前从未挂号（#354 只按票面点名登记了两件，却写了「其余均在 350 以内」的整句结论，那句话当场就不成立；#445 改正为**逐件**口径）。逐件读数只看上表「当场实测」列——本段不重复抄写数字，免得和表走散。
+
+其中 `src/triggers/routes.generated.ts` 是生成物（见该行结论），其余各件的拆法均不在 #445 写集（本票不改任何件源码），逐件结论待归属票认领。
+
+## 检查脚本
+
+`packages/skill-calorie/scripts/check-warning-line.mjs`：
+
+- **绿**＝台账齐全**且**与实况逐件一致：`exit 0`、`RESULT: n/n`、`PASS: 告警线台账齐全且与实况一致`。
+- **红**（`exit 1`）四种，都在输出里点名：
+  - `RED 漏报（台账没有）：<件> LF=<n>`——盘上超线了却没进台账（新增件、或把某件撑过 350）；
+  - `RED 台账陈化：<件> 台账=<a> 实况=<b>`——台账「当场实测」列与实况不等；
+  - `RED 台账件在扫描面内：<件>`——台账点名了扫描面内不存在的件（改过名／搬过家）；
+  - `RED 台账缺行：<件>`——删台账任意一行、或改写冻结挂号值（#354 起的负向对照）。
+- **改了超线件、或新增／删除扫描面内的件，就必须同步这张台账表**，否则本门必红。这是设计行为（#445 要的就是「台账不随实况更新即报警」），不是误报。
+- 同步口径：把上表「当场实测」列改成当刻 LF（`readFileSync(f,'utf8').split('\n').length - 1`）；超线件补新行、落回线内的行保留并改实测值。
+- 复跑：`node packages/skill-calorie/scripts/check-warning-line.mjs`；夹具与变异可用 `--root`／`--agents` 指另一份包根与另一份 AGENTS.md（真实门禁**一律无参运行**，脚本会打印 `SCAN-ROOT:`／`LEDGER:` 两行供认口）。
+- 测试：`packages/skill-calorie/test/t445-告警线门.test.mjs`（漏报必红／陈化必红／还原必绿）。
