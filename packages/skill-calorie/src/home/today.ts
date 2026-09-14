@@ -13,7 +13,8 @@ import { buildViewDietDoc } from '../render/dietDocs.js';
 import { buildExerciseView } from './exercise.js';
 import { buildGoalProgress } from '../render/goalPlate.js';
 import { buildHomeData } from './home.js';
-import { renderGoalProgressHtml, renderHomeHtml } from '../render/html.js';
+import { renderHomeHtml } from './homeDocs.js';
+import { renderGoalProgressHtml } from '../render/html.js';
 import { buildExerciseDoc } from '../render/sportDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
 import {

@@ -3,7 +3,7 @@
  * 红线：样式常量一律走 token()/cx()（base-paint 唯一真相源），本包不自带颜色/圆角/字号常量；
  * 转义走 base-paint escapeHtml；数值序列化前已在数据层 round2，模板不再做数学
  * （bar 宽度的 0..100 钳位为纯展示裁剪；照片层数值在本层不做数学）。
- * T8 四模板：renderHomeHtml（总览）/ renderDietHtml（饮食：总览+餐别分布）/
+ * T8 四模板（总览已迁 `src/home/homeDocs.ts`，#370 纯搬迁）：renderDietHtml（饮食：总览+餐别分布）/
  * renderExerciseHtml（运动）/ renderGoalHtml（目标分析）。
  * T9 模板：目标五盘/组合分析/缺口/饮食复盘/健康盘/排行/食品库。
  * T10 模板：photoCardHtml（照片卡）/ renderPhotoReceiptHtml（CRUD 收据）/ renderGalleryHtml（画廊）/
@@ -12,7 +12,6 @@
  * 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64。
  */
 import { cx, escapeHtml, token } from 'base-paint';
-import type { HomeData } from '../home/home.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { ExerciseView } from '../home/exercise.js';
 import type { GoalView } from '../goal/goalPlate.js';
@@ -67,24 +66,6 @@ function bar(label: string, pct: number | null): string {
 function fmt(n: number | null | undefined, suffix = ''): string {
   if (n === null || n === undefined) return '—';
   return String(n) + suffix;
-}
-
-export function renderHomeHtml(d: HomeData): string {
-  const t = d.daily.totals;
-  const body =
-    '<div class="' + cx('grid') + '">' +
-    kpi('今日摄入', fmt(t.cal, ' 卡'), '目标 ' + fmt(d.calorieGoal, ' 卡')) +
-    kpi('蛋白', fmt(t.pro, ' g')) +
-    kpi('饮水', fmt(d.daily.waterMl, ' ml'), '目标 ' + fmt(d.waterGoal, ' ml')) +
-    kpi('今日缺口', fmt(d.deficitToday, ' 卡'), '正=缺口') +
-    kpi('连续记录', d.streakDays + ' 天', '近' + d.week.loggedDays + '天有记录') +
-    kpi('周均摄入', fmt(d.week.avgIntake, ' 卡'), d.week.start + ' ~ ' + d.week.end) +
-    '</div>' +
-    bar('热量完成度', d.caloriePct) + bar('蛋白完成度', d.proteinPct) + bar('饮水完成度', d.waterPct) +
-    (d.daily.overCal
-      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">今日已超热量目标</div>'
-      : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">热量在目标内</div>');
-  return pageShell('calorie', 'ilife:calorie', '今日总览 ' + d.date, body);
 }
 
 export function renderDietHtml(o: DietOverview, dist: MealDistribution): string {
