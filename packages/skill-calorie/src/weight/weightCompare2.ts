@@ -2,6 +2,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
+import { ratePerDayText } from './weightCompare.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -124,7 +125,7 @@ export function scenarioE2(db: DatabaseSync): ScenarioResult {
     compare: { deltaKg: round2(current - maxRow[1]), direction: current < maxRow[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
     extraRows: [
       { label: '已下降', value: dropped.toFixed(1) + ' kg' },
-      { label: '下降速率', value: round3(dropped / days).toFixed(3) + ' kg/天' },
+      { label: '每天变化', value: ratePerDayText(dropped / days) },
     ],
   };
 }
@@ -138,7 +139,7 @@ export function scenarioE3(db: DatabaseSync, deltaKg: number): ScenarioResult {
   const hit = rows.find((r) => r[1] <= th);
   if (!hit) {
     const diff = round1(maxKg - current);
-    throw new FetchError('未达成减重 ' + deltaKg + 'kg 里程碑(当前距历史最高已减 ' + diff + 'kg)');
+    throw new FetchError('还没减到 ' + deltaKg + ' kg（当前距历史最高已减 ' + diff + ' kg）');
   }
   const elapsed = Math.max(1, dayDiff(hit[0], (rows[rows.length - 1] as Row)[0]));
   const rate = round3((current - hit[1]) / elapsed);
@@ -151,13 +152,13 @@ export function scenarioE3(db: DatabaseSync, deltaKg: number): ScenarioResult {
     pts = idxs.map((i) => pts[i] as Row);
   }
   return {
-    segA: singleSeg('减重 ' + deltaKg + 'kg 那天', hit[0], hit[1]),
+    segA: singleSeg('减重 ' + deltaKg + ' kg 那天', hit[0], hit[1]),
     segB: singleSeg('今天', (rows[rows.length - 1] as Row)[0], current),
     compare: { deltaKg: round2(current - hit[1]), direction: current < hit[1] ? '下降' : current > hit[1] ? '上升' : '持平', rateDiffG: null, speed: '—' },
     extraRows: [
       { label: '用时', value: elapsed + ' 天' },
-      { label: '期间速率', value: rate.toFixed(3) + ' kg/天' },
-      { label: '体重轨迹', value: hit[1] + ' → ' + current + ' kg · ' + elapsed + ' 天', spark: pts.map((r) => ({ d: fmt(r[0]), kg: r[1] })) },
+      { label: '每天变化', value: ratePerDayText(rate) },
+      { label: '体重变化曲线', value: hit[1] + ' → ' + current + ' kg · ' + elapsed + ' 天', spark: pts.map((r) => ({ d: fmt(r[0]), kg: r[1] })) },
     ],
   };
 
@@ -183,7 +184,7 @@ export function scenarioE5(db: DatabaseSync, today: string): ScenarioResult {
   if (rows.length === 0) throw new FetchError('无体重记录');
   const current = (rows[rows.length - 1] as Row)[1];
   const m = seasonMin(rows, today, 'summer');
-  if (!m) throw new FetchError('今年夏天(6-8 月)无体重记录');
+  if (!m) throw new FetchError('今年夏天（6～8 月）没有体重记录');
   const daysSince = Math.max(0, dayDiff(m[0], today));
   return {
     segA: singleSeg('入夏最低', m[0], m[1]),
@@ -198,7 +199,7 @@ export function scenarioE6(db: DatabaseSync, today: string): ScenarioResult {
   if (rows.length === 0) throw new FetchError('无体重记录');
   const current = (rows[rows.length - 1] as Row)[1];
   const m = seasonMin(rows, today, 'winter');
-  if (!m) throw new FetchError('最近一个冬天(12-2 月)无体重记录');
+  if (!m) throw new FetchError('最近一个冬天（12～2 月）没有体重记录');
   const daysSince = Math.max(0, dayDiff(m[0], today));
   return {
     segA: singleSeg('入冬最低', m[0], m[1]),

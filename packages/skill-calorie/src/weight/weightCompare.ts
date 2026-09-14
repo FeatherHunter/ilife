@@ -106,6 +106,15 @@ const emptySeg = (label: string): Seg => ({ label, range: '', count: 0, avg: nul
 const singleSeg = (label: string, range: string, kg: number): Seg => ({ label, range, count: 1, avg: kg, startKg: kg, endKg: kg, netChange: 0, volatility: 0 });
 const flatCompare = (deltaKg: number | null, direction: string): Compare => ({ deltaKg, direction, rateDiffG: null, speed: '—' });
 
+/** 每天变化量的**克**写法（「每天变化」行与结论句共用一处）：口径 §3.2 全族统一「克」，
+ *  页面上不许 `kg/天` 与 `克` 两种单位并存。每天 100 克以上才留一位小数（免得印出「每天 +19.4 克」这类糊数）。 */
+export function ratePerDayText(kgPerDay: number): string {
+  const g = kgPerDay * 1000;
+  const abs = Math.abs(g);
+  const shown = abs >= 100 ? Math.round(abs * 10) / 10 : Math.round(abs);
+  return (g > 0 ? '每天 +' : g < 0 ? '每天 -' : '每天 ') + shown + ' 克';
+}
+
 export function scenarioA1(db: DatabaseSync, today: string): ScenarioResult {
   const seg2 = shiftISODate(today, -29);
   const seg1End = shiftISODate(seg2, -1);
@@ -117,7 +126,7 @@ export function scenarioA1(db: DatabaseSync, today: string): ScenarioResult {
 }
 
 export function scenarioA2(db: DatabaseSync, o: ScenarioOpts): ScenarioResult {
-  if (!o.startA || !o.endA || !o.startB || !o.endB) throw new FetchError('a2 需 startA/endA/startB/endB');
+  if (!o.startA || !o.endA || !o.startB || !o.endB) throw new FetchError('自定义两段时间需要四个月日期（起／止 × 两段）');
   const a = seg(fetchRows(db, o.startA, o.endA), '第一段');
   const b = seg(fetchRows(db, o.startB, o.endB), '第二段');
   if (!a || !b) throw new FetchError('数据不足(某段无记录)');
@@ -130,7 +139,7 @@ export function scenarioA3(db: DatabaseSync, today: string): ScenarioResult {
   const a = seg(fetchRows(db, lastMon, shiftISODate(lastMon, 6)), '上周');
   const b = seg(fetchRows(db, thisMon, today), '本周');
   if (!a || !b) throw new FetchError('数据不足(本周/上周无记录)');
-  if (a.count < 3 || b.count < 3) return { segA: a, segB: b, compare: flatCompare(null, '—'), sampleWarning: '样本不足(每段需 ≥3 条记录才能对比)' };
+  if (a.count < 3 || b.count < 3) return { segA: a, segB: b, compare: flatCompare(null, '—'), sampleWarning: '记录太少，每段要 3 条以上才能对比' };
   return { segA: a, segB: b, compare: comparePair(a, b) };
 }
 
@@ -162,11 +171,11 @@ export function sameDayCompare(db: DatabaseSync, today: string, monthsBack: numb
   const { hit, offset } = nearest(rows, target);
   if (!hit) {
     return {
-      segA: { ...emptySeg(label), range: '±3 天无记录' },
+      segA: { ...emptySeg(label), range: '前后 3 天都没有记录' },
       segB: singleSeg('今天', today, current),
       compare: { deltaKg: null, direction: '—', rateDiffG: null, speed: '—' },
-      tolerance: { hit: false, target, note: target + ' ±3 天内无记录' },
-      extraRows: [{ label: '容差命中', value: '未命中' }],
+      tolerance: { hit: false, target, note: target + ' 前后 3 天都没有记录' },
+      extraRows: [],
     };
   }
   const delta = round2(current - hit[1]);
@@ -180,8 +189,8 @@ export function sameDayCompare(db: DatabaseSync, today: string, monthsBack: numb
     compare: flatCompare(delta, direction),
     tolerance: { hit: true, target, hitDate: hit[0], offsetDays: offset as number },
     extraRows: [
-      { label: '容差命中', value: offset ? hit[0] + '(±' + offset + ' 天)' : '精确命中 ' + hit[0] },
-      { label: label + '内区间均值', value: wAvg !== null ? wAvg + ' kg' : '—' },
+      { label: label + '那天', value: hit[0] + (offset ? '（前后 ' + offset + ' 天内的最近一条）' : '（精确命中）') },
+      { label: '最近 ' + windowDays + ' 天均值', value: wAvg !== null ? wAvg + ' kg' : '—' },
     ],
   };
 }

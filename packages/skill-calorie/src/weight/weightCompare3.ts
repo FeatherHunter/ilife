@@ -68,7 +68,7 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
     "SELECT strftime('%Y-%m', date) AS m, COALESCE(SUM(calories_burned), 0) AS v FROM exercise_log WHERE date IS NOT NULL AND " + EX_ALIVE + ' GROUP BY m ORDER BY m',
   ).all() as unknown as Array<{ m: string; v: number }>;
   const months: Array<[string, number]> = monthsRaw.map((r) => [r.m, r.v]);
-  if (months.length < 2) throw new FetchError('数据不足(需至少 2 个月有运动记录)');
+  if (months.length < 2) throw new FetchError('至少要有两个月的运动记录才能比（当前只有 ' + months.length + ' 个月）');
   let lowM = (months[0] as [string, number])[0];
   let highM = lowM;
   let lowT = 0;
@@ -77,7 +77,7 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
     if (total > highT) { highT = total; highM = m; }
     if (lowT === 0 || total < lowT) { lowT = total; lowM = m; }
   }
-  if (lowM === highM) throw new FetchError('数据不足(各月运动量相同)');
+  if (lowM === highM) throw new FetchError('各月运动量一样，挑不出运动最多／最少的两个月');
   const [lowS, lowE] = monthRange(lowM);
   const [highS, highE] = monthRange(highM);
   const segOf = (s: string, e: string, label: string) => {
@@ -88,9 +88,9 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
     const last = rows[rows.length - 1] as Row;
     return { label, range: first[0] + ' ~ ' + last[0], count: rows.length, avg: round2(mean(kgs)), startKg: first[1], endKg: last[1], netChange: round2(last[1] - first[1]), volatility: round2(Math.max(...kgs) - Math.min(...kgs)) };
   };
-  const a = segOf(lowS, lowE, lowM + '(运动最少)');
-  const b = segOf(highS, highE, highM + '(运动最多)');
-  if (!a || !b) throw new FetchError('数据不足(极端月无体重记录)');
+  const a = segOf(lowS, lowE, lowM + ' · 运动最少');
+  const b = segOf(highS, highE, highM + ' · 运动最多');
+  if (!a || !b) throw new FetchError('运动最多／最少的那两个月里没有体重记录');
   const calLow = monthTotal(db, lowS, lowE, 'food_log', 'calories');
   const calHigh = monthTotal(db, highS, highE, 'food_log', 'calories');
   const sleepLow = sleepHours(scheduleDbPath, lowS, lowE);
@@ -99,13 +99,13 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
   const extra: Array<{ label: string; value: string }> = [
     { label: lowM + ' 运动总量', value: round(lowT) + ' 卡' },
     { label: highM + ' 运动总量', value: round(highT) + ' 卡' },
-    calLow !== null ? { label: lowM + ' 摄入', value: calLow + ' 卡' } : { label: lowM + ' 摄入', value: '缺失(无记录)' },
-    calHigh !== null ? { label: highM + ' 摄入', value: calHigh + ' 卡' } : { label: highM + ' 摄入', value: '缺失(无记录)' },
+    calLow !== null ? { label: lowM + ' 摄入', value: calLow + ' 卡' } : { label: lowM + ' 摄入', value: '没有记录' },
+    calHigh !== null ? { label: highM + ' 摄入', value: calHigh + ' 卡' } : { label: highM + ' 摄入', value: '没有记录' },
   ];
   if (sleepLow !== null && sleepHigh !== null) {
     extra.push({ label: lowM + ' 睡眠', value: sleepLow + ' 小时' });
     extra.push({ label: highM + ' 睡眠', value: sleepHigh + ' 小时' });
-  } else extra.push({ label: '睡眠数据', value: '缺失(外部技能未记录)' });
+  } else extra.push({ label: '睡眠', value: '没有记录' });
   return {
     segA: a,
     segB: b,
@@ -120,10 +120,10 @@ export function scenarioD4(db: DatabaseSync, today: string = todayISO()): Scenar
     return new Date(t - 6 * 86400000).toISOString().slice(0, 10);
   })();
   const rows = fetchRows(db, start, today);
-  if (rows.length === 0) throw new FetchError('最近 7 天无记录');
+  if (rows.length === 0) throw new FetchError('最近 7 天没有记录');
   const wd = rows.filter((r) => { const d = (new Date(r[0] + 'T12:00:00Z').getUTCDay() + 6) % 7; return d < 5; });
   const we = rows.filter((r) => { const d = (new Date(r[0] + 'T12:00:00Z').getUTCDay() + 6) % 7; return d >= 5; });
-  if (wd.length === 0 || we.length === 0) throw new FetchError('样本不足(工作日/周末需各有记录)');
+  if (wd.length === 0 || we.length === 0) throw new FetchError('工作日与周末都要有记录才能比');
   const stats = (rr: Row[]): [number, number] => {
     const kgs = rr.map((r) => r[1]);
     return [round2(mean(kgs)), round2(stdev(kgs))];
@@ -141,7 +141,8 @@ export function scenarioD4(db: DatabaseSync, today: string = todayISO()): Scenar
     extraRows: [
       { label: '工作日波动', value: '±' + wdVol + ' kg' },
       { label: '周末波动', value: '±' + weVol + ' kg' },
-      { label: '一致率', value: agreement + '%' },
+      /* 「一致率」= 两段均值差越小越一致，是**本页自造的数**，读者看不懂也没法验算 ⇒ 换成人话标签。 */
+      { label: '两段均值接近程度', value: agreement + '%' },
     ],
   };
 }

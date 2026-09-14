@@ -50,8 +50,8 @@ test('情景面 8 锚点：逐条完整文档＋锚点日期印出', () => {
     ['b8', { scenario: 'b8', today: TODAY }, '平台期首日', '2026-08-01'],
     ['e1', { scenario: 'e1', today: TODAY }, '历史最低', null],
     ['e2', { scenario: 'e2', today: TODAY }, '历史最高', '2025-09-01'],
-    ['e3d5', { scenario: 'e3', delta: 5, today: TODAY }, '减重 5kg 那天', null],
-    ['e3d10', { scenario: 'e3', delta: 10, today: TODAY }, '减重 10kg 那天', null],
+    ['e3d5', { scenario: 'e3', delta: 5, today: TODAY }, '减重 5 kg 那天', null],
+    ['e3d10', { scenario: 'e3', delta: 10, today: TODAY }, '减重 10 kg 那天', null],
     ['e5', { scenario: 'e5', today: TODAY }, '入夏最低', '2026-08-31'],
     ['e6', { scenario: 'e6', today: TODAY }, '入冬最低', null],
     ['c5', { scenario: 'c5', today: TODAY }, '运动最少', '2026-07'],
@@ -61,9 +61,23 @@ test('情景面 8 锚点：逐条完整文档＋锚点日期印出', () => {
     assert.ok(isDoc(r.html), id + ' 应为完整文档');
     assert.ok(r.html.includes(segLabel), id + ' 应印段标签 ' + segLabel);
     assert.ok(r.html.includes('结论'), id + ' 应有结论句');
+    assert.ok(!r.html.includes('情景 ' + id), id + ' 眉标不许印内部情景代号');
+    assert.ok(!r.html.includes('情景 b8') && !r.html.includes('情景 e1'), id + ' 情景页眉标整行应删');
+    assert.ok(!r.html.includes('无从对照') && !r.html.includes('n=1') && !r.html.includes('仅一天'), id + ' 旧记号（无从对照／n=1／仅一天）命中数须为 0');
+    assert.ok(!r.html.includes('g/天'), id + ' 每天变化量单位统一「克」（不许 g/天）');
+    assert.ok(!r.html.includes('kg/天'), id + ' 每天变化量单位统一「克」（不许 kg/天）');
+    assert.ok(r.html.includes('每天变化'), id + ' 应有「每天变化」卡');
     assert.ok(/\d{4}-\d\d-\d\d/.test(r.html), id + ' 应印出锚点日期');
     if (anchorNeedle) assert.ok(r.html.includes(anchorNeedle), id + ' 应印出锚点 ' + anchorNeedle);
   }
+  // 副标题已压成两段区间（业务名删重）⇒ 这里改判「区间那一句还在」，别让删重把锚点日期带走；
+  // 同时守「情景业务名在整页只印一次」（删重前是 2~3 处：副标题／情景卡副说明／表题）。
+  const e3 = run(db, { scenario: 'e3', delta: 5, today: TODAY });
+  assert.match(e3.html, /减重 5 kg 那天 \d{4}-\d\d-\d\d vs 今天 \d{4}-\d\d-\d\d/, 'e3 副标题应印「两段 ＋ 各自区间」（含锚点日，段标签带空格）');
+  assert.ok(e3.html.includes('减重 5 kg 那天'), 'e3 段标签按口径带空格（数字与单位一个空格）');
+  assert.ok(e3.html.includes('减重 N kg 那天 vs 今天'), 'e3 表题里的情景名仍是冻结表原文');
+  // 删重后整页只剩 2 处：情景卡副说明 ＋ 表题（删重前副标题还有第 3 处）。
+  assert.ok((e3.html.match(/减重 N kg 那天 vs 今天/g) || []).length === 2, 'e3 情景业务名整页只剩 2 处（删重）');
   db.close();
 });
 
@@ -83,7 +97,7 @@ test('窗口面回归：显式日期与 9 条窗口参数照旧', () => {
 test('缺失阻断与用法错：不编日期顶上', () => {
   const db = tmpDb();
   seed(db);
-  assert.throws(() => run(db, { scenario: 'e3', delta: 50, today: TODAY }), /未达成/);
+  assert.throws(() => run(db, { scenario: 'e3', delta: 50, today: TODAY }), /还没减到/);
   assert.throws(() => run(db, { scenario: 'zz', today: TODAY }), /未知对比情景/);
   db.close();
 });
