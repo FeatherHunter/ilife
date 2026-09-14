@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>样张 · 改运动记录回执（融合设计，不进生产）</title>
+<style>
+/* 样张 throwaway：单文件、双击即看、无持久化。样式单源思路取自新仓，密度细节取自老技能。 */
+:root{
+  --fg:#1d1d1f; --fg2:#6e6e73; --fg3:#86868b; --bg:#f5f5f7; --card:#ffffff;
+  --line:#d2d2d7; --blue:#007aff; --soft:#f5f8ff; --ok:#34c759; --warn:#ff9500; --bad:#ff3b30;
+  --strength:#5856d6; --cardio:#0071e3; --flex:#34c759; --daily:#ff9500;
+}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);margin:0}
+.wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+.meta-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.meta-bar .left{font-size:12px;color:var(--fg2)}
+.type-badge{font-size:11px;padding:3px 10px;border-radius:6px;background:#efeff2;color:var(--fg2);font-weight:600;white-space:nowrap}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 4px}
+.sub{font-size:14px;color:var(--fg3);margin:0 0 16px}
+.proto-banner{font-size:12px;color:var(--fg2);background:var(--soft);border:1px dashed var(--blue);border-radius:10px;padding:8px 12px;margin-bottom:16px}
+.toc{font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 20px}
+.toc a{color:var(--blue);text-decoration:none;margin-right:14px;line-height:2}
+section.block{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+section.block h2{font-size:17px;margin:0 0 12px}
+.id-card .headline{display:flex;align-items:center;gap:12px}
+.id-card .icon{width:40px;height:40px;border-radius:12px;background:rgba(52,199,89,.15);display:flex;align-items:center;justify-content:center;font-size:20px}
+.id-card .title{font-size:18px;font-weight:700}
+.id-card .id{font-size:13px;color:var(--fg2)}
+.id-card .meta{font-size:12px;color:var(--fg3);margin-top:6px}
+.summary{font-size:14px;margin-top:8px}
+.sum-nums{font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}
+.sum-old{background:#ffeaea;color:#c7254e;text-decoration:line-through;border-radius:4px;padding:0 4px}
+.sum-new{background:rgba(52,199,89,.15);color:var(--ok);border-radius:4px;padding:0 4px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .label{font-size:12px;color:var(--fg2)}
+.kpi .value{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .extra{font-size:11px;color:var(--fg3)}
+.diff-card .diff-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.diff-old{background:#ffeaea;color:#c7254e;text-decoration:line-through;border-radius:6px;padding:2px 8px}
+.diff-new{background:rgba(52,199,89,.15);color:var(--ok);border-radius:6px;padding:2px 8px}
+.diff-arrow{color:var(--fg3)}
+.ctx-card .ctx-row{display:flex;align-items:center;gap:10px;font-size:13px;padding:6px 0}
+.ctx-card .label{flex:0 0 120px;color:var(--fg2)}
+.ctx-card .value{font-weight:700;font-variant-numeric:tabular-nums}
+.bar-wrap{flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden}
+.bar{height:100%;background:var(--blue)}
+.items-card table{width:100%;border-collapse:collapse;font-size:13px}
+.items-card th,.items-card td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.items-card th{background:var(--soft);font-size:11px}
+.num{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.note-line{background:var(--soft);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--fg2);margin-top:12px}
+.footer{display:flex;gap:12px;align-items:center;margin:16px 0}
+.btn{font-size:14px;padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.src{font-size:12px;color:var(--fg3)}
+.ilife-copy-menu-wrap{position:relative;display:inline-block}
+.ilife-copy-menu{display:flex;gap:8px;margin-top:8px}
+.ilife-copy-menu button{font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.ilife-copy-menu button span{display:block;font-size:11px;color:var(--fg3)}
+.copylog{font-size:12px;color:var(--fg2);background:var(--soft);border-radius:8px;padding:8px 12px;margin-top:10px;white-space:pre-wrap}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(28,28,30,.94);color:#fff;font-size:12.5px;padding:10px 16px;border-radius:12px;display:none}
+@media (max-width:640px){
+  .wrap{padding:20px 16px 60px}
+  h1{font-size:22px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .diff-card .diff-row{grid-template-columns:1fr}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (hover:none){ .btn{padding:12px 20px} }
+@media print{
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  .toc,.ilife-copy-menu-wrap,.footer .btn,.toast{display:none}
+  section.block{break-inside:avoid;border-color:#999}
+  @page{margin:15mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap ilife-page">
+  <div class="proto-banner">样张（throwaway，可双击打开，不进生产路径）：融合设计 S1 · 写后回执。不点头不实施。</div>
+  <div class="meta-bar"><div class="left">2026-09-14 · 改运动记录 · 共 1 条</div><div class="type-badge">回执型 · 通用 CRUD</div></div>
+  <h1>✅ 改运动记录 · 回执</h1>
+  <p class="sub">运动记录 <b>已更新</b> · 实体操作成功</p>
+  <nav class="toc" aria-label="页内导航">页内导航：
+    <a href="#sec-id">操作卡</a><a href="#sec-diff">字段变更</a><a href="#sec-ctx">今日累计</a><a href="#sec-items">复制明细</a><a href="#sec-copy">复制区</a><a href="#sec-src">来源</a>
+  </nav>
+
+  <section class="block id-card" id="sec-id" data-op="update">
+    <div class="headline"><div class="icon">✏️</div><div class="title" id="opTitle">已更新运动记录</div><div class="id" id="recordId">#1</div></div>
+    <div class="meta" id="recordMeta">2026-09-14 15:05 · 运动</div>
+    <div class="summary" id="summaryLine">已更新运动 #1：时长 <span class="sum-old">30 分钟</span> → <span class="sum-new">40 分钟</span>，共 <span class="sum-nums">380 卡 · 40 分钟</span></div>
+  </section>
+
+  <div class="kpi-grid" id="sec-kpi">
+    <div class="kpi"><div class="label">状态</div><div class="value">已更新</div><div class="extra">op=update</div></div>
+    <div class="kpi"><div class="label">影响行数</div><div class="value">1</div><div class="extra">行</div></div>
+    <div class="kpi"><div class="label">写入字段</div><div class="value">1</div><div class="extra">duration_minutes</div></div>
+    <div class="kpi"><div class="label">今日消耗</div><div class="value">380</div><div class="extra">卡</div></div>
+  </div>
+
+  <section class="block diff-card" id="sec-diff">
+    <h2>📋 字段变更</h2>
+    <div id="diffList">
+      <div class="diff-row"><span class="diff-label">时长（分钟）</span><span class="diff-old">30</span><span class="diff-arrow">→</span><span class="diff-new">40</span></div>
+      <div class="diff-row"><span class="diff-label">消耗（卡）</span><span class="diff-old">320</span><span class="diff-arrow" style="visibility:hidden">→</span><span class="diff-new">380</span></div>
+    </div>
+  </section>
+
+  <section class="block ctx-card" id="sec-ctx">
+    <h2>📊 今日累计</h2>
+    <div id="ctxList">
+      <div class="ctx-row"><span class="label">今日消耗</span><span class="value">380 卡</span><div class="bar-wrap"><div class="bar" style="width:76%"></div></div><span>76%</span></div>
+      <div class="ctx-row"><span class="label">今日时长</span><span class="value">40 分钟</span><div class="bar-wrap"><div class="bar" style="width:66%"></div></div><span>66%</span></div>
+    </div>
+  </section>
+
+  <section class="block items-card" id="sec-items">
+    <h2 id="itemsTitle">📋 复制明细（运动口径）</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>日期</th><th>运动类型</th><th>时长</th><th class="num">消耗</th><th>备注</th></tr></thead>
+      <tbody id="itemList">
+        <tr><td>2026-09-14</td><td>慢跑</td><td>40 分钟</td><td class="num">380 卡</td><td>夜跑</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-line">备注：夜跑，配速平稳。字段中文标签：运动类型／时长／消耗／距离／心率／备注。</div>
+  </section>
+
+  <div class="footer">
+    <button class="btn" id="undoBtn">↩ 撤销</button>
+    <span class="src" id="sec-src">📊 数据来源：exercise_log · 2026-09-14 · 共 1 条</span>
+  </div>
+
+  <section class="block" id="sec-copy">
+    <h2>复制区（三格式恒开）</h2>
+    <div class="ilife-copy-menu-wrap">
+      <button class="btn-primary btn" id="copyMain" aria-haspopup="menu" aria-expanded="false">复制数据 ▾</button>
+      <div class="ilife-copy-menu" role="menu">
+        <button data-fmt="text">纯文本<span>粘贴给 AI / 自己看</span></button>
+        <button data-fmt="json">JSON<span>结构化存档</span></button>
+        <button data-fmt="csv">CSV<span>表格导入</span></button>
+      </div>
+    </div>
+    <div class="copylog ilife-copy-log">复制日志：calorie.exercise.update {"id":1,"minutes":40} ｜ exercise_log ｜ 影响 1 行 ｜ 2026-09-14 ｜ 版本 0.1.0</div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+// 样张内联脚本：无持久化，只做显隐与复制演示。
+var opColors = { create: '#34c759', add: '#34c759', update: '#0071e3', delete: '#ff3b30' };
+var opLabels = { create: '新增', add: '新增', update: '已更新', delete: '已删除' };
+var FIELD_LABELS = { exercise_type: '运动类型', duration_minutes: '时长', calories_burned: '消耗', distance_km: '距离', avg_heart_rate: '心率', note: '备注' };
+var undo_cli = 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":30}\'';
+(function(){
+  // 四态着色：按 data-op 取色
+  var card = document.querySelector('[data-op]');
+  if (card) { card.style.borderLeft = '4px solid ' + (opColors[card.getAttribute('data-op')] || '#0071e3'); }
+  // 无内容不留空壳：任一列表 length 为 0 即整卡隐藏
+  [['diffList','sec-diff'],['ctxList','sec-ctx'],['itemList','sec-items']].forEach(function(pair){
+    var list = document.getElementById(pair[0]);
+    if (list && list.children.length === 0) {
+      var sec = document.getElementById(pair[1]);
+      if (sec) sec.style.display = 'none';
+    }
+  });
+  // 可撤销才出现：无 undo_cli 即隐藏撤销按钮
+  var undoBtn = document.getElementById('undoBtn');
+  if (typeof undo_cli === 'undefined' || !undo_cli) {
+    if (undoBtn) undoBtn.style.display = 'none';
+  } else if (undoBtn) {
+    undoBtn.style.display = 'inline-block';
+    undoBtn.addEventListener('click', function(){ toast('✓ 撤销指令已复制'); });
+  }
+  function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 1600);
+  }
+  // 三格式复制菜单委派（演示：按 data-fmt 报提示，不读写任何库）
+  document.querySelector('.ilife-copy-menu').addEventListener('click', function(ev){
+    var b = ev.target.closest('button[data-fmt]');
+    if (!b) return;
+    var fmt = b.getAttribute('data-fmt');
+    var main = document.getElementById('copyMain');
+    main.setAttribute('aria-expanded', 'true');
+    toast('已复制（' + fmt + '）');
+    setTimeout(function(){ main.setAttribute('aria-expanded', 'false'); }, 800);
+  });
+})();
+</script>
+</body>
+</html>

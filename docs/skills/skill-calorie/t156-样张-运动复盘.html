@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>样张 · 本周运动复盘（融合设计，不进生产）</title>
+<style>
+:root{
+  --fg:#1d1d1f; --fg2:#6e6e73; --fg3:#86868b; --bg:#f5f5f7; --card:#ffffff;
+  --line:#d2d2d7; --blue:#007aff; --soft:#f5f8ff; --ok:#34c759; --warn:#ff9500; --bad:#ff3b30;
+  --strength:#5856d6; --cardio:#0071e3; --flex:#34c759; --daily:#ff9500;
+}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);margin:0}
+.wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+.meta-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.meta-bar .left{font-size:12px;color:var(--fg2)}
+.type-badge{font-size:11px;padding:3px 10px;border-radius:6px;background:#efeff2;color:var(--fg2);font-weight:600}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 4px}
+.sub{font-size:14px;color:var(--fg3);margin:0 0 16px}
+.proto-banner{font-size:12px;color:var(--fg2);background:var(--soft);border:1px dashed var(--blue);border-radius:10px;padding:8px 12px;margin-bottom:16px}
+.toc{font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 20px}
+.toc a{color:var(--blue);text-decoration:none;margin-right:14px;line-height:2}
+section.block{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+section.block h2{font-size:17px;margin:0 0 4px}
+.caliber{font-size:12px;color:var(--fg3);margin:0 0 12px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .label{font-size:12px;color:var(--fg2)}
+.kpi .value{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .extra{font-size:11px;color:var(--fg3)}
+.one-line{background:var(--soft);border-radius:14px;padding:16px 20px;font-size:15px;margin-bottom:16px}
+.dist-row{display:flex;align-items:center;gap:10px;font-size:13px;padding:6px 0}
+.dist-name{flex:0 0 64px}
+.dist-bar{flex:1;height:8px;background:var(--soft);border-radius:4px;overflow:hidden}
+.dist-fill{display:block;height:100%}
+.dist-val{flex:0 0 90px;text-align:right;font-variant-numeric:tabular-nums}
+.cat-strength{color:var(--strength);font-weight:700}
+.cat-cardio{color:var(--cardio);font-weight:700}
+.cat-flex{color:var(--flex);font-weight:700}
+.cat-daily{color:var(--daily);font-weight:700}
+.chip{display:inline-block;font-size:13px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;margin:0 8px 8px 0;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{background:var(--soft);font-size:11px}
+.num{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.bar-wrap{height:6px;background:var(--soft);border-radius:3px;overflow:hidden;margin-top:4px}
+.bar{height:100%}
+tr.total td{font-weight:700;background:var(--soft)}
+.trend{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:8px}
+.trend-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.trend-bar{width:22px;border-radius:4px 4px 0 0;min-height:2px}
+.trend-date{font-size:10px;color:var(--fg3)}
+.ring-card{border:1px solid var(--line);border-radius:20px;padding:20px;text-align:center}
+.ring-wrap{position:relative;width:220px;height:220px;margin:0 auto}
+.ring-pct{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums}
+.verdict{display:inline-block;padding:6px 18px;border-radius:20px;font-size:14px;font-weight:700;margin-top:12px}
+.verdict.ok{background:rgba(52,199,89,.15);color:var(--ok)}
+.verdict.no{background:rgba(255,59,48,.15);color:var(--bad)}
+.legend{font-size:12px;color:var(--fg2);margin-top:10px;display:flex;gap:16px;flex-wrap:wrap}
+.src{font-size:12px;color:var(--fg3)}
+.ilife-copy-menu-wrap{position:relative}
+.ilife-copy-menu{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.ilife-copy-menu button{font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.ilife-copy-menu button span{display:block;font-size:11px;color:var(--fg3)}
+.empty-demo{font-size:13px;color:var(--fg2);background:var(--soft);border-radius:8px;padding:10px 14px;margin-top:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(28,28,30,.94);color:#fff;font-size:12.5px;padding:10px 16px;border-radius:12px;display:none}
+@media (max-width:640px){
+  .wrap{padding:20px 16px 60px}
+  h1{font-size:22px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .ring-wrap{width:180px;height:180px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (hover:none){ .chip{padding:8px 14px} }
+@media print{
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  .toc,.ilife-copy-menu-wrap,.toast{display:none}
+  section.block{break-inside:avoid;border-color:#999}
+  @page{margin:15mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap ilife-page">
+  <div class="proto-banner">样张（throwaway，可双击打开，不进生产路径）：融合设计 S2 · 运动复盘。不点头不实施。</div>
+  <div class="meta-bar"><div class="left">2026-09-08 ~ 2026-09-14 · 共 6 条 · 本周</div><div class="type-badge">运动 · 复盘</div></div>
+  <h1>📊 本周运动复盘</h1>
+  <p class="sub">记录级明细＋分类＋目标对照｜共 6 条</p>
+  <nav class="toc" aria-label="页内导航">页内导航：
+    <a href="#sec-kpi">指标</a><a href="#sec-oneline">一句话结论</a><a href="#sec-dist">类型分布</a><a href="#sec-top">高频运动</a><a href="#sec-trend">每日消耗趋势</a><a href="#sec-goal">目标对照</a><a href="#sec-copy">复制区</a>
+  </nav>
+
+  <div class="kpi-grid" id="sec-kpi">
+    <div class="kpi"><div class="label">总消耗</div><div class="value">1360</div><div class="extra">卡</div></div>
+    <div class="kpi"><div class="label">总时长</div><div class="value">175</div><div class="extra">分钟</div></div>
+    <div class="kpi"><div class="label">运动次数</div><div class="value">6</div><div class="extra">次</div></div>
+    <div class="kpi"><div class="label">活跃天数</div><div class="value">6</div><div class="extra">天</div></div>
+  </div>
+
+  <div class="one-line" id="sec-oneline">💬 一句话结论：本周练 6 次、消耗 1360 卡，有氧是基本盘，力量两次守住下限。</div>
+
+  <section class="block" id="sec-dist">
+    <h2>🧩 类型分布</h2>
+    <p class="caliber">口径：分类实填优先、缺失按名推断；占比＝该类热量 ÷ 全周热量。</p>
+    <div id="distBox">
+      <div class="dist-row"><span class="dist-name cat-strength">力量</span><div class="dist-bar"><span class="dist-fill" style="width:23%;background:var(--strength)"></span></div><span class="dist-val">310 卡 · 23%</span></div>
+      <div class="dist-row"><span class="dist-name cat-cardio">有氧</span><div class="dist-bar"><span class="dist-fill" style="width:71%;background:var(--cardio)"></span></div><span class="dist-val">970 卡 · 71%</span></div>
+      <div class="dist-row"><span class="dist-name cat-daily">日常</span><div class="dist-bar"><span class="dist-fill" style="width:6%;background:var(--daily)"></span></div><span class="dist-val">80 卡 · 6%</span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>类别</th><th class="num">次数</th><th class="num">热量</th><th>占比</th><th class="num">时长</th></tr></thead>
+      <tbody>
+        <tr><td class="cat-cardio">有氧</td><td class="num">3</td><td class="num">970 卡</td><td>71%<div class="bar-wrap"><div class="bar" style="width:71%;background:var(--cardio)"></div></div></td><td class="num">95 分钟</td></tr>
+        <tr><td class="cat-strength">力量</td><td class="num">2</td><td class="num">310 卡</td><td>23%<div class="bar-wrap"><div class="bar" style="width:23%;background:var(--strength)"></div></div></td><td class="num">60 分钟</td></tr>
+        <tr><td class="cat-daily">日常</td><td class="num">1</td><td class="num">80 卡</td><td>6%<div class="bar-wrap"><div class="bar" style="width:6%;background:var(--daily)"></div></div></td><td class="num">20 分钟</td></tr>
+        <tr class="total"><td>合计</td><td class="num">6</td><td class="num">1360 卡</td><td>100%</td><td class="num">175 分钟</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="block" id="sec-top">
+    <h2>🔥 高频运动</h2>
+    <p class="caliber">口径：按名称计数，不看时长。</p>
+    <div id="topBox">
+      <span class="chip">户外跑 ×2</span><span class="chip">卧推 ×2</span><span class="chip">慢跑 ×1</span><span class="chip">步行 ×1</span>
+    </div>
+  </section>
+
+  <section class="block" id="sec-trend">
+    <h2>📈 每日消耗趋势</h2>
+    <p class="caliber">口径：空缺不断 0（断点）；柱高只比高低，精确值读悬停。</p>
+    <div class="trend" id="trendBox">
+      <div class="trend-col"><div class="trend-bar" title="09-09 160 卡" style="height:46px;background:var(--cardio)"></div><span class="trend-date">09-09</span></div>
+      <div class="trend-col"><div class="trend-bar" title="09-10 80 卡" style="height:23px;background:var(--cardio)"></div><span class="trend-date">09-10</span></div>
+      <div class="trend-col"><div class="trend-bar" title="09-11 320 卡" style="height:92px;background:var(--cardio)"></div><span class="trend-date">09-11</span></div>
+      <div class="trend-col"><div class="trend-bar" title="09-12 300 卡" style="height:86px;background:var(--cardio)"></div><span class="trend-date">09-12</span></div>
+      <div class="trend-col"><div class="trend-bar" title="09-13 150 卡" style="height:43px;background:var(--strength)"></div><span class="trend-date">09-13</span></div>
+      <div class="trend-col"><div class="trend-bar" title="09-14 350 卡" style="height:100px;background:var(--cardio)"></div><span class="trend-date">09-14</span></div>
+    </div>
+    <div class="legend"><span><i style="display:inline-block;width:16px;height:2px;background:#0071e3"></i> 消耗（卡）</span><span><i style="display:inline-block;width:16px;height:2px;background:#34c759"></i> 时长（分钟）</span></div>
+  </section>
+
+  <section class="block" id="sec-goal">
+    <h2>🎯 目标对照（今日）</h2>
+    <p class="caliber">口径：周目标口径＝每日目标 × 7；环最高 100%，超额看文字。</p>
+    <div class="ring-card">
+      <div class="ring-wrap">
+        <div id="ringBar" style="width:220px;height:220px;border-radius:50%;background:conic-gradient(var(--blue) 0 70%, #e8e8ed 70% 100%)"></div>
+        <div class="ring-center" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div class="ring-pct" id="ringPct">70%</div>
+          <div style="font-size:12px;color:var(--fg2)">完成度</div>
+        </div>
+      </div>
+      <div><span class="verdict no" id="verdict">还需再练 · 差 150 卡</span></div>
+      <p style="font-size:13px;color:var(--fg2)">目标 500 卡 · 实际 350 卡 · 区间 09-14</p>
+    </div>
+  </section>
+
+  <section class="block" id="sec-empty">
+    <h2>空态样式（有数据时折叠示例）</h2>
+    <details><summary>展开看空态文案</summary><div class="empty-demo">暂无力量训练记录，说「记力量训练」记下第一条；暂无有氧记录，说「记有氧运动」记下第一条。</div></details>
+    <p class="src" style="margin-top:12px">📊 数据来源：exercise_log · 2026-09-08 ~ 2026-09-14 · 共 6 条</p>
+  </section>
+
+  <section class="block" id="sec-copy">
+    <h2>复制区（三格式恒开）</h2>
+    <div class="ilife-copy-menu-wrap">
+      <button class="btn" id="copyMain" aria-haspopup="menu" aria-expanded="false" style="font-size:14px;padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--blue);color:#fff;cursor:pointer">复制数据 ▾</button>
+      <div class="ilife-copy-menu" role="menu">
+        <button data-fmt="text">纯文本<span>粘贴给 AI / 自己看</span></button>
+        <button data-fmt="json">JSON<span>结构化存档</span></button>
+        <button data-fmt="csv">CSV<span>表格导入</span></button>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+// 样张内联脚本：无持久化，只做复制演示。
+(function(){
+  function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 1600);
+  }
+  // 无内容不留空壳：三块各自判 length，空即整块隐藏（本样张有数据，均保留）
+  [['distBox','sec-dist'],['topBox','sec-top'],['trendBox','sec-trend']].forEach(function(pair){
+    var el = document.getElementById(pair[0]);
+    if (el && el.children.length === 0) {
+      var sec = document.getElementById(pair[1]);
+      if (sec) sec.style.display = 'none';
+    }
+  });
+  document.querySelector('.ilife-copy-menu').addEventListener('click', function(ev){
+    var b = ev.target.closest('button[data-fmt]');
+    if (!b) return;
+    var main = document.getElementById('copyMain');
+    main.setAttribute('aria-expanded', 'true');
+    toast('已复制（' + b.getAttribute('data-fmt') + '）');
+    setTimeout(function(){ main.setAttribute('aria-expanded', 'false'); }, 800);
+  });
+})();
+</script>
+</body>
+</html>
