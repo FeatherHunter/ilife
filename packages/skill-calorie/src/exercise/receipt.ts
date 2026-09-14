@@ -241,21 +241,6 @@ function undoBlock(undoCli: unknown): string {
   });
 }
 
-/** 可打印版面（#420 第 7 条）：`renderPageShell({ printable: true })` 把类加在版面根上，打印规则
- *  （隐藏页内导航与区块形态复制区、具名页 `@page printable`）只挂在它名下。
- *  本票整页仍走唯一一份文档壳 `assembleDocPage`（`docShell` 只此一处，不许第二份），而该件今天
- *  没有把 `printable` 透传下来，故装配后对版面根做**定点**加类：锚点必须恰好命中一次，否则抛错
- *  （形状变了要立刻知道，别静默产出一份没打印样式的页）。#420 审查探针（`t420-review-probe.mjs`）
- *  取证可打印页用的就是这条单点插入；要收掉它，需 `src/shared/docPage.ts` 增 `printable` 透传位。 */
-const PAGE_SHELL_ROOT = '<section class="ilife-block ilife-block-page-shell">';
-const PRINTABLE_ROOT = '<section class="ilife-block ilife-block-page-shell ilife-page-printable">';
-
-function withPrintableRoot(html: string): string {
-  const hits = html.split(PAGE_SHELL_ROOT).length - 1;
-  if (hits !== 1) throw new Error('运动回执页版面根锚点命中 ' + hits + ' 次（应恰 1 次）：base-render 的页壳形状变了');
-  return html.replace(PAGE_SHELL_ROOT, PRINTABLE_ROOT);
-}
-
 function writtenDetailOf(key: string): string {
   if (key === 'calorie.exercise.update') return '已更新运动记录';
   if (key === 'calorie.exercise.remove') return '已删除运动记录';
@@ -338,11 +323,14 @@ export function buildExerciseReceiptDoc(
       },
     }),
   ].join('');
-  return withPrintableRoot(assembleDocPage({
+  return assembleDocPage({
     docTitle: DOC_TITLE,
     title: receipt.scene + ' · 回执',
     eyebrow: '运动 · 写后回执',
     subtitle: receipt.summary,
     content,
-  }));
+    // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），
+    // 打印规则（隐藏页内导航与区块复制区、具名页 `@page printable`）见 `base-render/src/blocks.ts`。
+    printable: true,
+  });
 }

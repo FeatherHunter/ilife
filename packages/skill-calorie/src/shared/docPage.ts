@@ -35,6 +35,10 @@ interface DocPageInput {
   readonly badge?: string;
   /** B线老A壳第3行：结论摘要（一句话人话；空串／null＝不出这一行）。 */
   readonly summary?: string | null;
+  /** 可打印版式（#448 透传位，口径与 `renderPageShell({ printable })` 逐字一致）：为真时版面根带
+   *  `ilife-page-printable`，A线／B线两条路都认；不给／给假 → 产物与旧版逐字相同（类不出现，
+   *  样式段里的打印规则一律不命中）。样式与打印规则的唯一定义地在 `base-render/src/blocks.ts`。 */
+  readonly printable?: boolean;
 }
 
 /** B线老A壳补丁 CSS（照抄老 combined_analysis.html 实测值；只用冻结 token 名＋#ff9500 字面，不新增变量名）。 */
@@ -73,10 +77,13 @@ function docShell(docTitle: string, charts: boolean): string {
 
 /** ① 整页装配：区块 HTML ＋ 标题三件套 → 完整文档（图表页多带图表 helpers）。
  * B线新路（给了 metaLeft）：老A壳两行式＝meta-bar（左参数一行＋右徽章）＋H1（人话短标题）
- * ＋结论摘要行；沿用 B-01 类名（不碰类名根），补丁样式只用冻结 token。 */
+ * ＋结论摘要行；沿用 B-01 类名（不碰类名根），补丁样式只用冻结 token。
+ * 可打印位（`printable`，A线／B线共用）只加类名，不加样式、不碰 `extraCss`。 */
 export function assembleDocPage(input: DocPageInput): string {
   const charts = input.charts === true;
   const bline = typeof input.metaLeft === 'string' && input.metaLeft !== '';
+  /** 可打印位（#448）：只认真真值，不给／给假即老路（与 `renderPageShell` 的口径同）。 */
+  const printable = input.printable === true;
   const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
     sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + (bline ? BLINE_CSS : ''),
     sharedHelpersJs: buildSharedHelpersJs(),
@@ -85,7 +92,7 @@ export function assembleDocPage(input: DocPageInput): string {
   if (bline) {
     const badge = typeof input.badge === 'string' && input.badge !== '' ? input.badge : '卡路里 · 分析';
     const summary = typeof input.summary === 'string' && input.summary !== '' ? input.summary : undefined;
-    const body = '<section class="ilife-block ilife-block-page-shell">'
+    const body = '<section class="ilife-block ilife-block-page-shell' + (printable ? ' ilife-page-printable' : '') + '">'
       + '<div class="meta-bar"><div class="left">' + blineEsc(input.metaLeft as string) + '</div>'
       + '<div class="type-badge">' + blineEsc(badge) + '</div></div>'
       + '<h1 class="ilife-block-page-shell-title">' + blineEsc(input.title) + '</h1>'
@@ -99,6 +106,7 @@ export function assembleDocPage(input: DocPageInput): string {
     ...(input.eyebrow ? { eyebrow: input.eyebrow } : {}),
     ...(input.subtitle ? { subtitle: input.subtitle } : {}),
     content: input.content,
+    printable,
   });
   return fillTemplate({ template: docShell(input.docTitle, charts), assets, content: body }).html;
 }
