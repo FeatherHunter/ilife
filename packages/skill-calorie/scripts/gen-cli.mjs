@@ -17,12 +17,16 @@
 //   ⑤ `scripts/build-help.mjs` 的 `EXAMPLE` 表（标记块；#295 返修 A3——原先这里有 101 条手写 `case`，
 //      是同一文件里第二处手写「一条命令的事实」：加一条命令不补 case 就 `default: throw`，SKILL.md 停更）。
 //
-// 新鲜度（#295 返修 A4 立、返修第二轮 N1 改成**内容**判据）：生成器读的是**编译后**的声明模块，所以在读之前
-// 先查「`dist/` 是不是这些声明的内容产物」——只改 `src/` 不 `pnpm build` 时，旧 `dist/` 会让 `gen`／`gen:check`
-// 双双按旧声明判绿（假绿，P4 实测）。查法是**内容印记**（`dist/.gen-inputs.json`：声明源逐文件 sha256，
-// 由 `pnpm build` 在 `tsc -b` 之后调本脚本的 `--stamp` 写入），**不看时间戳**：
-//   · 源的内容没变（`git checkout -- .`／`touch` 只动 mtime）⇒ 印记相符 ⇒ 放行（mtime 判据会在这里假红）；
-//   · 源的内容真变了又没重建 ⇒ 印记不符 ⇒ 大声失败并叫人 `pnpm build`（这句医嘱**可执行**：build 必重打印记）。
+// 新鲜度（#295 返修 A4 立、第二轮 N1 换成**内容**判据、#325 补成**配对**判据）：生成器读的是**编译后**
+// 的声明模块，所以在读之前先查「`dist/` 是不是这些声明的内容产物」——只改 `src/` 不 `pnpm build` 时，
+// 旧 `dist/` 会让 `gen`／`gen:check` 双双按旧声明判绿（假绿，P4 实测）。查法是**内容印记** v2
+// （`dist/.gen-inputs.json`：每条声明源记一对哈希 `{src, dist}`＝源文本 sha256 ＋ 它编译产物 `.js`
+// 文本 sha256，由 `pnpm build` 在 `tsc -b` 之后调本脚本的 `--stamp` 写入）配**现场配对门**
+// （`pairMismatches()`：不经过印记，直接把源里的声明事实与 dist 编译出的事实逐件比对），**都不看时间戳**：
+//   · 源的内容没变（`git checkout -- .`／`touch` 只动 mtime）⇒ 印记相符、现场相符 ⇒ 放行；
+//   · 源的内容真变了又没重建 ⇒ 印记不符 ⇒ `GEN-STALE FAIL`（医嘱**可执行**：build 必重打印记）；
+//   · 源改了＋保 mtime 让 `tsc -b` 跳过重编＋`--stamp` 已重签（#325 假绿链）⇒ dist 字节绑定与现场
+//     事实比对必有一处对不上 ⇒ `GEN-PAIR FAIL`（印记自洽也拦不住它，因为现场比对不信任印记）。
 // 为什么不能只看 mtime（旧判据的死结）：`tsc -b` 在 emit 与现有 `dist/` 逐字节相同时**不重写文件**，
 // 于是源 mtime 被正常动作刷新后 dist 的 mtime 永远追不平 —— 门恒红而 `pnpm build` 解不开，`gen` 一并被挡死。
 //
@@ -36,7 +40,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
-import { renderRoutesGenerated, routeDeclarationSources } from './gen-routes.mjs';
+import { loadDecls, renderRoutesGenerated, routeDeclarationSources } from './gen-routes.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = join(HERE, '..');
@@ -55,10 +59,12 @@ const REPR_START = '// -- GEN-CLI-START REPR 表（由 packages/skill-calorie/sc
 const REPR_END = '// -- GEN-CLI-END REPR 表';
 const EXAMPLE_START = '// -- GEN-CLI-START EXAMPLE 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）';
 const EXAMPLE_END = '// -- GEN-CLI-END EXAMPLE 表';
-/** #295 返修第二轮 N1 · 内容印记：声明源逐文件的 sha256，由 `pnpm build`（`tsc -b` 之后）调 `--stamp` 写入。
- * 住 `dist/` 里（与 dist 同生共死，且 `pnpm gen:check` 在仓外沙箱跑时随 dist 一起被复制）。 */
+/** #295 返修第二轮 N1 · 内容印记，#325 升到 v2（配对）：每条声明源记一对哈希
+ * `{src, dist}`＝源文本 sha256 ＋ 它编译产物 `.js` 文本 sha256（编译产物缺席记 `dist: null`），
+ * 由 `pnpm build`（`tsc -b` 之后）调 `--stamp` 写入。住 `dist/` 里（与 dist 同生共死，且
+ * `pnpm gen:check` 在仓外沙箱跑时随 dist 一起被复制）。 */
 const STAMP = join(DIST_DIR, '.gen-inputs.json');
-const STAMP_VERSION = 1;
+const STAMP_VERSION = 2;
 /** `src/cli/legacy/` 里**不是**场景分片的文件：`index.ts` 是汇总（不声明命令）、`types.ts` 只给声明形状。
  * 两者都不该被当成声明源读——汇总若也算输入，就成了「第三处清单」。 */
 const LEGACY_NON_SCENE = new Set(['index.ts', 'types.ts']);
@@ -355,13 +361,19 @@ function stampKey(src) {
   return relative(SRC_DIR, src).replace(/\\/g, '/');
 }
 
-/** #295 返修第二轮 N1 · `--stamp`：给声明源打内容印记。由 **`pnpm build`** 在 `tsc -b` 之后调用——
- * 只有「刚构建完」这一时刻才有资格宣称「dist/ 是这些声明的内容产物」，所以写印记的入口挂 build，不挂 gen。 */
+/** #325 · `--stamp`：给声明源打内容印记 v2（`{src, dist}` 配对）。由 **`pnpm build`** 在 `tsc -b`
+ * 之后调用——只有「刚构建完」这一时刻才有资格宣称「dist/ 是这些声明的内容产物」，所以写印记的入口
+ * 挂 build，不挂 gen。注意：`--stamp` 仍是无条件重签（它无法独立判断 `tsc -b` 是否跳过），
+ * 真正堵假绿的是 `gen`／`gen:check` 入口的 `pairMismatches()` 现场比对，不是这一写。 */
 function writeStamp(names) {
   const files = {};
   for (const src of declarationSources(names)) {
     if (!existsSync(src)) continue;
-    files[stampKey(src)] = sha256(readFileSync(src, 'utf8'));
+    const dist = distOf(src);
+    files[stampKey(src)] = {
+      src: sha256(readFileSync(src, 'utf8')),
+      dist: existsSync(dist) ? sha256(readFileSync(dist, 'utf8')) : null,
+    };
   }
   mkdirSync(DIST_DIR, { recursive: true });
   writeFileSync(
@@ -369,7 +381,7 @@ function writeStamp(names) {
     JSON.stringify(
       {
         version: STAMP_VERSION,
-        note: '生成器输入（声明源）的内容印记，由 `pnpm build` 调 `node packages/skill-calorie/scripts/gen-cli.mjs --stamp` 写入；`pnpm gen`／`pnpm gen:check` 按它判陈旧——内容判据，不看时间戳。',
+        note: '生成器输入（声明源）的内容印记 v2：每条记 {src, dist} 配对（源文本与编译产物 .js 文本的 sha256），由 `pnpm build` 调 `node packages/skill-calorie/scripts/gen-cli.mjs --stamp` 写入；`pnpm gen`／`pnpm gen:check` 按它判陈旧、按现场配对门判脱钩——内容判据，不看时间戳。',
         files,
       },
       null,
@@ -379,19 +391,43 @@ function writeStamp(names) {
   console.log('GEN-STAMP ok ' + relative(REPO_ROOT, STAMP) + '：声明源 ' + Object.keys(files).length + ' 件（' + Object.keys(files).join('／') + '）');
 }
 
+/** #325 · 读印记并验完整：`ok`（可用配对表）／`missing`（文件不在：沿旧口径只告警不判红，
+ * 无从判断的状态不当红用）／`corrupt`（JSON 坏／版本不对／条目形状不对：印记不可信即判红，
+ * 不拿坏印记判绿）。 */
+function readStamp() {
+  let raw;
+  try {
+    raw = readFileSync(STAMP, 'utf8');
+  } catch {
+    return { state: 'missing' };
+  }
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    return { state: 'corrupt', reason: 'JSON 解析失败（' + (e && e.message) + '）' };
+  }
+  if (!data || data.version !== STAMP_VERSION || !data.files || typeof data.files !== 'object' || Array.isArray(data.files)) {
+    return { state: 'corrupt', reason: 'version 不是 ' + STAMP_VERSION + '（旧印记／外来残留不认）' };
+  }
+  const files = {};
+  for (const [k, v] of Object.entries(data.files)) {
+    const distOk = v && typeof v === 'object' && (v.dist === null || (typeof v.dist === 'string' && /^[0-9a-f]{64}$/.test(v.dist)));
+    if (!distOk || typeof v.src !== 'string' || !/^[0-9a-f]{64}$/.test(v.src)) {
+      return { state: 'corrupt', reason: '条目 ' + k + ' 不是 {src, dist} 配对形状' };
+    }
+    files[k] = v;
+  }
+  return { state: 'ok', files };
+}
+
 /** #295 返修第二轮 N1 · 新鲜度守卫：**内容**判据，不看时间戳。返回逐条说明（空数组＝新鲜）。
  * 三件事各司其职：① 缺编译产物 ⇒ 报「先 build」；② 印记里没有这条（新文件／仓外沙箱里的假能力）⇒ 无对照，放行；
- * ③ 印记与现内容不符 ⇒ 源的内容真变了而没重建 ⇒ 报陈旧。印记整个缺失（没 `pnpm build` 过、或 dist 是别处拷来的）
- * ⇒ **不判陈旧**并打一行告警：无从判断的状态不当红用，宁可少拦一次也不重演「假红＋自锁」。 */
-function staleDeclarations(names) {
+ * ③ 印记源哈希与现内容不符 ⇒ 源的内容真变了而没重建 ⇒ 报陈旧。印记整个缺失（没 `pnpm build` 过、或
+ * dist 是别处拷来的）⇒ **不判陈旧**并打一行告警：无从判断的状态不当红用，宁可少拦一次也不重演「假红＋自锁」。
+ * （#325：`files` 由调用方 `readStamp()` 给；`dist` 字节绑定与源↔编译现场比对另归 `pairMismatches()` 管。） */
+function staleDeclarations(names, files) {
   const stale = [];
-  let files = null;
-  try {
-    const raw = JSON.parse(readFileSync(STAMP, 'utf8'));
-    if (raw && raw.version === STAMP_VERSION && raw.files && typeof raw.files === 'object') files = raw.files;
-  } catch {
-    files = null;
-  }
   if (files === null) {
     console.error(
       'GEN-STAMP WARN：没有可用的内容印记 ' + relative(REPO_ROOT, STAMP) +
@@ -406,16 +442,154 @@ function staleDeclarations(names) {
     }
     if (files === null) continue;
     const recorded = files[stampKey(src)];
-    if (typeof recorded !== 'string') continue;
+    if (recorded === undefined) continue;
     const now = sha256(readFileSync(src, 'utf8'));
-    if (recorded !== now) {
+    if (recorded.src !== now) {
       stale.push(
-        relative(REPO_ROOT, src) + ' 的内容与上次 `pnpm build` 时不同（印记 ' + recorded.slice(0, 12) +
+        relative(REPO_ROOT, src) + ' 的内容与上次 `pnpm build` 时不同（印记 ' + recorded.src.slice(0, 12) +
           '… ≠ 现 ' + now.slice(0, 12) + '…）',
       );
     }
   }
   return stale;
+}
+
+/** #325 · 从源文本里取出那个唯一声明数组的字面量（字符串／注释感知，括号配平）。
+ * 找不到（路由汇总件这类无数组文件）返回 null；括号不配平抛（ fail closed：宁红不绿）。 */
+function extractExportedArray(srcText, rel) {
+  const m = /export\s+const\s+[A-Za-z_$][A-Za-z0-9_$]*\s*(?::[^=;]+)?=\s*\[/.exec(srcText);
+  if (!m) return null;
+  const start = m.index + m[0].length - 1;
+  let depth = 0;
+  let quote = null;
+  let escape = false;
+  let lineComment = false;
+  let blockComment = false;
+  for (let i = start; i < srcText.length; i += 1) {
+    const c = srcText[i];
+    const n = srcText[i + 1];
+    if (lineComment) {
+      if (c === '\n') lineComment = false;
+      continue;
+    }
+    if (blockComment) {
+      if (c === '*' && n === '/') {
+        blockComment = false;
+        i += 1;
+      }
+      continue;
+    }
+    if (quote !== null) {
+      if (escape) escape = false;
+      else if (c === '\\') escape = true;
+      else if (c === quote) quote = null;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      quote = c;
+      continue;
+    }
+    if (c === '/' && n === '/') {
+      lineComment = true;
+      i += 1;
+      continue;
+    }
+    if (c === '/' && n === '*') {
+      blockComment = true;
+      i += 1;
+      continue;
+    }
+    if (c === '[') depth += 1;
+    else if (c === ']') {
+      depth -= 1;
+      if (depth === 0) return srcText.slice(start, i + 1);
+    }
+  }
+  throw new Error('声明源静态解析失败：' + rel + '（数组括号不配平）');
+}
+
+/** #325 · 把源里的声明数组求值成事实（只取生成器关心的字段：`run:` 这类运行时引用先剥掉，
+ * 剩下全是字面量才求值）。求值失败抛（fail closed）。 */
+function evalDeclArrayText(arrText, rel) {
+  const cleaned = arrText.replace(/\brun\s*:\s*[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*\s*,?/g, '');
+  try {
+    const v = new Function('return (' + cleaned + '\n)')();
+    if (!Array.isArray(v)) throw new Error('求值结果不是数组');
+    return v;
+  } catch (e) {
+    throw new Error('声明源静态解析失败：' + rel + '（' + (e && e.message) + '）');
+  }
+}
+
+/** #325 · 事实归一：源里静态求出的与 dist 里 import 出的，走同一个归一（去 `run`／函数／`__` 内务键，
+ * 键排序后 JSON 化），字符串相等＝事实相等。时间戳不进归一，所以只碰 mtime 必绿。 */
+function normFacts(list) {
+  return JSON.stringify(
+    list.map((o) => {
+      const entries = Object.entries(o).filter(
+        ([k, v]) => !k.startsWith('__') && k !== 'run' && typeof v !== 'function' && v !== undefined,
+      );
+      entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+      return Object.fromEntries(entries);
+    }),
+  );
+}
+
+/** #325 · 某条声明源的“源事实”JSON；无声明数组、或数组是展开式拼接（路由汇总件：事实住被展开的
+ * 各分片，各分片逐件被查）返回 null——这类文件只由印记绑定字节，不管现场。 */
+function srcFactsJson(src) {
+  const rel = relative(REPO_ROOT, src);
+  const arr = extractExportedArray(readFileSync(src, 'utf8'), rel);
+  if (arr === null) return null;
+  if (/\.\.\./.test(arr)) return null;
+  return normFacts(evalDeclArrayText(arr, rel));
+}
+
+/** #325 · 现场配对门：不经过印记，逐件查「源的事实 ↔ dist 编译出的事实」＋「dist 字节 ↔ 印记 dist」。
+ * `files` 为 null（印记缺失）时只查现场、不查绑定。返回逐条说明（空数组＝配对成立）。
+ * 重点：`--stamp` 重签过的自洽假 pair 在这里必现形（源事实 ≠ 编译事实），报 `GEN-PAIR FAIL`。 */
+function pairMismatches(names, files, cmdDist, routeDist) {
+  const bad = [];
+  const jobs = [
+    ...legacySources().map((src) => ({ src, kind: 'command' })),
+    ...names.map((n) => ({ src: join(SRC_DIR, n, 'commands.ts'), kind: 'command' })),
+    ...routeDeclarationSources().map((src) => ({ src, kind: 'route' })),
+  ];
+  for (const { src, kind } of jobs) {
+    if (!existsSync(src)) continue;
+    const key = stampKey(src);
+    const dist = distOf(src);
+    if (!existsSync(dist)) continue; // 缺编译产物已由陈旧守卫报，这里不重复
+    if (files !== null && files[key] !== undefined) {
+      const nowDist = sha256(readFileSync(dist, 'utf8'));
+      if (files[key].dist === null || files[key].dist !== nowDist) {
+        bad.push(
+          relative(REPO_ROOT, src) + ' 的编译产物与印记对不上（印记 dist ' +
+            (files[key].dist === null ? '缺席' : files[key].dist.slice(0, 12) + '…') + ' ≠ 现 ' + nowDist.slice(0, 12) +
+            '…）：dist 变了而印记没重打，请跑 `pnpm build`。',
+        );
+        continue;
+      }
+    }
+    let srcJson;
+    try {
+      srcJson = srcFactsJson(src);
+    } catch (e) {
+      bad.push((e && e.message) + '（请检查该声明源是否仍为单个数组字面量）');
+      continue;
+    }
+    if (srcJson === null) continue; // 无声明数组／展开式拼接（如路由汇总件）：印记仍绑定，不管现场
+    const distMap = kind === 'command' ? cmdDist : routeDist;
+    if (!distMap.has(key)) continue; // 无对照（新文件）：下游 `GEN-CHECK` 兜
+    if (srcJson !== distMap.get(key)) {
+      bad.push(
+        relative(REPO_ROOT, src) + ' 的声明内容与 ' + relative(REPO_ROOT, dist) + ' 的编译内容对不上（源事实 ' +
+          sha256(srcJson).slice(0, 12) + '… ≠ 编译事实 ' + sha256(distMap.get(key)).slice(0, 12) +
+          '…）：构建可能跳过了重编（保时间戳的复制会让 `tsc -b` 跳过）。请 touch 该源文件后重跑 `pnpm build`，再跑 `pnpm gen` 重生成。',
+      );
+    }
+  }
+  return bad;
 }
 
 function sha256(text) {
@@ -428,7 +602,17 @@ async function main() {
     writeStamp(names);
     return;
   }
-  const stale = staleDeclarations(names);
+  const stamp = readStamp();
+  if (stamp.state === 'corrupt') {
+    const cmd = CHECK ? 'pnpm gen:check' : 'pnpm gen';
+    console.error(
+      'GEN-STAMP FAIL：内容印记 ' + relative(REPO_ROOT, STAMP) + ' 不完整（' + stamp.reason +
+        '）。印记不可信时不判绿：请跑 `pnpm build` 重打印记后再跑 `' + cmd + '`。',
+    );
+    process.exitCode = 1;
+    return;
+  }
+  const stale = staleDeclarations(names, stamp.state === 'ok' ? stamp.files : null);
   if (stale.length) {
     const cmd = CHECK ? 'pnpm gen:check' : 'pnpm gen';
     console.error(
@@ -443,9 +627,36 @@ async function main() {
   for (const name of names) capabilities.push(await loadCapability(name));
   // 未搬迁清单的场景分区：按文件名升序读，两个文件声明同一个键即抛（`mergeLegacyPartition`）。
   const legacyParts = [];
+  const legacyFiles = [];
   for (const file of scanLegacySceneNames()) {
     if (LEGACY_NON_SCENE.has(file)) continue;
+    legacyFiles.push(file);
     legacyParts.push(await loadLegacyScene(file));
+  }
+  // #325 · 现场配对门（不经过印记）：源事实 ↔ dist 编译事实逐件比对。`--stamp` 重签过的自洽假 pair
+  // 在这里现形（报 GEN-PAIR FAIL，不与 GEN-STALE 混用一个名，方便证据里点名）。
+  const cmdDist = new Map();
+  for (const cap of capabilities) cmdDist.set(cap.name + '/commands.ts', normFacts(cap.list));
+  for (let i = 0; i < legacyFiles.length; i += 1) {
+    cmdDist.set('cli/legacy/' + legacyFiles[i], normFacts(legacyParts[i] === null ? [] : legacyParts[i].list));
+  }
+  const routeDist = new Map();
+  for (const d of await loadDecls()) {
+    const key = d.__src.replace(/^packages\/skill-calorie\/src\//, '');
+    if (!routeDist.has(key)) routeDist.set(key, []);
+    routeDist.get(key).push(d);
+  }
+  for (const [k, v] of routeDist) routeDist.set(k, normFacts(v));
+  const pair = pairMismatches(names, stamp.state === 'ok' ? stamp.files : null, cmdDist, routeDist);
+  if (pair.length) {
+    const cmd = CHECK ? 'pnpm gen:check' : 'pnpm gen';
+    console.error(
+      'GEN-PAIR FAIL：声明源与编译产物对不上（' + pair.length + ' 件），继续跑会把旧声明当成事实（假绿）。先 `pnpm build`' +
+        '（确认 `tsc -b` 真重编了下面这些源——保时间戳的复制会让它跳过，可 touch 源文件后重跑）再 `' + cmd + '`。',
+    );
+    for (const s of pair) console.error('  ' + s);
+    process.exitCode = 1;
+    return;
   }
   const entries = merge(mergeLegacyPartition(legacyParts), capabilities);
 

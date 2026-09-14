@@ -66,8 +66,10 @@ function distOf(src) {
   return join(DIST_DIR, relative(SRC_DIR, src).replace(/\\/g, '/').replace(/\.ts$/, '.js'));
 }
 
-/** 读编译后的声明件：叶子件必须**恰好导出一个**声明数组（汇总件跳过）。 */
-async function loadDecls() {
+/** 读编译后的声明件：叶子件必须**恰好导出一个**声明数组（汇总件跳过）。
+ * #325 起导出给 `gen-cli.mjs` 的配对门复用：现场比对“源的事实 ↔ 编译的事实”必须读同一份加载逻辑，
+ * 不许在检查侧另写一份（一个概念一个定义地）。 */
+export async function loadDecls() {
   const decls = [];
   for (const src of routeDeclarationSources()) {
     if (src === AGGREGATOR) continue;
