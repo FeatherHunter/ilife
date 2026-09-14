@@ -1,0 +1,6 @@
+{
+  "deletes": ["tooling/test/__nope-missing__.md"],
+  "moves": [],
+  "writers": ["tooling/test/__probe__.md"],
+  "checks": ["tooling/test/__probe__.md"]
+}

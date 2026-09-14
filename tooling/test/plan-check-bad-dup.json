@@ -1,0 +1,6 @@
+{
+  "deletes": ["package.json", "package.json"],
+  "moves": [],
+  "writers": [],
+  "checks": []
+}

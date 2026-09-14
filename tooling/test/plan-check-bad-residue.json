@@ -1,0 +1,6 @@
+{
+  "deletes": ["tooling/run-locked.mjs"],
+  "moves": [],
+  "writers": ["tooling/run-locked.mjs"],
+  "checks": ["tooling/run-locked.mjs"]
+}

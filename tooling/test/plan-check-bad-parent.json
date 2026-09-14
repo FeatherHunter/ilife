@@ -1,0 +1,6 @@
+{
+  "deletes": [],
+  "moves": [{ "from": "tooling/run-locked.mjs", "to": "package.json/__probe__.md" }],
+  "writers": [],
+  "checks": []
+}
