@@ -212,9 +212,8 @@ test('#386 判据：范围由冻结表＋routes.ts 派生（预测模拟／报�
   );
   // 别名：本图范围的 new 记录＝`routes.ts` 里命令键落在范围内且 list==='new' 的那些
   assert.ok(ALIASES.length > 0, '本图范围一条 new 别名都没有（分母缺了口）');
-  const aliasKeySet = new Set(ALIASES.map((a) => a.key));
-  assert.deepEqual([...aliasKeySet].sort(), [...new Set([...SCOPE_COMMAND_KEYS])].filter((k) => k !== undefined).sort().filter((k) => aliasKeySet.has(k)).sort(),
-    'new 别名覆盖的命令键与范围命令键不自洽');
+  // 别名集合与范围命令键的自洽性判据在 `:65-67`：`ALIASES` 就是「`routes.ts` 的 `list==='new'` 记录里、
+  // 命令键落在 `SCOPE_COMMAND_KEYS` 内的那些」——此处不再复述（旧有一行把集合拿自己筛自己，恒真）。
   assert.equal(new Set(WORDS).size, WORDS.length, '本图范围唤醒词有重复');
   assert.equal(WORDS.length, SCOPED.length + ALIASES.length, '唤醒词数 ≠ 冻结表范围 ＋ 别名');
   // 缺口那条别名与冻结词的命令原文逐字相同（同一条命令、两个入口）
