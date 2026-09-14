@@ -22,11 +22,13 @@
  * 457／729 来源＝需求原文 `docs/skills/skill-calorie/t169-设计定稿.md` 票 2 票面），本脚本只核对它
  * 没被改写；**当场实测**＝当刻盘上的 LF（节点口径 `split('\n').length - 1`），台账里只有这一列对实况。
  *
- * 用法：无参＝真实门禁；`--sync --dry`＝只演练（打印要改的行、不落盘）；`--sync`＝落盘同步台账；
- * `--agents <…> --root <…>`＝夹具／变异入口。`--sync` 纪律（§2.5-1）：先在内存算新全文 → 跑完
- * 全部断言 → 全过才落盘；只改 `begin/end` 之间那块表，块外一个字不动（落盘前断言块外前后缀逐字节
- * 相同）。**真实门禁一律无参运行**，脚本每次自报 `SCAN-ROOT:`／`LEDGER:` 两行认口；本脚本**不提供**
- * 关掉扫描面的开关（缩面＝放宽，§2.4-4）。末行 `RESULT: n/m`；`--sync` 另打 `SYNC-PLAN … 改=／增=／删=`。
+ * 用法：无参＝真实门禁；`--sync --dry`＝只演练（打印要改的行、不落盘，**照当刻状态报**：计划非空即
+ * 非 0 退出、末行明说「未落盘」）；`--sync`＝落盘同步台账；`--agents <…> --root <…>`＝夹具／变异入口。
+ * `--sync` 纪律（§2.5-1）：先在内存算新全文 → 跑完全部断言 → 全过才落盘；只改 `begin/end` 之间那块表，
+ * 块外一个字不动（落盘前断言块外前后缀逐字节相同）。**真实门禁一律无参运行**，脚本每次自报
+ * `SCAN-ROOT:`／`LEDGER:` 两行认口；本脚本**不提供**关掉扫描面的开关（缩面＝放宽，§2.4-4）。
+ * 末行 `RESULT: n/m`（无参与 `--sync --dry` 打的都是**当刻状态**的读数）；`--sync` 另打
+ * `SYNC-PLAN … 改=／增=／删=` 与 `SYNC-WRITE`／`SYNC-VERIFY ok`。
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -329,7 +331,15 @@ if (bad.length > 0) {
   process.exit(1);
 }
 if (DRY) {
-  console.log('SYNC-DRY ok（未落盘；去掉 --dry 即写）');
+  // 演练口径照**当刻状态**报：计划非空即非 0 退出，末行明说「未落盘」，
+  // 免得把「计划落盘后」的 n/n 误读成已绿（复核 S3-2）。
+  const parts = `改=${plan.changed.length} 增=${plan.added.length} 删=${plan.dropped.length}`;
+  console.log(plan.changed.length + plan.added.length + plan.dropped.length > 0
+    ? `SYNC-DRY 计划非空（未落盘）：${parts}；台账尚未与实况一致，别只看退出码`
+    : 'SYNC-DRY ok（台账已与实况一致，未落盘）');
+  const failedNow = report(live.checks, live.rows.length, live.requiredHit);
+  for (const c of failedNow) console.log('RED ' + (c.detail || c.name));
+  process.exit(failedNow.length > 0 ? 1 : 0);
 } else {
   writeFileSync(AGENTS_PATH, plan.newText, 'utf8');
   if (readFileSync(AGENTS_PATH, 'utf8') !== plan.newText) {

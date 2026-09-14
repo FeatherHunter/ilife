@@ -11,6 +11,13 @@
  *
  * 夹具＝`mkdtempSync` 出来的独占小包根（自带 `src/`＋`scripts/`＋`AGENTS.md`），全部走
  * `--root`／`--agents` 两个夹具入口；**真实门禁读两份**（无参运行读本包真台账：T5 绿、T9 同步器零改动）。
+ *
+ * **T5／T9 的红＝全仓当刻状态**：这两例直接跑真包真台账，而本仓多席共用一个工作区 ⇒ **他席在飞的
+ * 超线件**（或任何扫描面内的件被改过行数／新增／删除）都会让本票靶向测试转红。**那是这道门的设计行为，
+ * 不是本票缺陷**；夹具七例（T1–T4、T6–T8）不受影响。修法就一条仓内命令：
+ * `node packages/skill-calorie/scripts/check-warning-line.mjs --sync`。
+ * 「`--sync --dry` 的读数照**当刻状态**报」：**计划非空即非 0 退出**、末行明说「未落盘」（T8 钉住这条），
+ * 台账已一致时才是 `exit 0`＋`SYNC-DRY ok`（T9 钉住另一条）——免得把「计划落盘后」的 n/n 误读成已绿。
  * 夹具用完即删，删除前过 §2.1-3 路径守卫；不碰真库、不碰任何源码件。
  *
  * 改坏必红实证（每条断言都附）：
@@ -246,14 +253,16 @@ test('T8 同步器：--dry 不改文件且报计划，--sync 回绿且只动台�
     writeLedger(fx, { 'src/over.ts': 999 }); // 改坏：台账陈化
     const before = readFileSync(fx.agents, 'utf8');
     const dry = runGate(['--sync', '--dry', '--root', fx.dir, '--agents', fx.agents]);
-    assert.equal(dry.exit, 0, `--dry 应只演练并报计划，实际 exit=${dry.exit}\n${dry.text}`);
+    assert.notEqual(dry.exit, 0, `计划非空时 --dry 必须照当刻状态非 0 退出（免得误读成已绿），实际 exit=${dry.exit}\n${dry.text}`);
     assert.match(dry.text, /SYNC-PLAN mode=dry 行=\d+ 改=1 增=0 删=0/);
     assert.match(dry.text, /SYNC-CHANGE src\/over\.ts 台账=999 实况=360/);
-    assert.match(dry.text, /SYNC-DRY ok/);
+    assert.match(dry.text, /SYNC-DRY 计划非空（未落盘）/);
+    assert.match(dry.text, /RED 台账陈化：src\/over\.ts 台账=999 实况=360/, '--dry 也要把当刻红条打出来');
     assert.equal(readFileSync(fx.agents, 'utf8'), before, '--dry 不许改文件');
     // 漏报也能补：加一个未挂号的 360 行件，再演练一次仍不落盘
     writeFileSync(path.join(fx.dir, 'src', 'surprise.ts'), body(360), 'utf8');
     const dry2 = runGate(['--sync', '--dry', '--root', fx.dir, '--agents', fx.agents]);
+    assert.notEqual(dry2.exit, 0, `计划非空（第二回）仍须非 0，实际 exit=${dry2.exit}\n${dry2.text}`);
     assert.match(dry2.text, /SYNC-CHANGE src\/over\.ts 台账=999 实况=360/);
     assert.match(dry2.text, /SYNC-ADD src\/surprise\.ts LF=360/);
     assert.equal(readFileSync(fx.agents, 'utf8'), before, '--dry 不许改文件（第二回）');
