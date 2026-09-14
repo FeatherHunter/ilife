@@ -14,7 +14,7 @@
     },
     {
       "file": "test/calorie-routing-81.test.mjs",
-      "line": 342,
+      "line": 350,
       "anchor": 9,
       "status": "历史（收紧后不再需要）：域内计数，准入已不认 ⇒ 当刻既不进 ② 也不进 ③；留作防回归",
       "reason": "非权威总量：9 是**smoke 快照 §1 的表格列数**（`c` 是 `rows1[i]`──`smokeSection(md, '## 1. ')` 切出的一行，消息自述「smoke §1 列数异常」），与体重键数 9 只是数值巧合。加删命令会改的是**行数**（`rows1.length` 与路由层对账，:338），不是列数。**本件冻结**（D 段不许碰）。",
@@ -110,6 +110,28 @@
       "owner": "#348 训练计划写命令席",
       "date": "2026-09-14",
       "evidence": "实命中：`assert.equal(wr.data.metrics.weightGoal, 68);`。"
+    },
+    {
+      "file": "packages/skill-calorie/test/cmd-write-40-persist.test.mjs",
+      "line": 497,
+      "anchor": 72,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：72 是**种子起始体重 72kg**（`calorie.goal.weight` 的入参 `startKg: 72`，见同文件 :492），断言另一侧是 `row.start_weight`（库内域值回读），不含 keys／键／声明／registry。另一侧之所以被判成「权威总量」，只因标识符里带 `weight`（体重）字样撞上探针 AUTHORITY_SUBJECT 的关键词，并非它真是计数。只是数值撞上当刻读命令总数锚 72（#355 加 2 条读命令 70→72）。加删命令不必手改本行（改种子起始体重值才需动）。",
+      "enforcer": "本探针 ② 桶对账（字段齐全 ＋ 该行仍把 72 当被比操作数）；域值本身由落库块逐列回读守（:493-499 同块）。",
+      "owner": "#355 对比接通席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(row.start_weight, 72);`（种子写入见同文件 :492：kg 68 ＋ startKg 72 ＋ startDate 2026-09-01）。"
+    },
+    {
+      "file": "packages/skill-calorie/test/goal-upsert-127.test.mjs",
+      "line": 109,
+      "anchor": 72,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：72 是种子起始体重 72kg（同测试 :95 的 `UPDATE daily_goal SET ... start_weight = 72.0 ...` 写入），断言另一侧 `after.start_weight` 为库内域值。另一侧被判成「权威总量」只因标识符带 `weight` 字样撞上探针关键词，并非计数。数值撞锚 72 而已。加删命令不必手改本行。",
+      "enforcer": "本探针 ② 桶对账（字段齐全 ＋ 该行仍把 72 当被比操作数）；域值本身由 goal-upsert-127 自己的逐列不变断言守（:103-110 同块）。",
+      "owner": "#355 对比接通席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(after.start_weight, 72);`；种子值见 :95。"
     }
   ]
 }
