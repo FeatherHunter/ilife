@@ -157,6 +157,33 @@ export function trendMeasurement(db: DatabaseSync, metric: string, days: number)
   return rows.map((r) => ({ date: r.date, avgVal: r.avg_val, n: r.n }));
 }
 
+/** #360 · 最近有数据部位：窗口内各部位按最新非空 `(date DESC, id DESC)` 取最大者。
+ *
+ * 平局（同日多部位）按 `MEASUREMENT_FIELDS` 既有次序取首位（确定性；循环不覆盖已选即首位胜）。
+ * 与老 `render_body_measurements_view.py:96-118` 的「首个有数据即 active（固定首项）」不同——
+ * 老口径不比日期，本票逐部位比最新日期，负向（改回固定首项）必红。
+ * 窗口与 `listMeasurements` 同口径：`dateFrom+dateTo` 显式区间优先，否则 `days`；
+ * 窗口内全无数据 → `null`（调用方按既有 `missing-data` 抛，空库语义不变）。 */
+export function latestMeasurementMetric(
+  db: DatabaseSync,
+  opts: { days?: number; dateFrom?: string; dateTo?: string } = {},
+): string | null {
+  let best: { field: string; date: string; id: number } | null = null;
+  for (const f of MEASUREMENT_FIELDS) {
+    let sql = `SELECT date, id FROM body_measurements WHERE COALESCE(is_deprecated, 0) = 0 AND ${f} IS NOT NULL`;
+    const params: SQLInputValue[] = [];
+    if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }
+    else if (opts.days !== undefined) { sql += ' AND date >= ?'; params.push(daysAgo(opts.days)); }
+    sql += ' ORDER BY date DESC, id DESC LIMIT 1';
+    const row = db.prepare(sql).get(...params) as { date: string; id: number } | undefined;
+    if (!row) continue;
+    if (!best || row.date > best.date || (row.date === best.date && row.id > best.id)) {
+      best = { field: f, date: row.date, id: row.id };
+    }
+  }
+  return best?.field ?? null;
+}
+
 export function compareMeasurements(db: DatabaseSync, date1: string, date2: string): {
   date1: string; date2: string; deltas: Record<string, { before: number; after: number; delta: number }>; nCompared: number;
 } {

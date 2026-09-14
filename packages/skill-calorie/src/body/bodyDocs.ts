@@ -7,6 +7,7 @@
 import {
   renderChartBlock,
   renderDataTable,
+  renderEmptyBlock,
   renderKpiGrid,
   renderParamForm,
 } from 'base-paint/blocks';
@@ -108,25 +109,42 @@ const MEASURE_ZH: Record<string, string> = {
 };
 
 export function buildBodyMeasureDoc(v: BodyMeasureView): string {
+  // #360 · 趋势部位：带部位用所传部位，不带部位用自动挑的最近有数据部位（`autoMetric`）；
+  // 全量表分支（`metric` 为空）照旧渲染未过滤列表（归 #361，本票不动表结构，只修缺值格）。
+  const trendMetric = v.metric ?? v.autoMetric;
+  const trendZh = trendMetric ? (MEASURE_ZH[trendMetric] ?? trendMetric) : '';
+  const cm = (n: number | null): string => (n === null ? '—' : String(n) + 'cm');
+  // 趋势点 0（样本不足）时写「—」不带单位（照老 `:491／:496／:507` 全落「—」）。
+  const trendPointCard = v.kpi.count === 0
+    ? { label: '趋势点', value: '—', detail: trendZh }
+    : { label: '趋势点', value: String(v.kpi.count), unit: '天', detail: trendZh };
   const parts: string[] = [
     renderParamForm({
       fields: [{ name: 'metric', label: '围度项', value: v.metric ?? '' }],
-      description: '13 围度项按名筛选（空=全部；趋势需指定单项；两期对比归组合分析）',
+      description: '13 围度项按名筛选（空=全部并自动挑最近有数据部位出趋势；两期对比归组合分析）',
     }),
     renderKpiGrid([
       { label: '围度看', value: v.metric ? (MEASURE_ZH[v.metric] ?? v.metric) : '全部围度', detail: '共 ' + v.total + ' 条' },
-      { label: '最新', value: v.latestVal === null ? '—' : String(v.latestVal) + 'cm', detail: v.metric ? (MEASURE_ZH[v.metric] ?? v.metric) : '' },
-      { label: '趋势点', value: String(v.trend.length), unit: '天' },
+      { label: '最新', value: v.latestVal === null ? '—' : String(v.latestVal) + 'cm', detail: trendZh },
+      trendPointCard,
+      { label: '均值', value: cm(v.kpi.avg), detail: trendZh },
+      { label: '最小', value: cm(v.kpi.min), detail: trendZh },
+      { label: '最大', value: cm(v.kpi.max), detail: trendZh },
+      { label: '变化量', value: v.kpi.delta === null ? '—' : (v.kpi.delta >= 0 ? '+' : '') + v.kpi.delta + 'cm', detail: trendZh },
     ]),
   ];
   let charts = false;
-  if (v.metric && v.trend.length > 0) {
+  if (trendMetric && v.trend.length > 0) {
     parts.push(renderChartBlock({
       kind: 'line',
-      title: (MEASURE_ZH[v.metric] ?? v.metric) + '趋势',
+      title: trendZh + '趋势',
       input: { items: v.trend.map((t) => ({ label: t.date.slice(5), value: t.avgVal })) },
     }));
     charts = true;
+  } else if (trendMetric) {
+    // #360 · 样本不足兜底：图区空态句（仍注部位，照老 `body_measurements_view.html:504` 文案），
+    // KPI 四格已是「—」（`cm(null)`／`delta null`／点数 0→「—」，照老 `:491／:496／:507`）。
+    parts.push(renderEmptyBlock({ title: trendZh + '趋势', text: '该部位暂无趋势数据' }));
   }
   if (v.metric) {
     const mkey = v.metric;
@@ -140,7 +158,8 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
         const val = r[mkey];
         return {
           date: typeof r['date'] === 'string' ? (r['date'] as string) : '',
-          val: typeof val === 'number' ? val : '',
+          // #360 · 裁定 2 表体：缺值格可见「—」（老 `:385`），不再留空串（空串会与备注空格连成连续空单元）。
+          val: typeof val === 'number' ? val : '—',
           note: typeof r['note'] === 'string' ? (r['note'] as string) : '',
         };
       }),
@@ -148,7 +167,8 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
       emptyText: '该项目无记录',
     }));
   } else {
-    const numOrEmpty = (x: unknown): number | string => (typeof x === 'number' ? x : '');
+    // #360 · 裁定 2 表体：数值缺值格一律「—」（老 `:385`）；备注沿旧口径（空串仍空，不新增语义，归 #361）。
+    const numOrDash = (x: unknown): number | string => (typeof x === 'number' ? x : '—');
     const strOrEmpty = (x: unknown): string => (typeof x === 'string' ? x : '');
     parts.push(renderDataTable({
       columns: [
@@ -160,8 +180,8 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
         { key: 'note', label: '备注' },
       ],
       rows: v.items.map((r) => ({
-        date: strOrEmpty(r['date']), chest: numOrEmpty(r['chest_cm']), waist: numOrEmpty(r['waist_cm']),
-        abdomen: numOrEmpty(r['abdomen_cm']), hip: numOrEmpty(r['hip_cm']), note: strOrEmpty(r['note']),
+        date: strOrEmpty(r['date']), chest: numOrDash(r['chest_cm']), waist: numOrDash(r['waist_cm']),
+        abdomen: numOrDash(r['abdomen_cm']), hip: numOrDash(r['hip_cm']), note: strOrEmpty(r['note']),
       })),
       caption: '围度记录（共 ' + v.total + ' 条；全量 13 项见复制数据）',
       emptyText: '无围度记录',

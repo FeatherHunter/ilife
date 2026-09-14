@@ -7,7 +7,7 @@
  * 空库一律 missing-data，不返空数组冒充正常。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { CALIPER_FIELDS, compareCompositions, compareMeasurements, listCompositions, listMeasurements, trendComposition, trendMeasurement } from '../fetch/body.js';
+import { CALIPER_FIELDS, compareCompositions, compareMeasurements, latestMeasurementMetric, listCompositions, listMeasurements, trendComposition, trendMeasurement } from '../fetch/body.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 
@@ -99,6 +99,34 @@ export interface BodyMeasureView {
   total: number;
   trend: { date: string; avgVal: number; n: number }[];
   latestVal: number | null;
+  /** #360 · 不带部位时自动挑的部位（`metric` 有值时为 `null`；全量表语义不动，仍是未过滤列表）。 */
+  autoMetric: string | null;
+  /** #360 · 趋势五项 KPI 的唯一来源（由 `trend` 的 `avgVal` 序列算出，与图同批定；
+   * 口径照老 `body_measurements_view.html:454-462` 的 `kpiFor`：均值保留 2 位，`n<2` 时变化量为 `null`）。 */
+  kpi: { count: number; avg: number | null; min: number | null; max: number | null; delta: number | null };
+}
+
+/** #360 · 趋势 KPI 单一来源（`bodyDocs` 只渲染不重算，KPI 与图必然一致）。 */
+export function measureTrendKpi(trend: { date: string; avgVal: number; n: number }[]): {
+  count: number; avg: number | null; min: number | null; max: number | null; delta: number | null;
+} {
+  const values = trend.map((t) => t.avgVal).filter((v) => typeof v === 'number' && Number.isFinite(v));
+  if (values.length === 0) return { count: 0, avg: null, min: null, max: null, delta: null };
+  const round2 = (n: number): number => Math.round(n * 100) / 100;
+  return {
+    count: values.length,
+    avg: round2(values.reduce((a, b) => a + b, 0) / values.length),
+    min: Math.min(...values),
+    max: Math.max(...values),
+    delta: values.length >= 2 ? round2(values[values.length - 1] - values[0]) : null,
+  };
+}
+
+/** #360 · 样本不足兜底的空 KPI（老正本 `:491／:496／:507` 三处 `kpiHtml(null×4)` 的新侧等价：四格 `null`＋点数 0）。 */
+function emptyMeasureKpi(): {
+  count: number; avg: number | null; min: number | null; max: number | null; delta: number | null;
+} {
+  return { count: 0, avg: null, min: null, max: null, delta: null };
 }
 
 export function buildBodyMeasureView(
@@ -115,23 +143,51 @@ export function buildBodyMeasureView(
   }
   if (opts.dateFrom && !/^\d{4}-\d{2}-\d{2}$/.test(opts.dateFrom)) throw new CalorieRenderError('bad-input', 'dateFrom 非法：' + opts.dateFrom);
   if (opts.dateTo && !/^\d{4}-\d{2}-\d{2}$/.test(opts.dateTo)) throw new CalorieRenderError('bad-input', 'dateTo 非法：' + opts.dateTo);
+  const useRange = Boolean(opts.dateFrom && opts.dateTo);
   try {
+    // #360 · 带部位＝单部位趋势（行为不变，另加该部位无数据时的样本不足兜底）；
+    // 不带部位＝全量表（列表语义归 #361，本票不动）＋ 自动挑最近有数据部位出趋势（裁定 4）。
+    if (opts.metric) {
+      const items = listMeasurements(db, {
+        metric: opts.metric,
+        days: useRange ? undefined : days,
+        dateFrom: opts.dateFrom,
+        dateTo: opts.dateTo,
+        limit,
+      });
+      if (items.length === 0) {
+        const anyRows = listMeasurements(db, {
+          days: useRange ? undefined : days,
+          dateFrom: opts.dateFrom,
+          dateTo: opts.dateTo,
+          limit: 1,
+        });
+        if (anyRows.length === 0) throw new CalorieRenderError('missing-data', '无围度记录');
+        return { metric: opts.metric, items: [], total: 0, trend: [], latestVal: null, autoMetric: null, kpi: emptyMeasureKpi() };
+      }
+      const trend = trendMeasurement(db, opts.metric, days);
+      const v = (items[0] as Record<string, unknown>)[opts.metric];
+      const latestVal = typeof v === 'number' ? v : null;
+      return { metric: opts.metric, items, total: items.length, trend, latestVal, autoMetric: null, kpi: measureTrendKpi(trend) };
+    }
     const items = listMeasurements(db, {
-      metric: opts.metric,
-      days: opts.dateFrom && opts.dateTo ? undefined : days,
+      days: useRange ? undefined : days,
       dateFrom: opts.dateFrom,
       dateTo: opts.dateTo,
       limit,
     });
     if (items.length === 0) throw new CalorieRenderError('missing-data', '无围度记录');
-    let trend: { date: string; avgVal: number; n: number }[] = [];
+    const picked = latestMeasurementMetric(db, useRange
+      ? { dateFrom: opts.dateFrom, dateTo: opts.dateTo }
+      : { days });
+    if (!picked) throw new CalorieRenderError('missing-data', '无围度记录');
+    const trend = trendMeasurement(db, picked, days);
     let latestVal: number | null = null;
-    if (opts.metric) {
-      trend = trendMeasurement(db, opts.metric, days);
-      const v = (items[0] as Record<string, unknown>)[opts.metric];
-      latestVal = typeof v === 'number' ? v : null;
+    for (const r of items) {
+      const cand = (r as Record<string, unknown>)[picked];
+      if (typeof cand === 'number') { latestVal = cand; break; }
     }
-    return { metric: opts.metric ?? null, items, total: items.length, trend, latestVal };
+    return { metric: null, items, total: items.length, trend, latestVal, autoMetric: picked, kpi: measureTrendKpi(trend) };
   } catch (e) {
     if (e instanceof CalorieRenderError) throw e;
     if (e instanceof FetchError) throw new CalorieRenderError('missing-data', e.message);

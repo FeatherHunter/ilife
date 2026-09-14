@@ -20,7 +20,7 @@ export function viewBodyComposition(params: Record<string, unknown>, db: Databas
   return { data: { metrics }, html: buildBodyCompositionDoc(v) };
 }
 
-/** `calorie.view.body-measure` · 围度看（`metric` 缺省看全量；窗口默认 90 天）。 */
+/** `calorie.view.body-measure` · 围度看（`metric` 缺省自动挑最近有数据部位出趋势，全量表不动；窗口默认 90 天）。 */
 export function viewBodyMeasure(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const metric = optStr(params, 'metric');
   const days = optNum(params, 'days') ?? 90;
