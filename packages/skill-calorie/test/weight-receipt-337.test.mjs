@@ -5,8 +5,11 @@
  * （`assertDocPage` 五连）、含体重眉标与对账信息＋三格式复制菜单；并按老实物
  * （`docs/skills/skill-calorie/t165-老页面实物结构.md`）补三变体区块：
  * 单条（本次体重／较上次／距目标／备注）／批量（写入跳过失败数＋逐条明细）／
- * 改类（改前 → 改后）／删类（删除快照＋硬删除口径）。写词另断言写前写后库真的变了
+ * 改类（改前 → 改后）／删类（删除前的原值＋删除不可恢复）。写词另断言写前写后库真的变了
  * （同一临时库内回读，**不碰真库**：`SKILLS_DB_PATH` 指向本次临时目录）。
+ * #483 文本审查后同步收紧：可见文本里不能再出现旧句（`影响行数`／`本次写入的行数`／`回执格式`／
+ * `已写入 weight_log`／`线在量程外`／`删除口径`／`批量计数`／`删除快照`／参数名 `kg、note、date、time`）
+ * ——`assertReceipt` 里逐条钉 0 命中；删掉的「批量计数」表改钉结论句那三数。
  *
  * 变异证据（自证两行，机器读数见 `docs/skills/skill-calorie/t337-体重盘与回执-证据.md`）：
  * - 变异红：把 `src/weight/receipt.ts` 的 `assembleDocPage` 入口改坏一处
@@ -86,16 +89,22 @@ function assertReceipt(r, what) {
     what + ' 的复制数据不是三格式菜单');
   assert.ok(r.file.includes('ilife-copy-log'), what + ' 缺复制日志按钮');
   assert.ok(r.file.length > 10000, what + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
+  // #483：旧句命中必须为 0（可见文本已改人话／已删；载荷里没有这些字面，故不误伤）。
+  for (const gone of ['影响行数', '本次写入的行数', '回执格式', '已写入 weight_log', '线在量程外',
+    '删除口径', '批量计数', '删除快照', 'kg、note、date、time']) {
+    assert.ok(!r.file.includes(gone), what + ' 仍含 #483 已删文本：' + gone);
+  }
 }
 
-/** 今日盘 2 条读共用的完整文档＋交付断言（读页眉标与写后回执不同）。 */
-function assertDashboard(r, what) {
+/** 今日盘 2 条读共用的完整文档＋交付断言（读页眉标与写后回执不同）。
+ *  第一张卡的标签按窗口给（#487：一天窗叫「今日体重」，30 天窗叫「最新体重」）——当参数传，不写死一个。 */
+function assertDashboard(r, what, firstCard) {
   assert.equal(r.status, 0, what + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
   assertDocPage(r.file, what);
   assert.ok(r.envelope !== null, what + ' stdout 不是信封 JSON');
   assert.equal(r.envelope.data.output, r.out, what + ' 信封交付路径不是本次 --html 那一份');
   assert.ok(isAbsolute(r.envelope.data.output), what + ' 交付路径不是绝对路径');
-  for (const needle of ['今日体重', '较上次', '结论', '体重曲线', '复制数据']) {
+  for (const needle of [firstCard, '较上次', '结论', '体重曲线', '复制数据']) {
     assert.ok(r.file.includes(needle), what + ' 缺：' + needle);
   }
 }
@@ -124,7 +133,7 @@ test('#337 看今日体重', () => {
   const dir = mkDir();
   seedBasic(dir);
   const r = runCli(dir, 'calorie.view.weight', { window: '今日' }, 'view-today');
-  assertDashboard(r, '看今日体重');
+  assertDashboard(r, '看今日体重', '今日体重');
   assert.ok(r.file.includes(todayISO()), '缺今日日期');
   assert.ok(r.file.includes('70.1'), '今日卡缺今日值');
 });
@@ -133,8 +142,8 @@ test('#337 看体重总览', () => {
   const dir = mkDir();
   seedBasic(dir);
   const r = runCli(dir, 'calorie.view.weight', { window: '30d' }, 'view-overview');
-  assertDashboard(r, '看体重总览');
-  assert.ok(r.file.includes('体重盘'), '缺体重盘卡');
+  assertDashboard(r, '看体重总览', '最新体重');
+  assert.ok(r.file.includes('体重总览'), '缺体重总览区块');
 });
 
 // ---------------------------------------------------------------- ⑥ 写后回执（9 条写）
@@ -182,7 +191,9 @@ test('#337 批量补录体重', () => {
   ];
   const r = runCli(dir, 'calorie.weight.batch', { items }, 'batch');
   assertReceipt(r, '批量补录体重');
-  for (const needle of ['批量计数', '写入', '跳过', '失败', '逐条明细']) {
+  // #483：「批量计数」表整块删（摘要与结论句里已有同样三数），改钉结论句那三个读数与两条定义。
+  for (const needle of ['逐条明细（共 3 条）', '本次批量 3 条：写入 1 条、跳过 1 条、失败 1 条',
+    '跳过＝那天已经记过（不覆盖旧记录）', '失败＝日期格式或体重值不对（原因见下表）']) {
     assert.ok(r.file.includes(needle), '批量补录体重缺：' + needle);
   }
   assert.match(r.envelope.data.message, /写入 1，跳过 1，失败 1/, '批量计数摘要不对：' + r.envelope.data.message);
@@ -217,7 +228,8 @@ test('#337 删体重记录', () => {
   const before = q1(dir, 'SELECT COUNT(*) AS n FROM weight_log').n;
   const r = runCli(dir, 'calorie.weight.remove', { id: seed.todayId }, 'remove-id');
   assertReceipt(r, '删体重记录');
-  for (const needle of ['删除快照', '硬删除，不可恢复']) {
+  // #483：可见文本的「删除前快照」改「删除前的原值」（快照列改状态列）；副标题里那句机器面摘要一字不动。
+  for (const needle of ['删除前的原值（共 1 条）', '删除不可恢复，要还原请照上表原值重新记一次', '硬删除，不可恢复']) {
     assert.ok(r.file.includes(needle), '删体重记录缺：' + needle);
   }
   assert.equal(q1(dir, 'SELECT COUNT(*) AS n FROM weight_log WHERE id = ?', seed.todayId).n, 0, '按 id 未硬删');
@@ -229,7 +241,8 @@ test('#337 删某日体重', () => {
   const seed = seedBasic(dir);
   const r = runCli(dir, 'calorie.weight.remove', { date: seed.noteDate }, 'remove-date');
   assertReceipt(r, '删某日体重');
-  assert.ok(r.file.includes('硬删除，不可恢复'), '缺硬删除口径');
+  assert.ok(r.file.includes('删除前的原值（共 1 条）'), '缺删除前的原值区');
+  assert.ok(r.file.includes('硬删除，不可恢复'), '缺硬删除口径（机器面摘要）');
   assert.equal(q1(dir, 'SELECT COUNT(*) AS n FROM weight_log WHERE date = ?', seed.noteDate).n, 0, '按日未硬删干净');
 });
 
