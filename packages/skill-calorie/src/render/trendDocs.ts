@@ -217,17 +217,15 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
   });
 }
 
-/* ── 热量缺口（calorie_deficit.html 对照：4 KPI＋每日摄入 vs 消耗＋缺口明细表） ── */
+/* ── 热量缺口（calorie_deficit.html 对照：4 KPI＋每日摄入 vs 消耗＋缺口明细表＋合计行） ── */
 
 const DEFICIT_TREND_ZH: Record<string, string> = { loss: '减重方向', gain: '增重方向', flat: '持平' };
 
 export function buildDeficitDoc(d: DeficitData): string {
+  const targetDef = d.target.weeklyDeficitPerDay;
   const parts: string[] = [
     renderParamForm({
-      fields: [
-        { name: 'start', label: '开始', value: d.meta.start },
-        { name: 'end', label: '结束', value: d.meta.end },
-      ],
+      fields: [{ name: 'start', label: '开始', value: d.meta.start }, { name: 'end', label: '结束', value: d.meta.end }],
       description: '缺口 = 消耗 − 摄入（正=缺口）；消耗 = TDEE＋当日运动；摄入 = 当日食物（不含水）',
     }),
     renderKpiGrid([
@@ -245,41 +243,45 @@ export function buildDeficitDoc(d: DeficitData): string {
       kind: 'line',
       title: '每日摄入 vs 消耗（虚线=消耗；水平线=摄入目标 ' + d.target.intake + ' 卡）',
       input: {
-        items: intake,
-        options: {
+        items: intake, options: {
           series: [
             { name: '摄入', items: intake },
             { name: '消耗', items: burn, dashed: true },
           ],
-          markLine: { value: d.target.intake, label: '目标' },
+          /* #385：补刻度值＋数字格式（老侧 `:150-157` 的 format／yMin／yMax；同包先例 `multiTrendPage.ts:261`）；量程不写死。 */
+          yTicks: 3, labels: 'select', format: (v: number) => Math.round(v).toLocaleString(), markLine: { value: d.target.intake, label: '目标' },
         },
       },
     }));
     charts = true;
   }
-  {
-    const shown = d.series.slice(0, 100);
-    parts.push(renderDataTable({
-      columns: [
-        { key: 'date', label: '日期' },
-        { key: 'intake', label: '摄入', align: 'right' },
-        { key: 'burn', label: '消耗', align: 'right' },
-        { key: 'deficit', label: '缺口', align: 'right' },
-        { key: 'target', label: '目标', align: 'right' },
-        { key: 'status', label: '状态' },
-      ],
-      rows: shown.map((s) => ({
-        date: s.date + ' ' + s.weekday,
-        intake: s.intake, burn: s.burn,
-        deficit: (s.deficit >= 0 ? '+' : '') + s.deficit,
-        target: d.target.intake,
-        status: s.deficit >= 0 ? '缺口' : '盈余',
-      })),
-      caption: '缺口明细' + (d.series.length > 100 ? '（仅列前 100 条，共 ' + d.series.length + ' 天）' : '（共 ' + d.series.length + ' 天）') +
-        ' · ' + d.meta.weekdayCount + ' 工作日/' + d.meta.weekendCount + ' 周末',
-      emptyText: '窗口内无缺口数据',
-    }));
-  }
+  const shown = d.series.slice(0, 100);
+  const totals = d.series.reduce((a, s) => ({ intake: a.intake + s.intake, burn: a.burn + s.burn, deficit: a.deficit + s.deficit }), { intake: 0, burn: 0, deficit: 0 });
+  parts.push(renderDataTable({
+    columns: [
+      { key: 'date', label: '日期' },
+      { key: 'intake', label: '摄入', align: 'right' },
+      { key: 'burn', label: '消耗', align: 'right' },
+      { key: 'deficit', label: '缺口', align: 'right' },
+      { key: 'target', label: '目标', align: 'right' },
+      { key: 'status', label: '状态' },
+    ],
+    rows: shown.map((s) => ({
+      date: s.date + ' ' + s.weekday,
+      intake: s.intake, burn: s.burn,
+      deficit: (s.deficit >= 0 ? '+' : '') + s.deficit,
+      target: (targetDef >= 0 ? '+' : '') + targetDef,
+      status: s.deficit >= targetDef ? '✓ 达标' : s.deficit > 0 ? '⚠ 偏低' : '✗ 超量',
+    })),
+    caption: '缺口明细' + (d.series.length > 100 ? '（仅列前 100 条，共 ' + d.series.length + ' 天）' : '（共 ' + d.series.length + ' 天）') +
+      ' · ' + d.meta.weekdayCount + ' 工作日/' + d.meta.weekendCount + ' 周末',
+    emptyText: '窗口内无缺口数据',
+  }));
+  parts.push(renderListRows({ items: [
+    { left: '合计摄入', main: totals.intake + ' 卡', right: d.meta.days + ' 天' },
+    { left: '合计消耗', main: totals.burn + ' 卡', right: 'TDEE×天＋运动' },
+    { left: '合计缺口', main: (totals.deficit >= 0 ? '+' : '') + totals.deficit + ' 卡', right: '周缺口 ' + d.summary.weeklyDeficit + ' 卡' },
+  ] }));
   parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.deficit',

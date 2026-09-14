@@ -31,8 +31,10 @@
  *      `src/render/sportPortDocs.ts` 的「摄入合计／TDEE 合计」同款）。
  *   D4 老侧每行摄入／消耗用专色 `--intake`／`--burn`、缺口三态用 `.deficit-pos/neg/zero`：
  *      **不移植**（本仓零命中，且技能侧颜色字面量必须为 0、样式一律走 base-paint）→ 记偏离。
- *   D5 老侧图表无 Y 轴刻度值（公共层 charts.ts 能力缺口）：本页 markLine／虚线系列已对齐，
- *      刻度值缺口只在公共层→ 记偏离并另立票，本票不改公共层。
+ *   D5 老侧图表缺 Y 轴刻度值（`calorie_deficit.html:149` 自注该偏离）：**不是公共层能力缺口**——
+ *      公共层支持刻度（`spec/charts.ts:98` 声明 `yTicks?:number|false`；`charts.ts:452` 收敛 2–6；
+ *      `:471-490` 渲 `<text class="ilife-charts-tick">`），只是折线缺省 `yTicks→false`（`charts.ts:777`）
+ *      ⇒ 属「本页漏传参数」。本页折线补 `yTicks:3`＋`labels:'select'`＋`format`（**不改公共层**）。
  *
  * 变异证据（源码级，票面 §自证两行）：
  *   MUT-RED  ：见文件尾「变异证据」段（改坏 D1 一处 → 本测试变红）。
