@@ -106,8 +106,11 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
     const d1 = rows[0]?.aDelta ?? 0;
     const d2 = rows[1]?.aDelta ?? 0;
     if ((rows[0]?.days ?? 0) > 0 && (rows[1]?.days ?? 0) > 0 && Math.abs(d1 - d2) > 0.2) {
-      (rows[0] as StratRow).note = 'Δ差异 ' + (d1 - d2 >= 0 ? '+' : '') + round2(d1 - d2).toFixed(2);
-      (rows[1] as StratRow).note = 'Δ差异 ' + (d2 - d1 >= 0 ? '+' : '') + round2(d2 - d1).toFixed(2);
+      /* #160 文本返工：备注写人话——「变化比另一组多／少 ＋ 绝对值」。旧串 `Δ差异 +-1.20` 两头都不对：
+       *  既有读者认不得的 Δ，负差还会打两个符号（`+` 判断与负号叠在一起）。口径见组合页 HTML 注释。 */
+      const gap = round2(Math.abs(d1 - d2)).toFixed(2);
+      (rows[0] as StratRow).note = '变化比' + l1 + (d1 - d2 >= 0 ? '多 ' : '少 ') + gap;
+      (rows[1] as StratRow).note = '变化比' + l0 + (d2 - d1 >= 0 ? '多 ' : '少 ') + gap;
     }
     if (mode === 'exercise') {
       if (db && series.length > 0) {
@@ -116,9 +119,9 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
           const end = (series[series.length - 1] as DaySeries).date;
           const st = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '力量' AND " + EX_ALIVE).get(start, end) as { v: number | null };
           const ca = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '有氧' AND " + EX_ALIVE).get(start, end) as { v: number | null };
-          extra.push('力量消耗合计 ' + round(st.v ?? 0) + ' 卡 vs 有氧 ' + round(ca.v ?? 0) + ' 卡');
-        } catch (e) { extra.push('力量/有氧分层不可用: ' + (e as Error).message); }
-      } else extra.push('力量/有氧分层不可用: 缺 db');
+          extra.push('其中力量消耗 ' + round(st.v ?? 0) + ' 卡、有氧消耗 ' + round(ca.v ?? 0) + ' 卡');
+        } catch { extra.push('力量和有氧这次没能分开算，只算了合计'); }
+      } else extra.push('力量和有氧这次没能分开算，只算了合计');
     }
   } else if (mode === 'deficit_src') {
     const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
@@ -129,7 +132,10 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
     rows.push({ label: '日均摄入', days: cal.length, aDelta: null, bAvg: calAvg, note: '' });
     rows.push({ label: '日均运动', days: ex.length, aDelta: null, bAvg: exAvg, note: '' });
     if (calAvg !== null && tdee !== null && tdee !== undefined) {
-      extra.push('缺口构成:(TDEE ' + tdee + ' + 运动 ' + (exAvg ?? 0) + ') − 摄入 ' + calAvg + ' = 日均缺口 ' + (tdee + (exAvg ?? 0) - calAvg >= 0 ? '+' : '') + round(tdee + (exAvg ?? 0) - calAvg) + ' 卡');
+      /* #160 文本返工：算式留公式、术语换人话（`TDEE` 是英文缩写，读者认不得；口径与算式不变）。 */
+      const daily = round(tdee + (exAvg ?? 0) - calAvg);
+      extra.push('缺口这样算：日常消耗 ' + tdee + ' 卡 ＋ 运动 ' + (exAvg ?? 0) + ' 卡 − 吃进 ' + calAvg
+        + ' 卡 ＝ 平均每天缺口 ' + (daily >= 0 ? '+' : '−') + Math.abs(daily) + ' 卡');
     }
   } else if (mode === 'divergence') {
     const wv = series.map((s) => s.weightKg).filter((v): v is number => v !== null && v !== undefined);
@@ -176,22 +182,37 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
   return { rows, extra };
 }
 
-function insight(pair: string, r: number | null, lag: Array<{ lag: number; r: number | null }>, st: Strat, days: number): string {
-  const bLabel = (PAIRS[pair] as [string, string, string, string, string])[3];
-  if (r === null) return '数据不足,无法判断“' + bLabel + '”与目标指标的关联。';
-  const strength = Math.abs(r) >= 0.5 ? '强' : Math.abs(r) >= 0.3 ? '中' : '弱';
-  const direction = r > 0 ? '正相关' : '负相关';
-  let line = strength + direction + '(r=' + (r >= 0 ? '+' : '') + r.toFixed(2) + ')';
+function insight(pair: string, r: number | null, lag: Array<{ lag: number; r: number | null }>, st: Strat, days: number, aligned: number): string {
+  /* #160 文本返工：整句重写成读者话。旧句（`窗口内共 30 天,摄入(卡)与目标指标的关联呈强负相关(r=-0.77);滞后 1 天相关性更强(r=-0.79)。`）
+   *  三条都不留：`目标指标` 是读者无从知道的自造词；`强负相关(r=…)` 是统计词；分号把两件事挤在一句。
+   *  新句只用「谁多的时候谁怎样」说方向，r 与档位留给页面（组合页 KPI 卡＋HTML 注释）。 */
+  const labels = PAIRS[pair] as [string, string, string, string, string];
+  const short = (s: string): string => s.replace(/\(.*?\)/g, '').replace(/（.*?）/g, '') || s;
+  const la = labels[2];
+  const lb = labels[3];
+  const aShort = short(la);
+  const bShort = short(lb);
+  /* r 算不出来只有两种来路：对得上的天数不足两个，或其中一项这几天一个数不变（分母为零）。
+   *  两句话分开说，别像旧句那样把「没算出来」说成「天数太少」。 */
+  if (r === null) {
+    return aligned < 2
+      ? lb + '和' + la + '能对上的天数太少，先多记几天再看它俩有没有关系。'
+      : lb + '和' + la + '这几天几乎没怎么变，暂时看不出关系，先多记几天再看。';
+  }
+  let line = '这 ' + days + ' 天里，' + (Math.abs(r) < 0.3
+    ? bShort + '和' + aShort + '看着没有稳定的一起变'
+    : (r > 0 ? bShort + '多的时候，' + aShort + '也高' : bShort + '多的时候，' + aShort + '反而低')) + '。';
   if (pair === 'weight_calorie' && lag.length > 0) {
     const best = lag.reduce((a, b) => Math.abs(b.r ?? 0) > Math.abs(a.r ?? 0) ? b : a);
     if (best.r !== null && Math.abs(best.r) > Math.abs(r)) {
-      line += ';滞后 ' + best.lag + ' 天相关性更强(r=' + (best.r >= 0 ? '+' : '') + best.r.toFixed(2) + ')';
+      line += '换成往前推 ' + best.lag + ' 天再和当天比，更看得出来。';
     }
   }
   const ext = st.extra.join('\n');
-  if (ext.includes('背离')) line += ';⚠️ 体重与体脂/围度存在背离信号';
-  if (ext.includes('⚠️ 背离')) line += ';⚠️ 体重降但体脂未同步降,警惕肌肉流失';
-  return '窗口内共 ' + days + ' 天,' + bLabel + '与目标指标呈' + line + '。';
+  /* 只说真有的那件事：旧实现按 `ext.includes('背离')` 判，样本不足那句（`体重/体脂样本不足,无法背离检测`）
+   *  也会命中，于是「没算出来」反被写成「存在背离信号」；两句又互相包含（同信息说两遍）。 */
+  if (ext.includes('⚠️ 背离')) line += '另外，体重降了但体脂没跟着降，留意肌肉流失。';
+  return line;
 }
 
 export interface PairAnalysis { pair: string; labels: { a: string; b: string }; window: string; start: string | null; end: string | null; days: number; aAvg: number | null; bAvg: number | null; aDelta: number | null; bDelta: number | null; aCount: number; bCount: number; line: Array<{ date: string; a: number | null; b: number | null }>; scatter: Array<{ x: number; y: number }>; overLimitDays: string[]; deficitBuckets: Array<{ label: string; days: number }>; correlation: { r: number | null; n: number }; regression: { slope: number; intercept: number; n: number } | null; lag: Array<{ lag: number; r: number | null }>; strat: Strat; insight: string }
@@ -228,14 +249,15 @@ export function analyzePair(series: DaySeries[], pair: string, db?: DatabaseSync
   }
   const deficitBuckets: Array<{ label: string; days: number }> = [];
   if (pair === 'weight_deficit') {
-    const buckets: Record<string, number> = { '深缺口(>500卡)': 0, '标准缺口(100~500)': 0, '小幅盈余(-100~100)': 0, '盈余(<-100)': 0 };
+    /* #160 文本返工：桶名换人话（`深缺口(>500卡)` 这种括号缩写读者要解码；分组阈值一个没动）。 */
+    const buckets: Record<string, number> = { '缺口大于 500 卡': 0, '缺口 100~500 卡': 0, '差不多持平': 0, '反而吃多了': 0 };
     for (const s of series) {
       const d = s.deficit;
       if (d === null || d === undefined) continue;
-      if (d > 500) buckets['深缺口(>500卡)'] = (buckets['深缺口(>500卡)'] as number) + 1;
-      else if (d > 100) buckets['标准缺口(100~500)'] = (buckets['标准缺口(100~500)'] as number) + 1;
-      else if (d >= -100) buckets['小幅盈余(-100~100)'] = (buckets['小幅盈余(-100~100)'] as number) + 1;
-      else buckets['盈余(<-100)'] = (buckets['盈余(<-100)'] as number) + 1;
+      if (d > 500) buckets['缺口大于 500 卡'] = (buckets['缺口大于 500 卡'] as number) + 1;
+      else if (d > 100) buckets['缺口 100~500 卡'] = (buckets['缺口 100~500 卡'] as number) + 1;
+      else if (d >= -100) buckets['差不多持平'] = (buckets['差不多持平'] as number) + 1;
+      else buckets['反而吃多了'] = (buckets['反而吃多了'] as number) + 1;
     }
     for (const [label, days] of Object.entries(buckets)) {
       if (days > 0) deficitBuckets.push({ label, days });
@@ -265,6 +287,6 @@ export function analyzePair(series: DaySeries[], pair: string, db?: DatabaseSync
     regression: reg,
     lag,
     strat: st,
-    insight: insight(pair, r, lag, st, series.length),
+    insight: insight(pair, r, lag, st, series.length, alignedPairs.length),
   };
 }

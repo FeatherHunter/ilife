@@ -141,7 +141,9 @@ test('120 · analysis 11 处查询逐处排除软删行（每处唯一可观测�
       reviewSets: review.data ? Object.values(review.data).filter((v) => v && v.date === DAY).reduce((a, v) => a + v.actualTotalSets, 0) : null,
       dailyBurn: dims.dailyBurn.length,
       dietDef: dietDef.data ? dietDef.data.avgExerciseBurn : null,
-      cross: String(pair.strat.extra.find((x) => String(x).indexOf('力量消耗合计') === 0)),
+      /* #160 文本返工：分层那句口径行从 `力量消耗合计 N 卡 vs 有氧 M 卡` 改成
+       *  `其中力量消耗 N 卡、有氧消耗 M 卡`（口径与算法一个没动，只换人话）。 */
+      cross: String(pair.strat.extra.find((x) => String(x).indexOf('其中力量消耗') === 0)),
       rows: exerciseRows(db, DAY, DAY).length,
       c5,
     };
@@ -149,7 +151,7 @@ test('120 · analysis 11 处查询逐处排除软删行（每处唯一可观测�
   const before = snap();
   assert.equal(before.seriesEx, DAY_TOTAL, '前置 series');
   assert.equal(before.rows, 2, '前置 exerciseRows');
-  assert.equal(before.cross, '力量消耗合计 100 卡 vs 有氧 250 卡', '前置 力量/有氧 分层');
+  assert.equal(before.cross, '其中力量消耗 100 卡、有氧消耗 250 卡', '前置 力量/有氧 分层');
 
   for (const id of ids) runOk(dir, 'calorie.exercise.remove', { id });
   const after = snap();
@@ -162,7 +164,7 @@ test('120 · analysis 11 处查询逐处排除软删行（每处唯一可观测�
   assert.equal(after.reviewSets, 0, 'exercise.ts:227 · exerciseReview 当日 actualTotalSets');
   assert.equal(after.dailyBurn, 0, 'review.ts:69 · query5dims.dailyBurn');
   assert.equal(after.dietDef, 0, 'diet.ts:162 · dietDeficitAnalysis.avgExerciseBurn');
-  assert.equal(after.cross, '力量消耗合计 0 卡 vs 有氧 0 卡', 'cross.ts:108,109 · 力量/有氧分层');
+  assert.equal(after.cross, '其中力量消耗 0 卡、有氧消耗 0 卡', 'cross.ts:108,109 · 力量/有氧分层');
   assert.equal(after.rows, 0, 'anomaly/common.ts:84 · exerciseRows');
   assert.equal(after.c5, '数据不足(需至少 2 个月有运动记录)', 'weightCompare3.ts:68 · scenarioC5 只剩 1 个月');
 });

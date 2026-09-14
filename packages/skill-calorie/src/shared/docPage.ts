@@ -16,7 +16,8 @@
 import { blocksCss, renderPageShell } from 'base-paint/blocks';
 import { buildChartsHelpersJs, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
 
-/** 整页装配的入参（≤11 字段；B线新增 metaLeft／badge／summary 三字段，老调用方不传即走老路）。 */
+/** 整页装配的入参（≤11 字段；B线新增 metaLeft／badge／summary 三字段：给 metaLeft 才走新路，
+ *  badge 缺省＝不出徽章，老调用方不传即走老路）。 */
 interface DocPageInput {
   /** head 的 `<title>` 文本：7 处旧模板除这一行外逐字相同，故标题走参数（如「卡路里·饮食」）。 */
   readonly docTitle: string;
@@ -31,7 +32,9 @@ interface DocPageInput {
   readonly charts?: boolean;
   /** B线老A壳第1行左：参数一行小字（窗口 · 分组 · 对照 · 区间，区间全页唯一出处）。给了即走新路。 */
   readonly metaLeft?: string;
-  /** B线老A壳第1行右：类型徽章（恒为「卡路里 · 分析」）。 */
+  /** B线老A壳第1行右：类型徽章。**由调用方传页型**（如「整体趋势」／「热量趋势」／
+   *  「组合分析」）；不传或传空串即**整颗徽章不渲染**（页头回到「meta 一行 ＋ H1」）。
+   *  #160 返工：此前缺省值是恒定的「卡路里 · 分析」，出现在每页且从不区分任何东西 ⇒ 删。 */
   readonly badge?: string;
   /** B线老A壳第3行：结论摘要（一句话人话；空串／null＝不出这一行）。 */
   readonly summary?: string | null;
@@ -76,8 +79,8 @@ function docShell(docTitle: string, charts: boolean): string {
 }
 
 /** ① 整页装配：区块 HTML ＋ 标题三件套 → 完整文档（图表页多带图表 helpers）。
- * B线新路（给了 metaLeft）：老A壳两行式＝meta-bar（左参数一行＋右徽章）＋H1（人话短标题）
- * ＋结论摘要行；沿用 B-01 类名（不碰类名根），补丁样式只用冻结 token。
+ * B线新路（给了 metaLeft）：老A壳两行式＝meta-bar（左参数一行＋右页型徽章，**徽章由调用方给、
+ * 不给即整颗不渲染**）＋H1（人话短标题）＋结论摘要行；沿用 B-01 类名（不碰类名根），补丁样式只用冻结 token。
  * 可打印位（`printable`，A线／B线共用）只加类名，不加样式、不碰 `extraCss`。 */
 export function assembleDocPage(input: DocPageInput): string {
   const charts = input.charts === true;
@@ -90,11 +93,11 @@ export function assembleDocPage(input: DocPageInput): string {
   };
   if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
   if (bline) {
-    const badge = typeof input.badge === 'string' && input.badge !== '' ? input.badge : '卡路里 · 分析';
+    const badge = typeof input.badge === 'string' && input.badge !== '' ? input.badge : null;
     const summary = typeof input.summary === 'string' && input.summary !== '' ? input.summary : undefined;
     const body = '<section class="ilife-block ilife-block-page-shell' + (printable ? ' ilife-page-printable' : '') + '">'
       + '<div class="meta-bar"><div class="left">' + blineEsc(input.metaLeft as string) + '</div>'
-      + '<div class="type-badge">' + blineEsc(badge) + '</div></div>'
+      + (badge === null ? '' : '<div class="type-badge">' + blineEsc(badge) + '</div>') + '</div>'
       + '<h1 class="ilife-block-page-shell-title">' + blineEsc(input.title) + '</h1>'
       + (summary === undefined ? '' : '<p class="sub">' + blineEsc(summary) + '</p>')
       + '<div class="ilife-block-page-shell-body">' + input.content + '</div>'

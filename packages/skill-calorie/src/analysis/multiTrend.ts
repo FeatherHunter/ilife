@@ -33,7 +33,11 @@ export interface MultiTrendDay {
   readonly waterMl: number | null;
 }
 
-/** 汇总（≤8 字段；缺失以 null 明示，投影时由 `nums` 丢弃）。 */
+/** 汇总（缺失以 null 明示，投影时由 `nums` 丢弃）。
+ *  #160 返工：本件破例到 9 字段——`compliantDays` 必须与 `complianceRate` **一起**投影。
+ *  比例是 `round2` 过的（730 天窗 11/730 → 0.02），页面拿比例乘窗口天数反解就会算出
+ *  「达标 15 天」，而同页 730 行明细里只有 11 行有热量且全达标 ⇒ 自相矛盾。
+ *  整数天数由本层给出（它就是上面 filter 的计数，不是回算），页面一律直读、不再反解。 */
 export interface MultiTrendSummary {
   readonly days: number;
   readonly loggedDays: number;
@@ -43,6 +47,8 @@ export interface MultiTrendSummary {
   readonly avgProtein: number | null;
   readonly avgDeficit: number | null;
   readonly complianceRate: number | null;
+  /** 窗口内达标天数的**整数**（达标＝单日 ≤ 目标×1.05）；无目标即 null（不编数）。 */
+  readonly compliantDays: number | null;
 }
 
 /** 对照目标（≤8 字段；热量／体重目标缺行即 null，不编数）。 */
@@ -160,6 +166,8 @@ export function buildMultiTrendView(db: DatabaseSync, input: MultiTrendInput): M
     avgProtein: seriesAvg(series, 'protein'),
     avgDeficit: seriesAvg(series, 'deficit'),
     complianceRate: calorieGoal === null ? null : (series.length > 0 ? round2(compliantDays / series.length) : null),
+    /* #160：整数天数与比例同批投影（页面不许按比例反解，见类型注释）。 */
+    compliantDays: calorieGoal === null ? null : compliantDays,
   };
   return {
     start,

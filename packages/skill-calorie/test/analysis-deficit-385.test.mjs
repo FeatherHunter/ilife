@@ -10,7 +10,7 @@
  *
  * 逐项核 10 个字段（老侧 render_calorie_deficit.py build_data 的产物 ↔ 本页落点）：
  *   1 日均摄入 summary.avg_intake        → KPI「日均摄入」＋详情「目标 X 卡/天」
- *   2 日均消耗 summary.avg_burn          → KPI「日均消耗」＋详情「TDEE X · 运动 Y 卡」
+ *   2 日均消耗 summary.avg_burn          → KPI「日均消耗」＋详情「日常消耗 X ＋ 运动 Y 卡」（#160 改人话）
  *   3 日均运动消耗 avg_exercise_burn     → 同上详情「运动 Y 卡」
  *   4 日均缺口 summary.avg_deficit       → KPI「日均缺口」（带符号）
  *   5 每周缺口 summary.weekly_deficit    → KPI「理论减重」详情「周缺口 X 卡」
@@ -188,7 +188,8 @@ test('#385 十字段：窗内逐字段与老实物一一对上（7d 窗口，命
   // ② 日均消耗 ＋ ③ 日均运动消耗
   assert.equal(kpi.get('日均消耗').value, String(m.avgBurn), '② 日均消耗值不等于 metrics.avgBurn');
   assert.equal(kpi.get('日均消耗').unit, '卡', '② 日均消耗单位');
-  assert.equal(kpi.get('日均消耗').detail, 'TDEE ' + m.targetTdee + ' · 运动 ' + m.avgExerciseBurn + ' 卡', '③ 日均运动消耗文案');
+  // #160 文本返工：详情改人话「日常消耗 X ＋ 运动 Y 卡」（旧文案 `TDEE X · 运动 Y 卡` 已判死）。
+  assert.equal(kpi.get('日均消耗').detail, '日常消耗 ' + m.targetTdee + ' ＋ 运动 ' + m.avgExerciseBurn + ' 卡', '③ 日均运动消耗文案');
   assert.ok(m.avgExerciseBurn > 0, '③ 窗体应含运动消耗（本测试种了 exercise_log）');
   // ④ 日均缺口 ＋ ⑦ 趋势
   assert.equal(kpi.get('日均缺口').value, (m.avgDeficit >= 0 ? '+' : '') + m.avgDeficit, '④ 日均缺口值（带符号）');
@@ -206,7 +207,8 @@ test('#385 十字段：窗内逐字段与老实物一一对上（7d 窗口，命
     assert.ok(html.includes('>' + label + '<'), 'KPI 缺格：' + label);
   }
   // ⑩ 工作日与周末天数
-  assert.ok(html.includes(m.weekdayCount + ' 工作日/' + m.weekendCount + ' 周末'), '⑩ 工作日/周末天数不在产物里');
+  // #160 文本返工：表题改「缺口明细（共 N 天），其中 X 天是工作日，Y 天是周末」（旧「X 工作日/Y 周末」已判死）。
+  assert.ok(html.includes('，其中 ' + m.weekdayCount + ' 天是工作日，' + m.weekendCount + ' 天是周末'), '⑩ 工作日/周末天数不在产物里');
   assert.equal(m.weekdayCount + m.weekendCount, m.days, '⑩ 工作日＋周末＝窗内天数');
 });
 

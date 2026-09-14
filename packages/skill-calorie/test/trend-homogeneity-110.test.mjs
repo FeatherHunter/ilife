@@ -85,10 +85,22 @@ function run(bin, key, params, envExtra) {
   return spawnSync(NODE_BIN, [bin, ...a], { encoding: 'utf8', env: { ...process.env, ...(envExtra || {}) } });
 }
 
+/** 模板**未填充**的槽位标记（逐字表＝`base-render/src/spec/template.ts::TEMPLATE_MARKERS`，
+ *  与 `test/doc-page-assert.mjs` 的「残留即未装配完」同源，只是那份判据现在写成 `!h.includes('<!--')`）。 */
+const TEMPLATE_RESIDUE = ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->', '<!--CHARTS-HELPERS-->', '<!--INJECT-DATA-->'];
+
 function docChecks(h) {
   return {
     doctype: h.startsWith('<!doctype html>'),
-    noResidue: !h.includes('<!--'),
+    /* 判据＝「**无未填充的模板残留标记**」，不是「全文一条 HTML 注释都不许有」——
+     * `assembleDocPage` 的 `fillTemplate` 应把上面那五个槽位全换掉，残留即未装配完；这条照旧。
+     * 但组合配对页另有一条**有意保留**的口径注释（`src/render/trendDocs.ts::buildCombinedDoc` 的
+     * `techNote`，形如 `<!-- 配对<key> 窗口<window> … -->`）：#160 返工把「不进可见正文、读者也
+     * 用不上的技术口径」（白名单窗口／数列唯一源／相关系数与斜率／各节取舍）折进了这条注释，
+     * 且 `配对…`／`窗口…` 两个字面量是 **e2e（`.scratch/t381/e2e-check.mjs`）与 #380 查「入参真的
+     * 落进产物」的唯一落点**。它在本轮之前就在（`git show HEAD:packages/skill-calorie/src/render/trendDocs.ts`
+     * 同一行），故判据不能写成 `!h.includes('<!--')`——那会把有意保留的口径注释一起判死。 */
+    noResidue: TEMPLATE_RESIDUE.every((m) => !h.includes(m)),
     page: h.includes('ilife-page'),
     block: h.includes('ilife-block'),
     style: h.includes('<style>'),
@@ -161,7 +173,10 @@ test('#110 组合分析落差闭合：KPI＋双轴＋散点回归＋延迟＋分
     assert.equal(out.data.metrics.aCount, 7);
     assert.equal(out.data.metrics.correlationN, 3);
     assertDoc(out.html, 'view.combined');
-    for (const needle of ['组合分析', '相关系数 r', '对齐样本', '双轴走势', '相关性与回归', '延迟相关性', '分层对比', '逐日双指标明细', '复制数据']) {
+    /* #160 文本返工后的成稿（逐条对账见 `.scratch/t160f/t1/receipt-t160t1.md` ① 表；字数按
+     *  `src/render/trendDocs.ts::buildCombinedDoc` 实际拼法取，含随配对名生成的表名）。第 5 项的
+     *  图题与第 6 项（散点）自带单位，是因为散点图公共层没有轴名能力（口径在注释里）。 */
+    for (const needle of ['看体重与摄入', '一起变的程度', '平均体重', '平均摄入', '两项都有记录的天数', '体重与摄入', '体重(kg)和摄入(卡)的关系', '往前推几天会不会更清楚', '工作日和周末，差多少', '每天一行', '复制数据']) {
       assert.ok(out.html.includes(needle), 'view.combined 缺：' + needle);
     }
     assert.ok(out.html.includes('correlationR') || out.html.includes('correlationN'), 'view.combined 复制文本缺指标');
@@ -264,13 +279,17 @@ test('#110 多配对同键直出：weight_deficit 分桶节＋custom 窗（子�
   try {
     const w = dispatch('calorie.view.combined', { pair: 'weight_deficit', window: 'custom', start: '2026-09-01', end: '2026-09-07' }, db);
     assertDoc(w.html, 'weight_deficit');
-    assert.ok(w.html.includes('缺口分桶'), 'weight_deficit 缺分桶节');
+    /* #160 文本返工：旧表名 `缺口分桶（仅 weight_deficit 配对有此节）` 连同列名 `缺口分桶` 一并改名
+     *  （表名给读者看的那件事＝`按缺口大小分组…`；作者才需要的「仅某某配对有此节」已删）。 */
+    assert.ok(w.html.includes('按缺口大小分组'), 'weight_deficit 缺分桶节（表名）');
+    assert.ok(w.html.includes('缺口多大'), 'weight_deficit 缺分桶节（列名）');
     const e = dispatch('calorie.view.combined', { pair: 'weight_exercise', window: '7d', start: '2026-09-01', end: '2026-09-07' }, db);
     assertDoc(e.html, 'weight_exercise');
-    assert.ok(e.html.includes('延迟相关性'), 'weight_exercise 应有延迟节（三配对之一）');
+    /* #160 文本返工：`延迟相关性` → 表名 `往前推几天会不会更清楚`（同一节，节级门控不变）。 */
+    assert.ok(e.html.includes('往前推几天会不会更清楚'), 'weight_exercise 应有延迟节（三配对之一）');
     const r = dispatch('calorie.view.combined', { pair: 'protein_carbs', window: '7d', start: '2026-09-01', end: '2026-09-07' }, db);
     assertDoc(r.html, 'protein_carbs');
-    assert.ok(!r.html.includes('延迟相关性'), 'protein_carbs 不应有延迟节（节级门控）');
+    assert.ok(!r.html.includes('往前推几天会不会更清楚'), 'protein_carbs 不应有延迟节（节级门控）');
   } finally {
     db.close();
   }

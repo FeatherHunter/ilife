@@ -94,13 +94,29 @@ function runCli(dir, params, htmlPath) {
   return spawnSync(NODE_BIN, [BIN, ...a], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
 }
 
+/** 模板**未填充**的槽位标记（逐字表＝`base-render/src/spec/template.ts::TEMPLATE_MARKERS` 里由
+ *  `fillTemplate` 填充的五个装配槽位）——与 `test/doc-page-assert.mjs:17` 的 `TEMPLATE_RESIDUE`
+ *  同源同判据（同族 `trend-homogeneity-110.test.mjs`／`trend-misc-port-113.test.mjs` 三处一致，#160 收窄）。 */
+const TEMPLATE_RESIDUE = ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->', '<!--CHARTS-HELPERS-->', '<!--INJECT-DATA-->'];
+
 function assertFullDoc(html, what) {
   assert.ok(html.startsWith('<!doctype html>'), what + ' 缺 doctype');
   assert.ok(html.includes('charset="utf-8"'), what + ' 缺 charset');
   assert.ok(html.includes('<style>'), what + ' 缺 style');
   assert.ok(html.includes('<script>'), what + ' 缺 helpers');
   assert.ok(html.includes('ilife-page'), what + ' 缺 page');
-  assert.ok(!html.includes('<!--'), what + ' 有残留标记');
+  /* 判据＝「**无未填充的模板残留标记**」，**不是**「全文一条 HTML 注释都不许有」——上面那五个槽位
+   * 是 `fillTemplate` 必须换掉的，残留即未装配完；这条照旧必红。
+   * 但本族整页产物**允许有意保留的口径注释**（#160 定稿：读者用不上的技术口径不进可见正文、改住
+   * HTML 注释）：例如组合配对页 `src/render/trendDocs.ts::buildCombinedDoc` 的 `techNote`
+   * （`<!-- 配对<key> 窗口<window> … -->`）、热量趋势页
+   * `src/render/trendMiscPortDocs.ts::buildCalorieTrendDoc` 的 `techNote`
+   * （`<!-- calorie.view.calorie-trend window <起> <止> … -->`）——其中 `配对…`／`窗口…`／
+   * `calorie.view.calorie-trend` 正是 e2e（`.scratch/t381/e2e-check.mjs`）与 #380 查「入参真的落进产物」
+   * 的**唯一**落点。故判据不能写成 `!html.includes('<!--')`——那是个**过宽的替身**，会把有意保留的
+   * 口径注释一起判死。
+   * 本票 15 页当刻实测 `<!--` 命中 **0** 条（收窄前后判读一致，未放宽任何东西：槽位残留照旧必红）。 */
+  assert.ok(TEMPLATE_RESIDUE.every((m) => !html.includes(m)), what + ' 有残留标记');
   assert.ok(html.includes('复制数据'), what + ' 缺复制区');
   assert.ok(html.includes('data-fmt-open="1"'), what + ' 缺三格式菜单开合器');
   assert.deepEqual([...html.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'], what + ' 三格式菜单缺项');

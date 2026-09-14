@@ -78,9 +78,21 @@ function run(bin, key, params, envExtra) {
   return spawnSync(NODE_BIN, [bin, ...a], { encoding: 'utf8', env: { ...process.env, ...(envExtra || {}) } });
 }
 
+/** 模板**未填充**的槽位标记（逐字表＝`base-render/src/spec/template.ts::TEMPLATE_MARKERS`）。 */
+const TEMPLATE_RESIDUE = ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->', '<!--CHARTS-HELPERS-->', '<!--INJECT-DATA-->'];
+
 function assertDoc(h, what) {
   assert.ok(h.startsWith('<!doctype html>'), what + ' 缺 doctype');
-  assert.ok(!h.includes('<!--'), what + ' 有残留标记');
+  /* 判据＝「无未填充的模板残留标记」，不是「全文一条 HTML 注释都不许有」——与同族
+   * `trend-homogeneity-110.test.mjs::docChecks.noResidue` 同一条（两页的注释同出一门）。
+   * 热量趋势页有一条**有意保留**的口径注释（`src/render/trendMiscPortDocs.ts::buildCalorieTrendDoc`
+   * 的 `techNote`，形如 `<!-- calorie.view.calorie-trend window <起> <止> … -->`）：
+   * `calorie.view.calorie-trend` 与 `window` 两个字面量正是 e2e（`.scratch/t381/e2e-check.mjs` 的
+   * `contrast` 样例）查「入参真的落进产物」的落点；它在本轮之前就在
+   * （`git show HEAD:packages/skill-calorie/src/render/trendMiscPortDocs.ts` 同一行，本轮未改）。
+   * 本判据在改前即红（`.scratch/t160f/attrib-113.mjs` 拿 HEAD 版重跑得到同样 2 红），
+   * 故同步成与 #160 同款判据。 */
+  assert.ok(TEMPLATE_RESIDUE.every((m) => !h.includes(m)), what + ' 有残留标记');
   assert.ok(h.includes('ilife-page'), what + ' 缺 page');
   assert.ok(h.includes('<style>'), what + ' 缺 style');
   assert.ok(h.includes('<script>'), what + ' 缺 helpers');
