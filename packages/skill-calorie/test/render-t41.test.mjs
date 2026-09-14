@@ -149,13 +149,13 @@ test('#41 计划三盘 + HTML 字段断言', () => {
   html = renderPlanWizardHtml(wiz);
   assert.match(html, /构建向导/);
   assert.match(html, /可落地/);
-  assert.match(html, /已检查 1 个会话/);
+  assert.match(html, /已检查 1 个训练场次/);
   const bad = buildPlanWizardView({ config: {}, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: 'a', movements: [{ name: '硬拉', part: '背', type: '力量', sets: [] }] }] }] }] }, ['深蹲']);
   assert.ok(bad.errorCount >= 1);
   assert.equal(bad.checkedSessions, 1); // #102 G15：坏计划也计 N（已检查≠已通过）
   const badHtml = renderPlanWizardHtml(bad);
   assert.match(badHtml, /有硬止/);
-  assert.match(badHtml, /1 个会话（\d+硬止）/); // T351：已检查计数由 label 承担，value 只留「N 个会话（M硬止）」
+  assert.match(badHtml, /1 个训练场次（\d+硬止）/); // T351：已检查计数由 label 承担，value 只留「N 个训练场次（M硬止）」
   const goal = buildExerciseGoalView(db, '2026-09-06', '2026-09-07');
   assert.equal(goal.dailyGoal, 300);
   assert.equal(goal.actual, 620);
@@ -207,7 +207,7 @@ test('#41 分析长尾四盘 + HTML 字段断言', () => {
   assert.ok(c.errorCount + c.warnCount + c.infoCount >= 1);
   html = renderContraHtml(c);
   assert.match(html, /禁忌扫描/);
-  assert.match(html, /会话/);
+  assert.match(html, /训练场次/);
   const d = buildDedupeView(db);
   assert.equal(d.groupCount, 1);
   assert.equal(d.totalProducts, 3);

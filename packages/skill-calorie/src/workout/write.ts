@@ -74,7 +74,7 @@ export function writePlanCopy(params: Record<string, unknown>, db: DatabaseSync)
     const plan = getPlan(db);
     const maxWn = plan.sessions.reduce((n, s) => Math.max(n, s.week_number), 0);
     if (maxWn === 0) fail(4, '无训练计划可复制（先定训练计划）');
-    if (!plan.sessions.some((s) => s.week_number === from)) fail(4, '第' + from + '周没有会话可复制');
+    if (!plan.sessions.some((s) => s.week_number === from)) fail(4, '第' + from + '周没有训练场次可复制');
     const to = toWeek === undefined ? maxWn + 1 : needWeek(toWeek, 'toWeek');
     const r = copyWeek(db, from, to);
     const summary = '已复制第' + from + '周 → 第' + to + '周（' + r.copiedRows + ' 场）';
@@ -194,7 +194,7 @@ export function previewCopy(params: Record<string, unknown>, db: DatabaseSync): 
   if (week !== undefined) {
     const from = needWeek(week, 'week');
     const src = plan.sessions.filter((s) => s.week_number === from);
-    if (src.length === 0) fail(4, '第' + from + '周没有会话可复制');
+    if (src.length === 0) fail(4, '第' + from + '周没有训练场次可复制');
     const maxWn = plan.sessions.reduce((n, s) => Math.max(n, s.week_number), 0);
     const to = optInt(params, 'toWeek') === undefined ? maxWn + 1 : needWeek(optInt(params, 'toWeek'), 'toWeek');
     const before = src.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
@@ -365,7 +365,7 @@ export function previewDelete(params: Record<string, unknown>, db: DatabaseSync)
   return {
     op: 'delete', title: '撤销整份训练计划',
     before: ['「' + String(plan.config?.title ?? '未命名') + '」共 ' + plan.sessions.length + ' 场'],
-    after: ['配置＋全部会话删除（硬删除，不可恢复）'],
+    after: ['配置与全部训练场次删除（硬删除，不可恢复）'],
     note: '确认后删除；删完需重定计划',
   };
 }
@@ -411,7 +411,7 @@ const CONFIG_LABEL: Record<string, string> = { title: '标题', version: '版本
 /** `calorie.workout.plan-update` · 改训练计划（配置字段；总周数由行数决定，不直接改）。 */
 export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   if (params['totalWeeks'] !== undefined || params['total_weeks'] !== undefined) {
-    fail(2, '总周数由会话行数决定，不直接改（增删周用定一周计划／删某天训练）');
+    fail(2, '总周数由训练场次决定，不直接改（增删周用定一周计划／删某天训练）');
   }
   const fields: Partial<Record<'title' | 'version' | 'description' | 'start_date', string>> = {};
   for (const k of Object.keys(CONFIG_LABEL)) {

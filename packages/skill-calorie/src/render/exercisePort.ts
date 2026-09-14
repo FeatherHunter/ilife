@@ -374,6 +374,8 @@ function daySetOf(rows: PortRow[]): Set<string> {
 export interface PlannedSession {
   date: string;
   label: string;
+  /** 计划里的第几周（`workout_plans.week_number` 原值）：复盘页「周次」列的唯一出处。 */
+  week: number;
   movements: string[];
   plannedSets: number | null;
   hit: boolean;
@@ -433,6 +435,7 @@ export function buildReviewView(db: DatabaseSync, start: string, end: string): R
     sessions.push({
       date: d,
       label: String(s.session_label ?? ''),
+      week: s.week_number,
       movements,
       plannedSets,
       hit: actual.length > 0,
@@ -440,7 +443,7 @@ export function buildReviewView(db: DatabaseSync, start: string, end: string): R
     });
   }
   if (sessions.length === 0) {
-    throw new CalorieRenderError('missing-data', `窗内无计划会话：${start} ~ ${end}`);
+    throw new CalorieRenderError('missing-data', `窗内没有安排训练：${start} ~ ${end}`);
   }
   const hitSessions = sessions.filter((s) => s.hit).length;
   const plannedMoves = sessions.flatMap((s) => s.movements.map((m) => s.date + '|' + m));

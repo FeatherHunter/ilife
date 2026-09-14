@@ -615,7 +615,7 @@ export function renderContraHtml(v: ContraView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
     kpi('禁忌扫描', v.summaryStatus, '部位 ' + v.part) +
-    kpi('会话', v.scannedSessions + ' 个', '动作 ' + v.scannedMovements + ' 个') +
+    kpi('训练场次', v.scannedSessions + ' 个', '动作 ' + v.scannedMovements + ' 个') +
     kpi('error', v.errorCount + ' 个') +
     kpi('warn', v.warnCount + ' 个') +
     kpi('info', v.infoCount + ' 个') +

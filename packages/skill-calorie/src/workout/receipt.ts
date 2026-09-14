@@ -43,7 +43,7 @@ function currentPlanTable(db: DatabaseSync): string {
   if (!plan.config && plan.sessions.length === 0) {
     return renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-      rows: [{ k: '当前计划', v: '计划已撤销（配置＋会话均为空）' }],
+      rows: [{ k: '当前计划', v: '计划已撤销（配置与训练安排均为空）' }],
       caption: '写后现值',
     });
   }
@@ -51,7 +51,7 @@ function currentPlanTable(db: DatabaseSync): string {
     columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
     rows: [
       { k: '计划', v: String(plan.config?.title ?? '未命名计划') },
-      { k: '会话', v: plan.sessions.length + ' 场' },
+      { k: '训练场次', v: plan.sessions.length + ' 场' },
     ],
     caption: '写后现值（`getPlan` 现值）',
   });

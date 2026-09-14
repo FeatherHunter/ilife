@@ -394,7 +394,7 @@ export function buildContraDoc(v: ContraView): string {
     }),
     renderKpiGrid([
       { label: '扫描', value: CONTRA_STATUS_ZH[v.summaryStatus] ?? v.summaryStatus, detail: '部位 ' + v.part },
-      { label: '会话', value: String(v.scannedSessions), unit: '个', detail: '动作 ' + v.scannedMovements + ' 个' },
+      { label: '训练场次', value: String(v.scannedSessions), unit: '个', detail: '动作 ' + v.scannedMovements + ' 个' },
       { label: '错误', value: String(v.errorCount), unit: '个' },
       { label: '警告', value: String(v.warnCount), unit: '个' },
       { label: '提示', value: String(v.infoCount), unit: '个' },

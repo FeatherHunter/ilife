@@ -548,109 +548,15 @@ export function buildRecapDoc(v: RecapView): string {
   });
 }
 
-/* ── 计划复盘（exercise_review.html 对照：计划 vs 实绩＋完成率＋未完成清单） ── */
-
-/** T351 肉眼修复（order201–206）：复制区＝「复制数据／复制日志」双按钮。
- * 单格式数据文本＋日志文本直挂承载属性，共用页面双通道运行时（剪贴板→命令兜底＋
- * 已复制态＋提示），零内联脚本；无三格式菜单、无 text/json/csv 英文菜单项、无同名
- * 块标题（R2②）。头部/KPI/图表/明细不动。本函数不导出（接口零增长）。 */
-function reviewCopyBlock(v: ReviewView): string {
-  const data: DataTextInput = {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-review',
-      data: {
-        metrics: metricsOf({
-          plannedSessions: v.plannedSessions, hitSessions: v.hitSessions,
-          completionPct: v.completionPct, plannedMovements: v.plannedMovements,
-          hitMovements: v.hitMovements, movementPct: v.movementPct,
-        }),
-      },
-    },
-    title: '【calorie · 计划复盘】',
-    format: 'text',
-  };
-  return renderCopyBlock({
-    dataText: buildDataText(data),
-    logText: buildLogText({
-      envelope: data.envelope,
-      copyLog: copyLog({
-        command: 'calorie-cmd-read calorie.view.exercise-review',
-        source: 'workout_plans ＋ exercise_log（只读）',
-        actionAt: nowStamp(), version: DOC_VERSION,
-      }),
-    }),
-  }).replace('data-action-id="ilife-copy-data"', 'id="ilife-copy-data" data-action-id="ilife-copy-data"')
-    .replace('data-action-id="ilife-copy-log"', 'id="ilife-copy-log" data-action-id="ilife-copy-log"');
-}
-
-export function buildReviewDoc(v: ReviewView): string {
-  const parts: string[] = [
-    windowForm(v.start, v.end, '计划来源＝workout_plans（会话日期按周一口径由 start_date 派生；休息日不计）'),
-    renderKpiGrid([
-      { label: '计划会话', value: String(v.plannedSessions), unit: '场', detail: v.planTitle },
-      { label: '已完成', value: String(v.hitSessions), unit: '场' },
-      {
-        label: '会话完成率', value: v.completionPct === null ? '—' : String(v.completionPct) + '%',
-        status: (v.completionPct ?? 0) >= 80 ? 'ok' : 'warn',
-      },
-      {
-        label: '动作完成率', value: v.movementPct === null ? '—' : String(v.movementPct) + '%',
-        detail: v.hitMovements + '/' + v.plannedMovements,
-      },
-    ]),
-  ];
-  let charts = false;
-  parts.push(renderChartBlock({
-    kind: 'bar',
-    title: '计划 vs 实做',
-    input: {
-      items: [
-        { label: '计划会话', value: v.plannedSessions },
-        { label: '已完成', value: v.hitSessions },
-      ],
-    },
-  }));
-  charts = true;
-  parts.push(renderDataTable({
-    columns: [
-      { key: 'date', label: '日期' },
-      { key: 'label', label: '计划' },
-      { key: 'moves', label: '计划动作' },
-      { key: 'actual', label: '实做' },
-      { key: 'hit', label: '完成' },
-    ],
-    rows: v.sessions.map((s) => ({
-      date: s.date,
-      label: s.label === '' ? '—' : s.label,
-      moves: s.movements.length === 0 ? '—' : s.movements.join('、'),
-      actual: s.actualTypes.length === 0 ? '—' : s.actualTypes.join('、'),
-      hit: s.hit ? '是' : '否',
-    })),
-    caption: '每日明细（完成＝当日有运动记录；动作命中＝双向子串）',
-    emptyText: '窗内无计划会话',
-  }));
-  if (v.unhit.length > 0) {
-    parts.push(renderDisclosure({
-      title: '未完成训练（共 ' + v.unhit.length + ' 场）',
-      contentHtml: renderListRows({
-        items: v.unhit.map((s) => ({
-          left: s.date,
-          main: (s.label === '' ? '训练' : s.label) + (s.movements.length > 0 ? '：' + s.movements.join('、') : ''),
-          right: '未完成',
-        })),
-      }),
-    }));
-  }
-  parts.push(reviewCopyBlock(v));
-  return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '计划复盘 ' + v.start + ' ~ ' + v.end,
-    eyebrow: 'calorie.view.exercise-review · 运动移植域',
-    subtitle: v.planTitle + '（会话完成＝当日有记录；动作完成＝计划名与实做双向子串命中）',
-    content: parts.join(''),
-    charts,
-  });
-}
+/* ── 计划复盘（exercise_review.html 对照） ──
+ *
+ * **T351-v7：整支已搬进姊妹件 `./reviewDocs.ts`**（键 `calorie.view.exercise-review`，
+ * order201–206）——本件已超 350 行告警线（见包 `AGENTS.md` 台账挂号行），复盘族的页内样式
+ * 与热力图再挤进来只会更糟；搬走后本件只留「分布／力量／有氧／运动复盘／趋势」五键，
+ * `buildReviewDoc` 改由 `../workout/review.ts` 直接 import 姊妹件。
+ * 台账许诺的「趋势／复盘一族分住两件」这次只走完「复盘」这一半：`buildRecapDoc`（运动复盘）
+ * 与 `buildTrendDoc`（运动趋势）是 #454 刚换过版式的融合版式，属另一半，留给收口票。
+ */
 
 /* ── 运动趋势（exercise_trend.html 对照：#454 融合版式：每日折线＋每周柱图＋逐日表） ── */
 

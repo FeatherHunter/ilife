@@ -252,7 +252,7 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: PlanDocOpts): string
       { label: '构建向导', value: ok ? '可落地' : '有硬止', status: ok ? 'ok' : 'warn' },
       { label: '错误', value: v.errorCount + ' 项' },
       { label: '警告', value: v.warningCount + ' 项' },
-      { label: '已检查', value: v.checkedSessions + ' 个会话' + (v.errorCount > 0 ? '（' + v.errorCount + '硬止）' : ''), detail: '纯校验，不写库' },
+      { label: '已检查', value: v.checkedSessions + ' 个训练场次' + (v.errorCount > 0 ? '（' + v.errorCount + '硬止）' : ''), detail: '纯校验，不写库' },
     ]),
     // 零条时不出折叠块：KPI 卡已出「错误 0 项／警告 0 项」，两块空折叠是噪声（展开也无内容）。
     // 有硬止时那两块就是「为什么不能写」的正据，默认展开；警告是次要面，仍折叠。
@@ -274,7 +274,7 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: PlanDocOpts): string
     docTitle: DOC_TITLE,
     title: '构建向导 · 定训练计划',
     eyebrow: '健身计划 · 预检确认页',
-    subtitle: ok ? '可落地 · 已检查 ' + v.checkedSessions + ' 个会话' : '有硬止 · 先改计划再确认',
+    subtitle: ok ? '可落地 · 已检查 ' + v.checkedSessions + ' 个训练场次' : '有硬止 · 先改计划再确认',
     content: parts.join(''),
   });
 }
