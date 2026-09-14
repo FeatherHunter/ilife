@@ -152,6 +152,16 @@ function blockPart(section: BlockStyleSection, part: string): string {
   return STYLE_PREFIX + 'block-' + sectionSlug(section) + '-' + part;
 }
 
+/** 可打印版式根类的主体（#420）：`ilife-page-printable`。它不是第 13 个区块——`BLOCK_STYLE_SECTIONS`
+ *  由 `test/blocks.test.mjs` 钉死 12 项，故样式落在 `pageShell` 区，仅作页面级开关。 */
+const PRINTABLE_SLUG = 'page-printable';
+
+/** 页面级区块类（#420：页内导航／口径说明行）：`ilife-block-<name>`。
+ *  与 12 区同命名空间、同 `ilife-block-` 前缀，但不进 `BLOCK_STYLE_SECTIONS`（样式仍落 `pageShell` 区）。 */
+function pageLevelBlock(name: string): string {
+  return STYLE_PREFIX + 'block-' + name;
+}
+
 /* ══════════════════════════════════════════════════════════════
  * B-01 共享页面模板／标题区
  * ══════════════════════════════════════════════════════════════ */
@@ -162,6 +172,9 @@ export interface PageShellInput {
   readonly eyebrow?: string;
   /** 已组合好的区块 HTML（受信透传，不转义）。 */
   readonly content: string;
+  /** 可打印版式（#420）：为真时版面根加 `ilife-page-printable`，打印规则挂在它名下
+   *  （隐藏页内导航与复制区）。不给／给假 → 产物与旧版逐字相同（类不出现，规则不命中）。 */
+  readonly printable?: boolean;
 }
 
 /** B-01：单页容器＋标题三件套（eyebrow／title／subtitle）＋正文。 */
@@ -171,7 +184,9 @@ export function renderPageShell(input: PageShellInput): string {
   const shell = input as PageShellInput;
   const title = reqText(shell.title, 'renderPageShell: input.title');
   if (typeof shell.content !== 'string') badInput('renderPageShell: input.content 必须是字符串');
-  const parts: string[] = ['<section class="' + blockRoot('pageShell') + '">'];
+  const rootClass = blockRoot('pageShell')
+    + (shell.printable === true ? ' ' + STYLE_PREFIX + PRINTABLE_SLUG : '');
+  const parts: string[] = ['<section class="' + rootClass + '">'];
   const eyebrow = optText(shell.eyebrow);
   if (eyebrow !== undefined) parts.push('<p class="' + blockPart('pageShell', 'eyebrow') + '">' + esc(eyebrow) + '</p>');
   parts.push('<h1 class="' + blockPart('pageShell', 'title') + '">' + esc(title) + '</h1>');
@@ -180,6 +195,44 @@ export function renderPageShell(input: PageShellInput): string {
   parts.push('<div class="' + blockPart('pageShell', 'body') + '">' + shell.content + '</div>');
   parts.push('</section>');
   return parts.join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * #420 页内导航 ／ 口径说明行（与领域无关：锚点 id 与文案全由调用方给）
+ * ══════════════════════════════════════════════════════════════ */
+
+export interface TocItem {
+  /** 锚点 id（由调用方给，区块不猜；须与页内 `id` 属性逐字相同）。 */
+  readonly id: string;
+  readonly text: string;
+}
+
+export interface TocBlockInput {
+  readonly items: readonly TocItem[];
+}
+
+/** #420-1 页内导航区块（`<nav aria-label="页内导航">` ＋ 逐项 `<a href="#id">`）。
+ *  空列表＝不出这一块（与「没内容不留空壳」同口径，返回空串）；非数组／项缺 `id`／`text` → `bad-input`。 */
+export function renderTocBlock(input: TocBlockInput): string {
+  assertPlainObject(input, 'renderTocBlock: input');
+  assertNoInlineHandler(input, 'renderTocBlock: input');
+  const block = input as TocBlockInput;
+  if (!Array.isArray(block.items)) badInput('renderTocBlock: input.items 必须是数组');
+  if (block.items.length === 0) return '';
+  const links: string[] = [];
+  for (const item of block.items) {
+    assertPlainObject(item, 'renderTocBlock: items[] 元素');
+    assertNoInlineHandler(item as unknown as object, 'renderTocBlock: items[] 元素');
+    links.push('<a href="#' + esc(reqText(item.id, 'renderTocBlock: items[].id')) + '">'
+      + esc(reqText(item.text, 'renderTocBlock: items[].text')) + '</a>');
+  }
+  return '<nav class="' + pageLevelBlock('toc') + '" aria-label="页内导航">' + links.join('') + '</nav>';
+}
+
+/** #420-2 口径说明行（纯文本单参；五字符转义表与区块层其余函数同源 `esc`）。
+ *  聚合数字旁那句灰色小字（例如「周目标口径＝每日目标 × 7」）的唯一落点。 */
+export function renderCaliberLine(text: string): string {
+  return '<p class="' + pageLevelBlock('caliber') + '">' + esc(reqText(text, 'renderCaliberLine: text')) + '</p>';
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -749,6 +802,55 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  }',
     '  .' + p + 'block-page-shell-title {',
     '    font-size: 26px;',
+    '  }',
+    '}',
+    // #420 页面级三件的样式随本区落盘（`BLOCK_STYLE_SECTIONS` 由 `test/blocks.test.mjs` 钉死 12 项，
+    // 不新增样式区；三件都是页面级、与 12 区块无组合关系）。
+    '.' + p + 'block-toc {',
+    '  display: flex;',
+    '  flex-wrap: wrap;',
+    '  gap: 8px;',
+    '  margin: 0 0 16px;',
+    '}',
+    '.' + p + 'block-toc a {',
+    '  padding: 6px 12px;',
+    '  border: 1px solid var(--line);',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--card);',
+    // #179 对比度口径：13px 小字压白底用 `--blue2`（5.6:1），`--blue` 4.02:1 不到 AA 的 4.5:1。
+    '  color: var(--blue2);',
+    '  font-size: 13px;',
+    '  font-weight: 600;',
+    '  text-decoration: none;',
+    '}',
+    '.' + p + 'block-toc a:focus-visible {',
+    '  outline: 2px solid var(--blue);',
+    '  outline-offset: 2px;',
+    '}',
+    // 口径说明行：聚合数字旁的灰色小字。12px 取 `--fg2`（4.94:1）；`--fg3` 只有 3.62:1，不到 AA。
+    '.' + p + 'block-caliber {',
+    '  margin: 0 0 8px;',
+    '  color: var(--fg2);',
+    '  font-size: 12px;',
+    '  line-height: 1.5;',
+    '}',
+    // #420-3 打印段：**必须显式打开**——只有 `renderPageShell({ printable: true })` 的页才带
+    // `.ilife-page-printable`；不给的调用点类名不出现，规则虽在样式段里但一律不命中（逐字零变）。
+    // 打印段里**每条选择器**都挂在该类名下（不出现裸 `body`／裸 `.wrap`）：样式表是共享资产、
+    // 注入到全部页面，裸选择器会在别的页上生效。页面留白交给 `@page`，屏幕上那 32px 留白在纸上没有意义。
+    '@media print {',
+    '  .' + p + PRINTABLE_SLUG + ' {',
+    '    max-width: none;',
+    '    padding: 0;',
+    '  }',
+    '  .' + p + PRINTABLE_SLUG + ' .' + p + 'block-toc {',
+    '    display: none;',
+    '  }',
+    '  .' + p + PRINTABLE_SLUG + ' .' + p + 'block-copy-block {',
+    '    display: none;',
+    '  }',
+    '  @page {',
+    '    margin: 12mm;',
     '  }',
     '}',
   ].join(LF),
