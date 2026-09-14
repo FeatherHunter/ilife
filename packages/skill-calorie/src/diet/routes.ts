@@ -33,7 +33,6 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 37, wakeWord: '改食品', scene: '02', kind: 'exec', key: 'calorie.product.update', cli: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
   { list: 'wake', order: 38, wakeWord: '下架食品', scene: '02', kind: 'exec', key: 'calorie.product.deprecate', cli: 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'' },
   { list: 'wake', order: 39, wakeWord: '看食品库（去重）', scene: '02', kind: 'exec', key: 'calorie.view.dedupe', cli: 'calorie-cmd-read calorie.view.dedupe' },
-  { list: 'wake', order: 40, wakeWord: '批量导入食品', scene: '02', kind: 'exec', key: 'calorie.product.import', cli: 'calorie-cmd-read calorie.product.import --params \'{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}]}\'' },
   { list: 'wake', order: 41, wakeWord: '校验批量导入', scene: '02', kind: 'exec', key: 'calorie.view.batch-import-preview', cli: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'' },
   { list: 'wake', order: 42, wakeWord: '看食品来源统计', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
   { list: 'wake', order: 43, wakeWord: '看营养结构', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\'' },
