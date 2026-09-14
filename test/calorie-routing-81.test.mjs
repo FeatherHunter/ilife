@@ -229,7 +229,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         `${r.wakeWord} cli 键 token 与 key 不一致：${r.cli}`,
       );
     }
-    assert.equal(EXEC_ROUTES.length, 357, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入 ＋ #346 看今天练什么转入 ＋ #347 读筛选 7 条转入 ＋ #348 写创建类 5 条转入）');
+    assert.equal(EXEC_ROUTES.length, 361, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入 ＋ #346 看今天练什么转入 ＋ #347 读筛选 7 条转入 ＋ #348 写创建类 5 条转入 ＋ #333 页面① 4 条转入）');
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
@@ -317,7 +317,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
   it('FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 0 ＋ 已登记的数据依赖失败单列 ＋ 需参数键必须带 --params）', () => {
     const md = readFileSync(SMOKE_MD, 'utf8');
     const execAll = allExec();
-    assert.equal(execAll.length, 421, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec；#346 +1：看今天练什么转入 exec；#347 +7：读筛选 7 条转入 exec；#348 +5：写创建类 5 条转入 exec ＋ 5 条确认执行新拟入口）');
+    assert.equal(execAll.length, 425, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec；#346 +1：看今天练什么转入 exec；#347 +7：读筛选 7 条转入 exec；#348 +5：写创建类 5 条转入 exec ＋ 5 条确认执行新拟入口；#333 +4：页面① 4 条由 non-exec 转入 exec）');
     // ① 快照汇总：非零只许是**已登记的数据依赖失败**（用户 2026-09-11 裁定取甲：把「命令坏了」与
     // 「数据依赖的失败」分开统计；判据是快照自己 :7-9 写的「数据依赖失败（空库 exit 4）不算 cli 缺陷」，
     // 改断言＝把断言对齐判据）。
