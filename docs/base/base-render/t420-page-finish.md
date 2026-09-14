@@ -82,7 +82,16 @@ SyntaxError: The requested module '../dist/blocks.js' does not provide an export
 
 两轮错集互不相同，说明他席此刻正在改这批件；其中 `analysis/multiTrendPage.ts` 是**未跟踪新件**
 （`git status` 记 `?? `），`HEAD` 里没有。本票写面（`packages/base-render/`）零错行。
-**下一手**：他席落盘后需重跑一次 `pnpm build`；本票范围的编译与三条用例已各自留痕。
+
+**收尾复核（他席在途件落盘之后）**：⇒ 票面三条门禁在收尾时**全绿**。这几条运行时间在 §7 声明的
+对账窗口之外，故只在此处记读数，不写成 §7 的声明行（写成声明行会与窗口内条目对不上）。
+
+| 命令 | runId | exit | 摘要 |
+| --- | --- | --- | --- |
+| `pnpm build`（收尾第 3 次） | `31ded818-48da-4f1b-bb07-910e5d0a8674` | 0 | 全绿 |
+| `node --test packages/base-render/test/page-finish-420.test.mjs` | `24c867ec-a54b-41a1-bd0a-f1f48144822b` | 0 | `tests 13 pass 13 fail 0` |
+| `node --test packages/base-render/test/blocks.test.mjs` | `b36dbc85-3297-4bd3-b1dd-2039b0f1aecc` | 0 | `tests 46 pass 46 fail 0` |
+| `node --test packages/base-render/test/style.test.mjs` | `b0f2a445-262a-4863-9aee-f5af6d4b3f3b` | 0 | `tests 29 pass 29 fail 0` |
 
 ## 5. 台账口径（新类该不该补登）
 
@@ -204,8 +213,9 @@ gate-audit: PASS   （exit=0）
 
 ## 8. 未做项与已知副作用
 
-- **`pnpm build` 未在本票收尾时转绿**：红在他席在途件（§4 两条错行表），本票范围编译已绿。
-  他席落盘后请重跑一次。
+- **`pnpm build` 起初红在他席在途件**（两轮错行见 §4），他席落盘后收尾复核 `exit=0`；本票写面
+  （`packages/base-render/`）自始至终零错行，本票范围编译另有一条 `exit=0`。因此本票三条门禁
+  在收尾时全绿，读数是 §4 末表的四条。
 - **具名页的退化面**：不支持 `page` 属性的浏览器上 `@page printable` 不生效 ⇒ 打印退化成浏览器
   默认页边距（不报错、不影响别页）。#420 没有浏览器打印取证面，本记录只有静态读数。
 - **遗留出口（票面「密度细节」逐条核对结果）**：`tabular-nums` 公共层今天有
