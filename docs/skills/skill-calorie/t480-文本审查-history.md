@@ -92,6 +92,11 @@
 
 ## 三、机器读数
 
+**提交**：`ddcaf0d2d20b7db4f45082a6341a138c0fd82081`（`feat(480): 场景03 体重 明细／曲线族 18 页 文本精简·人话改写·展示升级（删四处窗口/条数重印）`，
+按路径点名提交：`history.ts`／`weight-history-333.test.mjs`／本证据件；已 `git push`，`549f4bc..ddcaf0d master`）。
+四席共用一个索引：本次 `git add` 后暂存区里出现别席在途件 `docs/skills/skill-calorie/t483-文本审查-receipt.md`，
+按 §3.2 第 1 条**把别席件从暂存区摘出**再提交（`git restore --staged` 只动索引，那份工作区内容一字未动、未丢）。
+
 **导出（`node .scratch/t154/text-review/render-family.mjs --family history --out .scratch/t154/text-review/out-history`）**：
 `TALLY {"通过":18} TOTAL 18 HTML=18`、末行 `OK-RENDER D:\ilife\.scratch\t154\text-review\out-history`；
 18 页字节合计 **2,329,025**（单页 74,240 ~ 437,425，逐页读数见 `out-history/result.json`）。
@@ -107,7 +112,8 @@ RESULT: ticket=480 runId=e94f8595-c9e1-4071-af56-5d9865850c3f waitedMs=20021 exi
 RESULT: ticket=480 runId=d4757902-81fa-4e7a-8519-80fc8ec041f2 waitedMs=0 exit=0         ← tsc（首轮）
 ```
 
-**变异两行（`.scratch/t154/text-review/b480/mutations.mjs`，一次锁里跑完 5 条 ＋ 逐条还原；日志 `b480/log-mutations.log`）**
+**变异两行（`.scratch/t154/text-review/b480/mutations.mjs`，一次锁里跑完 5 条 ＋ 逐条还原；日志 `b480/log-mutations.log`，
+runId=`20ef66d8-8db6-45a7-ab8c-3eecf5f010b3`）**
 
 ```
 BASELINE 改前（改动已在树里） exit=0 RESULT=18/18
@@ -141,3 +147,5 @@ FINAL-GREEN exit=0
 4. **波动页的「基线／黄±／红±」**：`src/weight/volatility.ts` 的口径串（`基线 … 黄± … 红± …`）属 B4 波动族，本票只改本文件里引用它时自己拼的那句（改后 `平均线 … 注意线 ±… kg，警戒线 ±… kg`）；**同一屏两句口径要不要同形**归 B4。
 5. **看图未覆盖的部分**：长表（90／180／365 天）只抽看了 45 号页（两张分段表、无压字）；其余长页以机器读数（表注逐字对照）代替眼睛。
 6. **回执（给编排者）**：见本次消息，格式按 `docs/subagent-concurrency-protocol.md` §5.1（判定／机器证据／路径／未做项）。
+7. **草稿件在忽略清单里**：`.scratch/` 全目录被 `.gitignore:5` 忽略 ⇒ 本节引用的脚本与日志（`b480/*.mjs`／`log-*.log`／
+   `pages-对照.md`／`gate-runs-480.txt`／`out-history/`／`shots-history/`）**不入版本库**，只在工作区备查；入版本库的可复跑件是本证据件引到的三条命令本身。
