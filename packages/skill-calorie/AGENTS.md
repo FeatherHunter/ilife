@@ -46,6 +46,7 @@
 | `src/analysis/multiTrendPage.ts` | — | 485 | 超因：通用分析页最小形态的整页装配与图／表／复制区调用同处一件。 |
 | `src/photo/helpCenter.ts` | — | 485 | 超因：#88 HELP 速查台的数据模型与页面装配同处一件。 |
 | `src/render/trendMiscPort.ts` | — | 456 | 超因：#113 八模板取数（计数 6＋4＋8 闭合）同处一件。 |
+| `src/analysis/commands.ts` | — | 437 | 已超线，需要根据规则进行重构。超因：（**#376～#378 引入**）分析域 14 个键的**声明**与按子功能分段的**处理函数**同处一件——本票给分析域加了 `calorie.view.multi-trend` 的声明与薄转调（取数 `multiTrend.ts`／装配 `multiTrendPage.ts` 已分住姊妹件），声明面仍集中在本件；本次先不拆：拆分不在 #376～#381 写集，拆法待后续票——把处理函数按子功能切成姊妹件（组合分析／整体趋势／对照），声明面留本件，出口经 `analysis/index.ts` 转出。 |
 | `src/profile/setup.ts` | — | 428 | 超因：#179 三条写入词共用的写前页与 #175 补的写后回执页同处一件。 |
 | `src/diet/nutritionPortDocs.ts` | — | 423 | 超因：#112 营养 4 页的全文档装配（数据→区块→填充器）同处一件。 |
 | `src/analysis/reportPlate.ts` | — | 393 | 已超线，需要根据规则进行重构。超因：（**#384 在途件**）报告子形态的取数与聚合（1 个多态底座 9 个 kind：bmi／tdee／bmr／protein／water／score／trend／compare）与页面装配同处一件；本次先不拆：本票（#445）只做告警线门与台账对齐、不改任何件源码，拆法待该件归属票认领。 |
