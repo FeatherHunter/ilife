@@ -1,0 +1,8 @@
+# #361 · 门禁运行记录导出（协议 §2.3-4 对账源，本票窗口 2026-09-14T12:06:00Z .. 12:34:00Z）
+# 源：.scratch/locks/gate-runs.log（未受版本控制）→ 逐条导出到本受跟踪件。
+# 窗口按 §2.4-3④ 只含 exit=0 的三条声明条目；本席另有 exit=1 的 runId=0dae8d1b（12:05:57Z）在窗口之外，仅作阻塞记账。
+# 对账：node tooling/check-gate-audit.mjs --evidence docs/skills/skill-calorie/t361-实施证据.md --log <本件> --ticket 361 --since 2026-09-14T12:06:00Z --until 2026-09-14T12:34:00Z
+
+RUN ticket=361 runId=2eadbbf8-5877-4512-940f-8fe50bc9d59b cmd="node --test packages/skill-calorie/test/t361-measure-full-table.test.mjs" waitedMs=0 exit=0 pid=48900 at=2026-09-14T12:06:24.501Z
+RUN ticket=361 runId=9b00912b-dbed-4ef5-ba1c-fe05f81510b0 cmd="npx tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=8268 at=2026-09-14T12:32:13.350Z
+RUN ticket=361 runId=4bad51a9-2b69-4b87-9681-698db7c373a8 cmd="node .scratch/t361/mut-battery.mjs" waitedMs=0 exit=0 pid=52148 at=2026-09-14T12:33:00.262Z
