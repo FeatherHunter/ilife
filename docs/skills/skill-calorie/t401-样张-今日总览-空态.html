@@ -42,7 +42,11 @@
       并列被读成减法。
     · 折线块的周均参考线在样张甲取 var(--fg2)（生产此处是橙色字面量），故样张甲的说明行只写「虚线」、
       不带颜色词：页面里一行色值都不许写，宁可说明行少一个颜色词，也不让图文不符。本件折线块不出。
-  本页不比设计多：深底常驻横幅不出（设计已裁决撤掉，改成标题下一行的结论小字）；@media print 不出。
+     · 复制区两颗按钮的分工：数据按钮开三格式菜单（纯文本／JSON／CSV），日志按钮一次复制六段；
+       两处都不出与按钮同字的标题。窗口非缺省时，日志第 3 段「调用链」把窗口写全，例如
+       calorie-cmd-read calorie.view.home --params '{"windowDays":30,"date":"今日"}'。
+     · 数据来源与生成命令：calorie_data.db（food_log ＋ exercise_log ＋ daily_goal，只读）；
+       生成命令 calorie-cmd-read calorie.view.home --params '{"date":"今日"}'。  本页不比设计多：深底常驻横幅不出（设计已裁决撤掉，改成标题下一行的结论小字）；@media print 不出。
 -->
 <style>
 /* ═══ ① 共享样式段（token 块 ＋ 区块与控件规则；配色与字号只在这里出现） ═══ */
@@ -105,6 +109,8 @@ body {
 .ilife-block-kpi-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* 行高按最高的那张卡对齐：两行六张一样高，行内几张底边也齐 */
+  grid-auto-rows: 1fr;
   gap: 12px;
 }
 .ilife-block-kpi-card {
@@ -394,9 +400,10 @@ body {
   display: block;
   margin: 16px 0;
 }
-/* 「今日还能吃多少」与「热量缺口（TDEE 口径）」并排：等宽两列，窄屏落一列 */
+/* KPI 六张固定三列两行：六张一样宽、行行都满，任何屏宽都不留单张孤行。
+   页身最宽 960px，六列至少要约 1152px 才排得下，逐列自适应必然甩出一张，故列数写死。 */
 .ilife-block-page-shell-body > .ilife-block-kpi-card-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 /* 完成度条的形状位；填充取共享 token，档位色的出处见文件头注释 */
 .ilife-block-kpi-card-bar {
@@ -409,6 +416,7 @@ body {
   height: 100%;
 }
 @media (max-width: 640px) {
+  /* 窄屏落两列三行：六张仍两两成行，也不留孤行 */
   .ilife-block-kpi-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -418,7 +426,7 @@ body {
 <body>
 <div class="wrap ilife-page">
 <section class="ilife-block ilife-block-page-shell">
-  <p class="ilife-block-page-shell-eyebrow">calorie.view.home · 主页 · 看今日主页</p>
+  <p class="ilife-block-page-shell-eyebrow">主页</p>
   <h1 class="ilife-block-page-shell-title">今日总览 2026-09-07</h1>
   <p class="ilife-block-page-shell-subtitle">窗口 2026-09-01 ~ 2026-09-07 · 连续记录天数 — · 0/7 天有记录</p>
 
@@ -429,8 +437,7 @@ body {
     页内导航：
     <a href="#sec-kpi">KPI 六张</a> ·
     <a href="#sec-empty">空态</a> ·
-    <a href="#sec-copy">复制区</a> ·
-    <a href="#sec-src">来源</a>
+    <a href="#sec-copy">复制区</a>
   </nav>
 
   <div class="ilife-block-page-shell-body">
@@ -561,10 +568,7 @@ calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot
 没有记录：food_log 与 exercise_log 都没有行，daily_goal 也没有设过热量目标与饮水目标">复制日志</button>
         </div>
       </div>
-      <p class="ilife-block-page-shell-subtitle">两颗按钮各行其道：数据按钮开三格式菜单（纯文本／JSON／CSV），日志按钮一次复制六段；两处都不出与按钮同字的标题。窗口非缺省时，第 3 段「调用链」把窗口写全，例如 calorie-cmd-read calorie.view.home --params '{&quot;windowDays&quot;:30,&quot;date&quot;:&quot;今日&quot;}'。</p>
     </section>
-
-    <p class="ilife-block-page-shell-subtitle" id="sec-src">📊 来源：calorie_data.db（food_log ＋ exercise_log ＋ daily_goal，只读）· 由 calorie-cmd-read calorie.view.home --params '{&quot;date&quot;:&quot;今日&quot;}' 生成 · 2026-09-14 17:31:00 · 版本 0.1.0</p>
   </div>
 </section>
 </div>
