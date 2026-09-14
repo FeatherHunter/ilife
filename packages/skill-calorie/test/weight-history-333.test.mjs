@@ -7,10 +7,13 @@
  * 判据（只断言 exit 0 不够——本票修的正是 exit 0 但窗口错）：每条另断言产物窗口区间
  * （HTML 标题 `体重历史 <range>`）与唤醒词语义一致，且逐日种子下 metrics.rows 等于
  * 窗内天数（退回缺省 30 天即红）。空窗／坏参另起两个用例钉缺失阻断口径。
- * #480 文本审查在同一循环里另加八条（副标题／表注／图例／结论的重复与专业话）：
- * ① 页脚来源行统一句式（全角冒号 ＋ 三段 `｜`）恰 1 处；② 全窗不编缺口句；③ 旧句零命中；
- * ④ 窗口区间串可见文本里只 1 处；⑤ 不印「日均 N kg」；⑥「结论」恰 1 处且块内有并列小标签；
- * ⑦ 数字与单位之间留空格；⑧ 结论正文恰一句。
+ * #480 文本审查在同一循环里另加十二条（副标题／表注／图例／结论的重复与专业话）：
+ * ① 页脚来源行统一句式（全角冒号 ＋ 三段 `｜`）恰 1 处＋库表名退出可见面但复制日志里仍在（裁定 F）；
+ * ② 全窗不编缺口句；③ 旧句零命中（含工程词「样本／门槛」与库表名）；④ 窗口区间串上限；
+ * ⑤ 不印「日均 N kg」；⑥「结论」恰 1 处且结论块不重复卡片的说明槽；⑦ 数字与单位之间留空格；
+ * ⑧ 结论正文恰一句；⑨ 同卡跨槽重复 0（值槽／副说明／徽章逐卡比，钉今天那五处重复）；
+ * ⑩ 徽章 `共 N 条`／单点页 `只有一条`；⑪ `标签 N 类` 只许在徽章出现一次；
+ * ⑫ 表标题（`明细记录（共 N 条）`／`体重明细（只列最近 30 条）`／`体重明细（更早的 N 条）`）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
@@ -76,15 +79,19 @@ const CASES = [
   ['看某段时间体重曲线', { window: 'custom', start: '2026-09-01', end: '2026-09-07' }, '2026-09-01 ~ 2026-09-07', 7],
 ];
 
-/** #480 文本审查：页页必在的新句（人话口径）。 */
+/** #480 文本审查：页页必在的新句（人话口径）。裁定 F 后页脚不再带库表名（机器面在复制日志里）。 */
 const NEW_TEXTS = [
-  '📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ',
+  '📊 数据来源：体重记录 ｜ 窗口 ',
   '｜ 共 ',
 ];
-/** #480 文本审查：页页必零命中的旧句（删掉的重复／看不懂的专业话／实现细节）。 */
+/** #480 文本审查：页页必零命中的旧句（删掉的重复／看不懂的专业话／实现细节）。
+ *  对抗审查整改本轮新增（缺陷单 §三.1 点名上一轮漏掉的）：工程词「样本／门槛」＋库表名退出**可见面**。 */
 const OLD_TEXTS = [
   '📊 数据来源:', '日均 0.01 kg', '日均 -0.01 kg', '首末对照', '量程外', '基线 ', '黄±', '红±',
   'weight_log ·', '窗内 ', '本窗一条记录都没有', '按窗口 7 点现算', '只取有备注的）</span>',
+  '样本', '门槛', 'calorie_data.db', 'weight_log',
+  '单点数据', '单点无均值对照', '偏红的点', '超过图的取值范围', '窗口外',
+  '体重明细（共 ', '体重明细（最近 30 条）', '体重明细（其余 ',
 ];
 
 /** 可见文本（剥 style／script／全部标签与属性、解实体、收敛空白）——口径同 `test/visible-text-probe.mjs`。
@@ -107,6 +114,52 @@ function runOne(dir, word, params, htmlPath) {
     encoding: 'utf8',
   });
 }
+
+/** 从 `<div ...>` 起取 tag 配平的一整块（KPI 卡的 div 是嵌套的，正则切不准）。 */
+function cutDiv(html, start) {
+  let depth = 0;
+  let j = html.indexOf('<div', start);
+  const from = j;
+  while (j >= 0) {
+    const open = html.indexOf('<div', j);
+    const close = html.indexOf('</div>', j);
+    if (close < 0) break;
+    if (open >= 0 && open < close) { depth += 1; j = open + 4; } else {
+      depth -= 1;
+      j = close + 6;
+      if (depth === 0) return html.slice(from, j);
+    }
+  }
+  return html.slice(from);
+}
+
+const CARD_OPEN = '<div class="ilife-block ilife-block-kpi-card">';
+
+/** 四张 KPI 卡的四槽文本（#480「同卡跨槽重复 0」的判据用：值槽／副说明／徽章逐卡取出来比）。 */
+function kpiCards(html) {
+  const out = [];
+  const grid = html.indexOf('ilife-block-kpi-card-grid');
+  let i = grid < 0 ? -1 : html.indexOf(CARD_OPEN, grid);
+  while (i >= 0) {
+    const block = cutDiv(html, i);
+    const slot = (name) => {
+      const m = new RegExp('ilife-block-kpi-card-' + name + '">(.*?)</div>', 's').exec(block);
+      return m === null ? null : m[1].replace(/<[^>]*>/g, '').trim();
+    };
+    out.push({ label: slot('label'), value: slot('value'), unit: slot('unit'), detail: slot('detail'), badge: slot('badge') });
+    i = html.indexOf(CARD_OPEN, i + block.length);
+  }
+  return out;
+}
+
+/** 结论折叠区里的可见文本（缺陷 1：结论块不再重复卡片的说明槽）。 */
+function conclText(html) {
+  const i = html.indexOf('<summary class="ilife-block-disclosure-summary">结论</summary>');
+  return i < 0 ? '' : visibleText(html.slice(i, html.indexOf('</details>', i)));
+}
+
+/** 比「同卡两槽逐字同说一件事」时要忽略空白（`达成 2 个` 与值槽 `2 个` 的空格位置不同）。 */
+const nospace = (s) => String(s ?? '').replace(/\s+/g, '');
 
 test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间一致）', () => {
   assert.equal(CASES.length, 18);
@@ -139,11 +192,18 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
 
     // ── #480 文本审查判据（页页过） ────────────────────────────────────────────
     const text = visibleText(html);
+    const cards = kpiCards(html);
+    const byLabel = (name) => cards.find((c) => c.label === name) ?? null;
     // ① 新句式在场：页脚来源行走统一句式（全角冒号 ＋ 三段 `｜`），数据来源恰 1 处。
     for (const s of NEW_TEXTS) assert.ok(text.includes(s), word + ' 缺新句式：' + s);
     assert.equal(text.split('📊 数据来源：').length - 1, 1, word + ' 数据来源行不是恰 1 处');
-    assert.ok(text.includes('体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + range + ' ｜ 共 '),
+    assert.ok(text.includes('📊 数据来源：体重记录 ｜ 窗口 ' + range + ' ｜ 共 '),
       word + ' 页脚来源行的窗口不是逐字本文窗口：' + text.slice(text.indexOf('📊 数据来源：'), text.indexOf('📊 数据来源：') + 90));
+    // ①b 裁定 F：库表名退出**可见面**，但机器面（复制日志第 3 段）照旧写库文件名 ｜ 来源（§5.5），不许一起丢。
+    assert.equal(text.split(DB_FILENAME).length - 1, 0, word + ' 可见面仍印库文件名');
+    assert.equal(text.split('weight_log').length - 1, 0, word + ' 可见面仍印表名');
+    assert.ok(html.includes('体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + range + ' ｜ 共 '),
+      word + ' 复制日志第 3 段丢了库表名（机器面不该跟着一起丢）');
     // ② 窗内没有缺口时不编缺口句（种子是逐日全窗，除筛选窗与单点窗外都齐）。
     if (word === '看体重曲线' || word === '看上月体重曲线' || word === '看某段时间体重曲线') {
       assert.ok(!text.includes('缺 '), word + ' 全窗却写了缺口句');
@@ -159,28 +219,83 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     assert.ok(text.split(range).length - 1 <= cap, word + ' 窗口串出现 ' + (text.split(range).length - 1) + ' 次（上限 ' + cap + '）');
     // ⑤ 日均速率一律说人话（「每天 +N 克」），页面上不出现「日均 N kg」。
     assert.ok(!/日均 -?[\d.]+ kg/.test(text), word + ' 仍印「日均 N kg」');
-    // ⑥ 结论 = 一句话 ＋ 并列小标签（同一块里），页内「结论」两个字仍只出现在折叠区标题那一处。
+    // ⑥ 结论 = 一句话（＋ 标注类小标签）；页内「结论」两个字仍只出现在折叠区标题那一处。
+    //    缺陷 1：原与变化卡／均值卡逐字重复的速率／首末／均值三枚小标签已删，结论块不再复述卡片的说明槽。
     assert.equal(text.split('结论').length - 1, 1, word + ' 页内「结论」不是恰 1 处');
     const conclAt = html.indexOf('<summary class="ilife-block-disclosure-summary">结论</summary>');
     assert.ok(conclAt >= 0, word + ' 缺结论折叠区');
     const conclBody = html.slice(conclAt, html.indexOf('</details>', conclAt));
-    assert.ok(conclBody.includes('ilife-block-chip'), word + ' 结论块里没有并列小标签');
+    const concl = conclText(html);
+    assert.ok(!/每天 [+\-]?\d+ 克/.test(concl), word + ' 结论块里还留着与变化卡重复的速率小标签');
+    for (const name of ['变化', '均值']) {
+      const c = byLabel(name);
+      if (c !== null && c.detail !== null) {
+        assert.ok(!concl.includes(c.detail), word + ' 结论块重复了「' + name + '」卡的说明槽：' + c.detail);
+      }
+    }
     // ⑦ 数字与单位留一个空格：可见文本里不出现紧贴单位的写法，也不出现「首末对照」这类内部词。
     assert.ok(!/\d+kg/.test(text), word + ' 数字与单位之间没留空格');
     // ⑧ 口径块（结论正文）只留一句：长句不再塞满首／末／日均。
     assert.equal((conclBody.match(/<p>/g) || []).length, 1, word + ' 结论正文不是一句话');
+    // ⑨ 同卡跨槽重复 0（缺陷 2／3／4／5）：值槽／副说明／徽章在同一张卡里两两不逐字同说一件事。
+    //    体重历史卡豁免「徽章含值槽」：缺陷 14 点名要的徽章本来就是「共 N 条」（值槽是数字 ＋ unit 槽）。
+    assert.equal(cards.length, 4, word + ' KPI 卡不是四张（实测 ' + cards.length + '）');
+    for (const c of cards) {
+      const slots = [c.detail, c.badge].filter((s) => s !== null && s !== '');
+      assert.equal(new Set(slots).size, slots.length, word + '「' + c.label + '」卡副说明与徽章逐字重复');
+      assert.ok(!slots.includes(c.value), word + '「' + c.label + '」卡别的槽重复了值槽');
+      if (c.label !== '体重历史' && c.badge !== null) {
+        assert.ok(!nospace(c.badge).includes(nospace(c.value)), word + '「' + c.label + '」徽章复述值槽「' + c.value + '」');
+      }
+    }
+    // ⑩ 缺陷 14：「样本 N 条」是工程词 ⇒ 徽章说「共 N 条」；单点页说「只有一条」。
+    assert.equal(byLabel('体重历史').badge, rows >= 2 ? '共 ' + rows + ' 条' : '只有一条',
+      word + ' 体重历史卡徽章不对：' + byLabel('体重历史').badge);
+    // ⑪ 缺陷 2：备注卡的「标签 N 类」只许出现在徽章那一次（副说明已删）。
+    assert.ok((text.match(/标签 \d+ 类/g) || []).length <= 1, word + ' 「标签 N 类」说了不止一次');
+    // ⑫ 缺陷 8／9／13：表标题（主标题已有「体重历史」，单表改说「明细记录」；分两段说清截过与更早）。
+    if (rows > 30) {
+      assert.ok(text.includes('体重明细（只列最近 30 条）'), word + ' 头表标题不对');
+      assert.ok(text.includes('体重明细（更早的 ' + (rows - 30) + ' 条）'), word + ' 续表标题不对');
+    } else {
+      assert.ok(text.includes('明细记录（共 ' + rows + ' 条）'), word + ' 单表标题不对');
+    }
+    if (word === '看本周体重') {
+      // 缺陷 3：单点页三处同槽重复全拆开（变化卡副说明说人话、均值卡删副说明、备注卡删副说明）。
+      assert.equal(byLabel('变化').detail, '只有 1 天记录，没法算变化', word + ' 变化卡副说明不对');
+      assert.equal(byLabel('变化').badge, '单点无变化', word + ' 变化卡徽章不该跟着改');
+      assert.equal(byLabel('均值').detail, null, word + ' 均值卡仍留副说明');
+      assert.equal(byLabel('均值').badge, '无对照', word + ' 均值卡徽章不对');
+      assert.equal(byLabel('备注').detail, null, word + ' 备注卡仍留副说明');
+      assert.ok(text.includes('再记一条就能比首日和末日'), word + ' 页顶提示块仍写「首末」');
+    }
     if (word === '看体重曲线（带目标）') {
       assert.ok(text.includes('目标 68 kg') && text.includes('目标线'), word + ' 缺目标标注');
-      assert.ok(text.includes('超过图的取值范围'), word + ' 目标线在图外时没说清为什么图上没有');
+      // 缺陷 11：图上画不下时说人话；缺陷 7：值槽不许带正号（`+2.4 kg` 会被读成「涨了」）。
+      assert.ok(text.includes('（图上画不下，没画）'), word + ' 目标线在图外时没说清为什么图上没有');
+      const g = byLabel('距目标') ?? byLabel('目标');
+      assert.ok(g !== null, word + ' 缺距目标卡');
+      assert.ok(!/^[+\-]/.test(String(g.value)), word + ' 距目标值槽仍带符号：' + g.value);
+      assert.ok(/还差 [\d.]+ kg|已低于目标 [\d.]+ kg|已达目标/.test(String(g.value)), word + ' 距目标值槽没说人话：' + g.value);
     }
     if (word === '看体重曲线（带里程碑）') {
       assert.ok(text.includes('里程碑') && text.includes('减重 5 kg 那天'), word + ' 缺里程碑标注');
       assert.ok(!text.includes('减重 5kg 那天'), word + ' 里程碑标签没做数字与单位分空格');
+      // 缺陷 4／10／15：副说明说人话（末字不再悬空）、徽章不复述值槽、图例窗外的说「不在这段时间里」。
+      assert.equal(byLabel('里程碑').detail, '减重 5 kg、10 kg 两个里程碑都达到了', word + ' 里程碑副说明不对');
+      assert.equal(byLabel('里程碑').badge, '已达成', word + ' 里程碑徽章不对');
+      assert.ok(/减重 5 kg 那天 \d{4}-\d{2}-\d{2}，[\d.]+ kg（不在这段时间里）/.test(text), word + ' 里程碑图例不对');
     }
     if (word === '看体重曲线（带异常点）') {
       assert.ok(text.includes('异常点'), word + ' 缺异常点标注');
-      // 偏离一律点名相对谁 ＋ 分高低 ＋ 带单位（旧写法「偏 0.13」没说相对谁、也没单位）。
-      assert.ok(/比平均线[高低] \d+(\.\d+)? kg/.test(text), word + ' 异常点偏离口径没做人话');
+      // 缺陷 5／6／12：副说明只说头三天形态；徽章只说偏高；图例首行不用颜色词；偏离精度两位。
+      const d = String(byLabel('异常点').detail ?? '');
+      assert.ok(/^\d{4}-\d{2}-\d{2} 起连续 3 天偏高$/.test(d) || /^\d{4}-\d{2}-\d{2} 偏高$/.test(d),
+        word + ' 异常点卡副说明不对：' + d);
+      assert.equal(byLabel('异常点').badge, '偏高', word + ' 异常点徽章不对');
+      assert.ok(!/异常 \d+ 个/.test(text), word + ' 仍印「异常 N 个」');
+      assert.ok(text.includes('- - 异常点 比平均线高的那几天'), word + ' 异常点图例首行不对');
+      assert.ok(/比平均线(略高|略低)/.test(text) || /比平均线[高低] \d+\.\d{2} kg/.test(text), word + ' 异常点偏离没做两位精度');
       assert.ok(!/偏 \d/.test(text), word + ' 仍印没说相对谁的「偏 N」');
     }
     if (word === '看「有备注」的体重记录') {
@@ -188,6 +303,8 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
       // 「只看有备注的 5 条」原在副标题、次卡、图例、表注、页脚说了五遍 ⇒ 只留卡片与页脚两处。
       assert.equal(text.split('只取有备注的').length - 1, 2, word + '「只取有备注的」不是恰 2 处');
       assert.ok(!text.includes('只看有备注的'), word + ' 图例／结论里仍重印「只看有备注的」');
+      // 缺陷 2：筛选页那张卡（`有备注`）同样只留徽章。
+      assert.equal(byLabel('有备注').detail, null, word + ' 有备注卡仍留副说明');
     }
     pass += 1;
   }
