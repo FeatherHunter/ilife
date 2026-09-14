@@ -61,6 +61,26 @@ function assertIsoDate(date: string): void {
 
 export type { SourceChoice };
 
+/** #398 · 读侧来源筛选词：三个入库来源 ＋ `all`。
+ *
+ * `all` **只是读侧筛选词**（不按来源过滤／按来源分组），**不入库**——
+ * 写侧仍由 `validateCompositionInput` 的 `SOURCE_CHOICES` 三值守门，
+ * 表级 `CHECK (source IN ('home_caliper','hospital','gym'))`（`src/schema.ts:85`）也与本词无关。
+ */
+export const SOURCE_FILTER_ALL = 'all' as const;
+export type SourceFilter = SourceChoice | typeof SOURCE_FILTER_ALL;
+
+/** 读侧来源词判定：给了但不是入库来源也不是 `all` ⇒ 报错（`FetchError`；上层按 `missing-data` 出口）。
+ *
+ * 原状是**无校验**：任何字面值都原样进 SQL 当来源名，取不到记录就以「无体成分记录」收场（`all` 即此路）。
+ * 那种口径把**拼错来源**与**窗口内确实没记录**混成一个答案；本票把它拆开。
+ */
+export function assertSourceFilter(source: string): void {
+  if (source !== SOURCE_FILTER_ALL && !SOURCE_CHOICES.includes(source as SourceChoice)) {
+    throw new FetchError(`未知来源: ${source}（合法值: ${SOURCE_CHOICES.join(' / ')} 或 ${SOURCE_FILTER_ALL}）`);
+  }
+}
+
 export interface CompositionInput {
   date: string; source: string; age?: number | null; sex?: string | null;
   bodyFatPct?: number | null; calculatedAt?: string | null; note?: string;
@@ -223,10 +243,13 @@ export function addComposition(db: DatabaseSync, input: CompositionInput): { id:
 export function listCompositions(db: DatabaseSync, opts: { dateFrom?: string; dateTo?: string; days?: number; source?: string; limit?: number } = {}): Record<string, unknown>[] {
   // #359 · 读侧放行 7 点皮褶：原 5 列不含 CALIPER_FIELDS，看体脂页读不到当初填的 7 个数。
   // 形状照下方 listMeasurements 的既有写法（cols 数组）；只放行列，不动筛选与排序，更不在读侧算任何东西。
-  const cols = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note'];
+  // #398 · `source` 三值照旧按字面过滤；`all`（读侧筛选词）＝**不按来源过滤**，行形状与次序一律不变。
+  //        其它字面值 ⇒ 报错（原来的「静默当来源名用、空结果」口径已收）。
+  if (opts.source !== undefined) assertSourceFilter(opts.source);
+  const cols = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note']; // M1-ANCHOR
   let sql = 'SELECT ' + cols.join(', ') + ' FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0';
   const params: SQLInputValue[] = [];
-  if (opts.source) { sql += ' AND source = ?'; params.push(opts.source); }
+  if (opts.source && opts.source !== SOURCE_FILTER_ALL) { sql += ' AND source = ?'; params.push(opts.source); }
   if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }
   else if (opts.days !== undefined) { sql += ' AND date >= ?'; params.push(daysAgo(opts.days)); }
   sql += ' ORDER BY date DESC, id DESC';
@@ -246,12 +269,69 @@ export function latestSource(db: DatabaseSync): string | null {
   return row?.source ?? null;
 }
 
+/** 单来源趋势：一天一个点（窗口内 `date >= 今天-N 天`，`AVG` 取当天均值）。 */
 export function trendComposition(db: DatabaseSync, days: number, source?: string): { date: string; avgPct: number; n: number }[] {
-  const src = source ?? latestSource(db) ?? 'home_caliper';
-  const rows = db.prepare(`SELECT date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ? AND source = ? GROUP BY date ORDER BY date ASC`)
-    .all(daysAgo(days), src) as unknown as { date: string; avg_pct: number; n: number }[];
+  if (source !== undefined) assertSourceFilter(source);
+  const all = source === SOURCE_FILTER_ALL;
+  const src = all ? null : (source ?? latestSource(db) ?? 'home_caliper');
+  let sql = `SELECT date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
+    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ?`;
+  const params: SQLInputValue[] = [daysAgo(days)];
+  // #398 · `all` ⇒ 不加 `AND source = ?`（不按来源过滤）；具体来源与缺省（`latestSource`）照旧恒带该过滤。
+  if (src !== null) { sql += ' AND source = ?'; params.push(src); }
+  sql += ' GROUP BY date ORDER BY date ASC';
+  const rows = db.prepare(sql).all(...params) as unknown as { date: string; avg_pct: number; n: number }[];
   return rows.map((r) => ({ date: r.date, avgPct: r.avg_pct, n: r.n }));
+}
+
+/** #398 · 按来源分组的趋势：每个来源一条序列，来源内**一天一个点**，来源之间**不合并**。
+ *
+ * 口径不同的设备（家测皮褶钳／健身房 InBody／医院测）混成一条线会得出假趋势
+ * （基准 `docs/skills/skill-calorie/t395-融合基准.md` §四 裁定 5 的原文理由），故分组在数据层做：
+ * 页面拿到的是**已经分好的序列**，不允许再自行把来源混回去。
+ *
+ * 序列次序＝「该来源最近一条的日期」由近到远（并列按来源名升序）——与记录列表 `date DESC, id DESC` 同向，
+ * 使组序在任何日期种子下都由数据决定，不含字典序偶然。
+ */
+export interface SourceSeries {
+  source: string;
+  points: { date: string; avgPct: number; n: number }[];
+  latestDate: string;
+}
+
+export function trendCompositionBySource(db: DatabaseSync, days: number): SourceSeries[] {
+  const rows = db.prepare(`SELECT source, date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
+    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ?
+    GROUP BY source, date ORDER BY date ASC`).all(daysAgo(days)) as unknown as // M2-ANCHOR
+    { source: string; date: string; avg_pct: number; n: number }[];
+  const bySource = new Map<string, { date: string; avgPct: number; n: number }[]>();
+  for (const r of rows) {
+    const list = bySource.get(r.source) ?? [];
+    list.push({ date: r.date, avgPct: r.avg_pct, n: r.n });
+    bySource.set(r.source, list);
+  }
+  return [...bySource.entries()]
+    .map(([source, points]) => ({ source, points, latestDate: points[points.length - 1]?.date ?? '' }))
+    .sort((a, b) => (a.latestDate === b.latestDate
+      ? a.source.localeCompare(b.source)
+      : (a.latestDate < b.latestDate ? 1 : -1)));
+}
+
+/** #398 · 窗口内**按来源分组的组数**：本函数的读数与
+ *  `SELECT COUNT(DISTINCT source) FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0`
+ *  （同窗口）**恒等**——它就是同一句聚合，只是把窗口参数与「跳过废弃」写成与列表同一套写法。
+ *  给「按来源分组取数」一条可独立取的读数（页面文本不参与判据）。
+ */
+export function compositionSourceCount(
+  db: DatabaseSync,
+  opts: { days?: number; dateFrom?: string; dateTo?: string } = {},
+): number {
+  let sql = `SELECT COUNT(DISTINCT source) AS n FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0`;
+  const params: SQLInputValue[] = [];
+  if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }
+  else if (opts.days !== undefined) { sql += ' AND date >= ?'; params.push(daysAgo(opts.days)); }
+  const row = db.prepare(sql).get(...params) as { n: number };
+  return row.n;
 }
 
 export function compareCompositions(db: DatabaseSync, fromDate: string, toDate: string, source?: string): Record<string, unknown> {

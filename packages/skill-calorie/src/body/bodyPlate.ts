@@ -7,7 +7,8 @@
  * 空库一律 missing-data，不返空数组冒充正常。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { CALIPER_FIELDS, compareCompositions, compareMeasurements, latestMeasurementMetric, listCompositions, listMeasurements, trendComposition, trendMeasurement } from '../fetch/body.js';
+import { CALIPER_FIELDS, compareCompositions, compareMeasurements, compositionSourceCount, latestMeasurementMetric, listCompositions, listMeasurements, trendComposition, trendCompositionBySource, trendMeasurement } from '../fetch/body.js';
+import type { SourceFilter, SourceSeries } from '../fetch/body.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 
@@ -47,11 +48,15 @@ export interface BodyCompositionView {
   latestPct: number | null;
   /** #359 · 7 点皮褶回显（最近一条有皮褶数据的记录；没有＝null）。 */
   calipers: CaliperEcho | null;
+  /** #398 · 按来源分组（仅 `source=all` 时非空）：每个来源一条序列，来源之间不合并。 */
+  sourceSeries: SourceSeries[];
+  /** #398 · 窗口内按来源分组的组数（`source=all` 时＝`compositionSourceCount` 的读数，页面直接可判）。 */
+  sourceCount: number;
 }
 
 export function buildBodyCompositionView(
   db: DatabaseSync,
-  opts: { days?: number; source?: string; limit?: number } = {},
+  opts: { days?: number; source?: SourceFilter; limit?: number } = {},
 ): BodyCompositionView {
   const days = opts.days ?? 90;
   if (!Number.isInteger(days) || days < 1 || days > 365) {
@@ -68,7 +73,19 @@ export function buildBodyCompositionView(
     const first = items[0] as { body_fat_pct?: unknown; source?: unknown };
     const latestPct = typeof first?.body_fat_pct === 'number' ? (first.body_fat_pct as number) : null;
     const source = typeof first?.source === 'string' ? (first.source as string) : (opts.source ?? null);
-    return { source, items, total: items.length, trend, latestPct, calipers: caliperEchoOf(items) };
+    // #398 · `source=all`：分组序列与组数由数据层备齐（不按来源过滤、按来源分组）。
+    // 组数取 `compositionSourceCount` 的读数，与 `SELECT COUNT(DISTINCT source)…`（同窗口）恒等。
+    const grouped = opts.source === 'all';
+    return {
+      source,
+      items,
+      total: items.length,
+      trend,
+      latestPct,
+      calipers: caliperEchoOf(items),
+      sourceSeries: grouped ? trendCompositionBySource(db, days) : [],
+      sourceCount: grouped ? compositionSourceCount(db, { days }) : 0,
+    };
   } catch (e) {
     if (e instanceof CalorieRenderError) throw e;
     if (e instanceof FetchError) throw new CalorieRenderError('missing-data', e.message);

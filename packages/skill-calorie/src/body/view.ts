@@ -8,12 +8,19 @@ import type { DatabaseSync } from 'node:sqlite';
 import { buildBodyCompositionView, buildBodyMeasureView } from './bodyPlate.js';
 import { buildBodyCompositionDoc, buildBodyMeasureDoc } from './bodyDocs.js';
 import { dayField, nums, optNum, optStr } from '../shared/params.js';
+import { SOURCE_FILTER_ALL } from '../fetch/body.js';
+import type { SourceChoice } from '../fetch/body.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 
-/** `calorie.view.body-composition` · 体成分看（窗口默认 90 天，`limit` 默认 20 条）。 */
+/** `calorie.view.body-composition` · 体成分看（窗口默认 90 天，`limit` 默认 20 条）。
+ *
+ * #398 · 读侧来源词＝三个入库来源 ＋ `all`（`all`＝不按来源过滤／按来源分组）。
+ * 校验归 `fetch/body.ts` 的 `assertSourceFilter`（取数口径唯一定义地），此处只把类型收窄到读侧词，
+ * **不改**任何取值行为：三个来源与 `all` 原样下传，其余字面值由数据层抛错（不再静默当来源名用）。
+ */
 export function viewBodyComposition(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const days = optNum(params, 'days') ?? 90;
-  const source = optStr(params, 'source');
+  const source = optStr(params, 'source') as SourceChoice | typeof SOURCE_FILTER_ALL | undefined;
   const limit = optNum(params, 'limit') ?? 20;
   const v = buildBodyCompositionView(db, { days: days as number, source: source ?? undefined, limit: limit as number });
   const metrics = nums({ total: v.total, latestPct: v.latestPct, trendDays: v.trend.length });
