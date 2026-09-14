@@ -174,10 +174,27 @@ export function listMeasurements(db: DatabaseSync, opts: { dateFrom?: string; da
   return db.prepare(sql).all(...params) as unknown as Record<string, unknown>[];
 }
 
-export function deleteMeasurement(db: DatabaseSync, id: number): { id: number } {
+/** #364 · 删前快照的取数列（围度）：**逐字段**，列序＝列表口径（`listMeasurements`）。 */
+const MEASURE_SNAPSHOT_COLS: string[] = ['id', 'date', ...MEASUREMENT_FIELDS, 'note'];
+
+/** #364 · 删前快照取数口（围度）：按主键读出**全部列**的原始值（缺项 `null`／备注 `''`，本层不代字 `—`）。
+ *
+ *  **不加 `is_deprecated` 过滤**：本表删除是软删（只置废，行与字段值一字不动），
+ *  「删前读」与「删后读」自然是同一份值；`null` ＝ 库里没有这条 id。
+ *  #365 的整页回执按本函数的逐字段值铺删前对照行（中文名由命令层按唯一来源贴）。
+ */
+export function measurementSnapshot(db: DatabaseSync, id: number): Record<string, unknown> | null {
+  const row = db.prepare(`SELECT ${MEASURE_SNAPSHOT_COLS.join(', ')} FROM body_measurements WHERE id = ?`)
+    .get(id) as Record<string, unknown> | undefined;
+  return row ?? null;
+}
+
+export function deleteMeasurement(db: DatabaseSync, id: number): { id: number; snapshot: Record<string, unknown> } {
+  // #364 · **删前**先取快照（必须排在置废那一句之前）。下面 `changes` 仍是不存在即抛的原判据，取数面不动它。
+  const snapshot = measurementSnapshot(db, id);
   const info = db.prepare('UPDATE body_measurements SET is_deprecated=1, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(id);
-  if (!info.changes) throw new FetchError(`id=${id} 不存在`);
-  return { id };
+  if (!info.changes || snapshot === null) throw new FetchError(`id=${id} 不存在`);
+  return { id, snapshot };
 }
 
 export function trendMeasurement(db: DatabaseSync, metric: string, days: number): { date: string; avgVal: number; n: number }[] {
@@ -309,10 +326,22 @@ export function listCompositions(db: DatabaseSync, opts: { dateFrom?: string; da
   return db.prepare(sql).all(...params) as unknown as Record<string, unknown>[];
 }
 
-export function deleteComposition(db: DatabaseSync, id: number): { id: number } {
+/** #364 · 删前快照的取数列（体成分）：**逐字段**，列序＝列表口径（`listCompositions`，不含 7 点以外的运算列）。 */
+const COMPOSITION_SNAPSHOT_COLS: string[] = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note'];
+
+/** #364 · 删前快照取数口（体成分）：口径与 `measurementSnapshot` 逐条相同（软删不删内容，删后仍可回读）。 */
+export function compositionSnapshot(db: DatabaseSync, id: number): Record<string, unknown> | null {
+  const row = db.prepare(`SELECT ${COMPOSITION_SNAPSHOT_COLS.join(', ')} FROM body_composition WHERE id = ?`)
+    .get(id) as Record<string, unknown> | undefined;
+  return row ?? null;
+}
+
+export function deleteComposition(db: DatabaseSync, id: number): { id: number; snapshot: Record<string, unknown> } {
+  // #364 · **删前**先取快照（必须排在置废那一句之前）；不存在即抛仍看 `changes`（原判据不动）。
+  const snapshot = compositionSnapshot(db, id);
   const info = db.prepare('UPDATE body_composition SET is_deprecated=1, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(id);
-  if (!info.changes) throw new FetchError(`id=${id} 不存在`);
-  return { id };
+  if (!info.changes || snapshot === null) throw new FetchError(`id=${id} 不存在`);
+  return { id, snapshot };
 }
 
 export function latestSource(db: DatabaseSync): string | null {
