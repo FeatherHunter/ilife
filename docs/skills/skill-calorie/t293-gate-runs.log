@@ -1,16 +1,16 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks-land\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：293close｜since：2026-09-14T00:07:13Z｜until：（无）｜条目数：8｜导出时间：2026-09-14T00:09:39.055Z
+> 票号过滤：293close2｜since：2026-09-14T00:30:02Z｜until：（无）｜条目数：8｜导出时间：2026-09-14T00:32:00.950Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
-RUN ticket=293close runId=280a2f91-e1fe-46fe-88fa-2b9d0814becb cmd="node node_modules/typescript/bin/tsc -b" waitedMs=0 exit=0 pid=39196 at=2026-09-14T00:07:14.299Z
-RUN ticket=293close runId=e2754261-0503-4cd3-8e91-2c3856cf806f cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=0 exit=0 pid=43344 at=2026-09-14T00:07:16.550Z
-RUN ticket=293close runId=0e3db087-61ef-41ac-886a-8ede0d6bd8c4 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --stamp" waitedMs=0 exit=0 pid=44656 at=2026-09-14T00:07:16.710Z
-RUN ticket=293close runId=81c828de-e1ba-4740-b5fb-336c989440f2 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=41416 at=2026-09-14T00:07:16.962Z
-RUN ticket=293close runId=46f2d240-c167-4137-9170-1bbfb04fe77f cmd="node --test test/*.test.mjs packages/base-render/test/*.test.mjs packages/skill-calorie/test/*.test.mjs packages/skill-memo-ilife/test/*.test.mjs packages/skill-schedule/test/*.test.mjs packages/skill-home/test/*.test.mjs packages/skill-bill/test/*.test.mjs packages/skill-chef/test/*.test.mjs packages/plugin-manager/test/*.test.mjs packages/plugin-calorie/test/*.test.mjs packages/plugin-memo-ilife/test/*.test.mjs packages/plugin-schedule-ilife/test/*.test.mjs packages/plugin-home-ilife/test/*.test.mjs packages/plugin-chef/test/*.test.mjs packages/plugin-bill-ilife/test/*.test.mjs" waitedMs=0 exit=1 pid=52624 at=2026-09-14T00:07:56.472Z
-RUN ticket=293close runId=71d5adb3-c5da-4d82-8c1a-11258082feb9 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=45688 at=2026-09-14T00:07:56.802Z
-RUN ticket=293close runId=36f7049f-9874-4dc4-b7b1-fea64c3259fb cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=1 exit=0 pid=46988 at=2026-09-14T00:08:01.351Z
-RUN ticket=293close runId=a83e2865-bb5d-428c-9f70-24a1bc51ef91 cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 exit=0 pid=45448 at=2026-09-14T00:08:01.541Z
+RUN ticket=293close2 runId=7e5edb90-c94e-485f-a13a-758c2d5339e9 cmd="node node_modules/typescript/bin/tsc -b" waitedMs=1 exit=0 pid=43572 at=2026-09-14T00:30:02.830Z
+RUN ticket=293close2 runId=36904195-9e00-426b-9a8e-806bc260ef4d cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=0 exit=0 pid=19880 at=2026-09-14T00:30:05.328Z
+RUN ticket=293close2 runId=fbe6b81b-b71c-41f2-9474-39103f18fa4c cmd="node packages/skill-calorie/scripts/gen-cli.mjs --stamp" waitedMs=1 exit=0 pid=37644 at=2026-09-14T00:30:05.509Z
+RUN ticket=293close2 runId=0a6c0507-29db-45c1-a185-8504217eac0a cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=34324 at=2026-09-14T00:30:05.794Z
+RUN ticket=293close2 runId=726aa620-aecb-4a11-9d34-214d5e1d5475 cmd="node --test test/*.test.mjs packages/base-render/test/*.test.mjs packages/skill-calorie/test/*.test.mjs packages/skill-memo-ilife/test/*.test.mjs packages/skill-schedule/test/*.test.mjs packages/skill-home/test/*.test.mjs packages/skill-bill/test/*.test.mjs packages/skill-chef/test/*.test.mjs packages/plugin-manager/test/*.test.mjs packages/plugin-calorie/test/*.test.mjs packages/plugin-memo-ilife/test/*.test.mjs packages/plugin-schedule-ilife/test/*.test.mjs packages/plugin-home-ilife/test/*.test.mjs packages/plugin-chef/test/*.test.mjs packages/plugin-bill-ilife/test/*.test.mjs" waitedMs=0 exit=0 pid=45632 at=2026-09-14T00:30:49.057Z
+RUN ticket=293close2 runId=df9eca95-7f5e-4ab1-b8cc-ebc5825298a1 cmd="node --test test/calorie-routing-81.test.mjs" waitedMs=0 exit=0 pid=36964 at=2026-09-14T00:30:49.409Z
+RUN ticket=293close2 runId=15f2528b-fc0b-4fe7-b985-ce7f2e5ef302 cmd="node docs/skills/skill-calorie/t293-验收-命令自治.mjs" waitedMs=0 exit=0 pid=8652 at=2026-09-14T00:30:54.437Z
+RUN ticket=293close2 runId=f69c7e40-9808-4019-ac80-0163e26c649f cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=1 exit=0 pid=24332 at=2026-09-14T00:30:54.632Z
 ```
