@@ -1,0 +1,46 @@
+START ticket=351 runId=t351-a2-brief-add cmd="git add docs/skills/skill-calorie/t351-a2-review-brief.md" waitedMs=280198 pid=29724 at=2026-09-14T12:05:49.074Z
+RUN ticket=351 runId=t351-a2-brief-add cmd="git add docs/skills/skill-calorie/t351-a2-review-brief.md" waitedMs=280198 exit=0 pid=29724 at=2026-09-14T12:05:49.126Z
+START ticket=351 runId=t351-a2-brief-commit cmd="git commit -F .scratch/t351-ux/commit-msg6.txt -- docs/skills/skill-calorie/t351-a2-review-brief.md" waitedMs=0 pid=47448 at=2026-09-14T12:05:49.262Z
+RUN ticket=351 runId=t351-a2-brief-commit cmd="git commit -F .scratch/t351-ux/commit-msg6.txt -- docs/skills/skill-calorie/t351-a2-review-brief.md" waitedMs=0 exit=0 pid=47448 at=2026-09-14T12:05:49.345Z
+START ticket=351 runId=t351-a2-brief-push cmd="git push" waitedMs=0 pid=4616 at=2026-09-14T12:06:15.149Z
+RUN ticket=351 runId=t351-a2-brief-push cmd="git push" waitedMs=0 exit=0 pid=4616 at=2026-09-14T12:06:17.888Z
+START ticket=351 runId=t351-a2-a2types cmd="pnpm test:types" waitedMs=20029 pid=39568 at=2026-09-14T12:28:39.322Z
+RUN ticket=351 runId=t351-a2-a2types cmd="pnpm test:types" waitedMs=20029 exit=0 pid=39568 at=2026-09-14T12:28:40.187Z
+START ticket=351 runId=t351-a2-add cmd="git add packages/skill-calorie/src/render/workoutMovementTable.ts packages/skill-calorie/src/render/workoutPlanDocs.ts docs/skills/skill-calorie/t351-redesign-184-spec.md" waitedMs=0 pid=18288 at=2026-09-14T12:31:02.232Z
+RUN ticket=351 runId=t351-a2-add cmd="git add packages/skill-calorie/src/render/workoutMovementTable.ts packages/skill-calorie/src/render/workoutPlanDocs.ts docs/skills/skill-calorie/t351-redesign-184-spec.md" waitedMs=0 exit=0 pid=18288 at=2026-09-14T12:31:02.277Z
+START ticket=351 runId=t351-a2-commit cmd="git commit -F .scratch/t351-ux/commit-msg-a2.txt -- packages/skill-calorie/src/render/workoutMovementTable.ts packages/skill-calorie/src/render/workoutPlanDocs.ts docs/skills/skill-calorie/t351-redesign-184-spec.md" waitedMs=0 pid=42144 at=2026-09-14T12:31:09.387Z
+RUN ticket=351 runId=t351-a2-commit cmd="git commit -F .scratch/t351-ux/commit-msg-a2.txt -- packages/skill-calorie/src/render/workoutMovementTable.ts packages/skill-calorie/src/render/workoutPlanDocs.ts docs/skills/skill-calorie/t351-redesign-184-spec.md" waitedMs=0 exit=0 pid=42144 at=2026-09-14T12:31:09.485Z
+START ticket=351 runId=t351-a2-push cmd="git push" waitedMs=0 pid=50668 at=2026-09-14T12:31:16.331Z
+RUN ticket=351 runId=t351-a2-push cmd="git push" waitedMs=0 exit=0 pid=50668 at=2026-09-14T12:31:18.517Z
+START ticket=351 runId=t351-a2-a2scene cmd="node --test test/scene05-read.test.mjs test/scene05-write-create.test.mjs test/scene05-write-mutate.test.mjs" waitedMs=0 pid=47064 at=2026-09-14T12:32:32.406Z
+RUN ticket=351 runId=t351-a2-a2scene cmd="node --test test/scene05-read.test.mjs test/scene05-write-create.test.mjs test/scene05-write-mutate.test.mjs" waitedMs=0 exit=0 pid=47064 at=2026-09-14T12:32:36.622Z
+START ticket=351 runId=t351-a2-mut1 cmd="node .scratch/t351-a2/mutate.mjs --mutant m1 --out .scratch/t351-fix/mut/m1" waitedMs=10012 pid=52456 at=2026-09-14T12:33:15.721Z
+RUN ticket=351 runId=t351-a2-mut1 cmd="node .scratch/t351-a2/mutate.mjs --mutant m1 --out .scratch/t351-fix/mut/m1" waitedMs=10012 exit=0 pid=52456 at=2026-09-14T12:33:27.903Z
+START ticket=351 runId=t351-a2-mut1b cmd="node .scratch/t351-a2/mutate.mjs --mutant m1 --out .scratch/t351-fix/mut/m1" waitedMs=0 pid=28212 at=2026-09-14T12:34:36.522Z
+RUN ticket=351 runId=t351-a2-mut1b cmd="node .scratch/t351-a2/mutate.mjs --mutant m1 --out .scratch/t351-fix/mut/m1" waitedMs=0 exit=0 pid=28212 at=2026-09-14T12:34:49.955Z
+START ticket=351 runId=t351-a2-mut2 cmd="node .scratch/t351-a2/mutate.mjs --mutant m2 --out .scratch/t351-fix/mut/m2" waitedMs=20022 pid=3128 at=2026-09-14T12:34:59.944Z
+RUN ticket=351 runId=t351-a2-mut2 cmd="node .scratch/t351-a2/mutate.mjs --mutant m2 --out .scratch/t351-fix/mut/m2" waitedMs=20022 exit=0 pid=3128 at=2026-09-14T12:35:15.351Z
+START ticket=351 runId=t351-a2-v4full cmd="node .scratch/t351-fix/v4/run-176-207-v4.mjs --out .scratch/t351-fix/final-v4" waitedMs=0 pid=35196 at=2026-09-14T12:35:35.072Z
+RUN ticket=351 runId=t351-a2-v4full cmd="node .scratch/t351-fix/v4/run-176-207-v4.mjs --out .scratch/t351-fix/final-v4" waitedMs=0 exit=0 pid=35196 at=2026-09-14T12:35:45.964Z
+START ticket=351 runId=t351-a2-v4real cmd="node .scratch/t351-fix/v4/run-realdata-v4.mjs --out .scratch/t351-fix/final-v4/realdata" waitedMs=1 pid=3004 at=2026-09-14T12:35:56.016Z
+RUN ticket=351 runId=t351-a2-v4real cmd="node .scratch/t351-fix/v4/run-realdata-v4.mjs --out .scratch/t351-fix/final-v4/realdata" waitedMs=1 exit=1 pid=3004 at=2026-09-14T12:35:56.099Z
+START ticket=351 runId=t351-a2-v4real2 cmd="node .scratch/t351-fix/v4/run-realdata-v4.mjs --out .scratch/t351-fix/final-v4/realdata" waitedMs=10012 pid=2744 at=2026-09-14T12:36:35.925Z
+RUN ticket=351 runId=t351-a2-v4real2 cmd="node .scratch/t351-fix/v4/run-realdata-v4.mjs --out .scratch/t351-fix/final-v4/realdata" waitedMs=10012 exit=1 pid=2744 at=2026-09-14T12:36:36.295Z
+START ticket=351 runId=t351-a2-a2types2 cmd="pnpm test:types" waitedMs=0 pid=6648 at=2026-09-14T12:39:09.979Z
+RUN ticket=351 runId=t351-a2-a2types2 cmd="pnpm test:types" waitedMs=0 exit=0 pid=6648 at=2026-09-14T12:39:11.348Z
+START ticket=351 runId=t351-a2-mut1c cmd="node .scratch/t351-a2/mutate.mjs --mutant m1 --out .scratch/t351-fix/mut/m1" waitedMs=20013 pid=2956 at=2026-09-14T12:40:47.926Z
+RUN ticket=351 runId=t351-a2-mut1c cmd="node .scratch/t351-a2/mutate.mjs --mutant m1 --out .scratch/t351-fix/mut/m1" waitedMs=20013 exit=0 pid=2956 at=2026-09-14T12:41:00.413Z
+START ticket=351 runId=t351-a2-mut2b cmd="node .scratch/t351-a2/mutate.mjs --mutant m2 --out .scratch/t351-fix/mut/m2" waitedMs=30034 pid=30612 at=2026-09-14T12:41:01.844Z
+RUN ticket=351 runId=t351-a2-mut2b cmd="node .scratch/t351-a2/mutate.mjs --mutant m2 --out .scratch/t351-fix/mut/m2" waitedMs=30034 exit=0 pid=30612 at=2026-09-14T12:41:14.204Z
+START ticket=351 runId=t351-a2-v4full2 cmd="node .scratch/t351-a2/fresh-run.mjs .scratch/t351-fix/final-v4 .scratch/t351-fix/v4/run-176-207-v4.mjs" waitedMs=0 pid=48656 at=2026-09-14T12:41:48.843Z
+RUN ticket=351 runId=t351-a2-v4full2 cmd="node .scratch/t351-a2/fresh-run.mjs .scratch/t351-fix/final-v4 .scratch/t351-fix/v4/run-176-207-v4.mjs" waitedMs=0 exit=0 pid=48656 at=2026-09-14T12:41:58.691Z
+START ticket=351 runId=t351-a2-v4real3 cmd="node .scratch/t351-a2/fresh-run.mjs .scratch/t351-fix/final-v4/realdata .scratch/t351-fix/v4/run-realdata-v4.mjs" waitedMs=0 pid=43384 at=2026-09-14T12:42:07.129Z
+RUN ticket=351 runId=t351-a2-v4real3 cmd="node .scratch/t351-a2/fresh-run.mjs .scratch/t351-fix/final-v4/realdata .scratch/t351-fix/v4/run-realdata-v4.mjs" waitedMs=0 exit=0 pid=43384 at=2026-09-14T12:42:07.522Z
+START ticket=351 runId=t351-a2-a2pkg cmd="node --test packages/skill-calorie/test/*.test.mjs" waitedMs=0 pid=40520 at=2026-09-14T12:42:16.979Z
+RUN ticket=351 runId=t351-a2-a2pkg cmd="node --test packages/skill-calorie/test/*.test.mjs" waitedMs=0 exit=1 pid=40520 at=2026-09-14T12:43:19.165Z
+START ticket=351 runId=t351-a2-a2readblock cmd="node .scratch/t351-review/probe-read-block.mjs" waitedMs=70071 pid=44264 at=2026-09-14T12:43:39.014Z
+RUN ticket=351 runId=t351-a2-a2readblock cmd="node .scratch/t351-review/probe-read-block.mjs" waitedMs=70071 exit=0 pid=44264 at=2026-09-14T12:43:40.609Z
+START ticket=351 runId=t351-a2-a2plan cmd="node --test packages/skill-calorie/test/db-readonly-93.test.mjs packages/skill-calorie/test/exercise-routes-265.test.mjs packages/skill-calorie/test/exercise-wakewords-266.test.mjs packages/skill-calorie/test/output-naming-119.test.mjs packages/skill-calorie/test/t156-fusion-sample.test.mjs" waitedMs=0 pid=628 at=2026-09-14T12:43:43.265Z
+RUN ticket=351 runId=t351-a2-a2plan cmd="node --test packages/skill-calorie/test/db-readonly-93.test.mjs packages/skill-calorie/test/exercise-routes-265.test.mjs packages/skill-calorie/test/exercise-wakewords-266.test.mjs packages/skill-calorie/test/output-naming-119.test.mjs packages/skill-calorie/test/t156-fusion-sample.test.mjs" waitedMs=0 exit=0 pid=628 at=2026-09-14T12:43:45.937Z
+START ticket=351 runId=t351-a2-fixaddcommit cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/src/render/workoutMovementTable.ts docs/skills/skill-calorie/t351-redesign-184-spec.md; git diff --cached --name-only; git commit -F .scratch/t351-a2/commit-msg-fix.txt -- packages/skill-calorie/src/render/workoutMovementTable.ts docs/skills/skill-calorie/t351-redesign-184-spec.md\"" waitedMs=10015 pid=40896 at=2026-09-14T12:44:56.774Z
+RUN ticket=351 runId=t351-a2-fixaddcommit cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/src/render/workoutMovementTable.ts docs/skills/skill-calorie/t351-redesign-184-spec.md; git diff --cached --name-only; git commit -F .scratch/t351-a2/commit-msg-fix.txt -- packages/skill-calorie/src/render/workoutMovementTable.ts docs/skills/skill-calorie/t351-redesign-184-spec.md\"" waitedMs=10015 exit=0 pid=40896 at=2026-09-14T12:44:57.150Z
