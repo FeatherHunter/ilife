@@ -1,0 +1,56 @@
+{
+  "cases": [
+    {
+      "wake": "看今日主页",
+      "key": "calorie.view.home",
+      "params": {
+        "date": "今日"
+      },
+      "sha256": "d7c7366526afff1a0ecaf679cc3736fcd0a7ee4eb74295371b926e8b3ae327b7",
+      "bytes": 2499,
+      "doctype": false
+    },
+    {
+      "wake": "看本周主页",
+      "key": "calorie.view.home",
+      "params": {
+        "windowDays": 7,
+        "date": "今日"
+      },
+      "sha256": "d7c7366526afff1a0ecaf679cc3736fcd0a7ee4eb74295371b926e8b3ae327b7",
+      "bytes": 2499,
+      "doctype": false
+    },
+    {
+      "wake": "看本月主页",
+      "key": "calorie.view.home",
+      "params": {
+        "windowDays": 30,
+        "date": "今日"
+      },
+      "sha256": "3bfb2783f6332e41af564ae59a6f7f3e637fcd29f13aa84fe6b263d6df36bce6",
+      "bytes": 2499,
+      "doctype": false
+    },
+    {
+      "wake": "看连续记录天数",
+      "key": "calorie.view.home",
+      "params": {
+        "date": "今日"
+      },
+      "sha256": "d7c7366526afff1a0ecaf679cc3736fcd0a7ee4eb74295371b926e8b3ae327b7",
+      "bytes": 2499,
+      "doctype": false
+    },
+    {
+      "wake": "看今日热量预算",
+      "key": "calorie.view.home",
+      "params": {
+        "date": "今日"
+      },
+      "sha256": "d7c7366526afff1a0ecaf679cc3736fcd0a7ee4eb74295371b926e8b3ae327b7",
+      "bytes": 2499,
+      "doctype": false
+    }
+  ]
+}
