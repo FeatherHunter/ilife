@@ -81,7 +81,7 @@ function run(key, params, env) {
   return spawnSync(NODE_BIN, [BIN, ...a], { encoding: 'utf8', env: { ...process.env, ...env } });
 }
 
-/** 35 写键逐键场景：pre＝前置写（取 id），params＝被测键参数（可为 ids => params）。 */
+/** 40 写键逐键场景：pre＝前置写（取 id），params＝被测键参数（可为 ids => params）。 */
 export const SCENARIOS = [
   { key: 'calorie.diet.add', params: { foodName: '鸡胸', calories: 200, protein: 35, date: '2026-09-06', time: '12:10:00' } },
   { key: 'calorie.diet.update', pre: [['calorie.diet.add', { foodName: '牛肉', calories: 250, protein: 30, date: '2026-09-06', time: '12:20:00' }]], params: (ids) => ({ id: ids[0], grams: 150 }) },
@@ -118,6 +118,11 @@ export const SCENARIOS = [
   { key: 'calorie.body.composition-remove', pre: [['calorie.body.composition-add', { source: 'gym', bodyFatPct: 19.5, date: '2026-09-06' }]], params: (ids) => ({ id: ids[0] }) },
   { key: 'calorie.body.measure-add', params: { waistCm: 85, hipCm: 95, date: '2026-09-06' } },
   { key: 'calorie.body.measure-remove', pre: [['calorie.body.measure-add', { waistCm: 86, date: '2026-09-06' }]], params: (ids) => ({ id: ids[0] }) },
+  { key: 'calorie.workout.plan-set', params: { plan: { config: { title: 't97计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }] }] }] } } },
+  { key: 'calorie.workout.plan-copy', pre: [['calorie.workout.plan-set', { plan: { config: { title: 't97计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫'] }, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }] }] }] } }]], params: { newTitle: 't97副本' } },
+  { key: 'calorie.workout.plan-set-week', params: { week: 1, days: [{ dayOfWeek: 1, sessionLabel: '上肢', movements: [{ name: '俯卧撑' }] }] } },
+  { key: 'calorie.workout.plan-add-movement', params: { week: 1, dayOfWeek: 2, movement: { name: '深蹲' } } },
+  { key: 'calorie.workout.plan-set-rest', params: { week: 1, dayOfWeek: 3 } },
 ];
 
 function main() {

@@ -25,6 +25,7 @@ import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } 
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 import type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
+import type { WritePreview } from '../workout/write.js';
 import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';
 import type { ProfileView } from '../profile/view.js';
@@ -554,6 +555,17 @@ export function renderPlanVsActualHtml(v: PlanVsActualView): string {
     kpi('完成率', v.completionRate === null ? '—' : v.completionRate + '%', v.plannedCount === 0 ? '窗内无计划' : '') +
     '</div><div class="' + cx('grid') + '">' + rows + '</div>';
   return pageShell('calorie', 'ilife:calorie:plan-vs-actual', '计划比实际', body);
+}
+
+export function renderPlanWritePreviewHtml(v: WritePreview): string {
+  const before = v.before.slice(0, 8).map((b) => '<div>' + escapeHtml(b) + '</div>').join('');
+  const after = v.after.slice(0, 8).map((a) => '<div>' + escapeHtml(a) + '</div>').join('');
+  const body =
+    '<div class="' + cx('grid') + '">' +
+    kpi('写前预览', v.title, '改前 ' + v.before.length + ' 行 → 改后 ' + v.after.length + ' 行') +
+    kpi('确认', '复制 prompt 后执行写命令', v.note) +
+    '</div><div><b>改前</b>' + before + '</div><div><b>改后</b>' + after + '</div>';
+  return pageShell('calorie', 'ilife:calorie:plan-write-preview', '写前预览', body);
 }
 
 export function renderPlanWizardHtml(v: PlanWizardView): string {

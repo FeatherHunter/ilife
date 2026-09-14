@@ -161,6 +161,9 @@ const READ_PARAMS = {
   'calorie.photo.gif': { tag: '正面', dateFrom: D3, dateTo: D0 },
   'calorie.help.lookup': { q: '看今日主页' },
   'calorie.history': { days: 7 },
+  // #348 · 计划比实际＋写前预览（只读句柄同跑；t93 种子有计划行，copy 预览不写库）
+  'calorie.view.plan-vs-actual': RANGE,
+  'calorie.view.plan-write-preview': { op: 'copy' },
 };
 
 // ---------------------------------------------------------------- sweep 子进程
@@ -279,7 +282,7 @@ test('#93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接�
 });
 
 // ---------------------------------------------------------------- 验收 ①：读键全部可用 ＋ 接线等价
-test('#93 ① 66 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4／#179 +1／#251 +1）', () => {
+test('#93 ① 68 读键在只读句柄上逐个可用，且与可写句柄 data/html 全等（#113 +8／#86 +4／#179 +1／#251 +1／#347 +1／#348 +1）', () => {
   const tpl = makeTemplate();
   const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--sweep', tpl], { encoding: 'utf8' });
   assert.equal(r.status, 0, 'sweep 子进程必须正常退出：' + String(r.stderr).slice(0, 400));

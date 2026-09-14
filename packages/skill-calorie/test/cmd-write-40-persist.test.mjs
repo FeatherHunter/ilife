@@ -1,4 +1,4 @@
-/** #101 · 写链**落库断言**（35 写键逐键「写后 SELECT 回读」）＋ 删除回执可恢复性口径。
+/** #101 · 写链**落库断言**（40 写键逐键「写后 SELECT 回读」）＋ 删除回执可恢复性口径。
  *
  * 与 `cmd-write-40.test.mjs` 的分工：那份只断言 stdout envelope／回执行字串与 exit 契约，
  * 本份**只认库内行**——每个写键跑完 CLI（独立进程，`SKILLS_DB_PATH` 指向 tmp 库）后，
@@ -7,7 +7,7 @@
  *
  * 覆盖门（#101 返修 H2）：**不再自报**。`withRead(dir, key, fn)` 必须声明所校验的写键，
  * 且内部用 Proxy 统计真实 `prepare()` 次数——某键的 SELECT 块被删空即 `reads = 0` 直接抛，
- * 覆盖门再断言 35 键**每键 ≥1 次真实只读查询**（删断言而保留登记不会变绿）。
+ * 覆盖门再断言 40 键**每键 ≥1 次真实只读查询**（删断言而保留登记不会变绿）。
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/cmd-write-40-persist.test.mjs`
  */
@@ -47,7 +47,7 @@ function promisesRecovery(text) {
   return String(text).split('不可恢复').join('').includes('可恢复');
 }
 
-/** 每键**真实只读查询**次数（覆盖门据此断言 35/35；不是自报登记）。 */
+/** 每键**真实只读查询**次数（覆盖门据此断言 40/40；不是自报登记）。 */
 const readsByKey = new Map();
 
 function seedDb(db) {
@@ -743,6 +743,93 @@ test('口径 · 删除回执可恢复性：文案与库内语义一致（软删�
     assert.ok(SOFT_DELETE_KEYS.has(k) || HARD_DELETE_KEYS.has(k), '删除键未归类可恢复性：' + k);
   }
   assert.equal(SOFT_DELETE_KEYS.size + HARD_DELETE_KEYS.size, deleteKeys.length, '删除键归类数量与注册表不符');
+});
+
+// ---------------------------------------------------------------- 训练计划（5 写键）
+
+const T2_PLAN = {
+  config: { title: '落库计划', start_date: '2026-09-07', user_level: '中手', available_equipment: ['瑜伽垫', '杠铃'] },
+  weeks: [{ week_number: 1, days: [
+    { day_of_week: 1, sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑', part: '胸', type: '力量', sets: [] }] }] },
+    { day_of_week: 3, sessions: [{ session_label: '下肢', movements: [{ name: '深蹲', part: '腿', type: '力量', sets: [] }] }] },
+  ] }],
+};
+
+function seedPlan(dir) {
+  runWrite(dir, 'calorie.workout.plan-set', { plan: T2_PLAN });
+}
+
+test('落库 · 训练计划 set/copy/set-week/add-movement/set-rest：回执与库内行', () => {
+  // set：整份替换逐列回读
+  {
+    const dir = mkEmpty();
+    runWrite(dir, 'calorie.workout.plan-set', { plan: T2_PLAN });
+    withRead(dir, 'calorie.workout.plan-set', (db) => {
+      const cfg = q1(db, 'SELECT title, total_weeks, start_date FROM workout_plan_config WHERE id = 1');
+      assert.ok(cfg, 'plan-set 未落 config 行');
+      assert.equal(cfg.title, '落库计划');
+      assert.equal(cfg.total_weeks, 1);
+      assert.equal(cfg.start_date, '2026-09-07');
+      const rows = qn(db, 'SELECT week_number, day_of_week, session_label, movements FROM workout_plans ORDER BY day_of_week');
+      assert.equal(rows.length, 2, 'plan-set 会话行数不符');
+      assert.equal(rows[0].session_label, '上肢');
+      assert.ok(String(rows[0].movements).includes('俯卧撑'), 'plan-set 动作未落库');
+    });
+  }
+  // copy：整份复制换标题、行数一致
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-copy', { newTitle: '副本' });
+    withRead(dir, 'calorie.workout.plan-copy', (db) => {
+      assert.equal(q1(db, 'SELECT title FROM workout_plan_config WHERE id = 1').title, '副本', 'plan-copy 未换标题');
+      assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plans').n, 2, 'plan-copy 行数不符');
+    });
+  }
+  // copy：单周复制到新周
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-copy', { week: 1, toWeek: 3 });
+    withRead(dir, 'calorie.workout.plan-copy', (db) => {
+      assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plans WHERE week_number = 3').n, 2, 'plan-copy 单周未落目标周');
+    });
+  }
+  // set-week：该周先清后写
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-set-week', { week: 1, days: [{ dayOfWeek: 2, sessionLabel: '背', movements: [{ name: '硬拉' }] }] });
+    withRead(dir, 'calorie.workout.plan-set-week', (db) => {
+      const rows = qn(db, 'SELECT day_of_week, session_label FROM workout_plans WHERE week_number = 1');
+      assert.equal(rows.length, 1, 'plan-set-week 未先清后写');
+      assert.equal(rows[0].day_of_week, 2);
+      assert.equal(rows[0].session_label, '背');
+    });
+  }
+  // add-movement：时段追加动作
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-add-movement', { week: 1, dayOfWeek: 1, movement: { name: '深蹲' } });
+    withRead(dir, 'calorie.workout.plan-add-movement', (db) => {
+      const row = q1(db, 'SELECT movements FROM workout_plans WHERE week_number = 1 AND day_of_week = 1');
+      assert.ok(String(row.movements).includes('俯卧撑') && String(row.movements).includes('深蹲'), 'plan-add-movement 未追加落库');
+    });
+  }
+  // set-rest：休息标记落库
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    runWrite(dir, 'calorie.workout.plan-set-rest', { week: 1, dayOfWeek: 3 });
+    withRead(dir, 'calorie.workout.plan-set-rest', (db) => {
+      assert.equal(q1(db, 'SELECT is_rest_day FROM workout_plans WHERE week_number = 1 AND day_of_week = 3').is_rest_day, 1, 'plan-set-rest 未落标记');
+    });
+    runWrite(dir, 'calorie.workout.plan-set-rest', { week: 1, dayOfWeek: 3, rest: false });
+    withRead(dir, 'calorie.workout.plan-set-rest', (db) => {
+      assert.equal(q1(db, 'SELECT is_rest_day FROM workout_plans WHERE week_number = 1 AND day_of_week = 3').is_rest_day, 0, 'plan-set-rest 取消未落库');
+    });
+  }
 });
 
 // ---------------------------------------------------------------- 覆盖门

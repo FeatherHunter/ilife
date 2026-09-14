@@ -300,6 +300,12 @@ export function copyWeek(db: DatabaseSync, fromWn: number, toWn: number): { copi
   return { copiedRows: Number(ins.changes), fromWeek: fromWn, toWeek: toWn };
 }
 
+/** 清空某一周的会话（只删行，不重编周号；定一周计划先清后写用它——`deleteWeek` 会前移后续周，不适用）。 */
+export function clearWeek(db: DatabaseSync, wn: number): { clearedWeek: number; clearedRows: number } {
+  const upd = db.prepare('DELETE FROM workout_plans WHERE week_number = ?').run(wn);
+  return { clearedWeek: wn, clearedRows: Number(upd.changes) };
+}
+
 export function deleteWeek(db: DatabaseSync, wn: number): { deletedWeek: number } {
   db.prepare('DELETE FROM workout_plans WHERE week_number = ?').run(wn);
   db.prepare('UPDATE workout_plans SET week_number = week_number - 1 WHERE week_number > ?').run(wn);

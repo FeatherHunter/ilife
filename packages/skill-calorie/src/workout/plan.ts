@@ -7,10 +7,11 @@
  * 本能力只经它们的公开函数调用，不把那份取数抄进自己目录（铁律一）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { renderPlanHtml, renderPlanVsActualHtml } from '../render/html.js';
+import { renderPlanHtml, renderPlanVsActualHtml, renderPlanWritePreviewHtml } from '../render/html.js';
 import { buildPlanView, buildPlanVsActualView } from '../render/planPlate.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { anchorOf, assertISO, dayField, fail, nums, optInt, optStr, windowRange } from '../shared/params.js';
+import { previewWrite } from './write.js';
 
 /** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率；带筛选即看该粒度）。 */
 export function viewPlan(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
@@ -25,6 +26,12 @@ export function viewPlan(params: Record<string, unknown>, db: DatabaseSync): Vie
   return { data: { metrics }, html: renderPlanHtml(v) };
 }
 
+/** `calorie.view.plan-write-preview` · 写前预览（只读：改前 → 改后，不写库；与写实现同一定位规则）。 */
+export function viewPlanWritePreview(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  const v = previewWrite(params, db);
+  const metrics = nums({ beforeLines: v.before.length, afterLines: v.after.length });
+  return { data: { metrics }, html: renderPlanWritePreviewHtml(v) };
+}
 /** `calorie.view.plan-vs-actual` · 计划比实际（窗内计划动作 × 运动记录逐日命中；缺 `window` 即本周）。 */
 export function viewPlanVsActual(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const s0 = optStr(params, 'start');

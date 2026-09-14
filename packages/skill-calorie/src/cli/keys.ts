@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 35 ＋ 读 67 ＝ 102 条。
+ * registry 合法键表：写 40 ＋ 读 68 ＝ 108 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -55,6 +55,11 @@ export const CALORIE_WRITE_COMBOS = {
   'calorie.weight.log': { shape: 'receipt' as EnvelopeShape, title: '记体重' },
   'calorie.weight.remove': { shape: 'receipt' as EnvelopeShape, title: '删体重' },
   'calorie.weight.update': { shape: 'receipt' as EnvelopeShape, title: '改体重' },
+  'calorie.workout.plan-add-movement': { shape: 'receipt' as EnvelopeShape, title: '加训练动作' },
+  'calorie.workout.plan-copy': { shape: 'receipt' as EnvelopeShape, title: '复制训练计划' },
+  'calorie.workout.plan-set': { shape: 'receipt' as EnvelopeShape, title: '定训练计划' },
+  'calorie.workout.plan-set-rest': { shape: 'receipt' as EnvelopeShape, title: '定休息日' },
+  'calorie.workout.plan-set-week': { shape: 'receipt' as EnvelopeShape, title: '定一周计划' },
 } as const;
 
 export type CalorieWriteKey = keyof typeof CALORIE_WRITE_COMBOS;
@@ -117,6 +122,7 @@ export const CALORIE_COMBOS = {
   'calorie.view.plan': { shape: 'stat' as EnvelopeShape, title: '训练计划看' },
   'calorie.view.plan-vs-actual': { shape: 'stat' as EnvelopeShape, title: '计划比实际' },
   'calorie.view.plan-wizard': { shape: 'stat' as EnvelopeShape, title: '构建向导' },
+  'calorie.view.plan-write-preview': { shape: 'stat' as EnvelopeShape, title: '写前预览' },
   'calorie.view.predict': { shape: 'stat' as EnvelopeShape, title: '体重预测' },
   'calorie.view.process-progress': { shape: 'stat' as EnvelopeShape, title: '落地训练进度' },
   'calorie.view.profile': { shape: 'stat' as EnvelopeShape, title: '档案视图' },

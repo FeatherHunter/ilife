@@ -60,6 +60,7 @@ export {
   renderBodyMeasureHtml,
   renderPlanHtml,
   renderPlanVsActualHtml,
+  renderPlanWritePreviewHtml,
   renderPlanWizardHtml,
   renderExerciseGoalHtml,
   renderGoalExpiringHtml,

@@ -44,6 +44,72 @@
       "owner": "t293 验收探针精度修复席（第二任）",
       "date": "2026-09-13",
       "evidence": "与 :204 同源同数（照片域 10 条）。"
+    },
+    {
+      "file": "packages/skill-calorie/test/cmd-write-40-persist.test.mjs",
+      "line": 495,
+      "anchor": 68,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：68 是**种子体重目标 68kg**（`calorie.goal.weight` 示例值；同文件 :492 用 kg:68 写入），断言另一侧是 `row.weight_goal`（库内域值回读），不含 keys／键／声明／registry。只是数值撞上当刻读命令总数锚 68（#348 加预览读命令致 67→68）。加删命令不必手改本行（改种子体重目标值才需动）。",
+      "enforcer": "本探针 ② 桶对账（字段齐全 ＋ 该行仍把 68 当被比操作数）；域值本身由落库块逐列回读守（:493-499 同块）。",
+      "owner": "#348 训练计划写命令席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(row.weight_goal, 68, 'goal.weight 的 kg 未落库');`（种子写入见同文件 :492 `{ kg: 68, deadline: ... }`）。"
+    },
+    {
+      "file": "packages/skill-calorie/test/goal-upsert-127.test.mjs",
+      "line": 105,
+      "anchor": 68,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：68 是种子体重目标 68kg（同文件 :31／:65／:95 三处 `weight_goal = 68.0` 写入），另一侧 `after.weight_goal` 为库内域值。数值撞锚而已。加删命令不必手改本行。",
+      "enforcer": "本探针 ② 桶对账；域值本身由 goal-upsert-127 自己的 UPSERT 断言守。",
+      "owner": "#348 训练计划写命令席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(after.weight_goal, 68);`；种子值见 :31。"
+    },
+    {
+      "file": "packages/skill-calorie/test/m5-receipt-97.test.mjs",
+      "line": 283,
+      "anchor": 68,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：68 是种子体重目标 68kg（UPSERT 保持原值断言），另一侧 `after1.weight_goal` 为库内域值。数值撞锚而已。加删命令不必手改本行。",
+      "enforcer": "本探针 ② 桶对账；域值本身由 m5-receipt-97 的回执断言守。",
+      "owner": "#348 训练计划写命令席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(after1.weight_goal, 68, 'weight_goal 保持原值（#127 UPSERT）');`。"
+    },
+    {
+      "file": "packages/skill-calorie/test/render-t41.test.mjs",
+      "line": 89,
+      "anchor": 68,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：68 是种子体重目标 68kg 在仪表盘视图的回显（`dash.weightGoal`），另一侧为视图域值。数值撞锚而已。加删命令不必手改本行。",
+      "enforcer": "本探针 ② 桶对账；域值本身由 render-t41 的仪表盘断言守。",
+      "owner": "#348 训练计划写命令席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(dash.weightGoal, 68);`。"
+    },
+    {
+      "file": "packages/skill-calorie/test/render-t41.test.mjs",
+      "line": 105,
+      "anchor": 68,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：68 是种子体重目标 68kg 在复盘视图里程碑的回显（`rev.milestone.weightGoal`）。数值撞锚而已。加删命令不必手改本行。",
+      "enforcer": "本探针 ② 桶对账；域值本身由 render-t41 的复盘断言守。",
+      "owner": "#348 训练计划写命令席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(rev.milestone.weightGoal, 68);`。"
+    },
+    {
+      "file": "packages/skill-calorie/test/render-t41.test.mjs",
+      "line": 290,
+      "anchor": 68,
+      "status": "生效中：域值断言，非权威总量",
+      "reason": "非权威总量：68 是种子体重目标 68kg 在 CLI 实跑回执 metrics 的回显（`wr.data.metrics.weightGoal`）。数值撞锚而已。加删命令不必手改本行。",
+      "enforcer": "本探针 ② 桶对账；域值本身由 render-t41 的 CLI 回执断言守。",
+      "owner": "#348 训练计划写命令席",
+      "date": "2026-09-14",
+      "evidence": "实命中：`assert.equal(wr.data.metrics.weightGoal, 68);`。"
     }
   ]
 }

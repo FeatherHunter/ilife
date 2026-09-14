@@ -179,6 +179,31 @@ combos:
     shape: receipt
     title: 改体重
     cmd: skill-calorie
+  - key: calorie.workout.plan-add-movement
+    skill: calorie
+    shape: receipt
+    title: 加训练动作
+    cmd: skill-calorie
+  - key: calorie.workout.plan-copy
+    skill: calorie
+    shape: receipt
+    title: 复制训练计划
+    cmd: skill-calorie
+  - key: calorie.workout.plan-set
+    skill: calorie
+    shape: receipt
+    title: 定训练计划
+    cmd: skill-calorie
+  - key: calorie.workout.plan-set-rest
+    skill: calorie
+    shape: receipt
+    title: 定休息日
+    cmd: skill-calorie
+  - key: calorie.workout.plan-set-week
+    skill: calorie
+    shape: receipt
+    title: 定一周计划
+    cmd: skill-calorie
   - key: calorie.help.center
     skill: calorie
     shape: list
@@ -438,6 +463,11 @@ combos:
     skill: calorie
     shape: stat
     title: 构建向导
+    cmd: skill-calorie
+  - key: calorie.view.plan-write-preview
+    skill: calorie
+    shape: stat
+    title: 写前预览
     cmd: skill-calorie
   - key: calorie.view.predict
     skill: calorie

@@ -62,10 +62,10 @@ const decodeEntities = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'")
 
 /* ── ① 口径：逐场景 CLI 恒取路由层 exec ──────────────────────────── */
 
-test('① 352/436 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由（红点：helpSceneCli 改回 main_prompt.cli 原文）', () => {
+test('① 357/436 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由（红点：helpSceneCli 改回 main_prompt.cli 原文）', () => {
   const withCli = scenes.filter((s) => helpSceneCli(s.wake_word) !== null);
-  assert.equal(withCli.length, 352, 'exec 场景数 = #81 路由层 exec 桶 352（#252 目标管理 3 条自动算词转入 ＋ #346/#347 场景 05 读筛选 8 条转入）');
-  assert.equal(scenes.length - withCli.length, 84, 'non-exec 84（out-of-scope 10 ＋ legacy-chain 74）');
+  assert.equal(withCli.length, 357, 'exec 场景数 = #81 路由层 exec 桶 357（#252 目标管理 3 条自动算词转入 ＋ #346/#347 场景 05 读筛选 8 条转入 ＋ #348 写创建类 5 条转入）');
+  assert.equal(scenes.length - withCli.length, 79, 'non-exec 79（out-of-scope 10 ＋ legacy-chain 69）');
   for (const scene of withCli) {
     const expected = routeCli(scene.wake_word);
     assert.ok(expected !== null, '路由层应给出 exec CLI：' + scene.wake_word);
@@ -79,7 +79,9 @@ test('① 352/436 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由�
   // 预检页 CLI（3 条互不相同）；余下 2 条的差额来自同时并行的场景 02 改动。
   // #346/#347 再升到 **302**：场景 05 读筛选 8 条转入 exec（其中「看某天练什么」与「看今天练什么」
   // 同串，去重后 ＋7）。
-  assert.equal(new Set(withCli.map((s) => helpSceneCli(s.wake_word))).size, 302, '唯一 CLI 302 条');
+  // #348 再升到 **307**：写创建类 5 条转入 exec（预检页 CLI 5 串互不相同）。
+  // 确认执行新拟入口 5 条不在 436 场景表里，不进本数。
+  assert.equal(new Set(withCli.map((s) => helpSceneCli(s.wake_word))).size, 307, '唯一 CLI 307 条');
 });
 
 test('① 死命令零泄漏：任何 CLI 值都不是 python／mavis／mmx 原文（红点：改回 main_prompt.cli 原文）', () => {
@@ -105,9 +107,9 @@ test('① 未知唤醒词返 null（不返空串冒充，红点：return ""）',
 
 /* ── ② 落位：冻结槽位 editable_fields → Sheet 详情层 ───────────────── */
 
-test('② 数据层：352 条 `editable_fields` 恰 1 行（name/label/value），84 条不发（红点：给全部场景发空值行）', () => {
+test('② 数据层：357 条 `editable_fields` 恰 1 行（name/label/value），79 条不发（红点：给全部场景发空值行）', () => {
   const withField = scenes.filter((s) => Array.isArray(s.editable_fields) && s.editable_fields.length > 0);
-  assert.equal(withField.length, 352);
+  assert.equal(withField.length, 357);
   for (const scene of withField) {
     assert.equal(scene.editable_fields.length, 1, '恰 1 行：' + scene.id);
     const field = scene.editable_fields[0];
@@ -121,10 +123,10 @@ test('② 数据层：352 条 `editable_fields` 恰 1 行（name/label/value）�
   }
 });
 
-test('② 渲染层：file／inline 各 352 条 `data-field="cli"`，落在场景卡内的 Sheet 里（红点：字段发到卡外／不发）', () => {
+test('② 渲染层：file／inline 各 357 条 `data-field="cli"`，落在场景卡内的 Sheet 里（红点：字段发到卡外／不发）', () => {
   for (const [label, html] of [['file', file.html], ['inline', inline.html]]) {
-    assert.equal(count(html, 'data-field="' + HELP_CLI_FIELD_NAME + '"'), 352, label + ' 命令行数');
-    assert.equal(count(html, '>' + HELP_CLI_FIELD_LABEL + '</span>'), 352, label + ' 标签文案数');
+    assert.equal(count(html, 'data-field="' + HELP_CLI_FIELD_NAME + '"'), 357, label + ' 命令行数');
+    assert.equal(count(html, '>' + HELP_CLI_FIELD_LABEL + '</span>'), 357, label + ' 标签文案数');
   }
   const sample = cardFragment(file.html, 'home_today_overview');
   assert.ok(sample.includes('class="ilife-help-shell-sheet"'), '卡内含 Sheet 详情层');

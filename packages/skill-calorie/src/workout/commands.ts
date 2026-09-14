@@ -13,10 +13,17 @@
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewContraindication } from './contraindication.js';
-import { viewPlan, viewPlanVsActual } from './plan.js';
+import { viewPlan, viewPlanVsActual, viewPlanWritePreview } from './plan.js';
 import { viewProcessProgress } from './progress.js';
 import { viewExerciseReview } from './review.js';
 import { viewPlanWizard } from './wizard.js';
+import {
+  writePlanAddMovement,
+  writePlanCopy,
+  writePlanSet,
+  writePlanSetRest,
+  writePlanSetWeek,
+} from './write.js';
 
 export const WORKOUT_COMMANDS = [
   { kind: 'read', key: 'calorie.view.plan', shape: 'stat', title: '训练计划看', wakeWord: '看计划概览', run: viewPlan, example: 'calorie-cmd-read calorie.view.plan --params \'{"date":"今日"}\'' },
@@ -25,4 +32,10 @@ export const WORKOUT_COMMANDS = [
   { kind: 'read', key: 'calorie.view.contraindication', shape: 'stat', title: '禁忌扫描', run: viewContraindication, example: 'calorie-cmd-read calorie.view.contraindication --params \'{"part":"all"}\'' },
   { kind: 'read', key: 'calorie.view.process-progress', shape: 'stat', title: '落地训练进度', wakeWord: '看落地训练进度', run: viewProcessProgress, example: 'calorie-cmd-read calorie.view.process-progress' },
   { kind: 'read', key: 'calorie.view.plan-vs-actual', shape: 'stat', title: '计划比实际', wakeWord: '看计划 vs 实际', run: viewPlanVsActual, example: 'calorie-cmd-read calorie.view.plan-vs-actual --params \'{"window":"本周"}\'' },
+  { kind: 'read', key: 'calorie.view.plan-write-preview', shape: 'stat', title: '写前预览', run: viewPlanWritePreview, example: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"copy"}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-set', shape: 'receipt', title: '定训练计划', wakeWord: '定训练计划', run: writePlanSet, example: 'calorie-cmd-read calorie.workout.plan-set --params \'{"plan":{"config":{"title":"示例计划","start_date":"2026-09-07","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑"}]}]}]}]}}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-copy', shape: 'receipt', title: '复制训练计划', wakeWord: '复制训练计划', run: writePlanCopy, example: 'calorie-cmd-read calorie.workout.plan-copy --params \'{"newTitle":"示例副本"}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-set-week', shape: 'receipt', title: '定一周计划', wakeWord: '定一周计划', run: writePlanSetWeek, example: 'calorie-cmd-read calorie.workout.plan-set-week --params \'{"week":1,"days":[{"dayOfWeek":1,"sessionLabel":"上肢","movements":[{"name":"俯卧撑"}]}]}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-add-movement', shape: 'receipt', title: '加训练动作', wakeWord: '加训练动作', run: writePlanAddMovement, example: 'calorie-cmd-read calorie.workout.plan-add-movement --params \'{"week":1,"dayOfWeek":1,"movement":{"name":"深蹲"}}\'' },
+  { kind: 'write', key: 'calorie.workout.plan-set-rest', shape: 'receipt', title: '定休息日', wakeWord: '定休息日', run: writePlanSetRest, example: 'calorie-cmd-read calorie.workout.plan-set-rest --params \'{"week":1,"dayOfWeek":3}\'' },
 ] satisfies readonly CommandSpec[];
