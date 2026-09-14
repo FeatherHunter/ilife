@@ -5,6 +5,9 @@
  * 不碰：process_progress（落地/训记二期，O3 命中但不执行）／营养 4（→ #112）／
  * 趋势 2＋其他 6（→ #113）／47 页已有（#108–#110 已关）。
  * 运行：先 pnpm --filter skill-calorie build，再 node --test packages/skill-calorie/test/exercise-port-111.test.mjs
+ *
+ * #465 更新判据（族版式换过之后）：可见面零工程话（命令键／票号／工序词）、载荷面认「技能 · 页名」，
+ * 页题与窗口各写各的。旧断言→新断言逐条对照见 `docs/skills/skill-calorie/t465-既有红清零.md`。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
@@ -105,15 +108,34 @@ function assertDoc(h, what) {
   for (const [k, v] of Object.entries(c)) assert.ok(v, what + ' 缺 ' + k);
 }
 
+/** 复制菜单某一格式的 `data-t` 载荷（**机器面**；实体还原后原样返回）。 */
+function copyPayload(html, fmt) {
+  const m = new RegExp('data-fmt="' + fmt + '"[^>]*?data-t="([^"]*)"').exec(html);
+  assert.ok(m !== null, '产物里读不到 ' + fmt + ' 格式的复制载荷');
+  return m[1]
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
+/** **可见面**（人话面）：剥掉样式／脚本与全部标签后的纯文本。
+ *  `data-t` 等机器面住在属性里，随标签一并剥掉——两面才分得开。 */
+function visibleText(html) {
+  return html
+    .replace(/<style>[\s\S]*?<\/style>/g, '')
+    .replace(/<script>[\s\S]*?<\/script>/g, '')
+    .replace(/<[^>]*>/g, '');
+}
+
 const WIN = { start: '2026-09-05', end: '2026-09-07' };
 
 test('#111 域内唤醒词命中：16 词→运动移植 6 键（促进 10＋新拟 6）', () => {
   const pairs = [
     ['看力量训练总览', 'calorie.view.exercise-strength'],
-    ['看运动记录（按力量筛选）', 'calorie.view.exercise-strength'],
+    // 归属 #342（`5d159c0`）：运动记录 3 词改指记录级明细，冻结表／路由／COMBOS 三处同指。
+    ['看运动记录（按力量筛选）', 'calorie.view.exercise-records'],
     ['看力量总览', 'calorie.view.exercise-strength'],
     ['看有氧训练总览', 'calorie.view.exercise-cardio'],
-    ['看运动记录（按有氧筛选）', 'calorie.view.exercise-cardio'],
+    ['看运动记录（按有氧筛选）', 'calorie.view.exercise-records'],
     ['看有氧总览', 'calorie.view.exercise-cardio'],
     ['看运动分类占比', 'calorie.view.exercise-distribution'],
     ['看运动复盘', 'calorie.view.exercise-recap'],
@@ -160,7 +182,8 @@ test('#111 力量总览：按动作聚合＋重量轨迹＋逐条记录', () => 
     assert.equal(out.data.metrics.totalVolumeKg, 1080);
     assert.equal(out.data.metrics.totalReps, 18);
     assertDoc(out.html, 'exercise-strength');
-    for (const needle of ['力量训练总览 2026-09-05 ~ 2026-09-07', '1080', '卧推', '重量轨迹', '按动作聚合', '逐条记录', '复制数据']) {
+    // 版式（#453 融合）：页题与窗口各写各的——窗口住「窗口」卡，题面不再连写窗口。
+    for (const needle of ['力量训练总览', '2026-09-05 ~ 2026-09-07', '1080', '卧推', '重量轨迹', '按动作聚合', '逐条记录', '复制数据']) {
       assert.ok(out.html.includes(needle), 'strength 缺：' + needle);
     }
     assert.ok(out.html.includes('totalVolumeKg'), 'strength 复制文本缺指标');
@@ -178,7 +201,7 @@ test('#111 有氧总览：按类型聚合＋配速＋逐条记录', () => {
     assert.equal(out.data.metrics.totalDistanceKm, 23);
     assert.equal(out.data.metrics.avgPaceMinPerKm, 4.78);
     assertDoc(out.html, 'exercise-cardio');
-    for (const needle of ['有氧训练总览 2026-09-05 ~ 2026-09-07', '4.78 分/公里', '跑步', '骑行', '按类型聚合', '逐条记录', '复制数据']) {
+    for (const needle of ['有氧训练总览', '2026-09-05 ~ 2026-09-07', '4.78 分/公里', '跑步', '骑行', '按类型聚合', '逐条记录', '复制数据']) {
       assert.ok(out.html.includes(needle), 'cardio 缺：' + needle);
     }
   } finally {
@@ -195,7 +218,8 @@ test('#111 类型分布：分类占比双 bar＋摄入/TDEE 联动', () => {
     assert.equal(out.data.metrics.intakeCal, 2689);
     assert.equal(out.data.metrics.deficit, out.data.metrics.tdeeTotal + 1320 - 2689);
     assertDoc(out.html, 'exercise-distribution');
-    for (const needle of ['运动类型分布 2026-09-05 ~ 2026-09-07', '按分类热量分布', '按分类次数占比', '分类明细', '摄入/TDEE 联动', '柔韧', '复制数据']) {
+    // 版式（#453 融合）：分类图两轴改「分类占比」，明细表带窗口；页题与窗口亦各写各的。
+    for (const needle of ['运动类型分布', '2026-09-05 ~ 2026-09-07', '按分类热量分布', '分类占比', '分类明细', '摄入/TDEE 联动', '柔韧', '复制数据']) {
       assert.ok(out.html.includes(needle), 'distribution 缺：' + needle);
     }
   } finally {
@@ -211,7 +235,8 @@ test('#111 运动复盘：KPI＋分类＋TOP5＋日趋势＋一句话', () => {
     assert.equal(out.data.metrics.totalBurned, 1320);
     assert.equal(out.data.metrics.activeDays, 3);
     assertDoc(out.html, 'exercise-recap');
-    for (const needle of ['运动复盘 2026-09-05 ~ 2026-09-07', '每日消耗趋势', '高频 TOP5', '跑步', '6 次', '累计消耗 1320 卡', '复制数据']) {
+    // 版式（#454 融合）：「高频 TOP5」块改名「高频运动」（前 5 名以徽章列，本页窗口仍连写题面）。
+    for (const needle of ['运动复盘 2026-09-05 ~ 2026-09-07', '每日消耗趋势', '高频运动', '跑步', '6 次', '累计消耗 1320 卡', '复制数据']) {
       assert.ok(out.html.includes(needle), 'recap 缺：' + needle);
     }
   } finally {
@@ -230,9 +255,15 @@ test('#111 计划复盘：计划 vs 实绩＋双完成率＋未完成清单', ()
     assert.equal(out.data.metrics.hitMovements, 2);
     assert.equal(out.data.metrics.movementPct, 66.67);
     assertDoc(out.html, 'exercise-review');
-    for (const needle of ['计划复盘', 'port计划', '计划 vs 实做', '每日明细', '硬拉', '户外跑', '复制数据']) {
+    // T351-v7：复盘页按老 exercise_review.html 重做——出「每日完成情况」热力图与「周次」列，
+    // 原「计划 vs 实做」柱图撤掉（那张图吃的是老技能 __meta__.volume，本仓取数层没有对应字段）。
+    for (const needle of ['计划复盘', 'port计划', '每日完成情况', '每日明细', '硬拉', '户外跑', '复制数据']) {
       assert.ok(out.html.includes(needle), 'review 缺：' + needle);
     }
+    assert.match(out.html, /第 \d 周/, 'review 缺：周次列');
+    assert.match(out.html, /热力图只画前 84 天|class="ilr-hm"/, 'review 缺：热力图');
+    // 负责人 2026-09-14 点名：「会话」是内部概念，用户看不懂，页面文案一律不出现。
+    assert.ok(!out.html.includes('会话'), 'review 正文不得出现内部词「会话」');
     // 本周窗：仅 wk2d1 一场（09-07 上肢[硬拉]，有记录命中、动作未命中）。
     const week = dispatch('calorie.view.exercise-review', { start: '2026-09-07', end: '2026-09-07' }, db);
     assert.equal(week.data.metrics.plannedSessions, 1);
@@ -296,13 +327,41 @@ test('#111 命名底座可用：力量训练总览落点＋回传一致＋产物
   assertDoc(readFileSync(env.data.output, 'utf8'), 'strength 落盘');
 });
 
-test('#111 复制头与冻结 envelope 版本对齐（防漂移）', () => {
+test('#111 复制头与冻结 envelope 版本对齐（防漂移 · 载荷面）', () => {
   assert.equal(ENVELOPE_VERSION, '0.1.0');
   assert.equal(CALORIE_SKILL, 'calorie');
   const { db } = mkPortDb();
   try {
     const out = dispatch('calorie.view.exercise-trend', WIN, db);
-    assert.ok(out.html.includes('【calorie · calorie.view.exercise-trend】'), '复制头与 envelope key 不一致');
+
+    // ── 载荷面（机器面）：复制菜单的 text 头＝「技能 · 页名」，json 载荷带 version/skill/key。
+    //    #465 口径：**人不该看见命令键**，机器面也认人话页名（命令键落在哪一面由本件钉住）。
+    const textFold = copyPayload(out.html, 'text');
+    assert.ok(textFold.startsWith('【calorie · 运动趋势】\n'),
+      '复制载荷头不是「技能 · 页名」形态：' + JSON.stringify(textFold.slice(0, 40)));
+    const jsonFold = JSON.parse(copyPayload(out.html, 'json'));
+    assert.equal(jsonFold.version, ENVELOPE_VERSION, 'json 载荷 version 与冻结 envelope 版本不一致');
+    assert.equal(jsonFold.skill, CALORIE_SKILL, 'json 载荷 skill 与冻结技能名不一致');
+    assert.equal(jsonFold.key, '运动趋势', 'json 载荷 key 不是人话页名：' + jsonFold.key);
+
+    // ── 可见面（人话面）单独一条判据（见下一 test）：两面分开，改坏哪面红哪面。
+  } finally {
+    db.close();
+  }
+});
+
+test('#111 可见面零工程话：整份产物零命令键／票号／工序词', () => {
+  const { db } = mkPortDb();
+  try {
+    const out = dispatch('calorie.view.exercise-trend', WIN, db);
+    // 可见面＝剥掉样式／脚本与全部标签后的纯文本（载荷住在属性里，随标签剥掉）。
+    const visible = visibleText(out.html);
+    for (const [what, hit] of [['命令键', 'calorie.view.'], ['命令键', 'calorie.exercise.'], ['工序词「移植」', '移植']]) {
+      assert.ok(!visible.includes(hit), '可见面出现' + what + '：' + hit);
+    }
+    assert.ok(!/\bt\d{3}\b/i.test(visible), '可见面出现票号样式');
+    // 全份产物（含载荷）也不许有命令键：本页入口是唤醒词，命令键一次都不该印出来。
+    assert.ok(!out.html.includes('calorie.view.'), '产物任意一面出现命令键 calorie.view.*');
   } finally {
     db.close();
   }

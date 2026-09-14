@@ -6,9 +6,12 @@
  * 本测试断言：
  *  1. `routesFor(7 条词)` 的 exec 记录 key 分别是 distribution(1)／trend(1)／recap(5)；
  *  2. 逐条按路由 cli 实跑（临时库，custom 用具体日期代占位），产物题面是各自那一页
- *     （eyebrow 含各自 key ＋ title 含各自页名），且不是「运动总览 」；
+ *     （题面含各自页名 ＋ 复制载荷头认「技能 · 页名」），且不是「运动总览 」；
  *  3. 冻结表 `scene-04-exercise.ts` 这 7 条的 `main_prompt.cli`／`data_source`
  *     与路由 cli 逐字一致（D2④ 同源）。
+ *
+ * #465 更新判据：页身份改由**可见面题面**＋**载荷面复制头**两处认，全份产物零命令键
+ * （旧断言要产物含 `c.key`，与本图「可见面零工程话」口径正面冲突；对照见 t465 证据件）。
  *
  * 变异证据（自证两行，机器读数见 `docs/skills/skill-calorie/t265-*.md`）：
  * - 变异红：任一条词的声明改回 `calorie.view.exercise` → 本测试变红；
@@ -33,15 +36,16 @@ const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const DB_FILENAME = 'calorie_data.db';
 
-/** 7 条词 → 期望键／页名／eyebrow（分布 1＋趋势 1＋复盘 5）。 */
+/** 7 条词 → 期望键／页名／眉标（分布 1＋趋势 1＋复盘 5）。
+ *  #465：版式换过后题面不再连写窗口，页身份改认「眉标逐字 ＋ 载荷头页名」（两处都是人话）。 */
 const CASES = [
-  { word: '看运动类型分布', key: 'calorie.view.exercise-distribution', title: '运动类型分布 ' },
-  { word: '看运动趋势', key: 'calorie.view.exercise-trend', title: '运动趋势 ' },
-  { word: '运动复盘（本周）', key: 'calorie.view.exercise-recap', title: '运动复盘 ' },
-  { word: '运动复盘（本月）', key: 'calorie.view.exercise-recap', title: '运动复盘 ' },
-  { word: '运动复盘（最近 90 天）', key: 'calorie.view.exercise-recap', title: '运动复盘 ' },
-  { word: '运动复盘（今年）', key: 'calorie.view.exercise-recap', title: '运动复盘 ' },
-  { word: '运动复盘（自定义时间）', key: 'calorie.view.exercise-recap', title: '运动复盘 ' },
+  { word: '看运动类型分布', key: 'calorie.view.exercise-distribution', page: '运动类型分布', eyebrow: '运动 · 类型分布' },
+  { word: '看运动趋势', key: 'calorie.view.exercise-trend', page: '运动趋势', eyebrow: '运动 · 趋势' },
+  { word: '运动复盘（本周）', key: 'calorie.view.exercise-recap', page: '运动复盘', eyebrow: '运动 · 复盘' },
+  { word: '运动复盘（本月）', key: 'calorie.view.exercise-recap', page: '运动复盘', eyebrow: '运动 · 复盘' },
+  { word: '运动复盘（最近 90 天）', key: 'calorie.view.exercise-recap', page: '运动复盘', eyebrow: '运动 · 复盘' },
+  { word: '运动复盘（今年）', key: 'calorie.view.exercise-recap', page: '运动复盘', eyebrow: '运动 · 复盘' },
+  { word: '运动复盘（自定义时间）', key: 'calorie.view.exercise-recap', page: '运动复盘', eyebrow: '运动 · 复盘' },
 ];
 
 function mkDir() {
@@ -103,6 +107,22 @@ function parseCli(cli, today) {
   return { key: m[1], params };
 }
 
+/** 复制菜单某一格式的 `data-t` 载荷（**机器面**；实体还原后原样返回）。 */
+function copyPayload(html, fmt) {
+  const m = new RegExp('data-fmt="' + fmt + '"[^>]*?data-t="([^"]*)"').exec(html);
+  assert.ok(m !== null, '产物里读不到 ' + fmt + ' 格式的复制载荷');
+  return m[1]
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
+/** **可见面**眉标逐字（`运动 · <页名>`）；读不到即 fail（形制变了要当面红，不静默放过）。 */
+function eyebrow(html) {
+  const m = /<p class="ilife-block-page-shell-eyebrow">([^<]*)<\/p>/.exec(html);
+  assert.ok(m !== null, '产物里读不到眉标（ilife-block-page-shell-eyebrow）');
+  return m[1];
+}
+
 test('#265 7 条词 routesFor 分别指 distribution/trend/recap', () => {
   for (const c of CASES) {
     const routes = routesFor(c.word);
@@ -127,8 +147,15 @@ test('#265 逐条按路由 cli 实跑是各自那一页、不是运动总览', (
     assert.ok(r.envelope !== null, c.word + ' stdout 不是信封 JSON');
     assert.equal(r.envelope.data.output, r.out, c.word + ' 信封交付路径不是本次 --html 那一份');
     assert.ok(isAbsolute(r.envelope.data.output), c.word + ' 交付路径不是绝对路径');
-    assert.ok(r.file.includes(c.key), c.word + ' 缺 eyebrow key ' + c.key);
-    assert.ok(r.file.includes(c.title), c.word + ' 缺题面 ' + c.title);
+    assert.equal(eyebrow(r.file), c.eyebrow, c.word + ' 眉标不是各自那一页：' + eyebrow(r.file));
+    assert.ok(r.file.includes(c.page), c.word + ' 缺题面 ' + c.page);
+    // #465 口径：页的「身份」认人话两面 —— 可见面（眉标逐字）＋载荷面（复制头「技能 · 页名」）；
+    // 命令键一次都不许印出来（旧断言 `r.file.includes(c.key)` 要产物含命令键，与新口径正面冲突）。
+    assert.ok(!r.file.includes('calorie.view.'), c.word + ' 产物里出现命令键 calorie.view.*');
+    assert.ok(!r.file.includes('移植'), c.word + ' 产物里出现工序词「移植」');
+    const fold = copyPayload(r.file, 'text');
+    assert.ok(fold.startsWith('【calorie · ' + c.page + '】\n'),
+      c.word + ' 复制载荷头不是「技能 · 页名」：' + JSON.stringify(fold.slice(0, 40)));
     assert.ok(!r.file.includes('运动总览 '), c.word + ' 仍是运动总览页');
     assert.ok(r.file.includes('复制数据'), c.word + ' 缺复制区');
     assert.ok(r.file.length > 10000, c.word + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
