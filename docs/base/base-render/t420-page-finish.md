@@ -123,33 +123,84 @@ packages/base-render/src/blocks.ts | 76 +++++++++++++++++++++++++++++++++++++-
 
 四个 hunk 头全落在 #397 的四处；本票两段（`PRINTABLE_PAGE_NAME`、打印段）已不在其中（已入 `9a56df3`）。
 
-## 7. GATE-RUN 对账（逐字取自 `.scratch/locks/gate-runs.log`，共 20 条，一对一命中）
+## 7. GATE-RUN 对账
+
+**对账窗口**（`tooling/check-gate-audit.mjs` 的 `--ticket 420 --since 2026-09-14T10:23:00Z --until 2026-09-14T10:37:30Z`）内
+共 **27 条** `RUN` 条目，逐字列在下面，**无一条未声明**。
+
+窗口内有 4 条非零退出（3 条过程读数＋2 条 `pnpm build`／共 5 条，见下表），按工具口径需要放宽开关，故写明：
 
 ```
-GATE-RUN runId=6d509317-c916-404d-9403-fb8c05b790b1 cmd="node --test packages/base-render/test/page-finish-420.test.mjs" exit=1（先红）
-GATE-RUN runId=22245b4b-b6a8-4d1d-9d6d-9526e963a970 cmd="pnpm build" exit=0
-GATE-RUN runId=5215a7a2-9981-4c0a-840d-42b83dbca94e cmd="node --test packages/base-render/test/page-finish-420.test.mjs" exit=0
-GATE-RUN runId=aa9294a6-6248-4d42-85c4-25930c57d2e3 cmd="git add packages/base-render/src/blocks.ts packages/base-render/test/page-finish-420.test.mjs" exit=0
-GATE-RUN runId=41c5df9a-e2c0-4551-afbb-547e4cff4309 cmd="git commit -F .scratch/t420/msg-1.txt" exit=0
-GATE-RUN runId=9015110d-ff90-4126-9cf3-4b9205637763 cmd="git push origin master" exit=0
-GATE-RUN runId=1383fdc0-5bfa-4f46-8f19-04044d0c29d2 cmd="pnpm exec tsc -b" exit=0
-GATE-RUN runId=8518ee99-ebcb-412e-b1e3-bbfe3b31a431 cmd="node --test packages/base-render/test/page-finish-420.test.mjs" exit=0
-GATE-RUN runId=2f069c90-b321-4095-aea0-a26dc0bf590e cmd="node .scratch/t420/mutate.mjs one two" exit=0
-GATE-RUN runId=5b5bf7fd-8960-4f88-977a-93e787c65a44 cmd="node .scratch/t420/mutate.mjs two" exit=0
-GATE-RUN runId=4670982b-b052-4f5a-9efa-e41560c52d39 cmd="pnpm build" exit=2（他席在途件）
-GATE-RUN runId=6ac04a70-c673-4bad-b388-18e2a3cd1999 cmd="node --test packages/base-render/test/page-finish-420.test.mjs" exit=0
-GATE-RUN runId=2530462f-1b6e-4695-b55a-7db8cb715eba cmd="node --test packages/base-render/test/blocks.test.mjs" exit=0
-GATE-RUN runId=34ad2b75-9bda-4815-85ff-4f402e168001 cmd="node --test packages/base-render/test/style.test.mjs" exit=0
-GATE-RUN runId=3a0aa233-9e87-495f-a342-e51f09c6f3be cmd="pnpm -C packages/base-render exec tsc -b" exit=0
-GATE-RUN runId=899dc78e-7b98-44ce-ab03-dc58aa33b85b cmd="git apply --cached .scratch/t420/blocks-mine.patch" exit=0
-GATE-RUN runId=7e007e8e-57b7-4068-a8de-9b37f8e19229 cmd="git add packages/base-render/test/page-finish-420.test.mjs" exit=0
-GATE-RUN runId=871f87a8-17e7-4f97-816c-87fef4796c1e cmd="git commit -F .scratch/t420/msg-2.txt" exit=0
-GATE-RUN runId=0937b2c8-798b-423c-a879-058c8ee9aca7 cmd="git push origin master" exit=0
-GATE-RUN runId=378ee1b9-41e6-444a-915e-279cd8e9a371 cmd="pnpm build" exit=2（他席在途件，错集与上一轮不同）
+GATE-RELAX flag=--allow-nonzero reason=先红读数 1 条、调用方式错误 2 条、变异脚本首次自身抛错 2 条、pnpm build 红在他席在途件 2 条，都是本票过程读数，须连同非零退出一起入账。
 ```
 
-提交：`dc16ba1`（三件实现＋测试，两件）与 `9a56df3`（打印留白改具名页＋两条断言，两件），均已推送
-（`2ef942b..dc16ba1`、`0b0e372..9a56df3`）。
+非零退出条目逐条缘由：
+
+| runId（前 8 位） | exit | 缘由 |
+| --- | --- | --- |
+| `6d509317` | 1 | **先红**：当刻三函数都不存在，`node --test` 报 `does not provide an export named 'renderCaliberLine'` |
+| `91bc75b9`／`441744bb` | 1 | 变异脚本首次跑的自身缺陷（②的定位串不命中即抛错）；①的读数已由 `2f069c90` 那一轮重新取得、②由 `5b5bf7fd` 取得 |
+| `7c4fc3e4` | 1 | 调用方式错误：多包一层引号把两条命令拼成一条 |
+| `4670982b`／`378ee1b9` | 2 | `pnpm build` 红在他席在途件（错行见 §4；`git status` 记 `?? analysis/multiTrendPage.ts`） |
+
+本件自身的提交运行与对账自检运行都在窗口之外（自指面），不列入此表。声明行按工具口径写成
+`GATE-RUN runId=<id> cmd="<命令>"`（`cmd=` 之后到行尾整段都是命令，故退出码注记一律不写在声明行里）。
+
+```
+GATE-RUN runId=6d509317-c916-404d-9403-fb8c05b790b1 cmd="node --test packages/base-render/test/page-finish-420.test.mjs"
+GATE-RUN runId=22245b4b-b6a8-4d1d-9d6d-9526e963a970 cmd="pnpm build"
+GATE-RUN runId=5215a7a2-9981-4c0a-840d-42b83dbca94e cmd="node --test packages/base-render/test/page-finish-420.test.mjs"
+GATE-RUN runId=aa9294a6-6248-4d42-85c4-25930c57d2e3 cmd="git add packages/base-render/src/blocks.ts packages/base-render/test/page-finish-420.test.mjs"
+GATE-RUN runId=41c5df9a-e2c0-4551-afbb-547e4cff4309 cmd="git commit -F .scratch/t420/msg-1.txt"
+GATE-RUN runId=9015110d-ff90-4126-9cf3-4b9205637763 cmd="git push origin master"
+GATE-RUN runId=91bc75b9-2bdc-410e-b4c5-d49e3c3918af cmd="node .scratch/t420/mutate.mjs"
+GATE-RUN runId=7deeccf1-4549-45e5-894a-b70d94a8c504 cmd="node .scratch/t420/probe-build.mjs"
+GATE-RUN runId=7c4fc3e4-5723-4760-8f23-3efcbab08f3b cmd="\"pnpm exec tsc -b && node --test packages/base-render/test/page-finish-420.test.mjs\""
+GATE-RUN runId=1383fdc0-5bfa-4f46-8f19-04044d0c29d2 cmd="pnpm exec tsc -b"
+GATE-RUN runId=8518ee99-ebcb-412e-b1e3-bbfe3b31a431 cmd="node --test packages/base-render/test/page-finish-420.test.mjs"
+GATE-RUN runId=441744bb-f1a9-499a-8d1d-67a4cd122ccf cmd="node .scratch/t420/mutate.mjs"
+GATE-RUN runId=2f069c90-b321-4095-aea0-a26dc0bf590e cmd="node .scratch/t420/mutate.mjs one two"
+GATE-RUN runId=5b5bf7fd-8960-4f88-977a-93e787c65a44 cmd="node .scratch/t420/mutate.mjs two"
+GATE-RUN runId=4670982b-b052-4f5a-9efa-e41560c52d39 cmd="pnpm build"
+GATE-RUN runId=6ac04a70-c673-4bad-b388-18e2a3cd1999 cmd="node --test packages/base-render/test/page-finish-420.test.mjs"
+GATE-RUN runId=2530462f-1b6e-4695-b55a-7db8cb715eba cmd="node --test packages/base-render/test/blocks.test.mjs"
+GATE-RUN runId=34ad2b75-9bda-4815-85ff-4f402e168001 cmd="node --test packages/base-render/test/style.test.mjs"
+GATE-RUN runId=3a0aa233-9e87-495f-a342-e51f09c6f3be cmd="pnpm -C packages/base-render exec tsc -b"
+GATE-RUN runId=899dc78e-7b98-44ce-ab03-dc58aa33b85b cmd="git apply --cached .scratch/t420/blocks-mine.patch"
+GATE-RUN runId=7e007e8e-57b7-4068-a8de-9b37f8e19229 cmd="git add packages/base-render/test/page-finish-420.test.mjs"
+GATE-RUN runId=871f87a8-17e7-4f97-816c-87fef4796c1e cmd="git commit -F .scratch/t420/msg-2.txt"
+GATE-RUN runId=0937b2c8-798b-423c-a879-058c8ee9aca7 cmd="git push origin master"
+GATE-RUN runId=378ee1b9-41e6-444a-915e-279cd8e9a371 cmd="pnpm build"
+GATE-RUN runId=23a34060-5058-4b5f-b15b-e55fe610e217 cmd="git add docs/base/base-render/t420-page-finish.md"
+GATE-RUN runId=d282e2e6-29d2-4f73-918d-878f03307fef cmd="git commit -F .scratch/t420/msg-3.txt"
+GATE-RUN runId=d1426806-5f7f-4857-a246-25ff4776c2e5 cmd="git push origin master"
+```
+
+提交：`dc16ba1`（三件实现＋测试）、`9a56df3`（打印留白改具名页＋两条断言）、`8873b5e`（本记录首版），
+均只含自己声明的路径，均已推送（`2ef942b..dc16ba1`、`0b0e372..9a56df3`、`9a56df3..8873b5e`）。
+
+## 9. 对账自检读数
+
+```
+node tooling/check-gate-audit.mjs --evidence docs/base/base-render/t420-page-finish.md --ticket 420 --since 2026-09-14T10:23:00Z --until 2026-09-14T10:37:30Z --allow-nonzero
+```
+
+读数（自检运行 `runId=69257dba-3b21-4508-83e7-af51a91e6a9c`，在声明窗口之外、按自指面不写成声明行）：
+
+```
+matched=27/27 auditEntries=2637 scoped=27 undeclared=0
+gate-audit: PASS   （exit=0）
+```
+
+自检过程如实记账：本席先跑过两轮 FAIL（`runId=577530bd-0a36-4235-8f05-2743929912f8` 报 `matched=1/27`、
+`runId=435a4164-6524-489e-ac55-4117c05284ff` 报 `matched=26/27`），两轮都是**声明行写法**不合工具口径
+（工具把 `cmd=` 之后到行尾整段当命令，故退出码注记会被当成命令的一部分；另一条是当刻日志把整条命令
+连引号一起记进 `cmd=`）——不是运行记录缺条目。改成 `GATE-RUN runId=<id> cmd="<命令>"` 且注记另起后
+第三轮 PASS。前两轮的运行条目也在声明窗口之外。
+
+本节只加文字、不改 §7 已声明的任何 runId，故该读数对本件最终版同样成立（窗口内 27 条不变）。
+
+
 
 ## 8. 未做项与已知副作用
 
