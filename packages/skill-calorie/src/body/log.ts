@@ -67,7 +67,7 @@ const JP7_COEF = {
 
 /** Jackson-Pollock 7 点法：7 处皮褶**合计 mm** ＋ 年龄（岁）＋ 性别 → 体脂率（％）。
  *  口径照老实现：`BD` 非正即 `null`；结果两位小数（老实现 `Math.round(pct*100)/100`）。
- *  性别/年龄任一缺席时**不由本函数兜底**——调用方先拦（不静默用默认值），交互归 #358。 */
+ *  性别/年龄任一缺席时**不由本函数兜底**——调用方先拦（不静默用默认值），交互归 #366。 */
 export function jp7BodyFatPct(sumMm: number, age: number, sex: string): number | null {
   const c = sex === 'male' ? JP7_COEF.male : sex === 'female' ? JP7_COEF.female : null;
   if (c === null) return null;
