@@ -174,13 +174,12 @@ body {
 .ilife-charts-dot{pointer-events:none}
 .ilife-charts-xlabel{font-size:10px}
 .ilife-charts-marktext{font-size:10px}
-.ilife-charts-line .ilife-charts-svg{max-width:480px;margin:0 auto}
 /* 公共层 charts.ts:1772-1777 的窄屏那一档（断点 720 取 CHART_BREAKPOINTS.mobileMaxPx，charts.ts:228）：
    手机档折线图定高 150px、点径收到 8px —— 不按 viewBox 比例往下缩，横向撑满内容列。
    空态页不出图表，这条与甲样张的共享样式段逐字相同，留着供两张样张对照。 */
 @media (max-width:720px){
   .ilife-charts{--ilife-charts-dot:8px}
-  .ilife-charts-line .ilife-charts-svg{height:150px}
+  .ilife-charts-line .ilife-charts-svg{height:auto}
 }
 /* 表格 */
 .ilife-block-data-table {
