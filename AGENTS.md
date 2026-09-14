@@ -31,3 +31,5 @@ Single-context (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
 ### 命令登记
 
 一条命令的事实只住它自己的能力目录（`src/<能力>/commands.ts`），汇总位一律由 `pnpm gen` 派生、`pnpm gen:check` 守。改命令、搬老命令、碰共用位前读 `docs/agents/命令登记纪律.md`。
+### 编排纪律
+切票、派活、收活之前读 `docs/agents/编排纪律.md`（地图设计者十条 ＋ 地图执行者十一条）；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。
