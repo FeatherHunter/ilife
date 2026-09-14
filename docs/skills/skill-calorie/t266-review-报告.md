@@ -51,4 +51,6 @@
 
 **未做项**：干净 worktree 复跑未做（主仓 94 件他席在途脏件）——以「五件指纹前后逐件相同＋`git diff --quiet`=0＋`gen:check`=0」证明我的变异窗口未污染他席；链四步未跑（D4）；跨图 6 红对照未复跑（D5）；6 条 `new` 记录只判定未动手（票面明令）。
 
-**路径**：报告本文；探针 `docs/skills/skill-calorie/t266-review-probe.mjs`（复跑：`node docs/skills/skill-calorie/t266-review-probe.mjs`）；原始读数 `.scratch/t266-review/battery.log`／`battery2.log`／`battery3.log`（含三窗口逐行输出、`hold-review*.ps1`、`mutate.mjs`，未入仓）。
+**本席全部持锁窗口（`ticket=266`，逐字）**：`a30d8389-3bfc-4004-993b-4d6eccd11a16`（waitedMs=10002：`gen:check` ＋ 判据复跑 ＋ 探针）、`77cbc610-4816-4071-bf0d-c75d6ea91a11`（waitedMs=50003：变异红 → 逐文件还原绿）、`514e8db0-421e-4d14-8960-f9c3a064442f`（waitedMs=20002：`help:examples:check` ＋ 探针终版）、`3cf4ac82-1192-45fa-892c-6fb1838cbb99`（waitedMs=40003：提交第一跑——index 里已有别席暂存的 `t339-58条真出口-证据.md`／`weight-wake-58-339.test.mjs` ⇒ 触发 `STAGED-MISMATCH`，**本席未提交、未动别席暂存**）、`30bb3419-ce07-4cf4-86e7-733232b37953`（waitedMs=70007：paths 限定提交＋推送 `5b21561..a4a9f70`）。提交 `a4a9f70` 只含本席两件；别席那两件提交后仍留在暂存区原样未动。
+
+**路径**：报告本文；探针 `docs/skills/skill-calorie/t266-review-probe.mjs`（复跑：`node docs/skills/skill-calorie/t266-review-probe.mjs`）；原始读数 `.scratch/t266-review/battery.log`／`battery2.log`／`battery3.log`／`battery5-commit.log`（含三窗口逐行输出、`hold-review*.ps1`、`mutate.mjs`，未入仓）。
