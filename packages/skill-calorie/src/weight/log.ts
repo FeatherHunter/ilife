@@ -118,9 +118,16 @@ function todayCards(t: WeightTrend, w: WeightDashboard): KpiCardInput[] {
     },
     {
       label: '较上次', value: delta === null ? '—' : delta === 0 ? '0 kg' : signed(delta),
-      ...(prevW === null ? {} : { detail: '上次 ' + prevW + ' kg' }),
-      status: delta === null ? 'empty' : delta > 0 ? 'warn' : delta < 0 ? 'ok' : 'empty',
-      statusText: delta === null ? '无可比' : delta > 0 ? '上升' : delta < 0 ? '下降' : '持平',
+      /* 「持平」与值槽 `0 kg` 说的是同一件事 ⇒ 零变化不出徽章，只在副说明写「与上次一样」；
+         升降才出徽章（那是状态），副说明改用「上次 X kg」把参照值说清。 */
+      ...(prevW === null
+        ? {}
+        : { detail: delta === 0 ? '与上次一样' : '上次 ' + prevW + ' kg' }),
+      ...(delta === null
+        ? { status: 'empty' as const, statusText: '无可比' }
+        : delta === 0
+          ? {}
+          : { status: (delta > 0 ? 'warn' : 'ok') as 'warn' | 'ok', statusText: delta > 0 ? '上升' : '下降' }),
     },
   ];
 }
@@ -143,8 +150,11 @@ function plateCards(w: WeightDashboard): KpiCardInput[] {
     },
     {
       label: '均值', value: t.avgWeight + ' kg',
-      ...(single ? {} : { detail: '最低 ' + t.minWeight + ' kg · 最高 ' + t.maxWeight + ' kg' }),
-      ...(single ? { status: 'empty' as const, statusText: '无对照' } : {}),
+      /* 单点页：均值就是当天那一个读数（卡 1 已写），不再报一遍 ⇒ 只留一句「只有一天」。
+         多天页：这里说**区间**（整段落在哪两条线之间），首末日那一对住在「窗口」卡，两处各说一件事。 */
+      ...(single
+        ? { status: 'empty' as const, statusText: '只有一天' }
+        : { detail: '这段都在 ' + t.minWeight + ' ~ ' + t.maxWeight + ' kg 之间' }),
     },
     {
       label: '变化', value: t.changeKg === 0 ? '0 kg' : signed(t.changeKg),
@@ -167,11 +177,11 @@ function plateCards(w: WeightDashboard): KpiCardInput[] {
  *  窗口与条数住在页头副标题与页脚来源行，本句只说「变了多少、还算不算好」——同一屏不报第二遍。 */
 function weightConclusion(w: WeightDashboard): string {
   const t = w.trend;
-  const bits = [w.curve.single
-    ? rangeTextOf(w.start, w.end) + ' 只有 1 条记录（' + t.lastWeight + ' kg），看不出变化，再记一条就能比较'
-    : '这段时间从 ' + t.firstWeight + ' kg 到 ' + t.lastWeight + ' kg，累计 ' + signed(t.changeKg)
-      + '（趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) + '）'];
-  if (t.recordCount >= 2) bits.push('平均 ' + t.avgWeight + ' kg');
+  // 单点页：只有一句可说的（「看不出变化」），卡上也已各写一遍 ⇒ 这里不再复述日期／读数／目标差值。
+  if (w.curve.single) return '只有这一天，看不出变化；再记一条就能比较。';
+  const bits = ['这段时间从 ' + t.firstWeight + ' kg 到 ' + t.lastWeight + ' kg，累计 ' + signed(t.changeKg)
+    + '（趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) + '）'];
+  if (t.recordCount >= 2) bits.push('均值 ' + t.avgWeight + ' kg');
   if (w.gapKg === null) {
     bits.push(w.weightGoal === null ? '未设体重目标' : '目标 ' + w.weightGoal + ' kg（差值暂缺）');
   } else if (w.gapKg > 0) bits.push('目标 ' + w.weightGoal + ' kg，还差 ' + w.gapKg + ' kg');
