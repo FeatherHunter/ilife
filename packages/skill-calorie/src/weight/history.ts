@@ -41,6 +41,7 @@ import { weightVolatilityV2 } from './volatility.js';
 import {
   renderCaliberLine,
   renderChartBlock,
+  renderChips,
   renderDataTable,
   renderDisclosure,
   renderEmptyBlock,
@@ -88,6 +89,37 @@ const MILESTONE_KG: readonly number[] = [5, 10];
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+/** 带符号的差值／速率（#480 口径 3.3）：正零不写加号、数字与单位之间留一个空格；小数位与读数槽一致取一位。 */
+function signedKg(n: number, unit = ' kg'): string {
+  const v = round1(n);
+  return (v > 0 ? '+' : '') + (Number.isInteger(v) ? v.toFixed(1) : String(v)) + unit;
+}
+
+/** 速率说人话（#480 口径 3.2）：「每天 +10 克」，全页不出现 `g/天`，也不两种单位并存。 */
+function perDayHuman(delta: number, spanDays: number): string | null {
+  if (spanDays <= 0) return null;
+  const g = Math.round((delta / spanDays) * 1000);
+  return '每天 ' + (g > 0 ? '+' : '') + g + ' 克';
+}
+
+/** 「首日 → 末日」（#480 口径 3.2 的「首日与末日对比」，替换内部的「首末对照」说法）。 */
+function firstLastHuman(c: NonNullable<WeightHistory['change']>): string {
+  return '首日 ' + c.first + ' kg → 末日 ' + c.last + ' kg';
+}
+
+/** 异常点偏离说人话（#480）：原写「偏 0.13」没说相对谁、也没带单位；这里点名相对平均线并分高低。 */
+function deviationHuman(kg: number, deviationKg: number): string {
+  const d = round1(Math.abs(deviationKg));
+  if (d === 0) return kg + ' kg（和平均线一样）';
+  return kg + ' kg（比平均线' + (deviationKg > 0 ? '高' : '低') + ' ' + d + ' kg）';
+}
+
+/** 长清单截断（#480：卡片说明槽不塞同构信息，前 3 条 ＋ 「等 N 个」）。 */
+function topOf(texts: readonly string[], max = 3): string {
+  if (texts.length <= max) return texts.join('；');
+  return texts.slice(0, max).join('；') + ' 等 ' + texts.length + ' 个';
 }
 
 function avgOf(rows: WeightHistory['rows']): number | null {
@@ -175,9 +207,10 @@ export function viewWeightHistory(params: Record<string, unknown>, db: DatabaseS
     for (const delta of MILESTONE_KG) {
       try {
         const r = scenarioE3(db, delta);
-        hits.push({ label: '减重 ' + delta + 'kg 那天', date: r.segA.range, kg: r.segA.avg as number });
+        // 数字与单位留一个空格（#480 口径 3.3）；同一份标签在对比族由 `weightCompare2.ts:154` 生成，口径另报。
+        hits.push({ label: '减重 ' + delta + ' kg 那天', date: r.segA.range, kg: r.segA.avg as number });
       } catch (e) {
-        miss.push('减重 ' + delta + 'kg 未达成' + (e instanceof FetchError ? '（' + e.message + '）' : ''));
+        miss.push('减重 ' + delta + ' kg 未达成' + (e instanceof FetchError ? '（' + e.message + '）' : ''));
       }
     }
     extra.milestones = hits;
@@ -216,7 +249,9 @@ function anomaliesOf(db: DatabaseSync, h: WeightHistoryView): {
     if (res.status !== 'ok' || !res.data) return { list: [], note: null };
     return {
       list: res.data.recentAnomalies.map((p) => ({ date: p.date, kg: p.kg, deviationKg: p.deviationKg, level: p.level })),
-      note: '基线 ' + res.data.baselineValue + ' kg，黄±' + res.data.thresholds.yellow + ' 红±' + res.data.thresholds.red,
+      // #480 口径 3.2：术语表把「基线／黄线／红线」换成人话「平均线／注意线／警戒线」，数字与单位留空格。
+      note: '平均线 ' + res.data.baselineValue + ' kg，注意线 ±' + res.data.thresholds.yellow + ' kg，警戒线 ±'
+        + res.data.thresholds.red + ' kg',
     };
   } catch {
     return { list: [], note: null };
@@ -309,11 +344,11 @@ function curvePlanOf(h: WeightHistoryView, extra: HistoryDocExtra): CurvePlan | 
   const last = (asc[asc.length - 1] as (typeof asc)[number]).weight_kg;
   const kind = extra.overlay;
   const markLine: MarkLinePlan | undefined = kind === 'target' && goal !== null && targetInRange
-    ? { value: goal, label: '目标 ' + goal + 'kg' }
+    ? { value: goal, label: '目标 ' + goal + ' kg' }
     : kind === 'milestone' && milestoneInWindow !== undefined
-      ? { xValue: milestoneInWindow.date.slice(5), label: milestoneInWindow.label + ' ' + milestoneInWindow.kg + 'kg' }
+      ? { xValue: milestoneInWindow.date.slice(5), label: milestoneInWindow.label + ' ' + milestoneInWindow.kg + ' kg' }
       /* 单点：单点标记之外再给一条均值线（该点自身的均值），曲线不再是一个孤点无名。 */
-      : asc.length === 1 ? { value: last, label: '均值 ' + last + 'kg' } : undefined;
+      : asc.length === 1 ? { value: last, label: '均值 ' + last + ' kg' } : undefined;
   return {
     asc, yMin, yMax, yTicks, markLine, targetInRange, milestoneInWindow,
     anomalyDates: new Set((extra.anomalies ?? []).map((a) => a.date)),
@@ -346,30 +381,34 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
       };
     }
     return {
-      label: '距目标', value: (d >= 0 ? '+' : '') + d + ' kg', detail: '目标 ' + goal.kg + ' kg',
-      status: d > 0 ? 'warn' : 'ok', statusText: d > 0 ? '还差 ' + d + ' kg' : '已达目标',
+      label: '距目标', value: signedKg(d), detail: '目标 ' + goal.kg + ' kg',
+      // #480：徽章不复述值槽的差数（值槽 ＋ 徽章两处说同一件事时删一处）。
+      status: d > 0 ? 'warn' : 'ok', statusText: d > 0 ? '未达目标' : '已达目标',
     };
   }
   if (extra.overlay === 'milestone') {
     const n = extra.milestones?.length ?? 0;
-    const hit = n > 0
-      ? (extra.milestones as Array<{ label: string; date: string }>).map((m) => m.label + ' ' + m.date).join('；')
-      : (extra.milestoneMiss ?? []).join('；');
-    // 值槽只放「达成几个」这一个数；「／2」的分母改成 `detail` 里的门槛口径，判词进徽章。
-    const detail = '门槛 减重 ' + MILESTONE_KG.join('kg／') + 'kg' + (hit === '' ? '' : ' · ' + hit);
+    // #480：日期不在这里念（图例与结论标签各有一处），卡片说明只留「门槛 ＋ 达成几个」。
+    const detail = n > 0
+      ? '门槛 减重 ' + MILESTONE_KG.join(' kg／') + ' kg · 达成 ' + n + ' 个'
+      : '门槛 减重 ' + MILESTONE_KG.join(' kg／') + ' kg · ' + (extra.milestoneMiss ?? []).join('；');
     return { label: '里程碑', value: String(n), unit: '个', detail, status: n > 0 ? 'ok' : 'empty', statusText: n > 0 ? '达成 ' + n + ' 个' : '未达成' };
   }
   if (extra.overlay === 'anomaly') {
     const n = extra.anomalies?.length ?? 0;
     const detail = n > 0
-      ? (extra.anomalies as Array<{ date: string; kg: number }>).map((a) => a.date + ' ' + a.kg + 'kg').join('；')
+      ? topOf((extra.anomalies as Array<{ date: string; kg: number }>).map((a) => a.date + ' ' + a.kg + ' kg'))
       : '本窗无异常点' + (extra.anomalyNote === undefined ? '' : '（' + extra.anomalyNote + '）');
     return { label: '异常点', value: String(n) + ' 个', detail, status: n > 0 ? 'warn' : 'ok', statusText: n > 0 ? '异常 ' + n + ' 个' : '无异常' };
   }
   const tags = tagDist(h.rows);
   const n = Object.keys(tags).length;
   if (extra.noteOnly) {
-    return { label: '有备注', value: h.rows.length + ' 条', detail: n > 0 ? '标签 ' + n + ' 类' : '备注无标签', status: 'ok', statusText: '已筛备注' };
+    // #480：徽章不复述「已筛备注」这个模式词（页头副标题已写「模式：备注筛选」），改印标签类数。
+    return {
+      label: '有备注', value: h.rows.length + ' 条', detail: n > 0 ? '标签 ' + n + ' 类' : '备注无标签',
+      status: 'ok', statusText: n > 0 ? '标签 ' + n + ' 类' : '有备注',
+    };
   }
   const noted = h.rows.filter((r) => r.note && String(r.note).trim() !== '').length;
   return {
@@ -379,12 +418,12 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
 }
 
 function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | null): KpiCard[] {
-  const asc = [...h.rows].reverse();
   const c = h.change;
   return [
     /* 值槽只放「本窗条数」这一个数：区间串（`2026-08-09 ~ 2026-09-07`，23 字）在 28px 且
      * `overflow-wrap: anywhere` 的值槽里会被断成 2~3 行，是四张卡不等高的直接成因（t154 用户读数）。
-     * 区间挪进 `detail`（副说明行）——页题 `<h1>`、副标题与页脚来源行各还有一份，信息不丢。 */
+     * 区间挪进 `detail`（副说明行）——页题 `<h1>` 与页脚来源行各还有一份，信息不丢（#480 把副标题
+     * 里那份重复的窗口串删掉：页头、表注、页脚三处已够，副标题只留模式）。 */
     {
       label: '体重历史', value: String(h.rows.length), unit: '条',
       detail: '本窗 ' + h.range + (extra.noteOnly ? '（只取有备注的）' : ''),
@@ -393,18 +432,21 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
     },
     {
       label: '变化',
-      value: c ? (c.delta >= 0 ? '+' : '') + c.delta + ' kg' : '—',
-      detail: c ? c.spanDays + ' 天 · 日均 ' + c.dailyAvg + ' kg' : '单点无变化',
+      value: c ? signedKg(c.delta) : '—',
+      // #480 口径 3.2：日均速率改说人话「每天 +10 克」；持平与单点不编速率句。
+      detail: c === null
+        ? '单点无变化'
+        : c.delta === 0
+          ? c.spanDays + ' 天，首日到末日没变化'
+          : c.spanDays + ' 天 · ' + (perDayHuman(c.delta, c.spanDays) ?? '看不出快慢'),
       status: c === null ? 'empty' : c.delta < 0 ? 'ok' : c.delta > 0 ? 'warn' : 'empty',
       statusText: c === null ? '单点无变化' : c.delta < 0 ? '下降' : c.delta > 0 ? '上升' : '持平',
     },
     {
       label: '均值', value: avg === null ? '—' : String(avg) + ' kg',
-      detail: h.rows.length >= 2
-        ? '首 ' + (asc[0] as (typeof asc)[number]).weight_kg + ' → 末 ' + (asc[asc.length - 1] as (typeof asc)[number]).weight_kg + ' kg'
-        : '单点无均值对照',
+      detail: h.rows.length >= 2 ? firstLastHuman(h.change as NonNullable<WeightHistory['change']>) : '单点无均值对照',
       status: h.rows.length >= 2 ? 'ok' : 'empty',
-      statusText: h.rows.length >= 2 ? '首末对照' : '无对照',
+      statusText: h.rows.length >= 2 ? '首日 → 末日' : '无对照',
     },
     fourthKpi(h, extra),
   ];
@@ -421,40 +463,52 @@ function tagDist(rows: WeightHistory['rows']): Record<string, number> {
 }
 
 /** 结论句（#333 融合：与 `compare.ts` 情景版同形——同一句话进 `renderDisclosure` 折叠区；
- *  正文不再自带「结论：」前缀，页内「结论」两个字只出现在折叠区标题那一处）。 */
-function conclusionOf(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | null): string {
+ *  正文不再自带「结论：」前缀，页内「结论」两个字只出现在折叠区标题那一处）。
+ *
+ *  #480：一长句塞满「首／末／变化／日均／均值／里程碑／异常点／缺口」读不动 ⇒ 这里**只留一句结论**
+ *  （窗口 ＋ 条数 ＋ 这段的净变化／单点口径），细节拆成并列小标签 `conclusionChips`（走公共件
+ *  `renderChips`，同住结论块，页内仍只有一处「结论」）。 */
+function conclusionOf(h: WeightHistoryView): string {
   if (h.rows.length === 0) return h.range + ' 无体重记录，先记一条再看。';
-  const last = (h.rows[0] as (typeof h.rows)[number]).weight_kg;
-  const bits: string[] = [];
-  if (h.change === null) {
-    bits.push(h.range + ' 只有 1 条记录（' + last + ' kg），单点看不出变化，再记一条就能比较');
+  // 窗口串不在这里再说一遍：页题、KPI 卡说明、页脚来源行各有一处，本块只交代「这段怎么走」。
+  if (h.change === null) return '本窗只有 1 条记录，单点看不出变化，再记一条就能比较。';
+  const c = h.change;
+  if (c.delta === 0) return '首日到末日没变化（持平）。';
+  return '这段累计' + (c.delta > 0 ? '涨了 ' : '降了 ') + Math.abs(c.delta) + ' kg。';
+}
+
+/** 结论块里的并列小标签（#480「细节拆成列表行或并列小标签」）：一条事实一处，不重复卡片值槽。 */
+function conclusionChips(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | null): string {
+  if (h.rows.length === 0) return '';
+  const texts: string[] = [];
+  const c = h.change;
+  if (c === null) {
+    texts.push('只有 1 天有记录');
+    if (avg !== null) texts.push('均值 ' + avg + ' kg');
   } else {
-    const c = h.change;
-    bits.push(h.range + ' 共 ' + h.rows.length + ' 条，首 ' + c.first + ' → 末 ' + c.last
-      + ' kg（' + (c.delta >= 0 ? '+' : '') + c.delta + ' kg，日均 ' + c.dailyAvg + ' kg，' + c.spanDays + ' 天）');
+    const rate = perDayHuman(c.delta, c.spanDays);
+    if (rate !== null) texts.push(rate);
+    texts.push(firstLastHuman(c));
+    if (avg !== null) texts.push('均值 ' + avg + ' kg');
   }
-  if (avg !== null) bits.push('均值 ' + avg + ' kg');
   const goal = extra.goal;
   if (extra.overlay === 'target' && goal !== null && goal !== undefined) {
     const d = goal.diffKg;
-    bits.push(d === null ? '目标 ' + goal.kg + ' kg（本窗无记录可比）'
+    texts.push(d === null ? '目标 ' + goal.kg + ' kg'
       : d > 0 ? '目标 ' + goal.kg + ' kg，还差 ' + d + ' kg'
         : d < 0 ? '目标 ' + goal.kg + ' kg，已低于目标 ' + Math.abs(d) + ' kg' : '目标 ' + goal.kg + ' kg，已达目标');
   }
   if (extra.overlay === 'milestone') {
     const hit = extra.milestones ?? [];
-    bits.push('里程碑达成 ' + hit.length + '／2'
-      + (hit.length > 0 ? '：' + hit.map((m) => m.label + ' ' + m.date).join('；') : '（' + (extra.milestoneMiss ?? []).join('；') + '）'));
+    texts.push('里程碑达成 ' + hit.length + '／2'
+      + (hit.length > 0 ? '' : '（' + (extra.milestoneMiss ?? []).join('；') + '）'));
   }
   if (extra.overlay === 'anomaly') {
     const list = extra.anomalies ?? [];
-    bits.push('异常点 ' + list.length + ' 个'
-      + (list.length > 0
-        ? '：' + list.map((a) => a.date + ' ' + a.kg + 'kg（偏 ' + a.deviationKg + '）').join('；')
-        : '（' + (extra.anomalyNote ?? '本窗波动在阈值内') + '）'));
+    texts.push('异常点 ' + list.length + ' 个'
+      + (list.length > 0 ? '' : '（' + (extra.anomalyNote ?? '本窗波动在正常范围里') + '）'));
   }
-  if (extra.noteOnly) bits.push('只看有备注的 ' + h.rows.length + ' 条');
-  return bits.join('；') + '。';
+  return texts.length === 0 ? '' : renderChips({ items: texts.map((t) => ({ text: t })) });
 }
 
 /** 复制载荷的逐条行（日期／时间／体重／BMI／备注）：`text` 每行一条、`json` 结构、`csv` 可导入。
@@ -463,29 +517,32 @@ function copyRowsOf(rows: WeightHistory['rows']): Array<Record<string, string | 
   return rows.map((r) => ({ 日期: r.date, 时间: r.time ?? '', 体重kg: r.weight_kg, BMI: r.bmi ?? null, 备注: r.note ?? '' }));
 }
 
-/** 数据来源那句话（页脚与复制日志第 3 段共用一份措辞）。 */
+/** 数据来源那句话（页脚与复制日志第 3 段共用一份措辞）：#480 统一句式「体重记录（库 · 表） ｜ 窗口 … ｜ 共 N 条」。 */
 function sourceTextOf(h: WeightHistoryView, extra: HistoryDocExtra): string {
-  return 'weight_log · ' + h.range + ' · 共 ' + h.rows.length + ' 条' + (extra.noteOnly ? '（只取有备注的）' : '');
+  return '体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + h.range + ' ｜ 共 ' + h.rows.length + ' 条'
+    + (extra.noteOnly ? '（只取有备注的）' : '');
 }
 
 /** 页脚数据来源行（§5.5：哪张库／哪张表／哪个窗口／多少条；窗内有缺口时同一行补一句口径）。
  *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`（12px `--fg2`）：页脚的来源是「口径行」，
- *  不是需要注意的提示，故不用深色 toast 卡（#340 裁定）；原 toast 的「标题 ＋ detail」两行合成这一句。 */
+ *  不是需要注意的提示，故不用深色 toast 卡（#340 裁定）；原 toast 的「标题 ＋ detail」两行合成这一句。
+ *  #480：句式与全族统一（`口径.md` §3.1）——库表名进括号、三段用 `｜` 分、末段恒为「共 N 条」；
+ *  「体重记录」是读者话（`weight_log` 只留在复制日志第 3 段，不上屏）。 */
 function sourceLine(h: WeightHistoryView, extra: HistoryDocExtra): string {
   const gap = gapNoteOf(h, extra);
-  return renderCaliberLine('📊 数据来源:' + DB_FILENAME + ' · weight_log · ' + h.range
-    + ' · 共 ' + h.rows.length + ' 条'
+  return renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + h.range
+    + ' ｜ 共 ' + h.rows.length + ' 条'
     + (extra.noteOnly ? '（只取有备注的）' : '')
-    + (gap === null ? '' : '；' + gap));
+    + (gap === null ? '' : ' ｜ ' + gap));
 }
 
 /** 窗内缺口（§3 第 15 条：缺多少天要写清；缺值按断点画、不补 0）。给了区间串才数得出来。 */
 function gapNoteOf(h: WeightHistoryView, extra: HistoryDocExtra): string | null {
-  if (h.rows.length === 0) return '本窗一条记录都没有：不补默认值，也不拿别的窗口顶。';
+  if (h.rows.length === 0) return '本窗没有记录，不补默认值，也不拿别的窗口顶';
   if (extra.noteOnly) return null; // 筛选后的条数与窗口天数不可比
   const span = windowDaysOf(h.range);
   if (span === null || h.rows.length >= span) return null;
-  return '窗内 ' + span + ' 天只有 ' + h.rows.length + ' 天有记录，缺 ' + (span - h.rows.length) + ' 天（缺的那几天不补 0）';
+  return '缺 ' + (span - h.rows.length) + ' 天没记（缺的那几天不补 0）';
 }
 
 /** 区间串 → 天数：`2026-09-01`／`2026-09-01 ~ 2026-09-07`／`最近30天` 三种形态。 */
@@ -533,7 +590,7 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
         })),
         options: {
           height: 300,
-          format: (v: number) => round1(v) + 'kg',
+          format: (v: number) => round1(v) + ' kg',
           labels: 'select',
           yTicks: plan.yTicks,
           yMin: plan.yMin,
@@ -557,7 +614,11 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     items: Object.entries(tags).map(([k, v]) => ({ main: k, right: String(v) + ' 条' })),
     emptyText: '无备注标签',
   }));
-  parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + conclusionOf(h, extra, avg) + '</p>', open: true }));
+  parts.push(renderDisclosure({
+    title: '结论',
+    contentHtml: '<p>' + conclusionOf(h) + '</p>' + conclusionChips(h, extra, avg),
+    open: true,
+  }));
   parts.push(sourceLine(h, extra));
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: CMD_KEY,
@@ -579,15 +640,19 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     docTitle: DOC_TITLE,
     title: '体重历史 ' + h.range,
     eyebrow: CMD_KEY + ' · 运动身体域',
-    subtitle: modeBadge(extra) + '｜' + h.range + '（共 ' + h.rows.length + ' 条）',
+    // #480：副标题原写「模式｜窗口（共 N 条）」，与页题（窗口）＋表注（窗口 ＋ 条数）＋页脚来源行
+    // （窗口 ＋ 条数）四处同说一件事 ⇒ 只留模式；窗口与条数在页头、表注、页脚各仍有一份。
+    subtitle: modeBadge(extra),
     content: parts.join(''),
     charts,
   });
 }
 
 function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePlan): Array<{ left?: string; main: string; right?: string }> {
+  // #480：图例只说「图上那条线是什么」，不念实现细节（「按 7 点现算」「量程外，改画文字」都删）；
+  // 窗口串不再重印（页题／表注／页脚各有一份）。最高／最低仍在图上，画了就该读得到。
   const rows: Array<{ left?: string; main: string; right?: string }> = [
-    { left: '—', main: '体重曲线', right: h.range },
+    { left: '—', main: '体重曲线', right: extra.overlay === 'anomaly' ? '偏红的点＝异常点' : undefined },
   ];
   const asc = plan.asc;
   const top = asc.reduce((a, b) => (b.weight_kg > a.weight_kg ? b : a));
@@ -597,47 +662,40 @@ function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePla
     rows.push({ left: '▼', main: '最低 ' + low.weight_kg + ' kg', right: low.date });
   }
   if (asc.length >= 2) {
-    // 图上叠的那条**灰色斜虚线**就是它（引擎 `avgLine` 追加的均线序列 `charts.ts:816` 名「7 天均线」）：
-    // 图例点名「图上那条灰色虚线」，免得跟目标线／里程碑竖线混起来（§2 第 1 条：不许有画了但读不到的线）。
+    // 图上叠的那条**灰色斜虚线**就是它（引擎 `avgLine` 追加的均线序列 `charts.ts:816`）：
+    // 图例点名「灰色虚线」，免得跟目标线／里程碑竖线混起来（§2 第 1 条：不许有画了但读不到的线）。
     const win = Math.max(3, Math.min(asc.length, 7));
-    rows.push({
-      left: '– –',
-      main: win >= 7 ? '7 天均线' : '均线（窗口 ' + win + ' 点）',
-      right: '图上那条灰色虚线（按窗口 ' + win + ' 点现算）',
-    });
+    rows.push({ left: '– –', main: win >= 7 ? '均线（最近 7 天）' : '均线（最近 ' + win + ' 天）', right: '图上那条灰色虚线' });
   }
   if (asc.length === 1) rows.push({ left: '·', main: '单点标记', right: '本窗只有 1 条记录，图上只有这一个点' });
   if (extra.overlay === 'target' && extra.goal !== null && extra.goal !== undefined) {
     const goal = extra.goal;
-    const d = goal.diffKg;
-    rows.push({ left: '- -', main: '目标线', right: '目标 ' + goal.kg + ' kg' + (plan.targetInRange ? '' : '（量程外，改画文字）') });
-    if (!plan.targetInRange && d !== null) {
-      // 老技能 `weight_history.html:275-278`：目标远超数据范围时退化成文字徽章，不拉长量程。
-      rows.push({
-        left: '→',
-        main: d > 0 ? '距目标还差 ' + d + ' kg' : d < 0 ? '已达目标（低于目标 ' + Math.abs(d) + ' kg）' : '已达目标',
-        right: '目标 ' + goal.kg + ' kg',
-      });
-    } else if (!plan.targetInRange) {
-      rows.push({ left: '→', main: '本窗无记录可比', right: '目标 ' + goal.kg + ' kg' });
-    }
+    // 量程外（图外）时不重复「还差多少」——那已经在 KPI 卡与结论标签里各有一处。
+    rows.push({
+      left: '- -', main: '目标线',
+      right: '目标 ' + goal.kg + ' kg' + (plan.targetInRange ? '' : '（超过图的取值范围，没画）'),
+    });
   }
   if (extra.overlay === 'milestone') {
     for (const m of extra.milestones ?? []) {
       const inWindow = plan.milestoneInWindow !== undefined && plan.milestoneInWindow.date === m.date;
-      rows.push({ left: '◆', main: m.label, right: m.date + ' ' + m.kg + 'kg' + (inWindow ? '（窗内已标竖线）' : '（窗口外）') });
+      rows.push({ left: '◆', main: m.label, right: m.date + ' ' + m.kg + ' kg' + (inWindow ? '' : '（窗口外）') });
     }
     if ((extra.milestones ?? []).length === 0) rows.push({ left: '◇', main: '里程碑未达成', right: (extra.milestoneMiss ?? []).join('；') || '继续记录' });
   }
   if (extra.overlay === 'anomaly') {
-    for (const a of extra.anomalies ?? []) {
-      rows.push({ left: '▲', main: '异常点 ' + a.date, right: a.kg + 'kg（偏 ' + a.deviationKg + '，图上已染红）' });
-    }
-    if ((extra.anomalies ?? []).length === 0) {
-      rows.push({ left: '△', main: '本窗无异常点', right: extra.anomalyNote ?? '波动在阈值内' });
+    const list = extra.anomalies ?? [];
+    if (list.length > 0) {
+      // 值最多 5 行：再长的清单交给下方的逐日明细表（图上那几个点本来也看得到）。
+      const cap = 5;
+      for (const a of list.slice(0, cap)) {
+        rows.push({ left: '▲', main: '异常点 ' + a.date, right: deviationHuman(a.kg, a.deviationKg) });
+      }
+      if (list.length > cap) rows.push({ left: '…', main: '还有 ' + (list.length - cap) + ' 个异常点', right: '见下方明细表' });
+    } else {
+      rows.push({ left: '△', main: '本窗无异常点', right: extra.anomalyNote ?? '波动在正常范围里' });
     }
   }
-  if (extra.noteOnly) rows.push({ left: '✎', main: '只看有备注的记录', right: '共 ' + h.rows.length + ' 条' });
   return rows;
 }
 
@@ -655,7 +713,8 @@ function segmentTables(h: WeightHistoryView, extra: HistoryDocExtra): string[] {
     bmi: r.bmi === null || r.bmi === undefined ? '—' : r.bmi,
     note: r.note && String(r.note).trim() !== '' ? r.note : '—',
   });
-  const suffix = extra.noteOnly ? '·有备注' : '';
+  // #480：表注不再重印窗口串与「·有备注」——窗口串页题／副标题／页脚共 3 处已够（页内窗口串**只留 1 处**，
+  // 见用例 `窗口区间串在可见文本里只出现 1 次`），「有备注」由页头副标题与第四张卡各说一次。
   if (h.rows.length > 30) {
     const head = h.rows.slice(0, 30);
     const tail = h.rows.slice(30);
@@ -663,13 +722,13 @@ function segmentTables(h: WeightHistoryView, extra: HistoryDocExtra): string[] {
       renderDataTable({
         columns: cols,
         rows: head.map(toRow),
-        caption: '体重明细（最近 30 条' + suffix + '）',
+        caption: '体重明细（最近 30 条）',
         emptyText: '本窗无体重记录',
       }),
       renderDataTable({
         columns: cols,
         rows: tail.map(toRow),
-        caption: '体重明细（其余 ' + tail.length + ' 条' + suffix + '）',
+        caption: '体重明细（其余 ' + tail.length + ' 条）',
         emptyText: '无更多记录',
       }),
     ];
@@ -677,7 +736,7 @@ function segmentTables(h: WeightHistoryView, extra: HistoryDocExtra): string[] {
   return [renderDataTable({
     columns: cols,
     rows: h.rows.map(toRow),
-    caption: '体重历史 ' + h.range + suffix + '（共 ' + h.rows.length + ' 条）',
+    caption: '体重明细（共 ' + h.rows.length + ' 条）',
     emptyText: '本窗无体重记录',
   })];
 }
