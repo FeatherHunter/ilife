@@ -75,7 +75,7 @@ const smokeSection = (md, heading) => {
 const unquote = (s) => String(s).replace(/`/g, '');
 
 describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
-  it('D2① 436 条逐条恰一个桶（可执行 357 ／ 命中但不执行 79，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行 ＋ #346 看今天练什么转入可执行 ＋ #347 读筛选 7 条转入可执行 ＋ #348 写创建类 5 条转入可执行）', () => {
+  it('D2① 436 条逐条恰一个桶（可执行 361 ／ 命中但不执行 75，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行 ＋ #346 看今天练什么转入可执行 ＋ #347 读筛选 7 条转入可执行 ＋ #348 写创建类 5 条转入可执行 ＋ #333 页面① 4 条转入可执行）', () => {
     assert.equal(WAKE_ROUTES.length, 436);
     assert.equal(EXEC_ROUTES.length + HIT_NOT_EXEC_ROUTES.length, 436);
     const buckets = { exec: 0, 'non-exec': 0 };
@@ -93,13 +93,13 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         assert.ok(Object.values(NON_EXEC_REASONS).includes(r.reason), r.wakeWord);
       }
     }
-    assert.deepEqual(buckets, { exec: 357, 'non-exec': 79 });
+    assert.deepEqual(buckets, { exec: 361, 'non-exec': 75 });
     assert.deepEqual(routingSummary(), {
       total: 436,
-      exec: 357,
-      nonExec: 79,
+      exec: 361,
+      nonExec: 75,
       outOfScope: 10,
-      legacyChain: 69,
+      legacyChain: 65,
       newEntries: 63,
       repairEntries: 1,
       coveredKeys: DECLARED_KEYS.length,
@@ -329,9 +329,12 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     //   `计划复盘（本周）`（key `calorie.view.exercise-review`）：#250 起「本周」＝本周一..今日（自然周），
     //   种子库的数据日是周一 ⇒ 窗只 1 天；那天没有计划会话 ⇒ exit 4、envelope `—`。
     //   这是**数据依赖**失败（词与窗口都对：真用户的计划周一有会话就跑得通），故登记而不改判。
+    //   `看「有备注」的体重记录`（key `calorie.view.weight-history`）：#333 备注筛选要求备注非空，
+    //   标准种子库体重记录无备注 ⇒ exit 4、envelope `—`。词与窗口都对（种子库有备注即跑得通），故登记。
     const DATA_DEPENDENT_FAILURES = new Map([
       ['复制昨日运动', { exit: '4', key: 'calorie.exercise.add' }],
       ['计划复盘（本周）', { exit: '4', key: 'calorie.view.exercise-review' }],
+      ['看「有备注」的体重记录', { exit: '4', key: 'calorie.view.weight-history' }],
     ]);
     // ② 快照逐条：exit 全 0（登记项除外）＋ envelope key 与路由 key 一致（登记项除外）＋ 条数与路由层一致。
     const rows1 = smokeSection(md, '## 1. ');
