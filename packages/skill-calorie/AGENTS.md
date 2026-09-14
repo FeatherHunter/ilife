@@ -6,7 +6,13 @@
 
 **告警线＝350 行。数法：LF 口径，只数 `\n`。**
 
-- 范围：本包 `src/**/*.ts` 与包内 `scripts/**/*.mjs`。
+- 范围：本包 `src/**/*.ts` 与包内 `scripts/**/*.mjs`。**生成物不算**——剔除名单只认生成器自己的输出声明
+  （`scripts/gen-*.mjs` 里名字带 `OUT`／`TARGET(S)`／`DST`／`DEST`／`GEN…` 段的 `const <名> = join(SRC_DIR, …)`，
+  与 `targets` 数组里的 `path: join(SRC_DIR, …)`），不手写一份会过期的名单；判据一条输出声明都抽不到即红。
+  当前剔出三件：`src/cli/keys.ts`、`src/cli/registry.ts`（`scripts/gen-cli.mjs` 生成）、
+  `src/triggers/routes.generated.ts`（`scripts/gen-cli.mjs`／`scripts/gen-routes.mjs` 生成）——重跑 `pnpm gen`
+  改它们不会逼无关的票来同步台账。**手写的 `src/triggers/routing.ts` 仍在扫描面内**：它 import 生成物，
+  但本身是人写的逻辑与类型再导出件（`src/triggers/routeSpec.ts` 同），人改了它就照常挂号。
 - 不算：`templates/*.html`（页面模板）、`SKILL.md`（说明面）、`test/*.mjs`（测试文件）、`dist/` 与 `.tsbuildinfo`（构建产物）——`structure.md` 的「管辖」一节已把它们划在外面。
 - 超线即触发必报五步的**第四步**：当场报一句「已超线，需要根据规则进行重构。」，后头接一句为什么超，再给拆法或说明这次为什么先不拆。**超线是报警，不是拦路。**
 
@@ -36,7 +42,6 @@
 | `src/weight/compare.ts` | — | 547 | 超因：对比体重的主窗口／对比窗口两套参数与对比算式同处一件（算式另有姊妹件 `weightCompare*.ts`）。 |
 | `src/render/exercisePort.ts` | — | 541 | 超因：#111 运动移植 6 键取数（行源＋分类口径）同处一件。 |
 | `src/render/sportPortDocs.ts` | — | 533 | 超因：#111 运动移植 6 键的全文档装配（数据→区块→填充器）同处一件。 |
-| `src/triggers/routes.generated.ts` | — | 529 | **生成物**：由 `scripts/gen-routes.mjs` 生成（件头「勿手改」，`pnpm gen` 重生成）。挂号只为「扫描面看得见它」；本行**不触发**第四步改造——结构纪律「不管生成的资产」。重新生成后若行数变了，本行「当场实测」列要跟着改，否则本门必红。 |
 | `src/migrate/migrate.ts` | — | 494 | 超因：老库到新 schema 的一次性迁移（13 表重建口径）全在一件里。 |
 | `src/analysis/multiTrendPage.ts` | — | 485 | 超因：通用分析页最小形态的整页装配与图／表／复制区调用同处一件。 |
 | `src/photo/helpCenter.ts` | — | 485 | 超因：#88 HELP 速查台的数据模型与页面装配同处一件。 |
@@ -53,19 +58,24 @@
 
 `#445` 把检查脚本从「`REQUIRED` 硬清单存在性」扩成「扫描面＋台账逐件对账」之后，当场扫描发现**超线件远不止 #354 在册的三件**：多出来的那些此前从未挂号（#354 只按票面点名登记了两件，却写了「其余均在 350 以内」的整句结论，那句话当场就不成立；#445 改正为**逐件**口径）。逐件读数只看上表「当场实测」列——本段不重复抄写数字，免得和表走散。
 
-其中 `src/triggers/routes.generated.ts` 是生成物（见该行结论），其余各件的拆法均不在 #445 写集（本票不改任何件源码），逐件结论待归属票认领。
+其中生成物（`src/cli/keys.ts`／`src/cli/registry.ts`／`src/triggers/routes.generated.ts`）按上「范围」一节的
+判据剔在扫描面外、不挂号；其余各件的拆法均不在 #445 写集（本票不改任何件源码），逐件结论待归属票认领。
 
 ## 检查脚本
 
 `packages/skill-calorie/scripts/check-warning-line.mjs`：
 
 - **绿**＝台账齐全**且**与实况逐件一致：`exit 0`、`RESULT: n/n`、`PASS: 告警线台账齐全且与实况一致`。
-- **红**（`exit 1`）四种，都在输出里点名：
+- **红**（`exit 1`）五种，都在输出里点名，末段直接给修法（`修法：node packages/skill-calorie/scripts/check-warning-line.mjs --sync`）：
   - `RED 漏报（台账没有）：<件> LF=<n>`——盘上超线了却没进台账（新增件、或把某件撑过 350）；
   - `RED 台账陈化：<件> 台账=<a> 实况=<b>`——台账「当场实测」列与实况不等；
-  - `RED 台账件在扫描面内：<件>`——台账点名了扫描面内不存在的件（改过名／搬过家）；
-  - `RED 台账缺行：<件>`——删台账任意一行、或改写冻结挂号值（#354 起的负向对照）。
+  - `RED 台账件在扫描面内不成立：<件>`——台账点名了不在扫描面内的件（改过名／搬过家／后来判成生成物）；
+  - `RED 台账缺行：<件>`／`RED 挂号值被改写：<件>`——删台账任意一行、或改写冻结挂号值（#354 起的负向对照）；
+  - `RED 生成物判据自证`／`RED 生成物印记已认领：<件>`——生成物剔除法的自证（见下）。
+- **回绿＝跑同步器，不用手改数**：`node packages/skill-calorie/scripts/check-warning-line.mjs --sync`
+  ——「当场实测」列照当刻 LF 改、超线件补新行（挂号值 `—`，结论列写明「超因与拆法待补」）、不在扫描面内的行剔、
+  冻结行缺了补回；**先加 `--dry` 只演练**（打印 `SYNC-PLAN 改=／增=／删=` 与逐条 `SYNC-CHANGE／ADD／DROP`，不落盘）。
+  同步器只改 `begin/end` 之间那块表（落盘前断言块外前后缀逐字节相同、断言全过才落盘；落盘后回读自证打 `SYNC-VERIFY ok`）。
 - **改了超线件、或新增／删除扫描面内的件，就必须同步这张台账表**，否则本门必红。这是设计行为（#445 要的就是「台账不随实况更新即报警」），不是误报。
-- 同步口径：把上表「当场实测」列改成当刻 LF（`readFileSync(f,'utf8').split('\n').length - 1`）；超线件补新行、落回线内的行保留并改实测值。
-- 复跑：`node packages/skill-calorie/scripts/check-warning-line.mjs`；夹具与变异可用 `--root`／`--agents` 指另一份包根与另一份 AGENTS.md（真实门禁**一律无参运行**，脚本会打印 `SCAN-ROOT:`／`LEDGER:` 两行供认口）。
-- 测试：`packages/skill-calorie/test/t445-告警线门.test.mjs`（漏报必红／陈化必红／还原必绿）。
+- 复跑：`node packages/skill-calorie/scripts/check-warning-line.mjs`；夹具与变异可用 `--root`／`--agents` 指另一份包根与另一份 AGENTS.md（真实门禁**一律无参运行**，脚本会打印 `SCAN-ROOT:`／`LEDGER:` 两行供认口，剔出的生成物逐条打 `GENERATED-SKIP`）。
+- 测试：`packages/skill-calorie/test/t445-告警线门.test.mjs`（漏报必红／陈化必红／还原必绿／缩面失明／生成物剔除与自证／同步器 `--dry` 不改文件 ＋ `--sync` 回绿）。
