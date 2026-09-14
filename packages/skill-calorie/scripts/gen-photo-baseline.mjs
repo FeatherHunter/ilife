@@ -8,7 +8,8 @@
  * - 固定时钟：凡能显式传日期的页一律显式传（list 传 `today:2026-09-06`、gif 传 `days:36500`、
  *   gif-planner 传 `start/end`、add 传 `date/time`）；`help.center` 走 `q` 现找分支（不碰 `new Date()`）。
  * - 比对**规范化后的页面正文 sha256**（剥掉临时目录绝对路径与产物时间戳），不比文件字节。
- * - 目标页（`calorie.photo.list`）有据更新；其余 9 页 sha 必须不变（改完之后 `--check` 逐页报告）。
+ * - 目标页（`calorie.photo.list`）有据更新；其余页 sha 冻结式守护：无据不得变，
+ *   有据更新须附成因（见 t341 文档附录·基线重落），改完之后 `--check` 逐页报告。
  *
  * 基线清单即本文件尾部的 `BASELINE` 常量（不另落 JSON 文件：本票只写四处路径，
  * 清单住脚本自己体内）。`--write` 重算并回写本文件；`--check` 逐页比对并 exit。
