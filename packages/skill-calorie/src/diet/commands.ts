@@ -17,7 +17,8 @@
  *   `diet.remove-by-range`／`diet.remove-by-type`）；
  *   看饮食＝`today.ts`（`today`／`view.today-water`）；
  *   查食品＝`library.ts`（`view.library`／`view.search`／`view.dedupe`／`view.source-stats`）
- *   ＋ `products.ts`（`product.add`／`product.update`／`product.deprecate`）；
+ *   ＋ `products.ts`（`product.add`／`product.update`／`product.deprecate`）
+ *   ＋ `productImport.ts`（`product.import`：批量导入食品，读写分开的写入侧）；
  *   看营养＝`nutrition.ts`（`view.nutrition-ratio`／`view.nutrition-detail`／`view.batch-import-preview`）；
  *   看排行＝`ranking.ts`（`view.ranking`）；饮食复盘＝`review.ts`（`view.diet-review`）。
  */
@@ -30,6 +31,7 @@ import { writeDietAdd, writeDietBatch, writeDietCopy, writeWaterLog } from './lo
 import { viewDedupe, viewLibrary, viewSearch, viewSourceStats } from './library.js';
 import { viewBatchImportPreview, viewNutritionDetail, viewNutritionRatio } from './nutrition.js';
 import { writeProductAdd, writeProductDeprecate, writeProductUpdate } from './products.js';
+import { writeProductImport } from './productImport.js';
 import { viewRanking } from './ranking.js';
 import { viewDietReview } from './review.js';
 import { viewToday, viewTodayWater } from './today.js';
@@ -46,6 +48,7 @@ export const DIET_COMMANDS = [
   { kind: 'write', key: 'calorie.diet.update-by-date', shape: 'receipt', title: '按日改饮食', wakeWord: '改某日饮食', run: writeDietUpdateByDate, example: 'calorie-cmd-read calorie.diet.update-by-date --params \'{"note":"食堂","date":"<日期>"}\'' },
   { kind: 'write', key: 'calorie.product.add', shape: 'receipt', title: '存食品', wakeWord: '存食品', run: writeProductAdd, example: 'calorie-cmd-read calorie.product.add --params \'{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}\'' },
   { kind: 'write', key: 'calorie.product.deprecate', shape: 'receipt', title: '下架食品', wakeWord: '下架食品', run: writeProductDeprecate, example: 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'' },
+  { kind: 'write', key: 'calorie.product.import', shape: 'receipt', title: '批量导入食品', wakeWord: '批量导入食品', run: writeProductImport, example: 'calorie-cmd-read calorie.product.import --params \'{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}]}\'' },
   { kind: 'write', key: 'calorie.product.update', shape: 'receipt', title: '改食品', wakeWord: '改食品', run: writeProductUpdate, example: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
   { kind: 'read', key: 'calorie.today', shape: 'list', title: '今日饮食', wakeWord: '看今日饮食概览', run: viewToday, example: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
   { kind: 'read', key: 'calorie.view.batch-import-preview', shape: 'stat', title: '批量导入预览', wakeWord: '看批量导入预览', run: viewBatchImportPreview, example: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },

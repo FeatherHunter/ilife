@@ -15,15 +15,26 @@ import { CalorieRenderError } from '../render/errors.js';
 import { buildTodayWaterView } from './nutritionPort.js';
 import { buildTodayWaterDoc } from './nutritionPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
-import { assertISO, dayField, latestFoodDate, nums, windowRange } from '../shared/params.js';
+import { assertISO, dayField, fail, latestFoodDate, nums, windowRange } from '../shared/params.js';
 
-/** `calorie.today` · 今日饮食。 */
+/** 备注筛选参数：`hasNote` 主名、`withNote` 兼容旧唤醒词文案（`--with-note`）。只收布尔，非布尔即用法错。 */
+function hasNoteOf(params: Record<string, unknown>): boolean | undefined {
+  const v = params['hasNote'] !== undefined ? params['hasNote'] : params['withNote'];
+  if (v === undefined || v === null) return undefined;
+  if (typeof v !== 'boolean') fail(2, '参数 hasNote 须为布尔');
+  return v as boolean;
+}
+
+/** `calorie.today` · 今日饮食（`hasNote:true` 只看带备注的条目；取数已含 note 列）。 */
 export function viewToday(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
   assertISO(date, 'date');
-  const rows = listMeals(db, date).filter((r) => r.food_name !== '💧水');
-  if (rows.length === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-  const items = rows.map((r) => ({ id: r.id, date: r.date, time: r.time, food_name: r.food_name, grams: r.grams, calories: r.calories, protein: r.protein, carbs: r.carbs, fat: r.fat }));
+  const hasNote = hasNoteOf(params);
+  let rows = listMeals(db, date).filter((r) => r.food_name !== '💧水');
+  if (hasNote === true) rows = rows.filter((r) => (r.note ?? '').trim() !== '');
+  if (hasNote === false) rows = rows.filter((r) => (r.note ?? '').trim() === '');
+  if (rows.length === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + (hasNote === true ? '，有备注' : '') + '）');
+  const items = rows.map((r) => ({ id: r.id, date: r.date, time: r.time, food_name: r.food_name, grams: r.grams, calories: r.calories, protein: r.protein, carbs: r.carbs, fat: r.fat, note: r.note ?? '' }));
   const o = buildDietOverview(db, date, date);
   const dist = buildMealDistribution(db, date);
   // #108 · 今日饮食全文档（餐次进度＋营养配比＋今日明细；配比无数据即 skip，不编数）。
