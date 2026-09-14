@@ -51,7 +51,7 @@ RUN ticket=269 runId=t269-commit-4 cmd="git commit -F .scratch/t269/commit-msg-1
 | t269f-window | `cmd /c .scratch\\t269-final\\g10-window.cmd` | 20 | 诊断：变异自检判据写错的第一轮（未跑全量，exit=20） |
 | t269f-window2 | `cmd /c .scratch\\t269-final\\g10-window.cmd` | 1 | 诊断：变异电池 exit=0 ＋ 全量测试（tests 1616／fail 28） |
 | t269f-windowA | `cmd /c .scratch\\t269-final\\g11-windowA.cmd` | 0 | 门禁：变异电池 ＋ 入仓脚本复跑 ＋ 13 条实跑 ＋ gen:check（窗口内三步骤皆 exit=0） |
-| t269f-windowB1 | `cmd /c .scratch\\t269-final\\g12-windowB1.cmd` | 0 | （未登记作用） |
+| t269f-windowB1 | `cmd /c .scratch\\t269-final\\g12-windowB1.cmd` | 0 | 门禁：前后对照复跑 ＋ 暂存集对账（`git add` 后 `git diff --cached --name-only`） |
 
 原文逐行（`RUN`）：
 
@@ -85,4 +85,19 @@ RUN ticket=269 runId=t269f-windowB1 cmd="cmd /c .scratch\\t269-final\\g12-window
 
 ```text
 RUN ticket=269 runId=t269f-commit cmd="cmd /c .scratch\\t269-final\\g13-commit.cmd" waitedMs=10001 exit=0 pid=11784 at=2026-09-14T06:18:29.268Z
+```
+
+## 追加：运行时终验与漏改修补这一段（2026-09-14T06:19:29.496Z）
+
+> 导出时刻见本行上方时间戳；源 `.scratch/locks/gate-runs.log`。`START` 行略去，只列 `RUN` 行（一对一）。
+> 逐条声明与判据见 `t269-final-verify.md` 第七节。
+
+| 运行标识 | 命令 | 退出码 | 证据作用 |
+|---|---|---|---|
+| t269f-commit2 | `cmd /c .scratch\\t269-final\\g14-commit2.cmd` | 0 | 门禁：导出件补 `t269f-commit` 一条并推送（单件点名提交，范围回读） |
+
+原文逐行（`RUN`）：
+
+```text
+RUN ticket=269 runId=t269f-commit2 cmd="cmd /c .scratch\\t269-final\\g14-commit2.cmd" waitedMs=0 exit=0 pid=50536 at=2026-09-14T06:19:10.268Z
 ```
