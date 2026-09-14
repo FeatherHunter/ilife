@@ -118,11 +118,23 @@ test('① 候选与快照真跑（缩略图＋日期＋标签＋快照＋prompt�
   const bytes = assertShape(html);
   assert.ok(bytes > 500, '页面过小，不像含内嵌照片：' + bytes);
   assert.match(html, /#1/, '候选缺 #1');
-  assert.match(html, /2026-09-04/, '候选缺日期');
-  assert.match(html, /正面/, '候选缺标签');
-  assert.match(html, /快照/, '未选中快照缺失');
+  // #474：候选行只留「#编号 标签 · 短日期 · 相对时间」（文件名与「文件存在」都下屏）。
+  assert.match(html, /#1 正面 · 09-04/, '候选行缺「#编号 标签 · 短日期」');
+  assert.match(html, /09-04 · \d+ 天前/, '候选行缺相对时间');
+  assert.doesNotMatch(html, /文件存在/, '#474：正常照片不许逐行喊「文件存在」');
+  assert.doesNotMatch(html, /2026-09-04_00\d\.png/, '#474：候选行不再抄文件名');
+  assert.match(html, /<figcaption>快照 #1 2026-09-04/, '快照位应留完整日期（删前核对凭据）');
+  assert.match(html, /<title>/, '文档标题缺失');
+  assert.match(html, /删照候选/, '页名缺失');
   assert.match(html, /calorie\.photo\.remove/, 'prompt 缺删除写命令');
   assert.match(html, /&quot;id&quot;:1|&#34;id&#34;:1|"id":1/, 'prompt 缺选中的 id');
+  // #474：内部命令名、内部词「内嵌」、H1 张数重复、表注旧句一律下屏。
+  assert.doesNotMatch(html, /calorie\.view\.photo-picker/, '#474：眉标里的内部命令名须 0 命中');
+  assert.doesNotMatch(html, /内嵌/, '#474：「内嵌」这种技术词须 0 命中');
+  assert.doesNotMatch(html, /删照候选 · \d+ 张/, '#474：H1 里的张数重复须删');
+  assert.doesNotMatch(html, /快照明细（只读，删除走写命令）/, '#474：旧表注须 0 命中');
+  assert.match(html, /本页不删任何东西；要删得你复制下面那段指令/, '#474：表注安全感那句缺失');
+  assert.match(html, /把上面某个 #号说给我（例如 #19）/, '#474：空态须改人话');
 });
 
 test('② prompt 照抄即跑（抽出即跑：删与标签各一遍）', async () => {
@@ -131,7 +143,15 @@ test('② prompt 照抄即跑（抽出即跑：删与标签各一遍）', async 
   const html = readFileSync(assertOutputOnDisk(env), 'utf8');
   const cli = extractBashCli(html);
   assert.ok(cli.includes('"id":1'), '删 prompt 未含选中的 id：' + cli);
+  // #474：对着用户说的那句改人话（命令段一字未动）。
+  assert.match(html, /删了就找不回来，先看上面那张是不是它/, '#474：删除提示须改人话');
+  assert.doesNotMatch(html, /硬删除，不可恢复，跑之前请先核对本页快照/, '#474：旧系统口吻须 0 命中');
   runExtractedCli(iso, cli);
+  // #474：op 缺项占位句不再印 `op/set/add/remove/newTag` 五个英文词。
+  const noOp = runPickerOk(iso, { id: 1, action: 'tag' });
+  const noOpHtml = readFileSync(assertOutputOnDisk(noOp), 'utf8');
+  assert.match(noOpHtml, /要把标签换成、加上，还是去掉哪个/, '#474：缺 op 占位句须改人话');
+  assert.doesNotMatch(noOpHtml, /op（set 全量替换／add 追加／remove 移除）/, '#474：五个英文参数词须 0 命中');
   const tagEnv = runPickerOk(iso, { id: 2, action: 'tag', op: 'add', newTag: '晨起' });
   const tagHtml = readFileSync(assertOutputOnDisk(tagEnv), 'utf8');
   const tagCli = extractBashCli(tagHtml);
@@ -170,8 +190,12 @@ test('⑤ data.output 绝对路径在盘上＋体积 ≤ 上限', async () => {
   const env = runPickerOk(iso, {});
   const out = assertOutputOnDisk(env);
   const html = readFileSync(out, 'utf8');
-  assert.match(html, /未选中/, '无 id 时应明示未选中（缺项占位）');
-  assert.match(html, /重跑本命令/, '缺项时 prompt 应指到步骤（t400 裁定 2）');
+  // #474：没给 id 时两处都说人话——空态指到操作（说个 #号），prompt 占位句同指。
+  assert.match(html, /还没说要删哪张/, '无 id 时应明示还没选');
+  assert.match(html, /还没选照片：把候选列表里那个 #号说给我/, '缺项时 prompt 应指到步骤（t400 裁定 2）');
+  assert.match(html, /<h1[^>]*>删照候选<\/h1>/, '#474：H1 只留页名');
+  assert.match(html, /本页显示<\/div>/, '#474：KPI 须说「本页显示」几张');
+  assert.match(html, /能看<\/div>/, '#474：KPI 须说「能看」几张');
   const bytes = Buffer.byteLength(html, 'utf8');
   assert.ok(bytes <= PHOTO_LIST_PAGE_MAX_BYTES, '超限：' + bytes + ' > ' + PHOTO_LIST_PAGE_MAX_BYTES);
 });

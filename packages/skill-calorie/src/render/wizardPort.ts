@@ -75,8 +75,9 @@ function normSrcPaths(raw: unknown): string[] {
 }
 
 export function buildPhotoLogWizardPrompt(srcPaths: string[], tag: string | null, note: string | null): string {
-  if (srcPaths.length === 0) return '// 请先填照片文件路径（srcPaths，至多 20 张）';
-  if (!tag) return '// 请填 tag（建议：正面/背面/侧面，同一类用同一 tag）';
+  // #474：两处缺项占位句去参数名、说人话（用户看不出 `srcPaths`／`tag` 指的是哪一栏）。
+  if (srcPaths.length === 0) return '// 还没填照片路径：把照片的完整路径粘到上面那一栏（最多 20 张）';
+  if (!tag) return '// 还没填标签：从上面的常用标签里点一个（同一类照片用同一个）';
   const files = srcPaths.map((f) => '"' + f + '"').join(' ');
   const params = { srcPaths, tag, ...(note ? { note } : {}) };
   return '请帮我记录 ' + srcPaths.length + ' 张身材照到卡路里\n\n参数:\n- 照片文件:' + files +
