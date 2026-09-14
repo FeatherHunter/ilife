@@ -1,6 +1,8 @@
 /** 改体重记录（HELP 场景 03「体重」下一级）：`calorie.weight.update`／`calorie.weight.remove` 写。
  *
  * 两条命令都收「按 id」与「按日期／范围」两套定位口径——参数形状与回执逐字沿用原分派层。
+ * #337 融合：回执行 `items` 补出整页那两张表要用的读数——改类给「改前 → 改后」（体重一侧
+ * 与备注一侧各成一对，缺的那侧留空串，页面按可见文本口径写 `—`），删类给快照行的可读体重。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { assertISO, fail, optNum, optStr, wday } from '../shared/params.js';
@@ -21,8 +23,12 @@ export function writeWeightUpdate(params: Record<string, unknown>, db: DatabaseS
     const bmiTextU = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
     return out(R('改体重记录', 'update', '已更新体重 #' + id + '：' + r.oldWeight + '→' + r.newWeight + ' kg（' + bmiTextU + '）', '改体重记录', 'weight_log (写库回执)', {
       recordId: id, ids: [id], writtenFields: [...(kg !== undefined ? ['kg'] : []), ...(note !== undefined ? ['note'] : [])],
-      // 整页回执的对照表吃改前 → 改后（摘要口径一字不动）。
-      items: [{ id, status: '已更新', reason: r.oldWeight + ' → ' + r.newWeight + ' kg', detail: note ?? '' }],
+      // 整页回执的对照表吃改前 → 改后（摘要口径一字不动；按 id 改拿不到改前备注，那一侧留空）。
+      items: [{
+        id, date: r.date, status: '已更新',
+        reason: r.oldWeight + ' kg → ' + r.newWeight + ' kg',
+        detail: note === undefined ? '' : '备注改为「' + note + '」',
+      }],
     }));
   }
   if (date !== undefined) {
@@ -30,11 +36,11 @@ export function writeWeightUpdate(params: Record<string, unknown>, db: DatabaseS
     const r = updateWeightByDate(db, date, kg, note);
     return out(R('改某日体重', 'update', '已更新 ' + date + ' 体重 ' + r.hitCount + ' 条', '改某日体重', 'weight_log (写库回执)', {
       ids: [], idSource: 'condition', writtenFields: [...(kg !== undefined ? ['kg'] : []), ...(note !== undefined ? ['note'] : [])],
-      // 整页回执的对照表吃逐行改前 → 改后（命中多条时逐行一对，不丢行）。
+      // 整页回执的对照表吃逐行改前 → 改后（命中多条时逐行一对，不丢行；改前备注逐行取自回读）。
       items: r.oldRows.map((row) => ({
         id: row.id, date: row.date, status: '已更新',
-        reason: r.newWeight === null ? '' : row.weight_kg + ' → ' + r.newWeight + ' kg',
-        detail: r.note ?? '',
+        reason: r.newWeight === null ? '' : row.weight_kg + ' kg → ' + r.newWeight + ' kg',
+        detail: note === undefined ? '' : (row.note ?? '') + ' → ' + note,
       })),
     }));
   }
@@ -53,8 +59,8 @@ export function writeWeightRemove(params: Record<string, unknown>, db: DatabaseS
     const r = deleteWeight(db, id);
     return out(R('删体重记录', 'delete', '已删除体重 #' + id + '（' + r.date + ' ' + r.weight_kg + ' kg · ' + HARD_INNER + '）', '删体重记录', 'weight_log (写库回执)', {
       recordId: id, ids: [id], writtenFields: [],
-      // 整页回执的快照表吃删前取值（摘要口径一字不动）。
-      items: [{ id, date: r.date, status: deleteStatus('hard'), reason: '', detail: r.weight_kg + 'kg' }],
+      // 整页回执的快照表吃删前取值（摘要口径一字不动；`detail` 给原始数值，单位由页面加）。
+      items: [{ id, date: r.date, status: deleteStatus('hard'), reason: '', detail: String(r.weight_kg) }],
     }));
   }
   if (date !== undefined) {
@@ -63,7 +69,7 @@ export function writeWeightRemove(params: Record<string, unknown>, db: DatabaseS
     return out(R('删某日体重', 'delete', '已删除 ' + date + ' 体重 ' + r.deletedCount + ' 条' + HARD_WORDING, '删某日体重', 'weight_log (写库回执)', {
       ids: [], idSource: 'condition', writtenFields: [],
       items: r.snapshot.map((row) => ({
-        id: row.id, date: row.date, status: deleteStatus('hard'), reason: '', detail: row.weight_kg + 'kg',
+        id: row.id, date: row.date, status: deleteStatus('hard'), reason: '', detail: String(row.weight_kg),
       })),
     }));
   }
