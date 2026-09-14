@@ -172,6 +172,9 @@ test('#337 补录体重', () => {
 test('#337 批量补录体重', () => {
   const dir = mkDir();
   const today = todayISO();
+  // 先占住 -5 那一天，批量里那一条才真的走「跳过」（新库什么都不跳过，三态就只剩写入与失败）。
+  const seed = runCli(dir, 'calorie.weight.log', { kg: 70.9, date: shiftISO(today, -5) }, 'batch-seed');
+  assert.equal(seed.status, 0, '批量种子 exit ' + seed.status + ' stderr=' + seed.stderr.slice(-300));
   const items = [
     { date: shiftISO(today, -4), kg: 70.8 },
     { date: shiftISO(today, -5), kg: 70.5 },

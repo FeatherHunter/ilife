@@ -9,10 +9,12 @@ import { buildAddReceipt } from './photo.js';
 import { withM5 } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { todayISO } from '../analysis/utils.js';
-import { F, receiptHtml } from '../shared/writeParts.js';
+import { F, commandLine, totalChanges } from '../shared/writeParts.js';
 import { assertISO, fail, needStr, optStr, wday } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { photoDirOrThrow } from './dir.js';
+import { embedPhotos } from './photoThumb.js';
+import { buildPhotoAddDoc } from './receipt.js';
 
 /** `calorie.photo.add` · 记身材照（至多 20 张；源文件都不存在即 missing-data，不写半条空记录）。 */
 export function writePhotoAdd(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
@@ -24,7 +26,9 @@ export function writePhotoAdd(params: Record<string, unknown>, db: DatabaseSync)
   const dir = photoDirOrThrow(params);
   const today = wday(params, 'date') ?? todayISO();
   assertISO(today, 'date');
-  const added = addPhotos(db, dir, { srcPaths, tag, note: optStr(params, 'note'), today, nowTime: optStr(params, 'time') });
+  const note = optStr(params, 'note');
+  const before = totalChanges(db);
+  const added = addPhotos(db, dir, { srcPaths, tag, note, today, nowTime: optStr(params, 'time') });
   if (added.length === 0) throw new CalorieRenderError('missing-data', '照片源文件均不存在，未存入');
   let distance = null;
   try {
@@ -33,8 +37,10 @@ export function writePhotoAdd(params: Record<string, unknown>, db: DatabaseSync)
   } catch {
     distance = null;
   }
-  const receipt = withM5(buildAddReceipt(added, { tag, note: optStr(params, 'note'), distance, failedCount: srcPaths.length - added.length || undefined }), {
+  const receipt = withM5(buildAddReceipt(added, { tag, note, distance, failedCount: srcPaths.length - added.length || undefined }), {
     ids: added.map((a) => a.id), writtenFields: [...F.photo],
+    affectedRows: totalChanges(db) - before,
   });
-  return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
+  const embeds = embedPhotos(dir, added.map((a) => ({ photoPath: a.file })));
+  return { data: { ok: true, message: receipt.summary, receipt }, html: buildPhotoAddDoc(receipt, { embeds, tag, note, date: today, command: commandLine('calorie.photo.add', params) }) };
 }

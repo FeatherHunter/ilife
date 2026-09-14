@@ -9,10 +9,12 @@ import { deletePhoto, getPhotoRow, parseTags, serializeTags, tagAdd, tagRemove, 
 import { buildDeleteReceipt, buildTagReceipt } from './photo.js';
 import { withM5 } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { receiptHtml } from '../shared/writeParts.js';
+import { commandLine, totalChanges } from '../shared/writeParts.js';
 import { fail, needId, needStr } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { photoDirOrThrow } from './dir.js';
+import { embedPhoto } from './photoThumb.js';
+import { buildPhotoRemoveDoc, buildPhotoTagDoc } from './receipt.js';
 
 /** `calorie.photo.remove` · 删身材照（硬删除；查不到即 missing-data）。 */
 export function writePhotoRemove(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
@@ -20,9 +22,13 @@ export function writePhotoRemove(params: Record<string, unknown>, db: DatabaseSy
   const dir = photoDirOrThrow(params);
   const snap = getPhotoRow(db, id);
   if (!snap) throw new CalorieRenderError('missing-data', '身材照 #' + id + ' 不存在');
+  const preEmbed = embedPhoto(dir, snap.photo_path);
+  const before = totalChanges(db);
   deletePhoto(db, dir, id);
-  const receipt = withM5(buildDeleteReceipt(snap), { ids: [id], writtenFields: [] });
-  return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
+  const receipt = withM5(buildDeleteReceipt(snap), {
+    ids: [id], writtenFields: [], affectedRows: totalChanges(db) - before,
+  });
+  return { data: { ok: true, message: receipt.summary, receipt }, html: buildPhotoRemoveDoc(receipt, { embed: preEmbed, command: commandLine('calorie.photo.remove', params) }) };
 }
 
 /** `calorie.photo.tag` · 改照片标签：`op` 三选一（set 全量替换／add 加一个／remove 删一个）。 */
@@ -33,6 +39,7 @@ export function writePhotoTag(params: Record<string, unknown>, db: DatabaseSync)
   const row = getPhotoRow(db, id);
   if (!row) throw new CalorieRenderError('missing-data', '身材照 #' + id + ' 不存在');
   const before = [...row.tag_list];
+  const dbBefore = totalChanges(db);
   let scene: '改照片标签' | '加照片标签' | '删照片标签';
   if (op === 'set') {
     const raw = params['tags'] ?? params['tag'];
@@ -51,6 +58,9 @@ export function writePhotoTag(params: Record<string, unknown>, db: DatabaseSync)
     scene = '删照片标签';
   }
   const after = getPhotoRow(db, id)?.tag_list ?? before;
-  const receipt = withM5(buildTagReceipt(id, before, after, scene), { ids: [id], writtenFields: op === 'set' ? ['tags'] : ['tag'] });
-  return { data: { ok: true, message: receipt.summary, receipt }, html: receiptHtml(receipt.scene, receipt.summary, receipt.op, receipt.recordId, receipt.items) };
+  const receipt = withM5(buildTagReceipt(id, before, after, scene), {
+    ids: [id], writtenFields: op === 'set' ? ['tags'] : ['tag'],
+    affectedRows: totalChanges(db) - dbBefore,
+  });
+  return { data: { ok: true, message: receipt.summary, receipt }, html: buildPhotoTagDoc(receipt, { command: commandLine('calorie.photo.tag', params) }) };
 }
