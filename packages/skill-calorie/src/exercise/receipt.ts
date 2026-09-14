@@ -1,7 +1,10 @@
 /** 运动（HELP 场景 04「运动」下一级 · 记运动／改运动／删运动）· 写后回执页装配。
  *
  * #264 建的形状（`assembleDocPage` 整页、`statusCard`／`reconcileDisclosure`、`copyArea` 三格式恒开、
- * 当日累计走 `analysis/utils.ts` 的 `EX_ALIVE` 活行口径、中文列名只此一处）本票不动；#423 换版式：
+ * 当日累计走 `analysis/utils.ts` 的 `EX_ALIVE` 活行口径）本票不动；#449 把字段展示收口到域标签表：
+ * 写入字段卡、字段变更卡与页面副标题一律查 `exercise/fieldLabels.ts`（`shared/fieldLabel.ts` 的查表口径，
+ * 缺项回退原键名），**中文列名表不再住本件**——用户可见文本里不留参数名。
+ * #423 换版式：
  * 照地图 #156 融合设计（`docs/skills/skill-calorie/t156-融合设计.md`，样张 `t156-样张-写后回执.html`）
  * 把回执页做成**页面族的样板**，八条——① 四态头走 #422 `shared/operationHead.ts`（三张表只一处定义）；
  * ② 字段变更卡共用一张（改＝旧→新、删＝快照、增＝新增内容，同一行类，箭位可见性占位），零行＝整卡不出现；
@@ -28,8 +31,10 @@ import { copyArea, copyLog } from '../shared/copyArea.js';
 import { operationHead } from '../shared/operationHead.js';
 import type { ReceiptOp } from '../shared/operationHead.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
+import { fieldLabel } from '../shared/fieldLabel.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { SOFT_EXCLUDED } from '../shared/writeParts.js';
+import { EXERCISE_DOMAIN } from './fieldLabels.js';
 import type { ExerciseRow } from './exerciseStore.js';
 
 const DOC_VERSION = '0.1.0';
@@ -50,20 +55,20 @@ export interface ExerciseReceiptDetail {
   readonly undoCli?: string;
 }
 
-/** 库列名 → 中文列名（老实物 `crud_receipt.html` 的 `FIELD_LABELS` 运动那半，中文面只此一处）。 */
-const FIELD_LABELS: Record<string, string> = {
-  exercise_type: '运动类型', date: '日期', time: '时间', duration_minutes: '时长', calories_burned: '消耗',
-  category: '分类', difficulty: '强度', distance_km: '距离', avg_heart_rate: '平均心率', max_heart_rate: '最高心率',
-  steps: '步数', reps: '次数', load_kg: '重量', set_index: '组号', is_backfill: '补录', note: '备注',
-};
-
 /** 快照／新增内容要逐个摆出来看的列（按人读的顺序；值没有就不摆这一行）。 */
 const SNAPSHOT_COLS = ['exercise_type', 'date', 'time', 'duration_minutes', 'calories_burned', 'category', 'difficulty', 'distance_km', 'avg_heart_rate', 'max_heart_rate', 'steps', 'reps', 'load_kg', 'set_index', 'is_backfill', 'note'];
 
 const SKIP_COLS = new Set(['id', 'created_at', 'updated_at', 'is_deleted']);
 
-function fieldLabel(col: string): string {
-  return FIELD_LABELS[col] ?? col;
+/** 字段名 → 中文标签：查 `exercise/fieldLabels.ts` 那张域表的单源口径（`#449`，缺项回退原键名）。 */
+function label(col: string): string {
+  return fieldLabel(EXERCISE_DOMAIN, col);
+}
+
+/** 摘要里的字段键也换掉：写命令给的摘要按库列名报字段（如「已更新运动 #1（duration_minutes）」），
+ *  它是页面副标题这一处可见文本；只换**域表里登记过**的键，没登记的原样留着（截断在词边界）。 */
+function labelSummary(summary: string): string {
+  return summary.replace(/[A-Za-z][A-Za-z0-9_]*/g, (token) => label(token));
 }
 
 /** 给人看的格值：没有值只写「未设置」（与场景 07 同词）。 */
@@ -121,21 +126,21 @@ function changeCard(op: ReceiptOp, rows: readonly ExerciseRow[], pairs: readonly
         const before = pair.old[col];
         const after = pair.new[col];
         if (String(before ?? '') === String(after ?? '')) continue;
-        items.push({ label: idPrefix(pairs.length, pair.new) + fieldLabel(col), before: rowText(pair.old, col), after: rowText(pair.new, col) });
+        items.push({ label: idPrefix(pairs.length, pair.new) + label(col), before: rowText(pair.old, col), after: rowText(pair.new, col) });
       }
     }
   } else if (op === 'delete') {
     for (const row of rows) {
       for (const col of SNAPSHOT_COLS) {
         if (!hasValue(row, col)) continue;
-        items.push({ label: idPrefix(rows.length, row) + fieldLabel(col), before: rowText(row, col), arrow: false });
+        items.push({ label: idPrefix(rows.length, row) + label(col), before: rowText(row, col), arrow: false });
       }
     }
   } else {
     for (const row of rows) {
       for (const col of SNAPSHOT_COLS) {
         if (!hasValue(row, col)) continue;
-        items.push({ label: idPrefix(rows.length, row) + fieldLabel(col), after: rowText(row, col), arrow: false });
+        items.push({ label: idPrefix(rows.length, row) + label(col), after: rowText(row, col), arrow: false });
       }
     }
   }
@@ -300,7 +305,7 @@ export function buildExerciseReceiptDoc(
   }
   if (receipt.affectedRows > 0) kpi.push({ label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' });
   if (receipt.writtenFields.length > 0) {
-    kpi.push({ label: '写入字段', value: receipt.writtenFields.length + ' 项', detail: receipt.writtenFields.join('、') || '未设置' });
+    kpi.push({ label: '写入字段', value: receipt.writtenFields.length + ' 项', detail: receipt.writtenFields.map(label).join('、') || '未设置' });
   }
 
   const cards = [counts, change, detailRows, day, source].filter((c): c is Card => c !== null);
@@ -327,7 +332,7 @@ export function buildExerciseReceiptDoc(
     docTitle: DOC_TITLE,
     title: receipt.scene + ' · 回执',
     eyebrow: '运动 · 写后回执',
-    subtitle: receipt.summary,
+    subtitle: labelSummary(receipt.summary),
     content,
     // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），
     // 打印规则（隐藏页内导航与区块复制区、具名页 `@page printable`）见 `base-render/src/blocks.ts`。
