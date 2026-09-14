@@ -11,7 +11,7 @@
  *   必需槽位是哪些住 `./collect.ts` 的 `RECORD_SLOTS`（唯一定义地）；真值校验仍走 `src/policy`
  *   （`validateAddInput`／`validateUpdateInput`／`needId`／`parseRecordOp`），取数写库仍走 `src/fetch`
  *   （`addBill`／`updateBill`／`undoBill`／`restoreBill`），本文件只做编排与回执事实装配。
- * 写入字段口径：create 键＝该键写入列全集（含缺省值列）；改字段＝本次实际变更的列；撤销／恢复写的是 `deleted_at`。
+ * 写入字段口径：记一笔写整列全集（含缺省值列）；改字段＝本次实际变更的列；撤销／恢复写的是 `deleted_at`。
  */
 import { addBill, updateBill, undoBill, restoreBill, getById, DB_FILENAME } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
@@ -21,12 +21,13 @@ import { buildRecordReceipt } from '../render/views.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { totalChanges } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
-import { RECORD_SLOTS, missingSlots, recordCollectDoc } from './collect.js';
+import { RECORD_SLOTS, missingSlotMessage, missingSlots, recordCollectDoc } from './collect.js';
 import type { RecordSlot } from './collect.js';
 import { recordReceiptDoc } from './receipt.js';
 
-/** 记一笔的写入列全集（缺省值列也算写入：时间／账户／账本／币种都带缺省）。 */
-const ADD_FIELDS: readonly string[] = ['category', 'amount', 'time', 'account', 'ledger', 'currency', 'note'];
+/** 记一笔写进库的列全集（**由槽位表派生，同一件事实一处定义**）：`add` 那一行的七个参数名就是它写进库的七个列
+ *  （缺省值列也算写入：时间／账户／账本／币种都带缺省）。名单只有 `./collect.ts` 的 `RECORD_SLOTS` 一处。 */
+const ADD_FIELDS: readonly string[] = RECORD_SLOTS['bill.record.add'].map((s) => s.name);
 
 /** 本次数据来源（复制日志第 3 段）；库文件名逐字取本包常量，共用件不取。 */
 const SOURCE = DB_FILENAME + ' · bills（写库回执）';
@@ -56,11 +57,18 @@ function rowDetail(r: BillRow): DetailRow[] {
   ];
 }
 
+/** 库内那一列在改前的值。字段名只认 `BillRow` 上真有的列——形状写得出（铁律三），
+ *  不拿 `unknown` 中转成宽字典再按变长字符串取字段。`patch` 那一边由 `src/policy` 的
+ *  `validateUpdateInput` 校验过字段与值，这里只读回来比对。 */
+function preValue(pre: BillRow, column: string): string | number | null | undefined {
+  return Object.prototype.hasOwnProperty.call(pre, column) ? pre[column as keyof BillRow] : undefined;
+}
+
 /** 必需槽位缺失时的那一支：出过程型采集页、不写库、`ok:false`。 */
 function collectOut(
   key: string, params: Record<string, unknown>, slots: readonly RecordSlot[], missing: readonly RecordSlot[],
 ): WriteOut {
-  const message = '缺必需槽位：' + missing.map((m) => m.name).join('、') + '（已出采集页，补齐后重跑同一条命令）';
+  const message = missingSlotMessage(missing);
   return {
     data: { ok: false, message },
     html: recordCollectDoc({ key, params, slots, missing, source: SOURCE, actionAt: nowStamp() }),
@@ -150,15 +158,14 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): 
     });
   }
   const { id, patch } = validateUpdateInput(params);
-  const pre = getById(db, id) as unknown as Record<string, unknown>;
-  const r = updateBill(db, id, patch as Partial<BillRow>);
+  const pre = getById(db, id);
+  const r = updateBill(db, id, patch);
   const fields = Object.keys(patch);
-  const patchRecord = patch as Record<string, unknown>;
-  const noChange = fields.every((f) => pre[f] === patchRecord[f]);
+  const noChange = fields.every((f) => preValue(pre, f) === patch[f]);
   return finish({
     db, key, params, op: 'update', row: r, fields, before, noChange,
     summary: `已修改：${r.id}（${fields.join('/')}）`,
     writtenDetail: '已改账单库那一条',
-    detail: [{ k: 'id', v: String(r.id) }, ...fields.map((f) => ({ k: f, v: String(patchRecord[f]) }))],
+    detail: [{ k: 'id', v: String(r.id) }, ...fields.map((f) => ({ k: f, v: String(patch[f]) }))],
   });
 }

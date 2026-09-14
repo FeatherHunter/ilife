@@ -3,6 +3,7 @@
  * 谁在用（两个调用点，指名）：
  *   ① `src/record/receipt.ts`——结果型回执整页：`receiptStatusCard`（已改动／无改动）＋ `reconcileDisclosure`；
  *   ② `src/record/collect.ts`——过程型采集页：`statusCard`（那一格写「待补槽位」）。
+ *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
  *
  * 口径出处：照 `packages/skill-calorie/src/shared/receiptParts.ts` 的两块（状态卡＋页尾对账折叠区），
  *   分「块」与「整页」的分工也照它：整页装配住同目录 `docPage.ts`，本文件只出页内的两块。

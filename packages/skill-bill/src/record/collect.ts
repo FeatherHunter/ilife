@@ -18,7 +18,8 @@ import { renderStatusBadge, type SerializableEnvelope } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { statusCard } from '../shared/receiptParts.js';
-import { commandLine, DOC_SKILL, DOC_TITLE, DOC_VERSION, writeSection } from '../shared/writeParts.js';
+import { commandLine, writeSection } from '../shared/writeParts.js';
+import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 
 /** 一个槽位：参数名／中文名／怎么给／是否必需。 */
 export interface RecordSlot {
@@ -72,6 +73,12 @@ function promptOf(key: string, params: Record<string, unknown>, missing: readonl
     + '。\n补齐后照抄重跑：\n' + commandLine(key, filled);
 }
 
+/** 必需槽位缺失那句文案（**唯一定义地**）：envelope 载荷与采集页副标题都引它。
+ *  两处各写一遍就会改一处漏一处（同一件事两个说法），故只在本件写这一遍。 */
+export function missingSlotMessage(missing: readonly RecordSlot[]): string {
+  return '缺必需槽位：' + missing.map((m) => m.name).join('、') + '（已出采集页，补齐后重跑同一条命令）';
+}
+
 /** 采集页入参：时刻与来源由调用方给（共用位不取时钟、不取库文件名）。 */
 interface CollectInput {
   readonly key: string;
@@ -85,7 +92,7 @@ interface CollectInput {
 /** 过程型采集页整页：状态徽标 ＋ 状态卡 ＋ 缺槽位明示表 ＋ 采集表单 ＋ 复制 prompt 区 ＋ 复制区。 */
 export function recordCollectDoc(input: CollectInput): string {
   const { key, params, slots, missing } = input;
-  const message = '缺必需槽位：' + missing.map((m) => m.name).join('、') + '（已出采集页，补齐后重跑同一条命令）';
+  const message = missingSlotMessage(missing);
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key, data: { ok: false, message },
   };
@@ -129,6 +136,6 @@ export function recordCollectDoc(input: CollectInput): string {
     title: '补齐槽位',
     eyebrow: '记账 · 写入域',
     subtitle: message,
-    content: writeSection({ slot: 'collect', key, content }),
+    content: writeSection({ slot: 'collect', shape: envelope.shape, key, content }),
   });
 }

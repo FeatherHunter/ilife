@@ -3,6 +3,7 @@
  * 谁在用（两个调用点，指名）：
  *   ① `src/record/collect.ts`——过程型采集页：`promptCopyArea`（复制 prompt 区）＋ `copyArea`（复制数据／日志）；
  *   ② `src/record/receipt.ts`——结果型回执整页：`copyArea`（复制数据／日志）＋ `copyLog`。
+ *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
  *
  * 三件东西**只接线、不重造**：
  *   ① 复制按钮与区块 → `base-paint/blocks` 的 `renderPreBlock`（带 `copyText` 自带复制按钮）与 `renderCopyBlock`；
@@ -50,7 +51,7 @@ interface CopyLogInput {
   readonly source?: string;
   /** 写库那一行的过程说明（第 4 段后半，如「影响 1 行 · 字段 category」）。 */
   readonly detail?: string;
-  /** 时间戳（第 5 段）：**必填，本件不自己取时钟**——共用位不反向依赖渲染层，时间戳由页面层供给。 */
+  /** 时间戳（第 5 段）：**必填，本件不自己取时钟**——共用位不反向依赖页面装配那一层，时间戳由页面层供给。 */
   readonly actionAt: string;
   /** 文档版本（第 5 段后半）；不给则不写这半句。 */
   readonly version?: string;

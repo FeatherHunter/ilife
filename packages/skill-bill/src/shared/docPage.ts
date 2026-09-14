@@ -3,6 +3,7 @@
  * 谁在用（两个调用点，指名）：
  *   ① `src/record/receipt.ts`——结果型回执整页；
  *   ② `src/record/collect.ts`——过程型采集页。
+ *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
  *
  * 包裹约定（沿卡路里同件的 `docPage.ts`，不新增）：
  *   内容＝`base-paint/blocks` 的区块；文档＝`fillTemplate` 包裹（资产**裸文本**传入＋由填充器包裹）；
@@ -17,7 +18,7 @@ import { buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint'
 interface DocPageInput {
   /** head 的 `<title>` 文本。 */
   readonly docTitle: string;
-  /** 正文标题（页面壳的 H1）。 */
+  /** 正文标题（页面模板的 H1）。 */
   readonly title: string;
   /** 正文眉标（空串＝不写这一行）。 */
   readonly eyebrow: string;

@@ -75,7 +75,7 @@ function weekRange(): { start: string; end: string } {
  * 缺省（不给任何参数）＝ 老实物同款 HELP 文件：`<SKILLS_DB_PATH>/biscuit_accountant_html/
  * 饼干记账_HELP_<YYYYMMDD_HHMMSS>[_N].html`，独占落盘 ＋ 绝对路径回执（`delivery` 顶层追加）。
  * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体 `饼干记账_速查表`，与 HELP 分名——照 #139 判法：
- * 一个键两种产物就分成两个名字，别让用户按一个名字打开到另一个东西）。
+ * 一条命令两种产物就分成两个名字，别让用户按一个名字打开到另一个东西）。
  * 显式 `q` ＝ 现找：只回命中（stdout），`--html <路径>` 给了才落盘（检索式问答不刷目录）。
  * 显式 `reuseHours`（小时）＝ 复用窗口：`0`＝每次都落新的（要一份最新的）；不给＝**一天**——
  * 24 小时内反复读同一份 HELP 产物**只留一份、不再新建**（#245）。判据在共用件里按**落盘名里的
@@ -89,7 +89,7 @@ interface DeliverIntent { readonly html?: string; readonly target: HtmlLanding; 
 interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
 
 /** 吃复用窗口的 HELP 产物名（本技能自己的两个主体）。#245：判据**按落点名**而不是按 key——
- *  `bill.help.lookup` 这个键下挂着两种产物（HELP 文件与速查表），两种都算「反复读的 HELP 产物」；
+ *  `bill.help.lookup` 这条命令下挂着两种产物（HELP 文件与速查表），两种都算「反复读的 HELP 产物」；
  *  而 `--html` 那支是用户逐字指定的落点（共用件的 `file` 口子），本来不吃复用。 */
 const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, LOOKUP_FILE_STEM];
 
@@ -117,7 +117,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const mode = params.mode === undefined ? undefined : String(params.mode);
   const q = params.q === undefined ? undefined : String(params.q);
   if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
-  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本键只认 lookup');
+  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本命令只认 lookup');
   if (q !== undefined) {
     const hits = buildHelpItems(buildHelpLookup(), q);
     return { data: { ...hits, mode: 'lookup', query: q } };
@@ -160,11 +160,11 @@ function runRegistered(key: string, params: Record<string, unknown>): WriteOut {
   }
 }
 
-// 十六键分发：读走 fetch 读，写走 fetch 写+policy 校验；未知键上游已拦，此处再拦一道。
+// 十六条命令分发：读走 fetch 读，写走 fetch 写+policy 校验；未知命令名上游已拦，此处再拦一道。
 function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const goalsPath = resolveGoalsPath();
-  // 写键前置守卫（B6）：非 tmp 写库须 BILL_FORCE_PROD=1；读键不受影响。
+  // 会改数据库的命令前置守卫（B6）：非 tmp 写库须 BILL_FORCE_PROD=1；查询命令不受影响。
   // 记一笔／改记录已迁进能力目录（走上面的 `runRegistered`），守卫也跟着搬过去了。
   if (key === 'bill.goal.write') assertWritablePath(goalsPath);
   if (key === 'bill.account.write') { assertWritablePath(dbPath); assertWritablePath(goalsPath); }
@@ -474,10 +474,10 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         return null;
       }
       case 'bill.help.lookup':
-        // #144：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
+        // #144：本命令由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
         fail(1, '内部错误：bill.help.lookup 须走 dispatchHelp（开库之前）');
         return null;
-      default: fail(3, '未知 bill key：' + key); return null;
+      default: fail(3, '未知 bill 命令：' + key); return null;
     }
   } finally {
     try { closeBillDb(handle); } catch { /* ignore */ }
@@ -525,18 +525,20 @@ async function main() {
     // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
     // 迁移过的写命令另有整页（采集页／回执页住 `src/record/`），不再套老模板。
     const sectionHtml = (): string => {
-      if (writeOut) { assertHtmlSize(writeOut.html); return writeOut.html; }
-      const full = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
-      assertHtmlSize(full);
-      return full;
+      if (writeOut) return writeOut.html;
+      return fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
     };
+    // B1 复核整改：体积门对准**实际交付的那串**——交给 `deliverHtml` 的字符串先过 `gatedHtml()`，
+    // 判的就是写下去的那一串（`delivery.bytes` 也照它算）。四条交付路都从这里过：迁移过的写命令
+    // （回执页／采集页整页，由能力目录出）、未迁移的命令（section 片段经 CONTENT 注入模板）、
+    // HELP 缺省整页、HELP 速查表分节页。
+    const gatedHtml = (html: string): string => { assertHtmlSize(html); return html; };
     if (help?.deliver !== undefined) {
-      // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
-      const html = help.deliver.html ?? sectionHtml();
-      if (help.deliver.html !== undefined) assertHtmlSize(html);
+      // 本命令的产物：缺省＝HELP 整页（共享 help 模板自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
+      const html = gatedHtml(help.deliver.html ?? sectionHtml());
       delivery = deliverHtml({ explicit: o.html, target: help.deliver.target, html, reuseMs: help.deliver.reuseMs });
     } else if (o.html) {
-      delivery = deliverHtml({ explicit: o.html, html: sectionHtml() });
+      delivery = deliverHtml({ explicit: o.html, html: gatedHtml(sectionHtml()) });
     }
   } catch (e) {
     if (e instanceof BillFetchError) fail(4, '取数失败：' + e.message);

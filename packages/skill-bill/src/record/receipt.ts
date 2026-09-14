@@ -18,7 +18,8 @@ import type { RecordOp } from '../policy/record.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { commandLine, DOC_SKILL, DOC_TITLE, DOC_VERSION, writeSection } from '../shared/writeParts.js';
+import { commandLine, writeSection } from '../shared/writeParts.js';
+import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 
 /** 四个操作各自的页标题。 */
@@ -91,6 +92,6 @@ export function recordReceiptDoc(input: ReceiptInput): string {
     title: PAGE_TITLES[receipt.op],
     eyebrow: '记账 · 写入域',
     subtitle: receipt.summary,
-    content: writeSection({ slot: 'receipt', key, content }),
+    content: writeSection({ slot: 'receipt', shape: envelope.shape, key, content }),
   });
 }

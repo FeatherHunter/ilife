@@ -124,7 +124,7 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
     assert.equal(env.data.receipt.affectedRows, 1, '影响行数＝total_changes 前后差');
     const text = pageOf(file);
     assert.ok(statSync(file).size > 10 * 1024, '走的是新装配的整页，不是老极简模板');
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-key="bill.record.add"', '已改动', '影响行数', '写入字段', '对账信息']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-key="bill.record.add"', 'data-shape="receipt"', '已改动', '影响行数', '写入字段', '对账信息']) {
       assert.ok(text.includes(needle), '回执整页缺：' + needle);
     }
   });
@@ -137,11 +137,12 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
     const env = envOf(r);
     assert.equal(env.shape, 'receipt');
     assert.equal(env.data.ok, false, '这一次没写库，载荷照实说');
-    assert.ok(env.data.message.includes('缺必需槽位：category、amount'), env.data.message);
+    assert.equal(env.data.message, '缺必需槽位：category、amount（已出采集页，补齐后重跑同一条命令）',
+      'envelope 载荷与页内文案须同一句（同一件事实一处定义）');
     const text = pageOf(file);
     for (const needle of [
-      'data-slot="ilife:bill:collect"', 'data-key="bill.record.add"',
-      '缺必需槽位：category、amount', '待补槽位', '未发生',
+      'data-slot="ilife:bill:collect"', 'data-key="bill.record.add"', 'data-shape="receipt"',
+      '缺必需槽位：category、amount（已出采集页，补齐后重跑同一条命令）', '待补槽位', '未发生',
       '复制 prompt', 'ilife-block-pre-block', 'ilife-block-param-form', '复制日志',
     ]) {
       assert.ok(text.includes(needle), '采集页缺：' + needle);
@@ -168,9 +169,21 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.equal(env.data.receipt.op, 'update');
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', '改记录 · 回执', '已改动', '影响行数']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '改记录 · 回执', '已改动', '影响行数']) {
       assert.ok(text.includes(needle), '改记录回执缺：' + needle);
     }
+  });
+
+  it('改成与改前相同的值 → 回执说「无改动」（改前值取自库内那一行，不靠 unknown 中转）', () => {
+    const file = join(HTML, 'nochange.html');
+    const r = run(['bill.record.update', '--params', JSON.stringify({ id, note: '改过' }), '--html', file]);
+    assert.equal(r.status, 0, 'stderr=' + r.stderr);
+    const env = envOf(r);
+    assert.equal(env.data.receipt.noChange, true, '值与改前一致时 noChange 须为真');
+    assert.deepEqual(env.data.receipt.writtenFields, ['note']);
+    const text = pageOf(file);
+    assert.ok(text.includes('无改动'), '无改动那一格须照实说');
+    assert.ok(text.includes('值与改前一致'), '无改动须带依据');
   });
 
   it('撤销与恢复各出一页（软删口径不得写成可恢复承诺）', () => {

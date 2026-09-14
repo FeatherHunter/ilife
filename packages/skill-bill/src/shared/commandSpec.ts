@@ -3,6 +3,7 @@
  * 谁在用（两个调用点，指名）：
  *   ① `src/record/commands.ts`——命令事实的唯一权威源（本票两条写命令：记一笔、改记录）；
  *   ② `src/cli/registry.ts`——把能力声明汇总成一张查表，供 `src/cli/cmd_read.ts` 先查注册表。
+ *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，查命令的声明与产物落点意图也走这一份形状）。
  *
  * 口径出处：形状照 `packages/skill-calorie/src/shared/commandSpec.ts`（照结构，不照文件）。
  * `docs/skills/skill-bill/t406-共用件依赖与提升改造清单.md` 第三节第 1 条判「`commandSpec.ts` 不上移公共层」，
@@ -11,7 +12,7 @@
  * 为什么写命令一律 `shape: 'receipt'`：写命令的产物是一次写库的事实（`ok`／`message`／回执三件），
  * 与 `base-link-core` 的 `receipt` 形同一件事实的两种说法，测试里钉死二者等价。
  *
- * 本票只搬写命令：读命令那一支（读形状／产物落点意图）待读命令搬迁的票按需加，这里不先写空壳。
+ * 本票只搬写命令：读命令那一支（读形状／产物落点意图）待读命令搬迁的票按需加，这里不先写空的占位。
  */
 import type { BillDb } from '../fetch/db.js';
 import type { BillReceipt } from './writeParts.js';

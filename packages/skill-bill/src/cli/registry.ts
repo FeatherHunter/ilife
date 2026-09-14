@@ -5,9 +5,15 @@
  *   ① `src/cli/cmd_read.ts`——迁移过的命令先查这张表，命中即走能力目录；未迁移的照旧走它自己的 switch；
  *   ② `src/render/envelope.ts`——迁移过的命令的形状从这张表**运行期派生**（形状事实只住 `commands.ts`）。
  *
- * 本文件**手写**（卡路里那份由它的 `scripts/gen-cli.mjs` 生成）：饼干还没有生成器链，那是后票；
- * 生成器链接手时本文件改成生成物、由 `pnpm gen:check` 守真，届时这张表由扫 `src/*\/commands.ts` 派生。
- * 新加一个能力＝建它的 `commands.ts` 并在下面 `SOURCES` 加一行；新加一条命令＝改它的声明，本文件不动。
+ * 本文件**手写**（卡路里那份由它的 `scripts/gen-cli.mjs` 生成）：饼干还没有生成器链，那是后票。
+ *
+ * **本件是过渡形态**（当前身份，写清楚免得下游误以为有机器拦）：
+ *   - 人手写的共用位：**没有生成器、`pnpm gen:check` 管不到它、也没有棘轮**（那三样只住在卡路里件
+ *     `scripts/gen-cli.mjs` ＋ `test/` 的棘轮文件里）；「同一条命令被两个人声明」这道去重，今天只由
+ *     本件 `build()` 在运行期抛错兜住，手改这张表或往 `cmd_read.ts` 的 switch 里加一行**今天无人拦**。
+ *   - 机器拦由**生成器链**那张遗留票接管：它接手时本件改成生成物、由 `pnpm gen:check` 守真，
+ *     届时这张表由扫 `src/*\/commands.ts` 派生；在那之前，新加一个能力＝建它的 `commands.ts` 并在
+ *     下面 `SOURCES` 加一行；新加一条命令＝改它的声明，本文件不动。
  */
 import { RECORD_COMMANDS } from '../record/index.js';
 import type { CommandSpec } from '../shared/commandSpec.js';
