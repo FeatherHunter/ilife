@@ -125,10 +125,27 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
  * 算式与命令住同一处（变化频率同批）；取数／窗口口径走共用位，页面装配走本能力内部件。
  */
 
-/** `calorie.view.volatility` · 波动分析（rolling／goal 双基线，1.5σ 黄 / 2.0σ 红）。 */
+/** `calorie.view.volatility` · 波动分析（rolling／goal 双基线，1.5σ 黄 / 2.0σ 红）。
+ *
+ * 老实物 `weight_volatility_v2.html` 参数面对照（`t165-老页面实物结构.md`）：
+ * - 看体重稳不稳（增强版）→ 默认 30 天（老脚本无参即 30 天前～今天）；
+ * - 看波动异常点 → `--view anomalies-only`（仅异常列表，不出整图）。
+ * 本函数收 `view`（`full`／`anomalies-only`，缺省 `full`），`window` 走共用位。
+ */
+export type VolatilityViewMode = 'full' | 'anomalies-only';
+
+export function parseVolatilityView(params: Record<string, unknown>): VolatilityViewMode {
+  const v = optStr(params, 'view') ?? 'full';
+  if (v !== 'full' && v !== 'anomalies-only') {
+    throw new CalorieRenderError('bad-input', 'view 非法（full/anomalies-only）：' + String(v));
+  }
+  return v;
+}
+
 export function viewVolatility(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
-  const { start, end } = defaultRange(db, params);
+  const { start, end } = defaultRange(db, params, 30);
   const mode = (optStr(params, 'baselineMode') ?? optStr(params, 'mode') ?? 'rolling') as BaselineMode;
+  const view = parseVolatilityView(params);
   const v = buildVolatilityView(db, start, end, mode);
   const metrics = nums({
     baselineValue: v.volatility.baselineValue, baselineSigma: v.volatility.baselineSigma,
@@ -136,7 +153,7 @@ export function viewVolatility(params: Record<string, unknown>, db: DatabaseSync
     points: v.volatility.points.length, anomalies: v.volatility.recentAnomalies.length,
     deviationKg: v.volatility.earlyWarning.deviationKg,
   });
-  return { data: { metrics }, html: buildVolatilityDoc(v) };
+  return { data: { metrics }, html: buildVolatilityDoc(v, view) };
 }
 
 /* ── 视图模型（#332 自 `plate.ts` 原样迁入：波动＝analysis/volatilityV2 双基线） ── */
@@ -165,10 +182,65 @@ export function buildVolatilityView(
   return { start, end: end ?? start, baselineMode, volatility: res.data };
 }
 
-/* ── 整页装配（#332 自 `plateDocs.ts` 原样迁入：weight_volatility_v2.html 对照） ── */
+/* ── 整页装配（#332 自 `plateDocs.ts` 原样迁入：weight_volatility_v2.html 对照） ──
+ * #336 补齐：结论句（老 `_augment_kpis` summary 口径）＋ σ 趋势 ＋ 异常原因；
+ * `anomalies-only` 只含异常点与其原因，不出曲线（老模板隐藏 KPI＋Canvas 口径）。
+ */
 
-export function buildVolatilityDoc(v: VolatilityView): string {
+function anomalyReason(p: VolPoint, o: VolatilityV2): string {
+  const dir = p.deviationKg >= 0 ? '+' : '';
+  const line = p.level === 'red' ? '超过 2σ 红线' : '超过 1.5σ 黄线';
+  return '偏离基线 ' + dir + p.deviationKg + 'kg，' + line + '（黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + '）';
+}
+
+function volatilitySummary(o: VolatilityV2): string {
+  const kgs = o.points.map((p) => p.kg);
+  const overall = kgs.length >= 2 ? stdev(kgs) : 0;
+  const last7 = o.points.slice(-7);
+  const deltas: number[] = [];
+  for (let i = 1; i < last7.length; i++) deltas.push(Math.abs((last7[i] as VolPoint).kg - (last7[i - 1] as VolPoint).kg));
+  const dailyAvg = deltas.length > 0 ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 0;
+  const yellow = o.recentAnomalies.filter((a) => a.level === 'yellow').length;
+  const red = o.recentAnomalies.filter((a) => a.level === 'red').length;
+  const std2 = (Math.round(overall * 100) / 100).toFixed(2);
+  const dd3 = (Math.round(dailyAvg * 1000) / 1000).toFixed(3);
+  if (overall < 0.3 && o.recentAnomalies.length === 0) return '体重很稳：标准差 ' + std2 + 'kg，无异常点，日均波动 ' + dd3 + 'kg';
+  if (overall < 0.5) return '体重基本稳定：标准差 ' + std2 + 'kg，异常 ' + o.recentAnomalies.length + ' 次（黄 ' + yellow + '/红 ' + red + '）';
+  return '体重波动较大：标准差 ' + std2 + 'kg，异常 ' + o.recentAnomalies.length + ' 次（黄 ' + yellow + '/红 ' + red + '），建议关注饮食与饮水';
+}
+
+export function buildVolatilityDoc(v: VolatilityView, view: VolatilityViewMode = 'full'): string {
   const o = v.volatility;
+  const summary = volatilitySummary(o);
+  const anomalyRows = o.recentAnomalies.map((p) => ({ date: p.date, kg: p.kg, dev: p.deviationKg, level: p.level, reason: anomalyReason(p, o) }));
+  if (view === 'anomalies-only') {
+    const parts: string[] = [renderDataTable({
+      columns: [
+        { key: 'date', label: '日期' },
+        { key: 'kg', label: '体重', align: 'right' },
+        { key: 'dev', label: '偏离', align: 'right' },
+        { key: 'level', label: '级别' },
+        { key: 'reason', label: '原因' },
+      ],
+      rows: anomalyRows,
+      caption: '波动异常点（共 ' + o.recentAnomalies.length + ' 个，只看异常点）',
+      emptyText: '近期无异常点（基线 ' + o.baselineValue + ' kg，黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + '）',
+    })];
+    parts.push(dataCopyArea('复制数据', {
+      envelope: {
+        version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.volatility',
+        data: { metrics: { baselineValue: o.baselineValue, baselineSigma: o.baselineSigma, yellow: o.thresholds.yellow, red: o.thresholds.red, points: o.points.length, anomalies: o.recentAnomalies.length, deviationKg: o.earlyWarning.deviationKg } },
+      },
+    }));
+    return assembleDocPage({
+      docTitle: DOC_TITLE,
+      title: '看波动异常点 ' + v.start + ' ~ ' + v.end,
+      eyebrow: 'calorie.view.volatility · 运动身体域',
+      subtitle: summary,
+      content: parts.join(''),
+      charts: false,
+    });
+  }
   const parts: string[] = [renderKpiGrid([
     { label: '波动分析', value: '基线 ' + o.baselineValue + ' kg', detail: o.baselineToggleLabel },
     {
@@ -185,8 +257,16 @@ export function buildVolatilityDoc(v: VolatilityView): string {
   if (o.points.length > 0) {
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '偏离基线',
+      title: '偏离基线（黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + 'kg）',
       input: { items: o.points.map((p) => ({ label: p.date.slice(5), value: p.deviationKg })) },
+    }));
+    charts = true;
+  }
+  if (o.sigmaTrend.length > 0) {
+    parts.push(renderChartBlock({
+      kind: 'line',
+      title: 'σ 趋势',
+      input: { items: o.sigmaTrend.map((s) => ({ label: s.dateStart.slice(5), value: s.sigmaKg })) },
     }));
     charts = true;
   }
@@ -196,8 +276,9 @@ export function buildVolatilityDoc(v: VolatilityView): string {
       { key: 'kg', label: '体重', align: 'right' },
       { key: 'dev', label: '偏离', align: 'right' },
       { key: 'level', label: '级别' },
+      { key: 'reason', label: '原因' },
     ],
-    rows: o.recentAnomalies.map((p) => ({ date: p.date, kg: p.kg, dev: p.deviationKg, level: p.level })),
+    rows: anomalyRows,
     caption: '近期异常点（共 ' + o.recentAnomalies.length + ' 个，黄/红阈上）',
     emptyText: '近期无异常点（基线 ' + o.baselineValue + ' kg，黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + '）',
   }));
@@ -218,7 +299,7 @@ export function buildVolatilityDoc(v: VolatilityView): string {
     docTitle: DOC_TITLE,
     title: '波动分析 ' + v.start + ' ~ ' + v.end,
     eyebrow: 'calorie.view.volatility · 运动身体域',
-    subtitle: o.earlyWarning.message,
+    subtitle: o.earlyWarning.message + '｜' + summary,
     content: parts.join(''),
     charts,
   });
