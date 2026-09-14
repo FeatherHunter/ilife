@@ -28,16 +28,16 @@ import { dispatchWrite } from '../dist/cli/write.js';
 /* ── 基线清单（`--write` 回写本块；`--check` 逐键比对） ── */
 // BASELINE-BEGIN
 const BASELINE = {
-  "calorie.help.center": "0a0132d335b129a57c9fc15d2bcdcc998de7cbfb93784308ecd9c849f81a070f",
+  "calorie.help.center": "fe452fadf15fe8ef94033bcac573bb6d5e97dc5ea6b2133b86356ce56d91251e",
   "calorie.photo.add": "fcc55990964664e10433824cc5a1fd723cb4827d4dea6dedabe0e5eae1fd5a61",
   "calorie.photo.compare": "deb413fde06aed08900081356108d9c51c185db7b945e5ce3699cf7eb970432b",
   "calorie.photo.detail": "dfc49b927eb7c6b7b7abeeaff2fa1096864c2c6efbfcaf64c14f7bd2789310d6",
   "calorie.photo.gif": "c7869012198940e69a365aba79b8349ea48302a4379947ad412d7116dbca1827",
-  "calorie.photo.list": "856e37c368cd268c7ecc817b705b8153fc5e96c5361800e27bff914c3307df77",
+  "calorie.photo.list": "81b9036951d61047f16b1ebc2044e87c23c99ef3fda1ea2280ddf7ebc9809be9",
   "calorie.photo.remove": "31508df6dd87213729e0a9c9f477b098f37e4542ec793fa685a7c498ffef7397",
   "calorie.photo.tag": "c87ebf61d83424b8df10ba27b56b9148d0318249274e2025dfa893ffb464ee8a",
-  "calorie.view.gif-planner": "ccfaf619c44b92f3bbbcd3d0696631b0302c0ecb1eb5c014e82f5dd13669172e",
-  "calorie.view.photo-log-wizard": "84315cd16883b0fcc8b8e9bf2634c4ba76080b768d989c1e0dbb88e5c2b86f9b"
+  "calorie.view.gif-planner": "6b7a5fe2c3728272723eff9f16000abf87db97bbc7f6bfb976e53cfaaff21b0e",
+  "calorie.view.photo-log-wizard": "9dca1349af69374331aef82b73ba8dbd2d0d127b6044a6a7c8e6cf50202957a7"
 };
 // BASELINE-END
 

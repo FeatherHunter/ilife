@@ -20,8 +20,8 @@ const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·身材照片';
 
 /** 单页体积上限（字节）：本票首定，供 281／282／352 复用（见 t341 文档）。
- * 种子 3 张 1x1 PNG 的实测页约 2 KB；1 MiB 容得下几十张手机实拍缩略图，
- * 又拦得住“原图无脑全嵌”的体积爆炸（超限即测试红，不静默放宽）。 */
+ * 实测 2 张小图约 60KB（含 ~60KB 文档壳）；1 MiB 直嵌仅容 3~4 张 200KB 实拍，
+ * 超限即测试红，不静默放宽（超限策略见 t341 文档体积节）。 */
 export const PHOTO_LIST_PAGE_MAX_BYTES = 1024 * 1024;
 
 function figureHtml(
