@@ -1,6 +1,9 @@
 # #367 对账导出件（源：未受版本控制的 .scratch/locks/gate-runs.log）
-# 截取范围：第 10631 行（t367-probe01）～ 第 10732 行（t367-final）；同窗口内他席条目原样保留。
-# 导出于 2026-09-15（本地 +08:00）；行内时刻为 UTC。第二次导出：补 t367-commit／t367-final 两窗。
+# 切片规则：从第 10631 行（t367-probe01 的 START）到**导出当刻的日志末尾**（第 10855 行）；同窗口内他席条目原样保留。
+# 导出于 2026-09-15（本地 +08:00；行内时刻为 UTC）。
+# 按定义，导出动作自身那一窗（t367-export）与本轮提交窗（t367-commit3）的 RUN 行排在切片之后；
+# 两窗在证据 docs/skills/skill-calorie/t367-门证据.md §六 对账表里逐行声明，可在活日志按 runId 直核。
+# 第三版：按复核 S3-3 补进 t367-commit2，并改切片规则为「到日志末尾」。
 START ticket=367 runId=t367-probe01 cmd="node .scratch/t367/probe.mjs" waitedMs=0 pid=35460 at=2026-09-15T02:02:38.010Z
 RUN ticket=367 runId=t367-probe01 cmd="node .scratch/t367/probe.mjs" waitedMs=0 exit=0 pid=35460 at=2026-09-15T02:02:38.226Z
 START ticket=510 runId=599ebb7d-3868-40c5-84fe-dc468eeaa5f9 cmd="npx tsc -b packages/skill-calorie" waitedMs=0 pid=31856 at=2026-09-15T02:02:44.657Z
@@ -103,3 +106,126 @@ START ticket=510 runId=7490d123-823e-4503-9e0e-857843e63451 cmd="pwsh -NoProfile
 RUN ticket=510 runId=7490d123-823e-4503-9e0e-857843e63451 cmd="pwsh -NoProfile -Command \"git add docs/skills/skill-calorie/t483-文本审查-receipt.md packages/skill-calorie/src/weight/logReceipt.ts packages/skill-calorie/src/weight/receipt.ts packages/skill-calorie/test/weight-receipt-337.test.mjs; git diff --cached --name-only; git commit -F .scratch/t154/text-review/rev-fix2/commit-msg.txt -- docs/skills/skill-calorie/t483-文本审查-receipt.md packages/skill-calorie/src/weight/logReceipt.ts packages/skill-calorie/src/weight/receipt.ts packages/skill-calorie/test/weight-receipt-337.test.mjs; git push\"" waitedMs=60007 exit=0 pid=37732 at=2026-09-15T02:20:11.764Z
 START ticket=367 runId=t367-final cmd="pwsh -NoProfile -File .scratch/t367/final-check.ps1" waitedMs=90020 pid=37584 at=2026-09-15T02:20:15.976Z
 RUN ticket=367 runId=t367-final cmd="pwsh -NoProfile -File .scratch/t367/final-check.ps1" waitedMs=90020 exit=0 pid=37584 at=2026-09-15T02:20:18.478Z
+START ticket=351 runId=t351v12-tsc cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=30005 pid=32888 at=2026-09-15T02:20:27.899Z
+RUN ticket=351 runId=t351v12-tsc cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=30005 exit=0 pid=32888 at=2026-09-15T02:20:28.035Z
+START ticket=512 runId=09848025-d64e-4093-bad3-2a7abb2f5517 cmd="node .scratch/t512/量列宽.mjs --html .scratch/t507/看今日主页.html --out .scratch/t512/读数-改前" waitedMs=0 pid=41248 at=2026-09-15T02:20:34.698Z
+RUN ticket=512 runId=09848025-d64e-4093-bad3-2a7abb2f5517 cmd="node .scratch/t512/量列宽.mjs --html .scratch/t507/看今日主页.html --out .scratch/t512/读数-改前" waitedMs=0 exit=1 pid=41248 at=2026-09-15T02:20:36.652Z
+START ticket=401 runId=b5814b19-3454-4644-a68a-8a6dacbbfbce cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie" waitedMs=0 pid=30668 at=2026-09-15T02:20:41.125Z
+RUN ticket=401 runId=b5814b19-3454-4644-a68a-8a6dacbbfbce cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie" waitedMs=0 exit=0 pid=30668 at=2026-09-15T02:20:42.029Z
+START ticket=351 runId=t351v12-full cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=10002 pid=2320 at=2026-09-15T02:20:45.982Z
+RUN ticket=351 runId=t351v12-full cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=10002 exit=0 pid=2320 at=2026-09-15T02:20:56.195Z
+START ticket=512 runId=2058b075-dd5c-4ae3-ad15-d03e7035a4af cmd="node .scratch/t512/量列宽.mjs --html .scratch/t507/看今日主页.html --out .scratch/t512/读数-改前" waitedMs=10003 pid=35560 at=2026-09-15T02:20:59.111Z
+RUN ticket=512 runId=2058b075-dd5c-4ae3-ad15-d03e7035a4af cmd="node .scratch/t512/量列宽.mjs --html .scratch/t507/看今日主页.html --out .scratch/t512/读数-改前" waitedMs=10003 exit=1 pid=35560 at=2026-09-15T02:21:01.090Z
+START ticket=367 runId=t367-commit2 cmd="pwsh -NoProfile -File .scratch/t367/commit2.ps1" waitedMs=20002 pid=15356 at=2026-09-15T02:21:09.500Z
+RUN ticket=367 runId=t367-commit2 cmd="pwsh -NoProfile -File .scratch/t367/commit2.ps1" waitedMs=20002 exit=0 pid=15356 at=2026-09-15T02:21:11.523Z
+START ticket=512 runId=363df54a-25cf-4423-9b23-7df369939bcc cmd="node .scratch/t512/量列宽.mjs --html .scratch/t507/看今日主页.html --out .scratch/t512/读数-改前" waitedMs=0 pid=2460 at=2026-09-15T02:21:24.087Z
+RUN ticket=512 runId=363df54a-25cf-4423-9b23-7df369939bcc cmd="node .scratch/t512/量列宽.mjs --html .scratch/t507/看今日主页.html --out .scratch/t512/读数-改前" waitedMs=0 exit=0 pid=2460 at=2026-09-15T02:21:29.715Z
+START ticket=511 runId=7f39e822-4197-467b-acdf-bda448d0d45d cmd="pwsh -NoProfile -File .scratch/t511/live.ps1" waitedMs=0 pid=37976 at=2026-09-15T02:21:31.647Z
+RUN ticket=511 runId=7f39e822-4197-467b-acdf-bda448d0d45d cmd="pwsh -NoProfile -File .scratch/t511/live.ps1" waitedMs=0 exit=0 pid=37976 at=2026-09-15T02:21:57.744Z
+START ticket=351 runId=t351v12-tsc2 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=20002 pid=33072 at=2026-09-15T02:22:05.131Z
+RUN ticket=351 runId=t351v12-tsc2 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=20002 exit=0 pid=33072 at=2026-09-15T02:22:05.245Z
+START ticket=351 runId=t351v12-full2 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 pid=42304 at=2026-09-15T02:22:05.318Z
+RUN ticket=351 runId=t351v12-full2 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 exit=0 pid=42304 at=2026-09-15T02:22:15.638Z
+START ticket=340 runId=5d05190c-82b5-4d4e-8ad7-318e4e398244 cmd="npx tsc -b packages/skill-calorie" waitedMs=50003 pid=21252 at=2026-09-15T02:22:16.879Z
+RUN ticket=340 runId=5d05190c-82b5-4d4e-8ad7-318e4e398244 cmd="npx tsc -b packages/skill-calorie" waitedMs=50003 exit=0 pid=21252 at=2026-09-15T02:22:17.390Z
+START ticket=511 runId=40c419f0-2196-45cd-8247-47bcbc50de23 cmd="pwsh -NoProfile -File .scratch/t511/suite.ps1" waitedMs=0 pid=37928 at=2026-09-15T02:22:47.848Z
+RUN ticket=511 runId=40c419f0-2196-45cd-8247-47bcbc50de23 cmd="pwsh -NoProfile -File .scratch/t511/suite.ps1" waitedMs=0 exit=0 pid=37928 at=2026-09-15T02:24:08.225Z
+START ticket=154 runId=b1da588a-4eac-4869-a4ec-866989261a5c cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/AGENTS.md; git commit -m 'docs(154): 告警线台账同步（设计视角整改＋收尾后逐件对账）' -- packages/skill-calorie/AGENTS.md; git push\"" waitedMs=0 pid=37808 at=2026-09-15T02:24:09.925Z
+LOCK-STOLEN ticket=351 runId=t351v12-tsc3 reason=owner-dead ownerPid=37808 ownerAlive=0 ownerBelongsToLock=1 ageMinutes=0.17 at=2026-09-15T02:24:20.137Z
+START ticket=351 runId=t351v12-tsc3 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=70021 pid=38064 at=2026-09-15T02:24:20.140Z
+RUN ticket=351 runId=t351v12-tsc3 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=70021 exit=0 pid=38064 at=2026-09-15T02:24:21.019Z
+START ticket=351 runId=t351v12-full3 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 pid=31728 at=2026-09-15T02:24:21.081Z
+RUN ticket=351 runId=t351v12-full3 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 exit=0 pid=31728 at=2026-09-15T02:24:30.786Z
+START ticket=511 runId=98d07f91-c7b1-4099-9711-3f4052564733 cmd="pwsh -NoProfile -File .scratch/t511/revert-run.ps1" waitedMs=0 pid=12824 at=2026-09-15T02:25:00.571Z
+RUN ticket=511 runId=98d07f91-c7b1-4099-9711-3f4052564733 cmd="pwsh -NoProfile -File .scratch/t511/revert-run.ps1" waitedMs=0 exit=0 pid=12824 at=2026-09-15T02:26:18.750Z
+START ticket=367 runId=t367r-probe-src cmd="node .scratch/t367-review/probe-src.mjs" waitedMs=75045 pid=34940 at=2026-09-15T02:26:19.901Z
+RUN ticket=367 runId=t367r-probe-src cmd="node .scratch/t367-review/probe-src.mjs" waitedMs=75045 exit=0 pid=34940 at=2026-09-15T02:26:20.109Z
+START ticket=512 runId=84783e8e-fe90-468d-b614-ee09c52fec63 cmd="node .scratch/t512/量列宽.mjs --html docs/skills/skill-bill/t407-页-记退款-采集页.html --out .scratch/t512/读数-账单页" waitedMs=10001 pid=35516 at=2026-09-15T02:26:22.614Z
+RUN ticket=512 runId=84783e8e-fe90-468d-b614-ee09c52fec63 cmd="node .scratch/t512/量列宽.mjs --html docs/skills/skill-bill/t407-页-记退款-采集页.html --out .scratch/t512/读数-账单页" waitedMs=10001 exit=0 pid=35516 at=2026-09-15T02:26:28.240Z
+START ticket=401 runId=acdb33d2-2fa7-4a16-9934-ac2172251b9b cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie" waitedMs=20003 pid=32772 at=2026-09-15T02:26:32.892Z
+RUN ticket=401 runId=acdb33d2-2fa7-4a16-9934-ac2172251b9b cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie" waitedMs=20003 exit=0 pid=32772 at=2026-09-15T02:26:33.005Z
+START ticket=512 runId=7de8d5d0-5644-428f-80c8-5c4670ce5766 cmd="git add packages/base-render/src/charts.ts packages/base-render/test/charts.test.mjs docs/base/base-render/t512-图表字号与刻度-证据.md" waitedMs=10001 pid=41476 at=2026-09-15T02:26:35.671Z
+RUN ticket=512 runId=7de8d5d0-5644-428f-80c8-5c4670ce5766 cmd="git add packages/base-render/src/charts.ts packages/base-render/test/charts.test.mjs docs/base/base-render/t512-图表字号与刻度-证据.md" waitedMs=10001 exit=0 pid=41476 at=2026-09-15T02:26:35.723Z
+START ticket=367 runId=t367r-probe-src2 cmd="node .scratch/t367-review/probe-src.mjs" waitedMs=1 pid=7044 at=2026-09-15T02:26:39.836Z
+RUN ticket=367 runId=t367r-probe-src2 cmd="node .scratch/t367-review/probe-src.mjs" waitedMs=1 exit=0 pid=7044 at=2026-09-15T02:26:40.046Z
+START ticket=512 runId=bda12963-ceed-40bb-9dda-856a0520e168 cmd="git commit -F C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t512-commit-msg.txt" waitedMs=0 pid=41424 at=2026-09-15T02:26:41.815Z
+RUN ticket=512 runId=bda12963-ceed-40bb-9dda-856a0520e168 cmd="git commit -F C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t512-commit-msg.txt" waitedMs=0 exit=0 pid=41424 at=2026-09-15T02:26:41.890Z
+START ticket=512 runId=e45e6c5f-ff80-49f0-b002-503a0fd9d53f cmd="git push" waitedMs=0 pid=24580 at=2026-09-15T02:26:46.335Z
+RUN ticket=512 runId=e45e6c5f-ff80-49f0-b002-503a0fd9d53f cmd="git push" waitedMs=0 exit=0 pid=24580 at=2026-09-15T02:26:48.915Z
+START ticket=367 runId=t367r-gates-before cmd="pwsh -NoProfile -File .scratch/t367-review/window-gates.ps1 -Tag before" waitedMs=0 pid=38696 at=2026-09-15T02:27:10.180Z
+RUN ticket=367 runId=t367r-gates-before cmd="pwsh -NoProfile -File .scratch/t367-review/window-gates.ps1 -Tag before" waitedMs=0 exit=0 pid=38696 at=2026-09-15T02:27:40.342Z
+START ticket=511 runId=0934b14a-0ede-4f5b-a10e-26598b9a2623 cmd="pwsh -NoProfile -File .scratch/t511/suite.ps1" waitedMs=10001 pid=42832 at=2026-09-15T02:27:50.056Z
+RUN ticket=511 runId=0934b14a-0ede-4f5b-a10e-26598b9a2623 cmd="pwsh -NoProfile -File .scratch/t511/suite.ps1" waitedMs=10001 exit=0 pid=42832 at=2026-09-15T02:29:06.703Z
+START ticket=512 runId=f8b6653a-f10c-4fb0-953a-8b38cc403e68 cmd="npx tsc -b packages/base-render" waitedMs=80029 pid=42460 at=2026-09-15T02:29:16.434Z
+RUN ticket=512 runId=f8b6653a-f10c-4fb0-953a-8b38cc403e68 cmd="npx tsc -b packages/base-render" waitedMs=80029 exit=0 pid=42460 at=2026-09-15T02:29:16.913Z
+START ticket=367 runId=t367r-negative cmd="node .scratch/t367-review/window-negative.mjs" waitedMs=45005 pid=38556 at=2026-09-15T02:29:18.293Z
+RUN ticket=367 runId=t367r-negative cmd="node .scratch/t367-review/window-negative.mjs" waitedMs=45005 exit=0 pid=38556 at=2026-09-15T02:29:21.398Z
+START ticket=512 runId=016a35b7-971f-4a3a-ae10-11a5b4bed367 cmd="node --test packages/base-render/test/table-width-512.test.mjs packages/base-render/test/blocks.test.mjs packages/base-render/test/ui-fix-154.test.mjs" waitedMs=0 pid=14828 at=2026-09-15T02:29:24.789Z
+RUN ticket=512 runId=016a35b7-971f-4a3a-ae10-11a5b4bed367 cmd="node --test packages/base-render/test/table-width-512.test.mjs packages/base-render/test/blocks.test.mjs packages/base-render/test/ui-fix-154.test.mjs" waitedMs=0 exit=0 pid=14828 at=2026-09-15T02:29:24.981Z
+START ticket=512 runId=fe0d3675-f89c-42c0-8c56-c061a575cea8 cmd="node --test packages/base-render/test/style.test.mjs packages/base-render/test/table-width-512.test.mjs" waitedMs=0 pid=41456 at=2026-09-15T02:29:31.416Z
+RUN ticket=512 runId=fe0d3675-f89c-42c0-8c56-c061a575cea8 cmd="node --test packages/base-render/test/style.test.mjs packages/base-render/test/table-width-512.test.mjs" waitedMs=0 exit=0 pid=41456 at=2026-09-15T02:29:31.604Z
+START ticket=512 runId=d4e012a2-301e-40f9-8ae2-28af608659cd cmd="node .scratch/t512/变异自证.mjs" waitedMs=0 pid=32112 at=2026-09-15T02:29:46.163Z
+RUN ticket=512 runId=d4e012a2-301e-40f9-8ae2-28af608659cd cmd="node .scratch/t512/变异自证.mjs" waitedMs=0 exit=0 pid=32112 at=2026-09-15T02:29:51.859Z
+START ticket=367 runId=t367r-probe cmd="node .scratch/t367-review/window-probe.mjs" waitedMs=0 pid=32400 at=2026-09-15T02:29:53.839Z
+RUN ticket=367 runId=t367r-probe cmd="node .scratch/t367-review/window-probe.mjs" waitedMs=0 exit=0 pid=32400 at=2026-09-15T02:30:01.609Z
+START ticket=351 runId=t351v12-tsc4 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10001 pid=26332 at=2026-09-15T02:30:06.555Z
+RUN ticket=351 runId=t351v12-tsc4 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10001 exit=1 pid=26332 at=2026-09-15T02:30:07.687Z
+START ticket=512 runId=18dfb4b3-dafe-4775-878d-12440ff17815 cmd="node .scratch/t512/重出产物.mjs" waitedMs=0 pid=40388 at=2026-09-15T02:30:09.743Z
+RUN ticket=512 runId=18dfb4b3-dafe-4775-878d-12440ff17815 cmd="node .scratch/t512/重出产物.mjs" waitedMs=0 exit=0 pid=40388 at=2026-09-15T02:30:12.448Z
+START ticket=512 runId=2c5f249f-6cf2-4670-8fad-5dcd902d33c3 cmd="node .scratch/t512/量列宽.mjs --html .scratch/t512/产物/看今日主页.html --out .scratch/t512/读数-改后" waitedMs=1 pid=42968 at=2026-09-15T02:30:22.095Z
+RUN ticket=512 runId=2c5f249f-6cf2-4670-8fad-5dcd902d33c3 cmd="node .scratch/t512/量列宽.mjs --html .scratch/t512/产物/看今日主页.html --out .scratch/t512/读数-改后" waitedMs=1 exit=0 pid=42968 at=2026-09-15T02:30:27.673Z
+START ticket=351 runId=t351v12-tsc5 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=31996 at=2026-09-15T02:30:55.900Z
+RUN ticket=351 runId=t351v12-tsc5 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=31996 at=2026-09-15T02:30:56.998Z
+START ticket=367 runId=t367r-gates-after cmd="pwsh -NoProfile -File .scratch/t367-review/window-gates.ps1 -Tag after" waitedMs=0 pid=2208 at=2026-09-15T02:31:03.547Z
+RUN ticket=367 runId=t367r-gates-after cmd="pwsh -NoProfile -File .scratch/t367-review/window-gates.ps1 -Tag after" waitedMs=0 exit=0 pid=2208 at=2026-09-15T02:31:37.689Z
+START ticket=512 runId=47ef07f7-de51-4a34-8591-87ca17662171 cmd="git add packages/base-render/src/charts.ts packages/base-render/test/charts.test.mjs docs/base/base-render/t512-图表字号与刻度-证据.md" waitedMs=10001 pid=16700 at=2026-09-15T02:31:39.744Z
+RUN ticket=512 runId=47ef07f7-de51-4a34-8591-87ca17662171 cmd="git add packages/base-render/src/charts.ts packages/base-render/test/charts.test.mjs docs/base/base-render/t512-图表字号与刻度-证据.md" waitedMs=10001 exit=0 pid=16700 at=2026-09-15T02:31:39.797Z
+START ticket=512 runId=8cd171b9-cade-422a-80e4-60e688b318e0 cmd="git commit -F C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t512-grid-msg.txt" waitedMs=0 pid=29704 at=2026-09-15T02:31:43.529Z
+RUN ticket=512 runId=8cd171b9-cade-422a-80e4-60e688b318e0 cmd="git commit -F C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t512-grid-msg.txt" waitedMs=0 exit=0 pid=29704 at=2026-09-15T02:31:43.606Z
+START ticket=512 runId=471f8c41-0e44-4cbe-b40c-e135c37adb66 cmd="node .scratch/t512/量列宽.mjs --html .scratch/t512/产物-改前/看今日主页.html --out .scratch/t512/读数-改前件" waitedMs=40004 pid=42664 at=2026-09-15T02:31:45.290Z
+RUN ticket=512 runId=471f8c41-0e44-4cbe-b40c-e135c37adb66 cmd="node .scratch/t512/量列宽.mjs --html .scratch/t512/产物-改前/看今日主页.html --out .scratch/t512/读数-改前件" waitedMs=40004 exit=0 pid=42664 at=2026-09-15T02:31:50.886Z
+START ticket=351 runId=t351v12-tsc6 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=30001 pid=7864 at=2026-09-15T02:31:57.065Z
+RUN ticket=351 runId=t351v12-tsc6 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=30001 exit=0 pid=7864 at=2026-09-15T02:31:57.972Z
+START ticket=367 runId=t367r-routes cmd="node .scratch/t367-review/probe-routes.mjs" waitedMs=0 pid=40808 at=2026-09-15T02:32:00.821Z
+RUN ticket=367 runId=t367r-routes cmd="node .scratch/t367-review/probe-routes.mjs" waitedMs=0 exit=0 pid=40808 at=2026-09-15T02:32:00.906Z
+START ticket=512 runId=aacd6c20-8e88-48b8-be2f-7487f8c62bf8 cmd="git push origin master" waitedMs=20002 pid=42176 at=2026-09-15T02:32:07.364Z
+RUN ticket=512 runId=aacd6c20-8e88-48b8-be2f-7487f8c62bf8 cmd="git push origin master" waitedMs=20002 exit=0 pid=42176 at=2026-09-15T02:32:09.549Z
+START ticket=351 runId=t351v12-test cmd="node --test packages/skill-calorie/test/wizard-86.test.mjs packages/skill-calorie/test/render-t41.test.mjs test/scene05-write-create.test.mjs test/scene05-write-mutate.test.mjs test/scene05-read.test.mjs" waitedMs=10001 pid=35400 at=2026-09-15T02:32:17.415Z
+RUN ticket=351 runId=t351v12-test cmd="node --test packages/skill-calorie/test/wizard-86.test.mjs packages/skill-calorie/test/render-t41.test.mjs test/scene05-write-create.test.mjs test/scene05-write-mutate.test.mjs test/scene05-read.test.mjs" waitedMs=10001 exit=0 pid=35400 at=2026-09-15T02:32:22.053Z
+START ticket=401 runId=1633d43a-d81d-483a-a72c-f58e0a1fafc4 cmd="git add packages/skill-calorie/src/home/homeDocs.ts docs/skills/skill-calorie/t401-样板-文本结构-证据.md" waitedMs=20003 pid=41476 at=2026-09-15T02:32:28.334Z
+RUN ticket=401 runId=1633d43a-d81d-483a-a72c-f58e0a1fafc4 cmd="git add packages/skill-calorie/src/home/homeDocs.ts docs/skills/skill-calorie/t401-样板-文本结构-证据.md" waitedMs=20003 exit=0 pid=41476 at=2026-09-15T02:32:28.383Z
+START ticket=351 runId=t351v12-full cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 pid=42896 at=2026-09-15T02:32:31.753Z
+RUN ticket=351 runId=t351v12-full cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 exit=0 pid=42896 at=2026-09-15T02:32:42.145Z
+START ticket=401 runId=e498f30a-85d5-4002-8a42-fae974ff6de5 cmd="git commit -F .scratch/t401y-commit-msg.txt -- packages/skill-calorie/src/home/homeDocs.ts docs/skills/skill-calorie/t401-样板-文本结构-证据.md" waitedMs=10001 pid=27980 at=2026-09-15T02:32:51.225Z
+RUN ticket=401 runId=e498f30a-85d5-4002-8a42-fae974ff6de5 cmd="git commit -F .scratch/t401y-commit-msg.txt -- packages/skill-calorie/src/home/homeDocs.ts docs/skills/skill-calorie/t401-样板-文本结构-证据.md" waitedMs=10001 exit=0 pid=27980 at=2026-09-15T02:32:51.310Z
+START ticket=512 runId=b5edd607-faa7-477d-b17c-ff2e3dff6585 cmd="pwsh -NoProfile -Command \"git commit -F .scratch/t512/commit-msg.txt -- packages/base-render/src/blocks.ts packages/base-render/test/table-width-512.test.mjs; git log --oneline -1; git push 2>&1 | Select-Object -Last 3\"" waitedMs=0 pid=42856 at=2026-09-15T02:32:53.454Z
+RUN ticket=512 runId=b5edd607-faa7-477d-b17c-ff2e3dff6585 cmd="pwsh -NoProfile -Command \"git commit -F .scratch/t512/commit-msg.txt -- packages/base-render/src/blocks.ts packages/base-render/test/table-width-512.test.mjs; git log --oneline -1; git push 2>&1 | Select-Object -Last 3\"" waitedMs=0 exit=0 pid=42856 at=2026-09-15T02:32:58.831Z
+START ticket=401 runId=9bb37655-aba3-4ad1-a5ee-581cc3d05fe8 cmd="git push" waitedMs=10001 pid=35544 at=2026-09-15T02:33:06.494Z
+RUN ticket=401 runId=9bb37655-aba3-4ad1-a5ee-581cc3d05fe8 cmd="git push" waitedMs=10001 exit=0 pid=35544 at=2026-09-15T02:33:07.599Z
+START ticket=351 runId=t351v12-tsc7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=1 pid=30964 at=2026-09-15T02:33:32.195Z
+RUN ticket=351 runId=t351v12-tsc7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=1 exit=0 pid=30964 at=2026-09-15T02:33:32.307Z
+START ticket=351 runId=t351v12-full2 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 pid=42892 at=2026-09-15T02:33:32.377Z
+RUN ticket=351 runId=t351v12-full2 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 exit=0 pid=42892 at=2026-09-15T02:33:42.922Z
+START ticket=367 runId=t367r-commit cmd="node .scratch/t367-review/commit-review.mjs" waitedMs=0 pid=32448 at=2026-09-15T02:34:06.716Z
+RUN ticket=367 runId=t367r-commit cmd="node .scratch/t367-review/commit-review.mjs" waitedMs=0 exit=0 pid=32448 at=2026-09-15T02:34:07.093Z
+START ticket=512 runId=473eac99-371b-4c18-b654-6b274001437b cmd="git add docs/base/base-render/t512-表格列宽-证据.md" waitedMs=0 pid=26728 at=2026-09-15T02:35:42.823Z
+RUN ticket=512 runId=473eac99-371b-4c18-b654-6b274001437b cmd="git add docs/base/base-render/t512-表格列宽-证据.md" waitedMs=0 exit=0 pid=26728 at=2026-09-15T02:35:42.871Z
+START ticket=512 runId=d221b6e3-6b40-4966-a022-7c2a3e533c07 cmd="git commit -F .t512-msg.txt" waitedMs=1 pid=38568 at=2026-09-15T02:35:50.144Z
+RUN ticket=512 runId=d221b6e3-6b40-4966-a022-7c2a3e533c07 cmd="git commit -F .t512-msg.txt" waitedMs=1 exit=0 pid=38568 at=2026-09-15T02:35:50.216Z
+START ticket=512 runId=95b14a0f-63a6-4557-9e42-2e9f379689ea cmd="git push origin master" waitedMs=0 pid=7116 at=2026-09-15T02:35:54.893Z
+RUN ticket=512 runId=95b14a0f-63a6-4557-9e42-2e9f379689ea cmd="git push origin master" waitedMs=0 exit=0 pid=7116 at=2026-09-15T02:35:57.242Z
+START ticket=401h runId=8ab81597-5144-4889-9f3f-55c3b516dbe1 cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie" waitedMs=1 pid=42240 at=2026-09-15T02:36:09.486Z
+RUN ticket=401h runId=8ab81597-5144-4889-9f3f-55c3b516dbe1 cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie" waitedMs=1 exit=0 pid=42240 at=2026-09-15T02:36:10.529Z
+START ticket=351 runId=t351v12-tsc8 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10002 pid=36056 at=2026-09-15T02:36:20.206Z
+RUN ticket=351 runId=t351v12-tsc8 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10002 exit=0 pid=36056 at=2026-09-15T02:36:20.325Z
+START ticket=351 runId=t351v12-full3 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 pid=41244 at=2026-09-15T02:36:21.328Z
+RUN ticket=351 runId=t351v12-full3 cmd="node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-fix/final-v12" waitedMs=0 exit=0 pid=41244 at=2026-09-15T02:36:31.349Z
+START ticket=367 runId=t367-s31 cmd="pwsh -NoProfile -File .scratch/t367/s31-probe.ps1" waitedMs=0 pid=41136 at=2026-09-15T02:36:33.094Z
+RUN ticket=367 runId=t367-s31 cmd="pwsh -NoProfile -File .scratch/t367/s31-probe.ps1" waitedMs=0 exit=0 pid=41136 at=2026-09-15T02:36:37.374Z
+START ticket=367 runId=t367-recheck cmd="pwsh -NoProfile -File .scratch/t367/recheck.ps1" waitedMs=0 pid=40076 at=2026-09-15T02:37:00.468Z
+RUN ticket=367 runId=t367-recheck cmd="pwsh -NoProfile -File .scratch/t367/recheck.ps1" waitedMs=0 exit=0 pid=40076 at=2026-09-15T02:37:04.269Z
+START ticket=272 runId=64187e20-2736-47f7-9402-4946bb00dda4 cmd="npx tsc -b packages/skill-calorie" waitedMs=0 pid=11528 at=2026-09-15T02:38:05.415Z
+RUN ticket=272 runId=64187e20-2736-47f7-9402-4946bb00dda4 cmd="npx tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=11528 at=2026-09-15T02:38:05.970Z
+START ticket=272 runId=dcd358b1-64cd-4254-a5d4-e843d22af8c2 cmd="node docs/skills/skill-calorie/t155-证据/复算-全量真跑.mjs" waitedMs=0 pid=32196 at=2026-09-15T02:38:10.569Z
+RUN ticket=272 runId=dcd358b1-64cd-4254-a5d4-e843d22af8c2 cmd="node docs/skills/skill-calorie/t155-证据/复算-全量真跑.mjs" waitedMs=0 exit=0 pid=32196 at=2026-09-15T02:38:35.939Z
+START ticket=367 runId=t367-export cmd="pwsh -NoProfile -File .scratch/t367/export.ps1" waitedMs=0 pid=4432 at=2026-09-15T02:38:36.725Z

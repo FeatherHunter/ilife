@@ -5,17 +5,26 @@
  * 当场量化过缺口：全包 109 条带代表唤醒词的声明里 **24 条不在 436 词表**（body 3 条正在其中）。
  * 本件**另立一件**把扫描面铺到全部能力目录（不改 #294 那一件的判据与棘轮数字）。
  *
- * 四条判据（期望值只认两份权威源本身：`src/triggers/wake-assets.ts` 的 436 词表／生成物注册表）：
+ * 五条判据（期望值只认两份权威源本身：`src/triggers/wake-assets.ts` 的 436 词表／生成物注册表）：
  *  ① **扫描面覆盖**：`src/<能力>/commands.ts` 逐个目录进门，逐目录报读数（目录／声明条数／数组名）；
  *  ② **双向差集为空**：各能力目录声明的 (命令名 → 代表唤醒词) 配对集合 与 生成物注册表的同一集合，
  *     两个方向都必须是空集（`DIFF-DIR-ONLY 0`／`DIFF-REG-ONLY 0`）；
  *  ③ **真词**：每条写了代表唤醒词的声明，那个词必须在 436 词表里；
- *  ④ **登记表只许变短**：③ 报出来的行，若属别的图（非本票写集），逐行登记在 `REGISTERED_OFF_TABLE`
- *     （漏报即红＝新错行必被抓；陈化即红＝已清掉的行必须从登记表删掉）。
+ *  ④ **登记表同时钉住键与词**：③ 报出来的行，若属别的图（非本票写集），逐行登记在 `REGISTERED_OFF_TABLE`。
+ *     三条都必红：**漏报**（新错行没登记）／**陈化**（已清掉的行还留在登记表）／
+ *     **漂移**（已登记的键换了词——豁免位按 `目录|键|词` 三元组匹配，换词即视为未登记）。
+ *     ★ 这一条是独立复核对 §初版的 S3 返修：初版只按 `目录|键` 豁免 ⇒ 已登记键换成任何表外词都不红；
+ *     复核用探针（把 `goal/calorie.view.goal-status` 换成另一个假词仍 5/5 全绿）证伪了「登记即钉住」的说法。
+ *  ⑤ **判据自证**：合成夹具上「表外词必被报出／表内词不报／登记位生效／**登记键换词仍被报出**」。
  *
  * 口径说明（写清楚免得被读成放宽）：
  *  - **没写代表唤醒词的声明不算错**——契约明写 `wakeWord` 可缺（缺了速查表退回列命令名，
  *    `shared/commandSpec.ts:45-48`），照片域三个流程内页就是照这条办的（#450）。本门对「缺词」只报读数。
+ *  - **本门不查「代表唤醒词路由回同键」**（明确划界，别读成本门管了）：那条判据今天只在
+ *    `test/cmd-registry-294.test.mjs:301` 对**体重域**跑；全包铺开会当场逮到 19 条错键行
+ *    （现场读数见 `docs/skills/skill-calorie/t367-门证据.md` §九，本门只打 `ROUTE-SAMEKEY off=<n>`
+ *    与逐行 `ROUTE-UNBOUND` 读数、**不判红**）——清／登记这 19 行属另一张框架票，已按票面「遗留出口」
+ *    在证据里登记转票措辞，不塞进本票写集。
  *  - 本门**只加扫描面**：不动任何棘轮数字、不改其它门（#294／#266／告警线门）的判据与读数。
  *
  * 负向对照（两行机器读数见 `docs/skills/skill-calorie/t367-门证据.md`）：
@@ -32,6 +41,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { REGISTRY } from '../dist/cli/registry.js';
 import { WAKE_ASSETS } from '../dist/triggers/wake-assets.js';
+import { routesFor } from '../dist/triggers/routing.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = join(HERE, '..', 'src');
@@ -92,13 +102,14 @@ const REGISTERED_BY_DIR = {
 const REGISTERED_OFF_TABLE = Object.entries(REGISTERED_BY_DIR)
   .flatMap(([dir, g]) => g.rows.map(([key, wakeWord]) => [dir, key, wakeWord]));
 
-/** 一条声明行＝`{ dir, key, wakeWord }`；本判据只对「写了词」的行生效（缺词是契约允许的另一类，只读数）。 */
+/** 一条声明行＝`{ dir, key, wakeWord }`；本判据只对「写了词」的行生效（缺词是契约允许的另一类，只读数）。
+ *  豁免位按**三元组** `目录|键|词` 匹配（S3 返修）：登记键换了词 ⇒ 命中不了豁免位 ⇒ 当违规报出。 */
 function offTableRows(rows, words, registered = new Set()) {
   return rows.filter((r) => typeof r.wakeWord === 'string' && r.wakeWord !== ''
-    && !words.has(r.wakeWord) && !registered.has(r.dir + '|' + r.key));
+    && !words.has(r.wakeWord) && !registered.has(regKey(r.dir, r.key, r.wakeWord)));
 }
 
-const regKey = (dir, key) => dir + '|' + key;
+const regKey = (dir, key, word) => dir + '|' + key + '|' + word;
 
 /** 逐目录取声明数组：`dist/<能力>/index.js` 里**恰好一个**「元素都带 `calorie.` 键」的数组。 */
 async function declarationsOf(dir) {
@@ -152,7 +163,7 @@ const ALL_ROWS = SCANNED.flatMap((s) => s.rows);
 const WITH_WORD = ALL_ROWS.filter((r) => typeof r.wakeWord === 'string' && r.wakeWord !== '');
 const BLANK = ALL_ROWS.filter((r) => typeof r.wakeWord !== 'string' || r.wakeWord === '');
 const VIOLATIONS = ALL_ROWS.filter((r) => typeof r.wakeWord === 'string' && r.wakeWord !== '' && !TABLE.has(r.wakeWord));
-const REGISTERED = new Set(REGISTERED_OFF_TABLE.map((e) => regKey(e[0], e[1])));
+const REGISTERED = new Set(REGISTERED_OFF_TABLE.map((e) => regKey(e[0], e[1], e[2])));
 const UNREGISTERED = offTableRows(ALL_ROWS, TABLE, REGISTERED);
 
 console.log('SCAN dirs=' + DIRS.length + ' table=' + TABLE.size + ' registry=' + Object.keys(REGISTRY).length);
@@ -160,8 +171,19 @@ for (const s of SCANNED) console.log('DIR ' + s.dir + ' array=' + s.array + ' de
 console.log('SCAN-TOTAL decl=' + ALL_ROWS.length + ' withWord=' + WITH_WORD.length + ' blank=' + BLANK.length);
 console.log('OFF-TABLE ' + VIOLATIONS.length + ' registered=' + REGISTERED.size + ' unregistered=' + UNREGISTERED.length);
 for (const r of VIOLATIONS) {
-  console.log((REGISTERED.has(regKey(r.dir, r.key)) ? 'REGISTERED ' : 'UNREGISTERED ') + r.dir + ' ' + r.key + ' 「' + r.wakeWord + '」');
+  console.log((REGISTERED.has(regKey(r.dir, r.key, r.wakeWord)) ? 'REGISTERED ' : 'UNREGISTERED ') + r.dir + ' ' + r.key + ' 「' + r.wakeWord + '」');
 }
+
+/* 划界读数（**不判红**，见件头「本门不查路由回同键」）：这条判据全包铺开时会逮到哪些行。 */
+const ROUTE_UNBOUND = [];
+for (const r of WITH_WORD) {
+  const hit = routesFor(r.wakeWord).filter((x) => x.kind === 'exec');
+  if (!hit.some((x) => x.key === r.key)) {
+    ROUTE_UNBOUND.push(r.dir + ' ' + r.key + '「' + r.wakeWord + '」→[' + hit.map((x) => x.key).join('|') + ']');
+  }
+}
+console.log('ROUTE-SAMEKEY off=' + ROUTE_UNBOUND.length + '（本门不判红，转票依据见证据 §九）');
+for (const l of ROUTE_UNBOUND) console.log('ROUTE-UNBOUND ' + l);
 
 check('① 扫描面覆盖每个能力目录的声明', () => {
   assert.ok(DIRS.length >= 10, '能力目录少于 10 个（扫描面缩了？）：' + DIRS.join('、'));
@@ -189,15 +211,26 @@ check('③ 代表唤醒词必须是唤醒词表（436 条）里真有的词', ()
   assert.deepEqual(list, [], '这些代表唤醒词不在 ' + TABLE.size + ' 条词表里，且没进登记表：' + list.join('；'));
 });
 
-check('④ 登记表只许变短（陈化即红：已清掉的行必须删）', () => {
-  const stillBad = new Set(VIOLATIONS.map((r) => regKey(r.dir, r.key)));
-  const stale = REGISTERED_OFF_TABLE
-    .filter((e) => !stillBad.has(regKey(e[0], e[1])))
-    .map((e) => e[0] + ' ' + e[1] + '→「' + e[2] + '」');
-  assert.deepEqual(stale, [], '登记表里有已经不算违规的行（别的图已清掉？请删掉本表对应行）：' + stale.join('；'));
+check('④ 登记表同时钉住键与词（漂移即红／陈化即红：已清掉的行必须删）', () => {
+  const drift = [];
+  const gone = [];
+  for (const e of REGISTERED_OFF_TABLE) {
+    const row = ALL_ROWS.find((r) => r.dir === e[0] && r.key === e[1]);
+    if (row === undefined) { gone.push(e[0] + ' ' + e[1] + '：声明已不在（键搬走／删了？）'); continue; }
+    if (row.wakeWord !== e[2]) {
+      drift.push(e[0] + ' ' + e[1] + '：登记「' + e[2] + '」声明「' + String(row.wakeWord) + '」');
+      continue;
+    }
+    if (TABLE.has(e[2])) gone.push(e[0] + ' ' + e[1] + '→「' + e[2] + '」：已修好');
+  }
+  console.log('REGISTERED-DRIFT ' + drift.length + ' REGISTERED-GONE ' + gone.length);
+  assert.deepEqual(drift, [],
+    '登记词与声明词漂移（豁免位按「目录|键|词」三元组，换词即视为未登记 ⇒ 请勿拿登记换词绕过）：' + drift.join('；'));
+  assert.deepEqual(gone, [],
+    '登记表里有已经不算违规的行（别的图已清掉／键已搬走？请删掉本表对应行）：' + gone.join('；'));
 });
 
-check('⑤ 判据自证：合成夹具上「不在表里的词必被报出、在表里的词不报」', () => {
+check('⑤ 判据自证：合成夹具上「表外词必被报出／表内词不报／登记位生效／登记键换词仍被报出」', () => {
   const words = new Set(['真词']);
   const rows = [
     { dir: 'x', key: 'calorie.a', wakeWord: '真词' },
@@ -206,6 +239,8 @@ check('⑤ 判据自证：合成夹具上「不在表里的词必被报出、在
   ];
   const hits = offTableRows(rows, words);
   assert.deepEqual(hits.map((r) => r.key), ['calorie.b'], '自造假词的声明没被报出（门失明）');
-  assert.deepEqual(offTableRows(rows, words, new Set(['x|calorie.b'])), [], '登记表的豁免位没生效');
-  console.log('SELFTEST offTable=1 blank=0 registered=1');
+  assert.deepEqual(offTableRows(rows, words, new Set(['x|calorie.b|自造词'])), [], '登记表的豁免位没生效');
+  assert.deepEqual(offTableRows(rows, words, new Set(['x|calorie.b|别的词'])).map((r) => r.key), ['calorie.b'],
+    '登记键换了词仍被豁免（登记表没钉住词面——复核 S3-I 的那个窟窿）');
+  console.log('SELFTEST offTable=1 blank=0 registered=1 drift=1');
 });
