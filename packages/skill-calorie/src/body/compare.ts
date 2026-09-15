@@ -15,6 +15,8 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import {
+  renderCaliberLine,
+  renderConclusionBar,
   renderDataTable,
   renderKpiGrid,
 } from 'base-paint/blocks';
@@ -31,8 +33,22 @@ import type { ViewOut } from '../shared/commandSpec.js';
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 本文件各页共用的 head 标题（与 bodyDocs.ts 同值，同域同标题）。 */
-const DOC_TITLE = '卡路里·运动身体';
+/* 本文件各页共用的 head 标题：域名只说人话，不拿 `·` 串（负责人第 4／5 条——那个分隔符
+ * 是「该做形状」的信号，页签文字里落不了形状，就只写一个词）。同域的 `bodyDocs.ts` 另有一份
+ * 同名（域票改它时应保持本值一致）。 */
+const DOC_TITLE = '卡路里身体细节';
+
+/** 徽标（本族两页共用一词）。 */
+const BADGE = '身体细节';
+
+/** 页码 ①：`assembleDocPage` 的 `pageUi` 位（页面级移动端配方：安全区／44px 触摸区／640 档
+ *  字号下限与读数卡两格／页内导航横滑／表格卡片化，配方本体在 `base-render/src/pageUi.ts`）。 */
+const PAGE_UI = true;
+
+/** 期别日期人话：单日只写那一天；跨日写「起至止」，**不拿 `~` 顶替「至」**（第 5 条）。 */
+function rangeText(from: string, to: string): string {
+  return from === to ? from : from + ' 至 ' + to;
+}
 
 /* 围度 13 项中文名：一律取 `fetch/body.ts` 的 `MEASUREMENT_ZH`（#440 前本件自持过一份同字表，同源已收）；
  * 英文列序以 `fetch/body.ts` 的 `MEASUREMENT_FIELDS` 为准。 */
@@ -141,37 +157,46 @@ export function viewBodyCompositionCompare(params: Record<string, unknown>, db: 
 }
 
 export function buildBodyCompositionCompareDoc(v: BodyCompositionCompareView): string {
-  const fmt = (n: number | null, unit: string): string => (n === null ? '—' : String(n) + unit);
+  const fmt = (n: number | null): string => (n === null ? '—' : String(n) + '%');
   const deltaTxt = v.delta === null ? '—' : (v.delta >= 0 ? '+' : '') + v.delta + '%';
   const rateTxt = v.ratePct === null ? '—' : (v.ratePct >= 0 ? '+' : '') + v.ratePct + '%';
+  const dTxt = v.delta === null ? '' : v.delta > 0 ? '上升 ' + v.delta
+    : v.delta < 0 ? '下降 ' + Math.abs(v.delta) : '没变';
+  const sourceTxt = v.source ?? '全部来源';
+  /** 结论条：一句结论 ＋ 括号里的事实条（数字只在这里出现一次，读数卡与表格不再各说一遍）。 */
+  const summary = v.delta === null
+    ? '两段都缺体脂率均值，算不出变化'
+    : '体脂率均值从 ' + fmt(v.beforeAvg) + ' 到 ' + fmt(v.afterAvg) + '，' + dTxt
+      + ' 个百分点（变化率 ' + rateTxt + '）';
   const parts: string[] = [renderKpiGrid([
-    { label: '体脂对比', value: deltaTxt, detail: '变化率 ' + rateTxt },
-    { label: '第一段', value: fmt(v.beforeAvg, '%'), detail: v.p1Start + ' ~ ' + v.p1End + ' · ' + v.beforeN + ' 条' },
-    { label: '第二段', value: fmt(v.afterAvg, '%'), detail: v.p2Start + ' ~ ' + v.p2End + ' · ' + v.afterN + ' 条' },
-    { label: '变化率', value: rateTxt, detail: v.source ? '来源 ' + v.source : '全部来源' },
+    { label: '第一段', value: fmt(v.beforeAvg), detail: '这一段的体脂率均值' },
+    { label: '第二段', value: fmt(v.afterAvg), detail: '这一段的体脂率均值' },
   ])];
+  parts.push(renderConclusionBar(summary));
   parts.push(renderDataTable({
     columns: [
       { key: 'period', label: '期别' },
-      { key: 'range', label: '区间' },
-      { key: 'avg', label: '均值(%)', align: 'right' },
-      { key: 'n', label: '条数', align: 'right' },
-      { key: 'delta', label: '差值', align: 'right' },
+      { key: 'range', label: '日期' },
+      { key: 'avg', label: '体脂率均值', align: 'right' },
+      { key: 'n', label: '记录条数', align: 'right' },
+      { key: 'delta', label: '比基准', align: 'right' },
       { key: 'rate', label: '变化率', align: 'right' },
     ],
     rows: [
       {
-        period: '第一段', range: v.p1Start + ' ~ ' + v.p1End,
-        avg: v.beforeAvg === null ? '—' : v.beforeAvg, n: v.beforeN, delta: '—', rate: '—',
+        period: '第一段', range: rangeText(v.p1Start, v.p1End),
+        avg: fmt(v.beforeAvg), n: v.beforeN, delta: '基准', rate: '—',
       },
       {
-        period: '第二段', range: v.p2Start + ' ~ ' + v.p2End,
-        avg: v.afterAvg === null ? '—' : v.afterAvg, n: v.afterN, delta: deltaTxt, rate: rateTxt,
+        period: '第二段', range: rangeText(v.p2Start, v.p2End),
+        avg: fmt(v.afterAvg), n: v.afterN, delta: deltaTxt, rate: rateTxt,
       },
     ],
-    caption: '体脂两期对比（差值 ' + deltaTxt + ' · 变化率 ' + rateTxt + '）',
+    // 表题只交代表格的读法（两段的均值／差值由读数值与结论条说，不再抄一遍）。
+    caption: '第一段是基准，第二段的差值与变化率都以它为准。',
     emptyText: '对比期无数据',
   }));
+  parts.push(renderCaliberLine('两段的体脂率按各自那段的记录求平均，来源：' + sourceTxt + '。'));
   parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.body-composition-compare',
@@ -186,10 +211,15 @@ export function buildBodyCompositionCompareDoc(v: BodyCompositionCompareView): s
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '对比体脂',
-    eyebrow: 'calorie.view.body-composition-compare · 运动身体域',
-    subtitle: v.p1Start + ' ~ ' + v.p1End + ' vs ' + v.p2Start + ' ~ ' + v.p2End,
+    eyebrow: '身体细节 · 两期对比',
+    badge: BADGE,
+    summary: '把两段的体脂率记录各自求平均，看这一段比上一段变了多少。',
+    // B 线路（给了 `metaLeft`）的正文用 `summary` 当结论行；A 线的 `subtitle` 位不写（写两处＝同一事实两处）。
+    subtitle: null,
+    metaLeft: '体脂率两期对比',
     content: parts.join(''),
     charts: false,
+    pageUi: PAGE_UI,
   });
 }
 
@@ -237,34 +267,38 @@ export function viewBodyMeasureCompare(params: Record<string, unknown>, db: Data
 
 export function buildBodyMeasureCompareDoc(v: BodyMeasureCompareView): string {
   const nonZero = v.rows.filter((r) => r.delta !== null && r.delta !== 0).length;
+  const cm = (n: number | null): string => (n === null ? '—' : String(n) + 'cm');
+  /** 结论条：一句判语 ＋ 括号里的事实条（部位口径只说这一处，读数卡不再抄一遍）。 */
+  const verdict = nonZero === 0
+    ? '两个日期的围度一个部位都没变'
+    : '两个日期之间有 ' + nonZero + ' 个部位的围度变了';
   const parts: string[] = [renderKpiGrid([
-    { label: '围度对比', value: v.date1 + ' vs ' + v.date2, detail: '共 ' + v.nCompared + ' 项可比' },
-    { label: '有差值', value: String(nonZero), unit: '项', detail: '差值 ≠ 0 的部位数' },
-    { label: '部位', value: '13 项', detail: '胸/腰/腹/臀/肩/大腿/小腿/手臂/前臂(左+右)' },
+    { label: '有变化的部位', value: String(nonZero), unit: '项', detail: '差值不为 0 的部位' },
+    { label: '比较的部位', value: String(v.nCompared), unit: '项', detail: '两个日期都有记录的部位' },
   ])];
-  const cell = (n: number | null, unit: string): string | number => {
-    if (n === null) return '—';
-    if (unit === '') return n;
-    return String(n) + unit;
-  };
+  parts.push(renderConclusionBar(verdict + '（前一次记录是 ' + v.date1 + '，后一次是 ' + v.date2 + '）'));
   parts.push(renderDataTable({
     columns: [
       { key: 'part', label: '部位' },
-      { key: 'before', label: '前(cm)', align: 'right' },
-      { key: 'after', label: '后(cm)', align: 'right' },
+      { key: 'before', label: '前一次(cm)', align: 'right' },
+      { key: 'after', label: '后一次(cm)', align: 'right' },
       { key: 'delta', label: '差值(cm)', align: 'right' },
       { key: 'rate', label: '变化率', align: 'right' },
     ],
     rows: v.rows.map((r) => ({
       part: r.zh,
-      before: cell(r.before, ''),
-      after: cell(r.after, ''),
+      before: cm(r.before),
+      after: cm(r.after),
       delta: r.delta === null ? '—' : (r.delta >= 0 ? '+' : '') + r.delta,
       rate: r.ratePct === null ? '—' : (r.ratePct >= 0 ? '+' : '') + r.ratePct + '%',
     })),
-    caption: '围度两期对比（' + v.date1 + ' vs ' + v.date2 + '，' + nonZero + ' 项有变化）',
+    caption: '前一次记录是基准，差值与变化率都以后一次减前一次算。',
     emptyText: '两期无可比部位',
   }));
+  // 口径行只补表格读法（部位名单已在表内逐行，不在这里再列一遍——同一事实一页一处）。
+  parts.push(renderCaliberLine(
+    '只有两个日期都有记录的部位才比。差值与变化率都是后一次减前一次，单位厘米。',
+  ));
   parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.body-measure-compare',
@@ -276,9 +310,14 @@ export function buildBodyMeasureCompareDoc(v: BodyMeasureCompareView): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '对比围度',
-    eyebrow: 'calorie.view.body-measure-compare · 运动身体域',
-    subtitle: v.date1 + ' vs ' + v.date2,
+    eyebrow: '身体细节 · 两期对比',
+    badge: BADGE,
+    summary: '把两个日期的围度记录摆在一起，逐部位看变了多少。',
+    // 同上：B 线路的结论行走 `summary`，A 线的 `subtitle` 位不写。
+    subtitle: null,
+    metaLeft: '围度两期对比',
     content: parts.join(''),
     charts: false,
+    pageUi: PAGE_UI,
   });
 }
