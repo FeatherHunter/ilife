@@ -24,7 +24,8 @@ import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } 
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 import type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
-import { buildPlanProcessDoc, buildPlanResultDoc, buildPlanVsActualDoc, buildPlanWizardDoc } from './workoutPlanDocs.js';
+import { buildPlanProcessDoc, buildPlanResultDoc, buildPlanVsActualDoc } from './workoutPlanDocs.js';
+import { buildPlanWizardDoc } from './planWizardDocs.js';
 import type { WritePreview } from '../workout/write.js';
 import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';

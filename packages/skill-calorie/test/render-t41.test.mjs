@@ -148,17 +148,27 @@ test('#41 计划三盘 + HTML 字段断言', () => {
   assert.ok(!('insertedCount' in wiz) && !('validatedCount' in wiz)); // #102 G15：改名后旧键均不再返
   html = renderPlanWizardHtml(wiz);
   assert.match(html, /构建向导/);
-  // 页面可见文本：指标卡的「标签」与「值」是两个元素（值还带一层 `<span>`），
-  // 直接在原 HTML 上匹配连写的整句会漏——先剥标记再匹配（T351-v10 随公共层卡片的标记变更收紧）。
+  // 页面可见文本：区块里的「标签」与「值」各是独立元素，直接在原 HTML 上匹配连写整句会漏
+  // ——先剥标记再匹配（T351-v10 随公共层卡片标记变更收紧）。
+  // T351-v11 构建向导重做后，结论从「四张指标卡」收成一行结论条：措辞也随之改成人话
+  // （「这份计划可以落地」），读数各自成项（错误 N 项／警告 N 项／已检查 N 个训练场次）。
   const wizText = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ');
-  assert.match(wizText, /可落地/);
+  assert.match(wizText, /可以落地/);
   assert.match(wizText, /已检查\s*1 个训练场次/);
+  // 构建向导的核心：把计划摊成 计划→周→日→时段→动作 五层（旧版只有校验结论，看不到计划本身）。
+  assert.match(html, /ilw-timeline|ilw-week/);
+  assert.match(html, /第 1 周/);
+  assert.match(wizText, /俯卧撑/);
+  // 零脚本交互的两件：勾选钮与计数器（勾一颗加一由 CSS 计数器现算）。
+  assert.match(html, /class="ilw-mark"/);
+  assert.match(html, /class="ilw-count"/);
   const bad = buildPlanWizardView({ config: {}, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: 'a', movements: [{ name: '硬拉', part: '背', type: '力量', sets: [] }] }] }] }] }, ['深蹲']);
   assert.ok(bad.errorCount >= 1);
   assert.equal(bad.checkedSessions, 1); // #102 G15：坏计划也计 N（已检查≠已通过）
   const badText = renderPlanWizardHtml(bad).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ');
-  assert.match(badText, /有硬止/);
-  assert.match(badText, /1 个训练场次（\d+\s*硬止）/); // T351：已检查计数由 label 承担，value 只留「N 个训练场次（M硬止）」
+  assert.match(badText, /先改掉硬止再确认/);
+  assert.match(badText, /错误\s*[1-9]\d* 项/); // T351-v11：硬止条数自己成一项（≥1），不再缀在「已检查」后面
+  assert.match(badText, /已检查\s*1 个训练场次/);
   const goal = buildExerciseGoalView(db, '2026-09-06', '2026-09-07');
   assert.equal(goal.dailyGoal, 300);
   assert.equal(goal.actual, 620);

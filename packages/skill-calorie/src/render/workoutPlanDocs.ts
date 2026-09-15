@@ -277,39 +277,6 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
   });
 }
 
-/** 过程：构建向导五段式（校验结论＋错误/警告＋复制区）。 */
-export function buildPlanWizardDoc(v: PlanWizardView, opts: PlanDocOpts): string {
-  const ok = v.errorCount === 0;
-  const parts: string[] = [
-    renderKpiGrid([
-      { label: '构建向导', value: ok ? '可落地' : '有硬止', status: ok ? 'ok' : 'warn' },
-      { label: '错误', value: v.errorCount + ' 项' },
-      { label: '警告', value: v.warningCount + ' 项' },
-      { label: '已检查', value: v.checkedSessions + ' 个训练场次' + (v.errorCount > 0 ? '（' + v.errorCount + '硬止）' : ''), detail: '纯校验，不写库' },
-    ]),
-    // 零条时不出折叠块：KPI 卡已出「错误 0 项／警告 0 项」，两块空折叠是噪声（展开也无内容）。
-    // 有硬止时那两块就是「为什么不能写」的正据，默认展开；警告是次要面，仍折叠。
-    ...(v.errors.length === 0 ? [] : [renderDisclosure({
-      title: '硬止错误（' + v.errors.length + ' 条）', open: true,
-      contentHtml: renderListRows({ items: v.errors.map((e, i) => ({ left: '错误' + (i + 1), main: e, right: '' })) }),
-    })]),
-    ...(v.warnings.length === 0 ? [] : [renderDisclosure({
-      title: '警告（' + v.warnings.length + ' 条）',
-      contentHtml: renderListRows({ items: v.warnings.map((w, i) => ({ left: '警告' + (i + 1), main: w, right: '' })) }),
-    })]),
-    dualCopy({
-      key: opts.key, command: opts.command, source: 'planStore 校验（构建向导，纯校验）',
-      dataTitle: '【calorie · 构建向导】', prompt: opts.prompt ?? '',
-      metrics: { errorCount: v.errorCount, warningCount: v.warningCount, checkedSessions: v.checkedSessions },
-    }),
-  ];
-  return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '构建向导',
-    eyebrow: '健身计划',
-    // 副标题只留一件事：这份计划现在能不能落地。检查了几场、几项错都由下面的指标卡与折叠块交代，
-    // 不再用 `·` 把「结论」和「读数」串成一句（原来那版读作「可落地 · 已检查 1 个训练场次」）。
-    subtitle: ok ? '这份计划可以落地' : '先改掉硬止再确认',
-    content: pageChromeCss(960) + parts.join(''),
-  });
-}
+/* 构建向导（`buildPlanWizardDoc`，order186）T351-v11 已搬进姊妹件 `./planWizardDocs.ts`：
+ * 它要摊出「计划→周→日→时段→动作」五层时间线 ＋ 零脚本的就地改与计数，是本族里最大的一页，
+ * 与本件的「看计划／写前预览／计划 vs 实际」三种版式也不同源。出口由 `./html.ts` 直接 import 姊妹件。 */

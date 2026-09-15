@@ -169,6 +169,102 @@ export interface PlanWizardView {
   /** G15 #102 · 已检查计数（输入计划含的会话数；≠通过数：坏计划也计 N，通过与否看 errorCount；未写库） */
   checkedSessions: number;
   dryRun: true;
+  /** T351-v11 · 计划结构（计划→周→日→时段→动作）：构建向导要**把计划摊开给人看**，
+   *  只报校验条数帮不了「怎么构建」（负责人 2026-09-14 第 3 条：看不到如何帮助用户构建出健身计划）。 */
+  tree: WizardTree;
+}
+
+/** 构建向导时间线里的一行动作（组数×次数与重量在这里就拼成一句人话，页上不再算）。 */
+export interface WizardMovement {
+  readonly name: string;
+  readonly part: string;
+  readonly type: string;
+  readonly sets: string;
+}
+
+/** 一个时段（老页叫「场次」）：名字 ／ 时段 ／ 是否休息日 ／ 动作。 */
+export interface WizardSession {
+  readonly label: string;
+  readonly time: string;
+  readonly rest: boolean;
+  readonly moves: readonly WizardMovement[];
+}
+
+/** 一天（周几 ＋ 该天的时段）。 */
+export interface WizardDay {
+  readonly dow: number;
+  readonly sessions: readonly WizardSession[];
+}
+
+/** 一周（周次 ＋ 该周的天）。 */
+export interface WizardWeek {
+  readonly week: number;
+  readonly days: readonly WizardDay[];
+}
+
+/** 计划结构（时间线的五级 ＋ 页眉读数）。 */
+export interface WizardTree {
+  readonly title: string;
+  readonly description: string;
+  readonly startDate: string;
+  readonly level: string;
+  readonly equipment: readonly string[];
+  readonly weeks: readonly WizardWeek[];
+  readonly totals: { readonly weeks: number; readonly sessions: number; readonly movements: number };
+}
+
+/** 组（第 6 级）的一句话：同重复数写「3 组 × 12 次」，逐组不同写「2 组 × 8／10 次」；
+ *  重量逐组同一写 `35kg`，逐组不同写 `30／35kg`；没有重量写「自重」。没有组写「—」。 */
+function setsPhrase(sets: readonly { reps: number; weight: number; unit: string }[] | undefined): string {
+  if (sets === undefined || sets.length === 0) return '—';
+  const reps = [...new Set(sets.map((s) => s.reps))];
+  const weights = [...new Set(sets.map((s) => s.weight))];
+  const load = weights.some((w) => w > 0)
+    ? weights.join('／') + (sets[0].unit ?? 'kg')
+    : (sets[0].unit === '自重' ? '自重' : '—');
+  return sets.length + ' 组 × ' + reps.join('／') + ' 次 · ' + load;
+}
+
+/** 输入计划 → 时间线（纯映射，不触库、不校验；校验归 `validatePlan`）。 */
+function wizardTreeOf(p: PlanInput): WizardTree {
+  const cfg = p.config ?? {};
+  const weeks: WizardWeek[] = (p.weeks ?? []).map((w) => ({
+    week: typeof w.week_number === 'number' ? w.week_number : 0,
+    days: (w.days ?? []).map((d) => ({
+      dow: typeof d.day_of_week === 'number' ? d.day_of_week : 0,
+      sessions: (d.sessions ?? []).map((s) => ({
+        label: s.session_label === undefined || s.session_label === ''
+          ? (s.is_rest_day === true ? '休息日' : '训练') : s.session_label,
+        time: s.time_start === undefined || s.time_start === null || s.time_start === ''
+          ? '' : (s.time_end === undefined || s.time_end === null || s.time_end === '' || s.time_end === s.time_start
+            ? s.time_start : s.time_start + '–' + s.time_end),
+        rest: s.is_rest_day === true,
+        moves: (s.movements ?? []).map((m) => ({
+          name: m.name === undefined || m.name === '' ? '（未具名动作）' : m.name,
+          part: m.part ?? '',
+          type: m.type === 'main' ? '主要' : m.type === 'iso' ? '孤立' : (m.type ?? ''),
+          sets: setsPhrase(m.sets),
+        })),
+      })),
+    })),
+  }));
+  let sessions = 0;
+  let movements = 0;
+  for (const w of weeks) {
+    for (const d of w.days) {
+      sessions += d.sessions.length;
+      for (const s of d.sessions) movements += s.moves.length;
+    }
+  }
+  return {
+    title: cfg.title === undefined || cfg.title === '' ? '未命名计划' : cfg.title,
+    description: cfg.description ?? '',
+    startDate: cfg.start_date ?? '',
+    level: cfg.user_level ?? '',
+    equipment: cfg.available_equipment ?? [],
+    weeks,
+    totals: { weeks: weeks.length, sessions, movements },
+  };
 }
 
 export function buildPlanWizardView(plan: unknown, catalog?: unknown): PlanWizardView {
@@ -190,7 +286,10 @@ export function buildPlanWizardView(plan: unknown, catalog?: unknown): PlanWizar
   // G15 #102 · 诚实计数：只统计输入含的会话数，不触库（已检查≠已通过：坏计划也计 N；原 insertedCount: 0 恒零且暗示已落库）。
   let checkedSessions = 0;
   for (const week of p.weeks ?? []) for (const day of week.days ?? []) checkedSessions += (day.sessions ?? []).length;
-  return { errors, warnings, errorCount: errors.length, warningCount: warnings.length, checkedSessions, dryRun: true };
+  return {
+    errors, warnings, errorCount: errors.length, warningCount: warnings.length, checkedSessions, dryRun: true,
+    tree: wizardTreeOf(p),
+  };
 }
 
 export interface ExerciseGoalView {
