@@ -264,7 +264,7 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: spanDays === 1 ? '今日体重' : '体重总览',
-    eyebrow: 'calorie.view.weight · 运动身体域',
+    eyebrow: '',
     subtitle: rangeText + ' · '
       + (w.curve.single ? '只有一条记录，还看不出趋势' : '共 ' + t.recordCount + ' 条 · 趋势' + t.trendCn),
     content: parts.join(''),
@@ -297,7 +297,7 @@ function buildWeightEmptyDoc(start: string, end: string, command: string): strin
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: spanDays === 1 ? '今日体重' : '体重总览',
-    eyebrow: 'calorie.view.weight · 运动身体域',
+    eyebrow: '',
     subtitle: '这段时间还没有体重记录',
     content: parts.join(''),
   });

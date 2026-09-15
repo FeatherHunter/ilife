@@ -152,7 +152,7 @@ export function receiptPageOf(receipt: CrudReceipt, content: string, subtitle?: 
   return assembleDocPage({
     docTitle: '卡路里·体重回执',
     title: receipt.scene + ' · 回执',
-    eyebrow: '体重 · 写后回执',
+    eyebrow: '',
     subtitle: subtitle ?? receipt.summary,
     content,
   });

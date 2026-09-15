@@ -482,7 +482,7 @@ function renderComparePage(core: CompareCore): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: core.title,
-    eyebrow: core.eyebrow,
+    eyebrow: '',
     subtitle: core.subtitle,
     content: parts.join(''),
     charts: core.curve !== null,
@@ -507,7 +507,7 @@ export function buildWeightCompareDoc(v: WeightCompareView, command = ''): strin
   const a = sideToSegment('对比期', v.compare.comparePeriod);
   return renderComparePage({
     title: '体重对比',
-    eyebrow: CMD_KEY + ' · 运动身体域',
+    eyebrow: '',
     subtitle: b.label + ' ' + rangeText(b) + ' vs ' + a.label + ' ' + rangeText(a),
     caption: (delta) => '两期对比（平均差 ' + fmtDelta(delta) + '）',
     a, b, extraRows: [], curve: null, anchorMiss: false,
@@ -601,25 +601,16 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
   const singleB = isSingleDay(b);
   /* 情景卡只说**跟哪一天／哪一段比**（值槽放短标签，不放句子、也不放差值）：
    * 差值那一个数已经住了「体重对比」卡；情景名在页题副标题与表题各有一处 ⇒ 本卡不重复它们。 */
-  const leadValue = delta === null ? MISSING : a.label;
   return renderComparePage({
     title: '对比体重',
-    /* 眉标留空：原来印的是 `calorie.view.weight-compare · 情景 b8` 这类**内部代号**，
-     * 同页副标题已逐字写了业务名（「对比体重：当前 vs 平台期首日」）⇒ 整行删（口径 §3.2）。
-     * `assembleDocPage` 收到空串即不出眉标行。*/
+    /* 眉标整行删（本轮裁定）：原来印的是 `calorie.view.weight-compare · 情景 b8` 这类**内部代号**，
+     * 与页题副标题逐字重复 ⇒ 权重域全族一律不出这一行（`assembleDocPage` 收空串即不出）。 */
     eyebrow: '',
     /* 副标题只印两段的区间：情景业务名与标题行逐字相同，写在这里就是同一页第二处（口径 §2 第一条）。 */
     subtitle: a.label + ' ' + rangeText(a) + ' vs ' + b.label + ' ' + rangeText(b),
     caption: (delta) => (delta === null ? v.scenarioLabel + '（差值暂时算不出来）' : v.scenarioLabel + '（差值 ' + fmtDelta(delta) + '）'),
-    /* 值槽印「与哪一段比 · 差多少」（参照物）；情景名（`对比体重：当前 vs 平台期第一天`，15~21 字）
-     * 进 `detail`——它是句短语，进值槽会被断成两三行（t154 用户读数）。 */
-    lead: {
-      label: '对比情景', value: leadValue,
-      detail: '今天 vs 那一天',
-      status: anchorMiss ? 'empty' : 'ok',
-      /* #481 整改缺陷 6：`锚点`／`命中` 是查询行话——命中的是「一天」还是「两段」，照实说。 */
-      statusText: anchorMiss ? '没找到这一天' : (singleB ? '已找到这一天' : '已找到这两段'),
-    },
+    /* 情景卡整张删（本轮裁定）：它印的参照段标签与页题副标题逐字重复，徽章「已找到这一天」是
+     * 正常态（页能出，正说明那一天找到了）；真没找到时页顶软横幅已用「参照日前后 3 天都没有体重记录」据实说明。 */
     a, b,
     extraRows: r.extraRows ?? [],
     curve: v.curve,

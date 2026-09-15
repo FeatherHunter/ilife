@@ -432,7 +432,7 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '体重复核 ' + v.today,
-    eyebrow: CMD_KEY + ' · 运动身体域',
+    eyebrow: '',
     subtitle: m.status,
     content: parts.join(''),
     charts: false,
@@ -587,7 +587,7 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: v.title,
-    eyebrow: CMD_KEY + ' · 运动身体域',
+    eyebrow: '',
     /* 副标题只留窗口区间：条数与页脚来源行同一条事实（口径 §3.1 已把条数钉在页脚），删页头这份。 */
     subtitle: v.start + ' ~ ' + v.end,
     content: parts.join(''),
@@ -660,7 +660,7 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '看里程碑回溯',
-    eyebrow: CMD_KEY + ' · 运动身体域',
+    eyebrow: '',
     /* 副标题说这页的读法（每 5 kg 一档、记第一次达到那天）；条数与页脚来源行重复 ⇒ 删（口径 §3.1）。 */
     subtitle: '每减 5 kg 记一次，记的是第一次达到那天',
     content: parts.join(''),

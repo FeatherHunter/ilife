@@ -83,7 +83,10 @@ function assertReceipt(r, what) {
   assert.ok(r.envelope !== null, what + ' stdout 不是信封 JSON');
   assert.equal(r.envelope.data.output, r.out, what + ' 信封交付路径不是本次 --html 那一份');
   assert.ok(isAbsolute(r.envelope.data.output), what + ' 交付路径不是绝对路径');
-  assert.ok(r.file.includes('体重 · 写后回执'), what + ' 缺体重眉标');
+  /* 眉标整族删（文本审查轮裁定）：`体重 · 写后回执` 与页题「记体重 · 回执」说同一件事，
+   * 且读页那半边原来印的是内部命令键（`calorie.view.* · 运动身体域`）⇒ 权重域一律不出这一行。
+   * 判据只认**眉标元素**（类名在共享样式段里恒在，拿裸类名当判据会假红，见 #473 的同款写法）。 */
+  assert.doesNotMatch(r.file, /<p class="[^"]*page-shell-eyebrow/, what + ' 眉标整行应删（不许再出眉标元素）');
   assert.ok(r.file.includes('对账信息'), what + ' 缺页尾对账折叠区');
   assert.deepEqual([...r.file.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     what + ' 的复制数据不是三格式菜单');

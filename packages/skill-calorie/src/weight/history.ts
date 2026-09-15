@@ -661,7 +661,7 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '体重历史 ' + h.range,
-    eyebrow: CMD_KEY + ' · 运动身体域',
+    eyebrow: '',
     // #480：副标题原写「模式｜窗口（共 N 条）」，与页题（窗口）＋表注（窗口 ＋ 条数）＋页脚来源行
     // （窗口 ＋ 条数）四处同说一件事 ⇒ 只留模式；窗口与条数在页头、表注、页脚各仍有一份。
     subtitle: modeBadge(extra),
