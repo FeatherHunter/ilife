@@ -599,11 +599,9 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
   const delta = numOrNull(r.compare.deltaKg);
   const anchorMiss = Boolean(r.tolerance && !r.tolerance.hit);
   const singleB = isSingleDay(b);
-  /* 情景卡的值槽：不再与差值卡并列同一个数（#481 整改缺陷 9）。写「与哪一段比 · 差多少」——
-   * 差值卡印方向与幅度，这一句印**参照物**，两卡各说一件事（两位小数与算式同精度）。 */
-  const leadValue = delta === null
-    ? MISSING
-    : '与' + a.label + '比' + (delta > 0 ? '高' : delta < 0 ? '低' : '持平') + ' ' + Math.abs(delta).toFixed(2) + ' kg';
+  /* 情景卡只说**跟哪一天／哪一段比**（值槽放短标签，不放句子、也不放差值）：
+   * 差值那一个数已经住了「体重对比」卡；情景名在页题副标题与表题各有一处 ⇒ 本卡不重复它们。 */
+  const leadValue = delta === null ? MISSING : a.label;
   return renderComparePage({
     title: '对比体重',
     /* 眉标留空：原来印的是 `calorie.view.weight-compare · 情景 b8` 这类**内部代号**，
@@ -617,7 +615,7 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
      * 进 `detail`——它是句短语，进值槽会被断成两三行（t154 用户读数）。 */
     lead: {
       label: '对比情景', value: leadValue,
-      detail: v.scenarioLabel,
+      detail: '今天 vs 那一天',
       status: anchorMiss ? 'empty' : 'ok',
       /* #481 整改缺陷 6：`锚点`／`命中` 是查询行话——命中的是「一天」还是「两段」，照实说。 */
       statusText: anchorMiss ? '没找到这一天' : (singleB ? '已找到这一天' : '已找到这两段'),
