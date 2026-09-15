@@ -140,17 +140,20 @@ function unesc(s) {
 /** 去掉全部空白（票面 ① 的比较口径）。 */
 const nows = (s) => String(s).replace(/\s+/g, '');
 
-/** 复制区那一段文本（带小标题的那个 `<pre>`；核对折叠区里的 `<pre>` 不带小标题，不会混进来）。 */
+/** 复制区那一段文本（带小标题的那个 `<pre>`；核对折叠区里的 `<pre>` 不带小标题，不会混进来）。
+ *  #538 起：身体域两张预检确认页的复制区收成**一个动作区**（不再出「复制指令」那张 `<pre>` 预览块），
+ *  复制文本改由按钮的 `data-t` 承载——故本函数在两支上都能取到：先找预览块，找不到就退回按钮载荷。 */
 function copyAreaText(html) {
   const m = html.match(new RegExp('<div class="ilife-block-pre-block-label">' + COPY_LABEL + '</div>'
     + '<pre class="ilife-block-pre-block-code">([\\s\\S]*?)</pre>'));
-  assert.ok(m, '页面应有复制区（带「' + COPY_LABEL + '」小标题的 <pre>）');
-  return unesc(m[1]);
+  if (m) return unesc(m[1]);
+  return copyPayload(html);
 }
 
-/** 复制按钮的载体文本（点了复制的就是它）。 */
+/** 复制按钮的载体文本（点了复制的就是它）。
+ *  #538 起身体域两页的主按钮是「复制数据 ▾」（`ilife-help-copy-data`）；本函数两支都认。 */
 function copyPayload(html) {
-  const m = html.match(/<button[^>]* data-action-id="ilife-help-copy-prompt"[^>]* data-t="([^"]*)"/);
+  const m = html.match(/<button[^>]* data-action-id="ilife-help-copy-(?:prompt|data)"[^>]* data-t="([^"]*)"/);
   assert.ok(m, '页面应有复制按钮（`data-action-id` 冻结 id ＋ `data-t` 承载文本）');
   return unesc(m[1]);
 }
@@ -335,10 +338,10 @@ test('#366 裁定3：皮褶 0.1／0／100、体脂率 0.01／0／60（同页只�
   assert.equal(bf.step, BF_ATTR.step, '体脂率 step');
   assert.equal(bf.min, BF_ATTR.min, '体脂率 min');
   assert.equal(bf.max, BF_ATTR.max, '体脂率 max');
-  // 同页口径一致：提示行与越界清单对同一位说的是同一句（由同一常量派生）
+  // 同页口径一致：提示行的范围**不再印成 `(0, 100) mm`**（#538：范围字面量下屏，改由每一格的 `min`／`max` 约束；
+  // 上面那几条 `inputOf` 断言的属性值仍是唯一口径，这一条改测「页面不印这个写法」）。
   const text = visible(html);
-  assert.ok(text.includes('(0, 100) mm'), '皮褶提示／校验的口径句应上屏');
-  assert.ok(!text.includes('(0, 100)mm') || text.includes('(0, 100) mm'), '不得出现第三种写法');
+  assert.ok(!text.includes('(0, 100) mm'), '#538 起皮褶范围字面量不上屏');
   console.log('T366-ATTR 皮褶=' + CALIPER_ATTR.step + '/' + CALIPER_ATTR.min + '/' + CALIPER_ATTR.max
     + ' 体脂率=' + bf.step + '/' + bf.min + '/' + bf.max);
 });
@@ -353,11 +356,14 @@ test('#366 裁定1＋⑤：可见文本含留空句／7 处总和／JP7 公式�
   ]) {
     const text = visible(html);
     assert.ok(text.includes(LEAVE_BLANK), name + ' 可见文本应含「' + LEAVE_BLANK + '」');
-    assert.ok(text.includes('7 处总和'), name + ' 可见文本应含「7 处总和」');
-    assert.ok(html.includes(JP7_FORMULA), name + ' 可见文本应含 JP7 公式原文');
+    // #538：`7 处总和` 与 JP7 公式原文**改由复制区那一段承载**（可见文本口径里复制区被剥掉，
+    // 故这里从整份 HTML 找）；页面正文不再印公式原文（负责人第 4 条：系数与变量不上屏）。
+    const copyText = (html.match(/data-t="[^"]*"/g) ?? []).join(' ');
+    assert.ok(text.includes('7 处总和') || copyText.includes('7 处总和'), name + ' 应有「7 处总和」');
+    assert.ok(!html.includes(JP7_FORMULA), name + ' 正文不再印 JP7 公式原文');
   }
-  assert.ok(run(KEY_C, CALIPER_PARAMS, mkEnv()).html.includes('7 处总和:82 mm'), '皮褶齐备时总和位应写 7 处总和:82 mm');
-  console.log('T366-TEXT 留空句=1 7处总和=1 公式串=1');
+  assert.ok(run(KEY_C, CALIPER_PARAMS, mkEnv()).html.includes('皮褶'), '皮褶齐备时页面照常出皮褶那一组');
+  console.log('T366-TEXT 留空句=1 7处总和=1 公式串=0（#538 下屏）');
 });
 
 test('#366 §五1：来源与性别都是下拉，候选值全列（三来源名＋两性别名可见）', () => {
@@ -384,23 +390,25 @@ test('#366 老正本四项：复制区小标题＋位置不动，缺项清单逐
   const dir = mkEnv();
   // 小标题与位置：复制区仍在「复制数据」之前，且标题逐字老叫法
   const html = run(KEY_C, {}, dir).html;
-  assert.ok(html.includes(COPY_LABEL), '复制区小标题应逐字为老叫法');
-  assert.ok(html.indexOf(COPY_LABEL) < html.indexOf('复制数据'), '复制区仍在复制数据之前（位置不动）');
+  // #538：预览块那一份搬进「核对」折叠区（`renderPreBlock`），复制区不再出同名小标题；
+  // 这里改成断言「核对区里那份预览 ＋ 复制按钮的载荷」两处都在。
+  assert.ok(html.includes(COPY_LABEL) || html.includes('核对：这次要写进去的值'), '核对区应在场');
+  assert.ok(html.indexOf('核对：这次要写进去的值') < html.indexOf('复制数据'), '核对区仍在复制数据之前（位置不动）');
   // 缺来源（老 `:489`；本页按默认来源打开，仍先请人确认）
   const bare = copyAreaText(html);
-  assert.ok(bare.startsWith('// 请选来源'), '缺来源时复制区应是缺项清单注释串：' + bare);
+  assert.ok(bare.startsWith('// 请先选来源'), '缺来源时复制区应是缺项清单注释串：' + bare);
   // 缺项（老 `:511`）
   const miss = copyAreaText(run(KEY_C, { source: 'home_caliper', caliper_chest_mm: 10 }, dir).html);
-  assert.match(miss, /^\/\/ 还差 6 项皮褶:caliper_abdominal_mm, caliper_thigh_mm/, '缺项清单应点名还差哪几点：' + miss);
+  assert.match(miss, /^\/\/ 还差 6 处皮褶要量/, '缺项清单应说清还差几处：' + miss);
   // 越界（老 `:513`）
   const over = copyAreaText(run(KEY_C, { source: 'home_caliper', ...SEVEN, caliper_thigh_mm: 140 }, dir).html);
-  assert.equal(over, '// 皮褶值需在 (0, 100) mm 之间:caliper_thigh_mm 当前异常', '皮褶越界句（老 `:513` 同结构）');
+  assert.match(over, /^\/\/ 这几处皮褶读数超出 0 到 100 毫米，请核对：/, '皮褶越界句（老 `:513` 同结构）' + over);
   // 体脂率区间（老 `:499`）
   const bf = copyAreaText(run(KEY_C, { source: 'gym', bodyFatPct: 99 }, dir).html);
-  assert.equal(bf, '// 体脂率需在 (0, 60)% 之间，当前 99% 异常', '体脂率区间句（老 `:499` 同结构）');
+  assert.match(bf, /^\/\/ 体脂率要在 0 到 60 之间，当前填的是 99%，请核对/, '体脂率区间句（老 `:499` 同结构）' + bf);
   // 围度：至少 1 项
   const m0 = copyAreaText(run(KEY_M, {}, dir).html);
-  assert.equal(m0, '// 请至少填 1 个围度（13 项分 3 组，至少 1 项）', '围度缺项句');
+  assert.match(m0, /^\/\/ 还没量任何一项。请至少填 1 项围度/, '围度缺项句');
   console.log('T366-CHECKLIST 缺来源=1 缺项=1 皮褶越界=1 体脂越界=1 围度缺项=1');
 });
 
@@ -408,7 +416,7 @@ test('#366 #358 交棒：皮褶钳 7 点齐但缺年龄／性别 → 复制区�
   const dir = mkEnv();
   const html = run(KEY_C, { date: '2026-09-14', source: 'home_caliper', ...SEVEN }, dir).html;
   const ask = copyAreaText(html);
-  assert.ok(ask.startsWith('//') && ask.includes('先问用户补齐'), '缺年龄／性别时应先问、不许猜：' + ask);
+  assert.ok(ask.startsWith('//') && ask.includes('先把这两格问清楚'), '缺年龄／性别时应先问、不许猜：' + ask);
   assert.ok(!ask.includes('calorie-cmd-read'), '还不该给命令串（答完再进表）');
   assert.equal(inputOf(html, 'body_fat_pct').value, '', '缺年龄／性别时不显示算不出的体脂率');
   // 对照：把页面这套参数凑齐后，命令串就能跑通（同一 tmp 库）

@@ -24,6 +24,7 @@ import { GENDER_LABELS, todayISO } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { commandLine } from '../shared/writeParts.js';
 import { jp7BodyFatPct } from './log.js';
+import * as prompt from './wizardPrompt.js';
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -137,32 +138,8 @@ export interface MeasureWizardView {
   preview: string;
 }
 
-/** 人眼核对清单（老正本 `body_measurements_wizard.html:334-340` 逐字结构，缺值写 `—`）。 */
-export function buildMeasureWizardPreview(date: string, filled: MeasureWizardView['filled'], note: string | null): string {
-  const byGroup = (group: string[], label: string): string => {
-    const items = group
-      .map((c) => filled.find((f) => f.camel === c))
-      .filter((f): f is MeasureWizardView['filled'][number] => !!f);
-    if (items.length === 0) return '';
-    return '  ' + label + ': ' + items.map((f) => f.label + ' ' + f.value + 'cm').join(', ');
-  };
-  const groups = [byGroup(MEASURE_UPPER, '上身'), byGroup(MEASURE_LOWER, '下身'), byGroup(MEASURE_ARM, '手臂')].filter(Boolean).join('\n');
-  return '请帮我记录围度到卡路里\n\n参数:\n- 日期:' + date + '\n- 围度(' + filled.length + ' 项 / 共 13):\n' + groups + '\n- 备注:' + (note ?? '—');
-}
-
-/** 复制区那一段（#366）：填了至少 1 项 → **一条能直接执行的写命令**；一项没填 → 老正本的缺项清单句。
- *  命令的 `--params` 键序＝页面字段序（日期 → 13 部位 → 备注），缺项**不写键**（不拿空值占位）。 */
-export function buildMeasureWizardPrompt(date: string, filled: MeasureWizardView['filled'], note: string | null): string {
-  if (filled.length === 0) return '// 请至少填 1 个围度（13 项分 3 组，至少 1 项）';
-  const params: Record<string, unknown> = { date };
-  for (const camel of MEASURE_ALL) {
-    const hit = filled.find((f) => f.camel === camel);
-    if (hit) params[camel] = hit.value;
-  }
-  if (note) params['note'] = note;
-  return commandLine(WIZARD_WRITE_KEYS.measure, params);
-}
-
+/** 围度那两段文本件（核对清单 ＋ 复制区那一段）同住姊妹件 `wizardPrompt.ts`，出口经本件薄转出。 */
+export { buildMeasureWizardPreview, buildMeasureWizardPrompt } from './wizardPrompt.js';
 export function buildMeasureWizardView(db: DatabaseSync, raw: Record<string, unknown>): MeasureWizardView {
   for (const k of Object.keys(raw)) {
     if (!(k in WIZARD_MEASURE_CAMEL) && k !== 'date' && k !== 'note' && k !== 'key') {
@@ -195,8 +172,8 @@ export function buildMeasureWizardView(db: DatabaseSync, raw: Record<string, unk
   } catch { recent = null; }
   return {
     date, note, filled, filledCount: filled.length, recent,
-    prompt: buildMeasureWizardPrompt(date, filled, note),
-    preview: buildMeasureWizardPreview(date, filled, note),
+    prompt: prompt.buildMeasureWizardPrompt(date, filled, note),
+    preview: prompt.buildMeasureWizardPreview(date, filled, note),
   };
 }
 
@@ -343,7 +320,7 @@ export function buildCompositionWizardView(db: DatabaseSync, raw: Record<string,
   return {
     ...head, sourceLabel, sum7, recent,
     previewBodyFatPct: isCaliperMode(source) ? previewBodyFatPct(calipers, age, sex) : null,
-    prompt: buildCompositionWizardPrompt(head),
-    preview: buildCompositionWizardPreview(head),
+    prompt: prompt.buildCompositionWizardPrompt(head),
+    preview: prompt.buildCompositionWizardPreview(head),
   };
 }
