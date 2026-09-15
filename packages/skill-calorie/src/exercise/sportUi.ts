@@ -79,6 +79,18 @@ export function exerciseUiCss(): string {
     //    页级件按 CSS 内容补键（**不碰共用层 op-head 件的源码**；同值同词，不是新事实）。
     //    `content` 只进渲染层，不上屏到可见文本探针的「机器词」面。──
     + '.ilife-page .ilife-block-op-head-time::before{content:"写入时间 ";color:var(--fg2)}'
+    // ── 页头「操作头」三行排成两行（r8 的 P2-3）：共用件把图标／徽章／`<h2>` 各摆一行，
+    //    一枚 54×32.8 的胶囊独占整行、右侧 900px 全空，标题前空出 51.5px 的带子。
+    //    页级件改成流式（图标＋徽章＋标题同排，记录号／写入时间各起一行）——`<h2>` 恢复 `inline-flex`，
+    //    三件基线对齐。**不碰共用件 `shared/operationHead.ts` 的源码**。──
+    + '.ilife-page .ilife-block-op-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}'
+    + '.ilife-page .ilife-block-op-head-title{display:inline-flex;align-items:center;margin:0}'
+    + '.ilife-page .ilife-block-op-head-id,.ilife-page .ilife-block-op-head-time{flex:1 0 100%;margin:0}'
+    // ── 字段块自成一组（r8 的 P2-4 的同源病）：题／栅格／收口句之间 4—12px，与同级区块的 16px 不一致，
+    //    读起来像「贴住上一张卡」。题上行距归零、三件之间统一 8px。──
+    + '.ilife-page .sui-fields-k{margin-top:0}'
+    + '.ilife-page .sui-fieldgrid{margin-top:8px;margin-bottom:8px}'
+    + '.ilife-page .sui-fields-n{margin-top:0;margin-bottom:16px}'
     + '.ilife-page .ilife-block-change-row-label{flex:0 0 128px}'
     // ── 页级覆盖（#543 视觉复评 P0-1 ＋ 表头字号）：共享块的表卡是「上限 680 ＋ 居中」，上方卡片是
     //    960 整列 ⇒ 表正文比卡正文内缩 126px（实测 x373 vs x247），一页两条对齐轴。本族页把表卡

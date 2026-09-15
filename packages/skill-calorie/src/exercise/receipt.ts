@@ -258,7 +258,14 @@ function sourceCard(receipt: CrudReceipt, dates: readonly string[], count: numbe
  *  `total_changes` 库口径词改人话；首条保留 `口径：` 前缀（回归判据读它）。 */
 function caliberLines(hasDay: boolean): string[] {
   const lines = ['口径：影响行数＝本次写库实际改动的行数'];
-  if (hasDay) lines.push('当日累计只算未删除的行，软删除的行不计');
+  if (hasDay) {
+    lines.push('当日累计只算未删除的行，软删除的行不计');
+    // r8 的 P1-2：同屏「运动条数 N 条（当天现存）」与来源卡「记录数 共 1 条（本次写入的条数）」
+    // 两个数、同一天，没有一句交代，读者会以为页面自相矛盾。两个数的口径都被判据钉着
+    // （`exercise-summary-goal-fusion-452` 钉「记录数＝共 N 条」，`#543` 判据钉当日累计那一行），
+    // 故这里**不改数、只补一句口径**把两者的区别说清——口径行的存在意义就是干这个的。
+    lines.push('数据来源的「记录数」是本次写入的条数，不是当天存量的「运动条数」');
+  }
   lines.push('时长按分钟记，消耗按卡记');
   return lines;
 }
@@ -382,9 +389,10 @@ export function buildExerciseReceiptDoc(
 
   /** 「写入字段」那一块的题（r7 的 P2-6）：原来只写「写入字段（共 16 项）」，页下方明细却只列
    *  **有值**的那几行（`SNAPSHOT_COLS` 过 `hasValue` 过滤），读者没法把 16 与 5 对齐。
-   *  **题面一个字不改**（判据⑤ 的 `fieldBlockOf` 正则逐字钉着 `写入字段（共 N 项）</p><div class="…">`），
-   *  补的是一句**块尾收口**：本次真的填了几项。 */
-  const filledCount = fields.filter((f) => String(detail.rows?.[0]?.[f] ?? '').trim() !== '').length;
+   *  **题面一个字不改**（判据⑤ 的 `fieldBlockOf` 正则逐字钉着 `写入字段（共 N 项）</p><div class="…">`）。
+   *  r8 的 P1-1 判定本席撤销了曾补的那句块尾收口（`本次填了 N 项`）：本席按 `writtenFields` 数，
+   *  记页得 2、改页得 0，而屏上明细实列 5 行——**同屏 16／2／5 三个数打架，是补出来的新病**，
+   *  故整句撤掉（口径明细卡已逐行自陈，这块不再另算一遍）。 */
 
   const cards = [counts, change, detailRows, day, source].filter((c): c is Card => c !== null);
   /** 页内导航的项：卡自己的 `label` 就是锚点名（r6 的 P1-2 的口径），这里只做空 `id` 过滤。 */
@@ -399,7 +407,7 @@ export function buildExerciseReceiptDoc(
     // #543 视觉复评 P1-A 第 1 条：页族名归眉标、命令名归 h1、操作对象归操作头——h2 只说「运动记录」。
     operationHead({ op, title: '运动记录', recordId: receipt.recordId, actionAt: receipt.meta.actionAt }),
     kpi.length > 0 ? readoutShell(renderKpiGrid(kpi)) : '',
-    fieldsBlock(fields.map((f) => label(f)), filledCount),
+    fieldsBlock(fields.map((f) => label(f))),
     caliberLines(day !== null).map((t) => renderCaliberLine(t)).join(''),
     cards.map(shell).join(''),
     undoBlock(detail.undoCli),

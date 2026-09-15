@@ -1,5 +1,5 @@
 # #543 门禁运行记录导出（源：.scratch/locks/gate-runs.log，只筛 ticket=543 的行，逐行原样）
-# 导出时刻：2026-09-15T19:07:33.339Z　条目数：122
+# 导出时刻：2026-09-15T19:51:49.700Z　条目数：186
 
 START ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 pid=47004 at=2026-09-15T07:37:22.797Z
 RUN ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 exit=1 pid=47004 at=2026-09-15T07:37:26.838Z
@@ -123,3 +123,67 @@ RUN ticket=543 runId=1982d19c-9d22-4e2c-8376-35387238dfe4 cmd="pwsh -NoProfile -
 START ticket=543 runId=3aa98c44-bd60-46c2-bc60-44732f6c2369 cmd="pwsh -NoProfile -File .scratch/t543/window-mut-v1.ps1" waitedMs=10014 pid=31456 at=2026-09-15T19:06:00.289Z
 RUN ticket=543 runId=3aa98c44-bd60-46c2-bc60-44732f6c2369 cmd="pwsh -NoProfile -File .scratch/t543/window-mut-v1.ps1" waitedMs=10014 exit=0 pid=31456 at=2026-09-15T19:06:08.381Z
 START ticket=543 runId=144eb6f8-2647-45a6-b0bf-4a80c382c179 cmd="node .scratch/t543/export-runs.mjs" waitedMs=40039 pid=49932 at=2026-09-15T19:07:33.251Z
+RUN ticket=543 runId=144eb6f8-2647-45a6-b0bf-4a80c382c179 cmd="node .scratch/t543/export-runs.mjs" waitedMs=40039 exit=0 pid=49932 at=2026-09-15T19:07:33.350Z
+START ticket=543 runId=09d0e4b0-d1de-4af0-8e06-451680a8703f cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10016 pid=70860 at=2026-09-15T19:20:32.373Z
+RUN ticket=543 runId=09d0e4b0-d1de-4af0-8e06-451680a8703f cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10016 exit=1 pid=70860 at=2026-09-15T19:20:33.208Z
+START ticket=543 runId=0be69208-9626-434e-a09f-fe6e533fe6e3 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=70220 at=2026-09-15T19:20:39.834Z
+RUN ticket=543 runId=0be69208-9626-434e-a09f-fe6e533fe6e3 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=70220 at=2026-09-15T19:20:40.644Z
+START ticket=543 runId=b75ff0a8-28e1-42ac-9777-2208bc288655 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 pid=55248 at=2026-09-15T19:20:45.018Z
+RUN ticket=543 runId=b75ff0a8-28e1-42ac-9777-2208bc288655 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 exit=1 pid=55248 at=2026-09-15T19:20:45.278Z
+START ticket=543 runId=b16040eb-304a-44f6-b5a7-2de57677cbb4 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=69364 at=2026-09-15T19:21:12.870Z
+RUN ticket=543 runId=b16040eb-304a-44f6-b5a7-2de57677cbb4 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=69364 at=2026-09-15T19:21:13.701Z
+START ticket=543 runId=65114654-3335-4aa4-9634-27b902b72190 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 pid=42372 at=2026-09-15T19:21:13.751Z
+RUN ticket=543 runId=65114654-3335-4aa4-9634-27b902b72190 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 exit=1 pid=42372 at=2026-09-15T19:21:14.478Z
+START ticket=543 runId=2237bb16-3dd4-4b4f-a203-5bb26ad22dcf cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=59800 at=2026-09-15T19:21:27.012Z
+RUN ticket=543 runId=2237bb16-3dd4-4b4f-a203-5bb26ad22dcf cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=59800 at=2026-09-15T19:21:27.832Z
+START ticket=543 runId=8bded3a3-36f8-4289-a6d5-9d3f729448f8 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 pid=12696 at=2026-09-15T19:21:27.880Z
+RUN ticket=543 runId=8bded3a3-36f8-4289-a6d5-9d3f729448f8 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 exit=1 pid=12696 at=2026-09-15T19:21:28.545Z
+START ticket=543 runId=9e4c0678-2972-4f19-a6b9-bb82ea04968c cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=1 pid=56672 at=2026-09-15T19:22:21.278Z
+RUN ticket=543 runId=9e4c0678-2972-4f19-a6b9-bb82ea04968c cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=1 exit=0 pid=56672 at=2026-09-15T19:22:22.092Z
+START ticket=543 runId=418aa090-1aa9-401f-9ead-512e5d0f828f cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 pid=73020 at=2026-09-15T19:22:22.142Z
+RUN ticket=543 runId=418aa090-1aa9-401f-9ead-512e5d0f828f cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 exit=0 pid=73020 at=2026-09-15T19:22:22.818Z
+START ticket=543 runId=ef3175d5-e7cb-462a-a01e-a8547c68350a cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 pid=52772 at=2026-09-15T19:22:27.117Z
+RUN ticket=543 runId=ef3175d5-e7cb-462a-a01e-a8547c68350a cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 exit=1 pid=52772 at=2026-09-15T19:22:47.281Z
+START ticket=543 runId=16937335-a93a-439c-aca4-34beeef11be5 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=20007 pid=25352 at=2026-09-15T19:24:00.396Z
+RUN ticket=543 runId=16937335-a93a-439c-aca4-34beeef11be5 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=20007 exit=0 pid=25352 at=2026-09-15T19:24:00.542Z
+START ticket=543 runId=8b466c2f-3cd1-4bd5-bf92-8a9dc0ccabb4 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 pid=37072 at=2026-09-15T19:24:00.600Z
+RUN ticket=543 runId=8b466c2f-3cd1-4bd5-bf92-8a9dc0ccabb4 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 exit=0 pid=37072 at=2026-09-15T19:24:20.705Z
+START ticket=543 runId=07fb0071-47b3-4f83-acdd-ae4fbb6f90e5 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 pid=69004 at=2026-09-15T19:24:31.660Z
+RUN ticket=543 runId=07fb0071-47b3-4f83-acdd-ae4fbb6f90e5 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 exit=0 pid=69004 at=2026-09-15T19:25:41.043Z
+START ticket=543 runId=751d035c-6c85-44ce-8def-d9d6ebe63f9c cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 pid=55908 at=2026-09-15T19:26:55.314Z
+RUN ticket=543 runId=751d035c-6c85-44ce-8def-d9d6ebe63f9c cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 exit=0 pid=55908 at=2026-09-15T19:28:06.073Z
+START ticket=543 runId=c6f23520-a001-4402-9dc1-f82feb6fc18f cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=10015 pid=50800 at=2026-09-15T19:29:38.737Z
+RUN ticket=543 runId=c6f23520-a001-4402-9dc1-f82feb6fc18f cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=10015 exit=0 pid=50800 at=2026-09-15T19:30:51.520Z
+START ticket=543 runId=7dd39513-873a-45b3-932e-1837cfd44610 cmd="pwsh -NoProfile -File .scratch/t543/window-mut-v1.ps1" waitedMs=10002 pid=42548 at=2026-09-15T19:31:27.539Z
+RUN ticket=543 runId=7dd39513-873a-45b3-932e-1837cfd44610 cmd="pwsh -NoProfile -File .scratch/t543/window-mut-v1.ps1" waitedMs=10002 exit=0 pid=42548 at=2026-09-15T19:31:35.684Z
+START ticket=543 runId=113af3f5-76ba-4941-a9c3-5bbe63a73e13 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 pid=9712 at=2026-09-15T19:33:08.719Z
+RUN ticket=543 runId=113af3f5-76ba-4941-a9c3-5bbe63a73e13 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=1 pid=9712 at=2026-09-15T19:33:08.823Z
+START ticket=543 runId=b7e51fcb-0064-459c-a641-634e0d1946b3 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --dry" waitedMs=0 pid=42760 at=2026-09-15T19:33:14.341Z
+RUN ticket=543 runId=b7e51fcb-0064-459c-a641-634e0d1946b3 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --dry" waitedMs=0 exit=1 pid=42760 at=2026-09-15T19:33:14.452Z
+START ticket=543 runId=006bbcdc-0875-428c-b70b-7c85998c4c99 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync" waitedMs=0 pid=35292 at=2026-09-15T19:33:18.485Z
+RUN ticket=543 runId=006bbcdc-0875-428c-b70b-7c85998c4c99 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync" waitedMs=0 exit=0 pid=35292 at=2026-09-15T19:33:18.614Z
+START ticket=543 runId=50874dca-771b-44cf-865f-bdd91a5c8774 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=45356 at=2026-09-15T19:44:11.569Z
+RUN ticket=543 runId=50874dca-771b-44cf-865f-bdd91a5c8774 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=1 pid=45356 at=2026-09-15T19:44:12.565Z
+START ticket=543 runId=38ee2043-f88d-4359-814f-f8eda24e658c cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 pid=70048 at=2026-09-15T19:44:12.623Z
+RUN ticket=543 runId=38ee2043-f88d-4359-814f-f8eda24e658c cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 exit=1 pid=70048 at=2026-09-15T19:44:31.467Z
+START ticket=543 runId=b7f6fb65-8b06-478a-9bf2-6c9047b16f57 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=34620 at=2026-09-15T19:44:42.141Z
+RUN ticket=543 runId=b7f6fb65-8b06-478a-9bf2-6c9047b16f57 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=34620 at=2026-09-15T19:44:42.963Z
+START ticket=543 runId=f317c199-f1b1-474e-9cb3-9575e551dd3c cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=1 pid=70528 at=2026-09-15T19:44:43.015Z
+RUN ticket=543 runId=f317c199-f1b1-474e-9cb3-9575e551dd3c cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=1 exit=1 pid=70528 at=2026-09-15T19:45:02.655Z
+START ticket=543 runId=711c40da-8510-436f-ad50-6c9448800620 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=1 pid=73036 at=2026-09-15T19:45:24.616Z
+RUN ticket=543 runId=711c40da-8510-436f-ad50-6c9448800620 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=1 exit=0 pid=73036 at=2026-09-15T19:45:25.449Z
+START ticket=543 runId=92d3e631-40fb-4dd8-8601-bb1fde9e47df cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 pid=46176 at=2026-09-15T19:45:25.500Z
+RUN ticket=543 runId=92d3e631-40fb-4dd8-8601-bb1fde9e47df cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 exit=1 pid=46176 at=2026-09-15T19:45:46.584Z
+START ticket=543 runId=f9bb86d2-e355-426b-92a0-9ebac1df63a5 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=64552 at=2026-09-15T19:45:59.831Z
+RUN ticket=543 runId=f9bb86d2-e355-426b-92a0-9ebac1df63a5 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=64552 at=2026-09-15T19:46:00.690Z
+START ticket=543 runId=e20d0a93-e6ca-4bcc-9834-8b0c160e17dd cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 pid=32348 at=2026-09-15T19:46:00.743Z
+RUN ticket=543 runId=e20d0a93-e6ca-4bcc-9834-8b0c160e17dd cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 exit=0 pid=32348 at=2026-09-15T19:46:20.449Z
+START ticket=543 runId=7d1cfde9-9280-44d7-ab5d-d51fcbe5acb1 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 pid=58488 at=2026-09-15T19:46:25.824Z
+RUN ticket=543 runId=7d1cfde9-9280-44d7-ab5d-d51fcbe5acb1 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 exit=0 pid=58488 at=2026-09-15T19:47:36.120Z
+START ticket=543 runId=261c74cf-f505-4b8e-832d-b371f3b1aa30 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 pid=60528 at=2026-09-15T19:47:48.104Z
+RUN ticket=543 runId=261c74cf-f505-4b8e-832d-b371f3b1aa30 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 exit=0 pid=60528 at=2026-09-15T19:48:57.187Z
+START ticket=543 runId=e4ef8293-3875-476a-97f1-02b4bf30cd4d cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 pid=51044 at=2026-09-15T19:49:28.487Z
+RUN ticket=543 runId=e4ef8293-3875-476a-97f1-02b4bf30cd4d cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 exit=0 pid=51044 at=2026-09-15T19:50:38.965Z
+START ticket=543 runId=9386c33e-3813-4b34-8387-21378e743381 cmd="pwsh -NoProfile -File .scratch/t543/commit-v2.ps1" waitedMs=0 pid=57632 at=2026-09-15T19:51:36.810Z
+RUN ticket=543 runId=9386c33e-3813-4b34-8387-21378e743381 cmd="pwsh -NoProfile -File .scratch/t543/commit-v2.ps1" waitedMs=0 exit=0 pid=57632 at=2026-09-15T19:51:39.689Z
+START ticket=543 runId=25373ec8-06ac-4868-a58b-51f7fbcb8d13 cmd="node .scratch/t543/export-runs.mjs" waitedMs=0 pid=60920 at=2026-09-15T19:51:49.627Z
