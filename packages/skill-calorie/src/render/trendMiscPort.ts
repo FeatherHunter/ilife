@@ -2,6 +2,10 @@
  * calorie_trend／lint_health／long_trend／nutrition_analysis／process_progress／
  * review_template／six_factors 八模板的数据面；计数 6＋4＋8＝18 闭合）。
  *
+ * **#277 就地去掉一支**：`batch_import_preview` 的取数与逐行校验搬进
+ * `src/diet/precheckPort.ts`（同一个搬迁：页属 #277、件属 #113，台账那一行的拆法第一步）。
+ * 本件只剩 7 键。
+ *
  * 口径：
  * - 窗查询一律 food_log（水行以 WATER_NAME 排除，宏量全 0 数值无差）／weight_log／
  *   exercise_log（is_deleted＝0）／nutrition_products（is_deprecated＝0）／
@@ -304,62 +308,6 @@ export function buildLintHealthView(db: DatabaseSync): LintHealthView {
     },
   ];
   return { issueCount: checks.reduce((a, c) => a + c.count, 0), checks };
-}
-
-/* ── 批量导入预览（batch_import_preview：只预览不写库） ── */
-
-export interface BatchImportItemInput {
-  foodName: string;
-  calories: number;
-  protein?: number;
-  grams?: number;
-  date?: string;
-}
-
-export interface BatchImportPreviewItem {
-  foodName: string;
-  calories: number;
-  matched: boolean;
-  libCalories: number | null;
-}
-
-export interface BatchImportPreviewView {
-  total: number;
-  matched: number;
-  missing: number;
-  totalCalorie: number;
-  missingNames: string[];
-  items: BatchImportPreviewItem[];
-}
-
-export function buildBatchImportPreviewView(db: DatabaseSync, items: unknown): BatchImportPreviewView {
-  if (!Array.isArray(items) || items.length === 0 || items.length > 200) {
-    throw new CalorieRenderError('bad-input', 'items 须为 1~200 条数组');
-  }
-  const lib = new Map((db.prepare(
-    'SELECT product_name AS n, calories AS cal FROM nutrition_products WHERE COALESCE(is_deprecated, 0) = 0',
-  ).all() as { n: string; cal: number }[]).map((r) => [r.n, r.cal]));
-  const out: BatchImportPreviewItem[] = [];
-  for (const raw of items) {
-    const it = raw as Partial<BatchImportItemInput>;
-    if (typeof it?.foodName !== 'string' || it.foodName.trim() === '') {
-      throw new CalorieRenderError('bad-input', 'items[].foodName 须为非空字符串');
-    }
-    if (typeof it?.calories !== 'number' || !(it.calories > 0)) {
-      throw new CalorieRenderError('bad-input', 'items[].calories 须为正数：' + it.foodName);
-    }
-    const libCal = lib.get(it.foodName) ?? null;
-    out.push({ foodName: it.foodName, calories: it.calories, matched: libCal !== null, libCalories: libCal });
-  }
-  const missingNames = [...new Set(out.filter((i) => !i.matched).map((i) => i.foodName))];
-  return {
-    total: out.length,
-    matched: out.filter((i) => i.matched).length,
-    missing: missingNames.length,
-    totalCalorie: out.reduce((a, i) => a + i.calories, 0),
-    missingNames,
-    items: out,
-  };
 }
 
 /* ── 落地训练进度（process_progress：计划＋近 7 天执行） ── */

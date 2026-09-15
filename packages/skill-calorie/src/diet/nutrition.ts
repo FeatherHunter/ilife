@@ -1,18 +1,25 @@
-/** 饮食能力的子功能「看营养」（HELP 场景 02「饮食」下一级 diet_5）：营养配比／营养素深度／批量导入预览。
+/** 饮食能力的子功能「看营养」（HELP 场景 02「饮食」下一级 diet_5）：营养配比／营养素深度／
+ * 批量导入预览／营养表识别确认。
  *
  * #315 纯搬迁：三个处理体**逐字搬自** `src/cli/cmd_read.ts` 的对应 `case`（语义不动，只换住处）。
- * 取数走 `diet/nutritionPort.ts`／`render/trendMiscPort.ts`，装配走同名 `*Docs.ts` 的公开接口。
+ * 取数走 `diet/nutritionPort.ts`，装配走同名 `*Docs.ts` 的公开接口。
  * 三条声明住 `./commands.ts`；对外只经 `./index.ts`。
  *
  * #275 · **两态分清**（`t425` 裁定 4 的 2026-09-15 澄清）：这两条读命令在窗口零记录时不再笼统地
  * 走缺失阻断——**窗口为空**（别处还有记录）出完整空态页 ＋ 空态句 ＋ 引导句；
  * **库为空**仍原样抛出去走 `exit 4`（既有设计行为）。分辨点就在本件（取数层只负责抛）。
+ *
+ * #277 · 本件第三、四条处理体换成**预检确认页**（老实物 `batch_import_preview.html`／
+ * `nutrition_label_wizard.html`）：取数与逐行校验搬到 `./precheckPort.ts`、装配搬到 `./precheck.ts`。
+ * 两条都不写库（老实物 `output_type` 是 `result`／`process`）；真写库由 `calorie.product.import`／
+ * `calorie.diet.add` 承担，确认页把它们印在「确认后操作」块与复制日志第 4 段里。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildNutritionDetailView, buildNutritionRatioView, hasAnyDietRow } from './nutritionPort.js';
 import { buildEmptyWindowDoc, buildNutritionDetailDoc, buildNutritionRatioDoc } from './nutritionPortDocs.js';
-import { buildBatchImportPreviewView } from '../render/trendMiscPort.js';
-import { buildBatchImportPreviewDoc } from '../render/trendMiscPortDocs.js';
+import { buildImportPrecheckView, buildLabelPrecheckView, ENTRY_VALIDATE } from './precheckPort.js';
+import { buildImportPrecheckDoc } from './precheck.js';
+import { buildLabelPrecheckDoc } from './precheckLabel.js';
 import { CalorieRenderError } from '../render/errors.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { defaultRange, nums, optStr } from '../shared/params.js';
@@ -100,11 +107,46 @@ export function viewNutritionDetail(params: Record<string, unknown>, db: Databas
   return { data: { metrics }, html: buildNutritionDetailDoc(v, entry, command) };
 }
 
-/** `calorie.view.batch-import-preview` · 批量导入预览。 */
+/** `calorie.view.batch-import-preview` · 导入预检页（#277 按老实物 `batch_import_preview.html` 重做）。
+ *
+ *  同一张页两个形态，由**入口标记**选（`src/diet/routes.ts` 那几条记录自己带）：
+ *  「校验批量导入」带 `entry:'validate'` ⇒ 校验形态（逐行结果与失败原因）；其余 ⇒ 预览形态。
+ *  两形态都不写库（老实物 `output_type` 是 `result`／`process`，写库只发生在用户确认之后）。
+ *  `data.metrics` 四个键是 #113 起的冻结形状，不随形态变。 */
 export function viewBatchImportPreview(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
-  const v = buildBatchImportPreviewView(db, params['items']);
+  const entry = optStr(params, 'entry');
+  const validate = entry === ENTRY_VALIDATE;
+  const command = commandLine('calorie.view.batch-import-preview', params);
+  const v = buildImportPrecheckView(db, params['items']);
   const metrics = nums({
     total: v.total, matched: v.matched, missing: v.missing, totalCalorie: v.totalCalorie,
   });
-  return { data: { metrics }, html: buildBatchImportPreviewDoc(v) };
+  return { data: { metrics }, html: buildImportPrecheckDoc(v, entry, command, validate) };
+}
+
+/** `calorie.view.label-precheck` · 营养表识别确认页（#277 新建；老实物 `nutrition_label_wizard.html`）。
+ *
+ *  「拍营养表记一餐／拍营养表补记一餐」两条词的第一步就是这一页——识别在模型侧，
+ *  模型把识别到的字段照 `t276-营养表映射.md` 那张表填成参数递进来，本命令只把它摆成页给人核对，
+ *  **不写库**；用户确认之后跑的是 `calorie.diet.add`（页上「确认后操作」块给出字段与取值，
+ *  复制日志第 4 段给出那条命令原文）。两条词共用这一条命令：带日期＝补记那一支（页头与措辞按它换）。 */
+export function viewLabelPrecheck(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+  const command = commandLine('calorie.view.label-precheck', params);
+  const v = buildLabelPrecheckView(params);
+  const backfill = v.date !== '';
+  /* 读数投影只收确定数字（`nums` 的冻结口径）：识别成 `—` 的那一格不进投影，不上屏 0。 */
+  const numOfField = (key: string): number | undefined => {
+    const raw = v.fields.find((f) => f.key === key)?.value;
+    if (raw === undefined || raw === '—') return undefined;
+    const n = Number(raw);
+    return Number.isNaN(n) ? undefined : n;
+  };
+  const metrics = nums({
+    calories: v.totalCalorie,
+    protein: numOfField('protein'),
+    carbs: numOfField('carbohydrates'),
+    fat: numOfField('fat'),
+    uncertain: v.uncertainCount,
+  });
+  return { data: { metrics }, html: buildLabelPrecheckDoc(v, backfill, command) };
 }

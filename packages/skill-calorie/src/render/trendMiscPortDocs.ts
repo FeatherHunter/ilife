@@ -5,6 +5,12 @@
  * 图表页另加 CHARTS-HELPERS＋buildChartsHelpersJs，图表 CSS 由其运行时注入）。
  * 复制文本一律 buildDataText（#77 契约）：stat 投影 metrics 只收确定数字。
  * 本层不做取数（数据由 render/trendMiscPort.ts 备齐），不返空（缺失由数据层抛 missing-data）。
+ *
+ * **#277 就地去掉一支**：`batch_import_preview` 那一页（老实物 24324 B，属 `t425` §五 第 ⑦ 类
+ * 「预检确认页」）搬进 `src/diet/precheck.ts`＋`src/diet/precheckPort.ts`——页属饮食的 #277、
+ * 件属 #113 的杂项，是归属错配；搬法正是本包告警线台账那一行写好的「按页族切姊妹件」的第一步。
+ * 本件只剩 7 键（calorie_trend／lint_health／long_trend／nutrition_analysis／process_progress／
+ * review_template／six_factors）。
  */
 import {
   renderCaliberLine,
@@ -18,7 +24,6 @@ import {
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import type {
-  BatchImportPreviewView,
   CalorieTrendView,
   LintHealthView,
   LongTrendView,
@@ -522,79 +527,6 @@ export function buildLintHealthDoc(v: LintHealthView): string {
     title: '数据健康检查',
     eyebrow: '卡路里 · 趋势',
     subtitle: '未匹配库/零负热量/未来日期/疑似重复（只读，不写库）',
-    content: parts.join(''),
-    charts: false,
-  });
-}
-
-/* ── 批量导入预览（batch_import_preview） ── */
-
-export function buildBatchImportPreviewDoc(v: BatchImportPreviewView): string {
-  /* #509 · 这一页（33 校验批量导入／81 看批量导入预览）的两处被判「内部词」的话（审查件第 46、47 条）：
-     ① 读数卡「已匹配库·精确名匹配」「未匹配·导入后建议补录」——「精确名匹配」是检索方式的实现说法，
-        「补录」没说清往哪录；② 表头「热量卡／库热量／匹配」与单元格 `—`／`✗ 缺库`——「热量卡」读成名词，
-        「库热量」不知道是哪个库，`—`／`✗` 两个符号没有字面含义。都改写成读者自己的话，
-        并照审查件给的建议把「先存食品再导入」这句直接写出来（顺序即用户要做的事）。 */
-  const parts: string[] = [
-    renderKpiGrid([
-      { label: '待导入', value: String(v.total), unit: '条' },
-      { label: '食品库里有同名的', value: String(v.matched), unit: '条', detail: '可以直接导入' },
-      {
-        label: '食品库里没有的', value: String(v.missing), unit: '种',
-        detail: v.missing === 0 ? '全部可入库' : '建议先「存食品」再导入',
-        status: v.missing === 0 ? 'ok' : 'warn',
-      },
-      { label: '合计热量', value: String(v.totalCalorie), unit: '卡' },
-    ]),
-    renderDataTable({
-      columns: [
-        { key: 'foodName', label: '食物' },
-        { key: 'calories', label: '这一条的热量（卡）', align: 'right' },
-        { key: 'lib', label: '食品库里的热量（卡）', align: 'right' },
-        { key: 'status', label: '是否已匹配' },
-      ],
-      rows: v.items.map((it) => ({
-        foodName: it.foodName, calories: it.calories,
-        lib: it.matched ? fmt(it.libCalories) : '食品库中无此食物',
-        status: it.matched ? '已匹配' : '未匹配',
-      })),
-      caption: '逐条预览（仅预览，不写库）',
-      emptyText: '无待导入条目',
-    }),
-  ];
-  if (v.missingNames.length > 0) {
-    /* #496 · 原为「缺库食物（共 1 种）」＋「未在食品库找到／建议用「存食品」补录」：「缺库」是内部
-       简写，两个动作也没说清往哪录（审查件第 48 条）。改成一句读者的话，并把可以照说的那句
-       （带食物名）直接写出来，读者不必自己拼。 */
-    parts.push(renderDisclosure({
-      title: '食品库里没有这些食物（共 ' + v.missingNames.length + ' 种）',
-      contentHtml: renderListRows({
-        items: v.missingNames.map((name) => ({
-          left: name,
-          main: '不在食品库里，本次预览用的是你给的热量',
-          right: '想收进库里就说「存食品 ' + name + '」',
-        })),
-      }),
-    }));
-  }
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.batch-import-preview',
-      data: {
-        metrics: metricsOf({
-          total: v.total, matched: v.matched, missing: v.missing, totalCalorie: v.totalCalorie,
-        }),
-      },
-    },
-  }));
-  return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '批量导入预览',
-    eyebrow: '卡路里 · 趋势',
-    /* #509 · 副标题原为「库匹配＋合计试算（仅预览，不写库；确认后走 diet.batch 写入）」：「库匹配」是
-       读数卡那套内部说法（同页已改写），`diet.batch` 是源码命令名直接印给读者（审查件第 10 条点过
-       同页的眉标印命令名，本条是同一处没扫干净的尾巴）。改成读者的话，命令名不上屏。 */
-    subtitle: '食品库对照＋合计试算（只预览，不写库；确认之后再写入）',
     content: parts.join(''),
     charts: false,
   });
