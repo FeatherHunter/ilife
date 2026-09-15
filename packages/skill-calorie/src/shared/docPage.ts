@@ -148,7 +148,7 @@ export function assembleDocPage(input: DocPageInput): string {
     content: input.content,
     printable,
   });
-  return fillTemplate({ template: docShell(input.docTitle, charts), assets, content: body }).html;
+  return fillTemplate({ template: docShell(input.docTitle, charts, pageUi), assets, content: body }).html;
 }
 
 /** ② 度量投影：stat-metrics 只收确定数字（冻结口径：null／undefined 不进投影）。 */

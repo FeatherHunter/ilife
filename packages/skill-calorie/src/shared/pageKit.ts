@@ -14,8 +14,8 @@
  *  ② 不要在页面里写字号、内距、色值——版面单源在 `base-paint`，页面里一条都不许有。
  */
 import { buildStyleSheet } from 'base-paint';
-import { blocksCss } from 'base-paint/blocks';
-import { pageShapeCss, pageUiCss, renderDisclosure, renderPreBlock } from 'base-paint';
+import { blocksCss, renderDisclosure, renderPreBlock } from 'base-paint/blocks';
+import { pageShapeCss, pageUiCss } from 'base-paint';
 
 /** 形状清单：左＝这处债长什么样，右＝用哪件（形状名逐字即 `base-paint` 的出口名）。
  *  这份表是**照抄指引的机器可读版**，与交付件 `docs/skills/skill-calorie/t525-共享形状与样板页.md`
