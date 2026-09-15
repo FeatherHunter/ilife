@@ -13,7 +13,7 @@
  * #365 接线的身体细节 4 条（覆盖七条写词）：回执页换成能力目录 `src/body/receipt.ts` 整页装配。
  * #253 接线的目标管理 5 条（覆盖十条写词：定／改营养目标、定／改饮水目标、定／改体重目标、
  * 暂停所有目标、重启所有目标）：回执页换成能力目录 `src/goal/receipt.ts` 整页装配（链上第六个装配口）。
- * 其余 1 条（35 − 3 − 13 − 4 − 10 − 4）一字不改，仍是原回执片段。
+ * 其余 6 条（46 − 3 − 14 − 4 − 10 − 4 − 5：calorie.exercise.* 三条、calorie.photo.* 三条）各自由能力目录自己的实现出整页，不经这条链。
  * 退出码沿 T11 冻结：缺参/坏参 fail(2)；未知键上游拦（exit 3）；缺失阻断 fail(4)；
  * envelope/落盘 fail(5)。库函数 FetchError 透传（main 映射 exit 4）；body.ts
  * ValidationError 在此转 bad-input（exit 2）。
