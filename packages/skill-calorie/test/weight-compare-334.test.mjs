@@ -47,13 +47,13 @@ test('情景面 8 锚点：逐条完整文档＋锚点日期印出', () => {
   const db = tmpDb();
   seed(db);
   const cases = [
-    ['b8', { scenario: 'b8', today: TODAY }, '平台期首日', '2026-08-01'],
+    ['b8', { scenario: 'b8', today: TODAY }, '平台期第一天', '2026-08-01'],
     ['e1', { scenario: 'e1', today: TODAY }, '历史最低', null],
     ['e2', { scenario: 'e2', today: TODAY }, '历史最高', '2025-09-01'],
     ['e3d5', { scenario: 'e3', delta: 5, today: TODAY }, '减重 5 kg 那天', null],
     ['e3d10', { scenario: 'e3', delta: 10, today: TODAY }, '减重 10 kg 那天', null],
-    ['e5', { scenario: 'e5', today: TODAY }, '入夏最低', '2026-08-31'],
-    ['e6', { scenario: 'e6', today: TODAY }, '入冬最低', null],
+    ['e5', { scenario: 'e5', today: TODAY }, '今夏以来最低', '2026-08-31'],
+    ['e6', { scenario: 'e6', today: TODAY }, '今冬以来最低', null],
     ['c5', { scenario: 'c5', today: TODAY }, '运动最少', '2026-07'],
   ];
   for (const [id, params, segLabel, anchorNeedle] of cases) {
@@ -75,9 +75,10 @@ test('情景面 8 锚点：逐条完整文档＋锚点日期印出', () => {
   const e3 = run(db, { scenario: 'e3', delta: 5, today: TODAY });
   assert.match(e3.html, /减重 5 kg 那天 \d{4}-\d\d-\d\d vs 今天 \d{4}-\d\d-\d\d/, 'e3 副标题应印「两段 ＋ 各自区间」（含锚点日，段标签带空格）');
   assert.ok(e3.html.includes('减重 5 kg 那天'), 'e3 段标签按口径带空格（数字与单位一个空格）');
-  assert.ok(e3.html.includes('减重 N kg 那天 vs 今天'), 'e3 表题里的情景名仍是冻结表原文');
+  assert.ok(e3.html.includes('减重 5 kg 那天 vs 今天'), 'e3 表题／情景卡印实际减重数（不是模板占位符 N）');
+  assert.ok(!e3.html.includes('N kg'), 'e3 不许印模板占位符：字面 `N kg` 命中数须为 0');
   // 删重后整页只剩 2 处：情景卡副说明 ＋ 表题（删重前副标题还有第 3 处）。
-  assert.ok((e3.html.match(/减重 N kg 那天 vs 今天/g) || []).length === 2, 'e3 情景业务名整页只剩 2 处（删重）');
+  assert.ok((e3.html.match(/减重 5 kg 那天 vs 今天/g) || []).length === 2, 'e3 情景业务名整页只剩 2 处（删重）');
   db.close();
 });
 

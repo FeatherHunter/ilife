@@ -106,13 +106,14 @@ const emptySeg = (label: string): Seg => ({ label, range: '', count: 0, avg: nul
 const singleSeg = (label: string, range: string, kg: number): Seg => ({ label, range, count: 1, avg: kg, startKg: kg, endKg: kg, netChange: 0, volatility: 0 });
 const flatCompare = (deltaKg: number | null, direction: string): Compare => ({ deltaKg, direction, rateDiffG: null, speed: '—' });
 
-/** 每天变化量的**克**写法（「每天变化」行与结论句共用一处）：口径 §3.2 全族统一「克」，
- *  页面上不许 `kg/天` 与 `克` 两种单位并存。每天 100 克以上才留一位小数（免得印出「每天 +19.4 克」这类糊数）。 */
+/** 每天变化量的**克**写法（「这段时间平均」行与结论句共用一处）：口径 §3.2 全族统一「克」，
+ *  页面上不许 `kg/天` 与 `克` 两种单位并存。每天 100 克以上才留一位小数（免得印出「每天 +19.4 克」这类糊数）。
+ *  #481 整改缺陷 5：**只此一处**写「平均每天 …」（这一段自己的平均），别再让卡标签与明细行同名打架。 */
 export function ratePerDayText(kgPerDay: number): string {
   const g = kgPerDay * 1000;
   const abs = Math.abs(g);
   const shown = abs >= 100 ? Math.round(abs * 10) / 10 : Math.round(abs);
-  return (g > 0 ? '每天 +' : g < 0 ? '每天 -' : '每天 ') + shown + ' 克';
+  return (g > 0 ? '平均每天 +' : g < 0 ? '平均每天 -' : '平均每天 ') + shown + ' 克';
 }
 
 export function scenarioA1(db: DatabaseSync, today: string): ScenarioResult {
@@ -190,7 +191,7 @@ export function sameDayCompare(db: DatabaseSync, today: string, monthsBack: numb
     tolerance: { hit: true, target, hitDate: hit[0], offsetDays: offset as number },
     extraRows: [
       { label: label + '那天', value: hit[0] + (offset ? '（前后 ' + offset + ' 天内的最近一条）' : '（精确命中）') },
-      { label: '最近 ' + windowDays + ' 天均值', value: wAvg !== null ? wAvg + ' kg' : '—' },
+      { label: '最近 ' + windowDays + ' 天平均', value: wAvg !== null ? wAvg + ' kg' : '—' },
     ],
   };
 }

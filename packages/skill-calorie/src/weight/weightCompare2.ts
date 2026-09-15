@@ -4,7 +4,6 @@ import { FetchError } from '../fetch/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { ratePerDayText } from './weightCompare.js';
 
-const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
@@ -69,31 +68,30 @@ export function scenarioB8(db: DatabaseSync): ScenarioResult {
   const p = findPlateau(rows);
   const current = (rows[rows.length - 1] as Row)[1];
   if (!p) throw new FetchError('未识别到平台期(需至少连续 14 天波动 ≤ ±0.5kg)');
-  const after = rows.filter((r) => r[0] > p.end[0]);
   const inSeg = rows.filter((r) => r[0] >= p.start[0] && r[0] <= p.end[0]).map((r) => r[1]);
   const plateauAvg = mean(inSeg);
   const deltaAfter = round2(current - plateauAvg);
   let plateauCount = 1;
-  const breakDays: number[] = [];
   let remaining = [...rows];
   while (remaining.length >= 14) {
     const q = findPlateau(remaining);
     if (!q) break;
     plateauCount += 1;
-    const nxt = remaining.filter((r) => r[0] > q.end[0]);
-    if (nxt.length > 0) breakDays.push(dayDiff(q.end[0], (nxt[0] as Row)[0]));
     remaining = remaining.filter((r) => r[0] < q.start[0]);
   }
-  const avgBreak = breakDays.length > 0 ? round(mean(breakDays)) : null;
   return {
-    segA: { label: '平台期首日', range: p.start[0] + '(持续 ' + p.span + ' 天)', count: p.span, avg: round2(plateauAvg), startKg: p.start[1], endKg: p.end[1], netChange: round2(p.end[1] - p.start[1]), volatility: round2(Math.abs(p.end[1] - p.start[1])) },
+    /* #481 整改缺陷 12：段标签 `平台期首日` 是行话（「首日」是文牍词）⇒ `平台期第一天`。
+     * 这正是页脚那一段的标签，与「当前」成对读。 */
+    segA: { label: '平台期第一天', range: p.start[0] + '(持续 ' + p.span + ' 天)', count: p.span, avg: round2(plateauAvg), startKg: p.start[1], endKg: p.end[1], netChange: round2(p.end[1] - p.start[1]), volatility: round2(Math.abs(p.end[1] - p.start[1])) },
     segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
     compare: { deltaKg: round2(current - plateauAvg), direction: current < plateauAvg ? '下降' : current > plateauAvg ? '上升' : '持平', rateDiffG: null, speed: '—' },
     extraRows: [
       { label: '平台期持续', value: p.span + ' 天' },
-      { label: '突破后变化', value: (deltaAfter >= 0 ? '+' : '') + deltaAfter.toFixed(1) + ' kg' },
-      { label: '第几次平台期', value: '第 ' + plateauCount + ' 次' },
-      { label: '历史平均突破耗时', value: avgBreak !== null ? avgBreak + ' 天' : '—' },
+      /* #481 整改缺陷 7：`突破后变化` → `平台期结束后变化`（「突破」是行话）；
+       * `第几次平台期` → `这是第几次平台期`（问句要带问的主语）；
+       * 「历史平均突破耗时」整行删——本轮种子下它的值是 `—`（零信息），且数的是**别的段**的事。 */
+      { label: '平台期结束后变化', value: (deltaAfter >= 0 ? '+' : '') + deltaAfter.toFixed(1) + ' kg' },
+      { label: '这是第几次平台期', value: '第 ' + plateauCount + ' 次' },
     ],
   };
 }
@@ -125,7 +123,8 @@ export function scenarioE2(db: DatabaseSync): ScenarioResult {
     compare: { deltaKg: round2(current - maxRow[1]), direction: current < maxRow[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
     extraRows: [
       { label: '已下降', value: dropped.toFixed(1) + ' kg' },
-      { label: '每天变化', value: ratePerDayText(dropped / days) },
+      /* #481 整改缺陷 5：本行与节奏卡标签逐字同名（都叫「每天变化」），这里是**这一段的平均**，写全。 */
+      { label: '这段时间平均', value: ratePerDayText(dropped / days) },
     ],
   };
 }
@@ -157,12 +156,11 @@ export function scenarioE3(db: DatabaseSync, deltaKg: number): ScenarioResult {
     compare: { deltaKg: round2(current - hit[1]), direction: current < hit[1] ? '下降' : current > hit[1] ? '上升' : '持平', rateDiffG: null, speed: '—' },
     extraRows: [
       { label: '用时', value: elapsed + ' 天' },
-      { label: '每天变化', value: ratePerDayText(rate) },
+      /* #481 整改缺陷 5：改名避与节奏卡标签撞词（这里是这一段的平均，写全「平均每天」）。 */
+      { label: '这段时间平均', value: ratePerDayText(rate) },
       { label: '体重变化曲线', value: hit[1] + ' → ' + current + ' kg · ' + elapsed + ' 天', spark: pts.map((r) => ({ d: fmt(r[0]), kg: r[1] })) },
     ],
   };
-
-  function round1(n: number): number { return Math.round(n * 10) / 10; }
 }
 
 function seasonMin(rows: Row[], today: string, season: 'summer' | 'winter'): Row | null {
@@ -187,10 +185,11 @@ export function scenarioE5(db: DatabaseSync, today: string): ScenarioResult {
   if (!m) throw new FetchError('今年夏天（6～8 月）没有体重记录');
   const daysSince = Math.max(0, dayDiff(m[0], today));
   return {
-    segA: singleSeg('入夏最低', m[0], m[1]),
+    /* #481 整改缺陷 12：`入夏最低` 读者不知道是哪个夏天 ⇒ `今夏以来最低`（段标签与距今天数两处同改）。 */
+    segA: singleSeg('今夏以来最低', m[0], m[1]),
     segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
     compare: { deltaKg: round2(current - m[1]), direction: current > m[1] ? '上升' : current < m[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
-    extraRows: [{ label: '距入夏最低', value: daysSince + ' 天' }],
+    extraRows: [{ label: '距今夏最低', value: daysSince + ' 天' }],
   };
 }
 
@@ -202,9 +201,10 @@ export function scenarioE6(db: DatabaseSync, today: string): ScenarioResult {
   if (!m) throw new FetchError('最近一个冬天（12～2 月）没有体重记录');
   const daysSince = Math.max(0, dayDiff(m[0], today));
   return {
-    segA: singleSeg('入冬最低', m[0], m[1]),
+    /* #481 整改缺陷 12：`入冬最低` → `今冬以来最低`（与 e5 同形）。 */
+    segA: singleSeg('今冬以来最低', m[0], m[1]),
     segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
     compare: { deltaKg: round2(current - m[1]), direction: current > m[1] ? '上升' : current < m[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
-    extraRows: [{ label: '距入冬最低', value: daysSince + ' 天' }],
+    extraRows: [{ label: '距今冬最低', value: daysSince + ' 天' }],
   };
 }

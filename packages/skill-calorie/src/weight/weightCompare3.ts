@@ -34,12 +34,26 @@ function stdev(xs: number[]): number {
   return Math.sqrt(xs.reduce((a, b) => a + (b - m) * (b - m), 0) / (xs.length - 1));
 }
 
-function monthTotal(db: DatabaseSync, mStart: string, mEnd: string, table: string, col: string): number | null {
+/** 一张表的月合计（**值 ＋ 首末日期**）：日期给「平均每天」当分母用（#481 整改缺陷 10）。 */
+function monthTotal(db: DatabaseSync, mStart: string, mEnd: string, table: string, col: string):
+  { value: number; start: string; end: string } | null {
   try {
-    const row = db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(' + col + '), 0) AS v FROM ' + table + ' WHERE date BETWEEN ? AND ?').get(mStart, mEnd) as { n: number; v: number };
-    if (!row || row.n === 0) return null;
-    return round(row.v);
+    const row = db.prepare(
+      'SELECT COUNT(*) AS n, COALESCE(SUM(' + col + '), 0) AS v, MIN(date) AS s, MAX(date) AS e FROM ' + table
+      + ' WHERE date BETWEEN ? AND ?',
+    ).get(mStart, mEnd) as { n: number; s: string | null; e: string | null; v: number };
+    if (!row || row.n === 0 || row.s === null || row.e === null) return null;
+    return { value: round(row.v), start: row.s, end: row.e };
   } catch { return null; }
+}
+
+/** 一段的「平均每天」运动消耗（卡）：总量 ÷ **这段自己的天数**。
+ *  #481 整改缺陷 10：两段不等长（31 天 vs 8 天）时总量不可比 ⇒ 页上换这个可比口径。
+ *  分母只按**首条到末条**算（不是自然月天数）——首日之前／末日之后没记的日子不摊进分母，
+ *  否则短段被摊薄、长段被抬高，两段又不可比了。 */
+function perDayCal(v: number, start: string, end: string): string {
+  const days = Math.max(1, dayDiff(start, end) + 1);
+  return round(v / days) + ' 卡';
 }
 
 function sleepHours(scheduleDbPath: string | null | undefined, mStart: string, mEnd: string): number | null {
@@ -96,11 +110,14 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
   const sleepLow = sleepHours(scheduleDbPath, lowS, lowE);
   const sleepHigh = sleepHours(scheduleDbPath, highS, highE);
   const delta = round2((b.avg as number) - (a.avg as number));
+  /* #481 整改缺陷 10：原来写「2026-08 运动总量 900 卡／2026-09 运动总量 1400 卡」——
+   * 一段 31 天、一段 8 天（种子到 09-08 为止），总量不可比（读者会以为九月动了更多）。
+   * 换「平均每天 N 卡」，两段同口径；分母按各段自己的首末日期。 */
   const extra: Array<{ label: string; value: string }> = [
-    { label: lowM + ' 运动总量', value: round(lowT) + ' 卡' },
-    { label: highM + ' 运动总量', value: round(highT) + ' 卡' },
-    calLow !== null ? { label: lowM + ' 摄入', value: calLow + ' 卡' } : { label: lowM + ' 摄入', value: '没有记录' },
-    calHigh !== null ? { label: highM + ' 摄入', value: calHigh + ' 卡' } : { label: highM + ' 摄入', value: '没有记录' },
+    { label: lowM + ' 运动平均每天', value: perDayCal(lowT, a.range.split(' ~ ')[0] as string, a.range.split(' ~ ')[1] as string) },
+    { label: highM + ' 运动平均每天', value: perDayCal(highT, b.range.split(' ~ ')[0] as string, b.range.split(' ~ ')[1] as string) },
+    calLow !== null ? { label: lowM + ' 摄入', value: calLow.value + ' 卡' } : { label: lowM + ' 摄入', value: '没有记录' },
+    calHigh !== null ? { label: highM + ' 摄入', value: calHigh.value + ' 卡' } : { label: highM + ' 摄入', value: '没有记录' },
   ];
   if (sleepLow !== null && sleepHigh !== null) {
     extra.push({ label: lowM + ' 睡眠', value: sleepLow + ' 小时' });
@@ -141,12 +158,17 @@ export function scenarioD4(db: DatabaseSync, today: string = todayISO()): Scenar
     extraRows: [
       { label: '工作日波动', value: '±' + wdVol + ' kg' },
       { label: '周末波动', value: '±' + weVol + ' kg' },
-      /* 「一致率」= 两段均值差越小越一致，是**本页自造的数**，读者看不懂也没法验算 ⇒ 换成人话标签。 */
-      { label: '两段均值接近程度', value: agreement + '%' },
+      /* 「一致率」= 两段平均差越小越一致，是**本页自造的数**，读者看不懂也没法验算 ⇒ 换成人话标签。 */
+      { label: '两段平均接近程度', value: agreement + '%' },
     ],
   };
 }
 
+/** 冻结情景表（键＝路由键形，值＝老实物的情景业务名）。**键与值一字不动**——唤醒词原句住
+ *  `routes.ts`／`scene-03-weight.ts`，改名会断路由。
+ *  上屏那一份另有两处调整，都做在 `compare.ts` 的渲染层（#481 整改）：`e3` 的 `N` 换实际 kg
+ *  （缺陷 1）；`b8`／`e5`／`e6` 的三个行话词换人话（缺陷 12——`平台期第一天`／`今夏以来最低`／`今冬以来最低`，
+ *  改的是 `onScreenLabel` 那一层的返回值，见该函数）。 */
 export const SCENARIO_LABELS: Record<string, string> = {
   a1: '对比体重：最近 30 天 vs 之前 30 天',
   a2: '对比体重：自定义两段时间',
