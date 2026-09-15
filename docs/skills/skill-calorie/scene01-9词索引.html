@@ -79,7 +79,6 @@
     display:inline-block;font-size:var(--fs-1);line-height:1.6;padding:1px 9px;border-radius:999px;
     border:1px solid var(--line);background:var(--card);color:var(--fg2);white-space:nowrap;
   }
-  .tag.frag{border-color:var(--blue2);background:var(--soft);color:var(--blue2)}
   .bytes{display:block;font-size:var(--fs-1);color:var(--fg2);margin-top:4px}
   ul.plain{margin:6px 0 0;padding-left:22px}
   ul.plain li{margin:6px 0}
@@ -203,7 +202,7 @@ table.index th:nth-child(6),table.index td:nth-child(6){width:8%}
           </td>
           <td class="c-cmd" data-l="命令（整句）"><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'</code></td>
           <td class="c-path" data-l="产物绝对路径（可点开）"><a class="p" href="file:///D:/ilife/.scratch/t375/products/看今日目标进度.html" title="点开即看；这行文字就是路径，可选中复制">D:\ilife\.scratch\t375\products\看今日目标进度.html</a></td>
-          <td class="c-shape" data-l="形态"><span class="tag frag">片段</span><span class="bytes">1666 字节 · 归场景 06</span></td>
+          <td class="c-shape" data-l="形态"><span class="tag">结果型完整文档</span><span class="bytes">69566 字节</span></td>
         </tr>
         <tr>
           <td class="c-n" data-l="序号">6</td>
@@ -280,6 +279,7 @@ table.index th:nth-child(6),table.index td:nth-child(6){width:8%}
 <li>折线：图内字号四档不再随盒子缩放（≥ 正文字号）、y 轴刻度为整数、顶端刻度不再出框、峰值留 10% 余量、网格线与标注一一对齐。</li>
 <li>表格：表头压灰、数值列提亮并等宽、按内容给列宽、表宽收在 680px 内不再「两个角落」。</li>
 <li>卡片：四张同排等高，缺口卡补「消耗」说明格，徽章措辞与卡名同向。</li>
+<li>看今日目标进度（#467）：从 1666 字节的不完整页重做为 69566 字节的完整文档，与主页族同一套设计语言。</li>
 </ul>
 <h2>已知缺口</h2>
   <div class="card">
@@ -288,7 +288,7 @@ table.index th:nth-child(6),table.index td:nth-child(6){width:8%}
       <li><b>#427 手机适配缺口（OPEN，公共层）</b>：影响所有卡路里结果型页面，含本图 9 份——641–820 这一档动作条钉死在 520px 且贴左、动作条 ghost 行没有窄屏档、手机档 KPI 卡片没有单列规则；归公共层另立票，本图不动它。</li>
       <li><b>#399 跨家三页的「复制日志」点不动（OPEN）</b>：看今日饮食概览／看今日运动概览／看今日体重概览这三页的「复制日志」是禁用态；总览族 5 词已在 #375 内修好，两族形状目前不一致。</li>
       <li><b>#396 缺口口径与老技能不一致，且展示会误读（OPEN）</b>：影响总览族 5 份产物的横幅提示条——本日 TDEE 2556 ＋ 运动 320 − 摄入 1189 = 1687，而老技能 ADR-0013 §2 的主页缺口公式条走 BMR 口径 = 780；同一页还把「目标 1800 卡」与「缺口 1687 卡」并排，两个数基准不同，人会先做 1800 − 1189 = 611；等你裁决用哪个口径。</li>
-      <li><b>「看今日目标进度」的产物是片段，不是整页（本图裁决：归场景 06）</b>：1666 字节，无 <code>&lt;!doctype html&gt;</code>，以 <code>&lt;section</code> 起；本图只核验它跑得通、能取到数，做成完整文档归场景 06 的图。</li>
+      <li><b>「看今日目标进度」已由 #467 整页重做（留痕保留：本条不再是缺口）</b>：重做前它是 1666 字节的不完整页——不带 doctype，原文首节点是 <code>&lt;section</code> 元素，本图当时只核验「跑得通、能取到数」，把「做成完整文档」归给场景 06；那条裁定已被用户 2026-09-14「完全重做重新开发」覆盖（边界变更记在 #467 正文）。当刻它是 <b>69566 字节的完整文档</b>：首行 <code>&lt;!doctype html&gt;</code>，完整文档五连（doctype／charset／样式段／脚本段／版面）齐，与主页族同一套设计语言。#467 审查发现的 P0（虚线飘出图外）返修中——它影响的是 ≥2 个有记录日的窗口（7 天／30 天两档产物）；本行这一份是单日窗，不受它影响。</li>
       <li><b>5 条主页词里 4 条的产物实质是同一份，待你裁决（A 接受同页／B 补专门视图）</b>：看今日主页／看本周主页／看连续记录天数／看今日热量预算四件同为 77081 字节，逐行比对只在生成时间戳那一行不同（标题与 h1 四件相同）；原因是 <code>packages/skill-calorie/src/home/today.ts:30</code> 的 <code>windowDays ?? 7</code>，只有「看本月主页」（30 天，81915 字节）不同。</li>
     </ul>
   </div>
