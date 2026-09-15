@@ -163,3 +163,24 @@ test('#503 情景面 57／53：段标签去 `·`、轨迹行去 `·`、每天变
   assert.equal(countOf(e3.html, '·'), 1, 'e3 正文 `·` 只许剩共享眉标那 1 处');
   db.close();
 });
+
+/* ── #510 · 设计视角审查整改：同屏事实收敛（整改单第三节）的机器判据 ──
+ * 审查席实测：判语块把「两段各自的均值 ＋ 差值 ＋ 方向词 ＋ 幅度」逐条复述一遍（同一屏第三、四处）。
+ * 收敛口径：方向词只留徽章一处；差值那一个数只住「体重对比」卡的值槽与表内变化列；判语只说「差别算不算大」。 */
+test('#510 同屏事实收敛：判语块不给数不给方向词、表题与卡副行不再复述差值／方向', () => {
+  const db = tmpDb();
+  seed(db);
+  const w = run(db, { window: '30d', compareWindow: 'prev', today: TODAY });
+  const verdict = (w.html.match(/<p class="wui-verdict">([\s\S]*?)<\/p>/g) || [])[0] ?? '';
+  assert.ok(verdict.length > 0, '缺判语块（`verdict()` 未上屏）');
+  assert.ok(!/\d/.test(verdict), '判语块复述了数字：' + verdict);
+  assert.ok(!/(上升|下降|持平)/.test(verdict), '判语块复述了方向词：' + verdict);
+  assert.ok(!/平均差|差值 [+-]/.test(w.html), '表题仍在复述差值那个数');
+  assert.ok(!/上升 ↑|下降 ↓|持平 →/.test(w.html), '差值卡副行仍印方向词与箭头（方向只许留徽章）');
+  // 节奏条改竖排：两段各自成行（`wui-strip-v`），单日锚点页不再读成「今天 算不出 减重 5 kg 那天 算不出」。
+  assert.ok(w.html.includes('wui-strip-v'), '两段的每天变化量未走竖排（两半并排会连读成一句）');
+  const e3 = run(db, { scenario: 'e3', delta: 5, today: TODAY });
+  assert.ok(e3.html.includes('wui-strip-v'), 'e3 的每天变化量未走竖排');
+  assert.ok(!/（差值 /.test(e3.html), 'e3 表题仍在复述差值');
+  db.close();
+});

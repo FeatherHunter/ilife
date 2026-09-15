@@ -343,7 +343,7 @@ python .scratch/t154/text-review/rev-fix/probe-fix-readings.py   # → .scratch/
   （`.scratch/t154/text-review/rev-fix/tsc-2.log`）。
 - 出页六族全 `OK`：history 18／compare 17／review 6／volatility 5／plate 2／receipt 11（含 08／30 复用）
   ——`TALLY {"通过":n}` 且 `OK-RENDER`，日志 `.scratch/t154/text-review/rev-fix/render-*.log`。
-- 用例（持锁）：五件体重族测试 **42/42 通过**（`tests 42 / pass 42 / fail 0`，`.scratch/t154/text-review/rev-fix/tests-3.log`；
+- 用例（持锁）：五件体重族测试 **43/43 通过**（`tests 43 / pass 43 / fail 0`，`.scratch/t154/text-review/rev-fix/tests-final.log`；
   其中 `weight-history-333` 自打 `RESULT: 18/18`）。旧断言随新文案同步收紧（h1、徽章、里程碑副说明、
   单日窗副标题、期间事实条、卡②徽章与指路牌、今日盘形状件与卡网格）。
 - **变异两行**：把 `history.ts` 的节奏／首末事实条改回 `·` 串 ⇒ 必红
