@@ -29,23 +29,25 @@ const items = [
   ...man.results.map((r) => ({ ...r, type: '结果型', order: String(r.order) })),
 ];
 
-/** 每格「这一格该确认什么」——口径见 `docs/agents/视觉验收墙.md` §6.3-1。 */
+/** 每格「这一格该确认什么」——口径见 `docs/agents/视觉验收墙.md` §6.3-1。
+ *  数字逐字照夹具手算（`.scratch/t369/fixture.mjs`）：皮褶 10／12／14／11／13／12／10、合计 82mm 换算 12.02%；
+ *  对比体脂 21% → 20%（差值 −1 个百分点、变化率 −4.76%）；对比围度 13 项全对（如腰围 85→84 −1 −1.18%）。 */
 const CHECK_LINE = {
-  '记体脂（皮褶钳）': '7 点逐格 10／12／14／11／13／12／10、合计 82mm、体脂 12.02% 都在页上',
+  '记体脂（皮褶钳）': '体脂 12.02%（7 点 10／12／14／11／13／12／10 按 7 点法换算）、来源「家测皮褶钳」都在页上；只摆记了的项',
   '记体脂（外部测量）': '18.5% 与来源「健身房 InBody」在页上；同日冲突块把上一条的 7 点带出来',
-  '记围度': '腰围 85／臀围 95 落格，其余 11 项写「—」（没量就不编）',
-  '补记体脂': '日期 2026-09-06、体脂 19%；冲突块列出该日原有那条 20.5%',
-  '补记围度': '日期 2026-09-06、腰围 86；同日原有那条 13 项仍整条可见',
-  '看体脂': '窗口＝全部历史 7 条（含 2025-12-25 那条）；最新 18.5%',
-  '看体脂趋势': '窗口＝近 90 天 6 条；2025-12-25 不该出现在页上',
-  '看围度': '窗口 90 天共 9 条；13 项全量表；对比基准日 2026-09-05 在表里',
-  '看围度趋势': '与本目录 08 号页逐字节相同（同键同参）——该确认「是否该合成一条词」',
-  '对比体脂': '两段 21% → 20%、差值 -1%、变化率 -4.76%',
-  '对比围度': '13 项「前／后／差值／变化率」逐格对得上手算（如腰围 85→84 -1 -1.18%）',
-  '删体脂': '#1（2025-12-25 · 25.5%）记软删：已从查询排除、行仍在库',
-  '删围度': '#1（2025-12-25）记软删，删除前 13 项原值整条列出',
-  '看体脂向导': '空白可填的配置向导＋要粘的那段 prompt（写前预检页）',
-  '看围度向导': '13 项分 3 组的填空向导＋要粘的那段 prompt（写前预检页）',
+  '记围度': '腰围 85／臀围 95 落格，其余没量的项只计个数、不逐行占位',
+  '补记体脂': '判语写「补记」（日期 2026-09-06 早于今天）、体脂 19%；冲突块列出该日原有那条 20.5%',
+  '补记围度': '判语写「补记」（2026-09-06）、腰围 86；同日原有那条 13 项按躯干／左右成对分组可见',
+  '看体脂': '窗口＝全部历史 7 条（含 2025-12-25 那条）；最新 18.5%；7 点表只印日期一次',
+  '看体脂趋势': '窗口＝近 90 天 6 条；2025-12-25 不在页上；图下有窗口内最低／最高两条',
+  '看围度': '记录页以全量表为主（13 项列齐）；窗口条写「近 90 天」',
+  '看围度趋势': '与 08 同窗但**走势在前、明细在后**（两页 sha 不同）；确认主次真的不一样',
+  '对比体脂': '两段 21% → 20%、差值 −1 个百分点、变化率 −4.76%；首行差值格写「基准」',
+  '对比围度': '13 项「前／后／差值／变化率」逐格对得上手算（如腰围 85→84 −1 −1.18%）；变化最大的部位有条列',
+  '删体脂': '2025-12-25 那条记软删（判语在反馈条，行保留、查询统计排除）；原值表只摆记了的项',
+  '删围度': '2025-12-25 那条记软删；删除前 13 项按躯干／左右成对分组、单位只留组头',
+  '体成分向导（写前预检确认页）': '三页（记体脂两种／补记体脂）：来源中文名、这次记在哪天、表单两列、复制区只有一组动作',
+  '围度向导（写前预检确认页）': '两页（记围度／补记围度）：13 项分 3 组填空、至少填 1 项，复制区只有一组动作',
 };
 const checkLineOf = (it) => CHECK_LINE[it.word] ?? '（本票未写这一格的确认点）';
 
@@ -59,11 +61,14 @@ const status = (it) => (it.status === 'green' ? '绿' : '红');
 const readingsLine = (it) => {
   const v = man.verdict?.[it.rel] ?? null;
   const sep = it.sep ? `${it.sep.node === 0 ? '✓ 0 处' : '✗ ' + it.sep.node + ' 处'}` : '—';
-  const ovf = v?.overflow ?? '—';
-  const touch = it.fmt ? String((it.fmt.widths?.['390'] ?? it.fmt.widths?.[390])?.touchSmall ?? '—') : '—';
-  const minFont = it.fmt ? String((it.fmt.widths?.['390'] ?? it.fmt.widths?.[390])?.minFontPx ?? '—') : '—';
-  const vision = v?.vision === undefined || v?.vision === null ? '—' : String(v.vision);
-  return `分隔符命中 ${sep} · 三档溢出 ${ovf} · 390 档触摸不足 ${touch} 处 · 390 档最小字号 ${minFont}px · 视觉 ${vision} 分`;
+  const ovf = it.overflow === null || it.overflow === undefined
+    ? '—'
+    : (it.overflow.failed === 0 ? '✓ 三档 0' : '✗ ' + it.overflow.failed + ' 档');
+  const w390 = it.fmt ? (it.fmt.widths?.['390'] ?? it.fmt.widths?.[390] ?? null) : null;
+  const touch = w390 ? String(w390.touchSmall) : '—';
+  const minFont = w390 ? String(w390.minFontPx) : '—';
+  const vision = v?.vision === undefined || v?.vision === null ? '—' : String(v.vision) + ' 分';
+  return `分隔符命中 ${sep} · 三档溢出 ${ovf} · 390 档触摸不足 ${touch} 处 · 390 档最小字号 ${minFont}px · 视觉 ${vision}`;
 };
 function wall({ title, sub, w, h, colW }) {
   const cells = rows.map((it) => `  <figure class="cell-${it.type === '过程型' ? 'p' : 'r'}">
@@ -186,13 +191,13 @@ a.big{display:inline-block;margin-right:16px;font-size:13.5px;color:#007aff;text
 </head>
 <body>
 <div class="wrap">
-  <h1>t369 · 卡路里场景 08「身体细节」13 条逐条真跑 · 总索引</h1>
-  <div class="sub">票 <a href="https://github.com/FeatherHunter/ilife/issues/369">#369</a>（装机 ＋ 13 条逐条真跑）。
-  跑法：临时库 <code>.scratch/t369/tmpdb</code>（真库零写入）；每条都走真出口
-  <code>packages/skill-calorie/dist/cli/cmd_read.js</code>，键取自路由声明
-  <code>src/body/routes.ts</code>。清单见 <code>docs/skills/skill-calorie/t369-逐条清单.md</code>，证据见 <code>t369-证据.md</code>。</div>
+  <h1>卡路里场景 08「身体细节」· 18 件产物验收目录</h1>
+  <div class="sub">本目录是场景 08 的**产物册子与验收墙**：13 件结果型（唤醒词 order 237–249 逐条真跑）＋ 5 件过程型（两条写词的写前预检确认页）。
+  跑法：临时库（真库零写入），每条都走真出口 <code>packages/skill-calorie/dist/cli/cmd_read.js</code>，键取自路由声明 <code>src/body/routes.ts</code>。
+  判据面见 <code>docs/skills/skill-calorie/t534-场景08-视觉整改基准.md</code>（六条判据 ＋ 形状化规则 ＋ 五维尺），
+  改前读数见 <code>t534-改前读数.md</code>，收口证据见 <code>t539-证据.md</code> 与 <code>t539-逐格缺陷清单.md</code>。</div>
   <div>
-    <a class="big" href="t369-桌面墙.html">桌面墙（1100 宽 × ${items.length} 件）→</a>
+    <a class="big" href="t369-桌面墙.html">桌面墙（1280 宽 × ${items.length} 件）→</a>
     <a class="big" href="t369-手机墙.html">手机墙（390 宽 × ${items.length} 件）→</a>
   </div>
   <div class="gates">

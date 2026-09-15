@@ -1,10 +1,24 @@
 {
-  "generatedAt": "2026-09-15T05:28:13.280Z",
-  "declsSource": "D:\\ilife\\packages\\skill-calorie\\src\\body\\routes.ts",
+  "generatedAt": "2026-09-15T08:47:02.522Z",
+  "declsSource": "packages/skill-calorie/src/body/routes.ts（order 237–249）",
   "gate": {
-    "ok": true,
-    "rows": "13/13",
-    "procs": "5/5"
+    "separator": {
+      "pages": 18,
+      "green": 18,
+      "totals": {
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
+      }
+    },
+    "overflow": 18,
+    "fmt": {
+      "pages": 18
+    }
   },
   "results": [
     {
@@ -12,8 +26,7 @@
       "order": 237,
       "key": "calorie.body.composition-add",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.body.composition-add --params '{\"source\":\"home_caliper\",\"sex\":\"male\",\"age\":30,\"caliper_chest_mm\":10,\"caliper_abdominal_mm\":12,\"caliper_thigh_mm\":14,\"caliper_tricep_mm\":11,\"caliper_subscapular_mm\":13,\"caliper_suprailiac_mm\":12,\"caliper_midaxillary_mm\":10,\"date\":\"<日期>\"}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-add --params '{\"source\":\"home_caliper\",\"sex\":\"male\",\"age\":30,\"date\":\"2026-09-15\",\"caliper_chest_mm\":10,\"caliper_abdominal_mm\":12,\"caliper_thigh_mm\":14,\"caliper_tricep_mm\":11,\"caliper_subscapular_mm\":13,\"caliper_suprailiac_mm\":12,\"caliper_midaxillary_mm\":10}' --html D:\\ilife\\.scratch\\t369\\stage\\01-记体脂-皮褶钳.html",
+      "exit": 0,
       "params": {
         "source": "home_caliper",
         "sex": "male",
@@ -27,1199 +40,3037 @@
         "caliper_suprailiac_mm": 12,
         "caliper_midaxillary_mm": 10
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-记体脂-皮褶钳.html",
       "rel": "01-记体脂-皮褶钳.html",
-      "exists": true,
-      "bytes": 72580,
-      "sha256": "d3a702e7b6ea198c74c3c44f5794b0f7c4c254502d47b315bc262dce0b180a26",
+      "bytes": 87897,
+      "sha256": "43c31397da55ec55dde6968d75efb22aebf8c1cc6904f9d3317bc89163358f99",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55039,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 5,
-        "total": 5,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "已记体脂：2026-09-15",
-        "7 点合计 82mm ＋ 年龄 30 ＋ 男",
-        "12.02%",
-        "胸 → 10 腹 → 12 大腿 → 14 三头肌 → 11 肩胛下 → 13 髂上 → 12 腋中线 → 10",
-        "写入字段 12 项"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=237 key=calorie.body.composition-add"
+      "fmt": {
+        "name": "01-记体脂-皮褶钳.html",
+        "bytes": 87897,
+        "mtime": "2026-09-15T08:46:04.618Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-记体脂-皮褶钳.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "5/5 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 326,
+              "clientW": 326
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "记体脂（外部测量）",
       "order": 238,
       "key": "calorie.body.composition-add",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":18.5,\"date\":\"<日期>\"}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":18.5,\"date\":\"2026-09-15\"}' --html D:\\ilife\\.scratch\\t369\\stage\\02-记体脂-外部测量.html",
+      "exit": 0,
       "params": {
         "source": "gym",
         "bodyFatPct": 18.5,
         "date": "2026-09-15"
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-记体脂-外部测量.html",
       "rel": "02-记体脂-外部测量.html",
-      "exists": true,
-      "bytes": 75250,
-      "sha256": "6e5ebd31f3c0e03675b26f6091094fdac58126200c6f075541708d1a40bb8881",
+      "bytes": 87838,
+      "sha256": "dc8ec5d50799e6b24b75142f0c29a4c616bafcf5a257d6be22f4e88aae0378f4",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55039,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 5,
-        "total": 5,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "已记体脂：2026-09-15",
-        "健身房 InBody",
-        "体脂率 → 18.5",
-        "写入字段 3 项",
-        "皮褶 7 点 胸 10、腹 12、大腿 14、三头肌 11、肩胛下 13、髂上 12、腋中线 10"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=238 key=calorie.body.composition-add"
+      "fmt": {
+        "name": "02-记体脂-外部测量.html",
+        "bytes": 87838,
+        "mtime": "2026-09-15T08:46:05.091Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-记体脂-外部测量.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "5/5 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 326,
+              "clientW": 326
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "记围度",
       "order": 239,
       "key": "calorie.body.measure-add",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.body.measure-add --params '{\"waistCm\":85,\"hipCm\":95}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.measure-add --params '{\"waistCm\":85,\"hipCm\":95}' --html D:\\ilife\\.scratch\\t369\\stage\\03-记围度.html",
+      "exit": 0,
       "params": {
         "waistCm": 85,
         "hipCm": 95
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-记围度.html",
       "rel": "03-记围度.html",
-      "exists": true,
-      "bytes": 72763,
-      "sha256": "10c7f69c71349c80bf08fa3e71a54460e816af2296b9d2e7b14fee7372e67b20",
+      "bytes": 84252,
+      "sha256": "16160113c0612e0c27a132cdffb354f19595b78af9f42125d4a456a8fd5c7fd8",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55039,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 4,
-        "total": 4,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "已记围度：2026-09-15",
-        "腰围 → 85",
-        "臀围 → 95",
-        "写入字段 3 项"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=239 key=calorie.body.measure-add"
+      "fmt": {
+        "name": "03-记围度.html",
+        "bytes": 84252,
+        "mtime": "2026-09-15T08:46:05.550Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-记围度.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "4/4 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 326,
+              "clientW": 326
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "补记体脂",
       "order": 240,
       "key": "calorie.body.composition-add",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":19,\"date\":\"<日期>\"}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":19,\"date\":\"2026-09-06\"}' --html D:\\ilife\\.scratch\\t369\\stage\\04-补记体脂.html",
+      "exit": 0,
       "params": {
         "source": "gym",
         "bodyFatPct": 19,
         "date": "2026-09-06"
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-补记体脂.html",
       "rel": "04-补记体脂.html",
-      "exists": true,
-      "bytes": 75252,
-      "sha256": "de5cce2c4be409a101ff03f1738b15fc34eac2235e1838bfdf62085724918fc2",
+      "bytes": 85847,
+      "sha256": "14da21912a13986b41fbc24e4219e359ae405b263fcac4121019390bae290914",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55039,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 4,
-        "total": 4,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "已记体脂：2026-09-06",
-        "体脂率 → 19",
-        "同日已有记录",
-        "20.5"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=240 key=calorie.body.composition-add"
+      "fmt": {
+        "name": "04-补记体脂.html",
+        "bytes": 85847,
+        "mtime": "2026-09-15T08:46:06.032Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-补记体脂.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "4/4 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 326,
+              "clientW": 326
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "补记围度",
       "order": 241,
       "key": "calorie.body.measure-add",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.body.measure-add --params '{\"waistCm\":86,\"date\":\"<日期>\"}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.measure-add --params '{\"waistCm\":86,\"date\":\"2026-09-06\"}' --html D:\\ilife\\.scratch\\t369\\stage\\05-补记围度.html",
+      "exit": 0,
       "params": {
         "waistCm": 86,
         "date": "2026-09-06"
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-补记围度.html",
       "rel": "05-补记围度.html",
-      "exists": true,
-      "bytes": 77554,
-      "sha256": "a043f316638e2db7c7c267b9a820da8c8a2cbf1931e5cf2121cf806924ce93f2",
+      "bytes": 88950,
+      "sha256": "35b9871337e623de027ff9e382529ac5f2269bff735a9fcb7675686200539d81",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55039,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 4,
-        "total": 4,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "已记围度：2026-09-06",
-        "腰围 → 86",
-        "同日已有记录",
-        "M3-补记冲突日"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=241 key=calorie.body.measure-add"
+      "fmt": {
+        "name": "05-补记围度.html",
+        "bytes": 88950,
+        "mtime": "2026-09-15T08:46:06.499Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-补记围度.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "4/4 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 326,
+              "clientW": 326
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "看体脂",
       "order": 242,
       "key": "calorie.view.body-composition",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.view.body-composition",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-composition --html D:\\ilife\\.scratch\\t369\\stage\\06-看体脂.html",
       "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\06-看体脂.html",
       "rel": "06-看体脂.html",
-      "exists": true,
-      "bytes": 89015,
-      "sha256": "6512d499eeda323b00f20cac52fe67979d53e78902c52b6a683044a48f024c73",
+      "bytes": 105299,
+      "sha256": "f314cf572634944dd5a76dc3a18fb86df959801c8e79a9a9505143d87cf76c38",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55471,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 6,
-        "total": 6,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "共 7 条",
-        "18.5%",
-        "25.5%",
-        "12.02%",
-        "2025-12-25",
-        "皮褶 7 点原始值"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=242 key=calorie.view.body-composition"
+      "fmt": {
+        "name": "06-看体脂.html",
+        "bytes": 105299,
+        "mtime": "2026-09-15T08:46:06.733Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\06-看体脂.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "6/6 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 356,
+              "clientW": 356
+            },
+            "tdWithLabel": 42,
+            "tdTotal": 42,
+            "toc": 3,
+            "ids": 3,
+            "shellW": 390,
+            "kpiCards": 3,
+            "kpiPerRow": "1+1+1",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 42,
+            "tdTotal": 42,
+            "toc": 3,
+            "ids": 3,
+            "shellW": 1280,
+            "kpiCards": 3,
+            "kpiPerRow": "3",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "看体脂趋势",
       "order": 243,
       "key": "calorie.view.body-composition",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.view.body-composition --params '{\"days\":90}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-composition --params '{\"days\":90}' --html D:\\ilife\\.scratch\\t369\\stage\\07-看体脂趋势.html",
+      "exit": 0,
       "params": {
         "days": 90
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\07-看体脂趋势.html",
       "rel": "07-看体脂趋势.html",
-      "exists": true,
-      "bytes": 86903,
-      "sha256": "9ae25ab39d71255cda54f4185470214f3cf2eb86e8965a1b68d39f6f4729ecb2",
+      "bytes": 103127,
+      "sha256": "82f20a6d847e11a6a5bb37e02abda5f8514a7beb05ef97edc8dbc7d65260e395",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55471,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 4,
-        "total": 4,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "近 90 天",
-        "共 6 条",
-        "2026-09-05",
-        "2026-09-07"
-      ],
-      "absentList": [
-        "2025-12-25"
-      ],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=243 key=calorie.view.body-composition"
+      "fmt": {
+        "name": "07-看体脂趋势.html",
+        "bytes": 103127,
+        "mtime": "2026-09-15T08:46:06.971Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\07-看体脂趋势.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "4/4 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 356,
+              "clientW": 356
+            },
+            "tdWithLabel": 38,
+            "tdTotal": 38,
+            "toc": 3,
+            "ids": 3,
+            "shellW": 390,
+            "kpiCards": 3,
+            "kpiPerRow": "1+1+1",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 38,
+            "tdTotal": 38,
+            "toc": 3,
+            "ids": 3,
+            "shellW": 1280,
+            "kpiCards": 3,
+            "kpiPerRow": "3",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "看围度",
       "order": 244,
       "key": "calorie.view.body-measure",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.view.body-measure",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-measure --html D:\\ilife\\.scratch\\t369\\stage\\08-看围度.html",
       "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\08-看围度.html",
       "rel": "08-看围度.html",
-      "exists": true,
-      "bytes": 113381,
-      "sha256": "ea2fd6ad07d253939f1cadd51228ac01df03f31992d80682460bc270ba5a1a7f",
+      "bytes": 129257,
+      "sha256": "fa0d27ae217d6fac66ed9f14978914e64e8fb0b10a28713cecf4f6c3920396f0",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 40226,
+        "styleBytes": 56289,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 6,
-        "total": 6,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "13 项全量",
-        "共 9 条",
-        "腰围 85cm",
-        "臀围 95cm",
-        "M2-对比基准",
-        "M4-对比日2"
-      ],
-      "absentList": [
-        "2025-12-25"
-      ],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=244 key=calorie.view.body-measure"
+      "fmt": {
+        "name": "08-看围度.html",
+        "bytes": 129257,
+        "mtime": "2026-09-15T08:46:07.222Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\08-看围度.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "6/6 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=40226B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 0,
+              "clientW": 0
+            },
+            "tdWithLabel": 135,
+            "tdTotal": 135,
+            "toc": 2,
+            "ids": 2,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 1446,
+              "clientW": 680
+            },
+            "tdWithLabel": 135,
+            "tdTotal": 135,
+            "toc": 2,
+            "ids": 2,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 64,
+            "overflowElemsList": [
+              "table.ilife-block-data-table-table",
+              "caption.ilife-block-data-table-caption",
+              "thead.",
+              "tr.",
+              "th.ilife-block-data-table-cell-right",
+              "th.ilife-block-data-table-cell-right",
+              "th.ilife-block-data-table-cell-right",
+              "th.ilife-block-data-table-cell-right"
+            ]
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [
+              {
+                "tag": "table",
+                "cls": "ilife-block-data-table-table",
+                "w": 1446,
+                "right": 1490
+              },
+              {
+                "tag": "caption",
+                "cls": "ilife-block-data-table-caption",
+                "w": 1446,
+                "right": 1490
+              },
+              {
+                "tag": "thead",
+                "cls": "",
+                "w": 1446,
+                "right": 1490
+              }
+            ],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [
+              {
+                "tag": "div",
+                "cls": "ilife-block ilife-block-data-table",
+                "cw": 680,
+                "sw": 1446,
+                "ox": "auto"
+              }
+            ],
+            "scrollerCount": 1,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [
+              {
+                "tag": "table",
+                "cls": "ilife-block-data-table-table",
+                "w": 1446,
+                "right": 1826
+              },
+              {
+                "tag": "caption",
+                "cls": "ilife-block-data-table-caption",
+                "w": 1446,
+                "right": 1826
+              },
+              {
+                "tag": "thead",
+                "cls": "",
+                "w": 1446,
+                "right": 1826
+              }
+            ],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [
+              {
+                "tag": "div",
+                "cls": "ilife-block ilife-block-data-table",
+                "cw": 680,
+                "sw": 1446,
+                "ox": "auto"
+              }
+            ],
+            "scrollerCount": 1,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "看围度趋势",
       "order": 245,
       "key": "calorie.view.body-measure",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.view.body-measure --params '{\"days\":90}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-measure --params '{\"days\":90}' --html D:\\ilife\\.scratch\\t369\\stage\\09-看围度趋势.html",
+      "exit": 0,
       "params": {
         "days": 90
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\09-看围度趋势.html",
       "rel": "09-看围度趋势.html",
-      "exists": true,
-      "bytes": 113381,
-      "sha256": "ea2fd6ad07d253939f1cadd51228ac01df03f31992d80682460bc270ba5a1a7f",
+      "bytes": 129281,
+      "sha256": "94ffded97c663d81eae7867de784e0ffe80a146f03218d096ebf126c03ae5d5d",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 40226,
+        "styleBytes": 56289,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 5,
-        "total": 5,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "13 项全量",
-        "共 9 条",
-        "腰围 85cm",
-        "M2-对比基准",
-        "M4-对比日2"
-      ],
-      "absentList": [
-        "2025-12-25"
-      ],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=245 key=calorie.view.body-measure"
+      "fmt": {
+        "name": "09-看围度趋势.html",
+        "bytes": 129281,
+        "mtime": "2026-09-15T08:46:07.496Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\09-看围度趋势.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "5/5 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=40226B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 0,
+              "clientW": 0
+            },
+            "tdWithLabel": 135,
+            "tdTotal": 135,
+            "toc": 2,
+            "ids": 2,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 1446,
+              "clientW": 680
+            },
+            "tdWithLabel": 135,
+            "tdTotal": 135,
+            "toc": 2,
+            "ids": 2,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 24,
+            "bodyPx": 15,
+            "overflowElems": 64,
+            "overflowElemsList": [
+              "table.ilife-block-data-table-table",
+              "caption.ilife-block-data-table-caption",
+              "thead.",
+              "tr.",
+              "th.ilife-block-data-table-cell-right",
+              "th.ilife-block-data-table-cell-right",
+              "th.ilife-block-data-table-cell-right",
+              "th.ilife-block-data-table-cell-right"
+            ]
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [
+              {
+                "tag": "table",
+                "cls": "ilife-block-data-table-table",
+                "w": 1446,
+                "right": 1490
+              },
+              {
+                "tag": "caption",
+                "cls": "ilife-block-data-table-caption",
+                "w": 1446,
+                "right": 1490
+              },
+              {
+                "tag": "thead",
+                "cls": "",
+                "w": 1446,
+                "right": 1490
+              }
+            ],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [
+              {
+                "tag": "div",
+                "cls": "ilife-block ilife-block-data-table",
+                "cw": 680,
+                "sw": 1446,
+                "ox": "auto"
+              }
+            ],
+            "scrollerCount": 1,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [
+              {
+                "tag": "table",
+                "cls": "ilife-block-data-table-table",
+                "w": 1446,
+                "right": 1826
+              },
+              {
+                "tag": "caption",
+                "cls": "ilife-block-data-table-caption",
+                "w": 1446,
+                "right": 1826
+              },
+              {
+                "tag": "thead",
+                "cls": "",
+                "w": 1446,
+                "right": 1826
+              }
+            ],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [
+              {
+                "tag": "div",
+                "cls": "ilife-block ilife-block-data-table",
+                "cw": 680,
+                "sw": 1446,
+                "ox": "auto"
+              }
+            ],
+            "scrollerCount": 1,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "对比体脂",
       "order": 246,
       "key": "calorie.view.body-composition-compare",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.view.body-composition-compare --params '{\"period1Start\":\"2026-09-05\",\"period1End\":\"2026-09-05\",\"period2Start\":\"2026-09-07\",\"period2End\":\"2026-09-07\"}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-composition-compare --params '{\"period1Start\":\"2026-09-05\",\"period1End\":\"2026-09-05\",\"period2Start\":\"2026-09-07\",\"period2End\":\"2026-09-07\"}' --html D:\\ilife\\.scratch\\t369\\stage\\10-对比体脂.html",
+      "exit": 0,
       "params": {
         "period1Start": "2026-09-05",
         "period1End": "2026-09-05",
         "period2Start": "2026-09-07",
         "period2End": "2026-09-07"
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\10-对比体脂.html",
       "rel": "10-对比体脂.html",
-      "exists": true,
-      "bytes": 67596,
-      "sha256": "b0b78a07c79a94328698b1ef055fe3ae6f11382ec65963efbf7a155b4b440bc0",
+      "bytes": 83265,
+      "sha256": "1efea5e40b97a406affc28a68930d8bba3424e7bb809231072cb162be7a57468",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 54956,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 5,
-        "total": 5,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "体脂对比",
-        "-1%",
-        "-4.76%",
-        "21%",
-        "20%"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=246 key=calorie.view.body-composition-compare"
+      "fmt": {
+        "name": "10-对比体脂.html",
+        "bytes": 83265,
+        "mtime": "2026-09-15T08:46:07.721Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\10-对比体脂.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "5/5 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 376,
+              "clientW": 356
+            },
+            "tdWithLabel": 12,
+            "tdTotal": 12,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 0,
+            "kpiPerRow": "",
+            "kpiValuePx": 0,
+            "bodyPx": 15,
+            "overflowElems": 1,
+            "overflowElemsList": [
+              "caption.ilife-block-data-table-caption"
+            ]
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11,
+            "minFontWho": "div.type-badge",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 565,
+              "clientW": 565
+            },
+            "tdWithLabel": 12,
+            "tdTotal": 12,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 0,
+            "kpiPerRow": "",
+            "kpiValuePx": 0,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [
+              {
+                "tag": "caption",
+                "cls": "ilife-block-data-table-caption",
+                "w": 376,
+                "right": 393
+              }
+            ],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [
+              {
+                "tag": "div",
+                "cls": "ilife-block ilife-block-data-table",
+                "cw": 356,
+                "sw": 376,
+                "ox": "auto"
+              }
+            ],
+            "scrollerCount": 1,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "对比围度",
       "order": 247,
       "key": "calorie.view.body-measure-compare",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.view.body-measure-compare --params '{\"date1\":\"2026-09-05\",\"date2\":\"2026-09-07\"}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-measure-compare --params '{\"date1\":\"2026-09-05\",\"date2\":\"2026-09-07\"}' --html D:\\ilife\\.scratch\\t369\\stage\\11-对比围度.html",
+      "exit": 0,
       "params": {
         "date1": "2026-09-05",
         "date2": "2026-09-07"
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\11-对比围度.html",
       "rel": "11-对比围度.html",
-      "exists": true,
-      "bytes": 71350,
-      "sha256": "ea9b513b358fd142a7dc1f62a1eea23c6dac4913644aa0a10a60eb9ecbc4a7ff",
+      "bytes": 88745,
+      "sha256": "e14b7ebb29decbabdd9febf5a8ff798ebbf702be3a74462ec315fa2a7f50f2d9",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 54956,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 4,
-        "total": 4,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 13
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "围度对比",
-        "13 项",
-        "差值(cm)",
-        "变化率"
-      ],
-      "absentList": [],
-      "reList": [
-        "胸围 100→102",
-        "腰围 85→84",
-        "腹围 90→91.5",
-        "臀围 95→94.5",
-        "左大腿 55→56",
-        "右大腿 55.5→54.5",
-        "左小腿 36→36.5",
-        "右小腿 36.5→36",
-        "左上臂 30→31",
-        "右上臂 30.5→29.5",
-        "左前臂 25→27",
-        "右前臂 25.5→23.5",
-        "肩围 110→113"
-      ],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=247 key=calorie.view.body-measure-compare"
+      "fmt": {
+        "name": "11-对比围度.html",
+        "bytes": 88745,
+        "mtime": "2026-09-15T08:46:07.970Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\11-对比围度.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "4/4 命中 ＋ 逐项 13/13"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 376,
+              "clientW": 356
+            },
+            "tdWithLabel": 65,
+            "tdTotal": 65,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 0,
+            "kpiPerRow": "",
+            "kpiValuePx": 0,
+            "bodyPx": 15,
+            "overflowElems": 1,
+            "overflowElemsList": [
+              "caption.ilife-block-data-table-caption"
+            ]
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11,
+            "minFontWho": "div.type-badge",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 465,
+              "clientW": 465
+            },
+            "tdWithLabel": 65,
+            "tdTotal": 65,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 0,
+            "kpiPerRow": "",
+            "kpiValuePx": 0,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [
+              {
+                "tag": "caption",
+                "cls": "ilife-block-data-table-caption",
+                "w": 376,
+                "right": 393
+              }
+            ],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [
+              {
+                "tag": "div",
+                "cls": "ilife-block ilife-block-data-table",
+                "cw": 356,
+                "sw": 376,
+                "ox": "auto"
+              }
+            ],
+            "scrollerCount": 1,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "删体脂",
       "order": 248,
       "key": "calorie.body.composition-remove",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.body.composition-remove --params '{\"id\":1}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-remove --params '{\"id\":1}' --html D:\\ilife\\.scratch\\t369\\stage\\12-删体脂.html",
+      "exit": 0,
       "params": {
         "id": 1
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\12-删体脂.html",
       "rel": "12-删体脂.html",
-      "exists": true,
-      "bytes": 71780,
-      "sha256": "1e0158b970cfcdd9a0561d0af31934866719f20e56cf45ff93dba445bbeaa2d8",
+      "bytes": 87192,
+      "sha256": "3f08bebeceadabc17b84ddf9407aca4fc73d844d06182ad7f4747135133418e4",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55039,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 3,
-        "total": 3,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "已删除体脂记录 #1（日期 2025-12-25 · 体脂率 25.5%",
-        "软删除",
-        "删除标志"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=248 key=calorie.body.composition-remove"
+      "fmt": {
+        "name": "12-删体脂.html",
+        "bytes": 87192,
+        "mtime": "2026-09-15T08:46:08.203Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\12-删体脂.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "3/3 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 326,
+              "clientW": 326
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
       "word": "删围度",
       "order": 249,
       "key": "calorie.body.measure-remove",
       "kind": "exec",
-      "declCli": "calorie-cmd-read calorie.body.measure-remove --params '{\"id\":1}'",
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.measure-remove --params '{\"id\":1}' --html D:\\ilife\\.scratch\\t369\\stage\\13-删围度.html",
+      "exit": 0,
       "params": {
         "id": 1
       },
-      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\13-删围度.html",
       "rel": "13-删围度.html",
-      "exists": true,
-      "bytes": 73823,
-      "sha256": "f81f05f40f5893c8fda431bb8ac2c652950c077dc745113ca8b6a890cebf2544",
+      "bytes": 89023,
+      "sha256": "63b291c6a77e5c3030613cc434eb52f0eaf0fb19912be682c2ccecace9ee034d",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55039,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "fields": {
-        "hit": 3,
-        "total": 3,
-        "miss": [],
-        "bad": [],
-        "reBad": [],
-        "reTotal": 0
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
       },
-      "expectList": [
-        "已删除围度记录 #1（日期 2025-12-25 · 胸围 105cm",
-        "软删除",
-        "删除标志"
-      ],
-      "absentList": [],
-      "reList": [],
-      "checks": [
-        {
-          "name": "路由声明",
-          "pass": true,
-          "detail": "order=249 key=calorie.body.measure-remove"
+      "fmt": {
+        "name": "13-删围度.html",
+        "bytes": 89023,
+        "mtime": "2026-09-15T08:46:08.447Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\13-删围度.html"
-        },
-        {
-          "name": "关键字段",
-          "pass": true,
-          "detail": "3/3 命中"
-        },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "p.ilife-block-page-shell-eyebrow",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 326,
+              "clientW": 326
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 11.5,
+            "minFontWho": "th.ilife-block-data-table-cell-left",
+            "tableWrap": {
+              "cls": true,
+              "overflowX": "auto",
+              "scrollW": 680,
+              "clientW": 680
+            },
+            "tdWithLabel": 6,
+            "tdTotal": 6,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     }
   ],
   "process": [
     {
-      "word": "看体脂向导",
+      "word": "体成分向导（写前预检确认页）",
       "forWord": "记体脂（皮褶钳）",
       "key": "calorie.view.composition-wizard",
       "order": null,
       "declCli": null,
+      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-过程-calorie.view.composition-wizard.html",
       "rel": "01-过程-calorie.view.composition-wizard.html",
-      "exists": true,
-      "bytes": 72006,
-      "sha256": "a7b87a6e7680429c6dda83da421bd5c2ebbeb6b77d0207958224241db603293f",
+      "bytes": 87738,
+      "sha256": "76128cddb88768e17e4b72df4ddb4d8aadd7b3e553d46dbe3a57b2fb761f8296",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55308,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.composition-wizard --html D:\\ilife\\.scratch\\t369\\stage\\01-过程-calorie.view.composition-wizard.html",
-      "checks": [
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-过程-calorie.view.composition-wizard.html"
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
+      },
+      "fmt": {
+        "name": "01-过程-calorie.view.composition-wizard.html",
+        "bytes": 87738,
+        "mtime": "2026-09-15T08:46:04.344Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
-        },
-        {
-          "name": "写前认领",
-          "pass": true,
-          "detail": "含向导／确认字样"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
-      "word": "看体脂向导",
+      "word": "体成分向导（写前预检确认页）",
       "forWord": "记体脂（外部测量）",
       "key": "calorie.view.composition-wizard",
       "order": null,
       "declCli": null,
+      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-过程-calorie.view.composition-wizard.html",
       "rel": "02-过程-calorie.view.composition-wizard.html",
-      "exists": true,
-      "bytes": 72018,
-      "sha256": "ac3d80f5245f28954b49e1463e15972a8be572a92b0aebfec3a4393f2d3fd90b",
+      "bytes": 87740,
+      "sha256": "320912f9423d089d9ca5f7c87e3cd5f29bc16914774d3bc0674c72ab2e9a2eab",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55308,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.composition-wizard --html D:\\ilife\\.scratch\\t369\\stage\\02-过程-calorie.view.composition-wizard.html",
-      "checks": [
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-过程-calorie.view.composition-wizard.html"
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
+      },
+      "fmt": {
+        "name": "02-过程-calorie.view.composition-wizard.html",
+        "bytes": 87740,
+        "mtime": "2026-09-15T08:46:04.851Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
-        },
-        {
-          "name": "写前认领",
-          "pass": true,
-          "detail": "含向导／确认字样"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
-      "word": "看围度向导",
+      "word": "围度向导（写前预检确认页）",
       "forWord": "记围度",
       "key": "calorie.view.measure-wizard",
       "order": null,
       "declCli": null,
+      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-过程-calorie.view.measure-wizard.html",
       "rel": "03-过程-calorie.view.measure-wizard.html",
-      "exists": true,
-      "bytes": 72147,
-      "sha256": "6a0f41ea85434e2e4c5057762ce76410987dc5d2eea7881a540a21d239637188",
+      "bytes": 90720,
+      "sha256": "7234182118992b2002837753768b384f1698cb2c4f450ce315855515145f1814",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55308,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.measure-wizard --html D:\\ilife\\.scratch\\t369\\stage\\03-过程-calorie.view.measure-wizard.html",
-      "checks": [
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-过程-calorie.view.measure-wizard.html"
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
+      },
+      "fmt": {
+        "name": "03-过程-calorie.view.measure-wizard.html",
+        "bytes": 90720,
+        "mtime": "2026-09-15T08:46:05.318Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
-        },
-        {
-          "name": "写前认领",
-          "pass": true,
-          "detail": "含向导／确认字样"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
-      "word": "看体脂向导",
+      "word": "体成分向导（写前预检确认页）",
       "forWord": "补记体脂",
       "key": "calorie.view.composition-wizard",
       "order": null,
       "declCli": null,
+      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-过程-calorie.view.composition-wizard.html",
       "rel": "04-过程-calorie.view.composition-wizard.html",
-      "exists": true,
-      "bytes": 72008,
-      "sha256": "2487951642cb58b9eb5a87e5f2643fed5a46aad18bf703a9ee99ad73b768da1b",
+      "bytes": 87740,
+      "sha256": "fc81ecf69ec735c6ae7420d2486247b591ba6d6e8551eb921a565b799cb3e76f",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55308,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.composition-wizard --html D:\\ilife\\.scratch\\t369\\stage\\04-过程-calorie.view.composition-wizard.html",
-      "checks": [
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-过程-calorie.view.composition-wizard.html"
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
+      },
+      "fmt": {
+        "name": "04-过程-calorie.view.composition-wizard.html",
+        "bytes": 87740,
+        "mtime": "2026-09-15T08:46:05.797Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
-        },
-        {
-          "name": "写前认领",
-          "pass": true,
-          "detail": "含向导／确认字样"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     },
     {
-      "word": "看围度向导",
+      "word": "围度向导（写前预检确认页）",
       "forWord": "补记围度",
       "key": "calorie.view.measure-wizard",
       "order": null,
       "declCli": null,
+      "exit": 0,
       "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-过程-calorie.view.measure-wizard.html",
       "rel": "05-过程-calorie.view.measure-wizard.html",
-      "exists": true,
-      "bytes": 71944,
-      "sha256": "61244b3f56714335fde3b5b96202da0b14c438b9be80296a3dfe72cda58f6c5f",
+      "bytes": 87877,
+      "sha256": "1f134841d3147d82491241211d0ec95dfe8abf64315448f3ac8a34a5993761bc",
       "fullPage": {
         "doctype": true,
         "charset": true,
-        "styleBytes": 39421,
+        "styleBytes": 55308,
         "inlineOk": true,
         "externals": [],
         "ok": true
       },
-      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.measure-wizard --html D:\\ilife\\.scratch\\t369\\stage\\05-过程-calorie.view.measure-wizard.html",
-      "checks": [
-        {
-          "name": "产物存在",
-          "pass": true,
-          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-过程-calorie.view.measure-wizard.html"
+      "sep": {
+        "node": 0,
+        "R1": 0,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 0
+      },
+      "fmt": {
+        "name": "05-过程-calorie.view.measure-wizard.html",
+        "bytes": 87877,
+        "mtime": "2026-09-15T08:46:06.262Z",
+        "static": {
+          "viewportFit": true,
+          "safeAreaBottom": 2,
+          "safeAreaTop": 0,
+          "safeAreaLeft": 1,
+          "safeAreaRight": 1,
+          "pageUiClass": true,
+          "touchAction": 0,
+          "breakpoints": [
+            "400",
+            "640",
+            "720",
+            "820"
+          ],
+          "lazyIframe": false
         },
-        {
-          "name": "命令 exit",
-          "pass": true,
-          "detail": "exit=0"
-        },
-        {
-          "name": "整页",
-          "pass": true,
-          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
-        },
-        {
-          "name": "写前认领",
-          "pass": true,
-          "detail": "含向导／确认字样"
+        "widths": {
+          "390": {
+            "vw": 390,
+            "scrollW": 390,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 390,
+            "kpiCards": 2,
+            "kpiPerRow": "1+1",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          },
+          "1440": {
+            "vw": 1440,
+            "scrollW": 1440,
+            "overflow": 0,
+            "touchSmall": 0,
+            "touchSmallList": [],
+            "minFontPx": 12,
+            "minFontWho": "div.left",
+            "tableWrap": null,
+            "tdWithLabel": 0,
+            "tdTotal": 0,
+            "toc": 0,
+            "ids": 0,
+            "shellW": 1280,
+            "kpiCards": 2,
+            "kpiPerRow": "2",
+            "kpiValuePx": 22,
+            "bodyPx": 15,
+            "overflowElems": 0,
+            "overflowElemsList": []
+          }
         }
-      ],
-      "status": "green",
-      "why": []
+      },
+      "overflow": {
+        "failed": 0,
+        "widths": {
+          "390": {
+            "innerWidth": 390,
+            "docScrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "768": {
+            "innerWidth": 768,
+            "docScrollWidth": 768,
+            "bodyScrollWidth": 768,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          },
+          "1440": {
+            "innerWidth": 1440,
+            "docScrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "images": 0,
+            "blame": [],
+            "imgs": [],
+            "clipped": [],
+            "clippedCount": 0,
+            "scrollers": [],
+            "scrollerCount": 0,
+            "overflow": 0,
+            "unfitted": 0,
+            "why": "",
+            "ok": true,
+            "bodyOverflow": 0
+          }
+        }
+      }
     }
   ],
-  "dbChecks": [
-    {
-      "name": "体成分总行",
-      "pass": true,
-      "detail": "总 7（期望 7：4 种子 ＋ 记×2 ＋ 补记×1）"
-    },
-    {
-      "name": "体成分软删",
-      "pass": true,
-      "detail": "软删 1／在用 6（期望 1／6）"
-    },
-    {
-      "name": "围度总行",
-      "pass": true,
-      "detail": "总 10（期望 10：8 种子 ＋ 记×1 ＋ 补记×1）"
-    },
-    {
-      "name": "围度软删",
-      "pass": true,
-      "detail": "软删 1／在用 9（期望 1／9）"
-    },
-    {
-      "name": "皮褶 7 点落库",
-      "pass": true,
-      "detail": "合计值 10/12/14/11/13/12/10 body_fat_pct=12.02（手算 12.02）"
-    },
-    {
-      "name": "补记围度落库",
-      "pass": true,
-      "detail": "腰 86 胸 null 臀 null"
-    },
-    {
-      "name": "对比日1 落库",
-      "pass": true,
-      "detail": "胸 100 腰 85 肩 110"
-    }
-  ]
+  "dbChecks": null
 }
