@@ -173,16 +173,17 @@ test('#86 身材照 wizard：纯配置＋新 CLI 命令段', () => {
     assert.ok(!v.html.includes('python scripts'), '不得出现旧 py 命令');
     // #474：tag 的值仍在参数段（拆行是呈现层的事，不牵连机器段）。
     assert.ok(v.html.includes('- tag:正面'), '命令段应带 tag');
-    // #474 展示升级：示例换 Windows 真路径、限制写进字段名（旧 hint 填过就看不见）。
-    assert.ok(v.html.includes('照片文件路径（最多 20 张；如 D:\\照片\\正面1.jpg，多张换行或逗号分隔）'),
-      '#474：照片路径字段名须带 Windows 真路径示例与张数上限');
+    // #527 展示升级：字段名里的 `；` 是并列语义 → 拆句（限制与示例不再用符号串一行）。
+    assert.ok(v.html.includes('照片文件路径（最多 20 张。如 D:\\照片\\正面1.jpg，多张换行或逗号分隔）'),
+      '#527：照片路径字段名须带 Windows 真路径示例与张数上限，且不出现 `；`');
     assert.ok(v.html.includes('标签（最多 20 个字）'), '#474：标签字段名须写「最多 20 个字」');
     // #474（审查整改 2）：「最多 20 张」一页只留一处（照片路径字段名里那处）。
     assert.equal((v.html.match(/最多 20 张/g) ?? []).length, 1,
       '#474：`最多 20 张` 须恰 1 处（KPI 明细不再与字段名重复）');
     // #474（审查整改 3c）：表单上方那句「改了不会自动生效」恰 1 次，且在字段之前。
-    assert.equal((v.html.match(/这些是 AI 已经用的值；改了不会自动生效——要改就直接跟 AI 说一句。/g) ?? []).length, 1,
-      '#474：记身材照页须恰 1 处「改了不会自动生效」告知句');
+    //  #527：句中的 `；` 拆成句号（同一件事一页一处）。
+    assert.equal((v.html.match(/这些是 AI 已经用的值。改了不会自动生效——要改就直接跟 AI 说一句。/g) ?? []).length, 1,
+      '#527：记身材照页须恰 1 处「改了不会自动生效」告知句');
     assert.ok(v.html.indexOf('这些是 AI 已经用的值') < v.html.indexOf('name="srcPaths"'),
       '#474：告知句须在表单**上方**（字段之前）');
     assert.ok(!v.html.includes('≤20 字符'), '#474：旧限制句须 0 命中');
@@ -217,12 +218,19 @@ test('#86 GIF 框选器：列表＋框选＋裁剪＋命令段（无 cropper.js�
     // #474 展示升级：两组数字分名（框选缺 ID ≠ 文件找不到），并给出四张 KPI 卡。
     assert.ok(v.html.includes('框选里没有的 ID'), '#474：缺 ID 那格须与「文件找不到」分开命名');
     assert.ok(v.html.includes('>要用</div>') && v.html.includes('>库里共 2 张</div>'), '#474：要用／库里共两张读数缺失');
-    assert.ok(v.html.includes('>GIF 输出</div>') && v.html.includes('500ms/帧 · 无限循环'), '#474：GIF 输出格读数缺失');
+    assert.ok(v.html.includes('>GIF 输出</div>'), '#474：GIF 输出格读数缺失');
+    // #527：GIF 输出卡的明细（原 `500ms/帧 · 无限循环`）撤到卡下的事实条，两件事各一格。
+    assert.ok(v.html.includes('ilife-block-fact-strip') && v.html.includes('每帧停')
+      && v.html.includes('0.5 秒'), '#527：输出规格须落事实条（每帧停 0.5 秒）');
+    assert.ok(v.html.includes('无限循环'), '#527：循环的人话须仍在');
+    assert.ok(!v.html.includes('ms/帧 · '), '#527：`·` 串的输出明细须下屏');
     assert.ok(!v.html.includes('文件丢失'), '#474：旧「文件丢失」须 0 命中');
-    // #474 表：正常行不喊存在／未校验，异常才出声。
-    assert.ok(v.html.includes('>照片文件</th>') && v.html.includes('>裁剪</th>'), '#474：表头须改「照片文件」「裁剪」');
-    assert.ok(v.html.includes('>已裁剪</td>') === false, '#474：无裁剪的行不该印已裁剪');
-    assert.ok(v.html.includes('>整图</td>'), '#474：未裁剪的行应印「整图」');
+    // #527 候选行（原六列表）：一行一张照片——编号／标签／文件名各一槽，次要事实走徽章列。
+    assert.ok(v.html.includes('照片 1') && v.html.includes('照片 2'), '#527：候选行须印「照片 N」（不印 `#N`）');
+    assert.equal((v.html.match(/<li class="phu-pl">/g) ?? []).length, 2, '#527：候选行须两行');
+    assert.ok(!v.html.includes('>照片文件</th>') && !v.html.includes('>裁剪</th>'), '#527：旧六列表头须下屏');
+    assert.ok(v.html.includes('整图'), '#527：未裁剪的行应印「整图」');
+    assert.ok(v.html.includes('已框选'), '#527：默认全选时每行须印「已框选」');
     assert.ok(!v.html.includes('>存在</td>') && !v.html.includes('>未校验</td>') && !v.html.includes('>缺失</td>'),
       '#474：正常行不该喊存在／未校验／缺失');
     // #474 表单：限制进字段名、数字框带上下限、两个枚举改下拉、坐标 JSON 那栏真撤掉。
@@ -243,16 +251,18 @@ test('#86 GIF 框选器：列表＋框选＋裁剪＋命令段（无 cropper.js�
     assert.equal((v.html.match(/<option value="dissolve"( selected)?>溶解<\/option>/g) ?? []).length, 1, '#474：切换效果下拉缺「机器值 dissolve ＋ 溶解」项');
     assert.match(v.html, /<option value="0" selected>无限<\/option>/, '#474：当刻 loop=0 那条须落 selected');
     assert.match(v.html, /<option value="cut" selected>硬切<\/option>/, '#474：当刻 transition=cut 那条须落 selected');
-    assert.equal((v.html.match(/<option value="" disabled( selected)?>选一个<\/option>/g) ?? []).length, 2,
-      '#474：两个下拉的占位项须都在（且在默认值下都不带 selected）');
-    assert.ok(!v.html.includes('<option value="" disabled selected>选一个</option>'),
-      '#474：视图真值在场时，占位项不该再被 selected 占住');
-    assert.ok(v.html.includes('每帧多久（毫秒）') && v.html.includes('宽（像素）'), '#474：数字字段须带单位');
+    assert.equal((v.html.match(/<option value="" disabled( selected)?>选一个<\/option>/g) ?? []).length, 0,
+      '#527：下拉不许再有「选一个」占位（当刻当前值即所选那一条）');
+    assert.ok(v.html.includes('每帧多久（毫秒，50 到 5000）') && v.html.includes('宽（像素，100 到 2000）'),
+      '#527：数字字段的单位与范围须进字段名（原来只在空栏可见）');
+    assert.ok(!v.html.includes('50..5000') && !v.html.includes('100..2000'),
+      '#527：`..` 这种符号顶替文字须 0 命中（改写「50 到 5000」）');
     assert.ok(v.html.includes('type="number"') && v.html.includes('max="5000"') && v.html.includes('min="50"'),
       '#474：毫秒字段须是带上下限的数字框');
     // #474（审查整改 3c）：表单上方那句「改了不会自动生效」——两个过程型页各恰 1 次。
-    assert.equal((v.html.match(/这些是 AI 已经用的值；改了不会自动生效——要改就直接跟 AI 说一句。/g) ?? []).length, 1,
-      '#474：GIF 规划器页须恰 1 处「改了不会自动生效」告知句');
+    //  #527：句中的 `；` 是并列语义 → 拆句（同一件事一页一处）。
+    assert.equal((v.html.match(/这些是 AI 已经用的值。改了不会自动生效——要改就直接跟 AI 说一句。/g) ?? []).length, 1,
+      '#527：GIF 规划器页须恰 1 处「改了不会自动生效」告知句');
     assert.ok(v.html.indexOf('这些是 AI 已经用的值') < v.html.indexOf('name="duration"'),
       '#474：告知句须在表单**上方**（字段之前）');
     const sel = dispatch('calorie.view.gif-planner', {
@@ -274,8 +284,9 @@ test('#86 GIF 框选器：列表＋框选＋裁剪＋命令段（无 cropper.js�
     assert.match(unescaped, /- 循环:3 次循环/, '#474：指令的循环行须与下拉同一个词');
     assert.ok(!/- 过渡:(cut|fade|dissolve)/.test(unescaped), '#474：指令里不该再出现英文过渡码');
     assert.ok(unescaped.includes('calorie.photo.gif'), '命令段仍在');
-    // #474：有裁剪的那张在本页表格印「已裁剪」（与整图分开）。
-    assert.ok(sel.html.includes('>已裁剪</td>'), '#474：裁剪过的行应印「已裁剪」');
+    // #474：有裁剪的那张在本页候选行印「裁剪过」（与整图分开）。
+    assert.ok(sel.html.includes('裁剪过'), '#527：裁剪过的行应印「裁剪过」');
+    assert.ok(!sel.html.includes('>整图</span>'), '#527：裁剪过的行不该印「整图」');
     const miss = dispatch('calorie.view.gif-planner', { tag: '正面', photoIds: [9999] }, db);
     assert.equal(miss.data.metrics.missingCount, 1);
     assert.equal(miss.data.metrics.selectedCount, 0);
@@ -296,10 +307,12 @@ test('#474 文件找不到与框选缺 ID 各归各位：异常行出声、KPI �
   const db = openDb(join(dir, DB_FILENAME));
   seedWizard(db);
   try {
-    // 照片目录是空的：库里两张都登记着，但磁盘上一张也没有 → 两张都「找不到（会跳过）」。
+    // 照片目录是空的：库里两张都登记着，但磁盘上一张也没有 → 两张都挂「会跳过」徽标。
     const v = dispatch('calorie.view.gif-planner', { tag: '正面', photosDir: join(dir, 'photos') }, db);
     const html = v.html;
-    assert.equal((html.match(/找不到（会跳过）<\/td>/g) ?? []).length, 2, '两张找不到的照片都应逐行出声');
+    // #527：候选行改「一行一张照片」，异常不再是表里的「找不到（会跳过）」单元格，而是行上的徽标。
+    assert.equal((html.match(/<li class="phu-pl">/g) ?? []).length, 2, '两张照片都该有候选行');
+    assert.equal((html.match(/>会跳过<\/span>/g) ?? []).length, 2, '两张找不到的照片都应逐行出声');
     assert.ok(html.includes('status-badge') && html.includes('会跳过'), '#474：异常格须挂状态徽标');
     assert.ok(html.includes('>框选里没有的 ID</div>'), '#474：缺 ID 那格须仍在（本用例为 0）');
     assert.ok(html.includes('>文件找不到</div>') && html.includes('>2</span>'), '#474：文件找不到那格须报 2 张');
