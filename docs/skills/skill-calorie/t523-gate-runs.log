@@ -1,0 +1,31 @@
+# #523 R3 窗口 · 门禁运行记录导出（协议 §2.3 第 4 条：对账源要落在受版本控制的路径上）
+
+> 源文件：`D:\ilife\.scratch\locks\gate-runs.log`（未受版本控制）。本件是 **#523 R3 返修窗口**内
+> `ticket=523` 的全部 `RUN` 条目**逐字导出**（`2026-09-15T15:38Z – 15:52Z`），供第三方当对账源复核：
+> 证据件 `docs/skills/skill-calorie/t523-证据.md` 里每条 `GATE-RUN runId=` 都能在下表找到**一对一**的同一行。
+> 导出动作：`Get-Content .scratch/locks/gate-runs.log | 过滤 ticket=523 与窗口时刻 | 只取 RUN 行 | Out-File`。
+> 同窗口内失败／重试的运行条目**一并留着**（不筛掉），免得「只导成功那几条」看起来像事后挑数。
+
+```
+RUN ticket=523 runId=4b066427-8fb2-48e7-9092-b17fd9588050 cmd="node docs/skills/skill-calorie/t523-截断探针.mjs --dir .scratch/t523/out --widths 390,1440 --json .scratch/t523/trunc-before.json" waitedMs=0 exit=1 pid=41164 at=2026-09-15T15:38:52.287Z
+RUN ticket=523 runId=8a9a471d-8caa-4ff5-96ff-4c4d7fd2d42b cmd="node docs/skills/skill-calorie/t523-截断探针.mjs --dir .scratch/t523/out --widths 390,1440 --json .scratch/t523/trunc-before.json" waitedMs=0 exit=1 pid=40896 at=2026-09-15T15:39:43.660Z
+RUN ticket=523 runId=4d1203ae-d6b0-4552-8a72-07b11fd61018 cmd="pnpm --filter skill-calorie run build" waitedMs=1 exit=0 pid=64916 at=2026-09-15T15:39:54.840Z
+RUN ticket=523 runId=fc9487a0-0e23-41b2-b2be-fbc3af001fe8 cmd="node .scratch/t523/verify.mjs" waitedMs=0 exit=0 pid=13528 at=2026-09-15T15:41:00.620Z
+RUN ticket=523 runId=a2d855f4-cc9a-43dc-b2fe-14ff91f50506 cmd="pwsh -NoProfile -Command \"node packages/skill-calorie/scripts/check-warning-line.mjs --sync --dry; Write-Host '--- REAL SYNC ---'; node packages/skill-calorie/scripts/check-warning-line.mjs --sync\"" waitedMs=1 exit=0 pid=7208 at=2026-09-15T15:42:48.012Z
+RUN ticket=523 runId=fd8a1cbf-1c71-47b0-8570-ed9aa6ac8c5a cmd="node .scratch/t523/verify.mjs" waitedMs=0 exit=0 pid=65008 at=2026-09-15T15:44:53.451Z
+RUN ticket=523 runId=e7621566-cbbe-40e7-9b3f-8db8f37849db cmd="node .scratch/t523/verify.mjs" waitedMs=0 exit=0 pid=62852 at=2026-09-15T15:47:10.736Z
+RUN ticket=523 runId=f84742f2-a13f-42fc-bc9b-ec113654205c cmd="node docs/skills/skill-calorie/t523-截断探针.mjs --dir .scratch/t523/out --widths 390,768,1440 --json .scratch/t523/trunc-after.json" waitedMs=0 exit=0 pid=43132 at=2026-09-15T15:47:38.757Z
+RUN ticket=523 runId=98f88195-900c-4dda-9e15-a1caed5054fa cmd="node .scratch/t523/mut-r3.mjs" waitedMs=0 exit=1 pid=62280 at=2026-09-15T15:48:21.238Z
+RUN ticket=523 runId=73452dae-b1f8-4aeb-b584-3f608879c0be cmd="node .scratch/t523/mut-r3.mjs" waitedMs=0 exit=1 pid=49568 at=2026-09-15T15:48:58.113Z
+RUN ticket=523 runId=f96b0972-bbd7-41ac-9bc6-e9943d7a1432 cmd="node .scratch/t523/mut-r3.mjs" waitedMs=0 exit=1 pid=62528 at=2026-09-15T15:50:44.175Z
+RUN ticket=523 runId=ddc63b4e-ed8a-4b3f-b6f1-948bfdb1948a cmd="node .scratch/t523/mut-r3.mjs" waitedMs=0 exit=0 pid=51872 at=2026-09-15T15:52:34.785Z
+```
+
+**失败／重试的条目逐条交代**（都在上表里，不藏）：
+
+- `4b066427` / `8a9a471d`（exit=1）：**这是探针该有的红**——量的是改前产物，判据就该非 0（本票「现状确认它红」那一步）。
+- `98f88195` / `73452dae` / `f96b0972`（exit=1）：变异脚本自身的前三次失败——
+  ① 前两次是 `spawnSync('pnpm', …)` 在 Windows 上拿不到 `.cmd`，`build` 根本没跑（`status=null` ⇒ 变异看着「没变红」，实为假绿）；
+  ② 第三次是 M2 只退回了一条 CSS 规则（轨宽那条没退），全称仍放得下 ⇒ 探针假绿。
+  两次都在脚本里补正（`shell:true` 起 build；M2 两条规则一起退）后由 `ddc63b4e` 拿到 PASS。
+  **中间态没有留在工作区**：脚本 `finally` 里逐文件还原源码，还原后重编＋重出产物再收尾。
