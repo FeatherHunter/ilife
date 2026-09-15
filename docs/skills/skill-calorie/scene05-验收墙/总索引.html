@@ -300,9 +300,9 @@ code{font-size:11.5px;color:#6e6e73;word-break:break-all}
 <div class="note">
   <h2>有意不出产物及其原因</h2>
   <ul>
-      <li><b>外部五条：落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩（order 196–200）</b>：`packages/skill-calorie/src/workout/routes.ts` 把这两组词记为 `kind:'non-exec'`、`bucket:'out-of-scope'`——本图 Out of scope，本票不承接、不造产物。验收只做「唤醒词命中 ＋ HELP 文案」读数（见证据件 `t351-v16-evidence.md`）。</li>
-      <li><b>撤销后读验证（order 195 的 read-after-delete 一步）</b>：那一步**不是页面**，是机器读数：撤销后念「看计划」出 `exit=4` ＋ stderr 命中「无训练计划」。批里只记读数（`detail.json` 的 `steps`），不落 HTML；本批另把批脚本一度产出的 `order195-verify.html` 当陈旧件删掉。</li>
-      <li><b>order 176–207 的中间产物：`dbs/`（隔离库）与 `detail.json`（逐条读数）</b>：它们留在原批目录 `.scratch/t351-v16/products/`，是**出页依据与判据读数**，不是给人看的页面；墙上没有可看的渲染，故不入这一册。</li>
+      <li><b>外部五条：落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩（order 196–200）</b>：`packages/skill-calorie/src/workout/routes.ts:32-36` 把这五条记为 `kind:'non-exec'`、`bucket:'out-of-scope'`，`reason` 逐条写着「明确不做（架构规格 `docs/calorie-architecture.md:60`：落地／训记）；词只保证命中与文案，执行层不承接」。**本轮仍不执行、仍不造产物**：这五条的执行面在外部 App（补计划到日历／记心愿／推送训记／回写训记实绩），卡路里这侧的执行层不承接 ⇒ 既没有「写后」可出回执页、也没有「读」结果可出结果页，硬出一张只能印这几句词本身。本轮实测：五条在路由表／场景词表／HELP 资产三处都命中（5/5），HELP 文案首句逐字在——读数见 `docs/skills/skill-calorie/t351-v17-evidence.md` §四「表二 · 外部五条」。本轮产物原批目录：`.scratch/t157-close/products/`。</li>
+      <li><b>撤销后读验证（order 195 的 read-after-delete 一步）</b>：那一步**不是页面**，是机检读数：撤销后念「看计划」再读一次，得 `exit=4` ＋ stderr 命中「无训练计划」（恢复缺失阻断）——它**没有可上屏的 HTML**，所以本轮照旧只把读数落进批次的 `detail.json`（`steps` 里那条 `撤销后读验证`），不产页面；批脚本一度产出的 `order195-verify.html` 已按陈旧件处理，不进这一册。本轮读数与逐条现场见 `docs/skills/skill-calorie/t351-v17-evidence.md` §三「口径两条」；本轮产物原批目录：`.scratch/t157-close/products/`。</li>
+      <li><b>order 176–207 的中间产物：`dbs/`（隔离库）与 `detail.json`（逐条读数）</b>：它们留在**本轮**的原批目录 `.scratch/t157-close/products/`（`dbs/` 隔离库 ＋ `detail.json` 逐条读数），是**出页依据与判据读数**，不是给人看的页面——墙上没有可看的渲染，故不入这一册。要看机器读数去 `.scratch/t157-close/products/detail.json`（`steps` 43 条 ＋ `checks` 29 条）；要看逐条实跑证据去 `docs/skills/skill-calorie/t351-v17-evidence.md`。</li>
   </ul>
 </div>
 </div></body></html>
