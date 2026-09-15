@@ -314,10 +314,9 @@ test('#273 ⑤ 反例①：同一把键缺 `meal` ＝ 不是餐别支（不编�
   assert.ok(!visible(r.html).includes('餐别热量占比'), '缺 meal 却出了四桶占比');
 });
 
-/* 反例②的**待办标记**：当刻（基线 `d243619`）「空窗 ＋ 带 `meal`」退回总览空态页，本行按「判据红如实报」
-   的姿态标成 skip——判据本身不改（票面裁定 4 的 2026-09-15 澄清要的是餐别页的空态）。修法只有 3 行
-   ＋ 1 行 import，但落点在 `src/home/today.ts`，**不在本票授权面内** ⇒ 等编排者裁定归属后去掉 skip。
-   补丁原文与两端读数：`.scratch/t273/空窗餐别-补丁.txt`、`.scratch/t273/mut/fix-*-{red,green}.log`。 */
+/* 反例②（#273 收口 · 编排者裁定 2026-09-15 授权落 4 行补丁）：空窗 ＋ 带 `meal` 必须仍出**餐别分布页**
+   的空态。修前那一次读数（`h1=🍽️ 饮食总览 …`、67249 B、`md-table`=no）与修后（`h1=餐别分布 …`、
+   71748 B、`md-table`=yes）留在 `.scratch/t273/mut/` 与 `t273-报告.md` §二 6。 */
 test('#273 ⑤ 空窗（库非空、这一段零记录）⇒ 仍出完整页 ＋ 空态句 ＋ 引导句（餐别页外的那一支已真）', () => {
   const r = renderOk(DIR, 'calorie.view.diet', { start: '2026-10-01', end: '2026-10-07' }, '空窗无 meal');
   assert.ok(r.html.startsWith('<!doctype html>') && r.html.includes('<meta charset="utf-8">'), '空窗页不是完整文档');
@@ -328,7 +327,7 @@ test('#273 ⑤ 空窗（库非空、这一段零记录）⇒ 仍出完整页 ＋
   assert.ok(r.bytes > 4000, '空窗页过小（' + r.bytes + ' B）');
 });
 
-test('#273 ⑤ 反例②（**当刻红，已 skip 并在报告里如实报**）：空窗 ＋ 带 `meal` ⇒ 应出餐别分布页的空态', { skip: '基线 d243619 上这一支退回总览空态页；修法落 src/home/today.ts，等编排者裁定归属' }, () => {
+test('#273 ⑤ 反例②：空窗（库非空、这一段零记录）＋ 带 `meal` ⇒ 出餐别分布页的空态，不退回总览页', () => {
   /* 裁定 4 的 2026-09-15 澄清：窗口内零记录 ⇒ 出完整页 ＋ 空态句 ＋ 引导句。这一族里「完整页」指的
      是**餐别分布页**（区块自出空态句＋引导句），不是退回总览那一张——两条词说的是餐别看餐别。 */
   const r = renderOk(DIR, 'calorie.view.diet', { start: '2026-10-01', end: '2026-10-07', meal: 'all' }, '空窗餐别');
@@ -346,6 +345,13 @@ test('#273 ⑤ 反例②（**当刻红，已 skip 并在报告里如实报**）�
   assert.ok(!text.includes('没有饮食记录，汇总算不出来'), '空窗 ＋ meal 还是落回了总览那一张空态页');
   assert.ok(!r.html.includes('<section id="md-dist">'), '零记录不该出四桶占比块');
   assert.ok(r.bytes > 4000, '空窗餐别页过小（' + r.bytes + ' B）');
+  /* 单餐别那一支也走同一页（不许只有 `all` 走对）：餐数 0、日均 `—`、空态句按餐别名逐字换。 */
+  const br = renderOk(DIR, 'calorie.view.diet', { start: '2026-10-01', end: '2026-10-07', meal: '早餐' }, '空窗餐别·早餐');
+  const bt = visible(br.html);
+  assert.ok(bt.includes('餐别分布'), '空窗 ＋ meal=早餐 落的是别的页：' + bt.slice(0, 200));
+  assert.ok(bt.includes('没有早餐的记录'), '单餐别空窗缺按餐别名的空态句：' + bt.slice(0, 300));
+  assert.ok(bt.includes('用「记一餐」'), '单餐别空窗缺引导句');
+  assert.ok(br.bytes > 4000, '单餐别空窗餐别页过小（' + br.bytes + ' B）');
 });
 
 test('#273 ⑤ 餐别参数缺失／未知值一律用法错（exit 2），不编数、不给默认餐别', () => {
