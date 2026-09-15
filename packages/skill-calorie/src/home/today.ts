@@ -17,6 +17,7 @@ import { buildHomeData } from './home.js';
 import { buildHomeDoc } from './homeDocs.js';
 import { buildGoalProgressDoc } from './goalProgressDocs.js';
 import { getNutritionGoal } from '../fetch/nutritionGoal.js';
+import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
 import { buildExerciseDoc } from '../render/sportDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
 import {
@@ -110,18 +111,44 @@ function goalProgressCommand(start: string, end: string, window: string | null):
  *  分辨两种态的唯一判据是**营养目标行在不在**，不看错误文案（文案会随取数层改）。 */
 interface GoalProgressLoad {
   readonly data: GoalProgress | null;
-  readonly goalCalories: number | null;
+  /** 四项目标值：窗口两态都照给（目标行在就有），页面按它们写「本期之外那三项」那一块。 */
+  readonly goals: {
+    readonly calorie: number | null;
+    readonly protein: number | null;
+    readonly water: number | null;
+    readonly exercise: number | null;
+  };
+}
+
+/** 运动目标（日耗）：`daily_goal.exercise_goal`。它不住 `NutritionGoalRow`（那个类型的字段面是 #23 定的、
+ *  本票不扩类型），故照 `render/planPlate.ts:315-318` 的既有读法单查一列。 */
+function exerciseGoalOf(db: DatabaseSync): number | null {
+  const row = db.prepare('SELECT exercise_goal FROM daily_goal WHERE id = 1').get() as
+    | { exercise_goal: number | null } | undefined;
+  return row?.exercise_goal ?? null;
+}
+
+/** 目标行（`daily_goal#1`）→ 四项目标值。**水位缺省照 `home.ts:78` 的既有口径补 2000**——
+ *  首页把那句「饮水目标 2000」已经写在屏幕上，这一页对同一个事实不能给第二个说法。 */
+function goalsOf(row: NutritionGoalRow | null, exercise: number | null): GoalProgressLoad['goals'] {
+  return {
+    calorie: row?.calorie_goal ?? null,
+    protein: row?.protein_goal ?? null,
+    water: row?.water_goal ?? 2000,
+    exercise,
+  };
 }
 
 function loadGoalProgress(db: DatabaseSync, start: string, end: string, historyDays: number): GoalProgressLoad {
+  const exercise = exerciseGoalOf(db);
   try {
     const g = buildGoalProgress(db, start, end, historyDays);
-    return { data: g, goalCalories: g.nutrition.calorie_goal };
+    return { data: g, goals: goalsOf(g.nutrition, exercise) };
   } catch (e) {
     if (!(e instanceof CalorieRenderError) || e.code !== 'missing-data') throw e;
     const goal = getNutritionGoal(db);
     if (goal === null) throw e;
-    return { data: null, goalCalories: goal.calorie_goal };
+    return { data: null, goals: goalsOf(goal, exercise) };
   }
 }
 
@@ -141,10 +168,13 @@ export function viewGoalProgress(params: Record<string, unknown>, db: DatabaseSy
   if (!Number.isInteger(historyDays) || (historyDays as number) < 1 || (historyDays as number) > 365) fail(2, 'historyDays 须为 1..365 整数');
   const command = goalProgressCommand(start, end, optStr(params, 'window') ?? null);
   const loaded = loadGoalProgress(db, start, end, historyDays as number);
-  const doc = { start, end, historyDays: historyDays as number, calorieGoal: loaded.goalCalories, command };
+  const doc = {
+    start, end, historyDays: historyDays as number, calorieGoal: loaded.goals.calorie, command,
+    proteinGoal: loaded.goals.protein, waterGoal: loaded.goals.water, exerciseGoal: loaded.goals.exercise,
+  };
   if (loaded.data === null) {
     return {
-      data: { metrics: nums({ calorie_goal: loaded.goalCalories }) },
+      data: { metrics: nums({ calorie_goal: loaded.goals.calorie }) },
       html: buildGoalProgressDoc({ ...doc, data: null }),
     };
   }
