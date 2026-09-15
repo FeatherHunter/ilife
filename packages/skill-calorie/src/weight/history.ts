@@ -35,7 +35,8 @@
  *   ④ 页顶那条样本不足提示的「；」串 → `notice()` ＋ `bulletList()` 两条前提逐条成行；
  *   ⑤ 结论块走 `verdict()`（一句话判语）；原与目标卡／图例逐字重复的目标小标签随本轮删（删的是重复，
  *      事实两处都在：距目标卡与图例）；异常点那页补一条 `note()` 脚注写清平均线／注意线／警戒线口径；
- *   ⑥ 表标题、图表、复制区、页脚口径行（`｜`）与机器面（复制载荷／日志原文）**一行未改**。
+ *   ⑥ 明细表包折叠区（用户反馈 #502）：标题点按展开／收起、默认收起，`caption` 移入
+ *      折叠标题（同一句话不说两遍）；图表、复制区、页脚口径行（`｜`）与机器面一行未改。
  *
  * #510 设计视角审查整改（同屏事实收敛，只动文本与装配，结构未动）：
  *   · 窗口串一屏三处（页题 ＋ KPI 卡副说明 ＋ 窗口条）⇒ **页题只留「体重历史」、卡副说明撤掉区间串**，
@@ -816,6 +817,15 @@ function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePla
   return rows;
 }
 
+/** 明细表包一层折叠区（用户反馈 #502）：标题点按展开／收起，默认收起，
+ *  长表（90／180／365 天）不再把底部按钮顶到几屏外。
+ *  标题收进折叠区后不再另出 `caption`（同一句话不说两遍），也顺带消掉 `caption`
+ *  在 390 档的内层横滚（探针实测 caption 右缘 393＞视口 390，页级 SW 仍 390）。
+ *  形状走共享 `renderDisclosure`（原生 details／summary，触摸目标 44px 已有），本族不另造折叠件。 */
+function detailTable(title: string, tableHtml: string): string {
+  return renderDisclosure({ title, contentHtml: tableHtml });
+}
+
 function segmentTables(h: WeightHistoryView, extra: HistoryDocExtra): string[] {
   const cols: DataTableColumn[] = [
     { key: 'date', label: '日期' },
@@ -836,27 +846,33 @@ function segmentTables(h: WeightHistoryView, extra: HistoryDocExtra): string[] {
     const head = h.rows.slice(0, 30);
     const tail = h.rows.slice(30);
     return [
-      renderDataTable({
-        columns: cols,
-        rows: head.map(toRow),
+      detailTable(
         // #480 缺陷 8：说清这张表是**截过**的（「最近 30 条」会被读成「一共就是这些」）。
-        caption: '体重明细（只列最近 30 条）',
-        emptyText: '本窗无体重记录',
-      }),
-      renderDataTable({
-        columns: cols,
-        rows: tail.map(toRow),
+        '体重明细（只列最近 30 条）',
+        renderDataTable({
+          columns: cols,
+          rows: head.map(toRow),
+          emptyText: '本窗无体重记录',
+        }),
+      ),
+      detailTable(
         // #480 缺陷 9：「其余」是对着上表算出来的说法，改成读者话「更早的」。
-        caption: '体重明细（更早的 ' + tail.length + ' 条）',
-        emptyText: '无更多记录',
-      }),
+        '体重明细（更早的 ' + tail.length + ' 条）',
+        renderDataTable({
+          columns: cols,
+          rows: tail.map(toRow),
+          emptyText: '无更多记录',
+        }),
+      ),
     ];
   }
-  return [renderDataTable({
-    columns: cols,
-    rows: h.rows.map(toRow),
+  return [detailTable(
     // #480 缺陷 13：页题已有「体重历史」，表标题不再把同一句话再说一遍 ⇒ 说「明细记录」。
-    caption: '明细记录（共 ' + h.rows.length + ' 条）',
-    emptyText: '本窗无体重记录',
-  })];
+    '明细记录（共 ' + h.rows.length + ' 条）',
+    renderDataTable({
+      columns: cols,
+      rows: h.rows.map(toRow),
+      emptyText: '本窗无体重记录',
+    }),
+  )];
 }

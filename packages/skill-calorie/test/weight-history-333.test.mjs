@@ -14,6 +14,7 @@
  * ⑧ 结论正文恰一句；⑨ 同卡跨槽重复 0（值槽／副说明／徽章逐卡比，钉今天那五处重复）；
  * ⑩ 徽章 `共 N 条`／单点页 `只有一条`；⑪ `标签 N 类` 只许在徽章出现一次；
  * ⑫ 表标题（`明细记录（共 N 条）`／`体重明细（只列最近 30 条）`／`体重明细（更早的 N 条）`）。
+ * ⑬ #502 用户反馈：明细表包折叠区（标题即折叠标题，默认收起，`caption` 不再单独出）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
@@ -312,12 +313,25 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     // ⑪ 缺陷 2：备注卡的「标签 N 类」只许出现在徽章那一次（副说明已删）。
     assert.ok((text.match(/标签 \d+ 类/g) || []).length <= 1, word + ' 「标签 N 类」说了不止一次');
     // ⑫ 缺陷 8／9／13：表标题（主标题已有「体重历史」，单表改说「明细记录」；分两段说清截过与更早）。
+    // ⑬ #502：标题即折叠区标题（默认收起），`caption` 不再单独出（同一句话不说两遍）。
+    const tableTitles = rows > 30
+      ? ['体重明细（只列最近 30 条）', '体重明细（更早的 ' + (rows - 30) + ' 条）']
+      : ['明细记录（共 ' + rows + ' 条）'];
     if (rows > 30) {
       assert.ok(text.includes('体重明细（只列最近 30 条）'), word + ' 头表标题不对');
       assert.ok(text.includes('体重明细（更早的 ' + (rows - 30) + ' 条）'), word + ' 续表标题不对');
     } else {
       assert.ok(text.includes('明细记录（共 ' + rows + ' 条）'), word + ' 单表标题不对');
     }
+    for (const t of tableTitles) {
+      const s = '<summary class="ilife-block-disclosure-summary">' + t + '</summary>';
+      assert.ok(html.includes(s), word + ' 明细表缺折叠标题：' + t);
+      const d = html.lastIndexOf('<details', html.indexOf(s));
+      assert.ok(d >= 0, word + ' 明细表折叠区找不到：' + t);
+      const tag = html.slice(d, html.indexOf('>', d) + 1);
+      assert.ok(!/\bopen\b/.test(tag), word + ' 明细表默认应收起：' + t);
+    }
+    assert.ok(!html.includes('<caption'), word + ' 明细表仍有 caption（标题已收进折叠区）');
     if (word === '看本周体重') {
       // 缺陷 3：单点页三处同槽重复全拆开（变化卡副说明说人话、均值卡删副说明、备注卡删副说明）。
       assert.equal(byLabel('变化').detail, '只有 1 天记录，没法算变化', word + ' 变化卡副说明不对');
