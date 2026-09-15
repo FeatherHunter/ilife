@@ -164,7 +164,7 @@ function goalDetail(goal: number | null | undefined, unit?: string): string {
 /** 缺口卡说明行（同 `goalDetail` 的槽位）：它相对的不是目标是**消耗** ⇒ 给消耗这个参照物，方向归徽章。
  *  **#401i（复审第 4 点）**：补这格前本卡比同排早 22px（少一行说明、徽章上浮）；缺消耗同 `goalDetail` 口径。 */
 function burnDetail(burn: number | null | undefined): string {
-  return burn === null || burn === undefined ? '未记消耗' : '消耗 ' + burn;
+  return burn === null || burn === undefined ? '未记消耗' : '消耗 ' + burn + '（日常消耗加运动。日常消耗取档案静态值）';
 }
 
 /** 缺口卡的方向胶囊（#401g · 审查必改 #4）：四卡里唯一**没有目标**的读数（相对的是消耗），套完成率档位
@@ -172,9 +172,9 @@ function burnDetail(burn: number | null | undefined): string {
  *  那个词的展开（缺口为正 ⟺ 摄入比消耗少），不再反着说「消耗多于摄入」；色沿用四值，没有读数不给徽章。 */
 function deficitDirection(n: number | null | undefined): { status: StatusKind; statusText: string } | null {
   if (n === null || n === undefined) return null;
-  if (n > 0) return { status: 'ok', statusText: '摄入比消耗少' };
-  if (n < 0) return { status: 'warn', statusText: '摄入比消耗多' };
-  return { status: 'empty', statusText: '摄入与消耗持平' };
+  if (n > 0) return { status: 'ok', statusText: '摄入比消耗少。与目标减摄入基准不同' };
+  if (n < 0) return { status: 'warn', statusText: '摄入比消耗多。与目标减摄入基准不同' };
+  return { status: 'empty', statusText: '摄入与消耗持平。与目标减摄入基准不同' };
 }
 
 /** 单日日期上屏只有一种长法：`09-07`（窗口跨年才补两位年份，同 `analysis/multiTrendPage.ts:145-152`）。
@@ -223,12 +223,12 @@ function todayCards(d: HomeData, extra?: KpiCardInput): readonly KpiCardInput[] 
       detail: goalDetail(d.waterGoal), ...(pctStatus(d.waterPct) ?? {}),
     },
     // 缺口定义全页只留在按日汇总那条口径行（#401 冗余 R5）。#401g：四卡里只有本卡没有目标、完成率套不上
-    // ⇒ 给**方向**胶囊（`deficitDirection`）；#401i：补说明格「消耗 N」，徽章词与卡名同向，卡内四件齐。
+    // ⇒ 给**方向**胶囊（`deficitDirection`）；#401i：补说明格「消耗 N」，徽章词与卡名同向，卡内四件齐。#396：卡名带中文口径名「热量缺口」，说明行追加算式半句；值与算法不动。
     // #401m：`budget` 档把这一张换成「剩余预算」（目标减已摄入）——那档的主角，故卡名／值／说明三格换掉，
     // 徽章位不给（预算相对的是目标，档位归「今日摄入」那张）。
     extra === undefined
       ? {
-        label: '今日缺口', value: fmt(d.deficitToday), unit: '卡', detail: burnDetail(d.burnToday),
+        label: '今日缺口（热量缺口）', value: fmt(d.deficitToday), unit: '卡', detail: burnDetail(d.burnToday) + '。缺口等于消耗减摄入',
         ...(deficitDirection(d.deficitToday) ?? {}),
       }
       : { label: extra.label, value: extra.value, unit: '卡', detail: extra.detail },
