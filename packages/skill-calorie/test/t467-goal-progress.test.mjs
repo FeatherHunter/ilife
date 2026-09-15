@@ -134,6 +134,8 @@ function assertCopyArea(html, what) {
     assert.ok(t.trim() !== '复制数据', what + ' 出了与按钮同名的标题');
     assert.ok(t.trim() !== '复制日志', what + ' 出了与按钮同名的标题');
   }
+  // 用户缺陷 6（2026-09-15）：「💰 数据与日志」这段标题直接删（按钮自己会说话），导航同步不收。
+  assert.ok(!html.includes('💰 数据与日志'), what + ' 复制区标题又回来了（用户已裁定删除）');
 }
 
 /** 版面（剥掉样式段与脚本段）：判「某个区块在不在」一律用它——
@@ -151,7 +153,11 @@ function assertShaped(html, what, opts = {}) {
   if (opts.conclusion === false) assert.equal(conclusion, null, what + ' 空窗页不该出结论条（那句由空态块承担）');
   else assert.ok(conclusion !== null && conclusion[1].trim() !== '', what + ' 缺结论条或结论句为空');
   const h2s = h2Texts(mark);
-  assert.ok(h2s.length >= 2, what + ' 段标题少于两块');
+  // 用户缺陷 6（2026-09-15）起复制区标题撤下：今日窗 h2 只剩「🎯 目标完成」一枚（30d 窗两枚）。
+  // 下限 2→1；覆盖不丢——「每日达标」那块的标题是表格 caption（与主页「按日汇总」同形），另起一句锁住。
+  assert.ok(h2s.length >= 1, what + ' 段标题少于一块');
+  // 「每日达标」那块的标题是表格 caption；有该区（`sec-history` 在场）才锁，无区不锁（空窗无此区，另有断言锁）。
+  if (mark.includes('id="sec-history"')) assert.ok(mark.includes('每日达标'), what + ' 缺「每日达标」块（caption 标题）');
   for (const t of h2s) assert.match(t, /^\S+\s+\S/, what + ' 段标题没有图标：' + t);
   if (opts.badges === false) assert.ok(!mark.includes('ilife-block-kpi-card-badge'), what + ' 空窗页摆了没有读数可比的徽章');
   else assert.ok(mark.includes('ilife-block-kpi-card-badge'), what + ' KPI 卡没有状态徽章');

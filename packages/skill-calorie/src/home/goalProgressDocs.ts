@@ -50,7 +50,10 @@ const SEC_GOAL = { id: 'sec-goal', icon: '🎯', name: '目标完成' } as const
 const SEC_TREND = { id: 'sec-trend', icon: '📈', name: '摄入走势' } as const;
 const SEC_HISTORY = { id: 'sec-history', icon: '📊', name: '每日达标' } as const;
 const SEC_GUIDE = { id: 'sec-guide', icon: '📝', name: '先记一笔' } as const;
-const SEC_COPY = { id: 'sec-copy', icon: '💰', name: '数据与日志' } as const;
+/** 复制区落点锚（`sec-copy`）：用户缺陷 6（2026-09-15）「有『💰 数据与日志』文字的直接删」⇒
+ *  本页复制区**不出标题**（`copyArea` 不传 `title`），页内导航也不再收这一项（#401 主页族同口径）。
+ *  `id` 保留，外链深跳稳定。 */
+const SEC_COPY = { id: 'sec-copy' } as const;
 
 /** 来源脚注上给**读者看**的来源名（可见文本零 snake_case；库表名只留在复制日志的来源段里）。 */
 const SOURCE_LOGGED = '饮食记录，运动记录，每日目标';
@@ -393,9 +396,8 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
       + renderCaliberLine('达标口径：当日摄入占目标的 80% 到 120% 之间算达标。没记录的日子不列表，既不算达标也不算落空。')
       + '</section>');
   }
-  toc.push({ id: SEC_COPY.id, text: SEC_COPY.name });
-
-  // 复制区（裁定 7）：两颗按钮、无与按钮同名的标题；数据按钮挂三格式菜单，日志第 4 段写本次命令原文。
+  // 复制区（裁定 7 ＋ 用户缺陷 6）：两颗按钮、无标题（标题位空着，公共层即不出 `<h2>`），
+  // 导航不同步收无标题区；数据按钮挂三格式菜单，日志第 4 段写本次命令原文。
   // `as const` 不是风格：`SerializableEnvelope` 的 `version`／`skill`／`key` 是字面量类型，对象字面量
   // 不这么写就会被拓宽成 `string` 而装配不上（两处引用的是同一份，故先落变量、不抄两遍）。
   const envelope = {
@@ -409,7 +411,6 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
     }) },
   } as const;
   sections.push('<section id="' + SEC_COPY.id + '">' + copyArea({
-    title: secTitle(SEC_COPY),
     data: { envelope },
     log: {
       envelope,
