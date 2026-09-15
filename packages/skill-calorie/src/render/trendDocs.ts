@@ -529,6 +529,25 @@ function contraCopyBlock(v: ContraView): string {
     .replace('data-action-id="ilife-copy-log"', 'id="ilife-copy-log" data-action-id="ilife-copy-log"');
 }
 
+/** 禁忌扫描页的**窄屏列取舍**（T351-v12）：这张页在 390 宽下有 5 列 ＋ 3 列表，五列那张挤成竖条
+ *  （「部位」「级别」表头都折成两行、规则值折三行）。让掉两处**重复信息**：
+ *   命中明细：让「部位」（动作格括号里已有 `第 1 周 周三（下肢）`）与「规则」（与原因句同义）；
+ *   替代建议：让「原因」（上一张表已逐条给过）。
+ *  与 `reviewDocsCss.ts` 窄屏让「周次」列同一手法（页内 CSS ＋ `nth-child`），只是这里要按表分开，
+ *  故两张表各包一层 `.ilw-hit`／`.ilw-alt` 挂钩子。 */
+const CONTRA_MOBILE_CSS = '<style>\n'
+  + '@media (max-width:820px){\n'
+  + '.ilw-hit .ilife-block-data-table th:nth-child(2),.ilw-hit .ilife-block-data-table td:nth-child(2),'
+  + '.ilw-hit .ilife-block-data-table th:nth-child(3),.ilw-hit .ilife-block-data-table td:nth-child(3)'
+  + '{display:none}\n'
+  + '.ilw-alt .ilife-block-data-table th:nth-child(2),.ilw-alt .ilife-block-data-table td:nth-child(2)'
+  + '{display:none}\n'
+  // 让位后「级别」那一列被挤到 30px 宽，「警告」折成「警／告」。**注意序号**：`display:none` 不会重排名次，
+  // 级别在源表里是第 4 列（第 2、3 列只是被藏了），故这里写 `nth-child(4)` 而不是 (2)。
+  + '.ilw-hit .ilife-block-data-table th:nth-child(4),.ilw-hit .ilife-block-data-table td:nth-child(4)'
+  + '{white-space:nowrap}\n'
+  + '}\n</style>';
+
 export function buildContraDoc(v: ContraView): string {
   const s = v.scan;
   /* 被删的技术口径改住 HTML 注释（#160 回炉）：参数取值与扫描范围口径原都在参数卡说明里。 */
@@ -552,7 +571,10 @@ export function buildContraDoc(v: ContraView): string {
   ];
   {
     const shown = s.hits.slice(0, 100);
-    parts.push(renderDataTable({
+    // 窄屏让位（`.ilw-hit` 是给页内 CSS 挂钩子用的，见 `CONTRA_MOBILE_CSS`）：五列在 390 宽下挤成竖条，
+    // 「部位」与「规则」两列让掉——部位已在动作格的括号里（`深蹲（第 1 周 周三（下肢））`）、
+    // 规则名与原因句说的是同一件事。
+    parts.push('<div class="ilw-hit">' + renderDataTable({
       columns: [
         { key: 'movement', label: '动作' },
         { key: 'part', label: '部位' },
@@ -566,12 +588,13 @@ export function buildContraDoc(v: ContraView): string {
       })),
       caption: '命中明细' + (s.hits.length > 100 ? '（仅列前 100 条，共 ' + s.hits.length + ' 条）' : '（共 ' + s.hits.length + ' 条）'),
       emptyText: '无命中（计划动作均通过扫描）',
-    }));
+    }) + '</div>');
   }
   if (s.suggestions.length > 0) {
     // T351-v11：原来一条建议挤成 `原因：…｜替换：…` 一行串（那个 `｜` 又是拿符号顶替设计，第 ⑤ 条），
     // 右侧槽还挂着规则名（与「命中明细」里的「规则」列重复）。改成三列真表格：动作｜原因｜可以换成。
-    parts.push(renderDataTable({
+    // 窄屏让「原因」列让位（`.ilw-alt`）：上一张表已逐条给过原因，这张窄屏只剩「动作｜可以换成」最好读。
+    parts.push('<div class="ilw-alt">' + renderDataTable({
       columns: [
         { key: 'movement', label: '动作' },
         { key: 'reason', label: '原因' },
@@ -580,7 +603,7 @@ export function buildContraDoc(v: ContraView): string {
       rows: s.suggestions.map((g) => ({ movement: g.movement, reason: g.reason, replace: g.replace })),
       caption: '替代建议',
       emptyText: '无替代建议',
-    }));
+    }) + '</div>');
   }
   parts.push(contraCopyBlock(v));
   return assembleDocPage({
@@ -591,7 +614,7 @@ export function buildContraDoc(v: ContraView): string {
     // （「趋势分析域」是仓库里的域划分，用户不该看到）。
     eyebrow: '健身计划',
     subtitle: v.part === 'all' ? '全部部位' : '只看' + v.part,
-    content: pageChromeCss(960) + parts.join(''),
+    content: pageChromeCss(960) + CONTRA_MOBILE_CSS + parts.join(''),
     charts: false,
   });
 }
