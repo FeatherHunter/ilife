@@ -8,6 +8,9 @@
  * 本件照 #390 的姊妹件 `goal/goalWeightDoc.ts` 与 `shared/docPage.ts::assembleDocPage` 的形状，
  * 按 `t425-融合基准.md` §五 的骨架补齐八样：页框／页头（唤醒词 ＋ 类型徽章）／含本页读数的结论句／
  * 页内导航／读数卡与表／口径行／来源脚注／复制区双按钮（裁定 7：日志第 4 段＝可照抄重跑的命令原文）。
+ * **#561（2026-09-15 用户裁决）**：八样里的**来源脚注**整条撤——「所有 HTML 页面底部的「数据来源：xxx」
+ * 都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）」；来源名仍住复制日志第 3 段（`copyBlockOf`
+ * 的 `source`），给 AI 照抄的技术原件一字不动。
  *
  * **取数一行不动**：本件只吃两条入参——`read.ts` 现算的视图对象与它现算的 `metrics`；同一份
  * `metrics` 对象既进信封 `data.metrics` 又进复制载荷，两处不会走散（票面「取数口径一个字不许变」）。
@@ -70,11 +73,10 @@ function copyBlockOf(key: string, metrics: Record<string, number>, command: stri
   });
 }
 
-/** 页面装配的四条共用尾巴：口径行两条 ＋ 复制区 ＋ 来源脚注（裁定 2-补：脚注走普通小字行）。 */
-function tailOf(key: string, metrics: Record<string, number>, command: string, source: string, calibers: readonly string[], footer: string): string {
+/** 页面装配的三条共用尾巴：口径行 ＋ 复制区（#561：来源脚注那条尾巴已按用户裁决整条撤）。 */
+function tailOf(key: string, metrics: Record<string, number>, command: string, source: string, calibers: readonly string[]): string {
   return calibers.map((line) => renderCaliberLine(line)).join('')
-    + copyBlockOf(key, metrics, command, source)
-    + renderCaliberLine(footer);
+    + copyBlockOf(key, metrics, command, source);
 }
 
 /* ── ① 目标分析（`calorie.view.goal`：目标值 ＋ 完成度 ＋ 缺口与摄入趋势） ───────────────────── */
@@ -137,8 +139,7 @@ export function buildGoalDoc(v: GoalView, metrics: Record<string, number>, comma
       emptyText: '窗口里没有饮食记录',
     })),
     tailOf('calorie.view.goal', metrics, command, '目标表与饮食记录',
-      ['缺口是当天消耗减掉当天摄入的差，正数代表有缺口。', '消耗算日常消耗加当天运动，摄入只算吃进去的，喝水不算。'],
-      '📊 数据来源：本机目标表与饮食记录，窗口 ' + v.start + ' 至 ' + v.end + '。'),
+      ['缺口是当天消耗减掉当天摄入的差，正数代表有缺口。', '消耗算日常消耗加当天运动，摄入只算吃进去的，喝水不算。']),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -203,8 +204,7 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
       emptyText: '窗口里没有饮食记录',
     })),
     tailOf('calorie.view.goal-vs-actual', metrics, command, '目标表与饮食记录',
-      ['达标线是当天摄入落在热量目标的 80% 到 120% 之间，没记录的日期不计入达标也不计入未达标。'],
-      '📊 数据来源：本机目标表与饮食记录，对比窗口 ' + v.start + ' 至 ' + v.end + '，逐日表看最近 30 天。'),
+      ['达标线是当天摄入落在热量目标的 80% 到 120% 之间，没记录的日期不计入达标也不计入未达标。']),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -252,8 +252,7 @@ export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string
       emptyText: '没有设过带截止日的目标',
     })),
     tailOf('calorie.view.goal-expiring', metrics, command, '目标表与体重目标',
-      ['即将到期是指剩余天数落进你设的提醒窗口内，窗口默认 14 天。', '截止日与体重目标都要先设过才有这一页，缺一样就先补齐再来看。'],
-      '📊 数据来源：本机目标表与体重目标。'),
+      ['即将到期是指剩余天数落进你设的提醒窗口内，窗口默认 14 天。', '截止日与体重目标都要先设过才有这一页，缺一样就先补齐再来看。']),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,

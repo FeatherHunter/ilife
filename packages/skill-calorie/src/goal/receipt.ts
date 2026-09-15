@@ -11,8 +11,11 @@
  *   定体重目标／改体重目标 → `calorie.goal.weight`；暂停所有目标 → `calorie.goal.pause`；
  *   重启所有目标 → `calorie.goal.resume`。
  *
- * 块序（本票裁定）：① 操作回执 ② 字段变更（改前 → 改后）③ 库里现在的目标 ④ 对账信息
- * ⑤ 复制区 ＋ 来源脚注。页头三件：`docTitle`＝「卡路里 目标回执」、眉标＝「目标管理」、
+ * 块序（本票裁定）：① 操作回执 ② 字段变更（改前 → 改后）③ 库里现在的目标 ④ 对账信息 ⑤ 复制区。
+ * **#561（2026-09-15 用户裁决）**：原块序里的「⑤ 复制区 ＋ 来源脚注」中**来源脚注整行撤**——
+ * 「所有 HTML 页面底部的「数据来源：xxx」都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）」；
+ * 来源名仍住复制日志第 3 段（`copyLog({ source: receipt.meta.source })`），技术原件一字不动。
+ * 页头三件：`docTitle`＝「卡路里 目标回执」、眉标＝「目标管理」、
  * 主标题＝`receipt.scene`（＝那条命令的中文名）。
  *
  * 取数两条路（**页面不改数据面**）：
@@ -215,7 +218,6 @@ function buildGoalReceiptDoc(db: DatabaseSync, key: string, receipt: CrudReceipt
         }),
       },
     }),
-    renderCaliberLine('数据来源：本机目标库 ｜ 本次影响 ' + receipt.affectedRows + ' 行 ｜ 时间 ' + receipt.meta.actionAt),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
