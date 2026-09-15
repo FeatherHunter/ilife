@@ -36,6 +36,13 @@ export const PLAN_EDITOR_JS = `
     var m = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(String(iso || ''));
     return m === null ? String(iso || '') : (m[1] + '年' + Number(m[2]) + '月' + Number(m[3]) + '日');
   }
+  /* 「结构禁」与「参数开」是**两件事**——本件两处 S1 的根因，是把它们绑在了同一个 locked 开关上：
+     于是需求正件 §1③ 的三句在任何可达状态都不同真——locked 真＝结构禁真／参数开假；locked 假＝结构禁假／参数开真。
+     本件按下面这份分工落代码：
+       ① 结构禁＝增删训练段／增删动作／换时段：由 lock() 分支与这些控件上的 disabled 挡；
+       ② 参数开＝组数／次数／负重（含 RM↔kg 切换）／时长：**任何周都可改**，与 locked 无关。
+     凡 lock() 分支，只许换「增删」那几处控件：
+       不许把参数面换成纯文本、也不许摘掉它的坐标。 */
   function lock(){ return S.weeks[week].locked; }
   function days(){ return S.weeks[week].days; }
   function day(d){ return days()[d]; }
@@ -185,22 +192,15 @@ export const PLAN_EDITOR_JS = `
         + '<button type="button" class="pe-mode" data-act="toggle-mode"' + at + '>' + (mv.mode === 'rm' ? 'RM' : 'kg') + '</button>'
         + '<span class="pe-param"><input type="number" min="0" max="500" step="0.5" value="' + mv.load + '" data-act="set-load"' + at + ' aria-label="负重"><span class="pe-param-u">' + (mv.mode === 'rm' ? 'RM' : 'kg') + '</span></span>';
     }
-    if (lock()) params = '<span class="pe-plain">' + plainParams(mv) + '</span>'
-      + '<button type="button" class="pe-edit" data-act="unlock-note"' + at + ' hidden></button>';
+    /* 参数面**不跟着 lock() 走**（负责人③「任何动作内参数都可改」）：锁住的周只锁结构——增删训练段与
+       动作、换时段；第 1 周排好的动作，组数／次数／负重（含 RM↔kg 切换）／有氧时长照样是可填的格。
+       坐标必须跟着出（data-d／data-s／data-m）：缺了它，写进去的值会落到别的行——底部那张表是落库依据。 */
     var del = lock() ? '<span class="pe-lockico" title="第 1 周之外不能改动作" aria-label="已锁"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>'
       : '<button type="button" class="pe-x" data-act="del-move"' + at + ' aria-label="删掉这个动作">✕</button>';
     return '<li class="pe-move">'
       + '<div class="pe-move-main"><div class="pe-move-nm">' + esc(mv.name) + '</div><div class="pe-move-tags">' + goal + tags + '</div></div>'
       + '<div class="pe-params">' + params + '</div>'
       + del + '</li>';
-  }
-
-  /** 锁住的周参数也**可改**（负责人③：组数次数重量能改）——所以是输入框，只是不再带删除与加号。 */
-  function plainParams(mv){
-    var at = '';
-    return mv.kind === '有氧'
-      ? '<span class="pe-param"><input type="number" min="1" max="600" value="' + mv.minutes + '" data-act="set-min"' + at + '><span class="pe-param-u">分钟</span></span>'
-      : mv.sets + ' 组乘 ' + mv.reps + ' 次 ' + (mv.mode === 'rm' ? mv.load + ' RM' : (mv.load ? mv.load + ' kg' : '自重'));
   }
 
   function pickerHtml(){
