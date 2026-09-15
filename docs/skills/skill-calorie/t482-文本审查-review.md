@@ -361,3 +361,89 @@ python .scratch/t154/text-review/rev-fix/probe-fix-readings.py   # → .scratch/
   复制区形态与深色瞬时 toast／第 48 条整页（归 #436）／`.scratch/t154/delivery/`（只有编排者重出交付包）。
 - **写集外残留（本票不改，供编排者派下一手）**：`weight/logReceipt.ts` 与 `weight/receipt.ts` 两件里的
   7 页 ★（01／09／16／17／23／24／31）与 3 处顿号——见 `t483-文本审查-receipt.md` 八.2 的逐条表。
+
+---
+
+## 九、W2 第二轮复验（2026-09-15，本席）
+
+**事由**：首轮（§二～§五）＋ 对抗整改（§六）＋ #504（§七）＋ #510（§八）之后，
+同一件又经公共层 `1712317`（口径行 `｜` 分隔改形状化）与眉标整族删除两批改动，
+按三条判据重验 6 页。**本节只追加，不改上文一字。**
+
+### 九.1 逐页复验（读者＝不懂技术的项目负责人）
+
+| 页 | 判据①冗余 | 判据②人话 | 判据③形态 | 处置 |
+|---|---|---|---|---|
+| 15 本周（单日） | 副标题只留窗口、条数归页脚；结论只说涨跌 | `记录太少`／`这段时间只记了 1 条`／`只有 1 个点，没法算变化` | 提示＋分条、卡片＋`verdict` 结论 | 通过，不动 |
+| 22 本月 | 同上 | `比上月`／`整段都记了`／`平均每天多 17 克` | 卡下事实条＋对照段小字 | 通过，不动 |
+| 29 最近 90 天 | 同上；月份数只留卡片一处 | `比前面一段`＋写明对照区间 | 月表 `平均体重`＋一位小数 | 通过，不动 |
+| 36 今年 | 同上（对照段跨到 2025 年已写明起止） | 同上 | 同上（最低 69.9 kg 中途值照旧出） | 通过，不动 |
+| 40 自定义时间 | 同第 22 条 | 同第 22 条 | 同第 22 条 | 通过，不动 |
+| 44 里程碑回溯 | 副标题说读法、结论只说两件列表没有的事 | `每减 5 kg 记一次`／`起算点`／`最新`／`已减` | **结论块原来裸 `<p>`，窗口五页已是 `verdict()`** | **改 1 行**：`verdict(v.summary)`（句子一字未改；附带 `esc` 转义） |
+
+其余候选逐条核实为**不动**：`基准`／`分月` 徽章（对抗审查 93 分已审过，非百分百冗余）；
+15 页 `持平`×2（期间变化 vs 比上周，答的是两道题）；15 页 `警告` 徽章（通用回落词，
+与卡片值槽／提示条说的是 severity／count／解释三件事）；复制区形态、眉标（已删）、第 48 条（`src/goal/` 零改动，
+`git status` 已验干净）。
+
+### 九.2 删掉的信息登记（不许丢）
+
+**本次零删除**：`review.ts` 改 1 行只换结论块容器（`<p>` → `verdict()` 同句）；
+测试件改的是断言写法（§九.3），页面事实零增减。无登记项。
+
+### 九.3 公共层改动同步（测试断言，不放宽）
+
+基线重跑发现 `weight-review-335` 12/13 红（`runId=bb3ba61f`，`本周 页脚未统一句式`）：
+公共层已提交件 `1712317` 把 `renderCaliberLine` 的 `｜` 分隔改成各段独立 `<span>`，
+HTML 字面不再含 `｜`，旧断言逐字匹配落空。**读者可见文本一字未变**
+（`📊 数据来源：体重记录 窗口 … 共 N 条`，`verify-text.py` 十项全 0）。
+处置（写集内）：两处页脚断言改判**可见文本**（人话来源 ＋ `共 N 条` 同页同序），
+意图与旧断言逐字一致；另加一条钉住本次源码改动（44 页结论含 `<p class="wui-verdict">最近一次达标`）。
+两份契约件（`weight-wake-58-339` 60/60、`render-t41` 10/10）判据一字未动、双绿。
+
+### 九.4 机器读数
+
+- **编译**（真实入口，`node node_modules/typescript/bin/tsc -b packages/skill-calorie`，`npx tsc` 在本机是假出口）：
+  改前 `runId=f7618751-b80a-45c9-8b86-2ed9f2443a29 exit=0`；
+  改后 `runId=f9cc368e-eeac-4e2d-84ac-93710329947d exit=0`；
+  变异轮 `runId=772d1a58 exit=0`；还原后 `runId=80aede46 exit=0`。
+- **靶向用例**（`node --test packages/skill-calorie/test/weight-review-335.test.mjs`）：
+  基线红 `runId=bb3ba61f-b026-... exit=1`（`tests 13 / pass 12 / fail 1`，§九.3 那一条）；
+  改后绿 `runId=4ae5379e-525d-441b-a82d-43a62d0e926f exit=0`（`tests 13 / pass 13 / fail 0`）；
+  还原绿 `runId=e7d3f992-fac4-4591-9617-2e7b3f749019 exit=0`（`tests 13 / pass 13 / fail 0`）。
+- **契约件**（判据未动）：`weight-wake-58-339` `runId=2cd044d8-e970-4f53-9a4f-07aa875217ac exit=0`
+  （`tests 60 / pass 60 / fail 0`）；`render-t41` `runId=500c3f48-06bd-4e81-b45f-88bb954faca2 exit=0`
+  （`tests 10 / pass 10 / fail 0`）。
+- **变异自证**：改坏页脚全角冒号→半角 ⇒
+  `AssertionError: 本周 仍有旧句：📊 数据来源:`，`tests 13 / pass 12 / fail 1`，
+  `RESULT: ticket=482 runId=a2548534-0195-473f-b305-38fa0d5bc7b3 waitedMs=0 exit=1`；
+  还原 ⇒ `tests 13 / pass 13 / fail 0`，
+  `RESULT: ticket=482 runId=e7d3f992-fac4-4591-9617-2e7b3f749019 waitedMs=0 exit=0`。
+- **出页**：`TALLY {"通过":6} TOTAL 6 HTML=6` ＋ `OK-RENDER`（44 页 `74369→74389` 字节，
+  其余 5 页字节不变）；截图 `SHOT 6 files`，本席用眼睛看过 44／15 两张（结论加粗同形、
+  里程碑三槽无折行无省略号、单点图平均线标签可读）。
+- **台账**：`review.ts` LF=754（台账值 754，一行换一行，零陈化；`AGENTS.md` 未碰，归编排者同步）。
+- **GATE-RUN 声明（本窗，ticket=482）**：
+
+GATE-RUN runId=c8cf7c88-74c4-4655-8118-ed38c6b40df9 cmd="npx tsc -b packages/skill-calorie"
+GATE-RUN runId=f7618751-b80a-45c9-8b86-2ed9f2443a29 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie"
+GATE-RUN runId=bb3ba61f-2a79-49c0-b026-030bff946e27 cmd="node --test packages/skill-calorie/test/weight-review-335.test.mjs"
+GATE-RUN runId=2cd044d8-e970-4f53-9a4f-07aa875217ac cmd="node --test packages/skill-calorie/test/weight-wake-58-339.test.mjs"
+GATE-RUN runId=500c3f48-06bd-4e81-b45f-88bb954faca2 cmd="node --test packages/skill-calorie/test/render-t41.test.mjs"
+GATE-RUN runId=f9cc368e-eeac-4e2d-84ac-93710329947d cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie"
+GATE-RUN runId=4ae5379e-525d-441b-a82d-43a62d0e926f cmd="node --test packages/skill-calorie/test/weight-review-335.test.mjs"
+GATE-RUN runId=772d1a58-2261-4b5a-bb90-754030db70e8 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie"
+GATE-RUN runId=a2548534-0195-473f-b305-38fa0d5bc7b3 cmd="node --test packages/skill-calorie/test/weight-review-335.test.mjs"
+GATE-RUN runId=80aede46-fc0d-4d5d-ba52-6d4f2153cd1c cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie"
+GATE-RUN runId=e7d3f992-fac4-4591-9617-2e7b3f749019 cmd="node --test packages/skill-calorie/test/weight-review-335.test.mjs"
+
+首条 `c8cf7c88` 是旧入口（`npx tsc`）的读数，如实登记但不作门禁依据（AGENTS.md 已写明该入口是假出口）；
+门禁只认真实入口的 `f7618751`（改前）／`f9cc368e`（改后）。
+
+### 九.5 未做项与下一手
+
+1. `基准`／`分月`／单点页双 `持平`（§九.1）：三轮已审过的判断，本席按「非百分百冗余不动」，
+   如编排者要收紧需另开票（改徽章词要同步两份契约件的冻结断言，不属本票）。
+2. `weightUi.ts` 未碰（`verdict()` 复用现成件）；`shared/*`／`base-render/*` 一行未读只用；
+   `.scratch/t154/delivery/` 未碰（编排者重出）；`git push` 未做（总工统一收口）。
+3. 日志：`.scratch/t154/w2-482/`（`tsc*.log`／`test-*.log`／`mut-*.log`／`render*.log`／`shoot.log`／`claim.md`）。
