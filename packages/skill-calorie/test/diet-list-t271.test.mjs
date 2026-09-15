@@ -64,8 +64,30 @@ function tableOf(html, needle) {
   const from = (before >= 0 && html.indexOf('</table>', before) > i) ? before : html.indexOf('<table', i);
   assert.ok(from > 0, '这门针之前之后都没有表：' + needle);
   const seg = html.slice(from, html.indexOf('</table>', from));
-  const head = seg.slice(seg.indexOf('<thead'), seg.indexOf('</thead>'));
+  const hs = seg.indexOf('<thead');
+  const he = seg.indexOf('</thead>');
+  /* 跳过 `<thead …>` 标签本身——它的开头也是 `<th`，正则会把它当成一格表头（实测踩过）。 */
+  const head = seg.slice(seg.indexOf('>', hs) + 1, he);
   return [...head.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1]);
+}
+
+/** 「复制日志」那颗按钮的标签原文（不给命令原文时公共层仍会出一颗 `disabled` 的同名按钮）。 */
+function logButtonTag(html) {
+  const i = html.indexOf('data-action-id="ilife-copy-log"');
+  if (i < 0) return null;
+  return html.slice(html.lastIndexOf('<button', i), html.indexOf('>', i) + 1);
+}
+
+/** 日志文本的第 4 段「调用链」（段序正本＝`packages/base-render/src/spec/text.ts:25` 的 `LOG_SECTIONS`）。 */
+function callChainOf(tag) {
+  const m = /data-t="([\s\S]*?)"/.exec(tag);
+  assert.ok(m, '复制日志按钮上读不到日志文本（死按钮）');
+  const log = m[1].replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const segs = log.split('\n');
+  assert.equal(segs.filter((s) => /^(场景标识|AI 思考链|数据结构|调用链|时间戳版本|异常)$/.test(s.trim())).length,
+    6, '日志不是六段：' + log.slice(0, 160));
+  return segs[segs.findIndex((s) => s.trim() === '调用链') + 1];
 }
 
 test('#271 骨架：15 行里该出的都出，明细长着备注列', () => {
@@ -97,25 +119,17 @@ test('#271 骨架：15 行里该出的都出，明细长着备注列', () => {
   assert.equal(a3.hit, null, '命令键漏到用户眼前：' + a3.hit);
 });
 
-test('#271 复制区：给了命令原文即双按钮，日志第 4 段＝本次命令原文', () => {
+test('#271 复制区：给了命令原文即真·日志按钮，第 4 段＝本次命令原文', () => {
   const cmd = "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'";
   const html = BUILD_VIEW(sampleInput({ command: cmd }));
   assert.ok(html.includes('复制数据'), '缺「复制数据」按钮');
-  const i = html.indexOf('data-action-id="ilife-copy-log"');
-  assert.ok(i > 0, '给了 command 却没出「复制日志」按钮（裁定 7 要双按钮）');
-  const tag = html.slice(html.lastIndexOf('<button', i), html.indexOf('>', i) + 1);
-  const m = /data-t="([\s\S]*?)"/.exec(tag);
-  assert.ok(m, '复制日志按钮上读不到日志文本（死按钮）');
-  const log = m[1].replace(/&#39;/g, "'").replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  const segs = log.split('\n');
-  assert.equal(segs.filter((s) => /^(场景标识|AI 思考链|数据结构|调用链|时间戳版本|异常)$/.test(s.trim())).length,
-    6, '日志不是六段：' + log.slice(0, 160));
-  assert.equal(segs[segs.findIndex((s) => s.trim() === '调用链') + 1], cmd, '第 4 段不是本次命令原文');
-  /* 不给 command 时**只出一颗**按钮——不留点不动的第二颗。 */
-  const bare = BUILD_VIEW(sampleInput());
-  assert.ok(bare.includes('复制数据'), '不给 command 也该出「复制数据」');
-  assert.ok(!bare.includes('ilife-copy-log'), '不给 command 却出了「复制日志」（死按钮）');
+  const tag = logButtonTag(html);
+  assert.ok(tag !== null, '给了 command 却没出「复制日志」按钮（裁定 7 要双按钮）');
+  assert.equal(callChainOf(tag), cmd, '第 4 段不是本次命令原文');
+  /* 不给 command 时那颗按钮**不许是活的**（公共层的复制区在无日志文本时出一颗 disabled 的同名按钮，
+     页面侧不做补救——不留点得动的死按钮）。 */
+  const bareTag = logButtonTag(BUILD_VIEW(sampleInput()));
+  if (bareTag !== null) assert.ok(bareTag.includes('disabled'), '不给 command 却出了能点的「复制日志」：' + bareTag);
 });
 
 test('#271 裁定 4／5：空窗仍出完整页；单点不成线；零值不画柱身', () => {
@@ -134,7 +148,10 @@ test('#271 裁定 4／5：空窗仍出完整页；单点不成线；零值不画
   assert.ok(visibleText(empty).includes('没有饮食记录'), '空窗缺空态句');
   assert.ok(visibleText(empty).includes('记一餐'), '空窗缺引导句');
   assert.ok(empty.includes('数据来源'), '空窗缺来源脚注');
-  assert.ok(!empty.includes('ilife-block-chart-block'), '空窗不该画图');
+  /* 断「图上不出图元」要看**正文**：样式段里本来就有 `.ilife-block-chart-block{…}` 那类规则名。 */
+  const emptyBody = empty.slice(empty.indexOf('</style>'));
+  assert.ok(!emptyBody.includes('ilife-block-chart-block-canvas'), '空窗不该画图');
+  assert.ok(!emptyBody.includes('id="sec-trend"') && !emptyBody.includes('id="sec-daily"'), '空窗不该出折线／按日汇总区块');
   /* 单点不成线：只有一天有记录 ⇒ 出说明句、不出折线。 */
   const one = BUILD_VIEW(sampleInput({
     days: [{ date: '2026-09-07', calories: 1700, protein: 100, carbs: 200, fat: 55, calorieGoal: 1800 }],
@@ -162,7 +179,7 @@ test('#271 餐别支／总览支：调用点给了取数才换页，区块走 #2
       dist: [{ label: '早餐', count: 1, cal: 320, pct: 100 }],
     },
   }));
-  assert.ok(meal.includes('ilife-block-distribution-rows'), '餐别支没出 #273 的占比条');
+  assert.ok(meal.includes('ilife-block-dist-row'), '餐别支没出 #273 的占比条');
   assert.ok(meal.includes('餐别分布 2026-09-01 ~ 2026-09-07'), '餐别支页名不对');
   assert.ok(visibleText(meal).includes('早餐热量占比最高'), '餐别支没把 #273 的结论句放进副题槽');
   const ov = BUILD_VIEW(sampleInput({
@@ -210,16 +227,15 @@ test('#271 真跑：calorie.view.diet（窗口词）exit 0＋完整文档＋日�
   assert.ok(r.html.includes('数据来源'), '缺来源脚注');
   assert.deepEqual(tableOf(r.html, '全部记录').at(-1), '备注', '真跑的明细末列不是备注');
   assert.ok(r.html.includes('复制数据'), '真跑缺「复制数据」按钮');
-  /* 复制日志那一颗**要处理体把命令原文传进来**才出：`calorie.view.diet` 的处理体住 `src/home/**`，
-     本票按编排者 2026-09-15 的裁定**不接线**（改归 #276 席），故这里只守不变量——
-     一旦哪天接上了，第 4 段必须逐字等于本次命令原文。 */
-  const i = r.html.indexOf('data-action-id="ilife-copy-log"');
-  if (i > 0) {
-    const tag = r.html.slice(r.html.lastIndexOf('<button', i), r.html.indexOf('>', i) + 1);
-    const log = /data-t="([\s\S]*?)"/.exec(tag)[1].replace(/&#39;/g, "'").replace(/&amp;/g, '&');
-    const segs = log.split('\n');
-    const call = segs[segs.findIndex((s) => s.trim() === '调用链') + 1];
-    assert.equal(call, "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'", '第 4 段不是本次命令原文');
+  /* 复制日志那一颗要处理体把命令原文传进来才**活**：`calorie.view.diet` 的处理体住 `src/home/**`，
+     本票按编排者 2026-09-15 的裁定**不接线**（改归 #276 席）⇒ 这里守的是不变量：
+     接上了，第 4 段必须逐字等于本次命令原文；没接上，那颗按钮必须是 `disabled`（不是死按钮）。 */
+  const tag = logButtonTag(r.html);
+  if (tag !== null && tag.includes('data-t=')) {
+    assert.equal(callChainOf(tag), "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
+      '第 4 段不是本次命令原文');
+  } else {
+    assert.ok(tag === null || tag.includes('disabled'), '没接上命令原文时那颗日志按钮不许是活的：' + tag);
   }
 });
 
@@ -244,11 +260,8 @@ test('#271 真跑：calorie.today 带 hasNote 的备注列＋标题写明筛选�
   const plain = run(dir, 'calorie.today', { date: '今日' });
   assert.ok(tableOf(plain.html, '今日明细').at(-1) === '备注', '普通今日页的明细缺备注列');
   /* 裁定 7 的真出口证据：处理体在自己声明路径内（`src/diet/today.ts`）⇒ 这一支接上了命令原文。 */
-  const i = r.html.indexOf('data-action-id="ilife-copy-log"');
-  assert.ok(i > 0, 'calorie.today 这一支缺「复制日志」按钮（处理体没把命令原文传进来）');
-  const tag = r.html.slice(r.html.lastIndexOf('<button', i), r.html.indexOf('>', i) + 1);
-  const log = /data-t="([\s\S]*?)"/.exec(tag)[1].replace(/&#39;/g, "'").replace(/&amp;/g, '&');
-  const segs = log.split('\n');
-  assert.equal(segs[segs.findIndex((s) => s.trim() === '调用链') + 1],
+  const tag = logButtonTag(r.html);
+  assert.ok(tag !== null && tag.includes('data-t='), 'calorie.today 那一支的「复制日志」不是活按钮：' + tag);
+  assert.equal(callChainOf(tag),
     "calorie-cmd-read calorie.today --params '{\"date\":\"今日\",\"hasNote\":true}'", '第 4 段不是本次命令原文');
 });
