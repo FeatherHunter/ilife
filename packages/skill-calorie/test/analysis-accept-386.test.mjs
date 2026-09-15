@@ -188,6 +188,18 @@ const REPORT_PIECE = {
 };
 const REPORT_KINDS = Object.keys(KIND_LABELS);
 
+/** 报告族的**页型身份标记**（新形状；#519 裁定 Q 的落点）。
+ *
+ *  改前这两条「不许落进报告页」的断言判的是旧串 `卡路里 · 报告`——那是 #516 判据 R1 的债，
+ *  本票已把它形状化掉（题名两段用空格、页型徽章只写一个词「报告」、归属词走页头胶囊）⇒
+ *  旧串在产物里**已不存在**，那两条断言变成**恒真的空转**。
+ *  收严做法（裁定 Q 的选项 ①：原事实仍在）：把判据换成新形状的**两枚标记**——
+ *    ① `<div class="type-badge">报告</div>`：报告族的页型徽章（`assembleDocPage` 的 `badge` 位，只写一个词）；
+ *    ② `ilife-block-chip">健康报告<`：报告族页头胶囊里那一枚归属词（`reportChips`）。
+ *  两枚**同时**在场才算报告族页；负向断言（预测／缺口页不得带它）与**正面半边**（报告族产物必须带它）
+ *  成对使用——没有正面半边，负向断言就是在空转（这正是本条要修的毛病）。 */
+const REPORT_PAGE_MARKS = ['<div class="type-badge">报告</div>', 'ilife-block-chip">健康报告<'];
+
 /* ── 判据 0 · 范围分母（派生自权威声明，无手写计数） ─────────────────────── */
 
 test('#386 判据：范围由冻结表＋routes.ts 派生（预测模拟／报告／缺口／new 别名）', () => {
@@ -322,6 +334,14 @@ test('#386 第三组：8 报告各拿自己那页（不是 full 健康盘）／�
   }
 
   // ② 预测各形态：页面必须带上**这条词自己**的参数；20 页两两互异
+  /* #519 裁定 Q（编排者 2026-09-16，一次性、具名、不类推）——**正面半边**：
+   * 下面两条「预测／缺口页不得落进报告页」的负向断言，只有当报告族产物**真的带**那两枚标记时才有力。
+   * 缺了这半边，负向断言就是恒真（旧串 `卡路里 · 报告` 已随形状化消失，正是那个毛病）。 */
+  for (const h of reportHtmls) {
+    for (const m of REPORT_PAGE_MARKS) {
+      assert.ok(h.includes(m), '报告族产物缺页型标记「' + m + '」⇒ 后面的负向断言会空转（裁定 Q）');
+    }
+  }
   const predKeys = new Set();
   for (const t of PREDICT) {
     const params = paramsOf(t.main_prompt.cli);
@@ -334,7 +354,10 @@ test('#386 第三组：8 报告各拿自己那页（不是 full 健康盘）／�
     }
     const h1IsOwn = h1 === t.wake_word || numbers.every(([, v]) => h1.includes(String(v)));
     assert.ok(h1IsOwn, t.wake_word + ' 的页头不是它自己那一页（H1=' + h1 + '）：拿错页即红');
-    assert.ok(!rec.html.includes('卡路里 · 报告'), t.wake_word + ' 落进了报告页');
+    /* #519 裁定 Q：由 `!includes('卡路里 · 报告')`（旧串已随形状化消失 ⇒ 恒真空转）收严为
+     * 「报告族的新形状标记一枚都不许出现」；正面半边见本节开头那条（报告族产物必须带这两枚）。 */
+    assert.ok(!REPORT_PAGE_MARKS.some((m) => rec.html.includes(m)),
+      t.wake_word + ' 落进了报告页（带上了报告族的页型标记）：' + REPORT_PAGE_MARKS.filter((m) => rec.html.includes(m)).join('／'));
     assert.ok(!/^热量缺口 /.test(h1), t.wake_word + ' 落进了缺口页');
     predKeys.add(h1 + '|' + JSON.stringify(rec.env.data.metrics));
   }
@@ -355,7 +378,9 @@ test('#386 第三组：8 报告各拿自己那页（不是 full 健康盘）／�
     for (const label of ['日均摄入', '日均消耗', '日均缺口', '理论减重']) {
       assert.ok(rec.html.includes('>' + label + '<'), t.wake_word + ' 缺口页缺 KPI 格：' + label);
     }
-    assert.ok(!rec.html.includes('卡路里 · 报告'), t.wake_word + ' 落进了报告页');
+    /* #519 裁定 Q：同上一条，收严成报告族**新形状**的两枚标记（旧串已不存在）。 */
+    assert.ok(!REPORT_PAGE_MARKS.some((m) => rec.html.includes(m)),
+      t.wake_word + ' 落进了报告页（带上了报告族的页型标记）：' + REPORT_PAGE_MARKS.filter((m) => rec.html.includes(m)).join('／'));
     assert.notEqual(rec.html, healthHtml, t.wake_word + ' 落回 full 健康盘那一页了');
   }
   // 缺口别名与本体同命令 ⇒ 产物逐字节相同（同一条命令、两个入口）
