@@ -54,10 +54,22 @@ const dropped = items.filter((it) => !rows.includes(it)); // 清单点名、盘�
 const status = (it) => (it.status === 'green' ? '绿' : '红');
 
 /* ── 墙（两页同一个模板，只换 iframe 与栅格宽） ── */
+/** 每格挂一行机器读数（#534 波次的判据面）：分隔符节点级命中 0 才绿、三档溢出归零是回归门、
+ *  版式要点（390 档触摸不足／最小字号）与视觉分（若当轮跑过 vision 终审）。**读数缺项写 `—`，不写假绿。** */
+const readingsLine = (it) => {
+  const v = man.verdict?.[it.rel] ?? null;
+  const sep = it.sep ? `${it.sep.node === 0 ? '✓ 0 处' : '✗ ' + it.sep.node + ' 处'}` : '—';
+  const ovf = v?.overflow ?? '—';
+  const touch = it.fmt ? String((it.fmt.widths?.['390'] ?? it.fmt.widths?.[390])?.touchSmall ?? '—') : '—';
+  const minFont = it.fmt ? String((it.fmt.widths?.['390'] ?? it.fmt.widths?.[390])?.minFontPx ?? '—') : '—';
+  const vision = v?.vision === undefined || v?.vision === null ? '—' : String(v.vision);
+  return `分隔符命中 ${sep} · 三档溢出 ${ovf} · 390 档触摸不足 ${touch} 处 · 390 档最小字号 ${minFont}px · 视觉 ${vision} 分`;
+};
 function wall({ title, sub, w, h, colW }) {
   const cells = rows.map((it) => `  <figure class="cell-${it.type === '过程型' ? 'p' : 'r'}">
     <figcaption><a href="${esc(it.rel)}" target="_blank" rel="noopener">${esc(it.order ? it.order + ' ' : '')}${esc(it.word)}</a><span>${esc(it.type)} · ${esc(status(it))}</span></figcaption>
     <div class="ask">该确认：${esc(checkLineOf(it))}</div>
+    <div class="mread">${esc(readingsLine(it))}</div>
     <iframe src="${esc(it.rel)}" width="${w}" height="${h}" title="${esc(it.word)}"></iframe>
     <div class="fn">${esc(it.rel)}</div>
   </figure>`).join('\n');
@@ -83,6 +95,7 @@ figcaption span{color:#86868b;font-weight:400;font-size:11.5px;white-space:nowra
 iframe{display:block;width:${w}px;height:${h}px;border:0;background:#fff}
 .fn{font-size:11px;color:#a1a1a6;padding:6px 10px;border-top:1px solid #f0f0f2;word-break:break-all}
 .ask{font-size:11.5px;color:#4a4a4f;background:#f7f8fa;padding:6px 10px;border-bottom:1px solid #ececf0}
+.mread{font-size:11px;color:#5b6b5b;background:#f2f7f2;padding:5px 10px;border-bottom:1px solid #e2ece2;overflow-wrap:anywhere}
 a.back{display:inline-block;margin-bottom:14px;font-size:13px;color:#007aff;text-decoration:none}
 </style>
 </head>
@@ -102,14 +115,14 @@ ${cells}
 }
 
 const desktopWall = wall({
-  title: `桌面墙 · ${items.length} 件 × ${1100} 宽`,
-  sub: `本批 ${man.results.length} 件结果型 ＋ ${man.process.length} 件过程型的整页并排。桌面宽下看版式与信息密度；窄屏看手机墙。`,
-  w: 1100, h: 900, colW: 1140,
+  title: `桌面墙 · ${items.length} 件 × 1280 宽`,
+  sub: `本批 ${man.results.length} 件结果型 ＋ ${man.process.length} 件过程型的整页并排。桌面宽（1280）下看版式、信息密度与「是不是更空而不是更好」；窄屏看手机墙。`,
+  w: 1280, h: 900, colW: 1320,
 });
 const mobileWall = wall({
   title: `手机墙 · ${items.length} 件 × 390 宽`,
-  sub: `同一批产物在手机宽度（390×820）下的真实渲染：媒体查询按 390 生效，窄屏塌列对不对一眼可见。`,
-  w: 390, h: 820, colW: 430,
+  sub: `同一批产物在手机宽度（390×844）下的真实渲染：媒体查询按 390 生效，窄屏塌列、卡片化表格、触摸目标一眼可见。`,
+  w: 390, h: 844, colW: 430,
 });
 writeFileSync(join(HERE, 't369-桌面墙.html'), desktopWall);
 writeFileSync(join(HERE, 't369-手机墙.html'), mobileWall);
@@ -183,10 +196,20 @@ a.big{display:inline-block;margin-right:16px;font-size:13.5px;color:#007aff;text
     <a class="big" href="t369-手机墙.html">手机墙（390 宽 × ${items.length} 件）→</a>
   </div>
   <div class="gates">
-    <span class="pill ok">总门：${man.gate.ok ? '绿' : '红'}</span>
-    <span class="pill">结果型 ${man.gate.rows} 行绿</span>
-    <span class="pill">过程型 ${man.gate.procs} 件绿</span>
-    <span class="pill">生成于 ${esc(man.generatedAt)}</span>
+    ${(() => {
+      const g = man.gate ?? {};
+      const s = g.separator ?? null;
+      const pills = [];
+      pills.push(s
+        ? `<span class="pill ${s.green === s.pages ? 'ok' : 'bad'}">分隔符与内部标识符：${s.green}/${s.pages} 页 0 命中</span>`
+        : '<span class="pill bad">分隔符读数缺</span>');
+      if (s && s.totals) pills.push(`<span class="pill">节点级命中合计 R1 ${s.totals.R1}／R2 ${s.totals.R2}／R3 ${s.totals.R3}／R4 ${s.totals.R4}／R5 ${s.totals.R5}／R6 ${s.totals.R6}／R7 ${s.totals.R7}</span>`);
+      if (g.overflow !== null && g.overflow !== undefined) pills.push(`<span class="pill ok">三档溢出：${g.overflow} 件读数在册（回归门）</span>`);
+      if (g.fmt) pills.push(`<span class="pill">版式读数：${g.fmt.pages} 件</span>`);
+      if (g.vision) pills.push(`<span class="pill ${g.vision.pass ? 'ok' : 'bad'}">视觉终审：均分 ${g.vision.avg}（${g.vision.pass ? '过线' : '未过线'}）</span>`);
+      pills.push(`<span class="pill">生成于 ${esc(man.generatedAt)}</span>`);
+      return pills.join('\n    ');
+    })()}
   </div>
 
   <h2>过程型（写前）· ${man.process.length} 件</h2>
