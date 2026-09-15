@@ -46,10 +46,12 @@ export interface FlowStepsInput {
   readonly steps: readonly FlowStepInput[];
 }
 
-/** 一段的徽标文字：段号 ＋ 标题 ＋ 这一段的现状。 */
+/** 一段的徽标文字：段号 ＋ 标题 ＋ 这一段的现状。
+ *  本轮整改：段号与标题之间那个 `·` 换全角空格——徽标是版式位，行内不再拿 `·` 当版式
+ *  （`docs/skills/skill-bill/t407-机审读数.md` 第三节：`.ilife-status-badge` 上不许再出现 `·`）。 */
 function stepText(no: number, step: FlowStepInput): string {
   const state = step.state ?? (step.done === true ? '已定' : '未定');
-  return '第 ' + no + ' 段 · ' + step.title + '：' + state;
+  return '第 ' + no + ' 段　' + step.title + '：' + state;
 }
 
 /** 流程三段式整块：逐段出「徽标 ＋ 说明行 ＋ 字段表单 ＋ 成品」。空数组＝空串。 */

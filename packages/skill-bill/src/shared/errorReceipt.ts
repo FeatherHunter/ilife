@@ -7,7 +7,7 @@
  *  铁律五：接口小、里面厚）。以后要真有第二处消费，再按那时的调用点收进公开面。
  *
  * 本件只管口径，不重造控件：本体是 `base-paint/blocks` 的 `renderFeedbackBlock`（含 `renderErrorReceipt`／`renderToast`）。
- *  锁住的那条口径：**消息句必填**（不许出一段没有事由的红块），`retryPrompt` 缺省写「补齐后重跑同一条命令」——
+ *  锁住的那条口径：**消息句必填**（不许出一段没有事由的红块），`retryPrompt` 缺省写「补齐后照这句跟助手说一遍」——
  *  本仓页面不写内联脚本，那段话是提示不是按钮动作。
  *
  * 整页替换这条**债务**（写在件头，不装作做过）：`docs/skills/skill-bill/t407-页面块清单-16词.md` 第一节末列
@@ -24,7 +24,7 @@ interface ErrorReceipt {
   readonly title?: string;
   /** 事由那一句（必填，非空）。 */
   readonly message: string;
-  /** 出错后怎么重来（缺省「补齐后重跑同一条命令」）。 */
+  /** 出错后怎么重来（缺省「补齐后照这句跟助手说一遍」）。 */
   readonly retryPrompt?: string;
   /** 可复制的数据文本（给了才出「复制数据」按钮）。 */
   readonly dataText?: string;
@@ -42,7 +42,7 @@ export function errorReceipt(input: ErrorReceipt): string {
   }
   const error: ErrorReceiptInput = {
     message: input.message,
-    retryPrompt: input.retryPrompt === undefined || input.retryPrompt === '' ? '补齐后重跑同一条命令' : input.retryPrompt,
+    retryPrompt: input.retryPrompt === undefined || input.retryPrompt === '' ? '补齐后照这句跟助手说一遍' : input.retryPrompt,
     ...(input.dataText === undefined ? {} : { dataText: input.dataText }),
     ...(input.logText === undefined ? {} : { logText: input.logText }),
   };

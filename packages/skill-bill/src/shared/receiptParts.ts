@@ -28,17 +28,18 @@ export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string): 
   );
 }
 
-/** 页尾「对账信息」折叠区：本次写入的**可核对信息**——记录编号／写入时间／回执格式。
- *  影响行数与写入字段已在上方卡片上，这里不重写。 */
+/** 页尾「对账信息」折叠区：本次写入的**可核对信息**——记录编号／写入时间。
+ *  这次记了几笔与写进去的项已在上方卡片上，这里不重写。
+ *  本轮整改删掉两行内部话（照 `docs/skills/skill-bill/t407-文字审查.md` 第 54 条）：
+ *  `本地时钟` 与 `回执格式 / v1（写库回执）`——前者是实现细节，后者是版本自指，用户都拿它没动作可做。 */
 export function reconcileDisclosure(receipt: BillReceipt): string {
   return renderDisclosure({
     title: '对账信息',
     contentHtml: renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: [
-        { k: '记录编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
+        { k: '记录编号', v: receipt.recordId === null ? '还没有' : String(receipt.recordId) },
         { k: '写入时间', v: receipt.actionAt },
-        { k: '回执格式', v: RECEIPT_FORMAT },
       ],
     }),
   });

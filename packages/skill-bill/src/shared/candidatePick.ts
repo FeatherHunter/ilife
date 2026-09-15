@@ -20,6 +20,7 @@
 import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderParamForm } from 'base-paint/blocks';
 import { emptyNote } from './emptyNote.js';
+import { badgeTextOf } from './userWording.js';
 
 /** 一个候选：哪条记录 ＋ 一眼认得出的摘要 ＋ 为什么是它。 */
 export interface CandidateItem {
@@ -48,18 +49,22 @@ interface CandidatePickInput {
   readonly hint?: string;
 }
 
-/** 选项的那一行文本：编号在前，挑中的就是编号。 */
+/** 选项的那一行文本与取值：**只写编号**（`#15`），详情就在紧挨着的那张表里逐列列着。
+ *  本轮整改：原来选项里把「分类 ＋ 账户 ＋ 备注」又抄一遍，同一句话在页上印两遍
+ *  （机审判成重复句）；编号是单选真正要选的那件事，挑中的就是编号。 */
 function optionOf(item: CandidateItem): string {
-  return '#' + item.id + ' · ' + item.label;
+  return '#' + item.id;
 }
 
-/** 依据徽标：逐条候选一句「为什么是它」。**空依据抛错**——不写依据的候选等于让人猜。 */
+/** 依据徽标：逐条候选一句「为什么是它」。**空依据抛错**——不写依据的候选等于让人猜。
+ *  徽标只写「第几条 ＋ 依据」：分类／账户／金额那一份已经在上面那张表里逐列列过，
+ *  这里再抄一遍就是同一件事在页上印两遍（本轮整改；表内文字是数据，徽标是文案）。 */
 function whyBadges(items: readonly CandidateItem[]): string {
   const lines = items.map((it, i) => {
     if (typeof it.why !== 'string' || it.why.trim() === '') {
       throw new Error('candidatePick: 第 ' + (i + 1) + ' 条候选没有写「为什么是它」');
     }
-    return renderStatusBadge({ status: 'warn', text: '候选 ' + optionOf(it) + '：为什么是它——' + it.why });
+    return renderStatusBadge({ status: 'warn', text: badgeTextOf('候选 #' + it.id + '：' + it.why) });
   });
   return lines.join('');
 }
@@ -68,12 +73,13 @@ function whyBadges(items: readonly CandidateItem[]): string {
 export function candidateEmpty(input: { readonly label: string; readonly what: string }): string {
   return emptyNote({
     title: '没有可选的' + input.label,
-    text: '这一格没有候选：' + input.what + '，列表里一条都没有。',
-    next: '不拿最近一笔顶替。请把' + input.label + '告诉 AI（或先说清是哪一笔），再重跑同一条命令。',
+    text: '这一格要的是' + input.what + '，列表里一条都没有。',
+    next: '不拿最近一笔顶替。请把' + input.label + '告诉助手（或先说清是哪一笔），再跟助手说一遍。',
   });
 }
 
-/** 记录列表（含依据徽标）：一条候选一行，零行返回空串（空态由 `candidatePick` 出）。 */
+/** 记录列表（含依据徽标）：一条候选一行，零行返回空串（空态由 `candidatePick` 出）。
+ *  表头 `资金`（金额）与列名照用户说法；`为什么是它` 那一列里的分隔符改顿号。 */
 export function candidateRows(items: readonly CandidateItem[]): string {
   if (items.length === 0) return '';
   return renderDataTable({
@@ -89,7 +95,11 @@ export function candidateRows(items: readonly CandidateItem[]): string {
   }) + whyBadges(items);
 }
 
-/** 候选单选整块：单选格 ＋ 记录列表 ＋「为什么是它」徽标 ＋ 一行口径；候选为空则只出空态。 */
+/** 候选单选整块：单选格 ＋ 记录列表 ＋「为什么是它」徽标 ＋ 一行口径；候选为空则只出空态。
+ *
+ *  **已经认准的那条不再进那张表**（本轮整改）：认准之后同页的只读回显表已经把这一条逐项列全，
+ *  候选表再列一遍就是同一句话在页上印两遍（机审判成重复句那一处就是它）。
+ *  没认准的形态照旧：全量候选铺开供挑。 */
 export function candidatePick(input: CandidatePickInput): string {
   const name = input.name;
   const label = input.label;
@@ -98,6 +108,7 @@ export function candidatePick(input: CandidatePickInput): string {
   }
   const selected = input.selectedId ?? null;
   const hit = selected === null ? undefined : input.candidates.find((it) => it.id === selected);
+  const table = hit === undefined ? candidateRows(input.candidates) : '';
   return renderParamForm({
     description: input.hint ?? '从下面列出的记录里挑一条；挑中的编号要跟复制指令里的那一个一致。',
     fields: [{
@@ -107,9 +118,9 @@ export function candidatePick(input: CandidatePickInput): string {
       ...(hit === undefined ? {} : { value: optionOf(hit) }),
       options: input.candidates.map(optionOf),
     }],
-  }) + candidateRows(input.candidates) + renderCaliberLine(
+  }) + table + renderCaliberLine(
     hit === undefined
-      ? '候选未预选（不给默认选中）：请用户从列表里指明是哪一条，再重跑同一条命令。'
-      : '候选已认准 ' + optionOf(hit) + '：请用户核一眼依据，再重跑同一条命令。',
+      ? '候选未预选（不给默认选中）：请用户从列表里指明是哪一条，再跟助手说一遍。'
+      : '候选已认准 ' + optionOf(hit) + '：请用户核一眼依据，再跟助手说一遍。',
   );
 }

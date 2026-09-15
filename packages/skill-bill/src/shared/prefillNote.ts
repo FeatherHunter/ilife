@@ -10,7 +10,7 @@
  *
  * 口径（三件事一处定义）：
  *   - **只预填四项**：账户／账本／币种（来源＝近期最近一笔的库内值）＋ 时间（来源＝本页执行那天的缺省时刻）；
- *     分类**一律不预填**（施工图第四节第 10 条：分类不许留空交 AI 猜），备注是自由文本也不预填；
+ *     分类**一律不预填**（施工图第四节第 10 条：分类不许留空交给助手猜），备注是自由文本也不预填；
  *   - **缺省值不在本件另立一份**：账本「生活」／币种「人民币」引 `src/policy/category.ts` 的 `DEFAULTS`；
  *     时间引同一件的 `defaultTimeOn`（`12:00:00` 的真源在口径层，本件不写第二份字面量）；
  *   - **来源逐格可追**：库里顶来的写「来自记录编号 N（最近一笔）」，缺省顶的写「缺省值（库里还没有可用的…）」，
@@ -70,10 +70,12 @@ export function prefillOf(input: {
   return marks;
 }
 
-/** 某一格的来源一句（给表单字段的提示用）；没有这一格＝返回 `undefined`。 */
+/** 某一格的来源一句（给表单字段的提示用）；没有这一格＝返回 `undefined`。
+ *  本轮整改：原来的 `预填 支付宝 · 来自记录编号 1` 里那个 `·` 落在选择器回显上（版式位），
+ *  改一句连读的「已经替你填上 支付宝，来自…」——一句话说清，不用分隔符。 */
 export function prefillHint(marks: readonly PrefillMark[], name: string): string | undefined {
   const hit = marks.find((m) => m.name === name);
-  return hit === undefined ? undefined : '预填 ' + hit.value + ' · ' + hit.from;
+  return hit === undefined ? undefined : '已经替你填上 ' + hit.value + '，' + hit.from;
 }
 
 /** 预填标注表：字段／取值／来源三列。**空数组＝没有预填，页上不出这一段**（返回空串）。 */

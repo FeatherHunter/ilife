@@ -52,7 +52,7 @@ export function totalChanges(db: DatabaseSync): number {
   return row && typeof row.n === 'number' ? Number(row.n) : 0;
 }
 
-/** 本次执行的命令原文（复制 prompt 区与复制日志第 4 段共用）：与 AI 实跑那条同形，含本次 `--params`，可照抄重跑。
+/** 本次执行的命令原文（复制 prompt 区与复制日志第 4 段共用）：与助手实跑那条同形，含本次 `--params`，可照抄重跑。
  *  参数值里若出现半角单引号，原文会在此处被截断——真要照抄重跑请自行转义（本仓命令原文一贯用单引号包 JSON）。 */
 export function commandLine(key: string, params: Record<string, unknown>): string {
   return 'bill-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";

@@ -96,11 +96,12 @@ describe('t406 · 记账写入域命令声明与注册表', () => {
     assert.throws(() => runRecordWrite('bill.goal.write', {}, null), /不是记账写入域的命令/);
   });
 
-  it('槽位探针：缺的只有必需槽位；金额 0 算给了', () => {
+  it('槽位探针：缺的只有必需槽位；金额 0 视同没给（本仓不记零，裁定第 3 条）', () => {
     const add = RECORD_SLOTS['bill.record.add'];
     assert.deepEqual(missingSlots({}, add).map((s) => s.name), ['category', 'amount']);
     assert.deepEqual(missingSlots({ category: '餐饮' }, add).map((s) => s.name), ['amount']);
-    assert.deepEqual(missingSlots({ category: '餐饮', amount: 0 }, add), []);
+    assert.deepEqual(missingSlots({ category: '餐饮', amount: 0 }, add).map((s) => s.name), ['amount']);
+    assert.deepEqual(missingSlots({ category: '餐饮', amount: '0' }, add).map((s) => s.name), ['amount']);
     const upd = RECORD_SLOTS['bill.record.update'];
     assert.deepEqual(missingSlots({ note: '改过' }, upd).map((s) => s.name), ['id']);
     assert.deepEqual(missingSlots({ id: 1 }, upd), []);
@@ -124,7 +125,7 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
     assert.equal(env.data.receipt.affectedRows, 1, '影响行数＝total_changes 前后差');
     const text = pageOf(file);
     assert.ok(statSync(file).size > 10 * 1024, '走的是新装配的整页，不是老极简模板');
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-key="bill.record.add"', 'data-shape="receipt"', '已改动', '影响行数', '写入字段', '对账信息']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-key="bill.record.add"', 'data-shape="receipt"', '已改动', '这次记了几笔', '写进去的项', '对账信息']) {
       assert.ok(text.includes(needle), '回执整页缺：' + needle);
     }
   });
@@ -137,13 +138,13 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
     const env = envOf(r);
     assert.equal(env.shape, 'receipt');
     assert.equal(env.data.ok, false, '这一次没写库，载荷照实说');
-    assert.equal(env.data.message, '缺必需槽位：category、amount（已出采集页，补齐后重跑同一条命令）',
+    assert.equal(env.data.message, '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）',
       'envelope 载荷与页内文案须同一句（同一件事实一处定义）');
     const text = pageOf(file);
     for (const needle of [
       'data-slot="ilife:bill:collect"', 'data-key="bill.record.add"', 'data-shape="receipt"',
-      '缺必需槽位：category、amount（已出采集页，补齐后重跑同一条命令）', '待补槽位', '未发生',
-      '复制 prompt', 'ilife-block-pre-block', 'ilife-block-param-form', '复制日志',
+      '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）', '还没写库', '还没发生',
+      '这一句可以直接复制', 'ilife-block-pre-block', 'ilife-block-param-form', '复制日志',
     ]) {
       assert.ok(text.includes(needle), '采集页缺：' + needle);
     }
@@ -169,7 +170,7 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.equal(env.data.receipt.op, 'update');
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '改记录 · 回执', '已改动', '影响行数']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '改记录 · 回执', '已改动', '这次记了几笔']) {
       assert.ok(text.includes(needle), '改记录回执缺：' + needle);
     }
   });
@@ -191,12 +192,12 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     const undo = run(['bill.record.update', '--params', JSON.stringify({ op: 'undo', id }), '--html', undoFile]);
     assert.equal(undo.status, 0, 'stderr=' + undo.stderr);
     assert.equal(envOf(undo).data.receipt.op, 'undo');
-    assert.ok(pageOf(undoFile).includes('软删'), '撤销页须说软删');
+    assert.ok(pageOf(undoFile).includes('记录还在'), '撤销页须说清记录还在（可恢复）');
     const restoreFile = join(HTML, 'restore.html');
     const restore = run(['bill.record.update', '--params', JSON.stringify({ op: 'restore', id }), '--html', restoreFile]);
     assert.equal(restore.status, 0, 'stderr=' + restore.stderr);
     assert.equal(envOf(restore).data.receipt.op, 'restore');
-    assert.ok(pageOf(restoreFile).includes('已恢复：' + id), '恢复页须印记录编号');
+    assert.ok(pageOf(restoreFile).includes('已恢复（记录编号 ' + id), '恢复页须印记录编号');
   });
 
   it('缺 id → 采集页（不写库）', () => {
@@ -205,9 +206,9 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.equal(r.status, 0, 'stderr=' + r.stderr);
     const env = envOf(r);
     assert.equal(env.data.ok, false);
-    assert.ok(env.data.message.includes('缺必需槽位：id'), env.data.message);
+    assert.ok(env.data.message.includes('缺必需槽位：记录编号'), env.data.message);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:collect"', '缺必需槽位：id', '复制 prompt', 'ilife-block-param-form']) {
+    for (const needle of ['data-slot="ilife:bill:collect"', '缺必需槽位：记录编号', '照这句跟助手说一遍', 'ilife-block-param-form']) {
       assert.ok(text.includes(needle), '改记录采集页缺：' + needle);
     }
   });
@@ -268,10 +269,10 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(env.data.receipt, undefined, '采集页没有回执事实');
     const text = pageOf(file);
     for (const needle of [
-      'data-slot="ilife:bill:collect"', 'data-page="collect"', '记支出 · 支出（金额取负数） · bill.record.add',
-      '缺项阻断条', '写库已阻断', '⛔ 先补齐（1 项）', 'ilife-action-btn ilife-action-btn-ghost',
+      'data-slot="ilife:bill:collect"', 'data-page="collect"', '记支出', '支出 金额取负数',
+      '还缺什么', '还缺 1 项，补齐再记', '⛔ 先补齐（1 项）', 'ilife-action-btn ilife-action-btn-ghost',
       '预填标注', '来自记录编号 1', 'ilife-block-param-form',
-      '复制 prompt', 'ilife-block-copy-block', '写库：未发生',
+      '这一句可以直接复制', 'ilife-block-copy-block', '写库：还没发生',
     ]) {
       assert.ok(text.includes(needle), '采集页缺：' + needle);
     }
@@ -282,15 +283,15 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const file = join(H2, 'collect-block.html');
     const r = run2(['bill.record.add', '--params', '{"kind":"expense"}', '--html', file]);
     assert.equal(r.status, 0, 'stderr=' + r.stderr);
-    assert.equal(envOf(r).data.message, '缺必需槽位：category、amount（已出采集页，补齐后重跑同一条命令）');
+    assert.equal(envOf(r).data.message, '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）');
     const text = pageOf(file);
     assert.ok(text.includes('⛔ 先补齐（2 项）'), '置灰按钮须报出缺几项');
-    assert.ok(text.includes('&lt;分类&gt;') && text.includes('&lt;金额&gt;'), '补齐后要跑的写库指令须给看');
+    assert.ok(text.includes('&lt;分类&gt;') && text.includes('&lt;金额&gt;'), '补齐后要跑的写库口令须给看');
     for (const t of copyTexts(text)) {
-      assert.ok(!t.includes('&lt;'), '含占位符的写库指令不得可复制，却出现在 data-t：' + t.slice(0, 60));
+      assert.ok(!t.includes('&lt;'), '含占位符的写库口令不得可复制，却出现在 data-t：' + t.slice(0, 60));
     }
-    assert.ok(copyTexts(text).some((t) => t.includes('这一页只采集、不写库')),
-      'prompt 区拷的是叙述句（不是可跑的写库指令）');
+    assert.ok(copyTexts(text).some((t) => t.includes('这一页先不写库')),
+      '这一区拷的是叙述句（不是可跑的写库口令）');
   });
 
   it('重复检测提示条：已给分类＋同日同额出现；分类未给不出条；换一天不出现', () => {
@@ -299,14 +300,14 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(h.status, 0, 'stderr=' + h.stderr);
     assert.equal(envOf(h).data.ok, true, JSON.stringify(envOf(h).data));
     const hitText = pageOf(hit);
-    assert.ok(hitText.includes('重复检测提示条'), '同日同额同分类须报疑似重复');
+    assert.ok(hitText.includes('疑似重复'), '同日同额同分类须报疑似重复');
     assert.ok(hitText.includes('记录编号 1'), '提示条须报出撞上的是哪几笔');
     assert.ok(!hitText.includes('记录编号 ' + envOf(h).data.receipt.recordId + ' · ' + '2026-09-14 13:00:00'),
       '本次自己那条不进提示条');
     const other = join(H2, 'dup-miss.html');
     const m = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-15 13:00:00","account":"支付宝"}', '--html', other]);
     assert.equal(m.status, 0, 'stderr=' + m.stderr);
-    assert.ok(!pageOf(other).includes('重复检测提示条'), '换一天不该报重复');
+    assert.ok(!pageOf(other).includes('疑似重复'), '换一天不该报重复');
   });
 
   it('分类未给 ⇒ 不出重复检测提示条（同日同额也不报，宁可漏提示不误报）', () => {
@@ -316,9 +317,9 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(r.status, 0, 'stderr=' + r.stderr);
     assert.equal(envOf(r).data.ok, false, '这一条缺分类，出采集页');
     const text = pageOf(file);
-    assert.ok(text.includes('缺项阻断条'), '这一页仍出缺项阻断条');
+    assert.ok(text.includes('还缺什么'), '这一页仍出「还缺什么」那一块');
     assert.ok(!/记录编号 1\b/.test(text), '提示条里不得列出同日同额的旧记录');
-    assert.ok(!text.includes('重复检测提示条'), '分类未给时不得出重复检测提示条');
+    assert.ok(!text.includes('疑似重复'), '分类未给时不得出重复那一块');
   });
 
   it('方向不符（记支出给正数）⇒ 阻断、不写库、栏上写清方向', () => {
@@ -328,9 +329,9 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(r.status, 0, '不报参数错，出采集页：' + r.stderr);
     const env = envOf(r);
     assert.equal(env.data.ok, false);
-    assert.match(env.data.message, /方向不符：记支出要负数/, env.data.message);
+    assert.match(env.data.message, /方向和这一型对不上：记支出要负数/, env.data.message);
     const text = pageOf(file);
-    assert.ok(text.includes('方向不符：记支出要负数，给的是 +35.00'), '阻断条须说清方向');
+    assert.ok(text.includes('方向和这一型对不上：记支出要负数，给的是 +35.00'), '阻断条须说清方向');
     assert.equal(rowsAt('2026-09-14'), before, '阻断这一笔不得落库');
   });
 
@@ -341,17 +342,17 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const env = envOf(r);
     assert.equal(env.data.ok, true);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '退出口', '对账信息', '重复检测提示条', '复制数据', '复制日志', '记支出 · 支出（金额取负数）']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '想反悔', '对账信息', '疑似重复', '复制数据', '复制日志', '记支出', '支出 金额取负数']) {
       assert.ok(text.includes(needle), '回执页缺：' + needle);
     }
     // 选页那两枚标记分家：data-shape 是信封形状契约（两页同为 receipt），data-page 才是哪一张页。
     assert.ok(!text.includes('data-page="collect"'), '回执页不得带采集页的 data-page');
     assert.equal((text.match(/data-page=/g) ?? []).length, 1, '整页只有一枚 data-page');
     assert.ok(text.includes('class="ilife-action-btn ilife-action-btn-red"'), '退出口须有危险色按钮');
-    assert.ok(text.includes('ilife-exit-undo-copy'), '撤销指令须有可复制位');
+    assert.ok(text.includes('ilife-exit-undo-copy'), '撤销口令须有可复制位');
     assert.ok(text.includes('bill.record.add（receipt）'), '日志场景标识须是 技能.本地名');
     assert.ok(!text.includes('bill.bill'), '双前缀不得再出现');
-    assert.ok(text.includes('bills（写库回执）'), '回执页数据结构照实说写库');
+    assert.ok(text.includes('biscuit_accountant.db（写库回执）'), '回执页数据结构照实说写库');
   });
 
   it('采集页的数据结构不许照抄回执页那句（写库回执）', () => {
@@ -359,7 +360,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const r = run2(['bill.record.add', '--params', '{"kind":"expense"}', '--html', file]);
     assert.equal(r.status, 0, 'stderr=' + r.stderr);
     const text = pageOf(file);
-    assert.ok(text.includes('bills（只读：本页不写库，只采集）'), '采集页数据结构须说清不写库');
-    assert.ok(!text.includes('bills（写库回执）'), '采集页不得照抄回执页那句');
+    assert.ok(text.includes('biscuit_accountant.db（只读：这一页先不写库，只采集）'), '采集页数据结构须说清不写库');
+    assert.ok(!text.includes('biscuit_accountant.db（写库回执）'), '采集页不得照抄回执页那句');
   });
 });

@@ -65,7 +65,7 @@ export function diffTable(input: { readonly rows: readonly DiffRow[]; readonly c
     return emptyNote({
       title: '没有一处改动',
       text: input.rows.length === 0 ? '这一次没有要比对的字段。' : '给的新值与原值一模一样，等于没改。',
-      next: '请把要改成什么说清（哪个字段、改成什么），再重跑同一条命令。',
+      next: '请把要改成什么说清（改哪一项、改成什么），再跟助手说一遍。',
     });
   }
   return renderDataTable({

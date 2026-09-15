@@ -160,8 +160,10 @@ export function fieldCardOf(input: {
 
 /** 缺项那两处的原文，一次给全（两个名字合成一个粗入口）：
  *  ① `command` 是缺项时那条写库指令原文——缺的值留成尖括号占位符，**只给看不给复制**（复制按钮在阻断条里被拿掉）；
- *  ② `prompt` 是复制 prompt 区那段话：说清缺什么、这一页不写库、补齐后重跑哪条命令——**不给可跑的写库指令**。
- *  `replaces` 给「按中文名占位」以外的写法（拍账单的要素名、记收入的方向提示）。 */
+ *  ② `prompt` 是「照这句跟助手说一遍」那块话：说清缺什么、这一页先不写库、补齐之后说哪句——
+ *     **不给可跑的写库指令**。本轮整改：缺项清单里不再印参数名（库列名不上屏），
+ *     `重跑同一条命令` 换「跟助手说一遍」。
+ *  `replaces` 给「按中文名占位」以外的写法（拍账单的要素名）。 */
 export function blockedPromptOf(input: {
   readonly key: string;
   readonly params: Record<string, unknown>;
@@ -173,7 +175,7 @@ export function blockedPromptOf(input: {
   return {
     command: commandLine(input.key, filled),
     prompt: '这一笔还差 ' + input.blocked.length + ' 项：'
-      + input.blocked.map((i) => i.label + '（' + i.name + '：' + i.why + '）').join('、')
-      + '。\n这一页只采集、不写库；补齐后重跑同一条命令 ' + input.key + '。',
+      + input.blocked.map((i) => i.label + '（' + i.why + '）').join('、')
+      + '。\n这一页先不写库；补齐之后跟助手说一遍，照这条说：' + input.key + '。',
   };
 }

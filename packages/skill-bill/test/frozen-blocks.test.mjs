@@ -82,8 +82,8 @@ describe('t407 · 缺口块一：候选单选', () => {
     const html = candidatePick({ name: 'id', label: '原支出', candidates: CANDIDATES });
     assert.equal((html.match(/<select/g) ?? []).length, 1, '单选就一枚下拉');
     assert.ok(html.includes('<table'), '候选须列出记录表');
-    assert.ok(html.includes('#7 · 餐饮/外卖/午餐 · 支付宝'), '选项要带编号');
-    assert.ok(html.includes('为什么是它——同类同额，最近一笔'), '每条候选要带依据徽标');
+    assert.ok(html.includes('>#7</option>') && html.includes('#7'), '选项要带编号（详情在下表逐列列着）');
+    assert.ok(html.includes('候选 #7：同类同额，最近一笔'), '每条候选要带依据徽标（只写第几条＋依据）');
     assert.ok(!html.includes('selected'), '没给 selectedId 就不预选（不拿第一条兜底）');
   });
 
@@ -129,7 +129,7 @@ describe('t407 · 缺口块二：逐行可编辑表', () => {
       rows: [{ amount: '-12.5', category: '餐饮/外卖/午餐' }, { amount: '-7.5', category: '交通/打车' }],
     });
     assert.ok(!ok.includes('缺：'), '每行齐了就别标红');
-    assert.ok(ok.includes('合计 2 行 · 其中 2 行有金额，合计 -20.00'), '合计只算解析得出的格');
+    assert.ok(ok.includes('合计 2 行，其中 2 行有金额，合计 -20.00'), '合计只算解析得出的格');
   });
 });
 

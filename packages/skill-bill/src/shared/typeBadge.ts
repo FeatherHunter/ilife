@@ -1,62 +1,68 @@
-/** 类型徽章（写入域每张页都有的第二件，**唯一定义地**）：报「这一页是哪条唤醒词、哪一型、哪条命令、什么状态」。
+/** 类型徽章（写入域每张页都有的第二件，**唯一定义地**）：报「这一页是哪条唤醒词、什么口径、什么状态、下一步做什么」。
  *
  * 谁在用（两个调用点，指名）：
- *   ① `src/record/collect.ts`——过程型采集页：`typeBadge` 报「待补槽位 · 未写库」（红档）；
- *   ② `src/record/receipt.ts`——结果型回执整页：同一件，报「写库成功」（绿档）。
- *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
- *  本票实测：本包 `src/` 下真引用本件的就是上面两个调用点，再无第三处。
+ *   ① `src/record/` 的 16 件场景件——过程型采集页：第三枚形状报「还没写库」（红档）；
+ *   ② 同一批场景件的回执页——第三枚形状报「这一笔已保存」（绿档）。
+ *  本票实测：本包 `src/` 下真引用本件的就是上面这批调用点，再无第三处。
+ *
+ * **不再拼分隔符串**（本轮的根因二）：改前是一行字符串
+ *  `记支出 · 支出（金额取负数） · bill.record.add · 待补槽位 · 未写库（已阻断）`——
+ *  一句话里塞了方向口径／命令身份／槽位状态／写库状态四件不同的东西。现在拆成**若干枚独立形状**，
+ *  每枚承载一件事：
+ *    ① 唤醒词标签（`renderChips` 一枚胶囊）；
+ *    ② 这一页的口径（同一枚胶囊里的第二段；型认得出就说方向，认不出就说「分类按三级挂靠」）；
+ *    ③ 页面状态徽章（`renderStatusBadge`，四档之一）；
+ *    ④ 下一步动作（`renderCaliberLine` 一行）；
+ *  命令身份（`bill.record.add`／`bill.record.update`）**从用户可见处去掉**（照上级裁定第 1 条）：
+ *  它只活在复制给助手的载荷里，页面正文与徽章一个字都不印。
+ *  用户说法取自 `./userWording.js`（**唯一映射地**）：本件不另写第二份对照表。
  *
  * 一型的那句方向口径（「记支出要负数」／「记收入要正数」）**不在这里另写一份**：取值走
- *  `./summaryRow.ts` 的 `directionOf`（符号即方向只有那一处定义），本件只负责把唤醒词／方向／状态拼成徽章。
+ *  `./summaryRow.ts` 的 `directionOf`（符号即方向只有那一处定义），本件只把它摆进第二枚形状。
  *
- * 口径出处：`docs/skills/skill-bill/t407-页面块清单-16词.md` 第一节第 2 行 ＋ 第二节「类型徽章」列。
+ * 对外四件（铁律五「不多于五个」）：`typeBadge`／`TypeBadgeInput`／`wakeWordOf`／`nextStepOf`（后两者转出给场景件与页标题用，
+ *  定义仍在 `./userWording.js` 那一处）。
+ *
+ * 口径出处：`docs/skills/skill-bill/t407-页面块清单-16词.md` 第一节第 2 行 ＋ 第二节「类型徽章」列
+ *  ＋ `docs/skills/skill-bill/t407-文字审查.md` 第三节第 1 条（该改的判法与最小改法）。
  */
 import { renderStatusBadge } from 'base-paint';
 import type { StatusKind } from 'base-paint';
+import { renderCaliberLine, renderChips } from 'base-paint/blocks';
 import { directionOf } from './summaryRow.js';
+import { statusNoteOf, wakeWordOf } from './userWording.js';
 
-/** 一型一句话：代表唤醒词（施工图第二节「类型徽章」列逐条抄来）。方向那句由 `directionOf` 补，不抄在这里。 */
-const KIND_WAKE_WORDS: Record<string, string> = {
-  expense: '记支出',
-  income: '记收入',
-  photo: '拍账单',
-  batch: '批量录入',
-  refund: '记退款',
-  reimburse: '记报销',
-  'reimburse-done': '报销到账',
-  lend: '记借出',
-  borrow: '记借入',
-  collect: '记收回',
-  repay: '记偿还',
-  installment: '记分期',
-};
-
-/** 无 preset 的那一条（记一笔）：方向按金额符号判，不由唤醒词定。 */
-const PLAIN_TYPE = { wakeWord: '记一笔', note: '按金额符号判支出／收入' };
+export { wakeWordOf } from './userWording.js';
+export { nextStepOf } from './userWording.js';
 
 /** 类型徽章的入参。 */
 export interface TypeBadgeInput {
   /** `params.kind`（空串＝没有 preset 的「记一笔」）。 */
   readonly kind: string;
-  /** 命令名（对外全名，如 `bill.record.add`）。 */
-  readonly key: string;
   /** 四档之一：`ok`＝已写库、`warn`＝待补、`danger`＝已阻断、`empty`＝无数据。 */
   readonly status: StatusKind;
-  /** 这一页现在是什么状态（如「待补槽位 · 未写库」／「写库成功」）。 */
+  /** 这一页现在是什么状态（内部状态串；用户说法走 `./userWording.js` 的 `statusNoteOf`）。 */
   readonly state: string;
+  /** 「下一步动作」那枚形状那句话（取值走 `./userWording.js` 的 `nextStepOf`）。 */
+  readonly next: string;
 }
 
-/** 类型徽章：报「这一页是哪条唤醒词、哪一型、哪条命令、什么状态」。
- *  一型的方向口径（支出负数／收入正数）取自 `./summaryRow.ts` 的 `directionOf`，本件不另写一份。 */
+/** 第二枚形状那句话：型认得出就说方向，认不出就说分类挂靠（不再印「本仓尚未定额的型」这种内部话）。 */
+function caliberOf(kind: string): string {
+  const d = directionOf(kind);
+  if (d !== undefined) return d.word + ' 金额取' + (d.sign < 0 ? '负' : '正') + '数';
+  if (kind.trim() === '') return '方向按金额符号判';
+  return '分类按三级挂靠';
+}
+
+/** 类型徽章：唤醒词标签 ＋ 这一页的口径 ＋ 页面状态徽章 ＋ 下一步动作。四枚形状各自独立，不拼分隔符串。 */
 export function typeBadge(input: TypeBadgeInput): string {
   const kind = typeof input.kind === 'string' ? input.kind : '';
-  const d = directionOf(kind);
-  const wakeWord = kind === '' ? PLAIN_TYPE.wakeWord : (KIND_WAKE_WORDS[kind] ?? kind);
-  const note = d === undefined
-    ? (kind === '' ? PLAIN_TYPE.note : '本仓尚未定额的型')
-    : d.word + '（金额取' + (d.sign < 0 ? '负' : '正') + '数）';
-  return renderStatusBadge({
-    status: input.status,
-    text: wakeWord + ' · ' + note + ' · ' + input.key + ' · ' + input.state,
-  });
+  const state = statusNoteOf(input.state);
+  const parts = [
+    renderChips({ items: [{ text: wakeWordOf(kind) + '　' + caliberOf(kind) }] }),
+    renderStatusBadge(state === '' ? { status: input.status } : { status: input.status, text: state }),
+  ];
+  if (input.next.trim() !== '') parts.push(renderCaliberLine(input.next));
+  return parts.join('');
 }

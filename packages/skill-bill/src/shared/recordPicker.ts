@@ -35,6 +35,7 @@ import { diffOf } from './diffTable.js';
 import type { DiffRow } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
 import { money2 } from './summaryRow.js';
+import { fieldLabelOf } from './userWording.js';
 
 /** 三条词的三种过筛条件（一条词一种）。**收在本件内**：对外那五个名字里不暴露它，签名的联合类型逐字写。 */
 type PickMode = 'update' | 'undo' | 'restore';
@@ -52,18 +53,18 @@ interface PickLabels {
 const LABELS: Record<PickMode, PickLabels> = {
   update: {
     label: '要改的那条记录',
-    what: '未撤销的记录',
-    hint: '从下面列出的记录里挑一条，再说清要改哪个字段、改成什么，重跑同一条命令。',
+    what: '没撤销过的记录',
+    hint: '从下面列出的记录里挑一条，再说清要改哪一项、改成什么，跟助手说一遍。',
   },
   undo: {
     label: '要撤销的那条记录',
-    what: '未撤销的记录',
-    hint: '从下面列出的记录里挑一条：撤销＝软删打标（`deleted_at = now`），行留在库里，随后还能恢复。',
+    what: '没撤销过的记录',
+    hint: '从下面列出的记录里挑一条：撤销只是打个标记，记录还在，随时可以恢复。',
   },
   restore: {
     label: '要恢复的那条记录',
-    what: '已打标撤销的记录',
-    hint: '只列已经打标撤销的那些：恢复＝把 `deleted_at` 置 NULL，这一行回到查询与统计里。',
+    what: '已经撤销过的记录',
+    hint: '只列已经撤销过的那些：恢复＝把撤销标记清掉，这一笔回到查询与统计里。',
   },
 };
 
@@ -96,18 +97,28 @@ interface CandidateRead {
   readonly total: number;
 }
 
-/** 一条候选为什么是它（**必填**：写不出依据的候选，用户没法判断该不该选）。 */
+/** 一条候选为什么是它（**必填**：写不出依据的候选，用户没法判断该不该选）。
+ *  本轮整改把工程话换成用户说法（原文见 `docs/skills/skill-bill/t407-文字审查.md` 第 25、30 条）：
+ *  `未撤销（deleted_at 为空）· 就躺在库里等你处置` → 「还没撤销过 可以改」；
+ *  `已于 X 打标撤销（软删：行还在库里，置 NULL 即可恢复）` → 「已于 X 撤销过（记录还在，点恢复就回来）」。 */
 function whyOf(mode: PickMode, row: BillRow): string {
   if (mode === 'restore') {
-    return '已于 ' + String(row.deleted_at) + ' 打标撤销（软删：行还在库里，置 NULL 即可恢复）';
+    return '已于 ' + String(row.deleted_at) + ' 撤销过（记录还在，点恢复就回来）';
   }
-  return '未撤销（`deleted_at` 为空）· 就躺在库里等你处置';
+  return mode === 'update' ? '还没撤销过 可以改' : '还没撤销过 可以撤';
 }
 
-/** 一眼认得出的摘要：分类 · 账户（有备注再带备注）。 */
+/** 候选行那一列的摘要：分类 ＋ 备注。
+ *  **不带账户**（本轮整改）：账户就在同页那张只读回显表的「账户」那一项里逐项列着，
+ *  候选表再抄一遍，同一句话在页上就印了两遍（机审判成重复句）。 */
+function pickLabelOf(row: BillRow): string {
+  return row.category + (row.note.trim() === '' ? '' : '　' + row.note.trim());
+}
+
+/** 单选选项那一格用的全量摘要：分类 ＋ 账户 ＋ 备注（分隔符用全角空格，行内不再拿 `·` 当版式）。 */
 function labelOf(row: BillRow): string {
-  const note = row.note.trim() === '' ? '' : ' · ' + row.note.trim();
-  return row.category + (row.account.trim() === '' ? '' : ' · ' + row.account) + note;
+  const note = row.note.trim() === '' ? '' : '　' + row.note.trim();
+  return row.category + (row.account.trim() === '' ? '' : '　' + row.account) + note;
 }
 
 /** 读候选：开库读一遍、按 `mode` 过筛、按时间倒序取最近 `PICK_LIMIT` 条，读完关库。读不通照实报。 */
@@ -119,7 +130,7 @@ function readCandidates(mode: PickMode): CandidateRead {
     const sorted = [...kept].sort(byTimeDesc);
     const items = sorted.slice(0, PICK_LIMIT).map((r) => ({
       id: r.id,
-      label: labelOf(r),
+      label: pickLabelOf(r),
       amount: money2(r.amount),
       time: r.time,
       why: whyOf(mode, r),
@@ -146,14 +157,14 @@ export function pickerBlock(input: {
     return emptyNote({
       title: '候选读不出来',
       text: '这一格要的候选没能从库里读出来：' + read.reason + '。',
-      next: '请先在能读库的环境里跑（`SKILLS_DB_PATH` 指向那个库），再重跑同一条命令。',
+      next: '请先在能读库的环境里跑（库路径指向那个库），再说一遍。',
     });
   }
   if (read.items.length === 0) {
     return emptyNote({
       title: '没有可选的' + meta.label,
       text: '这一格要的是' + meta.what + '，库里一条都没有。',
-      next: '不拿最近一笔顶替。请先说清是哪一笔（或先记一笔），再重跑同一条命令。',
+      next: '不拿最近一笔顶替。请先说清是哪一笔（或先记一笔），再说一遍。',
     });
   }
   return candidatePick({
@@ -188,27 +199,32 @@ export function readRowById(id: number): {
   }
 }
 
-/** 一条记录的只读回显（改记录的原记录那一格、撤销／恢复选定后那一格都用它）。 */
+/** 一条记录的只读回显（改记录的原记录那一格、撤销／恢复选定后那一格都用它）。
+ *  行名走 `./userWording.js` 的 `fieldLabelOf`（库列名不上屏）；撤销标记那一格照实说有没有打标。 */
 function snapshotRows(row: BillRow): readonly { readonly k: string; readonly v: string }[] {
   return [
-    { k: 'id', v: String(row.id) },
-    { k: 'category', v: row.category },
-    { k: 'amount', v: row.amount.toFixed(2) },
-    { k: 'time', v: row.time },
-    { k: 'account', v: row.account },
-    { k: 'ledger', v: row.ledger },
-    { k: 'currency', v: row.currency },
-    { k: 'note', v: row.note },
-    { k: 'deleted_at', v: row.deleted_at === null || String(row.deleted_at).trim() === '' ? '未设置（没打标）' : String(row.deleted_at) },
+    { k: fieldLabelOf('id'), v: String(row.id) },
+    { k: fieldLabelOf('category'), v: row.category },
+    { k: fieldLabelOf('amount'), v: row.amount.toFixed(2) },
+    { k: fieldLabelOf('time'), v: row.time },
+    { k: fieldLabelOf('account'), v: row.account },
+    { k: fieldLabelOf('ledger'), v: row.ledger },
+    { k: fieldLabelOf('currency'), v: row.currency },
+    { k: fieldLabelOf('note'), v: row.note },
+    {
+      k: fieldLabelOf('deleted_at'),
+      v: isDeleted(row) ? '已撤销（' + String(row.deleted_at) + '）' : '没撤销过',
+    },
   ];
 }
 
-/** 一条记录的只读表（列名与 `renderDataTable` 的两列同形）。 */
+/** 一条记录的只读表（列名与 `renderDataTable` 的两列同形）。
+ *  表头说明里那个 `·` 改全角空格（本轮整改：表头说明是版式位，行内不再拿 `·` 当版式）。 */
 export function snapshotTable(row: BillRow, caption?: string): string {
   return renderDataTable({
     columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
     rows: snapshotRows(row),
-    caption: caption ?? '这一条记录（记录编号 ' + row.id + ' · 只读回显）',
+    caption: caption ?? '这一条记录（记录编号 ' + row.id + '　只读回显）',
   });
 }
 

@@ -71,7 +71,7 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     const form = run(['bill.record.update', '--params', P({})]);
     assert.equal(form.status, 0, '缺 id 出采集页：' + form.stderr);
     assert.equal(JSON.parse(form.stdout).data.ok, false);
-    assert.match(JSON.parse(form.stdout).data.message, /缺必需槽位：id/);
+    assert.match(JSON.parse(form.stdout).data.message, /缺必需槽位：记录编号/);
   });
   it('analysis 三键：overview stat + compare/trend analysis', () => {
     const o = run(['bill.analysis.overview', '--params', P({ month: '2026-09' })]);

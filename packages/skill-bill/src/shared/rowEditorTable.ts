@@ -78,7 +78,7 @@ function rowFields(input: {
     const value = input.row[f.name];
     return {
       name: input.name + '-' + (input.index + 1) + '-' + f.name,
-      label: '第 ' + (input.index + 1) + ' 行 · ' + f.label,
+      label: '第 ' + (input.index + 1) + ' 行　' + f.label,
       ...(f.hint === undefined ? {} : { hint: f.hint }),
       ...(f.required === true ? { required: true } : {}),
       ...(value === undefined || value === '' ? {} : { value }),
@@ -108,7 +108,7 @@ function totalLine(input: RowEditorInput): string {
     counted += 1;
   }
   const label = input.totalLabel ?? '合计';
-  return label + ' ' + input.rows.length + ' 行 · 其中 ' + counted + ' 行有金额，合计 ' + sum.toFixed(2)
+  return label + ' ' + input.rows.length + ' 行，其中 ' + counted + ' 行有金额，合计 ' + sum.toFixed(2)
     + (counted === input.rows.length ? '' : '（解析不出数的格没算进合计）');
 }
 
@@ -118,7 +118,7 @@ export function rowEditorTable(input: RowEditorInput): string {
     return emptyNote({
       title: '这张表一行都没有',
       text: '要逐行填的那张表是空的，没有东西可改。',
-      next: '请把每一行的' + input.fields.map((f) => f.label).join('／') + '告诉 AI，再重跑同一条命令。',
+      next: '请把每一行的' + input.fields.map((f) => f.label).join('／') + '告诉助手，再说一遍。',
     });
   }
   const missing = rowEditorMissing(input);

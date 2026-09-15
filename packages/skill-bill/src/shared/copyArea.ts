@@ -23,14 +23,15 @@ import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, DataTextInput, LogTextInput } from 'base-paint';
 import { commandLine } from './writeParts.js';
 
-/** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
-const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
+/** 日志第 2 段（助手思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
+const LOG_THINKING = '本页由本地渲染，无助手链';
 /** 日志第 6 段（异常）：正常产出即「无」。 */
 const LOG_EXCEPTION = '无';
 /** 复制区空态缺省句（三样全没给时出这一句、不出按钮——点了没反应的死按钮就是问题）。 */
 const COPY_EMPTY_TEXT = '本页没有可复制的数据';
-/** 复制数据三格式菜单里三项的用途提示（纯文本／JSON／CSV，顺序＝`COPY_FORMATS`）。 */
-const MENU_HINTS: readonly string[] = ['粘贴给 AI / 自己看', '结构化存档', '表格导入'];
+/** 复制数据三格式菜单里三项的用途提示（纯文本／JSON／CSV，顺序＝`COPY_FORMATS`）。
+ *  格式名保留（那是数据格式本来的样子，不是内部标识），只说清它拿去做什么。 */
+const MENU_HINTS: readonly string[] = ['纯文本 粘贴给助手或自己看', 'JSON 结构化存档', 'CSV 表格导入'];
 
 /** `copyArea` 的可填位：给了什么出什么，0–3 颗按钮。 */
 interface CopyAreaInput {
@@ -58,22 +59,24 @@ interface CopyLogInput {
   readonly version?: string;
 }
 
-/** 复制 prompt 区那段 prompt 的复制按钮动作号（固定一枚：同页只出一次 prompt 区）。 */
+/** 复制 prompt 区那段 prompt 的复制按钮动作号（固定一枚：同页只出一次 prompt 区）。
+ *  小标题缺省那句 `复制 prompt（必走）` 里的 `prompt` 不上屏（本轮整改）——改「这一句可以直接复制」。 */
 const PROMPT_COPY_ACTION = 'ilife-copy-prompt';
+const PROMPT_COPY_HINT = '这一句可以直接复制';
 
 /** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋ 它自带的复制按钮。
  *  **`actionId` 必给**：公共层的 `renderPreBlock` 只在给了 `actionId` 时才渲染复制按钮
  *  （`packages/base-render/src/blocks.ts:729-736`），只给 `copyText` 会出一个「写着复制、其实没有按钮」的
  *  有标签没按钮位——那正是本票线上实测发现的一处，本件补齐。
- *  第二参可选：不给＝小标题「复制 prompt（必走）」；`null`＝不出小标题；给字符串就用它。 */
+ *  第二参可选：不给＝小标题「这一句可以直接复制」；`null`＝不出小标题；给字符串就用它。 */
 export function promptCopyArea(prompt: string, label?: string | null): string {
-  const heading = label === undefined ? '复制 prompt（必走）' : label;
+  const heading = label === undefined ? PROMPT_COPY_HINT : label;
   return renderPreBlock({
     ...(heading === null ? {} : { label: heading }),
     command: prompt,
     actionId: PROMPT_COPY_ACTION,
     copyText: prompt,
-    copyLabel: '复制 prompt',
+    copyLabel: PROMPT_COPY_HINT,
   });
 }
 
@@ -97,15 +100,21 @@ export function copyArea(input: CopyAreaInput): string {
   return renderEmptyBlock({ text: input.emptyText ?? COPY_EMPTY_TEXT });
 }
 
-/** 数据位的那份数据 → 三种格式各算一份 ＋ 菜单提示（`buildDataText` 是本仓复制文本的唯一出口）。 */
+/** 数据位的那份数据 → 三种格式各算一份 ＋ 菜单提示（`buildDataText` 是本仓复制文本的唯一出口）。
+ *  上级裁定第 2 条：复制载荷头行 `【bill · record.add】` 算上屏一并改——`text` 那份显式给 `title`，
+ *  不再让公共层按 `envelope.skill/key` 拼出命令名；`title` 只写用户说法，不带命令名与 `·`。 */
 function formatsOf(data: DataTextInput): {
   readonly text: string;
   readonly json: string;
   readonly csv: string;
   readonly hints: readonly string[];
 } {
+  const title = typeof (data as { title?: unknown }).title === 'string'
+    && ((data as { title?: string }).title ?? '').trim() !== ''
+    ? (data as { title: string }).title
+    : '记账数据';
   return {
-    text: buildDataText({ ...data, format: 'text' }),
+    text: buildDataText({ ...data, format: 'text', title }),
     json: buildDataText({ ...data, format: 'json' }),
     csv: buildDataText({ ...data, format: 'csv' }),
     hints: MENU_HINTS,
@@ -127,6 +136,9 @@ export function copyLog(input: CopyLogInput): CopyLogFields {
 const EXIT_COPY_ACTION = 'ilife-exit-undo-copy';
 /** 退出口那枚危险色出口标记的动作号。**故意不绑动作**：动作条场景按钮不带 `data-t`，点了不复制也不写库。 */
 const EXIT_MARK_ACTION = 'ilife-exit-undo';
+/** 退出口的标题与说明（本轮整改：`危险色出口` 是设计自指词，`restore` 是内部词，都不上屏）。 */
+const EXIT_TITLE = '想反悔（撤销这一笔）';
+const EXIT_NOTE = '要撤销这一笔，点下面那颗「复制数据」，里面带着一句撤销的话；撤销之后记录还在，随时可以恢复。';
 
 /** ④ 回执页退出口：危险色出口标记 ＋ 一枚真的能复制的撤销指令（带该记录编号）。
  *  两枚按钮同一区并列：危险色那枚让人一眼认出「这一步可退」，撤销指令挂在旁边那枚「复制数据」上。
@@ -136,9 +148,9 @@ const EXIT_MARK_ACTION = 'ilife-exit-undo';
 export function undoExit(recordId: number): string {
   const command = commandLine('bill.record.update', { op: 'undo', id: recordId });
   return renderCopyBlock({
-    title: '退出口（撤销这一笔）',
-    buttons: [{ label: '↩︎ 撤销这一笔（危险色出口）', kind: 'red', actionId: EXIT_MARK_ACTION }],
+    title: EXIT_TITLE,
+    buttons: [{ label: '↩︎ 撤销这一笔', kind: 'red', actionId: EXIT_MARK_ACTION }],
     dataText: command,
     dataActionId: EXIT_COPY_ACTION,
-  }) + renderCaliberLine('撤销指令挂在同区那颗「复制数据」上（撤销＝软删打标，行还在，恢复走 restore）。');
+  }) + renderCaliberLine(EXIT_NOTE);
 }

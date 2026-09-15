@@ -32,7 +32,7 @@ import { textOf } from './recentPicks.js';
 export interface PhotoScale {
   /** 已收到的图片张数（本次用户交上来的）。 */
   readonly count: number;
-  /** 这些图现在在哪（如「AI 侧／外部识别工具」）：本仓不落图片，兜底的归档位由 AI 侧给。 */
+  /** 这些图现在在哪（如「助手那边／外部识别工具」）：本仓不落图片，兜底的归档位由助手那边给。 */
   readonly where: string;
 }
 

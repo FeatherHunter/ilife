@@ -25,6 +25,7 @@ import { renderActionBar } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderPreBlock } from 'base-paint/blocks';
 import { directionOf, money2 } from './summaryRow.js';
 import { errorReceipt } from './errorReceipt.js';
+import { fieldLabelOf } from './userWording.js';
 
 /** 一个阻断项：哪个槽位／中文名／为什么挡住。 */
 export interface BlockedItem {
@@ -54,22 +55,30 @@ export function blockedItems(input: BlockedProbe): BlockedItem[] {
   const d = directionOf(input.kind);
   const amount = amountOf(input.params['amount']);
   if (d !== undefined && amount !== null && amount !== 0 && Math.sign(amount) !== d.sign) {
-    items.push({ name: 'amount', label: '金额', why: '方向不符：' + d.require + '，给的是 ' + money2(amount) });
+    items.push({
+      name: 'amount', label: '金额',
+      why: '方向和这一型对不上：' + d.require + '，给的是 ' + money2(amount),
+    });
   }
   return items;
 }
 
-/** 阻断那一句文案（**唯一定义地**）：envelope 载荷与采集页副标题都引它（两处各写一遍就会改一处漏一处）。
- *  两岔：纯缺槽位那一句照旧（与兄弟票同一句，测试逐字钉着）；只有方向不符时说方向。 */
+/** 阻断条那一句文案（**唯一定义地**）：envelope 载荷与采集页副标题都引它（两处各写一遍就会改一处漏一处）。
+ *  两岔：纯缺槽位那一句照旧（与兄弟票同一句，测试逐字钉着）；只有方向不符时说方向。
+ *
+ *  **中文名不进这一句**（本轮整改）：缺项清单写用户看得懂的中文名，库列名只留在字段表那一列的中文标签里
+ *  （照 `docs/skills/skill-bill/t407-文字审查.md` 第 34 条的判法：`还缺 N 项：分类（category）` 里
+ *  `category` 是内部标识，不上屏）。 */
 export function blockedMessage(
   missing: readonly { readonly name: string }[],
   blocked: readonly BlockedItem[],
 ): string {
   if (missing.length > 0) {
-    return '缺必需槽位：' + missing.map((m) => m.name).join('、') + '（已出采集页，补齐后重跑同一条命令）';
+    return '缺必需槽位：' + missing.map((m) => fieldLabelOf(m.name)).join('、')
+      + '（已出采集页，补齐之后跟助手说一遍）';
   }
-  return '写库已阻断：' + blocked.map((i) => i.name + '（' + i.why + '）').join('、')
-    + '（已出采集页，改好后重跑同一条命令）';
+  return '写库已阻断：' + blocked.map((i) => fieldLabelOf(i.name) + '（' + i.why + '）').join('、')
+    + '（已出采集页，改好之后跟助手说一遍）';
 }
 
 /** 阻断条的入参：判定结果 ＋ 那条「补齐后可重跑」的写库指令原文。 */
@@ -81,7 +90,18 @@ interface BlockedBarInput {
   readonly note?: string;
 }
 
-/** 置灰那枚写库按钮的动作号。**故意不绑任何动作**：本仓运行时按 `data-t` 复制，本按钮不给 `data-t`，点了不动。 */
+/** 遮断条那几块（**唯一定义地**）：错误回执 ＋ 还缺什么表 ＋ 补齐后照说那句话 ＋ 置灰的写库按钮。
+ *  空判定＝不出这一段（返回空串）。
+ *
+ *  本轮整改把内部话换成用户说法（逐条见 `docs/skills/skill-bill/t407-文字审查.md` 第 34、35、36、37、67 条）：
+ *   ① 标题 `缺项阻断条（写库已阻断）` → `还缺什么`（括号里那句是实现自指，删）；
+ *   ② 一句 `❌ 写库已阻断 · 还缺 N 项：分类（category）` → `❌ 还缺 N 项，补齐再记：分类`（列名不上屏）；
+ *   ③ `补齐后重跑同一条命令` → `补齐后照这句跟助手说一遍`（用户没有「同一条命令」可跑，那句话是给机器看的）；
+ *   ④ 置灰按钮那句 `⛔ 先补齐（N 项）` 保留（照实报缺几项）；
+ *   ⑤ 表头 `缺的槽位／是什么／为什么挡住` 与格值 `没给` → `还缺哪一项／是什么／为什么写不进去／这一项没给`；
+ *   ⑥ 写库指令块的标题 `写库指令（补齐前不给复制按钮）` 保留口令原文的**只读**身份（不给复制按钮，
+ *      用户不会照抄一条带占位符的 JSON），但那句括号里的实现说明删掉——它说的是页面怎么做，不是用户要做什么。
+ */
 const BLOCKED_WRITE_ACTION = 'ilife-blocked-write';
 
 /** 缺项阻断条：错误回执 ＋ 缺项明示表 ＋ 不可复制的写库指令 ＋ 置灰的写库按钮。空判定＝不出这一段（返回空串）。 */
@@ -89,25 +109,28 @@ export function blockedBar(input: BlockedBarInput): string {
   const n = input.items.length;
   if (n === 0) return '';
   return errorReceipt({
-    title: '缺项阻断条（写库已阻断）',
-    message: '写库已阻断 · 还缺 ' + n + ' 项：' + input.items.map((i) => i.label + '（' + i.name + '）').join('、'),
-    retryPrompt: '补齐后重跑同一条命令',
+    title: '还缺什么',
+    message: '还缺 ' + n + ' 项，补齐再记：' + input.items.map((i) => i.label).join('、'),
+    retryPrompt: '补齐了，说一遍试试',
   }) + renderDataTable({
     columns: [
-      { key: 'slot', label: '缺的槽位' },
+      { key: 'slot', label: '还缺哪一项' },
       { key: 'label', label: '是什么' },
-      { key: 'why', label: '为什么挡住' },
+      { key: 'why', label: '为什么写不进去' },
     ],
-    rows: input.items.map((i) => ({ slot: i.name, label: i.label, why: i.why })),
-    caption: '缺一项就不写库',
+    rows: input.items.map((i) => ({
+      slot: fieldLabelOf(i.name), label: i.label,
+      why: i.why === '没给' ? '这一项没给' : i.why,
+    })),
+    caption: '缺一项就先不写库',
   }) + renderPreBlock({
     command: input.command,
-    label: '写库指令（补齐前不给复制按钮）',
+    label: '口令原文（照上面那句跟助手说）',
   }) + renderActionBar({
     buttons: [{ label: '⛔ 先补齐（' + n + ' 项）', kind: 'ghost', actionId: BLOCKED_WRITE_ACTION }],
   }) + renderCaliberLine(
     input.note === undefined || input.note === ''
-      ? '这一页只收集、不写库；补齐之后重跑同一条命令才会写。'
+      ? '这一页先不写库；补齐之后照上面那句跟助手说一遍才会写。'
       : input.note,
   );
 }

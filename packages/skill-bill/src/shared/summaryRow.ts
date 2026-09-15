@@ -41,21 +41,24 @@ export function directionOf(kind: string): DirectionRule | undefined {
   return DIRECTION[kind];
 }
 
-/** 金额一律两位小数（**唯一定义地**，比对与展示同一份口径）。`null`＝未给；`+` 只给正数。 */
+/** 金额一律两位小数（**唯一定义地**，比对与展示同一份口径）。`null`／非有限数／`0`＝未给；`+` 只给正数。
+ *  上级裁定第 3 条：金额 `0.00` 配「零（本仓不记零）」自相矛盾，值栏一律写「未给」。 */
 export function money2(amount: number | null): string {
-  if (amount === null || !Number.isFinite(amount)) return '未给';
+  if (amount === null || !Number.isFinite(amount) || amount === 0) return '未给';
   return (amount > 0 ? '+' : '') + amount.toFixed(2);
 }
 
-/** 方向那句话（**唯一定义地**）：符号即方向——支出负数、收入正数。 */
+/** 方向那句话（**唯一定义地**）：符号即方向——支出负数、收入正数。零与「还没给」都照实说，不拿 0 顶。
+ *  用户说法照 `docs/skills/skill-bill/t407-文字审查.md` 第 43、44 条的判法：`未判（金额还没给）` 改「还没给」，
+ *  `零（本仓不记零）` 改「还没给」（值栏摆 0.00 配「本仓不记零」自相矛盾，本级不再这么写）。 */
 export function moneyDirection(amount: number | null): string {
-  if (amount === null || !Number.isFinite(amount)) return '未判（金额还没给）';
+  if (amount === null || !Number.isFinite(amount)) return '还没给';
   if (amount < 0) return '支出（取负数）';
   if (amount > 0) return '收入（取正数）';
-  return '零（本仓不记零）';
+  return '还没给';
 }
 
-/** 摘要行的事实：六格取值。`amount` 用 `null` 表示「还没给」（0 是给了，但本仓不记零）。 */
+/** 摘要行的事实：六格取值。`amount` 用 `null` 表示「还没给」；数字 `0` 视同没给（本仓不记零，裁定第 3 条）。 */
 export interface SummaryFacts {
   readonly amount: number | null;
   readonly category: string;
@@ -65,7 +68,11 @@ export interface SummaryFacts {
 }
 
 /** 结论摘要行的几格（**唯一定义地**）：采集页直接出网格，回执页把它们并进自己那张网格里。
- *  `amount` 未给时那一格写「未给」，不拿 0 顶替。时间缺省那句取口径层的缺省时刻，本件不抄第二份。 */
+ *  `amount` 未给时那一格写「未给」，不拿 0 顶替。时间缺省那句取口径层的缺省时刻，本件不抄第二份。
+ *
+ *  三处口径句改成用户说法（本轮整改，原文见 `docs/skills/skill-bill/t407-文字审查.md` 第 40、42、43、60 条）：
+ *   `L1/L2/L3 三级` 改成「分类要选到最细那一级」（内部层级名不上屏）；`缺省＝…` 改成「不填就记到…」；
+ *   采集页那一格给的是**真值**（这一笔打算记成什么），所以不再配「不填就记成…」——那是没给时才成立的话。 */
 export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
   const l1 = facts.category.trim() === '' ? '' : l1Of(facts.category);
   return [
@@ -73,16 +80,16 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
     {
       label: '分类',
       value: facts.category.trim() === '' ? '未给' : facts.category,
-      detail: facts.category.trim() === '' ? '三级分类：L1/L2/L3 都要能对上' : '一级＝' + l1 + '（L1/L2/L3 三级）',
+      detail: facts.category.trim() === '' ? '分类要选到最细那一级' : '归在「' + l1 + '」下面',
     },
-    { label: '账户', value: facts.account.trim() === '' ? '未给' : facts.account, detail: '缺省＝默认账户' },
-    { label: '账本', value: facts.ledger.trim() === '' ? '未给' : facts.ledger, detail: '缺省＝默认账本' },
-    { label: '时间', value: facts.time.trim() === '' ? '未给' : facts.time, detail: '缺省＝今天 ' + DEFAULT_TIME_SUFFIX },
+    { label: '账户', value: facts.account.trim() === '' ? '未给' : facts.account, detail: '不填就记到默认账户' },
+    { label: '账本', value: facts.ledger.trim() === '' ? '未给' : facts.ledger, detail: '不填就记到默认账本' },
+    { label: '时间', value: facts.time.trim() === '' ? '未给' : facts.time, detail: '不填就记成今天 ' + DEFAULT_TIME_SUFFIX },
   ];
 }
 
 /** 结论摘要行：那张网格 ＋ 一行口径。 */
 export function summaryRow(facts: SummaryFacts): string {
   return renderKpiGrid(summaryCards(facts))
-    + renderCaliberLine('金额符号即方向：支出记负、收入记正；分类按 L1/L2/L3 三级给，别只给一级。');
+    + renderCaliberLine('支出的金额记成负数、收入记成正数；分类要选到最细那一级。');
 }
