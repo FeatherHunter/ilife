@@ -51,6 +51,23 @@ for (const f of files) {
   // 色值数只数**活的声明**：先剥掉 CSS 注释（注释里常引老页色值当出处，那不是本页用的色）。
   const liveCss = styleText.replace(/\/\*[\s\S]*?\*\//g, '');
   const colors = new Set((liveCss.match(/#[0-9a-fA-F]{3,8}/g) ?? []).map((c) => c.toLowerCase()));
+  // 英文裸词／内部标识：可见正文里出现 ASCII 字母的行。**五条机检查不出这一类**——
+  // `plan`／`all`／`W1D3`／`getPlan` 看着都像数据，实则是内部键名或函数名（第 ④ 条）。
+  //
+  // 白名单分两类，都必须**说得清来路**，不许放宽成「像数据就放过」（那等于没查）：
+  //   ① 本就该有英文的：日期时间、单位（kg／ml／RPM／BMI）、器械名（T-bar）、提示词里的 HTML／AI；
+  //   ② **夹具自己的数据值**——`t1计划`（计划名）／`v1`（版本）／`示例改名`／`副本`：那是用户数据，
+  //      真用户的计划名自己起。夹具一换，这里要同步改（写在下面一行，改的是同一处）。
+  const ASCII_OK = /20\d\d-\d\d-\d\d|\d\d:\d\d|\d+\s*(?:kg|ml|km|cm)|RPM|BMI|HTML|\bAI\b|T-?bar/g;
+  const FIXTURE_DATA = /t1计划|v\d+|示例改名|副本/g;
+  // 提示词区块（`<pre>`）是**照抄触发器资产**的载荷——页上照抄、另有判据逐字对账（机检「逐字 prompt」那条）。
+  // 它里面的 `(kg,选填)` 属那份资产的写法，改它要动唤醒词资产（不在本图）；ASCII 只查**本页写的文案**，
+  // 故先剔掉 `<pre>`（与剔 `data-t` 载荷同口径：载荷不是文案）。
+  const copyLines = visibleLines(html.replace(/<pre[\s\S]*?<\/pre>/gi, ''));
+  const asciiBad = copyLines
+    .map((s) => ({ line: s, rest: s.replace(FIXTURE_DATA, '').replace(ASCII_OK, '') }))
+    .filter((x) => /[A-Za-z]/.test(x.rest))
+    .map((x) => x.line);
   // 本页**自造**的可点件（页签／折叠头）：0 个的页（如 185 只有共享复制按钮）不必自带触摸目标，
   // 那件事由共享样式表负责，本页不该重复画一遍。
   const tapTargets = (pageHtml.match(/<label|<summary/g) ?? []).length;
@@ -65,6 +82,8 @@ for (const f of files) {
     colors: colors.size,
     sep: sep.length,
     sepLines: sep,
+    ascii: asciiBad.length,
+    asciiLines: asciiBad,
     dupes: dupes.length,
     dupeLines: dupes,
   });
@@ -72,12 +91,12 @@ for (const f of files) {
 
 const pad = (s, n) => String(s).padEnd(n, ' ');
 console.log('文件'.padEnd(26) + pad('820断点', 9) + pad('自造可点件', 11) + pad('≥44px', 7) + pad('触屏三件', 9)
-  + pad('样式块', 7) + pad('内联style', 10) + pad('色值数', 7) + pad('分隔符行', 9) + '重复句');
+  + pad('样式块', 7) + pad('内联style', 10) + pad('色值数', 7) + pad('分隔符行', 9) + pad('英文行', 7) + '重复句');
 for (const r of rows) {
   console.log(pad(r.file, 26) + pad(r.bp820 ? 'Y' : '—', 9) + pad(r.tapTargets, 11)
     + pad(r.tapTargets === 0 ? '共享' : (r.touch44 ? 'Y' : '—'), 7)
     + pad(r.tap ? 'Y' : '—', 9) + pad(r.styleBlocks, 7) + pad(r.inlineStyle, 10)
-    + pad(r.colors, 7) + pad(r.sep, 9) + r.dupes);
+    + pad(r.colors, 7) + pad(r.sep, 9) + pad(r.ascii, 7) + r.dupes);
 }
 
 const bad = {
@@ -85,6 +104,7 @@ const bad = {
   缺触摸目标: rows.filter((r) => !r.touch44).map((r) => r.file),
   缺触屏三件: rows.filter((r) => !r.tap).map((r) => r.file),
   有分隔符懒政: rows.filter((r) => r.sep > 0).map((r) => r.file + '(' + r.sep + ')'),
+  有英文裸词: rows.filter((r) => r.ascii > 0).map((r) => r.file + '(' + r.ascii + ')'),
   有重复句: rows.filter((r) => r.dupes > 0).map((r) => r.file + '(' + r.dupes + ')'),
 };
 console.log('\n===== 逐条汇总（共 ' + rows.length + ' 份）=====');
@@ -95,4 +115,9 @@ console.log('\n分隔符逐行（只列有问题的）：');
 for (const r of rows.filter((x) => x.sep > 0)) {
   console.log('  [' + r.file + ']');
   for (const l of r.sepLines) console.log('      ' + l);
+}
+console.log('\n英文裸词逐行（只列有问题的）：');
+for (const r of rows.filter((x) => x.ascii > 0)) {
+  console.log('  [' + r.file + ']');
+  for (const l of r.asciiLines) console.log('      ' + l);
 }

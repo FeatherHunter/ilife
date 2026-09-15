@@ -39,6 +39,9 @@ export const WORKOUT_FIELD_LABELS: Readonly<Record<string, string>> = Object.fre
   version: '版本',
   description: '说明',
   start_date: '起始日',
+  // 撤销那条命令的 `writtenFields` 只报一个确认开关（它没有别的可写字段）；页上原来印成 `confirm`，
+  // 是英文裸词。给它一个人话说法——「写入字段 1 项：确认执行」读得通，也不假装写了别的东西。
+  confirm: '确认执行',
 });
 
 registerFieldLabels(WORKOUT_DOMAIN, WORKOUT_FIELD_LABELS);
