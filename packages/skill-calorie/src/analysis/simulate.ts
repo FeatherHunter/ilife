@@ -19,8 +19,11 @@ const round2 = (n: number): number => Math.round(n * 100) / 100;
 export interface SimPoint { date: string; value: number; lo?: number; hi?: number }
 export interface SimBase { kind: string; title: string; degraded: boolean; start?: string; end?: string; days?: number; degradeMsg?: string; insight: string }
 
-function degrade(kind: string, title: string, series: DaySeries[], need: string): SimBase {
-  return { kind, title, degraded: true, degradeMsg: '数据不足:需要 ' + need + ',当前只有 ' + series.length + ' 天。', insight: '数据不足,无法预测。' };
+/** 数据不足的降级（#466）：门槛词与「当前」读数**同一量纲**——由调用方把实际的**有效记录条数**
+ *  按门槛同一条量纲传进来（改前这里报的是 `series.length`＝**请求窗口的天数**，空库时会说出
+ *  「需要 ≥14 天体重记录,当前只有 14 天」这种自相矛盾的句子）。 */
+function degrade(kind: string, title: string, need: string, have: string): SimBase {
+  return { kind, title, degraded: true, degradeMsg: '数据不足:需要 ' + need + ',当前只有 ' + have + '。', insight: '数据不足,无法预测。' };
 }
 
 type NumField = 'weightKg' | 'calories';
@@ -72,6 +75,14 @@ function forecastSeries(current: number, ratePerDay: number, sigma: number, hori
     const band = ((2 * sigma * Math.sqrt(d)) / Math.sqrt(7));
     pts.push({ date: shiftISODate(startDate, d), value: round2(v), lo: round2(v - band), hi: round2(v + band) });
   }
+  /* #455 路线 A（轨迹末点口径）：非整周时补第 horizonDays 天末点——本页的结论句写的是
+   *  「<horizonDays> 天后体重约 X kg」，没有那一行时 X 其实是第 horizonDays−余数 天的值
+   *  （30 天页给的是第 28 天的值）。整周 horizon 不补，回归不变。 */
+  if (horizonDays % 7 !== 0) {
+    const v = current + ratePerDay * horizonDays;
+    const band = ((2 * sigma * Math.sqrt(horizonDays)) / Math.sqrt(7));
+    pts.push({ date: shiftISODate(startDate, horizonDays), value: round2(v), lo: round2(v - band), hi: round2(v + band) });
+  }
   return { label, horizonDays, points: pts };
 }
 
@@ -79,9 +90,9 @@ export interface WeightForecast extends SimBase { current?: number; ratePerWeek?
 
 export function weightForecast(series: DaySeries[], horizonDays: number, title: string, kind = 'weight_forecast'): WeightForecast {
   const wv = weightVals(series);
-  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, series, '≥' + SIM_MIN_DAYS + ' 天体重记录');
+  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天体重记录', wv.length + ' 天体重记录');
   const [rate, latest] = linearRate(series, 'weightKg');
-  if (rate === null || latest === null) return degrade(kind, title, series, '≥' + SIM_MIN_DAYS + ' 天有效体重记录');
+  if (rate === null || latest === null) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天有效体重记录', wv.length + ' 天体重记录');
   const sigma = residualStd(series, 'weightKg', rate);
   const last = series[series.length - 1] as DaySeries;
   const fc = forecastSeries(latest, rate, sigma, horizonDays, last.date, title);
@@ -102,9 +113,9 @@ export interface WeightTarget extends SimBase { current?: number; target?: numbe
 
 export function weightTarget(series: DaySeries[], targetKg: number, title: string, kind = 'weight_target'): WeightTarget {
   const wv = weightVals(series);
-  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, series, '≥' + SIM_MIN_DAYS + ' 天体重记录');
+  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天体重记录', wv.length + ' 天体重记录');
   const [rate, latest] = linearRate(series, 'weightKg');
-  if (rate === null || latest === null || Math.abs(rate) < 1e-6) return degrade(kind, title, series, '体重处于平台期(无趋势)');
+  if (rate === null || latest === null || Math.abs(rate) < 1e-6) return degrade(kind, title, '有趋势的体重记录', wv.length + ' 天体重记录但处于平台期');
   // 有意偏离老家：老家 (latest-target)/rate 在正常趋近时恒为负→恒降级；此处用 (target-latest)/rate，趋近为正（待口径裁决 T7）。
   const daysLeft = (targetKg - latest) / rate;
   if (daysLeft < 0) {

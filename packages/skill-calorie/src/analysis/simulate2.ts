@@ -1,4 +1,4 @@
-/** T5 #24 · 预测模拟续（减重模拟/摄入预测，对照老家 simulate.py A6.2/A6.3）。 */
+﻿/** T5 #24 · 预测模拟续（减重模拟/摄入预测，对照老家 simulate.py A6.2/A6.3）。 */
 import { seriesAvg } from './series.js';
 import type { DaySeries } from './series.js';
 import { shiftISODate } from './utils.js';
@@ -8,8 +8,13 @@ import type { SimBase, SimPoint } from './simulate.js';
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
-function degrade(kind: string, title: string, series: DaySeries[], need: string): SimBase {
-  return { kind, title, degraded: true, degradeMsg: '数据不足:需要 ' + need + ',当前只有 ' + series.length + ' 天。', insight: '数据不足,无法预测。' };
+/** 数据不足的降级（#466）：**门槛词与「当前」读数同一量纲**。
+ *
+ *  改前写的是「需要 ≥14 天摄入记录,当前只有 <窗口长度> 天」——把**请求窗口的天数**当成**实际有效记录的条数**报，
+ *  空库跑 20 条预测词时读者会看到「需要 ≥14 天…当前只有 14 天」这种自相矛盾的句子（#466 的根因）。
+ *  现在由**调用方**把两样都按同一条量纲传进来：`need`＝门槛原文，`have`＝实际有效记录的读数（如「13 天体重记录」）。 */
+function degrade(kind: string, title: string, need: string, have: string): SimBase {
+  return { kind, title, degraded: true, degradeMsg: '数据不足:需要 ' + need + ',当前只有 ' + have + '。', insight: '数据不足,无法预测。' };
 }
 
 function weightVals(series: DaySeries[]): number[] {
@@ -21,7 +26,7 @@ export interface WeightSimCut extends SimBase { current?: number; cutKcal?: numb
 export function weightSimCut(series: DaySeries[], cutKcal: number, title: string, kind = 'weight_sim_cut'): WeightSimCut {
   const dfAvg = seriesAvg(series, 'deficit');
   const wv = weightVals(series);
-  if (wv.length === 0) return degrade(kind, title, series, '至少 1 条体重记录');
+  if (wv.length === 0) return degrade(kind, title, '至少 1 天体重记录', wv.length + ' 天体重记录');
   const current = wv[wv.length - 1] as number;
   const newDeficit = (dfAvg ?? 0) + cutKcal;
   const weeklyLoss = (newDeficit * 7) / KCAL_PER_KG;
@@ -30,6 +35,11 @@ export function weightSimCut(series: DaySeries[], cutKcal: number, title: string
   const pts: SimPoint[] = [{ date: last.date, value: round2(current) }];
   for (let d = 7; d <= horizon; d += 7) {
     pts.push({ date: shiftISODate(last.date, d), value: round2(current - (weeklyLoss * d) / 7) });
+  }
+  /* #455 路线 A：90 不能被 7 整除 ⇒ 上面那些整周点只到第 84 天，而表头与结论句都说「90 天」，
+   *  读者拿不到第 90 天那一行去核。故**非整周时补第 horizon 天末点**（整周 horizon 不补，回归不变）。 */
+  if (horizon % 7 !== 0) {
+    pts.push({ date: shiftISODate(last.date, horizon), value: round2(current - (weeklyLoss * horizon) / 7) });
   }
   const feasible = HEALTHY_RATE[0] <= weeklyLoss && weeklyLoss <= HEALTHY_RATE[1];
   return {
@@ -49,7 +59,7 @@ export interface WeightSimTarget extends SimBase { current?: number; targetLoss?
 
 export function weightSimTarget(series: DaySeries[], targetKg: number, days: number, title: string, kind = 'weight_sim_target'): WeightSimTarget {
   const wv = weightVals(series);
-  if (wv.length === 0) return degrade(kind, title, series, '至少 1 条体重记录');
+  if (wv.length === 0) return degrade(kind, title, '至少 1 天体重记录', wv.length + ' 天体重记录');
   const current = wv[wv.length - 1] as number;
   const weeklyRate = targetKg / (days / 7);
   const neededDeficit = round((targetKg * KCAL_PER_KG) / days);
@@ -57,9 +67,15 @@ export function weightSimTarget(series: DaySeries[], targetKg: number, days: num
   const last = series[series.length - 1] as DaySeries;
   const pts: SimPoint[] = [{ date: last.date, value: round2(current) }];
   for (let d = 7; d <= days; d += 7) {
-    pts.push({ date: shiftISODate(last.date, d), value: round2(current - (targetKg * Math.min(d, days)) / days) });
+    pts.push({ date: shiftISODate(last.date, d), value: round2(current - (targetKg * d) / days) });
   }
-  (pts[pts.length - 1] as SimPoint).value = round2(current - targetKg);
+  /* #455 路线 A（并修不一致二「第 90 天的值钉在第 84 天的日期上」）：非整周时补第 days 天末点。
+   *  改前这里下面还有一行 `(pts[末]).value = round2(current - targetKg)` 的**强写**——它把第 days 天
+   *  的目标值硬塞进最后一个整周点（实例：69.1 落在第 84 天那一行，而该日期的诚实值是 69.5）。
+   *  补末点之后，第 days 天那一行的**日期与值同轴**（都是第 days 天），那行强写随之删除。 */
+  if (days % 7 !== 0) {
+    pts.push({ date: shiftISODate(last.date, days), value: round2(current - targetKg) });
+  }
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: last.date, days: series.length,
@@ -109,7 +125,7 @@ function residualStdCal(series: DaySeries[], slope: number): number {
 
 export function calorieForecast(series: DaySeries[], horizonDays: number, title: string, kind = 'calorie_forecast'): CalorieForecast {
   const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
-  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, series, '≥' + SIM_MIN_DAYS + ' 天摄入记录');
+  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入记录', cal.length + ' 天摄入记录');
   const [rate, latest] = linearRateCal(series);
   const sigma = residualStdCal(series, rate ?? 0);
   const last = series[series.length - 1] as DaySeries;
@@ -119,6 +135,13 @@ export function calorieForecast(series: DaySeries[], horizonDays: number, title:
     const v = (latest as number) + (rate as number) * d;
     const band = ((2 * sigma * Math.sqrt(d)) / Math.sqrt(7));
     pts.push({ date: shiftISODate(last.date, d), value: round2(v), lo: round2(v - band), hi: round2(v + band) });
+  }
+  /* #455 路线 A（同 `weightSimCut`）：非整周时补第 horizonDays 天末点——本页 KPI 卡与结论句都写
+   *  「<horizonDays> 天后预计 X 卡」，没有那一行时 X 其实是第 horizonDays−余数 天的值。 */
+  if (horizonDays % 7 !== 0) {
+    const v = (latest as number) + (rate as number) * horizonDays;
+    const band = ((2 * sigma * Math.sqrt(horizonDays)) / Math.sqrt(7));
+    pts.push({ date: shiftISODate(last.date, horizonDays), value: round2(v), lo: round2(v - band), hi: round2(v + band) });
   }
   const fc = { label: title, horizonDays, points: pts };
   const endV = (pts[pts.length - 1] as SimPoint).value;
@@ -139,7 +162,7 @@ export interface CalorieGoalEta extends SimBase { avg?: number; goal?: number; o
 
 export function calorieGoalEta(series: DaySeries[], title: string, kind = 'calorie_goal'): CalorieGoalEta {
   const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
-  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, series, '≥' + SIM_MIN_DAYS + ' 天摄入记录');
+  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入记录', cal.length + ' 天摄入记录');
   const avg = cal.reduce((a, b) => a + b, 0) / cal.length;
   const goal = (series[series.length - 1] as DaySeries).calorieGoal ?? 1800;
   const onTarget = Math.abs(avg - goal) <= goal * 0.1;
@@ -157,7 +180,7 @@ export interface CalorieDeficitEta extends SimBase { avgDeficit?: number; weekly
 
 export function calorieDeficitEta(series: DaySeries[], title: string, kind = 'calorie_deficit'): CalorieDeficitEta {
   const df = series.map((s) => s.deficit).filter((v): v is number => v !== null && v !== undefined);
-  if (df.length < SIM_MIN_DAYS) return degrade(kind, title, series, '≥' + SIM_MIN_DAYS + ' 天摄入+运动记录');
+  if (df.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入+运动记录', df.length + ' 天摄入或运动记录');
   const avgDf = df.reduce((a, b) => a + b, 0) / df.length;
   const weekly = (avgDf * 7) / KCAL_PER_KG;
   const healthy = weekly >= 0.3 && weekly <= 1.2;
@@ -174,7 +197,7 @@ export interface CalorieStability extends SimBase { avg?: number; sigma?: number
 
 export function calorieStability(series: DaySeries[], title: string, kind = 'calorie_stability'): CalorieStability {
   const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
-  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, series, '≥' + SIM_MIN_DAYS + ' 天摄入记录');
+  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入记录', cal.length + ' 天摄入记录');
   const avg = cal.reduce((a, b) => a + b, 0) / cal.length;
   const sigma = Math.sqrt(cal.reduce((a, c) => a + (c - avg) * (c - avg), 0) / (cal.length - 1));
   const stable = sigma <= 300;

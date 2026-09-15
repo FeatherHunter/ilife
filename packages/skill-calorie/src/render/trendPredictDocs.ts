@@ -49,8 +49,9 @@ const DEFICIT_SECTIONS: ReadonlyArray<{ readonly id: string; readonly text: stri
 
 /** 区块锚点外壳：`renderTocBlock` 只认 `id`、区块产出器本身不带 `id` ⇒ 由调用方在外面套一层
  *  （同族先例 `diet/sourceStatsDocs.ts` 的 `shell()`）。**只加锚点，不写任何样式**——
- *  版面单源住 `packages/base-render/`，页面本地一行色值、一个字号都不写。 */
-function deficitSection(id: string, html: string): string {
+ *  版面单源住 `packages/base-render/`，页面本地一行色值、一个字号都不写。
+ *  W2 起缺口族与预测族**共用**这一件（原名 `deficitSection`，W2 改名以名副其实）。 */
+function pageSection(id: string, html: string): string {
   return '<section id="' + id + '">' + html + '</section>';
 }
 
@@ -135,11 +136,11 @@ export function buildDeficitDoc(d: DeficitData): string {
     renderConclusionBar(deficitConclusion(d)),
     /* ③ 页内导航（J8／J9）：六个区块与六个导航项同源 `DEFICIT_SECTIONS`。 */
     renderTocBlock({ items: navItems.map((s) => ({ id: s.id, text: s.text })) }),
-    deficitSection('sec-params', renderParamForm({
+    pageSection('sec-params', renderParamForm({
       fields: [{ name: 'start', label: '开始', value: d.meta.start }, { name: 'end', label: '结束', value: d.meta.end }],
       description: '缺口就是当天消耗减掉当天吃的：正数代表有缺口。消耗算日常消耗加当天运动，摄入只算吃进去的，喝水不算。',
     })),
-    deficitSection('sec-overview', renderKpiGrid([
+    pageSection('sec-overview', renderKpiGrid([
       { label: '日均摄入', value: String(d.summary.avgIntake), unit: '卡', detail: '目标 ' + d.target.intake + ' 卡/天' },
       { label: '日均消耗', value: String(d.summary.avgBurn), unit: '卡', detail: '日常消耗 ' + d.target.tdee + ' ＋ 运动 ' + d.summary.avgExerciseBurn + ' 卡' },
       /* 「日均缺口」这张卡挂状态徽章（票面改法要点 ④）：判定词不再只当文字印，改走徽章的三个闭集档。 */
@@ -151,7 +152,7 @@ export function buildDeficitDoc(d: DeficitData): string {
   if (d.series.length > 0) {
     const intake = d.series.map((s) => ({ label: s.date.slice(5), value: s.intake }));
     const burn = d.series.map((s) => ({ label: s.date.slice(5), value: s.burn }));
-    parts.push(deficitSection('sec-chart', renderChartBlock({
+    parts.push(pageSection('sec-chart', renderChartBlock({
       kind: 'line',
       /* #160 回炉（用户点名反例①的同形）：旧图题把**画法**写进了标题（「虚线=消耗；水平线=摄入目标 1800 卡」）
        *  ——图题只说画的是什么，读法归线与图例。故：图题只留「每日摄入与消耗」；消耗那条线在**图例名**里带上
@@ -179,7 +180,7 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  `状态` 列仍是**纯文本**：`renderDataTable` 的单元格只收基元（公共层 `cellText`），把徽章放进单元格
    *  要动公共层产出器——本票（裁定 3）不碰 `packages/base-render/**`；状态的**形状**落在表下那排徽章
    *  （`deficitStatusChips`）与「日均缺口」卡的状态徽章上。 */
-  parts.push(deficitSection('sec-detail', renderDataTable({
+  parts.push(pageSection('sec-detail', renderDataTable({
     columns: [
       { key: 'date', label: '日期' },
       { key: 'intake', label: '摄入', align: 'right' },
@@ -205,12 +206,12 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  `overflow:hidden` 的截断线里**（判据 J3 实测：390 档 `合计消耗`／`合计缺口` 两行的值 cw=34／48px，
    *  值被裁得只露半个字）⇒ 右槽只留短注，「消耗＝日常消耗加当天运动」这类口径上移到口径行，
    *  「一周合计」这类事实住结论条与 KPI 卡（同一事实一页一处）。 */
-  parts.push(deficitSection('sec-totals', renderListRows({ items: [
+  parts.push(pageSection('sec-totals', renderListRows({ items: [
     { left: '合计摄入', main: totals.intake + ' 卡', right: '共 ' + d.meta.days + ' 天有记录' },
     { left: '合计消耗', main: totals.burn + ' 卡', right: '逐日累加' },
     { left: '合计缺口', main: signed(totals.deficit) + ' 卡' },
   ] })));
-  parts.push(deficitSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.deficit',
       data: {
@@ -249,31 +250,90 @@ export function buildDeficitDoc(d: DeficitData): string {
   });
 }
 
+/* ── W2（#518）· 预测族页框（照 #517 缺口样板页的骨架逐行落位） ───────────────────── */
+
+/** 预测族页内导航锚点（W2／W3 共用）：**先有 `id` 才有导航项**——区块与导航项同源这一份轻清单，
+ *  `href="#x"` 与页内 `id` 因此不可能走散（判据 J8 要求双向自洽，多一个孤儿锚点即红）。
+ *  `sec-track` 只有真出轨迹表的页才进导航（零轨迹的页不许留一个指向不存在 id 的孤儿锚点）。 */
+const PREDICT_SECTIONS: ReadonlyArray<{ readonly id: string; readonly text: string }> = [
+  { id: 'sec-params', text: '参数' },
+  { id: 'sec-overview', text: '概览' },
+  { id: 'sec-track', text: '模拟轨迹' },
+  { id: 'sec-data', text: '数据与日志' },
+];
+
+/** 导航项（按当页实际出的区块裁掉没有的那几项）＝`renderTocBlock`（J2／J8／J9 三条恒出之一）。 */
+function predictNav(hasTrack: boolean): string {
+  const items = PREDICT_SECTIONS.filter((s) => hasTrack || s.id !== 'sec-track')
+    .map((s) => ({ id: s.id, text: s.text }));
+  return renderTocBlock({ items });
+}
+
+/** 页头胶囊（#516 §3.2 D01／D02）：归属词与页型不拿 `·` 串进题名，改走徽章件（`renderChips`）。
+ *  页型逐页不同（体重预测／模拟减重／摄入预测），眉标只留一个域词（见各页 `assembleDocPage`）。 */
+function predictChips(pageType: string): string {
+  return renderChips({ items: [{ text: '卡路里' }, { text: pageType }, { text: '趋势分析' }] });
+}
+
+/** 来源脚注（J9 第三条恒出；同族写法见缺口页与 `diet/sourceStatsDocs.ts`）：走普通小字行，不走深底块。 */
+function sourceFootnote(what: string, start: string, end: string): string {
+  return renderCaliberLine('📊 数据来源：本机' + what + '，窗口 ' + start + ' 至 ' + end);
+}
+
+/** 轨迹覆盖天数（#455：表头写**实际覆盖天数**，不拿请求天数顶替——两者在非整周 horizon 上本不相等，
+ *  改前正是拿 `horizonDays` 当覆盖天数，才出现「说 90 天、表里只到第 84 天」这种自相矛盾）。
+ *  口径＝末点日期 − 首发点日期（与 `simulate2` 采样的锚点 `points[0].date` 同源）。 */
+function spanDaysOf(points: ReadonlyArray<{ date: string }>): number {
+  if (points.length < 2) return 0;
+  const first = points[0] as { date: string };
+  const last = points[points.length - 1] as { date: string };
+  return Math.round((Date.parse(last.date) - Date.parse(first.date)) / 86400000);
+}
+
+/** 轨迹表的公共装配（有表的页共用）：列与表题同源，表题按**实际覆盖天数**写实（#455）。 */
+function trackTable(points: ReadonlyArray<{ date: string; value: number }>, what: string, unit: string): string {
+  const span = spanDaysOf(points);
+  const shown = points.slice(0, 14);
+  const truncated = points.length > shown.length ? '（仅列前 14 点，共 ' + points.length + ' 点）' : '';
+  return renderDataTable({
+    columns: [{ key: 'date', label: '日期' }, { key: 'weight', label: what, align: 'right' }],
+    rows: shown.map((p) => ({ date: p.date, weight: p.value })),
+    caption: '模拟轨迹（共 ' + span + ' 天，每周一点' + truncated + '）',
+    emptyText: '这一段还没有体重记录，先称一次体重再来看',
+  });
+}
 /* ── 体重预测（predict_report 对照：点预测 KPI＋insight；曲线归组合分析，见 §3 R4） ── */
 
 export function buildPredictDoc(v: PredictView): string {
   const parts: string[] = [
-    renderParamForm({
+    predictChips('体重预测'),
+    /* 结论条（J2／J9 三条恒出之一；`t425` 裁定 2：结论句紧跟标题）：只用页里已有的数——
+     * `forecastValue` 是**轨迹末点**的值，补了第 horizon 天末点之后它与「N 天后」真正同轴（#455）。 */
+    renderConclusionBar('按最近的趋势，' + v.horizonDays + ' 天后体重约 ' + v.forecastValue + ' kg。'),
+    /* 页内导航（J8／J9）：本页无轨迹表（`PredictView` 不带点列），导航项同步不出「模拟轨迹」那一项。 */
+    predictNav(false),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start },
         { name: 'end', label: '结束', value: v.end },
         { name: 'horizonDays', label: '预测天数', value: String(v.horizonDays) },
       ],
-      /* #160 回炉：说明里原印内部参数名与拒绝码（`horizonDays`／`missing-data`）——读者认不得。
-       *  改说人话；参数名仍在参数表单的 `name` 属性里、可推范围与 14 天门槛一句没丢。
-       *  这 8 页（predict 族）**不另加 HTML 注释**：`analysis-predict-383.test.mjs:103` 还用着
-       *  「产物里一条注释都不许有」那条过宽判据（同族三处已在 #160 改成五标记判据，见
-       *  `test/doc-page-assert.mjs:17`）；注释一旦进这 8 页，那两处测试即红且不在本席写集内。 */
-      description: '按最近的体重趋势往后推（能推 7 到 180 天）；体重记录不到 14 天就只说数据不够，不编预测。',
-    }),
-    renderKpiGrid([
+      /* 说明里原印内部参数名与拒绝码（`horizonDays`／`missing-data`）——读者认不得；参数名仍在
+       * 参数表单的 `name` 属性里。W2 再把那句 `；` 改写成两句（#516 §3.2 D03：参数说明里的 `；`
+       * 是「拿符号简化 UI」的债，该处要做的是换成两句人话，不是删掉标点）。
+       * 这 8 页（predict 族）**不另加 HTML 注释**：`analysis-predict-383.test.mjs` 的残留判据只认
+       * 五个未填充的槽位标记，口径一律走可见的口径行（下面那两条），不靠注释留档。 */
+      description: '按最近的体重趋势往后推，能推 7 到 180 天。体重记录不到 14 天就只说数据不够，不编预测。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '预测', value: String(v.forecastValue), unit: 'kg', detail: v.horizonDays + ' 天后' },
       { label: '速率', value: String(v.ratePerWeek), unit: 'kg/周' },
-      { label: '区间', value: fmt(v.forecastLo) + ' ~ ' + fmt(v.forecastHi), unit: 'kg' },
-    ]),
+      /* 区间写「至」（#516 §3.2 D06：值位不许拿 `~` 顶替「至」）。 */
+      { label: '预计区间', value: fmt(v.forecastLo) + ' 至 ' + fmt(v.forecastHi), unit: 'kg', detail: '95% 置信带' },
+    ])),
   ];
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -283,13 +343,19 @@ export function buildPredictDoc(v: PredictView): string {
         }),
       },
     },
-  }));
+  })));
+  /* 口径行（J2／J9 三条恒出之一；`renderCaliberLine` 走 `｜` 分槽，产物可见文本里不留该字符）。 */
+  parts.push(renderCaliberLine('体重＝当前值加日速率乘天数｜预计区间按体重残差向外放宽，取 95% 置信带｜体重记录不到 14 天不出预测'));
+  parts.push(sourceFootnote('体重记录', v.start, v.end));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    /* head 的 `<title>` 也去 `·`（J1 题名两段不拿 `·` 串；同族先例 #517 缺口页的「卡路里 热量缺口」）。 */
+    docTitle: '卡路里 体重预测',
     title: '体重预测（' + v.horizonDays + ' 天）',
-    eyebrow: '体重预测 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    /* 眉标只留一个归属词（#516 §3.2 D02）：原来那串 `体重预测 · 趋势分析域` 的 `·` 拆开——
+     * 页型进了页头胶囊，眉标留域；`域` 是仓库里的架构词，不上屏。 */
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }
@@ -298,22 +364,29 @@ export function buildPredictDoc(v: PredictView): string {
 
 export function buildPredictTargetDoc(v: WeightTarget): string {
   const parts: string[] = [
-    renderParamForm({
+    predictChips('体重预测'),
+    /* 结论句只用页里已有的数（`eta`／`target`／`feasible`），不新算任何数。 */
+    renderConclusionBar('按最近的趋势，预计 ' + String(v.eta) + ' 前后达到 ' + String(v.target) + ' kg。'
+      + (v.feasible ? '' : '这个速度超出健康范围，建议调整目标或策略。')),
+    predictNav(false),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
         { name: 'target', label: '目标体重', value: String(v.target ?? '') },
       ],
-      description: '按当前趋势算出哪天能达到目标体重；体重记录不到 14 天就只说数据不够，不编一个日期出来。',
-    }),
-    renderKpiGrid([
+      description: '按当前的体重趋势算出哪天能达到目标体重。体重记录不到 14 天就只说数据不够，不编一个日期出来。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '目标', value: String(v.target), unit: 'kg' },
       { label: '预计达成', value: String(v.eta), detail: '剩余 ' + String(v.daysLeft) + ' 天' },
-      { label: '可行性', value: v.feasible ? '可行' : '超范围', detail: '速率 ' + String(v.ratePerWeek) + ' kg/周' },
-    ]),
+      /* 可行性改走**状态徽章**（票面改法要点 ④）：判定词不再只当文字印，走徽章的闭集档。 */
+      { label: '可行性', value: v.feasible ? '可行' : '超范围', status: v.feasible ? 'ok' : 'warn', statusText: v.feasible ? '可行' : '超范围',
+        detail: '速率 ' + String(v.ratePerWeek) + ' kg/周' },
+    ])),
   ];
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -323,13 +396,15 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
         }),
       },
     },
-  }));
+  })));
+  parts.push(renderCaliberLine('预计达成日＝按当前速率线性外推的那一天｜健康范围＝每周掉 0.5 到 1.0 公斤｜体重记录不到 14 天不出日期'));
+  parts.push(sourceFootnote('体重记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 体重预测',
     title: '预测体重(自定义目标)',
-    eyebrow: '预测体重 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }
@@ -337,37 +412,32 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
 /* ── #383 · 模拟减重(每天多减 cutKcal 卡)（每周掉重＋可行性；只改本图会碰到的预测段） ── */
 
 export function buildSimCutDoc(v: WeightSimCut): string {
+  const pts = v.forecast ? v.forecast.points : [];
   const parts: string[] = [
-    renderParamForm({
+    predictChips('模拟减重'),
+    /* 结论句只用页里已有的数（`cutKcal`／`weeklyLoss`／`feasible`）。 */
+    renderConclusionBar('每天多减 ' + String(v.cutKcal) + ' 卡，一周大约掉 ' + String(v.weeklyLoss) + ' kg。'
+      + (v.feasible ? '这个速度在健康范围内。' : '这个速度超出健康范围，建议减量。')),
+    predictNav(pts.length > 0),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
         { name: 'cut_kcal', label: '每天多减', value: String(v.cutKcal ?? '') },
       ],
-      /* #160 回炉：常量名（`KCAL_PER_KG`）与参数名（`cut_kcal`）原印在这句说明里，改说人话；
-       *  折算口径（每 7700 卡≈1 公斤）与安全区间（0.5–1.0 kg/周）都留在句子里，没丢口径。 */
-      description: '看看每天再多减一些卡路里，体重会怎么掉：每 7700 卡大约对应 1 公斤，按这个折算每周掉多少；能不能做到，看每周的掉重落在 0.5 到 1.0 公斤这个安全区间里没有。90 天的轨迹在下面。',
-    }),
-    renderKpiGrid([
+      /* 原说明里那句 `；` 与「90 天的轨迹在下面」拆开：轨迹那一句由区块自己（表题）承担，
+       * 这里只说这一页在做什么（#516 §3.2 D03；`KCAL_PER_KG` 这类常量名不上屏）。 */
+      description: '看看每天再多减一些卡路里，体重会怎么掉。每 7700 卡大约对应 1 公斤，按这个折算每周掉多少。能不能做到，看每周的掉重落在 0.5 到 1.0 公斤这个安全区间里没有。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '每天多减', value: String(v.cutKcal), unit: '卡' },
-      { label: '每周掉重', value: String(v.weeklyLoss), unit: 'kg/周', detail: v.feasible ? '可行' : '超范围' },
-      { label: '可行性', value: v.feasible ? '可行' : '超范围', detail: humanText(String(v.assumption ?? '')) },
-    ]),
+      { label: '每周掉重', value: String(v.weeklyLoss), unit: 'kg/周', detail: '安全区间 0.5 到 1.0 kg/周' },
+      { label: '可行性', value: v.feasible ? '可行' : '超范围', status: v.feasible ? 'ok' : 'warn', statusText: v.feasible ? '可行' : '超范围' },
+    ])),
   ];
-  if (v.forecast && v.forecast.points.length > 0) {
-    const shown = v.forecast.points.slice(0, 14);
-    parts.push(renderDataTable({
-      columns: [
-        { key: 'date', label: '日期' },
-        { key: 'weight', label: '模拟体重', align: 'right' },
-      ],
-      rows: shown.map((p) => ({ date: p.date, weight: p.value })),
-      caption: '模拟轨迹（' + v.forecast.horizonDays + ' 天，每周一点）',
-      emptyText: '无模拟轨迹',
-    }));
-  }
-  parts.push(dataCopyArea('复制数据', {
+  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg')));
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -377,13 +447,15 @@ export function buildSimCutDoc(v: WeightSimCut): string {
         }),
       },
     },
-  }));
+  })));
+  parts.push(renderCaliberLine('每 7700 卡大约折算 1 公斤｜轨迹从窗口最后一天起算，每周一点，非整周时补最后一天那一行｜安全区间＝每周掉 0.5 到 1.0 公斤'));
+  parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 模拟减重',
     title: '模拟减重(每天-' + String(v.cutKcal) + '卡)',
-    eyebrow: '模拟减重 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }
@@ -391,37 +463,32 @@ export function buildSimCutDoc(v: WeightSimCut): string {
 /* ── #383 · 模拟减重(自定天数减 Xkg)（所需每日缺口＋可行性；只改本图会碰到的预测段） ── */
 
 export function buildSimTargetDoc(v: WeightSimTarget): string {
-  /* #160 回炉：原说明句尾缺谓语、还夹着常量名与 `Xkg` 占位写法；反推口径与安全区间改成完整句子。 */
+  const pts = v.forecast ? v.forecast.points : [];
   const parts: string[] = [
-    renderParamForm({
+    predictChips('模拟减重'),
+    /* 结论句只用页里已有的数（`daysTarget`／`targetLoss`／`neededDeficit`／`feasible`）。 */
+    renderConclusionBar('要在 ' + String(v.daysTarget) + ' 天里减掉 ' + String(v.targetLoss) + ' kg，每天大约要留出 ' + String(v.neededDeficit) + ' 卡缺口。'
+      + (v.feasible ? '这个速度在健康范围内。' : '这个速度超出健康范围，建议拉长时间或降低目标。')),
+    predictNav(pts.length > 0),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
         { name: 'target_loss', label: '想减', value: String(v.targetLoss ?? '') },
         { name: 'days_target', label: '天数', value: String(v.daysTarget ?? '') },
       ],
-      description: '模拟在自定的天数里减掉想减的公斤数，需要每天留出多少缺口：每 7700 卡大约对应 1 公斤，按这个反推；能不能做到，看每周的掉重落在 0.5 到 1.0 公斤这个安全区间里没有。',
-    }),
-    renderKpiGrid([
+      /* 原说明句尾夹常量名、还拿 `；` 串两条规则（#516 §3.2 D03；`Xkg` 那种占位写法不上屏）。 */
+      description: '模拟在自定的天数里减掉想减的公斤数，需要每天留出多少缺口。每 7700 卡大约对应 1 公斤，按这个反推。能不能做到，看每周的掉重落在 0.5 到 1.0 公斤这个安全区间里没有。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '所需缺口', value: String(v.neededDeficit), unit: '卡/天', detail: '要在 ' + String(v.daysTarget) + ' 天里减掉 ' + String(v.targetLoss) + ' kg' },
-      { label: '每周掉重', value: String(v.weeklyRate), unit: 'kg/周' },
-      { label: '可行性', value: v.feasible ? '可行' : '超范围', detail: humanText(String(v.assumption ?? '')) },
-    ]),
+      { label: '每周掉重', value: String(v.weeklyRate), unit: 'kg/周', detail: '安全区间 0.5 到 1.0 kg/周' },
+      { label: '可行性', value: v.feasible ? '可行' : '超范围', status: v.feasible ? 'ok' : 'warn', statusText: v.feasible ? '可行' : '超范围' },
+    ])),
   ];
-  if (v.forecast && v.forecast.points.length > 0) {
-    const shown = v.forecast.points.slice(0, 14);
-    parts.push(renderDataTable({
-      columns: [
-        { key: 'date', label: '日期' },
-        { key: 'weight', label: '模拟体重', align: 'right' },
-      ],
-      rows: shown.map((p) => ({ date: p.date, weight: p.value })),
-      caption: '模拟轨迹（' + v.forecast.horizonDays + ' 天，每周一点）',
-      emptyText: '无模拟轨迹',
-    }));
-  }
-  parts.push(dataCopyArea('复制数据', {
+  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg')));
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -431,13 +498,15 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
         }),
       },
     },
-  }));
+  })));
+  parts.push(renderCaliberLine('所需缺口＝要减的公斤数乘 7700 卡再除以天数｜轨迹从窗口最后一天起算，每周一点，末点是第 ' + String(v.daysTarget) + ' 天｜安全区间＝每周掉 0.5 到 1.0 公斤'));
+  parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 模拟减重',
     title: '模拟减重(' + String(v.daysTarget) + '天减' + String(v.targetLoss) + 'kg)',
-    eyebrow: '模拟减重 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }

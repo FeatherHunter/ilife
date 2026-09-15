@@ -169,11 +169,19 @@ interface ProfileRow {
   activity_level: string | null;
 }
 
-/** 档案 TDEE（体重恒 70.0 parity，见 utils 说明）。 */
+/** 档案 TDEE（#463 候选 A：体重取**最近一次称重**，档案里没有体重记录才回退 70.0）。
+ *
+ *  改前恒用 70.0 kg 常量 ⇒ 消耗类数值与真实体重脱钩（#463 的根因）。**取数层补最近称重**这一处
+ *  与 `reportPlate.ts` 的 `energyOfWindow`（`d26d6ec`：档案四要素 ＋ 最近一次称重）**同口径**：
+ *  同一个人的 TDEE 不再有两个数。回退值 `70.0` 一字不改 ⇒ **档案无体重记录时数值与改前逐字相同**。
+ *  「最近」按 `date DESC, time DESC, id DESC`（与 `buildSeries` 里取当日首条同一套排序键，
+ *  只用 `weight_log` 现存列；`weight_log` 没有软删列，故不加 ALIVE 过滤）。 */
 export function loadProfileTdee(db: DatabaseSync): number {
   try {
     const prof = db.prepare('SELECT age, gender, height_cm, activity_level FROM user_profile WHERE id = 1').get() as ProfileRow | undefined;
-    return calcTdee(70.0, prof?.height_cm ?? 170.0, prof?.age ?? 30, prof?.gender ?? 'male', prof?.activity_level ?? 'moderate');
+    const last = db.prepare('SELECT weight_kg FROM weight_log ORDER BY date DESC, time DESC, id DESC LIMIT 1').get() as { weight_kg: number | null } | undefined;
+    const latestWeightKg = typeof last?.weight_kg === 'number' && last.weight_kg > 0 ? last.weight_kg : 70.0;
+    return calcTdee(latestWeightKg, prof?.height_cm ?? 170.0, prof?.age ?? 30, prof?.gender ?? 'male', prof?.activity_level ?? 'moderate');
   } catch {
     return 1800;
   }
