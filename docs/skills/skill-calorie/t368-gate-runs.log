@@ -1,7 +1,7 @@
 # #368 运行记录导出件（源＝未受版本控制的 .scratch/locks/gate-runs.log）
 # 切片规则＝从本票首个运行（baseline 批）导到导出当刻的日志末尾；含 START 与 RUN 两类行
 # 行内 runId 与 t368-索引证据.md §六 的逐条 GATE-RUN 声明一一对应（协议 §2.4 第 2 条）
-# 导出件行数＝53（不含本 4 行头注释）
+# 导出件行数＝112（不含本 4 行头注释）
 START ticket=368 runId=d4847bc3-e250-4ff0-a8ac-85507f5c4510 cmd="pwsh -NoProfile -File .scratch\\t368\\baseline.ps1" waitedMs=15002 pid=30556 at=2026-09-15T02:54:26.268Z
 RUN ticket=368 runId=d4847bc3-e250-4ff0-a8ac-85507f5c4510 cmd="pwsh -NoProfile -File .scratch\\t368\\baseline.ps1" waitedMs=15002 exit=0 pid=30556 at=2026-09-15T02:54:37.665Z
 START ticket=368 runId=12eb594b-18de-4625-b3c8-42cdb5b24d61 cmd="node .scratch/t368/probeA.mjs" waitedMs=180047 pid=44356 at=2026-09-15T02:58:06.832Z
@@ -55,3 +55,62 @@ RUN ticket=368 runId=8571cf75-dbf0-453b-b5d5-3dcd4092f249 cmd="pwsh -NoProfile -
 START ticket=368 runId=3a061acd-88b0-4dd8-9b49-0458d5251b2c cmd="pwsh -NoProfile -File .scratch\\t368\\commit.ps1" waitedMs=0 pid=5856 at=2026-09-15T03:28:50.781Z
 RUN ticket=368 runId=3a061acd-88b0-4dd8-9b49-0458d5251b2c cmd="pwsh -NoProfile -File .scratch\\t368\\commit.ps1" waitedMs=0 exit=0 pid=5856 at=2026-09-15T03:28:53.650Z
 START ticket=368 runId=e98a7e75-3934-43da-991c-aa11b0c19fa2 cmd="pwsh -NoProfile -File .scratch\\t368\\final.ps1" waitedMs=0 pid=33384 at=2026-09-15T03:29:21.035Z
+RUN ticket=368 runId=e98a7e75-3934-43da-991c-aa11b0c19fa2 cmd="pwsh -NoProfile -File .scratch\\t368\\final.ps1" waitedMs=0 exit=0 pid=33384 at=2026-09-15T03:29:24.810Z
+START ticket=368 runId=916c09a8-7fa4-45ee-b38d-172c722a6a96 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=43572 at=2026-09-15T03:30:00.062Z
+RUN ticket=368 runId=916c09a8-7fa4-45ee-b38d-172c722a6a96 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=0 pid=43572 at=2026-09-15T03:30:00.567Z
+START ticket=368 runId=ded6a49e-52a0-4067-9a66-458a32e1720c cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=1 pid=28060 at=2026-09-15T03:30:17.712Z
+RUN ticket=368 runId=ded6a49e-52a0-4067-9a66-458a32e1720c cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=1 exit=0 pid=28060 at=2026-09-15T03:30:18.234Z
+START ticket=368 runId=a32f6015-f9cc-4a6a-a56e-f8c1f29322c0 cmd="pwsh -NoProfile -Command \"git add -- packages/skill-calorie/test/t368-索引卡片.test.mjs; git diff --cached --name-only; git commit -F .scratch/t368/commit-msg3.txt -- packages/skill-calorie/test/t368-索引卡片.test.mjs; git log -3 --format='%h %s'\"" waitedMs=0 pid=45200 at=2026-09-15T03:30:32.077Z
+RUN ticket=368 runId=a32f6015-f9cc-4a6a-a56e-f8c1f29322c0 cmd="pwsh -NoProfile -Command \"git add -- packages/skill-calorie/test/t368-索引卡片.test.mjs; git diff --cached --name-only; git commit -F .scratch/t368/commit-msg3.txt -- packages/skill-calorie/test/t368-索引卡片.test.mjs; git log -3 --format='%h %s'\"" waitedMs=0 exit=0 pid=45200 at=2026-09-15T03:30:35.281Z
+START ticket=368 runId=23f08549-5f44-4c9d-a745-9be333a9b5e7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=46192 at=2026-09-15T03:33:01.591Z
+RUN ticket=368 runId=23f08549-5f44-4c9d-a745-9be333a9b5e7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=46192 at=2026-09-15T03:33:01.694Z
+START ticket=368 runId=7787d4bd-4e0e-49e9-bf82-751693edbd95 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=46964 at=2026-09-15T03:33:15.105Z
+RUN ticket=368 runId=7787d4bd-4e0e-49e9-bf82-751693edbd95 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=0 pid=46964 at=2026-09-15T03:33:15.652Z
+START ticket=368 runId=b0773125-0496-48b4-8528-96ee4549478d cmd="node .scratch/t368-review/probe1.mjs" waitedMs=0 pid=32168 at=2026-09-15T03:35:00.163Z
+RUN ticket=368 runId=b0773125-0496-48b4-8528-96ee4549478d cmd="node .scratch/t368-review/probe1.mjs" waitedMs=0 exit=0 pid=32168 at=2026-09-15T03:35:00.415Z
+START ticket=368 runId=3f447994-deb9-4fad-b51f-4dcc25a94267 cmd="node .scratch/t368-review/probe1.mjs" waitedMs=0 pid=42332 at=2026-09-15T03:35:26.588Z
+RUN ticket=368 runId=3f447994-deb9-4fad-b51f-4dcc25a94267 cmd="node .scratch/t368-review/probe1.mjs" waitedMs=0 exit=0 pid=42332 at=2026-09-15T03:35:26.863Z
+START ticket=368 runId=1ccf492f-134a-426b-909a-be4861da6cf0 cmd="node .scratch/t368-review/probe2.mjs" waitedMs=1 pid=12140 at=2026-09-15T03:36:01.256Z
+RUN ticket=368 runId=1ccf492f-134a-426b-909a-be4861da6cf0 cmd="node .scratch/t368-review/probe2.mjs" waitedMs=1 exit=2 pid=12140 at=2026-09-15T03:36:01.348Z
+START ticket=368 runId=ce5ab734-70a2-4198-9188-92bc1d8e2e08 cmd="node .scratch/t368-review/probe2.mjs" waitedMs=1 pid=35016 at=2026-09-15T03:36:13.832Z
+RUN ticket=368 runId=ce5ab734-70a2-4198-9188-92bc1d8e2e08 cmd="node .scratch/t368-review/probe2.mjs" waitedMs=1 exit=1 pid=35016 at=2026-09-15T03:36:13.953Z
+START ticket=368 runId=b8537078-579e-4a0f-b4a8-622781fe2f7a cmd="node .scratch/t368-review/probe2.mjs" waitedMs=0 pid=34852 at=2026-09-15T03:37:09.553Z
+RUN ticket=368 runId=b8537078-579e-4a0f-b4a8-622781fe2f7a cmd="node .scratch/t368-review/probe2.mjs" waitedMs=0 exit=0 pid=34852 at=2026-09-15T03:37:09.755Z
+START ticket=368 runId=bf50bbb2-bac5-43d4-b20c-bd9e517bc55d cmd="node .scratch/t368-review/probe2.mjs" waitedMs=0 pid=3064 at=2026-09-15T03:37:37.568Z
+RUN ticket=368 runId=bf50bbb2-bac5-43d4-b20c-bd9e517bc55d cmd="node .scratch/t368-review/probe2.mjs" waitedMs=0 exit=0 pid=3064 at=2026-09-15T03:37:37.766Z
+START ticket=368 runId=33dfbff4-7a62-439f-837c-4774dd6c6c42 cmd="node .scratch/t368-review/probe2.mjs" waitedMs=1 pid=32240 at=2026-09-15T03:38:04.754Z
+RUN ticket=368 runId=33dfbff4-7a62-439f-837c-4774dd6c6c42 cmd="node .scratch/t368-review/probe2.mjs" waitedMs=1 exit=0 pid=32240 at=2026-09-15T03:38:04.968Z
+START ticket=368 runId=233aeeb9-bdb7-4464-975e-bcb95d815849 cmd="node .scratch/t368-review/batch.mjs after" waitedMs=0 pid=37784 at=2026-09-15T03:38:33.936Z
+RUN ticket=368 runId=233aeeb9-bdb7-4464-975e-bcb95d815849 cmd="node .scratch/t368-review/batch.mjs after" waitedMs=0 exit=0 pid=37784 at=2026-09-15T03:47:31.679Z
+START ticket=368 runId=65d38b61-050f-45d9-8318-d94b49a6dd19 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=1 pid=41388 at=2026-09-15T03:48:05.149Z
+RUN ticket=368 runId=65d38b61-050f-45d9-8318-d94b49a6dd19 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=1 exit=0 pid=41388 at=2026-09-15T03:48:05.252Z
+START ticket=368 runId=2f0d0125-8d46-404b-8318-63aece227d1c cmd="node .scratch/t368-review/rerun-reds.mjs" waitedMs=1 pid=45164 at=2026-09-15T03:48:40.720Z
+RUN ticket=368 runId=2f0d0125-8d46-404b-8318-63aece227d1c cmd="node .scratch/t368-review/rerun-reds.mjs" waitedMs=1 exit=0 pid=45164 at=2026-09-15T03:50:26.638Z
+START ticket=368 runId=af8ca93f-9286-4872-a810-11119f5495b0 cmd="node .scratch/t368-review/attrib.mjs" waitedMs=0 pid=34740 at=2026-09-15T03:51:09.484Z
+START ticket=368 runId=a2cf3f79-878f-4366-a5ab-5054afd677f1 cmd="node .scratch/t368-review/attrib.mjs" waitedMs=15012 pid=24764 at=2026-09-15T03:53:41.243Z
+RUN ticket=368 runId=a2cf3f79-878f-4366-a5ab-5054afd677f1 cmd="node .scratch/t368-review/attrib.mjs" waitedMs=15012 exit=0 pid=24764 at=2026-09-15T03:55:29.158Z
+START ticket=368 runId=ab117c39-fb68-43a0-a15c-30da27153196 cmd="node .scratch/t368-review/step2.mjs" waitedMs=15010 pid=42036 at=2026-09-15T03:55:59.372Z
+RUN ticket=368 runId=ab117c39-fb68-43a0-a15c-30da27153196 cmd="node .scratch/t368-review/step2.mjs" waitedMs=15010 exit=0 pid=42036 at=2026-09-15T03:56:05.132Z
+START ticket=368 runId=83acc474-3ed6-4c5d-86fc-1c286734b831 cmd="node .scratch/t368-review/probe3.mjs" waitedMs=1 pid=34112 at=2026-09-15T03:56:15.477Z
+RUN ticket=368 runId=83acc474-3ed6-4c5d-86fc-1c286734b831 cmd="node .scratch/t368-review/probe3.mjs" waitedMs=1 exit=0 pid=34112 at=2026-09-15T03:57:27.662Z
+START ticket=368 runId=7337faf8-04af-4f7f-8ead-aa26217221c8 cmd="node .scratch/t368-review/attrib2.mjs" waitedMs=0 pid=7600 at=2026-09-15T03:58:10.492Z
+RUN ticket=368 runId=7337faf8-04af-4f7f-8ead-aa26217221c8 cmd="node .scratch/t368-review/attrib2.mjs" waitedMs=0 exit=0 pid=7600 at=2026-09-15T03:58:10.678Z
+START ticket=368 runId=0f56945f-4d15-4011-b31c-2c4e3d0e4eb9 cmd="node .scratch/t368-review/attrib2.mjs" waitedMs=0 pid=16796 at=2026-09-15T03:58:35.495Z
+RUN ticket=368 runId=0f56945f-4d15-4011-b31c-2c4e3d0e4eb9 cmd="node .scratch/t368-review/attrib2.mjs" waitedMs=0 exit=0 pid=16796 at=2026-09-15T03:58:35.699Z
+START ticket=368 runId=7f8e0ca5-95d7-4fb5-b42c-ba53489783b0 cmd="node .scratch/t368-review/attrib2.mjs" waitedMs=0 pid=35592 at=2026-09-15T03:58:54.340Z
+RUN ticket=368 runId=7f8e0ca5-95d7-4fb5-b42c-ba53489783b0 cmd="node .scratch/t368-review/attrib2.mjs" waitedMs=0 exit=0 pid=35592 at=2026-09-15T03:58:54.610Z
+START ticket=368 runId=8fb7bc67-cc4b-4be7-8b74-565ec631b78c cmd="node .scratch/t368-review/prestate.mjs" waitedMs=0 pid=37300 at=2026-09-15T03:59:11.238Z
+RUN ticket=368 runId=8fb7bc67-cc4b-4be7-8b74-565ec631b78c cmd="node .scratch/t368-review/prestate.mjs" waitedMs=0 exit=0 pid=37300 at=2026-09-15T03:59:13.698Z
+START ticket=368 runId=c6a5c1ea-adc8-458e-a319-eff2f5558ba7 cmd="node .scratch/t368-review/final.mjs" waitedMs=15008 pid=19272 at=2026-09-15T03:59:47.355Z
+RUN ticket=368 runId=c6a5c1ea-adc8-458e-a319-eff2f5558ba7 cmd="node .scratch/t368-review/final.mjs" waitedMs=15008 exit=0 pid=19272 at=2026-09-15T03:59:48.282Z
+START ticket=368 runId=efa60c94-3d98-42c9-b0c9-6fd257eb8b33 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=18632 at=2026-09-15T04:03:23.165Z
+RUN ticket=368 runId=efa60c94-3d98-42c9-b0c9-6fd257eb8b33 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=0 pid=18632 at=2026-09-15T04:03:23.696Z
+START ticket=368 runId=f668dc41-39aa-4e72-8621-770a4da1ea6d cmd="node .scratch/t368/s3-probe.mjs" waitedMs=270132 pid=37588 at=2026-09-15T04:08:36.206Z
+RUN ticket=368 runId=f668dc41-39aa-4e72-8621-770a4da1ea6d cmd="node .scratch/t368/s3-probe.mjs" waitedMs=270132 exit=0 pid=37588 at=2026-09-15T04:08:36.309Z
+START ticket=368 runId=82403dcd-eaac-4457-9fa4-a007bfd72a55 cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=105050 pid=41980 at=2026-09-15T04:12:34.204Z
+RUN ticket=368 runId=82403dcd-eaac-4457-9fa4-a007bfd72a55 cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=105050 exit=0 pid=41980 at=2026-09-15T04:12:34.439Z
+START ticket=368 runId=7694572e-dd27-42dc-b64f-8b951013978f cmd="pwsh -NoProfile -File .scratch\\t368\\s3-selfcheck.ps1" waitedMs=0 pid=44524 at=2026-09-15T04:12:47.487Z
+RUN ticket=368 runId=7694572e-dd27-42dc-b64f-8b951013978f cmd="pwsh -NoProfile -File .scratch\\t368\\s3-selfcheck.ps1" waitedMs=0 exit=0 pid=44524 at=2026-09-15T04:12:51.474Z
+START ticket=368 runId=8392273c-a9f3-4b19-b0be-297fb1a464b2 cmd="pwsh -NoProfile -File .scratch\\t368\\s3-selfcheck.ps1" waitedMs=15002 pid=8820 at=2026-09-15T04:13:32.793Z
+RUN ticket=368 runId=8392273c-a9f3-4b19-b0be-297fb1a464b2 cmd="pwsh -NoProfile -File .scratch\\t368\\s3-selfcheck.ps1" waitedMs=15002 exit=0 pid=8820 at=2026-09-15T04:13:36.550Z
+START ticket=368 runId=8e649721-e8be-4f0e-af91-c1d68c79a1b8 cmd="pwsh -NoProfile -File .scratch\\t368\\s3-final.ps1" waitedMs=210080 pid=19348 at=2026-09-15T04:18:39.369Z
