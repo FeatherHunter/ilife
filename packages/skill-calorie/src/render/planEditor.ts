@@ -1,83 +1,99 @@
-/** T351-v13 · **计划编辑器**的页面运行时 ＋ 状态形状（唯一产出者）。
+/** T351-v14 · **计划编辑器**的状态形状（唯一产出者）＋序列化。
  *
- * ## 这个件解决什么
+ * ## 形状跟着库走（不是我拍的）
  *
- * 前面 37 份产物都是**只读页**：文案 ＋ 复制区，用户只能看和复制。
- * 而「定计划」「改动作」这类页是**可写页**——用户要在页面上真把计划搭出来。
- * 本件产出那台编辑器的**唯一一份**运行时（把它抄到第二个页面就是两份会走散的实现，铁律二）。
+ * 真库 `workout_plans` 每次训练一行：`(week_number, day_of_week, session_index)` 唯一，
+ * 带 `session_label` 与 `time_start/time_end`；实测一天排 4 段，时段写在 `session_label` 前缀里
+ * （`"上午·胸·3 角度"`）。故本形状是 **周 → 日 → 段 → 动作**，**段就是「一次训练」**。
  *
- * ## 为什么技能可以自产这段脚本（把口径写清楚，免得下一个人再拦一次）
+ * ## 四条要求落在哪
  *
- * 契约的 **B3** 禁的是两件：技能**自造共享 helpers 的副本**（那段必须逐字取自
- * `buildSharedHelpersJs`，见 `./copy.ts`）与**自造填充器/标记**。
- * 它**不禁**技能给自己的页面配一段运行时——先例是 `src/render/copy.ts` 已经在自产 `<script>` 标签。
- * 本件因此守三条：① 不重写共享 helpers 的任何职责（复制、反馈一律走它——本件只更新
- * `data-t`，点击仍由 `bindCopyAction` 委派）；② 不产 `on*` 内联处理器（零注入面），事件一律委派；
- * ③ 全技能只此一份编辑器运行时。
+ *   ① 周用 TAB 选 → `EditorState.weeks` 是数组，页签数＝它的长度（加周就多一个）；
+ *   ② 每天 4 段、每段选时段 → `EditorDay.sessions`（上限 `maxSessionsPerDay`）＋ `EditorSession.slot`
+ *      （取值域 `EditorState.slots`：凌晨／上午／下午／晚上，负责人 2026-09-15 定）；
+ *   ③ 第 2 周起锁动作 → `EditorWeek.locked`：锁住的周页面不许增删段与动作，**只许改参数**；
+ *   ④ 零分隔符 → 本件与运行时里**没有一处**拿 `|`／`-`／`·` 拼文案；日期也输出成「2026年9月7日」。
  *
- * ## 状态形状（页面上那台编辑器的全部状态）
+ * ## 有氧怎么装（负责人 2026-09-15 认可）
  *
- * 计划 = 周 × 日 × 动作，动作带时段与参数。**第 1 周是母版**，其余周默认引用它
- * （负责人规则 (b)「第一周与第二周必须完全一致」——本件把它做成**默认值**而非常校验：
- * 想不一样得显式点「改为不同」）。
+ * 库里**计划侧没有有氧类型、也没有时间字段**（全库 264 个动作：`type` 只有 `main`／`iso`，
+ * `sets` 只有 `reps/weight/unit`，`unit` 只有 `kg`／`自重`）；有氧只出现在**记录侧**
+ * `exercise_log`（`category='有氧'` ＋ `duration_minutes`，实测 1437 条，含 7 条爬楼机）。
+ * 动库不变的前提下，有氧这样装：`type='有氧'`，并用**一段 set 承载时长**
+ * （`reps` ＝ 分钟数、`weight = 0`、`unit = '分钟'`）——因为 `sets[i]` 本来就是「量 ＋ 单位」的通用形状。
+ * 页面上这一行只出「时长」一个格。
  */
 
-/** 动作库里的一件（页面只负责「从库里选」，库本身来自参数里的**文件地址**）。 */
-export interface EditorLibMove {
-  readonly name: string;
-  readonly part: string;
-  readonly type: string;
-  readonly equip: string;
-}
-
-/** 一个已排进计划的动作（含时段与参数；`mode` 是负重计量方式：绝对重量或 RM）。 */
+/** 一节课里排的一个动作。`kind` 决定这一行要填哪些参数——「有氧只有时间」就落在这里。 */
 export interface EditorMove {
   readonly name: string;
   readonly part: string;
   readonly type: string;
   readonly equip: string;
-  /** 时段名（取自 `EditorState.slotLabels`）。 */
-  readonly slot: string;
+  /** 动作库里的分类值（`力量`／`有氧`）；页面据此切换参数面。 */
+  readonly kind: '力量' | '有氧';
+  /** 目标短语（例如「胸整体」），可空。**不装单位与节奏那类素材**，那些拆成元素或落库时再组。 */
+  readonly goal: string;
   readonly sets: number;
   readonly reps: number;
   readonly mode: 'kg' | 'rm';
   readonly load: number;
+  /** **有氧专用**：一次做多久（分钟）。力量动作恒 0。 */
+  readonly minutes: number;
 }
 
-/** 一天：`moves` 是该日全部动作（**每天合计上限 `maxPerDay` 个**，负责人规则）。 */
-export interface EditorDay {
+/** 一次训练（＝库里的一行）：一个时段 ＋ 这节课的动作。 */
+export interface EditorSession {
+  readonly slot: string;
   readonly moves: readonly EditorMove[];
 }
 
-/** 一周：`sameAsMaster` 为真时页面显示「同第 1 周」，不单独编辑（母版周恒为 false）。 */
+/** 一天：最多 `maxSessionsPerDay` 次训练（真库实况：一天 4 段）。 */
+export interface EditorDay {
+  readonly sessions: readonly EditorSession[];
+}
+
+/** 一周。**第 1 周是母版**；`locked` 的周只许改参数，不许改动作（负责人③）。 */
 export interface EditorWeek {
-  readonly sameAsMaster: boolean;
+  readonly locked: boolean;
   readonly days: readonly EditorDay[];
 }
 
-/** 编辑器整页的状态（页面把它序列化进 `#pe-state`，运行时读回来）。 */
+/** 动作库里的一件（库本体来自参数里的**文件地址**，页面只负责「从库里选」）。 */
+export interface EditorLibMove {
+  readonly name: string;
+  readonly part: string;
+  readonly type: string;
+  readonly equip: string;
+  readonly kind: '力量' | '有氧';
+  readonly goal: string;
+}
+
+/** 编辑器整页的状态（序列化进 `#pe-state`，运行时读回来）。 */
 export interface EditorState {
   readonly title: string;
   readonly startDate: string;
-  readonly totalWeeks: number;
-  readonly slotLabels: readonly string[];
-  readonly maxPerDay: number;
-  /** 动作库来源的人话说明（例如「内置示例库」或库文件地址）。 */
+  readonly slots: readonly string[];
+  readonly maxSessionsPerDay: number;
+  readonly maxMovesPerSession: number;
   readonly libSource: string;
   readonly lib: readonly EditorLibMove[];
   readonly weeks: readonly EditorWeek[];
-  /** 复制区那条命令的唤醒词（本页产出物的执行入口）。 */
   readonly wakeWord: string;
-  /** 首屏就把动作库选择层打开（给样张／验收墙用；正常运行时不传）。 */
-  readonly openSheet?: { readonly w: number; readonly d: number } | null;
+  /** 首屏就把动作库选择层打开（给样张／验收墙用）。 */
+  readonly openPicker?: { readonly w: number; readonly d: number; readonly s: number } | null;
+  /** 首屏停在第几个周页签（样张用；不传＝第 1 周）。 */
+  readonly openWeek?: number;
 }
 
-/** 把状态序列化进页面：`<` 一律写成 `\u003c`，防 `</script>` 断标签（与契约 INJECT-DATA 同法）。 */
+/** 把状态序列化进页面：`<` 写成 `\u003c`，防 `</script>` 断标签（与契约 INJECT-DATA 同法）。 */
 export function serializeState(state: EditorState): string {
   return JSON.stringify(state).replace(/</g, '\\u003c');
 }
 
-/**
- * 编辑器运行时。**无模板字符串、无箭头函数**：这段文本要逐字进页面，
- * 用最朴素的 ES5 写法可以让「TS 源码里怎么写的」与「页面上跑的」一眼对得上，也省掉层层转义。
- */
+/** 日期上屏一律写成「2026年9月7日」——ISO 里那两个连字符也算分隔符，负责人④不接受。 */
+export function cnDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (m === null) return iso;
+  return m[1] + '年' + Number(m[2]) + '月' + Number(m[3]) + '日';
+}

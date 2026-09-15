@@ -1,230 +1,271 @@
-/** T351-v13 · **计划编辑器页面运行时**（唯一产出者；由 `planEditor.ts` 拆出，见该件头）。
+/** T351-v14 · **计划编辑器页面运行时**（唯一产出者；形状见 `./planEditor.ts` 件头）。
  *
- * 这一段是**整台编辑器的行为**：渲染周×日×动作、开动作库选择层、增删改参数、
- * 按当前状态重写复制指令与产物表。全技能只此一份；把它抄进第二个页面就是两份会走散的实现（铁律二）。
+ * 这一段是整台编辑器的行为：周页签、每天最多 4 次训练（每次选一个时段）、
+ * 第 2 周起锁动作只改参数、按当前状态重写复制指令与产物表。
  *
- * 写这段时的三条硬要求（都会被下一个人问到，写在这里省一次解释）：
- *   ① **无模板字符串、无箭头函数**——这段文本要逐字进页面，最朴素的 ES5 写法让「源码里怎么写的」
- *      与「页面上跑的」一眼对得上；也正因为整段住在一个 TS 模板字符串里，**注释里不许出现反引号**
- *      （出现过一次，字符串当场截断、编译报 TS1127）。
+ * 三条硬要求（都会被下一个人问到）：
+ *   ① **无模板字符串、无箭头函数**——这段文本要逐字进页面；整段住在一个 TS 模板字符串里，
+ *      所以**注释里不许出现反引号**（出现过一次，字符串当场截断、编译报 TS1127）。
  *   ② **零内联处理器**：事件一律在容器上委派（`addEventListener` ＋ `data-act`），不产 `on*` 属性。
- *   ③ **不重写共享运行时的职责**：复制仍由共享 helpers 的 `bindCopyAction` 委派，本件只更新 `data-t`。
+ *   ③ **文案零分隔符**（负责人 2026-09-15 第 4 条）：不拿 `|`／`-`／`·` 拼一句话；
+ *      要并列就摆成元素（页签、胶囊、表格列、缩进行）。**日期也走 `cnDate`**（2026年9月7日）。
+ *   ④ **不重写共享运行时的职责**：复制仍由共享 helpers 的 `bindCopyAction` 委派，本件只更新 `data-t`。
  */
 export const PLAN_EDITOR_JS = `
 (function(){
   var root = document.getElementById('pe-root');
   if (!root) return;
   var S = JSON.parse(document.getElementById('pe-state').textContent);
-  var SLOTS = S.slotLabels || ['上午','中午','下午','晚上'];
-  var MAX = S.maxPerDay || 4;
+  var SLOTS = S.slots || ['凌晨','上午','下午','晚上'];
+  var MAXD = S.maxSessionsPerDay || 4;
+  var MAXM = S.maxMovesPerSession || 6;
   var LIB = S.lib || [];
-  var sheetDay = S.openSheet || null;   // 正在给哪天加动作：{w: 周下标, d: 日下标}
+  var DOW = ['周一','周二','周三','周四','周五','周六','周日'];
+  var week = S.openWeek || 0;
+  var picker = S.openPicker || null;
   var filterPart = '全部';
   var query = '';
-  var STATUS = { ok:'success' };
 
   function esc(x){
     return String(x == null ? '' : x).replace(/[&<>"']/g, function(c){
       return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
     });
   }
-  function weeksOf(){ return S.weeks; }
-  function dayOf(wi, di){ return S.weeks[wi].days[di]; }
-  function isEditable(wi){ return wi === 0 || !S.weeks[wi].sameAsMaster; }
-  /** 母版周对某个「天」的动作——其余周引用它。 */
-  function masterDay(di){ return S.weeks[0].days[di]; }
-  function totalMoves(){
+  function cnDate(iso){
+    var m = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(String(iso || ''));
+    return m === null ? String(iso || '') : (m[1] + '年' + Number(m[2]) + '月' + Number(m[3]) + '日');
+  }
+  function lock(){ return S.weeks[week].locked; }
+  function days(){ return S.weeks[week].days; }
+  function day(d){ return days()[d]; }
+  function isFirstWeek(){ return week === 0; }
+  function trainCount(){
     var n = 0;
-    for (var w = 0; w < S.weeks.length; w++){
-      var dws = isEditable(w) ? S.weeks[w].days : S.weeks[0].days;
-      for (var d = 0; d < dws.length; d++) n += dws[d].moves.length;
-    }
+    for (var w = 0; w < S.weeks.length; w++) for (var d = 0; d < 7; d++)
+      for (var s = 0; s < S.weeks[w].days[d].sessions.length; s++) n += 1;
     return n;
+  }
+  function moveCount(){
+    var n = 0;
+    for (var w = 0; w < S.weeks.length; w++) for (var d = 0; d < 7; d++)
+      for (var i = 0; i < S.weeks[w].days[d].sessions.length; i++) n += S.weeks[w].days[d].sessions[i].moves.length;
+    return n;
+  }
+  /** 新周照抄母版：动作一样（负责人③「第 2 周只能看到和第一周一样的动作」），参数各周独立。 */
+  function cloneWeek(){
+    return { locked: false, days: JSON.parse(JSON.stringify(S.weeks[0].days)) };
+  }
+  function blankDays(){
+    var a = [], i;
+    for (i = 0; i < 7; i++) a.push({ sessions: [] });
+    return a;
   }
   function setWeeks(n){
     n = Math.max(1, Math.min(52, n));
-    while (S.weeks.length < n) S.weeks.push({ sameAsMaster: true, days: blankDays() });
+    while (S.weeks.length < n) S.weeks.push(cloneWeek());
     while (S.weeks.length > n) S.weeks.pop();
-    S.totalWeeks = S.weeks.length;
+    if (week > S.weeks.length - 1) week = S.weeks.length - 1;
     render();
   }
-  function blankDays(){
-    var a = [];
-    for (var i = 0; i < 7; i++) a.push({ moves: [] });
-    return a;
+  function slotUse(d, slot, skip){
+    var n = 0, ss = day(d).sessions;
+    for (var i = 0; i < ss.length; i++) if (i !== skip && ss[i].slot === slot) n += 1;
+    return n;
   }
-  function slotIndex(slot){ var i = SLOTS.indexOf(slot); return i < 0 ? 0 : i; }
 
-  /* ── 渲染：整块重画（状态小、页面短，重画比打补丁可靠得多） ── */
+  /* ── 渲染 ── */
   function render(){
-    root.innerHTML = (S.weeks.length === 0 ? renderEmpty() : renderSetup() + renderWeeks()) + renderSheet();
+    root.innerHTML = (S.weeks.length === 0 ? emptyHtml() : setupHtml() + tabsHtml() + weekHtml()) + pickerHtml();
     syncCopy();
-    var btn = root.querySelector('.pe-sheet.is-open .pe-search');
-    if (btn) btn.focus();
+    var s = root.querySelector('.pe-search');
+    if (s) s.focus();
   }
 
-  /** 空态：负责人原话「初始页面可能什么都没有，只提示我们『定计划』」——就只有这一块。
-   *  图标用**内联 SVG** 而不是 emoji：验收墙上那个日历 emoji 落成了豆腐块（无字体回退时不可控），
-   *  SVG 与字体无关、在哪台机器上都长一样。
-   *  （注意：整段运行时就住在一个 TS 模板字符串里，注释里**不能出现反引号**，否则字符串当场断。） */
-  function renderEmpty(){
+  function emptyHtml(){
     return '<div class="pe-empty">'
       + '<div class="pe-empty-ico"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M12 14v4M10 16h4"/></svg></div>'
       + '<p class="pe-empty-t">还没有训练计划</p>'
-      + '<p class="pe-empty-d">从一周排起：排好第 1 周（母版），后面的周默认照它走；'
-      + '也可以先和 AI 说说目标，让它预填一份你再改。</p>'
-      + '<button type="button" class="pe-ghost" data-act="start-plan" style="min-height:44px;padding:0 20px;background:var(--blue);color:#fff;border-color:var(--blue)">＋ 定一份计划</button>'
+      + '<p class="pe-empty-d">先排第 1 周。它就是母版，后面的周都照它走，各周只改重量与次数这类参数。'
+      + '每天可以排 4 次训练，每次挑一个时段。</p>'
+      + '<button type="button" class="pe-cta" data-act="start">定一份计划</button>'
       + '</div>';
   }
 
-  function renderSetup(){
+  function setupHtml(){
     return '<div class="pe-setup">'
-      + '<span class="pe-setup-lab">总周数</span>'
-      + '<span class="pe-step">'
-      +   '<button type="button" data-act="wk-minus" aria-label="减一周"' + (S.weeks.length <= 1 ? ' disabled' : '') + '>−</button>'
-      +   '<span class="pe-step-n">' + S.weeks.length + ' 周</span>'
-      +   '<button type="button" data-act="wk-plus" aria-label="加一周">＋</button>'
-      + '</span>'
-      /* 「起日」与它的输入框包在一个不许拆的组里：验收墙上 390 宽时它俩被 flex 换行拆散了
-         （标签留在上一行、输入框掉到下一行），看起来像两个不相干的控件。 */
-      + '<span class="pe-pair"><span class="pe-setup-lab">起日</span>'
-      + '<input class="pe-date" type="date" value="' + esc(S.startDate) + '" data-act="start"></span>'
-      + '<span class="pe-count">已排 ' + totalMoves() + ' 个动作 · 每天上限 ' + MAX + ' 个 · ' + esc(S.libSource) + '</span>'
+      + '<span class="pe-pair"><span class="pe-lab">总周数</span>'
+      +   '<span class="pe-step">'
+      +     '<button type="button" data-act="wk-minus" aria-label="减一周"' + (S.weeks.length <= 1 ? ' disabled' : '') + '>−</button>'
+      +     '<span class="pe-step-n">' + S.weeks.length + ' 周</span>'
+      +     '<button type="button" data-act="wk-plus" aria-label="加一周">＋</button>'
+      +   '</span></span>'
+      + '<span class="pe-pair"><span class="pe-lab">起日</span>'
+      +   '<button type="button" class="pe-date" data-act="pick-start">' + esc(cnDate(S.startDate)) + '</button></span>'
+      + '<span class="pe-count">已排 ' + trainCount() + ' 次训练，' + moveCount() + ' 个动作</span>'
       + '</div>';
   }
 
-  function renderWeeks(){
-    if (S.weeks.length === 0) return '';
+  function tabsHtml(){
     var out = [];
-    for (var w = 0; w < S.weeks.length; w++) out.push(renderWeek(w));
-    out.push('<button type="button" class="pe-add" data-act="wk-plus" style="margin-top:2px">＋ 再加一周</button>');
-    return out.join('');
-  }
-
-  function renderWeek(wi){
-    var wk = S.weeks[wi];
-    var master = wi === 0;
-    var inherit = !master && wk.sameAsMaster;
-    var head = '<div class="pe-week-head">'
-      + '<span class="pe-week-n">第 ' + (wi + 1) + ' 周</span>'
-      + (master ? '<span class="pe-badge">母版周</span>'
-                : (inherit ? '<span class="pe-badge is-plain">同第 1 周</span>' : '<span class="pe-badge is-plain">已单独编辑</span>'))
-      + '<span class="pe-head-actions">'
-      + (master ? '' : '<button type="button" class="pe-ghost" data-act="toggle-same" data-w="' + wi + '">'
-          + (inherit ? '改为不同' : '恢复成同第 1 周') + '</button>')
-      + '</span></div>';
-    var body;
-    if (inherit){
-      body = '<div class="pe-week-body"><p class="pe-same">这一周沿用第 1 周（改第 1 周，这里会跟着变）。要不一样就点右上「改为不同」。</p></div>';
-    } else {
-      var days = [];
-      for (var d = 0; d < 7; d++) days.push(renderDay(wi, d, master));
-      body = '<div class="pe-week-body">' + days.join('') + '</div>';
+    for (var i = 0; i < S.weeks.length; i++){
+      out.push('<button type="button" class="pe-tab' + (i === week ? ' is-on' : '') + '" data-act="go-week" data-w="' + i + '"'
+        + ' aria-current="' + (i === week ? 'true' : 'false') + '">'
+        + '<span class="pe-tab-n">第 ' + (i + 1) + ' 周</span>'
+        + (i === 0 ? '<span class="pe-tab-b">母版</span>' : '')
+        + '</button>');
     }
-    return '<section class="pe-week' + (master ? ' is-master' : '') + (inherit ? ' is-inherit' : '') + '">' + head + body + '</section>';
+    out.push('<button type="button" class="pe-tab pe-tab-add" data-act="wk-plus">加一周</button>');
+    return '<div class="pe-tabs" role="tablist">' + out.join('') + '</div>';
   }
 
-  var DOW = ['周一','周二','周三','周四','周五','周六','周日'];
-
-  function renderDay(wi, di, master){
-    var day = dayOf(wi, di);
-    var moves = day.moves;
+  function weekHtml(){
+    var head = '<div class="pe-weekbar">'
+      + '<span class="pe-week-t">第 ' + (week + 1) + ' 周</span>'
+      + (lock()
+        ? '<span class="pe-lock">动作与第 1 周相同，只改参数</span>'
+        : '<span class="pe-master">母版周，动作在这一周排</span>')
+      + '</div>';
     var rows = [];
-    for (var i = 0; i < moves.length; i++) rows.push(renderMove(wi, di, i, moves[i]));
-    var full = moves.length >= MAX;
-    var add = '<button type="button" class="pe-add" data-act="open-lib" data-w="' + wi + '" data-d="' + di + '"'
-      + (full ? ' disabled' : '') + '>'
-      + (full ? '今天已满 ' + MAX + ' 个动作' : '＋ 加动作') + '</button>';
-    var hint = full ? '<p class="pe-limit">要换动作，先删掉一个（每天上限 ' + MAX + ' 个）。</p>' : '';
-    if (moves.length === 0) rows.push('<p class="pe-limit">这天还没排。点下面「＋ 加动作」从动作库里选。</p>');
-    return '<div class="pe-day">'
-      + '<div class="pe-day-dow">' + DOW[di] + '</div>'
-      + '<div class="pe-day-main"><ul class="pe-moves">' + rows.join('') + '</ul>' + add + hint + '</div>'
+    for (var d = 0; d < 7; d++) rows.push(dayHtml(d));
+    return head + '<div class="pe-week">' + rows.join('') + '</div>';
+  }
+
+  function dayHtml(d){
+    var ss = day(d).sessions, out = [], i;
+    for (i = 0; i < ss.length; i++) out.push(sessionHtml(d, i));
+    var full = ss.length >= MAXD;
+    out.push('<button type="button" class="pe-add" data-act="add-train" data-d="' + d + '"' + (full ? ' disabled' : '') + '>'
+      + (full ? '这天已排满 ' + MAXD + ' 次训练' : '加一次训练') + '</button>');
+    if (ss.length === 0 && !lock()) out.push('<p class="pe-hint">这天还没排。点「加一次训练」，再挑时段。</p>');
+    return '<div class="pe-day"><div class="pe-dow">' + DOW[d] + '</div><div class="pe-day-main">' + out.join('') + '</div></div>';
+  }
+
+  function sessionHtml(d, s){
+    var se = day(d).sessions[s], moves = [], i;
+    for (i = 0; i < se.moves.length; i++) moves.push(moveHtml(d, s, i));
+    var chips = [];
+    for (i = 0; i < SLOTS.length; i++){
+      chips.push('<button type="button" class="pe-slot' + (se.slot === SLOTS[i] ? ' is-on' : '') + '"'
+        + ' data-act="set-slot" data-d="' + d + '" data-s="' + s + '" data-slot="' + esc(SLOTS[i]) + '"'
+        + (lock() ? ' disabled' : '') + '>' + esc(SLOTS[i]) + '</button>');
+    }
+    var add = '<button type="button" class="pe-add sm" data-act="add-move" data-d="' + d + '" data-s="' + s + '"'
+      + (lock() || se.moves.length >= MAXM ? ' disabled' : '') + '>'
+      + (lock() ? '加动作' : (se.moves.length >= MAXM ? '这一节已满 ' + MAXM + ' 个动作' : '加动作')) + '</button>';
+    var del = lock() ? '' : '<button type="button" class="pe-x" data-act="del-train" data-d="' + d + '" data-s="' + s + '" aria-label="删掉这次训练">✕</button>';
+    return '<div class="pe-sess' + (lock() ? ' is-locked' : '') + '">'
+      + '<div class="pe-sess-head">'
+      +   '<span class="pe-slot-set">' + chips.join('') + '</span>'
+      +   del
+      + '</div>'
+      + (moves.length > 0 ? '<ul class="pe-moves">' + moves.join('') + '</ul>' : '<p class="pe-hint">这一节还没有动作。</p>')
+      + add
       + '</div>';
   }
 
-  function renderMove(wi, di, mi, m){
-    var tags = '<span class="pe-tag">' + esc(m.part) + '</span><span class="pe-tag">' + esc(m.type) + '</span>'
-      + (m.equip ? '<span class="pe-tag">' + esc(m.equip) + '</span>' : '');
-    var slot = '<button type="button" class="pe-tag is-slot" data-act="cycle-slot" data-w="' + wi + '" data-d="' + di
-      + '" data-m="' + mi + '" title="点一下换时段">' + esc(m.slot) + '</button>';
+  function moveHtml(d, s, m){
+    var mv = day(d).sessions[s].moves[m];
+    var tags = '<span class="pe-tag">' + esc(mv.part) + '</span><span class="pe-tag">' + esc(mv.type) + '</span>'
+      + (mv.equip ? '<span class="pe-tag">' + esc(mv.equip) + '</span>' : '');
+    var goal = mv.goal ? '<span class="pe-tag is-goal">' + esc(mv.goal) + '</span>' : '';
+    var params;
+    var at = ' data-d="' + d + '" data-s="' + s + '" data-m="' + m + '"';
+    if (mv.kind === '有氧'){
+      params = '<span class="pe-param"><input type="number" min="1" max="600" value="' + mv.minutes + '" data-act="set-min"' + at + ' aria-label="时长"><span class="pe-param-u">分钟</span></span>';
+    } else {
+      params = '<span class="pe-param"><input type="number" min="1" max="30" value="' + mv.sets + '" data-act="set-sets"' + at + ' aria-label="组数"><span class="pe-param-u">组</span></span>'
+        + '<span class="pe-param">乘<input type="number" min="1" max="100" value="' + mv.reps + '" data-act="set-reps"' + at + ' aria-label="每组次数"><span class="pe-param-u">次</span></span>'
+        + '<button type="button" class="pe-mode" data-act="toggle-mode"' + at + '>' + (mv.mode === 'rm' ? 'RM' : 'kg') + '</button>'
+        + '<span class="pe-param"><input type="number" min="0" max="500" step="0.5" value="' + mv.load + '" data-act="set-load"' + at + ' aria-label="负重"><span class="pe-param-u">' + (mv.mode === 'rm' ? 'RM' : 'kg') + '</span></span>';
+    }
+    if (lock()) params = '<span class="pe-plain">' + plainParams(mv) + '</span>'
+      + '<button type="button" class="pe-edit" data-act="unlock-note"' + at + ' hidden></button>';
+    var del = lock() ? '<span class="pe-lockico" title="第 1 周之外不能改动作" aria-label="已锁"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>'
+      : '<button type="button" class="pe-x" data-act="del-move"' + at + ' aria-label="删掉这个动作">✕</button>';
     return '<li class="pe-move">'
-      + '<div><div class="pe-move-nm">' + esc(m.name) + '</div><div class="pe-move-tags">' + slot + tags + '</div></div>'
-      + '<div class="pe-params">'
-      +   '<span class="pe-param"><input type="number" min="1" max="20" value="' + m.sets + '" data-act="set-sets" data-w="' + wi + '" data-d="' + di + '" data-m="' + mi + '" aria-label="组数"><span class="pe-param-u">组</span></span>'
-      +   '<span class="pe-param">×<input type="number" min="1" max="100" value="' + m.reps + '" data-act="set-reps" data-w="' + wi + '" data-d="' + di + '" data-m="' + mi + '" aria-label="次数"><span class="pe-param-u">次</span></span>'
-      +   '<button type="button" class="pe-ghost" data-act="toggle-mode" data-w="' + wi + '" data-d="' + di + '" data-m="' + mi + '" style="min-height:36px;padding:0 10px">' + (m.mode === 'rm' ? 'RM' : 'kg') + '</button>'
-      +   '<span class="pe-param"><input type="number" min="0" max="500" step="0.5" value="' + m.load + '" data-act="set-load" data-w="' + wi + '" data-d="' + di + '" data-m="' + mi + '" aria-label="负重"><span class="pe-param-u">' + (m.mode === 'rm' ? 'RM' : 'kg') + '</span></span>'
-      + '</div>'
-      + '<button type="button" class="pe-del" data-act="del-move" data-w="' + wi + '" data-d="' + di + '" data-m="' + mi + '" aria-label="删掉这个动作">✕</button>'
-      + '</li>';
+      + '<div class="pe-move-main"><div class="pe-move-nm">' + esc(mv.name) + '</div><div class="pe-move-tags">' + goal + tags + '</div></div>'
+      + '<div class="pe-params">' + params + '</div>'
+      + del + '</li>';
   }
 
-  /* ── 选择层：动作库 ── */
-  function parts(){
-    var seen = {}, out = ['全部'];
-    for (var i = 0; i < LIB.length; i++) if (!seen[LIB[i].part]) { seen[LIB[i].part] = 1; out.push(LIB[i].part); }
-    return out;
+  /** 锁住的周参数也**可改**（负责人③：组数次数重量能改）——所以是输入框，只是不再带删除与加号。 */
+  function plainParams(mv){
+    var at = '';
+    return mv.kind === '有氧'
+      ? '<span class="pe-param"><input type="number" min="1" max="600" value="' + mv.minutes + '" data-act="set-min"' + at + '><span class="pe-param-u">分钟</span></span>'
+      : mv.sets + ' 组乘 ' + mv.reps + ' 次 ' + (mv.mode === 'rm' ? mv.load + ' RM' : (mv.load ? mv.load + ' kg' : '自重'));
   }
-  function renderSheet(){
-    if (!sheetDay) return '';
-    var ps = parts(), chips = [];
-    for (var i = 0; i < ps.length; i++){
+
+  function pickerHtml(){
+    if (!picker) return '';
+    var ps = ['全部'], seen = {}, i;
+    for (i = 0; i < LIB.length; i++) if (!seen[LIB[i].part]) { seen[LIB[i].part] = 1; ps.push(LIB[i].part); }
+    var chips = [];
+    for (i = 0; i < ps.length; i++){
       chips.push('<button type="button" class="pe-filter' + (ps[i] === filterPart ? ' is-on' : '') + '" data-act="filter" data-p="' + esc(ps[i]) + '">' + esc(ps[i]) + '</button>');
     }
-    var used = dayOf(sheetDay.w, sheetDay.d).moves.length;
+    var used = day(picker.d).sessions[picker.s].moves.length;
     var rows = [];
-    for (var j = 0; j < LIB.length; j++){
-      var m = LIB[j];
+    for (i = 0; i < LIB.length; i++){
+      var m = LIB[i];
       if (filterPart !== '全部' && m.part !== filterPart) continue;
       if (query && m.name.toLowerCase().indexOf(query) < 0 && m.part.indexOf(query) < 0) continue;
-      /* 右侧那一槽原来把器械又印一遍（左边元信息里已经有了「腿 · 主要 · 杠铃」，右边再来个「杠铃」）
-         ——同一件事说两遍（第 ④ 条），验收墙上抓到的，故整槽去掉。 */
-      rows.push('<li><button type="button" class="pe-lib-row" data-act="pick" data-name="' + esc(m.name) + '"'
-        + (used >= MAX ? ' disabled' : '') + '>'
-        + '<span><span class="pe-lib-nm">' + esc(m.name) + '</span>'
-        + '<span class="pe-lib-meta">' + esc(m.part) + ' · ' + esc(m.type) + (m.equip ? ' · ' + esc(m.equip) : '') + '</span></span>'
+      rows.push('<li><button type="button" class="pe-lib-row" data-act="pick" data-name="' + esc(m.name) + '"' + (used >= MAXM ? ' disabled' : '') + '>'
+        + '<span class="pe-lib-nm">' + esc(m.name) + '</span>'
+        + '<span class="pe-lib-tags"><span class="pe-tag">' + esc(m.part) + '</span><span class="pe-tag">' + esc(m.kind) + '</span>'
+        + (m.equip ? '<span class="pe-tag">' + esc(m.equip) + '</span>' : '') + '</span>'
         + '</button></li>');
     }
     var list = rows.length ? '<ul class="pe-lib">' + rows.join('') + '</ul>'
-      : '<p class="pe-lib-empty">这个筛选下没有动作。换个部位或清掉搜索词。</p>';
-    return '<div class="pe-sheet is-open" data-sheet="1">'
+      : '<p class="pe-lib-empty">这个筛选下没有动作。换个部位，或把搜索词清掉。</p>';
+    return '<div class="pe-sheet">'
       + '<div class="pe-sheet-box">'
-      +   '<div class="pe-sheet-head"><span class="pe-sheet-t">选动作 · ' + DOW[sheetDay.d] + '（' + used + '/' + MAX + '）</span>'
-      +     '<button type="button" class="pe-sheet-x" data-act="close-lib" aria-label="关掉">✕</button></div>'
+      +   '<div class="pe-sheet-head"><span class="pe-sheet-t">选动作</span>'
+      +     '<span class="pe-sheet-sub">' + DOW[picker.d] + ' 的 ' + esc(day(picker.d).sessions[picker.s].slot) + '，这一节已有 ' + used + ' 个</span>'
+      +     '<button type="button" class="pe-x" data-act="close-picker" aria-label="关掉">✕</button></div>'
       +   '<div class="pe-sheet-filters">' + chips.join('') + '</div>'
       +   '<input class="pe-search" type="search" placeholder="搜动作名或部位" value="' + esc(query) + '" data-act="search">'
       +   list
       + '</div></div>';
   }
 
-  /* ── 产物：一张规范表 ＋ 一条命令，进复制区（AI 拿到的就是它） ── */
-  function rowsForOutput(){
-    var out = [], inherits = [];
-    for (var w = 0; w < S.weeks.length; w++){
-      if (!isEditable(w)) { inherits.push(w + 1); continue; }
-      for (var d = 0; d < 7; d++){
-        var mv = dayOf(w, d).moves;
-        for (var i = 0; i < mv.length; i++){
-          out.push([w + 1, DOW[d], mv[i].slot, mv[i].name, mv[i].part + '·' + mv[i].type,
-            mv[i].sets + ' 组 × ' + mv[i].reps + ' 次',
-            mv[i].mode === 'rm' ? (mv[i].load + ' RM') : (mv[i].load ? mv[i].load + ' kg' : '自重')]);
+  /* ── 产物：一张规范表 ＋ 一段缩进文本（**不用分隔符**，并列靠换行与缩进） ── */
+  function planRows(){
+    var out = [], w, d, s, i, j;
+    for (w = 0; w < S.weeks.length; w++){
+      for (d = 0; d < 7; d++){
+        for (s = 0; s < S.weeks[w].days[d].sessions.length; s++){
+          var se = S.weeks[w].days[d].sessions[s];
+          for (i = 0; i < se.moves.length; i++){
+            var mv = se.moves[i];
+            out.push({
+              week: w + 1, dow: DOW[d], slot: se.slot, name: mv.name, part: mv.part, type: mv.type,
+              amount: mv.kind === '有氧' ? (mv.minutes + ' 分钟')
+                : (mv.sets + ' 组乘 ' + mv.reps + ' 次'),
+              load: mv.kind === '有氧' ? '' : (mv.mode === 'rm' ? (mv.load + ' RM') : (mv.load ? (mv.load + ' kg') : '自重')),
+            });
+          }
         }
       }
     }
-    return { rows: out, inherits: inherits };
+    return out;
   }
   function promptText(){
-    var o = rowsForOutput();
-    var lines = [];
-    lines.push('请你加载技能 卡路里,执行唤醒词「' + S.wakeWord + '」。');
+    var rows = planRows(), lines = [], curWeek = 0, curDay = '', i;
+    lines.push('请你加载技能 卡路里，执行唤醒词「' + S.wakeWord + '」。');
     lines.push('');
-    lines.push('【计划】' + S.title + ' · 起日 ' + S.startDate + ' · 共 ' + S.weeks.length + ' 周');
-    lines.push('【明细】周次 | 星期 | 时段 | 动作 | 部位·类型 | 组×次 | 负重');
-    for (var i = 0; i < o.rows.length; i++) lines.push(o.rows[i].join(' | '));
-    if (o.inherits.length > 0) lines.push('【未列出的周】第 ' + o.inherits.join('、') + ' 周同第 1 周');
+    lines.push('计划名称：' + S.title);
+    lines.push('开始日期：' + cnDate(S.startDate));
+    lines.push('总周数：' + S.weeks.length + ' 周');
     lines.push('');
-    lines.push('这就是我要的计划,请照它落库,完成后给我回执 HTML。');
+    for (i = 0; i < rows.length; i++){
+      var r = rows[i];
+      if (r.week !== curWeek){ lines.push('第 ' + r.week + ' 周'); curWeek = r.week; curDay = ''; }
+      if (r.dow !== curDay){ lines.push('  ' + r.dow); curDay = r.dow; }
+      lines.push('    ' + r.slot + '　' + r.name + '　' + r.part + '　' + r.type + '　' + r.amount + (r.load ? ('　' + r.load) : ''));
+    }
+    lines.push('');
+    lines.push('请按这份表落库，完成后给我回执 HTML。');
     return lines.join('\\n');
   }
   function syncCopy(){
@@ -232,79 +273,82 @@ export const PLAN_EDITOR_JS = `
     if (btn) btn.setAttribute('data-t', promptText());
     var out = document.getElementById('pe-out-body');
     if (!out) return;
-    var o = rowsForOutput();
-    var tr = [];
-    for (var i = 0; i < o.rows.length; i++){
-      tr.push('<tr>' + o.rows[i].map(function(c){ return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>');
+    var rows = planRows(), tr = [], i;
+    for (i = 0; i < rows.length; i++){
+      var r = rows[i];
+      tr.push('<tr><td>第 ' + r.week + ' 周</td><td>' + esc(r.dow) + '</td><td>' + esc(r.slot) + '</td><td>' + esc(r.name)
+        + '</td><td>' + esc(r.part) + '</td><td>' + esc(r.type) + '</td><td>' + esc(r.amount) + '</td><td>' + esc(r.load) + '</td></tr>');
     }
-    out.innerHTML = '<table class="ilife-block-data-table"><caption class="ilife-block-data-table-caption">计划明细（' + o.rows.length + ' 行）</caption>'
-      + '<thead><tr><th>周次</th><th>星期</th><th>时段</th><th>动作</th><th>部位·类型</th><th>组×次</th><th>负重</th></tr></thead>'
-      + '<tbody>' + (tr.length ? tr.join('') : '<tr><td colspan="7">还没有排动作</td></tr>') + '</tbody></table>'
-      + (o.inherits.length ? '<p class="pe-limit">第 ' + o.inherits.join('、') + ' 周沿用第 1 周，不单独列行。</p>' : '');
+    out.innerHTML = '<table class="ilife-block-data-table"><caption class="ilife-block-data-table-caption">计划明细（' + rows.length + ' 行）</caption>'
+      + '<thead><tr><th>周次</th><th>星期</th><th>时段</th><th>动作</th><th>部位</th><th>类型</th><th>量</th><th>负重</th></tr></thead>'
+      + '<tbody>' + (tr.length ? tr.join('') : '<tr><td colspan="8">还没有排动作</td></tr>') + '</tbody></table>';
   }
 
-  /* ── 事件：一处委派，零内联处理器（零注入面） ── */
+  /* ── 事件：一处委派，零内联处理器 ── */
   root.addEventListener('click', function(e){
-    var t = e.target;
-    var el = t.closest ? t.closest('[data-act]') : null;
+    var el = e.target.closest ? e.target.closest('[data-act]') : null;
     if (!el) return;
     var act = el.getAttribute('data-act');
-    var w = Number(el.getAttribute('data-w')), d = Number(el.getAttribute('data-d')), mi = Number(el.getAttribute('data-m'));
-    if (act === 'start-plan'){
-      S.weeks = [{ sameAsMaster: false, days: blankDays() }];
-      S.totalWeeks = 1; setWeeks(4); return;
-    }
+    var w = Number(el.getAttribute('data-w')), d = Number(el.getAttribute('data-d')), s = Number(el.getAttribute('data-s')), m = Number(el.getAttribute('data-m'));
+    if (act === 'start'){ S.weeks = [ { locked: false, days: blankDays() } ]; setWeeks(4); return; }
     if (act === 'wk-plus'){ setWeeks(S.weeks.length + 1); return; }
     if (act === 'wk-minus'){ setWeeks(S.weeks.length - 1); return; }
-    if (act === 'toggle-same'){ S.weeks[w].sameAsMaster = !S.weeks[w].sameAsMaster; render(); return; }
-    if (act === 'open-lib'){ sheetDay = { w: w, d: d }; query = ''; filterPart = '全部'; render(); return; }
-    if (act === 'close-lib'){ sheetDay = null; render(); return; }
+    if (act === 'go-week'){ week = w; picker = null; render(); return; }
+    if (act === 'add-train'){
+      if (day(d).sessions.length >= MAXD) return;
+      var slot = SLOTS[0], k;
+      for (k = 0; k < SLOTS.length; k++) if (slotUse(d, SLOTS[k], -1) === 0){ slot = SLOTS[k]; break; }
+      day(d).sessions.push({ slot: slot, moves: [] });
+      render(); return;
+    }
+    if (act === 'del-train'){ day(d).sessions.splice(s, 1); render(); return; }
+    if (act === 'set-slot'){
+      var want = el.getAttribute('data-slot');
+      if (slotUse(d, want, s) > 0) return;
+      day(d).sessions[s].slot = want; render(); return;
+    }
+    if (act === 'add-move'){ picker = { w: week, d: d, s: s }; query = ''; filterPart = '全部'; render(); return; }
+    if (act === 'close-picker'){ picker = null; render(); return; }
     if (act === 'filter'){ filterPart = el.getAttribute('data-p'); render(); return; }
     if (act === 'pick'){
-      if (sheetDay === null) return;
-      var name = el.getAttribute('data-name'), hit = null;
-      for (var i = 0; i < LIB.length; i++) if (LIB[i].name === name) hit = LIB[i];
+      if (!picker) return;
+      var name = el.getAttribute('data-name'), hit = null, i;
+      for (i = 0; i < LIB.length; i++) if (LIB[i].name === name) hit = LIB[i];
       if (!hit) return;
-      var day = dayOf(sheetDay.w, sheetDay.d);
-      if (day.moves.length >= MAX) return;
-      var slot = SLOTS[0];
-      for (var s = 0; s < SLOTS.length; s++){
-        var n = 0;
-        for (var k = 0; k < day.moves.length; k++) if (day.moves[k].slot === SLOTS[s]) n++;
-        if (n === 0){ slot = SLOTS[s]; break; }
-      }
-      day.moves.push({ name: hit.name, part: hit.part, type: hit.type, equip: hit.equip, slot: slot, sets: 4, reps: 8, mode: 'kg', load: 0 });
-      render(); return;
+      var se = day(picker.d).sessions[picker.s];
+      if (se.moves.length >= MAXM) return;
+      se.moves.push({ name: hit.name, part: hit.part, type: hit.type, equip: hit.equip, kind: hit.kind, goal: hit.goal || '',
+        sets: 4, reps: 8, mode: 'kg', load: 0, minutes: hit.kind === '有氧' ? 30 : 0 });
+      picker = null; render(); return;
     }
-    if (act === 'del-move'){ dayOf(w, d).moves.splice(mi, 1); render(); return; }
-    if (act === 'cycle-slot'){
-      var mv = dayOf(w, d).moves[mi];
-      mv.slot = SLOTS[(slotIndex(mv.slot) + 1) % SLOTS.length];
-      render(); return;
-    }
+    if (act === 'del-move'){ day(d).sessions[s].moves.splice(m, 1); render(); return; }
     if (act === 'toggle-mode'){
-      var m2 = dayOf(w, d).moves[mi];
-      m2.mode = m2.mode === 'rm' ? 'kg' : 'rm';
-      render(); return;
+      var mv = day(d).sessions[s].moves[m];
+      mv.mode = mv.mode === 'rm' ? 'kg' : 'rm'; render(); return;
+    }
+    if (act === 'pick-start'){
+      var v = window.prompt('开始日期（写成 2026-09-07 这种）', S.startDate);
+      if (v && /^\\d{4}-\\d{2}-\\d{2}$/.test(v)){ S.startDate = v; render(); }
+      return;
     }
   });
   root.addEventListener('input', function(e){
     var el = e.target, act = el.getAttribute && el.getAttribute('data-act');
     if (!act) return;
     if (act === 'search'){ query = String(el.value || '').trim().toLowerCase(); render(); return; }
-    if (act === 'start'){ S.startDate = el.value; syncCopy(); return; }
-    var w = Number(el.getAttribute('data-w')), d = Number(el.getAttribute('data-d')), mi = Number(el.getAttribute('data-m'));
-    var mv = dayOf(w, d).moves[mi];
+    var d = Number(el.getAttribute('data-d')), s = Number(el.getAttribute('data-s')), m = Number(el.getAttribute('data-m'));
+    var mv = (day(d).sessions[s] || { moves: [] }).moves[m];
     if (!mv) return;
     var v = Number(el.value);
     if (isNaN(v)) return;
     if (act === 'set-sets') mv.sets = v;
     if (act === 'set-reps') mv.reps = v;
     if (act === 'set-load') mv.load = v;
+    if (act === 'set-min') mv.minutes = v;
     syncCopy();
   });
   root.addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && sheetDay !== null){ sheetDay = null; render(); }
+    if (e.key === 'Escape' && picker){ picker = null; render(); }
   });
 
   render();
