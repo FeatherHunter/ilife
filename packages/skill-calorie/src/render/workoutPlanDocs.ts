@@ -15,10 +15,11 @@
  * 过程型两页走原五段式（本轮不动），页底加本写词的逐字 prompt（预检确认页要能复制 prompt 回给 AI）。
  */
 import type { SerializableEnvelope } from 'base-paint';
+import { escapeHtml } from 'base-paint';
 import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import { nowStamp } from './receipt.js';
 import { planCopyBlock } from './planCopyBlock.js';
-import { planViewCss } from './workoutPlanCss.js';
+import { planPageCss, planViewCss } from './workoutPlanCss.js';
 import { DOW, planWeeksHtml } from './workoutPlanLook.js';
 import type { PlanWeek } from './workoutPlanLook.js';
 import { weekOfDate } from './planPlate.js';
@@ -104,12 +105,33 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
   // 周页签的默认选中项＝**本周**：计划起始日与今天都齐才算得出（`weekOfDate` 按「起始日那一周的周一为
   // 第 1 周」口径给周次号，与计划库 `day_of_week` 同源）；缺起始日 ⇒ 算不出 ⇒ 传 null 让它兜底第 1 周。
   const currentWeek = v.startDate === null || v.startDate === '' ? null : weekOfDate(v.startDate, todayISO()).week;
+  // 副标题只留一件事：计划名。T351-v9（负责人 2026-09-15 第 ⑤ 条）把原来那串
+  // `计划名 · 说明 · 起日 日期` 拆掉——三件事用 `·` 串成一行，正是「拿符号顶替设计」。
+  // 说明与起日改住页头下的**计划信息条**：起日是一个「键＋值」，说明原文里若带 `·`
+  // （老技能当年就写成 `科学定制·6天/周·270组`）拆成胶囊排开；说明是一句完整话（没有 `·`）时
+  // 原样落一行文字，不硬塞进胶囊。
+  // T351-v6 已砍掉的两项冗余不再回来：`版本 v1`（对用户无用）与 `共 4 周`（与指标卡「总周数」重复）。
+  const desc = (v.description ?? '').trim();
+  const descParts = desc.split('·').map((t) => t.trim()).filter((t) => t !== '').slice(0, 6);
+  const descHtml = desc === ''
+    ? ''
+    : (descParts.length === 1 && descParts[0].length > 14
+      ? '<span class="ilw-meta-v">' + escapeHtml(descParts[0]) + '</span>'
+      : descParts.map((t) => '<span class="ilw-chip">' + escapeHtml(t) + '</span>').join(''));
+  const metaStrip = '<div class="ilw-meta">'
+    + (opts.wakeWord === undefined || opts.wakeWord === ''
+      ? '' : '<span class="ilw-chip ilw-chip-strong">' + escapeHtml(opts.wakeWord) + '</span>')
+    + (v.startDate === null || v.startDate === '' ? ''
+      : '<span class="ilw-meta-k">起日</span><span class="ilw-meta-v">' + escapeHtml(v.startDate) + '</span>')
+    + descHtml
+    + '</div>';
   const parts: string[] = [
+    metaStrip,
     renderKpiGrid([
       { label: '总场次', value: String(v.totalSessions), unit: '场' },
       { label: '总动作', value: String(v.totalMovements), unit: '个' },
       { label: '总周数', value: String(v.totalWeeks ?? weeks.length), unit: '周',
-        detail: '周有安排 ' + weeks.length + ' 周' + (v.totalWeeks === null ? '（计划未标总周数）' : '') },
+        detail: '其中 ' + weeks.length + ' 周有安排' + (v.totalWeeks === null ? '（计划未标总周数）' : '') },
     ]),
     weeks.length === 0
       ? renderEmptyBlock({ title: '训练安排', text: '这一周没有训练安排（换一周看，或先定训练计划）' })
@@ -127,18 +149,11 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
       }),
     }),
   ];
-  // 副标题只留三项：计划名 · 计划说明（`config.description`，有则印、无则省）· 起日。
-  // T351-v6 砍掉两项冗余（负责人裁定）：`版本 v1` 对用户无用；`共 4 周` 与指标卡「总周数」重复。
-  // 两项仍可在库与复制区载荷里拿到，只是不再上页头（正文更短，页头不必两行）。
-  const startText = v.startDate === null || v.startDate === '' ? '' : '起日 ' + v.startDate;
-  const desc = v.description === null || v.description === undefined || v.description === '' ? '' : v.description;
-  const head = opts.wakeWord ? opts.wakeWord + ' · ' : '';
-  const subtitle = head + planName + (desc === '' ? '' : ' · ' + desc) + (startText === '' ? '' : ' · ' + startText);
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '健身计划',
     eyebrow: '训练计划查看',
-    subtitle,
+    subtitle: planName,
     // 页内样式（本族唯一产出者，见 `./workoutPlanCss.ts`）随正文进内容区：晚于 head 的共享样式表，
     // 同特异性下本页胜；只作用本页（样式块不在别的页上）。
     content: planViewCss(weeks.length) + parts.join(''),
@@ -157,7 +172,7 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
     }));
   const parts: string[] = [
     renderKpiGrid([
-      { label: '完成率', value: v.completionRate === null ? DASH : v.completionRate + '%', detail: v.start + ' ~ ' + v.end },
+      { label: '完成率', value: v.completionRate === null ? DASH : v.completionRate + '%' },
       { label: '计划', value: v.plannedCount + ' 个', detail: '窗内计划动作' },
       { label: '完成', value: v.doneCount + ' 个', detail: '命中动作' },
     ]),
@@ -169,7 +184,7 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
         { key: 'miss', label: '缺口' },
       ],
       rows,
-      caption: '逐日对照（' + v.start + ' ~ ' + v.end + '）',
+      caption: '逐日对照',
       emptyText: '范围内无计划或实绩数据',
     }),
     planCopyBlock({
@@ -191,9 +206,10 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '计划对比实际',
-    eyebrow: '健身计划 · 看训练计划',
-    subtitle: v.start + ' ~ ' + v.end + ' · 完成 ' + v.doneCount + '/' + v.plannedCount,
-    content: parts.join(''),
+    eyebrow: '健身计划',
+    // 窗口用 `→` 摆在副标题（唯一一处），不再进指标卡副行当重复件，也不用 `·` 串第二件事。
+    subtitle: v.start + ' → ' + v.end,
+    content: planPageCss() + parts.join(''),
   });
 }
 

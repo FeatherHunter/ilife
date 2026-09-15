@@ -39,14 +39,21 @@ for (const f of files) {
   const styleText = [...pageHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join('\n');
   const lines = visibleLines(html);
   const sep = lines.filter((s) => /[·；;]/.test(s));
-  // 重复句：剔掉纯日期/纯数字（那是数据本来的样子，不是文案冗余）
-  const prose = lines.filter((s) => s.length > 6 && !/^[\d\s\-–—/.、:：]+$/.test(s));
+  // 重复句：剔掉纯日期/纯数字（那是数据本来的样子，不是文案冗余），也剔掉「周X 不排训练」
+  // ——空日占位句**按周各出一份**（第 1 周与第 2 周各有一句），不是同一件事说了两遍。
+  const prose = lines.filter((s) => s.length > 6 && !/^[\d\s\-–—/.、:：]+$/.test(s) && !/不排训练$/.test(s));
   const dupes = [...new Set(prose.filter((s) => prose.filter((x) => x === s).length > 1))];
-  const colors = new Set((styleText.match(/#[0-9a-fA-F]{3,8}/g) ?? []).map((c) => c.toLowerCase()));
+  // 色值数只数**活的声明**：先剥掉 CSS 注释（注释里常引老页色值当出处，那不是本页用的色）。
+  const liveCss = styleText.replace(/\/\*[\s\S]*?\*\//g, '');
+  const colors = new Set((liveCss.match(/#[0-9a-fA-F]{3,8}/g) ?? []).map((c) => c.toLowerCase()));
+  // 本页**自造**的可点件（页签／折叠头）：0 个的页（如 185 只有共享复制按钮）不必自带触摸目标，
+  // 那件事由共享样式表负责，本页不该重复画一遍。
+  const tapTargets = (pageHtml.match(/<label|<summary/g) ?? []).length;
   rows.push({
     file: f,
     bp820: /@media\s*\(max-width:\s*820px\)/.test(styleText),
-    touch44: /min-height:\s*(4[4-9]|[5-9]\d)px/.test(styleText),
+    tapTargets,
+    touch44: tapTargets === 0 || /min-height:\s*(4[4-9]|[5-9]\d)px/.test(styleText),
     tap: /-webkit-tap-highlight-color/.test(styleText) && /touch-action/.test(styleText),
     styleBlocks: (pageHtml.match(/<style/gi) ?? []).length,
     inlineStyle: (pageHtml.match(/\sstyle="/g) ?? []).length,
@@ -59,10 +66,11 @@ for (const f of files) {
 }
 
 const pad = (s, n) => String(s).padEnd(n, ' ');
-console.log('文件'.padEnd(26) + pad('820断点', 9) + pad('≥44px', 7) + pad('触屏三件', 9)
+console.log('文件'.padEnd(26) + pad('820断点', 9) + pad('自造可点件', 11) + pad('≥44px', 7) + pad('触屏三件', 9)
   + pad('样式块', 7) + pad('内联style', 10) + pad('色值数', 7) + pad('分隔符行', 9) + '重复句');
 for (const r of rows) {
-  console.log(pad(r.file, 26) + pad(r.bp820 ? 'Y' : '—', 9) + pad(r.touch44 ? 'Y' : '—', 7)
+  console.log(pad(r.file, 26) + pad(r.bp820 ? 'Y' : '—', 9) + pad(r.tapTargets, 11)
+    + pad(r.tapTargets === 0 ? '共享' : (r.touch44 ? 'Y' : '—'), 7)
     + pad(r.tap ? 'Y' : '—', 9) + pad(r.styleBlocks, 7) + pad(r.inlineStyle, 10)
     + pad(r.colors, 7) + pad(r.sep, 9) + r.dupes);
 }

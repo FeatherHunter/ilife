@@ -67,7 +67,8 @@ export function sessionCardHtml(s: PlanSessionRow): string {
   const dow = DOW[s.day_of_week] ?? '周' + s.day_of_week;
   if (s.is_rest_day === 1) {
     return '<div class="ilw-session ilw-rest"><h3 class="ilw-rest-title">'
-      + escapeHtml(dow + ' · ' + restLabel(s.session_label ?? '')) + '</h3>'
+      + '<span class="ilw-sess-tag">' + escapeHtml(dow) + '</span>'
+      + '<span class="ilw-rest-txt">' + escapeHtml(restLabel(s.session_label ?? '')) + '</span></h3>'
       + '<p class="ilw-rest-note">' + REST_NOTE + '</p></div>';
   }
   const raw = s.session_label ?? '';
@@ -135,7 +136,8 @@ function weekSection(index: number, w: PlanWeek): string {
       + body + '</div>';
   });
   return '<section class="ilw-week" data-wk="' + index + '">'
-    + '<h2 class="ilw-week-head">第 ' + w.week + ' 周 · ' + w.sessions.length + ' 场</h2>'
+    + '<h2 class="ilw-week-head"><span class="ilw-week-n">第 ' + w.week + ' 周</span>'
+    + '<span class="ilw-week-count">' + w.sessions.length + ' 场</span></h2>'
     + radios(prefix, 'ilw-dyr', items)
     + tabRow('ilw-day-tabs', 'ilw-day-tab', items, '按星期看')
     + panes.join('')

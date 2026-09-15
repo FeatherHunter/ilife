@@ -22,7 +22,7 @@
  * 在本仓已因对比度 3.62:1 被否，见 `base-render/src/blocks.ts` 的 `block-kpi-card-detail` 注释）。
  */
 import { escapeHtml } from 'base-paint';
-import { renderCaliberLine, renderDataTable } from 'base-paint/blocks';
+import { renderDataTable } from 'base-paint/blocks';
 import { PART_CLASS, PART_FALLBACK_CLASS } from './workoutPlanCss.js';
 import type { PlanMovement } from '../workout/planStore.js';
 
@@ -86,12 +86,20 @@ function detailWord(raw: string, typeZh: string): string {
   return words.join(' ');
 }
 
-/** 副行：部位细化词 · 类型中文化（两项都空就不出副行）；块级小字走共用位的口径说明行。 */
+/** 副行：部位细化词 ＋ 类型中文化，**两颗块级小标签**（两项都空就不出副行）。
+ *  T351-v9：原来是一行 `细化词 · 类型`——那个 `·` 是拿符号顶替设计（负责人 2026-09-15 第 5 条），
+ *  改成两颗标签排一行（浅底＝细化词、淡主色＝类型），扫读时类型一列自成一路。
+ *  共享口径行 `renderCaliberLine` 是纯文本单参、会转义，装不下标签，故本页自落一行（样式在
+ *  `./workoutPlanCss.ts` 的 `.ilw-sub`，字号与共享口径行同值 12px／`--fg2`）。 */
 function subLine(m: PlanMovement): string {
   const type = cell(m.type);
   const zh = type === DASH ? '' : TYPE_ZH[type] ?? type;
-  const bits = [detailWord(splitNote(m.note).detail, zh), zh].filter((t) => t !== '');
-  return bits.length === 0 ? '' : renderCaliberLine(bits.join(' · '));
+  const detail = detailWord(splitNote(m.note).detail, zh);
+  const bits = [
+    detail === '' ? '' : '<span class="ilw-sub-detail">' + escapeHtml(detail) + '</span>',
+    zh === '' ? '' : '<span class="ilw-sub-type">' + escapeHtml(zh) + '</span>',
+  ].filter((t) => t !== '');
+  return bits.length === 0 ? '' : '<p class="ilw-sub">' + bits.join('') + '</p>';
 }
 
 /** 动作格的占位串：只含 ASCII 与花括号，`renderDataTable` 的转义不动它，替换目标不会撞车。 */

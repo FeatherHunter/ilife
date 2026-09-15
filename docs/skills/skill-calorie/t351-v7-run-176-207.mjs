@@ -146,8 +146,12 @@ const FOUR = ['动作', '部位', '组数×次数', '重量'];
 const BARE_TYPE_RE = /(?<![\w-])(main|iso)(?![\w-])/;
 /** 只在「备注方括号内逗号前那截」里才有的记号：逐字复现两条无损删减（`W<n>　<组数>reps×<重量>kg`）。 */
 const DROPPED_TOKENS = ['reps×', 'W1 ', 'W2 ', 'W3 ', 'W4 '];
-/** 副行小字＝共用位那件 `renderCaliberLine` 产出的 `<p class="ilife-block-caliber">`。 */
-const SUB_RE = /<p class="ilife-block-caliber">([\s\S]*?)<\/p>/;
+/** 副行小字：T351-v9 起是**两颗块级小标签**（`细化词` ＋ `类型`，见 `./workoutPlanCss.ts` 的 `.ilw-sub`）——
+ *  原来那版是一行 `细化词 · 类型`，那个 `·` 是拿符号顶替设计（负责人 2026-09-15 第 5 条）。
+ *  共享位 `renderCaliberLine` 是纯文本单参、会转义，装不下标签，故本族自落一行。 */
+const SUB_RE = /<p class="ilw-sub">([\s\S]*?)<\/p>/;
+/** 副行末尾那颗类型标签（判据用它认「以主要／孤立收尾」）。 */
+const SUB_TAIL_RE = /<span class="ilw-sub-type">(主要|孤立)<\/span>$/;
 /** 加粗动作名（副行之前那一块）。 */
 const STRONG_RE = /^<strong>[^<]*<\/strong>/;
 /** v5 的三处标题落点（结果页改零脚本选钮页签后，`<summary>` 只剩过程页在用）。 */
@@ -478,10 +482,10 @@ check('机检④ 表头按逐份声明对照（four 逐字四列且必须量到�
 const withTable = artifacts.filter((a) => a.expectTable === 'four');
 const badSub = withTable.filter((a) => a.inspect.boldMissing > 0
   || a.inspect.subLines.some((t) => t === '')
-  || !a.inspect.subLines.some((t) => /(^| · )(主要|孤立)$/.test(t)));
-const PROD_SUB = '背 主 · 孤立';
-check('机检⑥ 动作格＝加粗名＋块级副行小字，副行逐格齐且以「主要／孤立」收尾（只判有动作表的 ' + withTable.length + ' 份）；'
-  + '细化词里混类型裸词的生产形状须读作「' + PROD_SUB + '」',
+  || !a.inspect.subLines.some((t) => SUB_TAIL_RE.test(t)));
+const PROD_SUB = '<span class="ilw-sub-detail">背 主</span><span class="ilw-sub-type">孤立</span>';
+check('机检⑥ 动作格＝加粗名＋块级副行小字（两颗标签：细化词＋类型），副行逐格齐且以「主要／孤立」收尾'
+  + '（只判有动作表的 ' + withTable.length + ' 份）；细化词里混类型裸词的生产形状须读作「背 主／孤立」',
   withTable.length > 0 && badSub.length === 0 && withTable.some((a) => a.inspect.subLines.includes(PROD_SUB)),
   '红=' + (badSub.map((a) => a.file + '(缺加粗格=' + a.inspect.boldMissing + '／副行=' + JSON.stringify(a.inspect.subLines.slice(0, 3)) + ')').join('／') || '0')
     + ' 生产形状命中=' + withTable.some((a) => a.inspect.subLines.includes(PROD_SUB))
@@ -559,19 +563,29 @@ const h184 = artifacts.find((a) => a.file === 'order184-result.html');
 const raw184 = h184 ? readFileSync(join(OUT, 'order184-result.html'), 'utf8') : '';
 const rawAll = artifacts.filter((a) => /^order1[7-8]\d-result/.test(a.file))
   .map((a) => readFileSync(join(OUT, a.file), 'utf8'));
-check('夹具① 休息日标题不重复：order184 含「周二 · 休息日」且十份均无「休息日（休息日）」',
-  raw184.includes('周二 · 休息日') && rawAll.every((h) => !h.includes('休息日（休息日）')),
-  '命中=' + raw184.includes('周二 · 休息日') + ' 重复份数=' + rawAll.filter((h) => h.includes('休息日（休息日）')).length);
+/** 休息日标题的 T351-v9 形状：星期 chip ＋「休息日」两件（不再用 `·` 串成一行）。 */
+const REST_FORM_RE = new RegExp('<h3 class="ilw-rest-title"><span class="ilw-sess-tag">周二</span>'
+  + '<span class="ilw-rest-txt">休息日</span></h3>');
+check('夹具① 休息日标题不重复：order184 的休息日标题＝星期 chip ＋「休息日」两件（不再用 `·` 串），'
+  + '且十份均无「休息日（休息日）」',
+  REST_FORM_RE.test(raw184) && rawAll.every((h) => !h.includes('休息日（休息日）')),
+  '命中=' + REST_FORM_RE.test(raw184) + ' 重复份数=' + rawAll.filter((h) => h.includes('休息日（休息日）')).length);
 check('夹具② 多组不同次数紧凑写法：3组×10／8次 ＋ 35／40kg',
   raw184.includes('3组×10／8次') && raw184.includes('35／40kg'),
   '3组×10／8次=' + raw184.includes('3组×10／8次') + ' 35／40kg=' + raw184.includes('35／40kg'));
 check('夹具③ 空 sets 出「—」占位',
   /哑铃飞鸟[\s\S]{0,260}?<td[^>]*>—<\/td><td[^>]*>—<\/td>/.test(raw184),
   '哑铃飞鸟行双短横线=' + /哑铃飞鸟[\s\S]{0,260}?<td[^>]*>—<\/td><td[^>]*>—<\/td>/.test(raw184));
-check('页头副标题含计划说明（config.description）', raw184.includes(CFG_DESC), CFG_DESC + '＝' + raw184.includes(CFG_DESC));
+/** T351-v9：计划说明不再与计划名、起日串成一行 `·`，改住页头下的计划信息条——说明原文里的 `·`
+ *  拆成一颗颗胶囊（老技能当年就写成 `科学定制·6天/周·270组`）。判据改成「逐段都在页上」。 */
+const CFG_DESC_PARTS = CFG_DESC.split('·');
+check('页头信息条含计划说明（config.description 按 `·` 拆成胶囊，逐段上页）',
+  CFG_DESC_PARTS.every((t) => raw184.includes('>' + t + '<')),
+  CFG_DESC_PARTS.map((t) => t + '=' + raw184.includes('>' + t + '<')).join(' '));
 const txt184 = raw184.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-check('指标卡 总周数＝4（配置 totalWeeks）＋副行 周有安排 2 周', txt184.includes('总周数 4 周 周有安排 2 周'),
-  '读数=' + (/总周数 [\s\S]{0,40}?周有安排 \d+ 周/.exec(txt184) ?? ['未命中'])[0]);
+check('指标卡 总周数＝4（配置 totalWeeks）＋副行「其中 2 周有安排」',
+  txt184.includes('总周数 4 周 其中 2 周有安排'),
+  '读数=' + (/总周数 [\s\S]{0,40}?其中 \d+ 周有安排/.exec(txt184) ?? ['未命中'])[0]);
 
 /* 撤销后读验证：缺失阻断恢复 */
 const v195 = steps.find((s) => s.kind === '撤销后读验证');

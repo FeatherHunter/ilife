@@ -62,11 +62,32 @@ function stateSelAfter(ids: readonly string[], state: string, scope: string, lab
   return ids.map((id) => '#' + id + ':' + state + '~.' + scope + ' .' + label + '[for="' + id + '"]::after').join(',');
 }
 
-/** 静态段（与周数无关的那部分）；逐条都对着老模板的对应行写。 */
-const STATIC_CSS = [
+/** **页面级**样式（本族十份都要的那几件）：页宽、窄屏内距、触屏三件、按钮行宽度约束。
+ *  与下面那套 `.ilw-*`（两级页签／场次卡／动作副行）分开——同族的 185（计划对比实际）没有页签、
+ *  没有场次卡也没有动作表，它只要这一段，不该背一堆用不上的规则（同族第二处用法，故切出来）。
+ *  185 自己那张表是共享区块（`renderDataTable`）产的，窄屏形态由共享层那处 640 负责，本段不重复画。 */
+const PAGE_CSS = [
   '/* 老 .app：页宽 900 居中（共享页面模板缺省 960，本页照老页收窄）＋老页的上下内边距；',
   '   老页 `*{box-sizing:border-box}`，故这里显式钉上，900 是含内边距的总宽 */',
   '.ilife-block-page-shell{box-sizing:border-box;max-width:900px;padding:32px 20px 60px}',
+  '/* 触屏三件（照 HELP）：页面内可点的件（按钮／折叠头／页签）不许出现系统蓝高亮块、',
+  '   不许双击缩放延迟。触摸目标：页签 44px／38px 两档，见下 `.ilw-tab`。 */',
+  '.ilife-block-page-shell button,.ilife-block-page-shell summary,.ilw-tab,.ilw-day-tab'
+    + '{-webkit-tap-highlight-color:transparent;touch-action:manipulation}',
+  '/* 按钮行自约束宽度并居中（照 HELP `.hm-actions{max-width:520px;margin:0 auto}`）：',
+  '   本页页宽 900，两颗胶囊会被拉成半屏宽的长条 */',
+  '.ilife-block-page-shell .ilife-action-bar{max-width:520px;margin:0 auto}',
+  '/* 窄屏（820 · 同 HELP）的页面级部分：页壳收紧内距、指标卡两列＋奇数末位通栏 */',
+  '@media (max-width:820px){',
+  '.ilife-block-page-shell{padding:20px 16px 48px}',
+  '.ilife-block-page-shell-title{font-size:26px}',
+  '.ilife-block-kpi-card-grid{grid-template-columns:repeat(2,1fr)}',
+  '.ilife-block-kpi-card-grid>.ilife-block-kpi-card:nth-child(odd):last-child{grid-column:span 2}',
+  '}',
+].join('\n');
+
+/** 静态段（与周数无关的那部分）；逐条都对着老模板的对应行写。 */
+const STATIC_CSS = [
   '/* 老 token 名的页内别名（--lineS 照老值写死，无冻结对应） */',
   '.ilw-app{--ink:var(--fg);--ink2:var(--fg2);--ink3:var(--fg3);--lineS:#e8e8ed;--accent:var(--blue)}',
   '/* 选钮：视觉上藏起来，仍在文档流里、仍可 Tab 与方向键操作（零脚本的两级页签就靠它） */',
@@ -98,7 +119,7 @@ const STATIC_CSS = [
   '/* 老 .sess-head：一行信息密度高（周X ｜ 场次名 ｜ 时段 ｜ 共 N 组 ｜ 节奏） */',
   '.ilw-sess-head{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding-bottom:12px;'
     + 'border-bottom:1px solid var(--lineS);flex-wrap:wrap}',
-  '.ilw-sess-tag{font-family:"SF Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;'
+  '.ilw-sess-tag{font-size:11px;'
     + 'color:var(--ink3);background:var(--bg);padding:3px 8px;border-radius:5px}',
   '.ilw-sess-name{font-size:17px;font-weight:600;color:var(--ink)}',
   '.ilw-sess-meta{margin-left:auto;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink3)}',
@@ -126,21 +147,56 @@ const STATIC_CSS = [
   '@media print{.ilw-wkr,.ilw-dyr,.ilw-tabs,.ilw-day-tabs{display:none}'
     + '.ilw-week{display:block !important}.ilw-day:not(.ilw-day-empty){display:block !important}'
     + '.ilw-day-empty{display:none !important}.ilw-session{break-inside:avoid;box-shadow:none}}',
-  '/* 老模板第一处 @media（.app／.session／h1／td／td:first-child／.kpi-grid 两列＋奇数末位通栏） */',
-  '@media (max-width:640px){',
-  '.ilife-block-page-shell{padding:20px 12px 48px}',
-  '.ilife-block-page-shell-title{font-size:26px}',
+  '/* ── T351-v9 · 负责人 2026-09-15 六条口径落点 ─────────────────────────────',
+  '   ⑤ 不用 `·` 顶替设计：四处串字符串的元素改成有形状的件 —— 周区块标题的场次胶囊',
+  '      （`.ilw-week-count`）、休息日的星期小 chip（复用 `.ilw-sess-tag`）、动作副行的两颗小标签',
+  '      （`.ilw-sub-detail` / `.ilw-sub-type`）、页头下的计划信息条（`.ilw-meta` ＋ `.ilw-chip`）。',
+  '   ② 手机端照 HELP（`packages/base-render/src/helpShell.ts`）：触摸目标 ＋ 触屏三件 ＋',
+  '      按钮行自约束 520 居中 ＋ 窄屏塌列，断点用 HELP 的 820。 */',
+  '/* 动作副行：原来是一行「细化词 · 类型」，`·` 是拿符号顶替设计；改成两颗块级小标签。',
+  '   字号 12 ＋ 浅底，与共享口径行同值（共享那件是纯文本单参、会转义，装不下标签，故本页自落一行）。 */',
+  '.ilw-sub{margin:3px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:4px}',
+  '.ilw-sub-detail{font-size:12px;color:var(--ink2);background:var(--bg);border-radius:5px;padding:1px 6px}',
+  '.ilw-sub-type{font-size:12px;font-weight:600;color:var(--accent);background:rgba(0,122,255,.08);'
+    + 'border-radius:5px;padding:1px 6px}',
+  '/* 周区块标题：场次数做成胶囊（标题说「哪一周」、胶囊说「几场」，两件事各就各位） */',
+  '.ilw-week-head{display:flex;align-items:center;gap:8px}',
+  '.ilw-week-count{font-size:12px;font-weight:600;color:var(--ink2);background:var(--bg);'
+    + 'border-radius:999px;padding:2px 10px}',
+  '/* 休息日标题：星期小 chip（与场次卡同款）＋ 状态词 */',
+  '.ilw-rest-title{display:flex;align-items:center;justify-content:center;gap:8px}',
+  '.ilw-rest-txt{font-size:20px;font-weight:600;color:var(--ink)}',
+  '/* 计划信息条：起日与计划说明。说明原文里若带 `·`（老技能当年就是这么写的），拆成胶囊排开 */',
+  '.ilw-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}',
+  '.ilw-meta-k{font-size:12px;color:var(--ink3)}',
+  '.ilw-meta-v{font-size:13px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}',
+  '.ilw-chip{font-size:12px;font-weight:600;color:var(--ink2);background:var(--card);'
+    + 'border:1px solid var(--lineS);border-radius:999px;padding:3px 10px}',
+  '.ilw-chip-strong{color:var(--accent);background:rgba(0,122,255,.08);border-color:transparent}',
+  '/* 触屏三件（照 HELP）：可点的页签与折叠头不许出现系统蓝高亮块、不许双击缩放延迟。',
+  '   触摸目标：周页签（主导航）44px、日页签（次要、与 HELP 的 chip 同档）38px。 */',
+  '.ilw-tab,.ilw-day-tab{-webkit-tap-highlight-color:transparent;touch-action:manipulation;'
+    + 'display:inline-flex;align-items:center;justify-content:center}',
+  '.ilw-tab{min-height:44px}',
+  '.ilw-day-tab{min-height:38px}',
+  '/* 按钮行自约束宽度并居中（照 HELP `.hm-actions{max-width:520px;margin:0 auto}`）：',
+  '   本页页宽 900，两颗胶囊会被拉成半屏宽的长条 */',
+  '.ilife-block-page-shell .ilife-action-bar{max-width:520px;margin:0 auto}',
+  '/* 老模板第二处 @media：本页自造的件在窄屏塌列（断点用 HELP 的 820，不用老模板的 640）。',
+  '   共享区块自己那处 640 不撤——820 管本页，640 管共享件，两段同向不打架。 */',
+  '@media (max-width:820px){',
   '.ilw-session{padding:16px 14px}',
+  '.ilw-sess-head{gap:8px;padding-bottom:10px}',
   '.ilw-sess-name{font-size:16px}',
   '.ilw-sess-meta{width:100%;margin-left:0;gap:8px}',
   '.ilw-tab{padding:9px 12px;font-size:13px}',
   '.ilw-day-tab{padding:5px 10px;font-size:12px}',
   '.ilw-session td{padding:10px 4px 10px 0;font-size:12px}',
   '.ilw-session th{padding:6px 4px 6px 0}',
-  '.ilw-session td:first-child{min-width:120px}',
-  '.ilife-block-kpi-card-grid{grid-template-columns:repeat(2,1fr)}',
-  '.ilife-block-kpi-card-grid>.ilife-block-kpi-card:nth-child(odd):last-child{grid-column:span 2}',
+  '.ilw-session td:first-child{min-width:104px}',
   '.ilw-rest{padding:26px 14px}',
+  '.ilw-rest-title{flex-direction:column;gap:6px}',
+  '.ilw-rest-txt{font-size:18px}',
   '}',
 ].join('\n');
 
@@ -151,8 +207,14 @@ function badgeCss(): string {
     .join('\n');
 }
 
-/** 页内样式块（含 `<style>` 包裹，照包内先例 `FOOD_CSS`／`MEASURE_CSS` 直插正文）：静态段 ＋
- *  按周数生成的页签规则（零脚本页签的另一半）。`weekCount` ＝ 页内周区块数
+/** 本族**页面级**样式块（只 `PAGE_CSS`）：给 185 那种「只有共享区块、没有页签与场次卡」的页用，
+ *  免得它为了一段页宽去背整套 `.ilw-*` 规则。 */
+export function planPageCss(): string {
+  return '<style>\n' + PAGE_CSS + '\n</style>';
+}
+
+/** 页内样式块（含 `<style>` 包裹，照包内先例 `FOOD_CSS`／`MEASURE_CSS` 直插正文）：页面级段 ＋
+ *  本族静态段 ＋ 按周数生成的页签规则（零脚本页签的另一半）。`weekCount` ＝ 页内周区块数
  *  （0 ＝ 无周区块，两层页签都不出现，此处只出静态段）。
  *  v6：两级页签里没有「全部周次」／「全部」两枚（负责人裁定去掉），各层恒有且只有一枚默认选中，
  *  故收放规则只剩「先全收、再放选中的那一枚」这半边——没有「放全部」的规则了。 */
@@ -186,5 +248,5 @@ export function planViewCss(weekCount: number): string {
       dyn.push('#ilw-dy-' + i + '-' + d + ':checked~.ilw-day[data-dow="' + d + '"]{display:block}');
     }
   }
-  return '<style>\n' + STATIC_CSS + '\n' + dyn.join('\n') + '\n</style>';
+  return '<style>\n' + PAGE_CSS + '\n' + STATIC_CSS + '\n' + dyn.join('\n') + '\n</style>';
 }
