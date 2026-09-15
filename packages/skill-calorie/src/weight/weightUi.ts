@@ -43,9 +43,20 @@
  *      （log 族的目标线说明），`wui-strip-v` 给对比族的节奏事实条真用上（两枚段名各自成行）；
  *      两半的字号／色也分了两档（说明那半 12px `--fg2` 不加粗），并排不再读成一句不通的话；
  *   ④ **`windowStrip()` 加退化分支**：`start === end` 只出一枚日期块、不出箭头，文案写「（单日）」。
+ *
+ * ── 本轮 · 两段对照块（`compareBlock()`；本件由冻结状态解除，只加本条要用的形状）──
+ *   负责人第三轮第 3 条：`本期 2026-09-01 ~ 2026-09-07 vs 对比期 2026-08-25 ~ 2026-08-31` 这种
+ *   **直接写 `vs` 的正文**效果很差 ⇒ 那两段各落成一枚卡（段名／均值／区间／记录状态，卡形借共享
+ *   `renderKpiCard`，状态色走共享 `statusBadge`），中间那件**不再是一个字符**，而是形状：一条连接线
+ *   ＋ 中心一枚「对比」胶囊 ＋ 差值读数 ＋ 方向胶囊（方向由 `chip()` 出，色取冻结 token）。
+ *   **纵向还是横向由断点决定**：桌面（>820）三件横排、连接线竖直；窄屏（≤820）塌成一列，
+ *   上段 → 连接件（横线 ＋ 胶囊）→ 下段 → 块尾那一枚。本件只加这一族形状与它的 CSS，
+ *   既有 22 个 `wui-` 类一条未动、未重排。
  */
 
 import { escapeHtml } from 'base-paint';
+import { renderKpiCard } from 'base-paint/blocks';
+import type { KpiCardInput } from 'base-paint/blocks';
 
 const esc = (s: string): string => escapeHtml(s);
 
@@ -107,6 +118,25 @@ export function weightUiCss(): string {
     // ── 判语块（结论块正文：一句话 ＋ 可选胶囊），视觉上比正文重一档 ──
     + '.wui-verdict{font-size:15px;line-height:1.6;font-weight:600;color:var(--fg);margin:0}'
     + '.wui-verdict-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}'
+    // ── 两段对照块（本轮）：两枚段卡横排，中间那件连接件把两段「连」起来 ──
+    // 卡形借共享 `renderKpiCard`（段名＝label、均值＝value＋unit、区间＝detail、记录状态＝徽章），
+    // 故本件不给卡本身写样式；这一族只写**排布**（侧槽／连接件／块尾那一枚）与连接件的形状。
+    + '.wui-cmp{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:0 0 16px}'
+    + '.wui-cmp-side{display:flex;flex:1 1 0;min-width:0}'
+    + '.wui-cmp-side>.ilife-block-kpi-card{flex:1 1 auto;min-width:0}'
+    // 块尾那一枚（本页剩下的第三件读数）整幅宽一行：`flex-basis:100%` 逼它换行（`flex-wrap` 在场）。
+    + '.wui-cmp-foot{flex:1 0 100%}'
+    + '.wui-cmp-foot>.ilife-block-kpi-card{flex:1 1 auto;min-width:0}'
+    // 连接件：桌面竖排（线—胶囊—线），宽窄由内容定，不抢两段卡的地盘。
+    + '.wui-cmp-link{display:flex;flex:0 0 auto;flex-direction:column;align-items:center;justify-content:center;gap:6px}'
+    // 连接线取 hairline（`--line` 一像素）：长度由 flex 吃满，故两段卡不论多高都「接」到胶囊上。
+    + '.wui-cmp-rule{flex:1 1 auto;width:1px;min-height:10px;background:var(--line)}'
+    + '.wui-cmp-node{display:flex;flex-direction:column;align-items:center;gap:6px}'
+    // 中心那枚胶囊：「对比」是**形状里的字**，不是分隔符——它住在一枚胶囊里，与差值、方向同处一件。
+    + '.wui-cmp-pill{display:inline-flex;align-items:center;justify-content:center;font-size:12px;'
+    + 'font-weight:700;border-radius:999px;padding:3px 10px;background:var(--soft);color:var(--blue2)}'
+    // 差值读数（量值面）：与 KPI 卡的值槽同口径（13px／700／tnum），不换行。
+    + '.wui-cmp-delta{font-size:13px;font-weight:700;color:var(--fg);white-space:nowrap;font-variant-numeric:tabular-nums}'
     // ── 手机端（断点 820 = HELP）：横向塌纵向、内距收紧、触摸目标 ≥44px ──
     + '@media (max-width:820px){'
     + '  .wui-strip{gap:6px 14px}'
@@ -119,6 +149,15 @@ export function weightUiCss(): string {
     + '  .wui-verdict{font-size:15px}'
     // 判语块的胶囊行在窄屏塌成一栏「标签 ＋ 值」：原来几枚胶囊横排会折行、断在词中间。
     + '  .wui-verdict-row{flex-direction:column;align-items:stretch;gap:6px}'
+    // 两段对照块塌成一列（HELP 第 ③ 条）：上段 → 连接件（**横线**＋胶囊＋差值＋方向）→ 下段 → 块尾。
+    // 三处 flex 基准一并改回 `auto`：竖排容器里 `flex-basis` 量的是**高**，桌面那两条（100%／0）
+    // 在竖排下会把「块尾」撑成整屏高（实测坑，别省这三行）。
+    + '  .wui-cmp{flex-direction:column;gap:8px}'
+    + '  .wui-cmp-side{flex:0 0 auto}'
+    + '  .wui-cmp-foot{flex:0 0 auto}'
+    + '  .wui-cmp-link{flex-direction:row;width:100%;gap:8px}'
+    + '  .wui-cmp-rule{flex:1 1 auto;width:auto;height:1px;min-height:0}'
+    + '  .wui-cmp-node{flex-direction:row;gap:8px}'
     + '}'
     // ── 触摸面（HELP 第 ①）──
     // 本族的提示块／结论块是**读者在手机上会按住的一块内容**（选中文本、点开复制区）：补上
@@ -201,4 +240,54 @@ export function bulletList(items: readonly string[]): string {
 export function verdict(sentence: string, chips: readonly string[] = []): string {
   return '<p class="wui-verdict">' + esc(sentence) + '</p>'
     + (chips.length === 0 ? '' : '<div class="wui-verdict-row">' + chips.join('') + '</div>');
+}
+
+/** **两段对照块**（本轮）中间那枚连接件的读数。
+ *
+ *  `label`＝中心胶囊里的词（缺省「对比」）；`delta`＝差值读数（`+0.3 kg`／缺省不出这一行）；
+ *  `direction`＝方向词，由 `chip()` 出徽章（**方向只此一处**：`tone` 取冻结 token 的那三档——
+ *  上升＝`warn`（体重升是坏消息）、持平与「差值算不出」＝`plain`、下降＝蓝（缺省））。 */
+export interface CompareLinkInput {
+  readonly label?: string;
+  readonly delta?: string;
+  readonly direction?: string;
+  readonly tone?: 'warn' | 'plain' | '';
+}
+
+/** 两段对照块的入参：近段（`b`）在左、参照段（`a`）在右，`foot` 是块尾那一枚（本页剩下的第三件读数）。
+ *
+ *  **读序与差值符号同一处定义**：差值是「近段 − 参照段」（调用方算好），故左减右＝连接件上那个数，
+ *  读者从左往右读不会读反；窄屏塌成一列后 `b` 在最上面，与两段表的行序（近段在上）也一致。 */
+export interface CompareBlockInput {
+  readonly b: KpiCardInput;
+  readonly a: KpiCardInput;
+  readonly link: CompareLinkInput;
+  readonly foot?: KpiCardInput;
+}
+
+/** 两段对照块：**`VS` 的位置换成一件形状**（连接线 ＋ 中心胶囊 ＋ 差值 ＋ 方向）。
+ *
+ *  卡形借共享 `renderKpiCard`（段名／均值／区间／记录状态四槽一次到位，状态色走共享 `statusBadge`），
+ *  本件只给排布与连接件：桌面三件横排、连接线竖直；窄屏 ≤820 塌成一列（上段 → 横线 ＋ 胶囊 → 下段）。
+ *  连接件是**装饰与读数的合成件**：胶囊「对比」是形状里的字，差值那一个数住它下面——
+ *  正文里因此不再出现字面 ` vs `。 */
+export function compareBlock(input: CompareBlockInput): string {
+  const link = input.link;
+  const delta = link.delta === undefined || link.delta === ''
+    ? '' : '<span class="wui-cmp-delta">' + esc(link.delta) + '</span>';
+  const direction = link.direction === undefined || link.direction === ''
+    ? '' : chip(link.direction, link.tone === undefined ? '' : link.tone);
+  return '<div class="wui-cmp">'
+    + '<div class="wui-cmp-side">' + renderKpiCard(input.b) + '</div>'
+    + '<div class="wui-cmp-link">'
+    + '<span class="wui-cmp-rule"></span>'
+    + '<span class="wui-cmp-node">'
+    + '<span class="wui-cmp-pill">' + esc(link.label === undefined ? '对比' : link.label) + '</span>'
+    + delta + direction
+    + '</span>'
+    + '<span class="wui-cmp-rule"></span>'
+    + '</div>'
+    + '<div class="wui-cmp-side">' + renderKpiCard(input.a) + '</div>'
+    + (input.foot === undefined ? '' : '<div class="wui-cmp-foot">' + renderKpiCard(input.foot) + '</div>')
+    + '</div>';
 }

@@ -8,6 +8,13 @@
  * 「共用口径」一节派生一次：**方向词只看两段均值差的符号**、**节奏词只看两段日均速率的幅度差**，
  * 两者互不带对方的词 ⇒ 页上不会再出现「下降 ／ 加速上升」这类自相矛盾的组合
  * （老实物 `weight_compare.html:81-84` 的 `judge-line` 把两个不同的量并排印，是本页修掉的缺陷）。
+ *
+ * 本轮（负责人第三轮第 3 条）：**页题副标题里那句 `本期 X ~ Y vs 对比期 Z ~ W` 撤掉**——
+ * 直接拿字面 `vs` 分隔两段的效果很差（负责人原话）。两段各落成一枚卡（段名／均值／区间／记录状态），
+ * 中间那件由 `weightUi.ts` 的 `compareBlock()` 出形状：连接线 ＋「对比」胶囊 ＋ 差值 ＋ 方向胶囊。
+ * 连带收掉的三件重复：段名与均值原来在「本期／对比期」两张 KPI 卡上各有一处、差值原来在「体重对比」
+ * 卡上有一处——现在这三件事实都住那块两段对照块（同屏同一事实只此一处）；本页只剩「每天变化」那一枚
+ * 读数卡，挂在对照块的块尾（`.wui-cmp-foot`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { anchorOf, needDay, needStr, optInt, optNum, optStr, windowRange } from '../shared/params.js';
@@ -20,14 +27,15 @@ import { weightCompare } from './figures.js';
 import type { CompareSide, WeightCompare } from './figures.js';
 import { assertRange } from './plate.js';
 import type { WeightCompareView } from './plate.js';
-import { renderCaliberLine, renderChartBlock, renderDataTable, renderKpiGrid, renderListRows } from 'base-paint/blocks';
+import { renderCaliberLine, renderChartBlock, renderDataTable, renderListRows } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
-import { bulletList, factStrip, verdict, weightUiCss } from './weightUi.js';
+import { bulletList, compareBlock, factStrip, verdict, weightUiCss } from './weightUi.js';
+import type { CompareLinkInput } from './weightUi.js';
 import { runScenario, SCENARIO_LABELS } from './weightCompare3.js';
 import type { ExtraRow, ScenarioResult } from './weightCompare.js';
 
@@ -224,9 +232,9 @@ function rhythmOf(a: CompareSegment, b: CompareSegment): Rhythm {
  *  而条数徽章里已经有了（「记录齐全（30 条）」／「只有一天」）⇒ 副说明只留**区间**这一件事。
  *  **这一槽只能是纯文本**：`renderKpiCard` 对 `detail` 走 `esc()`（公共层 `blocks.ts:543`），
  *  形状 HTML 塞进来会原样印成字（第一版就是这么错的，截图当场抓到）。
- *  #510：这一句**撤掉**卡片——两段的段名与区间在页题副标题里已经逐段对齐印着（`本期 X ~ Y vs
- *  对比期 Z ~ W`），卡片再印一遍是同一屏同一事实的第二、第三处（审查席实测：18 字区间串在手机 390
- *  下还会把卡副行折成两行）。 */
+ *  #510 一度把这一句整个撤掉（当时两段的段名与区间住在页题副标题那句 `本期 X ~ Y vs 对比期 Z ~ W` 里，
+ *  卡上再印一遍是同一屏第二处）。**本轮那句副标题撤了**（负责人第三轮第 3 条）⇒ 区间搬回卡上这一槽：
+ *  同一事实仍只有一处（卡上），只是从页题搬到了段卡。 */
 const segmentCard = (s: CompareSegment): KpiCardInput => {
   const single = isSingleDay(s);
   const thin = !single && s.count < SAMPLE_MIN;
@@ -235,22 +243,25 @@ const segmentCard = (s: CompareSegment): KpiCardInput => {
       : thin ? '记录太少（' + s.count + ' 条）'
         : s.count === SAMPLE_MIN ? '记录齐全' : '记录齐全（' + s.count + ' 条）';
   return {
-    label: s.label, value: fmtKg(s.avg), unit: 'kg',
+    label: s.label, value: fmtKg(s.avg), unit: 'kg', detail: rangeText(s),
     status: s.count === 0 ? 'empty' : single ? 'empty' : thin ? 'warn' : 'ok',
     statusText: badgeText,
   };
 };
 
-/** 差值卡：方向只看均值差符号（ok＝降、warn＝升、empty＝持平或暂无）。
- *  #510（审查席 S2 第二类）：方向词原来在卡内印两处（副行「上升 ↑」＋ 徽章「上升」）、全屏三处
- *  （再加判语块）。现在**方向只留徽章这一处**（它是状态色）；副行撤掉——差值卡的值槽与徽章
- *  已经把这件事说全（「+0.3 kg ＋ 上升」）。算不出来的那档同理：徽章说「差值算不出」，
- *  为什么算不出来由结论块的一句判语交代（`missReason`）。 */
-const deltaCard = (delta: number | null): KpiCardInput => ({
-  label: '体重对比', value: fmtDelta(delta),
-  status: delta === null ? 'empty' : delta < 0 ? 'ok' : delta > 0 ? 'warn' : 'empty',
-  statusText: delta === null ? '差值算不出' : directionWord(delta),
-});
+/** 两段对照块中间那枚连接件的读数（两段均值差 ＋ 方向）。
+ *
+ *  方向只看均值差符号（`ok＝降／warn＝升／empty＝持平或暂无` 的老口径折成 `chip()` 的三档色：
+ *  降＝蓝、升＝`warn`、持平与「差值算不出」＝`plain`）；值槽与徽章同住连接件，
+ *  **方向只此一处**（#510 那条「方向只留一处」不变，只是那一处从差值卡搬到了连接件）。
+ *  差值 = 近段均值 − 参照段均值（`deltaOf()` 是全页唯一出处），与块内左减右的读序一致。 */
+const compareLink = (delta: number | null): CompareLinkInput => {
+  if (delta === null) return { label: '对比', direction: '差值算不出', tone: 'plain' };
+  return {
+    label: '对比', delta: fmtDelta(delta), direction: directionWord(delta),
+    tone: delta > 0 ? 'warn' : delta === 0 ? 'plain' : '',
+  };
+};
 
 /** 两段均值差（本期 − 对比期）：任一段没有均值就是「暂无」，不当 0 参与。**全页唯一出处**。 */
 const deltaOf = (a: CompareSegment, b: CompareSegment): number | null => {
@@ -492,10 +503,9 @@ interface CompareCore {
   readonly title: string;
   readonly eyebrow: string;
   readonly subtitle: string;
-  /** 表题：窗口面写「两期对比（…）」，情景面写情景名（…）——**只印差值**（方向与节奏判断归结论块与卡片）。 */
+  /** 表题：窗口面写「两期对比（…）」，情景面写「两段对照（…）」——**只印这张表是什么**（差值那一个数住
+   *  对照块的连接件与表内「变化」列，方向归连接件的胶囊）。 */
   readonly caption: (delta: number | null) => string;
-  /** 第一张卡：情景面给情景名，窗口面不给。 */
-  readonly lead?: KpiCardInput;
   readonly a: CompareSegment;
   readonly b: CompareSegment;
   /** 「中间那一段」的段名（`本期`／`当前`）：结论句与每天变化量把这两个词换成「最近这段／对比那段」，
@@ -514,18 +524,20 @@ function renderComparePage(core: CompareCore): string {
   const rhythm = rhythmOf(a, b);
   const conclusion = compareConclusion(a, b, delta, rhythm, core.missReason, core.mid);
   const band = premiseNotice(a, b, core.mid, core.anchorMiss);
-  const cards: KpiCardInput[] = [];
-  if (core.lead) cards.push(core.lead);
-  cards.push(deltaCard(delta), segmentCard(b), segmentCard(a), rhythmCard(rhythm, a, b));
-  // 页内样式放装配的**第一项**（`weightUi.ts` 的形状词汇：事实条／窗口条／逐条列表／判语块）。
+  // 页内样式放装配的**第一项**（`weightUi.ts` 的形状词汇：事实条／窗口条／逐条列表／判语块／两段对照块）。
   const parts: string[] = [weightUiCss()];
-  // 页顶软横幅先于一切区块（老实物 `weight_compare.html:79` 就在 KPI 之上）：
-  // 首行是记录条数读数（共用提示块），**逐条前提**紧随其后成列表（`bulletList()`，一前提一行）。
+  // 页顶软横幅先于读数（老实物 `weight_compare.html:79` 的软横幅就在读数之上）：它讲的是「这些读数该怎么看」
+  // 的前提，故排在对照块之前。首行是记录条数读数（共用提示块），**逐条前提**紧随其后成列表（一前提一行）。
   if (band) {
     parts.push(notice({ title: '记录与说明', msg: band.msg, icon: 'warn' }));
     parts.push(bulletList(band.items));
   }
-  parts.push(renderKpiGrid(cards));
+  /* 两段对照块（本轮）：这一块就是原来页题副标题那句 `本期 X ~ Y vs 对比期 Z ~ W` 的形状版——
+     近段在左、参照段在右，中间那枚连接件写「对比」＋差值＋方向；页上剩下的第三件读数（每天变化）
+     挂在块尾。差值那一个数与方向**只此一处**（原来分别在「体重对比」卡与两段卡上）。 */
+  parts.push(compareBlock({
+    b: segmentCard(b), a: segmentCard(a), link: compareLink(delta), foot: rhythmCard(rhythm, a, b),
+  }));
   parts.push(renderSegmentsTable(a, b, core.caption(delta)));
   if (core.extraRows.length > 0) {
     // 标签进 `main`（宽列）、值进 `right`：`left` 只有 44px（给 ▲／▼／— 这类标记用），
@@ -564,9 +576,11 @@ export function buildWeightCompareDoc(v: WeightCompareView, command = ''): strin
   return renderComparePage({
     title: '体重对比',
     eyebrow: '',
-    subtitle: b.label + ' ' + rangeText(b) + ' vs ' + a.label + ' ' + rangeText(a),
+    /* 页题副标题**空**（本轮）：原来这一行印的是 `本期 2026-09-01 ~ 2026-09-07 vs 对比期 2026-08-25 ~
+     * 2026-08-31`——两段的段名与区间现在各住对照块里那枚卡（同一事实仍只有一处，见 `segmentCard`）。 */
+    subtitle: '',
     /* #510：表题不再复述差值（审查席 S2 第三类：同一个数在值槽／表题／判语块印三处）——
-     * 那一个数住「体重对比」卡的值槽与表内「变化」列，表题只说这张表是什么。 */
+     * 那一个数住对照块连接件的值槽与表内「变化」列，表题只说这张表是什么。 */
     caption: () => '两期对比（本期在上）',
     a, b, mid: '本期', extraRows: [], curve: null, anchorMiss: false,
     missReason: '两段都要有记录才能对比', command,
@@ -604,6 +618,12 @@ function onScreenLabel(scenario: string, rawLabel: string, deltaKg: number): str
   if (scenario === 'e3') label = label.replace('减重 N kg 那天', '减重 ' + deltaKg + ' kg 那天');
   return label;
 }
+
+/** 表题那一份情景名（本轮）：`SCENARIO_LABELS` 的键与值一字不动（那是冻结表原文），
+ *  上屏这一份去掉与 H1 逐字重复的 `对比体重：` 前缀，并把字面 ` vs ` 落成「与」——
+ *  负责人第三轮第 3 条：正文（含表题）不许再出现 ` vs `；两段谁跟谁比由上面那块两段对照块出形状。 */
+const captionLabelOf = (scenarioLabel: string): string =>
+  scenarioLabel.replace('对比体重：', '').replace(' vs ', '与');
 
 /** 情景入口：同一个命令＋一个锚点参数，锚点日期由算式派生。 */
 export function viewWeightCompareScenario(
@@ -650,25 +670,24 @@ const segToCompare = (s: ScenarioResult['segA']): CompareSegment => ({
   ...(s.spanDays === undefined ? {} : { spanDays: s.spanDays }),
 });
 
-/** 情景整页装配（画面：情景卡／两段卡／差值方向／每天变化／补充对照＋轨迹图／样本前提／结论；锚点日期印在段区间里）。 */
+/** 情景整页装配（画面：两段对照块（两枚段卡 ＋ 连接件 ＋ 每天变化）／两段表／补充对照＋轨迹图／样本前提／结论；
+ *  锚点日期印在段卡的区间那一槽里）。 */
 export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): string {
   const r = v.result;
   const a = segToCompare(r.segA);
   const b = segToCompare(r.segB);
   const delta = numOrNull(r.compare.deltaKg);
   const anchorMiss = Boolean(r.tolerance && !r.tolerance.hit);
-  const singleB = isSingleDay(b);
-  /* 情景卡只说**跟哪一天／哪一段比**（值槽放短标签，不放句子、也不放差值）：
-   * 差值那一个数已经住了「体重对比」卡；情景名在页题副标题与表题各有一处 ⇒ 本卡不重复它们。 */
   return renderComparePage({
     title: '对比体重',
     /* 眉标整行删（本轮裁定）：原来印的是 `calorie.view.weight-compare · 情景 b8` 这类**内部代号**，
      * 与页题副标题逐字重复 ⇒ 权重域全族一律不出这一行（`assembleDocPage` 收空串即不出）。 */
     eyebrow: '',
-    /* 副标题只印两段的区间：情景业务名与标题行逐字相同，写在这里就是同一页第二处（口径 §2 第一条）。 */
-    subtitle: a.label + ' ' + rangeText(a) + ' vs ' + b.label + ' ' + rangeText(b),
-    /* #510：同上——表题不带差值那个数（它住「体重对比」卡的值槽）；情景名是这张表的读法，留着。 */
-    caption: () => v.scenarioLabel + '（当前在上）',
+    /* 页题副标题**空**（本轮，同窗口面）：两段的段名与区间各住对照块里那枚卡；
+     * 情景名（「减重 5 kg 那天与今天」这种）改住表题——那里只有一处，且页题行不再挤一长串日期。 */
+    subtitle: '',
+    /* #510：同上——表题不带差值那个数（它住对照块连接件的值槽）；情景名是这张表的读法，留着。 */
+    caption: () => captionLabelOf(v.scenarioLabel),
     /* 情景卡整张删（本轮裁定）：它印的参照段标签与页题副标题逐字重复，徽章「已找到这一天」是
      * 正常态（页能出，正说明那一天找到了）；真没找到时页顶软横幅已用「参照日前后 3 天都没有体重记录」据实说明。 */
     a, b, mid: '当前',
