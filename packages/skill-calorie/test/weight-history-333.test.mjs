@@ -341,6 +341,14 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
       assert.equal(byLabel('备注').detail, null, word + ' 备注卡仍留副说明');
       // #502：页顶提示的前提拆成两行，原句末的「比首末」也改说人话「比出首日和末日的差」。
       assert.ok(text.includes('再记一条就能比出首日和末日的差'), word + ' 页顶提示块仍写「首末」');
+      // #546 单点页双标签压字去一：末点高亮（黑字）与单点标记（蓝字）曾在同一点叠出两个同值标签；现单点不再传 markPoint，图内只剩点值标签（居中）＋均值线标签（右缘），错开可读，数字不动。只数 SVG 文本元（`<text`），不数 `<style>` 里的同名类。
+      assert.equal(html.split('<text class="ilife-charts-mptext"').length - 1, 0, word + ' 单点页图内仍有单点标记标签（与末点标签压字）');
+      assert.equal(html.split('<text class="ilife-charts-value ilife-charts-value-last"').length - 1, 1, word + ' 单点页图内点值标签不是恰 1 个');
+      assert.equal(html.split('<text class="ilife-charts-marktext"').length - 1, 1, word + ' 单点页均值线标签不是恰 1 个');
+      // 数字本身不动：均值线标签为「均值 X kg」，X 与点值标签的数逐字一致（单点均值即该点）。
+      const pointLabel = /<text class="ilife-charts-value ilife-charts-value-last"[^>]*>([^<]*)<\/text>/.exec(html)?.[1] ?? '';
+      const meanLabel = /<text class="ilife-charts-marktext"[^>]*>([^<]*)<\/text>/.exec(html)?.[1] ?? '';
+      assert.ok(pointLabel !== '' && meanLabel === '均值 ' + pointLabel, word + ' 单点页均值线标签数字变了（点值 ' + pointLabel + '／均值线 ' + meanLabel + '）');
     }
     if (word === '看体重曲线（带目标）') {
       assert.ok(text.includes('目标 68 kg') && text.includes('目标线'), word + ' 缺目标标注');

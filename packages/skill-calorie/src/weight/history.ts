@@ -696,7 +696,8 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
           yMin: plan.yMin,
           yMax: plan.yMax,
           highlightLast: true,
-          ...(plan.asc.length >= 2 ? { avgLine: 7 } : { markPoint: true as const }),
+          // #546 单点页双标签压字去一：单点时末点高亮已给一点值标签（黑字），再传 markPoint 会在同一点叠出第二个同值标签（蓝字），故单点不再传 markPoint；均值线标签在右缘，与点标签错开可读，数字不动。
+          ...(plan.asc.length >= 2 ? { avgLine: 7 } : {}),
           ...(plan.markLine === undefined ? {} : { markLine: plan.markLine }),
         },
       },
