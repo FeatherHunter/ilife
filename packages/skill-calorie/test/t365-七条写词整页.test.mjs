@@ -379,7 +379,10 @@ test('#365 防回显：跑之前不经命令直改库一个字段 → 页面跟�
 
 test('#365 id 卡三态：图标＋三态词＋色档三样都由 op 驱动（新增／删除），同一页只出现一处徽章', () => {
   const dir = mkTmpDb();
-  const add = runWrite(dir, KEY_M_ADD, { waistCm: 85, date: '2026-09-12' });
+  // #539 收口：徽章标签多一条规则——落库日期早于写入日即补记（J6），与唤醒词无关。
+  // 本用例的 add 必须落在"今天"（否则按规则出补记徽章，见下）；墙钟哪天跑都成立。
+  const today = new Date().toISOString().slice(0, 10);
+  const add = runWrite(dir, KEY_M_ADD, { waistCm: 85, date: today });
   const del = runWrite(dir, KEY_M_RM, { id: rowsOf(dir, "SELECT id FROM body_measurements WHERE date='2026-09-06'")[0].id });
   for (const [name, r, op] of [['记围度', add, 'create'], ['删围度', del, 'delete']]) {
     assert.equal(r.env.data.receipt.op, op, name + ' 回执 op');
@@ -396,6 +399,18 @@ test('#365 id 卡三态：图标＋三态词＋色档三样都由 op 驱动（�
   }
   console.log('T365-IDCARD 记围度=' + OPERATION_ICONS.create + ' ' + OPERATION_LABELS.create
     + ' 删围度=' + OPERATION_ICONS.delete + ' ' + OPERATION_LABELS.delete);
+});
+
+test('#365 补记徽章：落库日期早于写入日时徽章写「补记」（J6 规则回归）', () => {
+  const dir = mkTmpDb();
+  const r = runWrite(dir, KEY_M_ADD, { waistCm: 86, date: '2026-09-06' });
+  assert.equal(r.status, 0, '补记写入 exit 0，stderr=' + r.stderr.slice(-200));
+  const re = new RegExp('class="ilife-status-badge ilife-status-badge-' + OPERATION_TONES.create + '">([^<]*)<', 'g');
+  const texts = [...r.html.matchAll(re)].map((m) => m[1]);
+  assert.equal(texts.length, 1, '同一页只应出现一处徽章，实测 ' + JSON.stringify(texts));
+  assert.ok(texts[0].includes('✓') && texts[0].includes('补记'),
+    '落库日期早于写入日时徽章应为「✓ 补记」（色档沿用新增档），实测「' + texts[0] + '」');
+  console.log('T365-BACKFILL 徽章=' + texts[0].trim());
 });
 
 test('#365 值槽：增类全页现值落新值槽（无一格进旧槽被画成删除线）；删类全页落旧值槽', () => {
