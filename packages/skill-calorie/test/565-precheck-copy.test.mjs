@@ -1,15 +1,27 @@
-/** #565 · 场景 06 目标预检页（`calorie.view.goal-wizard`）：一页只留**一条**「复制日志」通道。
+/** #565 · 场景 06 目标预检页（`calorie.view.goal-wizard`）：一个复制区、三颗按钮、三条通道一条不少。
  *
  * 负责人 2026-09-15 肉眼验收报的缺陷：预检页上部「复制指令」那一排里已经有一颗「复制日志」
  * （公共层 #336 兜底补的**禁用态**占位），页底复制区又出一颗真日志 ⇒ 11 件产物各「复制日志」2 次、
- * copy-btn 4 个（同墙其余 22 件是 1 次／2 个）。收口后：上部只留「复制指令」，页底只留「复制日志」。
+ * copy-btn 4 个（同墙其余 22 件是 1 次／2 个）。
+ * 前席（b5fc9f9）把页底的数据位连同「复制数据」这条通道一起撤了（只留日志）——同名按钮没了，
+ * 但一条复制能力也消失了。本席按编排者 2026-09-16 的裁定**回旧例**（仓内旧例：
+ * `packages/skill-calorie/src/profile/setup.ts` 的档案预检页，#239／#238 裁定）：一个复制区出
+ * 「复制指令／复制数据／复制日志」三颗按钮，每个名字恰一颗、三条通道一条不少。
  *
  * 五组判据（每条都能真红）：
  *   ① 11 条带空位写词逐条真跑 exit 0 ＋ 完整文档四断言（doctype／charset／style／ilife-page）；
- *   ② 产物里「复制日志」**恰 1 次**（可见文本口径），copy-btn 元素**恰 2 个**，且**无禁用态**复制钮；
- *   ③ 两条通道各司其职：「复制指令」＝prompt 原文、「复制日志」＝六段日志，两份载荷都非空且不同；
+ *   ② 三颗按钮：copy-btn 恰 3 个、标签恰是三个名字各 1 颗、三颗的 actionId／菜单标记各恰 1 处、
+ *      无禁用态复制钮（「一页两个同名按钮」这条缺陷钉在这里）；
+ *   ③ 三份载荷各司其职：指令＝prompt 原文（逐字）、数据＝三格式（纯文本／JSON／CSV）都非空、
+ *      日志＝六段技术原件，三份互不相同；
  *   ④ 日志载荷没被删错：六段段名齐 ＋ 命令原文（含 `--params`）在，照抄可重跑；
- *   ⑤ 页内三块与 prompt 原文一字不改（正证删的是重复按钮，不是内容）。
+ *   ⑤ 页内三块、页头文案与 prompt 原文一字不改，整页可见文本里三个名字的读数如实（口径见下）。
+ *
+ * **名字怎么数（同一页两套口径，判据落第一套）**：
+ *   · **按钮口径**（本票「不许两个同名、也不许缺一条」的判据）＝三颗 copy-btn 的可见标签，各 1；
+ *   · **整页可见文本口径**＝剥掉复制载荷后的上屏文字。这一档里 `复制指令` 恒为 **2**：一颗按钮，
+ *     外加「写入词」卡片那句「填好表再复制指令」——那句属**页内三块**（本票一字不改；仓内旧例
+ *     档案预检页同样带这一句，实测同是 2）。`复制数据`／`复制日志` 整页各 1 次（只有复制区在用）。
  *
  * 配方照抄 `test/goal-wizard-251.test.mjs` 的临时库＋真 CLI 那一套（mkdtemp ＋ SKILLS_DB_PATH ＋
  * `docs/research/t81-seed.mjs` 的 `seedFull()` ＋ `CALORIE_TODAY=SEED_TODAY`），不碰真库。
@@ -31,6 +43,8 @@ const ROOT = join(HERE, '..', '..', '..');
 const PKG = join(ROOT, 'packages', 'skill-calorie');
 const CLI = join(PKG, 'dist', 'cli', 'cmd_read.js');
 const KEY = 'calorie.view.goal-wizard';
+/** 复制区三个名字（一个名字恰一颗按钮）。 */
+const COPY_NAMES = ['复制指令', '复制数据', '复制日志'];
 
 const { openDb, DB_FILENAME } = await import(pathToFileURL(join(PKG, 'dist', 'index.js')).href);
 const { seedFull, SEED_TODAY } = await import(pathToFileURL(join(ROOT, 'docs', 'research', 't81-seed.mjs')).href);
@@ -82,14 +96,26 @@ function copyBtnCount(html) {
   return (html.match(/class="[^"]*copy-btn[^"]*"/g) || []).length;
 }
 
-/** 「复制日志」可见命中次数：剥掉复制载荷后的可见文本里数（载荷是照抄用的技术原文，不算上屏文字）。 */
-function visibleLogCount(html) {
-  return (visibleText(stripCopyPayload(html)).match(/复制日志/g) || []).length;
+/** 三颗复制按钮的**可见标签**（文档顺序）——名字计数的判据口径（见件头「名字怎么数」）。 */
+function copyBtnLabels(html) {
+  return [...String(html).matchAll(/<button type="button" class="[^"]*copy-btn[^"]*"[^>]*>([^<]*)<\/button>/g)]
+    .map((m) => m[1]);
+}
+
+/** 某个名字在**整页可见文本**里的次数（剥掉复制载荷后数；仅供如实读数，判据用按钮口径）。 */
+function visibleNameCount(html, name) {
+  return (visibleText(stripCopyPayload(html)).match(new RegExp(name, 'g')) || []).length;
 }
 
 /** 某一颗按钮的 `data-t` 载荷（按 `data-action-id` 取；取不到返回 `null`）。 */
 function payloadOf(html, actionId) {
   const m = new RegExp('data-action-id="' + actionId + '"[^>]*data-t="([^"]*)"').exec(html);
+  return m === null ? null : m[1];
+}
+
+/** 数据位三格式里某一项的 `data-t` 载荷（按菜单项的 `data-fmt` 取；取不到返回 `null`）。 */
+function fmtPayloadOf(html, fmt) {
+  const m = new RegExp('data-fmt="' + fmt + '"[^>]*data-t="([^"]*)"').exec(html);
   return m === null ? null : m[1];
 }
 
@@ -126,41 +152,71 @@ test('#565 ① 11 条带空位写词逐条真跑：exit 0 ＋ 产物仍是完整
   }
 });
 
-/* ── ② 一页一条「复制日志」：1 次／2 个，且无禁用态占位 ── */
+/* ── ② 三颗按钮、三个名字各一颗：copy-btn 恰 3、无同名、无缺条、无禁用态占位 ── */
 
-test('#565 ② 11 件产物各：「复制日志」恰 1 次、copy-btn 恰 2 个、无禁用态复制钮', () => {
+test('#565 ② 11 件产物各：三颗复制钮、三个名字各 1 次、无禁用态占位', () => {
   for (const r of RUNS) {
     const what = '「' + r.wake + '」预检页';
-    assert.equal(visibleLogCount(r.html), 1,
-      what + '「复制日志」应恰 1 次，实测 ' + visibleLogCount(r.html) + ' 次（两条同名通道没并成一条）');
-    assert.equal(copyBtnCount(r.html), 2,
-      what + ' copy-btn 应恰 2 个，实测 ' + copyBtnCount(r.html) + ' 个');
-    const prompt = payloadOf(r.html, 'ilife-help-copy-prompt');
-    const log = payloadOf(r.html, 'ilife-copy-log');
-    assert.ok(prompt !== null, what + ' 缺「复制指令」那颗按钮（`ilife-help-copy-prompt`）');
-    assert.ok(log !== null, what + ' 缺「复制日志」那颗按钮（`ilife-copy-log`）');
+    const labels = copyBtnLabels(r.html);
+    assert.equal(copyBtnCount(r.html), 3,
+      what + ' copy-btn 应恰 3 个（指令／数据／日志各一颗），实测 ' + copyBtnCount(r.html) + ' 个');
+    assert.equal(labels.length, 3, what + ' 已闭合的复制钮应恰 3 颗，实测 ' + JSON.stringify(labels));
+    for (const name of COPY_NAMES) {
+      assert.equal(labels.filter((l) => l === name).length, 1,
+        what + ' 「' + name + '」按钮应恰 1 颗（既不许两个同名、也不许缺这条通道），实测 '
+        + labels.filter((l) => l === name).length + ' 颗；三颗标签：' + JSON.stringify(labels));
+    }
+    assert.equal((r.html.match(/data-action-id="ilife-help-copy-prompt"/g) || []).length, 1,
+      what + ' 「复制指令」的 actionId 应恰 1 处（多出来的那颗就是 #336 兜底占位）');
+    assert.equal((r.html.match(/data-action-id="ilife-copy-log"/g) || []).length, 1,
+      what + ' `data-action-id="ilife-copy-log"` 应恰 1 处（多出来的那颗就是 #336 兜底占位）');
+    assert.equal((r.html.match(/data-fmt-open="1"/g) || []).length, 1,
+      what + ' 「复制数据」的菜单开合器应恰 1 处');
     assert.equal(/class="[^"]*copy-btn[^"]*"[^>]*disabled/.test(r.html), false,
       what + ' 还有禁用态的复制钮（公共层 #336 兜底那颗占位没撤掉）');
-    assert.equal((r.html.match(/data-action-id="ilife-copy-log"/g) || []).length, 1,
-      what + ' `data-action-id="ilife-copy-log"` 应恰 1 处，实测 '
-      + (r.html.match(/data-action-id="ilife-copy-log"/g) || []).length + ' 处（多出来的那颗就是 #336 兜底占位）');
   }
 });
 
-/* ── ③ 两条通道各司其职：指令＝prompt 原文，日志＝六段，载荷都非空且不同 ── */
+/* ── ③ 三份载荷各司其职：指令＝prompt 原文、数据＝三格式、日志＝六段，三份都非空且互不相同 ── */
 
-test('#565 ③ 两条通道各司其职：「复制指令」＝prompt 原文，「复制日志」＝六段日志', () => {
+test('#565 ③ 三份复制载荷都非空，且各是各的（指令／数据／日志）', () => {
   for (const r of RUNS) {
     const what = '「' + r.wake + '」预检页';
-    const prompt = payloadOf(r.html, 'ilife-help-copy-prompt');
-    const log = payloadOf(r.html, 'ilife-copy-log');
-    assert.ok(prompt !== null && prompt.trim() !== '', what + ' 复制指令载荷空了');
-    assert.ok(log !== null && log.trim() !== '', what + ' 复制日志载荷空了（别把载荷删了）');
+    const prompt = decodeAttr(payloadOf(r.html, 'ilife-help-copy-prompt') ?? '');
+    const log = decodeAttr(payloadOf(r.html, 'ilife-copy-log') ?? '');
+    const dataText = decodeAttr(fmtPayloadOf(r.html, 'text') ?? '');
+    const dataJson = decodeAttr(fmtPayloadOf(r.html, 'json') ?? '');
+    const dataCsv = decodeAttr(fmtPayloadOf(r.html, 'csv') ?? '');
+
+    // 三份载荷都非空
+    assert.ok(prompt.trim() !== '', what + ' 复制指令载荷空了');
+    assert.ok(log.trim() !== '', what + ' 复制日志载荷空了（别把载荷删了）');
+    assert.ok(dataText.trim() !== '', what + ' 复制数据的纯文本载荷空了');
+    assert.ok(dataJson.trim() !== '', what + ' 复制数据的 JSON 载荷空了');
+    assert.ok(dataCsv.trim() !== '', what + ' 复制数据的 CSV 载荷空了');
+
+    // 指令＝这一条词的 prompt 原文（逐字）
+    assert.equal(prompt, frozenPrompt(r.wake),
+      what + ' 复制指令载荷与触发词表里的 prompt 原文不逐字相同');
     assert.ok(prompt.includes('执行唤醒词「' + r.wake + '」'),
       what + ' 复制指令载荷不是这一条词的 prompt 原文：' + prompt.slice(0, 120));
+
+    // 数据＝本页那几张表的机器可读投影（三格式各自成形）
+    assert.ok(dataText.includes('【calorie · 目标预检】'), what + ' 纯文本载荷缺页名：' + dataText.slice(0, 120));
+    const parsed = JSON.parse(dataJson);
+    assert.equal(parsed.key, KEY, what + ' JSON 载荷缺本页命令键：' + dataJson.slice(0, 120));
+    assert.equal(parsed.skill, 'calorie', what + ' JSON 载荷的 skill 不对：' + dataJson.slice(0, 120));
+    assert.ok(dataCsv.startsWith('section,row'), what + ' CSV 载荷缺表头：' + dataCsv.slice(0, 120));
+
+    // 日志＝六段技术原件
     assert.ok(log.includes('场景标识') && log.includes('调用链'),
       what + ' 复制日志载荷不是六段日志：' + log.slice(0, 120));
-    assert.notEqual(prompt, log, what + ' 两份载荷不该是同一份');
+
+    // 三份互不相同（别拿一份顶三颗按钮）
+    assert.notEqual(prompt, log, what + ' 指令与日志两份载荷不该是同一份');
+    assert.notEqual(dataText, log, what + ' 数据与日志两份载荷不该是同一份');
+    assert.notEqual(dataText, prompt, what + ' 数据与指令两份载荷不该是同一份');
+    assert.equal(new Set([dataText, dataJson, dataCsv]).size, 3, what + ' 三格式载荷应互不相同');
   }
 });
 
@@ -169,7 +225,7 @@ test('#565 ③ 两条通道各司其职：「复制指令」＝prompt 原文，�
 test('#565 ④ 复制日志六段齐、命令原文（含本次参数）在，照抄可重跑', () => {
   for (const r of RUNS) {
     const what = '「' + r.wake + '」预检页';
-    const log = payloadOf(r.html, 'ilife-copy-log');
+    const log = decodeAttr(payloadOf(r.html, 'ilife-copy-log') ?? '');
     for (const seg of ['场景标识', 'AI 思考链', '数据结构', '调用链', '时间戳版本', '异常']) {
       assert.ok(log.includes(seg), what + ' 日志第几段缺段名 `' + seg + '`：' + log.slice(0, 200));
     }
@@ -180,9 +236,9 @@ test('#565 ④ 复制日志六段齐、命令原文（含本次参数）在，�
   }
 });
 
-/* ── ⑤ 内容一字不改：页内三块、库内现值表、prompt 原文都在（正证删的是重复按钮） ── */
+/* ── ⑤ 内容一字不改：页内三块、库内现值表、prompt 原文都在；整页名字读数如实 ── */
 
-test('#565 ⑤ 页内三块与 prompt 原文一字不改', () => {
+test('#565 ⑤ 页内三块与 prompt 原文一字不改，名字读数如实', () => {
   for (const r of RUNS) {
     const what = '「' + r.wake + '」预检页';
     for (const needle of [
@@ -199,5 +255,16 @@ test('#565 ⑤ 页内三块与 prompt 原文一字不改', () => {
     assert.equal(decodeAttr(pre[1]), tpl, what + ' prompt 预览块与原文不逐字相同（原文一字不改）');
     assert.equal(decodeAttr(payloadOf(r.html, 'ilife-help-copy-prompt')), tpl,
       what + ' 「复制指令」载荷与原文不逐字相同（原文一字不改）');
+
+    // 整页读数（口径见件头）：数据／日志两个名字只有复制区在用；`复制指令` 那一份多出来的是
+    // 「写入词」卡片那句页内文案（一字不改，旧例同样带这句）。
+    assert.equal(visibleNameCount(r.html, '复制数据'), 1,
+      what + ' 整页「复制数据」应恰 1 次（只有复制区在用这个名字），实测 ' + visibleNameCount(r.html, '复制数据'));
+    assert.equal(visibleNameCount(r.html, '复制日志'), 1,
+      what + ' 整页「复制日志」应恰 1 次（两条同名通道没并成一条），实测 ' + visibleNameCount(r.html, '复制日志'));
+    assert.equal(visibleNameCount(r.html, '填好表再复制指令'), 1,
+      what + ' 「写入词」卡片那句页内文案丢了或变了（本票一字不改）');
+    assert.equal(visibleNameCount(r.html, '复制指令'), 2,
+      what + ' 整页「复制指令」应 1 颗按钮 ＋ 卡片那句 = 2 次，实测 ' + visibleNameCount(r.html, '复制指令'));
   }
 });

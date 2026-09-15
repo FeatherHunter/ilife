@@ -15,12 +15,15 @@
  * 一页一事：字段面（营养五项 ＋ 体重四项）就是本子功能的题目，故这一页住本文件；
  *   写后回执页不住这里（它吃 `CrudReceipt`，归「写后回执页」那张票）。
  *
- * **#565 复制通道收口（负责人 2026-09-15 肉眼验收）**：这一页原来一页出了**两条**「复制日志」——
- *   上部 prompt 那一排经共用件 `promptCopyArea` 出按钮，那一路走 `renderActionBar({ copyData })`，
- *   公共层 `controls.ts` 的 #336 兜底在「数据位在场、日志位缺席」时**自动补一颗禁用态「复制日志」**；
- *   页底复制区的数据位 ＋ 日志位又出一颗真日志。修法只在本文件：上部改走 `promptRow()`
- *   （prompt 挂在**日志位**上，日志位单独给一颗不触发兜底），页底只给日志位。收口后一页
- *   「复制指令」一颗 ＋「复制日志」一颗，共 2 个 copy-btn，日志六段载荷一字不动。
+ * **#565 复制区（负责人 2026-09-15 肉眼验收 ＋ 编排者 2026-09-16 裁定「回旧例」）**：这一页原来
+ *   一页出了**两条**「复制日志」——上部 prompt 那一排经共用件 `promptCopyArea` 出按钮，那一路走
+ *   `renderActionBar({ copyData })`，公共层 `controls.ts` 的 #336 兜底在「数据位在场、日志位缺席」时
+ *   **自动补一颗禁用态「复制日志」**；页底复制区的数据位 ＋ 日志位又出一颗真日志（当刻实测
+ *   copy-btn＝4）。第一版修法把页底的数据位连同那条通道一起撤了（只留日志）：同名按钮是没了，
+ *   但「复制数据」这条能力也一并消失——那是删能力，不是收口。
+ *   现按仓内旧例（`src/profile/setup.ts` 的档案预检页，#239／#238 裁定）收成**一个复制区、三颗按钮**：
+ *   复制指令／复制数据／复制日志，每个名字恰一颗、三条通道一条不少（数据位仍走共用件的三格式菜单，
+ *   纯文本／JSON／CSV）。做法与那一颗兜底的来路见下方 `copyZone`。
  */
 import type { SerializableEnvelope } from 'base-paint';
 import { renderActionBar } from 'base-paint';
@@ -137,24 +140,43 @@ function weightBlock(d: GoalDraft): string {
   return tables.join('');
 }
 
-/** 上部指令区：prompt 预览块（原文逐字，与原来那颗按钮同一个产出器）＋**一颗**「复制指令」。
+/** 本页**唯一的复制区**：三条通道各一颗按钮——复制指令（prompt 原文）／复制数据（本页现值与推荐
+ *  那几张表的数据，三格式菜单走共用件）／复制日志（六段技术原件，含产出本页那条命令）。
  *
- *  #565：prompt 挂在 actionBar 的**日志位**上——日志位单独给一颗**不触发** #336 兜底，
- *  同一页因此只剩页底那一条「复制日志」通道。actionId／文案取冻结表 `CALORIE_COPY_ACTION`
- *  （`../render/copy.js`，概念唯一出处，不另造名字），按下的仍是 prompt 原文；
- *  槽位换成日志位不改变按钮形状（`renderActionBar` 的两个槽位走同一个按钮产出器）。
+ *  **指令那一颗为什么不走 `copyArea` 的 prompt 位**：那一路是共用件 `promptCopyArea`，它把 prompt
+ *  挂在 `renderActionBar` 的**数据位**上；公共层 `controls.ts:1389-1396` 的 #336 兜底（「数据位在场、
+ *  日志位缺席」）随即补一颗**禁用态「复制日志」**，一页就有两颗同名按钮（#565 报的正是这一条）。
+ *  仓内旧例同一处兜底也在：档案预检页逐字写成 `copyArea({ prompt, data, log })`，当刻实测
+ *  copy-btn＝4、「复制日志」2 次（逐件读数见 `docs/skills/skill-calorie/565-证据.md` §九 9.1）——
+ *  故「三颗、名字各一次」这条判据不能靠照抄那一句达成。
+ *  本页把 prompt 挂**日志位**（日志位单独给一颗，不触发兜底）：actionId／文案仍取冻结表
+ *  `CALORIE_COPY_ACTION`（`../render/copy.js`，概念唯一出处，不另造名字），按钮形状与载荷与
+ *  `promptCopyArea` 那颗逐字同款（同一条 `renderActionBar` 按钮产出器）；按下的仍是 prompt 原文。
+ *  数据位与日志位合成**一个** `copyArea`（两者都在场，兜底同样不触发）——于是整页三颗按钮、
+ *  一处复制区，三份载荷（指令／数据／日志）都在。
  *
- *  没有 prompt（不针对某一条词进来的那次）**整区不出**——与共用件 `copyArea` 的跳过口径同
+ *  没有 prompt（不针对某一条词进来的那次）指令通道整条不出——与共用件 `copyArea` 的跳过口径同
  *  （`copyArea.ts` 的 prompt 位：空串不出预览与按钮；这里不能照渲染，`renderPreBlock` 拒绝空串）。 */
-function promptRow(prompt: string): string {
-  if (prompt === '') return '';
-  return renderPreBlock({ command: prompt })
-    + renderActionBar({
-      copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: CALORIE_COPY_ACTION.label, text: prompt },
-    });
+function copyZone(v: GoalPrecheckView, envelope: SerializableEnvelope): string {
+  const instruction = v.prompt === ''
+    ? ''
+    : renderPreBlock({ command: v.prompt })
+      + renderActionBar({
+        copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: CALORIE_COPY_ACTION.label, text: v.prompt },
+      });
+  return instruction + copyArea({
+    data: { envelope, title: '【calorie · 目标预检】' },
+    log: {
+      envelope,
+      copyLog: copyLog({
+        command: v.command, source: GOAL_SOURCE,
+        actionAt: nowStamp(), version: DOC_VERSION,
+      }),
+    },
+  });
 }
 
-/** 预检确认页整页：现值 → 要填的项 → 推荐方案 → 体重草稿 → 复制指令。 */
+/** 预检确认页整页：现值 → 要填的项 → 推荐方案 → 体重草稿 → 复制区（指令／数据／日志三通道）。 */
 export function buildGoalPrecheckDoc(v: GoalPrecheckView): string {
   const d = v.draft;
   const envelope: SerializableEnvelope = {
@@ -215,20 +237,8 @@ export function buildGoalPrecheckDoc(v: GoalPrecheckView): string {
         open: true,
       }),
     renderDisclosure({ title: '体重目标（目标／起始日／截止日／速率校验）', contentHtml: weightBlock(d), open: false }),
-    // 上部指令区：prompt 原文 ＋ 一颗「复制指令」（走 `promptRow` 的日志位，见该函数注释）。
-    promptRow(v.prompt),
-    // 页底技术原件区：只留**一条**复制通道——「复制日志」那颗，六段载荷照旧（命令原文含本次参数、
-    // 库文件名与来源、时间戳与版本）。数据位**不再给**：它一在场，公共层就按 #336 补一颗禁用态
-    // 「复制日志」，一页又出两条同名通道（#565 的缺陷正是这么来的）。技术原件没丢——都在这一颗里。
-    copyArea({
-      log: {
-        envelope,
-        copyLog: copyLog({
-          command: v.command, source: GOAL_SOURCE,
-          actionAt: nowStamp(), version: DOC_VERSION,
-        }),
-      },
-    }),
+    // 本页唯一的复制区：指令 ＋ 数据 ＋ 日志三通道、三颗按钮（见 `copyZone` 的注释）。
+    copyZone(v, envelope),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
