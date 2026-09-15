@@ -53,10 +53,27 @@ const DESKTOP_CSS = [
   '}',
 ].join('\n');
 
+/** 手机端黑底说明块补丁（t407 第 3 轮返工 B；与上面 D1 同一处、同一条路）。
+ *
+ *  块是 `base-paint` 的 `renderToast` 那一条（`.ilife-toast`）：左栏标题（「…标签流转：这一笔打…」，
+ *  窄栏里折成两到三行）＋ 右栏标签胶囊（永远一行）。实测毛病两处：
+ *    ① 两栏不等高——标题折了行、胶囊只有一行，整条横幅一边高一边矮（评审判「栏高不齐把整页拖重」）；
+ *    ② 行距偏紧——标题行贴着下面那几行说明，只隔 2px。
+ *  只动呈现：两栏拉到同高（`stretch` ＋ 胶囊内的字居中对齐）、标题与说明的行距统一到 1.5 以上、
+ *  标题行与说明之间留 6px。文字、块序、复制载荷一处不动；公共层样式仍不许动，落点仍只在本件。 */
+const TOAST_CSS = [
+  '/* t407-r3 B：黑底说明块（.ilife-toast）两栏等高＋行距 */',
+  '.ilife-toast { line-height: 1.5; }',
+  '.ilife-toast-title-row { align-items: stretch; margin-bottom: 6px; }',
+  '.ilife-toast-title-row > .ilife-toast-title { flex: 1 1 auto; min-width: 0; margin-bottom: 0; line-height: 1.5; }',
+  '.ilife-toast-title-row > .ilife-toast-chip { display: inline-flex; align-items: center; justify-content: center; }',
+  '.ilife-toast-lines { line-height: 1.6; }',
+].join('\n');
+
 /** 整页装配：区块 HTML ＋ 标题三件套 → 完整文档。 */
 export function assembleDocPage(input: DocPageInput): string {
   const assets = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + '\n' + DESKTOP_CSS,
+    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + '\n' + DESKTOP_CSS + '\n' + TOAST_CSS,
     sharedHelpersJs: buildSharedHelpersJs(),
   };
   const body = renderPageShell({
