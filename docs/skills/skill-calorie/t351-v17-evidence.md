@@ -14,7 +14,10 @@
 - 墙目录（发布名副本 ＋ 双墙 ＋ 索引 ＋ 清单 ＋ 生成器 ＋ 逐格缺陷清单）：`D:\ilife\docs\skills\skill-calorie\scene05-验收墙`
 - 门禁运行对账：`docs/skills/skill-calorie/t351-v17-gate-runs.md`（**本件声称跑过的每一次运行，在那件里都有 `GATE-RUN runId=<标识> cmd=<命令>` 一行**）
 - 本件**不做视觉判断**（不写「版式正常／好看」这类结论）：机器只负责把真渲染跑出来、把每格「该确认什么」写清、把自检退出码交出来；判定归负责人（`逐格缺陷清单.md` 的两条答复列留空待填）。
-- **本窗基线挂在哪一次 HEAD 上（如实记漂移）**：跑批与全部读数取自重编后、由 \`HEAD = c1f0977884c5301dbcebd841b3321e3ce3bdfa0b\` 时的**工作区**（编排者持锁提交 \`24fb121\`／\`a05feda\`／\`ecb665d\`／\`d1af159\` 之后）。**写回执当刻 HEAD 已漂到 \`e3cc0fcf123a2ebbcd1335a7da89d963fee39209\`**（别席在继续提交）——本窗**没有**跟到那一次上。核过：场景05 用到的九件源码（\`render/reviewDocs.ts\`／\`render/trendDocs.ts\`／\`render/planCopyBlock.ts\`／\`render/planEditorRuntime.ts\`／\`shared/copyArea.ts\`／\`shared/sceneEnvelope.ts\`／\`workout/receipt.ts\`／\`workout/write.ts\`／\`workout/planStore.ts\`）**最后一改是 21:01:26，早于本窗跑批时刻 21:19:38**；收工再跑 \`tsc -b --dry\` 仍报各工程最新。⇒ 本窗 37 份产物就是当刻源码的真实渲染。
+- **本窗基线挂在哪一次 HEAD 上（如实记漂移）**：跑批与全部读数取自重编后、由 `HEAD = c1f0977884c5301dbcebd841b3321e3ce3bdfa0b` 时的**工作区**（编排者持锁提交 `24fb121`／`a05feda`／`ecb665d`／`d1af159` 之后）。**写回执当刻 HEAD 已漂到 `e3cc0fcf123a2ebbcd1335a7da89d963fee39209`**（别席在继续提交）——本窗**没有**跟到那一次上。核过：场景05 用到的九件源码（`render/reviewDocs.ts`／`render/trendDocs.ts`／`render/planCopyBlock.ts`／`render/planEditorRuntime.ts`／`shared/copyArea.ts`／`shared/sceneEnvelope.ts`／`workout/receipt.ts`／`workout/write.ts`／`workout/planStore.ts`）**最后一改是 21:01:26，早于本窗跑批时刻 21:19:38**；收工再跑 `tsc -b --dry` 仍报各工程最新。⇒ 本窗 37 份产物就是当刻源码的真实渲染。
+- **本次重出（D1 返工 · 提交 `9b27549`）**：那一次把 `manifest.json` 的三段 `notShipped[].why` 与顶层 `source` **归位到本轮**（不再指 `t351-v16` 那一轮），并重出了 `总索引.html` 与 `逐格缺陷清单.md`（骨架）。⇒ **本件里凡涉及清单 sha256／索引字节数的读数，一律以本段为准**；本段之前出现的旧值（清单 `086E6975…`、索引 26,103 B）是**该次运行当刻的历史读数**，留作追溯、不再对应当刻盘上。两张墙与 37 份产物副本**不受这次重出影响**（重出后逐字节未变，见 §六.3）。
+- **当刻实测（本段写就时量的）**：`manifest.json` sha256 ＝ `2C33EDB3C450599E7FB0A1BA60F6AD13631010599720037514BCFE2E175EDDA1`（**22,609 B**）；`总索引.html` sha256 ＝ `A267DE67D303C292E929B1F3468F733EC8FCC42AA30C1E2F1BD8047FB3E1F58F`（**27,268 B**）。
+- **口径句（通篇适用）**：本件所有数字都是**该次运行当刻**的读数。清单与索引是**共享派生件——任何一次重出之后，本件里对应的数字即刻陈化**；要引用请先当刻重量一遍，别照抄本件。
 
 ---
 
@@ -204,7 +207,7 @@ runId `t157-wall-check-red` · **exit 1** · 读数：
 命令：`node … mutate-manifest.mjs restore manifest.json .scratch/t157-close/manifest.bak.json` 后再跑 `node gen-wall.mjs --check .`
 runId `t157-wall-check-restore` · **exit 0** · 读数回 `缺失 0 -> 可发`。
 
-**改回的完整性凭据**：`manifest.json` 的 SHA256 改前改后**逐字一致** ＝ `086E69755733BDD3D1150B442C945EF6C076D0AEFDA7CDB0913E826700371E78`。
+**改回的完整性凭据**：该次运行里 `manifest.json` 的 SHA256 改前改后**逐字一致** ＝ `086E69755733BDD3D1150B442C945EF6C076D0AEFDA7CDB0913E826700371E78`（**历史读数**：那是**本次重出之前**的清单，见件头「本次重出」段；当刻 sha256 ＝ `2C33EDB3C450599E7FB0A1BA60F6AD13631010599720037514BCFE2E175EDDA1`）。
 
 ### ④ `dropped` ＋ `dead` 两条腿一起判（反假绿灯）
 
@@ -240,7 +243,7 @@ runId `t157-wall-check-restore` · **exit 0** · 读数回 `缺失 0 -> 可发`�
 | BOM | 五件全 **无 BOM**（首 3 字节不是 `EF BB BF`） |
 | `手机墙-390.html` | 20,637 B；`<iframe ` **37** 个；`loading="lazy"` **0** 处；1:1 无缩放 |
 | `桌面墙-1280.html` | 25,296 B；`<iframe ` **37** 个；`loading="lazy"` **0** 处；`SCALE=min(0.5,600/1280)=0.469`（缩的是显示不是视口） |
-| `总索引.html` | 26,103 B；`iframe` 0 个（索引不发 iframe，39 条链接指向 37 份产物 ＋ 两张墙） |
+| `总索引.html` | **27,268 B**（sha256 `A267DE67D303C292E929B1F3468F733EC8FCC42AA30C1E2F1BD8047FB3E1F58F`）——**重出前是 26,103 B**，见件头「本次重出」段；`iframe` 0 个（索引不发 iframe，39 条链接指向 37 份产物 ＋ 两张墙） |
 | 格数对账 | 墙格数 37 ＝ 索引卡片数 37 ＝ 清单 `rows` 条数 37 ＝ 原批产物 `.html` 份数 37 |
 
 ---

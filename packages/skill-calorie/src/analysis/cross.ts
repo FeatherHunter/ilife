@@ -12,7 +12,7 @@ import { BODY_ALIVE, EX_ALIVE } from './utils.js';
 
 /** #440 · 围度各部位在「变化 TOP」里的列序（**只定序**，不改行为：并列时按此取前 3）。
  *  中文名一律从 `fetch/body.ts` 的 `MEASUREMENT_ZH` 取，本处不自持第二份名表。 */
-const WAIST_DIVERGENCE_ORDER: readonly string[] = [
+export const WAIST_DIVERGENCE_ORDER: readonly string[] = [
   'chest_cm', 'waist_cm', 'abdomen_cm', 'hip_cm', 'shoulder_cm',
   'left_thigh_cm', 'right_thigh_cm', 'left_calf_cm', 'right_calf_cm',
   'left_arm_cm', 'right_arm_cm', 'left_forearm_cm', 'right_forearm_cm',

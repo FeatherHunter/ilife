@@ -314,7 +314,7 @@ export function listCompositions(db: DatabaseSync, opts: { dateFrom?: string; da
   //        其它字面值 ⇒ 报错（原来的「静默当来源名用、空结果」口径已收）。
   // #362 · 日期窗口改走 `windowClause`（同一条口径的四条取数之一）；三样都不给＝全部历史，`limit` 仍可截行。
   if (opts.source !== undefined) assertSourceFilter(opts.source);
-  const cols = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note']; // M1-ANCHOR
+  const cols = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note'];
   let sql = 'SELECT ' + cols.join(', ') + ' FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0';
   const params: SQLInputValue[] = [];
   if (opts.source && opts.source !== SOURCE_FILTER_ALL) { sql += ' AND source = ?'; params.push(opts.source); }
@@ -389,7 +389,7 @@ export function trendCompositionBySource(db: DatabaseSync, win: CompositionWindo
   const clause = windowClause(win); // #362 · 与列表同一条窗口口径（不传＝全部历史）
   const rows = db.prepare(`SELECT source, date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
     WHERE COALESCE(is_deprecated, 0) = 0` + clause.sql + `
-    GROUP BY source, date ORDER BY date ASC`).all(...clause.params) as unknown as // M2-ANCHOR
+    GROUP BY source, date ORDER BY date ASC`).all(...clause.params) as unknown as
     { source: string; date: string; avg_pct: number; n: number }[];
   const bySource = new Map<string, { date: string; avgPct: number; n: number }[]>();
   for (const r of rows) {
