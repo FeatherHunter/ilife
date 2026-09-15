@@ -39,9 +39,14 @@ for (const f of files) {
   const styleText = [...pageHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join('\n');
   const lines = visibleLines(html);
   const sep = lines.filter((s) => /[·；;]/.test(s));
-  // 重复句：剔掉纯日期/纯数字（那是数据本来的样子，不是文案冗余），也剔掉「周X 不排训练」
-  // ——空日占位句**按周各出一份**（第 1 周与第 2 周各有一句），不是同一件事说了两遍。
-  const prose = lines.filter((s) => s.length > 6 && !/^[\d\s\-–—/.、:：]+$/.test(s) && !/不排训练$/.test(s));
+  // 表格**单元格**里的文字是数据（同一条规则在三个计划格上各命中一次，原因句就会重复三遍），
+  // 不是页面文案在说两遍同一件事——重复句只判「正文文案」，故先把单元格文本摘出来剔掉。
+  const cellText = new Set([...html.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)]
+    .map((m) => m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()));
+  // 重复句：剔掉纯日期/纯数字（那是数据本来的样子），剔掉「周X 不排训练」（空日占位句按周各出一份），
+  // 再剔掉表格单元格。
+  const prose = lines.filter((s) => s.length > 6 && !/^[\d\s\-–—/.、:：]+$/.test(s)
+    && !/不排训练$/.test(s) && !cellText.has(s));
   const dupes = [...new Set(prose.filter((s) => prose.filter((x) => x === s).length > 1))];
   // 色值数只数**活的声明**：先剥掉 CSS 注释（注释里常引老页色值当出处，那不是本页用的色）。
   const liveCss = styleText.replace(/\/\*[\s\S]*?\*\//g, '');

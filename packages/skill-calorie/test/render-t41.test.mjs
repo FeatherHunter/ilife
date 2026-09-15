@@ -148,14 +148,17 @@ test('#41 计划三盘 + HTML 字段断言', () => {
   assert.ok(!('insertedCount' in wiz) && !('validatedCount' in wiz)); // #102 G15：改名后旧键均不再返
   html = renderPlanWizardHtml(wiz);
   assert.match(html, /构建向导/);
-  assert.match(html, /可落地/);
-  assert.match(html, /已检查 1 个训练场次/);
+  // 页面可见文本：指标卡的「标签」与「值」是两个元素（值还带一层 `<span>`），
+  // 直接在原 HTML 上匹配连写的整句会漏——先剥标记再匹配（T351-v10 随公共层卡片的标记变更收紧）。
+  const wizText = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ');
+  assert.match(wizText, /可落地/);
+  assert.match(wizText, /已检查\s*1 个训练场次/);
   const bad = buildPlanWizardView({ config: {}, weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: 'a', movements: [{ name: '硬拉', part: '背', type: '力量', sets: [] }] }] }] }] }, ['深蹲']);
   assert.ok(bad.errorCount >= 1);
   assert.equal(bad.checkedSessions, 1); // #102 G15：坏计划也计 N（已检查≠已通过）
-  const badHtml = renderPlanWizardHtml(bad);
-  assert.match(badHtml, /有硬止/);
-  assert.match(badHtml, /1 个训练场次（\d+硬止）/); // T351：已检查计数由 label 承担，value 只留「N 个训练场次（M硬止）」
+  const badText = renderPlanWizardHtml(bad).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ');
+  assert.match(badText, /有硬止/);
+  assert.match(badText, /1 个训练场次（\d+\s*硬止）/); // T351：已检查计数由 label 承担，value 只留「N 个训练场次（M硬止）」
   const goal = buildExerciseGoalView(db, '2026-09-06', '2026-09-07');
   assert.equal(goal.dailyGoal, 300);
   assert.equal(goal.actual, 620);

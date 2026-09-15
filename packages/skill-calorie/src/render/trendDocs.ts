@@ -33,6 +33,7 @@ import type { DataTextInput } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog, dataCopyArea } from '../shared/copyArea.js';
 import { nowStamp } from './receipt.js';
+import { pageChromeCss } from './pageChromeCss.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import type { AnomalyView, ContraView, PredictView } from './insightPlate.js';
@@ -539,10 +540,11 @@ export function buildContraDoc(v: ContraView): string {
     noteBits,
     renderParamForm({
       fields: [{ name: 'part', label: '部位', value: v.part }],
-      description: '想扫哪个部位就说腰、膝或肩，不说就全部扫一遍；命中的动作会逐条列出，并给出可以替换的动作。',
+      description: '想扫哪个部位就说腰、膝或肩。不说部位就全部扫一遍。命中的动作会逐条列出，并给出可以替换的动作。',
     }),
     renderKpiGrid([
-      { label: '扫描', value: CONTRA_STATUS_ZH[v.summaryStatus] ?? v.summaryStatus, detail: '部位 ' + v.part },
+      { label: '扫描', value: CONTRA_STATUS_ZH[v.summaryStatus] ?? v.summaryStatus,
+        detail: '部位：' + (v.part === 'all' ? '全部' : v.part) },
       { label: '训练场次', value: String(v.scannedSessions), unit: '个', detail: '动作 ' + v.scannedMovements + ' 个' },
       { label: '错误', value: String(v.errorCount), unit: '个' },
       { label: '警告', value: String(v.warnCount), unit: '个' },
@@ -581,12 +583,13 @@ export function buildContraDoc(v: ContraView): string {
   parts.push(contraCopyBlock(v));
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '禁忌扫描（' + v.part + '）',
-    // T351 肉眼修复（order207）：眉标首段原露英文命令键，改该键既有中文 title
-    // （`cli/keys.ts` 的 `CALORIE_COMBOS['calorie.view.contraindication'].title`＝「禁忌扫描」），不新增概念。
-    eyebrow: '禁忌扫描 · 趋势分析域',
-    subtitle: null,
-    content: parts.join(''),
+    // T351-v10：标题里那个 `all` 是参数原值，读者看不懂（第 ④ 条）——扫全部部位时不缀括号。
+    title: v.part === 'all' ? '禁忌扫描' : '禁忌扫描（' + v.part + '）',
+    // 眉标只留技能名：原来那句 `禁忌扫描 · 趋势分析域` 把标题又抄了一遍，后半截还是内部架构词
+    // （「趋势分析域」是仓库里的域划分，用户不该看到）。
+    eyebrow: '健身计划',
+    subtitle: v.part === 'all' ? '全部部位' : '只看' + v.part,
+    content: pageChromeCss(960) + parts.join(''),
     charts: false,
   });
 }

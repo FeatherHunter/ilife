@@ -14,6 +14,7 @@ import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
 import { getPlan } from './planStore.js';
 import { assembleDocPage } from '../shared/docPage.js';
+import { pageChromeCss } from '../render/pageChromeCss.js';
 import { planCopyBlock } from '../render/planCopyBlock.js';
 import { copyLog } from '../shared/copyArea.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
@@ -57,17 +58,26 @@ function currentPlanTable(db: DatabaseSync): string {
   });
 }
 
-/** 老实物差异卡位：回执带对照即摆对照，否则只摆写入字段。 */
+/** 老实物差异卡位：回执带对照即摆对照，否则只摆写入字段。
+ *  T351-v10：原来「原因 · 结果」是拿 `·` 把两件事串进一格（第 ⑤ 条），现在拆成两列；
+ *  一条原因都没有时不摆空的「原因」列（整列「—」是噪声）。 */
 function itemsTable(receipt: CrudReceipt): string {
   const rows = receipt.items
     .filter((it) => (it.status ?? '') !== '')
     .map((it) => ({
       field: it.detail && it.detail !== '' ? it.detail : it.status,
-      change: [it.reason ?? '', it.status ?? ''].filter((p) => p !== '').join(' · ') || '—',
+      reason: it.reason ?? '',
+      change: it.status ?? '',
     }));
+  const hasReason = rows.some((r) => r.reason !== '');
+  const columns = [
+    { key: 'field', label: '事项' },
+    ...(hasReason ? [{ key: 'reason', label: '原因' }] : []),
+    { key: 'change', label: '结果' },
+  ];
   return renderDataTable({
-    columns: [{ key: 'field', label: '事项' }, { key: 'change', label: '结果' }],
-    rows,
+    columns,
+    rows: hasReason ? rows : rows.map((r) => ({ ...r, reason: '—' })),
     caption: '改动对照',
     emptyText: '本次回执未带逐项明细（写入字段：'
       + (receipt.writtenFields.join('、') || '未设置') + '）',
@@ -104,10 +114,12 @@ function buildWorkoutReceiptDoc(
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: receipt.scene + ' · 回执',
-    eyebrow: '健身计划 · 写后回执',
-    subtitle: receipt.summary,
-    content,
+    title: '回执',
+    eyebrow: '健身计划',
+    // 副标题只留一件事：这一页是哪一条写命令的回执（「定训练计划」）。**这次写成了什么**由下面那张
+    // 状态卡说（`receipt.summary`，例如「已定训练计划：1 周 1 场」）——原来两处都印同一句，读两遍。
+    subtitle: receipt.scene,
+    content: pageChromeCss(960) + content,
   });
 }
 

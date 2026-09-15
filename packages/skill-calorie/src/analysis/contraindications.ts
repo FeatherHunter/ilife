@@ -62,6 +62,9 @@ export function scanMovement(name: string, parts: string[] = [...CONTRA_PARTS]):
 
 const SEV_ORDER: Record<Severity, number> = { error: 3, warn: 2, info: 1 };
 
+/** 星期名（`day_of_week` 1–7）：命中明细里「这一场是计划哪一格」的写法用。 */
+const DOW_CN = ['', '一', '二', '三', '四', '五', '六', '日'];
+
 export function worstSeverity(rules: ContraRule[]): Severity | null {
   if (rules.length === 0) return null;
   return rules.reduce((a, b) => (SEV_ORDER[b.severity] > SEV_ORDER[a.severity] ? b : a)).severity;
@@ -96,7 +99,9 @@ export function scanPlan(db: DatabaseSync, part: string = 'all'): PlanScan {
   let safeSkipped = 0;
   for (const p of plans) {
     const movements = JSON.parse(p[4] || '[]') as Array<{ name?: string }>;
-    const usage = 'W' + p[0] + 'D' + p[1] + '(' + p[3] + ')';
+    // 「这一场是计划的哪一格」的人话写法（T351-v10）：原来是 `W1D3(下肢)`——英文周次代码直接印在页上，
+    // 读者看不懂（负责人 2026-09-15 第 ④ 条：文字不能出现不合理）。改成「第 1 周 周三（下肢）」。
+    const usage = '第 ' + p[0] + ' 周 周' + (DOW_CN[p[1]] ?? String(p[1])) + '（' + p[3] + '）';
     for (const m of movements) {
       movementCount += 1;
       const name = m.name ?? '';

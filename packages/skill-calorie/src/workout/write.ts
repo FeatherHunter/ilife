@@ -275,7 +275,7 @@ export function previewSetWeek(params: Record<string, unknown>, db: DatabaseSync
     const rest = o.rest === true;
     return sessLine(week, dn ?? 0, String(o.sessionLabel ?? (rest ? '休息' : '训练')), null, rest);
   }) : [noteLine('这一页还没填要定哪几天，补上后再确认')];
-  return { op: 'set-week', title: '定第' + week + '周计划', before, after, note: '确认后该周先清后写' };
+  return { op: 'set-week', title: '定第 ' + week + ' 周的计划', before, after, note: '确认后该周先清后写' };
 }
 
 export function previewAddMovement(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -389,7 +389,7 @@ export function previewDeleteDay(params: Record<string, unknown>, db: DatabaseSy
   const before = daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   const after = si === undefined ? [noteLine(dayPhrase(wn, dn) + ' 整天删除（硬删除，不可恢复）')] :
     [noteLine(dayPhrase(wn, dn) + ' 第' + si + ' 段删除（硬删除，不可恢复），其余保留')];
-  return { op: 'delete-day', title: '删' + dayPhrase(wn, dn) + '训练', before, after, note: '快照如上；确认后删除，不可恢复' };
+  return { op: 'delete-day', title: '删' + dayPhrase(wn, dn) + '训练', before, after, note: '确认后删除，不可恢复' };
 }
 
 export function previewUpdateMovement(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -417,7 +417,7 @@ export function previewDelete(params: Record<string, unknown>, db: DatabaseSync)
     op: 'delete', title: '撤销整份训练计划',
     before: [noteLine('「' + String(plan.config?.title ?? '未命名') + '」共 ' + plan.sessions.length + ' 场')],
     after: [noteLine('配置与全部训练场次删除（硬删除，不可恢复）')],
-    note: '确认后删除；删完需重定计划',
+    note: '确认后删除，删完需要重定计划',
   };
 }
 /** `calorie.workout.plan-set-rest` · 定休息日（date 与 week＋dayOfWeek 二选一；缺省标休息）。 */

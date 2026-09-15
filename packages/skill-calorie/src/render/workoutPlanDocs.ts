@@ -20,12 +20,13 @@ import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, ren
 import { nowStamp } from './receipt.js';
 import { planCopyBlock } from './planCopyBlock.js';
 import { planPageCss, planViewCss } from './workoutPlanCss.js';
+import { pageChromeCss } from './pageChromeCss.js';
 import { DOW, planWeeksHtml } from './workoutPlanLook.js';
 import type { PlanWeek } from './workoutPlanLook.js';
 import { weekOfDate } from './planPlate.js';
 import type { PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
 import type { PlanSessionRow } from '../workout/planStore.js';
-import type { WritePreview } from '../workout/write.js';
+import type { PreviewLine, WritePreview } from '../workout/write.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
 import { todayISO } from '../analysis/utils.js';
@@ -218,7 +219,6 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
  *  `第1周周1·上肢（2动作）` 那种串——那种写法是拿 `·` 与括号顶替表格设计（负责人第 ⑤ 条）。
  *  页头三件也不再用 `·` 串：眉标只留「健身计划」，标题只留「写前预览」，副标题只留这是哪一条写词。 */
 export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string {
-  const opName = OP_ZH[v.op] ?? '写前预览';
   /** 预览行 → 表格行：`week` 为 null 的概述行只填「训练」一列，其余列印「—」。 */
   const rowsOf = (lines: readonly PreviewLine[], withChange: boolean) => lines.map((l) => ({
     week: l.week === null ? DASH : '第 ' + l.week + ' 周',
@@ -241,7 +241,11 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
       caption: '改前（' + v.before.length + ' 行）',
       emptyText: '改前为空',
     }),
-    renderDataTable({
+    // 改后一整栏都是「参数没齐」的提示行时不摆表：一句话填进「训练」列、其余四列全是「—」，
+  // 那不是表格该有的样子（第 ⑤ 条）；改走共享空态块，一句话说清要补什么。
+  v.after.length > 0 && v.after.every((l) => l.week === null)
+    ? renderEmptyBlock({ title: '改后', text: v.after.map((l) => l.label).join('。') })
+    : renderDataTable({
       columns: cols(true),
       rows: rowsOf(v.after, true),
       caption: '改后（' + v.after.length + ' 行，只读不写库）',
@@ -266,7 +270,9 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
     docTitle: DOC_TITLE,
     title: '写前预览',
     eyebrow: '健身计划',
-    subtitle: opName + ' · ' + v.title,
+    // 副标题只留一件事：这一页具体要写什么（`v.title` 例如「定第 1 周计划」）。
+    // 另外那半句「这是哪一条写词」已由标题「写前预览」与表标题交代，不再叠一层重复。
+    subtitle: v.title,
     content: pageChromeCss(960) + parts.join(''),
   });
 }
@@ -299,9 +305,11 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: PlanDocOpts): string
   ];
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '构建向导 · 定训练计划',
-    eyebrow: '健身计划 · 预检确认页',
-    subtitle: ok ? '可落地 · 已检查 ' + v.checkedSessions + ' 个训练场次' : '有硬止 · 先改计划再确认',
-    content: parts.join(''),
+    title: '构建向导',
+    eyebrow: '健身计划',
+    // 副标题只留一件事：这份计划现在能不能落地。检查了几场、几项错都由下面的指标卡与折叠块交代，
+    // 不再用 `·` 把「结论」和「读数」串成一句（原来那版读作「可落地 · 已检查 1 个训练场次」）。
+    subtitle: ok ? '这份计划可以落地' : '先改掉硬止再确认',
+    content: pageChromeCss(960) + parts.join(''),
   });
 }
