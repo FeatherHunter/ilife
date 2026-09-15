@@ -13,13 +13,15 @@
  * 一字不动。
  *
  * 体积沿用 t341 首定 `PHOTO_LIST_PAGE_MAX_BYTES`（定义只在 `galleryDoc.ts`，本件只
- * 引用不另定；超预算即横幅「已嵌 N 张／还有 M 张未嵌入」＋替代操作，逐张弃最大者）。
+ * 引用不另定；超预算即逐张弃最大者，页面出**人话**提示块报「哪张没显示／为什么」＋替代操作，
+ * 见 `budgetNoticeHtml`；#499 前是「超预算横幅：已嵌 N 张／还有 M 张未嵌入（单页上限 1 MiB）」
+ * 那套开发口吻，同域 #472 换口径时漏了本页，故本票补齐）。
  * `src/render/html.ts` 已超线只读：本件不调它的照片段。
  */
 import { escapeHtml } from 'base-paint';
 import { renderChips, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea } from '../shared/copyArea.js';
+import { dataCopyArea, notice } from '../shared/copyArea.js';
 import { todayISO } from '../analysis/utils.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { embedPhotos, type PhotoEmbed } from './photoThumb.js';
@@ -85,6 +87,20 @@ function detailRows(c: CompareData): Array<Record<string, unknown>> {
   }));
 }
 
+/** 超预算横幅（#499 改同域人话口径，与 #472 的 `galleryDoc.budgetNoticeHtml` 同族）：
+ *  走公共层静态提示块 `notice()`，不再暴露页内上限与字节数这类内部单位，也不写「超预算横幅」
+ *  这种开发前缀。**超限不许静默**（#438／#472 口径）：仍要点名**哪张没显示**（逐张列文件名）
+ *  与**为什么**（放不下是因为太大），并给出替代操作。触发与张数仍只取**体积让位**这一路
+ *  （`dropped` 由 `buildPhotoCompareDoc` 的逐张弃最大者填）；文件本身缺失走各卡自己的占位句，
+ *  不并进这条——否则「一张太大 ＋ 一张文件不见」会被这条横幅一口说成同一回事。 */
+function budgetNoticeHtml(embeds: readonly PhotoEmbed[], dropped: ReadonlySet<string>): string {
+  const names = embeds.filter((e) => dropped.has(e.fileName)).map((e) => e.fileName);
+  return notice({
+    msg: '这两张里有一张太大，本页没显示：' + names.map(escapeHtml).join('、'),
+    detail: '可以打开文件名自己看，或改查单张详情分开看',
+  });
+}
+
 function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: ReadonlySet<string>): string {
   const byName = new Map(embeds.map((e) => [e.fileName, e]));
   const okCount = embeds.filter((e) => e.dataUri !== null && !dropped.has(e.fileName)).length;
@@ -103,10 +119,7 @@ function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: Reado
   // #473：间隔只在这里出现一次（KPI 里那格与它是同一件事，已删）。
   parts.push('<div>间隔 <b>' + c.intervalDays + '</b> 天</div>');
   if (c.crossTagWarning) parts.push('<div>' + escapeHtml(CROSS_TAG_TEXT) + '</div>');
-  if (dropped.size > 0) {
-    parts.push('<div>超预算横幅：已嵌入 ' + okCount + ' 张，还有 ' + dropped.size +
-      ' 张未嵌入（单页上限 1 MiB）· 替代操作：改查单张详情分看，或换小图后重跑</div>');
-  }
+  if (dropped.size > 0) parts.push(budgetNoticeHtml(embeds, dropped));
   // #484：两张并排（宽屏）／上下排列（窄屏）——折行容器＋可压窄的卡，两卡都放得下才不溢出。
   parts.push('<div style="display:flex;flex-wrap:wrap;gap:12px">' + [c.photo1, c.photo2].map((p) =>
     cardHtml(p, byName.get(fileKeyOf(p.photoPath)), dropped.has(fileKeyOf(p.photoPath)), today),
@@ -149,10 +162,10 @@ function shellOf(c: CompareData, content: string): string {
   });
 }
 
-/** 对比整页：完整文档（doctype 起、charset、版面、复制区）＋双卡内嵌＋超预算横幅。 */
+/** 对比整页：完整文档（doctype 起、charset、版面、复制区）＋双卡内嵌＋体积让位提示块。 */
 export function buildPhotoCompareDoc(c: CompareData, photosDir?: string | null): string {
   const embeds = embedPhotos(photosDir ?? null, [c.photo1, c.photo2]);
-  // 超预算即逐张弃最大者（最多两轮），横幅报「已嵌 N／还有 M」＋替代操作。
+  // 超预算即逐张弃最大者（最多两轮），提示块报「哪张没显示／为什么」＋替代操作。
   const dropped = new Set<string>();
   let html = shellOf(c, contentOf(c, embeds, dropped));
   for (let round = 0; round < 2; round += 1) {

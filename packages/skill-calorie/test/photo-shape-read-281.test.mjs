@@ -229,7 +229,7 @@ test('缺失阻断：不存在的 id 按既有口径 exit 4，不回半页', asy
   }
 });
 
-test('超预算横幅：已嵌 N／还有 M＋替代操作（缺失不牵连正常照片）', async () => {
+test('超预算提示块：哪张没显示／为什么＋替代操作（缺失不牵连正常照片）', async () => {
   const root = mkdtempSync(join(tmpdir(), 't281-big-'));
   const dbDir = join(root, 'db');
   const photosDir = join(root, 'photos');
@@ -252,11 +252,13 @@ test('超预算横幅：已嵌 N／还有 M＋替代操作（缺失不牵连正�
   const out = assertOutputOnDisk(env);
   const html = readFileSync(out, 'utf8');
   assert.ok(html.toLowerCase().startsWith('<!doctype html>'), '超预算页仍须是完整文档');
-  assert.match(html, /超预算横幅/, '超预算横幅缺失');
-  assert.match(html, /已嵌入 1 张/, '横幅须报已嵌 N');
-  assert.match(html, /还有 1 张未嵌入/, '横幅须报还有 M');
-  assert.match(html, /替代操作/, '横幅须给替代操作');
-  // #473：被弃那张的占位原因也改人话（横幅的 N／M 口径不动——那是 #438 定下的界面口径）。
+  // #499：改同域人话口径（与 #472 的 `galleryDoc.budgetNoticeHtml` 同族）——句面钉死，
+  // 负向钉住「旧句／内部单位必须 0 命中」；旧句改回去即红（下方变异自证另跑一遍）。
+  assert.match(html, /这两张里有一张太大，本页没显示：2026-09-04_001\.png/, '#499：须点名哪张没显示（逐张列文件名）');
+  assert.match(html, /可以打开文件名自己看，或改查单张详情分开看/, '#499：须给替代操作');
+  assert.doesNotMatch(html, /超预算横幅|未嵌入|单页上限|1 MiB|换小图后重跑|已嵌入/,
+    '#499：旧句与内部单位（超预算横幅／未嵌入／单页上限／1 MiB／换小图后重跑／已嵌入）须 0 命中');
+  // #473：被弃那张的占位原因也改人话（超限不许静默——横幅点名 ＋ 卡上占位两处都在）。
   assert.match(html, /照片没显示（太大放不下：/, '#473：被弃那张须明示人话原因');
   assert.doesNotMatch(html, /超预算未内嵌/, '#473：旧句「超预算未内嵌」须 0 命中');
   // 缺失不牵连：另一张仍内嵌。
