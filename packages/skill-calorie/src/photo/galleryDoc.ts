@@ -25,14 +25,16 @@
  *      没显示的那张在自己的格位上写明**哪一份文件**与**为什么**（退让不许静默，#438 口径）；
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px），
  *      明细表窄屏给「可以左右滑」这一行提示。
+ *   ⑤ **收口（本席位）**：逐张的复制按钮撤掉（一页 44 颗药丸按钮压过图注，其中 22 颗是公共层自动补的
+ *      禁用「复制日志」）；表的 `caption` 槽在公共层窄屏行卡化里被挤成 32px 竖排（`dom.mjs` 实测），
+ *      改成「照片清单」小节标题 ＋ 表下「按时间倒序」口径行。取值口径与体积退让一行未改。
  */
-import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import { escapeHtml, renderStatusBadge } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea, notice } from '../shared/copyArea.js';
 import { todayISO } from '../analysis/utils.js';
-import { CALORIE_COPY_ACTION, copyActionHtml } from '../render/copy.js';
 import type { GalleryData, PhotoCard } from './photo.js';
 import { embedPhotos, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
 import { chipRow, photoUiCss } from './photoUi.js';
@@ -44,6 +46,9 @@ const DOC_SKILL = 'calorie';
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
  *  #526：`卡路里·身材照片` 里的 `·` 是符号顶替版面（题名不是并列语义），改空格。 */
 const DOC_TITLE = '卡路里 身材照片';
+
+/** 本页小节标题的类名（#467 先例：KPI 区那把尺，同 `viewerDoc`／`compareDoc`，不新造样式）。 */
+const H2_CLASS = 'ilife-block-kpi-card-title';
 
 /** 单页体积上限（字节）：本票首定，供 281／282／352 复用（见 t341 文档）。
  *  实测 2 张小图约 60KB（含 ~60KB 文档壳）；1 MiB 直嵌仅容 3~4 张 200KB 实拍。
@@ -90,7 +95,12 @@ function windowDaysOf(g: GalleryData): number {
 }
 
 /** 一张照片的格位（#526）：能看的走 `aspect-ratio` 图片框，没显示的走占位（**哪一份文件 ＋ 为什么**）。
- *  图注＝时刻（一行粗体）＋ 徽章列（编号／标签／相对时间）＋ 可复制文件名，三件事各有各的形状。 */
+ *  图注＝时刻（一行粗体）＋ 徽章列（编号／标签／相对时间）＋ 文件名小字块，三件事各有各的形状。
+ *
+ *  #526 收口：**逐张的复制按钮撤掉**。原来每张卡调 `copyActionHtml()`，一页 22 张就是 44 颗药丸按钮
+ *  （其中 22 颗是公共层 `renderActionBar` 自动补的**禁用「复制日志」**，见 `controls.ts:1367` 的 #336 兜底），
+ *  按钮比图注还抢眼，而「复制日志」在单张卡里没有所指。文件名仍是可选中的小字块（同 #472 的「小字块」本意），
+ *  机器面由页尾的「复制数据」承担（envelope 逐张带 `photoPath`）。公共层的兜底按钮不在本票写集，故从**调用面**收。 */
 function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string | undefined, today: string): string {
   const fileName = e?.fileName ?? fileNameOf(p.photoPath);
   const shown = e?.dataUri != null;
@@ -110,9 +120,8 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string 
   return '<figure class="phu-card" data-id="' + p.id + '">' + stage
     + '<figcaption class="phu-cap"><div class="phu-when">' + escapeHtml(when) + '</div>'
     + chipRow(['编号 ' + p.id, ...tags, rel])
-    + '<div class="phu-file"><code>' + escapeHtml(fileName) + '</code>'
-    + copyActionHtml(fileName, { actionId: CALORIE_COPY_ACTION.actionId, label: '复制文件名' })
-    + '</div></figcaption></figure>';
+    + '<div class="phu-file"><code>' + escapeHtml(fileName) + '</code></div>'
+    + '</figcaption></figure>';
 }
 
 /** 体积提示块（#472 改公共层静态提示块；#526 拆成两句、去掉分号）：触发与 M 仍只取**预算跳过
@@ -159,7 +168,12 @@ function kpiCards(
 }
 
 /** 明细表：只标异常（正常行留空——「存在」是零信息值）。#526 收成四列（文件名列下屏：
- *  网格里每张照片下面就是文件名），窄屏另给一行「可以左右滑」的提示。 */
+ *  网格里每张照片下面就是文件名），窄屏另给一行「可以左右滑」的提示。
+ *
+ *  #526 收口：**表题行换成「小节标题 ＋ 表下的口径行」**。`renderDataTable` 的 `caption` 槽在公共层
+ *  窄屏行卡化（`blocks.ts:1691` 那段 `@media (max-width:640px)`，t154-r3 在途）里实测被挤成
+ *  **32×106 px 的竖排**（`dom.mjs` 读数：`caption.box.w=32`，6 行），一句话读不了；改成小节标题
+ *  「照片清单」＋表下一行口径「按时间倒序」，两处都走公共层既有的文字形状，不写死字号内距。 */
 function detailTable(g: GalleryData, skipReason: ReadonlyMap<string, string>): string {
   const rows = g.photos.map((p) => {
     const key = fileNameOf(p.photoPath);
@@ -167,17 +181,18 @@ function detailTable(g: GalleryData, skipReason: ReadonlyMap<string, string>): s
       : (skipReason.get(key) !== undefined ? '太大没显示' : (p.fileExists === null ? '没核对' : ''));
     return { id: p.id, date: p.date, tags: p.tagList.join(' '), status };
   });
-  return renderDataTable({
-    columns: [
-      { key: 'id', label: '编号', align: 'right' },
-      { key: 'date', label: '日期' },
-      { key: 'tags', label: '标签' },
-      { key: 'status', label: '状态' },
-    ],
-    rows,
-    caption: '按时间倒序',
-    emptyText: '本窗无身材照',
-  });
+  return '<section><h2 class="' + H2_CLASS + '">照片清单</h2>'
+    + renderDataTable({
+      columns: [
+        { key: 'id', label: '编号', align: 'right' },
+        { key: 'date', label: '日期' },
+        { key: 'tags', label: '标签' },
+        { key: 'status', label: '状态' },
+      ],
+      rows,
+      emptyText: '本窗无身材照',
+    })
+    + renderCaliberLine('按时间倒序') + '</section>';
 }
 
 function contentOf(
