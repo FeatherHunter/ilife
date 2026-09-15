@@ -10,6 +10,14 @@
  * 曲线补 options（量程／刻度／单位／横轴标注／目标线／空态句）、结论由数据表改唯一形态折叠区、
  * 复制区补日志位、页末补数据来源行；**窗口内没有记录时不再阻断，改出整页空态**
  * （§5.7 肉眼验收：空窗仍是一张完整的页）。
+ *
+ * #505 形状化与手机端（口径 `.scratch/t154/text-review/口径-UI.md`，先例 `render/reviewDocsCss.ts`）：
+ * 体重盘这一页原先靠 `·`／`；` 顶替设计的地方，全落成 `weightUi.ts` 的形状——
+ *   · 页头 `… · 共 30 条 · 趋势上升` → 正文首件 `windowStrip()`（两枚日期块 ＋ 条数胶囊）＋ `chip()`；
+ *   · 「变化」卡 `趋势上升 · 平均每天约 +10 克` → `factStrip()`（两枚「标签 ＋ 值」）；
+ *   · 「距目标」卡 `目标 68 kg · 截止 … · 目标线超出刻度` → `factStrip()` ＋ 一枚说明条（`.wui-strip-note`）；
+ *   · 结论句 `bits.join('；')` → `verdict()`（一句判语）＋ `factStrip()`（均值／目标两枚事实）。
+ * 手机端照 HELP（断点 820）：样式随 `weightUiCss()` 进 `parts` 第一项，横向件窄屏塌纵向。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { assertISO, defaultRange, fail, needArr, needNum, nums, optStr, wday } from '../shared/params.js';
@@ -35,7 +43,8 @@ import type { SerializableEnvelope } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
-import { DOC_SKILL, DOC_TITLE, DOC_VERSION, conclusionBlock, signed } from './plateDocs.js';
+import { DOC_SKILL, DOC_TITLE, DOC_VERSION, conclusionBlock, shapedConclusionBlock, signed } from './plateDocs.js';
+import { chip, factStrip, verdict, weightUiCss, windowStrip } from './weightUi.js';
 import { batchLogWeight, logWeight } from './records.js';
 
 const VIEW_KEY = 'calorie.view.weight';
@@ -139,11 +148,31 @@ function windowDays(w: WeightDashboard): number {
 
 /** 体重盘四卡（窗口天数／均值／变化／距目标）；单点在读数里写「单点无均值对照」。
  *  **值槽只放一个数与单位**：首末对（`70.1 → 70.4 kg`，14 字）挪进 `detail`
- *  ——它是区间串，进值槽会被断行撑高（t154 用户读数）。 */
-function plateCards(w: WeightDashboard): KpiCardInput[] {
+ *  ——它是区间串，进值槽会被断行撑高（t154 用户读数）。
+ *
+ *  #505：`detail` 那一槽**吃纯文本**（`renderKpiGrid` → `esc(card.detail)`，共享层转义），形状词汇的 HTML
+ *  进不去（本票实测：形状被当成字面量印上屏）。故原来串在 `detail` 里的几件事改走两路——
+ *  ① 「窗口」卡的条数／区间仍留纯文本（一个数 ＋ 一个区间串，没有分隔符）；
+ *  ② 「变化」「距目标」卡里原来用 `·` 串的事实（趋势／平均每天／目标／截止／目标线没画）改由
+ *     **结论块的形状**承载（本函数把它们交回去，调用处落成 `factStrip()`／说明条）。 */
+function plateCards(w: WeightDashboard): { cards: KpiCardInput[]; facts: { k: string; v: string }[] } {
   const t = w.trend;
   const single = w.curve.single;
-  return [
+  const facts: { k: string; v: string }[] = [];
+  if (!single) {
+    facts.push({ k: '变化', v: '趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) });
+  }
+  // 目标那一枚已经把「目标多少 ＋ 差多少」说全 ⇒ 结论句里不再另起一句复述（#505 去冗余）。
+  if (w.gapKg !== null && w.weightGoal !== null) {
+    const gap = w.gapKg;
+    facts.unshift({ k: '目标', v: w.weightGoal + ' kg，' + (gap > 0 ? '还差 ' + gap + ' kg' : gap < 0 ? '已比目标低 ' + Math.abs(gap) + ' kg' : '已达目标') });
+  }
+  if (w.weightGoal !== null && w.deadline !== null) facts.push({ k: '截止', v: w.deadline });
+  if (w.weightGoal !== null && !w.curve.targetInRange) {
+    facts.push({ k: '图上没画目标线', v: '目标值超出刻度' });
+  }
+  return { facts,
+    cards: [
     {
       label: '窗口', value: String(windowDays(w)), unit: '天',
       detail: single ? t.firstDate : '首 ' + t.firstWeight + ' → 末 ' + t.lastWeight + ' kg',
@@ -158,36 +187,36 @@ function plateCards(w: WeightDashboard): KpiCardInput[] {
     },
     {
       label: '变化', value: t.changeKg === 0 ? '0 kg' : signed(t.changeKg),
-      ...(single ? {} : { detail: '趋势' + t.trendCn + ' · ' + dailyGram(t.dailyChangeG) }),
+      // 清单那两件住在结论块的事实条（`detail` 槽吃纯文本，形状进不去）。
       status: single ? 'empty' : t.changeKg < 0 ? 'ok' : t.changeKg > 0 ? 'warn' : 'empty',
       statusText: single ? '看不出变化' : t.trendCn,
     },
     {
       label: '距目标', value: w.gapKg === null ? '—' : w.gapKg === 0 ? '0 kg' : signed(w.gapKg),
-      detail: w.weightGoal === null ? '未设体重目标 · 说「定体重目标」后可叠目标线'
-        : '目标 ' + w.weightGoal + ' kg' + (w.deadline ? ' · 截止 ' + w.deadline : '')
-          + (w.curve.targetInRange ? '' : ' · 目标线超出刻度，图上没画'),
+      // 目标／截止／目标线没画三件同样住结论块的事实条；未设目标时那一句也走那里。
+      detail: w.weightGoal === null ? '还没有体重目标' : undefined,
       status: w.gapKg === null ? 'empty' : w.gapKg <= 0 ? 'ok' : 'warn',
       statusText: w.gapKg === null ? '未设目标' : w.gapKg <= 0 ? '已达目标' : '未达成',
     },
-  ];
+    ] };
 }
 
 /** 结论句（引用取数层字段，不做自然语言解析；单点、未设目标各有各的说法）。
- *  窗口与条数住在页头副标题与页脚来源行，本句只说「变了多少、还算不算好」——同一屏不报第二遍。 */
-function weightConclusion(w: WeightDashboard): string {
+ *  窗口与条数住在页头副标题与页脚来源行，本句只说「变了多少、还算不算好」——同一屏不报第二遍。
+ *
+ *  #505 形状化：原来 `bits.join('；')` 把四件事串成一句 ⇒ 现拆成**一句判语 ＋ 若干枚事实**
+ *  （调用处 `verdict(sentence)` ＋ `factStrip(facts)` 各出一件）。事实一条不丢，只是不再挤在一句里：
+ *  首末对与累计在判语里（那是「变了多少」），均值、目标只是它旁边的量值。 */
+function weightConclusion(w: WeightDashboard): { sentence: string; facts: { k: string; v: string }[] } {
   const t = w.trend;
   // 单点页：只有一句可说的（「看不出变化」），卡上也已各写一遍 ⇒ 这里不再复述日期／读数／目标差值。
-  if (w.curve.single) return '只有这一天，看不出变化；再记一条就能比较。';
-  const bits = ['这段时间从 ' + t.firstWeight + ' kg 到 ' + t.lastWeight + ' kg，累计 ' + signed(t.changeKg)
-    + '（趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) + '）'];
-  if (t.recordCount >= 2) bits.push('均值 ' + t.avgWeight + ' kg');
-  if (w.gapKg === null) {
-    bits.push(w.weightGoal === null ? '未设体重目标' : '目标 ' + w.weightGoal + ' kg（差值暂缺）');
-  } else if (w.gapKg > 0) bits.push('目标 ' + w.weightGoal + ' kg，还差 ' + w.gapKg + ' kg');
-  else if (w.gapKg < 0) bits.push('目标 ' + w.weightGoal + ' kg，已比目标低 ' + Math.abs(w.gapKg) + ' kg');
-  else bits.push('目标 ' + w.weightGoal + ' kg，已达目标');
-  return bits.join('；') + '。';
+  if (w.curve.single) return { sentence: '只有这一天，看不出变化。再记一条就能比较。', facts: [] };
+  const sentence = '这段时间从 ' + t.firstWeight + ' kg 到 ' + t.lastWeight + ' kg，累计 ' + signed(t.changeKg)
+    + '（趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) + '）。';
+  const facts: { k: string; v: string }[] = [];
+  if (t.recordCount >= 2) facts.push({ k: '均值', v: t.avgWeight + ' kg' });
+  // 目标那一枚住在 `plateCards()`（它与「距目标」卡同源），本句不再另起一句复述（#505 去冗余）。
+  return { sentence, facts };
 }
 
 /** 复制区（数据＋日志）＋页末数据来源行：来源行写法照 `diet/nutritionPortDocs.ts:58-61`，
@@ -224,9 +253,20 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
   const rangeText = rangeTextOf(w.start, w.end);
   const sourceText = '体重记录 ｜ 窗口 ' + rangeText
     + ' ｜ 共 ' + t.recordCount + ' 条';
+  /* #505：原来的页头副标题是一句 `·` 串（`2026-08-09 ~ 2026-09-07 · 共 30 条 · 趋势上升`），
+   * 拆成两处成形的东西：① 窗口条（`windowStrip()`＝两枚日期块 ＋ 一枚条数胶囊）＋ 方向胶囊（`chip()`）
+   * 合成正文首件；② 副标题只留一句人话。条数两处同值（页脚口径行另有窗口与条数，属允许项 §二）。 */
+  const trendChip = w.curve.single
+    ? chip('只有一条记录，还看不出趋势', 'plain')
+    : chip('趋势' + t.trendCn, t.trendCn === '上升' ? 'warn' : t.trendCn === '下降' ? 'ok' : 'plain');
+  const plate = plateCards(w);
   const parts: string[] = [
+    // `weightUiCss()`＝本族形状词汇的样式，按口径放 `parts` 第一项（`assembleDocPage` 没有页内 CSS 入口）。
+    weightUiCss(),
+    // 窗口条 ＋ 趋势胶囊合成一件（形状与外边距全在 `weightUi.ts`：这里只给类名，正文零内联样式）。
+    '<div class="wui-window-block">' + windowStrip(w.start, w.end, '共 ' + t.recordCount + ' 条') + trendChip + '</div>',
     renderKpiGrid(todayCards(t, w)),
-    renderKpiGrid(plateCards(w)),
+    renderKpiGrid(plate.cards),
     // 老实物 weight_dashboard.html 的 h2 最近 7 天趋势：7 天内即近 7 天小图，否则全窗曲线。
     renderChartBlock({
       kind: 'line',
@@ -249,7 +289,10 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     }),
   ];
   // 结论卡（老实物 weight_dashboard.html 的 summaryCard／summaryText）：一页唯一形态的折叠区。
-  parts.push(conclusionBlock(weightConclusion(w)));
+  // #505：一句判语 ＋ 事实条两件（原来是 `bits.join('；')` 一句长串）＋ 四卡交回来的那几枚
+  // （趋势／平均每天／目标／截止／目标线没画——`detail` 槽吃纯文本，形状只能住这里）。
+  const concl = weightConclusion(w);
+  parts.push(shapedConclusionBlock(verdict(concl.sentence) + factStrip(concl.facts.concat(plate.facts))));
   parts.push(renderDataTable({
     columns: [
       { key: 'date', label: '日期' },
@@ -265,8 +308,8 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     docTitle: DOC_TITLE,
     title: spanDays === 1 ? '今日体重' : '体重总览',
     eyebrow: '',
-    subtitle: rangeText + ' · '
-      + (w.curve.single ? '只有一条记录，还看不出趋势' : '共 ' + t.recordCount + ' 条 · 趋势' + t.trendCn),
+    // 副标题只留一句人话（窗口 ＋ 共几条；`~` 是日期区间的允许项）——窗口与趋势已各是一件成形的东西。
+    subtitle: rangeText + '（共 ' + t.recordCount + ' 条）',
     content: parts.join(''),
     charts: true,
   });
@@ -286,6 +329,8 @@ function buildWeightEmptyDoc(start: string, end: string, command: string): strin
       { label: '今日体重', value: '—', unit: 'kg', detail: '这段时间没有记录', status: 'empty', statusText: '没有记录' },
       { label: '较上次', value: '—', detail: '没有记录，也没有上一次可比', status: 'empty', statusText: '无可比' },
     ]),
+    // `weightUiCss()` 同放空窗页（同族同一套形状；空窗页没有形状件也要有同一份页内样式）。
+    weightUiCss(),
     renderEmptyBlock({
       title: '体重曲线',
       text: '这段时间还没有体重记录',

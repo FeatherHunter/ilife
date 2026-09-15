@@ -20,6 +20,7 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { fieldLabel } from '../shared/fieldLabel.js';
 import { WEIGHT_DOMAIN } from './fieldLabels.js';
+import { weightUiCss } from './weightUi.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 export const DOC_VERSION = '0.1.0';
@@ -80,6 +81,15 @@ export function stateCard(
 /** 一句话结论块：一页只许这一种形态（折叠区标题「结论」＋ 默认展开）；正文由取数层拼好，此处只转义。 */
 export function conclusionBlock(sentence: string): string {
   return renderDisclosure({ title: '结论', contentHtml: '<p>' + escapeHtml(sentence) + '</p>', open: true });
+}
+
+/** 形状化结论块（#505）：与 `conclusionBlock` 同一个形态（同一个标题、同一个默认展开），
+ *  收的是**已成形的小段 HTML**（`weightUi.verdict()` ＋ `factStrip()` 那一串）而不是一句人话。
+ *  为什么另立一个入口而不是给 `conclusionBlock` 加开关：那个函数的契约是「正文只转义」
+ *  （#483 定稿，锁死一句话结论），形状化的页面要的是「正文已经是形状」——
+ *  两件事混淆过一次的代价就是形状被当成字面量印上屏（本票实测）。入口分开，两边契约各自清楚。 */
+export function shapedConclusionBlock(bodyHtml: string): string {
+  return renderDisclosure({ title: '结论', contentHtml: bodyHtml, open: true });
 }
 
 /** 页尾「对账信息」折叠区（体重域口径，替换共用件 `reconcileDisclosure`）：只留跟进要用到、
@@ -147,24 +157,46 @@ export function deliveryBlocks(
 
 /** 写后回执整页壳（标题三件套＋区块）：整页模板恒由 `assembleDocPage` 一处产出。
  *  `subtitle` 不给就用回执摘要（机器面那一句）；给了就是本页自己的标题行写法
- *  ——只有「同日范围删除」那一页用它（缺陷 5：`2026-09-06~2026-09-06` 同一天写两遍）。 */
+ *  ——只有「同日范围删除」那一页用它（缺陷 5：`2026-09-06~2026-09-06` 同一天写两遍）。
+ *
+ *  #505 两处：
+ *  - **正文里零 `·`**（负责人 2026-09-15 第 5 条）：页题原写 `记体重 · 回执`——那个 `·` 是把
+ *    「做什么 ＋ 这是一张回执」两件事串成一句符号，与「体重 · 写后回执」眉标说同一件事（眉标已整族删）。
+ *    改成 `记体重回执`。**副标题那一句同样落掉 `·`**：它照抄的是回执摘要（`receipt.summary`），
+ *    而摘要是**机器面**（信封 `message`／复制载荷，逐字不许动）——所以做法是**只删可见面那一个字符**
+ *    （`visualSubtitleOf`），机器面一字不改。
+ *  - `weightUiCss()` 进正文第一项：本族四个页壳共用这一处（`assembleDocPage` 没有页内 CSS 入口），
+ *    故四种回执页都在这里带上形状词汇的样式（`logReceipt.ts`／`receipt.ts` 的正文都用它）。 */
 export function receiptPageOf(receipt: CrudReceipt, content: string, subtitle?: string): string {
   return assembleDocPage({
     docTitle: '卡路里·体重回执',
-    title: receipt.scene + ' · 回执',
+    title: receipt.scene + '回执',
     eyebrow: '',
-    subtitle: subtitle ?? receipt.summary,
-    content,
+    subtitle: visualSubtitleOf(subtitle ?? receipt.summary),
+    content: weightUiCss() + content,
   });
+}
+
+/** 可见副标题的写法：**只把 `·` 落掉**，其余逐字照摘要（#505）。
+ *  摘要本体（信封 `message`／复制载荷）是机器面、一字不动；这一句是页面上给人读的，
+ *  分类符在这里没有信息量（`已删除体重 #1（2025-05-01 80 kg · 硬删除，不可恢复）` 的两半各说各的一件事）。 */
+function visualSubtitleOf(s: string): string {
+  return s.replace(/·/g, '');
 }
 
 /** 状态卡副说明那一句「接下来怎么办」（按命令取，一处定义）。**不复述徽章的结果词**：
  *  #483 之前这一格写的是「已写入 weight_log 体重记录」——既把徽章的话又说一遍，又把库表名摆上屏。
  *  改类那格按对抗审查缺陷 1 改口：对照表第一列是「记录」（`#1`／`#494`），`改前 → 改后` 在第二列，
- *  原来说「上表左列就是改前的原值」是**指错列**——原值在标题含「改前」的那一列里。 */
+ *  原来说「上表左列就是改前的原值」是**指错列**——原值在标题含「改前」的那一列里。
+ *
+ *  #505 两处收紧：
+ *  - **这一格吃纯文本**（`renderKpiGrid` → `esc(card.detail)`，共享层转义）⇒ 形状词汇的 HTML 进不来，
+ *    故这里一个字都不用 `·`／`；`：把「做什么」与「下一步」写成两句人话（对照表／表本身已在同页说清那件事）。
+ *  - 「上表左列」那句改成「表里「改前」那一列」——「上表」在本页有两张表（现值表 ＋ 对照表），
+ *    靠方位词指表读者要自己猜；点名列头才是无歧义的写法。 */
 export function writtenDetailOf(key: string): string {
-  if (key === 'calorie.weight.update') return '已按新值写回体重记录；上表「改前」那一列就是原值';
-  if (key === 'calorie.weight.remove') return '删除的行已从体重记录里移除，本页没有撤销按钮';
-  if (key === 'calorie.weight.batch') return '跳过与失败的行没写进库；改好日期或体重后可再补录一次';
-  return '已存入体重记录，可照「看今日体重」复查';
+  if (key === 'calorie.weight.update') return '已按新值写回体重记录。要改回去，照表里「改前」那一列的原值再改一次。';
+  if (key === 'calorie.weight.remove') return '删除的行已从体重记录里移除。本页没有撤销按钮。';
+  if (key === 'calorie.weight.batch') return '跳过与失败的行没写进库。改好日期或体重，可再补录一次。';
+  return '已存入体重记录。照「看今日体重」可复查。';
 }

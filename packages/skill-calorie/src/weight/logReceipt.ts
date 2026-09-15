@@ -10,18 +10,29 @@
  *
  * #483 文本审查：三处「同一件事说三遍」删到一处——状态卡三槽各说一件事、本次体重卡不再复述副标题
  * 的日期时间与 `weight_log`、「批量计数」表整块删（摘要与结论句里已有同样三数）；字段名换中文标签。
+ *
+ * #505 形状化与手机端（负责人 2026-09-15 第 1／2／5 条；口径正本 `.scratch/t154/text-review/口径-UI.md`）：
+ * 本族两页原先靠 `·`／`；` 顶替设计的地方，全部落成 `weightUi.ts` 的形状——
+ *   · 单条页：结论那一句 `；` 长串 → `verdict()`（一句判语）＋ `factStrip()`（较上次／距目标／近 30 天）
+ *     ＋ BMI 一枚事实条（原串在副标题 `BMI 23 · 2026-09-15 08:43:23` 里）；
+ *   · 批量页：三数 → 一句判语，`跳过＝…；失败＝…` 两条定义 → `bulletList()` 逐条成行；
+ *   · 两页的页脚**不再自串** `·` 串：`命中 0 条 · 跳过 0 条` 那类改用与 `｜` 同族的写法（`｜` 是允许项）。
+ *  页内样式由 `plateDocs.receiptPageOf()` 一处带进正文（`weightUiCss()`，四个回执页共用一处）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderChartBlock, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { CrudReceipt } from '../render/receipt.js';
 import { shiftISODate } from '../analysis/utils.js';
 import { deltaLast, goalDiff } from './records.js';
+import type { WeightRow } from './records.js';
+import { FetchError } from '../fetch/errors.js';
 import { getWeightGoalInfo, weightTrend } from './figures.js';
 import { weightCurvePlan } from './plate.js';
 import {
-  cell, conclusionBlock, deliveryBlocks, envelopeOf, fieldLabelList, receiptPageOf, reconcileBlock, signed,
-  stateCard, writtenDetailOf,
+  cell, conclusionBlock, deliveryBlocks, envelopeOf, fieldLabelList, receiptPageOf, reconcileBlock,
+  shapedConclusionBlock, signed, stateCard, writtenDetailOf,
 } from './plateDocs.js';
+import { bulletList, factStrip, verdict } from './weightUi.js';
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
@@ -79,6 +90,25 @@ export function buildLogReceiptDoc(
   }
   const plan = weightCurvePlan(series.map((s) => s.value), goal);
   const two = series.length >= 2;
+  /* BMI 的取数（#505）：写口那次 `logWeight()` 算过 BMI，但它只回在**写执行**那一支（`log.ts`）里，
+   * 行源里唯一的 BMI 落在 `weight_log.bmi` 列。这一页是回执、拿不到写执行的返回值，故**照行源列读一次**
+   * （回执页的这条读只用于显示，读不到就整枚不出——不替写口编值）。 */
+  let bmi: number | null = null;
+  if (f.kg !== null) {
+    try {
+      const row = db.prepare(
+        'SELECT id, date, time, weight_kg, bmi, note FROM weight_log WHERE date = ? AND weight_kg = ? '
+        + 'ORDER BY id DESC LIMIT 1',
+      ).get(f.date, f.kg) as WeightRow | undefined;
+      bmi = row?.bmi ?? null;
+    } catch (e) {
+      // 读不到（表里还没有这一行／库只读）就不出这一枚：副说明那一句已经说了补身高的办法。
+      // 取数失败按本族口径**不吞**（§5.7②）：非「读不到」的错（表结构不对那类）原话上抛，
+      // 由 CLI 按失败回执出；只有查无此行（`FetchError`）才回落成「不出这一枚」。
+      if (!(e instanceof FetchError)) throw e;
+      bmi = null;
+    }
+  }
   const rows = [
     {
       k: '较上次差值',
@@ -87,7 +117,9 @@ export function buildLogReceiptDoc(
     {
       k: '距目标差',
       v: gap === null
-        ? (goal === null ? '未设体重目标 · 说「定体重目标」后可看差距' : '—')
+        // #505：这一格原写 `未设体重目标 · 说「定体重目标」后可看差距`——两件事用一个 `·` 串着。
+        // 拆成两句人话（这一格是纯文本单元格，形状进不来；两句之间用逗号已是人话读法）。
+        ? (goal === null ? '未设体重目标，说「定体重目标」后可看差距' : '—')
         : signed(gap) + '（目标 ' + goal + ' kg）',
     },
     { k: '近 30 天均值', v: avg === null ? '—' : avg + ' kg' + (two ? '' : '（只有一条记录）') },
@@ -96,16 +128,21 @@ export function buildLogReceiptDoc(
     { k: '趋势', v: trendCn === null ? '—' : trendCn + (two ? '' : '（只有一条记录）') },
     { k: '备注', v: f.note ?? '—' },
   ];
-  const conclusion = (f.kg === null ? '回执未带本次体重' : '本次记 ' + f.kg + ' kg（' + f.date + ' ' + f.time + '）')
-    + (delta === null ? '；库里没有更早的记录，暂无较上次对照' : '；较上次 ' + signed(delta))
-    + (gap === null ? '；未设体重目标' : '；距目标 ' + signed(gap))
-    + (two ? '；近 30 天均值 ' + avg + ' kg、趋势' + trendCn : '；近 30 天只有一条记录，谈不上趋势')
+  /* #505 形状化（负责人第 5 条）：结论原是一句用 `；` 串起四件事的长句，现拆两件——
+   * ① `outcome`＝**一句判语**（做了哪一笔，跨时间那两件对不上时才补说）；② `facts`＝几枚「标签 ＋ 值」，
+   *    承载较上次／距目标／近 30 天两数，写成 `factStrip()`。两件都上屏（结论块里一上一下），
+   *    故三句原来那四个事实一个不丢，只是各归各处。`；` 与 `、` 两只分隔符因此一并退出可见正文。 */
+  const facts: { k: string; v: string }[] = [
+    { k: '较上次', v: delta === null ? '没有更早的记录可比' : signed(delta) },
+    { k: '距目标', v: gap === null ? '未设体重目标' : signed(gap) },
+    { k: '近 30 天', v: two ? '均值 ' + avg + ' kg，趋势' + trendCn : '只有一条记录，谈不上趋势' },
+  ];
+  const outcome = (f.kg === null ? '回执未带本次体重' : '本次记 ' + f.kg + ' kg，' + f.date + ' ' + f.time)
     + '。';
-  const payload = [conclusion];
-  if (f.kg !== null) payload.push('本次体重 ' + f.kg + ' kg（' + f.date + ' ' + f.time + '）');
-  if (delta !== null) payload.push('较上次差值 ' + signed(delta));
-  if (gap !== null) payload.push('距目标差 ' + signed(gap) + '（目标 ' + goal + ' kg）');
-  if (two) payload.push('近 30 天均值 ' + avg + ' kg', '近 30 天趋势 ' + trendCn);
+  // 复制载荷：机器面照旧「结论句 ＋ 表格逐行」，但原来那四行是把判语与事实重抄一遍 ⇒ 去掉重抄，
+  // 只留页面表格里读不到的那一笔（写入时刻 ＋ 备注）。`｜` 是载荷自身的分隔符（允许项，不进正文）。
+  const payload = [outcome];
+  if (f.kg !== null) payload.push('写入时刻 ' + f.date + ' ' + f.time);
   if (f.note !== null) payload.push('备注 ' + f.note);
   const content = [
     renderKpiGrid([
@@ -146,14 +183,27 @@ export function buildLogReceiptDoc(
         },
       },
     }),
-    conclusionBlock(conclusion),
+    // #505：结论块＝一句判语（`verdict()`）＋ 几枚事实（`factStrip()`）；BMI 是这一页剩下的最后一条
+    // 事实（原串在副标题那句 `BMI 23 · 2026-09-15 08:43:23` 里——那个 `·` 就是负责人点名的那类写法），
+    // 故出在这里，且**只在真的读过身高时出现**（缺身高不出空胶囊，缺值的说法已在本页副说明里）。
+    shapedConclusionBlock(
+      verdict(outcome)
+      + factStrip(facts)
+      + (bmi === null ? '' : factStrip([{ k: 'BMI', v: String(bmi) }], false, true)),
+    ),
     reconcileBlock(receipt),
     deliveryBlocks(
       envelopeOf(receipt, payload.join(' ｜ ')), receipt, command,
       '本次记录 ' + f.date + ' ｜ 写入 1 条 ｜ 近 30 天 ' + from + ' ~ ' + f.date,
     ),
   ].join('');
-  return receiptPageOf(receipt, content);
+  /* #505：副标题（可见）不再照抄回执摘要那句 `已记体重 70.5 kg（BMI 23 · 2026-09-15 08:43:23）`
+   * ——那个 `·` 正是负责人点名的写法，且 BMI 与时刻各有各的去处（BMI 进结论块的事实条、
+   * 时刻进判语）。**机器面一字不动**：回执摘要（`receipt.summary`／信封 `message`）仍逐字是原来那一句。 */
+  return receiptPageOf(
+    receipt, content,
+    f.kg === null ? '回执未带本次体重' : '已记体重 ' + f.kg + ' kg',
+  );
 }
 
 /** 批量回执整页：写入／跳过／失败三数 ＋ 逐条明细；徽章取本次最重的那一态（失败＞跳过＞写入）。 */
@@ -164,15 +214,21 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
   const skipped = count('跳过');
   const failed = count('失败');
   const top = failed > 0 ? '失败' : skipped > 0 ? '跳过' : wrote > 0 ? '写入' : '无改动';
-  const conclusion = '本次批量 ' + items.length + ' 条：写入 ' + wrote + ' 条、跳过 ' + skipped + ' 条、失败 ' + failed + ' 条。'
-    + '跳过＝那天已经记过（不覆盖旧记录）；失败＝日期格式或体重值不对（原因见下表）。';
+  /* #505 形状化：原来两句用 `；` 串起「三数」与「两条定义」，现拆两件——
+   * ① 三数归**一句判语**（值槽与徽章已各说一件事，这里只把它读成一句话）；
+   * ② 两条定义进 `bulletList()` **逐条成行**（「跳过＝…」「失败＝…」是两条独立规则，不该挤在一句里）。 */
+  const outcome = '本次批量 ' + items.length + ' 条，写入 ' + wrote + ' 条，跳过 ' + skipped + ' 条，失败 ' + failed + ' 条。';
+  const rules = [
+    '跳过＝那天已经记过（不覆盖旧记录）',
+    '失败＝日期格式或体重值不对（原因见下表）',
+  ];
   const rows = items.map((it) => ({
     date: cell(it.date),
     kg: cell(it.detail) === '—' ? '—' : it.detail + ' kg',
     status: cell(it.status),
     reason: it.reason === '' ? '—' : unitSpaced(it.reason),
   }));
-  const payload = [conclusion, ...rows.map((r) => r.date + ' ' + (r.kg === '—' ? '' : r.kg + ' ') + r.status + '（' + r.reason + '）')];
+  const payload = [outcome, ...rules, ...rows.map((r) => r.date + ' ' + (r.kg === '—' ? '' : r.kg + ' ') + r.status + '（' + r.reason + '）')];
   const content = [
     renderKpiGrid([
       stateCard(receipt, {
@@ -199,11 +255,11 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
       caption: '逐条明细（共 ' + items.length + ' 条）',
       emptyText: '这次没有逐条明细',
     }),
-    conclusionBlock(conclusion),
+    shapedConclusionBlock(verdict(outcome) + bulletList(rules)),
     reconcileBlock(receipt),
     deliveryBlocks(
       envelopeOf(receipt, payload.join(' ｜ ')), receipt, command,
-      '本次批量 ' + items.length + ' 条 ｜ 写入 ' + wrote + ' 条 · 跳过 ' + skipped + ' 条 · 失败 ' + failed + ' 条',
+      '本次批量 ' + items.length + ' 条 ｜ 写入 ' + wrote + ' 条 ｜ 跳过 ' + skipped + ' 条 ｜ 失败 ' + failed + ' 条',
     ),
   ].join('');
   return receiptPageOf(receipt, content);
