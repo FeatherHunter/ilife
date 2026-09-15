@@ -77,18 +77,21 @@ function whenText(p: PhotoCard): string {
  *  `min-width:0` 是让卡能被压窄的关键（少了 `min-width:0`，flex 项的下限仍是内容宽，窄屏照样撑破）。
  *  #526：图注五件事串一行改成「时刻 ＋ 徽章列 ＋ 文件名」；备注（用户自己连写的那几件事）
  *  按段落到形状上，不再靠 `/` 把一长串符号塞进表格单元格。 */
-function cardHtml(p: PhotoCard, e: PhotoEmbed | undefined, dropped: boolean, today: string): string {
+function cardHtml(p: PhotoCard, e: PhotoEmbed | undefined, dropped: boolean, today: string, noticeCovers: boolean): string {
   const fileName = e?.fileName ?? fileKeyOf(p.photoPath);
   const shown = !dropped && e?.dataUri;
   const stage = shown
     ? '<div class="phu-shot"><img src="' + e?.dataUri + '" alt="身材照 ' + p.id
       + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
     : (() => {
+      // #526 收口：这一格说「哪一份文件 （＋ 下一步）」。「为什么没显示」由页顶那条提示块一处说；
+      // 提示块在场时（`noticeCovers`）连下一步也在那条里说过了，这一格只留徽标与文件名，
+      // 同一件事不再说两遍（`seat-brief` §8 点名的重复）。
+      const next = dropped ? '想看原图：自己打开这份文件' : '把文件放回照片目录就会有图';
       const badge = dropped ? { status: 'warn' as const, text: '原图太大' } : { status: 'danger' as const, text: '找不到文件' };
       return '<div class="phu-shot"><div class="phu-miss">' + renderStatusBadge(badge)
         + '<code>' + escapeHtml(fileName) + '</code>'
-        + '<div>' + escapeHtml(dropped ? '超过一页能装的量，没进这一页' : '照片记录还在，文件不在照片目录里') + '</div>'
-        + '<div>' + (dropped ? '想看原图：自己打开这份文件' : '把文件放回照片目录就会有图') + '</div>'
+        + (dropped && noticeCovers ? '' : '<div>' + next + '</div>')
         + '</div></div>';
     })();
   const tags = p.tagList.length > 0 ? [...p.tagList] : ['无标签'];
@@ -155,7 +158,7 @@ function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: Reado
   if (dropped.size > 0) parts.push(budgetNoticeHtml(embeds, dropped));
   // #484：两张并排（宽屏）／上下排列（窄屏）——折行容器＋可压窄的卡，两卡都放得下才不溢出。
   parts.push('<div style="display:flex;flex-wrap:wrap;gap:12px">' + [c.photo1, c.photo2].map((p) =>
-    cardHtml(p, byName.get(fileKeyOf(p.photoPath)), dropped.has(fileKeyOf(p.photoPath)), today),
+    cardHtml(p, byName.get(fileKeyOf(p.photoPath)), dropped.has(fileKeyOf(p.photoPath)), today, dropped.size > 0),
   ).join('') + '</div>');
   parts.push(recordTable(c, dropped));
   parts.push(dataCopyArea('复制数据', {
@@ -180,6 +183,9 @@ function shellOf(c: CompareData, content: string): string {
     subtitle: null,
     content,
     charts: false,
+    // #526 收口：接上 #525 的页面级移动端配方（`viewport-fit=cover`／安全区／44px 触摸区／
+    // 窄屏字号下限／页内定位）。不传即老路，本票传真——用户第 2 条要的就是它。
+    pageUi: true,
   });
 }
 
