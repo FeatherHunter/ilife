@@ -1,26 +1,29 @@
-/** T351-v7 · 「计划复盘」一族（`calorie.view.exercise-review`，order201–206）整页装配。
+/** T351-v8 · 「计划复盘」一族（`calorie.view.exercise-review`，order201–206）整页装配。
  *
- * 出处：老模板 `D:\2Study\StudyNotes\SKILLS\卡路里\templates\exercise_review.html`（552 行）——
- * 页头＋四档统计卡＋**每日完成情况热力图**＋每日明细表＋复制区，双端 640 断点。老页的图表两张
- * （周容量／主项负荷）**不做**：它们吃的是老技能 `__meta__.volume` 那份数据（按周 Σ(kg×次数)），
- * 本仓取数层没有对应字段（`ReviewView` 只有计划场次／命中场次／计划动作／命中动作），
- * 硬造一张「计划 1 场 vs 已完成 1 场」的柱图是噪声，故本族不出图——页内因此**零图表 helpers**，
- * 全页只剩共享复制区那一段脚本，与 176–185 同档。
+ * 观感与双端出处：老模板 `exercise_review.html`（页头／统计卡／热力图／明细表／复制区），
+ * 手机端四条手法照 HELP 页面（见 `./reviewDocsCss.ts` 件头）。
  *
- * 取数仍住 `./exercisePort.ts` 的 `buildReviewView`（本件只装配，不碰库）。
- * 页内样式住 `./reviewDocsCss.ts`（唯一产出者），本件只把它插进正文。
+ * **本件的取舍（负责人 2026-09-15 六条要求逐条落点）**：
+ *   ① 双端自适应：页壳 960／窄屏 820 单列（HELP 断点）。
+ *   ② 手机端照 HELP：触摸目标、内距收紧、横向一行塌成纵向一列、复制胶囊 520 居中。
+ *   ③ 代码层面可审：本件只产**结构**，形状全在 `./reviewDocsCss.ts` 一处；正文里不写内联样式，
+ *      只给进度条写一个纯数字百分比（`style="width:50%"`，无注入面）。
+ *   ④ 文字不冗余：删掉原来那段「口径：…；…；…」的独立段落——每条定义**贴到用它的元素上**
+ *      （热力图图例下讲「完成」怎么算、动作命中卡副行讲「命中」怎么算）；删掉与副标题重复的
+ *      统计卡副行「t1计划」；删掉与口径段逐字重复的表标题后半句。
+ *   ⑤ 不用分隔符顶替设计：`·`／`；` 在这页的可见文本里**归零**——窗口写成日期块＋箭头＋天数胶囊，
+ *      计划与完成数写成两张带进度条的卡，周次写成表里的一列。
+ *   ⑥ 截图审查：见证据件。
  *
- * 用词（负责人 2026-09-14 点名）：「会话」是内部概念，用户看不懂，页面文案一律不出现——
- * 计划场次写「场」、完成率写「完成率」、缺数据的描述写「没有安排训练」。
+ * 取数仍住 `./exercisePort.ts` 的 `buildReviewView`（本件不碰库）；页内样式住 `./reviewDocsCss.ts`。
+ * 页面上不出现的词：「会话」是内部概念，用户看不懂（负责人 2026-09-14 点名）。
  */
 import { buildDataText, buildLogText } from 'base-paint';
 import type { DataTextInput } from 'base-paint';
 import {
-  renderCaliberLine,
   renderCopyBlock,
   renderDataTable,
   renderDisclosure,
-  renderKpiGrid,
   renderListRows,
 } from 'base-paint/blocks';
 import { shiftISODate } from '../analysis/utils.js';
@@ -59,16 +62,63 @@ function dateRange(start: string, end: string): string[] {
   return out;
 }
 
-/** 「9/14 周一」这种日期小字（老页 `.day-cell .date` 是 `M/D 周X`）。 */
-function shortDate(iso: string): string {
+/** 百分比 → 进度条三档色（老页 `.stat .value.good/warn/bad` 的三档语义）。
+ *  缺值（`null`：这份计划没登记动作）返回空串＝不画条，不假装 0%。 */
+function toneOf(pct: number | null): string {
+  if (pct === null) return '';
+  if (pct >= 80) return 'ilr-bar-ok';
+  if (pct >= 50) return 'ilr-bar-warn';
+  return 'ilr-bar-bad';
+}
+
+/** 日期小字（老页 `.day-cell .date` 是 `M/D 周X`）：`M/D` 与 `周X` 各一枚 span，
+ *  窄屏只留 `M/D`——手机上一格只有约 46px，两段挤一起读不动（见 `./reviewDocsCss.ts` 的 820 段）。 */
+function dateCell(iso: string): string {
   const [, m, d] = iso.split('-');
-  return String(Number(m)) + '/' + String(Number(d)) + ' 周' + DOW_CN[dowOf(iso)];
+  return '<span class="ilr-cell-date">' + Number(m) + '/' + Number(d)
+    + '<span class="ilr-cell-dow"> 周' + DOW_CN[dowOf(iso)] + '</span></span>';
+}
+
+/** 窗口条：这一页看的是哪一段。两枚日期块 ＋ 箭头 ＋ 天数胶囊（原来靠 `~` 与 `·` 串在一行字里）。
+ *  宽度由样式表收成内容宽（见 `./reviewDocsCss.ts` 的同名规则注释）。 */
+function windowStrip(start: string, end: string, days: number): string {
+  return '<div class="ilr-window">'
+    + '<span class="ilr-date">' + start + '</span>'
+    + '<span class="ilr-arrow">→</span>'
+    + '<span class="ilr-date">' + end + '</span>'
+    + '<span class="ilr-pill">' + days + ' 天</span>'
+    + '</div>';
+}
+
+/** 一张统计卡：标题 ＋ 大数字 ＋ 进度条 ＋ 一句话副行（副行是这张卡的**定义**，不再另起口径段）。 */
+function metricCard(label: string, pct: number | null, sub: string): string {
+  const tone = toneOf(pct);
+  const bar = pct === null
+    ? ''
+    : '<div class="ilr-bar"><span class="ilr-bar-fill ' + tone + '" style="width:' + pct + '%"></span></div>';
+  const value = pct === null
+    ? '<span class="ilr-metric-value">' + DASH + '</span>'
+    : '<span class="ilr-metric-value">' + pct + '<span class="ilr-metric-unit">%</span></span>';
+  return '<div class="ilr-metric"><p class="ilr-metric-label">' + label + '</p>'
+    + value + bar + '<p class="ilr-metric-sub">' + sub + '</p></div>';
+}
+
+/** 两张统计卡：训练完成（按场次）＋ 动作命中（按动作名）。
+ *  原来「计划场次／已完成／完成率／动作完成率」四张卡说的是两件事，现在合成两张、各带一条进度条。 */
+function metrics(v: ReviewView): string {
+  const movementSub = v.plannedMovements === 0
+    ? '这份计划没有登记动作'
+    : '计划 ' + v.plannedMovements + ' 个动作，实做对上 ' + v.hitMovements + ' 个';
+  return '<div class="ilr-metrics">'
+    + metricCard('训练完成', v.completionPct, '计划 ' + v.plannedSessions + ' 场，练了 ' + v.hitSessions + ' 场')
+    + metricCard('动作命中', v.movementPct, movementSub)
+    + '</div>';
 }
 
 /** 热力图一格（老 `.day-cell`）：日期小字＋状态词。状态词是**文字的**唯一出处——
  *  黑白打印丢掉底色也读得懂（老页那版只印百分比，丢了底色就只剩数字）。 */
 function heatCell(iso: string, cls: string, text: string): string {
-  return '<div class="ilr-cell ' + cls + '"><span class="ilr-cell-date">' + shortDate(iso) + '</span>'
+  return '<div class="ilr-cell ' + cls + '">' + dateCell(iso)
     + '<span class="ilr-cell-txt">' + text + '</span></div>';
 }
 
@@ -77,32 +127,29 @@ function legendItem(dot: string, text: string): string {
   return '<span class="ilr-legend-item"><span class="ilr-dot ' + dot + '"></span>' + text + '</span>';
 }
 
-/** 每日完成情况热力图（老 `.heatmap`）：一周一行、周一列打头，无安排的日印「未排训练」。
- *  首行补几个空位把日期按星期对齐（老页从区间第一天起排，头一行是斜的）。 */
-function heatmapHtml(v: ReviewView): string {
-  const all = dateRange(v.start, v.end);
+/** 每日完成情况：（老 `.heatmap`）一周一行、周一列打头。
+ *  图例下面那句是「完成」的定义——原来住在口径段里，现在贴着图例走。 */
+function heatmapSection(v: ReviewView, all: readonly string[]): string {
   const shown = all.slice(0, HEAT_CAP);
   const byDate = new Map(v.sessions.map((s) => [s.date, s]));
   const lead = shown.length === 0 ? 0 : (dowOf(shown[0]) + 6) % 7;
   const pads = '<div class="ilr-cell ilr-pad"></div>'.repeat(lead);
   const cells = shown.map((d) => {
     const s = byDate.get(d);
-    // 无安排＝「未排训练」：窗内没排到（含计划的休息日与计划外的日子），不写成「休息日」——
+    // 无安排＝「未排训练」：窗内没排到（含计划的休息日与计划外的日子）。不写「休息日」——
     // 库里的休息日是计划主动排的，与「这天压根没排」不是一回事，页面不替它们编同一句话。
     if (s === undefined) return heatCell(d, 'ilr-rest', '未排训练');
     return s.hit ? heatCell(d, 'ilr-done', '完成') : heatCell(d, 'ilr-miss', '未完成');
   }).join('');
-  const legend = '<div class="ilr-legend">'
-    + legendItem('ilr-dot-done', '完成')
-    + legendItem('ilr-dot-miss', '未完成')
-    + legendItem('ilr-dot-rest', '未排训练')
-    + '</div>';
   const note = all.length > shown.length
-    ? '<p class="ilr-note">热力图只画前 ' + shown.length + ' 天（本窗共 ' + all.length
-      + ' 天）；其余日期的明细见下表。</p>'
+    ? '<p class="ilr-note">热力图只画前 ' + shown.length + ' 天（本窗共 ' + all.length + ' 天），其余见下表。</p>'
     : '';
   return '<section class="ilr-sec"><h2 class="ilr-sec-title">每日完成情况</h2>'
-    + '<div class="ilr-hm">' + pads + cells + '</div>' + legend + note + '</section>';
+    + '<div class="ilr-hm">' + pads + cells + '</div>'
+    + '<div class="ilr-legend">' + legendItem('ilr-dot-done', '完成')
+    + legendItem('ilr-dot-miss', '未完成') + legendItem('ilr-dot-rest', '未排训练') + '</div>'
+    + '<p class="ilr-legend-note">当天有运动记录就算完成，没排到训练的日子单独标出来</p>'
+    + note + '</section>';
 }
 
 /** 一行明细（计划动作与实做都按顿号连；空列写「—」）。 */
@@ -120,7 +167,7 @@ function detailRow(s: PlannedSession): Record<string, string> {
 /** 带 prompt 的双按钮复制区（冻结 id `ilife-copy-data`／`ilife-copy-log`）：
  *  单格式数据文本＋日志文本直挂承载属性，共用页面双通道运行时（剪贴板→命令兜底＋已复制态），
  *  零内联脚本；无三格式菜单、无 text/json/csv 英文菜单项（沿 #351 定案口径）。 */
-function reviewCopyBlock(v: ReviewView): string {
+function copyBlock(v: ReviewView): string {
   const data: DataTextInput = {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-review',
@@ -150,26 +197,12 @@ function reviewCopyBlock(v: ReviewView): string {
 }
 
 export function buildReviewDoc(v: ReviewView): string {
-  const days = dateRange(v.start, v.end).length;
+  const all = dateRange(v.start, v.end);
   const parts: string[] = [
     reviewViewCss(),
-    // 窗口不另立参数表单：H1 里已经写着「计划复盘 起 ~ 止」，再摆两个 date 输入框是重复
-    // （负责人对 184 的反馈就是「副标题别冗余」）。取数口径改走一行灰色小字，同 184 的节奏。
-    renderCaliberLine('口径：训练日按周一口径由计划起始日推算，休息日不计；'
-      + '完成＝当日有运动记录；动作命中＝计划动作名与实做名双向匹配。'),
-    renderKpiGrid([
-      { label: '计划训练', value: String(v.plannedSessions), unit: '场', detail: v.planTitle === '' ? DASH : v.planTitle },
-      { label: '已完成', value: String(v.hitSessions), unit: '场' },
-      {
-        label: '完成率', value: v.completionPct === null ? DASH : String(v.completionPct) + '%',
-        status: (v.completionPct ?? 0) >= 80 ? 'ok' : 'warn',
-      },
-      {
-        label: '动作完成率', value: v.movementPct === null ? DASH : String(v.movementPct) + '%',
-        detail: '命中 ' + v.hitMovements + ' / 计划 ' + v.plannedMovements + ' 个动作',
-      },
-    ]),
-    heatmapHtml(v),
+    windowStrip(v.start, v.end, all.length),
+    metrics(v),
+    heatmapSection(v, all),
     renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
@@ -180,13 +213,13 @@ export function buildReviewDoc(v: ReviewView): string {
         { key: 'hit', label: '完成' },
       ],
       rows: v.sessions.map(detailRow),
-      caption: '每日明细（完成＝当日有运动记录；动作命中＝计划动作名与实做名双向匹配）',
+      caption: '每日明细',
       emptyText: '这段时间没有安排训练',
     }),
   ];
   if (v.unhit.length > 0) {
     parts.push(renderDisclosure({
-      title: '未完成训练（共 ' + v.unhit.length + ' 场）',
+      title: '未完成训练（' + v.unhit.length + ' 场）',
       contentHtml: renderListRows({
         items: v.unhit.map((s) => ({
           left: s.date,
@@ -196,12 +229,12 @@ export function buildReviewDoc(v: ReviewView): string {
       }),
     }));
   }
-  parts.push(reviewCopyBlock(v));
+  parts.push(copyBlock(v));
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '计划复盘 ' + v.start + ' ~ ' + v.end,
-    eyebrow: '健身计划 · 计划复盘',
-    subtitle: (v.planTitle === '' ? '训练计划' : v.planTitle) + ' · 共 ' + days + ' 天',
+    title: '计划复盘',
+    eyebrow: '健身计划',
+    subtitle: v.planTitle === '' ? null : v.planTitle,
     content: parts.join(''),
   });
 }
