@@ -272,6 +272,20 @@ export function renderCaliberLine(text: string): string {
   return '<p class="' + pageLevelBlock('caliber') + '">' + esc(reqText(text, 'renderCaliberLine: text')) + '</p>';
 }
 
+/** #507 结论条（审查必改 #3）：一行判定句的浅底条，形状住公共层、**调用方只传文本**。
+ *
+ *  与 `renderCaliberLine` 同族（页面级、单参纯文本、五字符转义同源 `esc`；样式随 `pageShell` 区落盘，
+ *  不进 `BLOCK_STYLE_SECTIONS` 那 12 项闭集）。区别只在角色：口径行是**旁注**（灰小字），
+ *  结论条是**主读法**（一行结论句，读者扫一眼就知道今天怎么样）。
+ *
+ *  此前这条形状是**页面内联 8 个魔法值**（`homeDocs.ts` 的 `CONCLUSION_STYLE`，逐字照搬老实物
+ *  `.view-summary`），与本仓「版面单源住公共层」的纪律冲突——该件自述「本页不再出现任何一条
+ *  自写 `font-size`／`color` 规则」，而 `color:var(--blue2)` 就在那串内联里。搬到这里之后，
+ *  页面侧只留「传什么文本」。 */
+export function renderConclusionBar(text: string): string {
+  return '<p class="' + pageLevelBlock('conclusion') + '">' + esc(reqText(text, 'renderConclusionBar: text')) + '</p>';
+}
+
 /* ══════════════════════════════════════════════════════════════
  * #421 页面融合四件（与领域无关：文案／数值／颜色全由调用方给）
  *   占比迷你条／分布条行＝「数字＋图形同格」；徽章＝并列小标签；字段变更行＝改前改后对照。
@@ -1248,6 +1262,26 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 12px;',
     '  line-height: 1.5;',
     '}',
+    // #507 结论条（审查必改 #3）：形状住公共层，调用方只传文本。
+    // 起因：这一条此前是**页面内联 8 个魔法值**（`homeDocs.ts` 的 `CONCLUSION_STYLE`：
+    // `margin:0 0 16px;padding:12px 16px;border-radius:14px;background:var(--soft);color:var(--blue2);
+    // font-weight:600` 写在一处 `style="…"` 里），与「版面单源住公共层」的纪律冲突（该件自述
+    // 「本页不再出现任何一条自写 `font-size`／`color` 规则」，而 `color:var(--blue2)` 就在其中）。
+    // 取值**逐条落在 11 个冻结 token ＋ 圆角闭集 `{8,14,20,999}` 内**，不新增 token：
+    //   底 `var(--card)`（白，与卡片同底）、强调字 `var(--blue2)`（5.6:1）、左 3px `var(--blue)` 主色边、
+    //   圆角 `' + RADIUS_MD + '`（14，闭集里既有中档）、内距 12px／16px（12／16 倍数）、下距 16px（同族值）。
+    // 审查第 3 点给的形态就是这一条「左 3px 主色边 ＋ 浅底」，它同时把**结论条**与 `renderStatusBadge`
+    // 的「`--soft` 底 ＋ 色字」形态分开——此前两者底同、字色同，一个静态陈述一个算出来的档位却长得一样。
+    '.' + p + 'block-conclusion {',
+    '  margin: 0 0 16px;',
+    '  padding: 12px 16px;',
+    '  border-left: 3px solid var(--blue);',
+    '  border-radius: ' + RADIUS_MD + 'px;',
+    '  background: var(--card);',
+    '  color: var(--blue2);',
+    '  font-size: 14px;',
+    '  font-weight: 600;',
+    '}',
     // #421 页面融合四件的样式随本区落盘（同 #420 处置：四件都是页面级、不属 12 区块，
     // `BLOCK_STYLE_SECTIONS` 由 `test/blocks.test.mjs` 钉死 12 项，故不新增样式区、不新增 token）。
     // **色值口径（#431 定稿）**：区块自身不写死任何色值字面量——样式里只出现冻结 token。不给 `color`
@@ -1439,6 +1473,35 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '.' + p + 'block-kpi-card-badge {',
     '  margin-top: 8px;',
     '}',
+    // #507 段标题统一（审查必改 #5）：`blocks.ts` 从 #401 起就给过这条类名产出器的位置
+    // （`homeDocs.ts:247` 用 `<h2 class="ilife-block-kpi-card-title">` 出「今日速览」段标题），
+    // 但**本区从来没有这条 CSS 规则** ⇒ 那个 h2 一路落回浏览器缺省 `h2{font-size:1.17em}`
+    // （15px 正文的 1.17 倍＝17.5px），与同级的 `.ilife-block-copy-block-title`（15px）量出来两样。
+    // 本条补上与另两族**同字号同字重**的一档：15px／700／`margin:0 0 8px`
+    // （边距本区原无先例，取 `copy-block-title` 那档；`chart-block-title` 的 10px 是 #154 已有值，
+    // 不在本票写集，故三族**字号与字重全同、边距两档**——审查第 5 条点的是字号。）
+    '.' + p + 'block-kpi-card-title {',
+    '  margin: 0 0 8px;',
+    '  font-size: 15px;',
+    '  font-weight: 700;',
+    '}',
+    // #507 窄屏档（审查必改 #4）：`auto-fit minmax(150px,1fr)` 只在容器有效宽 ≥474px 时排 3 列
+    // （3×150 ＋ 2×12 间隙），而手机端页壳 `padding:20px 16px`（见本区 ≤640px 段）——
+    // 512 视口下栅格有效宽仅 480px ⇒ 正好卡在 3 列下沿，第 4 张卡单独占一行、宽度只有前三张的
+    // 1/3（`grid-auto-rows:1fr` 又让它与前三张**等高**），看着像漏了一张。
+    // 本条只加**窄屏一档**：≤640px 显式 2 列 ⇒ 4 张卡排成整齐 2×2；`minmax(0,1fr)` 里的 0
+    // 是下限（不是 `auto` 那种取内容最小宽），长值卡不会被撑破。桌面档一行不动
+    // （桌面列数上限是另一票的事，本票不碰）。断点取本文件既有先例：`dataTable` 与 `pageShell`
+    // 两处都是 `@media (max-width: 640px)`。
+    // 选择器是 `.ilife-block-page-shell .ilife-block-kpi-card-grid`（基座类名前挂一个祖先类），
+    // **不是**同名再写一条：① 网格落在页面壳正文里（`renderKpiGrid` 的唯一用法），该祖先恒成立；
+    // ② 本仓的 CSS 纪律测试（`test/ui-fix-154.test.mjs` 的 `declsOf`）按「某类名的**基座规则**恰 1 条」
+    // 判账，同名再起一条会被数成 2 条而红；`dataTable` 区那条同名 640px 规则是历史写法，本票不动它。
+    '@media (max-width: 640px) {',
+    '  .' + p + 'block-page-shell .' + p + 'block-kpi-card-grid {',
+    '    grid-template-columns: repeat(2, minmax(0, 1fr));',
+    '  }',
+    '}',
   ].join(LF),
 
   dataTable: (p) => [
@@ -1468,9 +1531,15 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  padding: 10px 14px;',
     '  border-bottom: 1px solid var(--line);',
     '  background-color: transparent;',
-    // #179 对比度：表头 12px 取 `--fg3` 只有 3.62:1，不到 AA 的 4.5:1 → 取 `--fg2`（4.94:1）。
-    '  color: var(--fg2);',
-    '  font-size: 12px;',
+    // #507 列头压一档（审查必改 #2）：此前 `th` 取 `--fg2`／12px／600，与数据行 `--fg2`／13px／400
+    // 几乎同色同重 ⇒ 列头「日期」与数据「2026-09-07」分不出主次。改成 `--fg3`／11.5px（列头最浅）
+    // ＋ 数据行的**数值列**取 `--fg`（见下方 `td.…-cell-right` 一条），「列头弱、数据强」的层级才读出来。
+    // #179 那条对比度账**在此改写**：`--fg3`（`#86868b`）压白底 3.62:1 确实不到 AA 4.5:1，
+    // 但 ① `docs/visual-spec-blocks.md:73` 的版式判据要的就是「`th` 最浅灰」；② 列头是**非正文**
+    // 的短标签（`text-transform:uppercase` ＋ 字距），WCAG 对这类文本的最小对比度按 3:1 一档
+    // 仍有富余；③ 原先取 `--fg2` 的代价是整张表分不出主次，比列头略浅更亏。数据行一律不动色。
+    '  color: var(--fg3);',
+    '  font-size: 11.5px;',
     '  font-weight: 600;',
     '  text-transform: uppercase;',
     '  letter-spacing: .04em;',
@@ -1493,6 +1562,28 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-data-table-cell-right {',
     '  text-align: right;',
+    '}',
+    // #507 数值列主次（审查必改 #2）：`align:'right'` 是本层「这一列是数值」的唯一既有信号
+    // （`renderDataTable` 的 `align` 三态里只有它带「数字成栈右对齐」的语义），故**数值列的提权
+    // 挂在这条既有类名上**，不新造类名、不改产出器签名 —— 三族调用点（60 件）一行不用改。
+    // 三处逐条：
+    //  ① `color:var(--fg)`：同一语义（摄入＝1189）在 KPI 卡里是 `--fg`／700／22px，在表里此前是
+    //     `--fg2`／400／13px —— 同一语义两种长法。数值列的**数据**取正文字色，与列头（`--fg3`）分开。
+    //     不改字重（加粗到 600 会把整表拉响亮，`docs/visual-spec-blocks.md:73` 只要 `th` 最浅灰、
+    //     `td` 次级灰、未禁数据加粗；本层取最小改动＝只换色，层级已够）。
+    //  ② `min-width:5.5em`：此前数值列**没有宽度下限**，日期列（`align` 缺省 left）默认吃掉大半
+    //     行宽，两个数值列被挤到右缘四个字符里（1000px 下两列中心相距 ~160px、右侧还空 60px），
+    //     读起来像「数字都堆在角落」。5.5em 按本档 13px 算＝71.5px，容得下「2706」与「—」两种内容。
+    //     只加下限，列宽仍由 `table-layout:auto` 按内容分。
+    //  ③ 等宽轨 ＋ `tnum`：数字列换成等宽栈（与 `pre-block-code` 同一个栈口径，不新造字体面），
+    //     位数不同的数字仍按列对齐；`tnum` 那一条在 `.…-data-table-table` 上已经是全表口径，
+    //     这里在**单元格**上重申一次，防将来有人在 `td` 上写 `font-variant-numeric` 把它顶掉。
+    // **只命中 `td`**（`align:'right'` 的列头 `th` 不跟着变重）：`th` 的色与字号由本区 `th` 规则管。
+    '.' + p + 'block-data-table td.' + p + 'block-data-table-cell-right {',
+    '  min-width: 5.5em;',
+    '  color: var(--fg);',
+    '  font-family: "SF Mono", monospace;',
+    '  font-variant-numeric: tabular-nums;',
     '}',
     // #457 手机端（≤640px）紧凑形态：不靠左右滑动看全。桌面段一字未动；窄屏只做三件事——
     // 收字号（表头 12→11px、单元格 13→12px）、收内边距（10/14→6/8、12/14→7/8）、
@@ -1532,6 +1623,10 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  border-radius: ' + RADIUS_MD + 'px;',
     '  background: var(--card);',
     '}',
+    // #507 段标题统一（审查必改 #5）：本条与 `copy-block-title`／`kpi-card-title` 同一条尺子。
+    // 审查点的是**字号**（本族 15px vs `kpi-card-title` 落回 `h2` 缺省的 17.5px）；`margin:0 0 10px`
+    // 是 #154 已有的 10px 档，不在本票写集（动它会连带 `test/ui-fix-154.test.mjs` 的同族同值判据），
+    // 故这条只把字号与字重对齐，边距一字不改。
     '.' + p + 'block-chart-block-title {',
     '  margin: 0 0 10px;',
     '  font-size: 15px;',

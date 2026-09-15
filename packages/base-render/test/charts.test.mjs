@@ -1463,18 +1463,37 @@ describe('H 常量与规则', () => {
     assert.deepEqual(segs, [...CHART_PALETTE]);
   });
 
-  it('H.移动端满宽：line/combo/scatter 用 preserveAspectRatio="none"（旧 charts.js:661,774,899）', () => {
+  it('H.满宽与等比：line/combo/scatter 走等比 meet 且仍满宽（#507 撤 none；旧 charts.js:661,774,899）', () => {
     const aspectOf = (html) => (tagsOf(html, 'svg')[0].match(/preserveAspectRatio="([^"]*)"/) ?? [])[1];
     const FIXED = { width: 320, height: 170, labels: 'none', showValues: false, grid: false };
-    /* ≤720px 时 CSS 把折线 svg 高度钉成 150px；`xMidYMid meet` 会等比缩到 228.6px 宽并左右各留
-     * ~73px 空白（R2-N9）→ 三个 kind 必须用 `none` 满宽拉伸（描边有 vector-effect 防变形）。 */
-    assert.equal(aspectOf(lineHtml()), 'none');
-    assert.equal(aspectOf(charts.combo({ bars: [{ label: 'A', value: 1 }], lines: [{ label: 'A', value: 2 }], options: FIXED }).html), 'none');
-    assert.equal(aspectOf(charts.scatter({ items: [{ x: 1, y: 1 }], options: { ...FIXED, height: 180 } }).html), 'none');
-    assert.equal(aspectOf(charts.bar({ items: [{ label: 'A', value: 1 }] }).html), 'xMidYMid meet', 'bar 等比缩放');
-    assert.equal(aspectOf(charts.donut({ items: [{ label: 'A', value: 1 }] }).html), 'xMidYMid meet', 'donut 等比缩放');
-    assert.equal(aspectOf(charts.gauge({ pct: 50 }).html), 'xMidYMid meet', 'gauge 等比缩放');
-    assert.equal(aspectOf(charts.sparkline({ items: [{ label: 'A', value: 1 }, { label: 'B', value: 2 }] }).html), 'xMidYMid meet', 'sparkline 等比缩放');
+    /* **#507 换线（2026-09-15，票据 507「公共层视觉底座」）**：本用例原本断言 line/combo/scatter
+     * 三族取 `preserveAspectRatio="none"`，理由是「≤720px 时 CSS 把折线 svg 高度钉成 150px，
+     * `meet` 会等比缩到 228.6px 宽并左右各留 ~73px 空白（R2-N9）」。那条钉高在 #424 返工时就撤了
+     * （≤720px 段改成 `height:auto`，按 viewBox 长宽比派生高度 —— 下面 1478 行那条 needle 仍在断它），
+     * 于是**盒宽高比恒等于 viewBox 长宽比**，`none` 与 `meet` 逐像素同解，`none` 只剩一个隐患：
+     * 将来任一处把盒高钉回固定 px，图内文字立刻被横向抻宽（字脸变扁）。
+     * 故换线成：**七族一律等比 `meet`**，而「满宽」（R2-N9 真正要保的那件事）改由**盒尺寸**断 ——
+     * `svg{width:100%}` 是 `.ilife-charts-svg` 的基规则，viewBox 长宽比定高度，两者共同保证
+     * 图占满容器宽、不留左右空白。断言强度不减：既断等比（七族）又断满宽（CSS 基规则 needle）。
+     * **`progress` 是唯一的例外、且是有意的**：它走**内联 `height:Npx`**（轨道像素高，见 E.height 用例），
+     * SVG 盒高不再由 viewBox 长宽比派生，`none` 在这族才是真的在拉伸一条 100×8 的轨道 —— 它没有
+     * 文字要保形（`.ilife-charts-pct` 是 SVG **外**的 HTML），所以不该跟着折线族一起改。 */
+    const MEET_KINDS = {
+      line: lineHtml(),
+      combo: charts.combo({ bars: [{ label: 'A', value: 1 }], lines: [{ label: 'A', value: 2 }], options: FIXED }).html,
+      scatter: charts.scatter({ items: [{ x: 1, y: 1 }], options: { ...FIXED, height: 180 } }).html,
+      bar: charts.bar({ items: [{ label: 'A', value: 1 }] }).html,
+      donut: charts.donut({ items: [{ label: 'A', value: 1 }] }).html,
+      sparkline: charts.sparkline({ items: [{ label: 'A', value: 1 }, { label: 'B', value: 2 }] }).html,
+      gauge: charts.gauge({ pct: 50 }).html,
+    };
+    for (const [kind, html] of Object.entries(MEET_KINDS)) {
+      assert.equal(aspectOf(html), 'xMidYMid meet', kind + ' 一律等比缩放（不得回 `none` 非等比拉伸）');
+    }
+    assert.equal(aspectOf(charts.progress({ pct: 40 }).html), 'none', 'progress 例外：轨道像素高＋满宽拉伸（无图内文字）');
+    /* 满宽与高度派生：这两条 needle 一起，才是「无左右空白」的充分条件。 */
+    assert.equal(buildChartsHelpersJs().includes('.ilife-charts-svg{display:block;width:100%;height:auto;overflow:visible}'), true,
+      'svg 基规则仍 `width:100%`（满宽；撤 `none` 后由它与 viewBox 长宽比共同保证不留空白）');
     assert.ok(buildChartsHelpersJs().includes('.ilife-charts-line .ilife-charts-svg{height:auto}'), '移动端折线高度按 viewBox 比例派生（#424 返工后逐字，字面量 needle）');
     /* #424：桌面等比上限 `max-width:480px`（t-chartfix #160 补丁）撤销——折线 viewBox 已放大到
      * 580×260，靠 viewBox 自身就能把 930px 卡片下的图内字号压在 15–16px；留着它只会让图占卡片一半宽。

@@ -308,13 +308,22 @@ function tipAttrs(common: ResolvedCommon, makeText: () => string): string {
   return common.tooltip ? ' data-tip="' + esc(makeText()) + '"' : '';
 }
 
-/** `aspect='none'` 用于折线／组合／散点：旧版三者都是 `preserveAspectRatio="none"` 满宽拉伸
- *  （`charts.js:661,774,899`）——移动端 CSS 把 svg 高度钉成 `lineHeightMobilePx` 后，
- *  `meet` 会等比缩到 228.6px 宽并左右留白（R2-N9），`none` 才是满宽（描边有 `vector-effect` 防变形）。 */
-function svgOpen(common: ResolvedCommon, extra?: string, aspect: 'meet' | 'none' = 'meet'): string {
+/** 八个 kind **一律** `preserveAspectRatio="xMidYMid meet"`（等比，不拉伸文字）。
+ *
+ *  #507（2026-09-15 公共层视觉底座返工）撤掉了折线／组合／散点三族的 `none` 满宽拉伸：
+ *  这三族当年取 `none` 的**唯一理由是**移动端 CSS 把 svg 盒高钉成 `lineHeightMobilePx`（150px），
+ *  非等比压低后 `meet` 会等比缩到 228.6px 宽、左右各留 ~73px 空白（R2-N9）。那条钉高在
+ *  #424 返工时就撤了（改成 `height:auto` 按 viewBox 长宽比派生高度，见 `chartsCss` 的 ≤720px 段），
+ *  **盒宽高比自此恒等于 viewBox 长宽比** ⇒ `none` 与 `meet` 逐像素同解，`none` 只剩两个隐患：
+ *  ① 将来任一处把盒高钉回固定 px，图内文字立刻被横向抻宽（1000px 宽容器下 1.6×，字脸变扁）；
+ *  ② 读代码的人会以为本族真的在拉伸。
+ *  **本条只改属性，不改任何坐标**：坐标唯一性走 `CHART_COORD_RULE = 'viewBox-only'`（映射函数
+ *  按 `common.width/height` 算，`meet` 与 `none` 下同一份坐标同解）。描边的
+ *  `vector-effect="non-scaling-stroke"` 照旧保留（等比缩放下同样有用：描边不随缩放变粗）。 */
+function svgOpen(common: ResolvedCommon, extra?: string): string {
   return '<svg class="' + STYLE_PREFIX + 'charts-svg' + (extra === undefined ? '' : ' ' + extra) + '"'
     + ' viewBox="0 0 ' + n1(common.width) + ' ' + n1(common.height) + '"'
-    + ' preserveAspectRatio="' + (aspect === 'none' ? 'none' : 'xMidYMid meet') + '" role="img" focusable="false">';
+    + ' preserveAspectRatio="xMidYMid meet" role="img" focusable="false">';
 }
 
 /** 空态联动（`CHART_EMPTY_RULE = 'emptyState'`）：`empty:true`／`points:0`，不抛错。 */
@@ -742,7 +751,8 @@ function resolveMarkPoint(raw: unknown): ChartMarkPoint | true | undefined {
 
 /** 折线默认 viewBox：320×210 → 580×260（#424）。
  *
- *  `svgOpen(line, …, 'none')` 的非等比拉伸下，SVG 的**盒尺寸**仍按 viewBox 长宽比算
+ *  （#507 起本族不再走 `preserveAspectRatio="none"`，见 `svgOpen`；下面的量级关系一字不变——
+ *  真正决定实渲字号的是「盒宽 ÷ viewBox 宽」，与 `none`／`meet` 无关。）SVG 的**盒尺寸**仍按 viewBox 长宽比算
  *  （`width:100%` ＋ `height:auto`），所以 320×210 塞进 930px 卡片时会被拉到 2.91 倍
  *  ——10px 图内文字渲染 29px、点径 20px（t-chartfix #160 的实测）。#160 用
  *  `max-width:480px` 压回 1.5 倍，代价是图只占卡片一半宽（930 里居中的 480，左右各空 225）。
@@ -1154,7 +1164,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
 
   const html = containerOpen('line', line, STYLE_PREFIX + 'charts-line')
     + legendHtml(legendEntries)
-    + svgOpen(line, undefined, 'none')
+    + svgOpen(line)
     + (line.grid ? gridSvg(frame) : '')
     + bandSvg
     + fillSvg
@@ -1589,7 +1599,7 @@ function renderCombo(raw: ComboChartInput): ChartOutput {
   const points = bars.length + lines.length;
   const html = containerOpen('combo', common, STYLE_PREFIX + 'charts-combo')
     + legend
-    + svgOpen(common, undefined, 'none')
+    + svgOpen(common)
     + (common.grid ? gridSvg(frame) : '')
     + barsSvg
     + lineSvg
@@ -1779,7 +1789,7 @@ function renderScatter(raw: ScatterChartInput): ChartOutput {
 
   const points = items.length;
   const html = containerOpen('scatter', common, STYLE_PREFIX + 'charts-scatter')
-    + svgOpen(common, undefined, 'none')
+    + svgOpen(common)
     + (common.grid ? gridSvg(frame) : '')
     + ticksSvg(frame, ylo, yhi, SCATTER_Y_TICKS, common.format)
     + regressionSvg
