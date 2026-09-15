@@ -108,11 +108,22 @@ figcaption span{display:block;color:#86868b;font-weight:400;font-size:11.5px;mar
 .cell{width:${boxW}px;height:${boxH}px;overflow:hidden;background:#fff}
 iframe{display:block;width:${w}px;height:${CELL_H}px;border:0;background:#fff;transform:scale(${s});transform-origin:0 0}
 .chk{margin:0;padding:7px 10px 9px;font-size:12px;line-height:1.6;color:#3a3a3c;border-top:1px solid #e8e8ed;background:#fbfbfd}
+/* 窄浏览器（≤ 格子宽＋24）里把页边距让出去，格子正好落满一屏——**不藏横滚**（§7），
+   只是不再多占两边的空白；文字块自己留 14px 内边距，读起来不贴边。 */
+@media (max-width:${boxW + 24}px){
+  .wrap{padding:16px 0 48px}
+  h1,.sub{padding:0 14px}
+  h2{margin-left:14px;margin-right:14px}
+  .grid{gap:14px;justify-content:center}
+}
 </style></head><body><div class="wrap">
   <h1>${esc(label)} · 场景04 运动 39 页 · ${kept.length} 格 × ${esc(String(w))} 宽</h1>
   <div class="sub">每格是一份产物在 <b>${esc(String(w))} 宽</b>下的真实渲染（iframe 里跑真 HTML：媒体查询按 ${esc(String(w))} 生效、页内可交互）。
   点标题在新标签打开整页；每格下面那句是<b>这一格该确认什么</b>。这一页是给「一遍看完 39 页」用的，不是交付产物。
-  手机墙看<b>塌列</b>、桌面墙看<b>排布</b>；两张墙格数相同、格高一致。</div>
+  手机墙看<b>塌列</b>、桌面墙看<b>排布</b>；两张墙格数相同、格高一致。
+  ${w <= 500
+    ? '这一页在 390 宽的浏览器里也不横滚（格子宽＝要量的那个视口，正好落满一屏）。'
+    : '桌面墙请在桌面浏览器上滚（格子宽 1280、整页缩到 600 看；窄于 620px 的窗口放不下它——那正是它要量的视口）。'}</div>
 ${sections}
 </div></body></html>
 `;
