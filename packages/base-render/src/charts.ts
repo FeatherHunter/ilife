@@ -395,6 +395,36 @@ function insetsFor(common: ResolvedCommon, opts: {
  *  同一份数字既进 `chartsCss` 的媒体查询，也用来估留白（留白双端共用 → 取更大的这一档）。 */
 const LINE_TEXT_MOBILE = { tick: 20, xlabel: 20, value: 20, last: 20, mark: 20 } as const;
 
+/** t512：折线族字号的**档位表**（用户单位）。
+ *
+ *  svg 文本的 `font-size` 写在**用户单位**上，会被 viewBox 等比缩放（`preserveAspectRatio="xMidYMid meet"`
+ *  ＋ `width:100%;height:auto` → 两轴同倍），实渲像素 = 用户单位 × 缩放比，而缩放比 = svg 盒宽 ÷ 580
+ *  （`LINE_DEFAULT_WIDTH`）——盒宽随视口变，所以**同一个用户单位在不同视口实渲出不同像素**。
+ *  只留 ≤720px 的 20 单位那一档、721px 起落回桌面档 9.5/10 单位，就会在这条断点上**非单调地跳**：
+ *  720px 档盒宽 652 → 实渲 22.5px，721px 档盒宽 651 只剩 10.7px，再往宽走才慢慢回到 15px。
+ *
+ *  逐档补偿的算式：**用户单位 = 目标像素 ÷ 该档实测缩放比**。
+ *  缩放比取自 `docs/base/base-render/t507-视觉底座-证据.md` 的 CDP 四档实测（盒宽 ÷ 580）：
+ *  512px → 盒 450×201.72 → 0.7759；820px → 750×336.20 → 1.2931；1000px／1440px → 930×416.89 → 1.6034
+ *  （930 是卡片宽度上限，故 1000px 与 1440px 同档、实渲同值）。
+ *
+ *  三档结果（`chartsCss` 的 ≤720px／721–875px／≥876px 三段逐字用这三个数）：
+ *  20 单位 → 15.5px（512px）；12.4 单位 → 16.0px（820px）；10.8 单位 → 17.3px（1000px／1440px）
+ *  —— 四档**单调不降且 ≥15px**，不再随盒子宽度来回跳。
+ *
+ *  **不变式（别越）**：任何档位的用户单位都不得超过 `LINE_TEXT_MOBILE.tick`（20）。
+ *  `insetsFor` 的左留白是按**移动档那 20 单位**估的（`charts.ts:843`，留白是双端共用的用户单位），
+ *  抬高它会让「70.5kg」这类刻度文字在**每个**视口都顶出 viewBox 左沿。故本表只抬中间档与宽档。
+ *
+ *  **已知余量（如实记账）**：媒体查询只能按**视口**分档，而缩放比按**盒宽**走，同一档内仍是变化的
+ *  —— 721–875px 档的下沿（721px）实渲 14.0px、上沿（875px）17.2px；这是视口分档的固有锯齿，
+ *  比改前同一段的 10.7–13.9px 已经抬高，要再抹平得按容器宽分档（另一票的事）。 */
+const LINE_TEXT_WIDE_UNITS = 12.4;
+const LINE_TEXT_FULL_UNITS = 10.8;
+/** ≥876px 档的媒体查询下沿：由 `LINE_TEXT_FULL_UNITS` 的 ≥15px 要求**反解**得到——
+ *  缩放比须 ≤ 15 ÷ 10.8 = 1.3889 → 盒宽 ≤ 1.3889 × 580 = 805.6 → 视口 ≤ 875.6，取下沿 876。 */
+const LINE_TEXT_WIDE_MAX_PX = 875;
+
 /** 折线 X 标签行相对绘图区底边（`frame.y1`）的间距（用户单位）。最低那条刻度文字已抬到轴线上方
  *  （见 `ticksSvg` 的 `labelDy`），其文字盒下沿到 y1 附近；X 标签（20 单位）文字盒上沿顶在
  *  y1+gap−21 附近 —— gap ≥ 33 才不相撞（实测 gap 34 时 390px 下余 ≈4.5 用户单位）。 */
@@ -1835,6 +1865,17 @@ export const charts: ChartsApi = new Proxy(CHART_DISPATCH, {
 
 /* ── 图表 CSS 文本（R12：唯一产出者 = 本文件内部常量/函数；#75 复用同一份） ── */
 
+/** t512：折线族六个文本类的一组字号规则（**用户单位**，逐档补偿后的值——算式见 `LINE_TEXT_WIDE_UNITS`）。
+ *  类名与字形族与 ≤720px 段的六条逐字同款，只换数字；抽成一函数免得三档各抄一遍走散。 */
+function lineFontRules(p: string, units: number): string {
+  return '.' + p + 'charts-line .' + p + 'charts-tick{font-size:' + units + 'px}'
+    + '.' + p + 'charts-line .' + p + 'charts-xlabel{font-size:' + units + 'px}'
+    + '.' + p + 'charts-line .' + p + 'charts-value{font-size:' + units + 'px}'
+    + '.' + p + 'charts-line .' + p + 'charts-value-last{font-size:' + units + 'px}'
+    + '.' + p + 'charts-line .' + p + 'charts-marktext{font-size:' + units + 'px}'
+    + '.' + p + 'charts-line .' + p + 'charts-marktext-v{font-size:' + units + 'px}';
+}
+
 /** 图表样式文本（**唯一一份**）：类名走 `prefix` 命名空间；容器零 padding；
  *  断点数值逐值取 `CHART_BREAKPOINTS`（`mobileMaxPx`／`dotSizeMobilePx`）。
  *  （`lineHeightMobilePx` 自 #424 返工起不再进 CSS：折线在移动端改按 viewBox 长宽比派生高度，
@@ -1923,6 +1964,14 @@ export function chartsCss(prefix: string): string {
       + '.' + p + 'charts-line .' + p + 'charts-marktext{font-size:' + LINE_TEXT_MOBILE.mark + 'px}'
       + '.' + p + 'charts-line .' + p + 'charts-marktext-v{font-size:' + LINE_TEXT_MOBILE.mark + 'px}'
       + '}',
+    /* t512（字号随盒宽乱跳的根因）：上面那一段只按 ≤720px 给了一档 20 用户单位，721px 起落回桌面档，
+     *  断点两侧实渲 22.5px → 10.7px。这里补两档，用户单位 = 目标像素 ÷ 该档实测缩放比
+     *  （算式与四档实测读数见 `LINE_TEXT_WIDE_UNITS` 的注释）——只给**折线族**六条文本类，
+     *  杆／散点／环／量表各族沿用基规则 9.5/10 单位不动（它们没有被报「字号乱跳」）。 */
+    '@media (min-width:' + (mobile + 1) + 'px) and (max-width:' + LINE_TEXT_WIDE_MAX_PX + 'px){'
+      + lineFontRules(p, LINE_TEXT_WIDE_UNITS) + '}',
+    '@media (min-width:' + (LINE_TEXT_WIDE_MAX_PX + 1) + 'px){'
+      + lineFontRules(p, LINE_TEXT_FULL_UNITS) + '}',
   ].join(LF);
 }
 

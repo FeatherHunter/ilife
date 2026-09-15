@@ -1814,6 +1814,54 @@ describe('H 常量与规则', () => {
     );
   });
 
+  it('H.t512.折线字号按视口档位补偿：四档实渲字号单调不降且 ≥15px', () => {
+    const css = buildChartsHelpersJs();
+    /* 块定位：从 `@media` 起按大括号配平取出整块（块内每条规则自带花括号，不能按首个 `}` 截断）。 */
+    const blockAt = (needle) => {
+      const start = css.indexOf(needle);
+      assert.ok(start >= 0, 'CSS 必须含媒体查询 ' + needle);
+      let depth = 0;
+      for (let i = css.indexOf('{', start); i < css.length; i += 1) {
+        if (css[i] === '{') depth += 1;
+        else if (css[i] === '}') {
+          depth -= 1;
+          if (depth === 0) return css.slice(start, i + 1);
+        }
+      }
+      throw new Error('媒体查询块未配平：' + needle);
+    };
+    const unitsOf = (block, label) => {
+      const m = block.match(/\.ilife-charts-line \.ilife-charts-tick\{font-size:([\d.]+)px\}/);
+      assert.ok(m, label + ' 必须给折线刻度一条字号档位规则');
+      return Number(m[1]);
+    };
+    /* 缩放比 = svg 盒宽 ÷ viewBox 宽 580。四档盒宽取自
+     * `docs/base/base-render/t507-视觉底座-证据.md` 的 CDP 实测（512px→450／820px→750／
+     * 1000px 与 1440px→930，930 是卡片上限故后两档同值）。实渲像素 = 用户单位 × 缩放比。 */
+    const tiers = [
+      { vw: 512, scale: 450 / 580, units: unitsOf(blockAt('@media (max-width:720px){'), '≤720px 档') },
+      { vw: 820, scale: 750 / 580, units: unitsOf(blockAt('@media (min-width:721px)'), '721–875px 档') },
+      { vw: 1000, scale: 930 / 580, units: unitsOf(blockAt('@media (min-width:876px)'), '≥876px 档') },
+      { vw: 1440, scale: 930 / 580, units: NaN },
+    ];
+    tiers[3].units = tiers[2].units;
+    const rendered = tiers.map((t) => t.units * t.scale);
+    for (let i = 0; i < tiers.length; i += 1) {
+      assert.ok(rendered[i] >= 15,
+        tiers[i].vw + 'px 档折线字号实渲必须 ≥15px，实测 ' + rendered[i].toFixed(2)
+        + 'px（' + tiers[i].units + ' 用户单位 × ' + tiers[i].scale.toFixed(4) + '）');
+      if (i > 0) {
+        assert.ok(rendered[i] >= rendered[i - 1],
+          tiers[i].vw + 'px 档实渲字号不得小于 ' + tiers[i - 1].vw + 'px 档（单调不降）：'
+          + rendered[i].toFixed(2) + 'px < ' + rendered[i - 1].toFixed(2) + 'px');
+      }
+    }
+    /* 不变式：任何档位的用户单位都不得超过移动档那 20 —— `insetsFor` 的左留白按它估
+     * （`charts.ts` 的 `LINE_TEXT_MOBILE.tick`），越过去刻度文字会在每个视口顶出 viewBox 左沿。 */
+    assert.ok(tiers.every((t) => t.units <= 20),
+      '折线字号档位不得越过 LINE_TEXT_MOBILE.tick（20 用户单位）');
+  });
+
   it('H.chartsCss 经 jsStr 嵌入：CSS 以 JSON 字符串字面量出现（转义正确）', () => {
     const js = buildChartsHelpersJs();
     const literal = (js.match(/^  var CSS = (.*);$/m) ?? [])[1];
@@ -1877,8 +1925,9 @@ describe('H 常量与规则', () => {
     const source = readFileSync(fileURLToPath(new URL('./charts.test.mjs', import.meta.url)), 'utf8');
     const titles = [...source.matchAll(/^[ \t]*it\((["'])(.*?)\1/gm)].map((m) => m[2]);
     /* FX-78-V2a-3：`>= 60` 是宽松下界（删掉若干用例仍可绿）→ 精确条数。
-     * 口径：本文件磁盘上的 `it(...)` 标题条数。**改实现/改矩阵（增删用例）须同步此值**。 */
-    assert.equal(titles.length, 88, '用例条数精确值（实读 ' + titles.length + ' 条）');
+     * 口径：本文件磁盘上的 `it(...)` 标题条数。**改实现/改矩阵（增删用例）须同步此值**。
+     * t512：88 → 89（新增 `H.t512.折线字号按视口档位补偿` 一条，不是删改既有用例）。 */
+    assert.equal(titles.length, 89, '用例条数精确值（实读 ' + titles.length + ' 条）');
     const tokens = Object.values(FIELD_TITLES).flatMap((fields) => Object.values(fields));
     assert.equal(new Set(tokens).size, tokens.length, '每个字段必须绑定互不相同的用例标题 token');
     const hitTitles = [...new Set(titles.filter((title) => tokens.some((token) => title.includes(token))))];
