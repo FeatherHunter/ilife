@@ -279,6 +279,31 @@ describe('A 通用选项 ChartCommonOptions', () => {
     assert.equal(countOf(charts.bar({ items: [{ label: 'A', value: 1 }] }).html, P + 'charts-grid'), 3);
   });
 
+  /* #512：网格线不再固定三条，改按**实际标注条数**逐条对齐；标注关着才回退三条（外观不动）。 */
+  it('A.grid：有 Y 轴标注时网格线与刻度线同高同条数（#512）', () => {
+    const y1s = (html, cls) => attrsOf(html, 'line', cls).map((a) => a.y1);
+    const withTicks = (n) => lineHtml({ grid: true, yTicks: n });
+    for (const n of [2, 3, 4, 5, 6]) {
+      const html = withTicks(n);
+      const grid = y1s(html, P + 'charts-grid');
+      assert.equal(grid.length, n, 'yTicks:' + n + ' → ' + n + ' 条网格线');
+      assert.equal(textsOf(html, P + 'charts-tick').length, n, 'yTicks:' + n + ' → ' + n + ' 条标注');
+      assert.deepEqual(grid, y1s(html, P + 'charts-ytick'), 'yTicks:' + n + ' 网格线与刻度线同高');
+    }
+    /* 越界值经 `tickCount` 收敛 2–6，网格线随之一致（不得只改标注不改线）。 */
+    assert.deepEqual(y1s(withTicks(9), P + 'charts-grid'), y1s(withTicks(9), P + 'charts-ytick'));
+    /* 标注关着（缺省 `yTicks:false`）与无标注族（bar／combo）→ 仍是三条。 */
+    assert.equal(countOf(lineHtml({ grid: true }), P + 'charts-grid'), 3);
+    assert.equal(countOf(charts.bar({ items: [{ label: 'A', value: 1 }], options: { grid: true } }).html, P + 'charts-grid'), 3);
+    assert.equal(countOf(charts.combo({
+      bars: [{ label: 'A', value: 1 }], lines: [{ label: 'A', value: 2 }], options: { grid: true },
+    }).html, P + 'charts-grid'), 3);
+    /* scatter 缺省 4 条 Y 刻度（SCATTER_Y_TICKS）：旧行为是 3 条线配 4 条标注。 */
+    const scatter = charts.scatter({ items: [{ x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }], options: { grid: true } }).html;
+    assert.equal(countOf(scatter, P + 'charts-grid'), 4);
+    assert.deepEqual(y1s(scatter, P + 'charts-grid'), y1s(scatter, P + 'charts-ytick'));
+  });
+
   it('A.actionId：交互元素带 ACTION_ID_ATTR = 该值', () => {
     const html = lineHtml({ actionId: 'open-detail' });
     const container = tagsOf(html, 'div')[0];
@@ -1926,13 +1951,15 @@ describe('H 常量与规则', () => {
     const titles = [...source.matchAll(/^[ \t]*it\((["'])(.*?)\1/gm)].map((m) => m[2]);
     /* FX-78-V2a-3：`>= 60` 是宽松下界（删掉若干用例仍可绿）→ 精确条数。
      * 口径：本文件磁盘上的 `it(...)` 标题条数。**改实现/改矩阵（增删用例）须同步此值**。
-     * t512：88 → 89（新增 `H.t512.折线字号按视口档位补偿` 一条，不是删改既有用例）。 */
-    assert.equal(titles.length, 89, '用例条数精确值（实读 ' + titles.length + ' 条）');
+     * t512：88 → 89（新增 `H.t512.折线字号按视口档位补偿` 一条，不是删改既有用例）。
+     * t512（网格线对齐）：89 → 90（新增 `A.grid：有 Y 轴标注时网格线与刻度线同高同条数` 一条，
+     *  同样不是删改既有用例；命中条数 74 → 75 是该条也带 `A.grid` 这一 token）。 */
+    assert.equal(titles.length, 90, '用例条数精确值（实读 ' + titles.length + ' 条）');
     const tokens = Object.values(FIELD_TITLES).flatMap((fields) => Object.values(fields));
     assert.equal(new Set(tokens).size, tokens.length, '每个字段必须绑定互不相同的用例标题 token');
     const hitTitles = [...new Set(titles.filter((title) => tokens.some((token) => title.includes(token))))];
     /* 命中条数同样精确：改标题／删用例／让两条用例共用 token 都会红。 */
-    assert.equal(hitTitles.length, 74, '覆盖清单命中的用例条数精确值（实读 ' + hitTitles.length + ' 条）');
+    assert.equal(hitTitles.length, 75, '覆盖清单命中的用例条数精确值（实读 ' + hitTitles.length + ' 条）');
     for (const [group, fields] of Object.entries(FIELD_TITLES)) {
       for (const [field, token] of Object.entries(fields)) {
         assert.ok(

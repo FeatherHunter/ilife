@@ -154,6 +154,7 @@ const EMPTY_ICON = '📊';
 const EMPTY_HINT = '有记录后自动生成图表';
 const DONUT_ZERO_HINT = '合计为零, 无环形数据';
 const OWN_SCALE_NOTE = '各指标独立刻度';
+/** 水平网格线**无 Y 轴标注时**的条数（#512：有标注时改按标注条数画，见 `gridSvg`）。 */
 const GRID_LINES = 3;
 
 /** 稳定 32 位散列（FNV-1a）——渐变 `<linearGradient id>` 由**渐变参数**派生，
@@ -496,10 +497,15 @@ function tickCount(value: number | false | undefined): number {
 
 /* ── 共享 SVG 片段 ────────────────────────────────────────────────────── */
 
-function gridSvg(frame: Frame): string {
+function gridSvg(frame: Frame, count = 0): string {
+  /** 对齐口径（#512）：线条数取**实际标注条数**，位置与 `ticksSvg` 同一条均匀标度公式
+   *  （`y1 - h*i/(n-1)` ⇔ `i` 刻度值映射到 `yAt`），故每条线都压着自己那条刻度。
+   *  `count < 2`（`yTicks:false`／非数 → `tickCount` 给 0）时回退旧口径 `GRID_LINES` 三条：
+   *  bar／combo 与未开 `yTicks` 的 line 本就无标注，不得因此变成空白图。 */
+  const lines = count >= 2 ? count : GRID_LINES;
   let out = '';
-  for (let g = 0; g < GRID_LINES; g += 1) {
-    const gy = frame.y1 - (frame.h * g) / (GRID_LINES - 1);
+  for (let g = 0; g < lines; g += 1) {
+    const gy = frame.y1 - (frame.h * g) / (lines - 1);
     out += '<line class="' + STYLE_PREFIX + 'charts-grid" x1="' + n1(frame.x0) + '" y1="' + n1(gy)
       + '" x2="' + n1(frame.x1) + '" y2="' + n1(gy) + '" stroke="' + GRID_COLOR
       + '" stroke-width="1" vector-effect="non-scaling-stroke"/>';
@@ -1195,7 +1201,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
   const html = containerOpen('line', line, STYLE_PREFIX + 'charts-line')
     + legendHtml(legendEntries)
     + svgOpen(line)
-    + (line.grid ? gridSvg(frame) : '')
+    + (line.grid ? gridSvg(frame, tickN) : '')
     + bandSvg
     + fillSvg
     + ticksSvg(frame, lo, hi, tickN, line.format)
@@ -1820,7 +1826,7 @@ function renderScatter(raw: ScatterChartInput): ChartOutput {
   const points = items.length;
   const html = containerOpen('scatter', common, STYLE_PREFIX + 'charts-scatter')
     + svgOpen(common)
-    + (common.grid ? gridSvg(frame) : '')
+    + (common.grid ? gridSvg(frame, SCATTER_Y_TICKS) : '')
     + ticksSvg(frame, ylo, yhi, SCATTER_Y_TICKS, common.format)
     + regressionSvg
     + dotsSvg
