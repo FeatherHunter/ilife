@@ -1,5 +1,5 @@
 # #543 门禁运行记录导出（源：.scratch/locks/gate-runs.log，只筛 ticket=543 的行，逐行原样）
-# 导出时刻：2026-09-15T19:51:49.700Z　条目数：186
+# 导出时刻：2026-09-15T20:29:54.683Z　条目数：198
 
 START ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 pid=47004 at=2026-09-15T07:37:22.797Z
 RUN ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 exit=1 pid=47004 at=2026-09-15T07:37:26.838Z
@@ -187,3 +187,15 @@ RUN ticket=543 runId=e4ef8293-3875-476a-97f1-02b4bf30cd4d cmd="pwsh -NoProfile -
 START ticket=543 runId=9386c33e-3813-4b34-8387-21378e743381 cmd="pwsh -NoProfile -File .scratch/t543/commit-v2.ps1" waitedMs=0 pid=57632 at=2026-09-15T19:51:36.810Z
 RUN ticket=543 runId=9386c33e-3813-4b34-8387-21378e743381 cmd="pwsh -NoProfile -File .scratch/t543/commit-v2.ps1" waitedMs=0 exit=0 pid=57632 at=2026-09-15T19:51:39.689Z
 START ticket=543 runId=25373ec8-06ac-4868-a58b-51f7fbcb8d13 cmd="node .scratch/t543/export-runs.mjs" waitedMs=0 pid=60920 at=2026-09-15T19:51:49.627Z
+RUN ticket=543 runId=25373ec8-06ac-4868-a58b-51f7fbcb8d13 cmd="node .scratch/t543/export-runs.mjs" waitedMs=0 exit=0 pid=60920 at=2026-09-15T19:51:49.711Z
+START ticket=543 runId=805251b8-e2b1-4336-9bd9-7c828bfbde1c cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 pid=11272 at=2026-09-15T20:03:12.010Z
+RUN ticket=543 runId=805251b8-e2b1-4336-9bd9-7c828bfbde1c cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=11272 at=2026-09-15T20:03:12.871Z
+START ticket=543 runId=c84a6a82-a215-4c68-bcc3-be458c769e1e cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 pid=49492 at=2026-09-15T20:03:12.922Z
+RUN ticket=543 runId=c84a6a82-a215-4c68-bcc3-be458c769e1e cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=0 exit=0 pid=49492 at=2026-09-15T20:03:33.349Z
+START ticket=543 runId=0a22d7f8-3a5f-4e7e-9a5e-d9e2f0633e15 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 pid=37664 at=2026-09-15T20:03:38.974Z
+RUN ticket=543 runId=0a22d7f8-3a5f-4e7e-9a5e-d9e2f0633e15 cmd="pwsh -NoProfile -File .scratch/t543/window-v2.ps1" waitedMs=0 exit=0 pid=37664 at=2026-09-15T20:04:50.522Z
+START ticket=543 runId=a949c1db-3875-4323-8f4d-11516cbe67b2 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync" waitedMs=0 pid=56700 at=2026-09-15T20:15:57.778Z
+RUN ticket=543 runId=a949c1db-3875-4323-8f4d-11516cbe67b2 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync" waitedMs=0 exit=0 pid=56700 at=2026-09-15T20:15:57.913Z
+START ticket=543 runId=8d29cd90-e63d-4110-a94c-844fa7303447 cmd="pwsh -NoProfile -File .scratch/t543/commit-v3.ps1" waitedMs=1 pid=71148 at=2026-09-15T20:18:13.206Z
+RUN ticket=543 runId=8d29cd90-e63d-4110-a94c-844fa7303447 cmd="pwsh -NoProfile -File .scratch/t543/commit-v3.ps1" waitedMs=1 exit=0 pid=71148 at=2026-09-15T20:18:15.723Z
+START ticket=543 runId=d5580967-5c60-44c5-a6d8-0b6ef5ab3451 cmd="node .scratch/t543/export-runs.mjs" waitedMs=0 pid=42420 at=2026-09-15T20:29:54.616Z
