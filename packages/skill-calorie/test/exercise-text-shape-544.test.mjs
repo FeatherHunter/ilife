@@ -357,7 +357,142 @@ test('#544 ⑦ 窄屏页内导航换行铺开（视觉第 1 轮整改）', () =>
   console.log('T544 TOC 窄屏换行规则=在');
 });
 
-/* ───────────────────────── 六、变异自证（改坏必红／还原必绿） ───────────────────────── */
+/* ───────────────────────── 六、终审席（票 #268）打回项的四条判据 ───────────────────────── */
+
+/** 长窗夹具（复盘五窗与趋势共用形状）：逐日表 120 天、每天 500 卡（全等——刻度与线位都吃满这条）。 */
+function longDaily(over = {}) {
+  const out = [];
+  for (let i = 0; i < 120; i += 1) {
+    out.push({ date: new Date(Date.parse('2026-12-31T12:00:00Z') - (119 - i) * 86400000).toISOString().slice(0, 10), burned: 500, minutes: 30, sessions: 1 });
+  }
+  return out;
+}
+const LONG_DAILY = longDaily();
+function longRecapView(over = {}) {
+  return recapView({
+    start: LONG_DAILY[0].date, end: LONG_DAILY[LONG_DAILY.length - 1].date,
+    sessions: 120, activeDays: 120, days: 120, daily: LONG_DAILY, ...over,
+  });
+}
+function longTrendView(over = {}) {
+  return trendView({
+    start: LONG_DAILY[0].date, end: LONG_DAILY[LONG_DAILY.length - 1].date,
+    days: LONG_DAILY.map((d) => ({ date: d.date, minutes: d.minutes, burned: d.burned, sessions: d.sessions })),
+    activeDays: 120, totalMinutes: 3600, totalBurned: 60000,
+    peak: { date: LONG_DAILY[0].date, burned: 500 }, ...over,
+  });
+}
+
+test('#268 ① 纵轴刻度：最小刻度是 0（不印负数）；三条刻度都是整数（K2／P1-5）', () => {
+  // 终审席 §4 P1-5：38／39 两页纵轴最低刻度印出过 `-87.4`（「消耗了多少卡」出现负数）；
+  // §5 K2：37 页印过 `31.4／1118.0／2204.5` 这类带 `.0`／`.5` 尾巴的刻度。
+  const cases = [
+    ['复盘（长窗，全等）', buildRecapDoc(longRecapView()), 'sec-daily'],
+    ['趋势（长窗，全等）', buildTrendDoc(longTrendView()), 'sec-line'],
+    ['力量（等值序列）', buildStrengthDoc(strengthView()), 'sec-chart'],
+    ['复盘（两日窗）', buildRecapDoc(recapView()), 'sec-daily'],
+  ];
+  for (const [name, html, anchor] of cases) {
+    const card = cardOf(html, anchor);
+    const ticks = [...card.matchAll(/<text class="ilife-charts-tick"[^>]*>([^<]*)</g)].map((m) => m[1]);
+    const nums = ticks.map(Number);
+    console.log('T268 AXIS ' + name.padEnd(16) + ' 刻度=' + JSON.stringify(ticks));
+    assert.equal(ticks.length, 3, name + ' 纵轴刻度不是 3 条');
+    assert.ok(nums.every((v) => Number.isFinite(v)), name + ' 刻度里有非数：' + JSON.stringify(ticks));
+    assert.ok(nums[0] === 0, name + ' 纵轴最低刻度不是 0（实印 ' + ticks[0] + '）——负刻度与悬空的零基线都不许');
+    assert.ok(nums.every((v) => v >= 0), name + ' 纵轴出现负刻度：' + JSON.stringify(ticks));
+    assert.ok(nums.every((v) => Number.isInteger(v)),
+      name + ' 刻度带小数尾巴（`31.4`／`2204.5` 那种）：' + JSON.stringify(ticks));
+    assert.ok(nums[1] > nums[0] && nums[2] > nums[1], name + ' 刻度没有单调上升：' + JSON.stringify(ticks));
+  }
+});
+
+test('#268 ② 三节可见标题：核心数字／类型分布／高频运动（P1-6／K6）', () => {
+  // 终审席 §4 P1-6：盘族五页只有折线卡有卡题，另外三节在正文里没有任何可见标题。
+  for (const [name, html] of [['复盘（两日窗）', buildRecapDoc(recapView())], ['复盘（长窗）', buildRecapDoc(longRecapView())]]) {
+    const heads = [...html.matchAll(/<section id="(sec-[a-z]+)"><h2>([^<]+)<\/h2>/g)].map((m) => m[1] + '=' + m[2]);
+    console.log('T268 HEAD ' + name.padEnd(12) + ' ' + heads.join(' '));
+    for (const [anchor, text] of [['sec-figures', '核心数字'], ['sec-category', '类型分布'], ['sec-badges', '高频运动']]) {
+      assert.ok(heads.includes(anchor + '=' + text), name + ' 的 ' + anchor + ' 缺可见节标题「' + text + '」');
+    }
+  }
+});
+
+test('#268 ③ 参数输入框：页级规则不再把 44px 压下来（E1）', () => {
+  // 终审席 §5 E1：本族页级 `min-height:38px` 把 #525 配方给全宽档的 44px 压下来了（九页全是 38px）。
+  for (const [name, build] of PAGES) {
+    const html = build();
+    assert.ok(html.includes('#sec-window .ilife-block-param-form-input{min-height:44px}'),
+      name + ' 的页级输入框高度不是 44px（E1 会复现）');
+    assert.ok(!html.includes('min-height:38px'), name + ' 仍留着 38px 的页级覆盖');
+  }
+  console.log('T268 INPUT 页级 min-height=44px 覆盖已撤（9 页同形）');
+});
+
+test('#268 ④ KPI 一排四卡同一字号（K1）＋ 细条有下限（K5）', () => {
+  // K1：终审席机读 oddFonts —— 一排四卡首卡 28px、其余 22px，混用且基线错开。
+  for (const [name, html] of [['分布', buildDistributionDoc(distributionView())],
+    ['力量', buildStrengthDoc(strengthView())], ['有氧', buildCardioDoc(cardioView())],
+    ['复盘', buildRecapDoc(recapView())], ['趋势', buildTrendDoc(trendView())]]) {
+    const kpi = cardOf(html, 'sec-figures');
+    assert.ok(!kpi.includes('font-size:28px'), name + ' 页仍留着「首卡放大到 28px」的页级规则');
+  }
+  assert.ok(!buildRecapDoc(recapView()).includes(':first-child .ilife-block-kpi-card-value'),
+    '页级样式段里还留着 KPI 首卡的字号规则');
+  console.log('T268 KPI 首卡字号规则=已撤（整排退回公共层 22px）');
+
+  // K5：占比 <1% 的分布条实渲不到 1px，肉眼读成空行／占位残渣。
+  const recap = buildRecapDoc(recapView({ byCategory: [
+    { category: '力量', sessions: 99, burned: 9900 }, { category: '柔韧', sessions: 1, burned: 100 },
+  ], sessions: 100 }));
+  assert.ok(recap.includes('.ilife-page .ilife-block-dist-row-fill{min-width:4px}'),
+    '分布条缺 4px 下限（占比 <1% 的条会渲染成空行）');
+  console.log('T268 BAR 细条下限规则=在（4px）');
+});
+
+test('#268 ④b 窄屏长序列：折线卡下方有一条只出内部日期的日期轴（K4）', () => {
+  const html = buildRecapDoc(longRecapView());
+  const card = cardOf(html, 'sec-daily');
+  const ruler = /<div class="sui-xruler"[^>]*>([\s\S]*?)<\/div>/.exec(card);
+  assert.ok(ruler !== null, '120 天窗的折线卡没有日期轴（K4：读者看不出点落在哪一天）');
+  // 形状：5 个等宽槽（点数能整除 5 时取 4 条，免得有一条正好压在窗口末端），每槽＝一个刻度点（`<i>`）＋一条日期。
+  const marks = [...ruler[1].matchAll(/<span class="sui-xruler-t"><i><\/i>([^<]+)<\/span>/g)].map((m) => m[1]);
+  console.log('T268 RULER 标注=' + marks.join(' '));
+  assert.ok(marks.length === 4 || marks.length === 5, '日期轴的内部日期不是 4／5 条：' + JSON.stringify(marks));
+  assert.ok(marks.every((t) => /^\d\d-\d\d$/.test(t)), '日期轴里混进了非日期串：' + JSON.stringify(marks));
+
+  // 首尾两条**不出**：折线自带的首尾横轴标签已经说了窗口的起止（复评 r3 打回项之一：逐字重复）。
+  const chart = cardOf(html, 'sec-daily');
+  const edgeLabels = [...chart.matchAll(/<text class="ilife-charts-xlabel"[^>]*>([^<]+)</g)].map((m) => m[1]);
+  assert.ok(edgeLabels.includes('12-31') && edgeLabels.length >= 2, '折线自己的首尾标签不在了：' + JSON.stringify(edgeLabels));
+  assert.ok(!marks.includes(edgeLabels[0]) && !marks.includes(edgeLabels[edgeLabels.length - 1]),
+    '日期轴与折线的首尾标签逐字重复：' + JSON.stringify({ marks, edgeLabels }));
+
+  // 等宽槽：`flex:1 1 0` ＋ 最小宽，槽宽＝容器÷5；相邻标签不再挤在一条窄带里（复评 r3 的叠字）。
+  assert.ok(html.includes('.sui-xruler-t{position:relative;flex:1 1 0;min-width:26px'), '日期轴缺等宽槽规则');
+  assert.ok(html.includes('.sui-xruler{position:relative;display:flex;align-items:flex-start'), '日期轴缺 flex 容器规则');
+  // 轴要挂在**卡片内**（复评 r3b 打回项：初版挂在卡外、把卡片下边框顶出去），且左右与绘图区同起同止
+  //（复评 r3c 量出右内距写 35px 会短 14.5px ⇒ 右内距＝SVG 盒宽−566 用户单位＝24.4px；再加内距让槽区对齐）。
+  assert.ok(html.includes('.sui-xruler{position:relative;display:flex;align-items:flex-start;margin:2px 2.414% 0 10%;'
+    + 'padding-left:4%;padding-right:4%}'),
+    '日期轴的内距不是按 viewBox 比例给的（写死 px 会在手机档偏 25px）');
+  assert.ok(html.includes('class="ilife-block-chart-block-canvas"'), '折线卡缺画布容器');
+  const canvasAt = card.indexOf('ilife-block-chart-block-canvas');
+  const rulerAt = card.indexOf('<div class="sui-xruler"');
+  assert.ok(canvasAt !== -1 && rulerAt > canvasAt, '日期轴没挂在折线卡的画布容器里（会落到卡片外）');
+  assert.ok(rulerAt > card.indexOf('</svg>'), '日期轴没落在折线图下方');
+  assert.ok(!/<\/section>\s*<div class="sui-xruler"/.test(html), '日期轴落在了卡片外');
+
+  // 短窗不出标尺：两天窗那两条首尾标签本来就够，多点两条反而添乱。
+  // （判据认**标记**不认类名——页内样式段里那两条 `.sui-xruler*` 规则一直都在。）
+  const RULER_TAG = '<div class="sui-xruler"';
+  assert.ok(!buildRecapDoc(recapView()).includes(RULER_TAG), '短窗（2 天）不该出日期轴');
+  // 趋势页同一条（长窗出、短窗不出）。
+  assert.ok(cardOf(buildTrendDoc(longTrendView()), 'sec-line').includes(RULER_TAG), '趋势长窗缺日期轴');
+  assert.ok(!cardOf(buildTrendDoc(trendView()), 'sec-line').includes(RULER_TAG), '趋势短窗不该出日期轴');
+});
+
+/* ───────────────────────── 七、变异自证（改坏必红／还原必绿） ───────────────────────── */
 test('#544 变异：塞回一处 `·` 并列 ⇒ 守卫必红；还原 ⇒ 必绿', () => {
   const clean = buildRecapDoc(recapView());
   assert.equal(separatorHits(clean).length, 0, '原样产物应当零命中');

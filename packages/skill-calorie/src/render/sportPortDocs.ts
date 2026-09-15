@@ -90,11 +90,16 @@ function windowForm(start: string, end: string, extra: string): string {
 
 /* ── #453 融合版式共用件（分布／力量／有氧三页共用；形状照 #423 回执族样板） ── */
 
-/** 页内一张卡（`id` 即页内导航的锚点，导航项按同一份清单生成）；卡外壳＝锚点 id ＋ 区块 HTML。 */
-interface Card { readonly id: string; readonly label: string; readonly html: string }
+/** 页内一张卡（`id` 即页内导航的锚点，导航项按同一份清单生成）＝锚点 id ＋ 区块 HTML。
+ *  `head`＝这一节的**可见节标题**（#268 终审席 P1-6／K6：盘族五页原来只有折线卡有卡题，
+ *  另外三节的节身份只住在顶部导航的胶囊里，页面正文里读不到「这三条彩条／五枚胶囊叫什么」）。
+ *  给 `head` 的节在正文里印一个 `<h2>`（样式见 `S544_CSS`），不给的节仍只有导航 — 逐节按需。 */
+interface Card { readonly id: string; readonly label: string; readonly html: string; readonly head?: string }
 
 function shell(card: Card): string {
-  return '<section id="' + card.id + '">' + card.html + '</section>';
+  return '<section id="' + card.id + '">'
+    + (card.head === undefined ? '' : '<h2>' + card.head + '</h2>')
+    + card.html + '</section>';
 }
 
 /** 窗口卡：这一页看的是哪一段（开始／结束两个真日期）。 */
@@ -122,40 +127,162 @@ function windowDays(start: string, end: string): number {
  *  ① **刻度**：共享层折线**缺省不给刻度标注**（`spec/charts.ts` 的 `yTicks` 缺省 → 0 条，图中只剩网格线），
  *     不传就读不出量级 —— 同族先例 `analysis-deficit-385` 已把这条定成「本页漏传参数，本页补 `yTicks:3`」，
  *     本族三张折线照办；`format` 给整数原样、带小数的一位（口径与 KPI 卡同：读数不印浮点尘）。
- *  ② **量程**：全等序列（每天都一样）在共享层缺省域里落到图底 5% 处 —— `domainOf()` 把 `hi` 抬成 `lo + 1`，
- *     值本身只占 0.06/1.12，看上去像「满量程画成了零」。有波动时仍交回共享层缺省域（它自带 6% 外扩＋峰值余量），
- *     只在全等时显式给上下界（上下各留峰值的四分之一，线落在图中）。 */
+ *  ② **量程**：一律显式给 `yMin`／`yMax`（见 `valueAxisOf()`），理由有三条，都是量程的语义而不是观感：
+ *     ① **最小值恒为 0**：这三条纵轴量的都是「消耗了多少卡／举起了多少 kg」，负值不存在——
+ *        原来的 `lo` 由共享层缺省域「数据两端各外扩 6%」算出来，窗内最小日要是 0，`lo` 就成了负数
+ *        （#268 终审席打回项 P1-5：38／39 两页纵轴最低刻度印出 `-87.4`）；
+ *     ② **刻度落在整数上**：不给界时刻度值是「域两端内插」的产物，实测印出过 `1065.1`／`2217.7`
+ *        （38）、`31.4`／`1118.0`／`2204.5`（37）这类带 `.0`／`.5` 尾巴的读数——刻度是**刻度**，不是量出来的数；
+ *     ③ **线不贴上下沿**：显式给界会让共享层的「峰值余量」（`lineDomainOf` 只补派生域）失效，
+ *        故峰值与顶端刻度之间那点余量由 `setAxisRange()` 自己保证。 */
 function valueAxisOf(values: readonly (number | null)[]): {
   readonly yTicks: number;
-  readonly yMin?: number;
-  readonly yMax?: number;
+  readonly yMin: number;
+  readonly yMax: number;
   readonly format: (v: number) => string;
 } {
+  // 整数原样、小数一位：刻度是取整后的整数，`toFixed(1)` 只是兜住极小量程的尾巴（不印浮点尘）。
   const format = (v: number): string => (Number.isInteger(v) ? String(v) : v.toFixed(1));
   const nums = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
-  if (nums.length === 0) return { yTicks: 3, format };
-  const lo = Math.min(...nums);
-  const hi = Math.max(...nums);
-  if (hi !== lo) return { yTicks: 3, format };
-  const pad = Math.max(Math.abs(hi), 1) * 0.25;
-  return { yTicks: 3, yMin: lo - pad, yMax: hi + pad, format };
+  // 数的顶点走 `reduce`（不铺参：窗内最多 366 个点，`Math.max(...nums)` 会压栈）。
+  // 全空或全零：`maxOf` 取 1，域退化成 0…1 而不是 0…0（量程为 0 会让刻度三条叠在同一处）。
+  let peak = 0;
+  for (const v of nums) if (v > peak) peak = v;
+  const maxOf = peak > 0 ? peak : 1;
+  // 刻度＝`hi·i/(条数−1)`：`hi` 是 `step×(条数−1)` 的整数倍，三条刻度才全是步长的整数倍
+  // （否则会印出 `600.2`／`1200.4` 这种「峰值本身」——那是读数，不是刻度）。
+  return { yTicks: TICK_COUNT, yMin: 0, yMax: axisHeightOf(maxOf), format };
 }
 
-/** 本族页内小样式（#544）：KPI 首卡值放大当主角（28px，正文 13–14px 的两倍）。
- *  落本件常量，不新开样式件；`<style>` 段不进可见文本，探针无感。
- *  **#544 视觉第 1 轮整改两处**（都在本件内联规则里做，不碰共用层）：
+/** 纵轴刻度条数（#544：三条 —— 共享层 `yTicks` 的缺省是 0 条，不显式给就一个刻度都没有）。 */
+const TICK_COUNT = 3;
+
+/** 线位下限／上限：峰值至少离顶端刻度一档边距（0.88），也别把自己缩在图高一角（0.45）。 */
+const LINE_TOP_LIMIT = 0.88;
+const LINE_BOTTOM_LIMIT = 0.45;
+
+/** 刻度步长候选序列（1／2／5×10ᵏ 里 ≥ 入参的最小一个）。 */
+function niceStepAtOrAbove(v: number): number {
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 5, 10]) if (v <= m * mag) return Math.max(1, m * mag);
+  return Math.max(1, 10 * mag);
+}
+
+/** 上界（＝顶端那条刻度）：**让峰值落在图高 0.60 处**是这里的唯一目标——量程与刻度是同一件事的两面
+ *  （`hi = step×(条数−1)`），故直接按「哪一档 1／2／5×10ᵏ 步长把峰值放在最合适的位置」来挑：
+ *  比值 `peak/hi` 落在 0.45–0.88 之间给低分（离 0.60 越近越低），越界按距离重罚，
+ *  **步长不是整数再加一点罚**（刻度值会带 `.5` 尾巴，那正是 K2 那条打回项），取罚分最小、并列取较大步长。
+ *
+ *  为什么步长非要是 1／2／5×10ᵏ：三条刻度＝`hi·i/2`，只有 `hi` 是步长整数倍时刻度才全是整数
+ *  （否则会印出 `600.2`／`1200.4` 这种「峰值本身」——那是读数，不是刻度）。
+ *  例：峰值 500 ⇒ `0／500／1000`；峰值 1250 ⇒ `0／1000／2000`；峰值 2753 ⇒ `0／2000／4000`。 */
+function axisHeightOf(maxOf: number): number {
+  const base = niceStepAtOrAbove(Math.max(maxOf, 1) * 0.4);
+  let best = { step: base, score: Infinity };
+  for (const k of [0.5, 1, 2, 5, 10, 20, 50, 100, 200]) {
+    const step = Math.max(1, base * k);
+    if (step * (TICK_COUNT - 1) < maxOf) continue;       // 刻度带撑不住峰值 ⇒ 这一档不用看
+    const ratio = maxOf / (step * (TICK_COUNT - 1));
+    const integer = Number.isInteger(step) ? 0 : 0.1;    // 刻度值带小数尾巴（`2204.5` 那类）要罚
+    const score = ratio > LINE_TOP_LIMIT || ratio < LINE_BOTTOM_LIMIT
+      ? Math.abs(ratio - 0.6) * 2 + integer
+      : Math.abs(ratio - 0.6) * 0.1 + integer;
+    if (score <= best.score) best = { step, score };
+  }
+  return best.step * (TICK_COUNT - 1);
+}
+
+/** 折线卡的横轴日期标尺（#268 终审席 K4 的处置，第 2 版）。
+ *
+ *  **为什么不加这把尺的初版被视觉席打回**（复评 r3：39 页桌面表尺标签压在 07-10 一带、读成
+ *  `02-2704-01 05-05 …`）：初版一页印 **7** 条（含窗口首尾两条），条与条只隔 4.05% 宽（桌面 36px、
+ *  手机 20px），而标签本身就要 31px —— 必然叠字；且首尾两条与折线**自带**的首尾横轴标签逐字重复
+ *  （共享层折线的 X 标签口径是 `'edge'`）。
+ *
+ *  本版的形状：**只出窗口内部 5 条**（首尾让给折线自己的那两条），按**等宽槽**摆（`flex:1 1 0`），
+ *  槽宽＝容器宽÷5（桌面 176px、手机 71px），标签 26px ⇒ 相邻最小空档约 45px，三档都不叠。
+ *  一把尺要两样东西才算「轴」：一条细轴线 ＋ 等距刻度点，故每个槽里自带一段轴线与一个小圆点，
+ *  尺因此读成一条时间轴，而不是一行浮在空中的日期。
+ *
+ *  退化：点数 < 45（短窗）不出——那一档日期本来就稀，多点两条标签反而添乱；点数不整除 5 时
+ *  取 4 条（见 `INTERIOR_COUNT`）。 */
+const RULER_MIN_DAYS = 45;
+
+/** 标尺槽数：内部日期的枚数（首尾归折线自己的标签；5 条在 390 档仍有约 45px 空档）。 */
+const INTERIOR_COUNT = 5;
+
+/** 折线块画布容器的开标签（日期轴从**结构位**注入，见 `withXRuler`）。 */
+const S544_CANVAS_OPEN = '<div class="ilife-block-chart-block-canvas">';
+
+/** 日期轴的槽串（只出窗口内部几条日期；取数与退化见 `RULER_MIN_DAYS`）。 */
+function xRulerOf(items: ReadonlyArray<{ readonly label: string }>): string {
+  const n = items.length;
+  if (n < RULER_MIN_DAYS) return '';
+  const count = n % INTERIOR_COUNT === 0 ? INTERIOR_COUNT - 1 : INTERIOR_COUNT;
+  const cells: string[] = [];
+  for (let i = 1; i <= count; i += 1) {
+    const idx = Math.round((n - 1) * (i / (count + 1)));
+    const label = items[idx] === undefined ? '' : items[idx].label;   // 逐字复用图上那几条日期
+    cells.push('<span class="sui-xruler-t"><i></i>' + label + '</span>');
+  }
+  return '<div class="sui-xruler" aria-hidden="true">' + cells.join('') + '</div>';
+}
+
+/** 折线卡 ＋ 日期轴（#268 K4 第二版）：标尺**必须挂在卡片内**（视觉复评 r3b：初版挂在卡外，
+ *  整条轴线比绘图区左宽 100px、还把卡片下边框顶出去），落点＝画布容器的**末尾**（SVG 之后）。
+ *  `renderChartBlock` 的 title 只会进 `esc()` 后的文本节点（哨兵都逃不出来），故只从结构位注入。 */
+function withXRuler(chart: string, items: ReadonlyArray<{ readonly label: string }>): string {
+  const ruler = xRulerOf(items);
+  if (ruler === '') return chart;
+  const open = chart.indexOf(S544_CANVAS_OPEN);
+  const end = chart.lastIndexOf('</div>');              // 容器的收标签＝整卡的收标签
+  if (open === -1 || end <= open) return chart;         // 结构变了就退回不带轴（不硬塞）
+  return chart.slice(0, end) + ruler + chart.slice(end);
+}
+
+/** 本族页内小样式（#544）。落本件常量，不新开样式件；`<style>` 段不进可见文本，探针无感。
+ *  **#544 视觉第 1 轮整改三处**（都在本件内联规则里做，不碰共用层）：
  *  ① 窄屏页内导航：共享页框在 ≤640 把胶囊轨切成横滑（`nowrap ＋ overflow-x:auto`，滚动条还被藏），
  *     实测 390 档第 5、6 枚胶囊被拦腰切断且无滚动提示 —— 本族窄屏改回**换行铺开**（与桌面同规则）；
  *  ② 窗口卡的「开始／结束」两格是只读回显（字段本身由 `exercise-port-111` 钉死，不能删），
- *     但共用件给每格 `margin:8px 0` ＋ 44px 输入高度，桌面档拉出约 200px 空洞 —— 本族把它收成两格一行。 */
+ *     但共用件给每格 `margin:8px 0`，桌面档拉出约 200px 空洞 —— 本族把它收成两格一行；
+ *  ③ 窄屏分布条给 4px 下沿（`K5`：占比 <1% 的条实渲不到 1px，肉眼读成空行）。
+ *
+ *  **#544 终审席（票 #268 §4／§5）四条打回项**也落在这一段（都不出本件）：
+ *  ① `E1` 触摸目标：本族页级规则原写 `min-height:38px`，把 #525 配方给全宽档的 44px **压下来了**
+ *     （实测 31–39 九页输入框 1440 档 434×38）——改回 44px（＝ HELP 参照页与 `.ilife-copy-btn` 同值）；
+ *  ② `K1` 字号混用：原本只把 `#sec-figures` **首卡**值放大到 28px，一排四卡字号 28／22 混用、基线错开——
+ *     整排退回公共层那一档 22px（同批 01–30 页的读数），本段不再改 KPI 字号；
+ *  ③ `K5` 细条：`renderDistributionRows` 的填充宽＝占比（行内联 `width:<pct>%`，共用件只收百分比），
+ *     给 `.ilife-block-dist-row-fill` 加 4px 下限——**几何在 CSS 层解决**，不改共用件的入参口径，
+ *     也不在页面里新算第二个百分比；
+ *  ④ `P1-6／K6` 三节无可见标题（核心数字／类型分布／高频运动）：节标题由 `shell()` 写进 `<section>`
+ *     首个子节点，样式落本段 `#sec-figures > h2,…` 一条（沿用公共层卡题那一档：15px/700）。 */
 const S544_CSS = '<style>'
-  + '#sec-figures .ilife-block-kpi-card:first-child .ilife-block-kpi-card-value{font-size:28px;line-height:1.2}'
   + '@media (max-width:820px){.ilife-page .ilife-block-toc{flex-wrap:wrap;overflow-x:visible}'
   + '.ilife-page .ilife-block-toc a{flex:0 1 auto}}'
   + '#sec-window .ilife-block-param-form{margin:12px 0 0}'
   + '#sec-window .ilife-block-param-form-field{display:inline-block;width:calc(50% - 6px);margin:6px 0}'
   + '#sec-window .ilife-block-param-form-field + .ilife-block-param-form-field{margin-left:12px}'
-  + '#sec-window .ilife-block-param-form-input{min-height:38px}'
+  + '#sec-window .ilife-block-param-form-input{min-height:44px}'
+  + '.ilife-page .ilife-block-dist-row-fill{min-width:4px}'
+  // 日期轴（#268 K4 第二版）：一条细轴线 ＋ 等宽槽里的刻度点与日期。轴线与刻度点必须是
+  // **同一层两个元素**（同一层各自的伪元素会互相盖住），刻度的圆点用 `i` 的伪元素画。
+  // 内距**按百分比**（不能写死 px）：折线 SVG 的绘图区两侧在 viewBox 里的位置是定值
+  // （`charts.ts`：x0＝58、x1＝566，viewBox 宽 580），而 SVG 盒宽随卡片变（桌面 850px、手机 328px）
+  // ⇒ 左＝58/580＝10%，右＝1−566/580＝2.414%。`padding` 里再让出一半槽宽（5 个槽的槽心因此落到
+  // 58＋槽宽×(i−0.5)，与绘图区 1/6…5/6 的锚点同列）。写成定值 px 时手机档会偏 25px（≈18 天）——
+  // 视觉复评 r3b／r3c 连量两轮的那一笔。
+  + '.sui-xruler{position:relative;display:flex;align-items:flex-start;margin:2px 2.414% 0 10%;'
+  + 'padding-left:4%;padding-right:4%}'
+  + '.sui-xruler::before{content:"";position:absolute;left:0;right:0;top:3px;height:1px;background:var(--line)}'
+  + '.sui-xruler-t{position:relative;flex:1 1 0;min-width:26px;text-align:center;font-size:11px;'
+  + 'line-height:1.3;color:var(--fg2);font-variant-numeric:tabular-nums;white-space:nowrap}'
+  + '.sui-xruler-t > i{position:relative;display:inline-block;width:7px;height:7px}'
+  + '.sui-xruler-t > i::before{content:"";position:absolute;left:3px;top:0;width:1px;height:3px;background:var(--line)}'
+  + '.sui-xruler-t > i::after{content:"";position:absolute;left:1.5px;top:3px;width:4px;height:4px;'
+  + 'border-radius:50%;background:var(--fg3)}'
+  + '#sec-figures > h2,#sec-category > h2,#sec-badges > h2{margin:0;font-size:15px;font-weight:700;color:var(--fg)}'
   + '</style>';
 
 /** 来源脚注卡（#544 形状化，照 #523 的 `footFacts`）：键值行「数据来源／窗口／记录数」，
@@ -604,7 +731,11 @@ export function buildRecapDoc(v: RecapView): string {
     {
       id: 'sec-figures',
       label: '核心数字',
-      // #544：主角（总消耗）排首卡吃 28px；窗口住窗口条胶囊，活跃天数只报分子。
+      // #268 终审席 P1-6：核心数字这三节在正文里没有落点（节身份只在顶部导航的胶囊里），补可见节标题。
+      head: '核心数字',
+      // #544：主角（总消耗）排首卡；窗口住窗口条胶囊，活跃天数只报分子。
+      // （第 1 轮曾把首卡值放大到 28px 当主角，终审席 K1 判「一排四卡字号 28／22 混用、基线错开」，
+      //   故整排退回公共层那一档 22px，见 `S544_CSS` 件头。）
       html: renderKpiGrid([
         { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
         { label: '总时长', value: numUnit(v.totalMinutes, '分钟') },
@@ -622,6 +753,7 @@ export function buildRecapDoc(v: RecapView): string {
     cards.push({
       id: 'sec-category',
       label: '类型分布',
+      head: '类型分布',
       html: renderDistributionRows({
         rows: v.byCategory.map((b) => ({
           label: b.category,
@@ -635,17 +767,19 @@ export function buildRecapDoc(v: RecapView): string {
     cards.push({
       id: 'sec-badges',
       label: '高频运动',
+      head: '高频运动',
       html: renderChips({ items: v.top5.map((t) => ({ text: t.type + ' ×' + t.sessions })) }),
     });
     cards.push({
       id: 'sec-daily',
       label: '每日消耗趋势',
-      html: renderChartBlock({
+      // #268 K4：长窗（≥45 天）在折线卡下方补一条日期轴（只出窗口内部日期，短窗不出）。
+      html: withXRuler(renderChartBlock({
         kind: 'line',
         title: '每日消耗趋势（空缺断点不断 0）',
-        // #544：纵轴刻度与量程走 `valueAxisOf()`（这两天同值时不再贴着底边画）。
+        // #544：纵轴刻度与量程走 `valueAxisOf()`（最小值锚 0、刻度落整数、线不贴上下沿）。
         input: { items: dailyItems, options: valueAxisOf(dailyItems.map((p) => p.value)) },
-      }),
+      }), dailyItems),
     });
   } else {
     cards.push({
@@ -736,7 +870,8 @@ export function buildTrendDoc(v: TrendView): string {
     cards.push({
       id: 'sec-line',
       label: '每日消耗折线',
-      html: renderChartBlock({
+      // #268 K4：长窗（≥45 天）在折线卡下方补一条日期轴（只出窗口内部日期，短窗不出）。
+      html: withXRuler(renderChartBlock({
         kind: 'line',
         title: '每日消耗与时长（消耗实线，时长虚线，两套刻度）',
         input: {
@@ -750,7 +885,7 @@ export function buildTrendDoc(v: TrendView): string {
             ],
           },
         },
-      }),
+      }), burnItems),
     });
     cards.push({
       id: 'sec-weekly',
