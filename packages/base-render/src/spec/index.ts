@@ -191,17 +191,21 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'PAGE_UI_CLASS', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "'ilife-page-ui'" },
   { name: 'PAGE_UI_VIEWPORT', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "'width=device-width,initial-scale=1,viewport-fit=cover'" },
   { name: 'pageUiCss', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input?: PageUiCssInput): string' },
-  { name: 'MEDIA_RATIOS', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']" },
+  { name: 'MEDIA_RATIOS', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-5', '4-3', '9-16', '16-9']" },
   { name: 'pageShapeCss', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input?: { prefix?: string }): string' },
   { name: 'renderFactStrip', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: FactStripInput): string' },
   { name: 'renderMediaFigure', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: MediaFigureInput): string' },
+  // 追加窄席位（票号沿用 #525，本节归它）：媒体占位件——与 `renderMediaFigure` **同规格**
+  // （同宽高比容器／同圆角／同外边距／同图注槽），换的只是框里那点内容（一句原因 ＋ 可选下一步）。
+  { name: 'renderMediaPlaceholder', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: MediaPlaceholderInput): string' },
   { name: 'renderTimelineRows', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: TimelineRowsInput): string' },
   { name: 'PageUiCssInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ prefix?: string }' },
   { name: 'FactItemInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ label: string; value: string; tone?: FactTone }' },
   { name: 'FactStripInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ items: readonly FactItemInput[]; extraClass?: string }' },
   { name: 'FactTone', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['ok', 'warn', 'danger']" },
   { name: 'MediaFigureInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ src?: string; alt: string; ratio: MediaRatio; fit?: \'contain\' | \'cover\'; caption?: string; note?: string; placeholder?: string; id?: string }' },
-  { name: 'MediaRatio', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']" },
+  { name: 'MediaPlaceholderInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ alt: string; ratio: MediaRatio; reason: string; next?: string; caption?: string; note?: string; fit?: \'contain\' | \'cover\'; id?: string }' },
+  { name: 'MediaRatio', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-5', '4-3', '9-16', '16-9']" },
   { name: 'TimelineRowInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ time: string; main: string; note?: string }' },
   { name: 'TimelineRowsInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ rows: readonly TimelineRowInput[]; extraClass?: string }' },
 

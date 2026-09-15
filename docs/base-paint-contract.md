@@ -877,17 +877,19 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | `PAGE_UI_CLASS` | runtime | #525 | implemented | 3.6 | `'ilife-page-ui'` |
 | `PAGE_UI_VIEWPORT` | runtime | #525 | implemented | 3.6 | `'width=device-width,initial-scale=1,viewport-fit=cover'` |
 | `pageUiCss` | runtime | #525 | implemented | 3.6 | `(input?: PageUiCssInput): string` |
-| `MEDIA_RATIOS` | runtime | #525 | implemented | 3.6 | `readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']` |
+| `MEDIA_RATIOS` | runtime | #525 | implemented | 3.6 | `readonly ['natural', '1-1', '3-4', '4-5', '4-3', '9-16', '16-9']` |
 | `pageShapeCss` | runtime | #525 | implemented | 3.6 | `(input?: { prefix?: string }): string` |
 | `renderFactStrip` | runtime | #525 | implemented | 3.6 | `(input: FactStripInput): string` |
 | `renderMediaFigure` | runtime | #525 | implemented | 3.6 | `(input: MediaFigureInput): string` |
+| `renderMediaPlaceholder` | runtime | #525 | implemented | 3.6 | `(input: MediaPlaceholderInput): string` |
 | `renderTimelineRows` | runtime | #525 | implemented | 3.6 | `(input: TimelineRowsInput): string` |
 | `PageUiCssInput` | type | #525 | implemented | 3.6 | `{ prefix?: string }` |
 | `FactItemInput` | type | #525 | implemented | 3.6 | `{ label: string; value: string; tone?: FactTone }` |
 | `FactStripInput` | type | #525 | implemented | 3.6 | `{ items: readonly FactItemInput[]; extraClass?: string }` |
 | `FactTone` | type | #525 | implemented | 3.6 | `readonly ['ok', 'warn', 'danger']` |
 | `MediaFigureInput` | type | #525 | implemented | 3.6 | `{ src?: string; alt: string; ratio: MediaRatio; fit?: 'contain' \| 'cover'; caption?: string; note?: string; placeholder?: string; id?: string }` |
-| `MediaRatio` | type | #525 | implemented | 3.6 | `readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']` |
+| `MediaPlaceholderInput` | type | #525 | implemented | 3.6 | `{ alt: string; ratio: MediaRatio; reason: string; next?: string; caption?: string; note?: string; fit?: 'contain' \| 'cover'; id?: string }` |
+| `MediaRatio` | type | #525 | implemented | 3.6 | `readonly ['natural', '1-1', '3-4', '4-5', '4-3', '9-16', '16-9']` |
 | `TimelineRowInput` | type | #525 | implemented | 3.6 | `{ time: string; main: string; note?: string }` |
 | `TimelineRowsInput` | type | #525 | implemented | 3.6 | `{ rows: readonly TimelineRowInput[]; extraClass?: string }` |
 <!-- FROZEN-SURFACE-TABLE-END -->
