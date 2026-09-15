@@ -185,7 +185,8 @@ function assertFusion(r, what, eyebrow) {
   assert.deepEqual([...r.file.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     what + ' 的复制数据不是三格式菜单');
   // ⑥ 来源脚注 ＋ 口径行。
-  assert.ok(r.file.includes('数据来源 · '), what + ' 缺来源脚注');
+  // #544：来源脚注改键值行「数据来源／窗口／记录数」，不再是 `数据来源 · …` 那种 `·` 串。
+  assert.ok(r.file.includes('数据来源'), what + ' 缺来源脚注');
   assert.ok((r.file.match(/class="ilife-block-caliber"/g) ?? []).length >= 2,
     what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');
   assert.ok(r.file.length > 10000, what + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
@@ -193,7 +194,7 @@ function assertFusion(r, what, eyebrow) {
   assert.ok(!r.file.includes('calorie.view.'), what + ' 产物里出现命令键 calorie.view.*');
   assert.ok(!r.file.includes('移植'), what + ' 产物里出现工序词「移植」');
   assert.ok(!/t454\b/i.test(r.file) && !r.file.includes('#454'), what + ' 产物里出现票号');
-  // 页头写人话：眉标是「运动 · <页名>」，<title> 是人话标题。
+  // 页头写人话：眉标是「运动<页名>」（#544 去 `·`），<title> 是人话标题。
   const title = (/<title>([^<]*)<\/title>/.exec(r.file) ?? [])[1] ?? '';
   const gotEyebrow = (/<p class="ilife-block-page-shell-eyebrow">([^<]*)<\/p>/.exec(r.file) ?? [])[1] ?? '';
   assert.equal(gotEyebrow, eyebrow, what + ' 眉标不是人话原文：' + gotEyebrow);
@@ -202,15 +203,15 @@ function assertFusion(r, what, eyebrow) {
 
 /* ───────────────────────── ① 6 条词（冻结表逐字参数） ───────────────────────── */
 
-const RECAP_TITLE = '卡路里·运动复盘';
+const RECAP_TITLE = '卡路里 运动复盘';
 
 test('#454 看运动趋势（冻结表 window=30d）→ 趋势页融合版式', () => {
   const call = frozenCall('看运动趋势');
   assert.equal(call.key, 'calorie.view.exercise-trend');
   assert.deepEqual(call.params, { window: '30d' });
   const r = runCli(seededDir(), call.key, call.params, '01-trend');
-  assertFusion(r, '看运动趋势', '运动 · 趋势');
-  assert.equal((/<title>([^<]*)<\/title>/.exec(r.file) ?? [])[1], '卡路里·运动趋势');
+  assertFusion(r, '看运动趋势', '运动趋势');
+  assert.equal((/<title>([^<]*)<\/title>/.exec(r.file) ?? [])[1], '卡路里 运动趋势');
 
   // ② 每日消耗折线：消耗实线（无虚线属性）＋时长虚线（`stroke-dasharray`），两套刻度各一条序列。
   const line = cardOf(r.file, 'sec-line');
@@ -241,7 +242,7 @@ for (const [i, word] of ['运动复盘（本周）', '运动复盘（本月）',
     const call = frozenCall(word);
     assert.equal(call.key, 'calorie.view.exercise-recap');
     const r = runCli(seededDir(), call.key, call.params, '0' + (i + 2) + '-recap-' + ['week', 'month', '90d', 'year'][i]);
-    assertFusion(r, word, '运动 · 复盘');
+    assertFusion(r, word, '运动复盘');
     assert.equal((/<title>([^<]*)<\/title>/.exec(r.file) ?? [])[1], RECAP_TITLE);
     // ③ 一句话结论条（页内静态提示形态）＋核心数字。
     assert.ok(hasClass(r.file, 'ilife-block-feedback-block-note'), word + ' 缺一句话结论条');
@@ -266,7 +267,7 @@ test('#454 运动复盘（自定义时间）（冻结表 window=custom＋真日�
   assert.equal(call.key, 'calorie.view.exercise-recap');
   assert.deepEqual(call.params, { window: 'custom', start: '2026-06-01', end: '2026-06-30' });
   const r = runCli(seededDir(), call.key, call.params, '06-recap-custom');
-  assertFusion(r, '运动复盘（自定义时间）', '运动 · 复盘');
+  assertFusion(r, '运动复盘（自定义时间）', '运动复盘');
   assert.ok(r.file.includes('2026-06-01') && r.file.includes('2026-06-30'), '窗口没落成给的那对日期');
   assert.ok(hasClass(r.file, 'ilife-block-feedback-block-note'), '缺一句话结论条');
   assert.ok(hasClass(cardOf(r.file, 'sec-category'), 'ilife-block-dist-row'), '缺类型分布条');
@@ -316,7 +317,7 @@ test('#454 五窗同版：五个复盘窗口的锚点 id 与区块类名逐一�
 test('#454 长窗（120 天）逐日表：截断明示＋页眉条数与可见行数口径一致', () => {
   const r = runCli(seededDir(), 'calorie.view.exercise-trend',
     { window: 'custom', start: LONG_START, end: LONG_END }, '07-trend-long');
-  assertFusion(r, '看运动趋势（长窗）', '运动 · 趋势');
+  assertFusion(r, '看运动趋势（长窗）', '运动趋势');
   const daily = cardOf(r.file, 'sec-daily');
   assert.equal(bodyRows(daily), ROWS_CAP, '可见行数不是 ' + ROWS_CAP);
   assert.ok(daily.includes('共 120 天'), '页眉没报窗口总天数');
@@ -350,7 +351,7 @@ test('#454 空窗两页：真出口按缺失阻断退出 4；空态产物在装�
     days: spanDays.map((date) => ({ date, minutes: null, burned: null, sessions: 0 })),
     weekly: [], activeDays: 0, totalMinutes: null, totalBurned: 0, peak: null,
   });
-  assertFusion({ status: 0, file: trendEmpty, stderr: '' }, '看运动趋势（空窗）', '运动 · 趋势');
+  assertFusion({ status: 0, file: trendEmpty, stderr: '' }, '看运动趋势（空窗）', '运动趋势');
   assert.ok(hasClass(trendEmpty, 'ilife-block-empty-block'), '趋势空窗缺空态');
   assert.ok(trendEmpty.includes('说「记运动」'), '趋势空窗缺下一句话');
   assert.equal(cardOf(trendEmpty, 'sec-line'), '', '空窗却出了折线卡外壳');
@@ -363,7 +364,7 @@ test('#454 空窗两页：真出口按缺失阻断退出 4；空态产物在装�
     daily: spanDays.map((date) => ({ date, burned: null })),
     summary: '本窗 ' + spanDays.length + ' 天中共运动 0 天、0 次、累计消耗 0 卡。',
   });
-  assertFusion({ status: 0, file: recapEmpty, stderr: '' }, '运动复盘（空窗）', '运动 · 复盘');
+  assertFusion({ status: 0, file: recapEmpty, stderr: '' }, '运动复盘（空窗）', '运动复盘');
   assert.ok(hasClass(recapEmpty, 'ilife-block-empty-block'), '复盘空窗缺空态');
   assert.ok(recapEmpty.includes('说「记运动」'), '复盘空窗缺下一句话');
   assert.equal(cardOf(recapEmpty, 'sec-category'), '', '空窗却出了类型分布条外壳');

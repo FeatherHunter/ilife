@@ -124,3 +124,72 @@
 - 别家能力目录的页（`src/render/trendDocs.ts` 的 `goal-predict` 等）实跑零命中，**无需转票**；
   若后续另有页面新印来源脚注，按用户裁决在同一波「来源脚注删」的后续票里收。
 - 视觉终审（真浏览器量尺、肉眼逐页）不在实施者票面内，留负责人。
+
+## §六 补提交（接手席）
+
+> 题名照派单逐字（「§六 补提交（接手席）」）；上文 §一～§九 是第一席已写的段落，一字未改，
+> 本节只追加在文档末尾。编号与上文 §六「机器读数」重号，以本节标题末的「补提交（接手席）」为准。
+
+第一席中途死掉，实现那一半留在工作区未提交；本席按协议 §3.2 第 4 条接手：先量现场 → 复核 diff 合票面 → 跑门 → 限定路径提交（保持非受益者身份，未替它兜任何东西）。
+
+### 六.1 接手时量到的现场读数
+
+- `git status --porcelain packages/skill-calorie/src/goal`（接手当刻）：两条 ` M`——`src/goal/receipt.ts`、`src/goal/resultDocs.ts`。
+- `git diff --stat packages/skill-calorie/src/goal`（接手当刻）：
+  `2 files changed, 14 insertions(+), 13 deletions(-)`（分件 `receipt.ts` 8 ＋＋/−−、`resultDocs.ts` 19 行）——
+  **与派单给的读数逐字相符**。
+- `git log --oneline -1 cdf229a`：测试件 `test/t561-goal-no-source.test.mjs` 与证据件本件已入库（第一席那一半）；
+  接手当刻这两件在盘上、工作区干净。
+- 逐处读完 diff 后的判定：**改动只有两类，无一处越出票面**——
+  1. 撤屏上来源脚注：`receipt.ts` 内容数组末行 `renderCaliberLine('数据来源：本机目标库 ｜ 本次影响 … ｜ 时间 …')` 整行删；
+     `resultDocs.ts` 的 `tailOf()` 少一个 `footer` 入参、函数体撤 `+ renderCaliberLine(footer)`、3 个调用点各撤一行 footer 实参
+     （`view.goal`／`view.goal-vs-actual`／`view.goal-expiring`）。
+  2. 两件头各补 #561 用户裁决注记（`receipt.ts` 块序段、`resultDocs.ts`「八样」段）。
+  **取数、文案、键名、入参名、退出码零处改动**（无一处「顺手改了别的」）。
+- **复制载荷里的来源一字未动**（正证没删错地方）：
+  - `receipt.ts:215-218` → `copyLog({ command, source: receipt.meta.source, m5Line: …, actionAt: …, version: … })` 原样；
+  - `resultDocs.ts:69-71` → `copyLog({ command, source: DB_FILENAME + ' ｜ ' + source, … })` 原样，
+    `tailOf` 仍把 `source` 传给 `copyBlockOf`（`resultDocs.ts:79`）。
+- 判据：diff 与票面相符 ⇒ 继续跑门（无「停手上报」事由）。
+
+### 六.2 提交
+
+- 提交：`9c6710b`（全 `9c6710befa70407e540ae3c8e3417f1b5d9a7a18`），
+  `功能(561): 目标域屏上来源脚注删除（接手席补提交：resultDocs.ts 的 tailOf 尾巴 ＋ receipt.ts 回执末行；复制载荷来源一字未动）`。
+- `git show --stat` 读数：`2 files changed, 14 insertions(+), 13 deletions(-)`；
+  `git show --pretty=format: --name-only HEAD` 只有 `packages/skill-calorie/src/goal/receipt.ts` 与
+  `packages/skill-calorie/src/goal/resultDocs.ts` 两条——**别席的在途件一件都没进**。
+- 提交形态照铁律 5：路径全限定的 `git commit -m "…" -- <两路径>`（不是 `-a`、不是 `-A`）。
+- 并发现场如实记：另有一席当时在 `src/weight/**` 作业。本席 `git add`（runId `2b84c72d-fc35-4454-b224-00dd698de08c`）
+  只点本票两路径；紧接着读 `git diff --cached --name-only` 时，暂存区一度并列出现别席的
+  `packages/skill-calorie/src/weight/history.ts` 与 `packages/skill-calorie/test/weight-history-333.test.mjs`
+  （别席并发 `git add` 所致，非本席所为），到提交前复核时它们已不在暂存区，**本席未碰、未撤、未提交它们**；
+  且本席一律用路径限定的 `git commit -- <两路径>`，即便它们仍在暂存区也不会被带进本提交。
+- 提交后 `git status --porcelain packages/skill-calorie/src/goal` 无输出（本票两件已清）。
+
+### 六.3 跑门读数（均为持锁窗口内，`GATE-RUN` 行抄自 `.scratch/locks/gate-runs.log`）
+
+- 编译：`GATE-RUN runId=fcf42509-237d-44f5-9c7b-32f4fb7a928b cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10012 exit=0`
+  - 摘要行：`RESULT: ticket=561C runId=fcf42509-237d-44f5-9c7b-32f4fb7a928b waitedMs=10012 exit=0`。
+- 验收用例：`GATE-RUN runId=6f03d9fd-469d-4c33-898b-7726a891f6c9 cmd="node --test packages/skill-calorie/test/t561-goal-no-source.test.mjs" waitedMs=30027 exit=0`
+  - 摘要行：`ℹ tests 4 ／ ℹ pass 4 ／ ℹ fail 0`（`cancelled 0`／`skipped 0`／`todo 0`）；
+  - 用例内自证行：`T561-MUT 结果页改坏红=1 还原绿=1；回执页改坏红=1 还原绿=1`；
+  - 长输出落 `.scratch/t561c/gate-build.txt`／`gate-test.txt`。
+- 目标域自己那 14 件专跑（票面第二判据，非票面验收命令）：`GATE-RUN runId=d8a991c9-f691-4989-8230-9762c35b025a cmd="node .scratch/t561c/probe-14.mjs" waitedMs=0 exit=0`
+  - `T561C-PROBE 目标域 14 件＝结果页 4 ＋ 回执页 10`
+  - `T561C-PROBE 屏上可见文本 \`数据来源\` 命中件数 = 0 / 14`
+  - `T561C-PROBE 复制载荷来源仍在件数 = 14 / 14`
+  - `T561C-PROBE 逐件 exit 非 0 =`（空，25 条里这 14 件逐条 exit 0）
+  - 判据对账：屏上零命中 **0/14** ✅；复制载荷来源仍在 **14/14** ✅。探针与长输出落 `.scratch/t561c/probe-14.mjs`／`probe-14.txt`。
+
+### 六.4 本席写集与未做项
+
+- 写集（4 处，全在派单内）：`src/goal/receipt.ts`（只提交，未再加料）、`src/goal/resultDocs.ts`（同上）、
+  本证据件末尾本节（只追加）、`.scratch/t561c/`（日志与探针，不入库）。
+- 未改：测试件、上文 §一～§九 任一已写段落、`src/goal/` 之外的任何源件、唤醒词名／命令键名／参数名／退出码／取数口径。
+- 未做：`git push`（票面禁）；真浏览器量尺与肉眼终审仍留负责人（同 §九）；本席未做第二轮变异（第一席 §七 已做两轮真身变异，本席只复跑验收用例与专跑探针）。
+- 本节自身的提交归属如实记（同仓多席并发，留痕备查）：本席 `git add` 本件（runId `c58a6ea4-e56c-4f2e-b13f-75d30ff4317d`）后，
+  另一席（#560）并发跑了一次**未限定路径**的 `git commit`，把当时暂存区里本席这一件一并带走——本节的 64 行插入落在别席那条提交
+  `86dd890`（`修复(560): 体重页去屏上来源脚注 + log.ts/判据全绿`）里，不是本席署名的提交；本席随后那条路径限定提交因此报
+  `no changes added to commit`（exit 1）。**内容已入 HEAD 且逐字无误（`git show HEAD:…` 复核本节在册）**；
+  按铁律本席不做 rebase／amend／reset 等改写，故不再另立提交，如实在此留痕。

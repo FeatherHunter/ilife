@@ -217,6 +217,7 @@ function buildGoalReceiptDoc(db: DatabaseSync, key: string, receipt: CrudReceipt
           actionAt: receipt.meta.actionAt, version: DOC_VERSION,
         }),
       },
+    renderCaliberLine('数据来源：本机目标库 ｜ 本次影响 ' + receipt.affectedRows + ' 行 ｜ 时间 ' + receipt.meta.actionAt),
     }),
   ].join('');
   return assembleDocPage({
