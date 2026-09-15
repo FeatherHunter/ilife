@@ -1,0 +1,2 @@
+BUILD-LOG-ERROR-LINES=1
+packages/base-render/test-d/contract-signatures.ts(390,20): error TS2344: Type 'false' does not satisfy the constraint 'true'.

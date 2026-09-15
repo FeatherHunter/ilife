@@ -1,0 +1,17 @@
+OK   记一餐 [calorie.diet.add] exit=0 bytes=73322 
+OK   记一餐（含备注） [calorie.diet.add] exit=0 bytes=73325 
+OK   补记饮食 [calorie.diet.add] exit=0 bytes=73208 
+OK   批量补记饮食 [calorie.diet.batch] exit=0 bytes=74079 
+OK   记喝水 [calorie.water.log] exit=0 bytes=71966 
+OK   复制昨日饮食 [calorie.diet.copy] exit=0 bytes=72580 
+OK   改饮食记录 [calorie.diet.update] exit=0 bytes=72034 
+OK   改某日饮食 [calorie.diet.update-by-date] exit=0 bytes=71381 
+OK   删饮食记录 [calorie.diet.remove] exit=0 bytes=68977 
+OK   删一餐 [calorie.diet.remove-by-type] exit=0 bytes=68367 
+OK   删某日饮食 [calorie.diet.remove-by-date] exit=0 bytes=68351 
+OK   批量删饮食 [calorie.diet.remove-by-range] exit=0 bytes=68436 
+OK   存食品 [calorie.product.add] exit=0 bytes=73413 
+OK   改食品 [calorie.product.update] exit=0 bytes=71119 
+OK   下架食品 [calorie.product.deprecate] exit=0 bytes=71377 
+OK   批量导入食品 [calorie.product.import] exit=0 bytes=73419 
+RESULT: 16/16

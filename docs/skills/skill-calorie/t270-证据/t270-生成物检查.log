@@ -1,0 +1,7 @@
+$ node packages/skill-calorie/scripts/gen-cli.mjs --check
+GEN-CHECK ok packages\skill-calorie\src\cli\keys.ts sha256=568420b6cf6a695e44c186baa4a182ae66b451c8c6cc7ca82ef741df82296eae
+GEN-CHECK ok packages\skill-calorie\src\cli\registry.ts sha256=5c81bfbdaa1ea587a6b6a6fbf2d3a83aff1e76b93f6dc3a24291ce17b517b47b
+GEN-CHECK ok packages\base-combos\combos.yaml sha256=bca5b2403f50e53f66aa12a8631d72d5d4d71837c5bd5380479619e777d84853
+GEN-CHECK ok packages\skill-calorie\scripts\build-help.mjs sha256=3c7cf6acd09e6fc80551efe2dd79cd7384c101831564b454133fb5c2f7d3dcc5
+GEN-CHECK ok packages\skill-calorie\src\triggers\routes.generated.ts sha256=d12165cbc1314b4a3940bc7b0adf03e3a87fafe6e6ea91dcd3b95f4836aa442c
+GEN-CHECK PASS：键 127（写 46 ＋ 读 81）；能力 10 个（analysis／body／diet／exercise／goal／home／photo／profile／weight／workout）声明 127 条，未搬迁清单 0 条

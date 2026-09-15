@@ -1,0 +1,35 @@
+SEED ok=7/7
+NON-DIET 会改数据库的命令 =32
+SAME calorie.weight.log bytes=77039→77039
+SAME calorie.weight.batch bytes=73933→73933
+SKIP calorie.weight.update exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.weight.remove exit 4→4（两次都没产物，不参与逐字节比对）
+SAME calorie.exercise.add bytes=72531→72531
+SKIP calorie.exercise.update exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.exercise.remove exit 4→4（两次都没产物，不参与逐字节比对）
+SAME calorie.goal.set bytes=275→275
+SAME calorie.goal.weight bytes=206→206
+SKIP calorie.goal.water exit 4→4（两次都没产物，不参与逐字节比对）
+SAME calorie.goal.pause bytes=242→242
+SAME calorie.goal.resume bytes=224→224
+SAME calorie.profile.set bytes=69327→69327
+SAME calorie.profile.activity bytes=69105→69105
+SAME calorie.profile.update bytes=68455→68455
+SAME calorie.body.composition-add bytes=87925→87925
+SAME calorie.body.measure-add bytes=84280→84280
+SKIP calorie.body.composition-remove exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.body.measure-remove exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.photo.add exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.photo.remove exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.photo.tag exit 4→4（两次都没产物，不参与逐字节比对）
+SAME calorie.workout.plan-set bytes=69867→69867
+SKIP calorie.workout.plan-copy exit 4→4（两次都没产物，不参与逐字节比对）
+SAME calorie.workout.plan-set-week bytes=69600→69600
+SAME calorie.workout.plan-add-movement bytes=69567→69567
+SAME calorie.workout.plan-set-rest bytes=69475→69475
+SKIP calorie.workout.plan-update exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.workout.plan-update-day exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.workout.plan-delete-day exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.workout.plan-update-movement exit 4→4（两次都没产物，不参与逐字节比对）
+SKIP calorie.workout.plan-delete exit 4→4（两次都没产物，不参与逐字节比对）
+RESULT: 16/16 逐字节一致（时刻串已归一，只差当刻时钟不算差异）

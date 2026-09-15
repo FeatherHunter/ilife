@@ -1,0 +1,134 @@
+{
+  "at": "2026-09-15T12:04:19.103Z",
+  "seedToday": "2026-09-07",
+  "rows": [
+    {
+      "word": "记一餐",
+      "key": "calorie.diet.add",
+      "exit": 0,
+      "bytes": 73322,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-lOTFL5\\calorie_diet_add.html",
+      "fail": []
+    },
+    {
+      "word": "记一餐（含备注）",
+      "key": "calorie.diet.add",
+      "exit": 0,
+      "bytes": 73325,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-zDYA3p\\calorie_diet_add.html",
+      "fail": []
+    },
+    {
+      "word": "补记饮食",
+      "key": "calorie.diet.add",
+      "exit": 0,
+      "bytes": 73208,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-xGhf5X\\calorie_diet_add.html",
+      "fail": []
+    },
+    {
+      "word": "批量补记饮食",
+      "key": "calorie.diet.batch",
+      "exit": 0,
+      "bytes": 74079,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-dE7bBG\\calorie_diet_batch.html",
+      "fail": []
+    },
+    {
+      "word": "记喝水",
+      "key": "calorie.water.log",
+      "exit": 0,
+      "bytes": 71966,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-MltddT\\calorie_water_log.html",
+      "fail": []
+    },
+    {
+      "word": "复制昨日饮食",
+      "key": "calorie.diet.copy",
+      "exit": 0,
+      "bytes": 72580,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-fH8KEU\\calorie_diet_copy.html",
+      "fail": []
+    },
+    {
+      "word": "改饮食记录",
+      "key": "calorie.diet.update",
+      "exit": 0,
+      "bytes": 72034,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-tu6i92\\calorie_diet_update.html",
+      "fail": []
+    },
+    {
+      "word": "改某日饮食",
+      "key": "calorie.diet.update-by-date",
+      "exit": 0,
+      "bytes": 71381,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-Z4uhlB\\calorie_diet_update-by-date.html",
+      "fail": []
+    },
+    {
+      "word": "删饮食记录",
+      "key": "calorie.diet.remove",
+      "exit": 0,
+      "bytes": 68977,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-yCL1E1\\calorie_diet_remove.html",
+      "fail": []
+    },
+    {
+      "word": "删一餐",
+      "key": "calorie.diet.remove-by-type",
+      "exit": 0,
+      "bytes": 68367,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-q1yjHo\\calorie_diet_remove-by-type.html",
+      "fail": []
+    },
+    {
+      "word": "删某日饮食",
+      "key": "calorie.diet.remove-by-date",
+      "exit": 0,
+      "bytes": 68351,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-gKSkaR\\calorie_diet_remove-by-date.html",
+      "fail": []
+    },
+    {
+      "word": "批量删饮食",
+      "key": "calorie.diet.remove-by-range",
+      "exit": 0,
+      "bytes": 68436,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-mRYBS6\\calorie_diet_remove-by-range.html",
+      "fail": []
+    },
+    {
+      "word": "存食品",
+      "key": "calorie.product.add",
+      "exit": 0,
+      "bytes": 73413,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-B8pBHe\\calorie_product_add.html",
+      "fail": []
+    },
+    {
+      "word": "改食品",
+      "key": "calorie.product.update",
+      "exit": 0,
+      "bytes": 71119,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-OlVOhb\\calorie_product_update.html",
+      "fail": []
+    },
+    {
+      "word": "下架食品",
+      "key": "calorie.product.deprecate",
+      "exit": 0,
+      "bytes": 71377,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-6XXVAn\\calorie_product_deprecate.html",
+      "fail": []
+    },
+    {
+      "word": "批量导入食品",
+      "key": "calorie.product.import",
+      "exit": 0,
+      "bytes": 73419,
+      "path": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t270-nUhCIz\\calorie_product_import.html",
+      "fail": []
+    }
+  ]
+}

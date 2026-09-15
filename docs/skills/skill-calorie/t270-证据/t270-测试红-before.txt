@@ -1,0 +1,196 @@
+weightCompare：17 场景分发
+weightCompare：平台期/极端月/同期
+T8 四主视图 parity：envelope stat + metrics 全 number + HTML 快照
+口径 · 删除键数据驱动：prose／items[].status／库内行三源一致（回执 id 定位被删行）
+口径 · 删除回执可恢复性：文案与库内语义一致（软删行留／硬删行无）
+体重记/改/删/批量 + 缺身高仍记（C5 #43）
+#239 ① copyArea
+#239 ② 给了 log 出复制日志那颗：id 与文案取冻结表，文本渲染期写进 data-t
+#247 ④ 数据位恒出三格式菜单；三样全不给时仍不出按钮；hints 可换
+#239 弹提示：notice 走 base-render 的反馈区块（不自造提示通道）
+#448 判据①：不给该位／给假 → 结构 sha 与改动前同值（三件样本）
+#448 判据③：新透传位的产物 ≡ 老字符串手术后的产物（逐字节）
+plan 校验：三硬止+软提示
+#449 ④ 标签单源：运动域标签表与域登记都只有一处
+单源：四类色的色表绑定全仓只在一处
+① exec 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由（红点：helpSceneCli 改回 main_prompt.cli 原文）
+③ 冻结面恒 130 条／`Scene` 属性集不变（红点：往 Scene 上加 cli 字段）
+A2 复用冻结面 130 条 implemented／0 pending（红点：base-render 新增契约面）
+#374 看今日体重概览（有段出页／无段阻断算通）
+① ② ③ ④ ⑥ 真跑：超预算库 → 页 ≤ 1 MiB＋横幅 N／M＋占位原因＋复制数据全量
+缺失与预算各归各位：坏图明示找不到文件，正常张仍按预算内嵌
+#438 整改自查：提示块只按预算跳过计数（缺失不进提示块、M 不含缺失数）
+⑤ 变异自证：改坏必红、改回必绿（两行机器读数）
+① ② 真跑：绝对路径落盘 ＋ 完整文档 ＋ 页内嵌着能播放的 GIF
+③ 页内嵌的字节与盘上 .gif 同源（长度／sha256 一致）
+页口径：#472 三格读数 ＋ 帧序明细 ＋ 缺值 — ＋ 复制数据保原始空值
+移植项 3：页超单页上限即改本地路径提示（GIF 仍落盘可开）
+⑤ 变异自证：把内嵌换成一段任务描述文案，用例必红，改回必绿
+① 现找那一态（路由真值 q）：完整文档 ＋ 行／命令块／复制区齐 ＋ 信封与落点不回归
+② 全量那一态（q 空串）：10 键逐条在页内，行数／命令块数＝10
+④ 变异自证：八类改坏都必红、改回必绿
+① 候选与快照真跑（缩略图＋日期＋标签＋快照＋prompt）
+#474 文件找不到才出声：正常行留空、异常行挂徽标、KPI 说「能看」几张
+⑤ data.output 绝对路径在盘上＋体积 ≤ 上限
+改照片标签：三态对照（保留／新增／移除）＋变更徽章
+加照片标签：加前加后对照＋新增态
+删照片标签：删除前删除后对照＋移除态
+无变化降级：走提示块（不出「已改好」那句，自相矛盾即红）
+① 六张带图页的每张 `<img>` 都带宽度约束
+④ GIF 舞台带宽度约束（`width:min
+⑤ 本票定的三个图上限（候选缩略 160px／快照 60vh／回执 240px）与对比卡的可折行
+⑦ 变异自证：改坏必红、改回必绿（两行机器读数）
+缺照片时明示哪张
+超预算提示块：哪张没显示／为什么＋替代操作（缺失不牵连正常照片）
+#526 详情页超限态：页顶结论条说清多大与为什么＋占位点名文件（旧句 0 命中）
+#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，照抄可重跑
+#247 场景 07 五张页的复制数据是「三格式三选一」菜单：三种格式各一份文本 ＋ 用途提示 ＋ 选中即报所选格式
+#269／#270 饮食写命令已是完整文档，且四块标题（老实物逐字）在产物里
+#337 场景 03 四条体重写命令已是完整文档（三变体字段齐）
+#365 身体细节四条写命令已是完整文档（七条写词；从「其余仍是片段」那张表里拿出来）
+HELP 速查每行一个复制按钮：ACTION_ID_ATTR ＋ DEFAULT_DATA_ATTR，actionId 取冻结表（红点：自造 id／丢属性）
+唤醒词 HELP 速查（renderHelpLookupHtml）走同一套接线（红点：漏第二处落点）
+copyActionHtml：单按钮走 renderActionBar 产出（不自造按钮 HTML）
+bindCopyAction 端到端：通道 1（clipboard）成功 → 复制文本逐字、反馈取冻结文案
+120 · analysis 11 处查询逐处排除软删行（每处唯一可观测面）
+#109 域内唤醒词命中：代表词→运动/身体域 9 键（路由不断）
+#109 运动总览：汇总＋双图＋按日表＋类型明细＋分类折叠＋复制
+#109 运动目标：目标 vs 实际＋完成度＋达成判定
+#109 体重盘：首末＋均值＋变化＋曲线＋记录表
+#109 体成分：来源表单＋趋势＋记录表＋复制
+#109 围度：单项趋势＋全量表（胸腰腹臀）＋复制
+#109 无假数据：9 键空库一律 exit 4 且 stdout 纯净
+#275 ⑥ 复制区开关：拿到命令原文才出那一节，日志第 4 段就是它
+#275 ⑥ 一张页只有一个复制区：整页那一支显式关掉区块自带的那一节
+#359 看体脂页：7 点逐个出现、逐位等于查库值（冻结种子 3 条）
+#440 判据③④：src 里旧词零命中；13 名的定义只在 fetch/body.ts 一处
+T5 真包门禁：无参运行读真台账 → PASS（台账与当刻实况一致）
+T9 真包台账与当刻实况一致：--sync --dry 零改动且不动文件
+#511 ① 面外残留逐页收掉 —— 60 饮食复盘（本周）（周末/工作日拆卡）
+#511 ④ 变异自证：新句改回旧写法 / 标题改回旧写法，同一段断言必红
+#482 文本审查：6 页旧句归零、页脚同一句式、结论句不再复述卡片数字
+#86 围度 wizard：场景1空页＋场景2预填＋recent＋白名单
+#86 体脂 wizard：来源＋体脂率＋皮褶7点＋换算未移植口径
+#81 唤醒词路由层（路由与 parity 分家）
+calorie triggers parity（SoT scripts/_triggers.py）
+dsh-bill-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-bill-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-bill-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-calorie client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-calorie client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-calorie client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-chef client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-chef client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-chef client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-home-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-home-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-home-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-life-pack client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-life-pack client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-life-pack client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-memo-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-memo-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-memo-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-schedule-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-schedule-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-schedule-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+failing tests:
+weightCompare：17 场景分发
+weightCompare：平台期/极端月/同期
+T8 四主视图 parity：envelope stat + metrics 全 number + HTML 快照
+口径 · 删除键数据驱动：prose／items[].status／库内行三源一致（回执 id 定位被删行）
+口径 · 删除回执可恢复性：文案与库内语义一致（软删行留／硬删行无）
+体重记/改/删/批量 + 缺身高仍记（C5 #43）
+#239 ① copyArea
+#239 ② 给了 log 出复制日志那颗：id 与文案取冻结表，文本渲染期写进 data-t
+#247 ④ 数据位恒出三格式菜单；三样全不给时仍不出按钮；hints 可换
+#239 弹提示：notice 走 base-render 的反馈区块（不自造提示通道）
+#448 判据①：不给该位／给假 → 结构 sha 与改动前同值（三件样本）
+#448 判据③：新透传位的产物 ≡ 老字符串手术后的产物（逐字节）
+plan 校验：三硬止+软提示
+#449 ④ 标签单源：运动域标签表与域登记都只有一处
+单源：四类色的色表绑定全仓只在一处
+① exec 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由（红点：helpSceneCli 改回 main_prompt.cli 原文）
+③ 冻结面恒 130 条／`Scene` 属性集不变（红点：往 Scene 上加 cli 字段）
+A2 复用冻结面 130 条 implemented／0 pending（红点：base-render 新增契约面）
+#374 看今日体重概览（有段出页／无段阻断算通）
+① ② ③ ④ ⑥ 真跑：超预算库 → 页 ≤ 1 MiB＋横幅 N／M＋占位原因＋复制数据全量
+缺失与预算各归各位：坏图明示找不到文件，正常张仍按预算内嵌
+#438 整改自查：提示块只按预算跳过计数（缺失不进提示块、M 不含缺失数）
+⑤ 变异自证：改坏必红、改回必绿（两行机器读数）
+① ② 真跑：绝对路径落盘 ＋ 完整文档 ＋ 页内嵌着能播放的 GIF
+③ 页内嵌的字节与盘上 .gif 同源（长度／sha256 一致）
+页口径：#472 三格读数 ＋ 帧序明细 ＋ 缺值 — ＋ 复制数据保原始空值
+移植项 3：页超单页上限即改本地路径提示（GIF 仍落盘可开）
+⑤ 变异自证：把内嵌换成一段任务描述文案，用例必红，改回必绿
+① 现找那一态（路由真值 q）：完整文档 ＋ 行／命令块／复制区齐 ＋ 信封与落点不回归
+② 全量那一态（q 空串）：10 键逐条在页内，行数／命令块数＝10
+④ 变异自证：八类改坏都必红、改回必绿
+① 候选与快照真跑（缩略图＋日期＋标签＋快照＋prompt）
+#474 文件找不到才出声：正常行留空、异常行挂徽标、KPI 说「能看」几张
+⑤ data.output 绝对路径在盘上＋体积 ≤ 上限
+改照片标签：三态对照（保留／新增／移除）＋变更徽章
+加照片标签：加前加后对照＋新增态
+删照片标签：删除前删除后对照＋移除态
+无变化降级：走提示块（不出「已改好」那句，自相矛盾即红）
+① 六张带图页的每张 `<img>` 都带宽度约束
+④ GIF 舞台带宽度约束（`width:min
+⑤ 本票定的三个图上限（候选缩略 160px／快照 60vh／回执 240px）与对比卡的可折行
+⑦ 变异自证：改坏必红、改回必绿（两行机器读数）
+缺照片时明示哪张
+超预算提示块：哪张没显示／为什么＋替代操作（缺失不牵连正常照片）
+#526 详情页超限态：页顶结论条说清多大与为什么＋占位点名文件（旧句 0 命中）
+#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，照抄可重跑
+#247 场景 07 五张页的复制数据是「三格式三选一」菜单：三种格式各一份文本 ＋ 用途提示 ＋ 选中即报所选格式
+#269／#270 饮食写命令已是完整文档，且四块标题（老实物逐字）在产物里
+#337 场景 03 四条体重写命令已是完整文档（三变体字段齐）
+#365 身体细节四条写命令已是完整文档（七条写词；从「其余仍是片段」那张表里拿出来）
+HELP 速查每行一个复制按钮：ACTION_ID_ATTR ＋ DEFAULT_DATA_ATTR，actionId 取冻结表（红点：自造 id／丢属性）
+唤醒词 HELP 速查（renderHelpLookupHtml）走同一套接线（红点：漏第二处落点）
+copyActionHtml：单按钮走 renderActionBar 产出（不自造按钮 HTML）
+bindCopyAction 端到端：通道 1（clipboard）成功 → 复制文本逐字、反馈取冻结文案
+120 · analysis 11 处查询逐处排除软删行（每处唯一可观测面）
+#109 域内唤醒词命中：代表词→运动/身体域 9 键（路由不断）
+#109 运动总览：汇总＋双图＋按日表＋类型明细＋分类折叠＋复制
+#109 运动目标：目标 vs 实际＋完成度＋达成判定
+#109 体重盘：首末＋均值＋变化＋曲线＋记录表
+#109 体成分：来源表单＋趋势＋记录表＋复制
+#109 围度：单项趋势＋全量表（胸腰腹臀）＋复制
+#109 无假数据：9 键空库一律 exit 4 且 stdout 纯净
+#275 ⑥ 复制区开关：拿到命令原文才出那一节，日志第 4 段就是它
+#275 ⑥ 一张页只有一个复制区：整页那一支显式关掉区块自带的那一节
+#359 看体脂页：7 点逐个出现、逐位等于查库值（冻结种子 3 条）
+#440 判据③④：src 里旧词零命中；13 名的定义只在 fetch/body.ts 一处
+T5 真包门禁：无参运行读真台账 → PASS（台账与当刻实况一致）
+T9 真包台账与当刻实况一致：--sync --dry 零改动且不动文件
+#511 ① 面外残留逐页收掉 —— 60 饮食复盘（本周）（周末/工作日拆卡）
+#511 ④ 变异自证：新句改回旧写法 / 标题改回旧写法，同一段断言必红
+#482 文本审查：6 页旧句归零、页脚同一句式、结论句不再复述卡片数字
+#86 围度 wizard：场景1空页＋场景2预填＋recent＋白名单
+#86 体脂 wizard：来源＋体脂率＋皮褶7点＋换算未移植口径
+D2① 436 条逐条恰一个桶（可执行 419 ／ 命中但不执行 17，#113 促进 4 词 ＋ #252 目标管理 3 条自动算词转入可执行 ＋ #346 看今天练什么转入可执行 ＋ #347 读筛选 7 条转入可执
+D2④ 与冻结表逐条对齐（唤醒词集合相等 ＋ 场景对齐；FX-81-2 授权放宽 cli 逐字）
+FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 0 ＋ 已登记的数据依赖失败单列 ＋ 需参数键必须带 --params）
+A7 明确不做桶按架构规格 :60 建立，t71 差异逐条登记（两处出处）
+逐条 sha 一致（prompt 全文行为对齐）
+dsh-bill-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-bill-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-bill-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-calorie client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-calorie client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-calorie client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-chef client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-chef client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-chef client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-home-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-home-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-home-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-life-pack client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-life-pack client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-life-pack client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-memo-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-memo-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-memo-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）
+dsh-schedule-ilife client：classic 执行并注册自身 id（#48 整批 crash 回归）
+dsh-schedule-ilife client：factory 可物化，导出 apply/inject，无 node 依赖
+dsh-schedule-ilife client：产物无 ESM 语法、无 node: 导入（build 期纯度门镜像）

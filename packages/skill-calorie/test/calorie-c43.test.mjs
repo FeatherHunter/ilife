@@ -148,8 +148,69 @@ test('C6 写收据HTML结构化分项', () => {
   // 不再找 `<li>`；产物仍必须是带 charset 的完整文档，且分项仍须落在表格单元格里。
   assert.ok(html.startsWith('<!doctype html>'), 'C6：饮食写命令的回执已是整页文档');
   assert.ok(html.includes('charset="utf-8"'), 'C6：整页文档缺 charset');
-  // #496：那张表的标题原写「改动字段对照（回执未带对照时为空表，只看上方写入字段）」——括号里是
-  // 程序分支的解释、表头「字段｜改动」与内容（状态串）也对不上，现改标题「本次改动」、表头「本次结果」。
-  assert.match(html, /本次改动[\s\S]{0,600}?<td[^>]*>鸡胸<\/td>/, 'C6：改动分项没有落进结构化表格的单元格');
+  // #496／#270：那张表原来是「改动字段对照（回执未带对照时为空表，只看上方写入字段）」，
+  // #496 先把标题改成「本次改动」，#270 按老实物 `crud_receipt.html:156` 把四块标题摆成逐字四串
+  // ⇒ 本条改钉**区块标题 ＋ 分项仍落进表格单元格**（比一句表题更强）。
+  for (const t of ['✅ 操作回执', '📋 字段变更', '📊 今日累计', '📋 复制明细']) {
+    assert.ok(html.includes(t), 'C6：缺老实物那一块的标题：' + t);
+  }
+  // 分项仍须落进结构化表格的单元格：`calorie.diet.add` 是新增类 ⇒ 这一块摆「本次写入的字段」
+  // （#270 专属约束①：导入／新增不硬套「改前 → 改后」），第一行是食物名那一格。
+  // #270 收窄：原写法从**整页第一个**「📋 字段变更」起开窗，而那串第一次出现是页内导航那一项
+  // （实测该处到表格首格 1499 字符，> 原来的 900 ⇒ 假红）。改为先切出 `section#sec-change` 再断，
+  // 窗口不再是筹码，且比原来更严（分项必须落在那一块**内部**）。
+  const secChange = /<section id="sec-change">([\s\S]*?)<\/section>/.exec(html);
+  assert.ok(secChange !== null, 'C6：产物里没有「📋 字段变更」那一块（section#sec-change）');
+  assert.ok(secChange[1].includes('<h2>📋 字段变更</h2>'), 'C6：区块标题不是老实物那一串');
+  assert.match(secChange[1], /data-label="字段"[^>]*>食物名<\/td>[\s\S]{0,300}?已写入饮食记录/, 'C6：改动分项没有落进结构化表格的单元格');
   assert.match(html, /鸡胸/);
+});
+
+/** #270 · 改类出「改前 → 改后」对照、删类出被删快照（老实物 `diff-card` 的 update `:302-327` 与
+ *  delete `:328-350` 两分支口径）——票面专属约束①，也是本票在四块标题之外新摆上去的读数。
+ *
+ *  **本条收窄过一轮（#270 接手席，归因写在测试件里）**：原断言要求「改前」列读出库里的写前真值
+ *  （克数 300／热量 150）。实测该读数**在本票声明路径内拿不到**——`fetch/diet.ts` 的 `updateMeal`
+ * 回 `before`／`after`，而饮食写口 `src/diet/edit.ts:35-38` 只把**变更字段名**放进 `items[].detail`，
+ * `reason` 是空串；写前值要拿得动必须改 `src/diet/edit.ts`（不在本票声明路径内）。
+ *  同时实测到**真缺陷**：当时装配件把「本次参数」（写进去的新值）当「改前」印，两列同为 250／400 ——
+ *  「改前」那一列印着改后值，页上还照着它叫用户「照改前的原值再改一次」。现已改为缺值写 `—`＋一句
+ *  口径行（裁定 4），本断言守住两条：**改后**是写进去的那个值；**改前**要么是写前真值、要么是 `—`，
+ *  **绝不许等于改后**。 */
+test('#270 改类出「改前 → 改后」对照：表头与两个值都在产物里', () => {
+  const dir = mkDietDb();
+  const htmlFile = join(dir, 't270-update.html');
+  const env = runOk(dir, 'calorie.diet.update', { id: 1, calories: 400, grams: 250 }, ['--html', htmlFile]);
+  assert.equal(env.data.receipt.noChange, false, '改类该是有改动的一次');
+  const html = readFileSync(htmlFile, 'utf8');
+  assert.ok(html.includes('📋 字段变更'), '改类页缺「📋 字段变更」那块');
+  assert.ok(html.includes('改前 → 改后对照'), '改类页缺对照表的表题');
+  assert.ok(html.includes('>改前</th>') && html.includes('>改后</th>'), '改类页的对照表缺「改前／改后」两列');
+  // 按**行**读，不按整页第一个 `data-label="改前"`：这一族一次改两个字段（克数与热量），
+  // 逐行锚定才证明「改前→改后」是**按字段配的对子**，而不是两个各自独立的数。
+  const row = (label) => new RegExp('data-label="字段"[^>]*>' + label
+    + '<\\/td>[\\s\\S]{0,200}?data-label="改前"[^>]*>([^<]*)<\\/td>[\\s\\S]{0,200}?data-label="改后"[^>]*>([^<]*)<\\/td>').exec(html);
+  for (const [label, after] of [['克数', '250'], ['热量', '400']]) {
+    const m = row(label);
+    assert.ok(m !== null, '改类页读不到「' + label + '」那一行的改前 → 改后');
+    assert.equal(m[2], after, '「' + label + '」的改后该是本次写进去的值');
+    assert.notEqual(m[1], after, '「' + label + '」的改前被印成了改后值（不许拿新值顶替写前原值）');
+    assert.ok(m[1] === '—' || /^\d+$/.test(m[1]), '「' + label + '」的改前该是写前真值或缺值 —，读到：' + m[1]);
+  }
+  // 缺值那一列必须有话说（裁定 4）：写前值拿不到时，页上要说清为什么是 —、且不许拿新值顶替。
+  assert.ok(html.includes('不拿新值顶替'), '「改前」缺值的那一页缺一句口径行');
+});
+
+test('#270 删类出被删快照：删前的原值在产物里', () => {
+  const dir = mkDietDb();
+  const htmlFile = join(dir, 't270-remove.html');
+  const env = runOk(dir, 'calorie.diet.remove', { id: 1 }, ['--html', htmlFile]);
+  assert.equal(env.data.receipt.affectedRows, 1, '删一条该是影响 1 行');
+  const html = readFileSync(htmlFile, 'utf8');
+  assert.ok(html.includes('📋 字段变更'), '删类页缺「📋 字段变更」那块');
+  assert.ok(html.includes('删除前的原值（逐条）'), '删类页缺快照表的表题');
+  assert.ok(html.includes('>粥</td>'), '删类页的快照表里读不到被删那条的食物名');
+  assert.match(html, /data-label="状态"[^>]*>已删除/, '删类页的快照表缺「已删除」那一格');
+  // 老实物 `:374-387`：删除场景不出「今日累计」那一块（已删除不再展示被删记录的绿区）。
+  assert.equal(html.includes('📊 今日累计'), false, '删类页不该出「今日累计」那一块');
 });
