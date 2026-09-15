@@ -1,5 +1,5 @@
 ﻿# t518 门禁运行记录导出（协议 §2.3 第 4 条：对账源落受跟踪路径）
-# 导出时刻: 2026-09-16T04:18:16.4998777+08:00
+# 导出时刻: 2026-09-16T04:19:20.8861273+08:00
 # 源: .scratch/locks-m158v2/gate-runs.log（未受版本控制）；本文件只含 ticket=518 的 START／RUN 行，逐字抄录。
 # 声明口径：证据件里每条 GATE-RUN runId=<标识> 都能在此文件里找到同标识的 RUN 行；只领 exit=0。
 
@@ -101,3 +101,7 @@ START ticket=518 runId=ef388bc7-948d-4433-9994-6b376b45158c cmd="node packages/s
 RUN ticket=518 runId=ef388bc7-948d-4433-9994-6b376b45158c cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=66376 at=2026-09-15T20:17:19.078Z
 START ticket=518 runId=f0ce59bd-d0a5-4ae9-a9a9-4da80ed7be7e cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 pid=28048 at=2026-09-15T20:17:19.132Z
 RUN ticket=518 runId=f0ce59bd-d0a5-4ae9-a9a9-4da80ed7be7e cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=28048 at=2026-09-15T20:17:19.355Z
+START ticket=518 runId=bc79911a-1d91-484b-886b-0da6e478ae4c cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W4-鏀跺熬-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git diff --cached --name-only; git commit -F .scratch/t518/W4-commit-msg.txt -- packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W4-鏀跺熬-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git log --oneline -1\"" waitedMs=0 pid=54160 at=2026-09-15T20:18:28.088Z
+RUN ticket=518 runId=bc79911a-1d91-484b-886b-0da6e478ae4c cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W4-鏀跺熬-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git diff --cached --name-only; git commit -F .scratch/t518/W4-commit-msg.txt -- packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W4-鏀跺熬-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git log --oneline -1\"" waitedMs=0 exit=0 pid=54160 at=2026-09-15T20:18:30.464Z
+START ticket=518 runId=35a8aeba-c351-4ec6-834f-c063d150fbda cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 pid=51744 at=2026-09-15T20:19:07.401Z
+RUN ticket=518 runId=35a8aeba-c351-4ec6-834f-c063d150fbda cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=51744 at=2026-09-15T20:19:07.508Z
