@@ -176,14 +176,10 @@ export function writePlanAddMovement(params: Record<string, unknown>, db: Databa
 /** 过程页预览（读，不写库）：与上面写实现**同一套定位规则**（同文件，防两处推演走散）。
  * 返回 { op, title, before, after, note }，由 `plan.ts` 的 `viewPlanWritePreview` 经
  * `render/html.ts` 的 `renderPlanWritePreviewHtml` 出页。定位歧义时与写实现报同样的错。 */
-/** 星期名（`day_of_week` 1–7）：页面与报错话术共用的一处。 */
-const DOW_CN = ['', '一', '二', '三', '四', '五', '六', '日'];
-
-/** 「第 1 周 周三」这种写法：原来是 `'第' + wn + '周周' + dn` → 印出来是 `第1周周3`——
- *  连写两个「周」、星期还是阿拉伯数字，读起来像错字（负责人 2026-09-15 第 4 条：文字不能出现不合理）。 */
-export function dayPhrase(wn: number, dn: number): string {
-  return '第 ' + wn + ' 周 周' + (DOW_CN[dn] ?? String(dn));
-}
+/** 「第 1 周 周三」的写法：T351-v12 起住共用件 `./dayPhrase.ts`（校验器也要用同一句），
+ *  本件按原样转出，既有调用方与判据不受影响。 */
+export { dayPhrase } from './dayPhrase.js';
+import { dayPhrase } from './dayPhrase.js';
 
 /** 写前预览里的**一行**：字段就是表里的列，不再把四件事挤成一个字符串。
  *  原来那一行是 `第1周周1·上肢（2动作）`／`第1周周2·休息日（0动作·休）`——拿 `·` 与括号顶替表格设计

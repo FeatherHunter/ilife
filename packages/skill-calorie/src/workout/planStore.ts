@@ -6,6 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
+import { dayPhrase } from './dayPhrase.js';
 
 export const LEVEL_CONFIG: Record<string, { maxPerPartPerDay: number; maxPerPartPerWeek: number; restHours: number }> = {
   '新手': { maxPerPartPerDay: 6, maxPerPartPerWeek: 10, restHours: 72 },
@@ -81,7 +82,9 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
   const lvl = LEVEL_CONFIG[level] ?? LEVEL_CONFIG['中手'];
   const weeks = plan.weeks ?? [];
   if (weeks.length === 0) {
-    errors.push('weeks 为空');
+    // T351-v12：原来是 `weeks 为空`——英文键名直接印在页上（第 ④ 条）。改成短句「计划里一个周都没有」：
+    // 页上空态块那句已经带了「先说『定一周计划』…」的下一步，这里再抄一遍就是同一句话说两遍。
+    errors.push('计划里一个周都没有');
     return { errors, warnings };
   }
   const partDates = new Map<string, Array<[number, number]>>();
@@ -115,13 +118,16 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
       const prev = occurrences[i - 1] as [number, number];
       const curr = occurrences[i] as [number, number];
       const gap = (curr[0] - prev[0]) * 7 + (curr[1] - prev[1]);
-      if (gap < minDays) errors.push('部位「' + p + '」间隔仅 ' + gap + ' 天，建议 ≥ ' + minDays + ' 天（第' + prev[0] + '周周' + prev[1] + ' → 第' + curr[0] + '周周' + curr[1] + '）');
+      // T351-v12：这三条报错／警告原来带 `第1周周3`（连写两个「周」）、`·` 与半角括号，都印在页上。
+      if (gap < minDays) errors.push('部位「' + p + '」间隔仅 ' + gap + ' 天，建议至少 ' + minDays
+        + ' 天（' + dayPhrase(prev[0], prev[1]) + ' → ' + dayPhrase(curr[0], curr[1]) + '）');
     }
   }
   for (const [key, parts] of partDaySets) {
     const [wn, dow] = key.split(':');
     for (const [p, sets] of parts) {
-      if (sets > lvl.maxPerPartPerDay) warnings.push('第' + wn + '周周' + dow + '·' + p + ' ' + sets + ' 组，建议 ≤ ' + lvl.maxPerPartPerDay + ' 组');
+      if (sets > lvl.maxPerPartPerDay) warnings.push(dayPhrase(Number(wn), Number(dow))
+        + ' 的「' + p + '」排了 ' + sets + ' 组，建议不超过 ' + lvl.maxPerPartPerDay + ' 组');
     }
   }
   for (const week of weeks) {
@@ -139,7 +145,8 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
       }
       for (const [p, types] of dayParts) {
         if (types.length >= 2 && types.every((t) => t === types[0])) {
-          warnings.push('第' + wn + '周周' + dow + '·' + p + ' 仅一种训练类型(' + types[0] + ')，建议增加不同角度');
+          warnings.push(dayPhrase(Number(wn), Number(dow)) + ' 的「' + p
+            + '」只练了一种类型（' + types[0] + '），建议换换角度');
         }
       }
     }
