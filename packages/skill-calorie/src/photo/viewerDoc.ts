@@ -136,15 +136,19 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed, dropped: boolean): string {
     + '</div></div></figure>';
 }
 
-/** 这张照片的信息（#526 把六列单行表换成键值行）：文件（含它到底在不在）＋ 备注（用户自己
- *  连写的那几件事按段落到形状上，见 `photoUi.noteSegments`）。 */
-function infoHtml(p: PhotoCard, e: PhotoEmbed): string {
+/** 这张照片的信息（#526 把六列单行表换成键值行）：文件（含它到底在不在）＋ 原图大小 ＋
+ *  备注（用户自己连写的那几件事按段落到形状上，见 `photoUi.noteSegments`）。
+ *
+ *  大小这一格只在**图已显示**时给（2026-09-15 收口）：那时候页顶没有结论条，大小属于「事实」，
+ *  归键值行；图没显示时大小由页顶那条结论条说（「这张原图 3.0 MB，一页装不下…」），这里不再重复。 */
+function infoHtml(p: PhotoCard, e: PhotoEmbed, shown: boolean): string {
   const exists = p.fileExists === false
     ? renderStatusBadge({ status: 'danger', text: '不在照片目录里' })
     : (p.fileExists === null ? renderStatusBadge({ status: 'empty', text: '没核对' })
       : renderStatusBadge({ status: 'ok', text: '在照片目录里' }));
   const rows = [
     { k: '文件', vHtml: '<code>' + escapeHtml(e.fileName) + '</code> ' + exists },
+    { k: '原图大小', v: shown ? sizeText(e.bytes) : '' },
     { k: '备注', vHtml: p.note === null || p.note === '' ? '' : '<span class="phu-segs">' + noteSegments(p.note) + '</span>' },
   ];
   return '<section><h2 class="' + H2_CLASS + '">这张照片的信息</h2>' + factRows(rows) + '</section>';
@@ -171,13 +175,17 @@ function actionHtml(p: PhotoCard): string {
 function contentOf(v: ViewerData, e: PhotoEmbed, dropped: boolean): string {
   const p = v.photo;
   const today = todayISO();
+  const shown = !dropped && e.dataUri !== null;
   const parts: string[] = [photoUiCss()];
   parts.push(chipRow(['编号 ' + p.id, ...(p.tagList.length > 0 ? [...p.tagList] : ['无标签']),
     whenText(p), relTime(p.date, today)]));
-  parts.push(renderConclusionBar(verdictOf(e, dropped, p)));
+  // 结论条只在**有事要说**时出（2026-09-15 收口）：图没显示时说清「为什么／多大」；图正常显示时
+  // 「已经放在本页，可以直接看」这句是看图就能看出来的话（原图大小改由信息段的「原图大小」键值行承担），
+  // 撤掉它，图就贴着页头上来。
+  if (!shown) parts.push(renderConclusionBar(verdictOf(e, dropped, p)));
   parts.push(navHtml(v));
   parts.push(figureHtml(p, e, dropped));
-  parts.push(infoHtml(p, e));
+  parts.push(infoHtml(p, e, shown));
   parts.push(actionHtml(p));
   parts.push(dataCopyArea('复制数据', {
     envelope: {

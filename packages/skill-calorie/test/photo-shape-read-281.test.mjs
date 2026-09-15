@@ -117,18 +117,19 @@ test('对比页真跑：同形＋并排双卡＋间隔 N 等于日期差（同�
   assert.match(html, /对比两张照片/, '标题缺失');
   assert.match(html, /data-id="1"/, '照片 #1 卡缺失');
   assert.match(html, /data-id="2"/, '照片 #2 卡缺失');
-  // 间隔 N 天大数字中的 N 等于两张照片日期差（09-04 vs 09-05＝1）。
-  assert.match(html, /间隔 <b>1<\/b> 天/, '间隔横幅 N≠日期差（09-04 vs 09-05 应为 1）');
-  // 同标签对比不出提醒行（#473：旧句「跨标签」全页 0 命中）。
+  // #526：间隔改**独立间隔条**（两张日期块 ＋ 大数字 N ＋ 单位「天」），N 等于两张照片日期差
+  //（09-04 vs 09-05＝1）。旧形态是挂在页标题后的 `· 间隔 <b>N</b> 天` 半句。
+  assert.match(html, /class="phu-iv-n">1<\/span><span class="phu-iv-u">天<\/span>/, '间隔条 N≠日期差（09-04 vs 09-05 应为 1）');
+  assert.doesNotMatch(html, /间隔 <b>\d+<\/b> 天/, '#526：旧形态（页标题后的间隔半句）须 0 命中');
+  // 同标签对比：判语出「可以直接对照」那一句，且旧句全页 0 命中。
+  assert.match(html, /两张标签一样，放在一起可以直接对照看变化。/, '#526：同标签判语（结论条）缺失');
   assert.doesNotMatch(html, /角度不一样/, '同标签对比不应出角度不一样的提醒');
   assert.doesNotMatch(html, /跨标签/, '同标签对比不应出跨标签警告');
-  // #473：KPI 收成两格；「按日期正序」与 KPI 里的间隔格都删（间隔只留横幅那一处）。
-  assert.match(html, /角度一致吗/, '#473：KPI「角度一致吗」缺失');
-  assert.match(html, /2 张都已显示/, '#473：KPI「2 张都已显示」缺失');
-  assert.doesNotMatch(html, /按日期正序|按日期倒序/, '#473：「按日期正序」须删');
-  assert.doesNotMatch(html, /kpiCard-label">间隔/, '#473：KPI 里的间隔格须删（与横幅重复）');
-  // 副标题改日期对照，不再写裸 id。
-  assert.match(html, /2026-09-04 vs 2026-09-05/, '#473：副标题须是日期对照');
+  // #526：KPI 那两格（`角度一致吗`／`2 张都已显示`）删——判语与建议收成一条结论条一处说。
+  assert.doesNotMatch(html, /角度一致吗|张都已显示/, '#526：KPI 里与结论条重复的两格须删');
+  // 副标题 `日期 vs 日期` 也删（两张日期就在间隔条的两端）。
+  assert.doesNotMatch(html, /2026-09-04 vs 2026-09-05/, '#526：副标题的日期对照须删（间隔条两端已说）');
+  assert.match(html, /class="phu-date">2026-09-04<\/span>[\s\S]*class="phu-date">2026-09-05<\/span>/, '间隔条两端须是两张的日期');
   // envelope 数据形与改前一致（items/total）。
   assert.equal(env?.data?.total, 2, 'data.total≠2');
 });
@@ -139,11 +140,10 @@ test('对比页角度不一样的提醒改人话（N=3，旧句 0 命中）', as
   const out = assertOutputOnDisk(env);
   const html = readFileSync(out, 'utf8');
   assertShape(html);
-  assert.match(html, /这两张的角度不一样（正面／侧面），放在一起看不出真实变化，建议用同角度对比/, '#473：提醒行新文案缺失');
+  // #526：判语收成一条结论条（原 #473 的提醒行 ＋ KPI `角度一致吗` 两处说同一件事）。
+  assert.match(html, /这两张的标签不一样，放在一起看不出真实变化。建议挑同角度的两张再对比。/, '#526：结论条新文案缺失');
   assert.doesNotMatch(html, /跨标签对比警告|可比性较弱/, '#473：旧句（跨标签对比警告／可比性较弱）须 0 命中');
-  assert.match(html, /间隔 <b>3<\/b> 天/, '间隔横幅 N≠日期差（09-04 vs 09-07 应为 3）');
-  assert.match(html, /角度一致吗/, '#473：KPI「角度一致吗」缺失');
-  assert.match(html, /不一致/, '#473：跨标签时该格须写「不一致」');
+  assert.match(html, /class="phu-iv-n">3<\/span><span class="phu-iv-u">天<\/span>/, '间隔条 N≠日期差（09-04 vs 09-07 应为 3）');
   // 表注改「两张照片的原始记录」；旧表注与裸 id 副标题出页面。
   assert.match(html, /两张照片的原始记录/, '#473：表注缺失');
   assert.doesNotMatch(html, /对照明细/, '#473：旧表注「对照明细」须 0 命中');
@@ -156,7 +156,11 @@ test('详情页真跑：同形＋黑底大图＋中张双链＋图注收成人�
   const out = assertOutputOnDisk(env);
   const html = readFileSync(out, 'utf8');
   assertShape(html);
-  assert.match(html, /身材照查看 #2/, '标题缺失');
+  // #526：标题改人话（原 `身材照查看 #2` 里的 `#2` 是给机器看的编号，且撞内部标识符判据）；
+  // 编号与标签改由页头身份徽章承载。
+  assert.match(html, /2026-09-05 的身材照/, '#526：人话标题缺失');
+  assert.doesNotMatch(html, /身材照查看 #/, '#526：旧机器标题（`身材照查看 #N`）须 0 命中');
+  assert.match(html, /<span class="ilife-block-chip">编号 2<\/span>/, '#526：身份徽章「编号 2」缺失');
   // 大图观看规则：黑底 75vh contain。
   assert.match(html, /background:#000/, '大图黑底缺失');
   assert.match(html, /75vh/, '大图 75vh 缺失');
@@ -172,8 +176,10 @@ test('详情页真跑：同形＋黑底大图＋中张双链＋图注收成人�
   // #473：信息表在页，表注改「这张照片的信息」（旧「快照明细」0 命中）。
   assert.match(html, /这张照片的信息/, '#473：表注缺失');
   assert.doesNotMatch(html, /快照明细/, '#473：旧表注「快照明细」须 0 命中');
-  // #473：图注＝`YYYY-MM-DD HH:MM · 相对时间 · 标签 · 文件名小字块`；「文件存在」不再出现。
-  assert.match(html, /#2 2026-09-05 08:00 · 2 天前 · 正面 · <span class="[^"]*block-chip">2026-09-05_001\.png<\/span>/, '#473：图注没收成人话（日期＋相对时间＋标签＋文件名小字块）');
+  // #473／#526：页头身份徽章列＝编号／标签／拍摄时刻／相对时间（四件事各占一枚徽章，
+  // 不再靠 `#2 2026-09-05 08:00 · 2 天前 · 正面 · 文件名` 那种串）；文件名住信息段的「文件」键值行。
+  assert.match(html, /<div class="phu-chips"><span class="ilife-block-chip">编号 2<\/span><span class="ilife-block-chip">正面<\/span><span class="ilife-block-chip">2026-09-05 08:00<\/span><span class="ilife-block-chip">2 天前<\/span><\/div>/, '#526：页头身份徽章列形状不符（编号／标签／时刻／相对时间）');
+  assert.match(html, /<div class="phu-fact"><span class="phu-fk">文件<\/span><span class="phu-fv"><code>2026-09-05_001\.png<\/code>/, '#526：文件键值行（含文件名小字块）缺失');
   assert.doesNotMatch(html, /文件存在/, '#473：「文件存在」不该再出现（只在缺失时提示）');
   assert.equal(env?.data?.item?.id, 2, 'data.item.id≠2');
 });
@@ -195,8 +201,8 @@ test('详情页首尾禁用＋返回筛选上下文＋删了就找不回来', as
   // 单标签孤张双禁用（#4 侧面）。
   const lone = readFileSync(assertOutputOnDisk(runOk(iso, 'calorie.photo.detail', { id: 4 })), 'utf8');
   assert.equal((navOf(lone).match(/<a /g) ?? []).length, 0, '孤张应双禁用');
-  // 返回带筛选上下文。
-  assert.match(first, /返回画廊/, '返回画廊缺失');
+  // 返回带筛选上下文（#526：动作标签改「复制回画廊指令」——命令原文住 `data-t`，可见面只说做什么）。
+  assert.match(first, /复制回画廊指令/, '回画廊那颗复制按钮缺失');
   assert.match(first, /正面/, '返回筛选上下文（标签）缺失');
   assert.match(first, /calorie\.photo\.list/, '返回画廊命令缺失');
   // #473：删入口改人话＋安全感，旧「硬删除，不可恢复」出页面（「不可恢复」全页 0 命中）。
@@ -204,11 +210,16 @@ test('详情页首尾禁用＋返回筛选上下文＋删了就找不回来', as
   assert.match(first, /删了就找不回来，先确认上面那张是不是它/, '#473：删入口安全感那句缺失');
   assert.doesNotMatch(first, /不可恢复/, '#473：旧句「不可恢复」须 0 命中');
   assert.match(first, /calorie\.photo\.remove/, '删命令缺失');
-  // #473：两条命令都是可复制的命令块（`renderPreBlock` ＋ 冻结复制按钮），不是裸 <pre>。
-  const cmds = [...first.matchAll(new RegExp('data-action-id="' + COPY_ACTION_ID + '" data-t="([^"]*)"', 'g'))].map((m) => m[1]);
-  assert.equal(cmds.length, 2, '#473：删／回画廊两条命令各须一颗复制按钮，实得 ' + cmds.length);
-  assert.ok(cmds.some((t) => t.includes('calorie.photo.remove')), '删命令的复制文本缺失');
-  assert.ok(cmds.some((t) => t.includes('calorie.photo.list')), '回画廊命令的复制文本缺失');
+  // #526：两条命令原文都住进**复制按钮的 `data-t`**（页上不再有命令块 `<pre>`——命令键上屏即
+  // 内部标识符债，见 `photo-responsive-484` 的同名判据）；两条各一颗按钮，同一次渲染内 id 必须不同。
+  const cmds = [...first.matchAll(/data-action-id="([^"]*)" data-t="([^"]*)"/g)].map((m) => ({ id: m[1], text: m[2] }));
+  const cmdTexts = cmds.map((c) => c.text);
+  assert.ok(cmdTexts.some((t) => t.includes('calorie.photo.remove')), '删命令的复制文本缺失');
+  assert.ok(cmdTexts.some((t) => t.includes('calorie.photo.list')), '回画廊命令的复制文本缺失');
+  assert.equal(new Set(cmds.map((c) => c.id)).size, cmds.length, '#526：同一次渲染内复制按钮 id 须互不相同');
+  // 删那颗走本域冻结的复制 id（`base-paint` 的 `HELP_COPY_ACTIONS.prompt`，卡路里侧不自造 id）。
+  assert.ok(cmds.some((c) => c.id === COPY_ACTION_ID && c.text.includes('calorie.photo.remove')),
+    '#473：删命令那颗复制按钮的冻结 id 缺失');
   assert.doesNotMatch(first, /文件保留/, '老「文件保留」提示须作废');
   // #473：本页不再重复「删前核对凭据／本页即删身材照流程的快照」那两句。
   assert.doesNotMatch(first, /删前核对凭据/, '#473：重复的「删前核对凭据」须 0 命中');
@@ -252,20 +263,22 @@ test('超预算提示块：哪张没显示／为什么＋替代操作（缺失�
   const out = assertOutputOnDisk(env);
   const html = readFileSync(out, 'utf8');
   assert.ok(html.toLowerCase().startsWith('<!doctype html>'), '超预算页仍须是完整文档');
-  // #499：改同域人话口径（与 #472 的 `galleryDoc.budgetNoticeHtml` 同族）——句面钉死，
+  // #499：改同域人话口径（与 #472 的 `galleryDoc.budgetNoticeHtml` 同族）——句面钉死；
   // 负向钉住「旧句／内部单位必须 0 命中」；旧句改回去即红（下方变异自证另跑一遍）。
   assert.match(html, /这两张里有一张太大，本页没显示：2026-09-04_001\.png/, '#499：须点名哪张没显示（逐张列文件名）');
   assert.match(html, /可以打开文件名自己看，或改查单张详情分开看/, '#499：须给替代操作');
   assert.doesNotMatch(html, /超预算横幅|未嵌入|单页上限|1 MiB|换小图后重跑|已嵌入/,
     '#499：旧句与内部单位（超预算横幅／未嵌入／单页上限／1 MiB／换小图后重跑／已嵌入）须 0 命中');
-  // #473：被弃那张的占位原因也改人话（超限不许静默——横幅点名 ＋ 卡上占位两处都在）。
-  assert.match(html, /照片没显示（太大放不下：/, '#473：被弃那张须明示人话原因');
+  // #473／#526：被弃那张的占位**明示哪一份文件**（#526 起形状化：状态徽标 ＋ 文件名 ＋ 下一步，
+  // 不再用 `照片没显示（太大放不下：…）` 这种括号串——同一件事已由上面那句提示块一处说清）。
+  assert.match(html, /<div class="phu-shot"><div class="phu-miss">[\s\S]*?原图太大<\/span><code>2026-09-04_001\.png<\/code>/,
+    '#526：被弃那张的占位须带「原图太大」徽标 ＋ 文件名');
   assert.doesNotMatch(html, /超预算未内嵌/, '#473：旧句「超预算未内嵌」须 0 命中');
   // 缺失不牵连：另一张仍内嵌。
   assert.match(html, /data:image\//, '正常照片应仍内嵌');
 });
 
-test('#473 详情页超限态：一句人话＋信息表里的文件名（旧句 0 命中）', async () => {
+test('#526 详情页超限态：页顶结论条说清多大与为什么＋占位点名文件（旧句 0 命中）', async () => {
   const root = mkdtempSync(join(tmpdir(), 't281-big-one-'));
   const dbDir = join(root, 'db');
   const photosDir = join(root, 'photos');
@@ -282,9 +295,15 @@ test('#473 详情页超限态：一句人话＋信息表里的文件名（旧句
   const env = runOk({ root, dbDir, photosDir }, 'calorie.photo.detail', { id: 1 });
   const html = readFileSync(assertOutputOnDisk(env), 'utf8');
   assert.ok(html.toLowerCase().startsWith('<!doctype html>'), '超限页仍须是完整文档');
-  assert.match(html, /这张图太大放不下（超过 1 MB）：可以打开下面的文件名自己看/, '#473：退让句缺失');
-  assert.match(html, /照片没显示（太大放不下：2026-09-04_001\.png）/, '#473：占位句须明示文件名');
-  assert.match(html, /这张照片的信息/, '#473：信息表仍在（文件名在表里可查）');
+  // #526：退让句从「这张图太大放不下（超过 1 MB）：可以打开下面的文件名自己看」改成**页顶一条结论条**
+  // （说这张原图多大 ＋ 一页装不下），占位那格只说下一步——同一件事从两处合成一处（`seat-brief` §8
+  // 点名的重复债），并且不再暴露页内上限（#438 的「不暴露页内上限与字节数」口径）。
+  assert.match(html, /这张原图 [\d.]+ (MB|KB)，一页装不下，图没放进本页/, '#526：退让句缺失（结论条须说清多大与为什么）');
+  assert.doesNotMatch(html, /超过 1 MB/, '#526：页内上限不许上屏（退让句改说这张原图的实际大小）');
+  assert.match(html, /想看原图：自己打开这份文件/, '#526：占位那格须给下一步');
+  assert.match(html, /照片没显示<\/span>|原图太大<\/span>/, '#526：占位须带状态徽标');
+  assert.match(html, /<code>2026-09-04_001\.png<\/code>/, '#526：占位须明示哪一份文件');
+  assert.match(html, /这张照片的信息/, '#473：信息段仍在（文件名在页上可查）');
   assert.match(html, /2026-09-04_001\.png/, '文件名须在页上');
   assert.doesNotMatch(html, /超预算未嵌|换小图后重跑|1 MiB/, '#473：旧句（超预算未嵌／换小图后重跑／1 MiB）须 0 命中');
   assert.doesNotMatch(html, /data:image\//, '退让后不该再内嵌字节');

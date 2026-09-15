@@ -91,18 +91,20 @@ function assertOutputOnDisk(env) {
   return out;
 }
 
-/** 提示块读数：本页只显示 N 张／还有 M 张没显示（无提示块即 N/M 取不到，直接红）。 */
+/** 提示块读数：本页显示 N 张（读数卡）／还有 M 张原图太大（提示块）——#526 起两数各归各的形状，
+ *  两处都取不到即直接红（同一件事不在一句里用 `；` 串起来，读数关系一字不松）。 */
 function bannerOf(html) {
-  const m = /本页只显示 (\d+) 张；还有 (\d+) 张没显示/.exec(html);
-  assert.ok(m !== null, '提示块句缺失（须含「本页只显示 N 张；还有 M 张没显示」）');
-  return { embedded: Number(m[1]), skipped: Number(m[2]) };
+  const n = /kpi-card-label">本页显示<\/div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">(\d+) 张</.exec(html);
+  assert.ok(n !== null, '读数卡缺失（须含「本页显示 N 张」）');
+  const m = /还有 (\d+) 张原图太大，没进这一页/.exec(html);
+  assert.ok(m !== null, '提示块句缺失（须含「还有 M 张原图太大，没进这一页」）');
+  return { embedded: Number(n[1]), skipped: Number(m[1]) };
 }
 
-/** #438 整改口径：提示块只由**预算跳过**触发，文件缺失不得进提示块（缺失走缺失清单）。 */
+/** #438 整改口径：提示块只由**预算跳过**触发，文件缺失不得进提示块（缺失走各处占位）。 */
 function assertNoBudgetBanner(html) {
-  assert.equal(/本页只显示 \d+ 张；还有 \d+ 张没显示/.test(html), false, '仅文件缺失时不该有 N／M 提示句');
-  assert.equal(/照片较多/.test(html), false, '仅文件缺失时不该出「照片较多」提示块');
-  assert.equal(/张太大未显示/.test(html), false, '仅文件缺失时不许报「太大未显示」');
+  assert.equal(/还有 \d+ 张原图太大/.test(html), false, '仅文件缺失时不该有 M 提示句');
+  assert.equal(/照片多，一页装不下/.test(html), false, '仅文件缺失时不该出「照片多」提示块');
 }
 
 /** 形状总闸：完整文档＋复制区＋体积退让；变异体走此闸必红（`budget: false` 只关体积那条，
@@ -118,16 +120,16 @@ function assertBudgetPageShape(html, opts = {}) {
   }
   const b = bannerOf(html);
   assert.ok(b.embedded >= 1 && b.skipped >= 1, '提示块读数须两数非零：' + JSON.stringify(b));
-  assert.match(html, /可按「标签」或日期分批看/, '提示块须给替代操作（按标签或日期分批看）');
-  // 原因须落在**占位句**上：页面别处（提示块／KPI 明细）也会说「太大」，只做全页匹配
-  // 会把「占位原因换空话」这种改坏放过（本票首版变异二即栽在此处）。
-  const placeholders = [...html.matchAll(/<figure[^>]*>\s*<div>([^<]*)<\/div>/g)];
+  assert.match(html, /想全看：按标签挑，或者按日期挑一段时间/, '提示块须给替代操作（按标签或日期分批看）');
+  // 原因须落在**占位块**上：页面别处也会说「太大」，只做全页匹配会把「占位原因换空话」这种改坏放过。
+  const placeholders = [...html.matchAll(/<div class="phu-shot"><div class="phu-miss">([\s\S]*?)<\/div><\/div>/g)];
   assert.ok(placeholders.length > 0, '占位态缺失（未显示的张须走占位并写明原因）');
   for (const f of placeholders) {
-    assert.match(f[1], /照片太大，本页没显示/, '占位原因须是「照片太大，本页没显示」：' + f[1]);
+    assert.match(f[1], /(原图太大|找不到文件)[\s\S]*超过一页能装的量/, '占位须写明为什么：' + f[1]);
   }
-  const okFigures = (html.match(/<figure[^>]*>\s*<img /g) ?? []).length;
-  assert.equal(okFigures, b.embedded, '提示块「本页只显示 N 张」与实际内嵌 figure 数不符');
+  const okFigures = (html.match(/class="phu-shot"><img /g) ?? []).length;
+  assert.equal(okFigures, b.embedded, '读数卡「本页显示 N 张」与实际内嵌 figure 数不符');
+  assert.equal(placeholders.length, b.skipped, '占位格位数 ≠ 提示块 M');
   const rows = (html.match(/<tr/g) ?? []).length;
   assert.equal(rows, b.embedded + b.skipped + 1, '明细表行数 ≠ 内嵌＋未显示＋表头（数据不许被截断）');
   return bytes;
@@ -159,11 +161,10 @@ test('① ② ③ ④ ⑥ 真跑：超预算库 → 页 ≤ 1 MiB＋横幅 N／M
   assert.equal(b.embedded + b.skipped, g.photos.length, 'N＋M 须等于本窗行数：' + JSON.stringify(b));
   assert.equal(b.embedded, 1, '1 MiB 预算 + 560KB 单张：应只嵌 1 张，实得 ' + b.embedded);
 
-  // ③ 占位原因正确：每张没显示的 figure 都写着「照片太大，本页没显示」。
-  const placeholderFigures = (html.match(/<figure[^>]*>\s*<div>照片太大，本页没显示<\/div>/g) ?? []);
-  assert.equal(placeholderFigures.length, b.skipped, '占位 figure 数 ≠ 提示块 M');
-  assert.match(html, /1 张已显示/, 'KPI 明细须说「N 张已显示」');
-  assert.match(html, /3 张太大未显示/, 'KPI 明细须说「M 张太大未显示」');
+  // ③ 占位原因正确：每张没显示的格位都写着「原图太大 ＋ 为什么」。
+  const placeholderFigures = (html.match(/class="phu-shot"><div class="phu-miss">/g) ?? []);
+  assert.equal(placeholderFigures.length, b.skipped, '占位格位数 ≠ 提示块 M');
+  assert.match(html, /共找到 4 张/, '读数卡明细须说本窗共找到几张');
   assert.doesNotMatch(html, /1048576|上限/, '提示块不许再印体积上限这类技术细节');
 
   // ④ 复制数据（envelope）仍是全量行：行数＝库内行数（4），不是内嵌行数（1）。
@@ -183,14 +184,14 @@ test('缺失与预算各归各位：坏图明示找不到文件，正常张仍�
   const env = runList(iso, { tag: '正面' });
   const html = readFileSync(assertOutputOnDisk(env), 'utf8');
   assert.match(html, /2026-09-01_001\.png/, '缺失文件名未明示');
-  assert.match(html, /找不到文件：2026-09-01_001\.png/, '缺失原因未明示（须写找不到文件＋文件名）');
+  assert.match(html, /找不到文件<\/span><code>2026-09-01_001\.png<\/code>/, '缺失原因未明示（须写找不到文件＋文件名）');
   assert.match(html, /data:image\//, '正常照片应仍内嵌');
   const bytes = Buffer.byteLength(html, 'utf8');
   assert.ok(bytes <= PHOTO_LIST_PAGE_MAX_BYTES, '缺一张后仍须 ≤ 上限：' + bytes);
 });
 
 test('#438 整改自查：提示块只按预算跳过计数（缺失不进提示块、M 不含缺失数）', async () => {
-  // ① 仅缺失、无预算跳过（4 张小图，删第 1 张本体）：不得出提示块，缺失由缺失清单承担。
+  // ① 仅缺失、无预算跳过（4 张小图，删第 1 张本体）：不得出提示块，缺失由占位与读数卡承担。
   const iso1 = seedIso(4 * 1024);
   const gone1 = join(iso1.photosDir, '2026-09-01_001.png');
   assert.ok(existsSync(gone1), '种子照片不在盘上：' + gone1);
@@ -198,10 +199,9 @@ test('#438 整改自查：提示块只按预算跳过计数（缺失不进提示
   const env1 = runList(iso1, { tag: '正面' });
   const html1 = readFileSync(assertOutputOnDisk(env1), 'utf8');
   assertNoBudgetBanner(html1);
-  assert.match(html1, /1 张找不到文件/, '缺失张数未明示（缺失态须由 KPI 明细＋清单承担）');
-  assert.match(html1, /找不到文件：2026-09-01_001\.png/, '缺失文件名未明示');
-  assert.equal((html1.match(/<div>照片太大，本页没显示<\/div>/g) ?? []).length, 0, '无预算跳过却出现「太大」占位');
-  assert.equal((html1.match(/<figure[^>]*>\s*<img /g) ?? []).length, 3, '3 张正常照应全部内嵌');
+  assert.match(html1, /找不到文件<\/span><code>2026-09-01_001\.png<\/code>/, '缺失态须由占位明示（文件名在）');
+  assert.equal((html1.match(/class="phu-shot"><div class="phu-miss">/g) ?? []).length, 1, '缺失那张须走占位');
+  assert.equal((html1.match(/class="phu-shot"><img /g) ?? []).length, 3, '3 张正常照应全部内嵌');
   assert.equal(env1.data.items.length, 4, '复制数据仍须是库内 4 行');
   assert.ok(Buffer.byteLength(html1, 'utf8') <= PHOTO_LIST_PAGE_MAX_BYTES, '仅缺失时仍须 ≤ 上限');
 
@@ -215,9 +215,10 @@ test('#438 整改自查：提示块只按预算跳过计数（缺失不进提示
   const b3 = bannerOf(html3);
   assert.equal(b3.embedded, 1, 'N 须＝真内嵌 figure 数 1：' + JSON.stringify(b3));
   assert.equal(b3.skipped, 2, 'M 须＝预算跳过数 2（缺失那张不计入）：' + JSON.stringify(b3));
-  assert.equal((html3.match(/<div>照片太大，本页没显示<\/div>/g) ?? []).length, b3.skipped, '太大占位数 ≠ 提示块 M');
-  assert.equal((html3.match(/<div>找不到文件：/g) ?? []).length, 1, '找不到文件占位数 ≠ 1');
-  assert.match(html3, /找不到文件：2026-09-01_001\.png/, '缺失那一张仍未明示');
+  assert.equal((html3.match(/class="phu-shot"><div class="phu-miss">/g) ?? []).length, 3, '占位格位数须＝跳过＋缺失');
+  assert.equal((html3.match(/原图太大<\/span><code>/g) ?? []).length, b3.skipped, '太大占位数 ≠ 提示块 M');
+  assert.equal((html3.match(/找不到文件<\/span><code>/g) ?? []).length, 1, '找不到文件占位数 ≠ 1');
+  assert.match(html3, /找不到文件<\/span><code>2026-09-01_001\.png<\/code>/, '缺失那一张仍未明示');
   assert.equal(env3.data.items.length, 4, '复制数据仍须是库内 4 行');
   assert.equal((html3.match(/<tr/g) ?? []).length, 5, '明细表仍须 4 行＋表头');
   assert.ok(Buffer.byteLength(html3, 'utf8') <= PHOTO_LIST_PAGE_MAX_BYTES, '混合场景仍须 ≤ 上限');
@@ -230,7 +231,7 @@ test('⑤ 变异自证：改坏必红、改回必绿（两行机器读数）', a
   assertBudgetPageShape(good); // 改回必绿（先立绿线）
 
   let redLine = '';
-  // 变异一：删掉提示块（退让仍在，但用户看不见 N／M）→ 必红。
+  // 变异一：删掉提示块（退让仍在，但用户看不见 M）→ 必红。
   const noBanner = good.replace(/<section class="ilife-block ilife-block-feedback-block">[\s\S]*?<\/section>/, '');
   assert.notEqual(noBanner, good, '变异一未生效（提示块没删掉）');
   try {
@@ -241,33 +242,37 @@ test('⑤ 变异自证：改坏必红、改回必绿（两行机器读数）', a
     assert.match(redLine, /提示块句缺失/, '变异一红的理由不对：' + redLine);
   }
   // 变异二：把占位原因换成空话（没显示但不说为什么）→ 必红（只关体积那条，专打原因）。
-  const vague = good.replace(/<div>照片太大，本页没显示<\/div>/g, '<div>这张没显示</div>');
+  const vague = good.replace(/超过一页能装的量，没进这一页/g, '这一张没显示');
   assert.notEqual(vague, good, '变异二未生效（占位原因没换掉）');
   try {
     assertBudgetPageShape(vague, { budget: false });
     assert.fail('变异二（占位原因换成空话）未红');
   } catch (e) {
     redLine += ' | ' + String(e.message).split('\n')[0];
-    assert.match(String(e.message), /照片太大，本页没显示/, '变异二红的理由不对');
+    // 红的**理由**要是「占位没写明为什么」（不是别的闸顺手红）：变异体把原因句换成空话后，
+    // 报错文案里已不含原句，故按**断言语**认，不按被替换掉的文本认。
+    assert.match(String(e.message), /占位须写明为什么/, '变异二红的理由不对');
   }
   // 变异三（#438 整改）：把提示块**触发条件**还原成旧口径（按本窗总张数判，文件缺失也算进
-  // 提示块）→ 必红。旧口径产物＝在「仅缺失、无预算跳过」页上多一个 N／M 提示块；此处就注入那一段。
+  // 提示块）→ 必红。旧口径产物＝在「仅缺失、无预算跳过」页上多一个 M 提示块；此处就注入那一段。
   const isoGap = seedIso(4 * 1024);
   const goneGap = join(isoGap.photosDir, '2026-09-01_001.png');
   assert.ok(existsSync(goneGap), '种子照片不在盘上：' + goneGap);
   rmSync(goneGap);
   const gap = readFileSync(assertOutputOnDisk(runList(isoGap, { tag: '正面' })), 'utf8');
   assertNoBudgetBanner(gap); // 改回必绿（整改后的口径线）
-  const oldTrigger = gap.replace('<figure', '<section class="ilife-block ilife-block-feedback-block">'
-    + '<div class="ilife-block-feedback-block-note">照片较多，本页只显示 3 张；还有 1 张没显示</div>'
-    + '<div class="ilife-block-feedback-block-note-detail">可按「标签」或日期分批看</div></section><figure');
+  const oldTrigger = gap.replace('<section class="ilife-block ilife-block-copy-block">',
+    '<section class="ilife-block ilife-block-feedback-block">'
+    + '<div class="ilife-block-feedback-block-note">还有 1 张原图太大，没进这一页</div>'
+    + '<div class="ilife-block-feedback-block-note-detail">想全看：按标签挑，或者按日期挑一段时间</div></section>'
+    + '<section class="ilife-block ilife-block-copy-block">');
   assert.notEqual(oldTrigger, gap, '变异三未生效（旧口径提示块没注入）');
   try {
     assertNoBudgetBanner(oldTrigger);
     assert.fail('变异三（提示块触发条件还原旧口径）未红');
   } catch (e) {
     redLine += ' | ' + String(e.message).split('\n')[0];
-    assert.match(String(e.message), /仅文件缺失时不该/, '变异三红的理由不对');
+    assert.match(String(e.message), /仅文件缺失时不该有/, '变异三红的理由不对');
   }
   // 改回必绿：同一条闸门再走原页。
   const bytes = assertBudgetPageShape(good);

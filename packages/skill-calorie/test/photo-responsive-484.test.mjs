@@ -1,6 +1,7 @@
 /** #484 · 场景 09 响应式适配（三档横向溢出归零）的**机器面**验收：真跑六张带图页＋无图页，
- *  对产物页判四条——① 每张 `<img>` 带宽度约束；② 详情页命令块走 `renderPreBlock` 的类名（不是
- *  裸 `<pre>`）；③ 翻页链接触摸区 ≥44px；④ GIF 舞台的宽度约束。另加两条本票定的图上限与冻值守卫。
+ *  对产物页判四条——① 每张 `<img>` 带宽度约束；② 详情页两条命令原文住复制按钮的 `data-t`
+ *  （**#526 改的载体**：命令键上屏即内部标识符债，页上不再有 `<pre>`）；③ 翻页链接触摸区 ≥44px；
+ *  ④ GIF 舞台的宽度约束。另加两条本票定的图上限与冻值守卫。
  *
  *  **三档溢出本身**（390／768／1440 的 `docScrollWidth − innerWidth`）是版面事实，住真浏览器——
  *  读数工具是 `packages/skill-calorie/scripts/measure-responsive.mjs`（本票的验收工具）；本文件
@@ -114,18 +115,20 @@ function assertImgsConstrained(html, label) {
   return tags.length;
 }
 
-/** ② 详情页命令块：两条 `calorie-cmd-read` 命令都住在 `renderPreBlock` 的类名里，且页面**没有裸 `<pre>`**。 */
+/** ② 详情页命令原文（**#526 改了载体，判据跟着改**）：两条 `calorie-cmd-read` 命令都住**复制按钮的
+ *  `data-t` 属性**里——命令键与命令原文一旦上屏就是内部标识符债（#526 目标第 4 条／判据 2
+ *  「分隔符与内部标识符节点级归零」，当刻读数 10 → 0）；页面上**一处 `<pre>` 都不许有**
+ *  （命令原文占半屏是 #473 的旧形态，本票撤了，`查看 → 按钮点一下复制` 才是读者要的）。
+ *  判据不松：**两条命令必须都还在页上**（只是换了载体），少一条即红。 */
 function assertDetailCommands(html) {
   const face = elementFace(html);
   const pres = face.match(/<pre[^>]*>/g) ?? [];
-  assert.ok(pres.length >= 2, '详情页找不到命令块（应有两处 `renderPreBlock`）：' + JSON.stringify(pres));
-  for (const p of pres) {
-    assert.match(p, /class="ilife-block-pre-block-code"/, '详情页出现裸 `<pre>`（无类名即不中样式、窄屏必溢出）：' + p);
-  }
-  assert.match(face, /<pre class="ilife-block-pre-block-code">calorie-cmd-read calorie\.photo\.remove[^<]*<\/pre>/,
-    '删这张照片的命令没有走 renderPreBlock 的命令块');
-  assert.match(face, /<pre class="ilife-block-pre-block-code">calorie-cmd-read calorie\.photo\.list[^<]*<\/pre>/,
-    '返回画廊的命令没有走 renderPreBlock 的命令块');
+  assert.equal(pres.length, 0, '详情页不该再有命令块 `<pre>`（#526：命令原文改住复制按钮的 `data-t`）：'
+    + JSON.stringify(pres));
+  assert.match(face, /data-t="calorie-cmd-read calorie\.photo\.remove --params &#39;/,
+    '删这张照片的命令原文没住进复制按钮的 `data-t`');
+  assert.match(face, /data-t="calorie-cmd-read calorie\.photo\.list --params &#39;/,
+    '返回画廊的命令原文没住进复制按钮的 `data-t`');
 }
 
 /** ③ 翻页链接触摸区：本窗（中间那张）两条链接都要 `min-height:44px`。 */
@@ -168,7 +171,7 @@ test('① 六张带图页的每张 `<img>` 都带宽度约束', async () => {
   );
 });
 
-test('② 详情页命令块走 renderPreBlock 的类名，没有裸 `<pre>`', async () => {
+test('② 详情页命令原文住复制按钮的 data-t（不上屏、无 `<pre>`）', async () => {
   const p = allPages();
   assertDetailCommands(p.detail);
 });
@@ -203,8 +206,9 @@ test('⑥ 形状与冻值：无图页仍出完整文档，`PHOTO_LIST_PAGE_MAX_B
   for (const [name, html] of Object.entries(p)) {
     assert.ok(html.toLowerCase().startsWith('<!doctype html>'), name + '：文档头缺失');
     assert.match(html, /<meta charset/i, name + '：charset 缺失');
-    assert.match(html, /<meta name="viewport" content="width=device-width,initial-scale=1">/i,
-      name + '：窄屏一档要的 viewport 声明缺失');
+    assert.match(html, /<meta name="viewport" content="width=device-width,initial-scale=1(,viewport-fit=cover)?">/i,
+      name + '：窄屏一档要的 viewport 声明缺失（#526：启用页面级移动端配方后多一截 `,viewport-fit=cover`，'
+      + '安全区 `env(safe-area-inset-*)` 在 iOS 上要靠它才不为 0）');
     const bytes = Buffer.byteLength(html, 'utf8');
     assert.ok(bytes <= PHOTO_LIST_PAGE_MAX_BYTES, name + '：单页体积超限 ' + bytes);
   }
@@ -221,7 +225,9 @@ test('⑦ 变异自证：改坏必红、改回必绿（两行机器读数）', a
 
   const red = [];
   // 变异一：把画廊页每张图的宽度约束摘掉（回到天然像素上屏）→ ① 必红。
-  const noImgRule = p.list.replace(/style="max-width:100%;height:auto"/g, '');
+  // #526 起卡片图的内联样式是 `max-width:100%;width:100%;height:100%;object-fit:cover`（等高卡片网格），
+  // 变异点跟着改到当刻这一串上（判据不变：摘掉约束必红）。
+  const noImgRule = p.list.replace(/style="max-width:100%;width:100%;height:100%;object-fit:cover"/g, '');
   assert.notEqual(noImgRule, p.list, '变异一未生效（宽度约束没摘掉）');
   try {
     assertImgsConstrained(noImgRule, '看身材照');
@@ -229,9 +235,10 @@ test('⑦ 变异自证：改坏必红、改回必绿（两行机器读数）', a
   } catch (e) {
     red.push('图片宽度约束=' + String(e.message).split('\n')[0]);
   }
-  // 变异二：命令块退回裸 `<pre>` → ② 必红。
-  const barePre = p.detail.replace(/<pre class="ilife-block-pre-block-code">/g, '<pre>');
-  assert.notEqual(barePre, p.detail, '变异二未生效（命令块没退回裸 pre）');
+  // 变异二：命令原文退回**上屏**（`data-t` 改成可见的 `<pre>` 文本）→ ② 必红。
+  const barePre = p.detail.replace(/data-t="calorie-cmd-read calorie\.photo\.remove[^"]*"/,
+    'data-t="占位"') + '<pre>calorie-cmd-read calorie.photo.remove</pre>';
+  assert.notEqual(barePre, p.detail, '变异二未生效（命令原文没改成上屏）');
   try {
     assertDetailCommands(barePre);
     assert.fail('变异二（命令块退回裸 pre）未红');
