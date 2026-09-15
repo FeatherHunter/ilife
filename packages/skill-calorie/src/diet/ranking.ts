@@ -6,6 +6,10 @@
  *
  * #272：装配件补第二参（本次命令原文）——复制日志第 4 段要的是**本次跑的这条命令**（含本次参数），
  * 照抄可重跑；原文由本件的 `params` 原样序列化，不在这里另拼一份「等价参数」。
+ *
+ * #272 整改：**空窗与空库是两态**的分辨落在取数层 `./rankingPlate.ts`——**窗口为空**那一态它交回
+ * 零条目的盘（本条命令照常出整页、落盘、`exit 0`），**库为空**那一态它原样抛缺失阻断（`exit 4`、
+ * 不落盘）。本件两条出口因此一行未改：读数照 `items.length`／`okCount` 取，空窗时自然是 0。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildAllRankingsDoc, buildRankingDoc } from './rankingDocs.js';
