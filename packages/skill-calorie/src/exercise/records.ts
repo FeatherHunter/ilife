@@ -65,6 +65,12 @@ const COPY_KEY = '运动记录';
 const ROW_LIMIT = 50;
 /** 八列表头（逐字、逐序；按老实物 `exercise_summary.html` 的记录表逐列核过）。 */
 const COLUMNS = ['日期', '类型', '分类', '时长', '消耗', '距离', '心率', '备注'] as const;
+/** 数值那四列（#523 返修 R3）：挂公共层既有档位 `align:'right'` —— 右对齐 ＋ 等宽栈 ＋ `tabular-nums`
+ *  ＋ 正文字色（数值列主次 #507；`renderDataTable` 里「这一列是数值」的唯一信号就是它）。
+ *  此前八列**全走缺省 `left`**，`renderDataTable` 于是给两张表的每一格都挂 `cell-left`：时长／消耗／
+ *  距离既不右对齐，也拿不到等宽与 `tabular-nums`，数字走比例字体——视觉复评 R2 的硬伤①
+ *  （两页共 144 格同点位退化，而同族汇总页同名列挂对了，可作对照样板）。诊断列是数据本身，不在此列。 */
+const NUMERIC = new Set<string>(['时长', '消耗', '距离', '心率']);
 
 /** 记录视图（筛选后的逐条行＋汇总数；调用方只读，不改库）。 */
 export interface RecordsView {
@@ -249,7 +255,7 @@ function detailCard(v: RecordsView, shown: number): Card {
     id: 'sec-table',
     label: '记录明细',
     html: renderDataTable({
-      columns: COLUMNS.map((label) => ({ key: label, label })),
+      columns: COLUMNS.map((label) => (NUMERIC.has(label) ? { key: label, label, align: 'right' as const } : { key: label, label })),
       rows: v.rows.slice(0, shown).map((r) => ({
         日期: r.date,
         类型: r.type,

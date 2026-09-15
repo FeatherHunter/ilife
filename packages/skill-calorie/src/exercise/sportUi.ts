@@ -62,6 +62,14 @@ export function exerciseUiCss(): string {
     // ── 页级覆盖（视觉复评 r2 的 P0-A／P0-B）：页内导航的锚点是真 `<a href>`（可点）⇒ 抬到 44px
     //    触摸面；窄屏表格回退标签原来 11.5px，抬到 12px 下限。──
     + '.ilife-page .ilife-block-toc a{min-height:44px;display:inline-flex;align-items:center;padding-inline:14px}'
+    // ── 页级覆盖（#523 返修 R3 硬伤②）：分布条的类名轨是公共层给的 `minmax(0,6em)` ＋ `nowrap` ＋
+    //    `text-overflow:ellipsis`——类名超过 6em 的（「跪姿健腹轮前推」「对握式器械推胸」「把手式蝴蝶机飞鸟」）
+    //    在**三档宽度下都被悄悄截断**（headless 实测 `clientWidth=78 / scrollWidth=104`，390／768／1440 同值，
+    //    属信息丢失不是排版偏好）。本族页把类名轨放到容得下全称的宽度并**允许换行**：轨仍是定宽，
+    //    八根条的起点继续对齐；超长类名折行，一个字不丢。窄屏（820）再塌成两段式（见下）。
+    //    只在本页样式段加规则，不碰公共层源码——共享层那条 `6em` 是跨件改动，转公共层票（见证据件遗留节）。──
+    + '.ilife-page .ilife-block-dist-row{grid-template-columns:minmax(0,9.5em) minmax(0,1fr) auto}'
+    + '.ilife-page .ilife-block-dist-row-name{overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere}'
     + '@media (max-width:640px){.ilife-page .ilife-block-data-table td::before{font-size:12px}}'
     // ── 脚注小字（截断明示、口径旁注）──
     + '.sui-note{font-size:12px;line-height:1.6;color:var(--fg2);margin:8px 0 0}'
@@ -94,6 +102,11 @@ export function exerciseUiCss(): string {
     + '  .ilife-block-ring-card{flex-direction:column;align-items:center;gap:16px}'
     + '  .ilife-block-ring-side{flex:1 1 auto;width:100%;text-align:center}'
     + '  .ilife-block-ring-side .sui-facts{flex-direction:row;justify-content:center;gap:8px 16px}'
+    // 分布条塌成两段式（#523 返修 R3）：类名独占第一行（可换行、不截断），第二行「条 ＋ 数值」。
+    + '  .ilife-page .ilife-block-dist-row{grid-template-columns:minmax(0,1fr) auto;gap:4px 8px}'
+    + '  .ilife-page .ilife-block-dist-row-name{grid-column:1 / -1;grid-row:1}'
+    + '  .ilife-page .ilife-block-dist-row-bar{grid-column:1;grid-row:2}'
+    + '  .ilife-page .ilife-block-dist-row-val{grid-column:2;grid-row:2}'
     + '}'
     // ── 触摸面（HELP 第 ①）：本族的键值行／胶囊是读者在手机上会按住的一块内容 ──
     + '.sui-facts,.sui-caps,.sui-window{-webkit-tap-highlight-color:transparent;touch-action:manipulation}'
