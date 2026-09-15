@@ -7,6 +7,8 @@
  * - 固定照片目录：每页新鲜临时目录，经 `--params photosDir` 显式传入（不读不写环境变量）。
  * - 固定时钟：凡能显式传日期的页一律显式传（list 传 `today:2026-09-06`、gif 传 `days:36500`、
  *   gif-planner 传 `start/end`、add 传 `date/time`）；`help.center` 走 `q` 现找分支（不碰 `new Date()`）。
+ *   #495：显式参数钉不住**相对时间文案**（「今天」「N 天前」由装配层 `todayISO()` 现算），故本脚本进程内
+ *   另把 `CALORIE_TODAY` 钉到 `2026-09-06`（见下方 `PIN_TODAY`）；两条合起来才算「时钟钉死」。
  * - 比对**规范化后的页面正文 sha256**（剥掉临时目录绝对路径、产物时间戳与渲染当刻时钟），不比文件字节。
  *   #462：三条写后回执页（`photo.add`／`remove`／`tag`）的回执时间取自 `src/render/receipt.ts` 的
  *   `nowStamp()`（渲染当刻系统时钟、取到秒），页面参数钉住了业务日期也钉不住它——故按四处已知位置剥
@@ -29,19 +31,35 @@ import { openDb } from '../dist/index.js';
 import { dispatch } from '../dist/cli/cmd_read.js';
 import { dispatchWrite } from '../dist/cli/write.js';
 
+/* ── #495 · 把「今天」钉死 ──
+ * 本轮（#472／#473／#474／#476／#484／#488）多页新增**相对时间**文案（「今天」「N 天前」「N 个月前」），
+ * 出处是 `src/analysis/utils.ts` 的 `todayISO()`：`CALORIE_TODAY` 有值且形如 `YYYY-MM-DD` 时直接返它，
+ * 否则现取机器时钟的 UTC 日。所以「显式传业务日期」钉不住这类文案——`calorie.photo.list` 就是活的例子：
+ * 数据窗口吃的是页面参数 `today:2026-09-06`，而图注的相对天数由装配层的 `todayISO()` 另算
+ * （`src/photo/galleryDoc.ts` 的 `relativeDays`；`compareDoc`／`viewerDoc`／`pickerDoc` 同族同法）。
+ * 机器日过一天，这些页的正文就换一次字，sha 跟着漂——实测 2026-09-15 那轮十页全漂、其一是「11 天前」。
+ *
+ * 钉法：**本脚本进程内**把 `CALORIE_TODAY` 显式置为种子日的末日（`2026-09-06`，与种子库最后一张照片
+ * 同一天，也与 `photo.list` 的窗口右端同一个日期），置在最前、先于任何 `dispatch`／`addPhotos`。
+ * 只影响本进程：不写环境变量文件、不动真实库、不改生产默认（真实使用不设该变量即按机器时钟）。
+ * 取值落在种子日上，三张照片的相对文案是「2 天前／1 天前／今天」，无未来日期（`relativeDays` 对负数返空串）。
+ */
+const PIN_TODAY = '2026-09-06';
+process.env['CALORIE_TODAY'] = PIN_TODAY;
+
 /* ── 基线清单（`--write` 回写本块；`--check` 逐键比对） ── */
 // BASELINE-BEGIN
 const BASELINE = {
-  "calorie.help.center": "fe452fadf15fe8ef94033bcac573bb6d5e97dc5ea6b2133b86356ce56d91251e",
-  "calorie.photo.add": "d580551414e1d313e771a143dafc5667ffcd4908ca148c7f4c113f6d91eaa3b1",
-  "calorie.photo.compare": "5495d89bcbeb6d3d6911c90b87ce73e19b359b04a09a1689994418f0ef077863",
-  "calorie.photo.detail": "560a9b04745ac979c690c0138e76435671423babebbaece48225c9fc3cb811c3",
-  "calorie.photo.gif": "b303a017301ae91cec22ab0506d0f1f261910653eebdecb901689b7fd2044138",
-  "calorie.photo.list": "e10e44a69b838b5ff2e27db16ab27cde497094d07bb3c0fe1ea85bfe58a752f1",
-  "calorie.photo.remove": "bb9390bcdb1256e4ad6ad2a373a6c4ddad1ddb9e3f60aec32d751aecd598f65f",
-  "calorie.photo.tag": "fcf4621b1bb125b9e60b208bf810db63ccfae3df908e9defbc806c6922e6f57b",
-  "calorie.view.gif-planner": "74358b47f733084b5bf9a199e72ece44bfc05940a38514aff09e4398189211ba",
-  "calorie.view.photo-log-wizard": "4d25708e56b1f0bf4448fe23a5a58b5ff4bffb7c52d6aed4884e21a0eb3535e8"
+  "calorie.help.center": "58c4245397d4d99337107303c44d26598e5434e4e498266535fcd985a9300d4e",
+  "calorie.photo.add": "e32aa6bea297b182fdea2c88b35e42a88c3c36da1d55407c9b40df9948592e6d",
+  "calorie.photo.compare": "412af936b36263ddd98bdeaa385014077992b95626ab028ee14b20363833c2f7",
+  "calorie.photo.detail": "5e06ac53393efc8ad638395a5b31d75de184e6fe6b4881502083ae5c462533f8",
+  "calorie.photo.gif": "0fa5f355618aa124e3b6ecc90b21dd1a8856178af8f86608c0596db535c72b48",
+  "calorie.photo.list": "c20a0147a74d3f66923a00f1d8382fff6f0d8a7b4af519d67c885ad3726840ed",
+  "calorie.photo.remove": "88dfe5395e635e39efb11ffcdaf477bfb0ac85a09715745298e455360d477669",
+  "calorie.photo.tag": "c7fefda34dc77fe8af5815a48654cba2681f6f0c0b4c7d822e2e63efeea4d27c",
+  "calorie.view.gif-planner": "1880d6e65793b094c09e76cbf189186240bb1b6e5d7c913034a9d8234b3713e4",
+  "calorie.view.photo-log-wizard": "11906f26b450d81cb294920e51d2b85ac42056963efd0a1ca845a0e0cfa2609a"
 };
 // BASELINE-END
 
@@ -217,20 +235,28 @@ if (mode !== '--write' && mode !== '--check') {
   console.error('用法：gen-photo-baseline.mjs --write|--check');
   process.exit(2);
 }
+// 读数自证：#495 起每轮先亮出钉死的「今天」，免得读数与钉法两处走散。
+console.log('PIN-TODAY ' + process.env['CALORIE_TODAY'] + ' (machine-utc-day ' + new Date().toISOString().slice(0, 10) + ')');
 
 if (mode === '--write') {
   const { out, unstable } = runAll();
   const self = readFileSync(new URL(import.meta.url), 'utf8');
   const block = '// BASELINE-BEGIN\nconst BASELINE = ' + JSON.stringify(out, null, 2) + ';\n// BASELINE-END';
-  const next = self.replace(/\/\/ BASELINE-BEGIN[\s\S]*?\/\/ BASELINE-END/, block);
-  if (next === self) {
+  // #495 修一处判断串线：原先拿 `next === self` 当作「标记块未命中」的判据，而**回算出的块与文件里
+  // 那块逐字节相同时**（＝十页 sha 全部没变，正是本票要的两轮一致）`replace` 原样返回，于是把
+  // 「无需回写」误报成「标记块未命中」并 exit 1 —— 二次 `--write` 永远红，判据反而读不出来。
+  // 现改为：标记是否命中用 `test` 判（仍是有的牙齿：块被人删了就红），无变化则明确报 UNCHANGED、exit 0。
+  const re = /\/\/ BASELINE-BEGIN[\s\S]*?\/\/ BASELINE-END/;
+  if (!re.test(self)) {
     console.error('BASELINE 回写失败：标记块未命中');
     process.exit(1);
   }
-  writeFileSync(new URL(import.meta.url), next);
+  const next = self.replace(re, block);
+  const changed = next !== self;
+  if (changed) writeFileSync(new URL(import.meta.url), next);
   for (const [k, v] of Object.entries(out)) console.log((BASELINE[k] === v ? 'same ' : 'new ') + k + ' ' + v);
   if (unstable.length > 0) console.log('UNSTABLE ' + unstable.join(' | '));
-  console.log('BASELINE-WROTE ' + Object.keys(out).length + ' pages');
+  console.log((changed ? 'BASELINE-WROTE ' : 'BASELINE-UNCHANGED ') + Object.keys(out).length + ' pages');
 } else {
   const { out, unstable } = runAll();
   let bad = 0;
