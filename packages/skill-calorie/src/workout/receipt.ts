@@ -40,6 +40,20 @@ const WORKOUT_RECEIPT_KEYS: ReadonlySet<string> = new Set([
   'calorie.workout.plan-delete',
 ]);
 
+/** 「状态」卡副行（写入去向）的兜底措辞：10 条写命令里那 9 条增改类说「已写入训练计划」都贴切；
+ *  唯独撤销整份计划（`plan-delete`）落库后这份计划已经不在库里——同一页别处写着「已撤销训练计划「…」／
+ *  已删除（硬，不可恢复）」，兜底再说「已写入」就是同一页对同一动作自相矛盾（#435 第 1 条）。
+ *  故按命令键派生：撤销类给一条自己的写法，其余 9 条取值一个字不动。 */
+const WRITTEN_DETAIL_FALLBACK = '已写入训练计划';
+const WRITTEN_DETAIL_BY_KEY: ReadonlyMap<string, string> = new Map([
+  ['calorie.workout.plan-delete', '已删除训练计划'],
+]);
+
+/** 本命令「状态」卡副行的取值：具名键用表里的，其余一律走兜底。 */
+function writtenDetailOf(key: string): string {
+  return WRITTEN_DETAIL_BY_KEY.get(key) ?? WRITTEN_DETAIL_FALLBACK;
+}
+
 /** 写后计划现值（`getPlan` 正本；撤销后为空即明示已撤销，不编数）。 */
 function currentPlanTable(db: DatabaseSync): string {
   const plan = getPlan(db);
@@ -97,7 +111,7 @@ function buildWorkoutReceiptDoc(
   };
   const content = [
     renderKpiGrid([
-      statusCard(receipt, '已写入训练计划'),
+      statusCard(receipt, writtenDetailOf(key)),
       { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
       {
         label: '写入字段',
