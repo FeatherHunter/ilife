@@ -381,7 +381,11 @@ test('#385 视图层五列与状态徽章（合成数据，不依赖取数）：
   assert.equal(ticks, 3, '折线应带 3 条 Y 轴刻度文字（yTicks:3），实得 ' + ticks);
   // 硬约束 1（技能侧零颜色字面量）：只查**技能侧源码**——产物里的色值来自 base-paint 样式表，是正当来源。
   // 判颜色字面量＝`#` ＋ 6 位以上十六进制，或 3 位里含字母（据此排除注释里的 `#385`／`#113` 这类票号）。
-  for (const rel of ['../src/analysis/deficit.ts', '../src/render/trendDocs.ts']) {
+  /* #518 裁定 B（编排者 2026-09-16，一次性具名授权）：W1 把缺口族装配从 `render/trendDocs.ts`
+   *  搬进姊妹件 `render/trendPredictDocs.ts` 之后，这段代码不再住在扫描面内的那个件里 ⇒ **把搬迁后的
+   *  件补回列表**，恢复扫描面覆盖。语义**只加不改**：两件都在（老件仍住组合／异常／禁忌三支），
+   *  断言的判据与阈值一字未动，阈值与滤法照上面两行原样。 */
+  for (const rel of ['../src/analysis/deficit.ts', '../src/render/trendDocs.ts', '../src/render/trendPredictDocs.ts']) {
     const src = readFileSync(join(HERE, rel), 'utf8');
     for (const m of src.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) {
       if (m[0].length < 7 && !/[a-fA-F]/.test(m[0].slice(1))) continue;

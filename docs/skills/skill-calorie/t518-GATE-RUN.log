@@ -1,5 +1,5 @@
 ﻿# t518 门禁运行记录导出（协议 §2.3 第 4 条：对账源落受跟踪路径）
-# 导出时刻: 2026-09-16T03:59:26.1356093+08:00
+# 导出时刻: 2026-09-16T04:01:43.7317375+08:00
 # 源: .scratch/locks-m158v2/gate-runs.log（未受版本控制）；本文件只含 ticket=518 的 START／RUN 行，逐字抄录。
 # 声明口径：证据件里每条 GATE-RUN runId=<标识> 都能在此文件里找到同标识的 RUN 行；只领 exit=0。
 
@@ -25,3 +25,9 @@ START ticket=518 runId=0ae93b1d-e1c2-48cd-8cbf-462aef857b19 cmd="node packages/s
 RUN ticket=518 runId=0ae93b1d-e1c2-48cd-8cbf-462aef857b19 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=45548 at=2026-09-15T19:59:03.828Z
 START ticket=518 runId=a1db0e49-1d1a-4a16-981d-985c6e7026c3 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 pid=62988 at=2026-09-15T19:59:03.886Z
 RUN ticket=518 runId=a1db0e49-1d1a-4a16-981d-985c6e7026c3 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=62988 at=2026-09-15T19:59:04.116Z
+START ticket=518 runId=282c24a1-ca12-47b8-85d3-c9615c28c2b8 cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/src/render/trendPredictDocs.ts packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W1-鎼-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git diff --cached --name-only; git commit -F .scratch/t518/W1-commit-msg.txt -- packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/src/render/trendPredictDocs.ts packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W1-鎼-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git log --oneline -1\"" waitedMs=0 pid=54032 at=2026-09-15T19:59:56.122Z
+RUN ticket=518 runId=282c24a1-ca12-47b8-85d3-c9615c28c2b8 cmd="pwsh -NoProfile -Command \"git add packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/src/render/trendPredictDocs.ts packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W1-鎼-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git diff --cached --name-only; git commit -F .scratch/t518/W1-commit-msg.txt -- packages/skill-calorie/src/render/trendDocs.ts packages/skill-calorie/src/render/trendPredictDocs.ts packages/skill-calorie/AGENTS.md docs/skills/skill-calorie/t518-W1-鎼-璇佹嵁.md docs/skills/skill-calorie/t518-GATE-RUN.log; git log --oneline -1\"" waitedMs=0 exit=0 pid=54032 at=2026-09-15T19:59:58.476Z
+START ticket=518 runId=9e3d775e-1d4c-46db-bce6-fe88017195e3 cmd="node .scratch/t518/w1b-color-mutate.mjs" waitedMs=0 pid=48336 at=2026-09-15T20:01:00.011Z
+RUN ticket=518 runId=9e3d775e-1d4c-46db-bce6-fe88017195e3 cmd="node .scratch/t518/w1b-color-mutate.mjs" waitedMs=0 exit=1 pid=48336 at=2026-09-15T20:01:00.445Z
+START ticket=518 runId=97610443-6743-4229-aa1a-5d88887667d5 cmd="node .scratch/t518/w1b-color-mutate.mjs" waitedMs=0 pid=61264 at=2026-09-15T20:01:14.850Z
+RUN ticket=518 runId=97610443-6743-4229-aa1a-5d88887667d5 cmd="node .scratch/t518/w1b-color-mutate.mjs" waitedMs=0 exit=0 pid=61264 at=2026-09-15T20:01:15.336Z
