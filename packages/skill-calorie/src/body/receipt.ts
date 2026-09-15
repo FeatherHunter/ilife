@@ -219,13 +219,16 @@ function numCard(label: string, raw: unknown, unit: string): KpiCardInput {
  *  图标三张表 ＋ `:201` 的 `op` → class）。三张表的唯一来源是共用件 `shared/operationHead.ts:23-45`，
  *  本件不写第二份。它说的是**这次是什么操作**（新增／删除），与结论条那句**结果**分工不同——
  *  「写成功」这件事一页只在结论条（删类在警示块）说一处。 */
-const opBadge = (op: CrudReceipt['op']): Pick<KpiCardInput, 'status' | 'statusText'> => ({
-  status: OPERATION_TONES[op], statusText: OPERATION_ICONS[op] + ' ' + OPERATION_LABELS[op],
+const opBadge = (op: CrudReceipt['op'], backfill: boolean): Pick<KpiCardInput, 'status' | 'statusText'> => ({
+  // #539 收口：补记页顶「✓ 新增」语义矛盾（终审指控成立）——落库日期早于今天即补记（J6 同规则），
+  // 徽章改「补记」，图标色档沿用共享表（只换标签字，不动共享件）。
+  status: OPERATION_TONES[op],
+  statusText: OPERATION_ICONS[op] + ' ' + (backfill && op !== 'delete' ? '补记' : OPERATION_LABELS[op]),
 });
 
 /** 读数卡两张（**主角数字 ＋ 日期**）：体脂族给体脂率，围度族给这条记录里量到的部位数。
  *  影响行数与「这次写进去的字段」进页尾对账区；记录编号是内部主键，整张撤（#537）。 */
-function kpiCards(key: string, receipt: CrudReceipt, row: Record<string, unknown> | null): KpiCardInput[] {
+function kpiCards(key: string, receipt: CrudReceipt, row: Record<string, unknown> | null, backfill: boolean): KpiCardInput[] {
   const at = (c: string): unknown => (row === null ? undefined : row[c]);
   const date: KpiCardInput = { label: '日期', value: cell(at('date')) };
   const head: KpiCardInput = isMeasure(key)
@@ -234,7 +237,7 @@ function kpiCards(key: string, receipt: CrudReceipt, row: Record<string, unknown
       value: String(MEASUREMENT_FIELDS.filter((f) => hasValue(at(f))).length), unit: '个',
     }
     : numCard('体脂率', at('body_fat_pct'), '%');
-  return [{ ...head, ...opBadge(receipt.op) }, date];
+  return [{ ...head, ...opBadge(receipt.op, backfill) }, date];
 }
 
 /** 一条既有记录的现值块（同日已有记录／补记冲突时出；没有那一条就整块不出现）。
@@ -279,7 +282,7 @@ function buildBodyReceiptDoc(
       : renderConclusionBar(conclusionOf(key, receipt, row, backfill)),
     // ② 主角读数卡（原先四张：状态／记录编号／影响行数／写入字段——后两张进页尾对账区，
     //    记录编号是内部主键、整张撤）。
-    renderKpiGrid(kpiCards(key, receipt, row)),
+    renderKpiGrid(kpiCards(key, receipt, row, backfill)),
     // ③ 逐格快照（删类＝删除前的原值，记／补记类＝记录现值）：两段都**逐格读自库内**，
     //    缺值可见文本写 `—`；行序与列序一位不动（那是三条写词测试钉住的契约），只在行与行之间
     //    插组头，让裸数字按部位分家（编排者视觉裁定第 3 条）。

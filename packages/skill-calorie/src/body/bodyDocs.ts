@@ -286,6 +286,9 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
     // 复制 payload 行保持原样透传，不写「—」（裁定 2）。
     recordsBlock = '<section id="records">'
       + measureFullTable(v.items, byTrend ? '围度记录明细' : '围度记录', '还没有围度记录。用「记围度」记一条，第一条就是基线。')
+      // #539 收口：13 列宽表在桌面档会横滑（容器 overflow-x:auto，无数据丢失），与 06 页同款，
+      // 表下必须有一句横滑提示（终审指控"右列截断"实为无提示的横滑区；有提示即合规，见 t534 §3.2）。
+      + scrollHint('表格较宽时，可以在表里左右滑。')
       + renderCaliberLine('表里与卡上的数值单位都是 cm｜没量到的项写字面「—」') + '</section>';
   }
   /** 页内定位（长页）：顺序跟着主次走；没有走势块（样本不足或没有可比部位）时不出走势那颗胶囊。 */

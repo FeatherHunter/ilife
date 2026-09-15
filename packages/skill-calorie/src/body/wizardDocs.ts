@@ -150,7 +150,9 @@ export function buildMeasureWizardDoc(v: MeasureWizardView): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '记围度',
-    eyebrow: '身体细节 · 填表核对',
+    // #539 收口：B 线（给了 metaLeft）不渲染 eyebrow，这一串写了也白写——还留着 `·` 就是颗 latent 探针雷，
+    // 改成无符号的归属词。零产物变化（B 线只认 metaLeft，见 shared/docPage.ts:131-141）。
+    eyebrow: '身体细节',
     subtitle: null,
     metaLeft: '填好确认一遍，再照复制区那一段把记录写进库里。',
     content,
@@ -191,8 +193,9 @@ function compositionForm(v: CompositionWizardView): string {
     : (v.bodyFatPct === null ? '' : String(v.bodyFatPct));
   const head = renderParamForm({
     // 字段说明**不拿 `＋` 串成一行**（改前：「日期（必填）＋来源（必填）＋年龄／性别…」）：
-    // 一句人话在上头，必填由每一格自己的星号承担。
-    description: '带星号的必填。皮褶钳那一支的体脂率不用手填。',
+    // 一句人话在上头，必填由每一格自己的星号承担。#539 收口：后半句
+    // 「皮褶钳那一支的体脂率不用手填」与上面那块换算口径说同一件事，只留「带星号的必填」。
+    description: '带星号的必填。',
     fields: [
       { name: 'date', label: '日期', value: v.date, hint: 'YYYY-MM-DD', required: true },
       {
@@ -280,7 +283,8 @@ export function buildCompositionWizardDoc(v: CompositionWizardView): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '记体脂',
-    eyebrow: '身体细节 · 填表核对',
+    // #539 收口：同上，B 线不渲染 eyebrow，无符号归属词即可，零产物变化。
+    eyebrow: '身体细节',
     subtitle: null,
     metaLeft: '填好确认一遍，再照复制区那一段把记录写进库里。',
     content,

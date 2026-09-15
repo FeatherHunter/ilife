@@ -41,9 +41,10 @@ export function buildBodyMeasureCompareDoc(v: BodyMeasureCompareView): string {
     });
   const parts: string[] = [compareUiCss()];
   parts.push(renderFactStrip({
+    // #539 收口：`围度变了 N` 与 `两个日期都比过 N` 两格同值并列（终审指控同义反复，成立），
+    // 撤掉后者——eligibility（两个日期都有记录才比）已由下面那条口径行说一处，不在这里说第二遍。
     items: [
       { label: '围度变了', value: String(nonZero) + ' 个部位' },
-      { label: '两个日期都比过', value: String(v.nCompared) + ' 个部位' },
       { label: '前一次记录', value: v.date1 },
       { label: '后一次记录', value: v.date2 },
     ],
