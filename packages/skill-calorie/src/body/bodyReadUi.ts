@@ -166,7 +166,7 @@ export function measureFullTable(
       .filter((f) => typeof r[f] === 'number')
       .map((f) => '<div class="msr-item"><span class="msr-k">'
         + escapeHtml(MEASUREMENT_ZH[f] ?? f) + '</span><span class="msr-v">'
-        + escapeHtml(String(r[f])) + 'cm</span></div>')
+        + escapeHtml(String(r[f])) + ' cm</span></div>')
       .join('');
     return '<div class="msr-card"><div class="msr-head"><span class="msr-date">'
       + escapeHtml(date) + '</span>'

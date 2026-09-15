@@ -264,14 +264,14 @@ test('#361 窄屏卡片：与宽表同一份数据，只列已填项，全空行
   assert.deepEqual(cardDates, tableDates, '卡片日期列应与宽表日期列逐行相同（同一份数据）');
   const r3 = cardOf(html, dayBefore(1));
   assert.ok(r3.includes('腰围'), 'R3 卡片应列腰围（已填项）');
-  assert.ok(r3.includes('81cm'), 'R3 卡片腰围值应为 81cm');
+  assert.ok(r3.includes('81 cm'), 'R3 卡片腰围值应为「81 cm」（#535 起数值与单位之间留一个空格）');
   assert.ok(r3.includes('肩围'), 'R3 卡片应列肩围（13 项全列，已填即展示）');
   const r2 = cardOf(html, dayBefore(4));
   assert.equal(r2.includes('msr-k">腰围'), false, 'R2 卡片不得列腰围（缺项不出，老 :393-395 filter 口径）');
   assert.ok(r2.includes('胸围'), 'R2 卡片应列胸围（已填项）');
   const r0 = cardOf(html, dayBefore(6));
   assert.ok(r0.includes('肩围'), 'R0 卡片应列肩围（唯一已填项）');
-  assert.ok(r0.includes('44cm'), 'R0 卡片肩围值应为 44cm');
+  assert.ok(r0.includes('44 cm'), 'R0 卡片肩围值应为「44 cm」（#535 起数值与单位之间留一个空格）');
   assert.equal(r0.includes('msr-k">腰围'), false, 'R0 卡片不得列腰围（缺项不出）');
   assert.equal(r0.includes('未填围度'), false, 'R0 有已填项，不得出「未填围度」');
 });
@@ -294,7 +294,8 @@ test('#361 趋势闸门保持（#360 不许动）：自动挑部位＋五项 KPI
   const text = visibleText(html);
   assert.ok(text.includes('胸围趋势'), '平局按既有列序取首位，图题应为「胸围趋势」');
   assert.ok(html.includes('<svg'), '图区应有自绘 svg（#360 图闸门保持）');
-  assert.match(text, /趋势点\s*3\s*天/, 'KPI 趋势点应为手算 3 天');
+  // #535：读数卡「趋势点」的单位由「天」改「个」（编排者复核：3 个点不是跨 3 天），点数仍钉手算值 3。
+  assert.match(text, /趋势点\s*3\s*个/, 'KPI 趋势点应为手算 3 个');
   assert.match(text, /均值\s*95\.5\s*cm/, 'KPI 均值应为手算 95.5');
   assert.match(text, /最小\s*95\s*cm/, 'KPI 最小应为手算 95');
   assert.match(text, /最大\s*96\s*cm/, 'KPI 最大应为手算 96');

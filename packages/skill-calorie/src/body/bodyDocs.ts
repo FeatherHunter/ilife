@@ -222,25 +222,26 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
    *  「看围度趋势」显式点了窗口 ⇒ 这一页以走势为主（走势在前、记录在后）；为假＝「看围度」走的
    *  缺省窗口 ⇒ 以全量记录为主（记录在前、走势在后）。页名与副标题跟着这一位走。 */
   const byTrend = v.windowGiven;
-  const cm = (n: number | null): string => (n === null ? '—' : String(n) + 'cm');
-  // 趋势点 0（样本不足）时写「—」不带单位（照老 `:491／:496／:507` 全落「—」）。
-  // 注文说清这一格数的是什么：图上画出来的点，不是跨了多少天（编排者 2026-09-15 复核口径）。
-  const trendPointCard = v.kpi.count === 0
+  const cm = (n: number | null): string => (n === null ? '—' : String(n) + ' cm');
+  // 读数卡只留两张「一眼是本页主角」的：最新一次的量值、图上画出来的点数。
+  // 值槽只放数、单位走 `unit` 槽（中间那格空白由 DOM 给：`96 cm`）；注文说清「点」不是「天」。
+  const latestCard = { label: '最新', value: v.latestVal === null ? '—' : String(v.latestVal), unit: 'cm', detail: trendZh };
+  const pointCard = v.kpi.count === 0
     ? { label: '趋势点', value: '—', detail: trendZh }
-    : { label: '趋势点', value: String(v.kpi.count), unit: '天', detail: '图上画出来的点，一个点是一次测量那天' };
+    : { label: '趋势点', value: String(v.kpi.count), unit: '个', detail: '图上画出来的点，一个点是一次测量那天' };
   const parts: string[] = [bodyReadUiCss(), measureUiCss()];
   // 窗口条（与体成分两页同形）：窗口只说一次；条数是本页唯一一处「共 N 条」读数（表题只留表名）。
   // 取数层若没给窗口文案（合成分支）则整条不出——不印半句「窗口：」。
   if (typeof v.windowLabel === 'string' && v.windowLabel !== '') parts.push(windowBar(v.windowLabel, '共 ' + v.total + ' 条'));
-  // 读数卡：值槽一律放数（改前第一张卡的值是「全部围度」这类词）；部位名只在第一张卡当明细。
-  parts.push(renderKpiGrid([
-    { label: '最新', value: v.latestVal === null ? '—' : String(v.latestVal) + 'cm', detail: trendZh },
-    trendPointCard,
+  // 数值卡：手机档的读数卡栅格在 ≤400 是一格（共享配方定的），六张卡会把首屏吃光 ⇒ 只留两张，
+  // 其余四件读数改住卡外事实条（同一个数的口径不变，`#361` 判据按可见文本认这几件读数）。
+  parts.push(renderKpiGrid(byTrend ? [pointCard, latestCard] : [latestCard, pointCard]));
+  parts.push(renderFactStrip({ items: [
     { label: '均值', value: cm(v.kpi.avg) },
     { label: '最小', value: cm(v.kpi.min) },
     { label: '最大', value: cm(v.kpi.max) },
-    { label: '变化量', value: v.kpi.delta === null ? '—' : (v.kpi.delta >= 0 ? '+' : '') + v.kpi.delta + 'cm' },
-  ]));
+    { label: '变化量', value: v.kpi.delta === null ? '—' : (v.kpi.delta >= 0 ? '+' : '') + v.kpi.delta + ' cm' },
+  ] }));
   /** 趋势块：一个部位一条线（图上每个点＝那天该项的均值，取数层已定，本层不重算）。 */
   const trendParts: string[] = [];
   let charts = false;
