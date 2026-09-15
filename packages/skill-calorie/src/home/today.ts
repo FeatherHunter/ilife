@@ -6,6 +6,7 @@
  * 唯一的形状改动是签名收成 `(params, db)`——旧 `case` 里的 `params`／`db` 即这两个入参。
  */
 import type { DatabaseSync } from 'node:sqlite';
+import { buildMealDistributionView } from '../diet/index.js';
 import { listMeals } from '../fetch/diet.js';
 import { todayISO } from '../analysis/utils.js';
 import { buildDietOverview, buildMealDistribution, zeroMealDistribution } from '../render/diet.js';
@@ -22,6 +23,7 @@ import { getNutritionGoal } from '../fetch/nutritionGoal.js';
 import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
 import { buildExerciseDoc } from '../render/sportDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { commandLine } from '../shared/writeParts.js';
 import {
   assertISO, dayField, daysIn, defaultRange, fail, latestFoodDate, nums, optNum, optStr, windowRange,
 } from '../shared/params.js';
@@ -54,12 +56,22 @@ export function viewHomeToday(params: Record<string, unknown>, db: DatabaseSync)
   return { data: { section, metrics }, html: buildHomeDoc(h, section) };
 }
 
-/** `calorie.view.diet` · 饮食总览：窗口汇总 ＋ 餐别分布 ＋ 窗口明细（上限 100 条并明示截断）。 */
+/** `calorie.view.diet` · 饮食总览：窗口汇总 ＋ 餐别分布 ＋ 窗口明细（上限 100 条并明示截断）。
+ *
+ *  **#276 · 餐别 5 条词的那一半**：给了 `meal` 时整页换成**餐别分布页**（取数经饮食能力的门
+ *  `buildMealDistributionView`，页由 `render/dietDocs.ts` 接 `diet/todayDocs.ts` 的具名页）；
+ *  **不给 `meal` ＝今天的行为，逐字不变**（这一支是加法式的：另几条词吃不到它）。
+ *  餐别取值域与解析口径**不在这里重写**——`diet/reviewDocs.ts` 的 `mealParamOf` 是唯一定义地
+ *  （缺参／未知值即 exit 2，不猜、不给默认餐别）；本处只把参数原值交给那道门。 */
 export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const date = optStr(params, 'date') ?? end;
   assertISO(date as string, 'date');
   const o = buildDietOverview(db, start, end);
+  /* 只在真给了 `meal` 时才走餐别那一支（`undefined` 当没这个参数）。放在宿主取数之后，
+     空窗仍由上行 `buildDietOverview` 的缺失阻断收口（`diet/review.ts` 的件头口径）。 */
+  const mealRaw = optStr(params, 'meal');
+  const mealView = mealRaw === undefined ? undefined : buildMealDistributionView(db, mealRaw, start, end);
   // C4 #43 · 尾日空回零（窗内有数不掀整窗 missing；窗全空由上行 overview 抛 missing-data）。
   let dist;
   try {
@@ -93,6 +105,11 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
   return { data: { metrics }, html: buildViewDietDoc({
     overview: o, dist, distDate: date as string, days: o.series,
     meals: mealSlice, mealTotal, mealsTruncated: mealTotal > MEAL_CAP,
+    /* 只在给了 `meal` 时带上这一个位：`buildViewDietDoc` 一见它就整页换餐别分布页
+       （`render/dietDocs.ts`），并带上本次命令原文供复制区用。 */
+    ...(mealView === undefined
+      ? {}
+      : { mealView, command: commandLine('calorie.view.diet', params) }),
   }) };
 }
 
