@@ -1,6 +1,6 @@
 /** base-paint/controls：#76 控件层运行时（契约 §3.3／§6.3）。
  *
- * 落地冻结面 44 条里 #76 的 13 条 `pending`（10 个运行时出口 ＋ 3 个类型出口）：
+ * 实施冻结面 44 条里 #76 的 13 条 `pending`（10 个运行时出口 ＋ 3 个类型出口）：
  * `copyText`／`createCopyRuntime`／`bindCopyAction`／`buildSharedHelpersJs`／
  * `renderToast`／`createToastController`／`renderActionBar`／`renderStatusBadge`／
  * `renderEmptyState`／`renderErrorReceipt`。签名逐字取 `src/spec/controls.ts`，本文件不改任何冻结值。
@@ -163,7 +163,7 @@ export const TOAST_ICON_GLYPHS: Readonly<Record<ToastIcon, string>> = Object.fre
   info: '💡',
 });
 
-/** 徽章类型白名单：取冻结类型 `ToastBadge['type']` 的成员（非法值回落 `'ok'`，旧层口径）。 */
+/** 徽章类型允许清单：取冻结类型 `ToastBadge['type']` 的成员（非法值回落 `'ok'`，旧层口径）。 */
 const TOAST_BADGE_TYPES = ['ok', 'warn', 'danger'] as const satisfies readonly ToastBadge['type'][];
 
 /** 关闭按钮文案（文档无规定；沿用旧基线 `✓ 知道了`）。 */
@@ -430,7 +430,7 @@ export const createCopyRuntime = (ports: CopyPorts): CopyRuntime => {
  *  - id 来源**只有** `port.listActionIds()`：不猜 id、不通配前缀、不订阅未列出的 id；
  *  - 重复 id 由 binder 自行去重（同一 id 只订阅一次）；
  *  - 激活时读 `port.readDataText(actionId)`：非字符串（含 `undefined`）→ 跳过（不抛错、不产 toast），
- *    非复制按钮（场景按钮）即由此跳过，不另设白名单；
+ *    非复制按钮（场景按钮）即由此跳过，不另设允许清单；
  *  - 反馈一律走 `ports.toast`（`copyText` 内部），binder 不另出反馈；
  *  - **激活回调恒不产生未处理拒绝**（FX-76-6）：`copyText` 正常路径的失败已在内部 `settle()` 处理，
  *    这里只兜「逃出 `copyText` 的异常」（端口实现抛错／`ports.toast.mount` 抛错／回调抛错）——
@@ -502,7 +502,7 @@ function styleSectionSlug(section: string): string {
   return section.replace(/[A-Z]/g, (ch) => '-' + ch.toLowerCase());
 }
 
-/** HELP 壳类名命名空间 kebab 后缀（`help-shell`；缺省前缀下根 = `ilife-help-shell`）。
+/** HELP模板类名命名空间 kebab 后缀（`help-shell`；缺省前缀下根 = `ilife-help-shell`）。
  *  **延迟求值**（不在模块顶层）：`style.ts → charts.ts → controls.ts → style.ts` 存在模块环，
  *  顶层读 `STYLE_PREFIX` 会在 `style.js` 初始化完成前触发 TDZ（实测 `ReferenceError`），
  *  故派生式只在 `buildSharedHelpersJs()` **调用时**执行（此时全部模块已初始化）。 */

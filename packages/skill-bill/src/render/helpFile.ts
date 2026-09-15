@@ -12,7 +12,7 @@
  *  - `meta_blocks`：两块（`help_summary`／`help_wake_words`），内容全部派生，不写第二份源；
  *  - `version`：`'2.0'`——老口径 `str(summary.get("version","2.0"))`，语义是**技能数据世代**
  *    （bill 自己的 `init-status` 也自述「v2.0 特征 deleted_at」），**不是** npm 包版本 `0.1.0`；
- *  - `init_banner`：显隐由 `hidden` 控。老口径是「未初始化才给这个键」，壳读的却是 `hidden`
+ *  - `init_banner`：显隐由 `hidden` 控。老口径是「未初始化才给这个键」，help模板读的却是 `hidden`
  *    （`help-template.html` 的 `INIT_BANNER && !INIT_BANNER.hidden`），故新线**键常在、显隐走 `hidden`**：
  *    payload 形状不随状态变，下游用例能断言同一个键集。初始化状态由调用方传入（本模块零 IO）。
  */
