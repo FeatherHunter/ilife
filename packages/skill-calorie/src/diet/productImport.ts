@@ -20,8 +20,11 @@ import { validateRecord } from '../fetch/validate.js';
 import { CalorieRenderError } from '../render/errors.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { fail, needArr, optStr } from '../shared/params.js';
-import { F, R, out } from '../shared/writeParts.js';
+import { F, R, commandLine, out } from '../shared/writeParts.js';
 import { addProduct, deprecateProduct, updateProduct } from './productStore.js';
+import { ENTRY_PRECHECK } from './precheckPort.js';
+import { buildImportPrecheckDoc } from './precheck.js';
+import { buildImportPrecheckView } from './precheckPort.js';
 
 type DuplicatePolicy = 'skip' | 'overwrite' | 'deprecate';
 
@@ -37,8 +40,12 @@ function numOf(o: Record<string, unknown>, ...names: string[]): unknown {
   return strOf(o, ...names);
 }
 
-/** 命令参数归一化为 `validateRecord` 的蛇形记录（驼峰与蛇形两收）。 */
-function normalize(o: Record<string, unknown>): Record<string, unknown> {
+/** 命令参数归一化为 `validateRecord` 的蛇形记录（驼峰与蛇形两收）。
+ *
+ * **#277 起对外导出**（`export`）：预检确认页的「逐行校验结果」必须**与这条写命令判得一样**——
+ * 逐行原因若各写一份，页上说「这行能导入」而写的时候失败就是假预检。故校验口径只此一处，
+ * `diet/precheckPort.ts` 直接调它，不抄第二份。 */
+export function normalizeImportRecord(o: Record<string, unknown>): Record<string, unknown> {
   const rec: Record<string, unknown> = {
     product_name: strOf(o, 'productName', 'product_name'),
     brand: strOf(o, 'brand') ?? null,
@@ -58,13 +65,27 @@ function normalize(o: Record<string, unknown>): Record<string, unknown> {
   return rec;
 }
 
-function brandOf(rec: Record<string, unknown>): string | null {
+export function brandOfImportRecord(rec: Record<string, unknown>): string | null {
   const b = rec['brand'];
   return typeof b === 'string' && b !== '' ? b : null;
 }
 
+const normalize = normalizeImportRecord;
+const brandOf = brandOfImportRecord;
+
 /** `calorie.product.import` · 批量导入食品（同步 `items` 路）。 */
 export function writeProductImport(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  /* #277 · 「批量导入食品」这条词的**第一步**：入口带 `entry:"precheck"` 时本命令只出**导入预检页**
+     （导入条数／跳过条数／失败明细）、**不写库**（老实物 `batch_import_preview.html` 的
+     `output_type` 是 `process`，`scripts/build-help.mjs` 的流程句子逐字
+     「过程：先出预检确认页 → 用户确认 → 跑这条命令」）。确认之后跑同一条命令、去掉 `entry` 那一位。 */
+  if (optStr(params, 'entry') === ENTRY_PRECHECK) {
+    const v = buildImportPrecheckView(db, params['items']);
+    const page = buildImportPrecheckDoc(v, ENTRY_PRECHECK, commandLine('calorie.product.import', params), false);
+    return { data: out(R('批量导入食品', 'create', '这一页只做预览、不写库；确认后再跑同一条命令去掉入口标记即写入', '批量导入食品', 'nutrition_products (写前确认页)', {
+      recordId: null, noChange: true, ids: [], idSource: 'none', writtenFields: [],
+    })).data, html: page };
+  }
   const items = needArr(params, 'items');
   if (items.length > 200) fail(2, 'items 至多 200 条');
   const policyRaw = optStr(params, 'onDuplicate') ?? 'skip';

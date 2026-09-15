@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 46 ＋ 读 81 ＝ 127 条。
+ * registry 合法键表：写 46 ＋ 读 82 ＝ 128 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -128,6 +128,7 @@ export const CALORIE_COMBOS = {
   'calorie.view.goal-wizard': { shape: 'stat' as EnvelopeShape, title: '目标预检' },
   'calorie.view.health': { shape: 'stat' as EnvelopeShape, title: '健康盘' },
   'calorie.view.home': { shape: 'stat' as EnvelopeShape, title: '今日总览' },
+  'calorie.view.label-precheck': { shape: 'stat' as EnvelopeShape, title: '营养表识别确认' },
   'calorie.view.library': { shape: 'stat' as EnvelopeShape, title: '食品库' },
   'calorie.view.lint-health': { shape: 'stat' as EnvelopeShape, title: '数据健康检查' },
   'calorie.view.long-trend': { shape: 'stat' as EnvelopeShape, title: '整体趋势' },

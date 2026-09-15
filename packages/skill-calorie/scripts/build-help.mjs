@@ -253,6 +253,7 @@ const EXAMPLES = {
   'calorie.view.goal-wizard': 'calorie-cmd-read calorie.view.goal-wizard',
   'calorie.view.health': 'calorie-cmd-read calorie.view.health --params \'{"window":"本周"}\'',
   'calorie.view.home': 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'',
+  'calorie.view.label-precheck': 'calorie-cmd-read calorie.view.label-precheck --params \'{"productName":"鸡胸","calories":200,"protein":35,"note":"营养表识别"}\'',
   'calorie.view.library': 'calorie-cmd-read calorie.view.library',
   'calorie.view.lint-health': 'calorie-cmd-read calorie.view.lint-health',
   'calorie.view.long-trend': 'calorie-cmd-read calorie.view.long-trend --params \'{"group":"weight_calorie","window":"30d"}\'',
