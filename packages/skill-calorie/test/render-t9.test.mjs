@@ -210,7 +210,11 @@ test('食品库搜索 + HTML 快照', () => {
   html = renderProductStatsHtml(stats);
   assert.match(html, /库统计/);
   assert.throws(() => buildProductSearch(db, '   '), /关键词必填/);
-  assert.throws(() => buildProductSearch(db, '不存在的食品xyz'), /无命中/);
+  // #274 整改（2026-09-15 编排者口径）：库非空、只是本次零命中 ⇒ 不再阻断，出空盘让装配层出空态页；
+  // 「整个数据面为空」才 missing-data（下一条测试覆盖）。
+  const none = buildProductSearch(db, '不存在的食品xyz');
+  assert.equal(none.total, 0);
+  assert.deepEqual(none.items, []);
   db.close();
 });
 
@@ -227,6 +231,9 @@ test('缺失阻断：空库各盘一律 missing-data 不返空', () => {
   assert.throws(() => buildDietReview(db, '2026-09-05', '2026-09-07'), /无饮食记录/);
   assert.throws(() => buildFoodRankingPlate(db, '2026-09-05', '2026-09-07'), /无饮食记录/);
   assert.throws(() => buildProductLibrary(db), /食品库空/);
+  // #274 整改：品牌/分类/关键词定位不到的零命中不再阻断；但「整个库为空」时三条路都要 missing-data。
+  assert.throws(() => buildProductSearch(db, '鸡胸'), /食品库空/);
+  assert.throws(() => buildProductLibrary(db, '主食'), /食品库空/);
   assert.throws(() => buildGoalProgress(db, '2026-09-07', '2026-09-05'), /不得晚于/);
   db.close();
 });

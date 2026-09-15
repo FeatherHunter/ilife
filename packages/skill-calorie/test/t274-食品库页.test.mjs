@@ -25,9 +25,16 @@
  *   `node --test packages/skill-calorie/test/t274-食品库页.test.mjs`
  *   （件名 2026-09-15 由 `diet-library-t274.test.mjs` 改成 `t274-` 前缀，测试内容不动；
  *   可复跑取证脚本＝`docs/skills/skill-calorie/t274-真跑.mjs`）
+ *
+ * **2026-09-15 收口复核判 FAIL（S1）后的整改**（编排者口径，`t425` 裁定 4 的澄清）：库非空、只是
+ * 本次查询零命中，原先被当成「空库」一起 `exit 4` 阻断，不出完整页——与老实物 `food_search.html:98-101`
+ * （`items.length === 0` 出 `emptyState`）和 `render_food_search.py:132-153`（无论命中几条都写页、`return 0`）
+ * 的正本相反。本件据此把原来那一条「空库」（实际把两态锁成同一条）**拆成两条**：一条钉「整个数据面为空
+ * ⇒ `exit 4` ＋ 0 产物」，一条钉「库非空但零命中 ⇒ `exit 0` ＋ 完整文档 ＋ 空态句 ＋ 引导句」；
+ * 另补一条钉口径说明行文案（复核席变异-丙点名的探针盲区）。改动落在取数件 `src/diet/libraryPlate.ts`。
  */
 import { strict as assert } from 'node:assert';
-import { existsSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -381,20 +388,87 @@ test('#274 场景 02 四条词接的命令（含来源统计接对专面命令�
   assert.notEqual(keyOf('看食品来源分布'), 'calorie.view.library', '来源分布仍接分类食品列表');
 });
 
-test('#274 空库：三条词一律 exit 4 ＋ 缺失阻断，不留半页', () => {
+/** 产物目录里落了几个文件（`SKILLS_DB_PATH` 同目录的 `calorie_html/`）。 */
+function producedFiles(dir) {
+  const hd = join(dir, 'calorie_html');
+  return existsSync(hd) ? readdirSync(hd) : [];
+}
+
+/** 2026-09-15 编排者口径（`t425` 裁定 4 的澄清）：**两态是两件事**——
+ *  ① 「整个数据面为空」（库里一条在架食品都没有）⇒ `exit 4` ＋ 缺失阻断 ＋ 不落盘；
+ *  ② 「库里有东西、只是本次查询零命中」⇒ **出完整页 ＋ 空态句 ＋ 引导句**、`exit 0` ＋ 落盘。
+ *  下面两条各钉一态；上一版把两态锁成同一条（测试名叫「空库」、实际只跑得到一条路），故拆开。 */
+
+test('#274 整体为空：库里一条食品都没有 ⇒ 三条词一律 exit 4 ＋ 缺失阻断 ＋ 0 产物', () => {
   const dir = mkdtempSync(join(tmpdir(), 't274-empty-'));
   openDb(join(dir, DB_FILENAME)).close();
   const cases = [
-    ['calorie.view.search', { keyword: '鸡胸' }, /无命中|食品库/],
-    ['calorie.view.library', {}, /食品库空/],
-    ['calorie.view.library', { category: '主食' }, /该分类空库/],
+    ['calorie.view.search', { keyword: '鸡胸' }],
+    ['calorie.view.library', {}],
+    ['calorie.view.library', { category: '主食' }],
     ['calorie.view.dedupe', {}, /食品库空|无重复/],
   ];
   for (const [key, params, re] of cases) {
     const r = runCli(dir, key, params);
     assert.equal(r.status, 4, key + ' 空库未阻断（status=' + r.status + ' stderr=' + r.stderr.slice(0, 200) + '）');
     assert.equal(r.stdout, '', key + ' 空库 stdout 非空');
-    assert.match(r.stderr, re, key + ' 空库 stderr 文案不合：' + r.stderr.slice(0, 200));
+    assert.match(r.stderr, /食品库空/, key + ' 空库 stderr 须点名库为空：' + r.stderr.slice(0, 200));
+    if (re) assert.match(r.stderr, re, key + ' 空库 stderr 文案不合：' + r.stderr.slice(0, 200));
     assert.ok(r.stderr.includes('ERR 4: 取数失败（缺失阻断）'), key + ' 缺缺失阻断前缀');
+    assert.deepEqual(producedFiles(dir), [], key + ' 空库不该留下任何产物');
   }
+});
+
+test('#274 库非空但本次零命中：出完整页 ＋ 空态句 ＋ 引导句，exit 0 ＋ 落盘', () => {
+  const dir = mkdtempSync(join(tmpdir(), 't274-zero-'));
+  const db = openDb(join(dir, DB_FILENAME));
+  seed(db);
+  db.close();
+  const cases = [
+    ['关键词零命中', 'calorie.view.search', { keyword: '螺蛳粉' }, '在食品库里搜「螺蛳粉」，找到 0 条。'],
+    ['分类零命中', 'calorie.view.library', { category: '海鲜类' }, '分类「海鲜类」下有 0 条（库内共 5 条）。'],
+  ];
+  for (const [what, key, params, summary] of cases) {
+    // 判档① 全套：exit 0、stdout 一行 JSON、绝对路径、落 calorie_html/、真落盘、字节如实、完整文档。
+    const { html } = assertDelivery(dir, key, params, what);
+    // ⑫ 空态块：老实物 `food_search.html:98-101` 对 `items.length === 0` 出的就是 emptyState。
+    assert.ok(html.includes('ilife-block-empty'), what + ' 缺空态块（裁定 4 澄清：窗口为空出完整页）');
+    // 空态句与引导句逐字（老实物 :99 的 text／hint 两个人话版本，测试件钉本文）。
+    assert.ok(html.includes('没有找到匹配的食品'), what + ' 缺空态句');
+    assert.ok(html.includes('换个关键词或分类试试；库里还没有的话，说「存食品」就能加进第一条。'),
+      what + ' 缺引导句');
+    // 结论句仍报本次读数（0 条）与库内总数，读数卡也仍在。
+    assert.ok(html.includes(summary), what + ' 结论句未报本次读数：' + summary);
+    assert.ok(html.includes('ilife-block-kpi-card'), what + ' 零命中页仍要有读数卡');
+    // 页脚报的是**库内在架条数**（5 条种子），不是本次命中数——零命中页尤其不许印成 0 条。
+    assert.ok(html.includes('📊 数据来源：本机食品库 · 在架食品共 5 条'),
+      what + ' 页脚条数不是库内在架条数');
+    assert.equal(html.includes('在架食品共 0 条'), false, what + ' 页脚把库内条数印成 0');
+    // 复制区日志第 4 段仍必须是本次命令原文。
+    const cmd = 'calorie-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";
+    assertLogCallChain(html, cmd, what);
+  }
+});
+
+test('#274 口径说明行文案有断言的读数（复核席变异-丙的盲区：改一句没有任何断言红）', () => {
+  const { db } = mkDb();
+  try {
+    const 食品页 = [
+      ['查食品', dispatch('calorie.view.search', { keyword: '鸡胸' }, db).html],
+      ['食品库', dispatch('calorie.view.library', { category: '主食' }, db).html],
+      ['食品库（分类零命中）', dispatch('calorie.view.library', { category: '海鲜类' }, db).html],
+      ['食品库（关键词零命中）', dispatch('calorie.view.search', { keyword: '螺蛳粉' }, db).html],
+    ];
+    for (const [what, html] of 食品页) {
+      assert.ok(html.includes('营养值都是每 100 克；只列没有下架的食品。'),
+        what + ' 缺口径说明行原文（食品两页同一句）');
+    }
+    const dedupe = dispatch('calorie.view.dedupe', {}, db).html;
+    assert.ok(dedupe.includes('判定标准：名称和品牌都一样的算重复；已下架的食品不算，也不会出现在这张表里。'),
+      '去重页缺口径说明行原文');
+    // 口径行恒走公共层构件（裁定 3）：四页都要有这个类名。
+    for (const [what, html] of [...食品页, ['去重', dedupe]]) {
+      assert.ok(html.includes('ilife-block-caliber'), what + ' 口径行走的不是公共层构件');
+    }
+  } finally { db.close(); }
 });
