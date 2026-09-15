@@ -85,6 +85,9 @@ export function weightUiCss(): string {
     // 不留上边距（#504）：逐条列表紧跟页顶提示块出，那一块自带 `margin:16px 0`，再叠一条上边距就把
     // 「同类的一条说明」拆成两段。其余外边距交给 UA 缺省（本页没有 `*{margin:0}` 复位，见 blocks.ts:1370）。
     + '.wui-bullets{padding-left:18px}'
+    // 「提示块 ＋ 它那几条逐条说明」读成一组（#504 两族都用这个搭法）：紧贴上一块时只留 8px，
+    // 与「下一块」之间的 16px 拉开层次。`~` 只吃提示块的下一块，不牵动别处间距。
+    + '.ilife-block-feedback-block + .wui-bullets{margin:8px 0 6px}'
     + '.wui-bullets li{font-size:12.5px;line-height:1.65;color:var(--fg2);margin:2px 0}'
     // ── 判语块（结论块正文：一句话 ＋ 可选胶囊），视觉上比正文重一档 ──
     + '.wui-verdict{font-size:15px;line-height:1.6;font-weight:600;color:var(--fg);margin:0}'
