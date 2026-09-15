@@ -1427,6 +1427,13 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-weight: 600;',
     '  font-variant-numeric: tabular-nums;',
     '}',
+    // #533 触屏两件（照 HELP `button.copy` 与卡路里 `pageChromeCss`）：壳内可点件去蓝块、防双击缩放延迟。
+    // 只补两条声明，不改版式文案；第三件（`-webkit-touch-callout`）口径未定，见证据件交裁，本票不自定。
+    '.' + p + 'block-page-shell button,',
+    '.' + p + 'block-page-shell summary {',
+    '  -webkit-tap-highlight-color: transparent;',
+    '  touch-action: manipulation;',
+    '}',
     // #420-3 打印段：**必须显式打开**——只有 `renderPageShell({ printable: true })` 的页才带
     // `.ilife-page-printable`；不给的调用点类名不出现，规则虽在样式段里但一律不命中（逐字零变）。
     // 打印段里**每条规则**都挂在该类作用域下（不出现裸 `body`／裸 `.wrap`）：样式表是共享资产、
