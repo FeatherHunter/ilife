@@ -5,9 +5,10 @@
  *   ② `runWorkoutView(key, params, db)`——读命令入口（查不到健身计划键即抛，不当静默兜底）；
  *   ③ `runWorkoutWrite(key, params, db)`——写命令入口（同上）。
  *
- * 本场景今天**没有写键**（「定训练计划」在旧链是 `--live-plan-*` 系列，本仓执行层不承接；
- * 逐字理由住 `routes.ts` 的非执行记录）。写入口照 `src/weight/` 的同款形状保留：
- * 能力对外形状一致，且日后真出写键时只改 `commands.ts`＋子功能文件，门与分派层不动。
+ * 本场景**有写键**：`commands.ts` 里 `workout.plan-*` 那一族十条 `kind:'write'` 声明（定训练计划／复制／
+ * 定一周／加训练动作／定休息日／改计划／改某天／删某天／改动作／撤销），写入口照 `src/weight/` 的同款形状
+ * ——命中即派发，查出不是健身计划（或其实是读键）才抛，与读入口对称；加写键仍只改 `commands.ts`＋子功能
+ * 文件，门与分派层不动。（「落地训练」「同步到训记」两条仍无写键，非执行记录住 `routes.ts`。）
  *
  * 域内其他件（子功能 `plan.ts`／`wizard.ts`／`review.ts`／`contraindication.ts`／`progress.ts`）
  * **不出这个目录**，故不在这里转出。
@@ -32,7 +33,7 @@ export function runWorkoutView(key: string, params: Record<string, unknown>, db:
   return spec.run(params, db);
 }
 
-/** 写命令入口：同上（本场景今天无写键，任何键都抛）。 */
+/** 写命令入口：命中即走它的处理函数；键不属健身计划（或其实是读键）即抛——**不猜**。 */
 export function runWorkoutWrite(key: string, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const spec = BY_KEY.get(key);
   if (!spec || spec.kind !== 'write') {

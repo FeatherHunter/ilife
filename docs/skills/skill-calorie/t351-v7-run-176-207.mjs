@@ -3,6 +3,20 @@
  * **全量 37 份**（v7 撤掉 201–206 那张柱图后，全量统一为每份恰 1 块共享 helpers），并新增 ⑰ 全量 37 份
  * 正文零内部词「会话」；195 回执文案判据随「会话」下架改为「配置与训练安排均为空」。其余 ①–⑯ 逐条不放松。
  *
+ * **T351-v18（换装窗）在本件上的判据随动**——186 那一格由「构建向导预检页」换成**计划编辑器（可写页）**
+ * （产出者 `packages/skill-calorie/src/render/planEditorPort.ts`，键沿用 `calorie.view.plan-wizard`）。
+ * 随动三处，逐条只加严不放宽：
+ *   ① **⑩ 零 JS 自证**：编辑器页按形状有 **3 块** `<script>`（`application/json` 的 `#pe-state` ＋
+ *      技能自配运行时 ＋ 共享 helpers）——原来「每份恰 1 块」对它是错的形状。改后：36 份非编辑器页
+ *      仍是「恰 1 块且全量逐字同长同头」，编辑器页**恰 3 块**（其中 1 块 `#pe-state`、1 块与其余各页的
+ *      共享 helpers **逐字节相同**），全 37 份照旧无内联事件处理器、无 `javascript:`。
+ *   ② **⑱ 编辑器形状自证（新增）**：两层页签／参数可改／产物表＋复制指令／`ilw-` 命中 0／
+ *      `#pe-state` 里夹具参数真被翻译进初始状态（周数、动作名、标题、起日逐字对得上）。
+ *      本条取代原来的「过程页 10 份复制数据标题全中文」那一条——后者的断言**并入**了过程页那条
+ *      prompt 检查（沿用，不删：标题全中文＋无英文命令键照判）。
+ *   ③ **过程页 prompt 检查**：186 的「独有句」按编辑器页的实际文案改判（页面自己那句
+ *      「明细见下面的计划表」），其余 9 份逐字 prompt 一字未动。
+ *
  * 口径：每条唤醒词按 `packages/skill-calorie/src/workout/routes.ts` 的 `list:'wake'` 真命令与真参数
  * 跑真出口（`dist/cli/cmd_read.js`），库隔离在本目录 `dbs/` 下（`SKILLS_DB_PATH`），不碰生产库。
  *
@@ -26,6 +40,7 @@
  *   node .scratch/t351-fix/v5/run-176-207-v5.mjs --out .scratch/t351-fix/final-v5
  */
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -177,11 +192,14 @@ const EN_KEY_RE = /【calorie · calorie\./;
 
 function inspect(name, html) {
   const body = bodyOf(html);
-  const thead = /<thead>[\s\S]*?<\/thead>/.exec(html);
+  /** 表头／表体只在**正文**里找（v18 换装窗修正：原来在整页找，页内脚本文本里的表标记会被算成「页上真有表」——
+   *  计划编辑器的产物表就是页内运行时拼出来的字符串，整页口径下它会被误判成静态表）。改为正文口径后，
+   *  对原来那 36 份（表都是服务端渲染进正文的）读数一字不变，只是把「表在不在页上」问得更准。 */
+  const thead = /<thead>[\s\S]*?<\/thead>/.exec(body);
   const heads = thead === null ? [] : [...thead[0].matchAll(/<th[^>]*>([^<]*)<\/th>/g)].map((m) => m[1].trim());
   const bad = [...BAD_TOKENS, ...MENU_TOKENS].filter((t) => body.includes(t));
   const c3bad = EN_KEY_RE.test(body) ? bad.concat('【calorie · calorie.*（英文命令键标题）】') : bad;
-  const tbody = /<tbody>([\s\S]*?)<\/tbody>/.exec(html);
+  const tbody = /<tbody>([\s\S]*?)<\/tbody>/.exec(body);
   const moveCells = tbody === null ? [] : [...tbody[1].matchAll(/<tr>([\s\S]*?)<\/tr>/g)]
     .map((r) => (/<td[^>]*>([\s\S]*?)<\/td>/.exec(r[1]) ?? [, ''])[1]);
   /** 场次卡头行的可见文本（v5 的日级标题就住这里；各段在源里以换行分隔，`visibleText` 读得出）。 */
@@ -197,6 +215,24 @@ function inspect(name, html) {
   const tempoTitles = dayTitles.filter((t) => tempoOfTitle(t) !== '');
   const scriptOpen = count(html, '<script');
   const scriptBody = (/<script>([\s\S]*?)<\/script>/.exec(html) ?? [, ''])[1];
+  /** 脚本块逐块拆开（v18 换装窗）：`attrs` 空＝普通 `<script>`（共享 helpers／技能自配运行时）；
+   *  带 `application/json` 的那块是编辑器页的状态载荷 `#pe-state`（不是可执行脚本，单列一档）。
+   *  每块记一个 sha256 前 12 位——「同一份共享 helpers」这条判据按**逐字节哈希**比，不靠长度猜。 */
+  const scripts = [...html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)]
+    .map((m) => ({ attrs: m[1].trim(), body: m[2] }));
+  const plainSigs = scripts.filter((s) => s.attrs === '')
+    .map((s) => createHash('sha256').update(s.body).digest('hex').slice(0, 12));
+  const jsonScripts = scripts.filter((s) => /application\/json/.test(s.attrs)).length;
+  /** 编辑器形状读数（只对 186 有意义；其余各页这些计数恒 0）：标记在**整页**里数（含页内脚本文本），
+   *  状态则从 `#pe-state` 的 JSON 里读回来——「讨论结果真被翻译进初始状态」靠它判。 */
+  const ED_MARKS = ['pe-tabs', 'pe-daytabs', 'pe-day', 'data-act', 'pe-out-body', 'ilw-'];
+  const marks = {};
+  for (const m of ED_MARKS) marks[m] = count(html, m);
+  const stateText = (/<script type="application\/json" id="pe-state">([\s\S]*?)<\/script>/.exec(html) ?? [, ''])[1];
+  let editorState = null;
+  try { editorState = stateText === '' ? null : JSON.parse(stateText.replace(/\\u003c/g, '<')); } catch { editorState = null; }
+  /** 页内脚本文本（编辑器页 = `#pe-state` 载荷 ＋ 技能自配运行时；别的页只有共享 helpers 这块）。 */
+  const scriptText = scripts.map((s) => s.body).join('\n');
   return {
     name,
     bytes: html.length,
@@ -232,6 +268,12 @@ function inspect(name, html) {
     // `onclick` 这类字面，那不算页面注入面）。
     scriptOpen,
     scriptSig: scriptBody.length + ':' + scriptBody.slice(0, 24),
+    /** v18：脚本块形状读数（非编辑器页恒 `[共享 helpers 一块]`；编辑器页＝状态块 ＋ 运行时 ＋ helpers）。 */
+    plainSigs,
+    jsonScripts,
+    scriptText,
+    editorMarks: marks,
+    editorState,
     handlerHits: (HANDLER_RE.test(body) ? 1 : 0) + count(body, 'javascript:'),
     // ⑪ 用词：正文（剔载荷）四类记号计数。
     wordHits: ['会话', 'calorie.'].filter((w) => bodyNoPayload.includes(w))
@@ -328,7 +370,10 @@ const PROCESS = [
   [195, '撤销训练计划', 'calorie.view.plan-write-preview', { op: 'delete' }],
 ].map(([order, wake, key, params]) => ({
   order, wake, key, params, kind: '过程',
-  // 预检确认页只有指标卡与并列清单、无明细表；写前预览两段快照是「序号／改前快照」两列表（自有表）。
+  // 187–195 的写前预览两段快照是「序号／改前快照」两列表（自有表）。
+  // 186 是**计划编辑器（可写页）**：服务端那张页只有产物表的**挂载点** `#pe-out-body`（表与复制指令
+  // 由页内运行时装出来），故静态面仍声明 `none`——「必须有产物表 ＋ 复制指令」这半边由 ⑱ 判（挂载点
+  // ＋ 页内运行时里的 8 列表头 ＋ 复制指令钩子三件都在），不是靠这条放松。
   expectTable: order === 186 ? 'none' : 'own1',
 }));
 
@@ -369,7 +414,10 @@ const NON_EXEC = [
 /** 过程页该有的逐字 prompt（唤醒词 ＋ 该词 prompt 里独有的一句；原文取自
  *  `triggers/scene-05-workout.ts` 的 `prompt_template`，逐字比对，不改写）。 */
 const PROMPT_SIG = new Map([
-  [186, ['定训练计划', '我想制定一份新的健身计划,根据我的目标和训练情况来安排']],
+  // 186（v18 换装窗）：那一格已换成**计划编辑器（可写页）**——页面上「复制指令」那一段的静态文案
+  // 是编辑器自己的那句「明细见下面的计划表」（页内运行时会按当前计划整段重写成落库用的计划文本）。
+  // 唤醒词那一半照旧逐字判；「独有句」这一半换成本页自己的那句，判据不放松（还多判了 ⑱ 的五件）。
+  [186, ['定训练计划', '明细见下面的计划表']],
   [187, ['复制训练计划', '我想把现有训练计划复制一份作为模板']],
   [188, ['定休息日', '我想把某一天的训练标记为休息日(或取消休息)']],
   [189, ['加训练动作', '我想给计划里的某一天或某个训练时段加训练动作']],
@@ -457,7 +505,7 @@ for (const s of readSteps) {
 }
 
 const missing = readSteps.filter((s) => s.inspect === undefined);
-check('37 份产物全部落盘（176–185 结果 10 ＋ 186 预检 1 ＋ 187–195 过程 9 ＋ 186–195 回执 10 ＋ 201–207 结果 7）',
+check('37 份产物全部落盘（176–185 结果 10 ＋ 186 编辑器 1 ＋ 187–195 过程 9 ＋ 186–195 回执 10 ＋ 201–207 结果 7）',
   missing.length === 0 && readSteps.length === 37, '份数=' + readSteps.length + ' 缺=' + missing.length);
 
 const bad1 = artifacts.filter((a) => !a.inspect.c1);
@@ -532,12 +580,70 @@ check('机检⑤ 每份 `data-action-id="ilife-copy-log"` 恰好一颗，且无 
   badLog.length === 0,
   '红=' + badLog.map((a) => a.file + '(颗=' + a.inspect.logActionIds + '/禁用=' + a.inspect.logDisabled + ')').join('／') || '0');
 const processTitles = artifacts.filter((a) => /-process\.html$/.test(a.file)).map((a) => a.copyDataTitle);
-check('过程页 10 份复制数据标题全中文（写前预览／构建向导），无英文命令键',
-  processTitles.length === 10
-    && processTitles.every((t) => (t.includes('写前预览') || t.includes('构建向导')) && !EN_KEY_RE.test(t)),
-  '标题=' + [...new Set(processTitles)].join('／'));
+/** 过程页复制区第一半（原来的独立判据，v18 并入下面那条）：10 份的**复制数据标题**全中文，
+ *  186 是编辑器页 ⇒ 它的标题是【calorie · 定训练计划】，其余 9 份仍是【calorie · 写前预览】。 */
+const titleOk = processTitles.length === 10
+  && processTitles.every((t) => (t.includes('写前预览') || t.includes('定训练计划')) && !EN_KEY_RE.test(t));
 
-/* 过程页逐字 prompt（预检确认页「复制 prompt 回给 AI」那一环） */
+/* ── 机检⑱ 编辑器形状（T351-v18 换装窗：186 由「构建向导预检页」换成「计划编辑器（可写页）」）──
+ * 这一条**取代**了原来「过程页 10 份复制数据标题全中文（写前预览／构建向导）」那一条独立判据——
+ * 那一半断言并进了下面这条过程页 prompt 检查（`titleOk`），腾出的槽位给编辑器形状，判据总数不变（29）。
+ *
+ * 编辑器页与只读页的区别就在这几件，逐件都判（读数可逐条复算）：
+ *   ① 两层页签：周页签条 `pe-tabs` ＋ 日页签条 `pe-daytabs`（页内 runtime 文本里，页上一挂就有了）；
+ *   ② 一次只显示一天：`.pe-day` 的渲染入口在（`pe-day`）＋ 选哪周哪天的两个动作 `go-week`／`go-day`；
+ *   ③ 参数可改：四个写回动作 `set-sets`／`set-reps`／`set-load`／`set-min` ＋ RM↔kg 切换 `toggle-mode`
+ *      （有氧只填时长＝`set-min`，故两族参数面都在）；
+ *   ④ 产物表＋复制指令：产物表挂载点 `#pe-out-body` 在**正文**里恰一处（id 只在页上出现一次；页内脚本
+ *      里另有 `getElementById('pe-out-body')`，不算），页内运行时里有那张 8 列表的头
+ *      （周次／星期／时段／动作／部位／类型／量／负重）与行标题「计划明细（」，复制指令那颗按钮的钩子
+ *      `data-action-id="ilife-help-copy-prompt"` 在，且运行时会把 `data-t` 整段重写（`promptText`）；
+ *   ⑤ 换装干净：旧向导的标记 `ilw-` 命中 **0**（改前那一格是 119）；
+ *   ⑥ **讨论先于生成** 落到页上：`#pe-state` 能解析，且 CLI 带的 `plan` 参数真被翻译进初始状态——
+ *      周数、第 1 周第 1 天第 1 个动作名、标题、起日、每天段数上限逐字对得上（预填不是空表）。 */
+const ed18 = artifacts.find((a) => a.file === 'order186-process.html');
+const ed = ed18?.inspect;
+const edRuntimeText = String(ed?.scriptText ?? '');
+const ED_ACTS = ['go-week', 'go-day', 'set-sets', 'set-reps', 'set-load', 'set-min', 'toggle-mode'];
+const ED_ACTS_MISSING = ED_ACTS.filter((a) => !edRuntimeText.includes('data-act="' + a + '"'));
+const ED_TH = ['周次', '星期', '时段', '动作', '部位', '类型', '量', '负重'];
+const ED_TH_MISSING = ED_TH.filter((t) => !edRuntimeText.includes('<th>' + t + '</th>'));
+const edState = ed?.editorState ?? null;
+const edPlanMove = edState?.weeks?.[0]?.days?.[0]?.sessions?.[0]?.moves?.[0]?.name ?? null;
+const edPreFilled = edState !== null
+  && Array.isArray(edState.weeks) && edState.weeks.length === 1
+  && edPlanMove === '俯卧撑' && edState.title === '减脂4周' && edState.startDate === '2026-09-07'
+  && edState.maxSessionsPerDay === 4 && edState.weeks[0]?.locked === false
+  && Array.isArray(edState.lib) && edState.lib.some((m) => m.name === '俯卧撑');
+const edOutMount = ed === undefined ? -1 : count(ed.body, 'id="pe-out-body"');
+const edBad = [];
+if (ed === undefined) edBad.push('无产物');
+else {
+  if (!(ed.editorMarks['pe-tabs'] >= 1)) edBad.push('缺周页签条 pe-tabs');
+  if (!(ed.editorMarks['pe-daytabs'] >= 1)) edBad.push('缺日页签条 pe-daytabs');
+  if (!(ed.editorMarks['pe-day'] >= 1)) edBad.push('缺单日渲染入口 pe-day');
+  if (ED_ACTS_MISSING.length > 0) edBad.push('缺写入动作 ' + ED_ACTS_MISSING.join('／'));
+  if (edOutMount !== 1) edBad.push('正文里产物表挂载点 #pe-out-body 个数=' + edOutMount);
+  if (ED_TH_MISSING.length > 0) edBad.push('产物表缺列 ' + ED_TH_MISSING.join('／'));
+  if (!edRuntimeText.includes('计划明细（')) edBad.push('产物表缺行标题');
+  if (!String(ed.body).includes('data-action-id="ilife-help-copy-prompt"')) edBad.push('缺复制指令钩子');
+  if (!edRuntimeText.includes('data-t')) edBad.push('运行时没把复制载荷写回 data-t');
+  if (ed.editorMarks['ilw-'] !== 0) edBad.push('旧向导标记 ilw- 命中 ' + ed.editorMarks['ilw-']);
+  if (!edPreFilled) edBad.push('CLI 的 plan 参数没进初始状态');
+}
+check('机检⑱ 编辑器形状自证（186 换装）：两层页签（`pe-tabs`／`pe-daytabs`）＋ 一次只显示一天（`pe-day` ＋ `go-week`／`go-day`）'
+  + '＋ 参数可改（`set-sets`／`set-reps`／`set-load`／`set-min`／`toggle-mode`）＋ 产物表（挂载点 ＋ 8 列表头 ＋ 行标题）'
+  + '＋ 复制指令（钩子 ＋ 运行时回写 `data-t`）＋ 旧向导标记 `ilw-` 命中 0 ＋ `#pe-state` 里 CLI 参数真被预填',
+  edBad.length === 0,
+  '红=' + (edBad.join('／') || '0')
+    + '；标记计数=' + JSON.stringify(ed?.editorMarks ?? null)
+    + '；页内动作=' + JSON.stringify(ED_ACTS.filter((a) => edRuntimeText.includes('data-act="' + a + '"')))
+    + '；产物表列=' + JSON.stringify(ED_TH.filter((t) => edRuntimeText.includes('<th>' + t + '</th>')))
+    + '；#pe-state：周数=' + (edState?.weeks?.length ?? 'n/a') + ' 标题=' + (edState?.title ?? 'n/a')
+    + ' 起日=' + (edState?.startDate ?? 'n/a') + ' 每天段数上限=' + (edState?.maxSessionsPerDay ?? 'n/a')
+    + ' 第1周第1天第1动作=' + edPlanMove + ' 动作库件数=' + (edState?.lib?.length ?? 'n/a'));
+
+/* 过程页逐字 prompt（预检确认页「复制 prompt 回给 AI」那一环）＋ 复制数据标题（v18 并入本条的半边） */
 const processSteps = readSteps.filter((s) => s.card === 'process');
 const promptBad = [];
 for (const s of processSteps) {
@@ -550,8 +656,10 @@ for (const s of processSteps) {
     + ' 独有句命中=' + okSig + ' 词=「' + sig[0] + '」');
   if (!okWord || !okSig) promptBad.push(s.file + '（词=' + okWord + '／独有句=' + okSig + '）');
 }
-check('过程页 10 份各含本写词的逐字 prompt（`执行唤醒词「<词>」`＋该词独有句）',
-  promptBad.length === 0 && processSteps.length === 10, '红=' + (promptBad.join('／') || '0'));
+check('过程页 10 份各含本写词的逐字 prompt（`执行唤醒词「<词>」`＋该词独有句）'
+  + '＋ 10 份复制数据标题全中文（9 份写前预览 ＋ 186 编辑器）、无英文命令键',
+  promptBad.length === 0 && processSteps.length === 10 && titleOk,
+  '红=' + (promptBad.join('／') || '0') + '；标题=' + [...new Set(processTitles)].join('／'));
 
 const nonProcess = readSteps.filter((s) => s.card !== 'process' && s.inspect !== undefined);
 const promptLeak = nonProcess.filter((s) => s.inspect.hasPromptSeg).map((s) => s.file);
@@ -612,19 +720,39 @@ const inScopeAll = artifacts.filter((a) => SCOPE_RE.test(a.file));
  *  且逐字同长同头；正文无内联事件处理器与 `javascript:`。
  *  v6 时只判写集 176–185，写集外 201–207 自带两块（共享 helpers ＋ 图表 helpers）；v7 撤掉了 201–206
  *  那张「计划 1 场 vs 已完成 1 场」的柱图（它吃的是老技能 `__meta__.volume`，本仓取数层没有对应字段），
- *  图表 helpers 随之不再注入 —— 全量就此统一为「每份恰一块共享 helpers」，判据范围也一并放宽到全量。 */
-const badScript = inScopeAll.filter((a) => a.inspect.scriptOpen !== 1 || a.inspect.handlerHits > 0);
+ *  图表 helpers 随之不再注入 —— 全量就此统一为「每份恰一块共享 helpers」，判据范围也一并放宽到全量。
+ *  **v18 换装窗**：186 换成计划编辑器（可写页）后，它有**两块**普通 `<script>`（技能自配运行时 ＋ 共享
+ *  helpers）＋**一块** `application/json` 的 `#pe-state` 状态载荷——「每份恰一块」对它是错的形状。
+ *  改后判据（逐条只加严不放宽）：全 37 份都带**同一份**共享 helpers（按**逐块 sha256** 比，不靠长度猜）；
+ *  36 份非编辑器页**恰 1 块**普通 `<script>`；编辑器页**恰 2 块**普通（其中一块就是那份共享 helpers、
+ *  另一块是技能自配运行时）＋**恰 1 块** JSON；全 37 份照旧零内联事件处理器、零 `javascript:` 伪协议。 */
+const badScript = inScopeAll.filter((a) => a.inspect.handlerHits > 0);
 const sigs = [...new Set(inScopeAll.map((a) => a.inspect.scriptSig))];
 const allSig = artifacts.map((a) => a.inspect.scriptOpen);
 const allSigs = [...new Set(artifacts.map((a) => a.inspect.scriptSig))];
-const badScriptAll = artifacts.filter((a) => a.inspect.scriptOpen !== 1 || a.inspect.handlerHits > 0);
-check('机检⑩ 零 JS 自证（全量 ' + artifacts.length + ' 份）：每份 `<script` 恰 1 块且全量逐字同长同头'
-  + '（同一份共享 helpers，除它为零），正文无内联事件处理器、无 `javascript:` 伪协议',
-  inScopeAll.length === 10 && badScript.length === 0 && sigs.length === 1
-    && badScriptAll.length === 0 && allSigs.length === 1,
-  '红=' + (badScriptAll.map((a) => a.file + '(块=' + a.inspect.scriptOpen + '/内联=' + a.inspect.handlerHits + ')').join('／') || '0')
-    + ' 全量脚本块指纹数=' + allSigs.length + ' 指纹=' + allSigs[0]
-    + ' 全量块数分布=' + JSON.stringify([...new Set(allSig)].sort()) + '（全部 37 份＝helpers 一块）');
+const badScriptAll = artifacts.filter((a) => a.inspect.handlerHits > 0);
+/** 共享 helpers 指纹＝全量里出现次数最多的那个普通脚本块哈希（37 份共用的同一块）。 */
+const helperTally = new Map();
+for (const a of artifacts) for (const s of a.inspect.plainSigs) helperTally.set(s, (helperTally.get(s) ?? 0) + 1);
+const helpersSig = [...helperTally.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] ?? '';
+const ED_FILE = 'order186-process.html';
+const edArt = artifacts.find((a) => a.file === ED_FILE);
+const edRuntimeSigs = (edArt?.inspect.plainSigs ?? []).filter((s) => s !== helpersSig);
+const missingHelpers = artifacts.filter((a) => !a.inspect.plainSigs.includes(helpersSig)).map((a) => a.file);
+const plainCountBad = artifacts.filter((a) => a.inspect.plainSigs.length !== (a.file === ED_FILE ? 2 : 1)).map((a) => a.file);
+const jsonCountBad = artifacts.filter((a) => a.inspect.jsonScripts !== (a.file === ED_FILE ? 1 : 0)).map((a) => a.file);
+check('机检⑩ 零 JS 自证（全量 ' + artifacts.length + ' 份）：每份都带**同一份**共享 helpers（逐块 sha256 相同）；'
+  + '36 份非编辑器页恰 1 块普通 `<script>`，编辑器页（' + ED_FILE + '）恰 2 块普通 ＋ 恰 1 块 `#pe-state` 的 JSON；'
+  + '全量正文无内联事件处理器、无 `javascript:` 伪协议',
+  inScopeAll.length === 10 && badScript.length === 0
+    && badScriptAll.length === 0 && missingHelpers.length === 0
+    && plainCountBad.length === 0 && jsonCountBad.length === 0 && edRuntimeSigs.length === 1,
+  '红=' + (badScriptAll.map((a) => a.file + '(内联=' + a.inspect.handlerHits + ')').join('／') || '0')
+    + ' 共享helpers指纹=' + helpersSig + '（命中 ' + (helperTally.get(helpersSig) ?? 0) + ' 份；缺=' + (missingHelpers.join('／') || '0') + '）'
+    + ' 普通块数不符=' + (plainCountBad.join('／') || '0') + ' JSON块数不符=' + (jsonCountBad.join('／') || '0')
+    + ' 全量块数分布=' + JSON.stringify([...new Set(allSig)].sort())
+    + '｜编辑器：普通 2＝helpers ' + helpersSig + ' ＋ 自配运行时 ' + (edRuntimeSigs[0] ?? '（缺）')
+    + '；JSON 1；旧口径「首块指纹数」=' + allSigs.length + '（仅作对照，v18 起不再拿它当判据）');
 
 /** ⑪ 用词：正文（剔 `data-t` 载荷）四类记号全零。只判本单写集（176–185 十份结果页）——
  *  186–207 属别单（本单没动它们的文案），不对它们下判据。 */

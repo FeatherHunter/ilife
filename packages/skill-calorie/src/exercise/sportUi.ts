@@ -50,10 +50,19 @@ export function exerciseUiCss(): string {
     + '.sui-caps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 16px}'
     // ── 并列字段清单的行题（「本次写入的字段」这一行；字段名本身走 `renderChips` 的胶囊件）──
     + '.sui-fields-k{font-size:12px;color:var(--fg3);margin:12px 0 4px}'
-    // ── 字段网格（#543 视觉复评 P0-1／P0-2）：16 枚字段胶囊原来靠 `margin` 自由折行、行末参差，
-    //    改等宽网格（一列一格），桌面多列／窄屏自动落；格子抬到 32px，好认也好按。──
-    + '.sui-fieldgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:4px 0 16px}'
-    + '.sui-fieldgrid .ilife-block-chip{display:flex;align-items:center;justify-content:center;min-height:32px}'
+    // ── 字段清单容器（`sportUi.fieldGrid()` 的两个形状；字段名本身走公共层 `renderChips`）──
+    //    枚数多：等宽网格——**列数按 16 这个常见枚数定 8／4**，正好铺满 8×2（桌面）与 4×4（手机）
+    //    行，行末不留孤格（#543 视觉复评 P1-A 第 5 条、页 01 手机第 4 条）。
+    + '.sui-fieldgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin:4px 0 16px}'
+    + '.sui-fieldgrid .ilife-block-chip{display:flex;align-items:center;justify-content:center;'
+    + 'min-height:32px;padding-inline:6px;text-align:center}'
+    //    枚数少（≤4，改单条／改三字段那类）：行内胶囊——1 枚落进 8 列网格会在右边留一大片空。
+    + '.sui-caps .ilife-block-chip{min-height:32px;display:inline-flex;align-items:center}'
+    // ── 页级覆盖（#543 视觉复评 P2-G）：变更行的 `label{flex:1}` 把取值挤到卡片右缘（实测
+    //    01／09／11 三页桌面档各留 790–880px 空档，两处右轴还差 32px）。标签改**定宽两栏**的
+    //    「键」列，取值紧跟在键后，行整体限宽——三页取值停在同一根轴上。只在本页样式段加规则。──
+    + '.ilife-page .ilife-block-change-row{max-width:560px}'
+    + '.ilife-page .ilife-block-change-row-label{flex:0 0 128px}'
     // ── 页级覆盖（#543 视觉复评 P0-1 ＋ 表头字号）：共享块的表卡是「上限 680 ＋ 居中」，上方卡片是
     //    960 整列 ⇒ 表正文比卡正文内缩 126px（实测 x373 vs x247），一页两条对齐轴。本族页把表卡
     //    拉回内容轴、表头从 11.5px 抬到 12px 下限；只在本页样式段加规则，不碰共享层源码。──
@@ -70,7 +79,19 @@ export function exerciseUiCss(): string {
     //    只在本页样式段加规则，不碰公共层源码——共享层那条 `6em` 是跨件改动，转公共层票（见证据件遗留节）。──
     + '.ilife-page .ilife-block-dist-row{grid-template-columns:minmax(0,9.5em) minmax(0,1fr) auto}'
     + '.ilife-page .ilife-block-dist-row-name{overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere}'
-    + '@media (max-width:640px){.ilife-page .ilife-block-data-table td::before{font-size:12px}}'
+    // ── 页级覆盖（#543 视觉复评 P1-D／P1-F／页 11 手机第 1 条），都在窄屏 640 档：
+    //    ① 读数卡组：基础段那条 `repeat(2,minmax(0,1fr))` 让第三张卡孤在半行（2＋1）；
+    //       改回基础栅格的 `auto-fit`，一张卡时铺满、两张时并排，不留孤格；
+    //    ② 页内导航：5 枚锚点各 82px ＋ 间距会折成 4＋1（`数据来源` 孤一行）；
+    //       收紧内距与间距，5 枚并回一行（高度仍是 44px 触摸面，不缩目标）；
+    //    ③ 字段网格塌成 4 列（16 枚＝4×4，无孤格）。──
+    + '@media (max-width:640px){'
+    + '.ilife-page .ilife-block-data-table td::before{font-size:12px}'
+    + '.ilife-page .ilife-block-kpi-card-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}'
+    + '.ilife-page .ilife-block-toc{gap:6px}'
+    + '.ilife-page .ilife-block-toc a{padding-inline:6px}'
+    + '.sui-fieldgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}'
+    + '}'
     // ── 脚注小字（截断明示、口径旁注）──
     + '.sui-note{font-size:12px;line-height:1.6;color:var(--fg2);margin:8px 0 0}'
     // ── 目标环卡（`sportDocs.ringCard()` 那几个 `ilife-block-ring-*` 类）：此前全仓没有一条规则，
@@ -142,6 +163,28 @@ export function factStrip(facts: ReadonlyArray<{ k: string; v: string }>): strin
  *  传入的是**已产好的** `renderChips` 串——本件不重造徽章形状（公共层是唯一产出者）。 */
 export function capsStrip(chipsHtml: string): string {
   return chipsHtml === '' ? '' : '<div class="sui-caps">' + chipsHtml + '</div>';
+}
+
+/** 字段清单容器（#543 视觉复评 P1-A 第 5 条／页 09 第 4 条）：**枚数决定形状**——
+ *  ≥5 枚走等宽网格（16 枚正好 8×2／4×4 铺满，行末不留孤格，也不是自由折行的参差行末）；
+ *  ≤4 枚走行内胶囊（1 枚落进 8 列网格会在右边空掉七格，看着像漏渲染）。
+ *  两分支都**含 `ilife-block-chip`**：形状换了，事实与形状件一个字不丢。 */
+export function fieldGrid(chipsHtml: string, count: number): string {
+  if (chipsHtml === '') return '';
+  return count > 4 ? '<div class="sui-fieldgrid">' + chipsHtml + '</div>'
+    : '<div class="sui-caps">' + chipsHtml + '</div>';
+}
+
+/** 回执副标题收成**一句结论**（#543 视觉复评 P1-A 第 2 条）：写命令摘要里第一个顶层 `：`
+ *  之后那截是**这一条记录的值**（`慢跑 320 卡，30 分钟（2026-09-12）`／`新增 2 条`／
+ *  `复制 1，跳过 5`），页下方的计数卡与明细卡逐条说过了。括号里的 `：` 是后果说明
+ *  （`（软删除：行保留，……）`），**不切**——那句是读者最需要留住的。 */
+export function shapedConclusion(s: string): string {
+  const colon = s.indexOf('：');
+  if (colon === -1) return s;
+  const paren = s.indexOf('（');
+  if (paren !== -1 && colon > paren) return s;
+  return s.slice(0, colon);
 }
 
 /** 行文整形（回执副标题／单源措辞的显示层）：`·`／`；`／`;`／`、` 一律改行文逗号 `，`，

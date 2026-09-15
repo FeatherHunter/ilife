@@ -1818,7 +1818,7 @@ calorie_data.db ｜ workout_plans（写前预览，只读）
 调用链
 calorie-cmd-read calorie.view.plan-write-preview --params &#39;{&quot;op&quot;:&quot;delete&quot;}&#39;
 时间戳版本
-2026-09-15 21:19:24 · 版本 0.1.0
+2026-09-16 00:09:10 · 版本 0.1.0
 异常
 无">复制日志</button></div></div></section></div></section>
 </div>
@@ -2125,7 +2125,7 @@ calorie-cmd-read calorie.view.plan-write-preview --params &#39;{&quot;op&quot;:&
   /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，
      文本取同卡 `<pre class="prompt">` 的**原文**（＝该卡 prompt 逐字，与 F3 卡面同源）；
      读不到 <pre> 才回落同卡 Sheet 内 prompt 按钮的 data-t，两者都无才跳过
-     （#88 S5／B 段红队 S3-a：真实壳恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
+     （#88 S5／B 段红队 S3-a：真实help模板恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
   function injectCardCopy(cards) {
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
@@ -2200,7 +2200,7 @@ calorie-cmd-read calorie.view.plan-write-preview --params &#39;{&quot;op&quot;:&
   }
 
   /* 复制按钮文本同步：prompt 目标（卡头 ＋ Sheet 内）＝ 预览文本；params 目标＝label: value 行，
-     无字段时回落该卡 CLI 文本（与冻结壳 paramsText 同口径）。 */
+     无字段时回落该卡 CLI 文本（与冻结help模板 paramsText 同口径）。 */
   function syncCopyText(card, text, lines) {
     var buttons = allOf(card, "[" + ACTION_ATTR + "]");
     for (var i = 0; i < buttons.length; i++) {
