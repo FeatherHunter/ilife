@@ -25,6 +25,31 @@ export function bodyReceiptCss(): string {
     // 名字槽 ＋ 徽章列一行：名字槽与逐格行的标签列同宽，徽章自己折行（不挤成一串）。
     + '.brc-labeled{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:0 0 14px}'
     + '.brc-k{flex:0 0 88px;font-size:12px;color:var(--fg3)}'
+    // 逐格段里的组头：把一长串裸数字按部位分家（值那一列本来就有单位口径，组头再点一次）。
+    + '.brc-h3{font-size:12px;font-weight:600;color:var(--fg3);margin:14px 0 2px}'
+    // ── 键值行收窄：公共层的行是「名字 ｜ 旧值 ｜ 箭位 ｜ 新值」四栏，值被推到整行最右边，
+    //    一条行拉成一条长横杠（编排者视觉裁定第 3 条）。本页把箭位与空槽让掉、名字槽定宽，
+    //    值紧跟名字左边起排——两列排布，眼睛不用横着走一整行。 ──
+    + '.ilife-block-change-row{display:flex;gap:0 14px;align-items:baseline;justify-content:flex-start}'
+    + '.ilife-block-change-row-label{flex:0 0 92px;font-size:12px;color:var(--fg3)}'
+    + '.ilife-block-change-row-old:not(:empty),.ilife-block-change-row-new:not(:empty){flex:0 1 auto;font-size:14px}'
+    + '.ilife-block-change-row-old:empty,.ilife-block-change-row-new:empty{display:none}'
+    + '.ilife-block-change-row-arrow{display:none}'
+    // ── 值带单位：单位是**版式的一部分**，由 CSS 补在值后面（与公共层表格卡片化的
+    //    `td::before{content:attr(data-label)}` 同一手法）——逐格比对的值因此仍是查库原值。 ──
+    + '.brc-u-cm .ilife-block-change-row-old:not(:empty)::after,'
+    + '.brc-u-cm .ilife-block-change-row-new:not(:empty)::after{content:" 厘米";color:var(--fg3);font-size:12px}'
+    + '.brc-u-mm .ilife-block-change-row-old:not(:empty)::after,'
+    + '.brc-u-mm .ilife-block-change-row-new:not(:empty)::after{content:" 毫米";color:var(--fg3);font-size:12px}'
+    + '.brc-u-pct .ilife-block-change-row-old:not(:empty)::after,'
+    + '.brc-u-pct .ilife-block-change-row-new:not(:empty)::after{content:" %";color:var(--fg3);font-size:12px}'
+    // ── 两张表一眼分得开：上面「这次记下的」贴页走，下面「同一天还记过这条」整块浅底＋描边 ──
+    + '.brc-alt{margin-top:16px;padding:12px 14px;background:var(--soft);border:1px solid var(--line);border-radius:14px}'
+    + '.brc-now{margin-bottom:4px}'
+    // 复制区两颗按钮：公共层默认让它们均分整行（约半宽 480px，看着像胶囊条不像按钮）——
+    // 本页就地收窄成贴合文字的自宽按钮（触摸区 44px 由页尾兜底条保证）。
+    + '.ilife-copy-menu-wrap{width:auto;justify-self:start}'
+    + '.ilife-copy-btn{width:auto;min-width:0;justify-self:start;padding-left:18px;padding-right:18px}'
     // 640 档：卡片化后每格的列头抬到 12px（与 HELP 页同档的下限），表头与单元格一起抬。
     + '@media (max-width: 640px){'
     + '.ilife-block-data-table th,.ilife-block-data-table td{font-size:12px}'
@@ -45,4 +70,10 @@ export function labeledChips(label: string, items: readonly string[]): string {
   if (kept.length === 0) return '';
   return '<div class="brc-labeled"><span class="brc-k">' + esc(label) + '</span>'
     + renderChips({ items: kept.map((text) => ({ text })) }) + '</div>';
+}
+
+/** 逐格段里的组头（「躯干（厘米）」「左右成对（厘米）」「皮褶读数（毫米）」这类）：
+ *  一长串裸数字按部位分家，值和它的单位在同一行。它**只插在行与行之间**，不动行序。 */
+export function groupHead(text: string): string {
+  return '<h3 class="brc-h3">' + esc(text) + '</h3>';
 }

@@ -234,15 +234,23 @@ function expectCell(col, raw) {
   return raw === null || raw === undefined || String(raw) === '' ? MISSING : String(raw);
 }
 
-/** 逐格比：页内 `rows` 的每一格 == **脚本查库**那一格（缺项两边分别是 `—` 与 `null`／空串）。 */
-function assertRows(name, rows, key, row) {
+/** 逐格比：页内 `rows` 的每一格 == **脚本查库**那一格（缺项两边分别是 `—` 与 `null`／空串）。
+ *
+ *  #537 重排：口径行由「记录现值」改「这次记下的」，且**记／补记类只摆有值的行**
+ *  （缺值不占位，缺了几项由段下那句计数说清）⇒ 增类按**有值子集**比；
+ *  删类仍摆全字段（删除回执要摆的是「这条记录里原来有什么」，缺的格子也是它的一部分）。 */
+function assertRows(name, rows, key, row, op = 'create') {
   const isMeasure = key.includes('measure');
   const cols = isMeasure ? MEASURE_COLS : COMPOSITION_COLS;
-  const wantLabels = isMeasure ? ['日期', ...PART_13, '备注'] : ['日期', '来源', '体脂率', ...SITE_7, '备注'];
+  const allLabels = isMeasure ? ['日期', ...PART_13, '备注'] : ['日期', '来源', '体脂率', ...SITE_7, '备注'];
+  const kept = cols
+    .map((c, i) => [c, allLabels[i]])
+    .filter(([c]) => op === 'delete' || (row[c] !== null && row[c] !== undefined && String(row[c]) !== ''));
   assert.ok(rows !== null, name + ' 页内应有逐格段（口径行未找到）');
-  assert.deepEqual(rows.map(([k]) => k), wantLabels, name + ' 字段序与中文标签逐位：' + JSON.stringify(rows.map(([k]) => k)));
-  assert.equal(rows.length, cols.length, name + ' 格数 == 列数');
-  for (const [i, col] of cols.entries()) {
+  assert.deepEqual(rows.map(([k]) => k), kept.map(([, l]) => l),
+    name + ' 字段序与中文标签逐位（只比上屏的那几项）：' + JSON.stringify(rows.map(([k]) => k)));
+  assert.equal(rows.length, kept.length, name + ' 格数 == 上屏的列数');
+  for (const [i, [col]] of kept.entries()) {
     const want = expectCell(col, row[col]);
     assert.equal(rows[i][1], want, name + ' / ' + rows[i][0] + ' 页内=' + rows[i][1] + '，查库=' + want);
   }
@@ -290,9 +298,9 @@ test('#365 七条写词真出口：六项读数全绿 ＋ 页内逐格 == 脚本
     const row = dbRow(dir, key, id);
     // 增类现值落新值槽（`new`）；删类删前原值落旧值槽（`old`）。
     const slot = key.includes('remove') ? 'old' : 'new';
-    const prefix = key.includes('remove') ? '删除前的原值' : '记录现值';
+    const prefix = key.includes('remove') ? '删除前的原值' : '这次记下的';
     const rows = sectionRows(r.html, prefix, slot);
-    assertRows(name, rows, key, row);
+    assertRows(name, rows, key, row, key.includes('remove') ? 'delete' : 'create');
     // 关键字段值也在**可见文本**里（剥掉复制载荷属性后仍能读到）
     const text = visible(r.html);
     for (const col of key.includes('measure') ? ['waist_cm'] : ['date', 'body_fat_pct']) {
@@ -307,16 +315,20 @@ test('#365 七条写词真出口：六项读数全绿 ＋ 页内逐格 == 脚本
 
 /* ── 裁定 2：可见文本 `—` ／ 复制数据缺项整项缺位（两条分开断言，不互相顶替） ── */
 
-test('#365 裁定2-可见：缺项在页内逐格写 `—`（按格定位，不做全文 includes）', () => {
+test('#365 裁定2-可见：缺值的行整行不摆、上屏的行全为查库真值（#537 收）', () => {
   const dir = mkTmpDb();
-  // 记体脂（外部测量）：7 点皮褶全空 ＋ 备注空 → 8 格 `—`
+  // 记体脂（外部测量）：7 点皮褶全空 ＋ 备注空 ⇒ **缺值的行整行不摆**（#537：缺值不占位，
+  // 「没记」由段下那句计数说清）；剩下三行（日期／来源／体脂率）逐格是查库真值，一格 `—` 都没有。
   const r = runWrite(dir, KEY_C_ADD, { source: 'gym', bodyFatPct: 18.5, date: '2026-09-11' });
   assert.equal(r.status, 0, 'stderr=' + r.stderr.slice(-300));
-  const rows = sectionRows(r.html, '记录现值', 'new');
-  assert.deepEqual(rows.filter(([, v]) => v === MISSING).map(([k]) => k),
-    [...SITE_7, '备注'], '体脂：未填的 7 点与空备注逐格写 `—`');
-  for (const [, v] of rows) assert.notEqual(v, '', '缺值格不得留空串');
-  console.log('T365-DASH-VISIBLE 体脂缺项=' + rows.filter(([, v]) => v === MISSING).length + '/' + rows.length);
+  const rows = sectionRows(r.html, '这次记下的', 'new');
+  assert.deepEqual(rows.map(([k]) => k), ['日期', '来源', '体脂率'],
+    '缺值的 7 点与空备注整行不摆：' + JSON.stringify(rows.map(([k]) => k)));
+  assert.equal(rows.filter(([, v]) => v === MISSING).length, 0, '上屏的行不得有 `—` 格');
+  for (const [, v] of rows) assert.notEqual(v, '', '上屏的格不得留空串');
+  assert.ok(visible(r.html).includes('另有 8 项这次没记'),
+    '缺了几项由段下那句计数说清：' + visible(r.html).slice(0, 200));
+  console.log('T365-DASH-VISIBLE 体脂上屏行=' + rows.length + ' 全为查库真值');
 });
 
 test('#365 裁定2-载荷：复制数据里缺项整项缺位、全文不含 `—`', () => {
@@ -348,7 +360,7 @@ test('#365 防回显：跑之前不经命令直改库一个字段 → 页面跟�
   const del = runWrite(dir, KEY_C_RM, { id: idc });
   assert.equal(del.status, 0, 'stderr=' + del.stderr.slice(-300));
   const delRows = sectionRows(del.html, '删除前的原值', 'old');
-  assertRows('防回显/删体脂', delRows, KEY_C_RM, dbRow(dir, KEY_C_RM, idc));
+  assertRows('防回显/删体脂', delRows, KEY_C_RM, dbRow(dir, KEY_C_RM, idc), 'delete');
   assert.ok(delRows.some(([k, v]) => k === '体脂率' && v === '33.3'), '删前快照须读库内 33.3：' + JSON.stringify(delRows.slice(0, 3)));
   assert.ok(!delRows.some(([k, v]) => k === '体脂率' && v === '18.5'), '页面不得再出现种子旧值 18.5');
 
@@ -460,7 +472,7 @@ test('#537 回执七页：页头三处不带 `·`、标题按唤醒词读得懂�
     assert.ok(!text.includes('逐格读自库内'), name + ' 不得再印「逐格读自库内」');
     assert.ok(!text.includes('同一事实') && !text.includes('body_'), name + ' 内部叫法不上屏');
     // ④ 库内 ↔ 页面同源：这一页的逐格段仍在（删类读旧槽、记类读新槽）。
-    const rows = sectionRows(html, key.includes('remove') ? '删除前的原值' : '记录现值', key.includes('remove') ? 'old' : 'new');
+    const rows = sectionRows(html, key.includes('remove') ? '删除前的原值' : '这次记下的', key.includes('remove') ? 'old' : 'new');
     assert.ok(rows !== null && rows.length > 0, name + ' 逐格段仍在');
   }
   console.log('T537-HEADER 七页页头/内部标识符读数：' + pages.map(([n]) => n).join('、'));
@@ -551,9 +563,9 @@ test('#365 收口：七条写词的真出口读数汇总可复跑', () => {
     const r = runWrite(dir, key, params);
     assert.equal(r.status, 0, name + ' exit 0');
     const row = dbRow(dir, key, r.env.data.receipt.recordId);
-    const rows = sectionRows(r.html, key.includes('remove') ? '删除前的原值' : '记录现值',
+    const rows = sectionRows(r.html, key.includes('remove') ? '删除前的原值' : '这次记下的',
       key.includes('remove') ? 'old' : 'new');
-    assertRows(name, rows, key, row);
+    assertRows(name, rows, key, row, key.includes('remove') ? 'delete' : 'create');
     lines.push(name + '=' + sixReadings(r).cssBytes + 'B');
   }
   console.log('T365-SUMMARY ' + lines.join(' '));

@@ -210,13 +210,20 @@ test('#363 判据①体脂：同日已有记录 → 冲突段摆在最前，既�
   //     那一块逐格摆出既有值（带主键的整句摘要不再压上页头，库内世界不上屏）。
   const pageRows = sectionRows(r.html, '同一天还记过这条', 'new');
   assert.ok(pageRows !== null, '落盘页应有「同一天还记过这条」块：' + r.text.slice(0, 160));
-  assert.deepEqual(pageRows.map(([k]) => k), ['日期', '来源', '体脂率', ...SITE_7, '备注'],
-    '既有记录块字段序与中文标签逐位：' + JSON.stringify(pageRows.map(([k]) => k)));
+  // #537：只摆**有值的行**（缺值不占位）——故只比这一版页面上真的上屏的那几项，
+  // 逐格仍是查库真值；标签序照库列序。
+  assert.deepEqual(pageRows.map(([k]) => k), ['日期', '来源', '体脂率'],
+    '既有记录块标签序（只比上屏的项）：' + JSON.stringify(pageRows.map(([k]) => k)));
   const get = (k) => (pageRows.find(([x]) => x === k) || [])[1];
-  assert.equal(get('日期'), old.date, '落盘页/既有日期 == 查库值');
-  assert.equal(get('来源'), SRC_ZH[old.source], '落盘页/来源 == 查库值');
-  assert.equal(get('体脂率'), String(old.body_fat_pct), '落盘页/体脂率 == 查库值');
-  for (let i = 0; i < 7; i++) assert.equal(get(SITE_7[i]), String(old[CALIPER_COLS[i]]), '落盘页/皮褶 ' + SITE_7[i]);
+  /** 可见文本那一格的期望值（裁定 2 的可见文本口径：缺项写 `—`）。 */
+  const want = (raw) => (raw === null || raw === undefined || raw === '' ? MISSING : String(raw));
+  assert.equal(get('日期'), want(old.date), '落盘页/既有日期 == 查库值');
+  assert.equal(get('来源'), want(SRC_ZH[old.source]), '落盘页/来源 == 查库值');
+  assert.equal(get('体脂率'), want(old.body_fat_pct), '落盘页/体脂率 == 查库值');
+  for (let i = 0; i < 7; i++) {
+    if (old[CALIPER_COLS[i]] === null || old[CALIPER_COLS[i]] === undefined) continue;
+    assert.equal(get(SITE_7[i]), want(old[CALIPER_COLS[i]]), '落盘页/皮褶 ' + SITE_7[i]);
+  }
   assert.ok(!r.text.includes('#' + old.id), '落盘页不再印既有记录的主键（#537）：' + r.text.slice(0, 120));
   assert.ok(!r.text.includes('body_composition'), '落盘页不印库表名（#537）');
 

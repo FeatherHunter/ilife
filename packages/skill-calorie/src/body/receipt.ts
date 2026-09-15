@@ -50,17 +50,18 @@ import {
   renderCaliberLine, renderChangeRows, renderConclusionBar, renderDataTable, renderDisclosure,
   renderKpiGrid, renderPreBlock,
 } from 'base-paint/blocks';
-import type { KpiCardInput } from 'base-paint/blocks';
+import type { ChangeRowInput, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt, ReceiptItem } from '../render/receipt.js';
-import { MEASUREMENT_FIELDS } from '../fetch/body.js';
+import { MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
+import { CALIPER_SITE_LABELS } from './bodyPlate.js';
 import { JP7_METHOD } from './log.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../shared/operationHead.js';
 import { commandLine } from '../shared/writeParts.js';
 import { CALORIE_COPY_ACTION } from '../render/copy.js';
-import { bodyReceiptCss, labeledChips } from './receiptUi.js';
+import { bodyReceiptCss, groupHead, labeledChips } from './receiptUi.js';
 import {
   cell, currentRows, deleteSnapshotRows, entityOf, hasValue, isMeasure, otherItems, payloadMessage,
   snapshotOf, zhLabel,
@@ -85,14 +86,59 @@ const BODY_RECEIPT_KEYS: ReadonlySet<string> = new Set([
   'calorie.body.measure-remove',
 ]);
 
-/** 这一页叫什么：由**记录本身**推，不由唤醒词推——分派层只把命令名与参数交给本件，
- *  `meta.wakeWord` 恒是命令面的两个字（补记两条与记两条因此同字）。体脂按来源分两条路：
- *  皮褶钳来源是按 7 点换算来的，其余来源是外部量来的读数。 */
-function pageNameOf(key: string, op: CrudReceipt['op'], source: unknown): string {
-  if (isMeasure(key)) return op === 'delete' ? '删围度' : '记围度';
+/** 「这一条是不是补记」的判据（编排者 2026-09-15 裁定）：分派层只把命令名与参数交给本件，
+ *  `meta.wakeWord` 恒是命令面的两个字，唤醒词进不来——所以**由记录本身判**：
+ *  **落库日期早于这一条回执的写入日**就是补记。判据是日期比较，不是猜的；当天写的那几条与
+ *  补记那几条由此在页名与判语上自然分家（不动路由、不动冻结的词名与示例）。 */
+const writtenOn = (receipt: CrudReceipt): string => receipt.meta.actionAt.slice(0, 10);
+
+function isBackfill(receipt: CrudReceipt, row: Record<string, unknown> | null): boolean {
+  if (row === null || receipt.op === 'delete') return false;
+  const date = String(row['date'] ?? '');
+  return date !== '' && date < writtenOn(receipt);
+}
+
+/** 这一页叫什么：由**记录本身**推（见上）。体脂按来源分两条路：皮褶钳来源是按 7 点换算来的，
+ *  其余来源是外部量来的读数。七条唤醒词由此各自落到一个页名上。 */
+function pageNameOf(key: string, op: CrudReceipt['op'], source: unknown, backfill: boolean): string {
+  if (isMeasure(key)) return op === 'delete' ? '删围度' : (backfill ? '补记围度' : '记围度');
   if (op === 'delete') return '删体脂';
+  if (backfill) return '补记体脂';
   return source === 'home_caliper' ? '记体脂（皮褶钳）' : '记体脂（外部测量）';
 }
+
+/** 逐格段里插组头（「躯干」「左右成对」「皮褶读数」这类）——一长串裸数字按部位分家。
+ *  **组头只插在行与行之间**：行序一位不动（逐格比对是顺序敏感的，三条写词测试钉的就是这个序）。
+ *  每行还包一层**单位档**（见 `unitClass`）：值后面由页内 CSS 补上「 厘米／毫米／%」。 */
+function groupedRows(
+  key: string, rows: readonly ChangeRowInput[], heads: Readonly<Record<string, string>>,
+): string {
+  return rows.map((r) => (heads[r.label] === undefined ? '' : groupHead(heads[r.label]))
+    + '<div class="' + (unitClass(key, r.label) || 'brc-u-none') + '">'
+    + renderChangeRows({ rows: [r] }) + '</div>').join('');
+}
+
+/** 组头表（按家族取；键是**已有的中文标签**，不是库列名——组头只挑行，不改行的名字）。 */
+const GROUP_HEADS: Readonly<Record<'caliper' | 'measure', Readonly<Record<string, string>>>> = {
+  caliper: { 胸: '皮褶读数（毫米）' },
+  measure: { 胸围: '躯干（厘米）', 左大腿: '左右成对（厘米）' },
+};
+
+/** 逐格行的单位档（按列定）：围度部位读厘米、皮褶读毫米、体脂率读百分比；日期／来源／备注是文字，
+ *  不带单位。单位由页内 CSS 的 `::after` 补在值后面——与公共层表格卡片化的
+ *  `td::before{content:attr(data-label)}` 同一手法：**值带单位看得见**，而逐格比对的契约
+ *  （值 == 查库值）一位不动。 */
+function unitClass(key: string, label: string): string {
+  if (label === '体脂率') return 'brc-u-pct';
+  if (isMeasure(key)) return MEASUREMENT_FIELDS.some((f) => MEASUREMENT_ZH[f] === label) ? 'brc-u-cm' : '';
+  return (CALIPER_SITE_LABELS as readonly string[]).includes(label) ? 'brc-u-mm' : '';
+}
+
+/** **只留有值的行**（缺值的整行不摆，见编排者视觉裁定第 1 条）——「没记」这件事由段下那一句
+ *  计数说清，不让十几行 `—` 把两张表撑成一堵墙。删类**不过这道筛**：删除回执要摆的是
+ *  「这条记录里原来有什么」，缺的格子也是它的一部分（`t364` 的逐格同源契约钉的就是这一条）。 */
+const filledOnly = (rows: readonly ChangeRowInput[]): ChangeRowInput[] =>
+  rows.filter((r) => (r.after ?? r.before) !== '—');
 
 /** 「对账信息」折叠区（`render/receipt.ts:82-134` 的七个字段里**读者核对得到的几样**）。
  *
@@ -151,11 +197,13 @@ const nextStepOf = (key: string): string =>
  *
  *  值取自库内那一行（不回显命令参数：手改库里一个字段，这一句跟着变）。换算只说方法
  *  （`按 Jackson-Pollock 7 点法换算`），**系数与「7 点合计 82mm ＋ 年龄 30 ＋ 男」整段不上屏**。 */
-function conclusionOf(key: string, receipt: CrudReceipt, row: Record<string, unknown> | null): string {
+function conclusionOf(
+  key: string, receipt: CrudReceipt, row: Record<string, unknown> | null, backfill: boolean,
+): string {
   if (receipt.noChange === true) return '这次没有改动任何东西。';
   const date = row === null ? '—' : cell(row['date']);
   if (receipt.op === 'delete') return date + ' 的这条' + entityOf(key) + '记录已经删掉。';
-  const done = '已记下 ' + date + ' 的' + entityOf(key) + '记录';
+  const done = (backfill ? '已补记 ' : '已记下 ') + date + ' 的' + entityOf(key) + '记录';
   if (isMeasure(key)) return done + '，' + nextStepOf(key) + '。';
   const byCaliper = row !== null && row['source'] === 'home_caliper';
   return done + (byCaliper ? '，按 ' + JP7_METHOD + '换算' : '') + '，' + nextStepOf(key) + '。';
@@ -190,11 +238,14 @@ function kpiCards(key: string, receipt: CrudReceipt, row: Record<string, unknown
 }
 
 /** 一条既有记录的现值块（同日已有记录／补记冲突时出；没有那一条就整块不出现）。
- *  #537：口径行里的记录主键 `#5` 撤掉——「同一天还记过这条」说的是事实，主键不是读者的话。 */
+ *  #537：口径行里的记录主键 `#5` 撤掉——「同一天还记过这条」说的是事实，主键不是读者的话。
+ *  整块包一层 `.brc-alt`（浅底＋描边），与上面「这次记下的」那张**一眼分得开**；
+ *  同样只摆有值的行（缺项不占位）。 */
 function existingBlock(db: DatabaseSync, key: string, item: ReceiptItem): string {
   const id = typeof item.id === 'number' ? item.id : -1;
-  return renderCaliberLine('同一天还记过这条')
-    + renderChangeRows({ rows: currentRows(db, key, id) });
+  const rows = filledOnly(currentRows(db, key, id));
+  return '<div class="brc-alt">' + renderCaliberLine('同一天还记过这条')
+    + groupedRows(key, rows, GROUP_HEADS[isMeasure(key) ? 'measure' : 'caliper']) + '</div>';
 }
 
 /** 七条写词共用的写后回执整页。`command` ＝ AI 真跑那条写命令的原文，进「复制日志」第 4 段。 */
@@ -204,6 +255,17 @@ function buildBodyReceiptDoc(
   const id = receipt.recordId;
   const isDel = receipt.op === 'delete';
   const row = id === null ? null : snapshotOf(db, key, id);
+  const backfill = isBackfill(receipt, row);
+  const heads = GROUP_HEADS[isMeasure(key) ? 'measure' : 'caliper'];
+  // 逐格段的题目：**口径一句话说清单位与范围**（原先括号里印的是库表名与「读自库内」的实现细节，
+  // 而数值一律裸摆、没有单位）。段名本身是三条写词测试的锚点，逐字不动。
+  const unitOf = isMeasure(key) ? '各部位读厘米' : '体脂率读百分比，皮褶读毫米';
+  const allRows = isDel
+    ? deleteSnapshotRows(db, key, id, receipt.items[0])
+    : (id === null ? [] : currentRows(db, key, id));
+  // 记／补记类**只摆有值的行**（缺值的整行不占位）；缺了几项由段下那一句计数说清。
+  const snapRows = isDel ? allRows : filledOnly(allRows);
+  const leftOut = allRows.length - snapRows.length;
   const existing = otherItems(receipt);
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
@@ -211,22 +273,24 @@ function buildBodyReceiptDoc(
   };
   const content = [
     bodyReceiptCss(),
-    // ① 结论：**一页只在这一处说「写成功／已删除」**（原先是结论条／状态卡／表各说一遍）。
+    // ① 结论：**一页只在这一处说「写成功／已补记／已删除」**（原先是结论条／状态卡／表各说一遍）。
     //    删类走警示块（浅色静态提示），记／补记类走结论条。
     isDel
-      ? notice({ icon: 'warn', msg: conclusionOf(key, receipt, row), detail: DELETE_NOTE })
-      : renderConclusionBar(conclusionOf(key, receipt, row)),
+      ? notice({ icon: 'warn', msg: conclusionOf(key, receipt, row, backfill), detail: DELETE_NOTE })
+      : renderConclusionBar(conclusionOf(key, receipt, row, backfill)),
     // ② 主角读数卡（原先四张：状态／记录编号／影响行数／写入字段——后两张进页尾对账区，
     //    记录编号是内部主键、整张撤）。
     renderKpiGrid(kpiCards(key, receipt, row)),
     // ③ 逐格快照（删类＝删除前的原值，记／补记类＝记录现值）：两段都**逐格读自库内**，
-    //    缺值可见文本写 `—`；`renderChangeRows` 对空数组返空串 ⇒ 无行即不出空卡。
-    //    **#537：口径行只留读者话**——`（逐格读自库内 body_composition）：` 那截括号整段撤
-    //    （库表名与「读自库内」的实现细节都不上屏）；段名本身是两条写词测试的锚点，逐字不动。
-    isDel
-      ? renderCaliberLine('删除前的原值：')
-        + renderChangeRows({ rows: deleteSnapshotRows(db, key, id, receipt.items[0]) })
-      : renderCaliberLine('记录现值：') + renderChangeRows({ rows: id === null ? [] : currentRows(db, key, id) }),
+    //    缺值可见文本写 `—`；行序与列序一位不动（那是三条写词测试钉住的契约），只在行与行之间
+    //    插组头，让裸数字按部位分家（编排者视觉裁定第 3 条）。
+    snapRows.length === 0
+      ? ''
+      : '<div class="brc-now">'
+        + renderCaliberLine((isDel ? '删除前的原值（' : '这次记下的（') + unitOf + '）：')
+        + groupedRows(key, snapRows, heads)
+        + (leftOut === 0 ? '' : renderCaliberLine('另有 ' + leftOut + ' 项这次没记，就没摆上来'))
+        + '</div>',
     ...existing.map((it) => existingBlock(db, key, it)),
     m5Disclosure(receipt, !isDel),
     undoBlock(undoCliOf(receipt)),
@@ -247,7 +311,7 @@ function buildBodyReceiptDoc(
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: pageNameOf(key, receipt.op, row === null ? undefined : row['source']),
+    title: pageNameOf(key, receipt.op, row === null ? undefined : row['source'], backfill),
     eyebrow: EYEBROW,
     subtitle: null,
     content,
