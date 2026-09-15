@@ -64,9 +64,9 @@ const DESKTOP_CSS = [
 const TOAST_CSS = [
   '/* t407-r3 B：黑底说明块（.ilife-toast）两栏等高＋行距 */',
   '.ilife-toast { line-height: 1.5; }',
-  '.ilife-toast-title-row { align-items: stretch; margin-bottom: 6px; }',
+  '.ilife-toast-title-row { flex-wrap: nowrap; align-items: stretch; margin-bottom: 6px; }',
   '.ilife-toast-title-row > .ilife-toast-title { flex: 1 1 auto; min-width: 0; margin-bottom: 0; line-height: 1.5; }',
-  '.ilife-toast-title-row > .ilife-toast-chip { display: inline-flex; align-items: center; justify-content: center; }',
+  '.ilife-toast-title-row > .ilife-toast-chip { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }',
   '.ilife-toast-lines { line-height: 1.6; }',
 ].join('\n');
 
