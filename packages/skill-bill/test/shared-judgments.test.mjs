@@ -118,7 +118,7 @@ describe('t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps�
     };
     assert.ok(at('zzkeep3') < at('zzkeep2'), '最近的一笔（09-03）排在 09-02 之前');
     assert.ok(at('zzkeep2') < at('zzkeep1'), '09-02 排在 09-01 之前');
-    assert.ok(html.includes('餐饮/外卖/午餐 · 支付宝 · zzkeep3'), '摘要＝分类 · 账户 · 备注');
+    assert.ok(html.includes('餐饮/外卖/午餐　zzkeep3'), '候选行摘要＝分类＋备注（账户在同页只读回显表里，不重抄）');
   });
 
   it('候选读不通照实报（不拿空表冒充「库里没有记录」）', () => {
@@ -216,11 +216,11 @@ describe('t407 E1 · 流程三段式（flowSteps.ts）', () => {
 
   it('段状态：没写 done＝未定走 warn，写了 done＝已定走 ok，自定义 state 优先', () => {
     const html = flowSteps({ steps: [{ title: 'T1' }, { title: 'T2', done: true }, { title: 'T3', done: true, state: '半定' }] });
-    assert.ok(html.includes('第 1 段 · T1：未定'), '缺省按没定算');
+    assert.ok(html.includes('第 1 段　T1：未定'), '缺省按没定算');
     assert.ok(html.includes('ilife-status-badge-warn'), '未定那一段的徽标走 warn');
-    assert.ok(html.includes('第 2 段 · T2：已定'), 'done 为真＝已定');
+    assert.ok(html.includes('第 2 段　T2：已定'), 'done 为真＝已定');
     assert.ok(html.includes('ilife-status-badge-ok'), '已定那一段的徽标走 ok');
-    assert.ok(html.includes('第 3 段 · T3：半定'), '自定义 state 压过缺省那两个字');
+    assert.ok(html.includes('第 3 段　T3：半定'), '自定义 state 压过缺省那两个字');
   });
 
   it('一段之内按「徽标 → 说明 → 表单 → 成品」摆，段与段按给的次序', () => {
@@ -228,7 +228,7 @@ describe('t407 E1 · 流程三段式（flowSteps.ts）', () => {
       { title: 'A', note: 'NA', fields: [{ name: 'f', label: 'F', hint: 'h' }], html: '<b>HX</b>' },
       { title: 'B' },
     ] });
-    const order = ['第 1 段 · A：未定', 'NA', 'ilife-block-param-form', '<b>HX</b>', '第 2 段 · B：未定'];
+    const order = ['第 1 段　A：未定', 'NA', 'ilife-block-param-form', '<b>HX</b>', '第 2 段　B：未定'];
     let at = -1;
     for (const s of order) {
       const i = html.indexOf(s);
@@ -239,7 +239,7 @@ describe('t407 E1 · 流程三段式（flowSteps.ts）', () => {
 
   it('一段既没字段也没成品又没说明也出得来（三段骨架本身就是要看的东西）', () => {
     const html = flowSteps({ steps: [{ title: '空段' }] });
-    assert.ok(html.includes('第 1 段 · 空段：未定'), '只剩一枚徽标也算出得来');
+    assert.ok(html.includes('第 1 段　空段：未定'), '只剩一枚徽标也算出得来');
     assert.ok(!html.includes('ilife-block-param-form'), '没字段就不出表单');
   });
 });
