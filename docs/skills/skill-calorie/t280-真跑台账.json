@@ -1,0 +1,2094 @@
+{
+  "批次": "t280 · 场景 02 饮食 · 唤醒词真跑台账",
+  "检出": "D:\\ilife-wt\\wf155-m（新建 worktree，detached HEAD）",
+  "基线提交": "5dc096b206ac684d6034fa42436e8371bbc563c6",
+  "编译器": "node D:\\ilife\\node_modules\\typescript\\bin\\tsc --version → Version 5.9.2（绝对路径调真编译器，未走 npx）",
+  "唤醒词来源": "packages/skill-calorie/dist/triggers/routes.generated.js 的 ALL_ROUTES，筛 scene === '02'（不手抄字面量）",
+  "跑法": "每条跑前把 SKILLS_DB_PATH 指向的库文件还原成同一份播种快照（写词会改库，见派单附页 §15），再 node packages/skill-calorie/dist/cli/cmd_read.js <命令> --params '<json>'",
+  "条数口径": {
+    "运行期总表筛场景02": 83,
+    "地图设计期老技能词表SCENE_02_DIET": 70,
+    "70 条是否全含于 83 条": true,
+    "多出的13条": [
+      "看今日饮食记录",
+      "看饮食复盘",
+      "查高热量排行",
+      "查食品库",
+      "搜食品",
+      "看去重报告",
+      "查营养配比",
+      "看营养素明细",
+      "看食品来源分布",
+      "看今日饮水",
+      "看批量导入预览",
+      "看营养分析",
+      "看每日六因素"
+    ],
+    "说明": "地图 #155 正文说的「70 条」是地图设计期的老技能词表口径；当刻 master 的运行期总表里该场景是 83 条。本台账跑全 83 条，70 条一条不漏。"
+  },
+  "种子": {
+    "库路径": ".scratch/t280/db/calorie_data.db（隔离自建，SKILLS_DB_PATH 指向 .scratch/t280/db）",
+    "快照字节": 155648,
+    "覆盖": [
+      "档案 1 条（身高体重活动量）",
+      "食品库 10 条，经 product.update 打 6 个分类（蛋白类 3／主食类 3／脂肪类 1／蔬菜类 1／乳品类 1）＋2 组同名近重复（供去重报告）",
+      "饮食记录：75 天 × 每天 4 餐别（早餐／午餐／下午茶／晚餐），轮换 10 种食物 → 覆盖当日／昨日／本周／上周／本月／上月／最近 7 天／最近 30 天／自定义区间，以及早餐／午餐／晚餐／加餐／全部餐别",
+      "至少一条带备注：当日午餐 note=「煎的，少油」；昨日晚餐 note=「食堂」",
+      "饮水：当日 3 条（300／500／400 ml）＋昨日 1 条＋8 天前 1 条",
+      "体脂 2 条（composition-add）＋围度 2 条（measure-add）"
+    ],
+    "播种读数": "SEED ok=103/103（食品 10＋分类 9＋餐别批 75＋其余 9），快照 155,648 字节"
+  },
+  "读数": {
+    "真跑条数": 83,
+    "exit 分布": "exit 0：83 条",
+    "落盘件数": 83,
+    "第0字节为完整文档开头": "83/83",
+    "字节区间": "68351 – 168483（中位 79803）",
+    "内容完全相同的分组": "2 组（第 21／23 格；第 33／81 格），见逐格缺陷清单"
+  },
+  "两态": {
+    "一_库为空": {
+      "跑法": "全新空库（.scratch/t280/db-empty），跑全部读命令（命令名以 calorie.view. 或 calorie.today 开头）",
+      "读命令条数": 65,
+      "exit 4 条数": 61,
+      "exit 0 条数": 4,
+      "exit 0 的是哪几条": [
+        "看有备注的饮食记录",
+        "校验批量导入",
+        "看「有备注」的饮食记录",
+        "看批量导入预览"
+      ],
+      "口径": "库为空＝缺失阻断：按设计 exit 4 且不落盘（拒绝编数）。参数全在命令里、不读库的四条不受影响。",
+      "逐条读数": [
+        {
+          "wake": "看今日饮食",
+          "key": "calorie.today",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-15）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看昨日饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-14 ~ 2026-09-14）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看本周饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-14 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看上周饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-07 ~ 2026-09-13）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看本月饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看上月饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-08-01 ~ 2026-08-31）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看最近 7 天饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看最近 30 天饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-08-17 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看某段时间饮食",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看今日喝水",
+          "key": "calorie.view.today-water",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮水记录：2026-09-09 ~ 2026-09-15",
+          "artifact": null,
+          "落盘件数": 0
+        },
+        {
+          "wake": "看有备注的饮食记录",
+          "key": "calorie.today",
+          "status": 0,
+          "err": "",
+          "artifact": "D:\\\\ilife-wt\\\\wf155-m\\\\.scratch\\\\t280\\\\db-empty\\\\calorie_html\\\\今日饮食_20260915_215407.html",
+          "落盘件数": 1
+        },
+        {
+          "wake": "查食品",
+          "key": "calorie.view.search",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库空（先导入食品）",
+          "artifact": null,
+          "落盘件数": 1
+        },
+        {
+          "wake": "查食品（按分类）",
+          "key": "calorie.view.library",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库空（先导入食品）",
+          "artifact": null,
+          "落盘件数": 1
+        },
+        {
+          "wake": "看食品库（去重）",
+          "key": "calorie.view.dedupe",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库空（无去重对象）",
+          "artifact": null,
+          "落盘件数": 1
+        },
+        {
+          "wake": "校验批量导入",
+          "key": "calorie.view.batch-import-preview",
+          "status": 0,
+          "err": "",
+          "artifact": "D:\\\\ilife-wt\\\\wf155-m\\\\.scratch\\\\t280\\\\db-empty\\\\calorie_html\\\\批量导入预览_20260915_215408.html",
+          "落盘件数": 2
+        },
+        {
+          "wake": "看食品来源统计",
+          "key": "calorie.view.source-stats",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库为空（无来源统计）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看营养结构",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看今日营养",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-15 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看饮食总览",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看营养素深度",
+          "key": "calorie.view.nutrition-detail",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录：2026-09-09 ~ 2026-09-15",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高热量榜",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看低热量榜",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看频繁吃榜",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高碳水榜",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高蛋白榜",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看全部排行榜",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无排行数据（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高热量榜（最近 30 天）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-08-17 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高热量榜（本月）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高热量榜（自定义）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看低热量榜（最近 30 天）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-08-17 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看低热量榜（本月）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看低热量榜（自定义）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看频繁吃榜（最近 30 天）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-08-17 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看频繁吃榜（本月）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看频繁吃榜（自定义）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高碳水榜（最近 30 天）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-08-17 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高碳水榜（本月）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高碳水榜（自定义）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高蛋白榜（最近 30 天）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-08-17 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高蛋白榜（本月）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看高蛋白榜（自定义）",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "饮食复盘（本周）",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-14 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "饮食复盘（本月）",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "饮食复盘（最近 90 天）",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-06-18 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "饮食复盘（今年）",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-01-01 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "饮食复盘（自定义时间）",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看早餐（最近 7 天）",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看午餐（最近 7 天）",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看晚餐（最近 7 天）",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看加餐（最近 7 天）",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看全部餐别分布（最近 7 天）",
+          "key": "calorie.view.diet",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 2
+        },
+        {
+          "wake": "看「有备注」的饮食记录",
+          "key": "calorie.today",
+          "status": 0,
+          "err": "",
+          "artifact": "D:\\\\ilife-wt\\\\wf155-m\\\\.scratch\\\\t280\\\\db-empty\\\\calorie_html\\\\今日饮食_20260915_215415.html",
+          "落盘件数": 3
+        },
+        {
+          "wake": "看今日饮食记录",
+          "key": "calorie.today",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-15）",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "看饮食复盘",
+          "key": "calorie.view.diet-review",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-15 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "查高热量排行",
+          "key": "calorie.view.ranking",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录（2026-09-09 ~ 2026-09-15）",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "查食品库",
+          "key": "calorie.view.library",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库空（先导入食品）",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "搜食品",
+          "key": "calorie.view.search",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库空（先导入食品）",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "看去重报告",
+          "key": "calorie.view.dedupe",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库空（无去重对象）",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "查营养配比",
+          "key": "calorie.view.nutrition-ratio",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录：2026-09-09 ~ 2026-09-15",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "看营养素明细",
+          "key": "calorie.view.nutrition-detail",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录：2026-09-09 ~ 2026-09-15",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "看食品来源分布",
+          "key": "calorie.view.source-stats",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：食品库为空（无来源统计）",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "看今日饮水",
+          "key": "calorie.view.today-water",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮水记录：2026-09-09 ~ 2026-09-15",
+          "artifact": null,
+          "落盘件数": 3
+        },
+        {
+          "wake": "看批量导入预览",
+          "key": "calorie.view.batch-import-preview",
+          "status": 0,
+          "err": "",
+          "artifact": "D:\\\\ilife-wt\\\\wf155-m\\\\.scratch\\\\t280\\\\db-empty\\\\calorie_html\\\\批量导入预览_20260915_215417.html",
+          "落盘件数": 4
+        },
+        {
+          "wake": "看营养分析",
+          "key": "calorie.view.nutrition-analysis",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：无饮食记录：2026-09-09 ~ 2026-09-15",
+          "artifact": null,
+          "落盘件数": 4
+        },
+        {
+          "wake": "看每日六因素",
+          "key": "calorie.view.six-factors",
+          "status": 4,
+          "err": "ERR 4: 取数失败（缺失阻断）：当日无记录：2026-09-15",
+          "artifact": null,
+          "落盘件数": 4
+        }
+      ]
+    },
+    "二_窗口为空": {
+      "跑法": "库不动（播种快照），窗口取 2000-01-01 ~ 2000-01-31，跑 10 条窗口类读命令",
+      "exit 0 条数": 9,
+      "出完整文档条数": 9,
+      "带空态句且带引导句": "9/9",
+      "口径": "窗口为空＝出完整页 ＋ 空态句 ＋ 引导句（不报错）。",
+      "例外": [
+        {
+          "唤醒词": "看营养分析",
+          "命令": "calorie.view.nutrition-analysis",
+          "exit": 4,
+          "错误": "ERR 4: 取数失败（缺失阻断）：无饮食记录：2000-01-01 ~ 2000-01-31"
+        }
+      ],
+      "空态句与引导句原文": [
+        {
+          "file": "营养素深度_20260915_215420.html",
+          "空态句": "这段日子（2000-01-01 ~ 2000-01-31）一条饮食记录也没有，营养素合计算不出来（不编数）。",
+          "引导句": "这段日子（2000-01-01 ~ 2000-01-31）一条饮食记录也没有，营养素合计算不出来（不编数）。要让它有内容，先用「记一餐」把其中一天吃的东西记上；食品库里查不到营养值的食物，用「存食品」补上营养值。"
+        },
+        {
+          "file": "营养配比_20260915_215420.html",
+          "空态句": "这段日子（2000-01-01 ~ 2000-01-31）一条饮食记录也没有，配比算不出来（不编数）。",
+          "引导句": "这段日子（2000-01-01 ~ 2000-01-31）一条饮食记录也没有，配比算不出来（不编数）。要让它有内容，先用「记一餐」把其中一天吃的东西记上（可带日期与时间），再来看配比。"
+        },
+        {
+          "file": "食物排行_高热量_20260915_215419.html",
+          "空态句": "本窗没有记录",
+          "引导句": "说「记一餐」把吃的那顿记上，榜单就有内容了；补以前的日期就说「补记饮食」。"
+        },
+        {
+          "file": "饮食复盘_20260915_215419.html",
+          "空态句": "这段日子没有饮食记录，本页只出空态与口径。",
+          "引导句": "这段日子（2000-01-01 ~ 2000-01-31）一条饮食记录也没有。要让它有内容，先用「记一餐」把其中一天吃的东西记上（可带日期与时间），再来复盘。"
+        },
+        {
+          "file": "饮食复盘_20260915_215419_2.html",
+          "空态句": "这段日子没有饮食记录，本页只出空态与口径。",
+          "引导句": "这段日子（2000-01-01 ~ 2000-01-31）一条饮食记录也没有。要让它有内容，先用「记一餐」把其中一天吃的东西记上（可带日期与时间），再来复盘。"
+        },
+        {
+          "file": "饮食总览_20260915_215418.html",
+          "空态句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。",
+          "引导句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。要让它有内容，先用「记一餐」把吃的那顿记上；补以前的日期就说「补记饮食」。"
+        },
+        {
+          "file": "饮食总览_20260915_215418_2.html",
+          "空态句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。",
+          "引导句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。要让它有内容，先用「记一餐」把吃的那顿记上；补以前的日期就说「补记饮食」。"
+        },
+        {
+          "file": "饮食总览_20260915_215418_3.html",
+          "空态句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。",
+          "引导句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。要让它有内容，先用「记一餐」把吃的那顿记上；补以前的日期就说「补记饮食」。"
+        },
+        {
+          "file": "饮食总览_20260915_215418_4.html",
+          "空态句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。",
+          "引导句": "这一段时间（2000-01-01 ~ 2000-01-31）没有饮食记录，汇总算不出来（不编数）。要让它有内容，先用「记一餐」把吃的那顿记上；补以前的日期就说「补记饮食」。"
+        }
+      ]
+    }
+  },
+  "逐条": [
+    {
+      "seq": 1,
+      "族": "① 写后回执页",
+      "唤醒词": "记一餐",
+      "命令": "calorie.diet.add",
+      "参数": {
+        "foodName": "鸡胸",
+        "calories": 200,
+        "protein": 35
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"鸡胸\",\"calories\":200,\"protein\":35}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\记一餐.html",
+      "字节": 73097,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "记一餐 · 回执"
+    },
+    {
+      "seq": 2,
+      "族": "① 写后回执页",
+      "唤醒词": "记一餐（含备注）",
+      "命令": "calorie.diet.add",
+      "参数": {
+        "foodName": "鸡胸",
+        "calories": 200,
+        "protein": 35,
+        "note": "加了辣酱"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"鸡胸\",\"calories\":200,\"protein\":35,\"note\":\"加了辣酱\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\记一餐（含备注）.html",
+      "字节": 73299,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "记一餐（含备注） · 回执"
+    },
+    {
+      "seq": 3,
+      "族": "① 写后回执页",
+      "唤醒词": "补记饮食",
+      "命令": "calorie.diet.add",
+      "参数": {
+        "foodName": "米饭",
+        "calories": 500,
+        "protein": 10,
+        "time": "12:30:00",
+        "date": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"米饭\",\"calories\":500,\"protein\":10,\"time\":\"12:30:00\",\"date\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\补记饮食.html",
+      "字节": 73175,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "补记饮食 · 回执"
+    },
+    {
+      "seq": 4,
+      "族": "① 写后回执页",
+      "唤醒词": "批量补记饮食",
+      "命令": "calorie.diet.batch",
+      "参数": {
+        "items": [
+          {
+            "foodName": "粥",
+            "calories": 150,
+            "protein": 3,
+            "date": "2026-09-15"
+          }
+        ]
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.batch --params '{\"items\":[{\"foodName\":\"粥\",\"calories\":150,\"protein\":3,\"date\":\"2026-09-15\"}]}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\批量补记饮食.html",
+      "字节": 73917,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "批量补记饮食 · 回执"
+    },
+    {
+      "seq": 5,
+      "族": "① 写后回执页",
+      "唤醒词": "拍营养表记一餐",
+      "命令": "calorie.diet.add",
+      "参数": {
+        "foodName": "鸡胸",
+        "calories": 200,
+        "protein": 35,
+        "note": "营养表识别",
+        "source": "photo"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"鸡胸\",\"calories\":200,\"protein\":35,\"note\":\"营养表识别\",\"source\":\"photo\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\拍营养表记一餐.html",
+      "字节": 73427,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "拍照记一餐 · 回执"
+    },
+    {
+      "seq": 6,
+      "族": "① 写后回执页",
+      "唤醒词": "拍营养表补记一餐",
+      "命令": "calorie.diet.add",
+      "参数": {
+        "foodName": "米饭",
+        "calories": 500,
+        "protein": 10,
+        "date": "2026-09-15",
+        "time": "12:30:00",
+        "note": "营养表补记",
+        "source": "photo"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"米饭\",\"calories\":500,\"protein\":10,\"date\":\"2026-09-15\",\"time\":\"12:30:00\",\"note\":\"营养表补记\",\"source\":\"photo\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\拍营养表补记一餐.html",
+      "字节": 73505,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "拍照补记一餐 · 回执"
+    },
+    {
+      "seq": 7,
+      "族": "① 写后回执页",
+      "唤醒词": "记喝水",
+      "命令": "calorie.water.log",
+      "参数": {
+        "ml": 300
+      },
+      "命令原文": "calorie-cmd-read calorie.water.log --params '{\"ml\":300}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\记喝水.html",
+      "字节": 72014,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "记喝水 · 回执"
+    },
+    {
+      "seq": 8,
+      "族": "① 写后回执页",
+      "唤醒词": "复制昨日饮食",
+      "命令": "calorie.diet.copy",
+      "参数": {
+        "from": "2026-09-14"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.copy --params '{\"from\":\"2026-09-14\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\复制昨日饮食.html",
+      "字节": 72661,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "复制昨日饮食 · 回执"
+    },
+    {
+      "seq": 9,
+      "族": "① 写后回执页",
+      "唤醒词": "改饮食记录",
+      "命令": "calorie.diet.update",
+      "参数": {
+        "id": 1,
+        "grams": 150
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.update --params '{\"id\":1,\"grams\":150}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\改饮食记录.html",
+      "字节": 71752,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "改饮食记录 · 回执"
+    },
+    {
+      "seq": 10,
+      "族": "① 写后回执页",
+      "唤醒词": "改某日饮食",
+      "命令": "calorie.diet.update-by-date",
+      "参数": {
+        "note": "食堂",
+        "date": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.update-by-date --params '{\"note\":\"食堂\",\"date\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\改某日饮食.html",
+      "字节": 71408,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "改某日饮食 · 回执"
+    },
+    {
+      "seq": 11,
+      "族": "① 写后回执页",
+      "唤醒词": "删饮食记录",
+      "命令": "calorie.diet.remove",
+      "参数": {
+        "id": 1
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.remove --params '{\"id\":1}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\删饮食记录.html",
+      "字节": 68977,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "删饮食记录 · 回执"
+    },
+    {
+      "seq": 12,
+      "族": "① 写后回执页",
+      "唤醒词": "删一餐",
+      "命令": "calorie.diet.remove-by-type",
+      "参数": {
+        "mealType": "早餐",
+        "date": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.remove-by-type --params '{\"mealType\":\"早餐\",\"date\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\删一餐.html",
+      "字节": 68367,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "删一餐 · 回执"
+    },
+    {
+      "seq": 13,
+      "族": "① 写后回执页",
+      "唤醒词": "删某日饮食",
+      "命令": "calorie.diet.remove-by-date",
+      "参数": {
+        "date": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.remove-by-date --params '{\"date\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\删某日饮食.html",
+      "字节": 68351,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "删某日饮食 · 回执"
+    },
+    {
+      "seq": 14,
+      "族": "① 写后回执页",
+      "唤醒词": "批量删饮食",
+      "命令": "calorie.diet.remove-by-range",
+      "参数": {
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.diet.remove-by-range --params '{\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\批量删饮食.html",
+      "字节": 68443,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "批量删饮食 · 回执"
+    },
+    {
+      "seq": 15,
+      "族": "② 条目列表页",
+      "唤醒词": "看今日饮食",
+      "命令": "calorie.today",
+      "参数": {
+        "date": "今日"
+      },
+      "命令原文": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看今日饮食.html",
+      "字节": 81474,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "今日饮食 2026-09-15"
+    },
+    {
+      "seq": 16,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看昨日饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "昨日"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"昨日\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看昨日饮食.html",
+      "字节": 80082,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 17,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看本周饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "本周"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"本周\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看本周饮食.html",
+      "字节": 85067,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 18,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看上周饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "上周"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"上周\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看上周饮食.html",
+      "字节": 99521,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 19,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看本月饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "本月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"本月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看本月饮食.html",
+      "字节": 124344,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 20,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看上月饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "上月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"上月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看上月饮食.html",
+      "字节": 166196,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 21,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看最近 7 天饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看最近 7 天饮食.html",
+      "字节": 100240,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 22,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看最近 30 天饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "30d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"30d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看最近 30 天饮食.html",
+      "字节": 168483,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 23,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看某段时间饮食",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "custom",
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看某段时间饮食.html",
+      "字节": 100240,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览"
+    },
+    {
+      "seq": 24,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看今日喝水",
+      "命令": "calorie.view.today-water",
+      "参数": {
+        "date": "今日",
+        "entry": "drink"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.today-water --params '{\"date\":\"今日\",\"entry\":\"drink\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看今日喝水.html",
+      "字节": 78392,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "💧 今日喝水 2026-09-15"
+    },
+    {
+      "seq": 25,
+      "族": "② 条目列表页",
+      "唤醒词": "看有备注的饮食记录",
+      "命令": "calorie.today",
+      "参数": {
+        "date": "今日",
+        "hasNote": true
+      },
+      "命令原文": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\",\"hasNote\":true}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看有备注的饮食记录.html",
+      "字节": 76694,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "今日饮食 2026-09-15 · 只看有备注的"
+    },
+    {
+      "seq": 26,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "查食品",
+      "命令": "calorie.view.search",
+      "参数": {
+        "keyword": "鸡胸"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.search --params '{\"keyword\":\"鸡胸\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\查食品.html",
+      "字节": 73436,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "🍱 食物热量查询"
+    },
+    {
+      "seq": 27,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "查食品（按分类）",
+      "命令": "calorie.view.library",
+      "参数": {
+        "category": "蛋白类"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.library --params '{\"category\":\"蛋白类\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\查食品（按分类）.html",
+      "字节": 73509,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "🍱 食物热量查询"
+    },
+    {
+      "seq": 28,
+      "族": "① 写后回执页",
+      "唤醒词": "存食品",
+      "命令": "calorie.product.add",
+      "参数": {
+        "productName": "鸡胸肉",
+        "calories": 165,
+        "protein": 31,
+        "fat": 3.6,
+        "carbohydrates": 0,
+        "sodium": 70
+      },
+      "命令原文": "calorie-cmd-read calorie.product.add --params '{\"productName\":\"鸡胸肉\",\"calories\":165,\"protein\":31,\"fat\":3.6,\"carbohydrates\":0,\"sodium\":70}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\存食品.html",
+      "字节": 73446,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "存食品 · 回执"
+    },
+    {
+      "seq": 29,
+      "族": "① 写后回执页",
+      "唤醒词": "改食品",
+      "命令": "calorie.product.update",
+      "参数": {
+        "id": 1,
+        "note": "新版"
+      },
+      "命令原文": "calorie-cmd-read calorie.product.update --params '{\"id\":1,\"note\":\"新版\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\改食品.html",
+      "字节": 71152,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "改食品 · 回执"
+    },
+    {
+      "seq": 30,
+      "族": "① 写后回执页",
+      "唤醒词": "下架食品",
+      "命令": "calorie.product.deprecate",
+      "参数": {
+        "id": 1
+      },
+      "命令原文": "calorie-cmd-read calorie.product.deprecate --params '{\"id\":1}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\下架食品.html",
+      "字节": 71422,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "下架食品 · 回执"
+    },
+    {
+      "seq": 31,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "看食品库（去重）",
+      "命令": "calorie.view.dedupe",
+      "参数": null,
+      "命令原文": "calorie-cmd-read calorie.view.dedupe",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看食品库（去重）.html",
+      "字节": 68697,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📦 食品库去重"
+    },
+    {
+      "seq": 32,
+      "族": "① 写后回执页",
+      "唤醒词": "批量导入食品",
+      "命令": "calorie.product.import",
+      "参数": {
+        "items": [
+          {
+            "productName": "测试导入燕麦",
+            "calories": 389,
+            "protein": 13,
+            "fat": 7,
+            "carbohydrates": 66,
+            "sodium": 5
+          }
+        ]
+      },
+      "命令原文": "calorie-cmd-read calorie.product.import --params '{\"items\":[{\"productName\":\"测试导入燕麦\",\"calories\":389,\"protein\":13,\"fat\":7,\"carbohydrates\":66,\"sodium\":5}]}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\批量导入食品.html",
+      "字节": 73306,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "批量导入食品 · 回执"
+    },
+    {
+      "seq": 33,
+      "族": "⑦ 预检确认页",
+      "唤醒词": "校验批量导入",
+      "命令": "calorie.view.batch-import-preview",
+      "参数": {
+        "items": [
+          {
+            "foodName": "粥",
+            "calories": 150,
+            "protein": 3
+          }
+        ]
+      },
+      "命令原文": "calorie-cmd-read calorie.view.batch-import-preview --params '{\"items\":[{\"foodName\":\"粥\",\"calories\":150,\"protein\":3}]}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\校验批量导入.html",
+      "字节": 68542,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "批量导入预览"
+    },
+    {
+      "seq": 34,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "看食品来源统计",
+      "命令": "calorie.view.source-stats",
+      "参数": null,
+      "命令原文": "calorie-cmd-read calorie.view.source-stats",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看食品来源统计.html",
+      "字节": 74060,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📦 食品来源统计"
+    },
+    {
+      "seq": 35,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看营养结构",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看营养结构.html",
+      "字节": 88041,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 36,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看今日营养",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "今日"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"今日\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看今日营养.html",
+      "字节": 79803,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-09-15 ~ 2026-09-15"
+    },
+    {
+      "seq": 37,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看饮食总览",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "7d",
+        "entry": "overview"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\",\"entry\":\"overview\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看饮食总览.html",
+      "字节": 81652,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "饮食总览 2026-09-14 ~ 2026-09-14"
+    },
+    {
+      "seq": 38,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看营养素深度",
+      "命令": "calorie.view.nutrition-detail",
+      "参数": {
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.nutrition-detail --params '{\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看营养素深度.html",
+      "字节": 71093,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "🧪 营养素深度 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 39,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高热量榜",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_calorie",
+        "topN": 10,
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高热量榜.html",
+      "字节": 82124,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高热量榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 40,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看低热量榜",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "low_calorie",
+        "topN": 10,
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看低热量榜.html",
+      "字节": 80928,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 低热量榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 41,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看频繁吃榜",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "frequent",
+        "topN": 10,
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看频繁吃榜.html",
+      "字节": 80871,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 常吃榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 42,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高碳水榜",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_carb",
+        "topN": 10,
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高碳水榜.html",
+      "字节": 82099,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高碳水榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 43,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高蛋白榜",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_protein",
+        "topN": 10,
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高蛋白榜.html",
+      "字节": 82111,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高蛋白榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 44,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看全部排行榜",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "topN": 10,
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"topN\":10,\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看全部排行榜.html",
+      "字节": 91992,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "全部排行 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 45,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高热量榜（最近 30 天）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_calorie",
+        "topN": 10,
+        "window": "30d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"30d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高热量榜（最近 30 天）.html",
+      "字节": 82172,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高热量榜 2026-08-17 ~ 2026-09-15"
+    },
+    {
+      "seq": 46,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高热量榜（本月）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_calorie",
+        "topN": 10,
+        "window": "本月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"本月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高热量榜（本月）.html",
+      "字节": 82142,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高热量榜 2026-09-01 ~ 2026-09-15"
+    },
+    {
+      "seq": 47,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高热量榜（自定义）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_calorie",
+        "topN": 10,
+        "window": "custom",
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高热量榜（自定义）.html",
+      "字节": 82208,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高热量榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 48,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看低热量榜（最近 30 天）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "low_calorie",
+        "topN": 10,
+        "window": "30d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"30d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看低热量榜（最近 30 天）.html",
+      "字节": 80978,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 低热量榜 2026-08-17 ~ 2026-09-15"
+    },
+    {
+      "seq": 49,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看低热量榜（本月）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "low_calorie",
+        "topN": 10,
+        "window": "本月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"本月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看低热量榜（本月）.html",
+      "字节": 80944,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 低热量榜 2026-09-01 ~ 2026-09-15"
+    },
+    {
+      "seq": 50,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看低热量榜（自定义）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "low_calorie",
+        "topN": 10,
+        "window": "custom",
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看低热量榜（自定义）.html",
+      "字节": 81012,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 低热量榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 51,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看频繁吃榜（最近 30 天）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "frequent",
+        "topN": 10,
+        "window": "30d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"30d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看频繁吃榜（最近 30 天）.html",
+      "字节": 80919,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 常吃榜 2026-08-17 ~ 2026-09-15"
+    },
+    {
+      "seq": 52,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看频繁吃榜（本月）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "frequent",
+        "topN": 10,
+        "window": "本月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"本月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看频繁吃榜（本月）.html",
+      "字节": 80889,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 常吃榜 2026-09-01 ~ 2026-09-15"
+    },
+    {
+      "seq": 53,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看频繁吃榜（自定义）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "frequent",
+        "topN": 10,
+        "window": "custom",
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看频繁吃榜（自定义）.html",
+      "字节": 80955,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 常吃榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 54,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高碳水榜（最近 30 天）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_carb",
+        "topN": 10,
+        "window": "30d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"30d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高碳水榜（最近 30 天）.html",
+      "字节": 82154,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高碳水榜 2026-08-17 ~ 2026-09-15"
+    },
+    {
+      "seq": 55,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高碳水榜（本月）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_carb",
+        "topN": 10,
+        "window": "本月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"本月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高碳水榜（本月）.html",
+      "字节": 82117,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高碳水榜 2026-09-01 ~ 2026-09-15"
+    },
+    {
+      "seq": 56,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高碳水榜（自定义）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_carb",
+        "topN": 10,
+        "window": "custom",
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高碳水榜（自定义）.html",
+      "字节": 82183,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高碳水榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 57,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高蛋白榜（最近 30 天）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_protein",
+        "topN": 10,
+        "window": "30d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"30d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高蛋白榜（最近 30 天）.html",
+      "字节": 82160,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高蛋白榜 2026-08-17 ~ 2026-09-15"
+    },
+    {
+      "seq": 58,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高蛋白榜（本月）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_protein",
+        "topN": 10,
+        "window": "本月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"本月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高蛋白榜（本月）.html",
+      "字节": 82130,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高蛋白榜 2026-09-01 ~ 2026-09-15"
+    },
+    {
+      "seq": 59,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "看高蛋白榜（自定义）",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_protein",
+        "topN": 10,
+        "window": "custom",
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看高蛋白榜（自定义）.html",
+      "字节": 82195,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高蛋白榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 60,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "饮食复盘（本周）",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "本周"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"本周\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\饮食复盘（本周）.html",
+      "字节": 86901,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-09-14 ~ 2026-09-15"
+    },
+    {
+      "seq": 61,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "饮食复盘（本月）",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "本月"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"本月\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\饮食复盘（本月）.html",
+      "字节": 89815,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-09-01 ~ 2026-09-15"
+    },
+    {
+      "seq": 62,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "饮食复盘（最近 90 天）",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "90d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"90d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\饮食复盘（最近 90 天）.html",
+      "字节": 93211,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-06-18 ~ 2026-09-15"
+    },
+    {
+      "seq": 63,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "饮食复盘（今年）",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "今年"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"今年\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\饮食复盘（今年）.html",
+      "字节": 93222,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-01-01 ~ 2026-09-15"
+    },
+    {
+      "seq": 64,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "饮食复盘（自定义时间）",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "custom",
+        "start": "2026-09-09",
+        "end": "2026-09-15"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\饮食复盘（自定义时间）.html",
+      "字节": 88125,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 65,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看早餐（最近 7 天）",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "7d",
+        "meal": "早餐"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\",\"meal\":\"早餐\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看早餐（最近 7 天）.html",
+      "字节": 76016,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "餐别分布 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 66,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看午餐（最近 7 天）",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "7d",
+        "meal": "午餐"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\",\"meal\":\"午餐\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看午餐（最近 7 天）.html",
+      "字节": 75987,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "餐别分布 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 67,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看晚餐（最近 7 天）",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "7d",
+        "meal": "晚餐"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\",\"meal\":\"晚餐\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看晚餐（最近 7 天）.html",
+      "字节": 75997,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "餐别分布 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 68,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看加餐（最近 7 天）",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "7d",
+        "meal": "加餐"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\",\"meal\":\"加餐\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看加餐（最近 7 天）.html",
+      "字节": 73786,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "餐别分布 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 69,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看全部餐别分布（最近 7 天）",
+      "命令": "calorie.view.diet",
+      "参数": {
+        "window": "7d",
+        "meal": "all"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\",\"meal\":\"all\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看全部餐别分布（最近 7 天）.html",
+      "字节": 89601,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "餐别分布 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 70,
+      "族": "② 条目列表页",
+      "唤醒词": "看「有备注」的饮食记录",
+      "命令": "calorie.today",
+      "参数": {
+        "date": "今日",
+        "hasNote": true
+      },
+      "命令原文": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\",\"hasNote\":true}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看「有备注」的饮食记录.html",
+      "字节": 76694,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "今日饮食 2026-09-15 · 只看有备注的"
+    },
+    {
+      "seq": 71,
+      "族": "② 条目列表页",
+      "唤醒词": "看今日饮食记录",
+      "命令": "calorie.today",
+      "参数": {
+        "date": "今日"
+      },
+      "命令原文": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看今日饮食记录.html",
+      "字节": 81474,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "今日饮食 2026-09-15"
+    },
+    {
+      "seq": 72,
+      "族": "④ 复盘／餐别分布页",
+      "唤醒词": "看饮食复盘",
+      "命令": "calorie.view.diet-review",
+      "参数": {
+        "window": "今日"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"今日\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看饮食复盘.html",
+      "字节": 79803,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📝 饮食复盘 2026-09-15 ~ 2026-09-15"
+    },
+    {
+      "seq": 73,
+      "族": "③ 横向排行榜页",
+      "唤醒词": "查高热量排行",
+      "命令": "calorie.view.ranking",
+      "参数": {
+        "category": "high_calorie",
+        "topN": 10,
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\查高热量排行.html",
+      "字节": 82124,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "排行 高热量榜 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 74,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "查食品库",
+      "命令": "calorie.view.library",
+      "参数": null,
+      "命令原文": "calorie-cmd-read calorie.view.library",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\查食品库.html",
+      "字节": 82823,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "🍱 食物热量查询"
+    },
+    {
+      "seq": 75,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "搜食品",
+      "命令": "calorie.view.search",
+      "参数": {
+        "keyword": "鸡胸"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.search --params '{\"keyword\":\"鸡胸\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\搜食品.html",
+      "字节": 73436,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "🍱 食物热量查询"
+    },
+    {
+      "seq": 76,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "看去重报告",
+      "命令": "calorie.view.dedupe",
+      "参数": null,
+      "命令原文": "calorie-cmd-read calorie.view.dedupe",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看去重报告.html",
+      "字节": 68697,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📦 食品库去重"
+    },
+    {
+      "seq": 77,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "查营养配比",
+      "命令": "calorie.view.nutrition-ratio",
+      "参数": {
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.nutrition-ratio --params '{\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\查营养配比.html",
+      "字节": 79271,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "🥗 营养配比 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 78,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看营养素明细",
+      "命令": "calorie.view.nutrition-detail",
+      "参数": {
+        "window": "7d",
+        "entry": "detail"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.nutrition-detail --params '{\"window\":\"7d\",\"entry\":\"detail\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看营养素明细.html",
+      "字节": 71184,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "🧪 营养素明细 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 79,
+      "族": "⑤ 食品库类页",
+      "唤醒词": "看食品来源分布",
+      "命令": "calorie.view.source-stats",
+      "参数": null,
+      "命令原文": "calorie-cmd-read calorie.view.source-stats",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看食品来源分布.html",
+      "字节": 74060,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "📦 食品来源统计"
+    },
+    {
+      "seq": 80,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看今日饮水",
+      "命令": "calorie.view.today-water",
+      "参数": {
+        "date": "今日"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.today-water --params '{\"date\":\"今日\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看今日饮水.html",
+      "字节": 78356,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "💧 今日饮水 2026-09-15"
+    },
+    {
+      "seq": 81,
+      "族": "⑦ 预检确认页",
+      "唤醒词": "看批量导入预览",
+      "命令": "calorie.view.batch-import-preview",
+      "参数": {
+        "items": [
+          {
+            "foodName": "粥",
+            "calories": 150,
+            "protein": 3,
+            "date": "2026-09-15"
+          }
+        ]
+      },
+      "命令原文": "calorie-cmd-read calorie.view.batch-import-preview --params '{\"items\":[{\"foodName\":\"粥\",\"calories\":150,\"protein\":3,\"date\":\"2026-09-15\"}]}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看批量导入预览.html",
+      "字节": 68542,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "批量导入预览"
+    },
+    {
+      "seq": 82,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看营养分析",
+      "命令": "calorie.view.nutrition-analysis",
+      "参数": {
+        "window": "7d"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.nutrition-analysis --params '{\"window\":\"7d\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看营养分析.html",
+      "字节": 77110,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "营养分析 2026-09-09 ~ 2026-09-15"
+    },
+    {
+      "seq": 83,
+      "族": "⑥ 营养／饮水／总览页",
+      "唤醒词": "看每日六因素",
+      "命令": "calorie.view.six-factors",
+      "参数": {
+        "date": "今日"
+      },
+      "命令原文": "calorie-cmd-read calorie.view.six-factors --params '{\"date\":\"今日\"}'",
+      "exit": 0,
+      "产物绝对路径": "D:\\ilife-wt\\wf155-m\\docs\\skills\\skill-calorie\\scene02-验收墙\\看每日六因素.html",
+      "字节": 70557,
+      "第0字节": "<!doctype html>",
+      "第0字节是完整文档开头": true,
+      "页内H1": "每日六因素 2026-09-15"
+    }
+  ]
+}
