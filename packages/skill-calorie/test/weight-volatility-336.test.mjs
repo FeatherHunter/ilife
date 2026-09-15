@@ -8,10 +8,29 @@ import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { openDb } from '../dist/index.js';
-import { viewVolatility, buildVolatilityDoc, buildVolatilityView, parseVolatilityView } from '../dist/weight/volatility.js';
+import { openDb, DB_FILENAME } from '../dist/index.js';
+import { viewVolatility, buildVolatilityDoc, buildVolatilityView, parseVolatilityView, weightVolatilityV2 } from '../dist/weight/volatility.js';
+import { metricsOf } from '../dist/shared/docPage.js';
 
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't336-')), 't.db'));
+
+/** 可见文本层：剔掉 script／style、**整条属性**、标签后剩下的读者看得见的字。
+ *  顺序要紧：复制区把整份载荷塞进 `title`／`data-t`，属性值里带转义过的 `<`——属性**整条**（连同引号）
+ *  换成一个空格的写法，才不会让载荷里的 `结论`／`基线kg` 被当成页上的字（先剔标签会把属性拆散、漏出去）。
+ *  标签／属性一律换成一个空格（不删空），免得相邻文本被拼到一起。
+ *  （页上真正的属性值里没有裸 `<`，故第一条替换不会误吃正文。） */
+const attrOrTag = /[a-zA-Z][a-zA-Z0-9:._-]*\s*=\s*"[^"]*"|[a-zA-Z][a-zA-Z0-9:._-]*\s*=\s*'[^']*'|<[^>]*>/g;
+const cleanText = (s) => String(s).replace(attrOrTag, ' ')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+  .replace(/\s+/g, ' ').trim();
+const toVisible = (html) => cleanText(String(html)
+  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, ' ')
+  .replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, ' '));
+/** 机器面（复制载荷）里的键名：只住在属性值里，故那条判据看**引号串**、不看可见文本。 */
+const quotedStrings = (html) => (String(html).match(/"[^"]*"|'[^']*'/g) || []).join('\u0000');
+const betweenTags = (html, re) => (String(html).match(/>([^<>]*)</g) || [])
+  .map((s) => cleanText(s.slice(1, -1))).filter((s) => re.test(s));
 
 /** 30 天平稳 70kg＋一日 spike，保证近 7 天有异常点可断言。 */
 const seedVol = (db) => {
@@ -42,7 +61,7 @@ test('#336 波动算式：双基线＋1.5σ/2.0σ＋异常＋σ趋势＋预警',
   db.close();
 });
 
-test('#336 5 条全有命令：窗口与唤醒词语义一致', () => {
+test('#336 5 条全有命令：窗口与唤醒词语义一致＋页脚只留人话来源（#485 裁定 F）', () => {
   const db = tmpDb();
   seedVol(db);
   const cases = [
@@ -57,6 +76,13 @@ test('#336 5 条全有命令：窗口与唤醒词语义一致', () => {
     assert.ok(out.html.includes('<html'), wake + ' 产物是完整文档');
     assert.ok(out.html.includes('ilife-page'), wake + ' 走整页模板');
     assert.ok(out.data.metrics.points >= 2, wake + ' 有点数');
+    // #485 裁定 F：可见文本里两个库表名命中 0（页脚来源行只留「体重记录」）；复制日志第 4 段与复制载荷照旧带库与表。
+    const vis = toVisible(out.html);
+    assert.ok(vis.includes('📊 数据来源：体重记录 ｜ 窗口'), wake + ' 页脚只留人话来源');
+    assert.equal(vis.includes('weight_log'), false, wake + ' 可见文本没有表名');
+    assert.equal(vis.includes(DB_FILENAME), false, wake + ' 可见文本没有库文件名');
+    assert.ok(quotedStrings(out.html).includes('体重记录（本窗体重波动）'), wake + ' 复制日志第 4 段仍带库与来源（机器面）');
+    assert.ok(quotedStrings(out.html).includes('基线kg'), wake + ' 复制载荷的中文键名一字不动（机器面）');
   }
   db.close();
 });
@@ -67,11 +93,11 @@ test('#336 只看异常点：不含曲线段、含异常点与原因', () => {
   const full = viewVolatility({ window: '30d', today: '2026-08-18' }, db);
   const only = viewVolatility({ window: '30d', today: '2026-08-18', view: 'anomalies-only' }, db);
   assert.ok(full.html.includes('每天离平均线多远'), '整图含曲线段');
-  assert.ok(full.html.includes('波动幅度趋势'), '整图含波动幅度趋势');
+  assert.ok(full.html.includes('去掉涨跌后的波动'), '整图含「去掉涨跌后的波动」那张趋势图（#485 整改：图题不再叫「波动幅度趋势」）');
   assert.ok(!only.html.includes('每天离平均线多远'), '只看异常点不出曲线段');
   const charts = (html) => (html.match(/ilife-block-chart-block"/g) || []).length;
   assert.equal(charts(only.html), 0, '只看异常点一张图都不出（判据从文案改成图表区块计数）');
-  assert.ok(charts(full.html) >= 2, '整图至少两段（离平均线＋波动幅度趋势）');
+  assert.ok(charts(full.html) >= 2, '整图至少两段（离平均线＋去掉涨跌后的波动）');
   assert.ok(only.html.includes('波动异常点'), '只看异常点标题');
   assert.ok(only.html.includes('原因'), '只看异常点含原因列');
   assert.ok(only.html.includes('共 ') && only.html.includes('个'), '只看异常点含计数');
@@ -94,12 +120,12 @@ test('#336 融合（§5 七组）：图表 options／徽章／结论块／页脚
   db.close();
 });
 
-test('#336 页面补齐：波动带与今日偏离＋异常列表计数＋波动幅度趋势＋结论句（#485 换词后同步收紧）', () => {
+test('#336 页面补齐：波动带与今日偏离＋异常列表计数＋波动曲线＋结论句（#485 换词后同步收紧）', () => {
   const db = tmpDb();
   seedVol(db);
   const v = buildVolatilityView(db, '2026-07-20', '2026-08-18', 'rolling');
   const html = buildVolatilityDoc(v, 'full');
-  for (const needle of ['平均线', '注意线', '警戒线', '今日偏离', '近期异常', '波动幅度趋势', '体重很稳|体重基本稳定|体重波动较大']) {
+  for (const needle of ['平均线', '注意线', '警戒线', '今日偏离', '近期异常', '去掉涨跌后的波动', '体重很稳|体重基本稳定|体重波动较大']) {
     assert.match(html, new RegExp(needle), '补齐含 ' + needle);
   }
   // #485 文本审查：旧术语句命中数必须为 0（`基线` 不在本清单——复制载荷的中文**键名**仍有 `基线kg`，
@@ -107,6 +133,34 @@ test('#336 页面补齐：波动带与今日偏离＋异常列表计数＋波动
   for (const gone of ['偏离基线', '黄±', '红±', '阈值', '标准差', 'σ 趋势', '2sigma', '1.5sigma',
     'vs 近', '档位「', '📊 数据来源:', 'rolling 基线', '黄/红阈上']) {
     assert.equal(html.split(gone).length - 1, 0, '旧术语句残留：' + gone);
+  }
+  db.close();
+});
+
+test('#485 对抗审查 D1：一屏一义——「波动幅度」全页只许指卡②那个数（值槽同数同精度）', () => {
+  const db = tmpDb();
+  seedVol(db);
+  const html = viewVolatility({ window: '30d', today: '2026-08-18' }, db).html;
+  const vis = toVisible(html);
+  // S1 的根：本库（30 天里一天 75 kg 的尖峰）里，卡②的 1.848（σ＝去掉逐日涨跌后的波动）与整窗
+  // 离散度 0.90 是两个互不相容的量，原来两处都叫「波动幅度」——读者拿这个词得不出任何结论。
+  assert.equal(vis.split('波动幅度').length - 1, 1, '可见文本里「波动幅度」只许 1 处（卡②说明）');
+  const readings = vis.match(/波动幅度 (\d+\.\d+) kg/g) || [];
+  assert.equal(readings.length, 1, '「波动幅度」后面必须紧跟一个数：' + JSON.stringify(readings));
+  const sigma = metricsOf(weightVolatilityV2(db, '2026-07-20', '2026-08-18').data).baselineSigma;
+  assert.equal(readings[0], '波动幅度 ' + sigma + ' kg', '「波动幅度」跟随的数必须恒等于卡②值槽的 σ=' + sigma);
+  // 「波动带」是两条线围出来的那个已有名字（不是本票的量名）：页上只许卡②说明与结论句各 1 处
+  // （表注里的「超过波动带的点」是表格自述口径，不计入；卡②值槽与徽章的措辞走「警戒线／这两条线」。）
+  assert.equal((vis.match(/波动带 ±/g) || []).length, 1, '「波动带」＋线值只许卡②说明 1 处');
+  assert.equal(vis.includes('这两条线按本窗数据算'), true, '卡②徽章说清两条线是按本窗数据算的');
+  // D2／D3：结论不再复述卡面数字（卡②的档位天数／卡③的今日偏离与线值）——那几个数在结论句里命中 0，
+  // 它们只住在自己的卡里（表格逐行的偏离值与复制载荷机器面不在本判据内）。
+  const conclusion = betweenTags(html, /体重很稳|体重基本稳定|体重波动较大/).join('\n');
+  assert.ok(conclusion.length > 0, '找得到结论句');
+  assert.ok(conclusion.includes('整体离散度'), '结论句那个标准差用自己的名字（不是「波动幅度」）');
+  assert.equal(conclusion.split('波动幅度').length - 1, 0, '结论句不含「波动幅度」（那个词只归卡②）');
+  for (const gone of ['最近 7 天平均每天变化', '超过警戒线 0 天', '注意线 0 天', '超过警戒线 ±', '平均线高 0.03 kg']) {
+    assert.ok(!conclusion.includes(gone), '结论句复述了卡面读数：' + gone);
   }
   db.close();
 });

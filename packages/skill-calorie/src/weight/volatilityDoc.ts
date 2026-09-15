@@ -48,16 +48,16 @@ const levelWord = (l: VolLevel): string => LEVEL_WORD[l] ?? MISSING;
 
 /** 结论句（唯一形态：`renderDisclosure({title:'结论'})` 的正文）。
  *  不含「结论：」前缀——折叠区标题已经是「结论」。
- *  `only`（只看异常点读法）不提波动幅度趋势：本读法没画那张图，结论也不该引它。
- *  #485：`标准差／档位／σ` 全换人话——波动幅度／「比平均线高多少，越没越线」。 */
+ *  #485：`标准差／档位／σ` 全换人话——波动幅度（只归卡②）／「比平均线高多少，越没越线」。
+ *  （D1）这里原来还挂一句「（波动幅度趋势 N 个点）」——那个词与卡②说明撞名（一屏两义），
+ *  且趋势点数读者在图②题上一眼看得到，故删；结论只留判决与「有没有越线」。
+ *  `only`（只看异常点读法）本来就没有那两句，照旧。 */
 function volatilityConclusion(o: VolatilityV2, only = false): string {
   const s = volatilitySummary(o);
-  const since = only ? ''
-    : o.sigmaTrend.length > 0 ? '（波动幅度趋势 ' + o.sigmaTrend.length + ' 个点）' : '（记录太少，画不出波动幅度趋势）';
-  if (o.points.length === 1) return s + '；本窗只有 1 条记录，看不出波动对照' + since + '。';
+  if (only || o.points.length === 1) return s + '。';
   const level = o.earlyWarning.level;
   const tail = level === 'red' ? '，超过警戒线' : level === 'yellow' ? '，超过注意线' : '，在正常范围内';
-  return s + '；' + o.earlyWarning.date + ' ' + baselineDeltaText(o.earlyWarning.deviationKg) + tail + since + '。';
+  return s + '；' + o.earlyWarning.date + ' ' + baselineDeltaText(o.earlyWarning.deviationKg) + tail + '。';
 }
 
 /** 复制载荷（`stat` 形，键写中文）：页上读数 ＋ 异常明细整表 ＋ 结论原句。
@@ -114,7 +114,7 @@ function anomalyTable(o: VolatilityV2, view: VolatilityViewMode): string {
 }
 
 /** 四张 KPI 卡与徽章：状态词只在这里出现一次，档位词恒取 `LEVEL_WORD`。
- *  两种读法（整图／只看异常点）共用同一组卡——#485 之后卡面不再提波动幅度趋势，故不收读法参数。
+ *  两种读法（整图／只看异常点）共用同一组卡——#485 之后卡面不再引趋势点数，故不收读法参数。
  *
  *  **值槽只放一个数与单位**（t154 用户读数：值槽里塞长文本或颜色词，卡会被断行撑高、四张不等高）：
  *  ① 平均线值进值槽，线是什么线由页副标题（`以…为参照`）一处说清，卡副说明只报记录齐不齐；
@@ -122,7 +122,10 @@ function anomalyTable(o: VolatilityV2, view: VolatilityViewMode): string {
  *  ③ 今日偏离卡放「当前偏离」这个数（带符号），越没越线交给徽章与副说明。
  *
  *  #485 文本审查：①`波动分析` 卡名与页标题同字（冗余）→`平均线`；②`阈值／黄线／红线／σ` 全换人话；
- *  ③徽章只留状态（记录齐全／记录不齐／兜底值／无异常点），不再抄副说明的数字。 */
+ *  ③徽章只留状态（没有漏记／记录不齐／兜底值／没越线），不再抄副说明的数字。
+ *  #485 对抗审查整改（D1）：**「波动幅度」全页只许出现在卡②说明这一处**（＝值槽那个 σ），
+ *  别处一律用它自己的名字（图②题＝「去掉涨跌后的波动」）；结论句那个标准差与这里同值，两处同一个数。
+ *  （D5）（D6）：徽章措辞改成读者动作词——`没越线`／`没有漏记`。 */
 function kpiCards(o: VolatilityV2): KpiCardInput[] {
   const single = o.points.length === 1;
   const gap = o.days - o.warnDays;
@@ -134,15 +137,16 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
       label: o.baselineMode === 'goal' ? '目标体重' : '平均线', value: String(o.baselineValue), unit: 'kg',
       detail: o.warnDays + '/' + o.days + ' 天有记录' + (gap > 0 ? '（缺 ' + gap + ' 天）' : ''),
       status: single ? 'empty' : gap > 0 ? 'warn' : 'ok',
-      statusText: single ? '只有一天' : gap > 0 ? '记录不齐' : '记录齐全',
+      statusText: single ? '只有一天' : gap > 0 ? '记录不齐' : '没有漏记',
     },
     {
       label: '波动带', value: '±' + o.thresholds.red, unit: 'kg',
       detail: '警戒线 ±' + o.thresholds.red + ' kg · 注意线 ±' + o.thresholds.yellow + ' kg · 波动幅度 '
         + o.baselineSigma + ' kg',
       // 只有 1 个点、或点数不到门槛时，波动幅度取兜底值 0.5，两条线不是从本窗数据推出来的——徽章要如实说。
+      // （D1）徽章只说「这两条线按本窗数据算」，不再写「按本窗数据」四个字各说一半。
       status: single || o.sigmaTrend.length === 0 ? 'warn' : 'ok',
-      statusText: single || o.sigmaTrend.length === 0 ? '兜底值' : '按本窗数据',
+      statusText: single || o.sigmaTrend.length === 0 ? '兜底值' : '这两条线按本窗数据算',
     },
     {
       label: '今日偏离', value: deviationText(o.earlyWarning.deviationKg), unit: 'kg',
@@ -156,7 +160,7 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
       // 写成「共 N 点」会被读成本窗全覆盖（90／180 天窗口尤其误导）。
       detail: '近 7 天：超过注意线 ' + yellowN + ' 天 · 超过警戒线 ' + redN + ' 天',
       status: o.recentAnomalies.length === 0 ? 'ok' : redN > 0 ? 'danger' : 'warn',
-      statusText: o.recentAnomalies.length === 0 ? '无异常点' : '有异常点',
+      statusText: o.recentAnomalies.length === 0 ? '没越线' : '有异常点',
     },
   ];
 }
@@ -192,12 +196,15 @@ function deviationChart(o: VolatilityV2): string {
   });
 }
 
-/** 波动幅度折线：量程只按波动幅度序列算（两条线不属于这张图的量程），刻度恒显式给。 */
+/** 波动幅度折线：量程只按波动幅度序列算（两条线不属于这张图的量程），刻度恒显式给。
+ *  #485 对抗审查整改（D1）：**图题不许再叫「波动幅度」**——那个词在本页只归卡②的那一个数
+ *  （`baselineSigma`）；本图画的是「去掉一天到另一天的涨跌之后还剩多少波动」（窗口内 σ 逐步值），
+ *  同一屏里若两处都叫「波动幅度」，读者当成同一个量就会撞见 0.049 与 0.10 两个数。 */
 function sigmaChart(o: VolatilityV2): string {
   const plan = weightCurvePlan(o.sigmaTrend.map((s) => s.sigmaKg), null);
   return renderChartBlock({
     kind: 'line',
-    title: '波动幅度趋势',
+    title: '去掉涨跌后的波动',
     input: {
       items: o.sigmaTrend.map((s) => ({ label: s.dateStart.slice(5), value: s.sigmaKg })),
       options: {
@@ -208,7 +215,7 @@ function sigmaChart(o: VolatilityV2): string {
         format: (n: number): string => n.toFixed(2) + ' kg',
         showDots: true,
         height: 180,
-        emptyText: '记录太少，画不出波动幅度趋势（每段时间至少 ' + SAMPLE_MIN + ' 条记录才看得出差别）',
+        emptyText: '记录太少，画不出这张波动曲线（每段时间至少 ' + SAMPLE_MIN + ' 条记录才看得出差别）',
       },
     },
   });
@@ -221,19 +228,23 @@ function sigmaChart(o: VolatilityV2): string {
  *  「体重记录」是读者话（`weight_log` 只留在括号里的库表名与复制日志第 4 段）。 */
 function sourceLine(o: VolatilityV2, start: string, end: string): string {
   const gap = o.days - o.warnDays;
-  return renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + start + ' ~ ' + end
+  // #485 对抗审查整改（裁定 F）：页脚只留人话来源——库表名（`calorie_data.db`／`weight_log`）退出可见面，
+  // 机器面照旧住复制日志第 4 段（`COPY_SOURCE`，那两句是两处字符串，别合并）。
+  return renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 ' + start + ' ~ ' + end
     + ' ｜ 共 ' + o.warnDays + ' 条'
     + (gap > 0 ? ' ｜ 缺 ' + gap + ' 天没记' : ''));
 }
 
 /** 页顶前提提示（§5.6：记录太少不拒绝渲染，走 `warn` 写清「几条／门槛几条／为什么仍可看」）。
- *  #485：`样本／σ／阈值／兜底值` 换人话（记录太少／波动幅度／两条线／兜底值）。 */
+ *  #485：`样本／σ／阈值／兜底值` 换人话（记录太少／两条线／兜底值）。
+ *  （D1）兜底那一句只说「它们取兜底值 0.5 kg 档」，不再把兜底值也叫「波动幅度」——
+ *  那个词在本页只归卡②的那一个数（本窗 σ）。 */
 function premiseNotice(o: VolatilityV2): string | null {
   if (o.points.length === 0) return null;
   if (o.points.length === 1) {
     return notice({
       title: '记录太少', icon: 'warn',
-      msg: '本窗只有 1 条体重记录：平均线就是这一条读数，离平均线的距离必然是 0；波动幅度与两条线取兜底值 '
+      msg: '本窗只有 1 条体重记录：平均线就是这一条读数，离平均线的距离必然是 0；波动与两条线取兜底值 '
         + '0.5 kg 档，照常出页，但一天看不出趋势。',
     });
   }
@@ -241,7 +252,7 @@ function premiseNotice(o: VolatilityV2): string | null {
     return notice({
       title: '记录太少', icon: 'warn',
       msg: '本窗只有 ' + o.warnDays + ' 条记录，少于 ' + SAMPLE_MIN
-        + ' 条：曲线与异常表照常给，但波动幅度趋势画不出来，两条线用兜底值读，当参考值看。',
+        + ' 条：曲线与异常表照常给，但这张波动曲线画不出来，两条线用兜底值读，当参考值看。',
     });
   }
   return null;

@@ -466,7 +466,7 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
           ? c.spanDays + ' 天，首日到末日没变化'
           : c.spanDays + ' 天 · ' + (perDayHuman(c.delta, c.spanDays) ?? '看不出快慢'),
       status: c === null ? 'empty' : c.delta < 0 ? 'ok' : c.delta > 0 ? 'warn' : 'empty',
-      statusText: c === null ? '单点无变化' : c.delta < 0 ? '下降' : c.delta > 0 ? '上升' : '持平',
+      statusText: c === null ? '看不出变化' : c.delta < 0 ? '下降' : c.delta > 0 ? '上升' : '持平',
     },
     {
       label: '均值', value: avg === null ? '—' : String(avg) + ' kg',
@@ -500,7 +500,7 @@ function tagDist(rows: WeightHistory['rows']): Record<string, number> {
 function conclusionOf(h: WeightHistoryView): string {
   if (h.rows.length === 0) return h.range + ' 无体重记录，先记一条再看。';
   // 窗口串不在这里再说一遍：页题、KPI 卡说明、页脚来源行各有一处，本块只交代「这段怎么走」。
-  if (h.change === null) return '本窗只有 1 条记录，单点看不出变化，再记一条就能比较。';
+  if (h.change === null) return '本窗只有 1 条记录，看不出变化，再记一条就能比较。';
   const c = h.change;
   if (c.delta === 0) return '首日到末日没变化（持平）。';
   return '这段累计' + (c.delta > 0 ? '涨了 ' : '降了 ') + Math.abs(c.delta) + ' kg。';
@@ -588,7 +588,7 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     parts.push(notice({
       icon: 'warn',
       msg: '本窗只有 1 条记录（比较变化要 2 条以上）',
-      detail: '单点看不出变化，页照常出：' + h.range + ' 只有 1 天有记录，再记一条就能比首日和末日。',
+      detail: '看不出变化，页照常出：' + h.range + ' 只有 1 天有记录，再记一条就能比首日和末日。',
     }));
   }
   parts.push(renderKpiGrid(kpiCards(h, extra, avg)));
@@ -693,7 +693,7 @@ function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePla
     const win = Math.max(3, Math.min(asc.length, 7));
     rows.push({ left: '– –', main: win >= 7 ? '均线（最近 7 天）' : '均线（最近 ' + win + ' 天）', right: '图上那条灰色虚线' });
   }
-  if (asc.length === 1) rows.push({ left: '·', main: '单点标记', right: '本窗只有 1 条记录，图上只有这一个点' });
+  if (asc.length === 1) rows.push({ left: '·', main: '这一个点', right: '本窗只有 1 条记录，图上只有这一个点' });
   if (extra.overlay === 'target' && extra.goal !== null && extra.goal !== undefined) {
     const goal = extra.goal;
     // #480 缺陷 11：图上没画（在量程外）时，把「还差多少」写进图例——图上读不到，图例就得说清；

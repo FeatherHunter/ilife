@@ -241,20 +241,17 @@ export function anomalyReason(p: VolPoint): string {
 export function volatilitySummary(o: VolatilityV2): string {
   const kgs = o.points.map((p) => p.kg);
   const overall = kgs.length >= 2 ? stdev(kgs) : 0;
-  const last7 = o.points.slice(-7);
-  const deltas: number[] = [];
-  for (let i = 1; i < last7.length; i++) deltas.push(Math.abs((last7[i] as VolPoint).kg - (last7[i - 1] as VolPoint).kg));
-  const dailyAvg = deltas.length > 0 ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 0;
-  const yellow = o.recentAnomalies.filter((a) => a.level === 'yellow').length;
-  const red = o.recentAnomalies.filter((a) => a.level === 'red').length;
   const std2 = (Math.round(overall * 100) / 100).toFixed(2);
-  const dd3 = (Math.round(dailyAvg * 1000) / 1000).toFixed(3);
   if (o.points.length === 1) return '只有 1 条记录：本窗只有一天体重 ' + o.baselineValue + ' kg，看不出波动';
+  // #485 对抗审查整改（D2／D3，S1 的根）：本句原来把自己那个标准差也叫「波动幅度」——于是同一屏里
+  // 「波动幅度」同时代表本窗 σ（卡②说明）与本句的整窗离散度，两个数互不相容。现在**只有卡②说明**用
+  // 「波动幅度」这个词（＝σ）；本句这个量按它自己的名字写（`整体离散度`＝本窗所有点到平均线的距离的
+  // 总体离散程度，σ 是它去掉逐日涨跌后的那一份），读者一眼看得出是两个量、不是一个量的两种写法。
+  // 同时结论不再复述卡面已有的读数（卡②的档位天数、卡③的今日偏离与线值、图②的趋势点数）。
   if (overall < 0.3 && o.recentAnomalies.length === 0) {
-    return '体重很稳：波动幅度 ' + std2 + ' kg，没有异常点，最近 7 天平均每天变化 ' + dd3 + ' kg';
+    return '体重很稳：整体离散度 ' + std2 + ' kg，近期没有超过注意线的天';
   }
-  const head = '波动幅度 ' + std2 + ' kg，近 7 天有 ' + o.recentAnomalies.length + ' 天超过波动带（注意线 '
-    + yellow + ' 天／警戒线 ' + red + ' 天）';
+  const head = '整体离散度 ' + std2 + ' kg，近 7 天有 ' + o.recentAnomalies.length + ' 天超过波动带';
   if (overall < 0.5) return '体重基本稳定：' + head;
   return '体重波动较大：' + head + '，建议关注饮食与饮水';
 }

@@ -22,8 +22,8 @@
  *      （与 `weight/compare.ts` 情景版同形），不再用两列表格冒充结论块，复核形态也有这一位；
  *   ② 折线必传 `options`：`yTicks`＋`format`（不悬停也读得出一个数值）、`labels: 'select'`
  *      （首＋极值＋尾三点）、量程 `yMin`／`yMax`（算式住视图模型 `niceBounds`，装配层只透传）、
- *      期间均值 `markLine`；有记录就出图（**1 条也出图**，单点＋该点均值横线），
- *      单点另加页顶 warn 与 KPI `detail`「单点无变化」；
+ *      期间平均值 `markLine`；有记录就出图（**1 条也出图**，单点＋该点平均值横线），
+ *      单点另加页顶 warn 与 KPI `detail`「只有 1 个点」；
  *   ③ KPI 读数带 `status`／`statusText` 徽章（只收 ok／warn／danger／empty）：减重 ok、增重 warn、
  *      持平或无对照 empty；「无基线」与「持平 0.0」是两件事，分文写清；
  *   ④ 复制数据＝所见：载荷把窗口／首末／覆盖天数／最高最低／逐条里程碑／结论原句都带上，
@@ -38,7 +38,6 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { shiftISODate } from '../analysis/utils.js';
-import { DB_FILENAME } from '../paths.js';
 import { weightMilestone } from './figures.js';
 import type { WeightMilestone } from './figures.js';
 import { getWeightHistory } from './records.js';
@@ -88,13 +87,20 @@ function signed1(v: number): string {
 const FLAT_GRAMS_PER_DAY = 10;
 
 /** 期间结论句（#482 文本审查）：只说「快慢」这一件 KPI 里没有的事，不复述卡片上的数字。
- *  日均 = 期间变化 ÷ 窗口跨度，全族统一用「克」（口径 §3.2：页面上不出现 `g/天`）。 */
+ *  日均 = 期间变化 ÷ 窗口跨度，全族统一用「克」（口径 §3.2：页面上不出现 `g/天`）。
+ *  只有往下走的那一侧补一句「在稳步往下走」；往上走那一句已由「增重」徽章说清 ⇒ 不再同屏重复。 */
 function paceSentence(delta: number, spanDays: number): string {
   const days = Math.max(1, spanDays - 1);
   const grams = Math.round((delta / days) * 1000);
   const rate = grams === 0 ? '每天没有增减' : '平均每天' + (grams < 0 ? '少 ' + Math.abs(grams) : '多 ' + grams) + ' 克';
-  const verdict = Math.abs(grams) < FLAT_GRAMS_PER_DAY ? '基本算稳定' : grams < 0 ? '在稳步往下走' : '在往上走';
-  return rate + '，' + verdict + '。';
+  if (grams < 0) return rate + (Math.abs(grams) < FLAT_GRAMS_PER_DAY ? '，基本算稳定。' : '，在稳步往下走。');
+  return rate + '。';
+}
+
+/** 对照段区间文本（#482 缺陷 8）：对照段只有一天时不把同一天写两遍（`X ~ X`）。
+ *  KPI 卡的副说明与卡下那行小字共用这一处措辞，两处不各写一遍。 */
+function prevSpanText(v: WeightReviewPeriodView): string {
+  return v.prevStart === v.prevEnd ? v.prevStart : v.prevStart + ' ~ ' + v.prevEnd;
 }
 
 /** 总减重方向词（正数＝已减；负数是往回长，也照实写）——与载荷 `totalLoss` 正负语义一致。 */
@@ -252,11 +258,12 @@ export function buildWeightReviewPeriodView(
     ? [...months.entries()].map(([month, ws]) => ({ month, avg: round1(ws.reduce((a, w) => a + w, 0) / ws.length) }))
     : null;
   /* 结论句（#482 文本审查）：卡片已经把「变化／平均值／和上一段比」三个数字各说一处，
-   * 这里只补一件卡片上没有的事 —— 这段走得快还是慢；记录不够时如实说看不出。 */
+   * 这里只补一件卡片上没有的事 —— 这段走得快还是慢；记录不够时如实说看不出。
+   * 单点那句不再带「只有 1 条记录」：同屏警示句／`1 天` 卡／页脚 `共 1 条` 已经说过三次。 */
   const summary = n === 0
     ? '这段时间一条记录都没有，得不出变化。'
     : n === 1
-      ? '只有 1 条记录，看不出这段时间是涨是跌。'
+      ? '看不出这段时间是涨是跌。'
       : paceSentence(delta, spanDays);
   return {
     title, start, end, prevLabel, prevStart, prevEnd, rows,
@@ -399,7 +406,7 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
   }
   /* 结论块唯一形态：折叠区（§5.3），句子是取数层原话（`weightMilestone.status`），页面不做自然语言解析。 */
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + m.status + '</p>', open: true }));
-  parts.push(renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 复核日 ' + v.today
+  parts.push(renderCaliberLine('📊 数据来源：体重记录 ｜ 复核日 ' + v.today
     + ' ｜ 当前 ' + m.currentWeight + ' kg vs 目标 ' + m.weightGoal + ' kg'
     + (daily === null ? ' ｜ 日均变化未算' : '')));
   const metrics: Record<string, number | string | null> = {
@@ -443,12 +450,13 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
     {
       label: '期间变化', value: signed1(v.delta) + ' kg',
       status: dirStatus(v.delta), statusText: dirWord(v.delta),
-      detail: n === 0 ? '本窗无体重记录' : n === 1 ? '单点无变化' : '首末 ' + first + ' → ' + last + ' kg',
+      /* 单点那档：副说明改人话（原与徽章同为「单点无变化」）；徽章已删（见下）。 */
+      detail: n === 0 ? '本窗无体重记录' : n === 1 ? '只有 1 个点，没法算变化' : '开头 ' + first + ' → 最后 ' + last + ' kg',
     },
     {
       /* `共 N 条` 与页脚来源行是同一条事实 ⇒ 删卡片这份（口径 §3.5：同屏同一事实只留信息量最大的一处）。
        * 只有一条记录时最高＝最低＝这个值，复述它没有信息量 ⇒ 那一档只说空态。 */
-      label: '期间均值', value: v.avg.toFixed(1) + ' kg', status: 'empty', statusText: '基准',
+      label: '期间平均值', value: v.avg.toFixed(1) + ' kg', status: 'empty', statusText: '基准',
       ...(n > 1
         ? { detail: '最高 ' + String(v.maxKg) + ' kg · 最低 ' + String(v.minKg) + ' kg' }
         : n === 0 ? { detail: '本窗无体重记录' } : {}),
@@ -459,17 +467,20 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
       value: v.vsLast === null ? '—' : signed1(v.vsLast) + ' kg',
       status: v.vsLast === null ? 'empty' : dirStatus(v.vsLast),
       statusText: v.vsLast === null ? '未算' : dirWord(v.vsLast),
-      /* 对照区间只有一天时不再把同一天写两遍（`X ~ X`）。 */
-      detail: v.vsLast === null
-        ? '前面同样长的一段没有记录'
-        : '前面同样长的 ' + v.spanDays + ' 天：'
-          + (v.prevStart === v.prevEnd ? v.prevStart : v.prevStart + ' ~ ' + v.prevEnd),
+      /* 卡内只留「比的是哪一段」这一格读数；对照段的具体日期（`前面同样长的 250 天：…`）
+       * 原是一条塞进 KPI 卡的注释句（截图里折两行把卡撑高）⇒ 挪到卡下那一行浅色小字（见下 `对照段：…`）。 */
+      detail: v.vsLast === null ? '前面同样长的一段没有记录' : undefined,
     },
     {
-      /* 值槽带上单位（数字＋单位）；`覆盖 N 天` 在满窗时就是值槽的重述 ⇒ 只在有缺口时说窗口共几天。 */
+      /* 值槽带上单位（数字＋单位）；`覆盖 N 天` 在满窗时就是值槽的重述 ⇒ 只在有缺口时说窗口共几天。
+       * 徽章 `满窗` 是内部口径词（屏上没有解释）⇒ 换读者看得懂的话；
+       * 单点那枚删掉（#482 缺陷 7）：`单点` 与卡片副说明 `单点无变化` 同说一件事。
+       * 徽章位由公共层渲染、`text === ''` 按缺省处理（`controls.ts:37`），本仓没有「不渲染徽章」的入口，
+       * 故这里让徽章位回落到通用词（`STATUS_DEFAULT_TEXT.warn` 即「警告」）——它不再与副说明重词，
+       * 单点这件事全页仍只说一次（`status` 照旧带着语义与配色）。 */
       label: '记录天数', value: n + ' 天',
       status: n === 0 ? 'empty' : n === 1 ? 'warn' : v.gapDays > 0 ? 'warn' : 'ok',
-      statusText: n === 0 ? '无记录' : n === 1 ? '单点' : v.gapDays > 0 ? '有缺口' : '满窗',
+      statusText: n === 0 ? '无记录' : n === 1 ? '' : v.gapDays > 0 ? '有缺口' : '整段都记了',
       ...(v.gapDays > 0 ? { detail: '窗口共 ' + v.spanDays + ' 天' } : {}),
     },
   ];
@@ -493,6 +504,12 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
     }));
   }
   parts.push(renderKpiGrid(kpis));
+  /* 对照段（#482 缺陷 8）：原来这句塞在「比…」那张 KPI 卡的副说明里，截图里折两行把卡撑高；
+   * 挪到卡下当一行浅色小字（走公共层现成的 `renderCaliberLine`，不新造样式）。
+   * 一句只给 KPI 卡写不下的那件事——具体日期；比不了时不写（空态块自带口径句）。 */
+  if (v.vsLast !== null) {
+    parts.push(renderCaliberLine('对照段：' + prevSpanText(v) + '（同样 ' + v.spanDays + ' 天）'));
+  }
   parts.push(renderChartBlock({
     kind: 'line',
     title: '体重趋势',
@@ -509,8 +526,8 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
         labels: 'select',
         highlightLast: true,
         showDots: true,
-        /* 期间均值横线：恒在量程内（量程就是照这批值算的），不需要「越界改写进 KPI」这条退路。 */
-        ...(n > 0 ? { markLine: { value: v.avg, label: '期间均值 ' + v.avg.toFixed(1) + ' kg' } } : {}),
+        /* 平均值横线（#482 缺陷 2）：卡名是「期间平均值」、图例是「平均值」，同一件事实同屏只用一套词。 */
+        ...(n > 0 ? { markLine: { value: v.avg, label: '平均值 ' + v.avg.toFixed(1) + ' kg' } } : {}),
         emptyText: '本窗无体重记录',
       },
     },
@@ -524,7 +541,8 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
         { key: 'avg', label: '平均体重', align: 'right' },
       ],
       rows: v.monthly.map((m) => ({ month: m.month, avg: m.avg.toFixed(1) })),
-      caption: '按月平均体重（单位 kg，共 ' + v.monthly.length + ' 个月）',
+      /* 表注不再写「共 N 个月」（#482 缺陷 4）：同一个数同屏两槽——「月份数」卡已经写了，表注只留单位。 */
+      caption: '按月平均体重（单位 kg）',
       emptyText: '本窗无体重记录',
     }));
   }
@@ -538,8 +556,10 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
   }
   /* 结论块唯一形态：折叠区，全页「结论」恰一处（§5.3）。 */
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + v.summary + '</p>', open: true }));
-  /* 页脚一行（口径 §3.1 统一句式）：哪张库／哪张表 ｜ 哪个窗口 ｜ 共多少条，缺口在同一行补一句。 */
-  parts.push(renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + v.start + ' ~ ' + v.end
+  /* 页脚一行（口径 §3.1 统一句式 ＋ #482 裁定 F）：只留人话来源 ｜ 哪个窗口 ｜ 共多少条，缺口在同一行补一句。
+   *  库文件名与表名退出可见面（`calorie_data.db`／`weight_log` 在可见文本里命中数为 0）；
+   *  机器面不丢——复制日志第 3 段照旧写库文件名 ｜ 来源（§5.5）。 */
+  parts.push(renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 ' + v.start + ' ~ ' + v.end
     + ' ｜ 共 ' + n + ' 条' + gapText));
   const metrics: Record<string, number | string | null> = {
     ...periodNums(v),
@@ -607,8 +627,9 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
     emptyText: '尚未达成任何减重里程碑',
   }));
   parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + v.summary + '</p>', open: true }));
-  /* 页脚一行（口径 §3.1 统一句式）：这页没有窗口，写「全部记录（到某日）」代替窗口那一段。 */
-  parts.push(renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 全部记录（到 '
+  /* 页脚一行（口径 §3.1 统一句式 ＋ #482 裁定 F）：这页没有窗口，写「全部记录（到某日）」代替窗口那一段；
+   *  库文件名与表名退出可见面（同上，机器面仍在复制日志第 3 段）。 */
+  parts.push(renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 全部记录（到 '
     + v.currentDate + '） ｜ 共 ' + v.rows + ' 条'));
   const metrics: Record<string, number | string | null> = {
     ...milestoneNums(v),

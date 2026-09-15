@@ -263,7 +263,7 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     if (word === '看本周体重') {
       // 缺陷 3：单点页三处同槽重复全拆开（变化卡副说明说人话、均值卡删副说明、备注卡删副说明）。
       assert.equal(byLabel('变化').detail, '只有 1 天记录，没法算变化', word + ' 变化卡副说明不对');
-      assert.equal(byLabel('变化').badge, '单点无变化', word + ' 变化卡徽章不该跟着改');
+      assert.equal(byLabel('变化').badge, '看不出变化', word + ' 变化卡徽章不说人话（「单点」是圈内词）');
       assert.equal(byLabel('均值').detail, null, word + ' 均值卡仍留副说明');
       assert.equal(byLabel('均值').badge, '无对照', word + ' 均值卡徽章不对');
       assert.equal(byLabel('备注').detail, null, word + ' 备注卡仍留副说明');

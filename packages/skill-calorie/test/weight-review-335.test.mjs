@@ -181,16 +181,55 @@ test('#482 文本审查：6 页旧句归零、页脚同一句式、结论句不�
     ['自定义时间', viewWeightReview({ window: 'custom', start: '2026-09-01', end: '2026-09-07', today: T }, db).html],
     ['看里程碑回溯', viewWeightReview({ mode: 'milestones', today: T }, db).html],
   ];
-  const dead = ['📊 数据来源:', '上一段等长区间', '样本与口径', '距首条', '5/10/15/20kg', '月均值表', '均值差 vs', '共达成', '覆盖 '];
+  /* 页脚（#482 裁定 F）：只留人话来源，库文件名与表名退出**可见文本**——可见面从每个块标签之间取，
+   * 库文件名照旧写在复制日志第 3 段（`shared/copyArea.ts:170` 的 `DB_FILENAME ｜ source`，数据面不算可见面）。 */
+  const dead = ['📊 数据来源:', '上一段等长区间', '样本与口径', '距首条', '5/10/15/20kg', '月均值表', '均值差 vs', '共达成', '覆盖 ',
+    '期间均值', '满窗', '首末 ', '单点无变化，'];
+  const visibleOf = (html) => html.replace(/<style\b[\s\S]*?<\/style>/g, '').replace(/<[^>]+>/g, '\u0001');
   for (const [who, html] of pages) {
     for (const s of dead) assert.ok(!html.includes(s), who + ' 仍有旧句：' + s);
-    assert.ok(html.includes('📊 数据来源：体重记录（calorie_data.db · weight_log） ｜ '), who + ' 页脚未统一句式');
+    assert.ok(!visibleOf(html).includes('calorie_data.db'), who + ' 可见文本仍有库文件名');
+    assert.ok(!visibleOf(html).includes('weight_log'), who + ' 可见文本仍有表名');
+    assert.ok(html.includes('calorie_data.db'), who + ' 复制日志丢了库文件名（机器面不许丢）');
+    assert.ok(html.includes('📊 数据来源：体重记录 ｜ '), who + ' 页脚未统一句式（裁定 F：只留人话来源）');
     assert.ok(/｜ 共 \d+ 条/.test(html), who + ' 页脚缺条数');
     assert.equal((html.match(/<summary[^>]*>结论<\/summary>/g) || []).length, 1, who + ' 结论块恰一处');
   }
+  /* 缺陷 1：单点页结论不再复述「只有 1 条记录」（同屏第 3 次）——警示句／`1 天` 卡／页脚已经说过。
+   * 富种子的「本周」是 7 条，落不到单点档 ⇒ 这档另用瘦种子（那一天只有 1 条记录）单独钉。 */
+  const thin = tmpDb();
+  seedThin(thin);
+  const single = viewWeightReview({ window: '本周', today: T }, thin).html;
+  assert.ok(single.includes('看不出这段时间是涨是跌。'), '单点页结论未换成人话');
+  assert.ok(!single.includes('只有 1 条记录'), '单点页结论仍在复述条数');
+  /* 缺陷 7：单点页「记录天数」卡不再挂「单点」徽章（那枚与副说明同说一件事）；
+   * 副说明也说人话——`单点` 是圈内词（口径 §3.2 要求换读者能懂的话），全页可见文本不再出现它。 */
+  assert.ok(!single.includes('>单点<'), '单点页记录天数卡仍有「单点」徽章');
+  assert.ok(single.includes('只有 1 个点，没法算变化'), '单点页副说明没说人话');
+  assert.ok(!single.includes('单点'), '单点页可见文本不该再出现「单点」这个词');
+  thin.close();
+  /* 缺陷 2：卡名与图上横线标签同一套词（`期间平均值`／`平均值`），不再混用「均值」。 */
+  assert.ok(pages[1][1].includes('期间平均值'), '卡名未统一为「期间平均值」');
+  assert.ok(pages[1][1].includes('平均值 '), '图上横线标签未统一为「平均值」');
+  /* 缺陷 3：徽章去内部口径词 `满窗`（富种子「本周」那一页 7 天逐日全有记录，落满窗那档）。 */
+  assert.ok(pages[0][1].includes('整段都记了'), '记录天数徽章未换人话');
+  assert.ok(!pages.some(([, html]) => html.includes('满窗')), '仍有内部口径词「满窗」');
+  /* 缺陷 4：月份数同屏两槽只留一处（表注不再写「共 N 个月」）。 */
+  assert.ok(!pages[3][1].includes('按月平均体重（单位 kg，共 '), '表注仍在复述月份数');
+  assert.ok(pages[3][1].includes('按月平均体重（单位 kg）'), '表注被误删');
+  assert.ok(pages[3][1].includes('>月份数<'), '月份数卡被误删');
+  /* 缺陷 6：期间变化卡副说明去缩写「首末」（首末对只在值槽那一页出现，写作「开头 … → 最后 …」）。 */
+  assert.ok(pages[3][1].includes('开头 '), '期间变化副说明未去缩写');
+  /* 缺陷 8：对照段日期从 KPI 卡挪到卡下一行小字（口径行），卡内不再塞注释句。
+   * 富种子各页里只有「本周」这一页的对照段有记录（其余各页的对照段一条记录都没有）。 */
+  assert.ok(pages[0][1].includes('对照段：'), '对照段未落到卡下那行');
+  assert.ok(!pages[0][1].includes('前面同样长的 '), '对照段日期仍在 KPI 卡里');
   /* 结论句换人话：窗口页只说卡片上没有的事（走得多快），里程碑页说最近一次达标离今天多久。 */
   assert.ok(pages[2][1].includes('平均每天'), '窗口页结论未换成速度句');
   assert.ok(!pages[2][1].includes('（最近 90 天）变化'), '窗口页结论仍在复述卡片数字');
+  /* 缺陷 5：往上走那一侧不再补「在往上走」（那话与「增重」徽章同屏重复）；往下走那侧照旧说清走得稳不稳。 */
+  assert.ok(!pages.some(([, html]) => html.includes('在往上走')), '仍有「在往上走」与徽章重复');
+  assert.ok(pages[3][1].includes('在稳步往下走'), '往下走那侧的方向句被误删');
   assert.ok(pages[5][1].includes('最近一次达标'), '里程碑页结论未换人话');
   /* 一页只留一套方向词：里程碑页只剩「已减／回涨／持平」，不再混用「减重」。 */
   assert.equal((pages[5][1].match(/>减重</g) || []).length, 0, '里程碑页徽章仍混用「减重」');
