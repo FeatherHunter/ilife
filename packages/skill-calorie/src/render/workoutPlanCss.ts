@@ -80,10 +80,10 @@ const STATIC_CSS = [
   '/* 选钮：视觉上藏起来，仍在文档流里、仍可 Tab 与方向键操作（零脚本的两级页签就靠它） */',
   '.ilw-wkr,.ilw-dyr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;'
     + 'clip:rect(0 0 0 0);white-space:nowrap}',
-  '/* 老 .tabs／.tab：周次页签——胶囊＋激活态主色字与下划线 */',
-  '.ilw-tabs{display:flex;gap:2px;margin:0 0 18px;border-bottom:1px solid var(--lineS);overflow-x:auto;'
-    + 'scrollbar-width:none}',
-  '.ilw-tabs::-webkit-scrollbar{display:none}',
+  '/* 老 .tabs／.tab：周次页签——胶囊＋激活态主色字与下划线。',
+  '   T351-v12：窄屏与多周计划（实测 12 周）下原来靠横向滚动，而滚动条被 `scrollbar-width:none` 藏了、',
+  '   桌面也没有滚轮横滚的直觉 —— 第 11、12 周等于看不见。改成**换行铺开**：都在页上，点得到。 */',
+  '.ilw-tabs{display:flex;flex-wrap:wrap;gap:2px;margin:0 0 18px;border-bottom:1px solid var(--lineS)}',
   '.ilw-tab{flex-shrink:0;padding:10px 18px;font-size:14px;font-weight:500;color:var(--ink2);cursor:pointer;'
     + 'position:relative;border-radius:6px 6px 0 0}',
   '.ilw-tab:hover{color:var(--ink);background:rgba(0,122,255,.06)}',
