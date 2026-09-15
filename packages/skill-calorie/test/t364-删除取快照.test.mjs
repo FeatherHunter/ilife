@@ -16,6 +16,15 @@
  * 负向对照（源码级变异，持锁另做，两行机器读数见 `docs/skills/skill-calorie/t364-快照证据.md`）：
  *   M1 把回执里的快照段去掉（回旧一行回执）→ 必红；M2 把删前值取成**删后值**（快照读排在置废之后、
  *   且按活行口径）→ 必红；M3 围度标签取错（列名当标签）→ 13 部位名逐位必红。三处还原 ⇒ 必绿。
+ *
+ * **#365 口径变更（有意改，票面与提交信息写清）**：#365 把身体细节这一族四条写命令的回执从
+ *   「原回执片段」换成**整页**（`src/body/receipt.ts` 的 `bodyReceiptDoc`，接在 `cli/write.ts`
+ *   装配链第五个口上），片段里那条 `<li> … · 日期 …` 的删前快照行**不再存在**（那是片段形状，
+ *   不是本票要验的东西）；本文件的 `detailFromPage()` 随口径改读整页里的新结构——
+ *   `renderChangeRows` 的 `change-row` 逐格行（口径行「删除前的原值」之后那一段，与同目录
+ *   `t365-七条写词整页.test.mjs` 的 `sectionRows()` 同一判据），**断言意图一字不变**：
+ *   删前值逐格、标签序与格数照旧、两处（回执 `items[0].detail` 与落盘页）仍逐格同源。
+ *   其余 5 条用例（裁定 2×2／全填／软删语义／接通面）本票一行未动。
  * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
  *   `node --test packages/skill-calorie/test/t364-删除取快照.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库一个字节不动。
@@ -160,14 +169,39 @@ function assertCell(pair, raw, where) {
   assert.equal(pair[1], expect, where + ' 可见文本「' + pair[0] + '」格=' + pair[1] + '，查库值=' + expect);
 }
 
-/** 落盘页里 items 那条 `<li>` 的**逐字段删前值**（结构化解析：剥 li 内标签后取 ` · 日期 …` 之后那段）。 */
+/** 逐格行标记：整页里 `renderChangeRows` 的产出（label／old／arrow／new 四段一行）。箭头位
+ *  `arrow: false` 时 `visibility:hidden` 仍占栏，故正则读到箭位即止，不读它的内容。 */
+const CHANGE_ROW_RE = new RegExp(
+  '<div class="ilife-block-change-row">'
+  + '<span class="ilife-block-change-row-label">([^<]*)</span>'
+  + '<span class="ilife-block-change-row-old">([^<]*)</span>'
+  + '<span class="ilife-block-change-row-arrow"[^>]*>',
+  'g',
+);
+
+/** HTML 实体还原：逐格值要与 `items[0].detail` 的**原文**比，不能比转义写法。 */
+function unesc(s) {
+  return String(s)
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+}
+
+/** 落盘页里**删前逐格值**那一段的 `标签 值` 逐对文本（项间「、」，可直接喂 `pairsOf()`）。
+ *
+ * #365 口径变更（有意改）：整页把这份数据面改由 `renderChangeRows` 铺成 `change-row` 逐格行
+ * （口径行「删除前的原值」之后那一段），不再是片段里那条 `<li> … · 日期 …` 快照行；
+ * 取法与同目录 `t365-七条写词整页.test.mjs` 的 `sectionRows()` 同一判据，**断言意图不变**：
+ * 段在、格在、第一格是「日期」、逐格仍与回执 `items[0].detail` 同源。 */
 function detailFromPage(html) {
-  const li = /<li>([\s\S]*?)<\/li>/.exec(html);
-  assert.ok(li, '落盘页应有 items 逐条行（`<li>`）');
-  const text = visible(li[1]);
-  const at = text.indexOf(' · 日期 ');
-  assert.ok(at > 0, '落盘页 `<li>` 里应有「 · 日期 …」快照段：' + text.slice(0, 160));
-  return text.slice(at + ' · '.length);
+  for (const seg of String(html).split('<p class="ilife-block-caliber">').slice(1)) {
+    const end = seg.indexOf('</p>');
+    if (end < 0 || !seg.slice(0, end).startsWith('删除前的原值')) continue;
+    const rows = [...seg.slice(end).matchAll(CHANGE_ROW_RE)].map((m) => [unesc(m[1]), unesc(m[2])]);
+    assert.ok(rows.length > 0, '落盘页「删除前的原值」段应有逐格行（`ilife-block-change-row`）');
+    assert.equal(rows[0][0], '日期', '落盘页删前逐格行的第一格应是「日期」：' + JSON.stringify(rows[0]));
+    return rows.map(([k, v]) => k + ' ' + v).join('、');
+  }
+  return assert.fail('落盘页应有「删除前的原值」段（整页口径：口径行 ＋ change-row 逐格行）');
 }
 
 /** 回执 `items[0]` 的形状（两处同源：结构化载荷与落盘页）。 */

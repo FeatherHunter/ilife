@@ -5,8 +5,9 @@
  * 同批钉住反面：其余会改数据库的命令**仍是原回执片段**（`<section …ilife:calorie:receipt>`），
  * 一刀切换页会被这一条测出来。
  * 反面那张抽样表随各场景各自切整页而**收窄**：#337 把场景 03 体重 4 条拿走、
- * #269 把场景 02 饮食 13 条（含 `calorie.water.log`／`calorie.product.add`）拿走，
- * 两条的整页断言各自钉在本文件的下一条；剩下的仍逐字钉片段形状。
+ * #269 把场景 02 饮食 13 条（含 `calorie.water.log`／`calorie.product.add`）拿走、
+ * #365 把场景 08 身体细节 4 条（7 条写词语）拿走，三条的整页断言各自钉在本文件的下文；
+ * 剩下的仍逐字钉片段形状。
  * 运行：先 pnpm build，再 node --test packages/skill-calorie/test/profile-doc-179.test.mjs
  */
 import { strict as assert } from 'node:assert';
@@ -264,13 +265,18 @@ test('#247 场景 07 五张页的复制数据是「三格式三选一」菜单�
  * （9 条饮食记录 ＋ 3 条食品库 ＋ 1 条饮水）同样从这一堆里拿出来，切整页装配
  * （`src/diet/receipt.ts` 的 `dietReceiptDoc`，见下下条测试）；本条抽样改为
  * 目标域与身体域这三条，仍是逐字钉片段形状。
+ *
+ * #365 口径变更（有意改，票面与提交信息写清）：场景 08 身体细节这一族的写命令
+ * （`calorie.body.composition-add`／`calorie.body.measure-add`／
+ * `calorie.body.composition-remove`／`calorie.body.measure-remove`，对应 7 条写唤醒词）
+ * 同样从这一堆里拿出来，切整页装配（`src/body/receipt.ts` 的 `bodyReceiptDoc`，
+ * 见本文件末条测试）；本条抽样只剩目标域这两条，仍是逐字钉片段形状。
  */
 test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）', () => {
   const dir = mkDb(true);
   const cases = [
     ['calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50 }],
     ['calorie.goal.water', { water: 2000 }],
-    ['calorie.body.measure-add', { waistCm: 85, date: '2026-09-06' }],
   ];
   for (const [key, params] of cases) {
     const r = runCli(dir, key, params);
@@ -345,5 +351,64 @@ test('#337 场景 03 四条体重写命令已是完整文档（三变体字段�
   assertDocPage(del.file, 'weight.remove');
   for (const needle of ['删除快照', '硬删除，不可恢复']) {
     assert.ok(del.file.includes(needle), 'weight.remove 缺：' + needle);
+  }
+});
+
+/** 内联样式字节数（#365 票面读数之一「内联样式 ≥ 2KB」）。 */
+function inlineCssBytes(html) {
+  return Buffer.byteLength(
+    [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join('\n'), 'utf8');
+}
+
+/** 外链清单（#365 票面读数之一「无外链」）：`<link href>` 与 `<script src>` 两处。 */
+function externalLinks(html) {
+  return [...html.matchAll(/<(?:link|script)\b[^>]*\s(?:src|href)\s*=\s*["']([^"']*)["']/gi)].map((m) => m[1]);
+}
+
+/** #365 身体细节整页的六项读数：`assertDocPage` 那五断言（doctype／charset／style／script／
+ *  page 标记／无残留标记）＋ 内联样式 ≥ 2KB ＋ 无外链 ＋ 不再落在旧回执片段上。 */
+function assertBodyPage(html, what) {
+  assertDocPage(html, what);
+  const css = inlineCssBytes(html);
+  assert.ok(css >= 2048, what + ' 内联样式须 ≥ 2048B，实测 ' + css + 'B');
+  assert.deepEqual(externalLinks(html), [], what + ' 不得有外链');
+  assert.equal(html.includes('data-slot="ilife:calorie:receipt"'), false, what + ' 还落在旧回执片段上');
+}
+
+/** #365 场景 08 身体细节这一族的写命令已是完整文档（从上条的片段堆里拿出来）。
+ *
+ * 口径变更说明：#179 当年断言「其余仍是原回执片段」，本票把场景 08 身体细节的四条写命令
+ * （`calorie.body.composition-add`／`measure-add`／`composition-remove`／`measure-remove`，
+ * 对应 7 条写唤醒词：记体脂（皮褶钳）／记体脂（外部测量）／补记体脂／记围度／补记围度／
+ * 删体脂／删围度）切成整页回执（`src/body/receipt.ts` 的 `bodyReceiptDoc`，
+ * 装配链第五个口），故上条抽样不再含 body 键；本条把四条命令的六项读数与场景 08 眉标、
+ * 逐格行的新结构（`renderChangeRows` 的 change-row，不再是片段里的 `<li>`）钉死
+ * （不断言＝口径无锚，跳过＝放宽，都不许）；逐格值归 body 域自己的票（`test/t365-*`）。
+ */
+test('#365 身体细节四条写命令已是完整文档（七条写词；从「其余仍是片段」那张表里拿出来）', () => {
+  const dir = mkDb(true);
+  const addC = runCli(dir, 'calorie.body.composition-add', { source: 'gym', bodyFatPct: 18.5, date: '2026-09-11' }, 'b365-comp-add');
+  assert.equal(addC.status, 0, '记体脂 exit ' + addC.status + ' stderr=' + addC.stderr.slice(-300));
+  const idC = JSON.parse(addC.stdout).data.receipt.recordId;
+  const addM = runCli(dir, 'calorie.body.measure-add', { waistCm: 85, hipCm: 95, date: '2026-09-12' }, 'b365-meas-add');
+  assert.equal(addM.status, 0, '记围度 exit ' + addM.status + ' stderr=' + addM.stderr.slice(-300));
+  const idM = JSON.parse(addM.stdout).data.receipt.recordId;
+  const cases = [
+    ['记体脂', addC, '记录现值'],
+    ['记围度', addM, '记录现值'],
+    ['删体脂', runCli(dir, 'calorie.body.composition-remove', { id: idC }, 'b365-comp-remove'), '删除前的原值'],
+    ['删围度', runCli(dir, 'calorie.body.measure-remove', { id: idM }, 'b365-meas-remove'), '删除前的原值'],
+  ];
+  for (const [label, r, section] of cases) {
+    assert.equal(r.status, 0, label + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
+    assertBodyPage(r.file, label);
+    assert.ok(r.file.includes('身体细节 · 写后回执'), label + ' 缺场景 08 眉标');
+    assert.ok(r.file.includes(section), label + ' 缺「' + section + '」那一段');
+    assert.ok(r.file.includes('ilife-block-change-row-label'), label + ' 逐格行不走 renderChangeRows 新结构');
+    assert.ok(r.file.includes('对账信息'), label + ' 缺页尾对账折叠区');
+    assert.ok(r.file.includes('ilife-copy-log'), label + ' 缺「复制日志」按钮（#239）');
+    assert.ok(r.file.length > 10000, label + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
+    console.log('T365-NEEDLE ' + label + ' exit=' + r.status + ' doctype=' + r.file.startsWith('<!doctype html>')
+      + ' css=' + inlineCssBytes(r.file) + 'B ext=' + externalLinks(r.file).length + ' chars=' + r.file.length);
   }
 });
