@@ -11,6 +11,15 @@
  *
  * 变异自证（本件末节，读数逐条打 `T523-MUT`）：往产物里塞一处 `·`／一处 `；` 并列 ⇒ 守卫**必红**；
  * 逐文件还原 ⇒ **必绿**。
+ *
+ * #523 返修 R3 追加两条守卫（视觉复评 R2 的两处硬伤，靶心）：
+ *   ⑤ **列对齐**：记录级明细那两张八列表，四个数值列（时长／消耗／距离／心率）必须走公共层既有档位
+ *      `align:'right'`（右对齐 ＋ 等宽栈 ＋ `tabular-nums`；`renderDataTable` 里「这一列是数值」的
+ *      唯一信号就是它），文字列仍留 `left`——判据同时读**表头档**与**每一行的格子档**。
+ *   ⑥ **类名不截断**：本族页的样式段里，分布条类名轨必须放开公共层给的 `nowrap` ＋ 省略号截断、
+ *      且不再钉在容不下全称的 `6em` 上；窄屏（820）另有两段式（类名独占一行）。
+ *      **这一条的渲染面终验是真浏览器读数**——`docs/skills/skill-calorie/t523-截断探针.mjs`
+ *      在 headless Chrome 里读 `scrollWidth > clientWidth` 的格，判据与本条同向、互不替代。
  */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
@@ -215,8 +224,83 @@ test('#523 ④ 同一事实一页一处：窗口天数不在页头与表标题�
   assert.ok(burn <= 1, '总消耗数字在页上出现 ' + burn + ' 次（同一数值一页一处）');
 });
 
-/* ───────────────────────── 四、变异自证（改坏必红／还原必绿） ───────────────────────── */
+/* ───────────────────── 三之二、R3 两处硬伤的守卫（视觉复评 R2 靶心） ───────────────────── */
 
+/** 逐列表头档（页上原字）：`<th scope="col" class="ilife-block-data-table-cell-<档>">列名</th>`。 */
+function columnAligns(html) {
+  const out = new Map();
+  for (const m of html.matchAll(/<th scope="col" class="ilife-block-data-table-cell-([a-z]+)">([^<]*)<\/th>/g)) {
+    out.set(m[2], m[1]);
+  }
+  return out;
+}
+/** 数据行数（只数带 `<td` 的 `<tr>`，表头那一行不计）。 */
+function bodyRowCount(html) {
+  return (html.match(/<tr>[\s\S]*?<\/tr>/g) ?? []).filter((r) => r.includes('<td ')).length;
+}
+/** 本族自己的样式段（`exerciseUiCss()` 那一段：认 `sui-window` 这条类名，不拿裸 `<style>` 当判据）。 */
+function familyCss(html) {
+  const blocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+  const mine = blocks.filter((b) => b.includes('sui-window'));
+  assert.equal(mine.length, 1, '读不到本族样式段（含 `sui-window` 的那一段），形制变了要当面红');
+  return mine[0];
+}
+/** 取某条选择器的声明串（扁平扫描；同一段里后出的同名规则并到后面，正好当覆盖读）。 */
+function cssRule(css, selector) {
+  const decls = [];
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (m[1].split(',').map((s) => s.trim()).includes(selector)) decls.push(m[2].replace(/\s+/g, ' ').trim());
+  }
+  return decls.join(';');
+}
+
+test('#523 ⑤ 记录级明细：四个数值列走公共层 `align:"right"`（右对齐＋等宽数字），文字列留 left', () => {
+  const NUM = ['时长', '消耗', '距离', '心率'];
+  const TEXT = ['日期', '类型', '分类', '备注'];
+  let bad = 0;
+  const lines = [];
+  for (const [name, build] of PAGES.filter(([n]) => n.startsWith('记录级明细'))) {
+    const html = build();
+    const cols = columnAligns(html);
+    assert.equal(cols.size, 8, name + ' 的八列表头没读全（读到 ' + cols.size + ' 列）');
+    for (const c of NUM) {
+      if (cols.get(c) !== 'right') { bad += 1; lines.push(name + ' 数值列「' + c + '」档=' + cols.get(c)); }
+    }
+    for (const c of TEXT) {
+      if (cols.get(c) !== 'left') { bad += 1; lines.push(name + ' 文字列「' + c + '」档=' + cols.get(c)); }
+    }
+    // 每一行的数值格都带同一档（不是只改表头、也不是只改一行）。
+    const rows = bodyRowCount(html);
+    const right = (html.match(/<td class="ilife-block-data-table-cell-right"/g) ?? []).length;
+    const left = (html.match(/<td class="ilife-block-data-table-cell-left"/g) ?? []).length;
+    lines.push('T523 COL ' + name.padEnd(18) + ' 数据行=' + rows + ' 数值格=' + right + '（期望 ' + rows * NUM.length
+      + '）文字格=' + left + '（期望 ' + rows * TEXT.length + '）');
+    if (right !== rows * NUM.length || left !== rows * TEXT.length) bad += 1;
+  }
+  for (const l of lines) console.log(l);
+  assert.equal(bad, 0, '有 ' + bad + ' 处列对齐不达标：数值列必须 cell-right（右对齐＋等宽＋tabular-nums，'
+    + '公共层 #507 那条数值列主次的唯一信号），文字列留 cell-left');
+});
+
+test('#523 ⑥ 分布条：类名轨不截断（本族页样式段放开 nowrap／ellipsis ＋ 窄屏两段式）', () => {
+  const html = buildExerciseDoc(summaryView());
+  const css = familyCss(html);
+  const nameDecl = cssRule(css, '.ilife-page .ilife-block-dist-row-name');
+  const rowDecl = cssRule(css, '.ilife-page .ilife-block-dist-row');
+  const narrow = cssRule(css, '.ilife-page .ilife-block-dist-row-bar');
+  console.log('T523 DIST 类名声明=' + nameDecl);
+  console.log('T523 DIST 轨声明=' + rowDecl.slice(0, 120));
+  // 公共层给的是 `minmax(0,6em)` ＋ `nowrap` ＋ `text-overflow:ellipsis`（超长类名被悄悄截断）。
+  assert.ok(!/white-space:\s*nowrap/.test(nameDecl), '分布条类名轨仍是 nowrap（长类名会被截断）：' + nameDecl);
+  assert.ok(/white-space:\s*normal/.test(nameDecl), '分布条类名轨没放开换行：' + nameDecl);
+  assert.ok(/text-overflow:\s*clip/.test(nameDecl), '分布条类名轨没关掉省略号截断：' + nameDecl);
+  assert.ok(/overflow:\s*visible/.test(nameDecl), '分布条类名轨仍按 `overflow:hidden` 裁字：' + nameDecl);
+  assert.ok(!/6em/.test(rowDecl), '分布条类名轨仍钉在 6em（容不下「把手式蝴蝶机飞鸟」这类全称）：' + rowDecl);
+  // 窄屏（820）两段式：类名独占一行、条与数值第二行。
+  assert.ok(/grid-row:\s*2/.test(narrow), '窄屏分布条没有两段式（条不在第二行）：' + narrow);
+});
+
+/* ───────────────────────── 四、变异自证（改坏必红／还原必绿） ───────────────────────── */
 test('#523 变异：塞回一处 `·` 并列 ⇒ 守卫必红；还原 ⇒ 必绿', () => {
   const clean = buildExerciseDoc(summaryView());
   assert.equal(separatorHits(clean).length, 0, '原样产物应当零命中');
@@ -238,4 +322,40 @@ test('#523 变异：塞回一处 `·` 并列 ⇒ 守卫必红；还原 ⇒ 必�
   // 还原：逐文件还原（这里就是原样那一份）⇒ 必绿。
   assert.equal(separatorHits(clean).length, 0, '还原后守卫没绿');
   console.log('T523-MUT 塞`·`=' + h1.length + ' 处命中 塞`；`=' + h2.length + ' 处命中 还原=' + separatorHits(clean).length + ' 处命中');
+});
+
+test('#523 变异（R3 两处硬伤）：数值列改回 `left` ⇒ ⑤ 必红；类名轨改回 `6em+nowrap` ⇒ ⑥ 必红；还原 ⇒ 必绿', () => {
+  /** ⑤ 的判定（与上面那条同口径：四列在表头与每一行都必须是 `cell-right`）。 */
+  const numericOk = (html) => {
+    const cols = columnAligns(html);
+    return ['时长', '消耗', '距离', '心率'].every((c) => cols.get(c) === 'right')
+      && (html.match(/<td class="ilife-block-data-table-cell-right"/g) ?? []).length === bodyRowCount(html) * 4;
+  };
+  /** ⑥ 的判定（与上面那条同口径：类名轨放开换行、不再拿省略号裁字）。 */
+  const distOk = (html) => {
+    const decl = cssRule(familyCss(html), '.ilife-page .ilife-block-dist-row-name');
+    return /white-space:\s*normal/.test(decl) && !/nowrap/.test(decl) && /text-overflow:\s*clip/.test(decl);
+  };
+
+  const cleanRec = buildRecordsDoc(recordsView());
+  const cleanSum = buildExerciseDoc(summaryView());
+  assert.equal(numericOk(cleanRec), true, '原样产物：明细表数值列应当达标');
+  assert.equal(distOk(cleanSum), true, '原样产物：分布条类名轨应当达标');
+
+  // 变异①：数值列整列退回 `left`（视觉复评 R2 硬伤① 的原状）。
+  const mutA = cleanRec.replaceAll('ilife-block-data-table-cell-right', 'ilife-block-data-table-cell-left');
+  assert.notEqual(mutA, cleanRec, '变异①没塞进去（夹具变了）');
+  assert.equal(numericOk(mutA), false, '变异①：数值列改回 left 后守卫没红');
+
+  // 变异②：类名轨退回公共层原样（`6em` ＋ `nowrap` ＋ 省略号，视觉复评 R2 硬伤② 的原状）。
+  const mutB = cleanSum.replace(
+    '.ilife-page .ilife-block-dist-row-name{overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere}',
+    '.ilife-page .ilife-block-dist-row-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}');
+  assert.notEqual(mutB, cleanSum, '变异②没塞进去（夹具变了）');
+  assert.equal(distOk(mutB), false, '变异②：类名轨改回 6em＋nowrap 后守卫没红');
+
+  // 还原：原样那两份 ⇒ 必绿。
+  assert.equal(numericOk(cleanRec) && distOk(cleanSum), true, '还原后守卫没绿');
+  console.log('T523-MUT2 数值列改回left→' + numericOk(mutA) + ' 类名轨改回6em+nowrap→' + distOk(mutB)
+    + ' 还原→' + (numericOk(cleanRec) && distOk(cleanSum)));
 });
