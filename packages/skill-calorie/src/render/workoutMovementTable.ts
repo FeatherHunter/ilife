@@ -22,6 +22,7 @@
  * 在本仓已因对比度 3.62:1 被否，见 `base-render/src/blocks.ts` 的 `block-kpi-card-detail` 注释）。
  */
 import { escapeHtml } from 'base-paint';
+import { TYPE_ZH as TYPE_ZH_SRC } from '../workout/movementType.js';
 import { renderDataTable } from 'base-paint/blocks';
 import { PART_CLASS, PART_FALLBACK_CLASS } from './workoutPlanCss.js';
 import type { PlanMovement } from '../workout/planStore.js';
@@ -30,9 +31,9 @@ import type { PlanMovement } from '../workout/planStore.js';
  *  装配件 `./workoutPlanDocs.ts` 从这里取（别的族各写各的，不去碰）。 */
 export const DASH = '—';
 
-/** 类型中文化：库里取值域只有两种（生产库 264 个动作实测：`iso`×204、`main`×60），
- *  页面上不出现英文原值；清单外的值原样输出，不吞。 */
-const TYPE_ZH: Readonly<Record<string, string>> = { main: '主要', iso: '孤立' };
+/** 类型中文化：T351-v12 起住能力目录 `../workout/movementType.ts`（校验器的警告也要用同一份），
+ *  本件按原样转出——既有的调用方与判据不受影响。 */
+const TYPE_ZH = TYPE_ZH_SRC;
 
 /** 单元格文本：库里缺字段或空串写短横线。 */
 function cell(value: string | undefined): string {

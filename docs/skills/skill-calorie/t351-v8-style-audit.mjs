@@ -28,7 +28,10 @@ function visibleLines(html) {
   return body.split('\n').map((s) => s.trim()).filter(Boolean);
 }
 
-const files = readdirSync(DIR).filter((f) => /^order\d+-.*\.html$/.test(f)).sort();
+const files = readdirSync(DIR).filter((f) => /^order\d+-.*\.html$/.test(f)
+  // 也接受**自造用例**的文件名（空态／大号用例：`wizard-empty.html` 这种）——
+  // 那些路径 37 份夹具走不到，正是判据最该照到的地方。
+  || (/^[a-z][a-z0-9-]*\.html$/.test(f) && !f.includes('detail'))).sort();
 const rows = [];
 for (const f of files) {
   const html = readFileSync(join(DIR, f), 'utf8');

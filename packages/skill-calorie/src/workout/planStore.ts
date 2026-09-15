@@ -7,6 +7,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { dayPhrase } from './dayPhrase.js';
+import { typeZh } from './movementType.js';
 
 export const LEVEL_CONFIG: Record<string, { maxPerPartPerDay: number; maxPerPartPerWeek: number; restHours: number }> = {
   '新手': { maxPerPartPerDay: 6, maxPerPartPerWeek: 10, restHours: 72 },
@@ -89,6 +90,8 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
   }
   const partDates = new Map<string, Array<[number, number]>>();
   const partDaySets = new Map<string, Map<string, number>>();
+  /** 已计过的「部位｜周:日」（同一部位同一天只进 `partDates` 一次，见下面的注释）。 */
+  const seenPartDay = new Set<string>();
   for (const week of weeks) {
     const wn = week.week_number ?? 0;
     for (const day of week.days ?? []) {
@@ -105,8 +108,16 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
           if (!partDaySets.has(key)) partDaySets.set(key, new Map());
           const per = partDaySets.get(key) as Map<string, number>;
           per.set(p, (per.get(p) ?? 0) + (m.sets ?? []).length);
-          if (!partDates.has(p)) partDates.set(p, []);
-          (partDates.get(p) as Array<[number, number]>).push([wn, dow]);
+          // 同一部位**同一天只记一次**：这条规则问的是「两次练同一个部位之间歇够没有」，
+          // 不是「同一天同一个部位出现了几个动作」。原来逐动作 push，一堂课里 3 个腿部动作
+          // 就排出 3 条一模一样的 (周, 日)，自我比较得出「间隔仅 0 天（第 1 周 周一 → 第 1 周 周一）」
+          // ——页上印的是句废话（T351-v12 大号用例抓到）。
+          const seen = p + '|' + key;
+          if (!seenPartDay.has(seen)) {
+            seenPartDay.add(seen);
+            if (!partDates.has(p)) partDates.set(p, []);
+            (partDates.get(p) as Array<[number, number]>).push([wn, dow]);
+          }
         }
       }
     }
@@ -145,8 +156,9 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
       }
       for (const [p, types] of dayParts) {
         if (types.length >= 2 && types.every((t) => t === types[0])) {
+          // T351-v12：类型原值（`main`／`iso`）原来是原样印的，页上出英文；走类型中文名表。
           warnings.push(dayPhrase(Number(wn), Number(dow)) + ' 的「' + p
-            + '」只练了一种类型（' + types[0] + '），建议换换角度');
+            + '」只练了一种类型（' + typeZh(types[0]) + '），建议换换角度');
         }
       }
     }

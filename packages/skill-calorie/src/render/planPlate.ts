@@ -213,16 +213,20 @@ export interface WizardTree {
   readonly totals: { readonly weeks: number; readonly sessions: number; readonly movements: number };
 }
 
-/** 组（第 6 级）的一句话：同重复数写「3 组 × 12 次」，逐组不同写「2 组 × 8／10 次」；
- *  重量逐组同一写 `35kg`，逐组不同写 `30／35kg`；没有重量写「自重」。没有组写「—」。 */
+/** 组（第 6 级）的那句话：同重复数写「3 组 × 12 次」，逐组不同写「2 组 × 8／10 次」；
+ *  重量逐组同一写 `35kg`，逐组不同写 `30／35kg`；没有重量写「自重」。没有组写「—」。
+ *  **重量落成一颗小标签**（`ilw-tag`）：原来写成 `3 组 × 12 次 · 35kg`，那个 `·` 又是拿符号顶替设计
+ *  （负责人第 ⑤ 条）——组数×次数是一件事、负重是另一件事，两个元素各就各位。
+ *  这条只在**有 sets 的计划**上才看得见，37 份夹具的向导用例 sets 为空，故判据没走到（大号用例才暴露）。 */
 function setsPhrase(sets: readonly { reps: number; weight: number; unit: string }[] | undefined): string {
   if (sets === undefined || sets.length === 0) return '—';
   const reps = [...new Set(sets.map((s) => s.reps))];
   const weights = [...new Set(sets.map((s) => s.weight))];
   const load = weights.some((w) => w > 0)
     ? weights.join('／') + (sets[0].unit ?? 'kg')
-    : (sets[0].unit === '自重' ? '自重' : '—');
-  return sets.length + ' 组 × ' + reps.join('／') + ' 次 · ' + load;
+    : (sets[0].unit === '自重' ? '自重' : '');
+  const counts = sets.length + ' 组 × ' + reps.join('／') + ' 次';
+  return load === '' ? counts : counts + ' <span class="ilw-tag">' + load + '</span>';
 }
 
 /** 输入计划 → 时间线（纯映射，不触库、不校验；校验归 `validatePlan`）。 */
