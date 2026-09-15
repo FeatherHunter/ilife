@@ -154,7 +154,7 @@ export function installmentPreview(input: InstallmentInput): string {
   const head = folded ? shares.slice(0, HEAD_PERIODS) : shares;
   const rest = folded ? shares.slice(HEAD_PERIODS) : [];
   const parts = [renderCaliberLine(
-    '每期＝总价 ÷ 期数，四舍五入到分；尾差对齐到最后一期（末期＝总价 − 每期 × (期数 − 1)），'
+    '每期＝总价 ÷ 期数，四舍五入到分。尾差对齐到最后一期（末期＝总价 − 每期 × (期数 − 1)），'
     + '故合计逐分等于总价：' + yuan(total) + '（' + periods + ' 期）。',
   )];
   parts.push(shareTable(head, folded

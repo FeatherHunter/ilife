@@ -139,7 +139,7 @@ function collectOf(input: CollectInput): string {
     }),
     summaryRow(factsOf(row, params)),
     renderCaliberLine(SOFT_DELETE_NOTE),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；挑好记录后跟助手说一遍才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。挑好记录后跟助手说一遍才会写。'),
     blockedBar({ items: blocked, command: blockedCommand(params, blocked) }),
     middle.join(''),
     promptCopyArea(promptOf({ id, deleted, params }), '挑好记录后照这句跟助手说一遍'),
@@ -218,7 +218,7 @@ function receiptOf(input: ReceiptInput): string {
     renderCaliberLine(SOFT_DELETE_NOTE),
     rows.length === 0
       ? renderDataTable({
-        columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+        columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
         rows: [
           { k: fieldLabelOf('deleted_at'), v: '已打上（本页再读时已看不到这一条）' },
           { k: '撤销后能不能找回来', v: '能：点「恢复」把它找回来' },
@@ -227,7 +227,7 @@ function receiptOf(input: ReceiptInput): string {
       })
       : diffTable({ rows, caption: '改前改后对照（撤销只动「撤销标记」这一项）' }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

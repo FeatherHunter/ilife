@@ -90,7 +90,7 @@ function collectIncome(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf('income') }),
     }),
     summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；补齐之后跟助手说一遍才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
     renderCaliberLine('方向口径：收入取正数——金额符号即方向；给成负数会被拦在这一页，不进写库那一步。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     prefillNote(marks),
@@ -101,8 +101,8 @@ function collectIncome(input: CollectInput): string {
     }),
     empties.join(''),
     fieldCardOf({
-      description: '填好必需项再说一遍；这一页先不写库。分类要选到最细那一级'
-        + '（收入侧一级名目：工资／奖金／兼职／投资／其他收入／退款）；金额取正数。',
+      description: '填好必需项再说一遍。这一页先不写库。分类要选到最细那一级'
+        + '（收入侧一级名目：工资／奖金／兼职／投资／其他收入／退款）。金额取正数。',
       slots: input.slots,
       params,
       marks,
@@ -160,7 +160,7 @@ function receiptIncome(input: ReceiptInput): string {
       + '本页的字段与值都取自库内那一行，不是拿参数顶的。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

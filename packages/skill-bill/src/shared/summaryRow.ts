@@ -18,7 +18,7 @@
  *  ＋ `renderCaliberLine`）。三级分类的一级取自 `src/policy/category.ts` 的 `l1Of`（分类口径的唯一真相源），
  *  本件不另写一份 L1 名单。
  */
-import { renderCaliberLine, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderChips, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import { DEFAULT_TIME_SUFFIX, l1Of } from '../policy/category.js';
 
@@ -88,8 +88,12 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
   ];
 }
 
-/** 结论摘要行：那张网格 ＋ 一行口径。 */
+/** 结论摘要行：那张网格 ＋ 方向两枚胶囊 ＋ 分类一行口径。
+ *  R3 改形状：原先一句 `支出的金额记成负数、收入记成正数；分类要选到最细那一级。`
+ *  拿顿号分方向、用分号缀分类，三件事挤一句（采集 10 页同句）。现拆三枚独立形状：
+ *  方向两条各一枚胶囊（分行并列），分类单独一行口径；不再用连接符串版式。 */
 export function summaryRow(facts: SummaryFacts): string {
   return renderKpiGrid(summaryCards(facts))
-    + renderCaliberLine('支出的金额记成负数、收入记成正数；分类要选到最细那一级。');
+    + renderChips({ items: [{ text: '支出记负数' }, { text: '收入记正数' }] })
+    + renderCaliberLine('分类要选到最细那一级。');
 }

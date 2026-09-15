@@ -55,7 +55,8 @@ function caliberOf(kind: string): string {
   return '分类按三级挂靠';
 }
 
-/** 类型徽章：唤醒词标签 ＋ 这一页的口径 ＋ 页面状态徽章 ＋ 下一步动作。四枚形状各自独立，不拼分隔符串。 */
+/** 类型徽章：唤醒词标签 ＋ 这一页的口径 ＋ 页面状态徽章 ＋ 下一步动作。四枚形状各自独立，不拼分隔符串。
+ *  R3 分行：下一步动作那句按整句拆行（句号断开），一句一行口径；单句页仍只出一行，形状不变。 */
 export function typeBadge(input: TypeBadgeInput): string {
   const kind = typeof input.kind === 'string' ? input.kind : '';
   const state = statusNoteOf(input.state);
@@ -63,6 +64,10 @@ export function typeBadge(input: TypeBadgeInput): string {
     renderChips({ items: [{ text: wakeWordOf(kind) + '　' + caliberOf(kind) }] }),
     renderStatusBadge(state === '' ? { status: input.status } : { status: input.status, text: state }),
   ];
-  if (input.next.trim() !== '') parts.push(renderCaliberLine(input.next));
+  const next = input.next.trim();
+  if (next !== '') {
+    const lines = next.split('。').map((s) => s.trim()).filter((s) => s !== '');
+    for (const line of lines) parts.push(renderCaliberLine(line + '。'));
+  }
   return parts.join('');
 }

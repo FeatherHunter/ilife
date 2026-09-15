@@ -121,7 +121,8 @@ function collectPage(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('分期先定期数与总额，再按每期金额与日期逐期落库；尾差对齐到最后一期，合计逐分等于总价。'),
+    renderCaliberLine('分期先定期数与总额，再按每期金额与日期逐期落库。')
+      + renderCaliberLine('尾差对齐到最后一期，合计逐分等于总价。'),
     renderKpiGrid([
       { label: '总额', value: total === '' ? '未给' : total, detail: '这一笔总价（摊的就是它）' },
       { label: '期数', value: periods === '' ? '未给' : periods + ' 期', detail: shares.length === 0 ? '三样齐了才摊得出' : '每期日期＝每月同日，没有那一天就回退月末' },
@@ -200,8 +201,8 @@ function receiptPage(input: ReceiptInput): string {
       msg: '分期角标：这一笔按 ' + (periods || '未给') + ' 期摊',
       lines: [
         '总额 ' + (total || '未给') + '，尾差对齐到最后一期，合计逐分等于总价。',
-        '每期日期＝每月同日；该月没有那一天就回退到月末。',
-        '撤销走本页退出口；改期数走「改记录」带新的总额与期数重算。',
+        '每期日期＝每月同日。该月没有那一天就回退到月末。',
+        '撤销走本页退出口。改期数走「改记录」，带新的总额与期数重算。',
       ],
       badge: { text: '分期角标', type: 'ok' },
     }),
@@ -209,7 +210,7 @@ function receiptPage(input: ReceiptInput): string {
       ? renderCaliberLine(preview.err === '' ? '分摊预览：这次写库没带总额／期数／首期日，摊不出来（那一笔仍已落库）。' : '分摊没算出来：' + preview.err)
       : preview.html,
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

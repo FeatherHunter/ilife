@@ -115,7 +115,7 @@ function collectPhoto(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；三要素补齐后跟助手说一遍才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。三要素补齐后跟助手说一遍才会写。'),
     renderCaliberLine('识别口径：图片识别在本仓之外办——本仓不装识别引擎，也不做上传控件；'
       + '页上只给三要素文字填空，缺哪样报哪样。'),
     imageNote(scale),
@@ -130,7 +130,7 @@ function collectPhoto(input: CollectInput): string {
     }),
     fieldCardOf({
       description: '文字三要素填空：金额、分类、时间。分类要选到最细那一级'
-        + '（如 餐饮/外卖/午餐）；金额带符号，支出为负、收入为正；时间是账单上的日期。',
+        + '（如 餐饮/外卖/午餐）。金额带符号，支出为负、收入为正。时间是账单上的日期。',
       slots: ESCAPE_SLOTS,
       params,
       marks,
@@ -188,7 +188,7 @@ function receiptPhoto(input: ReceiptInput): string {
       + '本页的字段与值都取自库内那一行，不是拿参数顶的。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

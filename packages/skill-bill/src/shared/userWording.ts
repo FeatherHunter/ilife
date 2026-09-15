@@ -60,7 +60,7 @@ const WAKE_WORDS: Readonly<Record<string, string>> = {
   plain: '记一笔',
 };
 
-/** ③ 内部状态串 → 用户说法。键逐字取自页面现状（`docs/skills/skill-bill/t407-机审读数.md` 第三节的原文）。
+/** ③ 内部状态串 → 用户说法。表里的名字逐字取自页面现状（`docs/skills/skill-bill/t407-机审读数.md` 第三节的原文）。
  *  撤销／恢复两态照上级口径逐字：`deleted_at＝now` →「已撤销，记录还在，随时可恢复」、
  *  置 NULL →「已恢复」；「本仓尚未定额的型」→「分类按三级挂靠」（人话，不隐藏）。 */
 const STATUS_NOTES: Readonly<Record<string, string>> = {
@@ -118,7 +118,10 @@ export function badgeTextOf(text: string): string {
  *   - `missing > 0`：还差 `missing` 项，补齐了再说一遍唤醒词（`wakeWord` 为空串＝不点唤醒词，只剩前半句）；
  *   - 采集页（`page: 'collect'`）不缺项：核一眼就可以照着下面那句复制；
  *   - 回执页（`page: 'receipt'`）：这一笔已经记下了，不用再做什么；
- *   - 回执页带 `exit`：还想反悔就用下面那颗「撤销这一笔」。 */
+ *   - 回执页带 `exit`：还想反悔就用下面那颗「撤销这一笔」。
+ *  R3 改形状：回执带退出口那档原先一句拿分号串两件事
+ *  （`…不用再做什么；要反悔就点下面的「撤销这一笔」。`，回执 7 页同句）。
+ *  现写成两句整句（句号断开），由 `typeBadge` 按句分行各出一行口径；不再用分号串版式。 */
 export function nextStepOf(input: {
   readonly page: 'collect' | 'receipt';
   readonly missing?: number;
@@ -131,6 +134,6 @@ export function nextStepOf(input: {
     return '还差 ' + n + ' 项：补齐了' + word + '。';
   }
   if (input.page === 'collect') return '这一页先不写库；看准了就照下面那句复制。';
-  if (input.exit === true) return '这一笔已经记下了，不用再做什么；要反悔就点下面的「撤销这一笔」。';
+  if (input.exit === true) return '这一笔已经记下了，不用再做什么。要反悔就点下面的「撤销这一笔」。';
   return '这一笔已经记下了，不用再做什么。';
 }

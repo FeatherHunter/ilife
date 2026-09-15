@@ -150,7 +150,7 @@ function collectOf(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: WAKE }),
     }),
     summaryRow(factsOf(row, params)),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；核对无误后跟助手说一遍才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。核对无误后跟助手说一遍才会写。'),
     blockedBar({ items: blocked, command: blockedCommand(params, blocked) }),
     middle.join(''),
     promptCopyArea(promptOf({ id, row, deleted, blocked, params }), '挑好记录后照这句跟助手说一遍'),
@@ -207,7 +207,7 @@ function receiptOf(input: ReceiptInput): string {
     ]),
     renderCaliberLine('改前改后的对照落在写库前那一面：确认页上有原值与新值两栏；这一页只报写后的真值。'),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

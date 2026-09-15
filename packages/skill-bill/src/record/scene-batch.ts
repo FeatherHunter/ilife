@@ -130,7 +130,7 @@ function collectOf(input: CollectInput): string {
     renderCaliberLine('本批现阶段单笔化：一次只落一笔，表里一屏 ' + rows.length + ' 行、逐行可编辑。'
       + '多行待接：这一页会把一屏里的多行都铺出来给你改，但「一屏多行一次落库」这一段还没接，'
       + '眼下一次只落一笔——要落多笔，就按行一笔一笔再说一遍（说的时候只带那一行要的值）。'),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；补齐之后跟助手说一遍才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
     blockedBar({ items: blocked, command: blockedCommand(key, params, blocked) }),
     rowEditorTable({
       name: 'batch',
@@ -198,7 +198,7 @@ function receiptOf(input: ReceiptInput): string {
     ]),
     renderCaliberLine('这一批一次只落下面这一笔（回执里的编号就是它）；下一笔再说一遍。'),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

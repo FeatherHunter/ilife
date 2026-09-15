@@ -36,8 +36,9 @@ const KEY = 'bill.record.update';
 
 /** 「把标记清掉」那句说明（采集页与回执页各出一处，同一句话只写在这里一份）。
  *  本轮整改：`deleted_at`／`NULL` 是工程话，换成用户说法（照 `docs/skills/skill-bill/t407-文字审查.md` 第 29 条）。 */
-const RESTORE_NOTE = '恢复就是把「已撤销」这个标记清掉：这一笔回到查询和统计里；'
-  + '这一格只列已经撤销过的记录，没撤销过的不进来。';
+const RESTORE_NOTE = '恢复就是把「已撤销」这个标记清掉。'
+  + '这一笔回到查询和统计里。';
+const RESTORE_SCOPE = '这一格只列已经撤销过的记录，没撤销过的不进来。';
 
 /** 一个值的字符串形态（数字写十进制串，其余形态按空串用）。 */
 function textOf(v: unknown): string {
@@ -140,8 +141,8 @@ function collectOf(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: WAKE }),
     }),
     summaryRow(factsOf(row, params)),
-    renderCaliberLine(RESTORE_NOTE),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；挑好记录后跟助手说一遍才会写。'),
+    renderCaliberLine(RESTORE_NOTE) + renderCaliberLine(RESTORE_SCOPE),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。挑好记录后跟助手说一遍才会写。'),
     blockedBar({ items: blocked, command: blockedCommand(params, blocked) }),
     middle.join(''),
     promptCopyArea(promptOf({ id, deleted, params }), '挑好记录后照这句跟助手说一遍'),
@@ -200,9 +201,9 @@ function receiptOf(input: ReceiptInput): string {
         detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
-    renderCaliberLine(RESTORE_NOTE),
+    renderCaliberLine(RESTORE_NOTE) + renderCaliberLine(RESTORE_SCOPE),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: [
         { k: fieldLabelOf('id'), v: receipt.recordId === null ? '还没有' : String(receipt.recordId) },
         {
@@ -216,7 +217,7 @@ function receiptOf(input: ReceiptInput): string {
       caption: '恢复结果',
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

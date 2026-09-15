@@ -70,10 +70,10 @@ function candidatesOf(recent: CollectInput['recent'], amount: number | null): Ca
     const same = amount !== null && Math.abs(r.amount + amount) <= 0.005;
     out.push({
       id: r.id,
-      label: r.category + (r.note === '' ? '' : ' · ' + r.note.replace(/#/g, '')),
+      label: r.category + (r.note === '' ? '' : '　' + r.note.replace(/#/g, '')),
       amount: money2(r.amount),
       time: r.time,
-      why: same ? '金额一致（' + money2(-r.amount) + ' 对得上这笔退款额）' : '同分类近邻 · 金额与本笔不符',
+      why: same ? '金额一致（' + money2(-r.amount) + ' 对得上这笔退款额）' : '同分类近邻，金额与本笔不符',
     });
     if (out.length >= CAND_MAX) break;
   }
@@ -133,7 +133,7 @@ function collectPage(input: CollectInput): string {
         value: original === null ? '未认准' : money2(original.amount),
         detail: original === null
           ? (source === null ? '还没认准是哪一笔（候选里点一行）' : '#' + source + '（近期记录里没读到原支出）')
-          : '#' + source + ' · ' + original.category + ' · ' + original.time,
+          : '#' + source + '　' + original.category + '　' + original.time,
       },
       {
         label: '净差',
@@ -152,7 +152,7 @@ function collectPage(input: CollectInput): string {
       steps: [
         {
           title: '原记账',
-          note: '退的是哪一笔：从候选里挑一行；候选只列金额为负的记录，每条给一句「为什么是它」。',
+          note: '退的是哪一笔：从候选里挑一行。候选只列金额为负的记录，每条给一句「为什么是它」。',
           done: source !== null,
           state: source === null ? '还没认准是哪一笔' : '已认准 #' + source,
           html: candidatePick({
@@ -240,7 +240,7 @@ function receiptPage(input: ReceiptInput): string {
       badge: { text: '标签流转', type: 'ok' },
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

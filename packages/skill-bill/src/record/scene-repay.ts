@@ -239,7 +239,7 @@ function receiptPage(input: ReceiptInput): string {
       },
     ]),
     renderToast({
-      msg: '借贷标签流转：这一笔打 ' + TAG_REPAY + '，原记录 ' + TAG_UNPAID + ' → ' + TAG_PAID,
+      msg: '标签流转：这一笔打 ' + TAG_REPAY + '，原记录换成 ' + TAG_PAID,
       lines: [
         '这一笔记在「' + CATEGORY + '」，金额 ' + money2(input.facts.amount) + '（支出记负数）',
         source === null
@@ -250,7 +250,7 @@ function receiptPage(input: ReceiptInput): string {
       badge: { text: '标签流转', type: 'ok' },
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),
