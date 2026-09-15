@@ -267,15 +267,23 @@ test('#519 ⑧ 图表读数纪律：无逐点数值标签 ＋ 折线横轴等距
   assert.ok(lineCharts >= 6, '夹具里的折线图太少（本判据会变空转）：' + lineCharts);
 });
 
-/* ── #519 W5 · 长序列的**几何**判据（D4 的本体：标签外框会不会相交） ────────────────
+/* ── #519 W6 · 长序列的**几何**判据（D4 的本体：标签外框会不会相交） ───────────────
  *
- *  合成夹具只有 3 个点，量不出「30 天的横轴会怎样」——而那正是页 28 出事的场景
- *  （改前 x=58.0 与 x=75.5 只隔 17.5 用户单位，11px 标签宽约 34 单位 ⇒ 相交）。
- *  本件用**真的 30 天序列**直调装配件，判据是几何的：
- *    · 横轴刻度数 ≥ 3 且 ≤ 12（降采样上限是活的）；
- *    · 相邻间距 ≥ 标签宽（5 字符 × fontSize 11 × 0.62 ≈ 34 用户单位）——**这就是「外框不相交」**；
- *    · 且间距彼此相等（等距，极差 < 1 单位）。 */
-test('#519 ⑨ 30 天长序列的横轴几何：等距 ＋ 相邻标签外框不相交（D4）', () => {
+ *  门槛常量怎么来的（**这一步是本条的要害**）：W5 那次用 `5 × 11 × 0.62 ≈ 34.15` 用户单位**估算**，
+ *  而公共层折线图的 x 标签字号**按断点换档**（≤720px 走 `LINE_TEXT_MOBILE.*`）⇒ 那个常量既不是
+ *  1440 档真值也不是 390 档真值，于是「不相交」这条断言**在最窄档恒绿**，而页 24／26／28／30 在
+ *  390／512 档**每页 11/11 相邻对都相交**（复核席 S2-2 抓到的正是这条）。
+ *
+ *  现门槛＝**真渲染实测的最坏值**，来源 `.scratch/t519/W6-geom-before.json`（headless Chrome ＋ CDP，
+ *  `getBBox()` 用户单位）：390 档标签宽 **53.91～54.90**、512 档 **53.91～54.12**、820 档 34.45～34.82、
+ *  1440 档 30.01～30.30 ⇒ 按**最坏档（390）**取 **54.90** 用户单位，并要求相邻锚点间距 ≥ 它。
+ *  为什么用「锚点间距」而不是「外框间距」：同一张图的标签锚点差＝绘图宽 ÷ (点数−1)，
+ *  在**产物文本**里就能算出来（`x` 属性），而外框宽的断点档只有真渲染量得到——
+ *  所以定档在**源码常量**上收紧、识别力在真渲染探针上复验，两头都不靠估算。
+ *  定档值 9 的推导（484 ÷ (9−1) = 60.5 ≥ 54.90，见 `reportDocParts.ts` 的件头表）。 */
+const LABEL_W_USER_WORST = 54.90;
+
+test('#519 ⑨ 30 天长序列的横轴几何：等距 ＋ 刻间距 ≥ **实测**最窄档标签宽（D4／S2-2）', () => {
   const points = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(Date.parse('2026-08-17T12:00:00Z') + i * 86400000);
     return { date: d.toISOString().slice(0, 10), value: 1800 + (i % 3) * 200 };
@@ -289,11 +297,41 @@ test('#519 ⑨ 30 天长序列的横轴几何：等距 ＋ 相邻标签外框不
   assert.equal(charts[0].match(/<text class="ilife-charts-value"/g)?.length ?? 0, 0, '图里出现逐点数值标签（会互压）');
   const xs = [...charts[0].matchAll(/<text class="ilife-charts-xlabel" x="([-\d.]+)"/g)].map((m) => Number(m[1]));
   assert.ok(xs.length >= 3, '横轴刻度少于 3 枚（读不出中段参照）：' + xs.length);
-  assert.ok(xs.length <= 12, '横轴刻度超过 12 枚（降采样上限失效）：' + xs.length);
+  assert.ok(xs.length <= 9, '横轴刻度超过定档枚数 9（最窄档必相交）：' + xs.length);
   const gaps = xs.slice(1).map((x, i) => x - xs[i]);
-  const LABEL_W = 5 * 11 * 0.62;   // 「08-17」5 字符 × 字号 11 用户单位 × 0.62 字宽比
-  assert.ok(Math.min(...gaps) >= LABEL_W,
-    '相邻横轴标签外框相交：最小间距 ' + Math.min(...gaps).toFixed(1) + ' < 标签宽 ' + LABEL_W.toFixed(1)
-    + '（改前页 28 就是 17.5 < 34）');
+  assert.ok(Math.min(...gaps) >= LABEL_W_USER_WORST,
+    '相邻横轴标签外框相交：刻间距 ' + Math.min(...gaps).toFixed(1) + ' < 实测最窄档标签宽 ' + LABEL_W_USER_WORST
+    + '（改前页 28 在 390 档是 46.1 vs 54.9 ⇒ 11/11 相交、最大重叠 4.98px）');
   assert.ok(Math.max(...gaps) - Math.min(...gaps) < 1, '横轴刻度不等距：' + JSON.stringify(gaps.map((g) => Math.round(g * 10) / 10)));
+});
+
+/* ── #519 W6 · y 轴刻度值（复核席实测盲区：**没有任何测试读 `ilife-charts-tick`**） ──────
+ *
+ *  两条判据：
+ *   ① **同一张图三个刻度的小数位数必须一致**——改前页 26 是 `1516／1614.5／1720`（外刻度整数、中刻度一位小数）。
+ *   ② 整数语义的图（卡路里／毫升／分／天数）**三个刻度都必须是整数**。
+ *  夹具专挑「去掉取整守卫就会退化成 .5」的那一档：`[100, 201]` ⇒ pad = 12.12 ⇒ 87／214（差 127，奇数）
+ *  ⇒ 无守卫时中刻度 = 150.5；有守卫时 yMax 抬到 215、中刻度 = 151。 */
+test('#519 ⑩ y 轴刻度值：同图小数位一致 ＋ 整数语义的图全为整数（D7／S2-2 盲区）', () => {
+  const tickKind = (html) => [...html.matchAll(/<text class="ilife-charts-tick"[^>]*>([^<]*)</g)].map((m) => m[1]);
+  const decimals = (s) => (s.includes('.') ? s.split('.')[1].length : 0);
+  for (const [kind, html] of Object.entries(built)) {
+    const ticks = tickKind(html);
+    if (ticks.length === 0) continue;
+    assert.equal(ticks.length % 3, 0, KIND_LABELS[kind] + ' 的 y 刻度不是三的倍数（每图 3 条）：' + JSON.stringify(ticks));
+    for (let i = 0; i < ticks.length; i += 3) {
+      const three = ticks.slice(i, i + 3);
+      const ds = three.map(decimals);
+      assert.equal(new Set(ds).size, 1,
+        KIND_LABELS[kind] + ' 同一张图的 y 刻度小数位不一致（D7：外刻度整数、中刻度带小数）：' + JSON.stringify(three));
+    }
+  }
+  // ② 专挑「去掉取整守卫即退化成 .5」的序列
+  const odd = buildReportDoc(plateOf('water', {
+    points: [{ date: '2026-08-17', value: 100 }, { date: '2026-08-18', value: 201 }],
+    target: null, fourPiece: { avg: 150, target: null, hitDays: 0, loggedDays: 2, hitRate: null },
+  }), '');
+  const oddTicks = tickKind(odd);
+  assert.equal(oddTicks.length, 3, '那张图应当有 3 条 y 刻度，实得 ' + JSON.stringify(oddTicks));
+  for (const t of oddTicks) assert.ok(/^-?\d+$/.test(t), '整数语义的图出现非整数刻度（取整守卫失效）：' + JSON.stringify(oddTicks));
 });
