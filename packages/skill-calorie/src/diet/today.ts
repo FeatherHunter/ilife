@@ -46,7 +46,7 @@ export function viewToday(params: Record<string, unknown>, db: DatabaseSync): Vi
   const dist = buildMealDistribution(db, date);
   // #108 · 今日饮食全文档（餐次进度＋营养配比＋今日明细；配比无数据即 skip，不编数）。
   const mt = dietMacroRatio(db, date, date);
-  return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null, hasNote: hasNote === true }) };
+  return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null, hasNote: hasNote === true, command: commandLine('calorie.today', params) }) };
 }
 
 /** `calorie.view.today-water` · 今日饮水。 */
