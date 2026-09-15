@@ -31,6 +31,12 @@ const NL = String.fromCharCode(10);
 
 /** 规则拼装（每条一行，便于台账与 diff 读）。 */
 const RULES: readonly string[] = [
+  /* ── 正文列宽：宽屏不让一行跑满整块壳 ───────────────────────────────────
+   *  实测：1280 档壳给正文列 960px（每行约 70 个汉字），读起来要来回找行首。
+   *  本页把**正文列**收到 880px 并居中（只用一行，是「可读行长」这一件事的最小改动；
+   *  页面壳与外层留白不动——那是整页装配（`docPage`／`pageShell`）的口径，本票不动它）。 */
+  '.ilife-block-page-shell-body{max-width:880px;margin-left:auto;margin-right:auto}',
+
   /* ── 页内目录：触摸区在**所有**档都 ≥44px（#524 基准点名的「触摸目标 40px」正是本页 1440 档
    *    的目录链接实测 33.5px；pageUi 只管 820 档以下，故 44px 下限由本页自己钉住） ── */
   '.ilife-helpdoc-nav .ilife-block-toc{margin:16px 0}',
