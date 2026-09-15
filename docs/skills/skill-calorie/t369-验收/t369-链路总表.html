@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>场景08 链路总表：prompt → 唤醒词 → 命令 → HTML（13 条全通，无遗漏）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f;padding:24px 20px 60px}
+h1{font-size:22px;margin-bottom:6px}
+.sub{color:#6e6e73;font-size:13.5px;margin-bottom:16px;line-height:1.7}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}
+th,td{border:1px solid #d2d2d7;padding:8px 10px;vertical-align:top;text-align:left}
+th{background:#f5f5f7}
+td code{font-size:12px;word-break:break-all}
+td a{color:#007aff;word-break:break-all}
+.dim{color:#86868b;font-size:12px}
+details{margin-top:6px}summary{cursor:pointer;color:#007aff;font-size:12.5px}
+pre{white-space:pre-wrap;font-size:12px;background:#f5f5f7;padding:8px;border-radius:8px;margin-top:6px}
+</style></head><body>
+<h1>场景08 链路总表：prompt → 唤醒词 → 命令 → HTML</h1>
+<div class="sub">13 条唤醒词全部跑通，无遗漏。点 <b>HTML 绝对路径</b> 即在新标签打开那份产物（与本页同目录）。过程型 5 页只出现在 5 条写词行。产物目录：<code>D:\ilife\docs\skills\skill-calorie\t369-验收</code></div>
+<table><thead><tr><th>序</th><th>用户意图＋完整 prompt（点展开）</th><th>唤醒词</th><th>命令</th><th>结果型 HTML 绝对路径</th><th>过程型 HTML 绝对路径</th></tr></thead>
+<tbody>
+<tr>
+<td>01</td>
+<td>我想用手持皮褶钳测 7 点并自动算体脂率存档<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「记体脂（皮褶钳）」。
+
+我用皮褶钳测了 7 点(胸/腹/大腿/三头/肩胛下/髂上/腋中 mm),请按 Jackson-Pollock 7 点法帮我算体脂率并记录。如果我没说性别/年龄,请先问我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+7 点皮褶厚度(mm):
+胸:____
+腹:____
+大腿:____
+三头:____
+肩胛下:____
+髂上:____
+腋中:____
+性别(男/女):____
+年龄:____</pre></details></td>
+<td><b>记体脂（皮褶钳）</b></td>
+<td><code>calorie-cmd-read calorie.body.composition-add</code></td>
+<td><a href="01-记体脂-皮褶钳.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\01-记体脂-皮褶钳.html</a><br><span class="dim">exit=0 · 86KB · 整页 ✓</span></td>
+<td><a href="01-过程-calorie.view.composition-wizard.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\01-过程-calorie.view.composition-wizard.html</a><br><span class="dim">写前预检确认页（过程型）</span></td>
+</tr>
+<tr>
+<td>02</td>
+<td>我想记录外部设备(健身房/医院)测的体脂率<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「记体脂（外部测量）」。
+
+我用外部设备(健身房 InBody/医院/其他)测了体脂率,请帮我记录体脂率和来源、日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+体脂率(%):____
+来源(健身房/医院/其他):____
+日期:____</pre></details></td>
+<td><b>记体脂（外部测量）</b></td>
+<td><code>calorie-cmd-read calorie.body.composition-add</code></td>
+<td><a href="02-记体脂-外部测量.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\02-记体脂-外部测量.html</a><br><span class="dim">exit=0 · 86KB · 整页 ✓</span></td>
+<td><a href="02-过程-calorie.view.composition-wizard.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\02-过程-calorie.view.composition-wizard.html</a><br><span class="dim">写前预检确认页（过程型）</span></td>
+</tr>
+<tr>
+<td>03</td>
+<td>我想记录身体围度(13 项,可部分填写)<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「记围度」。
+
+我量了身体围度,请帮我记录 13 项围度(胸/腰/腹/臀/肩/大腿/小腿/手臂/前臂,左+右),量了哪项填哪项,没量的留空。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+胸围(cm):____
+腰围(cm):____
+腹围(cm):____
+臀围(cm):____
+肩围(cm):____
+左大腿(cm):____
+右大腿(cm):____
+左小腿(cm):____
+右小腿(cm):____
+左上臂(cm):____
+右上臂(cm):____
+左前臂(cm):____
+右前臂(cm):____</pre></details></td>
+<td><b>记围度</b></td>
+<td><code>calorie-cmd-read calorie.body.measure-add</code></td>
+<td><a href="03-记围度.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\03-记围度.html</a><br><span class="dim">exit=0 · 82KB · 整页 ✓</span></td>
+<td><a href="03-过程-calorie.view.measure-wizard.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\03-过程-calorie.view.measure-wizard.html</a><br><span class="dim">写前预检确认页（过程型）</span></td>
+</tr>
+<tr>
+<td>04</td>
+<td>我想补录过去某天的体脂测量<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「补记体脂」。
+
+我要补录之前某天的体脂测量(不是今天的)。如果那天已有记录,请先告诉我冲突再确认。补完后可以问我还要不要补其他日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+体脂率(%):____
+来源(皮褶钳/健身房/医院/其他):____
+日期:____</pre></details></td>
+<td><b>补记体脂</b></td>
+<td><code>calorie-cmd-read calorie.body.composition-add</code></td>
+<td><a href="04-补记体脂.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\04-补记体脂.html</a><br><span class="dim">exit=0 · 84KB · 整页 ✓</span></td>
+<td><a href="04-过程-calorie.view.composition-wizard.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\04-过程-calorie.view.composition-wizard.html</a><br><span class="dim">写前预检确认页（过程型）</span></td>
+</tr>
+<tr>
+<td>05</td>
+<td>我想补录过去某天的围度测量<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「补记围度」。
+
+我要补录之前某天的围度测量(不是今天的)。如果那天已有记录,请先告诉我冲突再确认。补完后可以问我还要不要补其他日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+各围度(cm,量了哪项填哪项):
+胸围:____
+腰围:____
+腹围:____
+臀围:____
+肩围:____
+左大腿:____
+右大腿:____
+左小腿:____
+右小腿:____
+左上臂:____
+右上臂:____
+左前臂:____
+右前臂:____
+日期:____</pre></details></td>
+<td><b>补记围度</b></td>
+<td><code>calorie-cmd-read calorie.body.measure-add</code></td>
+<td><a href="05-补记围度.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\05-补记围度.html</a><br><span class="dim">exit=0 · 87KB · 整页 ✓</span></td>
+<td><a href="05-过程-calorie.view.measure-wizard.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\05-过程-calorie.view.measure-wizard.html</a><br><span class="dim">写前预检确认页（过程型）</span></td>
+</tr>
+<tr>
+<td>06</td>
+<td>我想看历史体脂记录并可按来源筛选<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「看体脂」。
+
+我想看历史体脂记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></details></td>
+<td><b>看体脂</b></td>
+<td><code>calorie-cmd-read calorie.view.body-composition</code></td>
+<td><a href="06-看体脂.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\06-看体脂.html</a><br><span class="dim">exit=0 · 103KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+<tr>
+<td>07</td>
+<td>我想看体脂率趋势(默认最近来源,可切换)<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「看体脂趋势」。
+
+我想看体脂率趋势,默认用我最近用的来源,也可以切换来源。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></details></td>
+<td><b>看体脂趋势</b></td>
+<td><code>calorie-cmd-read calorie.view.body-composition</code></td>
+<td><a href="07-看体脂趋势.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\07-看体脂趋势.html</a><br><span class="dim">exit=0 · 101KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+<tr>
+<td>08</td>
+<td>我想看历史围度记录并可按部位筛选<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「看围度」。
+
+我想看历史围度记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></details></td>
+<td><b>看围度</b></td>
+<td><code>calorie-cmd-read calorie.view.body-measure</code></td>
+<td><a href="08-看围度.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\08-看围度.html</a><br><span class="dim">exit=0 · 126KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+<tr>
+<td>09</td>
+<td>我想看某部位围度的变化趋势<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「看围度趋势」。
+
+我想看某个部位的围度变化。请先让我选部位。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></details></td>
+<td><b>看围度趋势</b></td>
+<td><code>calorie-cmd-read calorie.view.body-measure</code></td>
+<td><a href="09-看围度趋势.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\09-看围度趋势.html</a><br><span class="dim">exit=0 · 126KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+<tr>
+<td>10</td>
+<td>我想对比两段时间的体脂变化<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「对比体脂」。
+
+我想对比两次体脂测量,第一次和第二次都可以给具体日期或一段时间。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+第一次(日期或时间段):____
+第二次(日期或时间段):____</pre></details></td>
+<td><b>对比体脂</b></td>
+<td><code>calorie-cmd-read calorie.view.body-composition-compare</code></td>
+<td><a href="10-对比体脂.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\10-对比体脂.html</a><br><span class="dim">exit=0 · 81KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+<tr>
+<td>11</td>
+<td>我想对比两个日期的围度变化<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「对比围度」。
+
+我想对比两次围度测量。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+第一次日期:____
+第二次日期:____</pre></details></td>
+<td><b>对比围度</b></td>
+<td><code>calorie-cmd-read calorie.view.body-measure-compare</code></td>
+<td><a href="11-对比围度.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\11-对比围度.html</a><br><span class="dim">exit=0 · 87KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+<tr>
+<td>12</td>
+<td>我想删除一条体脂记录<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「删体脂」。
+
+我要删一条体脂记录。如果我没说清是哪条,请先列出最近的几条记录(日期/体脂率/来源)让我选。确认后,删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+要删的记录(选填,如「最近一条」或日期):____</pre></details></td>
+<td><b>删体脂</b></td>
+<td><code>calorie-cmd-read calorie.body.composition-remove</code></td>
+<td><a href="12-删体脂.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\12-删体脂.html</a><br><span class="dim">exit=0 · 85KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+<tr>
+<td>13</td>
+<td>我想删除一条围度记录<details><summary>看完整 prompt</summary><pre>请你加载技能 卡路里,执行唤醒词「删围度」。
+
+我要删一条围度记录。如果我没说清是哪条,请先列出最近的几条记录(日期/各围度)让我选。确认后,删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+要删的记录(选填,如「最近一条」或日期):____</pre></details></td>
+<td><b>删围度</b></td>
+<td><code>calorie-cmd-read calorie.body.measure-remove</code></td>
+<td><a href="13-删围度.html" target="_blank" rel="noopener">D:\ilife\docs\skills\skill-calorie\t369-验收\13-删围度.html</a><br><span class="dim">exit=0 · 87KB · 整页 ✓</span></td>
+<td><span class="dim">—（读词／对比／删除无过程页）</span></td>
+</tr>
+</tbody></table>
+</body></html>
