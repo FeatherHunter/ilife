@@ -4,13 +4,16 @@
  *   ① 手算：冻结种子（相对日，防墙钟滑出 90 天窗；t360 同款 `dayBefore` 手法）——
  *     R0 ＝ 6 天前：只填肩围 44（note='r0'；库触发器禁全空行，故单填一行验「只列已填项」）；
  *     R1 ＝ 5 天前：13 项全填（胸95/腰80/腹78/臀92/左大腿55/右大腿55.5/左小腿36/右小腿36.2/
- *       左上臂32/右上臂32.1/左前臂26/右前臂26.3/肩45，note='r1'）；
+ *       左上臂32/右上臂32.1/左前臂26/右前臂26.3/肩45，note='r1—d'；备注特意带一个「—」，
+ *       载荷逐字段口径的活探针——全文 `JSON.stringify.includes('—')` 在此会假红）；
  *     R2 ＝ 4 天前：腰围与右小腿缺（其余胸95.5/腹78.5/臀92.2/左大腿55.2/右大腿55.6/左小腿36.1/
  *       左上臂32.2/右上臂32.4/左前臂26.1/右前臂26.4/肩45.2，note='r2'）；
  *     R3 ＝ 1 天前（最新）：13 项全填（胸96/腰81/腹79/臀93/左大腿56/右大腿56.5/左小腿37/右小腿37.2/
  *       左上臂33/右上臂33.1/左前臂27/右前臂27.3/肩46，note='r3'）。
- *     全空行卡片「未填围度」走合成视图直调断言（库触发器 `schema.ts:144-152` 禁全空行落库，
- *     真库语义下不可达；口径认老原文 `:397`，不断言真出口）。
+ *     E0（#443 新用例自建库，不混入冻结种子）：先单填肩围 44 落库，再 UPDATE 置空，
+ *       绕过只挂 BEFORE INSERT 的库触发器（`schema.ts:144-152`）造全空行；与有值行并存时
+ *       走真出口（PATH 的 `calorie-cmd-read` 垫片，无垫片退回本仓 BIN）断言 exit 0＋该行
+ *       13 格「—」＋卡片「未填围度」；渲染口径认老原文 `:397`，落点换成真出口。
  *   ① 手算之二（趋势闸门保持，#360 不许动）：13 部位最新非空同为 R3 → 平局按既有列序取首位
  *     `chest_cm`（`latestMeasurementMetric` 平局口径）；胸围趋势序列 [95, 95.5, 96] ⇒ 点数 3、
  *     均值 95.5、最小 95、最大 96、变化量 +1、最新 96。
@@ -20,6 +23,8 @@
  * 负向对照（源码级变异，持锁另做，机器读数见证据）：
  *   M1 删掉一列（如肩围列）→ 13 名断言必红；还原 → 必绿。
  *   M2 复制 payload 把空写成「—」→ 载荷断言必红；还原 → 必绿。
+ *   M3（#443）把载荷断言改回全文 `JSON.stringify.includes('—')` → R1 备注「—」必红；还原 → 必绿。
+ *   M4（#443）删掉全空行真出口新用例 → 用例计数减 1（红）；还原 → 计数复原（绿）。
  * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
  *   那条会重注入他席 SKILL.md），再 `node --test packages/skill-calorie/test/t361-measure-full-table.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库只读对账见证据。
@@ -68,7 +73,7 @@ function seedRows() {
       shoulder_cm: 44,
     },
     {
-      n: 5, note: 'r1',
+      n: 5, note: 'r1—d',
       chest_cm: 95, waist_cm: 80, abdomen_cm: 78, hip_cm: 92,
       left_thigh_cm: 55, right_thigh_cm: 55.5, left_calf_cm: 36, right_calf_cm: 36.2,
       left_arm_cm: 32, right_arm_cm: 32.1, left_forearm_cm: 26, right_forearm_cm: 26.3,
@@ -248,8 +253,19 @@ test('#361 裁定 2 复制区：payload 保留原始空值，绝不把「—」�
   assert.equal(r2.waist_cm, null, '载荷 R2 腰围应保留原始空值 null（不得写「—」）');
   assert.equal(r2.right_calf_cm, null, '载荷 R2 右小腿应保留原始空值 null');
   assert.equal(r2.chest_cm, 95.5, '载荷 R2 胸围应原样 95.5');
-  const dump = JSON.stringify(items);
-  assert.equal(dump.includes('—'), false, '载荷里不得出现「—」（表体与载荷两套口径，不许互染）');
+  // #443 逐字段口径：13 个围度字段逐个断言（数值或原始空值，绝不出现「—」）。
+  // 全文 `JSON.stringify.includes('—')` 会被 R1 备注的「—」假红，已退役。
+  for (const it of items) {
+    for (const f of MEASUREMENT_FIELDS) {
+      const v = it[f];
+      assert.ok(v === null || v === undefined || typeof v === 'number',
+        '载荷字段 ' + f + ' 应为数值或原始空值，实得 ' + JSON.stringify(v));
+      assert.notEqual(v, '—', '载荷字段 ' + f + ' 不得写「—」（表体与载荷两套口径，不许互染）');
+    }
+  }
+  const r1 = items.find((it) => it.date === dayBefore(5));
+  assert.ok(r1, '载荷应有 R1 行');
+  assert.equal(r1.note, 'r1—d', '备注含「—」应原样保留（逐字段口径不误伤备注）');
 });
 
 test('#361 窄屏卡片：与宽表同一份数据，只列已填项，全空行写「未填围度」', () => {
@@ -276,15 +292,67 @@ test('#361 窄屏卡片：与宽表同一份数据，只列已填项，全空行
   assert.equal(r0.includes('未填围度'), false, 'R0 有已填项，不得出「未填围度」');
 });
 
-test('#361 全空行卡片兜底：合成视图直调出「未填围度」（老 :397 口径）', async () => {
-  const { buildBodyMeasureDoc } = await import('../dist/body/bodyDocs.js');
-  const html = buildBodyMeasureDoc({
-    metric: null, total: 1, trend: [], latestVal: null, autoMetric: null,
-    kpi: { count: 0, avg: null, min: null, max: null, delta: null },
-    items: [{ date: '2026-01-01', note: '' }],
+/** 真出口读全量表：优先 PATH 上的 `calorie-cmd-read` 垫片（junction 指回本仓 dist，
+ * 与 `BIN` 同码，#443 已验哈希一致），无垫片退回本仓 `BIN`；读数行声明实际落点。 */
+function trueExitShim() {
+  if (process.platform === 'win32') {
+    for (const d of String(process.env.PATH || '').split(';')) {
+      if (d.trim() === '') continue;
+      const c = join(d.trim(), 'calorie-cmd-read.ps1');
+      try { readFileSync(c); return c; } catch {}
+    }
+    return null;
+  }
+  for (const d of String(process.env.PATH || '').split(':')) {
+    if (d.trim() === '') continue;
+    const c = join(d.trim(), 'calorie-cmd-read');
+    try { readFileSync(c); return c; } catch {}
+  }
+  return null;
+}
+
+function readFullTableTrueExit(dir) {
+  const shim = trueExitShim();
+  if (shim !== null && process.platform === 'win32') {
+    const r = spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', shim, KEY, '--params', '{"days":90}'], {
+      encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+    });
+    return { r, via: 'shim' };
+  }
+  if (shim !== null) {
+    const r = spawnSync(shim, [KEY, '--params', '{"days":90}'], {
+      encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+    });
+    return { r, via: 'shim' };
+  }
+  const r = spawnSync(NODE_BIN, [BIN, KEY, '--params', '{"days":90}'], {
+    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
   });
+  return { r, via: 'bin' };
+}
+
+test('#361 全空行真出口：与有值行并存时 exit 0，该行 13 格「—」＋卡片「未填围度」', () => {
+  // 全空行经 UPDATE 造出（库触发器 `schema.ts:144-152` 只挂 BEFORE INSERT，
+  // INSERT 全空必拦，UPDATE 置空可达；行为本身正确，本票只补真出口断言）。
+  const dir = mkdtempSync(join(tmpdir(), 't361-emptyrow-'));
+  const db = openDb(join(dir, DB_FILE));
+  const cols = ['date', ...MEASUREMENT_FIELDS, 'note'];
+  const stmt = db.prepare('INSERT INTO body_measurements (' + cols.join(', ') + ') VALUES ('
+    + cols.map(() => '?').join(', ') + ')');
+  stmt.run(dayBefore(2), ...MEASUREMENT_FIELDS.map((f) => (f === 'shoulder_cm' ? 44 : null)), '');
+  stmt.run(dayBefore(1), 96, 81, 79, 93, 56, 56.5, 37, 37.2, 33, 33.1, 27, 27.3, 46, 'v1');
+  db.prepare('UPDATE body_measurements SET shoulder_cm=NULL WHERE date=?').run(dayBefore(2));
+  db.close();
+  const { r, via } = readFullTableTrueExit(dir);
+  assert.equal(r.status, 0, '并存时真出口 exit=' + r.status + ' stderr=' + String(r.stderr || '').slice(-400));
+  const env = JSON.parse(r.stdout);
+  const html = readFileSync(env.data.output, 'utf8');
+  const rows = tableRows(html, '围度记录');
+  const er = rows.slice(1).find((x) => x[0] === dayBefore(2));
+  assert.ok(er, '应有全空行（' + dayBefore(2) + '）');
+  assert.deepEqual(er.slice(1, -1), SEED_13.map(() => '—'), '全空行 13 格应全为「—」');
   assert.ok(html.includes('未填围度'), '全空行卡片应写「未填围度」（老 :397）');
-  assert.ok(visibleText(html).includes('—'), '全空行表行缺值格应为「—」');
+  console.log('T443-READOUT empty-row=13/13 via=' + via);
 });
 
 test('#361 趋势闸门保持（#360 不许动）：自动挑部位＋五项 KPI＋图区原样', () => {
