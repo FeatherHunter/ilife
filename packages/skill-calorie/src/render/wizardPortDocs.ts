@@ -71,7 +71,9 @@ export function buildPhotoLogWizardDoc(v: PhotoLogWizardView): string {
     renderDisclosure({
       // #474：小标题由操作说明改人话（「常用 tag／8 个／其一」三个词说同一件事）。
       title: '常用标签（点一个填上去）',
-      contentHtml: PHOTO_LOG_TAGS.join(' · '),
+      // #530：8 个词原来拿 `·` 串成一行（探针 R1/R3 命中）→ 改走本域徽章列 `chipRow`
+      //（`renderChips` 一词一徽，测试只要求 8 个词可见，不断言分隔符）。
+      contentHtml: chipRow([...PHOTO_LOG_TAGS]),
     }),
     formNoticeHtml(),
     renderParamForm({

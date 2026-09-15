@@ -164,7 +164,8 @@ export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '删照候选',
-    eyebrow: '删照片 · 只看不删',
+    // #530：眉标原来是 `删照片 · 只看不删`（探针 R1 命中：`·` 串两件事）→ 改括号式。
+    eyebrow: '删照片（只看不删）',
     subtitle: '先看候选，点开一张确认，再复制指令让我删',
     content: parts.join(''),
   });

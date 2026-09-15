@@ -324,6 +324,9 @@ export function pageShapeCss(input?: { readonly prefix?: string }): string {
     '  overflow: hidden;',
     '  width: 100%;',
     '  max-width: 100%;',
+    // #530：`width:100%`＋`border:1px` 在 content-box 下＝100%＋2px，09-02 在 768／1440 档
+    // 恰好溢出 2px（回归门红）。框自己吃 border-box，不碰全局盒模型。
+    '  box-sizing: border-box;',
     '  border: 1px solid var(--line);',
     '  border-radius: ' + 14 + 'px;',
     '  background: var(--soft);',
