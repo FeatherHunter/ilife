@@ -10,7 +10,7 @@ import { buildNutritionDetailDoc, buildNutritionRatioDoc } from './nutritionPort
 import { buildBatchImportPreviewView } from '../render/trendMiscPort.js';
 import { buildBatchImportPreviewDoc } from '../render/trendMiscPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
-import { defaultRange, nums } from '../shared/params.js';
+import { defaultRange, nums, optStr } from '../shared/params.js';
 
 /** `calorie.view.nutrition-ratio` · 营养配比。 */
 export function viewNutritionRatio(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
@@ -39,7 +39,10 @@ export function viewNutritionDetail(params: Record<string, unknown>, db: Databas
     sodiumPct: v.items[1]?.pct,
     sugarPct: v.items[2]?.pct,
   });
-  return { data: { metrics }, html: buildNutritionDetailDoc(v) };
+  /* #511 · 两个唤醒词共用这一条命令（看营养素深度／看营养素明细），参数一字不差 ⇒ 由入口自己带
+     `entry` 标记（`src/diet/routes.ts` 那条「看营养素明细」的记录），页头按它出标题。
+     不给标记（含未知参数名）＝从前的「营养素深度」那一支，行为一字不差。 */
+  return { data: { metrics }, html: buildNutritionDetailDoc(v, optStr(params, 'entry')) };
 }
 
 /** `calorie.view.batch-import-preview` · 批量导入预览。 */

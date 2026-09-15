@@ -19,8 +19,13 @@ const DOC_TITLE = '卡路里·饮食';
 
 /* ── 食品排行（food_ranking.html 对照：榜单表＋复制榜单；tab 交互归宿主，静态页逐榜/全榜直出） ── */
 
+/** 榜名（读者看到的那一个名字，**五处共用一处**：单榜页的榜单卡与页题、全榜页的五张卡与五个折叠标题）。
+ *
+ *  #511 · `frequent` 原写「常吃」，同页另外两处写「频繁吃榜」（表题，来自 `dietEngine.ts` 的
+ *  `RANK_TITLES`）与「频繁吃」（页题）——一页三个名字（审查件第 59 条）⇒ 统一成「常吃榜」。
+ *  名字里带上「榜」字，下游不再各自拼一次（原来全榜页靠 `+ '榜'` 拼，改名单就会拼出「常吃榜榜」）。 */
 const RANK_ZH: Record<string, string> = {
-  high_calorie: '高热量', low_calorie: '低热量', frequent: '常吃', high_carb: '高碳水', high_protein: '高蛋白',
+  high_calorie: '高热量榜', low_calorie: '低热量榜', frequent: '常吃榜', high_carb: '高碳水榜', high_protein: '高蛋白榜',
 };
 
 const RANK_COLUMNS: DataTableColumn[] = [
@@ -90,7 +95,7 @@ export function buildAllRankingsDoc(a: AllRankings): string {
   for (const c of cats) {
     const b = a.boards[c];
     parts.push(renderDisclosure({
-      title: (RANK_ZH[c] ?? c) + '榜' + (b ? '（TOP ' + b.topN + '）' : '（本窗无数据）'),
+      title: (RANK_ZH[c] ?? c) + (b ? '（TOP ' + b.topN + '）' : '（本窗无数据）'),
       open: b !== null && cats.indexOf(c) === cats.findIndex((k) => a.boards[k] !== null),
       contentHtml: renderDataTable({
         columns: [...RANK_COLUMNS],

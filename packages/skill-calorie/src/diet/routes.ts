@@ -28,7 +28,11 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 21, wakeWord: '删某日饮食', scene: '02', kind: 'exec', key: 'calorie.diet.remove-by-date', cli: 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"<日期>"}\'' },
   { list: 'wake', order: 22, wakeWord: '批量删饮食', scene: '02', kind: 'exec', key: 'calorie.diet.remove-by-range', cli: 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"<日期>","end":"<日期>"}\'' },
   { list: 'wake', order: 23, wakeWord: '看今日饮食', scene: '02', kind: 'exec', key: 'calorie.today', cli: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
-  { list: 'wake', order: 32, wakeWord: '看今日喝水', scene: '02', kind: 'exec', key: 'calorie.view.today-water', cli: 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\'' },
+  /* #511 · 两组「同源入口页」的入口标记（做法同下面 #509 的 `source:"photo"`）：
+     `看今日喝水／看今日饮水` 两条词跑同一条命令、参数一字不差；`看营养素深度／看营养素明细` 同。
+     命令这一层分不出进来的是哪条 ⇒ 由入口把标记带进去，页头按它出各自的叫法（作者裁定一：
+     入口一个都不删、按唤醒词出对应标题）。标记名不上屏、不写库；不给标记的那一支是默认叫法。 */
+  { list: 'wake', order: 32, wakeWord: '看今日喝水', scene: '02', kind: 'exec', key: 'calorie.view.today-water', cli: 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日","entry":"drink"}\'' },
   { list: 'wake', order: 33, wakeWord: '看有备注的饮食记录', scene: '02', kind: 'exec', key: 'calorie.today', cli: 'calorie-cmd-read calorie.today --params \'{"date":"今日","hasNote":true}\'' },
   { list: 'wake', order: 34, wakeWord: '查食品', scene: '02', kind: 'exec', key: 'calorie.view.search', cli: 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'' },
   { list: 'wake', order: 35, wakeWord: '查食品（按分类）', scene: '02', kind: 'exec', key: 'calorie.view.library', cli: 'calorie-cmd-read calorie.view.library --params \'{"category":"蛋白类"}\'' },
@@ -92,7 +96,7 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'new', order: 12, wakeWord: '搜食品', scene: '02', kind: 'exec', key: 'calorie.view.search', cli: 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'' },
   { list: 'new', order: 32, wakeWord: '看去重报告', scene: '02', kind: 'exec', key: 'calorie.view.dedupe', cli: 'calorie-cmd-read calorie.view.dedupe' },
   { list: 'new', order: 40, wakeWord: '查营养配比', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-ratio', cli: 'calorie-cmd-read calorie.view.nutrition-ratio --params \'{"window":"7d"}\'' },
-  { list: 'new', order: 41, wakeWord: '看营养素明细', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\'' },
+  { list: 'new', order: 41, wakeWord: '看营养素明细', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d","entry":"detail"}\'' },
   { list: 'new', order: 42, wakeWord: '看食品来源分布', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
   { list: 'new', order: 43, wakeWord: '看今日饮水', scene: '02', kind: 'exec', key: 'calorie.view.today-water', cli: 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\'' },
   { list: 'new', order: 44, wakeWord: '看批量导入预览', scene: '02', kind: 'exec', key: 'calorie.view.batch-import-preview', cli: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },

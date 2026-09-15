@@ -61,6 +61,18 @@ function sourceLine(text: string): string {
   return notice({ icon: 'info', msg: '📊 数据来源:' + text });
 }
 
+/** 同源入口页的**入口标记**（两条唤醒词共用同一条命令时的页头开关）。
+ *
+ *  #511 · 两组「同源入口页」在命令面上完全同形，参数也一字不差，命令这一层分不出进来的是哪条词
+ *  （审查件第 80 条「78 与 38 逐行相同」、第 81 条「80 与 24 逐行相同」）：
+ *    · `calorie.view.nutrition-detail` ← 看营养素深度 ／ 看营养素明细；
+ *    · `calorie.view.today-water`     ← 看今日喝水 ／ 看今日饮水。
+ *  作者裁定一：两个入口都留，各自标题对上进来的那条词。做法沿 #509 的 `source:'photo'`——
+ *  由**入口自己**（`src/diet/routes.ts` 的路由记录）把标记带进命令，命令侧只拿它取页头。
+ *  标记名绝不上屏、不写库、不进 `writtenFields`；不给标记时页头与从前一字不差。 */
+export const ENTRY_DETAIL = 'detail';
+export const ENTRY_DRINK = 'drink';
+
 /* ── 营养配比（老实物 nutrition_ratio.html：3 维配比 KPI＋热量来源占比＋推荐范围对比） ── */
 
 /** 3 维配比的均衡档（老实物 `nutrition_ratio.html` 的 statusBadge 三档文案逐字）。 */
@@ -97,10 +109,12 @@ function kcalNote(totalCalorie: number | null): string {
 export function buildNutritionRatioBlock(v: NutritionRatioView): string {
   const balance = BALANCE[v.balance];
   const parts: string[] = [
+    /* #511 · 三张配比卡的值单位原写 `g`（审查件第 78 条那一处的同族写法），改「克」与下面那张
+       推荐范围对比表统一；说明行早已是「每天目标 N 克」（#496 的 `goalDetail`）。 */
     renderKpiGrid([
-      { label: '蛋白', value: String(v.proteinG), unit: 'g', detail: goalDetail(v.proteinPct, v.targetProteinG) },
-      { label: '碳水', value: String(v.carbG), unit: 'g', detail: goalDetail(v.carbPct, v.targetCarbG) },
-      { label: '脂肪', value: String(v.fatG), unit: 'g', detail: goalDetail(v.fatPct, v.targetFatG) },
+      { label: '蛋白', value: String(v.proteinG), unit: '克', detail: goalDetail(v.proteinPct, v.targetProteinG) },
+      { label: '碳水', value: String(v.carbG), unit: '克', detail: goalDetail(v.carbPct, v.targetCarbG) },
+      { label: '脂肪', value: String(v.fatG), unit: '克', detail: goalDetail(v.fatPct, v.targetFatG) },
       {
         label: '总摄入', value: String(v.totalCalorie), unit: '卡',
         detail: '共 ' + v.days + ' 天 · ' + balance.text,
@@ -140,12 +154,16 @@ export function buildNutritionRatioBlock(v: NutritionRatioView): string {
     const minG = Math.round((v.totalCalorie * it.r.min) / 100 / it.perG);
     const maxG = Math.round((v.totalCalorie * it.r.max) / 100 / it.perG);
     const inRange = it.pct >= it.r.min && it.pct <= it.r.max;
-    const gap = it.g > maxG ? '+' + (it.g - maxG) + 'g' : (it.g < minG ? '-' + (minG - it.g) + 'g' : '✓');
+    const gap = it.g > maxG ? '+' + (it.g - maxG) + ' 克' : (it.g < minG ? '-' + (minG - it.g) + ' 克' : '✓');
+    /* #511 · 下限／上限两列原写 `10%（48g）`——`g` 是英文缩写，且括号里的克数是**整窗合计**、
+       读者会当成一天的量（审查件第 78 条）。单位改「克」，并把「这一列是几天合计」写进格子；
+       表题再补一句同口径，免得逐格都读一遍才知道分母。 */
+    const span = ' 克 / ' + v.days + ' 天';
     return {
       name: it.name,
-      actual: it.g + 'g（' + it.pct + '%）',
-      lower: it.r.min + '%（' + minG + 'g）',
-      upper: it.r.max + '%（' + maxG + 'g）',
+      actual: it.g + ' 克（' + it.pct + '%）',
+      lower: it.r.min + '%（' + minG + span + '）',
+      upper: it.r.max + '%（' + maxG + span + '）',
       gap,
       status: inRange ? '✓ 在范围内' : (it.pct < it.r.min ? '↓ 偏低' : '↑ 偏高'),
     };
@@ -160,7 +178,9 @@ export function buildNutritionRatioBlock(v: NutritionRatioView): string {
       { key: 'status', label: '状态' },
     ],
     rows,
-    caption: '推荐范围对比（' + v.start + ' ~ ' + v.end + '）',
+    /* #511 · 表题补一句「克数都是这 N 天合计」（审查件第 78 条：括号里的 48 克是 7 天合计，
+       读者会当成一天）。 */
+    caption: '推荐范围对比（' + v.start + ' ~ ' + v.end + '；克数均为这 ' + v.days + ' 天合计）',
     emptyText: '本窗无配比数据',
   }));
   parts.push(sourceLine('📊 数据来自本机饮食记录 · ' + v.days + ' 天'));
@@ -258,14 +278,19 @@ export function buildNutritionDetailBlock(v: NutritionDetailView): string {
   return parts.join('');
 }
 
-export function buildNutritionDetailDoc(v: NutritionDetailView): string {
+export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string): string {
+  /* #511 · 页头按进来的那条唤醒词出：`看营养素明细` 那一支出「营养素明细」，`看营养素深度`
+     那一支（不给标记）出「营养素深度」——两条入口都留，不再出两张一样的页（审查件第 80 条）。 */
+  const detail = entry === ENTRY_DETAIL;
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '🧪 营养素深度 ' + v.start + ' ~ ' + v.end,
+    title: (detail ? '🧪 营养素明细 ' : '🧪 营养素深度 ') + v.start + ' ~ ' + v.end,
     /* #496 · 眉标原写「看营养素深度 · 区间 · N 天」——把唤醒词与窗口区间印了一遍（审查件第 80 条）。
        区间已在标题里，眉标只留人话归属；「缺库食物明示未计入，不编数」也是内部语气，改成读者的话。 */
     eyebrow: '卡路里 · 饮食',
-    subtitle: '膳食纤维、钠、糖每天平均摄入与每天推荐量的对比（食品库里查不到营养值的食物不计入）',
+    subtitle: detail
+      ? '与「看营养素深度」同源：同一份数据，膳食纤维、钠、糖逐项一行，累计／每天平均／每天推荐／完成度都在下面的表里'
+      : '膳食纤维、钠、糖每天平均摄入与每天推荐量的对比（食品库里查不到营养值的食物不计入）',
     content: buildNutritionDetailBlock(v),
   });
 }
@@ -322,14 +347,15 @@ export function buildSourceStatsDoc(v: SourceStatsView): string {
 
 const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
 
-/** 今日饮水区块（进度环／7 天柱图／每杯明细三块，标题逐字取老实物的三个 h2）。 */
-export function buildTodayWaterBlock(v: TodayWaterView): string {
+/** 今日饮水区块（进度环／7 天柱图／每杯明细三块，标题逐字取老实物的三个 h2）。
+ *  `name`＝这一页的正文叫法（「今日喝水」／「今日饮水」，由入口标记定，见 `ENTRY_DRINK`）。 */
+export function buildTodayWaterBlock(v: TodayWaterView, name: string): string {
   const remainText = v.remainMl > 0
     ? '还差 ' + v.remainMl + ' ml（占目标 ' + (100 - v.pct) + '%）'
     : (v.remainMl === 0 ? '已完成目标(100%)' : '超出目标 ' + (-v.remainMl) + ' ml(' + v.pct + '%)');
   const parts: string[] = [
     renderKpiGrid([
-      { label: '今日饮水', value: String(v.todayMl), unit: 'ml', detail: v.date },
+      { label: name, value: String(v.todayMl), unit: 'ml', detail: v.date },
       /* #496 · 原写 `daily_goal.water_goal（缺省 2000）`——库表名＋列名＋「缺省」都是源码词。 */
       { label: '目标', value: String(v.targetMl), unit: 'ml', detail: '没设过就是 2000 ml' },
       {
@@ -349,7 +375,7 @@ export function buildTodayWaterBlock(v: TodayWaterView): string {
         ],
         options: {
           size: 200, ringWidth: 14, legend: 'none', showPercent: false,
-          centerLabel: '今日饮水', centerValue: v.todayMl.toLocaleString(),
+          centerLabel: name, centerValue: v.todayMl.toLocaleString(),
         },
       },
     }),
@@ -403,18 +429,22 @@ function weekdayOf(date: string): number {
   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).getUTCDay();
 }
 
-export function buildTodayWaterDoc(v: TodayWaterView): string {
+export function buildTodayWaterDoc(v: TodayWaterView, entry?: string): string {
   const sub = v.remainMl > 0
     ? '还差 ' + v.remainMl + ' ml'
     : (v.remainMl === 0 ? '已完成目标(100%)' : '已达标 ' + (-v.remainMl) + ' ml(' + v.pct + '%)');
+  /* #511 · 页头与正文的饮水叫法都按进来的那条唤醒词出：`看今日喝水` 那一支出「今日喝水」，
+     `看今日饮水` 那一支（不给标记）出「今日饮水」——两条入口都留，不再出两张一样的页
+     （审查件第 81 条）。#496 当年把两页统一叫「今日饮水」，这一处按作者裁定一改回来。 */
+  const drink = entry === ENTRY_DRINK;
+  const name = drink ? '今日喝水' : '今日饮水';
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '💧 今日饮水 ' + v.date,
-    /* #496 · 眉标原写「<日期> · 饮水 #1」——把日期又抄一遍、`#1` 是内部形态号（审查件第 81 条：
-       两页都改叫「今日饮水」；24 与 80 两个词各出各的页，标题同一个）。 */
+    title: '💧 ' + name + ' ' + v.date,
+    /* #496 · 眉标原写「<日期> · 饮水 #1」——把日期又抄一遍、`#1` 是内部形态号。 */
     eyebrow: '卡路里 · 饮食',
-    subtitle: '今天的饮水 · ' + sub,
-    content: buildTodayWaterBlock(v),
+    subtitle: '今天的' + (drink ? '喝水' : '饮水') + ' · ' + sub,
+    content: buildTodayWaterBlock(v, name),
     charts: true,
   });
 }

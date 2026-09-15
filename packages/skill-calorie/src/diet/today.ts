@@ -15,7 +15,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { buildTodayWaterView } from './nutritionPort.js';
 import { buildTodayWaterDoc } from './nutritionPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
-import { assertISO, dayField, fail, latestFoodDate, nums, windowRange } from '../shared/params.js';
+import { assertISO, dayField, fail, latestFoodDate, nums, optStr, windowRange } from '../shared/params.js';
 
 /** 备注筛选参数：`hasNote` 主名、`withNote` 兼容旧唤醒词文案（`--with-note`）。只收布尔，非布尔即用法错。 */
 function hasNoteOf(params: Record<string, unknown>): boolean | undefined {
@@ -56,5 +56,8 @@ export function viewTodayWater(params: Record<string, unknown>, db: DatabaseSync
   const metrics = nums({
     todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
   });
-  return { data: { metrics }, html: buildTodayWaterDoc(v) };
+  /* #511 · 这一条命令底下挂着两个唤醒词（看今日喝水／看今日饮水），参数一字不差，命令分不出进来的是
+     哪条 ⇒ 由入口自己带 `entry` 标记（`src/diet/routes.ts` 那条「看今日喝水」的记录），页头按它出叫法。
+     不给标记（含未知参数名）＝从前的「今日饮水」那一支，行为一字不差。 */
+  return { data: { metrics }, html: buildTodayWaterDoc(v, optStr(params, 'entry')) };
 }

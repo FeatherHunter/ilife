@@ -404,7 +404,9 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
     docTitle: DOC_TITLE,
     title: '营养分析 ' + v.start + ' ~ ' + v.end,
     eyebrow: '卡路里 · 趋势',
-    subtitle: '配比＋微量＋规则建议（建议阈值见数据层注释，不编造结论）',
+    /* #511 · 原副题「配比＋微量＋规则建议（建议阈值见数据层注释，不编造结论）」——「配比／微量／规则建议」
+       是内部叫法，括号里那半句还是开发过程说明（审查件第 82 条）⇒ 换成一句「这页有什么」。 */
+    subtitle: '三大营养素比例、其他营养素摄入、以及根据这些数据给出的建议',
     content: parts.join(''),
     charts,
   });
@@ -412,10 +414,30 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
 
 /* ── 每日六因素（six_factors） ── */
 
+/** 数据层文案上屏归一（做法沿 `render/trendDocs.ts` 的 `humanText` 先例）。
+ *
+ *  #511 · 六因素那张页的**逐项名**与**没设目标时的那句话**都由取数层 `render/trendMiscPort.ts:215-227`
+ *  写死，本票声明路径不含那一件（它已 456 行、另在别的票的账上）⇒ 在装配层换成人话，取数层一行不动。
+ *  换的两处（审查件第 86、87 条）：
+ *    · `热量达标` → 「热量（千卡）达标」——全页没有一处说清热量的单位，条目名本身补上；
+ *    · `无X目标（先设目标）` → 一句说明「为什么判不了达标 ＋ 要设该说哪条唤醒词」（原句是祈使句，
+ *      读者不知道去哪里设）。
+ *  表里没有的取值原样透传（有目标时那几句「当日摄入 / 目标」不动）。 */
+const HUMAN_TEXT: Record<string, string> = {
+  热量达标: '热量（千卡）达标',
+  '无热量目标（先设目标）': '没有设热量目标，所以判不了达标。要设请说“定营养目标”',
+  '无蛋白目标（先设目标）': '没有设蛋白目标，所以判不了达标。要设请说“定营养目标”',
+  '无饮水目标（先设目标）': '没有设饮水目标，所以判不了达标。要设请说“定饮水目标”',
+};
+
+function humanText(s: string): string {
+  return HUMAN_TEXT[s] ?? s;
+}
+
 export function buildSixFactorsDoc(v: SixFactorsView): string {
   const parts: string[] = [
     renderKpiGrid(v.factors.map((f) => ({
-      label: f.label, value: f.ok ? '✓' : '✗', detail: f.detail,
+      label: humanText(f.label), value: f.ok ? '✓' : '✗', detail: humanText(f.detail),
       status: f.ok ? 'ok' : 'warn' as 'ok' | 'warn',
     }))),
     renderDataTable({
@@ -424,7 +446,7 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
         { key: 'ok', label: '达标' },
         { key: 'detail', label: '依据' },
       ],
-      rows: v.factors.map((f) => ({ label: f.label, ok: f.ok ? '✓' : '✗', detail: f.detail })),
+      rows: v.factors.map((f) => ({ label: humanText(f.label), ok: f.ok ? '✓' : '✗', detail: humanText(f.detail) })),
       caption: '六因素明细（' + v.date + '，得分 ' + v.score + '/6）',
       emptyText: '当日无因素数据',
     }),
@@ -449,7 +471,11 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
     docTitle: DOC_TITLE,
     title: '每日六因素 ' + v.date,
     eyebrow: '卡路里 · 趋势',
-    subtitle: '六因素＝这 6 项：热量、蛋白、饮水、运动、称重、三餐',
+    /* #511 · 这一句是 #496 补的「六因素是哪六项」（审查件第 85 条），本票只在它后面补一句单位口径
+       （审查件第 86 条：全页没有一处说清热量的单位是千卡）。**不往枚举里塞「（千卡）」**：那句话是
+       #496 的交付物、被 `test/t496-文案统一.test.mjs` 逐字钉住（该测试件不在本票声明路径内），
+       单位改由**条目名**（`热量（千卡）达标`）与句末这句口径承载——两处合起来读得到单位。 */
+    subtitle: '六因素＝这 6 项：热量、蛋白、饮水、运动、称重、三餐（热量按千卡计）',
     content: parts.join(''),
     charts: false,
   });

@@ -38,9 +38,18 @@ export function buildDietReviewDoc(r: DietReview, top5: FoodRanking | null): str
       label: '达标天', value: t ? String(t.complianceDays) + '/' + t.daysCount : '—',
       detail: t && t.calGoal ? '目标 ' + t.calGoal + ' 卡（±10%）' : '未设热量目标',
     },
+    /* #511 · 原是一张卡：标签「周末/工作日」、值 `0/720`、说明「均值（卡）」——斜杠串没写是哪两个数、
+       两个数也没有单位（审查件第 61 条）⇒ 拆成两张卡，各自带名带单位；这一段没有计入热量的记录时
+       值写「—」并说明，不拿 0 冒充当天的摄入。 */
     {
-      label: '周末/工作日', value: t ? t.weekendAvg + '/' + t.weekdayAvg : '—',
-      detail: '均值（卡）',
+      label: '工作日平均',
+      value: t && t.weekdayAvg > 0 ? String(t.weekdayAvg) + ' 卡' : '—',
+      detail: t && t.weekdayAvg > 0 ? '按有记录的工作日算' : '本窗没有工作日的记录',
+    },
+    {
+      label: '周末平均',
+      value: t && t.weekendAvg > 0 ? String(t.weekendAvg) + ' 卡' : '—',
+      detail: t && t.weekendAvg > 0 ? '按有记录的周末算' : '本窗没有周末的记录',
     },
   ])];
   let charts = false;

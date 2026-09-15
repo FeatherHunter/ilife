@@ -104,7 +104,9 @@ export interface FoodRanking { category: string; title: string; start: string; e
 const RANK_TITLES: Record<string, string> = {
   high_calorie: '🔥 热量炸弹榜',
   low_calorie: '🥬 低热量健康榜',
-  frequent: '📅 频繁吃榜',
+  /* #511 · 原写「📅 频繁吃榜」，与榜单卡／页题的「常吃」不是同一个名字（审查件第 59 条），
+     三处统一成「常吃榜」（另两处在 `diet/rankingDocs.ts` 的 `RANK_ZH`）。 */
+  frequent: '📅 常吃榜',
   high_carb: '🍚 高碳水榜',
   high_protein: '💪 高蛋白榜',
 };

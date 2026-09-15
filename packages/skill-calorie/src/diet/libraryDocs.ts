@@ -69,11 +69,6 @@ function fixed0(n: number | null | undefined): string {
   return n === null || n === undefined ? DASH : n.toFixed(0);
 }
 
-/** 老实物把空品牌显示成破折号；空来源显示成「未知」。 */
-function text(v: string | null | undefined): string {
-  return v === null || v === undefined || v === '' ? DASH : v;
-}
-
 /** 一条可见文案行（区块函数只收文本字段，这里同样只交文本，不走受信透传）。 */
 function line(cls: string, s: string): string {
   return '<p class="' + cls + '">' + s + '</p>';
@@ -91,10 +86,15 @@ function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): s
     let source = '来源：' + escapeHtml(it.source || UNKNOWN_SOURCE);
     if (withUpdatedAt && it.updated_at) source += ' · 更新于 ' + escapeHtml(it.updated_at);
     const cat = it.category ? '<div class="food-cat">' + escapeHtml(it.category) + '</div>' : '';
+    /* #511 · 品牌没填时原样印一个破折号占位，读者在食品名与四个宏量之间单读到一行「—」，
+       不知道那是哪一格（审查件第 74 条：「—」夹在中间）⇒ 这一格没有值就不出这一行
+       （#496 起来源那一格已经是「没填来源的归到「未知」」，不再用破折号）。 */
+    const brandText = it.brand ?? '';
+    const brand = brandText === '' ? '' : '<div class="food-brand">' + escapeHtml(brandText) + '</div>';
     return '<div class="food-card">'
       + cat
       + '<div class="food-name">' + escapeHtml(it.product_name) + '</div>'
-      + '<div class="food-brand">' + escapeHtml(text(it.brand)) + '</div>'
+      + brand
       + '<div class="food-macros">' + macros.map((m) =>
         '<div class="food-macro"><div class="food-macro-label">' + m.label + '</div>'
         + '<div class="food-macro-value">' + m.value + '</div></div>').join('') + '</div>'
