@@ -16,7 +16,8 @@
  * ── 手机端口径照 HELP 页（断点 820，四条固定手法）──
  *   ① 触摸目标 ≥44px、`-webkit-tap-highlight-color:transparent`、`touch-action:manipulation`；
  *   ② 横向一行在窄屏塌成纵向一列（图注的键值行、间隔条都不例外）；
- *   ③ 窄屏收紧内距、字号落 12／13／15 三档（与 `weightUi`／`sportUi` 同一档位表，不新造 12.5 这类空档）；
+ *   ③ 窄屏收紧内距、字号落**三级梯度**——标题 15／正文 14／辅助 12（px，全档 ≥12 下限，与
+ *      `weightUi`／`sportUi` 同一「不新造空档」的口径）；
  *   ④ 窄屏表格给「可以左右滑」这一行提示（`.phu-scroll-hint`，桌面不出）。
  *  共享区块自带的 **640** 段不撤：820 管本件自造的件，640 管共享件，两段同向、不打架。
  *
@@ -59,6 +60,17 @@ export function photoUiCss(): string {
     + '.phu-segs{display:flex;flex-wrap:wrap;align-items:baseline}'
     + '.phu-seg{font-size:14px;overflow-wrap:anywhere}'
     + '.phu-seg + .phu-seg{padding-left:8px;margin-left:8px;border-left:1px solid var(--line)}'
+    // ══ 字号三级梯度（2026-09-15 收口 · #526 版面档复评「② 信息层级与版式细调 78」的扣分项）══
+    //  定档（照片族四页**唯一**的字号表，不新造第四档，不写 12.5 这类空档；全档 ≥12px 下限）：
+    //    L1 15px＝**标题档**：一张照片的拍下时刻（`.phu-when`）、间隔条两端的日期（`.phu-date`）、
+    //       页内定位条上的动作（`[data-nav] a`）；
+    //    L2 14px＝**正文档**：键值行的值（`.phu-fv`）、备注分段（`.phu-seg`）、要读者记住的那一份文件名
+    //       （`.phu-file code`）、大图页的动作说明句（`.phu-act-s`）；
+    //    L3 12px＝**辅助档**：键值行的名字（`.phu-fk`）、页脚细字（`.phu-note`）、窄屏表格提示、
+    //       占位框里那两句人话（公共层媒体占位件给的 13px／12px，本族在 §占位件收敛 里压到 12px 一档）。
+    //  为什么这么分（复评原话「文件名与说明字号接近、看不出层次」）：改前占位里「文件名」与「为什么／
+    //  下一步」同为 12px 左右、同一个视觉重量；改后文件名落到 L2 且用正文色（`--fg`），说明落到 L3
+    //  且用弱色（`--fg2`／`--fg3`），**层级由字号 ＋ 颜色两重拉开**，不靠把辅助字越缩越小。
     // ── 画廊网格：等高卡片（`aspect-ratio` 定框），宽屏多列、390 宽两列 ──
     + '.phu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px;margin:0}'
     + '.phu-card{display:flex;flex-direction:column;min-width:0;margin:0;background:var(--card);'
@@ -68,33 +80,47 @@ export function photoUiCss(): string {
     // 图片容器有明确宽高比 ＋ `object-fit`：图按框裁切，绝不按天然像素撑破容器（高度的 `auto` 落在内联那侧）。
     + '.phu-shot img{display:block;width:100%;height:100%;object-fit:cover}'
     + '.phu-cap{display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;min-width:0}'
-    + '.phu-when{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
+    + '.phu-when{font-size:15px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
     + '.phu-file{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}'
-    // 字号下限（#526 · t524 §3.2「390 档正文类 ≥12px」）：文件名小字块原 11px 是全页最小字号，
-    // 抬到 12px 与同页徽章／键值行同档；层级由颜色（--fg2）与等宽字承担，不靠缩小字号。
-    + '.phu-file code{font-size:12px;color:var(--fg2);overflow-wrap:anywhere}'
-    // 占位（没图的那张）：明写**哪一份文件**与**为什么**，不留白框、不写内部原因码。
-    + '.phu-miss{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;'
-    + 'padding:14px 10px;text-align:center;color:var(--fg2);font-size:12px;line-height:1.6}'
-    + '.phu-miss code{font-size:12px;overflow-wrap:anywhere;color:var(--fg2)}'
+    // L2：文件名是这一格**要读者记住的那一件事**（占位态里就是「哪一份文件」，图在时是「这张图存在哪」），
+    // 故走正文档 14px ＋ 正文色；它与 L1 时刻（15px）差 1px，靠粗细（600 对 400）与等宽字再分一层。
+    // （#526 · t524 §3.2「390 档正文类 ≥12px」在这条上仍然成立：14px。）
+    + '.phu-file code{font-size:14px;color:var(--fg);overflow-wrap:anywhere}'
+    // 占位（没图的那张）走公共层同规格媒体占位件（`renderMediaPlaceholder`，见 `galleryDoc.figureHtml`）。
+    // 下面三条把公共件**收敛进本族的格位**里，明细见「占位件收敛」那一段的注释。
+    + '/* 占位件收敛（公共件 ＋ 本族格位） */'
+    // ① 格位（`.phu-shot`）是网格里的**等高框**：`aspect-ratio` 定第一次布局，`stretch` 只改高度。
+    + '.phu-grid .phu-shot,.phu-compare .phu-shot{position:relative;aspect-ratio:4/5}'
+    + '.phu-grid .phu-shot>.ilife-block-media,.phu-compare .phu-shot>.ilife-block-media,.phu-hero-miss>.ilife-block-media{margin:0}'
+    // ② 框体铺满格位；本族格位已经有比例，故不叠公共层那条 `4/5`，高度全交给外层。
+    + '.phu-grid .phu-shot>.ilife-block-media>.ilife-block-media-frame,.phu-compare .phu-shot>.ilife-block-media>.ilife-block-media-frame,.phu-hero-miss>.ilife-block-media>.ilife-block-media-frame{position:absolute;inset:0;aspect-ratio:auto}'
+    // ③ 框内两句人话：主句（哪一份文件 ＋ 为什么）走辅助档 12px，次句（下一步）再弱一档、字号同档。
+    + '.phu-grid .ilife-block-media-empty,.phu-grid .ilife-block-media-reason,.phu-compare .ilife-block-media-empty,.phu-compare .ilife-block-media-reason,.phu-hero-miss .ilife-block-media-empty,.phu-hero-miss .ilife-block-media-reason{font-size:12px}'
+    + '.phu-grid .ilife-block-media-frame-empty,.phu-compare .ilife-block-media-frame-empty,.phu-hero-miss .ilife-block-media-frame-empty{font-size:12px}'
+    // ── 对比并排（对比页）：两栏**等高**（`align-items:stretch` 是默认值，这里显式写出来，
+    //  说明它是判据）；卡内图注（`.phu-cap`）与占位舞台吃掉剩余高度，两栏下沿齐平，
+    //  不出现「一边有图一边是占位、短的那栏底下一大片空灰」。
+    + '.phu-compare{display:flex;flex-wrap:wrap;align-items:stretch;gap:12px;margin:0}'
+    + '.phu-compare>.phu-card>.phu-cap{flex:1 1 auto}'
+    + '.phu-compare>.phu-card>.phu-shot{flex:1 1 auto;min-height:0}'
     // ── 间隔条（对比页）：大数字 ＋ 两张日期块，原来挤在页头标题那句 `·` 串里 ──
     + '.phu-interval{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 10px;margin:0 0 14px}'
     + '.phu-iv-n{font-size:30px;font-weight:700;line-height:1.1;color:var(--fg);font-variant-numeric:tabular-nums}'
-    + '.phu-iv-u{font-size:13px;color:var(--fg2)}'
-    + '.phu-date{font-size:13px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--line);'
+    + '.phu-iv-u{font-size:14px;color:var(--fg2)}'
+    + '.phu-date{font-size:15px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--line);'
     + 'border-radius:10px;padding:3px 9px;font-variant-numeric:tabular-nums}'
     // ── 页内定位条（上一张／下一张）：`[data-nav]` 是三条既有判据认的锚（不加类名，改属性选择器）──
     + '[data-nav]{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:0 0 12px}'
-    + '[data-nav] a{font-size:13px;font-weight:600;color:var(--blue2);text-decoration:none;'
+    + '[data-nav] a{font-size:15px;font-weight:600;color:var(--blue2);text-decoration:none;'
     + 'border:1px solid var(--line);border-radius:999px;padding:0 12px;background:var(--card)}'
     + '[data-nav] a:hover{border-color:var(--blue2)}'
-    + '[data-nav] span[aria-disabled="true"]{font-size:13px;color:var(--fg3)}'
+    + '[data-nav] span[aria-disabled="true"]{font-size:15px;color:var(--fg3)}'
     + '.phu-nav-id{color:var(--fg3);font-weight:400}'
     // ── 大图舞台的占位态（查身材照）：黑底 75vh contain 是本页的既有观看口径（#473／#438），
     // 只换「没图可看」那一态——虚线框＋浅底，写明哪一份文件、为什么、下一步 ──
     + '.phu-hero-miss{min-height:200px;border:1px dashed var(--line);border-radius:14px;background:var(--soft)}'
     // ── 动作块的说明句（「删掉这张照片」那一段）──
-    + '.phu-act-s{font-size:13px;color:var(--fg2);margin:0 0 10px}'
+    + '.phu-act-s{font-size:14px;color:var(--fg2);margin:0 0 10px}'
     + '.phu-note{font-size:12px;color:var(--fg3);margin:8px 0 0}'
     // ── 候选行（#527 规划器：一行一张照片）：编号槽 ＋ 文件槽 ＋ 状态槽，不靠 `·`／`#N` 串 ──
     + '.phu-pl{border-top:1px solid var(--line)}'
@@ -105,6 +131,16 @@ export function photoUiCss(): string {
     + '.phu-pl-tag{flex:0 0 auto;font-size:12px;color:var(--fg2)}'
     + '.phu-pl-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:0 0 10px 74px;'
     + 'font-size:12px;color:var(--fg3);font-variant-numeric:tabular-nums}'
+    // ── 候选卡的编号行（#527 删照候选页）：与画廊同一张卡（`.phu-card`＋`.phu-shot`＝等高格位），
+    //  格位里放真图或**同规格占位件**（`renderMediaPlaceholder`）；编号与标签走 L1／辅助两档。 ──
+    + '.phu-cap-no{font-size:15px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
+    // ── 节标题（删照候选页的两块：候选照片／快照）：同一页内两块的分界，走 L1 档 ＋ 上留白 ──
+    + '.phu-sec{font-size:15px;font-weight:600;color:var(--fg);margin:20px 0 10px}'
+    + '.phu-sec:first-child{margin-top:0}'
+    // ── 快照位（删前核对凭据）：大图 ＋ 框内摆法；`contain` 保「整张都看得见」（删前要认得出是它）──
+    + '.phu-snap{aspect-ratio:4/5;background:var(--soft);border:1px solid var(--line);border-radius:14px;'
+    + 'overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0 0 12px}'
+    + '.phu-snap img{display:block;width:100%;height:100%;object-fit:contain}'
     // ── 表格列头抬到 12px 下限（#527 · t524 §3.2）：共享块层在 ≥641 档给 `th` 11.5px、
     //  ≤640 档给 11px，两档都低于本族页面正文的 12px 下限；本域页面自己把列头托起来
     //  （只动字号，不动块层的色与层级账——列头仍是最浅最弱的那一档）。──
@@ -113,11 +149,26 @@ export function photoUiCss(): string {
     //  在 >820 档只有 40px 高（390 档靠 #525 的 820 档配方已够）；本族页面自己把这两颗托到
     //  44px（原地加高，不改块层的排布与配色）。──
     + '.ilife-copy-btn,.ilife-copy-menu-item{min-height:44px}'
+    // ── GIF 舞台（#527）：图按 `1-1` 摆，占屏宽度给一个有上限的放大（#484 口径：合成的是
+    //  小方帧，不给上限放大会只占一小块屏；窄屏仍随容器收，`max-width:100%` 兜底在媒体件里）。
+    //  `image-rendering:pixelated` 保留 #484 的观感：放大后保持方帧锐边（不插值糊成一片）。──
+    + '.phu-gif-stage{max-width:300px}'
+    + '.phu-gif-stage .ilife-block-media-img{image-rendering:pixelated}'
     // ── 窄屏表格提示：桌面不出，640 以下才出（表格本身照公共层的横滑口径走）──
     + '.phu-scroll-hint{display:none}'
     // ── 手机端（断点 820 = HELP）：留白收紧、字号落档、触摸面补齐 ──
+    + '@media (max-width:400px){'
+    // 读数卡在 390 档**保持两格并排**（本族四页的读数卡都是短值：一行两枚才撑得住首屏）。
+    // 公共层的 `pageUi` 在 ≤400 档把读数卡塌成单列（`pageUi.ts` ⑦：照 HELP 的同一条意图）；
+    // 但 HELP 的单列是给长文本卡用的，本族的卡只有「4 张／2026-07-17／8 张」这类短值——
+    // 单列时三张卡占 309px，首屏被卡占满、第一批图掉到第二屏（对抗审查必改 ③ 的原话）。
+    // 本族页内件按自己的内容把小屏档位就地收紧（不改公共层，不动公共层的断点值）。
+    + '  .ilife-block-page-shell-body .ilife-block-kpi-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}'
+    + '}'
     + '@media (max-width:820px){'
     + '  .phu-chips{margin-bottom:10px}'
+    // 390 档（内容宽 358）**稳定两列**：150＋150＋间距 10＝310 ≤358，余量 48px，卡片实测宽 174。
+    // 字号三级梯度在窄屏**按同一套 px 落下**（不缩档）：标题 15／正文 14／辅助 12——12px 是下限。
     + '  .phu-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}'
     + '  .phu-fk{flex-basis:64px}'
     + '  .phu-iv-n{font-size:26px}'

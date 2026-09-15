@@ -9,11 +9,10 @@
  * 可复制命令块）＋ `dataCopyArea`（复制区）。
  *
  * **#529 重做（票「卡路里场景09 · HELP 两页整改」）**：整页从「十条命令逐条平铺原始 JS」改成
- * 「人话在前、载荷在后」的目录型长页。五处口径：
+ * 「人话在前、载荷在按钮上」的目录型长页。五处口径：
  *  1. **人话在前**：每条命令先出人话名（「存一张身材照」）＋ 一句话说明（`helpDocContent.ts`），
- *     可复制载荷（那段几十行的 node 一行式）收进**折叠块**（`renderDisclosure`，默认收起）——
- *     正文不再平铺原始 JS。载荷本身一字不改：它仍是 `renderPreBlock` 渲染的可复制命令块，
- *     `data-t` 里逐字带着那条命令，复制按钮的 `actionId` 仍取冻结表 `CALORIE_COPY_ACTION`。
+ *     可复制载荷（那段几十行的 node 一行式）**只住复制按钮的 `data-t` 属性**——正文与屏幕上
+ *     一个字都不印原始 JS（`#529` 硬要求「正文平铺原始 JS 一律判债」）。
  *  2. **内部标识符不上屏**：命令键只住在行的 `data-help-row` 属性里（供机器认人），
  *     人眼看的标题／说明／目录全无 `body_photo_*`、包名、函数名、`process.env.*`。
  *  3. **唤醒词逐字上屏**（#529 回补）：每行第一件是「说这句」＋ 唤醒词徽章（`renderChips`）——
@@ -21,13 +20,19 @@
  *     人话名时被一起丢了。唤醒词取命中的 `wakeWord` 字段（单一来源仍是 `helpLookup.ts`）。
  *  4. **并列语义换形状**：分组靠**节头 ＋ 目录**（`renderTocBlock`），组内一条一行（`<li>`），
  *     不再用 `·`／`／` 串把事实挤成一行。
- *  5. **手机端标杆**：页内目录可点（触摸区 44px）、节头有锚点、行内不出现横向滚动
- *     （载荷长串在折叠块里折行，见 `helpDocCss.ts`）；整页另开 `pageUi` 位（#525 共用件），
- *     与其余页族共享同一份移动端配方（断点／触摸区／安全区／窄屏表格）。
+ *  5. **手机端标杆**：页内目录可点（触摸区 44px）、节头有锚点、行内不出现横向滚动；
+ *     整页另开 `pageUi` 位（#525 共用件），与其余页族共享同一份移动端配方。
  *
- * **同事实一页一处**（#529 文案纪律）：读法那一句只出一次（`PHOTO_HELP_ROWS_LEAD`，在清单上方），
- * 改前是**每条命令的折叠块里各印一遍**同一句长话（10 行同一句）；页头副标题只说「这一页是找什么的」，
- * 不再复述卡②的用法。
+ * **#529 订正（对抗审查 `.scratch/…/t529-对抗审查.md` §7 三必改 ＋ 三建议）**：
+ *  - §7-1 **副标题与读数卡不许同说一件事**：副标题只说「这一页是找什么的」，条数与由来归读数卡，
+ *    两处各说各的（改前 09-16 两处逐字相同、09-15 同事实换词说两遍）。
+ *  - §7-2 **动作只讲一遍**：读数卡②「怎么用」整张撤掉，行内提示整句撤掉；「复制 → 发给我」
+ *    只在清单上方那一句里说一次（`photoHelpRowsLead`）。
+ *  - §7-3 **行内不再重复那句提示**：改前每行的折叠块里都印同一句 40 字提示（09-16 出现 10 次＝
+ *    行数份）。折叠块与它那格 `<pre>` 一并撤掉——原文住属性、屏上无字可藏，折叠块已无用武之地；
+ *    一行的动作就是那颗按钮本身（`copyButtonHtml`，见下）。
+ *  - §7-4 **文案与事实源对齐**：`body_photo_add_batch` 那句按 SoT 改正（每张可单独给标签）。
+ *  - §7-6 **可滑提示只在真能滑时出现**：见 `helpDocCss.ts` 的轨尾渐隐块。
  *
  * 边界：`src/render/html.ts` **一行不改**——`helpRowHtml` 仍被 `renderHelpLookupHtml`
  * （`calorie.help.lookup`）与两条既有测试（`render-t10`／`render-copy-90`）直调。
@@ -35,13 +40,13 @@
  * `<库目录>/calorie_html/卡路里_照片HELP_<TS>.html`（#245 复用窗口靠主体名认人）。
  */
 import { escapeHtml } from 'base-paint';
-import { renderChips, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderPreBlock, renderTocBlock } from 'base-paint/blocks';
+import { renderChips, renderEmptyBlock, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
-import { CALORIE_COPY_ACTION } from '../render/copy.js';
+import { CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS } from '../render/copy.js';
 import {
-  PHOTO_HELP_ROWS_LEAD, PHOTO_HELP_SAY_LABEL, PHOTO_HELP_SECTIONS,
-  photoHelpAnchorOf, photoHelpKeysBySection, photoHelpTextOf,
+  PHOTO_HELP_SAY_LABEL, PHOTO_HELP_SECTIONS, photoHelpAnchorOf, photoHelpKeysBySection,
+  photoHelpRowsLead, photoHelpTextOf,
 } from './helpDocContent.js';
 import type { PhotoHelpSection } from './helpDocContent.js';
 import { photoHelpDocCss } from './helpDocCss.js';
@@ -54,21 +59,26 @@ const DOC_SKILL = 'calorie';
  *  判据工具 `audit-separators.mjs` 的 R1（并列分隔符债），浏览器标签页上也照着它读。 */
 const DOC_TITLE = '卡路里 HELP 照片';
 
-/** 折叠块的标题（给用户看的那一行）：说清「点开会看到什么、点它做什么」。 */
-const PAYLOAD_TITLE = '这条指令怎么用';
-/** 载荷槽里给**人**看的那句话（命令原文不上屏，只住在复制按钮的 `data-t` 属性里）。
+/** 行内可复制载荷按钮：一行的动作，**屏上只有这一颗按钮，原文只住它的 `data-t`**。
  *
- *  口径：#529 硬要求「正文平铺原始 JS 一律判债」——那段几十行的 node 一行式对读者是零信息，
- *  但它必须**逐字可达**（用户点一下就复制走）。故原文改住属性（`renderPreBlock` 的 `copyText`
- *  → `data-t`），屏幕上这一格只说人话。判据工具 `audit-separators.mjs` 的可见文本口径里属性
- *  天然不进文本节点，节点级读数因此归零（这是「内部标识符清零」的可机械验证形态）。
- *
- *  **一页一句**（#529 回补）：这句读法只住在**每一行的折叠块里**，而清单上方那条
- *  `PHOTO_HELP_ROWS_LEAD` 是它对**整页**的说明——两者不重复：前者是按钮旁边的一步操作，
- *  后者是「这一页怎么用」。改前那一版把一句 40 字的长话在 10 个折叠块里各印一遍。 */
-const PAYLOAD_HINT = '点下面按钮复制，发给我就能用。原文是给 AI 读的，你不用看懂';
+ *  为什么手写这一颗（而不是走 `renderPreBlock`／`renderCopyBlock`）：
+ *  ① `renderPreBlock` 必带一格 `<pre>`（`command` 非空即渲染，空串抛 `bad-input`），而那一格
+ *     除了「点下面按钮复制…」这类**每行都要重复一遍**的提示之外没有别的内容可放——原文住属性、
+ *     不住屏（`#529` 硬要求），一句提示重复 10 行正是用户第 4 条点名的冗余；
+ *  ② `renderCopyBlock` 在有数据位、没有日志位时会**自动补一颗禁用的「复制日志」**（#336），
+ *     行内按钮数与页内 `actionId` 集都会被它改掉（页尾复制区才是那颗按钮的落点）。
+ *  故本页只保留按钮本身：id／文案取冻结表 `CALORIE_COPY_ACTION`，承载属性名取
+ *  `COPY_BUTTON_ATTRS`（两者都读冻结常量，本件不出现第二个字面量），类名与
+ *  `renderPreBlock` 产的按钮逐字同值（`.ilife-copy-btn.ilife-copy-btn-ghost`），
+ *  点一下仍由页面运行时的 `[data-action-id]` 委派读 `data-t` 复制。 */
+function copyButtonHtml(exec: string): string {
+  return '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" '
+    + COPY_BUTTON_ATTRS.actionId + '="' + escapeHtml(CALORIE_COPY_ACTION.actionId) + '" '
+    + COPY_BUTTON_ATTRS.text + '="' + escapeHtml(exec) + '">'
+    + escapeHtml(CALORIE_COPY_ACTION.label) + '</button>';
+}
 
-/** 一条命中：说这句（唤醒词徽章）＋ 人话名 ＋ 一句话说明 ＋ 折叠起来的可复制载荷。 */
+/** 一条命中：说这句（唤醒词徽章）＋ 人话名 ＋ 一句话说明 ＋ 可复制载荷按钮。 */
 function hitRowHtml(h: PhotoHelpHit): string {
   const text = photoHelpTextOf(h.key);
   return '<li data-help-row="' + escapeHtml(h.key) + '" class="ilife-helpdoc-row">'
@@ -76,15 +86,7 @@ function hitRowHtml(h: PhotoHelpHit): string {
     + '<p class="ilife-helpdoc-say"><span class="ilife-helpdoc-say-tag">' + PHOTO_HELP_SAY_LABEL + '</span>'
     + renderChips({ items: [{ text: h.wakeWord }] }) + '</p>'
     + '<p class="ilife-helpdoc-detail">' + escapeHtml(text.detail) + '</p>'
-    + renderDisclosure({
-      title: PAYLOAD_TITLE,
-      contentHtml: renderPreBlock({
-        command: PAYLOAD_HINT,
-        copyText: h.exec,
-        actionId: CALORIE_COPY_ACTION.actionId,
-        copyLabel: CALORIE_COPY_ACTION.label,
-      }),
-    })
+    + copyButtonHtml(h.exec)
     + '</li>';
 }
 
@@ -111,51 +113,54 @@ function sectionsHtml(hits: readonly PhotoHelpHit[]): string {
   return out.join('');
 }
 
+/** 轨尾渐隐块（样式住 `helpDocCss.ts` 的 `.ilife-helpdoc-nav-fade`）：**只在轨真的能向右滑时**
+ *  才看得见（对抗审查 §7-6：改前是 640 档无条件挂 `mask-image`，09-15 的轨根本滑不动却仍带渐隐）。
+ *
+ *  为什么塞进 `renderTocBlock` 的产物里：它必须是**滚动轨自己（`<nav class="ilife-block-toc">`）
+ *  的尾元素**，`position:sticky;right:0` 才钉得住轨的右缘——内容放得下时它落在内容尾之后、
+ *  与页底同色（等于没有提示）；内容超出时它被钉在右缘（＝「右边还有」那一道提示）。
+ *  #525 的共用件不给这个尾槽，故装配处补一枚空元素：无文字、`aria-hidden`、不吃点击。 */
+const NAV_FADE = '<span class="ilife-helpdoc-nav-fade" aria-hidden="true"></span>';
+
 /** 页内目录：只列**这一页真的有**的节（没命中的节不进目录，免得点了空跳）。 */
 function tocHtml(hits: readonly PhotoHelpHit[]): string {
   const present = new Set(hits.map((h) => photoHelpTextOf(h.key).section));
   const items = PHOTO_HELP_SECTIONS.filter((s) => present.has(s.id))
     .map((s) => ({ id: photoHelpAnchorOf(s.id), text: s.label }));
   if (items.length === 0) return '';
-  return '<div class="ilife-helpdoc-nav">' + renderTocBlock({ items }) + '</div>';
+  // 轨尾补渐隐块：`renderTocBlock` 的产物以唯一的 `</nav>` 收尾（项名已转义，不会撞见同名字符串）。
+  const nav = renderTocBlock({ items }).replace('</nav>', NAV_FADE + '</nav>');
+  return '<div class="ilife-helpdoc-nav">' + nav + '</div>';
 }
 
-/** 页头读数卡：**两页各说两件事，且不互相复述**（同事实一页一处）。
- *  - 卡①「命中」：这一页列了几条，以及这一页是怎么来的（**不复述用户刚打的查询词**——
- *    查询词已在副标题里点了名，卡里再引一遍就是同事实第二处）；
- *  - 卡②「怎么用」：一句话把用法讲完（复制 → 发给 AI → 拿结果）。 */
-function kpiHtml(hits: readonly PhotoHelpHit[], asked: boolean): string {
-  const n = hits.length;
-  return renderKpiGrid([
-    {
-      label: '命中',
-      value: String(n),
-      unit: '条',
-      detail: asked ? '跟你说的这件事有关的照片命令' : '照片这一类能做的十条命令',
-    },
-    {
-      label: '怎么用',
-      value: '复制发给我',
-      detail: '点一下按钮，粘到对话里发给我，我替你去办',
-    },
-  ]);
+/** 页头读数卡：**只报这一页列了几条**（一张卡，别的一律不在这里说）。
+ *
+ *  #529 订正（对抗审查 §7-1／§7-2）：改前这里是两张卡——卡①「命中」的说明与页头副标题
+ *  **逐字相同**（09-16）／同事实换词说两遍（09-15），卡②「怎么用」又把「复制 → 发给我」
+ *  与清单读法、行内提示讲了第三遍。改后：条数归这张卡，身份归副标题（`subtitleOf`），
+ *  动作归清单上方那一句（`photoHelpRowsLead`）——一处一件事，谁也不复述谁。 */
+function kpiHtml(hits: readonly PhotoHelpHit[]): string {
+  return renderKpiGrid([{ label: '命中', value: String(hits.length), unit: '条' }]);
 }
 
-/** 页头那一行小字（不写半角标点；不重复卡里的条数与用法，只说这一页是找什么的）。 */
+/** 页头那一行小字：**只说这一页是什么**（不报条数、不讲用法——那两件事各有自己的落点）。 */
 function subtitleOf(asked: boolean, query: string): string {
-  return asked ? '照片里跟「' + query + '」有关的那几条命令' : '照片这一类能做的十条命令';
+  return asked
+    ? '照片里跟「' + query + '」有关的那几条命令'
+    : '照片这一类能做的事，一条一条列在下面';
 }
 
 /** 整页装配：`query` 空串＝全量那一态（命中＝全 10 键），非空＝现找那一态。 */
 export function buildPhotoHelpDoc(hits: readonly PhotoHelpHit[], query?: string): string {
   const asked = typeof query === 'string' && query !== '';
   const n = hits.length;
-  const parts: string[] = [kpiHtml(hits, asked)];
+  const parts: string[] = [kpiHtml(hits)];
   if (n === 0) {
     parts.push(renderEmptyBlock({ text: '没有命中任何照片命令：换个说法再试试' }));
   } else {
     parts.push(tocHtml(hits));
-    parts.push('<p class="ilife-helpdoc-lead">' + PHOTO_HELP_ROWS_LEAD + '</p>');
+    parts.push('<p class="ilife-helpdoc-lead">'
+      + escapeHtml(photoHelpRowsLead(CALORIE_COPY_ACTION.label)) + '</p>');
     parts.push(sectionsHtml(hits));
   }
   parts.push('<div class="ilife-helpdoc-copy">' + dataCopyArea('复制数据', {

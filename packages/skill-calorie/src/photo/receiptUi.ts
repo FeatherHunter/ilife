@@ -77,35 +77,40 @@ export function receiptUiCss(): string {
     + '.ilife-block-data-table th,.ilife-block-data-table td{font-size:12px}'
     + '.ilife-block-data-table td::before{font-size:12px}'
     + '}'
-    // ── 标签对照（09-10／11／12）：列头与公共层 `renderChangeRows` 的四栏同轨（名字／旧值／箭位／
-    //    新值），窄屏旧值在上、新值在下，箭位让位——把「一行四栏」收成「一列两行」，不必横滚。 ──
-    + '.phr-tags{margin:0 0 14px}'
-    + '.phr-tags .ilife-block-change-row,'
-    + '.phr-tags-head{display:grid;grid-template-columns:3.6em minmax(0,1fr) 1.4em minmax(0,1fr);'
-    + 'gap:0 10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line)}'
-    + '.phr-tags .ilife-block-change-row:first-child,.phr-tags-head:first-child{border-top:0}'
-    + '.phr-tags-head{font-size:12px;color:var(--fg3)}'
-    + '.phr-tags .ilife-block-change-row-label{font-size:12px;color:var(--fg3);min-width:0}'
-    + '.phr-tags .ilife-block-change-row-old,.phr-tags .ilife-block-change-row-new{font-size:14px;min-width:0;overflow-wrap:anywhere}'
+    // ── 标签对照（09-10／11／12）：**一行四栏**（变化词／改前／改后／箭位），列头与行同轨；三态各带
+    //    自己的字重与色（保留中性／新增绿／移除红，与 `opBadgeOf` 同源），形状本身就是答案。
+    //    外层 `row` 只做透传（`display:contents`），让公共层那一行的四栏真正落进本页栅格。 ──
+    + '.phr-tags{margin:0 0 14px;max-width:620px;display:grid;grid-template-columns:3.4em minmax(0,1fr) minmax(0,1fr) 1.4em;'
+    + 'gap:0 10px;align-items:baseline}'
+    + '.phr-tags .phr-tags-row{display:contents}'
+    + '.phr-tags-head,.phr-tags .ilife-block-change-row{padding:7px 0;border-top:1px solid var(--line)}'
+    + '.phr-tags-head{border-top:0;font-size:12px;color:var(--fg3)}'
+    + '.phr-tags .phr-tags-slot{font-size:12px;color:var(--fg3);min-width:0}'
+    + '.phr-tag-add .phr-tags-slot{color:#34c759;font-weight:600}'
+    + '.phr-tag-remove .phr-tags-slot{color:#ff3b30;font-weight:600}'
+    + '.phr-tags .ilife-block-change-row-label{display:none}'
+    + '.phr-tags .ilife-block-change-row-old,.phr-tags .ilife-block-change-row-new{font-size:14px;'
+    + 'min-width:0;overflow-wrap:anywhere}'
     + '.phr-tags .ilife-block-change-row-arrow{font-size:14px}'
+    + '.phr-tag-add .ilife-block-change-row-new{color:#34c759;font-weight:600}'
+    + '.phr-tag-add .ilife-block-change-row-arrow{visibility:hidden}'
+    + '.phr-tag-remove .ilife-block-change-row-old{color:#ff3b30;font-weight:600}'
+    + '.phr-tag-remove .ilife-block-change-row-arrow{visibility:hidden}'
     // ── 640 档：表头与单元格抬到 HELP 同档的字号下限（12px）。公共层表头是 11px（§3.2 点的
     //    就是 `th.ilife-block-data-table-cell-*`），卡片化后每格的列头也走 `td::before`，一抬一起抬。
     + '@media (max-width: 640px){'
     + '.ilife-block-data-table th,.ilife-block-data-table td{font-size:12px}'
     + '.ilife-block-data-table td::before{font-size:12px}'
     + '}'
-    // ── 400 档（既有断点）：名字槽与行内距收紧；标签对照改「一列两行」——状态词一列、
-    //    旧值与新值各占一行、箭位隐去（字符会撞在一起，位置说清顺序比箭头清楚）。 ──
+    // ── 400 档（既有断点）：名字槽与行内距收紧；标签对照三栏（变化词／改前＋改后／箭位），
+    //    改前一行、改后一行，箭位隐去（三个字符挤在一起，不如位置说清顺序）。 ──
     + '@media (max-width: 400px){'
     + '.phr-fk{flex-basis:64px}'
     + '.phr-shot .ilife-block-list-rows-row{gap:6px 8px;padding:8px 10px}'
-    + '.phr-tags .ilife-block-change-row,.phr-tags-head{grid-template-columns:3.4em minmax(0,1fr);'
-    + 'gap:2px 10px;padding:8px 0}'
-    + '.phr-tags-head{padding-bottom:0}'
-    + '.phr-tags-head .phr-tags-arrow{display:none}'
-    + '.phr-tags .ilife-block-change-row-label{grid-column:1;grid-row:1/span 2}'
-    + '.phr-tags .ilife-block-change-row-old{grid-column:2;grid-row:1}'
-    + '.phr-tags .ilife-block-change-row-new{grid-column:2;grid-row:2}'
+    + '.phr-tags{grid-template-columns:3.4em minmax(0,1fr) minmax(0,1fr);gap:2px 10px}'
+    + '.phr-tags-head,.phr-tags .ilife-block-change-row{padding:8px 0}'
+    + '.phr-tags .ilife-block-change-row-old{grid-column:2}'
+    + '.phr-tags .ilife-block-change-row-new{grid-column:3}'
     + '.phr-tags .ilife-block-change-row-arrow{display:none}'
     + '}'
     // ── 触摸区：本页自有的可点元素两颗（页尾复制按钮与复制菜单项，公共层的）＋折叠块摘要。

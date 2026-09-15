@@ -31,7 +31,8 @@
  */
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
-import { escapeHtml, renderStatusBadge } from 'base-paint';
+import { renderMediaPlaceholder } from 'base-paint';
+import { escapeHtml } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea, notice } from '../shared/copyArea.js';
 import { todayISO } from '../analysis/utils.js';
@@ -67,16 +68,19 @@ function isNonBudgetSkip(e: PhotoEmbed | undefined): boolean {
 }
 
 /** 没显示的那张：**一句话说为什么** ＋ 一句读者能做的下一步（原来这两句串在一行里）。
- *  #526 收口时试过把「为什么」撤掉（理由：页顶提示块与读数卡各有一处「主」），但**占位必须写明原因**
- *  是本票目标第 5 条的硬要求，且既有测试（`photo-budget-438`／`photo-shape-341`）逐字钉着这两句；
- *  故保留「为什么」，页顶提示块说**这一窗有多少张**、这一格说**这一张为什么**，两处各说各的。 */
+ *  #526 收口第二轮（对抗审查必改 ①）：**同一事实一页一处**。上一版这一格写的
+ *  「超过一页能装的量，没进这一页」与页顶那条提示块的「还有 M 张原图太大，没进这一页」
+ *  是同一件事说两遍（实测 10 次＋缺失 8 次，H3 逐处 −2）；现在**分工**：
+ *    · 页顶提示块说**这一窗为什么只显示这些**（整批的规模 ＋ 可选的替代操作）；
+ *    · 这一格说**哪一份文件 ＋ 它为什么没显示 ＋ 这一张该怎么办**（单张的原因与下一步）。
+ *  两句都还在，只是不再互为复读。 */
 function missReason(e: PhotoEmbed | undefined, skipReason: string | undefined): { badge: string; why: string; what: string } {
   if (skipReason !== undefined) {
-    return { badge: '原图太大', why: '超过一页能装的量，没进这一页', what: '想看这一张：自己打开下面的文件' };
+    return { badge: '原图太大', why: '这张太大，一页装不下', what: '想看这一张：自己打开这份文件' };
   }
   const raw = e?.missing ?? '';
   if (raw === '') return { badge: '没显示', why: '这一张没能放上页面', what: '下面留着它的文件名' };
-  if (raw.includes('过大')) return { badge: '原图太大', why: '超过一页能装的量，没进这一页', what: '想看这一张：自己打开下面的文件' };
+  if (raw.includes('过大')) return { badge: '原图太大', why: '这张太大，一页装不下', what: '想看这一张：自己打开这份文件' };
   if (raw.includes('未配照片目录')) return { badge: '读不到', why: '还没有设照片目录，读不到文件', what: '设好照片目录再跑一次' };
   if (raw.includes('文件缺失')) return { badge: '找不到文件', why: '照片记录还在，文件不在照片目录里', what: '把文件放回照片目录就会有图' };
   return { badge: '读不出', why: '这一张读不出来', what: '下面留着它的文件名' };
@@ -97,8 +101,9 @@ function windowDaysOf(g: GalleryData): number {
   return Math.round((to - from) / 86400000) + 1;
 }
 
-/** 一张照片的格位（#526）：能看的走 `aspect-ratio` 图片框，没显示的走占位（**哪一份文件 ＋ 为什么**）。
+/** 一张照片的格位（#526）：能看的走 `aspect-ratio` 图片框，没显示的走**同规格媒体占位件**。
  *  图注＝时刻（一行粗体）＋ 徽章列（编号／标签／相对时间）＋ 文件名小字块，三件事各有各的形状。
+ *  占位框里两句人话：主句「哪一份文件 ＋ 为什么没显示」（`reason`），次句「这一张该怎么办」（`next`）。
  *
  *  #526 收口：**逐张的复制按钮撤掉**。原来每张卡调 `copyActionHtml()`，一页 22 张就是 44 颗药丸按钮
  *  （其中 22 颗是公共层 `renderActionBar` 自动补的**禁用「复制日志」**，见 `controls.ts:1367` 的 #336 兜底），
@@ -107,15 +112,19 @@ function windowDaysOf(g: GalleryData): number {
 function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string | undefined, today: string): string {
   const fileName = e?.fileName ?? fileNameOf(p.photoPath);
   const shown = e?.dataUri != null;
+  // #526 收口第二轮：占位格改用公共层**同规格媒体占位件**（`renderMediaPlaceholder`，#525b 交付）。
+  // 它走与真图同一个容器装配件——同宽高比档（`4-5`，与真图格的 `aspect-ratio:4/5` 同数）、同圆角、
+  // 同图注槽，所以「占位卡与真图卡规格不一致」（版面档复评 ① 82／② 78 的扣分项）由代码保证不再发生。
+  // 格位仍由 `.phu-shot` 定（网格里等高），框体在它里面铺满（见 `photoUiCss()` 的收敛规则）。
   const stage = shown
     ? '<div class="phu-shot"><img src="' + (e as PhotoEmbed).dataUri
       + '" alt="身材照 ' + p.id + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
     : (() => {
       const m = missReason(e, skipReason);
-      return '<div class="phu-shot"><div class="phu-miss">'
-        + renderStatusBadge({ status: m.badge === '原图太大' ? 'warn' : 'danger', text: m.badge })
-        + '<code>' + escapeHtml(fileName) + '</code><div>' + escapeHtml(m.why) + '</div>'
-        + '<div>' + escapeHtml(m.what) + '</div></div></div>';
+      return '<div class="phu-shot">' + renderMediaPlaceholder({
+        alt: '身材照 ' + p.id, ratio: '4-5',
+        reason: m.badge + '：' + fileName, next: m.why + '。' + m.what,
+      }) + '</div>';
     })();
   const rel = relativeDays(p.date, today);
   const when = p.date + (p.time === null ? '' : ' ' + p.time.slice(0, 5));
@@ -127,25 +136,25 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string 
     + '</figcaption></figure>';
 }
 
-/** 「这一页缺什么 ＋ 怎么办」那一块（#472 改公共层静态提示块；#526 拆成两句、去掉分号；
+/** 「这一窗为什么只显示这些」那一块（#472 改公共层静态提示块；#526 拆成两句、去掉分号；
  *  **收口再并一格**）：原来「找不到文件 N 张」自占一张读数卡，加上预算提示块，首屏是「三张卡＋一块」，
  *  读者一眼看不出先看什么。收口把两件事并成**一块**放在页头（徽章列之后、读数卡之前）——
  *  阅读顺序变成「这一页是什么（标题＋徽章）→ 缺什么／怎么办（本块）→ 有多少（读数卡）→ 图」。
  *
- *  触发口径照旧：#438 要求「预算提示块只按预算跳过计数」——`还有 M 张原图太大` 这句**只在有预算跳过时出**，
- *  仅文件缺失时出的是另一句（`N 张照片的文件不在照片目录里，图放不出来`），两态的归因不混。 */
+ *  **本块只说整批**（2026-09-15 收口第二轮，对抗审查必改 ①）：每张的「为什么没显示」由它自己的
+ *  占位格说（`missReason`，逐张带文件名），本块说**这一窗的规模**与**可选的替代操作**。
+ *  这样一条事实全页只有一处，读者也不用在十几张占位卡里读十几遍同一句话。 */
 function missNoticeHtml(budgetSkippedCount: number, missingCount: number): string {
   if (budgetSkippedCount <= 0 && missingCount <= 0) return '';
   if (budgetSkippedCount <= 0) {
-    return notice({
-      msg: missingCount + ' 张照片的文件不在照片目录里，图放不出来',
-      detail: '把文件放回照片目录就会有图',
-    });
+    return notice({ msg: missingCount + ' 张照片的文件不在照片目录里，图放不出来', detail: '把文件放回照片目录就会有图' });
+  }
+  if (missingCount <= 0) {
+    return notice({ msg: '还有 ' + budgetSkippedCount + ' 张原图太大，没进这一页', detail: '想全看：按标签挑，或者按日期挑一段时间' });
   }
   return notice({
     msg: '还有 ' + budgetSkippedCount + ' 张原图太大，没进这一页',
-    detail: (missingCount > 0 ? '另有 ' + missingCount + ' 张文件不在照片目录里。' : '')
-      + '想全看：按标签挑，或者按日期挑一段时间',
+    detail: '另有 ' + missingCount + ' 张文件不在照片目录里。想全看：按标签挑，或者按日期挑一段时间',
   });
 }
 

@@ -22,6 +22,7 @@
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px），键值行窄屏塌纵向。
  */
 import { escapeHtml, renderStatusBadge } from 'base-paint';
+import { renderMediaPlaceholder } from 'base-paint';
 import { renderConclusionBar } from 'base-paint/blocks';
 import { COPY_ACTION_IDS, renderActionBar } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
@@ -97,26 +98,26 @@ function navHtml(v: ViewerData): string {
   return '<div data-nav>' + prev + next + '</div>';
 }
 
-/** 结论条那一句（全页只此一处说「能不能看／多大」）：三态各归各的说法。 */
+/** 结论条那一句（全页只此一处说「能不能看／多大／为什么」）：四态各归各的说法。
+ *  图正常显示时**不出结论条**（看图就能看出来，见 `contentOf`）——那时「多大」由键值行说。 */
 function verdictOf(e: PhotoEmbed, dropped: boolean, p: PhotoCard): string {
   const size = sizeText(e.bytes);
   if (p.fileExists === false) return '这份原图不在照片目录里，图放不出来';
-  if (dropped) return '这张原图 ' + (size === '' ? '' : size + '，') + '一页装不下，图没放进本页';
+  if (dropped) return '这张原图 ' + (size === '' ? '' : size + '，') + '一页放不下，图没放进本页';
   if (e.dataUri !== null) return '这张原图 ' + size + '，已经放在本页，可以直接看';
   if (e.missing !== null && e.missing.includes('未配照片目录')) return '还没设照片目录，读不到这份原图';
   return '这张原图读不出来，下面留着文件名';
 }
 
-/** 占位那一格说什么（#526 收口）：**分工**＝这一格只说「这里是哪一份文件 ＋ 下一步做什么」，
- *  「为什么没图」由页顶那条结论条**一处**说。原来中间还有一句「超过一页能装的量，没进这一页」，
- *  与结论条的「一页装不下，图没放进本页」是同一件事说两遍（`seat-brief` §8 点名的那条债），本票删。 */
-function missHint(p: PhotoCard, e: PhotoEmbed, dropped: boolean): { badge: { status: 'warn' | 'danger'; text: string }; next: string } {
-  if (dropped) return { badge: { status: 'warn', text: '原图太大' }, next: '想看原图：自己打开这份文件' };
-  if (p.fileExists === false) return { badge: { status: 'danger', text: '找不到文件' }, next: '把文件放回照片目录就会有图' };
-  if (e.missing !== null && e.missing.includes('未配照片目录')) {
-    return { badge: { status: 'danger', text: '没设照片目录' }, next: '先设好照片目录，再跑一次' };
-  }
-  return { badge: { status: 'danger', text: '读不出来' }, next: '把文件放回照片目录就会有图' };
+/** 占位那一格说什么（#526 收口第二轮 · 编排者转来的必改项）：**同一事实一页一处**。
+ *  页顶那条结论条说**结果与原因**（放没放进本页／多大／为什么）；这一格只说**哪一份文件 ＋
+ *  下一步做什么**——上一版这里还挂了一枚「原图太大」徽标，与结论条的「一页装不下」是同一件事，
+ *  且「超过一页能装的量，没进这一页」与结论条那句逐字相近，全页复读两遍。现在两处各说各的。 */
+function missHint(p: PhotoCard, e: PhotoEmbed, dropped: boolean): { next: string } {
+  if (dropped) return { next: '想看原图：自己打开这份文件' };
+  if (p.fileExists === false) return { next: '把文件放回照片目录就会有图' };
+  if (e.missing !== null && e.missing.includes('未配照片目录')) return { next: '先设好照片目录，再跑一次' };
+  return { next: '把文件放回照片目录就会有图' };
 }
 
 /** 大图卡（黑底 75vh contain，老页 `:28-29` 规则）；没图那态给占位——**明写哪一份文件与下一步**。 */
@@ -129,25 +130,28 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed, dropped: boolean): string {
       + '" style="max-width:100%;max-height:75vh;object-fit:contain" /></div></figure>';
   }
   const m = missHint(p, e, dropped);
-  return '<figure data-id="' + p.id + '" id="photo-' + p.id + '"><div class="phu-hero-miss" style="display:flex;align-items:center;justify-content:center">'
-    + '<div class="phu-miss">' + renderStatusBadge(m.badge)
-    + '<code>' + escapeHtml(fileName) + '</code>'
-    + '<div>' + escapeHtml(m.next) + '</div>'
-    + '</div></div></figure>';
+  // #526 收口第二轮：占位改用公共层同规格媒体占位件（框体与真图同一段装配，规格由代码保证）。
+  return '<figure data-id="' + p.id + '" id="photo-' + p.id + '" class="phu-hero-miss">'
+    + renderMediaPlaceholder({
+      alt: '身材照 ' + p.id, ratio: '4-5',
+      reason: '这张原图没显示：' + fileName, next: m.next,
+    })
+    + '</figure>';
 }
 
-/** 这张照片的信息（#526 把六列单行表换成键值行）：文件（含它到底在不在）＋ 原图大小 ＋
- *  备注（用户自己连写的那几件事按段落到形状上，见 `photoUi.noteSegments`）。
+/** 这张照片的信息（#526 把六列单行表换成键值行）：文件 ＋ 原图大小 ＋ 备注。
  *
- *  大小这一格只在**图已显示**时给（2026-09-15 收口）：那时候页顶没有结论条，大小属于「事实」，
- *  归键值行；图没显示时大小由页顶那条结论条说（「这张原图 3.0 MB，一页装不下…」），这里不再重复。 */
+ *  两处分工（2026-09-15 收口第二轮 · 必改项：结论条与事实条说同一件事）：
+ *   · **大小**只在图已显示时给——那时页顶没有结论条，大小属于「事实」；图没显示时大小由结论条说。
+ *   · **文件在不在照片目录里**只在**真有事**时给（「不在照片目录里」／「没核对」）：
+ *     图正常显示时这一枚「在照片目录里」既与结论条／图重复，又是零信息值（不出问题就不必印）。
+ *  于是同一页上「能不能看、为什么」全在结论条一处，「文件叫什么、多大、在哪」全在键值行一处。 */
 function infoHtml(p: PhotoCard, e: PhotoEmbed, shown: boolean): string {
-  const exists = p.fileExists === false
+  const place = p.fileExists === false
     ? renderStatusBadge({ status: 'danger', text: '不在照片目录里' })
-    : (p.fileExists === null ? renderStatusBadge({ status: 'empty', text: '没核对' })
-      : renderStatusBadge({ status: 'ok', text: '在照片目录里' }));
+    : (p.fileExists === null ? renderStatusBadge({ status: 'empty', text: '没核对' }) : '');
   const rows = [
-    { k: '文件', vHtml: '<code>' + escapeHtml(e.fileName) + '</code> ' + exists },
+    { k: '文件', vHtml: '<code>' + escapeHtml(e.fileName) + '</code> ' + place },
     { k: '原图大小', v: shown ? sizeText(e.bytes) : '' },
     { k: '备注', vHtml: p.note === null || p.note === '' ? '' : '<span class="phu-segs">' + noteSegments(p.note) + '</span>' },
   ];

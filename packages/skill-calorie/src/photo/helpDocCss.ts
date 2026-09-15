@@ -71,17 +71,20 @@ const RULES: readonly string[] = [
   '.ilife-helpdoc-say-tag{color:var(--fg3);font-size:12px;font-weight:600;letter-spacing:.06em;'
     + 'opacity:.85}',
 
-  /* ── 折叠载荷：默认收起；展开后那一格**不是代码块**，是一句人话（原文住复制按钮的属性里）
-   *    加一条长串折行，防「属性/句式被顶宽」把窄屏撑出横向滚动 ── */
-  '.ilife-helpdoc-row .ilife-block-disclosure{margin:10px 0 0}',
-  '.ilife-helpdoc-row .ilife-block-pre-block{margin:0}',
-  '.ilife-helpdoc-row .ilife-block-pre-block-code{background:var(--soft);color:var(--fg2);'
-    + 'font-family:inherit;font-size:13px;line-height:1.6;white-space:normal;'
-    + 'word-break:break-word;overflow-wrap:anywhere}',
-  '.ilife-helpdoc-row .ilife-copy-btn{width:100%;margin-top:10px;min-height:44px}',
+  /* ── 行内复制按钮：一行的动作（原文只住它的 `data-t`，屏上就这一颗按钮） ──────────
+   *    #529 订正：折叠块与它那格 `<pre>` 撤掉后，这颗按钮成为行内唯一的动作件。
+   *    宽度**不收满**（`width:100%` 是折叠块时代的写法：那时它压在代码格下面），
+   *    改成跟着文字走的胶囊；高度仍钉 44px（手机端触摸区下限是本页的标杆判据）。 ── */
+  '.ilife-helpdoc-row .ilife-copy-btn{margin-top:10px;min-height:44px}',
 
   /* ── 页尾复制区：与上方清单留出一档呼吸 ─────────────────────────────── */
   '.ilife-helpdoc-copy{margin-top:24px}',
+
+  /* ── 轨尾渐隐块：**只在轨真的能向右滑时**才看得见 ─────────────────────────
+   *  `position:sticky;right:0` 的尾元素：内容超出时被钉在轨的右缘（提示右边还有），
+   *  内容放得下时落在内容尾之后、与页底同色（`--bg` 正是 `body` 的底色）＝什么也不显示。
+   *  纯几何判据，不用 JS、不用容器查询；≤400 档以外不参与布局（宽档目录换行，没有横滑轨）。 ── */
+  '.ilife-helpdoc-nav-fade{display:none}',
 ];
 
 /** 窄屏档（640px）：节头与行内边距收一档，字号**不下调**（手机端字号下限是标杆判据）。 */
@@ -90,21 +93,24 @@ const NARROW: readonly string[] = [
   '.ilife-helpdoc-name{font-size:15.5px}',
   '.ilife-helpdoc-detail{font-size:13px}',
   '.ilife-helpdoc-section{margin-top:20px}',
-  /* 胶囊轨的**可滑提示**：右缘一抹渐隐。为什么需要：390 档五颗胶囊一屏放不下、末颗只露一半，
-   *  「被切断」本身是提示，但若读成渲染事故就白搭；补一道渐隐把这条轨一眼读成「可滑」。
-   *  纯视觉属性（`mask-image`），不动可访问树、不动触摸区、不改任何尺寸。 */
-  '.ilife-helpdoc-nav .ilife-block-toc{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),'
-    + 'transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}',
 ];
 
 /** 极窄档（400px）：目录转**一条可横滑的胶囊行**——五个节名满宽竖排会白占一屏多，把正文压到
  *  首屏之外；横滑保住「一屏内看得见正文」与「每颗胶囊仍是 44px 触摸区」两件事。
- *  选择器与 pageUi 同级（不套父类），故这一档照旧盖得住共用配方给的 640 档默认值。 */
+ *  选择器与 pageUi 同级（不套父类），故这一档照旧盖得住共用配方给的 640 档默认值。
+ *
+ *  轨尾渐隐块在这一档才进布局：`position:sticky;right:0` 让它**只在轨能向右滑时**贴住右缘
+ *  （内容放得下时它落在内容尾之后、与 `--bg` 同色，看不见）——这一条替代了改前那枚无条件
+ *  `mask-image`（对抗审查 §7-6：09-15@390 的轨 `scrollWidth == clientWidth` 却仍带渐隐）。 */
 const TINY: readonly string[] = [
   '.ilife-block-toc{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;'
     + 'padding-bottom:2px;scrollbar-width:none}',
   '.ilife-block-toc::-webkit-scrollbar{display:none}',
   '.ilife-block-toc a{flex:0 0 auto;padding:0 14px}',
+  '.ilife-helpdoc-nav-fade{display:block;position:sticky;right:0;flex:0 0 28px;width:28px;'
+    + 'pointer-events:none;background:var(--bg);'
+    + '-webkit-mask-image:linear-gradient(to right,transparent,#000);'
+    + 'mask-image:linear-gradient(to right,transparent,#000)}',
 ];
 
 /** 页内样式文本（**自带 `<style>` 包裹**，与同族 `weightUiCss()`／`reviewViewCss()` 同口径：

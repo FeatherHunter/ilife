@@ -25,7 +25,7 @@
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px），卡片宽屏并排、
  *      窄屏自动上下排列（可压窄的 flex 项，`min-width:0`）。
  */
-import { escapeHtml, renderStatusBadge } from 'base-paint';
+import { escapeHtml, renderMediaPlaceholder } from 'base-paint';
 import { renderConclusionBar, renderDataTable } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea, notice } from '../shared/copyArea.js';
@@ -84,15 +84,14 @@ function cardHtml(p: PhotoCard, e: PhotoEmbed | undefined, dropped: boolean, tod
     ? '<div class="phu-shot"><img src="' + e?.dataUri + '" alt="身材照 ' + p.id
       + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
     : (() => {
-      // #526 收口：这一格说「哪一份文件 （＋ 下一步）」。「为什么没显示」由页顶那条提示块一处说；
-      // 提示块在场时（`noticeCovers`）连下一步也在那条里说过了，这一格只留徽标与文件名，
-      // 同一件事不再说两遍（`seat-brief` §8 点名的重复）。
+      // #526 收口第二轮：占位改用公共层同规格媒体占位件（`renderMediaPlaceholder`，与真图同一段框体装配）。
+      // 「为什么没显示」由页顶那条提示块**一处**说；这一格说**哪一份文件 ＋ 这一张该怎么办**。
       const next = dropped ? '想看原图：自己打开这份文件' : '把文件放回照片目录就会有图';
-      const badge = dropped ? { status: 'warn' as const, text: '原图太大' } : { status: 'danger' as const, text: '找不到文件' };
-      return '<div class="phu-shot"><div class="phu-miss">' + renderStatusBadge(badge)
-        + '<code>' + escapeHtml(fileName) + '</code>'
-        + (dropped && noticeCovers ? '' : '<div>' + next + '</div>')
-        + '</div></div>';
+      const why = dropped ? '这一张太大，没放进本页' : '照片记录还在，文件不在照片目录里';
+      return '<div class="phu-shot">' + renderMediaPlaceholder({
+        alt: '身材照 ' + p.id, ratio: '4-5',
+        reason: '没显示：' + fileName, next: (noticeCovers ? '' : why + '。') + next,
+      }) + '</div>';
     })();
   const tags = p.tagList.length > 0 ? [...p.tagList] : ['无标签'];
   return '<figure class="phu-card" data-id="' + p.id + '" style="flex:1 1 240px;min-width:0">' + stage
@@ -158,7 +157,10 @@ function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: Reado
   parts.push(intervalOf(c));
   if (dropped.size > 0) parts.push(budgetNoticeHtml(embeds, dropped));
   // #484：两张并排（宽屏）／上下排列（窄屏）——折行容器＋可压窄的卡，两卡都放得下才不溢出。
-  parts.push('<div style="display:flex;flex-wrap:wrap;gap:12px">' + [c.photo1, c.photo2].map((p) =>
+  // #526 收口第二轮（对抗审查必改 ②）：容器挂 `.phu-compare`，`align-items:stretch` 让两栏**等高**。
+  // 原来是一行内联 `display:flex`，卡高按各自内容定——一边有图一边是占位时，短的那栏底下留一大片
+  // 空灰（审查 @1280 给 55 分的那处）。等高之后，短栏的图注与舞台按格拉伸，两栏下沿齐平。
+  parts.push('<div class="phu-compare">' + [c.photo1, c.photo2].map((p) =>
     cardHtml(p, byName.get(fileKeyOf(p.photoPath)), dropped.has(fileKeyOf(p.photoPath)), today, dropped.size > 0),
   ).join('') + '</div>');
   parts.push(recordTable(c, dropped));

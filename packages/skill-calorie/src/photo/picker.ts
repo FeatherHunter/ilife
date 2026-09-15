@@ -82,17 +82,17 @@ export function buildPhotoPickerPrompt(input: {
 }): string {
   const { selectedId, action, op, newTag } = input;
   if (selectedId === null) {
-    return '// 还没选照片：把候选列表里那个 #号说给我（例如 #19），我再把要执行的指令写出来';
+    return '// 还没选照片：把候选列表里某张的编号说给我（例如 19），我再把要执行的指令写出来';
   }
   if (action === 'remove') {
-    return '请帮我删除身材照 #' + selectedId + '（删了就找不回来，先看上面那张是不是它）' +
+    return '请帮我删除身材照 ' + selectedId + '（删了就找不回来，先看上面那张是不是它）' +
       '\n\n命令:\n```bash\ncalorie-cmd-read calorie.photo.remove --params \'' +
       JSON.stringify({ id: selectedId }) + '\'\n```\n\n完成后返回写库回执。';
   }
   if (op === null || newTag === null) {
-    return '// 已选 #' + selectedId + '：还差两样——要把标签换成、加上，还是去掉哪个；换成／加上／去掉的标签叫什么';
+    return '// 已选照片 ' + selectedId + '：还差两样——要把标签换成、加上，还是去掉哪个；换成／加上／去掉的标签叫什么';
   }
-  return '请帮我改照片标签 #' + selectedId + '（先核对本页快照里的原标签）' +
+  return '请帮我改照片标签 ' + selectedId + '（先核对本页快照里的原标签）' +
     '\n\n命令:\n```bash\ncalorie-cmd-read calorie.photo.tag --params \'' +
     JSON.stringify({ id: selectedId, op, tag: newTag }) + '\'\n```\n\n完成后返回写库回执。';
 }

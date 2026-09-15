@@ -82,9 +82,10 @@ function changeHeadOf(scene: string): { before: string; after: string } {
   return { before: '改前', after: '改后' };
 }
 
-/** 标签逐行三态：标签名占左槽，被换掉的走旧槽（公共层自带红删除线）、新写的走新槽（字重 600）、
- *  没动的两槽都写状态词；「变化」这一列由行首状态词（保留／新增／移除）承载。 */
-function tagChangeRowsOf(before: readonly string[], after: readonly string[]): ChangeRowInput[] {
+/** 标签逐行三态：**一行一个标签**，改前／改后两列按状态填——保留＝两列都写状态词（中性），
+ *  新增＝新值槽写标签名（绿＋加粗），移除＝旧值槽写标签名（红＋删除线）。行首「变化」列写三态词；
+ *  箭位恒空（`arrow: false` 仍占位），三列栅格由 `.phr-tags` 收口（`receiptUi.ts`）。 */
+function tagChangeRowsOf(before: readonly string[], after: readonly string[]): string[] {
   const inBefore = new Set(before);
   const inAfter = new Set(after);
   const all = [...before, ...after.filter((t) => !inAfter.has(t) || !inBefore.has(t))];
@@ -92,26 +93,33 @@ function tagChangeRowsOf(before: readonly string[], after: readonly string[]): C
   return uniq.map((t) => {
     const b = inBefore.has(t);
     const a = inAfter.has(t);
-    if (b && a) return { label: '保留', before: '原有', after: '现有', arrow: false };
-    if (a) return { label: '新增', after: t, arrow: false };
-    return { label: '移除', before: t, arrow: false };
+    const state = b && a ? '保留' : (a ? '新增' : '移除');
+    const row: ChangeRowInput = b && a
+      ? { label: '\u2060', before: '', after: '', arrow: false }
+      : { label: '\u2060', ...(a ? { after: t } : { before: t }), arrow: false };
+    return '<div class="phr-tags-row phr-tag-' + (a ? 'add' : 'remove') + '">'
+      + cellOf(state) + renderChangeRows({ rows: [row] }) + '</div>';
   });
 }
 
-/** 标签对照块：列头一行（改前／加前／删除前 ＆ 改后／加后／删除后）＋ 逐标签一行。
+/** 对照块的列头格（纯文本；列头随场景换）。 */
+function cellOf(text: string): string {
+  return '<span class="phr-tags-slot">' + escapeHtml(text) + '</span>';
+}
+
+/** 标签对照块：列头一行（改前／加前／删除前 ＆ 改后／加后／删除后）＋ 每个标签一行。
  *  空标签表也出一行（「没有标签」），免得读者分不清「没有标签」与「这块没渲染」。 */
 function tagChangeBlock(receipt: CrudReceipt): string {
   const diff = receipt.tagDiff ?? { before: [], after: [] };
   const head = changeHeadOf(receipt.scene);
   const rows = tagChangeRowsOf(diff.before, diff.after);
   const body = rows.length === 0
-    ? renderChangeRows({ rows: [{ label: '没有标签', before: '原有', after: '现有', arrow: false }] })
-    : renderChangeRows({ rows });
-  return '<div class="phr-tags">'
-    + '<div class="phr-tags-row phr-tags-head"><span class="phr-tags-label"></span>'
-    + '<span class="phr-tags-slot">' + escapeHtml(head.before) + '</span>'
-    + '<span class="phr-tags-arrow" aria-hidden="true"></span>'
-    + '<span class="phr-tags-slot">' + escapeHtml(head.after) + '</span></div>'
+    ? '<div class="phr-tags-row">' + cellOf('保留')
+      + renderChangeRows({ rows: [{ label: '\u2060', before: '没有标签', after: '没有标签', arrow: false }] })
+      + '</div>'
+    : rows.join('');  return '<div class="phr-tags">'
+    + '<div class="phr-tags-row phr-tags-head">' + cellOf('变化') + cellOf(head.before)
+    + cellOf(head.after) + '<span class="phr-tags-arrow" aria-hidden="true"></span></div>'
     + body + '</div>';
 }
 
@@ -124,16 +132,16 @@ function tagNoticeOf(receipt: CrudReceipt): string {
   }
   const diff = receipt.tagDiff ?? { before: [], after: [] };
   const head = changeHeadOf(receipt.scene);
+  const tail = '（照片编号 ' + (receipt.recordId ?? '—') + '）';
   if (receipt.scene === '加照片标签') {
     const added = diff.after.filter((t) => !diff.before.includes(t));
-    return notice({ icon: 'ok', msg: added.length > 0 ? '标签已加好：' + added.join('、') : '标签已加好' });
+    return notice({ icon: 'ok', msg: (added.length > 0 ? '标签已加好：' + added.join('、') : '标签已加好') + tail });
   }
   if (receipt.scene === '删照片标签') {
     const gone = diff.before.filter((t) => !diff.after.includes(t));
-    return notice({ icon: 'ok', msg: gone.length > 0 ? '标签已删掉：' + gone.join('、') : '标签已删掉' });
+    return notice({ icon: 'ok', msg: (gone.length > 0 ? '标签已删掉：' + gone.join('、') : '标签已删掉') + tail });
   }
-  const now = tagListOf(diff.after).join('、');
-  return notice({ icon: 'ok', msg: head.after + '：' + now });
+  return notice({ icon: 'ok', msg: head.after + '：' + tagListOf(diff.after).join('、') + tail });
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -332,8 +340,9 @@ export function buildPhotoRemoveDoc(
 
 /* ── 09-10／11／12 标签三态（#528 窄席位 B） ─────────────────────── */
 
-/** 改／加／删照片标签回执整页：徽章（回执类型）＋ 结果句（这页唯一说清结果的地方）＋
- *  标签对照块（`renderChangeRows`：改前／改后两列，逐标签一行）＋ 记录标识（编号 ＋ 时间）。
+/** 改／加／删照片标签回执整页：徽章（回执类型）＋ 结果句（这页唯一说清结果的地方，带照片编号）＋
+ *  标签对照块（`renderChangeRows`：改前／改后两列，逐标签一行，行首「变化」列写三态词）
+ *  ＋ 记录标识（编号 ＋ 时间）。
  *  无变化时不出对照表，只出静态提示块「这次没有改动任何东西」。 */
 export function buildPhotoTagDoc(receipt: CrudReceipt, opts: { command: string }): string {
   return writeShell({
@@ -342,15 +351,11 @@ export function buildPhotoTagDoc(receipt: CrudReceipt, opts: { command: string }
     parts: [
       chipRow([opBadgeOf(receipt.op).badge]),
       tagNoticeOf(receipt),
-      receipt.noChange ? '' : tagChangeBlock(receipt),
-      renderDataTable({
-        columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-        rows: [
-          { k: '编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
-          { k: '时间', v: receipt.meta.actionAt },
-        ],
-        caption: '记录标识',
-      }),
+      receipt.noChange ? '' : sectionTitle('标签对照') + tagChangeBlock(receipt),
+      factRows([
+        { k: '编号', v: receipt.recordId === null ? '' : String(receipt.recordId) },
+        { k: '时间', v: receipt.meta.actionAt },
+      ]),
     ],
   });
 }

@@ -50,8 +50,17 @@ export const PHOTO_HELP_ANCHOR_PREFIX = 'help-';
 /** 唤醒词那一行的标签名（说清这枚徽章是什么：用户要照着说的一句话）。 */
 export const PHOTO_HELP_SAY_LABEL = '说这句';
 
-/** 清单上方那一句读法（**一页一句**，替代改前「每条命令各印一遍」：同事实一页一处）。 */
-export const PHOTO_HELP_ROWS_LEAD = '每条点开都有一句原文，按一下按钮就复制走，粘给我就能用';
+/** 清单上方那一句读法（**一页一句**，且是**全页唯一**讲「怎么把一条拿走」的地方）。
+ *
+ *  #529 订正（对抗审查 §7-2/§7-3）：改前这句与读数卡②「怎么用」（`复制发给我` ＋ 一行说明）
+ *  和**每一行折叠块里那句提示**（09-16 出现 10 次）同说一件事——用户在票面第 4 条点名
+ *  「文字不能出现冗余」。改后：读数卡②整张撤掉、行内提示整句撤掉，动作只在这里说一次。
+ *
+ *  按钮上的那个词**不在这里抄第二遍**：读法要念出按钮名（读者才知道去找哪颗），名字由调用方
+ *  `helpDoc.ts` 从冻结表 `CALORIE_COPY_ACTION.label` 递进来（单一来源）。 */
+export function photoHelpRowsLead(copyLabel: string): string {
+  return '每条下面有一颗「' + copyLabel + '」按钮，按一下复制走，粘给我就能用';
+}
 
 /** 一条命令的上屏文本。 */
 export interface PhotoHelpText {
@@ -70,13 +79,13 @@ export interface PhotoHelpText {
  */
 export const PHOTO_HELP_TEXT: Readonly<Record<string, PhotoHelpText>> = Object.freeze({
   body_photo_add_single: Object.freeze({
-    section: 'save', label: '存一张身材照', detail: '存刚拍的一张照片，照片上会记下当天日期',
+    section: 'save', label: '存一张身材照', detail: '存刚拍的一张照片，库里会记下当天的日期',
   }),
   body_photo_add_note: Object.freeze({
     section: 'save', label: '存一张带备注的', detail: '除了日期和标签，再记一句当时的情况，比如「早上空腹」',
   }),
   body_photo_add_batch: Object.freeze({
-    section: 'save', label: '一次存好几张', detail: '把同一天的几张照片一次收进来，共用一个日期和标签',
+    section: 'save', label: '一次存好几张', detail: '一次收进好几张照片，每张都能单独给标签，没说的就按同一个标签存',
   }),
   body_photo_list: Object.freeze({
     section: 'look', label: '看身材照', detail: '挑一个标签看这一类照片，默认看最近九十天',
