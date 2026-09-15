@@ -147,7 +147,29 @@ function pairsOf(text) {
 /** 逐格比对：可见文本那一格 == 库内原始值的文本（缺项两边分别是 `—` 与 `null`／空串）。 */
 function assertCell(pair, raw, where) {
   const expect = raw === null || raw === undefined || raw === '' ? MISSING : String(raw);
-  assert.equal(pair[1], expect, where + ' 可见文本「' + pair[0] + '」格=' + pair[1] + '，查库值=' + expect);
+  assert.equal(pair[1], expect, where + ' 可见文本「' + pair[0] + '」格=' + pair[1] + '，查库=' + expect);
+}
+
+/** 落盘页里某一段（口径行为界）的 `[标签, 值]` 有序对（与 `t365-七条写词整页.test.mjs:215`
+ *  的 `sectionRows()` 同一判据）。**#537 重排**：既有记录那一块改由「同一天还记过这条」承载
+ *  ——原先那件事是把整句回执摘要当副标题压在页头，与读数卡／逐格表各说一遍。 */
+const CHANGE_ROW_RE = new RegExp(
+  '<div class="ilife-block-change-row">'
+  + '<span class="ilife-block-change-row-label">([^<]*)</span>'
+  + '<span class="ilife-block-change-row-old">([^<]*)</span>'
+  + '<span class="ilife-block-change-row-arrow"[^>]*>[^<]*</span>'
+  + '<span class="ilife-block-change-row-new">([^<]*)</span>'
+  + '</div>',
+  'g',
+);
+
+function sectionRows(html, prefix, slot) {
+  for (const seg of String(html).split('<p class="ilife-block-caliber">').slice(1)) {
+    const end = seg.indexOf('</p>');
+    if (end < 0 || !seg.slice(0, end).startsWith(prefix)) continue;
+    return [...seg.slice(end).matchAll(CHANGE_ROW_RE)].map((m) => [m[1], slot === 'old' ? m[2] : m[3]]);
+  }
+  return null;
 }
 
 /* ── 判据①：同日已有记录 → exit 0（补记仍写）＋ 可见文本既有值逐字等于脚本查库值 ── */
@@ -163,8 +185,8 @@ test('#363 判据①体脂：同日已有记录 → 冲突段摆在最前，既�
   const old = sql.find((x) => x.id !== r.env.data.receipt.recordId);
   assert.ok(old, '库里应能认出既有那条（id != 本次回执 recordId）');
 
-  // ① 可见文本（回执 message 与落盘页的可见文本两处同源）：冲突段在最前，先摆既有值
-  for (const [what, text, atHead] of [['message', r.message, true], ['落盘页', r.text, false]]) {
+  // ① 可见文本（回执 message 那一面）：冲突段在最前，先摆既有值
+  for (const [what, text, atHead] of [['message', r.message, true]]) {
     if (atHead) assert.ok(text.startsWith('冲突：'), what + ' 必须先出冲突段：' + text.slice(0, 120));
     const c = parseConflict(text);
     assert.ok(c, what + ' 冲突段格式不合：' + text.slice(0, 160));
@@ -184,7 +206,21 @@ test('#363 判据①体脂：同日已有记录 → 冲突段摆在最前，既�
     assert.equal(p3, '备注 ' + MISSING, what + ' 空备注写 `—`：' + p3);
   }
 
-  // ③ 本次结论照旧写在后头（写库回执一字未丢）
+  // ①′ 落盘页（读者看的那一面）：#537 重排后同一事实改由**形状**承载——「同一天还记过这条」
+  //     那一块逐格摆出既有值（带主键的整句摘要不再压上页头，库内世界不上屏）。
+  const pageRows = sectionRows(r.html, '同一天还记过这条', 'new');
+  assert.ok(pageRows !== null, '落盘页应有「同一天还记过这条」块：' + r.text.slice(0, 160));
+  assert.deepEqual(pageRows.map(([k]) => k), ['日期', '来源', '体脂率', ...SITE_7, '备注'],
+    '既有记录块字段序与中文标签逐位：' + JSON.stringify(pageRows.map(([k]) => k)));
+  const get = (k) => (pageRows.find(([x]) => x === k) || [])[1];
+  assert.equal(get('日期'), old.date, '落盘页/既有日期 == 查库值');
+  assert.equal(get('来源'), SRC_ZH[old.source], '落盘页/来源 == 查库值');
+  assert.equal(get('体脂率'), String(old.body_fat_pct), '落盘页/体脂率 == 查库值');
+  for (let i = 0; i < 7; i++) assert.equal(get(SITE_7[i]), String(old[CALIPER_COLS[i]]), '落盘页/皮褶 ' + SITE_7[i]);
+  assert.ok(!r.text.includes('#' + old.id), '落盘页不再印既有记录的主键（#537）：' + r.text.slice(0, 120));
+  assert.ok(!r.text.includes('body_composition'), '落盘页不印库表名（#537）');
+
+  // ② 本次结论照旧写在后头（写库回执一字未丢）
   assert.ok(r.message.endsWith('已记体脂：' + D_C + ' 健身房 InBody 19%'), '回执结论句：' + r.message.slice(-60));
 
   // ④ 结构化载荷：冲突行带既有记录 id／日期（原始值），本次记录 id 仍是回执 recordId

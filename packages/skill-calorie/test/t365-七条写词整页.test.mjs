@@ -356,8 +356,8 @@ test('#365 防回显：跑之前不经命令直改库一个字段 → 页面跟�
   pokeDb(dir, "UPDATE body_measurements SET waist_cm = 111 WHERE date = '2026-09-06'");
   const back = runWrite(dir, KEY_M_ADD, { waistCm: 86, date: '2026-09-06' });
   assert.equal(back.status, 0, 'stderr=' + back.stderr.slice(-300));
-  const existing = sectionRows(back.html, '同日已有记录', 'new');
-  assert.ok(existing !== null, '补记命中同日既有记录时应有「同日已有记录」段');
+  const existing = sectionRows(back.html, '同一天还记过这条', 'new');
+  assert.ok(existing !== null, '补记命中同日既有记录时应有「同一天还记过这条」段');
   assert.equal(existing.find(([k]) => k === '腰围')?.[1], '111', '既有记录那一块须读库内 111：' + JSON.stringify(existing.slice(0, 2)));
   console.log('T365-ANTI-ECHO 删体脂快照体脂率=' + delRows.find(([k]) => k === '体脂率')?.[1]
     + ' 同日已有腰围=' + existing.find(([k]) => k === '腰围')?.[1]);
@@ -410,19 +410,60 @@ test('#365 值槽：增类全页现值落新值槽（无一格进旧槽被画成
   console.log('T365-SLOT ' + lines.join(' ｜ '));
 });
 
-test('#365 M5 自证进整页：影响行数／来源＋记录号来源＋契约版本四样都在页上', () => {
+test('#365 M5 自证进整页：读者核得着的三样都在页上，代码怎么取数的两样不上屏', () => {
   const dir = mkTmpDb();
   const r = runWrite(dir, KEY_C_ADD, { source: 'gym', bodyFatPct: 18.5, date: '2026-09-11' });
   const text = visible(r.html);
-  for (const token of ['影响行数来源', 'sqlite:total_changes', '记录号来源', 'record', '回执契约版本', 'v1']) {
-    assert.ok(text.includes(token), 'M5 自证项上页：' + token);
+  // #537：`影响行数来源`（值恒是内部计数器）与 `记录号来源`（值恒是内部枚举）两行整行撤——
+  // 它们说的是代码怎么取数，读者核不了，且 `sqlite:total_changes` 是点名不上屏的内部标识符。
+  for (const token of ['sqlite:total_changes', '记录号来源', '影响行数来源', 'body_composition']) {
+    assert.ok(!text.includes(token), '#537 内部标识符不得上屏：' + token);
   }
   const rc = r.env.data.receipt;
-  assert.equal(rc.m5Contract, '1', 'M5 契约版本');
-  assert.equal(rc.affectedRowsSource, 'sqlite:total_changes', '影响行数来源');
-  assert.equal(rc.idSource, 'record', '记录号来源');
-  assert.ok(text.includes(rc.affectedRows + ' 行'), '页上影响行数 == 回执读数');
+  assert.equal(rc.m5Contract, '1', 'M5 契约版本（回执载荷里仍带）');
+  assert.equal(rc.affectedRowsSource, 'sqlite:total_changes', '影响行数来源（回执载荷里仍带）');
+  assert.equal(rc.idSource, 'record', '记录号来源（回执载荷里仍带）');
+  // 页上留的是读者能核对的三样：影响行数（与回执读数同值）／回执格式／写入时间。
+  assert.ok(text.includes('影响行数') && text.includes(rc.affectedRows + ' 行'), '页上影响行数 == 回执读数');
+  assert.ok(text.includes('回执格式') && text.includes('v' + rc.m5Contract), '页上回执格式');
+  assert.ok(text.includes(rc.meta.actionAt), '页上写入时间 == 回执读数');
   console.log('T365-M5 affectedRows=' + rc.affectedRows + ' idSource=' + rc.idSource + ' 契约=v' + rc.m5Contract);
+});
+
+/* ── #537 重排：页头／内部标识符／结论一页一处（七页共用一条判据） ── */
+
+test('#537 回执七页：页头三处不带 `·`、标题按唤醒词读得懂、内部标识符与主键不上屏', () => {
+  const dir = mkTmpDb();
+  /** 七条写词各跑一次（与 `runSeven` 同一组参数），逐页查四类债。 */
+  const pages = [];
+  for (const [name, key, params] of runSeven(dir)) {
+    const r = runWrite(dir, key, params);
+    assert.equal(r.status, 0, name + ' exit 0，stderr=' + r.stderr.slice(-200));
+    pages.push([name, key, visible(r.html), r.html]);
+  }
+  assert.equal(pages.length, 7, '七条写词各跑一次');
+  for (const [name, key, text, html] of pages) {
+    // ① 页头三处 `·` 清零：`<title>`／眉标／H1 都换成读者看得懂的页名（R1 节点级命中 0 的其中三处）。
+    const title = /<title>([^<]*)<\/title>/.exec(html);
+    assert.ok(title && !title[1].includes('·'), name + ' 页签名不得带 `·`：' + (title && title[1]));
+    assert.ok(!/ilife-block-page-shell-eyebrow">[^<]*·/.test(html), name + ' 眉标不得带 `·`');
+    const h1 = /ilife-block-page-shell-title">([^<]*)</.exec(html);
+    assert.ok(h1 && h1[1] !== '' && !h1[1].includes('·'), name + ' H1 不得带 `·`：' + (h1 && h1[1]));
+    // 副标题整行撤：回执摘要与结论条说的是同一件事，只留一处。
+    assert.ok(!html.includes('class="sub"'), name + ' 不得再有副标题（结论条一处说清）');
+    // ② 库内世界不上屏：库表名／库文件名／内部计数器／记录主键／CLI 参数名。
+    for (const token of ['body_composition', 'body_measurements', 'calorie_data.db', 'sqlite:total_changes', '删除标志', 'waistCm', 'hipCm']) {
+      assert.ok(!text.includes(token), name + ' 内部标识符不得上屏：' + token);
+    }
+    assert.ok(!/(?:^|\s)#\d+(?:\s|$)/.test(text), name + ' 可见文本不得出现记录主键：' + text.slice(0, 80));
+    // ③ 逐格快照的口径行只留读者话（括号里那截库内口径整段撤）。
+    assert.ok(!text.includes('逐格读自库内'), name + ' 不得再印「逐格读自库内」');
+    assert.ok(!text.includes('同一事实') && !text.includes('body_'), name + ' 内部叫法不上屏');
+    // ④ 库内 ↔ 页面同源：这一页的逐格段仍在（删类读旧槽、记类读新槽）。
+    const rows = sectionRows(html, key.includes('remove') ? '删除前的原值' : '记录现值', key.includes('remove') ? 'old' : 'new');
+    assert.ok(rows !== null && rows.length > 0, name + ' 逐格段仍在');
+  }
+  console.log('T537-HEADER 七页页头/内部标识符读数：' + pages.map(([n]) => n).join('、'));
 });
 
 test('#365 撤销入口：回执不带撤销指令就不出（真出口 7 件产物都没有）；带了就出可复制指令块', () => {

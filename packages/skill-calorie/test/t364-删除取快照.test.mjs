@@ -268,7 +268,13 @@ test('#364 判据①②③④体脂：删前快照逐格 == 删前查库值，�
   assert.equal(segs[0], '日期 ' + before.date, '摘要/日期');
   assert.equal(segs[1], '体脂率 ' + before.body_fat_pct + '%', '摘要/体脂率');
   assert.equal(segs[2], '来源 ' + SRC_ZH[before.source], '摘要/来源');
-  assert.ok(r.text.includes(head[2]), '落盘页可见文本含同一句快照（两处同源）');
+  // #537 重排：那句带主键与「软删除」叫法的摘要不再当副标题压上页头（同一件事原先在页头／读数卡／
+  // 表各说一遍，且库内世界上了屏）。**两处同源改由逐格快照段承接**——上面 `detailFromPage()`
+  // 已逐格比过；这里补一条负向：摘要句与仓内叫法都不许再出现在页上（摘要句子只留在载荷里给 AI 读）。
+  assert.ok(r.text.includes('删除前的原值'), '落盘页保留删前逐格快照段');
+  assert.ok(!r.text.includes('已删除体脂记录'), '落盘页不再印带主键的摘要句（#537）');
+  assert.ok(!r.text.includes('软删除'), '落盘页不再印「软删除」这个仓内叫法（#537）');
+  assert.ok(!r.text.includes('body_composition'), '落盘页不印库表名（#537）');
 
   assertSoftDeleted(dir, 'body_composition', before.id, KEY_C);
   assertSnapshotFile(r, KEY_C);
