@@ -1,0 +1,533 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>场景06 目标管理 · 链路索引（33 件）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f}
+.wrap{padding:26px 22px 70px;max-width:1080px}
+h1{font-size:24px;font-weight:600;margin-bottom:6px}
+.sub{color:#6e6e73;font-size:13.5px;line-height:1.8;margin-bottom:20px}
+.sub b{color:#1d1d1f}
+.toc{background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:13px 16px;margin-bottom:18px;font-size:13px;line-height:1.9}
+.toc a{color:#007aff;text-decoration:none;margin-right:10px}
+.row{background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.head{display:flex;align-items:baseline;gap:8px;margin-bottom:9px}
+.seq{background:#1d1d1f;color:#fff;border-radius:6px;font-size:11.5px;font-weight:600;padding:1px 7px}
+.head b{font-size:15px}
+.kind{margin-left:auto;color:#86868b;font-size:11.5px}
+.lbl{color:#86868b;font-size:11.5px;display:block;margin-bottom:4px}
+pre{background:#f5f5f7;border:1px solid #e8e8ed;border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+dl{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:12.5px;line-height:1.7;margin-top:10px}
+dt{color:#86868b}
+code{font-size:11.5px;color:#3a3a3c;word-break:break-all}
+a.path{color:#007aff;text-decoration:underline;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+b.ok{color:#0a7f34}
+b.bad{color:#c0392b}
+.note{margin-top:22px;background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:16px 18px}
+.note ul{margin:8px 0 0 20px;font-size:13px;line-height:1.9;color:#3a3a3c}
+</style></head><body><div class="wrap">
+<h1>场景06「目标管理」链路索引 · 33 件</h1>
+<div class="sub">一条一条摆开：<b>用户会说的话（prompt 原文）→ 唤醒词 → 命令 → 产物绝对路径</b>。点「产物绝对路径」那一行即可打开该 HTML（绝对路径链接）。
+写类词走两段：<b>先出预检确认页（过程型）→ 用户确认 → 再出写后回执页（回执型）</b>。<br>
+其余入口：<a href="总索引.html">总索引</a> · <a href="手机墙-390.html">手机墙 390</a> · <a href="桌面墙-1280.html">桌面墙 1280</a>。</div>
+<div class="toc"><b>跳到：</b><a href="#r1">定营养目标</a><a href="#r2">定营养目标（预检）</a><a href="#r3">定营养目标(自动算)（预检）</a><a href="#r4">定体重目标</a><a href="#r5">定体重目标（预检）</a><a href="#r6">定体重目标(自动算截止)</a><a href="#r7">定体重目标(自动算截止)（预检）</a><a href="#r8">定体重目标(含起始日)</a><a href="#r9">定体重目标(含起始日)（预检）</a><a href="#r10">定饮水目标</a><a href="#r11">定饮水目标（预检）</a><a href="#r12">定饮水目标(自动算)（预检）</a><a href="#r13">一键定全套目标（预检）</a><a href="#r14">看今日目标</a><a href="#r15">看本周目标</a><a href="#r16">看营养目标进度</a><a href="#r17">看体重目标进度</a><a href="#r18">看饮水目标进度</a><a href="#r19">看目标对比实际</a><a href="#r20">看目标完成度</a><a href="#r21">看即将到期的目标</a><a href="#r22">看目标完成率(按周)</a><a href="#r23">看目标完成率(按月)</a><a href="#r24">改营养目标</a><a href="#r25">改营养目标（预检）</a><a href="#r26">改体重目标</a><a href="#r27">改体重目标（预检）</a><a href="#r28">改饮水目标</a><a href="#r29">改饮水目标（预检）</a><a href="#r30">暂停所有目标</a><a href="#r31">重启所有目标</a><a href="#r32">看目标历史完成</a><a href="#r33">看目标预测达成</a></div>
+  <article class="row" id="r1">
+    <div class="head"><span class="seq">1</span><b>定营养目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定营养目标」。
+
+我想设每日 4 大宏量营养目标(热量/蛋白/碳水/脂肪)+ 饮水目标。若热量明显低于我的基础代谢(BMR),请提示我注意。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的目标数值(请按实际替换,不知道的可以空着):
+热量(卡):____
+蛋白(g):____
+碳水(g):____
+脂肪(g):____
+饮水(ml):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定营养目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.set --params '{&quot;calorie&quot;:1800,&quot;protein&quot;:150,&quot;carbs&quot;:200,&quot;fat&quot;:50,&quot;water&quot;:2000}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定营养目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定营养目标-回执.html</a>（275 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r2">
+    <div class="head"><span class="seq">2</span><b>定营养目标</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定营养目标」。
+
+我想设每日 4 大宏量营养目标(热量/蛋白/碳水/脂肪)+ 饮水目标。若热量明显低于我的基础代谢(BMR),请提示我注意。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的目标数值(请按实际替换,不知道的可以空着):
+热量(卡):____
+蛋白(g):____
+碳水(g):____
+脂肪(g):____
+饮水(ml):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定营养目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;定营养目标&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定营养目标-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定营养目标-预检.html</a>（74055 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r3">
+    <div class="head"><span class="seq">3</span><b>定营养目标(自动算)</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定营养目标(自动算)」。
+
+想根据我的档案(身高/体重/年龄/活动量)+ 目标方向自动算出 4 项营养目标。若我未提供方向或档案信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的目标方向(减脂 / 维持 / 增肌):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定营养目标(自动算)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;定营养目标(自动算)&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定营养目标(自动算)-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定营养目标(自动算)-预检.html</a>（74059 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r4">
+    <div class="head"><span class="seq">4</span><b>定体重目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定体重目标」。
+
+我想设定体重目标(目标 kg + 可选截止日期)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的体重目标(kg):____
+截止日期(选填):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定体重目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.weight --params '{&quot;kg&quot;:68}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标-回执.html</a>（206 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r5">
+    <div class="head"><span class="seq">5</span><b>定体重目标</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定体重目标」。
+
+我想设定体重目标(目标 kg + 可选截止日期)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的体重目标(kg):____
+截止日期(选填):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定体重目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;定体重目标&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标-预检.html</a>（73633 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r6">
+    <div class="head"><span class="seq">6</span><b>定体重目标(自动算截止)</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定体重目标(自动算截止)」。
+
+我想设定体重目标(目标 kg + 期望每周减重速率),由你自动推算合理截止日期,并校验速率是否合理(不超安全范围)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的体重目标(kg):____
+期望每周减重速率(kg/周):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定体重目标(自动算截止)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.weight --params '{&quot;kg&quot;:68,&quot;deadline&quot;:&quot;2026-09-19&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(自动算截止)-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(自动算截止)-回执.html</a>（229 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r7">
+    <div class="head"><span class="seq">7</span><b>定体重目标(自动算截止)</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定体重目标(自动算截止)」。
+
+我想设定体重目标(目标 kg + 期望每周减重速率),由你自动推算合理截止日期,并校验速率是否合理(不超安全范围)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的体重目标(kg):____
+期望每周减重速率(kg/周):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定体重目标(自动算截止)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;定体重目标(自动算截止)&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(自动算截止)-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(自动算截止)-预检.html</a>（74033 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r8">
+    <div class="head"><span class="seq">8</span><b>定体重目标(含起始日)</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定体重目标(含起始日)」。
+
+我想完整设定体重目标:目标 kg + 起始日 + 截止日 + 起点体重。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的体重目标(kg):____
+起始日:____
+截止日期:____
+起点体重(kg):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定体重目标(含起始日)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.weight --params '{&quot;kg&quot;:68,&quot;startKg&quot;:72,&quot;deadline&quot;:&quot;2026-09-19&quot;,&quot;startDate&quot;:&quot;2026-09-01&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(含起始日)-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(含起始日)-回执.html</a>（245 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r9">
+    <div class="head"><span class="seq">9</span><b>定体重目标(含起始日)</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定体重目标(含起始日)」。
+
+我想完整设定体重目标:目标 kg + 起始日 + 截止日 + 起点体重。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的体重目标(kg):____
+起始日:____
+截止日期:____
+起点体重(kg):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定体重目标(含起始日)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;定体重目标(含起始日)&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(含起始日)-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定体重目标(含起始日)-预检.html</a>（73994 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r10">
+    <div class="head"><span class="seq">10</span><b>定饮水目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定饮水目标」。
+
+我想设定每天饮水目标(ml)。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的饮水目标(ml):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定饮水目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.water --params '{&quot;water&quot;:2000}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定饮水目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定饮水目标-回执.html</a>（217 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r11">
+    <div class="head"><span class="seq">11</span><b>定饮水目标</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定饮水目标」。
+
+我想设定每天饮水目标(ml)。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的饮水目标(ml):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定饮水目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;定饮水目标&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定饮水目标-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定饮水目标-预检.html</a>（73582 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r12">
+    <div class="head"><span class="seq">12</span><b>定饮水目标(自动算)</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「定饮水目标(自动算)」。
+
+想按我的体重(ml/kg)自动推算饮水目标推荐值,并和旧目标对比。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的体重(kg,选填,默认取最新记录):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>定饮水目标(自动算)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;定饮水目标(自动算)&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定饮水目标(自动算)-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/定饮水目标(自动算)-预检.html</a>（73828 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r13">
+    <div class="head"><span class="seq">13</span><b>一键定全套目标</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「一键定全套目标」。
+
+想一键设定 3 类目标(营养 + 体重 + 饮水),基于我的档案自动计算,先给我看结果,等我确认后再采纳。若我的档案(身高/年龄/活动量)未设置、无体重记录或信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(营养／体重／饮水三类目标的推荐值与依据),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我的目标方向(减脂 / 维持 / 增肌):____
+我的体重目标(kg,选填):____
+截止日期(选填):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>一键定全套目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;一键定全套目标&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/一键定全套目标-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/一键定全套目标-预检.html</a>（74400 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r14">
+    <div class="head"><span class="seq">14</span><b>看今日目标</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看今日目标」。
+
+我想看今日 5 项目标完成度(热量/蛋白/碳水/脂肪/饮水)。体重是累计目标,若我想看,请引导我到「看体重目标进度」。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看今日目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-progress --params '{&quot;window&quot;:&quot;今日&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看今日目标.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看今日目标.html</a>（73930 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r15">
+    <div class="head"><span class="seq">15</span><b>看本周目标</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看本周目标」。
+
+我想看本周目标完成情况(热量/蛋白/碳水/脂肪/饮水)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看本周目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-progress --params '{&quot;window&quot;:&quot;本周&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看本周目标.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看本周目标.html</a>（73930 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r16">
+    <div class="head"><span class="seq">16</span><b>看营养目标进度</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看营养目标进度」。
+
+我想看 4 项营养目标(热量/蛋白/碳水/脂肪)的完成进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看营养目标进度</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-progress --params '{&quot;window&quot;:&quot;7d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看营养目标进度.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看营养目标进度.html</a>（81859 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r17">
+    <div class="head"><span class="seq">17</span><b>看体重目标进度</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看体重目标进度」。
+
+我想看体重目标进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看体重目标进度</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-weight --params '{&quot;window&quot;:&quot;7d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看体重目标进度.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看体重目标进度.html</a>（68711 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r18">
+    <div class="head"><span class="seq">18</span><b>看饮水目标进度</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看饮水目标进度」。
+
+我想看今日饮水进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看饮水目标进度</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-progress --params '{&quot;window&quot;:&quot;今日&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看饮水目标进度.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看饮水目标进度.html</a>（73930 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r19">
+    <div class="head"><span class="seq">19</span><b>看目标对比实际</b><span class="kind">结果型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看目标对比实际」。
+
+我想看热量目标线 vs 实际摄入线的对比与偏差分析,默认最近 30 天(可自定义时间窗口)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+时间窗口(天,选填,默认 30):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看目标对比实际</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-vs-actual --params '{&quot;window&quot;:&quot;30d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标对比实际.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标对比实际.html</a>（1357 字节 · 模板 fragment · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r20">
+    <div class="head"><span class="seq">20</span><b>看目标完成度</b><span class="kind">结果型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看目标完成度」。
+
+我想看全部目标完成度汇总(热量/蛋白/碳水/脂肪/饮水)和总评分。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看目标完成度</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal --params '{&quot;window&quot;:&quot;7d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标完成度.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标完成度.html</a>（1779 字节 · 模板 fragment · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r21">
+    <div class="head"><span class="seq">21</span><b>看即将到期的目标</b><span class="kind">结果型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看即将到期的目标」。
+
+我想看即将到期的体重目标(默认 14 天内到期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+到期窗口(天,选填,默认 14):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看即将到期的目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-expiring</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看即将到期的目标.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看即将到期的目标.html</a>（1204 字节 · 模板 fragment · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r22">
+    <div class="head"><span class="seq">22</span><b>看目标完成率(按周)</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看目标完成率(按周)」。
+
+我想看本周(7 天)每日目标完成率 + 达标天数(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看目标完成率(按周)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-progress --params '{&quot;window&quot;:&quot;7d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标完成率(按周).html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标完成率(按周).html</a>（81859 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r23">
+    <div class="head"><span class="seq">23</span><b>看目标完成率(按月)</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看目标完成率(按月)」。
+
+我想看本月(30 天)每日目标完成率 + 达标天数(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看目标完成率(按月)</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-progress --params '{&quot;window&quot;:&quot;7d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标完成率(按月).html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标完成率(按月).html</a>（81859 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r24">
+    <div class="head"><span class="seq">24</span><b>改营养目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「改营养目标」。
+
+我想修改营养目标(热量/蛋白/碳水/脂肪/饮水),可同时改多项,并预估修改后的影响(热量缺口/预算变化)。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我要改的项(每行一项,不改的留空):
+热量(卡)新目标值:____
+蛋白(g)新目标值:____
+碳水(g)新目标值:____
+脂肪(g)新目标值:____
+饮水(ml)新目标值:____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>改营养目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.set --params '{&quot;calorie&quot;:1800,&quot;protein&quot;:150,&quot;carbs&quot;:200,&quot;fat&quot;:50}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改营养目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改营养目标-回执.html</a>（275 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r25">
+    <div class="head"><span class="seq">25</span><b>改营养目标</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「改营养目标」。
+
+我想修改营养目标(热量/蛋白/碳水/脂肪/饮水),可同时改多项,并预估修改后的影响(热量缺口/预算变化)。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我要改的项(每行一项,不改的留空):
+热量(卡)新目标值:____
+蛋白(g)新目标值:____
+碳水(g)新目标值:____
+脂肪(g)新目标值:____
+饮水(ml)新目标值:____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>改营养目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;改营养目标&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改营养目标-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改营养目标-预检.html</a>（74225 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r26">
+    <div class="head"><span class="seq">26</span><b>改体重目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「改体重目标」。
+
+我想修改体重目标值或截止日期,并给出新的建议减重速率。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我要改的项(每行一项,不改的留空):
+体重目标(kg):____
+截止日期:____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>改体重目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.weight --params '{&quot;kg&quot;:67.5}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改体重目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改体重目标-回执.html</a>（208 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r27">
+    <div class="head"><span class="seq">27</span><b>改体重目标</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「改体重目标」。
+
+我想修改体重目标值或截止日期,并给出新的建议减重速率。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+我要改的项(每行一项,不改的留空):
+体重目标(kg):____
+截止日期:____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>改体重目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;改体重目标&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改体重目标-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改体重目标-预检.html</a>（73745 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r28">
+    <div class="head"><span class="seq">28</span><b>改饮水目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「改饮水目标」。
+
+我想单独修改饮水目标,其他营养目标保持不变。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+饮水目标(ml):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>改饮水目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.water --params '{&quot;water&quot;:2200}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改饮水目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改饮水目标-回执.html</a>（217 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r29">
+    <div class="head"><span class="seq">29</span><b>改饮水目标</b><span class="kind">过程型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「改饮水目标」。
+
+我想单独修改饮水目标,其他营养目标保持不变。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+饮水目标(ml):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>改饮水目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-wizard --params '{&quot;wake&quot;:&quot;改饮水目标&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改饮水目标-预检.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/改饮水目标-预检.html</a>（73533 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r30">
+    <div class="head"><span class="seq">30</span><b>暂停所有目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「暂停所有目标」。
+
+我想临时冻结全部目标(营养 + 体重 + 饮水),记录照常,仅目标暂停,并提示恢复入口。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>暂停所有目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.pause</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/暂停所有目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/暂停所有目标-回执.html</a>（242 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r31">
+    <div class="head"><span class="seq">31</span><b>重启所有目标</b><span class="kind">回执型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「重启所有目标」。
+
+我想从暂停恢复全部目标(营养 + 体重 + 饮水)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>重启所有目标</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.goal.resume</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/重启所有目标-回执.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/重启所有目标-回执.html</a>（224 字节 · 模板 receipt · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r32">
+    <div class="head"><span class="seq">32</span><b>看目标历史完成</b><span class="kind">结果型·片段</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看目标历史完成」。
+
+我想看历史目标达成情况,含每日达成列表与完成/未完成天数统计(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。
+
+回看天数(选填,默认 30):____</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看目标历史完成</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal --params '{&quot;window&quot;:&quot;30d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标历史完成.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标历史完成.html</a>（1779 字节 · 模板 fragment · <b class="bad">片段，不是完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+  <article class="row" id="r33">
+    <div class="head"><span class="seq">33</span><b>看目标预测达成</b><span class="kind">结果型</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>请你加载技能 卡路里,执行唤醒词「看目标预测达成」。
+
+我想看按当前趋势预测的目标达成日与置信度(体重部分复用对比体重的预测逻辑)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>看目标预测达成</code></dd>
+      <dt>命令</dt><dd><code>calorie-cmd-read calorie.view.goal-predict --params '{&quot;window&quot;:&quot;14d&quot;}'</code></dd>
+      <dt>产物绝对路径</dt><dd><a class="path" href="file:///D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标预测达成.html">D:/ilife/docs/skills/skill-calorie/scene06-验收墙/看目标预测达成.html</a>（67568 字节 · 模板 doc-shell · <b class="ok">完整文档</b>）</dd>
+      <dt>该确认什么</dt><dd>数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。</dd>
+    </dl>
+  </article>
+<div class="note"><h2>本批的缺口（如实记账）</h2>
+<ul>
+<li>定营养目标（定营养目标-回执.html）：模板=receipt、275 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>定体重目标（定体重目标-回执.html）：模板=receipt、206 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>定体重目标(自动算截止)（定体重目标(自动算截止)-回执.html）：模板=receipt、229 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>定体重目标(含起始日)（定体重目标(含起始日)-回执.html）：模板=receipt、245 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>定饮水目标（定饮水目标-回执.html）：模板=receipt、217 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>看目标对比实际（看目标对比实际.html）：模板=fragment、1357 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>看目标完成度（看目标完成度.html）：模板=fragment、1779 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>看即将到期的目标（看即将到期的目标.html）：模板=fragment、1204 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>改营养目标（改营养目标-回执.html）：模板=receipt、275 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>改体重目标（改体重目标-回执.html）：模板=receipt、208 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>改饮水目标（改饮水目标-回执.html）：模板=receipt、217 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>暂停所有目标（暂停所有目标-回执.html）：模板=receipt、242 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>重启所有目标（重启所有目标-回执.html）：模板=receipt、224 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+<li>看目标历史完成（看目标历史完成.html）：模板=fragment、1779 字节 —— **不是完整文档**（片段直出，双击打开只有一段裸区块，没有 charset／样式／版面）</li>
+</ul>
+<h2>有意不出产物及其原因</h2>
+<ul>
+<li><b>暂停所有目标／重启所有目标 的预检确认页</b>：这两条词**无空位**（不带参数），按 2026-09-13 裁定不出预检页，只在写后回执页上出现。</li>
+<li><b>定营养目标(自动算)／定饮水目标(自动算)／一键定全套目标 的独立回执页</b>：这三条词的命令本身就是预检确认页（先算给我看）；写由后续三条写命令落地，回执挂在那三条词上——不是漏做，见 `SKILL.md:75`。</li>
+<li><b>三条自造词：看目标推荐／看目标配置／看目标状态</b>：它们不在场景 06 的 25 条冻结词表里（只在路由层，`src/goal/routes.ts:34-37`），也没有 HELP 卡片；归属与落地是票 #291 在办的事。</li>
+<li><b>看目标完成率(按周)／(按月) 的独立页</b>：两条词今天都路由到 `calorie.view.goal-progress`，与「看本周目标」同页（只是窗口参数相同）——产物在，但**屏幕上看不出差别**，这一条该由用户裁：要不要按词出不同的窗口。</li>
+</ul></div>
+</div></body></html>
