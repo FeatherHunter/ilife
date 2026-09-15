@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 45 ＋ 读 68 ＝ 113 条。
+ * registry 合法键表：写 46 ＋ 读 71 ＝ 117 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -46,6 +46,7 @@ export const CALORIE_WRITE_COMBOS = {
   'calorie.photo.tag': { shape: 'receipt' as EnvelopeShape, title: '改照片标签' },
   'calorie.product.add': { shape: 'receipt' as EnvelopeShape, title: '存食品' },
   'calorie.product.deprecate': { shape: 'receipt' as EnvelopeShape, title: '下架食品' },
+  'calorie.product.import': { shape: 'receipt' as EnvelopeShape, title: '批量导入食品' },
   'calorie.product.update': { shape: 'receipt' as EnvelopeShape, title: '改食品' },
   'calorie.profile.activity': { shape: 'receipt' as EnvelopeShape, title: '设活动量' },
   'calorie.profile.set': { shape: 'receipt' as EnvelopeShape, title: '设置档案' },
@@ -86,7 +87,9 @@ export const CALORIE_COMBOS = {
   'calorie.view.anomaly': { shape: 'stat' as EnvelopeShape, title: '异常诊断' },
   'calorie.view.batch-import-preview': { shape: 'stat' as EnvelopeShape, title: '批量导入预览' },
   'calorie.view.body-composition': { shape: 'stat' as EnvelopeShape, title: '体成分看' },
+  'calorie.view.body-composition-compare': { shape: 'stat' as EnvelopeShape, title: '体脂对比' },
   'calorie.view.body-measure': { shape: 'stat' as EnvelopeShape, title: '围度看' },
+  'calorie.view.body-measure-compare': { shape: 'stat' as EnvelopeShape, title: '围度对比' },
   'calorie.view.calorie-trend': { shape: 'stat' as EnvelopeShape, title: '热量趋势' },
   'calorie.view.combined': { shape: 'stat' as EnvelopeShape, title: '组合分析' },
   'calorie.view.composition-wizard': { shape: 'stat' as EnvelopeShape, title: '体脂向导' },
@@ -100,6 +103,7 @@ export const CALORIE_COMBOS = {
   'calorie.view.exercise-distribution': { shape: 'stat' as EnvelopeShape, title: '运动类型分布' },
   'calorie.view.exercise-goal': { shape: 'stat' as EnvelopeShape, title: '运动目标视图' },
   'calorie.view.exercise-recap': { shape: 'stat' as EnvelopeShape, title: '运动复盘' },
+  'calorie.view.exercise-records': { shape: 'stat' as EnvelopeShape, title: '运动记录' },
   'calorie.view.exercise-review': { shape: 'stat' as EnvelopeShape, title: '计划复盘' },
   'calorie.view.exercise-strength': { shape: 'stat' as EnvelopeShape, title: '力量训练总览' },
   'calorie.view.exercise-trend': { shape: 'stat' as EnvelopeShape, title: '运动趋势' },
