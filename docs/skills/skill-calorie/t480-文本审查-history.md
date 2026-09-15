@@ -319,7 +319,7 @@ FINAL-GREEN exit=0
    直写 `parent.document.title` 后，按 **`probe 390 2400 <文件…>`** 重跑 ⇒ **18/18 页 `无溢出`**，
    `03-看本周体重.html` 也正常出读数（`.scratch/t154/text-review/ui480/probe-final2.log`）。本票未改任何共享脚本。
 5. **行数**：`history.ts` 本轮 **LF=839**（#480 后 775 → 本票 ＋64 行注释与形状装配；超 350 线，超因与拆法见文件头，
-   台账由编排者 `--sync`）。
+   台账由编排者 `--sync`；本轮编排者已把台账「当场实测」列同步到 839）。
 6. **别席在途件**：本票编译期间临时红过 `weight/logReceipt.ts`／`weight/log.ts`／`render/workoutPlanDocs.ts`
    （均非本件，逐次如实记账）；末轮 `tsc -b packages/skill-calorie` **exit=0**，全包已绿。
 7. **草稿件在忽略清单里**：`.scratch/` 全目录被 `.gitignore` 忽略 ⇒ `ui480/*.mjs`／`*.log`／`out/`／`shots/`
