@@ -426,10 +426,20 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     // **禁用态必须看得出来**（#525 收口 · 两处公共债之一）：读页面没有写库日志，复制区按 #336
     // 自动补的那颗「复制日志」带 `disabled` 属性、可**从 #336 起就没有任何置灰规则**——看着与
     // 旁边那颗能点的按钮一模一样（`t524-改前读数.md` §7.1 第 3 条只核了属性、没核观感）。
-    // 半透明档 `.45` 与 HELP 页 `button.copy:disabled` 逐值同。`cursor` 一并给，桌面档悬停有交代。
+    //
+    // **#525 第二轮返修（禁用态只看得见、读不清）**：上一版照 HELP 页 `button.copy:disabled`
+    // 取 `opacity:.45` 压**整颗**按钮，实测有效文字色被混成 `#91b9e9` 压白底，对比度只有
+    // **2.03:1**（`.scratch/t525c/before.json`；读法＝把 opacity 混进底色后按 WCAG 相对亮度算）——
+    // 连 AA 大字的 3:1 都不到，等于把「禁用」写成了「看不清」。
+    // 改法＝**不压整颗**，改三处、各自都是一个信号：① 文字色换 `--fg3`；② 底压成 `--soft`；
+    // ③ 描边降到 `--line`（「蓝＝可点」这条信号只留在可点态）。`opacity` 恒 1（不继承、不叠乘）。
+    // 2.03 → 3.47 的两行读数落 `.scratch/t525c/disabled-contrast.json`，探针 `.scratch/t525c/probe.mjs` 可复跑。
     '.' + p + 'copy-btn[disabled],',
     '.' + p + 'copy-btn:disabled {',
-    '  opacity: .45;',
+    '  opacity: 1;',
+    '  border-color: var(--line);',
+    '  background: var(--soft);',
+    '  color: var(--fg3);',
     '  cursor: not-allowed;',
     '}',
     '.' + p + 'copy-btn[disabled]:active,',
