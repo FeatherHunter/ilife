@@ -326,29 +326,62 @@ function precheckFor(key) {
  * 而占位符的替换值登记在 `docs/research/t81-seed.mjs`（`pnpm help:examples:check` 按那份登记逐行实跑）。 */
 export const EXAMPLE_PLACEHOLDERS = ['<开始日期>', '<结束日期>', '<对比开始日期>', '<对比结束日期>', '<日期>'];
 const ISO_DATE_RE = /\b\d{4}-\d{2}-\d{2}\b/g;
-/** 一个日期＝让调用方自己填哪天（只此一个占位符）。 */
-const ONE_DATE_PLACEHOLDER = '<日期>';
-/** 两个以上＝两段（或多段）对比的起止，按出现次序取。 */
-const RANGE_PLACEHOLDERS = EXAMPLE_PLACEHOLDERS.filter((p) => p !== ONE_DATE_PLACEHOLDER);
+
+/* 占位符**按名分组**：名字与 `docs/research/t81-seed.mjs` 的 `PLACEHOLDER_SUBSTITUTIONS` 的键逐字相同
+ * （那几对键就是这四对；本表不造新名字，`assertPlaceholdersRegistered` 按那份登记逐字核对）。
+ *   单日期组：让调用方自己填哪天。
+ *   区间组：一条命令的起止两天（首位置＝早的那天、末位置＝晚的那天；同值两处＝同一天）。
+ *   对比组：两段对比里**对比段**的起止；位置排在主段之后。
+ * 分组让「一份日期该落哪一对」有名字可指：两天＝区间对，四个位置＝主段区间对 ＋ 对比段对比对。 */
+export const DATE_PLACEHOLDER_GROUPS = {
+  单日期: ['<日期>'],
+  区间: ['<开始日期>', '<结束日期>'],
+  对比: ['<对比开始日期>', '<对比结束日期>'],
+};
+/** 四个（或多段）位置用的整份表：按出现次序铺，主段在前、对比段在后。 */
+const RANGE_PLACEHOLDERS = [...DATE_PLACEHOLDER_GROUPS.区间, ...DATE_PLACEHOLDER_GROUPS.对比];
+
+/** 占位符名必须在 `PLACEHOLDER_SUBSTITUTIONS` 登记过：改了一处、漏了另一处即抛（不静默造名字）。 */
+function assertPlaceholdersRegistered(picks) {
+  for (const p of picks) {
+    if (!EXAMPLE_PLACEHOLDERS.includes(p)) {
+      throw new Error('占位符名不在登记表里：' + p + '（要加名字，先在 docs/research/t81-seed.mjs 的 '
+        + 'PLACEHOLDER_SUBSTITUTIONS 登记替换值，再加进本文件的 EXAMPLE_PLACEHOLDERS——两处同一份口径）');
+    }
+  }
+}
+
+/** 按**日期个数与命令语义**选占位符组。
+ *
+ *  一个日期＝单日期组（`<日期>`）；两个日期＝区间组（`<开始日期>`／`<结束日期>`）；
+ *  四个日期＝一条命令里的两段（区间组 ＋ 对比组，前两个位置给主段、后两个位置给对比段）。
+ *  其它个数照当刻口径抛（不静默降级、不铺满）：例子里出现三个日期，说明口径本身没定，得先定口径。 */
+export function placeholderGroupFor(dateCount) {
+  if (dateCount === 0) return [];
+  if (dateCount === 1) return DATE_PLACEHOLDER_GROUPS.单日期;
+  if (dateCount === 2) return DATE_PLACEHOLDER_GROUPS.区间;
+  if (dateCount === 4) return RANGE_PLACEHOLDERS;
+  throw new Error('示例里的日期个数没有对应的占位符组：' + dateCount + ' 个（照当刻登记只有 '
+    + '1 个＝' + DATE_PLACEHOLDER_GROUPS.单日期.join('／') + '、2 个＝' + DATE_PLACEHOLDER_GROUPS.区间.join('／')
+    + '、4 个＝两段（' + RANGE_PLACEHOLDERS.join('／') + '）。要加口径先在 '
+    + 'docs/research/t81-seed.mjs 的 PLACEHOLDER_SUBSTITUTIONS 登记替换值，再改本函数）');
+}
 
 /** 把示例里的日期字面量按**出现次序**换成登记过的占位符。
  *
- *  按次序（不是按「不同日期分组替换」）：一个日期＝让调用方自己填哪天（`<日期>`）；
- *  两个以上＝两段对比的起止，按出现次序取 `<开始日期>`／`<结束日期>`／`<对比开始日期>`／`<对比结束日期>`。
- *  按次序才守得住两件事：① 同一天的起止（`period1Start`／`period1End` 同值）会得到**同一个**占位符，
- *  替换回同一个真实日期，起止仍是一天；② 两段对比的四个位置各得各的占位符，
- *  替换回**各自登记的**日子，照抄出来仍是两段而不是同一个日期铺满四处。
- *  位置不够就抛（不静默退回「按值分组」那种铺满四处的写法）。 */
+ *  按次序（不是按「不同日期分组替换」）：同一天的两处会各得一个占位符（`<开始日期>`／`<结束日期>`），
+ *  替换回同一对登记值（09-01／09-07）——两段仍是两段，不是同一个日期铺满四处。
+ *  `calorie.view.body-composition-compare` 那四个位置就是这条路：前两个＝主段区间，后两个＝对比段起止；
+ *  替换后主段 2026-09-01~09-07 落在种子库体脂数据（09-05~07 三条）内，第二段是种子库没有体脂数据的日子
+ *  ⇒ 那一行照抄实跑取不到数（exit 4）。**这不是选组选错，是登记表里 `PLACEHOLDER_SUBSTITUTIONS` 的
+ *  `<对比开始日期>`／`<对比结束日期>`（2026-08-23／2026-08-29）这一对没有体脂／围度数据**——
+ *  登记值一动就跨出本文件的声明路径，故此处如实留着那一行红，归因写进本票报告。
+ *  个数没有对应组即抛（见 `placeholderGroupFor`）。 */
 export function dateFreeExample(cmd) {
   const dates = cmd.match(ISO_DATE_RE) ?? [];
   if (dates.length === 0) return cmd;
-  const picks = dates.length === 1 ? [ONE_DATE_PLACEHOLDER] : RANGE_PLACEHOLDERS;
-  if (dates.length > picks.length) {
-    throw new Error('示例里的日期多于已登记的占位符：' + cmd + '（' + dates.length + ' 处日期，只有 '
-      + picks.length + ' 个位置：' + picks.join('、')
-      + '。要加位置，先在 docs/research/t81-seed.mjs 的 PLACEHOLDER_SUBSTITUTIONS 登记替换值，'
-      + '再加进本文件的 EXAMPLE_PLACEHOLDERS——两处同一份口径，不许只改一处）');
-  }
+  const picks = placeholderGroupFor(dates.length);
+  assertPlaceholdersRegistered(picks);
   let i = 0;
   return cmd.replace(ISO_DATE_RE, () => picks[i++]);
 }

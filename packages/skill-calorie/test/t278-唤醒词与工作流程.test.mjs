@@ -161,10 +161,35 @@ test('③ 生成器把日期换成登记过的占位符：按出现次序取，�
   );
   assert.equal(GEN.dateFreeExample('x --params \'{"a":"今日"}\''), 'x --params \'{"a":"今日"}\'', '无日期不动');
   assert.throws(() => GEN.dateFreeExample('x --params \'{"a":"2026-09-01","b":"2026-09-02","c":"2026-09-03","d":"2026-09-04","e":"2026-09-05"}\''),
-    /多于已登记的占位符/, '日期多于登记占位符时应抛');
+    /没有对应的占位符组/, '日期个数没有对应组时应抛');
   for (const p of GEN.EXAMPLE_PLACEHOLDERS) {
     assert.ok(SEED_SRC.includes("'" + p + "'"), '登记的占位符缺替换值：' + p);
   }
+});
+
+test('③ 占位符按名分组：组里每个名字都在 t81-seed 登记过，个数↔组一一对上', () => {
+  // 组名与登记表的键逐字同：登记表加了名字而这里没加（或反之）即红。
+  for (const [g, picks] of Object.entries(GEN.DATE_PLACEHOLDER_GROUPS)) {
+    assert.ok(picks.length > 0, '空组：' + g);
+    for (const p of picks) {
+      assert.ok(SEED_SRC.includes("'" + p + "'"), '组「' + g + '」里的名字没在 t81-seed 登记：' + p);
+      assert.ok(GEN.EXAMPLE_PLACEHOLDERS.includes(p), '组「' + g + '」里的名字不在 EXAMPLE_PLACEHOLDERS：' + p);
+    }
+  }
+  assert.deepEqual(GEN.DATE_PLACEHOLDER_GROUPS.单日期, ['<日期>']);
+  assert.deepEqual(GEN.DATE_PLACEHOLDER_GROUPS.区间, ['<开始日期>', '<结束日期>']);
+  assert.deepEqual(GEN.DATE_PLACEHOLDER_GROUPS.对比, ['<对比开始日期>', '<对比结束日期>']);
+  assert.deepEqual(GEN.placeholderGroupFor(1), GEN.DATE_PLACEHOLDER_GROUPS.单日期, '1 个日期＝单日期组');
+  assert.deepEqual(GEN.placeholderGroupFor(2), GEN.DATE_PLACEHOLDER_GROUPS.区间, '2 个日期＝区间组');
+  assert.deepEqual(GEN.placeholderGroupFor(4),
+    [...GEN.DATE_PLACEHOLDER_GROUPS.区间, ...GEN.DATE_PLACEHOLDER_GROUPS.对比],
+    '4 个位置＝主段区间对在前、对比段对比对在后');
+  assert.throws(() => GEN.placeholderGroupFor(3), /没有对应的占位符组/, '3 个日期没有对应组时应抛');
+  // 四个位置各得各的名字，同一份日期不许铺满四处；前两个位置＝区间对、后两个＝对比对。
+  const four = GEN.dateFreeExample('x --params \'{"a":"2026-09-05","b":"2026-09-05","c":"2026-09-07","d":"2026-09-07"}\'');
+  assert.deepEqual([...new Set([...four.matchAll(/<[^<>]+>/g)].map((m) => m[0]))].length, 4, '四个位置重了名字：' + four);
+  assert.ok(four.includes('"a":"<开始日期>","b":"<结束日期>"'), '前两个位置不是区间对：' + four);
+  assert.ok(four.includes('"c":"<对比开始日期>","d":"<对比结束日期>"'), '后两个位置不是对比对：' + four);
 });
 
 test('③ 产物新鲜：AUTO 块 == 生成器输出', () => {
