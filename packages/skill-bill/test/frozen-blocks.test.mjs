@@ -93,6 +93,16 @@ describe('t407 · 缺口块一：候选单选', () => {
     assert.ok(html.includes('候选已认准 #9'), '预选那一条要写在口径行里');
     assert.throws(() => candidateRows([{ ...CANDIDATES[0], why: '   ' }]), /为什么是它/);
   });
+
+  // 返工第 3 轮：这个共用件一句模板串错在两处，三页（报销到账／记偿还／记收回）同一行同时中招。
+  it('空态模板串不重复、标点不粘连（一处救三页）', () => {
+    const hint = '这一格要的是还没还回来的那笔借出；拿不准就让助手先查「查欠款」。';
+    const html = candidatePick({ name: 'source_id', label: '借出记录编号', candidates: [], hint });
+    assert.ok(!html.includes('这一格要的是这一格要的是'), '模板串不得重复');
+    assert.ok(!html.includes('。，'), '句尾不得标点粘连');
+    assert.ok(html.includes('这一格要的是还没还回来的那笔借出。列表里一条都没有。'), '正文两句各自成句');
+    assert.ok(html.includes('拿不准就让助手先查「查欠款」。'), '后一句挪进「下一步」，一个字不丢');
+  });
 });
 
 const FIELDS = [

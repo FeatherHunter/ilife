@@ -69,12 +69,25 @@ function whyBadges(items: readonly CandidateItem[]): string {
   return lines.join('');
 }
 
-/** 候选为空那一格：不拿最近一笔兜底，直接反问用户要哪一条。 */
-export function candidateEmpty(input: { readonly label: string; readonly what: string }): string {
+/** 候选为空那一格：不拿最近一笔兜底，直接反问用户要哪一条。
+ *
+ *  **本轮返工（真 bug，一处救三页）**：`what` 收的是场景件那句**整句「这一格要的是…」**（就是传进来的 `hint` 原句），
+ *  改前本件又给它加了一遍「这一格要的是」前缀，于是三页同一行同时出两处硬伤——
+ *  「这一格要的是这一格要的是…」（模板串重复）与句尾「。，列表里一条都没有。」（标点粘连）。
+ *  现在按整句收：本件**不再加前缀**，只在句尾缺句号时补一个；
+ *  `；` 缀着的后一句（「拿不准就让助手先查…」）从正文里挪出来并进「下一步」那一格——
+ *  正文只说「要的是哪一类」与「一条都没有」，两句各自成句，不再串在一行里。
+ *  `what` 没给时才退回本件自己那一句。 */
+export function candidateEmpty(input: { readonly label: string; readonly what?: string }): string {
+  const told = (input.what ?? '').trim();
+  const clauses = told === '' ? [] : told.split('；');
+  const head = clauses.length === 0 ? '这一格要的是那类记录' : clauses[0];
+  const rest = clauses.slice(1).map((s) => s.trim()).filter((s) => s !== '').join('');
+  const want = head.endsWith('。') ? head : head + '。';
   return emptyNote({
     title: '没有可选的' + input.label,
-    text: '这一格要的是' + input.what + '，列表里一条都没有。',
-    next: '不拿最近一笔顶替。请把' + input.label + '告诉助手（或先说清是哪一笔），再跟助手说一遍。',
+    text: want + '列表里一条都没有。',
+    next: rest + '不拿最近一笔顶替。请把' + input.label + '告诉助手（或先说清是哪一笔），再跟助手说一遍。',
   });
 }
 
@@ -104,7 +117,7 @@ export function candidatePick(input: CandidatePickInput): string {
   const name = input.name;
   const label = input.label;
   if (input.candidates.length === 0) {
-    return candidateEmpty({ label, what: input.hint ?? '这一格要的那类记录' });
+    return candidateEmpty({ label, what: input.hint });
   }
   const selected = input.selectedId ?? null;
   const hit = selected === null ? undefined : input.candidates.find((it) => it.id === selected);
