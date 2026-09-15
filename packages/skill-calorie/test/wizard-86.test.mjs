@@ -285,8 +285,11 @@ test('#86 GIF 框选器：列表＋框选＋裁剪＋命令段（无 cropper.js�
     assert.ok(!/- 过渡:(cut|fade|dissolve)/.test(unescaped), '#474：指令里不该再出现英文过渡码');
     assert.ok(unescaped.includes('calorie.photo.gif'), '命令段仍在');
     // #474：有裁剪的那张在本页候选行印「裁剪过」（与整图分开）。
-    assert.ok(sel.html.includes('裁剪过'), '#527：裁剪过的行应印「裁剪过」');
-    assert.ok(!sel.html.includes('>整图</span>'), '#527：裁剪过的行不该印「整图」');
+    const selRows = /<ol class="phu-pl">([\s\S]*?)<\/ol>/.exec(sel.html);
+    assert.ok(selRows, '#527：候选行容器（`<ol class="phu-pl">`）缺失');
+    const croppedRow = selRows[1].split('<li class="phu-pl">').find((r) => r.includes('裁剪过'));
+    assert.ok(croppedRow, '#527：裁剪过的行应印「裁剪过」');
+    assert.ok(!croppedRow.includes('整图'), '#527：裁剪过的行不该印「整图」');
     const miss = dispatch('calorie.view.gif-planner', { tag: '正面', photoIds: [9999] }, db);
     assert.equal(miss.data.metrics.missingCount, 1);
     assert.equal(miss.data.metrics.selectedCount, 0);
@@ -311,8 +314,10 @@ test('#474 文件找不到与框选缺 ID 各归各位：异常行出声、KPI �
     const v = dispatch('calorie.view.gif-planner', { tag: '正面', photosDir: join(dir, 'photos') }, db);
     const html = v.html;
     // #527：候选行改「一行一张照片」，异常不再是表里的「找不到（会跳过）」单元格，而是行上的徽标。
-    assert.equal((html.match(/<li class="phu-pl">/g) ?? []).length, 2, '两张照片都该有候选行');
-    assert.equal((html.match(/>会跳过<\/span>/g) ?? []).length, 2, '两张找不到的照片都应逐行出声');
+    const rows = /<ol class="phu-pl">([\s\S]*?)<\/ol>/.exec(html);
+    assert.ok(rows, '#527：候选行容器（`<ol class="phu-pl">`）缺失');
+    assert.equal((rows[1].match(/<li class="phu-pl">/g) ?? []).length, 2, '两张照片都该有候选行');
+    assert.equal((rows[1].match(/>会跳过<\/span>/g) ?? []).length, 2, '两张找不到的照片都应逐行出声');
     assert.ok(html.includes('status-badge') && html.includes('会跳过'), '#474：异常格须挂状态徽标');
     assert.ok(html.includes('>框选里没有的 ID</div>'), '#474：缺 ID 那格须仍在（本用例为 0）');
     assert.ok(html.includes('>文件找不到</div>') && html.includes('>2</span>'), '#474：文件找不到那格须报 2 张');
