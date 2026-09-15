@@ -9,7 +9,7 @@ import { pauseAllGoals, resumeAllGoals, setWeightGoal } from './goalStore.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { fail, needNum, optNum } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
-import { R, out, provided } from '../shared/writeParts.js';
+import { R, out } from '../shared/writeParts.js';
 
 /** `calorie.goal.set` 本次**实际被 SET 的列** → CLI 参数名（正本 §3.4「update 键＝本次实际变更字段」）。
  * 与 `fetch/nutritionGoal.ts` 的两条 UPSERT 同源（#127 已改）：传 `water` 走 6 列
@@ -51,16 +51,25 @@ export function writeGoalWater(params: Record<string, unknown>, db: DatabaseSync
   }));
 }
 
-/** `calorie.goal.weight` · 定体重目标（目标 kg ＋ 可选截止／起始日／起点体重）。 */
+/** `calorie.goal.weight` · 定体重目标（目标 kg ＋ 可选截止／起始日／起点体重）。
+ *
+ * #548 · 三个可选参数**键在才进** `input`（不在就不写这一列，交给 `setWeightGoal` 按「键在不在」挑列）：
+ * 本函数是 CLI `params` 到取数层输入的唯一转手处，`params['startKg']` 在没传时是 `undefined`，
+ * 无条件写成 `startKg: undefined` 会让「没传」冒充成「键在」。
+ * 摘要里的「（截止 …）」只在**本次真写过截止**（`r.written` 含 `deadline`）且有值时才出；
+ * `writtenFields` 报 `r.written`（本次真进过 SET 列表的列），不再按「参数给了没」报。 */
 export function writeGoalWeight(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const kg = needNum(params, 'kg');
   if (!(kg > 0) || kg > 500) fail(2, 'kg 须为 0..500');
-  const r = setWeightGoal(db, {
-    kg, deadline: params['deadline'], startKg: params['startKg'], startDate: params['startDate'],
-  });
-  return out(R('定体重目标', 'update', '已定体重目标 ' + r.weightGoal + ' kg' + (r.deadline ? '（截止 ' + r.deadline + '）' : '') + (r.startKg !== null ? ' · 起点 ' + r.startKg + ' kg' : ''), '定体重目标', 'daily_goal (写库回执)', {
+  const input: Parameters<typeof setWeightGoal>[1] = { kg };
+  for (const name of ['deadline', 'startKg', 'startDate'] as const) {
+    if (Object.hasOwn(params, name) && params[name] !== undefined) input[name] = params[name];
+  }
+  const r = setWeightGoal(db, input);
+  const wroteDeadline = r.written.includes('deadline') && r.deadline !== null;
+  return out(R('定体重目标', 'update', '已定体重目标 ' + r.weightGoal + ' kg' + (wroteDeadline ? '（截止 ' + r.deadline + '）' : '') + (r.startKg !== null ? ' · 起点 ' + r.startKg + ' kg' : ''), '定体重目标', 'daily_goal (写库回执)', {
     recordId: 1, ids: [1], idSource: 'singleton',
-    writtenFields: provided(params, ['kg', 'deadline', 'startKg', 'startDate']),
+    writtenFields: r.written,
   }));
 }
 
