@@ -121,16 +121,17 @@ function tocHtml(hits: readonly PhotoHelpHit[]): string {
 }
 
 /** 页头读数卡：**两页各说两件事，且不互相复述**（同事实一页一处）。
- *  - 卡①「命中」：这一页列了几条，以及这一页是怎么来的；
+ *  - 卡①「命中」：这一页列了几条，以及这一页是怎么来的（**不复述用户刚打的查询词**——
+ *    查询词已在副标题里点了名，卡里再引一遍就是同事实第二处）；
  *  - 卡②「怎么用」：一句话把用法讲完（复制 → 发给 AI → 拿结果）。 */
-function kpiHtml(hits: readonly PhotoHelpHit[], asked: boolean, query: string): string {
+function kpiHtml(hits: readonly PhotoHelpHit[], asked: boolean): string {
   const n = hits.length;
   return renderKpiGrid([
     {
       label: '命中',
       value: String(n),
       unit: '条',
-      detail: asked ? '跟「' + query + '」有关的都在下面' : '照片这一类就这十条，全在下面',
+      detail: asked ? '跟你说的这件事有关的照片命令' : '照片这一类能做的十条命令',
     },
     {
       label: '怎么用',
@@ -149,7 +150,7 @@ function subtitleOf(asked: boolean, query: string): string {
 export function buildPhotoHelpDoc(hits: readonly PhotoHelpHit[], query?: string): string {
   const asked = typeof query === 'string' && query !== '';
   const n = hits.length;
-  const parts: string[] = [kpiHtml(hits, asked, asked ? (query as string) : '')];
+  const parts: string[] = [kpiHtml(hits, asked)];
   if (n === 0) {
     parts.push(renderEmptyBlock({ text: '没有命中任何照片命令：换个说法再试试' }));
   } else {

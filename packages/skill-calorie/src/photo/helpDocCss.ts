@@ -58,9 +58,12 @@ const RULES: readonly string[] = [
   '.ilife-helpdoc-detail{margin:4px 0 0;color:var(--fg2);font-size:13.5px;line-height:1.6;'
     + 'overflow-wrap:anywhere}',
 
-  /* ── 「说这句」＋唤醒词徽章：形状（徽章）已由 renderChips 给，这里只排一行与对齐 ── */
-  '.ilife-helpdoc-say{margin:6px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:6px}',
-  '.ilife-helpdoc-say-tag{color:var(--fg3);font-size:12px;font-weight:600;letter-spacing:.02em}',
+  /* ── 「说这句」＋唤醒词徽章：形状（徽章）已由 renderChips 给，这里只排一行与对齐。
+   *    标签**退让一档**：灰（`--fg3`）＋ 松字距 ＋ 略降不透明 —— 层级靠色与字距拉开，
+   *    **不靠降字号**（#524 基准要求 HELP 的最小字号 ≥ 它的下限，故这里恒 12px）。 ── */
+  '.ilife-helpdoc-say{margin:8px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:6px}',
+  '.ilife-helpdoc-say-tag{color:var(--fg3);font-size:12px;font-weight:600;letter-spacing:.06em;'
+    + 'opacity:.85}',
 
   /* ── 折叠载荷：默认收起；展开后那一格**不是代码块**，是一句人话（原文住复制按钮的属性里）
    *    加一条长串折行，防「属性/句式被顶宽」把窄屏撑出横向滚动 ── */
@@ -81,6 +84,11 @@ const NARROW: readonly string[] = [
   '.ilife-helpdoc-name{font-size:15.5px}',
   '.ilife-helpdoc-detail{font-size:13px}',
   '.ilife-helpdoc-section{margin-top:20px}',
+  /* 胶囊轨的**可滑提示**：右缘一抹渐隐。为什么需要：390 档五颗胶囊一屏放不下、末颗只露一半，
+   *  「被切断」本身是提示，但若读成渲染事故就白搭；补一道渐隐把这条轨一眼读成「可滑」。
+   *  纯视觉属性（`mask-image`），不动可访问树、不动触摸区、不改任何尺寸。 */
+  '.ilife-helpdoc-nav .ilife-block-toc{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),'
+    + 'transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}',
 ];
 
 /** 极窄档（400px）：目录转**一条可横滑的胶囊行**——五个节名满宽竖排会白占一屏多，把正文压到
