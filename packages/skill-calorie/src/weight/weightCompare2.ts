@@ -128,8 +128,9 @@ export function scenarioE2(db: DatabaseSync): ScenarioResult {
     compare: { deltaKg: round2(current - maxRow[1]), direction: current < maxRow[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
     extraRows: [
       { label: '已下降', value: dropped.toFixed(1) + ' kg' },
-      /* #481 整改缺陷 5：本行与节奏卡标签逐字同名（都叫「每天变化」），这里是**这一段的平均**，写全。 */
-      { label: '这段时间平均', value: ratePerDayText(dropped / days) },
+      /* #481 整改缺陷 5：本行与节奏卡标签逐字同名（都叫「每天变化」），这里是**这一段的平均**，写全。
+       * #481 本轮：符号与「已下降」同向——`dropped` 是正数 magnitude，直接除会印出「+19 克」（上升），与「已下降 9.6 kg」打架；改按 `(当前 − 最高) ÷ 天数` 取负值。 */
+      { label: '这段时间平均', value: ratePerDayText((current - maxRow[1]) / days) },
     ],
   };
 }

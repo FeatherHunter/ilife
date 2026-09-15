@@ -114,6 +114,11 @@ test('情景面 8 锚点：逐条完整文档＋锚点日期印出', () => {
   assert.ok(!e3.html.includes('N kg'), 'e3 不许印模板占位符：字面 `N kg` 命中数须为 0');
   // 删重后整页只剩 1 处：表题（情景卡已整张删、页题副标题本轮也撤了 ⇒ 情景业务名只此一处）。
   assert.ok((e3.html.match(/减重 5 kg 那天与今天/g) || []).length === 1, 'e3 情景业务名整页只剩 1 处（删到只剩表题）');
+  // #481 本轮：e2「这段时间平均」符号须与「已下降」同向（下降印「−」，不许印「+」）。
+  const e2 = run(db, { scenario: 'e2', today: TODAY });
+  assert.ok(e2.html.includes('已下降'), 'e2 应有「已下降」行');
+  assert.ok(e2.html.includes('平均每天 -'), 'e2 这段时间平均应与下降同向（印「平均每天 -」）');
+  assert.ok(!e2.html.includes('平均每天 +'), 'e2 下降时不许印「平均每天 +」（与已下降打架）');
   db.close();
 });
 
