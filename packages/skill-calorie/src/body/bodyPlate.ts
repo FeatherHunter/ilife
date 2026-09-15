@@ -201,6 +201,10 @@ export interface BodyMeasureView {
    *  在验收墙上是两格一模一样的东西。本字段让页面按「谁在问」换主次（趋势那条以趋势为主、记录那条以全量记录为主），
    *  **不动任何取数与窗口语义**：缺省仍是近 90 天，`window` 文案照旧。 */
   windowGiven: boolean;
+  /** #534 波次 · 本页窗口的人话文案（页面必须把这一句写进可见文本，与体成分看页同口径）：
+   *  `近 N 天` 或 `X 至 Y`。**为什么要有**：围度侧原先把「只取近 90 天」这件事藏在取数层里不上屏
+   *  （体成分侧 #362 已把窗口摆上页），两条看页因此在「窗口说不说」上不一致——本字段补齐这一条。 */
+  windowLabel: string;
 }
 
 /** #360 · 趋势 KPI 单一来源（`bodyDocs` 只渲染不重算，KPI 与图必然一致）。 */
@@ -232,6 +236,8 @@ export function buildBodyMeasureView(
 ): BodyMeasureView {
   const days = opts.days ?? 90;
   const windowGiven = opts.windowGiven === true;
+  /** 窗口文案（人话）：区间两日都给写「X 至 Y」，否则写「近 N 天」。页面把这一句写进可见文本。 */
+  const windowLabel = opts.dateFrom && opts.dateTo ? (opts.dateFrom + ' 至 ' + opts.dateTo) : ('近 ' + days + ' 天');
   if (!Number.isInteger(days) || days < 1 || days > 365) {
     throw new CalorieRenderError('bad-input', 'days 须为 1..365 整数');
   }
@@ -261,12 +267,12 @@ export function buildBodyMeasureView(
           limit: 1,
         });
         if (anyRows.length === 0) throw new CalorieRenderError('missing-data', '无围度记录');
-        return { metric: opts.metric, items: [], total: 0, trend: [], latestVal: null, autoMetric: null, kpi: emptyMeasureKpi(), windowGiven };
+        return { metric: opts.metric, items: [], total: 0, trend: [], latestVal: null, autoMetric: null, kpi: emptyMeasureKpi(), windowGiven, windowLabel };
       }
       const trend = trendMeasurement(db, opts.metric, days);
       const v = (items[0] as Record<string, unknown>)[opts.metric];
       const latestVal = typeof v === 'number' ? v : null;
-      return { metric: opts.metric, items, total: items.length, trend, latestVal, autoMetric: null, kpi: measureTrendKpi(trend), windowGiven };
+      return { metric: opts.metric, items, total: items.length, trend, latestVal, autoMetric: null, kpi: measureTrendKpi(trend), windowGiven, windowLabel };
     }
     const items = listMeasurements(db, {
       days: useRange ? undefined : days,
@@ -285,7 +291,7 @@ export function buildBodyMeasureView(
       const cand = (r as Record<string, unknown>)[picked];
       if (typeof cand === 'number') { latestVal = cand; break; }
     }
-    return { metric: null, items, total: items.length, trend, latestVal, autoMetric: picked, kpi: measureTrendKpi(trend), windowGiven };
+    return { metric: null, items, total: items.length, trend, latestVal, autoMetric: picked, kpi: measureTrendKpi(trend), windowGiven, windowLabel };
   } catch (e) {
     if (e instanceof CalorieRenderError) throw e;
     if (e instanceof FetchError) throw new CalorieRenderError('missing-data', e.message);
