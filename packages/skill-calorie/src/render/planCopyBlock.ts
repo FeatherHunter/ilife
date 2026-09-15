@@ -17,6 +17,7 @@ import type { CopyLogFields, SerializableEnvelope } from 'base-paint';
 import { buildDataText, buildLogText, renderActionBar } from 'base-paint';
 import { renderCopyBlock, renderPreBlock } from 'base-paint/blocks';
 import { CALORIE_COPY_ACTION } from './copy.js';
+import { sceneEnvelope } from '../shared/sceneEnvelope.js';
 
 /** prompt 段：预览块 ＋ 一颗「复制指令」（预检确认页「复制 prompt 回给 AI」那一环，老侧 `promptCopyArea` 的语序）。
  *
@@ -44,7 +45,8 @@ interface PlanCopyInput {
   readonly prompt?: string;
 }
 
-/** 复制区：数据位单格式、日志位直挂，按钮 `id` 补成冻结表那两颗；无三格式菜单、无英文菜单项。 */
+/** 复制区：数据位单格式、日志位直挂，按钮 `id` 补成冻结表那两颗；无三格式菜单、无英文菜单项。
+ *  日志位的信封先过 #550 归一（`key` 带 `calorie.` 前缀时剥一层），**数据位一字不动**。 */
 export function planCopyBlock(input: PlanCopyInput): string {
   const title = input.dataTitle;
   const prompt = input.prompt;
@@ -54,7 +56,7 @@ export function planCopyBlock(input: PlanCopyInput): string {
         envelope: input.envelope,
         ...(title === undefined ? {} : { title }),
       }),
-      logText: buildLogText({ envelope: input.envelope, copyLog: input.log }),
+      logText: buildLogText({ envelope: sceneEnvelope(input.envelope), copyLog: input.log }),
     })
       .replace('data-action-id="ilife-copy-data"', 'id="ilife-copy-data" data-action-id="ilife-copy-data"')
       .replace('data-action-id="ilife-copy-log"', 'id="ilife-copy-log" data-action-id="ilife-copy-log"');

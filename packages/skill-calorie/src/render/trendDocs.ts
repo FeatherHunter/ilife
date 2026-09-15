@@ -36,6 +36,7 @@ import { buildDataText, buildLogText } from 'base-paint';
 import type { DataTextInput } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog, dataCopyArea } from '../shared/copyArea.js';
+import { sceneEnvelope } from '../shared/sceneEnvelope.js';
 import { nowStamp } from './receipt.js';
 import { pageChromeCss } from './pageChromeCss.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
@@ -634,7 +635,7 @@ function contraCopyBlock(v: ContraView): string {
     title: '复制修改指令',
     dataText: buildDataText(data),
     logText: buildLogText({
-      envelope: data.envelope,
+      envelope: sceneEnvelope(data.envelope),
       copyLog: copyLog({
         command: 'calorie-cmd-read calorie.view.contraindication',
         source: 'workout_plans（只读）',

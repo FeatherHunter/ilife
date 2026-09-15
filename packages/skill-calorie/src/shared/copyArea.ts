@@ -32,6 +32,7 @@ import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, DataTextInput, LogTextInput, ToastIcon } from 'base-paint';
 import { DB_FILENAME } from '../paths.js';
 import { copyActionHtml } from '../render/copy.js';
+import { sceneEnvelope } from './sceneEnvelope.js';
 
 /** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
 const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
@@ -136,7 +137,9 @@ export function copyArea(input: CopyAreaInput): string {
     parts.push(renderCopyBlock({
       ...(title === undefined ? {} : { title }),
       ...(data === undefined ? {} : { dataFormats: formatsOf(data, input.dataFormats) }),
-      ...(log === undefined ? {} : { logText: buildLogText(log) }),
+      // 日志位的信封先过 #550 归一：`key` 已带 `{skill}.` 前缀时剥一层，公共层的
+      // `skill ＋ '.' ＋ key` 算式才不会拼成 `calorie.calorie.view.plan`（数据位不动）。
+      ...(log === undefined ? {} : { logText: buildLogText({ ...log, envelope: sceneEnvelope(log.envelope) }) }),
     }));
     return parts.join('');
   }

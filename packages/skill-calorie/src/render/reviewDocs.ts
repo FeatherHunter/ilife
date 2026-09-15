@@ -29,6 +29,7 @@ import {
 import { shiftISODate } from '../analysis/utils.js';
 import { copyLog } from '../shared/copyArea.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { sceneEnvelope } from '../shared/sceneEnvelope.js';
 import type { PlannedSession, ReviewView } from './exercisePort.js';
 import { nowStamp } from './receipt.js';
 import { reviewViewCss } from './reviewDocsCss.js';
@@ -185,7 +186,7 @@ function copyBlock(v: ReviewView): string {
   return renderCopyBlock({
     dataText: buildDataText(data),
     logText: buildLogText({
-      envelope: data.envelope,
+      envelope: sceneEnvelope(data.envelope),
       copyLog: copyLog({
         command: 'calorie-cmd-read calorie.view.exercise-review',
         source: 'workout_plans ＋ exercise_log（只读）',
