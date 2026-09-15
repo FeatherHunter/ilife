@@ -7,6 +7,7 @@
  * 本层不做取数（数据由 render/trendMiscPort.ts 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
+  renderCaliberLine,
   renderChartBlock,
   renderDataTable,
   renderDisclosure,
@@ -322,8 +323,11 @@ export function buildLongTrendDoc(v: LongTrendView): string {
 /* ── 营养分析（nutrition_analysis：宏量占比＋微量 vs 推荐＋规则建议） ── */
 
 export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
+  const folded = v.proteinG * 4 + v.carbG * 4 + v.fatG * 9;
   const parts: string[] = [
-    windowForm(v.start, v.end, '宏量占比＝蛋白/碳水×4、脂肪×9 除以总热量；微量＝日均 vs 每日推荐'),
+    /* #496 · 原说明是「宏量占比＝蛋白/碳水×4、脂肪×9 除以总热量；微量＝日均 vs 每日推荐」——
+       裸公式 ＋「宏量」「微量」「vs」三个内部叫法（审查件第 16 条）。改成读者读得懂的换算规则。 */
+    windowForm(v.start, v.end, '蛋白和碳水每克 4 千卡、脂肪每克 9 千卡，除以总热量得到占比；下面是每天平均摄入和每天推荐量的对比'),
     renderKpiGrid([
       { label: '蛋白', value: String(v.proteinG), unit: 'g', detail: v.proteinPct + '%（建议 10~20%）' },
       { label: '碳水', value: String(v.carbG), unit: 'g', detail: v.carbPct + '%（建议 45~65%）' },
@@ -362,13 +366,18 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
       title: '热量来源占比',
       input: {
         items: [
-          { label: '蛋白', value: v.proteinG * 4 },
-          { label: '碳水', value: v.carbG * 4 },
-          { label: '脂肪', value: v.fatG * 9 },
+          { label: '蛋白（千卡）', value: v.proteinG * 4 },
+          { label: '碳水（千卡）', value: v.carbG * 4 },
+          { label: '脂肪（千卡）', value: v.fatG * 9 },
         ],
-        options: { showPercent: true },
+        /* #496 · 中心原本不给标签，只印三数之和（891）——与上方「总摄入 1,916 卡」并排互相矛盾
+           （审查件第 83 条）。中心标明这是**折算**出来的合计，图下再说一句为什么两处对不上。 */
+        options: {
+          showPercent: true, centerLabel: '折算合计（千卡）', centerValue: String(Math.round(folded)),
+        },
       },
     }));
+    parts.push(renderCaliberLine('环上的数＝蛋白、碳水、脂肪按每克 4／4／9 千卡折算出的热量；它与上方「总摄入」（按每条记录的热量合计）不是同一个数——记录里的热量是各条自己报的值。'));
     charts = true;
   }
   parts.push(renderDisclosure({
@@ -440,7 +449,7 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
     docTitle: DOC_TITLE,
     title: '每日六因素 ' + v.date,
     eyebrow: '卡路里 · 趋势',
-    subtitle: '热量/蛋白/饮水/运动/称重/三餐（无目标项明示，不编数）',
+    subtitle: '六因素＝这 6 项：热量、蛋白、饮水、运动、称重、三餐',
     content: parts.join(''),
     charts: false,
   });
@@ -522,10 +531,17 @@ export function buildBatchImportPreviewDoc(v: BatchImportPreviewView): string {
     }),
   ];
   if (v.missingNames.length > 0) {
+    /* #496 · 原为「缺库食物（共 1 种）」＋「未在食品库找到／建议用「存食品」补录」：「缺库」是内部
+       简写，两个动作也没说清往哪录（审查件第 48 条）。改成一句读者的话，并把可以照说的那句
+       （带食物名）直接写出来，读者不必自己拼。 */
     parts.push(renderDisclosure({
-      title: '缺库食物（共 ' + v.missingNames.length + ' 种）',
+      title: '食品库里没有这些食物（共 ' + v.missingNames.length + ' 种）',
       contentHtml: renderListRows({
-        items: v.missingNames.map((name) => ({ left: name, main: '未在食品库找到', right: '建议用「存食品」补录' })),
+        items: v.missingNames.map((name) => ({
+          left: name,
+          main: '不在食品库里，本次预览用的是你给的热量',
+          right: '想收进库里就说「存食品 ' + name + '」',
+        })),
       }),
     }));
   }

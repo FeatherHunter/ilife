@@ -30,7 +30,7 @@ interface DocPageInput {
   readonly content: string;
   /** 图表页：模板多一个 CHARTS-HELPERS 标记，并带上图表 helpers 资产（缺省＝普通页）。 */
   readonly charts?: boolean;
-  /** B线老A壳第1行左：参数一行小字（窗口 · 分组 · 对照 · 区间，区间全页唯一出处）。给了即走新路。 */
+  /** 第 1 行左：参数一行小字（窗口／区间等）——**同过眉标那道源码标识符筛**（裁定 1 对整条页头成立）。 */
   readonly metaLeft?: string;
   /** B线老A壳第1行右：类型徽章。**由调用方传页型**（如「整体趋势」／「热量趋势」／
    *  「组合分析」）；不传或传空串即**整颗徽章不渲染**（页头回到「meta 一行 ＋ H1」）。
@@ -54,6 +54,27 @@ const BLINE_CSS = '\n.meta-bar{display:flex;justify-content:space-between;align-
   + '.legend span{display:inline-flex;align-items:center;gap:6px}\n'
   + '.legend i{display:inline-block;width:16px;height:2px}\n'
   + '.legend .b{border-top:2px dashed #ff9500;background:transparent;height:0}\n';
+
+/** 眉标里**命令键或英文标识符**的判据：`calorie.view.diet`／`calorie.today`／`app_user` 这类。
+ *
+ *  `t425-融合基准.md:127-132`（裁定 1）定死「参数名、常量名、英文内部标识符一律不上屏」，
+ *  并点名眉标那一行（当时实测「`CALORIE.VIEW.DIET · 饮食域`」漏到用户眼前）。
+ *  本判据只挡**含下划线或点号的连写英文小写串**：
+ *   · 命中：`calorie.view.diet`（点号连写）、`calorie_data`／`app_user`（下划线连写）；
+ *   · 不命中：单段英文（`AI`／`TDEE` 这类整词由各页自己决定要不要写）、中文族名（`条目列表` 是
+ *     `t425` 给的样张口径，必须留着）、带空格的英文短语。
+ *
+ *  为什么要在这里挡：眉标是**唯一**由整页装配层经手的页头字段，`assembleDocPage` 的 30 处调用点里
+ *  一半以上写的是命令键；逐页改写等于同一个不许出屏的规则抄 30 份，且新增一页还会漏。
+ *  这一道是**恒挡**（不是开关）：漏一行内部叫法就是用户看不懂，没有哪一页需要它。 */
+const SOURCE_IDENTIFIER_RE = /[A-Za-z][A-Za-z0-9]*[._][A-Za-z0-9._]+/;
+
+/** 眉标过滤：含源码标识符（命令键／下划线连写英文）即整行不出，其余原样。 */
+function screenEyebrow(raw: string): string | null {
+  if (raw === '') return null;
+  if (SOURCE_IDENTIFIER_RE.test(raw)) return null;
+  return raw;
+}
 
 /** B线转义（与 blocks.ts 同口径的冻结五字符表，老A壳三行文本字段用）。 */
 function blineEsc(value: string): string {
@@ -84,7 +105,8 @@ function docShell(docTitle: string, charts: boolean): string {
  * 可打印位（`printable`，A线／B线共用）只加类名，不加样式、不碰 `extraCss`。 */
 export function assembleDocPage(input: DocPageInput): string {
   const charts = input.charts === true;
-  const bline = typeof input.metaLeft === 'string' && input.metaLeft !== '';
+  const metaLeft = typeof input.metaLeft === 'string' ? screenEyebrow(input.metaLeft) : null;
+  const bline = metaLeft !== null;
   /** 可打印位（#448）：只认真真值，不给／给假即老路（与 `renderPageShell` 的口径同）。 */
   const printable = input.printable === true;
   const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
@@ -96,7 +118,7 @@ export function assembleDocPage(input: DocPageInput): string {
     const badge = typeof input.badge === 'string' && input.badge !== '' ? input.badge : null;
     const summary = typeof input.summary === 'string' && input.summary !== '' ? input.summary : undefined;
     const body = '<section class="ilife-block ilife-block-page-shell' + (printable ? ' ilife-page-printable' : '') + '">'
-      + '<div class="meta-bar"><div class="left">' + blineEsc(input.metaLeft as string) + '</div>'
+      + '<div class="meta-bar"><div class="left">' + blineEsc(metaLeft as string) + '</div>'
       + (badge === null ? '' : '<div class="type-badge">' + blineEsc(badge) + '</div>') + '</div>'
       + '<h1 class="ilife-block-page-shell-title">' + blineEsc(input.title) + '</h1>'
       + (summary === undefined ? '' : '<p class="sub">' + blineEsc(summary) + '</p>')
@@ -104,9 +126,10 @@ export function assembleDocPage(input: DocPageInput): string {
       + '</section>';
     return fillTemplate({ template: docShell(input.docTitle, charts), assets, content: body }).html;
   }
+  const eyebrow = typeof input.eyebrow === 'string' ? screenEyebrow(input.eyebrow) : null;
   const body = renderPageShell({
     title: input.title,
-    ...(input.eyebrow ? { eyebrow: input.eyebrow } : {}),
+    ...(eyebrow === null ? {} : { eyebrow }),
     ...(input.subtitle ? { subtitle: input.subtitle } : {}),
     content: input.content,
     printable,

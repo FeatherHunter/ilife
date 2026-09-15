@@ -1,5 +1,4 @@
 /** T351-v5 · 「看完整计划」一族（`buildPlanResultDoc`，order176–185）的页内样式文本（唯一产出者）。
- *
  * 出处：老模板 `D:\2Study\StudyNotes\SKILLS\卡路里\templates\workout_plan_view.html`（722 行）的
  * `<style>` 段，以及该模板的生产落盘成品 `看完整计划_20260914_141334.html` 的样式段。照搬的是**观感**，
  * 不是它的脚本：老页那三段内联 JS（页签切换／各模式渲染／取数入口）一个字都不搬——本仓契约
@@ -23,6 +22,7 @@
  * 是冻结双按钮（共享复制区），它的双端由共享样式表负责，本页不重画别人的件。
  * 打印：页签是导航件，打印时藏起来，两级面板一律展开（内容在 DOM 里，不靠脚本显示）。
  */
+import { pageChromeCss } from './pageChromeCss.js';
 /** 部位色板（老 `workout_plan_view.html:185-189` 的 `PART_COLORS` 逐字）：库中词／类名后缀／
  *  rgb 分量／文字色。老页把色值当内联 `style="background:色20;color:色"` 印在每颗徽章上（`色20`
  *  是 12.5% 的十六进制 alpha）；本页一律落类名，正文里零内联样式。 */
@@ -63,30 +63,17 @@ function stateSelAfter(ids: readonly string[], state: string, scope: string, lab
 }
 
 /** **页面级**样式（本族十份都要的那几件）：页宽、窄屏内距、触屏三件、按钮行宽度约束。
- *  与下面那套 `.ilw-*`（两级页签／场次卡／动作副行）分开——同族的 185（计划对比实际）没有页签、
- *  没有场次卡也没有动作表，它只要这一段，不该背一堆用不上的规则（同族第二处用法，故切出来）。
- *  185 自己那张表是共享区块（`renderDataTable`）产的，窄屏形态由共享层那处 640 负责，本段不重复画。 */
-const PAGE_CSS = [
-  '/* 老 .app：页宽 900 居中（共享页面模板缺省 960，本页照老页收窄）＋老页的上下内边距；',
-  '   老页 `*{box-sizing:border-box}`，故这里显式钉上，900 是含内边距的总宽 */',
-  '.ilife-block-page-shell{box-sizing:border-box;max-width:900px;padding:32px 20px 60px}',
-  '/* 触屏三件（照 HELP）：页面内可点的件（按钮／折叠头／页签）不许出现系统蓝高亮块、',
-  '   不许双击缩放延迟。触摸目标：页签 44px／38px 两档，见下 `.ilw-tab`。 */',
-  '.ilife-block-page-shell button,.ilife-block-page-shell summary,.ilw-tab,.ilw-day-tab'
-    + '{-webkit-tap-highlight-color:transparent;touch-action:manipulation}',
-  '/* 按钮行自约束宽度并居中（照 HELP `.hm-actions{max-width:520px;margin:0 auto}`）：',
-  '   本页页宽 900，两颗胶囊会被拉成半屏宽的长条 */',
-  '.ilife-block-page-shell .ilife-action-bar{max-width:520px;margin:0 auto}',
-  '/* 窄屏（820 · 同 HELP）的页面级部分：页壳收紧内距、指标卡两列＋奇数末位通栏 */',
-  '@media (max-width:820px){',
-  '.ilife-block-page-shell{padding:20px 16px 48px}',
-  '.ilife-block-page-shell-title{font-size:26px}',
-  '.ilife-block-kpi-card-grid{grid-template-columns:repeat(2,1fr)}',
-  '.ilife-block-kpi-card-grid>.ilife-block-kpi-card:nth-child(odd):last-child{grid-column:span 2}',
-  '}',
+ *  T351-v10 起这三件住共用件 `./pageChromeCss.ts`（看计划／复盘／写三族都用），本件只再加本族自己的
+ *  可点件触摸目标（周页签 44px／日页签 38px）。185（计划对比实际）没有页签、没有场次卡也没有动作表，
+ *  它只要页面级那一段（`planPageCss()`），不背一堆用不上的规则。 */
+const PLAN_TOUCH_CSS = [
+  '/* 本族可点件的触摸目标（HELP 的两档：主导航 44px、次要 chip 38px） */',
+  '.ilw-tab,.ilw-day-tab{display:inline-flex;align-items:center;justify-content:center}',
+  '.ilw-tab{min-height:44px}',
+  '.ilw-day-tab{min-height:38px}',
 ].join('\n');
 
-/** 静态段（与周数无关的那部分）；逐条都对着老模板的对应行写。 */
+/** 静态段（与周数无关的那部分，住 `.ilw-*` 命名空间）；逐条都对着老模板的对应行写。 */
 const STATIC_CSS = [
   '/* 老 token 名的页内别名（--lineS 照老值写死，无冻结对应） */',
   '.ilw-app{--ink:var(--fg);--ink2:var(--fg2);--ink3:var(--fg3);--lineS:#e8e8ed;--accent:var(--blue)}',
@@ -173,15 +160,6 @@ const STATIC_CSS = [
   '.ilw-chip{font-size:12px;font-weight:600;color:var(--ink2);background:var(--card);'
     + 'border:1px solid var(--lineS);border-radius:999px;padding:3px 10px}',
   '.ilw-chip-strong{color:var(--accent);background:rgba(0,122,255,.08);border-color:transparent}',
-  '/* 触屏三件（照 HELP）：可点的页签与折叠头不许出现系统蓝高亮块、不许双击缩放延迟。',
-  '   触摸目标：周页签（主导航）44px、日页签（次要、与 HELP 的 chip 同档）38px。 */',
-  '.ilw-tab,.ilw-day-tab{-webkit-tap-highlight-color:transparent;touch-action:manipulation;'
-    + 'display:inline-flex;align-items:center;justify-content:center}',
-  '.ilw-tab{min-height:44px}',
-  '.ilw-day-tab{min-height:38px}',
-  '/* 按钮行自约束宽度并居中（照 HELP `.hm-actions{max-width:520px;margin:0 auto}`）：',
-  '   本页页宽 900，两颗胶囊会被拉成半屏宽的长条 */',
-  '.ilife-block-page-shell .ilife-action-bar{max-width:520px;margin:0 auto}',
   '/* 老模板第二处 @media：本页自造的件在窄屏塌列（断点用 HELP 的 820，不用老模板的 640）。',
   '   共享区块自己那处 640 不撤——820 管本页，640 管共享件，两段同向不打架。 */',
   '@media (max-width:820px){',
@@ -207,10 +185,10 @@ function badgeCss(): string {
     .join('\n');
 }
 
-/** 本族**页面级**样式块（只 `PAGE_CSS`）：给 185 那种「只有共享区块、没有页签与场次卡」的页用，
- *  免得它为了一段页宽去背整套 `.ilw-*` 规则。 */
+/** 本族**页面级**样式块（共用件的页面级段 ＋ 本族可点件的触摸目标）：给 185 那种
+ *  「只有共享区块、没有页签与场次卡」的页用，不背一堆用不上的 `.ilw-*` 规则。 */
 export function planPageCss(): string {
-  return '<style>\n' + PAGE_CSS + '\n</style>';
+  return pageChromeCss(900) + '<style>\n' + PLAN_TOUCH_CSS + '\n</style>';
 }
 
 /** 页内样式块（含 `<style>` 包裹，照包内先例 `FOOD_CSS`／`MEASURE_CSS` 直插正文）：页面级段 ＋
@@ -248,5 +226,6 @@ export function planViewCss(weekCount: number): string {
       dyn.push('#ilw-dy-' + i + '-' + d + ':checked~.ilw-day[data-dow="' + d + '"]{display:block}');
     }
   }
-  return '<style>\n' + PAGE_CSS + '\n' + STATIC_CSS + '\n' + dyn.join('\n') + '\n</style>';
+  return pageChromeCss(900) + '<style>\n' + PLAN_TOUCH_CSS + '\n' + STATIC_CSS + '\n'
+    + dyn.join('\n') + '\n</style>';
 }

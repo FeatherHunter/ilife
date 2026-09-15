@@ -31,6 +31,19 @@
  *   ⑤ 页脚一行 #420 浅色口径行 `renderCaliberLine` 数据来源（哪张库／哪个窗口／多少条，有缺口写「缺 M−N 天」），
  *      样本不足走页顶 `notice({ icon: 'warn' })`、不拒绝渲染也不静默照画。
  *   总减重显示走 `lossPhrase`（正数＝已减），与载荷 `totalLoss` 的正负语义一致。
+ *
+ * **#504 形状化与手机端（负责人 2026-09-15 第 1／2／5 条；口径正本 `.scratch/t154/text-review/口径-UI.md`）**：
+ * 与同型先例 `src/render/reviewDocsCss.ts` 件头同口径——**手机端照 HELP（断点 820，四条手法：触摸目标
+ * ≥44px＋`-webkit-tap-highlight-color:transparent`＋`touch-action:manipulation`／窄屏横向塌纵向／
+ * 收紧内距），正文里不许再用 `·`／`；` 把好几件事串成一句话**。本件的三处落法：
+ *   - 期间变化卡副行 `开头 70.3 kg → 最后 70.4 kg`＋`最高 … · 最低 …` → `pairStrip()` ＋ `factStrip()`；
+ *   - 页顶「记录太少」的详情（`；` 串两件事）→ `bulletList()` 逐条成行；
+ *   - 里程碑表的每条（`日期 · 档位 · 当天体重` 三个 `·`）→ 档位落 `chip()` 居 `left` 列、
+ *     日期与当天体重进 `main`、隔多少天进右列。
+ * 形状与样式全部住同目录 `weightUi.ts`（本件正文零内联样式）；`weightUiCss()` 由本件三个整页装配
+ * 分别放进 `parts` 第一项（`assembleDocPage` 没有页内 CSS 入口）。
+ * **容许保留**：`<title>卡路里·体重</title>`（全仓 58 页逐字同一处品牌名，不属正文串）、页脚口径行的 `｜`、
+ * 日期区间里的 `~`、复制载荷与命令原文（机器面）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { anchorOf, dayField, optStr, windowRange } from '../shared/params.js';
@@ -58,6 +71,7 @@ import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
+import { bulletList, pairStrip, weightUiCss } from './weightUi.js';
 
 /** 页面 key（日志第 1 段「场景标识」由 envelope 派生）与本次数据来源（第 3 段后半）。 */
 const CMD_KEY = 'calorie.view.weight-review';
@@ -294,6 +308,10 @@ function viewWeightReviewPeriod(
   return { data: { metrics: periodNums(v) }, html: buildWeightReviewPeriodDoc(v, command) };
 }
 
+/** 判定口径（复核形态 `status`）与「日均变化」那两行都是**一整句人话**（取数层原话），
+ *  页面不做自然语言解析；#504 只钉一件事：这两个字段落 `renderListRows` 的 `main` 槽＝**纯文本**，
+ *  形状词汇的 HTML 进不去，故复核形态的正文里不许出现 `·`／`；`（本形态没有可分条的事实）。 */
+
 /* ── 回溯形态：里程碑回溯（老技能 build_review milestones 同义） ── */
 
 export interface WeightMilestoneHit { name: string; date: string; kg: number; elapsedDays: number }
@@ -439,6 +457,27 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
   });
 }
 
+/** 期间事实条（#504 形状化）：原来「开头 70.3 kg → 最后 70.4 kg」与「最高 … · 最低 …」**两条串法**
+ *  都住在 KPI 卡的副说明里——卡片的 `detail` 槽吃**纯文本**（公共层 `esc(detail)`，`blocks.ts:543`），
+ *  形状落不进去，所以原来只能拿 `→` 与 `·` 顶替。本件的做法与同族 `history.ts:progressStrips` 一致：
+ *  **事实从卡片里撤出来，落成页上一条真形状**（标签 ＋ 值），卡片只留「这一槽非说不可」的那个数。
+ *  一条横排事实条、三枚各自的形状：开头一枚（两端 ＋ 箭头）、最高一枚、最低一枚——
+ *  窄屏由 ③ 塌成一列，一屏一行一件事（桌面 1200 截图实测：竖排会把标签与值拉到 960px 的两头、
+ *  中间空空荡荡，读不成对，故这一条保持横排）。
+ *  三件事一件不少；单点／空窗那两档不出这条（同屏那两件事已各有一处说清）。 */
+function periodStrip(v: WeightReviewPeriodView, n: number, first: string, last: string): string {
+  if (n < 2) return '';
+  const kg = (x: number | null): string => (x === null ? '—' : String(x)) + ' kg';
+  return '<div class="wui-strip">'
+    + '<span class="wui-fact"><span class="wui-fact-k">开头与最后</span>'
+    + pairStrip(first + ' kg', last + ' kg') + '</span>'
+    + '<span class="wui-fact"><span class="wui-fact-k">最高</span>'
+    + '<span class="wui-fact-v">' + kg(v.maxKg) + '</span></span>'
+    + '<span class="wui-fact"><span class="wui-fact-k">最低</span>'
+    + '<span class="wui-fact-v">' + kg(v.minKg) + '</span></span>'
+    + '</div>';
+}
+
 /* ── 整页装配：期间复盘（老实物 weight_review.html：副标题＋期间指标＋趋势图＋结论句） ── */
 
 export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: string): string {
@@ -450,16 +489,17 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
     {
       label: '期间变化', value: signed1(v.delta) + ' kg',
       status: dirStatus(v.delta), statusText: dirWord(v.delta),
-      /* 单点那档：副说明改人话（原与徽章同为「单点无变化」）；徽章已删（见下）。 */
-      detail: n === 0 ? '本窗无体重记录' : n === 1 ? '只有 1 个点，没法算变化' : '开头 ' + first + ' → 最后 ' + last + ' kg',
+      /* 单点那档：副说明改人话（原与徽章同为「单点无变化」）；徽章已删（见下）。
+       * #504：中间那档的三条事实（首末对、最高、最低）不再串成一句——撤到卡下那条 `periodStrip()`。 */
+      detail: n === 0 ? '本窗无体重记录' : n === 1 ? '只有 1 个点，没法算变化' : '这一段的上下界看卡下那条',
     },
     {
       /* `共 N 条` 与页脚来源行是同一条事实 ⇒ 删卡片这份（口径 §3.5：同屏同一事实只留信息量最大的一处）。
-       * 只有一条记录时最高＝最低＝这个值，复述它没有信息量 ⇒ 那一档只说空态。 */
+       * 只有一条记录时最高＝最低＝这个值，复述它没有信息量 ⇒ 那一档只说空态。
+       * #504：最高／最低撤进卡下那条 `periodStrip()`（形状真出得来），卡内只剩均值这一个数
+       * ——同一组数字不在卡的值槽与副说明两处各印一遍（口径 §三 第 2 条）。 */
       label: '期间平均值', value: v.avg.toFixed(1) + ' kg', status: 'empty', statusText: '基准',
-      ...(n > 1
-        ? { detail: '最高 ' + String(v.maxKg) + ' kg · 最低 ' + String(v.minKg) + ' kg' }
-        : n === 0 ? { detail: '本窗无体重记录' } : {}),
+      ...(n === 0 ? { detail: '本窗无体重记录' } : {}),
     },
     {
       /* 标签改人话（`vs 上一段等长区间` 读不出意思）；`detail` 由「复述标签」改成写明对照的是哪一段。 */
@@ -490,20 +530,25 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
       label: '月份数', value: String(v.monthly.length) + ' 个月', status: 'empty', statusText: '分月',
     });
   }
-  const parts: string[] = [];
+  /* `weightUiCss()` 恒为正文第一项（口径 §二：形状词汇的样式住 `weightUi.ts` 一处，
+   *  `assembleDocPage` 没有页内 CSS 入口，故由整页装配把它带进来）。 */
+  const parts: string[] = [weightUiCss()];
   /* 页顶软横幅先于一切区块（§5.6 第 4 格：样本不足不拒绝渲染，也不静默照画）。 */
   if (n < 2) {
-    /* 标题改人话（口径 §3.2：`样本` 这类词换读者能懂的话）；`单点无变化` 卡片副说明已有 ⇒ 删这份。 */
+    /* 标题改人话（口径 §3.2：`样本` 这类词换读者能懂的话）；`单点无变化` 卡片副说明已有 ⇒ 删这份。
+     * #504：详情那一句原来用 `；` 把「给不给数」与「图上是哪个点」两件事串成一句——改 `bulletList()` 逐条成行。 */
     parts.push(notice({
       icon: 'warn',
       title: '记录太少',
       msg: n === 0 ? '本窗无体重记录' : '这段时间只记了 1 条',
-      detail: n === 0
-        ? '本窗一条记录也没有：趋势图走空态，均值与变化都不给数'
-        : '曲线上只有这一个点，图上那条横线就是这个点的平均值；一条记录谈不上趋势',
     }));
+    parts.push(bulletList(n === 0
+      ? ['本窗一条记录也没有：趋势图走空态，均值与变化都不给数']
+      : ['曲线上只有这一个点，图上那条横线就是这个点的平均值', '一条记录谈不上趋势']));
   }
   parts.push(renderKpiGrid(kpis));
+  /* 期间事实条紧跟 KPI 网格（#504）：四条到六条读数说完，这张表说的是「这一段的上下界与首末对」。 */
+  parts.push(periodStrip(v, n, first, last));
   /* 对照段（#482 缺陷 8）：原来这句塞在「比…」那张 KPI 卡的副说明里，截图里折两行把卡撑高；
    * 挪到卡下当一行浅色小字（走公共层现成的 `renderCaliberLine`，不新造样式）。
    * 一句只给 KPI 卡写不下的那件事——具体日期；比不了时不写（空态块自带口径句）。 */
@@ -615,14 +660,26 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
       statusText: lossWord(v.totalLoss),
     },
   ];
-  const parts: string[] = [renderKpiGrid(kpis)];
-  /* 一行一条读法走列表行区块（§2 #14），不再用数据表；空句自带口径。 */
-  // `left` 只有 44px（是给 ▲／▼／— 这类标记用的），10 个字符的日期塞进去会被挤成两行 ⇒
-  // 日期并进 `main`（宽列）当行首，**不给 `left`**（组件给这类行加 `-no-left` 修饰类、那一列不占位）。
+  /* `weightUiCss()` 恒为正文第一项（口径 §二，同上）。 */
+  const parts: string[] = [weightUiCss(), renderKpiGrid(kpis)];
+  /* 一行一条读法走列表行区块（§2 #14），不再用数据表；空句自带口径。
+   *
+   * #504 形状化：原来一条里程碑是**一句话里三个 `·`**（`2025-11-27 · 减重 5 kg · 当天 75 kg`）——
+   * 日期／档位／当天体重三件事串成一行字。现在各自落槽：
+   *   ① 档位（这一行讲的是哪一档）→ `left`（44px 那一列，`减重 5 kg` 两三个字放得下）；
+   *   ② 日期 → `main`（宽列；**日期不能进 `left`**：390px 手机上 44px 那列把 `2025-11-27` 折成
+   *      `2025-`＋`11-27` 两行，手机截图实测抓到过，见本轮证据件）；
+   *   ③ 当天体重 ＋「距第一条记录 N 天」→ 右列（页面上本来就有一列读数位；
+   *      后者是 `elapsedDays`，**只在这里出现**，别处没有它的去处，不许顺手丢）。
+   * 三件事一件不少，读者一眼看得出「这一行是哪一档、哪一天、那天多少」。
+   * **不挂胶囊**：`renderListRows` 的三个槽都是**纯文本**（公共层 `esc`，`blocks.ts:713-717`）——
+   * 形状词汇的 HTML 进那一槽会被转义成字面标签（本票实测：`<span class="wui-chip">…` 直接印在页上），
+   * 故这一页用分槽把三件事分开，不硬塞一个形状进去。 */
   parts.push(renderListRows({
     items: v.hits.map((m) => ({
-      main: m.date + ' · ' + m.name + ' · 当天 ' + m.kg + ' kg',
-      right: '距第一条记录 ' + m.elapsedDays + ' 天',
+      left: m.name,
+      main: m.date,
+      right: '当天 ' + m.kg + ' kg',
     })),
     emptyText: '尚未达成任何减重里程碑',
   }));

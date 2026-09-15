@@ -38,14 +38,26 @@ export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync):
     grams: optNum(params, 'grams') ?? 100, note: optStr(params, 'note'),
     date, time: optStr(params, 'time'), mealOverride: meal,
   });
+  /* #496 · 页面标题原写死「记一餐」，而这一条命令底下挂着 5 个唤醒词（记一餐／记一餐（含备注）／
+     补记饮食／拍营养表记一餐／拍营养表补记一餐）：补记饮食那一页顶着「记一餐 · 回执」，
+     与进来的唤醒词对不上（审查件第 22 条）。命令收不到唤醒词，只能按**这次写入自己的事实**取标题：
+     给了日期＝补记（不是现在吃的这一顿）；带了备注＝含备注。两者都不是的才是普通记一餐。 */
+  const note = optStr(params, 'note');
+  const hasNote = note !== undefined && note.trim() !== '';
+  const backfill = date !== undefined;
+  const scene = backfill ? '补记饮食' : (hasNote ? '记一餐（含备注）' : '记一餐');
+  const said = (backfill ? '已补记：' : '已记一餐：') + r.food_name + ' ' + r.date + ' ' + r.time + '（' + r.meal + '）';
   if (r.duplicate) {
-    return out(R('记一餐', 'create', String(r.message ?? '重复记录已跳过'), '记一餐', 'food_log (写库回执)', {
+    return out(R(scene, 'create', String(r.message ?? '重复记录已跳过'), scene, 'food_log (写库回执)', {
       recordId: r.dupId ?? null, noChange: true,
       ids: r.dupId ? [r.dupId] : [], idSource: r.dupId ? 'record' : 'none', writtenFields: [],
     }));
   }
   const remain = r.remainingCal === null || r.remainingCal === undefined ? '' : ' · 今日剩 ' + r.remainingCal + ' 卡';
-  return out(R('记一餐', 'create', '已记一餐：' + r.food_name + ' ' + r.date + ' ' + r.time + '（' + r.meal + '）' + remain, '记一餐', 'food_log (写库回执)', {
+  /* #496 · 副题把备注原文带上（审查件第 21、27 条：「含备注」那一页与普通记一餐逐字节相同，
+     读者看不出备注记到了哪里）。 */
+  const noteText = hasNote ? ' · 备注：' + String(note) : '';
+  return out(R(scene, 'create', said + noteText + remain, scene, 'food_log (写库回执)', {
     recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.diet],
     items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: r.food_name }],
   }));

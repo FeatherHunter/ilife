@@ -12,6 +12,19 @@
  *
  * 本页不吃老实物三项短板：手写 canvas／Y 轴无数值／单点口径分歧
  * （`weight_volatility_v2.html` 全篇 `<canvas>`；6 张全部没传 `yTicks`；两页单点一个出图一个不出）。
+ *
+ * **#504 形状化与手机端（负责人 2026-09-15 第 1／2／5 条；口径正本 `.scratch/t154/text-review/口径-UI.md`）**：
+ * 与同型先例 `src/render/reviewDocsCss.ts` 件头同口径——**手机端照 HELP（断点 820，四条手法：触摸目标
+ * ≥44px＋`-webkit-tap-highlight-color:transparent`＋`touch-action:manipulation`／窄屏横向塌纵向／
+ * 收紧内距），正文里不许再用 `·`／`；` 把好几件事串成一句话**。本页四处落法：
+ *   - 波动带卡副说明（**本族的样板**）`警戒线 ±… kg · 注意线 ±… kg · 波动幅度 … kg` → 两条线一对
+ *     （`factStrip(…, true, true)` 竖排）＋ 另一件「波动幅度」（`gap` 空一行）；
+ *   - 近期异常卡副说明 `超过注意线 0 天 · 超过警戒线 5 天` → `factStrip()` 两条各自成形；
+ *   - 结论块正文 `判语；今天那条读数。` → `verdict(判语)` ＋ `note(今天那条读数)`（两件块级元素，
+ *     故 `renderDisclosure` 的 `contentHtml` **不再套 `<p>`**）；
+ *   - `weightUiCss()` 放进本页（含空态那一页）`parts` 第一项。
+ *  允许保留：`<title>卡路里·体重</title>`（全仓 58 页逐字同一处品牌名）、页脚口径行的 `｜`、日期区间的 `~`、
+ *  复制载荷（`异常明细` 用 `｜`／`；` 分列）与命令原文（机器面）。
  */
 import { renderCaliberLine, renderChartBlock, renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
@@ -25,6 +38,7 @@ import { weightCurvePlan } from './plate.js';
 import type { VolatilityView } from './plate.js';
 import { anomalyReason, baselineDeltaText, deviationText, volatilitySummary } from './volatility.js';
 import type { VolatilityV2, VolatilityViewMode, VolLevel } from './volatility.js';
+import { bulletList, factStrip, note, verdict, weightUiCss } from './weightUi.js';
 
 const CMD_KEY = 'calorie.view.volatility';
 /** 复制日志第 3 段后半（哪张库／哪个窗口）。 */
@@ -51,13 +65,22 @@ const levelWord = (l: VolLevel): string => LEVEL_WORD[l] ?? MISSING;
  *  #485：`标准差／档位／σ` 全换人话——波动幅度（只归卡②）／「比平均线高多少，越没越线」。
  *  （D1）这里原来还挂一句「（波动幅度趋势 N 个点）」——那个词与卡②说明撞名（一屏两义），
  *  且趋势点数读者在图②题上一眼看得到，故删；结论只留判决与「有没有越线」。
- *  `only`（只看异常点读法）本来就没有那两句，照旧。 */
+ *  `only`（只看异常点读法）本来就没有那两句，照旧。
+ *
+ *  #504 形状化：正文原来是一句 `A；B。`——**两条判决串在一句里**（`；` 顶替了设计），
+ *  且 B 那条（今天比平均线高多少／越没越线）与「今日偏离」卡说的是同一件事。
+ *  现在拆成两件各自成形的元素（口径 §二「结论句里的 `；` 串 → 一句话判语，其余事实本就住在卡片里」）：
+ *    - `verdict(volatilitySummary(o))`：**判语**（体重稳不稳 ＋ 整体离散度 ＋ 近期越线天数），一句话；
+ *    - `note(预警读数)`：今天这一条**读数**（日期 ＋ 当日体重 ＋ 偏离多少 ＋ 越没越线），
+ *      用句号收尾成一行小字——它是「结论」这一块里对今天那句判语的落点，不是第二句判语。 */
 function volatilityConclusion(o: VolatilityV2, only = false): string {
   const s = volatilitySummary(o);
-  if (only || o.points.length === 1) return s + '。';
+  if (only || o.points.length === 1) return verdict(s + '。');
   const level = o.earlyWarning.level;
   const tail = level === 'red' ? '，超过警戒线' : level === 'yellow' ? '，超过注意线' : '，在正常范围内';
-  return s + '；' + o.earlyWarning.date + ' ' + baselineDeltaText(o.earlyWarning.deviationKg) + tail + '。';
+  const todayText = o.earlyWarning.date + ' ' + o.earlyWarning.kg + ' kg '
+    + baselineDeltaText(o.earlyWarning.deviationKg) + tail + '。';
+  return verdict(s + '。') + note(todayText);
 }
 
 /** 复制载荷（`stat` 形，键写中文）：页上读数 ＋ 异常明细整表 ＋ 结论原句。
@@ -140,9 +163,18 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
       statusText: single ? '只有一天' : gap > 0 ? '记录不齐' : '没有漏记',
     },
     {
+      /* #504 形状化（本族的样板处）：这一条副说明原来是**三件事串一行**
+       * （`警戒线 ±… kg · 注意线 ±… kg · 波动幅度 … kg`）——`·` 顶替了设计。
+       *
+       * **三个数不留在卡里**：`renderKpiCard` 的 `detail` 槽吃**纯文本**（公共层 `esc(detail)`，
+       * `blocks.ts:543`——形状词汇的 HTML 进那一槽会被转义成字面标签），故三个数改住卡下那条
+       * `thresholdStrip()`（块级件，形状真出得来）。卡内只留**这一槽非说不可**的一句：
+       * 注意线的数与波动幅度已由那条条子认领，值槽那个数（警戒线）由条子里的同名列认领——
+       * 同一组数字不在两处各印一遍（口径 §三 第 2 条）。 */
       label: '波动带', value: '±' + o.thresholds.red, unit: 'kg',
-      detail: '警戒线 ±' + o.thresholds.red + ' kg · 注意线 ±' + o.thresholds.yellow + ' kg · 波动幅度 '
-        + o.baselineSigma + ' kg',
+      // 卡内不再自己报三个数（#504）：那三个数落卡下那条 `thresholdStrip()`（块级件，形状真出得来）——
+      // `renderKpiCard` 的 `detail` 槽吃纯文本（公共层 `esc(detail)`，`blocks.ts:543`）。
+      detail: '两条线各是多少，看这张卡下面那条',
       // 只有 1 个点、或点数不到门槛时，波动幅度取兜底值 0.5，两条线不是从本窗数据推出来的——徽章要如实说。
       // （D1）徽章只说「这两条线按本窗数据算」，不再写「按本窗数据」四个字各说一半。
       status: single || o.sigmaTrend.length === 0 ? 'warn' : 'ok',
@@ -155,14 +187,35 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
       statusText: levelWord(level),
     },
     {
+      /* #485：只说「近 7 天里有几天越了哪条线」——异常点按近 7 天取（`cutoff`），
+       * 写成「共 N 点」会被读成本窗全覆盖（90／180 天窗口尤其误导）。
+       * #504 形状化：原来那一句用一个 `·` 把两条线各几天串在一行
+       * （`近 7 天：超过注意线 0 天 · 超过警戒线 5 天`）——两条事实各自落卡下那条条子
+       * （`wui-strip` 的「标签 ＋ 值」，与 `阈值` 那条同形）；卡内这一格只说「这一格数的是什么」。
+       * `近 7 天` 收进标签里说全（原来靠行首那一句管住整行，拆条之后每条得自己说全）。 */
       label: '近期异常', value: String(o.recentAnomalies.length), unit: '个',
-      // #485：只说「近 7 天里有几天越了哪条线」——异常点按近 7 天取（`cutoff`），
-      // 写成「共 N 点」会被读成本窗全覆盖（90／180 天窗口尤其误导）。
-      detail: '近 7 天：超过注意线 ' + yellowN + ' 天 · 超过警戒线 ' + redN + ' 天',
+      detail: '近 7 天越线的天数',
       status: o.recentAnomalies.length === 0 ? 'ok' : redN > 0 ? 'danger' : 'warn',
       statusText: o.recentAnomalies.length === 0 ? '没越线' : '有异常点',
     },
   ];
+}
+
+/** 卡下那条「两条线各是多少 ＋ 本窗波动幅度」（#504 形状化；本族的样板处）。
+ *
+ *  原来这三件事是**卡②副说明里的一行 `·` 串**（`警戒线 ±0.098 kg · 注意线 ±0.073 kg ·
+ *  波动幅度 0.049 kg`）——`·` 顶替了设计。现在各自成形：**同一行三枚「标签 ＋ 值」**（`factStrip`），
+ *  波动幅度一枚、两条线各一枚——线的名字与值成对，读者不用自己认哪个数是哪条线；
+ *  窄屏由 ③ 塌成一列，一屏一行一件事（桌面 1200 截图实测：改成竖排会把标签与值拉到 960px 的两头，
+ *  中间空空荡荡、读不成对，故这一条保持横排）。
+ *  条子放在 KPI 网格**之后**：卡片的值槽在网格上，条子回答的是「这些卡里的线各是多少」——
+ *  一屏同一事实只留一处（口径 §三 第 2 条），故卡内不再重印这三个数。 */
+function thresholdStrip(o: VolatilityV2): string {
+  return factStrip([
+    { k: '波动幅度', v: o.baselineSigma + ' kg' },
+    { k: '注意线', v: '±' + o.thresholds.yellow + ' kg' },
+    { k: '警戒线', v: '±' + o.thresholds.red + ' kg' },
+  ]);
 }
 
 /** 偏离折线：**量程把两条线也算进去**（算进去才画得住，§2 第 1 条「不许画了读不到」），
@@ -267,33 +320,42 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
   // 副标题只留整页唯一的「参照是谁」——`平均线` 这个词后面图表与结论句反复用，头一次见要有人话解释。
   // （只看异常点读法原来那句「本读法只列越阈异常点…」与页顶提示同字，删掉，读法说明只留页顶一处。）
   const subtitle = '以' + o.baselineToggleLabel + '为参照';
+  /* `weightUiCss()` 恒为正文第一项（口径 §二：形状词汇的样式住 `weightUi.ts` 一处，
+   *  `assembleDocPage` 没有页内 CSS 入口，故由整页装配把它带进来）。空态那一页同样先带它。 */
+  const parts: string[] = [weightUiCss()];
   if (o.points.length === 0) {
     // 数据型空态（§5.6）：页照常是一张完整的页——标题、空态句、页脚来源行、复制区都在。
-    const empty: string[] = [
-      notice({ title: '本窗无体重记录', icon: 'warn', msg: '窗口 ' + v.start + ' ~ ' + v.end + ' 内没有体重记录，出不了平均线与波动带。' }),
-      sourceLine(o, v.start, v.end),
-      copySection(volatilityCopyPayload(o), command),
-    ];
+    parts.push(notice({ title: '本窗无体重记录', icon: 'warn', msg: '窗口 ' + v.start + ' ~ ' + v.end + ' 内没有体重记录，出不了平均线与波动带。' }));
+    parts.push(sourceLine(o, v.start, v.end));
+    parts.push(copySection(volatilityCopyPayload(o), command));
     return assembleDocPage({
       docTitle: DOC_TITLE,
       title: '波动分析 ' + v.start + ' ~ ' + v.end,
       eyebrow: '',
       subtitle,
-      content: empty.join(''),
+      content: parts.join(''),
       charts: false,
     });
   }
-  const parts: string[] = [];
   if (only) {
+    /* 读法说明（#504 形状化）：原来是一句 `…（共 N 个），不出两张曲线图；要看整图请说…`——
+     * 一个 `；` 把「这一页有什么」与「要看整图怎么办」两件事串成一句。现在：提示块只报这一页列了点什么，
+     * 两条后续说明落 `bulletList()` 逐条成行（本族与复盘族同一个搭法）。 */
     parts.push(notice({
       title: '这一页只看异常点', icon: 'info',
-      msg: '这一页只列超过波动带的点（共 ' + o.recentAnomalies.length + ' 个），'
-        + '不出两张曲线图；要看整图请说「看体重稳不稳（增强版）」。',
+      msg: '这一页只列超过波动带的点（共 ' + o.recentAnomalies.length + ' 个）。',
     }));
+    parts.push(bulletList([
+      '这一页不出两张曲线图',
+      '要看整图，请说「看体重稳不稳（增强版）」',
+    ]));
   }
   const premise = premiseNotice(o);
   if (premise !== null) parts.push(premise);
   parts.push(renderKpiGrid(kpiCards(o)));
+  /* 卡下那条「两条线各是多少 ＋ 本窗波动幅度」紧跟 KPI 网格（#504）：卡②原来把这三件事串成一行 `·`
+   *  塞在副说明里；卡片副说明吃纯文本，形状落不进去 ⇒ 三个数下移到这一条同形的条子上。 */
+  parts.push(thresholdStrip(o));
   let charts = false;
   if (!only) {
     parts.push(deviationChart(o));
@@ -301,7 +363,9 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
     charts = true;
   }
   parts.push(anomalyTable(o, view));
-  parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + volatilityConclusion(o, only) + '</p>', open: true }));
+  /* 结论块（§5.3）：正文由 `verdict()` ＋ `note()` 两件块级元素组成，
+   * 故这里**不再套 `<p>`**（`<p>` 里塞不下块级件，浏览器会把套的这层拆开、产出坏结构）。 */
+  parts.push(renderDisclosure({ title: '结论', contentHtml: volatilityConclusion(o, only), open: true }));
   parts.push(sourceLine(o, v.start, v.end));
   parts.push(copySection(volatilityCopyPayload(o), command));
   return assembleDocPage({

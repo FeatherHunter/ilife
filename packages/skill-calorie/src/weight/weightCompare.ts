@@ -13,7 +13,9 @@ const round2 = (n: number): number => Math.round(n * 100) / 100;
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 
 export type Row = [string, number];
-export interface Seg { label: string; range: string; count: number; avg: number | null; startKg: number | null; endKg: number | null; netChange: number | null; volatility: number | null }
+/** 一段的读数。`spanDays` 只有平台期那段给（那段的天数本来就必须由识别器算，
+ *  `range` 串里读不出来）；页上由区间块的天数胶囊呈现（#503）。 */
+export interface Seg { label: string; range: string; count: number; avg: number | null; startKg: number | null; endKg: number | null; netChange: number | null; volatility: number | null; spanDays?: number }
 export interface Compare { deltaKg: number | null; direction: string; rateDiffG: number | null; speed: string }
 export interface ExtraRow { label: string; value: string; spark?: Array<{ d: string; kg: number }> }
 export interface ScenarioResult { segA: Seg; segB: Seg; compare: Compare; extraRows?: ExtraRow[]; tolerance?: { hit: boolean; target: string; hitDate?: string; offsetDays?: number; note?: string }; sampleWarning?: string }

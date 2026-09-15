@@ -6,16 +6,24 @@
  * 围度 recent＝listMeasurements(limit 1)；体脂 recent＝listCompositions(limit 1)。
  * 空库一律不抛（场景 1 空预检确认页照开；recent 记 null）。
  *
- * prompt 复刻口径（旧模板 buildPrompt/generatePrompt 逐字结构，新命令形态）：
- * 围度／体脂＝参数式（老家即无命令段，复制给 AI 后由 AI 调写命令）；
  * 预填 params 键名与写命令同形（MEASURE_CAMEL／CALIPER_FIELDS 口径），
  * 未知字段 fail(2)（与 cli/write.ts 同字面「不支持字段: 」，防拼写漂移）。
+ *
+ * **#366 · 复制—执行闭环**：页面上那两段文本分开住，各管一件事——
+ *   ① `prompt`＝**复制区**那一段：全合规时**就是一条能直接执行的写命令**（`calorie-cmd-read <写键>
+ *      --params '<JSON>'`，走 `shared/writeParts.ts:commandLine` 同一产出者）；缺项／越界时仍是老正本
+ *      的**缺项清单注释串**（`// …`，`body_composition_wizard.html:487-524`）——宁可不给命令，不给跑不通的命令。
+ *   ② `preview`＝**人眼核对**的参数清单（老正本 `#promptBox` 的老 prose 形态），住表单预览位，不参与复制。
+ * 输入口径（裁定 3）与模式判定（裁定 1）：`CALIPER_INPUT`／`BF_INPUT`／`MEASURE_STEP` 是提示文案与校验
+ * 文案的**同一处来源**，`isCaliperMode` 决定体脂率只读与否。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { listCompositions, listMeasurements, CALIPER_FIELDS, MEASUREMENT_FIELDS, MEASUREMENT_ZH, measureCamelName } from '../fetch/body.js';
+import { listCompositions, listMeasurements, BODY_FAT_PCT_MAX, BODY_FAT_PCT_MIN, CALIPER_FIELDS, CALIPER_MAX_MM, CALIPER_MIN_MM, MEASUREMENT_BOUNDS, MEASUREMENT_FIELDS, MEASUREMENT_ZH, measureCamelName } from '../fetch/body.js';
 import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import { GENDER_LABELS, todayISO } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { commandLine } from '../shared/writeParts.js';
+import { jp7BodyFatPct } from './log.js';
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -76,6 +84,45 @@ function normSource(v: unknown): string | undefined {
   throw new CalorieRenderError('bad-input', '参数 source 非法（home_caliper/hospital/gym 或中文 家测皮褶钳/医院测/健身房测）：' + s);
 }
 
+/* ── 0. 预检页的输入口径与复制区口径（#366：裁定 1 只读／裁定 3 单位与精度） ── */
+
+/** 本页复制区那条写命令的键（事实源＝`body/commands.ts` 的 `BODY_COMMANDS`）。只引字面量，
+ *  不反向 import：`commands.ts → wizard.ts → 本件` 会成环；t366 测试与注册表逐字对账。 */
+export const WIZARD_WRITE_KEYS = { measure: 'calorie.body.measure-add', composition: 'calorie.body.composition-add' } as const;
+
+/** 皮褶 7 点输入口径（裁定 3：老正本 `body_composition_wizard.html:300-329`）。 */
+export const CALIPER_INPUT = { step: '0.1', min: CALIPER_MIN_MM, max: CALIPER_MAX_MM } as const;
+/** 体脂率输入口径（裁定 3：老正本 `body_composition_wizard.html:346`）。 */
+export const BF_INPUT = { step: '0.01', min: BODY_FAT_PCT_MIN, max: BODY_FAT_PCT_MAX } as const;
+/** 围度 13 项步长（老正本 `body_measurements_wizard.html:181-253` 逐项 `step="0.1"`）；
+ *  逐部位区间取 `fetch/body.ts` 的 `MEASUREMENT_BOUNDS`（唯一来源），不在本件手抄第二份。 */
+export const MEASURE_STEP = '0.1';
+
+/** 皮褶 7 点范围句：**提示与校验同一句**（票面要消掉同页两套口径；数值以裁定 3 的 `min／max` 为准，
+ *  结论与 `fetch/body.ts` 的 `CALIPER_MIN_MM < v < CALIPER_MAX_MM` 一致）。 */
+export function caliperRangeText(): string { return '(' + CALIPER_INPUT.min + ', ' + CALIPER_INPUT.max + ') mm'; }
+
+/** 体脂率范围句：同上（老正本 `:499` 与 `fetch/body.ts` 的 `(0, 60)` 同结论）。 */
+export function bfRangeText(): string { return '(' + BF_INPUT.min + ', ' + BF_INPUT.max + ')%'; }
+
+/** 围度某一位的区间句（**闭区间**，与命令层 `validateMeasurementInput` 的 `lo <= v <= hi` 同结论）。 */
+export function measureRangeText(field: string): string {
+  const b = MEASUREMENT_BOUNDS[field] as [number, number];
+  return b[0] + '–' + b[1] + ' cm';
+}
+/** 未给 `source` 时页面按哪一支打开：照老正本下拉默认项（家测皮褶钳 `body_composition_wizard.html:270`）。 */
+export const CALIPER_SOURCE = 'home_caliper';
+/** 皮褶钳模式？（裁定 1：这一支的体脂率只读、由命令按 7 点换算） */
+export function isCaliperMode(source: string | null): boolean { return (source ?? CALIPER_SOURCE) === CALIPER_SOURCE; }
+
+/** 皮褶钳模式的体脂率**预演值**：页面显示的就是命令将算出的那一个（算式同源 `body/log.ts`）；
+ *  7 点／年龄／性别任一缺位即 `null`（不拿半份数据凑数）。 */
+export function previewBodyFatPct(calipers: { field: string; value: number }[], age: number | null, sex: string | null): number | null {
+  return age === null || !sex || calipers.length !== CALIPER_FIELDS.length
+    ? null
+    : jp7BodyFatPct(calipers.reduce((s, c) => s + c.value, 0), age, sex);
+}
+
 /* ── 1. 记围度预检确认页（body_measurements_wizard.html 复刻） ── */
 
 export interface MeasureWizardView {
@@ -84,11 +131,14 @@ export interface MeasureWizardView {
   filled: { camel: string; snake: string; label: string; value: number }[];
   filledCount: number;
   recent: { date: string; values: Record<string, number | null> } | null;
+  /** 复制区里那一段：全合规时＝可直接执行的写命令，缺项时＝缺项清单注释串（老正本 `:322-323`）。 */
   prompt: string;
+  /** 人眼核对的参数清单（老正本 `#promptBox` 的老 prose 形态；不参与复制）。 */
+  preview: string;
 }
 
-export function buildMeasureWizardPrompt(date: string, filled: MeasureWizardView['filled'], note: string | null): string {
-  if (filled.length === 0) return '// 请至少填 1 个围度（13 项分 3 组，至少 1 项）';
+/** 人眼核对清单（老正本 `body_measurements_wizard.html:334-340` 逐字结构，缺值写 `—`）。 */
+export function buildMeasureWizardPreview(date: string, filled: MeasureWizardView['filled'], note: string | null): string {
   const byGroup = (group: string[], label: string): string => {
     const items = group
       .map((c) => filled.find((f) => f.camel === c))
@@ -97,7 +147,20 @@ export function buildMeasureWizardPrompt(date: string, filled: MeasureWizardView
     return '  ' + label + ': ' + items.map((f) => f.label + ' ' + f.value + 'cm').join(', ');
   };
   const groups = [byGroup(MEASURE_UPPER, '上身'), byGroup(MEASURE_LOWER, '下身'), byGroup(MEASURE_ARM, '手臂')].filter(Boolean).join('\n');
-  return '请帮我记录围度到卡路里\n\n参数:\n- 日期:' + date + '\n- 围度(' + filled.length + ' 项 / 共 13):\n' + groups + (note ? '\n- 备注:' + note : '');
+  return '请帮我记录围度到卡路里\n\n参数:\n- 日期:' + date + '\n- 围度(' + filled.length + ' 项 / 共 13):\n' + groups + '\n- 备注:' + (note ?? '—');
+}
+
+/** 复制区那一段（#366）：填了至少 1 项 → **一条能直接执行的写命令**；一项没填 → 老正本的缺项清单句。
+ *  命令的 `--params` 键序＝页面字段序（日期 → 13 部位 → 备注），缺项**不写键**（不拿空值占位）。 */
+export function buildMeasureWizardPrompt(date: string, filled: MeasureWizardView['filled'], note: string | null): string {
+  if (filled.length === 0) return '// 请至少填 1 个围度（13 项分 3 组，至少 1 项）';
+  const params: Record<string, unknown> = { date };
+  for (const camel of MEASURE_ALL) {
+    const hit = filled.find((f) => f.camel === camel);
+    if (hit) params[camel] = hit.value;
+  }
+  if (note) params['note'] = note;
+  return commandLine(WIZARD_WRITE_KEYS.measure, params);
 }
 
 export function buildMeasureWizardView(db: DatabaseSync, raw: Record<string, unknown>): MeasureWizardView {
@@ -130,7 +193,11 @@ export function buildMeasureWizardView(db: DatabaseSync, raw: Record<string, unk
       recent = { date: String(r['date'] ?? ''), values };
     }
   } catch { recent = null; }
-  return { date, note, filled, filledCount: filled.length, recent, prompt: buildMeasureWizardPrompt(date, filled, note) };
+  return {
+    date, note, filled, filledCount: filled.length, recent,
+    prompt: buildMeasureWizardPrompt(date, filled, note),
+    preview: buildMeasureWizardPreview(date, filled, note),
+  };
 }
 
 /* ── 2. 记体脂预检确认页（body_composition_wizard.html 复刻） ── */
@@ -138,6 +205,8 @@ export function buildMeasureWizardView(db: DatabaseSync, raw: Record<string, unk
 export interface CompositionWizardView {
   date: string;
   source: string | null;
+  /** `--params` 里到底给没给 `source`（页面缺省按皮褶钳打开，但复制区仍要先请人确认来源）。 */
+  sourceGiven: boolean;
   sourceLabel: string | null;
   bodyFatPct: number | null;
   age: number | null;
@@ -145,27 +214,54 @@ export interface CompositionWizardView {
   note: string | null;
   calipers: { field: string; label: string; value: number }[];
   sum7: number | null;
+  /** 皮褶钳模式下的换算预演（7 点／年龄／性别全齐才算得出，否则 `null`）。 */
+  previewBodyFatPct: number | null;
   recent: { date: string; bodyFatPct: number | null; source: string | null } | null;
+  /** 复制区那一段：全合规时＝可直接执行的写命令，否则＝缺项清单注释串（老正本 `:487-524`）。 */
   prompt: string;
+  /** 人眼核对的参数清单（老正本 `#promptBox` 的老 prose 形态；不参与复制）。 */
+  preview: string;
 }
 
-export function buildCompositionWizardPrompt(v: {
+/** 缺项／越界清单（老正本 `body_composition_wizard.html:487-524` 四句：`:489` 缺来源、`:511` 缺项、
+ *  `:513` 越界、`:499` 体脂率区间），另补 `#358` 交棒的「缺年龄／性别先问」那一句。
+ *  **全合规时返回空串** —— 那时复制区放的是一条能直接跑的写命令。 */
+function compositionChecklist(v: {
+  source: string | null; sourceGiven: boolean; bodyFatPct: number | null;
+  age: number | null; sex: string | null;
+  calipers: { field: string; value: number }[];
+}): string {
+  if (!v.sourceGiven) {
+    return '// 请选来源（本页按默认「' + SOURCE_LABELS[CALIPER_SOURCE] + '」打开；可给：'
+      + SOURCE_CHOICES.map((s) => SOURCE_LABELS[s]).join('／') + '）';
+  }
+  const bad = v.calipers.filter((c) => !(c.value > CALIPER_INPUT.min && c.value < CALIPER_INPUT.max));
+  if (isCaliperMode(v.source)) {
+    const missing = CALIPER_FIELDS.filter((f) => !v.calipers.some((c) => c.field === f));
+    if (missing.length > 0) return '// 还差 ' + missing.length + ' 项皮褶:' + missing.join(', ');
+    if (bad.length > 0) return '// 皮褶值需在 ' + caliperRangeText() + ' 之间:' + bad.map((c) => c.field).join(', ') + ' 当前异常';
+    if (v.age === null || !v.sex) {
+      return '// 皮褶→体脂换算要用年龄和性别：先问用户补齐（上方第 1 步的 年龄／性别，不许猜默认值）';
+    }
+    return '';
+  }
+  if (v.bodyFatPct === null) return '// 请填体脂率（上方第 3 步；外部设备读数直传）';
+  if (!(v.bodyFatPct > BF_INPUT.min && v.bodyFatPct < BF_INPUT.max)) {
+    return '// 体脂率需在 ' + bfRangeText() + ' 之间，当前 ' + v.bodyFatPct + '% 异常';
+  }
+  if (bad.length > 0) return '// 皮褶值需在 ' + caliperRangeText() + ' 之间:' + bad.map((c) => c.field).join(', ') + ' 当前异常';
+  return '';
+}
+
+/** 人眼核对清单（老正本 `:518-523` 的老 prose 形态，缺值写 `—`）。 */
+export function buildCompositionWizardPreview(v: {
   date: string; source: string | null; bodyFatPct: number | null;
   age: number | null; sex: string | null; note: string | null;
   calipers: { field: string; label: string; value: number }[];
 }): string {
-  if (!v.source) return '// 请选来源（上方第 1 步：home_caliper/hospital/gym）';
-  if (v.bodyFatPct === null) return '// 请填体脂率（上方第 3 步；皮褶→体脂换算未移植，直传实测值）';
-  if (!(v.bodyFatPct > 0 && v.bodyFatPct < 60)) return '// 体脂率需在 (0, 60)% 之间，当前 ' + v.bodyFatPct + '% 异常';
-  const isCaliper = v.source === 'home_caliper';
+  const isCaliper = isCaliperMode(v.source);
   let textBody = '';
-  if (isCaliper) {
-    if (v.calipers.length < CALIPER_FIELDS.length) {
-      const missing = CALIPER_FIELDS.filter((f) => !v.calipers.some((c) => c.field === f));
-      return '// 还差 ' + missing.length + ' 项皮褶:' + missing.join(', ');
-    }
-    const bad = v.calipers.filter((c) => !(c.value > 0 && c.value < 100));
-    if (bad.length > 0) return '// 皮褶值需在 (0, 100) mm 之间:' + bad.map((c) => c.field).join(', ') + ' 当前异常';
+  if (isCaliper && v.calipers.length === CALIPER_FIELDS.length) {
     const by = (f: string): number => (v.calipers.find((c) => c.field === f) as { value: number }).value;
     const sum7 = CALIPER_FIELDS.reduce((s, f) => s + by(f), 0);
     textBody = '- 7 处皮褶(mm):胸 ' + by('caliper_chest_mm') + ' / 腹 ' + by('caliper_abdominal_mm') +
@@ -174,9 +270,30 @@ export function buildCompositionWizardPrompt(v: {
       ' / 腋中线 ' + by('caliper_midaxillary_mm') + '\n- 7 处总和:' + (Math.round(sum7 * 10) / 10) + ' mm\n';
   }
   return '请帮我记一条' + (isCaliper ? '体脂钳测' : '外部测量') + '结果到卡路里\n\n参数:\n- 日期:' + v.date +
-    '\n- 来源:' + v.source + (v.age !== null ? '\n- 年龄:' + v.age : '') +
-    (v.sex ? '\n- 性别:' + (GENDER_LABELS[v.sex] ?? v.sex) : '') + '\n' + textBody +
-    '- 体脂率:' + v.bodyFatPct + '%' + (v.note ? '\n- 备注:' + v.note : '');
+    '\n- 来源:' + (v.source ?? '—') + '\n- 年龄:' + (v.age === null ? '—' : v.age) +
+    '\n- 性别:' + (v.sex ? (GENDER_LABELS[v.sex] ?? v.sex) : '—') + '\n' + textBody +
+    '- 体脂率:' + (v.bodyFatPct === null ? '—' : v.bodyFatPct + '%') + '\n- 备注:' + (v.note ?? '—');
+}
+
+/** 复制区那一段（#366）：全合规 → **一条能直接执行的写命令**；否则 → 缺项／越界清单注释串。
+ *  皮褶钳模式下 `bodyFatPct` **不进命令**（裁定 1：由命令按 7 点换算，命令行直传路径另说）。 */
+export function buildCompositionWizardPrompt(v: {
+  date: string; source: string | null; sourceGiven: boolean; bodyFatPct: number | null;
+  age: number | null; sex: string | null; note: string | null;
+  calipers: { field: string; label: string; value: number }[];
+}): string {
+  const ask = compositionChecklist(v);
+  if (ask !== '') return ask;
+  const params: Record<string, unknown> = { date: v.date, source: v.source as string };
+  if (v.age !== null) params['age'] = v.age;
+  if (v.sex) params['sex'] = v.sex;
+  if (!isCaliperMode(v.source)) params['bodyFatPct'] = v.bodyFatPct as number;
+  for (const f of CALIPER_FIELDS) {
+    const hit = v.calipers.find((c) => c.field === f);
+    if (hit) params[f] = hit.value;
+  }
+  if (v.note) params['note'] = v.note;
+  return commandLine(WIZARD_WRITE_KEYS.composition, params);
 }
 
 export function buildCompositionWizardView(db: DatabaseSync, raw: Record<string, unknown>): CompositionWizardView {
@@ -222,9 +339,11 @@ export function buildCompositionWizardView(db: DatabaseSync, raw: Record<string,
     }
   } catch { recent = null; }
   const sourceLabel = source ? ((SOURCE_LABELS as Record<string, string>)[source] ?? source) : null;
-  const view: CompositionWizardView = {
-    date, source, sourceLabel, bodyFatPct, age, sex, note, calipers, sum7, recent, prompt: '',
+  const head = { date, source, sourceGiven: source !== null, bodyFatPct, age, sex, note, calipers };
+  return {
+    ...head, sourceLabel, sum7, recent,
+    previewBodyFatPct: isCaliperMode(source) ? previewBodyFatPct(calipers, age, sex) : null,
+    prompt: buildCompositionWizardPrompt(head),
+    preview: buildCompositionWizardPreview(head),
   };
-  view.prompt = buildCompositionWizardPrompt(view);
-  return view;
 }

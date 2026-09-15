@@ -149,10 +149,10 @@ export function writePlanAddMovement(params: Record<string, unknown>, db: Databa
   const daySessions = plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
   if (label !== undefined) {
     const hit = daySessions.filter((s) => s.session_label === label);
-    if (hit.length === 0) fail(4, '第' + week + '周周' + dow + '没有时段「' + label + '」');
+    if (hit.length === 0) fail(4, dayPhrase(week, dow) + '没有时段「' + label + '」');
     const s = hit[0] as (typeof daySessions)[number];
     updateSession(db, week, dow, s.session_index, { movements: [...(s.movements ?? []), movement] });
-    const summary = '已在第' + week + '周周' + dow + '「' + label + '」加动作「' + String(movement.name) + '」';
+    const summary = '已在' + dayPhrase(week, dow) + '「' + label + '」加动作「' + String(movement.name) + '」';
     return out(R('加训练动作', 'update', summary, '加训练动作', 'workout_plans（时段追加动作）', {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'dayOfWeek', 'sessionLabel', 'movement']),
       items: [{ status: '成功', reason: '', detail: summary }],
@@ -164,9 +164,9 @@ export function writePlanAddMovement(params: Record<string, unknown>, db: Databa
     const s = daySessions[0] as (typeof daySessions)[number];
     updateSession(db, week, dow, s.session_index, { movements: [...(s.movements ?? []), movement] });
   } else {
-    fail(2, '第' + week + '周周' + dow + '有 ' + daySessions.length + ' 个时段，给 sessionLabel 指定加到哪段');
+    fail(2, dayPhrase(week, dow) + '有 ' + daySessions.length + ' 个时段，给 sessionLabel 指定加到哪段');
   }
-  const summary = '已在第' + week + '周周' + dow + '加动作「' + String(movement.name) + '」';
+  const summary = '已在' + dayPhrase(week, dow) + '加动作「' + String(movement.name) + '」';
   return out(R('加训练动作', daySessions.length === 0 ? 'create' : 'update', summary, '加训练动作', 'workout_plans（加动作）', {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'dayOfWeek', 'movement']),
     items: [{ status: '成功', reason: '', detail: summary }],
@@ -176,16 +176,63 @@ export function writePlanAddMovement(params: Record<string, unknown>, db: Databa
 /** 过程页预览（读，不写库）：与上面写实现**同一套定位规则**（同文件，防两处推演走散）。
  * 返回 { op, title, before, after, note }，由 `plan.ts` 的 `viewPlanWritePreview` 经
  * `render/html.ts` 的 `renderPlanWritePreviewHtml` 出页。定位歧义时与写实现报同样的错。 */
+/** 星期名（`day_of_week` 1–7）：页面与报错话术共用的一处。 */
+const DOW_CN = ['', '一', '二', '三', '四', '五', '六', '日'];
+
+/** 「第 1 周 周三」这种写法：原来是 `'第' + wn + '周周' + dn` → 印出来是 `第1周周3`——
+ *  连写两个「周」、星期还是阿拉伯数字，读起来像错字（负责人 2026-09-15 第 4 条：文字不能出现不合理）。 */
+export function dayPhrase(wn: number, dn: number): string {
+  return '第 ' + wn + ' 周 周' + (DOW_CN[dn] ?? String(dn));
+}
+
+/** 写前预览里的**一行**：字段就是表里的列，不再把四件事挤成一个字符串。
+ *  原来那一行是 `第1周周1·上肢（2动作）`／`第1周周2·休息日（0动作·休）`——拿 `·` 与括号顶替表格设计
+ *  （负责人 2026-09-15 第 5 条），页上读起来是一串密码。现在拆成 周次｜星期｜训练｜动作数 四列。
+ *  `week`／`dow` 为 `null` ＝ 这一行不是「哪一场」，而是一句概述或提示（`label` 就是那句话）。 */
+export interface PreviewLine {
+  readonly week: number | null;
+  readonly dow: number | null;
+  readonly label: string;
+  readonly moves: number | null;
+  readonly rest: boolean;
+  /** 改后栏的「这一行怎么变」（空串＝没变）。原来是把变更句拼在场次行尾巴上。 */
+  readonly change: string;
+}
+
 export interface WritePreview {
   op: string;
   title: string;
-  before: string[];
-  after: string[];
+  before: PreviewLine[];
+  after: PreviewLine[];
   note: string;
 }
 
-function sessText(wn: number, dow: number, label: string, moveCount: number, rest: boolean): string {
-  return '第' + wn + '周周' + dow + '·' + (label || (rest ? '休息' : '训练')) + '（' + moveCount + '动作' + (rest ? '·休' : '') + '）';
+/** 场次行（改前／改后两栏共用）。 */
+function sessLine(wn: number, dow: number, label: string, moveCount: number | null, rest: boolean): PreviewLine {
+  return { week: wn, dow, label: label === '' ? (rest ? '休息日' : '训练') : label, moves: moveCount, rest, change: '' };
+}
+
+/** 概述行／提示行：没有周次与星期，整句写进 `label`（其余列在页上印「—」）。 */
+function noteLine(text: string): PreviewLine {
+  return { week: null, dow: null, label: text, moves: null, rest: false, change: '' };
+}
+
+/** 场次行 ＋ 一句变更说明（改后栏用）。 */
+function withChange(line: PreviewLine, change: string): PreviewLine {
+  return { ...line, change };
+}
+
+/** 改某一场时各字段的界面写法。原来是把参数名与 JSON 直接印在页上（`rest → true`／`newLabel → "上肢"`），
+ *  那既是英文裸词也是一串机器话。 */
+const CHANGE_LABEL: Record<string, string> = {
+  newLabel: '时段名', timeStart: '开始时间', timeEnd: '结束时间', rest: '作息', movements: '动作清单',
+};
+
+function changeText(key: string, value: unknown): string {
+  const name = CHANGE_LABEL[key] ?? key;
+  if (typeof value === 'boolean') return name + (value ? '设为休息' : '取消休息');
+  if (Array.isArray(value)) return name + '整段替换（' + value.length + ' 条）';
+  return name + '改成「' + String(value) + '」';
 }
 
 export function previewCopy(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -197,10 +244,10 @@ export function previewCopy(params: Record<string, unknown>, db: DatabaseSync): 
     if (src.length === 0) fail(4, '第' + from + '周没有训练场次可复制');
     const maxWn = plan.sessions.reduce((n, s) => Math.max(n, s.week_number), 0);
     const to = optInt(params, 'toWeek') === undefined ? maxWn + 1 : needWeek(optInt(params, 'toWeek'), 'toWeek');
-    const before = src.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+    const before = src.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
     return {
       op: 'copy', title: '复制第' + from + '周 → 第' + to + '周', before,
-      after: before.map((b) => b.replace('第' + from + '周', '第' + to + '周')),
+      after: before.map((b) => ({ ...b, week: to, change: '第 ' + to + ' 周' })),
       note: '确认后复制 ' + src.length + ' 场；目标周已有内容将被覆盖',
     };
   }
@@ -209,8 +256,8 @@ export function previewCopy(params: Record<string, unknown>, db: DatabaseSync): 
   if (n === 0) fail(4, '无训练计划可复制（先定训练计划）');
   return {
     op: 'copy', title: '复制整份计划为「' + title + '」',
-    before: ['「' + String(plan.config?.title ?? '未命名') + '」共 ' + n + ' 场'],
-    after: ['「' + title + '」共 ' + n + ' 场（整份替换当前计划）'],
+    before: [noteLine('「' + String(plan.config?.title ?? '未命名') + '」共 ' + n + ' 场')],
+    after: [noteLine('「' + title + '」共 ' + n + ' 场（整份替换当前计划）')],
     note: '确认后整份替换，旧计划不再保留',
   };
 }
@@ -219,13 +266,15 @@ export function previewSetWeek(params: Record<string, unknown>, db: DatabaseSync
   const week = needWeek(optInt(params, 'week'), 'week');
   const plan = getPlan(db);
   const cur = plan.sessions.filter((s) => s.week_number === week);
-  const before = cur.length === 0 ? ['第' + week + '周目前是空的'] :
-    cur.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const before = cur.length === 0 ? [noteLine('第 ' + week + ' 周目前是空的')] :
+    cur.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   const daysRaw = params['days'];
   const after = Array.isArray(daysRaw) ? (daysRaw as unknown[]).map((d) => {
     const o = (typeof d === 'object' && d !== null && !Array.isArray(d) ? d : {}) as Record<string, unknown>;
-    return '第' + week + '周周' + String(o.dayOfWeek ?? '?') + '·' + String(o.sessionLabel ?? (o.rest ? '休息' : '训练'));
-  }) : ['（days 未给出：页上补填后再确认）'];
+    const dn = typeof o.dayOfWeek === 'number' ? o.dayOfWeek : null;
+    const rest = o.rest === true;
+    return sessLine(week, dn ?? 0, String(o.sessionLabel ?? (rest ? '休息' : '训练')), null, rest);
+  }) : [noteLine('这一页还没填要定哪几天，补上后再确认')];
   return { op: 'set-week', title: '定第' + week + '周计划', before, after, note: '确认后该周先清后写' };
 }
 
@@ -236,18 +285,18 @@ export function previewAddMovement(params: Record<string, unknown>, db: Database
   const label = optStr(params, 'sessionLabel');
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
-  const before = daySessions.length === 0 ? ['第' + week + '周周' + dow + '目前是空的'] :
-    daySessions.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const before = daySessions.length === 0 ? [noteLine(dayPhrase(week, dow) + ' 目前是空的')] :
+    daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   if (label !== undefined && !daySessions.some((s) => s.session_label === label)) {
-    fail(4, '第' + week + '周周' + dow + '没有时段「' + label + '」');
+    fail(4, dayPhrase(week, dow) + '没有时段「' + label + '」');
   }
   if (label === undefined && daySessions.length > 1) {
-    fail(2, '第' + week + '周周' + dow + '有 ' + daySessions.length + ' 个时段，给 sessionLabel 指定加到哪段');
+    fail(2, dayPhrase(week, dow) + '有 ' + daySessions.length + ' 个时段，给 sessionLabel 指定加到哪段');
   }
   const target = label !== undefined ? '「' + label + '」' : (daySessions.length === 0 ? '新时段' : '该时段');
   return {
-    op: 'add-movement', title: '第' + week + '周周' + dow + target + '加动作「' + String(movement.name) + '」',
-    before, after: [...before, '＋ ' + String(movement.name)],
+    op: 'add-movement', title: dayPhrase(week, dow) + target + '加动作「' + String(movement.name) + '」',
+    before, after: [...before, sessLine(week, dow, String(movement.name), 1, false)],
     note: '确认后写入计划库',
   };
 }
@@ -271,12 +320,12 @@ export function previewSetRest(params: Record<string, unknown>, db: DatabaseSync
   const dn = needDow(dow, 'dayOfWeek（或 date）');
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  const before = daySessions.length === 0 ? ['第' + wn + '周周' + dn + '目前是空的'] :
-    daySessions.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
-  const after = daySessions.length === 0 ? ['新增休息标记（' + (rest ? '休' : '训') + '）'] :
-    daySessions.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, rest));
+  const before = daySessions.length === 0 ? [noteLine(dayPhrase(wn, dn) + ' 目前是空的')] :
+    daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const after = daySessions.length === 0 ? [noteLine('新增休息标记（' + (rest ? '休' : '训') + '）')] :
+    daySessions.map((s) => withChange(sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, rest), rest ? '设为休息日' : '取消休息日'));
   return {
-    op: 'set-rest', title: (rest ? '定' : '取消') + '第' + wn + '周周' + dn + '休息标记',
+    op: 'set-rest', title: (rest ? '定' : '取消') + dayPhrase(wn, dn) + '休息标记',
     before, after, note: '确认后写入计划库',
   };
 }
@@ -310,8 +359,8 @@ export function previewUpdate(params: Record<string, unknown>, db: DatabaseSync)
     title: plan.config.title, version: plan.config.version,
     description: plan.config.description, start_date: plan.config.start_date,
   };
-  const before = keys.map((k) => String(CONFIG_LABEL[k]) + '：' + String(cur[k] ?? '（空）'));
-  const after = keys.map((k) => String(CONFIG_LABEL[k]) + '：' + String(optStr(params, k)));
+  const before = keys.map((k) => noteLine(String(CONFIG_LABEL[k]) + '：' + String(cur[k] ?? '（空）')));
+  const after = keys.map((k) => noteLine(String(CONFIG_LABEL[k]) + '：' + String(optStr(params, k))));
   return { op: 'update', title: '改训练计划配置', before, after, note: '确认后写入计划库' };
 }
 
@@ -319,14 +368,16 @@ export function previewUpdateDay(params: Record<string, unknown>, db: DatabaseSy
   const { wn, dn } = resolveDayTarget(params, db);
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可改');
-  const before = daySessions.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可改');
+  const before = daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   const changes: string[] = [];
   for (const k of ['newLabel', 'timeStart', 'timeEnd', 'rest', 'movements']) {
-    if (params[k] !== undefined) changes.push(k + ' → ' + JSON.stringify(params[k]));
+    if (params[k] !== undefined) changes.push(changeText(k, params[k]));
   }
-  const after = changes.length === 0 ? ['（改项未给出：页上补填后再确认）'] : before.map((b) => b + ' 改：' + changes.join('、'));
-  return { op: 'update-day', title: '改第' + wn + '周周' + dn + '训练', before, after, note: '确认后写入计划库' };
+  const after = changes.length === 0
+    ? [noteLine('这一页还没填要改什么，补上后再确认')]
+    : before.map((b) => withChange(b, changes.join('；')));
+  return { op: 'update-day', title: '改' + dayPhrase(wn, dn) + '训练', before, after, note: '确认后写入计划库' };
 }
 
 export function previewDeleteDay(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -334,11 +385,11 @@ export function previewDeleteDay(params: Record<string, unknown>, db: DatabaseSy
   const si = optInt(params, 'sessionIndex');
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可删');
-  const before = daySessions.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
-  const after = si === undefined ? ['第' + wn + '周周' + dn + '整天删除（硬删除，不可恢复）'] :
-    ['第' + wn + '周周' + dn + '第' + si + '段删除（硬删除，不可恢复），其余保留'];
-  return { op: 'delete-day', title: '删第' + wn + '周周' + dn + '训练', before, after, note: '快照如上；确认后删除，不可恢复' };
+  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可删');
+  const before = daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const after = si === undefined ? [noteLine(dayPhrase(wn, dn) + ' 整天删除（硬删除，不可恢复）')] :
+    [noteLine(dayPhrase(wn, dn) + ' 第' + si + ' 段删除（硬删除，不可恢复），其余保留')];
+  return { op: 'delete-day', title: '删' + dayPhrase(wn, dn) + '训练', before, after, note: '快照如上；确认后删除，不可恢复' };
 }
 
 export function previewUpdateMovement(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -349,12 +400,12 @@ export function previewUpdateMovement(params: Record<string, unknown>, db: Datab
   const hits = plan.sessions.filter((s) => (week === undefined || s.week_number === week) &&
     (s.movements ?? []).some((m) => m.name === oldName));
   if (hits.length === 0) fail(4, '没有找到动作「' + String(oldName) + '」');
-  const before = hits.map((s) => sessText(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
+  const before = hits.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   const newName = typeof params['newMovement'] === 'object' && params['newMovement'] !== null
-    ? String(((params['newMovement'] as Record<string, unknown>)['name'] ?? '（新动作未具名）')) : '（新动作为给出：页上补填后再确认）';
+    ? String(((params['newMovement'] as Record<string, unknown>)['name'] ?? '（新动作未具名）')) : '（还没给新动作的名字）';
   return {
     op: 'update-movement', title: '把「' + String(oldName) + '」换成「' + newName + '」（' + hits.length + ' 段）',
-    before, after: before.map((b) => b + ' 换：' + newName), note: '确认后写入计划库',
+    before, after: before.map((b) => withChange(b, '换成「' + newName + '」')), note: '确认后写入计划库',
   };
 }
 
@@ -364,8 +415,8 @@ export function previewDelete(params: Record<string, unknown>, db: DatabaseSync)
   if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划可撤销');
   return {
     op: 'delete', title: '撤销整份训练计划',
-    before: ['「' + String(plan.config?.title ?? '未命名') + '」共 ' + plan.sessions.length + ' 场'],
-    after: ['配置与全部训练场次删除（硬删除，不可恢复）'],
+    before: [noteLine('「' + String(plan.config?.title ?? '未命名') + '」共 ' + plan.sessions.length + ' 场')],
+    after: [noteLine('配置与全部训练场次删除（硬删除，不可恢复）')],
     note: '确认后删除；删完需重定计划',
   };
 }
@@ -396,8 +447,8 @@ export function writePlanSetRest(params: Record<string, unknown>, db: DatabaseSy
     for (const s of daySessions) updateSession(db, wn, dn, s.session_index, { isRestDay: rest });
   }
   const summary = rest
-    ? '已定第' + wn + '周周' + dn + '为休息日（' + daySessions.length + ' 段）'
-    : '已取消第' + wn + '周周' + dn + '的休息标记（' + daySessions.length + ' 段）';
+    ? '已定' + dayPhrase(wn, dn) + '为休息日（' + daySessions.length + ' 段）'
+    : '已取消' + dayPhrase(wn, dn) + '的休息标记（' + daySessions.length + ' 段）';
   return out(R('定休息日', daySessions.length === 0 ? 'create' : 'update', summary, '定休息日', 'workout_plans（休息标记）', {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'rest']),
     items: [{ status: '成功', reason: '', detail: summary }],
@@ -459,17 +510,17 @@ export function writePlanUpdateDay(params: Record<string, unknown>, db: Database
   const { wn, dn } = resolveDayTarget(params, db);
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可改');
+  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可改');
   const si = optInt(params, 'sessionIndex');
   let target = daySessions;
   if (si !== undefined) {
     target = daySessions.filter((s) => s.session_index === si);
-    if (target.length === 0) fail(4, '第' + wn + '周周' + dn + '没有第' + si + '段');
+    if (target.length === 0) fail(4, dayPhrase(wn, dn) + '没有第' + si + '段');
   } else if (daySessions.length > 1 && optStr(params, 'sessionLabel') === undefined) {
-    fail(2, '第' + wn + '周周' + dn + '有 ' + daySessions.length + ' 段，给 sessionIndex 或 sessionLabel 指定改哪段');
+    fail(2, dayPhrase(wn, dn) + '有 ' + daySessions.length + ' 段，给 sessionIndex 或 sessionLabel 指定改哪段');
   } else if (optStr(params, 'sessionLabel') !== undefined) {
     target = daySessions.filter((s) => s.session_label === optStr(params, 'sessionLabel'));
-    if (target.length === 0) fail(4, '第' + wn + '周周' + dn + '没有时段「' + String(optStr(params, 'sessionLabel')) + '」');
+    if (target.length === 0) fail(4, dayPhrase(wn, dn) + '没有时段「' + String(optStr(params, 'sessionLabel')) + '」');
   }
   const patch: { sessionLabel?: string; timeStart?: string | null; timeEnd?: string | null; isRestDay?: boolean; movements?: PlanMovement[] } = {};
   const label = optStr(params, 'sessionLabel');
@@ -494,7 +545,7 @@ export function writePlanUpdateDay(params: Record<string, unknown>, db: Database
     if (updateSession(db, wn, dn, s.session_index, patch)) n += 1;
   }
   if (n === 0) fail(4, '改某天训练未命中行');
-  const summary = '已改第' + wn + '周周' + dn + '训练（' + n + ' 段）';
+  const summary = '已改' + dayPhrase(wn, dn) + '训练（' + n + ' 段）';
   return out(R('改某天训练', 'update', summary, '改某天训练', 'workout_plans（某天时段）', {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'sessionIndex', 'sessionLabel', 'newLabel', 'timeStart', 'timeEnd', 'rest', 'movements']),
     items: [{ status: '成功', reason: '', detail: summary }],
@@ -507,20 +558,20 @@ export function writePlanDeleteDay(params: Record<string, unknown>, db: Database
   const si = optInt(params, 'sessionIndex');
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, '第' + wn + '周周' + dn + '没有训练可删');
+  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可删');
   const snapshot = daySessions.map((s) => s.session_label || '训练').join('、');
   if (si !== undefined) {
     const hit = daySessions.filter((s) => s.session_index === si);
-    if (hit.length === 0) fail(4, '第' + wn + '周周' + dn + '没有第' + si + '段');
+    if (hit.length === 0) fail(4, dayPhrase(wn, dn) + '没有第' + si + '段');
     deleteSession(db, wn, dn, si);
-    const summary = '已删第' + wn + '周周' + dn + '第' + si + '段（硬删除，不可恢复）';
+    const summary = '已删' + dayPhrase(wn, dn) + '第' + si + '段（硬删除，不可恢复）';
     return out(R('删某天训练', 'delete', summary, '删某天训练', 'workout_plans（删时段）', {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'sessionIndex']),
       items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: '快照：' + snapshot + ' → ' + summary }],
     }));
   }
   const r = deleteDay(db, wn, dn);
-  const summary = '已删第' + wn + '周周' + dn + '训练（' + r.deletedSessions + ' 段，硬删除，不可恢复）';
+  const summary = '已删' + dayPhrase(wn, dn) + '训练（' + r.deletedSessions + ' 段，硬删除，不可恢复）';
   return out(R('删某天训练', 'delete', summary, '删某天训练', 'workout_plans（删整天）', {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek']),
     items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: '快照：' + snapshot + ' → ' + summary }],
@@ -544,7 +595,7 @@ export function writePlanUpdateMovement(params: Record<string, unknown>, db: Dat
     const next = moves.map((m) => (m.name === oldName ? { ...m, ...newMove } : m));
     if (updateSession(db, s.week_number, s.day_of_week, s.session_index, { movements: next })) {
       n += 1;
-      where.push('第' + s.week_number + '周周' + s.day_of_week);
+      where.push(dayPhrase(s.week_number, s.day_of_week));
     }
   }
   if (n === 0) fail(4, '没有找到动作「' + String(oldName) + '」' + (week === undefined ? '' : '（第' + week + '周）'));

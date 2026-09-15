@@ -144,7 +144,9 @@ test('#108 饮食总览＋餐别分布：区块对照（KPI＋双图＋按日表
     const out = dispatch('calorie.view.diet', { start: '2026-09-05', end: '2026-09-07', date: '2026-09-07' }, db);
     assert.equal(out.data.metrics.totalCalories, 2689);
     assertDoc(out.html, 'view.diet');
-    for (const needle of ['饮食总览 2026-09-05 ~ 2026-09-07', '2689', '餐别分布', '加餐=下午茶+夜宵', '按日汇总', '2026-09-06', '窗口明细', '米饭', '复制数据']) {
+    // #496：口径行原写「窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵」（常量名上屏），现换成
+    // 「加餐时段：下午茶、夜宵」；明细折叠区的标题原写「窗口明细」，现写「全部记录」。
+    for (const needle of ['饮食总览 2026-09-05 ~ 2026-09-07', '2689', '餐别分布', '加餐时段：下午茶、夜宵', '按日汇总', '2026-09-06', '全部记录', '米饭', '复制数据']) {
       assert.ok(out.html.includes(needle), 'view.diet 缺：' + needle);
     }
     // 复制文本为 stat 投影（含 totalCalories），动作 id 走冻结缺省
@@ -161,7 +163,8 @@ test('#108 今日饮食：明细表＋配比环＋餐别图', () => {
     const out = dispatch('calorie.today', { date: '2026-09-07' }, db);
     assert.equal(out.data.total, 4);
     assertDoc(out.html, 'today');
-    for (const needle of ['今日饮食 2026-09-07', '今日明细', '鸡胸', '营养配比', '餐别热量占比']) {
+    // #496：那张图画的是四餐的卡数、也没有百分比，标题「餐别热量占比」名实不符 ⇒ 改「各餐热量（卡）」。
+    for (const needle of ['今日饮食 2026-09-07', '今日明细', '鸡胸', '营养配比', '各餐热量（卡）']) {
       assert.ok(out.html.includes(needle), 'today 缺：' + needle);
     }
   } finally {
@@ -207,12 +210,14 @@ test('#108 查食品／食品库：参数表单＋结果表＋复制', () => {
   try {
     const s = dispatch('calorie.view.search', { keyword: '鸡胸' }, db);
     assertDoc(s.html, 'search');
-    for (const needle of ['查食品 鸡胸', '关键词', '鸡胸肉', '165', '复制数据']) {
+    // #496：「查食品 鸡胸」这类内部计数说法改成「搜索：鸡胸 · 找到 1 条」；食品库页的分类输入框
+    // 改成按名称／品牌搜（本页找的是名称），页头改写「全部食品 · 库内 N 条」。
+    for (const needle of ['搜索：鸡胸', '关键词', '鸡胸肉', '165', '复制数据']) {
       assert.ok(s.html.includes(needle), 'search 缺：' + needle);
     }
     const lib = dispatch('calorie.view.library', {}, db);
     assertDoc(lib.html, 'library');
-    for (const needle of ['食品库', '米饭', '分类', '复制数据']) {
+    for (const needle of ['食品库', '米饭', '全部食品', '复制数据']) {
       assert.ok(lib.html.includes(needle), 'library 缺：' + needle);
     }
   } finally {
@@ -241,7 +246,8 @@ test('#108 去重报告：KPI＋重复组表＋处理建议（种子含 1 组重
     const out = dispatch('calorie.view.dedupe', {}, db);
     assert.equal(out.data.metrics.groupCount, 1);
     assertDoc(out.html, 'dedupe');
-    for (const needle of ['去重报告', '重复组', '重复组列表', '米饭', '处理建议', '下架']) {
+    // #496：页名原写「去重报告」（内部说法），现写「📦 食品库去重」。
+    for (const needle of ['食品库去重', '重复组', '重复组列表', '米饭', '处理建议', '下架']) {
       assert.ok(out.html.includes(needle), 'dedupe 缺：' + needle);
     }
   } finally {

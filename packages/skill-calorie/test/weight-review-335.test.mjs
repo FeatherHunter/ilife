@@ -218,8 +218,18 @@ test('#482 文本审查：6 页旧句归零、页脚同一句式、结论句不�
   assert.ok(!pages[3][1].includes('按月平均体重（单位 kg，共 '), '表注仍在复述月份数');
   assert.ok(pages[3][1].includes('按月平均体重（单位 kg）'), '表注被误删');
   assert.ok(pages[3][1].includes('>月份数<'), '月份数卡被误删');
-  /* 缺陷 6：期间变化卡副说明去缩写「首末」（首末对只在值槽那一页出现，写作「开头 … → 最后 …」）。 */
-  assert.ok(pages[3][1].includes('开头 '), '期间变化副说明未去缩写');
+  /* 缺陷 6（#482）＋ #504 同步收紧：期间变化副说明去缩写「首末」，首末对落成卡下那条**形状**
+   * （`wui-pair`：两端各一枚加粗值、中缝一个箭头）。
+   * #504 之后这两条事实（首末对 ＋ 最高最低）已从**卡片的 `detail` 槽**撤到卡下的
+   * `wui-strip wui-strip-v`（那一槽吃纯文本，形状落不进去——见本件末尾的槽型判据）。 */
+  assert.ok(pages[3][1].includes('开头与最后'), '期间事实条缺「开头与最后」这一行');
+  /* 富种子「今年」页（本件 `seedRich`：120 天 75.5 → 69.6）的首末两端 75.5 → 69.6，
+   * 落成 pairStrip 的形状（两端各一枚加粗值，中缝一个箭头）。 */
+  assert.ok(pages[3][1].includes('<span class="wui-pair-v">75.5 kg</span><span class="wui-pair-mid">→</span><span class="wui-pair-v">69.6 kg</span>'),
+    '首末对未落成 pairStrip（两端加粗值 ＋ 箭头）');
+  assert.ok(!pages[3][1].includes('开头 75.5 kg → 最后 69.6 kg'), '首末对仍串在卡副说明里');
+  assert.ok(pages[3][1].includes('>最高<') && pages[3][1].includes('>最低<'), '最高／最低未落成事实条的两行');
+  assert.ok(!/最高 [\d.]+ kg · 最低/.test(pages[3][1]), '最高／最低仍用 `·` 串在卡副说明里');
   /* 缺陷 8：对照段日期从 KPI 卡挪到卡下一行小字（口径行），卡内不再塞注释句。
    * 富种子各页里只有「本周」这一页的对照段有记录（其余各页的对照段一条记录都没有）。 */
   assert.ok(pages[0][1].includes('对照段：'), '对照段未落到卡下那行');
@@ -234,6 +244,70 @@ test('#482 文本审查：6 页旧句归零、页脚同一句式、结论句不�
   /* 一页只留一套方向词：里程碑页只剩「已减／回涨／持平」，不再混用「减重」。 */
   assert.equal((pages[5][1].match(/>减重</g) || []).length, 0, '里程碑页徽章仍混用「减重」');
   assert.ok(pages[5][1].includes('>已减<'), '里程碑页缺「已减」方向徽章');
+  db.close();
+});
+
+test('#504 形状化与手机端：正文零 `·`／`；`、形状上屏、卡槽不吃 HTML、820 段随页到场', () => {
+  const db = tmpDb();
+  seedRich(db);
+  const pages = [
+    ['本周', viewWeightReview({ window: '本周', today: '2026-09-06' }, db).html],
+    ['本月', viewWeightReview({ window: '本月', today: T }, db).html],
+    ['最近 90 天', viewWeightReview({ window: '90d', today: T }, db).html],
+    ['今年', viewWeightReview({ window: '今年', today: T }, db).html],
+    ['自定义时间', viewWeightReview({ window: 'custom', start: '2026-09-01', end: '2026-09-07', today: T }, db).html],
+    ['看里程碑回溯', viewWeightReview({ mode: 'milestones', today: T }, db).html],
+  ];
+  /* 正文里零 `·`／`；`（口径 §三 第 3 条）：逐页数**可见面**（剔 style／script／整条属性／标签）。
+   * 允许项只有一处——`<title>卡路里·体重</title>`（全仓 58 页逐字同一处品牌名，不是正文串），
+   * 故这里先把它剔掉再数；页脚口径行的 `｜`、日期区间的 `~` 不在本判据内。 */
+  const visibleOf = (html) => String(html)
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title>/g, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/g, ' ')
+    .replace(/<script\b[\s\S]*?<\/script>/g, ' ')
+    .replace(/[a-zA-Z][a-zA-Z0-9:._-]*\s*=\s*"[^"]*"|[a-zA-Z][a-zA-Z0-9:._-]*\s*=\s*'[^']*'|<[^>]*>/g, ' ');
+  for (const [who, html] of pages) {
+    const vis = visibleOf(html);
+    assert.equal(vis.split('·').length - 1, 0, who + ' 正文仍有 `·`');
+    assert.equal(vis.split('；').length - 1, 0, who + ' 正文仍有 `；`');
+    /* 形状的上屏是**真 DOM**、不是被转义的字符串：转义后的标签会以 `&lt;div class=&quot;wui` 出现在页面上。 */
+    assert.equal(html.includes('&lt;div class=&quot;wui'), false, who + ' 形状被当成字面文本印上屏');
+  }
+  /* 卡片槽（label／value／unit／detail）由公共层 `esc`，形状进不去 ⇒ 卡槽里不许出现标签字面量。
+   * 这条判据把「形状必须走 parts／contentHtml，不许塞进卡槽」钉住（#504 实测踩过：整串 `<span…`
+   * 被印在页面上、页还照样出）。 */
+  for (const [who, html] of pages) {
+    for (const m of html.matchAll(/ilife-block-kpi-card-(?:detail|label|value|unit)">([^<]*)</g)) {
+      assert.ok(!m[1].includes('<'), who + ' 卡槽里塞了 HTML：' + m[1].slice(0, 60));
+    }
+  }
+  /* 期间事实条：形状真到场（栏 ＋ 行），且单点／空窗那两档不出这条（那两件事同屏已各有一处说清）。 */
+  assert.ok(pages[1][1].includes('class="wui-strip wui-strip-v"'), '期间事实条未上屏');
+  const thin = tmpDb();
+  seedThin(thin);
+  const single = viewWeightReview({ window: '本周', today: T }, thin).html;
+  assert.equal(single.includes('开头与最后'), false, '单点页不该出首末对（一条记录没有两端）');
+  thin.close();
+  /* 手机端（负责人第 1／2 条）：断点 820 那段随页到场——`weightUiCss()` 恒为正文第一项，
+   * 两族各放一次（本件三个形态各放一次）。 */
+  for (const [who, html] of pages) {
+    assert.ok(html.includes('@media (max-width:820px)'), who + ' 页内没有 820 段');
+    assert.ok(html.includes('-webkit-tap-highlight-color:transparent'), who + ' 触摸面没到场');
+    assert.ok(html.includes('touch-action:manipulation'), who + ' 触摸面没到场');
+  }
+  /* 里程碑表：三个 `·` 拆成三槽（日期 `left`／档位 `main`／当天体重 `right`），三件事一件不少。
+   * 富种子（本件 `seedRich`）恰达成减重 5 kg：首达 2026-08-18、当天 70.5 kg。 */
+  assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-left">2026-08-18</span>'),
+    '里程碑行日期未落 left 槽');
+  assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-main">减重 5 kg</span>'),
+    '里程碑行档位未落 main 槽');
+  assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-right">当天 70.5 kg</span>'),
+    '里程碑行当天体重未落 right 槽');
+  assert.ok(!pages[5][1].includes('2026-08-18 · 减重 5 kg'), '里程碑行仍是一句话三个 `·`');
+  /* 行槽也是纯文本槽（同 `renderListRows` 的三个槽）⇒ 槽值里不许出现标签（形状进不去就别硬塞）。 */
+  for (const m of pages[5][1].matchAll(/ilife-block-list-rows-(?:left|main|right)">([^<]*)</g)) {
+    assert.ok(!m[1].includes('<'), '行槽里塞了 HTML：' + m[1].slice(0, 60));
+  }
   db.close();
 });
 

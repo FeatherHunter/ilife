@@ -102,8 +102,12 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
     const last = rows[rows.length - 1] as Row;
     return { label, range: first[0] + ' ~ ' + last[0], count: rows.length, avg: round2(mean(kgs)), startKg: first[1], endKg: last[1], netChange: round2(last[1] - first[1]), volatility: round2(Math.max(...kgs) - Math.min(...kgs)) };
   };
-  const a = segOf(lowS, lowE, lowM + ' · 运动最少');
-  const b = segOf(highS, highE, highM + ' · 运动最多');
+  /* #503 形状化（口径 §一「正文里零 `·`／`；`」）：段标签原来写 `2026-09(运动最多)`，
+   * #481 整改曾把半角括号换成 ` · `；本轮连 `·` 一起去掉——月与「运动最多／最少」本来就是
+   * **两个不同槽**（月份是刻度、多少是判语），页上由 `pairStrip()`／`factStrip()` 分槽呈现，
+   * 故数据层只给「月 ＋ 空格 ＋ 判语」这一种可读形态，不再自带分隔符。 */
+  const a = segOf(lowS, lowE, lowM + ' 运动最少');
+  const b = segOf(highS, highE, highM + ' 运动最多');
   if (!a || !b) throw new FetchError('运动最多／最少的那两个月里没有体重记录');
   const calLow = monthTotal(db, lowS, lowE, 'food_log', 'calories');
   const calHigh = monthTotal(db, highS, highE, 'food_log', 'calories');

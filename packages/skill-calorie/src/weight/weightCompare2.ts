@@ -9,7 +9,9 @@ const round2 = (n: number): number => Math.round(n * 100) / 100;
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 
 export type Row = [string, number];
-export interface Seg { label: string; range: string; count: number; avg: number | null; startKg: number | null; endKg: number | null; netChange: number | null; volatility: number | null }
+/** 一段的读数。`spanDays` 只有平台期那一段给：`range` 串里读不出「持续几天」（#503），
+ *  页上由区间块的说明呈现；`ScenarioResult.segA` 是 `ScenarioResult` 的一部分，两处同形。 */
+export interface Seg { label: string; range: string; count: number; avg: number | null; startKg: number | null; endKg: number | null; netChange: number | null; volatility: number | null; spanDays?: number }
 export interface Compare { deltaKg: number | null; direction: string; rateDiffG: number | null; speed: string }
 export interface ExtraRow { label: string; value: string; spark?: Array<{ d: string; kg: number }> }
 export interface ScenarioResult { segA: Seg; segB: Seg; compare: Compare; extraRows?: ExtraRow[]; tolerance?: { hit: boolean; target: string; hitDate?: string; offsetDays?: number; note?: string }; sampleWarning?: string }
@@ -81,8 +83,11 @@ export function scenarioB8(db: DatabaseSync): ScenarioResult {
   }
   return {
     /* #481 整改缺陷 12：段标签 `平台期首日` 是行话（「首日」是文牍词）⇒ `平台期第一天`。
-     * 这正是页脚那一段的标签，与「当前」成对读。 */
-    segA: { label: '平台期第一天', range: p.start[0] + '(持续 ' + p.span + ' 天)', count: p.span, avg: round2(plateauAvg), startKg: p.start[1], endKg: p.end[1], netChange: round2(p.end[1] - p.start[1]), volatility: round2(Math.abs(p.end[1] - p.start[1])) },
+     * 这正是页脚那一段的标签，与「当前」成对读。
+     * #503 形状化：区间原来写 `2026-08-01(持续 14 天)`——日期与天数挤在一个串里（口径 §一）；
+     * 改回**真区间** `起 ~ 止`，天数另走 `spanDays`（页上由 `windowStrip()` 的胶囊呈现，
+     * 并且这一改让这一段**跨天数**可算，节奏判语不再白丢——`spanOf()` 靠 `~` 形态）。 */
+    segA: { label: '平台期第一天', range: p.start[0] + ' ~ ' + p.end[0], count: p.span, avg: round2(plateauAvg), startKg: p.start[1], endKg: p.end[1], netChange: round2(p.end[1] - p.start[1]), volatility: round2(Math.abs(p.end[1] - p.start[1])), spanDays: p.span },
     segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
     compare: { deltaKg: round2(current - plateauAvg), direction: current < plateauAvg ? '下降' : current > plateauAvg ? '上升' : '持平', rateDiffG: null, speed: '—' },
     extraRows: [
@@ -158,7 +163,9 @@ export function scenarioE3(db: DatabaseSync, deltaKg: number): ScenarioResult {
       { label: '用时', value: elapsed + ' 天' },
       /* #481 整改缺陷 5：改名避与节奏卡标签撞词（这里是这一段的平均，写全「平均每天」）。 */
       { label: '这段时间平均', value: ratePerDayText(rate) },
-      { label: '体重变化曲线', value: hit[1] + ' → ' + current + ' kg · ' + elapsed + ' 天', spark: pts.map((r) => ({ d: fmt(r[0]), kg: r[1] })) },
+      /* #503 形状化：值原为 `75 → 70.4 kg · 13 天`（同一格用 `·` 串了两件事）——天数本来就有
+       * 「用时 13 天」一行，取数层的这一格只留**两端值 ＋ 箭头**（口径 §一「正文里零 `·`」）。 */
+      { label: '体重变化曲线', value: hit[1] + ' → ' + current + ' kg', spark: pts.map((r) => ({ d: fmt(r[0]), kg: r[1] })) },
     ],
   };
 }

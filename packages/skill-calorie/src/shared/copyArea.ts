@@ -40,9 +40,16 @@ const LOG_EXCEPTION = '无';
 /** 复制区空态缺省句（三样全没给时出这一句、不出按钮——点了没反应的死按钮就是问题）。 */
 const COPY_EMPTY_TEXT = '本页没有可复制的数据';
 
-/** 三格式菜单里三项的用途提示（**逐字取老仓** `卡路里/templates/crud_receipt.html` 的 `.fmt-menu`
- *  三行：纯文本「粘贴给 AI / 自己看」／JSON「结构化存档」／CSV「表格导入」）。顺序＝`COPY_FORMATS`。 */
-const MENU_HINTS: readonly string[] = ['粘贴给 AI / 自己看', '结构化存档', '表格导入'];
+/** 三格式菜单里三项的用途提示：**本技能一律留空**（顺序＝`COPY_FORMATS`）。
+ *
+ *  老仓 `卡路里/templates/crud_receipt.html` 的 `.fmt-menu` 三行当年写「粘贴给 AI / 自己看」
+ *  「结构化存档」「表格导入」——#247 逐字搬过来之后，四份文本审查（`.scratch/t155o/text-review-P0.md`
+ *  的 20／44 条）逐页点到它：一行塞四个动作、读者看不懂「结构化存档」。作者 2026-09-14 裁定
+ *  「删掉这类动作与用途说明」⇒ 菜单只留三个格式名（纯文本／JSON／CSV），由选中的格式自己说明用途。
+ *
+ *  传空串而非撤掉 `hints` 位：公共层的三格式菜单对空串是**不渲染那行小字**（`controls.ts:1335`），
+ *  形状与「不给 hints」一致，但不依赖公共层那一支的缺省值。 */
+const MENU_HINTS: readonly string[] = ['', '', ''];
 
 /** `copyArea` 的 6 个可填位：给了什么出什么，0–3 颗按钮。 */
 interface CopyAreaInput {

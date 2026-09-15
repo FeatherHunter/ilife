@@ -213,27 +213,38 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
   });
 }
 
-/** 过程：写前预览五段式（标题＋进度＋改前/改后＋复制区，老 `process_progress` 版式）。 */
+/** 过程：写前预览（改前／改后两栏 ＋ 复制区）。
+ *  T351-v10：两栏改成**真表格**（周次｜星期｜训练｜动作数｜变更），不再是一列塞满
+ *  `第1周周1·上肢（2动作）` 那种串——那种写法是拿 `·` 与括号顶替表格设计（负责人第 ⑤ 条）。
+ *  页头三件也不再用 `·` 串：眉标只留「健身计划」，标题只留「写前预览」，副标题只留这是哪一条写词。 */
 export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string {
   const opName = OP_ZH[v.op] ?? '写前预览';
-  const beforeRows = v.before.map((b, i) => ({ n: String(i + 1), c: b }));
-  const afterRows = v.after.map((a, i) => ({ n: String(i + 1), c: a }));
+  /** 预览行 → 表格行：`week` 为 null 的概述行只填「训练」一列，其余列印「—」。 */
+  const rowsOf = (lines: readonly PreviewLine[], withChange: boolean) => lines.map((l) => ({
+    week: l.week === null ? DASH : '第 ' + l.week + ' 周',
+    dow: l.dow === null || l.dow === 0 ? DASH : DOW[l.dow] ?? '周' + l.dow,
+    label: l.label,
+    moves: l.moves === null ? DASH : l.moves + ' 个',
+    ...(withChange ? { change: l.change === '' ? DASH : l.change } : {}),
+  }));
+  const cols = (withChange: boolean) => [
+    { key: 'week', label: '周次' },
+    { key: 'dow', label: '星期' },
+    { key: 'label', label: '训练' },
+    { key: 'moves', label: '动作数' },
+    ...(withChange ? [{ key: 'change', label: '变更' }] : []),
+  ];
   const parts: string[] = [
-    renderKpiGrid([
-      { label: '操作', value: opName, detail: v.title },
-      { label: '改前', value: v.before.length + ' 行' },
-      { label: '改后', value: v.after.length + ' 行' },
-    ]),
     renderDataTable({
-      columns: [{ key: 'n', label: '序号' }, { key: 'c', label: '改前快照' }],
-      rows: beforeRows,
-      caption: '改前快照（' + v.before.length + ' 行）',
+      columns: cols(false),
+      rows: rowsOf(v.before, false),
+      caption: '改前（' + v.before.length + ' 行）',
       emptyText: '改前为空',
     }),
     renderDataTable({
-      columns: [{ key: 'n', label: '序号' }, { key: 'c', label: '改后预览' }],
-      rows: afterRows,
-      caption: '改后预览（' + v.after.length + ' 行，只读不写库）',
+      columns: cols(true),
+      rows: rowsOf(v.after, true),
+      caption: '改后（' + v.after.length + ' 行，只读不写库）',
       emptyText: '改后为空',
     }),
     renderDisclosure({
@@ -253,10 +264,10 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
   ];
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '写前预览 · ' + opName,
-    eyebrow: '健身计划 · 预检确认页',
-    subtitle: v.title,
-    content: parts.join(''),
+    title: '写前预览',
+    eyebrow: '健身计划',
+    subtitle: opName + ' · ' + v.title,
+    content: pageChromeCss(960) + parts.join(''),
   });
 }
 

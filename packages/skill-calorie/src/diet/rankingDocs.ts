@@ -68,8 +68,10 @@ export function buildRankingDoc(r: FoodRanking): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '排行 ' + (RANK_ZH[r.category] ?? r.category) + ' ' + r.start + ' ~ ' + r.end,
-    eyebrow: 'calorie.view.ranking · 饮食域',
-    subtitle: 'tab 切换归宿主：单榜直出（' + r.title + '）',
+    eyebrow: '卡路里 · 饮食',
+    /* #496 · 原副题「tab 切换归宿主：单榜直出（…）」是开发过程说明（审查件第 56、57、58 条）：
+       「归宿主」是技术词，括号里还把榜单名与窗口区间又抄了一遍（页头标题已经写过）。整句删。 */
+    subtitle: null,
     content: parts.join(''),
     charts: false,
   });
@@ -110,7 +112,7 @@ export function buildAllRankingsDoc(a: AllRankings): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '全部排行 ' + a.start + ' ~ ' + a.end,
-    eyebrow: 'calorie.view.ranking · 饮食域',
+    eyebrow: '卡路里 · 饮食',
     subtitle: a.start + ' ~ ' + a.end + ' · ' + a.okCount + '/5 榜有数据',
     content: parts.join(''),
     charts: false,

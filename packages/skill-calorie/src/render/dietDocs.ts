@@ -17,6 +17,7 @@
  * 本层不做取数（数据由调用方 dispatch 备齐），不返空（缺失由数据层抛 missing-data）。
  */
 import {
+  renderCaliberLine,
   renderChartBlock,
   renderDataTable,
   renderDisclosure,
@@ -59,7 +60,12 @@ function r1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-const MEAL_NOTE = '窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵';
+/** 餐别口径一行（**正文里说一次**的版本，不带常量名）。
+ *
+ *  #496 · 原文案是「窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵」——把源码常量名印给用户看
+ *  （`.scratch/t155o/text-review-P0.md` 第 2、62、68 条，四份审查件共 14 席命中）。
+ *  现在只留读者用得上的那半句：加餐是哪几顿。 */
+const MEAL_NOTE = '加餐时段：下午茶、夜宵';
 
 /* ── 饮食总览＋餐别分布（diet_overview／meal_distribution／today_meals 子集对照） ── */
 
@@ -113,6 +119,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       title: '餐别分布 ' + distDate,
       input: { items: dist.slices.map((s) => ({ label: s.meal + ' ' + s.count + '餐', value: s.calories })) },
     }));
+    /* #496 · 餐别口径（加餐是哪几顿）只在图下说一次，不带常量名。 */
+    parts.push(renderCaliberLine(MEAL_NOTE));
     charts = true;
   } else {
     parts.push(renderKpiGrid(dist.slices.map((s) => ({
@@ -135,14 +143,17 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
     emptyText: '本窗无按日汇总',
   }));
   parts.push(renderDisclosure({
-    title: '窗口明细（共 ' + mealTotal + ' 条' + (mealsTruncated ? '，仅列前 ' + meals.length + ' 条' : '') + '）',
+    /* #496 · 折行标题原写「窗口明细」——审查件第 63、64、66、68 条点到它：读者看不出「窗口」是哪扇窗，
+       且这一页的明细就是窗内全部记录 ⇒ 改「全部记录（共 N 条）」。 */
+    title: '全部记录（共 ' + mealTotal + ' 条' + (mealsTruncated ? '，仅列前 ' + meals.length + ' 条' : '') + '）',
     contentHtml: renderDataTable({
       columns: [...MEAL_COLUMNS],
       rows: meals.map((m) => ({
         date: m.date, time: m.time ?? '', meal: inferMealType(String(m.time ?? '')), food: m.food_name,
         grams: m.grams, cal: m.calories, pro: m.protein, carbs: m.carbs, fat: m.fat,
       })),
-      caption: '窗口明细' + (mealsTruncated ? '（截断前 ' + meals.length + ' 条）' : ''),
+      /* #496 · 这一段原caption 与折叠标题同名同数（「窗口明细（共 N 条）」＋「窗口明细」），
+         读者在同一行读到两遍（审查件第 64、66 条点的同形重复）。折叠标题已经说全 ⇒ caption 删。 */
       emptyText: '本窗无明细',
     }),
   }));
@@ -160,8 +171,14 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '饮食总览 ' + o.start + ' ~ ' + o.end,
-    eyebrow: 'calorie.view.diet · 饮食域',
-    subtitle: '餐别分布 ' + distDate + '（' + MEAL_NOTE + '）',
+    /* #496 · 眉标原写命令键「calorie.view.diet · 饮食域」——`t425-融合基准.md:127-132`（裁定 1）
+       定死不上屏，`assembleDocPage` 也已整行挡掉这种写法；这里同时换成样张口径的中文族名
+       （`t425-样张-今日饮食.html` 眉标＝`calorie.view.diet · 条目列表`）。 */
+    eyebrow: '卡路里 · 饮食',
+    /* #496 · 原副题是「餐别分布 <日期>（窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵）」：常量名上屏，
+       且这句话在页脚图下又说了一遍。副题改成老实物 `.sub` 那条「窗口 … · N 天 · M 条记录」口径，
+       并把餐别口径（加餐是哪两顿）收进这一行——图下不再重复说。 */
+    subtitle: '窗口 ' + o.start + ' ~ ' + o.end + ' · ' + o.days + ' 天 · ' + mealTotal + ' 条记录 · ' + MEAL_NOTE,
     content: parts.join(''),
     charts,
   });

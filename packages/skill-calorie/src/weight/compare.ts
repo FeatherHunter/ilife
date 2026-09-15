@@ -20,13 +20,14 @@ import { weightCompare } from './figures.js';
 import type { CompareSide, WeightCompare } from './figures.js';
 import { assertRange } from './plate.js';
 import type { WeightCompareView } from './plate.js';
-import { renderCaliberLine, renderChartBlock, renderDataTable, renderDisclosure, renderKpiGrid, renderListRows } from 'base-paint/blocks';
+import { renderCaliberLine, renderChartBlock, renderDataTable, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
+import { bulletList, factStrip, verdict, weightUiCss } from './weightUi.js';
 import { runScenario, SCENARIO_LABELS } from './weightCompare3.js';
 import type { ExtraRow, ScenarioResult } from './weightCompare.js';
 
@@ -137,6 +138,8 @@ interface CompareSegment {
   changeKg: number | null;
   /** 波动：情景面有、窗口面无（页上不出这一列，复制面缺位）。 */
   volatility?: number | null;
+  /** 这一段自己带的跨天数（只有平台期那段给）：区间块上的「持续 N 天」胶囊。 */
+  spanDays?: number;
 }
 
 /** 单日段（n＝1）：均值＝期首＝期末，三列并成一列，且**读不出趋势**——只认条数，不猜区间串。 */
@@ -172,35 +175,56 @@ const perDayG = (r: number): string => {
 /** 条数的中文短写（n=2 → 「两天」）；超出一只手就回阿拉伯数字＋单位。 */
 const cnDays = (n: number): string => (n === 1 ? '一天' : n === 2 ? '两天' : n + ' 天');
 
+/** **日期词**段名（窗口面的 `本期／对比期` ＋ 同日比那几页的 `今天`）：只有这种段名才谈得上
+ *  「两段都只有一天」；锚点段（`历史最低`／`减重 5 kg 那天`）本来就不是可比区间，得逐段说名字。 */
+const GENERIC_LABELS = ['本期', '对比期', '今天'];
+
+/** 段在**本页这一组对比**里的短名（结论句与每天变化量两处共用一处定义）：
+ *  有口径名（`最近 30 天`／`今天`／`运动最少`）就用口径名，没有（中间那个 `本期`）就按平均数是哪一段说。 */
+const labelOfB = (b: CompareSegment, mid: string): string => (b.label === mid ? '最近这段' : b.label);
+const labelOfA = (a: CompareSegment, mid: string): string => (a.label === mid ? '对比那段' : a.label);
+
 /** 节奏判语：**两段日均速率的幅度差**（不是净变化之差——两段不等长时净变化之差不是速率）。
  *
  * 词里不出现「上升／下降」，故与方向判语不可能在同一句里互相打脸（#334 修的那个缺陷）。
  * 任一段读不出速率（单日／锚点日）时如实写「看不出快慢」，不给假读数。
- *  `basis`＝**两段每天变化量**的逐字对照，只在结论句里出现一次（节奏卡的副说明只留判语词）。
- *  `short`＝进结论句的**单段短写**（`本期只有 1 条，算不出每天变化`）；两段逐字「vs」对照只在
- *  一个方向的速率读得出时才给（#481 整改缺陷 3：同一事实说了三遍、还有两套词）。 */
-interface Rhythm { readonly word: string; readonly basis: string; readonly short: string; readonly comparable: boolean }
-/** 一段读不出每天变化时，结论句里的短写：单日段说清「只有几天」；条数够但区间串读不出跨天
- *  （平台期的 `2026-08-01(持续 14 天)`）写「记录不够」——不许说成「只有 14 天」。 */
-const shortOf = (s: CompareSegment, r: number | null): string => {
-  if (r !== null) return s.label + ' ' + perDayG(r);
-  return s.label + (isSingleDay(s) ? '只有' + cnDays(s.count) : '记录不够') + '，算不出每天变化';
-};
+ *  #503 形状化：原来另带 `basis`／`short` 两条 `·`／`；` 串（节奏卡副说明与结论句各用一处出来），
+ *  #481 整改缺陷 3 又要求「同一事实不许说三遍」——两条一起删：**每天变化量**改由 `rhythmStrip()`
+ *  的 `factStrip()`（「最近 30 天 平均每天 +10 克」一条一格）出，结论句只留判语词（`word`）。 */
+interface Rhythm { readonly word: string; readonly comparable: boolean }
+/** 两段每天变化量的**形状版**（原来在结论句里靠 `；`／` vs ` 串成一句）：一段一格，
+ *  值带「平均每天」前缀，标签配「最近 30 天」这类**读者认得出来的段名**（口径 §三第 2 条）。
+ *  读不出速率的那一段照实写「算不出」——不丢事实、也不编数。 */
+function rhythmStrip(b: CompareSegment, a: CompareSegment, mid: string): string {
+  const val = (r: number | null): string => (r === null ? '算不出' : '平均' + perDayG(r));
+  return factStrip([
+    { k: labelOfB(b, mid), v: val(rateOf(b)) },
+    { k: labelOfA(a, mid), v: val(rateOf(a)) },
+  ]);
+}
 function rhythmOf(a: CompareSegment, b: CompareSegment): Rhythm {
   const ra = rateOf(a);
   const rb = rateOf(b);
-  const segText = (r: number | null): string => (r === null ? '读不出快慢' : perDayG(r));
-  const pair = (rb2: number | null, ra2: number | null): string =>
-    b.label + '：' + segText(rb2) + ' vs ' + a.label + '：' + segText(ra2);
   if (ra === null || rb === null) {
     /* 原因只写「记录不足」这一个事实：单日段的原因（没有跨天跨度）已由页顶说明说清，
      * 若在这里再写一遍「只有一天，读不出快慢」，「快慢」一词会在同一句里出现三次（口径 §2 第一条）。 */
-    const short = shortOf(b, rb) + '；' + shortOf(a, ra);
-    return { word: '看不出快慢', basis: pair(rb, ra) + '（记录不足 2 条）', short, comparable: false };
+    return { word: '看不出快慢', comparable: false };
   }
   const gap = Math.abs(rb) - Math.abs(ra);
   const word = gap > RATE_EPS ? '幅度更大' : gap < -RATE_EPS ? '幅度更小' : '幅度相当';
-  return { word, basis: pair(rb, ra), short: shortOf(b, rb) + ' vs ' + shortOf(a, ra), comparable: true };
+  return { word, comparable: true };
+}
+
+/** 段区间文本：单日段（`X ~ X` 压成一个日期）只留一枚日期，别的段照印 `起 ~ 止`。
+ *  #503 形状化：原来副说明是「2026-09-01 ~ 2026-09-07 · 30 条」——区间与条数被 `·` 串成一句，
+ *  而条数徽章里已经有了（「记录齐全（30 条）」／「只有一天」）⇒ 副说明只留**区间**这一件事。
+ *  **这一槽只能是纯文本**：`renderKpiCard` 对 `detail` 走 `esc()`（公共层 `blocks.ts:543`），
+ *  形状 HTML 塞进来会原样印成字（第一版就是这么错的，截图当场抓到）。 */
+function rangeTextOnly(s: CompareSegment): string {
+  const parts = rangeText(s).split(' ~ ');
+  const a = parts[0] ?? '';
+  const b = parts[1] ?? a;
+  return a === b ? a : a + ' ~ ' + b;
 }
 
 /** 两段卡：记录条数与「只有一天」直接进徽章；徽章只说状态，值槽里只有均值这一个数。
@@ -214,7 +238,7 @@ const segmentCard = (s: CompareSegment): KpiCardInput => {
         : s.count === SAMPLE_MIN ? '记录齐全' : '记录齐全（' + s.count + ' 条）';
   return {
     label: s.label, value: fmtKg(s.avg), unit: 'kg',
-    detail: rangeText(s) + ' · ' + s.count + ' 条',
+    detail: rangeTextOnly(s),
     status: s.count === 0 ? 'empty' : single ? 'empty' : thin ? 'warn' : 'ok',
     statusText: badgeText,
   };
@@ -238,21 +262,21 @@ const deltaOf = (a: CompareSegment, b: CompareSegment): number | null => {
 
 /** 节奏卡：能对照＝ok，读不出速率＝empty，任一段记录太少＝warn（与两段卡的警示词同一个）。
  *  **值槽只放本期每天变化量这一个数**（数字＋单位）；判语词（幅度更大／更小／相当／看不出快慢）
- *  进 `detail` 与徽章——值槽里不放词，也不放两段逐字对照（那段归结论句一处）。
+ *  进 `detail` 与徽章——值槽里不放词，也不放两段逐字对照（那段归结论块的「每天变化」一行）。
  *  值槽与副说明各出一个数：身上**不重复同一个数字两遍**。
  *  #481 整改缺陷 2：副说明与徽章原来逐字同词（都写「看不出快慢」）——副说明补一句「哪一段」，
  *  徽章换成状态词「记录太少」。
  *  #481 整改缺陷 5：值槽的「每天 +14 克」是**一段**平均，写全「平均每天 +14 克」，
- *  免得与卡标签「每天变化」逐字贴脸、读者分不清是这一段还是两段。 */
+ *  免得与卡标签「每天变化」逐字贴脸、读者分不清是这一段还是两段。
+ *  #503 形状化：副说明只留**判语词这一个形状**（原来读不出时是一句 15 字的话，截图里折两行）；
+ *  两段逐字对照归结论块的 `factStrip()`，卡片这一格不再复述它。 */
 const rhythmCard = (r: Rhythm, a: CompareSegment, b: CompareSegment): KpiCardInput => {
   const thin = a.count < SAMPLE_MIN || b.count < SAMPLE_MIN;
   const rb = rateOf(b);
   return {
     label: '每天变化',
     value: rb === null ? MISSING : '平均' + perDayG(rb),
-    detail: !r.comparable && rb === null
-      ? b.label + (isSingleDay(b) ? '只有' + cnDays(b.count) : '记录不够') + '，看不出快慢'
-      : r.word,
+    detail: r.word,
     status: !r.comparable ? 'empty' : thin ? 'warn' : 'ok',
     statusText: r.comparable && !thin ? '两段可比' : '记录太少',
   };
@@ -260,9 +284,13 @@ const rhythmCard = (r: Rhythm, a: CompareSegment, b: CompareSegment): KpiCardInp
 
 /** 页顶软横幅（老技能做法：记录不够也照常出页，`weight_compare.html:79`）：**一条**讲全所有前提，
  *  写清「记了几条、看这张页要几条、为什么仍可看」；标题不占状态词，状态词只在卡片徽章里出现一次。
- *  首行（`msg`）只放记录条数读数；逐条说明走 `detail`（toast 第二行，不在与关闭钮同行的首行里挤）。
- *  `detail` 用「；」分段而不是串成一个长句——读者一眼能数出几个前提。 */
-function premiseNotice(a: CompareSegment, b: CompareSegment, anchorMiss: boolean): { msg: string; detail: string } | null {
+ *  首行（`msg`）只放记录条数读数；逐条说明走**逐条列表**（`bulletList()`）。
+ *  **这些说明是「提防读者按提示去做某事的阻止话」**（「只当参考值看」「也不代表趋势」），
+ *  不是量本身——所以它们不进卡片与结论块，也不会成为第二处读数（口径 §三第 2 条）。
+ *  #503 形状化：原来 `msg`／`detail` 两处都用 `；` 串成一整句，读者数不出几个前提；
+ *  改成一前提一行（口径 §一：提示块里「前提一；前提二；前提三」→ `bulletList()`）。 */
+interface PremiseBand { readonly msg: string; readonly items: readonly string[] }
+function premiseNotice(a: CompareSegment, b: CompareSegment, mid: string, anchorMiss: boolean): PremiseBand | null {
   const thin = [b, a].filter((s) => s.count > 0 && s.count < SAMPLE_MIN);
   const singles = [b, a].filter((s) => isSingleDay(s));
   const msg: string[] = [];
@@ -270,17 +298,28 @@ function premiseNotice(a: CompareSegment, b: CompareSegment, anchorMiss: boolean
     msg.push(thin.map((s) => s.label + ' ' + s.count + ' 条').join('／') + '，低于 ' + SAMPLE_MIN + ' 条');
   }
   if (anchorMiss) msg.push('参照日前后 3 天都没有体重记录');
-  const detail: string[] = [];
-  if (thin.length > 0) detail.push('两段各要 ' + SAMPLE_MIN + ' 条以上，平均体重差才有参考价值。记录不够也照常出页，差值与每天变化只当参考值看');
-  if (singles.length > 0) {
-    /* #481 整改缺陷 4：原句说「这一页期初／期末／变化三列并成一列」——**页面并没有并**（表头仍是
-     * 五列、三个「—」照旧）⇒ 删掉这句没做到的承诺，只留读者真能看到的两件事。 */
-    detail.push(singles.map((s) => s.label).join('／') + '只有' + cnDays(singles[0]?.count ?? 1) + '，'
-      + '平均数就是那天的读数，看不出快慢，也不代表趋势');
-  }
-  if (anchorMiss) detail.push('差值暂时算不出来，其余读数照常给');
   if (msg.length === 0) return null;
-  return { msg: msg.join('；') + '。', detail: detail.join('；') + '。' };
+  const items: string[] = [];
+  if (thin.length > 0) {
+    items.push('两段各要 ' + SAMPLE_MIN + ' 条以上，平均体重差才有参考价值。');
+    items.push('记录不够也照常出页，差值与每天变化量只当参考值看。');
+  }
+  const singleParts = singles.filter((s) => !thin.includes(s)).map((s) => s.label);
+  /* 「两段都只有一天」只在**两段的段名都是日期词**时才说（`今天 vs 一年前今天`／`本周 vs 上周` 那种）。
+   * 锚点段另有自己的名字（`历史最低`／`今夏以来最低`／`减重 5 kg 那天`）时，说「两段都只有一天」是错的
+   * ——那两段本来就不是「两段可比区间」，把段名逐条说出来才对（手机截图当场抓到这处）。 */
+  const genericLabel = (s: CompareSegment): boolean => GENERIC_LABELS.indexOf(s.label) >= 0;
+  if (singles.length === 2 && singles.every(genericLabel)) {
+    /* `thin` 那一支已经把两个段名连同条数说了，这里不重复它们（本函数只出它自己那几分信息）。 */
+    if (singleParts.length === 0) items.push('两段都只有一天：平均数就是那天的读数，看不出快慢，也不代表趋势。');
+  } else {
+    for (const s of singles) {
+      if (thin.includes(s)) continue;
+      items.push(s.label + '只有' + cnDays(s.count) + '：平均数就是那天的读数，看不出快慢，也不代表趋势。');
+    }
+  }
+  if (anchorMiss) items.push('差值暂时算不出来，其余读数照常给。');
+  return items.length === 0 ? null : { msg: msg.join('；') + '。', items };
 }
 
 /** 页脚来源行（§5.5：哪张库／哪个窗口／多少条；有缺口当场注明，缺的日期不补 0）。
@@ -333,18 +372,29 @@ function renderSegmentsTable(a: CompareSegment, b: CompareSegment, caption: stri
   });
 }
 
-/** 结论句（两面同形）：两段平均数＋差值方向＋每天变化（读不出速率的段只写这一段）。**不带「结论：」前缀**
- *  ——折叠区标题已经是「结论」，正文再来一次就是同一页两处（§5.3 肉眼验收）。
- *  **一页同一事实只此一处**：两段净变化归表格「变化」列、每天变化归节奏卡，结论里不再念第二遍；
- *  只有一天的段不再追加尾巴——这件事页顶说明与表内「仅一天」已各说一处，第三处就是冗余（口径 §2 第一条）。 */
-function compareConclusion(a: CompareSegment, b: CompareSegment, delta: number | null, r: Rhythm, missReason: string): string {
-  const head = b.label + '平均 ' + fmtKg(b.avg) + ' kg，' + a.label + '平均 ' + fmtKg(a.avg) + ' kg';
-  if (delta === null) return head + '，差值暂时算不出来（' + missReason + '）。';
-  /* #481 整改缺陷 3：原句「…看不出快慢：本期：读不出快慢 vs 对比期：每天 +17 克（记录不足 2 条）。」
-   * 同一事实说三遍＋两套词（看不出／读不出）＋括注挂在句尾指代不清 ⇒ 一段读不出速率时只写这一段，
-   * 读得出的那一段照常给「每天 +17 克」。 */
-  return head + '，差值 ' + fmtDelta(delta) + '（' + directionWord(delta) + '）。'
-    + (r.comparable ? '每天变化：' + r.short + '，' + r.word + '。' : '每天变化：' + r.short + '。');
+/** 结论块的两件东西：**一句话判语** ＋ **每天变化量那一行**。
+ *  —— 判语一页只此一句；每天变化量（两段各一格）是原来那句 `；`／` vs ` 串的形状版。 */
+interface Conclusion { readonly sentence: string; readonly strip: string }
+
+/** 结论判语（两面同形）：**一句话**说全「哪两段的平均数比出了什么、差值方向是什么」。
+ *  **不带「结论：」前缀**——折叠区标题已经是「结论」，正文再来一次就是同一页两处（§5.3 肉眼验收）。
+ *  段名用 `labelOfB`／`labelOfA`：窗口面的「本期／对比期」在这句里读不出「最近 30 天」是哪一段
+ *  （那张页的段名本来就是时期词），故按平均数是哪一段说「最近这段／对比那段」。
+ *  **每天变化量不进这句**（#481 整改缺陷 3 的「同一事实不许说三遍」）：两段逐字对照归 `strip`，
+ *  判语词（幅度更大／看不出快慢）归 `chip()`。 */
+function compareConclusion(a: CompareSegment, b: CompareSegment, delta: number | null, r: Rhythm, missReason: string, mid: string): Conclusion {
+  const strip = rhythmStrip(b, a, mid);
+  const head = labelOfB(b, mid) + '平均 ' + fmtKg(b.avg) + ' kg，' + labelOfA(a, mid) + '平均 ' + fmtKg(a.avg) + ' kg';
+  if (delta === null) return { sentence: head + '，差值暂时算不出来（' + missReason + '）。', strip };
+  const tail = r.comparable ? '，' + r.word + '。' : '。';
+  return { sentence: head + '，差值 ' + fmtDelta(delta) + '（' + directionWord(delta) + '）' + tail, strip };
+}
+
+/** 结论块的形状版：一句话判语 ＋ **每天变化量一行**（两段各一格）。
+ *  判语里已经说了方向词（上升／下降／持平），故不再挂方向胶囊——那会是同一事实的第二处；
+ *  两段能不能对照由节奏卡的徽章（`两段可比`／`记录太少`）说，这里也不再复述。 */
+function conclusionBlock(c: Conclusion): string {
+  return verdict(c.sentence, c.strip === '' ? [] : [c.strip]);
 }
 
 /** 复制载荷（`stat` 形，键写中文）：两段读数＋差值方向＋节奏＋结论原句。
@@ -439,12 +489,15 @@ interface CompareCore {
   readonly title: string;
   readonly eyebrow: string;
   readonly subtitle: string;
-  /** 表题：窗口面写「两期对比（…）」，情景面写情景名（…）——都要印差值方向与节奏，故给函数。 */
-  readonly caption: (delta: number | null, rhythm: Rhythm) => string;
+  /** 表题：窗口面写「两期对比（…）」，情景面写情景名（…）——**只印差值**（方向与节奏判断归结论块与卡片）。 */
+  readonly caption: (delta: number | null) => string;
   /** 第一张卡：情景面给情景名，窗口面不给。 */
   readonly lead?: KpiCardInput;
   readonly a: CompareSegment;
   readonly b: CompareSegment;
+  /** 「中间那一段」的段名（`本期`／`当前`）：结论句与每天变化量把这两个词换成「最近这段／对比那段」，
+   *  其余段名（`最近 30 天`／`今天`／`运动最少`）原样用——它们是自解的口径名。 */
+  readonly mid: string;
   readonly extraRows: readonly ExtraRow[];
   readonly curve: CompareCurve | null;
   readonly anchorMiss: boolean;
@@ -456,16 +509,21 @@ function renderComparePage(core: CompareCore): string {
   const { a, b } = core;
   const delta = deltaOf(a, b);
   const rhythm = rhythmOf(a, b);
-  const conclusion = compareConclusion(a, b, delta, rhythm, core.missReason);
-  const band = premiseNotice(a, b, core.anchorMiss);
+  const conclusion = compareConclusion(a, b, delta, rhythm, core.missReason, core.mid);
+  const band = premiseNotice(a, b, core.mid, core.anchorMiss);
   const cards: KpiCardInput[] = [];
   if (core.lead) cards.push(core.lead);
   cards.push(deltaCard(delta), segmentCard(b), segmentCard(a), rhythmCard(rhythm, a, b));
-  const parts: string[] = [];
-  // 页顶软横幅先于一切区块（老实物 `weight_compare.html:79` 就在 KPI 之上）。
-  if (band) parts.push(notice({ title: '记录与说明', msg: band.msg, detail: band.detail, icon: 'warn' }));
+  // 页内样式放装配的**第一项**（`weightUi.ts` 的形状词汇：事实条／窗口条／逐条列表／判语块）。
+  const parts: string[] = [weightUiCss()];
+  // 页顶软横幅先于一切区块（老实物 `weight_compare.html:79` 就在 KPI 之上）：
+  // 首行是记录条数读数（共用提示块），**逐条前提**紧随其后成列表（`bulletList()`，一前提一行）。
+  if (band) {
+    parts.push(notice({ title: '记录与说明', msg: band.msg, icon: 'warn' }));
+    parts.push(bulletList(band.items));
+  }
   parts.push(renderKpiGrid(cards));
-  parts.push(renderSegmentsTable(a, b, core.caption(delta, rhythm)));
+  parts.push(renderSegmentsTable(a, b, core.caption(delta)));
   if (core.extraRows.length > 0) {
     // 标签进 `main`（宽列）、值进 `right`：`left` 只有 44px（给 ▲／▼／— 这类标记用），
     // 长标签塞进去会逐字换行。**不给 `left`**——组件会给这类行加
@@ -478,7 +536,7 @@ function renderComparePage(core: CompareCore): string {
   if (core.curve) parts.push(renderCurveBlock(core.curve));
   parts.push(conclusionBlock(conclusion));
   parts.push(renderCaliberLine(sourceText(a, b)));
-  parts.push(compareCopyArea(a, b, delta, rhythm, conclusion, core.command));
+  parts.push(compareCopyArea(a, b, delta, rhythm, conclusion.sentence, core.command));
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: core.title,
@@ -487,11 +545,6 @@ function renderComparePage(core: CompareCore): string {
     content: parts.join(''),
     charts: core.curve !== null,
   });
-}
-
-/** 结论块（两面同形：`renderDisclosure({title:'结论', open:true})`，一页只此一处）。 */
-function conclusionBlock(text: string): string {
-  return renderDisclosure({ title: '结论', contentHtml: '<p>' + text + '</p>', open: true });
 }
 
 /* ── 窗口面（#332 自 `plateDocs.ts` 原样迁入：weight_compare.html 对照） ── */
@@ -510,7 +563,7 @@ export function buildWeightCompareDoc(v: WeightCompareView, command = ''): strin
     eyebrow: '',
     subtitle: b.label + ' ' + rangeText(b) + ' vs ' + a.label + ' ' + rangeText(a),
     caption: (delta) => '两期对比（平均差 ' + fmtDelta(delta) + '）',
-    a, b, extraRows: [], curve: null, anchorMiss: false,
+    a, b, mid: '本期', extraRows: [], curve: null, anchorMiss: false,
     missReason: '两段都要有记录才能对比', command,
   });
 }
@@ -589,6 +642,7 @@ export function viewWeightCompareScenario(
 const segToCompare = (s: ScenarioResult['segA']): CompareSegment => ({
   label: s.label, range: s.range, count: s.count, avg: s.avg,
   firstKg: s.startKg, lastKg: s.endKg, changeKg: s.netChange, volatility: s.volatility,
+  ...(s.spanDays === undefined ? {} : { spanDays: s.spanDays }),
 });
 
 /** 情景整页装配（画面：情景卡／两段卡／差值方向／每天变化／补充对照＋轨迹图／样本前提／结论；锚点日期印在段区间里）。 */
@@ -611,7 +665,7 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
     caption: (delta) => (delta === null ? v.scenarioLabel + '（差值暂时算不出来）' : v.scenarioLabel + '（差值 ' + fmtDelta(delta) + '）'),
     /* 情景卡整张删（本轮裁定）：它印的参照段标签与页题副标题逐字重复，徽章「已找到这一天」是
      * 正常态（页能出，正说明那一天找到了）；真没找到时页顶软横幅已用「参照日前后 3 天都没有体重记录」据实说明。 */
-    a, b,
+    a, b, mid: '当前',
     extraRows: r.extraRows ?? [],
     curve: v.curve,
     anchorMiss,

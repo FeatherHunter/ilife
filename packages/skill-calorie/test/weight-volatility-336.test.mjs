@@ -27,6 +27,10 @@ const cleanText = (s) => String(s).replace(attrOrTag, ' ')
 const toVisible = (html) => cleanText(String(html)
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, ' ')
   .replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, ' '));
+/** 正文可见文本（#504）：在 `toVisible` 之上再剔掉 `<title>`——那一处 `卡路里·体重` 是全仓 58 页逐字
+ *  同一份品牌名（`plateDocs.ts:29` 的 `DOC_TITLE`），不是正文串；「正文零 `·`／`；`」数的是正文
+ *  （`<script>`／`<style>` 已由 `toVisible` 剔掉，页内脚本那些 `；` 不算正文）。 */
+const bodyText = (html) => toVisible(String(html).replace(/<title\b[^>]*>[\s\S]*?<\/title>/g, ' '));
 /** 机器面（复制载荷）里的键名：只住在属性值里，故那条判据看**引号串**、不看可见文本。 */
 const quotedStrings = (html) => (String(html).match(/"[^"]*"|'[^']*'/g) || []).join('\u0000');
 const betweenTags = (html, re) => (String(html).match(/>([^<>]*)</g) || [])
@@ -148,8 +152,7 @@ test('#485 对抗审查 D1：一屏一义——「波动幅度」全页只许指
   const readings = vis.match(/波动幅度 (\d+\.\d+) kg/g) || [];
   assert.equal(readings.length, 1, '「波动幅度」后面必须紧跟一个数：' + JSON.stringify(readings));
   const sigma = metricsOf(weightVolatilityV2(db, '2026-07-20', '2026-08-18').data).baselineSigma;
-  assert.equal(readings[0], '波动幅度 ' + sigma + ' kg', '「波动幅度」跟随的数必须恒等于卡②值槽的 σ=' + sigma);
-  // 「波动带」是两条线围出来的那个已有名字（不是本票的量名）：页上只许卡②说明与结论句各 1 处
+  assert.equal(readings[0], '波动幅度 ' + sigma + ' kg', '「波动幅度」跟随的数必须恒等于卡②值槽的 σ=' + sigma);  // 「波动带」是两条线围出来的那个已有名字（不是本票的量名）：页上只许卡②说明与结论句各 1 处
   // （表注里的「超过波动带的点」是表格自述口径，不计入；卡②值槽与徽章的措辞走「警戒线／这两条线」。）
   assert.equal((vis.match(/波动带 ±/g) || []).length, 1, '「波动带」＋线值只许卡②说明 1 处');
   assert.equal(vis.includes('这两条线按本窗数据算'), true, '卡②徽章说清两条线是按本窗数据算的');
@@ -165,8 +168,47 @@ test('#485 对抗审查 D1：一屏一义——「波动幅度」全页只许指
   db.close();
 });
 
-test('#336 view 非法抛 bad-input；缺省 view=full', () => {
-  assert.equal(parseVolatilityView({}), 'full');
+test('#504 形状化与手机端：卡②那行 `·` 串落成条子、卡槽不吃 HTML、正文零 `·`／`；`', () => {
+  const db = tmpDb();
+  seedVol(db);
+  const html = viewVolatility({ window: '30d', today: '2026-08-18' }, db).html;
+  const vis = bodyText(html);
+  /* 卡②副说明原来是一行三件事的 `·` 串 ⇒ 现在：三个数全在卡下那条**形状**上（标签 ＋ 值，竖排），
+   * 卡内只说「看那张卡下面那条」（口径 §三 第 2 条：同屏同一事实只留一处）。 */
+  assert.equal(vis.split('·').length - 1, 0, '正文仍有 `·`');
+  assert.equal(vis.split('；').length - 1, 0, '正文仍有 `；`');
+  assert.ok(vis.includes('两条线各是多少，看这张卡下面那条'), '卡②未指向卡下那条条子');
+  assert.ok(!/警戒线 ±[\d.]+ kg · 注意线/.test(vis), '卡②那行 `·` 串没删掉');
+  /* 三个数全在页上那条形状里（标签 ＋ 值成对），且不再是「一句话一串」的写法。 */
+  const v = weightVolatilityV2(db, '2026-07-20', '2026-08-18').data;
+  const shown = '波动幅度 ' + v.baselineSigma + ' kg';
+  for (const needle of [shown, '注意线 ±' + v.thresholds.yellow + ' kg', '警戒线 ±' + v.thresholds.red + ' kg']) {
+    assert.ok(vis.includes(needle), '卡下那条形状缺「' + needle + '」（页上读到的正文：' + vis.slice(0, 200) + '）');
+  }
+  assert.ok(html.includes('class="wui-strip wui-strip-v"'), '卡下那条形状未上屏（没有竖排事实条）');
+  assert.ok(html.includes('<span class="wui-fact-k">注意线</span><span class="wui-fact-v">±' + v.thresholds.yellow + ' kg</span>'),
+    '注意线未落成「标签 ＋ 值」的一枚');
+  /* 形状走的是真 DOM（不是被转义成字面文本的串）——本票实测踩过这一格：
+   * `renderKpiCard` 的 `detail` 槽由公共层 `esc`，把形状 HTML 塞进去会把整串标签印在页上、页还照样出。 */
+  assert.equal(html.includes('&lt;div class=&quot;wui'), false, '形状被当成字面文本印上屏');
+  for (const m of html.matchAll(/ilife-block-kpi-card-(?:detail|label|value|unit)">([^<]*)</g)) {
+    assert.ok(!m[1].includes('<'), '卡槽里塞了 HTML：' + m[1].slice(0, 60));
+  }
+  /* 结论块的 `；` 串拆成「判语 ＋ 今天那条读数」两件（`verdict()` ＋ `note()`）。 */
+  assert.ok(html.includes('class="wui-verdict"'), '结论未落成判语块');
+  assert.ok(html.includes('class="wui-note"'), '结论里今天那条读数未落成脚注行');
+  assert.ok(!vis.includes('超过注意线的天；'), '结论里仍有 `；` 串');
+  /* 手机端（负责人第 1／2 条）：820 段随页到场，触摸面两条到位。 */
+  assert.ok(html.includes('@media (max-width:820px)'), '页内没有 820 段');
+  assert.ok(html.includes('-webkit-tap-highlight-color:transparent'), '触摸面没到场');
+  assert.ok(html.includes('touch-action:manipulation'), '触摸面没到场');
+  /* 只看异常点那一页同样带形状与 820 段（两读法共用一份装配，只差曲线段）。 */
+  const only = viewVolatility({ window: '30d', today: '2026-08-18', view: 'anomalies-only' }, db).html;
+  assert.ok(only.includes('class="wui-verdict"') && only.includes('@media (max-width:820px)'), '只看异常点那一页缺形状或 820 段');
+  assert.equal(bodyText(only).split('；').length - 1, 0, '只看异常点那一页仍有 `；`');  db.close();
+});
+
+test('#336 view 非法抛 bad-input；缺省 view=full', () => {  assert.equal(parseVolatilityView({}), 'full');
   assert.equal(parseVolatilityView({ view: 'anomalies-only' }), 'anomalies-only');
   assert.throws(() => parseVolatilityView({ view: 'only' }), /view 非法/);
 });

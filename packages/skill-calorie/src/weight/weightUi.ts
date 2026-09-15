@@ -147,6 +147,14 @@ export function pairStrip(left: string, right: string, mid = '→'): string {
     + '<span class="wui-pair-v">' + esc(right) + '</span></span>';
 }
 
+/** 「一枚标签 ＋ 一对两端值」的正式形状（#502 报缺：原来各页是用 `factStrip` ＋ `pairStrip` 现拼，
+ *  拼法散在各处）。用在「首末日」「前后两期」「目标与实际」这类**成对**的量上；`mid` 缺省 `→`。 */
+export function pairFact(label: string, left: string, right: string, mid = '→'): string {
+  return '<div class="wui-strip"><span class="wui-fact">'
+    + '<span class="wui-fact-k">' + esc(label) + '</span>' + pairStrip(left, right, mid)
+    + '</span></div>';
+}
+
 /** 状态／方向胶囊。tone：ok／warn／danger／plain（缺省蓝）。 */
 export function chip(text: string, tone: 'ok' | 'warn' | 'danger' | 'plain' | '' = ''): string {
   const cls = tone === '' ? '' : ' wui-chip-' + tone;

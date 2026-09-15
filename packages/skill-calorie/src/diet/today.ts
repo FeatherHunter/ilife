@@ -10,7 +10,7 @@ import { dietMacroRatio } from './dietEngine.js';
 import { todayISO } from '../analysis/utils.js';
 import { listMeals } from '../fetch/diet.js';
 import { buildDietOverview, buildMealDistribution } from '../render/diet.js';
-import { buildTodayDietDoc } from './todayDocs.js';
+import { buildTodayDietDoc, buildTodayNoteEmptyDoc } from './todayDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { buildTodayWaterView } from './nutritionPort.js';
 import { buildTodayWaterDoc } from './nutritionPortDocs.js';
@@ -33,13 +33,19 @@ export function viewToday(params: Record<string, unknown>, db: DatabaseSync): Vi
   let rows = listMeals(db, date).filter((r) => r.food_name !== '💧水');
   if (hasNote === true) rows = rows.filter((r) => (r.note ?? '').trim() !== '');
   if (hasNote === false) rows = rows.filter((r) => (r.note ?? '').trim() === '');
-  if (rows.length === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + (hasNote === true ? '，有备注' : '') + '）');
+  /* #496 · 「只看有备注的」筛出 0 条不是取数失败（这天就是没写备注）⇒ 出空态页，
+     不落「ERR 4 取数失败（缺失阻断）」（审查件第 67 条：「无匹配时给空态句」）。
+     整日一条记录都没有（`hasNote` 没给）仍是既有口径：缺失阻断，读数层不编页。 */
+  if (rows.length === 0 && hasNote === true) {
+    return { data: { items: [], total: 0 }, html: buildTodayNoteEmptyDoc(date) };
+  }
+  if (rows.length === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
   const items = rows.map((r) => ({ id: r.id, date: r.date, time: r.time, food_name: r.food_name, grams: r.grams, calories: r.calories, protein: r.protein, carbs: r.carbs, fat: r.fat, note: r.note ?? '' }));
   const o = buildDietOverview(db, date, date);
   const dist = buildMealDistribution(db, date);
   // #108 · 今日饮食全文档（餐次进度＋营养配比＋今日明细；配比无数据即 skip，不编数）。
   const mt = dietMacroRatio(db, date, date);
-  return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null }) };
+  return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null, hasNote: hasNote === true }) };
 }
 
 /** `calorie.view.today-water` · 今日饮水。 */

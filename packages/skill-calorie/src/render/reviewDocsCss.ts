@@ -32,6 +32,7 @@
  * 打印：热力图与明细表都是内容，照常印；日期格的底色来自 CSS 类，浏览器默认不打印背景色，
  * 故格内文字本身写全状态词（「完成／未完成／未排训练」），黑白打印也读得出。
  */
+import { pageChromeCss } from './pageChromeCss.js';
 
 /** 卡片底：白底 ＋ 1px 细线 ＋ 16 圆角 ＋ 冻结阴影（全页三处卡共用，一处定义）。 */
 const CARD = 'background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)';
@@ -43,8 +44,6 @@ const BAR_TONE = '.ilr-bar-ok{background:var(--ok)}'
 
 /** 静态段（与数据无关的那部分）。 */
 const STATIC_CSS = [
-  '/* 老 .wrap：页宽 960 居中（共享页面模板缺省 960 同值，显式钉住免被别页改宽）＋老页上下内边距 */',
-  '.ilife-block-page-shell{box-sizing:border-box;max-width:960px;padding:32px 20px 60px}',
   '/* 窗口条：这一页看的是哪一段。日期是主角（等宽数字），天数是胶囊。',
   '   宽度取内容宽（`fit-content`）——铺满 960 时天数胶囊会被甩到最右、跟日期隔开九百像素，读起来是两截 */',
   '.ilr-window{display:flex;flex-wrap:wrap;align-items:center;gap:10px;width:fit-content;max-width:100%;'
@@ -102,14 +101,9 @@ const STATIC_CSS = [
   '.ilr-legend-note{margin:8px 0 0;text-align:center;font-size:12px;color:var(--fg3)}',
   '/* 截断明示（沿 R3 口径）：热力图只画前 N 天时说清楚，不静默少画 */',
   '.ilr-note{margin:10px 0 0;font-size:12px;color:var(--fg2)}',
-  '/* 复制区只做宽度约束：520 居中（HELP 第 ②，防两颗胶囊被 960 页宽拉成长条） */',
-  '.ilife-block-page-shell .ilife-action-bar{max-width:520px;margin:0 auto}',
-  '/* 折叠块的可点区在触屏上要有反馈，且不许出现系统蓝高亮块 */',
-  '.ilife-block-page-shell summary{-webkit-tap-highlight-color:transparent;touch-action:manipulation}',
-  '/* ── 窄屏（820 · 同 HELP）：窗口条与统计卡塌成单列、内距收紧、热力图字号降一档 ── */',
+  '/* ── 窄屏（820 · 同 HELP）：窗口条与统计卡塌成单列、热力图字号降一档；',
+  '   页壳内距与指标卡那两条页面级规则住共用件 `./pageChromeCss.ts`，本段不再重述 ── */',
   '@media (max-width:820px){',
-  '.ilife-block-page-shell{padding:20px 16px 48px}',
-  '.ilife-block-page-shell-title{font-size:26px}',
   '.ilr-window{gap:8px;padding:12px 14px}',
   '.ilr-spacer{display:none}',
   '.ilr-metrics{grid-template-columns:minmax(0,1fr);gap:10px}',
@@ -129,8 +123,9 @@ const STATIC_CSS = [
   '}',
 ].join('\n');
 
-/** 页内样式块（含 `<style>` 包裹，照包内先例 `FOOD_CSS`／`MEASURE_CSS`／`planViewCss` 直插正文）。
+/** 页内样式块（含 `<style>` 包裹，照包内先例 `FOOD_CSS`／`MEASURE_CSS`／`planViewCss` 直插正文）：
+ *  共用件的页面级段（页宽 960／窄屏／触屏三件／按钮行 520）＋ 本族自己的件。
  *  本族没有按数据生成的规则（格子与进度条都是静态 DOM，宽度写在内联 style 的百分比里），故无入参。 */
 export function reviewViewCss(): string {
-  return '<style>\n' + STATIC_CSS + '\n</style>';
+  return pageChromeCss(960) + '<style>\n' + STATIC_CSS + '\n</style>';
 }

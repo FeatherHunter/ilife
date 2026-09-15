@@ -42,6 +42,18 @@ function seed(db) {
 
 const run = (db, params) => runWeightView('calorie.view.weight-compare', params, db);
 const isDoc = (html) => html.startsWith('<!doctype html>') && html.includes('ilife-page');
+/** **可见面**的正文（去掉页内样式、脚本载荷、复制区、标签本身）：分隔符判据只认这里。
+ *  为什么要去样式：形状词汇的类名与 CSS 文件注释里带着 `·`（如 `weightUi.ts` 件头那几行），
+ *  它们不是「正文里的串」。 */
+const visibleBody = (html) => html
+  .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+  .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+  .replace(/<section[^>]*ilife-block-copy-block[\s\S]*?<\/section>/gi, ' ')
+  .replace(/<[^>]+>/g, ' ');
+/** 可见面正文里的分隔符计数：`·`（形状化要清的串）与全角分号。
+ *  文档标题里那一个 `·` 是**共享层眉标** `卡路里·体重`（`plateDocs.ts:30` 的 `DOC_TITLE`），
+ *  全仓同形、不在本票写集 ⇒ 断言按「可见面恰 1 处」收紧。 */
+const countOf = (html, ch) => (visibleBody(html).match(new RegExp(ch, 'g')) || []).length;
 
 test('情景面 8 锚点：逐条完整文档＋锚点日期印出', () => {
   const db = tmpDb();
@@ -67,8 +79,19 @@ test('情景面 8 锚点：逐条完整文档＋锚点日期印出', () => {
     assert.ok(!r.html.includes('g/天'), id + ' 每天变化量单位统一「克」（不许 g/天）');
     assert.ok(!r.html.includes('kg/天'), id + ' 每天变化量单位统一「克」（不许 kg/天）');
     assert.ok(r.html.includes('每天变化'), id + ' 应有「每天变化」卡');
-    assert.ok(/\d{4}-\d\d-\d\d/.test(r.html), id + ' 应印出锚点日期');
+    assert.ok(/\d{4}-\d{2}-\d\d/.test(r.html), id + ' 应印出锚点日期');
     if (anchorNeedle) assert.ok(r.html.includes(anchorNeedle), id + ' 应印出锚点 ' + anchorNeedle);
+    // #503 形状化与手机端：正文里不许再用 `·`／`；` 把几件事串成一句——
+    // 允许项只有共享层的文档标题 `卡路里·体重`（恰 1 处）与日期区间的 `~`。
+    assert.equal(countOf(r.html, '·'), 1, id + ' 正文 `·` 只许剩共享眉标那 1 处');
+    assert.equal(countOf(r.html, '；'), 0, id + ' 正文不许再出现 `；` 串');
+    if (r.html.includes('记录与说明')) {
+      assert.ok(r.html.includes('wui-bullets') && r.html.includes('<li>两段各要 3 条以上'),
+        id + ' 页顶前提须落成逐条列表（bulletList）');
+    }
+    assert.ok(r.html.includes('class="wui-verdict"'), id + ' 结论须落成一句话判语块（verdict）');
+    assert.ok(r.html.includes('.wui-verdict{') && r.html.includes('.wui-bullets li{'),
+      id + ' 页内样式须把 weightUiCss() 放进装配第一项（形状词汇只有一处样式源）');
   }
   // 副标题已压成两段区间（业务名删重）⇒ 这里改判「区间那一句还在」，别让删重把锚点日期带走；
   // 同时守「情景业务名在整页只印一次」（删重前是 2~3 处：副标题／情景卡副说明／表题）。
@@ -101,5 +124,42 @@ test('缺失阻断与用法错：不编日期顶上', () => {
   seed(db);
   assert.throws(() => run(db, { scenario: 'e3', delta: 50, today: TODAY }), /还没减到/);
   assert.throws(() => run(db, { scenario: 'zz', today: TODAY }), /未知对比情景/);
+  db.close();
+});
+
+/* ── #503 · 形状化（去 `·`／`；` 串）与手机端（断点 820）的机器判据 ──
+ * 逐页读数由 `scan-separators.py` 与手机 390 探针复核；这里守的是**形状本身还在**这件事。 */
+
+test('#503 窗口面：卡片副说明／结论／每天变化量都成形，正文零分隔符串', () => {
+  const db = tmpDb();
+  seed(db);
+  const w = run(db, { window: '30d', compareWindow: 'prev', today: TODAY });
+  // 结论与每天变化量都用**段名**指段（不是含糊的「这两段」）：窗口面未必给得出「最近 30 天」这种
+  // 口径名（`windowRange()` 不给名时两段就叫「本期／对比期」，页上转写成「最近这段／对比那段」）。
+  assert.ok(/最近这段|最近 ?30 ?天/.test(w.html),
+    '窗口面结论须用读者认得出的段名（最近这段／最近 30 天）');
+  assert.ok(w.html.includes('wui-strip'), '每天变化量须落成事实条（factStrip）');
+  assert.ok(!w.html.includes('class="wui-window"'), '卡片副说明的区间槽只收纯文本（公共层 esc(detail)），不许塞形状 HTML');
+  assert.ok(!w.html.includes('&lt;div class="wui-'), '卡片副说明不许把形状 HTML 原样印成字');
+  assert.equal(countOf(w.html, '·'), 1, '窗口面正文 `·` 只许剩共享眉标那 1 处');
+  assert.equal(countOf(w.html, '；'), 0, '窗口面正文不许再出现 `；` 串');
+  db.close();
+});
+
+test('#503 情景面 57／53：段标签去 `·`、轨迹行去 `·`、每天变化量成形', () => {
+  const db = tmpDb();
+  seed(db);
+  const c5 = run(db, { scenario: 'c5', today: TODAY });
+  assert.ok(!/ · 运动(最多|最少)/.test(c5.html), 'c5 段标签不许再带 ` · `（原 `2026-09 · 运动最多`）');
+  assert.ok(/运动(最多|最少)/.test(c5.html), 'c5 段标签的判语槽还在（删符号不删事实）');
+  assert.ok(c5.html.includes('平均每天'), 'c5 每天变化量应带「平均每天」前缀（形状条的值）');
+  assert.equal(countOf(c5.html, '·'), 1, 'c5 可见面 `·` 只许剩共享眉标那 1 处');
+  assert.equal(countOf(c5.html, '；'), 0, 'c5 可见面不许再出现 `；` 串');
+
+  const e3 = run(db, { scenario: 'e3', delta: 5, today: TODAY });
+  assert.ok(!/体重变化曲线<\/span><span[^>]*>[\d.]+ → [\d.]+ kg · \d+ 天/.test(e3.html),
+    'e3 轨迹行不许再用 `· N 天` 串（天数另有「用时」一行）');
+  assert.ok(/体重变化曲线/.test(e3.html) && /用时/.test(e3.html), 'e3 轨迹行与「用时」行都还在（删符号不删事实）');
+  assert.equal(countOf(e3.html, '·'), 1, 'e3 正文 `·` 只许剩共享眉标那 1 处');
   db.close();
 });

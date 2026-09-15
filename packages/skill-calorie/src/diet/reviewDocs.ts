@@ -3,7 +3,7 @@
  * 原地搬自 `src/render/dietDocs.ts`：本票只换住处，函数体与注释原样照抄，产物逐字节不变。
  * 服务页面类：④ 复盘／餐别分布页。
  */
-import { renderChartBlock, renderKpiGrid, renderDataTable } from 'base-paint/blocks';
+import { renderCaliberLine, renderChartBlock, renderKpiGrid, renderDataTable } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import type { DietReview } from '../render/analysisPlate.js';
@@ -16,7 +16,8 @@ const DOC_SKILL = 'calorie';
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
 const DOC_TITLE = '卡路里·饮食';
 
-const MEAL_NOTE = '窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵';
+/** 餐别口径一行（正文里说一次的版本，不带常量名；口径出处见 `render/dietDocs.ts` 的 `MEAL_NOTE`）。 */
+const MEAL_NOTE = '加餐时段：下午茶、夜宵';
 
 /* ── 饮食复盘（diet_review.html 对照：每日热量趋势＋配比＋高频 TOP＋按餐汇总） ── */
 
@@ -91,9 +92,12 @@ export function buildDietReviewDoc(r: DietReview, top5: FoodRanking | null): str
       { key: 'cal', label: '累计热量', align: 'right' },
     ],
     rows: r.byMeal.map((s) => ({ meal: s.meal, days: s.days, cal: s.totalCalories })),
-    caption: '按餐汇总（' + MEAL_NOTE + '）',
+    /* #496 · 原 caption 是「按餐汇总（窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵）」——常量名上屏
+       （审查件第 62 条）；口径半句挪到图／表下面的一行浅色小字，不带常量名。 */
+    caption: '按餐汇总',
     emptyText: '本窗无按餐汇总',
   }));
+  parts.push(renderCaliberLine(MEAL_NOTE));
   parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.diet-review',
@@ -103,7 +107,9 @@ export function buildDietReviewDoc(r: DietReview, top5: FoodRanking | null): str
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '饮食复盘 ' + r.start + ' ~ ' + r.end,
-    eyebrow: 'calorie.view.diet-review · 饮食域',
+    /* #496 · 眉标原写命令键「calorie.view.diet-review · 饮食域」（裁定 1 不上屏）⇒ 改中文族名。
+       副题原本是空串（本页没有结论句那一槽），维持不出。 */
+    eyebrow: '卡路里 · 饮食',
     subtitle: null,
     content: parts.join(''),
     charts,
