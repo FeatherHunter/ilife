@@ -1,0 +1,28 @@
+# t489 GATE-RUN 对账导出（自 `.scratch/locks/gate-runs.log` 摘 ticket=489 行）
+
+> 导出时刻：2026-09-15（提交 1 之后、提交 2 之前；提交 2 行待下次窗口补）。判定口径见并发协议 §2.4：只领 exit=0 条目；`--dry`（exit=1）与无参门（exit=1，他票陈化）仅留痕、不充门禁证据。
+
+START ticket=489 runId=eadb97fd-1a4c-44ad-afc3-f4e5991fcab4 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --dry" waitedMs=60047 pid=29776 at=2026-09-15T14:18:42.061Z
+RUN ticket=489 runId=eadb97fd-1a4c-44ad-afc3-f4e5991fcab4 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --dry" waitedMs=60047 exit=1 pid=29776 at=2026-09-15T14:18:42.174Z
+START ticket=489 runId=0ac72700-3166-4b7b-b1a2-4bf6c957c5ad cmd="npx tsc -b packages/skill-calorie" waitedMs=20011 pid=49124 at=2026-09-15T14:19:48.207Z
+RUN ticket=489 runId=0ac72700-3166-4b7b-b1a2-4bf6c957c5ad cmd="npx tsc -b packages/skill-calorie" waitedMs=20011 exit=0 pid=49124 at=2026-09-15T14:19:48.682Z
+START ticket=489 runId=6a85c710-dcb9-4011-81e6-025fe388eea0 cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs" waitedMs=0 pid=59500 at=2026-09-15T14:19:54.402Z
+RUN ticket=489 runId=6a85c710-dcb9-4011-81e6-025fe388eea0 cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs" waitedMs=0 exit=0 pid=59500 at=2026-09-15T14:19:58.649Z
+START ticket=489 runId=56271808-6323-4ef3-b8db-811fe8085504 cmd="node --test packages/skill-calorie/test/t364-删除取快照.test.mjs" waitedMs=0 pid=51464 at=2026-09-15T14:20:05.349Z
+RUN ticket=489 runId=56271808-6323-4ef3-b8db-811fe8085504 cmd="node --test packages/skill-calorie/test/t364-删除取快照.test.mjs" waitedMs=0 exit=0 pid=51464 at=2026-09-15T14:20:10.713Z
+START ticket=489 runId=19db13f5-d079-4ab0-9192-872c74b16892 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=1 pid=24444 at=2026-09-15T14:20:23.488Z
+RUN ticket=489 runId=19db13f5-d079-4ab0-9192-872c74b16892 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=1 exit=1 pid=24444 at=2026-09-15T14:20:23.599Z
+START ticket=489 runId=1b2aa91b-f812-4996-835c-62211eaf1ab2 cmd="node .scratch/t489/anchor-probe.mjs" waitedMs=0 pid=61720 at=2026-09-15T14:21:08.151Z
+RUN ticket=489 runId=1b2aa91b-f812-4996-835c-62211eaf1ab2 cmd="node .scratch/t489/anchor-probe.mjs" waitedMs=0 exit=0 pid=61720 at=2026-09-15T14:21:08.321Z
+START ticket=489 runId=59ed5489-59f2-460f-81f4-6fbef0a7f489 cmd="node .scratch/t489/anchor-probe.mjs" waitedMs=0 pid=63468 at=2026-09-15T14:21:25.829Z
+RUN ticket=489 runId=59ed5489-59f2-460f-81f4-6fbef0a7f489 cmd="node .scratch/t489/anchor-probe.mjs" waitedMs=0 exit=0 pid=63468 at=2026-09-15T14:21:25.952Z
+START ticket=489 runId=ce73a6fe-9687-4599-be42-54ab27b0949b cmd="npx tsc -b packages/skill-calorie --force" waitedMs=20019 pid=62300 at=2026-09-15T14:22:04.942Z
+RUN ticket=489 runId=ce73a6fe-9687-4599-be42-54ab27b0949b cmd="npx tsc -b packages/skill-calorie --force" waitedMs=20019 exit=0 pid=62300 at=2026-09-15T14:22:08.368Z
+START ticket=489 runId=26723d0a-5566-4e84-af76-b68e951622c1 cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs packages/skill-calorie/test/t364-删除取快照.test.mjs" waitedMs=80077 pid=67244 at=2026-09-15T14:23:35.581Z
+RUN ticket=489 runId=26723d0a-5566-4e84-af76-b68e951622c1 cmd="node --test packages/skill-calorie/test/t398-source-group.test.mjs packages/skill-calorie/test/t364-删除取快照.test.mjs" waitedMs=80077 exit=0 pid=67244 at=2026-09-15T14:23:38.551Z
+START ticket=489 runId=6c2a0589-7573-402f-a5b5-53bfae9e266c cmd="git add packages/skill-calorie/src/fetch/body.ts" waitedMs=0 pid=15988 at=2026-09-15T14:24:22.191Z
+RUN ticket=489 runId=6c2a0589-7573-402f-a5b5-53bfae9e266c cmd="git add packages/skill-calorie/src/fetch/body.ts" waitedMs=0 exit=0 pid=15988 at=2026-09-15T14:24:22.239Z
+START ticket=489 runId=d003239b-2878-4c4d-98a8-fcf2b2361dc9 cmd="git restore --staged .scratch/t464/review-probe.mjs docs/skills/skill-calorie/t464-复核.md" waitedMs=0 pid=55888 at=2026-09-15T14:24:28.124Z
+RUN ticket=489 runId=d003239b-2878-4c4d-98a8-fcf2b2361dc9 cmd="git restore --staged .scratch/t464/review-probe.mjs docs/skills/skill-calorie/t464-复核.md" waitedMs=0 exit=0 pid=55888 at=2026-09-15T14:24:28.124Z
+START ticket=489 runId=27ac615d-2b39-4b10-9901-e60778a64807 cmd="git commit -F .scratch/t489/msg-1.txt -- packages/skill-calorie/src/fetch/body.ts" waitedMs=40020 pid=44204 at=2026-09-15T14:25:11.594Z
+RUN ticket=489 runId=27ac615d-2b39-4b10-9901-e60778a64807 cmd="git commit -F .scratch/t489/msg-1.txt -- packages/skill-calorie/src/fetch/body.ts" waitedMs=40020 exit=0 pid=44204 at=2026-09-15T14:25:11.676Z
