@@ -44,6 +44,8 @@ function argOf(name, dflt) {
 const DIR = resolve(ROOT, argOf('--dir', '.scratch/t523/out'));
 /** `--files a.html,b.html`：只量这几件（变异复核用，省得为两页跑满 39 件）。 */
 const ONLY = argOf('--files', '').split(',').filter((s) => s !== '');
+/** `--measure <选择器>`：逐档量这些元素的盒（宽／高／display／min-height），用来复核「触摸目标 ≥44px」。 */
+const MEASURE = argOf('--measure', '');
 const JSON_OUT = argOf('--json', '');
 const WIDTHS = argOf('--widths', '390,768,1440').split(',').filter((s) => s !== '').map(Number);
 if (WIDTHS.length === 0) { console.log('RESULT: ABORT exit=2 :: --widths 为空'); process.exit(2); }
@@ -169,17 +171,24 @@ for (const file of files) {
     for (let i = 0; i < 80; i += 1) { if (await evaluate('document.readyState === "complete"') === true) break; await sleep(50); }
     await sleep(120);
     const probe = await evaluate(PROBE);
+    const box = MEASURE === '' ? null : await evaluate(
+      '(function(){var out=[];var els=document.querySelectorAll(' + JSON.stringify(MEASURE) + ');'
+      + 'for(var i=0;i<els.length;i++){var r=els[i].getBoundingClientRect();var cs=getComputedStyle(els[i]);'
+      + 'out.push({t:(els[i].textContent||"").trim().slice(0,12),w:Math.round(r.width),h:Math.round(r.height),'
+      + 'd:cs.display,mh:cs.minHeight,pad:cs.paddingInlineStart+" "+cs.paddingInlineEnd});}return out;}())');
     const overflow = probe.docScrollWidth - probe.innerWidth;
     const why = [
       probe.truncCount > 0 ? 'T1-截断=' + probe.truncCount : '',
       overflow > 0 ? 'T2-溢出+' + overflow : '',
     ].filter((x) => x !== '').join('｜');
-    const cellBad = width === wide
+    // T3 只在**桌面档（≥641）**判：≤640 表格已行卡化（公共层 #541 把列对齐收回 left、值靠容器右缘），
+    // 那一档量 `text-align` 必然 left —— 拿它当红就是**工具的假红**（`--widths 390` 单档跑过会中招）。
+    const cellBad = width >= 641
       ? probe.cells.filter((c) => (c.kind === 'num' && (c.align !== 'right' || !c.mono)) || (c.kind === 'text' && c.align !== 'left'))
       : [];
     const all = [why, cellBad.length > 0 ? 'T3-列档=' + cellBad.length : ''].filter((x) => x !== '').join('｜');
     row.widths[width] = { overflow, truncCount: probe.truncCount, trunc: probe.trunc, cellCount: probe.cellCount,
-      cellBad: cellBad.slice(0, 4), why: all, ok: all === '' };
+      cellBad: cellBad.slice(0, 4), why: all, ok: all === '', box };
     if (all !== '') { if (inScope) failed += 1; else outFailed += 1; }
   }
   rows.push(row);
@@ -192,6 +201,7 @@ for (const file of files) {
     const c = row.widths[w];
     if (c.truncCount > 0) console.log('      截断@' + w + ' ' + JSON.stringify(c.trunc));
     if (c.cellBad.length > 0) console.log('      列档@' + w + ' ' + JSON.stringify(c.cellBad));
+    if (c.box !== null && c.box.length > 0) console.log('      量@' + w + ' ' + JSON.stringify(c.box));
   }
 }
 cdp.close();
