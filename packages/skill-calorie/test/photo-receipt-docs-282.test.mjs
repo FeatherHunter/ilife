@@ -146,14 +146,16 @@ test('记身材照·单张：完整文档＋快照＋存入徽章＋人话句（
   assertDocTrio(html);
   assert.match(html, /data:image\//, '快照缺失（须含 data:image/）');
   assert.match(text, /存入回执/, 'op 徽章缺失（create 即存入回执）');
-  assert.match(text, /照片已经存好（#\d+）/, '干完了的人话句缺失');
+  assert.equal(countOf(text, '照片都存好了'), 0, '#528：全成功时结果只在读数卡的绿徽章说一处，反馈条不再重复');
   assert.match(text, /照片已存入/, '状态卡说明缺失（存照页＝照片已存入）');
-  assert.match(text, /这次改了/, '字段卡缺失');
-  assert.match(text, /照片路径/, '字段名未换人话（srcPaths→照片路径）');
-  assert.match(text, /照片记录 · 存了新照片/, '来源行未换人话');
+  assert.match(text, /标签/, '批次事实缺标签');
+  assert.match(text, /拍摄日期/, '批次事实缺拍摄日期');
+  assert.equal(countOf(text, '照片路径'), 0, '#528：「这次改了」那张卡印的是库内字段名，已整块撤掉');
+  assert.equal(countOf(text, '照片记录'), 0, '#528：来源行（读者拿不到信息）已整块撤掉');
   assert.match(text, /给 AI 核对的信息/, '页尾折叠块标题未改人话');
   assert.match(text, /数据库改了 1 行（给 AI 核对用）/, '数据库改动未并进折叠区');
-  assert.match(text, /记录标识（编号 ＋ 时间）/, '标识表未收成编号＋时间');
+  assert.equal(countOf(text, '记录标识'), 0, '#528：记录标识那一小节已并进键值行（只有一行「时间」的空壳）');
+  assert.match(text, /记录号/, '给 AI 核对的折叠块缺记录号');
   // #476 冗余必删（可见文本零命中；旧块回来即红）。
   for (const gone of ['徽章：', '影响行数', '本次写入的行数', '对账信息', '回执格式', '摘要', 'body_photos']) {
     assert.equal(countOf(text, gone), 0, '旧文案未删净：' + gone);
@@ -200,7 +202,7 @@ test('记身材照·三张：照片明细表按张数出（≥3）', () => {
   const { html, text } = readPage(env);
   assertDocTrio(html);
   assert.equal(html.split('data:image/').length - 1, 3, '三张快照缺失');
-  assert.match(text, /照片明细/, '3 张却不出照片明细表（票面：≥3 张才出）');
+  assert.match(text, /逐张结果/, '3 张却不出逐张结果（票面：一行一张）');
 });
 
 test('删身材照：删前快照＋永久删除口径（全页恰好 1 处，旧串 0 命中）', () => {
@@ -214,14 +216,16 @@ test('删身材照：删前快照＋永久删除口径（全页恰好 1 处，�
   assertDocTrio(html);
   assert.match(html, /data:image\//, '删前快照缺失（永久删除的唯一凭据须内嵌）');
   assert.match(text, /删除回执/, 'op 徽章缺失（delete 即删除回执）');
-  assert.match(text, /照片已删除（#1）/, '干完了的人话句缺失');
+  assert.match(text, /照片已删除，图和记录都一起删掉了/, '干完了的人话句缺失');
   // 缺陷：删除页原来写「已写入身材照片」（与语义相反）。
   assert.match(text, /照片已删除/, '状态卡说明未按场景换句');
   assert.equal(countOf(text, '已写入身材照片'), 0, '删除页仍印「已写入身材照片」');
-  assert.match(text, /删除的照片/, '「删除的照片」卡缺失');
-  assert.match(text, /#1 · 2026-09-04 · 正面/, '删掉的那张没写清（编号·日期·标签）');
-  assert.match(text, /删除前是这样的（永久删除，无法恢复）/, '删除快照块标题缺失');
-  assert.match(text, /照片记录 · 删掉了/, '来源行未换人话');
+  assert.match(text, /删除前的样子/, '「删除前的样子」小节缺失');
+  // #528：图注那行「编号 · 日期 · 标签 · 文件名」拆成键值行，一行一件事。
+  assert.match(text, /编号 1/, '删掉的那张没写清（编号）');
+  assert.match(text, /拍摄日期 2026-09-04/, '删掉的那张没写清（拍摄日期）');
+  assert.match(text, /原文件/, '删掉的那张没写清（原文件）');
+  assert.equal(countOf(text, '照片记录'), 0, '#528：来源行（读者拿不到信息）已整块撤掉');
   assert.equal(countOf(text, '永久删除，无法恢复'), 1, '「永久删除，无法恢复」全页须恰好 1 处');
   for (const gone of ['硬删除', '不可恢复', '写入字段', '影响行数', '对账信息', 'body_photos', '照片明细']) {
     assert.equal(countOf(text, gone), 0, '旧文案未删净：' + gone);
@@ -326,7 +330,7 @@ test('部分失败的批量存照：失败张逐张上页（#476 缺陷一）', 
   assert.match(text, /源文件：not-here-282\.png/, '失败张未指名是哪个文件');
   assert.match(text, /没有编号/, '失败张未标明没有记录号');
   assert.match(text, /2 张照片都存好了/, '成功张数说错（应只数真存进来的）');
-  assert.match(text, /照片明细/, '有失败时该出照片明细表（横向对账用）');
+  assert.match(text, /逐张结果/, '有失败时该出逐张结果（横向对账用）');
   assert.equal(html.split('data:image/').length - 1, 2, '成功两张的缩略图缺失');
 });
 

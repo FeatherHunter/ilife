@@ -5,62 +5,52 @@
  * `assembleDocPage`（`src/shared/docPage.ts`）＋ `copyArea`／`copyLog`／`notice`
  * （`src/shared/copyArea.ts`）＋ `statusCard`（`src/shared/receiptParts.ts`）。
  *
- * #476 的改造口径（逐条对票面）：
- * - **冗余必删**：回执标识表只留「编号＋时间」（摘要＝副标题、场景＝标题，两行删）；影响行数卡删
- *   （那句话并进页尾折叠区「数据库改了 N 行」）；删除页原来印的「写入字段 0 项／未设置」删，
- *   改印「删除的照片」卡；页尾不再复用 `reconcileDisclosure` 的默认三项（记录编号／写入时间／
- *   回执格式），本域自己出「给 AI 核对的信息」折叠块（内文只留记录号 ＋ 数据库改动）。
- * - **人话**：状态卡说明随场景切（标签页「照片标签已更新」／删除页「照片已删除」）；字段名走
- *   本域映射表 `FIELD_LABELS`；来源串去库表名（`SOURCE_TEXTS`）；徽章行删「徽章：」并改成一句
- *   「标签已改好（照片 #36）」；「硬删除，不可恢复」在**页面可见文本**里只留 1 处（删除快照块的
- *   标题，改词「永久删除，无法恢复」）。
- * - **版面**：标签表改三态（保留／新增 `+ x`／移除 `− x`，列头「改前｜改后」）；无变化改走
- *   `notice()` 静态提示块；删除快照改独立块（标题＋图＋一行元数据＋警示块）；照片明细表只在
- *   **≥3 张或存在失败**时才出（图与表不再同数据印两遍）；图题改两行＋状态徽标，失败张才出
- *   「失败原因」；「距上次拍照 N 天」做成状态卡旁的独立小卡（`photo.ts` 补传 `distance`）。
- * - **机器口径不动**：`receipt.summary` 与 `items[].status` 原样进复制区载荷（页内可见文本另写
- *   人话：删除页的副标题与状态都由本件自写），免得写链「prose／items／库内行」三源一致
- *   （`cmd-write-40-persist`）被改坏。
+ * ══ #528 窄席位 A（2026-09-15）：重排「记身材照」「删身材照」两页 ══
  *
- * 老→新对照（t400 §二序 1，裁定 1）：
- * - op 三态徽章（`body_photo_receipt.html:154-156`）：create＝存入回执（绿）／
- *   update＝变更回执（橙）／delete＝删除回执（红）。
- * - 标签对照词随 scene 换（`:215-219`）：改照片标签＝改前改后／加照片标签＝加前加后／
- *   删照片标签＝删除前删除后。
- * - 照片明细（`:186-209`）：存／删摆缩略快照（`data:image/`，缺失即明示原因）。
- * - 复制区（t400 裁定 5）：`copyArea({data, log})` 出「复制数据 ▾（纯文本／JSON／CSV 三选一）
- *   ＋复制日志」，空态不出按钮（`copyArea.ts:40-41`）。
+ * 本席位**只做这两页**：09-09 记身材照（`buildPhotoAddDoc`）／09-13 删身材照
+ * （`buildPhotoRemoveDoc`）。同票的**标签三态三页**（09-10／11／12，`buildPhotoTagDoc`）归
+ * 另一席位——为免两席位同时改一份产物，本席位把老壳原封留给它（`shellOf`／`summaryCards`／
+ * `badgeBlock`／`idCardTable`／`doneTextOf`／`writtenDetailOf`／`SOURCE_TEXTS`／`FIELD_LABELS`
+ * 七件一字未动），两页改走新壳 `writeShell`。两席位落地后老壳连同 `statusCard` 一起退休。
+ *
+ * 四条改动（判据逐条可复核）：
+ *  ① **重复收敛**（用户第 4 条）：旧页同一件事说四遍——副标题（回执摘要）／状态卡（「照片已存入」）／
+ *     徽章行（`存入回执 · 批量存照片`）／反馈条（「3 张照片都存好了」）。新页**只留一处说清**：
+ *     反馈条说结果、读数卡给数字、徽章列给类型，**副标题整行删**（摘要仍在复制区载荷里，机器面不变）。
+ *  ② **分隔符债归零**（用户第 5 条）：判据是 `scripts/audit-separators.mjs` 的**节点级命中全零**。
+ *     逐处换形状——`#36` 改「编号 36」（`#N` 形状算内部标识符）／`A · B · C` 串改键值行与读数卡／
+ *     `照片路径、标签、备注、日期、时间` 改……整块删（见 ④）／逐张结果由「图＋表两份同数据」改
+ *     一行一张（`renderListRows`，左中右三槽）；「这次改了」那张卡印的是库内字段名（内部口径），
+ *     整套撤掉，读者要看的是**值**（标签／备注／拍摄日期）不是**列名**。
+ *  ③ **形状化**（用户第 5 条）：两页各自成套——删身材照＝徽章列 ＋ 警示块（`renderFeedbackBlock`）
+ *     ＋ 删除前快照块（图 ＋ 键值行）；记身材照＝读数卡（入库张数／拍照节奏）＋ 反馈条 ＋
+ *     逐张结果行（成功绿、失败红，失败张逐张写「源文件：」「失败原因：」）＋ 批次键值行。
+ *     「永久删除，无法恢复」**全页只 1 处**（警示块的判语，旧页在副标题与快照标题各印一遍）。
+ *  ④ **文案纪律**（用户第 4 条）：去库表名与内部叫法（老壳的 `body_photos (写库回执)` 人话映射表
+ *     在新页整套不用——「来源 照片记录（存了新照片）」读者拿不到信息，两页都不印）；单位不重复；
+ *     符号不顶替文字。
+ *
+ * **机器口径一字不动**：`receipt.summary` 与 `items[].status` 原样进复制区载荷（写链「prose／items／
+ * 库内行」三源一致判据 `cmd-write-40-persist` 钉的就是这两串），页内可见文本另写人话。
  *
  * 体积沿用 t341 首定 `PHOTO_LIST_PAGE_MAX_BYTES = 1048576`（定义地
  * `src/photo/galleryDoc.ts`，本件不另定值；改值走 t341 同步清单）。
  * `src/render/html.ts`（647 行，已超线）只读：本件不调它的照片段。
  */
-import { escapeHtml, renderStatusBadge } from 'base-paint';
+import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
-import { renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
-import type { KpiCardInput } from 'base-paint/blocks';
-import type { CrudReceipt, ReceiptItem } from '../render/receipt.js';
+import { renderChangeRows, renderDataTable, renderDisclosure, renderKpiGrid, renderListRows } from 'base-paint/blocks';
+import type { ChangeRowInput, KpiCardInput } from 'base-paint/blocks';
+import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
-import { statusCard } from '../shared/receiptParts.js';
 import type { PhotoEmbed } from './photoThumb.js';
+import { chipRow, factRows, labelChips, receiptUiCss, sectionTitle, shotBlock } from './receiptUi.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·身材照片回执';
-
-/** 写库字段名 → 人话。**本域映射表**（#476 票面点了这六个）：公共层 `shared/writeParts.ts` 与
- *  跨域的 `shared/fieldLabel.ts` 本票不动，故表住这里；未登记的名字原样留（不编词、不吞字段）。 */
-const FIELD_LABELS: Readonly<Record<string, string>> = Object.freeze({
-  tags: '标签', srcPaths: '照片路径', tag: '标签', note: '备注', date: '日期', time: '时间',
-});
-
-/** 数据来源串 → 人话（去库表名「body_photos」）；三条来源在 `photo.ts` 给出，未登记的原样留。 */
-const SOURCE_TEXTS: Readonly<Record<string, string>> = Object.freeze({
-  'body_photos (写库回执)': '照片记录 · 存了新照片',
-  'body_photos (删除快照)': '照片记录 · 删掉了',
-  'body_photos (标签更新)': '照片记录 · 改了标签',
-});
+/** `<title>`：族名与页名之间原来是 `·`（判据 R1），改空格——标签页的 `<title>` 随本行一起变。 */
+const DOC_TITLE = '卡路里 身材照片回执';
 
 /** op 三态徽章（老实物 `:155-156` 配色；色值住本域，公共层色档徽章另用于逐张照片的状态）。 */
 function opBadgeOf(op: CrudReceipt['op']): { badge: string; color: string } {
@@ -69,70 +59,92 @@ function opBadgeOf(op: CrudReceipt['op']): { badge: string; color: string } {
   return { badge: '存入回执', color: '#34c759' };
 }
 
-/** 干完的那一句人话（原来是「✎ 修改成功 · 修改 改照片标签 已更新」这种拼装）。
- *  「没有变化」的那次不出这句（真话由无变化提示块说），免得同一页自相矛盾。 */
-function doneTextOf(receipt: CrudReceipt): string {
-  if (receipt.op === 'delete') return '照片已删除（#' + (receipt.recordId ?? '—') + '）';
-  if (receipt.op === 'update') return '标签已改好（照片 #' + (receipt.recordId ?? '—') + '）';
-  const n = receipt.items.filter((it) => it.reason === '').length;
-  return n > 1 ? n + ' 张照片都存好了' : '照片已经存好（#' + (receipt.recordId ?? '—') + '）';
+/** 编号的人话形状：`#36` 是**内部标识符**（判据 R7 的票号形状），两页一律写「编号 36」。 */
+function idTextOf(id: number | undefined | null): string {
+  return id === undefined || id === null ? '没有编号' : '编号 ' + id;
 }
 
-/** 状态卡说明随场景切（删除页原来写「已写入身材照片」，与语义相反）。 */
-function writtenDetailOf(receipt: CrudReceipt): string {
-  if (receipt.op === 'delete') return '照片已删除';
-  if (receipt.op === 'update') return '照片标签已更新';
-  return '照片已存入';
+/** 空标签印「无标签」（#476 统一）；多标签走徽章列，**不再用 `、` 串**。 */
+function tagListOf(tags: readonly string[] | undefined): string[] {
+  const kept = (tags ?? []).map(String).filter((t) => t !== '');
+  return kept.length === 0 ? ['无标签'] : kept;
 }
 
-/** 空标签印「无标签」（#476 统一：删除页本来就写「无标签」，标签表那边原来写「无」——「无」不知所指）。 */
-function tagText(tags: readonly string[]): string {
-  return tags.length > 0 ? tags.map(String).join('、') : '无标签';
+/* ══════════════════════════════════════════════════════════════
+ * 标签三态三页（09-10／11／12）：#528 窄席位 B
+ * ══════════════════════════════════════════════════════════════ */
+
+/** 对照列头随场景换（老实物 `:215-219`）：改照片标签＝改前改后／加照片标签＝加前加后／
+ *  删照片标签＝删除前删除后。 */
+function changeHeadOf(scene: string): { before: string; after: string } {
+  if (scene === '加照片标签') return { before: '加前', after: '加后' };
+  if (scene === '删照片标签') return { before: '删除前', after: '删除后' };
+  return { before: '改前', after: '改后' };
 }
 
-/** 每次写后必看的两格：状态 ＋（删除页＝删掉的那张／其余＝这次改了哪些字段）＋（有前照时的节奏卡）。 */
-function summaryCards(receipt: CrudReceipt): KpiCardInput[] {
-  const cards: KpiCardInput[] = [statusCard(receipt, writtenDetailOf(receipt))];
-  if (receipt.op === 'delete') {
-    const it = receipt.items[0];
-    cards.push({
-      label: '删除的照片',
-      value: '#' + (it?.id ?? '—') + ' · ' + (it?.date ?? '—') + ' · ' + tagText(it?.tagList ?? []),
-    });
-  } else {
-    cards.push({
-      label: '这次改了',
-      value: receipt.writtenFields.map((f) => FIELD_LABELS[f] ?? f).join('、') || '—',
-    });
-  }
-  // 专用小卡（原来那张表是死支：`distance` 位没人传，副标题里却印了一遍）。
-  if (receipt.distance) {
-    cards.push({ label: '拍照节奏', value: '距上次「' + receipt.distance.tag + '」拍照 ' + receipt.distance.days + ' 天' });
-  }
-  return cards;
-}
-
-/** 徽章行（op 徽章 ＋ 一句干完了的人话）：开发字样「徽章：」与拼装不通的动词串都不再出现。 */
-function badgeBlock(receipt: CrudReceipt): string {
-  const b = opBadgeOf(receipt.op);
-  const pill = '<div><span style="background:' + b.color + '">'
-    + escapeHtml(b.badge) + ' · ' + escapeHtml(receipt.scene) + '</span></div>';
-  return receipt.noChange ? pill : pill + notice({ icon: 'ok', msg: doneTextOf(receipt) });
-}
-
-/** 回执标识表（#476：摘要＝副标题、场景＝标题，两行删；来源串去库表名改人话）。 */
-function idCardTable(receipt: CrudReceipt): string {
-  return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-    rows: [
-      { k: '编号', v: receipt.recordId === null ? '未设置' : '#' + receipt.recordId },
-      { k: '时间', v: receipt.meta.actionAt + ' · ' + (SOURCE_TEXTS[receipt.meta.source] ?? receipt.meta.source) },
-    ],
-    caption: '记录标识（编号 ＋ 时间）',
+/** 标签逐行三态：标签名占左槽，被换掉的走旧槽（公共层自带红删除线）、新写的走新槽（字重 600）、
+ *  没动的两槽都写状态词；「变化」这一列由行首状态词（保留／新增／移除）承载。 */
+function tagChangeRowsOf(before: readonly string[], after: readonly string[]): ChangeRowInput[] {
+  const inBefore = new Set(before);
+  const inAfter = new Set(after);
+  const all = [...before, ...after.filter((t) => !inAfter.has(t) || !inBefore.has(t))];
+  const uniq = all.filter((t, i) => all.indexOf(t) === i);
+  return uniq.map((t) => {
+    const b = inBefore.has(t);
+    const a = inAfter.has(t);
+    if (b && a) return { label: '保留', before: '原有', after: '现有', arrow: false };
+    if (a) return { label: '新增', after: t, arrow: false };
+    return { label: '移除', before: t, arrow: false };
   });
 }
 
-/** 页尾「给 AI 核对的信息」折叠块（#476 本域自渲染：不复用共用件的默认三项，内文只留记录号＋数据库改动）。 */
+/** 标签对照块：列头一行（改前／加前／删除前 ＆ 改后／加后／删除后）＋ 逐标签一行。
+ *  空标签表也出一行（「没有标签」），免得读者分不清「没有标签」与「这块没渲染」。 */
+function tagChangeBlock(receipt: CrudReceipt): string {
+  const diff = receipt.tagDiff ?? { before: [], after: [] };
+  const head = changeHeadOf(receipt.scene);
+  const rows = tagChangeRowsOf(diff.before, diff.after);
+  const body = rows.length === 0
+    ? renderChangeRows({ rows: [{ label: '没有标签', before: '原有', after: '现有', arrow: false }] })
+    : renderChangeRows({ rows });
+  return '<div class="phr-tags">'
+    + '<div class="phr-tags-row phr-tags-head"><span class="phr-tags-label"></span>'
+    + '<span class="phr-tags-slot">' + escapeHtml(head.before) + '</span>'
+    + '<span class="phr-tags-arrow" aria-hidden="true"></span>'
+    + '<span class="phr-tags-slot">' + escapeHtml(head.after) + '</span></div>'
+    + body + '</div>';
+}
+
+/** 标签页的结果句：**这页唯一说清结果的地方**（徽章给类型、对照表给逐条，都不另说一遍）。
+ *  无变化时不出这句（真话由无变化提示块说，免得同一页自相矛盾）。 */
+function tagNoticeOf(receipt: CrudReceipt): string {
+  if (receipt.noChange) {
+    const tags = tagListOf((receipt.tagDiff ?? { before: [], after: [] }).after).join('、');
+    return notice({ icon: 'info', title: '没有变化', msg: '这次没有改动任何东西', detail: '标签还是：' + tags });
+  }
+  const diff = receipt.tagDiff ?? { before: [], after: [] };
+  const head = changeHeadOf(receipt.scene);
+  if (receipt.scene === '加照片标签') {
+    const added = diff.after.filter((t) => !diff.before.includes(t));
+    return notice({ icon: 'ok', msg: added.length > 0 ? '标签已加好：' + added.join('、') : '标签已加好' });
+  }
+  if (receipt.scene === '删照片标签') {
+    const gone = diff.before.filter((t) => !diff.after.includes(t));
+    return notice({ icon: 'ok', msg: gone.length > 0 ? '标签已删掉：' + gone.join('、') : '标签已删掉' });
+  }
+  const now = tagListOf(diff.after).join('、');
+  return notice({ icon: 'ok', msg: head.after + '：' + now });
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * 两页共用：给 AI 核对的折叠块 ＋ 复制区（机器面，一字不动）
+ * ══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════
+ * 两页共用：给 AI 核对的折叠块 ＋ 复制区（机器面，一字不动）
+ * ══════════════════════════════════════════════════════════════ */
+
+/** 页尾「给 AI 核对的信息」折叠块（本域自渲染：内文只留记录号＋数据库改动）。 */
 function aiCheckDisclosure(receipt: CrudReceipt): string {
   return renderDisclosure({
     title: '给 AI 核对的信息',
@@ -143,55 +155,6 @@ function aiCheckDisclosure(receipt: CrudReceipt): string {
         { k: '数据库改动', v: '数据库改了 ' + receipt.affectedRows + ' 行（给 AI 核对用）' },
       ],
     }),
-  });
-}
-
-/** 标签词随 scene 换（老实物 `:215-219`）。 */
-function tagLabelsOf(scene: string): [string, string] {
-  if (scene === '加照片标签') return ['加前', '加后'];
-  if (scene === '删照片标签') return ['删除前', '删除后'];
-  return ['改前', '改后'];
-}
-
-/** 标签三态行（#476）：两列看不出增删，改成逐标签一行——保留（中性）／新增（`+ 侧身`）／移除（`− 晨起`）。 */
-function tagRowsOf(before: readonly string[], after: readonly string[]): Array<Record<string, unknown>> {
-  const inBefore = new Set(before);
-  const inAfter = new Set(after);
-  const all = [...before, ...after.filter((t) => !inBefore.has(t))];
-  return all.map((t) => {
-    const b = inBefore.has(t);
-    const a = inAfter.has(t);
-    const state = b && a ? '保留' : (a ? '新增' : '移除');
-    return {
-      tag: (state === '新增' ? '+ ' : (state === '移除' ? '− ' : '')) + t,
-      before: b ? '✓' : '—',
-      after: a ? '✓' : '—',
-      state,
-    };
-  });
-}
-
-/** 标签变更表（三态对照；列头写业务说法，不再是空的「对照／标签」）＋无变化提示块。 */
-function tagDiffTable(receipt: CrudReceipt): string {
-  const diff = receipt.tagDiff ?? { before: [], after: [] };
-  const [lb, la] = tagLabelsOf(receipt.scene);
-  const rows = tagRowsOf(diff.before, diff.after);
-  const table = renderDataTable({
-    columns: [
-      { key: 'tag', label: '标签' },
-      { key: 'before', label: lb },
-      { key: 'after', label: la },
-      { key: 'state', label: '变化' },
-    ],
-    rows: rows.length > 0 ? rows : [{ tag: '无标签', before: '—', after: '—', state: '—' }],
-    caption: '标签变更（' + lb + ' → ' + la + '）',
-  });
-  if (!receipt.noChange) return table;
-  return table + notice({
-    icon: 'info',
-    title: '没有变化',
-    msg: '这次没有改动任何东西',
-    detail: '标签还是：' + tagText(diff.after),
   });
 }
 
@@ -213,112 +176,181 @@ function receiptCopyArea(receipt: CrudReceipt, command: string): string {
   });
 }
 
-/** 副标题：删除页自写人话（机器摘要里那串「硬删除，不可恢复」不上可见文本），其余页沿用回执摘要。 */
-function subtitleOf(receipt: CrudReceipt): string {
-  if (receipt.op !== 'delete') return receipt.summary;
-  const it = receipt.items[0];
-  const bits = ['已删除照片 #' + (it?.id ?? '—'), it?.date ?? '—', tagText(it?.tagList ?? [])];
-  if (it?.photoPath) bits.push(it.photoPath);
-  return bits.join(' · ');
-}
+/* ══════════════════════════════════════════════════════════════
+ * 新壳（记身材照／删身材照两页）
+ * ══════════════════════════════════════════════════════════════ */
 
-/** 单张照片的图题（两行式）：① 编号 · 日期 ＋状态徽标 ② 标签 · 文件名；只有失败张才出「失败原因」。 */
-function photoFigureOf(
-  it: ReceiptItem,
-  byName: ReadonlyMap<string, PhotoEmbed>,
-  opts: { tag: string; note?: string; date: string },
-): string {
-  const file = it.file ?? '';
-  const e = byName.get(file);
-  const failed = it.reason !== '';
-  const media = failed
-    ? '<div>这张没有存进来</div>'
-    : (e && e.dataUri !== null
-      // #484：图给宽度约束＋缩略级上限（存照回执可一次带多张，图别把页撑破）。
-      ? '<img src="' + e.dataUri + '" alt="身材照#' + (it.id ?? '') + '" style="max-width:100%;max-height:240px;height:auto" />'
-      : '<div>照片未内嵌（' + escapeHtml(e?.missing ?? '未知原因') + '）</div>');
-  const line1 = '<div>' + (it.id === undefined || it.id === null ? '没有编号' : '#' + it.id)
-    + ' · ' + escapeHtml(opts.date) + ' '
-    + renderStatusBadge({ status: failed ? 'danger' : 'ok', text: it.status }) + '</div>';
-  const line2 = '<div>' + (failed
-    ? '源文件：' + escapeHtml(file)
-    : escapeHtml('标签 ' + opts.tag + (opts.note ? ' · ' + opts.note : '') + (file ? ' · ' + file : ''))) + '</div>';
-  const line3 = failed ? '<div>失败原因：' + escapeHtml(it.reason) + '</div>' : '';
-  return '<figure data-id="' + (it.id ?? '') + '">' + media
-    + '<figcaption>' + line1 + line2 + line3 + '</figcaption></figure>';
-}
-
-function shellOf(receipt: CrudReceipt, command: string, bodyParts: string[]): string {
-  const parts = [
-    renderKpiGrid(summaryCards(receipt)),
-    badgeBlock(receipt),
-    idCardTable(receipt),
-    ...bodyParts,
-    aiCheckDisclosure(receipt),
-    receiptCopyArea(receipt, command),
-  ].join('');
+/** 新壳：眉标＝族名、H1＝这次做的动作（回执场景名，如「批量存照片」「删身材照」）、
+ *  **副标题整行删**（它印的是回执摘要——与反馈条说的是同一件事）。`pageUi: true` 接 #525 的
+ *  手机端配方（断点／44px 触摸区／安全区／窄屏表格卡片化）；页内样式第一项。 */
+function writeShell(input: {
+  receipt: CrudReceipt; command: string; parts: readonly string[];
+}): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: receipt.scene + ' · 回执',
-    eyebrow: '身材照片 · 写后回执',
-    subtitle: subtitleOf(receipt),
-    content: parts,
+    title: input.receipt.scene,
+    eyebrow: '身材照片',
+    subtitle: null,
+    pageUi: true,
+    content: [receiptUiCss(), ...input.parts, aiCheckDisclosure(input.receipt),
+      receiptCopyArea(input.receipt, input.command)].join(''),
   });
 }
 
-/** 存身材照回执整页（3 变体同形：单张／含备注／批量；失败张也逐张上页，带失败原因）。 */
+/* ── 09-09 记身材照 ───────────────────────────────────────────── */
+
+/** 读数卡：成功时 = **入库张数 ＋ 绿徽章「照片已存入」**（这页的结果就在这一处说清）；
+ *  有失败时 = **本次要存 N 张 ＋ 橙徽章「M 张没存进来」**，存好的张数让给下面的反馈条说——
+ *  同一事实不许在卡上与条上各说一遍（收拢前的老页在四处说同一件事）。一格一件事，卡槽吃纯文本。 */
+function addCardsOf(receipt: CrudReceipt): KpiCardInput[] {
+  const failed = receipt.items.filter((it) => it.reason !== '').length;
+  const ok = receipt.items.length - failed;
+  const cards: KpiCardInput[] = [failed > 0
+    ? {
+      label: '本次要存', value: String(receipt.items.length), unit: '张',
+      status: 'warn', statusText: failed + ' 张没存进来',
+    }
+    : {
+      label: '入库张数', value: String(ok), unit: '张',
+      status: 'ok', statusText: '照片已存入',
+    }];
+  if (receipt.distance) {
+    cards.push({
+      label: '拍照节奏',
+      value: '距上次「' + receipt.distance.tag + '」拍照 ' + receipt.distance.days + ' 天',
+    });
+  }
+  return cards;
+}
+
+/** 反馈条：**只在有事要说的时候出**——全成功时结果已经在读数卡的绿徽章上说清了，这一条不再重复；
+ *  有失败时它报「存好了几张」，卡上报「没进来几张」，失败原因落在逐张那一块里。 */
+function addNoticeOf(receipt: CrudReceipt): string {
+  const failed = receipt.items.filter((it) => it.reason !== '').length;
+  const ok = receipt.items.length - failed;
+  if (failed === 0) return '';
+  if (ok === 0) return notice({ icon: 'warn', msg: failed + ' 张都没存进来', detail: '每张的原因写在下面' });
+  return notice({ icon: 'warn', msg: ok + ' 张照片都存好了', detail: '没存进来的那张，原因写在下面' });
+}
+
+/** 逐张结果：**一张一块**——图（存不进来的那一张只给文字位）＋这一张的三槽列表行
+ *  （左＝编号、中＝文件名、右＝结果）；失败张多一行「失败原因：」。图上行下同住一块，
+ *  **不是同一份数据印两遍**（#476 的老债是「缩略图 ＋ 明细表」两份同数据）。 */
+function shotRowsOf(receipt: CrudReceipt, byName: ReadonlyMap<string, PhotoEmbed>): string {
+  const blocks: string[] = [];
+  for (const it of receipt.items) {
+    if (it.reason !== '') {
+      blocks.push(shotBlock('fail', renderListRows({
+        items: [
+          { left: '没有编号', main: '源文件：' + (it.file ?? '—'), right: '没存进来' },
+          { main: '失败原因：' + it.reason },
+        ],
+      })));
+      continue;
+    }
+    const e = byName.get(it.file ?? '');
+    // #484：图给宽度约束＋缩略级上限（判据钉死这一处 240px）；没内嵌的写明为什么，不留白框。
+    const media = e !== undefined && e.dataUri !== null
+      ? '<img src="' + e.dataUri + '" alt="刚存进来的身材照"'
+        + ' style="max-width:100%;max-height:240px;height:auto" />'
+      : '<div class="phr-shot-miss">这一张的原图没能放进页面</div>';
+    blocks.push(shotBlock('ok', media + renderListRows({
+      items: [{ left: idTextOf(it.id), main: it.file ?? '—', right: '已存入' }],
+    })));
+  }
+  if (blocks.length === 0) return '';
+  return (receipt.items.length > 1 ? sectionTitle('逐张结果') : '') + blocks.join('');
+}
+
+/** 批次键值行：这次存进去的值（标签走徽章列，不串 `、`）。**写入时间不再单列一行**——
+ *  它与「拍摄日期」在样张上同一天，读者看着像同一件事说两遍；回执时间仍在复制区载荷与
+ *  「给 AI 核对的信息」里（机器面一行未动）。 */
+function addFactsOf(opts: { tag: string; note?: string; date: string }): string {
+  return labelChips('标签', [opts.tag])
+    + factRows([
+      { k: '备注', v: opts.note ?? '' },
+      { k: '拍摄日期', v: opts.date },
+    ]);
+}
+
+/** 存身材照回执整页（3 变体同形：单张／含备注／批量；失败张逐张上页，带失败原因）。 */
 export function buildPhotoAddDoc(
   receipt: CrudReceipt,
   opts: { embeds: readonly PhotoEmbed[]; tag: string; note?: string; date: string; command: string },
 ): string {
   const byName = new Map(opts.embeds.map((e) => [e.fileName, e]));
-  const figures = receipt.items.map((it) => photoFigureOf(it, byName, opts)).join('');
-  const fails = receipt.items.filter((it) => it.reason !== '').length;
-  // #476：图与「照片明细」表同数据印两遍，表只在张数多（≥3）或本次有失败（要横向对账）时才出。
-  const table = receipt.items.length >= 3 || fails > 0
-    ? renderDataTable({
-      columns: [
-        { key: 'id', label: '编号' },
-        { key: 'file', label: '文件' },
-        { key: 'tag', label: '标签' },
-        { key: 'status', label: '状态' },
-      ],
-      rows: receipt.items.map((it) => ({
-        id: it.id === undefined || it.id === null ? '—' : String(it.id),
-        file: it.file ?? '—',
-        tag: opts.tag + (opts.note ? ' · ' + opts.note : ''),
-        status: it.status,
-      })),
-      caption: receipt.items.length > 1 ? '照片明细 · ' + receipt.items.length + ' 张' : '照片明细',
-      emptyText: '本次没有照片明细',
-    })
-    : '';
-  return shellOf(receipt, opts.command, ['<div>' + figures + '</div>', table]);
+  return writeShell({
+    receipt,
+    command: opts.command,
+    parts: [
+      chipRow([opBadgeOf(receipt.op).badge]),
+      renderKpiGrid(addCardsOf(receipt)),
+      addNoticeOf(receipt),
+      shotRowsOf(receipt, byName),
+      addFactsOf(opts),
+    ],
+  });
 }
 
-/** 删身材照回执整页：删除快照独立块（标题＋图＋一行元数据＋警示块）——删前快照是永久删除的唯一凭据。 */
+/* ── 09-13 删身材照 ───────────────────────────────────────────── */
+
+/** 删除前的样子：图（内嵌原图是永久删除的唯一凭据）＋这张照片的键值行。
+ *  旧页把「编号 · 日期 · 标签 · 文件名」串成一行图注，这里一行一件事。 */
+function removeSnapshotOf(receipt: CrudReceipt, embed: PhotoEmbed | null): string {
+  const it = receipt.items[0];
+  const img = embed && embed.dataUri !== null
+    // #484：图给宽度约束＋缩略级上限（判据钉死这一处 240px）。
+    ? '<div class="phr-shot-stage"><img src="' + embed.dataUri + '" alt="删除前的身材照"'
+      + ' style="max-width:100%;max-height:240px;height:auto" /></div>'
+    : '<div class="phr-shot-stage"><span>这张图没能留下来（原图已经随删除一起移走了）</span></div>';
+  return sectionTitle('删除前的样子') + img
+    + labelChips('标签', tagListOf(it?.tagList))
+    + factRows([
+      { k: '编号', v: it?.id === undefined || it?.id === null ? '' : String(it.id) },
+      { k: '拍摄日期', v: it?.date ?? '' },
+      { k: '原文件', v: it?.photoPath ?? embed?.fileName ?? '' },
+      { k: '删除时间', v: receipt.meta.actionAt },
+    ]);
+}
+
+/** 删身材照回执整页：徽章列 ＋ 警示块（「永久删除，无法恢复」全页只此一处）＋ 删除前快照块。 */
 export function buildPhotoRemoveDoc(
   receipt: CrudReceipt,
   opts: { embed: PhotoEmbed | null; command: string },
 ): string {
-  const it = receipt.items[0];
-  const e = opts.embed;
-  const img = e && e.dataUri !== null
-    ? '<img src="' + e.dataUri + '" alt="身材照#' + (it?.id ?? '') + '" style="max-width:100%;max-height:240px;height:auto" />'
-    : '<div>照片未内嵌（' + escapeHtml(e?.missing ?? '文件已随删除移除，快照仅保留文字行') + '）</div>';
-  const meta = '#' + (it?.id ?? '—') + ' · ' + (it?.date ?? '—') + ' · ' + tagText(it?.tagList ?? [])
-    + ' · ' + (it?.photoPath ?? e?.fileName ?? '—');
-  const snapshot = renderDisclosure({
-    title: '删除前是这样的（永久删除，无法恢复）',
-    open: true,
-    contentHtml: '<figure data-id="' + (it?.id ?? '') + '">' + img
-      + '<figcaption>' + escapeHtml(meta) + '</figcaption></figure>'
-      + notice({ icon: 'warn', msg: '照片和记录都已经删掉了', detail: '还想留底的话，下次删之前先另存一份' }),
+  const warn = notice({
+    icon: 'warn',
+    msg: '永久删除，无法恢复',
+    detail: '照片已删除，图和记录都一起删掉了。想留底的话，下次删之前先另存一份。',
   });
-  return shellOf(receipt, opts.command, [snapshot]);
+  return writeShell({
+    receipt,
+    command: opts.command,
+    parts: [chipRow([opBadgeOf(receipt.op).badge]), warn, removeSnapshotOf(receipt, opts.embed)],
+  });
 }
 
-/** 改／加／删照片标签回执整页（三态对照，对照词随 scene 换，无变化走提示块）。 */
+/* ── 09-10／11／12 标签三态（#528 窄席位 B） ─────────────────────── */
+
+/** 改／加／删照片标签回执整页：徽章（回执类型）＋ 结果句（这页唯一说清结果的地方）＋
+ *  标签对照块（`renderChangeRows`：改前／改后两列，逐标签一行）＋ 记录标识（编号 ＋ 时间）。
+ *  无变化时不出对照表，只出静态提示块「这次没有改动任何东西」。 */
 export function buildPhotoTagDoc(receipt: CrudReceipt, opts: { command: string }): string {
-  return shellOf(receipt, opts.command, [tagDiffTable(receipt)]);
+  return writeShell({
+    receipt,
+    command: opts.command,
+    parts: [
+      chipRow([opBadgeOf(receipt.op).badge]),
+      tagNoticeOf(receipt),
+      receipt.noChange ? '' : tagChangeBlock(receipt),
+      renderDataTable({
+        columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+        rows: [
+          { k: '编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
+          { k: '时间', v: receipt.meta.actionAt },
+        ],
+        caption: '记录标识',
+      }),
+    ],
+  });
 }
