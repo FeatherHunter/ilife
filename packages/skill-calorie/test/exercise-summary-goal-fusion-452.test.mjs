@@ -165,13 +165,14 @@ function calibersOf(html) {
   return [...html.matchAll(/<p class="ilife-block-caliber">([\s\S]*?)<\/p>/g)].map((m) => m[1]);
 }
 
-/** 来源脚注那一条：`数据来源 · <来源> · 起 → 止 · 共 N 条`（N 即本窗记录数，唯一的「共 N 条」来源处）。 */
+/** 来源脚注那一块：#523 起是**键值行**（`sportUi.factStrip()`），不再是
+ *  `数据来源 · <来源> · 起 → 止 · 共 N 条` 那种 `·` 串（共用层口径统一归 #470）。
+ *  仍读「本窗记录数」这一个数——判据覆盖面不变，只是取数位置跟着事实的落点走。 */
 function sourceFootnote(html) {
-  const hit = calibersOf(html).find((t) => t.startsWith('数据来源 · '));
-  assert.ok(hit !== undefined, '产物里读不到来源脚注');
-  const m = /共 (\d+) 条/.exec(hit);
-  assert.ok(m !== null, '来源脚注里读不到条数：' + hit);
-  return { text: hit, count: Number(m[1]) };
+  const hit = /<span class="sui-fact-k">记录数<\/span><span class="sui-fact-v">共 (\d+) 条<\/span>/.exec(html);
+  assert.ok(hit !== null, '产物里读不到来源脚注的记录数（键值行）');
+  assert.ok(html.includes('数据来源'), '产物里读不到来源脚注');
+  return { text: hit[0], count: Number(hit[1]) };
 }
 
 /** 复制载荷那几段（**有意**承载可照抄命令原文的地方）：复制菜单按钮的 `data-t` 载荷。
@@ -197,7 +198,8 @@ function assertNoEngineerWords(html, what) {
   const snake = /\b[a-z][a-z0-9]*_[a-z0-9_]+\b/.exec(body);
   assert.equal(snake, null, what + ' 的可见面出现 snake_case：' + (snake === null ? '' : snake[0]));
   const head = headTexts(html);
-  assert.equal(head.title, '卡路里·运动身体', what + ' 的 head 标题不是人话原名：' + head.title);
+  // #523：品牌名里的 `·` 去掉（`·` 是分隔符债，`<title>` 也是可见文本；照 #401 样板先例）。
+  assert.equal(head.title, '卡路里 运动', what + ' 的 head 标题不是人话原名：' + head.title);
   for (const [where, text] of [['head 标题', head.title], ['H1', head.h1], ['眉标', head.eyebrow]]) {
     assert.ok(!/calorie\.[a-z]/.test(text), what + ' 的' + where + '里有命令键：' + text);
     assert.ok(!/\bt\d{3}\b/i.test(text), what + ' 的' + where + '里有票号：' + text);
@@ -251,7 +253,8 @@ function assertSummary(r, c) {
   assertFusionShell(r, what);
   const head = headTexts(r.file);
   assert.ok(head.h1.startsWith('运动汇总 '), what + ' 的 H1 不是人话页名：' + head.h1);
-  assert.equal(head.eyebrow, '运动 · 汇总', what + ' 眉标不是人话原文：' + head.eyebrow);
+  // #523：眉标 `运动 · 汇总` → `运动汇总`（类别与页族两个字都在，只是不拿 `·` 串）。
+  assert.equal(head.eyebrow, '运动汇总', what + ' 眉标不是人话原文：' + head.eyebrow);
   // ① KPI 四格（结构上是四张卡）。
   const kpi = cardOf(r.file, 'sec-kpi');
   assert.ok(kpi.includes('ilife-block-kpi-card'), what + ' 缺 KPI 四格容器');
@@ -267,9 +270,8 @@ function assertSummary(r, c) {
   assert.ok(type.includes('按类型明细'), what + ' 缺按类型明细表');
   assert.ok(type.includes('ilife-block-data-table'), what + ' 按类型明细不是表格件');
   assert.ok(r.file.includes('按分类汇总'), what + ' 缺按分类汇总折叠区');
-  // ⑤ 来源脚注 ＋ ⑥ 口径行（两条都在页上，来源条数是唯一的「共 N 条」来源处）。
+  // ⑤ 来源脚注 ＋ ⑥ 口径行（来源条数是唯一的「共 N 条」来源处）。
   const src = sourceFootnote(r.file);
-  assert.ok(r.file.includes('数据来源 · '), what + ' 缺来源脚注');
   assert.ok(calibersOf(r.file).length >= 2, what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');
   // ⑦ 每日消耗折线按全窗口画（窗内天数＝折线点数）。
   assert.ok(r.file.includes('按 ' + r.days + ' 天画'), what + ' 折线点数口径不是窗内天数');
@@ -352,13 +354,15 @@ function assertGoalPage(r, what) {
   assertFusionShell(r, what, { minAnchors: 2 });
   const head = headTexts(r.file);
   assert.ok(head.h1.startsWith('运动目标 '), what + ' 的 H1 不是人话页名：' + head.h1);
-  assert.equal(head.eyebrow, '运动 · 对照目标', what + ' 眉标不是人话原文：' + head.eyebrow);
+  // #523：眉标 `运动 · 对照目标` → `运动对照目标`（同上，不拿 `·` 串）。
+  assert.equal(head.eyebrow, '运动对照目标', what + ' 眉标不是人话原文：' + head.eyebrow);
   // 环卡 ＋ 判决胶囊 ＋ 差距文案。
   assert.ok(hasClass(r.file, 'ilife-block-ring-wrap'), what + ' 缺环形进度容器（ilife-block-ring-wrap）');
   assert.ok(hasClass(r.file, 'ilife-block-ring-pct'), what + ' 环心缺百分比读数');
   assert.ok(hasClass(r.file, 'ilife-block-verdict'), what + ' 缺判决胶囊（ilife-block-verdict）');
   assert.ok(/class="[^"]*ilife-block-verdict (ok|no)"/.test(r.file), what + ' 判决胶囊没有档（ok/no）');
-  assert.ok(/差距( 超出 \d| 差 \d| −\d|\+\d)/.test(r.file), what + ' 缺差距文案');
+  // #523：差距文案从 `·` 串改成键值行（标签「差距」＋ 值「超出 N 卡／差 N 卡」），仍是同一份事实。
+  assert.ok(/超出 \d+ 卡|差 \d+ 卡/.test(r.file), what + ' 缺差距文案');
   assert.ok(hasClass(r.file, 'ilife-block-kpi-card'), what + ' 缺目标页的数值格');
   // 口径行（周口径那句只在一处算一处写；口径行走 renderCaliberLine）。
   assert.ok(calibersOf(r.file).length >= 2, what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');

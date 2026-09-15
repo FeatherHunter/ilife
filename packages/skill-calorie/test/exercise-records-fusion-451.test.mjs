@@ -46,8 +46,10 @@ const DB_FILENAME = 'calorie_data.db';
 const KEY = 'calorie.view.exercise-records';
 /** 样例产物落点（票面：落 `.scratch/t451/`，不进版本库，回执给可双击绝对路径）。 */
 const SAMPLES = join(REPO, '.scratch', 't451', 'out');
-/** 眉标原字（页头人话；判据读这一处）。 */
-const EYEBROW = '运动 · 记录级明细';
+/** 眉标原字（页头人话；判据读这一处）。
+ *  #523：`运动 · 记录级明细` → `运动记录明细`（`·` 是分隔符债，探针节点级必须为 0；
+ *  类别「运动」与页族「记录级明细」两个字都还在，只是不拿符号串）。 */
+const EYEBROW = '运动记录明细';
 /** 八列表头（逐字、逐序；票面第 1 条）。 */
 const COLUMNS = ['日期', '类型', '分类', '时长', '消耗', '距离', '心率', '备注'];
 /** 每页行数上限（实现件里的同值；表标题必须写明它）。 */
@@ -155,7 +157,9 @@ function assertFusion(r, what, opts = {}) {
   assert.ok(caption.includes('运动记录明细'), what + ' 缺记录级列表标题（#342 原字）：' + caption);
   assert.ok(caption.includes('每页最多 ' + ROW_LIMIT + ' 条'), what + ' 表标题没写明行数上限：' + caption);
   const subtitle = (/<p class="ilife-block-page-shell-subtitle">([^<]*)<\/p>/.exec(r.file) ?? [])[1] ?? '';
-  assert.ok(subtitle.includes('共 ' + (opts.sessions ?? '') + ' 条'), what + ' 页眉没写总数：' + subtitle);
+  // #523：总数那份事实只留在表标题一处（页眉副标题原来把它复读一遍，是重复事实债），
+  // 故这条读数改读表标题——判据覆盖面不变，只是取数位置跟着事实的落点走。
+  assert.ok(caption.includes('共 ' + (opts.sessions ?? '') + ' 条'), what + ' 表标题没写总数：' + caption);
   assert.ok(subtitle.includes('本页显示 ' + visibleRows(r.file) + ' 条'),
     what + ' 页眉「本页显示 N 条」与可见行数 ' + visibleRows(r.file) + ' 不一致：' + subtitle);
   assert.ok(caption.includes('本页显示 ' + visibleRows(r.file) + ' 条'),
@@ -175,8 +179,10 @@ function assertFusion(r, what, opts = {}) {
   assert.deepEqual([...r.file.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     what + ' 的复制数据不是三格式菜单');
   assert.ok(r.file.includes('复制数据'), what + ' 缺复制数据按钮');
-  // ⑤ 来源脚注 ＋ 口径行（都走 #420 的口径说明行）。
-  assert.ok(r.file.includes('数据来源 · '), what + ' 缺来源脚注');
+  // ⑤ 来源脚注 ＋ 口径行。
+  // #523：来源脚注换成键值行（`数据来源`／`窗口`／`记录数`），不再印 `数据来源 · …` 那种 `·` 串
+  // （共用层口径统一归 #470）；判据仍钉「页上有来源这条事实」＋「条数报出来」。覆盖率未减。
+  assert.ok(r.file.includes('数据来源'), what + ' 缺来源脚注');
   assert.ok((r.file.match(/class="ilife-block-caliber"/g) ?? []).length >= 2,
     what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');
   // 类别色：本页自己不写色表（色值单源判据归 #453 分布／趋势族；本页连字面量都不落版面正文）。
@@ -331,7 +337,7 @@ test('#451 空态：无记录时给「说哪句话记下第一条」（装配层
   assert.equal(cardOf(html, 'sec-table'), '', '没有行却留下了明细卡外壳');
   assert.equal(visibleRows(html), 0, '空态却有可见行');
   assert.ok(!html.includes('筛选口径'), '空态印出了筛选口径句');
-  assert.ok(html.includes('数据来源 · ') && html.includes('共 0 条'), '空态缺来源脚注（0 条也要报）');
+  assert.ok(html.includes('数据来源') && html.includes('共 0 条'), '空态缺来源脚注（0 条也要报）');
   // 三类工程话在空态页里同样零命中。
   assert.ok(!html.includes('calorie.view.') && !html.includes('移植'), '空态页出现工程话');
   // 按筛选词的下一句话（力量／有氧各自指名那条唤醒词）。
