@@ -20,11 +20,13 @@
  *      · `<title>` 的品牌 `·` → 空格（照 #401 样板先例）；
  *      · 页脚来源行**不再走 `src/shared/sourceLine.ts`**（那件的 `·` 串是跨场景共用位，本族改用
  *        `sportUi.factStrip()` 的键值行承接；共用层口径统一归 **#470**，本票吸收其一角）；
- *      · 数字口径行里 `；` 串 → 一条事实一个 `renderCaliberLine`（单位那几条并排成胶囊行）。
+ *      · 数字口径行里 `；` 串 → 改走 `renderCaliberLine`（单位那几条并排成胶囊行）；返修 R4 再把
+ *        「条数／消耗／缺时长」三行收成一行，段间分隔交给公共层的竖线拆段。
  *   ② **机器词上屏**：来源名从库表名 `exercise_log` 改成读者看得懂的「运动记录」；数值走显示层取整。
  *   ③ **重复事实**：窗口只在窗口条一处；「本页显示 N 条」只在表标题一处（副标题不再复读）；
  *      「活跃 N 天」只在独立卡一处（记录数卡小字已撤）；「每页最多 N 条」只在表标题一处。
- *      眉标退回族名（原来与 H1 逐字同名）。#523 返修落点。
+ *      眉标退回族名（原来与 H1 逐字同名）。#523 返修落点；返修 R4 再撤来源脚注的「窗口」一格
+ *      （日期已有 H1 与窗口卡两处落点）。
  *   ④ **手机端同档**：页内形状件的 820 段＋触摸面住 `src/exercise/sportUi.ts`（正文首项放它的样式）。
  *
  * 对外 2 件（铁律五「不多于五个」）：
@@ -182,15 +184,19 @@ function subtitleOf(): string {
   return '逐条列出本窗的运动记录';
 }
 
-/** 数字口径行（#523）：原来五件事一个 `；` 串，现在一条事实一行；单位那几条并排成胶囊行。
- *  第一条保留 `口径：` 前缀（回归判据读它）。两条各说一件取数事实，不当填充句。 */
-function caliberLines(v: RecordsView): string[] {
+/** 数字口径行（#523）：原来五件事一个 `；` 串，改后一条事实一行的 `口径：` 行。
+ *  **返修 R4 三行收一行**（视觉复评 R3 第 3、4 页各 −3「连排灰小字」）：本页原先把「条数」与
+ *  「消耗」「缺时长」**各占一个 `<p class="…-caliber">`**，页头因此堆三行 12px 灰字，读起来
+ *  像三句并列的脚注，而它们其实是**同一条取数口径的三个分句**。现收成一行，分隔交给公共层
+ *  `renderCaliberLine` 的竖线拆段（段间是版式里的 hairline，不是拿字符当分隔），窄屏靠它
+ *  自己的 `flex-wrap` 换行。**事实一条不减**：条数口径、消耗口径、缺时长的情形照旧都在列。 */
+function caliberLine(v: RecordsView): string {
   const parts = [
     '口径：条数＝本窗内未删除的运动记录',
     '消耗＝记录行上报值合计，不按天摊',
   ];
   if (v.totalMinutes === null) parts.push('本窗没有一行填了时长，总时长不印假 0');
-  return parts;
+  return parts.join('｜');
 }
 
 /** 单位图例（胶囊行）：每条一个「列名＝单位」，各自成形。 */
@@ -281,15 +287,18 @@ function emptyCard(v: RecordsView): Card {
   };
 }
 
-/** 来源脚注卡（#523 形状化）：键值行「数据来源／窗口／记录数」，三个独立文本节点。
- *  不再产 `数据来源 · <来源> · 起 → 止 · 共 N 条` 那种 `·` 串（共用层口径统一归 #470）。 */
+/** 来源脚注卡（#523 形状化）：键值行「数据来源／记录数」，两个独立文本节点。
+ *  不再产 `数据来源 · <来源> · 起 → 止 · 共 N 条` 那种 `·` 串（共用层口径统一归 #470）。
+ *  **返修 R4 撤「窗口」一格**（视觉复评 R3 第 3、4 页各 −4「日期范围两处」）：这一段日期在本页
+ *  已有两处更该在的落点——页头 H1 的页名句与窗口卡的两枚日期块（「开始／结束」），脚注再报一遍
+ *  属同一份事实的第三遍。撤这一格**只撤落点、不撤事实**：来源（哪张表）与条数（共 N 条）原样留着，
+ *  脚注的职责收成「这份数从哪来、共多少条」。 */
 function sourceCard(v: RecordsView): Card {
   return {
     id: 'sec-source',
     label: '数据来源',
     html: factStrip([
       { k: '数据来源', v: SOURCE },
-      { k: '窗口', v: v.start + ' → ' + v.end },
       { k: '记录数', v: '共 ' + v.sessions + ' 条' },
     ]),
   };
@@ -312,7 +321,7 @@ export function buildRecordsDoc(v: RecordsView): string {
     windowStrip(v.start, v.end, v.activeDays + ' 天有记录'),
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
     unitCaps(),
-    caliberLines(v).map((t) => renderCaliberLine(t)).join(''),
+    renderCaliberLine(caliberLine(v)),
     filter === null ? '' : renderCaliberLine(filter),
     truncation === null ? '' : renderCaliberLine(truncation),
     cards.map(shell).join(''),

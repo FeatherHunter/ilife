@@ -98,8 +98,10 @@ export function exerciseUiCss(): string {
     + '.ilife-page .ilife-block-data-table{max-width:none;margin-inline:0}'
     + '.ilife-page .ilife-block-data-table th{font-size:12px}'
     // ── 页级覆盖（视觉复评 r2 的 P0-A／P0-B）：页内导航的锚点是真 `<a href>`（可点）⇒ 抬到 44px
-    //    触摸面；窄屏表格回退标签原来 11.5px，抬到 12px 下限。──
-    + '.ilife-page .ilife-block-toc a{min-height:44px;display:inline-flex;align-items:center;padding-inline:14px}'
+    //    触摸面；窄屏表格回退标签原来 11.5px，抬到 12px 下限。
+    //    返修 R4：横内距 14px 落在 4／8 网格外（视觉复评 R3 六页各 −3「非 4 倍数间距」的唯一本席自身取值），
+    //    改 16px；窄屏那档的 6px 一并对齐到 8px（见下 `@media` 段），触摸面 44px 不动。──
+    + '.ilife-page .ilife-block-toc a{min-height:44px;display:inline-flex;align-items:center;padding-inline:16px}'
     // ── 页级覆盖（#523 返修 R3 硬伤②）：分布条的类名轨是公共层给的 `minmax(0,6em)` ＋ `nowrap` ＋
     //    `text-overflow:ellipsis`——类名超过 6em 的（「跪姿健腹轮前推」「对握式器械推胸」「把手式蝴蝶机飞鸟」）
     //    在**三档宽度下都被悄悄截断**（headless 实测 `clientWidth=78 / scrollWidth=104`，390／768／1440 同值，
@@ -118,7 +120,7 @@ export function exerciseUiCss(): string {
     + '.ilife-page .ilife-block-data-table td::before{font-size:12px}'
     + '.ilife-page .ilife-block-kpi-card-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}'
     + '.ilife-page .ilife-block-toc{gap:6px}'
-    + '.ilife-page .ilife-block-toc a{padding-inline:6px}'
+    + '.ilife-page .ilife-block-toc a{padding-inline:8px}'
     + '.sui-fieldgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}'
     + '}'
     // ── 脚注小字（截断明示、口径旁注）──

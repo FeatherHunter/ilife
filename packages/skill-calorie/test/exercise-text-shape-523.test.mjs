@@ -300,6 +300,59 @@ test('#523 ⑥ 分布条：类名轨不截断（本族页样式段放开 nowrap�
   assert.ok(/grid-row:\s*2/.test(narrow), '窄屏分布条没有两段式（条不在第二行）：' + narrow);
 });
 
+/* ───────────────────── 三之三、R4 两处收口的守卫（视觉复评 R3 的三行灰小字／日期复读） ───────────────────── */
+
+/** 口径行（`<p class="ilife-block-caliber">`）逐条文本，按页上顺序。 */
+function caliberParas(html) {
+  return [...html.matchAll(/<p class="ilife-block-caliber">([\s\S]*?)<\/p>/g)].map((m) => m[1]);
+}
+
+test('#523 ⑦ 明细族口径行：三行收一行（页上 1 行，三条事实一条不减，段间由版式承载）', () => {
+  const lines = [];
+  let bad = 0;
+  for (const [name, build] of PAGES.filter(([n]) => n.startsWith('记录级明细'))) {
+    const html = build();
+    const paras = caliberParas(html);
+    // 带筛选的页＝收口后的「条数＋消耗」一行 ＋「筛选口径」一行；无筛选的页＝只有收口后那一行。
+    const merged = paras.filter((t) => t.includes('口径：条数'));
+    const filter = paras.filter((t) => t.includes('筛选口径'));
+    lines.push('T523 CAL ' + name.padEnd(18) + ' 口径行=' + paras.length + '（收口行 ' + merged.length
+      + '／筛选行 ' + filter.length + '）');
+    if (merged.length !== 1) bad += 1;
+    // 三条事实一条都不许丢：条数口径 ＋ 消耗口径 同住收口那一行；筛选口径在它自己那一行。
+    const row = merged[0] ?? '';
+    if (!row.includes('条数＝本窗内未删除的运动记录') || !row.includes('消耗＝记录行上报值合计，不按天摊')) bad += 1;
+    if (name === '记录级明细（带筛选）' && filter.length !== 1) bad += 1;
+    // 收口那一行的可见文本里不许出现竖线字符本身（分隔由版式承担，不是拿字符当分隔）。
+    if (/[｜|]/.test(visibleAll(html))) bad += 1;
+  }
+  for (const l of lines) console.log(l);
+  assert.equal(bad, 0, '明细族口径行不是「三行收一行」：收口行必须恰好 1 行且三条事实齐（视觉复评 R3 的连排灰小字打回项）');
+});
+
+/** 某张卡（`<section id="…">…</section>`）的整段 HTML，本件自己数（不借别的测试件的夹具）。 */
+function cardOf(html, id) {
+  return (new RegExp('<section id="' + id + '">[\\s\\S]*?</section>').exec(html) ?? [])[0] ?? '';
+}
+
+test('#523 ⑧ 明细族来源脚注：撤「窗口」一格（日期只住页头与窗口卡，脚注留来源与条数）', () => {
+  const lines = [];
+  let bad = 0;
+  for (const [name, build] of PAGES.filter(([n]) => n.startsWith('记录级明细'))) {
+    const html = build();
+    const card = cardOf(html, 'sec-source');
+    assert.notEqual(card, '', name + ' 缺来源卡（sec-source）');
+    const keys = [...card.matchAll(/<span class="sui-fact-k">([^<]*)<\/span>/g)].map((m) => m[1]);
+    lines.push('T523 SRC ' + name.padEnd(18) + ' 脚注键=' + JSON.stringify(keys));
+    assert.deepEqual(keys, ['数据来源', '记录数'], name + ' 来源脚注的格不是「数据来源＋记录数」：' + JSON.stringify(keys));
+    // 撤的是落点、不是事实：日期仍在页头 H1 与窗口卡两处；条数仍在脚注（且只在脚注与表标题）。
+    assert.ok(html.includes('2026-09-13') && html.includes('2026-09-15'), name + ' 撤了脚注那一格后页上找不到日期');
+    if (!/共 2 条/.test(card)) bad += 1;
+  }
+  for (const l of lines) console.log(l);
+  assert.equal(bad, 0, '来源脚注的条数格丢了');
+});
+
 /* ───────────────────────── 四、变异自证（改坏必红／还原必绿） ───────────────────────── */
 test('#523 变异：塞回一处 `·` 并列 ⇒ 守卫必红；还原 ⇒ 必绿', () => {
   const clean = buildExerciseDoc(summaryView());

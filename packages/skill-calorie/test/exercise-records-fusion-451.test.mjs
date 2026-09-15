@@ -183,11 +183,18 @@ function assertFusion(r, what, opts = {}) {
     what + ' 的复制数据不是三格式菜单');
   assert.ok(r.file.includes('复制数据'), what + ' 缺复制数据按钮');
   // ⑤ 来源脚注 ＋ 口径行。
-  // #523：来源脚注换成键值行（`数据来源`／`窗口`／`记录数`），不再印 `数据来源 · …` 那种 `·` 串
+  // #523：来源脚注换成键值行（`数据来源`／`记录数`），不再印 `数据来源 · …` 那种 `·` 串
   // （共用层口径统一归 #470）；判据仍钉「页上有来源这条事实」＋「条数报出来」。覆盖率未减。
+  // #523 R4 口径变更（有意改，改动写进提交信息与证据件）：口径行**三行收一行**（视觉复评 R3
+  // 「连排灰小字」打回项），故页上口径行的**条数**由 2 降为 1（带筛选的页另有「筛选口径」一行＝2）。
+  // 判据**换形不换牙**：条数下限改 1，同时逐字钉住收进去的三条事实——口径行的存在与内容都比
+  // 原来那两条 `<p>` 更实：少了任何一条口径分句即红。来源脚注那条仍单列（下面第一行）。
   assert.ok(r.file.includes('数据来源'), what + ' 缺来源脚注');
-  assert.ok((r.file.match(/class="ilife-block-caliber"/g) ?? []).length >= 2,
-    what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');
+  assert.ok((r.file.match(/class="ilife-block-caliber"/g) ?? []).length >= 1,
+    what + ' 页上没有口径行（ilife-block-caliber）');
+  for (const fact of ['口径：条数＝本窗内未删除的运动记录', '消耗＝记录行上报值合计，不按天摊']) {
+    assert.ok(r.file.includes(fact), what + ' 口径行缺了这条事实：' + fact);
+  }
   // 类别色：本页自己不写色表（色值单源判据归 #453 分布／趋势族；本页连字面量都不落版面正文）。
   for (const hex of ['#5856d6', '#0071e3', '#34c759', '#ff9500']) {
     assert.ok(!bodyOf(r.file).includes(hex), what + ' 版面正文里写进了类别色字面量 ' + hex);

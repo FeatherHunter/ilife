@@ -29,3 +29,36 @@ RUN ticket=523 runId=ddc63b4e-ed8a-4b3f-b6f1-948bfdb1948a cmd="node .scratch/t52
   ② 第三次是 M2 只退回了一条 CSS 规则（轨宽那条没退），全称仍放得下 ⇒ 探针假绿。
   两次都在脚本里补正（`shell:true` 起 build；M2 两条规则一起退）后由 `ddc63b4e` 拿到 PASS。
   **中间态没有留在工作区**：脚本 `finally` 里逐文件还原源码，还原后重编＋重出产物再收尾。
+
+
+---
+
+## R4 窗口（R4 返修轮）· 逐字导出
+
+> 同一 `ticket=523`，窗口 `2026-09-15T20:30Z` 起（上面那段 R3 导出原样保留）。
+> 导出动作：`Select-String .scratch/locks/gate-runs.log ticket=523` → 只取 `RUN` 行 → 追加。
+> 失败／重试的条目一并留着（不筛掉），免得「只对成功那几条」看起来像事后拣数。
+
+```
+RUN ticket=523 runId=bb8b4465-f94b-462b-9f9d-702d2eb1802b cmd="node docs/skills/skill-calorie/t523-截断探针.mjs --dir .scratch/t523/out --files \"16-看本周运动.html,22-看某段时间运动.html,25-看运动记录（有备注）.html,27-看运动记录（按有氧筛选）.html,23-看今日运动（vs 目标）.html,24-看本周运动（vs 目标）.html\" --widths 390 --measure \".ilife-block-toc a\"" waitedMs=0 exit=0 pid=52816 at=2026-09-15T20:31:59.287Z
+RUN ticket=523 runId=8410461c-445f-4f50-85ed-855aa8150a96 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=1 exit=0 pid=61828 at=2026-09-15T20:34:00.230Z
+RUN ticket=523 runId=5aa3081e-400d-49f0-b6b5-957cb138febd cmd="node .scratch/t523/run17.mjs" waitedMs=0 exit=0 pid=71672 at=2026-09-15T20:34:35.807Z
+RUN ticket=523 runId=070c62c0-8bf3-44f6-80b9-b2c7c2d69db5 cmd="node packages/skill-calorie/scripts/measure-responsive.mjs --dir .scratch/t523/out --json .scratch/t523/resp-r4.json" waitedMs=0 exit=0 pid=67948 at=2026-09-15T20:35:18.327Z
+RUN ticket=523 runId=225e725b-9c1b-4980-b31b-aff4055ee9d4 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=1 pid=55180 at=2026-09-15T20:35:36.533Z
+RUN ticket=523 runId=43266fce-e70a-4f57-bffe-0207a0142e45 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync --dry" waitedMs=0 exit=1 pid=50832 at=2026-09-15T20:35:52.692Z
+RUN ticket=523 runId=bbba0269-177d-4f07-8e9d-e232b9534752 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync" waitedMs=0 exit=0 pid=41424 at=2026-09-15T20:35:55.864Z
+RUN ticket=523 runId=cd1e5f9e-1923-4c6b-a983-37068dadd9ba cmd="node .scratch/t523/verify.mjs" waitedMs=0 exit=0 pid=59160 at=2026-09-15T20:37:07.037Z
+RUN ticket=523 runId=a2d62f3f-497a-435f-ac51-9480c74f1f6f cmd="node --test packages/skill-calorie/test/exercise-records-fusion-451.test.mjs packages/skill-calorie/test/exercise-summary-goal-fusion-452.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=0 pid=15748 at=2026-09-15T20:37:43.896Z
+RUN ticket=523 runId=8908fd7d-1128-4c5b-b1fc-8215c7ad06ea cmd="node --test packages/skill-calorie/test/exercise-records-fusion-451.test.mjs packages/skill-calorie/test/exercise-summary-goal-fusion-452.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=0 pid=43208 at=2026-09-15T20:38:08.370Z
+RUN ticket=523 runId=f9c371a8-095a-4bbc-8619-7462ef8e631e cmd="node docs/skills/skill-calorie/t523-截断探针.mjs --dir .scratch/t523/out --widths 390,768,1440 --json .scratch/t523/trunc-r4.json" waitedMs=0 exit=0 pid=57944 at=2026-09-15T20:38:37.243Z
+RUN ticket=523 runId=d5f5c64d-c535-4bd2-880c-8cfd74406729 cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=1 pid=62988 at=2026-09-15T20:39:04.597Z
+RUN ticket=523 runId=33792353-9cce-40c5-bd73-068b7ed4a40e cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=1 pid=41348 at=2026-09-15T20:39:14.981Z
+RUN ticket=523 runId=2a834419-b07e-4ef7-8dc4-08af6faef566 cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=1 exit=0 pid=37184 at=2026-09-15T20:39:25.324Z
+RUN ticket=523 runId=4bab17a4-d92c-4d91-ad6d-36931c2939be cmd="node .scratch/t523/mut-r4.mjs" waitedMs=1 exit=0 pid=35256 at=2026-09-15T20:40:02.779Z
+RUN ticket=523 runId=a94f7c7d-bffc-42c4-9719-eacc7d1a1ca0 cmd="node .scratch/t523/verify.mjs" waitedMs=0 exit=0 pid=72932 at=2026-09-15T20:41:29.578Z
+RUN ticket=523 runId=fe7bfc22-5803-475c-a781-4ffcd6a47593 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync --dry" waitedMs=1 exit=1 pid=18484 at=2026-09-15T20:41:39.152Z
+RUN ticket=523 runId=7ed43821-ae9c-456a-877d-0b15a571af9b cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync" waitedMs=0 exit=0 pid=41712 at=2026-09-15T20:41:42.258Z
+RUN ticket=523 runId=ab8fa0e5-affc-4af2-b3c4-fd0158eafde8 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=47812 at=2026-09-15T20:52:45.013Z
+RUN ticket=523 runId=2056bfca-183b-4b30-a3c7-48e54c2e6b03 cmd="node .scratch/t523/verify.mjs" waitedMs=0 exit=0 pid=69368 at=2026-09-15T20:53:53.908Z
+RUN ticket=523 runId=95b8e54a-7491-4537-8b2e-d2b6572ce8dc cmd="pwsh -NoProfile -Command \"Select-String -Path 'D:\\ilife\\.scratch\\locks\\gate-runs.log' -Pattern 'ticket=523' | ForEach-Object { \\.Line } | Set-Content -Encoding UTF8 'D:\\ilife\\docs\\skills\\skill-calorie\\t523-gate-runs.log'; Write-Host ('LINES=' + (Get-Content 'D:\\ilife\\docs\\skills\\skill-calorie\\t523-gate-runs.log').Count)\"" waitedMs=0 exit=0 pid=39352 at=2026-09-15T20:54:32.475Z
+```
