@@ -29,7 +29,7 @@ import {
 } from './edit.js';
 import { writeDietAdd, writeDietBatch, writeDietCopy, writeWaterLog } from './log.js';
 import { viewDedupe, viewLibrary, viewSearch, viewSourceStats } from './library.js';
-import { viewBatchImportPreview, viewNutritionDetail, viewNutritionRatio } from './nutrition.js';
+import { viewBatchImportPreview, viewLabelPrecheck, viewNutritionDetail, viewNutritionRatio } from './nutrition.js';
 import { writeProductAdd, writeProductDeprecate, writeProductUpdate } from './products.js';
 import { writeProductImport } from './productImport.js';
 import { viewRanking } from './ranking.js';
@@ -52,6 +52,13 @@ export const DIET_COMMANDS = [
   { kind: 'write', key: 'calorie.product.update', shape: 'receipt', title: '改食品', wakeWord: '改食品', run: writeProductUpdate, example: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
   { kind: 'read', key: 'calorie.today', shape: 'list', title: '今日饮食', wakeWord: '看今日饮食概览', run: viewToday, example: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
   { kind: 'read', key: 'calorie.view.batch-import-preview', shape: 'stat', title: '批量导入预览', wakeWord: '看批量导入预览', run: viewBatchImportPreview, example: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },
+  /* #277 · 「拍营养表」两条词的第一步：识别在模型侧，模型照 `docs/skills/skill-calorie/t276-营养表映射.md`
+     那张表把识别读数填成参数递进来，本命令只把「照片 ＋ 识别出的营养 ＋ 补录日期」摆成确认页，**不写库**；
+     确认之后跑的是 `calorie.diet.add`（老实物 `nutrition_label_wizard.html`，`output_type: process`）。
+     两条词共用这一条命令（同 `calorie.view.batch-import-preview` 挂多词的既有形状）：
+     带 `date`＝补记那一支，页头与措辞按它换。**不给 `wakeWord`**：这一族的两条词都写在路由表里，
+     速查表不缺行（`CommandSpec.wakeWord` 自 #323 起可缺，与老键同口径）。 */
+  { kind: 'read', key: 'calorie.view.label-precheck', shape: 'stat', title: '营养表识别确认', run: viewLabelPrecheck, example: 'calorie-cmd-read calorie.view.label-precheck --params \'{"productName":"鸡胸","calories":200,"protein":35,"note":"营养表识别"}\'' },
   { kind: 'read', key: 'calorie.view.dedupe', shape: 'stat', title: '去重报告', run: viewDedupe, example: 'calorie-cmd-read calorie.view.dedupe' },
   { kind: 'read', key: 'calorie.view.diet-review', shape: 'stat', title: '饮食复盘', wakeWord: '今日复盘', run: viewDietReview, example: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\'' },
   { kind: 'read', key: 'calorie.view.library', shape: 'stat', title: '食品库', wakeWord: '查食品库', run: viewLibrary, example: 'calorie-cmd-read calorie.view.library' },

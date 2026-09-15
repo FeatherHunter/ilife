@@ -40,6 +40,7 @@ import { fieldLabel } from '../shared/fieldLabel.js';
 import { DIET_DOMAIN } from './fieldLabels.js';
 import { reconcileDisclosure } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
+import { ENTRY_PRECHECK as PRECHECK_ENTRY } from './precheckPort.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -375,5 +376,8 @@ export function dietReceiptDoc(
   key: string, params: Record<string, unknown>, receipt: CrudReceipt, db: DatabaseSync,
 ): string | null {
   if (!DIET_RECEIPT_KEYS.has(key)) return null;
+  /* #277 · 入口带 `entry:"precheck"` 时这一趟出的是**预检确认页**（写前页，在处理体里直接组装），
+     回执页整个让位。不带这一位＝从前的行为，一字不差。 */
+  if (params['entry'] === PRECHECK_ENTRY) return null;
   return buildDietReceiptDoc(db, key, params, receipt, commandLine(key, params));
 }

@@ -11,10 +11,24 @@ import { MEALS, WATER_NAME, addMeal, addMealsBatch, copyMeals, getDailySummary }
 import { CalorieRenderError } from '../render/errors.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { assertISO, fail, needArr, needNum, optNum, optStr, wday } from '../shared/params.js';
-import { F, R, out } from '../shared/writeParts.js';
+import { F, R, commandLine, out } from '../shared/writeParts.js';
+import { ENTRY_PRECHECK } from './precheckPort.js';
+import { buildLabelPrecheckDoc } from './precheckLabel.js';
+import { buildLabelPrecheckView } from './precheckPort.js';
 
 /** `calorie.diet.add` · 记一餐（唤醒词 记一餐）。 */
 export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  /* #277 · 「拍营养表」两条词的**第一步**：入口带 `entry:"precheck"` 时本命令只出**识别确认页**、
+     **不写库**（老实物 `nutrition_label_wizard.html` 的 `output_type` 是 `process`，
+     `scripts/build-help.mjs` 的流程句子逐字「过程：先出预检确认页 → 用户确认 → 跑这条命令」）。
+     确认之后跑的是同一条命令、去掉 `entry` 那一位——回执页仍是 #509／#270 那一张，行为一字不差。 */
+  if (optStr(params, 'entry') === ENTRY_PRECHECK) {
+    const v = buildLabelPrecheckView(params);
+    const page = buildLabelPrecheckDoc(v, v.date !== '', commandLine('calorie.diet.add', params));
+    return { data: out(R('拍营养表确认', 'create', '这一页只做确认、不写库；确认后再跑同一条命令去掉入口标记即写入', '拍营养表确认', 'food_log (写前确认页)', {
+      recordId: null, noChange: true, ids: [], idSource: 'none', writtenFields: [],
+    })).data, html: page };
+  }
   const foodName = (optStr(params, 'foodName') ?? optStr(params, 'food_name') ?? '');
   if (!foodName.trim()) fail(2, '缺参数 foodName');
   const calories = needNum(params, 'calories');

@@ -16,9 +16,13 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 12, wakeWord: '批量补记饮食', scene: '02', kind: 'exec', key: 'calorie.diet.batch', cli: 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },
   /* #509 · 两条「拍营养表」的词与普通记一餐／补记饮食跑同一条命令，参数也全同（都带 `note`）。
      入口是命令唯一看不见的差别，故由**入口自己**把来源带进去：`source:"photo"`——同文件先例＝
-     `看有备注的饮食记录` 由 #276 给 `calorie.today` 带 `hasNote`。命令侧只拿它取上屏标题。 */
-  { list: 'wake', order: 13, wakeWord: '拍营养表记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35,"note":"营养表识别","source":"photo"}\'' },
-  { list: 'wake', order: 14, wakeWord: '拍营养表补记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"米饭","calories":500,"protein":10,"date":"<日期>","time":"12:30:00","note":"营养表补记","source":"photo"}\'' },
+     `看有备注的饮食记录` 由 #276 给 `calorie.today` 带 `hasNote`。命令侧只拿它取上屏标题。
+     #277 · 再加一位 `entry:"precheck"`＝**先出识别确认页、不写库**（`docs/skills/skill-calorie/
+     t277-报告.md` §三：老实物 `nutrition_label_wizard.html` 的 `output_type` 是 `process`，
+     `scripts/build-help.mjs:378` 的流程句子逐字是「过程：先出预检确认页 → 用户确认 → 跑这条命令」）。
+     确认之后再跑同一条命令、去掉 `entry` 那一位即写库（回执页仍是 #509／#270 那一张）。 */
+  { list: 'wake', order: 13, wakeWord: '拍营养表记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35,"note":"营养表识别","source":"photo","entry":"precheck"}\'' },
+  { list: 'wake', order: 14, wakeWord: '拍营养表补记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"米饭","calories":500,"protein":10,"date":"<日期>","time":"12:30:00","note":"营养表补记","source":"photo","entry":"precheck"}\'' },
   { list: 'wake', order: 15, wakeWord: '记喝水', scene: '02', kind: 'exec', key: 'calorie.water.log', cli: 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'' },
   { list: 'wake', order: 16, wakeWord: '复制昨日饮食', scene: '02', kind: 'exec', key: 'calorie.diet.copy', cli: 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\'' },
   { list: 'wake', order: 17, wakeWord: '改饮食记录', scene: '02', kind: 'exec', key: 'calorie.diet.update', cli: 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'' },
@@ -40,8 +44,13 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 37, wakeWord: '改食品', scene: '02', kind: 'exec', key: 'calorie.product.update', cli: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
   { list: 'wake', order: 38, wakeWord: '下架食品', scene: '02', kind: 'exec', key: 'calorie.product.deprecate', cli: 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'' },
   { list: 'wake', order: 39, wakeWord: '看食品库（去重）', scene: '02', kind: 'exec', key: 'calorie.view.dedupe', cli: 'calorie-cmd-read calorie.view.dedupe' },
-  { list: 'wake', order: 40, wakeWord: '批量导入食品', scene: '02', kind: 'exec', key: 'calorie.product.import', cli: 'calorie-cmd-read calorie.product.import --params \'{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}]}\'' },
-  { list: 'wake', order: 41, wakeWord: '校验批量导入', scene: '02', kind: 'exec', key: 'calorie.view.batch-import-preview', cli: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'' },
+  /* #277 · 这两条词是**同一张导入预检页的两个形态**（老实物同为 `batch_import_preview.html`）：
+     「批量导入食品」＝预览形态（导入条数／跳过条数／失败明细；老实物 `output_type: process` ⇒
+     「先出预检确认页 → 用户确认 → 跑这条命令」，故带 `entry:"precheck"` 那一位，命令见它先出页、
+     不写库），「校验批量导入」＝校验形态（逐行结果与失败原因，老实物 `output_type: result` ⇒
+     它本身就是一条查询命令，不写库）。标记由**入口**带进去，照 #271 的 `entry:"overview"` 先例。 */
+  { list: 'wake', order: 40, wakeWord: '批量导入食品', scene: '02', kind: 'exec', key: 'calorie.product.import', cli: 'calorie-cmd-read calorie.product.import --params \'{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}],"entry":"precheck"}\'' },
+  { list: 'wake', order: 41, wakeWord: '校验批量导入', scene: '02', kind: 'exec', key: 'calorie.view.batch-import-preview', cli: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}],"entry":"validate"}\'' },
   { list: 'wake', order: 42, wakeWord: '看食品来源统计', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
   { list: 'wake', order: 43, wakeWord: '看营养结构', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 44, wakeWord: '看今日营养', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日"}\'' },
