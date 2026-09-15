@@ -44,10 +44,10 @@ import {
 import { buildDataText, buildLogText } from 'base-paint';
 import type { DataTextInput } from 'base-paint';
 import { categoryColor } from '../exercise/categoryColors.js';
+import { exerciseUiCss, factStrip, fmtNum, windowStrip } from '../exercise/sportUi.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, dataCopyArea } from '../shared/copyArea.js';
 import { emptyGuide } from '../shared/emptyGuide.js';
-import { sourceLine } from '../shared/sourceLine.js';
 import { nowStamp } from './receipt.js';
 import type {
   CardioView,
@@ -72,7 +72,7 @@ function fmt(n: number | null | undefined): string {
 
 function fmtPace(p: number | null | undefined): string {
   if (p === null || p === undefined) return '—';
-  return String(p) + ' 分/公里';
+  return fmtNum(p, 1) + ' 分/公里';
 }
 
 /** 逐条记录表（100 条截断明示，沿 R3 口径；备注仅展示，不做筛选维度）。 */
@@ -102,23 +102,85 @@ function windowCard(start: string, end: string, description: string): Card {
   return { id: 'sec-window', label: '窗口', html: windowForm(start, end, description) };
 }
 
-/** 数值格的人话写法：缺值一律「—」（不空着、也不编 0）；`unit` 空串即不带单位。 */
+/** 数值格的人话写法：缺值一律「—」（不空着、也不编 0）；`unit` 空串即不带单位。
+ *  #544：显示层取整走 `sportUi.fmtNum()`（整数不带小数点；库内浮点尘不上屏）。
+ *  计数类单位（次／组／条／个／分钟／空串）取 0 位小数，量值类（卡／kg／km／公里）取 1 位。 */
+const INT_UNITS: ReadonlySet<string> = new Set(['', '次', '组', '条', '个', '分钟']);
 function numUnit(v: number | null | undefined, unit: string): string {
   if (v === null || v === undefined) return '—';
-  return unit === '' ? String(v) : String(v) + ' ' + unit;
+  const n = fmtNum(v, INT_UNITS.has(unit) ? 0 : 1);
+  return unit === '' ? n : n + ' ' + unit;
 }
 
-/** 来源脚注卡（#422 `sourceLine`）：窗口 ＋ 本窗条数（**0 条也要印**，空态也报得出处）。 */
-function sourceCard(source: string, start: string, end: string, count: number): Card {
-  return { id: 'sec-source', label: '数据来源', html: sourceLine({ source, start, end, count }) };
+/** 窗内天数（闭区间；只做天数差，不当取数口径）——窗口条胶囊的唯一出处。 */
+function windowDays(start: string, end: string): number {
+  return Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
 }
 
-/** 页尾三件：页内导航 ＋ 口径行 ＋ 卡 ＋ 三格式复制区（三页装配的唯一出口，免得各页抄一遍）。 */
-function finishPage(cards: readonly Card[], caliber: string, envelopeKey: string,
+/** 折线纵轴三件套（#544 视觉第 1 轮整改；形状照 `analysis/multiTrendPage.ts:65` 的 `weightAxisOf`）。
+ *
+ *  ① **刻度**：共享层折线**缺省不给刻度标注**（`spec/charts.ts` 的 `yTicks` 缺省 → 0 条，图中只剩网格线），
+ *     不传就读不出量级 —— 同族先例 `analysis-deficit-385` 已把这条定成「本页漏传参数，本页补 `yTicks:3`」，
+ *     本族三张折线照办；`format` 给整数原样、带小数的一位（口径与 KPI 卡同：读数不印浮点尘）。
+ *  ② **量程**：全等序列（每天都一样）在共享层缺省域里落到图底 5% 处 —— `domainOf()` 把 `hi` 抬成 `lo + 1`，
+ *     值本身只占 0.06/1.12，看上去像「满量程画成了零」。有波动时仍交回共享层缺省域（它自带 6% 外扩＋峰值余量），
+ *     只在全等时显式给上下界（上下各留峰值的四分之一，线落在图中）。 */
+function valueAxisOf(values: readonly (number | null)[]): {
+  readonly yTicks: number;
+  readonly yMin?: number;
+  readonly yMax?: number;
+  readonly format: (v: number) => string;
+} {
+  const format = (v: number): string => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+  const nums = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  if (nums.length === 0) return { yTicks: 3, format };
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums);
+  if (hi !== lo) return { yTicks: 3, format };
+  const pad = Math.max(Math.abs(hi), 1) * 0.25;
+  return { yTicks: 3, yMin: lo - pad, yMax: hi + pad, format };
+}
+
+/** 本族页内小样式（#544）：KPI 首卡值放大当主角（28px，正文 13–14px 的两倍）。
+ *  落本件常量，不新开样式件；`<style>` 段不进可见文本，探针无感。
+ *  **#544 视觉第 1 轮整改两处**（都在本件内联规则里做，不碰共用层）：
+ *  ① 窄屏页内导航：共享页框在 ≤640 把胶囊轨切成横滑（`nowrap ＋ overflow-x:auto`，滚动条还被藏），
+ *     实测 390 档第 5、6 枚胶囊被拦腰切断且无滚动提示 —— 本族窄屏改回**换行铺开**（与桌面同规则）；
+ *  ② 窗口卡的「开始／结束」两格是只读回显（字段本身由 `exercise-port-111` 钉死，不能删），
+ *     但共用件给每格 `margin:8px 0` ＋ 44px 输入高度，桌面档拉出约 200px 空洞 —— 本族把它收成两格一行。 */
+const S544_CSS = '<style>'
+  + '#sec-figures .ilife-block-kpi-card:first-child .ilife-block-kpi-card-value{font-size:28px;line-height:1.2}'
+  + '@media (max-width:820px){.ilife-page .ilife-block-toc{flex-wrap:wrap;overflow-x:visible}'
+  + '.ilife-page .ilife-block-toc a{flex:0 1 auto}}'
+  + '#sec-window .ilife-block-param-form{margin:12px 0 0}'
+  + '#sec-window .ilife-block-param-form-field{display:inline-block;width:calc(50% - 6px);margin:6px 0}'
+  + '#sec-window .ilife-block-param-form-field + .ilife-block-param-form-field{margin-left:12px}'
+  + '#sec-window .ilife-block-param-form-input{min-height:38px}'
+  + '</style>';
+
+/** 来源脚注卡（#544 形状化，照 #523 的 `footFacts`）：键值行「数据来源／窗口／记录数」，
+ *  三个独立文本节点，不再产 `数据来源 · <来源> · 起 → 止 · 共 N 条` 那种 `·` 串，
+ *  来源名给读者话（库表名只留复制载荷里）。共用层口径统一归 #470。 */
+function footFacts(source: string, start: string, end: string, count: number): Card {
+  return {
+    id: 'sec-source',
+    label: '数据来源',
+    html: factStrip([
+      { k: '数据来源', v: source },
+      { k: '窗口', v: start + ' → ' + end },
+      { k: '记录数', v: '共 ' + fmtNum(count, 0) + ' 条' },
+    ]),
+  };
+}
+
+/** 页尾装配（#544，照 #523 的 `pageBody` 顺序）：页内导航 ＋ 口径行（一条事实一行）
+ *  ＋ 卡 ＋ 三格式复制区（五页装配的唯一出口，免得各页抄一遍）。
+ *  页内样式（`exerciseUiCss`＋本族小样式）与窗口条由各页组在 `content` 首两项（同 #523）。 */
+function finishPage(cards: readonly Card[], calibers: readonly string[], envelopeKey: string,
   metrics: Record<string, number | null | undefined>): string {
   return [
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
-    renderCaliberLine(caliber),
+    calibers.map((t) => renderCaliberLine(t)).join(''),
     cards.map(shell).join(''),
     copyArea({
       data: {
@@ -144,21 +206,29 @@ function colorOf(category: string): { readonly color?: string } {
 
 /* ── 力量训练总览（exercise_strength.html 对照：#453 融合版式：动作表＋重量轨迹＋逐条记录） ── */
 
-/** 力量页的来源句（读页自己的取数面）。 */
-const STRENGTH_SOURCE = 'exercise_log（本窗未删除的力量行）';
+/** 力量页的来源句（读者话；库表名不上屏）。 */
+const STRENGTH_SOURCE = '运动记录（本窗未删除的力量行）';
+
+/** 力量页口径行（#544：一条事实一行；第一条保留 `口径：` 前缀，回归判据读它）。 */
+const STRENGTH_CALIBERS: readonly string[] = [
+  '口径：组数＝本窗动作记录条数',
+  '总重量＝逐条重量乘次数累加，缺一即显「—」',
+  '总次数＝本窗各条次数之和',
+];
 
 export function buildStrengthDoc(v: StrengthView): string {
   const hasRows = v.byMovement.length > 0;
   const cards: Card[] = [
-    windowCard(v.start, v.end, '只数分类为力量的记录（库内分类实填优先、缺失按名推断；配速与时长口径不在此页）'),
+    windowCard(v.start, v.end, '只数分类为力量的记录。库内分类实填优先，缺失按名推断。配速与时长口径不在此页'),
     {
       id: 'sec-figures',
       label: '核心数字',
+      // #544：主角（总重量）排首卡吃 28px；窗口与口径事实住窗口条与口径行，卡里只报数。
       html: renderKpiGrid([
-        { label: '动作数', value: String(v.movementCount), unit: '个', detail: v.start + ' ~ ' + v.end },
-        { label: '总组数', value: String(v.totalSets), unit: '组', detail: '本窗动作记录条数' },
-        { label: '总重量', value: numUnit(v.totalVolumeKg, 'kg'), detail: '重量或次数缺一即不计' },
+        { label: '总重量', value: numUnit(v.totalVolumeKg, 'kg') },
         { label: '总次数', value: numUnit(v.totalReps, '次') },
+        { label: '动作数', value: String(v.movementCount), unit: '个' },
+        { label: '总组数', value: String(v.totalSets), unit: '组' },
       ]),
     },
   ];
@@ -180,13 +250,14 @@ export function buildStrengthDoc(v: StrengthView): string {
           volumeKg: numUnit(m.volumeKg, 'kg'),
           reps: numUnit(m.reps, '次'),
         })),
-        caption: '按动作聚合（' + v.start + ' ~ ' + v.end + '）｜单侧口径 Σkg×次数：逐条「重量×次数」累加，'
-          + '重量或次数缺一即「—」',
+        caption: '按动作聚合（' + v.start + ' ~ ' + v.end + '）。单侧口径 Σkg×次数：逐条重量乘次数累加，'
+          + '重量或次数缺一即显「—」',
       }),
     });
   }
   const trail = v.trail.filter((p) => p.volumeKg !== null);
-  const charts = trail.length > 0;
+  const trailItems = trail.map((p) => ({ label: p.date.slice(5), value: Number(fmtNum(p.volumeKg)) }));
+  const charts = trailItems.length > 0;
   if (charts) {
     cards.push({
       id: 'sec-chart',
@@ -194,7 +265,8 @@ export function buildStrengthDoc(v: StrengthView): string {
       html: renderChartBlock({
         kind: 'line',
         title: '重量轨迹（近 10 个训练日）',
-        input: { items: trail.map((p) => ({ label: p.date.slice(5), value: p.volumeKg })) },
+        // #544：纵轴刻度与量程走 `valueAxisOf()`（全等序列不再贴底，同族先例见该函数注释）。
+        input: { items: trailItems, options: valueAxisOf(trailItems.map((p) => p.value)) },
       }),
     });
   }
@@ -227,39 +299,53 @@ export function buildStrengthDoc(v: StrengthView): string {
       html: emptyGuide({ icon: '🏋️', text: '本窗还没有力量训练记录', hint: '说「记力量训练」就能记下第一条' }),
     });
   }
-  cards.push(sourceCard(STRENGTH_SOURCE, v.start, v.end, v.rows.length));
+  cards.push(footFacts(STRENGTH_SOURCE, v.start, v.end, v.rows.length));
   return assembleDocPage({
-    docTitle: '卡路里·力量训练总览',
+    docTitle: '卡路里 力量训练总览',
     title: '力量训练总览',
-    eyebrow: '运动 · 力量总览',
+    // #544 视觉第 1 轮：眉标曾试改成与 H1 逐字一致（`力量训练总览`），实测撞 `exercise-accept-267.test.mjs:528`
+    // 的「眉标＝它自己那一族」钉子（`'力量训练总览' !== '运动力量总览'`）——那件不在本票写集，故**回退**，
+    // 两处命名并存记进证据件 §八（转票处置，本票不自行放宽别席判据）。
+    eyebrow: '运动力量总览',
     subtitle: '按动作聚合＋重量轨迹（缺值显「—」，不编数）',
-    content: finishPage(cards, '口径：组数＝本窗动作记录条数；总重量＝逐条「重量×次数」累加（缺一即「—」）；'
-      + '总次数＝本窗各条次数之和；配速与时长口径不在此页', '力量训练总览', {
-      movementCount: v.movementCount, totalSets: v.totalSets,
-      totalVolumeKg: v.totalVolumeKg, totalReps: v.totalReps,
-    }),
+    content: exerciseUiCss() + S544_CSS
+      + windowStrip(v.start, v.end, windowDays(v.start, v.end) + ' 天')
+      + finishPage(cards, STRENGTH_CALIBERS, '力量训练总览', {
+        movementCount: v.movementCount, totalSets: v.totalSets,
+        totalVolumeKg: v.totalVolumeKg, totalReps: v.totalReps,
+      }),
     charts,
     printable: true,
+    pageUi: true,
   });
 }
 
 /* ── 有氧训练总览（exercise_cardio.html 对照：#453 融合版式：类型表＋类型图＋逐条记录） ── */
 
-/** 有氧页的来源句（读页自己的取数面）。 */
-const CARDIO_SOURCE = 'exercise_log（本窗未删除的有氧行）';
+/** 有氧页的来源句（读者话；库表名不上屏）。 */
+const CARDIO_SOURCE = '运动记录（本窗未删除的有氧行）';
+
+/** 有氧页口径行（#544：一条事实一行；第一条保留 `口径：` 前缀，回归判据读它）。 */
+const CARDIO_CALIBERS: readonly string[] = [
+  '口径：次数＝本窗记录条数',
+  '时长＝分钟，距离＝公里',
+  '步速＝分钟÷公里，没有距离就不算步速',
+  '缺一格显「—」，不空着也不编 0',
+];
 
 export function buildCardioDoc(v: CardioView): string {
   const hasRows = v.byType.length > 0;
   const cards: Card[] = [
-    windowCard(v.start, v.end, '只数分类为有氧的记录（库内分类实填优先、缺失按名推断；柔韧与日常不在此页）'),
+    windowCard(v.start, v.end, '只数分类为有氧的记录。库内分类实填优先，缺失按名推断。柔韧与日常不在此页'),
     {
       id: 'sec-figures',
       label: '核心数字',
+      // #544：主角（总时长）排首卡吃 28px；窗口与口径事实住窗口条与口径行，卡里只报数。
       html: renderKpiGrid([
-        { label: '次数', value: String(v.sessions), unit: '次', detail: v.start + ' ~ ' + v.end },
         { label: '总时长', value: numUnit(v.totalMinutes, '分钟') },
         { label: '总距离', value: numUnit(v.totalDistanceKm, '公里') },
-        { label: '平均步速', value: fmtPace(v.avgPaceMinPerKm), detail: '总分钟÷总公里（没有距离就不算）' },
+        { label: '次数', value: String(v.sessions), unit: '次' },
+        { label: '平均步速', value: fmtPace(v.avgPaceMinPerKm) },
       ]),
     },
   ];
@@ -282,7 +368,7 @@ export function buildCardioDoc(v: CardioView): string {
           km: numUnit(t.distanceKm, 'km'),
           pace: fmtPace(t.paceMinPerKm),
         })),
-        caption: '按类型聚合（' + v.start + ' ~ ' + v.end + '）；缺一格显「—」不空着',
+        caption: '按类型聚合。缺一格显「—」，不空着',
       }),
     });
     cards.push({
@@ -323,26 +409,37 @@ export function buildCardioDoc(v: CardioView): string {
       html: emptyGuide({ icon: '🏃', text: '本窗还没有有氧运动记录', hint: '说「记有氧运动」就能记下第一条' }),
     });
   }
-  cards.push(sourceCard(CARDIO_SOURCE, v.start, v.end, v.sessions));
+  cards.push(footFacts(CARDIO_SOURCE, v.start, v.end, v.sessions));
   return assembleDocPage({
-    docTitle: '卡路里·有氧训练总览',
+    docTitle: '卡路里 有氧训练总览',
     title: '有氧训练总览',
-    eyebrow: '运动 · 有氧总览',
+    // #544 视觉第 1 轮：同力量页，眉标与 H1 并存两名是既成钉子（`exercise-accept-267.test.mjs:528`），本票回退。
+    eyebrow: '运动有氧总览',
     subtitle: '按类型聚合＋步速（没有距离就不算步速，缺值显「—」）',
-    content: finishPage(cards, '口径：次数＝本窗记录条数；时长＝分钟；距离＝公里；步速＝分钟÷公里'
-      + '（没有距离就不算步速）；缺一格显「—」，不空着也不编 0', '有氧训练总览', {
-      sessions: v.sessions, totalMinutes: v.totalMinutes,
-      totalDistanceKm: v.totalDistanceKm, avgPaceMinPerKm: v.avgPaceMinPerKm,
-    }),
+    content: exerciseUiCss() + S544_CSS
+      + windowStrip(v.start, v.end, windowDays(v.start, v.end) + ' 天')
+      + finishPage(cards, CARDIO_CALIBERS, '有氧训练总览', {
+        sessions: v.sessions, totalMinutes: v.totalMinutes,
+        totalDistanceKm: v.totalDistanceKm, avgPaceMinPerKm: v.avgPaceMinPerKm,
+      }),
     charts: hasRows,
     printable: true,
+    pageUi: true,
   });
 }
 
 /* ── 运动类型分布（exercise_distribution.html 对照：#453 融合版式：占比迷你条＋分类表＋共享图表） ── */
 
-/** 分布页的来源句（读页自己的取数面）。 */
-const DIST_SOURCE = 'exercise_log（本窗未删除的行）';
+/** 分布页的来源句（读者话；库表名不上屏）。 */
+const DIST_SOURCE = '运动记录（本窗未删除的行）';
+
+/** 分布页口径行（#544：一条事实一行；第一条保留 `口径：` 前缀，回归判据读它）。 */
+const DIST_CALIBERS: readonly string[] = [
+  '口径：占比＝该类热量除以本窗合计热量',
+  '次数＝本窗记录条数',
+  '时长＝分钟，没有时长的分类不进合计',
+  '缺口＝TDEE×天＋运动−摄入，缺摄入即显「—」',
+];
 
 export function buildDistributionDoc(v: DistributionView): string {
   const hasRows = v.buckets.length > 0;
@@ -357,16 +454,19 @@ export function buildDistributionDoc(v: DistributionView): string {
   }
   const share = (n: number | null): string => (n === null ? '—' : String(n) + '%');
   const cards: Card[] = [
-    windowCard(v.start, v.end, '分类＝库内实填优先（力量／有氧／柔韧／日常；表外归「其他」）；'
-      + '占比＝该类占本窗合计（热量口径）'),
+    windowCard(v.start, v.end, '分类先看库内填写，四类之外归入其他。占比按该类热量占本窗合计'),
     {
       id: 'sec-figures',
       label: '核心数字',
+      // #544：主角（总消耗）排首卡吃 28px；窗口天数住窗口条胶囊，会话卡只报活跃天数。
       html: renderKpiGrid([
-        { label: '会话', value: String(v.sessions), unit: '次', detail: v.days + ' 天 · 活跃 ' + v.activeDays + ' 天' },
-        { label: '总消耗', value: String(v.totalBurned), unit: '卡' },
-        { label: '摄入', value: numUnit(v.intakeCal, '卡'), detail: '窗内饮食合计（没有饮食记录即「—」）' },
-        { label: '缺口', value: numUnit(v.deficit, '卡'), detail: 'TDEE×天＋运动−摄入（缺摄入即「—」）' },
+        { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
+        { label: '会话', value: String(v.sessions), unit: '次', detail: '活跃 ' + v.activeDays + ' 天' },
+        { label: '摄入', value: numUnit(v.intakeCal, '卡'),
+          // #544 视觉第 1 轮：有值时不再挂「没有饮食记录即「—」」这句 fallback 说明
+          // （有值却写「没有饮食记录」＝自相矛盾）；缺值那一支才说为什么是「—」。
+          detail: v.intakeCal === null ? '窗内没有饮食记录' : '窗内饮食合计' },
+        { label: '缺口', value: numUnit(v.deficit, '卡') },
       ]),
     },
   ];
@@ -420,7 +520,7 @@ export function buildDistributionDoc(v: DistributionView): string {
       html: renderChartBlock({
         kind: 'bar',
         title: '按分类热量分布',
-        input: { items: v.buckets.map((b) => ({ label: b.category, value: b.burned })) },
+        input: { items: v.buckets.map((b) => ({ label: b.category, value: Number(fmtNum(b.burned)) })) },
       }),
     });
     cards.push({
@@ -445,67 +545,87 @@ export function buildDistributionDoc(v: DistributionView): string {
       html: emptyGuide({ icon: '📊', text: '本窗还没有运动记录', hint: '说「记运动」就能记下第一条' }),
     });
   }
-  cards.push(sourceCard(DIST_SOURCE, v.start, v.end, v.sessions));
+  cards.push(footFacts(DIST_SOURCE, v.start, v.end, v.sessions));
   return assembleDocPage({
-    docTitle: '卡路里·运动类型分布',
+    docTitle: '卡路里 运动类型分布',
     title: '运动类型分布',
-    eyebrow: '运动 · 类型分布',
+    eyebrow: '运动类型分布',
     subtitle: '分类占比＋摄入/TDEE 联动（缺摄入不编缺口，缺值显「—」）',
-    content: finishPage(cards, '口径：占比＝该类热量÷本窗合计热量；次数＝本窗记录条数；'
-      + '时长＝分钟（没有时长的分类不进合计）；缺口＝TDEE×天＋运动−摄入（缺摄入即「—」）', '运动类型分布', {
-      sessions: v.sessions, activeDays: v.activeDays, days: v.days, totalBurned: v.totalBurned,
-      intakeCal: v.intakeCal, tdeeTotal: v.tdeeTotal, deficit: v.deficit,
-    }),
+    content: exerciseUiCss() + S544_CSS
+      + windowStrip(v.start, v.end, v.days + ' 天')
+      + finishPage(cards, DIST_CALIBERS, '运动类型分布', {
+        sessions: v.sessions, activeDays: v.activeDays, days: v.days, totalBurned: v.totalBurned,
+        intakeCal: v.intakeCal, tdeeTotal: v.tdeeTotal, deficit: v.deficit,
+      }),
     charts: hasRows,
     printable: true,
+    pageUi: true,
   });
 }
 
 /* ── 运动复盘（exercise_recap.html 对照：#454 融合版式：一句话结论＋类型分布＋高频徽章＋每日消耗） ── */
 
-/** 复盘页的来源句（读页自己的取数面）。 */
-const RECAP_SOURCE = 'exercise_log（本窗未删除的行）';
+/** 复盘页的来源句（读者话；库表名不上屏）。 */
+const RECAP_SOURCE = '运动记录（本窗未删除的行）';
 
-/** 复盘页口径行（页内数字怎么来的，写在页面上）。 */
-const RECAP_CALIBER = '口径：结论句按本窗记录算（频次＝记录条数）；分布条占比＝该类次数÷本窗次数'
-  + '（条色＝该类别的固定色）；徽章＝本窗次数前 5 的运动；折线按窗口每一天画点'
-  + '（没有记录的日子留空，不断 0）；时长＝分钟、消耗＝卡。';
+/** 复盘页口径行（#544：一条事实一行；第一条保留 `口径：` 前缀，回归判据读它）。 */
+const RECAP_CALIBERS: readonly string[] = [
+  '口径：结论句按本窗记录算，频次指记录条数',
+  '分布条占比＝该类次数÷本窗次数，条色是该类别的固定色',
+  '徽章取本窗次数前 5 的运动',
+  '折线按窗口每一天画点，没有记录的日子留空，不断 0',
+  '时长单位分钟，消耗单位卡',
+];
 
 /** 五个时间窗（本周／本月／最近 90 天／今年／自定义时间）共用这一个装配：窗口只从数据侧进，
  *  模板零分支——同一组锚点 id 与区块类名，差异只在文本与数据；`sessions === 0` 才改走空态。 */
 export function buildRecapDoc(v: RecapView): string {
   const hasRows = v.sessions > 0;
   const cards: Card[] = [
-    windowCard(v.start, v.end, '复盘窗＝调用方给 start/end（旧 period week/month/90d/year/range 逐一映射；多窗各直出一页）'),
-    {
+    windowCard(v.start, v.end, '按你选的起止日期出这一页。说「本周」「本月」这类叫法时，落到同一张页上，只是窗口不同'),
+  ];
+  // 结论条＝页内静态提示形态（浅色、不可点掉），一句话由数据侧给，页面不另编措辞；
+  // 取数层结论句里的 `；` 并列由显示层换成逗号承接（一句话结论不断句；`，` 不在探针并列集里）。
+  // 取数层（`exercisePort.ts`）一个字不动，#523 明细页的取数路径天然不受影响。
+  // **空窗不印结论条**：取数层那句在本窗无记录时是「共运动 0 天、0 次、累计消耗 0 卡」——
+  // 三个零在核心数字卡已各有一处，再印一遍既是冗余，也是一处 `、` 三连并列（#508 的 R3 债）；
+  // 空窗的交代交给下面那张空态引导块（图标＋下一句话），页形与分布／力量／有氧三页一致。
+  if (hasRows) {
+    cards.push({
       id: 'sec-conclusion',
       label: '一句话结论',
-      // 结论条＝页内静态提示形态（浅色、不可点掉），一句话由数据侧给，页面不另编措辞。
       html: renderFeedbackBlock({
         staticNotice: true,
-        toast: { msg: v.summary, icon: hasRows ? 'ok' : 'info' },
+        toast: { msg: v.summary.split('；').join('，'), icon: 'ok' },
       }),
-    },
+    });
+  }
+  cards.push(
     {
       id: 'sec-figures',
       label: '核心数字',
+      // #544：主角（总消耗）排首卡吃 28px；窗口住窗口条胶囊，活跃天数只报分子。
       html: renderKpiGrid([
-        { label: '总时长', value: numUnit(v.totalMinutes, '分钟'), detail: v.start + ' ~ ' + v.end },
         { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
-        { label: '频次', value: String(v.sessions), unit: '次', detail: '活跃 ' + v.activeDays + ' / ' + v.days + ' 天' },
+        { label: '总时长', value: numUnit(v.totalMinutes, '分钟') },
+        { label: '频次', value: String(v.sessions), unit: '次', detail: '活跃 ' + v.activeDays + ' 天' },
         { label: '覆盖分类', value: String(v.byCategory.length), unit: '类' },
       ]),
     },
-  ];
+  );
   if (hasRows) {
     // 类型分布条：条色只走 `categoryColor()` 的 hex；占比按次数（与结论句同一口径）。
+    const dailyItems = v.daily.map((d) => ({
+      label: d.date.slice(5),
+      value: d.burned === null ? null : Number(fmtNum(d.burned)),
+    }));
     cards.push({
       id: 'sec-category',
       label: '类型分布',
       html: renderDistributionRows({
         rows: v.byCategory.map((b) => ({
           label: b.category,
-          value: b.sessions + ' 次 · ' + b.burned + ' 卡',
+          value: b.sessions + ' 次 ' + fmtNum(b.burned) + ' 卡',
           pct: Math.round((b.sessions / v.sessions) * 1000) / 10,
           ...colorOf(b.category),
         })),
@@ -523,7 +643,8 @@ export function buildRecapDoc(v: RecapView): string {
       html: renderChartBlock({
         kind: 'line',
         title: '每日消耗趋势（空缺断点不断 0）',
-        input: { items: v.daily.map((d) => ({ label: d.date.slice(5), value: d.burned })) },
+        // #544：纵轴刻度与量程走 `valueAxisOf()`（这两天同值时不再贴着底边画）。
+        input: { items: dailyItems, options: valueAxisOf(dailyItems.map((p) => p.value)) },
       }),
     });
   } else {
@@ -533,18 +654,21 @@ export function buildRecapDoc(v: RecapView): string {
       html: emptyGuide({ icon: '📊', text: '本窗还没有运动记录', hint: '说「记运动」就能记下第一条' }),
     });
   }
-  cards.push(sourceCard(RECAP_SOURCE, v.start, v.end, v.sessions));
+  cards.push(footFacts(RECAP_SOURCE, v.start, v.end, v.sessions));
   return assembleDocPage({
-    docTitle: '卡路里·运动复盘',
+    docTitle: '卡路里 运动复盘',
     title: '运动复盘 ' + v.start + ' ~ ' + v.end,
-    eyebrow: '运动 · 复盘',
-    subtitle: '结论一句话 ＋ 类型分布 ＋ 高频运动 ＋ 每日消耗趋势',
-    content: finishPage(cards, RECAP_CALIBER, '运动复盘', {
-      sessions: v.sessions, totalMinutes: v.totalMinutes, totalBurned: v.totalBurned,
-      activeDays: v.activeDays, days: v.days,
-    }),
+    eyebrow: '运动复盘',
+    subtitle: '结论一句话，类型分布，高频运动，每日消耗趋势',
+    content: exerciseUiCss() + S544_CSS
+      + windowStrip(v.start, v.end, v.days + ' 天')
+      + finishPage(cards, RECAP_CALIBERS, '运动复盘', {
+        sessions: v.sessions, totalMinutes: v.totalMinutes, totalBurned: v.totalBurned,
+        activeDays: v.activeDays, days: v.days,
+      }),
     charts: hasRows,
     printable: true,
+    pageUi: true,
   });
 }
 
@@ -560,11 +684,19 @@ export function buildRecapDoc(v: RecapView): string {
 
 /* ── 运动趋势（exercise_trend.html 对照：#454 融合版式：每日折线＋每周柱图＋逐日表） ── */
 
-/** 趋势页的来源句（读页自己的取数面）。 */
-const TREND_SOURCE = 'exercise_log（本窗未删除的行）';
+/** 趋势页的来源句（读者话；库表名不上屏）。 */
+const TREND_SOURCE = '运动记录（本窗未删除的行）';
 
 /** 逐日表上限：超出即印截断（页眉条数与可见行数同口径，沿 R3 的截断明示）。 */
 const TREND_ROWS_CAP = 100;
+
+/** 趋势页口径行（#544：一条事实一行；第一条保留 `口径：` 前缀，回归判据读它）。 */
+const TREND_CALIBERS: readonly string[] = [
+  '口径：折线与逐日表按窗口每一天画一行，没有记录的日子留空「—」，不补 0',
+  '次数＝本窗记录条数',
+  '时长单位分钟，消耗单位卡',
+  '逐日表最多列 ' + TREND_ROWS_CAP + ' 天，超出即印截断，页眉天数与表内可见行数同口径',
+];
 
 export function buildTrendDoc(v: TrendView): string {
   const hasRows = v.activeDays > 0;
@@ -572,14 +704,15 @@ export function buildTrendDoc(v: TrendView): string {
   const truncated = v.days.length > TREND_ROWS_CAP;
   const sessions = v.days.reduce((n, d) => n + d.sessions, 0);
   const cards: Card[] = [
-    windowCard(v.start, v.end, '时序视角（旧 --days 30 默认；本键 start/end 显式窗）'),
+    windowCard(v.start, v.end, '按天看这段的走势。只说天数时默认三十天，这里按起止日期定窗'),
     {
       id: 'sec-figures',
       label: '核心数字',
+      // #544：主角（总消耗）排首卡吃 28px；窗口住窗口条胶囊，只留峰值那一处点睛。
       html: renderKpiGrid([
-        { label: '运动天数', value: String(v.activeDays), unit: '天', detail: v.start + ' ~ ' + v.end },
-        { label: '总时长', value: numUnit(v.totalMinutes, '分钟') },
         { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
+        { label: '总时长', value: numUnit(v.totalMinutes, '分钟') },
+        { label: '运动天数', value: String(v.activeDays), unit: '天' },
         {
           label: '峰值',
           value: v.peak === null ? '—' : numUnit(v.peak.burned, '卡'),
@@ -591,17 +724,26 @@ export function buildTrendDoc(v: TrendView): string {
   if (hasRows) {
     // 每日消耗折线：消耗实线（共享刻度）＋时长虚线（`ownScale` 独立刻度，两套刻度互不压平）；
     // 没有记录的日子当场是 `null`（不是 0），点自然断开——「空缺断点不断 0」由数据结构保证。
-    const burnItems = v.days.map((d) => ({ label: d.date.slice(5), value: d.burned }));
-    const minItems = v.days.map((d) => ({ label: d.date.slice(5), value: d.minutes }));
+    // #544：图表入参过显示层取整（空值仍 `null`，不断 0 口径不动）。
+    const burnItems = v.days.map((d) => ({
+      label: d.date.slice(5),
+      value: d.burned === null ? null : Number(fmtNum(d.burned)),
+    }));
+    const minItems = v.days.map((d) => ({
+      label: d.date.slice(5),
+      value: d.minutes === null ? null : Number(fmtNum(d.minutes, 0)),
+    }));
     cards.push({
       id: 'sec-line',
       label: '每日消耗折线',
       html: renderChartBlock({
         kind: 'line',
-        title: '每日消耗＋时长（消耗实线 · 时长虚线，两套刻度）',
+        title: '每日消耗与时长（消耗实线，时长虚线，两套刻度）',
         input: {
           items: burnItems,
           options: {
+            // #544：纵轴刻度与量程走 `valueAxisOf()`（共享域＝消耗那条；时长是 `ownScale` 独立刻度）。
+            ...valueAxisOf(burnItems.map((p) => p.value)),
             series: [
               { name: '消耗(卡)', items: burnItems },
               { name: '时长(分)', items: minItems, dashed: true, ownScale: true },
@@ -636,9 +778,9 @@ export function buildTrendDoc(v: TrendView): string {
           minutes: numUnit(d.minutes, '分钟'),
           burned: numUnit(d.burned, '卡'),
         })),
-        caption: '逐日明细（共 ' + v.days.length + ' 天；本表列出 ' + shown + ' 天'
-          + (truncated ? '——已截断，只列前 ' + TREND_ROWS_CAP + ' 天' : '，未截断')
-          + '；空缺日「—」不断 0）',
+        caption: '逐日明细（共 ' + v.days.length + ' 天，本表列出 ' + shown + ' 天'
+          + (truncated ? '，已截断，只列前 ' + TREND_ROWS_CAP + ' 天' : '，未截断')
+          + '，空缺日「—」不断 0）',
       }),
     });
   } else {
@@ -648,19 +790,20 @@ export function buildTrendDoc(v: TrendView): string {
       html: emptyGuide({ icon: '📈', text: '本窗还没有运动记录', hint: '说「记运动」就能记下第一笔' }),
     });
   }
-  cards.push(sourceCard(TREND_SOURCE, v.start, v.end, sessions));
+  cards.push(footFacts(TREND_SOURCE, v.start, v.end, sessions));
   return assembleDocPage({
-    docTitle: '卡路里·运动趋势',
+    docTitle: '卡路里 运动趋势',
     title: '运动趋势 ' + v.start + ' ~ ' + v.end,
-    eyebrow: '运动 · 趋势',
-    subtitle: '每日消耗与时长 ＋ 每周频次 ＋ 逐日明细（空缺日留空，不补 0）',
-    content: finishPage(cards, '口径：折线与逐日表按窗口每一天画一行（没有记录的日子留空「—」，不补 0）；'
-      + '次数＝本窗记录条数；时长＝分钟、消耗＝卡；逐日表最多列 ' + TREND_ROWS_CAP + ' 天，超出即印截断'
-      + '（页眉的天数与表里可见行数同口径）。', '运动趋势', {
-      activeDays: v.activeDays, totalMinutes: v.totalMinutes,
-      totalBurned: v.totalBurned, peakBurned: v.peak === null ? null : v.peak.burned,
-    }),
+    eyebrow: '运动趋势',
+    subtitle: '每日消耗与时长，每周频次，逐日明细（空缺日留空，不补 0）',
+    content: exerciseUiCss() + S544_CSS
+      + windowStrip(v.start, v.end, v.days.length + ' 天')
+      + finishPage(cards, TREND_CALIBERS, '运动趋势', {
+        activeDays: v.activeDays, totalMinutes: v.totalMinutes,
+        totalBurned: v.totalBurned, peakBurned: v.peak === null ? null : v.peak.burned,
+      }),
     charts: hasRows,
     printable: true,
+    pageUi: true,
   });
 }
