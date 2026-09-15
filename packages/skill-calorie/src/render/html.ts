@@ -24,6 +24,7 @@ import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } 
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 import type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
+import { buildPlanProcessDoc, buildPlanResultDoc, buildPlanVsActualDoc, buildPlanWizardDoc } from './workoutPlanDocs.js';
 import type { WritePreview } from '../workout/write.js';
 import type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 import type { AnomalyView, ContraView, DedupeView, PredictView } from './insightPlate.js';
@@ -511,54 +512,37 @@ export function renderBodyMeasureHtml(v: BodyMeasureView): string {
   return pageShell('calorie', 'ilife:calorie:body-measure', '围度看', body);
 }
 
-export function renderPlanHtml(v: PlanView): string {
-  const sessions = v.sessions.slice(0, 8).map((s) => kpi('W' + s.week_number + 'D' + s.day_of_week + '#' + s.session_index, s.session_label || (s.is_rest_day ? '休息' : '训练'), (Array.isArray(s.movements) ? s.movements.length : 0) + '动作')).join('');
-  const body =
-    '<div class="' + cx('grid') + '">' +
-    kpi('训练计划看', v.title ?? '未命名', v.totalWeeks === null ? '' : '共 ' + v.totalWeeks + ' 周') +
-    kpi('会话', v.totalSessions + ' 个', '动作 ' + v.totalMovements + ' 个') +
-    '</div><div class="' + cx('grid') + '">' + sessions + '</div>';
-  return pageShell('calorie', 'ilife:calorie:plan', '训练计划看', body);
+/** T351 视觉修复·实施兵B：计划四函数改薄委托，整页装配住 `workoutPlanDocs.ts`
+ *（老 `workout_plan_view`／`process_progress` 版式装新数据＋复制数据/复制日志双按钮）。
+ * 签名兼容旧调用（第二参可选）；`workout/plan.ts` 与 `workout/wizard.ts` 传真 key／命令原文，
+ * 直调旧签名的按缺省命令出口（复制日志仍可照抄重跑该查询命令）。 */
+export function renderPlanHtml(v: PlanView, opts?: { key?: string; command?: string; wakeWord?: string }): string {
+  return buildPlanResultDoc(v, {
+    key: opts?.key ?? 'calorie.view.plan',
+    command: opts?.command ?? 'calorie-cmd-read calorie.view.plan',
+    wakeWord: opts?.wakeWord,
+  });
 }
 
-export function renderPlanVsActualHtml(v: PlanVsActualView): string {
-  const rows = v.days
-    .filter((d) => d.planned.length > 0 || d.logged.length > 0)
-    .slice(0, 14)
-    .map((d) =>
-      kpi(d.date, '计划 ' + d.planned.length + ' 命中 ' + (d.planned.length - d.missed.length),
-        d.missed.length === 0 ? '全命中' : '漏 ' + d.missed.slice(0, 3).join('、')),
-    )
-    .join('');
-  const body =
-    '<div class="' + cx('grid') + '">' +
-    kpi('计划比实际', v.start + ' ~ ' + v.end, '完成 ' + v.doneCount + '/' + v.plannedCount) +
-    kpi('完成率', v.completionRate === null ? '—' : v.completionRate + '%', v.plannedCount === 0 ? '窗内无计划' : '') +
-    '</div><div class="' + cx('grid') + '">' + rows + '</div>';
-  return pageShell('calorie', 'ilife:calorie:plan-vs-actual', '计划比实际', body);
+export function renderPlanVsActualHtml(v: PlanVsActualView, opts?: { key?: string; command?: string }): string {
+  return buildPlanVsActualDoc(v, {
+    key: opts?.key ?? 'calorie.view.plan-vs-actual',
+    command: opts?.command ?? 'calorie-cmd-read calorie.view.plan-vs-actual',
+  });
 }
 
-export function renderPlanWritePreviewHtml(v: WritePreview): string {
-  const before = v.before.slice(0, 8).map((b) => '<div>' + escapeHtml(b) + '</div>').join('');
-  const after = v.after.slice(0, 8).map((a) => '<div>' + escapeHtml(a) + '</div>').join('');
-  const body =
-    '<div class="' + cx('grid') + '">' +
-    kpi('写前预览', v.title, '改前 ' + v.before.length + ' 行 → 改后 ' + v.after.length + ' 行') +
-    kpi('确认', '复制 prompt 后执行写命令', v.note) +
-    '</div><div><b>改前</b>' + before + '</div><div><b>改后</b>' + after + '</div>';
-  return pageShell('calorie', 'ilife:calorie:plan-write-preview', '写前预览', body);
+export function renderPlanWritePreviewHtml(v: WritePreview, opts?: { key?: string; command?: string }): string {
+  return buildPlanProcessDoc(v, {
+    key: opts?.key ?? 'calorie.view.plan-write-preview',
+    command: opts?.command ?? 'calorie-cmd-read calorie.view.plan-write-preview',
+  });
 }
 
-export function renderPlanWizardHtml(v: PlanWizardView): string {
-  const errs = v.errors.slice(0, 5).map((e) => '<div>' + escapeHtml(e) + '</div>').join('');
-  const warns = v.warnings.slice(0, 5).map((e) => '<div>' + escapeHtml(e) + '</div>').join('');
-  const body =
-    '<div class="' + cx('grid') + '">' +
-    kpi('构建向导', v.errorCount === 0 ? '可落地' : '有硬止', '错误 ' + v.errorCount + ' 警告 ' + v.warningCount) +
-    // G15 #102 · 已检查≠已通过：坏计划也计 N，通过与否看 errorCount；错误态追加（X硬止）与首 KPI 的“有硬止”呼应。
-    kpi('纯校验', '不写库', '已检查 ' + v.checkedSessions + ' 个会话' + (v.errorCount > 0 ? '（' + v.errorCount + '硬止）' : '')) +
-    '</div><div>' + errs + warns + '</div>';
-  return pageShell('calorie', 'ilife:calorie:plan-wizard', '构建向导', body);
+export function renderPlanWizardHtml(v: PlanWizardView, opts?: { key?: string; command?: string }): string {
+  return buildPlanWizardDoc(v, {
+    key: opts?.key ?? 'calorie.view.plan-wizard',
+    command: opts?.command ?? 'calorie-cmd-read calorie.view.plan-wizard',
+  });
 }
 
 export function renderExerciseGoalHtml(v: ExerciseGoalView): string {
