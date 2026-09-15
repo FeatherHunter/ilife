@@ -1,0 +1,266 @@
+﻿▶ 饼干记账唯一出口 cmd_read（16 键全票）
+  ✔ record.today：exit 0 + 纯 JSON list (111.0026ms)
+  ✔ record.range：条件查 + 空区间 exit 4 (356.1507ms)
+  ✔ record.search：备注/标签/欠款 + record.detail 闭环 (474.0962ms)
+  ✔ record.update：改 + 撤销恢复闭环 (585.2634ms)
+  ✔ analysis 三键：overview stat + compare/trend analysis (313.5235ms)
+  ✔ goal/account 写读闭环（写走 receipt） (728.4603ms)
+  ✔ link/setup/help：联动采单 + 初始化 + 现找 (852.4725ms)
+  ✔ 契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；--html 落盘 (508.5796ms)
+✔ 饼干记账唯一出口 cmd_read（16 键全票） (3930.4926ms)
+▶ t407 整改（二）· D1 桌面端补丁只在宽屏生效
+  ✔ head 样式带桌面补丁：1200px 以上内容列 1120、卡片 minmax(220px,1fr) (0.8383ms)
+  ✔ 手机端 CSS 不动：640 档断点仍在（复量不得回退的底） (0.1965ms)
+✔ t407 整改（二）· D1 桌面端补丁只在宽屏生效 (2.194ms)
+▶ t407 整改（二）· D2 回执页只剩一组复制按钮
+  ✔ undoExit 不再带复制按钮：无复制位、无 data-t，退出口仍在 (1.0938ms)
+  ✔ 复制区功能不受影响：数据三格式与日志载荷仍在 data-t 里 (1.5914ms)
+✔ t407 整改（二）· D2 回执页只剩一组复制按钮 (3.1191ms)
+[skill-bill] BILL_FORCE_PROD=1: 写入 D:\prod-bill.db
+▶ 饼干取数 fetch
+  ✔ 当日查 + 关键词 + #tag 精确匹配 (1.6589ms)
+  ✔ 改/撤销/恢复闭环 + 查无对条 (3.1419ms)
+  ✔ goals.json 原子读写 + 坏文件大声失败 (3.2126ms)
+  ✔ SKILLS_DB_PATH 缺失阻断 (0.2323ms)
+  ✔ BILL_FORCE_PROD 哨兵：非 tmp 写须 opt-in（tmp 直过） (0.9863ms)
+✔ 饼干取数 fetch (10.1113ms)
+▶ t407 · 写入域 16 条唤醒词一场景一件
+  ✔ 16 条词各落一件：落点两两不同、顺序与清单一致、每件场景件在盘上 (2.3692ms)
+  ✔ 登记表 16 行、与唤醒词表双向对得上（每件报的词都真路由到它自己那一件） (0.2552ms)
+  ✔ 认不得的 kind 落通用词那一件；不带 kind 的「记一笔」也落它 (0.1506ms)
+✔ t407 · 写入域 16 条唤醒词一场景一件 (3.7162ms)
+▶ t407 · 缺口块一：候选单选
+  ✔ 候选为空只出空态：不出下拉、不出表、不拿最近一笔兜底 (0.4067ms)
+  ✔ 有候选：出下拉与记录表，每条带「为什么是它」，没给 selectedId 就不预选 (0.6432ms)
+  ✔ 给了 selectedId 才预选；候选写不出依据就抛错，不静默出一张没有依据的表 (0.3257ms)
+  ✔ 空态模板串不重复、标点不粘连（一处救三页） (0.1207ms)
+✔ t407 · 缺口块一：候选单选 (1.6925ms)
+▶ t407 · 缺口块二：逐行可编辑表
+  ✔ 缺项逐行算得出来：只数必需列，可选列空着不算缺 (0.206ms)
+  ✔ 表里逐行标红，红标说清第几行缺哪一列（用中文名报） (0.2896ms)
+  ✔ 零行只出空态；每行必需格齐了就不出红标，并给一行合计 (0.2673ms)
+✔ t407 · 缺口块二：逐行可编辑表 (0.9138ms)
+▶ t407 · 缺口块三：diff 表
+  ✔ 原值与新值一样就不算改动，整块只出空态、不出表 (0.3487ms)
+  ✔ 只列真改动的行，行数与「共比了几个字段」分开报 (0.2269ms)
+  ✔ 没给这一列与给了空串同面（都写「未设置」） (0.0632ms)
+✔ t407 · 缺口块三：diff 表 (0.7531ms)
+▶ #237 名字通式与同秒递补（共用件口径，经交付入口验行为）
+  ✔ 名字＝<主体>_<本地 YYYYMMDD_HHMMSS>.html；HELP 与速查表两支分名 (3.0686ms)
+  ✔ 同秒递补：连写三次得本体／_2／_3，各自内容不被覆盖 (3.4755ms)
+✔ #237 名字通式与同秒递补（共用件口径，经交付入口验行为） (7.1953ms)
+▶ #237 交付入口 deliverHtml
+  ✔ target：返回绝对路径 ＋ 真实落盘字节数 (2.1504ms)
+  ✔ explicit 优先且为覆盖写（落点逐字，不递补）；缺落点即抛 (1.7846ms)
+✔ #237 交付入口 deliverHtml (4.2442ms)
+▶ #144 端到端冒烟（真 spawn 出口）
+  ✔ 缺省＝HELP 文件：stdout 给绝对路径，路径上真有全壳 HTML，且不建库 (303.6641ms)
+  ✔ 显式参数两支：mode=lookup 落速查表文件；q 只回命中不落盘 (224.5823ms)
+  ✔ --html 显式覆盖：写到用户逐字给的路径（缺父目录也建） (302.4871ms)
+✔ #144 端到端冒烟（真 spawn 出口） (831.049ms)
+▶ #144 落盘失败＝exit 5
+  ✔ 父级是文件时真跑 exit 5 且 stderr 有 ERR 5 (139.8731ms)
+✔ #144 落盘失败＝exit 5 (140.0108ms)
+✔ #148 ① 缺省＝HELP 文件：名字通式／落点／回执绝对路径，data 换成域级索引 (719.5565ms)
+✔ #148 ② 壳层锁：产物 = 共享 help 模板前后缀逐字 ＋ help-data 载荷（7 域／74 场景／两块 meta） (183.3675ms)
+✔ #148 ③ 独占与递补：并发 6 次内容互不覆盖；`reuseHours:0` ⇒ 6 个互异落点、目录恰 6 份 (325.9ms)
+✔ #148 ③b #245 复用：并发后目录不涨（再跑一次复用已有那份，既不新建也不改写） (425.9574ms)
+✔ #148 ④ 两支产物互不串：缺省 HELP 文件 vs mode=lookup 速查表 (403.5027ms)
+✔ #148 ⑤ 参数与退出码矩阵（真出口）＋ 失败时 stdout 空 (553.7005ms)
+▶ #145 饼干记账 HELP 渲染接线
+  ✔ 全壳 HTML：标题不重复技能名 ＋ 7 域／74 场景都在 (2.0804ms)
+  ✔ 5 键取值照老实样；subtitle 由计数派生（不写死 7／74） (0.3467ms)
+  ✔ 三块可选键照传：meta_blocks 两块（派生）＋ version ＋ init_banner (0.1685ms)
+  ✔ init_banner 状态驱动：已初始化 ⇒ hidden（键仍在，键集不随状态变） (0.3501ms)
+  ✔ 可复现：同一 now 两次渲染逐字节一致；坏 Date 即抛 (0.8698ms)
+✔ #145 饼干记账 HELP 渲染接线 (4.98ms)
+✔ #245 ① 缺省＝一天：连读 3 次目录文件数不增，三次落同一份、那份一字未改 (442.3877ms)
+✔ #245 ② 两支都吃窗口：HELP 文件与速查表各自复用，目录稳定在两份 (547.9995ms)
+✔ #245 ③ 窗口可换：3 小时同效；0＝每次都要一份最新的（不覆盖旧的） (499.884ms)
+✔ #245 ④ 坏参阻断：负数／非数一律 exit 2，且不落盘 (322.9026ms)
+✔ #245 ⑤ 不吃窗口的路照旧：`--html` 逐字覆盖、`q` 现找不落盘、看帮助不建库 (637.137ms)
+▶ t407 移动端返工 · 方向口径拆成独立形状
+  ✔ summaryRow 不再用顿号分方向、分号缀分类 (15.273ms)
+✔ t407 移动端返工 · 方向口径拆成独立形状 (15.9885ms)
+▶ t407 移动端返工 · 回执引导句分行
+  ✔ nextStepOf 带退出口那档不用分号串两件事 (0.6054ms)
+  ✔ typeBadge 按句分行各出一行口径 (6.2377ms)
+✔ t407 移动端返工 · 回执引导句分行 (7.0296ms)
+▶ t407 移动端返工 · diff 表走映射
+  ✔ 行名过 fieldLabelOf，列头说人话 (2.7303ms)
+✔ t407 移动端返工 · diff 表走映射 (2.9144ms)
+▶ t407 移动端返工 · 复制区写清给谁
+  ✔ prompt 区标题写清复制给助手 (1.9804ms)
+✔ t407 移动端返工 · 复制区写清给谁 (2.1831ms)
+▶ 饼干口径 policy
+  ✔ L1 10支出+6收入+隔离三类 + 三级上限 (0.7113ms)
+  ✔ amount 符号即方向 + 零阻断 (0.1401ms)
+  ✔ 时间容错 + 整单默认 (0.775ms)
+  ✔ 唤醒词 77 全量 + 最长匹配 + 缺槽位 (0.3592ms)
+  ✔ 错误皆为 BillPolicyError (0.1277ms)
+✔ 饼干口径 policy (2.8582ms)
+▶ t406 · 记账写入域命令声明与注册表
+  ✔ 恰好两条命令，六件事齐全，形状一律 receipt (0.7929ms)
+  ✔ 代表唤醒词是 WAKE_TABLE 里真有的词，且路由到本命令 (0.1779ms)
+  ✔ 两条示例照抄即能跑（本机真跑，空库） (234.492ms)
+  ✔ 注册表一能力一行；迁移过的命令的形状从它派生（形状事实不写在页面这一层） (0.144ms)
+  ✔ 入口不猜：不属于本域的命令即抛，不静默兜底 (0.3214ms)
+  ✔ 槽位探针：缺的只有必需槽位；金额 0 视同没给（本仓不记零，裁定第 3 条） (0.1738ms)
+✔ t406 · 记账写入域命令声明与注册表 (236.6133ms)
+▶ t406 · 记一笔（bill.record.add）真跑
+  ✔ 必需槽位齐全 → 写库 + 回执整页落盘 (166.8866ms)
+  ✔ 必需槽位缺失 → 采集页（不写库），退出码 0，含缺槽位明示与复制 prompt 区 (397.8066ms)
+✔ t406 · 记一笔（bill.record.add）真跑 (564.9149ms)
+▶ t406 · 改记录（bill.record.update）真跑
+  ✔ id 齐全 → 写库 + 回执整页落盘（页标题跟操作走） (165.8643ms)
+  ✔ 改成与改前相同的值 → 回执说「无改动」（改前值取自库内那一行，不靠 unknown 中转） (188.2466ms)
+  ✔ 撤销与恢复各出一页（软删口径不得写成可恢复承诺） (374.7958ms)
+  ✔ 缺 id → 采集页（不写库） (186.0484ms)
+  ✔ 撤销带方向不合的 kind＋amount 也照撤销（方向判定只服务录入路径） (307.2108ms)
+  ✔ id 有值但不是记录编号 → 仍走口径失败（不静默兜底成采集页） (105.685ms)
+✔ t406 · 改记录（bill.record.update）真跑 (1470.9506ms)
+▶ t407 · 记支出代表页（页面积木与三个缺口块）
+  ✖ 采集页十块齐全：类型徽章／摘要行／重复检测条／预填标注／缺项阻断条／表单三枚选择器／prompt 区／复制区 (311.3881ms)
+  ✔ 缺项阻断条真阻断：含占位符的写库指令只给看不给复制（任何 data-t 都不含它） (156.6201ms)
+  ✔ 重复检测提示条：已给分类＋同日同额出现；分类未给不出条；换一天不出现 (389.0544ms)
+  ✔ 分类未给 ⇒ 不出重复检测提示条（同日同额也不报，宁可漏提示不误报） (182.0536ms)
+  ✔ 方向不符（记支出给正数）⇒ 阻断、不写库、栏上写清方向 (385.1508ms)
+  ✖ 回执页：退出口／对账折叠区／复制区三件齐全，复制日志无双前缀，数据结构仍说写库回执 (213.2182ms)
+  ✔ 采集页的数据结构不许照抄回执页那句（写库回执） (190.9454ms)
+✖ t407 · 记支出代表页（页面积木与三个缺口块） (1942.8355ms)
+▶ 饼干渲染 render
+  ✔ 16 key×shape 全合法（命名空间+6 形状） (0.7552ms)
+  ✔ envelope 全字段 + 错形状 throw (0.2492ms)
+  ✔ KPI 转账除外 + 总览 metrics 全 number (0.2867ms)
+  ✔ HTML 按形状渲染 + 体积门 + 三标记 (0.7441ms)
+  ✔ 16 模板全在 + key 映射 (0.9888ms)
+✔ 饼干渲染 render (3.8606ms)
+▶ t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps）
+  ✔ 撤销候选只列未删：软删那笔一个都不出现、条数按未撤销数报 (386.6837ms)
+  ✔ 恢复候选只列已软删：没打标的那三笔一个都不出现、条数按已打标数报 (166.9317ms)
+  ✔ 三种过筛条件各归各位（op 落哪一档） (0.1151ms)
+  ✔ 按编号读一条认得软删行：deleted 与行一起给全（改记录／撤销／恢复三处共用） (3.7987ms)
+  ✔ 候选按时间倒序摆：最近的一笔在最前（页面与那一格同一条次序） (2.1082ms)
+  ✔ 候选读不通照实报（不拿空表冒充「库里没有记录」） (0.7002ms)
+  ✔ 库里一条候选都没有时出空态，不拿最近一笔顶替 (8.0445ms)
+✔ t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps） (569.1217ms)
+▶ t407 E1 · 取数共用位口径（recentPicks.ts）
+  ✔ 一个值的字符串形态：数字写成十进制串、字符串剪空白、其余按空串 (0.3247ms)
+  ✔ 候选按最近在先去重：同一个值只留第一次出现的那一个，次序按库里的先后 (0.854ms)
+  ✔ 候选上限十二个：给十五条也只剩前十二个 (0.2381ms)
+  ✔ 分类一条历史都没有才退到调用方给的 L1 名单；账本退到缺省「生活」；账户没有兜底 (0.1576ms)
+  ✔ 选项＝候选 ＋ 本次已给的值：已给的不在候选里时并到队首；候选为空／没这一格＝不给选项 (0.1604ms)
+  ✔ 端到端：采集页的分类候选不重复（同一分类在选项里只出现一次） (159.3252ms)
+✔ t407 E1 · 取数共用位口径（recentPicks.ts） (161.5387ms)
+▶ t407 E1 · 流程三段式（flowSteps.ts）
+  ✔ 空数组＝不出这一块（不留空块） (0.2428ms)
+  ✔ 段状态：没写 done＝未定走 warn，写了 done＝已定走 ok，自定义 state 优先 (0.1188ms)
+  ✔ 一段之内按「徽标 → 说明 → 表单 → 成品」摆，段与段按给的次序 (0.0987ms)
+  ✔ 一段既没字段也没成品又没说明也出得来（三段骨架本身就是要看的东西） (0.0381ms)
+✔ t407 E1 · 流程三段式（flowSteps.ts） (0.6441ms)
+▶ t407 E1 · 分摊预览（installmentPreview.ts）
+  ✔ 尾差对齐到最后一期：前几期各拿整数分、末期补齐，合计逐分等于总价 (0.4029ms)
+  ✔ 日期＝首期日之后每月同日；该月没有这一天就回退到该月最后一天 (0.1498ms)
+  ✔ 先校验再算：总额／期数／首期日三样各自解析不出就当场抛错（不静默当空） (0.3281ms)
+  ✔ 超 24 期只显前 12 期，其余进折叠区；24 期整好不折 (0.3921ms)
+  ✔ 口径行写明尾差去向与合计等于总价 (0.0727ms)
+✔ t407 E1 · 分摊预览（installmentPreview.ts） (1.4664ms)
+▶ t407 E1 · 图片识别外置通道（outsideScan.ts）
+  ✔ 三要素表只有一处定义：金额／分类／时间 (0.0748ms)
+  ✔ 已收图片数说明：0 张走文字填空那条路，给了图就说清收图与读图各在哪 (0.2541ms)
+  ✔ 明示卡：三样齐了说不缺，缺哪样就报哪样（缺一样就不写库） (0.2307ms)
+  ✔ 可复制那段话：缺项时照抄的命令留尖括号占位符，补齐后照抄真值 (0.1793ms)
+✔ t407 E1 · 图片识别外置通道（outsideScan.ts） (0.8638ms)
+▶ 饼干 SKILL 与 HELP
+  ✔ SKILL 含出口/口径/标记块 (0.8945ms)
+  ✔ 速查：77 短语全可路由且 key 对得上 (1.1689ms)
+  ✔ record.add 示例可直跑最小槽位（category+amount） (0.4052ms)
+  ✔ 互联区新鲜（构建期注入可复现） (0.4261ms)
+✔ 饼干 SKILL 与 HELP (4.2341ms)
+▶ t407 整改（一）· 用户语言映射只此一处
+  ✔ 库列名一律给中文名，认不得的照实返回（不静默抹掉） (0.5395ms)
+  ✔ W1 补钉：category 单独直断言（单文件跑即能红，不靠循环与全包） (0.0931ms)
+  ✔ 内部型名一律给唤醒词；认不得的与空串都落「记一笔」 (0.115ms)
+  ✔ 金额 0 视同没给（上级裁定第 3 条）：值栏与说明栏都不摆 0.00 (0.4755ms)
+  ✔ 复制载荷头行不再拼命令名（上级裁定第 2 条）：text 头行写用户说法 (4.6532ms)
+  ✔ 内部状态串给用户说法；工程话里的那几个标识一个都不许留下 (0.2508ms)
+  ✔ 下一步动作四档：缺项／采集页／回执页／回执页带退出口 (0.1473ms)
+  ✔ 摆进徽标的那句话：行内 `·` 一律换掉（徽标是版式位） (0.1792ms)
+✔ t407 整改（一）· 用户语言映射只此一处 (7.4163ms)
+▶ t407 整改（一）· 徽章改成若干枚独立形状
+  ✖ 四枚形状各自在：唤醒词胶囊／状态徽章／下一步动作 (0.6631ms)
+  ✔ 版式容器上不许出现 `·`（连形状都不许退回一行串） (0.2228ms)
+  ✔ 命令名不上屏（上级裁定第 1 条）：`bill.record.add` 一个字都不印 (0.0579ms)
+  ✔ 认不得的型不印内部话：给「分类按三级挂靠」而不是「本仓尚未定额的型」 (0.0854ms)
+✖ t407 整改（一）· 徽章改成若干枚独立形状 (1.2367ms)
+▶ #146 饼干记账 HELP 内容资产
+  ✔ 三层结构：7 域 / 20 二级组 / 74 场景（老 71 ＋ 新增 3），域顺序照老实样 (1.4677ms)
+  ✔ 场景字段齐、id 唯一、status 全空、types 用老词 (1.234ms)
+  ✔ 老 71 条逐字锁（摘要）＋ 二次生成可复现 (0.6243ms)
+  ✔ 新增 3 条落在对应域/组（补进既有二级组末尾，不新开组） (0.2255ms)
+  ✔ 与口径层 WAKE_TABLE 双向对账（77 = 4 HELP + 73，条条有落） (0.2449ms)
+  ✔ HELP_WAKE_WORDS 由口径层派生（4 条，不在场景目录） (0.1259ms)
+✔ #146 饼干记账 HELP 内容资产 (5.0759ms)
+ℹ tests 138
+ℹ suites 32
+ℹ pass 135
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4540.1449
+
+✖ failing tests:
+
+test at packages\skill-bill\test\record-write.test.mjs:262:3
+✖ 采集页十块齐全：类型徽章／摘要行／重复检测条／预填标注／缺项阻断条／表单三枚选择器／prompt 区／复制区 (311.3881ms)
+  AssertionError [ERR_ASSERTION]: 采集页缺：支出 金额取负数
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-bill/test/record-write.test.mjs:277:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1869:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at packages\skill-bill\test\record-write.test.mjs:338:3
+✖ 回执页：退出口／对账折叠区／复制区三件齐全，复制日志无双前缀，数据结构仍说写库回执 (213.2182ms)
+  AssertionError [ERR_ASSERTION]: 回执页缺：支出 金额取负数
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-bill/test/record-write.test.mjs:346:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at packages\skill-bill\test\user-wording.test.mjs:103:3
+✖ 四枚形状各自在：唤醒词胶囊／状态徽章／下一步动作 (0.6631ms)
+  AssertionError [ERR_ASSERTION]: 口径那一段（方向写清，不靠分隔符）
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-bill/test/user-wording.test.mjs:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at node:internal/test_runner/test:1867:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

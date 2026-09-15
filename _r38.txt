@@ -1,0 +1,8 @@
+﻿git : error: pathspec '-m' did not match any file(s) known to git
+At line:1 char:247
++ ... s.test.mjs; git commit -- packages/skill-bill/src/shared/candidatePic ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (error: pathspec...s) known to git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+error: pathspec 'fix(407): 第3轮返工 —— 空态模板串与标点修复＋黑底说明块排版＋撤销/记借入/记支出徽标/记借出四处' did not match any file(s) known to git

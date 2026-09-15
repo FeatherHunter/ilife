@@ -24,15 +24,17 @@
  *   node gen-wall.mjs --stage <源目录> <产物目录>   按清单把产物复制进同目录，再出两张墙 ＋ 索引 ＋ 自检
  *   node gen-wall.mjs --check <产物目录>            只跑自检（**反例测试就是这条**，改清单即红）
  *
- * 本批重跑方式（票 #351）：
- *   产物先由持锁跑批件出（`node tooling/run-locked.mjs --ticket 351 --run-id t351-v16-run -- \
- *   node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t351-v16/products`），
+ * 本批重跑方式（票 #351，最近一轮＝收口窗 T351-v19）：
+ *   产物先由持锁跑批件出（`node tooling/run-locked.mjs --ticket 157 --run-id t157-final-run -- \
+ *   node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t157-final/products`），
  *   再 `cd docs/skills/skill-calorie/scene05-验收墙` 跑
- *   `node gen-wall.mjs --stage ../../../../.scratch/t351-v16/products .`（复制 ＋ 出双墙 ＋ 出索引 ＋ 自检），
+ *   `node gen-wall.mjs --stage ../../../../.scratch/t157-final/products .`（复制 ＋ 出双墙 ＋ 出索引 ＋ 自检），
  *   最后 `node gen-wall.mjs --check .` 就是票面那条验收命令。
  *
  * 命名规则（全仓只此一处算）：发布名 ＝ **唤醒词 ＋ `.html`**，同一条词有过程页与回执页两份时用
  * `-预检`／`-回执` 后缀（照 `scene06-验收墙` 的既有样子），即清单 `manifest.json` 的 `file` 字段；
+ * **唯一例外**：order 186「定训练计划」那一格换装成**计划编辑器（可写页）**后没有「预检确认」这一步，
+ * 发布名取 `定训练计划-编辑器.html`（后缀按它是什么页给）；例外只在 `manifest.json` 那一行算，本件不特判。
  * 复制、墙、索引、自检都只读它，**别处不许再拼**（做法 §1「同一个名字只在一处算出来」——两侧不一致
  * ＝全墙集体死链）。墙页、索引页与产物**必须同目录**（iframe 走相对路径）。
  *

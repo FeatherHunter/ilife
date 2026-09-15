@@ -562,7 +562,7 @@ combos:
   - key: calorie.view.plan-wizard
     skill: calorie
     shape: stat
-    title: 构建向导
+    title: 定训练计划
     cmd: skill-calorie
   - key: calorie.view.plan-write-preview
     skill: calorie

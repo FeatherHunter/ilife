@@ -39,12 +39,17 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
     assert.ok(skill.includes(START) && skill.includes(END));
     assert.ok(skill.split('\n').length >= 70);
   });
-  it('M6 Wizard Verify 铁则正文（#98）在 AUTO 块外，含前置/映射/不可写/违规口径', () => {
+  it('M6 Wizard Verify 铁则正文（#98）在 AUTO 块外，含前置/映射/可写/违规口径', () => {
     assert.match(skill, /Wizard Verify 铁则/);
     const m6 = skill.indexOf('## Wizard Verify 铁则');
     assert.ok(m6 > 0, '缺 M6 章节标题');
     assert.ok(m6 < skill.indexOf(START), 'M6 章节必须在 AUTO 块之外（块内会被 build-help 重写）');
-    for (const s of ['记体脂（皮褶钳）', 'body_composition_wizard.html', 'body_measurements_wizard.html', 'plan_builder_wizard.html', '当前不可写', '不豁免', '协议 fail mode']) {
+    // #157 收口：前提已变——第 5 串原为 `当前不可写`（M6 表里「定训练计划」那一格写「95 键无训练计划写键」）。
+    // 换装后那条链确实可写（过程页＝计划编辑器 → 用户确认 → 写键 `calorie.workout.plan-set` 落库），
+    // SKILL.md 那句已按事实订正，`当前不可写` 在该件里 0 行 ⇒ 旧串必红。**不删断言、不放宽**：
+    // 把锚点重指到**只住那一格**的新事实串（整句钉住「可写＋编辑器＋写键＋落库」四件，
+    // 那格被改回旧口径即红——第 5 串连同它的独有性由 `skill-t11` 自身守着）。
+    for (const s of ['记体脂（皮褶钳）', 'body_composition_wizard.html', 'body_measurements_wizard.html', 'plan_builder_wizard.html', '**可写**：出计划编辑器（可写页）→ 用户改完确认 → 复制命令 → AI 调 `calorie.workout.plan-set` 落库', '不豁免', '协议 fail mode']) {
       assert.ok(skill.includes(s), 'M6 正文缺：' + s);
     }
   });

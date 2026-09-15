@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>t407 写入域 16 条唤醒词链路总览</title>
+<style>
+:root{--ink:#1b1f24;--sub:#5b6672;--line:#dfe4ea;--bg:#f6f8fa;--card:#fff;--hl:#0b6bcb;--warn:#8a5300;--warnbg:#fff8e6;}
+*{box-sizing:border-box;}
+body{margin:0;padding:28px 22px 64px;background:var(--bg);color:var(--ink);
+     font:15px/1.65 "Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;}
+h1{font-size:22px;margin:0 0 6px;}
+h2{font-size:17px;margin:30px 0 10px;padding-left:9px;border-left:4px solid var(--hl);}
+h3{font-size:15px;margin:18px 0 8px;}
+p{margin:8px 0;}
+.lead{color:var(--sub);margin-bottom:18px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:14px 0;}
+.card.warn{background:var(--warnbg);border-color:#f0d9a8;color:var(--warn);}
+pre{background:#0f172a;color:#e8eef7;border-radius:6px;padding:12px 14px;overflow-x:auto;
+    font:13px/1.7 Consolas,"Cascadia Mono",monospace;white-space:pre;}
+code{font-family:Consolas,"Cascadia Mono",monospace;background:#eef2f6;border-radius:3px;padding:1px 4px;font-size:13px;}
+pre code{background:none;padding:0;color:inherit;font-size:13px;}
+ul{margin:6px 0 6px 0;padding-left:22px;}
+li{margin:4px 0;}
+.tw{overflow-x:auto;border-radius:8px;}
+table{border-collapse:collapse;width:100%;min-width:1680px;background:var(--card);font-size:13.5px;}
+col.c-user{width:26%;}
+col.c-wake{width:88px;}
+col.c-cmd{width:176px;}
+col.c-page{width:210px;}
+col.c-flow{width:20%;}
+caption{caption-side:top;text-align:left;color:var(--sub);padding:4px 0 10px;}
+th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top;text-align:left;}
+th{background:#eaf0f6;font-weight:600;white-space:nowrap;}
+tr:nth-child(even) td{background:#fbfcfe;}
+td.wake{white-space:nowrap;font-weight:600;}
+td.cmd{white-space:nowrap;}
+td.cmd code{font-size:12.5px;}
+td.pg a{display:inline-block;text-decoration:none;color:var(--hl);border-bottom:1px solid var(--hl);}
+td.pg a:hover{background:#e8f1fb;}
+td.pg a:visited{color:#6b46c1;}
+.path{display:block;margin-top:4px;color:var(--sub);font:11.5px/1.5 Consolas,"Cascadia Mono",monospace;word-break:break-all;}
+.flow{min-width:230px;}
+.hint{color:var(--sub);}
+.slot{white-space:pre-wrap;font:12.5px/1.6 Consolas,"Cascadia Mono",monospace;background:#f2f5f8;
+      border-left:3px solid #c6d3e0;border-radius:4px;padding:8px 10px;margin:6px 0 0;}
+.foot{color:var(--sub);font-size:13px;margin-top:26px;border-top:1px solid var(--line);padding-top:12px;}
+</style>
+</head>
+<body>
+
+<h1>t407 写入域 16 条唤醒词链路总览</h1>
+<p class="lead">一句话链路：<strong>用户说的话（含唤醒词）</strong> → <strong>唤醒词</strong> → <strong>命令</strong> → <strong>过程型采集页</strong> → <strong>结果型回执页</strong>。表里 16 行＝16 条唤醒词，每行两列页面链接都可点开。</p>
+
+<h2>一、流程说明（这条链怎么走）</h2>
+
+<div class="card">
+<h3>过程型：采集页</h3>
+<ul>
+<li>用户说一句话，句子里带唤醒词（例如「记退款」）。这条话进到技能，按最长匹配命中唯一一条唤醒词，取出这一条的命令（记退款→<code>bill.record.add</code>，并带上 <code>kind=refund</code>）。</li>
+<li>命令要求的那几格必需槽位缺了（记退款缺 <code>category</code>、<code>amount</code>；撤销／恢复缺 <code>id</code>），就出<strong>采集页</strong>：页面明示缺哪几格槽位，给出「复制 prompt」区（把补齐的话原样交给 AI）与「复制数据／日志」区。</li>
+<li>用户照采集页把缺的槽位补齐，再把那一段 prompt 交给 AI，重跑同一条命令。</li>
+<li><strong>采集页不写库</strong>：这一支会建表，但不写行（页面自己的说明写的是「只读：本页不写库，只采集」）。</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>结果型：回执页</h3>
+<ul>
+<li>槽位齐了（并且金额方向对得上：记支出要负数、记收入要正数），命令就跑进写库那一步。</li>
+<li>AI 跑一条：<code>bill-cmd-read &lt;命令&gt; --params '&lt;JSON&gt;' --html &lt;路径&gt;</code>。</li>
+<li>落一张<strong>回执整页</strong>（不是片段），并回答这张页的<strong>绝对路径</strong>，用户双击即看。</li>
+<li><strong>写库只发生在回执这一步</strong>：写库成功后才有回执页；采集页那一步一行也不写。</li>
+</ul>
+</div>
+
+<div class="card warn">
+<p><strong>一句话记牢</strong>：采集页＝缺槽位时的过程页，建表不写行；回执页＝槽位齐了、真写库之后的回执整页。两页都是同一目录 <code>D:\ilife\docs\skills\skill-bill\</code> 下的成品 HTML，下面的链接用的是相对文件名，双击即开。</p>
+</div>
+
+<h2>二、命令原文模板（可直接复制）</h2>
+<pre><code>bill-cmd-read bill.record.add --params '{"kind":"refund"}' --html D:\ilife\docs\skills\skill-bill\t407-页-记退款-回执页.html
+bill-cmd-read bill.record.add --params '{"kind":"expense","category":"餐饮","amount":-35,"note":"午饭"}' --html &lt;绝对路径&gt;
+bill-cmd-read bill.record.update --params '{"op":"undo"}' --html &lt;绝对路径&gt;
+bill-cmd-read bill.record.update --params '{"op":"restore"}' --html &lt;绝对路径&gt;
+bill-cmd-read bill.record.update --params '{"id":1}' --html &lt;绝对路径&gt;</code></pre>
+<p>形状记法：<code>bill-cmd-read &lt;命令&gt; --params '&lt;JSON 对象&gt;' --html &lt;绝对路径&gt;</code>。参数口径：<code>kind</code> 取 <code>expense</code>／<code>income</code>／<code>photo</code>／<code>batch</code>／<code>refund</code>／<code>reimburse</code>／<code>reimburse-done</code>／<code>lend</code>／<code>borrow</code>／<code>collect</code>／<code>repay</code>／<code>installment</code>；<code>op</code> 取 <code>undo</code>／<code>restore</code>，不给 <code>op</code> 就是改字段（改记录）。</p>
+<p class="hint"><strong>本机 pwsh 5.1 的坑</strong>：内联 JSON 的内层双引号会被吃掉（<code>'{"kind":"refund"}'</code> 到命令行里可能变成 <code>{kind:refund}</code>，<code>--params</code> 当场报「须为 JSON」）。<strong>建议把整条命令写进一个 <code>.ps1</code> 文件再跑</strong>，例如：</p>
+<pre><code># 存成 run-refund.ps1 之后：pwsh -File run-refund.ps1
+$p = '{"kind":"refund","category":"餐饮","amount":-35,"note":"午饭"}'
+bill-cmd-read bill.record.add --params $p --html 'D:\ilife\docs\skills\skill-bill\t407-页-记退款-回执页.html'</code></pre>
+
+<h2>三、16 条唤醒词逐条链路</h2>
+<div class="tw">
+<table>
+<caption>列口径：① 用户会怎么说（prompt 示例，逐字取 <code>src\triggers\wake-assets.ts</code> 里该场景的 <code>prompt_template</code>，空槽写 <code>____</code>）／② 唤醒词／③ 命令（括号内是 <code>kind</code> 或 <code>op</code>）／④ 过程型采集页（可点链接 ＋ 绝对路径）／⑤ 结果型回执页（可点链接 ＋ 绝对路径）／⑥ 这一行怎么走。</caption>
+<thead>
+<colgroup>
+<col class="c-user"><col class="c-wake"><col class="c-cmd"><col class="c-page"><col class="c-page"><col class="c-flow">
+</colgroup>
+<tr>
+<th>① 用户会怎么说</th>
+<th>② 唤醒词</th>
+<th>③ 命令</th>
+<th>④ 过程型采集页</th>
+<th>⑤ 结果型回执页</th>
+<th>⑥ 这一行怎么走</th>
+</tr>
+</thead>
+<tbody>
+<!-- ROWS-START -->
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔支出(唤醒词:记支出):</div><div class="slot">  金  额: ____
+  分类/名目: ____ (如:房租 / 午饭 / 打车)
+  备  注: ____ (选填)
+  时  间: ____ (选填,默认现在;补记昨天写「昨天」)
+  账  户: ____ (选填,如:支付宝 / 微信)
+  账  本: ____ (选填,如:旅行 / 生活)
+  币  种: ____ (选填,默认人民币;外币如:USD)</div></td>
+<td class="wake">记支出</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=expense</code>）</td>
+<td class="pg"><a href="t407-代表-记支出-采集页.html">t407-代表-记支出-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-代表-记支出-采集页.html</span></td>
+<td class="pg"><a href="t407-代表-记支出-回执页.html">t407-代表-记支出-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-代表-记支出-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code>（或金额给了正数、方向不符）→ 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔收入(唤醒词:记收入):</div><div class="slot">  金  额: ____
+  分类/名目: ____ (如:工资 / 退款 / 卖闲置)
+  备  注: ____ (选填)
+  时  间: ____ (选填,默认现在)
+  账  户: ____ (选填,如:银行卡 / 微信)
+  币  种: ____ (选填,默认人民币;外币如:USD)</div></td>
+<td class="wake">记收入</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=income</code>）</td>
+<td class="pg"><a href="t407-页-记收入-采集页.html">t407-页-记收入-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记收入-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记收入-回执页.html">t407-页-记收入-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记收入-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code>（或金额给了负数、方向不符）→ 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我拍账单记账(唤醒词:拍账单):</div><div class="slot">（该 prompt_template 只有这一行开场，没有空槽行）</div></td>
+<td class="wake">拍账单</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=photo</code>）</td>
+<td class="pg"><a href="t407-页-拍账单-采集页.html">t407-页-拍账单-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-拍账单-采集页.html</span></td>
+<td class="pg"><a href="t407-页-拍账单-回执页.html">t407-页-拍账单-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-拍账单-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我批量记几笔账(唤醒词:批量录入):</div><div class="slot">  条  目: ____ (每行一笔,如:午饭35 / 奶茶25 / 打车20)
+  账  本: ____ (选填,如:旅行)</div></td>
+<td class="wake">批量录入</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=batch</code>）</td>
+<td class="pg"><a href="t407-页-批量录入-采集页.html">t407-页-批量录入-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-批量录入-采集页.html</span></td>
+<td class="pg"><a href="t407-页-批量录入-回执页.html">t407-页-批量录入-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-批量录入-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔退款(唤醒词:记退款):</div><div class="slot">  金  额: ____
+  原支出: ____ (描述哪一笔,如:昨天那笔午饭 / 5月1日买的衣服)
+  退款原因: ____ (选填,如:退货/取消订单/差价)</div></td>
+<td class="wake">记退款</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=refund</code>）</td>
+<td class="pg"><a href="t407-页-记退款-采集页.html">t407-页-记退款-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记退款-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记退款-回执页.html">t407-页-记退款-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记退款-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页（本型另需「原支出编号」）；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔报销支出(唤醒词:记报销):</div><div class="slot">  金  额: ____
+  分  类: ____ (选填,如:餐饮 / 差旅)
+  备  注: ____ (选填,自动加 #待报销)
+  时  间: ____ (选填,默认现在)</div></td>
+<td class="wake">记报销</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=reimburse</code>）</td>
+<td class="pg"><a href="t407-页-记报销-采集页.html">t407-页-记报销-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记报销-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记报销-回执页.html">t407-页-记报销-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记报销-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记录报销到账(唤醒词:报销到账):</div><div class="slot">  金  额: ____
+  关  联: ____ (选填,如:哪一笔 #待报销)</div></td>
+<td class="wake">报销到账</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=reimburse-done</code>）</td>
+<td class="pg"><a href="t407-页-报销到账-采集页.html">t407-页-报销到账-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-报销到账-采集页.html</span></td>
+<td class="pg"><a href="t407-页-报销到账-回执页.html">t407-页-报销到账-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-报销到账-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔借出(唤醒词:记借出):</div><div class="slot">  金  额: ____
+  对  象: ____ (借给谁)
+  期  限: ____ (选填,如:月底还)</div></td>
+<td class="wake">记借出</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=lend</code>）</td>
+<td class="pg"><a href="t407-页-记借出-采集页.html">t407-页-记借出-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记借出-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记借出-回执页.html">t407-页-记借出-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记借出-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔借入(唤醒词:记借入):</div><div class="slot">  金  额: ____
+  对  象: ____ (向谁借)
+  期  限: ____ (选填)</div></td>
+<td class="wake">记借入</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=borrow</code>）</td>
+<td class="pg"><a href="t407-页-记借入-采集页.html">t407-页-记借入-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记借入-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记借入-回执页.html">t407-页-记借入-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记借入-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔收回(唤醒词:记收回):</div><div class="slot">  哪一笔: ____ (对象/金额/描述,如:小明还我那 500)</div></td>
+<td class="wake">记收回</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=collect</code>）</td>
+<td class="pg"><a href="t407-页-记收回-采集页.html">t407-页-记收回-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记收回-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记收回-回执页.html">t407-页-记收回-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记收回-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔偿还(唤醒词:记偿还):</div><div class="slot">  哪一笔: ____ (对象/金额/描述,如:还小明那 500)</div></td>
+<td class="wake">记偿还</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=repay</code>）</td>
+<td class="pg"><a href="t407-页-记偿还-采集页.html">t407-页-记偿还-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记偿还-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记偿还-回执页.html">t407-页-记偿还-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记偿还-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔分期(唤醒词:记分期):</div><div class="slot">  名  目: ____ (如:手机 / 电脑)
+  总  价: ____
+  期  数: ____ (如:24)
+  首期日: ____ (选填,默认今天,每月固定这一天)
+  账  户: ____ (选填)
+  账  本: ____ (选填)</div></td>
+<td class="wake">记分期</td>
+<td class="cmd"><code>bill.record.add</code><br>（<code>kind=installment</code>）</td>
+<td class="pg"><a href="t407-页-记分期-采集页.html">t407-页-记分期-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记分期-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记分期-回执页.html">t407-页-记分期-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记分期-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页（本型另有分摊预览表待补）；补齐后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我记一笔(唤醒词:记一笔):</div><div class="slot">  金  额: ____ (支出写负数,收入写正数)
+  分类/名目: ____ (如:餐饮 / 工资 / 打车)
+  备  注: ____ (选填)
+  时  间: ____ (选填,默认现在;补记昨天写「昨天」)
+  账  户: ____ (选填,如:支付宝 / 微信)</div></td>
+<td class="wake">记一笔</td>
+<td class="cmd"><code>bill.record.add</code><br>（不给 <code>kind</code>，通用词）</td>
+<td class="pg"><a href="t407-页-记一笔-采集页.html">t407-页-记一笔-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记一笔-采集页.html</span></td>
+<td class="pg"><a href="t407-页-记一笔-回执页.html">t407-页-记一笔-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-记一笔-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>category</code>／<code>amount</code> → 采集页；补齐后重跑，写库成功 → 回执页（认不得的 <code>kind</code> 也落这一件）。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我改一条记录(唤醒词:改记录):</div><div class="slot">  目  标: ____ (如:最近一笔 / 某天的某条 / ID)
+  要改的字段: ____ (如:金额改成 38 / 分类改成交通 / 备注加牛奶)</div></td>
+<td class="wake">改记录</td>
+<td class="cmd"><code>bill.record.update</code><br>（不给 <code>op</code>，缺省＝改字段）</td>
+<td class="pg"><a href="t407-页-改记录-采集页.html">t407-页-改记录-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-改记录-采集页.html</span></td>
+<td class="pg"><a href="t407-页-改记录-回执页.html">t407-页-改记录-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-改记录-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>id</code> → 采集页（页面给候选记录让你挑一条，挑完仍走同一条命令）；带到 <code>id</code> 后重跑，写库成功 → 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我撤销一条记录(唤醒词:撤销):</div><div class="slot">  目  标: ____ (默认最近一笔;或描述某条)</div></td>
+<td class="wake">撤销</td>
+<td class="cmd"><code>bill.record.update</code><br>（<code>op=undo</code>）</td>
+<td class="pg"><a href="t407-页-撤销-采集页.html">t407-页-撤销-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-撤销-采集页.html</span></td>
+<td class="pg"><a href="t407-页-撤销-回执页.html">t407-页-撤销-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-撤销-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>id</code>（这条词不拦，只说唤醒词也照样出页）→ 采集页，挑一条候选；带到 <code>id</code> 后重跑，写库成功（<code>deleted_at</code> 置现在）→ 回执页。</td>
+</tr>
+<tr>
+<td><div>请加载「饼干记账」技能,帮我恢复一条已撤销的记录(唤醒词:恢复):</div><div class="slot">  目  标: ____ (描述被撤销的记录,如:昨天撤销的午饭)</div></td>
+<td class="wake">恢复</td>
+<td class="cmd"><code>bill.record.update</code><br>（<code>op=restore</code>）</td>
+<td class="pg"><a href="t407-页-恢复-采集页.html">t407-页-恢复-采集页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-恢复-采集页.html</span></td>
+<td class="pg"><a href="t407-页-恢复-回执页.html">t407-页-恢复-回执页.html</a><span class="path">D:\ilife\docs\skills\skill-bill\t407-页-恢复-回执页.html</span></td>
+<td class="flow">缺必需槽位 <code>id</code>（这条词不拦）→ 采集页，挑一条候选；带到 <code>id</code> 后重跑，写库成功（<code>deleted_at</code> 置回空）→ 回执页。</td>
+</tr>
+<!-- ROWS-ADD-END -->
+<!-- ROWS-END -->
+</tbody>
+</table>
+</div>
+
+<p class="foot">本页是只读盘点件：盘的是仓库里的唤醒词表、场景落点清单与同目录已生成的 32 张成品页，不碰 <code>packages/</code> 下任何源码。逐条对账读数见同目录 <code>t407-链路总览-证据.md</code>。</p>
+
+</body>
+</html>

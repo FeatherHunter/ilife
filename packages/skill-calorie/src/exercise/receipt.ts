@@ -14,7 +14,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import {
-  renderCaliberLine, renderChangeRows, renderChips, renderDataTable, renderDisclosure, renderKpiGrid,
+  renderCaliberLine, renderChangeRows, renderDataTable, renderDisclosure, renderKpiGrid,
   renderPreBlock, renderTocBlock,
 } from 'base-paint/blocks';
 import type { ChangeRowInput, KpiCardInput } from 'base-paint/blocks';
@@ -30,7 +30,7 @@ import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { fieldLabel } from '../shared/fieldLabel.js';
 import { EXERCISE_DOMAIN } from './fieldLabels.js';
 import type { ExerciseRow } from './exerciseStore.js';
-import { exerciseUiCss, factStrip, fmtNum, inlineShaped, receiptSource } from './sportUi.js';
+import { detailTableWanted, exerciseUiCss, factStrip, fieldsBlock, fmtNum, inlineShaped, receiptSource, shapedConclusion } from './sportUi.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -66,10 +66,10 @@ function labelSummary(summary: string): string {
   return shaped.replace(/\d+\.\d{6,}/g, (m) => fmtNum(Number(m)));
 }
 
-/** 给人看的格值：没有值只写「未设置」（与场景 07 同词）。 */
+/** 给人看的格值：没有值写短横 `—`（#543 视觉复评 P1-B 第 3 条：空值在表里与快照里同一种待遇）。 */
 function cellText(v: unknown, unit?: string): string {
   const s = v === null || v === undefined ? '' : String(v).trim();
-  return s === '' ? '未设置' : (unit === undefined || unit === '' ? s : s + ' ' + unit);
+  return s === '' ? '—' : (unit === undefined || unit === '' ? s : s + ' ' + unit);
 }
 
 /** 数值格走显示层取整（`sportUi.fmtNum`）：库内浮点原值不上屏；空仍写「未设置」。 */
@@ -174,10 +174,11 @@ function detailCard(rows: readonly ExerciseRow[]): Card | null {
     }),
   };
 }
+
+/** 明细表要不要出：形状决定落 `sportUi.detailTableWanted`（删类两条记录起才出表）。 */
 /* ───────────────────────── 计数卡 ／ 当日累计卡 ／ 来源脚注 ／ 口径行 ───────────────────────── */
 
-/** 计数卡：题一行（小标题）＋ `factStrip` 键值行。**不用数据表**——「项／值」两列表头不承载信息，
- *  窄屏还会把这两个字重复刷屏（#543 视觉复评 P0-3），表卡又自带 680 居中导致第二条对齐轴。 */
+/** 计数卡：题一行 ＋ `factStrip` 键值行（**不用数据表**：「项／值」表头不承载信息、窄屏重复刷屏，表卡又自带 680 居中＝第二条对齐轴）。 */
 function countCard(caption: string, rows: readonly (readonly [string, string])[]): Card {
   return {
     id: 'sec-count',
@@ -202,7 +203,7 @@ function dayCard(db: DatabaseSync, date: string): Card | null {
     id: 'sec-day',
     label: '当日累计',
     html: '<p class="sui-fields-k">当日累计（写后现值）</p>' + factStrip([
-      { k: '日期', v: date },
+      { k: '记录日期', v: date },
       { k: '运动条数', v: String(r.n) + ' 条' },
       { k: '消耗累计', v: fmtNum(r.kcal) + ' 卡' },
       { k: '时长累计', v: fmtNum(r.mins, 0) + ' 分钟' },
@@ -210,8 +211,10 @@ function dayCard(db: DatabaseSync, date: string): Card | null {
   };
 }
 
-/** 来源卡（#543 形状化）：键值行「数据来源／窗口／记录数」。不再产 `·` 串
- *  （`sourceLine.ts` 是跨场景共用位，共用层口径统一归 #470）；来源名取人话，机器值仍在复制日志里。 */
+/** 来源卡（#543 形状化）：题「数据来源」＋ 键值行「来源／窗口／记录数」。不再产 `·` 串
+ *  （`sourceLine.ts` 是跨场景共用位，共用层口径统一归 #470）；来源名取人话，机器值仍在复制日志里。
+ *  补题的理由（视觉复评 P1-A 第 2 条）：这一卡原来无题，紧跟当日累计卡，`数据来源 运动记录`
+ *  读起来像当日累计的一个字段。 */
 function sourceCard(receipt: CrudReceipt, dates: readonly string[], count: number, fallback: string): Card | null {
   const window = dates.length > 0 ? [...dates].sort() : (fallback === '' ? [] : [fallback]);
   if (window.length === 0) return null;
@@ -220,7 +223,12 @@ function sourceCard(receipt: CrudReceipt, dates: readonly string[], count: numbe
     { k: '窗口', v: (window[0] ?? '') + ' → ' + (window[window.length - 1] ?? '') },
     { k: '记录数', v: '共 ' + count + ' 条' },
   ];
-  return { id: 'sec-source', label: '数据来源', html: factStrip(s === '' ? facts : [{ k: '数据来源', v: s }, ...facts]) };
+  return {
+    id: 'sec-source',
+    label: '数据来源',
+    html: '<p class="sui-fields-k">数据来源</p>'
+      + factStrip(s === '' ? facts : [{ k: '来源', v: s }, ...facts]),
+  };
 }
 
 /** 口径行（#420 `renderCaliberLine`）：一条事实一行。#543：`；` 串拆开，
@@ -290,31 +298,28 @@ export function buildExerciseReceiptDoc(
   const counts = countCard(countCaption, countRows);
   // ② 变更卡（共用一张）／③ 明细卡（运动口径，只有逐条形态才摆）／④ 当日累计卡（活行口径、空即不出）。
   const change = changeCard(op, rows, pairs);
-  const detailRows = detailCard(op === 'delete' || isBatch || isCopy ? rows : []);
+  const detailRows = detailCard(detailTableWanted(op, rows.length, isBatch, isCopy) ? rows : []);
   const day = dayCard(db, detail.targetDate ?? (dates.length === 1 ? (dates[0] ?? '') : ''));
   const source = sourceCard(receipt, dates, Math.max(rows.length, pairs.length), target);
 
   // 状态卡判空：没有写入、没有改动、也不是「无改动」这一态时，整块 KPI 不出现（不留空壳）。
+  // 注：#543 视觉复评 P1-A 第 4 条剩下的那处（KPI「影响行数」与计数卡「X 条数」同数两名）本票不动——
+  // 两张卡的题都被本族三件既有关票判据钉死，动它要同时改那三件的断言＝降覆盖面（见证据件 §六第 6 条）。
   const kpi: KpiCardInput[] = [];
   if (receipt.affectedRows > 0 || receipt.writtenFields.length > 0 || receipt.noChange) {
     kpi.push(statusCard(receipt, writtenDetailOf(key)));
   }
   if (receipt.affectedRows > 0) kpi.push({ label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' });
-  // 写入字段：卡上只报条数，字段名另起一行走**并列小胶囊**（`renderChips` 的件）——
-  // 16 个字段名原先是 `，` 串一行（那是拿标点顶替设计，第 5 条），换成形状后一条事实一处不丢。
   const fields = receipt.writtenFields;
-  if (fields.length > 0) kpi.push({ label: '写入字段', value: fields.length + ' 项' });
 
   const cards = [counts, change, detailRows, day, source].filter((c): c is Card => c !== null);
   const content = [
     exerciseUiCss(),
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
-    operationHead({ op, title: wake, recordId: receipt.recordId, actionAt: receipt.meta.actionAt }),
+    // #543 视觉复评 P1-A 第 1 条：页族名归眉标、命令名归 h1、操作对象归操作头——h2 只说「运动记录」。
+    operationHead({ op, title: '运动记录', recordId: receipt.recordId, actionAt: receipt.meta.actionAt }),
     kpi.length > 0 ? renderKpiGrid(kpi) : '',
-    fields.length > 0
-      ? '<p class="sui-fields-k">本次写入的字段</p>'
-        + '<div class="sui-fieldgrid">' + renderChips({ items: fields.map((f) => ({ text: label(f) })) }) + '</div>'
-      : '',
+    fieldsBlock(fields.map((f) => label(f))),
     caliberLines(day !== null).map((t) => renderCaliberLine(t)).join(''),
     cards.map(shell).join(''),
     undoBlock(detail.undoCli),
@@ -332,9 +337,11 @@ export function buildExerciseReceiptDoc(
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: receipt.scene + '回执',
+    // 唤醒词而不是场景名：批量补记／复制昨日／删某日的场景名与「记运动」同源，用场景名会让同一张 h1 落到八页上。
+    title: wake + '回执',
     eyebrow: '运动写后回执',
-    subtitle: labelSummary(receipt.summary),
+    // 副标题只留一句结论（`：` 之后那截记录值下方明细说过了）；括号里的后果句整段保留。
+    subtitle: shapedConclusion(labelSummary(receipt.summary)),
     content,
     // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），
     // 打印规则（隐藏页内导航与区块复制区、具名页 `@page printable`）见 `base-render/src/blocks.ts`。

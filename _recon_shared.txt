@@ -1,0 +1,29 @@
+﻿
+Name                  Length
+----                  ------
+blockedSlots.ts         8352
+candidatePick.ts        7262
+commandSpec.ts          2960
+copyArea.ts             9465
+diffTable.ts            5250
+docPage.ts              3715
+duplicateNote.ts        5132
+emptyNote.ts            2237
+errorReceipt.ts         3408
+flowSteps.ts            4461
+installmentPreview.ts   8807
+outsideScan.ts          7767
+pageIdentity.ts         2650
+pageShell.ts            3101
+photoEscape.ts         10561
+prefillNote.ts          5508
+receiptParts.ts         2731
+recentPicks.ts          3667
+recordPicker.ts        12673
+rowEditorTable.ts       6987
+summaryRow.ts           6698
+typeBadge.ts            4571
+userWording.ts          7863
+writeParts.ts           5396
+
+

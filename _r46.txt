@@ -1,0 +1,11 @@
+﻿1: // t407 重评：用真 Chrome（CDP）量每张回执页在 390 宽下的真实页高，并顺带截整页图。
+7: const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+16: const rows = JSON.parse(readFileSync(LIST, 'utf8'));
+26: const proc = spawn(CHROME, [
+35: '--no-default-browser-check',
+39: let ws;
+43: ws = v.webSocketDebuggerUrl;
+44: if (ws) break;
+48: if (!ws) { console.error('Chrome 没起来'); proc.kill(); process.exit(1); }
+50: const sock = new WebSocket(ws);
+80: for (const r of rows) {

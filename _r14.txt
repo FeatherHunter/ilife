@@ -1,0 +1,29 @@
+﻿50: line-height: 1.4; <<< .ilife-toast 
+72: line-height: 1; <<< .ilife-toast-icon 
+89: line-height: 1.4; <<< .ilife-toast-title 
+95: line-height: 1.5; <<< .ilife-toast-title-detail 
+106: line-height: 1.6; <<< .ilife-toast-chip 
+133: line-height: 1.5; <<< .ilife-toast-detail 
+138: line-height: 1.55; <<< .ilife-toast-lines 
+149: line-height: 1.5; <<< .ilife-toast-code 
+242: line-height: 1; <<< .ilife-action-btn 
+282: line-height: 1; <<< .ilife-copy-btn 
+426: line-height: 1.6; <<< .ilife-status-badge 
+456: line-height: 1.2; <<< .ilife-empty-icon 
+519: .ilife-charts-legend{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;line-height:1.5;color:var(--fg2,#6e6e73)} <<< .ilife-charts-legend
+573: line-height: 1.2; <<< .ilife-help-shell-title 
+609: line-height: 1.55; <<< .ilife-help-shell-init-prompt 
+787: line-height: 1.55; <<< .ilife-help-shell-prompt 
+810: line-height: 1; <<< .ilife-help-shell-btn 
+943: line-height: 1; <<< .ilife-help-shell-tab-search-clear 
+969: line-height: 1; <<< .ilife-help-shell-card-copy 
+1026: line-height: 1; <<< .ilife-help-shell-btn-backtop 
+1088: line-height: 1.5; <<< 
+1112: line-height: 1.2; <<< .ilife-block-page-shell-title 
+1158: line-height: 1.5; <<< .ilife-block-caliber 
+1238: line-height: 1.5; <<< .ilife-block-chip 
+1316: line-height: 1.2; <<< .ilife-block-kpi-card-value 
+1548: line-height: 1.55; <<< .ilife-block-pre-block-code 
+1721: line-height: 1.5; <<< .ilife-block-feedback-block-note 
+1734: line-height: 1; <<< .ilife-block-feedback-block-note-icon 
+1781: line-height: 1.55; <<< .ilife-block-feedback-block-note-code 

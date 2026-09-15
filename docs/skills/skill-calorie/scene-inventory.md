@@ -78,16 +78,16 @@
 | 32 | 健身计划 | 看某动作安排 | ❌ 没打通 | `plan_view_movement` | 路由桶=legacy-chain；命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。 |
 | 33 | 健身计划 | 看某天练什么 | ❌ 没打通 | `plan_view_day` | 路由桶=legacy-chain；命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。 |
 | 34 | 健身计划 | 看计划 vs 实际 | ❌ 没打通 | `plan_vs_actual` | 路由桶=legacy-chain；命中但不执行：view.plan 无周／日／动作筛选参数（返回全计划），与词的周／日／动作粒度不同 → 无单命令同形。 |
-| 35 | 健身计划 | 定训练计划 | ❌ 没打通 | `plan_set` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 36 | 健身计划 | 复制训练计划 | ❌ 没打通 | `plan_copy` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 37 | 健身计划 | 定休息日 | ❌ 没打通 | `plan_set_rest` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 38 | 健身计划 | 加训练动作 | ❌ 没打通 | `plan_add_movement` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 39 | 健身计划 | 定一周计划 | ❌ 没打通 | `plan_set_week` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 40 | 健身计划 | 改训练计划 | ❌ 没打通 | `plan_update` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 41 | 健身计划 | 改某天训练 | ❌ 没打通 | `plan_update_day` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 42 | 健身计划 | 删某天训练 | ❌ 没打通 | `plan_delete_day` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 43 | 健身计划 | 改动作 | ❌ 没打通 | `plan_update_movement` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
-| 44 | 健身计划 | 撤销训练计划 | ❌ 没打通 | `plan_delete` | 路由桶=legacy-chain；命中但不执行：95 键无训练计划写键（旧链 --live-plan-* 系列），本仓执行层不承接计划写入。 |
+| 35 | 健身计划 | 定训练计划 | ✅ 打通 | `calorie.workout.plan-set` | 路由桶=exec；过程页＝**计划编辑器（可写页）**（路由键 `calorie.view.plan-wizard`）→ 用户改完确认 → 复制命令 → 跑写键 `calorie.workout.plan-set` 落库出回执页。 |
+| 36 | 健身计划 | 复制训练计划 | ✅ 打通 | `calorie.workout.plan-copy` | 路由桶=exec；过程页＝写前预览（路由键 `calorie.view.plan-write-preview`，`op=copy`）→ 用户确认 → 跑写键 `calorie.workout.plan-copy` 落库出回执页。 |
+| 37 | 健身计划 | 定休息日 | ✅ 打通 | `calorie.workout.plan-set-rest` | 路由桶=exec；过程页＝写前预览（`op=set-rest`）→ 用户确认 → 跑写键 `calorie.workout.plan-set-rest` 落库出回执页。 |
+| 38 | 健身计划 | 加训练动作 | ✅ 打通 | `calorie.workout.plan-add-movement` | 路由桶=exec；过程页＝写前预览（`op=add-movement`）→ 用户确认 → 跑写键 `calorie.workout.plan-add-movement` 落库出回执页。 |
+| 39 | 健身计划 | 定一周计划 | ✅ 打通 | `calorie.workout.plan-set-week` | 路由桶=exec；过程页＝写前预览（`op=set-week`）→ 用户确认 → 跑写键 `calorie.workout.plan-set-week` 落库出回执页。 |
+| 40 | 健身计划 | 改训练计划 | ✅ 打通 | `calorie.workout.plan-update` | 路由桶=exec；过程页＝写前预览（`op=update`）→ 用户确认 → 跑写键 `calorie.workout.plan-update` 落库出回执页。 |
+| 41 | 健身计划 | 改某天训练 | ✅ 打通 | `calorie.workout.plan-update-day` | 路由桶=exec；过程页＝写前预览（`op=update-day`）→ 用户确认 → 跑写键 `calorie.workout.plan-update-day` 落库出回执页。 |
+| 42 | 健身计划 | 删某天训练 | ✅ 打通 | `calorie.workout.plan-delete-day` | 路由桶=exec；过程页＝写前预览（`op=delete-day`）→ 用户确认 → 跑写键 `calorie.workout.plan-delete-day` 落库出回执页。 |
+| 43 | 健身计划 | 改动作 | ✅ 打通 | `calorie.workout.plan-update-movement` | 路由桶=exec；过程页＝写前预览（`op=update-movement`）→ 用户确认 → 跑写键 `calorie.workout.plan-update-movement` 落库出回执页。 |
+| 44 | 健身计划 | 撤销训练计划 | ✅ 打通 | `calorie.workout.plan-delete` | 路由桶=exec；过程页＝写前预览（`op=delete`）→ 用户确认 → 跑写键 `calorie.workout.plan-delete` 落库出回执页。 |
 | 45 | 健身计划 | 落地训练 | ⛔ 没开发 | `plan_execute` | 路由桶=out-of-scope；明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。 |
 | 46 | 健身计划 | 落地到本周末 | ⛔ 没开发 | `plan_execute_weekend` | 路由桶=out-of-scope；明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。 |
 | 47 | 健身计划 | 落地到本月底 | ⛔ 没开发 | `plan_execute_month` | 路由桶=out-of-scope；明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。 |

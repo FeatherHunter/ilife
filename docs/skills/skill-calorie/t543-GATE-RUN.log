@@ -1,5 +1,5 @@
 # #543 门禁运行记录导出（源：.scratch/locks/gate-runs.log，只筛 ticket=543 的行，逐行原样）
-# 导出时刻：2026-09-15T13:27:07.363Z　条目数：64
+# 导出时刻：2026-09-15T17:05:10.279Z　条目数：100
 
 START ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 pid=47004 at=2026-09-15T07:37:22.797Z
 RUN ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 exit=1 pid=47004 at=2026-09-15T07:37:26.838Z
@@ -65,3 +65,39 @@ START ticket=543 runId=98b9424c-84b8-40bb-80d6-d14665f70d82 cmd="pwsh -NoProfile
 RUN ticket=543 runId=98b9424c-84b8-40bb-80d6-d14665f70d82 cmd="pwsh -NoProfile -File .scratch/t543/window-mut.ps1" waitedMs=20017 exit=0 pid=61136 at=2026-09-15T13:25:10.038Z
 START ticket=543 runId=2c43604a-4221-441f-b5b1-fe76aee5ea3b cmd="pwsh -NoProfile -File .scratch/t543/window-mut.ps1" waitedMs=50026 pid=65104 at=2026-09-15T13:26:49.788Z
 RUN ticket=543 runId=2c43604a-4221-441f-b5b1-fe76aee5ea3b cmd="pwsh -NoProfile -File .scratch/t543/window-mut.ps1" waitedMs=50026 exit=0 pid=65104 at=2026-09-15T13:26:55.386Z
+START ticket=543 runId=e91c0ad7-b2da-4eb8-a5a7-5c60d0a785ac cmd="pwsh -NoProfile -File .scratch/t543/window-a.ps1" waitedMs=30033 pid=72028 at=2026-09-15T13:28:24.233Z
+RUN ticket=543 runId=e91c0ad7-b2da-4eb8-a5a7-5c60d0a785ac cmd="pwsh -NoProfile -File .scratch/t543/window-a.ps1" waitedMs=30033 exit=0 pid=72028 at=2026-09-15T13:28:36.980Z
+START ticket=543 runId=c2df76fc-fd25-495e-a280-1a5de8d5f2a4 cmd="pwsh -NoProfile -File .scratch/t543/commit.ps1" waitedMs=0 pid=34380 at=2026-09-15T13:43:07.613Z
+RUN ticket=543 runId=c2df76fc-fd25-495e-a280-1a5de8d5f2a4 cmd="pwsh -NoProfile -File .scratch/t543/commit.ps1" waitedMs=0 exit=0 pid=34380 at=2026-09-15T13:43:11.783Z
+START ticket=543 runId=87bc8658-470a-4fef-abd2-63bf5da24672 cmd="pwsh -NoProfile -File .scratch/t543/review-window-a.ps1" waitedMs=0 pid=44540 at=2026-09-15T16:07:04.401Z
+RUN ticket=543 runId=87bc8658-470a-4fef-abd2-63bf5da24672 cmd="pwsh -NoProfile -File .scratch/t543/review-window-a.ps1" waitedMs=0 exit=0 pid=44540 at=2026-09-15T16:08:25.090Z
+START ticket=543 runId=b20e4bd6-b34c-4e4b-b05a-792f0f7419ad cmd="pwsh -NoProfile -File .scratch/t543/review-window-b.ps1" waitedMs=10008 pid=37212 at=2026-09-15T16:10:31.427Z
+RUN ticket=543 runId=b20e4bd6-b34c-4e4b-b05a-792f0f7419ad cmd="pwsh -NoProfile -File .scratch/t543/review-window-b.ps1" waitedMs=10008 exit=0 pid=37212 at=2026-09-15T16:11:07.524Z
+START ticket=543 runId=1108cff3-3480-4762-9d45-57b2d1bade12 cmd="pwsh -NoProfile -File .scratch/t543/review-commit.ps1" waitedMs=0 pid=58512 at=2026-09-15T16:13:01.208Z
+RUN ticket=543 runId=1108cff3-3480-4762-9d45-57b2d1bade12 cmd="pwsh -NoProfile -File .scratch/t543/review-commit.ps1" waitedMs=0 exit=1 pid=58512 at=2026-09-15T16:13:03.758Z
+START ticket=543 runId=31fc92f9-2559-423a-9b84-f3e7e92f44cb cmd="pwsh -NoProfile -File .scratch/t543/review-commit.ps1" waitedMs=0 pid=47076 at=2026-09-15T16:13:13.370Z
+RUN ticket=543 runId=31fc92f9-2559-423a-9b84-f3e7e92f44cb cmd="pwsh -NoProfile -File .scratch/t543/review-commit.ps1" waitedMs=0 exit=0 pid=47076 at=2026-09-15T16:13:16.049Z
+START ticket=543 runId=ffc34206-8fb9-46fe-9bf2-de7b492ecba1 cmd="pwsh -NoProfile -Command \"git add -- 'docs/skills/skill-calorie/t543-复核-独立复核.md'; git diff --cached --name-only; git commit -F '.scratch/t543/review-commit-msg2.txt' -- 'docs/skills/skill-calorie/t543-复核-独立复核.md'; git log --oneline -2\"" waitedMs=0 pid=33540 at=2026-09-15T16:14:00.292Z
+RUN ticket=543 runId=ffc34206-8fb9-46fe-9bf2-de7b492ecba1 cmd="pwsh -NoProfile -Command \"git add -- 'docs/skills/skill-calorie/t543-复核-独立复核.md'; git diff --cached --name-only; git commit -F '.scratch/t543/review-commit-msg2.txt' -- 'docs/skills/skill-calorie/t543-复核-独立复核.md'; git log --oneline -2\"" waitedMs=0 exit=0 pid=33540 at=2026-09-15T16:14:03.229Z
+START ticket=543 runId=a548c33f-cc6e-4cee-9f88-13d3bc611395 cmd="pwsh -NoProfile -Command \"Set-Location 'D:\\ilife'; node node_modules/typescript/bin/tsc -b *> .scratch/t543/r1-tscn.log; Write-Host \\\" TSC-EXIT=\\\"" waitedMs=1 pid=48900 at=2026-09-15T16:51:56.916Z
+RUN ticket=543 runId=a548c33f-cc6e-4cee-9f88-13d3bc611395 cmd="pwsh -NoProfile -Command \"Set-Location 'D:\\ilife'; node node_modules/typescript/bin/tsc -b *> .scratch/t543/r1-tscn.log; Write-Host \\\" TSC-EXIT=\\\"" waitedMs=1 exit=0 pid=48900 at=2026-09-15T16:52:00.954Z
+START ticket=543 runId=5f58112b-585f-4ecf-a715-83c4c6e5a499 cmd="node node_modules/typescript/bin/tsc -b" waitedMs=0 pid=41032 at=2026-09-15T16:52:04.950Z
+RUN ticket=543 runId=5f58112b-585f-4ecf-a715-83c4c6e5a499 cmd="node node_modules/typescript/bin/tsc -b" waitedMs=0 exit=0 pid=41032 at=2026-09-15T16:52:05.473Z
+START ticket=543 runId=90e7b6ca-b92b-4afb-a169-9cabe1227c06 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 pid=23604 at=2026-09-15T16:52:44.012Z
+RUN ticket=543 runId=90e7b6ca-b92b-4afb-a169-9cabe1227c06 cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 exit=1 pid=23604 at=2026-09-15T16:52:44.688Z
+START ticket=543 runId=cbba9382-d5f1-4766-beea-7bac78ceec1c cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 pid=66756 at=2026-09-15T16:53:11.263Z
+RUN ticket=543 runId=cbba9382-d5f1-4766-beea-7bac78ceec1c cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 exit=1 pid=66756 at=2026-09-15T16:53:11.988Z
+START ticket=543 runId=6879fcca-4ef0-45e4-a782-55a96fc9c70b cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 pid=62020 at=2026-09-15T16:53:20.841Z
+RUN ticket=543 runId=6879fcca-4ef0-45e4-a782-55a96fc9c70b cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs" waitedMs=0 exit=0 pid=62020 at=2026-09-15T16:53:21.595Z
+START ticket=543 runId=b17d5823-88d0-4d85-9665-d1d44a8c546d cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=10015 pid=57216 at=2026-09-15T16:53:36.829Z
+RUN ticket=543 runId=b17d5823-88d0-4d85-9665-d1d44a8c546d cmd="node --test packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-receipt-264.test.mjs packages/skill-calorie/test/exercise-receipt-fusion-423.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs" waitedMs=10015 exit=0 pid=57216 at=2026-09-15T16:53:58.242Z
+START ticket=543 runId=6ad3a17a-28f1-4c24-94d1-aa7e4c0da8df cmd="pwsh -NoProfile -File .scratch/t543/window-r1.ps1" waitedMs=0 pid=65816 at=2026-09-15T16:54:08.681Z
+RUN ticket=543 runId=6ad3a17a-28f1-4c24-94d1-aa7e4c0da8df cmd="pwsh -NoProfile -File .scratch/t543/window-r1.ps1" waitedMs=0 exit=0 pid=65816 at=2026-09-15T16:55:27.666Z
+START ticket=543 runId=33f40e05-04f7-4198-b37b-f943fd556753 cmd="node .scratch/t543/r1-measure.mjs" waitedMs=1 pid=4840 at=2026-09-15T16:56:35.647Z
+RUN ticket=543 runId=33f40e05-04f7-4198-b37b-f943fd556753 cmd="node .scratch/t543/r1-measure.mjs" waitedMs=1 exit=0 pid=4840 at=2026-09-15T16:57:19.231Z
+START ticket=543 runId=ce72f211-5596-4581-bbf4-0a573567af83 cmd="pwsh -NoProfile -File .scratch/t543/window-mut-r1.ps1" waitedMs=0 pid=47380 at=2026-09-15T17:02:27.483Z
+RUN ticket=543 runId=ce72f211-5596-4581-bbf4-0a573567af83 cmd="pwsh -NoProfile -File .scratch/t543/window-mut-r1.ps1" waitedMs=0 exit=0 pid=47380 at=2026-09-15T17:02:37.511Z
+START ticket=543 runId=005ff0b5-b551-4b95-8dfe-b1392575de50 cmd="pwsh -NoProfile -File .scratch/t543/window-r2.ps1" waitedMs=0 pid=46112 at=2026-09-15T17:02:42.182Z
+RUN ticket=543 runId=005ff0b5-b551-4b95-8dfe-b1392575de50 cmd="pwsh -NoProfile -File .scratch/t543/window-r2.ps1" waitedMs=0 exit=0 pid=46112 at=2026-09-15T17:04:00.985Z
+START ticket=543 runId=829be8c2-a3d9-47bc-993e-792d7d3b6fb6 cmd="node .scratch/t543/r1-measure.mjs" waitedMs=0 pid=59448 at=2026-09-15T17:04:08.325Z
+RUN ticket=543 runId=829be8c2-a3d9-47bc-993e-792d7d3b6fb6 cmd="node .scratch/t543/r1-measure.mjs" waitedMs=0 exit=0 pid=59448 at=2026-09-15T17:04:51.878Z

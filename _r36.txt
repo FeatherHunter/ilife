@@ -1,0 +1,11 @@
+﻿ M packages/skill-bill/src/record/scene-borrow.ts
+ M packages/skill-bill/src/record/scene-lend.ts
+ M packages/skill-bill/src/record/scene-undo.ts
+ M packages/skill-bill/src/shared/candidatePick.ts
+ M packages/skill-bill/src/shared/docPage.ts
+ M packages/skill-bill/src/shared/outsideScan.ts
+ M packages/skill-bill/src/shared/summaryRow.ts
+ M packages/skill-bill/src/shared/typeBadge.ts
+ M packages/skill-bill/test/frozen-blocks.test.mjs
+ M packages/skill-bill/test/record-write.test.mjs
+ M packages/skill-bill/test/user-wording.test.mjs

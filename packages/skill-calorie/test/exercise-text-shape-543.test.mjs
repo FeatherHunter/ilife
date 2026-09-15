@@ -12,6 +12,11 @@
  *
  * 变异自证（本件末节，读数逐条打 `T543-MUT`）：往产物里塞一处 `·`／一处 `；` 并列 ⇒ 守卫**必红**；
  * 逐文件还原 ⇒ **必绿**。
+ *
+ * **#543 返工轮补的覆盖面**（复核席 M2 实锤的那一处缺口）：判据⑤ 判「写入字段」那一块——
+ * 容器必须是胶囊件（`sui-fieldgrid`／`sui-caps`）、块内必须有 `ilife-block-chip`、**块内零 `，` 并列**；
+ * 退回 `fields.map(label).join('，')` 必红（负向证据打 `T543-MUT-GRID`）。判据④ 另钉了错字守卫
+ * （页上不得出现「只数」）——交付产物与源码不对版那次，主判据自己就该红。
  */
 import { strict as assert } from 'node:assert';
 import { mkdtempSync } from 'node:fs';
@@ -88,6 +93,20 @@ function separatorHits(html) {
 /** 可见文本整串（行级判据与机器词判据读它）。 */
 const visibleAll = (html) => textNodes(html).join('\n');
 
+/** 判「写入字段」那一块（#543 第 5 条的守卫；复核席 M2 变异打的那一支）：
+ *  题里带枚数 ⇒ 容器必须是胶囊件（`sui-fieldgrid` 网格 或 `sui-caps` 行内），
+ *  容器里必须有公共层的 `ilife-block-chip`，且**块内不得出现 `，` 并列**
+ *  ——退回 `fields.map(label).join('，')` 就是拿标点顶替设计（第 5 条），必红。 */
+function fieldBlockOf(html) {
+  const m = /<p class="sui-fields-k">写入字段（共 (\d+) 项）<\/p><div class="([a-z-]+)">([\s\S]*?)<\/div>/.exec(html);
+  if (m === null) return { ok: false, why: '缺「写入字段」那一块（题＋容器）' };
+  const [, count, shape, inner] = m;
+  if (shape !== 'sui-fieldgrid' && shape !== 'sui-caps') return { ok: false, why: '容器不是胶囊件：' + shape };
+  if (!inner.includes('ilife-block-chip')) return { ok: false, why: '容器里没有胶囊件（renderChips）' };
+  if (inner.includes('，')) return { ok: false, why: '块内出现 `，` 并列（退回 join(\'，\') 了）' };
+  return { ok: true, count: Number(count), shape };
+}
+
 /* ───────────────────────── 二、夹具（覆盖九种写形态） ───────────────────────── */
 
 const DAY = '2026-09-12';
@@ -131,8 +150,15 @@ function receipt(over = {}) {
 
 const CMD = 'calorie-cmd-read calorie.exercise.add --params \'{}\'';
 const db = mkDb();
+/** 真实的「记运动」写形态带 16 个字段（逐字取自当刻产物页 01 的胶囊清单）；返工轮把它
+ *  补进夹具——字段块的**网格那一支**（≥5 枚）先前一页都没走到，判据⑤ 因此只覆盖了行内那一支。 */
+const FIELD16 = ['exercise_type', 'calories_burned', 'duration_minutes', 'date', 'time', 'category',
+  'difficulty', 'distance_km', 'avg_heart_rate', 'max_heart_rate', 'steps', 'reps',
+  'load_kg', 'set_index', 'is_backfill', 'note'];
 const PAGES = [
   ['新增单条', () => buildExerciseReceiptDoc(db, 'calorie.exercise.add', receipt(), CMD, { rows: [row()], targetDate: DAY })],
+  ['新增全字段', () => buildExerciseReceiptDoc(db, 'calorie.exercise.add',
+    receipt({ writtenFields: FIELD16 }), CMD, { rows: [row()], targetDate: DAY })],
   ['批量补记', () => buildExerciseReceiptDoc(db, 'calorie.exercise.add',
     receipt({ scene: '记运动', summary: '批量记运动：新增 2 条', wakeWord: '批量补记运动' }), CMD, { rows: [row(), row({ id: 2 })] })],
   ['复制昨日', () => buildExerciseReceiptDoc(db, 'calorie.exercise.add',
@@ -225,7 +251,36 @@ test('#543 ④ 形状：计数卡按写形态出数，软删除措辞单源派�
   // 口径行与来源键值行都在（首条保留 `口径：` 前缀，回归判据读它）。
   assert.ok(byName.get('改单条').includes('口径：影响行数'), '缺口径首行');
   assert.ok(byName.get('改单条').includes('sui-facts'), '缺来源键值行');
-  console.log('T543 SHAPE 计数／对照／快照／口径／来源行俱全');
+  // 错字守卫（S1-1 的返工点）：交付产物曾整批印「只数」而源码已是「只算」。
+  // 这条钉在**判据件里**，下次源码与产物再不对版时，主判据自己就红，不必等复核席比对。
+  assert.ok(!byName.get('新增单条').includes('只数'), '页上出现错字「只数」（当日累计口径句）');
+  assert.ok(byName.get('新增单条').includes('当日累计只算未删除的行'), '当日累计口径句不是「只算未删除的行」');
+  console.log('T543 SHAPE 计数／对照／快照／口径／来源行俱全，错字「只数」0 命中');
+});
+
+test('#543 ⑤ 字段胶囊：写入字段那一块必须是胶囊件（网格／行内），块内零 `，` 并列', () => {
+  // 覆盖两种形状：枚数多走等宽网格（16 枚＝8×2，行末不留孤格）、枚数少走行内胶囊。
+  const shapes = new Map();
+  let bad = 0;
+  for (const [name, build] of PAGES) {
+    const html = build();
+    if (!html.includes('写入字段（共 ')) continue; // 零写入字段那一态：整块不出（`零变更复制`）
+    const g = fieldBlockOf(html);
+    if (!g.ok) { bad += 1; console.log('T543 GRID ' + name + ' ' + g.why); continue; }
+    shapes.set(g.shape, (shapes.get(g.shape) ?? 0) + 1);
+    console.log('T543 GRID ' + name.padEnd(12) + ' 形状=' + g.shape + ' 枚数=' + g.count + ' 块内`，`=0');
+  }
+  assert.equal(bad, 0, '有 ' + bad + ' 页的字段块形状不对（第 5 条：拿标点顶替设计不算设计）');
+  assert.ok(shapes.has('sui-fieldgrid'), '没有任何一页走到等宽网格那一支（覆盖面塌了）');
+
+  // 变异判别力（本条判据自己的负向证据）：把网格支退回 `fields.map(…).join('，')` ⇒ 必红。
+  const clean = byName0('新增全字段');
+  const mut = clean.replace(/<div class="sui-fieldgrid">[\s\S]*?<\/div>/,
+    '<div class="sui-fieldgrid">运动类型，消耗，时长，备注</div>');
+  assert.notEqual(mut, clean, '变异没塞进去（字段容器锚点变了）');
+  const mg = fieldBlockOf(mut);
+  assert.equal(mg.ok, false, '退回 `，` 串后本判据**没红** ⇒ 覆盖面缺口又回来了');
+  console.log('T543-MUT-GRID 退回 `，` 串 ⇒ red=' + (mg.ok ? 0 : 1) + '（' + mg.why + '）／还原 ⇒ red=0');
 });
 
 /* ───────────────────────── 四、变异自证（改坏必红／还原必绿） ───────────────────────── */
@@ -235,7 +290,8 @@ test('#543 变异：塞回一处 `·` 并列 ⇒ 守卫必红；还原 ⇒ 必�
   assert.equal(separatorHits(clean).length, 0, '原样产物应当零命中');
 
   // 变异①：把副标题塞回 `·` 串（本票整形过的那一处；整形连符号两侧空档一起收，锚按实写）。
-  const mut1 = clean.replace('慢跑 320.4 卡，30.4 分钟', '慢跑 320.4 卡 · 30.4 分钟');
+  // 返工轮改锚：副标题已收成一句结论（`已记运动`），记录值那一截落进明细卡。
+  const mut1 = clean.replace('>已记运动</p>', '>已记运动 · 影响 1 行</p>');
   assert.notEqual(mut1, clean, '变异①没塞进去（夹具变了）');
   const h1 = separatorHits(mut1);
   assert.ok(h1.length >= 1, '变异①：塞回 `·` 串后守卫没红');

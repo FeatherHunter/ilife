@@ -1,0 +1,14 @@
+﻿t407-机审读数.md:8: - 命令：`node docs\skills\skill-bill\t407-v8-style-audit.mjs --dir docs\skills\skill-bill`
+t407-整改-移动端返工-证据.md:27: 无证据件、无提交、32 份产物未重出 —— 与上游交接一致。
+t407-整改-移动端返工-证据.md:33: 1. `npx tsc -b packages/skill-bill --force` → **EXIT 0**（无一行诊断）。
+t407-整改-移动端返工-证据.md:34: 2. `node --test "packages/skill-bill/test/*.test.mjs"` → **EXIT 0**：`tests 137 / suites 32 / pass 137 / fail 0 / cancelled 0 / skipped 0 / todo 0`，
+t407-整改-移动端返工-证据.md:36: 3. `node docs\skills\skill-bill\t407-v8-style-audit.mjs --dir docs/skills/skill-bill` → **EXIT 0**：
+t407-整改-移动端返工-证据.md:108: | 页（分） | 报告⑥理由 | 落点（改了什么） | 复量（重出后产物原文） |
+t407-整改-移动端返工-证据.md:158: 1. **重出 32 份产物**：`node .scratch\t407d2\gen32.mjs` → `ALL32_OK files=32` EXIT 0
+t407-整改-移动端返工-证据.md:161: 2. **机审保持绿**：`node docs\skills\skill-bill\t407-v8-style-audit.mjs --dir docs/skills/skill-bill` → **EXIT 0**，
+t407-整改-移动端返工-证据.md:165: 3. **`npx tsc -b packages/skill-bill --force` → EXIT 0**（改前 0 → 改后 0，无一行诊断）。
+t407-整改-移动端返工-证据.md:172: 另改 32 份产物（同名重出）与本证据件。**行长**：非测试最大件 `scene-collect.ts` 289 LF（＜350）；
+t407-整改-移动端返工-证据.md:178: （即 `data-key` 退回命令全名）→ `npx tsc -b packages/skill-bill --force` EXIT 0（编译不拦，红线在护栏）→
+t407-整改-移动端返工-证据.md:179: `node --test packages/skill-bill/test/record-write.test.mjs` → **`tests 21 / pass 19 / fail 2`，EXIT 1**，
+t407-整改-移动端返工-证据.md:222: | `aa1ce63` | `fix(407): 移动端定点返工 —— 非复制区内部话清除＋符号串改形状＋最低分五页`（上级给定原文） | 32 份产物同名重出 ＋ 本证据件，33 件 |
+t407-整改-移动端返工-证据.md:224: **交棒**：本窗四条判据全部自跑有数、32 份产物已同名重出、机审全绿、源码与产物均已分节提交；

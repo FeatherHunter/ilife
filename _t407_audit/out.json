@@ -1,0 +1,3064 @@
+{
+ "files": {
+  "t407-代表-记支出-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 3,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-代表-记支出-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 1,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 4,
+   "cmdInAttr": 5,
+   "cmdVisible": 0,
+   "colInPre": 5,
+   "colInAttr": 4,
+   "colVisible": 0,
+   "labelSamples": [
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-恢复-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-恢复-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-批量录入-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-批量录入-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 4,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-报销到账-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-报销到账-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 6,
+   "colInAttr": 3,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-拍账单-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-拍账单-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 4,
+   "cmdInAttr": 5,
+   "cmdVisible": 0,
+   "colInPre": 4,
+   "colInAttr": 2,
+   "colVisible": 2,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [
+    {
+     "file": "t407-页-拍账单-采集页.html",
+     "tok": "amount",
+     "line": 1793,
+     "inPre": false,
+     "ancTail": "tr>td>td",
+     "ancCls": "t-close ilife-block ilife-block-data-table ilife-block-data-table-table ilife-block-data-table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left",
+     "text": "amount"
+    },
+    {
+     "file": "t407-页-拍账单-采集页.html",
+     "tok": "category",
+     "line": 1793,
+     "inPre": false,
+     "ancTail": "tr>td>td",
+     "ancCls": "eft ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left",
+     "text": "category"
+    }
+   ],
+   "hasCopyBlock": true
+  },
+  "t407-页-撤销-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 5,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-撤销-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-改记录-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-改记录-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记一笔-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记一笔-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 3,
+   "cmdInAttr": 4,
+   "cmdVisible": 0,
+   "colInPre": 2,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记借入-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记借入-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 6,
+   "colInAttr": 3,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记借出-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 3,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记借出-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 7,
+   "colInAttr": 4,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记偿还-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记偿还-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 6,
+   "colInAttr": 3,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记分期-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记分期-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 4,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记报销-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记报销-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 3,
+   "cmdInAttr": 4,
+   "cmdVisible": 0,
+   "colInPre": 2,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记收入-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记收入-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 3,
+   "cmdInAttr": 4,
+   "cmdVisible": 0,
+   "colInPre": 2,
+   "colInAttr": 0,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记收回-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 2,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记收回-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 6,
+   "colInAttr": 3,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记退款-回执页.html": {
+   "preCodeBlocks": 0,
+   "preBlockLabels": 0,
+   "preBlockWrappers": 0,
+   "copyBlocks": 2,
+   "copyPromptBtns": 0,
+   "cmdInPre": 0,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 0,
+   "colInAttr": 3,
+   "colVisible": 0,
+   "labelSamples": [],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  },
+  "t407-页-记退款-采集页.html": {
+   "preCodeBlocks": 2,
+   "preBlockLabels": 2,
+   "preBlockWrappers": 2,
+   "copyBlocks": 1,
+   "copyPromptBtns": 0,
+   "cmdInPre": 2,
+   "cmdInAttr": 3,
+   "cmdVisible": 0,
+   "colInPre": 7,
+   "colInAttr": 4,
+   "colVisible": 0,
+   "labelSamples": [
+    "",
+    ""
+   ],
+   "visibleCmdSamples": [],
+   "visibleColSamples": [],
+   "hasCopyBlock": true
+  }
+ },
+ "textHits": [
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;}"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;}"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;}"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;}"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "expense",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;}"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "span>div>pre",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code",
+   "text": "这一笔还差 1 项：分类（没给）。\n这一页先不写库；补齐之后跟助手说一遍「记支出」，照这条说：bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quo"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "span>div>pre",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code",
+   "text": "这一笔还差 1 项：分类（没给）。\n这一页先不写库；补齐之后跟助手说一遍「记支出」，照这条说：bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quo"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "amount",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "span>div>pre",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code",
+   "text": "这一笔还差 1 项：分类（没给）。\n这一页先不写库；补齐之后跟助手说一遍「记支出」，照这条说：bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quo"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "expense",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "span>div>pre",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code",
+   "text": "这一笔还差 1 项：分类（没给）。\n这一页先不写库；补齐之后跟助手说一遍「记支出」，照这条说：bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;expense&quot;,&quot;amount&quot;:-12.5,&quot;time&quot;:&quot;2026-09-14 12:30:00&quo"
+  },
+  {
+   "file": "t407-页-恢复-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.update --params &#39;{&quot;op&quot;:&quot;restore&quot;,&quot;id&quot;:&quot;&lt;记录编号&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-恢复-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.update --params &#39;{&quot;op&quot;:&quot;restore&quot;,&quot;id&quot;:&quot;&lt;记录编号&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;batch&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;batch&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;batch&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;batch&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "category",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "dge ilife-status-badge-danger ilife-block-caliber ilife-toast ilife-toast-icon ilife-toast-body ilife-toast-title-row ilife-toast-title ilife-toast-chip ilife-toast-chip-warn ilife-toast-detail ilife-toast-close ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "本批现阶段单笔化：这一页一次只落一笔，表里一屏 1 行，逐行可编辑。每一行的金额与分类都要给（缺的格已在表下标红）。\n这一页还差 2 项：分类（category：没给）、金额（amount：没给）。补齐之后跟助手说一遍。"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "amount",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "dge ilife-status-badge-danger ilife-block-caliber ilife-toast ilife-toast-icon ilife-toast-body ilife-toast-title-row ilife-toast-title ilife-toast-chip ilife-toast-chip-warn ilife-toast-detail ilife-toast-close ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "本批现阶段单笔化：这一页一次只落一笔，表里一屏 1 行，逐行可编辑。每一行的金额与分类都要给（缺的格已在表下标红）。\n这一页还差 2 项：分类（category：没给）、金额（amount：没给）。补齐之后跟助手说一遍。"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse-done&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&qu"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse-done&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&qu"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse-done&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&qu"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse-done&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&qu"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse-done&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&qu"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、待报销记录编号（source_id：没给：到账要指名消哪一笔的 #待报销，不许按金额猜）。\n请加载「饼干记账」技能，帮我记一笔报销到账（唤醒词：报销到账）：\n待报销记录：&lt;待报销记录编号&gt;\n到账额：未给（收入正数）\n分类：其他收入/报销回款；到账账户：&lt;到账账户&gt;；账本：&lt;账本&gt;\n请"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、待报销记录编号（source_id：没给：到账要指名消哪一笔的 #待报销，不许按金额猜）。\n请加载「饼干记账」技能，帮我记一笔报销到账（唤醒词：报销到账）：\n待报销记录：&lt;待报销记录编号&gt;\n到账额：未给（收入正数）\n分类：其他收入/报销回款；到账账户：&lt;到账账户&gt;；账本：&lt;账本&gt;\n请"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、待报销记录编号（source_id：没给：到账要指名消哪一笔的 #待报销，不许按金额猜）。\n请加载「饼干记账」技能，帮我记一笔报销到账（唤醒词：报销到账）：\n待报销记录：&lt;待报销记录编号&gt;\n到账额：未给（收入正数）\n分类：其他收入/报销回款；到账账户：&lt;到账账户&gt;；账本：&lt;账本&gt;\n请"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": false,
+   "ancTail": "tr>td>td",
+   "ancCls": "t-close ilife-block ilife-block-data-table ilife-block-data-table-table ilife-block-data-table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left",
+   "text": "amount"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": false,
+   "ancTail": "tr>td>td",
+   "ancCls": "eft ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left",
+   "text": "category"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&quot;category&quot;:&quot;&lt;外部识别出的分类，要选到最细那一级&gt;&quot;,&quot;amount&quot;:&quot;&lt;外部识别出的金额：支出为负、收入为正&gt;&quot;}&#3"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&quot;category&quot;:&quot;&lt;外部识别出的分类，要选到最细那一级&gt;&quot;,&quot;amount&quot;:&quot;&lt;外部识别出的金额：支出为负、收入为正&gt;&quot;}&#3"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&quot;category&quot;:&quot;&lt;外部识别出的分类，要选到最细那一级&gt;&quot;,&quot;amount&quot;:&quot;&lt;外部识别出的金额：支出为负、收入为正&gt;&quot;}&#3"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&quot;category&quot;:&quot;&lt;外部识别出的分类，要选到最细那一级&gt;&quot;,&quot;amount&quot;:&quot;&lt;外部识别出的金额：支出为负、收入为正&gt;&quot;}&#3"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1795,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "拍账单：本仓不装识别引擎、也不做上传控件，图片识别在外部办（本仓之外）。已收到 0 张图；还缺 金额、分类、时间，缺一样不许写库、也不替你猜。\n请在外部识别（或眼看）之后，把 金额／分类／时间三样写成参数，然后照抄下面这条命令重跑：\nbill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&qu"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1795,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "拍账单：本仓不装识别引擎、也不做上传控件，图片识别在外部办（本仓之外）。已收到 0 张图；还缺 金额、分类、时间，缺一样不许写库、也不替你猜。\n请在外部识别（或眼看）之后，把 金额／分类／时间三样写成参数，然后照抄下面这条命令重跑：\nbill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&qu"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "category",
+   "line": 1795,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "拍账单：本仓不装识别引擎、也不做上传控件，图片识别在外部办（本仓之外）。已收到 0 张图；还缺 金额、分类、时间，缺一样不许写库、也不替你猜。\n请在外部识别（或眼看）之后，把 金额／分类／时间三样写成参数，然后照抄下面这条命令重跑：\nbill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&qu"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "amount",
+   "line": 1795,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "拍账单：本仓不装识别引擎、也不做上传控件，图片识别在外部办（本仓之外）。已收到 0 张图；还缺 金额、分类、时间，缺一样不许写库、也不替你猜。\n请在外部识别（或眼看）之后，把 金额／分类／时间三样写成参数，然后照抄下面这条命令重跑：\nbill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;photo&quot;,&qu"
+  },
+  {
+   "file": "t407-页-撤销-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.update --params &#39;{&quot;op&quot;:&quot;undo&quot;,&quot;id&quot;:&quot;&lt;记录编号&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-撤销-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.update --params &#39;{&quot;op&quot;:&quot;undo&quot;,&quot;id&quot;:&quot;&lt;记录编号&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-改记录-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.update --params &#39;{&quot;id&quot;:&quot;&lt;记录编号&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-改记录-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "table-caption ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.update --params &#39;{&quot;id&quot;:&quot;&lt;记录编号&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;category&quot;:&quot;&lt;三级分类，如 餐饮/外卖/午餐&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额，如 -35 或 5000&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;category&quot;:&quot;&lt;三级分类，如 餐饮/外卖/午餐&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额，如 -35 或 5000&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;category&quot;:&quot;&lt;三级分类，如 餐饮/外卖/午餐&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额，如 -35 或 5000&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;category&quot;:&quot;&lt;三级分类，如 餐饮/外卖/午餐&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额，如 -35 或 5000&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "rm-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 2 项：分类（没给）、金额（没给）。\n这一页先不写库；补齐之后跟助手说一遍，照这条说：bill.record.add。"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;borrow&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;向谁借&gt;"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;borrow&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;向谁借&gt;"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;borrow&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;向谁借&gt;"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;borrow&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;向谁借&gt;"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "who",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;borrow&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;向谁借&gt;"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、向谁借（who：没给：向谁借不许空着（这一族靠对象认人））。\n请加载「饼干记账」技能，帮我记一笔借入（唤醒词：记借入）：\n向谁借：&lt;向谁借&gt;；期限：&lt;期限&gt;\n借入金额：未给（收入取正数）\n分类：「借贷/借入」；账本：「借贷」；账户：&lt;钱进哪张卡&gt;\n备注请写：「#借入 向（对象）借 #"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、向谁借（who：没给：向谁借不许空着（这一族靠对象认人））。\n请加载「饼干记账」技能，帮我记一笔借入（唤醒词：记借入）：\n向谁借：&lt;向谁借&gt;；期限：&lt;期限&gt;\n借入金额：未给（收入取正数）\n分类：「借贷/借入」；账本：「借贷」；账户：&lt;钱进哪张卡&gt;\n备注请写：「#借入 向（对象）借 #"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "who",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、向谁借（who：没给：向谁借不许空着（这一族靠对象认人））。\n请加载「饼干记账」技能，帮我记一笔借入（唤醒词：记借入）：\n向谁借：&lt;向谁借&gt;；期限：&lt;期限&gt;\n借入金额：未给（收入取正数）\n分类：「借贷/借入」；账本：「借贷」；账户：&lt;钱进哪张卡&gt;\n备注请写：「#借入 向（对象）借 #"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;lend&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;借给谁&gt;&q"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;lend&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;借给谁&gt;&q"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;lend&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;借给谁&gt;&q"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;lend&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;借给谁&gt;&q"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "who",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;lend&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;借给谁&gt;&q"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "lend",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;lend&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;who&quot;:&quot;&lt;借给谁&gt;&q"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借给谁（who：没给：借给谁不许空着（这一族靠对象认人））。\n请加载「饼干记账」技能，帮我记一笔借出（唤醒词：记借出）：\n借给谁：&lt;借给谁&gt;；期限：&lt;期限&gt;\n借出金额：未给（支出取负数）\n分类：「借贷/借出」；账本：「借贷」；账户：&lt;哪张卡出去&gt;\n备注请写：「#借出 借给（对象） #"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借给谁（who：没给：借给谁不许空着（这一族靠对象认人））。\n请加载「饼干记账」技能，帮我记一笔借出（唤醒词：记借出）：\n借给谁：&lt;借给谁&gt;；期限：&lt;期限&gt;\n借出金额：未给（支出取负数）\n分类：「借贷/借出」；账本：「借贷」；账户：&lt;哪张卡出去&gt;\n备注请写：「#借出 借给（对象） #"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "who",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借给谁（who：没给：借给谁不许空着（这一族靠对象认人））。\n请加载「饼干记账」技能，帮我记一笔借出（唤醒词：记借出）：\n借给谁：&lt;借给谁&gt;；期限：&lt;期限&gt;\n借出金额：未给（支出取负数）\n分类：「借贷/借出」；账本：「借贷」；账户：&lt;哪张卡出去&gt;\n备注请写：「#借出 借给（对象） #"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;repay&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;借入"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;repay&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;借入"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;repay&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;借入"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;repay&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;借入"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;repay&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;借入"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借入记录编号（source_id：没给：偿还要指名销哪一笔的 #未还，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔偿还（唤醒词：记偿还）：\n借入记录：&lt;借入记录编号&gt;\n偿还金额：未给（支出负数）\n分类：「借贷/偿还」；账户：&lt;钱从哪张卡出去&gt;；账本：&lt;账本&gt;\n请照这个口径"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借入记录编号（source_id：没给：偿还要指名销哪一笔的 #未还，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔偿还（唤醒词：记偿还）：\n借入记录：&lt;借入记录编号&gt;\n偿还金额：未给（支出负数）\n分类：「借贷/偿还」；账户：&lt;钱从哪张卡出去&gt;；账本：&lt;账本&gt;\n请照这个口径"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借入记录编号（source_id：没给：偿还要指名销哪一笔的 #未还，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔偿还（唤醒词：记偿还）：\n借入记录：&lt;借入记录编号&gt;\n偿还金额：未给（支出负数）\n分类：「借贷/偿还」；账户：&lt;钱从哪张卡出去&gt;；账本：&lt;账本&gt;\n请照这个口径"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;installment&quot;,&quot;total&quot;:2400,&quot;periods&quot;:12,&quot;start_date&quot;:&quot;2026-01-31&quot;,&quot;category&quot;:&"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;installment&quot;,&quot;total&quot;:2400,&quot;periods&quot;:12,&quot;start_date&quot;:&quot;2026-01-31&quot;,&quot;category&quot;:&"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;installment&quot;,&quot;total&quot;:2400,&quot;periods&quot;:12,&quot;start_date&quot;:&quot;2026-01-31&quot;,&quot;category&quot;:&"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;installment&quot;,&quot;total&quot;:2400,&quot;periods&quot;:12,&quot;start_date&quot;:&quot;2026-01-31&quot;,&quot;category&quot;:&"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 2 项：分类（category：没给）、金额（amount：没给）。\n请加载「饼干记账」技能，帮我记一笔分期（唤醒词：记分期）：\n总额：2400；期数：12；首期日：2026-01-31\n分类：&lt;三级分类&gt;；账户：&lt;账户&gt;；账本：&lt;账本&gt;\n分摊：第 1 期 200.00（2026-01-31）、第 2 期 200.00（2026-02-28）、第 3"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 2 项：分类（category：没给）、金额（amount：没给）。\n请加载「饼干记账」技能，帮我记一笔分期（唤醒词：记分期）：\n总额：2400；期数：12；首期日：2026-01-31\n分类：&lt;三级分类&gt;；账户：&lt;账户&gt;；账本：&lt;账本&gt;\n分摊：第 1 期 200.00（2026-01-31）、第 2 期 200.00（2026-02-28）、第 3"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse&quot;,&quot;category&quot;:&quot;&lt;支出侧三级分类，如 出行/打车/机场往返&gt;&quot;,&quot;amount&quot;:&quot;&lt;垫付金额取负数，如 -128.6&gt;&quot"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse&quot;,&quot;category&quot;:&quot;&lt;支出侧三级分类，如 出行/打车/机场往返&gt;&quot;,&quot;amount&quot;:&quot;&lt;垫付金额取负数，如 -128.6&gt;&quot"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse&quot;,&quot;category&quot;:&quot;&lt;支出侧三级分类，如 出行/打车/机场往返&gt;&quot;,&quot;amount&quot;:&quot;&lt;垫付金额取负数，如 -128.6&gt;&quot"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;reimburse&quot;,&quot;category&quot;:&quot;&lt;支出侧三级分类，如 出行/打车/机场往返&gt;&quot;,&quot;amount&quot;:&quot;&lt;垫付金额取负数，如 -128.6&gt;&quot"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "rm-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 2 项：分类（没给）、金额（没给）。\n这一页先不写库；补齐之后跟助手说一遍，照这条说：bill.record.add。"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;income&quot;,&quot;category&quot;:&quot;&lt;收入侧三级分类，如 工资/月薪/9月&gt;&quot;,&quot;amount&quot;:&quot;&lt;正数金额，如 12.5&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;income&quot;,&quot;category&quot;:&quot;&lt;收入侧三级分类，如 工资/月薪/9月&gt;&quot;,&quot;amount&quot;:&quot;&lt;正数金额，如 12.5&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;income&quot;,&quot;category&quot;:&quot;&lt;收入侧三级分类，如 工资/月薪/9月&gt;&quot;,&quot;amount&quot;:&quot;&lt;正数金额，如 12.5&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;income&quot;,&quot;category&quot;:&quot;&lt;收入侧三级分类，如 工资/月薪/9月&gt;&quot;,&quot;amount&quot;:&quot;&lt;正数金额，如 12.5&gt;&quot;}&#39;"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1794,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "rm-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 2 项：分类（没给）、金额（没给）。\n这一页先不写库；补齐之后跟助手说一遍，照这条说：bill.record.add。"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;collect&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;collect&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;collect&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;collect&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;collect&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借出记录编号（source_id：没给：收回要指名销哪一笔的 #未还，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔收回（唤醒词：记收回）：\n借出记录：&lt;借出记录编号&gt;\n收回金额：未给（收入正数）\n分类：「借贷/收回」；账户：&lt;钱回到哪张卡&gt;；账本：&lt;账本&gt;\n请照这个口径办"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借出记录编号（source_id：没给：收回要指名销哪一笔的 #未还，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔收回（唤醒词：记收回）：\n借出记录：&lt;借出记录编号&gt;\n收回金额：未给（收入正数）\n分类：「借贷/收回」；账户：&lt;钱回到哪张卡&gt;；账本：&lt;账本&gt;\n请照这个口径办"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、借出记录编号（source_id：没给：收回要指名销哪一笔的 #未还，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔收回（唤醒词：记收回）：\n借出记录：&lt;借出记录编号&gt;\n收回金额：未给（收入正数）\n分类：「借贷/收回」；账户：&lt;钱回到哪张卡&gt;；账本：&lt;账本&gt;\n请照这个口径办"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;refund&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;原"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;refund&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;原"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;refund&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;原"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;refund&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;原"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;refund&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;原"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "refund",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "ble-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;refund&quot;,&quot;category&quot;:&quot;&lt;分类&gt;&quot;,&quot;amount&quot;:&quot;&lt;金额&gt;&quot;,&quot;source_id&quot;:&quot;&lt;原"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、原支出编号（source_id：没给：退款要指名退的是哪一笔原支出，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔退款（唤醒词：记退款）：\n原支出：&lt;原支出编号&gt;\n退款额：未给（收入正数）\n分类：退款/冲销；到账账户：&lt;到账账户&gt;；账本：&lt;账本&gt;\n请照这个口径写两笔并配对标"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、原支出编号（source_id：没给：退款要指名退的是哪一笔原支出，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔退款（唤醒词：记退款）：\n原支出：&lt;原支出编号&gt;\n退款额：未给（收入正数）\n分类：退款/冲销；到账账户：&lt;到账账户&gt;；账本：&lt;账本&gt;\n请照这个口径写两笔并配对标"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "inPre": true,
+   "ancTail": "div>div>pre",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code",
+   "text": "这一笔还差 3 项：分类（category：没给）、金额（amount：没给）、原支出编号（source_id：没给：退款要指名退的是哪一笔原支出，不拿最近一笔顶替）。\n请加载「饼干记账」技能，帮我记一笔退款（唤醒词：记退款）：\n原支出：&lt;原支出编号&gt;\n退款额：未给（收入正数）\n分类：退款/冲销；到账账户：&lt;到账账户&gt;；账本：&lt;账本&gt;\n请照这个口径写两笔并配对标"
+  }
+ ],
+ "attrHits": [
+  {
+   "file": "t407-代表-记支出-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-回执页.html",
+   "tok": "expense",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ock-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "t ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "amount",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "expense",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "m-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "amount",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-代表-记支出-采集页.html",
+   "tok": "expense",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-恢复-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-恢复-回执页.html",
+   "tok": "bill.record.update",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-恢复-回执页.html",
+   "tok": "bill.record.update",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-恢复-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-恢复-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-恢复-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ock-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ion-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "category",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "dge ilife-status-badge-danger ilife-block-caliber ilife-toast ilife-toast-icon ilife-toast-body ilife-toast-title-row ilife-toast-title ilife-toast-chip ilife-toast-chip-warn ilife-toast-detail ilife-toast-close ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "amount",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "dge ilife-status-badge-danger ilife-block-caliber ilife-toast ilife-toast-icon ilife-toast-body ilife-toast-title-row ilife-toast-title ilife-toast-chip ilife-toast-chip-warn ilife-toast-detail ilife-toast-close ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-批量录入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": " ilife-block ilife-block-empty-block ilife-block-empty-block-title ilife-empty ilife-empty-text ilife-empty-hint ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "-text ilife-empty-hint ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "category",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "amount",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "source_id",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-报销到账-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ock-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ion-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1797,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1797,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "category",
+   "line": 1797,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "amount",
+   "line": 1797,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "ed ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1811,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-拍账单-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-撤销-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1793,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "lock-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-copy-block ilife-block-copy-block-title ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-red ilife-action-row ilife-action-row-ghost"
+  },
+  {
+   "file": "t407-页-撤销-回执页.html",
+   "tok": "bill.record.update",
+   "line": 1793,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "lock-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block-data-table-cell-left ilife-block ilife-block-copy-block ilife-block-copy-block-title ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-red ilife-action-row ilife-action-row-ghost"
+  },
+  {
+   "file": "t407-页-撤销-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-撤销-回执页.html",
+   "tok": "bill.record.update",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-撤销-回执页.html",
+   "tok": "bill.record.update",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-撤销-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-撤销-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-撤销-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-改记录-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-改记录-回执页.html",
+   "tok": "bill.record.update",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-改记录-回执页.html",
+   "tok": "bill.record.update",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-改记录-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-改记录-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-改记录-采集页.html",
+   "tok": "bill.record.update",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ock-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "t ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "rm-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记一笔-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "who",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ife-toast-title-row ilife-toast-title ilife-toast-chip ilife-toast-chip-warn ilife-toast-lines ilife-toast-close ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "block-param-form-label ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "category",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "amount",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "who",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-回执页.html",
+   "tok": "lend",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "who",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ife-toast-title-row ilife-toast-title ilife-toast-chip ilife-toast-chip-warn ilife-toast-lines ilife-toast-close ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "block-param-form-label ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "category",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "amount",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "who",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记借出-采集页.html",
+   "tok": "lend",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": " ilife-block ilife-block-empty-block ilife-block-empty-block-title ilife-empty ilife-empty-text ilife-empty-hint ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "-text ilife-empty-hint ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "category",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "amount",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "source_id",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记偿还-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "category",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "amount",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记分期-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ock-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "t ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "rm-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记报销-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "ock-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "t ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1795,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "rm-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-input ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-field ilife-block-param-form-label ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1809,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收入-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1815,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": " ilife-block ilife-block-empty-block ilife-block-empty-block-title ilife-empty ilife-empty-text ilife-empty-hint ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "-text ilife-empty-hint ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "category",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "amount",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "source_id",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记收回-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-回执页.html",
+   "tok": "bill-cmd-read",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1807,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-回执页.html",
+   "tok": "bill.record.add",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-回执页.html",
+   "tok": "category",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-回执页.html",
+   "tok": "amount",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-回执页.html",
+   "tok": "refund",
+   "line": 1813,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "source_id",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "e ilife-toast-chip ilife-toast-chip-warn ilife-toast-detail ilife-toast-close ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-description ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "category",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "-table-cell-left ilife-block-data-table-cell-left ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "amount",
+   "line": 1793,
+   "zone": "ATTR(other)",
+   "cls": "ilife-block-param-form-input",
+   "ancCls": "rn ilife-block-caliber ilife-status-badge ilife-status-badge-warn ilife-block-caliber ilife-block ilife-block-param-form ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required ilife-block-param-form-field ilife-block-param-form-label ilife-block-param-form-required"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "category",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "amount",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "source_id",
+   "line": 1798,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-block-data-table-cell-left ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code ilife-action-bar ilife-action-row ilife-action-btn ilife-action-btn-ghost ilife-block-caliber ilife-block ilife-block-pre-block ilife-block-pre-block-label ilife-block-pre-block-code"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "bill-cmd-read",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1817,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "bill.record.add",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  },
+  {
+   "file": "t407-页-记退款-采集页.html",
+   "tok": "refund",
+   "line": 1823,
+   "zone": "ATTR(data-t)",
+   "cls": "ilife-copy-btn ilife-copy-btn-ghost",
+   "ancCls": "e-action-row ilife-action-row-ghost ilife-copy-menu-wrap ilife-copy-btn ilife-copy-btn-ghost ilife-copy-menu ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint ilife-copy-menu-item ilife-copy-menu-label ilife-copy-menu-hint"
+  }
+ ]
+}

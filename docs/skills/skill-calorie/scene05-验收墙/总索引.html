@@ -99,15 +99,18 @@ code{font-size:11.5px;color:#6e6e73;word-break:break-all}
         <dt>该确认什么</dt><dd>计划 vs 实际那一张自有表：列序（日期／计划动作／实际完成／缺口）读得顺吗、缺口为空的行有没有占位、全左对齐的四列在 390 宽下挤不挤。</dd></dl>
     </div>
   </div>
-  <h2>预检确认页 · 写前预览（order 186–195）（10 件）</h2>
+  <h2>计划编辑器 · 可写页（order 186）（1 件）</h2>
   <div class="cards">
     <div class="card">
-      <div class="card-head"><span class="seq">11</span><a href="定训练计划-预检.html">定训练计划 · 预检确认页（构建向导）</a><span class="kind">过程型</span></div>
+      <div class="card-head"><span class="seq">11</span><a href="定训练计划-编辑器.html">定训练计划 · 计划编辑器（可写页）</a><span class="kind">过程型（可写页）</span></div>
       <dl><dt>念这句</dt><dd>定训练计划</dd>
         <dt>命令键</dt><dd><code>calorie.view.plan-wizard</code></dd>
-        <dt>文件</dt><dd><code>定训练计划-预检.html</code></dd>
-        <dt>该确认什么</dt><dd>构建向导页：待确认的计划树（周／日／动作）读得懂吗；「执行唤醒词「定训练计划」」那一句和复制 prompt 那一段在不在；确认那一步写得清不清楚（谁动手、动完写什么）。</dd></dl>
+        <dt>文件</dt><dd><code>定训练计划-编辑器.html</code></dd>
+        <dt>该确认什么</dt><dd>计划编辑器（可写页）：两排页签（上面选第几周、下面选周几）能不能点、一次只显示一天吗；动作参数格（组数／每组次数／负重，有氧只填时长）在页上改得动吗，第 2 周起是不是只能改参数、不能增删动作；页底「生成的计划」那张表跟着改动走吗、「复制指令」那颗按钮复制的对不对。</dd></dl>
     </div>
+  </div>
+  <h2>预检确认页 · 写前预览（order 187–195）（9 件）</h2>
+  <div class="cards">
     <div class="card">
       <div class="card-head"><span class="seq">12</span><a href="复制训练计划-预检.html">复制训练计划 · 预检确认页</a><span class="kind">过程型</span></div>
       <dl><dt>念这句</dt><dd>复制训练计划</dd>
@@ -300,9 +303,9 @@ code{font-size:11.5px;color:#6e6e73;word-break:break-all}
 <div class="note">
   <h2>有意不出产物及其原因</h2>
   <ul>
-      <li><b>外部五条：落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩（order 196–200）</b>：`packages/skill-calorie/src/workout/routes.ts:32-36` 把这五条记为 `kind:'non-exec'`、`bucket:'out-of-scope'`，`reason` 逐条写着「明确不做（架构规格 `docs/calorie-architecture.md:60`：落地／训记）；词只保证命中与文案，执行层不承接」。**本轮仍不执行、仍不造产物**：这五条的执行面在外部 App（补计划到日历／记心愿／推送训记／回写训记实绩），卡路里这侧的执行层不承接 ⇒ 既没有「写后」可出回执页、也没有「读」结果可出结果页，硬出一张只能印这几句词本身。本轮实测：五条在路由表／场景词表／HELP 资产三处都命中（5/5），HELP 文案首句逐字在——读数见 `docs/skills/skill-calorie/t351-v17-evidence.md` §四「表二 · 外部五条」。本轮产物原批目录：`.scratch/t157-close/products/`。</li>
-      <li><b>撤销后读验证（order 195 的 read-after-delete 一步）</b>：那一步**不是页面**，是机检读数：撤销后念「看计划」再读一次，得 `exit=4` ＋ stderr 命中「无训练计划」（恢复缺失阻断）——它**没有可上屏的 HTML**，所以本轮照旧只把读数落进批次的 `detail.json`（`steps` 里那条 `撤销后读验证`），不产页面；批脚本一度产出的 `order195-verify.html` 已按陈旧件处理，不进这一册。本轮读数与逐条现场见 `docs/skills/skill-calorie/t351-v17-evidence.md` §三「口径两条」；本轮产物原批目录：`.scratch/t157-close/products/`。</li>
-      <li><b>order 176–207 的中间产物：`dbs/`（隔离库）与 `detail.json`（逐条读数）</b>：它们留在**本轮**的原批目录 `.scratch/t157-close/products/`（`dbs/` 隔离库 ＋ `detail.json` 逐条读数），是**出页依据与判据读数**，不是给人看的页面——墙上没有可看的渲染，故不入这一册。要看机器读数去 `.scratch/t157-close/products/detail.json`（`steps` 43 条 ＋ `checks` 29 条）；要看逐条实跑证据去 `docs/skills/skill-calorie/t351-v17-evidence.md`。</li>
+      <li><b>外部五条：落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩（order 196–200）</b>：`packages/skill-calorie/src/workout/routes.ts:32-36` 把这五条记为 `kind:'non-exec'`、`bucket:'out-of-scope'`，`reason` 逐条写着「明确不做（架构规格 `docs/calorie-architecture.md:60`：落地／训记）；词只保证命中与文案，执行层不承接」。**本轮仍不执行、仍不造产物**：这五条的执行面在外部 App（补计划到日历／记心愿／推送训记／回写训记实绩），卡路里这侧的执行层不承接 ⇒ 既没有「写后」可出回执页、也没有「读」结果可出结果页，硬出一张只能印这几句词本身。本轮实测：五条在路由表／场景词表／HELP 资产三处都命中（5/5），HELP 文案首句逐字在——读数见 `docs/skills/skill-calorie/t351-v19-evidence.md` §四「表二 · 外部五条」。本轮产物原批目录：`.scratch/t157-final/products/`。</li>
+      <li><b>撤销后读验证（order 195 的 read-after-delete 一步）</b>：那一步**不是页面**，是机检读数：撤销后念「看计划」再读一次，得 `exit=4` ＋ stderr 命中「无训练计划」（恢复缺失阻断）——它**没有可上屏的 HTML**，所以本轮照旧只把读数落进批次的 `detail.json`（`steps` 里那条 `撤销后读验证`），不产页面；批脚本一度产出的 `order195-verify.html` 已按陈旧件处理，不进这一册。本轮读数与逐条现场见 `docs/skills/skill-calorie/t351-v19-evidence.md` §三「口径两条」；本轮产物原批目录：`.scratch/t157-final/products/`。</li>
+      <li><b>order 176–207 的中间产物：`dbs/`（隔离库）与 `detail.json`（逐条读数）</b>：它们留在**本轮**的原批目录 `.scratch/t157-final/products/`（`dbs/` 隔离库 ＋ `detail.json` 逐条读数），是**出页依据与判据读数**，不是给人看的页面——墙上没有可看的渲染，故不入这一册。要看机器读数去 `.scratch/t157-final/products/detail.json`（`steps` 43 条 ＋ `checks` 29 条）；要看逐条实跑证据去 `docs/skills/skill-calorie/t351-v19-evidence.md`。</li>
   </ul>
 </div>
 </div></body></html>

@@ -141,7 +141,7 @@ export const CALORIE_COMBOS = {
   'calorie.view.photo-picker': { shape: 'list' as EnvelopeShape, title: '删照候选' },
   'calorie.view.plan': { shape: 'stat' as EnvelopeShape, title: '训练计划看' },
   'calorie.view.plan-vs-actual': { shape: 'stat' as EnvelopeShape, title: '计划比实际' },
-  'calorie.view.plan-wizard': { shape: 'stat' as EnvelopeShape, title: '构建向导' },
+  'calorie.view.plan-wizard': { shape: 'stat' as EnvelopeShape, title: '定训练计划' },
   'calorie.view.plan-write-preview': { shape: 'stat' as EnvelopeShape, title: '写前预览' },
   'calorie.view.predict': { shape: 'stat' as EnvelopeShape, title: '体重预测' },
   'calorie.view.process-progress': { shape: 'stat' as EnvelopeShape, title: '落地训练进度' },

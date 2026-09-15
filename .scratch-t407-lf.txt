@@ -1,0 +1,5 @@
+﻿packages/skill-bill/src/shared/docPage.ts 69
+packages/skill-bill/src/shared/copyArea.ts 150
+packages/skill-bill/src/record/collectBody.ts 173
+packages/skill-bill/src/record/receiptBody.ts 117
+packages/skill-bill/src/shared/userWording.ts 136

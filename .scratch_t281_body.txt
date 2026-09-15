@@ -1,0 +1,34 @@
+﻿Part of #159
+
+**票面五段（目标／验收命令／不许动的东西／交付物路径／遗留出口）**
+
+## 目标
+
+两条读命令的产物与票 1 同形：`对比两张照片`（`calorie.photo.compare`）与 `查身材照`（`calorie.photo.detail`，单张页）＝完整文档 ＋ **内嵌照片** ＋ 复制区。单张页同时充当「删身材照」流程里的**快照**（老技能 D6 的第二步要它）。
+
+## 验收命令
+
+```
+pnpm build && pnpm gen:check
+node --test packages/skill-calorie/test/photo-shape-read-<票号>.test.mjs
+node packages/skill-calorie/scripts/gen-photo-baseline.mjs --check
+```
+
+用例：① 两条命令真跑，产物都以 `<!doctype html>` 起、含复制区与 `data:image/`；② 对比页保留老实物口径（并排 ＋ 间隔天数 ＋ 跨标签警告文案）；③ 缺照片／传入不存在的 id 时按既有缺失阻断口径（exit 4，不回半页）；④ **变异自证**：去掉内嵌必红；⑤ 每条用例另断言 `data.output` 是绝对路径且该文件在盘上。
+
+## 不许动的东西
+
+- 命令声明与路由记录（不增删命令）；写命令与回执口径。
+- 票 1 已定的画廊页形状（本票不动它，只复用缩略图件与整页装配件）。
+- 其余 7 条回执页（归票 3）。
+
+## 交付物路径
+
+- 改：`src/photo/gallery.ts`（单张）、`src/photo/compare.ts`。
+- 新：`packages/skill-calorie/test/photo-shape-read-<票号>.test.mjs`。
+- 文档：`docs/skills/skill-calorie/t<票号>-读侧同形.md`。
+
+## 遗留出口
+
+- 回执侧铺开归票 3；缩略图件若被第二个能力用到，当场提「上移共用位」的建议，不顺手搬。
+
