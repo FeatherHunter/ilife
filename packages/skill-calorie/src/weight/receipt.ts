@@ -125,11 +125,13 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
   const dir = span === null ? '' : span > 0 ? '上升' : span < 0 ? '下降' : '持平';
   const latest = latestWeightAfter(db);
   /* #505 形状化：原句用 `；` 把「删了几条 ＋ 区间首末」与「删后库里还剩什么」串成一句 ⇒ 拆两件：
-   * ① `outcome`＝一句判语（删了几条、区间怎么变、不可恢复）；② `facts`＝一枚事实条（删后最新体重）。
-   *  «删除不可恢复，要还原请照上表原值重新记一次» 是这一句里最要紧的一笔（写进判语，仍是一句话）。 */
-  const outcome = '本次删除 ' + snap.length + ' 条'
-    + (span === null ? '' : '，删除前最早 ' + fw + ' kg → 最晚 ' + lw + ' kg（' + signed(span) + '，' + dir + '）')
-    + '。删除不可恢复，要还原请照上表原值重新记一次。';
+   * ① `outcome`＝一句判语；② `facts`＝一枚事实条（删后最新体重）。
+   *  «删除不可恢复，要还原请照下表原值重新记一次» 是这一句里最要紧的一笔（写进判语，仍是一句话）。
+   * #510 收敛（S2：条数三／四处）：判语原来还写着「本次删除 1 条」与首末对（`最早 80 → 最晚 80 kg
+   *  （+0.0 kg，持平）`）——条数与副标题（24／31 那两页）、值槽、表题说的是同一件事；方向词与
+   * 区间净变化各住在「区间变化」卡的徽章与值槽，首末对住在同一张卡的副说明里 ⇒ 判语改成**一句
+   * 不带数、不带方向词**的判语（要还原怎么做 ＋ 不可恢复），四件事实各有各的住所，一件不丢。 */
+  const outcome = '本次删掉的记录已经不在库里了，删除不可恢复，要还原请照下表原值重新记一次。';
   const facts = [{ k: '删后最新体重', v: latest === null ? '库里已无体重记录' : latest.kg + ' kg' }];
   const payload = [outcome, ...facts.map((f) => f.k + ' ' + f.v),
     ...snap.map((it) => (it.id === undefined || it.id === null ? '' : '#' + it.id + ' ')
@@ -142,11 +144,15 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
       }),
       {
         /* 值槽只放区间净变化这一个数（数字＋单位）；首末对（`72.5 → 70.1 kg`，14 字）进 `detail`
-         * ——它是区间串，进值槽会被断行撑高（t154 用户读数）。 */
+         * ——它是区间串，进值槽会被断行撑高（t154 用户读数）。
+         * #510：`span === null`（只删了一条，比不出区间）那一路原写「只删了 1 条，看不出区间变化」——
+         * 那个 `1 条` 与值槽、表题同说一件事（一屏三处）⇒ 副说明改说「只有一行」，条数留值槽与表题。
+         * `span !== null` 那一路的首末对是从判语搬来的（判语收敛时按「每条事实都要有去处」挪到这里，
+         * 与它讲的是同一件事：区间从哪变到哪）。 */
         label: '区间变化',
         value: span === null ? '—' : signed(span),
         detail: span === null
-          ? (snap.length > 0 ? '只删了 ' + snap.length + ' 条，看不出区间变化' : '这次没有可对照的行')
+          ? (snap.length > 0 ? '只有一份原值行，看不出区间变化' : '这次没有可对照的行')
           : '删除前最早 ' + fw + ' → 最晚 ' + lw + ' kg',
         status: span === null ? 'empty' : 'warn',
         statusText: span === null ? '没法比' : dir,
@@ -179,7 +185,12 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
         kg: kgOf(it) === null ? '—' : kgOf(it) + ' kg',
         status: '已删除',
       })),
-      caption: '删除前的原值（共 ' + snap.length + ' 条）',
+      /* 表题（#510 收敛）：原来带 `（共 N 条）`——「删了几条」这一件事在可见副标题（它照抄回执摘要：
+       * 按 id 那页是 `已删除体重 #1…`、按日／按范围那两页是 `已删除 … 体重 1 条…`）与状态卡值槽
+       * 已经各有一处；三处同说一个数就是冗余。故按「副标题已含 N 条」的两页（24／31）把表题的条数
+       * 撤掉，17 那页副标题不含条数（只有编号与前值），表题保留条数（值槽 ＋ 表题＝允许的上限 2）。
+       * 撤掉不等于丢：条数住在值槽，表里的行数把同一个数再算一遍（且「逐条」二字表明表是全量）。 */
+      caption: receipt.summary.includes(' 条') ? '删除前的原值（逐条）' : '删除前的原值（共 ' + snap.length + ' 条）',
       emptyText: '这次没有删除前的原值行',
     }),
     shapedConclusionBlock(verdict(outcome) + factStrip(facts)),

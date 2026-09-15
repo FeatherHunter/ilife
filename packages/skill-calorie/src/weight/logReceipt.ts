@@ -26,10 +26,12 @@ import { shiftISODate } from '../analysis/utils.js';
 import { deltaLast, goalDiff } from './records.js';
 import type { WeightRow } from './records.js';
 import { FetchError } from '../fetch/errors.js';
+import { fieldLabel } from '../shared/fieldLabel.js';
+import { WEIGHT_DOMAIN } from './fieldLabels.js';
 import { getWeightGoalInfo, weightTrend } from './figures.js';
 import { weightCurvePlan } from './plate.js';
 import {
-  cell, conclusionBlock, deliveryBlocks, envelopeOf, fieldLabelList, receiptPageOf, reconcileBlock,
+  cell, conclusionBlock, deliveryBlocks, envelopeOf, receiptPageOf, reconcileBlock,
   shapedConclusionBlock, signed, stateCard, writtenDetailOf,
 } from './plateDocs.js';
 import { bulletList, factStrip, verdict } from './weightUi.js';
@@ -137,7 +139,10 @@ export function buildLogReceiptDoc(
     { k: '距目标', v: gap === null ? '未设体重目标' : signed(gap) },
     { k: '近 30 天', v: two ? '均值 ' + avg + ' kg，趋势' + trendCn : '只有一条记录，谈不上趋势' },
   ];
-  const outcome = (f.kg === null ? '回执未带本次体重' : '本次记 ' + f.kg + ' kg，' + f.date + ' ' + f.time)
+  /* #510 收敛（S2：关键数字三处）：判语原来把本次体重那个数**又写一遍**（`本次记 70.5 kg，时刻`），
+   * 与副标题、KPI 卡·值槽同说一件事（一屏三处）⇒ 判语只说「记在哪一天哪一刻」——
+   * 数字只住卡片值槽（＋副标题那一句机器面摘要），判语一个数也不复述。 */
+  const outcome = (f.kg === null ? '回执未带本次体重' : '本次记在 ' + f.date + ' ' + f.time)
     + '。';
   // 复制载荷：机器面照旧「结论句 ＋ 表格逐行」，但原来那四行是把判语与事实重抄一遍 ⇒ 去掉重抄，
   // 只留页面表格里读不到的那一笔（写入时刻 ＋ 备注）。`｜` 是载荷自身的分隔符（允许项，不进正文）。
@@ -153,7 +158,11 @@ export function buildLogReceiptDoc(
       { label: '本次体重', value: f.kg === null ? '—' : String(f.kg), unit: 'kg' },
       ...(receipt.writtenFields.length === 0 ? [] : [{
         label: '写入字段', value: receipt.writtenFields.length + ' 项',
-        detail: fieldLabelList(receipt.writtenFields),
+        /* #510 收敛（S3：顿号漏网）：这一槽原印 `体重、备注、日期、时间`——四个字段名用 `、` 串起来，
+         * 正是「枚举字段名」那一型。卡片副行**吃纯文本**（共享层 `blocks.ts:557` 转义），形状件进不来
+         * ⇒ 照审查单的第二种改法**改写成一句话**（同 `weight/history.ts:487` 里程碑两档那处的先例），
+         * 四个字段名一个不丢。 */
+        detail: fieldLabelsSentence(receipt.writtenFields),
       }]),
     ]),
     renderDataTable({
@@ -215,9 +224,13 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
   const failed = count('失败');
   const top = failed > 0 ? '失败' : skipped > 0 ? '跳过' : wrote > 0 ? '写入' : '无改动';
   /* #505 形状化：原来两句用 `；` 串起「三数」与「两条定义」，现拆两件——
-   * ① 三数归**一句判语**（值槽与徽章已各说一件事，这里只把它读成一句话）；
-   * ② 两条定义进 `bulletList()` **逐条成行**（「跳过＝…」「失败＝…」是两条独立规则，不该挤在一句里）。 */
-  const outcome = '本次批量 ' + items.length + ' 条，写入 ' + wrote + ' 条，跳过 ' + skipped + ' 条，失败 ' + failed + ' 条。';
+   * ① 判语只说这一批怎么看；② 两条定义进 `bulletList()` **逐条成行**
+   *    （「跳过＝…」「失败＝…」是两条独立规则，不该挤在一句里）。
+   * #510 收敛（S2：条数三处）：判语原写「本次批量 1 条，写入 N 条，跳过 N 条，失败 N 条」——
+   * 四个数与值槽、表题、副标题摘要说的是同一件事（`1 条` 一屏三处）⇒ 判语一个数都不复述，
+   * 只留「这张表怎么看」这一句；写入／跳过／失败三数由副标题摘要与逐条明细表给。
+   * 这句里也不再用 `、` 枚举三个状态词（审查单 S3：形状槽零顿号）——改成人话的分句读法。 */
+  const outcome = '这一次批量的逐条结果都在下表里，有的写进去了，有的跳过了，有的失败，原因各有各的说法。';
   const rules = [
     '跳过＝那天已经记过（不覆盖旧记录）',
     '失败＝日期格式或体重值不对（原因见下表）',
@@ -239,7 +252,8 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
       }),
       ...(receipt.writtenFields.length === 0 ? [] : [{
         label: '写入字段', value: receipt.writtenFields.length + ' 项',
-        detail: fieldLabelList(receipt.writtenFields),
+        // #510 收敛（S3）：同单条页那一处——四个字段名改写成一句话，不再用 `、` 枚举（副行吃纯文本）。
+        detail: fieldLabelsSentence(receipt.writtenFields),
       }]),
     ]),
     // 老实物 weight_batch_receipt.html:67-73 的明细表（逐条状态与原因）。
@@ -263,6 +277,15 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
     ),
   ].join('');
   return receiptPageOf(receipt, content);
+}
+
+/** 本轮批：「写入字段」卡副行那一句（**枚举字段名**，S3 顿号漏网）。
+ *  卡片副行是纯文本槽，四个字段名原来写 `体重、备注、日期、时间`——正是审查单点名的枚举那一型。
+ *  改写成一句话（`体重 与 备注 与 日期 与 时间`），标签仍逐字取 `weight/fieldLabels.ts` 那一张域表
+ *  （不另写第二份映射）；缺项仍按该表口径回退原键名，回退值也不丢在这一句里。 */
+function fieldLabelsSentence(keys: readonly string[]): string {
+  const labels = keys.map((k) => fieldLabel(WEIGHT_DOMAIN, k)).filter((s) => s !== '');
+  return labels.length === 0 ? '—' : labels.join(' 与 ');
 }
 
 /** 原因串里数字与单位之间补一个空格（缺陷 6）：取数层给的是 `已有记录 70.4kg`，

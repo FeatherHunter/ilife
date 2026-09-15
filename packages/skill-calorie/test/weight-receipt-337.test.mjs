@@ -10,6 +10,11 @@
  * #483 文本审查后同步收紧：可见文本里不能再出现旧句（`影响行数`／`本次写入的行数`／`回执格式`／
  * `已写入 weight_log`／`线在量程外`／`删除口径`／`批量计数`／`删除快照`／参数名 `kg、note、date、time`）
  * ——`assertReceipt` 里逐条钉 0 命中；删掉的「批量计数」表改钉结论句那三数。
+ * #510 收尾（同屏事实收敛 ≤2）：旧断言随新文案同步收紧——记体重的判语块只剩「记在哪一天哪一刻」
+ * （不许再复述本次体重值）＋「写入字段」卡副行不再 `、` 枚举；批量补录的判语改说这张表怎么看
+ * （三数归副标题与表题）；删体重（按 id）的判语块不发数不给方向词、表题保留条数，删某日那页
+ * 副标题已含条数 ⇒ 表题改「（逐条）」不再复述。读数见
+ * `.scratch/t154/text-review/rev-fix2/证据-收敛.md`（7 页最高值 4→2，超 2 次页数 0/9）。
  *
  * 变异证据（自证两行，机器读数见 `docs/skills/skill-calorie/t337-体重盘与回执-证据.md`）：
  * - 变异红：把 `src/weight/receipt.ts` 的 `assembleDocPage` 入口改坏一处
@@ -220,6 +225,14 @@ test('#337 记体重', () => {
   }
   // #505：结论块两件都在——判语（写入时刻那句）＋ 事实条（较上次／距目标／近 30 天 ＋ BMI 一枚）。
   assert.ok(r.file.includes('<div class="wui-strip">'), '记体重 结论块缺事实条');
+  // #510 收敛（S2）：判语块不再复述本次体重那个数（数字只住卡片值槽）；四个字段名也不再 `、` 枚举。
+  // 判语里剩下的数字属性只有「写入时刻」那一个时间戳（它是卡片上没有的事实），故按「无本次体重值」判。
+  const verdict = /<p class="wui-verdict">([^<]*)<\/p>/.exec(r.file)?.[1] ?? '';
+  assert.ok(verdict.length > 0, '记体重缺判语块正文');
+  assert.ok(!verdict.includes('70.5'), '记体重的判语块复述了本次体重值：' + verdict);
+  assert.match(verdict, /^\D*[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}。$/,
+    '记体重的判语块只剩「记在哪一天哪一刻」这一句：' + verdict);
+  assert.ok(r.file.includes('体重 与 备注 与 日期 与 时间'), '「写入字段」卡副行未改写成一句话（仍是 `、` 枚举）');
   const body = visibleBody(r.file);
   assert.ok(!body.includes('（BMI 23 · '), '记体重 副标题仍在印机器面那句 `BMI 23 · 时刻`');
   assert.ok(r.envelope.data.receipt.recordId > 0, '回执缺记录号');
@@ -259,7 +272,8 @@ test('#337 批量补录体重', () => {
   assertReceipt(r, '批量补录体重');
   // #483：「批量计数」表整块删（摘要与结论句里已有同样三数），改钉结论句那三个读数与两条定义。
   // #505：结论块改形状后，三数那句由 `：`＋`、` 串改成两句人话（判语一句 ＋ 两条定义各成一行）。
-  for (const needle of ['逐条明细（共 3 条）', '本次批量 3 条，写入 1 条，跳过 1 条，失败 1 条。',
+  // #510 收敛：判语块不再复述数字（判语只留一句判语）——三数由副标题与表题给，判语只说这张表怎么看。
+  for (const needle of ['逐条明细（共 3 条）', '这一次批量的逐条结果都在下表里，有的写进去了，有的跳过了，有的失败，原因各有各的说法。',
     '跳过＝那天已经记过（不覆盖旧记录）', '失败＝日期格式或体重值不对（原因见下表）']) {
     assert.ok(r.file.includes(needle), '批量补录体重缺：' + needle);
   }
@@ -299,9 +313,15 @@ test('#337 删体重记录', () => {
   const r = runCli(dir, 'calorie.weight.remove', { id: seed.todayId }, 'remove-id');
   assertReceipt(r, '删体重记录');
   // #483：可见文本的「删除前快照」改「删除前的原值」（快照列改状态列）；副标题里那句机器面摘要一字不动。
-  for (const needle of ['删除前的原值（共 1 条）', '删除不可恢复，要还原请照上表原值重新记一次', '硬删除，不可恢复']) {
+  // #510 收敛：这一页（按 id 删）副标题只写编号与前值、不带条数 ⇒ 表题保留条数（值槽 ＋ 表题＝2 处）。
+  for (const needle of ['删除前的原值（共 1 条）', '删除不可恢复，要还原请照下表原值重新记一次', '硬删除，不可恢复']) {
     assert.ok(r.file.includes(needle), '删体重记录缺：' + needle);
   }
+  // #510 收敛：判语块只说这一句（不发数、不给方向词——数与方向归卡片值槽与徽章）。
+  const verdict = /<p class="wui-verdict">([^<]*)<\/p>/.exec(r.file)?.[1] ?? '';
+  assert.ok(verdict.length > 0, '删体重记录缺判语块正文');
+  assert.ok(!/\d/.test(verdict), '删体重记录的判语块复述了数字：' + verdict);
+  assert.ok(!/(上升|下降|持平)/.test(verdict), '删体重记录的判语块复述了方向词：' + verdict);
   // #505：删类页的结论块＝判语（含不可恢复那句）＋ 一枚「删后最新体重」事实条。
   assert.ok(r.file.includes('<div class="wui-strip">'), '删体重记录 结论块缺「删后最新体重」事实条');
   assert.equal(q1(dir, 'SELECT COUNT(*) AS n FROM weight_log WHERE id = ?', seed.todayId).n, 0, '按 id 未硬删');
@@ -313,7 +333,9 @@ test('#337 删某日体重', () => {
   const seed = seedBasic(dir);
   const r = runCli(dir, 'calorie.weight.remove', { date: seed.noteDate }, 'remove-date');
   assertReceipt(r, '删某日体重');
-  assert.ok(r.file.includes('删除前的原值（共 1 条）'), '缺删除前的原值区');
+  // #510 收敛：这一页副标题已含条数 ⇒ 表题不再复述 `共 1 条`（值槽 ＋ 副标题＝2 处），改说「逐条」。
+  assert.ok(r.file.includes('删除前的原值（逐条）'), '缺删除前的原值区（#510 后表题不再带条数）');
+  assert.ok(!r.file.includes('删除前的原值（共 1 条）'), '删某日体重的表题仍复述条数');
   assert.ok(r.file.includes('硬删除，不可恢复'), '缺硬删除口径（机器面摘要）');
   assert.equal(q1(dir, 'SELECT COUNT(*) AS n FROM weight_log WHERE date = ?', seed.noteDate).n, 0, '按日未硬删干净');
 });
