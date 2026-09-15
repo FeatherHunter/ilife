@@ -14,7 +14,7 @@
  * `copyArea.ts`——#239 按「一个文件对外不多于五个」把那一组名字另立一件，本文件只留装配与投影。
  */
 import { blocksCss, renderPageShell } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildSharedHelpersJs, buildStyleSheet, fillTemplate } from 'base-paint';
+import { buildChartsHelpersJs, buildSharedHelpersJs, buildStyleSheet, fillTemplate, PAGE_UI_CLASS, PAGE_UI_VIEWPORT, pageShapeCss, pageUiCss } from 'base-paint';
 
 /** 整页装配的入参（≤11 字段；B线新增 metaLeft／badge／summary 三字段：给 metaLeft 才走新路，
  *  badge 缺省＝不出徽章，老调用方不传即走老路）。 */
@@ -42,6 +42,12 @@ interface DocPageInput {
    *  `ilife-page-printable`，A线／B线两条路都认；不给／给假 → 产物与旧版逐字相同（类不出现，
    *  样式段里的打印规则一律不命中）。样式与打印规则的唯一定义地在 `base-render/src/blocks.ts`。 */
   readonly printable?: boolean;
+  /** **页面级移动端配方（#525）**：为真时这一页继承 HELP 页当刻的手机端能力——断点、44px 触摸区、
+   *  `env(safe-area-inset-*)` 安全区、窄屏读数卡栅格与页内导航横滑、窄屏表格卡片化、页内定位，
+   *  并拿到三件页面级形状（事实条／图片与 GIF 容器／时间轴条）的样式。
+   *  **不给／给假 → 产出物与旧版逐字节相同**（多出的只有这一位；样式与根类都不出现）。
+   *  定义地：`base-render/src/pageUi.ts`（配方）＋ `base-render/src/pageShapes.ts`（形状件）。 */
+  readonly pageUi?: boolean;
 }
 
 /** B线老A壳补丁 CSS（照抄老 combined_analysis.html 实测值；只用冻结 token 名＋#ff9500 字面，不新增变量名）。 */
@@ -88,13 +94,18 @@ function blineEsc(value: string): string {
 }
 
 /** 整页模板（裸标记＋CONTENT 槽；`wrap` 带 ilife-page 兼容既有 --html 断言）。
- *  标记不得预包裹：资产由 `fillTemplate` 按 `ASSET_WRAPPERS` 自己包。 */
-function docShell(docTitle: string, charts: boolean): string {
+ *  标记不得预包裹：资产由 `fillTemplate` 按 `ASSET_WRAPPERS` 自己包。
+ *  `pageUi`（#525）只改两处、都在启用时才发生：viewport 串加 `viewport-fit=cover`
+ *  （`env(safe-area-inset-*)` 在 iOS 上不写它恒取 0）＋版面根多一颗 `ilife-page-ui`；
+ *  不给即老串老类，产出物逐字节不变。 */
+function docShell(docTitle: string, charts: boolean, pageUi: boolean): string {
   const chartsSlot = charts ? '<!--CHARTS-HELPERS-->\n' : '';
+  const viewport = pageUi ? PAGE_UI_VIEWPORT : 'width=device-width,initial-scale=1';
+  const wrapClass = 'wrap ilife-page' + (pageUi ? ' ' + PAGE_UI_CLASS : '');
   return '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
-    + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+    + '<meta name="viewport" content="' + viewport + '">\n'
     + '<title>' + docTitle + '</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n'
-    + '<div class="wrap ilife-page">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n'
+    + '<div class="' + wrapClass + '">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n'
     + chartsSlot
     + '</body>\n</html>';
 }
@@ -109,8 +120,11 @@ export function assembleDocPage(input: DocPageInput): string {
   const bline = metaLeft !== null;
   /** 可打印位（#448）：只认真真值，不给／给假即老路（与 `renderPageShell` 的口径同）。 */
   const printable = input.printable === true;
+  /** 页面级移动端配方（#525）：同上口径——只认真真值，不给／给假即老路（产出物逐字节不变）。 */
+  const pageUi = input.pageUi === true;
   const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + (bline ? BLINE_CSS : ''),
+    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + (bline ? BLINE_CSS : '')
+      + (pageUi ? '\n' + pageUiCss() + '\n' + pageShapeCss() : ''),
     sharedHelpersJs: buildSharedHelpersJs(),
   };
   if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
@@ -124,7 +138,7 @@ export function assembleDocPage(input: DocPageInput): string {
       + (summary === undefined ? '' : '<p class="sub">' + blineEsc(summary) + '</p>')
       + '<div class="ilife-block-page-shell-body">' + input.content + '</div>'
       + '</section>';
-    return fillTemplate({ template: docShell(input.docTitle, charts), assets, content: body }).html;
+    return fillTemplate({ template: docShell(input.docTitle, charts, pageUi), assets, content: body }).html;
   }
   const eyebrow = typeof input.eyebrow === 'string' ? screenEyebrow(input.eyebrow) : null;
   const body = renderPageShell({

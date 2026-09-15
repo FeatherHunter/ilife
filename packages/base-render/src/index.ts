@@ -38,3 +38,25 @@ export { buildChartsHelpersJs, charts } from './charts.js';
 /** #78 HELP 壳（契约 §3.5.3／§6.5）：数据页分型，走 `fillTemplate`，`#88` 直接复用 `HelpShellInput`。
  *  `HelpSchemaError`／内置壳模板 **不在此导出**（同口径；模板可经 `HelpShellInput.template` 覆盖）。 */
 export { renderHelpShell } from './help.js';
+/** #525 页面级两层（只追加，不动上面任何一条 export）：**移动端配方**（断点／触摸区／安全区／
+ *  窄屏表格行为／页内定位）与**页面级形状件**（事实条／图片与 GIF 容器／时间轴条）。
+ *  与 `blocks.js` 的 12 区块样式区分住：这两层是「整页怎么摆」，不参与区块组合；
+ *  是否启用由整页装配的 `pageUi` 位决定，不启用则产出物逐字节不变。 */
+export { PAGE_UI_CLASS, PAGE_UI_VIEWPORT, pageUiCss } from './pageUi.js';
+export type { PageUiCssInput } from './pageUi.js';
+export {
+  MEDIA_RATIOS,
+  pageShapeCss,
+  renderFactStrip,
+  renderMediaFigure,
+  renderTimelineRows,
+} from './pageShapes.js';
+export type {
+  FactItemInput,
+  FactStripInput,
+  FactTone,
+  MediaFigureInput,
+  MediaRatio,
+  TimelineRowInput,
+  TimelineRowsInput,
+} from './pageShapes.js';
