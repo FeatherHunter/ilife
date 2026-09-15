@@ -8,8 +8,7 @@
  *
  * #337 融合（老实物 `templates/weight_dashboard.html`）：卡上补 `status` 徽章（四值取冻结表）、
  * 曲线补 options（量程／刻度／单位／横轴标注／目标线／空态句）、结论由数据表改唯一形态折叠区、
- * 复制区补日志位、页末补数据来源行；**窗口内没有记录时不再阻断，改出整页空态**
- * （§5.7 肉眼验收：空窗仍是一张完整的页）。
+ * 复制区补日志位、页末补数据来源行；空窗出整页空态（§5.7）＋空库缺失阻断（#556）。
  *
  * #505 形状化与手机端（口径 `.scratch/t154/text-review/口径-UI.md`，先例 `render/reviewDocsCss.ts`）：
  * 体重盘这一页原先靠 `·`／`；` 顶替设计的地方，全落成 `weightUi.ts` 的形状——
@@ -55,12 +54,13 @@ import { batchLogWeight, logWeight } from './records.js';
 
 const VIEW_KEY = 'calorie.view.weight';
 
-/** `calorie.view.weight` · 体重盘：首末＋均值＋变化趋势＋目标差距。窗口内 0 条＝整页空态（不阻断渲染）。 */
+/** `calorie.view.weight` · 体重盘：首末＋均值＋变化趋势＋目标差距。空库缺失阻断（#556），窗口为空出整页空态。 */
 export function viewWeight(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const command = commandLine(VIEW_KEY, params);
   const w = buildWeightDashboardOrNull(db, start, end);
   if (w === null) {
+    if (((db.prepare('SELECT COUNT(*) AS n FROM weight_log').get() as { n: number } | undefined)?.n ?? 0) === 0) throw new CalorieRenderError('missing-data', '无体重记录（' + start + ' ~ ' + end + '）');
     return { data: { metrics: nums({ recordCount: 0 }) }, html: buildWeightEmptyDoc(start, end, command) };
   }
   const t = w.trend;
