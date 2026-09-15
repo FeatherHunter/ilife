@@ -31,6 +31,9 @@
 | `fe5eb1d7-70d7-4eb8-854a-34100045986e` | `node packages/skill-calorie/scripts/check-warning-line.mjs --sync --dry` | 1（演练：`改=3`） |
 | `ea11b41b-cb9a-479b-bba4-25158e369604` | `node packages/skill-calorie/scripts/check-warning-line.mjs --sync` | 0（`SYNC-VERIFY ok`） |
 | `801af6d6-08b2-4bcc-91eb-e645fd104799` | `node packages/skill-calorie/scripts/check-warning-line.mjs` | 0（`RESULT: 67/67` ＋ PASS） |
+| `6d37559b-c15b-40db-b6cb-6b7e7bbae977` | 提交脚本 `pwsh -File .scratch/t274/commit2.ps1`（`git add -- <9 路径>`／`git commit -m … -- <9 路径>`） | 0（sha `ca52b5d`，已推送） |
+| `6955dd03-af62-4144-9b81-414533886d89` | `node packages/skill-calorie/scripts/check-warning-line.mjs`（提交后复跑） | 0（`RESULT: 67/67` ＋ PASS） |
+| （终态补记）`f50d89d9-7c9d-4c0d-8fa1-8d866d0708ce` | `node --test packages/skill-calorie/test/*.test.mjs` 终态全量，落盘 `.scratch/t274/pkg-test-final.log` | 1（`tests 1050 / pass 1012 / fail 38`；只在终态红的 3 条均为别席在途件，见 `t274-证据.md` §六） |
 
 ## 上一席（同一个票号，2026-09-14 06:55，孤儿件留下的历史）
 
