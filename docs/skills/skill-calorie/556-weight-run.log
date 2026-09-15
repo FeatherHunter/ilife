@@ -1,0 +1,60 @@
+#556体重空库阻断 run log（长输出存档；回执只看尾 5 行，重做后重跑）
+
+## 让路检查
+$ node tooling/run-locked.mjs --ticket 556 -- gh issue view 505 --json updatedAt,comments
+{"n":0,"updatedAt":"2026-09-15T00:42:09Z"}
+$ node tooling/run-locked.mjs --ticket 556 -- git status --porcelain -- packages/skill-calorie/src/weight/log.ts
+(empty)
+$ node tooling/run-locked.mjs --ticket 556 -- git log --oneline --grep="560"
+f9f3fed 修复(560): 体重页去屏上来源脚注 + log.ts/判据全绿
+
+## 编译
+$ node tooling/run-locked.mjs --ticket 556 -- npx tsc -b packages/skill-calorie
+LOCK-ACQUIRED ticket=556 runId=efeebe07-0af2-4df1-b68c-29c2aa7f7d62 waitedMs=1 exit=0
+RESULT: ticket=556 runId=efeebe07-0af2-4df1-b68c-29c2aa7f7d62 waitedMs=1 exit=0
+
+## 新用例绿
+$ node tooling/run-locked.mjs --ticket 556 -- node --test packages/skill-calorie/test/556-weight-empty.test.mjs
+T556-MUT 空库改坏红=1 还原绿=1；有数窗与空窗行为不变
+✔ #556 ① 空库走缺失阻断 exit 4 且 calorie_html/ 无落盘（home-lock-374:96-98）
+✔ #556 ② 有数窗行为不变：exit 0 ＋ 落盘 ＋ 完整文档 ＋ 七针全中
+✔ #556 ③ 窗口为空行为不变：exit 0 ＋ 完整空态页（库里有底、这段零记录）
+✔ #556 ④ 两态出口不同（空库 4 vs 空窗 0，塌成一条即红）
+ℹ tests 4
+ℹ pass 4
+ℹ fail 0
+RESULT: ticket=556 runId=f0f67b97-297c-4c93-8957-fa7bff18e6b7 exit=0
+
+## 旧用例回归绿
+$ node tooling/run-locked.mjs --ticket 556 -- node --test packages/skill-calorie/test/560-weight-no-source.test.mjs
+T560W-MUT 主盘改坏红=1 还原绿=1；空窗改坏红=1 还原绿=1
+ℹ tests 4 / pass 4 / fail 0
+RESULT: ticket=556 runId=f8f34508-9fc4-475d-b44a-5dacded12fba exit=0
+
+$ node tooling/run-locked.mjs --ticket 556 -- node --test packages/skill-calorie/test/home-lock-374.test.mjs
+✔ #374 看今日体重概览（有段出页／无段阻断算通）
+ℹ tests 9 / pass 9 / fail 0
+RESULT: ticket=556 runId=2e2f87bb-34f8-4244-9259-0f6981c959a2 exit=0
+
+## 真码变异红
+$ node tooling/run-locked.mjs --ticket 556 -- npx tsc -b packages/skill-calorie
+RESULT: ticket=556 runId=522136dd-0457-404b-bba3-ac35bb992dde exit=0
+$ node tooling/run-locked.mjs --ticket 556 -- node --test packages/skill-calorie/test/556-weight-empty.test.mjs
+✖ #556 ① 空库走缺失阻断 exit 4 且 calorie_html/ 无落盘（空库该 exit 4，实得 exit=0）
+✔ #556 ② 有数窗行为不变
+✔ #556 ③ 窗口为空行为不变
+✖ #556 ④ 两态出口不同（两态出口相同（都是 exit 0）——两态又塌成一条了）
+ℹ tests 4
+ℹ pass 2
+ℹ fail 2
+RESULT: ticket=556 runId=f8e4ac4d-2b60-4456-ac72-547642b1e628 exit=1
+
+## 真码还原绿
+$ node tooling/run-locked.mjs --ticket 556 -- npx tsc -b packages/skill-calorie
+RESULT: ticket=556 runId=cdb133ce-4cd1-4c1a-bbd7-6d2af6d2282c exit=0
+$ node tooling/run-locked.mjs --ticket 556 -- node --test packages/skill-calorie/test/556-weight-empty.test.mjs
+ℹ tests 4 / pass 4 / fail 0 / exit=0
+RESULT: ticket=556 runId=f0f67b97-297c-4c93-8957-fa7bff18e6b7 exit=0
+
+## LF
+LF=402
