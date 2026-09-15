@@ -7,6 +7,9 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildMealDistributionView } from '../diet/index.js';
+/* #273 · 空窗 ＋ 带 `meal` 时那一支要的整页装配（裁定 4 的 2026-09-15 澄清：这一段没记也得是
+   餐别分布页的空态，不退回总览页）。与上面那条同族、同走 `diet/` 的门与具名页。 */
+import { buildMealDistributionPage } from '../diet/todayDocs.js';
 /* #271 · 「看饮食总览」那一支要的四件（取数视图／两态判据／空窗整页／入口标记）：照 #275 交接的
    口径走**深路径**——「看饮食总览区块」与本组小件由 `diet/nutritionPort(Docs).ts` 交付，不经门。 */
 import { buildDietOverviewView, hasAnyDietRow } from '../diet/nutritionPort.js';
@@ -89,6 +92,11 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
   /* 复制日志第 4 段「调用链」＝**本次命令原文**（含本次 `--params`），照抄可重跑（裁定 7）；
      命令原文由命令层共用件 `shared/writeParts.ts` 的 `commandLine()` 派生，页面件不自己拼。 */
   const command = commandLine('calorie.view.diet', params);
+  /* #273 · 餐别那一支（`undefined` 当没这个参数）：**建在空窗判定之前** —— 空窗那一支才知道进来的是
+     哪条词，好把「这一段没记」写成餐别分布页的空态（裁定 4 的 2026-09-15 澄清），不退回总览页。
+     不给 `meal` 时 `mealView` 恒为 `undefined`，下面每一支的行为逐字不变。 */
+  const mealRaw = optStr(params, 'meal');
+  const mealView = mealRaw === undefined ? undefined : buildMealDistributionView(db, mealRaw, start, end);
   let o: ReturnType<typeof buildDietOverview>;
   try {
     o = buildDietOverview(db, start, end);
@@ -98,6 +106,11 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
        · **窗口为空**（库里别处有记录，只是这一段没记）⇒ 出完整空态页（空态句 ＋ 引导句 ＋ 页内导航
          ＋ 来源脚注 ＋ 复制区），照 #275 的 `buildEmptyWindowDoc` 与 #272 整改后的同一形状做。 */
     if (!(e instanceof CalorieRenderError) || e.code !== 'missing-data' || !hasAnyDietRow(db)) throw e;
+    /* #273 · **这一支是餐别词**：空窗也出**餐别分布页**（区块自己出空态句＋引导句＋来源脚注），
+       不出总览空态页——两条词说的是餐别看餐别。不给 `meal` 的调用到不了这里（`mealView` 为 `undefined`）。 */
+    if (mealView !== undefined) {
+      return { data: { metrics: {} }, html: buildMealDistributionPage(mealView, command) };
+    }
     return {
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
@@ -112,10 +125,7 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
       }),
     };
   }
-  /* 只在真给了 `meal` 时才走餐别那一支（`undefined` 当没这个参数）。放在宿主取数之后，
-     空窗已由上面的两态分辨收口（`diet/review.ts` 的件头口径）。 */
-  const mealRaw = optStr(params, 'meal');
-  const mealView = mealRaw === undefined ? undefined : buildMealDistributionView(db, mealRaw, start, end);
+  /* 餐别那一支已在上面（空窗判定之前）建好——`mealView` 由那一处唯一取一次，本处不再重建。 */
   // C4 #43 · 尾日空回零（窗内有数不掀整窗 missing；窗全空由上行 overview 抛 missing-data）。
   let dist;
   try {
