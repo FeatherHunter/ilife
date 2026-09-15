@@ -391,14 +391,18 @@ export function previewDeleteDay(params: Record<string, unknown>, db: DatabaseSy
 export function previewUpdateMovement(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
   const oldName = optStr(params, 'oldMovement');
   if (!oldName) fail(2, '缺参数 oldMovement（原动作名）');
+  const newName = typeof params['newMovement'] === 'object' && params['newMovement'] !== null
+    ? String(((params['newMovement'] as Record<string, unknown>)['name'] ?? '')) : '';
+  // T351-v12：原来名字缺了就换个「（新动作未具名）」的占位符照常出预览——**预览能出、写下去就是一条
+  // 没有名字的动作**（真按下去等于把计划里的动作改成无名）。缺参数一律 exit 2 挡在写前，
+  // 与上一行「缺参数 oldMovement」同口径。
+  if (newName === '') fail(2, '缺参数 newMovement.name（换成哪个动作）');
   const week = optInt(params, 'week');
   const plan = getPlan(db);
   const hits = plan.sessions.filter((s) => (week === undefined || s.week_number === week) &&
     (s.movements ?? []).some((m) => m.name === oldName));
   if (hits.length === 0) fail(4, '没有找到动作「' + String(oldName) + '」');
   const before = hits.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
-  const newName = typeof params['newMovement'] === 'object' && params['newMovement'] !== null
-    ? String(((params['newMovement'] as Record<string, unknown>)['name'] ?? '（新动作未具名）')) : '（还没给新动作的名字）';
   return {
     op: 'update-movement', title: '把「' + String(oldName) + '」换成「' + newName + '」（' + hits.length + ' 段）',
     before, after: before.map((b) => withChange(b, '换成「' + newName + '」')), note: '确认后写入计划库',
@@ -579,6 +583,8 @@ export function writePlanUpdateMovement(params: Record<string, unknown>, db: Dat
   const oldName = optStr(params, 'oldMovement');
   if (!oldName) fail(2, '缺参数 oldMovement（原动作名）');
   const newMove = asMovement(params['newMovement']);
+  // 同上：没名字的替换一律挡在写前（写下去就是一条无名动作）。
+  if (typeof newMove.name !== 'string' || newMove.name === '') fail(2, '缺参数 newMovement.name（换成哪个动作）');
   const week = optInt(params, 'week');
   if (week !== undefined) needWeek(week, 'week');
   const plan = getPlan(db);
