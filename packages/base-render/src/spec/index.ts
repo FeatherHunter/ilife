@@ -27,8 +27,11 @@ export const BASE_PAINT_CONTRACT_VERSION = '0.1.0' as const;
 
 export type FrozenSurfaceKind = 'runtime' | 'type';
 export type FrozenSurfaceStatus = 'implemented' | 'pending';
-export type FrozenSurfaceSection = '3.1' | '3.2' | '3.3' | '3.4' | '3.5' | '5' | '7';
-export type FrozenSurfaceTicket = '#74' | '#75' | '#76' | '#77' | '#78' | '#92';
+/** 节号闭集：`3.1`–`3.5` 是 v1 五节（#74–#78），`3.6` 是 **#525 追加**的「页面级移动端配方与形状件」
+ *  （根出口新增的八个运行时名字必须有处挂号，否则 `test/contract-signatures.test.mjs` 的
+ *  「运行时出口面锁」一节必红）；`5`／`7` 是 #92 的版本机制与签名测试两节。 */
+export type FrozenSurfaceSection = '3.1' | '3.2' | '3.3' | '3.4' | '3.5' | '3.6' | '5' | '7';
+export type FrozenSurfaceTicket = '#74' | '#75' | '#76' | '#77' | '#78' | '#92' | '#525';
 
 export interface FrozenSurfaceEntry {
   readonly name: string;
@@ -87,7 +90,7 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'TOAST_ICONS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "readonly ['copy', 'ok', 'warn', 'danger', 'info']" },
   { name: 'TOAST_DEFAULTS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "{ timeoutMs: 4500; maxStack: 5; mobileMaxStack: 3; mobileMaxPx: 820; gapPx: 8; role: 'status'; ariaLive: 'polite'; defaultIcon: 'copy' }" },
   { name: 'ACTION_BAR_KINDS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "readonly ['primary', 'red', 'ghost']" },
-  { name: 'ACTION_BAR_DEFAULTS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "{ copyDataLabel: '复制数据'; copyLogLabel: '复制日志'; ghostOwnRow: true; evenRowPairs: 2; minHeightPx: 40; fontSizePx: 12; fontWeight: 600; ghostBorderAlpha: 0.38 }" },
+  { name: 'ACTION_BAR_DEFAULTS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "{ copyDataLabel: '复制数据'; copyLogLabel: '复制日志'; ghostOwnRow: true; evenRowPairs: 2; minHeightPx: 44; fontSizePx: 12; fontWeight: 600; ghostBorderAlpha: 0.38 }" },
   { name: 'STATUS_KINDS', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "readonly ['ok', 'warn', 'danger', 'empty']" },
   { name: 'STATUS_DEFAULT_TEXT', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "{ ok: '成功'; warn: '警告'; danger: '失败'; empty: '无数据' }" },
   { name: 'CONTROLS_ERROR_CODES', kind: 'runtime', ticket: '#76', status: 'implemented', section: '3.3', signature: "readonly ['bad-input', 'bad-format']" },
@@ -179,6 +182,28 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'ChartsHelpersInput', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ prefix?: string; styleId?: string }' },
   { name: 'BuildChartsHelpersJs', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '(input?: ChartsHelpersInput) => string' },
   { name: 'buildChartsHelpersJs', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: '(input?: ChartsHelpersInput): string' },
+
+  // ── §3.6 页面级两层（#525）──
+  // 移动端配方（`src/pageUi.ts`）与页面级形状三件（`src/pageShapes.ts`）。与 `blocks.ts` 的
+  // 12 区块样式区分住：这两层是「整页怎么摆」，不参与区块组合；`blocks.ts` 走的是子路径出口
+  // `base-paint/blocks`，不在这张根出口表里。**这一节的运行时出口必须与 `dist/index.js` 的
+  // 新增导出逐字一致**（`test/contract-signatures.test.mjs` 的「运行时出口面锁」一节）。
+  { name: 'PAGE_UI_CLASS', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "'ilife-page-ui'" },
+  { name: 'PAGE_UI_VIEWPORT', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "'width=device-width,initial-scale=1,viewport-fit=cover'" },
+  { name: 'pageUiCss', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input?: PageUiCssInput): string' },
+  { name: 'MEDIA_RATIOS', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']" },
+  { name: 'pageShapeCss', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input?: { prefix?: string }): string' },
+  { name: 'renderFactStrip', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: FactStripInput): string' },
+  { name: 'renderMediaFigure', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: MediaFigureInput): string' },
+  { name: 'renderTimelineRows', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: TimelineRowsInput): string' },
+  { name: 'PageUiCssInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ prefix?: string }' },
+  { name: 'FactItemInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ label: string; value: string; tone?: FactTone }' },
+  { name: 'FactStripInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ items: readonly FactItemInput[]; extraClass?: string }' },
+  { name: 'FactTone', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['ok', 'warn', 'danger']" },
+  { name: 'MediaFigureInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ src?: string; alt: string; ratio: MediaRatio; fit?: \'contain\' | \'cover\'; caption?: string; note?: string; placeholder?: string; id?: string }' },
+  { name: 'MediaRatio', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']" },
+  { name: 'TimelineRowInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ time: string; main: string; note?: string }' },
+  { name: 'TimelineRowsInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ rows: readonly TimelineRowInput[]; extraClass?: string }' },
 
   // ── §5 版本机制 ──
   { name: 'BASE_PAINT_CONTRACT_VERSION', kind: 'runtime', ticket: '#92', status: 'implemented', section: '5', signature: "'0.1.0'" },

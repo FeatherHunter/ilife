@@ -298,7 +298,14 @@ export const ACTION_BAR_DEFAULTS = Object.freeze({
   copyLogLabel: '复制日志',
   ghostOwnRow: true,
   evenRowPairs: 2,
-  minHeightPx: 40,
+  /** 可点控件的最小命中高度（px）：**全宽档一律 44**，不只窄屏。
+   *  #525 收口：`t516-判据-版式.mjs` 实测 16 页在 **1440 档**各有 5～49 处只有 40px 的命中的
+   *  可点元素，逐条点名 `button.ilife-copy-btn`（61 处）与 `button.ilife-copy-menu-item`（42 处，
+   *  「复制数据 ▾」展开后的三格式菜单项）；窄屏那档本来就被各 `@media` 抬到 44，桌面档漏了。
+   *  用户裁定「触摸区 ≥44×44」是全宽口径（`t525` 票面判据 3 原写「窄屏」，本条按全宽执行）。
+   *  **这是值变更**：旧值 40（#76 冻结基线）→ 44；`spec/index.ts` 的签名快照与
+   *  `test/contract-signatures.test.mjs` 的那一行同步改（读这个常量的两处测试自动跟随）。 */
+  minHeightPx: 44,
   fontSizePx: 12,
   fontWeight: 600,
   ghostBorderAlpha: 0.38,

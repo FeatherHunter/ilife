@@ -367,7 +367,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  background: var(--card);',
     '  color: var(--blue2);',
     '}',
-    // #179 触控目标：窄屏按钮抬到 44px（桌面 40px 沿用 `ACTION_BAR_DEFAULTS.minHeightPx`，不改冻结值）。
+    // #179 触控目标：窄屏按钮抬到 44px。**#525 起两个宽档同值**（`minHeightPx` 40 → 44，见
+    // `spec/controls.ts`）；本条留在这里只为不动既有选择器与既有媒体查询。
     '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',
     '  .' + p + 'action-btn {',
     '    min-height: 44px;',
@@ -422,7 +423,22 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  background: var(--ok);',
     '  color: var(--card);',
     '}',
-    // #179 触控目标：窄屏按钮抬到 44px（桌面 40px 沿用 `ACTION_BAR_DEFAULTS.minHeightPx`，不改冻结值）。
+    // **禁用态必须看得出来**（#525 收口 · 两处公共债之一）：读页面没有写库日志，复制区按 #336
+    // 自动补的那颗「复制日志」带 `disabled` 属性、可**从 #336 起就没有任何置灰规则**——看着与
+    // 旁边那颗能点的按钮一模一样（`t524-改前读数.md` §7.1 第 3 条只核了属性、没核观感）。
+    // 半透明档 `.45` 与 HELP 页 `button.copy:disabled` 逐值同。`cursor` 一并给，桌面档悬停有交代。
+    '.' + p + 'copy-btn[disabled],',
+    '.' + p + 'copy-btn:disabled {',
+    '  opacity: .45;',
+    '  cursor: not-allowed;',
+    '}',
+    '.' + p + 'copy-btn[disabled]:active,',
+    '.' + p + 'copy-btn:disabled:active {',
+    '  transform: none;',
+    '}',
+    // #179 触控目标：窄屏按钮抬到 44px。**#525 起这条在两个宽档上是同一个值**（`minHeightPx`
+    // 由 40 提到 44，见 `spec/controls.ts`）——留在这里是为了不动既有选择器与既有媒体查询；
+    // 桌面档不再是 40px。
     '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',
     '  .' + p + 'copy-btn {',
     '    min-height: 44px;',

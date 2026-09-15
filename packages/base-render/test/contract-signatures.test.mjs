@@ -249,8 +249,8 @@ describe('冻结面清单（SPEC_FROZEN_SURFACE）', () => {
       assert.equal(typeof e.name, 'string');
       assert.ok(['runtime', 'type'].includes(e.kind), e.name + ' kind 非法');
       assert.ok(['implemented', 'pending'].includes(e.status), e.name + ' status 非法');
-      assert.ok(['3.1', '3.2', '3.3', '3.4', '3.5', '5', '7'].includes(e.section), e.name + ' section 非法');
-      assert.ok(['#74', '#75', '#76', '#77', '#78', '#92'].includes(e.ticket), e.name + ' ticket 非法');
+      assert.ok(['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '5', '7'].includes(e.section), e.name + ' section 非法');
+      assert.ok(['#74', '#75', '#76', '#77', '#78', '#92', '#525'].includes(e.ticket), e.name + ' ticket 非法');
       assert.ok(e.signature.length > 0, e.name + ' 缺逐字签名');
       assert.ok(!names.has(e.name), '重名：' + e.name);
       names.add(e.name);
@@ -597,7 +597,9 @@ describe('冻结口径逐值', () => {
     assert.deepEqual([...ACTION_BAR_KINDS], ['primary', 'red', 'ghost']);
     assert.deepEqual({ ...ACTION_BAR_DEFAULTS }, {
       copyDataLabel: '复制数据', copyLogLabel: '复制日志', ghostOwnRow: true, evenRowPairs: 2,
-      minHeightPx: 40, fontSizePx: 12, fontWeight: 600, ghostBorderAlpha: 0.38,
+      // #525 收口：旧值 40 → 44（可点控件的最小命中高度**全宽档**都是 44，不只窄屏；
+      // 1440 档实测 16 页各有 5～49 处 40px 的可点元素，逐条点名复制按钮与三格式菜单项）。
+      minHeightPx: 44, fontSizePx: 12, fontWeight: 600, ghostBorderAlpha: 0.38,
     });
     assert.deepEqual({ ...STATUS_DEFAULT_TEXT }, { ok: '成功', warn: '警告', danger: '失败', empty: '无数据' });
     assert.deepEqual([...CONTROLS_ERROR_CODES], ['bad-input', 'bad-format']);

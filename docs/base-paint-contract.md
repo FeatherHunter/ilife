@@ -322,7 +322,7 @@
 | `TOAST_ICONS` | runtime | #76 | implemented | 3.3 | `readonly ['copy', 'ok', 'warn', 'danger', 'info']` |
 | `TOAST_DEFAULTS` | runtime | #76 | implemented | 3.3 | `{ timeoutMs: 4500; maxStack: 5; mobileMaxStack: 3; mobileMaxPx: 820; gapPx: 8; role: 'status'; ariaLive: 'polite'; defaultIcon: 'copy' }` |
 | `ACTION_BAR_KINDS` | runtime | #76 | implemented | 3.3 | `readonly ['primary', 'red', 'ghost']` |
-| `ACTION_BAR_DEFAULTS` | runtime | #76 | implemented | 3.3 | `{ copyDataLabel: '复制数据'; copyLogLabel: '复制日志'; ghostOwnRow: true; evenRowPairs: 2; minHeightPx: 40; fontSizePx: 12; fontWeight: 600; ghostBorderAlpha: 0.38 }` |
+| `ACTION_BAR_DEFAULTS` | runtime | #76 | implemented | 3.3 | `{ copyDataLabel: '复制数据'; copyLogLabel: '复制日志'; ghostOwnRow: true; evenRowPairs: 2; minHeightPx: 44; fontSizePx: 12; fontWeight: 600; ghostBorderAlpha: 0.38 }` |
 | `STATUS_KINDS` | runtime | #76 | implemented | 3.3 | `readonly ['ok', 'warn', 'danger', 'empty']` |
 | `STATUS_DEFAULT_TEXT` | runtime | #76 | implemented | 3.3 | `{ ok: '成功'; warn: '警告'; danger: '失败'; empty: '无数据' }` |
 | `CONTROLS_ERROR_CODES` | runtime | #76 | implemented | 3.3 | `readonly ['bad-input', 'bad-format']` |
@@ -855,6 +855,45 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 - **数据归技能包**：唤醒词与场景数据是技能资产（t72 §5.2）；壳归共享层。
 
 **所属包**：`base-paint`。**旧侧对应物**：§6.5 `contract:199-241`；§6.6 `contract:243-251`；`help_template.html` 611 行；`scene-data-contract.md`／`scene_data.schema.json`；`injector.py:134-191`。
+
+### 3.6 页面级移动端配方与形状件（#525）
+
+这一节是**后追加**的一节（#525 收口）：新增的两个页面级件 —— `src/pageUi.ts` 的**移动端配方**
+（断点／44px 触摸区／`env(safe-area-inset-*)` 安全区／窄屏表格行为／页内定位）与
+`src/pageShapes.ts` 的**三件形状**（事实条／图片与 GIF 容器／时间轴条）。
+
+- **与 `blocks.ts` 的关系**：那 12 个区块样式区走**子路径出口** `base-paint/blocks`，不在这张根出口表里；
+  本节这两件是「整页怎么摆」，不参与区块组合，故走根出口。
+- **启用口径**：整页装配 `assembleDocPage` 的 `pageUi` 位。**不传／给假 → 产出物逐字节不变**
+  （根类、viewport 串、样式段三样都不出现；登录门读数见 `docs/skills/skill-calorie/t525-证据.md`）。
+- **断点口径（订正）**：仓内断点是**分住的**——页面 640／400（`blocks.ts`）、图表 720
+  （`CHART_BREAKPOINTS.mobileMaxPx`）、toast 栈与控件 820（`TOAST_DEFAULTS.mobileMaxPx`）；
+  HELP 页自己用 500／820。**本节的配方不新造断点值**，只用既有 820／640／400 三个档；
+  判据面只认「触摸区／安全区／窄屏表格行为」三条可逐值比的东西，不声称统一了断点。
+
+<!-- FROZEN-SURFACE-TABLE-START -->
+| 名字 | kind | ticket | status | section | 签名 |
+|---|---|---|---|---|---|
+| `PAGE_UI_CLASS` | runtime | #525 | implemented | 3.6 | `'ilife-page-ui'` |
+| `PAGE_UI_VIEWPORT` | runtime | #525 | implemented | 3.6 | `'width=device-width,initial-scale=1,viewport-fit=cover'` |
+| `pageUiCss` | runtime | #525 | implemented | 3.6 | `(input?: PageUiCssInput): string` |
+| `MEDIA_RATIOS` | runtime | #525 | implemented | 3.6 | `readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']` |
+| `pageShapeCss` | runtime | #525 | implemented | 3.6 | `(input?: { prefix?: string }): string` |
+| `renderFactStrip` | runtime | #525 | implemented | 3.6 | `(input: FactStripInput): string` |
+| `renderMediaFigure` | runtime | #525 | implemented | 3.6 | `(input: MediaFigureInput): string` |
+| `renderTimelineRows` | runtime | #525 | implemented | 3.6 | `(input: TimelineRowsInput): string` |
+| `PageUiCssInput` | type | #525 | implemented | 3.6 | `{ prefix?: string }` |
+| `FactItemInput` | type | #525 | implemented | 3.6 | `{ label: string; value: string; tone?: FactTone }` |
+| `FactStripInput` | type | #525 | implemented | 3.6 | `{ items: readonly FactItemInput[]; extraClass?: string }` |
+| `FactTone` | type | #525 | implemented | 3.6 | `readonly ['ok', 'warn', 'danger']` |
+| `MediaFigureInput` | type | #525 | implemented | 3.6 | `{ src?: string; alt: string; ratio: MediaRatio; fit?: 'contain' \| 'cover'; caption?: string; note?: string; placeholder?: string; id?: string }` |
+| `MediaRatio` | type | #525 | implemented | 3.6 | `readonly ['natural', '1-1', '3-4', '4-3', '9-16', '16-9']` |
+| `TimelineRowInput` | type | #525 | implemented | 3.6 | `{ time: string; main: string; note?: string }` |
+| `TimelineRowsInput` | type | #525 | implemented | 3.6 | `{ rows: readonly TimelineRowInput[]; extraClass?: string }` |
+<!-- FROZEN-SURFACE-TABLE-END -->
+
+**所属包**：`base-paint`。**旧侧对应物**：无（新增面）；形状债的旧样子（`·`／`；` 串）见
+`docs/skills/skill-calorie/t524-改前读数.md`。
 
 ## 4. 归属边界
 
