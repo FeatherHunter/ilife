@@ -185,7 +185,7 @@ test('#504 形状化与手机端：卡②那行 `·` 串落成条子、卡槽不
   for (const needle of [shown, '注意线 ±' + v.thresholds.yellow + ' kg', '警戒线 ±' + v.thresholds.red + ' kg']) {
     assert.ok(vis.includes(needle), '卡下那条形状缺「' + needle + '」（页上读到的正文：' + vis.slice(0, 200) + '）');
   }
-  assert.ok(html.includes('class="wui-strip wui-strip-v"'), '卡下那条形状未上屏（没有竖排事实条）');
+  assert.ok(html.includes('<div class="wui-strip">'), '卡下那条形状未上屏（没有事实条）');
   assert.ok(html.includes('<span class="wui-fact-k">注意线</span><span class="wui-fact-v">±' + v.thresholds.yellow + ' kg</span>'),
     '注意线未落成「标签 ＋ 值」的一枚');
   /* 形状走的是真 DOM（不是被转义成字面文本的串）——本票实测踩过这一格：

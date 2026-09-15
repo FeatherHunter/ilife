@@ -282,7 +282,7 @@ test('#504 形状化与手机端：正文零 `·`／`；`、形状上屏、卡�
     }
   }
   /* 期间事实条：形状真到场（栏 ＋ 行），且单点／空窗那两档不出这条（那两件事同屏已各有一处说清）。 */
-  assert.ok(pages[1][1].includes('class="wui-strip wui-strip-v"'), '期间事实条未上屏');
+  assert.ok(pages[1][1].includes('class="wui-strip"'), '期间事实条未上屏');
   const thin = tmpDb();
   seedThin(thin);
   const single = viewWeightReview({ window: '本周', today: T }, thin).html;
@@ -295,12 +295,14 @@ test('#504 形状化与手机端：正文零 `·`／`；`、形状上屏、卡�
     assert.ok(html.includes('-webkit-tap-highlight-color:transparent'), who + ' 触摸面没到场');
     assert.ok(html.includes('touch-action:manipulation'), who + ' 触摸面没到场');
   }
-  /* 里程碑表：三个 `·` 拆成三槽（日期 `left`／档位 `main`／当天体重 `right`），三件事一件不少。
+  /* 里程碑表：三个 `·` 拆成三槽（档位 `left`／日期 `main`／当天体重 `right`），三件事一件不少。
+   * 槽位是手机截图逐版定下来的：日期进 `left` 那 44px 列会在 390px 宽下折成两行
+   * （`2025-`＋`11-27`），三条读数一起进 `main` 又被 `nowrap` 截成省略号——故 `main` 只放日期一条。
    * 富种子（本件 `seedRich`）恰达成减重 5 kg：首达 2026-08-18、当天 70.5 kg。 */
-  assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-left">2026-08-18</span>'),
-    '里程碑行日期未落 left 槽');
-  assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-main">减重 5 kg</span>'),
-    '里程碑行档位未落 main 槽');
+  assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-left">减重 5 kg</span>'),
+    '里程碑行档位未落 left 槽');
+  assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-main">2026-08-18</span>'),
+    '里程碑行日期未落 main 槽');
   assert.ok(pages[5][1].includes('<span class="ilife-block-list-rows-right">当天 70.5 kg</span>'),
     '里程碑行当天体重未落 right 槽');
   assert.ok(!pages[5][1].includes('2026-08-18 · 减重 5 kg'), '里程碑行仍是一句话三个 `·`');
