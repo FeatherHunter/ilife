@@ -1,10 +1,10 @@
 /** 饮食能力的子功能「查食品·读」（HELP 场景 02「饮食」下一级 diet_4）：查食品／查食品库／看去重报告／看食品来源统计。
  *
  * #315 纯搬迁：四个处理体**逐字搬自** `src/cli/cmd_read.ts` 的对应 `case`（语义不动，只换住处）。
- * 取数走 `diet/libraryPlate.ts`、装配走 `diet/libraryDocs.ts`（查食品／食品库／去重报告三页，
- * 本票 #274 已照老实物与 `t425-融合基准.md` 的 ⑤ 类骨架重做，账见 `libraryDocs.ts` 头注）；
- * 来源统计那三行仍走 `render/insightPlate.ts`／`diet/nutritionPort(Docs).ts`——**装配件属 #275 的件**
- * （`diet/nutritionPortDocs.ts`），本票只核接线、不越界改它，见证据件「归属待裁定」一节。
+ * 取数走 `diet/libraryPlate.ts`、装配走 `diet/libraryDocs.ts`（查食品／食品库／去重报告三页）与
+ * `diet/sourceStatsDocs.ts`（来源统计页——编排者 2026-09-15 裁定 (b)：⑤ 食品库类页归本票，本票已把它
+ * 从 `diet/nutritionPortDocs.ts` 就地搬成姊妹件，搬迁读数见 `docs/skills/skill-calorie/t274-来源统计页搬迁.md`）。
+ * 四页都按老实物与 `t425-融合基准.md` 的 ⑤ 类骨架重做，账见两个装配件的头注。
  * 四条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
@@ -12,7 +12,7 @@ import { buildDedupeDoc, buildLibraryDoc, buildSearchDoc } from './libraryDocs.j
 import { buildDedupeView } from '../render/insightPlate.js';
 import { buildProductLibrary, buildProductSearch, buildProductStats } from './libraryPlate.js';
 import { buildSourceStatsView } from './nutritionPort.js';
-import { buildSourceStatsDoc } from './nutritionPortDocs.js';
+import { buildSourceStatsDoc } from './sourceStatsDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { fail, needStr, nums, optNum, optStr } from '../shared/params.js';
 
@@ -55,8 +55,11 @@ export function viewDedupe(params: Record<string, unknown>, db: DatabaseSync): V
 }
 
 /** `calorie.view.source-stats` · 食品来源统计。 */
-export function viewSourceStats(_params: Record<string, unknown>, db: DatabaseSync): ViewOut {
+export function viewSourceStats(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const v = buildSourceStatsView(db);
   const metrics = nums({ total: v.total, sources: v.sources });
-  return { data: { metrics }, html: buildSourceStatsDoc(v) };
+  return {
+    data: { metrics },
+    html: buildSourceStatsDoc(v, commandLine('calorie.view.source-stats', params)),
+  };
 }

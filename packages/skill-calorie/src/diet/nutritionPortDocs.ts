@@ -1,10 +1,13 @@
-/** #112 · 营养移植 4 页全文档装配（数据→区块→填充器）；#275 起按老实物重做内容与字段。
+/** #112 · 营养移植 3 页全文档装配（数据→区块→填充器）；#275 起按老实物重做内容与字段。
  *
- * 服务 4 条命令（声明住 `./commands.ts`）：
+ * 服务 3 条命令（声明住 `./commands.ts`）：
  *   · `calorie.view.nutrition-ratio`（查营养配比）→ `buildNutritionRatioDoc`
  *   · `calorie.view.nutrition-detail`（看营养素深度／看营养素明细）→ `buildNutritionDetailDoc`
- *   · `calorie.view.source-stats`（看食品来源统计／看食品来源分布）→ `buildSourceStatsDoc`
  *   · `calorie.view.today-water`（看今日喝水／看今日饮水）→ `buildTodayWaterDoc`
+ *
+ * `calorie.view.source-stats`（看食品来源统计／看食品来源分布）原住本件，**已按编排者 2026-09-15 裁定 (b)
+ * 搬进姊妹件 `./sourceStatsDocs.ts`**（⑤ 食品库类页归 #274、⑥ 营养类页归 #275；那一步也正是本包台账给本件
+ * 写好的拆法第一步）。本件只剩 ⑥ 类的三支。
  *
  * 另交两个**具名区块**（本票只交付、不集成，谁调写在各自注释里）：
  *   · `buildNutritionRatioBlock(v)` —— 服务 `calorie.view.diet-review`（作者＝#273，「看营养结构」）；
@@ -39,7 +42,6 @@ import type {
   DietOverviewView,
   NutritionDetailView,
   NutritionRatioView,
-  SourceStatsView,
   TodayWaterView,
 } from './nutritionPort.js';
 
@@ -295,53 +297,8 @@ export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string):
   });
 }
 
-/* ── 食品来源统计（老实物 source_stats.html：来源数＋总数＋按来源分组） ── */
-
-export function buildSourceStatsDoc(v: SourceStatsView): string {
-  const parts: string[] = [
-    renderKpiGrid([
-      { label: '来源数', value: String(v.sources), unit: '个' },
-      /* #496 · 原写 `nutrition_products（下架已排除）`——库表名上屏（审查件第 49 条）。 */
-      { label: '食品总数', value: String(v.total), unit: '条', detail: '数据范围：全部在架食品' },
-    ]),
-  ];
-  let charts = false;
-  if (v.items.length > 0) {
-    parts.push(renderChartBlock({
-      kind: 'bar',
-      title: '按来源分组',
-      input: { items: v.items.map((it) => ({ label: it.source, value: it.count })) },
-    }));
-    charts = true;
-  }
-  parts.push(renderDataTable({
-    columns: [
-      { key: 'source', label: '来源' },
-      { key: 'count', label: '条数', align: 'right' },
-      { key: 'pct', label: '占比%', align: 'right' },
-    ],
-    rows: v.items.map((it) => ({ source: it.source, count: it.count, pct: it.pct })),
-    /* #496 · 原 caption 里 `GROUP BY source`／「空串」都是源码词（审查件第 50 条）。 */
-    caption: '按来源统计（已下架的食品不算；没填来源的归到「未知」）',
-    emptyText: '库内无食品记录',
-  }));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.source-stats',
-      data: {
-        metrics: metricsOf({ total: v.total, sources: v.sources }),
-      },
-    },
-  }));
-  return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '食品来源统计',
-    eyebrow: '卡路里 · 饮食',
-    subtitle: '食品按来源分类计数；库为空时不凑数',
-    content: parts.join(''),
-    charts,
-  });
-}
+/* ── 食品来源统计：**已按编排者 2026-09-15 裁定 (b) 搬出本件**，见 `./sourceStatsDocs.ts` ──
+   ⑤ 食品库类页（#274）与 ⑥ 营养类页（#275）的归属按页面类划；本件只留 ⑥ 类的三支。 */
 
 /* ── 今日饮水（老实物 today_water.html：今日进度环＋本周 7 天＋今日每杯） ── */
 

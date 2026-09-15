@@ -304,6 +304,24 @@ test('#274 去重：条幅＋三读数＋重复组表＋处理建议＋来源脚
   } finally { db.close(); }
 });
 
+test('#274 来源统计：搬成姊妹件后补齐的 ⑤ 类四行骨架 ＋ 日志第 4 段', () => {
+  const { db } = mkDb();
+  try {
+    const out = dispatch('calorie.view.source-stats', {}, db);
+    assertDoc(out.html, '来源统计');
+    const h = out.html;
+    assert.deepEqual(out.data.metrics, { total: 5, sources: 4 }, '来源数与总数读数');
+    // 老实物 source_stats.html 的两读数 ＋ 按来源分组（占比条）
+    assert.ok(h.includes('来源数') && h.includes('食品总数'), '缺两枚读数标签（老实物 kpi-grid）');
+    assert.ok(h.includes('按来源分组'), '缺「按来源分组」块（老实物 section h2）');
+    assert.ok(h.includes('占比%'), '缺占比列');
+    // 编排者 2026-09-15 裁定 (b) 搬出 #275 件后，本票补齐的四行骨架
+    assertSkeleton(h, '来源统计', '来自 4 个来源');
+    assert.ok(h.includes('📦 食品来源统计'), '标题照老实物 h1（含 emoji）');
+    assertLogCallChain(h, 'calorie-cmd-read calorie.view.source-stats', '来源统计');
+  } finally { db.close(); }
+});
+
 test('#274 干净库：条幅转「无重复」且不编组（去重页两态）', () => {
   const dir = mkdtempSync(join(tmpdir(), 't274-clean-'));
   const db = openDb(join(dir, DB_FILENAME));

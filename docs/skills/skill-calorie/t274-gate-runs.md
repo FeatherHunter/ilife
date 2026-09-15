@@ -19,6 +19,18 @@
 | `3a08cf70-20d2-492b-8e24-c9aa7a6ce649` | `node packages/skill-calorie/scripts/check-warning-line.mjs --sync --dry` | 1（演练，报别席行陈化） |
 | `3bb5de03-10ee-4f9e-b6af-61f876d3829e` | `node packages/skill-calorie/scripts/check-warning-line.mjs --sync` | 0（`SYNC-VERIFY ok`） |
 | `4bfacc30-6ec8-48d4-93d0-8319306a6420` | `node packages/skill-calorie/scripts/check-warning-line.mjs` | 0（`RESULT: 67/67` ＋ PASS） |
+| `0dba66b8-ed91-49cf-9754-6b039546d22c` | 提交脚本 `pwsh -File .scratch/t274/commit.ps1`（`git add -- <7 路径>`／`git commit -m … -- <7 路径>`） | 0（sha `1ee8141`，已推送） |
+
+## 第二阶段：来源统计页搬成姊妹件（编排者裁定 (b)）
+
+| runId | 命令 | 退出 |
+|---|---|---|
+| `74dc2f69-8515-4052-b8ed-c45ee6f729cb` | `npx tsc -b packages/skill-calorie`（纯搬后首编，waitedMs=40025） | 0 |
+| `2b72dae2-e522-4128-bf16-1448b01f4ad5` | 同上（补骨架后首编，报两处 `SerializableEnvelope` 类型错） | 1 |
+| `f0b8eceb-a628-4012-9bae-d02fe3417d0b` | 同上（补 `DataTextInput['envelope']` 注记后复编） | 0 |
+| `fe5eb1d7-70d7-4eb8-854a-34100045986e` | `node packages/skill-calorie/scripts/check-warning-line.mjs --sync --dry` | 1（演练：`改=3`） |
+| `ea11b41b-cb9a-479b-bba4-25158e369604` | `node packages/skill-calorie/scripts/check-warning-line.mjs --sync` | 0（`SYNC-VERIFY ok`） |
+| `801af6d6-08b2-4bcc-91eb-e645fd104799` | `node packages/skill-calorie/scripts/check-warning-line.mjs` | 0（`RESULT: 67/67` ＋ PASS） |
 
 ## 上一席（同一个票号，2026-09-14 06:55，孤儿件留下的历史）
 
