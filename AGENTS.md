@@ -35,3 +35,7 @@ Single-context (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
 ### 编排纪律
 
 切票、派活、收活之前读 `docs/agents/编排纪律.md`（地图设计者十条 ＋ 地图执行者十一条）；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。
+
+### 并发纪律（共享工作区，硬规矩）
+
+多席共用同一个工作区，**禁止**切分支（`git switch`／`git checkout <分支>`）、`git reset`、`git stash`、`git clean`、`git restore .`、`--amend`／`rebase`／`push --force*`——它们会把别席已提交或在途的产出孤儿化（2026-09-15 实测发生过两次）。**只许** `git add <自己声明的路径>` ＋ `git commit -m "<中文信息>" -- <路径>`，且提交前用 `git diff --cached --name-only` 复核暂存区只含自己的件；编译／测试／git 写操作一律经 `node tooling/run-locked.mjs --ticket <票号> -- <命令>` 排队。编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`（本机 `node_modules\.bin` 不存在，`npx tsc` 是假出口、不编译却可能出假绿）。细则见 `docs/subagent-concurrency-protocol.md` §2–§3。
