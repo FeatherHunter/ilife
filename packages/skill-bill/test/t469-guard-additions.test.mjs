@@ -185,3 +185,45 @@ describe('t469 · textOf 三样口径保留（硬并不改行为，故逐处钉�
     assert.ok(marks.some((m) => m.name === 'account'), '甲：数字 12 当没给，预填仍发生');
   });
 });
+
+// t469-sup 追加：D1 S3 本票范围 diffRowsFor 只比给了的字段（recordPicker.ts:231-246）。
+// 红线延续：只钉现有行为（given：undefined／null／空白串不算给，0 算给；没给不进表），不改可见行为。
+// 复核探针 .scratch/t469/review-probe.mjs P-R1／P-R1b 去 given 过滤后红而新旧 38 存活，故滚进本票补断言，不新开票。
+import { diffRowsFor } from '../dist/shared/recordPicker.js';
+
+describe('t469-sup · diffRowsFor 只比给了的字段（recordPicker.ts diffRowsFor／given）', () => {
+  it('只给 note 就只比 note：没给的 amount 不进表', () => {
+    const r = diffRowsFor({ row: rowOf(), params: { note: '晚饭' }, fields: ['note', 'amount'] });
+    assert.equal(r.length, 1, '没给的 amount 不许进表（拿未设置当新值比会误报改动）');
+    assert.equal(r[0].field, 'note');
+    assert.equal(r[0].before, '午饭');
+    assert.equal(r[0].after, '晚饭');
+    assert.equal(r[0].changed, true);
+  });
+
+  it('空串／空白／null／undefined 都算没给：四态都不进表', () => {
+    for (const v of ['', '   ', null, undefined]) {
+      const r = diffRowsFor({ row: rowOf({ amount: 5 }), params: { amount: v, note: '晚饭' }, fields: ['note', 'amount'] });
+      assert.equal(r.length, 1, 'amount=' + String(v) + ' 不算给，不进表');
+      assert.equal(r[0].field, 'note');
+      assert.equal(r[0].changed, true);
+    }
+  });
+
+  it('0 算给了进表且算改动；同值进表但不算改动；给定子集保序；全没给就空表', () => {
+    const changed = diffRowsFor({ row: rowOf({ amount: 5 }), params: { amount: 0 }, fields: ['amount'] });
+    assert.equal(changed.length, 1, '0 算给，必须比');
+    assert.equal(changed[0].before, '5');
+    assert.equal(changed[0].after, '0');
+    assert.equal(changed[0].changed, true);
+    const same = diffRowsFor({ row: rowOf({ amount: 5 }), params: { amount: 5 }, fields: ['amount'] });
+    assert.equal(same.length, 1, '给了同值仍进表，只是 changed 为假');
+    assert.equal(same[0].before, '5');
+    assert.equal(same[0].after, '5');
+    assert.equal(same[0].changed, false);
+    const ordered = diffRowsFor({ row: rowOf(), params: { note: '晚饭', amount: -20 }, fields: ['amount', 'note'] });
+    assert.deepEqual(ordered.map((x) => x.field), ['amount', 'note'], '给定子集保序（按传入 fields 次序）');
+    const empty = diffRowsFor({ row: rowOf(), params: {}, fields: ['note', 'amount'] });
+    assert.equal(empty.length, 0, '一个都没给就空表，不拿未设置当新值比');
+  });
+});
