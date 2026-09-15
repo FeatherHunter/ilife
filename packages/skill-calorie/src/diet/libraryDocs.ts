@@ -104,7 +104,9 @@ function fixed0(n: number | null | undefined): string {
   return n === null || n === undefined ? DASH : n.toFixed(0);
 }
 
-/** 卡片格（老实物 `food_search.html` 的 `.food-grid`／`.food-card` 一族）。 */
+/** 卡片格（老实物 `food_search.html` 的 `.food-grid`／`.food-card` 一族）。
+ *  零条这一支**不是死代码**：库里非空、只是本次查询零命中时取数层返空盘，装配层走这里出空态
+ *  （老实物 `:98-101` 对 `items.length === 0` 出的就是 `emptyState`）。 */
 function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): string {
   if (items.length === 0) {
     return emptyGuide({
@@ -226,7 +228,10 @@ export function buildSearchDoc(s: ProductSearch, command: string): string {
       cards,
       command,
       caliber: CALIBER_FOOD,
-      sourceCount: s.total,
+      /* 页脚报的是**库内在架条数**（`s.libraryTotal`），不是本次命中数：这一格写明「在架食品共 N 条」，
+         N 若取命中数，搜「鸡胸」会印成「在架食品共 1 条」（库里其实 5 条），本次零命中那一页更会印成
+         「在架食品共 0 条」——两处都不是库里真有那么多。 */
+      sourceCount: s.libraryTotal,
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.search',
         data: { items: s.items.map(productCopyRow), total: s.total },
