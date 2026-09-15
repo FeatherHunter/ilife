@@ -27,6 +27,9 @@ export interface HomeData {
   proteinPct: number | null;
   waterPct: number | null;
   deficitToday: number | null;
+  /** 今日消耗（`buildDeficitData` 的 `burn` ＝ TDEE ＋ 当日运动）：缺口卡的说明行要给参照物。
+   *  #401i 起与 `deficitToday` 同一份结果里取，不另算第二份口径（缺口的定义就是「消耗减摄入」）。 */
+  burnToday: number | null;
   week: {
     start: string; end: string; series: DaySeries[]; avgIntake: number | null;
     avgDeficit: number | null; loggedDays: number;
@@ -66,7 +69,9 @@ export function buildHomeData(db: DatabaseSync, date?: string, windowDays = 7): 
     throw new CalorieRenderError('missing-data', '无今日数据（' + today + '，窗口 ' + start + ' ~ ' + today + ' 全空）');
   }
   const deficitData = buildDeficitData(db, start, today);
-  const deficitToday = deficitData.series[deficitData.series.length - 1]?.deficit ?? null;
+  const lastDeficitDay = deficitData.series[deficitData.series.length - 1];
+  const deficitToday = lastDeficitDay?.deficit ?? null;
+  const burnToday = lastDeficitDay?.burn ?? null;
   const nutrition = getNutritionGoal(db);
   const calorieGoal = nutrition?.calorie_goal ?? daily.goal?.calorie_goal ?? null;
   const proteinGoal = nutrition?.protein_goal ?? daily.goal?.protein_goal ?? null;
@@ -89,7 +94,7 @@ export function buildHomeData(db: DatabaseSync, date?: string, windowDays = 7): 
     caloriePct: pct(daily.totals.cal, calorieGoal),
     proteinPct: pct(daily.totals.pro, proteinGoal),
     waterPct: pct(daily.waterMl, waterGoal),
-    deficitToday,
+    deficitToday, burnToday,
     week: {
       start,
       end: today,

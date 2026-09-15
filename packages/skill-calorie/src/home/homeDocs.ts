@@ -24,9 +24,9 @@
  * #401g · 截图复审（81／100）页内六条返修（旧→新与读数见证据件第十二节）：
  * ① 缺口卡补**方向胶囊**（`deficitDirection`）——四卡里只有它没有目标，套完成率档位是假信息；
  * ② 日期收敛成两种各有其位的长法：单日一律 `MM-DD`（表内与图轴同走 `dayLabel`），窗口区间仍在页头写 ISO；
- * ③ emoji 只留**段标题**一处（每块一枚：导航不复印同图、结论句去 💡）；④ 三条口径行不再拿 `＝`／`−` 顶 UI，
- *   缺数口径并入页脚来源行（页首只剩胶囊行与结论条）；⑤ 四处段标题同走 `SECTIONS` 一份清单派生的文本形状，
- *   其中「数据与日志」改走 `copyArea` 的 `title` 位（公共层 `renderCopyBlock` 产出，不再手写 `<h2>`）；
+ * ③ emoji 只留**段标题**一处（每块一枚：导航不复印同图、结论句去 💡）；④ 三条口径行不再拿 `＝`／`−` 顶 UI
+ *   （**#401i（复审第 5 点）**改：缺数口径归表下那条、页脚只说来源——四处压到三处）；⑤ 四处段标题同走
+ *   `SECTIONS` 一份清单派生的文本形状，「数据与日志」走 `copyArea` 的 `title` 位（公共层产出，不手写 `<h2>`）；
  * ⑥ 今日行标记复核：`DataTableInput`（`blocks.ts:588-593`）四槽里**没有行标记槽**，故仍靠文本 `（今日）`
  *   收尾——**需公共层加槽**（证据件「需公共层加槽」一节）。
  */
@@ -145,15 +145,20 @@ function goalDetail(goal: number | null | undefined, unit?: string): string {
   return unit === undefined ? '目标 ' + goal : '目标 ' + goal + ' ' + unit;
 }
 
-/** 缺口卡的方向胶囊（#401g · 审查必改 #4）：它是四张卡里唯一**没有目标**的读数（相对的是消耗），
- *  套完成率档位是假信息 ⇒ 按差额正负给方向词。文案不写「缺口／盈余」——卡名已是「今日缺口」，
- *  徽章再印一遍就是同一张卡里同一个词两遍；档位色沿用四值（缺口＝ok、盈余＝warn、持平＝中性灰）。
- *  没有读数就不给徽章（同 `pctStatus`：没得比就不出假徽章）。 */
+/** 缺口卡说明行（同 `goalDetail` 的槽位）：它相对的不是目标是**消耗** ⇒ 给消耗这个参照物，方向归徽章。
+ *  **#401i（复审第 4 点）**：补这格前本卡比同排早 22px（少一行说明、徽章上浮）；缺消耗同 `goalDetail` 口径。 */
+function burnDetail(burn: number | null | undefined): string {
+  return burn === null || burn === undefined ? '未记消耗' : '消耗 ' + burn;
+}
+
+/** 缺口卡的方向胶囊（#401g · 审查必改 #4）：四卡里唯一**没有目标**的读数（相对的是消耗），套完成率档位
+ *  是假信息 ⇒ 按差额正负给方向词；**#401i（复审第 4 点）**措辞统一到「摄入比消耗多／少」——徽章就是卡名
+ *  那个词的展开（缺口为正 ⟺ 摄入比消耗少），不再反着说「消耗多于摄入」；色沿用四值，没有读数不给徽章。 */
 function deficitDirection(n: number | null | undefined): { status: StatusKind; statusText: string } | null {
   if (n === null || n === undefined) return null;
-  if (n > 0) return { status: 'ok', statusText: '消耗多于摄入' };
-  if (n < 0) return { status: 'warn', statusText: '摄入多于消耗' };
-  return { status: 'empty', statusText: '两者持平' };
+  if (n > 0) return { status: 'ok', statusText: '摄入比消耗少' };
+  if (n < 0) return { status: 'warn', statusText: '摄入比消耗多' };
+  return { status: 'empty', statusText: '摄入与消耗持平' };
 }
 
 /** 单日日期上屏只有一种长法：`09-07`（窗口跨年才补两位年份，同 `analysis/multiTrendPage.ts:145-152`）。
@@ -223,10 +228,10 @@ export function buildHomeDoc(d: HomeData): string {
       detail: goalDetail(d.waterGoal), ...(pctStatus(d.waterPct) ?? {}),
     },
     {
-      // 缺口定义全页只留在按日汇总那条口径行（#401 冗余 R5）。#401g（审查必改 #4）：本卡补档位槽——
-      // 它相对的是消耗不是目标，完成率套不上 ⇒ 给**方向**胶囊；说明行那半截裸名词「相对消耗」撤掉，
-      // 参照由徽章说（与结论句「距目标还差」各写各的参照，R-d）。
-      label: '今日缺口', value: fmt(d.deficitToday), unit: '卡', ...(deficitDirection(d.deficitToday) ?? {}),
+      // 缺口定义全页只留在按日汇总那条口径行（#401 冗余 R5）。#401g：四卡里只有本卡没有目标、完成率套不上
+      // ⇒ 给**方向**胶囊（`deficitDirection`）；#401i：补说明格「消耗 N」，徽章词与卡名同向，卡内四件齐。
+      label: '今日缺口', value: fmt(d.deficitToday), unit: '卡',
+      detail: burnDetail(d.burnToday), ...(deficitDirection(d.deficitToday) ?? {}),
     },
   ];
   // 区块标题带图标（`blocks.ts:655-657` 的 `title` 位；老实物每块都带）。#401g：段标题的**文本形状**
@@ -254,9 +259,7 @@ export function buildHomeDoc(d: HomeData): string {
         },
       },
       // 口径句走公共层 `renderCaliberLine`（`t425` 裁定 3）：原「无记录的日子留空、不按 0 算」整条删
-      // （#401 冗余 R4：空值口径页级已说一处）；这条只讲虚线是什么——周均摄入随 KPI 卡位撤出后，
-      // 「只算有记录的天」这个口径归口径行（#401 三）。窗口区间归页头一处，此处不抄第二遍。
-      // #401g：`＝` 不当 UI 符号（审查必改 #8）⇒ 读成一句话。
+      // （#401 冗余 R4）；这条只讲虚线是什么——周均摄入只算有记录的天（窗口区间归页头一处；`＝` 不上 UI 见件头 ④）。
     }) + renderCaliberLine('这条虚线是周均摄入，只算有记录的天。') + '</section>');
     charts = true;
   }
@@ -269,19 +272,18 @@ export function buildHomeDoc(d: HomeData): string {
       { key: 'cal', label: '摄入（卡）', align: 'right' },
       { key: 'deficit', label: '缺口（卡）', align: 'right' },
     ],
-    // 倒序＝最近的一天在最上（老实物明细表同此序）；空记录日不补 0。
-    // #401 债 #7：表下那条「没有记录的那天留空」已按工单删（空值口径全页只留页级一句）⇒ 表格必须真的
-    // 照页级那句做、「缺数一律写 —」才不是假话：空格改印 `—`（仍不是 0）。R8：今日行与 KPI 卡同值，
-    // 行标记点明「今日」，不必读者自己认。**#401g 复核**：`DataTableInput`（`blocks.ts:588-593`）只有
-    // columns／rows／caption／emptyText 四槽、**没有行标记槽**（行前置色点／首列加粗都落不进去，单元格
-    // 只吃纯文本）⇒ 今日行仍靠文本 `（今日）` 收尾，视觉通道待**公共层加槽**（证据件同名一节）。
+    // 倒序＝最近的一天在最上（老实物明细表同此序）；空记录日不补 0。#401 债 #7：表下那条「没有记录的那天
+    // 留空」已按工单删（缺值口径全页只留一处——本块口径行那句）⇒ 表格必须真的照它做、那句才不是假话：
+    // 空格改印 `—`（仍不是 0）。R8：今日行与 KPI 卡同值，行标记点明「今日」，不必读者自己认。
+    // **#401g 复核**：`DataTableInput`（`blocks.ts:588-593`）只有 columns／rows／caption／emptyText 四槽、
+    // **没有行标记槽**（行前置色点／首列加粗都落不进去，单元格吃纯文本）⇒ 今日行仍靠文本 `（今日）` 收尾。
     rows: d.week.series.slice().reverse().map((s) => ({
       date: s.date === d.date ? day(s.date) + '（今日）' : day(s.date),
       cal: s.calories ?? '—', deficit: s.deficit ?? '—',
     })),
     caption: secTitle(SEC_DAILY),
     emptyText: '本窗无按日汇总',
-  }) + renderCaliberLine('缺口是消耗减摄入的差。') + '</section>');
+  }) + renderCaliberLine('缺口是消耗减摄入的差。缺数一律写 —。') + '</section>');
   // #401 · 这里原有一条 `notice({…})` 深底提示条，已撤（裁决见件头与 `t401-融合设计.md` 第三节冲突 4）。
   // #375 · 复制区：不给与按钮同字的 `title`；`data`（业务数据文本）＋ `log`（运行日志文本）双双在场＝双按钮同行。
   // 日志第 3 段写「本页命令原文」：窗口非缺省 7 天时把窗口写全，照抄重跑得到同一张页（逐字照 `home/routes.ts`）。
@@ -332,11 +334,9 @@ export function buildHomeDoc(d: HomeData): string {
       { id: SEC_COPY.id, text: SEC_COPY.name },
     ] }),
     sections.join(''),
-    // #401e 债 #8 收口：来源脚注只留一条（原第二条「窗内共 N 条记录」整条删——那个 N 就是 `loggedDays`，
-    // **天数**，与页头胶囊同源同值却写成「条记录」）。#401g（审查必改 #8）：「缺数一律写 —」从页首第 4 行
-    // 并入这一行——它讲的是这份数据怎么读（缺的就是缺的、不补 0），与来源是同一件事；页首因此只剩
-    // 胶囊行与结论条两块，正文从数字卡起步。窗口区间仍只归副题一处。
-    renderCaliberLine('数据来源：' + SOURCE_LOGGED + '。缺数一律写 —。'),
+    // #401e 债 #8 收口：来源脚注只留一条（原第二条「窗内共 N 条记录」整条删——那个 N 就是 `loggedDays`＝
+    // **天数**）。**#401i（复审第 5 点）**：这条只说来源（缺数口径已归表下），页脚不再一句拼两件事。
+    renderCaliberLine('数据来源：' + SOURCE_LOGGED + '。'),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
