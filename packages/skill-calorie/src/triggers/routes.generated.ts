@@ -459,7 +459,7 @@ export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看热量缺口', scene: '10', kind: 'exec', key: 'calorie.view.deficit', cli: 'calorie-cmd-read calorie.view.deficit --params \'{"window":"7d"}\'' },
   { wakeWord: '看饮食复盘', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日"}\'' },
   { wakeWord: '看健康盘', scene: '10', kind: 'exec', key: 'calorie.view.health', cli: 'calorie-cmd-read calorie.view.health --params \'{"window":"今日"}\'' },
-  { wakeWord: '查高热量排行', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"window":"7d"}\'' },
+  { wakeWord: '查高热量排行', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\'' },
   { wakeWord: '查食品库', scene: '02', kind: 'exec', key: 'calorie.view.library', cli: 'calorie-cmd-read calorie.view.library' },
   { wakeWord: '搜食品', scene: '02', kind: 'exec', key: 'calorie.view.search', cli: 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'' },
   { wakeWord: '看身材照', scene: '09', kind: 'exec', key: 'calorie.photo.list', cli: 'calorie-cmd-read calorie.photo.list --params \'{"tag":"正面"}\'' },
