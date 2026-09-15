@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>#268 链路总览页 —— prompt → 唤醒词 → 命令 → HTML 绝对路径（卡路里·运动 39 条）</title>
+<style>
+:root{--ink:#1b1f24;--mut:#5c6773;--line:#d7dde4;--bg:#f6f8fa;--card:#fff;--ok:#0a7a3d;--bad:#b01212;--warn:#8a5a00}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 20px 60px;background:var(--bg);color:var(--ink);font:14px/1.6 "Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1{font-size:21px;margin:0 0 6px}
+h2{font-size:17px;margin:28px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+h3{font-size:15px;margin:0 0 6px}
+p,li{color:var(--ink)}
+.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:12px 0}
+.card.flag{border-color:#e0b400;background:#fffdf2}
+.card.red{border-color:#e0a3a3;background:#fff7f7}
+.loud{font-size:15px;font-weight:700}
+.small{font-size:12.5px;color:var(--mut)}
+code,kbd{background:#eef2f6;border:1px solid #dde3ea;border-radius:4px;padding:1px 4px;font-family:Consolas,"Courier New",monospace;font-size:12.5px;word-break:break-all}
+table{border-collapse:collapse;width:100%;background:var(--card);font-size:13px}
+th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+th{background:#eef2f6;font-weight:600;position:sticky;top:0;z-index:1}
+td.num{text-align:right;white-space:nowrap;color:var(--mut)}
+td.w{font-weight:700;white-space:nowrap}
+td.p{min-width:210px}
+td.cmd code{display:block;max-width:430px;white-space:normal}
+td.prod{min-width:250px}
+td.prod a{font-family:Consolas,monospace;font-size:12.5px;word-break:break-all}
+td.prod .abs{display:block;margin-top:3px;font-size:12px}
+.ok{color:var(--ok);font-weight:700}
+.bad{color:var(--bad);font-weight:700}
+.warn{color:var(--warn);font-weight:700}
+.g{color:var(--mut);font-size:12.5px}
+ol,ul{margin:6px 0 6px 20px;padding:0}
+li{margin:3px 0}
+.count{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<h1>#268 · 链路总览页 —— prompt → 唤醒词 → 命令 → HTML 绝对路径</h1>
+<p class="sub">卡路里「运动」（场景 04）<strong>39 条唤醒词</strong>逐条一行：你会说的那句 prompt ／ 唤醒词原文 ／ 该跑的命令原文 ／ 那页 HTML 的绝对路径（<strong>点一下就能跳转打开</strong>）。
+本页自包含：不联网、无外链、无脚本。<code>CALORIE_TODAY</code> 钉在 <strong>2026-09-15</strong>；冻结表里的占位符按当天代实：<code>&lt;日期&gt;</code>→2026-09-12、<code>&lt;开始日期&gt;</code>→2026-02-27、<code>&lt;结束日期&gt;</code>→2026-09-15。</p>
+
+<div class="card flag">
+<h3>本场景没有过程型页面 —— <strong>0 条</strong>（39 条逐条核过）</h3>
+<p class="loud">地图给的依据原话：「39 条词的 prompt 逐条无『先问／先确认』要求」。</p>
+<p class="small">本席逐条实测后要在这里校正两个字，免得后来人拿这句话当免检牌：39 条里<strong>有 2 条</strong>（<a href="#r23">#23 看今日运动（vs 目标）</a>／<a href="#r24">#24 看本周运动（vs 目标）</a>）的 prompt 原文<strong>含「先问我目标值」</strong>（原文：如果还没设过每日运动消耗目标，先问我目标值）。
+但实现上它们<strong>不落过程型 HTML</strong>：目标为空时命令走<strong>缺失阻断</strong>（<code>ERR 4: 取数失败（缺失阻断）：未设运动目标（daily_goal.exercise_goal 缺失，先维护运动目标）</code>，见下行「真库实况」列），目标在时直接出成终页（对照目标页）。
+⇒ <strong>结论不变：39 条词没有任何一条落过程型页面；每条词一次跑动出且只出一份成终页。</strong></p>
+</div>
+
+<div class="card">
+<h3>① 怎么用（三步）</h3>
+<ol>
+<li><strong>双击打开本页</strong>（它就是一份普通 HTML，放在 <code>D:\ilife\docs\skills\skill-calorie\t268-链路总览.html</code>）。</li>
+<li><strong>点行内「产物」那一列的链接</strong>——链接是 <code>file:///</code> 绝对路径，点一下就跳转打开那一页 HTML。</li>
+<li><strong>点了没反应怎么办</strong>：浏览器对 <code>file://</code> 跳转有本地限制（有的浏览器拦跨目录、有的拦带中文的文件名）。这时把<strong>同一行的绝对路径</strong>（链接下面那行 <code>D:\ilife\…html</code>）复制到地址栏粘一次，回车就打开了。</li>
+</ol>
+<p class="small">想自己念一遍：在空白会话里逐字念「唤醒词」那一列的原话，agent 回执里会给出它落盘的那份 HTML 的绝对路径；拿那个路径和本页这一列对一下，看是不是同一族的页。</p>
+</div>
+
+<div class="card">
+<h3>② 本页覆盖范围与条数自证</h3>
+<p>范围＝冻结表 <code>packages/skill-calorie/src/triggers/scene-04-exercise.ts</code>（<code>SCENE_04_EXERCISE</code>）<strong>全部 39 条</strong>，一条不漏、一条不多。逐族计数（由本页 39 行的命令机械数出来，不是估的）：</p>
+<p class="loud">39 条 = 读 7 ＋ 写 13 ＋ 其余读类 19。</p>
+<table>
+<thead><tr><th style="width:130px">族</th><th style="width:70px">条数</th><th>明细</th></tr></thead>
+<tbody>
+<tr><td class="w">写 13</td><td class="num count">13</td><td class="small">记运动族 8（写后回执（记））＋ 改／删族 5（写后回执（改／删））</td></tr>
+<tr><td class="w">读 7</td><td class="num count">7</td><td class="small">类型分布 1 ＋ 趋势 1 ＋ 复盘 5（#31／#34／#35–#39）</td></tr>
+<tr><td class="w">其余读类 19</td><td class="num count">19</td><td class="small">看运动族 17（记录级明细／运动汇总（长窗·自定义）／对照目标）＋ 力量总览 1 ＋ 有氧总览 1</td></tr>
+<tr><td class="w">合计</td><td class="num count">39</td><td class="small">＝ 冻结表 SCENE_04_EXERCISE 条数（39）</td></tr>
+</tbody>
+</table>
+<p class="small">按页面族再数一遍（同一批 39 行，页族来自命令）：写后回执（记） 8 ／ 写后回执（改／删） 5 ／ 记录级明细页 5 ／ 运动汇总页（长窗／自定义） 10 ／ 对照目标页 2 ／ 类型分布页 1 ／ 力量总览页 1 ／ 有氧总览页 1 ／ 趋势页 1 ／ 复盘页 5。
+按模板件数：templates/crud_receipt.html 13 ／ templates/exercise_summary.html 15 ／ templates/exercise_goal_view.html 2 ／ templates/exercise_distribution.html 1 ／ templates/exercise_strength.html 1 ／ templates/exercise_cardio.html 1 ／ templates/exercise_trend.html 1 ／ templates/exercise_recap.html 5 —— 两边各自加总都是 39。
+按<strong>产物自称页名</strong>（开后第一行 <code>&lt;title&gt;</code>，实测）：卡路里·运动回执 13 ／ 卡路里·运动记录 5 ／ 卡路里·运动身体 12 ／ 卡路里·运动类型分布 1 ／ 卡路里·力量训练总览 1 ／ 卡路里·有氧训练总览 1 ／ 卡路里·运动趋势 1 ／ 卡路里·运动复盘 5 —— 同样 39。</p>
+<p class="small">产物面：<strong>39 条全部 exit 0、39 份文档完整</strong>（<code>&lt;!doctype html&gt;</code> 起、<code>&lt;/html&gt;</code> 收），字节域 65,028–121,054 字节；39 个链接逐条 <code>Test-Path</code> 断言存在：<strong>39/39 通过</strong>（href 解析成的本机路径 39 条、清单里的绝对路径 39 条，缺 0 条；断言工具 Test-Path -LiteralPath -PathType Leaf）（完整读数在 <code>t268-链路清单.json</code> 的 <code>link_assert</code>）。</p>
+</div>
+
+<div class="card red">
+<h3>③ 已知遗漏与口径（照实写，别当免检牌）</h3>
+<ol>
+<li><strong>真库实况下只有 14/39 出得来</strong>：真库末条运动记在 <strong>2026-07-31</strong>，所有时间窗都落其后（<strong>20 条空窗阻断</strong>）＋未设运动目标（<strong>2 条</strong>）＋昨日无可复制记录（<strong>1 条</strong>）；<strong>本页产物来自临时库副本</strong>（补了当日记录与运动目标），故 39 条齐。另有 2 条（#9 改运动记录／#11 删运动记录）因示例参数 <code>id:1</code> 在真库不可达而阻断，见下条。</li>
+<li><strong>两条写词的示例参数 <code>id:1</code> 在任何真库都不可达</strong>（真库 id 域 <strong>3…8305</strong>）——已立票 <strong>#478</strong>；本页对这两条用<strong>副本里真实存在的 id</strong>（<code>id 8344</code>），并在行内注明。</li>
+<li><strong>同族两处口径不一致</strong>（收口票在办）：<strong>#470</strong> 来源行（五页仍印库表名 <code>exercise_log</code>）／<strong>#477</strong> 载荷头（汇总·对照目标两页仍印命令，其余五页是人话页名）。</li>
+<li><strong>本场景没有过程型页面</strong>（依据同上：39 条词的 prompt 逐条无「先问／先确认」要求；逐条实测的 2 处例外见页首黄框）。</li>
+</ol>
+<p class="small">真库只读对账（跑前／跑后各取一次）：sha256 <code>57ce9d87f5f232822332d7057c2ae8411d99ba7fdecea289f2028e19fc3ffc15</code> 跑前跑后<strong>同值</strong>；<code>PRAGMA integrity_check</code> {&quot;integrity_check&quot;:&quot;ok&quot;}；表数 11；逐表行数摘要 digest <code>1cd4132be6168ef5</code>（如 <code>exercise_log = 8297</code>）。</p>
+</div>
+
+<h2>39 条逐条</h2>
+<p class="small">「prompt」＝你会说的那句话（写类词把它要带的值写全，值逐字取自冻结表命令里的参数）；「唤醒词」＝冻结表 <code>wake_word</code> 原文；「命令」＝冻结表 <code>main_prompt.cli</code> 原文（只在有占位符／示例 id 的地方按上文代实，代实处已注明）；「产物」＝本席在临时库副本上真跑出来的那份 HTML。</p>
+<table>
+<thead><tr>
+<th style="width:34px">#</th><th style="width:150px">唤醒词（原文）</th><th style="width:230px">prompt（你会说的那句）</th><th style="width:470px">命令（逐字）</th><th style="width:290px">产物（点开即跳转 ＆ 绝对路径）</th><th style="width:180px">页面族</th><th style="width:80px">产物字节</th><th style="width:110px">过程型页</th><th style="width:150px">真库实况（只读）</th>
+</tr></thead>
+<tbody>
+  <tr>
+    <td class="num">1</td>
+    <td class="w">记运动</td>
+    <td class="p">记运动：慢跑，30 分钟，320 千卡</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;type&quot;:&quot;慢跑&quot;,&quot;calories&quot;:320,&quot;minutes&quot;:30}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/01-记运动.html">file:///D:/ilife/.scratch/t268-link/out/01-记运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\01-记运动.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">记运动 · 回执</span></td>
+    <td class="num count">68,582</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">2</td>
+    <td class="w">记运动（含备注）</td>
+    <td class="p">记运动（含备注）：慢跑，30 分钟，320 千卡，备注「夜跑」</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;type&quot;:&quot;慢跑&quot;,&quot;calories&quot;:320,&quot;minutes&quot;:30,&quot;note&quot;:&quot;夜跑&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/02-记运动（含备注）.html">file:///D:/ilife/.scratch/t268-link/out/02-记运动（含备注）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\02-记运动（含备注）.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">记运动 · 回执</span></td>
+    <td class="num count">68,916</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">3</td>
+    <td class="w">记力量训练</td>
+    <td class="p">记力量训练：卧推，60 公斤 × 10 次，150 千卡（力量）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;type&quot;:&quot;卧推&quot;,&quot;calories&quot;:150,&quot;category&quot;:&quot;力量&quot;,&quot;loadKg&quot;:60,&quot;reps&quot;:10}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/03-记力量训练.html">file:///D:/ilife/.scratch/t268-link/out/03-记力量训练.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\03-记力量训练.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">记运动 · 回执</span></td>
+    <td class="num count">69,181</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">4</td>
+    <td class="w">记有氧运动</td>
+    <td class="p">记有氧运动：户外跑，30 分钟，5 公里，300 千卡（有氧）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;type&quot;:&quot;户外跑&quot;,&quot;calories&quot;:300,&quot;minutes&quot;:30,&quot;category&quot;:&quot;有氧&quot;,&quot;distance&quot;:5}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/04-记有氧运动.html">file:///D:/ilife/.scratch/t268-link/out/04-记有氧运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\04-记有氧运动.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">记运动 · 回执</span></td>
+    <td class="num count">69,257</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">5</td>
+    <td class="w">记日常活动</td>
+    <td class="p">记日常活动：步行，20 分钟，3000 步，80 千卡（日常）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;type&quot;:&quot;步行&quot;,&quot;calories&quot;:80,&quot;minutes&quot;:20,&quot;category&quot;:&quot;日常&quot;,&quot;steps&quot;:3000}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/05-记日常活动.html">file:///D:/ilife/.scratch/t268-link/out/05-记日常活动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\05-记日常活动.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">记运动 · 回执</span></td>
+    <td class="num count">69,237</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">6</td>
+    <td class="w">补记运动</td>
+    <td class="p">补记运动：慢跑，30 分钟，320 千卡，记在 2026-09-12<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;type&quot;:&quot;慢跑&quot;,&quot;calories&quot;:320,&quot;minutes&quot;:30,&quot;date&quot;:&quot;&lt;日期&gt;&quot;}'</code><span class="small">※ 实跑代实：&lt;日期&gt; → 2026-09-12（按 CALORIE_TODAY=2026-09-15 的相对日算，用户念词时不必手填）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/06-补记运动.html">file:///D:/ilife/.scratch/t268-link/out/06-补记运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\06-补记运动.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">记运动 · 回执</span></td>
+    <td class="num count">68,622</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">7</td>
+    <td class="w">批量补记运动</td>
+    <td class="p">批量补记运动：2026-09-12 慢跑 30 分钟 320 千卡（一次补多条）<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;items&quot;:[{&quot;type&quot;:&quot;慢跑&quot;,&quot;calories&quot;:320,&quot;minutes&quot;:30,&quot;date&quot;:&quot;&lt;日期&gt;&quot;}]}'</code><span class="small">※ 实跑代实：&lt;日期&gt; → 2026-09-12（按 CALORIE_TODAY=2026-09-15 的相对日算，用户念词时不必手填）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/07-批量补记运动.html">file:///D:/ilife/.scratch/t268-link/out/07-批量补记运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\07-批量补记运动.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">记运动 · 回执</span></td>
+    <td class="num count">69,682</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">8</td>
+    <td class="w">复制昨日运动</td>
+    <td class="p">复制昨日运动（照昨天的记录复制一份到今天）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.add --params '{&quot;copyFrom&quot;:&quot;yesterday&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/08-复制昨日运动.html">file:///D:/ilife/.scratch/t268-link/out/08-复制昨日运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\08-复制昨日运动.html</code></td>
+    <td>写后回执（记）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">复制昨日运动 · 回执</span></td>
+    <td class="num count">66,153</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：昨日无运动记录可复制</span></td>
+  </tr>
+  <tr>
+    <td class="num">9</td>
+    <td class="w">改运动记录</td>
+    <td class="p">改运动记录：把 id 8344 那条的时长改成 40 分钟<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.update --params '{&quot;id&quot;:1,&quot;minutes&quot;:40}'</code><span class="small">※ 示例参数 id:1 → id:8344（id:1 在任何真库都不可达，已立票 #478；实跑改用副本里真实存在的那条）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/09-改运动记录.html">file:///D:/ilife/.scratch/t268-link/out/09-改运动记录.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\09-改运动记录.html</code></td>
+    <td>写后回执（改／删）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">改运动记录 · 回执</span></td>
+    <td class="num count">66,948</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败：记录 ID 1 不存在</span></td>
+  </tr>
+  <tr>
+    <td class="num">10</td>
+    <td class="w">改某日运动</td>
+    <td class="p">改某日运动：把 2026-09-12 那天的备注改成「补记」<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.update --params '{&quot;note&quot;:&quot;补记&quot;,&quot;date&quot;:&quot;&lt;日期&gt;&quot;}'</code><span class="small">※ 实跑代实：&lt;日期&gt; → 2026-09-12（按 CALORIE_TODAY=2026-09-15 的相对日算，用户念词时不必手填）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/10-改某日运动.html">file:///D:/ilife/.scratch/t268-link/out/10-改某日运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\10-改某日运动.html</code></td>
+    <td>写后回执（改／删）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">改某日运动 · 回执</span></td>
+    <td class="num count">68,118</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录（2026-09-12）</span></td>
+  </tr>
+  <tr>
+    <td class="num">11</td>
+    <td class="w">删运动记录</td>
+    <td class="p">删运动记录：删 id 8344 那条<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.remove --params '{&quot;id&quot;:1}'</code><span class="small">※ 示例参数 id:1 → id:8344（id:1 在任何真库都不可达，已立票 #478；实跑改用副本里真实存在的那条）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/11-删运动记录.html">file:///D:/ilife/.scratch/t268-link/out/11-删运动记录.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\11-删运动记录.html</code></td>
+    <td>写后回执（改／删）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">删运动记录 · 回执</span></td>
+    <td class="num count">69,710</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败：记录 ID 1 不存在</span></td>
+  </tr>
+  <tr>
+    <td class="num">12</td>
+    <td class="w">删某日运动</td>
+    <td class="p">删某日运动：删 2026-09-12 那天全部记录<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.remove --params '{&quot;date&quot;:&quot;&lt;日期&gt;&quot;}'</code><span class="small">※ 实跑代实：&lt;日期&gt; → 2026-09-12（按 CALORIE_TODAY=2026-09-15 的相对日算，用户念词时不必手填）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/12-删某日运动.html">file:///D:/ilife/.scratch/t268-link/out/12-删某日运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\12-删某日运动.html</code></td>
+    <td>写后回执（改／删）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">删某日运动 · 回执</span></td>
+    <td class="num count">77,977</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录（2026-09-12）</span></td>
+  </tr>
+  <tr>
+    <td class="num">13</td>
+    <td class="w">批量删运动</td>
+    <td class="p">批量删运动：删 2026-09-12 到 2026-09-12 之间的记录<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.exercise.remove --params '{&quot;from&quot;:&quot;&lt;日期&gt;&quot;,&quot;to&quot;:&quot;&lt;日期&gt;&quot;}'</code><span class="small">※ 实跑代实：&lt;日期&gt; → 2026-09-12（按 CALORIE_TODAY=2026-09-15 的相对日算，用户念词时不必手填）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/13-批量删运动.html">file:///D:/ilife/.scratch/t268-link/out/13-批量删运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\13-批量删运动.html</code></td>
+    <td>写后回执（改／删）<br><span class="g">产物自称：卡路里·运动回执</span><br><span class="g">批量删运动 · 回执</span></td>
+    <td class="num count">78,059</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录（2026-09-12~2026-09-12）</span></td>
+  </tr>
+  <tr>
+    <td class="num">14</td>
+    <td class="w">看今日运动</td>
+    <td class="p">看今日运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-records --params '{&quot;window&quot;:&quot;今日&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/14-看今日运动.html">file:///D:/ilife/.scratch/t268-link/out/14-看今日运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\14-看今日运动.html</code></td>
+    <td>记录级明细页<br><span class="g">产物自称：卡路里·运动记录</span><br><span class="g">运动记录明细</span></td>
+    <td class="num count">67,462</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-15 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">15</td>
+    <td class="w">看昨日运动</td>
+    <td class="p">看昨日运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-records --params '{&quot;window&quot;:&quot;昨日&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/15-看昨日运动.html">file:///D:/ilife/.scratch/t268-link/out/15-看昨日运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\15-看昨日运动.html</code></td>
+    <td>记录级明细页<br><span class="g">产物自称：卡路里·运动记录</span><br><span class="g">运动记录明细</span></td>
+    <td class="num count">67,462</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-14 ~ 2026-09-14</span></td>
+  </tr>
+  <tr>
+    <td class="num">16</td>
+    <td class="w">看本周运动</td>
+    <td class="p">看本周运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;本周&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/16-看本周运动.html">file:///D:/ilife/.scratch/t268-link/out/16-看本周运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\16-看本周运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-09-14 ~ 2026-09-15</span></td>
+    <td class="num count">76,569</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-14 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">17</td>
+    <td class="w">看上周运动</td>
+    <td class="p">看上周运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;上周&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/17-看上周运动.html">file:///D:/ilife/.scratch/t268-link/out/17-看上周运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\17-看上周运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-09-07 ~ 2026-09-13</span></td>
+    <td class="num count">77,396</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-07 ~ 2026-09-13</span></td>
+  </tr>
+  <tr>
+    <td class="num">18</td>
+    <td class="w">看本月运动</td>
+    <td class="p">看本月运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;本月&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/18-看本月运动.html">file:///D:/ilife/.scratch/t268-link/out/18-看本月运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\18-看本月运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-09-01 ~ 2026-09-15</span></td>
+    <td class="num count">78,818</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-01 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">19</td>
+    <td class="w">看上月运动</td>
+    <td class="p">看上月运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;上月&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/19-看上月运动.html">file:///D:/ilife/.scratch/t268-link/out/19-看上月运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\19-看上月运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-08-01 ~ 2026-08-31</span></td>
+    <td class="num count">79,752</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-08-01 ~ 2026-08-31</span></td>
+  </tr>
+  <tr>
+    <td class="num">20</td>
+    <td class="w">看最近 7 天运动</td>
+    <td class="p">看最近 7 天运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;7d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/20-看最近%207%20天运动.html">file:///D:/ilife/.scratch/t268-link/out/20-看最近%207%20天运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\20-看最近 7 天运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-09-09 ~ 2026-09-15</span></td>
+    <td class="num count">77,613</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-09 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">21</td>
+    <td class="w">看最近 30 天运动</td>
+    <td class="p">看最近 30 天运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;30d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/21-看最近%2030%20天运动.html">file:///D:/ilife/.scratch/t268-link/out/21-看最近%2030%20天运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\21-看最近 30 天运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-08-17 ~ 2026-09-15</span></td>
+    <td class="num count">80,873</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-08-17 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">22</td>
+    <td class="w">看某段时间运动</td>
+    <td class="p">看某段时间运动：2026-02-27 到 2026-09-15<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;custom&quot;,&quot;start&quot;:&quot;&lt;开始日期&gt;&quot;,&quot;end&quot;:&quot;&lt;结束日期&gt;&quot;}'</code><span class="small">※ 实跑代实：&lt;开始日期&gt; → 2026-02-27、&lt;结束日期&gt; → 2026-09-15（按 CALORIE_TODAY=2026-09-15 的相对日算，用户念词时不必手填）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/22-看某段时间运动.html">file:///D:/ilife/.scratch/t268-link/out/22-看某段时间运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\22-看某段时间运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-02-27 ~ 2026-09-15</span></td>
+    <td class="num count">120,861</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num"><a id="r23"></a>23</td>
+    <td class="w">看今日运动（vs 目标）</td>
+    <td class="p">看今日运动（vs 目标）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-goal --params '{&quot;window&quot;:&quot;今日&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/23-看今日运动（vs%20目标）.html">file:///D:/ilife/.scratch/t268-link/out/23-看今日运动（vs%20目标）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\23-看今日运动（vs 目标）.html</code></td>
+    <td>对照目标页<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动目标 2026-09-15 ~ 2026-09-15</span></td>
+    <td class="num count">65,028</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：未设运动目标（daily_goal.exercise_goal 缺失，先维护运动目标）</span></td>
+  </tr>
+  <tr>
+    <td class="num"><a id="r24"></a>24</td>
+    <td class="w">看本周运动（vs 目标）</td>
+    <td class="p">看本周运动（vs 目标）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-goal --params '{&quot;window&quot;:&quot;本周&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/24-看本周运动（vs%20目标）.html">file:///D:/ilife/.scratch/t268-link/out/24-看本周运动（vs%20目标）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\24-看本周运动（vs 目标）.html</code></td>
+    <td>对照目标页<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动目标 2026-09-14 ~ 2026-09-15</span></td>
+    <td class="num count">65,033</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：未设运动目标（daily_goal.exercise_goal 缺失，先维护运动目标）</span></td>
+  </tr>
+  <tr>
+    <td class="num">25</td>
+    <td class="w">看运动记录（有备注）</td>
+    <td class="p">看运动记录（有备注）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-records --params '{&quot;window&quot;:&quot;7d&quot;,&quot;hasNote&quot;:true}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/25-看运动记录（有备注）.html">file:///D:/ilife/.scratch/t268-link/out/25-看运动记录（有备注）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\25-看运动记录（有备注）.html</code></td>
+    <td>记录级明细页<br><span class="g">产物自称：卡路里·运动记录</span><br><span class="g">运动记录明细</span></td>
+    <td class="num count">67,117</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-09 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">26</td>
+    <td class="w">看运动记录（按力量筛选）</td>
+    <td class="p">看运动记录（按力量筛选）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-records --params '{&quot;window&quot;:&quot;7d&quot;,&quot;category&quot;:&quot;力量&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/26-看运动记录（按力量筛选）.html">file:///D:/ilife/.scratch/t268-link/out/26-看运动记录（按力量筛选）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\26-看运动记录（按力量筛选）.html</code></td>
+    <td>记录级明细页<br><span class="g">产物自称：卡路里·运动记录</span><br><span class="g">运动记录明细</span></td>
+    <td class="num count">67,091</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-09 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">27</td>
+    <td class="w">看运动记录（按有氧筛选）</td>
+    <td class="p">看运动记录（按有氧筛选）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-records --params '{&quot;window&quot;:&quot;7d&quot;,&quot;category&quot;:&quot;有氧&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/27-看运动记录（按有氧筛选）.html">file:///D:/ilife/.scratch/t268-link/out/27-看运动记录（按有氧筛选）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\27-看运动记录（按有氧筛选）.html</code></td>
+    <td>记录级明细页<br><span class="g">产物自称：卡路里·运动记录</span><br><span class="g">运动记录明细</span></td>
+    <td class="num count">70,792</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-09 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">28</td>
+    <td class="w">看最近 60 天运动</td>
+    <td class="p">看最近 60 天运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;60d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/28-看最近%2060%20天运动.html">file:///D:/ilife/.scratch/t268-link/out/28-看最近%2060%20天运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\28-看最近 60 天运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-07-18 ~ 2026-09-15</span></td>
+    <td class="num count">94,064</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">29</td>
+    <td class="w">看最近 180 天运动</td>
+    <td class="p">看最近 180 天运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;180d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/29-看最近%20180%20天运动.html">file:///D:/ilife/.scratch/t268-link/out/29-看最近%20180%20天运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\29-看最近 180 天运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2026-03-20 ~ 2026-09-15</span></td>
+    <td class="num count">121,054</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">30</td>
+    <td class="w">看最近 365 天运动</td>
+    <td class="p">看最近 365 天运动</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise --params '{&quot;window&quot;:&quot;365d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/30-看最近%20365%20天运动.html">file:///D:/ilife/.scratch/t268-link/out/30-看最近%20365%20天运动.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\30-看最近 365 天运动.html</code></td>
+    <td>运动汇总页（长窗／自定义）<br><span class="g">产物自称：卡路里·运动身体</span><br><span class="g">运动汇总 2025-09-16 ~ 2026-09-15</span></td>
+    <td class="num count">120,464</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">31</td>
+    <td class="w">看运动类型分布</td>
+    <td class="p">看运动类型分布</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-distribution --params '{&quot;window&quot;:&quot;7d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/31-看运动类型分布.html">file:///D:/ilife/.scratch/t268-link/out/31-看运动类型分布.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\31-看运动类型分布.html</code></td>
+    <td>类型分布页<br><span class="g">产物自称：卡路里·运动类型分布</span><br><span class="g">运动类型分布</span></td>
+    <td class="num count">74,319</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-09 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">32</td>
+    <td class="w">看力量训练总览</td>
+    <td class="p">看力量训练总览</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-strength --params '{&quot;window&quot;:&quot;7d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/32-看力量训练总览.html">file:///D:/ilife/.scratch/t268-link/out/32-看力量训练总览.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\32-看力量训练总览.html</code></td>
+    <td>力量总览页<br><span class="g">产物自称：卡路里·力量训练总览</span><br><span class="g">力量训练总览</span></td>
+    <td class="num count">72,674</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-09 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">33</td>
+    <td class="w">看有氧训练总览</td>
+    <td class="p">看有氧训练总览</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-cardio --params '{&quot;window&quot;:&quot;7d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/33-看有氧训练总览.html">file:///D:/ilife/.scratch/t268-link/out/33-看有氧训练总览.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\33-看有氧训练总览.html</code></td>
+    <td>有氧总览页<br><span class="g">产物自称：卡路里·有氧训练总览</span><br><span class="g">有氧训练总览</span></td>
+    <td class="num count">75,746</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-09 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">34</td>
+    <td class="w">看运动趋势</td>
+    <td class="p">看运动趋势</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-trend --params '{&quot;window&quot;:&quot;30d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/34-看运动趋势.html">file:///D:/ilife/.scratch/t268-link/out/34-看运动趋势.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\34-看运动趋势.html</code></td>
+    <td>趋势页<br><span class="g">产物自称：卡路里·运动趋势</span><br><span class="g">运动趋势 2026-08-17 ~ 2026-09-15</span></td>
+    <td class="num count">81,706</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-08-17 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">35</td>
+    <td class="w">运动复盘（本周）</td>
+    <td class="p">运动复盘（本周）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-recap --params '{&quot;window&quot;:&quot;本周&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/35-运动复盘（本周）.html">file:///D:/ilife/.scratch/t268-link/out/35-运动复盘（本周）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\35-运动复盘（本周）.html</code></td>
+    <td>复盘页<br><span class="g">产物自称：卡路里·运动复盘</span><br><span class="g">运动复盘 2026-09-14 ~ 2026-09-15</span></td>
+    <td class="num count">71,719</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-14 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">36</td>
+    <td class="w">运动复盘（本月）</td>
+    <td class="p">运动复盘（本月）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-recap --params '{&quot;window&quot;:&quot;本月&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/36-运动复盘（本月）.html">file:///D:/ilife/.scratch/t268-link/out/36-运动复盘（本月）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\36-运动复盘（本月）.html</code></td>
+    <td>复盘页<br><span class="g">产物自称：卡路里·运动复盘</span><br><span class="g">运动复盘 2026-09-01 ~ 2026-09-15</span></td>
+    <td class="num count">72,357</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="bad">念不通</span><br><span class="g">ERR 4: 取数失败（缺失阻断）：无运动记录：2026-09-01 ~ 2026-09-15</span></td>
+  </tr>
+  <tr>
+    <td class="num">37</td>
+    <td class="w">运动复盘（最近 90 天）</td>
+    <td class="p">运动复盘（最近 90 天）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-recap --params '{&quot;window&quot;:&quot;90d&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/37-运动复盘（最近%2090%20天）.html">file:///D:/ilife/.scratch/t268-link/out/37-运动复盘（最近%2090%20天）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\37-运动复盘（最近 90 天）.html</code></td>
+    <td>复盘页<br><span class="g">产物自称：卡路里·运动复盘</span><br><span class="g">运动复盘 2026-06-18 ~ 2026-09-15</span></td>
+    <td class="num count">74,442</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">38</td>
+    <td class="w">运动复盘（今年）</td>
+    <td class="p">运动复盘（今年）</td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-recap --params '{&quot;window&quot;:&quot;今年&quot;}'</code><span class="g">（原文即实跑命令，无代实）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/38-运动复盘（今年）.html">file:///D:/ilife/.scratch/t268-link/out/38-运动复盘（今年）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\38-运动复盘（今年）.html</code></td>
+    <td>复盘页<br><span class="g">产物自称：卡路里·运动复盘</span><br><span class="g">运动复盘 2026-01-01 ~ 2026-09-15</span></td>
+    <td class="num count">73,049</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+  <tr>
+    <td class="num">39</td>
+    <td class="w">运动复盘（自定义时间）</td>
+    <td class="p">运动复盘（自定义时间）：2026-02-27 到 2026-09-15<br><span class="g">（prompt 里的日期／id 按实跑代实，见同行命令列的说明）</span></td>
+    <td class="cmd"><code>calorie-cmd-read calorie.view.exercise-recap --params '{&quot;window&quot;:&quot;custom&quot;,&quot;start&quot;:&quot;&lt;开始日期&gt;&quot;,&quot;end&quot;:&quot;&lt;结束日期&gt;&quot;}'</code><span class="small">※ 实跑代实：&lt;开始日期&gt; → 2026-02-27、&lt;结束日期&gt; → 2026-09-15（按 CALORIE_TODAY=2026-09-15 的相对日算，用户念词时不必手填）</span></td>
+    <td class="prod"><a href="file:///D:/ilife/.scratch/t268-link/out/39-运动复盘（自定义时间）.html">file:///D:/ilife/.scratch/t268-link/out/39-运动复盘（自定义时间）.html</a><code class="abs">D:\ilife\.scratch\t268-link\out\39-运动复盘（自定义时间）.html</code></td>
+    <td>复盘页<br><span class="g">产物自称：卡路里·运动复盘</span><br><span class="g">运动复盘 2026-02-27 ~ 2026-09-15</span></td>
+    <td class="num count">73,446</td>
+    <td class="small">无<br><span class="g">一次跑动只出一份成终页</span></td>
+    <td class="small"><span class="ok">念得通</span></td>
+  </tr>
+</tbody>
+</table>
+
+<div class="card">
+<h3>口径与出处</h3>
+<ul>
+<li>唤醒词／命令／模板件：逐字取自冻结表 <code>packages/skill-calorie/src/triggers/scene-04-exercise.ts</code>（39 条）；命令的占位符与示例 id 按本节说明代实。</li>
+<li>产物：本席用临时库副本（真库字节拷贝 ＋ 只在副本上补当日运动记录与运动目标）对 39 条<strong>逐条真跑</strong>，产物落 <code>D:\ilife\.scratch\t268-link\out</code>（39 件 <code>.html</code>）。命令文本逐字取冻结表；<code>CALORIE_TODAY=2026-09-15</code>。</li>
+<li>真库全程只读：跑前跑后 sha256／逐表行数／integrity_check 三项逐字相同；读数在 <code>.scratch/t268-link/db-account-before.log</code>／<code>db-account-after.log</code>。</li>
+<li>本页的机读版（39 条逐条字段 ＋ 真库对账 ＋ 链接断言）在 <code>docs/skills/skill-calorie/t268-链路清单.json</code>。</li>
+</ul>
+</div>
+</body>
+</html>
