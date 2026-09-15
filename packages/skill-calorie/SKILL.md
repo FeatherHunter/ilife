@@ -254,7 +254,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看食品来源统计 | `calorie-cmd-read calorie.view.source-stats` | 结果：跑这条命令 → 结果型 HTML 落盘 |
 | 看营养结构 | `calorie-cmd-read calorie.view.diet-review --params '{"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
 | 看今日营养 | `calorie-cmd-read calorie.view.diet-review --params '{"window":"今日"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
-| 看饮食总览 | `calorie-cmd-read calorie.view.diet --params '{"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看饮食总览 | `calorie-cmd-read calorie.view.diet --params '{"window":"7d","entry":"overview"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
 | 看营养素深度 | `calorie-cmd-read calorie.view.nutrition-detail --params '{"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
 | 看高热量榜 | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_calorie","topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
 | 看低热量榜 | `calorie-cmd-read calorie.view.ranking --params '{"category":"low_calorie","topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
