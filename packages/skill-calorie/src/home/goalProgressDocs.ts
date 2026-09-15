@@ -22,8 +22,9 @@
 import type { StatusKind } from 'base-paint';
 import {
   renderCaliberLine, renderChartBlock, renderChips, renderConclusionBar,
-  renderDataTable, renderKpiGrid, renderTocBlock,
+  renderDataTable, renderKpiGrid, renderListRows, renderTocBlock,
 } from 'base-paint/blocks';
+import type { ListRowInput } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
@@ -53,6 +54,10 @@ const SEC_COPY = { id: 'sec-copy', icon: '💰', name: '数据与日志' } as co
 
 /** 来源脚注上给**读者看**的来源名（可见文本零 snake_case；库表名只留在复制日志的来源段里）。 */
 const SOURCE_LOGGED = '饮食记录，运动记录，每日目标';
+
+/** 「本期之外那三项」的引导句：这三项的数据今天**确实在库里**（见 `notCountedRows`），
+ *  必须写清「本页的完成度与缺口只算热量」，否则读者会把「4 项目标」读成「热量一项」。 */
+const NOT_COUNTED_NOTE = '本页的完成度与缺口只算热量。上面这三项目标今天还没纳入，本页不给它们的完成率。';
 
 /** 段标题的**文本形状**（图标 ＋ 空格 ＋ 名）：段标题与表格 caption 都走它，不手抄第二遍。 */
 function secTitle(section: { readonly icon: string; readonly name: string }): string {
@@ -86,6 +91,12 @@ interface Facts {
   readonly completed: number | null;
   readonly loggedInHistory: number | null;
   readonly rate: number | null;
+  /** 热量目标有没有落在**本窗图上的量程内**：不在就不画目标线（改写进读数），见 `intakeChart`。 */
+  readonly targetInRange: boolean;
+  /** 还没纳入本页完成度的三项目标（今天在库里的值；`null` ＝ 那项还没设）。 */
+  readonly proteinGoal: number | null;
+  readonly waterGoal: number | null;
+  readonly exerciseGoal: number | null;
 }
 
 /** 整页装配的入参：出口按当刻的取数结果给事实，本件不取数、不猜口径。 */
@@ -98,24 +109,50 @@ export interface GoalProgressDocInput {
   readonly calorieGoal: number | null;
   /** 窗口内一条记录也没有时为 `null`（走空态页，不编 0）。 */
   readonly data: GoalProgress | null;
+  /** 蛋白／饮水／运动三项目标：**目标行在就有**（与 `data` 两态无关，空窗页也照给）。
+   *  缺省 `null` ＝ 那项还没设；出口传值时不额外判定，缺值口径由 `num()` 统一收口。 */
+  readonly proteinGoal?: number | null;
+  readonly waterGoal?: number | null;
+  readonly exerciseGoal?: number | null;
   /** 本次命令原文（日志第 4 段「调用链」），由出口按本次参数拼；照抄可重跑。 */
   readonly command: string;
+}
+
+/** 目标值里**画得出来**的那些（图上的 `null` 点位不参与量程）。 */
+function loggedValues(points: readonly (number | null)[]): number[] {
+  return points.filter((p): p is number => p !== null && p !== undefined);
+}
+
+/** 目标线量程判定（照仓内裁定 `weight/plate.ts:99-113`）：目标给出**且落在数据量程内**才画线；
+ *  越界不画——由页面把它改写进读数（老技能那条「画了但读不到的线」不再出现）。
+ *  图表层按**数据量程**算 y（`base-render/src/charts.ts:1164`），量程外的 `value` 会画到绘图区外，
+ *  而 `.ilife-charts-svg{overflow:visible}` 不裁剪 ⇒ 一条飘到卡片区的橙线，比不画更糟。 */
+function targetInRange(points: readonly (number | null)[], goal: number | null): boolean {
+  const values = loggedValues(points);
+  return goal !== null && goal !== undefined && values.length > 0
+    && goal >= Math.min(...values) && goal <= Math.max(...values);
 }
 
 /** 事实派生：`data === null` 时除目标外一律空（缺值口径不在这一层判，`num()` 统一收口）。 */
 function factsOf(input: GoalProgressDocInput): Facts {
   const days = Math.round((Date.parse(input.end) - Date.parse(input.start)) / 86400000) + 1;
   const g = input.data;
+  const notCounted = {
+    proteinGoal: input.proteinGoal ?? null, waterGoal: input.waterGoal ?? null,
+    exerciseGoal: input.exerciseGoal ?? null, targetInRange: false,
+  };
   if (g === null) {
     return {
       goal: input.calorieGoal, windowDays: days, loggedDays: 0, avgIntake: null, avgDeficit: null,
       windowDeficit: null, lossKg: null, completed: null, loggedInHistory: null, rate: null,
+      ...notCounted,
     };
   }
+  const points = g.trend.series.map((p) => p.calorie);
   return {
     goal: input.calorieGoal,
     windowDays: days,
-    loggedDays: g.trend.series.filter((p) => p.calorie !== null && p.calorie !== undefined).length,
+    loggedDays: loggedValues(points).length,
     avgIntake: g.trend.summary.avg,
     avgDeficit: g.deficit.summary.avgDeficit,
     windowDeficit: g.deficit.summary.weeklyDeficit,
@@ -123,6 +160,10 @@ function factsOf(input: GoalProgressDocInput): Facts {
     completed: g.history.completedCount,
     loggedInHistory: g.history.completedCount + g.history.incompleteCount,
     rate: g.completionPct,
+    proteinGoal: input.proteinGoal ?? null,
+    waterGoal: input.waterGoal ?? null,
+    exerciseGoal: input.exerciseGoal ?? null,
+    targetInRange: targetInRange(points, input.calorieGoal),
   };
 }
 
@@ -136,6 +177,13 @@ function rateStatus(rate: number | null | undefined): { status: StatusKind; stat
   if (rate >= 90) return { status: 'ok', statusText: '多数达标 ' + shown };
   if (rate >= 60) return { status: 'warn', statusText: '达标过半 ' + shown };
   return { status: 'danger', statusText: '多数没达标 ' + shown };
+}
+
+/** 完成率（0–100）：**分子分母有一个缺就不给**（缺值口径裁定 4——没有目标就不摆徽章）。
+ *  与 `homeDocs.ts:133-139` 的 `pctStatus` 配对：那边算率、这边判档，徽章文案仍只这一处写。 */
+function pctOf(value: number | null, goal: number | null): number | null {
+  if (value === null || goal === null || !Number.isFinite(goal) || goal <= 0) return null;
+  return (value / goal) * 100;
 }
 
 /** 缺口方向徽章：本页「缺口」相对的是**消耗**而不是目标，套完成率档位是假信息 ⇒ 按差额正负给方向词。
@@ -185,21 +233,48 @@ function conclusionText(f: Facts): string {
     + (diff > 0 ? '高 ' : '低 ') + Math.abs(diff) + ' 卡。';
 }
 
-/** KPI 四张：热量目标／日均缺口／本窗累计缺口／达标天数（达标账另带它自己的窗口字面）。 */
+/** KPI 四张：热量目标／日均缺口／本窗累计缺口／达标天数（达标账另带它自己的窗口字面）。
+ *  徽章四处都按「卡名那个词的档位」给（对齐 `homeDocs.ts:217-236` 四张全带）：热量目标卡按
+ *  本窗日均摄入占目标判档，本窗累计缺口卡走方向词，达标天数卡走完成率档位。 */
 function kpiCards(f: Facts, historyDays: number): KpiCardInput[] {
   return [
-    { label: '热量目标', value: num(f.goal), unit: '卡', detail: '本窗日均摄入 ' + num(f.avgIntake) + ' 卡' },
+    {
+      label: '热量目标', value: num(f.goal), unit: '卡',
+      detail: '本窗日均摄入 ' + num(f.avgIntake) + ' 卡',
+      ...(rateStatus(pctOf(f.avgIntake, f.goal)) ?? {}),
+    },
     { label: '日均缺口', value: num(f.avgDeficit), unit: '卡', ...(deficitDirection(f.avgDeficit) ?? {}) },
     {
       label: '本窗累计缺口', value: num(f.windowDeficit), unit: '卡',
       detail: '折合体重 ' + num(f.lossKg) + ' 公斤',
+      ...(deficitDirection(f.windowDeficit) ?? {}),
     },
     {
-      label: '达标天数', value: num(f.completed), unit: '天',
+      // 卡名的窗口字面挂着 `historyDays`（它是入参、不是本窗天数）：这一列说的是**达标账那个窗口**。
+      label: '近 ' + historyDays + ' 天达标天数', value: num(f.completed), unit: '天',
       detail: '近 ' + historyDays + ' 天里有记录 ' + num(f.loggedInHistory) + ' 天',
       ...(rateStatus(f.rate) ?? {}),
     },
   ];
+}
+
+/** 今天还没纳入本页的那三项目标（蛋白／饮水／运动）：**有目标就把目标值上屏**，没设就写「还没设」。
+ *  这三项今天都不参与上面的完成度与缺口（那是 #396 的事），本件只如实呈现 + 说清下一步该说哪条唤醒词。 */
+function notCountedRows(f: Facts): ListRowInput[] {
+  return [
+    { left: '蛋白', main: '每天目标', right: f.proteinGoal === null ? '还没设' : num(f.proteinGoal) + ' 克' },
+    { left: '饮水', main: '每天目标', right: f.waterGoal === null ? '还没设' : num(f.waterGoal) + ' 毫升' },
+    { left: '运动', main: '每天消耗目标', right: f.exerciseGoal === null ? '还没设' : num(f.exerciseGoal) + ' 卡' },
+  ];
+}
+
+/** 「本期之外那三项」那一块：行列表 ＋ 一句总说。总说走 `renderCaliberLine`（口径行的既有形状，
+ *  本页不新造样式）；唤醒词逐字与 HELP 表一致，读者能照抄。 */
+function notCountedBlock(f: Facts): string {
+  return renderListRows({ items: notCountedRows(f), emptyText: NOT_COUNTED_NOTE })
+    + renderCaliberLine(NOT_COUNTED_NOTE
+      + '要设或改：蛋白说「定营养目标」，饮水说「定饮水目标」。运动目标的设置页由「看今日运动（vs 目标）」这条词带出来——'
+      + '没有目标时它会先问你目标值。');
 }
 
 /** 每日达标表最多列这么多行（`historyDays` 可到 365，整页不该无边上长）；截断另起一句明示。 */
@@ -231,8 +306,10 @@ function historyTable(g: GoalProgress, historyDays: number, day: (d: string) => 
 }
 
 /** 摄入走势图（本窗）：只画**有记录的每一天**，没记录的那天不补 0、连线跨过空档（`connectNulls`，
- *  与 `homeDocs.ts:254-259` 同一口径）。实线上另压一条热量目标参考线。 */
-function intakeChart(g: GoalProgress, day: (d: string) => string, goal: number | null): string {
+ *  与 `homeDocs.ts:254-259` 同一口径）。目标线**只在它落在量程内时**才画（`factsOf` 判好的 `targetInRange`）：
+ *  量程外不传 `markLine`——`base-render/src/charts.ts:1164` 按数据量程算 y，越界值会画到绘图区外面，
+ *  而 `.ilife-charts-svg{overflow:visible}` 不裁剪 ⇒ 橙线直接飘到 KPI 卡区（#467 复核的 P0 实拍）。 */
+function intakeChart(g: GoalProgress, day: (d: string) => string, f: Facts): string {
   const points = g.trend.series.map((p) => ({ label: day(p.date), value: p.calorie }));
   return renderChartBlock({
     kind: 'line',
@@ -244,10 +321,22 @@ function intakeChart(g: GoalProgress, day: (d: string) => string, goal: number |
         yTicks: 3,
         labels: 'select',
         format: (v: number) => String(Math.round(v)),
-        markLine: { value: goal ?? undefined, label: '热量目标' },
+        markLine: f.targetInRange && f.goal !== null ? { value: f.goal, label: '热量目标' } : undefined,
       },
     },
   });
+}
+
+/** 图下那句读法：**线画了就说线，没画就说数**——线在量程外时不画，句子里也不得再承诺一条虚线
+ *  （否则屏幕上那句话就是假话）。两句都保留「点是有记录的每一天」这条读法。 */
+function chartCaliber(f: Facts, g: GoalProgress): string {
+  const logged = loggedValues(g.trend.series.map((p) => p.calorie));
+  const trend = trendPhrase(g.trend.series.map((p) => p.calorie));
+  if (f.targetInRange) return '虚线是热量目标 ' + num(f.goal) + ' 卡，点是有记录的每一天。' + trend;
+  const span = logged.length === 0 ? ''
+    : '本窗有记录的日子最低 ' + Math.min(...logged) + ' 卡、最高 ' + Math.max(...logged) + ' 卡，'
+      + '热量目标 ' + num(f.goal) + ' 卡在这段量程之外，所以图上没画那条虚线。';
+  return span + '图上的点是有记录的每一天。' + trend;
 }
 
 /** `calorie.view.goal-progress` 的整页装配（`<!doctype html>` 起，双击即开）。
@@ -266,6 +355,8 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
     + renderKpiGrid(kpiCards(f, input.historyDays))
     // 日均与缺口的读法都只这写一处：本页四个读数各归其位，页脚不再重复第二遍。
     + renderCaliberLine('日均按窗口天数摊平，没记录的日子也算一天。缺口是消耗减摄入的差，正数表示摄入比消耗少。')
+    // 四项目标落一项：三项目标值如实上屏 ＋ 一句「本期只算热量」（缺项说明，见 NOT_COUNTED_NOTE）。
+    + notCountedBlock(f)
     + '</section>');
 
   if (empty) {
@@ -285,13 +376,19 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
     if (f.loggedDays >= 2) {
       toc.push({ id: SEC_TREND.id, text: SEC_TREND.name });
       sections.push('<section id="' + SEC_TREND.id + '">'
-        + intakeChart(g, day, f.goal)
-        + renderCaliberLine('虚线是热量目标 ' + num(f.goal) + ' 卡，点是有记录的每一天。'
-          + trendPhrase(g.trend.series.map((p) => p.calorie)))
+        + intakeChart(g, day, f)
+        + renderCaliberLine(chartCaliber(f, g))
         + '</section>');
     }
     toc.push({ id: SEC_HISTORY.id, text: SEC_HISTORY.name });
     sections.push('<section id="' + SEC_HISTORY.id + '">' + historyTable(g, input.historyDays, day, input.end)
+      // 两档窗口的转场：上面的折线／卡是**本窗**、这张表是**达标账那个窗口**，句子里先交代清楚。
+      // **不提屏上没有的东西**：折线要两个有记录的日子才出（`t425` 裁定 5），窗口里只有一天时那块整块不出——
+      // 此时还说「上面那张折线图…」就是跟读者说假话（与「虚线是热量目标」那条 P0 同一个病根）。
+      + renderCaliberLine((f.loggedDays >= 2
+        ? '上面那张折线图是窗口 ' + f.windowDays + ' 天里的每一天。'
+        : '这个窗口里只有一天有记录，折线图要两天以上才出。')
+        + '下面这张表看的是近 ' + input.historyDays + ' 天，两处不是同一个窗口。')
       // 达成情况这一列的说法必须在页上写清，否则「达标」两个字各有各的解释。
       + renderCaliberLine('达标口径：当日摄入占目标的 80% 到 120% 之间算达标。没记录的日子不列表，既不算达标也不算落空。')
       + '</section>');
@@ -339,9 +436,13 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
     renderCaliberLine('数据来源：' + SOURCE_LOGGED + '。'),
   ].join('');
 
+  // 页名一处派生：h1 与 `<title>` 走同一个串（浏览器标签页上也带着窗口，不再只写「目标进度」）；
+  // `<title>` 那串**不带 `·`**：可见文本出现 `·`／`；` 即设计债（分隔符探针，口径见
+  // `docs/skills/skill-calorie/t161-勘察-响应式与视觉配方.md:434-445`），窗口改用括号承载。
+  const title = f.windowDays <= 1 ? '今日目标进度' : '近 ' + f.windowDays + ' 天目标进度';
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: f.windowDays <= 1 ? '今日目标进度' : '近 ' + f.windowDays + ' 天目标进度',
+    docTitle: title === '今日目标进度' ? DOC_TITLE : DOC_TITLE + '（近 ' + f.windowDays + ' 天）',
+    title,
     eyebrow: EYEBROW,
     subtitle: input.start + ' 至 ' + input.end,
     content,

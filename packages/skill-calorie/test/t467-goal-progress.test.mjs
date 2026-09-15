@@ -11,6 +11,8 @@
  *   ⑤ 空窗也是完整页：窗口内一条记录也没有时仍是完整文档，缺值一律 `—`（**不许印 0**），
  *      空态句后接一句「怎么记第一条」的引导句。
  * 另加一条形状判据：结论条在场、KPI 卡带状态徽章、段标题带图标、页内导航每个锚点都有对应 `id`。
+ * 末条用例是**复核整改五条**的判据（量程判定两相／卡四带窗口／窗口转场／三项目标上屏／页签标题不带 `·`），
+ * 逐条对着读者能看到的那句话量，见用例自己的注释。
  *
  * 视觉一律留给用户肉眼，本文件不做任何视觉判断（`t166-页面清单与公共层.md:115` 明文）。
  * 运行：`node --test packages/skill-calorie/test/t467-goal-progress.test.mjs`
@@ -31,11 +33,14 @@ const { openDb, DB_FILENAME } = await import(pathToFileURL(join(ROOT, 'packages'
 const { seedFull, SEED_TODAY } = await import(pathToFileURL(join(ROOT, 'docs', 'research', 't81-seed.mjs')).href);
 const { assertDocPage } = await import(pathToFileURL(join(HERE, 'doc-page-assert.mjs')).href);
 
-/** 有数据的库：种子库整份；空窗前先落种子、再把窗口挪到没有记录的月份（见 `EMPTY_WINDOW`）。 */
-function seededDir(seed = true) {
+/** 有数据的库：种子库整份；空窗前先落种子、再把窗口挪到没有记录的月份（见 `EMPTY_WINDOW`）。
+ *  `patch` ＝ 种完之后对库打一条 SQL（改**种子事实**用的，例如把热量目标挪进／挪出数据量程；
+ *  判据口径不跟着改——量的仍是同一件「目标在量程内才画线」）。 */
+function seededDir(seed = true, patch = null) {
   const dir = mkdtempSync(join(tmpdir(), 't467-'));
   const db = openDb(join(dir, DB_FILENAME));
   if (seed) seedFull(db);
+  if (patch !== null) db.prepare(patch).run();
   db.close();
   return dir;
 }
@@ -219,4 +224,58 @@ test('#467 库为空仍走缺失阻断：exit 4、不落盘（裁定 4 的另一
   assert.ok(/缺失阻断|missing-data|取数失败/.test(r.stderr), '空库须可读阻断：' + r.stderr.slice(-200));
   const landed = existsSync(join(dir, 'calorie_html')) ? readdirSync(join(dir, 'calorie_html')).length : 0;
   assert.equal(landed, 0, '空库不落盘');
+});
+
+/** #467 复核整改五条（`docs/skills/skill-calorie/t467-重做-证据.md` 的复核节）。
+ *  一条用例管五件事，判据都落在**读者能看到的那句话**上：
+ *   ① 目标线量程判定：量程外不画（否则溢出到 KPI 卡区）＋图下那句改读数；量程内照画（反例正相）；
+ *   ② ③ 卡四牌子带窗口、达标表前那句窗口转场；两者都**不许提屏上没有的东西**；
+ *   ④ 蛋白／饮水／运动三项目标如实上屏（缺值写「还没设」，不编数）＋说清本期只算热量、要设该说哪条词；
+ *   ⑤ 页签标题带窗口，且**不带 `·`**（可见文本出现 `·` 即设计债，分隔符探针口径）。 */
+test('#467 复核整改五条：量程判定两相 ＋ 卡四带窗口 ＋ 窗口转场 ＋ 三项目标上屏', () => {
+  const r = run(seededDir(), '{"window":"30d"}');
+  assert.equal(r.status, 0, 'exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
+  const mark = markup(r.file);
+  const text = visibleText(r.file);
+
+  // ① 量程外：图上没有那条虚线（1800 > 数据量程上沿），图下那句也**不许再承诺**虚线。
+  assert.ok(mark.includes('ilife-block-chart-block'), '近 30 天窗该出折线图（本用例的前提）');
+  assert.ok(!mark.includes('ilife-charts-markline'), '目标落在量程外时仍画了那条虚线（会飘出绘图区）');
+  assert.ok(!text.includes('虚线是热量目标'), '量程外还说「虚线是热量目标」＝跟读者说假话');
+  assert.match(text, /本窗有记录的日子最低 \d+ 卡、最高 \d+ 卡，热量目标 1800 卡在这段量程之外，所以图上没画那条虚线/);
+
+  // ① 反例（正相）：目标挪进量程（1000 ∈ [88,1311]）⇒ 线照画、句照承诺。少了这一相，
+  // 「一律不画线」也能骗过上面那三条。
+  const rin = run(seededDir(true, 'UPDATE daily_goal SET calorie_goal = 1000 WHERE id = 1'), '{"window":"30d"}');
+  assert.equal(rin.status, 0, 'exit ' + rin.status + ' stderr=' + rin.stderr.slice(-300));
+  assert.ok(markup(rin.file).includes('ilife-charts-markline'), '目标落在量程内却没画那条虚线');
+  assert.ok(visibleText(rin.file).includes('虚线是热量目标 1000 卡'), '量程内没出读线的那句');
+
+  // ② 卡四牌子带窗口（这一列说的是**达标账那个窗口**，不是本窗）。
+  assert.ok(mark.includes('近 30 天达标天数'), '卡四牌子没带窗口');
+  assert.ok(!/>\s*达标天数\s*</.test(mark), '卡四还留着不带窗口的牌子');
+  assert.ok(/近 30 天里有记录 \d+ 天/.test(mark), '卡四详情没带窗口');
+
+  // ③ 窗口转场：折线（本窗）与表（近 30 天）不是一个窗口；没折线的那一态**不许提折线**。
+  assert.ok(text.includes('上面那张折线图是窗口 30 天里的每一天。下面这张表看的是近 30 天，两处不是同一个窗口。'),
+    '缺窗口转场句');
+  const r1 = run(seededDir(), '{"window":"今日"}');
+  assert.ok(!visibleText(r1.file).includes('上面那张折线图'), '单日窗没有图，却还提「上面那张折线图」');
+  assert.ok(visibleText(r1.file).includes('只有一天有记录，折线图要两天以上才出'), '无图那态缺交代');
+
+  // ④ 三项目标如实上屏（种子库：蛋白 150 克／饮水 2000 毫升／运动 300 卡）＋缺项口径 ＋ 唤醒词。
+  assert.ok(text.includes('蛋白 每天目标 150 克'), '蛋白目标没上屏');
+  assert.ok(text.includes('饮水 每天目标 2000 毫升'), '饮水目标没上屏');
+  assert.ok(text.includes('运动 每天消耗目标 300 卡'), '运动目标没上屏');
+  assert.ok(text.includes('本页的完成度与缺口只算热量'), '缺「本期只算热量」那句');
+  for (const w of ['定营养目标', '定饮水目标', '看今日运动（vs 目标）']) {
+    assert.ok(text.includes(w), '缺要设那一项该说的唤醒词：' + w);
+  }
+  const rnone = run(seededDir(true, 'UPDATE daily_goal SET protein_goal = NULL WHERE id = 1'), '{"window":"30d"}');
+  assert.ok(visibleText(rnone.file).includes('蛋白 每天目标 还没设'), '目标缺值没写「还没设」（不许编数）');
+
+  // ⑤ 页签标题带窗口且不带 `·`。
+  assert.match(r.file, /<title>卡路里 目标进度（近 30 天）<\/title>/);
+  const titleTag = /<title>[\s\S]*?<\/title>/.exec(r.file)[0];
+  assert.ok(!titleTag.includes('·'), '<title> 里出现 `·`（可见文本的分隔符懒政）');
 });
