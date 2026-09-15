@@ -1585,6 +1585,27 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-family: "SF Mono", monospace;',
     '  font-variant-numeric: tabular-nums;',
     '}',
+    // #512（列宽按内容给）行首列收窄到内容所需，余量归数值列。
+    // 病根：`table-layout:auto` 下剩段行宽按各列 max-content 比例分，而行首列（`align` 缺省 left；
+    // 本页就是日期列）的 max-content 比数值列重 ⇒ 1000／1440 档实测该列 415.23px（**占表宽 43%**），
+    // 两个数值列各只 271.38px。日期串长度固定（`2026-09-07（今日）`），不需要半屏。
+    // 手段：`width:1%` ＋ `white-space:nowrap` —— 1% 把该列的**目标宽**压到最小，`nowrap` 让它的
+    // min-content ＝ max-content ＝ 内容自然宽，两下一夹，列宽**恰好收在内容上**（实测 152.25px），
+    // 余下的整段行宽归 auto 的数值列（实测 402.88px×2）。#507 那条 `min-width:5.5em` ＋ 等宽栈
+    // ＋ `tabular-nums`（上一行 `td.…-cell-right`）本票一字不动：数值列的**下限**与**余量**是两件事。
+    // 只钉**行首列**（`td.…-cell-left:first-child`）：本层没有「这一列是日期」的信号（`left` 是缺省，
+    // 表里人人 `cell-left`），行首是唯一的既有信号。把**所有** left 列一律钉住（试过）会把本仓 141 处
+    // 调用点里「左列装长文本」的表整表重排：账单候选表（5 列）实测数值列由 99.11px 涨到 375.22px，
+    // 且长文本列失去折行兜底（`nowrap`），内容一超宽就横滚 —— 本票不碰那些表。
+    // 只在**桌面档**：`nowrap` 与 ≤640 档 #457 的「靠折行换不横滚」硬碰。本条按 640 断点的桌面侧
+    // 加一档（`min-width:641px` 与既有 `max-width:640px` 互为补集，不新增断点值），窄屏段一字不动
+    // —— 实测 512 档列宽／折行／横滚与改前逐值相同（211.97／133／133.03，0 折行、0 横滚）。
+    '@media (min-width: 641px) {',
+    '  .' + p + 'block-data-table td.' + p + 'block-data-table-cell-left:first-child {',
+    '    width: 1%;',
+    '    white-space: nowrap;',
+    '  }',
+    '}',
     // #457 手机端（≤640px）紧凑形态：不靠左右滑动看全。桌面段一字未动；窄屏只做三件事——
     // 收字号（表头 12→11px、单元格 13→12px）、收内边距（10/14→6/8、12/14→7/8）、
     // 放开 `th` 的 `white-space: nowrap`（这是表宽唯一的硬来源：表头不换行 → 最小宽度＝各列整词宽之和）。
