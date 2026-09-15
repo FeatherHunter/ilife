@@ -16,7 +16,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
-import { avgCompositionInRange, MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
+import { SOURCE_FILTER_ALL, assertSourceFilter, avgCompositionInRange, MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
 import { buildBodyMeasureCompare } from './bodyPlate.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -126,11 +126,19 @@ function resolveCompositionPeriods(params: Record<string, unknown>): {
 /** `calorie.view.body-composition-compare` · 对比体脂（两段均值／差值／变化率）。 */
 export function viewBodyCompositionCompare(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { p1Start, p1End, p2Start, p2End, source } = resolveCompositionPeriods(params);
+  /* #444 · `all`＝不按来源过滤（与 `listCompositions` 同式）：映射为缺省下传——
+   *  `avgCompositionInRange` 只认 `undefined`＝全源；显示面同取该映射值，
+   *  使 `all` 与缺省同出「全部来源」（`fetch/body.ts` 只读不碰）。 */
+  const src = source === SOURCE_FILTER_ALL ? undefined : source;
   let before: { avg_pct: number | null; min_pct: number | null; n: number };
   let after: { avg_pct: number | null; min_pct: number | null; n: number };
   try {
-    before = avgCompositionInRange(db, p1Start, p1End, source);
-    after = avgCompositionInRange(db, p2Start, p2End, source);
+    /* #444 · 未知来源校验复用 `fetch/body.ts` 的 `assertSourceFilter`（与
+     *  `calorie.view.body-composition` 同一道门，#398 口径）：未知字面值抛
+     *  `FetchError` 并点名合法值（下层 catch 照旧转 `missing-data`，exit 4）。 */
+    if (source !== undefined) assertSourceFilter(source);
+    before = avgCompositionInRange(db, p1Start, p1End, src);
+    after = avgCompositionInRange(db, p2Start, p2End, src);
   } catch (e) {
     if (e instanceof FetchError) throw new CalorieRenderError('missing-data', e.message);
     throw e;
@@ -144,7 +152,7 @@ export function viewBodyCompositionCompare(params: Record<string, unknown>, db: 
     ? null
     : round2((delta / beforeAvg) * 100);
   const v: BodyCompositionCompareView = {
-    source: source ?? null,
+    source: src ?? null,
     p1Start, p1End, p2Start, p2End,
     beforeAvg, beforeN: before.n, afterAvg, afterN: after.n, delta, ratePct,
   };
