@@ -16,6 +16,7 @@ import { buildTodayWaterView } from './nutritionPort.js';
 import { buildTodayWaterDoc } from './nutritionPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { assertISO, dayField, fail, latestFoodDate, nums, optStr, windowRange } from '../shared/params.js';
+import { commandLine } from '../shared/writeParts.js';
 
 /** 备注筛选参数：`hasNote` 主名、`withNote` 兼容旧唤醒词文案（`--with-note`）。只收布尔，非布尔即用法错。 */
 function hasNoteOf(params: Record<string, unknown>): boolean | undefined {
@@ -59,5 +60,10 @@ export function viewTodayWater(params: Record<string, unknown>, db: DatabaseSync
   /* #511 · 这一条命令底下挂着两个唤醒词（看今日喝水／看今日饮水），参数一字不差，命令分不出进来的是
      哪条 ⇒ 由入口自己带 `entry` 标记（`src/diet/routes.ts` 那条「看今日喝水」的记录），页头按它出叫法。
      不给标记（含未知参数名）＝从前的「今日饮水」那一支，行为一字不差。 */
-  return { data: { metrics }, html: buildTodayWaterDoc(v, optStr(params, 'entry')) };
+  /* #275 · 复制日志第 4 段「调用链」＝**本次命令原文**（含 `--params`），照抄可重跑（裁定 7）；
+     命令原文走命令层共用件 `shared/writeParts.ts` 的 `commandLine()`，页面件不自己拼。 */
+  return {
+    data: { metrics },
+    html: buildTodayWaterDoc(v, optStr(params, 'entry'), commandLine('calorie.view.today-water', params)),
+  };
 }
