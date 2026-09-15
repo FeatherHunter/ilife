@@ -70,12 +70,13 @@ test('#536 对比体脂：页头人话＋期别区间写「至」＋基准行有
   assert.ok(!/\bvs\b/.test(text), '英文裸词 vs 不上屏');
   // ② 区间不拿 ~ 顶替「至」；单日只写那一天
   assert.ok(!text.includes('~'), '可见文本里没有 ~');
-  // ④ 同一组数以两处为限：结论条一次 ＋ 表格变化率那一格一次（改前是三处：结论条 ＋ 表题 ＋ 卡明细）
-  const rateHits = text.match(/-4\.76%/g) ?? [];
-  assert.ok(rateHits.length <= 2, '变化率数值不重复抄（结论条 1 ＋ 表内 1）：' + rateHits.length);
-  assert.ok(!text.includes('（差值 -1%'), '表题不再抄一遍差值（改前表题＝「差值 -1% · 变化率 -4.76%」）');
-  assert.ok(text.includes('比基准'), '差值列的表头说清它是「比基准」');
+  // ③ 同一组数以两处为限：对照带一次 ＋ 表内一次（改前是三处：结论条 ＋ 表题 ＋ 卡明细）
+  const rateHits = text.match(/4\.76%/g) ?? [];
+  assert.ok(rateHits.length <= 2, '变化率数值不重复抄：' + rateHits.length);
   assert.ok(text.includes('第一段是基准'), '表题说明首行是基准');
+  assert.ok(text.includes('基准'), '首行基准字样在场');
+  // ④ 半角减号不出现在数值里（负值走全角减号 U+2212）
+  assert.ok(!/[-]\d/.test(text.replace(/2026-\d\d-\d\d/g, '')), '数值不用半角减号');
   // ⑤ 页头两件是读者的话
   assert.ok(text.includes('体脂率两期对比'), '左槽写期别口径');
   assert.ok(text.includes('身体细节'), '类型徽章是域名');
@@ -97,7 +98,8 @@ test('#536 对比围度：9 部位斜杠串出页面＋页头人话＋手机端�
   assert.ok(!text.includes('胸/腰'), '部位斜杠串出页面');
   assert.ok(!/前臂\(/.test(text), '半角括号串出页面');
   assert.ok(text.includes('前一次记录是基准'), '表题说明前一次是基准');
-  assert.ok(text.includes('有变化的部位'), '卡名是读者的话');
+  assert.ok(text.includes('围度变了'), '事实条说清变了几个部位');
+  assert.ok(!/[-]\d/.test(text.replace(/2026-\d\d-\d\d/g, '')), '数值不用半角减号');
   assert.ok(html.includes('viewport-fit=cover') && html.includes('data-label='), '手机端配方在场');
   db.close();
 });
