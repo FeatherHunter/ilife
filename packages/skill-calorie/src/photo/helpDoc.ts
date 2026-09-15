@@ -9,17 +9,25 @@
  * 可复制命令块）＋ `dataCopyArea`（复制区）。
  *
  * **#529 重做（票「卡路里场景09 · HELP 两页整改」）**：整页从「十条命令逐条平铺原始 JS」改成
- * 「人话在前、载荷在后」的目录型长页。四处口径：
+ * 「人话在前、载荷在后」的目录型长页。五处口径：
  *  1. **人话在前**：每条命令先出人话名（「存一张身材照」）＋ 一句话说明（`helpDocContent.ts`），
  *     可复制载荷（那段几十行的 node 一行式）收进**折叠块**（`renderDisclosure`，默认收起）——
  *     正文不再平铺原始 JS。载荷本身一字不改：它仍是 `renderPreBlock` 渲染的可复制命令块，
  *     `data-t` 里逐字带着那条命令，复制按钮的 `actionId` 仍取冻结表 `CALORIE_COPY_ACTION`。
  *  2. **内部标识符不上屏**：命令键只住在行的 `data-help-row` 属性里（供机器认人），
  *     人眼看的标题／说明／目录全无 `body_photo_*`、包名、函数名、`process.env.*`。
- *  3. **并列语义换形状**：分组靠**节头 ＋ 目录**（`renderTocBlock`），组内一条一行（`<li>`），
+ *  3. **唤醒词逐字上屏**（#529 回补）：每行第一件是「说这句」＋ 唤醒词徽章（`renderChips`）——
+ *     本页是「现找」的落点，用户拿走的是**一句要对 AI 说的话**；改前它印在行首，中间态换成
+ *     人话名时被一起丢了。唤醒词取命中的 `wakeWord` 字段（单一来源仍是 `helpLookup.ts`）。
+ *  4. **并列语义换形状**：分组靠**节头 ＋ 目录**（`renderTocBlock`），组内一条一行（`<li>`），
  *     不再用 `·`／`／` 串把事实挤成一行。
- *  4. **手机端标杆**：页内目录可点（触摸区 44px）、节头有锚点、行内不出现横向滚动
- *     （载荷长串在折叠块里折行，见 `helpDocCss.ts`）。
+ *  5. **手机端标杆**：页内目录可点（触摸区 44px）、节头有锚点、行内不出现横向滚动
+ *     （载荷长串在折叠块里折行，见 `helpDocCss.ts`）；整页另开 `pageUi` 位（#525 共用件），
+ *     与其余页族共享同一份移动端配方（断点／触摸区／安全区／窄屏表格）。
+ *
+ * **同事实一页一处**（#529 文案纪律）：读法那一句只出一次（`PHOTO_HELP_ROWS_LEAD`，在清单上方），
+ * 改前是**每条命令的折叠块里各印一遍**同一句长话（10 行同一句）；页头副标题只说「这一页是找什么的」，
+ * 不再复述卡②的用法。
  *
  * 边界：`src/render/html.ts` **一行不改**——`helpRowHtml` 仍被 `renderHelpLookupHtml`
  * （`calorie.help.lookup`）与两条既有测试（`render-t10`／`render-copy-90`）直调。
@@ -27,11 +35,14 @@
  * `<库目录>/calorie_html/卡路里_照片HELP_<TS>.html`（#245 复用窗口靠主体名认人）。
  */
 import { escapeHtml } from 'base-paint';
-import { renderDisclosure, renderEmptyBlock, renderKpiGrid, renderPreBlock, renderTocBlock } from 'base-paint/blocks';
+import { renderChips, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderPreBlock, renderTocBlock } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import { CALORIE_COPY_ACTION } from '../render/copy.js';
-import { photoHelpAnchorOf, photoHelpKeysBySection, photoHelpTextOf, PHOTO_HELP_SECTIONS } from './helpDocContent.js';
+import {
+  PHOTO_HELP_ROWS_LEAD, PHOTO_HELP_SAY_LABEL, PHOTO_HELP_SECTIONS,
+  photoHelpAnchorOf, photoHelpKeysBySection, photoHelpTextOf,
+} from './helpDocContent.js';
 import type { PhotoHelpSection } from './helpDocContent.js';
 import { photoHelpDocCss } from './helpDocCss.js';
 import type { PhotoHelpHit } from './helpLookup.js';
@@ -50,14 +61,20 @@ const PAYLOAD_TITLE = '这条指令怎么用';
  *  口径：#529 硬要求「正文平铺原始 JS 一律判债」——那段几十行的 node 一行式对读者是零信息，
  *  但它必须**逐字可达**（用户点一下就复制走）。故原文改住属性（`renderPreBlock` 的 `copyText`
  *  → `data-t`），屏幕上这一格只说人话。判据工具 `audit-separators.mjs` 的可见文本口径里属性
- *  天然不进文本节点，节点级读数因此归零（这是「内部标识符清零」的可机械验证形态）。 */
-const PAYLOAD_HINT = '点下面的按钮复制这条指令，发给我就能用。指令原文是给 AI 读的，你不用看懂它';
+ *  天然不进文本节点，节点级读数因此归零（这是「内部标识符清零」的可机械验证形态）。
+ *
+ *  **一页一句**（#529 回补）：这句读法只住在**每一行的折叠块里**，而清单上方那条
+ *  `PHOTO_HELP_ROWS_LEAD` 是它对**整页**的说明——两者不重复：前者是按钮旁边的一步操作，
+ *  后者是「这一页怎么用」。改前那一版把一句 40 字的长话在 10 个折叠块里各印一遍。 */
+const PAYLOAD_HINT = '点下面按钮复制，发给我就能用。原文是给 AI 读的，你不用看懂';
 
-/** 一条命中：人话名 ＋ 一句话说明 ＋ 折叠起来的可复制载荷。 */
+/** 一条命中：说这句（唤醒词徽章）＋ 人话名 ＋ 一句话说明 ＋ 折叠起来的可复制载荷。 */
 function hitRowHtml(h: PhotoHelpHit): string {
   const text = photoHelpTextOf(h.key);
   return '<li data-help-row="' + escapeHtml(h.key) + '" class="ilife-helpdoc-row">'
     + '<p class="ilife-helpdoc-name">' + escapeHtml(text.label) + '</p>'
+    + '<p class="ilife-helpdoc-say"><span class="ilife-helpdoc-say-tag">' + PHOTO_HELP_SAY_LABEL + '</span>'
+    + renderChips({ items: [{ text: h.wakeWord }] }) + '</p>'
     + '<p class="ilife-helpdoc-detail">' + escapeHtml(text.detail) + '</p>'
     + renderDisclosure({
       title: PAYLOAD_TITLE,
@@ -104,7 +121,7 @@ function tocHtml(hits: readonly PhotoHelpHit[]): string {
 }
 
 /** 页头读数卡：**两页各说两件事，且不互相复述**（同事实一页一处）。
- *  - 卡①「命中」：这一页列了几条，以及为什么是这几条；
+ *  - 卡①「命中」：这一页列了几条，以及这一页是怎么来的；
  *  - 卡②「怎么用」：一句话把用法讲完（复制 → 发给 AI → 拿结果）。 */
 function kpiHtml(hits: readonly PhotoHelpHit[], asked: boolean, query: string): string {
   const n = hits.length;
@@ -113,7 +130,7 @@ function kpiHtml(hits: readonly PhotoHelpHit[], asked: boolean, query: string): 
       label: '命中',
       value: String(n),
       unit: '条',
-      detail: asked ? '你查的「' + query + '」查到的都在下面' : '照片这一类就这十条，全在下面',
+      detail: asked ? '跟「' + query + '」有关的都在下面' : '照片这一类就这十条，全在下面',
     },
     {
       label: '怎么用',
@@ -123,11 +140,9 @@ function kpiHtml(hits: readonly PhotoHelpHit[], asked: boolean, query: string): 
   ]);
 }
 
-/** 页头那一行小字（不写半角标点；不重复卡里的条数）。 */
-function subtitleOf(n: number, asked: boolean, query: string): string {
-  return asked
-    ? '跟「' + query + '」有关的照片命令，挑一条发给我就能用'
-    : '想做什么就挑哪一条，发给我就能用';
+/** 页头那一行小字（不写半角标点；不重复卡里的条数与用法，只说这一页是找什么的）。 */
+function subtitleOf(asked: boolean, query: string): string {
+  return asked ? '照片里跟「' + query + '」有关的那几条命令' : '照片这一类能做的十条命令';
 }
 
 /** 整页装配：`query` 空串＝全量那一态（命中＝全 10 键），非空＝现找那一态。 */
@@ -139,6 +154,7 @@ export function buildPhotoHelpDoc(hits: readonly PhotoHelpHit[], query?: string)
     parts.push(renderEmptyBlock({ text: '没有命中任何照片命令：换个说法再试试' }));
   } else {
     parts.push(tocHtml(hits));
+    parts.push('<p class="ilife-helpdoc-lead">' + PHOTO_HELP_ROWS_LEAD + '</p>');
     parts.push(sectionsHtml(hits));
   }
   parts.push('<div class="ilife-helpdoc-copy">' + dataCopyArea('复制数据', {
@@ -153,9 +169,12 @@ export function buildPhotoHelpDoc(hits: readonly PhotoHelpHit[], query?: string)
     // 眉标**不出**：改前那一行是「身材照片 · 命令速查」，那枚 `·` 是分隔符债（R1），且它说的事
     // 与 H1「身材照 HELP」＋ 副标题重复。页名已由 H1 与 `<title>` 各说一次，这一行是纯冗余。
     eyebrow: '',
-    subtitle: subtitleOf(n, asked, asked ? (query as string) : ''),
+    subtitle: subtitleOf(asked, asked ? (query as string) : ''),
     content: photoHelpDocCss() + parts.join(''),
     charts: false,
+    // #525 共用件：页面级移动端配方（断点／44px 触摸区／安全区／窄屏表格）。本页的
+    // 「页内目录触摸区」与「节头锚点」两项是本页特有的，仍住 `helpDocCss.ts`。
+    pageUi: true,
   });
 }
 

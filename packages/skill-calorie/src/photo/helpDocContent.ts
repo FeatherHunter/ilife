@@ -16,11 +16,18 @@
  *  ② 中文句子里不留半角 `,`／`:`／`(`／`/`（用「，」「：」「（）」或改写）；
  *  ③ 不写 `·`／`；`／`、`／`｜`／`~` 这类并列分隔符——并列语义一律交给形状（徽章／行／卡／目录），
  *     判据是 `scripts/audit-separators.mjs` 的节点级读数（本件一条字符串都不该命中）。
+ *
+ * **唤醒词逐字上屏（#529 回补，为什么它不能丢）**：本页是「现找」的落点——用户拿走的是**一句唤醒词**
+ *  （他要能对 AI 说出这句话）。改前那一版把唤醒词印在每行开头（`身材照 · body_photo_… · 存一张…`），
+ *  `#529` 的中间态把命令键换掉时**把唤醒词也一起丢了**（页面上一个字都没有），
+ *  机械闸门 `photo-helpdoc-488` 的 `assertKeysOnlyAsAttribute` 就是当场揭示这一点的牙齿。
+ *  唤醒词不住本件（它来自 `helpLookup.ts` 的命中项，单一来源）；本件只给它一个**标签**，
+ *  由 `helpDoc.ts` 用 `renderChips` 把它排成一行徽章。
  */
 
 /** 一个分组（页内一节）：`id` 既是锚点也是目录项的落点。 */
 export interface PhotoHelpSection {
-  /** 锚点 id 的短名（页内拼 `PHOTO_HELP_SECTION_DOM_PREFIX + id`）。 */
+  /** 锚点 id 的短名（页内拼 `PHOTO_HELP_ANCHOR_PREFIX + id`）。 */
   readonly id: string;
   /** 节标题（四个字以内，目录与节头同一份）。 */
   readonly label: string;
@@ -31,7 +38,7 @@ export interface PhotoHelpSection {
 /** 目录／节序：与 `helpLookup.ts` 的 SoT 场景序无关，是**给人看的走法**（先存、再看、再比、再动图、最后整理）。 */
 export const PHOTO_HELP_SECTIONS: readonly PhotoHelpSection[] = Object.freeze([
   Object.freeze({ id: 'save', label: '存照片', lead: '把手上的照片收进身材照库，以后按日期和标签翻得到' }),
-  Object.freeze({ id: 'look', label: '看照片', lead: '按标签和天数把库里的照片摆出来看' }),
+  Object.freeze({ id: 'look', label: '看照片', lead: '按标签和时间把库里的照片摆出来看' }),
   Object.freeze({ id: 'compare', label: '对比照片', lead: '挑两张并排看，看出这段时间的变化' }),
   Object.freeze({ id: 'motion', label: '生成动图', lead: '把一段时间的照片连成动图，一眼看出走势' }),
   Object.freeze({ id: 'organize', label: '整理照片', lead: '给照片挂标签或者摘标签，也可以删掉不要的' }),
@@ -39,6 +46,12 @@ export const PHOTO_HELP_SECTIONS: readonly PhotoHelpSection[] = Object.freeze([
 
 /** 锚点 id 前缀（`helpDoc.ts` 与节头 `id` 必须逐字同源，故只在这里写一份）。 */
 export const PHOTO_HELP_ANCHOR_PREFIX = 'help-';
+
+/** 唤醒词那一行的标签名（说清这枚徽章是什么：用户要照着说的一句话）。 */
+export const PHOTO_HELP_SAY_LABEL = '说这句';
+
+/** 清单上方那一句读法（**一页一句**，替代改前「每条命令各印一遍」：同事实一页一处）。 */
+export const PHOTO_HELP_ROWS_LEAD = '每条点开都有一句原文，按一下按钮就复制走，粘给我就能用';
 
 /** 一条命令的上屏文本。 */
 export interface PhotoHelpText {
@@ -78,13 +91,13 @@ export const PHOTO_HELP_TEXT: Readonly<Record<string, PhotoHelpText>> = Object.f
     section: 'organize', label: '删掉一张照片', detail: '确认之后才真的删，删了就找不回来',
   }),
   body_photo_tag_set: Object.freeze({
-    section: 'organize', label: '改标签', detail: '把一张照片的标签换成另一个，比如从「正面」改到「侧面」',
+    section: 'organize', label: '改标签', detail: '把一张照片的标签整套换掉，比如从「正面」改成「侧面」',
   }),
   body_photo_tag_add: Object.freeze({
-    section: 'organize', label: '加标签', detail: '在原有标签上再挂一个，一张照片可以有多个标签',
+    section: 'organize', label: '加标签', detail: '在原有标签之外再挂一个，一张照片可以同时有几个标签',
   }),
   body_photo_tag_remove: Object.freeze({
-    section: 'organize', label: '去掉标签', detail: '只摘掉指定的那个标签，照片本身还在库里',
+    section: 'organize', label: '去掉标签', detail: '只摘掉指定的那个标签，照片本身还留在库里',
   }),
 });
 
