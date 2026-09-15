@@ -2,9 +2,11 @@
  *
  * envelope 形状校验与装配（`assertEnvelopeData`／`buildEnvelope`）＋ 三态判定与落盘
  * （`describeDeliveryTarget`／`dataTextOf`／`buildDeliveredEnvelope`）＋ 渲染失败回执
- * （`failWithReceipt`：模板化回执，严禁手写 HTML 兜底）。变化频率与参数前置不同，
- * 故与 `readArgs.ts` 分件。对外 3 件（铁律五）：`buildDeliveredEnvelope`／`failWithReceipt`／
- * `describeDeliveryTarget`（主入口的渲染失败分支也要拼落点描述，故一并转出）。
+ * （`failWithReceipt`：模板化回执，严禁手写 HTML 兜底）＋ #500 身体域缺参数／缺数据
+ * 失败回执整页（`failWithReceipt` 的同形姐妹 `failWithBodyReceipt`，同复用
+ * `buildErrorReceipt`＋`renderErrorHtml`，仅外层包整页、exit 保持 2／4）。变化频率与参数前置不同，
+ * 故与 `readArgs.ts` 分件。对外 4 件（铁律五）：`buildDeliveredEnvelope`／`failWithReceipt`／
+ * `failWithBodyReceipt`／`describeDeliveryTarget`（主入口的渲染失败分支也要拼落点描述，故一并转出）。
  */
 import { buildDataText } from 'base-paint';
 import type { EnvelopeShape } from 'base-link-core';
@@ -16,6 +18,8 @@ import { CalorieRenderError } from '../render/errors.js';
 import { renderErrorHtml } from '../render/html.js';
 import { buildErrorReceipt } from '../render/receipt.js';
 import type { ErrorReceipt } from '../render/receipt.js';
+import { assembleDocPage } from '../shared/docPage.js';
+import { bodySceneFor } from './readArgs.js';
 import type { DeliveryKind, ViewOut } from '../shared/commandSpec.js';
 
 /** 本地 envelope 形状校验（镜像 link-core assertShapeData，不运行时 import）。 */
@@ -170,4 +174,62 @@ function failWithReceipt(reason: string, key: string | undefined): never {
   process.exit(5);
 }
 
-export { describeDeliveryTarget, failWithReceipt };
+/** #500 · 身体域缺参数／缺数据走失败回执整页（融合基准 §二 序 16）。
+ *
+ * 复用 `src/render/receipt.ts:212` 的 `buildErrorReceipt` 数据构造 ＋ `render/html.ts` 的
+ * `renderErrorHtml` 模板，不新造形状；仅外层经共用位 `shared/docPage.ts` 的 `assembleDocPage`
+ * 包成完整文档（`<!doctype html>`＋charset＋内联样式），使首行即 doctype。
+ * exit 保持调用方传入码（缺参数 2／缺数据 4，按 #365 实测），仅产物由纯 stderr 一行
+ * 升级为整页＋`RECEIPT`（P9：stdout 仍纯净）。场景名取 `readArgs.ts` 的 `bodySceneFor`
+ *（身体细节）；徽章 `失败`、摘要里点名 `重试指令` 与 `建议下一步`（老正本
+ * `error_receipt.html:67`／`:80`／`:101-107` 的四件）。其它域调用方不进本函数。 */
+function failWithBodyReceipt(reason: string, key: string, code: 2 | 4): never {
+  console.error('ERR ' + code + ': ' + reason);
+  try {
+    const scene = bodySceneFor(key) ?? '身体细节';
+    const fix = 'calorie-cmd-read ' + key + " --params '{…}'";
+    const suggestions = code === 2
+      ? ['补齐缺失参数后重试（缺哪个见页内原因）', '照命令示例补 --params 后重跑', '先看向导页确认必填项']
+      : ['先记一条身体记录再查（空库时）', '换个有数据的窗口或日期再查', '确认库内确有该来源记录'];
+    const receipt: ErrorReceipt = buildErrorReceipt({
+      sceneName: scene,
+      wakeWord: key,
+      op: code === 2 ? '参数缺失未完成' : '取数缺失未完成',
+      reason,
+      suggestions,
+      fixPrompt: fix,
+    });
+    const fragment = renderErrorHtml(receipt);
+    const full = assembleDocPage({
+      docTitle: '卡路里 身体细节',
+      title: scene + '失败回执',
+      subtitle: null,
+      eyebrow: '',
+      metaLeft: '身体细节',
+      badge: '失败',
+      summary: reason + '｜重试指令：' + fix + '｜建议下一步：见页内清单',
+      content: fragment,
+    });
+    let delivery: Delivery;
+    try {
+      const d = deliverHtml({
+        key, params: {}, target: resolveReceiptHtmlPath(), html: full,
+      });
+      delivery = buildDelivery({
+        mode: d.mode, path: d.mode === 'file' ? d.path : undefined, shape: 'receipt', html: full, bytes: d.bytes,
+      });
+    } catch {
+      delivery = buildDelivery({
+        mode: 'inline', shape: 'receipt', html: full, bytes: Buffer.byteLength(full, 'utf8'),
+      });
+    }
+    console.error('RECEIPT ' + JSON.stringify({
+      ok: false, ...receipt, delivery, html: delivery.mode === 'inline' ? full : undefined,
+    }));
+  } catch (e) {
+    console.error('TOAST: 回执生成失败（' + ((e as Error).message || String(e)) + '）');
+  }
+  process.exit(code);
+}
+
+export { describeDeliveryTarget, failWithReceipt, failWithBodyReceipt };

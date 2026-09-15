@@ -29,8 +29,8 @@ import { CalorieRenderError } from '../render/errors.js';
 
 // #330 · CLI 前置与交付装配住同目录两件（纯搬，行为不变）：`readArgs.ts`（参数＋预检）／
 // `delivery.ts`（envelope＋三态交付＋失败回执）。入口名与 `export function dispatch` 不挪。
-import { USAGE, parseReadArgs, preflight, toast } from './readArgs.js';
-import { buildDeliveredEnvelope, describeDeliveryTarget, failWithReceipt } from './delivery.js';
+import { USAGE, bodySceneFor, parseReadArgs, preflight, toast } from './readArgs.js';
+import { buildDeliveredEnvelope, describeDeliveryTarget, failWithBodyReceipt, failWithReceipt } from './delivery.js';
 export { buildDeliveredEnvelope };
 
 // #250 · 窗口与锚点只有一个定义地（analysis/series.ts）：读命令一律经下方 anchorOf／windowRange／dayField 取参。
@@ -119,11 +119,22 @@ async function main(): Promise<void> {
     }
   } catch (e) {
     if (e instanceof CalorieRenderError) {
-      if (e.code === 'missing-data') fail(4, '取数失败（缺失阻断）：' + e.message);
-      if (e.code === 'bad-input') fail(2, '参数失败：' + e.message);
+      // #500 · 身体域缺数据／缺参数走失败回执整页（exit 保持 4／2，按 #365 实测）；
+      // 非身体键走原纯文本（其它域不动）。接线位是框架调用方（声明外最小 wiring，见证据）。
+      if (e.code === 'missing-data') {
+        if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败（缺失阻断）：' + e.message, o.key as string, 4);
+        fail(4, '取数失败（缺失阻断）：' + e.message);
+      }
+      if (e.code === 'bad-input') {
+        if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('参数失败：' + e.message, o.key as string, 2);
+        fail(2, '参数失败：' + e.message);
+      }
       failWithReceipt('渲染失败：' + e.message, o.key as string);
     }
-    if (e instanceof FetchError) fail(4, '取数失败：' + (e as Error).message);
+    if (e instanceof FetchError) {
+      if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败：' + (e as Error).message, o.key as string, 4);
+      fail(4, '取数失败：' + (e as Error).message);
+    }
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally {
     clearTimeout(timer);
