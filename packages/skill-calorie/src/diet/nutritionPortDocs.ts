@@ -123,6 +123,59 @@ function statEnvelope(key: string, metrics: Record<string, number>): DataTextInp
   return { version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key, data: { metrics } };
 }
 
+/* ── 窗口为空那一态的整页（`t425` 裁定 4 的 2026-09-15 澄清） ── */
+
+/** **窗口为空**那一态的整页（裁定 4／§五 的 ⑥ 类骨架：页头 ＋ 页题 ＋ 结论句槽 ＋ 页内导航 ＋
+ *  空态块 ＋ 来源脚注 ＋ 复制区）。
+ *
+ *  两态互斥且不重叠，别把口径搅在一起：
+ *    · **窗口为空**（这条词跑得通、库里别处有记录，只是这段没记）⇒ 走本函数：完整页 ＋ 空态句 ＋
+ *      引导句（「怎么记第一条」），照样有页内导航与复制区，缺的只是读数；
+ *    · **库为空**（连取数的底都没有）⇒ 取数层原样抛 `missing-data`、`exit 4`、不落盘，
+ *      **是既有设计行为，本函数不接那一支**。
+ *  两态的分辨在调用点做（`./nutrition.ts`／`./today.ts` 用 `hasAnyDietRow(db)`），本件只负责装配。
+ *
+ *  字段面收在八个（结构纪律：一个类型的字段不多于八个）——锚点、导航文案、库文件名都是本页常量，
+ *  由本件自己定，不叫调用方填。 */
+export interface EmptyWindowDocInput {
+  /** 复制载荷的命令键（复制数据那一栏用）。 */
+  readonly key: string;
+  /** 眉标（§五 第 1 行：唤醒词 · 饮食；**不出命令键**——裁定 1）。 */
+  readonly metaLeft: string;
+  /** 页题（§五 第 2 行：页面名 ＋ 窗口／日期）。 */
+  readonly title: string;
+  /** 空态块的标题（这一块本来要出的是什么）。 */
+  readonly blockTitle: string;
+  /** 空态句（窗口内零记录这一件事，说清楚是哪一段）。 */
+  readonly emptyText: string;
+  /** 引导句（怎么记第一条）。裁定 4 要求空态句后必接一句。 */
+  readonly guide: string;
+  /** 来源脚注（普通小字行；裁定 3）。 */
+  readonly footnote: string;
+  /** 本次命令原文（复制日志第 4 段，裁定 7）。不给＝不出复制区。 */
+  readonly command?: string;
+}
+
+export function buildEmptyWindowDoc(input: EmptyWindowDocInput): string {
+  const envelope = statEnvelope(input.key, {});
+  const body = [
+    renderTocBlock({ items: [{ id: 'sec-empty', text: input.blockTitle }] }),
+    anchored('sec-empty', renderEmptyBlock({ title: input.blockTitle, text: input.emptyText + input.guide })),
+    sourceFootnote(input.footnote),
+    docCopy(envelope, input.command, DB_FILENAME + ' ｜ ' + input.blockTitle),
+  ].join('');
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: input.title,
+    eyebrow: EYEBROW,
+    subtitle: input.emptyText,
+    metaLeft: input.metaLeft,
+    badge: BADGE,
+    summary: input.emptyText,
+    content: body,
+  });
+}
+
 /** 同源入口页的**入口标记**（两条唤醒词共用同一条命令时的页头开关）。
  *
  *  #511 · 两组「同源入口页」在命令面上完全同形，参数也一字不差，命令这一层分不出进来的是哪条词
@@ -201,11 +254,36 @@ function ratioSummary(v: NutritionRatioView, balance: { text: string }): string 
     + balance.text + '（蛋白 ' + v.proteinPct + '% · 碳水 ' + v.carbPct + '% · 脂肪 ' + v.fatPct + '%）。';
 }
 
+/** 营养配比区块的开关（`buildNutritionRatioBlock` 的第二参；`#275` 微修按编排者 2026-09-15 指令加）。
+ *
+ *  一个区块里能出的东西只有一样是可选的：**末尾那一节复制区**。宿主页自己多半也有一整个复制区
+ *  （复盘页就有），两处并排既重复又难看 ⇒ 由**宿主页**决定要不要区块自带的那一节。
+ *
+ *  **两个位各守一件事，别混**：
+ *   · `copy` 只管**区块自带的那一节**；**缺省 `true`**——与 #275 交付时的行为一字不差，
+ *     老调用点（#273 的 `buildNutritionRatioBlock(ratio)`）不改也不变。宿主页自己出复制区时传 `false`。
+ *   · `command` 是**那一节**的日志第 4 段要写的本次命令原文——**不给就整节不出**（裁定 7：
+ *     不编命令原文，也不出点不动的日志按钮）。所以 `copy` 为真而 `command` 不给 ＝ 不出那一节，
+ *     不是出个半截（`copy` 为真时 `command` 是必需位）。
+ *
+ *  **整页那一支怎么用**（本件自己的先例）：`buildNutritionRatioDoc` 把命令原文**交给区块**出那一节，
+ *  自己不再另出一节 ⇒ 一张页只有一个复制区。这就是给 #273 的写法：
+ *  宿主页已有复制区就传 `copy: false`，没有就把命令原文给区块让它出。 */
+interface NutritionRatioBlockOptions {
+  /** 区块末尾要不要自带那一节复制区；缺省 `true`。宿主页自己出复制区时传 `false`。 */
+  readonly copy?: boolean;
+  /** 区块自带那一节的日志第 4 段＝本次命令原文（含 `--params`）。不给＝那一节整节不出。 */
+  readonly command?: string;
+}
+
 /** 营养配比区块（**服务 `calorie.view.diet-review`**，作者＝#273：「看营养结构」按老 SKILL 也出这张页，
  *  老模板 `templates/nutrition_ratio.html`；#273 把它嵌进复盘页。本件只交付，不集成）。
  *
- *  宿主页里出柱／环图 ⇒ `assembleDocPage` 的 `charts` 传 `true`。 */
-export function buildNutritionRatioBlock(v: NutritionRatioView): string {
+ *  宿主页里出柱／环图 ⇒ `assembleDocPage` 的 `charts` 传 `true`。
+ *
+ *  末尾那一节复制区（数据 ＋ 日志）的开关见 `NutritionRatioBlockOptions`：**缺省带**（老调用点逐字节不变），
+ *  宿主页自己出复制区时传 `{ copy: false }` 把它关掉——一张页上只该有一个复制区。 */
+export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: NutritionRatioBlockOptions): string {
   const balance = BALANCE[v.balance];
   /* 一张营养素一张卡：值／占比／每日目标都从上面那份 `macroReadings` 取（卡片槽吃纯文本，
      环图与对比表吃同一份读数，三处不可能各自算一遍）。 */
@@ -295,26 +373,31 @@ export function buildNutritionRatioBlock(v: NutritionRatioView): string {
   })));
   parts.push(sourceFootnote('📊 数据来源 · 饮食记录 · ' + v.start + ' → ' + v.end
     + '（按营养素折算）'));
-  /* 块层不给复制区（宿主页可能只是把这一块嵌进自己的页）——整页那一支由 `buildNutritionRatioDoc` 出。 */
+  /* 末尾那一节复制区（开关见 `NutritionRatioBlockOptions`）：
+     缺省带（老调用点＝#273 的 `buildNutritionRatioBlock(ratio)` 逐字节不变）；
+     宿主页自己出复制区时传 `{ copy: false }` ⇒ 这一节整节不出（不给命令原文时同样整节不出）。 */
+  if (opts?.copy !== false && opts?.command !== undefined) {
+    parts.push(docCopy(statEnvelope('calorie.view.nutrition-ratio', metricsOf({
+      totalCalorie: v.totalCalorie, proteinG: v.proteinG, proteinPct: v.proteinPct,
+      carbG: v.carbG, carbPct: v.carbPct, fatG: v.fatG, fatPct: v.fatPct,
+      targetProteinG: v.targetProteinG, targetCarbG: v.targetCarbG, targetFatG: v.targetFatG,
+    })), opts.command, DB_FILENAME + ' ｜ 饮食记录（按营养素折算）'));
+  }
   return parts.join('');
 }
 
 /** 营养配比**整页**（`calorie.view.nutrition-ratio`）。`command`＝本次命令原文（复制日志第 4 段）。 */
 export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string): string {
   const balance = BALANCE[v.balance];
-  const envelope = statEnvelope('calorie.view.nutrition-ratio', metricsOf({
-    totalCalorie: v.totalCalorie, proteinG: v.proteinG, proteinPct: v.proteinPct,
-    carbG: v.carbG, carbPct: v.carbPct, fatG: v.fatG, fatPct: v.fatPct,
-    targetProteinG: v.targetProteinG, targetCarbG: v.targetCarbG, targetFatG: v.targetFatG,
-  }));
   const body = [
     renderTocBlock({ items: [
       { id: 'sec-kpi', text: '配比读数' },
       { id: 'sec-chart', text: '热量来源占比' },
       { id: 'sec-table', text: '推荐范围对比' },
     ] }),
-    buildNutritionRatioBlock(v),
-    docCopy(envelope, command, DB_FILENAME + ' ｜ 饮食记录（按营养素折算）'),
+    /* 末尾那一节复制区由**区块**出（把本次命令原文交给它）——页脚不再另出一节 ⇒ 一张页只有一个复制区。
+       命令原文只在这一处给，页头与区块不可能各编一条。 */
+    buildNutritionRatioBlock(v, command === undefined ? undefined : { command }),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,

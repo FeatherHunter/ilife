@@ -7,13 +7,13 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { dietMacroRatio } from './dietEngine.js';
-import { todayISO } from '../analysis/utils.js';
+import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { listMeals } from '../fetch/diet.js';
 import { buildDietOverview, buildMealDistribution } from '../render/diet.js';
 import { buildTodayDietDoc, buildTodayNoteEmptyDoc } from './todayDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { buildTodayWaterView } from './nutritionPort.js';
-import { buildTodayWaterDoc } from './nutritionPortDocs.js';
+import { buildTodayWaterView, hasAnyDietRow } from './nutritionPort.js';
+import { buildEmptyWindowDoc, buildTodayWaterDoc } from './nutritionPortDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { assertISO, dayField, fail, latestFoodDate, nums, optStr, windowRange } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
@@ -53,17 +53,39 @@ export function viewToday(params: Record<string, unknown>, db: DatabaseSync): Vi
 export function viewTodayWater(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const date = windowRange(params)?.end ?? dayField(params, 'date') ?? latestFoodDate(db) ?? todayISO();
   assertISO(date, 'date');
-  const v = buildTodayWaterView(db, date);
-  const metrics = nums({
-    todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
-  });
   /* #511 · 这一条命令底下挂着两个唤醒词（看今日喝水／看今日饮水），参数一字不差，命令分不出进来的是
      哪条 ⇒ 由入口自己带 `entry` 标记（`src/diet/routes.ts` 那条「看今日喝水」的记录），页头按它出叫法。
      不给标记（含未知参数名）＝从前的「今日饮水」那一支，行为一字不差。 */
+  const entry = optStr(params, 'entry');
   /* #275 · 复制日志第 4 段「调用链」＝**本次命令原文**（含 `--params`），照抄可重跑（裁定 7）；
      命令原文走命令层共用件 `shared/writeParts.ts` 的 `commandLine()`，页面件不自己拼。 */
-  return {
-    data: { metrics },
-    html: buildTodayWaterDoc(v, optStr(params, 'entry'), commandLine('calorie.view.today-water', params)),
-  };
+  const command = commandLine('calorie.view.today-water', params);
+  let v;
+  try {
+    v = buildTodayWaterView(db, date);
+  } catch (e) {
+    /* #275 · **两态分清**（`t425` 裁定 4 的 2026-09-15 澄清）：7 天窗内一杯都没记、库里别处还有记录
+       ⇒ 这是「今天还没喝水」这个再常见不过的状态，出完整页 ＋ 空态句 ＋ 引导句；
+       **库为空**仍原样抛出去走 `exit 4`（既有设计行为，本件不据裁定 4 去改它）。 */
+    if (!(e instanceof CalorieRenderError) || e.code !== 'missing-data' || !hasAnyDietRow(db)) throw e;
+    const name = entry === 'drink' ? '今日喝水' : '今日饮水';
+    const weekStart = shiftISODate(date, -6);
+    return {
+      data: { metrics: {} },
+      html: buildEmptyWindowDoc({
+        key: 'calorie.view.today-water',
+        metaLeft: name + ' · 饮食',
+        title: '💧 ' + name + ' ' + date,
+        blockTitle: '今日读数',
+        emptyText: '这一段（' + weekStart + ' ~ ' + date + '）没有饮水记录，进度与每杯都还是空的。',
+        guide: '要让它有内容，先用「记喝水」记上一杯（可带时间），再来看进度。',
+        footnote: '📊 数据来源 · 饮水记录 · ' + date,
+        command,
+      }),
+    };
+  }
+  const metrics = nums({
+    todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
+  });
+  return { data: { metrics }, html: buildTodayWaterDoc(v, entry, command) };
 }

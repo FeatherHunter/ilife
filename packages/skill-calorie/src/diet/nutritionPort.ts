@@ -43,6 +43,18 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+/** 库里到底有没有底：**窗口为空**与**库为空**的分辨判据（`t425` 裁定 4 的 2026-09-15 澄清）。
+ *
+ *  本层的三个取数口在窗内零行时一律抛 `missing-data`（沿 G5 #100「缺失阻断不返空」）——那一条不改。
+ *  两态的分辨**由调用点做**：抛出来的若带底（别处还有记录），就是「这条词跑得通、只是这段没记」，
+ *  出完整空态页；若连底都没有，原样抛出去走 exit 4（**既有设计行为，任何票不得据裁定 4 去改它**）。
+ *
+ *  判据只看这一张表的行数在不在，不看错误文案（文案会随取数层改）。 */
+export function hasAnyDietRow(db: DatabaseSync): boolean {
+  const row = db.prepare('SELECT COUNT(*) AS n FROM food_log').get() as { n: number } | undefined;
+  return (row?.n ?? 0) > 0;
+}
+
 /* ── 营养配比（nutrition_ratio：蛋白/碳水/脂肪克数＋热量占比＋目标＋推荐范围） ── */
 
 export interface NutritionRatioRange { min: number; max: number; label: string }
