@@ -47,21 +47,28 @@ export interface TypeBadgeInput {
   readonly next: string;
 }
 
-/** 第二枚形状那句话：型认得出就说方向，认不出就说分类挂靠（不再印「本仓尚未定额的型」这种内部话）。 */
+/** 第二枚形状那句话：型认得出就说方向，认不出就说分类挂靠（不再印「本仓尚未定额的型」这种内部话）。
+ *  第 3 轮返工：型认得出时不再把方向词抄一遍（唤醒词那枚已经写了「记支出」），只留「金额取负数」这一半。 */
 function caliberOf(kind: string): string {
   const d = directionOf(kind);
-  if (d !== undefined) return d.word + ' 金额取' + (d.sign < 0 ? '负' : '正') + '数';
+  if (d !== undefined) return '金额取' + (d.sign < 0 ? '负' : '正') + '数';
   if (kind.trim() === '') return '方向按金额符号判';
   return '分类按三级挂靠';
 }
 
 /** 类型徽章：唤醒词标签 ＋ 这一页的口径 ＋ 页面状态徽章 ＋ 下一步动作。四枚形状各自独立，不拼分隔符串。
- *  R3 分行：下一步动作那句按整句拆行（句号断开），一句一行口径；单句页仍只出一行，形状不变。 */
+ *  R3 分行：下一步动作那句按整句拆行（句号断开），一句一行口径；单句页仍只出一行，形状不变。
+ *  第 3 轮返工（上级裁定第 3 条）：头两枚原先挤在**一枚**胶囊里、中间用全角空格串
+ *  （`记支出　支出 金额取负数`——一件事排了三件，且「记支出／支出」两段重字），
+ *  现在拆成两枚：`记支出` 一枚、`金额取负数` 一枚；口径那句不再重复唤醒词里已有的方向词。 */
 export function typeBadge(input: TypeBadgeInput): string {
   const kind = typeof input.kind === 'string' ? input.kind : '';
   const state = statusNoteOf(input.state);
+  const caliber = caliberOf(kind);
   const parts = [
-    renderChips({ items: [{ text: wakeWordOf(kind) + '　' + caliberOf(kind) }] }),
+    renderChips({
+      items: caliber === '' ? [{ text: wakeWordOf(kind) }] : [{ text: wakeWordOf(kind) }, { text: caliber }],
+    }),
     renderStatusBadge(state === '' ? { status: input.status } : { status: input.status, text: state }),
   ];
   const next = input.next.trim();

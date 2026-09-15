@@ -17,6 +17,7 @@
 import { renderToast } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import type { KpiCardInput } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
 import { candidateRows } from '../shared/candidatePick.js';
@@ -127,6 +128,16 @@ function stepsOf(input: {
   });
 }
 
+/** 可选项那一行（第 3 轮返工 C2）：账户／账本／时间三格原先各占一张同形卡，现并成一行口径。
+ *  三格的标签、值与说明句都取自 `summaryCards`（摘要行那一处定义），本件不另抄一遍字面量。
+ *  位置：必需项（借入金额／分类／向谁借）之后——先看要补什么，再看不补也成的几项。 */
+function optionalLineOf(cards: readonly KpiCardInput[]): string {
+  return cards
+    .slice(2)
+    .map((c) => c.label + ' ' + c.value + (c.detail === undefined ? '' : '（' + c.detail + '）'))
+    .join('，') + '。';
+}
+
 /** 采集页正文：摘要行 ＋ 借贷口径三格卡 ＋ 流程三段式 ＋ 阻断条 ＋ 两段复制区。 */
 function collectPage(input: CollectInput): string {
   const { key, params, slots, missing } = input;
@@ -164,6 +175,7 @@ function collectPage(input: CollectInput): string {
     + '分类：「' + CATEGORY + '」；账本：「' + LEDGER + '」；账户：' + (facts.account || '<钱进哪张卡>') + '\n'
     + '备注请写：「' + TAG_BORROW + ' 向' + (who || '（对象）') + '借 ' + TAG_UNPAID + '」，'
     + '还回去的时候走「记偿还」把 ' + TAG_UNPAID + ' 换成 #已还。';
+  const cards = summaryCards(facts); // 0 金额／1 分类／2 账户／3 账本／4 时间（顺序见 `summaryCards`）
   const content = [
     typeBadge({
       kind: KIND,
@@ -171,13 +183,18 @@ function collectPage(input: CollectInput): string {
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
-    summaryRow(facts),
-    renderCaliberLine('借贷走标签流转：这一笔写「' + TAG_BORROW + ' #向（对象）借 ' + TAG_UNPAID + '」，还回去时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
+    // 第 3 轮返工（上级裁定第 2 条，本页**只动这一刀**）：首屏原先 8 张同形卡（摘要行 5 张 ＋ 本型 3 张，
+    //  其中「金额」与「借入金额」还是同一件事）把行动点挤到中段。改法＝必需项置顶（借入金额／分类／向谁借
+    //  三张先出）＋ 可选项折叠（账户／账本／时间并成一行口径，不再各占一张卡）。页骨、块序一处不动。
     renderKpiGrid([
       { label: '借入金额', value: money2(amount), detail: '收入记正数，归在「' + CATEGORY + '」下面' },
+      cards[1], // 分类（必需项，取值与说明仍走摘要行那一处定义）
       { label: '向谁借', value: who === '' ? '未给' : who, detail: due === '' ? '期限还没给（可后补）' : '期限 ' + due },
       { label: '同人未还', value: unpaid.length + ' 笔', detail: unpaid.length === 0 ? '这个人名下没有还没还回去的借入' : '只列带 ' + TAG_UNPAID + ' 的借入记录' },
     ]),
+    summaryRow(facts, { cards: false }),
+    renderCaliberLine(optionalLineOf(cards)),
+    renderCaliberLine('借贷走标签流转：这一笔写「' + TAG_BORROW + ' #向（对象）借 ' + TAG_UNPAID + '」，还回去时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
     renderToast({
       msg: '标签是备注里的记号，给助手用来找借贷关系：' + TAG_BORROW + '、' + TAG_UNPAID,
       lines: [

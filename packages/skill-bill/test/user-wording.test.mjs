@@ -103,7 +103,10 @@ describe('t407 整改（一）· 徽章改成若干枚独立形状', () => {
   it('四枚形状各自在：唤醒词胶囊／状态徽章／下一步动作', () => {
     assert.ok(html.includes('ilife-block-chip'), '第一枚：唤醒词与这一页的口径那枚胶囊');
     assert.ok(html.includes('记支出'), '胶囊里写唤醒词');
-    assert.ok(html.includes('支出 金额取负数'), '口径那一段（方向写清，不靠分隔符）');
+    assert.ok(html.includes('金额取负数'), '口径那一段（方向写清，不靠分隔符）');
+    // 返工第 3 轮：唤醒词与口径拆成两枚胶囊——不再用全角空格把两件事串在一枚里，口径里也不重复唤醒词的方向词。
+    assert.ok(!html.includes('记支出　'), '唤醒词与口径不得再用全角空格串成一枚');
+    assert.ok(!html.includes('支出 金额取负数'), '口径里不再把「支出」抄第二遍');
     assert.ok(html.includes('ilife-status-badge'), '第二枚：页面状态徽章');
     assert.ok(html.includes('还没写库'), '状态徽章写用户说法');
     assert.ok(html.includes('ilife-block-caliber'), '第三枚：下一步动作那行');

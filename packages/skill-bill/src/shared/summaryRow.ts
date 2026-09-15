@@ -91,9 +91,12 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
 /** 结论摘要行：那张网格 ＋ 方向两枚胶囊 ＋ 分类一行口径。
  *  R3 改形状：原先一句 `支出的金额记成负数、收入记成正数；分类要选到最细那一级。`
  *  拿顿号分方向、用分号缀分类，三件事挤一句（采集 10 页同句）。现拆三枚独立形状：
- *  方向两条各一枚胶囊（分行并列），分类单独一行口径；不再用连接符串版式。 */
-export function summaryRow(facts: SummaryFacts): string {
-  return renderKpiGrid(summaryCards(facts))
-    + renderChips({ items: [{ text: '支出记负数' }, { text: '收入记正数' }] })
+ *  方向两条各一枚胶囊（分行并列），分类单独一行口径；不再用连接符串版式。
+ *
+ *  第 3 轮返工：记借入-采集页要把「必需项置顶、可选项折叠」重排进自己那张网格（首屏 8 张同形卡太挤），
+ *  故允许只取后面两件（`cards: false`）——那两枚胶囊与那一行口径的字面量仍只此一份，调用方不另抄一遍。 */
+export function summaryRow(facts: SummaryFacts, options?: { readonly cards?: boolean }): string {
+  const notes = renderChips({ items: [{ text: '支出记负数' }, { text: '收入记正数' }] })
     + renderCaliberLine('分类要选到最细那一级。');
+  return (options?.cards === false ? '' : renderKpiGrid(summaryCards(facts))) + notes;
 }

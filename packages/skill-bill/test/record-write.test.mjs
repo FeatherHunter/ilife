@@ -269,7 +269,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(env.data.receipt, undefined, '采集页没有回执事实');
     const text = pageOf(file);
     for (const needle of [
-      'data-slot="ilife:bill:collect"', 'data-page="collect"', '记支出', '支出 金额取负数',
+      'data-slot="ilife:bill:collect"', 'data-page="collect"', '记支出', '金额取负数',
       '还缺什么', '还缺 1 项，补齐再记', '⛔ 先补齐（1 项）', 'ilife-action-btn ilife-action-btn-ghost',
       '预填标注', '来自记录编号 1', 'ilife-block-param-form',
       '这一句可以直接复制', 'ilife-block-copy-block', '写库：还没发生',
@@ -342,7 +342,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const env = envOf(r);
     assert.equal(env.data.ok, true);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '想反悔', '对账信息', '疑似重复', '复制数据', '复制日志', '记支出', '支出 金额取负数']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '想反悔', '对账信息', '疑似重复', '复制数据', '复制日志', '记支出', '金额取负数']) {
       assert.ok(text.includes(needle), '回执页缺：' + needle);
     }
     // 选页那两枚标记分家：data-shape 是信封形状契约（两页同为 receipt），data-page 才是哪一张页。

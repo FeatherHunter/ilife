@@ -233,7 +233,7 @@ function receiptPage(input: ReceiptInput): string {
       { label: '标签', value: TAG_LEND + '、' + TAG_UNPAID, detail: who === '' ? '标签是备注里的记号，给助手用来找这笔借贷；对象没随这次写库给到' : '标签是备注里的记号，给助手用来找这笔借贷；备注里的对象：#借给' + who },
     ]),
     renderToast({
-      msg: '借贷标签流转：这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID,
+      msg: '标签流转：这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID,
       lines: [
         '这一笔记在「' + CATEGORY + '」，账本「' + LEDGER + '」，金额 ' + money2(input.facts.amount) + '（支出记负数）',
         who === '' ? '对象：这次没给到（这一笔仍已落库，补对象走「改记录」）' : '对象写进备注：#借给' + who,

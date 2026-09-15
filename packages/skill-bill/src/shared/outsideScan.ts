@@ -66,13 +66,15 @@ export function imageNote(scale: PhotoScale): string {
   return renderFeedbackBlock({ title: '已收图片数与识别分工（各占独立一块）', toast });
 }
 
-/** 外部识别通道那张明示卡：三要素逐条 ＋ 每一步在谁那里办 ＋ 缺了会怎样。 */
+/** 外部识别通道那张明示卡：三要素逐条 ＋ 每一步在谁那里办 ＋ 缺了会怎样。
+ *  第 3 轮返工（上级追加的定点小修）：原先四列里有一列「参数名」，把库列名（`amount`／`category`／`time`）
+ *  印到了可见正文上——全批 32 页里就这一处区外印了库列名。整列删掉：要素那一列写的就是中文名，
+ *  下一张表照旧交代每一步在谁那里办。命令原文仍只活在复制载荷区（`pre` 与 `data-t`），本件不碰。 */
 export function escapeCard(input: {
   readonly params: Record<string, unknown>;
 }): string {
   const rows = ESCAPE_FIELDS.map((f) => ({
     field: f.label,
-    name: f.name,
     现在: textOf(input.params[f.name]) === '' ? '还没填' : textOf(input.params[f.name]),
     找谁: '外部识别结果（或用你眼睛看一眼账单）',
   }));
@@ -80,7 +82,6 @@ export function escapeCard(input: {
   return renderDataTable({
     columns: [
       { key: 'field', label: '要素' },
-      { key: 'name', label: '参数名' },
       { key: '现在', label: '现在' },
       { key: '找谁', label: '这一步谁办' },
     ],

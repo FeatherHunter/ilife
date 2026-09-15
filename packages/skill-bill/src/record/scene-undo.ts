@@ -169,17 +169,20 @@ function collectOf(input: CollectInput): string {
   });
 }
 
-/** 退出口那枚可复制按钮的动作号（与改记录那一件的退出口分开写，同页不许两处撞号）。 */
-const RESTORE_COPY_ACTION = 'ilife-exit-restore-copy';
+/** 撤销回执的退出口：这一条已经撤销过，再撤一次无事可做——所以出口给的是「恢复」那条指令。
+ *
+ *  第 3 轮返工（上级裁定第 1 条）：改前本块另带一枚「复制数据」（`ilife-exit-restore-copy`）
+ *  ＋公共层按缺省自动补的一枚置灰「复制日志」，与下面复制区那组「复制数据／复制日志」上下重复
+ *  （DOM 实测：本页 4 枚复制按钮＝两组，其余 31 页各 2 枚＝单组）。
+ *  改后退出口只留那枚「恢复这一笔」按钮与一句去向说明，不带复制按钮、不带 `data-t`；
+ *  恢复指令走下面复制区那颗「复制数据」（复制载荷里仍带可重跑命令，`data-t` 形状不动）。 */
+const RESTORE_EXIT_NOTE = '撤销没删数据，所以出口是「恢复」：点下面那颗「复制数据」，里面带着一句恢复的话。';
 
-/** 撤销回执的退出口：这一条已经撤销过，再撤一次无事可做——所以出口给的是「恢复」那条指令。 */
-function restoreExit(recordId: number): string {
+function restoreExit(): string {
   return renderCopyBlock({
     title: '想反悔（把这一笔找回来）',
     buttons: [{ label: '↩︎ 恢复这一笔', kind: 'red', actionId: 'ilife-exit-restore' }],
-    dataText: commandLine(KEY, { op: 'restore', id: recordId }),
-    dataActionId: RESTORE_COPY_ACTION,
-  }) + renderCaliberLine('撤销没删数据，所以出口是「恢复」：点下面那颗「复制数据」，里面带着一句恢复的话。');
+  }) + renderCaliberLine(RESTORE_EXIT_NOTE);
 }
 
 /** 回执页整页：类型徽章 → 一张大网格 → 说明 → 「撤销标记」的改前改后对照（diff 表）→ 写入明细表
@@ -232,7 +235,7 @@ function receiptOf(input: ReceiptInput): string {
       caption: '写进去的项与值',
     }),
     reconcileDisclosure(receipt),
-    receipt.recordId === null ? '' : restoreExit(receipt.recordId),
+    receipt.recordId === null ? '' : restoreExit(),
     copyArea({
       data: { envelope },
       log: {
