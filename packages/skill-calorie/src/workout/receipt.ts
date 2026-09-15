@@ -19,6 +19,8 @@ import { planCopyBlock } from '../render/planCopyBlock.js';
 import { copyLog } from '../shared/copyArea.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
+import { fieldLabel } from '../shared/fieldLabel.js';
+import { WORKOUT_DOMAIN } from './fieldLabels.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -54,7 +56,9 @@ function currentPlanTable(db: DatabaseSync): string {
       { k: '计划', v: String(plan.config?.title ?? '未命名计划') },
       { k: '训练场次', v: plan.sessions.length + ' 场' },
     ],
-    caption: '写后现值（`getPlan` 现值）',
+    // T351-v11：原来这条表标题写作「写后现值（`getPlan` 现值）」——反引号与内部函数名一起印在页上
+    // （负责人 2026-09-15 第 ④ 条：文字不能出现不合理）。现值就是现值，页上不必交代它读的是哪个函数。
+    caption: '写后现值',
   });
 }
 
@@ -98,7 +102,8 @@ function buildWorkoutReceiptDoc(
       {
         label: '写入字段',
         value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.join('、') || '未设置',
+        // 原键名走域标签表（`./fieldLabels.ts`，本域表唯一定义地）：页上不出 `plan` 这类英文裸词。
+        detail: receipt.writtenFields.map((f) => fieldLabel(WORKOUT_DOMAIN, f)).join('、') || '未设置',
       },
     ]),
     currentPlanTable(db),
