@@ -477,6 +477,25 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn {',
     '  width: 100%;',
     '}',
+    // **#525 第二轮·三角用 CSS 画**（用户裁定第 5 条：符号顶替了设计）：
+    // 可见文字里的 `▾` 已从 `controls.ts` 的 `copyMenuHtml` 删掉（那句「可以选格式」改住 `aria-label`），
+    // 这里用 `border` 拼一个向下的小三角 ＋ `rotate(180deg)` 做开合态——**一个字符都不打**，
+    // 也就不会被字体／读屏／抓取器当成内容。画的规矩：零宽零高的盒子靠 `border-top` 出形，
+    // `margin-left: 6px` 与基座的 `gap: 6px` 同值（文字与三角的间距连两处取值都不新造）。
+    // 开合态由运行时加的 `.copy-menu-open` 落色（与菜单同一个类，不新增第二个开关）。
+    '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
+    '  content: "";',
+    '  width: 0;',
+    '  height: 0;',
+    '  margin-left: 6px;',
+    '  border-left: 4px solid transparent;',
+    '  border-right: 4px solid transparent;',
+    '  border-top: 5px solid currentColor;',
+    '  transition: transform .16s ease-out;',
+    '}',
+    '.copy-menu-open.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
+    '  transform: rotate(180deg);',
+    '}',
     '.' + p + 'copy-menu {',
     '  position: absolute;',
     '  bottom: calc(100% + 8px);',

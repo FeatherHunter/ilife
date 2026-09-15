@@ -56,7 +56,11 @@ test('#239 ② 给了 log 出复制日志那颗：id 与文案取冻结表，文
   assert.deepEqual(ids, ['ilife-copy-log'], '复制日志的 id 不是冻结表那一颗');
   assert.equal((html.match(/<button/g) ?? []).length, 5, '开合器 1 ＋ 菜单项 3 ＋ 复制日志 1');
   assert.ok(html.includes('>复制日志</button>'), '复制日志文案不是冻结缺省');
-  assert.ok(html.includes('>复制数据 ▾</button>'), '开合器文案丢了（应是「复制数据 ＋ ▾」）');
+  // #525 第二轮：开合器的可见文字就是标签本身（可见的 ▾ 已删，三角改由 CSS 画）；
+  // 「可以选格式」那句语义改住 `aria-label`（读屏仍读得出）。
+  assert.ok(html.includes('>复制数据</button>'), '开合器文案丢了（应是「复制数据」）');
+  assert.equal(html.includes('复制数据 ▾'), false, '可见文字里不得再出现 ▾（#525 第二轮）：符号顶替了设计');
+  assert.ok(html.includes('aria-label="复制数据（点开选格式）"'), '开合器缺 aria-label（语义不能跟着字形一起删）');
   assert.ok(html.includes('data-t="'), '复制文本必须渲染期写死（点开才读＝点了没反应）');
   assert.equal(/<button[^>]*\son[a-z]+\s*=/i.test(html), false, '零内联事件处理器');
 

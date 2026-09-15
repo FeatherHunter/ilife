@@ -264,9 +264,9 @@ test('#275 ④ 同源入口页各自对得上：水分／明细两支的页题�
 
 for (const { p, html, text } of RUNS) {
   test('#275 ⑤ 裁定 7：复制区双按钮 ＋ 日志第 4 段＝本次命令原文 —— ' + p.id, () => {
-    assert.ok(html.includes('data-fmt-open="1"'), p.id + ' 缺「复制数据 ▾」开合器');
+    assert.ok(html.includes('data-fmt-open="1"'), p.id + ' 缺「复制数据」三格式菜单开合器');
     for (const f of ['text', 'json', 'csv']) assert.ok(html.includes('data-fmt="' + f + '"'), p.id + ' 缺三格式里的 ' + f);
-    assert.ok(text.includes('复制数据 ▾'), p.id + ' 页面上读不到「复制数据 ▾」');
+    assert.ok(text.includes('复制数据'), p.id + ' 页面上读不到「复制数据 ▾」');
     assert.ok(html.includes('data-action-id="ilife-copy-log"'), p.id + ' 缺「复制日志」按钮');
     const logBtn = html.slice(html.indexOf('data-action-id="ilife-copy-log"'));
     assert.ok(!/^[^>]*disabled/.test(logBtn.slice(0, 400)), p.id + ' 复制日志按钮是死的（disabled＝日志文本没接）');
@@ -322,11 +322,47 @@ test('#275 ⑥ 交 #273 的 buildNutritionRatioBlock：一段一锚点 ＋ 逐�
     '推荐范围对比（' + WEEK + '；克数均为这 7 天合计）', '📊 数据来源 · 饮食记录 · ']) {
     assert.ok(RATIO_BLOCK.includes(b), '区块缺块：「' + b + '」');
   }
-  /* 区块不是页面：不夹 doctype／head／整页壳／复制区（集成归 #273）。 */
+  /* 区块不是页面：不夹 doctype／head／整页壳（集成归 #273）。 */
   assert.ok(!RATIO_BLOCK.includes('<!doctype'), '区块里夹了 doctype——它是块，不是页');
   assert.ok(!RATIO_BLOCK.includes('ilife-block-page-shell'), '区块里夹了整页壳');
-  assert.ok(!RATIO_BLOCK.includes('data-action-id="ilife-copy-data"'), '区块里夹了复制区（集成归调用方）');
   assert.ok(RATIO_BLOCK.length > 800, '区块过短（' + RATIO_BLOCK.length + ' 字符）');
+});
+
+/* ── 复制区开关（`buildNutritionRatioBlock` 第二参）：#273 收口报「一张页两个复制区」那一处 ── */
+
+/** 页面上的复制区**节**数（结构化口径：一枚复制区节 ＝ 一处 `<section class="ilife-block ilife-block-copyBlock">`）。 */
+const copyAreaCount = (html) => html.split('ilife-block-copyBlock').length - 1;
+
+test('#275 ⑥ 复制区开关：不给开关＝不出那一节（也就没有点不动的日志按钮，裁定 7）', () => {
+  assert.equal(copyAreaCount(RATIO_BLOCK), 0, '不给开关时区块自带了一节复制区');
+  assert.ok(!RATIO_BLOCK.includes('data-action-id="ilife-copy-log"'), '区块里出现复制日志按钮（该由宿主页出）');
+  /* 不给 `command` 时，就算显式说 `copy: true` 也整节不出 —— 不编命令原文、不出半截复制区。 */
+  const noCmd = withSeedDb((db) => buildNutritionRatioBlock(buildNutritionRatioView(db, '2026-09-01', D), { copy: true }));
+  assert.equal(copyAreaCount(noCmd), 0, '没给命令原文却出了复制区（那节的日志第 4 段会是空的）');
+  assert.equal(noCmd, RATIO_BLOCK, '不给命令原文时应当与缺省调用逐字相同');
+});
+
+test('#275 ⑥ 复制区开关：拿到命令原文才出那一节，日志第 4 段就是它', () => {
+  const CMD = "calorie-cmd-read calorie.view.nutrition-ratio --params '{\"window\":\"7d\"}'";
+  const withCopy = withSeedDb((db) => buildNutritionRatioBlock(buildNutritionRatioView(db, '2026-09-01', D), { command: CMD }));
+  assert.equal(copyAreaCount(withCopy), 1, '拿了命令原文却没出那一节复制区');
+  assert.ok(withCopy.includes('data-action-id="ilife-copy-log"'), '那一节缺复制日志按钮');
+  assert.ok(callChainOf(logTextOf(withCopy)).startsWith('calorie-cmd-read calorie.view.nutrition-ratio'),
+    '那一节的日志第 4 段不是给进来的命令原文：' + callChainOf(logTextOf(withCopy)));
+  /* `copy: false` ＋ 给了命令原文 ⇒ 仍然整节不出（宿主页自己出复制区时走这一支）。 */
+  const off = withSeedDb((db) => buildNutritionRatioBlock(
+    buildNutritionRatioView(db, '2026-09-01', D), { copy: false, command: CMD }));
+  assert.equal(copyAreaCount(off), 0, '`copy: false` 没把那一节关掉');
+  assert.equal(off, RATIO_BLOCK, '`copy: false` 的产物应当与缺省调用逐字相同（只少那一节）');
+});
+
+test('#275 ⑥ 一张页只有一个复制区：整页那一支显式关掉区块自带的那一节', () => {
+  const ratio = byId('查营养配比');
+  assert.equal(copyAreaCount(ratio.html), 1, '配比整页的复制区不是恰好一个：' + copyAreaCount(ratio.html));
+  /* 关掉复制区不动块里的锚点：整页导航仍按那三个 id 出。 */
+  for (const id of ['sec-kpi', 'sec-chart', 'sec-table']) {
+    assert.ok(ratio.html.includes('<section id="' + id + '">'), '整页缺锚点 ' + id);
+  }
 });
 
 test('#275 ⑥ 交 #271 的 buildDietOverviewBlock：本周／本月两段 ＋ 锚点 ＋ 到昨日口径 ＋ 来源脚注', () => {

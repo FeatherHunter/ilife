@@ -171,7 +171,7 @@ for (const { p, html } of RUNS) {
     assert.deepEqual(hits, [], p.id + ' 可见文本里出现机器话：' + hits.join('　'));
     assert.ok(html.includes('calorie.view.diet-review'), p.id + ' 复制载荷里的命令键不该一起消失');
     /* 裁定 7：双按钮 ＋ 日志第 4 段＝本次命令原文（照抄可重跑）。 */
-    assert.ok(html.includes('data-fmt-open="1"'), p.id + ' 缺「复制数据 ▾」开合器');
+    assert.ok(html.includes('data-fmt-open="1"'), p.id + ' 缺「复制数据」三格式菜单开合器');
     const call = callChainOf(logTextOf(html));
     assert.ok(call.startsWith('calorie-cmd-read calorie.view.diet-review --params \''), p.id + ' 第 4 段不是命令原文：' + call);
     for (const [k, v] of Object.entries(p.params)) {

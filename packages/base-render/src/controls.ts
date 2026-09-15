@@ -1266,6 +1266,13 @@ const COPY_FORMAT_LABELS: Record<string, string> = { text: '纯文本', json: 'J
 const COPY_MENU_HINT_CLASS = 'copy-menu-hint';
 /** 菜单**开着**时加在容器上的类（`opacity` / `visibility` 的开合开关；`aria-expanded` 同步）。 */
 const COPY_MENU_OPEN_CLASS = 'copy-menu-open';
+/** 开合器 `aria-label` 的后半句（**#525 第二轮**：可见文字里的 `▾` 已删，那句「可以选格式」改住这里）。
+ *
+ *  为什么删那个字符：用户裁定第 5 条逐字「该问题是用这些符号简化了 UI 展示的设计」——
+ *  `复制数据 ▾` 里的三角是「这里能展开」的纯装饰，用一个字形顶替了一次设计。现在三角由
+ *  `style.ts` copyButton 区的 `::after` 用 `border` ＋ `rotate` 画出来（零字符），
+ *  而**语义不留白**：这句写进 `aria-label`，读屏与抓取器仍读得出「这颗按钮要选格式」。 */
+const COPY_MENU_OPENER_ARIA = '（点开选格式）';
 /** 选中某个格式后的成功提示词干（老仓 `.fmt-menu` 那张菜单当年报的是「…数据复制成功(格式)」；
  *  本仓句头沿用既有「已复制」以外的**独立**一句，避免与单格式提示混同）。格式名由运行时从菜单项
  *  标签读回（即 `COPY_FORMAT_LABELS` 的中文名），不在运行时另立第二张表。 */
@@ -1335,7 +1342,11 @@ function copyButtonHtml(button: NormalizedCopyButton): string {
  *  菜单容器**不加 `hidden`**：它是浮层，用 CSS 的 `opacity` 开合（`hidden` 的 `display:none` 会让浏览器
  *  把 `opacity` 过渡整个跳过，且开合时重排整页——手机档上会看到内容跳一下）。 */
 function copyMenuHtml(button: NormalizedCopyButton, formats: { readonly texts: readonly string[]; readonly hints: readonly string[] }): string {
-  const openLabel = button.label + ' ▾';
+  // #525 第二轮：开合器**不再把 `▾` 打上屏**（用户裁定第 5 条「用符号简化了 UI 展示的设计」是债）。
+  // 这颗三角是「这里可以展开」的纯装饰，可见文字里删掉、改由 CSS 画（`style.ts` 的 copyButton 区
+  // `.ilife-copy-menu-wrap > .ilife-copy-btn::after`，`border` ＋ `transform: rotate`，一个字符都不打）。
+  // 删字符不能删语义：`aria-label` 里把那句「可以选格式」写成文字（读屏与无图形环境仍读得出）。
+  const openLabel = button.label;
   const items: string[] = [];
   for (let i = 0; i < COPY_FORMATS.length; i += 1) {
     const key = COPY_FORMATS[i] as string;
@@ -1346,7 +1357,8 @@ function copyMenuHtml(button: NormalizedCopyButton, formats: { readonly texts: r
       + '<span class="' + STYLE_PREFIX + COPY_MENU_LABEL_CLASS + '">' + esc(COPY_FORMAT_LABELS[key] ?? key) + '</span>' + hintHtml + '</button>');
   }
   const opener = '<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost" '
-    + COPY_MENU_OPEN_ATTR + '="1" aria-haspopup="menu" aria-expanded="false">' + esc(openLabel) + '</button>';
+    + COPY_MENU_OPEN_ATTR + '="1" aria-haspopup="menu" aria-expanded="false" '
+    + 'aria-label="' + esc(openLabel + COPY_MENU_OPENER_ARIA) + '">' + esc(openLabel) + '</button>';
   return '<div class="' + STYLE_PREFIX + COPY_MENU_WRAP_CLASS + '">' + opener
     + '<div class="' + STYLE_PREFIX + COPY_MENU_CLASS + '" role="menu">' + items.join('') + '</div></div>';
 }

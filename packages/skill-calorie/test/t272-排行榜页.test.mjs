@@ -166,9 +166,9 @@ for (const { c, html } of PAGES) {
 for (const { c, html } of PAGES) {
   test('#272 ⑦ 裁定 7：复制区双按钮 ＋ 日志第 4 段＝本次命令原文 —— ' + c.id, () => {
     /* 数据位＝三格式菜单形态（#247）：开合器带 `data-fmt-open`，三个格式项各自带 `data-fmt`。 */
-    assert.ok(html.includes('data-fmt-open="1"'), c.id + ' 缺「复制数据 ▾」开合器');
+    assert.ok(html.includes('data-fmt-open="1"'), c.id + ' 缺「复制数据」三格式菜单开合器');
     for (const f of ['text', 'json', 'csv']) assert.ok(html.includes('data-fmt="' + f + '"'), c.id + ' 缺三格式里的 ' + f);
-    assert.ok(textOfHtml(html).includes('复制数据 ▾'), c.id + ' 页面上读不到「复制数据 ▾」');
+    assert.ok(textOfHtml(html).includes('复制数据'), c.id + ' 页面上读不到「复制数据 ▾」');
     assert.ok(html.includes('data-action-id="ilife-copy-log"'), c.id + ' 缺「复制日志」按钮');
     const logBtn = html.slice(html.indexOf('data-action-id="ilife-copy-log"'));
     assert.ok(!/^[^>]*disabled/.test(logBtn.slice(0, 400)), c.id + ' 复制日志按钮是死的（disabled＝日志文本没接）');

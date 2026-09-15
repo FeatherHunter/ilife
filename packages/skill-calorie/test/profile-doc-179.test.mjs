@@ -153,7 +153,7 @@ test('#238 五张页的去技术词与中文页名：库列名／内部编号／
   // 复制区不再出与按钮同名的大标题（#238 清单 9 条）：预检确认页那两个复制区只由按钮表意。
   assert.equal(/<h2[^>]*ilife-block-copy-block-title/.test(wizard.file), false, '预检确认页还有复制区大标题');
   assert.equal(wizard.file.includes('复制 prompt（必走）'), false, '预检确认页指令块还挂着「复制 prompt（必走）」小标题');
-  for (const btn of ['复制指令', '复制数据 ▾', '复制日志']) {
+  for (const btn of ['复制指令', '复制数据', '复制日志']) {
     assert.ok(wizard.file.includes('>' + btn + '<'), '预检确认页缺按钮：' + btn);
   }
 });
@@ -245,7 +245,8 @@ test('#247 场景 07 五张页的复制数据是「三格式三选一」菜单�
     assert.ok(r.file.includes('data-fmt-open="1"'), what + ' 缺菜单开合器');
     const opener = /<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1"[^>]*>([^<]*)</.exec(r.file);
     assert.ok(opener !== null, what + ' 开合器不是复制按钮的同款');
-    assert.equal(opener[1].includes('▾'), true, what + ' 开合器缺下拉标记');
+    assert.equal(opener[1].includes('▾'), false, what + ' 可见文字里不得再出现 ▾（#525 第二轮：符号顶替了设计）');
+    assert.ok(/data-fmt-open="1"[^>]*aria-label="复制数据（点开选格式）"/.test(r.file), what + ' 开合器缺 aria-label（语义不能跟着字形一起删）');
     assert.equal(/data-fmt-open="1"[^>]*\sdata-t=/.test(r.file), false, what + ' 开合器不该带 data-t（点了不直接复制）');
 
     // ⑤ 选中后按所选格式报提示：格式名由运行时从菜单项标签读回，运行时只产这一句。
@@ -290,13 +291,18 @@ test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切
 
 /** #269 场景 02 饮食这一族的写命令已是完整文档（从上条那张片段表里拿出来）。
  *
- * 口径变更说明：#179 当年断言「其余仍是原回执片段」，本票把饮食这一族的 13 条
- * 切成整页回执（`src/diet/receipt.ts` 的 `dietReceiptDoc`，与场景 07 的
- * `profileReceiptDoc` 同一份 `assembleDocPage`），故上条抽样不再含饮食命令；
- * 本条把其中两条钉死（另外 11 条的整页与逐条实跑见同目录
- * `t269-verify-final.mjs` 的 13/13；不断言＝口径无锚，跳过＝放宽，都不许）。
- */
-test('#269 饮食写命令已是完整文档（从「其余仍是片段」那张表里拿出来）', () => {
+ * 口径变更说明：#179 当年断言「其余仍是原回执片段」，#269 把饮食这一族的 13 条切成整页回执
+ * （`src/diet/receipt.ts` 的 `dietReceiptDoc`，与场景 07 的 `profileReceiptDoc` 同一份
+ * `assembleDocPage`），故上条抽样不再含饮食命令；本条把其中两条钉死（另外 11 条的整页与逐条实跑见
+ * `t270-*` 的 15＋1 条实跑证据；不断言＝口径无锚，跳过＝放宽，都不许）。
+ *
+ * **#270 口径收窄（有意改，票面与提交信息写清）**：两条断言按本票交付后的**当刻口径**改写——
+ *   ① 原钉眉标 `'饮食 · 写后回执'`：#496 已把眉标整行撤掉（它与 head 标题「卡路里·饮食回执」
+ *      说同一件事），本票**不回退**；改钉**页题**，口径不变（仍证明这一族认到了场景 02 的回执面）；
+ *   ② 原钉 `'改动字段对照'`（#496 那张表的旧标题）：本票按老实物 `crud_receipt.html:156` 把四块
+ *      标题摆成逐字四串，故改钉这**四串**——比一句表题更强（#269 交接时那四串在产物里一个都不存在，
+ *      原文见 `docs/skills/skill-calorie/t270-回执页四块.md`）。 */
+test('#269／#270 饮食写命令已是完整文档，且四块标题（老实物逐字）在产物里', () => {
   const dir = mkDb(true);
   const cases = [
     ['calorie.water.log', { ml: 300, date: '2026-09-06', time: '09:00:00' }, '已写入饮水记录'],
@@ -306,10 +312,15 @@ test('#269 饮食写命令已是完整文档（从「其余仍是片段」那张
     const r = runCli(dir, key, params);
     assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
     assertDocPage(r.file, key);
-    assert.ok(r.file.includes('饮食 · 写后回执'), key + ' 缺场景 02 眉标');
-    assert.ok(r.file.includes('改动字段对照'), key + ' 缺改动分项表');
+    // ① 页题（原眉标那一条按 #496＋#270 的当刻口径改到页题上）
+    assert.ok(r.file.includes('饮食回执'), key + ' 缺场景 02 的页题');
+    // ② 四块标题逐字（老实物 crud_receipt.html 的 :140／:156／:161／:166）
+    for (const t of ['✅ 操作回执', '📋 字段变更', '📊 今日累计', '📋 复制明细']) {
+      assert.ok(r.file.includes(t), key + ' 缺老实物那一块的标题：' + t);
+    }
     assert.ok(r.file.includes(written), key + ' 缺写入去向那一行：' + written);
     assert.ok(r.file.includes('ilife-copy-log'), key + ' 缺「复制日志」按钮（#239）');
+    assert.ok(r.file.includes(key + ' --params'), key + ' 复制日志第 4 段缺本次命令原文（裁定 7）');
     assert.ok(r.file.length > 10000, key + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
   }
 });

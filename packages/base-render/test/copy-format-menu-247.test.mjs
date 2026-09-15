@@ -274,9 +274,15 @@ describe('#247 三格式菜单 · 产出面', () => {
     assert.equal(opener[1].includes(MENU_OPEN_ATTR + '="1"'), true, '开合器缺开合标记');
     assert.equal(opener[1].includes('aria-haspopup="menu"'), true, '开合器缺 aria-haspopup');
     assert.equal(opener[1].includes('aria-expanded="false"'), true, '开合器缺 aria-expanded 初值');
+    assert.equal(opener[1].includes('aria-label="复制数据（点开选格式）"'), true, '开合器缺 aria-label（#525 第二轮：可见的 ▾ 已删，语义改住这里）');
     assert.equal(opener[1].includes(DEFAULT_DATA_ATTR), false, '开合器不得带 data-t（点了不该直接复制）');
     assert.equal(opener[1].includes(ACTION_ID_ATTR), false, '开合器不是复制目标，不得占 data-action-id');
-    assert.equal(opener[2].endsWith('▾'), true, '开合器缺下拉标记：' + opener[2]);
+    // #525 第二轮（用户裁定第 5 条「符号顶替了设计」）：可见文字里**不再**出现三角字符，
+    // 按钮文字就是 label 本身；三角改由 CSS 画（`style.ts` 的 `.copy-menu-wrap > .copy-btn::after`）。
+    assert.equal(opener[2].endsWith('▾'), false, '开合器不得把 ▾ 打上屏（#525 第二轮）：' + opener[2]);
+    assert.equal(opener[2], '复制数据', '开合器可见文字只留标签：' + opener[2]);
+    assert.ok(/\.ilife-copy-menu-wrap > \.ilife-copy-btn::after\s*\{[^}]*border-top: 5px solid currentColor;/m.test(CSS),
+      'CSS 里必须有一条画三角的规则（border-top ＋ transparent 两条边）');
   });
 
   it('S3 复制日志仍走冻结表：菜单形态不吞掉同一行的第二颗按钮', () => {

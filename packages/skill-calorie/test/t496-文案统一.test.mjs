@@ -182,7 +182,7 @@ for (const { c, r } of [...READ_RUNS, ...WRITE_RUNS]) {
     assert.deepEqual(r.labels, [
       { key: 'text', label: '纯文本' }, { key: 'json', label: 'JSON' }, { key: 'csv', label: 'CSV' },
     ], c.id + ' 复制菜单的可见标签不是三个中文格式名（机器面 data-fmt 键值仍须是 text/json/csv）');
-    assert.ok(r.nDataMenu >= 1, c.id + ' 复制区没有「复制数据 ▾」三格式菜单开合器');
+    assert.ok(r.nDataMenu >= 1, c.id + ' 复制区没有「复制数据」三格式菜单开合器');
     assert.equal(r.sameTitle, false, c.id + ' 出了与复制按钮同名的标题');
     assert.ok(r.logButtons.length >= 1, c.id + ' 复制区没有「复制日志」按钮（写页必须有）');
   });
