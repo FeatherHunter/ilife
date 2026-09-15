@@ -711,7 +711,7 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
     })),
     emptyText: '尚未达成任何减重里程碑',
   }));
-  parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + v.summary + '</p>', open: true }));
+  parts.push(renderDisclosure({ title: '结论', contentHtml: verdict(v.summary), open: true }));
   /* 页脚一行（口径 §3.1 统一句式 ＋ #482 裁定 F）：这页没有窗口，写「全部记录（到某日）」代替窗口那一段；
    *  库文件名与表名退出可见面（同上，机器面仍在复制日志第 3 段）。 */
   parts.push(renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 全部记录（到 '

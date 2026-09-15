@@ -192,8 +192,12 @@ test('#482 文本审查：6 页旧句归零、页脚同一句式、结论句不�
     assert.ok(!visibleOf(html).includes('calorie_data.db'), who + ' 可见文本仍有库文件名');
     assert.ok(!visibleOf(html).includes('weight_log'), who + ' 可见文本仍有表名');
     assert.ok(html.includes('calorie_data.db'), who + ' 复制日志丢了库文件名（机器面不许丢）');
-    assert.ok(html.includes('📊 数据来源：体重记录 ｜ '), who + ' 页脚未统一句式（裁定 F：只留人话来源）');
-    assert.ok(/｜ 共 \d+ 条/.test(html), who + ' 页脚缺条数');
+    /* 页脚统一句式改判可见文本（W2 #482）：公共层 1712317 把口径行的 `｜` 分隔改成形状
+     * （各段进独立 span），HTML 字面不再含 `｜`，旧断言逐字匹配已无对应物。
+     * 意图不变——人话来源 ＋ 窗口 ＋ 条数同一句式，库表名不进可见面（上两行已钉）。 */
+    const vis = visibleOf(html);
+    assert.ok(vis.includes('📊 数据来源：体重记录'), who + ' 页脚未统一句式（裁定 F：只留人话来源）');
+    assert.ok(/共 \d+ 条/.test(vis.slice(vis.indexOf('📊 数据来源：体重记录'))), who + ' 页脚缺条数');
     assert.equal((html.match(/<summary[^>]*>结论<\/summary>/g) || []).length, 1, who + ' 结论块恰一处');
   }
   /* 缺陷 1：单点页结论不再复述「只有 1 条记录」（同屏第 3 次）——警示句／`1 天` 卡／页脚已经说过。
@@ -247,6 +251,8 @@ test('#482 文本审查：6 页旧句归零、页脚同一句式、结论句不�
   assert.ok(!pages.some(([, html]) => html.includes('在往上走')), '仍有「在往上走」与徽章重复');
   assert.ok(pages[3][1].includes('在稳步往下走'), '往下走那侧的方向句被误删');
   assert.ok(pages[5][1].includes('最近一次达标'), '里程碑页结论未换人话');
+  /* W2 #482：里程碑页结论块与窗口五页同形（`verdict()`，原来裸 `<p>`，六页两套样式）；句子仍是同一句。 */
+  assert.ok(pages[5][1].includes('<p class="wui-verdict">最近一次达标'), '里程碑页结论未走 verdict 形状');
   /* 一页只留一套方向词：里程碑页只剩「已减／回涨／持平」，不再混用「减重」。 */
   assert.equal((pages[5][1].match(/>减重</g) || []).length, 0, '里程碑页徽章仍混用「减重」');
   assert.ok(pages[5][1].includes('>已减<'), '里程碑页缺「已减」方向徽章');
