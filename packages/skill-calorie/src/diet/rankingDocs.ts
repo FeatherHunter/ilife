@@ -10,7 +10,11 @@
  *   24 名次前三金银铜圆章 ＋ 手机端左侧色条 → `MEDAL`（金／银／铜三个字形，页面正文不写色值）
  *      ＋ 本件 `RANK_CSS` 里那一处 `.r1／.r2／.r3` 左边条（**三个色值全族只此一份**）；
  *   25 营养结构一条三段堆叠条 ＋ 文字百分比（图文互为兜底）→ 表内「营养结构」列给文字百分比，
- *      表下「营养结构」块给同数据的三段堆叠条（色取公共层 `CHART_PALETTE` 前三位，与老实物逐色一致）；
+ *      表下「营养结构」块给同数据的三段堆叠条（色取公共层 `CHART_PALETTE` 前三位：蛋白 `#007aff`／
+ *      碳水 `#34c759`／脂肪 `#ff9500`。**逐色对照**：老实物 `.protein{background:var(--accent)}` 是
+ *      `#0071e3`（`:12`），与公共层色板首位 `#007aff` **不是同一个蓝**；碳水／脂肪两段同值
+ *      （老实物 `--green:#34c759`／`--orange:#FF9500`，`:13`）。**取公共层色板是对的做法**
+ *      （裁定 8：色值单源住公共层），代价是蛋白段那一色与老实物有差；
  *   26 无数据页签不显示；列表空给占位列 → 全榜页只给**有数据**的榜出折叠块，本窗空的几类在读数卡
  *      与口径行里点名（不拿空榜冒充有数据）；表空走 `renderDataTable` 的 `emptyText` 占位。
  *
@@ -35,6 +39,7 @@ import type { SerializableEnvelope } from 'base-paint';
 import type { DataTableColumn } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { emptyGuide } from '../shared/emptyGuide.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { nowStamp } from '../render/receipt.js';
@@ -152,7 +157,9 @@ function rowOf(it: RankItem, cat: string): Record<string, string> {
 }
 
 /** 页内小件的形状与色值（本族唯一一份；正文里不再写第二处色）。
- *  三段堆叠条三色取公共层 `CHART_PALETTE` 的 1／2／3 位（蓝／绿／橙，与老实物 `.nutri-bar` 逐色一致）；
+ *  三段堆叠条三色取公共层 `CHART_PALETTE` 的 1／2／3 位（蓝／绿／橙）——**与老实物只对得上两色**：
+ *  碳水 `#34c759`、脂肪 `#ff9500` 与老实物同值；蛋白段老实物取 `--accent:#0071e3`，这里取色板首位
+ *  `#007aff`，蓝深浅不同（详见件头第 25 条）。
  *  名次前三的左边条三色取老实物手机端同一处（金 `#f5b301`／银 `#a8a8ad`／铜 `#c77b3f`）。 */
 const RANK_CSS = '<style>'
   + '.ilife-block-rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);position:relative}'
@@ -216,11 +223,25 @@ function oneLine(cat: string, r: FoodRanking): string {
   return '本窗 ' + r.items.length + ' 种食物上榜，头名「' + top.foodName + '」：' + headPhrase(top, cat) + '。';
 }
 
-/** 单榜页：读数卡 → 营养结构 → 榜单表 → 口径行 → 复制区 → 来源脚注。 */
+/** 空窗那一态的两句（裁定 4 的 2026-09-15 澄清）：**空态句**说这一窗为什么空，
+ *  **引导句**说下一句能说的话。两处（单榜页／全榜页）共用这一对写法的形状，窗口区间各自给。 */
+function emptyWindowGuide(start: string, end: string, scope: string): string {
+  return emptyGuide({
+    icon: '🍽️',
+    text: '本窗 ' + start + ' ~ ' + end + ' 里一条饮食记录都没有，' + scope + '。',
+    hint: '说「记一餐」把吃的那顿记上，榜单就有内容了；补以前的日期就说「补记饮食」。',
+  });
+}
+
+/** 单榜页：读数卡 → 营养结构 → 榜单表 → 口径行 → 复制区 → 来源脚注。
+ *
+ *  `r.items` 零条即**窗口为空**那一态（库为空那一支在取数层就走 `missing-data`、到不了这里）：
+ *  仍然出完整页，只是把「营养结构」那一块换成空态块（空态句 ＋ 引导句），读数卡与表位一律 `—`。 */
 export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   const cat = r.category;
   const m = metricOf(cat);
   const top = r.items[0];
+  const emptyWindow = r.items.length === 0;
   const sum = r.items.reduce((acc, it) => acc + m.of(it), 0);
   const env: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.ranking',
@@ -247,9 +268,15 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   });
   const content = [
     RANK_CSS,
-    tocOf([{ id: 'sec-kpi', text: '上榜速览' }, { id: 'sec-nutri', text: '营养结构' }, { id: 'sec-table', text: '榜单明细' }]),
+    tocOf([
+      { id: 'sec-kpi', text: '上榜速览' },
+      emptyWindow ? { id: 'sec-empty', text: '本窗没有记录' } : { id: 'sec-nutri', text: '营养结构' },
+      { id: 'sec-table', text: '榜单明细' },
+    ]),
     '<section id="sec-kpi">' + kpis + '</section>',
-    '<section id="sec-nutri">' + nutriBlock(r.items) + '</section>',
+    emptyWindow
+      ? '<section id="sec-empty">' + emptyWindowGuide(r.start, r.end, '这张榜没有可上榜的食物') + '</section>'
+      : '<section id="sec-nutri">' + nutriBlock(r.items) + '</section>',
     '<section id="sec-table">' + table + '</section>',
     renderCaliberLine('口径：表里一行是一种食物，热量、碳水、蛋白都是窗口内同名记录的合计；'
       + '营养结构按每克蛋白 4 千卡、碳水 4 千卡、脂肪 9 千卡折算成热量占比；'
@@ -266,11 +293,15 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   });
 }
 
-/** 全榜页：五类榜各一张读数卡 ＋ 有数据的那几类各一个折叠明细（老实物「一张表一族」的做法）。 */
+/** 全榜页：五类榜各一张读数卡 ＋ 有数据的那几类各一个折叠明细（老实物「一张表一族」的做法）。
+ *
+ *  `okCount` 0（五类榜本窗全空）即**窗口为空**那一态（库为空那一支在取数层就走 `missing-data`）：
+ *  仍然出完整页，读数卡五张一律 `—` ＋「本窗无数据」，明细位换成空态块（空态句 ＋ 引导句）。 */
 export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
   const cats = Object.keys(a.boards) as Array<keyof typeof a.boards>;
   const live = cats.filter((c) => a.boards[c] !== null);
   const empty = cats.filter((c) => a.boards[c] === null);
+  const windowEmpty = a.okCount === 0;
   const total = live.reduce((acc, c) => acc + (a.boards[c] as FoodRanking).items.length, 0);
   const env: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.ranking',
@@ -304,9 +335,13 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
     + (a.boards[live[0]] as FoodRanking).items[0].foodName + '」（'
     + headPhrase((a.boards[live[0]] as FoodRanking).items[0], live[0]) + '）';
   const content = [
-    tocOf([{ id: 'sec-kpi', text: '五类榜速览' }, { id: 'sec-boards', text: '逐榜明细' }]),
+    tocOf(windowEmpty
+      ? [{ id: 'sec-kpi', text: '五类榜速览' }, { id: 'sec-empty', text: '本窗没有记录' }]
+      : [{ id: 'sec-kpi', text: '五类榜速览' }, { id: 'sec-boards', text: '逐榜明细' }]),
     '<section id="sec-kpi">' + kpis + '</section>',
-    '<section id="sec-boards">' + boards + '</section>',
+    windowEmpty
+      ? '<section id="sec-empty">' + emptyWindowGuide(a.start, a.end, '五类榜都没有可上榜的食物') + '</section>'
+      : '<section id="sec-boards">' + boards + '</section>',
     renderCaliberLine('口径：五类榜同一个窗口、同一套取数口径；每类榜的列序按榜单类查表，主指标排在食物名之后第一列；'
       + (empty.length === 0 ? '本窗五类榜都有数据。' : '本窗没有数据的榜不出明细块：' + empty.map(nameOf).join('、') + '。')),
     docCopy(env, cmd ?? commandLine('calorie.view.ranking', {})),
@@ -316,7 +351,9 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
     docTitle: DOC_TITLE,
     title: '全部排行 ' + a.start + ' ~ ' + a.end,
     eyebrow: EYEBROW,
-    subtitle: '五类榜里 ' + a.okCount + ' 类本窗有数据，合计 ' + total + ' 种食物上榜' + head + '。',
+    subtitle: windowEmpty
+      ? '本窗 ' + a.start + ' ~ ' + a.end + ' 五类榜都没有可上榜的食物：' + MISS + '。'
+      : '五类榜里 ' + a.okCount + ' 类本窗有数据，合计 ' + total + ' 种食物上榜' + head + '。',
     content,
   });
 }
