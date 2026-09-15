@@ -212,7 +212,11 @@ test('#363 判据①体脂：同日已有记录 → 冲突段摆在最前，既�
   assert.ok(pageRows !== null, '落盘页应有「同一天还记过这条」块：' + r.text.slice(0, 160));
   // #537：只摆**有值的行**（缺值不占位）——故只比这一版页面上真的上屏的那几项，
   // 逐格仍是查库真值；标签序照库列序。
-  assert.deepEqual(pageRows.map(([k]) => k), ['日期', '来源', '体脂率'],
+  const filled = (v) => v !== null && v !== undefined && String(v) !== '';
+  const wantLabels = ['日期', '来源', '体脂率',
+    ...SITE_7.filter((_, i) => filled(old[CALIPER_COLS[i]])),
+    ...(filled(old.note) ? ['备注'] : [])];
+  assert.deepEqual(pageRows.map(([k]) => k), wantLabels,
     '既有记录块标签序（只比上屏的项）：' + JSON.stringify(pageRows.map(([k]) => k)));
   const get = (k) => (pageRows.find(([x]) => x === k) || [])[1];
   /** 可见文本那一格的期望值（裁定 2 的可见文本口径：缺项写 `—`）。 */

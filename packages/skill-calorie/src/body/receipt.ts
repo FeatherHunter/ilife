@@ -109,12 +109,12 @@ function pageNameOf(key: string, op: CrudReceipt['op'], source: unknown, backfil
 
 /** 逐格段里插组头（「躯干」「左右成对」「皮褶读数」这类）——一长串裸数字按部位分家。
  *  **组头只插在行与行之间**：行序一位不动（逐格比对是顺序敏感的，三条写词测试钉的就是这个序）。
- *  每行还包一层**单位档**（见 `unitClass`）：值后面由页内 CSS 补上「 厘米／毫米／%」。 */
+ *  每行还包一层**档位**（见 `rowClass`）：身份字段抬到组外，部位读数留在组内。 */
 function groupedRows(
   key: string, rows: readonly ChangeRowInput[], heads: Readonly<Record<string, string>>,
 ): string {
   return rows.map((r) => (heads[r.label] === undefined ? '' : groupHead(heads[r.label]))
-    + '<div class="' + (unitClass(key, r.label) || 'brc-u-none') + '">'
+    + '<div class="' + rowClass(r.label) + '">'
     + renderChangeRows({ rows: [r] }) + '</div>').join('');
 }
 
@@ -124,14 +124,14 @@ const GROUP_HEADS: Readonly<Record<'caliper' | 'measure', Readonly<Record<string
   measure: { 胸围: '躯干（厘米）', 左大腿: '左右成对（厘米）' },
 };
 
-/** 逐格行的单位档（按列定）：围度部位读厘米、皮褶读毫米、体脂率读百分比；日期／来源／备注是文字，
- *  不带单位。单位由页内 CSS 的 `::after` 补在值后面——与公共层表格卡片化的
- *  `td::before{content:attr(data-label)}` 同一手法：**值带单位看得见**，而逐格比对的契约
- *  （值 == 查库值）一位不动。 */
-function unitClass(key: string, label: string): string {
-  if (label === '体脂率') return 'brc-u-pct';
-  if (isMeasure(key)) return MEASUREMENT_FIELDS.some((f) => MEASUREMENT_ZH[f] === label) ? 'brc-u-cm' : '';
-  return (CALIPER_SITE_LABELS as readonly string[]).includes(label) ? 'brc-u-mm' : '';
+/** 身份字段（不是部位读数）：它们落在所有组之外，整行抬开一档（`.brc-meta`）。 */
+const META_LABELS: ReadonlySet<string> = new Set(['日期', '来源', '体脂率', '备注']);
+
+/** 逐格行落在哪一档：身份字段走 `.brc-meta`（组外），部位读数不带单位——
+ *  **单位只留组头一处**（编排者视觉复核：组头已写「（厘米）」，行里再写就成同事实两处说，
+ *  且行里那根单位前的短横读起来像负号）。 */
+function rowClass(label: string): string {
+  return META_LABELS.has(label) ? 'brc-none brc-meta' : 'brc-none';
 }
 
 /** **只留有值的行**（缺值的整行不摆，见编排者视觉裁定第 1 条）——「没记」这件事由段下那一句
@@ -259,7 +259,6 @@ function buildBodyReceiptDoc(
   const heads = GROUP_HEADS[isMeasure(key) ? 'measure' : 'caliper'];
   // 逐格段的题目：**口径一句话说清单位与范围**（原先括号里印的是库表名与「读自库内」的实现细节，
   // 而数值一律裸摆、没有单位）。段名本身是三条写词测试的锚点，逐字不动。
-  const unitOf = isMeasure(key) ? '各部位读厘米' : '体脂率读百分比，皮褶读毫米';
   const allRows = isDel
     ? deleteSnapshotRows(db, key, id, receipt.items[0])
     : (id === null ? [] : currentRows(db, key, id));
@@ -287,7 +286,7 @@ function buildBodyReceiptDoc(
     snapRows.length === 0
       ? ''
       : '<div class="brc-now">'
-        + renderCaliberLine((isDel ? '删除前的原值（' : '这次记下的（') + unitOf + '）：')
+        + renderCaliberLine((isDel ? '删除前的原值：' : '这次记下的：'))
         + groupedRows(key, snapRows, heads)
         + (leftOut === 0 ? '' : renderCaliberLine('另有 ' + leftOut + ' 项这次没记，就没摆上来'))
         + '</div>',

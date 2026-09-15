@@ -35,14 +35,11 @@ export function bodyReceiptCss(): string {
     + '.ilife-block-change-row-old:not(:empty),.ilife-block-change-row-new:not(:empty){flex:0 1 auto;font-size:14px}'
     + '.ilife-block-change-row-old:empty,.ilife-block-change-row-new:empty{display:none}'
     + '.ilife-block-change-row-arrow{display:none}'
-    // ── 值带单位：单位是**版式的一部分**，由 CSS 补在值后面（与公共层表格卡片化的
-    //    `td::before{content:attr(data-label)}` 同一手法）——逐格比对的值因此仍是查库原值。 ──
-    + '.brc-u-cm .ilife-block-change-row-old:not(:empty)::after,'
-    + '.brc-u-cm .ilife-block-change-row-new:not(:empty)::after{content:" 厘米";color:var(--fg3);font-size:12px}'
-    + '.brc-u-mm .ilife-block-change-row-old:not(:empty)::after,'
-    + '.brc-u-mm .ilife-block-change-row-new:not(:empty)::after{content:" 毫米";color:var(--fg3);font-size:12px}'
-    + '.brc-u-pct .ilife-block-change-row-old:not(:empty)::after,'
-    + '.brc-u-pct .ilife-block-change-row-new:not(:empty)::after{content:" %";color:var(--fg3);font-size:12px}'
+    // ── 单位只留**组头**一处（编排者视觉复核：组头写了「（厘米）」，行里再写「厘米」＝
+    //    同一事实两处说）。行里不带单位，也就没有那根读起来像负号的短横。 ──
+    // ── 身份字段（日期／来源／体脂率／备注）不属于任何一个部位组：整行抬开一档、加一条细线，
+    //    让「备注」这些行一眼落在组外。 ──
+    + '.brc-meta{margin-top:14px;padding-top:10px;border-top:1px solid var(--line)}'
     // ── 两张表一眼分得开：上面「这次记下的」贴页走，下面「同一天还记过这条」整块浅底＋描边 ──
     + '.brc-alt{margin-top:16px;padding:12px 14px;background:var(--soft);border:1px solid var(--line);border-radius:14px}'
     + '.brc-now{margin-bottom:4px}'
