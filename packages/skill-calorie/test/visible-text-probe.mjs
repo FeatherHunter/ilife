@@ -117,9 +117,11 @@ export function longLines(html, min = 50) {
   return visibleLines(html).filter((t) => t.length >= min);
 }
 
-/** 「2026-09-01 ~ 2026-09-07」这种窗口区间串在**可见文本**里出现的次数。 */
-export function rangeOccurrences(html, start, end) {
-  const needle = start + ' ~ ' + end;
+/** 「2026-09-01 ~ 2026-09-07」这种窗口区间串在**可见文本**里出现的次数。
+ *  `sep` 可省（缺省 ` ~ `，photo 两页的原拼法）：#401e 把主页那页的区间连接符改成「至」，
+ *  计数口径不变、只是 needle 跟着上屏文本走，故留一个可省的连接符位。 */
+export function rangeOccurrences(html, start, end, sep = ' ~ ') {
+  const needle = start + sep + end;
   const text = visibleText(stripCopyPayload(html));
   return text.split(needle).length - 1;
 }

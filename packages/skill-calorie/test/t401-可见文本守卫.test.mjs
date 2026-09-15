@@ -82,15 +82,18 @@ function render(params) {
 
 const PAGE = render({ date: '今日' });
 
-/** 变异演示：把副题改回改前那串 `·` 并列（`2026-09-01 ~ 2026-09-07 · 窗内有记录 5 天 · 连续 3 天`）。
+/** 变异演示：把副题改回改前那串 `·` 并列（`2026-09-01 至 2026-09-07 · 有记录 5/7 天 · 连续记录 3 天`）。
  *  走产物而不是走源码：守卫吃的是 HTML（源码里的引号会被「丢标签」那一步当属性吃掉，拿源码演示
- *  会得到一个假绿）——与 `t401c` 探针的变异同法。 */
-const SUBTITLE_CLEAN = '<p class="ilife-block-page-shell-subtitle">2026-09-01 ~ 2026-09-07</p>';
+ *  会得到一个假绿）——与 `t401c` 探针的变异同法。
+ *  **#401e 只改锚点、不改判据**：副题那句的区间连接符按审查必改项 #7（R-e）由 `~` 改成「至」，
+ *  故这段「把并列塞回去」的固定串跟着上屏文本走；三条读数（`·`／`；`／≥3 段并列 全 0）一字未动，
+ *  变异后的期望读数也照旧（2 处 `·`、1 处 3 段并列）。 */
+const SUBTITLE_CLEAN = '<p class="ilife-block-page-shell-subtitle">2026-09-01 至 2026-09-07</p>';
 
 function mutateDots(html) {
   assert.ok(html.includes(SUBTITLE_CLEAN), '产物里找不到变异点（副题那一行）');
   return html.replace(SUBTITLE_CLEAN,
-    '<p class="ilife-block-page-shell-subtitle">2026-09-01 ~ 2026-09-07 · 窗内有记录 5 天 · 连续 3 天</p>');
+    '<p class="ilife-block-page-shell-subtitle">2026-09-01 至 2026-09-07 · 有记录 5/7 天 · 连续记录 3 天</p>');
 }
 
 function mutateSemi(html) {

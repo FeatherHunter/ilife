@@ -57,9 +57,9 @@ const PAGE = render({ date: '今日' });
  *  拿源码演示会得到一个假绿。这里与既有先例同法（`home-lock-374` 的 `T374_BREAK` 也是给产物
  *  加一处必 miss 的针）。 */
 function mutateArtifact(html) {
-  const hit = '<th scope="col" class="ilife-block-data-table-cell-right">缺口</th>';
-  assert.ok(html.includes(hit), '产物里找不到变异点（表头「缺口」）：' + hit);
-  return html.replace(hit, '<th scope="col" class="ilife-block-data-table-cell-right">缺口loss_log</th>');
+  const hit = '<th scope="col" class="ilife-block-data-table-cell-right">缺口（卡）</th>';
+  assert.ok(html.includes(hit), '产物里找不到变异点（表头「缺口（卡）」）：' + hit);
+  return html.replace(hit, '<th scope="col" class="ilife-block-data-table-cell-right">缺口（卡）loss_log</th>');
 }
 
 test('#401c 可见文本零机器话（四类各一条，只在复制载荷里放过技术原文）', () => {
@@ -74,9 +74,13 @@ test('#401c 可见文本零机器话（四类各一条，只在复制载荷里�
 });
 
 test('#401c 窗口区间串在可见文本里只出现 1 次', () => {
-  const n = rangeOccurrences(PAGE.html, PAGE.start, PAGE.end);
+  // #401e：区间连接符按审查必改项 #7（R-e）由 `~` 改成「至」——**计数口径没变**（还是「可见文本里恰 1 处」），
+  // 只是 needle 的拼法跟着上屏文本走，故 `rangeOccurrences` 多一个可省的 `sep`（缺省仍是 ` ~ `，photo 两页不受影响）。
+  const n = rangeOccurrences(PAGE.html, PAGE.start, PAGE.end, ' 至 ');
   assert.equal(n, 1, '窗口串出现 ' + n + ' 次（上限 1）');
-  assert.ok(visibleText(PAGE.html).includes(PAGE.start + ' ~ ' + PAGE.end), '窗口串该在可见文本里（页头那行）');
+  assert.ok(visibleText(PAGE.html).includes(PAGE.start + ' 至 ' + PAGE.end), '窗口串该在可见文本里（页头那行）');
+  // 反向锁：`~` 这种「拿符号顶文字」的连接符在本页退场（与上一条同源：同一处文本两种写法不许并存）。
+  assert.ok(!visibleText(stripCopyPayload(PAGE.html)).includes('~'), '可见文本里还有 `~` 那种区间连接符');
 });
 
 test('#401c 长行（≥50 字符）不超过 2 条', () => {
@@ -102,11 +106,17 @@ test('#401c 视觉升级四件在场（徽章／标题图标／胶囊导航／�
   }
   // 表格的标题位是 `<caption>`（`blocks.ts:613-615`），图标同样在本页给。
   // #401 返修（施工工单 R7）：`目标` 列是**常量列**（`series` 的 `calorieGoal` 全窗口静态值，
-  // `analysis/series.ts:248`）⇒ 整列删、目标写进 caption。本锁跟着这条裁定走：只锁「图标 ＋ 表名」
-  // 这段前缀（形状判据没变），目标值单独锁一条——删列之后它是目标在本页的**唯一**落点。
-  assert.ok(html.includes('<caption class="ilife-block-data-table-caption">📊 按日汇总（单位：卡）'),
-    '缺带图标的表格 caption');
-  assert.ok(html.includes('，目标 1800 卡</caption>'), '表格 caption 没带目标（#401 删常量列后目标的唯一落点）');
+  // `analysis/series.ts:248`）⇒ 整列删。本锁跟着裁定走：只锁「图标 ＋ 表名」这段前缀（形状判据没变）。
+  // #401e 返修（审查必改项 #6／R-c）：caption 再瘦身——单位归表头 `摄入（卡）`／`缺口（卡）`，
+  // 「目标 1800」回归「今日摄入」卡说明行（一处说一次）。故这里锁三件：caption 只留图标＋表名、
+  // 单位在表头、目标在卡上；并反向锁 caption 不再夹单位或目标（老写法回来即红）。
+  assert.ok(html.includes('<caption class="ilife-block-data-table-caption">📊 按日汇总</caption>'),
+    '缺带图标的表格 caption（只留图标＋表名）');
+  assert.ok(html.includes('<th scope="col" class="ilife-block-data-table-cell-right">摄入（卡）</th>'),
+    '列单位没上表头（#401e：caption 不再夹「（单位：卡）」）');
+  assert.ok(html.includes('<div class="ilife-block-kpi-card-detail">目标 1800</div>'),
+    '「今日摄入」卡说明行没写目标（#401e：目标值只留卡这一处）');
+  assert.ok(!html.includes('📊 按日汇总（单位：卡）'), '表格 caption 又夹回单位（#401e 已瘦身）');
   // ③ 页内导航走公共层胶囊排：`<nav class="ilife-block-toc">` ＋ 每个锚点都有对应 `id`。
   assert.ok(html.includes('<nav class="ilife-block-toc" aria-label="页内导航">'), '缺页内导航块');
   const hrefs = [...html.matchAll(/<a href="#([^"]+)">/g)].map((m) => m[1]);
