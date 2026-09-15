@@ -1,6 +1,6 @@
 # #272 门禁运行条目（抄自 `.scratch/locks/gate-runs.log`，只抄 `ticket=272`）
 
-> 本窗共 **23** 条运行条目；每条一行 `GATE-RUN runId=<标识> cmd=<命令> exit=<码> waitedMs=<等锁毫秒> at=<ISO>`。
+> 抄到**导出那一刻**为止共 **25** 条运行条目（导出的那条 `git commit`／`git push` 落在导出之后，属自指、不在表内，会话回执里另记运行标识）；每条一行 `GATE-RUN runId=<标识> cmd=<命令> exit=<码> waitedMs=<等锁毫秒> at=<ISO>`。
 > 编译／测试／`git add`／`git commit`／`git push` 一律持锁跑（协议 §2.4）；等到超时的 `exit 1` 不是失败。
 
 - `START ticket=272 runId=64187e20-2736-47f7-9402-4946bb00dda4 cmd="npx tsc -b packages/skill-calorie" waitedMs=0 pid=11528 at=2026-09-15T02:38:05.415Z`
@@ -49,6 +49,10 @@
 - `RUN ticket=272 runId=75c3da28-82df-42f5-aa4e-0bf6e37e20d6 cmd="git commit -m \"test(272): 排行榜页 26 条判据探针（列序按类查表／前三金银铜＋左色条单源／营养结构三段条＋文字百分比／空榜不出折叠块／结论句＋导航＋口径行＋脚注／零机器话／复制区双按钮＋日志第4段命令原文／窗口三写法） ＋ 四条证据件（21条真跑／判据与裁定／自证／门禁条目）\" -- packages/skill-calorie/test/t272-排行榜页.test.mjs docs/skills/skill-calorie/t272-21条真跑.md docs/skills/skill-calorie/t272-判据与裁定.md docs/skills/skill-calorie/t272-自证.md docs/skills/skill-calorie/t272-gate-runs.md" waitedMs=30008 exit=0 pid=25516 at=2026-09-15T03:14:42.702Z`
 - `START ticket=272 runId=5e42977b-78a3-43d4-a5ba-96b0ca561295 cmd="git push" waitedMs=0 pid=39668 at=2026-09-15T03:14:48.528Z`
 - `RUN ticket=272 runId=5e42977b-78a3-43d4-a5ba-96b0ca561295 cmd="git push" waitedMs=0 exit=0 pid=39668 at=2026-09-15T03:14:50.604Z`
+- `START ticket=272 runId=7de8db6c-0b45-4d2a-9c89-b6ff693a1538 cmd="git commit -m \"docs(272): 门禁运行条目导出件补到离开时窗口（含第二轮提交与推送）\" -- docs/skills/skill-calorie/t272-gate-runs.md" waitedMs=0 pid=28060 at=2026-09-15T03:14:56.553Z`
+- `RUN ticket=272 runId=7de8db6c-0b45-4d2a-9c89-b6ff693a1538 cmd="git commit -m \"docs(272): 门禁运行条目导出件补到离开时窗口（含第二轮提交与推送）\" -- docs/skills/skill-calorie/t272-gate-runs.md" waitedMs=0 exit=0 pid=28060 at=2026-09-15T03:14:56.630Z`
+- `START ticket=272 runId=129aaed5-22db-49cc-a105-e4b69cae7b33 cmd="git push" waitedMs=1 pid=632 at=2026-09-15T03:14:56.723Z`
+- `RUN ticket=272 runId=129aaed5-22db-49cc-a105-e4b69cae7b33 cmd="git push" waitedMs=1 exit=0 pid=632 at=2026-09-15T03:14:58.843Z`
 
 ## 机器可读形状（RUN 行）
 
@@ -76,4 +80,6 @@ GATE-RUN runId=9bce60c5-308b-4f3b-8734-1783aaf3566d cmd=pwsh -NoProfile -File .s
 GATE-RUN runId=545aa94b-e123-4fa8-8406-e112abbe28d5 cmd=node --test packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/t445-告警线门.test.mjs packages/skill-calorie/test/t272-排行榜页.test.mjs packages/skill-calorie/test/diet-homogeneity-108.test.mjs packages/skill-calorie/test/t511-清尾二.test.mjs waitedMs=0 exit=0 at=2026-09-15T03:13:10.744Z
 GATE-RUN runId=75c3da28-82df-42f5-aa4e-0bf6e37e20d6 cmd=git commit -m \"test(272): 排行榜页 26 条判据探针（列序按类查表／前三金银铜＋左色条单源／营养结构三段条＋文字百分比／空榜不出折叠块／结论句＋导航＋口径行＋脚注／零机器话／复制区双按钮＋日志第4段命令原文／窗口三写法） ＋ 四条证据件（21条真跑／判据与裁定／自证／门禁条目）\" -- packages/skill-calorie/test/t272-排行榜页.test.mjs docs/skills/skill-calorie/t272-21条真跑.md docs/skills/skill-calorie/t272-判据与裁定.md docs/skills/skill-calorie/t272-自证.md docs/skills/skill-calorie/t272-gate-runs.md waitedMs=30008 exit=0 at=2026-09-15T03:14:42.702Z
 GATE-RUN runId=5e42977b-78a3-43d4-a5ba-96b0ca561295 cmd=git push waitedMs=0 exit=0 at=2026-09-15T03:14:50.604Z
+GATE-RUN runId=7de8db6c-0b45-4d2a-9c89-b6ff693a1538 cmd=git commit -m \"docs(272): 门禁运行条目导出件补到离开时窗口（含第二轮提交与推送）\" -- docs/skills/skill-calorie/t272-gate-runs.md waitedMs=0 exit=0 at=2026-09-15T03:14:56.630Z
+GATE-RUN runId=129aaed5-22db-49cc-a105-e4b69cae7b33 cmd=git push waitedMs=1 exit=0 at=2026-09-15T03:14:58.843Z
 ```
