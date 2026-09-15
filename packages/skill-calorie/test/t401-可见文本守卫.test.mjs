@@ -97,9 +97,13 @@ function mutateDots(html) {
 }
 
 function mutateSemi(html) {
-  const hit = '<p class="ilife-block-caliber">缺数一律写 —。</p>';
-  assert.ok(html.includes(hit), '产物里找不到变异点（页级口径行）');
-  return html.replace(hit, '<p class="ilife-block-caliber">缺数一律写 —；有记录才有数。</p>');
+  // **#401g 只改夹具锚点、不改判据**：审查必改项 #8 把页首那条「缺数一律写 —。」并入页脚「数据来源」行
+  // （页级口径仍是一条 `p.ilife-block-caliber`，判据「塞一处 `；` ⇒ 读数 1」一字未动），
+  // 锚点跟着上屏文本走。
+  const hit = '<p class="ilife-block-caliber">数据来源：饮食记录，运动记录，每日目标。缺数一律写 —。</p>';
+  assert.ok(html.includes(hit), '产物里找不到变异点（页级口径行）：' + hit);
+  return html.replace(hit,
+    '<p class="ilife-block-caliber">数据来源：饮食记录，运动记录，每日目标。缺数一律写 —；有记录才有数。</p>');
 }
 
 test('#401 可见文本守卫：`·`／`；`／≥3 段并列 三条读数全 0', () => {
