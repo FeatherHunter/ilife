@@ -61,11 +61,14 @@ const KEY = {
   cardio: 'calorie.view.exercise-cardio',
 };
 const WINDOW = { window: '7d' };
-/** 眉标原字（页头人话；三条词各自的题面，判据读这一处）。 */
+/** 眉标原字（页头人话；三条词各自的题面，判据读这一处）。
+ *  #544：眉标去 `·`（`·` 是分隔符债，探针节点级必须为 0；类别与页族字都在）。
+ *  #544 视觉第 1 轮曾把力量／有氧两页的眉标改成与 H1 逐字一致（`力量训练总览`），
+ *  实测撞 `exercise-accept-267.test.mjs:528` 的「眉标＝它自己那一族」钉子（那件不在本票写集），已回退。 */
 const EYEBROW = {
-  distribution: '运动 · 类型分布',
-  strength: '运动 · 力量总览',
-  cardio: '运动 · 有氧总览',
+  distribution: '运动类型分布',
+  strength: '运动力量总览',
+  cardio: '运动有氧总览',
 };
 /** 四类色（**只在本测试里当期望值**；实现侧一律走 `categoryColor()`，不写第二份色表）。 */
 const HEX = { strength: '#5856d6', cardio: '#0071e3', flex: '#34c759', daily: '#ff9500' };
@@ -150,7 +153,7 @@ function assertFusion(r, what, eyebrow) {
   // ④ 页头写人话：<title> 与眉标不许出现命令键／票号／工序词「移植」。
   const head = headTexts(r.file);
   assert.equal(head.eyebrow, eyebrow, what + ' 眉标不是人话原字：' + head.eyebrow);
-  assert.ok(head.title.startsWith('卡路里·'), what + ' <title> 不是人话题名：' + head.title);
+  assert.ok(head.title.startsWith('卡路里 '), what + ' <title> 不是人话题名：' + head.title);
   for (const [where, text] of [['<title>', head.title], ['眉标', head.eyebrow]]) {
     assert.ok(!/calorie\.[a-z]/.test(text), what + ' 的' + where + '里有命令键：' + text);
     assert.ok(!/\bt\d{3}\b/i.test(text), what + ' 的' + where + '里有票号：' + text);
@@ -178,7 +181,8 @@ function assertFusion(r, what, eyebrow) {
   assert.ok(r.file.includes('复制数据'), what + ' 缺复制数据按钮');
   assert.ok(r.file.includes('ilife-copy-log'), what + ' 缺复制日志按钮');
   // ⑤ 来源脚注 ＋ 口径行（都走 #420 的口径说明行）。
-  assert.ok(r.file.includes('数据来源 · '), what + ' 缺来源脚注');
+  // #544：来源脚注改键值行「数据来源／窗口／记录数」，不再是 `数据来源 · …` 那种 `·` 串。
+  assert.ok(r.file.includes('数据来源'), what + ' 缺来源脚注');
   assert.ok((r.file.match(/class="ilife-block-caliber"/g) ?? []).length >= 2,
     what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');
   // 饮食口径的「克」不许露（运动页不该出现饮食口径）。
@@ -407,7 +411,7 @@ test('#453 空态：三页各出带下一句话的空态、不出现空表（装
     assert.equal(cardOf(html, 'sec-table'), '', what + ' 没有行却留下了表卡外壳');
     assert.equal(cardOf(html, 'sec-ratio'), '', what + ' 没有行却留下了占比卡外壳');
     assert.equal((html.match(/<tbody>/g) ?? []).length, 0, what + ' 没有行却出现了空表');
-    assert.ok(html.includes('数据来源 · ') && html.includes('共 0 条'), what + ' 空态缺来源脚注（0 条也要报）');
+    assert.ok(html.includes('数据来源') && html.includes('共 0 条'), what + ' 空态缺来源脚注（0 条也要报）');
     for (const [where, text] of [['<title>', headTexts(html).title], ['眉标', headTexts(html).eyebrow]]) {
       assert.ok(!/calorie\./i.test(text), what + ' 的' + where + '里有命令键：' + text);
     }
