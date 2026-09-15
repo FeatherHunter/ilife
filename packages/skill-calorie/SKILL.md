@@ -126,21 +126,21 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看TDEE报告 | calorie.report.tdee | stat |  |  | `calorie-cmd-read calorie.report.tdee --params '{"window":"30d"}'` |
 | 看健康趋势 | calorie.report.trend | stat |  |  | `calorie-cmd-read calorie.report.trend --params '{"window":"90d"}'` |
 | 看水分摄入报告 | calorie.report.water | stat |  |  | `calorie-cmd-read calorie.report.water --params '{"window":"30d"}'` |
-| 看今日饮食概览 | calorie.today | list |  |  | `calorie-cmd-read calorie.today --params '{"date":"今日"}'` |
+| 看今日饮食 | calorie.today | list |  |  | `calorie-cmd-read calorie.today --params '{"date":"今日"}'` |
 | calorie.view.anomaly | calorie.view.anomaly | stat |  |  | `calorie-cmd-read calorie.view.anomaly --params '{"kind":"weight_volatility","window":"90d"}'` |
-| 看批量导入预览 | calorie.view.batch-import-preview | stat |  |  | `calorie-cmd-read calorie.view.batch-import-preview --params '{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}'` |
+| 校验批量导入 | calorie.view.batch-import-preview | stat |  |  | `calorie-cmd-read calorie.view.batch-import-preview --params '{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}'` |
 | 看体脂 | calorie.view.body-composition | stat |  |  | `calorie-cmd-read calorie.view.body-composition` |
-| 对比体脂 | calorie.view.body-composition-compare | stat |  |  | `calorie-cmd-read calorie.view.body-composition-compare --params '{"period1Start":"2026-09-05","period1End":"2026-09-05","period2Start":"2026-09-07","period2End":"2026-09-07"}'` |
+| 对比体脂 | calorie.view.body-composition-compare | stat |  |  | `calorie-cmd-read calorie.view.body-composition-compare --params '{"period1Start":"<开始日期>","period1End":"<结束日期>","period2Start":"<对比开始日期>","period2End":"<对比结束日期>"}'` |
 | 看围度 | calorie.view.body-measure | stat |  |  | `calorie-cmd-read calorie.view.body-measure --params '{"metric":"waist_cm"}'` |
-| 对比围度 | calorie.view.body-measure-compare | stat |  |  | `calorie-cmd-read calorie.view.body-measure-compare --params '{"date1":"2026-09-05","date2":"2026-09-07"}'` |
+| 对比围度 | calorie.view.body-measure-compare | stat |  |  | `calorie-cmd-read calorie.view.body-measure-compare --params '{"date1":"<开始日期>","date2":"<结束日期>"}'` |
 | 看热量趋势 | calorie.view.calorie-trend | stat |  |  | `calorie-cmd-read calorie.view.calorie-trend --params '{"window":"7d"}'` |
 | 看体重 vs 摄入(最近 7 天) | calorie.view.combined | stat |  |  | `calorie-cmd-read calorie.view.combined --params '{"pair":"weight_calorie","window":"7d"}'` |
 | calorie.view.composition-wizard | calorie.view.composition-wizard | stat |  |  | `calorie-cmd-read calorie.view.composition-wizard` |
 | calorie.view.contraindication | calorie.view.contraindication | stat |  |  | `calorie-cmd-read calorie.view.contraindication --params '{"part":"all"}'` |
-| calorie.view.dedupe | calorie.view.dedupe | stat |  |  | `calorie-cmd-read calorie.view.dedupe` |
+| 看食品库（去重） | calorie.view.dedupe | stat |  |  | `calorie-cmd-read calorie.view.dedupe` |
 | 看热量缺口 | calorie.view.deficit | stat |  |  | `calorie-cmd-read calorie.view.deficit --params '{"window":"7d"}'` |
-| 看今日饮食概览 | calorie.view.diet | stat |  |  | `calorie-cmd-read calorie.view.diet --params '{"window":"今日"}'` |
-| 今日复盘 | calorie.view.diet-review | stat |  |  | `calorie-cmd-read calorie.view.diet-review --params '{"window":"7d"}'` |
+| 看昨日饮食 | calorie.view.diet | stat |  |  | `calorie-cmd-read calorie.view.diet --params '{"window":"今日"}'` |
+| 看营养结构 | calorie.view.diet-review | stat |  |  | `calorie-cmd-read calorie.view.diet-review --params '{"window":"7d"}'` |
 | 看今日运动概览 | calorie.view.exercise | stat |  |  | `calorie-cmd-read calorie.view.exercise --params '{"window":"今日"}'` |
 | 看有氧训练总览 | calorie.view.exercise-cardio | stat |  |  | `calorie-cmd-read calorie.view.exercise-cardio --params '{"window":"7d"}'` |
 | 看运动类型分布 | calorie.view.exercise-distribution | stat |  |  | `calorie-cmd-read calorie.view.exercise-distribution --params '{"window":"7d"}'` |
@@ -163,7 +163,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看目标预检 | calorie.view.goal-wizard | stat |  |  | `calorie-cmd-read calorie.view.goal-wizard` |
 | 看健康盘 | calorie.view.health | stat |  |  | `calorie-cmd-read calorie.view.health --params '{"window":"本周"}'` |
 | 看今日主页 | calorie.view.home | stat |  |  | `calorie-cmd-read calorie.view.home --params '{"date":"今日"}'` |
-| 查食品库 | calorie.view.library | stat |  |  | `calorie-cmd-read calorie.view.library` |
+| 查食品（按分类） | calorie.view.library | stat |  |  | `calorie-cmd-read calorie.view.library` |
 | 查卡路里数据 | calorie.view.lint-health | stat |  |  | `calorie-cmd-read calorie.view.lint-health` |
 | 看整体趋势 | calorie.view.long-trend | stat |  |  | `calorie-cmd-read calorie.view.long-trend --params '{"group":"weight_calorie","window":"30d"}'` |
 | calorie.view.measure-wizard | calorie.view.measure-wizard | stat |  |  | `calorie-cmd-read calorie.view.measure-wizard` |
@@ -181,7 +181,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 看落地训练进度 | calorie.view.process-progress | stat |  |  | `calorie-cmd-read calorie.view.process-progress` |
 | calorie.view.profile | calorie.view.profile | stat |  |  | `calorie-cmd-read calorie.view.profile` |
 | 看档案预检 | calorie.view.profile-wizard | stat |  |  | `calorie-cmd-read calorie.view.profile-wizard` |
-| 查高热量排行 | calorie.view.ranking | stat |  |  | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_calorie","topN":10,"window":"7d"}'` |
+| 看高热量榜 | calorie.view.ranking | stat |  |  | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_calorie","topN":10,"window":"7d"}'` |
 | 看复盘报告 | calorie.view.review-template | stat |  |  | `calorie-cmd-read calorie.view.review-template --params '{"window":"7d"}'` |
 | 查食品 | calorie.view.search | stat |  |  | `calorie-cmd-read calorie.view.search --params '{"keyword":"鸡胸"}'` |
 | 看每日六因素 | calorie.view.six-factors | stat |  |  | `calorie-cmd-read calorie.view.six-factors --params '{"date":"今日"}'` |
@@ -201,19 +201,107 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 复制训练计划 | calorie.workout.plan-copy | receipt |  |  | `calorie-cmd-read calorie.workout.plan-copy --params '{"newTitle":"示例副本"}'` |
 | 撤销训练计划 | calorie.workout.plan-delete | receipt |  |  | `calorie-cmd-read calorie.workout.plan-delete --params '{"confirm":true}'` |
 | 删某天训练 | calorie.workout.plan-delete-day | receipt |  |  | `calorie-cmd-read calorie.workout.plan-delete-day --params '{"week":1,"dayOfWeek":3}'` |
-| 定训练计划 | calorie.workout.plan-set | receipt |  |  | `calorie-cmd-read calorie.workout.plan-set --params '{"plan":{"config":{"title":"示例计划","start_date":"2026-09-07","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑"}]}]}]}]}}'` |
+| 定训练计划 | calorie.workout.plan-set | receipt |  |  | `calorie-cmd-read calorie.workout.plan-set --params '{"plan":{"config":{"title":"示例计划","start_date":"<日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑"}]}]}]}]}}'` |
 | 定休息日 | calorie.workout.plan-set-rest | receipt |  |  | `calorie-cmd-read calorie.workout.plan-set-rest --params '{"week":1,"dayOfWeek":3}'` |
 | 定一周计划 | calorie.workout.plan-set-week | receipt |  |  | `calorie-cmd-read calorie.workout.plan-set-week --params '{"week":1,"days":[{"dayOfWeek":1,"sessionLabel":"上肢","movements":[{"name":"俯卧撑"}]}]}'` |
 | 改训练计划 | calorie.workout.plan-update | receipt |  |  | `calorie-cmd-read calorie.workout.plan-update --params '{"title":"示例改名"}'` |
 | 改某天训练 | calorie.workout.plan-update-day | receipt |  |  | `calorie-cmd-read calorie.workout.plan-update-day --params '{"week":1,"dayOfWeek":3,"newLabel":"下肢＋核心"}'` |
 | 改动作 | calorie.workout.plan-update-movement | receipt |  |  | `calorie-cmd-read calorie.workout.plan-update-movement --params '{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}'` |
 
-「唤醒词」列是该键的代表词（**由命令声明派生**：`gen-cli.mjs` 写 `REPR` 表，本生成器不另存第二份）；「预检页」列是该写命令**先出的预检确认页命令**（读命令与「读—确认—写」那一类留空，事实出处＝`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`）；「流程」列是它服务的工作流程名。三列的事实都住各自能力目录的声明与路由，本表由 `pnpm help:build` 生成。
+「唤醒词」列是这条命令的代表词，三个来源逐条自述：饮食场景的命令取它自己那条词（源＝路由层，25 条）；其余取命令声明里的代表词（`gen-cli.mjs` 写 `REPR` 表，91 条）；只为页面服务、没有唤醒词的命令列命令名自身（11 条）。本生成器不另存第二份唤醒词。「预检页」列是该写命令**先出的预检确认页命令**（查询命令与「读—确认—写」那一类留空，事实出处＝`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`）；「流程」列是它服务的工作流程名。三列的事实都住各自能力目录的声明与路由，本表由 `pnpm help:build` 生成。
 体重一族 58 条唤醒词各归**一条**工作流程（八条流程的步骤与逐条对照见「场景 03 体重工作流程」一节与 `docs/skills/skill-calorie/t338-流程接线-证据.md` §3）；流程名的事实住命令声明（`src/weight/commands.ts` 与 `src/goal/commands.ts` 的 `flows`），本表由 `pnpm help:build` 生成。
-上表「流程」列按**命令**列：一个键服务多条流程时用「／」列全（`calorie.view.weight-history`＝看体重明细／看体重曲线／看体重备注），首项是「唤醒词」列那条代表词所在的流程；「唤醒词」列是该键的代表词，个别键的代表词取自别的场景清单（如 `calorie.view.weight-review` 一行的「看体重复核」）。
-相关场景：calorie.body.composition-add、calorie.body.composition-remove、calorie.body.measure-add、calorie.body.measure-remove、calorie.diet.add、calorie.diet.batch、calorie.diet.copy、calorie.diet.remove、calorie.diet.remove-by-date、calorie.diet.remove-by-range、calorie.diet.remove-by-type、calorie.diet.update、calorie.diet.update-by-date、calorie.exercise.add、calorie.exercise.remove、calorie.exercise.update、calorie.goal.pause、calorie.goal.resume、calorie.goal.set、calorie.goal.water、calorie.goal.weight、calorie.help.center、calorie.help.lookup、calorie.history、calorie.photo.add、calorie.photo.compare、calorie.photo.detail、calorie.photo.gif、calorie.photo.list、calorie.photo.remove、calorie.photo.tag、calorie.product.add、calorie.product.deprecate、calorie.product.import、calorie.product.update、calorie.profile.activity、calorie.profile.set、calorie.profile.update、calorie.report.bmi、calorie.report.bmr、calorie.report.compare、calorie.report.protein、calorie.report.score、calorie.report.tdee、calorie.report.trend、calorie.report.water、calorie.today、calorie.view.anomaly、calorie.view.batch-import-preview、calorie.view.body-composition、calorie.view.body-composition-compare、calorie.view.body-measure、calorie.view.body-measure-compare、calorie.view.calorie-trend、calorie.view.combined、calorie.view.composition-wizard、calorie.view.contraindication、calorie.view.dedupe、calorie.view.deficit、calorie.view.diet、calorie.view.diet-review、calorie.view.exercise、calorie.view.exercise-cardio、calorie.view.exercise-distribution、calorie.view.exercise-goal、calorie.view.exercise-recap、calorie.view.exercise-records、calorie.view.exercise-review、calorie.view.exercise-strength、calorie.view.exercise-trend、calorie.view.gif-planner、calorie.view.goal、calorie.view.goal-config、calorie.view.goal-expiring、calorie.view.goal-predict、calorie.view.goal-progress、calorie.view.goal-recommend、calorie.view.goal-status、calorie.view.goal-vs-actual、calorie.view.goal-weight、calorie.view.goal-wizard、calorie.view.health、calorie.view.home、calorie.view.library、calorie.view.lint-health、calorie.view.long-trend、calorie.view.measure-wizard、calorie.view.multi-trend、calorie.view.nutrition-analysis、calorie.view.nutrition-detail、calorie.view.nutrition-ratio、calorie.view.photo-log-wizard、calorie.view.photo-picker、calorie.view.plan、calorie.view.plan-vs-actual、calorie.view.plan-wizard、calorie.view.plan-write-preview、calorie.view.predict、calorie.view.process-progress、calorie.view.profile、calorie.view.profile-wizard、calorie.view.ranking、calorie.view.review-template、calorie.view.search、calorie.view.six-factors、calorie.view.source-stats、calorie.view.today-water、calorie.view.volatility、calorie.view.weight、calorie.view.weight-compare、calorie.view.weight-history、calorie.view.weight-review、calorie.water.log、calorie.weight.batch、calorie.weight.log、calorie.weight.remove、calorie.weight.update、calorie.workout.plan-add-movement、calorie.workout.plan-copy、calorie.workout.plan-delete、calorie.workout.plan-delete-day、calorie.workout.plan-set、calorie.workout.plan-set-rest、calorie.workout.plan-set-week、calorie.workout.plan-update、calorie.workout.plan-update-day、calorie.workout.plan-update-movement（127 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。
+上表「流程」列按**命令**列：一条命令服务多条流程时用「／」列全（`calorie.view.weight-history`＝看体重明细／看体重曲线／看体重备注），首项是「唤醒词」列那条代表词所在的流程；「唤醒词」列是这条命令的代表词，个别命令的代表词取自别的场景清单（如 `calorie.view.weight-review` 一行的「看体重复核」）。
+相关场景：calorie.body.composition-add、calorie.body.composition-remove、calorie.body.measure-add、calorie.body.measure-remove、calorie.diet.add、calorie.diet.batch、calorie.diet.copy、calorie.diet.remove、calorie.diet.remove-by-date、calorie.diet.remove-by-range、calorie.diet.remove-by-type、calorie.diet.update、calorie.diet.update-by-date、calorie.exercise.add、calorie.exercise.remove、calorie.exercise.update、calorie.goal.pause、calorie.goal.resume、calorie.goal.set、calorie.goal.water、calorie.goal.weight、calorie.help.center、calorie.help.lookup、calorie.history、calorie.photo.add、calorie.photo.compare、calorie.photo.detail、calorie.photo.gif、calorie.photo.list、calorie.photo.remove、calorie.photo.tag、calorie.product.add、calorie.product.deprecate、calorie.product.import、calorie.product.update、calorie.profile.activity、calorie.profile.set、calorie.profile.update、calorie.report.bmi、calorie.report.bmr、calorie.report.compare、calorie.report.protein、calorie.report.score、calorie.report.tdee、calorie.report.trend、calorie.report.water、calorie.today、calorie.view.anomaly、calorie.view.batch-import-preview、calorie.view.body-composition、calorie.view.body-composition-compare、calorie.view.body-measure、calorie.view.body-measure-compare、calorie.view.calorie-trend、calorie.view.combined、calorie.view.composition-wizard、calorie.view.contraindication、calorie.view.dedupe、calorie.view.deficit、calorie.view.diet、calorie.view.diet-review、calorie.view.exercise、calorie.view.exercise-cardio、calorie.view.exercise-distribution、calorie.view.exercise-goal、calorie.view.exercise-recap、calorie.view.exercise-records、calorie.view.exercise-review、calorie.view.exercise-strength、calorie.view.exercise-trend、calorie.view.gif-planner、calorie.view.goal、calorie.view.goal-config、calorie.view.goal-expiring、calorie.view.goal-predict、calorie.view.goal-progress、calorie.view.goal-recommend、calorie.view.goal-status、calorie.view.goal-vs-actual、calorie.view.goal-weight、calorie.view.goal-wizard、calorie.view.health、calorie.view.home、calorie.view.library、calorie.view.lint-health、calorie.view.long-trend、calorie.view.measure-wizard、calorie.view.multi-trend、calorie.view.nutrition-analysis、calorie.view.nutrition-detail、calorie.view.nutrition-ratio、calorie.view.photo-log-wizard、calorie.view.photo-picker、calorie.view.plan、calorie.view.plan-vs-actual、calorie.view.plan-wizard、calorie.view.plan-write-preview、calorie.view.predict、calorie.view.process-progress、calorie.view.profile、calorie.view.profile-wizard、calorie.view.ranking、calorie.view.review-template、calorie.view.search、calorie.view.six-factors、calorie.view.source-stats、calorie.view.today-water、calorie.view.volatility、calorie.view.weight、calorie.view.weight-compare、calorie.view.weight-history、calorie.view.weight-review、calorie.water.log、calorie.weight.batch、calorie.weight.log、calorie.weight.remove、calorie.weight.update、calorie.workout.plan-add-movement、calorie.workout.plan-copy、calorie.workout.plan-delete、calorie.workout.plan-delete-day、calorie.workout.plan-set、calorie.workout.plan-set-rest、calorie.workout.plan-set-week、calorie.workout.plan-update、calorie.workout.plan-update-day、calorie.workout.plan-update-movement（127 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 的下划线名只供页面装配复用）。
 身材照片 HELP 模块：skill-calorie/photo/photo＋skill-calorie/photo/photos（gallery/compare/viewer/gif/picker + buildPhotoHelp/lookupPhotoHelp，现找直达可执行 exec）。
+
+### 场景 02 饮食 · 逐条唤醒词 → 命令 → 工作流程（70 条，一行一条唤醒词）
+
+| 唤醒词 | 命令（照抄即跑） | 工作流程 |
+|---|---|---|
+| 记一餐 | `calorie-cmd-read calorie.diet.add --params '{"foodName":"鸡胸","calories":200,"protein":35}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 记一餐（含备注） | `calorie-cmd-read calorie.diet.add --params '{"foodName":"鸡胸","calories":200,"protein":35,"note":"加了辣酱"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 补记饮食 | `calorie-cmd-read calorie.diet.add --params '{"foodName":"米饭","calories":500,"protein":10,"time":"12:30:00","date":"<日期>"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 批量补记饮食 | `calorie-cmd-read calorie.diet.batch --params '{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 拍营养表记一餐 | `calorie-cmd-read calorie.diet.add --params '{"foodName":"鸡胸","calories":200,"protein":35,"note":"营养表识别","source":"photo"}'` | 过程：先出预检确认页 → 用户确认 → 跑这条命令 |
+| 拍营养表补记一餐 | `calorie-cmd-read calorie.diet.add --params '{"foodName":"米饭","calories":500,"protein":10,"date":"<日期>","time":"12:30:00","note":"营养表补记","source":"photo"}'` | 过程：先出预检确认页 → 用户确认 → 跑这条命令 |
+| 记喝水 | `calorie-cmd-read calorie.water.log --params '{"ml":300}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 复制昨日饮食 | `calorie-cmd-read calorie.diet.copy --params '{"from":"<日期>"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 改饮食记录 | `calorie-cmd-read calorie.diet.update --params '{"id":1,"grams":150}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 改某日饮食 | `calorie-cmd-read calorie.diet.update-by-date --params '{"note":"食堂","date":"<日期>"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 删饮食记录 | `calorie-cmd-read calorie.diet.remove --params '{"id":1}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 删一餐 | `calorie-cmd-read calorie.diet.remove-by-type --params '{"mealType":"早餐","date":"<日期>"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 删某日饮食 | `calorie-cmd-read calorie.diet.remove-by-date --params '{"date":"<日期>"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 批量删饮食 | `calorie-cmd-read calorie.diet.remove-by-range --params '{"start":"<日期>","end":"<日期>"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 看今日饮食 | `calorie-cmd-read calorie.today --params '{"date":"今日"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看昨日饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"昨日"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看本周饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"本周"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看上周饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"上周"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看本月饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"本月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看上月饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"上月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看最近 7 天饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看最近 30 天饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"30d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看某段时间饮食 | `calorie-cmd-read calorie.view.diet --params '{"window":"custom","start":"<开始日期>","end":"<结束日期>"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看今日喝水 | `calorie-cmd-read calorie.view.today-water --params '{"date":"今日","entry":"drink"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看有备注的饮食记录 | `calorie-cmd-read calorie.today --params '{"date":"今日","hasNote":true}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 查食品 | `calorie-cmd-read calorie.view.search --params '{"keyword":"鸡胸"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 查食品（按分类） | `calorie-cmd-read calorie.view.library --params '{"category":"蛋白类"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 存食品 | `calorie-cmd-read calorie.product.add --params '{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 改食品 | `calorie-cmd-read calorie.product.update --params '{"id":1,"note":"新版"}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 下架食品 | `calorie-cmd-read calorie.product.deprecate --params '{"id":1}'` | 回执：跑这条命令 → 写后回执页落盘 |
+| 看食品库（去重） | `calorie-cmd-read calorie.view.dedupe` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 批量导入食品 | `calorie-cmd-read calorie.product.import --params '{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}]}'` | 过程：先出预检确认页 → 用户确认 → 跑这条命令 |
+| 校验批量导入 | `calorie-cmd-read calorie.view.batch-import-preview --params '{"items":[{"foodName":"粥","calories":150,"protein":3}]}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看食品来源统计 | `calorie-cmd-read calorie.view.source-stats` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看营养结构 | `calorie-cmd-read calorie.view.diet-review --params '{"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看今日营养 | `calorie-cmd-read calorie.view.diet-review --params '{"window":"今日"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看饮食总览 | `calorie-cmd-read calorie.view.diet --params '{"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看营养素深度 | `calorie-cmd-read calorie.view.nutrition-detail --params '{"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高热量榜 | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_calorie","topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看低热量榜 | `calorie-cmd-read calorie.view.ranking --params '{"category":"low_calorie","topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看频繁吃榜 | `calorie-cmd-read calorie.view.ranking --params '{"category":"frequent","topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高碳水榜 | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_carb","topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高蛋白榜 | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_protein","topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看全部排行榜 | `calorie-cmd-read calorie.view.ranking --params '{"topN":10,"window":"7d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高热量榜（最近 30 天） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_calorie","topN":10,"window":"30d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高热量榜（本月） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_calorie","topN":10,"window":"本月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高热量榜（自定义） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_calorie","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看低热量榜（最近 30 天） | `calorie-cmd-read calorie.view.ranking --params '{"category":"low_calorie","topN":10,"window":"30d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看低热量榜（本月） | `calorie-cmd-read calorie.view.ranking --params '{"category":"low_calorie","topN":10,"window":"本月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看低热量榜（自定义） | `calorie-cmd-read calorie.view.ranking --params '{"category":"low_calorie","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看频繁吃榜（最近 30 天） | `calorie-cmd-read calorie.view.ranking --params '{"category":"frequent","topN":10,"window":"30d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看频繁吃榜（本月） | `calorie-cmd-read calorie.view.ranking --params '{"category":"frequent","topN":10,"window":"本月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看频繁吃榜（自定义） | `calorie-cmd-read calorie.view.ranking --params '{"category":"frequent","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高碳水榜（最近 30 天） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_carb","topN":10,"window":"30d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高碳水榜（本月） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_carb","topN":10,"window":"本月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高碳水榜（自定义） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_carb","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高蛋白榜（最近 30 天） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_protein","topN":10,"window":"30d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高蛋白榜（本月） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_protein","topN":10,"window":"本月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看高蛋白榜（自定义） | `calorie-cmd-read calorie.view.ranking --params '{"category":"high_protein","topN":10,"window":"custom","start":"<开始日期>","end":"<结束日期>"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 饮食复盘（本周） | `calorie-cmd-read calorie.view.diet-review --params '{"window":"本周"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 饮食复盘（本月） | `calorie-cmd-read calorie.view.diet-review --params '{"window":"本月"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 饮食复盘（最近 90 天） | `calorie-cmd-read calorie.view.diet-review --params '{"window":"90d"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 饮食复盘（今年） | `calorie-cmd-read calorie.view.diet-review --params '{"window":"今年"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 饮食复盘（自定义时间） | `calorie-cmd-read calorie.view.diet-review --params '{"window":"custom","start":"<开始日期>","end":"<结束日期>"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看早餐（最近 7 天） | `calorie-cmd-read calorie.view.diet --params '{"window":"7d","meal":"早餐"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看午餐（最近 7 天） | `calorie-cmd-read calorie.view.diet --params '{"window":"7d","meal":"午餐"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看晚餐（最近 7 天） | `calorie-cmd-read calorie.view.diet --params '{"window":"7d","meal":"晚餐"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看加餐（最近 7 天） | `calorie-cmd-read calorie.view.diet --params '{"window":"7d","meal":"加餐"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看全部餐别分布（最近 7 天） | `calorie-cmd-read calorie.view.diet --params '{"window":"7d","meal":"all"}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+| 看「有备注」的饮食记录 | `calorie-cmd-read calorie.today --params '{"date":"今日","hasNote":true}'` | 结果：跑这条命令 → 结果型 HTML 落盘 |
+
+本表 70 行＝HELP 资产「饮食」组的场景条数＝冻结唤醒词表 `scene-02-diet.ts` 的条数（构建期逐词核对，差一条即停）；三类流程：结果 52 条／回执 15 条／过程 3 条。
+「命令」列是该词在路由层（`src/diet/routes.ts`）记的那一条，照抄即跑；三类的步骤与交付判据见「场景 02 饮食工作流程」一节。
 <!-- HELP-AUTO-END -->
+
+## 场景 02 饮食工作流程（70 条唤醒词／三类流程）
+
+- 逐词对照表在上方「联动速查」节末（构建期注入：一行一条唤醒词，命令照抄即跑）。三类流程共用同一套步骤与判据：
+  - **结果**：用户说唤醒词 → 复制该词的 prompt → 跑表里那条命令 → 结果型 HTML 落盘，`data.output` 回绝对路径。
+  - **回执**：同上，交付写后回执页；改／删类先读定位（`calorie.today`／`calorie.view.diet` 给得出记录编号），把当前内容给用户看过，再跑写命令。
+  - **过程**：先出预检确认页 → 用户确认 → 跑表里那条写命令 → 写后回执页。营养表两条的读数在模型侧，先把识别结果给用户看；批量导入食品先跑 `calorie.view.batch-import-preview` 拿导入条数／跳过条数／失败明细。
+- 交付判据：① HTML 落盘、`data.output` 是绝对路径；② 字节不为 0；③ 文字回复只概括结论、不超过三句话；④ 该缺数据的（窗内无记录、记录编号不存在）出可读的缺失阻断且不落盘——这一档算完成，不算缺陷。
+- 权威源：唤醒词与它的类型住 HELP 资产 `src/triggers/wake-assets.ts` 的「饮食」组（与冻结唤醒词表 `src/triggers/scene-02-diet.ts` 逐词相同，构建期核对，差一条即停）；命令与参数住路由层 `src/diet/routes.ts`；那张表由 `pnpm help:build` 生成，谁都不手改。
+- 三类各自的条数不在此处手写：见上方那张表的自述行（构建期按当刻数据算）。
 
 ## HELP 交付与速查台
 

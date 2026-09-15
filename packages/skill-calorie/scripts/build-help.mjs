@@ -3,6 +3,11 @@
 //
 // 入口：`pnpm help:build`（= 跑本文件）。本文件里**没有一条命令的手写事实**：
 //   REPR 表、EXAMPLE 表与 FLOW 表（#338）都是 `scripts/gen-cli.mjs` 的标记块生成物，其余从 `dist/cli/keys.js` 读。
+//   #278 追加「场景 02 饮食」逐词表（一行一条唤醒词 → 命令 → 工作流程，70 行）：唤醒词与类型取自 HELP 资产
+//   「饮食」组（`dist/triggers/wake-assets.js`），并与冻结表 `dist/triggers/scene-02-diet.js` 逐词核对；
+//   命令取自路由层（`dist/triggers/routing.js` 的 `ALL_ROUTES`）。任一侧缺一条即抛，不静默少一行。
+//   同票：示例里的写死日期换成登记过的占位符（照抄出来不许指向过期时间段）；饮食场景的命令，其代表唤醒词
+//   取自它自己那条词（源＝路由层），不再退回命令名。
 //   工作流程名的唯一住处是命令声明上的可选 `flow`（`src/shared/commandSpec.ts`）；本文件只列名单（`BODY_HELP_FLOWS`
 //   ＝帮助面场景 03 的八个下一级分组名），声明里出现名单外的名字即抛。
 // 重生成 SKILL.md 的正确顺序（少一步就会得到「键数停在旧的」这种静默结果）：
@@ -13,7 +18,10 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { CALORIE_COMBOS } from '../dist/cli/keys.js';
+import { CALORIE_COMBOS, isCalorieWriteKey } from '../dist/cli/keys.js';
+import { ALL_ROUTES } from '../dist/triggers/routing.js';
+import { SCENE_02_DIET } from '../dist/triggers/scene-02-diet.js';
+import { WAKE_GROUPS } from '../dist/triggers/wake-assets.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
 export const END = '<!-- HELP-AUTO-END -->';
@@ -313,13 +321,129 @@ function precheckFor(key) {
 }
 
 /** 逐键取示例：住声明的 `example` 字段，由 `gen-cli.mjs` 落成上面那张表（#295 返修 A3）。
- * 表里没有＝声明漏了 `example`（`CommandSpec` 的必填字段，tsc 与生成器各拦一道）——大声失败，不静默降级。 */
+ * 表里没有＝声明漏了 `example`（`CommandSpec` 的必填字段，tsc 与生成器各拦一道）——大声失败，不静默降级。
+ * #278：示例里的具体日期换成占位符再上表——写死的 `2026-09-xx` 照抄出来指向过期时间段，
+ * 而占位符的替换值登记在 `docs/research/t81-seed.mjs`（`pnpm help:examples:check` 按那份登记逐行实跑）。 */
+export const EXAMPLE_PLACEHOLDERS = ['<开始日期>', '<结束日期>', '<对比开始日期>', '<对比结束日期>', '<日期>'];
+const ISO_DATE_RE = /\b\d{4}-\d{2}-\d{2}\b/g;
+/** 一个日期＝让调用方自己填哪天（只此一个占位符）。 */
+const ONE_DATE_PLACEHOLDER = '<日期>';
+/** 两个以上＝两段（或多段）对比的起止，按出现次序取。 */
+const RANGE_PLACEHOLDERS = EXAMPLE_PLACEHOLDERS.filter((p) => p !== ONE_DATE_PLACEHOLDER);
+
+/** 把示例里的日期字面量按**出现次序**换成登记过的占位符。
+ *
+ *  按次序（不是按「不同日期分组替换」）：一个日期＝让调用方自己填哪天（`<日期>`）；
+ *  两个以上＝两段对比的起止，按出现次序取 `<开始日期>`／`<结束日期>`／`<对比开始日期>`／`<对比结束日期>`。
+ *  按次序才守得住两件事：① 同一天的起止（`period1Start`／`period1End` 同值）会得到**同一个**占位符，
+ *  替换回同一个真实日期，起止仍是一天；② 两段对比的四个位置各得各的占位符，
+ *  替换回**各自登记的**日子，照抄出来仍是两段而不是同一个日期铺满四处。
+ *  位置不够就抛（不静默退回「按值分组」那种铺满四处的写法）。 */
+export function dateFreeExample(cmd) {
+  const dates = cmd.match(ISO_DATE_RE) ?? [];
+  if (dates.length === 0) return cmd;
+  const picks = dates.length === 1 ? [ONE_DATE_PLACEHOLDER] : RANGE_PLACEHOLDERS;
+  if (dates.length > picks.length) {
+    throw new Error('示例里的日期多于已登记的占位符：' + cmd + '（' + dates.length + ' 处日期，只有 '
+      + picks.length + ' 个位置：' + picks.join('、')
+      + '。要加位置，先在 docs/research/t81-seed.mjs 的 PLACEHOLDER_SUBSTITUTIONS 登记替换值，'
+      + '再加进本文件的 EXAMPLE_PLACEHOLDERS——两处同一份口径，不许只改一处）');
+  }
+  let i = 0;
+  return cmd.replace(ISO_DATE_RE, () => picks[i++]);
+}
+
 function exampleFor(key) {
   const hit = EXAMPLES[key];
   if (hit === undefined) {
     throw new Error('exampleFor 缺 case：' + key + '（新增键必须在声明里带 example，不得落 default）');
   }
+  return dateFreeExample(hit);
+}
+
+/* ── 场景 02 饮食：一行一条唤醒词 → 命令 → 工作流程 ──────────────────────────────────────
+ *
+ * 单一来源两处，本文件不存第三份：
+ *   ① 唤醒词与它的类型（结果／回执／过程）＝ HELP 资产「饮食」组的场景数据
+ *      （`src/triggers/wake-assets.ts`，用户看的 HELP 场景页与它是同一份）；与冻结唤醒词表
+ *      `src/triggers/scene-02-diet.ts` 逐词双向核对，差一条即抛并点名。
+ *   ② 该词跑哪条命令＝路由层（`src/triggers/routing.ts` 的 `ALL_ROUTES`，记录住 `src/diet/routes.ts`）；
+ *      该词没有可执行命令即抛并点名——不许静默少一行。 */
+
+/** 一条场景的流程类别 → 表里那句话。三类名字取 HELP 资产自己的 `types`（结果／回执／过程），不另造词。 */
+const DIET_FLOW_TEXT = {
+  结果: '结果：跑这条命令 → 结果型 HTML 落盘',
+  回执: '回执：跑这条命令 → 写后回执页落盘',
+  过程: '过程：先出预检确认页 → 用户确认 → 跑这条命令',
+};
+
+/** HELP 资产「饮食」组的场景（唤醒词 ＋ 类型），照实物分组顺序。 */
+export function dietScenes(groups = WAKE_GROUPS) {
+  const group = groups.find((g) => g.id === 'diet');
+  if (group === undefined) throw new Error('HELP 资产缺「饮食」分组（id=diet）');
+  return group.subgroups.flatMap((s) => s.scenes);
+}
+
+/** 流程类别：HELP 资产的 `types` 是第一来源；实物遗留的那 1 条没有 `types`，按它那条命令的种类定。
+ *  同时核对「类型 ↔ 命令种类」对得上（回执／过程＝会改数据库的命令，结果＝查询命令）——对不上即抛。 */
+function dietFlowOf(scene, key) {
+  const hit = (Array.isArray(scene.types) ? scene.types : []).find((t) => DIET_FLOW_TEXT[t] !== undefined);
+  const isWrite = isCalorieWriteKey(key);
+  if (hit === undefined) return isWrite ? '回执' : '结果';
+  if (isWrite !== (hit === '回执' || hit === '过程')) {
+    throw new Error('饮食场景的类型与命令对不上：' + scene.wake_word + ' 类型=' + hit + ' 命令=' + key);
+  }
   return hit;
+}
+
+/** 逐词行：顺序＝冻结唤醒词表的顺序（用户语言的原序）。行数对不上、词没有命令 ⇒ 抛。 */
+export function buildDietRows({ scenes = dietScenes(), routes = ALL_ROUTES } = {}) {
+  const frozen = SCENE_02_DIET.map((t) => t.wake_word);
+  const assetWords = scenes.map((s) => s.wake_word);
+  const onlyAsset = assetWords.filter((w) => !frozen.includes(w));
+  const onlyFrozen = frozen.filter((w) => !assetWords.includes(w));
+  if (onlyAsset.length > 0 || onlyFrozen.length > 0) {
+    throw new Error('饮食唤醒词两处对不上——HELP 资产多出：[' + onlyAsset.join('、')
+      + ']；冻结唤醒词表多出：[' + onlyFrozen.join('、') + ']');
+  }
+  const firstRoute = new Map();
+  for (const r of routes) {
+    if (r.kind !== 'exec' || firstRoute.has(r.wakeWord)) continue;
+    firstRoute.set(r.wakeWord, r);
+  }
+  return frozen.map((wake) => {
+    const route = firstRoute.get(wake);
+    if (route === undefined) throw new Error('饮食唤醒词没有可执行的命令：' + wake);
+    if (typeof route.cli !== 'string' || route.cli === '') throw new Error('饮食唤醒词那条路由缺命令原文：' + wake);
+    return { wake, cli: route.cli, key: route.key, flow: dietFlowOf(scenes.find((s) => s.wake_word === wake), route.key) };
+  });
+}
+
+/** 场景 02 的逐词表：一行一条唤醒词。行数与两处来源逐条对得上，缺一条即抛。 */
+export function buildDietSection(opts) {
+  const rows = buildDietRows(opts);
+  const count = (t) => rows.filter((r) => r.flow === t).length;
+  const L = ['### 场景 02 饮食 · 逐条唤醒词 → 命令 → 工作流程（' + rows.length + ' 条，一行一条唤醒词）', '',
+    '| 唤醒词 | 命令（照抄即跑） | 工作流程 |', '|---|---|---|'];
+  for (const r of rows) L.push('| ' + r.wake + ' | \u0060' + r.cli + '\u0060 | ' + DIET_FLOW_TEXT[r.flow] + ' |');
+  L.push('');
+  L.push('本表 ' + rows.length + ' 行＝HELP 资产「饮食」组的场景条数＝冻结唤醒词表 `scene-02-diet.ts` 的条数'
+    + '（构建期逐词核对，差一条即停）；三类流程：结果 ' + count('结果') + ' 条／回执 ' + count('回执')
+    + ' 条／过程 ' + count('过程') + ' 条。');
+  L.push('「命令」列是该词在路由层（`src/diet/routes.ts`）记的那一条，照抄即跑；'
+    + '三类的步骤与交付判据见「场景 02 饮食工作流程」一节。');
+  return L.join('\n');
+}
+
+/** 饮食场景各命令的代表唤醒词（该场景自己的词，按路由层记录顺序取第一条）。 */
+export function dietRepresentatives(routes = ALL_ROUTES, frozen = SCENE_02_DIET.map((t) => t.wake_word)) {
+  const words = new Set(frozen);
+  const m = new Map();
+  for (const r of routes) {
+    if (r.kind !== 'exec' || !words.has(r.wakeWord) || m.has(r.key)) continue;
+    m.set(r.key, r.wakeWord);
+  }
+  return m;
 }
 
 /** #338 · 声明里的工作流程名只许取 `BODY_HELP_FLOWS` 里的取值：名字写错即抛（不静默少一列）。
@@ -337,26 +461,36 @@ function flowFor(key) {
 
 export function buildHelpBlock() {
   const keys = Object.keys(CALORIE_COMBOS).sort();
+  const diet = dietRepresentatives();
+  const src = { diet: 0, declared: 0, none: 0 };
+  const wakeOf = (k) => {
+    if (diet.has(k)) { src.diet += 1; return diet.get(k); }
+    if (REPR[k] !== undefined) { src.declared += 1; return REPR[k]; }
+    src.none += 1; return k;         // 只为页面服务、没有唤醒词的命令：首列列命令名自身（条数写进下面那句自述）
+  };
   const lines = ['| 唤醒词 | key | shape | 预检页 | 流程 | 例 |', '|---|---|---|---|---|---|'];
   for (const k of keys) {
     const shape = CALORIE_COMBOS[k].shape;
-    const wake = REPR[k] || k;
-    lines.push('| ' + wake + ' | ' + k + ' | ' + shape + ' | ' + precheckFor(k) + ' | ' + flowFor(k)
+    lines.push('| ' + wakeOf(k) + ' | ' + k + ' | ' + shape + ' | ' + precheckFor(k) + ' | ' + flowFor(k)
       + ' | \u0060' + exampleFor(k) + '\u0060 |');
   }
   lines.push('');
-  lines.push('「唤醒词」列是该键的代表词（**由命令声明派生**：`gen-cli.mjs` 写 `REPR` 表，本生成器不另存第二份）；'
-    + '「预检页」列是该写命令**先出的预检确认页命令**（读命令与「读—确认—写」那一类留空，事实出处＝'
+  lines.push('「唤醒词」列是这条命令的代表词，三个来源逐条自述：饮食场景的命令取它自己那条词（源＝路由层，'
+    + src.diet + ' 条）；其余取命令声明里的代表词（`gen-cli.mjs` 写 `REPR` 表，' + src.declared + ' 条）；'
+    + '只为页面服务、没有唤醒词的命令列命令名自身（' + src.none + ' 条）。本生成器不另存第二份唤醒词。'
+    + '「预检页」列是该写命令**先出的预检确认页命令**（查询命令与「读—确认—写」那一类留空，事实出处＝'
     + '`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`）；「流程」列是它服务的工作流程名。'
     + '三列的事实都住各自能力目录的声明与路由，本表由 `pnpm help:build` 生成。');
   lines.push('体重一族 58 条唤醒词各归**一条**工作流程（八条流程的步骤与逐条对照见「场景 03 体重工作流程」一节与'
     + ' `docs/skills/skill-calorie/t338-流程接线-证据.md` §3）；流程名的事实住命令声明（`src/weight/commands.ts` 与'
     + ' `src/goal/commands.ts` 的 `flows`），本表由 `pnpm help:build` 生成。');
-  lines.push('上表「流程」列按**命令**列：一个键服务多条流程时用「／」列全（`calorie.view.weight-history`＝看体重明细／看体重曲线／看体重备注），'
-    + '首项是「唤醒词」列那条代表词所在的流程；「唤醒词」列是该键的代表词，个别键的代表词取自别的场景清单'
+  lines.push('上表「流程」列按**命令**列：一条命令服务多条流程时用「／」列全（`calorie.view.weight-history`＝看体重明细／看体重曲线／看体重备注），'
+    + '首项是「唤醒词」列那条代表词所在的流程；「唤醒词」列是这条命令的代表词，个别命令的代表词取自别的场景清单'
     + '（如 `calorie.view.weight-review` 一行的「看体重复核」）。');
-  lines.push('相关场景：' + keys.join('、') + '（' + keys.length + ' 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 下划线键仅渲染复用）。');
+  lines.push('相关场景：' + keys.join('、') + '（' + keys.length + ' 组合，key 字符串 skilllink 登记时冻结；内部 VIEW 的下划线名只供页面装配复用）。');
   lines.push('身材照片 HELP 模块：skill-calorie/photo/photo＋skill-calorie/photo/photos（gallery/compare/viewer/gif/picker + buildPhotoHelp/lookupPhotoHelp，现找直达可执行 exec）。');
+  lines.push('');
+  lines.push(buildDietSection());
   return lines.join('\n');
 }
 
