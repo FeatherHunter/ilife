@@ -425,3 +425,57 @@ python .scratch/t154/text-review/rev-fix/probe-fix-readings.py   # → .scratch/
 3. **交付包重出**：`.scratch/t154/delivery/` 只有编排者重出，本票动过源码后旧产物仍是旧形态（含旧 caption 横滚）。
 4. **行数**：`history.ts` 本轮 LF=878（改前 862，＋16 行注释与装配）；超 350 线，超因与拆法见包台账，台账「当场实测」列由编排者 `--sync`。
 5. **并发记账**：本席变异期盘上 `detailTable` 的 `open: true` 一度被还原（重编后产物无变异，变异被迫重做一次）。`history.ts` 同在 #480 与 #510 写集里——后人改此件先确认盘上版本。
+
+---
+
+## 十、单点页曲线双标签压字去一（#546）
+
+票：**#546**（九.3 第 1 条的遗留开票：03 页图上两个 `70.4 kg` 叠在一起）。本节为 #546 的证据续节（原九章一字未动）。
+
+### 10.1 改了什么（只动一处装配，`curvePlanOf` 单点分支未动）
+
+- 根因：单点页图表同时传了 `highlightLast: true`（黑字点值标签，居中）与 `markPoint: true`（蓝字同值标签，同一点），两标签同坐标叠字；均值线标签（`均值 X kg`，右缘）本就错开，不在叠字之列。
+- 改法（`packages/skill-calorie/src/weight/history.ts:699`）：单点分支不再传 `markPoint`，只留末点高亮的一点值标签（居中）＋均值线标签（右缘），两标签错开可读；数字本身不动（均值线标签仍为 `均值 X kg`，X 与点值逐字一致）。
+- 测试（`packages/skill-calorie/test/weight-history-333.test.mjs`，`看本周体重` 分支内新增 4 条）：单点页 SVG 文本元中 `ilife-charts-mptext` 恰 0 个、`ilife-charts-value-last` 恰 1 个、`ilife-charts-marktext` 恰 1 个，且均值线标签逐字等于 `均值 ＋ 点值标签`。只数 `<text` 元，不数 `<style>` 里的同名类（样式里各有 2 处同名，会误计数；首轮红即因此）。
+
+### 10.2 判据读数
+
+| 读数 | 值 |
+|---|---|
+| 出页 history 族 | `TALLY {"通过":18} TOTAL 18 HTML=18`、`OK-RENDER …/w1-546/out-history` |
+| test-333 | `RESULT: 18/18`（三只用例：18 词逐条真跑／备注空窗 exit 4 不落盘／旧口径 days 与显式起止；`pass 3 fail 0`） |
+| 桌面 1200 看图（03） | `shots-desktop/03-看本周体重.png`（1200×3000）：居中黑字 `70.4 kg` 一枚＋右缘灰字 `均值 70.4 kg` 一枚，无叠字，已真看 |
+| 手机 390 看图（03） | `shots-mobile/03-看本周体重-390.png`：同上两枚错开可读，无叠字，已真看 |
+| 手机 390 探针 | 18/18 页 `SW=390 VW=390 ｜｜ 无溢出`（03 页 `SW=390 VW=390 ｜｜ 无溢出`） |
+| 变异两行 | 改坏 `exit=1 (无 RESULT 行)`（点名 `单点页图内仍有单点标记标签`）→ 改回 `exit=0 RESULT: 18/18`，双还原逐字节一致 |
+| 行数 | `history.ts` LF=879（改前 878，＋1 行注释与装配） |
+
+**必报五步第四步**：`src/weight/history.ts` **已超线（879 行 > 350），需要根据规则进行重构。** 超因＝「看体重明细」与「看体重曲线」在命令面上是同一个命令，两条子功能共用一件（包台账原话）。本次先不拆：拆分不在 #546 写集（票面只许动单点分支或装配择一处）。拆法照本件 §头已定那条：`history.ts` → `historyCurve.ts`（曲线计划与量程）／`historyRows.ts`（明细分段与标签分布）／`historyPage.ts`（整页装配与复制区），台账「当场实测」列（现 878，实况 879）由编排者 `--sync`。
+
+### 10.3 门禁声明（逐条 GATE-RUN，退出码 0 的才算门禁证据）
+
+```
+GATE-RUN runId=de60f3c0-a9a7-45ae-ba55-7602fd732f1a cmd=npx tsc -b packages/skill-calorie
+GATE-RUN runId=4f482a7b-2e14-44bd-b05c-3964b680410c cmd=node .scratch/t154/text-review/render-family.mjs --family history --out .scratch/t154/w1-546/out-history
+GATE-RUN runId=ee3e38b8-c09a-4e80-8533-ddb9cffe6402 cmd=node --test packages/skill-calorie/test/weight-history-333.test.mjs
+GATE-RUN runId=64c76620-b094-4ce1-ac2c-9302986266a4 cmd=node .scratch/t154/shoot.mjs .scratch/t154/w1-546/out-history .scratch/t154/w1-546/shots-desktop
+GATE-RUN runId=768a29e1-5069-474b-b146-308062d83cb0 cmd=node .scratch/t154/text-review/mobile-frame.mjs shoot 390 2400 .scratch/t154/w1-546/out-history/03-看本周体重.html
+GATE-RUN runId=1bfedd94-032d-4f8b-8e8b-c2f3dffa9b23 cmd=node .scratch/t154/text-review/mobile-frame.mjs probe 390 2400 .scratch/t154/w1-546/out-history
+GATE-RUN runId=de57b080-9808-4efe-a2c0-70694fc5ba7f cmd=node .scratch/t154/w1-546/mutations-546.mjs
+```
+
+同 green 的早期重复条 `runId=3c854d2f-5b22-4493-9902-ec0f571cb863`（同一改动的 test-333 全绿，还原事故前）备查，不重复计入。
+
+### 10.4 过程记账（红与阻断，一字不瞒）
+
+1. 断言首轮红两次（皆测试写法问题，非实现错）：① 按裸类名计数把 `<style>` 里的 2 处同名也数进去（`2 !== 0`）→ 改只数 `<text` 元；② 均值标签硬编码 `70.4 kg`，而用例种子窗的单点值不是该数 → 改值无关断言（均值线标签逐字等于 `均值 ＋ 点值`）。
+2. 改动一度丢失：变异前盘上两件回到 HEAD（`git diff` 空），草稿与日志都在。现场无别席在途改动（两件 `git status` 干净），原因未查明；已按原样重落（`history.ts` 3 行／`test-333` 8 行），重编重测回绿（`ee3e38b8`），出页与截图沿用同一改动生成的那批（内容同形）。
+3. 全包编译红与本票无关：重落后的 `tsc -b` 报 `planEditorPort.ts(62/63/64/196) error TS2304: Cannot find name 'SLOTS'`（别席在途件，本件 0 错；`runId=5e6826a6-3777-4dcc-b6fc-0d57f9a815e1 exit=1`）。用例吃此前同形改动的已落盘产物（`dist` 与现源码一致），`RESULT: 18/18` 仍有效；全包回绿待该席落完。
+4. 变异代偿公示：`tsc -b/-p` 均不刷新 `dist/history.js`（红树），故变异电池内同步改源码一行（`markPoint: true as const`）与产物同形一行（`markPoint: true`，编译后形），逐字见 `log-mut4.log` 的 `MUT-SRC/MUT-DIST` 两行；改坏红、双还原一致、改回归绿后，终态源码为修后、产物为修后等价（`RESTORE-OK src逐字节一致 true dist逐字节一致 true`）。
+
+### 10.5 未做项与下一手
+
+1. 台账与生成物：`AGENTS.md` 台账 `history.ts` 行仍为 878（实况 879），`pnpm gen`／`gen:check` 由编排者统一同步，本票不代改。
+2. `log.ts`／`logReceipt.ts` 的同形 `single ? {markPoint:true} : {}`（今日盘／回执的单点图）按禁区一行未碰；要不要同治请编排者另开票。
+3. 交付包重出：`.scratch/t154/delivery/` 只有编排者重出，本票出页在 `w1-546/out-history`（18 页）备查。
+4. 草稿在忽略清单里：`.scratch/t154/w1-546/`（出页／两档截图／探针与变异日志／`mutations-546.mjs`）不入版本库；入版本库的为本节引到的三件（实现／测试／本证据件）。
