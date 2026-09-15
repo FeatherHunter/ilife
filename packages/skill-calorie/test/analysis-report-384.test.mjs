@@ -78,7 +78,7 @@ const CASES = [
     html: ['评分序列', '变化方向', '前段均分', '后段均分'],
   },
   {
-    word: '看健康报告(含对比)', key: 'calorie.report.compare', kind: 'compare', title: '健康报告(含对比)', params: {},
+    word: '看健康报告(含对比)', key: 'calorie.report.compare', kind: 'compare', title: '健康报告（含对比）', params: {},
     metrics: ['days', 'tdee', 'weightKg', 'deltaTdee', 'deltaWeightKg'],
     html: ['两期变化量', '对比期'],
   },
@@ -163,9 +163,23 @@ test('#384 8 条逐条跑通：exit 0＋绝对路径＋完整文档＋各自字�
       assert.ok(html.includes(needle), c.word + ' 产物缺字段文案：' + needle);
     }
     // 拿错页即红：8 页各有自己那一页的形态名（`KIND_LABELS`），不许落回 full 健康盘。
-    assert.ok(html.includes('卡路里·' + c.title), c.word + ' 缺页面标题（疑似落回 full 健康盘）');
-    assert.ok(html.includes('卡路里 · 报告'), c.word + ' 缺类型徽标');
+    /* #519 授权改写（编排者 2026-09-16，`gh issue view 519 --comments` 的《编排者授权（2026-09-16 ·
+     * 报告族 4 条冻结断言的形状改写）》；**一次性、具名、不类推**）：题名两段不再拿 `·` 串
+     * （#516 判据 R1 的债），改「卡路里 ＋ 半角空格 ＋ 形态名」。语义一件不少——仍逐字钉住
+     * 「这一页是它自己那个形态、不是 full 健康盘」。before／after 对照见
+     * `docs/skills/skill-calorie/t519-W1-报告族-证据.md` §授权改写。 */
+    assert.ok(html.includes('<title>卡路里 ' + c.title + '</title>'), c.word + ' 缺页面标题（疑似落回 full 健康盘）');
+    /* 同一条授权：徽章只写一个词「报告」（#516 §3.2 D04，拿掉 `·` 串）。 */
+    assert.ok(html.includes('<div class="type-badge">报告</div>'), c.word + ' 缺类型徽标');
     assert.ok(html.includes('calorie.report.' + c.kind), c.word + ' 缺本形态命令回执行');
+    /* #519 新增（对偶，只加强不删减；授权条件 ② 要求的那条）：**可见文本**里不得再出现旧写法。
+     * 口径与 `audit-separators.mjs` 同源：先剥 `<style>`／`<script>`／注释／全部标签。
+     * 题名那处 `·` 住 `<title>`，剥标签后仍在可见文本里（标签页上就是给读者看的），故一并判。 */
+    const vis = html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ');
+    assert.ok(!vis.includes('·'), c.word + ' 可见文本里出现 `·`（#516 判据 R1 的债）');
+    assert.ok(!html.includes('卡路里 · 报告'), c.word + ' 产物里仍有旧徽章串「卡路里 · 报告」');
+    assert.ok(!vis.includes('~'), c.word + ' 可见文本里出现 `~`（#516 判据 R6 的债）');
   }
 });
 
@@ -219,9 +233,16 @@ test('#384f 日均总消耗两期同源真体重：Δ 随窗口变，不再是�
     const html = readFileSync(out, 'utf8');
     const cells = tableRow(html, '日均总消耗');   // [label, cur, prev, delta, dir]
     const days = Number(/^([0-9]+)d$/.exec(win)[1]);
-    // 窗口不自己算：取**页面自述的两期**（KPI 卡「本期」＝cur.start ~ cur.end，「对比期」＝prev.start ~ prev.end）
-    const spans = [...new Set([...html.matchAll(/(\d{4}-\d{2}-\d{2}) ~ (\d{4}-\d{2}-\d{2})/g)].map((m) => m[1] + '~' + m[2]))];
+    // 窗口不自己算：取**页面自述的两期**（KPI 卡「本期」＝cur.start 至 cur.end，「对比期」＝prev.start 至 prev.end）
+    /* #519 授权改写（同一条授权，条件 ①②）：只把**判据里那个分隔符**从 `~` 换成「至」
+     * （#516 判据 R6：拿 `~` 顶替「至」判债）。语义一件不少——仍是「页面上恰好自述两期」＋
+     * 「第二期＝紧邻本期的等长窗口」，`spans` 的内部拼法（用 `~` 拼接）是测试自用中间量、不是产物文本，一字未动。 */
+    const spans = [...new Set([...html.matchAll(/(\d{4}-\d{2}-\d{2}) 至 (\d{4}-\d{2}-\d{2})/g)].map((m) => m[1] + '~' + m[2]))];
     assert.equal(spans.length, 2, win + ' 页面没给出两期窗口：' + JSON.stringify(spans));
+    /* #519 新增（对偶，只加强不删减；授权条件 ② 要求的那条）：可见文本里不得再出现 `~`。 */
+    const vis = html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ');
+    assert.ok(!vis.includes('~'), win + ' 可见文本里出现 `~`（#516 判据 R6 的债）');
     const [curStart, curEnd] = spans[0].split('~');
     const [prevStart, prevEnd] = [shift(curStart, -days), shift(curStart, -1)];
     assert.equal(spans[1], prevStart + '~' + prevEnd, win + ' 对比期不是紧邻本期的等长窗口：' + spans[1]);

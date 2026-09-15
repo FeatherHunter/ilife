@@ -299,10 +299,18 @@ test('#386 第三组：8 报告各拿自己那页（不是 full 健康盘）／�
     const expectKind = MUT_TPL && i === 0
       ? REPORT_KINDS[(REPORT_KINDS.indexOf(kind) + 1) % REPORT_KINDS.length]
       : kind;
-    assert.ok(rec.html.includes('卡路里·' + KIND_LABELS[expectKind]),
-      t.wake_word + ' 页面标题不是它自己那个形态（疑似拿错页）：期望「卡路里·' + KIND_LABELS[expectKind] + '」');
-    assert.ok(rec.html.includes('卡路里 · 报告'), t.wake_word + ' 缺报告类型徽标');
+    assert.ok(rec.html.includes('<title>卡路里 ' + KIND_LABELS[expectKind] + '</title>'),
+      t.wake_word + ' 页面标题不是它自己那个形态（疑似拿错页）：期望「卡路里 ' + KIND_LABELS[expectKind] + '」');
+    assert.ok(rec.html.includes('<div class="type-badge">报告</div>'), t.wake_word + ' 缺报告类型徽标');
     assert.ok(rec.html.includes('calorie.report.' + kind), t.wake_word + ' 产物缺本形态命令回执行');
+    /* #519 授权改写（编排者 2026-09-16，《编排者授权（2026-09-16 · 报告族 4 条冻结断言的形状改写）》；
+     * **一次性、具名、不类推**）：上面两条只把**债字符**换成新形状——题名两段不再拿 `·` 串
+     * （#516 判据 R1）改「卡路里 ＋ 半角空格 ＋ 形态名」；徽章只写一个词「报告」（#516 §3.2 D04）。
+     * 语义一件不少（仍逐字钉住「这是哪一页」），并按下条与 `analysis-report-384.test.mjs` 的那处对称加强。 */
+    const vis = rec.html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ');
+    assert.ok(!vis.includes('·'), t.wake_word + ' 可见文本里出现 `·`（#516 判据 R1 的债）');
+    assert.ok(!rec.html.includes('卡路里 · 报告'), t.wake_word + ' 产物里仍有旧徽章串「卡路里 · 报告」');
     assert.notEqual(rec.html, healthHtml, t.wake_word + ' 落回 full 健康盘那一页了');
     reportHtmls.push(rec.html);
   });
