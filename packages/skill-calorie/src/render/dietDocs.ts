@@ -73,6 +73,20 @@ function r1(n: number): number {
  *  现在只留读者用得上的那半句：加餐是哪几顿。 */
 const MEAL_NOTE = '加餐时段：下午茶、夜宵';
 
+/* ── #551 · 副题与 caption 一带的形状件（写集只给本件：窗口条＋事实条，字号 12／13，断点 820 照 HELP）── */
+const DIET_SHAPE_CSS = '<style>.diet-window,.diet-facts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:4px 0 12px}'
+  + '.diet-date{font-size:13px;font-weight:600;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 8px}'
+  + '.diet-arrow{font-size:13px;color:var(--fg3)}.diet-chip{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);border-radius:999px;padding:4px 8px}'
+  + '.diet-fact{display:inline-flex;gap:8px;align-items:baseline}.diet-fact-k{font-size:12px;color:var(--fg3);white-space:nowrap}'
+  + '.diet-fact-v{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}'
+  + '@media (max-width:820px){.diet-facts{flex-direction:column;align-items:stretch;gap:8px}.diet-fact{justify-content:space-between}}</style>';
+const dietEsc = (s: string): string => s.replace(/[&<>"']/g, (c) => c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;');
+function dietHead(start: string, end: string, chip: string, facts: ReadonlyArray<readonly [string, string]>): string {
+  const mid = start === end ? '<span class="diet-date">' + dietEsc(start) + '（单日）</span>' : '<span class="diet-date">' + dietEsc(start) + '</span><span class="diet-arrow">→</span><span class="diet-date">' + dietEsc(end) + '</span>';
+  return DIET_SHAPE_CSS + '<div class="diet-window">' + mid + '<span class="diet-chip">' + dietEsc(chip) + '</span></div><div class="diet-facts">'
+    + facts.map(([k, v]) => '<span class="diet-fact"><span class="diet-fact-k">' + dietEsc(k) + '</span><span class="diet-fact-v">' + dietEsc(v) + '</span></span>').join('') + '</div>';
+}
+
 /* ── 条目列表页（`calorie.view.diet` 的窗口词；老实物 `today_meals.html` 对照） ── */
 
 /** 区块锚点（页内导航 `renderTocBlock` 的落点；名字照作者认可的样张
@@ -141,6 +155,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       { id: LIST_ANCHOR.copy, text: '复制区' },
     ],
   }));
+  /* #551 · 副题只留一句结论，五事实落窗口条＋事实条（390 靠 flex-wrap＋820 纵列）。 */
+  parts.push(dietHead(o.start, o.end, '共 ' + o.days + ' 天', [['有记录', o.loggedDays + ' 天'], ['记录', mealTotal + ' 条'], ['合计', o.totalCalories + ' 卡'], ['日均', fmt(o.avgCalories) + ' 卡']]));
   /* §五 第 5 行：KPI 读数。 */
   parts.push(anchored(LIST_ANCHOR.kpi, renderKpiGrid([
     { label: '累计', value: String(o.totalCalories), unit: '卡', detail: o.loggedDays + '/' + o.days + '天有记录' },
@@ -203,9 +219,11 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
         date: d.date, cal: fmt(d.calories), pro: fmt(d.protein), carbs: fmt(d.carbs), fat: fmt(d.fat),
         goal: fmt(d.calorieGoal),
       })),
-      caption: '按日汇总（' + o.start + ' ~ ' + o.end + '，无记录日写 —，不断 0）',
+      /* #551 · caption 只留表名，窗口与口径事实另有去处（窗口在页顶条，口径在表下行），不删事实。 */
+      caption: '按日汇总',
       emptyText: '本窗无按日汇总',
     })));
+    parts.push(renderCaliberLine('无记录日写 — 不断 0'));
     parts.push(anchored(LIST_ANCHOR.meals, renderDisclosure({
       /* #496 · 折行标题原写「窗口明细」——审查件第 63、64、66、68 条点到它：读者看不出「窗口」是哪扇窗，
          且这一页的明细就是窗内全部记录 ⇒ 改「全部记录（共 N 条）」。 */
@@ -245,10 +263,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
     /* #496 · 眉标原写命令键「calorie.view.diet · 饮食域」——`t425-融合基准.md:127-132`（裁定 1）
        定死不上屏，`assembleDocPage` 也已整行挡掉这种写法；这里同时换成样张口径的中文族名。 */
     eyebrow: '卡路里 · 饮食',
-    /* §五 第 3 行：结论句（句内含本页读数）。样张做法＝复用页头副题槽（公共层没有「结论行」区块，
-       `t425-融合基准.md:139` 记明这个缺项），裁定 2-补：它是普通小字行、不走深底块。 */
-    subtitle: '窗口 ' + o.start + ' ~ ' + o.end + ' 共 ' + o.days + ' 天，有记录 ' + o.loggedDays + ' 天、'
-      + mealTotal + ' 条，合计 ' + o.totalCalories + ' 卡，日均 ' + fmt(o.avgCalories) + ' 卡。',
+    /* §五 第 3 行：结论句（句内只留合计一句，窗口与五事实明细在页顶形状条；#551 去文字串）。 */
+    subtitle: '本窗合计 ' + o.totalCalories + ' 卡',
     content: parts.join(''),
     charts,
   });
