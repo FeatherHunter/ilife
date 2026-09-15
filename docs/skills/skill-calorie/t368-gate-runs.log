@@ -1,0 +1,54 @@
+# #368 运行记录导出件（源＝未受版本控制的 .scratch/locks/gate-runs.log）
+# 切片规则＝从本票首个运行（baseline 批）导到导出当刻的日志末尾；含 START 与 RUN 两类行
+# 行内 runId 与 t368-索引证据.md §六 的逐条 GATE-RUN 声明一一对应（协议 §2.4 第 2 条）
+# 导出件行数＝50（不含本 4 行头注释）
+START ticket=368 runId=d4847bc3-e250-4ff0-a8ac-85507f5c4510 cmd="pwsh -NoProfile -File .scratch\\t368\\baseline.ps1" waitedMs=15002 pid=30556 at=2026-09-15T02:54:26.268Z
+RUN ticket=368 runId=d4847bc3-e250-4ff0-a8ac-85507f5c4510 cmd="pwsh -NoProfile -File .scratch\\t368\\baseline.ps1" waitedMs=15002 exit=0 pid=30556 at=2026-09-15T02:54:37.665Z
+START ticket=368 runId=12eb594b-18de-4625-b3c8-42cdb5b24d61 cmd="node .scratch/t368/probeA.mjs" waitedMs=180047 pid=44356 at=2026-09-15T02:58:06.832Z
+RUN ticket=368 runId=12eb594b-18de-4625-b3c8-42cdb5b24d61 cmd="node .scratch/t368/probeA.mjs" waitedMs=180047 exit=1 pid=44356 at=2026-09-15T02:58:06.909Z
+START ticket=368 runId=0ca71676-64d9-4498-8dfd-d7d18e9561f5 cmd="node .scratch/t368/probeA.mjs" waitedMs=120075 pid=45492 at=2026-09-15T03:00:38.847Z
+RUN ticket=368 runId=0ca71676-64d9-4498-8dfd-d7d18e9561f5 cmd="node .scratch/t368/probeA.mjs" waitedMs=120075 exit=0 pid=45492 at=2026-09-15T03:00:38.943Z
+START ticket=368 runId=42c23f39-a1f5-4a8e-ac89-8d44f620e6e2 cmd="pwsh -NoProfile -File .scratch\\t368\\impl.ps1" waitedMs=75045 pid=43648 at=2026-09-15T03:06:58.666Z
+RUN ticket=368 runId=42c23f39-a1f5-4a8e-ac89-8d44f620e6e2 cmd="pwsh -NoProfile -File .scratch\\t368\\impl.ps1" waitedMs=75045 exit=0 pid=43648 at=2026-09-15T03:07:16.696Z
+START ticket=368 runId=533b7806-9d25-4c6b-bd21-0bf3a8ec24e5 cmd="pwsh -NoProfile -File .scratch\\t368\\impl.ps1" waitedMs=0 pid=10284 at=2026-09-15T03:09:07.570Z
+RUN ticket=368 runId=533b7806-9d25-4c6b-bd21-0bf3a8ec24e5 cmd="pwsh -NoProfile -File .scratch\\t368\\impl.ps1" waitedMs=0 exit=0 pid=10284 at=2026-09-15T03:09:24.698Z
+START ticket=368 runId=4de5c518-b67f-4ebd-ae05-3ee9db93adb3 cmd="pwsh -NoProfile -File .scratch\\t368\\impl2.ps1" waitedMs=0 pid=40112 at=2026-09-15T03:09:40.475Z
+RUN ticket=368 runId=4de5c518-b67f-4ebd-ae05-3ee9db93adb3 cmd="pwsh -NoProfile -File .scratch\\t368\\impl2.ps1" waitedMs=0 exit=0 pid=40112 at=2026-09-15T03:09:58.922Z
+START ticket=368 runId=33ccce46-f275-49a0-852d-ec03f7697840 cmd="pwsh -NoProfile -File .scratch\\t368\\impl2.ps1" waitedMs=0 pid=39756 at=2026-09-15T03:10:50.297Z
+RUN ticket=368 runId=33ccce46-f275-49a0-852d-ec03f7697840 cmd="pwsh -NoProfile -File .scratch\\t368\\impl2.ps1" waitedMs=0 exit=0 pid=39756 at=2026-09-15T03:11:02.309Z
+START ticket=368 runId=731e7c7d-3409-493d-97d3-3c6e020d172c cmd="node .scratch/t368/probeA.mjs" waitedMs=1 pid=37072 at=2026-09-15T03:11:08.552Z
+RUN ticket=368 runId=731e7c7d-3409-493d-97d3-3c6e020d172c cmd="node .scratch/t368/probeA.mjs" waitedMs=1 exit=0 pid=37072 at=2026-09-15T03:11:08.667Z
+START ticket=368 runId=8d440858-c916-499f-bd12-188b7ff7713a cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=40588 at=2026-09-15T03:12:13.654Z
+RUN ticket=368 runId=8d440858-c916-499f-bd12-188b7ff7713a cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=1 pid=40588 at=2026-09-15T03:12:14.071Z
+START ticket=368 runId=fb639a90-95d6-41bb-b702-dcc560cfbbb3 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=42876 at=2026-09-15T03:12:53.161Z
+RUN ticket=368 runId=fb639a90-95d6-41bb-b702-dcc560cfbbb3 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=1 pid=42876 at=2026-09-15T03:12:53.572Z
+START ticket=368 runId=3cf50a91-5c6d-4ede-84e0-0b57f88e726a cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=15005 pid=12348 at=2026-09-15T03:13:23.688Z
+RUN ticket=368 runId=3cf50a91-5c6d-4ede-84e0-0b57f88e726a cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=15005 exit=1 pid=12348 at=2026-09-15T03:13:24.093Z
+START ticket=368 runId=7d944e40-4bb0-49ff-8f4e-3354d64f96fb cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=75026 pid=42172 at=2026-09-15T03:14:53.746Z
+RUN ticket=368 runId=7d944e40-4bb0-49ff-8f4e-3354d64f96fb cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=75026 exit=1 pid=42172 at=2026-09-15T03:14:54.155Z
+START ticket=368 runId=7769d394-c64f-467b-ba5a-753787625b34 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=46264 at=2026-09-15T03:15:17.876Z
+RUN ticket=368 runId=7769d394-c64f-467b-ba5a-753787625b34 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=1 pid=46264 at=2026-09-15T03:15:18.288Z
+START ticket=368 runId=e4c0b3a7-b52a-4137-980d-555760d3f5f7 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=6780 at=2026-09-15T03:15:28.242Z
+RUN ticket=368 runId=e4c0b3a7-b52a-4137-980d-555760d3f5f7 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=1 pid=6780 at=2026-09-15T03:15:28.658Z
+START ticket=368 runId=5325cac2-9894-44bf-90b0-8247414302b6 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=212 pid=3484 at=2026-09-15T03:16:11.072Z
+RUN ticket=368 runId=5325cac2-9894-44bf-90b0-8247414302b6 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=212 exit=1 pid=3484 at=2026-09-15T03:16:11.581Z
+START ticket=368 runId=09b4118b-92e8-404f-8769-532546180f34 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=1 pid=12196 at=2026-09-15T03:17:01.133Z
+RUN ticket=368 runId=09b4118b-92e8-404f-8769-532546180f34 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=1 exit=1 pid=12196 at=2026-09-15T03:17:01.554Z
+START ticket=368 runId=4b55b536-86e7-431e-9eda-1e823204e7b4 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=29172 at=2026-09-15T03:17:20.960Z
+RUN ticket=368 runId=4b55b536-86e7-431e-9eda-1e823204e7b4 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=1 pid=29172 at=2026-09-15T03:17:21.471Z
+START ticket=368 runId=9b2dd99f-f600-4e2a-8912-f7453a8a8995 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 pid=8820 at=2026-09-15T03:17:34.634Z
+RUN ticket=368 runId=9b2dd99f-f600-4e2a-8912-f7453a8a8995 cmd="node --test packages/skill-calorie/test/t368-索引卡片.test.mjs" waitedMs=0 exit=0 pid=8820 at=2026-09-15T03:17:35.145Z
+START ticket=368 runId=60774956-a2b4-4e39-ba16-1fd7e5ba9fd5 cmd="pwsh -NoProfile -File .scratch\\t368\\run-gates.ps1 -args after" waitedMs=0 pid=46736 at=2026-09-15T03:17:48.653Z
+RUN ticket=368 runId=60774956-a2b4-4e39-ba16-1fd7e5ba9fd5 cmd="pwsh -NoProfile -File .scratch\\t368\\run-gates.ps1 -args after" waitedMs=0 exit=0 pid=46736 at=2026-09-15T03:19:03.030Z
+START ticket=368 runId=e6ffd7f7-b2a8-425e-83d7-da15bb777a5c cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=0 pid=46040 at=2026-09-15T03:20:19.068Z
+RUN ticket=368 runId=e6ffd7f7-b2a8-425e-83d7-da15bb777a5c cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=0 exit=1 pid=46040 at=2026-09-15T03:20:19.286Z
+START ticket=368 runId=11b4be42-6949-4fe0-b03f-fba7ef3889a5 cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=1 pid=38632 at=2026-09-15T03:20:38.509Z
+RUN ticket=368 runId=11b4be42-6949-4fe0-b03f-fba7ef3889a5 cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=1 exit=1 pid=38632 at=2026-09-15T03:20:38.745Z
+START ticket=368 runId=44b6463d-a656-4b70-b903-219cc7e28a7b cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=0 pid=44820 at=2026-09-15T03:21:07.712Z
+RUN ticket=368 runId=44b6463d-a656-4b70-b903-219cc7e28a7b cmd="node --test packages/skill-calorie/test/help-center-106.test.mjs" waitedMs=0 exit=0 pid=44820 at=2026-09-15T03:21:07.929Z
+START ticket=368 runId=1af80044-0543-4621-9dc3-7e3f687dc099 cmd="pwsh -NoProfile -File .scratch\\t368\\mutation.ps1" waitedMs=1 pid=45912 at=2026-09-15T03:23:59.123Z
+RUN ticket=368 runId=1af80044-0543-4621-9dc3-7e3f687dc099 cmd="pwsh -NoProfile -File .scratch\\t368\\mutation.ps1" waitedMs=1 exit=0 pid=45912 at=2026-09-15T03:24:09.351Z
+START ticket=368 runId=4972d725-4e13-4e20-9055-306295444754 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=1 pid=42308 at=2026-09-15T03:24:17.488Z
+RUN ticket=368 runId=4972d725-4e13-4e20-9055-306295444754 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=1 exit=0 pid=42308 at=2026-09-15T03:24:17.590Z
+START ticket=368 runId=8571cf75-dbf0-453b-b5d5-3dcd4092f249 cmd="pwsh -NoProfile -File .scratch\\t368\\run-gates.ps1 final" waitedMs=0 pid=13968 at=2026-09-15T03:24:36.516Z
+RUN ticket=368 runId=8571cf75-dbf0-453b-b5d5-3dcd4092f249 cmd="pwsh -NoProfile -File .scratch\\t368\\run-gates.ps1 final" waitedMs=0 exit=0 pid=13968 at=2026-09-15T03:25:48.966Z

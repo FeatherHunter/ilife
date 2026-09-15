@@ -62,6 +62,11 @@ const EXAMPLE_START = '// -- GEN-CLI-START EXAMPLE 表（由 packages/skill-calo
 const EXAMPLE_END = '// -- GEN-CLI-END EXAMPLE 表';
 const FLOW_START = '// -- GEN-CLI-START FLOW 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）';
 const FLOW_END = '// -- GEN-CLI-END FLOW 表';
+/** #368 · 预检确认页表（写命令 → 它先出的那一页命令）：源＝能力目录 `src/body/wizardPlate.ts` 的
+ *  `WIZARD_WRITE_KEYS`（两个向导页各自服务的写命令），本生成器只做**反查**（页 → 写命令），
+ *  写命令到页的映射不在别处存第二份。 */
+const PRECHECK_START = '// -- GEN-CLI-START 预检页表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）';
+const PRECHECK_END = '// -- GEN-CLI-END 预检页表';
 /** #295 返修第二轮 N1 · 内容印记，#325 升到 v2（配对）：每条声明源记一对哈希
  * `{src, dist}`＝源文本 sha256 ＋ 它编译产物 `.js` 文本 sha256（编译产物缺席记 `dist: null`），
  * 由 `pnpm build`（`tsc -b` 之后）调 `--stamp` 写入。住 `dist/` 里（与 dist 同生共死，且
@@ -346,6 +351,37 @@ function renderExampleBlock(entries) {
   for (const e of entries) L.push('  ' + q(e.key) + ': ' + q(e.example) + ',');
   L.push('};');
   L.push(EXAMPLE_END);
+  return L.join('\n');
+}
+
+/** #368 · 预检确认页表：**写命令 → 它先出的那一页命令**（能力目录声明的反查，不手写第二份）。
+ *
+ *  源＝`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`（`{measure: '…measure-add', composition: '…composition-add'}`，
+ *  **键名＝页名、值＝该页服务的写命令**）。本函数只做反查：一条写命令有预检页 ⟺ 某个向导页声明它服务这条写命令。
+ *  表里出现的每个键都必须在注册表里（不在即抛——不生成读不懂的行）。 */
+async function renderPrecheckBlock(entries) {
+  const wizardPath = join(DIST_DIR, 'body', 'wizardPlate.js');
+  let writeKeys = null;
+  if (existsSync(wizardPath)) {
+    const mod = await import(pathToFileURL(wizardPath).href);
+    writeKeys = mod.WIZARD_WRITE_KEYS ?? null;
+  }
+  const known = new Set(entries.map((e) => e.key));
+  const L = [PRECHECK_START];
+  L.push('// 写命令 → 它先出的预检确认页命令（值一律是注册表里的键；读命令与「读—确认—写」那一类没有行）。');
+  L.push('// 源＝`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`（键名＝页名，值＝该页服务的写命令），本表只做反查。');
+  L.push('const PRECHECK_PAGE = {');
+  const pairs = writeKeys === null ? [] : Object.entries(writeKeys)
+    .map(([pageName, writeKey]) => [writeKey, 'calorie.view.' + pageName + '-wizard'])
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  for (const [writeKey, pageKey] of pairs) {
+    for (const k of [writeKey, pageKey]) {
+      if (!known.has(k)) throw new Error('预检页表含注册表里没有的键：' + k);
+    }
+    L.push('  ' + q(writeKey) + ': ' + q(pageKey) + ',');
+  }
+  L.push('};');
+  L.push(PRECHECK_END);
   return L.join('\n');
 }
 
@@ -689,15 +725,21 @@ async function main() {
       path: BUILD_HELP,
       text: replaceBlock(
         replaceBlock(
-          replaceBlock(readFileSync(BUILD_HELP, 'utf8'), REPR_START, REPR_END, renderReprBlock(entries), BUILD_HELP),
-          EXAMPLE_START,
-          EXAMPLE_END,
-          renderExampleBlock(entries),
+          replaceBlock(
+            replaceBlock(readFileSync(BUILD_HELP, 'utf8'), REPR_START, REPR_END, renderReprBlock(entries), BUILD_HELP),
+            EXAMPLE_START,
+            EXAMPLE_END,
+            renderExampleBlock(entries),
+            BUILD_HELP,
+          ),
+          FLOW_START,
+          FLOW_END,
+          renderFlowBlock(entries),
           BUILD_HELP,
         ),
-        FLOW_START,
-        FLOW_END,
-        renderFlowBlock(entries),
+        PRECHECK_START,
+        PRECHECK_END,
+        await renderPrecheckBlock(entries),
         BUILD_HELP,
       ),
     },

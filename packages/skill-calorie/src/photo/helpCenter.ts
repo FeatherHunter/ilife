@@ -29,6 +29,12 @@
  *     该串数归 0，本行随之失效。）
  *  3. **非 exec 的 95 条不发该行**（#81 裁定：out-of-scope 10／legacy-chain 85，无单命令入口），
  *     不造占位文案；`text` 态不加该行（纯文本索引，且 #88 D-3 锁「text 尖括号集恒 {<N>}」）。
+ *
+ * **#368 两栏（票 16：HELP 卡片要带命令与工作流程两栏）**：同一条 `editable_fields` 槽位再加两行
+ * ——`命令`＝**注册表命令名**（`calorie.*` 键本体，不是 CLI 全文；`helpSceneCommand`，与 `helpSceneCli`
+ * 同一趟 `routesFor` 取值）、`工作流程`＝**该场景所属子功能名**（与卡片分组同一处事实，不另立第二份
+ * 流程表）。判据③「身体 13 条卡片的命令字段值 == 注册表命令名（13/13）」就落在这一行上；
+ * 行序恒 `命令`→`工作流程`→`可执行命令`（后两行是 #106／#368 各自追加，`可执行命令` 原文不动）。
  */
 import { ASSET_WRAPPERS, HELP_SHELL_ID, buildStyleSheet, escapeHtml, renderHelpShell } from 'base-paint';
 import type {
@@ -102,9 +108,17 @@ export const HELP_LEGACY_SUBGROUP = '既有唤醒词';
 
 /** 字段名（`data-field` 承载值）；**恒本模块常量**，不写第二份字面量。 */
 export const HELP_CLI_FIELD_NAME = 'cli';
+/** #368 · 卡片的「命令」字段名（`data-field` 承载值）：值＝**注册表命令名**（`calorie.*`，非 CLI 全文）。 */
+export const HELP_COMMAND_FIELD_NAME = 'command';
+/** #368 · 卡片的「工作流程」字段名：值＝该场景所属的子功能名（与卡片分组同一处事实）。 */
+export const HELP_FLOW_FIELD_NAME = 'flow';
 
 /** 对外文案（对齐 ADR-0008「可一键复制执行」口径）。 */
 export const HELP_CLI_FIELD_LABEL = '可执行命令';
+/** #368 · 卡片「命令」字段的对外文案。 */
+export const HELP_COMMAND_FIELD_LABEL = '命令';
+/** #368 · 卡片「工作流程」字段的对外文案（AI 靠它知道从哪一段流程执行下去）。 */
+export const HELP_FLOW_FIELD_LABEL = '工作流程';
 
 /** 唤醒词 → 该场景的**可执行 CLI**；无 exec 路由（#81 的 95 条 non-exec）→ `null`。
  *
@@ -118,10 +132,33 @@ export function helpSceneCli(wakeWord: string): string | null {
   return null;
 }
 
-/** 该唤醒词的 `editable_fields`（无 exec CLI 时返空数组＝**不发字段**，不造空值行）。 */
-function cliFields(wakeWord: string): SceneEditableField[] {
-  const cli = helpSceneCli(wakeWord);
-  return cli === null ? [] : [{ name: HELP_CLI_FIELD_NAME, label: HELP_CLI_FIELD_LABEL, value: cli }];
+/** 唤醒词 → 该场景的**注册表命令名**（`calorie.*`）；无 exec 路由 → `null`。
+ *
+ * 与 `helpSceneCli` 同一趟取值（同一份 `routesFor` 记录），只少一层 `calorie-cmd-read` 前缀与参数：
+ * 卡片「命令」列要的是**命令名**这一件事实（#368 判据③），CLI 全文归 `helpSceneCli` 那一条。
+ */
+export function helpSceneCommand(wakeWord: string): string | null {
+  for (const route of routesFor(wakeWord)) {
+    if (route.kind === 'exec') return route.key;
+  }
+  return null;
+}
+
+/** 该唤醒词的 `editable_fields`（无 exec 路由时返空数组＝**不发字段**，不造空值行）。
+ *
+ * 三行（#368 起）：`命令`（注册表命令名）＋`工作流程`（子功能名）＋`可执行命令`（CLI 全文，**末行**）。
+ * 「工作流程」的值取**该场景所属子功能名**——与卡片分组（`HELP_SUBFUNC_ORDER`／`subgroup.label`）
+ * 同一处事实，不另立第二份流程表；卡片分组为空时不发该行（不造空值行）。
+ */
+function cliFields(wakeWord: string, flow: string): SceneEditableField[] {
+  const command = helpSceneCommand(wakeWord);
+  if (command === null) return [];
+  const fields: SceneEditableField[] = [
+    { name: HELP_COMMAND_FIELD_NAME, label: HELP_COMMAND_FIELD_LABEL, value: command },
+  ];
+  if (flow !== '') fields.push({ name: HELP_FLOW_FIELD_NAME, label: HELP_FLOW_FIELD_LABEL, value: flow });
+  fields.push({ name: HELP_CLI_FIELD_NAME, label: HELP_CLI_FIELD_LABEL, value: helpSceneCli(wakeWord) as string });
+  return fields;
 }
 
 /** `output_type` → 徽章（**必须发 `SceneTypeBadge{text,bg,fg}`**，E-2）。
@@ -221,7 +258,7 @@ export function buildHelpSceneData(opts: HelpSceneDataOptions = {}): SceneData {
   });
   for (const trigger of newTriggers) {
     const badge = HELP_TYPE_BADGES[trigger.output_type];
-    const fields = cliFields(trigger.wake_word);
+    const fields = cliFields(trigger.wake_word, trigger.subfunction);
     const scene: Scene = {
       id: trigger.key,
       title: trigger.name,
@@ -239,7 +276,8 @@ export function buildHelpSceneData(opts: HelpSceneDataOptions = {}): SceneData {
     .slice()
     .sort((a, b) => (a.wake_word < b.wake_word ? -1 : a.wake_word > b.wake_word ? 1 : 0));
   for (const trigger of legacyTriggers) {
-    const fields = cliFields(trigger.wake_word);
+    // legacy 行没有子功能名（F3 恒把它们收在「既有唤醒词」下），`flow` 传空＝不发该行。
+    const fields = cliFields(trigger.wake_word, '');
     const scene: Scene = {
       id: trigger.main_prompt.cli,
       title: trigger.wake_word,

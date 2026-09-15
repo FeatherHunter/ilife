@@ -21,7 +21,7 @@ export const END = '<!-- HELP-AUTO-END -->';
 // -- GEN-CLI-START REPR 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）
 // 每组合键一行代表唤醒词（优先真实 TRIGGERS 短语，照片 HELP 10 键原样，通用 HELP 走 lookup）。
 const REPR = {
-  'calorie.body.composition-add': '记体脂',
+  'calorie.body.composition-add': '记体脂（皮褶钳）',
   'calorie.body.composition-remove': '删体脂',
   'calorie.body.measure-add': '记围度',
   'calorie.body.measure-remove': '删围度',
@@ -84,11 +84,12 @@ const REPR = {
   'calorie.report.water': '看水分摄入报告',
   'calorie.today': '看今日饮食概览',
   'calorie.view.batch-import-preview': '看批量导入预览',
+  'calorie.view.body-composition': '看体脂',
   'calorie.view.body-composition-compare': '对比体脂',
+  'calorie.view.body-measure': '看围度',
   'calorie.view.body-measure-compare': '对比围度',
   'calorie.view.calorie-trend': '看热量趋势',
   'calorie.view.combined': '看体重 vs 摄入(最近 7 天)',
-  'calorie.view.composition-wizard': '看体脂向导',
   'calorie.view.deficit': '看热量缺口',
   'calorie.view.diet': '看今日饮食概览',
   'calorie.view.diet-review': '今日复盘',
@@ -116,7 +117,6 @@ const REPR = {
   'calorie.view.library': '查食品库',
   'calorie.view.lint-health': '查卡路里数据',
   'calorie.view.long-trend': '看整体趋势',
-  'calorie.view.measure-wizard': '看围度向导',
   'calorie.view.multi-trend': '看整体趋势(含目标对比)',
   'calorie.view.nutrition-analysis': '看营养分析',
   'calorie.view.nutrition-detail': '看营养素深度',
@@ -293,6 +293,25 @@ const FLOW = {
 };
 // -- GEN-CLI-END FLOW 表
 
+// -- GEN-CLI-START 预检页表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）
+// 写命令 → 它先出的预检确认页命令（值一律是注册表里的键；读命令与「读—确认—写」那一类没有行）。
+// 源＝`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`（键名＝页名，值＝该页服务的写命令），本表只做反查。
+const PRECHECK_PAGE = {
+  'calorie.body.composition-add': 'calorie.view.composition-wizard',
+  'calorie.body.measure-add': 'calorie.view.measure-wizard',
+};
+// -- GEN-CLI-END 预检页表
+
+/** 该键的预检确认页命令；读命令与「没有预检页的写命令」都返空串（表格那一格留空，不造占位文案）。 */
+function precheckFor(key) {
+  const page = PRECHECK_PAGE[key];
+  if (page === undefined) return '';
+  if (CALORIE_COMBOS[page] === undefined) {
+    throw new Error('预检页不是注册表里的键：' + key + ' → ' + page);
+  }
+  return page;
+}
+
 /** 逐键取示例：住声明的 `example` 字段，由 `gen-cli.mjs` 落成上面那张表（#295 返修 A3）。
  * 表里没有＝声明漏了 `example`（`CommandSpec` 的必填字段，tsc 与生成器各拦一道）——大声失败，不静默降级。 */
 function exampleFor(key) {
@@ -318,13 +337,18 @@ function flowFor(key) {
 
 export function buildHelpBlock() {
   const keys = Object.keys(CALORIE_COMBOS).sort();
-  const lines = ['| 唤醒词 | key | shape | 流程 | 例 |', '|---|---|---|---|---|'];
+  const lines = ['| 唤醒词 | key | shape | 预检页 | 流程 | 例 |', '|---|---|---|---|---|---|'];
   for (const k of keys) {
     const shape = CALORIE_COMBOS[k].shape;
     const wake = REPR[k] || k;
-    lines.push('| ' + wake + ' | ' + k + ' | ' + shape + ' | ' + flowFor(k) + ' | \u0060' + exampleFor(k) + '\u0060 |');
+    lines.push('| ' + wake + ' | ' + k + ' | ' + shape + ' | ' + precheckFor(k) + ' | ' + flowFor(k)
+      + ' | \u0060' + exampleFor(k) + '\u0060 |');
   }
   lines.push('');
+  lines.push('「唤醒词」列是该键的代表词（**由命令声明派生**：`gen-cli.mjs` 写 `REPR` 表，本生成器不另存第二份）；'
+    + '「预检页」列是该写命令**先出的预检确认页命令**（读命令与「读—确认—写」那一类留空，事实出处＝'
+    + '`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`）；「流程」列是它服务的工作流程名。'
+    + '三列的事实都住各自能力目录的声明与路由，本表由 `pnpm help:build` 生成。');
   lines.push('体重一族 58 条唤醒词各归**一条**工作流程（八条流程的步骤与逐条对照见「场景 03 体重工作流程」一节与'
     + ' `docs/skills/skill-calorie/t338-流程接线-证据.md` §3）；流程名的事实住命令声明（`src/weight/commands.ts` 与'
     + ' `src/goal/commands.ts` 的 `flows`），本表由 `pnpm help:build` 生成。');

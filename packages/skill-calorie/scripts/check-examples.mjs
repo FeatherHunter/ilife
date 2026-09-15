@@ -46,18 +46,37 @@ const SKILL_PATH = resolve(flag('--skill', DEFAULT_SKILL));
 const ONLY = flag('--only', null);
 const LIST = argv.includes('--list');
 
-/** 解析 AUTO 块内的示例表：`| 唤醒词 | key | shape | \`命令\` |`。 */
+/** 解析 AUTO 块内的示例表：`| 唤醒词 | key | shape | 预检页 | 流程 | \`命令\` |`。
+ *
+ *  按**列名**定位（不按位次）：#368 在 `shape` 之后插了「预检页」列（#338 的「流程」列也在这条线上），
+ *  位次会随列数漂移，列名不会。找不到列名即抛（不静默少读列）。 */
 export function parseExamples(text) {
   const si = text.indexOf(START), ei = text.indexOf(END);
   if (si < 0 || ei < si) throw new Error('SKILL.md 缺 HELP 标记块');
+  const at = (row, name) => row.findIndex((c) => c === name);
   const rows = [];
+  let wakeCol = -1, keyCol = -1, shapeCol = -1, cmdCol = -1;
   for (const ln of text.slice(si + START.length, ei).split('\n')) {
     if (!ln.startsWith('| ')) continue;
     const cells = ln.split('|').map((c) => c.trim());
-    if (cells.length < 6) continue;
-    const [, wake, key, shape, rawCmd] = cells;
-    if (key === 'key' || /^-+$/.test(shape)) continue;
-    const cmd = rawCmd.replace(/^`/, '').replace(/`$/, '');
+    if (wakeCol < 0) {
+      const i = at(cells, '唤醒词');
+      if (i < 0) continue;
+      wakeCol = i;
+      keyCol = at(cells, 'key');
+      shapeCol = at(cells, 'shape');
+      cmdCol = at(cells, '例');
+      for (const [name, i2] of [['key', keyCol], ['shape', shapeCol], ['例', cmdCol]]) {
+        if (i2 < 0) throw new Error('SKILL.md 速查表缺列「' + name + '」：' + ln);
+      }
+      continue;
+    }
+    if (cells.length <= Math.max(wakeCol, keyCol, shapeCol, cmdCol)) continue;
+    if (/^-+$/.test(cells[shapeCol] ?? '')) continue;
+    const wake = cells[wakeCol];
+    const key = cells[keyCol];
+    const shape = cells[shapeCol];
+    const cmd = (cells[cmdCol] ?? '').replace(/^`/, '').replace(/`$/, '');
     if (!cmd.startsWith('calorie-cmd-read ')) continue;
     rows.push({ wake, key, shape, cmd });
   }
