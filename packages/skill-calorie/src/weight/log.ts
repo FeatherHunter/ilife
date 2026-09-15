@@ -39,7 +39,6 @@ import type { WeightTrend } from './figures.js';
 import { assertRange, weightCurvePlan } from './plate.js';
 import type { WeightDashboard } from './plate.js';
 import {
-  renderCaliberLine,
   renderChartBlock,
   renderDataTable,
   renderEmptyBlock,
@@ -230,17 +229,18 @@ function weightConclusion(w: WeightDashboard): { sentence: string; facts: { k: s
   return { sentence, facts };
 }
 
-/** 复制区（数据＋日志）＋页末数据来源行：来源行写法照 `diet/nutritionPortDocs.ts:58-61`，
- *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`（12px `--fg2`）——页脚来源是「口径行」，
- *  不是需要注意的提示，故不走深色 toast 卡（#340 裁定；`notice` 仍服务于真正的提示）。 */
+/** 复制区（数据＋日志）：#560 屏上来源脚注整行撤（用户裁决原文：「用户 2026-09-15 点名：所有 HTML
+ *  页面底部的「数据来源：xxx」都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）。」）。
+ *  `renderCaliberLine` helper 本身保留（别家页在用，本件 import 已清）；`sourceText` 转进
+ *  `copyLog.source`（复制日志第 3 段技术原件，一律保留，只删屏上脚注）。主盘与空窗共用本函数，一并处理。 */
 function deliveryBlocks(envelope: SerializableEnvelope, command: string, sourceText: string): string {
   return copyArea({
     data: { envelope },
     log: {
       envelope,
-      copyLog: copyLog({ command, actionAt: nowStamp(), version: DOC_VERSION }),
+      copyLog: copyLog({ command, source: sourceText, actionAt: nowStamp(), version: DOC_VERSION }),
     },
-  }) + renderCaliberLine('📊 数据来源：' + sourceText);
+  });
 }
 
 function weightEnvelope(w: WeightDashboard): SerializableEnvelope {
@@ -335,7 +335,7 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
   });
 }
 
-/** 空窗整页（§5.7 肉眼验收）：标题、空态句、结论、复制区、数据来源行一件不少，不出图表空壳。 */
+/** 空窗整页（§5.7 肉眼验收）：标题、空态句、结论、复制区一件不少，不出图表空壳（#560 屏上来源行已撤，来源只留复制载荷）。 */
 function buildWeightEmptyDoc(start: string, end: string, command: string): string {
   const rangeText = rangeTextOf(start, end);
   const spanDays = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;

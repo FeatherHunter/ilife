@@ -1,0 +1,67 @@
+#560体重片 run log（长输出存档；回执只看尾 5 行）
+
+## 让路检查
+$ node tooling/run-locked.mjs --ticket 560 -- gh issue view 505 --json updatedAt,comments --jq "{updatedAt, n: (.comments|length)}"
+{"n":0,"updatedAt":"2026-09-15T00:42:09Z"}
+LOCK-ACQUIRED ticket=560 … exit=0
+
+$ node tooling/run-locked.mjs --ticket 560 -- git status --porcelain -- packages/skill-calorie/src/weight/log.ts
+(empty)
+LOCK-ACQUIRED ticket=560 … exit=0
+
+## 编译
+$ node tooling/run-locked.mjs --ticket 560 -- npx tsc -b packages/skill-calorie
+LOCK-ACQUIRED ticket=560 runId=d2374ee0-… exit=0
+RESULT: ticket=560 runId=d2374ee0-… waitedMs=0 exit=0
+
+## 新用例绿
+$ node tooling/run-locked.mjs --ticket 560 -- node --test packages/skill-calorie/test/560-weight-no-source.test.mjs
+T560W-MUT 主盘改坏红=1 还原绿=1；空窗改坏红=1 还原绿=1
+✔ #560体重 ① 主盘屏上无来源脚注
+✔ #560体重 ① 空窗屏上无来源脚注
+✔ #560体重 ② 复制载荷里的来源段保留（只删屏上脚注，不删技术原件）
+✔ #560体重 ③ 变异自证：塞回任一窗来源脚注必红，还原必绿
+ℹ tests 4
+ℹ pass 4
+ℹ fail 0
+RESULT: ticket=560 runId=7fd86933-… exit=0
+
+## 旧用例回归绿
+$ node tooling/run-locked.mjs --ticket 560 -- node --test packages/skill-calorie/test/560-no-source.test.mjs
+T560-MUT 主页改坏红=1 还原绿=1；饮食改坏红=1 还原绿=1
+✔ #560 ① 主页屏上无来源脚注
+✔ #560 ① 饮食列表装配有数／直调空窗两态都无来源脚注
+✔ #560 ② 复制载荷里的来源段保留
+✔ #560 体重片排队注记
+✔ #560 ③ 390 无横滑回归
+✔ #560 ④ 变异自证
+ℹ tests 6 / pass 6 / fail 0
+RESULT: ticket=560 … exit=0
+
+## 真码变异红（加回两处后重建跑）
+$ node tooling/run-locked.mjs --ticket 560 -- node --test packages/skill-calorie/test/560-weight-no-source.test.mjs
+✖ #560体重 ① 主盘屏上无来源脚注
+✖ #560体重 ① 空窗屏上无来源脚注
+✔ #560体重 ② 复制载荷里的来源段保留
+✖ #560体重 ③ 变异自证
+ℹ tests 4
+ℹ pass 1
+ℹ fail 3
+RESULT: ticket=560 runId=a90b3d6e-… exit=1
+（空窗失败段可见 `📊 数据来源：体重记录 窗口 2020-01-01 ~ 2020-01-07 共 0 条`，即被删的那一行）
+
+## 真码还原绿
+ℹ tests 4 / pass 4 / fail 0 / exit=0
+RESULT: ticket=560 runId=7fd86933-… exit=0
+
+## 回归抽查（cmd-registry-294，体重两条绿，#320 红系他票）
+✔ #294 新路：注册表命中的体重键走能力目录
+✔ #294 能力那道门
+✖ #320 终态：分派层没有按键分派的 calorie. 字面量（actual: calorie.view.composition-wizard、calorie.view.measure-wizard）
+ℹ tests 7 / pass 6 / fail 1
+RESULT: ticket=560 runId=ae6460c0-… exit=1
+
+## LF
+$ node tooling/run-locked.mjs --ticket 560 -- node -e "…split('\n').length-1"
+LF=402
+RESULT: ticket=560 … exit=0
