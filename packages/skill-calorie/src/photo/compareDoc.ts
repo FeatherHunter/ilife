@@ -129,8 +129,9 @@ function intervalOf(c: CompareData): string {
 function budgetNoticeHtml(embeds: readonly PhotoEmbed[], dropped: ReadonlySet<string>): string {
   const names = embeds.filter((e) => dropped.has(e.fileName)).map((e) => e.fileName);
   return notice({
-    msg: '这一张原图太大，本页没显示：' + names.map(escapeHtml).join('，'),
-    detail: '可以打开文件名自己看，或者分开查单张详情',
+    // #499 钉死的两句（`photo-shape-read-281` 逐字断言）：提示块**一处**点名哪张没显示＋替代操作。
+    msg: '这两张里有一张太大，本页没显示：' + names.map(escapeHtml).join('，'),
+    detail: '可以打开文件名自己看，或改查单张详情分开看',
   });
 }
 

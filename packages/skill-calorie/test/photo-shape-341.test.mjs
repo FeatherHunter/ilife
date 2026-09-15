@@ -14,6 +14,13 @@
  * 天数（当刻今天由 `CALORIE_TODAY` 钉住）；正常张不再逐张喊「文件存在」；窗口区间串在可见文本里
  * 0 命中（KPI 说明位与表注各去掉一处，只由页头副标题承载）；缺失清单逐张一行并挂状态徽标。
  *
+ * #526（读侧族重排）把页头身份行／图注／读数卡／明细表重排成形状，旧文案钉住的断言逐条同步成新文案，
+ * 并加负向断言（旧句 0 命中）——不许放宽成永真：
+ * - 页头身份行＝徽章列（筛选／窗口），标题不再带张数；
+ * - 读数卡三张：本页显示 N 张（明细＝共找到 M 张）／最近一张 日期（明细＝N 天前拍的）／找不到文件 N 张；
+ * - 图注＝时刻一行 ＋ 徽章列（编号／标签／相对时间）＋ 文件名，三件事各有各的形状（`·` 串 0 命中）；
+ * - 没显示的那张在自己的格位上写明**哪一份文件 ＋ 为什么**（原来那行 `#id · 文件名 · 徽标` 清单已并入网格）。
+ *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/photo-shape-341.test.mjs`
  */
 import { strict as assert } from 'node:assert';
@@ -90,6 +97,12 @@ function assertShape(html) {
   return bytes;
 }
 
+/** 读数卡取值（#526：一格一件事，卡片槽是唯一读数位；取值口径&#65309;卡片值槽的文本）。 */
+function kpiValue(html, label) {
+  const m = new RegExp('>' + label + '<\\/div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">([^<]*)<').exec(html);
+  return m === null ? null : m[1];
+}
+
 test('完整文档＋内嵌照片＋复制区（真跑 CLI）', async () => {
   const iso = seedIso();
   const env = runList(iso, { tag: '正面' });
@@ -104,34 +117,45 @@ test('完整文档＋内嵌照片＋复制区（真跑 CLI）', async () => {
   assert.doesNotMatch(vis, /文件存在/, '正常张不许逐张喊「文件存在」');
   assert.equal(rangeOccurrences(html, WINDOW_FROM, WINDOW_TO), 0,
     '窗口区间串须从可见文本下屏（KPI 说明位与表注各去掉一处）');
-  // 新句命中：KPI「共」只留张数＋最近一张；显示位说「N 张已显示」；表注只留张数。
-  assert.match(html, /最近一张 2026-09-05/, 'KPI 须说「最近一张」的日期');
-  assert.match(html, /2 张已显示/, 'KPI 须说「N 张已显示」');
-  assert.match(html, /身材照 2 张/, '明细表表注须只留张数');
-  // 图注＝日期时刻 · 标签 · 相对天数（今天钉在 2026-09-07）。
-  assert.match(vis, /2026-09-05 08:00 · 正面 · 2 天前/, '图注须是「日期时刻 · 标签 · 相对天数」');
-  assert.match(vis, /2026-09-04 08:00 · 正面 · 3 天前/, '图注第二行同形');
+  // #526：并列分隔符与内部读数一律下屏（节点级全零的**本文件侧**守卫；权威判据是 audit-separators.mjs）。
+  assert.doesNotMatch(vis, /[·；、｜]/, '#526：可见文本不许再用并列分隔符串语义');
+  assert.doesNotMatch(vis, /内嵌/, '#526：「内嵌」这种内部叫法须下屏');
+  // 新读数卡（#526）：本页显示／最近一张／共找到 —— 一格一件事，不在一格里串两件事。
+  assert.equal(kpiValue(html, '最近一张'), '2026-09-05', '读数卡须说「最近一张」的日期');
+  assert.equal(kpiValue(html, '本页显示'), '2 张', '读数卡须说「本页显示 N 张」');
+  assert.match(html, /共找到 2 张/, '本窗张数由「本页显示」那张卡的明细位说');
+  assert.match(html, /按时间倒序/, '明细表表注须只说自己是什么（按时间倒序），不再重复张数');
+  // 图注＝时刻一行 ＋ 徽章列（编号／标签／相对时间）＋ 文件名，三件事各有各的形状（今天钉在 2026-09-07）。
+  assert.match(vis, /2026-09-05 08:00/, '图注须有拍摄时刻');
+  assert.match(vis, /编号 2/, '图注须有编号徽章');
+  assert.match(vis, /2 天前/, '图注须有相对时间');
+  assert.match(vis, /2026-09-05_001\.png/, '图注须有文件名');
+  assert.match(html, /<div class="phu-when">2026-09-05 08:00<\/div>/, '时刻须单独成行（不再与别的语义串一行）');
+  assert.equal((html.match(/<figure class="phu-card" data-id="/g) ?? []).length, 2, '本窗两张各占一个格位');
 });
 
 test('缺照片时明示哪张', async () => {
   const iso = seedIso();
-  // 删掉一张已入库照片的本体（库行保留 → 页面须明示缺哪张）。
+  // 删掉一张已入库照片的本体（库行保留 → 该张须明示缺哪张）。
   const gone = join(iso.photosDir, '2026-09-04_001.png');
   assert.ok(existsSync(gone), '种子照片不在盘上：' + gone);
   rmSync(gone);
   const env = runList(iso, { tag: '正面' });
   const out = assertOutputOnDisk(env);
   const html = readFileSync(out, 'utf8');
-  // #472：缺失清单逐张一行「#id · 文件名 · 状态徽标」，不再写两遍文件名、不再有计数句。
-  assert.match(html, /#1 · 2026-09-04_001\.png · <span class="ilife-status-badge ilife-status-badge-danger">找不到文件<\/span>/,
-    '缺失清单须逐张一行＋状态徽标');
-  assert.doesNotMatch(html, /缺失照片/, '重复计数句须下屏（张数已由 KPI 明细说）');
-  assert.match(html, /1 张找不到文件/, 'KPI 明细须说「N 张找不到文件」');
-  assert.match(html, /<div>找不到文件：2026-09-04_001\.png<\/div>/, '该张位置上须写「找不到文件：文件名」');
+  // #526：没显示的那张在**自己的格位**上写明「哪一份文件 ＋ 为什么」（原来那行 `#id · 文件名 · 徽标`
+  // 清单与网格是同一件事说两遍，本票并入网格——信息一条不少：文件名在、原因在、徽标在）。
+  assert.match(html, /<div class="phu-shot"><div class="phu-miss">[\s\S]*?找不到文件<\/span><code>2026-09-04_001\.png<\/code>/,
+    '缺文件那张的格位须明示徽标与文件名');
+  assert.match(html, /照片记录还在，文件不在照片目录里/, '缺文件那张须写清为什么');
+  assert.doesNotMatch(html, /缺失照片/, '重复计数句须下屏（张数已由读数卡说）');
+  assert.equal(kpiValue(html, '找不到文件'), '1 张', '读数卡须说「找不到文件 N 张」');
+  assert.equal(kpiValue(html, '本页显示'), '1 张', '另一张仍内嵌，本页显示 1 张');
   // 另一张仍内嵌（缺失不牵连正常照片）。
-  assert.match(html, /data:image\//, '正常照片应仍内嵌');
+  assert.match(html, /class="phu-shot"><img /, '正常照片应仍内嵌');
   // 明细表异常行标「缺文件」、正常行留空（「存在」是零信息值）。
-  assert.match(html, /<td class="ilife-block-data-table-cell-left">缺文件<\/td>/, '明细表异常行须标「缺文件」');
+  // 注：`data-label` 是块层窄屏行卡化（`renderDataTable` 写入）加的属性，判据只认 class 与文本。
+  assert.match(html, /<td class="ilife-block-data-table-cell-left"[^>]*>缺文件<\/td>/, '明细表异常行须标「缺文件」');
   assert.doesNotMatch(html, /<td[^>]*>存在<\/td>/, '「存在」这种零信息值须删');
 });
 

@@ -66,19 +66,20 @@ function isNonBudgetSkip(e: PhotoEmbed | undefined): boolean {
   return e === undefined || e.dataUri === null;
 }
 
-/** 没显示的那张：**哪一份文件 ＋ 下一步做什么**。#526 收口：中间那句「为什么」在页面上已有主
- *  （预算退让走页顶提示块的计数、文件缺失走读数卡那一格），逐张再说一遍是同一件事说十遍——
- *  这一格只留状态徽标（短词）＋文件名＋下一步。 */
-function missReason(e: PhotoEmbed | undefined, skipReason: string | undefined): { badge: string; what: string } {
+/** 没显示的那张：**一句话说为什么** ＋ 一句读者能做的下一步（原来这两句串在一行里）。
+ *  #526 收口时试过把「为什么」撤掉（理由：页顶提示块与读数卡各有一处「主」），但**占位必须写明原因**
+ *  是本票目标第 5 条的硬要求，且既有测试（`photo-budget-438`／`photo-shape-341`）逐字钉着这两句；
+ *  故保留「为什么」，页顶提示块说**这一窗有多少张**、这一格说**这一张为什么**，两处各说各的。 */
+function missReason(e: PhotoEmbed | undefined, skipReason: string | undefined): { badge: string; why: string; what: string } {
   if (skipReason !== undefined) {
-    return { badge: '原图太大', what: '想看这一张：自己打开下面的文件' };
+    return { badge: '原图太大', why: '超过一页能装的量，没进这一页', what: '想看这一张：自己打开下面的文件' };
   }
   const raw = e?.missing ?? '';
-  if (raw === '') return { badge: '没显示', what: '下面留着它的文件名' };
-  if (raw.includes('过大')) return { badge: '原图太大', what: '想看这一张：自己打开下面的文件' };
-  if (raw.includes('未配照片目录')) return { badge: '读不到', what: '设好照片目录再跑一次' };
-  if (raw.includes('文件缺失')) return { badge: '找不到文件', what: '把文件放回照片目录就会有图' };
-  return { badge: '读不出', what: '下面留着它的文件名' };
+  if (raw === '') return { badge: '没显示', why: '这一张没能放上页面', what: '下面留着它的文件名' };
+  if (raw.includes('过大')) return { badge: '原图太大', why: '超过一页能装的量，没进这一页', what: '想看这一张：自己打开下面的文件' };
+  if (raw.includes('未配照片目录')) return { badge: '读不到', why: '还没有设照片目录，读不到文件', what: '设好照片目录再跑一次' };
+  if (raw.includes('文件缺失')) return { badge: '找不到文件', why: '照片记录还在，文件不在照片目录里', what: '把文件放回照片目录就会有图' };
+  return { badge: '读不出', why: '这一张读不出来', what: '下面留着它的文件名' };
 }
 
 /** 相对天数（#472 图注第三段）：**装配层**按当刻「今天」现算；未到／算不出即不出这一段。 */
@@ -113,7 +114,7 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string 
       const m = missReason(e, skipReason);
       return '<div class="phu-shot"><div class="phu-miss">'
         + renderStatusBadge({ status: m.badge === '原图太大' ? 'warn' : 'danger', text: m.badge })
-        + '<code>' + escapeHtml(fileName) + '</code>'
+        + '<code>' + escapeHtml(fileName) + '</code><div>' + escapeHtml(m.why) + '</div>'
         + '<div>' + escapeHtml(m.what) + '</div></div></div>';
     })();
   const rel = relativeDays(p.date, today);
