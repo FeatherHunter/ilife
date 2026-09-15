@@ -1,7 +1,7 @@
 # #368 运行记录导出件（源＝未受版本控制的 .scratch/locks/gate-runs.log）
 # 切片规则＝从本票首个运行（baseline 批）导到导出当刻的日志末尾；含 START 与 RUN 两类行
 # 行内 runId 与 t368-索引证据.md §六 的逐条 GATE-RUN 声明一一对应（协议 §2.4 第 2 条）
-# 导出件行数＝50（不含本 4 行头注释）
+# 导出件行数＝53（不含本 4 行头注释）
 START ticket=368 runId=d4847bc3-e250-4ff0-a8ac-85507f5c4510 cmd="pwsh -NoProfile -File .scratch\\t368\\baseline.ps1" waitedMs=15002 pid=30556 at=2026-09-15T02:54:26.268Z
 RUN ticket=368 runId=d4847bc3-e250-4ff0-a8ac-85507f5c4510 cmd="pwsh -NoProfile -File .scratch\\t368\\baseline.ps1" waitedMs=15002 exit=0 pid=30556 at=2026-09-15T02:54:37.665Z
 START ticket=368 runId=12eb594b-18de-4625-b3c8-42cdb5b24d61 cmd="node .scratch/t368/probeA.mjs" waitedMs=180047 pid=44356 at=2026-09-15T02:58:06.832Z
@@ -52,3 +52,6 @@ START ticket=368 runId=4972d725-4e13-4e20-9055-306295444754 cmd="node packages/s
 RUN ticket=368 runId=4972d725-4e13-4e20-9055-306295444754 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=1 exit=0 pid=42308 at=2026-09-15T03:24:17.590Z
 START ticket=368 runId=8571cf75-dbf0-453b-b5d5-3dcd4092f249 cmd="pwsh -NoProfile -File .scratch\\t368\\run-gates.ps1 final" waitedMs=0 pid=13968 at=2026-09-15T03:24:36.516Z
 RUN ticket=368 runId=8571cf75-dbf0-453b-b5d5-3dcd4092f249 cmd="pwsh -NoProfile -File .scratch\\t368\\run-gates.ps1 final" waitedMs=0 exit=0 pid=13968 at=2026-09-15T03:25:48.966Z
+START ticket=368 runId=3a061acd-88b0-4dd8-9b49-0458d5251b2c cmd="pwsh -NoProfile -File .scratch\\t368\\commit.ps1" waitedMs=0 pid=5856 at=2026-09-15T03:28:50.781Z
+RUN ticket=368 runId=3a061acd-88b0-4dd8-9b49-0458d5251b2c cmd="pwsh -NoProfile -File .scratch\\t368\\commit.ps1" waitedMs=0 exit=0 pid=5856 at=2026-09-15T03:28:53.650Z
+START ticket=368 runId=e98a7e75-3934-43da-991c-aa11b0c19fa2 cmd="pwsh -NoProfile -File .scratch\\t368\\final.ps1" waitedMs=0 pid=33384 at=2026-09-15T03:29:21.035Z
