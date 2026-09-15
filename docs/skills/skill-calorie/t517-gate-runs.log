@@ -1,0 +1,21 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks-m158v2\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：517｜since：2026-09-15T19:00:00.000Z｜until：2026-09-15T19:17:36.673Z｜条目数：13｜导出时间：2026-09-15T19:17:38.833Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=517 runId=d079f44f-7736-4719-85ae-0cab598ac704 cmd="node .scratch/t517/gate-steps.mjs build gen artifacts negdatalabel probes preclip sep measure probe tests pkgwarn gencheck" waitedMs=1 exit=1 pid=64092 at=2026-09-15T19:09:21.627Z
+RUN ticket=517 runId=87300dcb-c5a0-4343-8f11-b1f0418b1005 cmd="node .scratch/t517/gate-steps.mjs probes preclip sep measure probe tests pkgwarn gencheck" waitedMs=0 exit=1 pid=54156 at=2026-09-15T19:10:25.447Z
+RUN ticket=517 runId=d5e1e1c4-59d2-492c-9d7f-b990c5fc2610 cmd="node .scratch/t517/gate-steps.mjs probes preclip sep measure probe tests pkgwarn gencheck" waitedMs=0 exit=0 pid=4908 at=2026-09-15T19:11:13.753Z
+RUN ticket=517 runId=79b9891b-9d3f-42ed-8e0e-e92eb3285b15 cmd="node .scratch/t517/gate-steps.mjs mut" waitedMs=0 exit=0 pid=59336 at=2026-09-15T19:11:34.115Z
+RUN ticket=517 runId=40d7116d-6bf5-4ce2-9ea1-bd255b4e29a1 cmd="node .scratch/t517/window4-steps.mjs" waitedMs=0 exit=0 pid=57448 at=2026-09-15T19:12:40.426Z
+RUN ticket=517 runId=71374957-17c9-424a-96f0-8041ad4b75c8 cmd="node .scratch/t517/audit.mjs 2026-09-15T19:30:00.000Z" waitedMs=0 exit=1 pid=50992 at=2026-09-15T19:14:34.093Z
+RUN ticket=517 runId=0cc7a504-9ee7-4620-a491-96b2274bdc7c cmd="node .scratch/t517/audit.mjs --until-now" waitedMs=0 exit=0 pid=54524 at=2026-09-15T19:15:21.666Z
+RUN ticket=517 runId=337e127f-cb0f-441b-ac15-f91c95c5e4be cmd="node .scratch/t517/audit.mjs 2026-09-15T19:20:50.537Z" waitedMs=0 exit=1 pid=41768 at=2026-09-15T19:15:48.821Z
+RUN ticket=517 runId=ee563228-5f9a-4355-a6cf-7e60d46ca0a3 cmd="node .scratch/t517/audit.mjs 2026-09-15T19:20:50.537Z" waitedMs=0 exit=0 pid=48232 at=2026-09-15T19:15:56.766Z
+RUN ticket=517 runId=63c9feca-fbc1-470e-8ab8-059645e6346a cmd="node .scratch/t517/audit.mjs 2026-09-15T19:20:50.537Z" waitedMs=1 exit=1 pid=65292 at=2026-09-15T19:16:33.895Z
+RUN ticket=517 runId=f04c2f88-5b25-4357-8c13-0fba78b0d29a cmd="node .scratch/t517/audit.mjs 2026-09-15T19:20:50.537Z" waitedMs=0 exit=0 pid=29424 at=2026-09-15T19:16:55.375Z
+RUN ticket=517 runId=3fbb72ad-3abf-40a1-8b8d-98605d047635 cmd="node .scratch/t517/audit.mjs 2026-09-15T19:20:50.537Z" waitedMs=0 exit=1 pid=45472 at=2026-09-15T19:17:00.184Z
+RUN ticket=517 runId=22b834e7-d6a8-4f0f-b446-6d6a61185b56 cmd="node .scratch/t517/audit.mjs 2026-09-15T19:21:20.000Z" waitedMs=0 exit=1 pid=36060 at=2026-09-15T19:17:05.789Z
+```
