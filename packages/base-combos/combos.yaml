@@ -494,6 +494,11 @@ combos:
     shape: stat
     title: 今日总览
     cmd: skill-calorie
+  - key: calorie.view.label-precheck
+    skill: calorie
+    shape: stat
+    title: 营养表识别确认
+    cmd: skill-calorie
   - key: calorie.view.library
     skill: calorie
     shape: stat
