@@ -70,8 +70,11 @@ const DAILY_CAP = 100;
 const DIST_TOP = 8;
 
 /** 人话眉标（页头不许出现命令键；两页各一句）。
- *  #523：`运动 · 汇总` 的 `·` 去掉——类别（运动）与页族（汇总）两个字都在，只是不拿符号串。 */
-const SUMMARY_EYEBROW = '运动汇总';
+ *  #523：`运动 · 汇总` 的 `·` 去掉——类别（运动）与页族（汇总）两个字都在，只是不拿符号串。
+ *  #523 返修 R3：眉标原来与 H1（`运动汇总`）**逐字全同**——#552 把 H1 的日期摘掉之后两者撞成同一个串，
+ *  视觉复评 R2 在汇总族两页各记 −5「眉标与 H1 逐字同名」。现眉标退回**类别词**「运动」、页族「汇总」
+ *  由 H1 承载：两件事实都还在页头，眉标不再复读页名（与明细族「眉标＝运动记录／H1＝运动记录明细」同构）。 */
+const SUMMARY_EYEBROW = '运动';
 const GOAL_EYEBROW = '运动对照目标';
 
 /** 来源脚注上给**读者看**的来源名：可见文本零 snake_case（库表名只留在复制日志的「来源」段里，
@@ -388,7 +391,9 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
     cmd ?? commandLine('calorie.view.exercise-goal', { start: v.start, end: v.end }),
     v.source ?? 'daily_goal ＋ exercise_log（只读对照）',
   );
-  const title = '运动目标 ' + rangeText(v.start, v.end);
+  // #523 返修 R3：单日窗原来印成「运动目标 2026-09-15 ~ 2026-09-15」——同一天在 H1 里写两遍
+  // （窗口条与来源脚注再各一份，视觉复评 R2 记 −3）。起止同日只印一次，与窗口条的退化分支同口径。
+  const title = '运动目标 ' + (v.start === v.end ? v.start : rangeText(v.start, v.end));
   if (v.goalTotal === null || v.pct === null) {
     return assembleDocPage({
       docTitle: DOC_TITLE, title, eyebrow: GOAL_EYEBROW, subtitle: '还没设每日运动消耗目标',

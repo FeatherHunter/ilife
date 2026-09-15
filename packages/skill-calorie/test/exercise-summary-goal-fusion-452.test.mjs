@@ -255,7 +255,9 @@ function assertSummary(r, c) {
   // #552 去文（用户裁决“标题无日期”——票面判据）：H1 只留“运动汇总”，窗口由 windowStrip 承载。
   assert.equal(head.h1, '运动汇总', what + ' 的 H1 不是去日期页名：' + head.h1);
   // #523：眉标 `运动 · 汇总` → `运动汇总`（类别与页族两个字都在，只是不拿 `·` 串）。
-  assert.equal(head.eyebrow, '运动汇总', what + ' 眉标不是人话原文：' + head.eyebrow);
+  // #523 返修 R3：眉标与 H1（`运动汇总`）逐字全同后，眉标退回**类别词**「运动」——页族「汇总」由 H1
+  // 承载，两件事实都还在页头，只是不再复读页名（与明细族「眉标＝运动记录／H1＝运动记录明细」同构）。
+  assert.equal(head.eyebrow, '运动', what + ' 眉标不是人话原文：' + head.eyebrow);
   // ① KPI 四格（结构上是四张卡）。
   const kpi = cardOf(r.file, 'sec-kpi');
   assert.ok(kpi.includes('ilife-block-kpi-card'), what + ' 缺 KPI 四格容器');
