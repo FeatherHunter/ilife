@@ -94,12 +94,18 @@ describe('t411 ② 整页：查今天／查区间各出一张列表整页', () =
       'data-page="list"',
       'data-shape="list"',
       'data-key="record.today"',
-      'ilife-block-kpi-card',
-      '<table',
+      // 判别性标记一律带标签形状：只数子串会命中 CSS 里的选择器名（`.ilife-block-kpi-card-grid{…}`），
+      // 「页面上真渲染出这张卡」就漏判了——本票第一次变异自证正是这么漏过去的，故这里写整段开标签。
+      '<div class="ilife-block ilife-block-kpi-card">',
+      '<div class="ilife-block-kpi-card-grid">',
+      '<table class="ilife-block-data-table-table">',
       '复制数据',
       '复制日志',
       'bill-cmd-read bill.record.today',
     ]) assert.ok(text.includes(needle), '整页该有：' + needle);
+    assert.equal((text.match(/<th scope="col"/g) ?? []).length, 7, '数据表七列');
+    assert.equal((text.match(/<div class="ilife-block ilife-block-kpi-card">/g) ?? []).length, 4, 'KPI 行四格');
+    assert.equal((text.match(/<tr>/g) ?? []).length, 3, '表头一行 ＋ 样本两行');
     assert.equal((text.match(/data-page=/g) ?? []).length, 1, '整页恰一枚 data-page');
     assert.ok(!text.includes('data-key="bill.'), 'data-key 写场景名，不带技能前缀');
     assert.ok(text.includes('午饭'), '表里应有备注');

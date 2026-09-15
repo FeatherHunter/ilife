@@ -5,20 +5,30 @@
  *   `viewRecordSearch`（搜备注那一族）同形，`viewRecordDetail`（查账单详情）本票先借用同一种版式
  *   （单条也出一行；详情页的专属版式是 #415 那张票的事）。
  *
- * 三源融合（老 `templates/query_view.html` ＋ 新迁移产物 ＋ 外界取法；判据沿写入域 R1 的三源融合原则）：
- *   - **留**（老页留用的块）：KPI 四项（笔数／支出／收入／净额，老页 `recordsList` 上那排 `kpi-grid`）＋
- *     记录行的事实（时间／分类／备注／金额带符号与颜色）＋ 空态 ＋ 复制数据／日志两条通道；
+ * 三源融合（老 `templates/query_view.html` ＋ 新迁移产物 ＋ 外界取法；老侧逐块清单与逐块裁定见
+ *   `docs/skills/skill-bill/t411-查询域-老模板逐块清单.md`，本件是那份清单的落地）：
+ *   - **留**（老页留用的块）：KPI 行（老页 6 处 KPI 行共用同一套数：笔数／支出／收入／净额）＋
+ *     明细列表（老页 `recordsList`：时间／分类／备注／金额带符号）＋ 空态（老页 8 处 `emptyState`）＋
+ *     复制数据／日志两条通道（老页动作区）；
  *   - **舍**（老页不搬的部分）：客户端 JS 渲染（老页把 payload 注入 `<script id="payload">` 再由
- *     `recordsList`／`kpiCard` 当场拼 DOM；新架构在 Node 侧渲染成静态页，产物不依赖运行时）＋
- *     `CHARTS-HELPERS`（查询列表不出图表）＋ 自绘 `.records/.record` 版式（改走公共层组件）；
- *   - **外界取法**（新页比老页多的）：语义表格（`renderDataTable`：`table/thead/th/td` ＋ 窄屏每格
- *     `data-label` 行卡化）＝老自绘 grid 拿不到的可访问性与手机端表现；KPI 卡走公共层 `renderKpiGrid`
- *     （数值 `tnum` 等宽对齐）；空态用 `renderEmptyBlock`（多一句「下一步说什么」的引导）；
+ *     `recordsList`／`kpiCard`／`init` 的路由表当场拼 DOM；新架构在 Node 侧渲染成静态页）＋
+ *     自绘样式层与 `.records/.record` 版式（改走公共层组件）＋ `CHARTS-HELPERS` 与环形图挂钩
+ *     （老页只有 breakdown 用，17 词里没有该路径）＋ 对比卡（老页 `compareCard`，属分析域）＋
+ *     离线提示条与页脚的 `type` 代码（老侧机制块，静态页没有这两个成因）；
+ *   - **改**（新页比老页多的）：语义表格（`renderDataTable`：`table/thead/th/td` ＋ 窄屏每格
+ *     `data-label` 行卡化，零行自带空表兜底）＝老自绘 grid 拿不到的可访问性与手机端表现；
+ *     KPI 走公共层 `renderKpiGrid`（数值走等宽数字字形对齐）；空态用 `renderEmptyBlock`（多一句「下一步说什么」）；
  *     复制区走公共层三格式菜单（纯文本／JSON／CSV）。
+ *
+ * **本票不搬的老页块（留给页面票，不是漏项）**：分类聚合卡（`categoryBar` 前 8 类）与过滤芯片
+ *  （老页 `:280`／`:287` 的 `data.filter`／占比芯片）——票面把骨架块序写死为「KPI 行＋数据表＋空态＋复制区」四块，
+ *  这两块是**每个词各自的页**上的事（#412～#415）；老页记录列表的 200 条显示上限同理：
+ *  老页是显示截断（`:524` `slice(0,200)` ＋ `:533` 追一行提示），本票不截断、也不分页，
+ *  条数窗口细则随页面票定（地图「Not yet specified」原有此条）。
  *
  * 数据表的列（本页**唯一一处**定义；表头文本与每格 `data-label` 同源，不存在两处文案）：
  *   时间／分类／金额／账户／账本／备注／编号——「编号」列留着是为了说得出口的下一步：
- *   用户拿它就能说「查账单详情」。
+ *   用户拿它就能说「查账单详情」（老页没有这一列、也没有 detail 分支；这是新仓补的读链）。
  */
 import { renderDataTable, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
