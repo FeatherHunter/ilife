@@ -1,0 +1,47 @@
+GENERATED-SKIP src/cli/keys.ts LF=175（由 scripts/gen-cli.mjs 生成，不在扫描面内）
+GENERATED-SKIP src/cli/registry.ts LF=50（由 scripts/gen-cli.mjs 生成，不在扫描面内）
+GENERATED-SKIP src/triggers/routes.generated.ts LF=529（由 scripts/gen-cli.mjs／scripts/gen-routes.mjs 生成，不在扫描面内）
+OVER scripts/build-help.mjs LF=386 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER scripts/check-warning-line.mjs LF=356 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER scripts/gen-cli.mjs LF=796 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/analysis/commands.ts LF=443 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/analysis/multiTrendPage.ts LF=516 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/analysis/reportPlate.ts LF=406 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/diet/libraryDocs.ts LF=396 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/diet/nutritionPort.ts LF=371 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/diet/nutritionPortDocs.ts LF=645 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/diet/receipt.ts LF=379 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/diet/reviewDocs.ts LF=351 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/fetch/body.ts LF=455 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/home/goalProgressDocs.ts LF=451 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/home/homeViewParts.ts LF=366 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/migrate/migrate.ts LF=494 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/photo/gifDoc.ts LF=354 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/photo/helpCenter.ts LF=523 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/photo/photo.ts LF=355 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/photo/receipt.ts LF=361 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/profile/setup.ts LF=428 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/exercisePort.ts LF=544 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/html.ts LF=648 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/planEditorRuntime.ts LF=364 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/sportDocs.ts LF=423 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/sportPortDocs.ts LF=666 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/trendDocs.ts LF=1135 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/trendMiscPort.ts LF=456 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/render/trendMiscPortDocs.ts LF=676 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/triggers/wake-assets.ts LF=4747 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/weight/compare.ts LF=700 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/weight/history.ts LF=878 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/weight/log.ts LF=402 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/weight/review.ts LF=754 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/weight/volatilityDoc.ts LF=411 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/workout/planStore.ts LF=388 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+OVER src/workout/write.ts LF=623 已超线，需要根据规则进行重构。（本次先不拆，见台账）
+IN-LINE src/home/homeDocs.ts 挂号=— 实测=334（已落回线内，挂号行保留）
+IN-LINE scripts/gen-photo-baseline.mjs 挂号=— 实测=283（已落回线内，挂号行保留）
+IN-LINE src/render/wizardPort.ts 挂号=457 实测=277（已落回线内，挂号行保留）
+SCAN-ROOT: D:\ilife-wt\wf155-e\packages\skill-calorie
+LEDGER: D:\ilife-wt\wf155-e\packages\skill-calorie\AGENTS.md
+AGENTS.md：D:\ilife-wt\wf155-e\packages\skill-calorie\AGENTS.md（台账 39 行；扫描面 319 件，超线 36 件，剔出生成物 3 件；挂号台账命中 2/2）
+RESULT: 82/82
+PASS: 告警线台账齐全且与实况一致

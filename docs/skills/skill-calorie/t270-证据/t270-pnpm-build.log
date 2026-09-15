@@ -1,0 +1,3 @@
+$ tsc -b && node packages/skill-calorie/scripts/gen-cli.mjs --stamp && pnpm -r --if-present run build:client
+packages/base-render/test-d/contract-signatures.ts(390,20): error TS2344: Type 'false' does not satisfy the constraint 'true'.
+[ELIFECYCLE] Command failed with exit code 2.

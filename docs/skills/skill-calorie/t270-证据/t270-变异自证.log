@@ -1,0 +1,15 @@
+MUTATE-APPLIED 把 commandLine(key, params) 换成空串； BUILD-EXIT=0
+MUT-VERIFY-RED RESULT: 0/16
+MUTATE-RESTORED 逐文件点名还原 packages/skill-calorie/src/diet/receipt.ts（回读逐字节一致=true）； BUILD-EXIT=0
+DIST-POLLUTION-CHECK packages/skill-calorie/dist/diet/receipt.js 21d13490327a0bdb→21d13490327a0bdb polluted=false
+OK   记一餐 [calorie.diet.add] exit=0 bytes=73322 
+OK   记一餐（含备注） [calorie.diet.add] exit=0 bytes=73325 
+OK   补记饮食 [calorie.diet.add] exit=0 bytes=73208 
+OK   批量补记饮食 [calorie.diet.batch] exit=0 bytes=74079 
+OK   记喝水 [calorie.water.log] exit=0 bytes=71966 
+OK   复制昨日饮食 [calorie.diet.copy] exit=0 bytes=72580 
+OK   改饮食记录 [calorie.diet.update] exit=0 bytes=72034 
+OK   改某日饮食 [calorie.diet.update-by-date] exit=0 bytes=71381 
+OK   删饮食记录 [calorie.diet.remove] exit=0 bytes=68977 
+OK   删一餐 [calorie.diet.remove-by-type] exit=0 bytes=68367 
+OK   删某日饮食 [calorie.diet.remove-by-date] exit=0 bytes=68351 
