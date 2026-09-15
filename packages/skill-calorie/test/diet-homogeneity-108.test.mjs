@@ -146,9 +146,13 @@ test('#108 饮食总览＋餐别分布：区块对照（KPI＋双图＋按日表
     assertDoc(out.html, 'view.diet');
     // #496：口径行原写「窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵」（常量名上屏），现换成
     // 「加餐时段：下午茶、夜宵」；明细折叠区的标题原写「窗口明细」，现写「全部记录」。
-    for (const needle of ['饮食总览 2026-09-05 ~ 2026-09-07', '2689', '餐别分布', '加餐时段：下午茶、夜宵', '按日汇总', '2026-09-06', '全部记录', '米饭', '复制数据']) {
+    // 用户缺陷（2026-09-15）：页名不再带窗口日期（窗口归副题那一行），故锁无日期的页名＋副题仍带窗口。
+    for (const needle of ['2689', '餐别分布', '加餐时段：下午茶、夜宵', '按日汇总', '2026-09-06', '全部记录', '米饭', '复制数据']) {
       assert.ok(out.html.includes(needle), 'view.diet 缺：' + needle);
     }
+    assert.ok(out.html.includes('<h1 class="ilife-block-page-shell-title">饮食总览</h1>'), 'view.diet 页名不是无日期的「饮食总览」');
+    assert.ok(!out.html.includes('饮食总览 2026-09-05'), 'view.diet 页名又带回窗口日期');
+    assert.ok(out.html.includes('窗口 2026-09-05 ~ 2026-09-07'), 'view.diet 副题丢了窗口（页名去日期后窗口只剩这一处）');
     // 复制文本为 stat 投影（含 totalCalories），动作 id 走冻结缺省
     assert.ok(out.html.includes('totalCalories'), 'view.diet 复制文本缺指标');
     assert.ok(out.html.includes('data-action-id') || out.html.includes('data-copy'), 'view.diet 复制按钮缺绑定属性');

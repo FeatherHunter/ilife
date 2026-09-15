@@ -239,7 +239,9 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
   parts.push(sourceLine({ source: '饮食记录', start: o.start, end: o.end, count: mealTotal }));
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '饮食总览 ' + o.start + ' ~ ' + o.end,
+    /* 用户缺陷（2026-09-15）：页名不再带窗口日期——窗口区间归副题那一行，全页只出现一次。
+       单日窗「饮食总览 2026-09-07 ~ 2026-09-07」又长又丑；多日窗同样只说「饮食总览」。 */
+    title: '饮食总览',
     /* #496 · 眉标原写命令键「calorie.view.diet · 饮食域」——`t425-融合基准.md:127-132`（裁定 1）
        定死不上屏，`assembleDocPage` 也已整行挡掉这种写法；这里同时换成样张口径的中文族名。 */
     eyebrow: '卡路里 · 饮食',
