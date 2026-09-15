@@ -52,13 +52,13 @@
    "family": "读页 · 今日与餐别",
    "wake": "看今日饮食",
    "title": "今日饮食 2026-09-15",
-   "file": "今日饮食_20260915_122539.html",
+   "file": "今日饮食_20260915_141553.html",
    "cmd": "calorie.today",
    "params": {
     "date": "今日"
    },
    "cli": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\"}'",
-   "bytes": 76098,
+   "bytes": 78147,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -67,14 +67,14 @@
    "family": "读页 · 今日与餐别",
    "wake": "看今日喝水",
    "title": "💧 今日喝水 2026-09-15",
-   "file": "今日饮水_20260915_122542.html",
+   "file": "今日饮水_20260915_141555.html",
    "cmd": "calorie.view.today-water",
    "params": {
     "date": "今日",
     "entry": "drink"
    },
    "cli": "calorie-cmd-read calorie.view.today-water --params '{\"date\":\"今日\",\"entry\":\"drink\"}'",
-   "bytes": 74854,
+   "bytes": 77739,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -83,14 +83,14 @@
    "family": "读页 · 今日与餐别",
    "wake": "看有备注的饮食记录",
    "title": "今日饮食 2026-09-15 · 只看有备注的",
-   "file": "今日饮食_20260915_122542.html",
+   "file": "今日饮食_20260915_141555.html",
    "cmd": "calorie.today",
    "params": {
     "date": "今日",
     "hasNote": true
    },
    "cli": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\",\"hasNote\":true}'",
-   "bytes": 73519,
+   "bytes": 75276,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -99,14 +99,14 @@
    "family": "读页 · 今日与餐别",
    "wake": "看「有备注」的饮食记录",
    "title": "今日饮食 2026-09-15 · 只看有备注的",
-   "file": "今日饮食_20260915_122553.html",
+   "file": "今日饮食_20260915_141606.html",
    "cmd": "calorie.today",
    "params": {
     "date": "今日",
     "hasNote": true
    },
    "cli": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\",\"hasNote\":true}'",
-   "bytes": 73519,
+   "bytes": 75276,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -115,13 +115,13 @@
    "family": "读页 · 今日与餐别",
    "wake": "看今日饮食记录",
    "title": "今日饮食 2026-09-15",
-   "file": "今日饮食_20260915_122553_2.html",
+   "file": "今日饮食_20260915_141607.html",
    "cmd": "calorie.today",
    "params": {
     "date": "今日"
    },
    "cli": "calorie-cmd-read calorie.today --params '{\"date\":\"今日\"}'",
-   "bytes": 76098,
+   "bytes": 78147,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -130,13 +130,13 @@
    "family": "读页 · 今日与餐别",
    "wake": "看今日饮水",
    "title": "💧 今日饮水 2026-09-15",
-   "file": "今日饮水_20260915_122555.html",
+   "file": "今日饮水_20260915_141609.html",
    "cmd": "calorie.view.today-water",
    "params": {
     "date": "今日"
    },
    "cli": "calorie-cmd-read calorie.view.today-water --params '{\"date\":\"今日\"}'",
-   "bytes": 74854,
+   "bytes": 77703,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -145,13 +145,13 @@
    "family": "读页 · 区间总览",
    "wake": "看昨日饮食",
    "title": "饮食总览 2026-09-14 ~ 2026-09-14",
-   "file": "饮食总览_20260915_122540.html",
+   "file": "饮食总览_20260915_141553.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "昨日"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"昨日\"}'",
-   "bytes": 76225,
+   "bytes": 78278,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -160,13 +160,13 @@
    "family": "读页 · 区间总览",
    "wake": "看本周饮食",
    "title": "饮食总览 2026-09-14 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122540_2.html",
+   "file": "饮食总览_20260915_141553_2.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "本周"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"本周\"}'",
-   "bytes": 78392,
+   "bytes": 81102,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -175,13 +175,13 @@
    "family": "读页 · 区间总览",
    "wake": "看上周饮食",
    "title": "饮食总览 2026-09-07 ~ 2026-09-13",
-   "file": "饮食总览_20260915_122540_3.html",
+   "file": "饮食总览_20260915_141554.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "上周"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"上周\"}'",
-   "bytes": 78296,
+   "bytes": 81071,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -190,13 +190,13 @@
    "family": "读页 · 区间总览",
    "wake": "看本月饮食",
    "title": "饮食总览 2026-09-01 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122540_4.html",
+   "file": "饮食总览_20260915_141554_2.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "本月"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"本月\"}'",
-   "bytes": 83886,
+   "bytes": 88514,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -220,13 +220,13 @@
    "family": "读页 · 区间总览",
    "wake": "看最近 7 天饮食",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122541.html",
+   "file": "饮食总览_20260915_141554_3.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -235,13 +235,13 @@
    "family": "读页 · 区间总览",
    "wake": "看最近 30 天饮食",
    "title": "饮食总览 2026-08-17 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122541_2.html",
+   "file": "饮食总览_20260915_141554_4.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "30d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"30d\"}'",
-   "bytes": 88805,
+   "bytes": 95233,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -250,7 +250,7 @@
    "family": "读页 · 区间总览",
    "wake": "看某段时间饮食",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122541_3.html",
+   "file": "饮食总览_20260915_141555.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "custom",
@@ -258,7 +258,7 @@
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -267,13 +267,13 @@
    "family": "读页 · 区间总览",
    "wake": "看饮食总览",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122545.html",
+   "file": "饮食总览_20260915_141558.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -282,13 +282,13 @@
    "family": "读页 · 区间总览",
    "wake": "看早餐（最近 7 天）",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122552.html",
+   "file": "饮食总览_20260915_141605.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -297,13 +297,13 @@
    "family": "读页 · 区间总览",
    "wake": "看午餐（最近 7 天）",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122552_2.html",
+   "file": "饮食总览_20260915_141605_2.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -312,13 +312,13 @@
    "family": "读页 · 区间总览",
    "wake": "看晚餐（最近 7 天）",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122552_3.html",
+   "file": "饮食总览_20260915_141606.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -327,13 +327,13 @@
    "family": "读页 · 区间总览",
    "wake": "看加餐（最近 7 天）",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122552_4.html",
+   "file": "饮食总览_20260915_141606_2.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -342,13 +342,13 @@
    "family": "读页 · 区间总览",
    "wake": "看全部餐别分布（最近 7 天）",
    "title": "饮食总览 2026-09-09 ~ 2026-09-15",
-   "file": "饮食总览_20260915_122553.html",
+   "file": "饮食总览_20260915_141606_3.html",
    "cmd": "calorie.view.diet",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\"}'",
-   "bytes": 81251,
+   "bytes": 84919,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -357,13 +357,13 @@
    "family": "读页 · 营养分析",
    "wake": "看营养素深度",
    "title": "🧪 营养素深度 2026-09-09 ~ 2026-09-15",
-   "file": "营养素深度_20260915_122545.html",
+   "file": "营养素深度_20260915_141558.html",
    "cmd": "calorie.view.nutrition-detail",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.nutrition-detail --params '{\"window\":\"7d\"}'",
-   "bytes": 67922,
+   "bytes": 71272,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -372,13 +372,13 @@
    "family": "读页 · 营养分析",
    "wake": "查营养配比",
    "title": "🥗 营养配比 2026-09-09 ~ 2026-09-15",
-   "file": "营养配比_20260915_122555.html",
+   "file": "营养配比_20260915_141608.html",
    "cmd": "calorie.view.nutrition-ratio",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.nutrition-ratio --params '{\"window\":\"7d\"}'",
-   "bytes": 74688,
+   "bytes": 78216,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -387,14 +387,14 @@
    "family": "读页 · 营养分析",
    "wake": "看营养素明细",
    "title": "🧪 营养素明细 2026-09-09 ~ 2026-09-15",
-   "file": "营养素深度_20260915_122555.html",
+   "file": "营养素深度_20260915_141608.html",
    "cmd": "calorie.view.nutrition-detail",
    "params": {
     "window": "7d",
     "entry": "detail"
    },
    "cli": "calorie-cmd-read calorie.view.nutrition-detail --params '{\"window\":\"7d\",\"entry\":\"detail\"}'",
-   "bytes": 67961,
+   "bytes": 71363,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -403,13 +403,13 @@
    "family": "读页 · 营养分析",
    "wake": "看营养分析",
    "title": "营养分析 2026-09-09 ~ 2026-09-15",
-   "file": "营养分析_20260915_122556.html",
+   "file": "营养分析_20260915_141609.html",
    "cmd": "calorie.view.nutrition-analysis",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.nutrition-analysis --params '{\"window\":\"7d\"}'",
-   "bytes": 74772,
+   "bytes": 76288,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -418,13 +418,13 @@
    "family": "读页 · 营养分析",
    "wake": "看每日六因素",
    "title": "每日六因素 2026-09-15",
-   "file": "每日六因素_20260915_122556.html",
+   "file": "每日六因素_20260915_141610.html",
    "cmd": "calorie.view.six-factors",
    "params": {
     "date": "今日"
    },
    "cli": "calorie-cmd-read calorie.view.six-factors --params '{\"date\":\"今日\"}'",
-   "bytes": 68128,
+   "bytes": 70065,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -433,7 +433,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高热量榜",
    "title": "排行 高热量榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_高热量_20260915_122545.html",
+   "file": "食物排行_高热量_20260915_141559.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_calorie",
@@ -441,7 +441,7 @@
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"7d\"}'",
-   "bytes": 76009,
+   "bytes": 78356,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -450,7 +450,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看低热量榜",
    "title": "排行 低热量榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_低热量_20260915_122546.html",
+   "file": "食物排行_低热量_20260915_141559.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "low_calorie",
@@ -458,7 +458,7 @@
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"7d\"}'",
-   "bytes": 74950,
+   "bytes": 77168,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -467,7 +467,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看频繁吃榜",
    "title": "排行 常吃榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_常吃_20260915_122546.html",
+   "file": "食物排行_常吃_20260915_141559.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "frequent",
@@ -475,7 +475,7 @@
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"7d\"}'",
-   "bytes": 74886,
+   "bytes": 77104,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -484,7 +484,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高碳水榜",
    "title": "排行 高碳水榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_高碳水_20260915_122546.html",
+   "file": "食物排行_高碳水_20260915_141559.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_carb",
@@ -492,7 +492,7 @@
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"7d\"}'",
-   "bytes": 75973,
+   "bytes": 78336,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -501,7 +501,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高蛋白榜",
    "title": "排行 高蛋白榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_高蛋白_20260915_122546.html",
+   "file": "食物排行_高蛋白_20260915_141559.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_protein",
@@ -509,7 +509,7 @@
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"7d\"}'",
-   "bytes": 75975,
+   "bytes": 78340,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -518,14 +518,14 @@
    "family": "读页 · 排行与榜单",
    "wake": "看全部排行榜",
    "title": "全部排行 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_全部_20260915_122547.html",
+   "file": "食物排行_全部_20260915_141600.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "topN": 10,
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"topN\":10,\"window\":\"7d\"}'",
-   "bytes": 81158,
+   "bytes": 86378,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -534,7 +534,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高热量榜（最近 30 天）",
    "title": "排行 高热量榜 2026-08-17 ~ 2026-09-15",
-   "file": "食物排行_高热量_20260915_122547.html",
+   "file": "食物排行_高热量_20260915_141600.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_calorie",
@@ -542,7 +542,7 @@
     "window": "30d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"30d\"}'",
-   "bytes": 76010,
+   "bytes": 78357,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -551,7 +551,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高热量榜（本月）",
    "title": "排行 高热量榜 2026-09-01 ~ 2026-09-15",
-   "file": "食物排行_高热量_20260915_122547_2.html",
+   "file": "食物排行_高热量_20260915_141600_2.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_calorie",
@@ -559,7 +559,7 @@
     "window": "本月"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"本月\"}'",
-   "bytes": 76013,
+   "bytes": 78360,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -568,7 +568,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高热量榜（自定义）",
    "title": "排行 高热量榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_高热量_20260915_122547_3.html",
+   "file": "食物排行_高热量_20260915_141600_3.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_calorie",
@@ -578,7 +578,7 @@
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
-   "bytes": 76093,
+   "bytes": 78440,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -587,7 +587,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看低热量榜（最近 30 天）",
    "title": "排行 低热量榜 2026-08-17 ~ 2026-09-15",
-   "file": "食物排行_低热量_20260915_122548.html",
+   "file": "食物排行_低热量_20260915_141601.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "low_calorie",
@@ -595,7 +595,7 @@
     "window": "30d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"30d\"}'",
-   "bytes": 74951,
+   "bytes": 77169,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -604,7 +604,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看低热量榜（本月）",
    "title": "排行 低热量榜 2026-09-01 ~ 2026-09-15",
-   "file": "食物排行_低热量_20260915_122548_2.html",
+   "file": "食物排行_低热量_20260915_141601_2.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "low_calorie",
@@ -612,7 +612,7 @@
     "window": "本月"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"本月\"}'",
-   "bytes": 74954,
+   "bytes": 77172,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -621,7 +621,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看低热量榜（自定义）",
    "title": "排行 低热量榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_低热量_20260915_122548_3.html",
+   "file": "食物排行_低热量_20260915_141601_3.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "low_calorie",
@@ -631,7 +631,7 @@
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"low_calorie\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
-   "bytes": 75034,
+   "bytes": 77252,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -640,7 +640,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看频繁吃榜（最近 30 天）",
    "title": "排行 常吃榜 2026-08-17 ~ 2026-09-15",
-   "file": "食物排行_常吃_20260915_122548.html",
+   "file": "食物排行_常吃_20260915_141602.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "frequent",
@@ -648,7 +648,7 @@
     "window": "30d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"30d\"}'",
-   "bytes": 74887,
+   "bytes": 77105,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -657,7 +657,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看频繁吃榜（本月）",
    "title": "排行 常吃榜 2026-09-01 ~ 2026-09-15",
-   "file": "食物排行_常吃_20260915_122549.html",
+   "file": "食物排行_常吃_20260915_141602_2.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "frequent",
@@ -665,7 +665,7 @@
     "window": "本月"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"本月\"}'",
-   "bytes": 74890,
+   "bytes": 77108,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -674,7 +674,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看频繁吃榜（自定义）",
    "title": "排行 常吃榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_常吃_20260915_122549_2.html",
+   "file": "食物排行_常吃_20260915_141602_3.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "frequent",
@@ -684,7 +684,7 @@
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"frequent\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
-   "bytes": 74970,
+   "bytes": 77188,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -693,7 +693,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高碳水榜（最近 30 天）",
    "title": "排行 高碳水榜 2026-08-17 ~ 2026-09-15",
-   "file": "食物排行_高碳水_20260915_122549.html",
+   "file": "食物排行_高碳水_20260915_141602.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_carb",
@@ -701,7 +701,7 @@
     "window": "30d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"30d\"}'",
-   "bytes": 75974,
+   "bytes": 78337,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -710,7 +710,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高碳水榜（本月）",
    "title": "排行 高碳水榜 2026-09-01 ~ 2026-09-15",
-   "file": "食物排行_高碳水_20260915_122549_2.html",
+   "file": "食物排行_高碳水_20260915_141603.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_carb",
@@ -718,7 +718,7 @@
     "window": "本月"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"本月\"}'",
-   "bytes": 75977,
+   "bytes": 78340,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -727,7 +727,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高碳水榜（自定义）",
    "title": "排行 高碳水榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_高碳水_20260915_122550.html",
+   "file": "食物排行_高碳水_20260915_141603_2.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_carb",
@@ -737,7 +737,7 @@
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_carb\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
-   "bytes": 76057,
+   "bytes": 78420,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -746,7 +746,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高蛋白榜（最近 30 天）",
    "title": "排行 高蛋白榜 2026-08-17 ~ 2026-09-15",
-   "file": "食物排行_高蛋白_20260915_122550.html",
+   "file": "食物排行_高蛋白_20260915_141603.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_protein",
@@ -754,7 +754,7 @@
     "window": "30d"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"30d\"}'",
-   "bytes": 75976,
+   "bytes": 78341,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -763,7 +763,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高蛋白榜（本月）",
    "title": "排行 高蛋白榜 2026-09-01 ~ 2026-09-15",
-   "file": "食物排行_高蛋白_20260915_122550_2.html",
+   "file": "食物排行_高蛋白_20260915_141603_2.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_protein",
@@ -771,7 +771,7 @@
     "window": "本月"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"本月\"}'",
-   "bytes": 75979,
+   "bytes": 78344,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -780,7 +780,7 @@
    "family": "读页 · 排行与榜单",
    "wake": "看高蛋白榜（自定义）",
    "title": "排行 高蛋白榜 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_高蛋白_20260915_122550_3.html",
+   "file": "食物排行_高蛋白_20260915_141604.html",
    "cmd": "calorie.view.ranking",
    "params": {
     "category": "high_protein",
@@ -790,7 +790,7 @@
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_protein\",\"topN\":10,\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
-   "bytes": 76059,
+   "bytes": 78424,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -798,14 +798,16 @@
    "seq": 73,
    "family": "读页 · 排行与榜单",
    "wake": "查高热量排行",
-   "title": "全部排行 2026-09-09 ~ 2026-09-15",
-   "file": "食物排行_全部_20260915_122554.html",
+   "title": "排行 高热量榜 2026-09-09 ~ 2026-09-15",
+   "file": "食物排行_高热量_20260915_141607.html",
    "cmd": "calorie.view.ranking",
    "params": {
+    "category": "high_calorie",
+    "topN": 10,
     "window": "7d"
    },
-   "cli": "calorie-cmd-read calorie.view.ranking --params '{\"window\":\"7d\"}'",
-   "bytes": 80114,
+   "cli": "calorie-cmd-read calorie.view.ranking --params '{\"category\":\"high_calorie\",\"topN\":10,\"window\":\"7d\"}'",
+   "bytes": 78356,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -813,14 +815,14 @@
    "seq": 35,
    "family": "读页 · 饮食复盘",
    "wake": "看营养结构",
-   "title": "饮食复盘 2026-09-09 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122544.html",
+   "title": "📝 饮食复盘 2026-09-09 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141558.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "7d"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"7d\"}'",
-   "bytes": 74356,
+   "bytes": 86121,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -828,14 +830,14 @@
    "seq": 36,
    "family": "读页 · 饮食复盘",
    "wake": "看今日营养",
-   "title": "饮食复盘 2026-09-15 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122545.html",
+   "title": "📝 饮食复盘 2026-09-15 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141558_2.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "今日"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"今日\"}'",
-   "bytes": 73017,
+   "bytes": 78808,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -843,14 +845,14 @@
    "seq": 60,
    "family": "读页 · 饮食复盘",
    "wake": "饮食复盘（本周）",
-   "title": "饮食复盘 2026-09-14 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122551.html",
+   "title": "📝 饮食复盘 2026-09-14 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141604.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "本周"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"本周\"}'",
-   "bytes": 74137,
+   "bytes": 85900,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -858,14 +860,14 @@
    "seq": 61,
    "family": "读页 · 饮食复盘",
    "wake": "饮食复盘（本月）",
-   "title": "饮食复盘 2026-09-01 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122551_2.html",
+   "title": "📝 饮食复盘 2026-09-01 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141604_2.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "本月"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"本月\"}'",
-   "bytes": 74356,
+   "bytes": 86133,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -873,14 +875,14 @@
    "seq": 62,
    "family": "读页 · 饮食复盘",
    "wake": "饮食复盘（最近 90 天）",
-   "title": "饮食复盘 2026-06-18 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122551_3.html",
+   "title": "📝 饮食复盘 2026-06-18 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141604_3.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "90d"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"90d\"}'",
-   "bytes": 74356,
+   "bytes": 86130,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -888,14 +890,14 @@
    "seq": 63,
    "family": "读页 · 饮食复盘",
    "wake": "饮食复盘（今年）",
-   "title": "饮食复盘 2026-01-01 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122551_4.html",
+   "title": "📝 饮食复盘 2026-01-01 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141605.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "今年"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"今年\"}'",
-   "bytes": 74356,
+   "bytes": 86141,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -903,8 +905,8 @@
    "seq": 64,
    "family": "读页 · 饮食复盘",
    "wake": "饮食复盘（自定义时间）",
-   "title": "饮食复盘 2026-09-09 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122552.html",
+   "title": "📝 饮食复盘 2026-09-09 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141605_2.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "custom",
@@ -912,7 +914,7 @@
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"custom\",\"start\":\"2026-09-09\",\"end\":\"2026-09-15\"}'",
-   "bytes": 74356,
+   "bytes": 86205,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -920,14 +922,14 @@
    "seq": 72,
    "family": "读页 · 饮食复盘",
    "wake": "看饮食复盘",
-   "title": "饮食复盘 2026-09-15 ~ 2026-09-15",
-   "file": "饮食复盘_20260915_122553.html",
+   "title": "📝 饮食复盘 2026-09-15 ~ 2026-09-15",
+   "file": "饮食复盘_20260915_141607.html",
    "cmd": "calorie.view.diet-review",
    "params": {
     "window": "今日"
    },
    "cli": "calorie-cmd-read calorie.view.diet-review --params '{\"window\":\"今日\"}'",
-   "bytes": 73017,
+   "bytes": 78808,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -936,13 +938,13 @@
    "family": "读页 · 食品库",
    "wake": "查食品",
    "title": "🍱 食物热量查询",
-   "file": "查食品_20260915_122542.html",
+   "file": "查食品_20260915_141555.html",
    "cmd": "calorie.view.search",
    "params": {
     "keyword": "鸡胸"
    },
    "cli": "calorie-cmd-read calorie.view.search --params '{\"keyword\":\"鸡胸\"}'",
-   "bytes": 68194,
+   "bytes": 69771,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -966,11 +968,11 @@
    "family": "读页 · 食品库",
    "wake": "看食品库（去重）",
    "title": "📦 食品库去重",
-   "file": "去重报告_20260915_122543.html",
+   "file": "去重报告_20260915_141557.html",
    "cmd": "calorie.view.dedupe",
    "params": null,
    "cli": "calorie-cmd-read calorie.view.dedupe",
-   "bytes": 66636,
+   "bytes": 68213,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -979,11 +981,11 @@
    "family": "读页 · 食品库",
    "wake": "看食品来源统计",
    "title": "📦 食品来源统计",
-   "file": "食品来源统计_20260915_122544.html",
+   "file": "食品来源统计_20260915_141557.html",
    "cmd": "calorie.view.source-stats",
    "params": null,
    "cli": "calorie-cmd-read calorie.view.source-stats",
-   "bytes": 71938,
+   "bytes": 73576,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -992,11 +994,11 @@
    "family": "读页 · 食品库",
    "wake": "查食品库",
    "title": "🍱 食物热量查询",
-   "file": "食品库_20260915_122554.html",
+   "file": "食品库_20260915_141607.html",
    "cmd": "calorie.view.library",
    "params": null,
    "cli": "calorie-cmd-read calorie.view.library",
-   "bytes": 72716,
+   "bytes": 74293,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1005,13 +1007,13 @@
    "family": "读页 · 食品库",
    "wake": "搜食品",
    "title": "🍱 食物热量查询",
-   "file": "查食品_20260915_122554.html",
+   "file": "查食品_20260915_141608.html",
    "cmd": "calorie.view.search",
    "params": {
     "keyword": "鸡胸"
    },
    "cli": "calorie-cmd-read calorie.view.search --params '{\"keyword\":\"鸡胸\"}'",
-   "bytes": 68194,
+   "bytes": 69771,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1020,11 +1022,11 @@
    "family": "读页 · 食品库",
    "wake": "看去重报告",
    "title": "📦 食品库去重",
-   "file": "去重报告_20260915_122554.html",
+   "file": "去重报告_20260915_141608.html",
    "cmd": "calorie.view.dedupe",
    "params": null,
    "cli": "calorie-cmd-read calorie.view.dedupe",
-   "bytes": 66636,
+   "bytes": 68213,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1033,11 +1035,11 @@
    "family": "读页 · 食品库",
    "wake": "看食品来源分布",
    "title": "📦 食品来源统计",
-   "file": "食品来源统计_20260915_122555.html",
+   "file": "食品来源统计_20260915_141609.html",
    "cmd": "calorie.view.source-stats",
    "params": null,
    "cli": "calorie-cmd-read calorie.view.source-stats",
-   "bytes": 71938,
+   "bytes": 73576,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1046,7 +1048,7 @@
    "family": "过程页 · 写前确认",
    "wake": "校验批量导入",
    "title": "批量导入预览",
-   "file": "批量导入预览_20260915_122544.html",
+   "file": "批量导入预览_20260915_141557.html",
    "cmd": "calorie.view.batch-import-preview",
    "params": {
     "items": [
@@ -1058,7 +1060,7 @@
     ]
    },
    "cli": "calorie-cmd-read calorie.view.batch-import-preview --params '{\"items\":[{\"foodName\":\"粥\",\"calories\":150,\"protein\":3}]}'",
-   "bytes": 66339,
+   "bytes": 68050,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1067,7 +1069,7 @@
    "family": "过程页 · 写前确认",
    "wake": "看批量导入预览",
    "title": "批量导入预览",
-   "file": "批量导入预览_20260915_122556.html",
+   "file": "批量导入预览_20260915_141609.html",
    "cmd": "calorie.view.batch-import-preview",
    "params": {
     "items": [
@@ -1080,7 +1082,7 @@
     ]
    },
    "cli": "calorie-cmd-read calorie.view.batch-import-preview --params '{\"items\":[{\"foodName\":\"粥\",\"calories\":150,\"protein\":3,\"date\":\"2026-09-15\"}]}'",
-   "bytes": 66339,
+   "bytes": 68050,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1089,7 +1091,7 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "记一餐",
    "title": "记一餐 · 回执",
-   "file": "记一餐_回执_鸡胸_20260915_122536.html",
+   "file": "记一餐_回执_鸡胸_20260915_141549.html",
    "cmd": "calorie.diet.add",
    "params": {
     "foodName": "鸡胸",
@@ -1097,7 +1099,7 @@
     "protein": 35
    },
    "cli": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"鸡胸\",\"calories\":200,\"protein\":35}'",
-   "bytes": 67538,
+   "bytes": 69512,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1106,7 +1108,7 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "记一餐（含备注）",
    "title": "记一餐（含备注） · 回执",
-   "file": "记一餐_回执_鸡胸_20260915_122536_2.html",
+   "file": "记一餐_回执_鸡胸_20260915_141550.html",
    "cmd": "calorie.diet.add",
    "params": {
     "foodName": "鸡胸",
@@ -1115,7 +1117,7 @@
     "note": "加了辣酱"
    },
    "cli": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"鸡胸\",\"calories\":200,\"protein\":35,\"note\":\"加了辣酱\"}'",
-   "bytes": 67740,
+   "bytes": 69714,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1124,7 +1126,7 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "补记饮食",
    "title": "补记饮食 · 回执",
-   "file": "记一餐_回执_米饭_20260915_122536.html",
+   "file": "记一餐_回执_米饭_20260915_141550.html",
    "cmd": "calorie.diet.add",
    "params": {
     "foodName": "米饭",
@@ -1134,7 +1136,7 @@
     "date": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"米饭\",\"calories\":500,\"protein\":10,\"time\":\"12:30:00\",\"date\":\"2026-09-15\"}'",
-   "bytes": 67617,
+   "bytes": 69579,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1143,7 +1145,7 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "批量补记饮食",
    "title": "批量补记饮食 · 回执",
-   "file": "批量记饮食_回执_粥_20260915_122537.html",
+   "file": "批量记饮食_回执_粥_20260915_141550.html",
    "cmd": "calorie.diet.batch",
    "params": {
     "items": [
@@ -1156,7 +1158,7 @@
     ]
    },
    "cli": "calorie-cmd-read calorie.diet.batch --params '{\"items\":[{\"foodName\":\"粥\",\"calories\":150,\"protein\":3,\"date\":\"2026-09-15\"}]}'",
-   "bytes": 68596,
+   "bytes": 70512,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1165,7 +1167,7 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "拍营养表记一餐",
    "title": "拍照记一餐 · 回执",
-   "file": "记一餐_回执_鸡胸_20260915_122537.html",
+   "file": "记一餐_回执_鸡胸_20260915_141550_2.html",
    "cmd": "calorie.diet.add",
    "params": {
     "foodName": "鸡胸",
@@ -1175,7 +1177,7 @@
     "source": "photo"
    },
    "cli": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"鸡胸\",\"calories\":200,\"protein\":35,\"note\":\"营养表识别\",\"source\":\"photo\"}'",
-   "bytes": 67868,
+   "bytes": 69842,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1184,7 +1186,7 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "拍营养表补记一餐",
    "title": "拍照补记一餐 · 回执",
-   "file": "记一餐_回执_米饭_20260915_122537.html",
+   "file": "记一餐_回执_米饭_20260915_141551.html",
    "cmd": "calorie.diet.add",
    "params": {
     "foodName": "米饭",
@@ -1196,7 +1198,7 @@
     "source": "photo"
    },
    "cli": "calorie-cmd-read calorie.diet.add --params '{\"foodName\":\"米饭\",\"calories\":500,\"protein\":10,\"date\":\"2026-09-15\",\"time\":\"12:30:00\",\"note\":\"营养表补记\",\"source\":\"photo\"}'",
-   "bytes": 67947,
+   "bytes": 69909,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1205,13 +1207,13 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "记喝水",
    "title": "记喝水 · 回执",
-   "file": "记喝水_回执_300ml_20260915_122537.html",
+   "file": "记喝水_回执_300ml_20260915_141551.html",
    "cmd": "calorie.water.log",
    "params": {
     "ml": 300
    },
    "cli": "calorie-cmd-read calorie.water.log --params '{\"ml\":300}'",
-   "bytes": 67371,
+   "bytes": 69333,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1220,13 +1222,13 @@
    "family": "写后回执 · 记饮食与水",
    "wake": "复制昨日饮食",
    "title": "复制昨日饮食 · 回执",
-   "file": "复制饮食_回执_20260915_20260915_122538.html",
+   "file": "复制饮食_回执_20260915_20260915_141551.html",
    "cmd": "calorie.diet.copy",
    "params": {
     "from": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.diet.copy --params '{\"from\":\"2026-09-15\"}'",
-   "bytes": 67138,
+   "bytes": 69054,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1235,14 +1237,14 @@
    "family": "写后回执 · 改与删",
    "wake": "改饮食记录",
    "title": "改饮食记录 · 回执",
-   "file": "改饮食_回执_20260915_122538.html",
+   "file": "改饮食_回执_20260915_141551.html",
    "cmd": "calorie.diet.update",
    "params": {
     "id": 1,
     "grams": 150
    },
    "cli": "calorie-cmd-read calorie.diet.update --params '{\"id\":1,\"grams\":150}'",
-   "bytes": 67283,
+   "bytes": 69245,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1251,14 +1253,14 @@
    "family": "写后回执 · 改与删",
    "wake": "改某日饮食",
    "title": "改某日饮食 · 回执",
-   "file": "按日改饮食_回执_20260915_20260915_122538.html",
+   "file": "按日改饮食_回执_20260915_20260915_141552.html",
    "cmd": "calorie.diet.update-by-date",
    "params": {
     "note": "食堂",
     "date": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.diet.update-by-date --params '{\"note\":\"食堂\",\"date\":\"2026-09-15\"}'",
-   "bytes": 67096,
+   "bytes": 69012,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1267,13 +1269,13 @@
    "family": "写后回执 · 改与删",
    "wake": "删饮食记录",
    "title": "删饮食记录 · 回执",
-   "file": "删饮食_回执_20260915_122538.html",
+   "file": "删饮食_回执_20260915_141552.html",
    "cmd": "calorie.diet.remove",
    "params": {
     "id": 1
    },
    "cli": "calorie-cmd-read calorie.diet.remove --params '{\"id\":1}'",
-   "bytes": 67444,
+   "bytes": 69406,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1282,14 +1284,14 @@
    "family": "写后回执 · 改与删",
    "wake": "删一餐",
    "title": "删一餐 · 回执",
-   "file": "按餐别删饮食_回执_20260915早餐_20260915_122539.html",
+   "file": "按餐别删饮食_回执_20260915早餐_20260915_141552.html",
    "cmd": "calorie.diet.remove-by-type",
    "params": {
     "mealType": "早餐",
     "date": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.diet.remove-by-type --params '{\"mealType\":\"早餐\",\"date\":\"2026-09-15\"}'",
-   "bytes": 67160,
+   "bytes": 69076,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1298,13 +1300,13 @@
    "family": "写后回执 · 改与删",
    "wake": "删某日饮食",
    "title": "删某日饮食 · 回执",
-   "file": "按日删饮食_回执_20260915_20260915_122539.html",
+   "file": "按日删饮食_回执_20260915_20260915_141552.html",
    "cmd": "calorie.diet.remove-by-date",
    "params": {
     "date": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.diet.remove-by-date --params '{\"date\":\"2026-09-15\"}'",
-   "bytes": 67140,
+   "bytes": 69057,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1313,14 +1315,14 @@
    "family": "写后回执 · 改与删",
    "wake": "批量删饮食",
    "title": "批量删饮食 · 回执",
-   "file": "按范围删饮食_回执_20260915至20260915_20260915_122539.html",
+   "file": "按范围删饮食_回执_20260915至20260915_20260915_141553.html",
    "cmd": "calorie.diet.remove-by-range",
    "params": {
     "start": "2026-09-15",
     "end": "2026-09-15"
    },
    "cli": "calorie-cmd-read calorie.diet.remove-by-range --params '{\"start\":\"2026-09-15\",\"end\":\"2026-09-15\"}'",
-   "bytes": 67226,
+   "bytes": 69143,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1329,7 +1331,7 @@
    "family": "写后回执 · 食品库管理",
    "wake": "存食品",
    "title": "存食品 · 回执",
-   "file": "存食品_回执_鸡胸肉_20260915_122543.html",
+   "file": "存食品_回执_鸡胸肉_20260915_141556.html",
    "cmd": "calorie.product.add",
    "params": {
     "productName": "鸡胸肉",
@@ -1340,7 +1342,7 @@
     "sodium": 70
    },
    "cli": "calorie-cmd-read calorie.product.add --params '{\"productName\":\"鸡胸肉\",\"calories\":165,\"protein\":31,\"fat\":3.6,\"carbohydrates\":0,\"sodium\":70}'",
-   "bytes": 67550,
+   "bytes": 69512,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1349,14 +1351,14 @@
    "family": "写后回执 · 食品库管理",
    "wake": "改食品",
    "title": "改食品 · 回执",
-   "file": "改食品_回执_20260915_122543.html",
+   "file": "改食品_回执_20260915_141556.html",
    "cmd": "calorie.product.update",
    "params": {
     "id": 1,
     "note": "新版"
    },
    "cli": "calorie-cmd-read calorie.product.update --params '{\"id\":1,\"note\":\"新版\"}'",
-   "bytes": 67226,
+   "bytes": 69188,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1365,13 +1367,13 @@
    "family": "写后回执 · 食品库管理",
    "wake": "下架食品",
    "title": "下架食品 · 回执",
-   "file": "下架食品_回执_20260915_122543.html",
+   "file": "下架食品_回执_20260915_141556.html",
    "cmd": "calorie.product.deprecate",
    "params": {
     "id": 1
    },
    "cli": "calorie-cmd-read calorie.product.deprecate --params '{\"id\":1}'",
-   "bytes": 67472,
+   "bytes": 69434,
    "delivered": true,
    "notDeliveredReason": null
   },
@@ -1380,7 +1382,7 @@
    "family": "写后回执 · 食品库管理",
    "wake": "批量导入食品",
    "title": "批量导入食品 · 回执",
-   "file": "批量导入食品_回执_20260915_122544.html",
+   "file": "批量导入食品_回执_20260915_141557.html",
    "cmd": "calorie.product.import",
    "params": {
     "items": [
@@ -1395,25 +1397,25 @@
     ]
    },
    "cli": "calorie-cmd-read calorie.product.import --params '{\"items\":[{\"productName\":\"测试导入燕麦\",\"calories\":389,\"protein\":13,\"fat\":7,\"carbohydrates\":66,\"sodium\":5}]}'",
-   "bytes": 67634,
+   "bytes": 69550,
    "delivered": true,
    "notDeliveredReason": null
   }
  ],
  "notInBook": [
-  "存食品_回执_全麦面包_20260915_122533.html",
-  "存食品_回执_燕麦片_20260915_122533.html",
-  "存食品_回执_米饭_20260915_122533.html",
-  "存食品_回执_鸡胸肉_20260915_122533.html",
-  "记一餐_回执_全麦面包_20260915_122534.html",
-  "记一餐_回执_燕麦片_20260915_122534.html",
-  "记一餐_回执_燕麦片_20260915_122535.html",
-  "记一餐_回执_牛肉面_20260915_122535.html",
-  "记一餐_回执_米饭_20260915_122534.html",
-  "记一餐_回执_鸡胸肉_20260915_122534.html",
-  "记一餐_回执_鸡胸肉_20260915_122535.html",
-  "记喝水_回执_300ml_20260915_122535.html",
-  "记喝水_回执_500ml_20260915_122536.html",
-  "设置档案_回执_20260915_122533.html"
+  "存食品_回执_全麦面包_20260915_141547.html",
+  "存食品_回执_燕麦片_20260915_141547.html",
+  "存食品_回执_米饭_20260915_141547.html",
+  "存食品_回执_鸡胸肉_20260915_141546.html",
+  "记一餐_回执_全麦面包_20260915_141548.html",
+  "记一餐_回执_燕麦片_20260915_141547.html",
+  "记一餐_回执_燕麦片_20260915_141549.html",
+  "记一餐_回执_牛肉面_20260915_141548.html",
+  "记一餐_回执_米饭_20260915_141548.html",
+  "记一餐_回执_鸡胸肉_20260915_141548.html",
+  "记一餐_回执_鸡胸肉_20260915_141549.html",
+  "记喝水_回执_300ml_20260915_141549.html",
+  "记喝水_回执_500ml_20260915_141549.html",
+  "设置档案_回执_20260915_141546.html"
  ]
 }
