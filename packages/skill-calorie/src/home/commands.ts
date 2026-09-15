@@ -11,7 +11,9 @@
  *   · 看今日饮食概览 → `calorie.view.diet`；看今日运动概览 → `calorie.view.exercise`；
  *     看今日目标进度 → `calorie.view.goal-progress`。
  * `calorie.view.home` 另承接「看周期主页／看今日成就」两组的唤醒词（看本周主页／看本月主页／
- * 看连续记录天数／看今日热量预算）——同一命令换窗口参数，故声明仍只此一条。
+ * 看连续记录天数／看今日热量预算）——**同一个命令键、五种视图**：视图由 `--params` 里的 `section` 选
+ * （`overview` 今日主页／`week` 本周主页／`streak` 连续记录天数／`budget` 今日热量预算／`month` 本月主页，
+ * 逐条登记见 `src/home/routes.ts`），故声明仍只此一条；示例取缺省那一档（`section` 不给即 `overview`）。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewDietOverview, viewExerciseOverview, viewGoalProgress, viewHomeToday } from './today.js';

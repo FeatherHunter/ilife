@@ -8,14 +8,14 @@
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
 export const HOME_ROUTES: readonly RouteDecl[] = [
-  { list: 'wake', order: 0, wakeWord: '看今日主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'' },
+  { list: 'wake', order: 0, wakeWord: '看今日主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日","section":"overview"}\'' },
   { list: 'wake', order: 1, wakeWord: '看今日饮食概览', scene: '01', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"今日"}\'' },
   { list: 'wake', order: 2, wakeWord: '看今日运动概览', scene: '01', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"今日"}\'' },
   { list: 'wake', order: 4, wakeWord: '看今日目标进度', scene: '01', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\'' },
-  { list: 'wake', order: 5, wakeWord: '看本周主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"windowDays":7,"date":"今日"}\'' },
-  { list: 'wake', order: 6, wakeWord: '看本月主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"windowDays":30,"date":"今日"}\'' },
-  { list: 'wake', order: 7, wakeWord: '看连续记录天数', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'' },
-  { list: 'wake', order: 8, wakeWord: '看今日热量预算', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"}\'' },
+  { list: 'wake', order: 5, wakeWord: '看本周主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"windowDays":7,"date":"今日","section":"week"}\'' },
+  { list: 'wake', order: 6, wakeWord: '看本月主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"windowDays":30,"date":"今日","section":"month"}\'' },
+  { list: 'wake', order: 7, wakeWord: '看连续记录天数', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日","section":"streak"}\'' },
+  { list: 'wake', order: 8, wakeWord: '看今日热量预算', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日","section":"budget"}\'' },
   { list: 'wake', order: 24, wakeWord: '看昨日饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"昨日"}\'' },
   { list: 'wake', order: 25, wakeWord: '看本周饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"本周"}\'' },
   { list: 'wake', order: 26, wakeWord: '看上周饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"上周"}\'' },

@@ -15,6 +15,8 @@ import { buildGoalProgress } from '../render/goalPlate.js';
 import type { GoalProgress } from '../render/goalPlate.js';
 import { buildHomeData } from './home.js';
 import { buildHomeDoc } from './homeDocs.js';
+import { HOME_SECTIONS } from './homeViewParts.js';
+import type { HomeSection } from './homeViewParts.js';
 import { buildGoalProgressDoc } from './goalProgressDocs.js';
 import { getNutritionGoal } from '../fetch/nutritionGoal.js';
 import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
@@ -25,13 +27,22 @@ import {
 } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 
-/** `calorie.view.home` · 今日总览：`windowDays` 1..90（无窗口参数时默认 7）。 */
+/** `calorie.view.home` · 今日总览：`windowDays` 1..90（无窗口参数时默认 7）；
+ *  `section` 选视图（`overview` 今日主页／`week` 本周主页／`streak` 连续记录天数／`budget` 今日热量预算／
+ *  `month` 本月主页；无此参数时按 `overview`）——五条唤醒词同住这一个键，靠它出**五张不同的页**
+ *  （缺陷与口径见件头与 `homeDocs.ts` 的 #401m 一段；老技能当年是 `--section`，同一手法）。
+ *  非法档名当场报参数错（exit 2）：静默落回 `overview` 会让「词配错视图」这条缺陷藏起来。 */
 export function viewHomeToday(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const win = windowRange(params);
   const date = win?.end ?? dayField(params, 'date') ?? dayField(params, 'today') ?? latestFoodDate(db) ?? todayISO();
   assertISO(date, 'date');
   const windowDays = win ? daysIn(win) : (optNum(params, 'windowDays') ?? 7);
   if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 90) fail(2, 'windowDays 须为 1..90 整数');
+  const rawSection = optStr(params, 'section');
+  if (rawSection !== undefined && !(HOME_SECTIONS as readonly string[]).includes(rawSection)) {
+    fail(2, 'section 须为 ' + HOME_SECTIONS.join('／') + ' 之一');
+  }
+  const section = (rawSection ?? 'overview') as HomeSection;
   const h = buildHomeData(db, date, windowDays as number);
   const metrics = nums({
     calorieGoal: h.calorieGoal, waterGoal: h.waterGoal, caloriePct: h.caloriePct, proteinPct: h.proteinPct,
@@ -40,7 +51,7 @@ export function viewHomeToday(params: Record<string, unknown>, db: DatabaseSync)
     waterMl: h.daily.waterMl, entryCount: h.daily.entryCount, avgIntake: h.week.avgIntake, avgDeficit: h.week.avgDeficit,
     loggedDays: h.week.loggedDays,
   });
-  return { data: { metrics }, html: buildHomeDoc(h) };
+  return { data: { section, metrics }, html: buildHomeDoc(h, section) };
 }
 
 /** `calorie.view.diet` · 饮食总览：窗口汇总 ＋ 餐别分布 ＋ 窗口明细（上限 100 条并明示截断）。 */
