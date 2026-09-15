@@ -127,15 +127,25 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string 
     + '</figcaption></figure>';
 }
 
-/** 体积提示块（#472 改公共层静态提示块；#526 拆成两句、去掉分号）：触发与 M 仍只取**预算跳过
- *  计数**（老正本 `embed_skipped_count` 口径；文件缺失态由各处占位承担、不进这里——否则
- *  「3 张正常照＋1 张缺文件」也会弹这条并写错归因）。数字只在**这一处**说 M，
- *  「本页显示 N 张」只在 KPI 那一处说 N（同一事实一页一处）。 */
-function budgetNoticeHtml(budgetSkippedCount: number): string {
-  if (budgetSkippedCount <= 0) return '';
+/** 「这一页缺什么 ＋ 怎么办」那一块（#472 改公共层静态提示块；#526 拆成两句、去掉分号；
+ *  **收口再并一格**）：原来「找不到文件 N 张」自占一张读数卡，加上预算提示块，首屏是「三张卡＋一块」，
+ *  读者一眼看不出先看什么。收口把两件事并成**一块**放在页头（徽章列之后、读数卡之前）——
+ *  阅读顺序变成「这一页是什么（标题＋徽章）→ 缺什么／怎么办（本块）→ 有多少（读数卡）→ 图」。
+ *
+ *  触发口径照旧：#438 要求「预算提示块只按预算跳过计数」——`还有 M 张原图太大` 这句**只在有预算跳过时出**，
+ *  仅文件缺失时出的是另一句（`N 张照片的文件不在照片目录里，图放不出来`），两态的归因不混。 */
+function missNoticeHtml(budgetSkippedCount: number, missingCount: number): string {
+  if (budgetSkippedCount <= 0 && missingCount <= 0) return '';
+  if (budgetSkippedCount <= 0) {
+    return notice({
+      msg: missingCount + ' 张照片的文件不在照片目录里，图放不出来',
+      detail: '把文件放回照片目录就会有图',
+    });
+  }
   return notice({
     msg: '还有 ' + budgetSkippedCount + ' 张原图太大，没进这一页',
-    detail: '想全看：按标签挑，或者按日期挑一段时间',
+    detail: (missingCount > 0 ? '另有 ' + missingCount + ' 张文件不在照片目录里。' : '')
+      + '想全看：按标签挑，或者按日期挑一段时间',
   });
 }
 
@@ -152,22 +162,17 @@ function latestDateOf(g: GalleryData): string {
   return g.photos.reduce((acc, p) => (p.date > acc ? p.date : acc), g.photos[0]?.date ?? '');
 }
 
-/** 读数卡（#526 重排）：本页显示／最近一张／找不到文件，一格一件事，明细位不串第二件事。
- *  「内嵌」这类内部叫法、以及与本页显示重复的「本窗共 N 张」都在本票出页面。 */
-function kpiCards(
-  g: GalleryData, embeddedCount: number, missingCount: number, daysSince: number | null,
-): KpiCardInput[] {
-  const cards: KpiCardInput[] = [
+/** 读数卡（#526 重排；收口再收一格）：本页显示／最近一张——一格一件事，明细位不串第二件事。
+ *  「找不到文件 N 张」那一格**并入页头的「缺什么」块**（`missNoticeHtml`）：首屏少一张卡，
+ *  缺什么集中在一条里说，读数卡只留「这一页有多少、最近一张是哪天」。 */
+function kpiCards(g: GalleryData, embeddedCount: number, daysSince: number | null): KpiCardInput[] {
+  return [
     { label: '本页显示', value: embeddedCount + ' 张', detail: '共找到 ' + g.totalCount + ' 张' },
     {
       label: '最近一张', value: latestDateOf(g),
       detail: daysSince === null ? '日期算不出来' : (daysSince === 0 ? '就是今天拍的' : daysSince + ' 天前拍的'),
     },
   ];
-  if (missingCount > 0) {
-    cards.push({ label: '找不到文件', value: missingCount + ' 张', detail: '文件不在照片目录里' });
-  }
-  return cards;
 }
 
 /** 明细表：只标异常（正常行留空——「存在」是零信息值）。#526 收成四列（文件名列下屏：
@@ -210,9 +215,9 @@ function contentOf(
   const win = windowDaysOf(g);
   const parts: string[] = [photoUiCss()];
   parts.push(chipRow([g.filters.tag ? '标签 ' + g.filters.tag : '全部标签', win > 0 ? '近 ' + win + ' 天' : '']));
-  parts.push(renderKpiGrid(kpiCards(g, embeddedCount, missingCount, g.daysSinceLast)));
-  // 提示块紧挨它要解释的那一块（网格）：先说为什么没全放上，再看图。
-  parts.push(budgetNoticeHtml(skipReason.size));
+  // 阅读顺序（收口定）：① 这一页是什么＝标题＋徽章列；② 缺什么／怎么办＝这一块；③ 有多少＝读数卡；④ 图。
+  parts.push(missNoticeHtml(skipReason.size, missingCount));
+  parts.push(renderKpiGrid(kpiCards(g, embeddedCount, g.daysSinceLast)));
   parts.push('<div class="phu-grid">' + g.photos.map((p) => {
     const key = fileNameOf(p.photoPath);
     return figureHtml(p, byName.get(key), skipReason.get(key), today);
