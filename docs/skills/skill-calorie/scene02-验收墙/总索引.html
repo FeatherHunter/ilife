@@ -1,0 +1,654 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>场景02 饮食 验收总索引（83 件）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f}
+.wrap{padding:28px 22px 60px;max-width:1080px}
+h1{font-size:24px;font-weight:600;margin-bottom:6px}
+.sub{color:#6e6e73;font-size:13.5px;line-height:1.8;margin-bottom:22px}
+.sub b{color:#1d1d1f}
+h2{font-size:15px;font-weight:600;margin:26px 0 10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.card{background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:13px 15px}
+.card-head{display:flex;align-items:baseline;gap:8px;margin-bottom:9px}
+.seq{background:#1d1d1f;color:#fff;border-radius:6px;font-size:11.5px;font-weight:600;padding:1px 7px}
+.card-head a{color:#007aff;text-decoration:none;font-size:14px;font-weight:600}
+.kind{margin-left:auto;color:#86868b;font-size:11.5px}
+dl{display:grid;grid-template-columns:70px 1fr;gap:3px 8px;font-size:12.5px;line-height:1.6}
+dt{color:#86868b}
+dd{color:#1d1d1f}
+code{font-size:11.5px;color:#6e6e73;word-break:break-all}
+.note{margin-top:28px;background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:16px 18px}
+.note h2{margin-top:0}
+.note ul{margin:8px 0 0 20px;font-size:13px;line-height:1.9;color:#3a3a3c}
+</style></head><body><div class="wrap">
+<h1>场景02「饮食」验收总索引</h1>
+<div class="sub">83 件产物按页面族分组，每份一张卡（念哪句话／命令／文件／该确认什么）。
+手机墙 <b>390 宽 × 3 列</b>看塌列，桌面墙 <b>1280 宽 × 1 列</b>看排布；两张墙、本索引与产物**同目录**，
+格数 ＝ 本索引卡的件数 ＝ 清单 <code>manifest.json</code> 的条目数（少任何一件，生成器自检点名并 exit 1）。
+本页：<a href="手机墙-390.html">手机墙-390.html</a> · <a href="桌面墙-1280.html">桌面墙-1280.html</a></div>
+<div class="note">
+  <h2>本批机器读数（照单抄，生成器不自己算）</h2>
+  <ul>
+      <li><b>真跑条数</b>：83</li>
+      <li><b>exit 分布</b>：exit 0 83 条</li>
+      <li><b>落盘件数</b>：83（每件都第 0 字节 `&lt;!doctype html&gt;`：83 条）</li>
+      <li><b>字节区间</b>：68,351 – 168,483 B（中位 79,803 B）</li>
+      <li><b>空库态</b>：读命令 65 条：exit 4 61 条（库为空＝缺失阻断，按设计不落盘）；另 4 条 exit 0（参数全在命令里、不读库：校验批量导入／看批量导入预览／看有备注的饮食记录／看「有备注」的饮食记录）。</li>
+      <li><b>空窗态</b>：10 条里 9 条 exit 0 且出完整文档、带空态句＋引导句；**1 条例外**：`calorie.view.nutrition-analysis`（看营养分析）空窗报 exit 4「无饮食记录：2000-01-01 ~ 2000-01-31」——见 `逐格缺陷清单.md` 第 82 格。</li>
+      <li><b>口径提醒</b>：运行期总表里筛 `scene === '02'` 是 **83 条**（地图设计期的老技能词表 `SCENE_02_DIET` 是 **70 条**，其 70 条全含于这 83 条，多出的 13 条是运行期补词）。逐条读数见台账。</li>
+  </ul>
+</div>
+  <h2>① 写后回执页（18 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">1</span><a href="记一餐.html">记一餐（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>记一餐</dd>
+        <dt>命令</dt><dd><code>calorie.diet.add</code></dd>
+        <dt>文件</dt><dd><code>记一餐.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本条不带备注，与第 2 格逐处比对页头措辞。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">2</span><a href="记一餐（含备注）.html">记一餐（含备注）（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>记一餐（含备注）</dd>
+        <dt>命令</dt><dd><code>calorie.diet.add</code></dd>
+        <dt>文件</dt><dd><code>记一餐（含备注）.html</code></dd>
+        <dt>该确认什么</dt><dd>带备注的那一格：页内应出现「备注」一栏且写着种子里那句「加了辣酱」。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">3</span><a href="补记饮食.html">补记饮食（写后回执页·2026-09-15）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>补记饮食</dd>
+        <dt>命令</dt><dd><code>calorie.diet.add</code></dd>
+        <dt>文件</dt><dd><code>补记饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">4</span><a href="批量补记饮食.html">批量补记饮食（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>批量补记饮食</dd>
+        <dt>命令</dt><dd><code>calorie.diet.batch</code></dd>
+        <dt>文件</dt><dd><code>批量补记饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">5</span><a href="拍营养表记一餐.html">拍营养表记一餐（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>拍营养表记一餐</dd>
+        <dt>命令</dt><dd><code>calorie.diet.add</code></dd>
+        <dt>文件</dt><dd><code>拍营养表记一餐.html</code></dd>
+        <dt>该确认什么</dt><dd>拍营养表那一支：页内应出现「来源：营养表照片」这类标记（路由带 `source=photo`）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">6</span><a href="拍营养表补记一餐.html">拍营养表补记一餐（写后回执页·2026-09-15）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>拍营养表补记一餐</dd>
+        <dt>命令</dt><dd><code>calorie.diet.add</code></dd>
+        <dt>文件</dt><dd><code>拍营养表补记一餐.html</code></dd>
+        <dt>该确认什么</dt><dd>同第 5 格，但带日期（补记那一支）：看回执措辞是不是「已补记」。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">7</span><a href="记喝水.html">记喝水（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>记喝水</dd>
+        <dt>命令</dt><dd><code>calorie.water.log</code></dd>
+        <dt>文件</dt><dd><code>记喝水.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">8</span><a href="复制昨日饮食.html">复制昨日饮食（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>复制昨日饮食</dd>
+        <dt>命令</dt><dd><code>calorie.diet.copy</code></dd>
+        <dt>文件</dt><dd><code>复制昨日饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">9</span><a href="改饮食记录.html">改饮食记录（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>改饮食记录</dd>
+        <dt>命令</dt><dd><code>calorie.diet.update</code></dd>
+        <dt>文件</dt><dd><code>改饮食记录.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">10</span><a href="改某日饮食.html">改某日饮食（写后回执页·2026-09-15）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>改某日饮食</dd>
+        <dt>命令</dt><dd><code>calorie.diet.update-by-date</code></dd>
+        <dt>文件</dt><dd><code>改某日饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">11</span><a href="删饮食记录.html">删饮食记录（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>删饮食记录</dd>
+        <dt>命令</dt><dd><code>calorie.diet.remove</code></dd>
+        <dt>文件</dt><dd><code>删饮食记录.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">12</span><a href="删一餐.html">删一餐（写后回执页·2026-09-15）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>删一餐</dd>
+        <dt>命令</dt><dd><code>calorie.diet.remove-by-type</code></dd>
+        <dt>文件</dt><dd><code>删一餐.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">13</span><a href="删某日饮食.html">删某日饮食（写后回执页·2026-09-15）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>删某日饮食</dd>
+        <dt>命令</dt><dd><code>calorie.diet.remove-by-date</code></dd>
+        <dt>文件</dt><dd><code>删某日饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">14</span><a href="批量删饮食.html">批量删饮食（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>批量删饮食</dd>
+        <dt>命令</dt><dd><code>calorie.diet.remove-by-range</code></dd>
+        <dt>文件</dt><dd><code>批量删饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">28</span><a href="存食品.html">存食品（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>存食品</dd>
+        <dt>命令</dt><dd><code>calorie.product.add</code></dd>
+        <dt>文件</dt><dd><code>存食品.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">29</span><a href="改食品.html">改食品（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>改食品</dd>
+        <dt>命令</dt><dd><code>calorie.product.update</code></dd>
+        <dt>文件</dt><dd><code>改食品.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">30</span><a href="下架食品.html">下架食品（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>下架食品</dd>
+        <dt>命令</dt><dd><code>calorie.product.deprecate</code></dd>
+        <dt>文件</dt><dd><code>下架食品.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">32</span><a href="批量导入食品.html">批量导入食品（写后回执页·无窗口参数）</a><span class="kind">回执型</span></div>
+      <dl><dt>念这句</dt><dd>批量导入食品</dd>
+        <dt>命令</dt><dd><code>calorie.product.import</code></dd>
+        <dt>文件</dt><dd><code>批量导入食品.html</code></dd>
+        <dt>该确认什么</dt><dd>回执页四段（操作回执／字段变更／今日累计／复制明细）是否齐；本命令写库后今日累计是否跟着动；归属 #270（饮食回执 15）。</dd></dl>
+    </div>
+  </div>
+  <h2>② 条目列表页（4 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">15</span><a href="看今日饮食.html">看今日饮食（条目列表页·今日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看今日饮食</dd>
+        <dt>命令</dt><dd><code>calorie.today</code></dd>
+        <dt>文件</dt><dd><code>看今日饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 71 格同一条命令、同参数 —— 两格应在屏上完全一致（只差页内生成时间戳）。看的是「看今日饮食／看今日饮食记录两条词出一页」该不该。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">25</span><a href="看有备注的饮食记录.html">看有备注的饮食记录（条目列表页·今日·只看有备注）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看有备注的饮食记录</dd>
+        <dt>命令</dt><dd><code>calorie.today</code></dd>
+        <dt>文件</dt><dd><code>看有备注的饮食记录.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 70 格同一条命令、同参数 —— 两格应完全一致。这一对就是 t166 记的那条「旧版遗留的同能指条目」（`看「有备注」的饮食记录`）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">70</span><a href="看「有备注」的饮食记录.html">看「有备注」的饮食记录（条目列表页·今日·只看有备注）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看「有备注」的饮食记录</dd>
+        <dt>命令</dt><dd><code>calorie.today</code></dd>
+        <dt>文件</dt><dd><code>看「有备注」的饮食记录.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 25 格同一条命令、同参数 —— 逐处比对；重点看「只看有备注的」这一支的页头措辞与筛选说明是否说得清。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">71</span><a href="看今日饮食记录.html">看今日饮食记录（条目列表页·今日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看今日饮食记录</dd>
+        <dt>命令</dt><dd><code>calorie.today</code></dd>
+        <dt>文件</dt><dd><code>看今日饮食记录.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 15 格同一条命令、同参数 —— 逐处比对两格是否只有时间戳之差。</dd></dl>
+    </div>
+  </div>
+  <h2>⑥ 营养／饮水／总览页（16 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">16</span><a href="看昨日饮食.html">看昨日饮食（营养／饮水／总览页·昨日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看昨日饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看昨日饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>注意 H1 只有「饮食总览」四个字、不带日期；第 17–22 六格同形。要看的是「六条窗口词出一张无窗口字的同页」该不该。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">17</span><a href="看本周饮食.html">看本周饮食（营养／饮水／总览页·本周）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看本周饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看本周饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（85,067 B，盘上 看本周饮食.html），页标题「卡路里·饮食」、页内 H1「饮食总览」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">18</span><a href="看上周饮食.html">看上周饮食（营养／饮水／总览页·上周）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看上周饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看上周饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（99,521 B，盘上 看上周饮食.html），页标题「卡路里·饮食」、页内 H1「饮食总览」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">19</span><a href="看本月饮食.html">看本月饮食（营养／饮水／总览页·本月）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看本月饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看本月饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（124,344 B，盘上 看本月饮食.html），页标题「卡路里·饮食」、页内 H1「饮食总览」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">20</span><a href="看上月饮食.html">看上月饮食（营养／饮水／总览页·上月）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看上月饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看上月饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（166,196 B，盘上 看上月饮食.html），页标题「卡路里·饮食」、页内 H1「饮食总览」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">21</span><a href="看最近 7 天饮食.html">看最近 7 天饮食（营养／饮水／总览页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看最近 7 天饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看最近 7 天饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 23 格逐字节同一份产物：本条 `window=7d`，第 23 格是自定义区间，而路由给的自定义区间正好也是最近 7 天，于是两格同页。要看的是「自定义区间与 7d 走同一条装配」是否合意。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">22</span><a href="看最近 30 天饮食.html">看最近 30 天饮食（营养／饮水／总览页·30d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看最近 30 天饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看最近 30 天饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（168,483 B，盘上 看最近 30 天饮食.html），页标题「卡路里·饮食」、页内 H1「饮食总览」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">23</span><a href="看某段时间饮食.html">看某段时间饮食（营养／饮水／总览页·custom 2026-09-09~2026-09-15）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看某段时间饮食</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看某段时间饮食.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 21 格逐字节同一份产物（原因见第 21 格）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">24</span><a href="看今日喝水.html">看今日喝水（营养／饮水／总览页·今日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看今日喝水</dd>
+        <dt>命令</dt><dd><code>calorie.view.today-water</code></dd>
+        <dt>文件</dt><dd><code>看今日喝水.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 80 格是同一张页的两条词：本条带 `entry=drink`，第 80 格不带 —— 逐处比对两格，看差别是不是只有「喝水／饮水」的措辞。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">37</span><a href="看饮食总览.html">看饮食总览（营养／饮水／总览页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看饮食总览</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看饮食总览.html</code></dd>
+        <dt>该确认什么</dt><dd>**这一格与其余「总览」格不同形**：路由给的是 `{&quot;window&quot;:&quot;7d&quot;,&quot;entry&quot;:&quot;overview&quot;}`，屏上 H1 却是「饮食总览 2026-09-14 ~ 2026-09-14」（昨日单日），页内两段是「本周累计／本月累计（统计到昨日）」。请判 `entry=overview` 与 `window=7d` 是否都该被这一步吃掉。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">38</span><a href="看营养素深度.html">看营养素深度（营养／饮水／总览页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看营养素深度</dd>
+        <dt>命令</dt><dd><code>calorie.view.nutrition-detail</code></dd>
+        <dt>文件</dt><dd><code>看营养素深度.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（71,093 B，盘上 看营养素深度.html），页标题「卡路里·饮食」、页内 H1「🧪 营养素深度 2026-09-09 ~ 2026-09-15」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">77</span><a href="查营养配比.html">查营养配比（营养／饮水／总览页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>查营养配比</dd>
+        <dt>命令</dt><dd><code>calorie.view.nutrition-ratio</code></dd>
+        <dt>文件</dt><dd><code>查营养配比.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（79,271 B，盘上 查营养配比.html），页标题「卡路里·饮食」、页内 H1「🥗 营养配比 2026-09-09 ~ 2026-09-15」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">78</span><a href="看营养素明细.html">看营养素明细（营养／饮水／总览页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看营养素明细</dd>
+        <dt>命令</dt><dd><code>calorie.view.nutrition-detail</code></dd>
+        <dt>文件</dt><dd><code>看营养素明细.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（71,184 B，盘上 看营养素明细.html），页标题「卡路里·饮食」、页内 H1「🧪 营养素明细 2026-09-09 ~ 2026-09-15」。看：这一段（营养／饮水／总览页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #275（营养饮水总览 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">80</span><a href="看今日饮水.html">看今日饮水（营养／饮水／总览页·今日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看今日饮水</dd>
+        <dt>命令</dt><dd><code>calorie.view.today-water</code></dd>
+        <dt>文件</dt><dd><code>看今日饮水.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 24 格逐处比对（见第 24 格）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">82</span><a href="看营养分析.html">看营养分析（营养／饮水／总览页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看营养分析</dd>
+        <dt>命令</dt><dd><code>calorie.view.nutrition-analysis</code></dd>
+        <dt>文件</dt><dd><code>看营养分析.html</code></dd>
+        <dt>该确认什么</dt><dd>**场景归属待裁**：运行期总表里同时挂着「场景 10／看钠糖纤维趋势」与本条「场景 02／看营养分析」两条记录，`t313a-分区-证据.md` 按「WAKE ＞ NEW_KEY」判它属场景 10。按票面口径（筛 `scene === '02'`）纳进本册。另：**本条的空窗态（库有数据、窗口内无记录）报 exit 4**，与其余 9 条空窗页不同（见逐格缺陷清单）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">83</span><a href="看每日六因素.html">看每日六因素（营养／饮水／总览页·今日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看每日六因素</dd>
+        <dt>命令</dt><dd><code>calorie.view.six-factors</code></dd>
+        <dt>文件</dt><dd><code>看每日六因素.html</code></dd>
+        <dt>该确认什么</dt><dd>**场景归属待裁**：同第 82 格（这个命令同时挂场景 10／02 两条记录，分区证据判属 10）。</dd></dl>
+    </div>
+  </div>
+  <h2>⑤ 食品库类页（8 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">26</span><a href="查食品.html">查食品（食品库类页·无窗口参数·关键词＝鸡胸）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>查食品</dd>
+        <dt>命令</dt><dd><code>calorie.view.search</code></dd>
+        <dt>文件</dt><dd><code>查食品.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（73,436 B，盘上 查食品.html），页标题「卡路里 · 食物热量查询」、页内 H1「🍱 食物热量查询」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">27</span><a href="查食品（按分类）.html">查食品（按分类）（食品库类页·无窗口参数·类别＝蛋白类）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>查食品（按分类）</dd>
+        <dt>命令</dt><dd><code>calorie.view.library</code></dd>
+        <dt>文件</dt><dd><code>查食品（按分类）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（73,509 B，盘上 查食品（按分类）.html），页标题「卡路里 · 食物热量查询」、页内 H1「🍱 食物热量查询」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">31</span><a href="看食品库（去重）.html">看食品库（去重）（食品库类页·无窗口参数）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看食品库（去重）</dd>
+        <dt>命令</dt><dd><code>calorie.view.dedupe</code></dd>
+        <dt>文件</dt><dd><code>看食品库（去重）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（68,697 B，盘上 看食品库（去重）.html），页标题「卡路里 · 食品库去重」、页内 H1「📦 食品库去重」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">34</span><a href="看食品来源统计.html">看食品来源统计（食品库类页·无窗口参数）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看食品来源统计</dd>
+        <dt>命令</dt><dd><code>calorie.view.source-stats</code></dd>
+        <dt>文件</dt><dd><code>看食品来源统计.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（74,060 B，盘上 看食品来源统计.html），页标题「卡路里·饮食」、页内 H1「📦 食品来源统计」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">74</span><a href="查食品库.html">查食品库（食品库类页·无窗口参数）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>查食品库</dd>
+        <dt>命令</dt><dd><code>calorie.view.library</code></dd>
+        <dt>文件</dt><dd><code>查食品库.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,823 B，盘上 查食品库.html），页标题「卡路里 · 食物热量查询」、页内 H1「🍱 食物热量查询」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">75</span><a href="搜食品.html">搜食品（食品库类页·无窗口参数·关键词＝鸡胸）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>搜食品</dd>
+        <dt>命令</dt><dd><code>calorie.view.search</code></dd>
+        <dt>文件</dt><dd><code>搜食品.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（73,436 B，盘上 搜食品.html），页标题「卡路里 · 食物热量查询」、页内 H1「🍱 食物热量查询」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">76</span><a href="看去重报告.html">看去重报告（食品库类页·无窗口参数）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看去重报告</dd>
+        <dt>命令</dt><dd><code>calorie.view.dedupe</code></dd>
+        <dt>文件</dt><dd><code>看去重报告.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（68,697 B，盘上 看去重报告.html），页标题「卡路里 · 食品库去重」、页内 H1「📦 食品库去重」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">79</span><a href="看食品来源分布.html">看食品来源分布（食品库类页·无窗口参数）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看食品来源分布</dd>
+        <dt>命令</dt><dd><code>calorie.view.source-stats</code></dd>
+        <dt>文件</dt><dd><code>看食品来源分布.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（74,060 B，盘上 看食品来源分布.html），页标题「卡路里·饮食」、页内 H1「📦 食品来源统计」。看：这一段（食品库类页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #274（食品库 4）。</dd></dl>
+    </div>
+  </div>
+  <h2>⑦ 预检确认页（2 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">33</span><a href="校验批量导入.html">校验批量导入（预检确认页·无窗口参数）</a><span class="kind">过程型</span></div>
+      <dl><dt>念这句</dt><dd>校验批量导入</dd>
+        <dt>命令</dt><dd><code>calorie.view.batch-import-preview</code></dd>
+        <dt>文件</dt><dd><code>校验批量导入.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 81 格逐字节同一份产物（同命令同参数）。**另请判**：这一格的 `&lt;title&gt;` 与页头品牌行写的是「卡路里 · 趋势」，而页内 H1 是「批量导入预览」—— 页族名与页内容对不上，归 ⑦ 预检确认页。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">81</span><a href="看批量导入预览.html">看批量导入预览（预检确认页·无窗口参数）</a><span class="kind">过程型</span></div>
+      <dl><dt>念这句</dt><dd>看批量导入预览</dd>
+        <dt>命令</dt><dd><code>calorie.view.batch-import-preview</code></dd>
+        <dt>文件</dt><dd><code>看批量导入预览.html</code></dd>
+        <dt>该确认什么</dt><dd>与第 33 格逐字节同一份产物。同上一格的 `&lt;title&gt;`／品牌行「卡路里 · 趋势」与 H1「批量导入预览」不一致。</dd></dl>
+    </div>
+  </div>
+  <h2>④ 复盘／餐别分布页（13 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">35</span><a href="看营养结构.html">看营养结构（复盘／餐别分布页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看营养结构</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>看营养结构.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（88,041 B，盘上 看营养结构.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-09-09 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">36</span><a href="看今日营养.html">看今日营养（复盘／餐别分布页·今日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看今日营养</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>看今日营养.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（79,803 B，盘上 看今日营养.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-09-15 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">60</span><a href="饮食复盘（本周）.html">饮食复盘（本周）（复盘／餐别分布页·本周）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>饮食复盘（本周）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>饮食复盘（本周）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（86,901 B，盘上 饮食复盘（本周）.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-09-14 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">61</span><a href="饮食复盘（本月）.html">饮食复盘（本月）（复盘／餐别分布页·本月）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>饮食复盘（本月）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>饮食复盘（本月）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（89,815 B，盘上 饮食复盘（本月）.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-09-01 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">62</span><a href="饮食复盘（最近 90 天）.html">饮食复盘（最近 90 天）（复盘／餐别分布页·90d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>饮食复盘（最近 90 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>饮食复盘（最近 90 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（93,211 B，盘上 饮食复盘（最近 90 天）.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-06-18 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">63</span><a href="饮食复盘（今年）.html">饮食复盘（今年）（复盘／餐别分布页·今年）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>饮食复盘（今年）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>饮食复盘（今年）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（93,222 B，盘上 饮食复盘（今年）.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-01-01 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">64</span><a href="饮食复盘（自定义时间）.html">饮食复盘（自定义时间）（复盘／餐别分布页·custom 2026-09-09~2026-09-15）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>饮食复盘（自定义时间）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>饮食复盘（自定义时间）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（88,125 B，盘上 饮食复盘（自定义时间）.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-09-09 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">65</span><a href="看早餐（最近 7 天）.html">看早餐（最近 7 天）（复盘／餐别分布页·7d·餐别＝早餐）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看早餐（最近 7 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看早餐（最近 7 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>餐别分布页：先看「餐数／日均」读数与下方明细条数是否自洽（本格 7 餐），再看四条餐别词的页形是否一致。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">66</span><a href="看午餐（最近 7 天）.html">看午餐（最近 7 天）（复盘／餐别分布页·7d·餐别＝午餐）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看午餐（最近 7 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看午餐（最近 7 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>同上；与第 65／67 格逐处比对页形（餐别名换掉就应只有餐别名之差）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">67</span><a href="看晚餐（最近 7 天）.html">看晚餐（最近 7 天）（复盘／餐别分布页·7d·餐别＝晚餐）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看晚餐（最近 7 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看晚餐（最近 7 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>同上；与第 65／66 格逐处比对页形。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">68</span><a href="看加餐（最近 7 天）.html">看加餐（最近 7 天）（复盘／餐别分布页·7d·餐别＝加餐）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看加餐（最近 7 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看加餐（最近 7 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格 3 餐（种子只播了下午茶），比第 65–67 格少 —— 看的是「餐数为 0 或很少时这张页会不会塌」。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">69</span><a href="看全部餐别分布（最近 7 天）.html">看全部餐别分布（最近 7 天）（复盘／餐别分布页·7d·餐别＝all）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看全部餐别分布（最近 7 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet</code></dd>
+        <dt>文件</dt><dd><code>看全部餐别分布（最近 7 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>「全部餐别」那一支：与 65–68 四格是两张页形（本格多「餐别热量占比」一段）。请判这两支的差别在词面上说得清不清。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">72</span><a href="看饮食复盘.html">看饮食复盘（复盘／餐别分布页·今日）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看饮食复盘</dd>
+        <dt>命令</dt><dd><code>calorie.view.diet-review</code></dd>
+        <dt>文件</dt><dd><code>看饮食复盘.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（79,803 B，盘上 看饮食复盘.html），页标题「卡路里·饮食」、页内 H1「📝 饮食复盘 2026-09-15 ~ 2026-09-15」。看：这一段（复盘／餐别分布页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #273（复盘与餐别 10）。</dd></dl>
+    </div>
+  </div>
+  <h2>③ 横向排行榜页（22 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">39</span><a href="看高热量榜.html">看高热量榜（横向排行榜页·7d·类别＝high_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高热量榜</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高热量榜.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,124 B，盘上 看高热量榜.html），页标题「卡路里·饮食」、页内 H1「排行 高热量榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">40</span><a href="看低热量榜.html">看低热量榜（横向排行榜页·7d·类别＝low_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看低热量榜</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看低热量榜.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（80,928 B，盘上 看低热量榜.html），页标题「卡路里·饮食」、页内 H1「排行 低热量榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">41</span><a href="看频繁吃榜.html">看频繁吃榜（横向排行榜页·7d·类别＝frequent）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看频繁吃榜</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看频繁吃榜.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（80,871 B，盘上 看频繁吃榜.html），页标题「卡路里·饮食」、页内 H1「排行 常吃榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">42</span><a href="看高碳水榜.html">看高碳水榜（横向排行榜页·7d·类别＝high_carb）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高碳水榜</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高碳水榜.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,099 B，盘上 看高碳水榜.html），页标题「卡路里·饮食」、页内 H1「排行 高碳水榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">43</span><a href="看高蛋白榜.html">看高蛋白榜（横向排行榜页·7d·类别＝high_protein）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高蛋白榜</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高蛋白榜.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,111 B，盘上 看高蛋白榜.html），页标题「卡路里·饮食」、页内 H1「排行 高蛋白榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">44</span><a href="看全部排行榜.html">看全部排行榜（横向排行榜页·7d）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看全部排行榜</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看全部排行榜.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（91,992 B，盘上 看全部排行榜.html），页标题「卡路里·饮食」、页内 H1「全部排行 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">45</span><a href="看高热量榜（最近 30 天）.html">看高热量榜（最近 30 天）（横向排行榜页·30d·类别＝high_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高热量榜（最近 30 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高热量榜（最近 30 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,172 B，盘上 看高热量榜（最近 30 天）.html），页标题「卡路里·饮食」、页内 H1「排行 高热量榜 2026-08-17 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">46</span><a href="看高热量榜（本月）.html">看高热量榜（本月）（横向排行榜页·本月·类别＝high_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高热量榜（本月）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高热量榜（本月）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,142 B，盘上 看高热量榜（本月）.html），页标题「卡路里·饮食」、页内 H1「排行 高热量榜 2026-09-01 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">47</span><a href="看高热量榜（自定义）.html">看高热量榜（自定义）（横向排行榜页·custom 2026-09-09~2026-09-15·类别＝high_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高热量榜（自定义）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高热量榜（自定义）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,208 B，盘上 看高热量榜（自定义）.html），页标题「卡路里·饮食」、页内 H1「排行 高热量榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">48</span><a href="看低热量榜（最近 30 天）.html">看低热量榜（最近 30 天）（横向排行榜页·30d·类别＝low_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看低热量榜（最近 30 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看低热量榜（最近 30 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（80,978 B，盘上 看低热量榜（最近 30 天）.html），页标题「卡路里·饮食」、页内 H1「排行 低热量榜 2026-08-17 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">49</span><a href="看低热量榜（本月）.html">看低热量榜（本月）（横向排行榜页·本月·类别＝low_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看低热量榜（本月）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看低热量榜（本月）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（80,944 B，盘上 看低热量榜（本月）.html），页标题「卡路里·饮食」、页内 H1「排行 低热量榜 2026-09-01 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">50</span><a href="看低热量榜（自定义）.html">看低热量榜（自定义）（横向排行榜页·custom 2026-09-09~2026-09-15·类别＝low_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看低热量榜（自定义）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看低热量榜（自定义）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（81,012 B，盘上 看低热量榜（自定义）.html），页标题「卡路里·饮食」、页内 H1「排行 低热量榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">51</span><a href="看频繁吃榜（最近 30 天）.html">看频繁吃榜（最近 30 天）（横向排行榜页·30d·类别＝frequent）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看频繁吃榜（最近 30 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看频繁吃榜（最近 30 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（80,919 B，盘上 看频繁吃榜（最近 30 天）.html），页标题「卡路里·饮食」、页内 H1「排行 常吃榜 2026-08-17 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">52</span><a href="看频繁吃榜（本月）.html">看频繁吃榜（本月）（横向排行榜页·本月·类别＝frequent）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看频繁吃榜（本月）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看频繁吃榜（本月）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（80,889 B，盘上 看频繁吃榜（本月）.html），页标题「卡路里·饮食」、页内 H1「排行 常吃榜 2026-09-01 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">53</span><a href="看频繁吃榜（自定义）.html">看频繁吃榜（自定义）（横向排行榜页·custom 2026-09-09~2026-09-15·类别＝frequent）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看频繁吃榜（自定义）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看频繁吃榜（自定义）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（80,955 B，盘上 看频繁吃榜（自定义）.html），页标题「卡路里·饮食」、页内 H1「排行 常吃榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">54</span><a href="看高碳水榜（最近 30 天）.html">看高碳水榜（最近 30 天）（横向排行榜页·30d·类别＝high_carb）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高碳水榜（最近 30 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高碳水榜（最近 30 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,154 B，盘上 看高碳水榜（最近 30 天）.html），页标题「卡路里·饮食」、页内 H1「排行 高碳水榜 2026-08-17 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">55</span><a href="看高碳水榜（本月）.html">看高碳水榜（本月）（横向排行榜页·本月·类别＝high_carb）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高碳水榜（本月）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高碳水榜（本月）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,117 B，盘上 看高碳水榜（本月）.html），页标题「卡路里·饮食」、页内 H1「排行 高碳水榜 2026-09-01 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">56</span><a href="看高碳水榜（自定义）.html">看高碳水榜（自定义）（横向排行榜页·custom 2026-09-09~2026-09-15·类别＝high_carb）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高碳水榜（自定义）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高碳水榜（自定义）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,183 B，盘上 看高碳水榜（自定义）.html），页标题「卡路里·饮食」、页内 H1「排行 高碳水榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">57</span><a href="看高蛋白榜（最近 30 天）.html">看高蛋白榜（最近 30 天）（横向排行榜页·30d·类别＝high_protein）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高蛋白榜（最近 30 天）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高蛋白榜（最近 30 天）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,160 B，盘上 看高蛋白榜（最近 30 天）.html），页标题「卡路里·饮食」、页内 H1「排行 高蛋白榜 2026-08-17 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">58</span><a href="看高蛋白榜（本月）.html">看高蛋白榜（本月）（横向排行榜页·本月·类别＝high_protein）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高蛋白榜（本月）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高蛋白榜（本月）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,130 B，盘上 看高蛋白榜（本月）.html），页标题「卡路里·饮食」、页内 H1「排行 高蛋白榜 2026-09-01 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">59</span><a href="看高蛋白榜（自定义）.html">看高蛋白榜（自定义）（横向排行榜页·custom 2026-09-09~2026-09-15·类别＝high_protein）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>看高蛋白榜（自定义）</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>看高蛋白榜（自定义）.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,195 B，盘上 看高蛋白榜（自定义）.html），页标题「卡路里·饮食」、页内 H1「排行 高蛋白榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">73</span><a href="查高热量排行.html">查高热量排行（横向排行榜页·7d·类别＝high_calorie）</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>查高热量排行</dd>
+        <dt>命令</dt><dd><code>calorie.view.ranking</code></dd>
+        <dt>文件</dt><dd><code>查高热量排行.html</code></dd>
+        <dt>该确认什么</dt><dd>本格是一份**完整文档**（82,124 B，盘上 查高热量排行.html），页标题「卡路里·饮食」、页内 H1「排行 高热量榜 2026-09-09 ~ 2026-09-15」。看：这一段（横向排行榜页）的空块／缺值占位「—」用得对不对、窄屏有没有塌列。归属 #272（排行榜 21）。</dd></dl>
+    </div>
+  </div>
+<div class="note">
+  <h2>有意不出产物及其原因</h2>
+  <ul>
+      <li><b>空库态产物（库为空时那 61 条）</b>：库为空时读命令按设计 **exit 4 且不落盘**（缺失阻断，不编数）——本来就没有产物可铺。空库态的读数进台账 `两态` 一节。</li>
+      <li><b>空窗态产物（库有数据、窗口内无记录的那 9 份）</b>：那 9 份要与「有数据」的那一份成对看才有意义，且它们的窗口是 2000-01-01~2000-01-31（不是负责人看到的真实窗口）。本册只铺真实窗口的那一份；空窗态的**空态句＋引导句原文**抄进台账 `两态` 一节，产物留在 `.scratch/t280/db-window/calorie_html/`。</li>
+      <li><b>其余 9 个场景的产物</b>：本批按票面口径只收运行期总表里 `scene === '02'` 的 83 条记录；场景 01／03–10 各有自己的册子与墙。</li>
+      <li><b>HELP 页（`calorie.help.center`）</b>：HELP 属另一页面族（映射面 #278 在做），不在本场景 83 条唤醒词的产物里。</li>
+      <li><b>四档实拍图（390／512／1000／1440 的 PNG）</b>：墙用 iframe 真渲染（格子宽就是视口），铺 PNG 反而把「窄屏塌列对不对」量丢（做法 §6.3-1、§7）。</li>
+  </ul>
+</div>
+</div></body></html>
