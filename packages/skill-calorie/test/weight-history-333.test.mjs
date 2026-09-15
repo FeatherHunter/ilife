@@ -85,13 +85,16 @@ const NEW_TEXTS = [
   '｜ 共 ',
 ];
 /** #480 文本审查：页页必零命中的旧句（删掉的重复／看不懂的专业话／实现细节）。
- *  对抗审查整改本轮新增（缺陷单 §三.1 点名上一轮漏掉的）：工程词「样本／门槛」＋库表名退出**可见面**。 */
+ *  对抗审查整改本轮新增（缺陷单 §三.1 点名上一轮漏掉的）：工程词「样本／门槛」＋库表名退出**可见面**。
+ *  #502 再加两条本轮替换掉的写法：`起连续`（新句去掉悬空的「起」）与结论块的旧 `<p>` 形态
+ *  （改 `verdict()` 后正文恒带 `wui-verdict` 类，旧断言「`<p>` 恰一处」随之收紧）。 */
 const OLD_TEXTS = [
   '📊 数据来源:', '日均 0.01 kg', '日均 -0.01 kg', '首末对照', '量程外', '基线 ', '黄±', '红±',
   'weight_log ·', '窗内 ', '本窗一条记录都没有', '按窗口 7 点现算', '只取有备注的）</span>',
   '样本', '门槛', 'calorie_data.db', 'weight_log',
   '单点数据', '单点无均值对照', '偏红的点', '超过图的取值范围', '窗口外',
   '体重明细（共 ', '体重明细（最近 30 条）', '体重明细（其余 ',
+  '起连续',
 ];
 
 /** 可见文本（剥 style／script／全部标签与属性、解实体、收敛空白）——口径同 `test/visible-text-probe.mjs`。
@@ -158,6 +161,22 @@ function conclText(html) {
   return i < 0 ? '' : visibleText(html.slice(i, html.indexOf('</details>', i)));
 }
 
+/** #502 形状件的逐件可见文本：`weightUi.ts` 那几枚形状的 class 是唯一认口。 */
+function stripTexts(html, cls) {
+  return html.split('class="' + cls + '"').slice(1).map((s) => visibleText(s.slice(0, s.indexOf('</div>'))));
+}
+
+/** 窗口条那一条 ＋ 事实条那一条（`progressStrips` 产出）的可见文本。 */
+function shapeText(html) {
+  return stripTexts(html, 'wui-strip').join(' ');
+}
+
+/** 脚注小字的可见文本（异常点那页的判据脚注；其余页无脚注）。脚注是 `<p>`，故按 `</p>` 截。 */
+function noteText(html) {
+  const i = html.indexOf('<p class="wui-note">');
+  return i < 0 ? '' : visibleText(html.slice(html.indexOf('>', i) + 1, html.indexOf('</p>', i)));
+}
+
 /** 比「同卡两槽逐字同说一件事」时要忽略空白（`达成 2 个` 与值槽 `2 个` 的空格位置不同）。 */
 const nospace = (s) => String(s ?? '').replace(/\s+/g, '');
 
@@ -194,6 +213,28 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     const text = visibleText(html);
     const cards = kpiCards(html);
     const byLabel = (name) => cards.find((c) => c.label === name) ?? null;
+    const shapes = shapeText(html);
+    // ⓪ #502 形状化 ＋ 手机端（负责人口径第 1／2／5 条）：本族的形状样式随页落盘（`parts` 第一项），
+    //    断点 820 在场；正文里零 `·`／`；`（分隔符回扫的等价断言，逐页过）；形状只以 class 落，
+    //    正文不写内联样式。窗口条每页恰一条（多行页），节奏条只在有首末可比的页上出。
+    assert.ok(html.includes('<style>') && html.includes('@media (max-width:820px)'), word + ' 缺本族手机端样式（断点 820）');
+    assert.ok(html.includes('.wui-window{') && html.includes('.wui-fact{'), word + ' 形状件未落盘（`weightUiCss` 没进 parts）');
+    assert.equal(text.split('·').length - 1, word === '看本周体重' ? 2 : 1, word + ' 可见面 `·` 命中数不对（只许共享文档标题 1 处；单点页另有图例的「这一个点」标记 1 处）');
+    assert.equal(text.split('；').length - 1, 0, word + ' 可见面仍有 `；`');
+    assert.ok(!/<[a-z][^>]*style="/.test(html), word + ' 正文出现内联样式');
+    if (rows >= 2) {
+      assert.equal(html.split('class="wui-window"').length - 1, 1, word + ' 窗口条不是恰 1 条');
+      assert.ok(/wui-days">\d+ 天</.test(html), word + ' 窗口条缺天数胶囊');
+      assert.ok(/节奏 每天 [+-]?\d+ 克/.test(shapes), word + ' 缺「节奏」事实（原「30 天 · 每天 +10 克」那串）：' + shapes);
+      assert.ok(/首日 [\d.]+ kg → 末日 [\d.]+ kg/.test(shapes), word + ' 缺首末两端值的形状：' + shapes);
+      assert.equal(text.split('首日 → 末日').length - 1, 1, word + ' 均值卡徽章「首日 → 末日」不是恰 1 处');
+      assert.equal(html.split('class="wui-strip"').length - 1, 1, word + ' 事实条不是恰 1 条');
+    } else {
+      assert.ok(!html.includes('class="wui-window"'), word + ' 单日窗不该出窗口条（区间串就是那一天）');
+      assert.ok(!html.includes('class="wui-strip"'), word + ' 单点页不该出节奏／首末事实条');
+      assert.ok(html.includes('class="wui-bullets"'), word + ' 单点页的提示前提没有逐条成行');
+      assert.ok(text.includes('比出首日和末日的差'), word + ' 单点页提示丢了「再记一条就能比出首日和末日」那条事实');
+    }
     // ① 新句式在场：页脚来源行走统一句式（全角冒号 ＋ 三段 `｜`），数据来源恰 1 处。
     for (const s of NEW_TEXTS) assert.ok(text.includes(s), word + ' 缺新句式：' + s);
     assert.equal(text.split('📊 数据来源：').length - 1, 1, word + ' 数据来源行不是恰 1 处');
@@ -214,19 +255,24 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     }
     // ④ 窗口区间串在可见文本里最多 3 处（页题 ＋ KPI 卡说明 ＋ 页脚来源行）。
     //    原先另有两处纯重复：副标题「模式｜窗口（共 N 条）」与表注里的窗口串 —— #480 已删。
-    //    单点窗放宽到 6：那天本身还会出现在数据行与页顶提示的口径句里，那是同一事实的另两处正常出现。
-    const cap = range.includes(' ~ ') ? 3 : 6;
+    //    #502：单点窗从 6 收到 4——页顶提示不再重印那天（同一事实原在提示、KPI 卡、页脚三处各说一遍）；
+    //    单日窗也不出窗口条（区间串就是那一天，画成「今天 → 今天」是白占一行）。
+    //    剩下的第 4 处是数据行本身（那一天就是唯一一条记录），属真数据、不是口径重复。
+    const cap = range.includes(' ~ ') ? 3 : 4;
     assert.ok(text.split(range).length - 1 <= cap, word + ' 窗口串出现 ' + (text.split(range).length - 1) + ' 次（上限 ' + cap + '）');
     // ⑤ 日均速率一律说人话（「每天 +N 克」），页面上不出现「日均 N kg」。
     assert.ok(!/日均 -?[\d.]+ kg/.test(text), word + ' 仍印「日均 N kg」');
-    // ⑥ 结论 = 一句话（＋ 标注类小标签）；页内「结论」两个字仍只出现在折叠区标题那一处。
+    // ⑥ 结论 = 一句话（`verdict()` 的判语块，无小标签行）；页内「结论」两个字仍只出现在折叠区标题那一处。
     //    缺陷 1：原与变化卡／均值卡逐字重复的速率／首末／均值三枚小标签已删，结论块不再复述卡片的说明槽。
+    //    #502：结论正文改带 `wui-verdict` 类的判语块；速率／首末那两件事实改住形状条（断言见 ⓪）。
     assert.equal(text.split('结论').length - 1, 1, word + ' 页内「结论」不是恰 1 处');
     const conclAt = html.indexOf('<summary class="ilife-block-disclosure-summary">结论</summary>');
     assert.ok(conclAt >= 0, word + ' 缺结论折叠区');
     const conclBody = html.slice(conclAt, html.indexOf('</details>', conclAt));
     const concl = conclText(html);
-    assert.ok(!/每天 [+\-]?\d+ 克/.test(concl), word + ' 结论块里还留着与变化卡重复的速率小标签');
+    assert.equal((conclBody.match(/<p class="wui-verdict">/g) || []).length, 1, word + ' 结论正文不是一句判语（`verdict()` 形状）');
+    assert.equal((conclBody.match(/<p[ >]/g) || []).length, 1, word + ' 结论块不是恰一句话');
+    assert.ok(!concl.includes('；') && !concl.includes('·'), word + ' 结论块里仍有分隔符串：' + concl);
     for (const name of ['变化', '均值']) {
       const c = byLabel(name);
       if (c !== null && c.detail !== null) {
@@ -235,8 +281,6 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     }
     // ⑦ 数字与单位留一个空格：可见文本里不出现紧贴单位的写法，也不出现「首末对照」这类内部词。
     assert.ok(!/\d+kg/.test(text), word + ' 数字与单位之间没留空格');
-    // ⑧ 口径块（结论正文）只留一句：长句不再塞满首／末／日均。
-    assert.equal((conclBody.match(/<p>/g) || []).length, 1, word + ' 结论正文不是一句话');
     // ⑨ 同卡跨槽重复 0（缺陷 2／3／4／5）：值槽／副说明／徽章在同一张卡里两两不逐字同说一件事。
     //    体重历史卡豁免「徽章含值槽」：缺陷 14 点名要的徽章本来就是「共 N 条」（值槽是数字 ＋ unit 槽）。
     assert.equal(cards.length, 4, word + ' KPI 卡不是四张（实测 ' + cards.length + '）');
@@ -267,7 +311,8 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
       assert.equal(byLabel('均值').detail, null, word + ' 均值卡仍留副说明');
       assert.equal(byLabel('均值').badge, '无对照', word + ' 均值卡徽章不对');
       assert.equal(byLabel('备注').detail, null, word + ' 备注卡仍留副说明');
-      assert.ok(text.includes('再记一条就能比首日和末日'), word + ' 页顶提示块仍写「首末」');
+      // #502：页顶提示的前提拆成两行，原句末的「比首末」也改说人话「比出首日和末日的差」。
+      assert.ok(text.includes('再记一条就能比出首日和末日的差'), word + ' 页顶提示块仍写「首末」');
     }
     if (word === '看体重曲线（带目标）') {
       assert.ok(text.includes('目标 68 kg') && text.includes('目标线'), word + ' 缺目标标注');
@@ -289,14 +334,21 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     if (word === '看体重曲线（带异常点）') {
       assert.ok(text.includes('异常点'), word + ' 缺异常点标注');
       // 缺陷 5／6／12：副说明只说头三天形态；徽章只说偏高；图例首行不用颜色词；偏离精度两位。
+      // #502：新句去掉悬空的「起」（旧句 `某日起连续 3 天偏高` 已进 `OLD_TEXTS`）。
       const d = String(byLabel('异常点').detail ?? '');
-      assert.ok(/^\d{4}-\d{2}-\d{2} 起连续 3 天偏高$/.test(d) || /^\d{4}-\d{2}-\d{2} 偏高$/.test(d),
+      assert.ok(/^\d{4}-\d{2}-\d{2} 连续 3 天偏高$/.test(d) || /^\d{4}-\d{2}-\d{2} 偏高$/.test(d),
         word + ' 异常点卡副说明不对：' + d);
       assert.equal(byLabel('异常点').badge, '偏高', word + ' 异常点徽章不对');
       assert.ok(!/异常 \d+ 个/.test(text), word + ' 仍印「异常 N 个」');
       assert.ok(text.includes('- - 异常点 比平均线高的那几天'), word + ' 异常点图例首行不对');
       assert.ok(/比平均线(略高|略低)/.test(text) || /比平均线[高低] \d+\.\d{2} kg/.test(text), word + ' 异常点偏离没做两位精度');
       assert.ok(!/偏 \d/.test(text), word + ' 仍印没说相对谁的「偏 N」');
+      // #502：三档口径改住图例下方的脚注（原来只在「无异常点」时才说，有异常点时读者反而看不到判据）。
+      const note = noteText(html);
+      assert.ok(/^比平均线 [\d.]+ kg 是基线：差 [\d.]+ kg 到注意线，差 [\d.]+ kg 到警戒线。$/.test(note),
+        word + ' 判据脚注不对：' + note);
+      assert.equal(html.split('<p class="wui-note">').length - 1, 1, word + ' 判据脚注不是恰 1 条');
+      assert.ok(!text.includes('（' + note), word + ' 卡片副说明仍在复述脚注口径');
     }
     if (word === '看「有备注」的体重记录') {
       assert.ok(html.includes('备注筛选') && html.includes('晨起空腹'), word + ' 缺备注筛选');

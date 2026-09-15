@@ -24,6 +24,18 @@
  * ⑤ 收尾三件（本轮）：页脚数据来源行（哪张库／哪张表／哪个窗口／多少条＋缺口）、复制区恒为
  *    「复制数据 ▾ ＋ 复制日志」两颗（日志第 3 段是渲染命令原文，照抄能重跑）、空窗仍出**完整页**
  *    （数据型空态句＋页脚来源行，不是整页不落盘）。
+ *
+ * #502 形状化 ＋ 手机端（负责人口径 2026-09-15 第 1／2／5 条；共同口径 `.scratch/t154/text-review/口径-UI.md`，
+ * 形状词汇住同目录 `weightUi.ts`，样式由本页装配放进 `parts` 第一项）：
+ *   ① 页头副标题的 `·` 串改成**顿号**（「模式：曲线，带目标线」等；「明细／曲线」是页族名、照旧）；
+ *   ② 窗口事实（区间 ＋ 天数）从「本窗 2026-08-09 ~ 2026-09-07」这句串里提出来，落成 `windowStrip()`
+ *      （两枚日期块 ＋ 箭头 ＋ 天数胶囊）；单日窗（区间串＝一天）不出这条，免得画成「今天 → 今天」；
+ *   ③ 卡片副说明里的「30 天 · 每天 +10 克」 → `factStrip()` 的「节奏」一枚；「首日 … → 末日 …」→
+ *      `pairStrip()` 的「首日与末日」一枚（两张卡的值槽／徽章照旧只说自己那个数，不再同说一件事）；
+ *   ④ 页顶那条样本不足提示的「；」串 → `notice()` ＋ `bulletList()` 两条前提逐条成行；
+ *   ⑤ 结论块走 `verdict()`（一句话判语）；原与目标卡／图例逐字重复的目标小标签随本轮删（删的是重复，
+ *      事实两处都在：距目标卡与图例）；异常点那页补一条 `note()` 脚注写清平均线／注意线／警戒线口径；
+ *   ⑥ 表标题、图表、复制区、页脚口径行（`｜`）与机器面（复制载荷／日志原文）**一行未改**。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { optNum, optStr, windowRange } from '../shared/params.js';
@@ -41,13 +53,15 @@ import { weightVolatilityV2 } from './volatility.js';
 import {
   renderCaliberLine,
   renderChartBlock,
-  renderChips,
   renderDataTable,
   renderDisclosure,
   renderEmptyBlock,
   renderKpiGrid,
   renderListRows,
 } from 'base-paint/blocks';
+import {
+  bulletList, factStrip, note as wnote, verdict, weightUiCss, windowStrip,
+} from './weightUi.js';
 import type { DataTableColumn, StatusKind } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
@@ -111,9 +125,60 @@ function perDayHuman(delta: number, spanDays: number): string | null {
   return '每天 ' + (g > 0 ? '+' : '') + g + ' 克';
 }
 
-/** 「首日 → 末日」（#480 口径 3.2 的「首日与末日对比」，替换内部的「首末对照」说法）。 */
-function firstLastHuman(c: NonNullable<WeightHistory['change']>): string {
-  return '首日 ' + c.first + ' kg → 末日 ' + c.last + ' kg';
+/** 「首日 → 末日」两端的写法（#480 口径 3.2 的「首日与末日对比」，替换内部的「首末对照」说法）。
+ *  #502 起两端各成一枚加粗值（`pairStrip()` 的那个形状），故拆成两半取用：`end` 说取哪一端。 */
+function firstLastHuman(c: NonNullable<WeightHistory['change']>, end: 'first' | 'last'): string {
+  return end === 'first' ? '首日 ' + c.first + ' kg' : '末日 ' + c.last + ' kg';
+}
+
+/** 区间串 → 天数（`2026-09-01`／`2026-09-01 ~ 2026-09-07` 两种；「最近30天」那类由视图模型给成区间串）。 */
+function rangeDaysHuman(range: string): number | null {
+  const m = /^(\d{4}-\d{2}-\d{2})(?: ~ (\d{4}-\d{2}-\d{2}))?$/.exec(range);
+  if (m === null) return null;
+  const a = Date.parse(m[1] + 'T00:00:00Z');
+  const b = Date.parse((m[2] ?? m[1]) + 'T00:00:00Z');
+  return Math.round((b - a) / 86400000) + 1;
+}
+
+/** 窗口事实条（#502）：区间 ＋ 天数本来串在卡片副说明的一句话里（「本窗 …」），
+ *  本轮提成 `windowStrip()` 的形状（日期块 → 日期块 ＋ 天数胶囊）。
+ *  单日窗不出这条：区间串就是那一天，画成「今天 → 今天」是白占一行（天数由页顶提示那句说）。 */
+function windowFactStrip(h: WeightHistoryView): string {
+  if (h.rows.length === 0) return '';
+  const parts = h.range.split(' ~ ');
+  if (parts.length !== 2 || parts[0] === '' || parts[1] === '') return '';
+  const days = rangeDaysHuman(h.range);
+  return windowStrip(parts[0], parts[1], days === null ? '' : days + ' 天');
+}
+
+/** 进度事实条（#502）：变化卡副说明里的「30 天 · 每天 +10 克」原来是拿 `·` 把两件事串成一句话；
+ *  跨度和速率各有自己的位置（跨度已住在窗口条的天数胶囊里），这里只把**速率**这一件事实落成形状。
+ *  首末两端的对照（「首日 70.1 kg → 末日 70.4 kg」，原住在均值卡副说明）本轮也从卡片里撤出来，
+ *  与速率同住一条：三枚「标签 ＋ 值」并排，两端中间挂一个箭头（形状取 `weightUi.ts` 的 `.wui-pair-*`，
+ *  不另造形状；本件不写内联样式）。 */
+function progressStrips(h: WeightHistoryView, avg: number | null): string {
+  if (h.rows.length === 0) return '';
+  const c = h.change;
+  if (c === null || avg === null) return '';
+  const rate = perDayHuman(c.delta, c.spanDays);
+  if (rate === null) return '';
+  return '<div class="wui-strip">'
+    + '<span class="wui-fact"><span class="wui-fact-k">节奏</span>'
+    + '<span class="wui-fact-v">' + rate + '</span></span>'
+    + '<span class="wui-pair"><span class="wui-pair-v">' + firstLastHuman(c, 'first') + '</span>'
+    + '<span class="wui-pair-mid">→</span>'
+    + '<span class="wui-pair-v">' + firstLastHuman(c, 'last') + '</span></span>'
+    + '</div>';
+}
+
+/** 异常点那页的脚注（#502）：平均线／注意线／警戒线三档口径原只在「本窗无异常点」时才说，
+ *  有异常点时读者反而看不到判据 ⇒ 落成 `note()` 脚注，画在异常点下面。 */
+function anomalyNoteOf(extra: HistoryDocExtra): string {
+  const n = extra.anomalyNote;
+  if (n === undefined || n === '') return '';
+  const m = /平均线 ([\d.]+) kg，注意线 ±([\d.]+) kg，警戒线 ±([\d.]+) kg/.exec(n);
+  if (m === null) return wnote(n);
+  return wnote('比平均线 ' + m[1] + ' kg 是基线：差 ' + m[2] + ' kg 到注意线，差 ' + m[3] + ' kg 到警戒线。');
 }
 
 /** 异常点偏离说人话（#480）：原写「偏 0.13」没说相对谁、也没带单位；这里点名相对平均线并分高低。
@@ -125,14 +190,16 @@ function deviationHuman(kg: number, deviationKg: number): string {
   return kg + ' kg（比平均线' + (deviationKg > 0 ? '高' : '低') + ' ' + d + ' kg）';
 }
 
-/** 异常点卡的副说明（#480 缺陷 5）：按当刻数据取头三天——连号时说「某日起连续 3 天偏高」，
- *  不连号只点到首日（清单本身在图例里逐条念，卡片不重复抄）。长度以一行不被截断为准。 */
+/** 异常点卡的副说明（#480 缺陷 5）：按当刻数据取头三天——连号时说「某日连续 3 天偏高」，
+ *  不连号只点到首日（清单本身在图例里逐条念，卡片不重复抄）。长度以一行不被截断为准。
+ *  #502：原句「某日**起**连续 3 天偏高」那个悬空的「起」是写串了（读成「从那天起」要接后半句，
+ *  可后半句就是「偏高」本身）⇒ 去掉。 */
 function anomalyHeadHuman(list: readonly { date: string }[]): string {
   const head = list.slice(0, 3);
   const day = (s: string) => Date.parse(s + 'T00:00:00Z');
   const consecutive = head.length === 3
     && head.every((a, i) => i === 0 || day(a.date) - day(head[i - 1].date) === 86400000);
-  if (consecutive) return head[0].date + ' 起连续 3 天偏高';
+  if (consecutive) return head[0].date + ' 连续 3 天偏高';
   return list[0].date + ' 偏高';
 }
 
@@ -373,9 +440,9 @@ function curvePlanOf(h: WeightHistoryView, extra: HistoryDocExtra): CurvePlan | 
 
 function modeBadge(extra: HistoryDocExtra): string {
   if (extra.noteOnly) return '模式：备注筛选';
-  if (extra.overlay === 'target') return '模式：曲线·带目标线';
-  if (extra.overlay === 'milestone') return '模式：曲线·带里程碑';
-  if (extra.overlay === 'anomaly') return '模式：曲线·带异常点';
+  if (extra.overlay === 'target') return '模式：曲线，带目标线';
+  if (extra.overlay === 'milestone') return '模式：曲线，带里程碑';
+  if (extra.overlay === 'anomaly') return '模式：曲线，带异常点';
   return '模式：明细／曲线';
 }
 
@@ -383,22 +450,21 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
   if (extra.overlay === 'target') {
     const goal = extra.goal;
     if (goal === null || goal === undefined) {
-      // 值槽只放数：空态不把「未设目标」四个字当大数字，判断词进 `detail` 与徽章。
-      return { label: '目标', value: '—', detail: '未设目标 · 说「定体重目标」后可叠目标线', status: 'empty', statusText: '未设目标' };
+      // 值槽只放数：空态不把「未设目标」四个字当大数字，判断词进 `detail` 与徽章；
+      // #502：副说明原用 `·` 串「未设目标 · 说「定体重目标」后可叠目标线」⇒ 改说人话一句（不再靠标点分层）。
+      return { label: '目标', value: '—', detail: '还没定体重目标，说「定体重目标」就能在这张图上叠一条目标线', status: 'empty', statusText: '未设目标' };
     }
     const d = goal.diffKg;
     if (d === null) {
-      // 本窗没有记录 ⇒ 没有「距目标」可算：给空态句，不打印 `null kg`。
-      return {
-        label: '目标', value: '—', detail: '目标 ' + goal.kg + ' kg · 本窗无记录可比',
-        status: 'empty', statusText: '本窗无记录',
-      };
+      // 本窗没有记录 ⇒ 没有「距目标」可算：给空态句，不打印 `null kg`；
+      // #502：目标数已住在图例那一行，卡片不再复述（删的是重复，不是事实）。
+      return { label: '目标', value: '—', detail: '本窗没有记录，没法比', status: 'empty', statusText: '本窗无记录' };
     }
     return {
       // #480 缺陷 7：值槽原写 `+2.4 kg`（正号会被读成「涨了」）⇒ 说人话，差多少／低多少／已到。
+      // #502：副说明原写「目标 68 kg」（与图例逐字重复）⇒ 撤走；值槽 ＋ 徽章一个说差数、一个说成没成。
       label: '距目标',
       value: d > 0 ? '还差 ' + d + ' kg' : d < 0 ? '已低于目标 ' + Math.abs(d) + ' kg' : '已达目标',
-      detail: '目标 ' + goal.kg + ' kg',
       // #480：徽章不复述值槽的差数（值槽 ＋ 徽章两处说同一件事时删一处）。
       status: d > 0 ? 'warn' : 'ok', statusText: d > 0 ? '未达目标' : '已达目标',
     };
@@ -407,20 +473,22 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
     const n = extra.milestones?.length ?? 0;
     // #480 缺陷 4：副说明不再用「门槛 … 两档 · 已达成 N 个」的工程句（末字「kg／」还悬空），
     // 说人话「减重 5 kg、10 kg 两个里程碑都达到了」；徽章不复述值槽的「N 个」，只说成没成。
-    const miss = extra.milestoneMiss ?? [];
+    // #502：没达成那一路原把两档失败原因用「；」串进括号（机器话），改成读者话一句；两档各自的
+    // 原因逐条住在图例的「里程碑未达成」那一行里（`milestoneMiss` 仍原样进那一行，事实不丢）。
     const detail = n > 0
       ? '减重 ' + MILESTONE_KG.join(' kg、') + ' kg 两个里程碑都达到了'
-      : '减重 ' + MILESTONE_KG.join(' kg、') + ' kg 两个里程碑还没达到'
-        + (miss.length > 0 ? '（' + miss.join('；') + '）' : '');
+      : '减重 ' + MILESTONE_KG.join(' kg、') + ' kg 两个里程碑还没达到';
     return { label: '里程碑', value: String(n), unit: '个', detail, status: n > 0 ? 'ok' : 'empty', statusText: n > 0 ? '已达成' : '未达成' };
   }
   if (extra.overlay === 'anomaly') {
     const n = extra.anomalies?.length ?? 0;
     // #480 缺陷 5：副说明原把整张清单抄一遍（长到被换行截断）⇒ 只按头三天说一句形态；
     // 徽章原写「异常 N 个」与值槽的「N 个」同说一件事 ⇒ 只说高低。
+    // #502：无异常那一路原把三档口径括在副说明里（与图例下方的脚注同说一件事）⇒ 副说明只说结论，
+    // 口径统一住脚注（`anomalyNoteOf`），一处说一次。
     const detail = n > 0
       ? anomalyHeadHuman(extra.anomalies as Array<{ date: string; kg: number }>)
-      : '本窗无异常点' + (extra.anomalyNote === undefined ? '' : '（' + extra.anomalyNote + '）');
+      : '本窗没有异常点，波动都在正常范围里';
     return { label: '异常点', value: String(n) + ' 个', detail, status: n > 0 ? 'warn' : 'ok', statusText: n > 0 ? '偏高' : '无异常' };
   }
   const tags = tagDist(h.rows);
@@ -447,10 +515,12 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
     /* 值槽只放「本窗条数」这一个数：区间串（`2026-08-09 ~ 2026-09-07`，23 字）在 28px 且
      * `overflow-wrap: anywhere` 的值槽里会被断成 2~3 行，是四张卡不等高的直接成因（t154 用户读数）。
      * 区间挪进 `detail`（副说明行）——页题 `<h1>` 与页脚来源行各还有一份，信息不丢（#480 把副标题
-     * 里那份重复的窗口串删掉：页头、表注、页脚三处已够，副标题只留模式）。 */
+     * 里那份重复的窗口串删掉：页头、表注、页脚三处已够，副标题只留模式）。
+     * #502：副说明只留区间串本身（原写「本窗 …」——「本窗」是范围词、与本卡标签同义），
+     * 天数与「区间 → 区间」的形状另住 `windowFactStrip()` 那条事实条。 */
     {
       label: '体重历史', value: String(h.rows.length), unit: '条',
-      detail: '本窗 ' + h.range + (extra.noteOnly ? '（只取有备注的）' : ''),
+      detail: h.range + (extra.noteOnly ? '（只取有备注的）' : ''),
       status: h.rows.length >= 2 ? 'ok' : 'empty',
       // #480 缺陷 14：「样本 N 条」是工程词 ⇒ 徽章说「共 N 条」；单点页不说「单点数据」说「只有一条」。
       statusText: h.rows.length >= 2 ? '共 ' + h.rows.length + ' 条' : h.rows.length === 1 ? '只有一条' : '本窗无记录',
@@ -460,20 +530,21 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
       value: c ? signedKg(c.delta) : '—',
       // #480 口径 3.2：日均速率改说人话「每天 +10 克」；持平与单点不编速率句。
       // #480 缺陷 3：单点页的副说明原与徽章逐字同为「单点无变化」⇒ 副说明改说人话那句。
+      // #502：原写「30 天 · 每天 +10 克」——一个 `·` 把跨度与速率两件事串起来；天数已住在窗口事实条
+      // 的天数胶囊里，速率单独说（形状条「节奏」那枚与这句同源，二者取一处：这里给持平的读数）。
       detail: c === null
         ? '只有 1 天记录，没法算变化'
         : c.delta === 0
-          ? c.spanDays + ' 天，首日到末日没变化'
-          : c.spanDays + ' 天 · ' + (perDayHuman(c.delta, c.spanDays) ?? '看不出快慢'),
+          ? c.spanDays + ' 天里没有变化'
+          : perDayHuman(c.delta, c.spanDays) ?? '看不出快慢',
       status: c === null ? 'empty' : c.delta < 0 ? 'ok' : c.delta > 0 ? 'warn' : 'empty',
       statusText: c === null ? '看不出变化' : c.delta < 0 ? '下降' : c.delta > 0 ? '上升' : '持平',
     },
     {
       label: '均值', value: avg === null ? '—' : String(avg) + ' kg',
       // #480 缺陷 3：单点页的副说明原写「单点无均值对照」，与徽章同说一件事 ⇒ 单点时不给副说明。
-      ...(h.rows.length >= 2
-        ? { detail: firstLastHuman(h.change as NonNullable<WeightHistory['change']>) }
-        : {}),
+      // #502：首日与末日的对照从本卡副说明撤走，改住 `pairStrip()` 那条形状（中间一个箭头，
+      // 两端各是一枚加粗值），卡片只留均值这一个数。
       status: h.rows.length >= 2 ? 'ok' : 'empty',
       statusText: h.rows.length >= 2 ? '首日 → 末日' : '无对照',
     },
@@ -495,8 +566,8 @@ function tagDist(rows: WeightHistory['rows']): Record<string, number> {
  *  正文不再自带「结论：」前缀，页内「结论」两个字只出现在折叠区标题那一处）。
  *
  *  #480：一长句塞满「首／末／变化／日均／均值／里程碑／异常点／缺口」读不动 ⇒ 这里**只留一句结论**
- *  （窗口 ＋ 条数 ＋ 这段的净变化／单点口径），细节拆成并列小标签 `conclusionChips`（走公共件
- *  `renderChips`，同住结论块，页内仍只有一处「结论」）。 */
+ *  （窗口 ＋ 条数 ＋ 这段的净变化／单点口径）。
+ *  #502：这句话由 `verdict()` 落成判语块（15px 加粗那一档），形状与全族一致。 */
 function conclusionOf(h: WeightHistoryView): string {
   if (h.rows.length === 0) return h.range + ' 无体重记录，先记一条再看。';
   // 窗口串不在这里再说一遍：页题、KPI 卡说明、页脚来源行各有一处，本块只交代「这段怎么走」。
@@ -504,32 +575,6 @@ function conclusionOf(h: WeightHistoryView): string {
   const c = h.change;
   if (c.delta === 0) return '首日到末日没变化（持平）。';
   return '这段累计' + (c.delta > 0 ? '涨了 ' : '降了 ') + Math.abs(c.delta) + ' kg。';
-}
-
-/** 结论块里的并列小标签（#480「细节拆成列表行或并列小标签」）：一条事实一处，不重复卡片值槽。
- *  #480 缺陷 1：速率（`每天 +10 克`）／首末（`首日 70.1 kg → 末日 70.4 kg`）／均值（`均值 70.3 kg`）
- *  三枚小标签与变化卡／均值卡逐字同说一件事 ⇒ 删掉；结论块只留正文那一句 ＋ 标注类（目标／里程碑／异常点）小标签。 */
-function conclusionChips(h: WeightHistoryView, extra: HistoryDocExtra): string {
-  if (h.rows.length === 0) return '';
-  const texts: string[] = [];
-  const goal = extra.goal;
-  if (extra.overlay === 'target' && goal !== null && goal !== undefined) {
-    const d = goal.diffKg;
-    texts.push(d === null ? '目标 ' + goal.kg + ' kg'
-      : d > 0 ? '目标 ' + goal.kg + ' kg，还差 ' + d + ' kg'
-        : d < 0 ? '目标 ' + goal.kg + ' kg，已低于目标 ' + Math.abs(d) + ' kg' : '目标 ' + goal.kg + ' kg，已达目标');
-  }
-  if (extra.overlay === 'milestone') {
-    const hit = extra.milestones ?? [];
-    texts.push('里程碑达成 ' + hit.length + '／2'
-      + (hit.length > 0 ? '' : '（' + (extra.milestoneMiss ?? []).join('；') + '）'));
-  }
-  if (extra.overlay === 'anomaly') {
-    const list = extra.anomalies ?? [];
-    texts.push('异常点 ' + list.length + ' 个'
-      + (list.length > 0 ? '' : '（' + (extra.anomalyNote ?? '本窗波动在正常范围里') + '）'));
-  }
-  return texts.length === 0 ? '' : renderChips({ items: texts.map((t) => ({ text: t })) });
 }
 
 /** 复制载荷的逐条行（日期／时间／体重／BMI／备注）：`text` 每行一条、`json` 结构、`csv` 可导入。
@@ -581,17 +626,29 @@ function windowDaysOf(range: string): number | null {
 
 export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExtra = {}): string {
   const avg = avgOf(h.rows);
-  const parts: string[] = [];
+  const parts: string[] = [weightUiCss()];
+  // 窗口事实（区间 ＋ 天数）：原串在「体重历史」卡副说明的那句话里，本轮提成 `windowStrip()` 的形状，
+  // 放页顶——读者第一眼就知道这一页覆盖哪一段（条数由下面那张卡的值槽与徽章说）。
+  parts.push(windowFactStrip(h));
   // 样本不足不拒绝渲染：页顶一条软横幅写清「几条、门槛几条、为什么仍可看」
   // （位置照老实物 `weight_compare.html:79` 的 `.warn-banner`：副标题之下、KPI 之上）。
   if (h.rows.length === 1) {
     parts.push(notice({
       icon: 'warn',
       msg: '本窗只有 1 条记录（比较变化要 2 条以上）',
-      detail: '看不出变化，页照常出：' + h.range + ' 只有 1 天有记录，再记一条就能比首日和末日。',
+      // #502：原句「…；再记一条就能比首日和末日。」是拿 `；` 把「为什么仍可看」与「下一手」两件事
+      // 串成一句 ⇒ 改成两句人话，「几天、几条」也不在这句里再说一遍（提示的第一行与下面两张卡各有一处）；
+      // 并列的两条前提另起一条 `bulletList()`（原来也串在同一句里）。
+      detail: '看不出变化，页照常出，表里的数值照读。',
     }));
+    parts.push(bulletList([
+      '比较变化至少要 2 条记录，本窗只有 1 条，所以看不出涨还是降',
+      '再记一条就能比出首日和末日的差',
+    ]));
   }
   parts.push(renderKpiGrid(kpiCards(h, extra, avg)));
+  // 节奏（每天涨／降多少克）与首末两头：两件形状，各占一枚「标签 ＋ 值」。
+  parts.push(progressStrips(h, avg));
   const plan = curvePlanOf(h, extra);
   let charts = false;
   if (plan === null) {
@@ -599,7 +656,7 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     parts.push(renderEmptyBlock({
       title: '体重曲线',
       text: '本窗无体重记录（' + h.range + '）',
-      hint: '说「记体重」记一条，曲线就有第一个点；本页不编默认值，也不拿别的窗口顶。',
+      hint: '说「记体重」记一条，曲线就有第一个点。本页不编默认值，也不拿别的窗口顶。',
     }));
   } else {
     parts.push(renderChartBlock({
@@ -625,6 +682,8 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     }));
     charts = true;
     parts.push(renderListRows({ items: legendRows(h, extra, plan), emptyText: '无图例' }));
+    // 异常点那页的判据脚注（裸名：`note()` 与上下文里的「备注」重名，本页 import 时已改名 `wnote`）。
+    if (extra.overlay === 'anomaly') parts.push(anomalyNoteOf(extra));
   }
   const tables = segmentTables(h, extra);
   for (const t of tables) parts.push(t);
@@ -636,9 +695,12 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     items: Object.entries(tags).map(([k, v]) => ({ main: k, right: String(v) + ' 条' })),
     emptyText: '无备注标签',
   }));
+  // #502：结论块正文走 `verdict()`（一句话判语，形状与全族的判语块一致）。
+  // 原与目标卡／图例逐字重复的目标小标签、以及复述卡片的里程碑／异常点小标签随本轮删——
+  // 删的是重复（那几件事实各在距目标卡／图例／异常点卡上），不是删事实。
   parts.push(renderDisclosure({
     title: '结论',
-    contentHtml: '<p>' + conclusionOf(h) + '</p>' + conclusionChips(h, extra),
+    contentHtml: verdict(conclusionOf(h)),
     open: true,
   }));
   parts.push(sourceLine(h, extra));
@@ -693,7 +755,9 @@ function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePla
     const win = Math.max(3, Math.min(asc.length, 7));
     rows.push({ left: '– –', main: win >= 7 ? '均线（最近 7 天）' : '均线（最近 ' + win + ' 天）', right: '图上那条灰色虚线' });
   }
-  if (asc.length === 1) rows.push({ left: '·', main: '这一个点', right: '本窗只有 1 条记录，图上只有这一个点' });
+  // #502：`main` 那列窄（44px 左列 ＋ 右列都占位时），原句「本窗只有 1 条记录，图上只有这一个点」
+  // 在手机端被 `ellipsis` 截成「这一…」——把重复的半句去掉（「只有 1 条记录」卡片徽章已说）。
+  if (asc.length === 1) rows.push({ left: '·', main: '这一个点', right: '本窗唯一的一点' });
   if (extra.overlay === 'target' && extra.goal !== null && extra.goal !== undefined) {
     const goal = extra.goal;
     // #480 缺陷 11：图上没画（在量程外）时，把「还差多少」写进图例——图上读不到，图例就得说清；
@@ -711,7 +775,7 @@ function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePla
       // #480 缺陷 10：日期与体重之间用顿号（原空格并列读成「日期 体重」），窗外的说「不在这段时间里」。
       rows.push({ left: '◆', main: m.label, right: m.date + '，' + m.kg + ' kg' + (inWindow ? '' : '（不在这段时间里）') });
     }
-    if ((extra.milestones ?? []).length === 0) rows.push({ left: '◇', main: '里程碑未达成', right: (extra.milestoneMiss ?? []).join('；') || '继续记录' });
+    if ((extra.milestones ?? []).length === 0) rows.push({ left: '◇', main: '里程碑未达成', right: (extra.milestoneMiss ?? []).join('，') || '继续记录' });
   }
   if (extra.overlay === 'anomaly') {
     const list = extra.anomalies ?? [];
