@@ -35,6 +35,9 @@
  * 姊妹件 `homeViewParts.ts`（五档：`overview`／`week`／`streak`／`budget`／`month`，路由声明逐条给值），
  * 本件留「页框接线 ＋ 四支 KPI 卡件 ＋ 折线块 ＋ 复制区」并把卡件按档传给姊妹件。
  * `overview` 档形状**逐字不变**（#401 样板页，`t401c` 探针与 `t401-可见文本守卫` 都锁在它上面）。
+ * #401 缺陷 6（用户 2026-09-15「『💰 数据与日志』直接删」）：复制区不出标题、导航不再收 `sec-copy`
+ *  （`SEC_COPY` 只留 `id`）；改的是五档共用的页框（复制区＋导航），卡件／折线／按日表三块一字未动，
+ *  `t401c` 判据同改（标题期望与导航下限）。
  */
 import { cx, escapeHtml, token } from 'base-paint';
 import type { StatusKind } from 'base-paint';
@@ -45,7 +48,7 @@ import { copyArea, copyLog } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import type { HomeData } from './home.js';
 import {
-  HOME_VIEW_BODIES, partTitle, viewConclusion, viewTitle, weekCardInputs,
+  HOME_VIEW_BODIES, viewConclusion, viewTitle, weekCardInputs,
 } from './homeViewParts.js';
 import type { HomeSection } from './homeViewParts.js';
 
@@ -120,7 +123,11 @@ const HOME_EYEBROW = '卡路里';
  *  #401g · emoji 全页只留**段标题**这一处、每块一枚——导航不再把同一枚图标印第二遍（原为 9 枚 → 4 枚）。 */
 const SEC_OVERVIEW = { id: 'sec-overview', icon: '🔥', name: '今日速览' } as const;
 const SEC_TREND = { id: 'sec-trend', icon: '📈', name: '每日摄入' } as const;
-const SEC_COPY = { id: 'sec-copy', icon: '💰', name: '数据与日志' } as const;
+/** 复制区落点锚（`sec-copy`）：用户缺陷 6（2026-09-15）「有『💰 数据与日志』文字的直接删，
+ *  用户直接看得见按钮」⇒ 本页复制区**不出标题**（`copyArea` 不传 `title`，公共层即不出 `<h2>`），
+ *  页内导航也不再收这一项（无标题的区不进导航）。`id` 保留：外链深跳稳定，且各档 `body.toc` 不含它，
+ *  导航与标题「同源」口径仍成立（导航项 ⟺ 有标题的区）。目标进度页的同名标题归 #467 定。 */
+const SEC_COPY = { id: 'sec-copy' } as const;
 
 /** 来源脚注上给**读者看**的来源名：可见文本零 snake_case（库表名只留在复制日志的「来源」段里，那是给复核
  *  的人照抄用的技术原件，不上页面——同 `render/sportDocs.ts:54-57` 口径）。#401 分隔符债 #8：三件来源
@@ -283,8 +290,7 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
     avgIntake: d.week.avgIntake, avgDeficit: d.week.avgDeficit, loggedDays: d.week.loggedDays,
   });
   const copy = copyArea({
-    // #401g：这一段的标题不再手写 `<h2>`——走 `title` 位由公共层 `renderCopyBlock` 产出（同一个类名同一把尺）。
-    title: partTitle(SEC_COPY),
+    // 用户缺陷 6：复制区不出标题（按钮自己会说话）；`title` 位空着，公共层即不出 `<h2>`。
     data: {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.home',
@@ -310,7 +316,7 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
   const content = [
     headBadges(d),
     renderConclusionBar(viewConclusion(section, d)),
-    renderTocBlock({ items: [...body.toc, { id: SEC_COPY.id, text: SEC_COPY.name }] }),
+    renderTocBlock({ items: [...body.toc] }),
     body.sections.join(''),
     '<section id="' + SEC_COPY.id + '">' + copy + '</section>',
     // #401e 债 #8 收口：来源脚注只留一条（原第二条「窗内共 N 条记录」整条删——那个 N 就是 `loggedDays`＝

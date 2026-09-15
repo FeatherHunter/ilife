@@ -29,8 +29,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
 const CLI = join(ROOT, 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js');
 
-/** 关键词表：域名里允许上屏的那些（`AI` 是「粘贴给 AI / 自己看」这句老仓原话里的词，不是源码标识符）。 */
-const ALLOWED_UPPER = new Set(['AI']);
+/** 关键词表：域名里允许上屏的那些（`AI` 是「粘贴给 AI / 自己看」这句老仓原话里的词，不是源码标识符；
+ *  `JSON` 是复制数据三格式菜单里的格式名（#247，用户点的就是它），同属面向用户的专名，不是内部标识符）。 */
+const ALLOWED_UPPER = new Set(['AI', 'JSON']);
 
 const { openDb, DB_FILENAME } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'index.js')).href);
 const { seedFull, SEED_TODAY } = await import(pathToFileURL(join(ROOT, 'docs', 'research', 't81-seed.mjs')).href);
@@ -99,11 +100,14 @@ test('#401c 视觉升级四件在场（徽章／标题图标／胶囊导航／�
     assert.ok(!visibleText(html).includes(dflt), '徽章文案落到控件缺省值了：' + dflt);
   }
   // ② 区块标题带图标，且是**本页自产**的 `<h2>`（公共层不给 `title` 时不产元素）。
-  for (const h2 of ['🔥 今日速览', '📈 每日摄入', '💰 数据与日志']) {
+  // 用户缺陷 6（2026-09-15）：复制区标题「💰 数据与日志」已删（按钮自己会说话），本页只锁前两枚。
+  for (const h2 of ['🔥 今日速览', '📈 每日摄入']) {
     assert.ok(html.includes('<h2 class="ilife-block-kpi-card-title">' + h2 + '</h2>')
       || html.includes('<h2 class="ilife-block-chart-block-title">' + h2 + '</h2>')
       || html.includes('<h2 class="ilife-block-copy-block-title">' + h2 + '</h2>'), '缺带图标的区块标题：' + h2);
   }
+  // 用户缺陷 6 反向锁：页上不再出现「💰 数据与日志」（标题与导航双双撤下，按钮仍在）。
+  assert.ok(!html.includes('💰 数据与日志'), '复制区标题又回来了（用户已裁定删除）');
   // 表格的标题位是 `<caption>`（`blocks.ts:613-615`），图标同样在本页给。
   // #401 返修（施工工单 R7）：`目标` 列是**常量列**（`series` 的 `calorieGoal` 全窗口静态值，
   // `analysis/series.ts:248`）⇒ 整列删。本锁跟着裁定走：只锁「图标 ＋ 表名」这段前缀（形状判据没变）。
@@ -120,14 +124,22 @@ test('#401c 视觉升级四件在场（徽章／标题图标／胶囊导航／�
   // ③ 页内导航走公共层胶囊排：`<nav class="ilife-block-toc">` ＋ 每个锚点都有对应 `id`。
   assert.ok(html.includes('<nav class="ilife-block-toc" aria-label="页内导航">'), '缺页内导航块');
   const hrefs = [...html.matchAll(/<a href="#([^"]+)">/g)].map((m) => m[1]);
-  assert.ok(hrefs.length >= 4, '页内导航锚点只有 ' + hrefs.length + ' 个');
+  // 用户缺陷 6 起导航 3 项（`sec-copy` 无标题不进导航）；下限 3，上限随档变（`week` 档 3 项）。
+  assert.ok(hrefs.length >= 3, '页内导航锚点只有 ' + hrefs.length + ' 个');
   for (const id of hrefs) assert.ok(html.includes('id="' + id + '"'), '锚点 ' + id + ' 没有对应的页内 id');
-  // ④ 结论条专属浅色面：底 `--soft`、字 `--blue2`（冻结 token，`style.ts:12-24`）。
-  const concl = /<p class="ilife-block-page-shell-conclusion" style="([^"]*)">([^<]*)<\/p>/.exec(html);
-  assert.ok(concl !== null, '缺结论条（`ilife-block-page-shell-conclusion`）');
-  assert.ok(concl[1].includes('background:var(--soft)'), '结论条没有专属浅色面：' + concl[1]);
-  assert.ok(concl[1].includes('color:var(--blue2)'), '结论条字色不是冻结 token `--blue2`：' + concl[1]);
-  assert.ok(!/#[0-9a-fA-F]{3,6}/.test(concl[1]), '结论条里写了色值字面量（只许冻结 token）：' + concl[1]);
+  // ④ 结论条专属面：#507 起形状住公共层（`renderConclusionBar` 只出文本，样式在样式段）。
+  // 本锁跟着裁定走：不断言旧的内联形（`ilife-block-page-shell-conclusion`＋`style="background:var(--soft)…"`，
+  // 那是搬迁前的页内联写法），改锁已落定的公共层形——元素类 `ilife-block-conclusion`、无内联 `style`、
+  // 样式段里该规则用冻结 token（`background:var(--card)`／`color:var(--blue2)`，色值字面量不许出现）。
+  const concl = /<p class="ilife-block-conclusion"([^>]*)>([^<]*)<\/p>/.exec(html);
+  assert.ok(concl !== null, '缺结论条（`ilife-block-conclusion`）');
+  assert.equal(concl[1].includes('style='), false, '结论条又有内联样式了（形状住公共层，元素只留类名）');
+  assert.ok(concl[2].length > 0, '结论条是空句');
+  const style = html.slice(html.indexOf('<style'), html.indexOf('</style>'));
+  const conclRule = /\.ilife-block-conclusion\s*\{[^}]*\}/.exec(style);
+  assert.ok(conclRule !== null, '样式段里没有结论条规则（`.ilife-block-conclusion{…}`）');
+  assert.ok(/color:\s*var\(--blue2\)/.test(conclRule[0]), '结论条字色不是冻结 token `--blue2`：' + conclRule[0].slice(0, 200));
+  assert.ok(!/#[0-9a-fA-F]{3,6}/.test(conclRule[0]), '结论条规则里写了色值字面量（只许冻结 token）：' + conclRule[0].slice(0, 200));
 });
 
 test('#401c 变异自证：把内部标识符塞回可见文本 → 探针必红；拿掉 → 必绿', () => {
