@@ -1,4 +1,4 @@
-﻿/** T5 #24 · 预测模拟续（减重模拟/摄入预测，对照老家 simulate.py A6.2/A6.3）。 */
+/** T5 #24 · 预测模拟续（减重模拟/摄入预测，对照老家 simulate.py A6.2/A6.3）。 */
 import { seriesAvg } from './series.js';
 import type { DaySeries } from './series.js';
 import { shiftISODate } from './utils.js';
@@ -180,7 +180,14 @@ export interface CalorieDeficitEta extends SimBase { avgDeficit?: number; weekly
 
 export function calorieDeficitEta(series: DaySeries[], title: string, kind = 'calorie_deficit'): CalorieDeficitEta {
   const df = series.map((s) => s.deficit).filter((v): v is number => v !== null && v !== undefined);
-  if (df.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入+运动记录', df.length + ' 天摄入或运动记录');
+  /* #466（编排者 2026-09-16 裁定 J）· **量纲词前后必须同一**：门槛段与读数段都写「摄入+运动记录」。
+   *
+   *  改前读数写的是「N 天**摄入或运动**记录」——与门槛的 AND 口径相抵：`deficit` 在 `series.ts:239`
+   *  的算法是「摄入非空才算得出缺口」（`calories === null ⇒ deficit = null`），故这一支能读到的天数
+   *  本来就是**摄入（＋运动）**那些天，不含「只有运动、没有摄入」的天。量纲词写成并集会把读者引到
+   *  一个不存在的口径上：那几天既没进分母、也没进分子。判据件＝
+   *  `test/analysis-deficit-eta-466.test.mjs`（① 两段量纲词逐字相等；② 读数＝`deficit` 非空条数）。 */
+  if (df.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入+运动记录', df.length + ' 天摄入+运动记录');
   const avgDf = df.reduce((a, b) => a + b, 0) / df.length;
   const weekly = (avgDf * 7) / KCAL_PER_KG;
   const healthy = weekly >= 0.3 && weekly <= 1.2;
