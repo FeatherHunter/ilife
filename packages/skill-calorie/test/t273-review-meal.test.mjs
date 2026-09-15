@@ -266,7 +266,7 @@ test('#273 ⑤ 餐别取数：四餐一桶不漏 ＋ 与老脚本同口径的读
   assert.ok(ALL.items.every((i) => i.food !== '💧水'), '饮水行混进了餐别明细');
 });
 
-test('#273 ⑤ 餐别区块对得上 meal_distribution.html ＋ 不夹整页壳', () => {
+test('#273 ⑤ 餐别区块对得上 meal_distribution.html ＋ 区外不夹整页（页头／页脚一概不进块）', () => {
   const text = visibleText(ALL_BLOCK);
   for (const b of ['餐数', '日均热量', '餐别热量占比', '最高占比', '午餐 52.4%', '明细（2026-09-01 ~ 2026-09-07 · 共 10 条）',
     '📊 数据来源 · 饮食记录 · 餐别时间窗推断 · 2026-09-01 → 2026-09-07', '加餐时段：下午茶、夜宵']) {
@@ -279,9 +279,9 @@ test('#273 ⑤ 餐别区块对得上 meal_distribution.html ＋ 不夹整页壳'
   assert.deepEqual(thsOf(detail), ['日期', '时间', '餐次', '食物', '克数', '热量', '蛋白'], '明细列序与老实物不一致');
   assert.ok(detail.includes('>2026-09-07<') && detail.includes('>19:10<') && detail.includes('>晚餐<'), '明细行缺日期／时间／餐次');
   assert.ok(detail.includes('200 克') && detail.includes('500 卡'), '明细行缺克数／热量读数');
-  /* 区块不是页面：不夹 doctype／整页壳；给了命令行原文才出复制区。 */
+  /* 区块不是页面：不带 doctype、不带整页区（`ilife-block-page-shell` 那一层）；给了命令行原文才出复制区。 */
   assert.ok(!ALL_BLOCK.includes('<!doctype'), '区块里夹了 doctype——它是块，不是页');
-  assert.ok(!ALL_BLOCK.includes('ilife-block-page-shell'), '区块里夹了整页壳');
+  assert.ok(!ALL_BLOCK.includes('ilife-block-page-shell'), '区块里夹了整页区那一层');
   assert.ok(ALL_BLOCK.includes('data-action-id="ilife-copy-log"'), '给了命令原文却没出复制日志');
   assert.equal(callChainOf(logTextOf(ALL_BLOCK)), "calorie-cmd-read calorie.view.diet --params '{\"window\":\"7d\",\"meal\":\"all\"}'",
     '复制日志第 4 段不是给进来的命令原文');
