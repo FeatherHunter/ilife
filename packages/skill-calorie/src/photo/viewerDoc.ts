@@ -107,8 +107,19 @@ function verdictOf(e: PhotoEmbed, dropped: boolean, p: PhotoCard): string {
   return '这张原图读不出来，下面留着文件名';
 }
 
-/** 大图卡（黑底 75vh contain，老页 `:28-29` 规则）；没图那态给占位——**明写哪一份文件与为什么**，
- *  原来那两句（占位句 ＋ 卡下那句「超过 1 MB…」）是同一件事说两遍，本票合成一句。 */
+/** 占位那一格说什么（#526 收口）：**分工**＝这一格只说「这里是哪一份文件 ＋ 下一步做什么」，
+ *  「为什么没图」由页顶那条结论条**一处**说。原来中间还有一句「超过一页能装的量，没进这一页」，
+ *  与结论条的「一页装不下，图没放进本页」是同一件事说两遍（`seat-brief` §8 点名的那条债），本票删。 */
+function missHint(p: PhotoCard, e: PhotoEmbed, dropped: boolean): { badge: { status: 'warn' | 'danger'; text: string }; next: string } {
+  if (dropped) return { badge: { status: 'warn', text: '原图太大' }, next: '想看原图：自己打开这份文件' };
+  if (p.fileExists === false) return { badge: { status: 'danger', text: '找不到文件' }, next: '把文件放回照片目录就会有图' };
+  if (e.missing !== null && e.missing.includes('未配照片目录')) {
+    return { badge: { status: 'danger', text: '没设照片目录' }, next: '先设好照片目录，再跑一次' };
+  }
+  return { badge: { status: 'danger', text: '读不出来' }, next: '把文件放回照片目录就会有图' };
+}
+
+/** 大图卡（黑底 75vh contain，老页 `:28-29` 规则）；没图那态给占位——**明写哪一份文件与下一步**。 */
 function figureHtml(p: PhotoCard, e: PhotoEmbed, dropped: boolean): string {
   const fileName = e.fileName;
   if (!dropped && e.dataUri !== null) {
@@ -117,12 +128,11 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed, dropped: boolean): string {
       + '<img src="' + e.dataUri + '" alt="身材照 ' + p.id
       + '" style="max-width:100%;max-height:75vh;object-fit:contain" /></div></figure>';
   }
-  const badge = dropped ? { status: 'warn' as const, text: '原图太大' } : { status: 'danger' as const, text: '找不到文件' };
+  const m = missHint(p, e, dropped);
   return '<figure data-id="' + p.id + '" id="photo-' + p.id + '"><div class="phu-hero-miss" style="display:flex;align-items:center;justify-content:center">'
-    + '<div class="phu-miss">' + renderStatusBadge(badge)
+    + '<div class="phu-miss">' + renderStatusBadge(m.badge)
     + '<code>' + escapeHtml(fileName) + '</code>'
-    + '<div>' + escapeHtml(dropped ? '超过一页能装的量，没进这一页' : (p.fileExists === false ? '照片记录还在，文件不在照片目录里' : '这一张读不出来')) + '</div>'
-    + '<div>' + escapeHtml(dropped ? '想看原图：自己打开这份文件' : '把文件放回照片目录就会有图') + '</div>'
+    + '<div>' + escapeHtml(m.next) + '</div>'
     + '</div></div></figure>';
 }
 
@@ -191,6 +201,9 @@ function shellOf(v: ViewerData, content: string): string {
     subtitle: null,
     content,
     charts: false,
+    // #526 收口：接上 #525 的页面级移动端配方（`viewport-fit=cover`／安全区／44px 触摸区／
+    // 窄屏字号下限／页内定位）。不传即老路，本票传真——用户第 2 条要的就是它。
+    pageUi: true,
   });
 }
 
