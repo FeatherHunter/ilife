@@ -504,13 +504,18 @@ export function buildLintHealthDoc(v: LintHealthView): string {
 /* ── 批量导入预览（batch_import_preview） ── */
 
 export function buildBatchImportPreviewDoc(v: BatchImportPreviewView): string {
+  /* #509 · 这一页（33 校验批量导入／81 看批量导入预览）的两处被判「内部词」的话（审查件第 46、47 条）：
+     ① 读数卡「已匹配库·精确名匹配」「未匹配·导入后建议补录」——「精确名匹配」是检索方式的实现说法，
+        「补录」没说清往哪录；② 表头「热量卡／库热量／匹配」与单元格 `—`／`✗ 缺库`——「热量卡」读成名词，
+        「库热量」不知道是哪个库，`—`／`✗` 两个符号没有字面含义。都改写成读者自己的话，
+        并照审查件给的建议把「先存食品再导入」这句直接写出来（顺序即用户要做的事）。 */
   const parts: string[] = [
     renderKpiGrid([
       { label: '待导入', value: String(v.total), unit: '条' },
-      { label: '已匹配库', value: String(v.matched), unit: '条', detail: '精确名匹配' },
+      { label: '食品库里有同名的', value: String(v.matched), unit: '条', detail: '可以直接导入' },
       {
-        label: '未匹配', value: String(v.missing), unit: '种',
-        detail: v.missing === 0 ? '全部可入库' : '导入后建议补录',
+        label: '食品库里没有的', value: String(v.missing), unit: '种',
+        detail: v.missing === 0 ? '全部可入库' : '建议先「存食品」再导入',
         status: v.missing === 0 ? 'ok' : 'warn',
       },
       { label: '合计热量', value: String(v.totalCalorie), unit: '卡' },
@@ -518,13 +523,14 @@ export function buildBatchImportPreviewDoc(v: BatchImportPreviewView): string {
     renderDataTable({
       columns: [
         { key: 'foodName', label: '食物' },
-        { key: 'calories', label: '热量卡', align: 'right' },
-        { key: 'lib', label: '库热量', align: 'right' },
-        { key: 'status', label: '匹配' },
+        { key: 'calories', label: '这一条的热量（卡）', align: 'right' },
+        { key: 'lib', label: '食品库里的热量（卡）', align: 'right' },
+        { key: 'status', label: '是否已匹配' },
       ],
       rows: v.items.map((it) => ({
         foodName: it.foodName, calories: it.calories,
-        lib: fmt(it.libCalories), status: it.matched ? '✓' : '✗ 缺库',
+        lib: it.matched ? fmt(it.libCalories) : '食品库中无此食物',
+        status: it.matched ? '已匹配' : '未匹配',
       })),
       caption: '逐条预览（仅预览，不写库）',
       emptyText: '无待导入条目',
@@ -559,7 +565,10 @@ export function buildBatchImportPreviewDoc(v: BatchImportPreviewView): string {
     docTitle: DOC_TITLE,
     title: '批量导入预览',
     eyebrow: '卡路里 · 趋势',
-    subtitle: '库匹配＋合计试算（仅预览，不写库；确认后走 diet.batch 写入）',
+    /* #509 · 副标题原为「库匹配＋合计试算（仅预览，不写库；确认后走 diet.batch 写入）」：「库匹配」是
+       读数卡那套内部说法（同页已改写），`diet.batch` 是源码命令名直接印给读者（审查件第 10 条点过
+       同页的眉标印命令名，本条是同一处没扫干净的尾巴）。改成读者的话，命令名不上屏。 */
+    subtitle: '食品库对照＋合计试算（只预览，不写库；确认之后再写入）',
     content: parts.join(''),
     charts: false,
   });

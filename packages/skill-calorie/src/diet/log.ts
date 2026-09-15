@@ -45,7 +45,16 @@ export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync):
   const note = optStr(params, 'note');
   const hasNote = note !== undefined && note.trim() !== '';
   const backfill = date !== undefined;
-  const scene = backfill ? '补记饮食' : (hasNote ? '记一餐（含备注）' : '记一餐');
+  /* #509 · 上面那三种事实还分不出「拍营养表记一餐／拍营养表补记一餐」这两个入口——它俩的参数与
+     普通记一餐／补记饮食全同（都带 `note`、都带 `date`），差别只在用户点的是哪条唤醒词，
+     命令这一层看不见（审查件第 21、27 条点名的「05 与 01 逐字节相同」就是这两页）。⇒ 由**入口**
+     自己带一个来源标记：`source:'photo'`（`src/diet/routes.ts` 那两条拍营养表的记录照 #276 给
+     `看有备注的饮食记录` 带 `hasNote` 的同款做法传）。它只是上屏措辞的开关：
+     参数名不上屏、不写库、不进 `writtenFields`；不给这个参数时行为与从前一字不差。 */
+  const photo = optStr(params, 'source') === 'photo';
+  const scene = backfill
+    ? (photo ? '拍照补记一餐' : '补记饮食')
+    : (photo ? '拍照记一餐' : (hasNote ? '记一餐（含备注）' : '记一餐'));
   const said = (backfill ? '已补记：' : '已记一餐：') + r.food_name + ' ' + r.date + ' ' + r.time + '（' + r.meal + '）';
   if (r.duplicate) {
     return out(R(scene, 'create', String(r.message ?? '重复记录已跳过'), scene, 'food_log (写库回执)', {
@@ -57,7 +66,10 @@ export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync):
   /* #496 · 副题把备注原文带上（审查件第 21、27 条：「含备注」那一页与普通记一餐逐字节相同，
      读者看不出备注记到了哪里）。 */
   const noteText = hasNote ? ' · 备注：' + String(note) : '';
-  return out(R(scene, 'create', said + noteText + remain, scene, 'food_log (写库回执)', {
+  /* #509 · 拍照入口的两页（05 拍营养表记一餐／06 拍营养表补记一餐）另带一行来源：
+     读者点两个入口看到的是两张一样的页——这一行就是「同一顿、这次是照着包装营养表记的」那处差异。 */
+  const sourceText = photo ? ' · 来源：营养表照片' : '';
+  return out(R(scene, 'create', said + sourceText + noteText + remain, scene, 'food_log (写库回执)', {
     recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.diet],
     items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: r.food_name }],
   }));

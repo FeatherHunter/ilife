@@ -14,8 +14,11 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 10, wakeWord: '记一餐（含备注）', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35,"note":"加了辣酱"}\'' },
   { list: 'wake', order: 11, wakeWord: '补记饮食', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"米饭","calories":500,"protein":10,"time":"12:30:00","date":"<日期>"}\'' },
   { list: 'wake', order: 12, wakeWord: '批量补记饮食', scene: '02', kind: 'exec', key: 'calorie.diet.batch', cli: 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },
-  { list: 'wake', order: 13, wakeWord: '拍营养表记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35,"note":"营养表识别"}\'' },
-  { list: 'wake', order: 14, wakeWord: '拍营养表补记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"米饭","calories":500,"protein":10,"date":"<日期>","time":"12:30:00","note":"营养表补记"}\'' },
+  /* #509 · 两条「拍营养表」的词与普通记一餐／补记饮食跑同一条命令，参数也全同（都带 `note`）。
+     入口是命令唯一看不见的差别，故由**入口自己**把来源带进去：`source:"photo"`——同文件先例＝
+     `看有备注的饮食记录` 由 #276 给 `calorie.today` 带 `hasNote`。命令侧只拿它取上屏标题。 */
+  { list: 'wake', order: 13, wakeWord: '拍营养表记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35,"note":"营养表识别","source":"photo"}\'' },
+  { list: 'wake', order: 14, wakeWord: '拍营养表补记一餐', scene: '02', kind: 'exec', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"米饭","calories":500,"protein":10,"date":"<日期>","time":"12:30:00","note":"营养表补记","source":"photo"}\'' },
   { list: 'wake', order: 15, wakeWord: '记喝水', scene: '02', kind: 'exec', key: 'calorie.water.log', cli: 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'' },
   { list: 'wake', order: 16, wakeWord: '复制昨日饮食', scene: '02', kind: 'exec', key: 'calorie.diet.copy', cli: 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\'' },
   { list: 'wake', order: 17, wakeWord: '改饮食记录', scene: '02', kind: 'exec', key: 'calorie.diet.update', cli: 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'' },
