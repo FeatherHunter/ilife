@@ -13,8 +13,11 @@
  * 期望值来源（只认手写样例 ＋ 脚本查库 ＋ 老正本，不拿新实现输出当期望）：
  *   ① **手写样例**（`SEED_*`）：每格期望值由种子直接读出；
  *   ② **脚本查库**：另开 `node:sqlite` 句柄按 `receipt.recordId` 读整行，逐格比（不是回显输入）；
- *   ③ **老正本** `templates/crud_receipt.html:328-350`（删除前快照逐字段行）／`:26-29`（id 卡三态）／
- *      `:414-429`（撤销按钮只在带撤销指令时出现）；
+ *   ③ **老正本** `templates/crud_receipt.html:328-350`（删除前快照逐字段行；`:343` 写 `.diff-old`）／
+ *      `:351-371`（新增内容逐字段行；`:364` 写 `.diff-new`）／`:26-29`（id 卡三态配色）／
+ *      `:192-197`（标签／色档／图标三张表）／`:202-203`（图标与标题上卡）／
+ *      `:414-429`（撤销按钮只在带撤销指令时出现）；**值槽口径＝逐支读**：增类落新值槽、删类落旧值槽，
+ *      `:315-322` 那一支是「改」模式、不是全体（`body/receipt.ts` 件头 ② 记同一条）；
  *   ④ **基准** `docs/skills/skill-calorie/t395-融合基准.md` §四 裁定 2：可见文本缺值写 `—`、
  *      复制数据缺项**整项缺位**（**两条分开断言**，不互相顶替）＋ §六-C 回执页骨架；
  *   ⑤ **唯一来源**：13 部位 `MEASUREMENT_ZH`、7 点站名 `CALIPER_SITE_LABELS`、来源 `SOURCE_LABELS`
@@ -39,6 +42,7 @@ import { MEASUREMENT_FIELDS, MEASUREMENT_ZH, measureCamelName } from '../dist/fe
 import { CALIPER_SITE_LABELS } from '../dist/body/bodyPlate.js';
 import { BODY_COMMANDS } from '../dist/body/commands.js';
 import { bodyReceiptDoc } from '../dist/body/index.js';
+import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../dist/shared/operationHead.js';
 import { buildCrudReceipt, withM5 } from '../dist/render/receipt.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -191,22 +195,35 @@ function assertSixReadings(name, r, expect) {
   return rd;
 }
 
-/** 逐格行的标记（`renderChangeRows` 的产出；箭头位 `visibility:hidden` 仍占栏，与老正本 `:344` 同一手法）。 */
+/** 逐格行的标记（`renderChangeRows` 的产出；箭头位 `visibility:hidden` 仍占栏，与老正本 `:344`／`:365`
+ *  同一手法）。**四个槽都读**：值落哪一槽由**操作类型**定——增类落 `-new`（老正本增支 `:351-371`，
+ *  `:364` 写 `.diff-new`）、删类落 `-old`（删支 `:328-350`，`:343` 写 `.diff-old`）。只读一个槽会把
+ *  「增类现值落进旧槽」这种错读成绿——`.ilife-block-change-row-old` 自带红删除线
+ *  （`base-render/src/blocks.ts:1333-1336`），增类页那样摆等于把刚写入的现值画成待删。 */
 const ROW_RE = new RegExp(
   '<div class="ilife-block-change-row">'
   + '<span class="ilife-block-change-row-label">([^<]*)</span>'
   + '<span class="ilife-block-change-row-old">([^<]*)</span>'
-  + '<span class="ilife-block-change-row-arrow"[^>]*>',
+  + '<span class="ilife-block-change-row-arrow"[^>]*>[^<]*</span>'
+  + '<span class="ilife-block-change-row-new">([^<]*)</span>'
+  + '</div>',
   'g',
 );
 
-/** 页内一段（口径行为界）的 `[标签, 值]` 有序对；口径行前缀即段名。 */
-function sectionRows(html, prefix) {
+/** 页内一段（口径行为界）的 `[标签, 值]` 有序对；口径行前缀即段名。
+ *  `slot` ＝ 该 op 值**应落**的那一槽（增 `new`／删 `old`）；另一槽逐行必须留空（两槽都有值＝一段摆两遍）。 */
+function sectionRows(html, prefix, slot) {
   const segs = String(html).split('<p class="ilife-block-caliber">');
   for (const seg of segs.slice(1)) {
     const end = seg.indexOf('</p>');
     if (end < 0 || !seg.slice(0, end).startsWith(prefix)) continue;
-    return [...seg.slice(end).matchAll(ROW_RE)].map((m) => [m[1], m[2]]);
+    const all = [...seg.slice(end).matchAll(ROW_RE)]
+      .map((m) => ({ label: m[1], old: m[2], new: m[3] }));
+    for (const row of all) {
+      assert.equal(slot === 'old' ? row.new : row.old, '',
+        '「' + prefix + '」段的「' + row.label + '」不该出现在另一槽（值只落该 op 的那一槽）');
+    }
+    return all.map((row) => [row.label, slot === 'old' ? row.old : row.new]);
   }
   return null;
 }
@@ -271,8 +288,10 @@ test('#365 七条写词真出口：六项读数全绿 ＋ 页内逐格 == 脚本
     assertSixReadings(name, r);
     const id = r.env.data.receipt.recordId;
     const row = dbRow(dir, key, id);
+    // 增类现值落新值槽（`new`）；删类删前原值落旧值槽（`old`）。
+    const slot = key.includes('remove') ? 'old' : 'new';
     const prefix = key.includes('remove') ? '删除前的原值' : '记录现值';
-    const rows = sectionRows(r.html, prefix);
+    const rows = sectionRows(r.html, prefix, slot);
     assertRows(name, rows, key, row);
     // 关键字段值也在**可见文本**里（剥掉复制载荷属性后仍能读到）
     const text = visible(r.html);
@@ -293,7 +312,7 @@ test('#365 裁定2-可见：缺项在页内逐格写 `—`（按格定位，不�
   // 记体脂（外部测量）：7 点皮褶全空 ＋ 备注空 → 8 格 `—`
   const r = runWrite(dir, KEY_C_ADD, { source: 'gym', bodyFatPct: 18.5, date: '2026-09-11' });
   assert.equal(r.status, 0, 'stderr=' + r.stderr.slice(-300));
-  const rows = sectionRows(r.html, '记录现值');
+  const rows = sectionRows(r.html, '记录现值', 'new');
   assert.deepEqual(rows.filter(([, v]) => v === MISSING).map(([k]) => k),
     [...SITE_7, '备注'], '体脂：未填的 7 点与空备注逐格写 `—`');
   for (const [, v] of rows) assert.notEqual(v, '', '缺值格不得留空串');
@@ -328,7 +347,7 @@ test('#365 防回显：跑之前不经命令直改库一个字段 → 页面跟�
   const idc = rowsOf(dir, "SELECT id FROM body_composition WHERE date='2026-09-05'")[0].id;
   const del = runWrite(dir, KEY_C_RM, { id: idc });
   assert.equal(del.status, 0, 'stderr=' + del.stderr.slice(-300));
-  const delRows = sectionRows(del.html, '删除前的原值');
+  const delRows = sectionRows(del.html, '删除前的原值', 'old');
   assertRows('防回显/删体脂', delRows, KEY_C_RM, dbRow(dir, KEY_C_RM, idc));
   assert.ok(delRows.some(([k, v]) => k === '体脂率' && v === '33.3'), '删前快照须读库内 33.3：' + JSON.stringify(delRows.slice(0, 3)));
   assert.ok(!delRows.some(([k, v]) => k === '体脂率' && v === '18.5'), '页面不得再出现种子旧值 18.5');
@@ -337,7 +356,7 @@ test('#365 防回显：跑之前不经命令直改库一个字段 → 页面跟�
   pokeDb(dir, "UPDATE body_measurements SET waist_cm = 111 WHERE date = '2026-09-06'");
   const back = runWrite(dir, KEY_M_ADD, { waistCm: 86, date: '2026-09-06' });
   assert.equal(back.status, 0, 'stderr=' + back.stderr.slice(-300));
-  const existing = sectionRows(back.html, '同日已有记录');
+  const existing = sectionRows(back.html, '同日已有记录', 'new');
   assert.ok(existing !== null, '补记命中同日既有记录时应有「同日已有记录」段');
   assert.equal(existing.find(([k]) => k === '腰围')?.[1], '111', '既有记录那一块须读库内 111：' + JSON.stringify(existing.slice(0, 2)));
   console.log('T365-ANTI-ECHO 删体脂快照体脂率=' + delRows.find(([k]) => k === '体脂率')?.[1]
@@ -346,16 +365,49 @@ test('#365 防回显：跑之前不经命令直改库一个字段 → 页面跟�
 
 /* ── id 卡三态 ＋ M5 自证 ＋ 撤销入口 ＋ 复制区 ── */
 
-test('#365 id 卡三态：三态词由 op 驱动（新增／删除），同一页只出现一处徽章', () => {
+test('#365 id 卡三态：图标＋三态词＋色档三样都由 op 驱动（新增／删除），同一页只出现一处徽章', () => {
   const dir = mkTmpDb();
   const add = runWrite(dir, KEY_M_ADD, { waistCm: 85, date: '2026-09-12' });
   const del = runWrite(dir, KEY_M_RM, { id: rowsOf(dir, "SELECT id FROM body_measurements WHERE date='2026-09-06'")[0].id });
-  for (const [name, r, word] of [['记围度', add, '新增'], ['删围度', del, '删除']]) {
-    const badge = (r.html.match(new RegExp('ilife-\\S*-badge[^>]*>[^<]*' + word, 'g')) ?? []).length;
-    assert.ok(badge >= 1, name + ' 应在徽章位给出三态词「' + word + '」');
-    assert.equal(r.env.data.receipt.op, name === '记围度' ? 'create' : 'delete', name + ' 回执 op');
+  for (const [name, r, op] of [['记围度', add, 'create'], ['删围度', del, 'delete']]) {
+    assert.equal(r.env.data.receipt.op, op, name + ' 回执 op');
+    const word = OPERATION_LABELS[op];
+    const icon = OPERATION_ICONS[op];
+    // 三样都查（老正本 `:192-197` 的标签／色档／图标三张表）：色档落在公共层徽章档名上。
+    const re = new RegExp('class="ilife-status-badge ilife-status-badge-' + OPERATION_TONES[op] + '">([^<]*)<', 'g');
+    const texts = [...r.html.matchAll(re)].map((m) => m[1]);
+    assert.equal(texts.length, 1, name + ' 同一页只应出现一处 id 卡三态徽章，实测 ' + JSON.stringify(texts));
+    assert.ok(texts[0].includes(icon),
+      name + ' 徽章须带三态图标「' + icon + '」（老 `:194` 的 opIcons），实测「' + texts[0] + '」');
+    assert.ok(texts[0].includes(word),
+      name + ' 徽章须带三态词「' + word + '」（老 `:192` 的 opLabels），实测「' + texts[0] + '」');
   }
-  console.log('T365-IDCARD 记围度=新增 删围度=删除');
+  console.log('T365-IDCARD 记围度=' + OPERATION_ICONS.create + ' ' + OPERATION_LABELS.create
+    + ' 删围度=' + OPERATION_ICONS.delete + ' ' + OPERATION_LABELS.delete);
+});
+
+test('#365 值槽：增类全页现值落新值槽（无一格进旧槽被画成删除线）；删类全页落旧值槽', () => {
+  const dir = mkTmpDb();
+  const lines = [];
+  for (const [name, key, params] of runSeven(dir)) {
+    const r = runWrite(dir, key, params);
+    assert.equal(r.status, 0, name + ' exit 0，stderr=' + r.stderr.slice(-200));
+    const op = r.env.data.receipt.op;
+    const wantNew = op !== 'delete';
+    const all = [...r.html.matchAll(ROW_RE)].map((m) => ({ label: m[1], old: m[2], new: m[3] }));
+    assert.ok(all.length > 0, name + '（op=' + op + '）页内应有逐格行');
+    for (const row of all) {
+      // **全页扫**：不只「记录现值」那一段——同日已有记录那一块同样不许进旧槽。
+      assert.equal(wantNew ? row.old : row.new, '',
+        name + '（op=' + op + '）的「' + row.label + '」落错槽：' + JSON.stringify(row));
+      assert.notEqual(wantNew ? row.new : row.old, '', name + ' 的「' + row.label + '」应有值');
+    }
+    // 判据的机理面：旧槽的红删除线是真的（落错槽看得见），从**产物自带 CSS** 读出。
+    assert.match(r.html, /\.ilife-block-change-row-old\s*\{[^}]*text-decoration:\s*line-through/,
+      name + ' 产物自带 CSS 里旧槽应是删除线');
+    lines.push(name + ' op=' + op + ' 槽=' + (wantNew ? 'new' : 'old') + ' 行=' + all.length);
+  }
+  console.log('T365-SLOT ' + lines.join(' ｜ '));
 });
 
 test('#365 M5 自证进整页：影响行数／来源＋记录号来源＋契约版本四样都在页上', () => {
@@ -458,7 +510,8 @@ test('#365 收口：七条写词的真出口读数汇总可复跑', () => {
     const r = runWrite(dir, key, params);
     assert.equal(r.status, 0, name + ' exit 0');
     const row = dbRow(dir, key, r.env.data.receipt.recordId);
-    const rows = sectionRows(r.html, key.includes('remove') ? '删除前的原值' : '记录现值');
+    const rows = sectionRows(r.html, key.includes('remove') ? '删除前的原值' : '记录现值',
+      key.includes('remove') ? 'old' : 'new');
     assertRows(name, rows, key, row);
     lines.push(name + '=' + sixReadings(r).cssBytes + 'B');
   }

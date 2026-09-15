@@ -11,34 +11,37 @@
  *   删体脂 → `calorie.body.composition-remove`；删围度 → `calorie.body.measure-remove`。
  *
  * 老正本 `templates/crud_receipt.html`（只读参照）逐条落点：
- *   ① **id 卡三态** `:26-29`（基态／`.delete`／`.update`）＋ `:201`（`op` → class）→ `OP_BADGE`
- *      给状态卡补徽章（三态由 `receipt.op` 驱动，不看命令名字面量）；
- *   ② **diff 三列＋中文标签** `:61-69`（三列网格）／`:276-291`（字段中文标签表）／`:315-322`（装配）
- *      → 一律走共用件 `renderChangeRows`（箭头位 `arrow:false` 时**仍占位**，与老 `:344` 的
- *      `visibility:hidden` 同一手法，左右两栏不塌）；
- *   ③ **删除前快照** `:328-350`（删除模式把删前每条记录逐字段铺成行；`:337` 空值不摆；
- *      `:340-347` 只留旧值、箭头占位）→ `snapshotRows()`，数据面由 **#364** 备好
- *      （`items[0].detail` ＝ `标签 值` 以「、」分隔）；`:325-327`／`:348-350` 的「无行不出空卡」
- *      由 `renderChangeRows` 对空数组返空串天然承接；
- *   ④ **撤销按钮** `:414-429`（`:420` 撤销指令文本、`:423` 复制提示）→ `undoBlock()`：
- *      **只在回执带撤销指令时出现**；本域写命令本就不传撤销指令 ⇒ 按钮**自动不出现**
- *      （真出口产物里连「撤销」二字都没有）；出现时点了走冻结复制运行时给的 toast，不是死按钮。
+ *   ① **id 卡三态** `:26-29`（`.id-card` 基态／`.delete`／`.update` 三套配色）＋ `:192-197` 三张表
+ *      （`:192` `opLabels`／`:193` `opColors`／`:194` `opIcons`）＋ `:201`（`op` → class）＋ `:202-203`
+ *      （图标与标题上卡）→ **图标＋文字＋色档三样都由 `receipt.op` 驱动**，三张表的唯一来源是共用件
+ *      `shared/operationHead.ts:23-45`（本件不写第二份）；图标按老页 `:31`「摆在 id 卡内」对位到徽章前缀；
+ *   ② **diff 三列＋中文标签** `:61-69`（`:64` 旧值＝红删除线、`:65` 新值＝绿）／`:276-291`（标签表）→
+ *      走共用件 `renderChangeRows`（箭头 `arrow:false` 仍占位，与老 `:344`／`:365` 同一手法）。
+ *      **值槽按操作类型分**——老正本三支要**逐支读**，`:315-322` 那一支是「改」模式、不是全体：
+ *      增类 `:351-371`（`:364` 写 `.diff-new`）⇒ 现值落**新值槽**；删类 `:328-350`（`:343` 写
+ *      `.diff-old`）⇒ 删前原值落**旧值槽**。落错槽是看得见的错：`.block-change-row-old` 带
+ *      `text-decoration: line-through`（`base-render/src/blocks.ts:1333-1336`）⇒ 增类页会把刚写入的现值画成删除线；
+ *   ③ **删除前快照** `:328-350`（`:343` 只留旧值、`:344` 箭头 `visibility:hidden` 占位）→
+ *      `deleteSnapshotRows()`，数据面由 **#364** 备好（`items[0].detail` ＝ `标签 值` 以「、」分隔）；
+ *      「无行不出空卡」的 `:324-327`（改）／`:348-350`（删）由 `renderChangeRows` 对空数组返空串承接。
+ *      **一处有意偏离**：老正本 `:337`（删支）／`:360`（增支）对空值是**整行不摆**，本件按基准
+ *      `t395-融合基准.md` §四 裁定 2 的可见文本口径**逐格写 `—`**（`cell()`）——空的那格照摆、值写 `—`；
+ *   ④ **撤销按钮** `:414-429`（`:420` 撤销指令文本、`:423` 复制提示）→ `undoBlock()`：**只在回执带
+ *      撤销指令时出现**（本域写命令不传 ⇒ 真出口产物里连「撤销」二字都没有）；出现时走冻结复制运行时的 toast。
  *
- * 新保留（新有老无）：
- *   · **M5 自证**（`render/receipt.ts:82-134` 的 `M5Fields`／`buildM5`／`withM5`）→ `m5Disclosure()`：
- *     影响行数／影响行数来源／记录号来源／契约版本四样上页（融合基准 §六-C 第 4 行）；
- *   · **复制区** → `shared/copyArea.ts:116` 的 `copyArea`（数据位恒出三格式菜单，与老 `:98` 的
- *     `.fmt-menu` 同形；三样全没给时不出按钮，见该件 `:41`）。
+ * 新保留（新有老无）：**M5 自证**（`render/receipt.ts:82-134` 的 `M5Fields`／`buildM5`／`withM5`）→
+ *   `m5Disclosure()`：影响行数／影响行数来源／记录号来源／契约版本四样上页（融合基准 §六-C 第 4 行）；
+ *   **复制区** → `shared/copyArea.ts:116` 的 `copyArea`（数据位恒出三格式菜单，与老 `:98` 的 `.fmt-menu`
+ *   同形；三样全没给时不出按钮，见该件 `:41`）。
  *
  * **裁定 2**（`docs/skills/skill-calorie/t395-融合基准.md` §四）在复制区这一半的落法：
  *   可见文本缺值一律 `—`（`cell()`），**复制数据里缺值不写 `—`**——`payloadMessage()` 只摆
  *   **有值的**项，缺项**整项缺位**（连标签一起省），与 `weight/plateDocs.ts:105`「缺的那一格
  *   不写进载荷」同口径。两条分开断言，不互相顶替。
  *
- * 取数两条路（**页面不改数据面**）：
- *   · `items[0].detail`（#364 的删前快照）——只做切分，标签不信本件、由 #364 的唯一来源给；
- *   · `compositionSnapshot`／`measurementSnapshot`（#364 的**按 id 复取**口，软删后仍可回读）
- *     ——页面上的「记录现值」逐格读自库内，**不回显输入**：手改库里一个字段，页面跟着变。
+ * 取数两条路（**页面不改数据面**）：`items[0].detail`（#364 删前快照，只切分、标签不信本件）＋
+ *   `compositionSnapshot`／`measurementSnapshot`（#364 按 id 复取口，软删后仍可回读）——页面现值
+ *   逐格读自库内，**不回显输入**：手改库里一个字段，页面跟着变。
  * 中文名一律取唯一来源：13 部位 `MEASUREMENT_ZH`、7 点站名 `CALIPER_SITE_LABELS`、来源
  * `SOURCE_LABELS`（＋「日期」「备注」），本件不写第二份名表。
  */
@@ -58,6 +61,7 @@ import type { SourceChoice } from '../kcal.js';
 import { DB_FILENAME } from '../paths.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../shared/operationHead.js';
 import { statusCard } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
 import { CALORIE_COPY_ACTION } from '../render/copy.js';
@@ -77,12 +81,13 @@ const BODY_RECEIPT_KEYS: ReadonlySet<string> = new Set([
 /** 徽章种类（冻结四值；非法值由冻结语义降级 `empty`）。 */
 type Kind = 'ok' | 'warn' | 'danger' | 'empty';
 
-/** 老正本 `:26-29` 的 id 卡三态 ＋ `:201` 的 `op` → class：**三态由操作类型驱动**。 */
-const OP_BADGE: Record<CrudReceipt['op'], { status: Kind; text: string }> = {
-  create: { status: 'ok', text: '新增' },
-  update: { status: 'warn', text: '更新' },
-  delete: { status: 'danger', text: '删除' },
-};
+/** id 卡三态：老正本 `:192-197` 的标签／色档／图标三张表 ＋ `:201` 的 `op` → class ⇒
+ *  **三态由操作类型驱动**。三张表的唯一来源是共用件 `shared/operationHead.ts:23-45`，本件不写第二份
+ *  （原先这里自持一份 `{status, text}` 表，`update` 的文字已与唯一来源走散：写「更新」而唯一来源是
+ *  「修改」——本域 `update` 恒不命中所以没暴露，仍按唯一来源收口）。 */
+const badgeOf = (op: CrudReceipt['op']): { status: Kind; text: string; icon: string } => ({
+  status: OPERATION_TONES[op], text: OPERATION_LABELS[op], icon: OPERATION_ICONS[op],
+});
 
 /** 非围度／非皮褶列的中文名（`is_deprecated` 照仓内软删口径给中文，不让库内列名直接上屏）。 */
 const COL_ZH: Record<string, string> = {
@@ -147,19 +152,33 @@ function cellOf(col: string, v: unknown): string {
   return cell(v);
 }
 
-/** 一行「标签 ＋ 值」（`arrow:false` 仍占箭位，与老 `:344` 的 `visibility:hidden` 同一手法）。 */
-const rowOf = (col: string, v: unknown): ChangeRowInput => ({
-  label: zhLabel(col), before: cellOf(col, v), arrow: false,
-});
+/** 值落在哪一槽：`old` ＝ 改前（`renderChangeRows` 画**红删除线**，`base-render/src/blocks.ts:1333-1336`）、
+ *  `new` ＝ 改后（同件 `:1344-1348`，正文字重 600）。**由操作类型定，不是由调用点随手定**。 */
+type Slot = 'old' | 'new';
 
-/** **记录现值（逐格读自库内）**——防「回显输入」的那一面：手改库里一个字段，本段跟着变。 */
-function currentRows(db: DatabaseSync, key: string, id: number): ChangeRowInput[] {
+/** 一行「标签 ＋ 值」落在指定槽（`arrow:false` 仍占箭位，与老 `:344`／`:365` 同一手法）。 */
+const rowIn = (label: string, value: string, slot: Slot): ChangeRowInput => (slot === 'new'
+  ? { label, after: value, arrow: false }
+  : { label, before: value, arrow: false });
+
+/** 库内那一行的逐格 `[中文标签, 可见文本值]`（`currentRows` 与删前快照**共用同一份取值**，
+ *  免得两处各读一次、其中一处读错槽）。 */
+function currentCells(db: DatabaseSync, key: string, id: number): Array<[string, string]> {
   const snap = snapshotOf(db, key, id);
-  return snap === null ? [] : colsOf(key).map((c) => rowOf(c, snap[c]));
+  return snap === null ? [] : colsOf(key).map((c) => [zhLabel(c), cellOf(c, snap[c])]);
+}
+
+/** **记录现值（逐格读自库内）**——落**新值槽**（老正本增类那一支 `:351-371`，`:364` 把值写进
+ *  `.diff-new`）。落旧槽会被 `renderChangeRows` 的 `.block-change-row-old` 画成红删除线，把
+ *  「本次刚写入的现值」读成「这些值要被删掉」。
+ *  防「回显输入」的那一面：手改库里一个字段，本段跟着变。 */
+function currentRows(db: DatabaseSync, key: string, id: number): ChangeRowInput[] {
+  return currentCells(db, key, id).map(([label, value]) => rowIn(label, value, 'new'));
 }
 
 /** **删除前的原值**（老正本 `:328-350`）：#364 把每条记录逐字段铺成 `标签 值`（项间「、」），
  *  这里只按首个空格切成有序 `[标签, 值]`；标签不信本件、由 #364 的唯一来源给。
+ *  **值落旧值槽**（老正本删类那一支 `:343` 写 `.diff-old`）——删除页的删除线正对：被删的就是它。
  *  **值改读库内现值**（软删除不改内容，两者恒等）——删前快照与「现值」是同一行，故只出一段、
  *  不摆两遍；同时页面跟着库走，手改库里一个字段这一段跟着变（不回显命令参数）。 */
 function deleteSnapshotRows(
@@ -167,14 +186,12 @@ function deleteSnapshotRows(
 ): ChangeRowInput[] {
   const detail = item?.detail ?? '';
   if (detail === '') return [];
-  const fromDb = new Map(
-    (id === null ? [] : currentRows(db, key, id)).map((r) => [r.label, String(r.before ?? '')]),
-  );
+  const fromDb = new Map(id === null ? [] : currentCells(db, key, id));
   return detail.split('、').map((seg) => {
     const at = seg.indexOf(' ');
-    if (at < 0) return { label: seg, before: '—', arrow: false };
+    if (at < 0) return rowIn(seg, '—', 'old');
     const label = seg.slice(0, at);
-    return { label, before: fromDb.get(label) ?? seg.slice(at + 1), arrow: false };
+    return rowIn(label, fromDb.get(label) ?? seg.slice(at + 1), 'old');
   });
 }
 
@@ -195,7 +212,7 @@ function payloadLines(db: DatabaseSync, key: string, id: number): string[] {
  *  冲突段与 `—` 占位，进载荷会违反裁定 2）。 */
 function payloadMessage(db: DatabaseSync, key: string, receipt: CrudReceipt): string {
   const id = receipt.recordId;
-  const head = '本次' + OP_BADGE[receipt.op].text + entityOf(key) + '记录'
+  const head = '本次' + OPERATION_LABELS[receipt.op] + entityOf(key) + '记录'
     + (id === null ? '' : ' #' + id);
   return [head, ...(id === null ? [] : payloadLines(db, key, id))].join(' ｜ ');
 }
@@ -258,9 +275,16 @@ function buildBodyReceiptDoc(
   db: DatabaseSync, key: string, receipt: CrudReceipt, command: string,
 ): string {
   const id = receipt.recordId;
-  const badge = OP_BADGE[receipt.op];
-  // id 卡三态：共用件 `statusCard` 出状态那两槽，三态徽章由 `op` 补（老 `:26-29` ＋ `:201`）。
-  const idCard: KpiCardInput = { ...statusCard(receipt, writtenDetailOf(key)), status: badge.status, statusText: badge.text };
+  const badge = badgeOf(receipt.op);
+  // id 卡三态：共用件 `statusCard` 出状态那两槽，三态**图标＋文字＋色档**由 `op` 补
+  // （老 `:26-29` 三套配色 ＋ `:192-197`／`:201-203`）。图标按老页对位摆在 id 卡内（`:31`）——
+  // 本页 id 卡是 KPI 卡，卡内唯一由 `op` 驱动的槽就是徽章，故图标取徽章文字前缀（仓内同法：
+  // `diet/nutritionPortDocs.ts:67` 的 `badge: '✓ 均衡'`）。`update` 在本域四条写命令里走不到。
+  const idCard: KpiCardInput = {
+    ...statusCard(receipt, writtenDetailOf(key)),
+    status: badge.status,
+    statusText: badge.icon + ' ' + badge.text,
+  };
   const existing = otherItems(receipt);
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
