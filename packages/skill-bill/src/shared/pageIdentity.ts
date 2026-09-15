@@ -1,14 +1,12 @@
 /** 页面三个公共标识 ＋ 场景名（**唯一定义地**）：文档版本／技能名／页面标题／`sceneKeyOf`。
  *  整页装配的调用方与复制日志都读它，别处只引用、不另写这几个字面量（同一件事实两处就会走散）。
  *
- * 谁在用（三个调用点，指名）：
- *   ① `src/record/receipt.ts`——结果型回执整页：envelope 三字段（其中 `key` 过 `sceneKeyOf`）、
- *      复制日志版本、页标题前缀；
- *   ② `src/record/collect.ts`——过程型采集页：同样这几处；
- *   ③ `src/shared/writeParts.ts` 的 `writeSection` 取技能名做 `data-skill`；
- *   另有本件的 `sceneKeyOf`——两张页的内置 envelope（`src/record/collect.ts` 与 `src/record/receipt.ts`）拿它
- *      把对外命令名收成场景名（`bill.record.add` → `record.add`），公共层的日志场景标识再与技能名拼回整名。
- *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
+ * 谁在用（两个能力，指名）：
+ *   ① `src/record/`——写入域：结果型回执整页与过程型采集页的 envelope 三字段（其中 `key` 过 `sceneKeyOf`）、
+ *      复制日志版本、页标题前缀；`src/shared/writeParts.ts` 的 `writeSection` 取技能名做 `data-skill`；
+ *   ② `src/query/`——查询域：通用查询列表页的同一批取值（envelope 三字段、复制日志版本、页标题前缀）。
+ *  两域的页面内置 envelope 都拿本件的 `sceneKeyOf` 把对外命令名收成场景名（`bill.record.today` → `record.today`），
+ *      公共层的日志场景标识再与技能名拼回整名。
  *
  * 为什么另立一件：这三个取值是「页面是谁」那件活，与回执事实、`<section>` 段不是同一件事——
  *  混在 `./writeParts.ts` 里会把那份的对外名字顶过五个（铁律五）。

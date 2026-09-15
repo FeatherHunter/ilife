@@ -7,12 +7,12 @@ import { join, basename, resolve } from 'node:path';
 import {
   BillFetchError, BillPolicyError,
   resolveDbPath, resolveDbDir, resolveGoalsPath, assertWritablePath, openBillDb, closeBillDb,
-  fetchAll, listToday, listRange, getById, searchKeyword, listByTag,
+  fetchAll, listRange,
   addBill, loadGoals, saveGoals,
 } from '../fetch/index.js';
 import {
-  needId,
-  resolveQueryDate, resolveRange, parseOverviewKind, parseCompareKind, parseTrendKind,
+  resolveRange, parseOverviewKind, parseCompareKind, parseTrendKind,
+  monthRange,
   parseGoalOp, validateSetBudget, validateSetSaving,
   parseAccountOp, needName, validateTransfer, TRANSFER_OUT_CATEGORY, TRANSFER_IN_CATEGORY, TRANSFER_LEDGER,
   validateCategory,
@@ -20,8 +20,7 @@ import {
 import {
   billShapeFor, buildBillEnvelope, renderEnvelopeHtml, assertHtmlSize,
   templateFor, loadTemplate, fillTemplate,
-  toBillItem, calcKpi, calcCategories, buildRecordToday, buildRecordRange, buildRecordSearch,
-  buildRecordDetail, buildRecordReceipt, buildOverview, buildCompare, buildTrend,
+  toBillItem, buildRecordReceipt, buildOverview, buildCompare, buildTrend,
   buildGoalQuery, buildAccountQuery, buildHelpItems,
   buildHelpIndex, buildHelpFileData, renderHelpFileHtml,
   HELP_FILE_STEM, LOOKUP_FILE_STEM, HELP_HTML_DIR_NAME,
@@ -32,7 +31,8 @@ import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup } from '../help/index.js';
 import { REGISTRY } from './registry.js';
 import { runRecordWrite } from '../record/index.js';
-import type { WriteOut } from '../shared/commandSpec.js';
+import { runQueryRead } from '../query/index.js';
+import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import type { BillRow } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -49,26 +49,9 @@ function preflight(): string {
   return p;
 }
 
-function monthRange(month: string): { start: string; end: string } {
-  const [y, m] = month.split('-').map(Number);
-  const last = new Date(y, m, 0).getDate();
-  const dd = String(last).padStart(2, '0');
-  return { start: month + '-01', end: month + '-' + dd };
-}
-
-function yesterdayStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
-function weekRange(): { start: string; end: string } {
-  const now = new Date();
-  const day = (now.getDay() + 6) % 7;
-  const mon = new Date(now); mon.setDate(now.getDate() - day);
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  return { start: mon.toISOString().slice(0, 10), end: sun.toISOString().slice(0, 10) };
-}
+/* 时间窗口（周／月／昨天）与日期归一不再是本文件的文件级函数：查询域搬迁（#411）时它们被
+ * 查询的四条命令与分析的三个命令同时需要，已按口径层的位置搬进 `src/policy/record.ts`，
+ * 出口经 `src/policy/index.ts` 转出（`monthRange`／`weekRange`／`yesterdayStr`）——本文件照旧引用它们。 */
 
 /* ── #144 · 「饼干记账help」的交付装配（**在开库之前**走） ────────────────────────────────
  *
@@ -145,16 +128,21 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   };
 }
 
-/** 迁移过的写命令入口（记一笔／改记录）：查注册表命中即走能力目录。
- *  开库／关库与写前置守卫与老路同一套；这两条命令的整页（采集页／回执页）住 `src/record/`，
+/** 迁移过的命令入口（写入域两条 ＋ 查询域四条）：查注册表命中即走能力目录，按 `kind` 静态分两支。
+ *  开库／关库与写前置守卫与老路同一套；读命令不碰写库守卫（照旧只读）。
+ *  这些命令的整页（采集页／回执页／查询列表页）住各自能力目录，
  *  故 `dispatch` 的 switch 里**不再有**它们的 case（一个命令恰住一处）。 */
-function runRegistered(key: string, params: Record<string, unknown>): WriteOut {
+function runRegistered(key: string, params: Record<string, unknown>): WriteOut | ViewOut {
+  const spec = REGISTRY[key];
+  if (spec === undefined) fail(3, '未知 bill 命令：' + key);
   const dbPath = resolveDbPath();
-  assertWritablePath(dbPath);
+  if (spec.kind === 'write') assertWritablePath(dbPath);
   const handle = openBillDb(dbPath);
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
-    return runRecordWrite(key, params, handle);
+    return spec.kind === 'write'
+      ? runRecordWrite(key, params, handle)
+      : runQueryRead(key, params, handle);
   } finally {
     try { closeBillDb(handle); } catch { /* ignore */ }
   }
@@ -172,68 +160,6 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
     switch (key) {
-      case 'bill.record.today': {
-        if (params.recent === true) {
-          const limit = params.limit === undefined ? 10 : params.limit;
-          if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 200) fail(2, 'recent limit 须为 1~200 的整数');
-          const rows = fetchAll(handle).sort((a, b) => b.time.localeCompare(a.time) || b.id - a.id).slice(0, limit as number);
-          return buildRecordToday('recent', rows);
-        }
-        const date = params.date === 'yesterday' ? yesterdayStr() : resolveQueryDate(params);
-        const rows = listToday(handle, date);
-        if (!rows.length) note('当日无记录：' + date + '（真实无，非故障）');
-        return buildRecordToday(date, rows);
-      }
-      case 'bill.record.range': {
-        let start: string; let end: string;
-        if (typeof params.range === 'string' && params.range === 'week') ({ start, end } = weekRange());
-        else if (typeof params.range === 'string' && params.range === 'month') ({ start, end } = monthRange(new Date().toISOString().slice(0, 7)));
-        else if (params.start !== undefined || params.end !== undefined) ({ start, end } = resolveRange(params));
-        else if (params.category !== undefined || params.account !== undefined || params.ledger !== undefined) {
-          const rows = fetchAll(handle, {
-            category: params.category as string | undefined,
-            account: params.account as string | undefined,
-            ledger: params.ledger as string | undefined,
-          });
-          if (!rows.length) throw new BillFetchError('BILL_EMPTY_RANGE', '条件无记录（缺失阻断，不返空统计）');
-          return buildRecordRange('', '', rows);
-        }
-        else fail(2, '缺槽位 start/end（或 range=week/month，或 category/account/ledger 条件）');
-        const rows = fetchAll(handle, {
-          fromTime: start! + ' 00:00:00', toTime: end! + ' 23:59:59',
-          category: params.category as string | undefined,
-          account: params.account as string | undefined,
-          ledger: params.ledger as string | undefined,
-        });
-        if (!rows.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
-        return buildRecordRange(start!, end!, rows);
-      }
-      case 'bill.record.search': {
-        const kind = params.kind === undefined ? '' : String(params.kind);
-        if (kind === 'tag') {
-          const tag = params.tag;
-          if (typeof tag !== 'string' || !tag.trim()) fail(2, '查标签须给 tag');
-          return buildRecordSearch('tag:' + (tag as string), listByTag(handle, tag as string));
-        }
-        if (kind === 'debt') {
-          const rows = fetchAll(handle).filter((r) => r.category.startsWith('借贷/') || r.note.includes('#未还'));
-          return buildRecordSearch('debt', rows);
-        }
-        if (kind === 'reimburse') {
-          const rows = fetchAll(handle).filter((r) => r.note.includes('#待报销'));
-          return buildRecordSearch('reimburse', rows);
-        }
-        if (kind === 'installment') {
-          const rows = fetchAll(handle).filter((r) => r.category.startsWith('分期/') || r.note.includes('#分期'));
-          return buildRecordSearch('installment', rows);
-        }
-        const q = params.q;
-        if (typeof q !== 'string' || !q.trim()) fail(2, '搜备注须给 q');
-        return buildRecordSearch('search:' + (q as string), searchKeyword(handle, q as string));
-      }
-      case 'bill.record.detail': {
-        return buildRecordDetail(getById(handle, needId(params)));
-      }
       case 'bill.analysis.overview': {
         const kind = parseOverviewKind(params);
         let rows: BillRow[]; let label: string = kind;
@@ -517,20 +443,21 @@ async function main() {
   let env = null;
   let delivery: HtmlDelivery | undefined;
   try {
-    // #144：HELP 在开库之前分派（只读页不建库）；迁移过的写命令先查注册表走能力目录；其余照旧走 dispatch。
+    // #144：HELP 在开库之前分派（只读页不建库）；迁移过的命令（写入域两条＋查询域四条）先查注册表走能力目录；
+    // 其余照旧走 dispatch。
     const help = key === 'bill.help.lookup' ? dispatchHelp(params) : null;
-    const writeOut = help === null && REGISTRY[key] !== undefined ? runRegistered(key, params) : null;
-    const built = buildBillEnvelope(key, writeOut ? writeOut.data : (help ? help.data : dispatch(key, params)));
+    const abilityOut: WriteOut | ViewOut | null = help === null && REGISTRY[key] !== undefined ? runRegistered(key, params) : null;
+    const built = buildBillEnvelope(key, abilityOut ? abilityOut.data : (help ? help.data : dispatch(key, params)));
     env = built;
     // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
-    // 迁移过的写命令另有整页（采集页／回执页住 `src/record/`），不再套老模板。
+    // 迁移过的命令另有整页（采集页／回执页住 `src/record/`、查询列表页住 `src/query/`），不再套老模板。
     const sectionHtml = (): string => {
-      if (writeOut) return writeOut.html;
+      if (abilityOut) return abilityOut.html;
       return fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
     };
     // B1 复核整改：体积门对准**实际交付的那串**——交给 `deliverHtml` 的字符串先过 `gatedHtml()`，
-    // 判的就是写下去的那一串（`delivery.bytes` 也照它算）。四条交付路都从这里过：迁移过的写命令
-    // （回执页／采集页整页，由能力目录出）、未迁移的命令（section 片段经 CONTENT 注入模板）、
+    // 判的就是写下去的那一串（`delivery.bytes` 也照它算）。四条交付路都从这里过：迁移过的命令
+    // （回执页／采集页／查询列表页整页，由能力目录出）、未迁移的命令（section 片段经 CONTENT 注入模板）、
     // HELP 缺省整页、HELP 速查表分节页。
     const gatedHtml = (html: string): string => { assertHtmlSize(html); return html; };
     if (help?.deliver !== undefined) {

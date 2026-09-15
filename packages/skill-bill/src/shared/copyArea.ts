@@ -1,9 +1,9 @@
 /** 复制与提示共用件：复制 prompt 区、复制区（数据位＋日志位）、复制日志的入参。
  *
- * 谁在用（两个调用点，指名）：
- *   ① `src/record/collect.ts`——过程型采集页：`promptCopyArea`（复制 prompt 区）＋ `copyArea`（复制数据／日志）；
- *   ② `src/record/receipt.ts`——结果型回执整页：`copyArea`（复制数据／日志）＋ `copyLog`。
- *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，出来的是同一套采集页／回执页／复制区）。
+ * 谁在用（两个能力，指名）：
+ *   ① `src/record/`——写入域：过程型采集页（复制 prompt 区 ＋ 复制数据／日志）与结果型回执整页（复制数据／日志）；
+ *   ② `src/query/`——查询域：通用查询列表页的复制数据／日志两条通道（不设 prompt 区——查询不写库，没有要交回助手的一句）。
+ *  （写域 32 份产物按本件的字面量冻结，查询域只引用、不改这里的任何一句。）
  *
  * 三件东西**只接线、不重造**：
  *   ① 复制按钮与区块 → `base-paint/blocks` 的 `renderPreBlock`（带 `copyText` 自带复制按钮）与 `renderCopyBlock`；
@@ -28,6 +28,14 @@ const LOG_THINKING = '本页由本地渲染，无助手链';
 const LOG_EXCEPTION = '无';
 /** 复制区空态缺省句（三样全没给时出这一句、不出按钮——点了没反应的死按钮就是问题）。 */
 const COPY_EMPTY_TEXT = '本页没有可复制的数据';
+
+/** 本次执行时刻串（页面入参 `actionAt`／回执事实 `actionAt` 的**唯一定义地**）：本地时钟 `YYYY-MM-DD HH:MM:SS`。
+ *  写域与查询域两张页都读它——搬迁前它分别是 `src/record/write.ts` 的文件级函数与查询域现取的钟，
+ *  第二个用法（查询域列表页，票 #411）长出来之后收成这一处；**取时钟仍在各域处理体那一步调它**，
+ *  共用位不自己在模块顶层取时钟（那样一次调用两次读数会不一致）。 */
+export function actionStamp(): string {
+  return new Date().toISOString().slice(0, 19).replace('T', ' ');
+}
 /** 复制数据三格式菜单里三项的用途提示（纯文本／JSON／CSV，顺序＝`COPY_FORMATS`）。
  *  格式名保留（那是数据格式本来的样子，不是内部标识），只说清它拿去做什么。 */
 const MENU_HINTS: readonly string[] = ['纯文本 粘贴给助手或自己看', 'JSON 结构化存档', 'CSV 表格导入'];

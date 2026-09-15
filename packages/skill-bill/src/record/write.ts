@@ -30,6 +30,7 @@ import type { SummaryFacts } from '../shared/summaryRow.js';
 import { fieldLabelOf, statusNoteOf, wakeWordOf } from '../shared/userWording.js';
 import { totalChanges } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
+import { actionStamp } from '../shared/copyArea.js';
 import { RECORD_SLOTS, missingSlots, recordCollectDoc } from './collect.js';
 import type { RecordSlot } from './collect.js';
 import { recordReceiptDoc } from './receipt.js';
@@ -48,9 +49,10 @@ const RECENT_WINDOW_DAYS = 90;
 const SOURCE_RECEIPT = DB_FILENAME + '（写库回执）';
 const SOURCE_COLLECT = DB_FILENAME + '（只读：这一页先不写库，只采集）';
 
-/** 本地时钟时刻串（写入时间与复制日志时间戳）。**取时钟在写体，不在共用位**。 */
+/** 本地时钟时刻串（写入时间与复制日志时间戳）。**取时钟在这一步，不在共用位**——取值口径住
+ *  `../shared/copyArea.js` 的 `actionStamp`（写域与查询域两种页共用同一份，本件只调它）。 */
 function nowStamp(): string {
-  return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  return actionStamp();
 }
 
 /** 本页执行那天（`YYYY-MM-DD`）：缺省时间的取值与重复检测的比对面用它。 */

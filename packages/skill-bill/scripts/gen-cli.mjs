@@ -2,8 +2,9 @@
 // #432 · 饼干记账命令汇总位的生成器（照卡路里 `skill-calorie/scripts/gen-cli.mjs` 的形状同构，包内最小面）。
 //
 // 输入（唯一权威源）：`src/<能力>/commands.ts` 导出的唯一一个声明数组（编译后 `dist/<能力>/commands.js`）。
-// 本票只纳已迁移的两条（`bill.record.add`／`bill.record.update`，都在 `src/record/commands.ts`）；
-// 其余 14 条仍住 `src/render/envelope.ts` 的过渡表，行为与产物一律不动，本生成器不读不写它们。
+// 收两种命令：`kind:'write'`（形状恒 `receipt`）与 `kind:'read'`（形状是表里的形状：`list`／`detail`…）。
+// 当前纳已迁移的六条（写入域 `bill.record.add`／`update`，查询域 `bill.record.today`／`range`／`search`／`detail`）；
+// 其余 10 条仍住 `src/render/envelope.ts` 的过渡表，行为与产物一律不动，本生成器不读不写它们。
 // 输出（唯一生成物）：`src/cli/registry.ts`（一能力一行，由扫描得出，人不手改）。
 // 不派生的落点（本次不动，不上报）：`packages/base-combos/combos.yaml` 属跨技能登记禁区（地图 OutofScope），
 // `src/render/envelope.ts` 过渡表、`scripts/build-help.mjs` 的 HELP-AUTO 块、路由与 `wake-assets` 一律不碰。
@@ -57,7 +58,11 @@ async function loadCapability(name) {
     for (const f of ['kind', 'key', 'shape', 'title', 'wakeWord', 'example']) {
       if (typeof spec?.[f] !== 'string' || spec[f] === '') throw new Error(name + ' 的声明缺 ' + f + '：' + spec?.key);
     }
-    if (spec.kind !== 'write' || spec.shape !== 'receipt') throw new Error(name + ' 本票只收 write／receipt：' + spec.key);
+    if (spec.kind === 'write') {
+      if (spec.shape !== 'receipt') throw new Error(name + ' 的写命令形状恒为 receipt：' + spec.key);
+    } else if (spec.kind !== 'read') {
+      throw new Error(name + ' 的声明 kind 只认 write／read：' + spec.key);
+    }
     if (!spec.example.includes(spec.key)) throw new Error(name + ' 的示例须含命令名（照抄即能跑）：' + spec.key);
   }
   return { name, exportName, list };
@@ -81,7 +86,7 @@ function renderRegistryTs(capabilities) {
   L.push(' * 对外两件：`REGISTRY`（命令名 → 声明）与 `REGISTRY_KEYS`（全部命令名）。');
   L.push(' * 谁在用（两个调用点，指名）：① `src/cli/cmd_read.ts`——迁移过的命令先查这张表；');
   L.push(' * ② `src/render/envelope.ts`——迁移过的命令的形状从这张表运行期派生。');
-  L.push(' * 本次只纳已迁移的两条，其余 14 条仍在过渡表（行为产物不动，本生成器不读写它们）。');
+  L.push(' * 本次只纳已迁移的六条（写入域两条／查询域四条），其余 10 条仍在过渡表（行为产物不动，本生成器不读写它们）。');
   L.push(' * `combos.yaml` 不在本生成器派生面（跨技能登记禁区，本次不动）。');
   L.push(' * 新加一个能力＝建它的 `commands.ts` 并在该能力 `index.ts` 再导出那个数组；');
   L.push(' * 新加一条命令＝改它的声明加它那个子功能文件，本文件不动。');

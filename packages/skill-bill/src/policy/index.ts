@@ -1,6 +1,6 @@
 export { EXPENSE_L1, INCOME_L1, SPECIAL_L1, ALL_L1, DEFAULTS, l1Of, validateCategory, validateAmount, validateTime, normalizeDate, normalizeMonth, validateRecord } from './category.js';
 export type { BillL1, BillRecordInput } from './category.js';
-export { parseRecordOp, needId, validateAddInput, validateUpdateInput, resolveQueryDate, resolveRange } from './record.js';
+export { parseRecordOp, needId, validateAddInput, validateUpdateInput, resolveQueryDate, resolveRange, monthRange, weekRange, yesterdayStr } from './record.js';
 export type { RecordOp } from './record.js';
 export { parseOverviewKind, parseCompareKind, parseTrendKind, needMonth, needRange } from './analysis.js';
 export type { OverviewKind, CompareKind, TrendKind } from './analysis.js';

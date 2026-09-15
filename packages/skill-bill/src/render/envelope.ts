@@ -1,17 +1,13 @@
 // 页面交付·envelope：16 联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
-// 迁移过的命令（记一笔／改记录）的形状**不在本文件写死**：从 `src/cli/registry.ts` 运行期派生。
+// 迁移过的命令（写入域两条 ＋ 查询域四条）的形状**不在本文件写死**：从 `src/cli/registry.ts` 运行期派生。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { REGISTRY } from '../cli/registry.js';
 import { BillRenderError } from './errors.js';
 
-/** 过渡表是**债务**：14 条尚未搬进能力目录的命令，形状仍写在这里。
- *  待生成器链那票把它替换成「全部命令的形状从注册表派生」——届时本表删掉，
- *  本文件只剩 `billShapeFor`／`buildBillEnvelope`／`parseBillEnvelope` 三件。 */
+/** 过渡表是**债务**：10 条尚未搬进能力目录的命令，形状仍写在这里。
+ *  迁移过的六条（写入域两条 ＋ 查询域四条）从表里删掉，形状由注册表运行期派生（见下 `keyShapeTable`）；
+ *  余下待搬迁的域各自成票时，本表跟着变薄，直到「全部命令的形状从注册表派生」。 */
 const TRANSITIONAL_KEY_SHAPES: Record<string, EnvelopeShape> = {
-  'bill.record.today': 'list',
-  'bill.record.range': 'list',
-  'bill.record.search': 'list',
-  'bill.record.detail': 'detail',
   'bill.analysis.overview': 'stat',
   'bill.analysis.compare': 'analysis',
   'bill.analysis.trend': 'analysis',

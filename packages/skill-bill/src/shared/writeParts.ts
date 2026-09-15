@@ -1,12 +1,13 @@
 /** 写命令回执的共用件（**唯一定义地**）：回执事实的形状（`BillReceipt`）＋ 影响行数口径（`totalChanges`）
- *  ＋ 回执的 `<section>` 段（`writeSection`）＋ 命令原文（`commandLine`）。**对外五件**；三字符转义（`esc`）只在本件内部
+ *  ＋ 页面的 `<section>` 段（`writeSection`）＋ 命令原文（`commandLine`）。**对外五件**；三字符转义（`esc`）只在本件内部
  *  给 `writeSection` 用，不转出去（铁律五：接口小、里面厚）。
  *
- * 谁在用（两个调用点，指名）：
- *   ① `src/record/write.ts`——两条写命令的处理体：影响行数取前后差、回执事实在这里装配、命令原文在这里拼；
- *   ② `src/record/receipt.ts` 与 `src/record/collect.ts`——两张整页的 `<section>` 段都由 `writeSection` 生，
- *      复制 prompt 区与复制日志的命令原文都走 `commandLine`。
- *  第二个消费者：`src/query/`（随兄弟图 #403 的查询域一起到位，同一套采集页／回执页／复制区）。
+ * 谁在用（两个能力，指名）：
+ *   ① `src/record/`——写入域：两条写命令的处理体（影响行数取前后差、回执事实在这里装配、命令原文在这里拼），
+ *      过程型采集页与结果型回执整页的 `<section>` 段；
+ *   ② `src/query/`——查询域：四条读命令的处理体用 `commandLine` 拼复制载荷与日志的命令原文，
+ *      通用查询列表页的 `<section>` 段同走 `writeSection`（槽位 `list`）。
+ *  （页面三个公共标识另立 `./pageIdentity.ts`：那是另一件活——标识取值，不是回执与 `<section>` 段。）
  *  （页面三个公共标识另立 `./pageIdentity.ts`：那是另一件活——标识取值，不是回执与 `<section>` 段。）
  *
  * 口径出处：
@@ -58,22 +59,31 @@ export function commandLine(key: string, params: Record<string, unknown>): strin
   return 'bill-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";
 }
 
-/** 写域页面的 `<section>` 段：五个机器标记 ＋ 正文。
- *  标记：`data-skill`（技能名，取值同页标识）／`data-slot`（`receipt`＝结果型回执整页、`collect`＝过程型采集页）
+/** `<section>` 上的类名（按槽位取值）。写域两页沿用已交付产物上的 `ilife-write`（32 份产物与验收墙按它，
+ *  本票一字不动）；查询域列表页用自己那一枚 `ilife-list`——同一份整页不该顶着「write」这个类名走。 */
+const SECTION_CLASS: Readonly<Record<'receipt' | 'collect' | 'list', string>> = {
+  receipt: 'ilife-write',
+  collect: 'ilife-write',
+  list: 'ilife-list',
+};
+
+/** 页面域内的 `<section>` 段：`data-slot`（`receipt`＝结果型回执整页、`collect`＝过程型采集页、
+ *  `list`＝查询域列表页）＋ 四个机器标记 ＋ 正文。
+ *  标记：`data-skill`（技能名，取值同页标识）／`data-slot`（页型槽位，取值见上）
  *  ／`data-shape`（＝本次 envelope 的形状，与老回执页同一枚，**是契约、不随页型改**）
- *  ／`data-page`（**选页用这一枚**：`collect`／`receipt`；两者共用 `shape=receipt`，靠 shape 选页会选错）
+ *  ／`data-page`（**选页用这一枚**：`collect`／`receipt`／`list`；回执页与采集页共用 `shape=receipt`，靠 shape 选页会选错）
  *  ／`data-key`（**场景名**，过 `sceneKeyOf`：`bill.record.add` → `record.add`）。
- *  R4 收口（本窗）：`bill.` 只许出现在复制载荷区（`pre`／复制块／`data-t`），页面标记一律写场景名；
+ *  R4 收口（写域）：`bill.` 只许出现在复制载荷区（`pre`／复制块／`data-t`），页面标记一律写场景名；
  *  要整名时 `data-skill` ＋ `.` ＋ `data-key` 仍拼得回来。
  *  H1 与副标题**不在这里**：那是页面模板（`base-paint/blocks` 的 `renderPageShell`）的活，一处只出一次。 */
 export function writeSection(input: {
-  readonly slot: 'receipt' | 'collect';
-  readonly page: 'receipt' | 'collect';
+  readonly slot: 'receipt' | 'collect' | 'list';
+  readonly page: 'receipt' | 'collect' | 'list';
   readonly shape: string;
   readonly key: string;
   readonly content: string;
 }): string {
-  return '<section class="ilife-write" data-skill="' + DOC_SKILL + '" data-slot="ilife:bill:' + input.slot
+  return '<section class="' + SECTION_CLASS[input.slot] + '" data-skill="' + DOC_SKILL + '" data-slot="ilife:bill:' + input.slot
     + '" data-page="' + input.page + '" data-shape="' + esc(input.shape) + '" data-key="' + esc(sceneKeyOf(input.key)) + '">'
     + input.content + '</section>';
 }

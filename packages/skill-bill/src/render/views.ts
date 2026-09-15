@@ -1,5 +1,7 @@
 // 页面交付·视图数据装配：DB 行 → 16 key 的 envelope data（全字段，不返空冒充由调用方缺失阻断）。
 // KPI：笔数/支出（绝对值累计）/收入/净额；转账分类 转账/* 不入收支统计，余额另计。
+// 查询域四条命令（today/range/search/detail）的取数与数据装配已随 #411 搬进 `src/query/read.ts`：
+// 本件留 KPI 口径（`calcKpi`——查询域与分析域共用，是本包唯一一份）与行投影（`toBillItem`／`BillItem`）。
 import type { BillRow } from '../fetch/db.js';
 import { l1Of } from '../policy/category.js';
 
@@ -48,26 +50,7 @@ export function calcCategories(records: BillRow[]): { category: string; total: n
   return out;
 }
 
-// 单日/区间/搜索：items + total + kpi（供模板主卡）。
-export function buildRecordToday(date: string, records: BillRow[]): { items: BillItem[]; total: number; date: string; kpi: ReturnType<typeof calcKpi> } {
-  const items = records.map(toBillItem);
-  return { items, total: items.length, date, kpi: calcKpi(records) };
-}
-
-export function buildRecordRange(start: string, end: string, records: BillRow[]): { items: BillItem[]; total: number; start: string; end: string; kpi: ReturnType<typeof calcKpi> } {
-  const items = records.map(toBillItem);
-  return { items, total: items.length, start, end, kpi: calcKpi(records) };
-}
-
-export function buildRecordSearch(kind: string, records: BillRow[]): { items: BillItem[]; total: number; kind: string; kpi: ReturnType<typeof calcKpi> } {
-  const items = records.map(toBillItem);
-  return { items, total: items.length, kind, kpi: calcKpi(records) };
-}
-
-export function buildRecordDetail(record: BillRow): { item: Record<string, unknown> } {
-  return { item: { ...toBillItem(record) } };
-}
-
+// 单条/回执：items 与 total 由查询域与分析域各自装配，本件只留回执那一条的载荷形状。
 export function buildRecordReceipt(message: string): { ok: boolean; message: string } {
   return { ok: true, message };
 }

@@ -60,3 +60,32 @@ export function resolveRange(params: Record<string, unknown>): { start: string; 
   if (start > end) throw new BillPolicyError('POLICY_BAD_INPUT', 'start 不得晚于 end：' + start + '~' + end);
   return { start, end };
 }
+
+/* ── 时间窗口口径（**唯一定义地**，查询域与三个分析命令共用）─────────────────────
+ * 这三件原来住在 `src/cli/cmd_read.ts` 的文件级函数里：查询域搬迁（#411）时被两个去处同时需要——
+ * 查询的「查周／查月／查昨天」与分析的「看月度／看年度／看对比」——故按口径层的位置摆正到这里，
+ * 出口经 `src/policy/index.ts` 转出；两处都引用这一份，不各写一份日期算式。 */
+
+/** 某个月的起止日（`YYYY-MM` → 该月 1 号到月末）。 */
+export function monthRange(month: string): { start: string; end: string } {
+  const [y, m] = month.split('-').map(Number);
+  const last = new Date(y, m, 0).getDate();
+  const dd = String(last).padStart(2, '0');
+  return { start: month + '-01', end: month + '-' + dd };
+}
+
+/** 昨天（本地日期串 `YYYY-MM-DD`）。 */
+export function yesterdayStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/** 本周（周一为第一天）的起止日。 */
+export function weekRange(): { start: string; end: string } {
+  const now = new Date();
+  const day = (now.getDay() + 6) % 7;
+  const mon = new Date(now); mon.setDate(now.getDate() - day);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return { start: mon.toISOString().slice(0, 10), end: sun.toISOString().slice(0, 10) };
+}
