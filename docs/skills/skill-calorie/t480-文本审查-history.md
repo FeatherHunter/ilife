@@ -479,3 +479,90 @@ GATE-RUN runId=de57b080-9808-4efe-a2c0-70694fc5ba7f cmd=node .scratch/t154/w1-54
 2. `log.ts`／`logReceipt.ts` 的同形 `single ? {markPoint:true} : {}`（今日盘／回执的单点图）按禁区一行未碰；要不要同治请编排者另开票。
 3. 交付包重出：`.scratch/t154/delivery/` 只有编排者重出，本票出页在 `w1-546/out-history`（18 页）备查。
 4. 草稿在忽略清单里：`.scratch/t154/w1-546/`（出页／两档截图／探针与变异日志／`mutations-546.mjs`）不入版本库；入版本库的为本节引到的三件（实现／测试／本证据件）。
+
+---
+
+## 十一、W2 复核续节（2026-09-16，本轮零源码改动验证轮）
+
+本轮开工先查自己三件：`git status --short -- <三件>` 干净、`git log` 无别席在途改动，继续。
+结论先行：**实现已齐**（#480 本体 → 对抗审查整改 → #502 形状化 → #510 收敛 → #502 折叠 → #546 去叠字，逐节见上），
+本轮把票面五条验收命令逐条重跑一遍，18 页逐页过，无新增问题，故**源码与测试零改动**；
+样张按票面口径重出到 `.scratch/t154/text-review/out-history/`（与别席目录无冲突，未用独占子目录）。
+
+### 11.1 逐页复核（18 页逐条过，无新增问题）
+
+18 页共用同一套槽位（页题只留名／窗口条／四张卡／节奏事实条／曲线／图例／折叠明细表／标签行／一句话结论／页脚来源行），
+复核＝出页逐条 `OK` ＋ 用例 18 页循环内断言逐页过。实看三张（03 单点／04 基准／26 异常点，见 11.3）。
+
+| 页（第几条／唤醒词） | 复核 | 备注 |
+|---|---|---|
+| 03 看本周体重 | 通过，本页无新增问题 | 实看：单点标签与均值线标签错开，无叠字（#546 保持） |
+| 04 看体重曲线 | 通过，本页无新增问题 | 实看：窗口条／节奏条／结论一句／页脚齐，无截断 |
+| 06 看「有备注」的体重记录 | 通过，本页无新增问题 | 「只取有备注的」仍恰 1 处（页脚） |
+| 11 看上周体重 | 通过，本页无新增问题 | 与 04 同形 |
+| 12 看体重曲线（带目标） | 通过，本页无新增问题 | 「图上画不下，没画」＋值槽人话保持 |
+| 18 看本月体重 | 通过，本页无新增问题 | 与 04 同形 |
+| 19 看体重曲线（带里程碑） | 通过，本页无新增问题 | 副说明「与」字句保持，无顿号 |
+| 25 看上月体重 | 通过，本页无新增问题 | 分段表题两句保持 |
+| 26 看体重曲线（带异常点） | 通过，本页无新增问题 | 实看：5 行偏离两位小数＋判据脚注恰 1 条 |
+| 32 看最近 7 天体重 | 通过，本页无新增问题 | 与 04 同形 |
+| 33 看本月体重曲线 | 通过，本页无新增问题 | 与 04 同形 |
+| 37 看最近 90 天体重 | 通过，本页无新增问题 | 长表分段保持 |
+| 38 看上月体重曲线 | 通过，本页无新增问题 | 与 25 同形 |
+| 41 看某段时间体重 | 通过，本页无新增问题 | 与 04 同形 |
+| 42 看最近 90 天体重曲线 | 通过，本页无新增问题 | 与 37 同形 |
+| 45 看最近 180 天体重曲线 | 通过，本页无新增问题 | 分段表题保持 |
+| 47 看最近 365 天体重曲线 | 通过，本页无新增问题 | 分段表题保持 |
+| 49 看某段时间体重曲线 | 通过，本页无新增问题 | 与 04 同形 |
+
+### 11.2 删掉的信息登记（本轮）
+
+本轮删 **0 条**（零改动验证轮）。历史删除登记见 §二／§5.2／§7.2，既有登记一字未动。
+
+### 11.3 机器读数（本轮，每条都经 `node tooling/run-locked.mjs --ticket 480 -- <单命令>`）
+
+- 出页：`render-family.mjs --family history --out .scratch/t154/text-review/out-history` ⇒
+  `TALLY {"通过":18} TOTAL 18 HTML=18`、末行 `OK-RENDER …/out-history`；18 页合计 **2,589,599** 字节（逐页见 `out-history/result.json`）。
+- 清单：`inventory.py` 重出逐页文本清单（`inventory/history.md` 已是新页内容）。
+- 看图：`shoot.mjs out-history shots-history` ⇒ `SHOT 18 files`；**实看 3 张**
+  （`03-看本周体重.png`／`04-看体重曲线.png`／`26-看体重曲线(带异常点).png`）：
+  省略号截断／压字／错行三项逐张看过，均无；03 页居中黑字点值与右缘灰字均值线两枚错开可读。
+- 用例：`node --test packages/skill-calorie/test/weight-history-333.test.mjs` ⇒ `RESULT: 18/18`（三只用例全绿）。
+- 变异两行（`.scratch/t154/w2-480/mutate.mjs`，页脚全角冒号改半角一行 → 旧句回页）：
+
+```
+MUT-RED exit=1 RESULT=(no RESULT) :: AssertionError [ERR_ASSERTION]: 看本周体重 缺新句式：📊 数据来源：体重记录
+MUT-GREEN exit=0 RESULT=18/18 restore-identical=true
+```
+
+- 行数：`history.ts` LF=**879**（与 §十 一致，无漂移；超 350 线，超因与拆法见文件头，台账由编排者统一同步）。
+
+### 11.4 门禁声明（逐条 GATE-RUN，退出码 0 的才算门禁证据）
+
+```
+GATE-RUN runId=dce389ff-fb07-440e-ab98-7ad59f4d76e4 cmd=node node_modules/typescript/bin/tsc -b packages/skill-calorie
+GATE-RUN runId=4a35a774-c8bd-453b-bc69-888db259eb99 cmd=node .scratch/t154/text-review/render-family.mjs --family history --out .scratch/t154/text-review/out-history
+GATE-RUN runId=ed80d496-38da-4a0f-bc71-0bc54d247852 cmd=python .scratch/t154/text-review/inventory.py
+GATE-RUN runId=331e2f69-0fd9-4e5b-8c49-6f358a4c8702 cmd=node .scratch/t154/shoot.mjs .scratch/t154/text-review/out-history .scratch/t154/text-review/shots-history
+GATE-RUN runId=20a825ac-1483-403c-95a8-bc21763594e0 cmd=node --test packages/skill-calorie/test/weight-history-333.test.mjs
+GATE-RUN runId=59166117-8c4f-4edc-bba2-c0d3f9661e2f cmd=node .scratch/t154/w2-480/mutate.mjs
+```
+
+### 11.5 过程记账（红与失误，一字不瞒）
+
+1. 首轮变异没红（`MUT-RED exit=0 RESULT=18/18`）：电池内层用了 `npx tsc`，与本窗口当场生效的包内规矩
+   （`AGENTS.md` 并发纪律：编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`）相悖，
+   改坏的源码没进 `dist`，用例吃的仍是好产物 ⇒ 假绿。该轮 `runId=82ad705c`（外层 exit=1）**不计入门禁证据**，
+   内层改回真实入口后重跑 ⇒ 红（上式）绿（`RESULT: 18/18`）两行齐。源码树全程干净（改坏即还，逐字节一致）。
+2. 首轮另有一次 `npx tsc -b` 全包编译（`runId=7a156c84` exit=0），同样因入口问题**不计入门禁证据**；
+   门禁编译证据只认真实入口那条（`runId=dce389ff` exit=0）。
+3. 未动（照票面不许动的东西）：命令与路由／`plate.ts`／`figures.ts`／`records.ts`／`shared/*`／
+   `packages/base-render/*`／包台账／`weight-wake-58-339` 与 `render-t41` 两件测试／`.scratch/t154/delivery/`／
+   眉标／第 48 条整页／复制区形态与深色 toast／老技能目录与 `SKILL.md` —— 本轮一行未碰。
+
+### 11.6 未做项与下一手
+
+1. 台账与生成物：`AGENTS.md` 台账 `history.ts` 行实况 879（本轮无漂移），`pnpm gen`／`gen:check` 由编排者统一同步，本票不代改。
+2. 样张与清单在忽略清单里：`.scratch/t154/text-review/out-history/`／`shots-history/`／`inventory/` 与
+   `.scratch/t154/w2-480/`（认领／六份持锁日志／变异电池）不入版本库；入版本库的为本节一件（本证据件）。
+3. 本票窗口不执行 `git push`（派单：总工统一收口）；提交 sha 见结果评论。
