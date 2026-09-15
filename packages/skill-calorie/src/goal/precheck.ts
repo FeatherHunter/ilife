@@ -14,10 +14,19 @@
  *
  * 一页一事：字段面（营养五项 ＋ 体重四项）就是本子功能的题目，故这一页住本文件；
  *   写后回执页不住这里（它吃 `CrudReceipt`，归「写后回执页」那张票）。
+ *
+ * **#565 复制通道收口（负责人 2026-09-15 肉眼验收）**：这一页原来一页出了**两条**「复制日志」——
+ *   上部 prompt 那一排经共用件 `promptCopyArea` 出按钮，那一路走 `renderActionBar({ copyData })`，
+ *   公共层 `controls.ts` 的 #336 兜底在「数据位在场、日志位缺席」时**自动补一颗禁用态「复制日志」**；
+ *   页底复制区的数据位 ＋ 日志位又出一颗真日志。修法只在本文件：上部改走 `promptRow()`
+ *   （prompt 挂在**日志位**上，日志位单独给一颗不触发兜底），页底只给日志位。收口后一页
+ *   「复制指令」一颗 ＋「复制日志」一颗，共 2 个 copy-btn，日志六段载荷一字不动。
  */
 import type { SerializableEnvelope } from 'base-paint';
-import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
+import { renderActionBar } from 'base-paint';
+import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm, renderPreBlock } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
+import { CALORIE_COPY_ACTION } from '../render/copy.js';
 import { nowStamp } from '../render/receipt.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
@@ -128,6 +137,23 @@ function weightBlock(d: GoalDraft): string {
   return tables.join('');
 }
 
+/** 上部指令区：prompt 预览块（原文逐字，与原来那颗按钮同一个产出器）＋**一颗**「复制指令」。
+ *
+ *  #565：prompt 挂在 actionBar 的**日志位**上——日志位单独给一颗**不触发** #336 兜底，
+ *  同一页因此只剩页底那一条「复制日志」通道。actionId／文案取冻结表 `CALORIE_COPY_ACTION`
+ *  （`../render/copy.js`，概念唯一出处，不另造名字），按下的仍是 prompt 原文；
+ *  槽位换成日志位不改变按钮形状（`renderActionBar` 的两个槽位走同一个按钮产出器）。
+ *
+ *  没有 prompt（不针对某一条词进来的那次）**整区不出**——与共用件 `copyArea` 的跳过口径同
+ *  （`copyArea.ts` 的 prompt 位：空串不出预览与按钮；这里不能照渲染，`renderPreBlock` 拒绝空串）。 */
+function promptRow(prompt: string): string {
+  if (prompt === '') return '';
+  return renderPreBlock({ command: prompt })
+    + renderActionBar({
+      copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: CALORIE_COPY_ACTION.label, text: prompt },
+    });
+}
+
 /** 预检确认页整页：现值 → 要填的项 → 推荐方案 → 体重草稿 → 复制指令。 */
 export function buildGoalPrecheckDoc(v: GoalPrecheckView): string {
   const d = v.draft;
@@ -189,9 +215,12 @@ export function buildGoalPrecheckDoc(v: GoalPrecheckView): string {
         open: true,
       }),
     renderDisclosure({ title: '体重目标（目标／起始日／截止日／速率校验）', contentHtml: weightBlock(d), open: false }),
+    // 上部指令区：prompt 原文 ＋ 一颗「复制指令」（走 `promptRow` 的日志位，见该函数注释）。
+    promptRow(v.prompt),
+    // 页底技术原件区：只留**一条**复制通道——「复制日志」那颗，六段载荷照旧（命令原文含本次参数、
+    // 库文件名与来源、时间戳与版本）。数据位**不再给**：它一在场，公共层就按 #336 补一颗禁用态
+    // 「复制日志」，一页又出两条同名通道（#565 的缺陷正是这么来的）。技术原件没丢——都在这一颗里。
     copyArea({
-      prompt: { text: v.prompt, label: null },
-      data: { envelope, title: '【calorie · 目标预检】' },
       log: {
         envelope,
         copyLog: copyLog({
