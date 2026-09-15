@@ -422,3 +422,86 @@ python .scratch/t154/text-review/rev-fix/probe-fix-readings.py   # → .scratch/
   复制区形态与深色瞬时 toast／第 48 条整页（归 #436）／`.scratch/t154/delivery/`（只有编排者重出交付包）。
 - **写集外残留（本票不改，供编排者派下一手）**：`weight/logReceipt.ts` 与 `weight/receipt.ts` 两件里的
   7 页 ★（01／09／16／17／23／24／31）与 3 处顿号——见 `t483-文本审查-receipt.md` 八.2 的逐条表。
+
+---
+
+## 九、本轮复验与一处符号修正（2026-09-16 · #481 第二席）
+
+> 前八节原文一字未动。本节只记本轮在现树（`48aa870` 两段对照块之后）上的复验与改动。
+> 结构纪律：改前已读 `docs/agents/structure.md`。影响清单只有体重对比能力目录内两件，
+> 不跨能力、不碰共享层、不新建目录：
+> `src/weight/weightCompare2.ts`（E2 每天变化符号）＋ `test/weight-compare-334.test.mjs`（锁符号断言）。
+> 超线报警：`weightCompare2.ts` 217→218，未超 350 线；`compare.ts` 700 行超线但本轮一字未碰，
+> 台账按票面归编排者统一同步，本票不碰 `AGENTS.md`。
+
+### 九.1 逐页复验（17 页，数据源＝重出的 `out-compare/` 与 `inventory/compare.md`）
+
+- 07／14／28／35（多记录两段）：本轮无问题。段卡区间住卡、每天变化卡值「平均每天 +N 克」、
+  表题「两期对比（本期在上）」、结论只说差别大小、页脚「体重记录 ｜ 窗口 ｜ 共 N 条」。禁词 `g/天`／`无从对照`／`n=1`／`样本`／`情景`／`节奏`／` vs `／`·`／`；` 全 0。
+- 21／39／43／46（单日段）：本轮无问题。页顶「本期 1 条，低于 3 条。」＋逐条列表、
+  徽章「只有一天」／「记录太少」、每天变化「看不出快慢」、表内「—」三列。已真看 21 样张，无截断压字。
+- 50／51／55／56（锚点单日）：本轮无问题。眉标整行删、段标签「平台期第一天」／「今夏以来最低」／「今冬以来最低」、
+  副题撤、表题「当前与 X」只此一处。已真看 52 样张（见九.2），表格「开始时／结束时」三列「—」。
+- 53／54（减重 N kg）：本轮无问题。表题「减重 5 kg 那天与今天」（`N` 已换实际数，` vs ` 已换「与」）、
+  段标签带空格「减重 5 kg 那天」、轨迹行只留两端值、明细「这段时间平均 平均每天 ±N 克」符号与升降同向（E3 取数层已对）。
+- 57（运动多 vs 少）：本轮无问题。段标签「2026-09 运动最多」（空格分槽，无括号无 `·`）、
+  补充对照「运动平均每天 29 卡／175 卡」（不等长两段换可比口径）、「睡眠 没有记录」。已真看 57 样张，表区间换行正常、无溢出。
+- 58（工作日 vs 周末）：本轮无问题。对比期徽章「记录太少（2 条）」、每天变化徽章「记录太少」。`scenarioD4` 的三行
+  （工作日波动／周末波动／两段平均接近程度）不在任何唤醒词链路上，本轮不碰（改它用户看不见）。
+- 07 样张已真看：对照块两段卡＋「对比 +0.3 kg 上升」连接件＋块尾「每天变化」；结论「差别很小」不给数不给方向；页脚单行。
+
+### 九.2 唯一改动：第 52 条符号与方向打架
+
+| 页 | 现文本（逐字） | 判据 | 判定 | 改后文本 | 依据 |
+|---|---|---|---|---|---|
+| 52 当前 vs 历史最高 · 补充对照「这段时间平均」 | `平均每天 +19 克`（上升口吻）＋ 同页「已下降 9.6 kg」＋ 方向胶囊「下降」 | 难（用户视角：下降页却说每天 +N 克，看不懂哪边） | 改 | `平均每天 -19 克` | 取数层 `dropped` 是正数 magnitude，直接除丢了符号；改按 `(当前 − 最高) ÷ 天数` 取负值，与「已下降」同向。E3 同行已按 `(当前 − 命中) ÷ 天数` 取号，本改只是把 E2 拉到同一口径。 |
+
+- 展示形式未换：仍是 `renderListRows` 那一行，只改值字符串，不加组件、不加样式。
+- 为何只改 E2：E3 的 `rate` 已带号（53 页 −16 克下降／54 页 +5 克上升，逐页对过）；B8 的「平台期结束后变化」手工拼 `+/-` 已对；C5 的两行是运动消耗不是体重速率。
+
+### 九.3 删掉的信息登记（不许丢）
+
+| # | 删掉的文本（逐字） | 出现在 | 去处 |
+|---|---|---|---|
+| — | 本轮零删除。符号 `+`→`−` 是改写不是删除；其余 16 页一字未动。 | — | — |
+
+### 九.4 机器读数
+
+- **写集 LF**：`weightCompare2.ts` 217→218（+1 行注释）／`weight-compare-334.test.mjs` 250→255（+5 行 E2 符号断言）。
+- **编译（持锁，真入口）**：`node tooling/run-locked.mjs --ticket 481 -- node node_modules/typescript/bin/tsc -b packages/skill-calorie`
+  → 初验 `runId=5f3640d4-3317-4a5e-aefa-5cfab748b3e8 exit=0`；改后 `runId=5cd857c1-a250-4812-827c-29e43065c63f exit=0`；
+  强制重建 `runId=68be12b0-a98b-4920-8770-fd24a366dde7 exit=0`（增量未拾取时用 `--force`，见九.5）。
+- **出页**：`node .scratch/t154/text-review/render-family.mjs --family compare --out .scratch/t154/text-review/out-compare`
+  → `TALLY {"通过":17} TOTAL 17 HTML=17`，末行 `OK-RENDER`；17 页合计 1324538 字节。样张 `.scratch/t154/text-review/out-compare/`（绝对路径 `D:\ilife\.scratch\t154\text-review\out-compare\`）。
+- **清单**：`python .scratch/t154/text-review/inventory.py` → exit 0（`history 18／compare 17／review 6／volatility 5／other 3`）。
+- **截图**：`node .scratch/t154/shoot.mjs .scratch/t154/text-review/out-compare .scratch/t154/text-review/shots-compare`
+  → `SHOT 17 files`；已用 `read_image` 真看 07／21／57／52 四张（无省略号截断、无压字、无错行；52 页「平均每天 -19 克」与「已下降」同向）。
+- **用例（持锁）**：`node tooling/run-locked.mjs --ticket 481 -- node --test packages/skill-calorie/test/weight-compare-334.test.mjs`
+  → 改后 `runId=6863d988-23d3-4177-8232-0a3dcc42be44 ℹ pass 7／ℹ fail 0 exit=0`；
+  最终绿 `runId=8a3c1dfe-ffa8-4441-ad07-4ea41bc48c5a ℹ pass 7／ℹ fail 0 exit=0`。
+- **变异自证（源码级，两行）**：
+  - 改坏：`weightCompare2.ts` 的 `(current - maxRow[1]) / days` → `dropped / days`
+    ⇒ `runId=091a1b78-2fba-4f4b-bd37-107a8d8bd403 exit=1 ℹ fail 1 AssertionError: e2 这段时间平均应与下降同向（印「平均每天 -」）`。
+  - 还原：改回 ⇒ `runId=8a3c1dfe-ffa8-4441-ad07-4ea41bc48c5a exit=0 ℹ pass 7／ℹ fail 0`。
+- **门禁声明**：
+  - GATE-RUN runId=5f3640d4-3317-4a5e-aefa-5cfab748b3e8 cmd=node node_modules/typescript/bin/tsc -b packages/skill-calorie
+  - GATE-RUN runId=5cd857c1-a250-4812-827c-29e43065c63f cmd=node node_modules/typescript/bin/tsc -b packages/skill-calorie
+  - GATE-RUN runId=68be12b0-a98b-4920-8770-fd24a366dde7 cmd=node node_modules/typescript/bin/tsc -b packages/skill-calorie --force
+  - GATE-RUN runId=6863d988-23d3-4177-8232-0a3dcc42be44 cmd=node --test packages/skill-calorie/test/weight-compare-334.test.mjs
+  - GATE-RUN runId=091a1b78-2fba-4f4b-bd37-107a8d8bd403 cmd=node --test packages/skill-calorie/test/weight-compare-334.test.mjs
+  - GATE-RUN runId=8a3c1dfe-ffa8-4441-ad07-4ea41bc48c5a cmd=node --test packages/skill-calorie/test/weight-compare-334.test.mjs
+- **禁词回扫（可见面，去样式／脚本／复制区／标题）**：`g/天`=0、`kg/天`=0、`无从对照`=0、`n=1`=0、`仅一天`=0、
+  `门槛`=0、`样本`=0、`单日数据`=0、`情景 b/e/c/d`=0、`锚点`=0、`节奏`=0、` vs `=0、`·`=0、`；`=0、
+  `N kg`=0、`σ`=0、`weight_log`=0、`calorie_data`=0。
+
+### 九.5 未做项与下一手
+
+1. `npx tsc` 在本机是假出口（`node_modules\.bin` 不存在，不编译却可能出假绿）：本轮已改用真入口
+   `node node_modules/typescript/bin/tsc`；此事已报（并发纪律更新），各票照新口径跑。
+2. 增量编译有一次未拾取还原（`dist` 留着改坏版）：已用 `--force` 重建并复绿；变异后一律 `--force` 再验。
+3. `inventory.py` 仍抽不到新形状（对照块连接件差值／结论判语／`factStrip` 两段每天变化）：本轮靠直接读 `out-compare/*.html` 与样张补验；
+   要修抽取另开票（不动本票写集）。
+4. 窗口面 H1 `体重对比` vs 情景面 H1 `对比体重` 两名并存：用户视角可统一为 `对比体重`（与唤醒词同字），但改 H1 牵动 17 页，
+   本轮未动，留编排者裁定。
+5. `AGENTS.md` 台账本票不碰；`delivery/` 只有编排者重出；第 48 条一字符未碰；推送等总工收口（本票不 `push`）。
+
