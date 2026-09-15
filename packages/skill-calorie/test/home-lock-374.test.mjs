@@ -37,7 +37,7 @@ const CASES = [
   { wake: '看今日饮食概览', key: 'calorie.view.diet', cli: `calorie-cmd-read calorie.view.diet --params '{"window":"今日"}'`, shape: 'doc', needles: ['累计', '日均', '目标', '趋势', '按日汇总', '蛋白', 'calorie.view.diet'] },
   { wake: '看今日运动概览', key: 'calorie.view.exercise', cli: `calorie-cmd-read calorie.view.exercise --params '{"window":"今日"}'`, shape: 'doc', needles: ['总消耗', '总时长', '按日消耗', '按类型明细', 'calorie.view.exercise'] },
   { wake: '看今日体重概览', key: 'calorie.view.weight', cli: 'calorie-cmd-read calorie.view.weight', shape: 'doc', needles: ['体重总览', '最新体重', '距目标', '变化', '体重曲线', '体重记录', 'calorie.view.weight'] },
-  { wake: '看今日目标进度', key: 'calorie.view.goal-progress', cli: `calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'`, shape: 'fragment', needles: ['目标进度', '热量目标', '目标完成率', 'ilife:calorie:goal-progress'] },
+  { wake: '看今日目标进度', key: 'calorie.view.goal-progress', cli: `calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'`, shape: 'doc', needles: ['目标进度', '热量目标', '每日达标', '复制数据', 'calorie.view.goal-progress'] },
   { wake: '看本周主页', key: 'calorie.view.home', cli: `calorie-cmd-read calorie.view.home --params '{"windowDays":7,"date":"今日"}'`, shape: 'doc', needles: [...HOME, 'calorie.view.home'] },
   { wake: '看本月主页', key: 'calorie.view.home', cli: `calorie-cmd-read calorie.view.home --params '{"windowDays":30,"date":"今日"}'`, shape: 'doc', needles: [...HOME, 'calorie.view.home'] },
   { wake: '看连续记录天数', key: 'calorie.view.home', cli: `calorie-cmd-read calorie.view.home --params '{"date":"今日"}'`, shape: 'doc', needles: [...HOME, 'calorie.view.home'] },

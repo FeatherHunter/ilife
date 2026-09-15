@@ -1,0 +1,28 @@
+# gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：467｜since：（无）｜until：2026-09-15T04:23:15.332Z｜条目数：20｜导出时间：2026-09-15T04:24:06.168Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
+
+```text
+RUN ticket=467 runId=af92010b-6285-4823-8073-b47582f5ab49 cmd="pnpm build" waitedMs=130075 exit=2 pid=44224 at=2026-09-15T03:47:37.420Z
+RUN ticket=467 runId=01d053bd-9c2a-4a17-a661-b8c699195399 cmd="pnpm build" waitedMs=0 exit=0 pid=36540 at=2026-09-15T03:48:27.449Z
+RUN ticket=467 runId=3c210958-6231-4f30-a053-dc0a236330ab cmd="pwsh -NoProfile -Command \"node .scratch/t467/gen.mjs\nWrite-Output ---\" probe \"---\nnode .scratch/sep-audit/probe.mjs .scratch/t467/看今日目标进度.html | Select-Object -First 3\nnode .scratch/sep-audit/probe.mjs .scratch/t467/看今日目标进度-近30天.html | Select-Object -First 3\nnode .scratch/sep-audit/probe.mjs .scratch/t467/看今日目标进度-空窗.html | Select-Object -First 3\nWrite-Output ---\" tests \"---\nnode --test packages/skill-calorie/test/t467-goal-progress.test.mjs\nWrite-Output TEST467-EXIT=$LASTEXITCODE\nnode --test packages/skill-calorie/test/home-lock-374.test.mjs packages/skill-calorie/test/render-t8.test.mjs packages/skill-calorie/test/render-t9.test.mjs\nWrite-Output TESTNEI-EXIT=$LASTEXITCODE\"" waitedMs=80069 exit=1 pid=6136 at=2026-09-15T03:50:39.704Z
+RUN ticket=467 runId=b5c5b9c7-0152-4570-a456-2ea94b62a247 cmd="pwsh -NoProfile -Command \"node .scratch/t467/gen.mjs\nWrite-Output ---\" probe \"---\nforeach ($f in @('看今日目标进度.html','看今日目标进度-近30天.html','看今日目标进度-空窗.html')) {\n  node .scratch/sep-audit/probe.mjs (.scratch/t467/ + $f) | Select-Object -First 2\n}\nWrite-Output ---\" tests \"---\nnode --test packages/skill-calorie/test/t467-goal-progress.test.mjs\nWrite-Output TEST467-EXIT=$LASTEXITCODE\nnode --test packages/skill-calorie/test/home-lock-374.test.mjs packages/skill-calorie/test/render-t8.test.mjs packages/skill-calorie/test/render-t9.test.mjs\nWrite-Output TESTNEI-EXIT=$LASTEXITCODE\"" waitedMs=0 exit=0 pid=33324 at=2026-09-15T03:50:56.928Z
+RUN ticket=467 runId=2f5589f3-6217-4ba4-b684-6dc1cc7db5d9 cmd="node .scratch/t467/run-all.mjs all" waitedMs=110085 exit=1 pid=45680 at=2026-09-15T03:53:27.152Z
+RUN ticket=467 runId=2297e1d1-a7b3-4645-8c28-9cf76c1f961a cmd="node .scratch/t467/run-all.mjs all" waitedMs=70052 exit=1 pid=2168 at=2026-09-15T03:55:48.681Z
+RUN ticket=467 runId=1efc601e-749e-4f55-b6b8-db5a9a648391 cmd="node .scratch/t467/run-all.mjs test" waitedMs=70068 exit=1 pid=29248 at=2026-09-15T03:57:52.033Z
+RUN ticket=467 runId=7929c5d3-0c53-4a94-a319-68da48827068 cmd="node .scratch/t467/run-all.mjs test" waitedMs=0 exit=1 pid=40828 at=2026-09-15T03:58:31.641Z
+RUN ticket=467 runId=8098fba7-6638-4440-99d8-b5720b0892a7 cmd="node .scratch/t467/run-all.mjs all" waitedMs=0 exit=1 pid=45932 at=2026-09-15T03:59:37.413Z
+RUN ticket=467 runId=539b3646-1ab1-4b44-97e2-ab1364e7907d cmd="node .scratch/t467/run-all.mjs test" waitedMs=0 exit=1 pid=20364 at=2026-09-15T04:00:08.034Z
+RUN ticket=467 runId=9908d3ce-ea02-4189-a84b-509d45c4772c cmd="node .scratch/t467/shots.mjs" waitedMs=0 exit=0 pid=41608 at=2026-09-15T04:02:48.610Z
+RUN ticket=467 runId=407d2a45-a2a1-4ab0-b4f5-a71abeb627ff cmd="node .scratch/t467/shots.mjs 看今日目标进度-近30天.html measure" waitedMs=0 exit=0 pid=43032 at=2026-09-15T04:05:27.652Z
+RUN ticket=467 runId=7bfe6f91-50e7-4e89-b750-abb3a5828690 cmd="node .scratch/t467/shots.mjs ../../../.scratch/t375/products/看今日主页.html measure" waitedMs=0 exit=0 pid=44948 at=2026-09-15T04:06:51.800Z
+RUN ticket=467 runId=ef3cf5ef-0b8b-4976-a5e0-bd4ecf51c760 cmd="node .scratch/t467/shots.mjs ../t375/products/看今日主页.html measure" waitedMs=0 exit=0 pid=40796 at=2026-09-15T04:08:25.124Z
+RUN ticket=467 runId=9628051b-83d3-4dcb-8dc7-5315b24fb39a cmd="node .scratch/t467/run-all.mjs all" waitedMs=1 exit=1 pid=44252 at=2026-09-15T04:08:59.134Z
+RUN ticket=467 runId=5268a2fa-0a42-449e-a30b-a247f5b5cd20 cmd="node .scratch/t467/run-all.mjs all" waitedMs=0 exit=1 pid=11008 at=2026-09-15T04:10:16.097Z
+RUN ticket=467 runId=21662f05-3238-4a2f-bdb4-dad9ced5d621 cmd="node .scratch/t467/shots.mjs 看今日目标进度.html both" waitedMs=0 exit=0 pid=45380 at=2026-09-15T04:12:28.047Z
+RUN ticket=467 runId=6dfc936d-378d-40ad-a0e7-d9bc1f81c934 cmd="node .scratch/t467/mutate.mjs" waitedMs=0 exit=0 pid=45100 at=2026-09-15T04:13:20.408Z
+RUN ticket=467 runId=2e26bb06-8ccd-46d7-bae8-e6991687f100 cmd="node .scratch/t467/final.mjs" waitedMs=0 exit=1 pid=3276 at=2026-09-15T04:18:26.700Z
+RUN ticket=467 runId=7c4b54ec-bac2-40bb-8da7-e9db55254b9a cmd="node .scratch\\t467\\shots.mjs 看今日目标进度.html measure" waitedMs=0 exit=0 pid=10760 at=2026-09-15T04:22:41.123Z
+```
