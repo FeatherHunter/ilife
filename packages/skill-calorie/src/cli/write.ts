@@ -1,6 +1,7 @@
 /** #40 · 卡路里写键分发（单条 CRUD 可执行链）：唯一出口 cmd_read 的写分支（memo.create/update/remove 范式）。
  *
- * 35 写键一律 receipt 形：先调现行 fetch 层库函数写库，再用 render/receipt.ts（T10）
+ * 会改数据库的命令一律出整页文档（#253F2 当刻实况：46 条；六个装配口共认 40 条，链外 6 条
+ * 各由能力目录自己的实现出整页）：先调现行 fetch 层库函数写库，再用 render/receipt.ts（T10）
  * buildCrudReceipt（照片键用 photo/photo.ts 三回执）组装回执；envelope 数据为
  * { ok: true, message, receipt }（ok/message 过 envelope 全字段，receipt carry T10 形状）。
  * 本文件不写 render/ 新视图、不碰 envelope 键表（#41 边界）；HTML 为 dispatch 内联

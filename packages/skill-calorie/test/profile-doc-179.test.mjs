@@ -255,25 +255,35 @@ test('#247 场景 07 五张页的复制数据是「三格式三选一」菜单�
 });
 
 
-/** #179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）。
+/** 完整文档四断言（本文件自带的判定，沿本文件 `assertDocPage` 那条的口径）：
+ * ① `<!doctype html>` 起；② 含 charset；③ 含 `<style`；④ 含 `ilife-page`。
+ * 反面同时钉死：产物不再是旧回执片段（不得还落在 `data-slot="ilife:calorie:receipt"` 那段裸片段上）。 */
+function assertFullDocPage(html, what) {
+  assert.ok(html !== null, what + ' 未落盘');
+  assert.ok(html.startsWith('<!doctype html>'), what + ' 缺 doctype：' + String(html).slice(0, 60));
+  assert.ok(html.includes('charset'), what + ' 缺 charset');
+  assert.ok(html.includes('<style'), what + ' 缺 style');
+  assert.ok(html.includes('ilife-page'), what + ' 缺 ilife-page');
+  assert.equal(html.includes('data-slot="ilife:calorie:receipt"'), false, what + ' 还落在旧回执片段上');
+}
+
+/** #179 当年那条「其余会改数据库的命令仍是原回执片段（没被一刀切换页）」**按 #253 的当刻口径翻面**。
+ *
+ * 口径变更说明（有意改，票面与提交信息写清；编排者裁定 (b)）：#179 当年拿这批命令当「未切整页」的
+ * 反面样本；此后各场景各自切整页（#337 体重 4 条／#269 饮食 13 条／#365 身体细节 4 条／#253 目标 5 条），
+ * 本条抽样一次次收窄。收窄到只剩目标域两条时再往下就没了——上一席曾试「把抽样换成当刻仍是片段的命令」，
+ * 复核用探针实测证明**当刻 46 条会改数据库的命令全部出整页**（六个装配口共认 40 条，链外 6 条也已是整页），
+ * 「仍是片段」已无样本可抽。故本条不再找「片段」样本：**改钉这两条被测命令的产物是完整文档**，
+ * 强度不降（四断言逐条真跑，退回片段即红，见文件末的整页断言同款口径）。
  *
  * #337 口径变更（有意改，票面与提交信息写清）：场景 03 的 4 条体重写命令
- * （`calorie.weight.log`／`batch`／`update`／`remove`）已从这一堆里拿出来，
- * 切整页装配（`src/weight/receipt.ts`，见下条测试）；本条只钉剩下的抽样，
- * 不断言也不跳过体重命令（体重命令的整页断言见下条）。
+ * （`calorie.weight.log`／`batch`／`update`／`remove`）已切整页装配（`src/weight/receipt.ts`，见下条测试）。
  *
  * #269 口径变更（有意改，票面与提交信息写清）：场景 02 饮食这一族的 13 条
- * （9 条饮食记录 ＋ 3 条食品库 ＋ 1 条饮水）同样从这一堆里拿出来，切整页装配
- * （`src/diet/receipt.ts` 的 `dietReceiptDoc`，见下下条测试）；本条抽样改为
- * 目标域与身体域这三条，仍是逐字钉片段形状。
- *
- * #365 口径变更（有意改，票面与提交信息写清）：场景 08 身体细节这一族的写命令
- * （`calorie.body.composition-add`／`calorie.body.measure-add`／
- * `calorie.body.composition-remove`／`calorie.body.measure-remove`，对应 7 条写唤醒词）
- * 同样从这一堆里拿出来，切整页装配（`src/body/receipt.ts` 的 `bodyReceiptDoc`，
- * 见本文件末条测试）；本条抽样只剩目标域这两条，仍是逐字钉片段形状。
+ * （9 条饮食记录 ＋ 3 条食品库 ＋ 1 条饮水）同样切整页装配（`src/diet/receipt.ts` 的 `dietReceiptDoc`，
+ * 见下下条测试）；#365 身体细节 4 条切 `src/body/receipt.ts` 的 `bodyReceiptDoc`（见本文件末条测试）。
  */
-test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切换页）', () => {
+test('#179／#253 目标域两条会改数据库的命令：产物是完整文档（原「仍是片段」反面按当刻口径翻面）', () => {
   const dir = mkDb(true);
   const cases = [
     ['calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50 }],
@@ -282,10 +292,7 @@ test('#179 其余会改数据库的命令仍是原回执片段（没被一刀切
   for (const [key, params] of cases) {
     const r = runCli(dir, key, params);
     assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
-    assert.ok(r.file !== null, key + ' 未落盘');
-    assert.ok(r.file.startsWith('<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:receipt">'),
-      key + ' 的产物不再是原回执片段（本条钉住的命令尚未切整页）：' + r.file.slice(0, 80));
-    assert.ok(!r.file.startsWith('<!doctype html>'), key + ' 意外变成了整页文档');
+    assertFullDocPage(r.file, key);
   }
 });
 

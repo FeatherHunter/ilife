@@ -25,6 +25,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { buildDataText } from 'base-paint';
 import { openDb } from '../dist/index.js';
+// #253F2 · 链外六条与训练计划族的覆盖用标准种子库（目标行／运动记录／计划表齐），
+// 沿 `docs/research/t81-seed.mjs` 的 `seedFull()`＋`SEED_TODAY`（票面载明的临时库口径）。
+import { seedFull, SEED_TODAY } from '../../../docs/research/t81-seed.mjs';
 import {
   DELIVERY_MODES, DELIVERY_TEMPLATES, buildDelivery, deliveryTemplateOf, withDelivery,
 } from '../dist/render/envelope.js';
@@ -41,12 +44,30 @@ const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const DB_FILENAME = 'calorie_data.db';
 const ENVELOPE_FIELDS = ['version', 'skill', 'shape', 'key', 'data', 'delivery'];
+/** 一份最小可用的 PNG 字节（`calorie.photo.add` 只要求源文件存在，`embedPhoto` 按扩展名定 MIME 搬字节）。 */
+const PNG_1PX = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 function mkDb(tag, seed = false) {
   const dir = mkdtempSync(join(tmpdir(), 't83-' + tag + '-'));
   const db = openDb(join(dir, DB_FILENAME));
   if (seed) seedDb(db);
   db.close();
+  return dir;
+}
+
+/** 标准种子库（`seedFull()`）：目标行／运动记录／`workout_plan_config`＋`workout_plans` 齐，
+ *  链外六条与训练计划族那条腿要靠它（#253F2）。写法沿本件 `mkDb`，只换种子函数。 */
+function mkSeedDb(tag) {
+  const dir = mkdtempSync(join(tmpdir(), 't83-' + tag + '-'));
+  const db = openDb(join(dir, DB_FILENAME));
+  try {
+    seedFull(db);
+  } finally {
+    db.close();
+  }
   return dir;
 }
 
@@ -312,7 +333,12 @@ test('#83 写键同样有 delivery（receipt 产物族）', () => {
   const dir = mkDb('write');
   // #269 口径变更（有意改，票面与提交信息写清）：饮食这一族的 13 条回执已从片段切成整页文档
   // ⇒ 产物族按本文件上面那条单元断言钉住的判定次序（DOCTYPE 先于 shape）判成 `doc-shell`；
-  // envelope 的 `shape` 仍是 `receipt`。反面同时钉住：未切整页的命令仍是 `receipt` 片段族。
+  // envelope 的 `shape` 仍是 `receipt`。
+  // #253F2 口径变更（有意改，票面与提交信息写清；编排者裁定 (b)）：本条原反面样本 `calorie.goal.set`
+  // 已由 #253 切成整页回执 ⇒ 反面一并翻面并**加强**：不再只钉产物族一个字段，
+  // 改成「产物族走 class 判定 ＋ 完整文档四断言（doctype 起／charset／`<style`／`ilife-page`）＋
+  // 不再落在旧片段标记 `data-slot="ilife:calorie:receipt"` 上」，退回片段即红（片段的 class 是 `''`，
+  // 判定次序永远走不到 `doc-shell`）。
   const r = runOk(dir, 'calorie.water.log', { ml: 300 });
   assert.equal(r.env.shape, 'receipt');
   assert.equal(r.env.delivery.mode, 'file');
@@ -321,12 +347,87 @@ test('#83 写键同样有 delivery（receipt 产物族）', () => {
   assert.ok(existsSync(r.env.delivery.path));
   assert.equal(r.env.delivery.bytes, statSync(r.env.delivery.path).size);
 
-  const frag = runOk(dir, 'calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50 });
-  assert.equal(frag.env.shape, 'receipt');
-  assert.equal(frag.env.delivery.mode, 'file');
-  assert.equal(frag.env.delivery.template, 'receipt', '未切整页的命令仍是片段族');
-  assert.ok(readFileSync(frag.env.delivery.path, 'utf8').startsWith('<section class="ilife-page"'), '片段族以 section 开头');
-  assert.equal(frag.env.delivery.bytes, statSync(frag.env.delivery.path).size);
+  const full = runOk(dir, 'calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50 });
+  assert.equal(full.env.shape, 'receipt', '写键的 shape 仍是 receipt（整页只换装配，不改信封形状）');
+  assert.equal(full.env.delivery.mode, 'file');
+  assert.equal(full.env.delivery.template, 'doc-shell', '目标域整页回执的产物族（退回片段即 class 判定走不到这里）');
+  assertFullDoc(full.env.delivery.path, 'calorie.goal.set');
+  assert.equal(full.env.delivery.bytes, statSync(full.env.delivery.path).size);
+});
+
+/** 完整文档四断言（票面口径：① `<!doctype html>` 起 ② 含 charset ③ 含 `<style` ④ 含 `ilife-page`，
+ *  沿本文件上面那条单元断言钉住的产物族判定次序）＋ 反面：产物里不再有旧片段标记。 */
+function assertFullDoc(htmlPath, what) {
+  assert.ok(existsSync(htmlPath), what + ' 未落盘');
+  const html = readFileSync(htmlPath, 'utf8');
+  assert.ok(html.startsWith('<!doctype html>'), what + ' 缺 doctype：' + html.slice(0, 60));
+  assert.ok(html.includes('charset'), what + ' 缺 charset');
+  assert.ok(html.includes('<style'), what + ' 缺 style');
+  assert.ok(html.includes('ilife-page'), what + ' 缺 ilife-page');
+  assert.equal(html.includes('data-slot="ilife:calorie:receipt"'), false, what + ' 还落在旧回执片段上');
+  return html;
+}
+
+/* ── ⑥b 链外六条 ＋ 训练计划族代表键：产物已是完整文档（#253F2 补覆盖）────────────────────────
+ * 上一席复核的受控变异抓出的洞：把训练计划那个装配口整体退回片段（`workoutReceiptDoc(key, …)`
+ * 换成不认的键），本文件与 `profile-doc-179.test.mjs` **一条都没红**——链外／某族装配口被整体
+ * 退回片段时无人发现。本条把这组洞补上：链外六条（`calorie.exercise.*` 三条、`calorie.photo.*`
+ * 三条）＋ 训练计划族一条代表（`calorie.workout.plan-set`），逐条真跑并钉完整文档四断言。
+ * 被测参数照各能力目录 routes.ts 的示例（同一键在同一份库里逐条顺序跑，互不顶替）。 */
+
+test('#253F2 链外六条会改数据库的命令：产物已是完整文档（不是片段）', () => {
+  const dir = mkSeedDb('outchain');
+  const photosDir = join(dir, 'photos');
+  mkdirSync(photosDir, { recursive: true });
+  const srcPhoto = join(dir, 'src-face.png');
+  writeFileSync(srcPhoto, PNG_1PX);
+
+  const exAdd = runOk(dir, 'calorie.exercise.add', { type: '慢跑', calories: 320, minutes: 30, date: '2026-09-06' });
+  const exId = exAdd.env.data.receipt.recordId;
+  assert.ok(exId > 0, '记运动回执缺记录号');
+
+  const outChain = [
+    ['calorie.exercise.add', exAdd],
+    ['calorie.exercise.update', runOk(dir, 'calorie.exercise.update', { id: exId, minutes: 40 })],
+    ['calorie.exercise.remove', runOk(dir, 'calorie.exercise.remove', { id: exId })],
+    ['calorie.photo.add', runOk(dir, 'calorie.photo.add', { srcPaths: [srcPhoto], tag: '正面', photosDir })],
+  ];
+  const photoId = outChain[3][1].env.data.receipt.recordId;
+  assert.ok(photoId > 0, '记身材照回执缺记录号');
+  outChain.push(['calorie.photo.tag', runOk(dir, 'calorie.photo.tag', { id: photoId, op: 'add', tag: '早晨', photosDir })]);
+  outChain.push(['calorie.photo.remove', runOk(dir, 'calorie.photo.remove', { id: photoId, photosDir })]);
+
+  assert.equal(outChain.length, 6, '链外六条一条不少');
+  for (const [key, r] of outChain) {
+    assert.equal(r.env.key, key);
+    assert.equal(r.env.shape, 'receipt', key + ' 的 shape 仍是 receipt');
+    assert.equal(r.env.delivery.mode, 'file');
+    assert.equal(r.env.delivery.template, 'doc-shell',
+      key + ' 的产物族：链外的整页回执（判定次序 DOCTYPE 先于 shape；退回片段即红）');
+    const html = assertFullDoc(r.env.delivery.path, key);
+    assert.equal(r.env.delivery.bytes, Buffer.byteLength(html, 'utf8'), key + ' 的字节数须与产物一致');
+  }
+});
+
+test('#253F2 训练计划族代表键（calorie.workout.plan-set）：产物已是完整文档（不是片段）', () => {
+  const dir = mkSeedDb('workout');
+  const r = runOk(dir, 'calorie.workout.plan-set', {
+    plan: {
+      config: { title: '253F2 覆盖用计划', start_date: SEED_TODAY, user_level: '中手', available_equipment: ['瑜伽垫'] },
+      weeks: [{
+        week_number: 1,
+        days: [{
+          day_of_week: 1,
+          sessions: [{ session_label: '上肢', movements: [{ name: '俯卧撑' }] }],
+        }],
+      }],
+    },
+  });
+  assert.equal(r.env.key, 'calorie.workout.plan-set');
+  assert.equal(r.env.shape, 'receipt');
+  assert.equal(r.env.delivery.mode, 'file');
+  assert.equal(r.env.delivery.template, 'doc-shell', '训练计划族整页回执的产物族（退回片段即红）');
+  assertFullDoc(r.env.delivery.path, 'calorie.workout.plan-set');
 });
 
 /* ── ⑥ 返修 R-1（红队 S1）：相对落点不得把「写盘成功」报成参数失败 ───────────────────────────
