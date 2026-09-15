@@ -91,7 +91,9 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 435, wakeWord: '查高蛋白榜', scene: '10', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_protein","topN":10,"window":"7d"}\'' },
   { list: 'new', order: 3, wakeWord: '看今日饮食记录', scene: '02', kind: 'exec', key: 'calorie.today', cli: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
   { list: 'new', order: 8, wakeWord: '看饮食复盘', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日"}\'' },
-  { list: 'new', order: 10, wakeWord: '查高热量排行', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"window":"7d"}\'' },
+  /* #276 · 「接对」第 1 处：本条丢了 `category`，实跑落成「全部排行」而不是高热量榜（#272 实测发现）。
+     词说的是「高热量排行」⇒ 与 `看高热量榜`／`查高热量榜` 同一条榜，参数取该条命令的现值口径。 */
+  { list: 'new', order: 10, wakeWord: '查高热量排行', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\'' },
   { list: 'new', order: 11, wakeWord: '查食品库', scene: '02', kind: 'exec', key: 'calorie.view.library', cli: 'calorie-cmd-read calorie.view.library' },
   { list: 'new', order: 12, wakeWord: '搜食品', scene: '02', kind: 'exec', key: 'calorie.view.search', cli: 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'' },
   { list: 'new', order: 32, wakeWord: '看去重报告', scene: '02', kind: 'exec', key: 'calorie.view.dedupe', cli: 'calorie-cmd-read calorie.view.dedupe' },
