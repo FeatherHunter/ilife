@@ -99,10 +99,12 @@ function conclusionOf(plate: ReportPlate): string {
       const tdee = p.profile.tdee;
       if (tdee === null) return '档案四要素不全，出不了每日总消耗（缺：' + missText(p.profile.missing) + '）';
       const intake = avgCalories(plate);
-      return intake === null
-        ? '每日总消耗约 ' + fmtInt(tdee) + ' 卡，窗口里没有可算的摄入记录'
-        : '每日总消耗约 ' + fmtInt(tdee) + ' 卡，日均摄入 ' + fmtInt(intake) + ' 卡，静态缺口 '
-          + (Math.round((tdee - intake) * 10) / 10 > 0 ? '+' : '') + String(Math.round((tdee - intake) * 10) / 10) + ' 卡';
+      if (intake === null) return '每日总消耗约 ' + fmtInt(tdee) + ' 卡，窗口里没有可算的摄入记录';
+      /* #519 W5（视觉席 D2）：结论句原来印 `+1044.1 卡`、同页 KPI 印 `1044 卡`——同一量两种精度，
+       * 那一位小数没有任何信息量（摄入与消耗都是整数语义的量）。结论句按 **KPI 同一档**取整。 */
+      const gap = Math.round(tdee - intake);
+      return '每日总消耗约 ' + fmtInt(tdee) + ' 卡，日均摄入 ' + fmtInt(intake) + ' 卡，静态缺口 '
+        + (gap > 0 ? '+' : '') + String(gap) + ' 卡';
     }
     case 'bmr': {
       const d = plate.bmrDanger;
@@ -173,7 +175,13 @@ function calibersOf(plate: ReportPlate): string[] {
   const p = plate.base;
   switch (p.kind) {
     case 'bmi':
-      return ['BMI＝体重（kg）÷ 身高（m）的平方｜身高取档案里那一个值｜窗口里没有称重的日子不参与均值'];
+      /* #519 W5（视觉席 D1）：原先是一条长行（三段），在 1440／390 都会折行，段间的 hairline
+       * 分隔在折行处看不出来。拆成两条短行——每行都读得完整句，分隔也都在行内可见（同页
+       * 另有来源脚注那条口径行，J2／J9 的「≥1 条口径行」不受影响）。 */
+      return [
+        'BMI＝体重（kg）÷ 身高（m）的平方｜身高取档案里那一个值',
+        '窗口里没有称重的日子不参与均值',
+      ];
     case 'tdee':
       return ['总消耗＝基础代谢 × 活动系数｜系数取档案里的活动量档位｜静态缺口＝每日总消耗减日均摄入，运动消耗另计'];
     case 'bmr':

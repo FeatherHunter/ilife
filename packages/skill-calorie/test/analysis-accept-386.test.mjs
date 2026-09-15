@@ -322,7 +322,14 @@ test('#386 第三组：8 报告各拿自己那页（不是 full 健康盘）／�
     const vis = rec.html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
       .replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ');
     assert.ok(!vis.includes('·'), t.wake_word + ' 可见文本里出现 `·`（#516 判据 R1 的债）');
-    assert.ok(!rec.html.includes('卡路里 · 报告'), t.wake_word + ' 产物里仍有旧徽章串「卡路里 · 报告」');
+    /* #519 裁定 S（编排者 2026-09-16，**一次性、具名、不类推**）：本条原判 `!includes('卡路里 · 报告')`——
+     * 那条旧串已随形状化消失 ⇒ 断言恒真空转（与裁定 Q 修掉的两条同病、同件同句）。
+     * 按同法收严成「报告族**新形状**的两枚页型标记一枚都不许少」：报告族产物必须带满两枚
+     * （正面半边在第三组②：`reportHtmls` 逐页核），别的族的产物一枚都不许带（裁定 Q 的两条负向）。
+     * 语义一件不少，红时点名是哪一枚。原文留底见 `docs/skills/skill-calorie/t519-W5-视觉整改-证据.md` §裁定 S。 */
+    assert.ok(REPORT_PAGE_MARKS.every((m) => rec.html.includes(m)),
+      t.wake_word + ' 报告族产物的页型标记不全：' + REPORT_PAGE_MARKS.filter((m) => !rec.html.includes(m)).join('／')
+      + '（旧串 `卡路里 · 报告` 已随形状化消失，本条按裁定 S 改判新形状）');
     assert.notEqual(rec.html, healthHtml, t.wake_word + ' 落回 full 健康盘那一页了');
     reportHtmls.push(rec.html);
   });

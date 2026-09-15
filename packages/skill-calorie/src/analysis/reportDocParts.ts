@@ -79,14 +79,47 @@ export function fmtInt(v: number | null | undefined, unit = ''): string {
   return String(Math.round(v)) + unit;
 }
 
-/** 逐日点 → 折线（`label` 带月日；`value` 缺即断点，不补 0）；全空走表格空态。 */
+/** 折线图最多画几个点（#519 W5 · 视觉整改 D4／D7）。
+ *
+ *  病根（视觉席 D4，机器复现）：公共层折线图的 `labels:'select'` 取「首＋峰值＋尾」三点，
+ *  而它**没有碰撞避免**——峰值落在 index 1 时，首标签（x=58）与峰值标签（x=75.5）只隔 17.5 用户单位，
+ *  11px 的日期标签宽约 32 单位 ⇒ 必然重叠（1440 渲染成 `08-038-18`、390 糊成 `0809178`）。
+ *
+ *  页面侧的解（**不动 `packages/base-render/**`**）：把喂给图表的点数收进 12 以内并改 `labels:'all'`——
+ *  取点因此走**等距**那条路（`xAt(i,n)`），相邻标签间距 ＝ 绘图宽 ÷ (点数−1)：12 点时最坏
+ *  508/11 ≈ **46 用户单位 > 标签宽 32 单位** ⇒ 四档都不可能相交（390 档缩放 0.597 后仍留 ~9px 净空），
+ *  横轴顺带变成**均布**（销掉 D7 的「x 轴刻度非均布」）。降采样等距取点（含首末两点），
+ *  图题里如实写明「每 N 天一点」，逐日值仍在下方明细表里。 */
+const CHART_MAX_POINTS = 12;
+
+/** 等距取点（含首末）：`n ≤ 12` 原样返回（`step=1`，图题不出后缀）。 */
+function thinOf<T>(points: readonly T[]): { readonly points: readonly T[]; readonly step: number } {
+  const n = points.length;
+  if (n <= CHART_MAX_POINTS) return { points, step: 1 };
+  const m = CHART_MAX_POINTS;
+  const out: T[] = [];
+  for (let i = 0; i < m; i += 1) out.push(points[Math.round((i * (n - 1)) / (m - 1))] as T);
+  return { points: out, step: Math.max(1, Math.round((n - 1) / (m - 1))) };
+}
+
+/** 逐日点 → 折线（`label` 带月日；`value` 缺即断点，不补 0）；全空走表格空态。
+ *
+ *  #519 W5 三处口径（全部页面侧）：① 点数收进 12 且 `labels:'all'`（见 `CHART_MAX_POINTS` 的说明）；
+ *  ② **不传 `showValues`**——公共层折线图的**逐点数值标签**要 `showValues:true` 才出、且那一档字号是
+ *  移动端 9.5px（`LINE_TEXT_MOBILE.value`），12 点各挂一枚既挤又跌破 11px；而**末值那一枚**受
+ *  `labels === 'select'` 门控，本件改走 `'all'` 后它自然不再出——末值在页内另有落点（KPI 卡／明细表），
+ *  同一事实一页一处（这一条与 D6 的「59 枚标签互压」同源：公共层的数值标签档只能全开或全关）；
+ *  ③ y 域两端取整到**差为偶数**：`yTicks:3` 的中刻度 ＝ (min+max)/2，差为奇数就会印出 `1614.5`
+ *  这种与两端整数不同档的读数（视觉席 D7）。 */
 export function lineOf(
   points: readonly { readonly date: string; readonly value: number | null }[],
   title: string,
   opts: { readonly format?: (v: number) => string; readonly target?: number | null } = {},
 ): string {
-  const items = points.map((p) => ({ label: p.date.slice(5), value: p.value }));
+  const { points: pts, step } = thinOf(points);
+  const items = pts.map((p) => ({ label: p.date.slice(5), value: p.value }));
   const target = opts.target === null || opts.target === undefined ? null : opts.target;
+  const shownTitle = step === 1 ? title : title.replace(/）$/, '，图上每 ' + String(step) + ' 天一点）');
   if (items.every((i) => i.value === null)) {
     return renderDataTable({
       columns: [{ key: 'note', label: '说明' }],
@@ -98,16 +131,19 @@ export function lineOf(
   const lo = Math.min(...values, ...(target === null ? [] : [target]));
   const hi = Math.max(...values, ...(target === null ? [] : [target]));
   const pad = Math.max((hi - lo) * 0.12, hi === lo ? Math.max(Math.abs(hi) * 0.05, 1) : 0);
+  const yMin = Math.max(0, Math.floor(lo - pad));
+  let yMax = Math.ceil(hi + pad);
+  if ((yMax - yMin) % 2 !== 0) yMax += 1;
   return renderChartBlock({
     kind: 'line',
-    title,
+    title: shownTitle,
     input: {
       items,
       options: {
         yTicks: 3,
-        labels: 'select',
-        yMin: Math.max(0, Math.floor(lo - pad)),
-        yMax: Math.ceil(hi + pad),
+        labels: 'all',
+        yMin,
+        yMax,
         connectNulls: true,
         highlightLast: true,
         ...(opts.format === undefined ? {} : { format: opts.format }),

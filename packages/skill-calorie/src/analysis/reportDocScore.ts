@@ -38,7 +38,14 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
         title: '综合评分（满分 100，六因素等距折算）',
         input: {
           pct: avg === null ? 0 : Math.max(0, Math.min(100, avg)),
-          options: { label: avg === null ? '—' : String(avg) },
+          /* #519 W5（视觉席 D5）：仪表盘原来印两行——`70%`（值）＋ `70`（label），同页 KPI 又写
+           * `70 分` ⇒ 一个数三种写法（`%` 还与「满分 100 分」的语义打架）。
+           * 改法：**单位只留一种**——值文本走 `format` 出 `70 分`；`label` 位给空串，公共层对空
+           * `label` 是整行不渲染。缺值那一支仍印 `—`（真缺值语境）。 */
+          options: {
+            format: (v: number) => (avg === null ? '—' : String(v) + ' 分'),
+            label: '',
+          },
         },
       })
       + renderKpiGrid([

@@ -44,8 +44,8 @@ export function buildTrackedBlocks(plate: ReportPlate): ReportSection[] {
     }))];
   }
   const rate = f.hitRate === null
-    ? { label: which.rate, value: '—', unit: '', detail: '还没有设' + which.label + '目标（先去定目标）' }
-    : { label: which.rate, value: String(f.hitRate), unit: '%', detail: f.hitDays + ' / ' + f.loggedDays + ' 天' + which.hitWord };
+    ? { label: which.rate, value: '—', detail: '还没有设' + which.label + '目标（先去定目标）' }
+    : { label: which.rate, value: String(f.hitRate) + '%', detail: f.hitDays + ' / ' + f.loggedDays + ' 天' + which.hitWord };
   const missed = f.target === null ? 0 : f.loggedDays - f.hitDays;
   return [
     sec('sec-overview', '概览', renderKpiGrid([
@@ -159,7 +159,10 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
     sec('sec-danger', '危险信号', danger
       ? renderDataTable({
         columns: [{ key: 't', label: '⚠️ 危险信号' }],
-        rows: [{ t: '连续多日低于基础代谢：共 ' + under.length + ' 天低于 ' + fmtInt(th, ' 卡') + '，长期如此会压低基础代谢，建议把摄入提到基础代谢之上。' }],
+        /* #519 W5（视觉席 D3）：这一格原来把「N 天低于 X 卡」整句又印一遍，与页顶结论行、
+         * 「低于基础代谢」KPI 卡**同一事实写三遍**。改法：正文只留**该怎么办**，
+         * 天数与阈值各留在它自己的那一处（结论行讲事实、KPI 卡讲读数）——同一事实一页一处。 */
+        rows: [{ t: '连续多日摄入低于基础代谢，长期会压低基础代谢，建议把摄入提到基础代谢之上。' }],
         caption: '低于基础代谢（老侧口径：3 天及以上即告警）',
       })
       : renderEmptyBlock({

@@ -214,11 +214,86 @@ test('#519 ⑦ 空窗兜底：区块少了，导航项跟着少、不留孤儿�
     bmrDanger: { underDays: [], threshold: 1700 },
   }), '');
   assert.ok(bmrSafe.includes('ilife-empty'), 'BMR 没有危险日时应出空态块');
+  /* #519 裁定 T（编排者 2026-09-16）：上面这条负向断言必须配**同批正向控制**，
+   * 否则它可能只是恒真（本票刚在 `analysis-accept-386` 上吃过这个亏）。
+   * 控制来自同一份夹具：有危险日那一支（`built.bmr`，3 天低于阈值）**必须**出这块表。 */
+  assert.ok(built.bmr.includes('⚠️ 危险信号'), '正向控制：有危险日时应当出危险信号表（否则上条负向恒真）');
   assert.ok(!bmrSafe.includes('⚠️ 危险信号'), 'BMR 没有危险日时不该出危险信号表');
   // 蛋白页没有目标 ⇒ 不出达标徽章（零信息量的徽章不印）
   const proteinNoGoal = buildReportDoc(plateOf('protein', {
     points: SERIES.map((s) => ({ date: s.date, value: s.protein })),
     target: null, fourPiece: { avg: 120, target: null, hitDays: 0, loggedDays: 3, hitRate: null },
   }), '');
+  /* 裁定 T 的同一条：正向控制＝**有目标**那一支（`built.protein`，目标 150、3 天里 1 天达标）
+   * 必须真的印出 `未达标`（徽章列那一枚），否则下面这条负向断言是空转。 */
+  assert.ok(built.protein.includes('未达标'), '正向控制：有目标时应当出「未达标」徽章（否则上条负向恒真）');
   assert.ok(!proteinNoGoal.includes('未达标'), '没设目标时不判达标，不该出现未达标徽章');
+});
+
+/* ── #519 W5 视觉整改（D4／D5／D6／D7）的机器守卫 ─────────────────────────────
+ *
+ *  为什么要有这一条：D4／D6 两条**严重**缺陷（页 28 的 x 轴标签重叠、页 30 的 59 枚数值标签互压）
+ *  原先在机器判据里**完全不可见**——`audit-separators`／`measure-responsive`／版式探针都不看图表内部，
+ *  四条靶向测试也没有一条读 `ilife-charts-*`。没有守卫，下一次改动把密度改回去没人会知道。
+ *  判据取自**缺陷本身**（不是取自实现）：
+ *    · 逐点数值标签**一枚都不许有**（公共层那一档字号是移动端 9.5px，且柱状图那一支恒全开）；
+ *    · 折线图的横轴刻度必须**等距**（相邻间距极差 < 1 用户单位）且至少 3 枚——
+ *      「首＋峰值＋尾」那条路在峰值贴边时会退化成「首＋次＋尾」，两枚标签只隔十几单位 ⇒ 重叠；
+ *    · 仪表盘的值文本不许带 `%`（本页 KPI 与结论行都是「N 分」，`%` 与「满分 100 分」语义打架），
+ *      且不许出第二行数值标签（原来 `70%` 叠 `70`）。
+ */
+test('#519 ⑧ 图表读数纪律：无逐点数值标签 ＋ 折线横轴等距 ≥3 枚 ＋ 仪表盘单位只一种（D4／D5／D6／D7）', () => {
+  const chartSections = (html) => [...html.matchAll(/<section class="ilife-block ilife-block-chart-block">[\s\S]*?<\/section>/g)].map((m) => m[0]);
+  let lineCharts = 0;
+  for (const [kind, html] of Object.entries(built)) {
+    const what = KIND_LABELS[kind];
+    for (const chart of chartSections(html)) {
+      assert.equal([...chart.matchAll(/<text class="ilife-charts-value"/g)].length, 0,
+        what + ' 图里出现逐点数值标签（公共层那一档字号 9.5px，且密集时互压）');
+      if (!/ilife-charts-line\b/.test(chart)) continue;
+      lineCharts += 1;
+      const xs = [...chart.matchAll(/<text class="ilife-charts-xlabel" x="([-\d.]+)"/g)].map((m) => Number(m[1]));
+      assert.ok(xs.length >= 3, what + ' 折线横轴刻度少于 3 枚（读不出中段参照）：' + xs.length);
+      const gaps = xs.slice(1).map((x, i) => x - xs[i]);
+      assert.ok(Math.max(...gaps) - Math.min(...gaps) < 1,
+        what + ' 折线横轴刻度不等距（「首＋峰值＋尾」那条路会退化成首＋次＋尾 ⇒ 重叠）：' + JSON.stringify(gaps.map((g) => Math.round(g * 10) / 10)));
+    }
+    const gaugeValues = [...html.matchAll(/charts-gauge-value"[^>]*>([^<]*)</g)].map((m) => m[1]);
+    if (gaugeValues.length > 0) {
+      for (const v of gaugeValues) assert.ok(!v.includes('%'), what + ' 仪表盘值文本带百分号（与「满分 100 分」两种单位并存）：' + v);
+      assert.equal([...html.matchAll(/charts-gauge-label"/g)].length, 0, what + ' 仪表盘多出一行数值标签（同一个数印两遍）');
+    }
+  }
+  assert.ok(lineCharts >= 6, '夹具里的折线图太少（本判据会变空转）：' + lineCharts);
+});
+
+/* ── #519 W5 · 长序列的**几何**判据（D4 的本体：标签外框会不会相交） ────────────────
+ *
+ *  合成夹具只有 3 个点，量不出「30 天的横轴会怎样」——而那正是页 28 出事的场景
+ *  （改前 x=58.0 与 x=75.5 只隔 17.5 用户单位，11px 标签宽约 34 单位 ⇒ 相交）。
+ *  本件用**真的 30 天序列**直调装配件，判据是几何的：
+ *    · 横轴刻度数 ≥ 3 且 ≤ 12（降采样上限是活的）；
+ *    · 相邻间距 ≥ 标签宽（5 字符 × fontSize 11 × 0.62 ≈ 34 用户单位）——**这就是「外框不相交」**；
+ *    · 且间距彼此相等（等距，极差 < 1 单位）。 */
+test('#519 ⑨ 30 天长序列的横轴几何：等距 ＋ 相邻标签外框不相交（D4）', () => {
+  const points = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(Date.parse('2026-08-17T12:00:00Z') + i * 86400000);
+    return { date: d.toISOString().slice(0, 10), value: 1800 + (i % 3) * 200 };
+  });
+  const html = buildReportDoc(plateOf('water', {
+    points, target: 2000,
+    fourPiece: { avg: 2000, target: 2000, hitDays: 20, loggedDays: 30, hitRate: 66.7 },
+  }), '');
+  const charts = [...html.matchAll(/<section class="ilife-block ilife-block-chart-block">[\s\S]*?<\/section>/g)].map((m) => m[0]);
+  assert.equal(charts.length, 1, '30 天水分页应当只有一张图，实得 ' + charts.length);
+  assert.equal(charts[0].match(/<text class="ilife-charts-value"/g)?.length ?? 0, 0, '图里出现逐点数值标签（会互压）');
+  const xs = [...charts[0].matchAll(/<text class="ilife-charts-xlabel" x="([-\d.]+)"/g)].map((m) => Number(m[1]));
+  assert.ok(xs.length >= 3, '横轴刻度少于 3 枚（读不出中段参照）：' + xs.length);
+  assert.ok(xs.length <= 12, '横轴刻度超过 12 枚（降采样上限失效）：' + xs.length);
+  const gaps = xs.slice(1).map((x, i) => x - xs[i]);
+  const LABEL_W = 5 * 11 * 0.62;   // 「08-17」5 字符 × 字号 11 用户单位 × 0.62 字宽比
+  assert.ok(Math.min(...gaps) >= LABEL_W,
+    '相邻横轴标签外框相交：最小间距 ' + Math.min(...gaps).toFixed(1) + ' < 标签宽 ' + LABEL_W.toFixed(1)
+    + '（改前页 28 就是 17.5 < 34）');
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) < 1, '横轴刻度不等距：' + JSON.stringify(gaps.map((g) => Math.round(g * 10) / 10)));
 });
