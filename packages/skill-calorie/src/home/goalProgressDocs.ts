@@ -10,6 +10,8 @@
  * （#401／#401c／#401g／#507 逐轮定稿），块顺序与件逐条对齐——KPI 网格带状态徽章档位 → 段标题带图标 →
  * 页内导航胶囊 → 结论条 → 口径行 → 三格式复制区（`data` ＋「复制日志」）→ 来源脚注（浅色口径行，
  * 不走 `notice()` 深底块）。字号与档位色一律不在本件写：版面单源住 `packages/base-render/`。
+ * #467 切片·用户逐字点名删来源脚注与部分口径行：页上不再出「数据来源：…」（来源只留复制日志第 4 段），
+ * 日均／缺口／转场／达标四组口径句已删，图下读法与空态句保留（禁区：图表／达标表／复制区本身不动）。
  *
  * 文本纪律（同批页面共同要求，#401c 已先做样板）：**参数名、常量名、英文内部标识符一律不上屏**。
  * 重做前两张卡的值位直接印枚举原文——`kpi('缺口趋势', g.deficit.summary.trend)` 与 `kpi('摄入趋势',
@@ -17,7 +19,7 @@
  * 人话（`trendPhrase`／`deficitDirection`），机器判据在 `test/t467-goal-progress.test.mjs`。
  *
  * 空窗与库为空是两态（`t425-融合基准.md:156-159` 裁定 4）：窗口为空仍出完整页（标题 ＋ 空态句 ＋ 引导句
- * ＋ 来源脚注），读数一律 `—`；库为空仍走取数层的缺失阻断、不落盘。两态的分辨在 `today.ts` 的出口。
+ * ＋ 空态口径句；来源脚注已按 #467 切片·用户逐字点名删除），读数一律 `—`；库为空仍走取数层的缺失阻断、不落盘。两态的分辨在 `today.ts` 的出口。
  */
 import type { StatusKind } from 'base-paint';
 import {
@@ -55,12 +57,9 @@ const SEC_GUIDE = { id: 'sec-guide', icon: '📝', name: '先记一笔' } as con
  *  `id` 保留，外链深跳稳定。 */
 const SEC_COPY = { id: 'sec-copy' } as const;
 
-/** 来源脚注上给**读者看**的来源名（可见文本零 snake_case；库表名只留在复制日志的来源段里）。 */
+/** 来源脚注上给**读者看**的来源名（可见文本零 snake_case；库表名只留在复制日志的来源段里）。
+ *  #467 切片后页上来源行已删（用户逐字点名），本常量只供复制日志第 4 段 `source` 用。 */
 const SOURCE_LOGGED = '饮食记录，运动记录，每日目标';
-
-/** 「本期之外那三项」的引导句：这三项的数据今天**确实在库里**（见 `notCountedRows`），
- *  必须写清「本页的完成度与缺口只算热量」，否则读者会把「4 项目标」读成「热量一项」。 */
-const NOT_COUNTED_NOTE = '本页的完成度与缺口只算热量。上面这三项目标今天还没纳入，本页不给它们的完成率。';
 
 /** 段标题的**文本形状**（图标 ＋ 空格 ＋ 名）：段标题与表格 caption 都走它，不手抄第二遍。 */
 function secTitle(section: { readonly icon: string; readonly name: string }): string {
@@ -262,7 +261,8 @@ function kpiCards(f: Facts, historyDays: number): KpiCardInput[] {
 }
 
 /** 今天还没纳入本页的那三项目标（蛋白／饮水／运动）：**有目标就把目标值上屏**，没设就写「还没设」。
- *  这三项今天都不参与上面的完成度与缺口（那是 #396 的事），本件只如实呈现 + 说清下一步该说哪条唤醒词。 */
+ *  这三项今天都不参与上面的完成度与缺口（那是 #396 的事），本件只如实呈现三行值；
+ *  唤醒词句已按 #467 切片·用户逐字点名删除。 */
 function notCountedRows(f: Facts): ListRowInput[] {
   return [
     { left: '蛋白', main: '每天目标', right: f.proteinGoal === null ? '还没设' : num(f.proteinGoal) + ' 克' },
@@ -271,13 +271,12 @@ function notCountedRows(f: Facts): ListRowInput[] {
   ];
 }
 
-/** 「本期之外那三项」那一块：行列表 ＋ 一句总说。总说走 `renderCaliberLine`（口径行的既有形状，
- *  本页不新造样式）；唤醒词逐字与 HELP 表一致，读者能照抄。 */
+/** 「本期之外那三项」那一块：只留行列表（#467 切片·用户逐字点名删总说 caliber 句：
+ *  原总说句「本页的完成度与缺口只算热量。上面这三项目标今天还没纳入，本页不给它们的完成率。」
+ *  ＋后续唤醒词句已删；`renderListRows` 的 `emptyText` 可选（`base-render/src/blocks.ts:727`）且本块恒 3 行，
+ *  签名不强制，故不补中性短句——若后续签名变必填再补并报用户复核）。 */
 function notCountedBlock(f: Facts): string {
-  return renderListRows({ items: notCountedRows(f), emptyText: NOT_COUNTED_NOTE })
-    + renderCaliberLine(NOT_COUNTED_NOTE
-      + '要设或改：蛋白说「定营养目标」，饮水说「定饮水目标」。运动目标的设置页由「看今日运动（vs 目标）」这条词带出来——'
-      + '没有目标时它会先问你目标值。');
+  return renderListRows({ items: notCountedRows(f) });
 }
 
 /** 每日达标表最多列这么多行（`historyDays` 可到 365，整页不该无边上长）；截断另起一句明示。 */
@@ -345,8 +344,9 @@ function chartCaliber(f: Facts, g: GoalProgress): string {
 /** `calorie.view.goal-progress` 的整页装配（`<!doctype html>` 起，双击即开）。
  *
  *  块序（两态一致，只有中段不同）：页头胶囊 → 结论条（空窗时换成空态句）→ 页内导航 →
- *  目标完成卡 →〔摄入走势｜先记一笔〕→ 每日达标表 → 数据与日志 → 来源脚注。
- *  三条恒出（`t425` 裁定 3）：页内导航、口径说明行、来源脚注。 */
+ *  目标完成卡 →〔摄入走势｜先记一笔〕→ 每日达标表 → 数据与日志（来源只留复制日志，页上来源行已删）。
+ *  三条恒出（`t425` 裁定 3）本页已按 #467 切片·用户逐字点名改：页内导航恒出；口径说明行只剩图下读法与空态句；
+ *  来源脚注不再出（用户点名删除）。 */
 export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
   const f = factsOf(input);
   const day = dayLabel(input.start, input.end);
@@ -356,9 +356,9 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
 
   sections.push('<section id="' + SEC_GOAL.id + '"><h2 class="' + H2_CLASS + '">' + secTitle(SEC_GOAL) + '</h2>'
     + renderKpiGrid(kpiCards(f, input.historyDays))
-    // 日均与缺口的读法都只这写一处：本页四个读数各归其位，页脚不再重复第二遍。
-    + renderCaliberLine('日均按窗口天数摊平，没记录的日子也算一天。') + renderCaliberLine('缺口是消耗减摄入的差，正数表示摄入比消耗少。')
-    // 四项目标落一项：三项目标值如实上屏 ＋ 一句「本期只算热量」（缺项说明，见 NOT_COUNTED_NOTE）。
+    // #467 切片·用户逐字点名删两句口径：原「日均按窗口天数摊平，没记录的日子也算一天。」
+    // ＋「缺口是消耗减摄入的差，正数表示摄入比消耗少。」两行 renderCaliberLine 已删。
+    // 四项目标落一项：三项目标值如实上屏（行列表只留值，总说句已按同一切片删除）。
     + notCountedBlock(f)
     + '</section>');
 
@@ -384,16 +384,9 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
         + '</section>');
     }
     toc.push({ id: SEC_HISTORY.id, text: SEC_HISTORY.name });
+    // #467 切片·用户逐字点名删转场整句（原「上面那张折线图是窗口…／这个窗口里只有一天…＋下面这张表看的是近…」整行已删）
+    // ＋删达标口径两句（原「达标口径：当日摄入占目标的 80% 到 120% 之间算达标。」＋「没记录的日子不列表，既不算达标也不算落空。」已删）。
     sections.push('<section id="' + SEC_HISTORY.id + '">' + historyTable(g, input.historyDays, day, input.end)
-      // 两档窗口的转场：上面的折线／卡是**本窗**、这张表是**达标账那个窗口**，句子里先交代清楚。
-      // **不提屏上没有的东西**：折线要两个有记录的日子才出（`t425` 裁定 5），窗口里只有一天时那块整块不出——
-      // 此时还说「上面那张折线图…」就是跟读者说假话（与「虚线是热量目标」那条 P0 同一个病根）。
-      + renderCaliberLine((f.loggedDays >= 2
-        ? '上面那张折线图是窗口 ' + f.windowDays + ' 天里的每一天。'
-        : '这个窗口里只有一天有记录，折线图要两天以上才出。')
-        + '下面这张表看的是近 ' + input.historyDays + ' 天，两处不是同一个窗口。')
-      // 达成情况这一列的说法必须在页上写清，否则「达标」两个字各有各的解释。
-      + renderCaliberLine('达标口径：当日摄入占目标的 80% 到 120% 之间算达标。') + renderCaliberLine('没记录的日子不列表，既不算达标也不算落空。')
       + '</section>');
   }
   // 复制区（裁定 7 ＋ 用户缺陷 6）：两颗按钮、无标题（标题位空着，公共层即不出 `<h2>`），
@@ -434,7 +427,8 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
     empty ? '' : renderConclusionBar(conclusionText(f)),
     renderTocBlock({ items: toc }),
     sections.join(''),
-    renderCaliberLine('数据来源：' + SOURCE_LOGGED + '。'),
+    // #467 切片·用户逐字点名删来源行（原 `renderCaliberLine('数据来源：' + SOURCE_LOGGED + '。')` 已删；
+    // 来源名仍在复制日志第 4 段 `SOURCE_LOGGED` 里可重跑，页上不再另起一行）。
   ].join('');
 
   // 页名一处派生：h1 与 `<title>` 走同一个串（浏览器标签页上也带着窗口，不再只写「目标进度」）；
