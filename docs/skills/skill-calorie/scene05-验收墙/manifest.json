@@ -1,7 +1,7 @@
 {
   "batch": "scene05-验收墙",
   "madeAt": "2026-09-15",
-  "source": "场景05 全量重跑批：`docs/skills/skill-calorie/t351-v7-run-176-207.mjs`（入仓跑批件）持锁跑出的 `.scratch/t157-close/products/`（37 份 HTML ＋ `detail.json` 读数）；本轮逐条实跑证据见 `docs/skills/skill-calorie/t351-v17-evidence.md`（门禁读数见同目录 `t351-v17-gate-runs.md`）",
+  "source": "场景05 全量重跑批：`docs/skills/skill-calorie/t351-v7-run-176-207.mjs`（入仓跑批件）持锁跑出的 `.scratch/t157-swap/products/`（37 份 HTML ＋ `detail.json` 读数）；本轮逐条实跑证据见 `docs/skills/skill-calorie/t351-v18-evidence.md`（门禁读数见同目录 `t351-v18-gate-runs.md`）",
   "naming": "发布名 ＝ 清单 rows[].file，**全仓只在本清单算一处**；规则＝唤醒词 ＋ `.html`，同一条词有过程页与回执页两份时用 `-预检`／`-回执` 后缀（照 `scene06-验收墙` 的既有样子）。rows[].src ＝ 该件在原批目录里的文件名；`gen-wall.mjs --stage` 只读这两个字段复制，别处不许再拼名字",
   "counts": {
     "executableWakeWords": 27,
@@ -133,19 +133,19 @@
     {
       "seq": 11,
       "order": 186,
-      "family": "预检确认页 · 写前预览（order 186–195）",
-      "kind": "过程型",
+      "family": "计划编辑器 · 可写页（order 186）",
+      "kind": "过程型（可写页）",
       "wake": "定训练计划",
-      "title": "定训练计划 · 预检确认页（构建向导）",
+      "title": "定训练计划 · 计划编辑器（可写页）",
       "file": "定训练计划-预检.html",
       "src": "order186-process.html",
       "key": "calorie.view.plan-wizard",
-      "check": "构建向导页：待确认的计划树（周／日／动作）读得懂吗；「执行唤醒词「定训练计划」」那一句和复制 prompt 那一段在不在；确认那一步写得清不清楚（谁动手、动完写什么）。"
+      "check": "计划编辑器（可写页）：两排页签（上面选第几周、下面选周几）能不能点、一次只显示一天吗；动作参数格（组数／每组次数／负重，有氧只填时长）在页上改得动吗，第 2 周起是不是只能改参数、不能增删动作；页底「生成的计划」那张表跟着改动走吗、「复制指令」那颗按钮复制的对不对。"
     },
     {
       "seq": 12,
       "order": 187,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "复制训练计划",
       "title": "复制训练计划 · 预检确认页",
@@ -157,7 +157,7 @@
     {
       "seq": 13,
       "order": 188,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "定休息日",
       "title": "定休息日 · 预检确认页",
@@ -169,7 +169,7 @@
     {
       "seq": 14,
       "order": 189,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "加训练动作",
       "title": "加训练动作 · 预检确认页",
@@ -181,7 +181,7 @@
     {
       "seq": 15,
       "order": 190,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "定一周计划",
       "title": "定一周计划 · 预检确认页",
@@ -193,7 +193,7 @@
     {
       "seq": 16,
       "order": 191,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "改训练计划",
       "title": "改训练计划 · 预检确认页",
@@ -205,7 +205,7 @@
     {
       "seq": 17,
       "order": 192,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "改某天训练",
       "title": "改某天训练 · 预检确认页",
@@ -217,7 +217,7 @@
     {
       "seq": 18,
       "order": 193,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "删某天训练",
       "title": "删某天训练 · 预检确认页",
@@ -229,7 +229,7 @@
     {
       "seq": 19,
       "order": 194,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "改动作",
       "title": "改动作 · 预检确认页",
@@ -241,7 +241,7 @@
     {
       "seq": 20,
       "order": 195,
-      "family": "预检确认页 · 写前预览（order 186–195）",
+      "family": "预检确认页 · 写前预览（order 187–195）",
       "kind": "过程型",
       "wake": "撤销训练计划",
       "title": "撤销训练计划 · 预检确认页",
@@ -458,15 +458,15 @@
   "notShipped": [
     {
       "what": "外部五条：落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩（order 196–200）",
-      "why": "`packages/skill-calorie/src/workout/routes.ts:32-36` 把这五条记为 `kind:'non-exec'`、`bucket:'out-of-scope'`，`reason` 逐条写着「明确不做（架构规格 `docs/calorie-architecture.md:60`：落地／训记）；词只保证命中与文案，执行层不承接」。**本轮仍不执行、仍不造产物**：这五条的执行面在外部 App（补计划到日历／记心愿／推送训记／回写训记实绩），卡路里这侧的执行层不承接 ⇒ 既没有「写后」可出回执页、也没有「读」结果可出结果页，硬出一张只能印这几句词本身。本轮实测：五条在路由表／场景词表／HELP 资产三处都命中（5/5），HELP 文案首句逐字在——读数见 `docs/skills/skill-calorie/t351-v17-evidence.md` §四「表二 · 外部五条」。本轮产物原批目录：`.scratch/t157-close/products/`。"
+      "why": "`packages/skill-calorie/src/workout/routes.ts:32-36` 把这五条记为 `kind:'non-exec'`、`bucket:'out-of-scope'`，`reason` 逐条写着「明确不做（架构规格 `docs/calorie-architecture.md:60`：落地／训记）；词只保证命中与文案，执行层不承接」。**本轮仍不执行、仍不造产物**：这五条的执行面在外部 App（补计划到日历／记心愿／推送训记／回写训记实绩），卡路里这侧的执行层不承接 ⇒ 既没有「写后」可出回执页、也没有「读」结果可出结果页，硬出一张只能印这几句词本身。本轮实测：五条在路由表／场景词表／HELP 资产三处都命中（5/5），HELP 文案首句逐字在——读数见 `docs/skills/skill-calorie/t351-v18-evidence.md` §四「表二 · 外部五条」。本轮产物原批目录：`.scratch/t157-swap/products/`。"
     },
     {
       "what": "撤销后读验证（order 195 的 read-after-delete 一步）",
-      "why": "那一步**不是页面**，是机检读数：撤销后念「看计划」再读一次，得 `exit=4` ＋ stderr 命中「无训练计划」（恢复缺失阻断）——它**没有可上屏的 HTML**，所以本轮照旧只把读数落进批次的 `detail.json`（`steps` 里那条 `撤销后读验证`），不产页面；批脚本一度产出的 `order195-verify.html` 已按陈旧件处理，不进这一册。本轮读数与逐条现场见 `docs/skills/skill-calorie/t351-v17-evidence.md` §三「口径两条」；本轮产物原批目录：`.scratch/t157-close/products/`。"
+      "why": "那一步**不是页面**，是机检读数：撤销后念「看计划」再读一次，得 `exit=4` ＋ stderr 命中「无训练计划」（恢复缺失阻断）——它**没有可上屏的 HTML**，所以本轮照旧只把读数落进批次的 `detail.json`（`steps` 里那条 `撤销后读验证`），不产页面；批脚本一度产出的 `order195-verify.html` 已按陈旧件处理，不进这一册。本轮读数与逐条现场见 `docs/skills/skill-calorie/t351-v18-evidence.md` §三「口径两条」；本轮产物原批目录：`.scratch/t157-swap/products/`。"
     },
     {
       "what": "order 176–207 的中间产物：`dbs/`（隔离库）与 `detail.json`（逐条读数）",
-      "why": "它们留在**本轮**的原批目录 `.scratch/t157-close/products/`（`dbs/` 隔离库 ＋ `detail.json` 逐条读数），是**出页依据与判据读数**，不是给人看的页面——墙上没有可看的渲染，故不入这一册。要看机器读数去 `.scratch/t157-close/products/detail.json`（`steps` 43 条 ＋ `checks` 29 条）；要看逐条实跑证据去 `docs/skills/skill-calorie/t351-v17-evidence.md`。"
+      "why": "它们留在**本轮**的原批目录 `.scratch/t157-swap/products/`（`dbs/` 隔离库 ＋ `detail.json` 逐条读数），是**出页依据与判据读数**，不是给人看的页面——墙上没有可看的渲染，故不入这一册。要看机器读数去 `.scratch/t157-swap/products/detail.json`（`steps` 43 条 ＋ `checks` 29 条）；要看逐条实跑证据去 `docs/skills/skill-calorie/t351-v18-evidence.md`。"
     }
   ]
 }

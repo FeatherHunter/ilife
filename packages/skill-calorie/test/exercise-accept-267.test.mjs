@@ -83,7 +83,9 @@ const EYEBROW_OF_KEY = new Map([
   ['calorie.exercise.remove', '运动写后回执'],
   // #523（汇总／记录级明细／对照目标三族）：眉标去 `·`——`·` 是分隔符债，探针节点级必须为 0；
   // 类别「运动」与页族名都还在（`运动` ＋ `汇总`），只是不拿符号串。其余两族的眉标归 #524／#525。
-  ['calorie.view.exercise', '运动汇总'],
+  // #523 返修 R3：汇总族眉标与 H1（`运动汇总`）逐字全同 → 眉标退回类别词「运动」；页族的身份针
+  // 落到同族的 H1 断言上（本件 G3 的 `rec.h1` 那两条，`运动汇总` 仍是汇总页的钉子，覆盖面未减）。
+  ['calorie.view.exercise', '运动'],
   ['calorie.view.exercise-goal', '运动对照目标'],
   // #523 返修：记录级明细眉标原来与 H1 逐字同名，现退回族名「运动记录」（H1 留页名）。
   ['calorie.view.exercise-records', '运动记录'],
@@ -140,6 +142,13 @@ function recordIdOf(seedDir) {
     db.close();
   }
 }
+
+/** 空种子库上没有可填的真记录号（#478 起 `"<记录号>"` 是占位符：填不出真值就原样递给入口，
+ *  入口先报 `ERR 2: id 须为正整数`，走不到取数层——G4 那条判据判的是**取数层的阻断**
+ *  （`取数失败` ＋ 点名缺什么 ＋ 不落盘），故空库上用一枚语法合法、库里必然不存在的记录号把占位符填上。
+ *  **判据一行未放宽、覆盖面一行未减**：`999999` 在任何库里都不可达（空库更是零行），
+ *  实测 `exit 4 ＋ ERR 4: 取数失败：记录 ID 999999 不存在`。出处：#523 R3 的范围外发现（见证据件遗留节）。 */
+const UNREACHABLE_ID = '999999';
 
 /** 占位符补真实日期（`<日期>`／`<开始日期>`／`<结束日期>`；命令**形状**一字不改）。
  *  `"<记录号>"` 一样补真值（#478：冻结表的改／删两条词改成占位符，替掉不可达的常量 `"id":1`）。 */
@@ -222,7 +231,7 @@ function runWord(seedDir, cli, tag, recordId) {
  *  种子库里真实可达的记录号先量一次（#478：改／删两条词的 `"<记录号>"` 拿它填）。 */
 function round(tag, seedDays) {
   const seedDir = mkDir(tag + '-seed', seedDays);
-  const recordId = recordIdOf(seedDir);
+  const recordId = recordIdOf(seedDir) ?? UNREACHABLE_ID;
   const recs = [];
   for (const word of WORDS) {
     const hits = lookupWake(buildHelpLookup(TRIGGERS), word);
