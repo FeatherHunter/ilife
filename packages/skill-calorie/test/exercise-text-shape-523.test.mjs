@@ -12,6 +12,14 @@
  * 变异自证（本件末节，读数逐条打 `T523-MUT`）：往产物里塞一处 `·`／一处 `；` 并列 ⇒ 守卫**必红**；
  * 逐文件还原 ⇒ **必绿**。
  *
+ * #523 返修 R5 追加四条守卫（终审席 `.scratch/t268/视觉终评-全批39.md` §4 的三条 P1／P2 打回项）：
+ *   ⑧ **来源脚注的格**：有表时只剩「数据来源」（「窗口」「记录数」两格已撤）；空态仍报「共 0 条」
+ *      （#451 的空态判据读这一句，空态页没有表标题可承载条数——撤格只撤有表时的第三遍）。
+ *   ⑨ **窗口节＝只读展示形状**：`#sec-window` 里不许有 `<input>`／`<textarea>`／`<select>`，
+ *      窗口日期必须在**文本节点**里（改前日期只住 `value` 属性，390 档复制读不到）。
+ *   ⑩ **汇总页两处一处**：逐日表表题不复读窗口天数（「按日消耗」，天数只住页头窗口条，
+ *      被截窗把天数并进截断明示那一句）；两张表的数值格带单位（「2 次」「800 卡」「90 分钟」）。
+ *   另有 ⑨⑩ 的变异自证（塞回 `<input>`／塞回天数／退回裸数 ⇒ 必红；还原 ⇒ 必绿）。
  * #523 返修 R3 追加两条守卫（视觉复评 R2 的两处硬伤，靶心）：
  *   ⑤ **列对齐**：记录级明细那两张八列表，四个数值列（时长／消耗／距离／心率）必须走公共层既有档位
  *      `align:'right'`（右对齐 ＋ 等宽栈 ＋ `tabular-nums`；`renderDataTable` 里「这一列是数值」的
@@ -335,7 +343,7 @@ function cardOf(html, id) {
   return (new RegExp('<section id="' + id + '">[\\s\\S]*?</section>').exec(html) ?? [])[0] ?? '';
 }
 
-test('#523 ⑧ 明细族来源脚注：撤「窗口」一格（日期只住页头与窗口卡，脚注留来源与条数）', () => {
+test('#523 ⑧ 明细族来源脚注：有表时只剩「数据来源」（窗口／记录数两格已撤）；空态仍报「共 0 条」', () => {
   const lines = [];
   let bad = 0;
   for (const [name, build] of PAGES.filter(([n]) => n.startsWith('记录级明细'))) {
@@ -344,14 +352,112 @@ test('#523 ⑧ 明细族来源脚注：撤「窗口」一格（日期只住页�
     assert.notEqual(card, '', name + ' 缺来源卡（sec-source）');
     const keys = [...card.matchAll(/<span class="sui-fact-k">([^<]*)<\/span>/g)].map((m) => m[1]);
     lines.push('T523 SRC ' + name.padEnd(18) + ' 脚注键=' + JSON.stringify(keys));
-    assert.deepEqual(keys, ['数据来源', '记录数'], name + ' 来源脚注的格不是「数据来源＋记录数」：' + JSON.stringify(keys));
-    // 撤的是落点、不是事实：日期仍在页头 H1 与窗口卡两处；条数仍在脚注（且只在脚注与表标题）。
-    assert.ok(html.includes('2026-09-13') && html.includes('2026-09-15'), name + ' 撤了脚注那一格后页上找不到日期');
-    if (!/共 2 条/.test(card)) bad += 1;
+    // R5 打回项 G2：脚注原来还有「记录数 共 N 条」一格——读数卡与表标题已各报一处，脚注是第三遍。
+    assert.deepEqual(keys, ['数据来源'], name + ' 来源脚注的格不是只剩「数据来源」：' + JSON.stringify(keys));
+    // 撤的是落点、不是事实：日期仍在页头窗口条与窗口卡两处；条数仍在读数卡与表标题两处。
+    assert.ok(html.includes('2026-09-13') && html.includes('2026-09-15'), name + ' 撤了脚注那两格后页上找不到日期');
+    const vis = visibleAll(html);
+    assert.ok((vis.match(/共 2 条/g) ?? []).length >= 1, name + ' 撤了脚注的条数格后，页上找不到条数（读数卡／表标题都不报）');
+    if (!/共 2 条/.test(cardOf(html, 'sec-table'))) bad += 1;
   }
   for (const l of lines) console.log(l);
-  assert.equal(bad, 0, '来源脚注的条数格丢了');
+  assert.equal(bad, 0, '条数从表标题里丢了（脚注撤格不等于删事实）');
+  // 例外那一格：本页没有表（空态）时脚注仍报「共 0 条」——#451 的空态判据读的正是这一句，
+  // 而空态页上没有表标题可承载条数（撤格只撤有表时的第三遍，不是把空态的唯一那句也撤了）。
+  const emptyHtml = buildRecordsDoc({
+    start: '2026-09-13', end: '2026-09-13', rows: [], sessions: 0,
+    totalBurned: 0, totalMinutes: null, activeDays: 0, category: null, hasNote: null,
+  });
+  const emptyKeys = [...cardOf(emptyHtml, 'sec-source').matchAll(/<span class="sui-fact-k">([^<]*)<\/span>/g)].map((m) => m[1]);
+  console.log('T523 SRC 空态 脚注键=' + JSON.stringify(emptyKeys) + ' 「共 0 条」=' + emptyHtml.includes('共 0 条'));
+  assert.deepEqual(emptyKeys, ['数据来源', '记录数'], '空态的脚注丢了条数格（#451 空态判据「0 条也要报」）：' + JSON.stringify(emptyKeys));
+  assert.ok(emptyHtml.includes('共 0 条'), '空态页上读不到「共 0 条」');
 });
+
+/* ───────────── 三之四、R5 打回项的守卫（终审席 P1-1／P2-7／P2-8，票 #523） ───────────── */
+
+/** 某张卡里数据格的「标签 ＋ 文本」清单（`<td … data-label="…">值</td>`，与页面同序）。 */
+function cellsOf(card) {
+  return [...card.matchAll(/<td[^>]*data-label="([^"]*)">([^<]*)<\/td>/g)].map((m) => ({ label: m[1], text: m[2] }));
+}
+
+test('#523 ⑨ 窗口节＝只读展示形状（无输入控件；两枚日期都在文本流里，复制得到）', () => {
+  const lines = [];
+  let bad = 0;
+  for (const [name, build] of PAGES.filter(([n]) => n.startsWith('记录级明细'))) {
+    const html = build();
+    const sec = cardOf(html, 'sec-window');
+    assert.notEqual(sec, '', name + ' 缺窗口节（sec-window）');
+    // ① 只读：只读页上不许出现写页的入参控件（真 `<input>`／`<textarea>`／`<select>`）。
+    const controls = (sec.match(/<(input|textarea|select)\b/g) ?? []).length;
+    // ② 日期在文本流里：节点级可见文本（属性里的 `value` 不算）必须读到窗口起止两个日期。
+    const secText = visibleAll(sec);
+    const dates = secText.match(/\d{4}-\d{2}-\d{2}/g) ?? [];
+    const keys = [...sec.matchAll(/<span class="sui-fact-k">([^<]*)<\/span>/g)].map((m) => m[1]);
+    lines.push('T523 WIN ' + name.padEnd(18) + ' 控件=' + controls + ' 节内文本日期=' + JSON.stringify(dates)
+      + ' 键=' + JSON.stringify(keys) + ' 带写页表单类=' + /param-form/.test(sec));
+    if (controls !== 0 || dates.length === 0) bad += 1;
+    if (/param-form/.test(sec)) bad += 1;
+    // 起止两天必须都读到（夹具是 2026-09-13 → 2026-09-15 的区间窗）。
+    for (const d of ['2026-09-13', '2026-09-15']) {
+      if (!dates.includes(d)) { bad += 1; lines.push('  日期缺：' + d); }
+    }
+  }
+  for (const l of lines) console.log(l);
+  assert.equal(bad, 0, '窗口节仍是可改的入参控件，或窗口日期仍不在文本流里（终审席 P1-1：只读事实就要只读形状）');
+});
+
+test('#523 ⑩ 汇总页两处一处：表题不复读窗口天数；表内数值带单位（与分布条同一写法）', () => {
+  const lines = [];
+  let bad = 0;
+  // 长窗（逐日行 120 条 > 上限 100，触发截断）：天数只在页头窗口条与截断明示那一句；表题收成「按日消耗」。
+  const long = buildExerciseDoc(summaryView());
+  const cutDays = summaryView().series.length; // 截断口径里的「本窗共 N 天」＝逐日行数（夹具 120）
+  const longCap = (/<caption class="ilife-block-data-table-caption">([^<]*)<\/caption>/.exec(cardOf(long, 'sec-series')) ?? [])[1] ?? '';
+  const longVis = visibleAll(long);
+  const daysLong = (longVis.match(/201\s*天/g) ?? []).length;
+  lines.push('T523 DAY 长窗 表题=' + JSON.stringify(longCap) + ' 「201 天」=' + daysLong + ' 处'
+    + ' 截断句带本窗天数=' + longVis.includes('本窗共 ' + cutDays + ' 天')
+    + ' 截断句带上限=' + longVis.includes('显示最近 100 天'));
+  assert.equal(longCap, '按日消耗', '长窗表题仍复读窗口天数（终审席 P2-8）：' + longCap);
+  if (daysLong > 1) bad += 1; // 天数只住页头窗口条那一颗胶囊（截断句报的是逐日行数，不是窗口天数）
+  if (!longVis.includes('本窗共 ' + cutDays + ' 天')) bad += 1; // 截断三数仍在同一个句子里
+  if (!longVis.includes('显示最近 100 天')) bad += 1;
+
+  // 短窗（2 天，不截断）：天数只住页头窗口条那一颗胶囊，页上不再有第二处「本窗共 N 天」。
+  const short = buildExerciseDoc(summaryView({
+    start: '2026-09-14', end: '2026-09-15', activeDays: 2, totalBurnedSeries: 2500, avgBurnedPerLoggedDay: 1250,
+    series: [{ date: '2026-09-14', exerciseKcal: 1250 }, { date: '2026-09-15', exerciseKcal: 1250 }],
+    review: {
+      ...summaryView().review, start: '2026-09-14', end: '2026-09-15', days: 2, sessions: 10, activeDays: 2,
+      totalBurned: 2500, totalMinutes: 300, byCategory: { 有氧: { sessions: 8, burned: 2000 }, 力量: { sessions: 2, burned: 500 } },
+    },
+  }));
+  const shortCap = (/<caption class="ilife-block-data-table-caption">([^<]*)<\/caption>/.exec(cardOf(short, 'sec-series')) ?? [])[1] ?? '';
+  const shortVis = visibleAll(short);
+  lines.push('T523 DAY 短窗 表题=' + JSON.stringify(shortCap) + ' 「本窗共」出现=' + shortVis.includes('本窗共')
+    + ' 页头天数胶囊=' + /<span class="sui-days">2 天<\/span>/.test(short));
+  assert.equal(shortCap, '按日消耗', '短窗表题仍复读窗口天数：' + shortCap);
+  if (shortVis.includes('本窗共')) bad += 1; // 短窗没有截断句，天数只许在页头窗口条
+  if (!/<span class="sui-days">2 天<\/span>/.test(short)) bad += 1; // 天数没被删掉，仍在页头
+
+  // 数值带单位：两张表的数值格按列名收尾（次数→次、消耗→卡、时长→分钟；缺值 `—` 除外）。
+  const UNITS = [['sec-series', { 消耗: / 卡$/ }], ['sec-type', { 次数: / 次$/, 消耗: / 卡$/, 时长: / 分钟$/ }]];
+  for (const [name, html] of [['长窗', long], ['短窗', short]]) {
+    for (const [id, labels] of UNITS) {
+      const card = cardOf(html, id);
+      for (const cell of cellsOf(card)) {
+        if (labels[cell.label] === undefined || cell.text === '—') continue;
+        if (!labels[cell.label].test(cell.text)) { bad += 1; lines.push('T523 UNIT ' + name + ' ' + id + ' ' + cell.label + '=' + cell.text); }
+      }
+    }
+  }
+  const firstBurn = cellsOf(cardOf(short, 'sec-type')).find((c) => c.label === '消耗');
+  lines.push('T523 UNIT 类型表首个消耗格=' + JSON.stringify(firstBurn));
+  for (const l of lines) console.log(l);
+  assert.equal(bad, 0, '汇总页仍有「同一事实两处」或「数值列裸数」（终审席 P2-7／P2-8）');
+});
+
 
 /* ───────────────────────── 四、变异自证（改坏必红／还原必绿） ───────────────────────── */
 test('#523 变异：塞回一处 `·` 并列 ⇒ 守卫必红；还原 ⇒ 必绿', () => {
@@ -411,4 +517,47 @@ test('#523 变异（R3 两处硬伤）：数值列改回 `left` ⇒ ⑤ 必红�
   assert.equal(numericOk(cleanRec) && distOk(cleanSum), true, '还原后守卫没绿');
   console.log('T523-MUT2 数值列改回left→' + numericOk(mutA) + ' 类名轨改回6em+nowrap→' + distOk(mutB)
     + ' 还原→' + (numericOk(cleanRec) && distOk(cleanSum)));
+});
+
+test('#523 变异（R5 三处）：窗口节塞回 `<input>` ⇒ ⑨ 必红；表题塞回窗口天数 ／ 数值列退回裸数 ⇒ ⑩ 必红；还原 ⇒ 必绿', () => {
+  /** ⑨ 的判定（与上面那条同口径：只读形状、日期在文本流里）。 */
+  const winOk = (sec) => (sec.match(/<(input|textarea|select)\b/g) ?? []).length === 0
+    && new Set(visibleAll(sec).match(/\d{4}-\d{2}-\d{2}/g) ?? []).size >= 2
+    && !/param-form/.test(sec);
+  /** ⑩ 的判定：表题不带天数 ＋ 三个数值列都带单位（`—` 是缺值写法，不算裸数）。 */
+  const capOf = (html) => (/<caption class="ilife-block-data-table-caption">([^<]*)<\/caption>/.exec(cardOf(html, 'sec-series')) ?? [])[1] ?? '';
+  const UNIT_RE = { 次数: / 次$/, 消耗: / 卡$/, 时长: / 分钟$/ };
+  const unitOk = (html) => ['sec-type', 'sec-series'].every((id) => cellsOf(cardOf(html, id))
+    .filter((c) => UNIT_RE[c.label] !== undefined && c.text !== '—')
+    .every((c) => UNIT_RE[c.label].test(c.text)));
+
+  const cleanRec = buildRecordsDoc(recordsView());
+  const cleanSum = buildExerciseDoc(summaryView());
+  assert.equal(winOk(cardOf(cleanRec, 'sec-window')), true, '原样产物：窗口节应当是只读形状且带两个日期');
+  assert.equal(capOf(cleanSum) === '按日消耗' && unitOk(cleanSum), true, '原样产物：表题不该带天数、消耗格该带单位');
+
+  // 变异①：窗口节塞回写页的入参控件（P1-1 的原状）。
+  const mutA = cleanRec.replace(
+    '<div class="sui-facts">',
+    '<input class="ilife-block-param-form-input" name="start" value="2026-09-13" /><div class="sui-facts">');
+  assert.notEqual(mutA, cleanRec, '变异①没塞进去（夹具变了）');
+  assert.equal(winOk(cardOf(mutA, 'sec-window')), false, '变异①：窗口节塞回 input 后守卫没红');
+
+  // 变异②：表题塞回窗口天数（P2-8 的原状）。
+  const mutB = cleanSum.replace('<caption class="ilife-block-data-table-caption">按日消耗</caption>',
+    '<caption class="ilife-block-data-table-caption">按日消耗（本窗共 201 天）</caption>');
+  assert.notEqual(mutB, cleanSum, '变异②没塞进去（夹具变了）');
+  assert.equal(capOf(mutB) === '按日消耗', false, '变异②：表题塞回天数后守卫没红');
+
+  // 变异③：类型表的消耗格退回裸数（P2-7 的原状）。靶心钉在表格单元格上——
+  // 同一个数在分布条里也带单位（那里先出现），只换分布条那处不算本条的靶。
+  const mutC = cleanSum.replace('data-label="消耗">5702 卡<', 'data-label="消耗">5702<');
+  assert.notEqual(mutC, cleanSum, '变异③没塞进去（夹具变了）');
+  assert.equal(unitOk(mutC), false, '变异③：消耗格退回裸数后守卫没红');
+
+  // 还原：原样那两份 ⇒ 必绿。
+  assert.equal(winOk(cardOf(cleanRec, 'sec-window')) && capOf(cleanSum) === '按日消耗' && unitOk(cleanSum), true,
+    '还原后守卫没绿');
+  console.log('T523-MUT3 窗口塞input→' + winOk(cardOf(mutA, 'sec-window')) + ' 表题塞天数→' + (capOf(mutB) === '按日消耗')
+    + ' 数值退回裸数→' + unitOk(mutC) + ' 还原→' + (winOk(cardOf(cleanRec, 'sec-window')) && unitOk(cleanSum)));
 });

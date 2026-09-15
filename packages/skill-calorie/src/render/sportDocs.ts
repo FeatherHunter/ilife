@@ -23,6 +23,9 @@
  *      （表标题只报本窗天数，可见行数与被截天数只住截断明示一句）；类型分布由柱状图改分布条
  *      （长分类名在 x 轴上重叠越界）；目标页「已达成」只住判决胶囊一处，环下键值行已撤
  *      （目标／实际／差额只在数值四格一处）。#523 返修落点。
+ *      **返修 R5（终审席 P2-7／P2-8，I1／I2）**：① 逐日表的表题不再复读窗口天数——表题收成
+ *      「按日消耗」，天数只留页头窗口条一处（被截窗把本窗天数并进截断明示那一句）；
+ *      ② 两张表的三个数值列都带上单位（「2 次」「800 卡」「90 分钟」），与同页分布条／折叠体同一种写法。
  *   ④ **手机端同档**：页内形状件的 820 段＋触摸面在 `src/exercise/sportUi.ts`（本件正文首项放它的样式）。
  *
  * 取数仍由调用方备齐（`home/exercise.ts`／`render/planPlate.ts`）；本层不查库、不返空。
@@ -153,31 +156,37 @@ function summaryKpi(v: ExerciseView): KpiCardInput[] {
   ];
 }
 
-/** 逐日表的截断口径（一处算）：表标题只报本窗天数，可见行数与被截掉的天数只住截断明示那一句
- *  （#523 返修：原来 caption 与 `sui-note` 把「表被截断、看折线」各说一遍，现拆成一句一事）。
- *  返回的 `note` 只在超上限时出，且**必带「截断」二字**（回归判据读它）。 */
-function truncation(days: number): { visible: boolean; caption: string; note: string } {
-  if (days <= DAILY_CAP) return { visible: false, caption: '本窗共 ' + days + ' 天', note: '' };
+/** 逐日表的截断口径（一处算）：**表题只报这张表是什么**，天数与截断三数全住截断明示那一句。
+ *  #523 返修：原来 caption 与 `sui-note` 把「表被截断、看折线」各说一遍，现拆成一句一事。
+ *  **R5 打回项 I2（终审席 P2-8）**：表题原来写「按日消耗（本窗共 N 天）」，那个 N 天与**页头窗口条
+ *  右端那颗「N 天」胶囊是同一条事实**（同一页说两遍）。现表题收成「按日消耗」，天数只留页头窗口条
+ *  一处；被截窗里本窗天数并进截断明示那一句（「本窗共 N 天 ＋ 显示最近 100 天 ＋ 其余 M 天」三数同句），
+ *  读者在一个句子里就能对齐「窗共几天／表列几天／少了几」。
+ *  返回的 `note` 只在超上限时出，且**必带「截断」二字**（#452 的回归判据读它）。 */
+function truncation(days: number): { visible: boolean; note: string } {
+  if (days <= DAILY_CAP) return { visible: false, note: '' };
   return {
     visible: true,
-    caption: '本窗共 ' + days + ' 天',
-    note: '逐日表已截断：显示最近 ' + DAILY_CAP + ' 天，其余 ' + (days - DAILY_CAP) + ' 天见上方折线',
+    note: '逐日表已截断：本窗共 ' + days + ' 天，显示最近 ' + DAILY_CAP + ' 天，其余 ' + (days - DAILY_CAP) + ' 天见上方折线',
   };
 }
 
 /** 逐日消耗表：窗内**每天都有一行**（无记录日留空，不断 0）；超上限时只摆最近一截并明示。
  *  表标题不再复读窗口（窗口住页头窗口条与 H1），也不复读写法说明（住页底口径行）。
- *  单元格走 `fmtNum`——库里的 `153.60000000000002` 那样的原值不上屏。 */
+ *  单元格走 `fmtNum`——库里的 `153.60000000000002` 那样的原值不上屏。
+ *  **R5 打回项 I1（终审席 P2-7）**：消耗列原来是裸数（`1250`），而同页分布条写「1250 卡」——
+ *  一页两套单位写法、读者还要自己猜这一列是卡还是分钟。现单元格直接带单位「1250 卡」，
+ *  与该页分布条／折叠体同一种写法（同族记录级明细页的四列本来就带单位，两族由此一致）。 */
 function seriesCard(v: ExerciseView): Card | null {
   if (v.series.length === 0) return null;
   const rows = v.series.map((d: DaySeries) => ({
-    date: d.date, burn: d.exerciseKcal === null ? '—' : fmtNum(d.exerciseKcal, 1),
+    date: d.date, burn: d.exerciseKcal === null ? '—' : fmtNum(d.exerciseKcal, 1) + ' 卡',
   }));
   const cut = truncation(rows.length);
   const table = renderDataTable({
     columns: [{ key: 'date', label: '日期' }, { key: 'burn', label: '消耗', align: 'right' }],
     rows: cut.visible ? rows.slice(rows.length - DAILY_CAP) : rows,
-    caption: '按日消耗（' + cut.caption + '）',
+    caption: '按日消耗',
     emptyText: '本窗无按日消耗',
   });  return {
     id: 'sec-series', label: '逐日明细',
@@ -187,7 +196,10 @@ function seriesCard(v: ExerciseView): Card | null {
 
 /** 按类型明细表（力量／有氧筛选子集：同窗不同类直出，无类切换页）。
  *  #523：表标题只留类数，删掉「力量／有氧筛选子集同窗直出」那句读者用不上的工序话；
- *  数值一律走显示层取整（库里 `1680.8000000000004` 那样的原值不上屏）。 */
+ *  数值一律走显示层取整（库里 `1680.8000000000004` 那样的原值不上屏）。
+ *  **R5 打回项 I1**：三列数值原来都是裸数（次数 `2`、消耗 `800`、时长 `90`）且表头不带单位，
+ *  读者要自己猜这两列是卡还是分钟；现与逐日表、分布条、折叠体统一成「值 ＋ 单位」
+ *  （折叠体本来就写「2 次」「2200 卡」，三处同一写法）。 */
 function typeCard(v: ExerciseView): Card | null {
   const byType = v.review.byType;
   if (byType.length === 0) return null;
@@ -200,8 +212,8 @@ function typeCard(v: ExerciseView): Card | null {
         { key: 'burned', label: '消耗', align: 'right' }, { key: 'minutes', label: '时长', align: 'right' },
       ],
       rows: byType.map((t) => ({
-        type: t.type, cat: inferCategory(t.type), sessions: t.sessions,
-        burned: fmtNum(t.burned), minutes: fmtNum(t.minutes, 0),
+        type: t.type, cat: inferCategory(t.type), sessions: t.sessions + ' 次',
+        burned: fmtNum(t.burned) + ' 卡', minutes: fmtNum(t.minutes, 0) + ' 分钟',
       })),
       caption: '按类型明细（共 ' + byType.length + ' 类）',
       emptyText: '本窗无类型明细',

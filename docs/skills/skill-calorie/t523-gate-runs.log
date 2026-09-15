@@ -62,3 +62,38 @@ RUN ticket=523 runId=ab8fa0e5-affc-4af2-b3c4-fd0158eafde8 cmd="node packages/ski
 RUN ticket=523 runId=2056bfca-183b-4b30-a3c7-48e54c2e6b03 cmd="node .scratch/t523/verify.mjs" waitedMs=0 exit=0 pid=69368 at=2026-09-15T20:53:53.908Z
 RUN ticket=523 runId=95b8e54a-7491-4537-8b2e-d2b6572ce8dc cmd="pwsh -NoProfile -Command \"Select-String -Path 'D:\\ilife\\.scratch\\locks\\gate-runs.log' -Pattern 'ticket=523' | ForEach-Object { \\.Line } | Set-Content -Encoding UTF8 'D:\\ilife\\docs\\skills\\skill-calorie\\t523-gate-runs.log'; Write-Host ('LINES=' + (Get-Content 'D:\\ilife\\docs\\skills\\skill-calorie\\t523-gate-runs.log').Count)\"" waitedMs=0 exit=0 pid=39352 at=2026-09-15T20:54:32.475Z
 ```
+
+
+---
+
+## R5 窗口（终审席三条打回项的返修轮）· 逐字导出
+
+> 同一 `ticket=523`，窗口 `2026-09-15T22:20Z` 起（上面 R3／R4 两段原样保留）。
+> 导出动作：`Select-String .scratch/locks/gate-runs.log ticket=523` → 只取 `RUN` 行 → 追加。
+> 失败／重试的条目一并留着（不筛掉），免得「只对成功那几条」看起来像事后拣数。
+
+```
+RUN ticket=523 runId=d1844560-4dcf-41c2-9978-52e2ad630c34 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=35372 at=2026-09-15T22:22:06.486Z
+RUN ticket=523 runId=8d74f645-892f-4860-95d2-18b9e8ff2717 cmd="node .scratch/t523/run17.mjs" waitedMs=1 exit=0 pid=61468 at=2026-09-15T22:22:33.963Z
+RUN ticket=523 runId=71337497-502c-4d13-917b-ac33d2779d6f cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=6 exit=0 pid=43784 at=2026-09-15T22:23:29.810Z
+RUN ticket=523 runId=cc172c0f-e74b-467f-815a-ca6eb2a67bb5 cmd="node .scratch/t523/run17.mjs" waitedMs=1 exit=0 pid=10964 at=2026-09-15T22:23:52.998Z
+RUN ticket=523 runId=5693ad04-1783-4ea6-bbab-eb753fae5cc6 cmd="node .scratch/t523/scan17.mjs D:/ilife/.scratch/t523/out D:/ilife/.scratch/t523" waitedMs=0 exit=0 pid=21888 at=2026-09-15T22:24:11.517Z
+RUN ticket=523 runId=7e72f74b-fb3a-4220-be37-e54002151729 cmd="pwsh -NoProfile -Command \"param($names) $n=0; foreach ($x in $names) { Copy-Item -LiteralPath (D:\\ilife\\.scratch\\t523\\out\\\"\" + $x + .html) -Destination \"(D:\\ilife\\.scratch\\t541\\out\\\" + $x + .html) -Force; $n++ }; Write-Output (COPIED\" \" + $n)\" 14-看今日运动 15-看昨日运动 16-看本周运动 17-看上周运动 18-看本月运动 19-看上月运动 \"20-看最近 7 天运动\" \"21-看最近 30 天运动\" 22-看某段时间运动 \"23-看今日运动（vs 目标）\" \"24-看本周运动（vs 目标）\" 25-看运动记录（有备注） 26-看运动记录（按力量筛选） 27-看运动记录（按有氧筛选） \"28-看最近 60 天运动\" \"29-看最近 180 天运动\" \"30-看最近 365 天运动\"" waitedMs=0 exit=1 pid=38464 at=2026-09-15T22:24:24.239Z
+RUN ticket=523 runId=38f444b3-323e-4946-81de-9bd201cfb1ec cmd="node .scratch/t523/r5-copy.mjs" waitedMs=0 exit=0 pid=68416 at=2026-09-15T22:24:33.798Z
+RUN ticket=523 runId=8223aae4-7b55-415b-a47e-82e86cb836d4 cmd="node packages/skill-calorie/scripts/measure-responsive.mjs --dir D:/ilife/.scratch/t523/out --json D:/ilife/.scratch/t523/r5-resp.json --label r5" waitedMs=0 exit=0 pid=70768 at=2026-09-15T22:24:59.358Z
+RUN ticket=523 runId=2f4b95f9-a254-4db0-93ce-a33ce9a91e40 cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=20022 exit=1 pid=14756 at=2026-09-15T22:25:02.515Z
+RUN ticket=523 runId=b3730c5f-b0a6-4252-b5a0-b1a1fe2f0e43 cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=1 pid=61836 at=2026-09-15T22:25:27.028Z
+RUN ticket=523 runId=76ac4c29-27c4-48e8-acac-5348bc7932a7 cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=1 pid=53884 at=2026-09-15T22:25:41.606Z
+RUN ticket=523 runId=daf98373-b958-4995-9ead-3029a880680f cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=1 pid=58624 at=2026-09-15T22:25:53.191Z
+RUN ticket=523 runId=14222db9-b9f4-42a6-8cd0-606063f53bd0 cmd="node --test packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=1 exit=0 pid=62404 at=2026-09-15T22:26:06.439Z
+RUN ticket=523 runId=f061f58d-19dd-4a06-bb42-800b33bd6f15 cmd="node --test packages/skill-calorie/test/exercise-records-fusion-451.test.mjs packages/skill-calorie/test/exercise-summary-goal-fusion-452.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs packages/skill-calorie/test/exercise-text-shape-523.test.mjs packages/skill-calorie/test/exercise-port-111.test.mjs packages/skill-calorie/test/sport-homogeneity-109.test.mjs packages/skill-calorie/test/exercise-text-shape-543.test.mjs packages/skill-calorie/test/exercise-text-shape-544.test.mjs" waitedMs=0 exit=1 pid=62300 at=2026-09-15T22:27:07.668Z
+RUN ticket=523 runId=d41dc77a-cb8d-45e9-9ae3-3ae9e1019aaa cmd="node --test packages/skill-calorie/test/exercise-records-fusion-451.test.mjs" waitedMs=0 exit=1 pid=25508 at=2026-09-15T22:27:32.348Z
+RUN ticket=523 runId=98720ef4-1a81-4e21-9e46-fd21388ae771 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=60732 at=2026-09-15T22:28:54.516Z
+RUN ticket=523 runId=6a9bb4e2-a4c9-494c-b863-cdb66f1afe17 cmd="node .scratch/t523/run17.mjs" waitedMs=0 exit=0 pid=54292 at=2026-09-15T22:29:18.295Z
+RUN ticket=523 runId=aabcd5c8-3f59-425b-aac6-00ea2a448264 cmd="node --test packages/skill-calorie/test/exercise-records-fusion-451.test.mjs packages/skill-calorie/test/exercise-summary-goal-fusion-452.test.mjs packages/skill-calorie/test/exercise-accept-267.test.mjs packages/skill-calorie/test/exercise-text-shape-523.test.mjs" waitedMs=0 exit=0 pid=55016 at=2026-09-15T22:29:48.400Z
+RUN ticket=523 runId=f155a1c0-e139-4721-8194-23e52b1b8c5c cmd="node .scratch/t523/r5-copy.mjs" waitedMs=1 exit=0 pid=65912 at=2026-09-15T22:30:11.680Z
+RUN ticket=523 runId=b0d0182c-0068-4a8d-a431-7f3c4ac287c1 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs --sync" waitedMs=0 exit=0 pid=73692 at=2026-09-15T22:30:15.859Z
+RUN ticket=523 runId=304b7a2d-4f8c-443b-8e42-95e4bb178cc1 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=53864 at=2026-09-15T22:30:51.002Z
+RUN ticket=523 runId=7d0ce4b4-c61e-4a1b-af58-6d389c6701bd cmd="node .scratch/t523/scan17.mjs D:/ilife/.scratch/t523/out D:/ilife/.scratch/t523" waitedMs=0 exit=0 pid=53892 at=2026-09-15T22:30:52.455Z
+RUN ticket=523 runId=01fba728-2d48-4eb8-b8c5-5e74a30e406a cmd="node packages/skill-calorie/scripts/measure-responsive.mjs --dir D:/ilife/.scratch/t523/out --json D:/ilife/.scratch/t523/r5-resp-final.json --label r5-final" waitedMs=0 exit=0 pid=16796 at=2026-09-15T22:31:29.153Z
+```

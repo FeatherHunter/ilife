@@ -26,8 +26,12 @@
  *   ③ **重复事实**：窗口只在窗口条一处；「本页显示 N 条」只在表标题一处（副标题不再复读）；
  *      「活跃 N 天」只在独立卡一处（记录数卡小字已撤）；「每页最多 N 条」只在表标题一处。
  *      眉标退回族名（原来与 H1 逐字同名）。#523 返修落点；返修 R4 再撤来源脚注的「窗口」一格
- *      （日期已有 H1 与窗口卡两处落点）。
+ *      （日期已有 H1 与窗口卡两处落点）；**返修 R5 再撤脚注的「记录数」一格**（终审席 G2：
+ *      读数卡与表标题已各报一处，脚注是第三遍）。
  *   ④ **手机端同档**：页内形状件的 820 段＋触摸面住 `src/exercise/sportUi.ts`（正文首项放它的样式）。
+ *   ⑤ **只读页不摆入参控件**（#523 R5 打回项①②，终审席 P1-1）：窗口节原走写页 `renderParamForm`，
+ *      两个可聚焦可改字的 `<input>` 的日期只住 `value` 属性、复制读不到；现改只读键值行
+ *      （`factStrip`），日期进文本流。**只改形状，事实一条不减**：窗口仍在本页、条数三处口径不动。
  *
  * 对外 2 件（铁律五「不多于五个」）：
  *   ① `viewExerciseRecords`——读命令入口（窗口＋分类＋备注筛选）；
@@ -35,7 +39,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import {
-  renderCaliberLine, renderChips, renderDataTable, renderKpiGrid, renderParamForm, renderTocBlock,
+  renderCaliberLine, renderChips, renderDataTable, renderKpiGrid, renderTocBlock,
 } from 'base-paint/blocks';
 import { listPortRows } from '../render/exercisePort.js';
 import type { PortRow } from '../render/exercisePort.js';
@@ -223,18 +227,26 @@ function truncationText(v: RecordsView, shown: number): string | null {
   return '口径：本窗共 ' + v.sessions + ' 条，本页只列前 ' + shown + ' 条';
 }
 
-/** 窗口卡：这一页看的是哪一段（开始／结束两个真日期）。 */
+/** 窗口卡：这一页看的是哪一段。
+ *  **#523 R5 打回项①②（终审席 P1-1，页 14／15／25／26／27 两档）**：本节原来走写页的
+ *  `renderParamForm`——两个**可聚焦、可改字**的 `<input name="start|end">`（带 `:focus` 蓝框规则、
+ *  `min-height:44px`、`width:100%`）当只读事实组用。三处可见后果：① 只读报告页上摆着写页的入参控件；
+ *  ② 两枚日期**只住在 `value` 属性里、不在文本流内**，390 档复制页面文字只剩「开始／结束」两个空标签
+ *  （实测 14／15 整页可见文本里不同日期只剩 **1 个**，正是表内那一个）；③ 1440 档每个输入框撑满
+ *  960px，文字只占最左约 90px，右侧约 870px 连续空白。
+ *  改法照终审席建议：**窗口事实改走键值行**（`sportUi.factStrip()`，与同页「数据来源」脚注同一形状），
+ *  `renderParamForm` 留给真正的入参页（本件不再 import 它）。
+ *  形制随窗口退化：单日窗出一格「日期」（`开始／结束` 两个标签对同一天没有信息量，页头窗口条另标「单日」）；
+ *  区间窗出「开始／结束」两格——两枚日期**都在文本节点里**，复制得到、读屏也读得到。
+ *  节内原有一句 `description`（本窗内逐条运动记录…）**随表单一起撤**：页头副标题「逐条列出本窗的
+ *  运动记录」已说同一件事，留着就是同页复读（用户第 ④ 条：文字不冗余）。 */
 function windowCard(v: RecordsView): Card {
   return {
     id: 'sec-window',
     label: '窗口',
-    html: renderParamForm({
-      fields: [
-        { name: 'start', label: '开始', value: v.start },
-        { name: 'end', label: '结束', value: v.end },
-      ],
-      description: '本窗内逐条运动记录，下面那张表列八列明细',
-    }),
+    html: factStrip(v.start === v.end
+      ? [{ k: '日期', v: v.start }]
+      : [{ k: '开始', v: v.start }, { k: '结束', v: v.end }]),
   };
 }
 
@@ -287,20 +299,24 @@ function emptyCard(v: RecordsView): Card {
   };
 }
 
-/** 来源脚注卡（#523 形状化）：键值行「数据来源／记录数」，两个独立文本节点。
+/** 来源脚注卡（#523 形状化）：键值行「数据来源」，一个独立文本节点。
  *  不再产 `数据来源 · <来源> · 起 → 止 · 共 N 条` 那种 `·` 串（共用层口径统一归 #470）。
  *  **返修 R4 撤「窗口」一格**（视觉复评 R3 第 3、4 页各 −4「日期范围两处」）：这一段日期在本页
  *  已有两处更该在的落点——页头 H1 的页名句与窗口卡的两枚日期块（「开始／结束」），脚注再报一遍
- *  属同一份事实的第三遍。撤这一格**只撤落点、不撤事实**：来源（哪张表）与条数（共 N 条）原样留着，
- *  脚注的职责收成「这份数从哪来、共多少条」。 */
+ *  属同一份事实的第三遍。
+ *  **返修 R5 再撤「记录数」一格（终审席 G2／P2-5）**：`#sec-figures` 首卡就是「记录数 N 条」，
+ *  表标题又写「共 N 条」（同一口径：本窗内未删除的行），脚注第三遍是纯复读。
+ *  **一处例外（不是漏改，是与 #451 的既有判据接边）**：本页**没有表**（`sessions === 0` 的空态）时，
+ *  脚注仍报「记录数 共 0 条」——空态不出表标题，那一句是这一页唯一带「共 N 条」口径的句子，
+ *  `test/exercise-records-fusion-451.test.mjs` 的空态判据（「0 条也要报」）读的正是它。
+ *  有表时（条数已在读数卡与表标题各一处）脚注不再报，只为「这份数从哪来」负责。 */
 function sourceCard(v: RecordsView): Card {
+  const facts = [{ k: '数据来源', v: SOURCE }];
+  if (v.sessions === 0) facts.push({ k: '记录数', v: '共 ' + v.sessions + ' 条' });
   return {
     id: 'sec-source',
     label: '数据来源',
-    html: factStrip([
-      { k: '数据来源', v: SOURCE },
-      { k: '记录数', v: '共 ' + v.sessions + ' 条' },
-    ]),
+    html: factStrip(facts),
   };
 }
 
