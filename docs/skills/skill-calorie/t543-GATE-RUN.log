@@ -1,5 +1,5 @@
 # #543 门禁运行记录导出（源：.scratch/locks/gate-runs.log，只筛 ticket=543 的行，逐行原样）
-# 导出时刻：2026-09-15T20:29:54.683Z　条目数：198
+# 导出时刻：2026-09-15T20:30:19.769Z　条目数：202
 
 START ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 pid=47004 at=2026-09-15T07:37:22.797Z
 RUN ticket=543 runId=daa14de9-d215-4bad-af4f-f78f8797b8ec cmd="pnpm --filter skill-calorie run build" waitedMs=30029 exit=1 pid=47004 at=2026-09-15T07:37:26.838Z
@@ -199,3 +199,7 @@ RUN ticket=543 runId=a949c1db-3875-4323-8f4d-11516cbe67b2 cmd="node packages/ski
 START ticket=543 runId=8d29cd90-e63d-4110-a94c-844fa7303447 cmd="pwsh -NoProfile -File .scratch/t543/commit-v3.ps1" waitedMs=1 pid=71148 at=2026-09-15T20:18:13.206Z
 RUN ticket=543 runId=8d29cd90-e63d-4110-a94c-844fa7303447 cmd="pwsh -NoProfile -File .scratch/t543/commit-v3.ps1" waitedMs=1 exit=0 pid=71148 at=2026-09-15T20:18:15.723Z
 START ticket=543 runId=d5580967-5c60-44c5-a6d8-0b6ef5ab3451 cmd="node .scratch/t543/export-runs.mjs" waitedMs=0 pid=42420 at=2026-09-15T20:29:54.616Z
+RUN ticket=543 runId=d5580967-5c60-44c5-a6d8-0b6ef5ab3451 cmd="node .scratch/t543/export-runs.mjs" waitedMs=0 exit=0 pid=42420 at=2026-09-15T20:29:54.694Z
+START ticket=543 runId=1f2e9fcb-c562-407d-8a7e-f8402127d31d cmd="pwsh -NoProfile -File .scratch/t543/commit-v4.ps1" waitedMs=0 pid=52048 at=2026-09-15T20:30:07.750Z
+RUN ticket=543 runId=1f2e9fcb-c562-407d-8a7e-f8402127d31d cmd="pwsh -NoProfile -File .scratch/t543/commit-v4.ps1" waitedMs=0 exit=0 pid=52048 at=2026-09-15T20:30:10.368Z
+START ticket=543 runId=2a0efc13-ee62-4d67-8439-54246684163d cmd="node .scratch/t543/export-runs.mjs" waitedMs=0 pid=59956 at=2026-09-15T20:30:19.706Z
