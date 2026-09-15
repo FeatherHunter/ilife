@@ -538,10 +538,8 @@ export function buildContraDoc(v: ContraView): string {
   ]);
   const parts: string[] = [
     noteBits,
-    renderParamForm({
-      fields: [{ name: 'part', label: '部位', value: v.part }],
-      description: '想扫哪个部位就说腰、膝或肩。不说部位就全部扫一遍。命中的动作会逐条列出，并给出可以替换的动作。',
-    }),
+    renderCaliberLine('想扫哪个部位就说腰、膝或肩。不说部位就全部扫一遍。'
+      + '命中的动作会逐条列出，并给出可以替换的动作。'),
     renderKpiGrid([
       { label: '扫描', value: CONTRA_STATUS_ZH[v.summaryStatus] ?? v.summaryStatus,
         detail: '部位：' + (v.part === 'all' ? '全部' : v.part) },
@@ -571,12 +569,16 @@ export function buildContraDoc(v: ContraView): string {
     }));
   }
   if (s.suggestions.length > 0) {
-    parts.push(renderListRows({
-      items: s.suggestions.map((g) => ({
-        left: g.movement,
-        main: '原因：' + g.reason + '｜替换：' + g.replace,
-        right: g.rule,
-      })),
+    // T351-v11：原来一条建议挤成 `原因：…｜替换：…` 一行串（那个 `｜` 又是拿符号顶替设计，第 ⑤ 条），
+    // 右侧槽还挂着规则名（与「命中明细」里的「规则」列重复）。改成三列真表格：动作｜原因｜可以换成。
+    parts.push(renderDataTable({
+      columns: [
+        { key: 'movement', label: '动作' },
+        { key: 'reason', label: '原因' },
+        { key: 'replace', label: '可以换成' },
+      ],
+      rows: s.suggestions.map((g) => ({ movement: g.movement, reason: g.reason, replace: g.replace })),
+      caption: '替代建议',
       emptyText: '无替代建议',
     }));
   }

@@ -20,23 +20,23 @@ export function isSafeVariant(name: string): boolean {
 export interface ContraRule { part: ContraPart; name: string; reason: string; keywords: string[]; severity: Severity }
 
 const LUMBAR: ContraRule[] = [
-  { part: '腰', name: '髋铰链轴向压力', reason: '硬拉/罗马尼亚硬拉/早安式弯腰会让腰椎承受巨大轴向压力,突出节段受挤压加重', keywords: ['硬拉', '罗马尼亚', '早安', 'good morning', '臀桥'], severity: 'error' },
-  { part: '腰', name: '俯身/弯腰划船类', reason: '俯身角度超过 45° 时腰部竖脊肌持续等长收缩 + 腰椎剪切力,T-bar 划船最危险', keywords: ['俯身', 't-bar', 'tbar', 't bar', '杠铃划船'], severity: 'warn' },
-  { part: '腰', name: '腿举/倒蹬类', reason: '倒蹬器械在膝屈曲 + 髋屈曲时腰椎屈曲代偿,突出节段受压(用户已主动删除器械倒蹬)', keywords: ['倒蹬', '腿举', 'smith 机深蹲'], severity: 'error' },
-  { part: '腰', name: '坐姿腿弯举', reason: '腘绳肌在屈膝时收缩牵拉坐骨结节,导致骨盆前倾 + 腰椎屈曲,加重突出', keywords: ['腿弯举', '坐姿腿弯举', '俯卧腿弯举'], severity: 'error' },
+  { part: '腰', name: '髋铰链轴向压力', reason: '硬拉/罗马尼亚硬拉/早安式弯腰会让腰椎承受巨大轴向压力，突出节段受挤压加重', keywords: ['硬拉', '罗马尼亚', '早安', 'good morning', '臀桥'], severity: 'error' },
+  { part: '腰', name: '俯身/弯腰划船类', reason: '俯身角度超过 45° 时腰部竖脊肌持续等长收缩 + 腰椎剪切力，T-bar 划船最危险', keywords: ['俯身', 't-bar', 'tbar', 't bar', '杠铃划船'], severity: 'warn' },
+  { part: '腰', name: '腿举/倒蹬类', reason: '倒蹬器械在膝屈曲 + 髋屈曲时腰椎屈曲代偿，突出节段受压(用户已主动删除器械倒蹬)', keywords: ['倒蹬', '腿举', 'smith 机深蹲'], severity: 'error' },
+  { part: '腰', name: '坐姿腿弯举', reason: '腘绳肌在屈膝时收缩牵拉坐骨结节，导致骨盆前倾 + 腰椎屈曲，加重突出', keywords: ['腿弯举', '坐姿腿弯举', '俯卧腿弯举'], severity: 'error' },
 ];
 
 const KNEE: ContraRule[] = [
-  { part: '膝', name: '大重量深蹲/全蹲', reason: '超过 90° 深度 + 大重量会让髌股关节压力激增,半月板承受剪切', keywords: ['深蹲', '全蹲', '高杠深蹲', '低杠深蹲', '前蹲'], severity: 'warn' },
-  { part: '膝', name: '跳跃/冲击类', reason: '跳跃落地时膝关节承受 5-7 倍体重冲击,半月板/韧带风险高', keywords: ['跳箱', 'box jump', '跳跃', '冲刺跑'], severity: 'warn' },
-  { part: '膝', name: '开链伸膝大重量', reason: '坐姿腿屈伸(开链)大重量时髌腱张力极高,易诱发髌腱炎', keywords: ['腿屈伸', 'leg extension'], severity: 'info' },
+  { part: '膝', name: '大重量深蹲/全蹲', reason: '超过 90° 深度 + 大重量会让髌股关节压力激增，半月板承受剪切', keywords: ['深蹲', '全蹲', '高杠深蹲', '低杠深蹲', '前蹲'], severity: 'warn' },
+  { part: '膝', name: '跳跃/冲击类', reason: '跳跃落地时膝关节承受 5-7 倍体重冲击，半月板/韧带风险高', keywords: ['跳箱', 'box jump', '跳跃', '冲刺跑'], severity: 'warn' },
+  { part: '膝', name: '开链伸膝大重量', reason: '坐姿腿屈伸(开链)大重量时髌腱张力极高，易诱发髌腱炎', keywords: ['腿屈伸', 'leg extension'], severity: 'info' },
 ];
 
 const SHOULDER: ContraRule[] = [
-  { part: '肩', name: '颈后推举', reason: '颈后推举时肩关节外旋 + 极度外展,肩峰下撞击综合征风险极高', keywords: ['颈后推举', '颈后推', 'behind neck press'], severity: 'error' },
-  { part: '肩', name: '大重量直立划船', reason: '直立划船到顶端时肩关节内旋 + 外展,肩峰撞击 + 肩袖肌群挤压', keywords: ['直立划船', 'upright row'], severity: 'warn' },
-  { part: '肩', name: '过头推举大重量', reason: '过头推举超过头部时肱骨大结节与肩峰撞击,肩袖肌群受压', keywords: ['过头推举', 'overhead press', '推举过头'], severity: 'warn' },
-  { part: '肩', name: '大幅度侧平举', reason: '侧平举超过 90° 时肩峰下空间消失,冈上肌撞击', keywords: ['侧平举', 'lateral raise'], severity: 'info' },
+  { part: '肩', name: '颈后推举', reason: '颈后推举时肩关节外旋 + 极度外展，肩峰下撞击综合征风险极高', keywords: ['颈后推举', '颈后推', 'behind neck press'], severity: 'error' },
+  { part: '肩', name: '大重量直立划船', reason: '直立划船到顶端时肩关节内旋 + 外展，肩峰撞击 + 肩袖肌群挤压', keywords: ['直立划船', 'upright row'], severity: 'warn' },
+  { part: '肩', name: '过头推举大重量', reason: '过头推举超过头部时肱骨大结节与肩峰撞击，肩袖肌群受压', keywords: ['过头推举', 'overhead press', '推举过头'], severity: 'warn' },
+  { part: '肩', name: '大幅度侧平举', reason: '侧平举超过 90° 时肩峰下空间消失，冈上肌撞击', keywords: ['侧平举', 'lateral raise'], severity: 'info' },
 ];
 
 export const ALL_RULES: Record<ContraPart, ContraRule[]> = { '腰': LUMBAR, '膝': KNEE, '肩': SHOULDER };
