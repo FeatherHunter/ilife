@@ -2,7 +2,7 @@
 
 ## 机器证据
 
-基线 sha＝`506bdcaba3d51dd257856841c1adb9096966f355`（`git -C D:\ilife rev-parse HEAD`）。检出 `D:\ilife-wt\wf155-a2`（`worktree add -d … HEAD`，detached；收工 `git status --porcelain -- packages/` 为空）。日志在 `.scratch\t269a2\`。
+基线 sha＝`506bdcaba3d51dd257856841c1adb9096966f355`（`git -C D:\ilife rev-parse HEAD`，本席起跑时的 master；本席全部读数都钉在这个 sha 上）。检出 `D:\ilife-wt\wf155-a2`（`worktree add -d … HEAD`，detached；收工 `git status --porcelain -- packages/` 为空）。日志在 `.scratch\t269a2\`。**收工复查：`D:\ilife` 的 HEAD 已在本席作业期间前进到 `e1dd266`（+3 提交），本席未碰它。**
 
 | 判据 | 命令 | 机器读数 |
 |---|---|---|
@@ -33,6 +33,7 @@
 1. **S2（范围外，归 #478／`aac39bf`）**：当刻 master 派生件已走散。`node packages/skill-calorie/scripts/gen-cli.mjs --check` exit **1**：盘上 `routes.generated.ts:85` 为 `--params '{"window":"7d","meal":"早餐"}'`，生成器输出 `'{"window":"7d"}'`；权威声明 `src/home/routes.ts:28` 与生成器一致。`git log -1 -- routes.generated.ts` ＝ `aac39bf`，而 `645aa37` 上该行与生成器一致 ⇒ 走散由 `aac39bf` 引入。**不决定本票裁决**（`pnpm build` 走 `--stamp`，exit 0），但少一面门。另：`8c1d94b` 提交信息写「重生成派生路由总表」，`git show --stat 8c1d94b` 只含 2 个 doc／script 件、未碰该派生件 —— 任务书与上一轮据它认定「派生件已重生成」，与提交内容不符，而 `gen:check` 在当刻 master 上仍红。
 2. **S3（归上一轮 lane）**：上一轮把该集的构成写成「9＋3＋1」，与它自己断言的 14 条不自洽（应为 9＋4＋1）。计数不实，方向不错（`water.log` 确在集内、`product.import` 确在集内），对它的 FAIL 结论无影响。
 3. **S3（范围外，归 #449 及后续扩域各票）**：`field-labels-449` 的「单源」断言范围是全仓，设计已扩到四域各一张表 ⇒ 该件长期红（见 ③）。
+4. **S2 已在更新的 master 上自愈（复核）**：第 1 条报的走散，在 `e1dd266` 上已消失 —— `47d9d6d` 把 `home/routes.ts` 的 order 73–77 五条补上 `meal`（`看早餐（最近 7 天）` 等），与盘上 `routes.generated.ts:85` 对齐，改的是权威声明而非重生成派生件。故此条仅对 `506bdca` 成立，**不需要为它单开整改**。
 
 未做项与下一手缺什么：
 
