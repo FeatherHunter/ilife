@@ -18,7 +18,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 
-import { machineWords, visibleText } from './visible-text-probe.mjs';
+import { machineWords, stripCopyPayload, visibleText } from './visible-text-probe.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -133,7 +133,9 @@ test('#271 复制区：给了命令原文即真·日志按钮，第 4 段＝本�
 });
 
 test('#271 裁定 4／5：空窗仍出完整页；单点不成线；零值不画柱身', () => {
-  /* 空窗：一条记录也没有 ⇒ 标题／空态句／引导句／来源脚注都在。 */
+  /* 空窗：一条记录也没有 ⇒ 标题／空态句／引导句都在。#560 用户裁决原文：「用户 2026-09-15 点名：所有 HTML 页面底部的'
+     「数据来源：xxx」都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）。」⇒ 本页屏上来源脚注已撤，'
+     空窗不再断言它在（复制载荷里的来源段保留，见 560 用例正证）。 */
   const empty = BUILD_VIEW(sampleInput({
     days: [{ date: '2026-09-07', calories: null, protein: null, carbs: null, fat: null, calorieGoal: 1800 }],
     meals: [], mealTotal: 0,
@@ -147,7 +149,8 @@ test('#271 裁定 4／5：空窗仍出完整页；单点不成线；零值不画
   assert.ok(empty.includes('ilife-block-empty-block'), '空窗缺空态块');
   assert.ok(visibleText(empty).includes('没有饮食记录'), '空窗缺空态句');
   assert.ok(visibleText(empty).includes('记一餐'), '空窗缺引导句');
-  assert.ok(empty.includes('数据来源'), '空窗缺来源脚注');
+  /* #560（用户裁决见本件上文）：屏上来源脚注已撤——空窗可见文本 `数据来源` 零命中才是绿；加回即红。 */
+  assert.ok(!empty.includes('数据来源') && !visibleText(empty).includes('数据来源'), '空窗屏上还有来源脚注（#560 已撤）');
   /* 断「图上不出图元」要看**正文**：样式段里本来就有 `.ilife-block-chart-block{…}` 那类规则名。 */
   const emptyBody = empty.slice(empty.indexOf('</style>'));
   assert.ok(!emptyBody.includes('ilife-block-chart-block-canvas'), '空窗不该画图');
@@ -224,7 +227,8 @@ test('#271 真跑：calorie.view.diet（窗口词）exit 0＋完整文档＋日�
   assert.ok(r.html.includes('<meta charset="utf-8">'), '产物缺 charset');
   assert.ok(r.html.length > 4000 && r.bytes > 4000, '产物太小，像片段：' + r.bytes);
   assert.ok(r.html.includes('ilife-block-toc'), '缺页内导航');
-  assert.ok(r.html.includes('数据来源'), '缺来源脚注');
+  /* #560（用户裁决见本件上文）：屏上来源脚注已撤——可见文本 `数据来源` 零命中才是绿；复制载荷里的来源段保留（见 560 用例正证）。 */
+  assert.ok(!visibleText(stripCopyPayload(r.html)).includes('数据来源'), '屏上还有来源脚注（#560 已撤）');
   assert.deepEqual(tableOf(r.html, '全部记录').at(-1), '备注', '真跑的明细末列不是备注');
   assert.ok(r.html.includes('复制数据'), '真跑缺「复制数据」按钮');
   /* 复制日志那一颗要处理体把命令原文传进来才**活**：`calorie.view.diet` 的处理体住 `src/home/**`，

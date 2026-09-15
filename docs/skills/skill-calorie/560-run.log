@@ -1,0 +1,182 @@
+node : LOCK-ACQUIRED ticket=560 runId=30b65d94-65b1-46fc-bee2-5817748cf60e waitedMs=0 pid=10812
+At line:1 char:129
++ ... ew($false); node tooling/run-locked.mjs --ticket 560 -- npx tsc -b pa ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (LOCK-ACQUIRED t...dMs=0 pid=10812:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+LOCK-RELEASED ticket=560 runId=30b65d94-65b1-46fc-bee2-5817748cf60e exit=0
+RESULT: ticket=560 runId=30b65d94-65b1-46fc-bee2-5817748cf60e waitedMs=0 exit=0
+node : LOCK-ACQUIRED ticket=560 runId=05b91f04-5ae9-49f8-ba21-835ff9a6bee2 waitedMs=0 pid=37384
+At line:1 char:129
++ ... ew($false); node tooling/run-locked.mjs --ticket 560 -- node --test p ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (LOCK-ACQUIRED t...dMs=0 pid=37384:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+T560-MUT 主页改坏红=1 还原绿=1；饮食改坏红=1 还原绿=1
+✔ #560 ① 主页屏上无来源脚注（空窗与否同页框，只判代表态） (4.997ms)
+✖ #560 ① 饮食列表屏上有数／空窗两态都无来源脚注 (7.8515ms)
+✖ #560 ② 复制载荷里的来源段保留（只删屏上脚注，不删技术原件） (0.1637ms)
+✔ #560 体重片排队注记：`weight/log.ts` 来源行仍在（等 #505 窗口，另派） (0.2795ms)
+✔ #560 ③ 390 无横滑回归（只删一句脚注，版式形状原样） (0.1445ms)
+✔ #560 ④ 变异自证：塞回任一处来源脚注必红，还原必绿 (4.6655ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3753.3145
+
+✖ failing tests:
+
+test at packages\skill-calorie\test\560-no-source.test.mjs:78:1
+✖ #560 ① 饮食列表屏上有数／空窗两态都无来源脚注 (7.8515ms)
+  AssertionError [ERR_ASSERTION]: 饮食列表空窗屏上还有来源脚注：饮食总览 · 饮食
+  营养 · 饮水 · 总览
+  🍽️ 饮食总览 2020-01-01 ~ 2020-01-07
+  这一段时间（2020-01-01 ~ 2020-01-07）没有饮食记录，汇总算不出来（不编数）。
+  窗口读数
+  窗口读数
+  这一段时
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-calorie/test/560-no-source.test.mjs:81:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at packages\skill-calorie\test\560-no-source.test.mjs:88:1
+✖ #560 ② 复制载荷里的来源段保留（只删屏上脚注，不删技术原件） (0.1637ms)
+  AssertionError [ERR_ASSERTION]: 饮食列表复制载荷里来源丢了（删错地方）
+      at TestContext.<anonymous> (file:///D:/ilife/packages/skill-calorie/test/560-no-source.test.mjs:91:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+LOCK-RELEASED ticket=560 runId=05b91f04-5ae9-49f8-ba21-835ff9a6bee2 exit=1
+RESULT: ticket=560 runId=05b91f04-5ae9-49f8-ba21-835ff9a6bee2 waitedMs=0 exit=1
+node : LOCK-ACQUIRED ticket=560 runId=df2974f3-c746-4046-9e53-676b04e4bfe4 waitedMs=0 pid=47228
+At line:1 char:129
++ ... ew($false); node tooling/run-locked.mjs --ticket 560 -- node --test p ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (LOCK-ACQUIRED t...dMs=0 pid=47228:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+T560-MUT 主页改坏红=1 还原绿=1；饮食改坏红=1 还原绿=1
+✔ #560 ① 主页屏上无来源脚注（空窗与否同页框，只判代表态） (4.5178ms)
+✔ #560 ① 饮食列表装配（`dietDocs.ts`）有数／直调空窗两态都无来源脚注 (6.7827ms)
+✔ #560 ② 复制载荷里的来源段保留（只删屏上脚注，不删技术原件） (0.1608ms)
+✔ #560 体重片排队注记：`weight/log.ts` 来源行仍在（等 #505 窗口，另派） (0.2719ms)
+✔ #560 ③ 390 无横滑回归（只删一句脚注，版式形状原样） (0.1569ms)
+✔ #560 ④ 变异自证：塞回任一处来源脚注必红，还原必绿 (4.3428ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7519.5292
+LOCK-RELEASED ticket=560 runId=df2974f3-c746-4046-9e53-676b04e4bfe4 exit=0
+RESULT: ticket=560 runId=df2974f3-c746-4046-9e53-676b04e4bfe4 waitedMs=0 exit=0
+node : LOCK-ACQUIRED ticket=560 runId=b7b93e91-7a5a-4178-bb06-15aed6789f7d waitedMs=0 pid=48580
+At line:1 char:129
++ ... ew($false); node tooling/run-locked.mjs --ticket 560 -- node --test p ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (LOCK-ACQUIRED t...dMs=0 pid=48580:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+✔ #271 骨架：15 行里该出的都出，明细长着备注列 (20.9177ms)
+✔ #271 复制区：给了命令原文即真·日志按钮，第 4 段＝本次命令原文 (2.8057ms)
+✔ #271 裁定 4／5：空窗仍出完整页；单点不成线；零值不画柱身 (17.6375ms)
+✔ #271 餐别支／总览支：调用点给了取数才换页，区块走 #273／#275 的具名函数 (13.7841ms)
+✔ #271 真跑：calorie.view.diet（窗口词）exit 0＋完整文档＋日志第 4 段＝命令原文 (3262.4104ms)
+✔ #271 真跑：calorie.today 带 hasNote 的备注列＋标题写明筛选口径 (3290.271ms)
+READING #271 13 条词的路由 cli 逐字未变：看昨日饮食、看本周饮食、看上周饮食、看本月饮食、看上月饮食、看最近 7 天饮食、看最近 30 天饮食、看某段时间饮食、看早餐（最近 7 天）、看午餐（最近 7 天）、看晚餐（最近 7 天）、看加餐（最近 7 天）、看全部餐别分布（最近 7 天）
+READING #271 看饮食总览 exit=0 产物 C:\Users\辰辰洋洋\AppData\Local\Temp\t271-VJza0x\t271-out-2tknwb.html 76245 B
+READING #271 看饮食总览 路由 cli=calorie-cmd-read calorie.view.diet --params '{"window":"7d","entry":"overview"}'
+READING #271 看饮食总览 76245 B ／ 看最近 7 天饮食 89045 B（两页不同）
+READING #271 空库 不给 entry exit=4 不落盘（C:\Users\辰辰洋洋\AppData\Local\Temp\t271-vSSmOM）
+READING #271 空库 给 entry=overview exit=4 不落盘（C:\Users\辰辰洋洋\AppData\Local\Temp\t271-kUjeLB）
+READING #271 空窗 不给 entry exit=0 产物 C:\Users\辰辰洋洋\AppData\Local\Temp\t271-BBY4ZB\t271-out-m0iabc.html 67254 B
+READING #271 空窗 给 entry=overview exit=0 产物 C:\Users\辰辰洋洋\AppData\Local\Temp\t271-jt5PVd\t271-out-iczya0.html 67296 B
+READING #271 hasAnyDietRow 定义处 1 个：packages/skill-calorie/src/diet/nutritionPort.ts:53
+READING #271 原样必绿 ok · 周窗口来源脚注字样 2026-09-01 → 2026-09-07
+✔ #271 ① 不给 entry 的 8 个窗口词 ＋ 5 条餐别词：路由 cli 逐字未变 (2.0558ms)
+✔ #271 ① 「看饮食总览」那条记录自己带入口标记 entry=overview (0.8535ms)
+✔ #271 ② 看饮食总览：exit 0 ＋ 总览页（sec-week／sec-month ＋ 统计到昨日），不是条目列表页 (550.2303ms)
+✔ #271 ② 看饮食总览 与 看最近 7 天饮食 同库同参数：产物不再逐字节相同 (841.0313ms)
+✔ #271 ③ 库为空：`calorie.view.diet` 仍 exit 4 ＋ ERR 4: 取数失败（缺失阻断）＋ 一条都不落盘 (880.6164ms)
+✔ #271 ③ 库非空、窗口内零记录：出完整页 ＋ 空态句 ＋ 引导句 ＋ exit 0 ＋ 落盘 (1110.3786ms)
+✔ #271 ③ 空窗与空库不是同一条路（正反两面都钉住） (1055.7902ms)
+✔ #271 ④ hasAnyDietRow 全仓只有一处定义（diet/nutritionPort.ts），两张页都吃它 (23.192ms)
+✔ #271 ⑤ 原样必绿：探针不落仓内件 (0.4522ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6772.9111
+LOCK-RELEASED ticket=560 runId=b7b93e91-7a5a-4178-bb06-15aed6789f7d exit=0
+RESULT: ticket=560 runId=b7b93e91-7a5a-4178-bb06-15aed6789f7d waitedMs=0 exit=0
+node : LOCK-ACQUIRED ticket=560 runId=a2670972-b19e-4c59-ae34-8282204ba005 waitedMs=1 pid=72920
+At line:1 char:129
++ ... ew($false); node tooling/run-locked.mjs --ticket 560 -- node --test p ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (LOCK-ACQUIRED t...dMs=1 pid=72920:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+✔ #396 口径名与算式同页可见（overview）：卡名带热量缺口＋算式＋基准说明 (0.4849ms)
+✔ #396 算法未动：缺口值仍是 TDEE 系（1687），611 只是还能吃多少 (0.1043ms)
+✔ #396 英文不上屏：可见文本无全大写常量（t401c A1 同口径） (4.5643ms)
+✔ #396 分隔符守卫：新增文案无并列分隔符（t401 同口径） (4.4813ms)
+✔ #396 分档限定：budget 档不出缺口卡（仍是剩余预算） (0.1634ms)
+T551 SUB 有数 副题=本窗合计 3200 卡 命中=0
+T551 SUB 空窗 副题=本窗合计 0 卡 命中=0
+T551 CAP caption=按日汇总 命中=0
+T551 FACTS 五事实齐＋形状在
+T551-MUT 塞·=R1 塞；=R2 塞三段=R3 还原=0
+✔ #551 ① 副题节点 R1/R2/R3 零命中（有数＋空窗；L6 title 除外，title 住 head 不进本判） (12.3814ms)
+✔ #551 ② caption 节点 R1/R2/R3 零命中且只留「按日汇总」，口径注另起形状行 (1.6344ms)
+✔ #551 ③ 五事实屏上可读：窗口＋共N天／有记录／条数／合计／日均都在，且落形状不在串里 (1.5954ms)
+✔ #551 ④ 390 无横滑（静态形状守卫：flex 折行＋820 纵列＋无定宽；真浏览器量尺见证据件） (0.9155ms)
+✔ #551 变异电池（字串级）：塞回 ·／；／三段并列 ⇒ 守卫必红；还原 ⇒ 必绿 (1.1131ms)
+✔ #401 可见文本守卫：`·`／`；`／≥3 段并列 三条读数全 0 (5.3423ms)
+✔ #401 变异自证：塞回一处 `·` 并列／一处 `；` → 必红；拿掉 → 必绿 (9.0083ms)
+✔ #401c 可见文本零机器话（四类各一条，只在复制载荷里放过技术原文） (5.3857ms)
+✔ #401c 窗口区间串在可见文本里只出现 1 次 (8.8607ms)
+✔ #401c 长行（≥50 字符）不超过 2 条 (1.8406ms)
+✔ #401c 视觉升级四件在场（徽章／标题图标／胶囊导航／结论条专属浅色面） (5.5085ms)
+✔ #401c 变异自证：把内部标识符塞回可见文本 → 探针必红；拿掉 → 必绿 (4.1221ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8661.9843
+LOCK-RELEASED ticket=560 runId=a2670972-b19e-4c59-ae34-8282204ba005 exit=0
+RESULT: ticket=560 runId=a2670972-b19e-4c59-ae34-8282204ba005 waitedMs=1 exit=0

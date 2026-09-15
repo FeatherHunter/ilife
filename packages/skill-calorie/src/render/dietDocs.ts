@@ -253,8 +253,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       },
     },
   }, input.command)));
-  /* §五 第 15 行：来源脚注一行（老 `today_meals.html:344-345`；裁定 2-补：走普通小字行，不走深底块）。 */
-  parts.push(sourceLine({ source: '饮食记录', start: o.start, end: o.end, count: mealTotal }));
+  /* #560 · 屏上来源脚注撤（用户裁决原文：「用户 2026-09-15 点名：所有 HTML 页面底部的「数据来源：xxx」都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）。」）；
+     `sourceLine` helper 与复制载荷 `copyLog.source` 保留（技术原件，只删屏上脚注）。 */
   return assembleDocPage({
     docTitle: DOC_TITLE,
     /* 用户缺陷（2026-09-15）：页名不再带窗口日期——窗口区间归副题那一行，全页只出现一次。

@@ -319,9 +319,9 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
     renderTocBlock({ items: [...body.toc] }),
     body.sections.join(''),
     '<section id="' + SEC_COPY.id + '">' + copy + '</section>',
-    // #401e 债 #8 收口：来源脚注只留一条（原第二条「窗内共 N 条记录」整条删——那个 N 就是 `loggedDays`＝
-    // **天数**）。**#401i（复审第 5 点）**：这条只说来源（缺数口径已归表下），页脚不再一句拼两件事。
-    renderCaliberLine('数据来源：' + SOURCE_LOGGED + '。'),
+    // #560 · 屏上来源脚注整行撤（用户裁决原文：「用户 2026-09-15 点名：所有 HTML 页面底部的「数据来源：xxx」都删掉'
+    // （用户直接看得见按钮与内容，不需要脚注复读来路）。」）。`renderCaliberLine` helper 本身保留（别家页在用）；
+    // 复制载荷 `copyLog.source`（`SOURCE_LOGGED`）是给复核照抄的技术原件，一律保留，只删屏上脚注。
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
