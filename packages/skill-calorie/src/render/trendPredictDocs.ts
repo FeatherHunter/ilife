@@ -514,35 +514,48 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
 /* ── #383 · 摄入预测(按当前速率)（日均摄入外推＋目标对照；只改本图会碰到的预测段） ── */
 
 export function buildCalorieForecastDoc(v: CalorieForecast): string {
+  const pts = v.forecast ? v.forecast.points : [];
+  const span = spanDaysOf(pts);
+  const lastV = pts.length > 0 ? (pts[pts.length - 1] as { value: number }).value : null;
   const parts: string[] = [
-    renderParamForm({
+    predictChips('摄入预测'),
+    /* 结论句只用页里已有的数（末点预测值／目标／窗口天数）。 */
+    renderConclusionBar(lastV === null
+      ? '这一段的摄入还不够算预测。'
+      : '按当前速率，' + span + ' 天后每天大约吃 ' + lastV + ' 卡。'
+        + (v.goal === null || v.goal === undefined ? '' : '目标 ' + v.goal + ' 卡。')),
+    predictNav(pts.length > 0),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
         { name: 'horizonDays', label: '预测天数', value: String(v.forecast?.horizonDays ?? '') },
       ],
-      description: '按最近的摄入趋势往后推每天会吃多少；摄入记录不到 14 天就只说数据不够，不编预测。',
-    }),
-    renderKpiGrid([
+      /* 原说明那句 `；` 改写成两句（#516 §3.2 D03：该处要换形状，不是删标点）。 */
+      description: '按最近的摄入趋势往后推每天会吃多少。摄入记录不到 14 天就只说数据不够，不编预测。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
       { label: '当前摄入', value: String(v.current), unit: '卡', detail: '日均' },
       { label: '目标', value: String(v.goal ?? '—'), unit: '卡' },
       { label: '日变化', value: String(v.dailyRate ?? '—'), unit: '卡/天' },
-      { label: '摄入预测', value: String(v.forecast?.points[v.forecast.points.length - 1]?.value ?? '—'), unit: '卡' },
-    ]),
+      { label: '摄入预测', value: String(v.forecast?.points[v.forecast.points.length - 1]?.value ?? '—'), unit: '卡', detail: span > 0 ? span + ' 天后' : '按当前趋势' },
+    ])),
   ];
-  if (v.forecast && v.forecast.points.length > 0) {
-    const shown = v.forecast.points.slice(0, 14);
-    parts.push(renderDataTable({
+  if (pts.length > 0) {
+    const shown = pts.slice(0, 14);
+    const cut = pts.length > shown.length ? '（仅列前 14 点，共 ' + pts.length + ' 点）' : '';
+    parts.push(pageSection('sec-track', renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
         { key: 'intake', label: '预测摄入', align: 'right' },
+        { key: 'band', label: '预计区间', align: 'right' },
       ],
-      rows: shown.map((p) => ({ date: p.date, intake: p.value })),
-      caption: '摄入预测轨迹（' + v.forecast.horizonDays + ' 天，每周一点）',
-      emptyText: '无预测轨迹',
-    }));
+      rows: shown.map((p) => ({ date: p.date, intake: p.value, band: fmt(p.lo) + ' 至 ' + fmt(p.hi) })),
+      caption: '摄入预测轨迹（共 ' + span + ' 天，每周一点' + cut + '）',
+      emptyText: '这一段还没有饮食记录，先记一餐再来看',
+    })));
   }
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -552,13 +565,15 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
         }),
       },
     },
-  }));
+  })));
+  parts.push(renderCaliberLine('摄入＝按最近的趋势线往外推｜预计区间按摄入残差向外放宽，取 95% 置信带｜摄入记录不到 14 天不出预测'));
+  parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 摄入预测',
     title: '摄入预测(按当前速率 ' + String(v.forecast?.horizonDays ?? '') + ' 天)',
-    eyebrow: '摄入预测 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }
@@ -567,21 +582,25 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
 
 export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
   const parts: string[] = [
-    renderParamForm({
+    predictChips('摄入预测'),
+    renderConclusionBar('这段的日均摄入 ' + String(v.avg) + ' 卡，比目标 ' + String(v.goal) + ' 卡' + (v.onTarget ? '守在 ±10% 以内。' : '差了 ' + String(Math.abs(Number(v.gap))) + ' 卡。')),
+    predictNav(false),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
       ],
-      description: '看每天的摄入能不能守在营养目标上：平均下来差在 10% 以内就算守住了；摄入记录不到 14 天就只说数据不够。',
-    }),
-    renderKpiGrid([
+      description: '看每天的摄入能不能守在营养目标上。平均下来差在 10% 以内就算守住了，摄入记录不到 14 天就只说数据不够。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
       { label: '均值', value: String(v.avg), unit: '卡' },
       { label: '目标', value: String(v.goal), unit: '卡' },
       { label: '缺口', value: String(v.gap), unit: '卡' },
-      { label: '是否在轨', value: v.onTarget ? '在轨' : '偏离', detail: v.onTarget ? '已在目标 ±10% 内' : '超出目标 ±10%' },
-    ]),
+      /* 在轨与否改走**状态徽章**（#517 样板页的同一手法），值位保留判定词供既有断言认领。 */
+      { label: '是否在轨', value: v.onTarget ? '在轨' : '偏离', status: v.onTarget ? 'ok' : 'warn', statusText: v.onTarget ? '在轨' : '偏离', detail: v.onTarget ? '已在目标 ±10% 内' : '超出目标 ±10%' },
+    ])),
   ];
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -590,13 +609,15 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
         }),
       },
     },
-  }));
+  })));
+  parts.push(renderCaliberLine('目标＝每天的热量目标｜达标线＝日均偏离不超过目标的 10%｜摄入记录不到 14 天不出判定'));
+  parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 摄入预测',
     title: '摄入预测(营养目标达成预测)',
-    eyebrow: '摄入预测 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }
@@ -604,35 +625,38 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
 /* ── #383 · 摄入预测(卡路里缺口预测)（平均缺口＋每周掉重；只改预测段） ── */
 
 export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
-  /* #160 回炉：算式与常量原本就印在这句说明里（`TDEE`／`KCAL_PER_KG`）——改说人话，
-   *  算式留在句子里（缺口＝消耗−摄入、每 7700 卡≈1 公斤），常量名不再上屏。 */
   const parts: string[] = [
-    renderParamForm({
+    predictChips('摄入预测'),
+    renderConclusionBar('这段时间平均每天有 ' + (Number(v.avgDeficit) >= 0 ? '+' : '') + String(v.avgDeficit) + ' 卡缺口，折算下来一周约 ' + String(v.weeklyLoss) + ' kg。'),
+    predictNav(false),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
       ],
-      description: '按最近的趋势预测卡路里缺口：缺口就是当天消耗减掉当天吃的，消耗算日常消耗加运动消耗；每 7700 卡大约对应 1 公斤。',
-    }),
-    renderKpiGrid([
-      { label: '平均缺口', value: String(v.avgDeficit), unit: '卡/天' },
-      { label: '每周掉重', value: String(v.weeklyLoss), unit: 'kg/周' },
-    ]),
+      description: '按最近的趋势预测卡路里缺口。缺口就是当天消耗减掉当天吃的，消耗算日常消耗加运动消耗。每 7700 卡大约对应 1 公斤。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
+      { label: '平均缺口', value: String(v.avgDeficit), unit: '卡/天', detail: '正数是缺口' },
+      { label: '每周掉重', value: String(v.weeklyLoss), unit: 'kg/周', detail: '健康区间 0.3 到 1.2 kg/周' },
+    ])),
   ];
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
         metrics: metricsOf({ avg_deficit: v.avgDeficit, weekly_loss: v.weeklyLoss }),
       },
     },
-  }));
+  })));
+  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 公斤｜健康区间＝每周掉 0.3 到 1.2 公斤'));
+  parts.push(sourceFootnote('饮食记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 摄入预测',
     title: '摄入预测(卡路里缺口预测)',
-    eyebrow: '摄入预测 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }
@@ -641,34 +665,39 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
 
 export function buildCalorieStabilityDoc(v: CalorieStability): string {
   const parts: string[] = [
-    renderParamForm({
+    predictChips('摄入预测'),
+    renderConclusionBar('日均摄入 ' + String(v.avg) + ' 卡，每天上下波动 ' + String(v.sigma) + ' 卡，' + (v.stable ? '算稳。' : '波动偏大。')),
+    predictNav(false),
+    pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
       ],
-      description: '看每天的摄入稳不稳定：每天上下波动不超过 300 卡就算稳；摄入记录不到 14 天就只说数据不够。',
-    }),
-    renderKpiGrid([
+      description: '看每天的摄入稳不稳定。每天上下波动不超过 300 卡就算稳，摄入记录不到 14 天就只说数据不够。',
+    })),
+    pageSection('sec-overview', renderKpiGrid([
       { label: '均值', value: String(v.avg), unit: '卡' },
-      /* σ 是统计符号，读者认不得：这一格就说「上下波动的幅度」，阈值那句写成人话（口径在同页 HTML 注释里）。 */
+      /* σ 是统计符号，读者认不得：这一格就说「上下波动的幅度」（口径在同页的口径行里）。 */
       { label: '波动', value: String(v.sigma), unit: '卡', detail: '上下波动的幅度' },
-      { label: '是否稳定', value: v.stable ? '稳定' : '波动大', detail: v.stable ? '每天波动不超过 300 卡' : '每天波动超过 300 卡' },
-    ]),
+      { label: '是否稳定', value: v.stable ? '稳定' : '波动大', status: v.stable ? 'ok' : 'warn', statusText: v.stable ? '稳定' : '波动大', detail: v.stable ? '每天波动不超过 300 卡' : '每天波动超过 300 卡' },
+    ])),
   ];
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
         metrics: metricsOf({ avg: v.avg, sigma: v.sigma, stable: v.stable ? 1 : 0 }),
       },
     },
-  }));
+  })));
+  parts.push(renderCaliberLine('波动＝每天摄入偏离日均的幅度（标准差）｜判据＝上下波动不超过 300 卡算稳｜摄入记录不到 14 天不出判定'));
+  parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 摄入预测',
     title: '摄入预测(摄入稳定性预测)',
-    eyebrow: '摄入预测 · 趋势分析域',
-    subtitle: v.insight ? humanText(v.insight) : null,
-    content: parts.join(''),
+    eyebrow: '趋势分析',
+    subtitle: null,
+    content: pageChromeCss(1120) + parts.join(''),
     charts: false,
   });
 }

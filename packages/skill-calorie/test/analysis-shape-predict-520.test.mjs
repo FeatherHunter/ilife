@@ -1,4 +1,4 @@
-﻿/** #518 · 预测族形状判据（W2 预测体重族 4 个装配件 ＋ #466 降级文案口径）。
+/** #518 · 预测族形状判据（W2 预测体重族 4 个装配件 ＋ #466 降级文案口径）。
  *
  * 量的是**形状**（基准件 `t516-场景10-视觉整改基准.md` §一 J2／J8／J9 与 §三 的六种形状），
  * 取数、字段与口径另由 `analysis-predict-383`／`analysis-deficit-385`／`t518` 的 `-455`／`-463` 两件守着，
@@ -14,8 +14,11 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { shiftISODate } from '../dist/analysis/utils.js';
 import { SIM_MIN_DAYS, weightTarget, weightForecast } from '../dist/analysis/simulate.js';
-import { weightSimCut, weightSimTarget, calorieForecast, calorieGoalEta } from '../dist/analysis/simulate2.js';
-import { buildPredictDoc, buildPredictTargetDoc, buildSimCutDoc, buildSimTargetDoc } from '../dist/render/trendPredictDocs.js';
+import { weightSimCut, weightSimTarget, calorieForecast, calorieGoalEta, calorieDeficitEta, calorieStability } from '../dist/analysis/simulate2.js';
+import {
+  buildPredictDoc, buildPredictTargetDoc, buildSimCutDoc, buildSimTargetDoc,
+  buildCalorieForecastDoc, buildCalorieGoalDoc, buildCalorieDeficitDoc, buildCalorieStabilityDoc,
+} from '../dist/render/trendPredictDocs.js';
 import { assertDocPage } from './doc-page-assert.mjs';
 
 const START = '2026-06-18';
@@ -42,7 +45,7 @@ const series = mkSeries();
 const START14 = shiftISODate(series[series.length - 1].date, -13);
 const TARGET_VIEW = weightTarget(series, 65, '预测体重');
 
-/** 四个装配件用同一份合成视图（形状判据与取数无关）。 */
+/** 预测族 9 个装配件用同一份合成视图（形状判据与取数无关）。 */
 const PAGES = [
   ['01–05／23 预测体重', buildPredictDoc({
     start: START14, end: series[series.length - 1].date, horizonDays: 30,
@@ -52,6 +55,11 @@ const PAGES = [
   ['06 预测体重(自定义目标)', buildPredictTargetDoc(TARGET_VIEW)],
   ['07–09 模拟减重(每天-N卡)', buildSimCutDoc(weightSimCut(series, 500, '模拟减重'))],
   ['10–13 模拟减重(N天减Xkg)', buildSimTargetDoc(weightSimTarget(series, 6, 90, '模拟减重'))],
+  /* W3 摄入预测族 7 页（14–20）：四个装配件走同一套页框。 */
+  ['14–17 摄入预测(按当前速率)', buildCalorieForecastDoc(calorieForecast(series, 30, '摄入预测'))],
+  ['18 摄入预测(营养目标达成预测)', buildCalorieGoalDoc(calorieGoalEta(series, '摄入预测'))],
+  ['19 摄入预测(卡路里缺口预测)', buildCalorieDeficitDoc(calorieDeficitEta(series, '摄入预测'))],
+  ['20 摄入预测(摄入稳定性预测)', buildCalorieStabilityDoc(calorieStability(series, '摄入预测'))],
 ];
 
 /** 可见文本（口径与 `scripts/audit-separators.mjs` 同源：剥样式段／脚本段／注释／全部标签）。 */
