@@ -12,6 +12,11 @@
  * 都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）」；来源名仍住复制日志第 3 段（`copyBlockOf`
  * 的 `source`），给 AI 照抄的技术原件一字不动。
  *
+ * **#566（2026-09-15 用户肉眼验收）**：窗口区间**不进 H1**——「日期不写在标题，写在其他 UI 控件内」。
+ * H1 只留页面名（「目标分析」／「目标对比实际」），区间改由页头 `meta-bar` 左边那一行承载
+ * （`windowLineOf()`；`shared/docPage.ts:33` 定死这一行就是「参数一行小字（窗口／区间等）」）。
+ * 本票只搬这一处：读数卡副说明与表题里的区间一字未动，页面上照样看得出这是哪一段时间。
+ *
  * **取数一行不动**：本件只吃两条入参——`read.ts` 现算的视图对象与它现算的 `metrics`；同一份
  * `metrics` 对象既进信封 `data.metrics` 又进复制载荷，两处不会走散（票面「取数口径一个字不许变」）。
  * 旧片段渲染件按票面留在 `src/render/html.ts`，本票不删。
@@ -55,6 +60,16 @@ function section(id: string, html: string): string {
 /** 缺口方向与摄入走向的读者话（数据层给的是 `loss`／`up` 这类内部取值，不上屏）。 */
 const DEFICIT_TREND_ZH: Record<string, string> = { loss: '缺口在变大', gain: '缺口在变小', flat: '基本持平' };
 const INTAKE_TREND_ZH: Record<string, string> = { up: '后半段比前半段多', down: '后半段比前半段少', flat: '前后半段基本持平' };
+
+/** 页头第 1 行左的参数小字（`shared/docPage.ts:33` 定死这一行的用途＝窗口／区间）。
+ *
+ *  **#566**：窗口区间原来写在 H1 里（`'🎯 目标分析 ' + v.start + ' 至 ' + v.end`），负责人肉眼验收裁定
+ *  「日期不写在标题，写在其他 UI 控件内」⇒ 区间搬到这里，H1 只留页面名。拼法与页内那两处同口径
+ *  （读数卡副说明／表题都写「起 至 止」），读者一眼看得出这一页看的是哪一段。
+ *  区间只在这一行新出现一次，卡与表的区间一个字没动（本票只搬 H1 那一处）。 */
+function windowLineOf(metaLeft: string, start: string, end: string): string {
+  return metaLeft + ' · 窗口 ' + start + ' 至 ' + end;
+}
 
 /** 复制区（双按钮：复制数据 ＋ 复制日志；裁定 7）。载荷与 `data.metrics` 是同一份对象。 */
 function copyBlockOf(key: string, metrics: Record<string, number>, command: string, source: string): string {
@@ -143,10 +158,11 @@ export function buildGoalDoc(v: GoalView, metrics: Record<string, number>, comma
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '🎯 目标分析 ' + v.start + ' 至 ' + v.end,
+    // #566：H1 只留页面名；窗口区间住页头 meta-bar 左行（windowLineOf）。
+    title: '🎯 目标分析',
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看目标完成度 · 目标管理',
+    metaLeft: windowLineOf('看目标完成度 · 目标管理', v.start, v.end),
     badge: '目标分析',
     summary: goalSummaryOf(v),
     content: body,
@@ -208,10 +224,11 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '🎯 目标对比实际 ' + v.start + ' 至 ' + v.end,
+    // #566：同 `buildGoalDoc`——H1 只留页面名，窗口区间住页头 meta-bar 左行。
+    title: '🎯 目标对比实际',
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看目标对比实际 · 目标管理',
+    metaLeft: windowLineOf('看目标对比实际 · 目标管理', v.start, v.end),
     badge: '目标对比实际',
     summary: '结论：热量目标 ' + (v.calorieGoal === null ? '—' : v.calorieGoal + ' 卡') + '，最近 30 天里有记录 '
       + recorded + ' 天、达标 ' + v.completedCount + ' 天（完成率 ' + pct + '），本窗日均摄入 ' + v.trendAvg + ' 卡。',
