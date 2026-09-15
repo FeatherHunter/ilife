@@ -47,6 +47,8 @@
 | `d9e5bb5e-176b-4b6f-9db1-7422b8240601` | 同上（测试件退回旧件名 `diet-library-t274.test.mjs`，落盘 `pkg-test-without-t274.log`） | 1（同读数同红件集合，双向差集为空 ⇒ `ATTRIBUTION PASS`） |
 | `f953dcd7-a63b-4aca-9fb6-c83c7b18ba14` | `node .scratch/t274/mutate.mjs`（变异自证：`fixed0(it.calories)`→`fixed1`，再逐文件点名还原；内含 `tsc -b` 两次与 `node --test` 两次） | 0（`变异必红=true 还原必绿=true dist回到基线=true polluted=[false]`） |
 | `2479d057-8a27-4537-9975-6fdedce97deb` | `git commit -F .scratch/t274/commit1.txt -- <3 路径>`（测试件改名＋真跑脚本） | 0（sha `de5e91b`） |
+| `5eacef73-cdcd-49cc-9420-b474237a40ec` | `git commit -F .scratch/t274/commit2.txt -- <3 路径>`（报告＋本表＋changeset 测试件名同步） | 0（sha `cd4578f`） |
+| `7a002a5b-c0ad-41fc-818d-6854cae4b321` | `node --test packages/skill-calorie/test/t274-食品库页.test.mjs`（提交后复跑，落盘 `test-final.log`） | 0（`tests 11 / pass 11 / fail 0`） |
 
 未持锁跑的两条（都只读、不写工作区）：`node packages/skill-calorie/scripts/gen-cli.mjs --check`（红，见报告 §二）、
 `node packages/skill-calorie/scripts/check-warning-line.mjs`（红，5 条陈化全属别票；**本窗不跑 `--sync`**，它写的
