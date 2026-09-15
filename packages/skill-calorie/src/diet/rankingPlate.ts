@@ -12,12 +12,13 @@
  * 整改前这两态在本层塌成同一条 rejection（`dietEngine.ts` 对「无记录」与「无排行数据」同样返 rejection）
  * ⇒ 空窗那一支永远走缺失阻断，页面自带的空态文案出不来。
  *
- * 两态的判别只看**行数**（库整表行数／窗内行数），不看错误文案（文案会随取数层改），
- * 与 `diet/review.ts` 的 `hasAnyDietRow` 同一判据、同一写法。
+ * 两态的判别只看**行数**（库整表行数／窗内行数），不看错误文案（文案会随取数层改）；
+ *  库整表那一件吃 `./nutritionPort.ts` 的共用件 `hasAnyDietRow`（#271 收敛，本件不再自带一份）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { dietFoodRanking } from './dietEngine.js';
 import type { FoodRanking } from './dietEngine.js';
+import { hasAnyDietRow } from './nutritionPort.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 
@@ -39,11 +40,10 @@ function assertArgs(start: string, end: string, topN: number): void {
   }
 }
 
-/** 库里到底有没有底：**库为空**那一半的判据（裁定 4 的 2026-09-15 澄清）。只看整表有没有行。 */
-function hasAnyDietRow(db: DatabaseSync): boolean {
-  const row = db.prepare('SELECT COUNT(*) AS n FROM food_log').get() as { n: number } | undefined;
-  return (row?.n ?? 0) > 0;
-}
+/** 库里到底有没有底：**库为空**那一半的判据（裁定 4 的 2026-09-15 澄清）。只看整表有没有行。
+ *
+ *  **#271 · 判据的唯一定义地**在取数层 `./nutritionPort.ts`：本件从前那份私有副本（#272 落的同名同
+ *  写法函数）已删、改吃共用件——两份写法一旦走散，几张页的两态判据就会分家（铁律二「概念唯一」）。 */
 
 /** 窗内行数：**窗口为空**那一半的判据。与库整表行数分开数，两态才分得开。 */
 function dietRowsInWindow(db: DatabaseSync, start: string, end: string): number {

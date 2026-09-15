@@ -7,6 +7,10 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildMealDistributionView } from '../diet/index.js';
+/* #271 · 「看饮食总览」那一支要的四件（取数视图／两态判据／空窗整页／入口标记）：照 #275 交接的
+   口径走**深路径**——「看饮食总览区块」与本组小件由 `diet/nutritionPort(Docs).ts` 交付，不经门。 */
+import { buildDietOverviewView, hasAnyDietRow } from '../diet/nutritionPort.js';
+import { buildEmptyWindowDoc, ENTRY_OVERVIEW } from '../diet/nutritionPortDocs.js';
 import { listMeals } from '../fetch/diet.js';
 import { todayISO } from '../analysis/utils.js';
 import { buildDietOverview, buildMealDistribution, zeroMealDistribution } from '../render/diet.js';
@@ -62,14 +66,54 @@ export function viewHomeToday(params: Record<string, unknown>, db: DatabaseSync)
  *  `buildMealDistributionView`，页由 `render/dietDocs.ts` 接 `diet/todayDocs.ts` 的具名页）；
  *  **不给 `meal` ＝今天的行为，逐字不变**（这一支是加法式的：另几条词吃不到它）。
  *  餐别取值域与解析口径**不在这里重写**——`diet/reviewDocs.ts` 的 `mealParamOf` 是唯一定义地
- *  （缺参／未知值即 exit 2，不猜、不给默认餐别）；本处只把参数原值交给那道门。 */
+ *  （缺参／未知值即 exit 2，不猜、不给默认餐别）；本处只把参数原值交给那道门。
+ *
+ *  **#271 两处接线**（本票）：
+ *   · **看饮食总览那一支**：给了 `entry`＝`overview` 时整页换**总览页**——取数 `buildDietOverviewView`
+ *     （本周／本月累计，都统计到昨日），装配走 #275 交的具名区块 `buildDietOverviewBlock`
+ *     （老实物 `diet_overview.html`）。这一位由**入口自己**带进来（`src/home/routes.ts` 那条
+ *     「看饮食总览」的记录）：它与「看最近 7 天饮食」在参数上只差这一位，命令这一层分不出两条词
+ *     （照 #509 的 `source`／#511 的 `ENTRY_*` 先例）。**不给这一位＝其余 8 个窗口词与 5 条餐别词
+ *     从前的行为，一字不变。**
+ *   · **两态分清**（`t425-融合基准.md` 裁定 4 的 2026-09-15 澄清）：**库非空、窗口内零记录** ⇒ 这是
+ *     「这段没记」不是「没得取」，出完整页 ＋ 空态句 ＋ 引导句、exit 0、照常落盘；**库为空**
+ *     （`food_log` 整表零行）⇒ 照旧 `exit 4` ＋ `ERR 4: 取数失败（缺失阻断）`、不落盘（既有设计
+ *     行为，**不放宽**）。分辨判据＝取数层的 `hasAnyDietRow(db)`，不看错误文案。
+ */
 export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const date = optStr(params, 'date') ?? end;
   assertISO(date as string, 'date');
-  const o = buildDietOverview(db, start, end);
+  /* 入口标记（`src/home/routes.ts` 那条「看饮食总览」的记录带进来）：不给即窗口词那一支。 */
+  const entry = optStr(params, 'entry');
+  /* 复制日志第 4 段「调用链」＝**本次命令原文**（含本次 `--params`），照抄可重跑（裁定 7）；
+     命令原文由命令层共用件 `shared/writeParts.ts` 的 `commandLine()` 派生，页面件不自己拼。 */
+  const command = commandLine('calorie.view.diet', params);
+  let o: ReturnType<typeof buildDietOverview>;
+  try {
+    o = buildDietOverview(db, start, end);
+  } catch (e) {
+    /* #271 · 两态分清在这里做（取数层只负责抛）：
+       · **库为空**（连取数的底都没有）⇒ 原样抛出去走 `exit 4`、不落盘——既有设计行为，不放宽；
+       · **窗口为空**（库里别处有记录，只是这一段没记）⇒ 出完整空态页（空态句 ＋ 引导句 ＋ 页内导航
+         ＋ 来源脚注 ＋ 复制区），照 #275 的 `buildEmptyWindowDoc` 与 #272 整改后的同一形状做。 */
+    if (!(e instanceof CalorieRenderError) || e.code !== 'missing-data' || !hasAnyDietRow(db)) throw e;
+    return {
+      data: { metrics: {} },
+      html: buildEmptyWindowDoc({
+        key: 'calorie.view.diet',
+        metaLeft: (entry === ENTRY_OVERVIEW ? '看饮食总览' : '饮食总览') + ' · 饮食',
+        title: '🍽️ 饮食总览 ' + start + ' ~ ' + end,
+        blockTitle: '窗口读数',
+        emptyText: '这一段时间（' + start + ' ~ ' + end + '）没有饮食记录，汇总算不出来（不编数）。',
+        guide: '要让它有内容，先用「记一餐」把吃的那顿记上；补以前的日期就说「补记饮食」。',
+        footnote: '📊 数据来源 · 饮食记录 · ' + start + ' → ' + end,
+        command,
+      }),
+    };
+  }
   /* 只在真给了 `meal` 时才走餐别那一支（`undefined` 当没这个参数）。放在宿主取数之后，
-     空窗仍由上行 `buildDietOverview` 的缺失阻断收口（`diet/review.ts` 的件头口径）。 */
+     空窗已由上面的两态分辨收口（`diet/review.ts` 的件头口径）。 */
   const mealRaw = optStr(params, 'meal');
   const mealView = mealRaw === undefined ? undefined : buildMealDistributionView(db, mealRaw, start, end);
   // C4 #43 · 尾日空回零（窗内有数不掀整窗 missing；窗全空由上行 overview 抛 missing-data）。
@@ -109,7 +153,14 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
        （`render/dietDocs.ts`），并带上本次命令原文供复制区用。 */
     ...(mealView === undefined
       ? {}
-      : { mealView, command: commandLine('calorie.view.diet', params) }),
+      : { mealView, command }),
+    /* #271 · 只在入口带了 `entry`＝`overview` 时带上这一个位：`buildViewDietDoc` 一见它就整页换**总览页**
+       （本周／本月累计，都统计到昨日；`diet/todayDocs.ts` 的 `buildDietOverviewPage` ＋ #275 交的
+       `buildDietOverviewBlock`）。取数 `buildDietOverviewView(db, date)` **不抛缺失阻断**——它是宿主页
+       里的一块，两态已由上面收口。两个位在本键的路由里两两不共存（8 窗口词／5 餐别词／总览那一条各带各的）。 */
+    ...(entry === ENTRY_OVERVIEW
+      ? { overviewView: buildDietOverviewView(db, date as string), command }
+      : {}),
   }) };
 }
 
