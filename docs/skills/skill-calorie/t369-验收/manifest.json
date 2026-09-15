@@ -1,0 +1,1225 @@
+{
+  "generatedAt": "2026-09-15T05:28:13.280Z",
+  "declsSource": "D:\\ilife\\packages\\skill-calorie\\src\\body\\routes.ts",
+  "gate": {
+    "ok": true,
+    "rows": "13/13",
+    "procs": "5/5"
+  },
+  "results": [
+    {
+      "word": "记体脂（皮褶钳）",
+      "order": 237,
+      "key": "calorie.body.composition-add",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.body.composition-add --params '{\"source\":\"home_caliper\",\"sex\":\"male\",\"age\":30,\"caliper_chest_mm\":10,\"caliper_abdominal_mm\":12,\"caliper_thigh_mm\":14,\"caliper_tricep_mm\":11,\"caliper_subscapular_mm\":13,\"caliper_suprailiac_mm\":12,\"caliper_midaxillary_mm\":10,\"date\":\"<日期>\"}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-add --params '{\"source\":\"home_caliper\",\"sex\":\"male\",\"age\":30,\"date\":\"2026-09-15\",\"caliper_chest_mm\":10,\"caliper_abdominal_mm\":12,\"caliper_thigh_mm\":14,\"caliper_tricep_mm\":11,\"caliper_subscapular_mm\":13,\"caliper_suprailiac_mm\":12,\"caliper_midaxillary_mm\":10}' --html D:\\ilife\\.scratch\\t369\\stage\\01-记体脂-皮褶钳.html",
+      "params": {
+        "source": "home_caliper",
+        "sex": "male",
+        "age": 30,
+        "date": "2026-09-15",
+        "caliper_chest_mm": 10,
+        "caliper_abdominal_mm": 12,
+        "caliper_thigh_mm": 14,
+        "caliper_tricep_mm": 11,
+        "caliper_subscapular_mm": 13,
+        "caliper_suprailiac_mm": 12,
+        "caliper_midaxillary_mm": 10
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-记体脂-皮褶钳.html",
+      "rel": "01-记体脂-皮褶钳.html",
+      "exists": true,
+      "bytes": 72580,
+      "sha256": "d3a702e7b6ea198c74c3c44f5794b0f7c4c254502d47b315bc262dce0b180a26",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 5,
+        "total": 5,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "已记体脂：2026-09-15",
+        "7 点合计 82mm ＋ 年龄 30 ＋ 男",
+        "12.02%",
+        "胸 → 10 腹 → 12 大腿 → 14 三头肌 → 11 肩胛下 → 13 髂上 → 12 腋中线 → 10",
+        "写入字段 12 项"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=237 key=calorie.body.composition-add"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-记体脂-皮褶钳.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "5/5 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "记体脂（外部测量）",
+      "order": 238,
+      "key": "calorie.body.composition-add",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":18.5,\"date\":\"<日期>\"}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":18.5,\"date\":\"2026-09-15\"}' --html D:\\ilife\\.scratch\\t369\\stage\\02-记体脂-外部测量.html",
+      "params": {
+        "source": "gym",
+        "bodyFatPct": 18.5,
+        "date": "2026-09-15"
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-记体脂-外部测量.html",
+      "rel": "02-记体脂-外部测量.html",
+      "exists": true,
+      "bytes": 75250,
+      "sha256": "6e5ebd31f3c0e03675b26f6091094fdac58126200c6f075541708d1a40bb8881",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 5,
+        "total": 5,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "已记体脂：2026-09-15",
+        "健身房 InBody",
+        "体脂率 → 18.5",
+        "写入字段 3 项",
+        "皮褶 7 点 胸 10、腹 12、大腿 14、三头肌 11、肩胛下 13、髂上 12、腋中线 10"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=238 key=calorie.body.composition-add"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-记体脂-外部测量.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "5/5 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "记围度",
+      "order": 239,
+      "key": "calorie.body.measure-add",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.body.measure-add --params '{\"waistCm\":85,\"hipCm\":95}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.measure-add --params '{\"waistCm\":85,\"hipCm\":95}' --html D:\\ilife\\.scratch\\t369\\stage\\03-记围度.html",
+      "params": {
+        "waistCm": 85,
+        "hipCm": 95
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-记围度.html",
+      "rel": "03-记围度.html",
+      "exists": true,
+      "bytes": 72763,
+      "sha256": "10c7f69c71349c80bf08fa3e71a54460e816af2296b9d2e7b14fee7372e67b20",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 4,
+        "total": 4,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "已记围度：2026-09-15",
+        "腰围 → 85",
+        "臀围 → 95",
+        "写入字段 3 项"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=239 key=calorie.body.measure-add"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-记围度.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "4/4 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "补记体脂",
+      "order": 240,
+      "key": "calorie.body.composition-add",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":19,\"date\":\"<日期>\"}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-add --params '{\"source\":\"gym\",\"bodyFatPct\":19,\"date\":\"2026-09-06\"}' --html D:\\ilife\\.scratch\\t369\\stage\\04-补记体脂.html",
+      "params": {
+        "source": "gym",
+        "bodyFatPct": 19,
+        "date": "2026-09-06"
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-补记体脂.html",
+      "rel": "04-补记体脂.html",
+      "exists": true,
+      "bytes": 75252,
+      "sha256": "de5cce2c4be409a101ff03f1738b15fc34eac2235e1838bfdf62085724918fc2",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 4,
+        "total": 4,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "已记体脂：2026-09-06",
+        "体脂率 → 19",
+        "同日已有记录",
+        "20.5"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=240 key=calorie.body.composition-add"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-补记体脂.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "4/4 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "补记围度",
+      "order": 241,
+      "key": "calorie.body.measure-add",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.body.measure-add --params '{\"waistCm\":86,\"date\":\"<日期>\"}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.measure-add --params '{\"waistCm\":86,\"date\":\"2026-09-06\"}' --html D:\\ilife\\.scratch\\t369\\stage\\05-补记围度.html",
+      "params": {
+        "waistCm": 86,
+        "date": "2026-09-06"
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-补记围度.html",
+      "rel": "05-补记围度.html",
+      "exists": true,
+      "bytes": 77554,
+      "sha256": "a043f316638e2db7c7c267b9a820da8c8a2cbf1931e5cf2121cf806924ce93f2",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 4,
+        "total": 4,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "已记围度：2026-09-06",
+        "腰围 → 86",
+        "同日已有记录",
+        "M3-补记冲突日"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=241 key=calorie.body.measure-add"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-补记围度.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "4/4 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看体脂",
+      "order": 242,
+      "key": "calorie.view.body-composition",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.view.body-composition",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-composition --html D:\\ilife\\.scratch\\t369\\stage\\06-看体脂.html",
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\06-看体脂.html",
+      "rel": "06-看体脂.html",
+      "exists": true,
+      "bytes": 89015,
+      "sha256": "6512d499eeda323b00f20cac52fe67979d53e78902c52b6a683044a48f024c73",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 6,
+        "total": 6,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "共 7 条",
+        "18.5%",
+        "25.5%",
+        "12.02%",
+        "2025-12-25",
+        "皮褶 7 点原始值"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=242 key=calorie.view.body-composition"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\06-看体脂.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "6/6 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看体脂趋势",
+      "order": 243,
+      "key": "calorie.view.body-composition",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.view.body-composition --params '{\"days\":90}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-composition --params '{\"days\":90}' --html D:\\ilife\\.scratch\\t369\\stage\\07-看体脂趋势.html",
+      "params": {
+        "days": 90
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\07-看体脂趋势.html",
+      "rel": "07-看体脂趋势.html",
+      "exists": true,
+      "bytes": 86903,
+      "sha256": "9ae25ab39d71255cda54f4185470214f3cf2eb86e8965a1b68d39f6f4729ecb2",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 4,
+        "total": 4,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "近 90 天",
+        "共 6 条",
+        "2026-09-05",
+        "2026-09-07"
+      ],
+      "absentList": [
+        "2025-12-25"
+      ],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=243 key=calorie.view.body-composition"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\07-看体脂趋势.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "4/4 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看围度",
+      "order": 244,
+      "key": "calorie.view.body-measure",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.view.body-measure",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-measure --html D:\\ilife\\.scratch\\t369\\stage\\08-看围度.html",
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\08-看围度.html",
+      "rel": "08-看围度.html",
+      "exists": true,
+      "bytes": 113381,
+      "sha256": "ea2fd6ad07d253939f1cadd51228ac01df03f31992d80682460bc270ba5a1a7f",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 40226,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 6,
+        "total": 6,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "13 项全量",
+        "共 9 条",
+        "腰围 85cm",
+        "臀围 95cm",
+        "M2-对比基准",
+        "M4-对比日2"
+      ],
+      "absentList": [
+        "2025-12-25"
+      ],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=244 key=calorie.view.body-measure"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\08-看围度.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "6/6 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=40226B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看围度趋势",
+      "order": 245,
+      "key": "calorie.view.body-measure",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.view.body-measure --params '{\"days\":90}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-measure --params '{\"days\":90}' --html D:\\ilife\\.scratch\\t369\\stage\\09-看围度趋势.html",
+      "params": {
+        "days": 90
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\09-看围度趋势.html",
+      "rel": "09-看围度趋势.html",
+      "exists": true,
+      "bytes": 113381,
+      "sha256": "ea2fd6ad07d253939f1cadd51228ac01df03f31992d80682460bc270ba5a1a7f",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 40226,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 5,
+        "total": 5,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "13 项全量",
+        "共 9 条",
+        "腰围 85cm",
+        "M2-对比基准",
+        "M4-对比日2"
+      ],
+      "absentList": [
+        "2025-12-25"
+      ],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=245 key=calorie.view.body-measure"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\09-看围度趋势.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "5/5 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=40226B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "对比体脂",
+      "order": 246,
+      "key": "calorie.view.body-composition-compare",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.view.body-composition-compare --params '{\"period1Start\":\"2026-09-05\",\"period1End\":\"2026-09-05\",\"period2Start\":\"2026-09-07\",\"period2End\":\"2026-09-07\"}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-composition-compare --params '{\"period1Start\":\"2026-09-05\",\"period1End\":\"2026-09-05\",\"period2Start\":\"2026-09-07\",\"period2End\":\"2026-09-07\"}' --html D:\\ilife\\.scratch\\t369\\stage\\10-对比体脂.html",
+      "params": {
+        "period1Start": "2026-09-05",
+        "period1End": "2026-09-05",
+        "period2Start": "2026-09-07",
+        "period2End": "2026-09-07"
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\10-对比体脂.html",
+      "rel": "10-对比体脂.html",
+      "exists": true,
+      "bytes": 67596,
+      "sha256": "b0b78a07c79a94328698b1ef055fe3ae6f11382ec65963efbf7a155b4b440bc0",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 5,
+        "total": 5,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "体脂对比",
+        "-1%",
+        "-4.76%",
+        "21%",
+        "20%"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=246 key=calorie.view.body-composition-compare"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\10-对比体脂.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "5/5 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "对比围度",
+      "order": 247,
+      "key": "calorie.view.body-measure-compare",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.view.body-measure-compare --params '{\"date1\":\"2026-09-05\",\"date2\":\"2026-09-07\"}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.body-measure-compare --params '{\"date1\":\"2026-09-05\",\"date2\":\"2026-09-07\"}' --html D:\\ilife\\.scratch\\t369\\stage\\11-对比围度.html",
+      "params": {
+        "date1": "2026-09-05",
+        "date2": "2026-09-07"
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\11-对比围度.html",
+      "rel": "11-对比围度.html",
+      "exists": true,
+      "bytes": 71350,
+      "sha256": "ea9b513b358fd142a7dc1f62a1eea23c6dac4913644aa0a10a60eb9ecbc4a7ff",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 4,
+        "total": 4,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 13
+      },
+      "expectList": [
+        "围度对比",
+        "13 项",
+        "差值(cm)",
+        "变化率"
+      ],
+      "absentList": [],
+      "reList": [
+        "胸围 100→102",
+        "腰围 85→84",
+        "腹围 90→91.5",
+        "臀围 95→94.5",
+        "左大腿 55→56",
+        "右大腿 55.5→54.5",
+        "左小腿 36→36.5",
+        "右小腿 36.5→36",
+        "左上臂 30→31",
+        "右上臂 30.5→29.5",
+        "左前臂 25→27",
+        "右前臂 25.5→23.5",
+        "肩围 110→113"
+      ],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=247 key=calorie.view.body-measure-compare"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\11-对比围度.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "4/4 命中 ＋ 逐项 13/13"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "删体脂",
+      "order": 248,
+      "key": "calorie.body.composition-remove",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.body.composition-remove --params '{\"id\":1}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.composition-remove --params '{\"id\":1}' --html D:\\ilife\\.scratch\\t369\\stage\\12-删体脂.html",
+      "params": {
+        "id": 1
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\12-删体脂.html",
+      "rel": "12-删体脂.html",
+      "exists": true,
+      "bytes": 71780,
+      "sha256": "1e0158b970cfcdd9a0561d0af31934866719f20e56cf45ff93dba445bbeaa2d8",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 3,
+        "total": 3,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "已删除体脂记录 #1（日期 2025-12-25 · 体脂率 25.5%",
+        "软删除",
+        "删除标志"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=248 key=calorie.body.composition-remove"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\12-删体脂.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "3/3 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "删围度",
+      "order": 249,
+      "key": "calorie.body.measure-remove",
+      "kind": "exec",
+      "declCli": "calorie-cmd-read calorie.body.measure-remove --params '{\"id\":1}'",
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.body.measure-remove --params '{\"id\":1}' --html D:\\ilife\\.scratch\\t369\\stage\\13-删围度.html",
+      "params": {
+        "id": 1
+      },
+      "exit": 0,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\13-删围度.html",
+      "rel": "13-删围度.html",
+      "exists": true,
+      "bytes": 73823,
+      "sha256": "f81f05f40f5893c8fda431bb8ac2c652950c077dc745113ca8b6a890cebf2544",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "fields": {
+        "hit": 3,
+        "total": 3,
+        "miss": [],
+        "bad": [],
+        "reBad": [],
+        "reTotal": 0
+      },
+      "expectList": [
+        "已删除围度记录 #1（日期 2025-12-25 · 胸围 105cm",
+        "软删除",
+        "删除标志"
+      ],
+      "absentList": [],
+      "reList": [],
+      "checks": [
+        {
+          "name": "路由声明",
+          "pass": true,
+          "detail": "order=249 key=calorie.body.measure-remove"
+        },
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\13-删围度.html"
+        },
+        {
+          "name": "关键字段",
+          "pass": true,
+          "detail": "3/3 命中"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B(≥2048 true) 外链=0"
+        }
+      ],
+      "status": "green",
+      "why": []
+    }
+  ],
+  "process": [
+    {
+      "word": "看体脂向导",
+      "forWord": "记体脂（皮褶钳）",
+      "key": "calorie.view.composition-wizard",
+      "order": null,
+      "declCli": null,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-过程-calorie.view.composition-wizard.html",
+      "rel": "01-过程-calorie.view.composition-wizard.html",
+      "exists": true,
+      "bytes": 72006,
+      "sha256": "a7b87a6e7680429c6dda83da421bd5c2ebbeb6b77d0207958224241db603293f",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.composition-wizard --html D:\\ilife\\.scratch\\t369\\stage\\01-过程-calorie.view.composition-wizard.html",
+      "checks": [
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\01-过程-calorie.view.composition-wizard.html"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
+        },
+        {
+          "name": "写前认领",
+          "pass": true,
+          "detail": "含向导／确认字样"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看体脂向导",
+      "forWord": "记体脂（外部测量）",
+      "key": "calorie.view.composition-wizard",
+      "order": null,
+      "declCli": null,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-过程-calorie.view.composition-wizard.html",
+      "rel": "02-过程-calorie.view.composition-wizard.html",
+      "exists": true,
+      "bytes": 72018,
+      "sha256": "ac3d80f5245f28954b49e1463e15972a8be572a92b0aebfec3a4393f2d3fd90b",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.composition-wizard --html D:\\ilife\\.scratch\\t369\\stage\\02-过程-calorie.view.composition-wizard.html",
+      "checks": [
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\02-过程-calorie.view.composition-wizard.html"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
+        },
+        {
+          "name": "写前认领",
+          "pass": true,
+          "detail": "含向导／确认字样"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看围度向导",
+      "forWord": "记围度",
+      "key": "calorie.view.measure-wizard",
+      "order": null,
+      "declCli": null,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-过程-calorie.view.measure-wizard.html",
+      "rel": "03-过程-calorie.view.measure-wizard.html",
+      "exists": true,
+      "bytes": 72147,
+      "sha256": "6a0f41ea85434e2e4c5057762ce76410987dc5d2eea7881a540a21d239637188",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.measure-wizard --html D:\\ilife\\.scratch\\t369\\stage\\03-过程-calorie.view.measure-wizard.html",
+      "checks": [
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\03-过程-calorie.view.measure-wizard.html"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
+        },
+        {
+          "name": "写前认领",
+          "pass": true,
+          "detail": "含向导／确认字样"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看体脂向导",
+      "forWord": "补记体脂",
+      "key": "calorie.view.composition-wizard",
+      "order": null,
+      "declCli": null,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-过程-calorie.view.composition-wizard.html",
+      "rel": "04-过程-calorie.view.composition-wizard.html",
+      "exists": true,
+      "bytes": 72008,
+      "sha256": "2487951642cb58b9eb5a87e5f2643fed5a46aad18bf703a9ee99ad73b768da1b",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.composition-wizard --html D:\\ilife\\.scratch\\t369\\stage\\04-过程-calorie.view.composition-wizard.html",
+      "checks": [
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\04-过程-calorie.view.composition-wizard.html"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
+        },
+        {
+          "name": "写前认领",
+          "pass": true,
+          "detail": "含向导／确认字样"
+        }
+      ],
+      "status": "green",
+      "why": []
+    },
+    {
+      "word": "看围度向导",
+      "forWord": "补记围度",
+      "key": "calorie.view.measure-wizard",
+      "order": null,
+      "declCli": null,
+      "file": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-过程-calorie.view.measure-wizard.html",
+      "rel": "05-过程-calorie.view.measure-wizard.html",
+      "exists": true,
+      "bytes": 71944,
+      "sha256": "61244b3f56714335fde3b5b96202da0b14c438b9be80296a3dfe72cda58f6c5f",
+      "fullPage": {
+        "doctype": true,
+        "charset": true,
+        "styleBytes": 39421,
+        "inlineOk": true,
+        "externals": [],
+        "ok": true
+      },
+      "cmd": "node packages/skill-calorie/dist/cli/cmd_read.js calorie.view.measure-wizard --html D:\\ilife\\.scratch\\t369\\stage\\05-过程-calorie.view.measure-wizard.html",
+      "checks": [
+        {
+          "name": "产物存在",
+          "pass": true,
+          "detail": "D:\\ilife\\docs\\skills\\skill-calorie\\t369-验收\\05-过程-calorie.view.measure-wizard.html"
+        },
+        {
+          "name": "命令 exit",
+          "pass": true,
+          "detail": "exit=0"
+        },
+        {
+          "name": "整页",
+          "pass": true,
+          "detail": "doctype=true charset=true 内联样式=39421B 外链=0"
+        },
+        {
+          "name": "写前认领",
+          "pass": true,
+          "detail": "含向导／确认字样"
+        }
+      ],
+      "status": "green",
+      "why": []
+    }
+  ],
+  "dbChecks": [
+    {
+      "name": "体成分总行",
+      "pass": true,
+      "detail": "总 7（期望 7：4 种子 ＋ 记×2 ＋ 补记×1）"
+    },
+    {
+      "name": "体成分软删",
+      "pass": true,
+      "detail": "软删 1／在用 6（期望 1／6）"
+    },
+    {
+      "name": "围度总行",
+      "pass": true,
+      "detail": "总 10（期望 10：8 种子 ＋ 记×1 ＋ 补记×1）"
+    },
+    {
+      "name": "围度软删",
+      "pass": true,
+      "detail": "软删 1／在用 9（期望 1／9）"
+    },
+    {
+      "name": "皮褶 7 点落库",
+      "pass": true,
+      "detail": "合计值 10/12/14/11/13/12/10 body_fat_pct=12.02（手算 12.02）"
+    },
+    {
+      "name": "补记围度落库",
+      "pass": true,
+      "detail": "腰 86 胸 null 臀 null"
+    },
+    {
+      "name": "对比日1 落库",
+      "pass": true,
+      "detail": "胸 100 腰 85 肩 110"
+    }
+  ]
+}
