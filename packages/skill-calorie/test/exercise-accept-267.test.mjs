@@ -86,11 +86,13 @@ const EYEBROW_OF_KEY = new Map([
   ['calorie.view.exercise-goal', '运动对照目标'],
   // #523 返修：记录级明细眉标原来与 H1 逐字同名，现退回族名「运动记录」（H1 留页名）。
   ['calorie.view.exercise-records', '运动记录'],
-  ['calorie.view.exercise-distribution', '运动 · 类型分布'],
-  ['calorie.view.exercise-strength', '运动 · 力量总览'],
-  ['calorie.view.exercise-cardio', '运动 · 有氧总览'],
-  ['calorie.view.exercise-trend', '运动 · 趋势'],
-  ['calorie.view.exercise-recap', '运动 · 复盘'],
+  // #544（类型分布／力量／有氧／趋势／复盘五族）：眉标去 `·`——`·` 是分隔符债，探针节点级必须为 0；
+  // 类别「运动」与页族名都还在，只是不拿符号串。
+  ['calorie.view.exercise-distribution', '运动类型分布'],
+  ['calorie.view.exercise-strength', '运动力量总览'],
+  ['calorie.view.exercise-cardio', '运动有氧总览'],
+  ['calorie.view.exercise-trend', '运动趋势'],
+  ['calorie.view.exercise-recap', '运动复盘'],
 ]);
 /** 载荷面页名（键 → 复制头「技能 · 页名」里的页名）；只有这几页当刻是**人话**页名。 */
 const COPY_PAGE_OF_KEY = new Map([
@@ -108,11 +110,11 @@ const COPY_KEY_LEAK = new Set(['calorie.view.exercise', 'calorie.view.exercise-g
  *  只登记「一条词一个页」的那几件——`templates/exercise_summary.html` 一族**两页**
  *  （汇总与记录级明细共件），它的页身份由命令键面钉住，不进本表。 */
 const PAGE_OF_TEMPLATE = new Map([
-  ['templates/exercise_distribution.html', { eyebrow: '运动 · 类型分布', copyPage: '运动类型分布' }],
-  ['templates/exercise_trend.html', { eyebrow: '运动 · 趋势', copyPage: '运动趋势' }],
-  ['templates/exercise_recap.html', { eyebrow: '运动 · 复盘', copyPage: '运动复盘' }],
-  ['templates/exercise_strength.html', { eyebrow: '运动 · 力量总览', copyPage: '力量训练总览' }],
-  ['templates/exercise_cardio.html', { eyebrow: '运动 · 有氧总览', copyPage: '有氧训练总览' }],
+  ['templates/exercise_distribution.html', { eyebrow: '运动类型分布', copyPage: '运动类型分布' }],
+  ['templates/exercise_trend.html', { eyebrow: '运动趋势', copyPage: '运动趋势' }],
+  ['templates/exercise_recap.html', { eyebrow: '运动复盘', copyPage: '运动复盘' }],
+  ['templates/exercise_strength.html', { eyebrow: '运动力量总览', copyPage: '力量训练总览' }],
+  ['templates/exercise_cardio.html', { eyebrow: '运动有氧总览', copyPage: '有氧训练总览' }],
 ]);
 
 /** 票面第三组：曾经指错页的**读类词**——按**模板件名**派生（分布／趋势／复盘三件下的全部词）。
@@ -127,9 +129,24 @@ const WRITE_WORDS = SCENE_04_EXERCISE.filter((t) => WRITE_KEYS.has(KEY_OF_WORD.g
 /* ── 真跑夹具（真库零接触：库路径一律指向系统临时根） ─────────────────────── */
 
 const isoAt = (i) => new Date(Date.parse(TODAY + 'T12:00:00Z') - i * DAY).toISOString().slice(0, 10);
-/** 占位符补真实日期（`<日期>`／`<开始日期>`／`<结束日期>`；命令**形状**一字不改）。 */
-const fillPlaceholders = (cli) => String(cli)
-  .replaceAll('<开始日期>', isoAt(200)).replaceAll('<结束日期>', TODAY).replaceAll('<日期>', isoAt(3));
+/** 本库里真实可达的记录号（占位符 `"<记录号>"` 的填法）：取 live 行里最大的 id。#478 */
+function recordIdOf(seedDir) {
+  const db = openDb(join(seedDir, DB_FILENAME));
+  try {
+    const r = db.prepare('SELECT MAX(id) AS id FROM exercise_log WHERE COALESCE(is_deleted, 0) = 0').get();
+    return r === undefined || r.id === null ? null : String(r.id);
+  } finally {
+    db.close();
+  }
+}
+
+/** 占位符补真实日期（`<日期>`／`<开始日期>`／`<结束日期>`；命令**形状**一字不改）。
+ *  `"<记录号>"` 一样补真值（#478：冻结表的改／删两条词改成占位符，替掉不可达的常量 `"id":1`）。 */
+function fillPlaceholders(cli, recordId) {
+  const s = String(cli)
+    .replaceAll('<开始日期>', isoAt(200)).replaceAll('<结束日期>', TODAY).replaceAll('<日期>', isoAt(3));
+  return recordId === undefined || recordId === null ? s : s.replaceAll('"<记录号>"', '"' + recordId + '"');
+}
 
 /** 命令原文 → argv（首个 token 是 `calorie-cmd-read` 本身，运行时由 `dist/cli/cmd_read.js` 顶替）。 */
 function tokenize(cli) {
@@ -143,9 +160,9 @@ function tokenize(cli) {
   return out;
 }
 
-/** 命令原文 → 参数对象。 */
-function paramsOf(cli) {
-  const toks = tokenize(fillPlaceholders(cli));
+/** 命令原文 → 参数对象（`recordId` 给了就把 `"<记录号>"` 补成真值）。 */
+function paramsOf(cli, recordId) {
+  const toks = tokenize(fillPlaceholders(cli, recordId));
   const at = toks.indexOf('--params');
   if (at < 0 || toks[at + 1] === undefined) return {};
   return JSON.parse(toks[at + 1]);
@@ -180,11 +197,12 @@ function mkDir(tag, days) {
   return dir;
 }
 
-/** 命令**原样**跑：库路径经 `SKILLS_DB_PATH` 指向本词的独立副本，写类词互不串扰。 */
-function runWord(seedDir, cli, tag) {
+/** 命令**原样**跑：库路径经 `SKILLS_DB_PATH` 指向本词的独立副本，写类词互不串扰。
+ *  `recordId`＝本次种子库里真实可达的记录号（`"<记录号>"` 的填法），不给即按不可达正例跑。 */
+function runWord(seedDir, cli, tag, recordId) {
   const dir = mkdtempSync(join(tmpdir(), tag + '-'));
   copyFileSync(join(seedDir, DB_FILENAME), join(dir, DB_FILENAME));
-  const toks = tokenize(fillPlaceholders(cli));
+  const toks = tokenize(fillPlaceholders(cli, recordId));
   const r = spawnSync(NODE_BIN, [BIN, ...toks.slice(1)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
     env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: TODAY },
@@ -199,15 +217,17 @@ function runWord(seedDir, cli, tag) {
   };
 }
 
-/** 一轮真跑：逐条从**唤醒词**出发（查找命中 → 那条命令 → 真跑），跑一次、各组复用。 */
+/** 一轮真跑：逐条从**唤醒词**出发（查找命中 → 那条命令 → 真跑），跑一次、各组复用。
+ *  种子库里真实可达的记录号先量一次（#478：改／删两条词的 `"<记录号>"` 拿它填）。 */
 function round(tag, seedDays) {
   const seedDir = mkDir(tag + '-seed', seedDays);
+  const recordId = recordIdOf(seedDir);
   const recs = [];
   for (const word of WORDS) {
     const hits = lookupWake(buildHelpLookup(TRIGGERS), word);
     const cli = hits.length === 1 ? hits[0].cli : null;
     const rec = { word, cli, hits: hits.length };
-    const r = runWord(seedDir, cli ?? FROZEN_CLI.get(word), tag + '-run');
+    const r = runWord(seedDir, cli ?? FROZEN_CLI.get(word), tag + '-run', recordId);
     Object.assign(rec, r);
     if (rec.status === 0) {
       const lines = String(rec.stdout).trimEnd().split(/\r?\n/);

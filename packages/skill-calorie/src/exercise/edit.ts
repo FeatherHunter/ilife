@@ -8,6 +8,10 @@
  * 状态 ＋ 命中计数 ＋ 改前→改后／删除快照 ＋ 对账 ＋ 复制区）；行为不动——校验口径、
  * 写库语句、回执数据（`recordId`／`ids`／`writtenFields`／`items`／摘要）与搬迁前逐字一致，
  * `affectedRows` 按 `total_changes()` 增量自算（与分派层同口径，页内与信封一致）。
+ *
+ * #478 入口口径：`id` 收**数字或数字串**（`coerceId`）。理由是唤醒词的示例参数改成了占位符
+ * `"<记录号>"`——记录号是「先跑一次看运动记录，把那一页上的号填进来」得到的，填进来的是**字符串**。
+ * 非数字串仍给参数错（`id 须为正整数`），不会拿占位符去查库。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { deleteDay, deleteRange, deleteRecord, updateDay, updateRecord } from './exerciseStore.js';
@@ -28,6 +32,25 @@ const EX_CAMEL: Record<string, string> = {
   date: 'date', time: 'time', backfill: 'is_backfill', isBackfill: 'is_backfill',
 };
 
+/** 记录号（`id`）：收数字或数字串，其余一律判成「没给」交给后面的校验去报参数错（不拿占位符去查库）。（#478 入口口径）
+ *  **不许用 `optNum`／`optStr` 去读这个字段**：两者都是严格类型闸（读到另一种形状会直接 `fail(2)`），
+ *  串起来读反而把「数字串」这一种合法输入当成类型错。 */
+function coerceId(v: unknown): number | undefined {
+  if (typeof v === 'number') return v;
+  if (typeof v !== 'string') return undefined;
+  const s = v.trim();
+  return s !== '' && /^[0-9]+$/.test(s) ? Number(s) : undefined;
+}
+
+/** 读 `id` 这一格（数字或数字串都收）；给的形状不是这两样即按参数错当场报，不给即 undefined。（#478） */
+function readId(params: Record<string, unknown>): number | undefined {
+  const v = params['id'];
+  if (v === undefined || v === null) return undefined;
+  const id = coerceId(v);
+  if (id === undefined) fail(2, typeof v === 'number' ? 'id 须为正整数' : 'id 须为正整数（可给数字或数字串）');
+  return id;
+}
+
 /** 回执装配收口：数据与整页同源（同一份 `receipt`），页面只读装配不改数据。 */
 function done(
   db: DatabaseSync, key: string, command: string, receipt: CrudReceipt,
@@ -44,7 +67,7 @@ export function writeExerciseUpdate(params: Record<string, unknown>, db: Databas
   const key = 'calorie.exercise.update';
   const command = commandLine(key, params);
   const before = totalChanges(db);
-  const id = optNum(params, 'id');
+  const id = readId(params);
   const date = wday(params, 'date');
   const fields: Record<string, unknown> = {};
   for (const [camel, col] of Object.entries(EX_CAMEL)) {
@@ -95,7 +118,7 @@ export function writeExerciseRemove(params: Record<string, unknown>, db: Databas
   const key = 'calorie.exercise.remove';
   const command = commandLine(key, params);
   const before = totalChanges(db);
-  const id = optNum(params, 'id');
+  const id = readId(params);
   const date = wday(params, 'date');
   const from = wday(params, 'from');
   const to = wday(params, 'to');
