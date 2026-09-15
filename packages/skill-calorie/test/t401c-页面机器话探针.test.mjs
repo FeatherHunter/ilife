@@ -101,8 +101,12 @@ test('#401c 视觉升级四件在场（徽章／标题图标／胶囊导航／�
       || html.includes('<h2 class="ilife-block-copy-block-title">' + h2 + '</h2>'), '缺带图标的区块标题：' + h2);
   }
   // 表格的标题位是 `<caption>`（`blocks.ts:613-615`），图标同样在本页给。
-  assert.ok(html.includes('<caption class="ilife-block-data-table-caption">📊 按日汇总（单位：卡）</caption>'),
+  // #401 返修（施工工单 R7）：`目标` 列是**常量列**（`series` 的 `calorieGoal` 全窗口静态值，
+  // `analysis/series.ts:248`）⇒ 整列删、目标写进 caption。本锁跟着这条裁定走：只锁「图标 ＋ 表名」
+  // 这段前缀（形状判据没变），目标值单独锁一条——删列之后它是目标在本页的**唯一**落点。
+  assert.ok(html.includes('<caption class="ilife-block-data-table-caption">📊 按日汇总（单位：卡）'),
     '缺带图标的表格 caption');
+  assert.ok(html.includes('，目标 1800 卡</caption>'), '表格 caption 没带目标（#401 删常量列后目标的唯一落点）');
   // ③ 页内导航走公共层胶囊排：`<nav class="ilife-block-toc">` ＋ 每个锚点都有对应 `id`。
   assert.ok(html.includes('<nav class="ilife-block-toc" aria-label="页内导航">'), '缺页内导航块');
   const hrefs = [...html.matchAll(/<a href="#([^"]+)">/g)].map((m) => m[1]);

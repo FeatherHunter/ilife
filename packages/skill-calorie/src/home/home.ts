@@ -20,6 +20,8 @@ export interface HomeData {
   date: string;
   daily: DailySummary;
   calorieGoal: number | null;
+  /** 蛋白目标（#401）：KPI 卡说明行只留目标、完成率进徽章，故三张有目标的卡都要取得到自己的目标值。 */
+  proteinGoal: number | null;
   waterGoal: number | null;
   caloriePct: number | null;
   proteinPct: number | null;
@@ -67,6 +69,7 @@ export function buildHomeData(db: DatabaseSync, date?: string, windowDays = 7): 
   const deficitToday = deficitData.series[deficitData.series.length - 1]?.deficit ?? null;
   const nutrition = getNutritionGoal(db);
   const calorieGoal = nutrition?.calorie_goal ?? daily.goal?.calorie_goal ?? null;
+  const proteinGoal = nutrition?.protein_goal ?? daily.goal?.protein_goal ?? null;
   const waterGoal = nutrition?.water_goal ?? daily.goal?.water_goal ?? 2000;
   // 连续记录优先用 T4 history 口径？history 按 food_log 聚合，与 series 同源；此处用 series 倒数，保证与周趋势同口径。
   const streakDays = streakFromSeries(series);
@@ -80,10 +83,11 @@ export function buildHomeData(db: DatabaseSync, date?: string, windowDays = 7): 
     date: today,
     daily,
     calorieGoal,
+    proteinGoal,
     waterGoal,
     streakDays,
     caloriePct: pct(daily.totals.cal, calorieGoal),
-    proteinPct: pct(daily.totals.pro, nutrition?.protein_goal ?? daily.goal?.protein_goal ?? null),
+    proteinPct: pct(daily.totals.pro, proteinGoal),
     waterPct: pct(daily.waterMl, waterGoal),
     deficitToday,
     week: {

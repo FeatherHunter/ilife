@@ -34,14 +34,20 @@
  * 视觉升级只取「已冻结 token ＋ 已支持 API」里那几项：KPI 卡状态徽章（`renderKpiCard` 的 `status`）、
  * 区块标题带图标、结论条专属浅色面、页内导航胶囊排。**KPI 卡完成度条本属票 #418**（公共层增量），
  * 本样板**不做条**——不用自造进度条去顶 #418 的位（`t425` 裁定 6「条位与档位色只准有一处」）。
+ *
+ * #401 · 文本与结构返修（施工工单 `.scratch/sep-audit/报告.md`：8 处分隔符债 ＋ 9 条冗余 R1–R9）：
+ * ① 不再用 `·`／`；` 串并列事实——页头副题只留窗口，有记录天数与连续天数改页头胶囊 `renderChips`
+ *    （`blocks.ts:459` 现成件；页面模板三槽里没有徽章槽，故放在正文首行）；KPI 说明行只留目标；
+ * ② 同一事实一页一处——空值口径／缺口定义／窗口／页面名各留一处，表格常量列（`目标`）删进 caption；
+ * ③ KPI 六张减到四张（今日摄入／蛋白／饮水／今日缺口），周均摄入与连续记录移出 KPI 位。
+ * 逐条证据见 `docs/skills/skill-calorie/t401-样板-文本结构-证据.md`；栅格列数属公共层，另开票。
  */
 import { cx, escapeHtml, token } from 'base-paint';
 import type { StatusKind } from 'base-paint';
-import { renderCaliberLine, renderChartBlock, renderDataTable, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
+import { renderCaliberLine, renderChartBlock, renderChips, renderDataTable, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
-import { sourceLine } from '../shared/sourceLine.js';
 import { nowStamp } from '../render/receipt.js';
 import type { HomeData } from './home.js';
 
@@ -98,16 +104,18 @@ export function renderHomeHtml(d: HomeData): string {
 
 /* ── #371 · 主页完整文档（今日总览族 5 词共用同一组装配）；#401c 整页融合返修 ── */
 
-/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
-const DOC_TITLE = '卡路里·主页';
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
+ *  #401 债 #1：原为 `卡路里·主页`（与眉标两种写法）→ 统一成「产品名＋空格＋页名」，不带 `·`：
+ *  `·` 是「用符号挡 UI」，且分隔符探针把 `<title>` 文本也算可见文本。 */
+const DOC_TITLE = '卡路里 主页';
 
 /** envelope 头（值冻结对齐 `cli/keys.ts` ENVELOPE_VERSION 与 CALORIE_SKILL）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 页头眉标（人话）：`t425` 裁定 1 禁上屏英文内部标识符，故这里是「域 · 页面」而不是命令键
- *  （旧写法 `calorie.view.home · 主页` 把内部命令键直接印给了读者）。 */
-const HOME_EYEBROW = '卡路里 · 主页';
+/** 页头眉标（人话）：**只留产品名**（`t425` 裁定 1 禁上屏英文内部标识符，故不印命令键）。
+ *  #401 债 #2：原 `卡路里 · 主页` 用 `·` 并排了「谁的产品」与「哪一页」；页面身份改由 `headBadges` 承担。 */
+const HOME_EYEBROW = '卡路里';
 
 /** 页内导航的锚点 id 与区块标题图标（同一份清单供导航与正文用，锚点不会指到不存在的 id）。 */
 const SEC_OVERVIEW = 'sec-overview';
@@ -120,29 +128,29 @@ const ICON_DAILY = '📊';
 const ICON_COPY = '💰';
 
 /** 来源脚注上给**读者看**的来源名：可见文本零 snake_case（库表名只留在复制日志的「来源」段里，
- *  那是给复核的人照抄用的技术原件，不上页面——同 `render/sportDocs.ts:54-57` 口径）。 */
-const SOURCE_LOGGED = '饮食记录 ＋ 运动记录 ＋ 每日目标';
+ *  那是给复核的人照抄用的技术原件，不上页面——同 `render/sportDocs.ts:54-57` 口径）。
+ *  #401 分隔符债 #8：三件来源**不再用 `＋` 串**——`＋` 与 `·`／`、` 同属「≥3 段并列」判据里的分隔符
+ *  （`.scratch/sep-audit/probe.mjs:39`），改用行文逗号，三件来源仍在一句话里读得完。 */
+const SOURCE_LOGGED = '饮食记录，运动记录，每日目标';
 
 /** 完成度 → 档位徽章（四档 `STATUS_KINDS`；文案随档给，不印状态机里的英文枚举——
  *  `STATUS_DEFAULT_TEXT` 是「成功／警告／失败／无数据」，那是控件缺省值，页面自己给业务说法）。
  *  档位取自 `renderKpiCard` 已支持的 `status`（`blocks.ts:533-539`），**没有目标就不给徽章**——
- *  没目标可比的读数摆一枚「无数据」徽章是假信息，不如不出。 */
+ *  没目标可比的读数摆一枚「无数据」徽章是假信息，不如不出。
+ *  #401 分隔符债 #4／#5：完成率此前挤在说明行里与目标用 `·` 并排 → 现并进徽章文案
+ *  （`接近目标 66%`／`达标 100%`）；**取整只改显示**，档位仍按精确值判（90／60 两道线）。 */
 function pctStatus(pct: number | null | undefined): { status: StatusKind; statusText: string } | null {
   if (pct === null || pct === undefined) return null;
-  if (pct >= 90) return { status: 'ok', statusText: '达标' };
-  if (pct >= 60) return { status: 'warn', statusText: '接近目标' };
-  return { status: 'danger', statusText: '偏少' };
+  const shown = Math.round(pct) + '%';
+  if (pct >= 90) return { status: 'ok', statusText: '达标 ' + shown };
+  if (pct >= 60) return { status: 'warn', statusText: '接近目标 ' + shown };
+  return { status: 'danger', statusText: '偏少 ' + shown };
 }
 
-/** 完成度读数：缺目标写 `—`（不拿 0 顶、不拿「未设目标」顶，`t425` 裁定 4 的缺值口径）。 */
-function pctText(pct: number | null | undefined): string {
-  return pct === null || pct === undefined ? '—' : String(pct) + '%';
-}
-
-/** KPI 卡说明行：`目标 X · 完成度 Y`（缺目标时只写「未设目标」，不拼半截读数）。 */
-function goalDetail(pct: number | null | undefined, goal: number | null | undefined, unit: string): string {
+/** KPI 卡说明行：**只写目标**（缺目标写「未设目标」，不拼半截读数，`t425` 裁定 4 的缺值口径）。 */
+function goalDetail(goal: number | null | undefined, unit: string): string {
   if (goal === null || goal === undefined) return '未设目标';
-  return '目标 ' + goal + ' ' + unit + ' · 完成度 ' + pctText(pct);
+  return '目标 ' + goal + ' ' + unit;
 }
 
 /** 页头窗口词：本页名如实写**本唤醒词的窗口**（同一命令键带不同 `windowDays`）——窗口是
@@ -152,10 +160,25 @@ function windowName(days: number): string {
   return days <= 1 ? '今日总览' : '近 ' + days + ' 天总览';
 }
 
-/** 页头副题：窗口区间在这条出现**一次**（本页唯一写全区间的地方，口径句只写「窗内」）。 */
+/** 窗口自称：单日窗口写「当日」，多日写「窗内」（副题与页头胶囊共用这一处口径）。 */
+function windowScope(d: HomeData): string {
+  return d.week.windowDays <= 1 ? '当日' : '窗内';
+}
+
+/** 页头副题：**只写窗口**——窗口区间全页只在这里出现一次（#401 冗余 R2；口径句只写「窗内」）。 */
 function subtitleText(d: HomeData): string {
-  const g = d.week.windowDays <= 1 ? '当日' : '窗内';
-  return d.week.start + ' ~ ' + d.week.end + ' · ' + g + '有记录 ' + d.week.loggedDays + ' 天 · 连续 ' + d.streakDays + ' 天';
+  return d.week.start + ' ~ ' + d.week.end;
+}
+
+/** 页头胶囊行（#401 债 #3 ＋ 冗余 R3／R6）：副题里 `有记录 5 天 · 连续 3 天` 两段并列改用现成胶囊件
+ *  `renderChips`（`blocks.ts:459`）；「主页」那枚承接从眉标撤下的页面身份（债 #2）。取舍：页面模板
+ *  （`renderPageShell`）只有 eyebrow／title／subtitle 三槽、没有徽章槽，故不改公共层签名，落正文首行。 */
+function headBadges(d: HomeData): string {
+  return renderChips({ items: [
+    { text: '主页' },
+    { text: windowScope(d) + '有记录 ' + d.week.loggedDays + '/' + d.week.windowDays + ' 天' },
+    { text: '连续记录 ' + d.streakDays + ' 天' },
+  ] });
 }
 
 /** 页首结论句（读序＝标题 → 一句结论 → 数字卡）：只给判定与「还能吃／已超」一个读数，
@@ -185,30 +208,25 @@ export function buildHomeDoc(d: HomeData): string {
   const t = d.daily.totals;
   const windowDays = d.week.windowDays;
   const range = d.week.start + ' ~ ' + d.week.end;
+  // #401 三：KPI 六张减到四张——「今日速览」只留今日四个核心读数；连续记录搬页头胶囊（它说的是窗口的
+  // 事），周均摄入随卡位撤出、口径挂折线说明行。
   const cards: KpiCardInput[] = [
     {
       label: '今日摄入', value: fmt(t.cal), unit: '卡',
-      detail: goalDetail(d.caloriePct, d.calorieGoal, '卡'), ...(pctStatus(d.caloriePct) ?? {}),
+      detail: goalDetail(d.calorieGoal, '卡'), ...(pctStatus(d.caloriePct) ?? {}),
     },
     {
       label: '蛋白', value: fmt(t.pro), unit: '克',
-      detail: '完成度 ' + pctText(d.proteinPct), ...(pctStatus(d.proteinPct) ?? {}),
+      detail: goalDetail(d.proteinGoal, '克'), ...(pctStatus(d.proteinPct) ?? {}),
     },
     {
       label: '饮水', value: fmt(d.daily.waterMl), unit: '毫升',
-      detail: goalDetail(d.waterPct, d.waterGoal, '毫升'), ...(pctStatus(d.waterPct) ?? {}),
+      detail: goalDetail(d.waterGoal, '毫升'), ...(pctStatus(d.waterPct) ?? {}),
     },
     {
+      // 缺口定义（`缺口＝消耗 − 摄入，正数是缺口`）全页只留在按日汇总那条口径行（#401 冗余 R5）。
       label: '今日缺口', value: fmt(d.deficitToday), unit: '卡',
-      detail: '摄入比消耗少这么多，正数是缺口',
-    },
-    {
-      label: '连续记录', value: String(d.streakDays), unit: '天',
-      detail: '窗内有记录 ' + d.week.loggedDays + '/' + windowDays + ' 天',
-    },
-    {
-      label: '周均摄入', value: fmt(d.week.avgIntake), unit: '卡',
-      detail: '只算有记录的天',
+      detail: '比消耗少这么多',
     },
   ];
   // 区块标题带图标（`blocks.ts:655-657` 的 `title` 位；老实物每块都带，`home_dashboard.html:623-649`）。
@@ -231,25 +249,33 @@ export function buildHomeDoc(d: HomeData): string {
           markLine: { value: d.week.avgIntake ?? undefined, label: '周均' },
         },
       },
-      // 口径句走公共层 `renderCaliberLine`（`t425` 裁定 3）：只留「留空不断 0」这条事实，
-      // 窗口区间归页头一处（旧 caption 把区间又抄了一遍）。
-    }) + renderCaliberLine('无记录的日子留空、不按 0 算，折线在那些天连过去不断段。') + '</section>');
+      // 口径句走公共层 `renderCaliberLine`（`t425` 裁定 3）：原「无记录的日子留空、不按 0 算」整条删
+      // （#401 冗余 R4：空值口径页级已说一处）；这条只讲虚线是什么——周均摄入随 KPI 卡位撤出后，
+      // 「只算有记录的天」这个口径归口径行（#401 三）。窗口区间归页头一处，此处不抄第二遍。
+    }) + renderCaliberLine('虚线＝周均摄入，只算有记录的天。') + '</section>');
     charts = true;
   }
+  // 目标列是**常量列**（`series` 的 `calorieGoal` 全窗口同一个值，`analysis/series.ts:248`），
+  // 七行印同一个数＝冗余 R7 的 7／8 处 → 删列，目标写进 caption（表的参照值在表说明里说一次）。
+  const tableGoal = d.week.series[0]?.calorieGoal ?? d.calorieGoal;
   sections.push('<section id="' + SEC_DAILY + '">' + renderDataTable({
     columns: [
       { key: 'date', label: '日期' },
       { key: 'cal', label: '摄入', align: 'right' },
       { key: 'deficit', label: '缺口', align: 'right' },
-      { key: 'goal', label: '目标', align: 'right' },
     ],
-    // 倒序＝最近的一天在最上（老实物明细表同此序）；空记录日不补 0，整行空着。
+    // 倒序＝最近的一天在最上（老实物明细表同此序）；空记录日不补 0。
+    // #401 债 #7：表下那条「没有记录的那天留空」已按工单删（空值口径全页只留页级一句）⇒ 表格必须真的
+    // 照页级那句做、「缺数一律写 —」才不是假话：空格改印 `—`（仍不是 0）。R8：今日行与 KPI 卡同值，
+    // 行标记点明「今日」，不必读者自己认。
     rows: d.week.series.slice().reverse().map((s) => ({
-      date: s.date, cal: s.calories, deficit: s.deficit, goal: s.calorieGoal,
+      date: s.date === d.date ? s.date + '（今日）' : s.date,
+      cal: s.calories ?? '—', deficit: s.deficit ?? '—',
     })),
-    caption: ICON_DAILY + ' 按日汇总（单位：卡）',
+    caption: ICON_DAILY + ' 按日汇总（单位：卡）'
+      + (tableGoal === null || tableGoal === undefined ? '' : '，目标 ' + tableGoal + ' 卡'),
     emptyText: '本窗无按日汇总',
-  }) + renderCaliberLine('窗内每天一行，没有记录的那天留空、不当 0 算；缺口＝消耗 − 摄入，正数是缺口。') + '</section>');
+  }) + renderCaliberLine('缺口＝消耗 − 摄入，正数是缺口。') + '</section>');
   // #401 · 这里原有一条 `notice({…})` 深底提示条，已撤（裁决见件头与
   // `docs/skills/skill-calorie/t401-融合设计.md` 第三节冲突 4）：结论句改由页首那行结论小字说。
   // #375 · 复制区：不给 `title`（与按钮同字的标题不出，只留动作）；
@@ -289,19 +315,26 @@ export function buildHomeDoc(d: HomeData): string {
   sections.push('<section id="' + SEC_COPY + '"><h2 class="ilife-block-copy-block-title">' + ICON_COPY + ' 数据与日志</h2>' + copy + '</section>');
   // 页内导航走公共层 `renderTocBlock`（`t425` 裁定 3）：白底胶囊排，形态全在 `blocks.ts:1200-1216`；
   // 锚点清单与正文四个 `id` 逐字同源，不手抄第二份。
+  // #401 冗余 R9：节名在两处（导航／标题）角色不同都必留，但写法此前不一致（标题带图标、导航不带）
+  // → 统一成同一种：两处都用同一组 `ICON_*` 常量，读者扫导航就能对上区块。
   // 承重例外：`--soft` 那处浅色面**不在**本页出现——它是结论条，见 `CONCLUSION_STYLE`。
   const content = [
-    renderCaliberLine('缺数一律写 —；有记录才有数。'),
+    headBadges(d),
+    renderCaliberLine('缺数一律写 —。'),
     '<p class="' + cx('block-page-shell-conclusion') + '" style="' + CONCLUSION_STYLE + '">'
       + escapeHtml(CONCLUSION_TEXT(d)) + '</p>',
     renderTocBlock({ items: [
-      { id: SEC_OVERVIEW, text: '今日速览' },
-      ...(charts ? [{ id: SEC_TREND, text: '每日摄入' }] : []),
-      { id: SEC_DAILY, text: '按日汇总' },
-      { id: SEC_COPY, text: '数据与日志' },
+      { id: SEC_OVERVIEW, text: ICON_OVERVIEW + ' 今日速览' },
+      ...(charts ? [{ id: SEC_TREND, text: ICON_TREND + ' 每日摄入' }] : []),
+      { id: SEC_DAILY, text: ICON_DAILY + ' 按日汇总' },
+      { id: SEC_COPY, text: ICON_COPY + ' 数据与日志' },
     ] }),
     sections.join(''),
-    sourceLine({ source: SOURCE_LOGGED, start: d.week.start, end: d.week.end, count: d.week.loggedDays }),
+    // #401 债 #8：来源脚注拆成两条口径行（来源一条、条数一条）。窗口区间**不在这里重复**
+    // （冗余 R2：全页只留副题那一处）；`共 5 条记录`（行数口径）与被撤掉的 KPI 卡 `有记录 5/7 天`
+    // （天数口径）措辞刻意分开（冗余 R6 要求），免得读者以为同一件事说了两遍。
+    renderCaliberLine('数据来源：' + SOURCE_LOGGED + '。'),
+    renderCaliberLine(windowScope(d) + '共 ' + d.week.loggedDays + ' 条记录。'),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
