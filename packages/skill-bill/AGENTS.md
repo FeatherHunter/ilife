@@ -61,3 +61,27 @@
 | `src/help/index.ts` | 1 | 在 350 以内 |
 
 超线件两件：`src/triggers/wake-assets.ts` 986、`src/cli/cmd_read.ts` 558（两件都已挂号，各带超因与拆法去向）。
+
+## #411 查询骨架后复测（2026-09-16，只列读数变了的件与新增件）
+
+上面那张表是 **t406 当刻的实测**，留着当历史；本节记查询域到位后的读数（同 LF 口径）。改动经 `tsc -b packages/skill-bill` 全绿、包内全量 `node --test` 194/194 后实测。
+
+| 件 | LF | 结论 |
+|---|---|---|
+| `src/cli/cmd_read.ts` | 485 | 已超线，需要根据规则进行重构。读数沿革 558（t406 表）→ **485**（#411 把四条查询命令的处理体与时间窗口三件搬走，净减 62）。超因与拆法同前：按域拆分派，属「读命令迁移」那条后票；本票只搬不拆 |
+| `src/triggers/wake-assets.ts` | 986 | 本票未动（拆法在生成器链那条线） |
+| `src/query/commands.ts` | 53 | 新件（#411）：查询域命令声明四条 |
+| `src/query/index.ts` | 22 | 新件（#411）：查询域的门 |
+| `src/query/list.ts` | 182 | 新件（#411）：通用查询列表页（列表装配件） |
+| `src/query/read.ts` | 236 | 新件（#411）：四条读命令的处理体 |
+| `scripts/gen-cli.mjs` | 302 | #411 放开读命令（`kind:'read'`）并改头注释；仍在 350 以内 |
+| `src/shared/copyArea.ts` | 159 | #411 加 `actionStamp()`（本次执行时刻串的唯一取法）；仍在 350 以内 |
+| `src/shared/commandSpec.ts` | 74 | #411 补读命令那一支；仍在 350 以内 |
+| `src/shared/pageShell.ts` | 65 | #411 眉标按域取、槽位加 `list`；仍在 350 以内 |
+| `src/shared/writeParts.ts` | 89 | #411 `<section>` 槽位加 `list`；仍在 350 以内 |
+| `src/render/views.ts` | 125 | #411 搬走四条 `buildRecord*`；仍在 350 以内 |
+| `src/policy/record.ts` | 91 | #411 收时间窗口三件（`monthRange`／`weekRange`／`yesterdayStr`）；仍在 350 以内 |
+| `src/render/envelope.ts` | 64 | #411 过渡表删四条查询命令；仍在 350 以内 |
+| `src/cli/registry.ts` | 37 | 生成物（`pnpm gen`）：两域六条；仍在 350 以内 |
+
+超线件仍是两件（`wake-assets.ts` 986、`cmd_read.ts` 485），各带超因与拆法去向；本票新增的四个件都在 350 以内。
