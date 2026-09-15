@@ -94,8 +94,8 @@ function collectPlain(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；补齐之后跟助手说一遍才会写。'),
-    renderCaliberLine('方向：这一条方向按金额符号判——支出记负数、收入记正数；'
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
+    renderCaliberLine('方向：这一条方向按金额符号判——支出记负数、收入记正数。'
       + '给什么符号就记什么方向，这一页不替你改符号。'),
     renderCaliberLine('认不得型名的时候，这一页也照实报，不猜是哪一型。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
@@ -108,8 +108,8 @@ function collectPlain(input: CollectInput): string {
     }),
     empties.join(''),
     fieldCardOf({
-      description: '填好必需项再说一遍；这一页先不写库。分类要选到最细那一级'
-        + '（最细一级即名目，如 餐饮/外卖/午餐）；金额带符号，符号即方向。',
+      description: '填好必需项再说一遍。这一页先不写库。分类要选到最细那一级'
+        + '（最细一级即名目，如 餐饮/外卖/午餐）。金额带符号，符号即方向。',
       slots: input.slots,
       params,
       marks,
@@ -163,11 +163,10 @@ function receiptPlain(input: ReceiptInput): string {
         detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
-    renderCaliberLine('这一条是通用词那一件落下来的：方向由金额符号定（负数支出、正数收入）；'
-      + '本页的字段与值都取自库内那一行，不是拿参数顶的。'),
+    renderCaliberLine('方向由金额符号定：负数记支出、正数记收入。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

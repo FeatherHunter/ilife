@@ -20,6 +20,7 @@
  */
 import { renderCaliberLine, renderChangeRows, renderDataTable } from 'base-paint/blocks';
 import { emptyNote } from './emptyNote.js';
+import { fieldLabelOf } from './userWording.js';
 
 /** 一行：哪个字段、改前、改后、算不算真改动。 */
 export interface DiffRow {
@@ -58,7 +59,9 @@ function caliberOf(rows: readonly DiffRow[]): string {
     + (changed === rows.length ? '（每一个都动了）' : '（原值与新值一样的那些没列出来）') + '。';
 }
 
-/** diff 表整块：字段／原值／新值三列；零改动（或一个字段都没比）只出空态。行数为零时也不出空表。 */
+/** diff 表整块：改了哪一项／改前／改后三列；零改动（或一个字段都没比）只出空态。行数为零时也不出空表。
+ *  R2 走映射：行名过 `fieldLabelOf`（库列名不上屏；`deleted_at`→撤销标记、`op`→这一步做什么）；
+ *  列头不再用「字段／原值／新值」这类表述。口径句与「未设置」字面沿用（护栏逐字钉着）。 */
 export function diffTable(input: { readonly rows: readonly DiffRow[]; readonly caption?: string }): string {
   const changed = input.rows.filter((r) => r.changed);
   if (changed.length === 0) {
@@ -70,20 +73,20 @@ export function diffTable(input: { readonly rows: readonly DiffRow[]; readonly c
   }
   return renderDataTable({
     columns: [
-      { key: 'field', label: '字段' },
-      { key: 'before', label: '原值' },
-      { key: 'after', label: '新值' },
+      { key: 'field', label: '改了哪一项' },
+      { key: 'before', label: '改前' },
+      { key: 'after', label: '改后' },
     ],
-    rows: changed.map((r) => ({ field: r.field, before: r.before, after: r.after })),
+    rows: changed.map((r) => ({ field: fieldLabelOf(r.field), before: r.before, after: r.after })),
     caption: input.caption ?? '本次改动的字段（' + changed.length + ' 项）',
   }) + renderCaliberLine(caliberOf(input.rows));
 }
 
-/** 同一批改动的紧凑形态：一行「字段名 ｜ 改前 → 改后」（走 base 的 `renderChangeRows`）。零改动返回空串。 */
+/** 同一批改动的紧凑形态：一行「改了哪一项 ｜ 改前 → 改后」（走 base 的 `renderChangeRows`）。零改动返回空串。 */
 export function diffChangeRows(input: { readonly rows: readonly DiffRow[] }): string {
   const changed = input.rows.filter((r) => r.changed);
   if (changed.length === 0) return '';
   return renderChangeRows({
-    rows: changed.map((r) => ({ label: r.field, before: r.before, after: r.after })),
+    rows: changed.map((r) => ({ label: fieldLabelOf(r.field), before: r.before, after: r.after })),
   });
 }

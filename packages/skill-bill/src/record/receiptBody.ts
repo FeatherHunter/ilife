@@ -83,7 +83,7 @@ export function receiptBody(input: ReceiptInput): string {
     ]),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

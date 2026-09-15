@@ -124,7 +124,7 @@ function collectReimburse(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf('reimburse') }),
     }),
     summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；补齐之后跟助手说一遍才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
     tagNote(),
     sourceNote(),
     duplicateNote(findDuplicates(input.recent, probe), probe),
@@ -137,7 +137,7 @@ function collectReimburse(input: CollectInput): string {
     }),
     empties.join(''),
     fieldCardOf({
-      description: '填好必需项再说一遍；这一页先不写库。金额取负数（垫付出去的钱）；'
+      description: '填好必需项再说一遍。这一页先不写库。金额取负数（垫付出去的钱）。'
         + '备注那格写清垫了什么，并带上 ' + TAG + '。',
       slots: input.slots,
       params,
@@ -190,14 +190,14 @@ function receiptReimburse(input: ReceiptInput): string {
     typeBadge({
       kind: 'reimburse',
       status: 'ok',
-      state: '写库成功（已打 ' + TAG + '）',
+      state: '写库成功',
       next: nextStepOf({ page: 'receipt', exit: true }),
     }),
-    renderFeedbackBlock({ title: '打标说明条（这一笔怎么流转）', toast }),
+    renderFeedbackBlock({ title: '打标说明', toast }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(input.receipt, input.writtenDetail),
-      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+      { label: '记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       {
         label: '写进去的项',
         value: input.receipt.writtenFields.length + ' 项',
@@ -208,7 +208,7 @@ function receiptReimburse(input: ReceiptInput): string {
       + '报销到账是另一笔（正数），按备注里的 ' + TAG + ' 对上。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

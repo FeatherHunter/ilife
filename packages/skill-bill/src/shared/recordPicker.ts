@@ -222,7 +222,7 @@ function snapshotRows(row: BillRow): readonly { readonly k: string; readonly v: 
  *  表头说明里那个 `·` 改全角空格（本轮整改：表头说明是版式位，行内不再拿 `·` 当版式）。 */
 export function snapshotTable(row: BillRow, caption?: string): string {
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
     rows: snapshotRows(row),
     caption: caption ?? '这一条记录（记录编号 ' + row.id + '　只读回显）',
   });

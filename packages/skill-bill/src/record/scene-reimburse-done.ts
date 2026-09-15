@@ -14,7 +14,7 @@
  */
 import { renderToast } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderChips, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
 import { candidatePick } from '../shared/candidatePick.js';
@@ -69,10 +69,10 @@ function candidatesOf(recent: CollectInput['recent'], amount: number | null): Ca
     const same = amount !== null && Math.abs(Math.abs(r.amount) - amount) <= 0.005;
     out.push({
       id: r.id,
-      label: r.category + ' · ' + r.note.replace(/#/g, ''),
+      label: r.category + '　' + r.note.replace(/#/g, ''),
       amount: money2(r.amount),
       time: r.time,
-      why: same ? '打了 ' + TAG_WAIT + ' 且金额与到账额一致' : '打了 ' + TAG_WAIT + ' · 金额与到账额不符',
+      why: same ? '打了 ' + TAG_WAIT + ' 且金额与到账额一致' : '打了 ' + TAG_WAIT + '，金额与到账额不符',
     });
     if (out.length >= CAND_MAX) break;
   }
@@ -123,7 +123,8 @@ function collectPage(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('到账照收入口径写正数、落「' + CATEGORY + '」；原记录那一笔只动标签：' + TAG_WAIT + ' 换成 ' + TAG_DONE + '，金额不动。'),
+    renderChips({ items: [{ text: '到账记正数' }, { text: '落「' + CATEGORY + '」' }] }),
+    renderCaliberLine('原记录那一笔只动标签：' + TAG_WAIT + ' 换成 ' + TAG_DONE + '，金额不动。'),
     renderKpiGrid([
       { label: '到账额', value: money2(amount), detail: '收入记正数，归在「' + CATEGORY + '」下面' },
       {
@@ -131,7 +132,7 @@ function collectPage(input: CollectInput): string {
         value: original === null ? '未认准' : money2(original.amount),
         detail: original === null
           ? (source === null ? '还没认准是哪一笔（候选里点一行）' : '#' + source + '（近期记录里没读到原记录）')
-          : '#' + source + ' · ' + original.category + ' · ' + original.time,
+          : '#' + source + '　' + original.category + '　' + original.time,
       },
       {
         label: '净差',
@@ -147,7 +148,7 @@ function collectPage(input: CollectInput): string {
     renderToast({
       msg: '打标说明：' + TAG_WAIT + ' 靠标签流转，不按金额猜',
       lines: [
-        '这一笔打 ' + TAG_ARRIVE + '；原记录备注把 ' + TAG_WAIT + ' 换成 ' + TAG_DONE + '（金额不动，不删原记录）。',
+        '这一笔打 ' + TAG_ARRIVE + '。原记录备注把 ' + TAG_WAIT + ' 换成 ' + TAG_DONE + '（金额不动，不删原记录）。',
         '候选只列备注里带 ' + TAG_WAIT + ' 的记录；一条都没有就反问用户，不拿最近一笔顶替。',
         '「查待报销」看的是 ' + TAG_WAIT + '，「看报销」看的是这一笔与 ' + TAG_DONE + '。',
       ],
@@ -238,18 +239,18 @@ function receiptPage(input: ReceiptInput): string {
       },
     ]),
     renderToast({
-      msg: '报销标签流转：这一笔打 ' + TAG_ARRIVE,
+      msg: '标签是备注里的记号，给助手用来找报销关系：这一笔打 ' + TAG_ARRIVE,
       lines: [
         '这一笔记在「' + CATEGORY + '」，金额 ' + money2(input.facts.amount) + '（收入记正数）',
         source === null
-          ? '原记录：#待报销记录编号 没随这次写库给到，标签换名要在下一次带上（这一笔仍已落库）'
+          ? '原记录这次没说清是哪一笔，换名下次补上（这一笔仍已落库）'
           : '原记录 #' + source + '：备注把 ' + TAG_WAIT + ' 换成 ' + TAG_DONE + '，金额不动',
-        '「查待报销」按 ' + TAG_WAIT + ' 数，这一笔写完之后它就少一笔；撤销走本页退出口。',
+        '「查待报销」按 ' + TAG_WAIT + ' 数，这一笔写完之后它就少一笔。撤销走本页退出口。',
       ],
       badge: { text: '标签流转', type: 'ok' },
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

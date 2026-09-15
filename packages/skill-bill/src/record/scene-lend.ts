@@ -180,7 +180,7 @@ function collectPage(input: CollectInput): string {
       { label: '同人未还', value: unpaid.length + ' 笔', detail: unpaid.length === 0 ? '这个人名下没有还没还的借出' : '只列带 ' + TAG_UNPAID + ' 的借出记录' },
     ]),
     renderToast({
-      msg: '借贷标签流转：' + TAG_LEND + ' ＋ ' + TAG_UNPAID,
+      msg: '标签流转：这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID,
       lines: [
         '这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID + '，对象写进备注（#借给' + (who || '（对象）') + '）。',
         '收回的时候走「记收回」：原记录 ' + TAG_UNPAID + ' 换成 #已还，金额不动。',
@@ -229,8 +229,8 @@ function receiptPage(input: ReceiptInput): string {
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
-      { label: '借贷标签', value: TAG_LEND + ' ＋ ' + TAG_UNPAID, detail: who === '' ? '对象没随这次写库给到' : '备注里的对象：#借给' + who },
+      { label: '记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+      { label: '标签', value: TAG_LEND + '、' + TAG_UNPAID, detail: who === '' ? '标签是备注里的记号，给助手用来找这笔借贷；对象没随这次写库给到' : '标签是备注里的记号，给助手用来找这笔借贷；备注里的对象：#借给' + who },
     ]),
     renderToast({
       msg: '借贷标签流转：这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID,
@@ -242,7 +242,7 @@ function receiptPage(input: ReceiptInput): string {
       badge: { text: '借贷流转', type: 'ok' },
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

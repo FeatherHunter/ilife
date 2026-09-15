@@ -239,18 +239,18 @@ function receiptPage(input: ReceiptInput): string {
       },
     ]),
     renderToast({
-      msg: '借贷标签流转：这一笔打 ' + TAG_COLLECT + '，原记录 ' + TAG_UNPAID + ' → ' + TAG_PAID,
+      msg: '标签流转：这一笔打 ' + TAG_COLLECT + '，原记录换成 ' + TAG_PAID,
       lines: [
-        '这一笔记在「' + CATEGORY + '」，金额 ' + money2(input.facts.amount) + '（收入记正数）',
+        '标签是备注里的记号，给助手用来找借贷关系；这一笔记在「' + CATEGORY + '」，金额 ' + money2(input.facts.amount) + '（收入记正数）',
         source === null
-          ? '原记录：#借出记录编号 没随这次写库给到，消标要在下一次带上（这一笔仍已落库）'
+          ? '原记录这次没说清是哪一笔，消标下次补上（这一笔仍已落库）'
           : '原记录 #' + source + '：备注把 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动',
         '「查欠款」按 ' + TAG_UNPAID + ' 数，这一笔写完之后它就少一笔；撤销走本页退出口。',
       ],
       badge: { text: '标签流转', type: 'ok' },
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: '写进去的项与值',
     }),

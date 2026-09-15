@@ -59,15 +59,16 @@ interface CopyLogInput {
 }
 
 /** 复制 prompt 区那段 prompt 的复制按钮动作号（固定一枚：同页只出一次 prompt 区）。
- *  小标题缺省那句 `复制 prompt（必走）` 里的 `prompt` 不上屏（本轮整改）——改「这一句可以直接复制」。 */
+ *  小标题缺省那句 `复制 prompt（必走）` 里的 `prompt` 不上屏（本轮整改）——改「复制给助手：这一句可以直接复制」
+ *  （总则②：写清这块复制走给谁；仍含老字串，护栏不断言全等只认包含）。 */
 const PROMPT_COPY_ACTION = 'ilife-copy-prompt';
-const PROMPT_COPY_HINT = '这一句可以直接复制';
+const PROMPT_COPY_HINT = '复制给助手：这一句可以直接复制';
 
 /** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋ 它自带的复制按钮。
  *  **`actionId` 必给**：公共层的 `renderPreBlock` 只在给了 `actionId` 时才渲染复制按钮
  *  （`packages/base-render/src/blocks.ts:729-736`），只给 `copyText` 会出一个「写着复制、其实没有按钮」的
  *  有标签没按钮位——那正是本票线上实测发现的一处，本件补齐。
- *  第二参可选：不给＝小标题「这一句可以直接复制」；`null`＝不出小标题；给字符串就用它。 */
+ *  第二参可选：不给＝小标题「复制给助手：这一句可以直接复制」；`null`＝不出小标题；给字符串就用它。 */
 export function promptCopyArea(prompt: string, label?: string | null): string {
   const heading = label === undefined ? PROMPT_COPY_HINT : label;
   return renderPreBlock({
