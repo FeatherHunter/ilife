@@ -1697,6 +1697,10 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  .' + p + 'block-data-table-caption {',
     '    padding: 8px 10px;',
     '    font-size: 12px;',
+    // 表注是 `<caption>`，缺省 `display:table-caption`；表在窄屏已 `display:block`（行卡化），
+    // 表注留 `table-caption` 会被挤成**一个汉字宽**的竖排（负责人截图实拍的那一列）⇒ 显式转回块级、占满整卡。
+    '    display: block;',
+    '    width: 100%;',
     '  }',
     // 列名不再占一行：它们改住每格的标签里（`data-label`），留着只会把行挤窄。
     '  .' + p + 'block-data-table thead {',
@@ -1722,11 +1726,19 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  .' + p + 'block-data-table tr:first-child {',
     '    border-top: 0;',
     '  }',
-    // 一格＝一行「标签 ＋ 值」：`5em` 标签轨（2–4 个汉字的列名都放得下）＋ `1fr` 值轨（满宽换行）。
+    // 一格＝一行「标签 ＋ 值」。**#541（负责人第四轮）**：此前是两轨栅格（`5em` 标签轨 ＋ `1fr` 值轨），
+    // 但值轨里的文字**左对齐**且轨本身吃掉整行余宽 ⇒ 390 档实测值与容器右缘之间空掉**半张卡**（负责人
+    // 截图实拍的那片空白），一列行卡读起来像「左边一小撮字，右边一大片空」。
+    // 改成一个 flex 行 ＋ `space-between`：**值贴容器右缘**，标签贴左缘，两端各自成轴。
+    // 长度自适应是 `space-between` 自带的：短值（`70.4`／`2026-09-07`）的伸缩项收到内容宽、被推到右缘；
+    // 长值（备注里一整句）的 max-content 超过可用宽 ⇒ 伸缩项撑满到标签之后并换行，**不会被挤成一条窄柱**。
+    // `align-items: baseline`：值换行成多行时，标签仍落在**首行**的基线上（同族先例 `weightUi.ts` 的
+    // `.wui-strip-v .wui-fact{justify-content:space-between}`）。
     // 格的底边线在卡形态下取消（分隔已由卡间线承担）；值取正文字色 `--fg`，标签取 `--fg3`（判据同列头）。
     '  .' + p + 'block-data-table td {',
-    '    display: grid;',
-    '    grid-template-columns: 5em minmax(0, 1fr);',
+    '    display: flex;',
+    '    align-items: baseline;',
+    '    justify-content: space-between;',
     '    gap: 2px 10px;',
     '    padding: 4px 0;',
     '    border-bottom: 0;',
@@ -1736,6 +1748,11 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  }',
     '  .' + p + 'block-data-table td::before {',
     '    content: attr(data-label);',
+    // #541：标签轨**不许收缩**。值很长时（备注里一整句）值的伸缩项撑满余宽，标签轨若还能被压，就会
+    // 被压到「一个汉字宽」并按字断行——正是这一票要消灭的那类形态（负责人截图里的竖排）。
+    // `flex: none`＝`0 0 auto`：宽度取标签自己的内容宽，既不缩也不长；值那一侧 `min-width:auto` ＋
+    // `overflow-wrap:anywhere` 仍能一直缩到 1 个字，所以整行永远不会溢出。
+    '    flex: none;',
     '    color: var(--fg3);',
     '    font-size: 11.5px;',
     '    font-weight: 600;',
@@ -1744,11 +1761,12 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // 判据：空标签不许出现 —— `content:none` 让伪元素整个不生成（不是「生成一个空盒子」）。
     // 两条选择器**各占一条规则**（不合并成选择器列表）：机检按「选择器逐字相等」查规则，
     // 合并成列表后按单条选择器会找不到（t154-r3 用例实测）。
+    // #541：三件一行的 flex 形态下「只有值」的那一格不需要任何拉开——**去掉 flex 行**，值就是一块满宽的文字。
     '  .' + p + 'block-data-table td:not([data-label]) {',
-    '    grid-template-columns: minmax(0, 1fr);',
+    '    display: block;',
     '  }',
     '  .' + p + 'block-data-table td[data-label=""] {',
-    '    grid-template-columns: minmax(0, 1fr);',
+    '    display: block;',
     '  }',
     '  .' + p + 'block-data-table td:not([data-label])::before {',
     '    content: none;',
@@ -1756,8 +1774,9 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  .' + p + 'block-data-table td[data-label=""]::before {',
     '    content: none;',
     '  }',
-    // 列已经不在，列对齐（`center`／`right`）在卡里只剩副作用：标签会被推到格右缘、值轨被
-    // `min-width:5.5em` 顶开 ⇒ 两档一律收回左对齐、下限收回 0，「标签 ＋ 值」的左轴才齐。
+    // 列已经不在，列对齐（`center`／`right`）在卡里只剩副作用：`min-width:5.5em` 会把值轨顶开 ⇒ 下限
+    // 一律收回 0。`text-align` 只留 `left`：`#541` 起「值贴右缘」由容器上的 `justify-content:space-between`
+    // 承担（那是**盒子**的位置），这条管的是**值换行成多行时行内文字怎么排**——长文本左对齐才好读。
     '  .' + p + 'block-data-table-table td.' + p + 'block-data-table-cell-center,',
     '  .' + p + 'block-data-table-table td.' + p + 'block-data-table-cell-right {',
     '    min-width: 0;',

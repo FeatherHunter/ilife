@@ -145,10 +145,15 @@ describe('t154-r3 ② 窄屏（≤640px）行卡化', () => {
       '首卡不画上线（否则贴着容器上边框成双线）');
   });
 
-  it('每格一行「标签 ＋ 值」：`td` 两轨栅格 ＋ 伪元素取 `data-label`', () => {
+  it('每格一行「标签 ＋ 值」：`td` 两端对齐的 flex 行 ＋ 伪元素取 `data-label`', () => {
     const td = declsOf(narrowDataTable().body, TABLE + ' td');
-    assert.equal(declValue(td, 'display'), 'grid', '格内要两轨（标签／值）');
-    assert.equal(declValue(td, 'grid-template-columns'), '5em minmax(0, 1fr)', '标签轨 5em ＋ 值轨满宽');
+    // #541 收紧：原来是两轨栅格（`5em minmax(0, 1fr)`），值轨的左对齐让 390 档右半张卡空着；
+    // 现在值由 `space-between` 推到容器右缘，标签留在左缘。判据于是落在 flex ＋ 两端对齐上。
+    assert.equal(declValue(td, 'display'), 'flex', '格内要一行两端对齐（标签左缘／值右缘）');
+    assert.equal(declValue(td, 'justify-content'), 'space-between', '值必须被推到容器右缘');
+    assert.equal(declValue(td, 'align-items'), 'baseline', '值换行时标签要落在首行基线上');
+    assert.ok(!declsOf(narrowDataTable().body, TABLE + ' td').some((d) => d.startsWith('grid-template-columns:')),
+      '#541 起窄屏不再用栅格轨（栅格轨左侧对齐会让值轨右侧空掉）');
     assert.equal(declValue(td, 'border-bottom'), '0', '卡形态下格的底线取消（分隔已由卡间线承担）');
     assert.equal(declValue(td, 'color'), 'var(--fg)', '值取正文字色（标签另取 --fg3）');
     assert.equal(declValue(td, 'overflow-wrap'), 'anywhere', '长串不溢出的兜底必须留着（作用在满宽格上）');
@@ -163,8 +168,8 @@ describe('t154-r3 ② 窄屏（≤640px）行卡化', () => {
     assert.equal(declValue(declsOf(narrowDataTable().body, TABLE + ' td[data-label=""]::before'), 'content'), 'none',
       '空 data-label 同样不许出空标签（`renderDataTable` 不会产，手写表可能）');
     for (const sel of [TABLE + ' td:not([data-label])', TABLE + ' td[data-label=""]']) {
-      assert.equal(declValue(declsOf(narrowDataTable().body, sel), 'grid-template-columns'), 'minmax(0, 1fr)',
-        sel + ' 的值要单独占满一格');
+      assert.equal(declValue(declsOf(narrowDataTable().body, sel), 'display'), 'block',
+        sel + ' 的值要单独占满一格（#541：不再是两轨栅格，改回块级满宽）');
     }
   });
 
@@ -199,10 +204,18 @@ describe('t154-r3 ③ 桌面档（≥641）零变化', () => {
     assert.ok(!rest.includes('attr('), '桌面档 CSS 不该出现 attr()');
   });
 
-  it('行卡化的载体（thead 收起／tr 成卡／td 栅格）只在那一段里', () => {
+  it('行卡化的载体（thead 收起／tr 成卡／td 两端对齐行）只在那一段里', () => {
     assert.ok(!rest.includes(TABLE + ' thead'), '桌面档不得出现 thead 规则');
     assert.ok(!new RegExp(TABLE.replace(/[.\\]/g, '\\$&') + '\\s+tr\\s*\\{').test(rest), '桌面档不得出现 tr 卡的规则');
-    assert.ok(!rest.includes('grid-template-columns: 5em minmax(0, 1fr)'), '两轨栅格只许住窄屏段');
+    // #541 收紧：窄屏那两枚「值贴右缘」的声明（`justify-content: space-between` ＋ `align-items: baseline`）
+    // 只许住窄屏段 —— 桌面档仍是真表格，列对齐由 `cell-left`／`cell-center`／`cell-right` 三条基座规则管。
+    // 判**数据表自己的规则**而不是整份 CSS：同一份 CSS 里别的组件也有这两枚声明（`caliber` 行就用 `baseline`），
+    // 按整份文本判会把它们误伤。
+    const desktopTableRules = ruleBlocks(rest).filter((b) => b.selector.includes('data-table'));
+    const leaked = desktopTableRules
+      .filter((b) => b.decls.some((d) => d.startsWith('justify-content: space-between') || d.startsWith('align-items: baseline')))
+      .map((b) => b.selector);
+    assert.deepEqual(leaked, [], '桌面档的数据表规则里不得出现窄屏那两枚声明');
   });
 
   it('桌面档那条行首列钉宽（#512）一字未动，且仍只此一条', () => {
