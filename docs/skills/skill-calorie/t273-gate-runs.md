@@ -1,6 +1,7 @@
-# #273 门禁运行条目（抄自 `.scratch/locks/gate-runs.log`，只抄 `ticket=273`）
+﻿# #273 门禁运行条目（抄自 `.scratch/locks/gate-runs.log`，只抄 `ticket=273`）
 
-> 每行 `GATE-RUN runId=<标识> cmd=<命令>` 是本票证据里**声称跑过**的每一次运行；标识从运行记录对应行逐字抄录（只领 `exit=0` 的条目当门禁证据）。
+> 每行 `START`／`RUN ticket=273 runId=<标识> cmd=<命令>` 是本席**声称跑过**的每一次运行；标识逐字抄录（只领 `exit=0` 的条目当门禁证据）。
+> 上一窗口（`68332d5`／`d7a53f3` 等）的记录原样保留在下方，未删改。
 
 - `START ticket=273 runId=7a1b81f9-b0a9-48b9-9a92-23951a68b196 cmd="pwsh -NoProfile -File .scratch/t273/01-baseline.ps1" waitedMs=20018 pid=41772 at=2026-09-15T05:25:32.596Z`
 - `RUN ticket=273 runId=7a1b81f9-b0a9-48b9-9a92-23951a68b196 cmd="pwsh -NoProfile -File .scratch/t273/01-baseline.ps1" waitedMs=20018 exit=0 pid=41772 at=2026-09-15T05:26:05.492Z`
@@ -25,3 +26,6 @@
 - `START ticket=273 runId=731286fb-a54b-4e75-af63-4dbf865c3e29 cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=20023 pid=29132 at=2026-09-15T06:29:31.425Z`
 - `RUN ticket=273 runId=731286fb-a54b-4e75-af63-4dbf865c3e29 cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=20023 exit=0 pid=29132 at=2026-09-15T06:29:37.654Z`
 - `START ticket=273 runId=0c221eef-cf17-498a-b45a-a86d4a40dd96 cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=0 pid=31548 at=2026-09-15T06:29:42.714Z`
+- `RUN ticket=273 runId=0c221eef-cf17-498a-b45a-a86d4a40dd96 cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=0 exit=0 pid=31548 at=2026-09-15T06:29:48.722Z`
+- `START ticket=273 runId=2e36c0c0-3798-40af-bd84-f053481cb452 cmd="pwsh -NoProfile -File .scratch/t273/10-doc-commit.ps1" waitedMs=180155 pid=39984 at=2026-09-15T06:34:22.764Z`
+- `RUN ticket=273 runId=2e36c0c0-3798-40af-bd84-f053481cb452 cmd="pwsh -NoProfile -File .scratch/t273/10-doc-commit.ps1" waitedMs=180155 exit=0 pid=39984 at=2026-09-15T06:34:24.913Z`
