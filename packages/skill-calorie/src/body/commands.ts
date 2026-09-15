@@ -10,6 +10,11 @@
  *   向导（看体脂向导／看围度向导）＝`calorie.view.composition-wizard`／`calorie.view.measure-wizard`；
  *   比身体细节（#355 接线）＝`calorie.view.body-composition-compare`／`calorie.view.body-measure-compare`
  *  （取数走 `body/compare.ts`，路由 `order 246/247` 由 `non-exec` 转 `exec`）。
+ *
+ * **代表唤醒词的出处（#367 门）**：一律取 `t169-设计定稿.md` 那 13 条词表里、且**路由回同键**的那一个
+ * （看体脂／看围度／记体脂（皮褶钳）／对比体脂…）；两个向导页是写词的**流程内页**（老技能没给它们词），
+ * 照 `t450-词表订正.md` 的照片域先例**不设代表唤醒词**——速查表退回列命令名，`看体脂向导`／`看围度向导`
+ * 仍在路由面（用户说得出、命得中），那两条自造入口词归路由面收口票。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { writeCompositionAdd, writeMeasureAdd } from './log.js';
@@ -19,14 +24,14 @@ import { viewCompositionWizard, viewMeasureWizard } from './wizard.js';
 import { viewBodyCompositionCompare, viewBodyMeasureCompare } from './compare.js';
 
 export const BODY_COMMANDS = [
-  { kind: 'write', key: 'calorie.body.composition-add', shape: 'receipt', title: '记体脂', wakeWord: '记体脂', run: writeCompositionAdd, example: 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5}\'' },
+  { kind: 'write', key: 'calorie.body.composition-add', shape: 'receipt', title: '记体脂', wakeWord: '记体脂（皮褶钳）', run: writeCompositionAdd, example: 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5}\'' },
   { kind: 'write', key: 'calorie.body.composition-remove', shape: 'receipt', title: '删体脂', wakeWord: '删体脂', run: writeCompositionRemove, example: 'calorie-cmd-read calorie.body.composition-remove --params \'{"id":1}\'' },
   { kind: 'write', key: 'calorie.body.measure-add', shape: 'receipt', title: '记围度', wakeWord: '记围度', run: writeMeasureAdd, example: 'calorie-cmd-read calorie.body.measure-add --params \'{"waistCm":85}\'' },
   { kind: 'write', key: 'calorie.body.measure-remove', shape: 'receipt', title: '删围度', wakeWord: '删围度', run: writeMeasureRemove, example: 'calorie-cmd-read calorie.body.measure-remove --params \'{"id":1}\'' },
-  { kind: 'read', key: 'calorie.view.body-composition', shape: 'stat', title: '体成分看', run: viewBodyComposition, example: 'calorie-cmd-read calorie.view.body-composition' },
-  { kind: 'read', key: 'calorie.view.body-measure', shape: 'stat', title: '围度看', run: viewBodyMeasure, example: 'calorie-cmd-read calorie.view.body-measure --params \'{"metric":"waist_cm"}\'' },
-  { kind: 'read', key: 'calorie.view.composition-wizard', shape: 'stat', title: '体脂向导', wakeWord: '看体脂向导', run: viewCompositionWizard, example: 'calorie-cmd-read calorie.view.composition-wizard' },
-  { kind: 'read', key: 'calorie.view.measure-wizard', shape: 'stat', title: '围度向导', wakeWord: '看围度向导', run: viewMeasureWizard, example: 'calorie-cmd-read calorie.view.measure-wizard' },
+  { kind: 'read', key: 'calorie.view.body-composition', shape: 'stat', title: '体成分看', wakeWord: '看体脂', run: viewBodyComposition, example: 'calorie-cmd-read calorie.view.body-composition' },
+  { kind: 'read', key: 'calorie.view.body-measure', shape: 'stat', title: '围度看', wakeWord: '看围度', run: viewBodyMeasure, example: 'calorie-cmd-read calorie.view.body-measure --params \'{"metric":"waist_cm"}\'' },
+  { kind: 'read', key: 'calorie.view.composition-wizard', shape: 'stat', title: '体脂向导', run: viewCompositionWizard, example: 'calorie-cmd-read calorie.view.composition-wizard' },
+  { kind: 'read', key: 'calorie.view.measure-wizard', shape: 'stat', title: '围度向导', run: viewMeasureWizard, example: 'calorie-cmd-read calorie.view.measure-wizard' },
   { kind: 'read', key: 'calorie.view.body-composition-compare', shape: 'stat', title: '体脂对比', wakeWord: '对比体脂', run: viewBodyCompositionCompare, example: 'calorie-cmd-read calorie.view.body-composition-compare --params \'{"period1Start":"2026-09-05","period1End":"2026-09-05","period2Start":"2026-09-07","period2End":"2026-09-07"}\'' },
   { kind: 'read', key: 'calorie.view.body-measure-compare', shape: 'stat', title: '围度对比', wakeWord: '对比围度', run: viewBodyMeasureCompare, example: 'calorie-cmd-read calorie.view.body-measure-compare --params \'{"date1":"2026-09-05","date2":"2026-09-07"}\'' },
 ] satisfies readonly CommandSpec[];
