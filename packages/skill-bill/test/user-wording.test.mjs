@@ -25,6 +25,10 @@ describe('t407 整改（一）· 用户语言映射只此一处', () => {
     assert.equal(fieldLabelOf('  '), '', '空串给空串');
   });
 
+  it('W1 补钉：category 单独直断言（单文件跑即能红，不靠循环与全包）', () => {
+    assert.equal(fieldLabelOf('category'), '分类', "category 必须映成'分类'");
+  });
+
   it('内部型名一律给唤醒词；认不得的与空串都落「记一笔」', () => {
     const WANT = {
       expense: '记支出', income: '记收入', photo: '拍账单', batch: '批量录入', refund: '记退款',

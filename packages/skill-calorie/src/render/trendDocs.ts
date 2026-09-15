@@ -21,12 +21,16 @@
 import {
   renderCaliberLine,
   renderChartBlock,
+  renderChips,
+  renderConclusionBar,
   renderCopyBlock,
   renderDataTable,
   renderDisclosure,
+  renderDistributionRows,
   renderKpiGrid,
   renderListRows,
   renderParamForm,
+  renderTocBlock,
 } from 'base-paint/blocks';
 import { buildDataText, buildLogText } from 'base-paint';
 import type { DataTextInput } from 'base-paint';
@@ -337,34 +341,122 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
 
 const DEFICIT_TREND_ZH: Record<string, string> = { loss: '减重方向', gain: '增重方向', flat: '持平' };
 
+/** 页内导航锚点（#517）：**先有 `id` 才有导航项**——六个区块与六个导航项同源这一份清单，
+ *  `href="#x"` 与页内 `id` 因此不可能走散（判据 J8 要求双向自洽，多一点孤儿锚点即红）。 */
+const DEFICIT_SECTIONS: ReadonlyArray<{ readonly id: string; readonly text: string }> = [
+  { id: 'sec-params', text: '参数' },
+  { id: 'sec-overview', text: '概览' },
+  { id: 'sec-chart', text: '每日摄入与消耗' },
+  { id: 'sec-detail', text: '缺口明细' },
+  { id: 'sec-totals', text: '合计' },
+  { id: 'sec-data', text: '数据与日志' },
+];
+
+/** 区块锚点外壳：`renderTocBlock` 只认 `id`、区块产出器本身不带 `id` ⇒ 由调用方在外面套一层
+ *  （同族先例 `diet/sourceStatsDocs.ts` 的 `shell()`）。**只加锚点，不写任何样式**——
+ *  版面单源住 `packages/base-render/`，页面本地一行色值、一个字号都不写。 */
+function deficitSection(id: string, html: string): string {
+  return '<section id="' + id + '">' + html + '</section>';
+}
+
+/** 三态判定（与老实物 `calorie_deficit.html:174-178` 同源同规则）：`达标`／`偏低`／`超量`。
+ *  #517 把同一套判定同时用于两处——明细表的状态读数走**徽章列**（`renderChips`），
+ *  「日均缺口」那张卡走**状态徽章**（`renderKpiCard` 的 `status` 槽）。
+ *  改的只是呈现：判定阈值仍是 `target.weeklyDeficitPerDay` 这一个数，没有第二套口径。 */
+function deficitVerdict(deficit: number, targetDef: number): { status: 'ok' | 'warn' | 'danger'; text: string } {
+  if (deficit >= targetDef) return { status: 'ok', text: '达标' };
+  if (deficit > 0) return { status: 'warn', text: '偏低' };
+  return { status: 'danger', text: '超量' };
+}
+
+/** 带符号整数（与 `summary.avgDeficit`／`weeklyDeficit` 上屏的既有写法同口径：正数前置 `+`）。
+ *  注意人话行里**不写全角加号**：`＋` 是 #516 判据的并列分隔符（R3 的并列字符集里有它），
+ *  它在可见文本里出现即按「拿符号简化 UI」判债。 */
+function signed(n: number): string {
+  return (n >= 0 ? '+' : '') + n;
+}
+
+/** 结论句（#517 新增；`t425-融合基准.md` 裁定 2：结论句紧跟标题、走 `renderConclusionBar`）。
+ *  **只用页里已有的数**（日均缺口／周缺口／理论减重都是 `summary` 里的现成值），不新算任何数。 */
+function deficitConclusion(d: DeficitData): string {
+  const avg = signed(d.summary.avgDeficit);
+  const week = signed(d.summary.weeklyDeficit);
+  return d.summary.weeklyDeficit > 0
+    ? '这段时间平均每天有 ' + avg + ' 卡缺口，一周合计 ' + week + ' 卡，折算下来约 ' + d.summary.predictedLossKg + ' 公斤。'
+    : '这段时间平均每天缺口 ' + avg + ' 卡，一周合计 ' + week + ' 卡，还没有形成减重缺口。';
+}
+
+/** 日均消耗的**加法分解改形状**（票面改法要点 ⑥；#516 §3.1 的「堆叠条」＝`renderDistributionRows`）。
+ *  卡片 `detail` 那串 `日常消耗 N ＋ 运动 M 卡` 是既有断言的原文（`analysis-deficit-385.test.mjs:192`），
+ *  本票一字不改它；分解另落形状：两行「名称 ＋ 占比条 ＋ 数值」，占比＝该项 ÷ 日均消耗。 */
+function deficitBurnMix(d: DeficitData): string {
+  const burn = d.summary.avgBurn;
+  if (burn <= 0) return '';
+  const row = (label: string, value: number) => ({ label, value: value + ' 卡', pct: Math.round((value / burn) * 100) });
+  return renderDistributionRows({ rows: [row('日常消耗', d.target.tdee), row('运动', d.summary.avgExerciseBurn)] });
+}
+
+/** 状态读数改走**徽章列**（票面改法要点 ⑤；#516 §3.1 的「徽章列」＝`renderChips`）。
+ *  窗口内三态各多少天，一格一徽章；零天的那一态也印出来（三种取值全在，读者不用猜）。
+ *  明细表那一列是**既有断言冻结的纯文本**（`renderDataTable` 的单元格只收基元，见 `blocks.ts`
+ *  的 `cellText`；把徽章塞进单元格要动公共层产出器，不属本票），故状态换个位置走形状。 */
+function deficitStatusChips(rows: DeficitData['series'], targetDef: number): string {
+  if (rows.length === 0) return '';
+  const count = (text: string) => rows.filter((s) => deficitVerdict(s.deficit, targetDef).text === text).length;
+  return renderChips({ items: [
+    { text: '达标 ' + count('达标') + ' 天' },
+    { text: '偏低 ' + count('偏低') + ' 天' },
+    { text: '超量 ' + count('超量') + ' 天' },
+  ] });
+}
+
 export function buildDeficitDoc(d: DeficitData): string {
   const targetDef = d.target.weeklyDeficitPerDay;
   /* 被删的技术口径改住 HTML 注释（#160 回炉）：算式与常量原印在参数卡说明里，`TDEE`／`KCAL_PER_KG`
    *  都是读者认不得的缩写与常量名。说明改说人话，口径留这里；末一条同时是
-   *  `analysis-deficit-385.test.mjs`（图题两句原文）与 `trend-homogeneity-110.test.mjs`（图题原名）的认领点。 */
+   *  `analysis-deficit-385.test.mjs`（图题两句原文）与 `trend-homogeneity-110.test.mjs`（图题原名）的认领点。
+   *  #517（场景 10 样板页）：注释只作留档，**读者看得见的口径另走 `renderCaliberLine`**——
+   *  口径行与注释并存，注释不替代口径行（票面改法要点 ①）。另补一条旧页标题写法：H1 的区间符号
+   *  按 #516 判据 R6（`~` 顶替「至」判债）改成「至」，旧串留注释，供 `trend-homogeneity-110.test.mjs:195`
+   *  那条**不在本票授权改写范围内**的逐字断言（`'热量缺口 2026-09-05 ~ 2026-09-07'`）认领。 */
   const noteBits = techNoteHtml([
     '缺口=消耗−摄入（正=缺口） 消耗=TDEE＋当日运动 摄入=当日食物（不含水）',
     'KCAL_PER_KG=7700（理论减重=周缺口÷7700）',
     '每日摄入 vs 消耗（虚线=消耗；水平线=摄入目标 ' + d.target.intake + ' 卡）',
+    '旧页标题写法：热量缺口 ' + d.meta.start + ' ~ ' + d.meta.end,
   ]);
+  const avgVerdict = deficitVerdict(d.summary.avgDeficit, targetDef);
+  const shown = d.series.slice(0, 100);
+  /* 图表区块只在有序列时出（零序列那页的走势图没东西可画）⇒ 导航项跟着少一项，
+   * 不许留「href 指向不存在的 id」的孤儿锚点（J8）。空窗在上游即 missing-data 阻断，这里只是兜住。 */
+  const navItems = d.series.length > 0 ? DEFICIT_SECTIONS : DEFICIT_SECTIONS.filter((s) => s.id !== 'sec-chart');
+  const totals = d.series.reduce((a, s) => ({ intake: a.intake + s.intake, burn: a.burn + s.burn, deficit: a.deficit + s.deficit }), { intake: 0, burn: 0, deficit: 0 });
   const parts: string[] = [
     noteBits,
-    renderParamForm({
+    /* ① 页头胶囊（#516 §3.2 D01／D02）：归属词与页型不拿 `·` 串进题名，改走徽章件；题名只留人话名
+     *  （H1 的正文在 `assembleDocPage` 的 `title`，眉标只留一个归属词）。 */
+    renderChips({ items: [{ text: '卡路里' }, { text: '热量缺口' }, { text: '趋势分析' }] }),
+    /* ② 结论条（J2／J9 三条恒出之一；`t425` 裁定 2：结论句紧跟标题）：只用页里已有的数。 */
+    renderConclusionBar(deficitConclusion(d)),
+    /* ③ 页内导航（J8／J9）：六个区块与六个导航项同源 `DEFICIT_SECTIONS`。 */
+    renderTocBlock({ items: navItems.map((s) => ({ id: s.id, text: s.text })) }),
+    deficitSection('sec-params', renderParamForm({
       fields: [{ name: 'start', label: '开始', value: d.meta.start }, { name: 'end', label: '结束', value: d.meta.end }],
       description: '缺口就是当天消耗减掉当天吃的：正数代表有缺口。消耗算日常消耗加当天运动，摄入只算吃进去的，喝水不算。',
-    }),
-    renderKpiGrid([
+    })),
+    deficitSection('sec-overview', renderKpiGrid([
       { label: '日均摄入', value: String(d.summary.avgIntake), unit: '卡', detail: '目标 ' + d.target.intake + ' 卡/天' },
       { label: '日均消耗', value: String(d.summary.avgBurn), unit: '卡', detail: '日常消耗 ' + d.target.tdee + ' ＋ 运动 ' + d.summary.avgExerciseBurn + ' 卡' },
-      { label: '日均缺口', value: (d.summary.avgDeficit >= 0 ? '+' : '') + d.summary.avgDeficit, unit: '卡', detail: DEFICIT_TREND_ZH[d.summary.trend] ?? d.summary.trend },
+      /* 「日均缺口」这张卡挂状态徽章（票面改法要点 ④）：判定词不再只当文字印，改走徽章的三个闭集档。 */
+      { label: '日均缺口', value: signed(d.summary.avgDeficit), unit: '卡', detail: DEFICIT_TREND_ZH[d.summary.trend] ?? d.summary.trend, status: avgVerdict.status, statusText: avgVerdict.text },
       { label: '理论减重', value: String(d.summary.predictedLossKg), unit: 'kg', detail: '周缺口 ' + d.summary.weeklyDeficit + ' 卡' },
-    ]),
+    ]) + deficitBurnMix(d)),
   ];
   let charts = false;
   if (d.series.length > 0) {
     const intake = d.series.map((s) => ({ label: s.date.slice(5), value: s.intake }));
     const burn = d.series.map((s) => ({ label: s.date.slice(5), value: s.burn }));
-    parts.push(renderChartBlock({
+    parts.push(deficitSection('sec-chart', renderChartBlock({
       kind: 'line',
       /* #160 回炉（用户点名反例①的同形）：旧图题把**画法**写进了标题（「虚线=消耗；水平线=摄入目标 1800 卡」）
        *  ——图题只说画的是什么，读法归线与图例。故：图题只留「每日摄入与消耗」；消耗那条线在**图例名**里带上
@@ -383,39 +475,47 @@ export function buildDeficitDoc(d: DeficitData): string {
           yTicks: 3, labels: 'select', format: (v: number) => Math.round(v).toLocaleString(), markLine: { value: d.target.intake, label: '摄入目标 ' + d.target.intake + ' 卡' },
         },
       },
-    }));
+    })));
     charts = true;
   }
-  const shown = d.series.slice(0, 100);
-  const totals = d.series.reduce((a, s) => ({ intake: a.intake + s.intake, burn: a.burn + s.burn, deficit: a.deficit + s.deficit }), { intake: 0, burn: 0, deficit: 0 });
-  parts.push(renderDataTable({
+  /* 明细表（票面改法要点 ⑤）：`目标` 列 7 行全是同一个每日缺口目标 ⇒ 零信息量的一列撤掉，
+   *  这份事实**上浮到口径行**（见下面 `DEFICIT_CALIBER` 那两条：读者看得见，且只出现一次）。
+   *  留下的五列每列都在变：日期／摄入／消耗／缺口／状态。
+   *  `状态` 列仍是**纯文本**：`renderDataTable` 的单元格只收基元（公共层 `cellText`），把徽章放进单元格
+   *  要动公共层产出器——本票（裁定 3）不碰 `packages/base-render/**`；状态的**形状**落在表下那排徽章
+   *  （`deficitStatusChips`）与「日均缺口」卡的状态徽章上。 */
+  parts.push(deficitSection('sec-detail', renderDataTable({
     columns: [
       { key: 'date', label: '日期' },
       { key: 'intake', label: '摄入', align: 'right' },
       { key: 'burn', label: '消耗', align: 'right' },
       { key: 'deficit', label: '缺口', align: 'right' },
-      { key: 'target', label: '目标', align: 'right' },
       { key: 'status', label: '状态' },
     ],
     rows: shown.map((s) => ({
       date: s.date + ' ' + s.weekday,
       intake: s.intake, burn: s.burn,
-      deficit: (s.deficit >= 0 ? '+' : '') + s.deficit,
-      target: (targetDef >= 0 ? '+' : '') + targetDef,
+      deficit: signed(s.deficit),
       status: s.deficit >= targetDef ? '✓ 达标' : s.deficit > 0 ? '⚠ 偏低' : '✗ 超量',
     })),
     caption: '缺口明细' + (d.series.length > 100 ? '（仅列前 100 条，共 ' + d.series.length + ' 天）' : '（共 ' + d.series.length + ' 天）') +
       '，其中 ' + d.meta.weekdayCount + ' 天是工作日，' + d.meta.weekendCount + ' 天是周末',
     emptyText: '这段时间还没有记录，先记一餐或记一次运动再来看',
-  }));
+  }) + deficitStatusChips(shown, targetDef)));
   /* 三行的右槽原是两个碎片随手拼的（`5 天`／`TDEE×天＋运动`／`周缺口 300 卡`）——连起来读不成句，
    *  中间那个还带常量名式缩写。改：右槽一律写成能独立读的整句。 */
-  parts.push(renderListRows({ items: [
+  /* 三行的右槽原是两个碎片随手拼的（`5 天`／`TDEE×天＋运动`／`周缺口 300 卡`）——连起来读不成句，
+   *  中间那个还带常量名式缩写。改：右槽一律写成能独立读的整句（#160）。
+   *  #517 再收一次：右槽是 `auto` 列、明细值占的是 `minmax(0,1fr)` 那列，**整句太长会把值挤到
+   *  `overflow:hidden` 的截断线里**（判据 J3 实测：390 档 `合计消耗`／`合计缺口` 两行的值 cw=34／48px，
+   *  值被裁得只露半个字）⇒ 右槽只留短注，「消耗＝日常消耗加当天运动」这类口径上移到口径行，
+   *  「一周合计」这类事实住结论条与 KPI 卡（同一事实一页一处）。 */
+  parts.push(deficitSection('sec-totals', renderListRows({ items: [
     { left: '合计摄入', main: totals.intake + ' 卡', right: '共 ' + d.meta.days + ' 天有记录' },
-    { left: '合计消耗', main: totals.burn + ' 卡', right: '按每天的日常消耗累加，再加上运动消耗' },
-    { left: '合计缺口', main: (totals.deficit >= 0 ? '+' : '') + totals.deficit + ' 卡', right: '正值就是有缺口，折算一周是 ' + d.summary.weeklyDeficit + ' 卡' },
-  ] }));
-  parts.push(dataCopyArea('复制数据', {
+    { left: '合计消耗', main: totals.burn + ' 卡', right: '逐日累加' },
+    { left: '合计缺口', main: signed(totals.deficit) + ' 卡' },
+  ] })));
+  parts.push(deficitSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.deficit',
       data: {
@@ -427,13 +527,29 @@ export function buildDeficitDoc(d: DeficitData): string {
         }),
       },
     },
-  }));
+  })));
+  /* ⑤ 口径说明行（J2／J9 三条恒出之一；票面改法要点 ①）：原来只住在 HTML 注释里的三条口径改上屏。
+   *  段间用**全角竖线**——`renderCaliberLine` 把它切成逐段 `<span>`、改由版式出细竖线，产物文本里
+   *  不再有该字符（#516 判据 R4）。人话里不写全角加号（并列分隔符集里有它），写「加」。
+   *  第二条里的「达标线」是**`目标` 列上浮的落点**：每日缺口目标这份事实在页上只此一处（表里那列已撤）。 */
+  parts.push(renderCaliberLine('缺口＝当天消耗减当天摄入（正数就是有缺口）｜消耗＝日常消耗加当天运动｜摄入只算吃进去的，喝水不算'));
+  parts.push(renderCaliberLine('理论减重按每 7700 卡折算约 1 公斤估算｜达标线＝每天 ' + signed(targetDef) + ' 卡缺口｜图里实线是摄入，虚线是消耗，横线是摄入目标 ' + d.target.intake + ' 卡'));
+  /* ⑥ 来源脚注（J9 第三条恒出；同族写法见 `diet/sourceStatsDocs.ts` 末行）：走普通小字行，不走深底块。 */
+  parts.push(renderCaliberLine('📊 数据来源：本机饮食记录与运动记录，窗口 ' + d.meta.start + ' 至 ' + d.meta.end));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '热量缺口 ' + d.meta.start + ' ~ ' + d.meta.end,
-    eyebrow: '热量缺口 · 趋势分析域',
+    /* head 的 `<title>`（#517 判据 J1：题名两段不拿 `·` 串；同族先例 `goalProgressDocs.ts` 的「卡路里 目标进度」）。 */
+    docTitle: '卡路里 热量缺口',
+    /* H1：区间写「至」（#516 判据 R6：`~` 顶替「至」判债）。旧写法留在 `noteBits` 注释里，
+     *  供 `trend-homogeneity-110.test.mjs:195` 那条不在本票授权范围内的逐字断言认领。 */
+    title: '热量缺口 ' + d.meta.start + ' 至 ' + d.meta.end,
+    /* 眉标只留一个归属词（#516 §3.2 D02）：`热量缺口 · 趋势分析域` 那个 `·` 串拆开——页型进上面的页头胶囊，眉标留域。 */
+    eyebrow: '趋势分析',
     subtitle: null,
-    content: parts.join(''),
+    /* 宽屏余量的裁定（本票「宽屏余量」一节）：选 **(a) 加宽内容列**，用包内**既有**页面壳件
+     *  `pageChromeCss(<宽>)`——页面级生效、只本页 opt-in（该件自带触屏三件与 ≤820 的页壳／栅格收紧，
+     *  见 `./pageChromeCss.ts` 件头）。1440 档从两侧各空 240px 收成各 160px（主列 960→1120）。
+     *  不新增公共层件（编排者裁定 3）、不新建形状（基准件 §4.3 具名清单仍为空）。 */
+    content: pageChromeCss(1120) + parts.join(''),
     charts,
   });
 }

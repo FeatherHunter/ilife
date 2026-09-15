@@ -81,8 +81,13 @@ test('#336 5 条全有命令：窗口与唤醒词语义一致＋页脚只留人�
     assert.ok(out.html.includes('ilife-page'), wake + ' 走整页模板');
     assert.ok(out.data.metrics.points >= 2, wake + ' 有点数');
     // #485 裁定 F：可见文本里两个库表名命中 0（页脚来源行只留「体重记录」）；复制日志第 4 段与复制载荷照旧带库与表。
+    // #542 收紧：口径行分隔改由 CSS 细竖线承担（t154-r3 #541 起 `｜` 只活在 HTML 结构里）后，
+    // 可见文本里不再有字面 ｜——分三段各断一处，不断整句（旧整句断言至此作废）。
     const vis = toVisible(out.html);
-    assert.ok(vis.includes('📊 数据来源：体重记录 ｜ 窗口'), wake + ' 页脚只留人话来源');
+    assert.ok(vis.includes('📊 数据来源：'), wake + ' 页脚缺来源头');
+    assert.ok(vis.includes('体重记录'), wake + ' 页脚缺人话来源');
+    assert.ok(vis.includes('窗口'), wake + ' 页脚缺窗口');
+    assert.ok(out.html.includes('ilife-block-caliber'), wake + ' 缺口径行区块');
     assert.equal(vis.includes('weight_log'), false, wake + ' 可见文本没有表名');
     assert.equal(vis.includes(DB_FILENAME), false, wake + ' 可见文本没有库文件名');
     assert.ok(quotedStrings(out.html).includes('体重记录（本窗体重波动）'), wake + ' 复制日志第 4 段仍带库与来源（机器面）');
@@ -223,5 +228,23 @@ test('#336 缺省窗口=30 天（老脚本无参即 30 天）', () => {
   seedVol(db);
   const out = viewVolatility({ today: '2026-08-18' }, db);
   assert.equal(out.data.metrics.points, 30);
+  db.close();
+});
+
+test('#542 页题去时间：窗口退出 H1，改住正文首件窗口条（#340 打回批）', () => {
+  const db = tmpDb();
+  seedVol(db);
+  const full = viewVolatility({ window: '30d', today: '2026-08-18' }, db).html;
+  const only = viewVolatility({ window: '30d', today: '2026-08-18', view: 'anomalies-only' }, db).html;
+  const h1 = (html) => /<h1[^>]*>([^<]*)<\/h1>/.exec(html)?.[1] ?? '';
+  assert.equal(h1(full), '波动分析', '整图页题不该再带时间（实测 ' + h1(full) + '）');
+  assert.equal(h1(only), '看波动异常点', '只看异常点页题不该再带时间（实测 ' + h1(only) + '）');
+  assert.ok(!/<h1[^>]*>[\s\S]{0,40}\d{4}-\d\d-\d\d/.test(full), '整图页题里仍有日期');
+  assert.ok(!/<h1[^>]*>[\s\S]{0,40}\d{4}-\d\d-\d\d/.test(only), '只看异常点页题里仍有日期');
+  // 窗口进正文首件窗口条（两枚日期块 ＋ 条数胶囊），两读法各恰一条。
+  for (const [name, html] of [['整图', full], ['只看异常点', only]]) {
+    assert.equal(html.split('class="wui-window"').length - 1, 1, name + ' 窗口条不是恰 1 条');
+    assert.ok(html.includes('2026-07-20') && html.includes('2026-08-18'), name + ' 窗口条缺两枚日期块');
+  }
   db.close();
 });

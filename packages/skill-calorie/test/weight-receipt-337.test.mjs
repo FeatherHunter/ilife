@@ -13,7 +13,10 @@
  * #510 收尾（同屏事实收敛 ≤2）：旧断言随新文案同步收紧——记体重的判语块只剩「记在哪一天哪一刻」
  * （不许再复述本次体重值）＋「写入字段」卡副行不再 `、` 枚举；批量补录的判语改说这张表怎么看
  * （三数归副标题与表题）；删体重（按 id）的判语块不发数不给方向词、表题保留条数，删某日那页
- * 副标题已含条数 ⇒ 表题改「（逐条）」不再复述。读数见
+ * 副标题已含条数 ⇒ 表题改「（逐条）」不再复述。
+ * #542（#340 打回批）：记／批量／删除三支回执的可见副标题整行撤——副标题槽里不再复述任何计数；
+ * 批量三数（写入／跳过／失败）改住一条事实条，删除三页的日期／条数／不可恢复各住快照表／状态卡／判语。
+ * 读数见
  * `.scratch/t154/text-review/rev-fix2/证据-收敛.md`（7 页最高值 4→2，超 2 次页数 0/9）。
  *
  * 变异证据（自证两行，机器读数见 `docs/skills/skill-calorie/t337-体重盘与回执-证据.md`）：
@@ -151,6 +154,8 @@ function assertDashboard(r, what, firstCard) {
     assert.ok(r.file.includes(shape), what + ' 缺形状件：' + shape);
   }
   assert.equal((r.file.match(/<p class="wui-verdict">/g) || []).length, 1, what + ' 结论块须恰一句判语');
+  // #542：页头副标题整行撤（窗口与条数住窗口条与页脚来源行）——元素本身不得出现。
+  assert.ok(!r.file.includes('class="ilife-block-page-shell-subtitle"'), what + ' 页头副标题应整行撤掉');
   assert.ok(!/&lt;(p|div|span|ul) class=&quot;wui-/.test(r.file), what + ' 形状词汇被当成字面量印上了屏');
 }
 
@@ -235,6 +240,9 @@ test('#337 记体重', () => {
   assert.ok(r.file.includes('体重 与 备注 与 日期 与 时间'), '「写入字段」卡副行未改写成一句话（仍是 `、` 枚举）');
   const body = visibleBody(r.file);
   assert.ok(!body.includes('（BMI 23 · '), '记体重 副标题仍在印机器面那句 `BMI 23 · 时刻`');
+  // #542：可见副标题整行撤（「已记体重 70.5 kg」不上屏）——本次体重住 KPI 卡值槽，时刻住判语。
+  assert.ok(!r.file.includes('class="ilife-block-page-shell-subtitle"'), '记体重 页头副标题应整行撤掉');
+  assert.ok(!body.includes('已记体重'), '记体重 正文仍有副标题那句');
   assert.ok(r.envelope.data.receipt.recordId > 0, '回执缺记录号');
   assert.equal(q1(dir, 'SELECT COUNT(*) AS n FROM weight_log').n, before + 1, '写后库行数未 +1');
   assert.equal(q1(dir, 'SELECT weight_kg AS w FROM weight_log WHERE id = ?', r.envelope.data.receipt.recordId).w, 70.5, '落库值不对');
@@ -273,9 +281,15 @@ test('#337 批量补录体重', () => {
   // #483：「批量计数」表整块删（摘要与结论句里已有同样三数），改钉结论句那三个读数与两条定义。
   // #505：结论块改形状后，三数那句由 `：`＋`、` 串改成两句人话（判语一句 ＋ 两条定义各成一行）。
   // #510 收敛：判语块不再复述数字（判语只留一句判语）——三数由副标题与表题给，判语只说这张表怎么看。
+  // #542：副标题整行撤，三数改住一条事实条（`写入／跳过／失败` 各一枚「标签 ＋ 值」）。
   for (const needle of ['逐条明细（共 3 条）', '这一次批量的逐条结果都在下表里，有的写进去了，有的跳过了，有的失败，原因各有各的说法。',
     '跳过＝那天已经记过（不覆盖旧记录）', '失败＝日期格式或体重值不对（原因见下表）']) {
     assert.ok(r.file.includes(needle), '批量补录体重缺：' + needle);
+  }
+  assert.ok(!r.file.includes('class="ilife-block-page-shell-subtitle"'), '批量补录体重 页头副标题应整行撤掉');
+  for (const [k, v] of [['写入', '1 条'], ['跳过', '1 条'], ['失败', '1 条']]) {
+    assert.ok(r.file.includes('<span class="wui-fact-k">' + k + '</span><span class="wui-fact-v">' + v + '</span>'),
+      '批量补录体重 缺事实条「' + k + ' ' + v + '」');
   }
   // 两条定义是**逐条列表**（`wui-bullets` 里的两个 `<li>`），不再挤在一句里（#505）。
   assert.ok(r.file.includes('<ul class="wui-bullets"><li>跳过＝那天已经记过（不覆盖旧记录）</li>'
@@ -313,8 +327,10 @@ test('#337 删体重记录', () => {
   const r = runCli(dir, 'calorie.weight.remove', { id: seed.todayId }, 'remove-id');
   assertReceipt(r, '删体重记录');
   // #483：可见文本的「删除前快照」改「删除前的原值」（快照列改状态列）；副标题里那句机器面摘要一字不动。
-  // #510 收敛：这一页（按 id 删）副标题只写编号与前值、不带条数 ⇒ 表题保留条数（值槽 ＋ 表题＝2 处）。
-  for (const needle of ['删除前的原值（共 1 条）', '删除不可恢复，要还原请照下表原值重新记一次', '硬删除，不可恢复']) {
+  // #510 收敛：表题保留条数（值槽 ＋ 表题＝2 处）。#542：可见副标题整行撤（编号与前值住快照表，
+  // 不可恢复住判语，条数住状态卡值槽）——机器面摘要一字不动。
+  // #542：用户定的「硬删除，不可恢复」口径词随副标题撤掉搬进判语（一句，不发数不给方向词）。
+  for (const needle of ['删除前的原值（共 1 条）', '硬删除，不可恢复，要还原请照下表原值重新记一次']) {
     assert.ok(r.file.includes(needle), '删体重记录缺：' + needle);
   }
   // #510 收敛：判语块只说这一句（不发数、不给方向词——数与方向归卡片值槽与徽章）。
@@ -333,7 +349,9 @@ test('#337 删某日体重', () => {
   const seed = seedBasic(dir);
   const r = runCli(dir, 'calorie.weight.remove', { date: seed.noteDate }, 'remove-date');
   assertReceipt(r, '删某日体重');
-  // #510 收敛：这一页副标题已含条数 ⇒ 表题不再复述 `共 1 条`（值槽 ＋ 副标题＝2 处），改说「逐条」。
+  // #510 收敛：表题不再复述 `共 1 条`（值槽 ＋ 表题＝2 处），改说「逐条」。
+  // #542：可见副标题整行撤（日期住快照表、条数住状态卡、不可恢复住判语）。
+  assert.ok(!r.file.includes('class="ilife-block-page-shell-subtitle"'), '删某日体重 页头副标题应整行撤掉');
   assert.ok(r.file.includes('删除前的原值（逐条）'), '缺删除前的原值区（#510 后表题不再带条数）');
   assert.ok(!r.file.includes('删除前的原值（共 1 条）'), '删某日体重的表题仍复述条数');
   assert.ok(r.file.includes('硬删除，不可恢复'), '缺硬删除口径（机器面摘要）');
@@ -346,6 +364,8 @@ test('#337 批量删体重', () => {
   const today = todayISO();
   const r = runCli(dir, 'calorie.weight.remove', { start: shiftISO(today, -9), end: shiftISO(today, -8) }, 'remove-range');
   assertReceipt(r, '批量删体重');
+  // #542：可见副标题整行撤（范围与条数住快照表与状态卡）。
+  assert.ok(!r.file.includes('class="ilife-block-page-shell-subtitle"'), '批量删体重 页头副标题应整行撤掉');
   assert.match(r.envelope.data.message, /2 条/, '批量删摘要不对：' + r.envelope.data.message);
   assert.equal(q1(dir, 'SELECT COUNT(*) AS n FROM weight_log WHERE date BETWEEN ? AND ?', shiftISO(today, -9), shiftISO(today, -8)).n, 0, '按范围未硬删干净');
 });

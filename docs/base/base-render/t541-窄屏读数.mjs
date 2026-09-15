@@ -39,7 +39,15 @@ const GAP_MAX = Number(opt('--gap', 24));
 const CAP_LINES_MAX = Number(opt('--caption-lines', 3));
 const LABEL_SLACK_MIN = Number(opt('--label-slack', 4));
 const OUT = resolve('.scratch/t541/probe');
-const targets = argv.filter((a) => !a.startsWith('--') && a !== '390' && !/^\d+(\.\d+)?$/.test(a));
+// H2（#542 修）：选项的值（`--gap -999` 这类负数也不例外）不许被当成文件——按已知选项名逐个跳过其取值，
+// 不再靠“长得像不像数字”猜（那个正则认不出负数，曾把 `-999` 当成路径去读文件）。
+const OPT_WITH_VALUE = new Set(['--width', '--gap', '--caption-lines', '--label-slack']);
+const targets = [];
+for (let i = 0; i < argv.length; i += 1) {
+  if (OPT_WITH_VALUE.has(argv[i])) { i += 1; continue; }
+  if (argv[i].startsWith('--')) continue;
+  targets.push(argv[i]);
+}
 
 const chrome = CHROME_CANDIDATES.find((p) => existsSync(p));
 if (!chrome) {

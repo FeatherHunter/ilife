@@ -349,7 +349,9 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.ok(!text.includes('data-page="collect"'), '回执页不得带采集页的 data-page');
     assert.equal((text.match(/data-page=/g) ?? []).length, 1, '整页只有一枚 data-page');
     assert.ok(text.includes('class="ilife-action-btn ilife-action-btn-red"'), '退出口须有危险色按钮');
-    assert.ok(text.includes('ilife-exit-undo-copy'), '撤销口令须有可复制位');
+    assert.ok(!text.includes('ilife-exit-undo-copy'), 'D2 去重：退出口不再另带复制位（撤销指令走复制区）');
+    assert.equal((text.match(/>复制数据</g) ?? []).length, 1, 'D2 去重：复制数据只剩复制区那一组');
+    assert.equal((text.match(/>复制日志</g) ?? []).length, 1, 'D2 去重：复制日志只剩复制区那一组');
     assert.ok(text.includes('bill.record.add（receipt）'), '日志场景标识须是 技能.本地名');
     assert.ok(!text.includes('bill.bill'), '双前缀不得再出现');
     assert.ok(text.includes('biscuit_accountant.db（写库回执）'), '回执页数据结构照实说写库');

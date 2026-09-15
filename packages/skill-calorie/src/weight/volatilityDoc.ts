@@ -43,7 +43,7 @@ import { weightCurvePlan } from './plate.js';
 import type { VolatilityView } from './plate.js';
 import { anomalyReason, baselineDeltaText, deviationText, volatilitySummary } from './volatility.js';
 import type { VolatilityV2, VolatilityViewMode, VolLevel } from './volatility.js';
-import { bulletList, factStrip, note, verdict, weightUiCss } from './weightUi.js';
+import { bulletList, factStrip, note, verdict, weightUiCss, windowStrip } from './weightUi.js';
 
 const CMD_KEY = 'calorie.view.volatility';
 /** 复制日志第 3 段后半（哪张库／哪个窗口）。 */
@@ -330,13 +330,18 @@ function premiseNotice(o: VolatilityV2): string | null {
 export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode, command: string): string {
   const o = v.volatility;
   const only = view === 'anomalies-only';
-  // #485 副标题：窗口与条数已由标题（H1）和页脚来源行各说一处，这里三说一句是百分百冗余；
+  // #485 副标题：窗口与条数已由页脚来源行说一处，这里再说一句是百分百冗余；
   // 副标题只留整页唯一的「参照是谁」——`平均线` 这个词后面图表与结论句反复用，头一次见要有人话解释。
   // （只看异常点读法原来那句「本读法只列越阈异常点…」与页顶提示同字，删掉，读法说明只留页顶一处。）
+  // #542（#340 打回批）：窗口退出页题（H1），改住正文首件 `windowStrip()`（两枚日期块 ＋ 条数胶囊），
+  // 与页脚来源行各一处；副标题只留参照句。
   const subtitle = '以' + o.baselineToggleLabel + '为参照';
   /* `weightUiCss()` 恒为正文第一项（口径 §二：形状词汇的样式住 `weightUi.ts` 一处，
    *  `assembleDocPage` 没有页内 CSS 入口，故由整页装配把它带进来）。空态那一页同样先带它。 */
   const parts: string[] = [weightUiCss()];
+  if (o.points.length > 0) {
+    parts.push(windowStrip(v.start, v.end, '共 ' + o.warnDays + ' 条'));
+  }
   if (o.points.length === 0) {
     // 数据型空态（§5.6）：页照常是一张完整的页——标题、空态句、页脚来源行、复制区都在。
     parts.push(notice({ title: '本窗无体重记录', icon: 'warn', msg: '窗口 ' + v.start + ' ~ ' + v.end + ' 内没有体重记录，出不了平均线与波动带。' }));
@@ -344,7 +349,7 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
     parts.push(copySection(volatilityCopyPayload(o), command));
     return assembleDocPage({
       docTitle: DOC_TITLE,
-      title: '波动分析 ' + v.start + ' ~ ' + v.end,
+      title: '波动分析',
       eyebrow: '',
       subtitle,
       content: parts.join(''),
@@ -384,7 +389,7 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
   parts.push(copySection(volatilityCopyPayload(o), command));
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: only ? '看波动异常点 ' + v.start + ' ~ ' + v.end : '波动分析 ' + v.start + ' ~ ' + v.end,
+    title: only ? '看波动异常点' : '波动分析',
     eyebrow: '',
     subtitle,
     content: parts.join(''),

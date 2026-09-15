@@ -208,11 +208,10 @@ export function buildLogReceiptDoc(
   ].join('');
   /* #505：副标题（可见）不再照抄回执摘要那句 `已记体重 70.5 kg（BMI 23 · 2026-09-15 08:43:23）`
    * ——那个 `·` 正是负责人点名的写法，且 BMI 与时刻各有各的去处（BMI 进结论块的事实条、
-   * 时刻进判语）。**机器面一字不动**：回执摘要（`receipt.summary`／信封 `message`）仍逐字是原来那一句。 */
-  return receiptPageOf(
-    receipt, content,
-    f.kg === null ? '回执未带本次体重' : '已记体重 ' + f.kg + ' kg',
-  );
+   * 时刻进判语）。**机器面一字不动**：回执摘要（`receipt.summary`／信封 `message`）仍逐字是原来那一句。
+   * #542（#340 打回批）：副标题整行撤——传空串（`assembleDocPage` 遇空即整段省略，不回退到机器面摘要）。
+   * 本次体重那个数住 KPI 卡「本次体重」值槽，时刻住判语，BMI 住结论块事实条，一处不丢。 */
+  return receiptPageOf(receipt, content, '');
 }
 
 /** 批量回执整页：写入／跳过／失败三数 ＋ 逐条明细；徽章取本次最重的那一态（失败＞跳过＞写入）。 */
@@ -256,8 +255,16 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
         detail: fieldLabelsSentence(receipt.writtenFields),
       }]),
     ]),
+    // #542（#340 打回批）：写入／跳过／失败三数原来只活在页头副标题那句纯文本里——副标题撤掉后
+    // 三数要有形状上的家，故在这里加一条事实条（状态卡说「收到几条＋最重那一态」，这一条说三态各几条，
+    // 与逐条明细表首尾相加一致）。判语仍一个数不复述（#510 收敛口径不变）。
+    factStrip([
+      { k: '写入', v: wrote + ' 条' },
+      { k: '跳过', v: skipped + ' 条' },
+      { k: '失败', v: failed + ' 条' },
+    ]),
     // 老实物 weight_batch_receipt.html:67-73 的明细表（逐条状态与原因）。
-    // #483 删掉上面那张「批量计数」表：写入／跳过／失败三数与两句定义在摘要（副标题）和结论句里已各有一份。
+    // #483 删掉上面那张「批量计数」表。#542：副标题也撤掉后，三数只住上面那条事实条（不再回表格）。
     renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
@@ -276,7 +283,9 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
       '本次批量 ' + items.length + ' 条 ｜ 写入 ' + wrote + ' 条 ｜ 跳过 ' + skipped + ' 条 ｜ 失败 ' + failed + ' 条',
     ),
   ].join('');
-  return receiptPageOf(receipt, content);
+  // #542（#340 打回批）：可见副标题整行撤（传空串，整段省略，不回退到机器面摘要）。
+  // 写入／跳过／失败三数住上面那条事实条，逐条住明细表，定义住结论块两条规则，一处不丢。
+  return receiptPageOf(receipt, content, '');
 }
 
 /** 本轮批：「写入字段」卡副行那一句（**枚举字段名**，S3 顿号漏网）。

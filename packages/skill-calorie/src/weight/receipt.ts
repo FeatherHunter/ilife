@@ -94,18 +94,8 @@ function latestWeightAfter(db: DatabaseSync): { date: string; kg: number } | nul
   return last === undefined ? null : { date: last.date, kg: last.kg };
 }
 
-/** 副标题：范围删除里**同一天写两遍**的区间串（`2026-09-06~2026-09-06`）读不出信息（缺陷 5：
- *  「已删除 2026-09-06~2026-09-06 体重 1 条」，读者要自己看出这两头是同一日）。页上改写成
- *  「已删除 2026-09-06 当天体重 N 条」，条数按当刻快照行数取；摘要本体的机器面（信封 message）
- *  一字不动，只有这一页的标题行换写法——其余摘要原样透出（含 `（硬删除，不可恢复）`）。
- *
- *  #505：摘要里 `体重 N 条（硬删除，不可恢复）` 之间那个 `·` 在**可见副标题**上要落掉
- *  （页壳的 `visualSubtitleOf` 统管这一件事）；本函数只管「同一天写两遍」那一处写法。 */
-function sameDaySubtitle(receipt: CrudReceipt, snapshotCount: number): string {
-  const m = /^已删除 (\d{4}-\d{2}-\d{2})~\1 体重 \d+ 条(.*)$/.exec(receipt.summary);
-  if (m === null) return receipt.summary;
-  return '已删除 ' + m[1] + ' 当天体重 ' + snapshotCount + ' 条' + m[2];
-}
+/* #542（#340 打回批）：`sameDaySubtitle` 退场 —— 可见副标题整行撤掉后，「同一天写两遍」的改写
+ * 无处可写；日期住快照表、条数住状态卡。摘要本体的机器面（信封 message）一字不动。 */
 
 /** 删体重回执整页：删除前快照行 ＋ 删除后最新体重**成对**；没有快照行时出显式空态。 */
 function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: string): string {
@@ -126,12 +116,14 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
   const latest = latestWeightAfter(db);
   /* #505 形状化：原句用 `；` 把「删了几条 ＋ 区间首末」与「删后库里还剩什么」串成一句 ⇒ 拆两件：
    * ① `outcome`＝一句判语；② `facts`＝一枚事实条（删后最新体重）。
-   *  «删除不可恢复，要还原请照下表原值重新记一次» 是这一句里最要紧的一笔（写进判语，仍是一句话）。
+   *  «硬删除，不可恢复，要还原请照下表原值重新记一次» 是这一句里最要紧的一笔（写进判语，仍是一句话）。
    * #510 收敛（S2：条数三／四处）：判语原来还写着「本次删除 1 条」与首末对（`最早 80 → 最晚 80 kg
    *  （+0.0 kg，持平）`）——条数与副标题（24／31 那两页）、值槽、表题说的是同一件事；方向词与
    * 区间净变化各住在「区间变化」卡的徽章与值槽，首末对住在同一张卡的副说明里 ⇒ 判语改成**一句
    * 不带数、不带方向词**的判语（要还原怎么做 ＋ 不可恢复），四件事实各有各的住所，一件不丢。 */
-  const outcome = '本次删掉的记录已经不在库里了，删除不可恢复，要还原请照下表原值重新记一次。';
+  // #542 回填（删副标题不丢事实）：「硬删除，不可恢复」原来只活在可见副标题那一句里，
+  // 副标题撤掉后改住判语——仍是一句话，不发数、不给方向词（#510 口径不变），用户定的口径词逐字保留。
+  const outcome = '本次删掉的记录已经不在库里了，硬删除，不可恢复，要还原请照下表原值重新记一次。';
   const facts = [{ k: '删后最新体重', v: latest === null ? '库里已无体重记录' : latest.kg + ' kg' }];
   const payload = [outcome, ...facts.map((f) => f.k + ' ' + f.v),
     ...snap.map((it) => (it.id === undefined || it.id === null ? '' : '#' + it.id + ' ')
@@ -201,7 +193,9 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
         + (latest === null ? '删除后库里已无记录' : '删除后最新 ' + latest.kg + ' kg（' + latest.date + '）'),
     ),
   ].join('');
-  return receiptPageOf(receipt, content, sameDaySubtitle(receipt, snap.length));
+  // #542（#340 打回批）：可见副标题整行撤（传空串，整段省略，不回退到机器面摘要）。
+  // 日期住快照表日期列、条数住状态卡值槽、「硬删除，不可恢复」住判语与状态卡副说明，一处不丢。
+  return receiptPageOf(receipt, content, '');
 }
 
 /** 体重 4 条会改数据库的命令的整页回执端口（分派层只调本函数）。 */

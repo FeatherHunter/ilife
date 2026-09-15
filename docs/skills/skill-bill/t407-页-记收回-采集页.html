@@ -1781,6 +1781,11 @@ body {
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-x: auto;
+}
+/* t407-D1：桌面端内容列与卡片网格（只 1200px 以上生效，手机端不动） */
+@media (min-width:1200px) {
+  .ilife-block-page-shell { max-width: 1120px; }
+  .ilife-block-page-shell .ilife-block-kpi-card-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 }</style>
 </head>
 <body>
@@ -1817,7 +1822,7 @@ biscuit_accountant.db（只读：这一页先不写库，只采集）
 调用链
 bill-cmd-read bill.record.add --params &#39;{&quot;kind&quot;:&quot;collect&quot;}&#39; ｜ 没写库（采集页）
 时间戳版本
-2026-09-15 07:22:01 · 版本 0.1.0
+2026-09-15 07:51:00 · 版本 0.1.0
 异常
 无">复制日志</button></div></div></section></section></div></section>
 </div>

@@ -327,8 +327,9 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     docTitle: DOC_TITLE,
     title: spanDays === 1 ? '今日体重' : '体重总览',
     eyebrow: '',
-    // 副标题只留一句人话（窗口 ＋ 共几条；`~` 是日期区间的允许项）——窗口与趋势已各是一件成形的东西。
-    subtitle: rangeText + '（共 ' + t.recordCount + ' 条）',
+    // #542（#340 打回批）：副标题整行撤——窗口与条数已是正文首件 `windowStrip()`（两枚日期块 ＋
+    // 条数胶囊）与页脚来源行，副标题再写一遍是百分百冗余。传空串即整段省略。
+    subtitle: '',
     content: parts.join(''),
     charts: true,
   });

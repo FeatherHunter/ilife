@@ -81,8 +81,10 @@ const CASES = [
 
 /** #480 文本审查：页页必在的新句（人话口径）。裁定 F 后页脚不再带库表名（机器面在复制日志里）。 */
 const NEW_TEXTS = [
-  '📊 数据来源：体重记录 ｜ 窗口 ',
-  '｜ 共 ',
+  // #542 收紧：口径行分隔改由 CSS 细竖线承担（t154-r3 #541 起字面 ｜ 不再进产物文本）后，
+  // 可见新句式按段各断——整句不断（旧整句断言至此作废，见下 ①）。
+  '📊 数据来源：体重记录',
+  '窗口 ',
 ];
 /** #480 文本审查：页页必零命中的旧句（删掉的重复／看不懂的专业话／实现细节）。
  *  对抗审查整改本轮新增（缺陷单 §三.1 点名上一轮漏掉的）：工程词「样本／门槛」＋库表名退出**可见面**。
@@ -95,6 +97,8 @@ const OLD_TEXTS = [
   '单点数据', '单点无均值对照', '偏红的点', '超过图的取值范围', '窗口外',
   '体重明细（共 ', '体重明细（最近 30 条）', '体重明细（其余 ',
   '起连续',
+  // #542（#340 打回批）：页头副标题整行撤，「模式：…」那组实现变体名页页零命中。
+  '模式：',
 ];
 
 /** 可见文本（剥 style／script／全部标签与属性、解实体、收敛空白）——口径同 `test/visible-text-probe.mjs`。
@@ -209,6 +213,9 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     const h1 = /<h1[^>]*>([^<]*)<\/h1>/.exec(html)?.[1] ?? '';
     assert.equal(h1, '体重历史', word + ' 页题不该再印窗口串（实测 ' + h1 + '）');
     assert.ok(!/<h1[^>]*>[\s\S]{0,40}\d{4}-\d\d-\d\d/.test(html), word + ' 页题里仍有日期');
+    // #542（#340 打回批）：页头副标题整行撤（「模式：明细／曲线」多余）——元素本身不得出现，
+    // 不是只删文字（空壳 <p> 也是多余的一行）。
+    assert.ok(!html.includes('class="ilife-block-page-shell-subtitle"'), word + ' 页头副标题应整行撤掉');
     assert.ok(!html.includes('kpi-card-detail">' + range), word + ' KPI 卡副说明里仍有窗口串');
     assert.ok(html.includes('备注'), word + ' 缺备注列');
 
@@ -238,11 +245,12 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
       assert.ok(html.includes('class="wui-bullets"'), word + ' 单点页的提示前提没有逐条成行');
       assert.ok(text.includes('比出首日和末日的差'), word + ' 单点页提示丢了「再记一条就能比出首日和末日」那条事实');
     }
-    // ① 新句式在场：页脚来源行走统一句式（全角冒号 ＋ 三段 `｜`），数据来源恰 1 处。
+    // ① 新句式在场：页脚来源行走统一句式（全角冒号 ＋ 三段，段间分隔由 CSS 细竖线承担），数据来源恰 1 处。
     for (const s of NEW_TEXTS) assert.ok(text.includes(s), word + ' 缺新句式：' + s);
     assert.equal(text.split('📊 数据来源：').length - 1, 1, word + ' 数据来源行不是恰 1 处');
-    assert.ok(text.includes('📊 数据来源：体重记录 ｜ 窗口 ' + range + ' ｜ 共 '),
+    assert.ok(text.includes('窗口 ' + range + ' ') && text.includes('共 '),
       word + ' 页脚来源行的窗口不是逐字本文窗口：' + text.slice(text.indexOf('📊 数据来源：'), text.indexOf('📊 数据来源：') + 90));
+    assert.ok(html.includes('ilife-block-caliber'), word + ' 缺口径行区块');
     // ①b 裁定 F：库表名退出**可见面**，但机器面（复制日志第 3 段）照旧写库文件名 ｜ 来源（§5.5），不许一起丢。
     assert.equal(text.split(DB_FILENAME).length - 1, 0, word + ' 可见面仍印库文件名');
     assert.equal(text.split('weight_log').length - 1, 0, word + ' 可见面仍印表名');
@@ -360,9 +368,10 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
       assert.ok(!text.includes('（' + note), word + ' 卡片副说明仍在复述脚注口径');
     }
     if (word === '看「有备注」的体重记录') {
-      assert.ok(html.includes('备注筛选') && html.includes('晨起空腹'), word + ' 缺备注筛选');
-      // 「只看有备注的 5 条」原在副标题、次卡、图例、表注、页脚说了五遍 ⇒ #510 之后再收到**一处**：
-      // 模式由页题副标题「模式：备注筛选」说，卡副说明那一份随窗口串一并撤（元信息面只留页脚来源行）。
+      assert.ok(html.includes('晨起空腹'), word + ' 缺备注行');
+      // 「只看有备注的 5 条」原在副标题、次卡、图例、表注、页脚说了五遍 ⇒ #510 之后收到**一处**
+      // （页脚来源行「只取有备注的」）；#542 把页头副标题整行撤掉，「备注筛选」这个模式词不再上屏，
+      // 筛选态只由页脚那一句与表里全是有备注的行承载。
       assert.equal(text.split('只取有备注的').length - 1, 1, word + '「只取有备注的」不是恰 1 处（页脚来源行）');
       assert.ok(!text.includes('只看有备注的'), word + ' 图例／结论里仍重印「只看有备注的」');
       // 缺陷 2：筛选页那张卡（`有备注`）同样只留徽章。

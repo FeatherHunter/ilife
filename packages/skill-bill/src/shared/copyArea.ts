@@ -21,7 +21,6 @@
 import { renderCaliberLine, renderCopyBlock, renderEmptyBlock, renderPreBlock } from 'base-paint/blocks';
 import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, DataTextInput, LogTextInput } from 'base-paint';
-import { commandLine } from './writeParts.js';
 
 /** 日志第 2 段（助手思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
 const LOG_THINKING = '本页由本地渲染，无助手链';
@@ -132,25 +131,20 @@ export function copyLog(input: CopyLogInput): CopyLogFields {
   };
 }
 
-/** 退出口那枚可复制按钮的动作号（与数据位／日志位分开，免得同页两处撞同一个号）。 */
-const EXIT_COPY_ACTION = 'ilife-exit-undo-copy';
 /** 退出口那枚危险色出口标记的动作号。**故意不绑动作**：动作条场景按钮不带 `data-t`，点了不复制也不写库。 */
 const EXIT_MARK_ACTION = 'ilife-exit-undo';
 /** 退出口的标题与说明（本轮整改：`危险色出口` 是设计自指词，`restore` 是内部词，都不上屏）。 */
 const EXIT_TITLE = '想反悔（撤销这一笔）';
 const EXIT_NOTE = '要撤销这一笔，点下面那颗「复制数据」，里面带着一句撤销的话；撤销之后记录还在，随时可以恢复。';
 
-/** ④ 回执页退出口：危险色出口标记 ＋ 一枚真的能复制的撤销指令（带该记录编号）。
- *  两枚按钮同一区并列：危险色那枚让人一眼认出「这一步可退」，撤销指令挂在旁边那枚「复制数据」上。
- *  为什么不一枚到底：公共层的动作条场景按钮（`primary`／`red`／`ghost`）**不带**复制文本，
- *  能带文本的只有复制位那两枚（`packages/base-render/src/controls.ts:1307-1316`）；要「危险色 ＋ 能复制」
- *  得等公共层补这一档，本票记成遗留（见证据件第五节）。 */
+/** ④ 回执页退出口：危险色出口标记 ＋ 一句去向说明（t407 根因整改二 D2 去重后）。
+ *  改前这里另带一枚「复制数据」（撤销指令直拷，`ilife-exit-undo-copy`）＋ base #336
+ *  自动补的一枚置灰「复制日志」，与下面复制区那组「复制数据／复制日志」上下重复。
+ *  改后退出口只留标记与说明、不带任何复制按钮与 `data-t`；撤销指令走下面复制区那颗
+ *  「复制数据」（复制载荷里仍带可重跑命令，`data-t` 形状不动）。 */
 export function undoExit(recordId: number): string {
-  const command = commandLine('bill.record.update', { op: 'undo', id: recordId });
   return renderCopyBlock({
     title: EXIT_TITLE,
     buttons: [{ label: '↩︎ 撤销这一笔', kind: 'red', actionId: EXIT_MARK_ACTION }],
-    dataText: command,
-    dataActionId: EXIT_COPY_ACTION,
-  }) + renderCaliberLine(EXIT_NOTE);
+  }) + renderCaliberLine(EXIT_NOTE + '（记录编号 ' + recordId + '）');
 }

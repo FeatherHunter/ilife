@@ -27,7 +27,7 @@
  *
  * #502 形状化 ＋ 手机端（负责人口径 2026-09-15 第 1／2／5 条；共同口径 `.scratch/t154/text-review/口径-UI.md`，
  * 形状词汇住同目录 `weightUi.ts`，样式由本页装配放进 `parts` 第一项）：
- *   ① 页头副标题的 `·` 串改成**顿号**（「模式：曲线，带目标线」等；「明细／曲线」是页族名、照旧）；
+ *   ① 页头副标题整行撤（#542）；
  *   ② 窗口事实（区间 ＋ 天数）从「本窗 2026-08-09 ~ 2026-09-07」这句串里提出来，落成 `windowStrip()`
  *      （两枚日期块 ＋ 箭头 ＋ 天数胶囊）；单日窗（区间串＝一天）不出这条，免得画成「今天 → 今天」；
  *   ③ 卡片副说明里的「30 天 · 每天 +10 克」 → `factStrip()` 的「节奏」一枚；「首日 … → 末日 …」→
@@ -445,13 +445,8 @@ function curvePlanOf(h: WeightHistoryView, extra: HistoryDocExtra): CurvePlan | 
 
 /* ── 整页装配（#332 自 `plateDocs.ts` 原样迁入：weight_history.html 对照） ── */
 
-function modeBadge(extra: HistoryDocExtra): string {
-  if (extra.noteOnly) return '模式：备注筛选';
-  if (extra.overlay === 'target') return '模式：曲线，带目标线';
-  if (extra.overlay === 'milestone') return '模式：曲线，带里程碑';
-  if (extra.overlay === 'anomaly') return '模式：曲线，带异常点';
-  return '模式：明细／曲线';
-}
+/* #542（#340 打回批）：`modeBadge` 退场 —— 页头副标题整行撤掉后，「模式：…」这组实现变体名
+ * 不再上屏（变体的信息各有去处，见装配处注释）。函数删掉，不留死代码。 */
 
 function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
   if (extra.overlay === 'target') {
@@ -504,7 +499,7 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
   const tags = tagDist(h.rows);
   const n = Object.keys(tags).length;
   if (extra.noteOnly) {
-    // #480：徽章不复述「已筛备注」这个模式词（页头副标题已写「模式：备注筛选」），改印标签类数。
+    // #480：徽章不复述筛选态，改印标签类数。#542：页头副标题撤掉后，「只取有备注的」住页脚来源行。
     // #480 缺陷 2：副说明原与徽章逐字同为「标签 N 类」⇒ 删副说明，只留徽章。
     return {
       label: '有备注', value: h.rows.length + ' 条',
@@ -524,8 +519,8 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
   return [
     /* 值槽只放「本窗条数」这一个数：区间串（`2026-08-09 ~ 2026-09-07`，23 字）在 28px 且
      * `overflow-wrap: anywhere` 的值槽里会被断成 2~3 行，是四张卡不等高的直接成因（t154 用户读数）。
-     * 区间挪进 `detail`（副说明行）——页题 `<h1>` 与页脚来源行各还有一份，信息不丢（#480 把副标题
-     * 里那份重复的窗口串删掉：页头、表注、页脚三处已够，副标题只留模式）。
+     * 区间挪进 `detail`（副说明行）——页题 `<h1>` 与页脚来源行各还有一份，信息不丢（#480 先删副标题
+     * 里的窗口串，#542 把副标题整行撤掉：页头、表注、页脚三处已够）。
      * #502：副说明只留区间串本身（原写「本窗 …」——「本窗」是范围词、与本卡标签同义），
      * 天数与「区间 → 区间」的形状另住 `windowFactStrip()` 那条事实条。 */
     {
@@ -751,9 +746,10 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
      * 一屏三处）⇒ 页题只留名字，**窗口串归页顶那条窗口条**（形状件，两枚日期块 ＋ 天数胶囊）。 */
     title: '体重历史',
     eyebrow: '',
-    // #480：副标题原写「模式｜窗口（共 N 条）」，与页题（窗口）＋表注（窗口 ＋ 条数）＋页脚来源行
-    // （窗口 ＋ 条数）四处同说一件事 ⇒ 只留模式；窗口与条数在窗口条、表注、页脚各仍有一份。
-    subtitle: modeBadge(extra),
+    // #542（#340 打回批）：副标题整行撤——「模式：明细／曲线」是实现变体的名字，读者要的是图和表本身；
+    // 四个变体的信息各有去处：目标线／里程碑／异常点住图例行，「只取有备注的」住页脚来源行。
+    // 传空串即整段省略（`assembleDocPage` 遇空不写该元素；同 `eyebrow: ''` 的既有口径）。
+    subtitle: '',
     content: parts.join(''),
     charts,
   });

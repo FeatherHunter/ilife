@@ -336,8 +336,14 @@ test('#386 第三组：8 报告各拿自己那页（不是 full 健康盘）／�
   for (const t of DEFICIT) {
     const rec = pageOf(t.wake_word);
     const h1 = (rec.html.match(/ilife-block-page-shell-title">([^<]*)/) ?? [])[1];
-    assert.ok(/^热量缺口 \d{4}-\d{2}-\d{2} ~ \d{4}-\d{2}-\d{2}$/.test(h1 ?? ''),
+    assert.ok(/^热量缺口 \d{4}-\d{2}-\d{2} 至 \d{4}-\d{2}-\d{2}$/.test(h1 ?? ''),
       t.wake_word + ' 页头不是缺口页：H1=' + h1);
+    /* #517（编排者具名授权 3，本票、一次性）：H1 的区间符号按 #516 判据 R6（`~` 顶替「至」判债）改「至」。
+     * 上面那条正则的语义**一件不少**：前缀锚定 `^热量缺口 `（不许落进报告页）、必须带完整日期区间、两端锚定 `$`。
+     * 紧随其后的这条是**新增的对偶断言**：可见 H1 里不许出现 `~`（与 `analysis-deficit-385.test.mjs`
+     * 里 #517 新加的那条「可见文本零并列分隔符」互为对偶；旧写法住在产物的口径注释里，
+     * 供 `trend-homogeneity-110.test.mjs:195` 那条不在授权范围内的逐字断言认领）。 */
+    assert.ok(!String(h1).includes('~'), t.wake_word + ' 可见 H1 里出现 `~`：H1=' + h1);
     for (const label of ['日均摄入', '日均消耗', '日均缺口', '理论减重']) {
       assert.ok(rec.html.includes('>' + label + '<'), t.wake_word + ' 缺口页缺 KPI 格：' + label);
     }

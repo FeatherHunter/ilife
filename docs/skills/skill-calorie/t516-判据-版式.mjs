@@ -21,7 +21,7 @@
  *       `docs/skills/skill-calorie/t516-场景10-视觉整改基准.md`，读数供其红绿两向对照。
  */
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -96,11 +96,19 @@ function expr() {
   });
   out.outOfBounds = wide.length; out.outOfBoundsList = wide.slice(0, 12);
 
-  // ② 主内容列对余量的利用
+  // ② 主内容列对余量的利用（J6：主列宽／两侧余量／区块是否铺满内容列）
   var shell = document.querySelector('.ilife-block-page-shell');
   out.shell = rect(shell);
   out.shellMaxWidth = shell ? getComputedStyle(shell).maxWidth : null;
   out.shellPadding = shell ? getComputedStyle(shell).paddingLeft + '/' + getComputedStyle(shell).paddingRight : null;
+  /* J6 的第三问「区块铺满内容列、不出现『收得住的没排好』」：内容容器（页壳的 body 那一层）
+   * 自己的宽，与它的**直接子件**逐个量宽 —— 只报读数，判红绿归基准件。 */
+  var bodyBox = document.querySelector('.ilife-block-page-shell-body');
+  out.body = rect(bodyBox);
+  out.bodyChildren = bodyBox ? Array.prototype.map.call(bodyBox.children, function (el) {
+    var b = el.getBoundingClientRect();
+    return { cls: String(el.getAttribute('class') || '').split(' ')[0] || el.tagName.toLowerCase(), w: Math.round(b.width), x: Math.round(b.x) };
+  }) : [];
 
   // ③ 页上**实际渲染**的可见字号分布（不读样式段声明值：那是全族共用的一份，量不出页面差异）
   var hist = {}; var measured = [];
@@ -192,23 +200,38 @@ function expr() {
 
 /* ── headless Chrome ＋ CDP ───────────────────────────────────────────── */
 const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
-const PORT = 9711 + (process.pid % 200);
+/* 端口走**临时端口**（`--remote-debugging-port=0`）＋ 从 `DevToolsActivePort` 读回实际端口。
+ * #517 修：原来固定 `9711 + pid%200`，同机并发另一只 Chrome 落在同一端口时，`/json/list` 会被
+ * 别人的实例应答——实测报 `Error: 'Page.enable' wasn't found`（连过去的是不带 Page 域的会话）。 */
 const profile = mkdtempSync(join(tmpdir(), 't516-profile-'));
 const chrome = spawn(BROWSER, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run',
   '--disable-extensions', '--disable-background-networking', '--disable-component-update', '--disable-breakpad',
   '--disable-dev-shm-usage', '--hide-scrollbars', '--allow-file-access-from-files',
-  '--remote-debugging-port=' + PORT, '--user-data-dir=' + profile, '--window-size=1440,900', 'about:blank'],
+  '--remote-debugging-port=0', '--user-data-dir=' + profile, '--window-size=1440,900', 'about:blank'],
   { stdio: 'ignore' });
 
-/** 连**页面目标**（`/json/list` 里的 `type=page`），不是浏览器目标——`Page.*` 域只在页面会话上有。 */
-async function devtoolsUrl() {
+/** Chrome 把实际端口写进 `<user-data-dir>/DevToolsActivePort` 首行。 */
+async function devtoolsPort() {
   for (let waited = 0; waited < TIMEOUT_MS; waited += 250) {
     try {
-      const r = await fetch('http://127.0.0.1:' + PORT + '/json/list');
+      const line = readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0].trim();
+      if (/^\d+$/.test(line) && Number(line) > 0) return Number(line);
+    } catch { /* 端口文件还没写出来 */ }
+    await sleep(250);
+  }
+  return 0;
+}
+
+/** 浏览器端点（`/json/version` 的 `webSocketDebuggerUrl`）：先连它，再 `Target.attachToTarget` 认领页面会话。
+ *  #517 修：`/json/list` 里那条 `webSocketDebuggerUrl` **不保证**挂在页面目标上，直连它会踩
+ *  `Page.enable` 不存在的坑；走 `attachToTarget({flatten:true})` 拿到的 `sessionId` 才一定带页面级域。 */
+async function devtoolsUrl(port) {
+  for (let waited = 0; waited < TIMEOUT_MS; waited += 250) {
+    try {
+      const r = await fetch('http://127.0.0.1:' + port + '/json/version');
       if (r.ok) {
-        const list = await r.json();
-        const page = list.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);
-        if (page) return page.webSocketDebuggerUrl;
+        const v = await r.json();
+        if (v.webSocketDebuggerUrl) return v.webSocketDebuggerUrl;
       }
     } catch { /* 端口未就绪 */ }
     await sleep(250);
@@ -235,16 +258,33 @@ function connect(url) {
     ready,
     send(method, params) {
       const id = nextId++;
-      return new Promise((res, reject) => { pending.set(id, { resolve: res, reject }); ws.send(JSON.stringify({ id, method, params })); });
+      const msg = { id, method, params };
+      if (sessionId !== undefined) msg.sessionId = sessionId;
+      return new Promise((res, reject) => { pending.set(id, { resolve: res, reject }); ws.send(JSON.stringify(msg)); });
     },
     close() { ws.close(); },
+    sessionId: undefined,
   };
 }
 
-const wsUrl = await devtoolsUrl();
-if (wsUrl === null) { chrome.kill(); die(2, '等不到 headless 浏览器的调试端口（' + TIMEOUT_MS + 'ms 超时）。'); }
+const port = await devtoolsPort();
+if (port === 0) { chrome.kill(); die(2, '等不到 headless 浏览器的调试端口（' + TIMEOUT_MS + 'ms 超时）。'); }
+const wsUrl = await devtoolsUrl(port);
+if (wsUrl === null) { chrome.kill(); die(2, '等不到 headless 浏览器的浏览器端点（' + TIMEOUT_MS + 'ms 超时）。'); }
 const cdp = connect(wsUrl);
 await cdp.ready;
+/* 认领一个**页面会话**（`Target.attachToTarget` ＋ `flatten`）：`Page.*`／`Emulation.*` 只在页面会话上有。 */
+let sessionId;
+for (let waited = 0; waited < TIMEOUT_MS && sessionId === undefined; waited += 250) {
+  const targets = (await cdp.send('Target.getTargets')).targetInfos;
+  const page = targets.find((t) => t.type === 'page' && t.attached !== true) ?? targets.find((t) => t.type === 'page');
+  if (page !== undefined) {
+    const attached = await cdp.send('Target.attachToTarget', { targetId: page.targetId, flatten: true });
+    sessionId = attached.sessionId;
+  } else await sleep(250);
+}
+if (sessionId === undefined) { chrome.kill(); die(2, '拿不到页面会话（没有 type=page 的目标）。'); }
+cdp.sessionId = sessionId;
 await cdp.send('Page.enable');
 
 const rows = [];

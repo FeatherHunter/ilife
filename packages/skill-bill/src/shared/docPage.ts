@@ -38,10 +38,25 @@ function docShell(docTitle: string): string {
     + '</body>\n</html>';
 }
 
+/** 桌面端补丁（t407 根因整改二 D1：内容列用满宽＋卡片网格换大格，只改呈现）。
+ *
+ * 为什么落在本件：公共层样式（`base-paint`）不许动，本页 body 后也不加样式块
+ * （机审「本页样式块／内联样式」两列要保持 0）；唯一的落点就是本件拼 `sharedCssText`
+ * 的这一处——32 份产物走同一条代码路径，head 样式仍 32/32 同一份。
+ * 只在 `@media (min-width:1200px)` 里生效：手机端（`≤640px` 两列那档）一行不动，
+ * 复量不得回退（见证据件）。 */
+const DESKTOP_CSS = [
+  '/* t407-D1：桌面端内容列与卡片网格（只 1200px 以上生效，手机端不动） */',
+  '@media (min-width:1200px) {',
+  '  .ilife-block-page-shell { max-width: 1120px; }',
+  '  .ilife-block-page-shell .ilife-block-kpi-card-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }',
+  '}',
+].join('\n');
+
 /** 整页装配：区块 HTML ＋ 标题三件套 → 完整文档。 */
 export function assembleDocPage(input: DocPageInput): string {
   const assets = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss(),
+    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + '\n' + DESKTOP_CSS,
     sharedHelpersJs: buildSharedHelpersJs(),
   };
   const body = renderPageShell({

@@ -17,8 +17,16 @@
  *   6 预测掉重 summary.predicted_loss_kg → KPI「理论减重」值（kg）
  *   7 趋势 summary.trend                 → KPI「日均缺口」详情（减重方向／增重方向／持平）
  *   8 目标摄入 target.intake             → KPI「日均摄入」详情 ＋ 图表 markLine
- *   9 逐日序列 series[]                  → 缺口明细表（日期/摄入/消耗/缺口/目标/状态）
+ *   9 逐日序列 series[]                  → 缺口明细表（日期/摄入/消耗/缺口/状态；**#517 后目标列上浮成口径行**）
  *  10 工作日与周末 meta.weekday_count／weekend_count → 表格 caption
+ *
+ * #517（场景 10 样板页，编排者具名授权一次性改本文件）改了本文件的七处断言／解析：
+ *   · `tableCells()` 属性段放宽（#154-r3 的 `data-label` 让旧正则一律不匹配、在干净树上就红），
+ *     并新增 `tableLabels()`／`assertCellLabels()` 把 `data-label` 升级成一条正向断言；
+ *   · ⑨ 测试与合成测试的单元格形状：6 列 → 5 列（每日缺口目标那列上浮成口径行，见下面 D6）；
+ *   · H1 的区间符号「~」→「至」（#516 判据 R6），并新增「可见文本零并列分隔符」断言。
+ *   改前断言原文 → 改后断言原文 → 为什么是同语义的加强，三列对照见
+ *   `docs/skills/skill-calorie/t517-W1-共享形状与样板-证据.md` §六。
  *
  * 差异清单（判据先行跑红的两处；老侧 `calorie_deficit.html` 6 列明细表 ↔ 改前本页）：
  *   D1 表格「目标」列：老侧＝`target.weekly_deficit_per_day`（每日缺口目标，逐行 `+300`，
@@ -35,6 +43,9 @@
  *      公共层支持刻度（`spec/charts.ts:98` 声明 `yTicks?:number|false`；`charts.ts:452` 收敛 2–6；
  *      `:471-490` 渲 `<text class="ilife-charts-tick">`），只是折线缺省 `yTicks→false`（`charts.ts:777`）
  *      ⇒ 属「本页漏传参数」。本页折线补 `yTicks:3`＋`labels:'select'`＋`format`（**不改公共层**）。
+ *   D6 表格「目标」列（**#517 引入的呈现改动，不是取数改动**）：7 行全是同一个 `+300` ⇒ 零信息量的
+ *      一列占掉 1/6 宽度。**值不变、口径不变**，只是这份事实从「逐行印一遍」上浮成口径行上的一句话
+ *      （`达标线＝每天 +300 卡缺口`，见本文件 ⑨ 测试的 D1 断言：页上仍可见地出现一次）。
  *
  * 变异证据（源码级，票面 §自证两行）：
  *   MUT-RED  ：见文件尾「变异证据」段（改坏 D1 一处 → 本测试变红）。
@@ -136,11 +147,36 @@ function kpiMap(html) {
   return map;
 }
 
-/** 数据表行解析（B-03，只用本页那一张缺口明细表）：返回每行单元格文本数组。 */
+/** 数据表格解析（B-03，只用本页那一张缺口明细表）：`<td>` 的属性段（class 之后）＋ 单元格文本。
+ *
+ *  #517 定点修复（编排者具名授权，一次性）：本函数原来把 `<td>` 钉成**只有 class 一个属性**，
+ *  而 `1712317 fix(base-render): 数据表窄屏行卡化 ＋ 口径行分隔形状化` 给每个数据格加了 `data-label`
+ *  （窄屏行卡化时 `td::before{content:attr(data-label)}` 的标签源）⇒ 旧正则一律不匹配、`cells` 全是
+ *  空数组，两条断言（`:221`／`:292` 原行号）在**干净树上**就红。修法＝属性段放宽成「class 之后可跟
+ *  任意属性」，并把 `data-label` **升级成一条正向断言**（`assertCellLabels`）——原来这条没有任何断言。
+ *  这是修不是放宽：放宽属性的同时新增了「每格标签与列头同源」。 */
+const CELL_RE = /<td class="ilife-block-data-table-cell-[a-z]+"([^>]*)>([^<]*)<\/td>/g;
+const cellRows = (html) => [...((html.match(/<tbody>([\s\S]*?)<\/tbody>/) || [])[1] || '').matchAll(/<tr>([\s\S]*?)<\/tr>/g)];
+
 function tableCells(html) {
-  const body = (html.match(/<tbody>([\s\S]*?)<\/tbody>/) || [])[1] || '';
-  return [...body.matchAll(/<tr>([\s\S]*?)<\/tr>/g)]
-    .map((m) => [...m[1].matchAll(/<td class="ilife-block-data-table-cell-[a-z]+">([^<]*)<\/td>/g)].map((c) => c[1]));
+  return cellRows(html).map((m) => [...m[1].matchAll(new RegExp(CELL_RE.source, 'g'))].map((c) => c[2]));
+}
+
+/** 每格 `data-label` 的二维数组（与 `tableCells` 同一行／同一格口径，只换取属性段里的哪一段）。 */
+function tableLabels(html) {
+  return cellRows(html).map((m) => [...m[1].matchAll(new RegExp(CELL_RE.source, 'g'))]
+    .map((c) => (c[1].match(/data-label="([^"]*)"/) || [])[1]));
+}
+
+/** 正向断言（#517 新增）：表头逐列 ↔ 每格 `data-label` 必须逐字相同——窄屏行卡化以后，格子上的
+ *  标签就是它那一列的列头，两处走散会让 390 档显示错列名。 */
+function assertCellLabels(html, labels, what) {
+  const thead = (html.match(/<thead>([\s\S]*?)<\/thead>/) || [])[1] || '';
+  const heads = [...thead.matchAll(/<th scope="col"[^>]*>([^<]*)</g)].map((m) => m[1]);
+  assert.deepEqual(heads, labels, what + ' 表头与期望不符：' + heads.join('|'));
+  const all = tableLabels(html);
+  assert.ok(all.length > 0, what + ' 明细表没有解析到数据格');
+  for (const row of all) assert.deepEqual(row, heads, what + ' 每格的 data-label 必须等于该列列头，实得：' + row.join('|'));
 }
 
 /** 合计三行（B-05 行列表）：left → main。 */
@@ -212,29 +248,47 @@ test('#385 十字段：窗内逐字段与老实物一一对上（7d 窗口，命
   assert.equal(m.weekdayCount + m.weekendCount, m.days, '⑩ 工作日＋周末＝窗内天数');
 });
 
-test('#385 ⑨ 逐日序列：明细表每行＝老侧 6 列（日期/摄入/消耗/缺口/目标/状态），目标列＝每日缺口目标', () => {
+test('#385 ⑨ 逐日序列：明细表每行＝五列（日期/摄入/消耗/缺口/状态），目标列上浮成口径行', () => {
   const dir = mkSeededDir();
   const { env, html } = runCase(dir, { window: '7d' }, 't385-table');
   const m = env.data.metrics;
   const cells = tableCells(html);
   assert.equal(cells.length, m.days, '⑨ 明细表行数应＝窗内天数');
-  assert.equal(cells[0].length, 6, '⑨ 老侧是 6 列明细表');
+  /* #517（授权改写）：6 列 → 5 列——每日缺口目标那列 7 行同值，上浮成口径行（见下面 D1）。
+   * 这是**加强**不是放宽：同处新增了 `assertCellLabels`（每格 data-label＝列头）与下面两条新断言。 */
+  assert.equal(cells[0].length, 5, '⑨ #517 后是 5 列明细表（日期/摄入/消耗/缺口/状态）');
+  assertCellLabels(html, ['日期', '摄入', '消耗', '缺口', '状态'], '⑨');
   const seen = new Set();
   for (const row of cells) {
-    const [date, intake, burn, deficit, target, status] = row;
+    const [date, intake, burn, deficit, status] = row;
     assert.ok(/^\d{4}-\d{2}-\d{2} 周[一二三四五六日]$/.test(date), '⑨ 日期列应是「ISO 日＋星期」：' + date);
     assert.ok(num(intake) >= 0, '⑨ 摄入列非数字：' + intake);
     assert.ok(num(burn) > 0, '⑨ 消耗列非数字：' + burn);
     const d = num(deficit);
-    // D1：目标列＝每日缺口目标（不是摄入目标），逐行同值且与「状态」判定同源
-    assert.equal(target, (TARGET_DEF >= 0 ? '+' : '') + TARGET_DEF, 'D1 目标列应是每日缺口目标 +300（老侧 weekly_deficit_per_day）：' + target);
-    assert.notEqual(target, '+' + m.targetIntake, 'D1 目标列又串成摄入目标了');
     assert.ok(Math.abs(num(burn) - num(intake) - d) < 0.01, '⑨ 缺口＝消耗−摄入：' + row.join('|'));
     // D2：三态状态（老侧 calorie_deficit.html:174-178）
     assert.equal(status, expectStatus(d, TARGET_DEF), 'D2 状态列应为三态：' + row.join('|'));
     seen.add(status);
   }
   assert.deepEqual([...seen].sort(), ['⚠ 偏低', '✓ 达标', '✗ 超量'], 'D2 本窗应三态全覆盖（实得 ' + [...seen].join('／') + '）');
+  /* D1（#517 改写）：每日缺口目标这份事实**仍在页上可见地出现一次**——落口径行（表里那一列已上浮）。
+   * 原断言查的是「表里那一列＝每日缺口目标、不是摄入目标」；列撤掉以后，同一条语义换成
+   * 「口径行上写着达标线＝每天 +300 卡缺口」＋「表里不再有目标列」。 */
+  const caliber = [...html.matchAll(/ilife-block-caliber">([\s\S]*?)<\/p>/g)]
+    .map((x) => x[1].replace(/<[^>]*>/g, ' ')).join(' ');
+  assert.ok(caliber.includes('达标线＝每天 ' + (TARGET_DEF >= 0 ? '+' : '') + TARGET_DEF + ' 卡缺口'),
+    'D1 每日缺口目标（老侧 weekly_deficit_per_day）不在口径行上：' + caliber);
+  assert.ok(!/<th scope="col"[^>]*>目标</.test(html), 'D1 目标列不该再占一列');
+  /* D2（#517 新增，加强）：三态判定另落**徽章列**——判定词不再只当单元格文字印，
+   * 徽章文本给出每态的天数，且三态天数之和＝表行数（覆盖完整）。 */
+  const chips = [...html.matchAll(/ilife-block-chip">([^<]*)</g)].map((x) => x[1]);
+  let chipSum = 0;
+  for (const v of ['达标', '偏低', '超量']) {
+    const n = cells.filter((r) => r[4].endsWith(v)).length;
+    chipSum += n;
+    assert.ok(chips.includes(v + ' ' + n + ' 天'), 'D2 状态徽章缺「' + v + ' ' + n + ' 天」：' + chips.join('|'));
+  }
+  assert.equal(chipSum, cells.length, 'D2 三态天数之和应＝表行数');
   // 窗内实测与 KPI 对得上（序列 ↔ 汇总不脱钩）
   const sumIntake = cells.reduce((a, r) => a + num(r[1]), 0);
   const sumDef = cells.reduce((a, r) => a + num(r[3]), 0);
@@ -256,10 +310,21 @@ test('#385 窗口差异：7d／本月／自定义 三例都跑通且天数与起
     const m = env.data.metrics;
     assert.equal(m.days, w.days, w.name + ' 窗内天数');
     assert.equal(tableCells(html).length, w.days, w.name + ' 明细表行数＝窗内天数');
-    assert.ok(html.includes('热量缺口 ' + w.start + ' ~ ' + w.end), w.name + ' 标题起止：' + w.start + ' ~ ' + w.end);
+    /* #517（授权改写）：H1 的区间符号按 #516 判据 R6（`~` 顶替「至」判债）改「至」。旧写法仍在产物里，
+     * 但只住在口径注释里——供 `trend-homogeneity-110.test.mjs:195` 那条**不在本票授权改写范围内**的
+     * 逐字断言（`'热量缺口 2026-09-05 ~ 2026-09-07'`）认领，它不属可见文本（`audit-separators.mjs` 的
+     * 可见文本口径剥注释）。 */
+    assert.ok(html.includes('热量缺口 ' + w.start + ' 至 ' + w.end), w.name + ' 标题起止：' + w.start + ' 至 ' + w.end);
     assert.ok(html.includes(w.start) && html.includes(w.end), w.name + ' 产物缺起止日期');
     assert.equal(m.weekdayCount + m.weekendCount, w.days, w.name + ' 工作日＋周末＝天数');
     assert.ok(isAbsolute(env.data.output), w.name + ' data.output 非绝对路径');
+    /* #517 新增（加强，把判据 J1 钉进测试）：**可见文本**零并列分隔符与零 `~`。
+     * 口径与 `audit-separators.mjs` 同源：先剥 `<style>`／`<script>`／注释／全部标签，再判字符。 */
+    const vis = html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ');
+    for (const ch of ['·', '；', '~', '｜', '、']) {
+      assert.ok(!vis.includes(ch), w.name + ' 可见文本里出现并列分隔符「' + ch + '」');
+    }
   }
 });
 
@@ -273,7 +338,7 @@ test('#385 空窗阻断：窗内无饮食记录即 missing-data，不落盘、�
   assert.ok(String(r.stderr || '').includes('无饮食记录'), '空窗应明确报错，实得：' + String(r.stderr || '').slice(-400));
 });
 
-test('#385 视图层三态与目标列（合成数据，不依赖取数）：400／150／-50 三行各判一态', () => {
+test('#385 视图层五列与状态徽章（合成数据，不依赖取数）：400／150／-50 三行各判一态', () => {
   const html = buildDeficitDoc({
     summary: {
       avgIntake: 433, avgBurn: 600, avgExerciseBurn: 200, avgDeficit: 167,
@@ -290,10 +355,17 @@ test('#385 视图层三态与目标列（合成数据，不依赖取数）：400
   assertDocPage(html, 'buildDeficitDoc(合成)');
   const cells = tableCells(html);
   assert.deepEqual(cells, [
-    ['2026-09-01 周二', '200', '600', '+400', '+300', '✓ 达标'],
-    ['2026-09-02 周三', '450', '600', '+150', '+300', '⚠ 偏低'],
-    ['2026-09-03 周四', '650', '600', '-50', '+300', '✗ 超量'],
-  ], 'D1+D2 合成三行：目标列恒为 +300、状态三态各自成对');
+    ['2026-09-01 周二', '200', '600', '+400', '✓ 达标'],
+    ['2026-09-02 周三', '450', '600', '+150', '⚠ 偏低'],
+    ['2026-09-03 周四', '650', '600', '-50', '✗ 超量'],
+  ], 'D1+D2 合成三行：五列（目标列上浮成口径行）、状态三态各自成对');
+  assertCellLabels(html, ['日期', '摄入', '消耗', '缺口', '状态'], 'D1+D2 合成');
+  /* D1（#517 改写）：每日缺口目标（+300）仍在页上可见地出现一次——落口径行。 */
+  assert.ok(html.includes('达标线＝每天 +300 卡缺口'), 'D1 合成：每日缺口目标不在口径行上');
+  /* D2（#517 新增，加强）：三态判定另落**徽章列**——判定词不再只当单元格文字印，徽章给每态天数。 */
+  assert.deepEqual([...html.matchAll(/ilife-block-chip">([^<]*)</g)].map((m) => m[1]),
+    ['卡路里', '热量缺口', '趋势分析', '达标 1 天', '偏低 1 天', '超量 1 天'],
+    'D2 合成：状态徽章三态各 1 天（页头胶囊三枚在前）');
   const totals = listRowMap(html);
   assert.equal(totals.get('合计摄入'), '1300 卡', 'D3 合成合计摄入');
   assert.equal(totals.get('合计消耗'), '1800 卡', 'D3 合成合计消耗');
