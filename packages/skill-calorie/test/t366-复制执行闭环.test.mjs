@@ -49,8 +49,9 @@ const COPY_LABEL = '复制 prompt（必走）';
 
 /** 老正本 `body_composition_wizard.html:354` 的公式原文（逐字，含 `Σ`／`²`／U+2212 减号）。 */
 const JP7_FORMULA = 'BD = 1.112 - 0.00043499×Σ + 0.00000055×Σ² - 0.00028826×年龄(男) · 体脂率 = (495 / BD) − 450';
-/** 裁定 1 的文案（逐字）。 */
-const LEAVE_BLANK = '体脂率可留空，由命令按 7 点换算';
+/** 裁定 1 的文案（逐字）。#538 起旧句「体脂率可留空，由命令按 7 点换算」改人话，承诺不变：
+ *  皮褶钳分支体脂率不用手填、7 处＋年龄性别齐了由命令换算。 */
+const LEAVE_BLANK = '体脂率不用手填';
 
 /** 围度逐部位区间（**手抄**老正本 `body_measurements_wizard.html:181-253`，不取新实现）。 */
 const PART_RANGE = {
@@ -348,7 +349,7 @@ test('#366 裁定3：皮褶 0.1／0／100、体脂率 0.01／0／60（同页只�
 
 /* ── 裁定 1／§五 1：可见文本与可取值域 ── */
 
-test('#366 裁定1＋⑤：可见文本含留空句／7 处总和／JP7 公式串（不带参数打开也算）', () => {
+test('#366 裁定1＋⑤：可见文本含留空句／点名 7 点法／「已填 n/7」计数器（不带参数打开也算）', () => {
   const dir = mkEnv();
   for (const [name, html] of [
     ['不带参数', run(KEY_C, {}, dir).html],
@@ -356,14 +357,14 @@ test('#366 裁定1＋⑤：可见文本含留空句／7 处总和／JP7 公式�
   ]) {
     const text = visible(html);
     assert.ok(text.includes(LEAVE_BLANK), name + ' 可见文本应含「' + LEAVE_BLANK + '」');
-    // #538：`7 处总和` 与 JP7 公式原文**改由复制区那一段承载**（可见文本口径里复制区被剥掉，
-    // 故这里从整份 HTML 找）；页面正文不再印公式原文（负责人第 4 条：系数与变量不上屏）。
-    const copyText = (html.match(/data-t="[^"]*"/g) ?? []).join(' ');
-    assert.ok(text.includes('7 处总和') || copyText.includes('7 处总和'), name + ' 应有「7 处总和」');
+    // #538：旧块标题「7 处总和」＋ JP7 公式原文下屏，改由两处等价信号承载——① 方法点名（7 点法／Jackson-Pollock），
+    // ②「已填 n/7」计数器。页面正文不再印公式原文（负责人第 4 条：系数与变量不上屏）。
+    assert.ok(text.includes('7 点法') || text.includes('Jackson-Pollock'), name + ' 应点名换算方法（7 点法）');
+    assert.match(text, /已填 \d\/7/, name + ' 应有「已填 n/7」计数器');
     assert.ok(!html.includes(JP7_FORMULA), name + ' 正文不再印 JP7 公式原文');
   }
   assert.ok(run(KEY_C, CALIPER_PARAMS, mkEnv()).html.includes('皮褶'), '皮褶齐备时页面照常出皮褶那一组');
-  console.log('T366-TEXT 留空句=1 7处总和=1 公式串=0（#538 下屏）');
+  console.log('T366-TEXT 留空句=1 7点法=1 已填计数=1 公式串=0（#538 下屏）');
 });
 
 test('#366 §五1：来源与性别都是下拉，候选值全列（三来源名＋两性别名可见）', () => {

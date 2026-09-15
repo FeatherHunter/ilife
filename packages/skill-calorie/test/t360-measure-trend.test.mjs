@@ -161,7 +161,7 @@ test('#360 恰 N 个趋势点：KPI 趋势点 == sqlite 按日聚合计数 == �
   const env = readAutoPage(dir);
   const html = readFileSync(env.data.output, 'utf8');
   const text = visibleText(html);
-  assert.match(text, /趋势点\s*3\s*天/, 'KPI「趋势点」读数应为 3 天（裁定 4 读数③）');
+  assert.match(text, /趋势点\s*3\s*个/, 'KPI「趋势点」读数应为 3 个（裁定 4 读数③；#535 起「3 天」改「3 个」，手算仍是 3）');
   const n = sqliteTrendCount(dir, EXPECT.picked);
   assert.equal(n, EXPECT.n, 'sqlite 窗口内腰围按日聚合点数应为手算 3');
   const db = openDb(join(dir, DB_FILE));
@@ -178,7 +178,7 @@ test('#360 五项 KPI 与手算逐值相同（点数/均值/最小/最大/变化
   const env = readAutoPage(dir);
   const html = readFileSync(env.data.output, 'utf8');
   const text = visibleText(html);
-  assert.match(text, /趋势点\s*3\s*天/, '点数');
+  assert.match(text, /趋势点\s*3\s*个/, '点数（#535 起「3 天」改「3 个」）');
   assert.match(text, /均值\s*79\s*cm/, '均值 (80+79+78)/3=79');
   assert.match(text, /最小\s*78\s*cm/, '最小 78');
   assert.match(text, /最大\s*80\s*cm/, '最大 80');
@@ -222,14 +222,14 @@ test('#360 样本不足兜底：无数据部位 → KPI 三格「—」＋ 图�
   const html = readFileSync(env.data.output, 'utf8');
   const text = visibleText(html);
   assert.ok(text.includes('肩围趋势'), '图注仍写该部位（裁定 4 反向）');
-  assert.ok(text.includes('该部位暂无趋势数据'), '图区应是空态句');
+  assert.ok(text.includes('这个部位还没有可以连成趋势的记录'), '图区应是空态句（#535 起「该部位暂无趋势数据」改人话）');
   assert.ok(!html.includes('<svg'), '兜底页不应有趋势 svg');
   assert.match(text, /均值\s*—/, '均值格「—」');
   assert.match(text, /最小\s*—/, '最小格「—」');
   assert.match(text, /最大\s*—/, '最大格「—」');
   assert.match(text, /变化量\s*—/, '变化量格「—」');
   assert.match(text, /趋势点\s*—/, '趋势点格「—」');
-  assert.ok(text.includes('该项目无记录'), '单项表应是空态');
+  assert.ok(text.includes('这个部位还没有记录'), '单项表应是空态（#535 起「该项目无记录」改人话）');
 });
 
 test('#360 空库语义不变：无记录时仍 missing-data（exit 4），不编兜底页', () => {
