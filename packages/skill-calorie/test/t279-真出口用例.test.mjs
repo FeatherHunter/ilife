@@ -38,6 +38,7 @@ const CLI = join(ROOT, 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js'
 /** 跑法与种子的**同一处定义**：判据件与可复跑脚本共用（`docs/skills/skill-calorie/t279-真跑.mjs`）。 */
 const H = await import(pathToFileURL(join(ROOT, 'docs', 'skills', 'skill-calorie', 't279-真跑.mjs')).href);
 const { openDb } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'index.js')).href);
+const { routesFor } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'triggers', 'routing.js')).href);
 const { SCENE_02_DIET } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'triggers', 'scene-02-diet.js')).href);
 
 /** 老技能词表有、地图设计期写进票面的那 70 条之外的运行期补词（13 条，`t280-真跑台账.md` §一 同表）。 */
@@ -336,6 +337,18 @@ test('#279 ③ 空窗：已知例外只有一条（看营养分析），且它�
 });
 
 /* ── ④ 失败要能指出卡在哪一步 ────────────────────────────────────────────── */
+
+test('#279 ④ 第 1 步：83 条词在运行期路由器里都命中得到本锁跑的那条命令', () => {
+  let 多解 = 0;
+  for (const route of ROUTES) {
+    const 命中 = routesFor(route.wakeWord);
+    assert.ok(命中.length > 0, where(route, 1, '运行期路由器按这条唤醒词查不到任何记录（词没接上）'));
+    assert.ok(命中.some((h) => h.key === route.key),
+      where(route, 1, '按这条唤醒词解析到的命令里没有本锁跑的那条：' + JSON.stringify(命中.map((h) => h.key))));
+    if (命中.length > 1) 多解 += 1;
+  }
+  console.log('READING #279 ④ 83 条词在路由器里都命中；其中 ' + 多解 + ' 个词在总表里挂不止一条记录');
+});
 
 test('#279 ④ 失败消息点得出卡在哪一步（唤醒词命中／命令／页面）', () => {
   const route = ROUTES.find((r) => r.wakeWord === '看今日饮食');
