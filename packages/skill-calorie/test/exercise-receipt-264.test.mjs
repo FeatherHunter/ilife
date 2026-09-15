@@ -63,7 +63,7 @@ function assertReceipt(r, what) {
   assert.ok(r.envelope !== null, what + ' stdout 不是信封 JSON');
   assert.equal(r.envelope.data.output, r.out, what + ' 信封交付路径不是本次 --html 那一份');
   assert.ok(isAbsolute(r.envelope.data.output), what + ' 交付路径不是绝对路径');
-  assert.ok(r.file.includes('运动 · 写后回执'), what + ' 缺运动眉标');
+  assert.ok(r.file.includes('运动写后回执'), what + ' 缺运动眉标');
   assert.ok(r.file.includes('对账信息'), what + ' 缺页尾对账折叠区');
   assert.deepEqual([...r.file.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     what + ' 的复制数据不是三格式菜单');

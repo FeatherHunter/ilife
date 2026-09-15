@@ -113,7 +113,8 @@ function assertFusion(r, what, opts = {}) {
 
   // 页头写人话：<title> 与眉标不许出现命令键／票号／工序词「移植」。
   const head = headTexts(r.file);
-  assert.equal(head.eyebrow, '运动 · 写后回执', what + ' 眉标不是 #264 的人话原文：' + head.eyebrow);
+  // #543：眉标去 `·`（`·` 是分隔符债，探针节点级必须为 0），类别「运动」与页族名都还在。
+  assert.equal(head.eyebrow, '运动写后回执', what + ' 眉标不是 #264 的人话原文：' + head.eyebrow);
   for (const [where, text] of [['<title>', head.title], ['眉标', head.eyebrow]]) {
     assert.ok(!/calorie\.[a-z]/.test(text), what + ' 的' + where + '里有命令键：' + text);
     assert.ok(!/\bt\d{3}\b/i.test(text), what + ' 的' + where + '里有票号：' + text);
@@ -144,8 +145,10 @@ function assertFusion(r, what, opts = {}) {
   assert.deepEqual([...r.file.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     what + ' 的复制数据不是三格式菜单');
   assert.ok(r.file.includes('ilife-copy-log'), what + ' 缺复制日志按钮');
-  // ⑥ 来源脚注 ＋ 口径行（都走 #420 的口径说明行）。
-  assert.ok(r.file.includes('数据来源 · '), what + ' 缺来源脚注');
+  // ⑥ 来源行 ＋ 口径行（都走 #420 的口径说明行）。
+  // #543：来源行由 `sourceLine` 的 `·` 串改**键值行**（`sui-facts`：「数据来源／窗口／记录数」三件事实
+  // 一条一行，`·` 是分隔符债）——仍判来源件在不在，只换形状不降覆盖。
+  assert.ok(r.file.includes('数据来源') && r.file.includes('sui-facts'), what + ' 缺来源脚注');
   assert.ok((r.file.match(/class="ilife-block-caliber"/g) ?? []).length >= 2,
     what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');
   // ⑦ 运动口径：不许露饮食口径的「克」。

@@ -48,6 +48,21 @@ export function exerciseUiCss(): string {
     + '.sui-fact-v{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
     // ── 并列小胶囊（单位／筛选这类短词并排；`renderChips` 的件，本类只管行距与折行）──
     + '.sui-caps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 16px}'
+    // ── 并列字段清单的行题（「本次写入的字段」这一行；字段名本身走 `renderChips` 的胶囊件）──
+    + '.sui-fields-k{font-size:12px;color:var(--fg3);margin:12px 0 4px}'
+    // ── 字段网格（#543 视觉复评 P0-1／P0-2）：16 枚字段胶囊原来靠 `margin` 自由折行、行末参差，
+    //    改等宽网格（一列一格），桌面多列／窄屏自动落；格子抬到 32px，好认也好按。──
+    + '.sui-fieldgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:4px 0 16px}'
+    + '.sui-fieldgrid .ilife-block-chip{display:flex;align-items:center;justify-content:center;min-height:32px}'
+    // ── 页级覆盖（#543 视觉复评 P0-1 ＋ 表头字号）：共享块的表卡是「上限 680 ＋ 居中」，上方卡片是
+    //    960 整列 ⇒ 表正文比卡正文内缩 126px（实测 x373 vs x247），一页两条对齐轴。本族页把表卡
+    //    拉回内容轴、表头从 11.5px 抬到 12px 下限；只在本页样式段加规则，不碰共享层源码。──
+    + '.ilife-page .ilife-block-data-table{max-width:none;margin-inline:0}'
+    + '.ilife-page .ilife-block-data-table th{font-size:12px}'
+    // ── 页级覆盖（视觉复评 r2 的 P0-A／P0-B）：页内导航的锚点是真 `<a href>`（可点）⇒ 抬到 44px
+    //    触摸面；窄屏表格回退标签原来 11.5px，抬到 12px 下限。──
+    + '.ilife-page .ilife-block-toc a{min-height:44px;display:inline-flex;align-items:center;padding-inline:14px}'
+    + '@media (max-width:640px){.ilife-page .ilife-block-data-table td::before{font-size:12px}}'
     // ── 脚注小字（截断明示、口径旁注）──
     + '.sui-note{font-size:12px;line-height:1.6;color:var(--fg2);margin:8px 0 0}'
     // ── 目标环卡（`sportDocs.ringCard()` 那几个 `ilife-block-ring-*` 类）：此前全仓没有一条规则，
@@ -114,6 +129,21 @@ export function factStrip(facts: ReadonlyArray<{ k: string; v: string }>): strin
  *  传入的是**已产好的** `renderChips` 串——本件不重造徽章形状（公共层是唯一产出者）。 */
 export function capsStrip(chipsHtml: string): string {
   return chipsHtml === '' ? '' : '<div class="sui-caps">' + chipsHtml + '</div>';
+}
+
+/** 行文整形（回执副标题／单源措辞的显示层）：`·`／`；`／`;`／`、` 一律改行文逗号 `，`，
+ *  **连它两侧的空白一起收**——`卡 · 30 分钟` 原文两侧有空格，只换符号会印成 `卡 ， 30 分钟`。
+ *  `，` 不在探针并列集里（probe.mjs:39），事实一字不少，只换连接符；信封与库值不动。 */
+export function inlineShaped(s: string): string {
+  return s.replace(/\s*[·；;、]\s*/g, '，');
+}
+
+/** 回执来源名（显示层）：库表名 `exercise_log` 改读者看得懂的「运动记录」；
+ *  机器值仍在复制日志来源段里（`copyLog` 原样透传，不动）。空来源回空串（键值行整条不出）。 */
+export function receiptSource(source: string): string {
+  const s = source.trim();
+  if (s === '') return '';
+  return s.includes('exercise_log') ? '运动记录' : s;
 }
 
 /** 显示层取整（#523）：`153.60000000000002` → `153.6`；`21053.499999999985` → `21053.5`；

@@ -77,9 +77,10 @@ const DECLS = [...EXERCISE_ROUTES, ...HOME_ROUTES];
 
 /** 页族身份（键 → 眉标）：产物层面的页身份针，**换错页件即红**。 */
 const EYEBROW_OF_KEY = new Map([
-  ['calorie.exercise.add', '运动 · 写后回执'],
-  ['calorie.exercise.update', '运动 · 写后回执'],
-  ['calorie.exercise.remove', '运动 · 写后回执'],
+  // #543（写后回执 13 页）：眉标去 `·`——同上，类别「运动」与页族名都还在。
+  ['calorie.exercise.add', '运动写后回执'],
+  ['calorie.exercise.update', '运动写后回执'],
+  ['calorie.exercise.remove', '运动写后回执'],
   // #523（汇总／记录级明细／对照目标三族）：眉标去 `·`——`·` 是分隔符债，探针节点级必须为 0；
   // 类别「运动」与页族名都还在（`运动` ＋ `汇总`），只是不拿符号串。其余两族的眉标归 #524／#525。
   ['calorie.view.exercise', '运动汇总'],
