@@ -175,3 +175,66 @@ test('#276 ⑤ 守卫：看有备注的饮食记录 的 hasNote 筛选参数不�
     assert.equal(paramsOf(r.cli).hasNote, true, `${r.wakeWord} 的 hasNote 筛选参数丢了`);
   }
 });
+
+/** 「看食品来源统计」那一族的词（编排者 2026-09-15 曾据旧读数派过「接错到分类食品列表」的活，本用例是那一处的门）。 */
+const SOURCE_STATS_WORDS = ['看食品来源统计', '看食品来源分布'];
+
+test('#276 ⑥ 看食品来源统计 落在来源统计页上（不是分类食品列表）', () => {
+  // ① 声明面：两条词都落在 `calorie.view.source-stats` 上，一条也不许落 `calorie.view.library`
+  const rows = SOURCE_STATS_WORDS.map((w) => DIET_ROUTES.find((r) => r.wakeWord === w));
+  for (const [i, r] of rows.entries()) {
+    assert.ok(r, `声明件里找不到 ${SOURCE_STATS_WORDS[i]}`);
+    assert.equal(r.kind, 'exec', `${r.wakeWord} 必须是可执行记录`);
+    assert.equal(r.key, 'calorie.view.source-stats', `${r.wakeWord} 接错命令了（应落来源统计，不是分类食品列表）`);
+    assert.match(String(r.cli), /calorie-cmd-read calorie\.view\.source-stats\b/, `${r.wakeWord} 的 cli 与 key 不同源`);
+  }
+  // ② 记录面：生成物与声明件逐字一致（声明改了没重跑 pnpm gen 即红）
+  for (const r of rows) {
+    const rec = ALL_ROUTES.find((x) => x.wakeWord === r.wakeWord);
+    assert.ok(rec, `记录面里找不到 ${r.wakeWord}`);
+    assert.equal(rec.key, r.key);
+    assert.equal(rec.cli, r.cli, `${r.wakeWord} 的记录面与声明件走散`);
+  }
+  // ③ 出口面：照该行 cli 实跑，出的是**来源统计页**，不是分类食品列表
+  //    先量一条**空库负向读数**（两条命令的缺失阻断各有各的话，这也是它们不同源的证据）
+  const empty = mkdtempSync(join(tmpdir(), 't276-src-empty-'));
+  try {
+    const er = spawnSync(NODE_BIN, ['--require', join(HERE, 'freeze-clock.cjs'), BIN, 'calorie.view.source-stats', '--params', '{}'], {
+      encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: empty },
+    });
+    assert.notEqual(er.status, 0, '空库跑来源统计应当是缺失阻断');
+    assert.match(String(er.stderr), /来源统计/, '空库的阻断语不是来源统计那条（接错命令即说不出这句）');
+    assert.doesNotMatch(String(er.stderr), /先导入食品/, '空库的阻断语是分类食品列表那条（＝接错命令）');
+  } finally {
+    rmSync(empty, { recursive: true, force: true });
+  }
+  const { dir, env } = seedDir();
+  try {
+    const db = openDb(join(dir, 'calorie_data.db'));
+    // 食品库要有行，来源统计才有「来源」可数（两张页取的都是 `nutrition_products`，判据看页头不是看有没有数据）
+    db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('鸡胸肉', '测试', 165, 31, 3.6, 0, 70, '蛋白类', '测试')").run();
+    db.close();
+    for (const r of rows) {
+      const run = spawnSync(NODE_BIN, ['--require', join(HERE, 'freeze-clock.cjs'), BIN, r.key, '--params', '{}'], {
+        encoding: 'utf8', env: { ...process.env, ...env },
+      });
+      assert.equal(run.status, 0, `${r.wakeWord} 实跑 exit ${run.status}；stderr=${String(run.stderr || '').slice(-300)}`);
+      const envl = JSON.parse(run.stdout);
+      assert.equal(envl.key, 'calorie.view.source-stats');
+      const html = readFileSync(envl.data.output, 'utf8');
+      assert.match(html, /^<!doctype html>/i, `${r.wakeWord} 的产物不是完整文档`);
+      /* 判「出的是哪张页」只用**已实测的**区分物（见 `.scratch/t276/probe-t276.out.txt` 的对照读数）：
+         来源统计页的页头带「来源统计」；
+         分类食品列表（`calorie.view.library`）那一条路的页头是「食品库」。
+         另有两条读数级区分：来源统计的 `metrics` 是 `total`＋`sources`，食品库的是 `total`＋`statsTotal`。 */
+      const h1 = /ilife-block-page-shell-title">([^<]{0,120})</.exec(html);
+      assert.ok(h1, `${r.wakeWord} 的页里没有页头`);
+      assert.match(h1[1], /来源统计/, `${r.wakeWord} 的页头不是来源统计页（实测页头＝${h1[1]}）`);
+      assert.doesNotMatch(h1[1], /食品库/, `${r.wakeWord} 出的是分类食品列表（页头＝${h1[1]}）`);
+      assert.ok(typeof envl.data.metrics.sources === 'number', `${r.wakeWord} 的读数不是来源统计那一套（缺 sources）`);
+      assert.equal(envl.data.metrics.statsTotal, undefined, `${r.wakeWord} 的读数是分类食品列表那一套（statsTotal）`);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -3,7 +3,10 @@
  * 对外三件（铁律五「不多于五个」）：
  *   ① `DIET_COMMANDS`——命令声明（权威源在 `commands.ts`，这里只是转出）；
  *   ② `runDietView(key, params, db)`——读命令入口（查不到饮食键即抛，不当静默兜底）；
- *   ③ `runDietWrite(key, params, db)`——写命令入口（同上）。
+ *   ③ `runDietWrite(key, params, db)`——写命令入口（同上）；
+ *   ④ `buildMealDistributionView(db, mealRaw, start, end)`——**餐别分布取数**（**#271／#276 跨能力调用**：
+ *      `calorie.view.diet` 那一族五条词住 `src/home/`，它要按 `meal` 出餐别分布页。取数口径与餐别取值
+ *      域住本能力，故经这道门出去；页装配仍由调用方自己的文档件接 `diet/reviewDocs.ts` 的具名区块）。
  *
  * 域内其他件（记饮食 `log.ts`／改饮食 `edit.ts`／看饮食 `today.ts`／查食品 `library.ts`＋`products.ts`／
  * 看营养 `nutrition.ts`／看排行 `ranking.ts`／饮食复盘 `review.ts`／路由声明 `routes.ts`）
@@ -13,8 +16,11 @@ import type { DatabaseSync } from 'node:sqlite';
 import { CalorieRenderError } from '../render/errors.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import { DIET_COMMANDS } from './commands.js';
+import { buildMealDistributionView } from './review.js';
 
 export { DIET_COMMANDS } from './commands.js';
+export { buildMealDistributionView } from './review.js';
+export type { MealDistributionView } from './reviewDocs.js';
 
 const BY_KEY = new Map(DIET_COMMANDS.map((c) => [c.key, c]));
 
