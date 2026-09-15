@@ -83,8 +83,12 @@ describe('t406 · 记账写入域命令声明与注册表', () => {
   });
 
   it('注册表一能力一行；迁移过的命令的形状从它派生（形状事实不写在页面这一层）', () => {
-    assert.equal(REGISTRY_KEYS.length, 2);
-    assert.deepEqual([...REGISTRY_KEYS].sort(), ['bill.record.add', 'bill.record.update']);
+    // #411 起注册表纳两域六条：写入域两条（记一笔／改记录）＋ 查询域四条（查今天／查区间／搜备注／查账单详情）。
+    assert.equal(REGISTRY_KEYS.length, 6);
+    assert.deepEqual(
+      [...REGISTRY_KEYS].sort(),
+      ['bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update'],
+    );
     assert.equal(Object.keys(BILL_KEY_SHAPES).length, 16, '16 条联动命令的形状表不缩水');
     for (const key of REGISTRY_KEYS) {
       assert.equal(BILL_KEY_SHAPES[key], REGISTRY[key].shape, key + ' 的形状须由注册表派生');
