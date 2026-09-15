@@ -357,7 +357,7 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
   sections.push('<section id="' + SEC_GOAL.id + '"><h2 class="' + H2_CLASS + '">' + secTitle(SEC_GOAL) + '</h2>'
     + renderKpiGrid(kpiCards(f, input.historyDays))
     // 日均与缺口的读法都只这写一处：本页四个读数各归其位，页脚不再重复第二遍。
-    + renderCaliberLine('日均按窗口天数摊平，没记录的日子也算一天。缺口是消耗减摄入的差，正数表示摄入比消耗少。')
+    + renderCaliberLine('日均按窗口天数摊平，没记录的日子也算一天。') + renderCaliberLine('缺口是消耗减摄入的差，正数表示摄入比消耗少。')
     // 四项目标落一项：三项目标值如实上屏 ＋ 一句「本期只算热量」（缺项说明，见 NOT_COUNTED_NOTE）。
     + notCountedBlock(f)
     + '</section>');
@@ -393,7 +393,7 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
         : '这个窗口里只有一天有记录，折线图要两天以上才出。')
         + '下面这张表看的是近 ' + input.historyDays + ' 天，两处不是同一个窗口。')
       // 达成情况这一列的说法必须在页上写清，否则「达标」两个字各有各的解释。
-      + renderCaliberLine('达标口径：当日摄入占目标的 80% 到 120% 之间算达标。没记录的日子不列表，既不算达标也不算落空。')
+      + renderCaliberLine('达标口径：当日摄入占目标的 80% 到 120% 之间算达标。') + renderCaliberLine('没记录的日子不列表，既不算达标也不算落空。')
       + '</section>');
   }
   // 复制区（裁定 7 ＋ 用户缺陷 6）：两颗按钮、无标题（标题位空着，公共层即不出 `<h2>`），

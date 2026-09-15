@@ -285,3 +285,22 @@ test('#467 复核整改五条：量程判定两相 ＋ 卡四带窗口 ＋ 窗�
   const titleTag = /<title>[\s\S]*?<\/title>/.exec(r.file)[0];
   assert.ok(!titleTag.includes('·'), '<title> 里出现 `·`（可见文本的分隔符懒政）');
 });
+
+/** #467 切片 · 用户缺陷⑤：两句话形状化（一条事实一行口径行）。
+ *
+ *  只增本用例，不动上面五个旧用例的一字一句（不重断旧形）。
+ *  两句话各拆成两行 `renderCaliberLine`（既有件，不新造形状）：
+ *  「日均按窗口天数摊平…」→ 日均口径一行 ＋ 缺口口径一行；
+ *  「达标口径：当日摄入…」→ 达标带一行 ＋ 没记录处理一行。
+ *  判据只量「各占一行、合串行消失」，不锁口径行总数与其他区块。 */
+test('#467 缺陷⑤两句话形状化：一条事实一行口径行', () => {
+  const r = run(seededDir(), '{"window":"30d"}');
+  assert.equal(r.status, 0, 'exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
+  const lines = calibers(r.file);
+  assert.ok(lines.includes('日均按窗口天数摊平，没记录的日子也算一天。'), '缺日均口径独占的一行');
+  assert.ok(lines.includes('缺口是消耗减摄入的差，正数表示摄入比消耗少。'), '缺缺口口径独占的一行');
+  assert.ok(lines.includes('达标口径：当日摄入占目标的 80% 到 120% 之间算达标。'), '缺达标带独占的一行');
+  assert.ok(lines.includes('没记录的日子不列表，既不算达标也不算落空。'), '缺没记录处理独占的一行');
+  assert.ok(!lines.some((t) => t.includes('摊平') && t.includes('缺口是')), '两事实仍挤在一个口径行里');
+  assert.ok(!lines.some((t) => t.includes('达标口径') && t.includes('不列表')), '两事实仍挤在一个口径行里');
+});
