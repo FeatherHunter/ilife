@@ -389,7 +389,7 @@ type _V05 = Expect<Equal<Mod['TOAST_DEFAULTS'], {
 type _V06 = Expect<Equal<Mod['ACTION_BAR_KINDS'], readonly ['primary', 'red', 'ghost']>>;
 type _V07 = Expect<Equal<Mod['ACTION_BAR_DEFAULTS'], {
   readonly copyDataLabel: '复制数据'; readonly copyLogLabel: '复制日志'; readonly ghostOwnRow: true;
-  readonly evenRowPairs: 2; readonly minHeightPx: 40; readonly fontSizePx: 12; readonly fontWeight: 600;
+  readonly evenRowPairs: 2; readonly minHeightPx: 44; readonly fontSizePx: 12; readonly fontWeight: 600;
   readonly ghostBorderAlpha: 0.38;
 }>>;
 type _V08 = Expect<Equal<Mod['STATUS_DEFAULT_TEXT'], { readonly ok: '成功'; readonly warn: '警告'; readonly danger: '失败'; readonly empty: '无数据' }>>;
