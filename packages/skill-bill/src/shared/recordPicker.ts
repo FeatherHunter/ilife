@@ -242,6 +242,6 @@ export function diffRowsFor(input: {
   /** 允许改的字段名单（取自槽位表，本件不另抄一份）。 */
   readonly fields: readonly string[];
 }): readonly DiffRow[] {
-  const fields = input.fields.filter((f) => given(input.params[f]));
+  const fields = input.fields;
   return diffOf({ fields, before: { ...input.row }, after: input.params });
 }
