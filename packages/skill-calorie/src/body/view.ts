@@ -41,11 +41,21 @@ export function viewBodyComposition(params: Record<string, unknown>, db: Databas
 /** `calorie.view.body-measure` · 围度看（`metric` 缺省自动挑最近有数据部位出趋势，全量表不动；窗口默认 90 天）。 */
 export function viewBodyMeasure(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const metric = optStr(params, 'metric');
-  const days = optNum(params, 'days') ?? 90;
+  /** 点名给的窗口与缺省兜的窗口在这里分开记：页面据此换主次（「看围度趋势」是显式 `days:90`，
+   *  「看围度」是缺省 90 天——两条词当刻会出**逐字节相同**的产物，见 #534 波次裁定）。 */
+  const daysGiven = optNum(params, 'days');
+  const days = daysGiven ?? 90;
   const limit = optNum(params, 'limit') ?? 20;
   const dateFrom = dayField(params, 'dateFrom');
   const dateTo = dayField(params, 'dateTo');
-  const v = buildBodyMeasureView(db, { metric: metric ?? undefined, days: days as number, limit: limit as number, dateFrom: dateFrom ?? undefined, dateTo: dateTo ?? undefined });
+  const v = buildBodyMeasureView(db, {
+    metric: metric ?? undefined,
+    days: days as number,
+    limit: limit as number,
+    dateFrom: dateFrom ?? undefined,
+    dateTo: dateTo ?? undefined,
+    windowGiven: daysGiven !== undefined || dateFrom !== null || dateTo !== null,
+  });
   const metrics = nums({ total: v.total, latestVal: v.latestVal, trendDays: v.trend.length });
   return { data: { metrics }, html: buildBodyMeasureDoc(v) };
 }

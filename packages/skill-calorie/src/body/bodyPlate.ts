@@ -196,6 +196,11 @@ export interface BodyMeasureView {
   /** #360 · 趋势五项 KPI 的唯一来源（由 `trend` 的 `avgVal` 序列算出，与图同批定；
    * 口径照老 `body_measurements_view.html:454-462` 的 `kpiFor`：均值保留 2 位，`n<2` 时变化量为 `null`）。 */
   kpi: { count: number; avg: number | null; min: number | null; max: number | null; delta: number | null };
+  /** #534 波次裁定 · 窗口是「调用方点名给的」还是「缺省兜的」。
+   *  两条唤醒词「看围度」与「看围度趋势」当刻同键同参（缺省 90 天 vs 显式 `days:90`）⇒ 产物**逐字节相同**，
+   *  在验收墙上是两格一模一样的东西。本字段让页面按「谁在问」换主次（趋势那条以趋势为主、记录那条以全量记录为主），
+   *  **不动任何取数与窗口语义**：缺省仍是近 90 天，`window` 文案照旧。 */
+  windowGiven: boolean;
 }
 
 /** #360 · 趋势 KPI 单一来源（`bodyDocs` 只渲染不重算，KPI 与图必然一致）。 */
@@ -223,9 +228,10 @@ function emptyMeasureKpi(): {
 
 export function buildBodyMeasureView(
   db: DatabaseSync,
-  opts: { metric?: string; days?: number; limit?: number; dateFrom?: string; dateTo?: string } = {},
+  opts: { metric?: string; days?: number; limit?: number; dateFrom?: string; dateTo?: string; windowGiven?: boolean } = {},
 ): BodyMeasureView {
   const days = opts.days ?? 90;
+  const windowGiven = opts.windowGiven === true;
   if (!Number.isInteger(days) || days < 1 || days > 365) {
     throw new CalorieRenderError('bad-input', 'days 须为 1..365 整数');
   }
@@ -255,12 +261,12 @@ export function buildBodyMeasureView(
           limit: 1,
         });
         if (anyRows.length === 0) throw new CalorieRenderError('missing-data', '无围度记录');
-        return { metric: opts.metric, items: [], total: 0, trend: [], latestVal: null, autoMetric: null, kpi: emptyMeasureKpi() };
+        return { metric: opts.metric, items: [], total: 0, trend: [], latestVal: null, autoMetric: null, kpi: emptyMeasureKpi(), windowGiven };
       }
       const trend = trendMeasurement(db, opts.metric, days);
       const v = (items[0] as Record<string, unknown>)[opts.metric];
       const latestVal = typeof v === 'number' ? v : null;
-      return { metric: opts.metric, items, total: items.length, trend, latestVal, autoMetric: null, kpi: measureTrendKpi(trend) };
+      return { metric: opts.metric, items, total: items.length, trend, latestVal, autoMetric: null, kpi: measureTrendKpi(trend), windowGiven };
     }
     const items = listMeasurements(db, {
       days: useRange ? undefined : days,
@@ -279,7 +285,7 @@ export function buildBodyMeasureView(
       const cand = (r as Record<string, unknown>)[picked];
       if (typeof cand === 'number') { latestVal = cand; break; }
     }
-    return { metric: null, items, total: items.length, trend, latestVal, autoMetric: picked, kpi: measureTrendKpi(trend) };
+    return { metric: null, items, total: items.length, trend, latestVal, autoMetric: picked, kpi: measureTrendKpi(trend), windowGiven };
   } catch (e) {
     if (e instanceof CalorieRenderError) throw e;
     if (e instanceof FetchError) throw new CalorieRenderError('missing-data', e.message);
