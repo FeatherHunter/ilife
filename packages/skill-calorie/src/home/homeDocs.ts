@@ -249,7 +249,7 @@ export function buildHomeDoc(d: HomeData): string {
           /* #401：空白日不补 0、只连线——没有记录的日期是 `null`，折线默认在 `null` 处抬笔断段，
              稀疏记录会只剩孤点（口径同 #160／`0da6472` 另外 4 处调用点）。 */
           connectNulls: true,
-          yTicks: 3,
+          yTicks: 3, labels: 'select', format: (v: number) => String(Math.round(v)),
           markLine: { value: d.week.avgIntake ?? undefined, label: '周均' },
         },
       },
