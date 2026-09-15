@@ -1,6 +1,6 @@
 /** base-paint/charts：#78 图表层运行时（契约 §3.5／§6.5）。
  *
- * 落地冻结面里 #78 的三条运行时出口：`charts`（8 方法）／`buildChartsHelpersJs`；
+ * 实施冻结面里 #78 的三条运行时出口：`charts`（8 方法）／`buildChartsHelpersJs`；
  * `ChartError` 与本文件**不**从 `src/index.ts` 导出（冻结面 44 条内无该运行时条目，
  * 与 `TemplateError`／`ControlsError` 同口径：调用方按 `name === 'ChartError'` ＋ `code` 判定）。
  *
@@ -25,7 +25,7 @@
  *    图标 📊 与提示「有记录后自动生成图表」沿用旧基线（纯 UI 文案，非契约常量）；
  *  - `dotStyle`／`line.dotSize`／`combo.tooltip` 旧版是死参数，按 R21 实现为**新能力**：
  *    `dotStyle` = 数据点内联 `style` 文本（逐点样式覆盖），`dotSize` = 点直径，`tooltip` = `data-tip` 数据属性；
- *  - `avgLine(n)` = 旧语义的**均线序列**（窗口收敛 `3..items.length`，`old-baseline.md` §2.2），
+ *  - `avgLine(n)` = 旧语义的**均线序列**（窗口统一为 `3..items.length`，`old-baseline.md` §2.2），
  *    不是水平线；`emptyText`／`compact`／`bar.grid` 旧版是死参数，按冻结类型补齐为有效选项；
  *  - `prefix` 覆盖只影响 `buildChartsHelpersJs` **产出的 CSS 文本**；`charts.*` 产出的 HTML 恒用
  *    `STYLE_PREFIX` 命名空间（与 `SharedHelpersInput.dataAttr` 覆盖口径同构，不一致由调用方自负）。
@@ -224,7 +224,7 @@ function normalizeItems(raw: unknown, kind: ChartKind, allowNull: boolean, mode:
   });
 }
 
-/** `pct` 非数 → `pct-invalid`；超界收敛 0~100（旧 §6.5 逐字行为）。 */
+/** `pct` 非数 → `pct-invalid`；超界统一为 0~100（旧 §6.5 逐字行为）。 */
 function normalizePct(raw: unknown, kind: ChartKind): number {
   if (!isNum(raw)) badPct('charts.' + kind + ': pct 无效: ' + String(raw));
   return Math.max(0, Math.min(100, raw));
@@ -311,7 +311,7 @@ function tipAttrs(common: ResolvedCommon, makeText: () => string): string {
 
 /** 八个 kind **一律** `preserveAspectRatio="xMidYMid meet"`（等比，不拉伸文字）。
  *
- *  #507（2026-09-15 公共层视觉底座返工）撤掉了折线／组合／散点三族的 `none` 满宽拉伸：
+ *  #507（2026-09-15 公共层视觉机制返工）撤掉了折线／组合／散点三族的 `none` 满宽拉伸：
  *  这三族当年取 `none` 的**唯一理由是**移动端 CSS 把 svg 盒高钉成 `lineHeightMobilePx`（150px），
  *  非等比压低后 `meet` 会等比缩到 228.6px 宽、左右各留 ~73px 空白（R2-N9）。那条钉高在
  *  #424 返工时就撤了（改成 `height:auto` 按 viewBox 长宽比派生高度，见 `chartsCss` 的 ≤720px 段），
@@ -414,7 +414,7 @@ const LINE_TEXT_MOBILE = { tick: 19.4, xlabel: 19.4, value: 19.4, last: 19.4, ma
  *  720px 档盒宽 652 → 实渲 22.5px，721px 档盒宽 651 只剩 10.7px，再往宽走才慢慢回到 15px。
  *
  *  逐档补偿的算式：**用户单位 = 目标像素 ÷ 该档实测缩放比**。
- *  缩放比取自 `docs/base/base-render/t507-视觉底座-证据.md` 的 CDP 四档实测（盒宽 ÷ 580）：
+ *  缩放比取自 `docs/base/base-render/` 下 t507 证据的 CDP 四档实测（盒宽 ÷ 580）：
  *  512px → 盒 450×201.72 → 0.7759；820px → 750×336.20 → 1.2931；1000px／1440px → 930×416.89 → 1.6034
  *  （930 是卡片宽度上限，故 1000px 与 1440px 同档、实渲同值）。
  *
@@ -515,7 +515,7 @@ function domainOf(
   return [lo, hi];
 }
 
-/** `yTicks` 收敛 2-6（旧 `charts.js:498`）；`false`／非数 → 0 条。 */
+/** `yTicks` 统一为 2-6（旧 `charts.js:498`）；`false`／非数 → 0 条。 */
 function tickCount(value: number | false | undefined): number {
   if (!isNum(value)) return 0;
   return Math.max(2, Math.min(6, Math.round(value)));
@@ -951,9 +951,9 @@ function renderLine(raw: LineChartInput): ChartOutput {
   };
   const seriesPts = series.map((s, si) => ptsOf(s, si));
 
-  /* avgLine：均线序列（窗口收敛 3..items.length）。旧版 `charts.js:414` 是 `if(opt.avgLine&&!opt.series)`
+  /* avgLine：均线序列（窗口统一为 3..items.length）。旧版 `charts.js:414` 是 `if(opt.avgLine&&!opt.series)`
    *  ——传了 `series` 就不叠加（R2-N6，调用方自己管序列）。#424 放开这条互斥：`series` 同时用于给**主序列**
-   *  起图例名（旧壳 `chart-multi-v2` 的图例写「每次称重／7 天均线」，均线是引擎现算的、调用方拿不到它的
+   *  起图例名（旧help模板 `chart-multi-v2` 的图例写「每次称重／7 天均线」，均线是引擎现算的、调用方拿不到它的
    *  数据）——两种用法合并，叠加均线仍由 `avgLine` 决定。主序列恒 `series[0]`、均线恒追加在末尾，
    *  「只看第一条」的逻辑（`highlightLast`／`markPoint`）不受影响。 */
   const avgWindow = line.avgLine === undefined
@@ -1167,7 +1167,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
         + '" x2="' + n1(frame.x1) + '" y2="' + n1(my) + '" stroke="' + esc(color)
         + '" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>'
         + '<text class="' + STYLE_PREFIX + 'charts-marktext" x="' + n1(frame.x1 - 2) + '" y="' + n1(my - 4)
-        /* t-chartfix #160：标签恒用静音灰 `--fg3,#86868b`（老壳 `公共组件/assets/charts.js:87`
+        /* t-chartfix #160：标签恒用静音灰 `--fg3,#86868b`（老help模板 `公共组件/assets/charts.js:87`
          * 同款），**线**仍跟序列色／`mark.color`——线色由 3 条测试锁，标签色不锁。 */
         + '" text-anchor="end" fill="' + MUTED_COLOR + '">'
         + esc(mark.label !== undefined && mark.label !== null ? String(mark.label) : String(mark.value)) + '</text>';
@@ -2049,7 +2049,7 @@ function helpersStyleId(input?: ChartsHelpersInput): string {
  *  不向 `window.<id>`／`globalThis.<id>` 赋值／不引 `node:`。
  *
  *  首步即幂等自注入 `<style id="{styleId ?? CHARTS_STYLE_ID}">`（R3／R12）；图表 CSS 文本
- *  **只此一处产出**（`chartsCss`），#75 落地时复用同一份文本，不得重述。 */
+ *  **只此一处产出**（`chartsCss`），#75 实施时复用同一份文本，不得重述。 */
 export const buildChartsHelpersJs: BuildChartsHelpersJs = (input) => {
   const prefix = helpersPrefix(input);
   const styleId = helpersStyleId(input);

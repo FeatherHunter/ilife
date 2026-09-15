@@ -92,7 +92,7 @@ export type CreateCopyRuntime = (ports: CopyPorts) => CopyRuntime;
 /* ── 复制接线（FX-3／FX-17／#90 可直接使用） ────────────────── */
 
 /** 复制按钮上承载 `actionId` 的属性名（FX-17④，冻结）：`renderActionBar`／`renderErrorReceipt`
- *  ／HELP 壳**渲染期**写入该属性；调用方的 `CopyActionHostPort.listActionIds()` 据此发现 id 集合。
+ *  ／HELP模板**渲染期**写入该属性；调用方的 `CopyActionHostPort.listActionIds()` 据此发现 id 集合。
  *  文本仍走 `SharedHelpersInput.dataAttr`（缺省 `DEFAULT_DATA_ATTR = 'data-t'`）——id 与文本是两个属性，不得混用。 */
 export const ACTION_ID_ATTR = 'data-action-id' as const;
 
@@ -105,7 +105,7 @@ export const ACTION_ID_ATTR = 'data-action-id' as const;
  *
  *  约定：全部 base-paint actionId（含 `HELP_COPY_ACTIONS`）在**同一页面内唯一**；调用方可覆盖
  *  `ErrorReceiptInput.dataActionId`／`logActionId`，覆盖值同样必须唯一且可被 `listActionIds()` 发现。
- *  **例外（#78 记账，R27）**：HELP 壳按 §3.5.3 字面把三个复制目标的 actionId **逐字**写入**每张**场景卡
+ *  **例外（#78 记账，R27）**：HELP模板按 §3.5.3 字面把三个复制目标的 actionId **逐字**写入**每张**场景卡
  *  （多场景卡必然页内重复，且 §3.5.3 禁「另定通配约定」）。歧义由宿主适配端解决——
  *  `readDataText(actionId)` 在激活处理内**同步**调用（§3.3 语义 2），适配端按「最近一次激活元素」关联。
  */
@@ -121,7 +121,7 @@ export interface CopyActionHostPort {
    *  顺序无语义、可含重复但须自行去重）。`bindCopyAction` **只**订阅这里列出的 id——
    *  不得猜 id、不得约定通配前缀、不得订阅未列出的 id。
    *  允许包含**非复制按钮**（如 `ActionBarButton` 的场景按钮）：binder 一律靠
-   *  `readDataText → undefined` 跳过，不报错、不另设白名单。 */
+   *  `readDataText → undefined` 跳过，不报错、不另设允许清单。 */
   listActionIds(): readonly string[];
   /** 读取渲染期写入的复制文本（`dataAttr`，缺省 `data-t`）；该 actionId 无文本返回 undefined。 */
   readDataText(actionId: string): string | undefined;
@@ -279,7 +279,7 @@ export interface CopyFormatTexts {
   readonly json: string;
   readonly csv: string;
   /** 每个格式项右侧的用途提示（老仓原样：`粘贴给 AI / 自己看`／`结构化存档`／`表格导入`）。
-   *  **给人看的字**不落渲染层：调用方不给就不出提示行（同 `DataTextInput` 的 title／note 口径）。 */
+   *  **给人看的字**不落页面交付：调用方不给就不出提示行（同 `DataTextInput` 的 title／note 口径）。 */
   readonly hints?: readonly [string, string, string] | readonly string[];
 }
 
@@ -332,7 +332,7 @@ export interface StatusBadgeInput {
   readonly text?: string;
 }
 
-/** 非法 status 白名单降级 empty（不抛错，防无样式徽章）。 */
+/** 非法 status 允许清单降级 empty（不抛错，防无样式徽章）。 */
 export type RenderStatusBadge = (input: StatusBadgeInput) => string;
 
 export interface EmptyStateInput {

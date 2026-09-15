@@ -1,6 +1,6 @@
 /** base-paint/spec/charts：图表层契约（#78 冻结面）。
  *
- * B4：**去掉**「技能自营 canvas」白名单例外——唯一实现住 base-paint。
+ * B4：**去掉**「技能自营 canvas」允许清单例外——唯一实现住 base-paint。
  * 纯 CSS + SVG 字符串产出（无 `<canvas>`、无第三方、无 `node:`），
  * 结构违规**直接抛错**，空数组走 `emptyState` 联动（不静默空图）。
  */
@@ -166,7 +166,7 @@ export interface DonutChartInput {
   readonly options?: DonutChartOptions;
 }
 
-/** `pct` 非数报错，超界收敛 0~100（旧 §6.5 逐字行为）。 */
+/** `pct` 非数报错，超界统一为 0~100（旧 §6.5 逐字行为）。 */
 export interface ProgressChartInput {
   readonly pct: number;
   readonly options?: ProgressChartOptions;

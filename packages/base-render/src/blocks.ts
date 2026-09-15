@@ -249,7 +249,7 @@ export interface TocBlockInput {
 }
 
 /** #420-1 页内导航区块（`<nav aria-label="页内导航">` ＋ 逐项 `<a href="#id">`）。
- *  空列表＝不出这一块（与「没内容不留空壳」同口径，返回空串）；非数组／项缺 `id`／`text` → `bad-input`。 */
+ *  空列表＝不出这一块（与「没内容不留空块」同口径，返回空串）；非数组／项缺 `id`／`text` → `bad-input`。 */
 export function renderTocBlock(input: TocBlockInput): string {
   assertPlainObject(input, 'renderTocBlock: input');
   assertNoInlineHandler(input, 'renderTocBlock: input');
@@ -454,7 +454,7 @@ export interface DistributionRowsInput {
 }
 
 /** #421-2 分布条行：`名称 ｜ 条 ｜ 数值` 一格三栏，逐行拼出（行即件，不另加容器类）。
- *  `rows: []` ＝ 空串（与「没内容不留空壳」同口径）；行内校验逐条 fail-fast。 */
+ *  `rows: []` ＝ 空串（与「没内容不留空块」同口径）；行内校验逐条 fail-fast。 */
 export function renderDistributionRows(input: DistributionRowsInput): string {
   assertPlainObject(input, 'renderDistributionRows: input');
   assertNoInlineHandler(input, 'renderDistributionRows: input');
@@ -1186,7 +1186,7 @@ const RADIUS_PILL = 999;
 /** 区块 CSS：12 区各自实现（键与 `BLOCK_STYLE_SECTIONS` 一一对应，缺区导入即抛，防静默缺样式）。 */
 const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => string> = {
   pageShell: (p) => [
-    // #179 整页基座（文档级）：本区是「共享页面模板」的唯一落点（`style.test.mjs` T22 明写 body／html
+    // #179 整页基础（文档级）：本区是「共享页面模板」的唯一落点（`style.test.mjs` T22 明写 body／html
     // 规则归 #104，`buildStyleSheet()` 不得产）。此前一条都没有 → 实测 `body` 吃 UA 的 8px 外边距、
     // 白底（`--bg` `#f5f5f7` 定义了却没人用）＋ 系统默认字体（computed 回落到 Noto Sans SC）。
     // 这三条与参照件 HELP 的 `body{font-family…;background:var(--bg);color:var(--text)}` 对齐；
@@ -1247,7 +1247,7 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // 折叠区里的块（它不是正文的直接子级）。
     // **与 #154「各区自补 16px」重叠（同一根因的另一处补法）**：那批区间给 `dataTable`／`listRows`／
     // `kpiCardGrid` 各补了 `margin: 16px 0`，与本条命中同一处时两边同值、走 margin 折叠，恒 16px、
-    // 不翻倍（实测 regen-262：表接表 16px）。两票都落地后由后续票收敛成单一落点，本票不撤。
+    // 不翻倍（实测 regen-262：表接表 16px）。两票都实施后由后续票合并成单一落点，本票不撤。
     '.' + p + 'block-page-shell-body > * + .' + p + 'block {',
     '  margin-top: 16px;',
     '}',
@@ -1533,16 +1533,16 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-weight: 700;',
     '}',
     // #507 窄屏档（审查必改 #4）：`auto-fit minmax(150px,1fr)` 只在容器有效宽 ≥474px 时排 3 列
-    // （3×150 ＋ 2×12 间隙），而手机端页壳 `padding:20px 16px`（见本区 ≤640px 段）——
+    // （3×150 ＋ 2×12 间隙），而手机端页面模板 `padding:20px 16px`（见本区 ≤640px 段）——
     // 512 视口下栅格有效宽仅 480px ⇒ 正好卡在 3 列下沿，第 4 张卡单独占一行、宽度只有前三张的
     // 1/3（`grid-auto-rows:1fr` 又让它与前三张**等高**），看着像漏了一张。
     // 本条只加**窄屏一档**：≤640px 显式 2 列 ⇒ 4 张卡排成整齐 2×2；`minmax(0,1fr)` 里的 0
     // 是下限（不是 `auto` 那种取内容最小宽），长值卡不会被撑破。桌面档一行不动
     // （桌面列数上限是另一票的事，本票不碰）。断点取本文件既有先例：`dataTable` 与 `pageShell`
     // 两处都是 `@media (max-width: 640px)`。
-    // 选择器是 `.ilife-block-page-shell .ilife-block-kpi-card-grid`（基座类名前挂一个祖先类），
-    // **不是**同名再写一条：① 网格落在页面壳正文里（`renderKpiGrid` 的唯一用法），该祖先恒成立；
-    // ② 本仓的 CSS 纪律测试（`test/ui-fix-154.test.mjs` 的 `declsOf`）按「某类名的**基座规则**恰 1 条」
+    // 选择器是 `.ilife-block-page-shell .ilife-block-kpi-card-grid`（基础类名前挂一个祖先类），
+    // **不是**同名再写一条：① 网格落在页面模板正文里（`renderKpiGrid` 的唯一用法），该祖先恒成立；
+    // ② 本仓的 CSS 纪律测试（`test/ui-fix-154.test.mjs` 的 `declsOf`）按「某类名的**基础规则**恰 1 条」
     // 判账，同名再起一条会被数成 2 条而红；`dataTable` 区那条同名 640px 规则是历史写法，本票不动它。
     '@media (max-width: 640px) {',
     '  .' + p + 'block-page-shell .' + p + 'block-kpi-card-grid {',
@@ -1568,18 +1568,18 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // —— 候选 A 给数值列 9em 上限后四档列宽一字未变（读数见 `docs/base/base-render/t512-最后一公里-证据.md`），
     // 上限只加在 `td` 上等于没加。生效的手段是收**表**宽：给表卡一个宽度上限，列宽仍由内容定
     // （日期列 116.13 不变、数值列各 281.94），中缝 392.93 → 253.93。卡**左对齐**（不居中）：左缘是
-    // 全页的主对齐轴（页壳／KPI 栅格／图表卡／复制区一律 left=20），收窄的卡仍与它们同线；右缘
+    // 全页的主对齐轴（页面模板／KPI 栅格／图表卡／复制区一律 left=20），收窄的卡仍与它们同线；右缘
     // 留给空白，不新增对齐轴。
-    // 放**基座规则**（不另开 `@media`）：`max-width` 只在可用宽超过它时才生效，窄屏（≤640 档列宽
+    // 放**基础规则**（不另开 `@media`）：`max-width` 只在可用宽超过它时才生效，窄屏（≤640 档列宽
     // 远小于 680）本就不触发 ⇒ 512 档逐值同改前（日期列 178.03／数值列 149.97／150、表宽 478、
-    // 0 折行 0 横滚），#457／#507 的地盘不碰；也免得同一条基座规则被写第二遍（`ui-fix-154` 的
-    // 「基座规则恰 1 条」守卫就是防这个）。
+    // 0 折行 0 横滚），#457／#507 的地盘不碰；也免得同一条基础规则被写第二遍（`ui-fix-154` 的
+    // 「基础规则恰 1 条」守卫就是防这个）。
     '  max-width: 680px;',
     // t512 收尾（复审 P0）：上限收到 680 后，**其上图表卡宽 780**（820／1000 档）⇒ 表卡左缘与图表同线、
     // 右缘空出 100px，读成「表格没对上图表」（1440 档容器余量小，反倒看不出）。两条路选**居中**：
     // 抬上限到与图表同宽会把 #512 刚修掉的「左右两角」退回去（数值列各再摊约 50px），且 #512 机检
     // 逐值钉死 `max-width: 680px`；居中不动上限，也不动 #154 那条块级外边距 —— `margin` 仍是 `16px 0`，
-    // 居中另起一条（逻辑属性，不占「基座规则恰 1 条」的名额）。
+    // 居中另起一条（逻辑属性，不占「基础规则恰 1 条」的名额）。
     // 窄档（512：容器 478 < 680）上限本就不触发 ⇒ 卡满宽、`auto` 边距按 CSS 解成 0，逐值同改前。
     '  margin-inline: auto;',
     '}',

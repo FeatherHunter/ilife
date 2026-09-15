@@ -65,7 +65,7 @@ export interface FactItemInput {
 }
 
 export interface FactStripInput {
-  /** 一条事实一行；0 条＝空串（与「没内容不留空壳」同口径）。 */
+  /** 一条事实一行；0 条＝空串（与「没内容不留空块」同口径）。 */
   readonly items: readonly FactItemInput[];
   /** 版面根的附加类名（空格分隔，同 `blocks.ts` 的 `optExtraClass` 口径）。 */
   readonly extraClass?: string;

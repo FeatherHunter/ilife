@@ -79,7 +79,7 @@ function rootBlock(): string {
   return lines.join(LF);
 }
 
-/** 页级基座（非控件区）：**本票不产**。
+/** 页级基础（非控件区）：**本票不产**。
  *  裁定 R7／施工单 B-D2(a)：共享页面模板／KPI／表格／回到顶部等**无闭集归属**的样式归 #104
  *  （区块组件 owner），#75 只产 11 token ＋ 8 个闭集样式区；`extraCss` 语义被
  *  契约 doc:299-300 限死（只许技能作用域 token 覆盖块），**不得**塞共享页面模板的样式。 */
@@ -414,7 +414,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  transform: scale(.96);',
     '}',
     // W3（H-16 双反馈的 CSS 侧）：复制成功态变绿。规格 `docs/visual-spec-help.md:195,197`
-    // 「按钮变绿进入 `copied` 态并跑 450ms 弹簧动画」；弹簧 = 基座 `transition: transform .45s
+    // 「按钮变绿进入 `copied` 态并跑 450ms 弹簧动画」；弹簧 = 基础 `transition: transform .45s
     // cubic-bezier(.34, 1.56, .64, 1)`（B1 `benchmark-visual-spec.md:279,645`），本节只补**变绿**。
     // 类名由**运行时**添加（`copied`，非 `ilife-` 前缀 → 不占样式区命名空间）；
     // 本票**不改** helpers 的复制反馈行为，移交落点见契约 §8.11.1 FX-75-11。
@@ -481,7 +481,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     // 可见文字里的 `▾` 已从 `controls.ts` 的 `copyMenuHtml` 删掉（那句「可以选格式」改住 `aria-label`），
     // 这里用 `border` 拼一个向下的小三角 ＋ `rotate(180deg)` 做开合态——**一个字符都不打**，
     // 也就不会被字体／读屏／抓取器当成内容。画的规矩：零宽零高的盒子靠 `border-top` 出形，
-    // `margin-left: 6px` 与基座的 `gap: 6px` 同值（文字与三角的间距连两处取值都不新造）。
+    // `margin-left: 6px` 与基础的 `gap: 6px` 同值（文字与三角的间距连两处取值都不新造）。
     // 开合态由运行时加的 `.copy-menu-open` 落色（与菜单同一个类，不新增第二个开关）。
     '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
     '  content: "";',
@@ -597,7 +597,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
    *  ok `#e6f7ec`／`#1f8c3d`、warn `#fff5e0`／`#a25b00`、danger `#fff0ee`／`#a83228`、
    *  empty `#f0f0f3`／`var(--fg2)`（empty 字色旧层 `base.css:228` 为 `#6e6e73`＝`--fg2` 解析值，底色为实色 `#f0f0f3`）。
    *  **返修 W2**：上一轮误用 `#1f8f3d`／`#b25000`（全仓无出处）＋ 12% alpha 底色，且注释谎称「沿用旧值」
-   *  → 已改回旧逐值，注释与实现一致（非 token 硬编码色按 D-5 以 CSS 常量落地，不新增 token 名）。 */
+   *  → 已改回旧逐值，注释与实现一致（非 token 硬编码色按 D-5 以 CSS 常量实施，不新增 token 名）。 */
   statusBadge: (p) => [
     '.' + p + 'status-badge {',
     '  display: inline-flex;',
@@ -980,7 +980,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  font-size: ' + ACTION_BAR_DEFAULTS.fontSizePx + 'px;',
     '  font-weight: ' + ACTION_BAR_DEFAULTS.fontWeight + ';',
     '  line-height: 1;',
-    // #121：H-16「跑 450ms 弹簧动画」——弹簧口径**逐字复用** `copyButton` 基座（B1
+    // #121：H-16「跑 450ms 弹簧动画」——弹簧口径**逐字复用** `copyButton` 基础（B1
     // `benchmark-visual-spec.md:279,645`：`transform .45s cubic-bezier(.34,1.56,.64,1)`），
     // 不新增机制、不新增关键帧；按下态同 `.ilife-copy-btn:active`（scale .96）。
     '  transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;',
@@ -1140,7 +1140,7 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  font-size: 12px;',
     '  font-weight: 600;',
     '  line-height: 1;',
-    // #121：弹簧口径同 `copyButton` 基座（H-16「450ms 弹簧」），成功态 `.copied` 见上方 helpShell 区。
+    // #121：弹簧口径同 `copyButton` 基础（H-16「450ms 弹簧」），成功态 `.copied` 见上方 helpShell 区。
     '  transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;',
     '  cursor: pointer;',
     '}',
@@ -1270,7 +1270,7 @@ function normalizePrefix(input?: StyleSheetInput): string {
 /** `extraCss` 违规错误：**不导出**（与 #74 `TemplateError`／#76 `bad-input` 同口径——
  *  冻结面 `SPEC_FROZEN_SURFACE` 无该运行时条目，调用方按 `name`／`code` 判定）。
  *  code 三值 = 契约 doc:299-300 三条「不得」的落点：
- *  `extra-css-root`（改写基座 `:root`）／`extra-css-forbidden-token`（Q14 禁入项）／
+ *  `extra-css-root`（改写基础 `:root`）／`extra-css-forbidden-token`（Q14 禁入项）／
  *  `extra-css-dark-scheme`（深色区选择器，doc:292）。 */
 class StyleSheetExtraCssError extends Error {
   readonly code: string;
@@ -1283,7 +1283,7 @@ class StyleSheetExtraCssError extends Error {
 }
 
 /** CSS 块注释剥除（`/* … *\/` → 空格）：**判定前先剥注释**——注释里的 `:root`／`--pink` 只是说明文字，
- *  不是「改写基座／引入禁入项」；反之注释**不能**藏住真实声明（`/*c*\/:root{}` 剥后仍命中）。 */
+ *  不是「改写基础／引入禁入项」；反之注释**不能**藏住真实声明（`/*c*\/:root{}` 剥后仍命中）。 */
 function stripCssComments(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, ' ');
 }
@@ -1298,9 +1298,9 @@ function hasBoundedToken(text: string, token: string): boolean {
 
 /** `extraCss` 三禁强制（**编排者返修裁定：D3 修订**，见契约 §8.11）。
  *
- *  理由：契约 doc:299-300 的三条「不得」（不得改写基座值／不得引入 Q14 禁入项／不得引入深色区）
+ *  理由：契约 doc:299-300 的三条「不得」（不得改写基础值／不得引入 Q14 禁入项／不得引入深色区）
  *  此前**无任何落点**（D3 原裁定「不校验、纯调用方责任」）→ 本票补最小强制：
- *  - (a) 含 `:root` 选择器 → 改写基座；
+ *  - (a) 含 `:root` 选择器 → 改写基础；
  *  - (b) 含 `STYLE_FORBIDDEN_TOKENS`（`--r-xl`／`--pink`）；
  *  - (c) 含深色区选择器（`[data-theme`／`prefers-color-scheme: dark`）。
  *  命中**任一**即抛错；**合法技能作用域覆盖块**（`.ilife-<skill>{--blue:…}`）照常通过。
@@ -1314,7 +1314,7 @@ function assertExtraCss(extraCss: string): void {
   // `:root` 是伪类名（CSS 伪类名大小写不敏感）→ 用 `/i` 拦住 `:ROOT` 之类的等价写法。
   if (/:root(?![A-Za-z0-9_-])/i.test(code)) {
     throw new StyleSheetExtraCssError('extra-css-root',
-      'buildStyleSheet: extraCss 不得改写基座（命中 `:root` 选择器）；技能主题只许用 `.ilife-<skill>` 作用域覆盖块（契约 doc:299）');
+      'buildStyleSheet: extraCss 不得改写基础（命中 `:root` 选择器）；技能主题只许用 `.ilife-<skill>` 作用域覆盖块（契约 doc:299）');
   }
   for (const forbidden of STYLE_FORBIDDEN_TOKENS) {
     if (hasBoundedToken(code, forbidden)) {

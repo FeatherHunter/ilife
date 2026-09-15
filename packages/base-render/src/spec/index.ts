@@ -37,7 +37,7 @@ export interface FrozenSurfaceEntry {
   readonly name: string;
   readonly kind: FrozenSurfaceKind;
   readonly ticket: FrozenSurfaceTicket;
-  /** implemented = #92 已落地（纯数据／类型）；pending = 留给执行票实现。 */
+  /** implemented = #92 已实施（纯数据／类型）；pending = 留给执行票实现。 */
   readonly status: FrozenSurfaceStatus;
   readonly section: FrozenSurfaceSection;
   /** 逐字签名（与文档 §3 签名表逐字一致，由签名测试比对）。 */
@@ -154,7 +154,7 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'buildLogText', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: '(input: LogTextInput): string' },
   { name: 'SENSITIVE_ROW_RULE', kind: 'runtime', ticket: '#77', status: 'implemented', section: '3.4', signature: "{ textField: 'text'; flagField: 'sensitive'; flagValue: true; mask: '****'; textNotice: '（敏感字段已脱敏）' }" },
 
-  // ── §3.5 图表层与 HELP 壳（#78） ──
+  // ── §3.5 图表层与 HELP模板（#78） ──
   { name: 'CHART_KINDS', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "readonly ['bar', 'line', 'donut', 'progress', 'combo', 'sparkline', 'gauge', 'scatter']" },
   { name: 'CHARTS_STYLE_ID', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "'ilife-charts'" },
   { name: 'CHART_STRUCTURE_RULE', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: "'throw'" },

@@ -35,8 +35,8 @@ export { buildDataText, buildLogText } from './text.js';
  *  `ChartError` **不在此导出**——与 `TemplateError`／`ControlsError` 同口径（冻结面无该运行时条目，
  *  调用方按 `name`／`code` 判定）。 */
 export { buildChartsHelpersJs, charts } from './charts.js';
-/** #78 HELP 壳（契约 §3.5.3／§6.5）：数据页分型，走 `fillTemplate`，`#88` 直接复用 `HelpShellInput`。
- *  `HelpSchemaError`／内置壳模板 **不在此导出**（同口径；模板可经 `HelpShellInput.template` 覆盖）。 */
+/** #78 HELP模板（契约 §3.5.3／§6.5）：数据页分型，走 `fillTemplate`，`#88` 直接复用 `HelpShellInput`。
+ *  `HelpSchemaError`／内置help模板 **不在此导出**（同口径；模板可经 `HelpShellInput.template` 覆盖）。 */
 export { renderHelpShell } from './help.js';
 /** #525 页面级两层（只追加，不动上面任何一条 export）：**移动端配方**（断点／触摸区／安全区／
  *  窄屏表格行为／页内定位）与**页面级形状件**（事实条／图片与 GIF 容器／时间轴条／媒体占位件）。

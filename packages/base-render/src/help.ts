@@ -1,11 +1,11 @@
-/** base-paint/help：HELP 壳渲染（#78 运行时）。
+/** base-paint/help：HELP模板渲染（#78 运行时）。
  *
- * 契约正本：`docs/base-paint-contract.md` §3.5.2（scene-data 契约）／§3.5.3（HELP 壳接口）／
+ * 契约正本：`docs/base-paint-contract.md` §3.5.2（scene-data 契约）／§3.5.3（HELP模板接口）／
  * §6.5（实现指引）；冻结面：`packages/base-render/src/spec/help.ts`（本文件**只消费**，不改签名）。
  *
  * 三条红线（逐条对齐契约与架构裁定）：
- *  1. **不得自填**（B3／§3.5.3「填充」）：壳把「骨架 ＋ 由 sceneData 渲染出的静态 HTML」拼成模板后
- *     **一律走 `fillTemplate`**（`src/template.ts`），共享资产／载荷由填充器注入；壳不写 `<script>` 代码、
+ *  1. **不得自填**（B3／§3.5.3「填充」）：help模板把「骨架 ＋ 由 sceneData 渲染出的静态 HTML」拼成模板后
+ *     **一律走 `fillTemplate`**（`src/template.ts`），共享资产／载荷由填充器注入；help模板不写 `<script>` 代码、
  *     不读 `document`／`window`／`globalThis`、不引 `node:`、不引第三方。
  *  2. **占位符契约（数据页，R7）**：`<!--INJECT-DATA-->` 恰 1 次且落在**自带容器**
  *     `<script id="payload" type="application/json">` 内；`<!--SHARED-CSS-->`／`<!--SHARED-HELPERS-->`
@@ -17,7 +17,7 @@
  *
  * 契约未规定处的取值（本文件显式记账，不留暗猜）：
  *  - **交互恒为 CSS-only**（裁定 R4）：分组 Tab ＝ 每页自带 `:checked` radio ＋ 同级页面体（标签用 `for` 指向），
- *    二级折叠／Sheet ＝ 原生 `<details>`；壳**不产任何可执行 `<script>`**（唯一的 `<script>` 是 payload 数据容器，
+ *    二级折叠／Sheet ＝ 原生 `<details>`；help模板**不产任何可执行 `<script>`**（唯一的 `<script>` 是 payload 数据容器，
  *    由 `fillTemplate` 注入的 helpers 包裹亦为既有约定）。样式规则归 #75 的 `sharedCssText`
  *    （`CONTROL_STYLE_SECTIONS.helpShell` 命名空间），本模块**不产 CSS 常量**（否则构成第二份样式真相）。
  *  - **逐场景 CLI 形态文本**（Q11／R17／**R32**）：**恒等于 `Scene.id` 原文**（逐字，经 `escapeHtml`）。
@@ -193,7 +193,7 @@ function firstViolation(schema: unknown, value: unknown, path: string): Violatio
 
   const allowed = schema.enum;
   if (Array.isArray(allowed) && !allowed.some((member) => member === value)) {
-    return { path, message: '不在 enum 白名单：' + describe(value) };
+    return { path, message: '不在 enum 允许清单：' + describe(value) };
   }
 
   const minLength = schema.minLength;
@@ -301,7 +301,7 @@ function findDuplicateId(sites: readonly SceneSite[]): Violation | null {
   return null;
 }
 
-/** `status-invalid`：**出现**的 `status` 不在 `SCENE_STATUS` 白名单（缺失归 `schema-invalid`）。 */
+/** `status-invalid`：**出现**的 `status` 不在 `SCENE_STATUS` 允许清单（缺失归 `schema-invalid`）。 */
 function findStatusViolation(sites: readonly SceneSite[]): Violation | null {
   const allowed = SCENE_STATUS as readonly unknown[];
   for (const site of sites) {
@@ -600,7 +600,7 @@ function renderMetaBlocks(blocks: readonly SceneMetaBlock[]): string {
     + '</section>').join(LF);
 }
 
-/* ── 5. 内置壳模板（**非导出**，裁定 R13；可经 `HelpShellInput.template` 覆盖） ── */
+/* ── 5. 内置help模板（**非导出**，裁定 R13；可经 `HelpShellInput.template` 覆盖） ── */
 
 /** payload 容器开标签：标签名恒取 `ASSET_WRAPPERS`，`id`／`type` 恒取 `CONTAINER_CHECK_RULE`
  *  （容器校验规则的 `id`／`type` 与 `DEFAULT_DATA_SCRIPT_ID`／`DATA_SCRIPT_TYPE` 同值，不写第二份字面量）。 */
@@ -614,7 +614,7 @@ function documentTitle(data: SceneData): string {
   return data.title + ' · ' + data.skill_name;
 }
 
-/** 内置壳模板（**完整 HTML 文档**，R31）：数据页分型（`<!--INJECT-DATA-->` 恰 1 次且在自带容器内；
+/** 内置help模板（**完整 HTML 文档**，R31）：数据页分型（`<!--INJECT-DATA-->` 恰 1 次且在自带容器内；
  *  `<!--SHARED-CSS-->` 落在 `<head>`、`<!--SHARED-HELPERS-->` 落在 `<body>`，各恰 1；
  *  `<!--CHARTS-HELPERS-->`／`<!--CONTENT-->` 各 0）。
  *
@@ -665,10 +665,10 @@ function buildShellTemplate(data: SceneData): string {
 
 /* ── 6. 对外出口 ────────────────────────────────────────────── */
 
-/** HELP 壳渲染（冻结签名 `(input: HelpShellInput): FillTemplateOutput`）。
+/** HELP模板渲染（冻结签名 `(input: HelpShellInput): FillTemplateOutput`）。
  *
- * 次序：**先校验 `sceneData`**（失败抛 `HelpSchemaError`）→ 再拼内置壳模板（或 `template` 覆盖）
- * → **一律走 `fillTemplate`**（共享资产与 JSON 载荷由填充器注入，壳不得自填）。
+ * 次序：**先校验 `sceneData`**（失败抛 `HelpSchemaError`）→ 再拼内置help模板（或 `template` 覆盖）
+ * → **一律走 `fillTemplate`**（共享资产与 JSON 载荷由填充器注入，help模板不得自填）。
  *
  * `strict` 原样透传给 `fillTemplate`（契约 §3.5.3「透传」）；`template` 覆盖时按调用方模板填充。
  */

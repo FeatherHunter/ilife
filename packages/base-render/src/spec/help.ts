@@ -1,4 +1,4 @@
-/** base-paint/spec/help：HELP 壳与 scene-data 契约（#78 冻结面）。
+/** base-paint/spec/help：HELP模板与 scene-data 契约（#78 冻结面）。
  *
  * B6：HELP 形态 = HTML 速查台；Q11：取 F3 并回补 F1／F2 的逐场景 CLI 展示与变体示例。
  * AC-3：场景类型徽章字段取 **`types`（复数）**，不提供 `type` 别名（旧侧
@@ -8,7 +8,7 @@
  *   该行实为 CSS；模板资产本身用 `s.types`（`help_template.html:224`）。裁定结论不变。
  * AC-4：`SCENE_DATA_SCHEMA` 是**唯一机读权威**，文档 §3.5 只是它的可读投影。
  *
- * 依赖红线：只许 `import type`（AC-13）；壳复用面见 `HelpShellInput`（#88 直接消费）。
+ * 依赖红线：只许 `import type`（AC-13）；help模板复用面见 `HelpShellInput`（#88 直接消费）。
  */
 
 import type { FillTemplateOutput, TemplateAssets } from './template.js';
@@ -254,10 +254,10 @@ export const HELP_COPY_ACTIONS = Object.freeze({
 
 export interface HelpShellInput {
   readonly sceneData: SceneData;
-  /** 共享资产走同一填充器（B3）：HELP 壳不得自填。 */
+  /** 共享资产走同一填充器（B3）：HELP模板不得自填。 */
   readonly assets: TemplateAssets;
   readonly strict?: boolean;
-  /** 覆盖内置壳模板；缺省用 base-paint 自带模板。 */
+  /** 覆盖内置help模板；缺省用 base-paint 自带模板。 */
   readonly template?: string;
 }
 

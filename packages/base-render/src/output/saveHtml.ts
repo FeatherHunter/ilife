@@ -130,7 +130,7 @@ export function reuseWindowOfHours(value: unknown, defaultHours?: number): numbe
  *  ```
  *
  *  为什么要这个工厂：五家原先的写法是「`try { reuseWindowOfHours(…) } catch { fail(2, …) }`」五份逐字
- *  相同的壳（只有「翻成哪家错误」不同）——那正是仓规铁律二禁止的「同一件事五份实现」。这里只做一件事：
+ *  相同（只有「翻成哪家错误」不同）——那正是仓规铁律二禁止的「同一件事五份实现」。这里只做一件事：
  *  把 `RangeError` 交给你给的处理器（各家自己决定翻成 `fail(2)` 还是别家错误类型），其余错误原样穿过
  *  （不吞非预期异常）。 */
 export function helpReuseWindowOf(

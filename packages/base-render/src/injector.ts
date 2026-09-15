@@ -2,7 +2,7 @@
  *
  * better-sidebar 槽位注册只许住这里：link-core/combos 禁止自装配
  *（tooling/check-boundaries.mjs 可执行断言）。host 无关设计——
- * 以 SlotsPort 注入真实服务，B 落地实测时接线，单测用假端口。
+ * 以 SlotsPort 注入真实服务，B 实施实测时接线，单测用假端口。
  * 语义抄 matt 实证：幂等（disposer 非空即跳过）+ 有界重试（1s×10）+
  * 卸载清理（ctx.effect 同构），成功后无轮询；openTab 走 path seed 内容型打开。
  */
