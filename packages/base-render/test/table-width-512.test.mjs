@@ -114,10 +114,15 @@ describe('#512 ① 行首列按内容收窄（桌面档）', () => {
  * ══════════════════════════════════════════════════════════════ */
 
 describe('#512 ② 窄屏档（≤640px）不受影响', () => {
-  it('≤640 段里不出现行首列的钉宽选择器', () => {
+  it('≤640 段里不出现行首列的钉宽选择器（`first-child` 在窄屏只许承担卡间分隔）', () => {
     const narrow = narrowDataTableSpan(CSS);
-    assert.ok(!narrow.body.includes('first-child'), '窄屏段不该出现 first-child 钉宽');
     assert.ok(!narrow.body.includes(P + 'block-data-table-cell-left'), '窄屏段不该提到行首列');
+    assert.ok(!narrow.body.includes(P + 'block-data-table-cell-left:first-child'), '窄屏段不该出现行首列钉宽选择器');
+    // t154-r3 起窄屏是**行卡形态**：`tr:first-child` 用来取消首卡的卡间线，与本票的「钉宽」无关。
+    // 判据不许放宽成「只要不出现 cell-left 就行」——这里把窄屏段里**所有** `first-child` 用法逐字钉死。
+    const uses = [...narrow.body.matchAll(/[^{}]*first-child[^{}]*\{/g)].map((m) => m[0].replace(/\s+/g, ' ').trim());
+    assert.deepEqual(uses, ['.' + P + 'block-data-table tr:first-child {'],
+      '窄屏段的 first-child 只许有「首卡无线」一条：' + JSON.stringify(uses));
   });
 
   it('#457 的折行兜底仍在：`td` 的 `overflow-wrap:anywhere` ＋ `th` 的 `white-space:normal`', () => {

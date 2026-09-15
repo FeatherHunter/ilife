@@ -217,6 +217,8 @@ describe('#428 可追溯基线（打印版式基线的来源与自证检查）',
     const allowed = new Set([
       'ilife', 'block', 'page', 'printable', 'shell', 'title', 'body', 'section', 'nav', 'div', 'h1',
       'p', 'class', 'a', 'b', 'i', 'T', 'C', 'E', 'S', 'x', 'q',
+      // t154-r3：口径行拆 span 后，断言里要用到「根类名」这一枚 token（类名，不是整页字面量）。
+      'caliber',
     ]);
     const fragments = [...source.matchAll(/'([^'\r\n]*)'/g)].map((m) => m[1])
       .filter((lit) => /[<>]/.test(lit)).map((lit) => lit.split(/[^A-Za-z0-9]+/).filter(Boolean));
@@ -275,6 +277,19 @@ describe('#420 口径说明行 renderCaliberLine', () => {
   it('空串／非串 → bad-input', () => {
     assertBadInput(() => renderCaliberLine(''), '空串');
     assertBadInput(() => renderCaliberLine(7), '非串');
+  });
+
+  // t154-r3（负责人第三轮要求 1）：签名不变，分隔从「文本里的全角竖线」改成「版式里的细竖线」。
+  // 详细判据（窄屏换行、空段、退化、CSS 侧 flex／border-left）住 `rowcard-caliber-t154r3.test.mjs`，
+  // 这里只钉「旧锚点不破 ＋ 新形态成立」两件，防本文件的老断言在新形态下静默失效。
+  it('t154-r3：带竖线的行拆成 span、文本里不再出现竖线；不带竖线的行逐字节同改前', () => {
+    const one = renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 2026-09-07');
+    assert.ok(one.startsWith('<p class="ilife-block-caliber">'), '根类逐字不变（既有锚点不破）：' + one);
+    assert.equal((one.match(/<span>/g) ?? []).length, 2, '两段＝两枚 span：' + one);
+    assert.ok(!one.includes('｜'), '竖线字符不得进产物：' + one);
+    // 期望串按 token 拼（不写整段 `<p class=…>` 字面量）：本文件上面那条守卫扫的就是「含 < 或 > 的字面量」。
+    const plainExpected = '<' + 'p class="ilife-block-' + 'caliber">' + '周目标口径＝每日目标 × 7' + '</p>';
+    assert.equal(renderCaliberLine('周目标口径＝每日目标 × 7'), plainExpected, '不带竖线的行逐字节同改前');
   });
 });
 

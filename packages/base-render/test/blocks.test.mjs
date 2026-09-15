@@ -182,7 +182,7 @@ describe('B-03 表格', () => {
     const html = renderDataTable({ columns, rows: [{ k: 'a', v: 1 }] });
     assert.ok(html.includes('<table class="ilife-block-data-table-table">'), 'table 类');
     assert.ok(html.includes('<thead>') && html.includes('<th scope="col"'), '语义表头');
-    assert.ok(html.includes('<td class="ilife-block-data-table-cell-right">1</td>'), '右对齐+值');
+    assert.ok(html.includes('<td class="ilife-block-data-table-cell-right" data-label="V">1</td>'), '右对齐+值+标签');
     const css = blocksCss();
     assert.ok(css.includes('tr:last-child td'), '末行无边框规则');
     assert.ok(css.includes('text-transform: uppercase'), 'th 大写规则');
@@ -200,7 +200,7 @@ describe('B-03 表格', () => {
     assertBadInput(() => renderDataTable({ columns: [], rows: [] }), '空列');
     assertBadInput(() => renderDataTable({ columns: [{ key: 'k', label: 'L', align: 'up' }], rows: [] }), '非法对齐');
     assertBadInput(() => renderDataTable({ columns, rows: [{ k: {}, v: 1 }] }), '对象单元格');
-    assert.ok(renderDataTable({ columns, rows: [{ k: null, v: 2 }] }).includes('<td class="ilife-block-data-table-cell-left"></td>'), 'null 置空');
+    assert.ok(renderDataTable({ columns, rows: [{ k: null, v: 2 }] }).includes('<td class="ilife-block-data-table-cell-left" data-label="K"></td>'), 'null 置空（标签仍在）');
   });
 });
 

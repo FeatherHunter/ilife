@@ -266,10 +266,32 @@ export function renderTocBlock(input: TocBlockInput): string {
   return '<nav class="' + pageLevelBlock('toc') + '" aria-label="页内导航">' + links.join('') + '</nav>';
 }
 
+/** 口径行的并列分隔符（U+FF5C 全角竖线）：**唯一**被当作「并列」的字符。
+ *  #514 立规把它计入可见文本的设计债（R4），本票（负责人第三轮要求 1）就是把这笔债在
+ *  **公共层一次还掉**：该字符不再进产物文本，分隔改由版式承担（见 `renderCaliberLine` 与本区 CSS）。 */
+const CALIBER_SEP = '｜';
+
 /** #420-2 口径说明行（纯文本单参；五字符转义表与区块层其余函数同源 `esc`）。
- *  聚合数字旁那句灰色小字（例如「周目标口径＝每日目标 × 7」）的唯一落点。 */
+ *  聚合数字旁那句灰色小字（例如「周目标口径＝每日目标 × 7」）的唯一落点。
+ *
+ *  t154-r3（负责人第三轮要求 1「用竖线分割的部分都要优化」）：**签名一字不改**（全仓 141 处
+ *  调用点一行不用动），函数内部按全角竖线拆段 ⇒ 逐段一枚 `<span>`，段间分隔交给 CSS 的细竖线
+ *  （`.…-caliber > span + span` 的 `border-left` hairline ＋ flex 间距）——「拿字符当分隔」换成
+ *  「拿版式当分隔」。判据：产物该行的**文本里不再出现该竖线字符**（分隔只活在版式里）。
+ *  · 不带分隔符的行（多数调用点）**逐字节同改前**：仍是「一个 `<p>` ＋ 一段纯文本」；
+ *    flex 只对「真的有 span 子件」的行生效（CSS 侧 `.…-caliber:has(> span)`）。
+ *  · 空段丢弃（首尾竖线／连续两条竖线）：不出版面的空位；全空的无实义行退化回原样文本
+ *    （没有可分的段，不静默吞字符）。 */
 export function renderCaliberLine(text: string): string {
-  return '<p class="' + pageLevelBlock('caliber') + '">' + esc(reqText(text, 'renderCaliberLine: text')) + '</p>';
+  const raw = reqText(text, 'renderCaliberLine: text');
+  const cls = pageLevelBlock('caliber');
+  if (!raw.includes(CALIBER_SEP)) return '<p class="' + cls + '">' + esc(raw) + '</p>';
+  const segs = raw.split(CALIBER_SEP).map((seg) => seg.trim()).filter((seg) => seg !== '');
+  if (segs.length === 0) return '<p class="' + cls + '">' + esc(raw) + '</p>';
+  // 段间留一个空格：flex 容器里纯空白文本节点不成匿名项（不占版面），但**文本面**（复制／
+  // 无障碍树／测试的可见文本读数）读出来仍是「甲 乙」而不是「甲乙」。
+  return '<p class="' + cls + '">'
+    + segs.map((seg) => '<span>' + esc(seg) + '</span>').join(' ') + '</p>';
 }
 
 /** #507 结论条（审查必改 #3）：一行判定句的浅底条，形状住公共层、**调用方只传文本**。
@@ -630,7 +652,12 @@ export function renderDataTable(input: DataTableInput): string {
   const body = '<tbody>' + table.rows.map((row, ri) => {
     assertPlainObject(row, 'renderDataTable: input.rows[' + ri + ']');
     return '<tr>' + columns.map((column) =>
-      '<td class="' + blockPart('dataTable', 'cell-' + column.align) + '">'
+      // t154-r3（负责人第三轮要求 2）：每个数据格带上**列头文本**（`data-label`），窄屏行卡化
+      // 时由 CSS 的 `td::before{content:attr(data-label)}` 出「标签 ＋ 值」，列头因此不必再挤在
+      // 390px 里。**只加属性**：既有类名、既有结构、既有文本一字不动，桌面档（≥641）没有任何
+      // 规则引用它 ⇒ 桌面渲染逐像素不变（自证读数见证据件）。列头文本与 `th` 同源（同一个
+      // `column.label`），不存在两处文案漂移。`esc` 已含 `"`（五字符表）⇒ 标签含引号也安全。
+      '<td class="' + blockPart('dataTable', 'cell-' + column.align) + '" data-label="' + esc(column.label) + '">'
       + cellText((row as Readonly<Record<string, unknown>>)[column.key], 'renderDataTable: input.rows[' + ri + '].' + column.key)
       + '</td>',
     ).join('') + '</tr>';
@@ -1262,6 +1289,26 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 12px;',
     '  line-height: 1.5;',
     '}',
+    // t154-r3（负责人第三轮要求 1）：口径行的**并列分隔**从「文本里的全角竖线字符」改成「版式里的细竖线」。
+    //  拆段住在产出器（`renderCaliberLine` 逐段出一枚 `<span>`），本处只给版式：段间一枚 hairline
+    //  ＋ 间距；窄屏靠 `flex-wrap` 换行（不再靠竖线字符挤在一行）。
+    //  **`:has(> span)` 是这条的鉴别器**：只有真拆过段的行才是 flex 容器；没带分隔符的口径行
+    //  （多数调用点）连 flex 都不是 ⇒ 版面与改前逐值相同（「桌面档不变」在口径行这侧的保证）。
+    //  `gap: 4px 12px`＝行距 4px／列距 12px；竖线借 `> span + span` 的 `border-left`（首段无线）。
+    //  色取既有 `LINE_RGB` 的 .6 透明档（与表行分隔同一档，不新增色值、不新增 token）。
+    //  列距 12px 落在「竖线两侧不对称」的观感上偏紧，故每段再补 8px 左内距：竖线两侧留白
+    //  12px／8px，读到的是「一条细线把两段分开」，而不是「一行贴着线条」。
+    //  注：本条注释不写那个竖线字符本身 —— 产物里「全角竖线」的命中数是个判据，注释不该去凑它。
+    '.' + p + 'block-caliber:has(> span) {',
+    '  display: flex;',
+    '  flex-wrap: wrap;',
+    '  gap: 4px 12px;',
+    '  align-items: baseline;',
+    '}',
+    '.' + p + 'block-caliber > span + span {',
+    '  padding-left: 8px;',
+    '  border-left: 1px solid rgba(' + LINE_RGB + ', .6);',
+    '}',
     // #507 结论条（审查必改 #3）：形状住公共层，调用方只传文本。
     // 起因：这一条此前是**页面内联 8 个魔法值**（`homeDocs.ts` 的 `CONCLUSION_STYLE`：
     // `margin:0 0 16px;padding:12px 16px;border-radius:14px;background:var(--soft);color:var(--blue2);
@@ -1627,32 +1674,94 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '    white-space: nowrap;',
     '  }',
     '}',
-    // #457 手机端（≤640px）紧凑形态：不靠左右滑动看全。桌面段一字未动；窄屏只做三件事——
-    // 收字号（表头 12→11px、单元格 13→12px）、收内边距（10/14→6/8、12/14→7/8）、
-    // 放开 `th` 的 `white-space: nowrap`（这是表宽唯一的硬来源：表头不换行 → 最小宽度＝各列整词宽之和）。
-    // `td` 另给 `overflow-wrap: anywhere`：它同时把单元格的最小内容宽度压到 1 字符，
-    // 长日期串（`2024-09-08`）与长数字列因此可断行，7 列表在 390 宽里放得下。
-    // 容器仍留 `overflow-x: auto` 作兜底（列数极多的表仍可滑），但常态不再触发。
-    // **与 #154 给本区根补的 `margin: 16px 0` 不冲突**：窄屏段只碰字号／内距／换行，不碰边距；
-    // 边距那处重叠见本文件 pageShell 区同口径注释（待后续票收敛成单一落点）。
+    // #457 手机端（≤640px）紧凑形态：不靠左右滑动看全 —— 收字号（表头 12→11px、单元格 13→12px）、
+    // 收内边距、放开 `th` 的 `white-space: nowrap`（表宽的硬来源）。容器留 `overflow-x: auto` 兜底。
+    // **与 #154 给本区根补的 `margin: 16px 0` 不冲突**：窄屏段只碰字号／内距／换行，不碰边距。
+    //
+    // t154-r3（负责人第三轮要求 2「这张表在手机宽度上效果很差，所有用到该表格的页面都要整改」）：
+    // 窄屏从「折行硬挤」改成**行卡化**。病根是上一张票选的「靠折行换不横滚」：`td{overflow-wrap:anywhere}`
+    // 把单元格的最小内容宽度压到 **1 个字符**，五列表（两列长文本）在 390px 里于是被压成「一个汉字宽」，
+    // 日期串按任意位置断行 → 一个字一行（负责人实拍）。
+    // 行卡化＝窄屏不再有「列」：`thead` 收起（列名不再占位），`tr` 变一张张小卡，每格一行「标签 ＋ 值」，
+    // 标签来自产出器写在 `td` 上的 `data-label`（`td::before{content:attr(data-label)}`）。
+    // `overflow-wrap:anywhere` **仍留着**（长串——网址／UUID／长数字——不溢出），但它此时作用在
+    // **满宽**的格上，最小宽度是「整格宽」而不是「1 个汉字」⇒ 不会再断成竖排。
+    // 桌面档（≥641）零变化：下面每一条都住在这条既有 `@media (max-width: 640px)` 里，且没有任何
+    // ≥641 的规则引用 `data-label`（属性本身不带任何桌面档样式）。
     '@media (max-width: 640px) {',
     '  .' + p + 'block-data-table-table {',
+    // 表格、行、格在窄屏一律走块／栅格流（`table` 的列布局是把内容挤扁的机制本身）。
+    '    display: block;',
     '    font-size: 12px;',
     '  }',
     '  .' + p + 'block-data-table-caption {',
     '    padding: 8px 10px;',
     '    font-size: 12px;',
     '  }',
+    // 列名不再占一行：它们改住每格的标签里（`data-label`），留着只会把行挤窄。
+    '  .' + p + 'block-data-table thead {',
+    '    display: none;',
+    '  }',
+    // 保留 #457 的 `th` 一档：本组件不再产 `thead` 之外的 `th`，但手写表可能有 `tbody` 里的
+    // `th`（行首标签列），那类格走「标签 ＋ 值」的同一套字号与换行，不能因为「本组件用不到」而删。
     '  .' + p + 'block-data-table th {',
     '    padding: 6px 8px;',
     '    font-size: 11px;',
     '    letter-spacing: 0;',
     '    white-space: normal;',
     '  }',
+    '  .' + p + 'block-data-table tbody {',
+    '    display: block;',
+    '  }',
+    // 一行＝一张卡：卡间一条 hairline（首卡无线），卡内左右各 12px 内距（值与容器边框不贴）。
+    '  .' + p + 'block-data-table tr {',
+    '    display: block;',
+    '    padding: 8px 12px;',
+    '    border-top: 1px solid rgba(' + LINE_RGB + ', .6);',
+    '  }',
+    '  .' + p + 'block-data-table tr:first-child {',
+    '    border-top: 0;',
+    '  }',
+    // 一格＝一行「标签 ＋ 值」：`5em` 标签轨（2–4 个汉字的列名都放得下）＋ `1fr` 值轨（满宽换行）。
+    // 格的底边线在卡形态下取消（分隔已由卡间线承担）；值取正文字色 `--fg`，标签取 `--fg3`（判据同列头）。
     '  .' + p + 'block-data-table td {',
-    '    padding: 7px 8px;',
+    '    display: grid;',
+    '    grid-template-columns: 5em minmax(0, 1fr);',
+    '    gap: 2px 10px;',
+    '    padding: 4px 0;',
+    '    border-bottom: 0;',
+    '    color: var(--fg);',
     '    font-size: 12px;',
     '    overflow-wrap: anywhere;',
+    '  }',
+    '  .' + p + 'block-data-table td::before {',
+    '    content: attr(data-label);',
+    '    color: var(--fg3);',
+    '    font-size: 11.5px;',
+    '    font-weight: 600;',
+    '  }',
+    // 没拿到标签的格（手写 `td`／极端情况下没有列头）**退化**：不出版面的空标签，值单独占满一格。
+    // 判据：空标签不许出现 —— `content:none` 让伪元素整个不生成（不是「生成一个空盒子」）。
+    // 两条选择器**各占一条规则**（不合并成选择器列表）：机检按「选择器逐字相等」查规则，
+    // 合并成列表后按单条选择器会找不到（t154-r3 用例实测）。
+    '  .' + p + 'block-data-table td:not([data-label]) {',
+    '    grid-template-columns: minmax(0, 1fr);',
+    '  }',
+    '  .' + p + 'block-data-table td[data-label=""] {',
+    '    grid-template-columns: minmax(0, 1fr);',
+    '  }',
+    '  .' + p + 'block-data-table td:not([data-label])::before {',
+    '    content: none;',
+    '  }',
+    '  .' + p + 'block-data-table td[data-label=""]::before {',
+    '    content: none;',
+    '  }',
+    // 列已经不在，列对齐（`center`／`right`）在卡里只剩副作用：标签会被推到格右缘、值轨被
+    // `min-width:5.5em` 顶开 ⇒ 两档一律收回左对齐、下限收回 0，「标签 ＋ 值」的左轴才齐。
+    '  .' + p + 'block-data-table-table td.' + p + 'block-data-table-cell-center,',
+    '  .' + p + 'block-data-table-table td.' + p + 'block-data-table-cell-right {',
+    '    min-width: 0;',
+    '    text-align: left;',
     '  }',
     '}',
   ].join(LF),
