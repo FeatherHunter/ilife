@@ -102,7 +102,7 @@ export function escapeCard(input: {
         who: '本仓之外（外部识别工具／你手填）',
         detail: ESCAPE_FIELDS.map((f) => f.label).join('／') + '三样文字',
       },
-      { step: '落库', who: '本仓（bill.record.add）', detail: '三样齐了才写；缺一样只出这一页，不写库' },
+      { step: '落库', who: '这台手机上的记账技能', detail: '三样齐了才写；缺一样只出这一页，不写库' },
     ],
     caption: '每一步在谁那里办（识别不落在本仓）',
   });

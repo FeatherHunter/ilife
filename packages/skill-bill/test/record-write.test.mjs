@@ -82,7 +82,7 @@ describe('t406 · 记账写入域命令声明与注册表', () => {
     }
   });
 
-  it('注册表一能力一行；迁移过的命令的形状从它派生（形状事实不写在渲染层）', () => {
+  it('注册表一能力一行；迁移过的命令的形状从它派生（形状事实不写在页面这一层）', () => {
     assert.equal(REGISTRY_KEYS.length, 2);
     assert.deepEqual([...REGISTRY_KEYS].sort(), ['bill.record.add', 'bill.record.update']);
     assert.equal(Object.keys(BILL_KEY_SHAPES).length, 16, '16 条联动命令的形状表不缩水');
@@ -125,7 +125,7 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
     assert.equal(env.data.receipt.affectedRows, 1, '影响行数＝total_changes 前后差');
     const text = pageOf(file);
     assert.ok(statSync(file).size > 10 * 1024, '走的是新装配的整页，不是老极简模板');
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-key="bill.record.add"', 'data-shape="receipt"', '已改动', '这次记了几笔', '写进去的项', '对账信息']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-key="record.add"', 'data-shape="receipt"', '已改动', '这次记了几笔', '写进去的项', '对账信息']) {
       assert.ok(text.includes(needle), '回执整页缺：' + needle);
     }
   });
@@ -142,7 +142,7 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
       'envelope 载荷与页内文案须同一句（同一件事实一处定义）');
     const text = pageOf(file);
     for (const needle of [
-      'data-slot="ilife:bill:collect"', 'data-key="bill.record.add"', 'data-shape="receipt"',
+      'data-slot="ilife:bill:collect"', 'data-key="record.add"', 'data-shape="receipt"',
       '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）', '还没写库', '还没发生',
       '这一句可以直接复制', 'ilife-block-pre-block', 'ilife-block-param-form', '复制日志',
     ]) {

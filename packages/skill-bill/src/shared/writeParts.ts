@@ -20,7 +20,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import type { RecordOp } from '../policy/record.js';
-import { DOC_SKILL } from './pageIdentity.js';
+import { DOC_SKILL, sceneKeyOf } from './pageIdentity.js';
 
 /** 一次写库的事实（回执页与复制日志都读它）。
  *  形状照卡路里同件的收据对象，只留饼干用得上的：操作／记录号／摘要／影响行数／写入字段／有无改动／来源／时刻。
@@ -62,7 +62,9 @@ export function commandLine(key: string, params: Record<string, unknown>): strin
  *  标记：`data-skill`（技能名，取值同页标识）／`data-slot`（`receipt`＝结果型回执整页、`collect`＝过程型采集页）
  *  ／`data-shape`（＝本次 envelope 的形状，与老回执页同一枚，**是契约、不随页型改**）
  *  ／`data-page`（**选页用这一枚**：`collect`／`receipt`；两者共用 `shape=receipt`，靠 shape 选页会选错）
- *  ／`data-key`（命令名）。
+ *  ／`data-key`（**场景名**，过 `sceneKeyOf`：`bill.record.add` → `record.add`）。
+ *  R4 收口（本窗）：`bill.` 只许出现在复制载荷区（`pre`／复制块／`data-t`），页面标记一律写场景名；
+ *  要整名时 `data-skill` ＋ `.` ＋ `data-key` 仍拼得回来。
  *  H1 与副标题**不在这里**：那是页面模板（`base-paint/blocks` 的 `renderPageShell`）的活，一处只出一次。 */
 export function writeSection(input: {
   readonly slot: 'receipt' | 'collect';
@@ -72,6 +74,6 @@ export function writeSection(input: {
   readonly content: string;
 }): string {
   return '<section class="ilife-write" data-skill="' + DOC_SKILL + '" data-slot="ilife:bill:' + input.slot
-    + '" data-page="' + input.page + '" data-shape="' + esc(input.shape) + '" data-key="' + esc(input.key) + '">'
+    + '" data-page="' + input.page + '" data-shape="' + esc(input.shape) + '" data-key="' + esc(sceneKeyOf(input.key)) + '">'
     + input.content + '</section>';
 }

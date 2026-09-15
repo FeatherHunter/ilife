@@ -29,8 +29,8 @@ export const DOC_TITLE = '饼干记账';
  *  （`packages/base-render/src/text.ts:296-298` 的 `sceneText`）——`skill` 已是 `bill`，
  *  这里再写一条带 `bill.` 前缀的整名，日志就会印成 `bill.bill.record.add`（两处都重复一遍）。
  *  本件按公共层的分工收口：**页面内置 envelope 的 key＝本地场景名**（`bill.record.add` → `record.add`），
- *  `skill` ＋ `key` 拼起来正好是对外命令名；`<section data-key>` 与 CLI 那条 envelope 照旧写整名，
- *  两件事各按各的口径，不混。
+ *  `skill` ＋ `key` 拼起来正好是对外命令名；`<section data-key>` **同写场景名**（R4 收口：`bill.` 只许出现在
+ *  复制载荷区，页面标记一律不带技能前缀），两处一个值，不再各写各的。
  */
 export function sceneKeyOf(key: string): string {
   const prefix = DOC_SKILL + '.';
