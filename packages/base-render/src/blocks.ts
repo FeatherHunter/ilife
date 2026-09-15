@@ -1701,6 +1701,10 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // 表注留 `table-caption` 会被挤成**一个汉字宽**的竖排（负责人截图实拍的那一列）⇒ 显式转回块级、占满整卡。
     '    display: block;',
     '    width: 100%;',
+    // #547：`width:100%` 只管内容宽，而本仓结果页没有全局 `border-box`（`pageUi.ts:173`）⇒
+    // 实占 100%＋左右内距，在 390 档撑出 20px 横滑（容器 376＞356，真机实测）。只加这一条声明，
+    // 不新增规则（`ui-fix-154` 守卫按选择器计条，加声明不触发），桌面档不在本段、一字不动。
+    '    box-sizing: border-box;',
     '  }',
     // 列名不再占一行：它们改住每格的标签里（`data-label`），留着只会把行挤窄。
     '  .' + p + 'block-data-table thead {',
