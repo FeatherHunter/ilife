@@ -1,0 +1,11 @@
+# t464 运行记录导出（`gate-runs.log` 中本票持锁行原文，`runId=t464-5481714f`）
+
+START ticket=464 runId=t464-5481714f cmd="t464 build+test+mutate+commit" waitedMs=360000 pid=24672
+RUN ticket=464 runId=t464-5481714f cmd="npx tsc -b packages/skill-calorie" waitedMs=360000 exit=0 pid=24672
+RUN ticket=464 runId=t464-5481714f cmd="node --test packages/skill-calorie/test/t464-备注列口径.test.mjs" waitedMs=360000 exit=0 pid=24672
+RUN ticket=464 runId=t464-5481714f cmd="node --test packages/skill-calorie/test/t362-窗口不截断.test.mjs" waitedMs=360000 exit=0 pid=24672
+RUN ticket=464 runId=t464-5481714f cmd="node --test packages/skill-calorie/test/t464-备注列口径.test.mjs [mut-red]" waitedMs=360000 exit=1 pid=24672
+RUN ticket=464 runId=t464-5481714f cmd="npx tsc -b packages/skill-calorie [restore]" waitedMs=360000 exit=0 pid=24672
+RUN ticket=464 runId=t464-5481714f cmd="node --test packages/skill-calorie/test/t464-备注列口径.test.mjs [restore]" waitedMs=360000 exit=0 pid=24672
+
+口径：exit=0 的 5 行可作门禁引用（证据 §三逐条声明）；`[mut-red]` exit=1 为变异负向证据，不作门禁引用。

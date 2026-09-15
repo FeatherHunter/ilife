@@ -159,14 +159,18 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
   trendParts.push(renderCaliberLine('图上每个点是一次测量那天的读数｜窗口内共 ' + v.windowTotal + ' 条记录'));
 
   /* ── 记录清单：表题报本页行数（`#362` 判据按「共 N 条」认读数，窗口那件事不在这句里重复）── */
-  // 裁定 2 · 可见文本：缺值一律「—」（老 `:342`／`:347-352`）；复制 payload（下 `items`）保留原始空值，两套口径不互染。
+  // #464 · 裁定 2 · 可见文本：缺值一律「—」（老正本 `body_composition_view.html:211`
+  // `esc(s){return String(s==null?'—':s)}`：`null` 写「—」；`:366` 行正是 `esc(r.note)`，
+  // 故老页对 `null` 同样写「—」，「留空归因 :366」是误记）；「空」只来自空串值
+  // （写侧统一 `input.note ?? ''`，见 `fetch/body.ts:289`），而非模板选择；
+  // 复制 payload（下 `items`）保留原始空值，两套口径不互染。
   const rows = v.items.map((r) => {
     const x = r as { date?: unknown; body_fat_pct?: unknown; source?: unknown; note?: unknown };
     return {
       date: typeof x.date === 'string' ? x.date : '—',
       pct: typeof x.body_fat_pct === 'number' ? String(x.body_fat_pct) + '%' : '—',
       source: typeof x.source === 'string' ? srcZh(x.source) : '—',
-      note: typeof x.note === 'string' ? x.note : '',
+      note: typeof x.note === 'string' ? x.note : '—',
     };
   });
   const truncated = v.windowTotal > v.total;
