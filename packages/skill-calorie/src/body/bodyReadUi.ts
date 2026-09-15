@@ -23,6 +23,7 @@
 
 import { escapeHtml } from 'base-paint';
 import { renderDataTable } from 'base-paint/blocks';
+import { MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
 
 const esc = (s: string): string => escapeHtml(s);
 
@@ -101,17 +102,78 @@ export function recordsSection(
     + scrollHint('表格较宽时，可以在表里左右滑。') + '</section>';
 }
 
-/** 皮褶 7 点小表（部位／毫米两列）：**日期与单位只出现在表题一处**（改前 7 行各印一遍同一天）。
+/** 皮褶 7 点小表（部位／毫米两列）：**日期只出现在表题一处、单位只出现在表头一处**。
+ *  （改前 3 列，7 行各印一遍同一天，单位还印在表题里，两边各说一遍。）
  *  `#362` 判据按「皮褶 7 点原始值」认这张表（7 行逐点成行、缺槽位 `—`），表题措辞可调、这七个字不动。 */
 export function caliperSection(date: string, sites: readonly { readonly label: string; readonly mm: number | null }[]): string {
   const table = renderDataTable({
     columns: [
       { key: 'site', label: '部位' },
-      { key: 'mm', label: '皮褶(mm)', align: 'right' },
+      { key: 'mm', label: '皮褶（毫米）', align: 'right' },
     ],
     rows: sites.map((s) => ({ site: s.label, mm: s.mm === null ? '—' : s.mm })),
-    caption: '皮褶 7 点原始值（' + date + '，单位毫米）',
+    caption: '皮褶 7 点原始值（' + date + '）',
     emptyText: '该记录无皮褶 7 点数据',
   });
   return '<section id="calipers"><div class="bru-table">' + table + '</div></section>';
+}
+
+/** 围度页页内样式：宽屏见表、窄屏（≤640）见卡（老 `body_measurements_view.html:128-151` 同口径）。
+ *  `#361` 判据按 `.msr-card` 的 DOM 结构认窄屏卡，结构不动；本件只补字号下限（`.msr-note` 11→12px）。 */
+export function measureUiCss(): string {
+  return '<style>'
+    + '.msr-cards{display:none}'
+    + '.msr-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}'
+    + '.msr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}'
+    + '.msr-date{font-size:14px;font-weight:700}'
+    + '.msr-note{font-size:12px;color:var(--fg3);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    + '.msr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}'
+    + '.msr-item{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:6px 8px;background:var(--soft);border-radius:8px}'
+    + '.msr-k{color:var(--fg3)}'
+    + '.msr-v{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}'
+    + '.msr-empty{color:var(--fg3);font-size:12px;padding:4px 0}'
+    + '@media (max-width:640px){.msr-table{display:none}.msr-cards{display:block}}'
+    + '</style>';
+}
+
+/** 围度全量 13 项：宽表 ＋ 窄屏卡（同一份 `items`，同行同序）。
+ *  卡片只列已填项（老 `:393-395` 的 `filter(c => r[c] != null)`）；可见「—」只落在宽表缺值格（裁定 2 表体）。 */
+export function measureFullTable(
+  items: readonly Record<string, unknown>[],
+  caption: string,
+  emptyText: string,
+): string {
+  const numOrDash = (x: unknown): number | string => (typeof x === 'number' ? x : '—');
+  const strOrEmpty = (x: unknown): string => (typeof x === 'string' ? x : '');
+  const table = renderDataTable({
+    columns: [
+      { key: 'date', label: '日期' },
+      ...MEASUREMENT_FIELDS.map((f) => ({ key: f, label: MEASUREMENT_ZH[f] ?? f, align: 'right' as const })),
+      { key: 'note', label: '备注' },
+    ],
+    rows: items.map((r) => {
+      const row: Record<string, unknown> = { date: strOrEmpty(r['date']), note: strOrEmpty(r['note']) };
+      for (const f of MEASUREMENT_FIELDS) row[f] = numOrDash(r[f]);
+      return row;
+    }),
+    caption,
+    emptyText,
+  });
+  const cards = items.map((r) => {
+    const date = typeof r['date'] === 'string' ? (r['date'] as string) : '';
+    const note = typeof r['note'] === 'string' ? (r['note'] as string) : '';
+    const cells = MEASUREMENT_FIELDS
+      .filter((f) => typeof r[f] === 'number')
+      .map((f) => '<div class="msr-item"><span class="msr-k">'
+        + escapeHtml(MEASUREMENT_ZH[f] ?? f) + '</span><span class="msr-v">'
+        + escapeHtml(String(r[f])) + 'cm</span></div>')
+      .join('');
+    return '<div class="msr-card"><div class="msr-head"><span class="msr-date">'
+      + escapeHtml(date) + '</span>'
+      + (note === '' ? '' : '<span class="msr-note">' + escapeHtml(note) + '</span>')
+      + '</div><div class="msr-grid">'
+      + (cells === '' ? '<div class="msr-empty">未填围度</div>' : cells)
+      + '</div></div>';
+  }).join('');
+  return '<div class="msr-table">' + table + '</div><div class="msr-cards">' + cards + '</div>';
 }

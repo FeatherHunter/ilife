@@ -30,11 +30,11 @@ import {
 // `base-paint` 的子路径只导出 `.`／`./blocks`／`./help-shell`／`./save-html`；
 // 页面级形状（事实条／图片容器／时间轴条）走索引进（`base-render/src/index.ts` 转出 `pageShapes.ts`）。
 import { renderFactStrip } from 'base-paint';
-import { MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
+import { MEASUREMENT_ZH } from '../fetch/body.js';
 import { SOURCE_LABELS } from '../kcal.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
-import { bodyReadUiCss, caliperSection, recordsSection, windowBar } from './bodyReadUi.js';
+import { bodyReadUiCss, caliperSection, measureFullTable, measureUiCss, recordsSection, scrollHint, windowBar } from './bodyReadUi.js';
 import { compositionWindowLabel } from './bodyPlate.js';
 import type {
   BodyCompositionView,
@@ -110,7 +110,7 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
     { label: '趋势点', value: String(trendDays), unit: '个', detail: '图上画出来的点，一个点是一次测量那天的读数' },
   ];
   if (grouped) cards.push({ label: '来源分组', value: String(v.sourceCount), unit: '组', detail: '每个来源各成一条线，不混着算' });
-  const parts: string[] = [bodyReadUiCss(), windowBar(win, '共 ' + v.windowTotal + ' 条'), renderKpiGrid(cards)];
+  const parts: string[] = [bodyReadUiCss(), windowBar(win), renderKpiGrid(cards)];
   if (d !== null && d.prevSource !== null && d.prevSource !== (anchor?.source ?? null)) {
     parts.push(renderFactStrip({ items: [{ label: '上次测量来自', value: srcZh(d.prevSource) }] }));
   }
@@ -146,7 +146,17 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
   }
   if (!charts) {
     trendParts.push(renderEmptyBlock({ title: '体脂趋势', text: '这个窗口里还没有能连成走势的读数。' }));
+  } else {
+    // 图没有纵轴刻度（共享图表件不给刻度文本）⇒ 量级由卡外事实条给（最低／最高取自图上同一批点）。
+    const plotted = (grouped ? groups.flatMap((g) => g.points) : single).map((p) => p.value);
+    trendParts.push(renderFactStrip({ items: [
+      { label: '窗口内最低', value: Math.min(...plotted) + '%' },
+      { label: '窗口内最高', value: Math.max(...plotted) + '%' },
+    ] }));
   }
+  // 图上每个点是什么、以及这条走势用的是窗口内哪一批记录（本页第二处、也是最后一处「共 N 条」读数：
+  // 另一处在记录表题里；改前这两处还外加窗口条上一枚同样的胶囊，编排者已按「同数留一处」删掉）。
+  trendParts.push(renderCaliberLine('图上每个点是一次测量那天的读数｜窗口内共 ' + v.windowTotal + ' 条记录'));
 
   /* ── 记录清单：表题报本页行数（`#362` 判据按「共 N 条」认读数，窗口那件事不在这句里重复）── */
   // 裁定 2 · 可见文本：缺值一律「—」（老 `:342`／`:347-352`）；复制 payload（下 `items`）保留原始空值，两套口径不互染。
@@ -203,81 +213,39 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
 
 /* ── 围度（body_measurements_view.html 对照：项目筛选＋趋势＋记录表＋复制，13 项） ── */
 
-/** #361 · 全量 13 项列序：直引 `fetch/body.ts` 的 `MEASUREMENT_FIELDS`
- *（与 `compare.ts` 同一来源；本文件不定序也不定中文名——中文名一律取 `fetch/body.ts` 的 `MEASUREMENT_ZH`，
- * #440 前本文件自持过一份 `MEASURE_ZH`，同源已收）。 */
-const MEASURE_FIELDS: readonly string[] = MEASUREMENT_FIELDS;
-
-/** #361 · 窄屏卡片样式（页内 CSS；`libraryDocs.ts` 的 `FOOD_CSS` 同形先例，不碰共用层）。
- * 口径照老 `body_measurements_view.html:128-151`：宽屏见表、窄屏（≤640px）见卡，
- * 卡片只列已填项（老 `:389-399`），全空行写「未填围度」（老 `:397`）。类名前缀 `msr-`，只作用于本页。 */
-const MEASURE_CSS = [
-  '<style>',
-  '.msr-cards{display:none}',
-  '.msr-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}',
-  '.msr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}',
-  '.msr-date{font-size:14px;font-weight:700}',
-  '.msr-note{font-size:11px;color:var(--fg3);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-  '.msr-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}',
-  '.msr-item{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 8px;background:var(--soft);border-radius:7px}',
-  '.msr-k{color:var(--fg3)}',
-  '.msr-v{font-weight:600;font-variant-numeric:tabular-nums}',
-  '.msr-empty{color:var(--fg3);font-size:12px;padding:4px 0}',
-  '@media (max-width:640px){.msr-table{display:none}.msr-cards{display:block}}',
-  '</style>',
-].join('\n');
-
-/** #361 · 窄屏卡片（与宽表同一份 `v.items`：同行同序，只列已填项并注 `cm`；
- * 缺值在卡片上是「不出该项」（老 `:393-395` 的 `filter(c => r[c] != null)`），
- * 可见「—」只落在宽表缺值格（裁定 2 表体），两处不混。 */
-function renderMeasureCards(items: readonly Record<string, unknown>[]): string {
-  const cards = items.map((r) => {
-    const date = typeof r['date'] === 'string' ? (r['date'] as string) : '';
-    const note = typeof r['note'] === 'string' ? (r['note'] as string) : '';
-    const cells = MEASURE_FIELDS
-      .filter((f) => typeof r[f] === 'number')
-      .map((f) => '<div class="msr-item"><span class="msr-k">'
-        + escapeHtml(MEASUREMENT_ZH[f] ?? f) + '</span><span class="msr-v">'
-        + escapeHtml(String(r[f])) + 'cm</span></div>')
-      .join('');
-    return '<div class="msr-card"><div class="msr-head"><span class="msr-date">'
-      + escapeHtml(date) + '</span>'
-      + (note === '' ? '' : '<span class="msr-note">' + escapeHtml(note) + '</span>')
-      + '</div><div class="msr-grid">'
-      + (cells === '' ? '<div class="msr-empty">未填围度</div>' : cells)
-      + '</div></div>';
-  }).join('');
-  return '<div class="msr-cards">' + cards + '</div>';
-}
-
 export function buildBodyMeasureDoc(v: BodyMeasureView): string {
   // #360 · 趋势部位：带部位用所传部位，不带部位用自动挑的最近有数据部位（`autoMetric`）；
-  // #361 · 全量表分支（`metric` 为空）：未过滤列表印全量 13 项（宽表＋窄屏卡同源），趋势闸门与 KPI 逻辑保持 #360 原样。
+  // #361 · 全量表分支（`metric` 为空）：未过滤列表印全量 13 项（宽表＋窄屏卡同源，形状住 `bodyReadUi`）。
   const trendMetric = v.metric ?? v.autoMetric;
   const trendZh = trendMetric ? (MEASUREMENT_ZH[trendMetric] ?? trendMetric) : '';
+  /** #534 波次裁定的两位（编排者已把 `windowLabel` 补进取数层）：`windowGiven` 为真＝唤醒词
+   *  「看围度趋势」显式点了窗口 ⇒ 这一页以走势为主（走势在前、记录在后）；为假＝「看围度」走的
+   *  缺省窗口 ⇒ 以全量记录为主（记录在前、走势在后）。页名与副标题跟着这一位走。 */
+  const byTrend = v.windowGiven;
   const cm = (n: number | null): string => (n === null ? '—' : String(n) + 'cm');
   // 趋势点 0（样本不足）时写「—」不带单位（照老 `:491／:496／:507` 全落「—」）。
+  // 注文说清这一格数的是什么：图上画出来的点，不是跨了多少天（编排者 2026-09-15 复核口径）。
   const trendPointCard = v.kpi.count === 0
     ? { label: '趋势点', value: '—', detail: trendZh }
-    : { label: '趋势点', value: String(v.kpi.count), unit: '天', detail: trendZh };
-  const parts: string[] = [
-    renderParamForm({
-      fields: [{ name: 'metric', label: '围度项', value: v.metric ?? '' }],
-      description: '13 围度项按名筛选（空=全部并自动挑最近有数据部位出趋势；两期对比归组合分析）',
-    }),
-    renderKpiGrid([
-      { label: '围度看', value: v.metric ? (MEASUREMENT_ZH[v.metric] ?? v.metric) : '全部围度', detail: '共 ' + v.total + ' 条' },
-      { label: '最新', value: v.latestVal === null ? '—' : String(v.latestVal) + 'cm', detail: trendZh },
-      trendPointCard,
-      { label: '均值', value: cm(v.kpi.avg), detail: trendZh },
-      { label: '最小', value: cm(v.kpi.min), detail: trendZh },
-      { label: '最大', value: cm(v.kpi.max), detail: trendZh },
-      { label: '变化量', value: v.kpi.delta === null ? '—' : (v.kpi.delta >= 0 ? '+' : '') + v.kpi.delta + 'cm', detail: trendZh },
-    ]),
-  ];
+    : { label: '趋势点', value: String(v.kpi.count), unit: '天', detail: '图上画出来的点，一个点是一次测量那天' };
+  const parts: string[] = [bodyReadUiCss(), measureUiCss()];
+  // 窗口条（与体成分两页同形）：窗口只说一次；条数是本页唯一一处「共 N 条」读数（表题只留表名）。
+  // 取数层若没给窗口文案（合成分支）则整条不出——不印半句「窗口：」。
+  if (typeof v.windowLabel === 'string' && v.windowLabel !== '') parts.push(windowBar(v.windowLabel, '共 ' + v.total + ' 条'));
+  // 读数卡：值槽一律放数（改前第一张卡的值是「全部围度」这类词）；部位名只在第一张卡当明细。
+  parts.push(renderKpiGrid([
+    { label: '最新', value: v.latestVal === null ? '—' : String(v.latestVal) + 'cm', detail: trendZh },
+    trendPointCard,
+    { label: '均值', value: cm(v.kpi.avg) },
+    { label: '最小', value: cm(v.kpi.min) },
+    { label: '最大', value: cm(v.kpi.max) },
+    { label: '变化量', value: v.kpi.delta === null ? '—' : (v.kpi.delta >= 0 ? '+' : '') + v.kpi.delta + 'cm' },
+  ]));
+  /** 趋势块：一个部位一条线（图上每个点＝那天该项的均值，取数层已定，本层不重算）。 */
+  const trendParts: string[] = [];
   let charts = false;
   if (trendMetric && v.trend.length > 0) {
-    parts.push(renderChartBlock({
+    trendParts.push(renderChartBlock({
       kind: 'line',
       title: trendZh + '趋势',
       input: { items: v.trend.map((t) => ({ label: t.date.slice(5), value: t.avgVal })) },
@@ -286,18 +254,22 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
   } else if (trendMetric) {
     // #360 · 样本不足兜底：图区空态句（仍注部位，照老 `body_measurements_view.html:504` 文案），
     // KPI 四格已是「—」（`cm(null)`／`delta null`／点数 0→「—」，照老 `:491／:496／:507`）。
-    parts.push(renderEmptyBlock({ title: trendZh + '趋势', text: '该部位暂无趋势数据' }));
+    trendParts.push(renderEmptyBlock({ title: trendZh + '趋势', text: '这个部位还没有可以连成趋势的记录。' }));
   }
-  if (v.metric) {
-    const mkey = v.metric;
-    parts.push(renderDataTable({
+  /** 记录块：带部位时只列那一项；不带的（全量表）印 13 项宽表＋窄屏卡。表题只留表名——窗口与条数
+   *  已由上面那条窗口条说过一次（编排者 2026-09-15 口径：同一个数留一处）。 */
+  const metric = v.metric;
+  let recordsBlock: string;
+  if (metric !== null) {
+    const zh = MEASUREMENT_ZH[metric] ?? metric;
+    recordsBlock = '<section id="records"><div class="bru-table">' + renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
-        { key: 'val', label: (MEASUREMENT_ZH[mkey] ?? mkey) + '(cm)', align: 'right' },
+        { key: 'val', label: zh + '（厘米）', align: 'right' },
         { key: 'note', label: '备注' },
       ],
       rows: v.items.map((r) => {
-        const val = r[mkey];
+        const val = r[metric];
         return {
           date: typeof r['date'] === 'string' ? (r['date'] as string) : '',
           // #360 · 裁定 2 表体：缺值格可见「—」（老 `:385`），不再留空串（空串会与备注空格连成连续空单元）。
@@ -305,45 +277,38 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
           note: typeof r['note'] === 'string' ? (r['note'] as string) : '',
         };
       }),
-      caption: (MEASUREMENT_ZH[mkey] ?? mkey) + '记录（共 ' + v.total + ' 条）',
-      emptyText: '该项目无记录',
-    }));
+      caption: zh + '记录',
+      emptyText: '这个部位还没有记录',
+    }) + '</div>' + scrollHint('表格较宽时，可以在表里左右滑。') + '</section>';
   } else {
-    // #361 · 全量 13 项：列序直引 `MEASURE_FIELDS`（即 `fetch/body.ts` 列序，无第二份定序）；
-    // 数值缺值格一律「—」（老 `:385`，#360 口径沿用）；备注沿旧口径（空串仍空）。
-    // 复制 payload 行（下 `rows`）保持原样透传，不写「—」（裁定 2）。
-    const numOrDash = (x: unknown): number | string => (typeof x === 'number' ? x : '—');
-    const strOrEmpty = (x: unknown): string => (typeof x === 'string' ? x : '');
-    const fullTable = renderDataTable({
-      columns: [
-        { key: 'date', label: '日期' },
-        ...MEASURE_FIELDS.map((f) => ({ key: f, label: MEASUREMENT_ZH[f] ?? f, align: 'right' as const })),
-        { key: 'note', label: '备注' },
-      ],
-      rows: v.items.map((r) => {
-        const row: Record<string, unknown> = { date: strOrEmpty(r['date']), note: strOrEmpty(r['note']) };
-        for (const f of MEASURE_FIELDS) row[f] = numOrDash(r[f]);
-        return row;
-      }),
-      caption: '围度记录（共 ' + v.total + ' 条 · 13 项全量 · 单位 cm）',
-      emptyText: '无围度记录',
-    });
-    // #361 · 宽屏表＋窄屏卡：同一份 `v.items`（老 `:389-399` 同源口径），CSS 按 640px 切换显隐。
-    parts.push(MEASURE_CSS + '<div class="msr-table">' + fullTable + '</div>' + renderMeasureCards(v.items));
+    // #361 · 全量 13 项：列序直引 `fetch/body.ts`（无第二份定序）；数值缺值格一律「—」；
+    // 复制 payload 行保持原样透传，不写「—」（裁定 2）。
+    recordsBlock = '<section id="records">'
+      + measureFullTable(v.items, byTrend ? '围度记录明细' : '围度记录', '还没有围度记录。用「记围度」记一条，第一条就是基线。')
+      + renderCaliberLine('表里与卡上的数值单位都是 cm｜没量到的项写字面「—」') + '</section>';
   }
-  const rows = v.items.map((r) => ({ ...r }));
+  /** 页内定位（长页）：顺序跟着主次走；没有走势块（样本不足或没有可比部位）时不出走势那颗胶囊。 */
+  const toc: { id: string; text: string }[] = byTrend
+    ? [{ id: 'trend', text: '围度趋势' }, { id: 'records', text: '记录明细' }]
+    : [{ id: 'records', text: '全部记录' }, { id: 'trend', text: '围度趋势' }];
+  parts.push(renderTocBlock({ items: toc }));
+  const trendBlock = trendParts.length > 0 ? '<section id="trend">' + trendParts.join('') + '</section>' : '';
+  parts.push(...(byTrend ? [trendBlock, recordsBlock] : [recordsBlock, trendBlock]));
   parts.push(dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.body-measure',
-      data: { items: rows, total: v.total },
+      data: { items: v.items.map((r) => ({ ...r })), total: v.total },
     },
   }));
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '围度看',
-    eyebrow: 'calorie.view.body-measure · 运动身体域',
-    subtitle: null,
+    title: byTrend ? '围度趋势' : '围度记录',
+    eyebrow: DOC_EYEBROW,
+    subtitle: byTrend
+      ? '同一部位的围度随时间的走势，一个点是一次测量。'
+      : '每次量的围度按日期列出，一条一行。',
     content: parts.join(''),
     charts,
+    pageUi: true,
   });
 }
