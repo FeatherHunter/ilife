@@ -29,8 +29,12 @@ export const PLAN_EDITOR_CSS = `
 .pe-cta{min-height:44px;padding:0 22px;border:0;border-radius:999px;background:var(--blue);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .pe-cta:active{filter:brightness(.94)}
 /* 周页签 */
-.pe-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
-.pe-tab{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--fg2);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+/* 周页签：**单行横向滑动，不换行**（负责人 2026-09-15）。滚动条**显出来**——
+   上一版在只读页把滚动条藏掉过，结果第 11、12 周等于看不见，这条教训在这里不重犯。 */
+.pe-tabs{display:flex;flex-wrap:nowrap;gap:6px;margin:0 0 12px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.pe-tabs::-webkit-scrollbar{height:6px}
+.pe-tabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.pe-tab{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--fg2);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .pe-tab:hover{border-color:var(--blue);color:var(--blue)}
 .pe-tab.is-on{background:var(--blue);border-color:var(--blue);color:#fff}
 .pe-tab-b{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:999px;background:var(--soft);color:var(--blue2)}
@@ -43,7 +47,15 @@ export const PLAN_EDITOR_CSS = `
 .pe-lock{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--bg);color:var(--fg2)}
 /* 周与日 */
 .pe-week{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:4px 18px 14px}
-.pe-day{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+/* 日页签：与周页签同形（负责人：周一到周日也做成页签切换），一次只显示一天。 */
+.pe-daytabs{display:flex;flex-wrap:nowrap;gap:6px;margin:0 0 10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.pe-daytabs::-webkit-scrollbar{height:6px}
+.pe-daytabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.pe-daytab{flex:none;min-width:62px;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg2);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.pe-daytab:hover{border-color:var(--blue);color:var(--blue)}
+.pe-daytab.is-on{background:var(--blue);border-color:var(--blue);color:#fff}
+.pe-daytab .pe-daytab-n{font-size:11px;font-weight:600;opacity:.8;margin-left:4px}
+.pe-day{padding:4px 0 0}
 .pe-day:first-child{border-top:0}
 .pe-dow{font-size:13.5px;font-weight:700;padding-top:10px}
 .pe-day-main{min-width:0;display:flex;flex-direction:column;gap:10px}

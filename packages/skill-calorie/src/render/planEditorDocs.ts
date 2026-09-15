@@ -28,9 +28,9 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
 }): string {
   const parts: string[] = [
     // 口径行：把四条规矩一次说清，用户不必猜「为什么第 2 周加不了动作」。
-    renderCaliberLine('先把第 1 周排好，它就是母版。后面每一周的动作都跟它一样，只改重量、次数、时长这类参数。'
-      + '每天最多 ' + state.maxSessionsPerDay + ' 次训练，每次挑一个时段。'
-      + '有氧只填时长，力量填组数、次数与负重。'),
+    renderCaliberLine('这份计划是按我们刚才讨论的结果填好的，你看着改。'
+      + '动作结构只在第 1 周改，后面每一周的动作都跟它一样，各周自己填重量、次数与时长。'
+      + '每天最多 ' + state.maxSessionsPerDay + ' 次训练，每次挑一个时段；有氧只填时长。'),
     '<div id="pe-root"></div>',
     '<section class="pe-out">'
       + '<h2 class="pe-out-t">生成的计划，照这张表落库</h2>'

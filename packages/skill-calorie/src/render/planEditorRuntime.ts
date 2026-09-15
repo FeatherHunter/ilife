@@ -22,6 +22,7 @@ export const PLAN_EDITOR_JS = `
   var LIB = S.lib || [];
   var DOW = ['周一','周二','周三','周四','周五','周六','周日'];
   var week = S.openWeek || 0;
+  var daySel = 0;   // 日页签：一次只显示这一天
   var picker = S.openPicker || null;
   var filterPart = '全部';
   var query = '';
@@ -125,19 +126,25 @@ export const PLAN_EDITOR_JS = `
         ? '<span class="pe-lock">动作与第 1 周相同，只改参数</span>'
         : '<span class="pe-master">母版周，动作在这一周排</span>')
       + '</div>';
-    var rows = [];
-    for (var d = 0; d < 7; d++) rows.push(dayHtml(d));
-    return head + '<div class="pe-week">' + rows.join('') + '</div>';
+    var tabs = [];
+    for (var d = 0; d < 7; d++){
+      var n = day(d).sessions.length;
+      tabs.push('<button type="button" class="pe-daytab' + (d === daySel ? ' is-on' : '') + '" data-act="go-day" data-d="' + d + '"'
+        + ' aria-current="' + (d === daySel ? 'true' : 'false') + '">' + DOW[d]
+        + (n > 0 ? '<span class="pe-daytab-n">' + n + '</span>' : '') + '</button>');
+    }
+    return head + '<div class="pe-daytabs">' + tabs.join('') + '</div>'
+      + '<div class="pe-week">' + dayHtml(daySel) + '</div>';
   }
 
   function dayHtml(d){
     var ss = day(d).sessions, out = [], i;
     for (i = 0; i < ss.length; i++) out.push(sessionHtml(d, i));
     var full = ss.length >= MAXD;
-    out.push('<button type="button" class="pe-add" data-act="add-train" data-d="' + d + '"' + (full ? ' disabled' : '') + '>'
-      + (full ? '这天已排满 ' + MAXD + ' 次训练' : '加一次训练') + '</button>');
+    out.push('<button type="button" class="pe-add" data-act="add-train" data-d="' + d + '"' + (full || lock() ? ' disabled' : '') + '>'
+      + (lock() ? '训练安排由第 1 周决定，这里只改参数' : (full ? '这天已排满 ' + MAXD + ' 次训练' : '加一次训练')) + '</button>');
     if (ss.length === 0 && !lock()) out.push('<p class="pe-hint">这天还没排。点「加一次训练」，再挑时段。</p>');
-    return '<div class="pe-day"><div class="pe-dow">' + DOW[d] + '</div><div class="pe-day-main">' + out.join('') + '</div></div>';
+    return '<div class="pe-day"><div class="pe-day-main">' + out.join('') + '</div></div>';
   }
 
   function sessionHtml(d, s){
@@ -294,6 +301,7 @@ export const PLAN_EDITOR_JS = `
     if (act === 'wk-plus'){ setWeeks(S.weeks.length + 1); return; }
     if (act === 'wk-minus'){ setWeeks(S.weeks.length - 1); return; }
     if (act === 'go-week'){ week = w; picker = null; render(); return; }
+    if (act === 'go-day'){ daySel = d; picker = null; render(); return; }
     if (act === 'add-train'){
       if (day(d).sessions.length >= MAXD) return;
       var slot = SLOTS[0], k;
