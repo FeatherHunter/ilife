@@ -75,8 +75,9 @@ const SUMMARY_EYEBROW = '运动汇总';
 const GOAL_EYEBROW = '运动对照目标';
 
 /** 来源脚注上给**读者看**的来源名：可见文本零 snake_case（库表名只留在复制日志的「来源」段里，
- *  那是给复核的人照抄用的技术原件，不上页面）。 */
-const SOURCE_LOGGED = '运动记录';
+ *  那是给复核的人照抄用的技术原件，不上页面）。
+ *  #552 去文：SOURCE_LOGGED 已删（运动汇总来源块整块消失后本件只剩目标页用 SOURCE_GOAL；
+ *  用户裁决“口径/来源块消失”——见票面判据）。 */
 const SOURCE_GOAL = '每日目标 ＋ 运动记录';
 
 /** 数值的展示写形一律走 `sportUi.fmtNum()`（显示层取整，见 #523）；本件不再另立一个 `fmt`。 */
@@ -253,17 +254,7 @@ function summaryCards(v: ExerciseView): Card[] {
   return cards;
 }
 
-/** 汇总页口径行（#523）：原来一条 `；` 串把四件事挤成一句，现在**一条事实一行**。
- *  每行都走公共层 `renderCaliberLine`（灰小字旁注的形状只有一个产出者）。 */
-function summaryCalibers(v: ExerciseView): string[] {
-  return [
-    '消耗＝运动记录上报值合计',
-    '逐日表窗内每天一行，无记录日留空，不断 0',
-    '每日消耗折线按 ' + v.series.length + ' 天画',
-    '折线上没有记录的那天不画点',
-    '日均＝有记录天的合计 ÷ 有记录天数',
-  ];
-}
+/* #552 去文：summaryCalibers 整函数删（仅此处用；用户裁决“口径/来源块消失”——见票面判据）。 */
 
 function summaryEnvelope(v: ExerciseView): SerializableEnvelope {
   const r = v.review;
@@ -279,11 +270,14 @@ function summaryEnvelope(v: ExerciseView): SerializableEnvelope {
   };
 }
 
-/** 运动汇总整页（只读页：数据由调用方 `buildExerciseView` 备齐；零记录走空态指引）。 */
+/** 运动汇总整页（只读页：数据由调用方 `buildExerciseView` 备齐；零记录走空态指引）。
+ *  #552 去文（用户裁决“标题无日期；副题元素消失；口径/来源块消失”——见票面判据）：
+ *  标题只留“运动汇总”（窗口由 windowStrip 承载）；副题整行删（传 subtitle:null）；
+ *  口径/来源整块消失（pageBody 传 [] 与空串）。 */
 export function buildExerciseDoc(v: ExerciseView, cmd?: string): string {
   const env = summaryEnvelope(v);
   const copy = docCopy(env, cmd ?? commandLine('calorie.view.exercise', { start: v.start, end: v.end }), 'exercise_log（只读汇总）');
-  const title = '运动汇总 ' + rangeText(v.start, v.end);
+  const title = '运动汇总';
   if (v.series.length === 0) {
     // 零窗（装配层构造）＝一整页空态指引：不留空 KPI 卡、不出空折线。
     return assembleDocPage({
@@ -296,13 +290,13 @@ export function buildExerciseDoc(v: ExerciseView, cmd?: string): string {
     }) + copy;
   }
   const cards = summaryCards(v);
-  const source = footFacts(SOURCE_LOGGED, v.start, v.end, v.review.sessions);
   return assembleDocPage({
     docTitle: DOC_TITLE, title, eyebrow: SUMMARY_EYEBROW,
-    subtitle: '这段时间的运动量，按消耗、时长与类型分布同窗直出',
+    subtitle: null,
     // 窗口条（#523）：起止两枚日期块 ＋ 天数胶囊，替掉原来挤在副标题／表标题里的 `·` 串。
+    // #552 去文：窗口只由 windowStrip 承载（用户裁决“窗口由 windowStrip 承载”——见票面判据）。
     content: windowStrip(v.start, v.end, daysIn(v.start, v.end) + ' 天')
-      + pageBody(cards, summaryCalibers(v), source, copy),
+      + pageBody(cards, [], '', copy),
     charts: true, printable: true,
   });
 }

@@ -1,0 +1,2 @@
+MUT-RED exit=1 T552-TITLE-hasDate=1 h1!=运动汇总（改坏一行必红，runId=98fb6736-1b6e-40e1-8f6f-66afed1615a9，见552-mut-red.log）
+MUT-GREEN exit=0 T552-TITLE-h1=运动汇总-hasDate=0（还原必绿，runId=7342fab6-70ff-42b4-9bf7-5e73d6d9eb08，见552-mut-green.log）

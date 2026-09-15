@@ -1,0 +1,36 @@
+{
+  "label": "run",
+  "widths": [
+    390
+  ],
+  "at": "2026-09-15T13:52:43.594Z",
+  "rows": [
+    {
+      "file": "docs/skills/skill-calorie/552-exercise.html",
+      "name": "552-exercise.html",
+      "inScope": true,
+      "bytes": 80128,
+      "sha256": "ca8663d18fde1e4c2f0697fc789411bc6be95273f18a3f8ea65275f4e6d8c7f9",
+      "images": 0,
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "docScrollWidth": 390,
+          "bodyScrollWidth": 390,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [],
+          "clippedCount": 0,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        }
+      }
+    }
+  ]
+}

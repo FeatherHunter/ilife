@@ -252,7 +252,8 @@ function assertSummary(r, c) {
   const what = c.word;
   assertFusionShell(r, what);
   const head = headTexts(r.file);
-  assert.ok(head.h1.startsWith('运动汇总 '), what + ' 的 H1 不是人话页名：' + head.h1);
+  // #552 去文（用户裁决“标题无日期”——票面判据）：H1 只留“运动汇总”，窗口由 windowStrip 承载。
+  assert.equal(head.h1, '运动汇总', what + ' 的 H1 不是去日期页名：' + head.h1);
   // #523：眉标 `运动 · 汇总` → `运动汇总`（类别与页族两个字都在，只是不拿 `·` 串）。
   assert.equal(head.eyebrow, '运动汇总', what + ' 眉标不是人话原文：' + head.eyebrow);
   // ① KPI 四格（结构上是四张卡）。
@@ -270,14 +271,14 @@ function assertSummary(r, c) {
   assert.ok(type.includes('按类型明细'), what + ' 缺按类型明细表');
   assert.ok(type.includes('ilife-block-data-table'), what + ' 按类型明细不是表格件');
   assert.ok(r.file.includes('按分类汇总'), what + ' 缺按分类汇总折叠区');
-  // ⑤ 来源脚注 ＋ ⑥ 口径行（来源条数是唯一的「共 N 条」来源处）。
-  const src = sourceFootnote(r.file);
-  assert.ok(calibersOf(r.file).length >= 2, what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');
-  // ⑦ 每日消耗折线按全窗口画（窗内天数＝折线点数）。
-  assert.ok(r.file.includes('按 ' + r.days + ' 天画'), what + ' 折线点数口径不是窗内天数');
-  // ⑧ 体量（看着像整页，不是片段）。
+  // #552 去文（用户裁决“口径/来源块消失”——票面判据）：汇总页口径行与来源脚注整块不出；
+  // 原“来源条数是唯一的共 N 条来源处 / 口径≥2条 / 按 N 天画”三断言与本支矛盾，改断消失。
+  assert.equal(calibersOf(r.file).length, 0, what + ' 汇总页仍有口径行（#552 已整块删）');
+  assert.ok(!r.file.includes('数据来源'), what + ' 汇总页仍有来源脚注（#552 已整块删）');
+  assert.ok(!r.file.includes('按 ' + r.days + ' 天画'), what + ' 汇总页仍有折线点数口径句（#552 已随口径块删）');
+  // ⑦ 体量（看着像整页，不是片段）。
   assert.ok(r.file.length > 10000, what + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
-  return { rows: tableRows(daily), days: r.days, count: src.count };
+  return { rows: tableRows(daily), days: r.days, count: 0 };
 }
 
 /** 窗内天数（供折线点数与截断口径断言；只对 10 条冻结参数算，不当取数口径）。 */
