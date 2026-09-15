@@ -4,6 +4,8 @@
  * 只换住处（分派层改走 `src/cli/registry.ts` 查表 ⇒ `commands.ts` 的 `run`）。
  * 读命令一律经共用位取口径（`shared/params.ts` 的 `defaultRange`／`nums`／`optNum`／`optStr`），
  * 取数与装配仍住原处（`render/goal.ts`／`goalPlate.ts`／`goalExtra.ts`／`trendDocs.ts`），本件只做入口。
+ * #254 · `view.goal`／`view.goal-vs-actual`／`view.goal-expiring` 三处的 `html:` 改走
+ * `./resultDocs.ts`（片段 → 整页）；三条命令的取数、参数与退出码一字未动。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from './goalExtraPlate.js';
@@ -12,18 +14,20 @@ import { buildGoalPredictDoc } from '../render/trendDocs.js';
 import { buildGoalView } from './goalPlate.js';
 import { CalorieRenderError } from '../render/errors.js';
 import {
-  renderGoalConfigHtml, renderGoalExpiringHtml, renderGoalHtml, renderGoalRecommendHtml,
-  renderGoalStatusHtml, renderGoalVsActualHtml,
+  renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalStatusHtml,
 } from '../render/html.js';
 import { dayField, defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { TRIGGERS } from '../triggers/index.js';
 import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
 import { buildGoalPrecheckDoc } from './precheck.js';
+import { buildGoalDoc, buildGoalExpiringDoc, buildGoalVsActualDoc } from './resultDocs.js';
 import { buildGoalWeightDoc } from './goalWeightDoc.js';
 import { buildGoalDraft, isGoalProfile } from './set.js';
 
-/** `calorie.view.goal` · 目标分析（完成度 ＋ 缺口 ＋ 趋势 ＋ 历史）。 */
+/** `calorie.view.goal` · 目标分析（完成度 ＋ 缺口 ＋ 趋势 ＋ 历史）。
+ * #254 整页化：页面装配改走 `./resultDocs.ts::buildGoalDoc`（取数口径一行不动；
+ * 旧 `renderGoalHtml` 片段按票面留在 `../render/html.ts`，本票不删）。 */
 export function viewGoal(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const v = buildGoalView(db, start, end);
@@ -35,7 +39,8 @@ export function viewGoal(params: Record<string, unknown>, db: DatabaseSync): Vie
     avgIntake: v.deficit.summary.avgIntake, trendAvg: v.trend.summary.avg,
     completedCount: v.history.completedCount, incompleteCount: v.history.incompleteCount,
   });
-  return { data: { metrics }, html: renderGoalHtml(v) };
+  const command = 'calorie-cmd-read calorie.view.goal --params \'{"start":"' + start + '","end":"' + end + '"}\'';
+  return { data: { metrics }, html: buildGoalDoc(v, metrics, command) };
 }
 
 /** `calorie.view.goal-config` · 目标配置（四项目标现值 ＋ 宏量自洽 ＋ 暂停态）。 */
@@ -70,13 +75,16 @@ export function viewGoalStatus(params: Record<string, unknown>, db: DatabaseSync
   return { data: { metrics }, html: renderGoalStatusHtml(g) };
 }
 
-/** `calorie.view.goal-expiring` · 即将到期的目标（默认 14 天内）。 */
+/** `calorie.view.goal-expiring` · 即将到期的目标（默认 14 天内）。
+ * #254 整页化：装配改走 `./resultDocs.ts::buildGoalExpiringDoc`（取数、参数与退出码一字不动）。 */
 export function viewGoalExpiring(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const withinDays = optNum(params, 'withinDays') ?? optNum(params, 'days') ?? 14;
   const today = dayField(params, 'today') ?? dayField(params, 'date');
   const v = buildGoalExpiringView(db, withinDays as number, today ?? undefined);
   const metrics = nums({ daysLeft: v.daysLeft, withinDays: v.withinDays, expiring: v.expiring ? 1 : 0, weightGoal: v.weightGoal, calorieGoal: v.calorieGoal });
-  return { data: { metrics }, html: renderGoalExpiringHtml(v) };
+  const command = 'calorie-cmd-read calorie.view.goal-expiring --params \'{"withinDays":' + withinDays
+    + (today === null ? '' : ',"today":"' + today + '"') + '}\'';
+  return { data: { metrics }, html: buildGoalExpiringDoc(v, metrics, command) };
 }
 
 /** `calorie.view.goal-predict` · 目标预测达成。
@@ -88,7 +96,8 @@ export function viewGoalPredict(params: Record<string, unknown>, db: DatabaseSyn
   return { data: { metrics }, html: buildGoalPredictDoc(v) };
 }
 
-/** `calorie.view.goal-vs-actual` · 目标对比实际（完成／未完成 ＋ 趋势均值）。 */
+/** `calorie.view.goal-vs-actual` · 目标对比实际（完成／未完成 ＋ 趋势均值）。
+ * #254 整页化：装配改走 `./resultDocs.ts::buildGoalVsActualDoc`（取数、参数与退出码一字不动）。 */
 export function viewGoalVsActual(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const historyDays = optNum(params, 'historyDays') ?? 30;
@@ -97,7 +106,9 @@ export function viewGoalVsActual(params: Record<string, unknown>, db: DatabaseSy
     completedCount: v.completedCount, incompleteCount: v.incompleteCount,
     completionPct: v.completionPct, trendAvg: v.trendAvg, calorieGoal: v.calorieGoal,
   });
-  return { data: { metrics }, html: renderGoalVsActualHtml(v) };
+  const command = 'calorie-cmd-read calorie.view.goal-vs-actual --params \'{"start":"' + start + '","end":"' + end
+    + '","historyDays":' + historyDays + '}\'';
+  return { data: { metrics }, html: buildGoalVsActualDoc(v, metrics, command) };
 }
 
 /** `calorie.view.goal-wizard` · 目标预检页（写前确认）。
