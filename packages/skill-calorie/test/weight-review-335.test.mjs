@@ -68,9 +68,10 @@ test('#335 判别式①：today／date／无参仍走目标复核形态（既有
 test('#335／#482 判别式②：五窗口逐条走窗口形态（标题＋区间＋指标，不读目标）', () => {
   const db = tmpDb();
   seedThin(db);
-  /* 副标题（#482 文本审查）：只留窗口区间；条数归页脚来源行（口径 §3.1），故这里不再带「N 条记录」。 */
+  /* 副标题（#482 文本审查）：只留窗口区间；条数归页脚来源行（口径 §3.1），故这里不再带「N 条记录」。
+   * #510：单日窗不再写 `X ~ X`（那是把不存在的跨度画成形状）⇒ 写「（单日）」。 */
   const cases = [
-    [{ window: '本周', today: T }, '体重复盘（本周）', '2026-09-07 ~ 2026-09-07', 1, 0, 70],
+    [{ window: '本周', today: T }, '体重复盘（本周）', '2026-09-07（单日）', 1, 0, 70],
     [{ window: '本月', today: T }, '体重复盘（本月）', '2026-09-01 ~ 2026-09-07', 7, -0.6, 70.3],
     [{ window: '90d', today: T }, '体重复盘（最近 90 天）', '2026-06-10 ~ 2026-09-07', 16, -1.5, 70.8],
     [{ window: '今年', today: T }, '体重复盘（今年）', '2026-01-01 ~ 2026-09-07', 16, -1.5, 70.8],
@@ -228,7 +229,12 @@ test('#482 文本审查：6 页旧句归零、页脚同一句式、结论句不�
   assert.ok(pages[3][1].includes('<span class="wui-pair-v">75.5 kg</span><span class="wui-pair-mid">→</span><span class="wui-pair-v">69.6 kg</span>'),
     '首末对未落成 pairStrip（两端加粗值 ＋ 箭头）');
   assert.ok(!pages[3][1].includes('开头 75.5 kg → 最后 69.6 kg'), '首末对仍串在卡副说明里');
-  assert.ok(pages[3][1].includes('>最高<') && pages[3][1].includes('>最低<'), '最高／最低未落成事实条的两行');
+  /* #510：最高／最低与首末两端重合时**不再单独报**（同一个数不在同一条条子里印两遍）——
+   * 判据改成「条子里的值槽不出现重复读数」（极端值真落在中间时那两行照旧出，见下一条用例）。 */
+  const strip = /<div class="wui-strip">([\s\S]*?)<\/div>/.exec(pages[3][1])?.[1] ?? '';
+  const vals = [...strip.matchAll(/wui-(?:fact|pair)-v">([\d.]+) kg</g)].map((m) => m[1]);
+  assert.ok(vals.length >= 2, '期间事实条的值槽少于两枚：' + strip);
+  assert.equal(new Set(vals).size, vals.length, '期间事实条里有重复读数（同一事实说两遍）：' + vals.join('／'));
   assert.ok(!/最高 [\d.]+ kg · 最低/.test(pages[3][1]), '最高／最低仍用 `·` 串在卡副说明里');
   /* 缺陷 8：对照段日期从 KPI 卡挪到卡下一行小字（口径行），卡内不再塞注释句。
    * 富种子各页里只有「本周」这一页的对照段有记录（其余各页的对照段一条记录都没有）。 */
@@ -244,6 +250,21 @@ test('#482 文本审查：6 页旧句归零、页脚同一句式、结论句不�
   /* 一页只留一套方向词：里程碑页只剩「已减／回涨／持平」，不再混用「减重」。 */
   assert.equal((pages[5][1].match(/>减重</g) || []).length, 0, '里程碑页徽章仍混用「减重」');
   assert.ok(pages[5][1].includes('>已减<'), '里程碑页缺「已减」方向徽章');
+  db.close();
+});
+
+test('#510 期间事实条：极端值落在窗口中间时照旧出，与首末同值的那一行不出', () => {
+  const db = tmpDb();
+  seedBase(db);
+  /* 中间鼓一下：首 70、末 71、最高 75（不是两端）、最低 70（＝首端）⇒ 只该出「最高」一行。
+   * 这条用例守的是 #510 的删重口径：删的是**重复的那一行**，不是「最高／最低」这两件事实。 */
+  for (const [d, kg] of [['2026-09-01', 70], ['2026-09-02', 75], ['2026-09-03', 71]]) {
+    db.prepare('INSERT INTO weight_log (date, time, weight_kg, height_cm, bmi) VALUES (?, ?, ?, 175, 22.9)').run(d, '07:00:00', kg);
+  }
+  const r = viewWeightReview({ window: 'custom', start: '2026-09-01', end: '2026-09-03', today: T }, db);
+  assert.ok(r.html.includes('>开头与最后<'), '期间事实条缺首末那一行');
+  assert.ok(r.html.includes('>最高<') && r.html.includes('>75 kg<'), '中途更高的那一段应出「最高 75 kg」一行');
+  assert.ok(!r.html.includes('>最低<'), '最低＝首端（同一个数已在首末对里）⇒ 不该再出「最低」一行');
   db.close();
 });
 

@@ -73,7 +73,7 @@ import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
-import { bulletList, pairStrip, weightUiCss } from './weightUi.js';
+import { bulletList, pairStrip, verdict, weightUiCss } from './weightUi.js';
 
 /** 页面 key（日志第 1 段「场景标识」由 envelope 派生）与本次数据来源（第 3 段后半）。 */
 const CMD_KEY = 'calorie.view.weight-review';
@@ -466,21 +466,35 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
  *  一条横排事实条、三枚各自的形状：开头一枚（两端 ＋ 箭头）、最高一枚、最低一枚——
  *  窄屏由 ③ 塌成一列，一屏一行一件事（桌面 1200 截图实测：竖排会把标签与值拉到 960px 的两头、
  *  中间空空荡荡，读不成对，故这一条保持横排）。
- *  三件事一件不少；单点／空窗那两档不出这条（同屏那两件事已各有一处说清）。 */
+ *  三件事一件不少；单点／空窗那两档不出这条（同屏那两件事已各有一处说清）。
+ *
+ *  #510：最高／最低与首末两端重合时**不再单独报**——那一行只是把同一个数再印一遍
+ *  （审查席实测：本窗一路上行时，同一个 70.4 kg 在「期间平均值」值槽、两端值、最高三处各印一次）；
+ *  路径中途出过更极端的值时那两行照旧出（信息一点不丢）。 */
 function periodStrip(v: WeightReviewPeriodView, n: number, first: string, last: string): string {
   if (n < 2) return '';
   const kg = (x: number | null): string => (x === null ? '—' : String(x)) + ' kg';
-  return '<div class="wui-strip">'
-    + '<span class="wui-fact"><span class="wui-fact-k">开头与最后</span>'
-    + pairStrip(first + ' kg', last + ' kg') + '</span>'
-    + '<span class="wui-fact"><span class="wui-fact-k">最高</span>'
-    + '<span class="wui-fact-v">' + kg(v.maxKg) + '</span></span>'
-    + '<span class="wui-fact"><span class="wui-fact-k">最低</span>'
-    + '<span class="wui-fact-v">' + kg(v.minKg) + '</span></span>'
-    + '</div>';
+  const rows: string[] = [
+    '<span class="wui-fact"><span class="wui-fact-k">开头与最后</span>'
+    + pairStrip(first + ' kg', last + ' kg') + '</span>',
+  ];
+  const ends = [first, last];
+  for (const [label, val] of [['最高', v.maxKg], ['最低', v.minKg]] as Array<[string, number | null]>) {
+    if (val === null) continue;
+    if (ends.indexOf(String(val)) >= 0) continue;
+    rows.push('<span class="wui-fact"><span class="wui-fact-k">' + label + '</span>'
+      + '<span class="wui-fact-v">' + kg(val) + '</span></span>');
+  }
+  return '<div class="wui-strip">' + rows.join('') + '</div>';
 }
 
 /* ── 整页装配：期间复盘（老实物 weight_review.html：副标题＋期间指标＋趋势图＋结论句） ── */
+
+/** 窗口写法（#510）：单日窗只写那一天 ＋「（单日）」——`X ~ X` 是把不存在的跨度画成形状。
+ *  复制载荷里的「窗口」字段仍写原始区间（机器面：一格一问，不参与上屏形状）。 */
+function windowText(start: string, end: string): string {
+  return start === end ? start + '（单日）' : start + ' ~ ' + end;
+}
 
 export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: string): string {
   const n = v.coveredDays;
@@ -492,8 +506,10 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
       label: '期间变化', value: signed1(v.delta) + ' kg',
       status: dirStatus(v.delta), statusText: dirWord(v.delta),
       /* 单点那档：副说明改人话（原与徽章同为「单点无变化」）；徽章已删（见下）。
-       * #504：中间那档的三条事实（首末对、最高、最低）不再串成一句——撤到卡下那条 `periodStrip()`。 */
-      detail: n === 0 ? '本窗无体重记录' : n === 1 ? '只有 1 个点，没法算变化' : '这一段的上下界看卡下那条',
+       * #504：中间那档的三条事实（首末对、最高、最低）不再串成一句——撤到卡下那条 `periodStrip()`。
+       * #510：中间那档原来写的是**指路牌**（「这一段的上下界看卡下那条」）——事实被移出卡、再用一句话
+       * 叫读者去别处看（审查席判为「文字顶替设计」的新变体）⇒ 撤掉这一槽，卡下那条自己会说话。 */
+      detail: n === 0 ? '本窗无体重记录' : n === 1 ? '只有 1 个点，没法算变化' : undefined,
     },
     {
       /* `共 N 条` 与页脚来源行是同一条事实 ⇒ 删卡片这份（口径 §3.5：同屏同一事实只留信息量最大的一处）。
@@ -601,12 +617,18 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
       hint: '用来对比的 ' + v.prevStart + ' ~ ' + v.prevEnd + ' 本来就没有记录，不是算不出来',
     }));
   }
-  /* 结论块唯一形态：折叠区，全页「结论」恰一处（§5.3）。 */
-  parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + v.summary + '</p>', open: true }));
+  /* 结论块唯一形态：折叠区，全页「结论」恰一处（§5.3）。
+   *  #510：正文由裸 `<p>` 改成 `verdict()`——六族的结论块同形（审查席 S3：复盘族 5 页没走形状化，
+   *  `wui-verdict` 在页 15 命中 0）。`v.summary` 是本族结论句的唯一出处，一字未改。 */
+  parts.push(renderDisclosure({
+    title: '结论',
+    contentHtml: verdict(v.summary),
+    open: true,
+  }));
   /* 页脚一行（口径 §3.1 统一句式 ＋ #482 裁定 F）：只留人话来源 ｜ 哪个窗口 ｜ 共多少条，缺口在同一行补一句。
    *  库文件名与表名退出可见面（`calorie_data.db`／`weight_log` 在可见文本里命中数为 0）；
    *  机器面不丢——复制日志第 3 段照旧写库文件名 ｜ 来源（§5.5）。 */
-  parts.push(renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 ' + v.start + ' ~ ' + v.end
+  parts.push(renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 ' + windowText(v.start, v.end)
     + ' ｜ 共 ' + n + ' 条' + gapText));
   const metrics: Record<string, number | string | null> = {
     ...periodNums(v),
@@ -635,8 +657,10 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
     docTitle: DOC_TITLE,
     title: v.title,
     eyebrow: '',
-    /* 副标题只留窗口区间：条数与页脚来源行同一条事实（口径 §3.1 已把条数钉在页脚），删页头这份。 */
-    subtitle: v.start + ' ~ ' + v.end,
+    /* 副标题只留窗口区间：条数与页脚来源行同一条事实（口径 §3.1 已把条数钉在页脚），删页头这份。
+     * #510：单日窗写「（单日）」——原来印 `2026-09-07 ~ 2026-09-07`，那是把一个不存在的跨度
+     * 画成了形状（与 `windowStrip()` 的退化分支同一口径）。 */
+    subtitle: windowText(v.start, v.end),
     content: parts.join(''),
     charts: true,
   });

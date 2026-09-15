@@ -18,6 +18,13 @@
  *   · 「距目标」卡 `目标 68 kg · 截止 … · 目标线超出刻度` → `factStrip()` ＋ 一枚说明条（`.wui-strip-note`）；
  *   · 结论句 `bits.join('；')` → `verdict()`（一句判语）＋ `factStrip()`（均值／目标两枚事实）。
  * 手机端照 HELP（断点 820）：样式随 `weightUiCss()` 进 `parts` 第一项，横向件窄屏塌纵向。
+ *
+ * #510 设计视角审查整改（同屏事实收敛，只动文本与装配，结构未动）：
+ *   · 判语块不再逐句复述卡片：`weightConclusion()` 改成一句判语（只说挪动算不算大，不给数、不给方向词）；
+ *   · 结论块的事实条只留卡片上没有的（目标值／截止日）；「图上没画目标线 ＋ 目标值超出刻度」那一型
+ *     改走 `factStrip(…, asNote=true)`（两半分两档，不再是同字号同色的一句）；
+ *   · 「变化」卡的速率从结论块搬回卡副说明；「均值」卡副说明的区间（与「窗口」卡首末对同数）删；
+ *   · 今日盘两个 grid 合成一个（六卡三列两行，行行同宽）；单点页的胶囊由 13 字句子改回状态词。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { assertISO, defaultRange, fail, needArr, needNum, nums, optStr, wday } from '../shared/params.js';
@@ -155,23 +162,24 @@ function windowDays(w: WeightDashboard): number {
  *  ① 「窗口」卡的条数／区间仍留纯文本（一个数 ＋ 一个区间串，没有分隔符）；
  *  ② 「变化」「距目标」卡里原来用 `·` 串的事实（趋势／平均每天／目标／截止／目标线没画）改由
  *     **结论块的形状**承载（本函数把它们交回去，调用处落成 `factStrip()`／说明条）。 */
-function plateCards(w: WeightDashboard): { cards: KpiCardInput[]; facts: { k: string; v: string }[] } {
+function plateCards(w: WeightDashboard): { cards: KpiCardInput[]; facts: { k: string; v: string }[]; notes: { k: string; v: string }[] } {
   const t = w.trend;
   const single = w.curve.single;
   const facts: { k: string; v: string }[] = [];
-  if (!single) {
-    facts.push({ k: '变化', v: '趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) });
-  }
-  // 目标那一枚已经把「目标多少 ＋ 差多少」说全 ⇒ 结论句里不再另起一句复述（#505 去冗余）。
-  if (w.gapKg !== null && w.weightGoal !== null) {
-    const gap = w.gapKg;
-    facts.unshift({ k: '目标', v: w.weightGoal + ' kg，' + (gap > 0 ? '还差 ' + gap + ' kg' : gap < 0 ? '已比目标低 ' + Math.abs(gap) + ' kg' : '已达目标') });
-  }
+  // #510 同屏事实收敛：结论块只留**卡片上没有的事实**（`verdict()` 第二参数的口径）——
+  //   ① 「趋势上升／平均每天 …」原来整条进事实条：方向词与胶囊、徽章同说一件事，速率与「变化」卡
+  //      说的是同一段 ⇒ 速率改住「变化」卡副说明（普通量值、纯文本进得去），这条事实删；
+  //   ② 「目标 68 kg，还差 2.4 kg」里的差值正是「距目标」卡的值槽 ⇒ 事实条只留目标值（卡上没有的那半）；
+  if (w.weightGoal !== null) facts.push({ k: '目标', v: w.weightGoal + ' kg' });
   if (w.weightGoal !== null && w.deadline !== null) facts.push({ k: '截止', v: w.deadline });
+  /* 「标签 ＋ 一句说明」那一型（#510 的 S2 整改）：原来与量值同住一条 `wui-strip`，两半同字号同色，
+   * 读者把这句读成「图上没画目标线 目标值超出刻度」一整句。这一型单出一列，调用处走
+   * `factStrip(…, asNote=true)`（说明那半退到 12px `--fg2` 不加粗）。 */
+  const notes: { k: string; v: string }[] = [];
   if (w.weightGoal !== null && !w.curve.targetInRange) {
-    facts.push({ k: '图上没画目标线', v: '目标值超出刻度' });
+    notes.push({ k: '图上没画目标线', v: '目标值超出刻度' });
   }
-  return { facts,
+  return { facts, notes,
     cards: [
     {
       label: '窗口', value: String(windowDays(w)), unit: '天',
@@ -180,20 +188,20 @@ function plateCards(w: WeightDashboard): { cards: KpiCardInput[]; facts: { k: st
     {
       label: '均值', value: t.avgWeight + ' kg',
       /* 单点页：均值就是当天那一个读数（卡 1 已写），不再报一遍 ⇒ 只留一句「只有一天」。
-         多天页：这里说**区间**（整段落在哪两条线之间），首末日那一对住在「窗口」卡，两处各说一件事。 */
-      ...(single
-        ? { status: 'empty' as const, statusText: '只有一天' }
-        : { detail: '这段都在 ' + t.minWeight + ' ~ ' + t.maxWeight + ' kg 之间' }),
+         多天页：原副说明写「这段都在 X ~ Y kg 之间」，那两个数就是「窗口」卡副说明里的首末对
+         （#510 实测：同一屏同一个 70.4 印了 4 遍）⇒ 那一句撤掉，均值卡只留均值这一个数。 */
+      ...(single ? { status: 'empty' as const, statusText: '只有一天' } : {}),
     },
     {
       label: '变化', value: t.changeKg === 0 ? '0 kg' : signed(t.changeKg),
-      // 清单那两件住在结论块的事实条（`detail` 槽吃纯文本，形状进不去）。
+      // 速率住这里（#510：原来住结论块的事实条，与卡说的是同一段）；方向只看徽章一处。
+      ...(single ? {} : { detail: dailyGram(t.dailyChangeG) }),
       status: single ? 'empty' : t.changeKg < 0 ? 'ok' : t.changeKg > 0 ? 'warn' : 'empty',
       statusText: single ? '看不出变化' : t.trendCn,
     },
     {
       label: '距目标', value: w.gapKg === null ? '—' : w.gapKg === 0 ? '0 kg' : signed(w.gapKg),
-      // 目标／截止／目标线没画三件同样住结论块的事实条；未设目标时那一句也走那里。
+      // 未设目标那一句走结论块的事实条；设置了的，目标值与截止日也走那里（卡上没有这两件）。
       detail: w.weightGoal === null ? '还没有体重目标' : undefined,
       status: w.gapKg === null ? 'empty' : w.gapKg <= 0 ? 'ok' : 'warn',
       statusText: w.gapKg === null ? '未设目标' : w.gapKg <= 0 ? '已达目标' : '未达成',
@@ -202,20 +210,23 @@ function plateCards(w: WeightDashboard): { cards: KpiCardInput[]; facts: { k: st
 }
 
 /** 结论句（引用取数层字段，不做自然语言解析；单点、未设目标各有各的说法）。
- *  窗口与条数住在页头副标题与页脚来源行，本句只说「变了多少、还算不算好」——同一屏不报第二遍。
+ *  窗口与条数住在页头副标题与页脚来源行，本句只说「这段怎么样」。
  *
- *  #505 形状化：原来 `bits.join('；')` 把四件事串成一句 ⇒ 现拆成**一句判语 ＋ 若干枚事实**
- *  （调用处 `verdict(sentence)` ＋ `factStrip(facts)` 各出一件）。事实一条不丢，只是不再挤在一句里：
- *  首末对与累计在判语里（那是「变了多少」），均值、目标只是它旁边的量值。 */
+ *  #510 同屏事实收敛：本句原来把「首末两值 ＋ 累计变化 ＋ 趋势词 ＋ 日均速率」逐条复述一遍
+ *  （那四件事实各住在卡片值槽／副说明／徽章里，判语块是同一屏第三、第四处）⇒ 改成**一句判语**：
+ *  只说这一段的挪动算不算大（0.5kg／1.5kg 两档口径），不给数、不给方向词——数与方向归卡片与徽章。 */
 function weightConclusion(w: WeightDashboard): { sentence: string; facts: { k: string; v: string }[] } {
   const t = w.trend;
   // 单点页：只有一句可说的（「看不出变化」），卡上也已各写一遍 ⇒ 这里不再复述日期／读数／目标差值。
   if (w.curve.single) return { sentence: '只有这一天，看不出变化。再记一条就能比较。', facts: [] };
-  const sentence = '这段时间从 ' + t.firstWeight + ' kg 到 ' + t.lastWeight + ' kg，累计 ' + signed(t.changeKg)
-    + '（趋势' + t.trendCn + '，' + dailyGram(t.dailyChangeG) + '）。';
+  const abs = Math.abs(t.changeKg);
+  const sentence = abs < 0.5
+    ? '这一段的读数基本在一个水平上来回，日常波动就能解释。'
+    : abs < 1.5
+      ? '这一段的挪动比日常波动大一些，再记一两周更看得清。'
+      : '这一段挪动的幅度不小，值得留意。';
   const facts: { k: string; v: string }[] = [];
-  if (t.recordCount >= 2) facts.push({ k: '均值', v: t.avgWeight + ' kg' });
-  // 目标那一枚住在 `plateCards()`（它与「距目标」卡同源），本句不再另起一句复述（#505 去冗余）。
+  // 均值／目标／截止三件各有各的住所（卡片值槽），本句不再另起一条复述（#510 去冗余）。
   return { sentence, facts };
 }
 
@@ -255,18 +266,22 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     + ' ｜ 共 ' + t.recordCount + ' 条';
   /* #505：原来的页头副标题是一句 `·` 串（`2026-08-09 ~ 2026-09-07 · 共 30 条 · 趋势上升`），
    * 拆成两处成形的东西：① 窗口条（`windowStrip()`＝两枚日期块 ＋ 一枚条数胶囊）＋ 方向胶囊（`chip()`）
-   * 合成正文首件；② 副标题只留一句人话。条数两处同值（页脚口径行另有窗口与条数，属允许项 §二）。 */
+   * 合成正文首件；② 副标题只留一句人话。条数两处同值（页脚口径行另有窗口与条数，属允许项 §二）。
+   * #510：胶囊只装 2～4 字的状态词——单点那档原来把一句 13 字的句子（「只有一条记录，还看不出趋势」）
+   * 塞进胶囊，改回状态词（那件事由结论块的判语说全）；方向词全屏只留胶囊与徽章两处。 */
   const trendChip = w.curve.single
-    ? chip('只有一条记录，还看不出趋势', 'plain')
-    : chip('趋势' + t.trendCn, t.trendCn === '上升' ? 'warn' : t.trendCn === '下降' ? 'ok' : 'plain');
+    ? chip('记录太少', 'plain')
+    : chip('趋势' + t.trendCn, t.trendCn === '上升' ? 'warn' : 'plain');
   const plate = plateCards(w);
   const parts: string[] = [
     // `weightUiCss()`＝本族形状词汇的样式，按口径放 `parts` 第一项（`assembleDocPage` 没有页内 CSS 入口）。
     weightUiCss(),
     // 窗口条 ＋ 趋势胶囊合成一件（形状与外边距全在 `weightUi.ts`：这里只给类名，正文零内联样式）。
     '<div class="wui-window-block">' + windowStrip(w.start, w.end, '共 ' + t.recordCount + ' 条') + trendChip + '</div>',
-    renderKpiGrid(todayCards(t, w)),
-    renderKpiGrid(plate.cards),
+    /* #510（审查席 S2）：今日盘原来渲染**两个 grid**（最新体重两卡 ＋ 体重盘四卡）——桌面 1200 下
+     * 第一行两枚各 ~497px、第二行四枚各 ~245px，同一张网格里两行卡宽不同（手机两列看不出来）。
+     * 六张卡合成一个网格：三列两行，行行同宽。 */
+    renderKpiGrid(todayCards(t, w).concat(plate.cards)),
     // 老实物 weight_dashboard.html 的 h2 最近 7 天趋势：7 天内即近 7 天小图，否则全窗曲线。
     renderChartBlock({
       kind: 'line',
@@ -289,10 +304,14 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     }),
   ];
   // 结论卡（老实物 weight_dashboard.html 的 summaryCard／summaryText）：一页唯一形态的折叠区。
-  // #505：一句判语 ＋ 事实条两件（原来是 `bits.join('；')` 一句长串）＋ 四卡交回来的那几枚
-  // （趋势／平均每天／目标／截止／目标线没画——`detail` 槽吃纯文本，形状只能住这里）。
+  // #505：一句判语 ＋ 若干枚事实（原来是 `bits.join('；')` 一句长串）。
+  // #510：事实只留卡片上没有的那几件（目标值／截止日），「标签 ＋ 一句说明」那一型走 `asNote`——
+  // 两半分两档，不再与量值同一条条子同字号并排（审查席 S2：那两半读成一句不通的话）。
   const concl = weightConclusion(w);
-  parts.push(shapedConclusionBlock(verdict(concl.sentence) + factStrip(concl.facts.concat(plate.facts))));
+  parts.push(shapedConclusionBlock(
+    verdict(concl.sentence)
+    + factStrip(concl.facts.concat(plate.facts))
+    + factStrip(plate.notes, false, true, true)));
   parts.push(renderDataTable({
     columns: [
       { key: 'date', label: '日期' },

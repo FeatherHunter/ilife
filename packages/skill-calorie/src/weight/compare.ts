@@ -123,8 +123,8 @@ const fmtDelta = (v: number | null | undefined): string => {
   const n = numOrNull(v);
   return n === null ? MISSING : (n >= 0 ? '+' : '') + n + ' kg';
 };
-/** 箭头只看差值符号；差值为 0 才写持平——不借别的字段旁证方向。 */
-const arrowOf = (n: number): string => (n < 0 ? '↓' : n > 0 ? '↑' : '→');
+/** 方向词只看差值符号；差值为 0 才写持平——不借别的字段旁证方向。
+ *  #510：原来另有一个箭头帮手（`↑`／`↓`）挂在差值卡的副行上，那是方向词的第二处 ⇒ 随副行一并删。 */
 const directionWord = (n: number): string => (n < 0 ? '下降' : n > 0 ? '上升' : '持平');
 
 /** 一段的全部页上读数（两面共用同一形状；窗口面与情景面的字段名在这里对齐，别处不再各译一遍）。 */
@@ -194,13 +194,17 @@ const labelOfA = (a: CompareSegment, mid: string): string => (a.label === mid ? 
 interface Rhythm { readonly word: string; readonly comparable: boolean }
 /** 两段每天变化量的**形状版**（原来在结论句里靠 `；`／` vs ` 串成一句）：一段一格，
  *  值带「平均每天」前缀，标签配「最近 30 天」这类**读者认得出来的段名**（口径 §三第 2 条）。
- *  读不出速率的那一段照实写「算不出」——不丢事实、也不编数。 */
+ *  读不出速率的那一段照实写「算不出」——不丢事实、也不编数。
+ *
+ *  #510（审查席 S2）：原来横排一行的两半同字号同色，单日锚点页逐字读成
+ *  「今天 算不出   减重 5 kg 那天 算不出」（一句不通的话）⇒ 走 `vertical`：
+ *  一枚「标签 ＋ 值」占一行、标签在左值贴右，两段各自成行（`.wui-strip-v` 的读法）。 */
 function rhythmStrip(b: CompareSegment, a: CompareSegment, mid: string): string {
   const val = (r: number | null): string => (r === null ? '算不出' : '平均' + perDayG(r));
   return factStrip([
     { k: labelOfB(b, mid), v: val(rateOf(b)) },
     { k: labelOfA(a, mid), v: val(rateOf(a)) },
-  ]);
+  ], true);
 }
 function rhythmOf(a: CompareSegment, b: CompareSegment): Rhythm {
   const ra = rateOf(a);
@@ -219,16 +223,10 @@ function rhythmOf(a: CompareSegment, b: CompareSegment): Rhythm {
  *  #503 形状化：原来副说明是「2026-09-01 ~ 2026-09-07 · 30 条」——区间与条数被 `·` 串成一句，
  *  而条数徽章里已经有了（「记录齐全（30 条）」／「只有一天」）⇒ 副说明只留**区间**这一件事。
  *  **这一槽只能是纯文本**：`renderKpiCard` 对 `detail` 走 `esc()`（公共层 `blocks.ts:543`），
- *  形状 HTML 塞进来会原样印成字（第一版就是这么错的，截图当场抓到）。 */
-function rangeTextOnly(s: CompareSegment): string {
-  const parts = rangeText(s).split(' ~ ');
-  const a = parts[0] ?? '';
-  const b = parts[1] ?? a;
-  return a === b ? a : a + ' ~ ' + b;
-}
-
-/** 两段卡：记录条数与「只有一天」直接进徽章；徽章只说状态，值槽里只有均值这一个数。
- *  #481 整改缺陷 8：副说明已写「共 N 条」时，徽章不再把同一个数说第二遍（改说「记录齐全」）。 */
+ *  形状 HTML 塞进来会原样印成字（第一版就是这么错的，截图当场抓到）。
+ *  #510：这一句**撤掉**卡片——两段的段名与区间在页题副标题里已经逐段对齐印着（`本期 X ~ Y vs
+ *  对比期 Z ~ W`），卡片再印一遍是同一屏同一事实的第二、第三处（审查席实测：18 字区间串在手机 390
+ *  下还会把卡副行折成两行）。 */
 const segmentCard = (s: CompareSegment): KpiCardInput => {
   const single = isSingleDay(s);
   const thin = !single && s.count < SAMPLE_MIN;
@@ -238,19 +236,20 @@ const segmentCard = (s: CompareSegment): KpiCardInput => {
         : s.count === SAMPLE_MIN ? '记录齐全' : '记录齐全（' + s.count + ' 条）';
   return {
     label: s.label, value: fmtKg(s.avg), unit: 'kg',
-    detail: rangeTextOnly(s),
     status: s.count === 0 ? 'empty' : single ? 'empty' : thin ? 'warn' : 'ok',
     statusText: badgeText,
   };
 };
 
 /** 差值卡：方向只看均值差符号（ok＝降、warn＝升、empty＝持平或暂无）。
- *  值槽放差值，方向词与箭头把这句话说完整——**值槽与副说明不重复同一个数**（口径 §3.5）。 */
+ *  #510（审查席 S2 第二类）：方向词原来在卡内印两处（副行「上升 ↑」＋ 徽章「上升」）、全屏三处
+ *  （再加判语块）。现在**方向只留徽章这一处**（它是状态色）；副行撤掉——差值卡的值槽与徽章
+ *  已经把这件事说全（「+0.3 kg ＋ 上升」）。算不出来的那档同理：徽章说「差值算不出」，
+ *  为什么算不出来由结论块的一句判语交代（`missReason`）。 */
 const deltaCard = (delta: number | null): KpiCardInput => ({
   label: '体重对比', value: fmtDelta(delta),
-  detail: delta === null ? '差值暂时算不出来' : directionWord(delta) + ' ' + arrowOf(delta),
   status: delta === null ? 'empty' : delta < 0 ? 'ok' : delta > 0 ? 'warn' : 'empty',
-  statusText: delta === null ? '差值暂时算不出来' : directionWord(delta),
+  statusText: delta === null ? '差值算不出' : directionWord(delta),
 });
 
 /** 两段均值差（本期 − 对比期）：任一段没有均值就是「暂无」，不当 0 参与。**全页唯一出处**。 */
@@ -376,23 +375,27 @@ function renderSegmentsTable(a: CompareSegment, b: CompareSegment, caption: stri
  *  —— 判语一页只此一句；每天变化量（两段各一格）是原来那句 `；`／` vs ` 串的形状版。 */
 interface Conclusion { readonly sentence: string; readonly strip: string }
 
-/** 结论判语（两面同形）：**一句话**说全「哪两段的平均数比出了什么、差值方向是什么」。
+/** 结论判语（两面同形）：**一句话**说「两段之间这个差别算不算大」。
  *  **不带「结论：」前缀**——折叠区标题已经是「结论」，正文再来一次就是同一页两处（§5.3 肉眼验收）。
- *  段名用 `labelOfB`／`labelOfA`：窗口面的「本期／对比期」在这句里读不出「最近 30 天」是哪一段
- *  （那张页的段名本来就是时期词），故按平均数是哪一段说「最近这段／对比那段」。
- *  **每天变化量不进这句**（#481 整改缺陷 3 的「同一事实不许说三遍」）：两段逐字对照归 `strip`，
- *  判语词（幅度更大／看不出快慢）归 `chip()`。 */
+ *  **每天变化量不进这句**（#481 整改缺陷 3 的「同一事实不许说三遍」）：两段逐字对照归 `strip`。
+ *
+ *  #510 同屏事实收敛（审查席 S2 第二、三类）：这一句原来把「两段各自的均值 ＋ 差值 ＋ 方向词 ＋
+ *  幅度判语」逐条念一遍——那几件各住在「体重对比」的值槽与徽章、「本期」「对比期」两张卡的值槽、
+ *  表题里，判语块成了同一屏第三、第四处。现在判语**只说差别算不算大**（0.5kg／2kg 两档，与
+ *  `RATE_EPS` 同为显示口径）：不给数、不给方向词、不复述段名与均值；算不出来时只交代原因。 */
 function compareConclusion(a: CompareSegment, b: CompareSegment, delta: number | null, r: Rhythm, missReason: string, mid: string): Conclusion {
   const strip = rhythmStrip(b, a, mid);
-  const head = labelOfB(b, mid) + '平均 ' + fmtKg(b.avg) + ' kg，' + labelOfA(a, mid) + '平均 ' + fmtKg(a.avg) + ' kg';
-  if (delta === null) return { sentence: head + '，差值暂时算不出来（' + missReason + '）。', strip };
-  const tail = r.comparable ? '，' + r.word + '。' : '。';
-  return { sentence: head + '，差值 ' + fmtDelta(delta) + '（' + directionWord(delta) + '）' + tail, strip };
+  if (delta === null) return { sentence: missReason + '，这一次的差值先给不出。', strip };
+  const abs = Math.abs(delta);
+  const sentence = abs < 0.5 ? '两段之间的差别很小，日常波动就能解释。'
+    : abs < 2 ? '两段之间的差别看得出来，但还不到要调整的程度。'
+      : '两段之间的差别不小，值得留意。';
+  return { sentence, strip };
 }
 
 /** 结论块的形状版：一句话判语 ＋ **每天变化量一行**（两段各一格）。
- *  判语里已经说了方向词（上升／下降／持平），故不再挂方向胶囊——那会是同一事实的第二处；
- *  两段能不能对照由节奏卡的徽章（`两段可比`／`记录太少`）说，这里也不再复述。 */
+ *  #510：判语里既不出现方向词也不挂方向胶囊（方向只留差值卡的徽章）；两段能不能对照由节奏卡的
+ *  徽章（`两段可比`／`记录太少`）说，这里也不再复述。 */
 function conclusionBlock(c: Conclusion): string {
   return verdict(c.sentence, c.strip === '' ? [] : [c.strip]);
 }
@@ -562,7 +565,9 @@ export function buildWeightCompareDoc(v: WeightCompareView, command = ''): strin
     title: '体重对比',
     eyebrow: '',
     subtitle: b.label + ' ' + rangeText(b) + ' vs ' + a.label + ' ' + rangeText(a),
-    caption: (delta) => '两期对比（平均差 ' + fmtDelta(delta) + '）',
+    /* #510：表题不再复述差值（审查席 S2 第三类：同一个数在值槽／表题／判语块印三处）——
+     * 那一个数住「体重对比」卡的值槽与表内「变化」列，表题只说这张表是什么。 */
+    caption: () => '两期对比（本期在上）',
     a, b, mid: '本期', extraRows: [], curve: null, anchorMiss: false,
     missReason: '两段都要有记录才能对比', command,
   });
@@ -662,7 +667,8 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
     eyebrow: '',
     /* 副标题只印两段的区间：情景业务名与标题行逐字相同，写在这里就是同一页第二处（口径 §2 第一条）。 */
     subtitle: a.label + ' ' + rangeText(a) + ' vs ' + b.label + ' ' + rangeText(b),
-    caption: (delta) => (delta === null ? v.scenarioLabel + '（差值暂时算不出来）' : v.scenarioLabel + '（差值 ' + fmtDelta(delta) + '）'),
+    /* #510：同上——表题不带差值那个数（它住「体重对比」卡的值槽）；情景名是这张表的读法，留着。 */
+    caption: () => v.scenarioLabel + '（当前在上）',
     /* 情景卡整张删（本轮裁定）：它印的参照段标签与页题副标题逐字重复，徽章「已找到这一天」是
      * 正常态（页能出，正说明那一天找到了）；真没找到时页顶软横幅已用「参照日前后 3 天都没有体重记录」据实说明。 */
     a, b, mid: '当前',

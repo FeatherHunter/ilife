@@ -32,6 +32,17 @@
  *      用法（值退成脚注口气的字）。两者都是**整块**的落点，不是内联样式；
  *   ② 判语块的胶囊行（`.wui-verdict-row`）在 820 段塌成一栏：原来几枚胶囊横排会折行断在词中间；
  *   ③ `.wui-window-block`：窗口条与方向胶囊合成的一件（体重盘正文首件，窄屏照 ③ 塌一列）。
+ *
+ * ── #510 设计视角审查整改（只做整改单第六节列的四类 ＋ 必要的 `asNote` 用法，结构未动）──
+ *   ① **色值改冻结正本**：`.wui-chip-warn` 由自造的 `#fff4e5`／`#a05a00` 换成正本
+ *      `base-render/src/style.ts` 的 `statusBadge` warn（`#fff5e0`／`#a25b00`）；
+ *      `ok`／`danger` 两档 0 页用过 ⇒ 连类带值一起删（`chip()` 的类型同步收到 `warn`／`plain`）；
+ *   ② **字号收到三档**（12／13／15）：`.wui-bullets li` 的 `12.5px`→`12px`、手机档 `.wui-verdict` 的
+ *      `14.5px`→`15px`（与桌面同档，原差 0.5px 是空档）；
+ *   ③ **死 CSS 清零**：`wui-chip-ok`／`wui-chip-danger` 删；`wui-strip-note` 给「标签 ＋ 说明」那一型真用上
+ *      （log 族的目标线说明），`wui-strip-v` 给对比族的节奏事实条真用上（两枚段名各自成行）；
+ *      两半的字号／色也分了两档（说明那半 12px `--fg2` 不加粗），并排不再读成一句不通的话；
+ *   ④ **`windowStrip()` 加退化分支**：`start === end` 只出一枚日期块、不出箭头，文案写「（单日）」。
  */
 
 import { escapeHtml } from 'base-paint';
@@ -50,9 +61,11 @@ export function weightUiCss(): string {
     // 纵列里的一组「标签 ＋ 值」：标签在左、值贴右，行行对齐（窄屏的事实一栏读法）。
     + '.wui-strip-v .wui-fact{width:100%;justify-content:space-between;gap:12px}'
     // 「标签 ＋ **说明句**」那一型（`factStrip(facts, false, true, true)`）：值不是量值而是一句脚注口气的
-    // 说明（「目标线超出刻度，图上没画」），整块退一档（同 `.wui-note` 的字号／行高／色），不跟量值抢眼。
+    // 说明（「目标值超出刻度」），整块退一档（同 `.wui-note` 的字号／行高／色），不跟量值抢眼。
+    // #510：两半**分两档**——标签留 `--fg3`、说明那半落到 `--fg2` 且不加粗（原来两半同为 13px 加粗 `--fg`，
+    // 并排读成一句不通的话：`图上没画目标线 目标值超出刻度`）。
     + '.wui-strip-note .wui-fact{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}'
-    + '.wui-strip-note .wui-fact-k{font-size:12px;color:var(--fg2);font-weight:400;white-space:normal}'
+    + '.wui-strip-note .wui-fact-k{font-size:12px;color:var(--fg3);font-weight:400;white-space:normal}'
     + '.wui-strip-note .wui-fact-v{font-size:12px;font-weight:400;color:var(--fg2);line-height:1.6}'
     + '.wui-fact{display:inline-flex;align-items:baseline;gap:6px;min-width:0}'
     + '.wui-fact-k{font-size:12px;color:var(--fg3);white-space:nowrap}'
@@ -72,12 +85,14 @@ export function weightUiCss(): string {
     + '.wui-pair{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:2px 0 0}'
     + '.wui-pair-v{font-size:15px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}'
     + '.wui-pair-mid{font-size:12px;color:var(--fg3)}'
-    // ── 状态／方向胶囊（四色取冻结 token；不用裸颜色词） ──
+    // ── 状态／方向胶囊（色值取冻结正本 `base-render/src/style.ts` 的 `statusBadge`；不用裸颜色词） ──
+    // #510：`ok`／`danger` 两档在 58 页里 0 页上过屏（那是死 CSS）⇒ 连同自造色值一并删；
+    // 留下的 `warn` 逐值照抄 `statusBadge` 的 warn（`#fff5e0`／`#a25b00`）——本批原先自造的
+    // `#fff4e5`／`#a05a00` 与正本差 1 位数（审查席实测 Δfg 2.2、Δbg 5.1）。
     + '.wui-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;'
     + 'border-radius:999px;padding:3px 10px;background:var(--soft);color:var(--blue2)}'
-    + '.wui-chip-ok{background:#e7f8ee;color:#1a7a3a}'
-    + '.wui-chip-warn{background:#fff4e5;color:#a05a00}'
-    + '.wui-chip-danger{background:#ffeceb;color:#c0392b}'
+    + '.wui-chip-warn{background:#fff5e0;color:#a25b00}'
+    + '.wui-chip-plain{background:var(--line);color:var(--fg2)}'
     + '.wui-chip-plain{background:var(--line);color:var(--fg2)}'
     // ── 脚注小字（口径说明、图例说明）──
     + '.wui-note{font-size:12px;line-height:1.6;color:var(--fg2);margin:2px 0 0}'
@@ -88,7 +103,7 @@ export function weightUiCss(): string {
     // 「提示块 ＋ 它那几条逐条说明」读成一组（#504 两族都用这个搭法）：紧贴上一块时只留 8px，
     // 与「下一块」之间的 16px 拉开层次。`~` 只吃提示块的下一块，不牵动别处间距。
     + '.ilife-block-feedback-block + .wui-bullets{margin:8px 0 6px}'
-    + '.wui-bullets li{font-size:12.5px;line-height:1.65;color:var(--fg2);margin:2px 0}'
+    + '.wui-bullets li{font-size:12px;line-height:1.65;color:var(--fg2);margin:2px 0}'
     // ── 判语块（结论块正文：一句话 ＋ 可选胶囊），视觉上比正文重一档 ──
     + '.wui-verdict{font-size:15px;line-height:1.6;font-weight:600;color:var(--fg);margin:0}'
     + '.wui-verdict-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}'
@@ -100,7 +115,8 @@ export function weightUiCss(): string {
     + '  .wui-fact-v{font-size:13px}'
     + '  .wui-date{padding:6px 10px;min-height:32px;display:inline-flex;align-items:center}'
     + '  .wui-days{padding:5px 10px}'
-    + '  .wui-verdict{font-size:14.5px}'
+    // #510：手机档原写 14.5px——比桌面那 15px 只差 0.5px，是个空档（页内件面只留 12／13／15 三档）。
+    + '  .wui-verdict{font-size:15px}'
     // 判语块的胶囊行在窄屏塌成一栏「标签 ＋ 值」：原来几枚胶囊横排会折行、断在词中间。
     + '  .wui-verdict-row{flex-direction:column;align-items:stretch;gap:6px}'
     + '}'
@@ -114,13 +130,20 @@ export function weightUiCss(): string {
     + '</style>';
 }
 
-/** 窗口条：`2026-09-01 → 2026-09-07` ＋ 天数（或条数）胶囊。 */
+/** 窗口条：`2026-09-01 → 2026-09-07` ＋ 天数（或条数）胶囊。
+ *  #510 退化分支：`start === end`（单日窗）时**只出一枚日期块、不出箭头**——原来会印
+ *  `2026-09-07 → 2026-09-07`，那是形状替读者断言了一个不存在的跨度（页 15／30 同病）；
+ *  这一档的日期块里写明「单日」，跨度的形状不再出现。 */
 export function windowStrip(start: string, end: string, chipText?: string): string {
+  const chip = chipText === undefined || chipText === '' ? '' : '<span class="wui-days">' + esc(chipText) + '</span>';
+  if (start === end) {
+    return '<div class="wui-window"><span class="wui-date">' + esc(start) + '（单日）</span>' + chip + '</div>';
+  }
   return '<div class="wui-window">'
     + '<span class="wui-date">' + esc(start) + '</span>'
     + '<span class="wui-arrow">→</span>'
     + '<span class="wui-date">' + esc(end) + '</span>'
-    + (chipText === undefined || chipText === '' ? '' : '<span class="wui-days">' + esc(chipText) + '</span>')
+    + chip
     + '</div>';
 }
 
@@ -155,8 +178,10 @@ export function pairFact(label: string, left: string, right: string, mid = '→'
     + '</span></div>';
 }
 
-/** 状态／方向胶囊。tone：ok／warn／danger／plain（缺省蓝）。 */
-export function chip(text: string, tone: 'ok' | 'warn' | 'danger' | 'plain' | '' = ''): string {
+/** 状态／方向胶囊。tone：warn／plain（缺省蓝）。
+ *  #510：`ok`／`danger` 两档删掉（58 页里 0 页用过，是死 CSS）——**类型里也不留**，
+ *  免得将来有人传进来只拿到一个没有样式的类名。胶囊只装 2～4 字的状态词，句子走 `note()`。 */
+export function chip(text: string, tone: 'warn' | 'plain' | '' = ''): string {
   const cls = tone === '' ? '' : ' wui-chip-' + tone;
   return '<span class="wui-chip' + cls + '">' + esc(text) + '</span>';
 }

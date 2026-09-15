@@ -139,14 +139,13 @@ function assertDashboard(r, what, firstCard) {
   assert.ok(!body.includes('·'), what + ' 正文里仍有 `·`：' + (body.match(/.{0,24}·.{0,24}/) ?? [''])[0]);
   assert.ok(!body.includes('；'), what + ' 正文里仍有 `；`：' + (body.match(/.{0,24}；.{0,24}/) ?? [''])[0]);
   // 形状词汇上屏：窗口条 ＋ 方向胶囊（页头原是一句 `·` 串）＋ 结论块的判语。
-  // 事实条只在真有事实时出（单点页的目标只写在「距目标」卡上，结论块里没有可列的事实）——故那一件分开钉。
+  // 事实条只在真有**卡片上没有的事实**时出（#510 收敛口径：目标值／截止日那一型；未设体重目标的
+  // 种子这一页没有可列的 ⇒ 结论块只剩一句判语）。有目标的那一支由本文件末尾「#510 设了目标」那条钉。
   for (const shape of ['<div class="wui-window-block">', '<span class="wui-days">', '<span class="wui-chip',
     '<p class="wui-verdict">']) {
     assert.ok(r.file.includes(shape), what + ' 缺形状件：' + shape);
   }
-  if (firstCard === '最新体重') {
-    assert.ok(r.file.includes('<div class="wui-strip'), what + ' 多天页的结论块缺事实条');
-  }
+  assert.equal((r.file.match(/<p class="wui-verdict">/g) || []).length, 1, what + ' 结论块须恰一句判语');
   assert.ok(!/&lt;(p|div|span|ul) class=&quot;wui-/.test(r.file), what + ' 形状词汇被当成字面量印上了屏');
 }
 
@@ -185,6 +184,28 @@ test('#337 看体重总览', () => {
   const r = runCli(dir, 'calorie.view.weight', { window: '30d' }, 'view-overview');
   assertDashboard(r, '看体重总览', '最新体重');
   assert.ok(r.file.includes('体重总览'), '缺体重总览区块');
+});
+
+/* #510（审查席 S2 第三类 ＋ 同类项）：今日盘的两处收敛——六张卡合成一个网格（两行同宽）、
+ * 结论块的事实条只装卡片上没有的事实，且「标签 ＋ 一句说明」那一型走 `asNote`（两半分两档）。 */
+test('#510 设了目标的今日盘：结论块的事实条只装卡片上没有的事实，说明那一型走 asNote', () => {
+  const dir = mkDir();
+  seedBasic(dir);
+  const g = runCli(dir, 'calorie.goal.weight', { kg: 68, deadline: '2026-12-31' }, 'seed-goal');
+  assert.equal(g.status, 0, '种子目标 exit ' + g.status + ' stderr=' + g.stderr.slice(-200));
+  const r = runCli(dir, 'calorie.view.weight', { window: '30d' }, 'view-overview-goal');
+  assertDashboard(r, '看体重总览（设了目标）', '最新体重');
+  assert.ok(r.file.includes('<div class="wui-strip'), '结论块缺事实条（目标值／截止日两件卡上没有的事实）');
+  assert.ok(r.file.includes('wui-strip-note'), '「标签 ＋ 说明」那一型未走 asNote（说明那半没退一档）');
+  assert.ok(r.file.includes('图上没画目标线') && r.file.includes('目标值超出刻度'), '目标线没画那一件丢了');
+  // 六张卡一个网格：卡网格元素恰一个（原来 2 卡 ＋ 4 卡两个网格、两行卡宽不同）。
+  assert.equal((r.file.match(/<div class="ilife-block-kpi-card-grid"/g) || []).length, 1,
+    '今日盘的卡网格不是一个（两行卡宽会不同）');
+  // 判语块不再逐句复述卡片：那一句里不许出现关键数字与方向词（数与方向归卡片值槽与徽章）。
+  const verdict = /<p class="wui-verdict">([^<]*)<\/p>/.exec(r.file)?.[1] ?? '';
+  assert.ok(verdict.length > 0, '缺判语块正文');
+  assert.ok(!/\d/.test(verdict), '判语块复述了数字：' + verdict);
+  assert.ok(!/(上升|下降|持平)/.test(verdict), '判语块复述了方向词：' + verdict);
 });
 
 // ---------------------------------------------------------------- ⑥ 写后回执（9 条写）

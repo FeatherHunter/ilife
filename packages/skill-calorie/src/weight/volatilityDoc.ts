@@ -25,6 +25,11 @@
  *   - `weightUiCss()` 放进本页（含空态那一页）`parts` 第一项。
  *  允许保留：`<title>卡路里·体重</title>`（全仓 58 页逐字同一处品牌名）、页脚口径行的 `｜`、日期区间的 `~`、
  *  复制载荷（`异常明细` 用 `｜`／`；` 分列）与命令原文（机器面）。
+ *
+ * #510 设计视角审查整改（同屏事实收敛，只动文本与装配，结构未动）：
+ *   · 「波动带」卡撤掉指路牌副行（「两条线各是多少，看这张卡下面那条」）⇒ 无副行的纯指标卡；
+ *     徽章由 11 字的句子（「这两条线按本窗数据算」）收到 4 字状态词（「本窗算出」）；
+ *   · 「平均线」卡满窗时不再报「7/7 天有记录」（那个数同屏三处）；异常表表题不再写「近 7 天」。
  */
 import { renderCaliberLine, renderChartBlock, renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
@@ -129,9 +134,11 @@ function anomalyTable(o: VolatilityV2, view: VolatilityViewMode): string {
       date: p.date, kg: String(p.kg) + ' kg', dev: deviationText(p.deviationKg) + ' kg',
       level: levelWord(p.level), reason: anomalyReason(p),
     })),
+    /* #510：表题不再写「近 7 天」（审查席 S2 第三类：那个 `7 天` 与「近期异常」卡副说明、结论判语
+     * 同屏三处）——这一张表列的就是近 7 天的异常点，卡副说明已经写着「近 7 天越线的天数」。 */
     caption: only
       ? '波动异常点（共 ' + o.recentAnomalies.length + ' 个）'
-      : '近 7 天异常点（共 ' + o.recentAnomalies.length + ' 个，超过波动带的点）',
+      : '异常点（共 ' + o.recentAnomalies.length + ' 个，超过波动带的点）',
     emptyText: '近期没有异常点（平均线 ' + o.baselineValue + ' kg）',
   });
 }
@@ -158,7 +165,12 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
   return [
     {
       label: o.baselineMode === 'goal' ? '目标体重' : '平均线', value: String(o.baselineValue), unit: 'kg',
-      detail: o.warnDays + '/' + o.days + ' 天有记录' + (gap > 0 ? '（缺 ' + gap + ' 天）' : ''),
+      /* #510：满窗时原写「7/7 天有记录」——那个 `7 天` 与副标题（「以近 7 天平均体重为参照」）、
+       * 「近期异常」卡副说明（「近 7 天越线的天数」）同屏三处（审查席实测的 ★ 条数项）。
+       * 每天都有记录时不报这个数（读数就是全窗天数，副标题已有），有缺口时照实报「N/M 天（缺 K 天）」。 */
+      detail: o.warnDays >= o.days
+        ? '每天都有记录'
+        : o.warnDays + '/' + o.days + ' 天有记录' + (gap > 0 ? '（缺 ' + gap + ' 天）' : ''),
       status: single ? 'empty' : gap > 0 ? 'warn' : 'ok',
       statusText: single ? '只有一天' : gap > 0 ? '记录不齐' : '没有漏记',
     },
@@ -170,15 +182,17 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
        * `blocks.ts:543`——形状词汇的 HTML 进那一槽会被转义成字面标签），故三个数改住卡下那条
        * `thresholdStrip()`（块级件，形状真出得来）。卡内只留**这一槽非说不可**的一句：
        * 注意线的数与波动幅度已由那条条子认领，值槽那个数（警戒线）由条子里的同名列认领——
-       * 同一组数字不在两处各印一遍（口径 §三 第 2 条）。 */
+       * 同一组数字不在两处各印一遍（口径 §三 第 2 条）。
+       *
+       * #510（审查席 S3）：那一句原来是**指路牌**（「两条线各是多少，看这张卡下面那条」）——
+       * 事实已被移出卡、再叫读者去别处看 ⇒ 撤掉整条副说明，这张卡改成**无副行的纯指标卡**
+       * （值槽 ＋ 徽章 ＋ 卡下那条条子，各说一件事）。 */
       label: '波动带', value: '±' + o.thresholds.red, unit: 'kg',
-      // 卡内不再自己报三个数（#504）：那三个数落卡下那条 `thresholdStrip()`（块级件，形状真出得来）——
-      // `renderKpiCard` 的 `detail` 槽吃纯文本（公共层 `esc(detail)`，`blocks.ts:543`）。
-      detail: '两条线各是多少，看这张卡下面那条',
-      // 只有 1 个点、或点数不到门槛时，波动幅度取兜底值 0.5，两条线不是从本窗数据推出来的——徽章要如实说。
-      // （D1）徽章只说「这两条线按本窗数据算」，不再写「按本窗数据」四个字各说一半。
+      /* 只有 1 个点、或点数不到门槛时，波动幅度取兜底值 0.5，两条线不是从本窗数据推出来的——徽章要如实说。
+       * #510：徽章原来是 11 字的句子（「这两条线按本窗数据算」，审查席 S3：胶囊只装 2～4 字状态词）
+       * ⇒ 收到 4 字状态词；「按本窗数据算」这层意思由这一个词承担，不再另起一句。 */
       status: single || o.sigmaTrend.length === 0 ? 'warn' : 'ok',
-      statusText: single || o.sigmaTrend.length === 0 ? '兜底值' : '这两条线按本窗数据算',
+      statusText: single || o.sigmaTrend.length === 0 ? '兜底值' : '本窗算出',
     },
     {
       label: '今日偏离', value: deviationText(o.earlyWarning.deviationKg), unit: 'kg',

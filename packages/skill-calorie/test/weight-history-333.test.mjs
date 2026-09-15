@@ -204,9 +204,12 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     const html = readFileSync(htmlPath, 'utf8');
     assert.ok(html.startsWith('<!doctype html>'), word + ' 非完整文档');
     assert.ok(html.includes('ilife-page'), word + ' 缺页面壳');
-    // 区间逐字比 h1（单日窗的区间串＝那一天本身，口径在 `records.ts:98`）；用 includes 会被前缀骗过。
+    // #510：页题只留名字——窗口串一屏三处（页题／KPI 卡副说明／窗口条）收敛成**窗口条一处**
+    //（页脚来源行是元信息面，照旧留）。逐字比 h1：用 includes 会被前缀骗过。
     const h1 = /<h1[^>]*>([^<]*)<\/h1>/.exec(html)?.[1] ?? '';
-    assert.equal(h1, '体重历史 ' + range, word + ' 区间与语义不一致（要 ' + range + '，实测 ' + h1 + '）');
+    assert.equal(h1, '体重历史', word + ' 页题不该再印窗口串（实测 ' + h1 + '）');
+    assert.ok(!/<h1[^>]*>[\s\S]{0,40}\d{4}-\d\d-\d\d/.test(html), word + ' 页题里仍有日期');
+    assert.ok(!html.includes('kpi-card-detail">' + range), word + ' KPI 卡副说明里仍有窗口串');
     assert.ok(html.includes('备注'), word + ' 缺备注列');
 
     // ── #480 文本审查判据（页页过） ────────────────────────────────────────────
@@ -282,19 +285,22 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     // ⑦ 数字与单位留一个空格：可见文本里不出现紧贴单位的写法，也不出现「首末对照」这类内部词。
     assert.ok(!/\d+kg/.test(text), word + ' 数字与单位之间没留空格');
     // ⑨ 同卡跨槽重复 0（缺陷 2／3／4／5）：值槽／副说明／徽章在同一张卡里两两不逐字同说一件事。
-    //    体重历史卡豁免「徽章含值槽」：缺陷 14 点名要的徽章本来就是「共 N 条」（值槽是数字 ＋ unit 槽）。
+    //    #510：体重历史卡**不再豁免**——徽章原来是「共 N 条」（把值槽的 N 复述一遍），现改状态词
+    //    「记录足够」，故这一卡与其余三卡同判据。
     assert.equal(cards.length, 4, word + ' KPI 卡不是四张（实测 ' + cards.length + '）');
     for (const c of cards) {
       const slots = [c.detail, c.badge].filter((s) => s !== null && s !== '');
       assert.equal(new Set(slots).size, slots.length, word + '「' + c.label + '」卡副说明与徽章逐字重复');
       assert.ok(!slots.includes(c.value), word + '「' + c.label + '」卡别的槽重复了值槽');
-      if (c.label !== '体重历史' && c.badge !== null) {
+      if (c.badge !== null) {
         assert.ok(!nospace(c.badge).includes(nospace(c.value)), word + '「' + c.label + '」徽章复述值槽「' + c.value + '」');
       }
     }
-    // ⑩ 缺陷 14：「样本 N 条」是工程词 ⇒ 徽章说「共 N 条」；单点页说「只有一条」。
-    assert.equal(byLabel('体重历史').badge, rows >= 2 ? '共 ' + rows + ' 条' : '只有一条',
+    // ⑩ #510：条数只许住在值槽那一处（卡内徽章复述已删；条数在值槽 ＋ 表题两处＝判据允许的 2 处）。
+    assert.equal(byLabel('体重历史').badge, rows >= 2 ? '记录足够' : '只有一条',
       word + ' 体重历史卡徽章不对：' + byLabel('体重历史').badge);
+    assert.equal(nospace(byLabel('体重历史').badge).includes(String(rows)), false,
+      word + ' 体重历史卡徽章仍在复述条数');
     // ⑪ 缺陷 2：备注卡的「标签 N 类」只许出现在徽章那一次（副说明已删）。
     assert.ok((text.match(/标签 \d+ 类/g) || []).length <= 1, word + ' 「标签 N 类」说了不止一次');
     // ⑫ 缺陷 8／9／13：表标题（主标题已有「体重历史」，单表改说「明细记录」；分两段说清截过与更早）。
@@ -327,7 +333,10 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
       assert.ok(text.includes('里程碑') && text.includes('减重 5 kg 那天'), word + ' 缺里程碑标注');
       assert.ok(!text.includes('减重 5kg 那天'), word + ' 里程碑标签没做数字与单位分空格');
       // 缺陷 4／10／15：副说明说人话（末字不再悬空）、徽章不复述值槽、图例窗外的说「不在这段时间里」。
-      assert.equal(byLabel('里程碑').detail, '减重 5 kg、10 kg 两个里程碑都达到了', word + ' 里程碑副说明不对');
+      // #510（审查席 S3：顿号漏网）：副说明那一槽吃纯文本、形状落不进去 ⇒ 照审查单第二种改法
+    // **改写成一句话**（两档之间用「与」），`、` 不再顶替设计。
+    assert.equal(byLabel('里程碑').detail, '减重 5 kg 与 10 kg 两个里程碑都达到了', word + ' 里程碑副说明不对');
+    assert.ok(!byLabel('里程碑').detail.includes('、'), word + ' 里程碑副说明仍有顿号枚举');
       assert.equal(byLabel('里程碑').badge, '已达成', word + ' 里程碑徽章不对');
       assert.ok(/减重 5 kg 那天 \d{4}-\d{2}-\d{2}，[\d.]+ kg（不在这段时间里）/.test(text), word + ' 里程碑图例不对');
     }
@@ -352,8 +361,9 @@ test('#333 页面① 18 词逐条真跑（exit 0＋完整文档＋窗口区间�
     }
     if (word === '看「有备注」的体重记录') {
       assert.ok(html.includes('备注筛选') && html.includes('晨起空腹'), word + ' 缺备注筛选');
-      // 「只看有备注的 5 条」原在副标题、次卡、图例、表注、页脚说了五遍 ⇒ 只留卡片与页脚两处。
-      assert.equal(text.split('只取有备注的').length - 1, 2, word + '「只取有备注的」不是恰 2 处');
+      // 「只看有备注的 5 条」原在副标题、次卡、图例、表注、页脚说了五遍 ⇒ #510 之后再收到**一处**：
+      // 模式由页题副标题「模式：备注筛选」说，卡副说明那一份随窗口串一并撤（元信息面只留页脚来源行）。
+      assert.equal(text.split('只取有备注的').length - 1, 1, word + '「只取有备注的」不是恰 1 处（页脚来源行）');
       assert.ok(!text.includes('只看有备注的'), word + ' 图例／结论里仍重印「只看有备注的」');
       // 缺陷 2：筛选页那张卡（`有备注`）同样只留徽章。
       assert.equal(byLabel('有备注').detail, null, word + ' 有备注卡仍留副说明');

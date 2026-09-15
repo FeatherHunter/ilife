@@ -201,3 +201,76 @@
    （`packages/skill-calorie/AGENTS.md` 台账行，「已超线，需要根据规则进行重构。」＋超因＋拆法＝
    读面／写面切姊妹件 `weight/logWrite.ts`）；**本票不拆**（拆分不在写集）。
 4. **第 8／30 条单点图的纵轴自适应**仍归 `packages/base-render`（共享层，本批不碰）。
+
+
+## 八、设计视角审查整改（#510，2026-09-16）
+
+**本族整改完成**（逐条「改了／为什么没改」见下）。依据：整改单 `.scratch/t154/text-review/fix-brief-uireview.md`
+（八节）＋审查席回执与四份读数 `.scratch/t154/text-review/rev-ui/`。本席出页与读数在
+`.scratch/t154/text-review/rev-fix/`（`out-<族>`／`out-all`／`*.log`／`probe-fix-readings.py`／`readings-fix.txt`）。
+
+### 八.1 第二节四类硬读数（复跑）
+
+| 类 | 整改前（审查席实测） | 整改后（本席复跑） | 判据 |
+|---|---|---|---|
+| ① 硬编码色值 | 页内件面 6 处自造：`#e7f8ee/#1a7a3a`、`#fff4e5/#a05a00`、`#ffeceb/#c0392b` | 页内件面只剩 `#fff5e0`／`#a25b00`——**逐值等于冻结正本** `base-render/src/style.ts` 的 `statusBadge` warn；`ok`／`danger` 两档连类带值删（58 页里 0 页用过＝死 CSS，`chip()` 类型同步收到 `warn`／`plain`） | PASS |
+| ② 字号阶梯 | 5 档 `{12, 12.5, 13, 14.5, 15}px` | **3 档**：`12px:456`／`13px:228`／`15px:171`（`.wui-bullets li` 12.5→12、手机档 `.wui-verdict` 14.5→15） | PASS |
+| ③ 死 CSS | `wui-strip-note`／`wui-strip-v`／`wui-chip-ok`／`wui-chip-danger` 各 0 页 | 声明 22 个 `wui-*` 类、**0 页用到 0 个**：`-note` 2 页、`-v` 17 页真用上，`-ok`／`-danger` 删 | PASS |
+| ④ 同屏事实 ≥3 | **51/58 页** | **7/57 页**（第 48 条归 #436 未纳入本批；残留 7 页全在写集外的 `logReceipt.ts`／`receipt.ts`） | 本族 0 页 |
+
+复跑命令（口径与审查席四脚本同源，源目录换 `PROBE_DIR`）：
+
+```
+python .scratch/t154/text-review/rev-fix/probe-redundancy.py     # → .scratch/t154/text-review/rev-fix/redundancy-after.txt（等价于 rev-ui/probe-redundancy.py）
+python .scratch/t154/text-review/rev-fix/probe-css.py            # → .scratch/t154/text-review/rev-fix/css-after.txt
+python .scratch/t154/text-review/rev-fix/probe-fix-readings.py   # → .scratch/t154/text-review/rev-fix/readings-fix.txt（色值／字号／死 CSS／形状槽顿号四类一次出）
+```
+
+其余三面读数（审查席已判达标、本轮未推翻）：间距页内件面 12 档无孤值｜圆角 2 档＋零 box-shadow｜
+手机 390 真视口 **57/57 页 `SW=390 VW=390`**（`.scratch/t154/text-review/rev-fix/mobile-probe.log`）。
+
+### 八.2 本族（体重盘 2 页：08／30）＋ 同批今日盘逐条
+
+- **S2 卡网格两行不同宽（页 08／30：2 卡 ＋ 4 卡两个 grid，桌面第一行 ~497px、第二行 ~245px）→ 已改**：
+  `log.ts` 的两处 `renderKpiGrid()` 合成一处（六卡一网格，1200 下三列两行、行行同宽；
+  370 手机两列同宽）。断言：`<div class="ilife-block-kpi-card-grid"` 恰 1 个。
+- **S2 退化窗口条（页 30 `2026-09-07 → 2026-09-07`）→ 已改**：`windowStrip()` 加退化分支——
+  `start === end` 只出一枚日期块、不出箭头，文案写「2026-09-07（单日）」。页 30 实测：
+  `2026-09-07（单日）` ＋ `共 1 条`。
+- **S2「标签 ＋ 说明」同字号（页 08／30 `图上没画目标线 目标值超出刻度`）→ 已改**：
+  这一型单出一列、走 `factStrip(…, asNote=true)`（`.wui-strip-note`：标签 12px `--fg3`、说明那半
+  12px `--fg2` 不加粗），两半分两档；`wui-strip-note` 由此从死 CSS 变成 2 页在用。
+- **S2 关键数字四处（页 08 的 `70.4`）→ 已改**：判语块不再复述（改一句判语：只说这一段挪动算不算大，
+  不给数、不给方向词）；「变化」卡的速率从结论块搬回卡副说明；「均值」卡副说明的区间
+  （与「窗口」卡首末对同数）删。⇒ 08 的 ★ 三项全清（`70.4` 2 处、方向词 2 处、条数 2 处）。
+- **S3 胶囊里装句子（页 30 `只有一条记录，还看不出趋势`，13 字）→ 已改**：胶囊装状态词「记录太少」
+  （那件事由结论块的判语说全）；页 08 的 `趋势上升` 保持 4 字。
+- **结论块的事实条只装卡片上没有的事实 → 已改**：留着「目标 68 kg」「截止 2026-12-31」「图上没画目标线 ＋
+  目标值超出刻度」；均值／目标差值／趋势那几枚（都在卡片上）从结论块撤掉。
+- **未改（为什么）**：结论句的「不编缺口／单点口径」照旧；图表末点标签压均值虚线、`70.4kg` 少一个空格
+  仍归 #424（共享层，本批一行不碰）；第 48 条归 #436。
+
+### 八.3 自证
+
+- 持锁编译：`node tooling/run-locked.mjs --ticket 510 -- npx tsc -b packages/skill-calorie` → **exit=0**
+  （`.scratch/t154/text-review/rev-fix/tsc-2.log`）。
+- 出页六族全 `OK`：history 18／compare 17／review 6／volatility 5／plate 2／receipt 11（含 08／30 复用）
+  ——`TALLY {"通过":n}` 且 `OK-RENDER`，日志 `.scratch/t154/text-review/rev-fix/render-*.log`。
+- 用例（持锁）：五件体重族测试 **42/42 通过**（`tests 42 / pass 42 / fail 0`，`.scratch/t154/text-review/rev-fix/tests-3.log`；
+  其中 `weight-history-333` 自打 `RESULT: 18/18`）。旧断言随新文案同步收紧（h1、徽章、里程碑副说明、
+  单日窗副标题、期间事实条、卡②徽章与指路牌、今日盘形状件与卡网格）。
+- **变异两行**：把 `history.ts` 的节奏／首末事实条改回 `·` 串 ⇒ 必红
+  （`runId=0270d68d-6937-4f6d-8de4-cc1aaa0b579a`，`fail 1`：`看上周体重 可见面 · 命中数不对`）；
+  改回 ⇒ 必绿（`runId=800175d3-1eec-43a3-8484-38a5ec5dca23`，`RESULT: 18/18`／`pass 3`）。
+  日志 `.scratch/t154/text-review/rev-fix/mut-red.log`／`.scratch/t154/text-review/rev-fix/mut-green.log`。
+- 手机 390 真视口：`node .scratch/t154/text-review/mobile-frame.mjs probe 390 2400 .scratch/t154/text-review/rev-fix/out-all` →
+  **57/57 页 `SW=390 VW=390`**；截图两档 `.scratch/t154/text-review/rev-fix/shots-desktop/*.png`（1200）与
+  `.scratch/t154/text-review/mobile/*.png`（390），审查席点名的 04／08／22／30／45／47／53 逐张看过。
+- **告警线台账**：`packages/skill-calorie/AGENTS.md` 台账里本票六件的「当场实测」列已随实况（别席同步器在场）；
+  本席复跑 `node packages/skill-calorie/scripts/check-warning-line.mjs` 的残余红只剩
+  `src/render/trendDocs.ts 台账=994 实况=996`（**别席在途件**，不在本票写集，不代改）。
+- 未动（照整改单第八节）：命令与路由／`shared/*`／`packages/base-render/*`（共享层一行未碰——间距 16 档、
+  字号 18 档、数据表 1200 下两列相距 ~1000px、图表末点标签压均值虚线／`70.4kg` 少空格，均归 #424）／眉标／
+  复制区形态与深色瞬时 toast／第 48 条整页（归 #436）／`.scratch/t154/delivery/`（只有编排者重出交付包）。
+- **写集外残留（本票不改，供编排者派下一手）**：`weight/logReceipt.ts` 与 `weight/receipt.ts` 两件里的
+  7 页 ★（01／09／16／17／23／24／31）与 3 处顿号——见 `t483-文本审查-receipt.md` 八.2 的逐条表。
