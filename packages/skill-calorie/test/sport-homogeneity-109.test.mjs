@@ -215,7 +215,7 @@ test('#109 对比＋复核＋波动：两期表＋里程碑＋基线预警', () 
   try {
     const c = dispatch('calorie.view.weight-compare', { start: '2026-09-05', end: '2026-09-07', compareStart: '2026-08-05', compareEnd: '2026-08-07' }, db);
     assertDoc(c.html, 'weight-compare');
-    for (const needle of ['体重对比', '本期', '对比期', '节奏', '两期对比', '复制数据']) {
+    for (const needle of ['体重对比', '本期', '对比期', '每天变化', '两期对比', '复制数据']) {
       assert.ok(c.html.includes(needle), 'weight-compare 缺：' + needle);
     }
     const r = dispatch('calorie.view.weight-review', {}, db);
