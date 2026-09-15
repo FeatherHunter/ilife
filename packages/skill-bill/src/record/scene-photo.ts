@@ -15,7 +15,7 @@
  *     也不替用户猜三要素里缺的值。
  *
  * 两个页面级的入参约定（本件读 `params`，不由命令注册表声明）：
- *   `params.images`＝本次交上来的账单图片张数（不给＝0）；`params.imageWhere`＝这些图现在在哪（不给＝「AI 侧」）。
+ *   `params.images`＝本次交上来的账单图片张数（不给＝0）；`params.imageWhere`＝这些图现在在哪（不给＝「助手那边」）。
  *   本仓不落图片，这两格只用来把「收图」这一步讲清楚。
  *
  * 必有块（逐块在这里落点，核对见证据件第三节）：
@@ -38,7 +38,8 @@ import type { PhotoScale } from '../shared/outsideScan.js';
 import { prefillNote, prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
-import { typeBadge } from '../shared/typeBadge.js';
+import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
@@ -51,7 +52,7 @@ const KIND = 'photo';
 /** 缺项时那条「补齐后重跑」的写库指令用什么占位：三要素各给自己那一格的说法。 */
 const REPLACES: Readonly<Record<string, string>> = {
   amount: '<外部识别出的金额：支出为负、收入为正>',
-  category: '<外部识别出的分类：L1/L2/L3>',
+  category: '<外部识别出的分类，要选到最细那一级>',
   time: '<账单上的时间，如 2026-09-14>',
 };
 
@@ -73,7 +74,7 @@ function isGiven(v: unknown): boolean {
 function scaleOf(params: Record<string, unknown>): PhotoScale {
   const raw = params['images'];
   const n = typeof raw === 'number' ? raw : Number(String(raw ?? '').trim());
-  const where = isGiven(params['imageWhere']) ? String(params['imageWhere']) : 'AI 侧（本仓不存图、也不读图）';
+  const where = isGiven(params['imageWhere']) ? String(params['imageWhere']) : '助手那边（本仓不存图、也不读图）';
   return { count: Number.isFinite(n) ? n : 0, where };
 }
 
@@ -109,12 +110,12 @@ function collectPhoto(input: CollectInput): string {
   const content = [
     typeBadge({
       kind: KIND,
-      key: input.key,
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('写库：未发生——这一页只采集、不碰库；三要素补齐后重跑同一条命令才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；三要素补齐后跟助手说一遍才会写。'),
     renderCaliberLine('识别口径：图片识别在本仓之外办——本仓不装识别引擎，也不做上传控件；'
       + '页上只给三要素文字填空，缺哪样报哪样。'),
     imageNote(scale),
@@ -125,17 +126,17 @@ function collectPhoto(input: CollectInput): string {
       items: blocked,
       command: bp.command,
       note: '三要素（金额／分类／时间）缺一不许写库，也不替用户猜缺的那一格；'
-        + '补齐之后重跑同一条命令才会写库。',
+        + '补齐之后跟助手说一遍才会写库。',
     }),
     fieldCardOf({
-      description: '文字三要素填空：金额、分类、时间。分类要 L1/L2/L3 三级'
+      description: '文字三要素填空：金额、分类、时间。分类要选到最细那一级'
         + '（如 餐饮/外卖/午餐）；金额带符号，支出为负、收入为正；时间是账单上的日期。',
       slots: ESCAPE_SLOTS,
       params,
       marks,
       pick,
     }),
-    promptCopyArea(escapePrompt({ params, blocked, scale }), '复制 prompt（外部识别后补齐重跑）'),
+    promptCopyArea(escapePrompt({ params, blocked, scale }), '外部识别后补齐，照这句跟助手说一遍'),
     copyArea({
       data: { envelope },
       log: {
@@ -143,7 +144,7 @@ function collectPhoto(input: CollectInput): string {
         copyLog: copyLog({
           command: commandLine(input.key, params),
           source: input.source,
-          detail: '未写库（采集页） · 已收 ' + (scale.count > 0 ? scale.count : 0) + ' 张图',
+          detail: '没写库（采集页） · 已收 ' + (scale.count > 0 ? scale.count : 0) + ' 张图',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -167,15 +168,20 @@ function receiptPhoto(input: ReceiptInput): string {
   const probe = probeOfReceipt(input);
   const envelope = envelopeOf(input.key, true, input.receipt.summary);
   const content = [
-    typeBadge({ kind: KIND, key: input.key, status: 'ok', state: '写库成功（三要素来自外部识别）' }),
+    typeBadge({
+      kind: KIND,
+      status: 'ok',
+      state: '写库成功（三要素来自外部识别）',
+      next: nextStepOf({ page: 'receipt', exit: true }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(input.receipt, input.writtenDetail),
-      { label: '影响行数', value: input.receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       {
-        label: '写入字段',
+        label: '写进去的项',
         value: input.receipt.writtenFields.length + ' 项',
-        detail: input.receipt.writtenFields.join('、') || '未设置',
+        detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
     renderCaliberLine('这一条的金额／分类／时间三样都来自本仓之外的识别结果（本仓不存图、不读图）；'
@@ -184,7 +190,7 @@ function receiptPhoto(input: ReceiptInput): string {
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(input.receipt),
     input.receipt.recordId === null ? '' : undoExit(input.receipt.recordId),
@@ -195,8 +201,8 @@ function receiptPhoto(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
           source: input.receipt.source,
-          detail: '影响 ' + input.receipt.affectedRows + ' 行 · 字段 '
-            + (input.receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + input.receipt.affectedRows + ' 笔，写进去 '
+            + (input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: input.receipt.actionAt,
           version: DOC_VERSION,
         }),

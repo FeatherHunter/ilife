@@ -3,7 +3,7 @@
  * 服务哪条唤醒词：记分期（`src/policy/wakewords.ts` 的 `WAKE_TABLE` 里 `preset: { kind: 'installment' }`）。
  * 这一件出的两张页（施工图 `docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「记分期」那一行）：
  *   采集页：类型徽章（分期）、结论摘要行、参数只读回显（总额／期数／首期日）、期数角标、分摊预览表、
- *           折叠说明（>24 期只显前 12 期）、缺项阻断条、复制 prompt 区、复制区；
+ *           折叠说明（>24 期只显前 12 期）、缺项阻断条、照这句跟助手说一遍、复制区；
  *   回执页：类型徽章、结论摘要行、分摊预览表（写库那一笔按期数摊开的同一张）、写入明细表、
  *           对账折叠区、退出口、复制区。
  *
@@ -28,7 +28,8 @@ import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { money2, summaryCards, summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
-import { typeBadge } from '../shared/typeBadge.js';
+import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
@@ -114,9 +115,10 @@ function collectPage(input: CollectInput): string {
     + '\n每期按上面那张表逐期落库；尾差对齐到最后一期。';
   const content = [
     typeBadge({
-      kind: KIND, key,
+      kind: KIND,
       status: blocked.length > 0 ? 'danger' : 'warn',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
     renderCaliberLine('分期先定期数与总额，再按每期金额与日期逐期落库；尾差对齐到最后一期，合计逐分等于总价。'),
@@ -126,7 +128,7 @@ function collectPage(input: CollectInput): string {
       { label: '首期日', value: first === '' ? '未给' : first, detail: '第 1 期哪一天落账' },
     ]),
     renderParamForm({
-      description: '这三格是这一型的参数，页面只回显不让人改；要改就重跑同一条命令带新值。',
+      description: '这三格是这一型的参数，这一页只回显不让人改；要改就重说一遍，带上新值。',
       fields: [
         { name: TOTAL_NAME, label: TOTAL_LABEL, readonly: true, value: total, hint: '总价（元）' },
         { name: PERIODS_NAME, label: PERIODS_LABEL, readonly: true, value: periods, hint: '分几期' },
@@ -151,14 +153,14 @@ function collectPage(input: CollectInput): string {
       : '',
     blockedBar({ items: blocked, command: commandLine(key, filled) }),
     copyArea({
-      prompt: { text: prompt, label: blocked.length === 0 ? '复制 prompt（照这个口径逐期落库）' : '复制 prompt（补齐后重跑）' },
+      prompt: { text: prompt, label: blocked.length === 0 ? '照这个口径逐期落库，点这颗复制' : '补齐后照这句跟助手说一遍' },
       data: { envelope },
       log: {
         envelope,
         copyLog: copyLog({
           command: commandLine(key, params),
           source: input.source,
-          detail: '未写库（采集页）',
+          detail: '没写库（采集页）',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -182,11 +184,16 @@ function receiptPage(input: ReceiptInput): string {
     data: { ok: true, message: receipt.summary },
   };
   const content = [
-    typeBadge({ kind: KIND, key, status: 'ok', state: '写库成功' }),
+    typeBadge({
+      kind: KIND,
+      status: 'ok',
+      state: '写库成功',
+      next: nextStepOf({ page: 'receipt', exit: true }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       { label: '分期参数', value: (total || '未给') + ' ÷ ' + (periods || '未给') + ' 期', detail: '首期日 ' + (textOf(params[FIRST_NAME]) || '未给') },
     ]),
     renderToast({
@@ -204,7 +211,7 @@ function receiptPage(input: ReceiptInput): string {
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(receipt),
     receipt.recordId === null ? '' : undoExit(receipt.recordId),
@@ -215,7 +222,8 @@ function receiptPage(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(key, params),
           source: receipt.source,
-          detail: '影响 ' + receipt.affectedRows + ' 行 · 字段 ' + (receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
+            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: receipt.actionAt,
           version: DOC_VERSION,
         }),

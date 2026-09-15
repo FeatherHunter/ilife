@@ -1,18 +1,17 @@
 /** 场景件：恢复（`op=restore`）。**本票：两格都换成这一件自己的装配体**（改前两格都指通用页）。
  *
  * 服务哪条唤醒词：恢复（`src/policy/wakewords.ts` 的 `WAKE_TABLE` 里 `preset: { op: 'restore' }`）。
- * 现在出哪张页：采集页＝本件 `collectOf`（**只列已打标撤销的那些**，挑一条置 NULL），
- *  回执页＝本件 `receiptOf`（置空那一次的回执，写明 `deleted_at` 已置 NULL）。
+ * 现在出哪张页：采集页＝本件 `collectOf`（**只列已经撤销过的那些**，挑一条把标记清掉），
+ *  回执页＝本件 `receiptOf`（恢复那一次的回执，写明「已撤销」标记已清掉）。
  * 施工图那一行（`docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「恢复」）要的块，逐块落位：
- *  类型徽章（恢复·置 NULL）／候选单选（列出已打标记录，`../shared/recordPicker.ts`）／
+ *  类型徽章（恢复）／候选单选（列出已经撤销过的记录，`../shared/recordPicker.ts`）／
  *  置空说明／复制指令块／动作区／空态／错误回执。
  *
  * **本票修掉的破口**：`WAKE_TABLE` 原来给这一条写了 `needs:['id']`，路由层就抛「缺槽位 id」，
  *  到不了采集页那一支。去掉 `needs` 之后，只说「恢复」也出这一页，由候选列表让用户挑一条。
- *  候选口径只此一处（`recordPicker` 的 `mode='restore'`）：**只列 `deleted_at` 有值的那些**，
+ *  候选口径只此一处（`recordPicker` 的 `mode='restore'`）：**只列带「已撤销」标记的那些**，
  *  没撤销过的记录不进这一格。老侧没有这一张页（`scenes/write.yaml:242-251` 只有两行文字回执）。
  */
-import { renderStatusBadge } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
@@ -25,6 +24,8 @@ import { pickerBlock, readRowById, snapshotTable } from '../shared/recordPicker.
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
+import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
@@ -33,9 +34,10 @@ const WAKE = '恢复';
 /** 本件的命令名（恢复是 `bill.record.update` 的 `op=restore` 那一支）。 */
 const KEY = 'bill.record.update';
 
-/** 置空那句说明（采集页与回执页各出一处，同一句话只写在这里一份）。 */
-const RESTORE_NOTE = '恢复＝把 `deleted_at` 置 NULL：把那一行的软删标记清掉，行回到查询与统计里；'
-  + '只列已经打过标的记录，没撤销过的记录不进这一格。';
+/** 「把标记清掉」那句说明（采集页与回执页各出一处，同一句话只写在这里一份）。
+ *  本轮整改：`deleted_at`／`NULL` 是工程话，换成用户说法（照 `docs/skills/skill-bill/t407-文字审查.md` 第 29 条）。 */
+const RESTORE_NOTE = '恢复就是把「已撤销」这个标记清掉：这一笔回到查询和统计里；'
+  + '这一格只列已经撤销过的记录，没撤销过的不进来。';
 
 /** 一个值的字符串形态（数字写十进制串，其余形态按空串用）。 */
 function textOf(v: unknown): string {
@@ -74,22 +76,22 @@ function blockedCommand(params: Record<string, unknown>, blocked: readonly Block
   return commandLine(KEY, filled);
 }
 
-/** 复制 prompt 区那段话：挑哪一条、恢复是什么口径、接下来重跑哪条命令。 */
+/** 「照这句跟助手说一遍」那块话：挑哪一条、恢复是什么口径、接下来跟助手说哪句。 */
 function promptOf(input: { readonly id: number | null; readonly deleted: boolean; readonly params: Record<string, unknown> }): string {
   if (input.id === null) {
-    return '这一页只采集、不写库：恢复原先缺「记录编号」就没页可看（路由层直接报错），现在改成先列表让用户挑。\n'
-      + '请从上面的候选记录里指定一条（说编号即可，候选只列已打标撤销的那些），再重跑同一条命令 ' + KEY + '（`op` 取 `restore`）。';
+    return '这一页先不写库：恢复原先缺「记录编号」就没页可看（原先直接报错），现在改成先列表让用户挑。\n'
+      + '请从上面的候选记录里指定一条（说编号即可，候选只列已经撤销过的那些），再跟助手说一遍「恢复」。';
   }
   if (!input.deleted) {
-    return '记录编号 ' + input.id + ' 那一条并没有软删标记，没有可置空的：恢复是无事可做。\n'
-      + '要撤它就走「撤销」：' + commandLine(KEY, { op: 'undo', id: input.id }) + '。';
+    return '记录编号 ' + input.id + ' 那一条没撤销过，没有标记可清：恢复无事可做。\n'
+      + '要撤它就说「撤销」：' + commandLine(KEY, { op: 'undo', id: input.id }) + '。';
   }
-  return '这一条就是这次要恢复的目标；恢复只把 `deleted_at` 置 NULL，别的列一概不动。照抄这条命令重跑：\n'
+  return '这一条就是这次要恢复的目标；恢复只把「已撤销」那个标记清掉，别的项一概不动。照这条说：\n'
     + commandLine(KEY, input.params);
 }
 
 /** 采集页整页：类型徽章 → 摘要行 → 置空说明 → 写库未发生 → 缺项阻断条 → 候选列表（或选定那一条的只读回显）
- *  → 复制 prompt 区 → 复制区。缺 `id` 时**不给可跑的写库指令**（阻断条里那条带占位符、只给看不给复制）。 */
+ *  → 照这句跟助手说一遍 → 复制区。缺 `id` 时**不给可跑的写库指令**（阻断条里那条带占位符、只给看不给复制）。 */
 function collectOf(input: CollectInput): string {
   const { params, missing } = input;
   const blocked = blockedItems({ params, missing, kind: '' });
@@ -103,45 +105,46 @@ function collectOf(input: CollectInput): string {
     ? { ok: true, reason: '', row: null, deleted: false }
     : readRowById(id);
   const row = probe.row;
-  // 软删口径取自 `../shared/recordPicker.ts` 的 `isDeleted`（读一条时一次算好，本件不重判一次）。
+  // 撤销标记口径取自 `../shared/recordPicker.ts` 的 `isDeleted`（读一条时一次算好，本件不重判一次）。
   const deleted = probe.deleted;
   const middle: string[] = [];
   if (id === null) {
     middle.push(pickerBlock({
       mode: 'restore',
-      hint: '只列已经打标撤销的那些记录：挑一条，把它那条 `deleted_at` 置回 NULL。',
+      hint: '只列已经撤销过的那些记录：挑一条，把它那个「已撤销」标记清掉。',
     }));
   } else if (row !== null && deleted) {
-    middle.push(snapshotTable(row, '这一条就是要恢复的记录（只读回显 · 记录编号 ' + row.id + '）'));
-    middle.push(renderCaliberLine('它现在带软删标记（`deleted_at = ' + String(row.deleted_at)
-      + '`）；恢复之后这一列置 NULL，行回到查询与统计里。'));
+    middle.push(snapshotTable(row, '这一条就是要恢复的记录（只读回显，记录编号 ' + row.id + '）'));
+    middle.push(renderCaliberLine('它现在带着「已撤销」标记（' + String(row.deleted_at)
+      + '）；恢复之后标记清掉，这一笔回到查询和统计里。'));
   } else if (row === null) {
     middle.push(emptyNote({
       title: '这个编号没有可恢复的记录',
       text: '记录编号 ' + id + ' 在库里读不到'
-        + (probe.ok ? '（连已打标撤销的那些里也没有它）。' : '：' + probe.reason + '。'),
-      next: '请核一下编号（或先说清是哪一笔），再重跑同一条命令；候选记录列表在缺编号那一形态里出。',
+        + (probe.ok ? '（连已经撤销过的那些里也没有它）。' : '：' + probe.reason + '。'),
+      next: '请核一下编号（或先说清是哪一笔），再跟助手说一遍；候选记录列表在缺编号那一形态里出。',
     }));
   } else {
-    middle.push(snapshotTable(row, '这一条记录（没过撤销 · 只读回显）'));
+    middle.push(snapshotTable(row, '这一条记录（没撤销过，只读回显）'));
     middle.push(emptyNote({
-      title: '这一条没打过软删标记',
-      text: '记录编号 ' + id + ' 的 `deleted_at` 是空的（`未设置`），没有可置空的东西。',
-      next: '恢复只对已打标撤销的记录有意义；要撤它就走「撤销」，要改它就走「改记录」。',
+      title: '这一条没撤销过',
+      text: '记录编号 ' + id + ' 没有「已撤销」标记，没有可清的东西。',
+      next: '恢复只对已经撤销过的记录有意义；要撤它就说「撤销」，要改它就说「改记录」。',
     }));
   }
   const content = [
-    renderStatusBadge({
+    typeBadge({
+      kind: '',
       status: 'danger',
-      text: WAKE + ' · 置 NULL（`deleted_at` 清空） · ' + KEY + ' · '
-        + (blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待确认 · 未写库'),
+      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: WAKE }),
     }),
     summaryRow(factsOf(row, params)),
     renderCaliberLine(RESTORE_NOTE),
-    renderCaliberLine('写库：未发生——这一页只采集、不碰库；挑好记录后重跑同一条命令才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；挑好记录后跟助手说一遍才会写。'),
     blockedBar({ items: blocked, command: blockedCommand(params, blocked) }),
     middle.join(''),
-    promptCopyArea(promptOf({ id, deleted, params }), '复制 prompt（挑好记录后重跑）'),
+    promptCopyArea(promptOf({ id, deleted, params }), '挑好记录后照这句跟助手说一遍'),
     copyArea({
       data: { envelope },
       log: {
@@ -149,7 +152,7 @@ function collectOf(input: CollectInput): string {
         copyLog: copyLog({
           command: commandLine(KEY, params),
           source: input.source,
-          detail: '未写库（采集页）',
+          detail: '没写库（采集页）',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -168,9 +171,9 @@ function collectOf(input: CollectInput): string {
   });
 }
 
-/** 回执页整页：类型徽章 → 一张大网格 → 置空说明 → 置空结果（读回来的 `deleted_at` 现值）→ 写入明细表
+/** 回执页整页：类型徽章 → 一张大网格 → 恢复说明 → 恢复结果（读回来的标记现值）→ 写入明细表
  *  → 对账折叠区 → 退出口（撤销，把这一笔再打回标）→ 复制区三件。
- *  这里不出 diff 表：置 NULL 之后库里已经看不到原值（`deleted_at` 是 NULL），拿「有值→未设置」顶一张表
+ *  这里不出改前改后对照表：标记清掉之后库里已经看不到原值，拿「有值→没有」顶一张表
  *  等于编一个原值，本页改出置空结果表照实说。 */
 function receiptOf(input: ReceiptInput): string {
   const { params, receipt } = input;
@@ -181,36 +184,41 @@ function receiptOf(input: ReceiptInput): string {
   const after = receipt.recordId === null ? null : readRowById(receipt.recordId);
   const now = after !== null && after.ok && after.row !== null ? after.row.deleted_at : undefined;
   const content = [
-    renderStatusBadge({ status: 'ok', text: WAKE + ' · 置 NULL（`deleted_at` 清空） · ' + KEY + ' · 写库成功' }),
+    typeBadge({
+      kind: '',
+      status: 'ok',
+      state: '写库成功',
+      next: nextStepOf({ page: 'receipt', exit: true }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       {
-        label: '写入字段',
+        label: '写进去的项',
         value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.join('、') || '未设置',
+        detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
     renderCaliberLine(RESTORE_NOTE),
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: [
-        { k: '记录编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
+        { k: fieldLabelOf('id'), v: receipt.recordId === null ? '还没有' : String(receipt.recordId) },
         {
-          k: 'deleted_at 现值',
+          k: fieldLabelOf('deleted_at') + '现在是什么样',
           v: now === undefined
-            ? '本页读不回这一行（写库回执以 receipt 为准）'
-            : now === null || String(now).trim() === '' ? '未设置（已置 NULL）' : '仍有值：' + String(now),
+            ? '这一页读不回这一条（写库回执以回执为准）'
+            : now === null || String(now).trim() === '' ? '已清掉（这一笔又是正常的了）' : '还带着：' + String(now),
         },
-        { k: '置空之后', v: '这一行回到查询与统计里；想再撤走「撤销」那一条命令' },
+        { k: '清掉之后', v: '这一笔回到查询和统计里；想再撤走就说「撤销」' },
       ],
-      caption: '置空结果',
+      caption: '恢复结果',
     }),
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(receipt),
     receipt.recordId === null ? '' : undoExit(receipt.recordId),
@@ -221,7 +229,8 @@ function receiptOf(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(KEY, params),
           source: receipt.source,
-          detail: '影响 ' + receipt.affectedRows + ' 行 · 字段 ' + (receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
+            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: receipt.actionAt,
           version: DOC_VERSION,
         }),

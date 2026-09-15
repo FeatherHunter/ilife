@@ -33,7 +33,8 @@ import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js
 import { prefillNote, prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
-import { typeBadge } from '../shared/typeBadge.js';
+import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
@@ -88,33 +89,33 @@ function collectPlain(input: CollectInput): string {
   const content = [
     typeBadge({
       kind: KIND,
-      key: input.key,
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('写库：未发生——这一页只采集、不碰库；补齐后重跑同一条命令才会写。'),
-    renderCaliberLine('方向口径：这一条不带 preset，方向按金额符号判——支出记负数、收入记正数；'
-      + '给什么符号就记什么方向，本件不替你改符号。'),
-    renderCaliberLine('落点：认不得的 `kind` 也落这一件（通用词那一件是兜底），页面照实报，不猜是哪一型。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；补齐之后跟助手说一遍才会写。'),
+    renderCaliberLine('方向：这一条方向按金额符号判——支出记负数、收入记正数；'
+      + '给什么符号就记什么方向，这一页不替你改符号。'),
+    renderCaliberLine('认不得型名的时候，这一页也照实报，不猜是哪一型。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     prefillNote(marks),
     blockedBar({
       items: blocked,
       command: bp.command,
-      note: '金额与分类三级补齐之后重跑同一条命令才会写库；分类候选取自近期记录，'
+      note: '金额与分类补齐之后跟助手说一遍才会写库；分类候选取自近期记录，'
         + '一条历史都没有时支出侧与收入侧的一级名目都给。',
     }),
     empties.join(''),
     fieldCardOf({
-      description: '填好必需槽位后重跑同一条命令；这一步不写库。分类要 L1/L2/L3 三级'
-        + '（L3 即名目，如 餐饮/外卖/午餐）；金额带符号，符号即方向。',
+      description: '填好必需项再说一遍；这一页先不写库。分类要选到最细那一级'
+        + '（最细一级即名目，如 餐饮/外卖/午餐）；金额带符号，符号即方向。',
       slots: input.slots,
       params,
       marks,
       pick,
     }),
-    promptCopyArea(bp.prompt, '复制 prompt（补齐后重跑）'),
+    promptCopyArea(bp.prompt, '补齐后照这句跟助手说一遍'),
     copyArea({
       data: { envelope },
       log: {
@@ -122,7 +123,7 @@ function collectPlain(input: CollectInput): string {
         copyLog: copyLog({
           command: commandLine(input.key, params),
           source: input.source,
-          detail: '未写库（采集页）',
+          detail: '没写库（采集页）',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -146,15 +147,20 @@ function receiptPlain(input: ReceiptInput): string {
   const probe = probeOfReceipt(input);
   const envelope = envelopeOf(input.key, true, input.receipt.summary);
   const content = [
-    typeBadge({ kind: KIND, key: input.key, status: 'ok', state: '写库成功（方向按金额符号判）' }),
+    typeBadge({
+      kind: KIND,
+      status: 'ok',
+      state: '写库成功（方向按金额符号判）',
+      next: nextStepOf({ page: 'receipt', exit: true }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(input.receipt, input.writtenDetail),
-      { label: '影响行数', value: input.receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       {
-        label: '写入字段',
+        label: '写进去的项',
         value: input.receipt.writtenFields.length + ' 项',
-        detail: input.receipt.writtenFields.join('、') || '未设置',
+        detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
     renderCaliberLine('这一条是通用词那一件落下来的：方向由金额符号定（负数支出、正数收入）；'
@@ -163,7 +169,7 @@ function receiptPlain(input: ReceiptInput): string {
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(input.receipt),
     input.receipt.recordId === null ? '' : undoExit(input.receipt.recordId),
@@ -174,8 +180,8 @@ function receiptPlain(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
           source: input.receipt.source,
-          detail: '影响 ' + input.receipt.affectedRows + ' 行 · 字段 '
-            + (input.receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + input.receipt.affectedRows + ' 笔，写进去 '
+            + (input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: input.receipt.actionAt,
           version: DOC_VERSION,
         }),

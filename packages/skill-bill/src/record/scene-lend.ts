@@ -4,7 +4,7 @@
  * 这一件出的两张页（施工图 `docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「记借出」那一行）：
  *   采集页：类型徽章（借出·#借贷 流转）、结论摘要行、借贷口径三格卡、借出对象与期限字段、
  *           流程三段式（借给谁→这一步→结果）、候选单选（同一个人名下还没还的借出记录）、
- *           缺项阻断条、复制 prompt 区、复制区；
+ *           缺项阻断条、照这句跟助手说一遍、复制区；
  *   回执页：类型徽章、结论摘要行、#tag 流转条、写入明细表、对账折叠区、退出口、复制区。
  * 另一半的场景事实：分类「借贷/借出」、账本「借贷」、**金额写负数**（钱出去）、
  *   备注写 `#借出 #借给<对象> #未还`；对象没给或金额方向不符都不许写库。
@@ -29,7 +29,8 @@ import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { money2, summaryCards, summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
-import { typeBadge } from '../shared/typeBadge.js';
+import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
@@ -93,7 +94,7 @@ function stepsOf(input: {
         title: '借给谁',
         note: '对象与期限是借贷这一族的必需格：对象没给不许写库；期限只在这一族里有。',
         done: who !== '',
-        state: who === '' ? '还没给对象' : '借给 ' + who + (due === '' ? '' : ' · 期限 ' + due),
+        state: who === '' ? '还没给对象' : '借给 ' + who + (due === '' ? '' : '，期限 ' + due),
         fields: [
           { name: WHO_NAME, label: WHO_LABEL, hint: '借给谁（实名的写称呼也行，如 小王）', required: true, ...(who === '' ? {} : { value: who }) },
           { name: DUE_NAME, label: DUE_LABEL, hint: '说好什么时候还（如 2026-12-31 或 下月底）', ...(due === '' ? {} : { value: due }) },
@@ -118,7 +119,7 @@ function stepsOf(input: {
       },
       {
         title: '结果',
-        note: '备注写「' + TAG_LEND + ' 借给' + (who === '' ? '<对象>' : who) + ' ' + TAG_UNPAID + '」；'
+        note: '备注写「' + TAG_LEND + ' 借给' + (who === '' ? '（对象）' : who) + ' ' + TAG_UNPAID + '」；'
           + '还回来的时候走「记收回」，把 ' + TAG_UNPAID + ' 换成 #已还（金额不动）。',
         done: blockedCount === 0,
         state: blockedCount === 0 ? '可以复制' : '还差 ' + blockedCount + ' 项',
@@ -137,7 +138,7 @@ function collectPage(input: CollectInput): string {
   const extra: BlockedItem[] = [];
   if (who === '') extra.push({ name: WHO_NAME, label: WHO_LABEL, why: '没给：借给谁不许空着（这一族靠对象认人）' });
   if (amount !== null && amount > 0) {
-    extra.push({ name: 'amount', label: '金额', why: '方向不符：借出是钱出去，写负数，给的是 ' + money2(amount) });
+    extra.push({ name: 'amount', label: '金额', why: '方向和这一型对不上：借出是钱出去，写负数，给的是 ' + money2(amount) });
   }
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
@@ -162,25 +163,26 @@ function collectPage(input: CollectInput): string {
     + '借给谁：' + (who || '<借给谁>') + '；期限：' + (due || '<期限>') + '\n'
     + '借出金额：' + money2(amount) + '（支出取负数）\n'
     + '分类：「' + CATEGORY + '」；账本：「' + LEDGER + '」；账户：' + (facts.account || '<哪张卡出去>') + '\n'
-    + '备注请写：「' + TAG_LEND + ' 借给' + (who || '<对象>') + ' ' + TAG_UNPAID + '」，'
+    + '备注请写：「' + TAG_LEND + ' 借给' + (who || '（对象）') + ' ' + TAG_UNPAID + '」，'
     + '还回来的时候走「记收回」把 ' + TAG_UNPAID + ' 换成 #已还。';
   const content = [
     typeBadge({
-      kind: KIND, key,
+      kind: KIND,
       status: blocked.length > 0 ? 'danger' : 'warn',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('借贷走标签流转：这一笔写「' + TAG_LEND + ' #借给<对象> ' + TAG_UNPAID + '」，还回来时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
+    renderCaliberLine('借贷走标签流转：这一笔写「' + TAG_LEND + ' #借给（对象） ' + TAG_UNPAID + '」，还回来时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
     renderKpiGrid([
-      { label: '借出金额', value: money2(amount), detail: '支出记负数 · 分类「' + CATEGORY + '」' },
+      { label: '借出金额', value: money2(amount), detail: '支出记负数，归在「' + CATEGORY + '」下面' },
       { label: '借给谁', value: who === '' ? '未给' : who, detail: due === '' ? '期限还没给（可后补）' : '期限 ' + due },
       { label: '同人未还', value: unpaid.length + ' 笔', detail: unpaid.length === 0 ? '这个人名下没有还没还的借出' : '只列带 ' + TAG_UNPAID + ' 的借出记录' },
     ]),
     renderToast({
       msg: '借贷标签流转：' + TAG_LEND + ' ＋ ' + TAG_UNPAID,
       lines: [
-        '这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID + '，对象写进备注（#借给' + (who || '<对象>') + '）。',
+        '这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID + '，对象写进备注（#借给' + (who || '（对象）') + '）。',
         '收回的时候走「记收回」：原记录 ' + TAG_UNPAID + ' 换成 #已还，金额不动。',
         '「查欠款」与「看借贷」按这两个标签数，不按金额猜。',
       ],
@@ -189,14 +191,14 @@ function collectPage(input: CollectInput): string {
     stepsOf({ params, slots, who, due, amount, unpaid, blockedCount: blocked.length }),
     blockedBar({ items: blocked, command: commandLine(key, filled) }),
     copyArea({
-      prompt: { text: prompt, label: blocked.length === 0 ? '复制 prompt（照这个口径记一笔）' : '复制 prompt（补齐后重跑）' },
+      prompt: { text: prompt, label: blocked.length === 0 ? '照这个口径记一笔，点这颗复制' : '补齐后照这句跟助手说一遍' },
       data: { envelope },
       log: {
         envelope,
         copyLog: copyLog({
           command: commandLine(key, params),
           source: input.source,
-          detail: '未写库（采集页）',
+          detail: '没写库（采集页）',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -218,17 +220,22 @@ function receiptPage(input: ReceiptInput): string {
     data: { ok: true, message: receipt.summary },
   };
   const content = [
-    typeBadge({ kind: KIND, key, status: 'ok', state: '写库成功' }),
+    typeBadge({
+      kind: KIND,
+      status: 'ok',
+      state: '写库成功',
+      next: nextStepOf({ page: 'receipt', exit: true }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       { label: '借贷标签', value: TAG_LEND + ' ＋ ' + TAG_UNPAID, detail: who === '' ? '对象没随这次写库给到' : '备注里的对象：#借给' + who },
     ]),
     renderToast({
       msg: '借贷标签流转：这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID,
       lines: [
-        '分类「' + CATEGORY + '」· 账本「' + LEDGER + '」· 金额 ' + money2(input.facts.amount) + '（支出负数）',
+        '这一笔记在「' + CATEGORY + '」，账本「' + LEDGER + '」，金额 ' + money2(input.facts.amount) + '（支出记负数）',
         who === '' ? '对象：这次没给到（这一笔仍已落库，补对象走「改记录」）' : '对象写进备注：#借给' + who,
         '还回来的时候走「记收回」把 ' + TAG_UNPAID + ' 换成 #已还；撤销走本页退出口。',
       ],
@@ -237,7 +244,7 @@ function receiptPage(input: ReceiptInput): string {
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(receipt),
     receipt.recordId === null ? '' : undoExit(receipt.recordId),
@@ -248,7 +255,8 @@ function receiptPage(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(key, params),
           source: receipt.source,
-          detail: '影响 ' + receipt.affectedRows + ' 行 · 字段 ' + (receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
+            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: receipt.actionAt,
           version: DOC_VERSION,
         }),

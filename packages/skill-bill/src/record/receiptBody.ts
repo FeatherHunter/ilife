@@ -8,12 +8,11 @@
  * 这一段是从拆件前的 `src/record/receipt.ts` 原样搬来的（同一段代码、同一串块、同一句文案）。
  *
  * 页内块按施工图第一节的页面积木拼，一件不自造：类型徽章（`src/shared/typeBadge.ts` 的 `typeBadge`）／
- *  结论摘要行 `src/shared/summaryRow.ts` 的 `summaryCards`（与状态卡、影响行数、写入字段并进同一张网格）／
+ *  结论摘要行 `src/shared/summaryRow.ts` 的 `summaryCards`（与状态卡、这次记了几笔、写进去的项并进同一张网格）／
  *  重复检测提示条 `src/shared/duplicateNote.ts`（写完再报一次，排除本次这条编号）／明细表 `renderDataTable`／
  *  页尾对账折叠区与状态卡 `src/shared/receiptParts.ts`／退出口与复制区三件 `src/shared/copyArea.ts`／
  *  整页包裹 `src/shared/pageShell.ts`。
- * 页标题由回执事实的 `op` 派生（**唯一来源**）：一次写库只有 add／update／undo／restore 四种，页面名跟着它走，
- *  不另立一张「命令名 → 页标题」的表。
+ * 页标题由**这一页是哪条唤醒词**派生，见下面 `PAGE_WAKE_WORDS` 的说明。
  * 未用到的 base 组件（记成遗留，不硬塞）：`renderEmptyBlock`——回执页恒有数据；失败那一面走
  *  `src/shared/errorReceipt.ts`（共用位内部件），它的整页替换落点是后票的事（见该文件头）。
  */
@@ -27,20 +26,24 @@ import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIde
 import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards } from '../shared/summaryRow.js';
-import { typeBadge } from '../shared/typeBadge.js';
+import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { ReceiptInput } from './scene.js';
 
-/** 四个操作各自的页标题。 */
-const PAGE_TITLES: Record<RecordOp, string> = {
-  add: '记一笔 · 回执',
-  update: '改记录 · 回执',
-  undo: '撤销 · 回执',
-  restore: '恢复 · 回执',
+/** 页标题由**这一页是哪条唤醒词**派生（**唯一来源**）：写库那一半只认四种操作（add／update／undo／restore），
+ *  而用户看到的标题说的是他刚才说的那条唤醒词（记支出／改记录／撤销／恢复）。唤醒词与型名的对照表只有
+ *  `../shared/userWording.js` 一处，本件不另立一张「命令名 → 页标题」的表。
+ *  本轮整改修掉代表页页头的笔误：改前 `add` 恒写「记一笔 · 回执」，记支出那两张代表页的页头与徽章对不上。 */
+const PAGE_WAKE_WORDS: Record<RecordOp, string> = {
+  add: '记一笔',
+  update: '改记录',
+  undo: '撤销',
+  restore: '恢复',
 };
 
-/** 结果型回执整页：类型徽章 ＋ 一张大网格（摘要行五格 ＋ 状态／影响行数／写入字段）＋ 重复检测提示条
- *  ＋ 写入明细表 ＋ 对账折叠区 ＋ 退出口 ＋ 复制区三件。 */
+/** 结果型回执整页：类型徽章 ＋ 一张大网格（摘要行五格 ＋ 状态／这次记了几笔／写进去的项）
+ *  ＋ 重复检测提示条 ＋ 写进去的项与值 ＋ 对账折叠区 ＋ 退出口 ＋ 复制区三件。 */
 export function receiptBody(input: ReceiptInput): string {
   const { key, params, receipt } = input;
   const envelope: SerializableEnvelope = {
@@ -51,6 +54,9 @@ export function receiptBody(input: ReceiptInput): string {
     data: { ok: true, message: receipt.summary },
   };
   const kind = typeof params.kind === 'string' ? params.kind : '';
+  // 这一页的唤醒词：型认得出就按型（记支出／记收入…），认不出就按操作（记一笔／改记录／撤销／恢复）。
+  const known = kind.trim() === '' ? '' : wakeWordOf(kind);
+  const wakeWord = known === '' || known === '记一笔' ? PAGE_WAKE_WORDS[receipt.op] : known;
   const probe: DuplicateProbe = {
     amount: input.facts.amount,
     category: input.facts.category,
@@ -59,22 +65,27 @@ export function receiptBody(input: ReceiptInput): string {
     ...(receipt.recordId === null ? {} : { excludeId: receipt.recordId }),
   };
   const content = [
-    typeBadge({ kind, key, status: 'ok', state: '写库成功' }),
+    typeBadge({
+      kind,
+      status: 'ok',
+      state: '写库成功',
+      next: nextStepOf({ page: 'receipt', exit: receipt.recordId !== null }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       {
-        label: '写入字段',
+        label: '写进去的项',
         value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.join('、') || '未设置',
+        detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(receipt),
     receipt.recordId === null ? '' : undoExit(receipt.recordId),
@@ -85,7 +96,8 @@ export function receiptBody(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(key, params),
           source: receipt.source,
-          detail: '影响 ' + receipt.affectedRows + ' 行 · 字段 ' + (receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
+            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: receipt.actionAt,
           version: DOC_VERSION,
         }),
@@ -94,7 +106,7 @@ export function receiptBody(input: ReceiptInput): string {
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + '·写库回执',
-    title: PAGE_TITLES[receipt.op],
+    title: wakeWord + ' · 回执',
     subtitle: receipt.summary,
     slot: 'receipt',
     page: 'receipt',

@@ -11,9 +11,8 @@
  * 缺 `id` 不再由路由层报错（那是本票修的破口）：路由只说「改记录」时落这一页，由**候选记录列表**让用户挑一条，
  *  挑完仍走同一条写命令。**没给 `id` 就不出可跑的写库指令**（阻断条里那条指令带尖括号占位符、只给看不给复制）。
  */
-import { renderStatusBadge } from 'base-paint';
-import type { SerializableEnvelope } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import type { SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
@@ -25,6 +24,8 @@ import { diffRowsFor, pickModeOf, pickerBlock, readRowById, snapshotTable } from
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { summaryCards, summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
+import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
@@ -76,7 +77,7 @@ function blockedCommand(params: Record<string, unknown>, blocked: readonly Block
   return commandLine(KEY, filled);
 }
 
-/** 复制 prompt 区那段话：这一页是哪一形态、接下来怎么办、补齐后重跑哪条命令。 */
+/** 「照这句跟助手说一遍」那块话：这一页是哪一形态、接下来怎么办、补齐后重跑哪条命令。 */
 function promptOf(input: {
   readonly id: number | null;
   readonly row: BillRow | null;
@@ -85,18 +86,18 @@ function promptOf(input: {
   readonly params: Record<string, unknown>;
 }): string {
   if (input.id === null) {
-    return '这一页只采集、不写库：改记录原先缺「记录编号」就没页可看（路由层直接报错），现在改成先列表让用户挑。\n'
-      + '请从上面的候选记录里指定一条（说编号即可），并说清要改哪个字段、改成什么，再重跑同一条命令 ' + KEY + '。';
+    return '这一页先不写库：改记录原先缺「记录编号」就没页可看（原先直接报错），现在改成先列表让用户挑。\n'
+      + '请从上面的候选记录里指定一条（说编号即可），并说清要改哪一项、改成什么，再跟助手说一遍「改记录」。';
   }
   if (input.deleted) {
-    return '记录编号 ' + input.id + ' 那一条已经打过软删标记（撤销过），改记录这一支不动它。\n'
-      + '要它回到库里就走「恢复」：' + commandLine(KEY, { op: 'restore', id: input.id }) + '。';
+    return '记录编号 ' + input.id + ' 那一条已经撤销过，改记录这一支不动它。\n'
+      + '要它回到库里就说「恢复」：' + commandLine(KEY, { op: 'restore', id: input.id }) + '。';
   }
   if (input.row === null) {
     return '记录编号 ' + input.id + ' 在库里读不到（可能是别的库、也可能已被别的操作改过）。\n'
-      + '请先核一下编号，或先说清是哪一笔，再重跑同一条命令 ' + KEY + '。';
+      + '请先核一下编号，或先说清是哪一笔，再跟助手说一遍「改记录」。';
   }
-  return '原记录与改动对照都在下面：核一眼「字段／原值／新值」，没问题就照抄这条命令重跑落库——\n'
+  return '原记录与改动对照都在下面：核一眼「原值／新值」，没问题就照这条说落库——\n'
     + commandLine(KEY, input.params);
 }
 
@@ -114,44 +115,45 @@ function collectOf(input: CollectInput): string {
     ? { ok: true, reason: '', row: null, deleted: false }
     : readRowById(id);
   const row = probe.row;
-  // 软删口径取自 `../shared/recordPicker.ts` 的 `isDeleted`（读一条时一次算好，本件不重判一次）。
+  // 撤销标记口径取自 `../shared/recordPicker.ts` 的 `isDeleted`（读一条时一次算好，本件不重判一次）。
   const deleted = probe.deleted;
-  const form = id === null ? '缺记录编号 · 先挑一条' : deleted ? '那一条已打标撤销' : row === null ? '那一条读不到' : '带记录编号 · 待确认';
+  const form = id === null ? '缺记录编号，先挑一条' : deleted ? '那一条已撤销过' : row === null ? '那一条读不到' : '带记录编号，待确认';
   const middle: string[] = [];
   if (id === null) {
     middle.push(pickerBlock({ mode: pickModeOf(params['op']) }));
   } else if (deleted && row !== null) {
-    middle.push(snapshotTable(row, '这一条记录（已打标撤销 · 只读回显）'));
+    middle.push(snapshotTable(row, '这一条记录（已撤销过，只读回显）'));
     middle.push(emptyNote({
       title: '这一条已经撤销过',
-      text: '记录编号 ' + id + ' 在 ' + String(row.deleted_at) + ' 打过软删标记，改记录这一支不管已打标撤销的行。',
-      next: '要它回到库里就走「恢复」（把 `deleted_at` 置 NULL），恢复之后再改；要改别的记录就换一个编号。',
+      text: '记录编号 ' + id + ' 在 ' + String(row.deleted_at) + ' 撤销过，改记录这一支不动已撤销的记录。',
+      next: '要它回到库里就说「恢复」，恢复之后再改；要改别的记录就换一个编号。',
     }));
   } else if (row === null) {
     middle.push(emptyNote({
       title: '这个编号没有记录',
       text: '记录编号 ' + id + ' 在库里一条都没读到'
-        + (probe.ok ? '（未撤销的那些里没有它）。' : '：' + probe.reason + '。'),
-      next: '请核一下编号（或先说清是哪一笔），再重跑同一条命令；候选记录列表在缺编号那一形态里出。',
+        + (probe.ok ? '（没撤销过的那些里没有它）。' : '：' + probe.reason + '。'),
+      next: '请核一下编号（或先说清是哪一笔），再跟助手说一遍；候选记录列表在缺编号那一形态里出。',
     }));
   } else {
-    middle.push(snapshotTable(row, '原记录（只读回显 · 记录编号 ' + row.id + '）'));
+    middle.push(snapshotTable(row, '原记录（只读回显，记录编号 ' + row.id + '）'));
     middle.push(diffTable({
       rows: diffRowsFor({ row, params, fields: changeFieldsOf(slots) }),
-      caption: 'diff 表：字段／原值／新值（本次打算改的字段）',
+      caption: '改前改后对照（本次打算改的那几项）',
     }));
   }
   const content = [
-    renderStatusBadge({
+    typeBadge({
+      kind: '',
       status: 'danger',
-      text: WAKE + ' · 三形态之一：' + form + ' · ' + KEY + ' · '
-        + (blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待确认 · 未写库'),
+      state: form === '缺记录编号，先挑一条' ? '三形态之一：缺记录编号 · 先挑一条' : '待核对 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: WAKE }),
     }),
     summaryRow(factsOf(row, params)),
-    renderCaliberLine('写库：未发生——这一页只采集、不碰库；核对无误后重跑同一条命令才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；核对无误后跟助手说一遍才会写。'),
     blockedBar({ items: blocked, command: blockedCommand(params, blocked) }),
     middle.join(''),
-    promptCopyArea(promptOf({ id, row, deleted, blocked, params }), '复制 prompt（挑好记录后重跑）'),
+    promptCopyArea(promptOf({ id, row, deleted, blocked, params }), '挑好记录后照这句跟助手说一遍'),
     copyArea({
       data: { envelope },
       log: {
@@ -159,7 +161,7 @@ function collectOf(input: CollectInput): string {
         copyLog: copyLog({
           command: commandLine(KEY, params),
           source: input.source,
-          detail: '未写库（采集页）',
+          detail: '没写库（采集页）',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -187,23 +189,27 @@ function receiptOf(input: ReceiptInput): string {
     data: { ok: true, message: receipt.summary },
   };
   const content = [
-    renderStatusBadge({ status: 'ok', text: WAKE + ' · 落库回执 · ' + KEY + ' · 写库成功' }),
+    typeBadge({
+      kind: '',
+      status: 'ok',
+      state: '写库成功',
+      next: nextStepOf({ page: 'receipt', exit: true }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       {
-        label: '写入字段',
+        label: '写进去的项',
         value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.join('、') || '未设置',
+        detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
-    renderCaliberLine('原值与新值的对照（diff 表）落在落库前那一面：带记录编号的确认页上有字段／原值／新值三列；'
-      + '这一页只报写后的真值。'),
+    renderCaliberLine('改前改后的对照落在写库前那一面：确认页上有原值与新值两栏；这一页只报写后的真值。'),
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(receipt),
     receipt.recordId === null ? '' : undoExit(receipt.recordId),
@@ -214,7 +220,8 @@ function receiptOf(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(KEY, params),
           source: receipt.source,
-          detail: '影响 ' + receipt.affectedRows + ' 行 · 字段 ' + (receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
+            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: receipt.actionAt,
           version: DOC_VERSION,
         }),

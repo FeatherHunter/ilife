@@ -27,6 +27,7 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
+import { fieldLabelOf, statusNoteOf, wakeWordOf } from '../shared/userWording.js';
 import { totalChanges } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import { RECORD_SLOTS, missingSlots, recordCollectDoc } from './collect.js';
@@ -41,13 +42,15 @@ const ADD_FIELDS: readonly string[] = RECORD_SLOTS['bill.record.add'].map((s) =>
 const RECENT_WINDOW_DAYS = 90;
 
 /** 本次数据来源（复制日志第 3 段）；库文件名逐字取本包常量，共用件不取。**两页各一句**：
- *  回执页那句说的是写库回执，采集页不写库，不许沿用回执页那句（改前两页共用一句，采集页照抄了「写库回执」）。 */
-const SOURCE_RECEIPT = DB_FILENAME + ' · bills（写库回执）';
-const SOURCE_COLLECT = DB_FILENAME + ' · bills（只读：本页不写库，只采集）';
+ *  回执页那句说的是写库回执，采集页不写库，不许沿用回执页那句（改前两页共用一句，采集页照抄了「写库回执」）。
+ *  本轮整改删掉两处内部话（照 `docs/skills/skill-bill/t407-文字审查.md` 第 57、58 条）：库内表名 `bills` 与
+ *  `prompt` 那个英文词都不上屏；`本地时钟` 只留在复制日志的时间戳里（那里是过程证据，正文不印）。 */
+const SOURCE_RECEIPT = DB_FILENAME + '（写库回执）';
+const SOURCE_COLLECT = DB_FILENAME + '（只读：这一页先不写库，只采集）';
 
 /** 本地时钟时刻串（写入时间与复制日志时间戳）。**取时钟在写体，不在共用位**。 */
 function nowStamp(): string {
-  return new Date().toISOString().slice(0, 19).replace('T', ' ') + '（本地时钟）';
+  return new Date().toISOString().slice(0, 19).replace('T', ' ');
 }
 
 /** 本页执行那天（`YYYY-MM-DD`）：缺省时间的取值与重复检测的比对面用它。 */
@@ -61,17 +64,17 @@ interface DetailRow {
   readonly v: string;
 }
 
-/** 库内那一行的八个字段（记一笔的回执明细）。 */
+/** 库内那一行写进明细表的项名（**库列名不上屏**：行名走 `../shared/userWording.js` 的 `fieldLabelOf`）。 */
 function rowDetail(r: BillRow): DetailRow[] {
   return [
-    { k: 'id', v: String(r.id) },
-    { k: 'category', v: r.category },
-    { k: 'amount', v: r.amount.toFixed(2) },
-    { k: 'time', v: r.time },
-    { k: 'account', v: r.account },
-    { k: 'ledger', v: r.ledger },
-    { k: 'currency', v: r.currency },
-    { k: 'note', v: r.note },
+    { k: fieldLabelOf('id'), v: String(r.id) },
+    { k: fieldLabelOf('category'), v: r.category },
+    { k: fieldLabelOf('amount'), v: r.amount.toFixed(2) },
+    { k: fieldLabelOf('time'), v: r.time },
+    { k: fieldLabelOf('account'), v: r.account },
+    { k: fieldLabelOf('ledger'), v: r.ledger },
+    { k: fieldLabelOf('currency'), v: r.currency },
+    { k: fieldLabelOf('note'), v: r.note },
   ];
 }
 
@@ -162,13 +165,15 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): Wri
   const before = totalChanges(db.db);
   const input = validateAddInput(params);
   const r = addBill(db, input);
+  // 回执摘要里的型名改唤醒词（本轮整改）：`（expense）` 这种内建型名不上屏，
+  // 换成「记支出」这类用户自己说过的词；`id=` 换「记录编号」；`prompt` 那个英文词删。
   const extra = kind === 'photo'
-    ? '（拍账单图片识别以外置为准）'
-    : kind === 'batch' ? '（批量逐笔校验其一）' : kind ? `（${kind}）` : '';
+    ? '（三要素以外部识别为准）'
+    : kind === 'batch' ? '（只落了其中一笔）' : kind ? '（' + wakeWordOf(kind) + '）' : '';
   return finish({
     db, key, params, op: 'add', row: r, fields: ADD_FIELDS, before, noChange: false,
-    summary: `已记录：${r.category} ${r.amount.toFixed(2)}${extra}（id=${r.id}，账单回执可复制 prompt）`,
-    writtenDetail: '已写入账单库',
+    summary: `已记录：${r.category} ${r.amount.toFixed(2)}${extra}（记录编号 ${r.id}，这一页可以复制）`,
+    writtenDetail: '已写进记账库',
     detail: rowDetail(r),
   });
 }
@@ -188,9 +193,9 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): 
     const r = undoBill(db, id);
     return finish({
       db, key, params, op: 'undo', row: r, fields: ['deleted_at'], before, noChange: false,
-      summary: `已撤销：${r.id}（软删，恢复走 restore）`,
-      writtenDetail: '已标记撤销（软删：行保留，已从查询与统计中排除）',
-      detail: [{ k: 'op', v: 'undo（软删）' }, { k: 'id', v: String(r.id) }],
+      summary: `已撤销，记录还在，随时可恢复（记录编号 ${r.id}）`,
+      writtenDetail: '已标记撤销（记录还在库里，只是不再算进查询与统计）',
+      detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('软删打标（deleted_at = now，不物理删）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
     });
   }
   if (op === 'restore') {
@@ -198,9 +203,9 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): 
     const r = restoreBill(db, id);
     return finish({
       db, key, params, op: 'restore', row: r, fields: ['deleted_at'], before, noChange: false,
-      summary: `已恢复：${r.id}`,
-      writtenDetail: '已撤回撤销（软删标记清掉，行回到查询与统计里）',
-      detail: [{ k: 'op', v: 'restore' }, { k: 'id', v: String(r.id) }],
+      summary: `已恢复（记录编号 ${r.id}）`,
+      writtenDetail: '已恢复（撤销标记清掉，这一笔回到查询与统计里）',
+      detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('置 NULL（deleted_at 清空）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
     });
   }
   const { id, patch } = validateUpdateInput(params);
@@ -210,8 +215,11 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): 
   const noChange = fields.every((f) => preValue(pre, f) === patch[f]);
   return finish({
     db, key, params, op: 'update', row: r, fields, before, noChange,
-    summary: `已修改：${r.id}（${fields.join('/')}）`,
-    writtenDetail: '已改账单库那一条',
-    detail: [{ k: 'id', v: String(r.id) }, ...fields.map((f) => ({ k: f, v: String(patch[f]) }))],
+    summary: `已修改：${r.id}（改了 ${fields.map((f) => fieldLabelOf(f)).join('、')}）`,
+    writtenDetail: '已改记账库里那一条',
+    detail: [
+      { k: fieldLabelOf('id'), v: String(r.id) },
+      ...fields.map((f) => ({ k: fieldLabelOf(f), v: String(patch[f]) })),
+    ],
   });
 }

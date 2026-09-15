@@ -3,8 +3,8 @@
  * 服务哪条唤醒词：记退款（`src/policy/wakewords.ts` 的 `WAKE_TABLE` 里 `preset: { kind: 'refund' }`）。
  * 这一件出的两张页（施工图 `docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「记退款」那一行）：
  *   采集页：类型徽章（退款·#tag 流转）、结论摘要行、退款口径三格卡（退款额／原支出／净差）、超支警示条、
- *           流程三段式（原记账→退款→结果，第一段用候选单选）、缺项阻断条、复制 prompt 区、复制区；
- *   回执页：类型徽章、结论摘要行（＋状态／影响行数／写入字段）、#tag 流转条、写入明细表、对账折叠区、退出口、复制区。
+ *           流程三段式（原记账→退款→结果，第一段用候选单选）、缺项阻断条、照这句跟助手说一遍、复制区；
+ *   回执页：类型徽章、结论摘要行（＋状态／这次记了几笔／写进去的项）、#tag 流转条、写入明细表、对账折叠区、退出口、复制区。
  * 另一半的场景事实：原支出在哪一笔上（候选单选「为什么是它」）、退款额写正数、分类一律「退款/冲销」、
  *   原支出只追加 `#已退款`（金额不动）——判定与文案都住本件，别处不抄。
  *
@@ -30,7 +30,8 @@ import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { money2, summaryCards, summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
-import { typeBadge } from '../shared/typeBadge.js';
+import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
@@ -118,14 +119,15 @@ function collectPage(input: CollectInput): string {
     + '② 原支出 #' + (source ?? '<原支出编号>') + ' 的备注追加「#已退款」，金额不动。';
   const content = [
     typeBadge({
-      kind: KIND, key,
+      kind: KIND,
       status: blocked.length > 0 ? 'danger' : 'warn',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
     renderCaliberLine('退款照收入口径写正数、落「' + CATEGORY + '」；原支出那一笔只追加 #已退款，金额不动（两笔成对，可核）。'),
     renderKpiGrid([
-      { label: '退款额', value: money2(amount), detail: '收入记正数 · 分类「' + CATEGORY + '」' },
+      { label: '退款额', value: money2(amount), detail: '收入记正数，归在「' + CATEGORY + '」下面' },
       {
         label: '原支出',
         value: original === null ? '未认准' : money2(original.amount),
@@ -158,7 +160,7 @@ function collectPage(input: CollectInput): string {
             label: SOURCE_LABEL,
             candidates,
             selectedId: source,
-            hint: '拿不准就别选：这一格没有候选时，让 AI 先查那笔原支出，不拿最近一笔顶替。',
+            hint: '拿不准就别选：这一格没有候选时，让助手先查那笔原支出，不拿最近一笔顶替。',
           }),
         },
         {
@@ -185,14 +187,14 @@ function collectPage(input: CollectInput): string {
     }),
     blockedBar({ items: blocked, command: commandLine(key, filled) }),
     copyArea({
-      prompt: { text: prompt, label: blocked.length === 0 ? '复制 prompt（照这个口径写两笔）' : '复制 prompt（补齐后重跑）' },
+      prompt: { text: prompt, label: blocked.length === 0 ? '照这个口径写两笔，点这颗复制' : '补齐后照这句跟助手说一遍' },
       data: { envelope },
       log: {
         envelope,
         copyLog: copyLog({
           command: commandLine(key, params),
           source: input.source,
-          detail: '未写库（采集页）',
+          detail: '没写库（采集页）',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -214,17 +216,22 @@ function receiptPage(input: ReceiptInput): string {
     data: { ok: true, message: receipt.summary },
   };
   const content = [
-    typeBadge({ kind: KIND, key, status: 'ok', state: '写库成功' }),
+    typeBadge({
+      kind: KIND,
+      status: 'ok',
+      state: '写库成功',
+      next: nextStepOf({ page: 'receipt', exit: true }),
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       { label: '配对标签', value: source === null ? '#退款' : '#退款 → #已退款', detail: '两笔成对：这一笔打 #退款，原支出追加 #已退款' },
     ]),
     renderToast({
       msg: '退款标签流转：这一笔打 #退款',
       lines: [
-        '分类「' + CATEGORY + '」· 金额 ' + money2(input.facts.amount) + '（收入正数）',
+        '这一笔记在「' + CATEGORY + '」，金额 ' + money2(input.facts.amount) + '（收入记正数）',
         source === null
           ? '原支出：#原支出编号 没随这次写库给到，配对要在下一次带上（这一笔仍已落库）'
           : '原支出 #' + source + '：备注追加 #已退款，金额不动',
@@ -235,7 +242,7 @@ function receiptPage(input: ReceiptInput): string {
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: input.detail,
-      caption: '本次写入的字段与值',
+      caption: '写进去的项与值',
     }),
     reconcileDisclosure(receipt),
     receipt.recordId === null ? '' : undoExit(receipt.recordId),
@@ -246,7 +253,8 @@ function receiptPage(input: ReceiptInput): string {
         copyLog: copyLog({
           command: commandLine(key, params),
           source: receipt.source,
-          detail: '影响 ' + receipt.affectedRows + ' 行 · 字段 ' + (receipt.writtenFields.join('/') || '未设置'),
+          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
+            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
           actionAt: receipt.actionAt,
           version: DOC_VERSION,
         }),

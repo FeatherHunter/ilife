@@ -5,15 +5,15 @@
  *   ② `src/record/collect.ts`——分派位只取件、不自己装配，故不直接引本件。
  *  后续三族窗口填各自那张页时，把**那件场景件**的 `collect` 换成自己的装配体即可，本件一行不动。
  *
- * 这一段是从拆件前的 `src/record/collect.ts` 原样搬来的（同一段代码、同一串块、同一句文案），
- *  搬的理由：`collect.ts` 要收成「按 kind／op 取件」的分派位，装配体不能再住分派位里。
- *
  * 信息层次（施工图第一节的页面积木按序拼，一件不自造）：
  *   类型徽章 → 结论摘要行 → 复制日志那行「写库：未发生」→ 重复检测提示条 → 预填标注 → 缺项阻断条
  *   → 选择器空态 → 采集表单 → 复制 prompt 区 → 复制区（共十块）。
  *  复制 prompt 区那段话里**没有可跑的写库指令**（写库指令只在缺项阻断条里、且不给复制按钮）——
  *  这就是「缺项即不出复制指令」那条口径；本页**不写库**：写库那一半在 `src/record/write.ts`，
  *  落点是结果型回执整页（`./receiptBody.ts`）。
+ *
+ * 本轮整改（根因二）：类型徽章原先是「动作 · 金额符号 · 命令名 · 槽位状态 · 写库状态」一行拼出来的串，
+ *  现在改成若干枚独立形状（唤醒词标签／页面状态徽章／下一步动作），命令名不上屏；页标题也补上唤醒词。
  */
 import { renderCaliberLine, renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
@@ -32,7 +32,7 @@ import type { PrefillMark } from '../shared/prefillNote.js';
 import { optionsFor, pickOf as pickValues, textOf } from '../shared/recentPicks.js';
 import { summaryRow } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
-import { typeBadge } from '../shared/typeBadge.js';
+import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput } from './scene.js';
 import { isGiven } from './slots.js';
@@ -67,15 +67,17 @@ function formFields(input: {
   });
 }
 
-/** 复制 prompt 区那段 prompt：说清缺什么、这一页不写库、补齐后重跑哪条命令。
- *  **不给可跑的写库指令**（那条在缺项阻断条里、且不给复制按钮）——缺项即不出复制指令。 */
+/** 复制 prompt 区那段 prompt：说清缺什么、这一页先不写库、补齐后照哪句跟助手说。
+ *  **不给可跑的写库指令**（那条在缺项阻断条里、且不给复制按钮）——缺项即不出复制指令。
+ *  本轮整改：缺项清单写中文名（库列名不上屏），`重跑同一条命令` 换「跟助手说一遍」。 */
 function promptOf(
-  key: string,
+  wakeWord: string,
+  command: string,
   blocked: readonly { readonly label: string; readonly name: string; readonly why: string }[],
 ): string {
   return '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.name + '：' + i.why + '）').join('、')
-    + '。\n这一页只采集、不写库；补齐后重跑同一条命令 ' + key + '。';
+    + blocked.map((i) => i.label + '（' + i.why + '）').join('、')
+    + '。\n这一页先不写库；补齐之后跟助手说一遍「' + wakeWord + '」，照这条说：' + command + '。';
 }
 
 /** 缺项时那条写库指令原文：缺的值留成尖括号占位符，**只给看不给复制**（复制按钮在阻断条里被拿掉）。 */
@@ -93,6 +95,7 @@ function commandLineOf(
 export function collectBody(input: CollectInput): string {
   const { key, params, slots, missing } = input;
   const kind = textOf(params.kind);
+  const wakeWord = wakeWordOf(kind);
   const blocked = blockedItems({ params, missing, kind });
   const message = blockedMessage(missing, blocked);
   const envelope: SerializableEnvelope = {
@@ -120,27 +123,27 @@ export function collectBody(input: CollectInput): string {
     empties.push(emptyNote({
       title: '没有可选的历史账户',
       text: '库里还没有带账户的记录，账户这一格没有候选可以挑。',
-      next: '账户留空即落默认账户；想选就先给一笔带账户的记录（例如 支付宝）。',
+      next: '账户留空就记到默认账户；想选就先给一笔带账户的记录（例如 支付宝）。',
     }));
   }
   const content = [
     typeBadge({
       kind,
-      key,
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord }),
     }),
     summaryRow(facts),
-    renderCaliberLine('写库：未发生——这一页只采集、不碰库；补齐后重跑同一条命令才会写。'),
+    renderCaliberLine('写库：还没发生——这一页先不写库，只采集；补齐之后跟助手说一遍才会写。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     prefillNote(prefill),
     blockedBar({ items: blocked, command: commandLineOf(key, params, blocked) }),
     empties.join(''),
     renderParamForm({
-      description: '填好必需槽位后重跑同一条命令；这一步不写库。分类／账户／账本三格是选择器，候选取自近期记录。',
+      description: '填好必需项再说一遍；这一页先不写库。分类／账户／账本三格是选择器，候选取自近期记录。',
       fields: formFields({ slots, params, marks: prefill, pick }),
     }),
-    promptCopyArea(promptOf(key, blocked), '复制 prompt（补齐后重跑）'),
+    promptCopyArea(promptOf(wakeWord, commandLine(key, params), blocked), null),
     copyArea({
       data: { envelope },
       log: {
@@ -150,7 +153,7 @@ export function collectBody(input: CollectInput): string {
           // 带占位符的写库指令只在上面阻断条里给看不给复制。
           command: commandLine(key, params),
           source: input.source,
-          detail: '未写库（采集页）',
+          detail: '没写库（采集页）',
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -159,7 +162,7 @@ export function collectBody(input: CollectInput): string {
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + '·补齐槽位',
-    title: '补齐槽位',
+    title: wakeWord + ' · 补齐槽位',
     subtitle: message,
     slot: 'collect',
     page: 'collect',
