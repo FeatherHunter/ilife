@@ -19,6 +19,7 @@ import {
   renderParamForm,
   renderTocBlock,
 } from 'base-paint/blocks';
+import { escapeHtml, renderStatusBadge } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import { pageChromeCss } from './pageChromeCss.js';
@@ -78,7 +79,7 @@ function deficitConclusion(d: DeficitData): string {
   const avg = signed(d.summary.avgDeficit);
   const week = signed(d.summary.weeklyDeficit);
   return d.summary.weeklyDeficit > 0
-    ? '这段时间平均每天有 ' + avg + ' 卡缺口，一周合计 ' + week + ' 卡，折算下来约 ' + d.summary.predictedLossKg + ' 公斤。'
+    ? '这段时间平均每天有 ' + avg + ' 卡缺口，一周合计 ' + week + ' 卡，折算下来约 ' + d.summary.predictedLossKg + ' kg。'
     : '这段时间平均每天缺口 ' + avg + ' 卡，一周合计 ' + week + ' 卡，还没有形成减重缺口。';
 }
 
@@ -229,7 +230,7 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  不再有该字符（#516 判据 R4）。人话里不写全角加号（并列分隔符集里有它），写「加」。
    *  第二条里的「达标线」是**`目标` 列上浮的落点**：每日缺口目标这份事实在页上只此一处（表里那列已撤）。 */
   parts.push(renderCaliberLine('缺口＝当天消耗减当天摄入（正数就是有缺口）｜消耗＝日常消耗加当天运动｜摄入只算吃进去的，喝水不算'));
-  parts.push(renderCaliberLine('理论减重按每 7700 卡折算约 1 公斤估算｜达标线＝每天 ' + signed(targetDef) + ' 卡缺口｜图里实线是摄入，虚线是消耗，横线是摄入目标 ' + d.target.intake + ' 卡'));
+  parts.push(renderCaliberLine('理论减重按每 7700 卡折算约 1 kg 估算｜达标线＝每天 ' + signed(targetDef) + ' 卡缺口｜图里实线是摄入，虚线是消耗，横线是摄入目标 ' + d.target.intake + ' 卡'));
   /* ⑥ 来源脚注（J9 第三条恒出；同族写法见 `diet/sourceStatsDocs.ts` 末行）：走普通小字行，不走深底块。 */
   parts.push(renderCaliberLine('📊 数据来源：本机饮食记录与运动记录，窗口 ' + d.meta.start + ' 至 ' + d.meta.end));
   return assembleDocPage({
@@ -306,9 +307,13 @@ function fixedOrUndefined(n: number | null | undefined, digits: number): number 
   return n === null || n === undefined || !Number.isFinite(n) ? undefined : Number(n.toFixed(digits));
 }
 
-/** 体重读数（1 位；`fmt` 负责 `undefined → '—'`）。 */
+/** 体重读数（**固定 1 位**；非有限数印 `—`）。
+ *  **W6**：这里必须走 `toFixed(1)` 的**字面**，不能走 `fmt(Number(n.toFixed(1)))`——
+ *  后者把整数位的小数点吃掉，页 07 轨迹列就会出现 `71` 与 `72.4` 同列两种字面
+ *  （视觉抽查 §9.5 那格「部分修」的尾巴：源码命中 `>71</td>`，与同列 `72.4`／`73.7` 不一致）。
+ *  非有限数那一支仍是**真缺值**语境，故照既有口径印 `—`。 */
 function fmtWeight(n: number | null | undefined): string {
-  return fmt(fixedOrUndefined(n, 1));
+  return n === null || n === undefined || !Number.isFinite(n) ? '—' : n.toFixed(1);
 }
 
 /** 速率读数（2 位）。 */
@@ -355,11 +360,21 @@ function trackTable(points: ReadonlyArray<{ date: string; value: number }>, what
  *  **不碰公共层**：`packages/base-render/**` 一行未动（票面红线），只在本页族的 `<style>` 段覆盖。
  *
  *  限定面：`<div class="tpd-track-table">` 由 `trackTable()` 自己套上（本件独有，逐字可检索），
- *  公共层产出器不吃额外入参，故只能在外层套这一层——不改公共层、也不改公共层的产出结构。 */
+ *  公共层产出器不吃额外入参，故只能在外层套这一层——不改公共层、也不改公共层的产出结构。
+ *
+ *  **W6 追加**：表头那一格的单位**只许一种形态**。公共层的 `.ilife-block-data-table th` 带
+ *  `text-transform: uppercase`（`base-render/src/blocks.ts` 的 `th` 一段），1440 档把
+ *  `模拟体重（kg）` 渲染成 `模拟体重（KG）`，而同一页的 KPI 卡单位是 `kg/周`、脚注写「公斤」
+ *  ⇒ 同页同单位三形态（视觉抽查 §9.2 新引入项之一的原句）。修正动作＝在本页族这一层把 `th`
+ *  的转换压掉（`text-transform:none`），字面就回到源码里的 `kg`；脚注那一侧的用词由本件自己
+ *  统一成 `kg`（见各页 `renderCaliberLine`）。表头缩写的选择权仍在**公共层**（红线：不动
+ *  `packages/base-render/**`），本件只覆盖这一张表的列头。 */
 function trackTableCss(): string {
   return '<style>\n'
     /* 纯标记块：桌面档不给任何样式，只作窄档那段规则的锚点。 */
     + '.tpd-track-table{display:block}\n'
+    /* W6：列头不放大写——单位写 `kg` 就渲染 `kg`（选择器多一层，压过公共层的同名同权重规则）。 */
+    + '.tpd-track-table .ilife-block-data-table th{text-transform:none}\n'
     + '@media (max-width:640px){\n'
     + '  .tpd-track-table tbody>tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}\n'
     + '  .tpd-track-table tbody>tr>td{display:block;white-space:nowrap;overflow-wrap:normal;padding:4px 0}\n'
@@ -367,6 +382,43 @@ function trackTableCss(): string {
     + '}\n'
     + '</style>';
 }
+/* ── W6（#518）· 判定卡的值位**整格撤掉**（视觉抽查 §9.6 新引入问题①） ─────────────────
+
+ *  缺陷原文（`docs/skills/skill-calorie/t518-视觉抽查.md` §9.6）：「KPI 行里三张卡是大号数字、
+ *  第四张是一个短横，**值位这个全页最大的字号位置被空符号占住**，整行扫读节奏断掉」＋
+ *  「更关键的是**符号语义撞车**：`—` 在数据页的通行读法是『缺值／无数据』，这里却被用来表达
+ *  『该指标不是数值型』。同一符号在别的卡上若真出现缺值，读者无法区分『没有数据』和『不适用』。」
+ *
+ *  改法＝W6 派单 §1 的推荐①：**撤掉该卡的值位**——判定词只由状态徽标承担（一处），空出的位置
+ *  由 `detail` 补一句人话（**不引入任何新数字**，也不与徽标同词，故 W5-① 那条「同卡不重复」仍绿）。
+ *
+ *  为什么这张卡不走 `renderKpiCard`：公共层的 `KpiCardInput.value` 是**必填非空**
+ *  （`base-render/src/blocks.ts` 的 `KpiCardInput.value` ＋ `reqText` 的 `value === '' → badInput`）
+ *  ⇒「没有值位的卡」在公共层**产不出来**，而本票红线不许动 `packages/base-render/**`。
+ *  故本件自出这一张卡的**页框**：类名沿用公共层同一套命名空间（`ilife-block-kpi-card` 一族），
+ *  `.ilife-block-kpi-card-grid` 的网格与全部样式因此仍单源住公共层——
+ *  **徽章本身**照旧走公共层 `renderStatusBadge`（本件不造第二份徽章）。
+ *  同族先例：`sportDocs.ts` 的目标环卡（`ilife-block-ring-*`）同样是页面自出的卡。
+ *
+ *  硬规矩（W6 派单 §1）：**可见文本里的 `—` 只允许用于缺值语境**。本件剩下两处 `—` 都在
+ *  `?? '—'` 的**真缺值**分支上（页 14–17 的「目标」「日变化」）；非数值型的判定卡一处不留。
+ *  机器守卫＝`test/analysis-deficit-eta-466.test.mjs` 的 `#518 W6-①`（含变异两行）。 */
+function verdictCard(label: string, detail: string, ok: boolean | undefined, okText: string, badText: string): string {
+  return '<div class="ilife-block ilife-block-kpi-card">'
+    + '<div class="ilife-block-kpi-card-label">' + escapeHtml(label) + '</div>'
+    + '<div class="ilife-block-kpi-card-detail">' + escapeHtml(detail) + '</div>'
+    + '<div class="ilife-block-kpi-card-badge">'
+    + renderStatusBadge({ status: ok ? 'ok' : 'warn', text: ok ? okText : badText })
+    + '</div></div>';
+}
+
+/** 判定卡补进网格的尾位：`renderKpiGrid` 只吃 `KpiCardInput`（值位必填非空），
+ *  而判定卡没有值位 ⇒ 在网格收尾前把这一张塞进去，网格结构与卡序（前 3 张数据卡 ＋ 尾位判定卡）不变。 */
+function withVerdictCard(gridHtml: string, cardHtml: string): string {
+  const CLOSE = '</div>';
+  return gridHtml.endsWith(CLOSE) ? gridHtml.slice(0, -CLOSE.length) + cardHtml + CLOSE : gridHtml + cardHtml;
+}
+
 /* ── 体重预测（predict_report 对照：点预测 KPI＋insight；曲线归组合分析，见 §3 R4） ── */
 
 export function buildPredictDoc(v: PredictView): string {
@@ -447,17 +499,13 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
       ],
       description: '按当前的体重趋势算出哪天能达到目标体重。体重记录不到 14 天就只说数据不够，不编一个日期出来。',
     })),
-    pageSection('sec-overview', renderKpiGrid([
+    pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '目标', value: String(v.target), unit: 'kg' },
       { label: '预计达成', value: String(v.eta), detail: '剩余 ' + String(v.daysLeft) + ' 天' },
-      /* 可行性改走**状态徽章**（票面改法要点 ④）：判定词不再只当文字印，走徽章的闭集档。
-       * W5（视觉抽查 §2.2 缺陷 3 的同族反例）：判定词上屏**一次**——值位原样又印一遍
-       * 「可行／超范围」，与徽标同词同卡两处；判定词归徽标（闭集档有语义色），
-       * 值位退化成「非读数」（`—`，同族 `fmt()` 的缺值写法）。原来挂在 `detail` 的「速率 N kg/周」
-       * 与第 3 张卡的「预计达成」同属一件事，撤掉后本卡只留**一条结论**。 */
-      { label: '可行性', value: '—', status: v.feasible ? 'ok' : 'warn', statusText: v.feasible ? '可行' : '超范围' },
-    ])),
+    ]), verdictCard('可行性', v.feasible
+      ? '照这个速度，这个目标赶得上。'
+      : '照这个速度，这个目标赶得偏快。', v.feasible, '可行', '超范围'))),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
@@ -470,7 +518,7 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
       },
     },
   })));
-  parts.push(renderCaliberLine('预计达成日＝按当前速率线性外推的那一天｜健康范围＝每周掉 0.5 到 1.0 公斤｜体重记录不到 14 天不出日期'));
+  parts.push(renderCaliberLine('预计达成日＝按当前速率线性外推的那一天｜健康范围＝每周掉 0.5 到 1.0 kg｜体重记录不到 14 天不出日期'));
   parts.push(sourceFootnote('体重记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 体重预测',
@@ -505,19 +553,19 @@ export function buildSimCutDoc(v: WeightSimCut): string {
       ],
       /* 原说明里那句 `；` 与「90 天的轨迹在下面」拆开：轨迹那一句由区块自己（表题）承担，
        * 这里只说这一页在做什么（#516 §3.2 D03；`KCAL_PER_KG` 这类常量名不上屏）。 */
-      description: '看看每天再多减一些卡路里，体重会怎么掉。每 7700 卡大约对应 1 公斤，按这个折算每周掉多少。能不能做到，看每周的掉重落在 0.5 到 1.0 公斤这个安全区间里没有。',
+      description: '看看每天再多减一些卡路里，体重会怎么掉。每 7700 卡大约对应 1 kg，按这个折算每周掉多少。能不能做到，看每周的掉重落在 0.5 到 1.0 kg 这个安全区间里没有。',
     })),
     trackTableCss(),
-    pageSection('sec-overview', renderKpiGrid([
+    pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '每天多减', value: String(v.cutKcal), unit: '卡' },
       /* W5：值走 `fmtRate`（2 位，kg/周 的语义档）——原写法把上游 `round2` 的尾零吃掉，
        * 会出现 `1.4` 与同族 `1.36` 两种写法；`安全区间 0.5 到 1.0 kg/周`这份事实已由
-       * 同页口径行末段承担（「安全区间＝每周掉 0.5 到 1.0 公斤」），卡内不再印第二遍。 */
+       * 同页口径行末段承担（「安全区间＝每周掉 0.5 到 1.0 kg」），卡内不再印第二遍。 */
       { label: '每周掉重', value: fmtRate(v.weeklyLoss), unit: 'kg/周' },
-      /* W5：判定词上屏**一次**（视觉抽查 §2.2 缺陷 3 原句：值就是「超范围」，下面又挂一个「超范围」徽标）。 */
-      { label: '可行性', value: '—', status: v.feasible ? 'ok' : 'warn', statusText: v.feasible ? '可行' : '超范围' },
-    ])),
+    ]), verdictCard('可行性', v.feasible
+      ? '这个减量落在安全区间里。'
+      : '这个减量超出安全区间。', v.feasible, '可行', '超范围'))),
   ];
   if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg')));
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
@@ -531,7 +579,7 @@ export function buildSimCutDoc(v: WeightSimCut): string {
       },
     },
   })));
-  parts.push(renderCaliberLine('每 7700 卡大约折算 1 公斤｜轨迹从窗口最后一天起算，每周一点，非整周时补最后一天那一行｜安全区间＝每周掉 0.5 到 1.0 公斤'));
+  parts.push(renderCaliberLine('每 7700 卡大约折算 1 kg｜轨迹从窗口最后一天起算，每周一点，非整周时补最后一天那一行｜安全区间＝每周掉 0.5 到 1.0 kg'));
   parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 模拟减重',
@@ -561,17 +609,17 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
         { name: 'days_target', label: '天数', value: String(v.daysTarget ?? '') },
       ],
       /* 原说明句尾夹常量名、还拿 `；` 串两条规则（#516 §3.2 D03；`Xkg` 那种占位写法不上屏）。 */
-      description: '模拟在自定的天数里减掉想减的公斤数，需要每天留出多少缺口。每 7700 卡大约对应 1 公斤，按这个反推。能不能做到，看每周的掉重落在 0.5 到 1.0 公斤这个安全区间里没有。',
+      description: '模拟在自定的天数里减掉想减的重量，需要每天留出多少缺口。每 7700 卡大约对应 1 kg，按这个反推。能不能做到，看每周的掉重落在 0.5 到 1.0 kg 这个安全区间里没有。',
     })),
     trackTableCss(),
-    pageSection('sec-overview', renderKpiGrid([
+    pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '所需缺口', value: String(v.neededDeficit), unit: '卡/天', detail: '要在 ' + String(v.daysTarget) + ' 天里减掉 ' + String(v.targetLoss) + ' kg' },
       /* W5：值走 `fmtRate`（2 位）——与结论句及同页轨迹同一语义档；「安全区间」那半句已住口径行，卡内不重印。 */
       { label: '每周掉重', value: fmtRate(v.weeklyRate), unit: 'kg/周' },
-      /* W5：判定词上屏一次（同页 07–09 的同一处）。 */
-      { label: '可行性', value: '—', status: v.feasible ? 'ok' : 'warn', statusText: v.feasible ? '可行' : '超范围' },
-    ])),
+    ]), verdictCard('可行性', v.feasible
+      ? '这个期限赶得上。'
+      : '这个期限赶得偏快。', v.feasible, '可行', '超范围'))),
   ];
   if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg')));
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
@@ -585,7 +633,7 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
       },
     },
   })));
-  parts.push(renderCaliberLine('所需缺口＝要减的公斤数乘 7700 卡再除以天数｜轨迹从窗口最后一天起算，每周一点，末点是第 ' + String(v.daysTarget) + ' 天｜安全区间＝每周掉 0.5 到 1.0 公斤'));
+  parts.push(renderCaliberLine('所需缺口＝用 7700 卡折算要减的重量，再除以天数｜轨迹从窗口最后一天起算，每周一点，末点是第 ' + String(v.daysTarget) + ' 天｜安全区间＝每周掉 0.5 到 1.0 kg'));
   parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 模拟减重',
@@ -685,16 +733,13 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
       ],
       description: '看每天的摄入能不能守在营养目标上。平均下来差在 10% 以内就算守住了，摄入记录不到 14 天就只说数据不够。',
     })),
-    pageSection('sec-overview', renderKpiGrid([
+    pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '均值', value: String(v.avg), unit: '卡' },
       { label: '目标', value: String(v.goal), unit: '卡' },
       { label: '缺口', value: String(v.gap), unit: '卡' },
-      /* 在轨与否改走**状态徽章**（#517 样板页的同一手法）。
-       * W5（视觉抽查 §2.2 缺陷 3 的同族反例）：判定词原来在值位与徽标上各印一遍
-       * ⇒ 判定词归徽标、值位退化成非读数；`detail` 那句「已/超出目标 ±10%」与结论条的
-       * 同一事实重复（结论句把均值与目标的差写全了），撤掉后本卡只留**一条结论**。 */
-      { label: '是否在轨', value: '—', status: v.onTarget ? 'ok' : 'warn', statusText: v.onTarget ? '在轨' : '偏离' },
-    ])),
+    ]), verdictCard('是否在轨', v.onTarget
+      ? '日均与目标差得不远。'
+      : '日均离目标偏开。', v.onTarget, '在轨', '偏离'))),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
@@ -730,12 +775,13 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
       ],
-      description: '按最近的趋势预测卡路里缺口。缺口就是当天消耗减掉当天吃的，消耗算日常消耗加运动消耗。每 7700 卡大约对应 1 公斤。',
+      description: '按最近的趋势预测卡路里缺口。缺口就是当天消耗减掉当天吃的，消耗算日常消耗加运动消耗。每 7700 卡大约对应 1 kg。',
     })),
     pageSection('sec-overview', renderKpiGrid([
       { label: '平均缺口', value: String(v.avgDeficit), unit: '卡/天', detail: '正数是缺口' },
       /* W5：卡内只留一条事实——`健康区间 0.3 到 1.2 kg/周` 已由同页口径行末段承担
-       * （「健康区间＝每周掉 0.3 到 1.2 公斤」），卡里再印一遍就是「同一事实在卡内出现两次」，
+       * （「健康区间＝每周掉 0.3 到 1.2 kg」；W6 起同页单位统一成 `kg`，不再有「公斤」那一形态），
+       * 卡里再印一遍就是「同一事实在卡内出现两次」，
        * 且它与主值 1.09 是同一量纲却不同有效位（视觉抽查 §2.3 缺陷 3 的原句）。 */
       { label: '每周掉重', value: fmtRate(v.weeklyLoss), unit: 'kg/周' },
     ])),
@@ -748,7 +794,7 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
       },
     },
   })));
-  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 公斤｜健康区间＝每周掉 0.3 到 1.2 公斤'));
+  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 kg｜健康区间＝每周掉 0.3 到 1.2 kg'));
   parts.push(sourceFootnote('饮食记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 摄入预测',
@@ -774,14 +820,13 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
       ],
       description: '看每天的摄入稳不稳定。每天上下波动不超过 300 卡就算稳，摄入记录不到 14 天就只说数据不够。',
     })),
-    pageSection('sec-overview', renderKpiGrid([
+    pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '均值', value: String(v.avg), unit: '卡' },
       /* σ 是统计符号，读者认不得：这一格就说「上下波动的幅度」（口径在同页的口径行里）。 */
       { label: '波动', value: String(v.sigma), unit: '卡', detail: '上下波动的幅度' },
-      /* W5：判定词上屏一次（同族 18／06 的同一处）；`detail` 那句与口径行「判据＝上下波动不超过 300 卡算稳」
-       * 是同一事实，撤掉后本卡只留判定一条。 */
-      { label: '是否稳定', value: '—', status: v.stable ? 'ok' : 'warn', statusText: v.stable ? '稳定' : '波动大' },
-    ])),
+    ]), verdictCard('是否稳定', v.stable
+      ? '每天的摄入比较匀。'
+      : '每天的摄入忽高忽低。', v.stable, '稳定', '波动大'))),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
