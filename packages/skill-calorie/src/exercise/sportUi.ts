@@ -43,14 +43,24 @@ export function exerciseUiCss(): string {
     + '.sui-days{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);'
     + 'border-radius:999px;padding:4px 8px}'
     // ── 键值行：一行若干「标签 ＋ 值」。窄屏塌成一列（标签贴左、值贴右），行行对齐 ──
-    + '.sui-facts{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin:8px 0 16px}'
-    + '.sui-fact{display:inline-flex;align-items:baseline;gap:8px;min-width:0}'
-    + '.sui-fact-k{font-size:12px;color:var(--fg3);white-space:nowrap}'
-    + '.sui-fact-v{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
+    // 键值行（#543 视觉复评 r6 的 P1-1）：**桌面档也必须是「键上／值下」的有轴小格**——
+    // 原来 `display:flex;flex-wrap:wrap` 一路横排，四组值在 1440 档落成 x=296／444／540／661
+    // **四条互不对齐的竖轴**（实测最大差 365px），「键—值」配对只能靠数；同一件的 390 档
+    // 反而塌成了右对齐纵列（那一档是对的）。改法：`auto-fit` 栅格——同排小格等宽、键左缘同轴，
+    // 行数由内容定（4 组＝1 行 4 格，3 组＝1 行 3 格），不写死列数，空档不靠 `wrap` 兜。
+    + '.sui-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px 16px;margin:8px 0 16px}'
+    + '.sui-fact{display:flex;flex-direction:column;gap:2px;min-width:0}'
+    // 键色 `--fg3`(#86868b) 对白底仅 3.62:1，12px 正文要 4.5:1；`--fg2`(#6e6e73) 为 5.07:1
+    // （同包 `base-render/src/style.ts:567` 已为同类 12px 小字做过同一次改动，本处照办）。
+    + '.sui-fact-k{font-size:12px;color:var(--fg2);white-space:nowrap}'
+    + '.sui-fact-v{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums;min-width:0}'
     // ── 并列小胶囊（单位／筛选这类短词并排；`renderChips` 的件，本类只管行距与折行）──
     + '.sui-caps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 16px}'
     // ── 并列字段清单的行题（「本次写入的字段」这一行；字段名本身走 `renderChips` 的胶囊件）──
-    + '.sui-fields-k{font-size:12px;color:var(--fg3);margin:12px 0 4px}'
+    //    题色同 `.sui-fact-k` 的处置：`--fg3` 对白底 3.62:1 不合格，12px 正文一律走 `--fg2`（5.07:1）。
+    + '.sui-fields-k{font-size:12px;color:var(--fg2);margin:12px 0 4px}'
+    //    块尾收口那句（r7 的 P2-6）：同档字号与色，行距不额外撑开。
+    + '.sui-fields-n{font-size:12px;color:var(--fg2);margin:4px 0 12px}'
     // ── 字段清单容器（`sportUi.fieldGrid()` 的两个形状；字段名本身走公共层 `renderChips`）──
     //    枚数多：等宽网格——**列数按 16 这个常见枚数定 8／4**，正好铺满 8×2（桌面）与 4×4（手机）
     //    行，行末不留孤格（#543 视觉复评 P1-A 第 5 条、页 01 手机第 4 条）。
@@ -64,6 +74,11 @@ export function exerciseUiCss(): string {
     //    取值紧跟在键后、三页取值起点落在同一条竖轴，行分隔线仍铺满卡片；字号从 14px 收回 13px 档
     //    （本页少一档字号）。只在本页样式段加规则，不碰共享层源码。──
     + '.ilife-page .ilife-block-change-row{font-size:13px}'
+    // ── 页头第三行（r7 的 P2-5）：操作头的时间那行**没有键**（上一行是「记录号 #8414」），
+    //    读者分不清它是写入时间、记录日期还是当前时间，而同一个值在对账抽屉里叫「写入时间」。
+    //    页级件按 CSS 内容补键（**不碰共用层 op-head 件的源码**；同值同词，不是新事实）。
+    //    `content` 只进渲染层，不上屏到可见文本探针的「机器词」面。──
+    + '.ilife-page .ilife-block-op-head-time::before{content:"写入时间 ";color:var(--fg2)}'
     + '.ilife-page .ilife-block-change-row-label{flex:0 0 128px}'
     // ── 页级覆盖（#543 视觉复评 P0-1 ＋ 表头字号）：共享块的表卡是「上限 680 ＋ 居中」，上方卡片是
     //    960 整列 ⇒ 表正文比卡正文内缩 126px（实测 x373 vs x247），一页两条对齐轴。本族页把表卡
@@ -117,9 +132,10 @@ export function exerciseUiCss(): string {
     + '  .sui-window{gap:8px}'
     + '  .sui-date{padding:8px 12px;min-height:32px;display:inline-flex;align-items:center}'
     + '  .sui-days{padding:4px 12px}'
-    // 键值行在窄屏塌成一列：原来几枚横排会折行、断在词中间（与 `.wui-strip-v` 同一处置）。
-    + '  .sui-facts{flex-direction:column;align-items:stretch;gap:8px}'
-    + '  .sui-fact{justify-content:space-between;gap:12px}'
+    // 键值行在窄屏塌成**一列「键左／值右」**（同 `.wui-strip-v` 的处置）：桌面那套小格在 390 档
+    // 会把「2026-09-15 → 2026-09-15」这类长值挤成两行，故窄屏改回纵列并两端对齐。
+    + '  .sui-facts{grid-template-columns:minmax(0,1fr);gap:8px}'
+    + '  .sui-fact{flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px}'
     + '  .sui-caps{gap:8px}'
     // 环卡在窄屏塌成一列：环在上、数值在下，居中——横排会把环挤到 100px 出头。
     + '  .ilife-block-ring-card{flex-direction:column;align-items:center;gap:16px}'
@@ -131,6 +147,13 @@ export function exerciseUiCss(): string {
     + '  .ilife-page .ilife-block-dist-row-bar{grid-column:1;grid-row:2}'
     + '  .ilife-page .ilife-block-dist-row-val{grid-column:2;grid-row:2}'
     + '}'
+    // ── 复制区按钮宽度：**本票不改**（#543 视觉复评 r6 的 P2-3「桌面档按钮被拉满」）。
+    //    这不是漏改，是**用户裁定的冻结形态**：公共层 `base-render/src/style.ts:311／317-321`
+    //    的动作条在 ≥821px 放开 `max-width:none`、ghost 行两列平分，出处是用户那句
+    //    「两个按钮平分宽度」（`#238` 本地二次裁定，2026-09-13；落实提交 `091e600`「#247 … 用户实拍返修」），
+    //    并被 `docs/skills/skill-calorie/t401-融合设计.md:111` 记为既有版式形态（「1920 实测两颗各 476px」）。
+    //    本票若在页级把它压成内容宽，只改本族三页、与其余 `skill-*` 全族不一致，等于拿本票覆盖一条用户裁定；
+    //    改它＝改冻结形态，归编排者开票，**本席不动**（见证据件 §六第 6 条转票建议）。──
     // ── 触摸面（HELP 第 ①）：本族的键值行／胶囊是读者在手机上会按住的一块内容 ──
     + '.sui-facts,.sui-caps,.sui-window{-webkit-tap-highlight-color:transparent;touch-action:manipulation}'
     + '</style>';
@@ -177,13 +200,20 @@ export function fieldGrid(chipsHtml: string, count: number): string {
     : '<div class="sui-caps">' + chipsHtml + '</div>';
 }
 
-/** 整块「写入字段」（行题 ＋ 容器）：条数由行题自陈，**不再另立一张 KPI 卡**
+/** 整块「写入字段」（行题 ＋ 容器 ＋ 块尾收口）：条数由行题自陈，**不再另立一张 KPI 卡**
  *  （原先「写入字段 16 项」卡与这块行题说的是同一件事，还让窄屏读数卡组落成 2＋1 的孤格）。
- *  传入的是**已换算好的中文标签**——域标签表的口径住 `receipt.ts`，本件只管形状。 */
-export function fieldsBlock(labels: readonly string[]): string {
+ *  传入的是**已换算好的中文标签**——域标签表的口径住 `receipt.ts`，本件只管形状。
+ *  `filled`（#543 视觉复评 r7 的 P2-6）：页下方明细只列**有值**的那几行，读者没法把「16 项」与
+ *  「5 行」对齐，故块尾补一句「本次填了 N 项，其余为空值」；**题面一个字不改**
+ *  （判据⑤ 的 `fieldBlockOf` 正则逐字钉着 `写入字段（共 N 项）</p><div class="…">` 这段）。 */
+export function fieldsBlock(labels: readonly string[], filled?: number): string {
   if (labels.length === 0) return '';
   const chips = renderChips({ items: labels.map((text) => ({ text })) });
-  return '<p class="sui-fields-k">写入字段（共 ' + labels.length + ' 项）</p>' + fieldGrid(chips, labels.length);
+  const total = labels.length;
+  const tail = filled === undefined || filled >= total
+    ? ''
+    : '<p class="sui-fields-n">本次填了 ' + filled + ' 项，其余为空值</p>';
+  return '<p class="sui-fields-k">写入字段（共 ' + total + ' 项）</p>' + fieldGrid(chips, total) + tail;
 }
 
 /** 明细表要不要出的形状决定（#543 视觉复评 P1-B）：**删类两条记录起才出**——一条记录时上面的

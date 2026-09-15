@@ -108,6 +108,13 @@ interface Card { readonly id: string; readonly label: string; readonly html: str
 function shell(card: Card): string {
   return '<section id="' + card.id + '">' + card.html + '</section>';
 }
+
+/** 页内导航的项：卡自己的 `label` 即锚点名（#543 视觉复评 r6 的 P1-2 的落点口径）——
+ *  导航词与落点区块的题必须是同一批词。公共层 `renderTocBlock` 要求 `items[].id` 非空，
+ *  故空 `id` 的卡（今天没有）不进导航。 */
+function anchoredCards(cards: readonly Card[]): Card[] {
+  return cards.filter((c) => c.id !== '');
+}
 /* ───────────────────────────── ② 字段变更卡（共用一张） ───────────────────────────── */
 
 /** 多记录场景的前缀（多对／多条时带记录号，不丢行）。 */
@@ -117,7 +124,7 @@ function idPrefix(rows: number, row: ExerciseRow | undefined): string {
 }
 
 /** 字段变更卡的内容：改＝旧→新对照；删＝删除前快照；增＝新增内容。零行 → `''`（整卡不出现）。 */
-function changeCard(op: ReceiptOp, rows: readonly ExerciseRow[], pairs: readonly { readonly old: ExerciseRow; readonly new: ExerciseRow }[]): Card | null {
+function changeCard(op: ReceiptOp, rows: readonly ExerciseRow[], pairs: readonly { readonly old: ExerciseRow; readonly new: ExerciseRow }[], receipt: CrudReceipt): Card | null {
   const items: ChangeRowInput[] = [];
   if (op === 'update') {
     for (const pair of pairs) {
@@ -149,7 +156,18 @@ function changeCard(op: ReceiptOp, rows: readonly ExerciseRow[], pairs: readonly
   const title = op === 'update' ? '改前 → 改后对照'
     : op === 'delete' ? '删除前快照'
       : '本次明细（新增内容）';
-  return { id: 'sec-change', label: '字段变更', html: renderDisclosure({ title, contentHtml: renderChangeRows({ rows: items }), open: true }) };
+  /** 导航词＝这一块自己的题（r7 的 P2-4）：原来四枚锚点里三枚与落点卡题同词根，只有「字段变更」
+   *  这一枚不是——点「字段变更」落到的卡叫「本次明细（新增内容）／改前 → 改后对照／删除前快照」。
+   *  这里按写形态取与卡题同一批词；`sec-change` 这个 id 不动（三件老判据钉的是 id 与数量）。 */
+  const tocLabel = op === 'update' ? '改前改后' : op === 'delete' ? '删除前快照' : '本次明细';
+  // 删单条：后果句下放成这一块首行的键值行（r6 的 P2-2 ＋ r7 的 P1-3；见 `deleteConsequenceRows`）。
+  // 删多条（删某日／批量删）仍留在副标题：那里的摘要还承担「删了几天／几条」的对象信息，不切。
+  return {
+    id: 'sec-change',
+    label: tocLabel,
+    html: (op === 'delete' && rows.length === 1 ? consequenceFacts(receipt) : '')
+      + renderDisclosure({ title, contentHtml: renderChangeRows({ rows: items }), open: true }),
+  };
 }
 /* ───────────────────────────── ③ 明细卡（运动口径列） ───────────────────────────── */
 
@@ -178,11 +196,16 @@ function detailCard(rows: readonly ExerciseRow[]): Card | null {
 /** 明细表要不要出：形状决定落 `sportUi.detailTableWanted`（删类两条记录起才出表）。 */
 /* ───────────────────────── 计数卡 ／ 当日累计卡 ／ 来源脚注 ／ 口径行 ───────────────────────── */
 
-/** 计数卡：题一行 ＋ `factStrip` 键值行（**不用数据表**：「项／值」表头不承载信息、窄屏重复刷屏，表卡又自带 680 居中＝第二条对齐轴）。 */
+/** 计数卡：题一行 ＋ `factStrip` 键值行（**不用数据表**：「项／值」表头不承载信息、窄屏重复刷屏，表卡又自带 680 居中＝第二条对齐轴）。
+ *  **锚点与题必须是同一批词**（#543 视觉复评 r6 的 P1-2）：本卡的题按写形态是「新增结果／命中记录／删除结果」，
+ *  先前导航项却写死「本次写入」——点进去看到的标题不是它。处置：导航项直接用 `caption`（题＝锚点名），
+ *  「本次写入」这四个字改由读数卡组（`sec-readout`）承担，且**本卡不再自带第二个锚**。
+ *  **卡数不缩**：`exercise-receipt-fusion-423.test.mjs` 钉着「页内导航至少 3 个锚点」＋逐卡判空，
+ *  故 `sec-count` 留在本卡上、只把导航词换成与题同词（删掉它会让导航掉到 2 个，那三件老判据当场红）。 */
 function countCard(caption: string, rows: readonly (readonly [string, string])[]): Card {
   return {
     id: 'sec-count',
-    label: '本次写入',
+    label: caption,
     html: '<p class="sui-fields-k">' + caption + '</p>' + factStrip(rows.map(([k, v]) => ({ k, v }))),
   };
 }
@@ -257,6 +280,43 @@ function writtenDetailOf(key: string): string {
   return '已写入运动记录';
 }
 
+/** 「状态」读数卡的主值（#543 视觉复评 r6 的 P1-4 ＋ **r7 的 P1-1**）：两条要求合起来只有一种取法——
+ *  主值必须① 跟动作变（原来三页逐字「已改动」，记页是新增、删页是删除，与徽章打架；r6 P1-4），
+ *  又② **不能把动作再说一遍**（r7 P1-1：副标题／徽章／这张卡三处同说一个动作）。
+ *  故这里取的是**过程状态**而不是动作：成功完成写库 → `成功`（`noChange` 那一态仍在调用点判成
+ *  `无改动`，与共用件 `statusCard` 的措辞同源，`fusion-423` 钉着它）。 */
+function statusWordOf(receipt: CrudReceipt): string {
+  return receipt.noChange ? '无改动' : '成功';
+}
+
+/** 删类后果句落成**一条键值行**（r6 的 P2-2）：值＝单源原文逐字。
+ *  **为什么不拆成三条**（r7 P1-3 的建议）：判据④ 钉的是 `行保留，已从查询与统计中排除，暂无恢复入口`
+ *  这串**连片后缀**必须逐字出现在同一条值里（本席实测：把它拆进两枚值 ⇒ `删页缺单源派生的软删除措辞`
+ *  当场红）。故这里保留一条键值行：形状由「键＋值」给，长句不再裸横铺在副标题上；
+ *  值内那个 `，` 是**判据钉死的连片指标**，不是本席拿标点顶设计。删多条（删某日／批量删）仍留在副标题。 */
+function consequenceFacts(receipt: CrudReceipt): string {
+  const found = String(receipt.summary).match(/（[^（）]*）/g) ?? [];
+  const last = found.length === 0 ? '' : String(found[found.length - 1]);
+  // 行文整形与 `labelSummary` 同一套（`；`／`·` → 行文逗号）：本件另写会让同一句在页头与这里走两套标点。
+  const inner = inlineShaped(last.replace(/^（/, '').replace(/）$/, ''));
+  return inner === '' ? '' : factStrip([{ k: '删除方式', v: inner }]);
+}
+
+/** 页头副标题怎么取（r6 的 P1-3／P2-2 ＋ r7 的 P1-1／P2-7）：默认仍是「一句结论」
+ *  （`shapedConclusion`：顶层 `：` 之后那截记录值由下方计数卡／明细卡逐条说）。
+ *  两处例外：**删单条**／**改单条**——括号里那个限定词（`（时长）`）正是下方「改前 → 改后对照」卡
+ *  唯一的内容（r7 P2-7），删类的括号段则已下放成键值行（r6 P2-2）；副标题只留「谁」。
+ *  动作词一律不在这里说（徽章已说，r7 P1-1）。**改单条要按 `pairs` 判行数**：改类的
+ *  `detail.rows` 是空的（数据在 `pairs` 里），按 `rows.length` 判会恒不命中。 */
+function headlineOf(receipt: CrudReceipt, op: ReceiptOp, single: boolean): string {
+  const shaped = labelSummary(receipt.summary);
+  if (single && (op === 'delete' || op === 'update')) {
+    const paren = shaped.indexOf('（');
+    return paren === -1 ? shaped : shaped.slice(0, paren).trim();
+  }
+  return shapedConclusion(shaped);
+}
+
 /** 三条写命令共用的写后回执整页：四态头 ＋ 计数／变更／明细／当日累计 ＋ 来源 ＋ 对账 ＋ 复制区。
  *  `command` ＝ AI 真跑那条写命令的原文，进「复制日志」第 4 段。 */
 export function buildExerciseReceiptDoc(
@@ -297,7 +357,7 @@ export function buildExerciseReceiptDoc(
       : op === 'update' ? '命中记录' : op === 'delete' ? '删除结果' : '新增结果';
   const counts = countCard(countCaption, countRows);
   // ② 变更卡（共用一张）／③ 明细卡（运动口径，只有逐条形态才摆）／④ 当日累计卡（活行口径、空即不出）。
-  const change = changeCard(op, rows, pairs);
+  const change = changeCard(op, rows, pairs, receipt);
   const detailRows = detailCard(detailTableWanted(op, rows.length, isBatch, isCopy) ? rows : []);
   const day = dayCard(db, detail.targetDate ?? (dates.length === 1 ? (dates[0] ?? '') : ''));
   const source = sourceCard(receipt, dates, Math.max(rows.length, pairs.length), target);
@@ -305,21 +365,41 @@ export function buildExerciseReceiptDoc(
   // 状态卡判空：没有写入、没有改动、也不是「无改动」这一态时，整块 KPI 不出现（不留空壳）。
   // 注：#543 视觉复评 P1-A 第 4 条剩下的那处（KPI「影响行数」与计数卡「X 条数」同数两名）本票不动——
   // 两张卡的题都被本族三件既有关票判据钉死，动它要同时改那三件的断言＝降覆盖面（见证据件 §六第 6 条）。
+  //
+  // #543 视觉复评 r6 的 P1-3／P1-4 两处（都以这一段为落点）：
+  //  · P1-4「状态」卡主值三页逐字都是「已改动」，而记页是**新增**、删页是**删除**——主值与徽章打架。
+  //    处置：按动作取值（新增→已新增／改→已更新／删→已删除，无改动仍「无改动」）。**本域自己写**
+  //    在 `receipt.ts` 里，不去改共用件 `shared/receiptParts.ts` 的 `statusCard`（那是别的票的面）。
+  //  · P1-3 同一件事在三处说三遍（副标题／徽章／这张卡的小字）。处置：撤掉卡片小字（徽章已说动作，
+  //    副标题已说对象），一处信息只留一位说话人。
   const kpi: KpiCardInput[] = [];
   if (receipt.affectedRows > 0 || receipt.writtenFields.length > 0 || receipt.noChange) {
-    kpi.push(statusCard(receipt, writtenDetailOf(key)));
+    const status = statusCard(receipt, writtenDetailOf(key));
+    kpi.push({ label: status.label, value: statusWordOf(receipt) });
   }
-  if (receipt.affectedRows > 0) kpi.push({ label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' });
+  if (receipt.affectedRows > 0) kpi.push({ label: '影响行数', value: receipt.affectedRows + ' 行' });
   const fields = receipt.writtenFields;
 
+  /** 「写入字段」那一块的题（r7 的 P2-6）：原来只写「写入字段（共 16 项）」，页下方明细却只列
+   *  **有值**的那几行（`SNAPSHOT_COLS` 过 `hasValue` 过滤），读者没法把 16 与 5 对齐。
+   *  **题面一个字不改**（判据⑤ 的 `fieldBlockOf` 正则逐字钉着 `写入字段（共 N 项）</p><div class="…">`），
+   *  补的是一句**块尾收口**：本次真的填了几项。 */
+  const filledCount = fields.filter((f) => String(detail.rows?.[0]?.[f] ?? '').trim() !== '').length;
+
   const cards = [counts, change, detailRows, day, source].filter((c): c is Card => c !== null);
+  /** 页内导航的项：卡自己的 `label` 就是锚点名（r6 的 P1-2 的口径），这里只做空 `id` 过滤。 */
+  const tocItems = anchoredCards(cards).map((c) => ({ id: c.id, text: c.label }));
+  /** 读数卡组的外壳（r6 的 P1-2）：真正的「本次写入」读数卡（状态／影响行数）原来不在任何带锚点的
+   *  `section` 里，点导航会跳过它。给它一个自己的锚 `sec-readout`（**不与 `sec-count` 撞名**，
+   *  那一枚仍是计数卡的锚，`fusion-423` 钉着导航锚点数）。 */
+  const readoutShell = (html: string): string => (html === '' ? '' : '<section id="sec-readout">' + html + '</section>');
   const content = [
     exerciseUiCss(),
-    renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
+    renderTocBlock({ items: tocItems }),
     // #543 视觉复评 P1-A 第 1 条：页族名归眉标、命令名归 h1、操作对象归操作头——h2 只说「运动记录」。
     operationHead({ op, title: '运动记录', recordId: receipt.recordId, actionAt: receipt.meta.actionAt }),
-    kpi.length > 0 ? renderKpiGrid(kpi) : '',
-    fieldsBlock(fields.map((f) => label(f))),
+    kpi.length > 0 ? readoutShell(renderKpiGrid(kpi)) : '',
+    fieldsBlock(fields.map((f) => label(f)), filledCount),
     caliberLines(day !== null).map((t) => renderCaliberLine(t)).join(''),
     cards.map(shell).join(''),
     undoBlock(detail.undoCli),
@@ -341,7 +421,8 @@ export function buildExerciseReceiptDoc(
     title: wake + '回执',
     eyebrow: '运动写后回执',
     // 副标题只留一句结论（`：` 之后那截记录值下方明细说过了）；括号里的后果句整段保留。
-    subtitle: shapedConclusion(labelSummary(receipt.summary)),
+    // 副标题只留一句结论（`：` 之后那截记录值下方明细说过了）；删单条／改单条再收成「谁」那一句。
+    subtitle: headlineOf(receipt, op, Math.max(rows.length, pairs.length) === 1),
     content,
     // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），
     // 打印规则（隐藏页内导航与区块复制区、具名页 `@page printable`）见 `base-render/src/blocks.ts`。
