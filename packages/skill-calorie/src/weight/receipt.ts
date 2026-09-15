@@ -86,11 +86,25 @@ function latestWeightAfter(db: DatabaseSync): { date: string; kg: number } | nul
   return last === undefined ? null : { date: last.date, kg: last.kg };
 }
 
+/** 副标题：范围删除里**同一天写两遍**的区间串（`2026-09-06~2026-09-06`）读不出信息（缺陷 5：
+ *  「已删除 2026-09-06~2026-09-06 体重 1 条」，读者要自己看出这两头是同一日）。页上改写成
+ *  「已删除 2026-09-06 当天体重 N 条」，条数按当刻快照行数取；摘要本体的机器面（信封 message）
+ *  一字不动，只有这一页的标题行换写法——其余摘要原样透出（含 `（硬删除，不可恢复）`）。 */
+function sameDaySubtitle(receipt: CrudReceipt, snapshotCount: number): string {
+  const m = /^已删除 (\d{4}-\d{2}-\d{2})~\1 体重 \d+ 条(.*)$/.exec(receipt.summary);
+  if (m === null) return receipt.summary;
+  return '已删除 ' + m[1] + ' 当天体重 ' + snapshotCount + ' 条' + m[2];
+}
+
 /** 删体重回执整页：删除前快照行 ＋ 删除后最新体重**成对**；没有快照行时出显式空态。 */
 function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: string): string {
   const snap = [...receipt.items].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+  /** 快照行的删前体重，取自回执行 `detail`。三条删除定位路径都往这一格放原始读数，**写法却不齐**：
+   *  按 id／按日期是 `'70.4'`，按范围（`edit.ts:85` 那支）是 `'70.4kg'`。
+   *  `Number('70.4kg')` 得 NaN ⇒ 体重格写 `—`——这就是对抗审查缺陷 2（S1：删掉的信息没有去处，
+   *  结论句还在教读者「照上表原值重新记一次」）。故读之前先把可选的单位前缀剥掉，三条路径一个读法。 */
   const kgOf = (it: CrudReceipt['items'][number] | undefined): number | null => {
-    const raw = String(it?.detail ?? '').trim();
+    const raw = String(it?.detail ?? '').trim().replace(/kg$/i, '').trim();
     const n = Number(raw);
     return raw !== '' && Number.isFinite(n) ? n : null;
   };
@@ -104,7 +118,7 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
     + '；' + (latest === null ? '删除后库里已无体重记录' : '删除后最新体重 ' + latest.kg + ' kg（' + latest.date + '）')
     + '。删除不可恢复，要还原请照上表原值重新记一次。';
   const payload = [conclusion, ...snap.map((it) => (it.id === undefined || it.id === null ? '' : '#' + it.id + ' ')
-    + (it.date ?? '') + ' ' + (it.detail ?? '') + ' kg ' + it.status)];
+    + (it.date ?? '') + ' ' + (kgOf(it) === null ? '—' : kgOf(it) + ' kg') + ' ' + it.status)];
   const content = [
     renderKpiGrid([
       stateCard(receipt, {
@@ -124,16 +138,20 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
       },
       {
         label: '删除后最新体重', value: latest === null ? '—' : String(latest.kg), unit: 'kg',
-        detail: latest === null ? '删除后库里已无体重记录' : latest.date + ' · 删除后重新读到的值',
-        status: latest === null ? 'empty' : 'ok',
-        statusText: latest === null ? '库里已空' : '库里还有记录',
+        /* 缺陷 8：这一格原本写「2026-09-08 · 删除后重新读到的值」＋徽章「库里还有记录」——
+         * 同一个数（值槽／副说明／结论句／页脚）一页说四遍。副说明压成日期加一个括号注解，
+         * 徽章撤掉（值槽与结论句已经把这件事说清了；空库那态仍留徽章）。 */
+        detail: latest === null ? '删除后库里已无体重记录' : latest.date + '（删除后重新读到的值）',
+        ...(latest === null ? { status: 'empty' as const, statusText: '库里已空' } : {}),
       },
     ]),
     // 老实物 crud_receipt.html:328-350 的 delete 模式（删除前快照）：那边无行时整卡隐藏，本页改一句空态。
     // 列头「快照」改「状态」、单元格写「已删除」——表本身就是删除前的原值，不必每行再喊一遍「硬，不可恢复」。
+    // 缺陷 10：列头原写「编号」，与副标题里的 `#1` 两种叫法同页并存——按裁定 G 统一叫「记录编号」，
+    // 值照现状写数字（副标题那句是机器面摘要，`#1` 留在那里）。
     renderDataTable({
       columns: [
-        { key: 'id', label: '编号' },
+        { key: 'id', label: '记录编号' },
         { key: 'date', label: '日期' },
         { key: 'kg', label: '体重', align: 'right' },
         { key: 'status', label: '状态' },
@@ -155,7 +173,7 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
         + (latest === null ? '删除后库里已无记录' : '删除后最新 ' + latest.kg + ' kg（' + latest.date + '）'),
     ),
   ].join('');
-  return receiptPageOf(receipt, content);
+  return receiptPageOf(receipt, content, sameDaySubtitle(receipt, snap.length));
 }
 
 /** 体重 4 条会改数据库的命令的整页回执端口（分派层只调本函数）。 */

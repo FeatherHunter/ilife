@@ -222,7 +222,7 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
   const t = w.trend;
   const spanDays = windowDays(w);
   const rangeText = rangeTextOf(w.start, w.end);
-  const sourceText = '体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + rangeText
+  const sourceText = '体重记录 ｜ 窗口 ' + rangeText
     + ' ｜ 共 ' + t.recordCount + ' 条';
   const parts: string[] = [
     renderKpiGrid(todayCards(t, w)),
@@ -276,7 +276,7 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
 function buildWeightEmptyDoc(start: string, end: string, command: string): string {
   const rangeText = rangeTextOf(start, end);
   const spanDays = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
-  const sourceText = '体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + rangeText + ' ｜ 共 0 条';
+  const sourceText = '体重记录 ｜ 窗口 ' + rangeText + ' ｜ 共 0 条';
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: VIEW_KEY,
     data: { metrics: metricsOf({ recordCount: 0 }) },

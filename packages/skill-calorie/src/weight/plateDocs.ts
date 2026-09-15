@@ -16,7 +16,6 @@ import type { SerializableEnvelope } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderDisclosure } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { CrudReceipt } from '../render/receipt.js';
-import { DB_FILENAME } from '../paths.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { fieldLabel } from '../shared/fieldLabel.js';
@@ -84,9 +83,13 @@ export function conclusionBlock(sentence: string): string {
 }
 
 /** 页尾「对账信息」折叠区（体重域口径，替换共用件 `reconcileDisclosure`）：只留跟进要用到、
- *  页面别处没有的两条。
- *  - 记录编号：按日期／范围定位的那几条命令本次没有单条编号，**不摆一行「未设置」**（那是机器面的缺值）；
- *  - 写入时间：这次真正落库的时刻（跟表里「体重记在哪一天」不是一件事，故留着）。
+ *  页面别处没有的两条，且**两条恒在场**（键集 ≥2：记录编号 ＋ 落库时间）。
+ *  - 记录编号（叫法按对抗审查裁定 G：这个字段全族只此一个叫法，值写数字）：
+ *    单条写／单条删取本次那条的号，按日期或范围定位的那几条命令取回执逐行的号，
+ *    两条路都取不到才写「本次不适用」。先前这里是**整行不摆**——#483 对抗审查缺陷 3：
+ *    折区只剩一个时间戳，而该族这几页时间戳几乎同值，读者对不上「改／删的是哪条」。
+ *  - 落库时间（原叫「写入时间」）：这次真正落库的时刻，跟表里「体重记在哪一天」不是一件事。
+ *    缺陷 7 改叫「落库时间」——它与记录日期同屏时，读一眼就会被当成同一样东西。
  *  #483 删掉的「回执格式 v1（写库回执）」是机器面契约号，读者零收益（登记见证据件）。 */
 export function reconcileBlock(receipt: CrudReceipt): string {
   return renderDisclosure({
@@ -94,11 +97,21 @@ export function reconcileBlock(receipt: CrudReceipt): string {
     contentHtml: renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: [
-        ...(receipt.recordId === null ? [] : [{ k: '记录编号', v: String(receipt.recordId) }]),
-        { k: '写入时间', v: receipt.meta.actionAt },
+        { k: '记录编号', v: recordNoOf(receipt) },
+        { k: '落库时间', v: receipt.meta.actionAt },
       ],
     }),
   });
+}
+
+/** 对账区的记录编号取值（缺陷 3）：本次那条的号 → 回执逐行的号 → 都没有才说「本次不适用」。
+ *  只收数字写法（裁定 G）：`#1` 那种写法留在复制载荷里，页面上不用。 */
+function recordNoOf(receipt: CrudReceipt): string {
+  if (receipt.recordId !== null) return String(receipt.recordId);
+  const ids = receipt.ids.length > 0
+    ? receipt.ids
+    : receipt.items.map((it) => it.id).filter((n): n is number => typeof n === 'number');
+  return ids.length === 0 ? '本次不适用' : ids.join('、');
 }
 
 /** 复制载荷（写命令一律 receipt 形，`test/cmd-registry-294.test.mjs:262`）：`message` 取**本页结论句 ＋
@@ -113,8 +126,9 @@ export function envelopeOf(receipt: CrudReceipt, message: string): SerializableE
 /** 复制区（数据＋日志，日志第 3 段是渲染命令原文）＋页末数据来源行
  *  （来源行写法照 `diet/nutritionPortDocs.ts:58-61`：哪张库／哪个窗口／多少条；形态走 #420
  *  浅色口径行 `renderCaliberLine`——页脚来源是口径行，不是需要注意的提示，故不用深色 toast 卡）。
- *  #483 统一句式（口径 §3.1，58 页同一行）：`📊 数据来源：体重记录（calorie_data.db · weight_log） ｜ …`
- *  ——全角冒号；来源名说人话「体重记录」，库里那张表的原名放进括号（口径行不是正文）。
+ *  **裁定 F（#483 对抗审查）**：可见的页脚只说人话来源「体重记录」——库文件名与表名退出可见面
+ *  （本族可见文本里 `calorie_data.db`／`weight_log` 命中数为 0）。机器面照旧不丢：复制日志第 3 段
+ *  由 `shared/copyArea.ts:170` 写成 `DB_FILENAME ｜ source`，库名与 `weight_log` 仍逐字在里面。
  *  调用方只给「实时部分」（本次记录／写入 N 条／窗口…），同一行接着写。 */
 export function deliveryBlocks(
   envelope: SerializableEnvelope, receipt: CrudReceipt, command: string, sourceText: string,
@@ -128,24 +142,28 @@ export function deliveryBlocks(
         actionAt: receipt.meta.actionAt, version: DOC_VERSION,
       }),
     },
-  }) + renderCaliberLine('📊 数据来源：体重记录（' + DB_FILENAME + ' · weight_log） ｜ ' + sourceText);
+  }) + renderCaliberLine('📊 数据来源：体重记录 ｜ ' + sourceText);
 }
 
-/** 写后回执整页壳（标题三件套＋区块）：整页模板恒由 `assembleDocPage` 一处产出。 */
-export function receiptPageOf(receipt: CrudReceipt, content: string): string {
+/** 写后回执整页壳（标题三件套＋区块）：整页模板恒由 `assembleDocPage` 一处产出。
+ *  `subtitle` 不给就用回执摘要（机器面那一句）；给了就是本页自己的标题行写法
+ *  ——只有「同日范围删除」那一页用它（缺陷 5：`2026-09-06~2026-09-06` 同一天写两遍）。 */
+export function receiptPageOf(receipt: CrudReceipt, content: string, subtitle?: string): string {
   return assembleDocPage({
     docTitle: '卡路里·体重回执',
     title: receipt.scene + ' · 回执',
     eyebrow: '体重 · 写后回执',
-    subtitle: receipt.summary,
+    subtitle: subtitle ?? receipt.summary,
     content,
   });
 }
 
 /** 状态卡副说明那一句「接下来怎么办」（按命令取，一处定义）。**不复述徽章的结果词**：
- *  #483 之前这一格写的是「已写入 weight_log 体重记录」——既把徽章的话又说一遍，又把库表名摆上屏。 */
+ *  #483 之前这一格写的是「已写入 weight_log 体重记录」——既把徽章的话又说一遍，又把库表名摆上屏。
+ *  改类那格按对抗审查缺陷 1 改口：对照表第一列是「记录」（`#1`／`#494`），`改前 → 改后` 在第二列，
+ *  原来说「上表左列就是改前的原值」是**指错列**——原值在标题含「改前」的那一列里。 */
 export function writtenDetailOf(key: string): string {
-  if (key === 'calorie.weight.update') return '已按新值写回体重记录，上表左列就是改前的原值';
+  if (key === 'calorie.weight.update') return '已按新值写回体重记录；上表「改前」那一列就是原值';
   if (key === 'calorie.weight.remove') return '删除的行已从体重记录里移除，本页没有撤销按钮';
   if (key === 'calorie.weight.batch') return '跳过与失败的行没写进库；改好日期或体重后可再补录一次';
   return '已存入体重记录，可照「看今日体重」复查';

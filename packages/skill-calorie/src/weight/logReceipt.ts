@@ -91,7 +91,9 @@ export function buildLogReceiptDoc(
         : signed(gap) + '（目标 ' + goal + ' kg）',
     },
     { k: '近 30 天均值', v: avg === null ? '—' : avg + ' kg' + (two ? '' : '（只有一条记录）') },
-    { k: '近 30 天趋势', v: trendCn === null ? '—' : trendCn + (two ? '' : '（只有一条记录）') },
+    // 缺陷 4：这一格原写「近 30 天趋势」，与下面图块标题「近 30 天趋势」同屏两处、看着像两块内容；
+    // 表这一格只放「趋势」这个词，窗口（近 30 天）由图块标题与表格标题说。
+    { k: '趋势', v: trendCn === null ? '—' : trendCn + (two ? '' : '（只有一条记录）') },
     { k: '备注', v: f.note ?? '—' },
   ];
   const conclusion = (f.kg === null ? '回执未带本次体重' : '本次记 ' + f.kg + ' kg（' + f.date + ' ' + f.time + '）')
@@ -168,13 +170,15 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
     date: cell(it.date),
     kg: cell(it.detail) === '—' ? '—' : it.detail + ' kg',
     status: cell(it.status),
-    reason: it.reason === '' ? '—' : it.reason,
+    reason: it.reason === '' ? '—' : unitSpaced(it.reason),
   }));
   const payload = [conclusion, ...rows.map((r) => r.date + ' ' + (r.kg === '—' ? '' : r.kg + ' ') + r.status + '（' + r.reason + '）')];
   const content = [
     renderKpiGrid([
       stateCard(receipt, {
-        label: '本次批量', word: top, count: items.length,
+        // 缺陷 9：值槽原叫「本次批量」＋值「1 条」与徽章「无改动」并列，一眼读成「成功 1 条」；
+        // 改叫「投入」——这个数说的是**收到几条**，写成没写看徽章。
+        label: '投入', word: top, count: items.length,
         detail: writtenDetailOf('calorie.weight.batch'),
       }),
       ...(receipt.writtenFields.length === 0 ? [] : [{
@@ -203,4 +207,11 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
     ),
   ].join('');
   return receiptPageOf(receipt, content);
+}
+
+/** 原因串里数字与单位之间补一个空格（缺陷 6）：取数层给的是 `已有记录 70.4kg`，
+ *  而页面与复制载荷全族统一写 `70.4 kg`（审查席探针实测第 31 条那处载荷 ⊂ 页面比对即由此转绿）。
+ *  单位后缀只认 `kg`——这一族原因串里的单位就这一个，不顺手改别的写法。 */
+function unitSpaced(s: string): string {
+  return s.replace(/(\d)kg/g, '$1 kg');
 }
