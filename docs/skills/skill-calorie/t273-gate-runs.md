@@ -23,3 +23,5 @@
 - `START ticket=273 runId=e936448f-0f02-4598-b6ee-1b6a7613ee6f cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=190169 pid=39280 at=2026-09-15T06:29:00.460Z`
 - `RUN ticket=273 runId=e936448f-0f02-4598-b6ee-1b6a7613ee6f cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=190169 exit=0 pid=39280 at=2026-09-15T06:29:06.336Z`
 - `START ticket=273 runId=731286fb-a54b-4e75-af63-4dbf865c3e29 cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=20023 pid=29132 at=2026-09-15T06:29:31.425Z`
+- `RUN ticket=273 runId=731286fb-a54b-4e75-af63-4dbf865c3e29 cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=20023 exit=0 pid=29132 at=2026-09-15T06:29:37.654Z`
+- `START ticket=273 runId=0c221eef-cf17-498a-b45a-a86d4a40dd96 cmd="pwsh -NoProfile -File .scratch/t273/09-windowG.ps1" waitedMs=0 pid=31548 at=2026-09-15T06:29:42.714Z`
