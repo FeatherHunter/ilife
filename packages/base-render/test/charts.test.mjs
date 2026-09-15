@@ -406,19 +406,23 @@ describe('B LineChartOptions', () => {
     assert.equal(countOf(lineHtml(), P + 'charts-area'), 0);
   });
 
-  it('B.yTicks：false 无刻度；数字收敛 2-6；刻度值 = 共享域（含 6% padding，尊重 yMin/yMax）', () => {
+  it('B.yTicks：false 无刻度；数字收敛 2-6；刻度值 = 共享域（下端 6%＋上端峰值余量，尊重 yMin/yMax）', () => {
     const items = [{ label: 'A', value: 0 }, { label: 'B', value: 10 }];
     const tickTexts = (extra) => textsOf(lineAuto(extra, items), P + 'charts-tick');
     assert.deepEqual(tickTexts({}), [], 'yTicks 缺省 false → 无刻度');
-    assert.deepEqual(tickTexts({ yTicks: 2 }), ['-0.6', '10.6'], '6% padding：span 10 → pad 0.6');
-    assert.deepEqual(tickTexts({ yTicks: 1 }), ['-0.6', '10.6'], '下界收敛到 2');
+    /* #512（最后一公里）折线**派生域**改口径：下端仍是 6% 外扩（0 → −0.6 不动），上端补到
+     * 「峰值离顶端刻度线 10% 绘图区高」（`charts.ts` 的 `LINE_PEAK_HEADROOM`／`lineDomainOf`）
+     * ⇒ 10 → 11.18（旧口径两端对称 6% 得 10.6）。改因：复审 §三-2 实测对称 6% 时峰值只离顶端
+     * 刻度线 5.36% 的绘图区高，顶端那条线读成「标题下划线」。 */
+    assert.deepEqual(tickTexts({ yTicks: 2 }), ['-0.6', '11.18'], '下端 6% ＋ 上端峰值余量：span 10 → [−0.6, 11.18]');
+    assert.deepEqual(tickTexts({ yTicks: 1 }), ['-0.6', '11.18'], '下界收敛到 2');
     assert.equal(tickTexts({ yTicks: 9 }).length, 6, '上界收敛到 6');
-    assert.deepEqual(tickTexts({ yTicks: 2, yMin: 0, yMax: 100 }), ['0', '100'], '显式域优先');
+    assert.deepEqual(tickTexts({ yTicks: 2, yMin: 0, yMax: 100 }), ['0', '100'], '显式域优先（显式域不补余量：边界＝「画到这儿」）');
     assert.equal(countOf(lineAuto({ yTicks: 2 }), P + 'charts-ytick'), 2, '刻度短线与文字同数');
     /* FX-78-V2a-4.4：`yTicks` 非整数取 `Math.round`（`charts.ts:416`）——改 `Math.floor` 时
      * 2.6/3.6/5.6 会分别掉到 2/3/5 条，原四条断言（1／2／9／false）全绿。 */
-    assert.deepEqual(tickTexts({ yTicks: 2.6 }), ['-0.6', '5', '10.6'], '2.6 → 3 条（round；floor 得 2 条）');
-    assert.deepEqual(tickTexts({ yTicks: 3.6 }), ['-0.6', '3.13', '6.87', '10.6'], '3.6 → 4 条（round；floor 得 3 条）');
+    assert.deepEqual(tickTexts({ yTicks: 2.6 }), ['-0.6', '5.29', '11.18'], '2.6 → 3 条（round；floor 得 2 条）');
+    assert.deepEqual(tickTexts({ yTicks: 3.6 }), ['-0.6', '3.33', '7.25', '11.18'], '3.6 → 4 条（round；floor 得 3 条）');
     assert.equal(tickTexts({ yTicks: 5.6 }).length, 6, '5.6 → 6 条（round；floor 得 5 条）');
     assert.equal(tickTexts({ yTicks: 2.4 }).length, 2, '2.4 → 2 条');
   });
@@ -604,7 +608,7 @@ describe('B LineChartOptions', () => {
     const band = { hi: [5, 100], lo: [0, 5] };
     const html = lineAuto({ band, yTicks: 2 }, items);
     assert.equal(attrsOf(html, 'path', P + 'charts-band')[0]['fill-opacity'], '0.15');
-    assert.deepEqual(textsOf(html, P + 'charts-tick'), ['-6', '106'], 'hi=100 必须并入共享域');
+    assert.deepEqual(textsOf(html, P + 'charts-tick'), ['-6', '111.78'], 'hi=100 必须并入共享域（上端含 #512 峰值余量）');
     assert.throws(
       () => lineHtml({ band: { hi: [1], lo: [0, 1] } }, items),
       (err) => err.name === 'ChartError' && err.code === 'structure-invalid',
@@ -759,7 +763,7 @@ describe('B LineChartOptions', () => {
         ],
       },
     }).html;
-    assert.deepEqual(textsOf(polluted, P + 'charts-tick'), ['-0.6', '10.6'], '共享域只看非 ownScale 序列');
+    assert.deepEqual(textsOf(polluted, P + 'charts-tick'), ['-0.6', '11.18'], '共享域只看非 ownScale 序列（上端同走 #512 峰值余量）');
   });
 
   it('B.ChartItem.value === null：仅 line 合法，其余 kind 抛 structure-invalid', () => {

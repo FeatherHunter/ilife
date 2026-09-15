@@ -377,6 +377,7 @@ function insetsFor(common: ResolvedCommon, opts: {
   labelHeight: number;
   valueHeight: number;
   minLeft?: number;
+  minTop?: number;
   minBottom?: number;
 }): Insets {
   const padX = common.compact ? 6 : 14;
@@ -384,7 +385,7 @@ function insetsFor(common: ResolvedCommon, opts: {
   return {
     left: Math.max(padX + opts.tickWidth, opts.minLeft ?? 0),
     right: padX,
-    top: padY + (common.showValues === false ? 0 : opts.valueHeight),
+    top: Math.max(padY + (common.showValues === false ? 0 : opts.valueHeight), opts.minTop ?? 0),
     bottom: Math.max(padY + opts.labelHeight, opts.minBottom ?? 0),
   };
 }
@@ -435,6 +436,20 @@ const LINE_BOTTOM_MIN = 40;
 /** 末值标签相对末点的抬升（用户单位）：文字盒高随字号走（移动端 20 单位那一档），抬 6 单位时
  *  390px 下标签盒底与数据线只余 0.4px、15 个折线顶点落在盒内 —— 按 0.7×字号 抬开。 */
 const LINE_LAST_LABEL_LIFT = 14;
+/** t512（最后一公里）· 折线族顶上那两条硬账。
+ *
+ *  ① **顶端刻度标注得在框里**：刻度文字的落点是 `y = ty + labelDy`（基线），实渲文字盒高约 1.33em、
+ *     基线以上约占 1.04em —— 顶端那条刻度（`i = count−1`，`ty = frame.y0`）的盒子因此探出 viewBox
+ *     上沿被裁（复审实测 1000／1440 档 `relTop = −0.36px`、512 档 −7.47px）。留白旧口径只认
+ *     `padY + valueHeight`（`showValues:false` 时仅 8 单位），而字号在 ≤720px 档是 20 单位
+ *     ⇒ 需要的上沿就是那 1.04em。留白是双端共用的**用户单位**，故按**最大那一档字号**
+ *     （`LINE_TEXT_MOBILE.tick = 20`）算：ceil(1.04 × 20) = 21 单位，四档一律够。
+ *  ② **峰值与顶端刻度线的余量**：派生域旧口径两端各外扩 6%（`domainOf`）⇒ 峰值只离顶端刻度线
+ *     5.36% 的绘图区高，顶端那条线读成「标题下划线」（复审 §三-2：图高 416.89px、顶线在 12.83px、
+ *     512 档峰值墨顶离顶线只剩 6.13px）。`LINE_PEAK_HEADROOM` 把**上端**补到绘图区高的 10%
+ *     （复审给的判据是 8–12%），下端 6% 不动。显式 `yMax` 是调用方的语义（「画到这儿」），不补。 */
+const LINE_TICK_TOP_MIN = 21;
+const LINE_PEAK_HEADROOM = 0.1;
 
 /** 文字宽度估值（用户单位）：ASCII ≈0.62em、CJK 全角 ≈1em。刻度留白按它算——留白必须容下
  *  **移动端那一档字号**，否则 390px 下「70.5kg」会顶出 viewBox 左沿（`overflow:visible` 也救不了，
@@ -493,6 +508,26 @@ function domainOf(
 function tickCount(value: number | false | undefined): number {
   if (!isNum(value)) return 0;
   return Math.max(2, Math.min(6, Math.round(value)));
+}
+
+/** t512：折线族的**共享派生域** —— `domainOf` 之上再保一条峰值余量（见 `LINE_PEAK_HEADROOM`）。
+ *
+ *  只动**派生**路径：显式 `yMin`／`yMax` 是调用方的语义（域的边界＝「画到这儿」），原样返回。
+ *  上端的求法：解 `(hi′ − max) / (hi′ − lo) = r` → `hi′ = (max − r·lo) / (1 − r)`；取下端不动
+ *  （`lo` 仍是 6% 外扩后的值），故上端比下端厚，峰值不会再压在顶端那条刻度线上。
+ *  单值／全等数据（`domainOf` 内部已把 `hi` 抬到 `lo + 1`）时 `want` 不会超过原 `hi`，`Math.max` 兜住。 */
+function lineDomainOf(
+  values: readonly number[],
+  yMin: number | undefined,
+  yMax: number | undefined,
+): readonly [number, number] {
+  const range = domainOf(values, yMin, yMax, false);
+  if (yMax !== undefined) return range;
+  let max = -Infinity;
+  for (const v of values) if (v > max) max = v;
+  if (max === -Infinity) return range;
+  const want = (max - LINE_PEAK_HEADROOM * range[0]) / (1 - LINE_PEAK_HEADROOM);
+  return [range[0], Math.max(range[1], want)];
 }
 
 /* ── 共享 SVG 片段 ────────────────────────────────────────────────────── */
@@ -868,11 +903,12 @@ function renderLine(raw: LineChartInput): ChartOutput {
     for (const v of band.hi) if (v !== null) sharedValues.push(v);
     for (const v of band.lo) if (v !== null) sharedValues.push(v);
   }
-  const [lo, hi] = domainOf(sharedValues, line.yMin, line.yMax, false);
+  const [lo, hi] = lineDomainOf(sharedValues, line.yMin, line.yMax);
 
   const tickN = tickCount(line.yTicks);
   /* 刻度留白按**移动端字号**估（`LINE_TEXT_MOBILE.tick`）：留白是双端共用的用户单位，桌面档估算
-   *  在 390px 下会漏 —— 见 `insetsFor` 的 `minLeft`。 */
+   *  在 390px 下会漏 —— 见 `insetsFor` 的 `minLeft`。上沿同理（`LINE_TICK_TOP_MIN`）：顶端那条
+   *  标注的基线以上要 1.04em，≤720px 档字号 20 单位最大，按它留才不会在四档里被裁。 */
   let tickTextW = 0;
   for (let i = 0; i < tickN; i += 1) {
     const tv = lo + ((hi - lo) * i) / (tickN - 1);
@@ -883,6 +919,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
     labelHeight: line.labels === 'none' ? 0 : (line.compact ? 10 : 14),
     valueHeight: line.compact ? 9 : 12,
     minLeft: tickN === 0 ? 0 : Math.ceil(tickTextW) + 9,
+    minTop: tickN === 0 ? 0 : LINE_TICK_TOP_MIN,
     minBottom: line.labels === 'none' ? 0 : LINE_BOTTOM_MIN,
   }));
 
