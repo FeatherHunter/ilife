@@ -188,6 +188,12 @@ export function buildEmptyWindowDoc(input: EmptyWindowDocInput): string {
 export const ENTRY_DETAIL = 'detail';
 export const ENTRY_DRINK = 'drink';
 
+/** 第三组「同源入口页」的入口标记（**#271**）：`calorie.view.diet` 底下这一条命令挂着 15 条唤醒词，
+ *  其中「看饮食总览」与「看最近 7 天饮食」在参数上只差这一位⇒由入口把标记带进命令，命令侧见它
+ *  整页换总览页（本周／本月累计，都统计到昨日）。不给标记（含未知值）＝其余 8 个窗口词与 5 条餐别词
+ *  从前的行为，一字不差。标记名与 `ENTRY_DETAIL`／`ENTRY_DRINK` 同规矩：不上屏、不写库。 */
+export const ENTRY_OVERVIEW = 'overview';
+
 /* ── 营养配比（老实物 nutrition_ratio.html：3 维配比 KPI＋热量来源占比＋推荐范围对比） ── */
 
 /** 3 维配比的均衡档（老实物 `nutrition_ratio.html` 的 statusBadge 三档文案逐字）。

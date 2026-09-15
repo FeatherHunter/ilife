@@ -7,6 +7,8 @@
  *   ④ `buildMealDistributionView(db, mealRaw, start, end)`——**餐别分布取数**（**#271／#276 跨能力调用**：
  *      `calorie.view.diet` 那一族五条词住 `src/home/`，它要按 `meal` 出餐别分布页。取数口径与餐别取值
  *      域住本能力，故经这道门出去；页装配仍由调用方自己的文档件接 `diet/reviewDocs.ts` 的具名区块）。
+ *      （**#271** 用的 `buildDietOverviewView`／`hasAnyDietRow`／`buildEmptyWindowDoc`／`ENTRY_OVERVIEW`
+ *      四个不在这里转出：它们照 #275 交接的口径走**深路径**——门只留「取数口径要跨能力对齐」的那一件。）
  *
  * 域内其他件（记饮食 `log.ts`／改饮食 `edit.ts`／看饮食 `today.ts`／查食品 `library.ts`＋`products.ts`／
  * 看营养 `nutrition.ts`／看排行 `ranking.ts`／饮食复盘 `review.ts`／路由声明 `routes.ts`）

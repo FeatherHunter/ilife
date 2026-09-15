@@ -18,7 +18,7 @@ import { shiftISODate } from '../analysis/utils.js';
 import { dietFoodRanking } from './dietEngine.js';
 import { buildDietReview } from '../render/analysisPlate.js';
 import { buildNutritionRatioBlock } from './nutritionPortDocs.js';
-import { buildNutritionRatioView } from './nutritionPort.js';
+import { buildNutritionRatioView, hasAnyDietRow } from './nutritionPort.js';
 import { buildDietReviewDoc, mealParamOf } from './reviewDocs.js';
 import type { MealDistributionItem, MealDistributionSlice, MealDistributionView } from './reviewDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -31,11 +31,10 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-/** 库里到底有没有底：**窗口为空**与**库为空**的分辨判据（裁定 4，判据只看这一张表的行数在不在）。 */
-function hasAnyDietRow(db: DatabaseSync): boolean {
-  const row = db.prepare('SELECT COUNT(*) AS n FROM food_log').get() as { n: number } | undefined;
-  return (row?.n ?? 0) > 0;
-}
+/** 库里到底有没有底：**窗口为空**与**库为空**的分辨判据（裁定 4，判据只看这一张表的行数在不在）。
+ *
+ *  #271 · 收敛到**唯一定义地**（铁律二「概念唯一」）：判据住取数层 `./nutritionPort.ts` 的共用件，
+ *  本件（#273 落的那份同名同写法的私有副本）改用共用件——两份写法一旦走散，两页的两态判据就会分家。 */
 
 /** 复盘取数两态：`r === null` ＝**窗口为空**（库里别处有记录）⇒ 出完整空态页；
  *  **库为空**仍原样抛缺失阻断（exit 4），这一条是既有设计，本件不据裁定 4 去改它。 */

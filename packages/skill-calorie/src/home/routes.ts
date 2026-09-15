@@ -24,7 +24,11 @@ export const HOME_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 29, wakeWord: '看最近 7 天饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 30, wakeWord: '看最近 30 天饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"30d"}\'' },
   { list: 'wake', order: 31, wakeWord: '看某段时间饮食', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },
-  { list: 'wake', order: 45, wakeWord: '看饮食总览', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d"}\'' },
+  /* #271 · 「看饮食总览」与「看最近 7 天饮食」在参数上原本一字不差，命令这一层分不出进来的是哪条词
+     ⇒ 这条记录自己带一个入口标记 `entry`（照 #509 的 `source`／#511 的 `ENTRY_*` 先例），
+     `viewDietOverview` 见它就整页换**总览页**（本周／本月累计，都统计到昨日）。
+     **其余 8 个窗口词与 5 条餐别词的记录一字不动**（不给这一位＝从前的行为，逐字不变）。 */
+  { list: 'wake', order: 45, wakeWord: '看饮食总览', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d","entry":"overview"}\'' },
   { list: 'wake', order: 73, wakeWord: '看早餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d","meal":"早餐"}\'' },
   { list: 'wake', order: 74, wakeWord: '看午餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d","meal":"午餐"}\'' },
   { list: 'wake', order: 75, wakeWord: '看晚餐（最近 7 天）', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d","meal":"晚餐"}\'' },
