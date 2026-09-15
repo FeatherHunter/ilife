@@ -1,4 +1,4 @@
-// 渲染层·模板装载：16 模板随包发布；未知/缺失大声失败。
+// 页面交付·模板装载：16 模板随包发布；未知/缺失大声失败。
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

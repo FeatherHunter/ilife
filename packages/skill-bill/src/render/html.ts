@@ -1,4 +1,4 @@
-// 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
+// 页面交付·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
 import type { Envelope } from 'base-link-core';
 import { BillRenderError } from './errors.js';
 
@@ -49,7 +49,7 @@ export function assertHtmlSize(html: string, max = BILL_HTML_MAX_BYTES): void {
   }
 }
 
-// 共享标记填充（老家离线注入壳对应）：CSS/HELPERS/CONTENT 三标记各恰出现 1 次，否则 throw。
+// 共享标记填充（老家离线注入help模板对应）：CSS/HELPERS/CONTENT 三标记各恰出现 1 次，否则 throw。
 export const SHARED_CSS_MARKER = '<!--SHARED-CSS-->';
 export const SHARED_HELPERS_MARKER = '<!--SHARED-HELPERS-->';
 export const CONTENT_MARKER = '<!--CONTENT-->';

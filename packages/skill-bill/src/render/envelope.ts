@@ -1,4 +1,4 @@
-// 渲染层·envelope：16 联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
+// 页面交付·envelope：16 联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
 // 迁移过的命令（记一笔／改记录）的形状**不在本文件写死**：从 `src/cli/registry.ts` 运行期派生。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { REGISTRY } from '../cli/registry.js';

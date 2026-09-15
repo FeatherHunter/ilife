@@ -1,9 +1,9 @@
 /** #146 · 饼干记账 HELP 内容资产（typed TS module，74 场景 ＝ 老 71 ＋ 现表多出 3 条）。
  *
  * 唯一事实源：老技能**新世代**实物 `D:\2Study\StudyNotes\SKILLS\饼干记账\饼干记账.html`
- * 的 `<script id="help-data">` payload——7 域／20 二级组／71 场景逐字落地，域、组、场景顺序与实物一致。
+ * 的 `<script id="help-data">` payload——7 域／20 二级组／71 场景逐字实施，域、组、场景顺序与实物一致。
  * ⚠️ 别拿 `.db\biscuit_accountant_html\饼干记账_HELP_20260813_161051.html` 当基准：那是 pre-v4.0 的
- * **上一代**（技能自带壳 + `domains→subs→scenes` 旧信封），比老技能切到公共组件模板早 6.5 小时。
+ * **上一代**（技能自带help模板 + `domains→subs→scenes` 旧信封），比老技能切到公共组件模板早 6.5 小时。
  *
  * 本文件由 `scripts/gen-wake-assets.mjs` 机器生成（逐字 `JSON.stringify`），**禁止手工改词**：
  * 改内容＝改事实源或改生成器里的新增条目段，再跑 `node packages/skill-bill/scripts/gen-wake-assets.mjs`

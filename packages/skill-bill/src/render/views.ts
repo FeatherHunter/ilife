@@ -1,4 +1,4 @@
-// 渲染层·视图数据装配：DB 行 → 16 key 的 envelope data（全字段，不返空冒充由调用方缺失阻断）。
+// 页面交付·视图数据装配：DB 行 → 16 key 的 envelope data（全字段，不返空冒充由调用方缺失阻断）。
 // KPI：笔数/支出（绝对值累计）/收入/净额；转账分类 转账/* 不入收支统计，余额另计。
 import type { BillRow } from '../fetch/db.js';
 import { l1Of } from '../policy/category.js';
