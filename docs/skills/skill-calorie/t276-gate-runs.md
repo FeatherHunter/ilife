@@ -43,3 +43,29 @@
 | `c16743c7-b9f0-4b77-a20c-0b315f4c74cc`／`9eefc93e-2bec-44a9-97c0-f85fd2770fe9` | `pnpm help:examples:check` → `git add` 逐条点名 → `git diff --cached --name-only` 量现场 → `git commit -F … -- <7 路径>` → `git show --name-only HEAD` 复核 → `git push` | `.scratch/t276/examples-check.log` |
 
 提交与推送（本次二阶段）：`bf274e6` 已在 `origin/master`（`git branch -r --contains bf274e6` → `origin/master`）；第二笔为证据件回填。
+
+## 第三阶段运行记录（窗口导出 · 自动生成，勿手改本节以下内容）
+
+> 导出源：`.scratch/locks/gate-runs.log`（未受版本控制）；本件是它的**受版本控制副本**，供第三方一对一复核
+> （协议 §2.3 第 4 条）。全部经 `node tooling/run-locked.mjs --ticket 276 --poll-ms 2000 --max-wait-ms 900000 -- …`。
+
+```
+RUN ticket=276 runId=0365809b-7b96-4f56-8598-da251dac18a5 cmd="\…"pnpm build; node packages/skill-calorie/scripts/gen-cli.mjs; node packages/skill-calorie/scripts/gen-cli.mjs --check; node packages/skill-calorie/scripts/build-help.mjs; node packages/skill-calorie/scripts/check-examples.mjs\"" waitedMs=40027 exit=1 pid=44428 at=2026-09-15T05:06:53.710Z
+RUN ticket=276 runId=16dbc561-b506-4ce8-8665-4561d2d86e83 cmd="cmd /c \…"pnpm build && node packages/skill-calorie/scripts/gen-cli.mjs && node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-calorie/scripts/build-help.mjs && node packages/skill-calorie/scripts/check-examples.mjs > \\\"D:\\ilife\\.scratch\\t276\\build.log\\\" 2>&1\"" waitedMs=10009 exit=2 pid=2504 at=2026-09-15T05:07:44.554Z
+RUN ticket=276 runId=57cd38ee-472f-48d8-9199-625ee4437b46 cmd="cmd /c \…"npx tsc -b --force packages/skill-calorie packages/base-render && node packages/skill-calorie/scripts/gen-cli.mjs && node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-calorie/scripts/build-help.mjs && node packages/skill-calorie/scripts/check-examples.mjs > \\\"D:\\ilife\\.scratch\\t276\\build2.log\\\" 2>&1\"" waitedMs=80053 exit=2 pid=7980 at=2026-09-15T05:09:44.739Z
+RUN ticket=276 runId=5e3ba582-208f-4432-b3af-098a578bc82e cmd="cmd /c \…"node packages/skill-calorie/scripts/gen-cli.mjs; node packages/skill-calorie/scripts/gen-cli.mjs --check; node packages/skill-calorie/scripts/build-help.mjs; node packages/skill-calorie/scripts/check-examples.mjs; node --test packages/skill-calorie/test/diet-ranking-route-t276.test.mjs packages/skill-calorie/test/cmd-write-40-persist.test.mjs packages/skill-calorie/test/m5-receipt-97.test.mjs > \\\"D:\\ilife\\.scratch\\t276\\w1.log\\\" 2>&1\"" waitedMs=0 exit=1 pid=44408 at=2026-09-15T05:15:52.599Z
+RUN ticket=276 runId=4a6858b4-f5a5-4b95-807c-36daaf4a17fa cmd="\…"node packages/skill-calorie/scripts/gen-cli.mjs && node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-calorie/scripts/build-help.mjs && node packages/skill-calorie/scripts/check-examples.mjs && node --test packages/skill-calorie/test/diet-ranking-route-t276.test.mjs packages/skill-calorie/test/cmd-write-40-persist.test.mjs packages/skill-calorie/test/m5-receipt-97.test.mjs\"" waitedMs=0 exit=1 pid=35388 at=2026-09-15T05:16:17.418Z
+RUN ticket=276 runId=c5eaf2a5-93c9-404b-8ec9-2362f04ef63c cmd="node .scratch/t276/battery.mjs w3 gen gen-check help examples test-t276 test-t27…" waitedMs=1 exit=1 pid=34280 at=2026-09-15T05:18:07.679Z
+RUN ticket=276 runId=bdffe4f2-42ee-484a-a0f7-aeda96d5a48e cmd="node .scratch/t276/battery.mjs w4 gen-stamp gen gen-check help examples test-t27…" waitedMs=10010 exit=1 pid=2908 at=2026-09-15T05:20:53.823Z
+RUN ticket=276 runId=e9dde6f0-651f-4c82-a2df-6b8c70bcabf5 cmd="node .scratch/t276/battery.mjs w5 probe gen-check test-t276…" waitedMs=0 exit=1 pid=34048 at=2026-09-15T05:22:03.287Z
+RUN ticket=276 runId=96018843-2dc4-4498-b544-a42421be017d cmd="node .scratch/t276/battery.mjs w6 test-t276 test-t276-extra ledger…" waitedMs=0 exit=1 pid=42624 at=2026-09-15T05:23:42.647Z
+RUN ticket=276 runId=e5a35a11-e200-4161-b9b1-82d8d1fae003 cmd="node .scratch/t276/battery.mjs w7 test-t276 examples…" waitedMs=60110 exit=1 pid=16012 at=2026-09-15T05:25:32.538Z
+RUN ticket=276 runId=cd89ddd4-57cf-4d6e-b6ce-4333382dd23d cmd="node .scratch/t276/battery.mjs w8 build test-t276…" waitedMs=20015 exit=1 pid=3880 at=2026-09-15T05:26:11.106Z
+RUN ticket=276 runId=25895ade-6866-488e-92d6-d63b98a9a730 cmd="node .scratch/t276/battery.mjs w9 build test-t276 test-sc test-root test-base…" waitedMs=270285 exit=1 pid=1480 at=2026-09-15T05:32:37.001Z
+RUN ticket=276 runId=8e85d01b-634f-47e8-b180-b9c0c8334ae0 cmd="node .scratch/t276/battery.mjs w10 probe…" waitedMs=60050 exit=0 pid=45904 at=2026-09-15T05:34:43.767Z
+RUN ticket=276 runId=bcb8ba9b-8424-4c39-a479-49add62ac937 cmd="node .scratch/t276/battery.mjs c2 commit…" waitedMs=20078 exit=0 pid=43820 at=2026-09-15T06:09:58.612Z
+RUN ticket=276 runId=a07c5475-8a27-43fe-b4cd-54efb604193f cmd="node .scratch/t276/battery.mjs w13 build test-t276 mutate…" waitedMs=880686 exit=1 pid=42380 at=2026-09-15T06:10:36.671Z
+RUN ticket=276 runId=9b23b26e-f1dc-4b26-8d40-9c6e99a3b02a cmd="node .scratch/t276/battery.mjs c4 build test-t276 mutate…" waitedMs=287008 exit=1 pid=2628 at=2026-09-15T06:16:42.700Z
+```
+
+条目数：START/其他 17 条 ＋ RUN 16 条 = 33 条。
