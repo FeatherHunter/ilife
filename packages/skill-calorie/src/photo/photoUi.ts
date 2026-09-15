@@ -28,7 +28,7 @@
  * 用法：`photoUiCss()` 返回 `<style>` 串，由本族三个整页装配放进 `parts` 的第一项
  * （`assembleDocPage` 没有页内 CSS 入口，同 `weightUi.ts` 的处置）。
  */
-import { escapeHtml } from 'base-paint';
+import { escapeHtml, renderStatusBadge } from 'base-paint';
 import { renderChips } from 'base-paint/blocks';
 
 const esc = (s: string): string => escapeHtml(s);
@@ -70,11 +70,13 @@ export function photoUiCss(): string {
     + '.phu-cap{display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;min-width:0}'
     + '.phu-when{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
     + '.phu-file{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}'
-    + '.phu-file code{font-size:11px;color:var(--fg2);overflow-wrap:anywhere}'
+    // 字号下限（#526 · t524 §3.2「390 档正文类 ≥12px」）：文件名小字块原 11px 是全页最小字号，
+    // 抬到 12px 与同页徽章／键值行同档；层级由颜色（--fg2）与等宽字承担，不靠缩小字号。
+    + '.phu-file code{font-size:12px;color:var(--fg2);overflow-wrap:anywhere}'
     // 占位（没图的那张）：明写**哪一份文件**与**为什么**，不留白框、不写内部原因码。
     + '.phu-miss{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;'
     + 'padding:14px 10px;text-align:center;color:var(--fg2);font-size:12px;line-height:1.6}'
-    + '.phu-miss code{font-size:11px;overflow-wrap:anywhere;color:var(--fg2)}'
+    + '.phu-miss code{font-size:12px;overflow-wrap:anywhere;color:var(--fg2)}'
     // ── 间隔条（对比页）：大数字 ＋ 两张日期块，原来挤在页头标题那句 `·` 串里 ──
     + '.phu-interval{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 10px;margin:0 0 14px}'
     + '.phu-iv-n{font-size:30px;font-weight:700;line-height:1.1;color:var(--fg);font-variant-numeric:tabular-nums}'
@@ -94,6 +96,23 @@ export function photoUiCss(): string {
     // ── 动作块的说明句（「删掉这张照片」那一段）──
     + '.phu-act-s{font-size:13px;color:var(--fg2);margin:0 0 10px}'
     + '.phu-note{font-size:12px;color:var(--fg3);margin:8px 0 0}'
+    // ── 候选行（#527 规划器：一行一张照片）：编号槽 ＋ 文件槽 ＋ 状态槽，不靠 `·`／`#N` 串 ──
+    + '.phu-pl{border-top:1px solid var(--line)}'
+    + '.phu-pl:first-child{border-top:0}'
+    + '.phu-pl-row{display:flex;align-items:center;gap:10px;padding:10px 0;min-width:0}'
+    + '.phu-pl-n{flex:0 0 auto;min-width:64px;font-size:12px;color:var(--fg3);font-variant-numeric:tabular-nums}'
+    + '.phu-pl-file{flex:1 1 auto;min-width:0;font-size:13px;color:var(--fg);overflow-wrap:anywhere}'
+    + '.phu-pl-tag{flex:0 0 auto;font-size:12px;color:var(--fg2)}'
+    + '.phu-pl-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:0 0 10px 74px;'
+    + 'font-size:12px;color:var(--fg3);font-variant-numeric:tabular-nums}'
+    // ── 表格列头抬到 12px 下限（#527 · t524 §3.2）：共享块层在 ≥641 档给 `th` 11.5px、
+    //  ≤640 档给 11px，两档都低于本族页面正文的 12px 下限；本域页面自己把列头托起来
+    //  （只动字号，不动块层的色与层级账——列头仍是最浅最弱的那一档）。──
+    + '.ilife-block-data-table th{font-size:12px}'
+    // ── 触摸目标 ≥44px（#527 · t524 §3.2「两档都 0 处不足」）：共享块层的复制按钮／菜单项
+    //  在 >820 档只有 40px 高（390 档靠 #525 的 820 档配方已够）；本族页面自己把这两颗托到
+    //  44px（原地加高，不改块层的排布与配色）。──
+    + '.ilife-copy-btn,.ilife-copy-menu-item{min-height:44px}'
     // ── 窄屏表格提示：桌面不出，640 以下才出（表格本身照公共层的横滑口径走）──
     + '.phu-scroll-hint{display:none}'
     // ── 手机端（断点 820 = HELP）：留白收紧、字号落档、触摸面补齐 ──
@@ -102,11 +121,15 @@ export function photoUiCss(): string {
     + '  .phu-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}'
     + '  .phu-fk{flex-basis:64px}'
     + '  .phu-iv-n{font-size:26px}'
+    + '  .phu-pl-row{min-height:44px;padding:6px 0;-webkit-tap-highlight-color:transparent}'
+    + '  .phu-pl-n{min-width:56px}'
+    + '  .phu-pl-meta{padding-left:66px}'
     + '  [data-nav] a{min-height:44px;display:inline-flex;align-items:center}'
     + '  .phu-card,[data-nav] a,.phu-date{-webkit-tap-highlight-color:transparent;touch-action:manipulation}'
     + '}'
     + '@media (max-width:640px){'
     + '  .phu-scroll-hint{display:block;margin:6px 0 0;font-size:12px;color:var(--fg3)}'
+    + '  .ilife-block-data-table th{font-size:12px}'
     // 键值行在 390 宽塌成「名字在上、值在下」：原来左栏 64px 会把值挤成一条窄柱。
     + '  .phu-fact{flex-direction:column;gap:2px}'
     + '  .phu-fk{flex:0 0 auto}'
@@ -149,4 +172,36 @@ export function intervalStrip(days: number, left: string, right: string): string
     + '<span class="phu-iv-u">天</span>'
     + '<span class="phu-date">' + esc(right) + '</span>'
     + '</div>';
+}
+
+/** 候选行的一行（#527 规划器）：编号槽／文件槽／标签槽／异常徽标槽 ＋ 次要行的事实。 */
+export interface PhotoPickRowInput {
+  /** 编号槽（人话，如「照片 31」）。 */
+  readonly no: string;
+  /** 文件槽（文件名；**不内嵌字节**，只有名字）。 */
+  readonly file: string;
+  /** 标签槽（本张的标签，短词）。 */
+  readonly tag?: string;
+  /** 异常徽标（正常张不给——「存在」是零信息值）。 */
+  readonly badge?: { readonly tone: 'ok' | 'warn' | 'danger'; readonly text: string };
+  /** 次要行（日期／整图或裁剪这类事实）；空数组＝不出这一行。 */
+  readonly meta?: readonly string[];
+}
+
+/** 候选行（#527 规划器）：原来六列表在窄屏被挤成长串，改「一行一张照片」——编号、文件名、
+ *  标签、异常徽标各占一槽，次要事实走第二行的徽章列。**不印 `#N`**（那是内部标识符口径），
+ *  改「照片 31」这种读者话；行高在 820 以下补到 44px 触摸面。 */
+export function photoPickRows(rows: readonly PhotoPickRowInput[]): string {
+  const body = rows.map((r) => {
+    const badge = r.badge === undefined ? ''
+      : ' ' + renderStatusBadge({ status: r.badge.tone, text: r.badge.text });
+    const meta = r.meta === undefined || r.meta.length === 0
+      ? '' : '<div class="phu-pl-meta">' + renderChips({ items: r.meta.map((text) => ({ text })) }) + '</div>';
+    return '<li class="phu-pl"><div class="phu-pl-row">'
+      + '<span class="phu-pl-n">' + esc(r.no) + '</span>'
+      + '<span class="phu-pl-tag">' + esc(r.tag ?? '') + '</span>'
+      + '<span class="phu-pl-file">' + esc(r.file) + '</span>'
+      + badge + '</div>' + meta + '</li>';
+  }).join('');
+  return body === '' ? '' : '<ol class="phu-pl">' + body + '</ol>';
 }
