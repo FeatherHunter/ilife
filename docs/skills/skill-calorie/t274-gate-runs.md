@@ -35,6 +35,26 @@
 | `6955dd03-af62-4144-9b81-414533886d89` | `node packages/skill-calorie/scripts/check-warning-line.mjs`（提交后复跑） | 0（`RESULT: 67/67` ＋ PASS） |
 | （终态补记）`f50d89d9-7c9d-4c0d-8fa1-8d866d0708ce` | `node --test packages/skill-calorie/test/*.test.mjs` 终态全量，落盘 `.scratch/t274/pkg-test-final.log` | 1（`tests 1050 / pass 1012 / fail 38`；只在终态红的 3 条均为别席在途件，见 `t274-证据.md` §六） |
 
+## 复核窗（2026-09-15，Asia/Shanghai 19:2x–19:4x）：按票面四条判据逐条复核 ＋ 补齐声明缺件
+
+> 本窗不改页面行为：只把测试件按票面改成 `t274-` 前缀、补可复跑取证脚本、逐条复核并导出本表。
+> 下面历史行里的 `test/diet-library-t274.test.mjs` 已在本窗改名为 `test/t274-食品库页.test.mjs`（测试内容逐字不动）。
+
+| runId | 命令 | 退出 |
+|---|---|---|
+| `eeb2baff-8c27-400a-8387-1ccdd4aca172` | `node --test packages/skill-calorie/test/t274-食品库页.test.mjs`（改名后首跑） | 0（`tests 11 / pass 11 / fail 0`） |
+| `eefb7768-f69b-4ea9-aecd-d82974a279ee` | `node --test "packages/skill-calorie/test/*.test.mjs"`（本票件名在场，落盘 `pkg-test-with-t274.log`） | 1（`tests 1160 / pass 1082 / fail 76`；11 条 `#274` 全绿，红点名到 33 件，无一属本票） |
+| `d9e5bb5e-176b-4b6f-9db1-7422b8240601` | 同上（测试件退回旧件名 `diet-library-t274.test.mjs`，落盘 `pkg-test-without-t274.log`） | 1（同读数同红件集合，双向差集为空 ⇒ `ATTRIBUTION PASS`） |
+| `f953dcd7-a63b-4aca-9fb6-c83c7b18ba14` | `node .scratch/t274/mutate.mjs`（变异自证：`fixed0(it.calories)`→`fixed1`，再逐文件点名还原；内含 `tsc -b` 两次与 `node --test` 两次） | 0（`变异必红=true 还原必绿=true dist回到基线=true polluted=[false]`） |
+| `2479d057-8a27-4537-9975-6fdedce97deb` | `git commit -F .scratch/t274/commit1.txt -- <3 路径>`（测试件改名＋真跑脚本） | 0（sha `de5e91b`） |
+
+未持锁跑的两条（都只读、不写工作区）：`node packages/skill-calorie/scripts/gen-cli.mjs --check`（红，见报告 §二）、
+`node packages/skill-calorie/scripts/check-warning-line.mjs`（红，5 条陈化全属别票；**本窗不跑 `--sync`**，它写的
+`packages/skill-calorie/AGENTS.md` 不在本票声明路径）。
+
+另：`npx tsc -b packages/base-render packages/skill-calorie` 在本检出首跑前，需先按 `D:\ilife` 的形状补包级
+`node_modules` 联结（`base-paint`→`packages/base-render`、`base-link-core`），否则 188 条 `Cannot find module 'base-paint'`。
+
 ## 上一席（同一个票号，2026-09-14 06:55，孤儿件留下的历史）
 
 | runId | 命令 | 退出 |
