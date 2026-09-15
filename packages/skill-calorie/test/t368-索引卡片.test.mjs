@@ -203,6 +203,8 @@ check('② 照索引表一条照抄执行 → exit 0 ＋落盘整页（六项读
   const env = JSON.parse(run.stdout.trim());
   assert.equal(env.key, 'calorie.view.measure-wizard', 'envelope key 逐字');
   // 六项读数（t169 §一 判据口径：退出码／doctype／charset／内联样式 ≥2KB／无外链／回执路径可读）
+  // 注：styleBytes 是**当刻构建**的共享样式字节数（随各席在途的公共层改动浮动），故只判「≥ 2 KB 下限」，
+  // 不把某个具体数字钉成期望值（钉了就会被他席的正常推进弄红）。
   const html = readFileSync(out, 'utf8');
   const cssBytes = Buffer.byteLength((html.match(/<style[^>]*>[\s\S]*?<\/style>/g) || []).join(''), 'utf8');
   // 「无外链」＝不从仓外加载资源（排除 `xmlns` 命名空间声明与注释；外链形态＝ src/href 指向 http(s):// 或 //）
