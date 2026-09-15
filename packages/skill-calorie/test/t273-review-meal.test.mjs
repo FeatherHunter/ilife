@@ -6,14 +6,18 @@
  *     `D:\2Study\StudyNotes\SKILLS\卡路里\templates\`，**只读**）。
  *  ② `calorie.view.diet-review` 全 8 条词是同一张页：营养配比那一段就是 #275 交的
  *     `buildNutritionRatioBlock`（本票**集成**，不自己重写一份）。
- *  ③ **餐别 5 条**的区块 `buildMealDistributionBlock()` 有**直测**：结构化断言逐块对得上
- *     `meal_distribution.html`；参数缺失一律按用法错走（`bad-input` ⇒ exit 2，不编数）。
+ *  ③ **餐别 5 条**：路由记录带 `meal`（#276 已接线）⇒ 真出口出**餐别分布页**，页上的区块就是本件
+ *     交付的 `buildMealDistributionBlock()`；另有区块**直测**逐块对得上 `meal_distribution.html`；
+ *     参数缺失一律按用法错走（`bad-input` ⇒ exit 2，不编数）。
  *  ④ 融合骨架：眉标（人话，无命令键）／结论句含读数／页内导航／来源脚注；裁定 2-补 结论句与来源
  *     脚注走普通小字行不走深底块；裁定 5 单点不成线；裁定 4 窗口为空仍出完整页、库为空仍 exit 4。
  *  ⑤ **变异自证**：改坏源件一处 ⇒ 同一段断言必红；逐文件还原 ⇒ 变绿（两行机器读数见证据件）。
  *
- * 跑法：`node --test packages/skill-calorie/test/diet-review-t273.test.mjs`
- * （先 `npx tsc -b packages/base-render packages/skill-calorie`）。
+ * 跑法：`node --test packages/skill-calorie/test/t273-review-meal.test.mjs`
+ * （先 `npx tsc -b packages/base-render packages/skill-calorie`）
+ *
+ * **件名与历史**：本探针原住 `test/diet-review-t273.test.mjs`（`68332d5` 那一笔），收口时按票面
+ * 「`test/t273-*.test.mjs`」改名到本件——**一处定义**，不留同内容的第二份副本。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
@@ -23,7 +27,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 
-import { machineWords, stripCopyPayload, visibleText } from './visible-text-probe.mjs';
+import { machineWords, visibleText } from './visible-text-probe.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -89,12 +93,12 @@ function callChainOf(log) {
 /* ── ① 复盘 6 条词逐条真跑（参数照 `src/diet/routes.ts` 的真值，起止按种子库锚点推） ── */
 
 const PAGES = [
-  { id: '饮食复盘（本周）', params: { window: '本周' }, span: D + ' ~ ' + D, days: '1 天', trend: false },
-  { id: '饮食复盘（本月）', params: { window: '本月' }, span: WEEK, days: '7 天', trend: true },
-  { id: '饮食复盘（最近 90 天）', params: { window: '90d' }, span: '2026-06-10 ~ ' + D, days: '90 天', trend: true },
-  { id: '饮食复盘（今年）', params: { window: '今年' }, span: '2026-01-01 ~ ' + D, days: '250 天', trend: true },
-  { id: '饮食复盘（自定义时间）', params: { window: 'custom', start: '2026-09-01', end: D }, span: WEEK, days: '7 天', trend: true },
-  { id: '看饮食复盘', params: { window: '今日' }, span: D + ' ~ ' + D, days: '1 天', trend: false },
+  { id: '饮食复盘（本周）', params: { window: '本周' }, span: D + ' ~ ' + D, trend: false },
+  { id: '饮食复盘（本月）', params: { window: '本月' }, span: WEEK, trend: true },
+  { id: '饮食复盘（最近 90 天）', params: { window: '90d' }, span: '2026-06-10 ~ ' + D, trend: true },
+  { id: '饮食复盘（今年）', params: { window: '今年' }, span: '2026-01-01 ~ ' + D, trend: true },
+  { id: '饮食复盘（自定义时间）', params: { window: 'custom', start: '2026-09-01', end: D }, span: WEEK, trend: true },
+  { id: '看饮食复盘', params: { window: '今日' }, span: D + ' ~ ' + D, trend: false },
 ];
 
 const DIR = freshDb();
@@ -191,18 +195,18 @@ test('#273 ④ 窗口为空（库里别处有记录）⇒ 完整空态页 ＋ �
   assert.ok(text.includes('一条饮食记录也没有'), '空窗页缺空态句');
   assert.ok(text.includes('先用「记一餐」'), '空窗页缺「怎么记第一条」的引导句');
   assert.ok(text.includes('📊 数据来源 · 饮食记录 · 饮食专属复盘 · 2026-09-03 → 2026-09-04'), '空窗页缺来源脚注');
-  assert.ok(visible(r.html).includes('这段日子没有饮食记录'), '空窗页缺结论句');
+  assert.ok(text.includes('这段日子没有饮食记录'), '空窗页缺结论句');
   assert.ok(r.bytes > 4000, '空窗页过小（' + r.bytes + ' B）');
 });
 
-test('#273 ④ 库为空 ⇒ 仍是既有缺失阻断 exit 4（面板不据裁定 4 去改它）', () => {
+test('#273 ④ 库为空 ⇒ 仍是既有缺失阻断 exit 4（页面不据裁定 4 去改它）', () => {
   const empty = freshDb(false);
   const r = render(empty, 'calorie.view.diet-review', { window: '7d' });
   assert.equal(r.status, 4, '空库该 exit 4，实测 exit=' + r.status + ' stderr=' + r.stderr.slice(-200));
   assert.match(r.stderr, /ERR 4: 取数失败（缺失阻断）/, '空库的失败文案不是既有那句');
 });
 
-/* ── ⑤ 餐别 5 条：`buildMealDistributionBlock()` 直测（交 #271） ── */
+/* ── ⑤ 餐别 5 条：路由带 `meal` ⇒ 真出口出餐别页（区块＝本件交付） ＋ 区块直测 ── */
 
 const { buildMealDistributionView } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'diet', 'review.js')).href);
 const { buildMealDistributionBlock, mealParamOf } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'diet', 'reviewDocs.js')).href);
@@ -215,6 +219,29 @@ const SINGLE_BLOCK = buildMealDistributionBlock(BREAKFAST);
 const SNACK_EMPTY = buildMealDistributionView(MDB, '加餐', '2026-09-01', '2026-09-04');
 const SNACK_BLOCK = buildMealDistributionBlock(SNACK_EMPTY);
 MDB.close();
+
+test('#273 ⑤ 餐别 5 条逐条真出口：路由带 `meal` ⇒ 出餐别分布页 ＋ 本件区块（exit 0／完整文档）', () => {
+  /* 参数**照当刻路由记录**（`src/home/routes.ts:32-36`）：`{"window":"7d","meal":"…"}`。这一族在复盘页
+     之外的那一半，页住在 `calorie.view.diet`（#271 是那条命令的作者），**区块必须是本件交付的
+     `buildMealDistributionBlock`** —— 页上 `<section id="md-kpi">` 与七列明细表同现，就是区块到位的读法。 */
+  const MEALS = [
+    { word: '看早餐（最近 7 天）', meal: '早餐', n: 4 },
+    { word: '看午餐（最近 7 天）', meal: '午餐', n: 4 },
+    { word: '看晚餐（最近 7 天）', meal: '晚餐', n: 1 },
+    { word: '看加餐（最近 7 天）', meal: '加餐', n: 1 },
+    { word: '看全部餐别分布（最近 7 天）', meal: 'all', n: 10 },
+  ];
+  for (const m of MEALS) {
+    const r = renderOk(DIR, 'calorie.view.diet', { window: '7d', meal: m.meal }, m.word);
+    assert.ok(r.html.startsWith('<!doctype html>') && r.html.includes('<meta charset="utf-8">'), m.word + ' 产物不是完整文档');
+    assert.ok(r.html.includes('<section id="md-kpi">'), m.word + ' 没出本区块的读数卡锚点 md-kpi');
+    assert.ok(r.html.includes('<section id="md-table">'), m.word + ' 没出本区块的明细锚点 md-table');
+    assert.ok(visible(r.html).includes('明细（2026-09-01 ~ 2026-09-07 · 共 ' + m.n + ' 条）'),
+      m.word + ' 明细条数不是种子库那 ' + m.n + ' 条：' + visible(r.html).slice(0, 200));
+    /* 四桶占比只有「全部餐别」那一支出（老实物 `view === 'all'` 才显示 distSection）。 */
+    assert.equal(r.html.includes('<section id="md-dist">'), m.meal === 'all', m.word + ' 的四桶占比出／不出与老实物不一致');
+  }
+});
 
 test('#273 ⑤ 餐别取数：四餐一桶不漏 ＋ 与老脚本同口径的读数（种子 09-01~09-07）', () => {
   assert.equal(ALL.days, 7, '窗口天数不是 7');
@@ -277,6 +304,50 @@ test('#273 ⑤ 单餐别支与空态支：缺值 `—`、空态句 ＋ 引导句
   assert.ok(!SNACK_BLOCK.includes('md-dist'), '零记录那一支不该出占比块');
 });
 
+test('#273 ⑤ 反例①：同一把键缺 `meal` ＝ 不是餐别支（不编数、不默认餐别）', () => {
+  /* 票面口径：「若某条命令的餐别参数缺失，按『参数缺失即用法错』走出错，不编数」。当刻 5 条路由记录
+     都带 `meal`（#276 已接线），故只能从**同一把键**直接递参数来验：没有 `meal` 就走它从前那一支
+     （窗口列表页），**绝不默认一个餐别**。 */
+  const r = renderOk(DIR, 'calorie.view.diet', { window: '7d' }, '缺 meal');
+  assert.ok(!r.html.includes('<section id="md-table">') && !r.html.includes('<section id="md-kpi">'),
+    '缺 meal 却出了餐别区块——默认值出现了（编数）');
+  assert.ok(!visible(r.html).includes('餐别热量占比'), '缺 meal 却出了四桶占比');
+});
+
+/* 反例②的**待办标记**：当刻（基线 `d243619`）「空窗 ＋ 带 `meal`」退回总览空态页，本行按「判据红如实报」
+   的姿态标成 skip——判据本身不改（票面裁定 4 的 2026-09-15 澄清要的是餐别页的空态）。修法只有 3 行
+   ＋ 1 行 import，但落点在 `src/home/today.ts`，**不在本票授权面内** ⇒ 等编排者裁定归属后去掉 skip。
+   补丁原文与两端读数：`.scratch/t273/空窗餐别-补丁.txt`、`.scratch/t273/mut/fix-*-{red,green}.log`。 */
+test('#273 ⑤ 空窗（库非空、这一段零记录）⇒ 仍出完整页 ＋ 空态句 ＋ 引导句（餐别页外的那一支已真）', () => {
+  const r = renderOk(DIR, 'calorie.view.diet', { start: '2026-10-01', end: '2026-10-07' }, '空窗无 meal');
+  assert.ok(r.html.startsWith('<!doctype html>') && r.html.includes('<meta charset="utf-8">'), '空窗页不是完整文档');
+  const text = visible(r.html);
+  assert.ok(text.includes('没有饮食记录，汇总算不出来'), '空窗页缺空态句');
+  assert.ok(text.includes('用「记一餐」'), '空窗页缺「怎么记第一条」的引导句');
+  assert.ok(text.includes('📊 数据来源 · 饮食记录 · 2026-10-01 → 2026-10-07'), '空窗页缺来源脚注');
+  assert.ok(r.bytes > 4000, '空窗页过小（' + r.bytes + ' B）');
+});
+
+test('#273 ⑤ 反例②（**当刻红，已 skip 并在报告里如实报**）：空窗 ＋ 带 `meal` ⇒ 应出餐别分布页的空态', { skip: '基线 d243619 上这一支退回总览空态页；修法落 src/home/today.ts，等编排者裁定归属' }, () => {
+  /* 裁定 4 的 2026-09-15 澄清：窗口内零记录 ⇒ 出完整页 ＋ 空态句 ＋ 引导句。这一族里「完整页」指的
+     是**餐别分布页**（区块自出空态句＋引导句），不是退回总览那一张——两条词说的是餐别看餐别。 */
+  const r = renderOk(DIR, 'calorie.view.diet', { start: '2026-10-01', end: '2026-10-07', meal: 'all' }, '空窗餐别');
+  assert.ok(r.html.startsWith('<!doctype html>') && r.html.includes('<meta charset="utf-8">'), '空窗餐别页不是完整文档');
+  const text = visible(r.html);
+  assert.ok(text.includes('餐别分布'), '空窗 ＋ meal 落的是别的页（不是餐别分布页）：' + text.slice(0, 200));
+  assert.ok(text.includes('📊 数据来源 · 饮食记录 · 餐别时间窗推断 · 2026-10-01 → 2026-10-07'), '空窗餐别页缺来源脚注');
+  assert.ok(r.html.includes('<section id="md-table">'), '空窗餐别页缺明细段的空态锚点 md-table');
+  assert.ok(text.includes('没有全部餐别的记录'), '空窗餐别页缺空态句：' + text.slice(0, 300));
+  assert.ok(text.includes('用「记一餐」'), '空窗餐别页缺「怎么记第一条」的引导句');
+  /* 日均那一格**逐字**：值位写 `—`、单位位不出现（0 是「那天真吃了 0 卡」的意思，不许拿 0 顶）。 */
+  assert.ok(r.html.includes('<div class="ilife-block-kpi-card-label">日均热量</div>'
+    + '<div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span></div>'),
+    '空窗餐别页的日均那一格没写 `—`：' + text.slice(0, 300));
+  assert.ok(!text.includes('没有饮食记录，汇总算不出来'), '空窗 ＋ meal 还是落回了总览那一张空态页');
+  assert.ok(!r.html.includes('<section id="md-dist">'), '零记录不该出四桶占比块');
+  assert.ok(r.bytes > 4000, '空窗餐别页过小（' + r.bytes + ' B）');
+});
+
 test('#273 ⑤ 餐别参数缺失／未知值一律用法错（exit 2），不编数、不给默认餐别', () => {
   for (const bad of [undefined, null, '', 'brunch', '早饭']) {
     assert.throws(() => mealParamOf(bad), (e) => e && e.code === 'bad-input',
@@ -290,15 +361,6 @@ test('#273 ⑤ 餐别参数缺失／未知值一律用法错（exit 2），不�
     assert.throws(() => buildMealDistributionView(db, undefined, '2026-09-01', D), (e) => e && e.code === 'bad-input',
       '取数入口没兜住缺参（#271 会从参数层把未解析的值直接递进来）');
   } finally { db.close(); }
-});
-
-test('#273 ⑤ 当刻症状（**证据不是判据**）：餐别 5 条今天到不了餐别页', () => {
-  /* 根因（写进回执的「下一手缺什么」）：5 条词的路由记录只有 `{"window":"7d"}`、**没有餐别参数**
-     （`src/home/routes.ts:28-32`），命令面 `src/diet/routes.ts` 也还没有这一位 ⇒ #271 拿不到 meal。
-     本条只把当刻产物记下来：出的是条目列表页，页面上一个餐别区块都没有。 */
-  const r = renderOk(DIR, 'calorie.view.diet', { window: '7d' }, '餐别 5 条当刻');
-  assert.ok(!r.html.includes('md-dist') && !visible(r.html).includes('餐别热量占比'),
-    '当刻产物里出现了餐别区块——症状变了，#271／#276 的做法要重核');
 });
 
 /* ── ⑥ 变异自证（源码级那两行机器读数见证据件；这里是同一段断言的「必红」对照） ── */
