@@ -31,25 +31,25 @@ import { escapeHtml } from 'base-paint';
 
 const esc = (s: string): string => escapeHtml(s);
 
-/** 形状词汇的 CSS（冻结 token；不新增 `:root` 变量）。 */
+/** 形状词汇的 CSS（冻结 token；不新增 `:root` 变量；间距一律落 4／8 网格）。 */
 export function exerciseUiCss(): string {
   return '<style>'
     // ── 窗口条：两枚日期块 ＋ 箭头 ＋ 天数／条数胶囊（原来这三件事挤在页头一行 `·` 串里）──
-    + '.sui-window{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 14px}'
+    + '.sui-window{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 16px}'
     + '.sui-date{font-size:13px;font-weight:600;color:var(--fg);background:var(--card);'
-    + 'border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-variant-numeric:tabular-nums}'
+    + 'border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-variant-numeric:tabular-nums}'
     + '.sui-arrow{color:var(--fg3);font-size:13px}'
     + '.sui-days{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);'
-    + 'border-radius:999px;padding:3px 10px}'
+    + 'border-radius:999px;padding:4px 8px}'
     // ── 键值行：一行若干「标签 ＋ 值」。窄屏塌成一列（标签贴左、值贴右），行行对齐 ──
-    + '.sui-facts{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin:8px 0 14px}'
-    + '.sui-fact{display:inline-flex;align-items:baseline;gap:6px;min-width:0}'
+    + '.sui-facts{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin:8px 0 16px}'
+    + '.sui-fact{display:inline-flex;align-items:baseline;gap:8px;min-width:0}'
     + '.sui-fact-k{font-size:12px;color:var(--fg3);white-space:nowrap}'
     + '.sui-fact-v{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
     // ── 并列小胶囊（单位／筛选这类短词并排；`renderChips` 的件，本类只管行距与折行）──
-    + '.sui-caps{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 14px}'
+    + '.sui-caps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 16px}'
     // ── 脚注小字（截断明示、口径旁注）──
-    + '.sui-note{font-size:12px;line-height:1.6;color:var(--fg2);margin:6px 0 0}'
+    + '.sui-note{font-size:12px;line-height:1.6;color:var(--fg2);margin:8px 0 0}'
     // ── 目标环卡（`sportDocs.ringCard()` 那几个 `ilife-block-ring-*` 类）：此前全仓没有一条规则，
     //    环与它下面那行数字是裸的（#523 补 —— 形状住本件，正文里不写内联样式）。──
     + '.ilife-block-ring-card{display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:4px 0}'
@@ -62,19 +62,19 @@ export function exerciseUiCss(): string {
     + '.ilife-block-ring-side{flex:1 1 240px;min-width:0}'
     + '.ilife-block-ring-side .sui-facts{margin:0 0 12px}'
     // 判决胶囊：色值逐值照抄公共层 `statusBadge` 的 ok／warn（`style.ts:570-578`），不新造色。
-    + '.ilife-block-verdict{display:inline-flex;align-items:center;gap:6px;border-radius:999px;'
-    + 'padding:5px 14px;font-size:13px;font-weight:600;line-height:1.6;background:var(--soft);color:var(--fg2)}'
+    + '.ilife-block-verdict{display:inline-flex;align-items:center;gap:8px;border-radius:999px;'
+    + 'padding:4px 16px;font-size:13px;font-weight:600;line-height:1.6;background:var(--soft);color:var(--fg2)}'
     + '.ilife-block-verdict.ok{background:#e6f7ec;color:#1f8c3d}'
     + '.ilife-block-verdict.no{background:#fff5e0;color:#a25b00}'
     // ── 手机端（断点 820 = HELP）：横向塌纵向、内距收紧、触摸目标 ≥44px ──
     + '@media (max-width:820px){'
-    + '  .sui-window{gap:6px}'
-    + '  .sui-date{padding:6px 10px;min-height:32px;display:inline-flex;align-items:center}'
-    + '  .sui-days{padding:5px 10px}'
+    + '  .sui-window{gap:8px}'
+    + '  .sui-date{padding:8px 12px;min-height:32px;display:inline-flex;align-items:center}'
+    + '  .sui-days{padding:4px 12px}'
     // 键值行在窄屏塌成一列：原来几枚横排会折行、断在词中间（与 `.wui-strip-v` 同一处置）。
     + '  .sui-facts{flex-direction:column;align-items:stretch;gap:8px}'
     + '  .sui-fact{justify-content:space-between;gap:12px}'
-    + '  .sui-caps{gap:4px}'
+    + '  .sui-caps{gap:8px}'
     // 环卡在窄屏塌成一列：环在上、数值在下，居中——横排会把环挤到 100px 出头。
     + '  .ilife-block-ring-card{flex-direction:column;align-items:center;gap:16px}'
     + '  .ilife-block-ring-side{flex:1 1 auto;width:100%;text-align:center}'

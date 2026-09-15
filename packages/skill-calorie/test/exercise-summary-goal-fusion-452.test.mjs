@@ -361,8 +361,9 @@ function assertGoalPage(r, what) {
   assert.ok(hasClass(r.file, 'ilife-block-ring-pct'), what + ' 环心缺百分比读数');
   assert.ok(hasClass(r.file, 'ilife-block-verdict'), what + ' 缺判决胶囊（ilife-block-verdict）');
   assert.ok(/class="[^"]*ilife-block-verdict (ok|no)"/.test(r.file), what + ' 判决胶囊没有档（ok/no）');
-  // #523：差距文案从 `·` 串改成键值行（标签「差距」＋ 值「超出 N 卡／差 N 卡」），仍是同一份事实。
-  assert.ok(/超出 \d+ 卡|差 \d+ 卡/.test(r.file), what + ' 缺差距文案');
+  // #523 返修：环下「目标／实际／差距」键值行已撤（这三个数只在数值四格各一处；
+  // 「差距／差额」两名一数收成「差额」一名），差距文案改读差额卡（标签＋值＋判语）。
+  assert.ok(r.file.includes('差额') && /(超出目标|还差这么多)/.test(r.file), what + ' 缺差距文案（差额卡）');
   assert.ok(hasClass(r.file, 'ilife-block-kpi-card'), what + ' 缺目标页的数值格');
   // 口径行（周口径那句只在一处算一处写；口径行走 renderCaliberLine）。
   assert.ok(calibersOf(r.file).length >= 2, what + ' 口径行／来源脚注不足两条（ilife-block-caliber）');

@@ -19,7 +19,10 @@
  *        本族改用 `sportUi.factStrip()` 的键值行承接；共用层口径统一归 **#470**，本票吸收其一角）；
  *      · 口径行里 `；` 串 → 每条事实一个 `renderCaliberLine`（公共层既有件，不重造形状）。
  *   ② **机器词上屏**：来源名从库表名改成读者看得懂的话；`月／日` 这类数值列走显示层取整。
- *   ③ **重复事实**：窗口与天数只在窗口条／H1 各出现一次；截断明示不再复读表标题里的两个数。
+ *   ③ **重复事实**：窗口与天数只在窗口条／H1 各出现一次；截断三数拆成一句一事
+ *      （表标题只报本窗天数，可见行数与被截天数只住截断明示一句）；类型分布由柱状图改分布条
+ *      （长分类名在 x 轴上重叠越界）；目标页「已达成」只住判决胶囊一处，环下键值行已撤
+ *      （目标／实际／差额只在数值四格一处）。#523 返修落点。
  *   ④ **手机端同档**：页内形状件的 820 段＋触摸面在 `src/exercise/sportUi.ts`（本件正文首项放它的样式）。
  *
  * 取数仍由调用方备齐（`home/exercise.ts`／`render/planPlate.ts`）；本层不查库、不返空。
@@ -27,9 +30,9 @@
 import {
   renderCaliberLine,
   renderChartBlock,
-  renderChips,
   renderDataTable,
   renderDisclosure,
+  renderDistributionRows,
   renderKpiGrid,
   renderListRows,
   renderTocBlock,
@@ -43,7 +46,7 @@ import { emptyGuide } from '../shared/emptyGuide.js';
 import { commandLine } from '../shared/writeParts.js';
 import { nowStamp } from './receipt.js';
 import { inferCategory } from '../exercise/exerciseStore.js';
-import { capsStrip, exerciseUiCss, factStrip, fmtNum, windowStrip } from '../exercise/sportUi.js';
+import { exerciseUiCss, factStrip, fmtNum, windowStrip } from '../exercise/sportUi.js';
 import type { DaySeries } from '../analysis/series.js';
 import type { ExerciseView } from '../home/exercise.js';
 import type { ExerciseGoalView } from './planPlate.js';
@@ -60,9 +63,11 @@ const DOC_TITLE = '卡路里 运动';
  *  口径取全仓既有上限写法（`copyArea` 的 100 条 caption 同数），不静默截数。 */
 const DAILY_CAP = 100;
 
-/** 类型分布图最多画几类（#523）：50 类柱状图在页面上是一条看不清的噪音带，只画消耗最高的这几类，
- *  其余在下方「按类型明细」表里逐条可查（图与表分工：图给一眼，表给逐条）。 */
-const CHART_TOP = 8;
+/** 分布条最多列几类（#523 返修）：类型名的柱状图 x 轴在 9 个长分类名下互相重叠、右端越出画布
+ *  （`把手式蝴蝶机飞鸟` 8 个字以 `x≈288` 居中，横跨约 248～328，画布宽只有 320），故柱状图不再画，
+ *  改走公共层 `renderDistributionRows`（名称 ｜ 条 ｜ 数值，HTML 横排，全称照印、窄屏自然换行）。
+ *  其余逐条仍归下方「按类型明细」表（条给一眼，表给逐条）。 */
+const DIST_TOP = 8;
 
 /** 人话眉标（页头不许出现命令键；两页各一句）。
  *  #523：`运动 · 汇总` 的 `·` 去掉——类别（运动）与页族（汇总）两个字都在，只是不拿符号串。 */
@@ -144,14 +149,15 @@ function summaryKpi(v: ExerciseView): KpiCardInput[] {
   ];
 }
 
-/** 逐日表的截断口径（一处算）：表标题报两个数，截断明示不再复读它们（原来两句逐字重复）。
+/** 逐日表的截断口径（一处算）：表标题只报本窗天数，可见行数与被截掉的天数只住截断明示那一句
+ *  （#523 返修：原来 caption 与 `sui-note` 把「表被截断、看折线」各说一遍，现拆成一句一事）。
  *  返回的 `note` 只在超上限时出，且**必带「截断」二字**（回归判据读它）。 */
 function truncation(days: number): { visible: boolean; caption: string; note: string } {
   if (days <= DAILY_CAP) return { visible: false, caption: '本窗共 ' + days + ' 天', note: '' };
   return {
     visible: true,
-    caption: '本窗共 ' + days + ' 天，显示最近 ' + DAILY_CAP + ' 天，其余 ' + (days - DAILY_CAP) + ' 天见上方折线',
-    note: '逐日表已截断：表内只列这一截，完整走势看上方折线',
+    caption: '本窗共 ' + days + ' 天',
+    note: '逐日表已截断：显示最近 ' + DAILY_CAP + ' 天，其余 ' + (days - DAILY_CAP) + ' 天见上方折线',
   };
 }
 
@@ -216,13 +222,20 @@ function summaryCards(v: ExerciseView): Card[] {
     })));
   }
   if (r.byType.length > 0) {
-    // #523：50 类柱状图换成「消耗最高的 8 类」——图的活儿是给一眼，逐条仍归下方按类型明细表。
-    const top = [...r.byType].sort((a, b) => b.burned - a.burned).slice(0, CHART_TOP);
-    cards.push(card('sec-dist', '类型消耗分布', renderChartBlock({
-      kind: 'bar',
-      title: '类型消耗分布',
-      input: { items: top.map((t) => ({ label: t.type, value: Number(fmtNum(t.burned)) })) },
-    })));
+    // #523 返修：类型消耗分布不再画柱状图（长分类名在 x 轴上重叠越界），改走分布条——
+    // 全称照印、窄屏自然换行；只列消耗最高的这几类，超上限时用一句注明去向（该句只出现一次）。
+    const top = [...r.byType].sort((a, b) => b.burned - a.burned).slice(0, DIST_TOP);
+    const max = top.length === 0 || !Number.isFinite(top[0].burned) || top[0].burned <= 0 ? 0 : top[0].burned;
+    const distNote = r.byType.length > DIST_TOP
+      ? '<p class="sui-note">' + escapeHtml('只列消耗最高的 ' + DIST_TOP + ' 类，逐类消耗见下方按类型明细表') + '</p>'
+      : '';
+    cards.push(card('sec-dist', '类型消耗分布', renderDistributionRows({
+      rows: top.map((t) => ({
+        label: t.type,
+        value: fmtNum(t.burned) + ' 卡',
+        pct: max === 0 ? 0 : Math.max(0, Math.min(100, (t.burned / max) * 100)),
+      })),
+    }) + distNote));
   }
   const series = seriesCard(v);
   if (series !== null) cards.push(series);
@@ -306,23 +319,18 @@ export interface ExerciseGoalPageInput extends Omit<ExerciseGoalView, 'goalTotal
 }
 
 /** 环卡：`min(pct,100)` 给环，实际百分比由文字承载（超额不把环画爆）。
- *  #523：环下那行 `目标 … · 实际 … · 差距 …` 改键值行——三件事各自成形，不再挤一句。 */
-function ringCard(v: ExerciseGoalPageInput, pct: number, goalTotal: number): string {
+ *  #523 返修：环下那行「目标／实际／差距」键值行已撤——这三个数在下方「数值对照」四格各有一处，
+ *  环旁只留判决胶囊（同一事实一页一处；「差距／差额」两名一数也随之收成「差额」一名）。
+ *  环心只留百分比读数，判语（已达成／还需再练）只住胶囊一处。 */
+function ringCard(v: ExerciseGoalPageInput, pct: number): string {
   const deg = Math.max(0, Math.min(100, Math.min(pct, 100)));
-  const word = v.achieved ? '已达成目标' : '还需再练';
   return '<div class="' + part('ring-card') + '">'
     + '<div class="' + part('ring-wrap') + '" role="img" aria-label="运动目标完成度 ' + fmtNum(v.pct) + '%">'
     + '<div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--blue) 0 ' + deg + '%, var(--line) ' + deg + '% 100%)"></div>'
     + '<div class="' + part('ring-center') + '">'
     + '<div class="' + part('ring-pct') + '">' + fmtNum(v.pct) + '%</div>'
-    + '<div class="' + part('ring-note') + '">' + word + '</div>'
     + '</div></div>'
     + '<div class="' + part('ring-side') + '">'
-    + factStrip([
-      { k: '目标', v: fmtNum(goalTotal, 0) + ' 卡' },
-      { k: '实际', v: fmtNum(v.actual, 0) + ' 卡' },
-      { k: '差距', v: (v.gap >= 0 ? '超出 ' : '差 ') + fmtNum(Math.abs(v.gap), 0) + ' 卡' },
-    ])
     + verdictPill(v)
     + '</div></div>';
 }
@@ -333,9 +341,8 @@ function verdictPill(v: ExerciseGoalPageInput): string {
   return '<span class="' + part('verdict') + ' ' + (v.achieved ? 'ok' : 'no') + '">' + text + '</span>';
 }
 
-/** 目标页数值四格（与环卡同窗同数：环给一眼，格给逐项）。
- *  #523：原来四张卡的 `detail` 槽里也串了 `·`，且「已达成」在三处各写一遍——现在每张卡只报一件事，
- *  判决只住胶囊（`status` 徽章那一路也收掉了，免得同一句判语在页面上出现三次）。 */
+/** 目标页数值四格（本页「目标／实际／完成度／差额」唯一的落点：环只给一眼的完成度，逐项对照全在这里）。
+ *  #523 返修：判决只住胶囊一处（窗口条后的状态徽标与环心判语两处已撤，不再一页三遍）。 */
 function goalFigures(v: ExerciseGoalPageInput, goalTotal: number): string {
   return renderKpiGrid([
     { label: '目标', value: fmtNum(goalTotal, 0), unit: '卡' },
@@ -400,7 +407,7 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
   }
   const goalTotal = v.goalTotal;
   const cards: Card[] = [
-    card('sec-ring', '目标环', ringCard(v, v.pct, goalTotal)),
+    card('sec-ring', '目标环', ringCard(v, v.pct)),
     card('sec-figures', '数值对照', goalFigures(v, goalTotal)),
   ];
   const source = footFacts(SOURCE_GOAL, v.start, v.end, v.days);
@@ -408,7 +415,6 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
     docTitle: DOC_TITLE, title, eyebrow: GOAL_EYEBROW,
     subtitle: '这段时间的运动消耗与每日目标的对照',
     content: windowStrip(v.start, v.end, v.days + ' 天')
-      + capsStrip(renderChips({ items: [{ text: v.achieved ? '已达成目标' : '未达成目标' }] }))
       + pageBody(cards, goalCalibers(v, goalTotal), source, copy),
     printable: true,
   });

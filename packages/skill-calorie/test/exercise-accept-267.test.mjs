@@ -84,7 +84,8 @@ const EYEBROW_OF_KEY = new Map([
   // 类别「运动」与页族名都还在（`运动` ＋ `汇总`），只是不拿符号串。其余两族的眉标归 #524／#525。
   ['calorie.view.exercise', '运动汇总'],
   ['calorie.view.exercise-goal', '运动对照目标'],
-  ['calorie.view.exercise-records', '运动记录明细'],
+  // #523 返修：记录级明细眉标原来与 H1 逐字同名，现退回族名「运动记录」（H1 留页名）。
+  ['calorie.view.exercise-records', '运动记录'],
   ['calorie.view.exercise-distribution', '运动 · 类型分布'],
   ['calorie.view.exercise-strength', '运动 · 力量总览'],
   ['calorie.view.exercise-cardio', '运动 · 有氧总览'],

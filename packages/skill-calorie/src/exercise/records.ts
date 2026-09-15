@@ -22,7 +22,9 @@
  *        `sportUi.factStrip()` 的键值行承接；共用层口径统一归 **#470**，本票吸收其一角）；
  *      · 数字口径行里 `；` 串 → 一条事实一个 `renderCaliberLine`（单位那几条并排成胶囊行）。
  *   ② **机器词上屏**：来源名从库表名 `exercise_log` 改成读者看得懂的「运动记录」；数值走显示层取整。
- *   ③ **重复事实**：窗口只在窗口条一处、条数只在与它同一句里报一次。
+ *   ③ **重复事实**：窗口只在窗口条一处；「本页显示 N 条」只在表标题一处（副标题不再复读）；
+ *      「活跃 N 天」只在独立卡一处（记录数卡小字已撤）；「每页最多 N 条」只在表标题一处。
+ *      眉标退回族名（原来与 H1 逐字同名）。#523 返修落点。
  *   ④ **手机端同档**：页内形状件的 820 段＋触摸面住 `src/exercise/sportUi.ts`（正文首项放它的样式）。
  *
  * 对外 2 件（铁律五「不多于五个」）：
@@ -49,8 +51,10 @@ const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里 运动记录';
 /** 眉标与页内 H1（页头写人话：不出命令键、票号、工序词；判据读这两处原字）。
- *  #523：眉标 `运动 · 记录级明细` 的 `·` 去掉，类别与页族两个字都留着。 */
-const EYEBROW = '运动记录明细';
+ *  #523：眉标 `运动 · 记录级明细` 的 `·` 去掉，类别与页族两个字都留着。
+ *  #523 返修：眉标原来与 H1 逐字同名（都是「运动记录明细」），现眉标退回族名「运动记录」，
+ *  H1 留页名——一眼分出「哪一族／哪一页」。 */
+const EYEBROW = '运动记录';
 const PAGE_TITLE = '运动记录明细';
 /** 来源脚注里的来源名（读页自己的取数面）。#523：不再印库表名 `exercise_log`，
  *  改成读者看得懂的「运动记录」，未删除这一条取数口径留在复制日志的「来源」段里（机器面）。 */
@@ -166,11 +170,10 @@ function captionOf(v: RecordsView, shown: number): string {
   return '运动记录明细（共 ' + v.sessions + ' 条，本页显示 ' + shown + ' 条，每页最多 ' + ROW_LIMIT + ' 条）';
 }
 
-/** 页眉副标题：记录级明细 ＋ 窗口 ＋ 两个条数（与表标题同口径）。
- *  #523：原来 `记录级明细｜起 ~ 止（…）` 的 `｜` 去掉——窗口归页面外那一条窗口条，
- *  这里只留本页列了多少（条数那份事实只在这句里报一次）。 */
-function subtitleOf(v: RecordsView, shown: number): string {
-  return '逐条列出本窗的运动记录，本页显示 ' + shown + ' 条';
+/** 页眉副标题：本页列的是什么（#523 返修：「本页显示 N 条」原来在副标题与表 caption 各写一遍，
+ *  现只留表标题那一处——副标题只说内容，不复读数）。 */
+function subtitleOf(): string {
+  return '逐条列出本窗的运动记录';
 }
 
 /** 数字口径行（#523）：原来五件事一个 `；` 串，现在一条事实一行；单位那几条并排成胶囊行。
@@ -201,10 +204,11 @@ function filterText(v: RecordsView): string | null {
   return null;
 }
 
-/** 截断口径句（超上限才出）：本页列了多少、本窗共有多少。 */
+/** 截断口径句（超上限才出）：本页列了多少、本窗共有多少（上限数只住表标题，这里不再复读）。
+ *  #523 返修：「每页最多 N 条」原来在表标题与这句各写一遍，现只留表标题一处。 */
 function truncationText(v: RecordsView, shown: number): string | null {
   if (shown >= v.sessions) return null;
-  return '口径：本窗共 ' + v.sessions + ' 条，本页只列前 ' + shown + ' 条（每页最多 ' + ROW_LIMIT + ' 条）';
+  return '口径：本窗共 ' + v.sessions + ' 条，本页只列前 ' + shown + ' 条';
 }
 
 /** 窗口卡：这一页看的是哪一段（开始／结束两个真日期）。 */
@@ -224,13 +228,14 @@ function windowCard(v: RecordsView): Card {
 
 /** 指标卡：记录数／总消耗／总时长／活跃天数。记录数是本窗总数，不是本页列出的行数。
  *  #523：`记录数` 卡的 `detail` 原来复读整段窗口（窗口已住页头窗口条）⇒ 撤掉，改报活跃天数；
+ *  #523 返修：「活跃 N 天」原来在 `记录数` 卡小字与独立的 `活跃天数` 卡各写一遍，现只留独立卡一处。
  *  `总消耗` 卡与明细表里的逐条消耗同源，但一个是合计一个是逐条，不算重复事实。 */
 function figureCard(v: RecordsView): Card {
   return {
     id: 'sec-figures',
     label: '指标',
     html: renderKpiGrid([
-      { label: '记录数', value: String(v.sessions), unit: '条', detail: '活跃 ' + v.activeDays + ' 天' },
+      { label: '记录数', value: String(v.sessions), unit: '条' },
       { label: '总消耗', value: fmtNum(v.totalBurned), unit: '卡' },
       { label: '总时长', value: v.totalMinutes === null ? '—' : fmtNum(v.totalMinutes, 0), unit: '分钟' },
       { label: '活跃天数', value: String(v.activeDays), unit: '天' },
@@ -323,7 +328,7 @@ export function buildRecordsDoc(v: RecordsView): string {
     docTitle: DOC_TITLE,
     title: PAGE_TITLE,
     eyebrow: EYEBROW,
-    subtitle: subtitleOf(v, shown),
+    subtitle: subtitleOf(),
     content,
     // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），
     // 打印规则（隐藏页内导航与区块复制区、具名页 `@page printable`）见 `base-render/src/blocks.ts`。

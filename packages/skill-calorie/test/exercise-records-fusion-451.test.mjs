@@ -48,8 +48,9 @@ const KEY = 'calorie.view.exercise-records';
 const SAMPLES = join(REPO, '.scratch', 't451', 'out');
 /** 眉标原字（页头人话；判据读这一处）。
  *  #523：`运动 · 记录级明细` → `运动记录明细`（`·` 是分隔符债，探针节点级必须为 0；
- *  类别「运动」与页族「记录级明细」两个字都还在，只是不拿符号串）。 */
-const EYEBROW = '运动记录明细';
+ *  类别「运动」与页族「记录级明细」两个字都还在，只是不拿符号串）。
+ *  #523 返修：眉标原来与 H1 逐字同名，现退回族名 `运动记录`（H1 留页名「运动记录明细」）。 */
+const EYEBROW = '运动记录';
 /** 八列表头（逐字、逐序；票面第 1 条）。 */
 const COLUMNS = ['日期', '类型', '分类', '时长', '消耗', '距离', '心率', '备注'];
 /** 每页行数上限（实现件里的同值；表标题必须写明它）。 */
@@ -160,8 +161,10 @@ function assertFusion(r, what, opts = {}) {
   // #523：总数那份事实只留在表标题一处（页眉副标题原来把它复读一遍，是重复事实债），
   // 故这条读数改读表标题——判据覆盖面不变，只是取数位置跟着事实的落点走。
   assert.ok(caption.includes('共 ' + (opts.sessions ?? '') + ' 条'), what + ' 表标题没写总数：' + caption);
-  assert.ok(subtitle.includes('本页显示 ' + visibleRows(r.file) + ' 条'),
-    what + ' 页眉「本页显示 N 条」与可见行数 ' + visibleRows(r.file) + ' 不一致：' + subtitle);
+  // #523 返修：「本页显示 N 条」只留表标题一处（副标题原来把它复读一遍，是重复事实债），
+  // 故副标题只判内容句、不判数；表标题仍逐字对可见行数。
+  assert.ok(subtitle.includes('逐条列出本窗的运动记录'), what + ' 页眉副标题不是内容句：' + subtitle);
+  assert.ok(!subtitle.includes('本页显示'), what + ' 页眉副标题复读了表标题的本页显示数：' + subtitle);
   assert.ok(caption.includes('本页显示 ' + visibleRows(r.file) + ' 条'),
     what + ' 表标题「本页显示 N 条」与可见行数 ' + visibleRows(r.file) + ' 不一致：' + caption);
   // ⑤ 融合构件接线：页内导航锚点（每个 href 都有对应的页内 id）。
