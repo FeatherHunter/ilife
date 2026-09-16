@@ -138,7 +138,7 @@
   .sheet .s-head{display:flex;align-items:center;gap:3.5px;flex-wrap:wrap;margin-bottom:4px}
   .sheet .s-title{font-size:17px;font-weight:700;flex-basis:100%;line-height:1.3}
   .sheet .s-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:0;background:var(--bg);color:var(--fg3);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-  .sheet .prompt-box{background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.65;margin-top:9px;word-break:break-all}
+  .sheet .prompt-box{background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.65;margin-top:9px;word-break:break-all}
   .sheet .pform{margin-top:9px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 10px}
   .sheet .pfield{display:flex;align-items:center;gap:7px;margin-bottom:7px}
   .sheet .pfield:last-of-type{margin-bottom:0}
@@ -149,14 +149,15 @@
   /* 未填时：灰淡背景 + 提示文字（placeholder 由技能方提供）*/
   .sheet .pfield input:placeholder-shown{background:#f2f2f4;border-color:#e0e0e4;color:#8e8e93}
   .sheet .pfield input:placeholder-shown:focus{background:#fff;border-color:var(--blue)}
-  .sheet .pprev{margin-top:9px;background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;font-size:12px;line-height:1.65;word-break:break-all;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace}
+  .sheet .pprev{margin-top:9px;background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;font-size:12px;line-height:1.65;word-break:break-all;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .sheet .pprev .pv-label{font-size:9px;color:#8e8e93;display:block;letter-spacing:.05em;margin-bottom:4px}
   .sheet .s-actions{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0));display:flex;gap:8px;flex-shrink:0}
   .sheet .s-actions .copy-btn{flex:1;min-height:48px;font-size:13px;font-weight:600;border-radius:12px;background:var(--blue);color:#fff;border:0;box-shadow:none}
   @media(max-width:500px){
     body{background:var(--bg)}
     .stage{padding:0;background:var(--bg)}
-    .phone{width:100%;height:100vh;border:0;border-radius:0;max-height:none;background:var(--bg);overflow:hidden}
+    /* #507 地址栏进出整屏跳动：老浏览器不懂 dvh 会整行丢弃，100vh 兜底须写在前 */
+    .phone{width:100%;height:100vh;height:100dvh;border:0;border-radius:0;max-height:none;background:var(--bg);overflow:hidden}
     .screen{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);overscroll-behavior-y:contain}
     .notch{display:none}
     .sheet-mask{left:0;right:0;top:0;bottom:0;border-radius:0}
@@ -1344,6 +1345,20 @@ button.copy.ghost {
   animation: hmPop .22s cubic-bezier(.34,1.56,.64,1);
 }
 @keyframes hmPop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* ── #507 减动效归零档（照老壳 style.ts 归零档补：默认态一字不动，只在 reduce 下归零）──
+ * 覆盖本母版本文件全部动效：summary 小三角 .15s／.mini 按压 .08s／.tab .08s／.copy-btn .12s／
+ * .sl-item 行 .15s／.sheet-mask 淡入 .25s／.sheet 滑入 .32s／toast 入场 .22s／hmFade .18s／hmPop .22s。
+ * toast 样式由 JS 后注入（晚于本表），归零规则须挂祖先类提权重才盖得住；.sheet 只停 transition
+ * （不碰 transform 终态，否则弹层开合定位失效），动效停、状态照走。 */
+@media (prefers-reduced-motion: reduce){
+.contact-box>summary::before,.subgroup>summary::before{transition:none}
+.mini,.tab,.copy-btn,.sl-item{transition:none}
+.mini:active{transform:none}
+.sheet,.sheet-mask{transition:none}
+.hm-toast-stack .hm-toast{transition:none}
+.hm-confirm-overlay{animation:none}
+.hm-confirm-panel{animation:none}
+}
 .hm-confirm-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
 .hm-confirm-detail { font-size: 13.5px; color: var(--fg2); line-height: 1.65; margin-bottom: 16px; }
 .hm-confirm-actions { display: flex; gap: 10px; }

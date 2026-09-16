@@ -1652,6 +1652,15 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  gap: 12px;',
     '  margin: 16px 0;',
     '}',
+    // #507 桌面列数上限（用户点名：6 张 KPI 在宽屏挤成一行）：基座 `auto-fit minmax(150px,1fr)`
+    // 无上限，越宽列越多。只加 ≥1024 一档 `repeat(3,…)`，基座一行不动；窄屏 2×2（#507 窄屏档）
+    // 与 400 单列（`pageUi` ⑦）各管各档。断点取票面值 1024；选择器挂祖先类（与窄屏档同法），
+    // 同名基座仍恰 1 条（`declsOf` 口径），不新类名、不新样式区。
+    '@media (min-width: 1024px) {',
+    '  .' + p + 'block-page-shell .' + p + 'block-kpi-card-grid {',
+    '    grid-template-columns: repeat(3, minmax(0, 1fr));',
+    '  }',
+    '}',
     // #513 徽章贴底：卡片改纵向 flex 列（子元素仍纵向满宽，`align-items` 缺省 `stretch`、
     // 无子元素设交叉轴尺寸 ⇒ 视觉同块流），余量由徽章的 `margin-top: auto` 吃掉（见下）。
     '.' + p + 'block-kpi-card {',
@@ -1833,6 +1842,13 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-data-table tr:last-child td {',
     '  border-bottom: none;',
+    '}',
+    // #507 表格斑马纹（用户点名的两条之一；另一条数值列等宽栈已由 #507 视觉底座落地，本票不重做）：
+    // 偶数数据行取 `var(--bg)`（既有冻结 token，不新增语义 token）。只染 `tbody` 行，列头不动；
+    // 背景落 `td`（本表 `border-collapse: collapse`，行背景不可靠）。伪类挂既有类上，不新类名、
+    // 不新样式区；窄屏行卡化（#457）下偶数卡整格同底，仍可读。
+    '.' + p + 'block-data-table tbody tr:nth-child(even) td {',
+    '  background-color: var(--bg);',
     '}',
     '.' + p + 'block-data-table-cell-left {',
     '  text-align: left;',
@@ -2184,6 +2200,13 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-disclosure[open] > .' + p + 'block-disclosure-summary::before {',
     '  transform: rotate(90deg);',
+    '}',
+    // #507 减动效归零档（照老壳 `style.ts` 归零档补：本区唯一的 `transition` 在此归零；
+    // 只停过渡，`rotate(90deg)` 开合终态照走）。
+    '@media (prefers-reduced-motion: reduce) {',
+    '  .' + p + 'block-disclosure-summary::before {',
+    '    transition: none;',
+    '  }',
     '}',
     '.' + p + 'block-disclosure-body {',
     '  padding: 0 14px 14px;',
