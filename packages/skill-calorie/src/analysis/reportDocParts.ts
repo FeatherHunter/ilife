@@ -188,7 +188,9 @@ export function tableOf(
   const columns = [
     { key: 'date', label: '日期' },
     { key: 'value', label: valueLabel, align: 'right' as const },
-    ...(extra ?? []).map((e) => ({ key: e.label, label: e.label, align: 'right' as const })),
+    /* #625 B团（28-3）：附加列是中文状态词（达标／未达标），不是数值——不定右对齐，
+     * 不套等宽数字（右对齐＋等宽下左缘参差）。 */
+    ...(extra ?? []).map((e) => ({ key: e.label, label: e.label })),
   ];
   const rows = points.map((p, i) => {
     const row: Record<string, string | number | null> = { date: p.date, value: p.value === null ? null : p.value };

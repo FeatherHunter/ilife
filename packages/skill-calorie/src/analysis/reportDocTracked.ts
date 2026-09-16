@@ -29,6 +29,11 @@ import type { ReportPlate } from './reportPlate.js';
 /** 缺项清单上屏口径：本用 `、` 连接（判据 R5 的债）⇒ 空格分隔（同一个 `missing` 数组，不另算一份）。 */
 const missText = (missing: readonly string[]): string => missing.join(' ');
 
+/** 窗口内最后一次称重（与对比页 `#384f` 同源口径；缺即 null，不编数）。 */
+function lastWeightOf(plate: ReportPlate): number | null {
+  return plate.base.series.reduce<number | null>((acc, s) => (s.weightKg === null ? acc : s.weightKg), null);
+}
+
 /** 目标追踪族（蛋白／水分）：两页同构，只换单位与目标源。
  *  R-39／R-46：两页统一用「达标」（蛋白／水分同词），不再各叫各的。 */
 export function buildTrackedBlocks(plate: ReportPlate): ReportSection[] {
@@ -45,7 +50,8 @@ export function buildTrackedBlocks(plate: ReportPlate): ReportSection[] {
   }
   const rateDetail = f.hitRate === null
     ? '还没有设' + which.label + '目标（先去定目标）'
-    : '达标率 ' + String(f.hitRate) + '%，共 ' + f.loggedDays + ' 天有记录';
+    /* #625 B团（27/28 达标率精度差，与 29-3 同档：整数补 `.0`）。 */
+    : '达标率 ' + f.hitRate.toFixed(1) + '%，共 ' + f.loggedDays + ' 天有记录';
   const missed = f.target === null ? 0 : f.loggedDays - f.hitDays;
   return [
     sec('sec-overview', '概览', renderKpiGrid([
@@ -178,17 +184,21 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
       columns: [
         { key: 'date', label: '低于基础代谢的日期' },
         { key: 'cal', label: '当日摄入（卡）', align: 'right' },
-        { key: 'gap', label: '距基础代谢', align: 'right' },
+        /* #625 B团（26-6R）：差值列行行重复 `卡`，单位收进表头；数值列保持右对齐。 */
+        { key: 'gap', label: '距基础代谢（卡）', align: 'right' },
       ],
-      rows: under.map((u) => ({ date: u.date, cal: u.calories, gap: th === null ? null : Math.round(u.calories - th) + ' 卡' })),
+      rows: under.map((u) => ({ date: u.date, cal: u.calories, gap: th === null ? null : Math.round(u.calories - th) })),
       caption: '低于基础代谢的日期表',
       emptyText: '窗口内没有低于基础代谢的日子',
     })),
     sec('sec-caliber', '计算口径', kvTable('计算口径' + (p.missing.length === 0 ? '' : '（缺：' + missText(p.missing) + '）'), [
-      { k: '公式', v: 'Mifflin-St Jeor：10×体重 加 6.25×身高 减 5×年龄 ' + (p.gender === 'male' ? '加 5' : '减 161') },
+      /* #625 B团（26-5R）：公式行 `×` 与加减汉字混排，统一汉字运算符。 */
+      { k: '公式', v: 'Mifflin-St Jeor：体重乘 10 加身高乘 6.25 减年龄乘 5 ' + (p.gender === 'male' ? '加 5' : '减 161') },
       { k: '身高', v: fmt(p.heightCm, ' cm') },
       { k: '年龄', v: fmt(p.age, ' 岁') },
       { k: '性别', v: p.genderLabel },
+      /* #625 B团（26-4R）：算式用体重，表里却无体重行——补窗口内最后一次称重（与对比页同源口径）。 */
+      { k: '体重', v: lastWeightOf(plate) === null ? '—' : fmt(lastWeightOf(plate), ' kg') + '（窗口内最后一次称重）' },
       { k: '活动量档位', v: p.activityLabel + (p.activityFactor === null ? '' : '（系数 ' + String(p.activityFactor) + '）') },
       { k: '危险信号判据', v: '窗口内摄入低于基础代谢的天数达到 3 天即告警' },
     ])),

@@ -131,10 +131,11 @@ function conclusionOf(plate: ReportPlate): string {
     }
     case 'trend': {
       const t = plate.trend;
+      /* #625 B团（30-4R）：结论句原复印四卡主值（方向／前段／后段／拐点数），卡上全有；
+       * 结论只给方向判定，读数住卡（384 词针经卡标签满足）。 */
       return t === null
         ? '这段时间算不出变化方向'
-        : '变化方向 ' + t.direction + '，前段均分 ' + fmt(t.earlyAvg) + ' 到后段均分 ' + fmt(t.lateAvg)
-          + '，序列里有 ' + String(t.turns) + ' 个拐点';
+        : '变化方向' + t.direction + '，前段与后段的差距见概览卡。';
     }
     case 'compare': {
       const c = plate.compare;
@@ -152,8 +153,9 @@ function bandSentence(plate: ReportPlate): string {
   const withBmi = plate.bandPoints.filter((x): x is { date: string; kg: number; bmi: number } => x.bmi !== null);
   const last = withBmi[withBmi.length - 1];
   if (last === undefined) return '还没有分档';
-  return '落在' + bmiBandOf(last.bmi) + '区间（身高取档案里那一个值，'
-    + String(plate.base.days) + ' 天窗口内不变）';
+  /* #625 B团（24-1R）：身高来源三处（结论括注／身高卡说明／页脚口径行）去结论这一处；
+   * 窗口天数住页头左格，结论不重复。 */
+  return '落在' + bmiBandOf(last.bmi) + '区间。';
 }
 
 /** 窗口日均摄入（TDEE 页读的那个数；与此前 KPI 卡同源同算法，不另算一份）。 */
@@ -187,7 +189,7 @@ function calibersOf(plate: ReportPlate): string[] {
        * 分隔在折行处看不出来。拆成两条短行——每行都读得完整句，分隔也都在行内可见（同页
        * 另有来源脚注那条口径行，J2／J9 的「≥1 条口径行」不受影响）。 */
       return [
-        'BMI＝体重（kg）÷ 身高（m）的平方｜身高取档案里那一个值',
+        'BMI＝体重（kg）÷ 身高（m）的平方｜分级阈值见下方分级表',
         '窗口里没有称重的日子不参与均值',
       ];
     case 'tdee':
@@ -196,8 +198,9 @@ function calibersOf(plate: ReportPlate): string[] {
        * 表里只留带本页取值的行。 */
       return ['总消耗＝基础代谢（Mifflin-St Jeor）× 活动系数｜系数取档案里的活动量档位｜静态缺口＝每日总消耗减日均摄入，运动消耗另计'];
     case 'bmr':
-      /* R-43：判据细则只住口径表，页脚只留算式与指引（两处不互为子串；保留竖线分段）。 */
-      return ['基础代谢按 Mifflin-St Jeor 算式｜四项齐备才算，危险信号见上方判据表'];
+      /* R-43：判据细则只住口径表，页脚只留算式与指引（两处不互为子串；保留竖线分段）。
+       * #625 B团（26-4R）：`四项` 与别处 `四要素` 混用，统一为四要素。 */
+      return ['基础代谢按 Mifflin-St Jeor 算式｜四要素齐备才算，危险信号见上方判据表'];
     case 'protein':
     case 'water': {
       /* #620 增量3c：`目标取目标设置里那一项` 与目标卡说明 `来自目标设置` 同一事实两处，
@@ -209,7 +212,13 @@ function calibersOf(plate: ReportPlate): string[] {
         : ['达标判定＝当天记录值达到目标值｜目标取目标设置里那一项'];
     }
     case 'score':
-      return ['分项命中率＝该项命中天数 ÷ 有记录天数｜综合评分＝六因素命中数与项数之比折算成 0–100 分，不另算第二套权重'];
+      /* #625 B团（29-2R 收口＋29-6R）：表头数是后段均值，页脚公式须同口径
+       * （原全段口径实算 69.4 与 68.4 并存无对账）；`不另算第二套权重` 内口吻删除。
+       * 注：两公式仍在同一行——J1 影子判据要求页上至少一条口径行落成 span 分段，
+       * 单段行不产 span；本行两段都短，1440 档一行可读。 */
+      return [
+        '分项命中率＝该项命中天数 ÷ 有记录天数｜综合评分＝后段六因素命中数与项数之比折算成 0–100 分',
+      ];
     case 'trend':
       /* #620 增量6：前段／后段取的是有评分记录的日子（缺记录日不参与），不是窗口天数；
        * 点名口径，卡面 70.1／69.3 按可评分序列复现时才对得上（30-1）。 */
@@ -219,9 +228,10 @@ function calibersOf(plate: ReportPlate): string[] {
        * `对比期怎么取`／`变化量 Δ` 两行同义重复，删口径行这一条留表；
        * 原第二条（日均总消耗两期同源，D-13）与 kvTable `日均总消耗怎么算` 那一行同义，
        * 那一行随本增量一并删除（见 `reportDocScore.ts`），此处保留这一条。
+       * #625 B团（31-10R）：`四要素` 一词无定义行，括号内点名四个要素（逗号枚举，非并列串）。
        * 拆成两段（同一事实不断成两处，只是落成两个 span，J1 影子判据要求口径行有 span 分段）。 */
       return [
-        '日均总消耗两期同源｜都按档案四要素加该期窗口内最后一次称重算，体重有变这一行就会变',
+        '日均总消耗两期同源｜都按档案四要素（身高，年龄，性别，活动量档位）加该期窗口内最后一次称重算，体重有变这一行就会变',
       ];
     default:
       return [];

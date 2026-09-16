@@ -35,8 +35,9 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
     sec('sec-overview', '概览',
       renderChartBlock({
         kind: 'gauge',
-        /* #620 增量6：表头数（后段均值）与全窗表可推均值天然不同（不同窗口），标题点名窗口以自证。 */
-        title: '综合评分（后段均值，满分 100，六因素等距折算）',
+        /* #625 B团（29-2R 收口）：表头数是后段均值，`综合评分` 一词只留标题，结论句的同括注去掉
+         * （29-5R 同一处）；页脚公式见 `calibersOf` score（已改后段口径，29-6R 内口吻同删）。 */
+        title: '综合评分',
         input: {
           pct: avg === null ? 0 : Math.max(0, Math.min(100, avg)),
           /* #519 W5（视觉席 D5）：仪表盘原来印两行——`70%`（值）＋ `70`（label），同页 KPI 又写
@@ -115,7 +116,8 @@ export function buildTrendBlocks(plate: ReportPlate): ReportSection[] {
        * （`calibersOf` trend 那一条）整段同义，删表里这两行留口径行；
        * `拐点`／`评分口径`两行是表里独有的事实，保留。 */
       { k: '拐点', v: '某日评分同时高于（或低于）左右相邻两天即记 1 个拐点' },
-      { k: '评分口径', v: '每日六因素命中数与项数之比折算成 0–100 分（不另算一套权重）' },
+      /* #625 B团（30-6R）：`（不另算一套权重）` 内口吻删除（29 页页脚同句同删）。 */
+      { k: '评分口径', v: '每日六因素命中数与项数之比折算成 0–100 分' },
     ])),
   ];
 }
@@ -133,7 +135,8 @@ export function buildCompareBlocks(plate: ReportPlate): ReportSection[] {
   const signed1 = (v: number): string => (v > 0 ? '+' : '') + (Math.round(v * 10) / 10).toFixed(1);
   const topRows = c.top.map((t) => ({
     label: t.label,
-    delta: signed1(t.delta) + ' ' + t.unit,
+    delta: t.delta,
+    unit: t.unit,
     dir: t.delta > 0 ? '上升' : t.delta < 0 ? '下降' : '持平',
   }));
   const dirCount = (want: string): number => c.rows.filter((r) => r.delta !== null
@@ -156,12 +159,14 @@ export function buildCompareBlocks(plate: ReportPlate): ReportSection[] {
         label: '本期日均体重', value: weight === null || weight.cur === null ? '—' : fmt1(weight.cur) ?? '—',
         detail: weight === null ? '两期都有数据的项还不够' : '对比期 ' + (fmt1(weight.prev) ?? '—') + '（同口径）',
       },
-      { label: '记录天数', value: String(plate.base.days), unit: '天', detail: '本期窗口长度' },
+      { label: '记录天数', value: fmt1(plate.base.days) ?? '—', unit: '天', detail: '本期窗口长度' },
       {
-        label: '前 3 项变化量', value: topRows.length === 0 ? '—' : topRows[0].delta,
-        detail: topRows.length === 0 ? '两期都有数据的项还不够' : '变化最大的是 ' + topRows[0].label,
+        /* #625 B团（31-4R）：原标签 `前 3 项变化量` 是集合名，值却是单项最大变化——标签与取值层级错位。
+         * 改标签为单项口径（值与说明同层）；`变化最大的是` 前缀并入标签，说明只留项名。 */
+        label: '变化最大项', value: topRows.length === 0 ? '—' : signed1(topRows[0].delta) + ' ' + topRows[0].unit,
+        detail: topRows.length === 0 ? '两期都有数据的项还不够' : topRows[0].label,
         /* R-42：徽标写领域词＋读数，不用默认成功／警告。 */
-        ...(topRows.length === 0 ? {} : { status: (topRows[0].dir === '下降' ? 'warn' : 'ok') as 'warn' | 'ok', statusText: topRows[0].dir + ' ' + topRows[0].delta }),
+        ...(topRows.length === 0 ? {} : { status: (topRows[0].dir === '下降' ? 'warn' : 'ok') as 'warn' | 'ok', statusText: topRows[0].dir + ' ' + signed1(topRows[0].delta) + ' ' + topRows[0].unit }),
       },
     ])),
     sec('sec-delta', '逐项变化量',
@@ -190,7 +195,9 @@ export function buildCompareBlocks(plate: ReportPlate): ReportSection[] {
       ] })),
     sec('sec-top', '前 3 项变化量', renderDataTable({
       columns: [{ key: 'label', label: '前 3 项变化量' }, { key: 'delta', label: 'Δ', align: 'right' }],
-      rows: topRows.map((t) => ({ label: t.label, delta: t.delta })),
+      /* #625 B团（31-3R）：Δ 表同列裸数（384f 逐格 Number 解析），前 3 项表跟它同形；
+       * 单位住 KPI 卡值位（`-28.6 ml` 不动）。 */
+      rows: topRows.map((t) => ({ label: t.label, delta: signed1(t.delta) })),
       caption: '前 3 项变化量（按 |Δ| 降序）',
       emptyText: '两期都有数据的项还不够，算不出 Δ',
     })),
@@ -201,7 +208,8 @@ export function buildCompareBlocks(plate: ReportPlate): ReportSection[] {
       { k: '变化量 Δ', v: '本期值减对比期值（正数＝本期更高）' },
       /* #620 增量3a：`日均总消耗怎么算` 这一行与底座口径行（D-13 那一条）同义重复，
        * 删表里这一行留口径行；`五维走势`是表里独有的事实，保留。 */
-      { k: '五维走势', v: '各维各画一张迷你折线（小倍数图）：每张有自己真实的纵轴与单位，不把不同单位压到同一条轴上' },
+      /* #625 B团（31-2R）：行文与 5 张折线图的实际尺寸不符（整宽大图不是迷你），按实际写。 */
+      { k: '五维走势', v: '摄入，体重，运动消耗，饮水，缺口各画一张折线，纵轴按各自单位画' },
     ])),
   ];
 }
