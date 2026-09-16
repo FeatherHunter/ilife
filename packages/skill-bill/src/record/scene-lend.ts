@@ -173,7 +173,7 @@ function collectPage(input: CollectInput): string {
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
     }),
     summaryRow(facts),
-    renderCaliberLine('借贷走标签流转：这一笔写「' + TAG_LEND + ' #借给（对象） ' + TAG_UNPAID + '」，还回来时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
+    renderCaliberLine('标签流转：这一笔写「' + TAG_LEND + ' #借给（对象） ' + TAG_UNPAID + '」，还回来时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
     renderKpiGrid([
       { label: '借出金额', value: money2(amount), detail: '支出记负数，归在「' + CATEGORY + '」下面' },
       { label: '借给谁', value: who === '' ? '未给' : who, detail: due === '' ? '期限还没给（可后补）' : '期限 ' + due },

@@ -194,7 +194,7 @@ function collectPage(input: CollectInput): string {
     ]),
     summaryRow(facts, { cards: false }),
     renderCaliberLine(optionalLineOf(cards)),
-    renderCaliberLine('借贷走标签流转：这一笔写「' + TAG_BORROW + ' #向（对象）借 ' + TAG_UNPAID + '」，还回去时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
+    renderCaliberLine('标签流转：这一笔写「' + TAG_BORROW + ' #向（对象）借 ' + TAG_UNPAID + '」，还回去时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
     renderToast({
       msg: '标签是备注里的记号，给助手用来找借贷关系：' + TAG_BORROW + '、' + TAG_UNPAID,
       lines: [
