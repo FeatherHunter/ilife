@@ -5,29 +5,40 @@
  *  回执页＝本件 `receiptOf`（落库后那一张，写明本批现阶段单笔化）。
  * 施工图那一行（`docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「批量录入」）要的块，逐块落位：
  *  类型徽章（批量·现单笔化）／逐行可编辑表（`../shared/rowEditorTable.ts`，缺项逐行标红）／合计行（同一件出）／
- *  缺项阻断条（`../shared/blockedSlots.ts`）／账本缺省提示（提示条）／复制指令块／动作区（`../shared/copyArea.ts`）。
+ *  缺项阻断条（`../shared/blockedSlots.ts`，走 `./collectBody.ts` 的折叠摆法）／账本缺省提示（浅色静态）／
+ *  复制指令块／动作区（`../shared/copyArea.ts`）。
  *
  * 本批现阶段的裁定（施工图第二节括注 ＋ 第五节第 2 条）：**单笔化**——这一页一次只落一笔，页面上明示；
  *  多笔同屏那张表还没接。表里那一屏：`params.rows` 给了就照它铺多行（每行一屏一格，逐行可编辑），
  *  没给＝本次参数就是唯一那一行。缺项判定只此一处（`rowEditorMissing`），红标与「给不给复制」都引它。
+ *
+ * 本轮整改（只动本件的可见正文与块序，不动行为判定与信封字段）：
+ *   ① **首屏同形「未给」卡清零**：删结论摘要行那一网格（五张同形「未给」卡）；
+ *   ② **常驻黑清零**：账本缺省那条深色毛玻璃提示改浅色静态（`renderFeedbackBlock` 的 `staticNotice` 分支），
+ *     不再带关闭按钮，页内动作只剩复制区那一组；
+ *   ③ 单笔化那段长句（原带「多行待接／一屏多行一次落库」的残尾）并成一句；那一行合计口径句删（合计行自带）；
+ *   ④ **口令原文块折叠**：缺项阻断条整条走 `./collectBody.ts` 的 `collectBlockedFold` 收进折叠区；
+ *   ⑤ 形状取 `../shared/collectFrame.ts` 里面向用户的那三种（进度／缺项标签／分段标题）；架头与按钮层级
+ *     两句的固定文案是页面自指话，本席未上屏，作残项报给该件所属窗口。页标题只留唤醒词。
  */
-import { renderToast } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderDataTable, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
 import { DEFAULTS } from '../policy/category.js';
-import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
+import { collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
 import { rowEditorTable } from '../shared/rowEditorTable.js';
 import type { RowEditorField } from '../shared/rowEditorTable.js';
-import { summaryCards, summaryRow } from '../shared/summaryRow.js';
+import { summaryCards } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
 import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
+import { collectBlockedFold } from './collectBody.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
 
@@ -69,19 +80,6 @@ function fieldsOf(slots: readonly RecordSlot[]): RowEditorField[] {
   }));
 }
 
-/** 摘要行的事实：取自本次参数（缺的槽位写「未给」，不拿 0 顶替）。 */
-function factsOf(params: Record<string, unknown>): SummaryFacts {
-  const raw = params['amount'];
-  const n = typeof raw === 'number' ? raw : textOf(raw) === '' ? NaN : Number(textOf(raw));
-  return {
-    amount: Number.isFinite(n) ? n : null,
-    category: textOf(params['category']),
-    account: textOf(params['account']),
-    ledger: textOf(params['ledger']),
-    time: textOf(params['time']),
-  };
-}
-
 /** 缺项时那条写库指令原文：缺的值留成尖括号占位符，**只给看不给复制**（照通用页同一口径）。 */
 function blockedCommand(key: string, params: Record<string, unknown>, blocked: readonly BlockedItem[]): string {
   const filled: Record<string, unknown> = { ...params };
@@ -89,25 +87,20 @@ function blockedCommand(key: string, params: Record<string, unknown>, blocked: r
   return commandLine(key, filled);
 }
 
-/** 「照这句跟助手说一遍」那块话：说清单笔化与缺什么、这一页不写库、补齐后重跑哪条命令。 */
+/** 采集页复制 prompt 区那段话：一句说清单笔化与缺什么，不回抄命令原文（口令只有阻断条那一处）。 */
 function promptOf(input: {
-  readonly key: string;
-  readonly params: Record<string, unknown>;
   readonly rows: readonly Cells[];
   readonly blocked: readonly BlockedItem[];
 }): string {
-  const head = '本批现阶段单笔化：这一页一次只落一笔，表里一屏 ' + input.rows.length + ' 行，逐行可编辑。'
-    + '每一行的金额与分类都要给（缺的格已在表下标红）。';
+  const head = '本批一次只落一笔，这一屏 ' + input.rows.length + ' 行。';
   const tail = input.blocked.length > 0
-    ? '这一页还差 ' + input.blocked.length + ' 项：'
-      + input.blocked.map((i) => i.label + '（' + i.name + '：' + i.why + '）').join('、')
-      + '。补齐之后跟助手说一遍。'
-    : '补齐后照下面这条命令重跑即落库：' + commandLine(input.key, input.params);
-  return head + '\n' + tail;
+    ? '还差 ' + input.blocked.length + ' 项：' + input.blocked.map((i) => i.label).join('、')
+      + '。补齐后跟助手说一遍「' + WAKE + '」。'
+    : '这一批照实说一遍「' + WAKE + '」即落库。';
+  return head + tail;
 }
 
-/** 采集页整页：类型徽章 → 摘要行 → 单笔化说明 → 写库未发生 → 缺项阻断条 → 逐行可编辑表
- *  → 账本提示 → 照这句跟助手说一遍 → 复制区。缺项时不出可复制的写库指令（那条只在阻断条里给看）。 */
+/** 采集页整页：三段按序拼（缺什么 → 逐行核对 → 请助手记）。 */
 function collectOf(input: CollectInput): string {
   const { key, params, slots, missing } = input;
   const kind = textOf(params['kind']);
@@ -124,14 +117,18 @@ function collectOf(input: CollectInput): string {
       kind,
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: WAKE }),
+      next: '',
     }),
-    summaryRow(factsOf(params)),
-    renderCaliberLine('本批现阶段单笔化：一次只落一笔，表里一屏 ' + rows.length + ' 行、逐行可编辑。'
-      + '多行待接：这一页会把一屏里的多行都铺出来给你改，但「一屏多行一次落库」这一段还没接，'
-      + '眼下一次只落一笔——要落多笔，就按行一笔一笔再说一遍（说的时候只带那一行要的值）。'),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
-    blockedBar({ items: blocked, command: blockedCommand(key, params, blocked) }),
+    collectProgress({ wakeWord: WAKE, missing: blocked.length }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
+    collectSectionTitle({ no: 1, title: '先看缺什么' }),
+    renderCaliberLine('本批一次只落一笔。'),
+    collectBlockedFold({
+      items: blocked,
+      command: blockedCommand(key, params, blocked),
+      note: '补齐后照上面那条口令跟助手说一遍。',
+    }),
+    collectSectionTitle({ no: 2, title: '核对这一屏' }),
     rowEditorTable({
       name: 'batch',
       fields: fieldsOf(slots),
@@ -139,12 +136,16 @@ function collectOf(input: CollectInput): string {
       totalOf: 'amount',
       totalLabel: '这一屏合计',
     }),
-    renderToast({
-      msg: '账本缺省：不给就落「' + DEFAULTS.ledger + '」',
-      detail: '这一格空着不算缺项；币种同理由缺省「' + DEFAULTS.currency + '」兜。要记进别的账本就先给这一格。',
-      badge: { text: '账本缺省提示', type: 'warn' },
+    renderFeedbackBlock({
+      toast: {
+        msg: '账本与币种留空按缺省落库',
+        detail: '账本「' + DEFAULTS.ledger + '」／币种「' + DEFAULTS.currency + '」；要记进别的账本就先给这一格。',
+        icon: 'info',
+      },
+      staticNotice: true,
     }),
-    promptCopyArea(promptOf({ key, params, rows, blocked }), '补齐后照这句跟助手说一遍'),
+    promptCopyArea(promptOf({ rows, blocked }), '这一段就是补齐后要发给助手的话'),
+    collectSectionTitle({ no: 3, title: '补齐了再请助手记' }),
     copyArea({
       data: { envelope },
       log: {
@@ -160,9 +161,9 @@ function collectOf(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·补齐槽位',
-    title: WAKE + ' · 补齐槽位',
-    subtitle: message,
+    docTitle: DOC_TITLE + '·采集页',
+    title: WAKE,
+    subtitle: '缺 ' + blocked.length + ' 项，详见下表。',
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -171,8 +172,17 @@ function collectOf(input: CollectInput): string {
   });
 }
 
-/** 回执页整页：类型徽章（写库成功）→ 一张大网格（摘要行五格 ＋ 状态／这次记了几笔／写进去的项）→ 单笔化说明
- *  → 写入明细表 → 对账折叠区 → 退出口 → 复制区三件。块序与通用回执页一致，多的是单笔化那一句。 */
+/** 回执页那张网格：落值那几格不再缀缺省说法（值已经落库，那句「不填就记到…」在回执页没有动作可做）。 */
+function receiptCardsOf(facts: SummaryFacts): ReturnType<typeof summaryCards> {
+  return summaryCards(facts).map((c) => (
+    c.value === '未给' || c.detail === undefined || !c.detail.startsWith('不填就记')
+      ? c
+      : { label: c.label, value: c.value }
+  ));
+}
+
+/** 回执页整页：类型徽章（写库成功）→ 一张大网格（摘要行五格 ＋ 状态／这次记了几笔／写进去的项）
+ *  → 单笔化那一句 → 写入明细表 → 对账折叠区 → 退出口 → 复制区三件。块序与通用回执页一致。 */
 function receiptOf(input: ReceiptInput): string {
   const { key, params, receipt } = input;
   const envelope: SerializableEnvelope = {
@@ -187,20 +197,20 @@ function receiptOf(input: ReceiptInput): string {
       next: nextStepOf({ page: 'receipt', exit: true }),
     }),
     renderKpiGrid([
-      ...summaryCards(input.facts),
+      ...receiptCardsOf(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
-      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔' },
       {
         label: '写进去的项',
         value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
+        detail: '共 ' + receipt.writtenFields.length + ' 项，详见下表。',
       },
     ]),
-    renderCaliberLine('这一批一次只落下面这一笔（回执里的编号就是它）；下一笔再说一遍。'),
+    renderCaliberLine('本批一次只落一笔，回执里的编号就是它。'),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
-      caption: '写进去的项与值',
+      caption: '这一笔记成什么',
     }),
     reconcileDisclosure(receipt),
     receipt.recordId === null ? '' : undoExit(receipt.recordId),
