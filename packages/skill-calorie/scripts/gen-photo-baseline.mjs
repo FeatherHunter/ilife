@@ -50,16 +50,16 @@ process.env['CALORIE_TODAY'] = PIN_TODAY;
 /* ── 基线清单（`--write` 回写本块；`--check` 逐键比对） ── */
 // BASELINE-BEGIN
 const BASELINE = {
-  "calorie.help.center": "9cf27744697216ad4381ab3860dd62839a457c268680465e630d624aa63e2672",
-  "calorie.photo.add": "93e2604ce2b02729367f6a5f11559282e1338c8220e451fbff5f72ce6842b129",
-  "calorie.photo.compare": "4268835e4766de60459f70ea12004d522b19a9c99b012cd650045fa44f4f111e",
-  "calorie.photo.detail": "a99b1875048f27ea87de6f076618e9110e84c33784a2fe86b0720da50b1d1c8b",
-  "calorie.photo.gif": "221cd678a1e46e0f3d9e36b6b4751d12c6c61030c83c016bf4ce7d3dc54183fc",
-  "calorie.photo.list": "1c899bb50af5b7eec6c37ef7ce9e5d4b4ebb89c62ddaba5ae53ea531180132b3",
-  "calorie.photo.remove": "3f13ea7507a3ee01ee371a98298cf0c2ba79e46bd89f7d8921bcb37583de0f25",
-  "calorie.photo.tag": "d9e11a1ddc1f79881a6675b0b2da525c7dc19fbb5069714d035ec10289ee3c8a",
-  "calorie.view.gif-planner": "0ffffa36ca57e749a68f6f2240a3a05fcea8508d21ca339d57d4704bbeffdca4",
-  "calorie.view.photo-log-wizard": "f7e2e052796b4af3ecc14a46d01575b7be764231a5220c93fd77fc22c88232c2"
+  "calorie.help.center": "3e712ecd9f09ae9037a0fbba31e16f147e1aae131030908806f0c21044186890",
+  "calorie.photo.add": "474166c7a68754ad0c83a676ca5791b8f7d1caea2715e4fbf4b4d6c535877c34",
+  "calorie.photo.compare": "92ebea0b7da475542241bdd005f04fb8c6c633dca3ed16ae3bb127ad0f5b34c1",
+  "calorie.photo.detail": "82424434082a1ff3570e50a6707ee6242030da6c6a7b24c59a81760ec7455c7e",
+  "calorie.photo.gif": "59c5cafddd8cafa345270d0b46028a10bc8722a4abbeb87496d652a2fe43a79e",
+  "calorie.photo.list": "4882b0e45638c59c6abe425dbd6be2a5f60a4842ea11aa6e75458f5f8f8410db",
+  "calorie.photo.remove": "693d13117c72adbc7cc0127cd0b81d24c88b09d8c20443e1a31edbcb281709a9",
+  "calorie.photo.tag": "493cc1f69009999925b190ea1e1f919b8f30cfc79ff400a1607093bdd2b7ecde",
+  "calorie.view.gif-planner": "f4f03a1622bc18b99110a43594d8c75313f2e6928462d8cb19121de7904c1eff",
+  "calorie.view.photo-log-wizard": "37a3d32a4631027727babe43b9d957809c51ea2039a6bc6518b725af26e8a4ee"
 };
 // BASELINE-END
 
@@ -131,6 +131,12 @@ const CLOCK_STRIP_RULES = [
   [new RegExp('(｜ id=\\S+ \\| 日期 )' + CLOCK_TEXT, 'g'), (p) => p + CLOCK_MARK],
   // ④ 复制日志「时间戳版本」行：`时间戳版本` ＋ 换行 ＋ `2026-09-14 23:35:57 · 版本 0.1.0`
   [new RegExp('(时间戳版本\\n)' + CLOCK_TEXT, 'g'), (p) => p + CLOCK_MARK],
+  // ⑤ #528b 起回执页的「时间」改住**键值行**（旧 `<td>` 表格形态换成 `.phr-fact` 一族）：
+  //    `<span class="phr-fk">删除时间</span><span class="phr-fv">2026-09-16 21:38:28</span>`
+  //    标签共三种：`时间`（改／加／删标签页）／`删除时间`（删照页）／`写入时间`（存照页）。
+  //    这正是 2026-09-16 报 `UNSTABLE …渲染当刻时钟未被剥净` 的那处：规则 ①／② 认的是旧表格形态。
+  [new RegExp('(<span class="phr-fk[^"]*">(?:时间|删除时间|写入时间)</span><span class="phr-fv[^"]*">)' + CLOCK_TEXT, 'g'),
+    (p) => p + CLOCK_MARK],
 ];
 const CLOCK_LEN = 19;
 
