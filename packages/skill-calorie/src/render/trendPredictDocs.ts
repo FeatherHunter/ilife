@@ -321,9 +321,14 @@ function secTitle(id: string, trackText = '模拟轨迹'): string {
 }
 
 /** 页头胶囊（#516 §3.2 D01／D02）：归属词与页型不拿 `·` 串进题名，改走徽章件（`renderChips`）。
- *  页型逐页不同（体重预测／模拟减重／摄入预测），眉标只留一个域词（见各页 `assembleDocPage`）。 */
-function predictChips(pageType: string): string {
-  return renderChips({ items: [{ text: '卡路里' }, { text: pageType }, { text: '趋势分析' }] });
+ *  页型逐页不同（体重预测／模拟减重／摄入预测），眉标只留一个域词（见各页 `assembleDocPage`）。
+ *  #625 A团：18／19／20 三页去第三枚胶囊（与眉标 `趋势分析` 逐字重复）；缺省三枚，
+ *  其余页逐字节不变（01–17 的 V1 读数不受影响）。 */
+function predictChips(pageType: string, short = false): string {
+  const items = short
+    ? [{ text: '卡路里' }, { text: pageType }]
+    : [{ text: '卡路里' }, { text: pageType }, { text: '趋势分析' }];
+  return renderChips({ items });
 }
 
 /** #568 R-01/R-02/R-04 · 预测体重族页面侧样式（只本族装配引用，不碰公共层与壳宽）。
@@ -419,6 +424,16 @@ function t570IntakeCss(): string {
     + '</style>';
 }
 
+/** #625 A团 · 稳定性页末格补齐（只本页装配引用）。
+ *
+ *  病根（V3-20）：均值／波动／是否稳定三格同处 2 列网格，末格落单，右侧留 534×125 空格
+ *  （桌面档；`t570IntakeCss` 的两列覆盖是族共用的，不能在这里改）。
+ *  解法：末个奇数格横跨两列（`#sec-overview` 限定，只吃本页本节；`t570IntakeCss` 与徽章升格一字不动）。 */
+function t625StabilityCss(): string {
+  return '<style>\n'
+    + '#sec-overview .ilife-block-kpi-card-grid > :nth-child(odd):last-child{grid-column:1/-1}\n'
+    + '</style>';
+}
 /** #573 跨族页面侧样式（只本件 9 个墙内装配引用，不碰公共层与壳宽）。
  *
  *  R-60（可见小节标题）：`.tpd-sec-title` 16px/700（16 为 4 的倍数，沿公共层正文上两档），
@@ -886,13 +901,15 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
     : '按当前趋势';
   const parts: string[] = [
     predictChips('摄入预测'),
-    /* 结论句只用页里已有的数（末点预测值／目标／窗口天数）。
-     * W5：末值与目标走 `fmtKcal`（整数）——同页「当前摄入」「目标」两张卡都是整数，
-     * 外推出来的 `1666.98` 与它们同列混排是同一处有效位不齐（视觉抽查 §2.2 缺陷 5 的同族）。 */
+    /* 结论只给判定不复述数（末点预测值／目标两数住卡；`目标`一词保留，383 针住它；
+     *  #625 A团）。W5 有效位口径不变：卡内末值与目标仍走 `fmtKcal`（整数）。 */
     renderConclusionBar(lastV === null
       ? '这一段的摄入还不够算预测。'
-      : '按当前速率，' + span + ' 天后每天大约吃 ' + fmtKcal(lastV) + ' 卡。'
-        + (v.goal === null || v.goal === undefined ? '' : '目标 ' + fmtKcal(v.goal) + ' 卡。')),
+      : v.goal === null || v.goal === undefined
+        ? '按当前速率，' + span + ' 天后继续保持当前节奏（还没有设目标，先去定目标）。'
+        : (typeof lastV === 'number' && typeof v.goal === 'number' && lastV >= v.goal)
+          ? '按当前速率，' + span + ' 天后能达到目标一带。'
+          : '按当前速率，' + span + ' 天后离目标还差一些。'),
     /* #570 R-15：轨迹项改`摄入预测轨迹`（与表注前6字一致，模拟族仍缺省`模拟轨迹`）。 */
     predictNav(pts.length > 0, '摄入预测轨迹'),
     pageSection('sec-params', renderParamForm({
@@ -974,8 +991,12 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
   const gapBasis = (typeof v.goal === 'number' && Number.isFinite(v.goal))
     ? '相对目标 ' + fmtKcal(v.goal) + ' 卡' : '相对目标';
   const parts: string[] = [
-    predictChips('摄入预测'),
-    renderConclusionBar('这段的日均摄入 ' + String(v.avg) + ' 卡，比目标 ' + String(v.goal) + ' 卡' + (v.onTarget ? '守在 ±10% 以内。' : '差了 ' + String(Math.abs(Number(v.gap))) + ' 卡。')),
+    /* #625 A团：去第三枚胶囊（与眉标逐字重复）；结论改综合不断复述数
+     * （均值／目标／缺口三数住卡，结论只留判定；`目标`／`在轨`两词保留，383 针住它们）。 */
+    predictChips('摄入预测', true),
+    renderConclusionBar(v.onTarget
+      ? '这段的日均摄入守在营养目标 ±10% 以内，在轨。'
+      : '这段的日均摄入偏离营养目标较多，偏离。'),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
@@ -992,7 +1013,7 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
       { label: '缺口', value: String(v.gap), unit: '卡', detail: gapBasis },
     ]), verdictCard('是否在轨', v.onTarget
       ? '日均与目标差得不远。'
-      : '日均离目标偏开。', v.onTarget, '在轨', '偏离')), secTitle('sec-overview')),
+      : '日均摄入离目标偏开。', v.onTarget, '在轨', '偏离')), secTitle('sec-overview')),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
@@ -1021,13 +1042,14 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
 
 export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
   /* #570 R-23：缺口取正向表述（结论句本就`+1196`，卡值跟上`+`前缀；量级与整数语义不动）。
-   *  体重侧不跟R-23期望的负号统一（`weeklyLoss`正表掉量是取数层语义，结论句`一周约 1.09 kg`
-   *  亦无符号，翻负会造出页内自相矛盾，见§6），改由口径行写明两族符号语义。 */
+   *  体重侧不跟R-23期望的负号统一（`weeklyLoss`正表掉量是取数层语义，翻负会造出页内自相矛盾，
+   *  见§6），改由口径行写明两族符号语义（#625 A团起结论句不再印数，`+` 前缀只住卡值）。 */
   const deficitSigned = (typeof v.avgDeficit === 'number' && Number.isFinite(v.avgDeficit))
     ? (v.avgDeficit >= 0 ? '+' : '') + String(v.avgDeficit) : String(v.avgDeficit);
   const parts: string[] = [
-    predictChips('摄入预测'),
-    renderConclusionBar('这段时间平均每天有 ' + (Number(v.avgDeficit) >= 0 ? '+' : '') + String(v.avgDeficit) + ' 卡缺口，折算下来一周约 ' + fmtRate(v.weeklyLoss) + ' kg。'),
+    /* #625 A团：去第三枚胶囊；结论改综合不断复述数（`缺口`／`每周`两词保留，383 针住它们）。 */
+    predictChips('摄入预测', true),
+    renderConclusionBar((Number(v.avgDeficit) >= 0 ? '这段时间平均每天都有缺口，折到每周掉重，处减重方向。' : '这段时间平均每天还没有缺口，每周掉重无从谈起。')),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
@@ -1056,7 +1078,7 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 kg｜健康区间＝每周掉 0.3 到 1.2 kg｜符号＝缺口取正数表缺口，每周掉重取掉量为正，体重速率页另取变化率为负表下降'));
+  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 kg｜健康区间＝每周掉 0.3 到 1.2 kg｜符号＝缺口取正数表示缺口，每周掉重取掉量为正，体重速率页另取变化率为负表示下降'));
   parts.push(sourceFootnote('饮食记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 摄入预测',
@@ -1076,8 +1098,9 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
    *  缺口页只读（#571地盘），本页均值卡detail补窗口区间（可达文本含窗口；21侧待#571，见§6）。 */
   const avgWindow = '日均，窗口 ' + String(v.start ?? '') + ' 至 ' + String(v.end ?? '');
   const parts: string[] = [
-    predictChips('摄入预测'),
-    renderConclusionBar('日均摄入 ' + String(v.avg) + ' 卡，每天上下波动 ' + String(v.sigma) + ' 卡，' + (v.stable ? '算稳。' : '波动偏大。')),
+    /* #625 A团：去第三枚胶囊；结论改综合不断复述数（`稳定`／`波动`两词保留，383 针住它们）。 */
+    predictChips('摄入预测', true),
+    renderConclusionBar(v.stable ? '每天的摄入比较匀，波动不大，整体稳定。' : '每天的摄入忽高忽低，波动偏大，不稳定。'),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
@@ -1111,8 +1134,9 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
     title: '摄入预测（摄入稳定性预测）',
     eyebrow: '趋势分析',
     subtitle: null,
-    /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。 */
-    content: pageChromeCss(1120) + t570IntakeCss() + t573CrossCss() + parts.join(''),
+    /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。
+     * #625 A团再加本页末格补齐（`t625StabilityCss`，只本页）。 */
+    content: pageChromeCss(1120) + t570IntakeCss() + t625StabilityCss() + t573CrossCss() + parts.join(''),
     charts: false,
   });
 }
