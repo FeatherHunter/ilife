@@ -89,7 +89,7 @@ export function buildGoalWeightDoc(g: GoalWeight, command: string): string {
       goal: fmtKg(g.weightGoal), latest: fmtKg(g.latestKg),
       change: fmtSigned(g.deltaKg), days: g.loggedDays + ' 天',
     }],
-    caption: '体重目标（目标 ' + fmtKg(g.weightGoal) + ' · 最新 ' + fmtKg(g.latestKg) + '）',
+    caption: '体重目标',
     emptyText: '本窗无体重记录',
   }));
   const metrics = nums({
