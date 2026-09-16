@@ -73,6 +73,29 @@ export function writeGoalWeight(params: Record<string, unknown>, db: DatabaseSyn
   }));
 }
 
+/** `calorie.goal.exercise` · 定运动目标（每日运动消耗目标，单例 UPSERT 只 SET 这一列）。
+ *
+ * #621 · 写法照 `goal/nutritionGoal.ts` 的 #127 同一款：不存在时按列默认插入，
+ * 存在时只覆盖 `exercise_goal`，其余列逐列保持原值（禁整行替换）。
+ * 参数 `goal` 须为正整数；0／负数／非数字／缺参一律失败 2。 */
+export function writeGoalExercise(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
+  const goal = needNum(params, 'goal');
+  if (!Number.isInteger(goal) || !(goal > 0)) fail(2, 'goal 须为正整数');
+  const before = db.prepare('SELECT exercise_goal FROM daily_goal WHERE id = 1').get() as
+    | { exercise_goal: number | null }
+    | undefined;
+  const old = before?.exercise_goal ?? null;
+  db.prepare(
+    'INSERT INTO daily_goal (id, exercise_goal, updated_at)' +
+      ' VALUES (1, ?, CURRENT_TIMESTAMP)' +
+      ' ON CONFLICT(id) DO UPDATE SET exercise_goal = excluded.exercise_goal,' +
+      ' updated_at = CURRENT_TIMESTAMP',
+  ).run(goal);
+  return out(R('定运动目标', 'update', '已定运动目标：' + (old ?? '—') + '→' + goal + ' 卡', '定运动目标', 'daily_goal (写库回执)', {
+    recordId: 1, ids: [1], idSource: 'singleton', writtenFields: ['goal'], noChange: old === goal,
+  }));
+}
+
 /** `calorie.goal.pause` · 暂停所有目标（记录照常，仅目标暂停）。 */
 export function writeGoalPause(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const r = pauseAllGoals(db);

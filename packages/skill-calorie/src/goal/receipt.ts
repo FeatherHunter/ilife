@@ -1,4 +1,4 @@
-/** #253 · 目标管理（HELP 场景 06）**五条会改数据库的命令的写后回执整页**。
+/** #253 · 目标管理（HELP 场景 06）**六条会改数据库的命令的写后回执整页**。
  *
  * 本文件是 `cli/write.ts:85` 整页装配链的**第六个装配口**（前五个：档案／饮食／体重／训练计划／
  * 身体细节），形状照 `diet/receipt.ts` 与 `body/receipt.ts` 抄——同一份 `assembleDocPage`、同一组
@@ -6,10 +6,10 @@
  * `shared/writeParts.ts:83` 的 `receiptHtml()`：产物是 275 字节上下的裸片段（没有 `<!doctype html>`、
  * 没有 charset、没有样式、没有页框），还把内部词 `op=update · id=1` 印在屏幕上。
  *
- * 五条命令 → 十条写词（命令名以 `goal/commands.ts` 注册表为准，本件不抄唤醒词）：
+ * 六条命令 → 十一条写词（命令名以 `goal/commands.ts` 注册表为准，本件不抄唤醒词）：
  *   定营养目标／改营养目标 → `calorie.goal.set`；定饮水目标／改饮水目标 → `calorie.goal.water`；
- *   定体重目标／改体重目标 → `calorie.goal.weight`；暂停所有目标 → `calorie.goal.pause`；
- *   重启所有目标 → `calorie.goal.resume`。
+ *   定体重目标／改体重目标 → `calorie.goal.weight`；定运动目标 → `calorie.goal.exercise`；
+ *   暂停所有目标 → `calorie.goal.pause`；重启所有目标 → `calorie.goal.resume`。
  *
  * 块序（本票裁定）：① 操作回执 ② 字段变更（改前 → 改后）③ 库里现在的目标 ④ 对账信息 ⑤ 复制区。
  * **#561（2026-09-15 用户裁决）**：原块序里的「⑤ 复制区 ＋ 来源脚注」中**来源脚注整行撤**——
@@ -52,10 +52,10 @@ const DOC_TITLE = '卡路里 目标回执';
 /** 归属词（眉标，**一页一处**）：说清这一页属于哪一族。 */
 const EYEBROW = '目标管理';
 
-/** 目标管理 5 条会改数据库的命令（**具名命令集**，命令名权威源＝`goal/commands.ts`）。 */
+/** 目标管理 6 条会改数据库的命令（**具名命令集**，命令名权威源＝`goal/commands.ts`）。 */
 const GOAL_RECEIPT_KEYS: ReadonlySet<string> = new Set([
   'calorie.goal.set', 'calorie.goal.water', 'calorie.goal.weight',
-  'calorie.goal.pause', 'calorie.goal.resume',
+  'calorie.goal.pause', 'calorie.goal.resume', 'calorie.goal.exercise',
 ]);
 
 /** 写入去向那句说明（共用件 `statusCard` 的必填参数，按命令取本域自己的说法）。 */
@@ -65,6 +65,7 @@ const WRITTEN_DETAIL: Readonly<Record<string, string>> = {
   'calorie.goal.weight': '已写入体重目标。说「看目标状态」可复查。',
   'calorie.goal.pause': '目标已暂停，记录照常。说「看目标状态」可复查。',
   'calorie.goal.resume': '目标已恢复。说「看目标状态」可复查。',
+  'calorie.goal.exercise': '已写入运动目标。说「看目标状态」可复查。',
 };
 
 /** 库列 → 中文名（名字逐字取 `precheck.ts` 的现值表与体重块，本件不另编名）＋ 值的单位。 */
@@ -81,6 +82,7 @@ const COLUMNS: readonly GoalColumn[] = [
   { col: 'carbs_goal', label: '碳水(g)', unit: 'g' },
   { col: 'fat_goal', label: '脂肪(g)', unit: 'g' },
   { col: 'water_goal', label: '饮水(ml)', unit: 'ml' },
+  { col: 'exercise_goal', label: '运动目标(卡)', unit: '卡' },
   { col: 'weight_goal', label: '体重目标(kg)', unit: 'kg' },
   { col: 'goal_deadline', label: '截止日期', unit: '' },
   { col: 'start_weight', label: '起点体重(kg)', unit: 'kg' },
@@ -91,7 +93,7 @@ const COLUMNS: readonly GoalColumn[] = [
 /** CLI 参数名 → 库列名（写口 `writtenFields` 报的是参数名，页面要说的是库里的那一列）。 */
 const PARAM_COLUMN: Readonly<Record<string, string>> = {
   calorie: 'calorie_goal', protein: 'protein_goal', carbs: 'carbs_goal', fat: 'fat_goal',
-  water: 'water_goal', kg: 'weight_goal', deadline: 'goal_deadline',
+  water: 'water_goal', kg: 'weight_goal', deadline: 'goal_deadline', goal: 'exercise_goal',
   startKg: 'start_weight', startDate: 'start_date', goal_paused: 'goal_paused',
 };
 

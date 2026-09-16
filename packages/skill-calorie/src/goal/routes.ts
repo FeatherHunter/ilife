@@ -17,6 +17,7 @@ export const GOAL_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 211, wakeWord: '定体重目标(自动算截止)', scene: '06', kind: 'exec', key: 'calorie.goal.weight', cli: 'calorie-cmd-read calorie.goal.weight --params \'{"kg":68,"deadline":"<日期>"}\'' },
   { list: 'wake', order: 212, wakeWord: '定体重目标(含起始日)', scene: '06', kind: 'exec', key: 'calorie.goal.weight', cli: 'calorie-cmd-read calorie.goal.weight --params \'{"kg":68,"startKg":72,"deadline":"<日期>","startDate":"<日期>"}\'' },
   { list: 'wake', order: 213, wakeWord: '定饮水目标', scene: '06', kind: 'exec', key: 'calorie.goal.water', cli: 'calorie-cmd-read calorie.goal.water --params \'{"water":2000}\'' },
+  { list: 'wake', order: 436, wakeWord: '定运动目标', scene: '06', kind: 'exec', key: 'calorie.goal.exercise', cli: 'calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'' },
   { list: 'wake', order: 214, wakeWord: '定饮水目标(自动算)', scene: '06', kind: 'exec', key: 'calorie.view.goal-wizard', cli: 'calorie-cmd-read calorie.view.goal-wizard --params \'{"profile":"cut","wake":"定饮水目标(自动算)"}\'' },
   { list: 'wake', order: 215, wakeWord: '一键定全套目标', scene: '06', kind: 'exec', key: 'calorie.view.goal-wizard', cli: 'calorie-cmd-read calorie.view.goal-wizard --params \'{"profile":"cut","wake":"一键定全套目标"}\'' },
   { list: 'wake', order: 219, wakeWord: '看体重目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-weight', cli: 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"7d"}\'' },

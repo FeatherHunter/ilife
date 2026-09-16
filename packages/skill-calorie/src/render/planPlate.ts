@@ -317,7 +317,7 @@ export function buildExerciseGoalView(db: DatabaseSync, start: string, end: stri
     | undefined;
   const daily = row?.exercise_goal ?? null;
   if (daily === null || daily === undefined) {
-    throw new CalorieRenderError('missing-data', '未设运动目标（daily_goal.exercise_goal 缺失，先维护运动目标）');
+    throw new CalorieRenderError('missing-data', '未设运动目标（daily_goal.exercise_goal 缺失，先维护运动目标，下一步跑 calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'）');
   }
   if (!Number.isFinite(daily) || daily <= 0) {
     throw new CalorieRenderError('missing-data', '运动目标非法（须正数）：' + String(daily));
