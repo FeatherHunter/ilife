@@ -156,6 +156,34 @@ function summaryKpi(v: ExerciseView): KpiCardInput[] {
   ];
 }
 
+/** #389 · 汇总页目标对照位（目标／对比目标在汇总页的落点）。
+ *  口径复用目标页同一套（每日目标＋完成度＋差额经 `home/exercise.ts` 的目标公开接口来，不在本件重算）。
+ *  形状守 #452／#552：只加一张卡（`sec-goal`），不加口径行、不加来源脚注，故汇总页口径行仍 0、来源仍无。
+ *  存量直构造（未带目标字段）回 null＝不加卡，旧快照逐字节不变；显式 null＝未设目标，走未设指引。 */
+function goalCard(v: ExerciseView): Card | null {
+  if (!('dailyGoal' in v)) return null;
+  const daily = v.dailyGoal ?? null;
+  const total = v.goalTotal ?? null;
+  const pct = v.goalPct ?? null;
+  const gap = v.goalGap ?? null;
+  const achieved = v.goalAchieved ?? null;
+  if (daily === null || total === null || pct === null || gap === null || achieved === null) {
+    return card('sec-goal', '目标对照', '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>' + emptyGuide({
+      icon: '🎯', text: '还没设每日运动消耗目标',
+      hint: '先说一句「定运动目标」把每日运动消耗目标定下来，再看对照。',
+    }));
+  }
+  const verdict = '<span class="' + part('verdict') + ' ' + (achieved ? 'ok' : 'no') + '">'
+    + (achieved ? '✓ 已达成目标' : '✕ 还差 ' + fmtNum(Math.abs(gap), 0) + ' 卡') + '</span>';
+  return card('sec-goal', '目标对照', '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>'
+    + renderKpiGrid([
+      { label: '目标', value: fmtNum(total, 0), unit: '卡' },
+      { label: '实际', value: fmtNum(v.review.totalBurned, 0), unit: '卡' },
+      { label: '完成度', value: fmtNum(pct) + '%' },
+      { label: '差额', value: fmtNum(Math.abs(gap), 0), unit: '卡', detail: gap >= 0 ? '超出目标' : '还差这么多' },
+    ]) + verdict);
+}
+
 /** 逐日表的截断口径（一处算）：**表题只报这张表是什么**，天数与截断三数全住截断明示那一句。
  *  #523 返修：原来 caption 与 `sui-note` 把「表被截断、看折线」各说一遍，现拆成一句一事。
  *  **R5 打回项 I2（终审席 P2-8）**：表题原来写「按日消耗（本窗共 N 天）」，那个 N 天与**页头窗口条
@@ -222,10 +250,12 @@ function typeCard(v: ExerciseView): Card | null {
 }
 
 /** 汇总页的卡片清单（页内导航与正文走**同一份清单**，锚点不会指到不存在的 id）：
- *  四格 KPI ／ 每日消耗折线 ／ 类型消耗分布 ／ 逐日明细 ／ 按类型明细 ／ 按分类汇总，逐块判空。 */
+ *  四格 KPI ／ 目标对照 ／ 每日消耗折线 ／ 类型消耗分布 ／ 逐日明细 ／ 按类型明细 ／ 按分类汇总，逐块判空。 */
 function summaryCards(v: ExerciseView): Card[] {
   const r = v.review;
   const cards: Card[] = [{ id: 'sec-kpi', label: '核心数字', html: '<h2 style="margin:0;font-size:15px;font-weight:700">核心数字</h2>' + renderKpiGrid(summaryKpi(v)) }];
+  const goal = goalCard(v);
+  if (goal !== null) cards.push(goal);
   const logged = v.series.filter((d: DaySeries) => d.exerciseKcal !== null);
   if (logged.length > 0) {
     cards.push(card('sec-trend', '每日消耗', renderChartBlock({
@@ -280,6 +310,8 @@ function summaryEnvelope(v: ExerciseView): SerializableEnvelope {
         totalBurned: r.totalBurned, totalMinutes: r.totalMinutes, sessions: r.sessions,
         activeDays: r.activeDays, totalBurnedSeries: v.totalBurnedSeries,
         avgBurnedPerLoggedDay: v.avgBurnedPerLoggedDay, seriesActiveDays: v.activeDays,
+        dailyGoal: v.dailyGoal ?? undefined, goalTotal: v.goalTotal ?? undefined,
+        goalPct: v.goalPct ?? undefined, goalGap: v.goalGap ?? undefined,
       }),
     },
   };
