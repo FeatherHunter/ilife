@@ -71,8 +71,10 @@ const PAGE_CASES = [
     id: '60 饮食复盘（本周）（周末/工作日拆卡）',
     key: 'calorie.view.diet-review',
     params: { window: '本周' },
+    /* #587 裁定1：周末/工作日拆卡 map 期已被四张蛋白卡取代（t273 锁死：总热量／日均热量／总蛋白／日均蛋白），
+       t511 期望 stale——改到现行四卡口径。旧 want（工作日平均／周末平均）在饮食域无此串来源。 */
     gone: ['周末/工作日', '均值（卡）'],
-    want: ['工作日平均', '周末平均'],
+    want: ['总热量', '日均热量', '总蛋白', '日均蛋白'],
   },
   {
     id: '75 搜食品（空品牌不再印破折号）',
@@ -117,8 +119,13 @@ function renderOk(dir, key, params, what) {
 /** 可见文本里的行（剥掉复制载荷）。 */
 const linesOf = (html) => visibleText(stripCopyPayload(html)).split('\n').map((l) => l.trim()).filter(Boolean);
 
-/** 页头 H1：跳掉页头族名那两行（「卡路里·饮食」／「卡路里 · 饮食」）。 */
-const h1Of = (html) => linesOf(html).find((l) => !/^卡路里\s*[·・]/.test(l)) ?? '';
+/** 页头 H1：从 `<h1 class="ilife-block-page-shell-title">` 取 innerText（#587 裁定2）。
+ *  旧写法取可见文本首个非族名行，取到的是 meta 行不是 H1；新写法对现行全部断言行为不变（逐条验证），变异项随之变真红。 */
+const h1Of = (html) => {
+  const m = /<h1[^>]*class="[^"]*ilife-block-page-shell-title[^"]*"[^>]*>([\s\S]*?)<\/h1>/.exec(html);
+  if (m === null) return '';
+  return m[1].replace(/<[^>]*>/g, '').trim();
+};
 
 for (const { c, status, stderr, html, text } of RENDERED) {
   test('#511 ① 面外残留逐页收掉 —— ' + c.id, () => {
