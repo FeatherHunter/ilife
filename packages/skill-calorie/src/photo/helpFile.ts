@@ -20,6 +20,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { HELP_CONTACT } from './helpCenter.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import type { WakeGroupAsset } from '../triggers/wake-assets.js';
+import { SCENE_09_PHOTO } from '../triggers/scene-09-photo.js';
 import { renderHelpShellHtml } from '../render/helpShell.js';
 
 /** 「卡路里help」交付文件的文件名主体（接线层写死；调用方不接受外部传入，S3-3）。 */
@@ -49,9 +50,38 @@ export function formatHelpMinute(now: Date): string {
     + ' ' + p(now.getHours()) + ':' + p(now.getMinutes());
 }
 
+/** #437 · 把 scene 09 那十条的 `prompt_template` 换成 **SoT（`SCENE_09_PHOTO`）** 的值。
+ *
+ *  分叉事实（2026-09-16 实测）：`WAKE_GROUPS`（`wake-assets.ts`，机器生成的老资产）里
+ *  `body_photo` 组十条 prompt **与 SoT 十条逐条不同**（10/10），且 #345 给速查写的流程句
+ *  （「动笔前请先出预检确认页」／「动手前请先出候选页」）**在缺省 HELP 里 0 命中** —— 即默认交付的
+ *  `卡路里_HELP_<时间戳>.html` 读不出「先出哪张过程型页」。
+ *
+ *  合口径的**唯一改动地就是这里**：`wake-assets.ts` 是生成物（头注禁令：不许手改，改词即改 SoT），
+ *  133 指纹也不动；只在装配这一步按**场景 id ↔ trigger key** 覆盖 prompt 文本，其余字段（标题／唤醒词／
+ *  分组／图标／顺序）仍由资产给——分叉只剩「prompt 文本」这一处，而它现在只有一个定义地。 */
+function withScene09Prompts(groups: readonly WakeGroupAsset[]): readonly WakeGroupAsset[] {
+  // `Trigger` 是 `SceneTrigger | LegacyTrigger` 的联合（老条目没有 key／prompt_template），
+  // 故按 SoT 的家法收窄（同 `helpLookup.ts` 的 `keyOf` 一脉），不硬转。
+  const byKey = new Map<string, string>();
+  for (const t of SCENE_09_PHOTO) {
+    if ('key' in t && 'prompt_template' in t) byKey.set(t.key, t.prompt_template);
+  }
+  return groups.map((g) => (g.id !== 'body_photo' ? g : {
+    ...g,
+    subgroups: g.subgroups.map((sg) => ({
+      ...sg,
+      scenes: sg.scenes.map((sc) => {
+        const prompt = byKey.get(sc.id);
+        return prompt === undefined || prompt === sc.prompt_template ? sc : { ...sc, prompt_template: prompt };
+      }),
+    })),
+  }));
+}
+
 /** 资产 → 5 键 JSON（纯函数；组数／场景数由资产派生，不写死 10／436）。 */
 export function buildHelpFileData(now: Date = new Date()): HelpFileData {
-  const groups: readonly WakeGroupAsset[] = WAKE_GROUPS;
+  const groups: readonly WakeGroupAsset[] = withScene09Prompts(WAKE_GROUPS);
   if (groups.length === 0 || WAKE_ASSETS.length === 0) {
     throw new CalorieRenderError('missing-data', 'HELP 资产分组缺失（WAKE_GROUPS 空）');
   }
