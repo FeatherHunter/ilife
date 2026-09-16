@@ -1,4 +1,0 @@
-﻿ℹ tests 138
-ℹ suites 32
-ℹ pass 138
-ℹ fail 0

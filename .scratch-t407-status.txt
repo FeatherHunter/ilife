@@ -1,6 +1,0 @@
-﻿A  docs/skills/skill-bill/t407-整改-桌面版式与收尾-证据.md
-M  packages/skill-bill/src/shared/copyArea.ts
-M  packages/skill-bill/src/shared/docPage.ts
-A  packages/skill-bill/test/desktop-copy.test.mjs
-M  packages/skill-bill/test/record-write.test.mjs
-M  packages/skill-bill/test/user-wording.test.mjs

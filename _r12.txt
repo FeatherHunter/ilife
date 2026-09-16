@@ -1,6 +1,0 @@
-﻿1277:   .ilife-page-printable .ilife-block-copy-block {
-1553: .ilife-block-detail-section {
-1561: .ilife-block-detail-section-title {
-1566: .ilife-block-detail-section-meta {
-1573: .ilife-block-detail-section-wake {
-1578: .ilife-block-detail-section-dev {

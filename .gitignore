@@ -8,3 +8,17 @@ packages/*/dist/
 .dsh-vision-router/
 # skills deck 插件的工作副本（工具产物，可重跑生成，不入库）
 .dsh-mattskillsdeck-cache/
+# P0 清账（#624）：ed87c79 曾把根目录施工作业副本误入库；以下全部锚定仓库根（/ 前缀），子目录不受影响
+/_r*.txt
+/_*.ps1
+/.scratch-t*
+/.scratch_t*
+/.t499-*
+/.tmp-394-*
+/.tmp-*
+/.t512j-*
+/900
+/undefined
+/probe.mjs
+/fieldLabel.ts
+/_t407_audit/

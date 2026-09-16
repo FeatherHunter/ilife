@@ -1,1 +1,0 @@
-﻿  var CLOSE_CLASS = "ilife-toast-close";

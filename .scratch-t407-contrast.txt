@@ -1,6 +1,0 @@
-﻿ghost复制数据/日志字(--blue2 #0a63ce) on 底(--card #ffffff) = 5.69:1
-菜单用途提示(--fg2 #6e6e73) on 底(--card #ffffff) = 5.07:1
-撤销红钮白字(#ffffff) on 底(#ff3b30) = 3.55:1
-已消除的置灰位(--fg3 #86868b) on 底(--soft #f5f8ff) = 3.41:1
-LF packages/skill-bill/src/shared/docPage.ts = 69
-LF packages/skill-bill/src/shared/copyArea.ts = 150

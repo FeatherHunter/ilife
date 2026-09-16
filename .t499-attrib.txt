@@ -1,7 +1,0 @@
-step1: 两件已置回 HEAD 版本
-baseline-before-attrib: BASELINE-DIFF 10 pages（见 .t499-final-check.txt）
-tsc-exit=0
-ISOLATED {"exit":1,"verdict":"BASELINE-DIFF 10 pages"}
-restored-byte-identical=true
-tsc-restore-exit=0
-AFTER-RESTORE {"exit":1,"verdict":"BASELINE-DIFF 10 pages"}
