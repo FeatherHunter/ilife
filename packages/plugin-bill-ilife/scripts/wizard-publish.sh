@@ -203,7 +203,7 @@ finish() {
 TOTAL_STAGES=5
 
 REG="https://registry.npmjs.org"
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
 V_PLUGIN="0.2.0"
