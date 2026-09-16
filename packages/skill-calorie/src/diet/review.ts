@@ -78,8 +78,13 @@ export function viewDietReview(params: Record<string, unknown>, db: DatabaseSync
     return { data: { metrics: {} }, html: buildDietReviewDoc(null, top5, { start, end, command, entry }) };
   }
   /* #275 交过来的两个具名区块之一：**在这里集成**（取数仍是 #275 的 `buildNutritionRatioView`，
-     本件只把它接进复盘页；配比页那支 `buildNutritionRatioDoc` 与本页无关）。 */
-  const nutrition = buildNutritionRatioBlock(loaded.ratio);
+     本件只把它接进复盘页；配比页那支 `buildNutritionRatioDoc` 与本页无关）。
+     #648 · 本件这一处是「复盘 8 词」那 8 页读营养配比区块的**唯一入口**，在这里开短名化即完成
+     #629 的 10 页铺开（配比页那一页由 `nutritionPortDocs.ts` 的 `buildNutritionRatioDoc` 自开）；
+     名称栏只出短名（蛋白／碳水／脂肪），推荐范围由区块内那张恒出的「推荐范围对比」表承担——
+     形状裁定与一页验证见 #647（`docs/base/base-render/t647-形状-证据.md`），
+     10 页逐页读数与独立复核见 #648（`docs/base/base-render/t648-复核-证据.md`）。 */
+  const nutrition = buildNutritionRatioBlock(loaded.ratio, { shortNames: true });
   const metrics = nums({
     loggedDays: r.loggedDays,
     'meal.早餐': r.byMeal.find((s) => s.meal === '早餐')?.totalCalories,
