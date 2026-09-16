@@ -153,43 +153,23 @@ function weeksOf(plan: Record<string, unknown>): EditorWeek[] {
   return rowsOf(plan['weeks']).slice(0, WEEK_CAP).map((w, i) => weekOf(w, i));
 }
 
-/** 动作库（选择层「从库里选」那一半）：先放本次计划里出现过的动作，再把库面多出来的名字补进去。
- *  库面三档：用户传了 `catalog` 参数就用它的；没传就用包内预置训记官方库
+/** 动作库（选择层「从库里选」那一半）：只装库里的动作，库外动作不进选择层。
+ *  库面两档：用户传了 `catalog` 参数就用它的；没传就用包内预置训记官方库
  *  （`data/训记官方动作.json`，读法见 `fetch/xunji-catalog.ts` 的 `loadPresetCatalogNames`）；
- *  预置库也缺才退回只用讨论结果自带。页面**不内嵌全库**（对齐记录 B3 的后半句——预置库落地后
+ *  两者都没有就空库。页面**不内嵌全库**（对齐记录 B3 的后半句——预置库落地后
  *  参数只作覆盖用；D1 的格式问题随预置文件一并落定：名数组）。
  *  预置库名只有名、没有部位/类型，一律按力量默认参数进选择层（与原来 `catalog` 参数同口）。
  *  预置库只管「从库里选」，不管校验口径——校验读数（`buildPlanWizardView`）仍只吃用户传的 catalog：
  *  官方库里没有爬楼机/椭圆机这类有氧名，校验口径一并切过去会把现有页染红，故两条线分开。 */
-function libOf(plan: Record<string, unknown>, catalog: readonly string[] | undefined, fromPreset: boolean): { lib: EditorMove[]; libSource: string } {
+function libOf(catalog: readonly string[] | undefined, fromPreset: boolean): { lib: EditorMove[]; libSource: string } {
   const seen = new Map<string, Omit<EditorMove, 'sets' | 'reps' | 'mode' | 'load' | 'minutes'>>();
-  for (const w of rowsOf(plan['weeks'])) {
-    if (!isRecord(w)) continue;
-    for (const d of rowsOf(w['days'])) {
-      if (!isRecord(d)) continue;
-      for (const s of rowsOf(d['sessions'])) {
-        if (!isRecord(s)) continue;
-        for (const m of rowsOf(s['movements'])) {
-          if (!isRecord(m)) continue;
-          const name = asText(m['name']).trim();
-          if (name === '' || seen.has(name)) continue;
-          const type = asText(m['type']).trim();
-          const part = asText(m['part']).trim();
-          seen.set(name, {
-            name, part: part === '' ? UNKNOWN_PART : part, type,
-            equip: inferEquipment(name) ?? '', kind: type.includes(CARDIO) ? CARDIO : '力量', goal: '',
-          });
-        }
-      }
-    }
-  }
   for (const name of catalog ?? []) {
     if (name === '' || seen.has(name)) continue;
     seen.set(name, { name, part: UNKNOWN_PART, type: '', equip: inferEquipment(name) ?? '', kind: '力量', goal: '' });
   }
   const lib = [...seen.values()].map((h) => ({ ...h, sets: NEW_MOVE_SETS, reps: NEW_MOVE_REPS, mode: 'kg' as const, load: 0, minutes: h.kind === CARDIO ? NEW_MOVE_MINUTES : 0 }));
   const src = catalog === undefined
-    ? '动作库：本次讨论结果里带的动作（' + lib.length + ' 件）'
+    ? '动作库：暂无可用来源（' + lib.length + ' 件）'
     : (fromPreset
       ? '动作库：预置训记官方库（' + lib.length + ' 件）'
       : '动作库：命令参数 catalog（' + lib.length + ' 件）');
@@ -224,13 +204,13 @@ function openWeekOf(params: Record<string, unknown>): number | undefined {
 export function editorStateFromPlan(plan: unknown, opts: { catalog?: readonly string[]; openWeek?: number } = {}): EditorState {
   const p = isRecord(plan) ? plan : {};
   const weeks = weeksOf(p);
-  // 库面三档（只管「从库里选」，校验读数仍只吃用户传的 catalog，见 viewPlanEditor）：
-  // 用户显式传了 catalog 就用它的；没传就读包内预置训记官方库；预置库也缺才退回讨论结果自带。
+  // 库面两档（只管「从库里选」，校验读数仍只吃用户传的 catalog，见 viewPlanEditor）：
+  // 用户显式传了 catalog 就用它的；没传就读包内预置训记官方库；预置库也缺就空库。
   const userCatalog = opts.catalog;
   const presetNames = userCatalog === undefined ? loadPresetCatalogNames() : [];
   const { lib, libSource } = userCatalog !== undefined
-    ? libOf(p, userCatalog, false)
-    : (presetNames.length > 0 ? libOf(p, presetNames, true) : libOf(p, undefined, false));
+    ? libOf(userCatalog, false)
+    : (presetNames.length > 0 ? libOf(presetNames, true) : libOf(undefined, false));
   const cfg = isRecord(p['config']) ? p['config'] : {};
   const title = asText(cfg['title']).trim();
   return {

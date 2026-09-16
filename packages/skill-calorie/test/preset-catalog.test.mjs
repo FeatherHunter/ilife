@@ -30,4 +30,11 @@ describe('预置训记官方动作库', () => {
     const st = editorStateFromPlan({}, { catalog: ['俯卧撑'] });
     assert.ok(st.libSource.startsWith('动作库：命令参数 catalog（'), st.libSource);
   });
+  it('选择层仅库：计划自带但库外的动作不进选择层', () => {
+    const names = loadPresetCatalogNames();
+    assert.ok(!names.includes('爬楼机'));
+    const st = editorStateFromPlan({ weeks: [{ week_number: 1, days: [{ day_of_week: 1, sessions: [{ session_label: '凌晨', movements: [{ name: '爬楼机' }] }] }] }] });
+    assert.equal(st.lib.length, names.length);
+    assert.ok(!st.lib.some((m) => m.name === '爬楼机'));
+  });
 });
