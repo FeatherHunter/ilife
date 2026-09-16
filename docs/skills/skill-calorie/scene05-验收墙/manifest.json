@@ -1,7 +1,7 @@
 {
   "batch": "scene05-验收墙",
   "madeAt": "2026-09-16",
-  "source": "场景05 全量重跑批：`docs/skills/skill-calorie/t351-v7-run-176-207.mjs`（入仓跑批件）持锁跑出的 `.scratch/t157-libonly/products/`（37 份 HTML ＋ `detail.json` 读数，66/66 ＋判据 29/29 全绿，runId t157-libonly-batch；186 格动作库件数＝1092）。前四批 `.scratch/t157-final/products/`、`.scratch/t157-slot-time/products/`、`.scratch/t157-slot-tab/products/` 与 `.scratch/t157-lib/products/`（逐条实跑证据见 `docs/skills/skill-calorie/t351-v19-evidence.md`，门禁读数见同目录 `t351-v19-gate-runs.md`）。本次刷新事由：编辑器动作库预置训记官方库（包内 `data/训记官方动作.json`，1092 名），选择层仅装库内动作；其余 36 格与上一批仅页脚时间戳不同。",
+  "source": "场景05 全量重跑批：`docs/skills/skill-calorie/t351-v7-run-176-207.mjs`（入仓跑批件）持锁跑出的 `.scratch/t157-filt/products/`（37 份 HTML ＋ `detail.json` 读数，66/66 ＋判据 29/29 全绿，runId t157-filt-batch；186 格动作库件数＝1092）。前五批 `.scratch/t157-final/products/`、`.scratch/t157-slot-time/products/`、`.scratch/t157-slot-tab/products/`、`.scratch/t157-lib/products/` 与 `.scratch/t157-libonly/products/`（逐条实跑证据见 `docs/skills/skill-calorie/t351-v19-evidence.md`，门禁读数见同目录 `t351-v19-gate-runs.md`）。本次刷新事由：编辑器动作库预置训记官方库（包内 `data/训记官方动作.json`，1092 名），选择层仅装库内动作且支持三档筛选；其余 36 格与上一批仅页脚时间戳不同。",
   "naming": "发布名 ＝ 清单 rows[].file，**全仓只在本清单算一处**；规则＝唤醒词 ＋ `.html`，同一条词有过程页与回执页两份时用 `-预检`／`-回执` 后缀（照 `scene06-验收墙` 的既有样子）。**唯一例外**：order 186「定训练计划」那一格换装成**计划编辑器（可写页）**后不再有「预检确认」这一步，发布名取 `定训练计划-编辑器.html`（后缀按它**是什么页**给：编辑器）。rows[].src ＝ 该件在原批目录里的文件名；`gen-wall.mjs --stage` 只读这两个字段复制，别处不许再拼名字",
   "counts": {
     "executableWakeWords": 27,
@@ -140,7 +140,7 @@
       "file": "定训练计划-编辑器.html",
       "src": "order186-process.html",
       "key": "calorie.view.plan-wizard",
-      "check": "计划编辑器（可写页）：两排页签（上面选第几周、下面选周几）能不能点、一次只显示一天吗；点加一次训练先选时段（凌晨／上午／下午／晚上，同一时段可建多段，靠起止时间分），一天最多 4 段，建满应有话；每段起止时间两格在段头，锁住的周也改得动吗；动作参数格（组数／每组次数／负重，有氧只填时长）在页上改得动吗，第 2 周起是不是只能改参数、不能增删动作；页底「生成的计划」那张表多出时间列且跟着改动走吗、「复制指令」那颗按钮复制的对不对。"
+      "check": "计划编辑器（可写页）：两排页签（上面选第几周、下面选周几）能不能点、一次只显示一天吗；点加一次训练先选时段（凌晨／上午／下午／晚上，同一时段可建多段，靠起止时间分），一天最多 4 段，建满应有话；每段起止时间两格在段头，锁住的周也改得动吗；动作参数格（组数／每组次数／负重，有氧只填时长）在页上改得动吗，第 2 周起是不是只能改参数、不能增删动作；选动作时能按部位／类型／器材筛吗；页底「生成的计划」那张表多出时间列且跟着改动走吗、「复制指令」那颗按钮复制的对不对。"
     },
     {
       "seq": 12,

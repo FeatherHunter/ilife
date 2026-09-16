@@ -25,7 +25,7 @@ export const PLAN_EDITOR_JS = `
   var daySel = 0;   // 日页签：一次只显示这一天
   var picker = S.openPicker || null;
   var slotPick = null;   // 新建时间段选时段：null＝没在选，否则＝正在选的那天（0基）
-  var filterPart = '全部';
+  var filt = { part: null, kind: null, equip: null };
   var query = '';
 
   function esc(x){
@@ -221,19 +221,32 @@ export const PLAN_EDITOR_JS = `
       + del + '</li>';
   }
 
+  /* 筛选胶囊一颗：dim 只认 part／kind／equip 三档；点已选中的那颗即松开本档。 */
+  function fchip(dim, v){
+    var on = filt[dim] === v;
+    return '<button type="button" class="pe-filter' + (on ? ' is-on' : '') + '" data-act="filter" data-dim="' + dim + '" data-v="' + esc(v) + '">' + esc(v) + '</button>';
+  }
   function pickerHtml(){
     if (!picker) return '';
-    var ps = ['全部'], seen = {}, i;
-    for (i = 0; i < LIB.length; i++) if (!seen[LIB[i].part]) { seen[LIB[i].part] = 1; ps.push(LIB[i].part); }
-    var chips = [];
-    for (i = 0; i < ps.length; i++){
-      chips.push('<button type="button" class="pe-filter' + (ps[i] === filterPart ? ' is-on' : '') + '" data-act="filter" data-p="' + esc(ps[i]) + '">' + esc(ps[i]) + '</button>');
+    var ps = [], ks = [], es = [], seenP = {}, seenK = {}, seenE = {}, i, m0;
+    for (i = 0; i < LIB.length; i++){
+      m0 = LIB[i];
+      if (!seenP[m0.part]){ seenP[m0.part] = 1; ps.push(m0.part); }
+      if (!seenK[m0.kind]){ seenK[m0.kind] = 1; ks.push(m0.kind); }
+      if (m0.equip && !seenE[m0.equip]){ seenE[m0.equip] = 1; es.push(m0.equip); }
     }
+    var chips = [];
+    chips.push('<button type="button" class="pe-filter' + (filt.part === null && filt.kind === null && filt.equip === null ? ' is-on' : '') + '" data-act="filter-clear">全部</button>');
+    for (i = 0; i < ps.length; i++) chips.push(fchip('part', ps[i]));
+    for (i = 0; i < ks.length; i++) chips.push(fchip('kind', ks[i]));
+    for (i = 0; i < es.length; i++) chips.push(fchip('equip', es[i]));
     var used = day(picker.d).sessions[picker.s].moves.length;
     var rows = [];
     for (i = 0; i < LIB.length; i++){
       var m = LIB[i];
-      if (filterPart !== '全部' && m.part !== filterPart) continue;
+      if (filt.part !== null && m.part !== filt.part) continue;
+      if (filt.kind !== null && m.kind !== filt.kind) continue;
+      if (filt.equip !== null && m.equip !== filt.equip) continue;
       if (query && m.name.toLowerCase().indexOf(query) < 0 && m.part.indexOf(query) < 0) continue;
       rows.push('<li><button type="button" class="pe-lib-row" data-act="pick" data-name="' + esc(m.name) + '"' + (used >= MAXM ? ' disabled' : '') + '>'
         + '<span class="pe-lib-nm">' + esc(m.name) + '</span>'
@@ -242,7 +255,7 @@ export const PLAN_EDITOR_JS = `
         + '</button></li>');
     }
     var list = rows.length ? '<ul class="pe-lib">' + rows.join('') + '</ul>'
-      : '<p class="pe-lib-empty">这个筛选下没有动作。换个部位，或把搜索词清掉。</p>';
+      : '<p class="pe-lib-empty">这个筛选下没有动作。换个筛选，或把搜索词清掉。</p>';
     return '<div class="pe-sheet">'
       + '<div class="pe-sheet-box">'
       +   '<div class="pe-sheet-head"><span class="pe-sheet-t">选动作</span>'
@@ -349,9 +362,14 @@ export const PLAN_EDITOR_JS = `
       var want = el.getAttribute('data-slot');
       day(d).sessions[s].slot = want; render(); return;
     }
-    if (act === 'add-move'){ picker = { w: week, d: d, s: s }; query = ''; filterPart = '全部'; render(); return; }
+    if (act === 'add-move'){ picker = { w: week, d: d, s: s }; query = ''; filt = { part: null, kind: null, equip: null }; render(); return; }
     if (act === 'close-picker'){ picker = null; render(); return; }
-    if (act === 'filter'){ filterPart = el.getAttribute('data-p'); render(); return; }
+    if (act === 'filter'){
+      var dim = el.getAttribute('data-dim'), vv = el.getAttribute('data-v');
+      if (dim !== 'part' && dim !== 'kind' && dim !== 'equip') return;
+      filt[dim] = (filt[dim] === vv ? null : vv); render(); return;
+    }
+    if (act === 'filter-clear'){ filt = { part: null, kind: null, equip: null }; render(); return; }
     if (act === 'pick'){
       if (!picker) return;
       var name = el.getAttribute('data-name'), hit = null, i;
