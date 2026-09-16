@@ -112,8 +112,16 @@ function run(key, params) {
 const CHECK = {
   结果型: '数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。',
   回执型: '写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。',
-  过程型: '预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。',
+  过程型: '预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面无取数／无AI生成逻辑、确认那一步写得清不清楚。',
 };
+
+/** 自动算三条的冻结原文带 `"profile":"cut"`（`scene-06-goal.ts` 的 `main_prompt.cli` 原文）：
+ *  预检页必须带上它才会出推荐值，不带只出「不推荐／档案不齐，本页不出推荐值」。 */
+const AUTO_PROFILE_WAKES = new Set([
+  '定营养目标(自动算)',
+  '定饮水目标(自动算)',
+  '一键定全套目标',
+]);
 
 /** 墙自检实读（重出后按 `node gen-wall.mjs …` 正例与反例各跑一遍抄回；**只此一处**，别处不许再写这两个数）。 */
 const WALL_SELFCHECK = {
@@ -158,9 +166,13 @@ for (const t of SCENE_06_GOAL) {
   }
 
   // ② 过程型：11 条带空位写词共用同一张预检确认页（按词出页，页内展开的是这一条词）。
+  //  S1（#611 复核）：自动算三条跑冻结原文（含 `"profile":"cut"`），其余 8 条跑派生命令（`{"wake":…}`）。
   if (needsPrecheck) {
     const preFile = `${wake}-预检.html`;
-    const r = run('calorie.view.goal-wizard', JSON.stringify({ wake }));
+    const preParams = AUTO_PROFILE_WAKES.has(wake)
+      ? JSON.stringify({ profile: 'cut', wake })
+      : JSON.stringify({ wake });
+    const r = run('calorie.view.goal-wizard', preParams);
     if (!r.ok) { problems.push(`${wake}（预检页）：${r.err}`); }
     else {
       const complete = /^<!doctype html>/i.test(r.html.trim());
@@ -171,7 +183,7 @@ for (const t of SCENE_06_GOAL) {
       rows.push({
         seq, family: '预检确认页（过程型 11 条）', kind: complete ? '过程型' : '过程型·片段', wake,
         title: `${wake} · 预检确认页`, file: preFile, key: 'calorie.view.goal-wizard',
-        cli: `calorie-cmd-read calorie.view.goal-wizard --params '{"wake":"${wake}"}'`,
+        cli: `calorie-cmd-read calorie.view.goal-wizard --params '${preParams}'`,
         prompt: t.prompt_template, bytes: r.bytes, template, complete, check: CHECK['过程型'],
       });
     }
@@ -324,7 +336,7 @@ const checklist = `# 场景06 目标管理 · 逐格缺陷清单（${rows.length
 - 自检读数：${WALL_SELFCHECK.positive}；
   ${WALL_SELFCHECK.negative}。
 - 数据来源：一次性临时库（\`seedFull\` 种子 ＋ \`CALORIE_TODAY=2026-09-07\`）；写类命令写的是这份临时库，**没碰真库**。
-- 唤醒词与命令：前 33 格逐条取 \`src/triggers/scene-06-goal.ts\` 的 25 条冻结词表原文（跑它自己的 \`main_prompt.cli\`，不另拟命令）；第 34 格是自造词「看目标推荐」，命令取路由层别名表 \`src/goal/routes.ts:37\` 原文。
+- 唤醒词与命令：主产物 33 件逐条取 \`src/triggers/scene-06-goal.ts\` 的 25 条冻结词表原文（跑它自己的 \`main_prompt.cli\`，不另拟命令）；11 件预检页是派生命令（见本目录 produce.mjs 预检分支：自动算三条按冻结原文加 profile cut，其余 8 条只带 wake）；第 34 格是自造词「看目标推荐」，命令取路由层别名表 \`src/goal/routes.ts:37\` 原文。
 
 ## 一、机器读数逐格（生产者出，不靠人眼）
 

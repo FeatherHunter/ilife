@@ -205,7 +205,9 @@ ${notShippedHtml}
   return { name: INDEX, html };
 }
 
-/** ④ 自检：`dropped`（清单点名却没有文件）与 `dead`（页上引用却落不到）**一起判**。 */
+/** ④ 自检：`dropped`（清单点名却没有文件）与 `dead`（页上引用却落不到）**一起判**，
+ *  再加 S2（#611 复核）：清单 `rows.length` ＝ 两张墙 `<figure>` 数 ＝ 总索引卡数，不等即点名 exit 1
+ * （防墙上砍掉一格仍报可发的假绿灯）。 */
 function selfCheck(dir, rows, pages) {
   const dropped = rows.filter((r) => !r.file || !existsSync(join(dir, r.file)));
   const refs = [];
@@ -216,9 +218,26 @@ function selfCheck(dir, rows, pages) {
     perPage.push(`${p.name} ${mine.length}`);
   }
   const dead = [...new Set(refs)].filter((r) => !existsSync(join(dir, decodeURIComponent(r))));
+  // S2：按盘上文件数格子（刚建的墙已落盘，读盘即最新；--check 模式同样覆盖两张墙＋总索引）。
+  const countBad = [];
+  for (const wn of [WALL_MOBILE, WALL_DESKTOP]) {
+    const wp = join(dir, wn);
+    if (existsSync(wp)) {
+      const html = readFileSync(wp, 'utf8');
+      const figs = (html.match(/<figure[\s>]/g) || []).length;
+      if (figs !== rows.length) countBad.push(`墙格数不对：${wn} 有 ${figs} 格，清单有 ${rows.length} 行`);
+    }
+  }
+  const ip = join(dir, INDEX);
+  if (existsSync(ip)) {
+    const html = readFileSync(ip, 'utf8');
+    const cards = (html.match(/class="card"/g) || []).length;
+    if (cards !== rows.length) countBad.push(`总索引卡数不对：${INDEX} 有 ${cards} 卡，清单有 ${rows.length} 行`);
+  }
   const bad = [
     ...dropped.map((r) => `清单点名却没有文件：${r.seq} ${r.wake} -> ${r.file || '（file 字段缺失）'}`),
     ...dead.map((d) => `页上引用却落不到：${d}`),
+    ...countBad,
   ];
   const kept = rows.length - dropped.length;
   const clean = bad.length === 0;
