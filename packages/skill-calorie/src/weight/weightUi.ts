@@ -104,7 +104,6 @@ export function weightUiCss(): string {
     + 'border-radius:999px;padding:3px 10px;background:var(--soft);color:var(--blue2)}'
     + '.wui-chip-warn{background:#fff5e0;color:#a25b00}'
     + '.wui-chip-plain{background:var(--line);color:var(--fg2)}'
-    + '.wui-chip-plain{background:var(--line);color:var(--fg2)}'
     // ── 脚注小字（口径说明、图例说明）──
     + '.wui-note{font-size:12px;line-height:1.6;color:var(--fg2);margin:2px 0 0}'
     // ── 逐条列表（替掉「前提一；前提二」那类分号串）──
