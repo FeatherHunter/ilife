@@ -32,7 +32,7 @@
  * 红不了也绿不了——本件一律按真类名断言。
  *
  * 跑法：`node --test packages/skill-calorie/test/t275-营养饮水总览页.test.mjs`
- * （先 `npx tsc -b packages/base-render packages/skill-calorie`）。
+ * （先 `node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie`）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

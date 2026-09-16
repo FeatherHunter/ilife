@@ -13,7 +13,7 @@
  *  ⑨ 窗口：`window` 三种写法各自落到对的窗口（30 天／本月／自定义）；
  *  ⑩ 变异自证：把列序改回「写死一套」、把日志第 4 段改成常量句，同一段断言必红。
  *
- * 跑法：`node --test packages/skill-calorie/test/t272-排行榜页.test.mjs`（先 `npx tsc -b packages/skill-calorie`）。
+ * 跑法：`node --test packages/skill-calorie/test/t272-排行榜页.test.mjs`（先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

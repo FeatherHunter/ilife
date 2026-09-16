@@ -14,7 +14,7 @@
  *  ⑤ **变异自证**：改坏源件一处 ⇒ 同一段断言必红；逐文件还原 ⇒ 变绿（两行机器读数见证据件）。
  *
  * 跑法：`node --test packages/skill-calorie/test/t273-review-meal.test.mjs`
- * （先 `npx tsc -b packages/base-render packages/skill-calorie`）
+ * （先 `node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie`）
  *
  * **件名与历史**：本探针原住 `test/diet-review-t273.test.mjs`（`68332d5` 那一笔），收口时按票面
  * 「`test/t273-*.test.mjs`」改名到本件——**一处定义**，不留同内容的第二份副本。
