@@ -183,7 +183,10 @@ test('#271 餐别支／总览支：调用点给了取数才换页，区块走 #2
     },
   }));
   assert.ok(meal.includes('ilife-block-dist-row'), '餐别支没出 #273 的占比条');
-  assert.ok(meal.includes('餐别分布 2026-09-01 ~ 2026-09-07'), '餐别支页名不对');
+  /* #588 跟改：餐别支的页名不带窗口（`todayDocs.ts:230` 逐字「餐别分布」，窗口归页顶窗口条与读数卡
+     detail），旧期望「餐别分布 2026-09-01 ~ 2026-09-07」是去分隔符那一波之前的形状。 */
+  assert.ok(meal.includes('<h1 class="ilife-block-page-shell-title">餐别分布</h1>'), '餐别支页名不对');
+  assert.ok(meal.includes('2026-09-01 至 2026-09-07（7 天）'), '餐别支没把窗口印在读法里');
   assert.ok(visibleText(meal).includes('早餐热量占比最高'), '餐别支没把 #273 的结论句放进副题槽');
   const ov = BUILD_VIEW(sampleInput({
     overviewView: {
