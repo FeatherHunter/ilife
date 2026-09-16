@@ -14,10 +14,16 @@ export const PLUGIN = 'dsh-calorie' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
 export const SKILL_PACKAGE = 'skill-calorie' as const;
 
-/** 版本行唯一来源（面板展示用；smoke 断言与两处 package.json 一致，防漂移）。
- * 发版 bump 时同步改这里（与 package.json 同值）。 */
-export const PLUGIN_VERSION = '0.2.4' as const;
-export const SKILL_VERSION = '0.2.3' as const;
+/** #130：手写版本常量（旧 PLUGIN_VERSION／SKILL_VERSION）已删除，旧「发版 bump 时同步改这里」纪律一并废止。
+ *
+ * 版本号唯一真相源＝已安装的磁盘 package.json，本文件不再持有任何版本值（也不再有版本兼容层）。
+ * 两个原因必须如此：
+ * ① 手写常量是第二真相源，发版只 bump package.json 时面板就会撒谎（#130 的缺陷本身）；
+ * ② 本文件被 src/client.ts 引入（client 束），而版本读取在 host 侧——若在此 import
+ *    './bridge.js'，bridge 的 5 个 node: 导入会被带进浏览器束，破 DSH client 纯度契约。
+ * 面板版本只走一条路：host（bridge.readInstalledVersions，读双 package.json）→ RPC
+ * （键见 bridge.VERSION_READ_KEY）→ client 纯渲染（读不到侧显示 unknown）。
+ */
 
 export interface SlotDescriptor {
   readonly skill: string;

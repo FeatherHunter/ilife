@@ -7,7 +7,7 @@
  * 技能包不动（只读）；combos.yaml 不动。
  */
 import { spawnSync } from 'node:child_process';
-import { accessSync, constants } from 'node:fs';
+import { accessSync, constants, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +19,99 @@ export const MANAGER_PACKAGE = 'dsh-life-pack' as const;
 
 export const MANAGER_MISSING_HINT =
   '总管缺席，请补装：dsh plugin add dsh-life-pack dsh-calorie（不许单卸总管）';
+
+/** #130 版本通道（host 侧动态读取已安装版本，client 纯渲染）。
+ *
+ * 唯一真相源=磁盘 package.json：插件取自身 package.json 的 version，
+ * skill 取已安装 skill-calorie/package.json 的 version（createRequire 按包名定位安装态）。
+ * client 禁 node（见 client.ts 头注释），故读取只许在 host 侧（本文件），
+ * 经现有 connection.rpc.call 模式（同 READ 端点、VERSION_READ_KEY 魔键）传给面板，
+ * client 只渲染 host 给的值，读不到侧显示 unknown（见 client normalizeVersion）。
+ * 不引入新运行时依赖；只解析 version 字段，不读 SKILL 正文、不改 provider 解析路径。
+ */
+export const VERSION_UNKNOWN = 'unknown' as const;
+export const VERSION_READ_KEY = 'dsh-calorie.version' as const;
+
+export interface InstalledVersions {
+  readonly plugin: string;
+  readonly skill: string;
+}
+
+/** 插件自身 package.json 路径（dist/bridge.js → ../package.json；dev 单仓与安装态 node_modules 同形）。 */
+export function pluginPackageJsonPath(): string {
+  return join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
+}
+
+/** 已安装 skill 包 package.json 路径（按包名解析安装态；失败回退单仓相对路径）。 */
+export function skillPackageJsonPath(): string {
+  try {
+    return createRequire(import.meta.url).resolve(SKILL_PACKAGE + '/package.json');
+  } catch {
+    return join(repoRoot(), 'packages', SKILL_PACKAGE, 'package.json');
+  }
+}
+
+function readOneVersion(path: string): { readonly version: string | null; readonly reason: string } {
+  let raw: string;
+  try {
+    raw = readFileSync(path, 'utf8');
+  } catch (e) {
+    return { version: null, reason: 'read failed: ' + (e instanceof Error ? e.message : String(e)) };
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch (e) {
+    return { version: null, reason: 'parse failed: ' + (e instanceof Error ? e.message : String(e)) };
+  }
+  const v = (parsed as { version?: unknown } | null | undefined)?.version;
+  if (typeof v !== 'string' || v.trim().length === 0) return { version: null, reason: 'version field missing or empty' };
+  return { version: v.trim(), reason: '' };
+}
+
+/** host 侧读已安装双 package.json（永不抛；失败侧 unknown＋warn 留痕，含路径与原因）。 */
+export function readInstalledVersions(opts?: {
+  readonly pluginPath?: string;
+  readonly skillPath?: string;
+  readonly logger?: { warn?: (...args: unknown[]) => void };
+}): InstalledVersions {
+  try {
+    const pluginPath = opts?.pluginPath ?? pluginPackageJsonPath();
+    const skillPath = opts?.skillPath ?? skillPackageJsonPath();
+    const warn =
+      opts?.logger && typeof opts.logger.warn === 'function'
+        ? opts.logger.warn.bind(opts.logger)
+        : console.warn.bind(console);
+    const p = readOneVersion(pluginPath);
+    const s = readOneVersion(skillPath);
+    if (!p.version) {
+      try {
+        warn('[dsh-calorie] version read failed (plugin): path=' + pluginPath + ' reason=' + p.reason);
+      } catch {
+        /* warn 不得抛，面板降级不受影响 */
+      }
+    }
+    if (!s.version) {
+      try {
+        warn('[dsh-calorie] version read failed (skill): path=' + skillPath + ' reason=' + s.reason);
+      } catch {
+        /* warn 不得抛 */
+      }
+    }
+    return { plugin: p.version ?? VERSION_UNKNOWN, skill: s.version ?? VERSION_UNKNOWN };
+  } catch (e) {
+    try {
+      const warn =
+        opts?.logger && typeof opts.logger.warn === 'function'
+          ? opts.logger.warn.bind(opts.logger)
+          : console.warn.bind(console);
+      warn('[dsh-calorie] version read failed (both): reason=' + (e instanceof Error ? e.message : String(e)));
+    } catch {
+      /* 兜底不抛 */
+    }
+    return { plugin: VERSION_UNKNOWN, skill: VERSION_UNKNOWN };
+  }
+}
 
 export class SkillBridgeError extends Error {
   readonly code: 'missing-cli' | 'fetch-failed' | 'bad-json' | 'key-mismatch';
@@ -85,6 +178,9 @@ export function resolveNodeBin(execPath: string = process.execPath): { readonly 
 
 /** 同步取数：spawn 技能 cmd_read，返回 envelope data（缺失阻断）。 */
 export function readViaCli(key: string, params: Record<string, unknown> = {}): unknown {
+  // #130 版本通道：不走 CLI spawn，直接读已安装 package.json；永不抛，失败侧 unknown＋warn。
+  // 经现有 connection.rpc.call 模式（同 READ 端点）透传，index.ts 无需改动。
+  if (key === VERSION_READ_KEY) return readInstalledVersions();
   const bin = cliPath();
   assertCliPresent(bin);
   const { bin: node, extraEnv } = resolveNodeBin();

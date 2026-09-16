@@ -17,9 +17,9 @@
  */
 import * as React from 'react';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
-import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE, PLUGIN_VERSION, SKILL_VERSION } from './slot.js';
+import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE } from './slot.js';
 import { SETTING_ROWS } from './settings.js';
-import type { ClientCtx, RpcCallResult } from './dsh-ctx.js';
+import type { ClientCtx, RpcCallFace, RpcCallResult } from './dsh-ctx.js';
 
 export const inject = ['slots', 'connection'];
 
@@ -51,9 +51,53 @@ const S = {
   } as React.CSSProperties,
 };
 
-/** 版本行：插件与技能双版本号（用户要求：每技能设置页自报家门）。 */
-function VersionLine(): React.ReactElement {
-  return React.createElement('div', { style: S.version }, `${PLUGIN} ${PLUGIN_VERSION} · ${SKILL_PACKAGE} ${SKILL_VERSION}`);
+/** #130 版本通道（host 侧动态读取已安装版本，client 纯渲染＋unknown 降级）。
+ *
+ * 唯一真相源=磁盘 package.json（host 侧 bridge.readInstalledVersions 读取双 package.json，
+ * 经现有 connection.rpc.call 模式〈同 READ 端点、VERSION_READ_KEY 魔键〉传值，读失败 host 写 warn）。
+ * 本文件禁 node／禁 DOM 直写（document/window/process），故不得直读文件；
+ * 只经 connection.rpc.call 取版本，取不到侧显示 unknown，骨架不变，余部照常，永不抛、永不重试风暴。
+ * VERSION_READ_KEY 与 bridge.VERSION_READ_KEY 同值（client 禁直引 bridge〈会带入 node〉，故镜像定义，权威出处见 bridge.ts）。
+ * 不引入新运行时依赖；不改唤醒词/triggers/HELP/设置行。
+ */
+const VERSION_READ_KEY = 'dsh-calorie.version' as const;
+const VERSION_UNKNOWN = 'unknown' as const;
+
+// 导出供单测复用（面板逻辑不变；权威出处仍见 bridge.ts）。
+export { VERSION_READ_KEY, VERSION_UNKNOWN };
+
+/** 版本归一：非空字符串原样（去首尾空格），余者一律 unknown（降级骨架不断、永不抛）。 */
+export function normalizeVersion(v: unknown): string {
+  return typeof v === 'string' && v.trim().length > 0 ? v.trim() : VERSION_UNKNOWN;
+}
+
+/** 版本行文本（纯函数，供 VersionLine 与单测复用；骨架恒为 `dsh-calorie X · skill-calorie Y`）。 */
+export function formatVersionLine(pluginVersion: unknown, skillVersion: unknown): string {
+  return `${PLUGIN} ${normalizeVersion(pluginVersion)} · ${SKILL_PACKAGE} ${normalizeVersion(skillVersion)}`;
+}
+
+/** 版本行：纯渲染 host 传来的值＋unknown 降级（用户要求：每技能设置页自报家门）。 */
+export function VersionLine(props: { readonly pluginVersion?: unknown; readonly skillVersion?: unknown }): React.ReactElement {
+  return React.createElement('div', { style: S.version }, formatVersionLine(props.pluginVersion, props.skillVersion));
+}
+
+/** 版本取值（与 fetchRead 同 connection.rpc.call 模式；单次、无轮询；任何失败→双 unknown，永不抛）。 */
+export async function fetchVersions(call: unknown): Promise<{ readonly plugin: string; readonly skill: string }> {
+  const fallback = { plugin: VERSION_UNKNOWN, skill: VERSION_UNKNOWN };
+  if (typeof call !== 'function') return { ...fallback };
+  try {
+    const raw: unknown = await withTimeout(
+      (call as RpcCallFace)('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_READ, payload: { key: VERSION_READ_KEY, params: {} } }, AbortSignal.timeout(READ_TIMEOUT_MS)),
+      READ_TIMEOUT_MS,
+    );
+    if (!isRpcResult(raw) || !raw.ok) return { ...fallback };
+    const v = (raw as { value?: unknown }).value;
+    if (typeof v !== 'object' || v === null) return { ...fallback };
+    const rec = v as { plugin?: unknown; skill?: unknown };
+    return { plugin: normalizeVersion(rec.plugin), skill: normalizeVersion(rec.skill) };
+  } catch {
+    return { ...fallback };
+  }
 }
 
 type PanelState =
@@ -145,6 +189,11 @@ async function fetchRead(call: unknown, key: string, params: Record<string, unkn
 /** 技能功能页：sidebar槽里展开的干活区（查数调数，不管配置）。挂载期一次 RPC。 */
 function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
   const [state, setState] = React.useState<PanelState>({ kind: 'loading' });
+  // #130 版本态（初值 unknown 骨架；独立单次 RPC，不阻塞数据、不轮询、不抛）。
+  const [versions, setVersions] = React.useState<{ readonly plugin: string; readonly skill: string }>({
+    plugin: VERSION_UNKNOWN,
+    skill: VERSION_UNKNOWN,
+  });
   React.useEffect(() => {
     let alive = true;
     const date = todayString();
@@ -167,6 +216,21 @@ function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
       alive = false;
     };
   }, [props.getCall]);
+  React.useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const v = await fetchVersions(props.getCall());
+        if (!alive) return;
+        setVersions(v);
+      } catch {
+        /* fetchVersions 永不抛，此处兜底不炸面板 */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [props.getCall]);
   if (state.kind === 'loading') {
     return React.createElement('div', { style: S.card }, React.createElement('div', { style: S.muted }, '卡路里加载中…'));
   }
@@ -176,14 +240,14 @@ function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
       { style: S.card },
       React.createElement('div', { style: S.title }, `卡路里 · ${state.date}`),
       React.createElement('div', { style: S.total }, `total ${state.total}`),
-      React.createElement(VersionLine, null),
+      React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
     );
   }
   return React.createElement(
     'div',
     { style: S.card },
     React.createElement('div', { style: state.kind === 'absent' ? S.muted : S.error }, state.message),
-    React.createElement(VersionLine, null),
+    React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
   );
 }
 
@@ -197,6 +261,11 @@ function controlLabel(control: string): string {
 /** 技能设置页：爱生活页签条下的一页（只读设置行 + 状态读数 + 版本行，禁做假开关）。 */
 function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
   const [state, setState] = React.useState<PanelState>({ kind: 'loading' });
+  // #130 版本态（初值 unknown 骨架；独立单次 RPC，不阻塞数据、不轮询、不抛）。
+  const [versions, setVersions] = React.useState<{ readonly plugin: string; readonly skill: string }>({
+    plugin: VERSION_UNKNOWN,
+    skill: VERSION_UNKNOWN,
+  });
   React.useEffect(() => {
     let alive = true;
     const date = todayString();
@@ -214,6 +283,21 @@ function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
       if (r.ok) setState({ kind: 'data', date, total: r.text });
       else if (r.absent) setState({ kind: 'absent', message: r.message });
       else setState({ kind: 'error', message: r.message });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [props.getCall]);
+  React.useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const v = await fetchVersions(props.getCall());
+        if (!alive) return;
+        setVersions(v);
+      } catch {
+        /* fetchVersions 永不抛，此处兜底不炸面板 */
+      }
     })();
     return () => {
       alive = false;
@@ -242,7 +326,7 @@ function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
         React.createElement('div', { key: row.key }, `${row.title} · ${controlLabel(row.control)}`),
       ),
     ),
-    React.createElement(VersionLine, null),
+    React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
   );
 }
 

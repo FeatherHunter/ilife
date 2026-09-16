@@ -7,8 +7,8 @@ import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
-import { resolveNodeBin, SPAWN_TIMEOUT_MS } from '../dist/bridge.js';
-import { PLUGIN, PLUGIN_VERSION, SKILL_VERSION } from '../dist/slot.js';
+import { resolveNodeBin, SPAWN_TIMEOUT_MS, readInstalledVersions } from '../dist/bridge.js';
+import { PLUGIN } from '../dist/slot.js';
 import { createRequire } from 'node:module';
 const requirePkg = createRequire(import.meta.url);
 
@@ -87,12 +87,15 @@ describe('dsh-calorie 烟囱', () => {
       const r = spawnSync(process.execPath, ['-e', 'setTimeout(()=>{},30000)'], { encoding: 'utf8', timeout: 400 });
       assert.equal(r.error?.code, 'ETIMEDOUT');
     });
-    it('版本行与双 package.json 一致（面板自报家门，防漂移）', () => {
+    it('#130 版本行与双 package.json 一致（动态读通路：面板自报家门＝磁盘已装版本，防漂移）', () => {
       const here = dirname(fileURLToPath(import.meta.url));
       const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
       assert.equal(PLUGIN, pkg.name);
-      assert.equal(PLUGIN_VERSION, pkg.version);
-      assert.equal(SKILL_VERSION, requirePkg(SKILL_PACKAGE + '/package.json').version);
+      // #130：版本号不再有任何源码常量（slot.ts 的手写常量已删且加了禁回潮门），
+      // 故此处断言的是 host 侧运行时读到的「磁盘上那两份 package.json」，而非任何写死的值。
+      const installed = readInstalledVersions();
+      assert.equal(installed.plugin, pkg.version);
+      assert.equal(installed.skill, requirePkg(SKILL_PACKAGE + '/package.json').version);
     });
   });
 });
