@@ -20,7 +20,7 @@ import { DB_FILENAME } from '../paths.js';
 import { nowStamp } from '../render/receipt.js';
 import { commandLine } from '../shared/writeParts.js';
 import { ENTRY_VALIDATE, type ImportPrecheckView } from './precheckPort.js';
-import { DOC_TITLE, DOC_VERSION, PRECHECK_BADGE, PRECHECK_CSS, anchored, stat, writeTargetBlock } from './precheckParts.js';
+import { DOC_VERSION, PRECHECK_BADGE, PRECHECK_CSS, anchored, stat, writeTargetBlock } from './precheckParts.js';
 
 /** 页头三处措辞由入口标记选，与 `#509`／`#511`／`#271` 同规矩（标记不上屏、不写库）。 */
 interface ImportEntryCopy {
@@ -30,20 +30,25 @@ interface ImportEntryCopy {
 }
 
 const IMPORT_COPY: Readonly<Record<string, ImportEntryCopy>> = Object.freeze({
-  [ENTRY_VALIDATE]: { metaLeft: '校验批量导入 · 饮食', title: '📥 批量导入校验', rowsTitle: '逐行校验结果（只校验，不写库）' },
-  precheck: { metaLeft: '批量导入食品 · 饮食', title: '📥 批量导入预览', rowsTitle: '逐条预览（仅预览，不写库）' },
-  default: { metaLeft: '看批量导入预览 · 饮食', title: '📥 批量导入预览', rowsTitle: '逐条预览（仅预览，不写库）' },
+  [ENTRY_VALIDATE]: { metaLeft: '校验批量导入', title: '📥 批量导入校验', rowsTitle: '逐行校验结果（只校验，不写库）' },
+  precheck: { metaLeft: '批量导入食品', title: '📥 批量导入预览', rowsTitle: '逐条预览（仅预览，不写库）' },
+  default: { metaLeft: '看批量导入预览', title: '📥 批量导入预览', rowsTitle: '逐条预览（仅预览，不写库）' },
 });
 
 const copyFor = (entry: string | undefined): ImportEntryCopy =>
   (entry !== undefined && IMPORT_COPY[entry] !== undefined
     ? IMPORT_COPY[entry] : IMPORT_COPY['default']) as ImportEntryCopy;
 
-/** 结论句（`t425` §五 第 3 行，句内含本页读数）。「食品库对照＋合计试算」是 #509 已改成人话的
- *  副题原文，保留。 */
+/** 结论句（`t425` §五 第 3 行，句内含本页读数）。#581 起副题只留结论一句——可新增／
+ *  会跳过／会失败三个计数由「这次的处置」读数卡逐格说（照回执批量三格先例），副题不再顿号并列。 */
 function importSummary(v: ImportPrecheckView): string {
-  return '食品库对照＋合计试算：共 ' + v.total + ' 条，可新增 ' + v.added + ' 条、跳过 ' + v.skipped
-    + ' 条、失败 ' + v.failed + ' 条，合计 ' + v.totalCalorie + ' 卡。';
+  return '食品库对照＋合计试算：共 ' + v.total + ' 条，合计 ' + v.totalCalorie + ' 卡。';
+}
+
+/** 确认后能写进库的食品名（逐行，不含失败的行；无名行照页上口径标「无名」）。 */
+function passNames(v: ImportPrecheckView): string[] {
+  return v.rows.filter((r) => r.status !== 'failed')
+    .map((r) => (r.productName === '' ? '（无名）' : r.productName));
 }
 
 /** `calorie.view.batch-import-preview` · 导入预检页。
@@ -145,7 +150,7 @@ export function buildImportPrecheckDoc(
       html: renderEmptyBlock({
         title: '这次一条都进不了食品库',
         text: '这 ' + v.total + ' 条里没有一条能写进去（失败 ' + v.failed + ' 条）。'
-          + '把「原因」那一列点到的字段补齐，再说一次「批量导入食品」；'
+          + '把「原因」那一列点到的字段补齐，再说一次「批量导入食品」。'
           + '想先建库，就先说「存食品」把要用的食物一条条收进库里。',
       }),
     });
@@ -157,11 +162,11 @@ export function buildImportPrecheckDoc(
       '确认后操作（这一步不写库）',
       '这一页会写进去的字段与取值（食品名与热量按你给的条目照抄）',
       [
-        {
-          field: 'productName',
-          value: v.rows.filter((r) => r.status !== 'failed')
-            .map((r) => (r.productName === '' ? '（无名）' : r.productName)).join('、') || '（本次没有可导入的行）',
-        },
+        /* #581 · 确认后食品名不再顿号串成一格：可导入的行一行一名（公共层逐行形状），
+           一行都进不了时仍保留原来那句空位说明。 */
+        ...(passNames(v).length > 0
+          ? passNames(v).map((name) => ({ field: 'productName', value: name }))
+          : [{ field: 'productName', value: '（本次没有可导入的行）' }]),
         { field: 'calories', value: String(v.totalCalorie) + ' 卡（本次条目的热量合计）' },
       ],
     ),
@@ -174,8 +179,11 @@ export function buildImportPrecheckDoc(
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
     cards.map(anchored).join(''),
     renderCaliberLine(validate
-      ? '「通过」＝照现在的规则能写进食品库的行；这一页只校验，不写库。'
-      : '「会新增／会跳过／会失败」是照现在的规则算出来的结果，不是已经写进去了；这一页只预览，不写库。'),
+      ? '「通过」＝照现在的规则能写进食品库的行。'
+      : '每条是会新增还是会跳过还是会失败，都是照现在的规则算出来的，不是已经写进去了。')
+    + renderCaliberLine(validate
+      ? '这一页只校验，不写库。'
+      : '这一页只预览，不写库。'),
     copyArea({
       data: { envelope },
       log: {
@@ -192,7 +200,9 @@ export function buildImportPrecheckDoc(
     renderCaliberLine('📊 数据来源：本机食品库 · 本次 ' + v.total + ' 条条目逐条对照在架食品'),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    /* #581 · 页题去间隔号：共用件 `precheckParts.ts` 的 `DOC_TITLE` 本票不碰（非写集），
+       本页调用点改传无间隔号题名。 */
+    docTitle: '卡路里饮食',
     title: copy.title,
     pageUi: true,
     eyebrow: '',

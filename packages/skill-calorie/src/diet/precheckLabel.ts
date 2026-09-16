@@ -20,7 +20,7 @@ import { DB_FILENAME } from '../paths.js';
 import { nowStamp } from '../render/receipt.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { LabelPrecheckView } from './precheckPort.js';
-import { DOC_TITLE, DOC_VERSION, PRECHECK_BADGE, PRECHECK_CSS, anchored, stat, writeTargetBlock } from './precheckParts.js';
+import { DOC_VERSION, PRECHECK_BADGE, PRECHECK_CSS, anchored, stat, writeTargetBlock } from './precheckParts.js';
 
 function fieldValue(v: LabelPrecheckView, key: string): string {
   return v.fields.find((f) => f.key === key)?.value ?? '—';
@@ -132,7 +132,8 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
     PRECHECK_CSS,
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
     cards.map(anchored).join(''),
-    renderCaliberLine('这一页只做确认、不写库；上面每一格都是照你给的那张营养表照片得来的。'
+    renderCaliberLine('这一页只做确认，不写库。')
+    + renderCaliberLine('上面每一格都是照你给的那张营养表照片得来的。'
       + (v.uncertainCount === 0 ? '没有要你核对的格子。' : '标着「要你核对」的那几格最可能要改。')),
     copyArea({
       data: { envelope },
@@ -151,12 +152,14 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
       + (backfill ? '按 ' + dateText + ' 补记' : '记到今天')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    /* #581 · 页题与眉标去间隔号：共用件 `precheckParts.ts` 的 `DOC_TITLE` 本票不碰（非写集），
+       本页调用点改传无间隔号题名；眉标只留唤醒词。 */
+    docTitle: '卡路里饮食',
     title: '📷 营养表识别确认',
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: (backfill ? '拍营养表补记一餐' : '拍营养表记一餐') + ' · 饮食',
+    metaLeft: backfill ? '拍营养表补记一餐' : '拍营养表记一餐',
     badge: PRECHECK_BADGE,
     summary: '识别出「' + v.productName + '」' + v.totalCalorie + ' 卡：'
       + (backfill ? '确认后按 ' + dateText + ' 补记这一餐。' : '确认后记进今天的饮食。')
