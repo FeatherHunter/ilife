@@ -173,6 +173,31 @@ describe('B-02 KPI 卡', () => {
     const html = renderKpiCard({ label: 'a&b', value: '<1>' });
     assert.ok(html.includes('a&amp;b') && html.includes('&lt;1&gt;'), '转义');
   });
+
+  it('#418 不给 bar＝零变；给 bar 产条（detail 后、宽内联、档类）', () => {
+    const bare = renderKpiCard({ label: 'L', value: '1' });
+    assert.ok(!bare.includes('kpi-card-bar'), '无条');
+    const html = renderKpiCard({ label: 'L', value: '1', detail: 'D', bar: { pct: 92 } });
+    assert.ok(html.includes('ilife-block-kpi-card-bar'), '条槽');
+    assert.ok(html.includes('ilife-block-kpi-card-bar-fill'), '条填充');
+    assert.ok(html.includes('ilife-block-kpi-card-bar-high'), '高档类');
+    assert.ok(html.includes('style="width:92%"'), '内联宽度');
+    assert.ok(html.indexOf('kpi-card-detail') < html.indexOf('kpi-card-bar'), '条在 detail 后');
+  });
+
+  it('#418 档位两界＋100/0 封顶；越界／非数 → bad-input', () => {
+    const cls = (pct) => renderKpiCard({ label: 'L', value: '1', bar: { pct } });
+    assert.ok(cls(90).includes('bar-high') && !cls(89).includes('bar-high'), '90/89 界');
+    assert.ok(cls(89).includes('bar-mid') && cls(60).includes('bar-mid') && !cls(59).includes('bar-mid'), '60/59 界');
+    assert.ok(cls(59).includes('bar-low'), '低档');
+    assert.ok(cls(100).includes('style="width:100%"'), '封顶');
+    assert.ok(cls(0).includes('style="width:0%"'), '零位');
+    assertBadInput(() => cls(101), '>100');
+    assertBadInput(() => cls(-1), '<0');
+    assertBadInput(() => cls(NaN), 'NaN');
+    assertBadInput(() => renderKpiCard({ label: 'L', value: '1', bar: { pct: 'x' } }), '非数');
+    assertBadInput(() => renderKpiCard({ label: 'L', value: '1', bar: {} }), '缺 pct');
+  });
 });
 
 describe('B-03 表格', () => {

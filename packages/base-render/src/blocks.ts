@@ -564,6 +564,15 @@ export interface KpiCardInput {
   readonly detail?: string;
   readonly status?: StatusKind;
   readonly statusText?: string;
+  /** 可选进度条（#418）：百分比 0–100；不给＝不产条（零变）。 */
+  readonly bar?: { readonly pct: number };
+}
+
+/** #418 条位判档（只此一处）：>=90 高档／>=60 中档／其余低档。 */
+function kpiBarClass(pct: number): string {
+  if (pct >= 90) return 'bar-high';
+  if (pct >= 60) return 'bar-mid';
+  return 'bar-low';
 }
 
 /** B-02：单张 KPI 卡（value 带 `tnum`；非法 status 由冻结语义降级 `empty`）。 */
@@ -582,6 +591,17 @@ export function renderKpiCard(input: KpiCardInput): string {
   parts.push('</div>');
   const detail = optText(card.detail);
   if (detail !== undefined) parts.push('<div class="' + blockPart('kpiCard', 'detail') + '">' + esc(detail) + '</div>');
+  const bar = card.bar;
+  if (bar !== undefined) {
+    assertPlainObject(bar, 'renderKpiCard: bar');
+    const pct: unknown = (bar as { pct: unknown }).pct;
+    if (typeof pct !== 'number' || !Number.isFinite(pct) || pct < 0 || pct > 100) {
+      badInput('renderKpiCard: bar.pct 必须在 0–100 之间');
+    }
+    parts.push('<div class="' + blockPart('kpiCard', 'bar') + '">'
+      + '<div class="' + blockPart('kpiCard', 'bar-fill') + ' ' + blockPart('kpiCard', kpiBarClass(pct)) + '" style="width:' + pct + '%"></div>'
+      + '</div>');
+  }
   if (card.status !== undefined) {
     const status: StatusKind = (STATUS_KINDS as readonly string[]).includes(card.status) ? card.status : 'empty';
     const badge = renderStatusBadge(
@@ -1647,6 +1667,28 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-kpi-card-badge {',
     '  margin-top: 8px;',
+    '}',
+    // #418 条位：detail 之后 badge 之前产条（见 renderKpiCard）。色值单源（甲路）：
+    // 三档各一处字面量，源 spec/charts.ts CHART_PALETTE[1..3]，与状态徽章底色同值。
+    '.' + p + 'block-kpi-card-bar {',
+    '  height: 6px;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--line);',
+    '  margin-top: 8px;',
+    '  overflow: hidden;',
+    '}',
+    '.' + p + 'block-kpi-card-bar-fill {',
+    '  height: 100%;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '}',
+    '.' + p + 'block-kpi-card-bar-high {',
+    '  background: #34c759;',
+    '}',
+    '.' + p + 'block-kpi-card-bar-mid {',
+    '  background: #ff9500;',
+    '}',
+    '.' + p + 'block-kpi-card-bar-low {',
+    '  background: #ff3b30;',
     '}',
     // #507 段标题统一（审查必改 #5）：`blocks.ts` 从 #401 起就给过这条类名产出器的位置
     // （`homeDocs.ts:247` 用 `<h2 class="ilife-block-kpi-card-title">` 出「今日速览」段标题），
