@@ -432,11 +432,11 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
   ].join('');
 
   // 页名一处派生：h1 与 `<title>` 走同一个串（浏览器标签页上也带着窗口，不再只写「目标进度」）；
-  // `<title>` 那串**不带 `·`**：可见文本出现 `·`／`；` 即设计债（分隔符探针，口径见
-  // `docs/skills/skill-calorie/t161-勘察-响应式与视觉配方.md:434-445`），窗口改用括号承载。
-  const title = f.windowDays <= 1 ? '今日目标进度' : '近 ' + f.windowDays + ' 天目标进度';
+  // #628 起先看窗口词（`command` 里 `window` 原文）：周窗（本周／week_cur）页名一律带「本周」二字（周一 1 天窗如实写「近 1 天目标进度（本周）」，不许只写「今日」）；`<title>` 那串**不带 `·`**（分隔符探针口径见 `docs/skills/skill-calorie/t161-勘察-响应式与视觉配方.md:434-445`），窗口改用括号承载。
+  const week628 = /"window"\s*:\s*"(本周|week_cur)"/.test(input.command);
+  const title = week628 ? '近 ' + f.windowDays + ' 天目标进度（本周）' : (f.windowDays <= 1 ? '今日目标进度' : '近 ' + f.windowDays + ' 天目标进度');
   return assembleDocPage({
-    docTitle: title === '今日目标进度' ? DOC_TITLE : DOC_TITLE + '（近 ' + f.windowDays + ' 天）',
+    docTitle: week628 ? DOC_TITLE + '（本周）' : (title === '今日目标进度' ? DOC_TITLE : DOC_TITLE + '（近 ' + f.windowDays + ' 天）'),
     title,
     eyebrow: EYEBROW,
     subtitle: input.start + ' 至 ' + input.end,
