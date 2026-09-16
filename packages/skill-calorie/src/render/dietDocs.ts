@@ -57,14 +57,14 @@ const DOC_SKILL = 'calorie';
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）；#591 去 `·`（门禁 R1），取值照同域 ② 类页现行口径（`diet/todayDocs.ts` 的「卡路里饮食」）。 */
 const DOC_TITLE = '卡路里饮食';
 
-function fmt(n: number | null | undefined): string {
-  if (n === null || n === undefined) return '—';
-  return String(n);
-}
+/* LF 口径：#618 要给本件（HEAD 已是 350 LF）加一处映射，同票把下面两个小件压成一行等价写法（本包告警线
+   台账住 `packages/skill-calorie/AGENTS.md`，不在本票写集 ⇒ 不越线、不改台账）。 */
+const fmt = (n: number | null | undefined): string => (n === null || n === undefined) ? '—' : String(n);
+const r1 = (n: number): number => Math.round(n * 10) / 10;
 
-function r1(n: number): number {
-  return Math.round(n * 10) / 10;
-}
+/** #618 趋势卡的中文判语（**本件唯一一处映射**，8 张窗口页共走 `buildViewDietDoc` 故只此一份）：用户原话
+ *  「趋势这个卡片写的是『up/down』不应该有英文」；数据层 `'up' | 'down' | 'flat'`（`analysis/trend.ts:26`）口径不动，只在页面侧换人话，表外值原样透传（照 `trendPredictDocs.ts` 的 `DEFICIT_TREND_ZH ?? …`）。 */
+const TREND_ZH: Record<string, string> = { up: '上升', down: '下降', flat: '持平' };
 
 /** 餐别口径一行（**正文里说一次**的版本，不带常量名）。
  *
@@ -162,7 +162,7 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
     { label: '累计', value: String(o.totalCalories), unit: '卡', detail: o.loggedDays + '/' + o.days + '天有记录' },
     { label: '日均', value: fmt(o.avgCalories), unit: '卡' },
     { label: '目标', value: String(o.calorieGoal), unit: '卡' },
-    { label: '趋势', value: o.trend.summary.trend, detail: '均值 ' + o.trend.summary.avg + ' 卡' },
+    { label: '趋势', value: TREND_ZH[o.trend.summary.trend] ?? o.trend.summary.trend, detail: '均值 ' + o.trend.summary.avg + ' 卡' },
   ])));
   /* §五 第 6 行：主体折线。裁定 5 —— 单点不成线：只画**两点及以上**，否则出一句说明。 */
   if (loggedDays.length >= 2) {

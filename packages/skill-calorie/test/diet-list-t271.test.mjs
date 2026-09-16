@@ -200,6 +200,29 @@ test('#271 餐别支／总览支：调用点给了取数才换页，区块走 #2
   assert.ok(visibleText(ov).includes('统计到昨日'), '总览支缺 #275 的口径句');
 });
 
+/** 「趋势」读数卡的值格原文（`renderKpiCard` 的 `kpi-card-value`；找不到返 `null`）。 */
+function trendCardValue(html) {
+  const m = /<div class="ilife-block-kpi-card-label">趋势<\/div>\s*<div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">([\s\S]*?)<\/span>/.exec(html);
+  return m === null ? null : m[1];
+}
+
+test('#618 趋势卡：数据层的 up／down／flat 不上屏，值位换中文判语（本页族唯一一处映射）', () => {
+  /* 用户缺陷④原话：「17 看本周饮食、18 看上周饮食 的 趋势这个卡片写的是『up/down』不应该有英文」。
+     8 张窗口页共走 `buildViewDietDoc` ⇒ 这里直调一页把三档枚举逐档钉住（真出口那一层由证据脚本
+     `docs/skills/skill-calorie/t618-真出口断言.mjs` 逐词跑）。枚举口径（取数层）不动，只断言页面侧映射。 */
+  for (const [raw, want] of [['up', '上升'], ['down', '下降'], ['flat', '持平']]) {
+    const html = BUILD_VIEW(sampleInput({
+      overview: {
+        start: '2026-09-01', end: '2026-09-07', days: 7, loggedDays: 2, totalCalories: 3200,
+        avgCalories: 1600, calorieGoal: 1800, trend: { summary: { trend: raw, avg: 1600 } },
+      },
+    }));
+    assert.equal(trendCardValue(html), want, '趋势卡的值不是中文判语（数据层 ' + raw + '）');
+    const bare = visibleText(html).match(/\b(?:up|down|flat)\b/gi);
+    assert.equal(bare, null, '可见文本里出现裸英文判语：' + (bare === null ? '' : bare.join('、')));
+  }
+});
+
 /* ── ② 真跑：一条读命令走完整 CLI（exit 0 ＋ 完整文档 ＋ 备注列） ── */
 
 const { openDb } = await import(pathToFileURL(join(PKG, 'dist', 'index.js')).href);
