@@ -110,24 +110,32 @@ function dsig() {
 }
 
 function runlogWindow() {
-  const DECLARED = new Set([
-    '91ea9f6e-b481-4e79-923d-e68bdf736c29', 'c4393afb-32d0-43c9-8a6f-5dc04fbba355',
-    'b69ba4af-97f8-4fba-a067-a3e9143ead78', '1a4d6e19-fea3-4fe5-8d14-b9eb273fdc86',
-    'ce890453-8294-440a-8491-11cdb0a6b76c', '63b15fc8-b7b5-4e3e-b4cc-7c37931cae40',
-    'ad30518a-e7b3-4a85-ac99-6af893955a1d', '01a691c6-2bb0-47b6-b32f-092a08f8217b',
-    'bbfde6fc-1b5b-482c-ba9b-cebdd520411d', '57003113-3296-46e9-b0f7-32e332b62828',
-  ]);
+  /** 本席窗口内的运行**按命令形状归类**（不是按 runId 白名单——提交运行会随每次提交新增，
+   *  按形状判能把「不属于本席声明的命令」一条不漏地标出来）。 */
+  const SHAPES = [
+    [/typescript\/bin\/tsc/, '① 编译'],
+    [/scene02-.*restage\.mjs/, '② 重出墙'],
+    [/audit-separators\.mjs/, '③④⑦ 门禁'],
+    [/responsive-run\.mjs/, '⑤ 四档自适应'],
+    [/t619-变异\.mjs/, '⑥ 变异自证'],
+    [/t619\/mutation\.mjs/, '⑥b 变异自证（草稿版，读数与 ⑥ 逐字相同）'],
+    [/t619\/commit\.mjs/, '⑪ 提交'],
+  ];
   const SINCE = '2026-09-16T12:14';
   const mine = readFileSync('.scratch/locks/gate-runs.log', 'utf8').split('\n')
     .filter((l) => l.startsWith('RUN ') && l.includes('ticket=619') && l.includes('at='))
     .filter((l) => /at=(\S+)/.exec(l)[1] >= SINCE);
-  let undeclared = 0;
+  let unknown = 0;
+  const tally = new Map();
   for (const l of mine) {
-    const id = /runId=(\S+)/.exec(l)[1];
-    if (!DECLARED.has(id)) undeclared += 1;
-    console.log((DECLARED.has(id) ? '声明 ✓ ' : '未声明 ✗ ') + id + ' exit=' + /exit=(\S+)/.exec(l)[1] + ' at=' + /at=(\S+)/.exec(l)[1]);
+    const cmd = /cmd=("?)([\s\S]*?)\1(?= waitedMs=)/.exec(l)?.[2] ?? '';
+    const hit = SHAPES.find(([re]) => re.test(cmd));
+    if (hit === undefined) unknown += 1;
+    else tally.set(hit[1], (tally.get(hit[1]) ?? 0) + 1);
+    console.log((hit === undefined ? '未声明 ✗ ' : '声明 ✓ ') + (hit === undefined ? '(不属于声明命令形状) ' : hit[1] + ' ')
+      + /runId=(\S+)/.exec(l)[1] + ' exit=' + /exit=(\S+)/.exec(l)[1] + ' at=' + /at=(\S+)/.exec(l)[1]);
   }
-  console.log('WINDOW ticket=619 条目=' + mine.length + '｜未声明=' + undeclared);
+  console.log('WINDOW ticket=619 条目=' + mine.length + '｜未声明=' + unknown + '｜分类=' + JSON.stringify([...tally.entries()]));
 }
 
 const [cmd, arg] = process.argv.slice(2);
