@@ -24,7 +24,7 @@ const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** head 标题（与 `diet/` 其余件的域口径一致）。 */
-const DOC_TITLE = '卡路里·饮食';
+const DOC_TITLE = '卡路里饮食';
 
 /** 类型徽章（`t425` §五 第 1 行右槽）：本类四页同属食品库。 */
 const BADGE = '食品库';
@@ -73,10 +73,11 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
         { key: 'pct', label: '占比%', align: 'right' },
       ],
       rows: v.items.map((it) => ({ source: it.source, count: it.count, pct: it.pct })),
-      /* #496 · 原 caption 里 `GROUP BY source`／「空串」都是源码词（审查件第 50 条）。 */
-      caption: '按来源统计（已下架的食品不算；没填来源的归到「未知」）',
+      /* #581 · 表题只留题名：下架口径与「未知」口径各走一条口径行（#496 原 caption 里的源码词早已改成人话）。 */
+      caption: '按来源分组统计',
       emptyText: '库内无食品记录',
-    }),
+    }) + renderCaliberLine('已下架的食品不算进这张表。')
+      + renderCaliberLine('没填来源的归到「未知」。'),
   });
   const envelope: DataTextInput['envelope'] = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.source-stats',
@@ -107,7 +108,7 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看食品来源统计 · 饮食',
+    metaLeft: '看食品来源统计',
     badge: BADGE,
     summary: sourceStatsSummary(v),
     content: body,
@@ -120,5 +121,5 @@ function sourceStatsSummary(v: SourceStatsView): string {
   const top = v.items[0];
   const head = '食品库 ' + v.total + ' 条在架食品来自 ' + v.sources + ' 个来源';
   if (top === undefined) return head + '。';
-  return head + '，最多的是「' + top.source + '」（' + top.count + ' 条 · ' + top.pct + '%）。';
+  return head + '，最多的是「' + top.source + '」（' + top.count + ' 条，' + top.pct + '%）。';
 }

@@ -45,8 +45,8 @@ const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** head 标题（各老实物 `<title>` 逐字：查食品／食品库同走 `food_search.html`，去重页走 `dedupe_report.html`）。 */
-const DOC_TITLE_SEARCH = '卡路里 · 食物热量查询';
-const DOC_TITLE_DEDUPE = '卡路里 · 食品库去重';
+const DOC_TITLE_SEARCH = '卡路里食物热量查询';
+const DOC_TITLE_DEDUPE = '卡路里食品库去重';
 
 /** 类型徽章（`t425` §五 第 1 行右槽）：本类三页同属食品库。 */
 const BADGE = '食品库';
@@ -57,10 +57,10 @@ const UNKNOWN_SOURCE = '未知';
 /** 老实物的缺值破折号（与 `render/dietDocs.ts` 同字面）。 */
 const DASH = '—';
 
-/** 口径说明行（§五 第 ⑬ 行）：这一页的数是怎么来的、单位是什么。 */
-const CALIBER_FOOD = '营养值都是每 100 克；只列没有下架的食品。';
-/** 去重页的口径行照老实物 `.footer .src`（「名称和品牌都一样的算重复」）＋下架口径。 */
-const CALIBER_DEDUPE = '判定标准：名称和品牌都一样的算重复；已下架的食品不算，也不会出现在这张表里。';
+/** 口径说明行（§五 第 ⑬ 行）：这一页的数是怎么来的、单位是什么（#581 起一条一行）。 */
+const CALIBER_FOOD = ['营养值都是每 100 克。', '只列没有下架的食品。'];
+/** 去重页的口径行照老实物 `.footer .src`（「名称和品牌都一样的算重复」）＋下架口径（同上一条一行）。 */
+const CALIBER_DEDUPE = ['判定标准：名称和品牌都一样的算重复。', '已下架的食品不算，也不会出现在这张表里。'];
 
 /** 数据来源脚注（§五 第 ⑮ 行）：库名 ＋ 在架条数（老实物 `.footer .src` 的库名 · 表名在 #496 已换人话）。 */
 function sourceNote(count: number): string {
@@ -112,18 +112,21 @@ function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): s
     return emptyGuide({
       icon: '🔍',
       text: '没有找到匹配的食品',
-      hint: '换个关键词或分类试试；库里还没有的话，说「存食品」就能加进第一条。',
+      hint: '换个关键词或分类试试。库里还没有的话，说「存食品」就能加进第一条。',
     });
   }
   const cards = items.map((it) => {
     const macros = [
       { label: '热量', value: fixed0(it.calories) + ' 卡' },
-      { label: '蛋白', value: fixed1(it.protein) + ' g' },
-      { label: '脂肪', value: fixed1(it.fat) + ' g' },
-      { label: '碳水', value: fixed1(it.carbohydrates) + ' g' },
+      { label: '蛋白', value: fixed1(it.protein) + ' 克' },
+      { label: '脂肪', value: fixed1(it.fat) + ' 克' },
+      { label: '碳水', value: fixed1(it.carbohydrates) + ' 克' },
     ];
-    let source = '来源：' + escapeHtml(it.source || UNKNOWN_SOURCE);
-    if (withUpdatedAt && it.updated_at) source += ' · 更新于 ' + escapeHtml(it.updated_at);
+    /* #581 · 来源行去间隔号：一行一键值（来源一行、更新于另起一行）。 */
+    let source = '<div class="food-src">来源：' + escapeHtml(it.source || UNKNOWN_SOURCE) + '</div>';
+    if (withUpdatedAt && it.updated_at) {
+      source += '<div class="food-src">更新于 ' + escapeHtml(it.updated_at) + '</div>';
+    }
     const cat = it.category ? '<div class="food-cat">' + escapeHtml(it.category) + '</div>' : '';
     /* #511 · 品牌没填时原样印一个破折号占位，读者在食品名与四个宏量之间单读到一行「—」，
        不知道那是哪一格（审查件第 74 条：「—」夹在中间）⇒ 这一格没有值就不出这一行
@@ -137,7 +140,7 @@ function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): s
       + '<div class="food-macros">' + macros.map((m) =>
         '<div class="food-macro"><div class="food-macro-label">' + m.label + '</div>'
         + '<div class="food-macro-value">' + m.value + '</div></div>').join('') + '</div>'
-      + '<div class="food-src">' + source + '</div>'
+      + source
       + '</div>';
   }).join('');
   return '<div class="food-grid">' + cards + '</div>';
@@ -155,11 +158,11 @@ function shell(card: Card): string {
 function finishPage(o: {
   readonly command: string;
   readonly envelope: DataTextInput['envelope'];
-  readonly caliber: string;
+  readonly caliber: readonly string[];
   readonly sourceCount: number;
 }): string {
   return [
-    renderCaliberLine(o.caliber),
+    ...o.caliber.map((line) => renderCaliberLine(line)),
     copyArea({
       data: { envelope: o.envelope },
       log: {
@@ -181,7 +184,7 @@ function body(o: {
   readonly cards: readonly Card[];
   readonly command: string;
   readonly envelope: DataTextInput['envelope'];
-  readonly caliber: string;
+  readonly caliber: readonly string[];
   readonly sourceCount: number;
 }): string {
   return [
@@ -201,7 +204,7 @@ export function buildSearchDoc(s: ProductSearch, command: string): string {
       id: 'sec-query',
       label: '搜索',
       html: renderParamForm({
-        fields: [{ name: 'keyword', label: '关键词', value: s.keyword, hint: '输入食物关键词，如 牛肉 / 鸡胸 / 可乐' }],
+        fields: [{ name: 'keyword', label: '关键词', value: s.keyword, hint: '输入食物关键词，如鸡胸' }],
         description: '按名称或品牌模糊查找',
       }),
     },
@@ -221,7 +224,7 @@ export function buildSearchDoc(s: ProductSearch, command: string): string {
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '查食品 · 饮食',
+    metaLeft: '查食品',
     badge: BADGE,
     summary: '在食品库里搜「' + s.keyword + '」，找到 ' + s.total + ' 条。',
     content: body({
@@ -255,7 +258,7 @@ export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number, command
       html: renderParamForm({
         fields: [{
           name: 'category', label: '分类', value: lib.category ?? '',
-          hint: '输入分类名，如 主食 / 蛋白类 / 水果（留空＝看全部）',
+          hint: '输入分类名，如主食（留空＝看全部）',
         }],
         description: byCategory ? '只看这个分类的食品' : '列出库里全部在架食品，按名称排序',
       }),
@@ -267,7 +270,7 @@ export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number, command
         label: byCategory ? '这个分类' : '本页',
         value: String(lib.total),
         unit: '条',
-        detail: (byCategory ? '分类：' + lib.category : '全部食品') + ' · 库内共 ' + statsTotal + ' 条',
+        detail: (byCategory ? '分类：' + lib.category : '全部食品') + '。库内共 ' + statsTotal + ' 条。',
       }]),
     },
     { id: 'sec-list', label: '食品卡片', html: renderFoodGrid(lib.items, true) },
@@ -278,7 +281,7 @@ export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number, command
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '查食品库 · 饮食',
+    metaLeft: '查食品库',
     badge: BADGE,
     summary: librarySummary(lib, statsTotal),
     content: body({
@@ -375,7 +378,7 @@ export function buildDedupeDoc(v: DedupeView, command: string): string {
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看食品库（去重） · 饮食',
+    metaLeft: '看食品库（去重）',
     badge: BADGE,
     summary: dedupeSummary(v),
     content: body({

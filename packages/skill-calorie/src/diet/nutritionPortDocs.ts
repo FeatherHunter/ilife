@@ -726,8 +726,9 @@ function overviewSummary(v: DietOverviewView): string {
  *  `command`＝宿主页本次命令原文（复制日志第 4 段，裁定 7），由 #271 从自己的处理体传进来。 */
 export function buildDietOverviewBlock(v: DietOverviewView, command?: string): string {
   return [
-    renderCaliberLine('统计到昨日 · ' + v.today
-      + '｜本周／本月都到昨日为止（不含今日），今日的饮食由「看今日饮食概览」承接'),
+    /* #581 · 总览口径行一条一事（本票唯一许写口）：统计口径与今日承接分两条口径行。 */
+    renderCaliberLine('本周和本月都统计到昨日为止，不含今日（今天是 ' + v.today + '）。')
+    + renderCaliberLine('今日的饮食由「看今日饮食概览」承接。'),
     overviewPeriodBlock('sec-week', '本周累计', v.week),
     overviewPeriodBlock('sec-month', '本月累计', v.month),
     sourceFootnote('📊 数据来源 · 饮食记录 · 本周 ' + v.week.start + ' → ' + v.week.end
