@@ -58,7 +58,10 @@ export function buildCalorieTrendView(db: DatabaseSync, start: string, end: stri
 
 export interface LongTrendDay {
   date: string;
-  calorie: number;
+  /* #497：没记录的天保 null（删掉 `?? 0`——「没记录＝0 卡」既在图上落 0 点、又被均值
+   * 吃进分母）。图靠 `connectNulls` 跨空白日连线（公共层 line 唯一支持 null 的形态，
+   * 见 base-render/src/spec/charts.ts），与热量趋势页 `ea7cdc9` 同口径。 */
+  calorie: number | null;
   weightKg: number | null;
 }
 
@@ -68,7 +71,10 @@ export interface LongTrendView {
   group: string;
   windowDays: number;
   days: LongTrendDay[];
-  avgCalorie: number;
+  /** 有热量记录的天数（取数层给整数，页面直读不反解；与 multiTrend.loggedDays 同例）。 */
+  loggedDays: number;
+  /** 日均热量（分母＝有热量记录的天；窗内无热量记录即 null，不编 0）。 */
+  avgCalorie: number | null;
   weightChange: number | null;
 }
 
@@ -106,13 +112,17 @@ export function buildLongTrendView(
   const days: LongTrendDay[] = [];
   for (let i = 0; i < n; i++) {
     const d = shiftISODate(start, i);
-    days.push({ date: d, calorie: calByDate.get(d) ?? 0, weightKg: wByDate.get(d) ?? null });
+    /* #497：没记录的天 calorie 保 null（不再 `?? 0`），weight 同例早已是 null。 */
+    days.push({ date: d, calorie: calByDate.get(d) ?? null, weightKg: wByDate.get(d) ?? null });
   }
   const weights = days.map((d) => d.weightKg).filter((w): w is number => w !== null);
-  const cals = days.map((d) => d.calorie);
+  /* #497：avg 分母＝有热量记录的天（旧口径除以窗口天数 n，把补出来的 0 吃进均值；
+   * 30 天窗 9 记录即只除以 9）。窗内无热量记录（纯称重窗）即 null，不编 0。 */
+  const loggedCals = days.map((d) => d.calorie).filter((c): c is number => c !== null);
   return {
     start, end, group: g, windowDays: n, days,
-    avgCalorie: Math.round(cals.reduce((a, b) => a + b, 0) / n),
+    loggedDays: loggedCals.length,
+    avgCalorie: loggedCals.length > 0 ? Math.round(loggedCals.reduce((a, b) => a + b, 0) / loggedCals.length) : null,
     weightChange: weights.length >= 2
       ? Math.round((weights[weights.length - 1]! - weights[0]!) * 10) / 10 : null,
   };

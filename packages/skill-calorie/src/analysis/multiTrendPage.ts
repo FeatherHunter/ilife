@@ -194,13 +194,14 @@ function bSummaryLine(v: MultiTrendView): string {
 }
 
 /** B线技术口径注释（e2e 消费的 window／group／compare 原词＋达标公式全进注释，可见文案只留人话）。
- *  #160 返工⑥：被删掉的口径句一律搬进这条注释——达标率分母＝窗口天数、日均运动只按有运动记录的
- *  天算、日均热量只按记了吃多少的天算、n 天窗与 T5／buildSeries 同源，读图必需的数一处不缺。 */
+ *  #160 返工⑥：被删掉的口径句一律搬进这条注释——日均运动只按有运动记录的
+ *  天算、日均热量只按记了吃多少的天算、n 天窗与 T5／buildSeries 同源，读图必需的数一处不缺。
+ *  #497：达标率分母由窗口天数改成有记录的天（旧句「达标率分母＝窗口天数 N」是旧口径，见 git 历史）。 */
 function bTechNote(v: MultiTrendView): string {
   const ok = compliantDaysOf(v);
   return '<!-- 窗口' + v.window + ' 分组' + v.group + ' 对照' + v.compare + ' 数列唯一源buildSeries 最小形态 空窗阻断 不编数'
     + ' 达标＝单日≤目标×1.05 T5 目标取库内现值 ' + bRangeSentence(v)
-    + ' 口径：达标率分母＝窗口天数' + v.days.length + '（达标 ' + (ok === null ? '无目标，不统计' : ok + ' 天（整数，直读取数层）') + '）；日均热量分母＝记了吃多少的天'
+    + ' 口径：达标率分母＝有记录的天' + v.summary.loggedDays + '（达标 ' + (ok === null ? '无目标，不统计' : ok + ' 天（整数，直读取数层）') + '）；日均热量分母＝记了吃多少的天'
     + loggedCalorieDays(v) + '；日均运动分母＝记了运动的天' + loggedExerciseDays(v) + '；均值null跳过、空白日不补0 -->';
 }
 
@@ -240,13 +241,15 @@ function bMonthlySummary(v: MultiTrendView): { rows: Array<Record<string, string
 }
 
 /** B线 KPI 四卡（默认形态与季度／年度分支逐字同款，这里收成一处；分母一律写清）。
- *  #160 返工①：`达标率 12%` 的分母是**窗口天数**（不是有记录的天数），故标签改「达标比例」、
- *  详例写「90 天里 11 天达标」；`日均运动` 的旧详例「共90天」分母错——均值只按有运动记录的天算。
+ *  #160 返工①：`日均运动` 的旧详例「共90天」分母错——均值只按有运动记录的天算（已改）。
  *  #160 返工（对账条）：分子也改成取数层的**整数**天数（`compliantDaysOf`）——比例与天数同出一源，
- *  730 天窗不再出现「比例 2%／15 天」这种与明细对不上的组合。 */
+ *  730 天窗不再出现「比例 2%／15 天」这种与明细对不上的组合。
+ *  #497：`达标比例` 的分母由**窗口天数**改成**有记录的天**（与热量趋势页 `ea7cdc9` 口径统一，
+ *  裁决见 t497 证据 §1）——旧标签「达标比例」＋详例「90 天里 11 天达标」是窗口天数口径，
+ *  与同页「日均热量只按记了吃多少的天算」并存两套口径；现四卡同一口径。 */
 function bKpiGrid(v: MultiTrendView): string {
   const s = v.summary;
-  const days = v.days.length;
+  const logged = v.summary.loggedDays;
   const exerciseDays = loggedExerciseDays(v);
   const okDays = compliantDaysOf(v);
   const range = v.target.calorieGoal === null ? '暂无目标' : '目标 ' + v.target.calorieGoal + ' 卡';
@@ -258,12 +261,16 @@ function bKpiGrid(v: MultiTrendView): string {
       status: s.weightChange === null ? undefined : (s.weightChange < 0 ? 'ok' : (s.weightChange > 0 ? 'warn' : undefined)),
     },
     { label: '日均运动', value: fmt(s.avgExercise), unit: '卡', detail: exerciseDays + ' 天有运动记录' },
+    /* #497：分母＝有记录的天（与取数层 complianceRate 同源；旧口径除以窗口天数）。
+     * 无热量记录（纯称重／纯运动窗）不断言 0%（0/0 不编数），明示先记一餐。 */
     {
-      label: '达标比例', value: okDays === null ? '—' : String(Math.round((okDays / days) * 100)),
-      unit: okDays === null ? '' : '%',
+      label: '达标比例', value: okDays === null || logged === 0 ? '—' : String(Math.round((okDays / logged) * 100)),
+      unit: okDays === null || logged === 0 ? '' : '%',
       detail: okDays === null
         ? '暂无目标，先去设一个目标'
-        : '全部 ' + days + ' 天里 ' + okDays + ' 天达标（每天不超过目标的 105%）',
+        : (logged === 0
+          ? '这段时间还没记过吃多少，先记一餐再来看'
+          : '有记录的 ' + logged + ' 天里 ' + okDays + ' 天达标（每天不超过目标的 105%）'),
     },
   ]);
 }

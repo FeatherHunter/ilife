@@ -158,14 +158,18 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
   const parts: string[] = [
     techNote,
     renderKpiGrid([
-      { label: '日均', value: String(s.avg), unit: '卡', detail: '目标 ' + s.target + '卡' },
-      { label: '趋势', value: trendHuman, detail: '从开头 ' + s.startAvg + ' 到结尾 ' + s.endAvg + '（差 ' + s.trendValue + '）' },
+      /* #497：日均分母＝有记录的天（取数层 `analysis/trend.ts` 已改）；副文案点名分母（判据③），
+       * 读数与逐日明细里有记录那几天的合计对得上。老文案只写「目标 N 卡」，分母不明。 */
+      { label: '日均', value: String(s.avg), unit: '卡', detail: '有记录的 ' + loggedDays + ' 天平均 · 目标 ' + s.target + '卡' },
+      /* #497：首末值取有记录的第一天／最后一天（窗边空白日不再读 0），副文案点名。 */
+      { label: '趋势', value: trendHuman, detail: '从有记录的第一天 ' + s.startAvg + ' 到最后一天 ' + s.endAvg + '（差 ' + s.trendValue + '）' },
       /* #160 收口（本票第一件）：分子与分母一次说清，且分母＝**有记录的天**（与图例同一口径）——
        * 「有记录的 N 天里 M 天达标」。老文案「全部 N 天里 M 天达标」的 N 是窗口天数、没记录的天
        * 被当 0 卡算成达标（7d 窗只记 5 天却报 7 天达标），与图例当场打架；被删口径见 techNote。 */
       { label: '达标天数', value: String(s.compliantDays), unit: '天',
         detail: '有记录的 ' + loggedDays + ' 天里 ' + s.compliantDays + ' 天达标（每天不超过目标的 105%）' },
-      { label: '周末比工作日', value: String(s.weekendDiff), unit: '卡', detail: '工作日 ' + s.weekdayAvg + '／周末 ' + s.weekendAvg },
+      /* #497：工作日／周末均值分母同样＝有记录的天（各组内空白日不进分母），副文案点名（判据③）。 */
+      { label: '周末比工作日', value: String(s.weekendDiff), unit: '卡', detail: '工作日 ' + s.weekdayAvg + '／周末 ' + s.weekendAvg + '（只算记了吃多少的天）' },
     ]),
     renderChartBlock({
       kind: 'line',
@@ -229,19 +233,25 @@ export function buildLongTrendDoc(v: LongTrendView): string {
   /* #160 收口（本票第二件）：两张图的横轴标签一律走同件 `dateLabelOf`（跨年补两位年份），
    * 与 `analysis/multiTrendPage.ts` 同源——365 天窗跨年，旧口径只给 `09-08` 分不出哪一年。 */
   const dLabel = dateLabelOf(v.start, v.end);
-  const calorieAxis = calorieAxisOf(v.days.reduce((peak, d) => (d.calorie > peak ? d.calorie : peak), 0))
+  /* #497：峰值只看有记录的天（null 不参与；旧式 `d.calorie > peak` 会把 null 按 0 参比）。 */
+  const calorieAxis = calorieAxisOf(v.days.reduce((peak, d) => (
+    typeof d.calorie === 'number' && Number.isFinite(d.calorie) && d.calorie > peak ? d.calorie : peak
+  ), 0))
     ?? axisOf(0, 1, '卡');
   const weighed = v.days.filter((d) => d.weightKg !== null);
   const weightAxis = weightAxisOf(weighed.map((d) => d.weightKg as number));
   const parts: string[] = [
     renderKpiGrid([
-      { label: '日均热量', value: String(v.avgCalorie), unit: '卡', detail: '按记了吃多少的天算' },
+      /* #497：avg 分母＝记了吃多少的天（取数层已改，卡副文案早写对）；窗内无热量记录即 —。 */
+      { label: '日均热量', value: fmt(v.avgCalorie), unit: '卡', detail: '按记了吃多少的天算' },
       {
         label: '体重变化', value: fmt(v.weightChange), unit: v.weightChange === null ? '' : 'kg',
         detail: v.weightChange === null ? '这段时间只称了 1 次，比不出变化' : '从第一天到最后一天',
         status: v.weightChange === null ? undefined : (v.weightChange < 0 ? 'ok' : (v.weightChange > 0 ? 'warn' : undefined)),
       },
-      { label: '数据天数', value: String(v.windowDays), unit: '天', detail: '有记录的天 · ' + v.start + ' ~ ' + v.end },
+      /* #497：卡值＝有热量记录的天数（旧口径值＝窗口天数，与副文案「有记录的天」打架；
+       * 30 天窗读 9）。副文案点名「记了吃多少」——纯称重日不计，与日均卡同口径。 */
+      { label: '数据天数', value: String(v.loggedDays), unit: '天', detail: '记了吃多少 ' + v.loggedDays + ' 天 · ' + v.start + ' ~ ' + v.end },
     ]),
     renderChartBlock({
       kind: 'line',
@@ -295,7 +305,7 @@ export function buildLongTrendDoc(v: LongTrendView): string {
       { key: 'calorie', label: '热量(卡)', align: 'right' },
       { key: 'weight', label: '体重(kg)', align: 'right' },
     ],
-    rows: v.days.map((d) => ({ date: d.date, calorie: d.calorie, weight: fmt(d.weightKg) })),
+    rows: v.days.map((d) => ({ date: d.date, calorie: fmt(d.calorie), weight: fmt(d.weightKg) })),
     /* #160 返工：表名只说「这是什么表」——区间同页 meta 行与「数据天数」卡已出现两次，删。 */
     caption: '逐日明细',
     emptyText: '这段时间还没有逐日记录，先记一餐或称一次体重再来看',

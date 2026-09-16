@@ -157,15 +157,21 @@ export function buildMultiTrendView(db: DatabaseSync, input: MultiTrendInput): M
     deficit: s.deficit,
     waterMl: s.waterMl,
   }));
+  /* #497：有热量记录的天数（达标率与本页「有记录的 N 天」文案的分母，页面直读）。 */
+  const loggedCalDays = seriesCount(series, 'calories');
   const summary: MultiTrendSummary = {
     days: series.length,
-    loggedDays: seriesCount(series, 'calories'),
+    loggedDays: loggedCalDays,
     avgCalorie: seriesAvg(series, 'calories'),
     weightChange: seriesDelta(series, 'weightKg'),
     avgExercise: seriesAvg(series, 'exerciseKcal'),
     avgProtein: seriesAvg(series, 'protein'),
     avgDeficit: seriesAvg(series, 'deficit'),
-    complianceRate: calorieGoal === null ? null : (series.length > 0 ? round2(compliantDays / series.length) : null),
+    /* #497：达标率分母＝有记录的天（旧口径除以窗口天数 series.length，分子本就只数有记录的天；
+     * 90 天窗 11 记录即 11/11 而非 11/90）。与热量趋势页 `ea7cdc9` 口径统一（裁决见 t497 证据 §1）；
+     * 窗内无热量记录回 null，不编数。 */
+    complianceRate: calorieGoal === null ? null : (loggedCalDays > 0
+      ? round2(compliantDays / loggedCalDays) : null),
     /* #160：整数天数与比例同批投影（页面不许按比例反解，见类型注释）。 */
     compliantDays: calorieGoal === null ? null : compliantDays,
   };
