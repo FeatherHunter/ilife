@@ -1,0 +1,11 @@
+# t416 锁记录导出（`.scratch/locks/gate-runs.log` 中 `ticket=416` 条目，c3 提交前 10 行；c3 两行提交后可查）
+START ticket=416 runId=0e04d469-6fb9-4194-a879-ab393d8f7b35 cmd="pwsh -File .scratch/t416/window-1.ps1" waitedMs=0 pid=52328 at=2026-09-16T02:19:20.815Z
+RUN ticket=416 runId=0e04d469-6fb9-4194-a879-ab393d8f7b35 cmd="pwsh -File .scratch/t416/window-1.ps1" waitedMs=0 exit=0 pid=52328 at=2026-09-16T02:19:30.114Z
+START ticket=416 runId=24f60005-f758-4f2b-ad8d-4c0cd7670657 cmd="pwsh -File .scratch/t416/window-c1.ps1" waitedMs=0 pid=13860 at=2026-09-16T02:19:45.523Z
+RUN ticket=416 runId=24f60005-f758-4f2b-ad8d-4c0cd7670657 cmd="pwsh -File .scratch/t416/window-c1.ps1" waitedMs=0 exit=0 pid=13860 at=2026-09-16T02:19:48.400Z
+START ticket=416 runId=c4372aec-87ed-4051-b876-98649b6b0146 cmd="pwsh -File .scratch/t416/window-c2.ps1" waitedMs=0 pid=72260 at=2026-09-16T02:20:03.145Z
+RUN ticket=416 runId=c4372aec-87ed-4051-b876-98649b6b0146 cmd="pwsh -File .scratch/t416/window-c2.ps1" waitedMs=0 exit=0 pid=72260 at=2026-09-16T02:20:05.777Z
+START ticket=416 runId=cdaee025-a974-40fc-b505-469e849c9da5 cmd="pwsh -File .scratch/t416/window-3.ps1" waitedMs=0 pid=65412 at=2026-09-16T02:20:10.458Z
+RUN ticket=416 runId=cdaee025-a974-40fc-b505-469e849c9da5 cmd="pwsh -File .scratch/t416/window-3.ps1" waitedMs=0 exit=0 pid=65412 at=2026-09-16T02:20:20.878Z
+START ticket=416 runId=99698a1e-8f60-4f39-af12-38acca5f4daa cmd="pwsh -File .scratch/t416/window-4.ps1" waitedMs=40029 pid=62008 at=2026-09-16T02:21:23.975Z
+RUN ticket=416 runId=99698a1e-8f60-4f39-af12-38acca5f4daa cmd="pwsh -File .scratch/t416/window-4.ps1" waitedMs=40029 exit=0 pid=62008 at=2026-09-16T02:21:32.585Z
