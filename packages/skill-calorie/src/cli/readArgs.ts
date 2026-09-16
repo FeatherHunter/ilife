@@ -50,17 +50,24 @@ function parseReadArgs(a: string[]): ReadArgs {
   return parseArgs(a);
 }
 
+/** 精确键名表（前缀规则覆盖不到的零散身体键；新增精确键往此表加一行，不写新 if）。
+ * 具名键集＝数据位（`cmd-registry-294` 终态门明示不算按键分派）。 */
+const BODY_EXACT_KEYS: readonly string[] = [
+  'calorie.view.composition-wizard',
+  'calorie.view.measure-wizard',
+];
+
 /** #500 · 身体域失败整页的场景判定（框架级）。
  *
  * 缺数据／缺参数走失败回执整页的只限身体域（HELP 一级分组「身体细节」／场景 08）：
- * 权威源 `src/body/commands.ts` 的 10 条键（4 写＋6 读）。此处按键名前缀判定，
- * 不另写第二份名表：`calorie.body.*`（4 写）／`calorie.view.body-*`（4 读）／
+ * 权威源 `src/body/commands.ts` 的 10 条键（4 写＋6 读）。此处按键名前缀判定＋精确键名表
+ * （`BODY_EXACT_KEYS`），不另写第二份名表：`calorie.body.*`（4 写）／`calorie.view.body-*`（4 读）／
  * 两向导 `calorie.view.composition-wizard`／`calorie.view.measure-wizard`。
  * 若新增身体键改了前缀，本票靶向测试会提醒同步（见 `test/t500-失败整页.test.mjs`）。
  * 返回场景名（`身体细节`），非身体键返 null（调用方走原纯文本，保持其它域不动）。 */
 function bodySceneFor(key: string | undefined): string | null {
   if (!key) return null;
-  if (key === 'calorie.view.composition-wizard' || key === 'calorie.view.measure-wizard') return '身体细节';
+  if (BODY_EXACT_KEYS.includes(key)) return '身体细节';
   if (key.startsWith('calorie.body.')) return '身体细节';
   if (key.startsWith('calorie.view.body-')) return '身体细节';
   return null;
