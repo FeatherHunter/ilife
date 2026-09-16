@@ -985,14 +985,14 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
       /* #570 R-27：原说明与口径行同义（10%两处、14天两处）。说明只讲做法与缺数分支，
        * 阈值与判据归口径行（`达标线＝…10%`），两处不再互为子串。 */
       description: '看每天的摄入能不能守在营养目标上。摄入记录不到 14 天就只说数据不够，够 14 天才给判定。',
-    })),
+    }), secTitle('sec-params')),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '均值', value: String(v.avg), unit: '卡' },
       { label: '目标', value: String(v.goal), unit: '卡' },
       { label: '缺口', value: String(v.gap), unit: '卡', detail: gapBasis },
     ]), verdictCard('是否在轨', v.onTarget
       ? '日均与目标差得不远。'
-      : '日均离目标偏开。', v.onTarget, '在轨', '偏离'))),
+      : '日均离目标偏开。', v.onTarget, '在轨', '偏离')), secTitle('sec-overview')),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
@@ -1003,7 +1003,7 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
         }),
       },
     },
-  })));
+  }), secTitle('sec-data')));
   parts.push(renderCaliberLine('目标＝每天的热量目标｜达标线＝日均偏离不超过目标的 10%｜摄入记录不到 14 天不出判定'));
   parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
@@ -1037,7 +1037,7 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
       /* #570 R-27：原说明与口径行同义（缺口定义两处、7700两处）。说明只讲做法，
        * 定义与折算归口径行，两处不再互为子串。 */
       description: '按最近的饮食与运动趋势，推后面每天能留出多少缺口，折算一周能掉多少。',
-    })),
+    }), secTitle('sec-params')),
     pageSection('sec-overview', renderKpiGrid([
       /* #570 R-26：该卡是相对消耗的差（消耗−摄入），detail 补限定词与数值一一对应。 */
       { label: '平均缺口', value: deficitSigned, unit: '卡/天', detail: '相对消耗，正数是缺口' },
@@ -1046,7 +1046,7 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
        * 卡里再印一遍就是「同一事实在卡内出现两次」，
        * 且它与主值 1.09 是同一量纲却不同有效位（视觉抽查 §2.3 缺陷 3 的原句）。 */
       { label: '每周掉重', value: fmtRate(v.weeklyLoss), unit: 'kg/周' },
-    ])),
+    ]), secTitle('sec-overview')),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
@@ -1055,7 +1055,7 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
         metrics: metricsOf({ avg_deficit: v.avgDeficit, weekly_loss: v.weeklyLoss }),
       },
     },
-  })));
+  }), secTitle('sec-data')));
   parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 kg｜健康区间＝每周掉 0.3 到 1.2 kg｜符号＝缺口取正数表缺口，每周掉重取掉量为正，体重速率页另取变化率为负表下降'));
   parts.push(sourceFootnote('饮食记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
@@ -1087,14 +1087,14 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
       /* #570 R-27：原说明与口径行同义（300卡判据两处）。说明只讲做法与缺数分支，
        * 阈值归口径行（`判据＝…300 卡算稳`），两处不再互为子串。 */
       description: '看每天的摄入稳不稳定。摄入记录不到 14 天就只说数据不够，够 14 天才给判定。',
-    })),
+    }), secTitle('sec-params')),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '均值', value: String(v.avg), unit: '卡', detail: avgWindow },
       /* σ 是统计符号，读者认不得：这一格就说「上下波动的幅度」（口径在同页的口径行里）。 */
       { label: '波动', value: String(v.sigma), unit: '卡', detail: '上下波动的幅度' },
     ]), verdictCard('是否稳定', v.stable
       ? '每天的摄入比较匀。'
-      : '每天的摄入忽高忽低。', v.stable, '稳定', '波动大'))),
+      : '每天的摄入忽高忽低。', v.stable, '稳定', '波动大')), secTitle('sec-overview')),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
@@ -1103,7 +1103,7 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
         metrics: metricsOf({ avg: v.avg, sigma: v.sigma, stable: v.stable ? 1 : 0 }),
       },
     },
-  })));
+  }), secTitle('sec-data')));
   parts.push(renderCaliberLine('波动＝每天摄入偏离日均的幅度（标准差）｜判据＝上下波动不超过 300 卡算稳｜摄入记录不到 14 天不出判定'));
   parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({

@@ -1,8 +1,9 @@
 /** #620 增量1：10–13 判词方向——偏慢不再误判偏快。改坏必红，还原必绿。 */
+/** #620 增量5：18–20 补可见小节标题（R-60同形，标题==导航）。 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { weightSimTarget } from '../dist/analysis/simulate2.js';
-import { buildSimTargetDoc } from '../dist/render/trendPredictDocs.js';
+import { weightSimTarget, calorieGoalEta, calorieDeficitEta, calorieStability } from '../dist/analysis/simulate2.js';
+import { buildSimTargetDoc, buildCalorieGoalDoc, buildCalorieDeficitDoc, buildCalorieStabilityDoc } from '../dist/render/trendPredictDocs.js';
 
 function series90() {
   const out = [];
@@ -47,4 +48,33 @@ test('#620-1 可行 4kg/60d（0.47？按实际算 feasible）：健康范围内�
   } else {
     assert.ok(text.includes('偏慢') || text.includes('偏快') || text.includes('超出'), '不可行页方向不明');
   }
+});
+
+function secHeadings(html) {
+  const secs = [...html.matchAll(/<section id="([^"]+)">(?:<h2 class="tpd-sec-title">([^<]*)<\/h2>)?/g)]
+    .map((m) => ({ id: m[1], h2: m[2] ?? null }));
+  const nav = [...html.matchAll(/href="#([^"]+)">([^<]*)</g)].map((m) => ({ id: m[1], text: m[2] }));
+  return { secs: secs.filter((s) => s.id.startsWith('sec-')), nav };
+}
+
+function assertHeadingsEqNav(html, what) {
+  const { secs, nav } = secHeadings(html);
+  assert.ok(secs.length > 0 && nav.length > 0, what + ' 无区块或无导航');
+  assert.deepEqual(secs.map((s) => s.id), nav.map((n) => n.id), what + ' 区块≠导航项');
+  secs.forEach((s, i) => {
+    assert.ok(s.h2 !== null, what + ' ' + s.id + ' 无可见小节标题');
+    assert.equal(s.h2, nav[i].text, what + ' ' + s.id + ' 标题≠导航：' + s.h2 + ' vs ' + nav[i].text);
+  });
+}
+
+test('#620-5 18营养目标达成：小节标题数==导航项数且逐字一致', () => {
+  assertHeadingsEqNav(buildCalorieGoalDoc(calorieGoalEta(series90(), '摄入预测')), 'buildCalorieGoalDoc');
+});
+
+test('#620-5 19缺口预测：小节标题数==导航项数且逐字一致', () => {
+  assertHeadingsEqNav(buildCalorieDeficitDoc(calorieDeficitEta(series90(), '摄入预测')), 'buildCalorieDeficitDoc');
+});
+
+test('#620-5 20稳定性：小节标题数==导航项数且逐字一致', () => {
+  assertHeadingsEqNav(buildCalorieStabilityDoc(calorieStability(series90(), '摄入预测')), 'buildCalorieStabilityDoc');
 });
