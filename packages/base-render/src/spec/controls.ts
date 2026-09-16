@@ -288,9 +288,11 @@ export interface ActionBarInput {
   readonly copyData?: CopyButtonInput;
   readonly copyLog?: CopyButtonInput;
 }
-/* #336 双按钮一行（base 侧兜底，实现见 `src/controls.ts` 的 `renderActionBar`）：
- *  有数据位（`copyData` 在场）无日志位时自动补一颗禁用态复制日志（沿用 `ACTION_BAR_DEFAULTS`
- *  双 label ＋ `COPY_ACTION_IDS.actionBar.copyLog`，无 `data-t` ＋ `disabled`，互不串味）；
+/* #654（负责人 2026-09-16 验收打回，**口径变更**）：「有数据位、无日志位」**不再自动补**禁用态复制日志。
+ *  原 #336 兜底补它的真实目的是保 ghost 行的**几何**（两颗等宽，别一颗铺满、一颗缩成内容宽）；
+ *  但它在读页面（没有写库日志）上产出一颗**点不动的控件**——第一性原理下站不住：
+ *  一个控件必须真能做它写的那件事。几何改由「列数跟着颗数走」保：单颗时 `renderActionBar` 挂
+ *  `action-row-ghost-single`（`style.ts` 让它在整行轨道里铺满），两颗真位时照 #247 两列平分。
  *  两边都在场／两边都不在场／仅日志位在场照旧。 */
 
 export const ACTION_BAR_DEFAULTS = Object.freeze({

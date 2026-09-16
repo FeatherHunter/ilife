@@ -359,6 +359,13 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '    grid-template-columns: minmax(0, 1fr);',
     '  }',
     '}',
+    // #654：ghost 行**只有一颗真按钮**时，让它在整行轨道里铺满——#336 当年靠「补一颗禁用态假按钮」
+    // 凑第二格，为的就是保这个几何（不占半格、也不缩成内容宽）；现在列数跟着颗数走，假控件不再需要
+    // （负责人 2026-09-16 验收：读页面底部那颗点不动的「复制日志」是缺陷）。
+    // 类名只在单颗时挂 ⇒ 两颗真位一格不动；≤640 档照旧走上面 #427 的单列（那一档本来就一颗一行）。
+    '.' + p + 'action-row-ghost-single > .' + p + 'copy-btn {',
+    '  grid-column: 1 / -1;',
+    '}',
     '.' + p + 'action-btn {',
     '  display: inline-flex;',
     '  align-items: center;',

@@ -2,8 +2,8 @@
  *
  *  口径（与派单逐条对上）：
  *  1. `renderCopyBlock` 标题「复制数据」与按钮同名时不出 `<h2>`（与 `copyArea` 去重口径对齐）；
- *  2. `renderActionBar` 有数据位则同时出复制数据＋复制日志（无日志位补禁用占位，互不串味，
- *     沿用 `ACTION_BAR_DEFAULTS` 双 label）；同一 ghost 行；
+ *  2. `renderActionBar` **只渲染真存在的动作**（#654 起：有数据位不再补禁用态复制日志占位，
+ *     单颗时挂 `action-row-ghost-single` 让它在整行轨道铺满）；同一 ghost 行；
  *  3. 复制逻辑：数据→数据位原文（三格式为菜单各带各的 `data-t`），日志→日志位，成功回执保留
  *     （`renderErrorReceipt` 双位都在场仍全使能、无 `disabled`）。
  */
@@ -13,7 +13,6 @@ import assert from 'node:assert/strict';
 import {
   ACTION_BAR_DEFAULTS,
   ACTION_ID_ATTR,
-  COPY_ACTION_IDS,
   COPY_FORMATS,
   DEFAULT_DATA_ATTR,
   renderActionBar,
@@ -25,7 +24,8 @@ const DATA_LABEL = ACTION_BAR_DEFAULTS.copyDataLabel;
 const LOG_LABEL = ACTION_BAR_DEFAULTS.copyLogLabel;
 
 function ghostRows(html) {
-  return (html.match(/ilife-action-row-ghost/g) ?? []).length;
+  // 只数 ghost 行本体；`-single`（#654 单颗修饰类）是同一行的第二个类名，别数进来。
+  return (html.match(/ilife-action-row-ghost(?!-)/g) ?? []).length;
 }
 
 function buttons(html) {
@@ -51,29 +51,23 @@ describe('#336 标题去重（base 侧兜底）', () => {
   });
 });
 
-describe('#336 ActionBar 双按钮一行（有数据位即补日志位）', () => {
-  it('单格式数据位单传 → 双按钮同行：数据带原文，日志禁用占位（无 data-t、disabled）', () => {
+describe('#336／#654 ActionBar 双按钮一行（有数据位不再补日志位）', () => {
+  it('#654 单格式数据位单传 → 只有一颗真按钮（不补禁用占位）＋ 挂单颗修饰类', () => {
     const html = renderActionBar({ copyData: { actionId: 'cd', text: 'D' } });
     assert.equal(ghostRows(html), 1, '必须同一 ghost 行');
-    assert.equal(buttons(html), 2, '必须两颗按钮');
+    assert.equal(buttons(html), 1, '只许一颗按钮（#654：不许补点不动的占位）');
+    assert.ok(html.includes('ilife-action-row-ghost-single'), '单颗必须挂单颗修饰类（几何靠列数，不靠假按钮）');
+    assert.equal(html.includes('disabled'), false, '不该有任何禁用控件');
     assert.ok(html.includes(ACTION_ID_ATTR + '="cd"'), '数据 id 必须保留调用方那颗');
-    assert.ok(html.includes(ACTION_ID_ATTR + '="' + COPY_ACTION_IDS.actionBar.copyLog + '"'), '日志 id 必须取冻结缺省');
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="D"'), '数据位必须带原文');
-    assert.ok(html.includes('>' + DATA_LABEL + '</button>'), '数据文案必须沿用缺省双 label');
-    assert.ok(html.includes('>' + LOG_LABEL + '</button>'), '日志文案必须沿用缺省双 label');
-    const logSeg = html.slice(html.indexOf(COPY_ACTION_IDS.actionBar.copyLog) - 200, html.indexOf(COPY_ACTION_IDS.actionBar.copyLog) + 300);
-    void logSeg;
-    // 日志占位段：有 disabled、无 data-t（互不串味：数据的 D 不得漏进日志位）。
-    const logBtn = /<button[^>]*ilife-copy-log"[^>]*>复制日志<\/button>/.exec(html);
-    assert.ok(logBtn !== null, '缺禁用态复制日志按钮');
-    assert.ok(logBtn[0].includes('disabled'), '无对应位必须禁用');
-    assert.equal(logBtn[0].includes(DEFAULT_DATA_ATTR), false, '禁用占位不得带 data-t（互不串味）');
+    assert.ok(html.includes('>' + DATA_LABEL + '</button>'), '数据文案必须沿用缺省 label');
+    assert.equal(html.includes('>' + LOG_LABEL + '</button>'), false, '没有日志位就不该出现「复制日志」');
   });
 
-  it('三格式数据位单传 → 菜单三项各带各的 data-t ＋ 禁用日志同行', () => {
+  it('#654 三格式数据位单传 → 菜单三项各带各的 data-t，仍只有一颗真按钮', () => {
     const html = renderActionBar({
       copyData: { actionId: 'cd', formats: { text: 'T', json: 'J', csv: 'C' } },
-      // 日志位缺席 → 应补禁用占位。
+      // #654：日志位缺席 → 不再补占位。
     });
     assert.equal(ghostRows(html), 1, '必须同一 ghost 行');
     for (const key of COPY_FORMATS) {
@@ -82,16 +76,19 @@ describe('#336 ActionBar 双按钮一行（有数据位即补日志位）', () =
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="T"'), '纯文本项必须带自己的 data-t');
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="J"'), 'JSON 项必须带自己的 data-t');
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="C"'), 'CSV 项必须带自己的 data-t');
-    const logBtn = /<button[^>]*ilife-copy-log"[^>]*>复制日志<\/button>/.exec(html);
-    assert.ok(logBtn !== null && logBtn[0].includes('disabled'), '三格式下同样要补禁用日志');
+    // 菜单三项本身就是按钮（真动作，不算占位）；这里判的是「复制胶囊只有一颗」。
+    assert.equal((html.match(/class="ilife-copy-btn(?!-)/g) ?? []).length, 1, '只许一颗复制胶囊（#654）');
+    assert.equal(html.includes('disabled'), false, '不该有任何禁用控件');
+    assert.equal(html.includes('>' + LOG_LABEL + '</button>'), false, '没有日志位就不该出现「复制日志」');
   });
 
-  it('双位都在场 → 照旧双使能（无 disabled），各带各的 data-t', () => {
+  it('双位都在场 → 照旧双使能（无 disabled），各带各的 data-t，且不挂单颗修饰类', () => {
     const html = renderActionBar({
       copyData: { actionId: 'cd', text: 'D' },
       copyLog: { actionId: 'cl', text: 'L' },
     });
     assert.equal(buttons(html), 2, '必须两颗');
+    assert.equal(html.includes('ilife-action-row-ghost-single'), false, '两颗时不得挂单颗修饰类（#247 两列平分）');
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="D"'), '数据位原文');
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="L"'), '日志位原文');
     assert.equal(html.includes('disabled'), false, '两边都在场不得禁用任何一颗');

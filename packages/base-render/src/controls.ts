@@ -1376,24 +1376,16 @@ function copyControlHtml(button: NormalizedCopyButton): string {
  *  逐区尺寸（`minHeightPx`／`fontSizePx`／`fontWeight`／`ghostBorderAlpha`／`evenRowPairs`）由 #75 的
  *  共享样式区消费（本文件不产样式常量）。
  *
- *  #336 双按钮一行（base 侧兜底）：有数据位（`copyData` 在场）无日志位时自动补一颗禁用态复制日志
- *  （文案／id 沿用 `ACTION_BAR_DEFAULTS.copyLogLabel`／`COPY_ACTION_IDS.actionBar.copyLog`，
- *  无 `data-t` ＋ `disabled`，只占 ghost 行第二格，点不动、互不串味）。两边都在场／两边都不在场照旧；
- *  仅日志位在场不补数据位。补位同样参与同次渲染内 id 唯一校验。 */
+ *  #654（负责人 2026-09-16 验收打回，**口径变更**）：**不再补**那颗禁用态「复制日志」占位。
+ *  动作条只渲染**真存在**的动作；ghost 行的几何改由「列数跟着颗数走」保——只有一颗时挂
+ *  `action-row-ghost-single`（`style.ts` 让它在整行轨道铺满），两颗真位时照 #247 两列平分。
+ *  两边都在场／都不在场／仅日志位在场照旧；仅日志位在场不补数据位。 */
 export const renderActionBar: RenderActionBar = (input) => {
   assertPlainObject(input, 'renderActionBar: input');
   const bar = input as ActionBarInput;
   const buttons = normalizeButtons(bar.buttons);
   const copyData = normalizeCopyButton(bar.copyData, ACTION_BAR_DEFAULTS.copyDataLabel, 'copyData');
-  let copyLog = normalizeCopyButton(bar.copyLog, ACTION_BAR_DEFAULTS.copyLogLabel, 'copyLog');
-  if (copyData !== null && copyLog === null) {
-    copyLog = {
-      label: ACTION_BAR_DEFAULTS.copyLogLabel,
-      actionId: COPY_ACTION_IDS.actionBar.copyLog,
-      text: undefined,
-      disabled: true,
-    };
-  }
+  const copyLog = normalizeCopyButton(bar.copyLog, ACTION_BAR_DEFAULTS.copyLogLabel, 'copyLog');
 
   const ids = new Set<string>();
   for (const button of buttons) {
@@ -1407,9 +1399,13 @@ export const renderActionBar: RenderActionBar = (input) => {
   }
 
   const sceneHtml = buttons.map(sceneButtonHtml).join('');
-  const ghostHtml = [copyData, copyLog].filter((copy): copy is NormalizedCopyButton => copy !== null).map(copyControlHtml).join('');
+  const ghostList = [copyData, copyLog].filter((copy): copy is NormalizedCopyButton => copy !== null);
+  const ghostHtml = ghostList.map(copyControlHtml).join('');
   const rowClass = STYLE_PREFIX + 'action-row';
-  const ghostRowClass = rowClass + ' ' + STYLE_PREFIX + 'action-row-ghost';
+  // #654：ghost 行**只有一颗**时挂单颗修饰类——`style.ts` 让它铺满整行轨道（既不占半格、
+  // 也不缩成内容宽）；两颗真位时不挂，#247 的两列平分口径一字不动。
+  const ghostRowClass = rowClass + ' ' + STYLE_PREFIX + 'action-row-ghost'
+    + (ghostList.length === 1 ? ' ' + STYLE_PREFIX + 'action-row-ghost-single' : '');
   const rows: string[] = [];
   if (sceneHtml !== '' && ghostHtml !== '' && !ACTION_BAR_DEFAULTS.ghostOwnRow) {
     rows.push('<div class="' + rowClass + '">' + sceneHtml + ghostHtml + '</div>');
