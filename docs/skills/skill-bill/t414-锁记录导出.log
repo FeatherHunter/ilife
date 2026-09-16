@@ -1,0 +1,15 @@
+# t414 锁记录导出（`.scratch/locks/gate-runs.log` 中 `ticket=414` 条目，c3 提交前 14 行；c3 两行提交后可查）
+START ticket=414 runId=730d0bdd-4d86-40b4-8b3a-01fce634e7d2 cmd="pwsh -File .scratch/t414/window-1.ps1" waitedMs=0 pid=4880 at=2026-09-16T01:58:45.180Z
+RUN ticket=414 runId=730d0bdd-4d86-40b4-8b3a-01fce634e7d2 cmd="pwsh -File .scratch/t414/window-1.ps1" waitedMs=0 exit=0 pid=4880 at=2026-09-16T01:59:00.629Z
+START ticket=414 runId=479accc8-de1e-4b19-b635-cd6c58d6eb19 cmd="pwsh -File .scratch/t414/window-1.ps1" waitedMs=20014 pid=44660 at=2026-09-16T01:59:34.240Z
+RUN ticket=414 runId=479accc8-de1e-4b19-b635-cd6c58d6eb19 cmd="pwsh -File .scratch/t414/window-1.ps1" waitedMs=20014 exit=0 pid=44660 at=2026-09-16T01:59:48.485Z
+START ticket=414 runId=ade8e872-f30a-44f1-9579-9c6bedce1b2a cmd="pwsh -File .scratch/t414/window-1.ps1" waitedMs=0 pid=44476 at=2026-09-16T01:59:54.890Z
+RUN ticket=414 runId=ade8e872-f30a-44f1-9579-9c6bedce1b2a cmd="pwsh -File .scratch/t414/window-1.ps1" waitedMs=0 exit=0 pid=44476 at=2026-09-16T02:00:10.246Z
+START ticket=414 runId=671bd831-aa5b-43d2-b535-c54b104e9efe cmd="pwsh -File .scratch/t414/window-c1.ps1" waitedMs=90058 pid=4752 at=2026-09-16T02:01:56.118Z
+RUN ticket=414 runId=671bd831-aa5b-43d2-b535-c54b104e9efe cmd="pwsh -File .scratch/t414/window-c1.ps1" waitedMs=90058 exit=0 pid=4752 at=2026-09-16T02:01:58.543Z
+START ticket=414 runId=8a63ad46-c2ce-4199-ae5c-284fb225c187 cmd="pwsh -File .scratch/t414/window-c2.ps1" waitedMs=20012 pid=55224 at=2026-09-16T02:02:25.815Z
+RUN ticket=414 runId=8a63ad46-c2ce-4199-ae5c-284fb225c187 cmd="pwsh -File .scratch/t414/window-c2.ps1" waitedMs=20012 exit=0 pid=55224 at=2026-09-16T02:02:28.241Z
+START ticket=414 runId=b7437904-4aaf-4921-9554-3ca29141d7da cmd="pwsh -File .scratch/t414/window-3.ps1" waitedMs=0 pid=65024 at=2026-09-16T02:02:39.563Z
+RUN ticket=414 runId=b7437904-4aaf-4921-9554-3ca29141d7da cmd="pwsh -File .scratch/t414/window-3.ps1" waitedMs=0 exit=0 pid=65024 at=2026-09-16T02:02:56.465Z
+START ticket=414 runId=603a165c-fd75-4141-aaad-22586b077cf3 cmd="pwsh -File .scratch/t414/window-4.ps1" waitedMs=0 pid=57532 at=2026-09-16T02:03:29.317Z
+RUN ticket=414 runId=603a165c-fd75-4141-aaad-22586b077cf3 cmd="pwsh -File .scratch/t414/window-4.ps1" waitedMs=0 exit=0 pid=57532 at=2026-09-16T02:03:43.260Z
