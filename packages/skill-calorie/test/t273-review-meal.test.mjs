@@ -154,8 +154,8 @@ const DEEP_BLOCK_CLASSES = ['ilife-block ilife-block-feedbackBlock'];
 for (const { p, html } of RUNS) {
   test('#273 ③ 骨架：眉标／结论句含读数／页内导航／来源脚注 ＋ 裁定 1／2-补／7 —— ' + p.id, () => {
     const text = visible(html);
-    assert.ok(text.includes('饮食复盘 · 饮食'), p.id + ' 眉标不是人话族名');
-    assert.ok(text.includes('复盘 · 餐别'), p.id + ' 缺类型徽章');
+    assert.ok(text.includes('饮食复盘饮食'), p.id + ' 眉标不是人话族名');
+    assert.ok(text.includes('复盘餐别'), p.id + ' 缺类型徽章');
     assert.ok(html.includes('class="ilife-block-toc"') && html.includes('aria-label="页内导航"'), p.id + ' 缺页内导航');
     for (const n of ['本窗读数', '每日热量趋势', '高频食物 TOP5', '按餐汇总', '营养配比', '复制数据']) {
       assert.ok(text.includes(n), p.id + ' 页内导航缺项：「' + n + '」');
@@ -271,7 +271,7 @@ test('#273 ⑤ 餐别取数：四餐一桶不漏 ＋ 与老脚本同口径的读
 test('#273 ⑤ 餐别区块对得上 meal_distribution.html ＋ 区外不夹整页（页头／页脚一概不进块）', () => {
   const text = visibleText(ALL_BLOCK);
   for (const b of ['餐数', '日均热量', '餐别热量占比', '最高占比', '午餐 52.4%', '明细（共 10 条）',
-    '📊 数据来源 · 饮食记录 · 餐别时间窗推断 · 2026-09-01 → 2026-09-07', '加餐时段：下午茶、夜宵']) {
+    '📊 数据来源 · 饮食记录 · 餐别时间窗推断 · 2026-09-01 → 2026-09-07', '加餐是下午茶和夜宵']) {
     assert.ok(text.includes(b), '餐别区块缺老实物那一块：「' + b + '」');
   }
   for (const id of ['md-kpi', 'md-dist', 'md-table', 'md-copy']) {
