@@ -16,7 +16,7 @@ import { TRIGGERS } from '../dist/triggers/index.js';
 import { buildPhotoHelp, CALORIE_TEMPLATES, loadTemplate, CalorieRenderError } from '../dist/render/index.js';
 import {
   HELP_VIEW_ENTRIES_META_ID, HELP_VIEW_ENTRIES_META_TITLE,
-  buildHelpViewEntries, renderHelpCenterHtml, renderViewEntriesHtml,
+  buildHelpSceneData, buildHelpViewEntries, renderHelpCenterHtml, renderViewEntriesHtml,
 } from '../dist/photo/helpCenter.js';
 
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -109,8 +109,29 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
     for (const e of entries) {
       assert.ok(text.html.includes('  ' + e.title + ' · ' + e.cli), 'text 态未渲染入口：' + e.name);
     }
-    // 入口行不得混进场景行口径（4 空格行恒 436 条）。
-    assert.equal(text.html.split('\n').filter((line) => line.startsWith('    ')).length, 436);
+    // 入口行不得混进场景行口径：text 态里**场景行恒「4 空格 ＋ 唤醒词 · 场景 id」**、
+    // **入口行恒 2 空格**（渲染器 `renderTextIndex` 两族靠缩进分家），同面消费方
+    // （`help-center-91` 的 `textSceneIds`）只认 4 空格行 ⇒ 入口行一旦也缩进 4 空格即改口径、
+    // 场景行漏渲染／多渲染也改口径。**数不手写**（仓规：数一律从声明件派生，冻结值必陈化）：
+    // 行源＝本渲染面真正依据的那份场景数据 `buildHelpSceneData()`（`TRIGGERS` 的运行期投影），
+    // 于是期望值随数据重算，不再有「数据一动、计数过期」这种红；而下面三条任一所盯的事实被破即红。
+    const sceneSourceLines = buildHelpSceneData().groups
+      .flatMap((group) => group.subgroups.flatMap(
+        (subgroup) => subgroup.scenes.map((scene) => '    ' + scene.wake_word + ' · ' + scene.id),
+      ));
+    const sceneRows = text.html.split('\n').filter((line) => line.startsWith('    '));
+    assert.deepEqual(sceneRows, sceneSourceLines, '4 空格行必须与场景源逐行逐字对齐（序／词／条数一并派生）');
+    // 再出一层等价判据：行源规模恒等于唤醒词声明面 —— 4 空格行的唤醒词**多重集**（含重数，
+    // 如 `记身材照` 出现 3 次）逐条对齐 `TRIGGERS` 的唤醒词多重集；唤醒词里不含 ` · ` 分隔符
+    // （探针实测 440 条无一命中），故按首个 ` · ` 切出的即唤醒词原文。
+    assert.deepEqual(
+      sceneRows.map((line) => line.slice('    '.length).split(' · ')[0]).sort(),
+      TRIGGERS.map((trigger) => trigger.wake_word).sort(),
+      '4 空格行的唤醒词多重集必须与声明面 TRIGGERS 逐条对齐',
+    );
+    // 条数口径直陈（同为派生值，非冻结数）：行源当下不丢任何条（F3 的分类过滤今日空转）；
+    // 哪天它真丢了条，本条即红 —— 那正是「速查台漏了那条」该被人工复核的时刻，不是噪声。
+    assert.equal(sceneSourceLines.length, TRIGGERS.length, '场景行源规模 == 声明面 TRIGGERS.length（派生，不手写）');
   });
   it('入口块自负转义（meta_blocks.html 原样透传，不得让模板内容注入标签）', () => {
     const html = renderViewEntriesHtml([
