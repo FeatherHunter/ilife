@@ -153,7 +153,7 @@ function rowOf(it: RankItem, cat: string): Record<string, string> {
     metric: textOf(it, m),
     cnt: it.cnt + ' 次',
     cal: it.totalCal + ' 卡',
-    avg: it.avgCalPerMeal + ' 卡/餐',
+    avg: it.avgCalPerMeal + ' 卡',
     nutri: nutriText(it),
   };
 }
