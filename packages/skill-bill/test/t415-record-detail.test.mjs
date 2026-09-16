@@ -1,7 +1,7 @@
 // t415 详情页锁：bill.record.detail 查账单详情（专属版式）
 // 判据五组：
 //   ① 存在 id 整页：字段 10 列全可见＋金额两位小数＝载荷数值＋金额卡＋状态卡（正常 ok）＋复制区＋页标记；
-//   ② 软删三态：同 id 正常→撤销后（整页＋已撤销 danger＋删除时间原值＋副标题后缀）→恢复后（正常）；
+//   ② 软删三态：同 id 正常→撤销后（整页＋已撤销 danger＋删除时间原值＋已撤销胶囊）→恢复后（正常）；
 //   ③ 红线：缺 id／坏 id→exit 2 且 stdout 空，真无此号→exit 4 且 stdout 空（不冒充正常）；
 //   ④ 路由回归：查账单→today，查账单详情→detail，含两词的长句走长者（最长匹配）；
 //   ⑤ 真跑：每条 exit 0＋shape detail＋H1 查账单详情＋KPI 两格（整段开标签计数）＋字段表一张 11 行。
@@ -80,7 +80,10 @@ describe('t415 ① 存在 id 整页：字段全＋金额卡＋状态卡＋复制
     assert.equal(typeof env.data.item.created_at, 'string', '载荷应含 created_at（加法式）');
     assert.ok('deleted_at' in env.data.item, '载荷应含 deleted_at（加法式）');
     assert.ok(text.includes(H1('查账单详情')), 'H1 应为查账单详情');
-    assert.ok(text.includes('记录编号 ' + ID1 + ' · 2026-09-06 12:00:00'), '副标题说清编号与时刻');
+    assert.ok(text.includes('2026-09-06 12:00:00'), '副标题说清时刻');
+    assert.ok(text.includes('>记录编号 ' + ID1 + '<'), '编号是胶囊（一枚独立形状）');
+    const sub = text.match(/<p class="ilife-block-page-shell-subtitle">([\s\S]*?)<\/p>/);
+    assert.ok(sub && !sub[1].includes('·'), '副标题不许有 ·（复制日志载荷里的 · 是机器文本，不算展示）');
     assert.equal(countTag(text, KPI_TAG), 2, '金额卡＋状态卡两格（整段开标签计数）');
     assert.equal(countTag(text, TABLE_TAG), 1, '字段表一张');
     assert.equal(countTag(text, '<tr>'), 11, '表头一行＋字段十行');
@@ -117,7 +120,7 @@ describe('t415 ① 存在 id 整页：字段全＋金额卡＋状态卡＋复制
 });
 
 describe('t415 ② 软删三态：同 id 正常→撤销后→恢复后', () => {
-  it('撤销后查详情仍 exit 0＋已撤销徽＋删除时间原值＋副标题后缀', () => {
+  it('撤销后查详情仍 exit 0＋已撤销徽＋删除时间原值＋已撤销胶囊', () => {
     assert.equal(run(['bill.record.update', '--params', P({ op: 'undo', id: ID1 })]).status, 0, '撤销应成功');
     const { text, stdout } = page('bill.record.detail', { id: ID1 }, 't415-detail-deleted');
     const env = JSON.parse(stdout);
@@ -127,7 +130,10 @@ describe('t415 ② 软删三态：同 id 正常→撤销后→恢复后', () => 
     assert.ok(text.includes(BADGE_DANGER), '已撤销徽 danger（整段开标签）');
     assert.ok(text.includes('已撤销'), '已撤销可见');
     assert.ok(text.includes(String(env.data.item.deleted_at)), '删除时间原值可见');
-    assert.ok(text.includes('记录编号 ' + ID1 + ' · ') && text.includes('已撤销'), '副标题带已撤销后缀');
+    assert.ok(text.includes('>记录编号 ' + ID1 + '<'), '编号胶囊在');
+    assert.ok(text.includes('>已撤销<'), '已撤销胶囊在（状态卡徽之外另有一枚）');
+    const subDel = text.match(/<p class="ilife-block-page-shell-subtitle">([\s\S]*?)<\/p>/);
+    assert.ok(subDel && !subDel[1].includes('·'), '副标题不许有 ·');
     assert.ok(text.includes('详情 1 笔 · 记录编号 ' + ID1 + ' · 已撤销'), '复制日志同步已撤销');
     assert.equal(countTag(text, KPI_TAG), 2, '已撤销页仍两格');
     assert.equal(countTag(text, '<tr>'), 11, '已撤销页仍十行');

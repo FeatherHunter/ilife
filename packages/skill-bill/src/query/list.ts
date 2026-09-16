@@ -30,7 +30,7 @@
  *   时间／分类／金额／账户／账本／备注／编号——「编号」列留着是为了说得出口的下一步：
  *   用户拿它就能说「查账单详情」（老页没有这一列、也没有 detail 分支；这是新仓补的读链）。
  */
-import { renderDataTable, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
+import { renderChips, renderDataTable, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
@@ -90,8 +90,11 @@ export interface QueryListInput {
   readonly shape: string;
   /** 页标题＝用户说的那条唤醒词（能判出来的那几条按参数判，判不出的按本命令的代表词）。 */
   readonly wakeWord: string;
-  /** 这一页查的是哪一段（副标题）：日期／区间／条件说明 ＋ 笔数。 */
+  /** 这一页查的是哪一段（副标题）：日期／区间／条件说明。笔数不在这里——它有自己的胶囊行。 */
   readonly window: string;
+  /** 结果胶囊（副标题之下、KPI 之上）：如 `共 8 笔`。行内 `·` 不许进版式位（t407 用户语言整改同口径），
+   *  有几个事实就出几枚胶囊，不用一行串拼起来。 */
+  readonly chips: readonly string[];
   /** 数据表的行。 */
   readonly rows: readonly QueryTableRow[];
   readonly kpi: QueryKpi;
@@ -125,22 +128,24 @@ function sumText(n: number): string {
   return (Number.isFinite(n) ? n : 0).toFixed(2);
 }
 
-/** KPI 行四格：笔数／支出／收入／净额（净额＝收入−支出，口径由 `calcKpi` 算好，本件只摆版式）。 */
+/** KPI 行四格：笔数／支出／收入／净额（净额＝收入−支出，口径由 `calcKpi` 算好，本件只摆版式）。
+ *  笔数卡不带单位：label 已是「笔数」，再跟一个「笔」字就是同一件事说两遍。 */
 function kpiCards(kpi: QueryKpi): readonly KpiCardInput[] {
   return [
-    { label: '笔数', value: String(kpi.count), unit: '笔', detail: '转账不计进收支' },
-    { label: '支出', value: sumText(kpi.expense), detail: '这一段的支出合计' },
-    { label: '收入', value: sumText(kpi.income), detail: '这一段的收入合计' },
+    { label: '笔数', value: String(kpi.count), detail: '转账不计进收支' },
+    { label: '支出', value: sumText(kpi.expense), detail: '本页支出合计' },
+    { label: '收入', value: sumText(kpi.income), detail: '本页收入合计' },
     { label: '净额', value: sumText(kpi.net), detail: '收入减支出' },
   ];
 }
 
-/** 通用查询列表页：一整页（页头 ＋ KPI 行 ＋ 数据表或空态 ＋ 复制区）。 */
+/** 通用查询列表页：一整页（页头 ＋ 结果胶囊 ＋ KPI 行 ＋ 数据表或空态 ＋ 复制区）。 */
 export function queryListDoc(input: QueryListInput): string {
   const table = input.rows.length === 0
     ? renderEmptyBlock({ text: input.emptyText, hint: input.emptyHint })
     : renderDataTable({ columns: COLUMNS, rows: input.rows, caption: '查到的记录', emptyText: input.emptyText });
   const content = [
+    renderChips({ items: input.chips.map((text) => ({ text })) }),
     renderKpiGrid(kpiCards(input.kpi)),
     table,
     copyArea({

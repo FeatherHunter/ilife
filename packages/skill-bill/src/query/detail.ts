@@ -13,7 +13,7 @@
  * 分工：取数与阻断在 `read.ts`（含删态读 `includeDeleted`），本件只做**整页装配**；
  *   载荷那一份（`detailEnvelope`）由调用方拼好传进来，本件不重拼（形状与载荷成对，见 `./list.js:173-175`）。
  */
-import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderChips, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
@@ -30,8 +30,10 @@ export interface QueryDetailInput {
   readonly params: Record<string, unknown>;
   /** 页标题＝用户说的那条唤醒词（本页恒为 `查账单详情`）。 */
   readonly wakeWord: string;
-  /** 副标题：记录编号 ＋ 时刻 ＋ 软删后缀（已撤销才带，无后缀即正常）。 */
+  /** 副标题：这条记录的时刻。编号与已撤销态不在这里——它们各是一枚胶囊（行内 `·` 不许进版式位）。 */
   readonly window: string;
+  /** 结果胶囊：首枚恒为 `记录编号 <id>`；已撤销再加一枚 `已撤销`（状态卡已有徽，胶囊只说事实）。 */
+  readonly chips: readonly string[];
   /** 查到的那一条（含软删列，调用方已按 `includeDeleted` 取到）。 */
   readonly row: BillRow;
   /** 复制载荷：**本次查询的 envelope 本身**（`detailEnvelope`，复制区直接序列化它）。 */
@@ -42,7 +44,8 @@ export interface QueryDetailInput {
   readonly actionAt: string;
 }
 
-/** 字段表的列（**唯一定义地**）：字段／值两列，表头文本与每格 `data-label` 同源。 */
+/** 字段表的列（**唯一定义地**）：字段／值两列，表头文本与每格 `data-label` 同源。表题叫「字段明细」：
+ *  H1 已是「查账单详情」，caption 再叫「账单详情」就是同一句话说两遍。 */
 const DETAIL_COLUMNS: readonly DataTableColumn[] = [
   { key: 'field', label: '字段' },
   { key: 'value', label: '值' },
@@ -57,7 +60,9 @@ function textOrDash(v: string): string {
 }
 
 /** 金额卡＋状态卡（两格）：单条 KPI 四格语义弱（笔数恒 1），本页只留金额与状态。
- *  金额文案与载荷数值逐字一致（两位小数，符号照库）；状态徽正常 `ok`／已撤销 `danger`。 */
+ *  金额文案与载荷数值逐字一致（两位小数，符号照库）；状态徽正常 `ok`／已撤销 `danger`。
+ *  正常态不写 detail：值「正常」＋ ok 徽已是两遍，第三遍「记录有效」是同一件事说三遍；
+ *  已撤销才写 detail（撤销时间是新增事实）。 */
 function detailCards(row: BillRow, deleted: boolean): readonly KpiCardInput[] {
   const amount = row.amount.toFixed(2);
   return [
@@ -71,7 +76,7 @@ function detailCards(row: BillRow, deleted: boolean): readonly KpiCardInput[] {
       value: deleted ? '已撤销' : '正常',
       status: deleted ? 'danger' : 'ok',
       statusText: deleted ? '已撤销' : '正常',
-      detail: deleted ? '撤销时间 ' + String(row.deleted_at) : '记录有效',
+      ...(deleted ? { detail: '撤销时间 ' + String(row.deleted_at) } : {}),
     },
   ];
 }
@@ -93,12 +98,13 @@ function detailRows(row: BillRow, deleted: boolean): readonly Record<string, unk
   ];
 }
 
-/** 查询详情页：一整页（页头 ＋ 金额卡＋状态卡 ＋ 字段表 ＋ 复制区）。 */
+/** 查询详情页：一整页（页头 ＋ 结果胶囊 ＋ 金额卡＋状态卡 ＋ 字段表 ＋ 复制区）。 */
 export function queryDetailDoc(input: QueryDetailInput): string {
   const deleted = input.row.deleted_at !== null && input.row.deleted_at !== '';
   const content = [
+    renderChips({ items: input.chips.map((text) => ({ text })) }),
     renderKpiGrid(detailCards(input.row, deleted)),
-    renderDataTable({ columns: DETAIL_COLUMNS, rows: detailRows(input.row, deleted), caption: '账单详情' }),
+    renderDataTable({ columns: DETAIL_COLUMNS, rows: detailRows(input.row, deleted), caption: '字段明细' }),
     copyArea({
       data: { envelope: input.envelope, title: input.wakeWord },
       log: {

@@ -70,7 +70,8 @@ function listOut(input: {
       params: input.params,
       shape: 'list',
       wakeWord: input.wakeWord,
-      window: input.window + ' · 共 ' + records.length + ' 笔',
+      window: input.window,
+      chips: ['共 ' + records.length + ' 笔'],
       rows,
       kpi,
       emptyText: input.emptyText,
@@ -94,7 +95,7 @@ function todayWakeWord(params: Record<string, unknown>): string {
  *  查某天自指已摘（不说「查某天」，说换个日子再查一次）。 */
 function todayEmpty(params: Record<string, unknown>): { readonly emptyText: string; readonly emptyHint: string } {
   if (params.date === 'yesterday') return { emptyText: '昨天还没有记录', emptyHint: '要补昨天那笔就说「记支出」。' };
-  if (params.date !== undefined && params.date !== null && params.date !== '') return { emptyText: '这一天没有记录', emptyHint: '要记一笔就说「记支出」；换个日子再查一次。' };
+  if (params.date !== undefined && params.date !== null && params.date !== '') return { emptyText: '这一天没有记录', emptyHint: '要记一笔就说「记支出」。换个日子再查一次。' };
   return { emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。' };
 }
 
@@ -281,7 +282,7 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
   return listOut({
     key, params, wakeWord, window, records, extra: { kind: label },
     emptyText: '没有找到符合条件的记录',
-    emptyHint: '换个关键词；或说「查最近」看看最近的记录。',
+    emptyHint: '换个关键词试试，也可以看看「查最近」。',
   });
 }
 
@@ -303,7 +304,8 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
       key,
       params,
       wakeWord: '查账单详情',
-      window: '记录编号 ' + row.id + ' · ' + row.time + (deleted ? ' · 已撤销' : ''),
+      window: row.time,
+      chips: deleted ? ['记录编号 ' + row.id, '已撤销'] : ['记录编号 ' + row.id],
       row,
       envelope: detailEnvelope(key, data),
       source: SOURCE_QUERY,

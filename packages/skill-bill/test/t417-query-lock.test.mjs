@@ -153,6 +153,33 @@ describe('t417 程序锁：detail 一词＋空态＋阻断', () => {
     assert.equal(env.data.total, 0);
     assert.ok(text.includes('ilife-block-empty-block'), '空态块');
   });
+/** 副标题那枚 <p> 的文本（版式位；复制日志 data 属性里的 · 不算展示）。 */
+function subtitleOf(text) {
+  const m = text.match(/<p class="ilife-block-page-shell-subtitle">([\s\S]*?)<\/p>/);
+  assert.ok(m, '副标题元素应在');
+  return m[1];
+}
+
+describe('t417 UI 打磨锁：胶囊承事实、副标题无 ·、笔数无单位', () => {
+  it('列表页：副标题只有窗口说明，笔数进胶囊', () => {
+    const { text } = page('bill.record.range', { start: '2026-09-03', end: '2026-09-06' }, 'u-list');
+    assert.ok(!subtitleOf(text).includes('·'), '副标题不许有 ·');
+    assert.ok(text.includes('>共 5 笔<'), '笔数是胶囊');
+    assert.ok(!text.includes('>笔<'), '笔数卡不再带「笔」单位');
+  });
+  it('详情页：编号与已撤销各一枚胶囊，副标题只有时刻', () => {
+    const s = page('bill.record.search', { q: '午饭' }, 'u-id');
+    const id = s.env.data.items[0].id;
+    const { text } = page('bill.record.detail', { id }, 'u-detail');
+    assert.ok(!subtitleOf(text).includes('·'), '副标题不许有 ·');
+    assert.ok(text.includes('>记录编号 ' + id + '<'), '编号胶囊在');
+  });
+  it('空态页：胶囊共 0 笔，hint 无 ；', () => {
+    const { text } = page('bill.record.today', { date: '2020-01-01' }, 'u-empty');
+    assert.ok(text.includes('>共 0 笔<'), '空态也有笔数胶囊');
+    assert.ok(!subtitleOf(text).includes('·'), '副标题不许有 ·');
+  });
+});
   it('阻断：空查询 exit 2、空区间 exit 4、无此号 exit 4、缺 id exit 2', () => {
     assert.equal(run(['bill.record.search', '--params', P({})]).status, 2);
     assert.equal(run(['bill.record.range', '--params', P({ start: '2026-09-01' })]).status, 2);
