@@ -26,15 +26,20 @@
  *
  * 中文名一律取唯一来源：`goal/precheck.ts:35-41,60-74` 那几张表（字段名一处一处照抄，本件不另编名）；
  * 暂停态的「正常（未暂停）」逐字取 `goalStore.ts:163`。
+ *
+ * #289 · 三族区块：营养 `sec-macro`（宏量合计与换算式＋BMR 提示，吃草稿 `energy`）、饮水 `sec-water`
+ * （`recommendWaterGoal` 的 ml/kg＋季节＋推荐对照）、体重 `sec-rate`（剩余天数与建议速率及极端警示）、
+ * 自动算 `sec-auto`（写参带 `profile` 时推荐值＋采纳值两段对照）。不新增命令，不改唤醒词。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { renderCaliberLine, renderDataTable, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
+import { renderCaliberLine, renderConclusionBar, renderDataTable, renderFeedbackBlock, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
-import { getNutritionGoal } from './nutritionGoal.js';
+import { getNutritionGoal, recommendWaterGoal, type NutriProfile } from './nutritionGoal.js';
 import type { NutritionGoalRow } from './nutritionGoal.js';
 import { getPausedState } from './goalStore.js';
+import { buildGoalDraft, isGoalProfile, type GoalDraft } from './set.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
@@ -185,6 +190,100 @@ function goalSection(row: NutritionGoalRow | null, paused: boolean): Section {
   };
 }
 
+/** #289 · 两列表（项／值）：三族区块共用，表题即段内小标题。 */
+function kvTable(caption: string, rows: Readonly<Record<string, unknown>[]>): string {
+  return renderDataTable({
+    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    rows,
+    caption,
+    emptyText: '缺项。',
+  });
+}
+
+/** #289 营养族（`calorie.goal.set` 专属）：行值重算宏量合计与换算式（口径照 `nutritionGoal.ts:67`），BMR 提示走草稿 `energy`。 */
+function macroSection(row: NutritionGoalRow | null, draft: GoalDraft): Section {
+  const cal = row === null ? null : row.calorie_goal, p = row?.protein_goal ?? null, c = row?.carbs_goal ?? null, f = row?.fat_goal ?? null;
+  if (cal === null || p === null || c === null || f === null) return { id: 'sec-macro', title: '🧮 宏量合计与换算', html: renderCaliberLine('宏量缺项，不算') };
+  const sum = p * 4 + c * 4 + f * 9, diff = sum - cal;
+  const bmr = draft.energy.bmr;
+  const below = bmr !== null && cal < bmr;
+  const verdict = bmr === null ? '缺' + draft.energy.missing.join('、') + '，不算' : below ? '⚠️ 热量 ' + cal + ' 卡低于基础代谢 BMR ' + bmr + ' 卡，建议复核' : '✅ BMR 安全确认 热量 ' + cal + ' 卡不低于基础代谢 ' + bmr + ' 卡';
+  return { id: 'sec-macro', title: '🧮 宏量合计与换算', html: kvTable('宏量合计与换算', [
+      { k: '热量目标', v: cal + ' 卡' },
+      { k: '宏量合计与换算', v: '合计 ' + sum + ' 卡，宏量换算 ' + sum + ' 卡' },
+      { k: 'diff 与自洽', v: 'diff ' + (diff >= 0 ? '＋' : '') + diff + ' 卡，' + (Math.abs(diff) <= 50 ? '一致' : '不一致，建议复核') },
+      { k: '基础代谢 BMR', v: bmr === null ? '—' : 'BMR ' + bmr + ' 卡' },
+    ]) + (below ? renderFeedbackBlock({ toast: { msg: verdict, icon: 'warn' }, staticNotice: true }) : renderConclusionBar(verdict))
+      + renderCaliberLine('换算式 蛋白 ' + p + '×4＋碳水 ' + c + '×4＋脂肪 ' + f + '×9＝' + sum + ' 卡，公式照老技能 nutrition_goal.py:84-85'),
+  };
+}
+
+/** #289 饮水族（`calorie.goal.water` 专属）：体重×ml/kg＋季节＋推荐值，改类加旧→新 vs 推荐。 */
+function waterSection(db: DatabaseSync, receipt: CrudReceipt, row: NutritionGoalRow | null): Section {
+  const rec = recommendWaterGoal(db, {}), now = row?.water_goal ?? null;
+  const old = beforeOf('water_goal', now === null ? '—' : now + ' ml', receipt);
+  const change = old === null || now === null ? null : '旧 ' + old + ' → 新 ' + now + ' ml，推荐 ' + rec.recommendedWaterMl + ' ml';
+  return { id: 'sec-water', title: '💧 饮水推荐对照', html: kvTable('饮水推荐对照', [
+      { k: '体重与标准', v: rec.weightKg.toFixed(1) + ' kg × ' + rec.mlPerKg + ' ml/kg' },
+      { k: '季节', v: rec.season },
+      { k: '推荐饮水', v: '推荐 ' + rec.recommendedWaterMl + ' ml' },
+    ]) + (change === null ? '' : renderConclusionBar(change))
+      + renderCaliberLine(rec.basis),
+  };
+}
+
+/** #289 体重族（`calorie.goal.weight` 专属）：剩余天数与建议速率，公式与极端口径照 `t251-老技能体重与状态页.md:143-146,233`。 */
+function rateSection(row: NutritionGoalRow | null, paused: boolean, draft: GoalDraft): Section {
+  const w = draft.weight, gap = w.gapKg, days = w.daysLeft;
+  let rate = '—';
+  let verdict = '未设置截止日期，无法计算建议速率。';
+  let extreme = false;
+  if (gap !== null && days !== null && days > 0) {
+    const perWeek = Math.abs(gap) / days * 7, pw = perWeek.toFixed(2);
+    rate = pw + ' kg/周';
+    const formula = gap.toFixed(1) + 'kg ÷ ' + days + '天 × 7 = ' + pw + ' kg/周 ≈ ' + (perWeek * 52 / 12).toFixed(1) + ' kg/月';
+    const adj = w.requiredDailyKcal;
+    extreme = perWeek >= 1.0 || (adj !== null && Math.abs(adj) > 1000);
+    const daily = adj === null ? '' : adj > 0 ? '，每日增加 ' + adj + ' 卡缺口' : adj < 0 ? '，每日减少 ' + Math.abs(adj) + ' 卡缺口' : '，每日缺口为零';
+    verdict = (extreme ? '⚠️ 极端目标 ' : perWeek >= 0.25 ? '✅ 建议速率合理 ' : '建议速率偏低 ') + '建议速率 ' + rate + daily + '，' + formula + '（健康带 0.25 kg/周到 1.0 kg/周）';
+  }
+  return { id: 'sec-rate', title: '⚖️ 体重速率与剩余天数', html: kvTable('体重目标与建议速率', [
+      { k: '目标', v: cellValue('weight_goal', row, paused) + '，截止 ' + cellValue('goal_deadline', row, paused) },
+      { k: '剩余天数', v: (days === null ? '—' : days + ' 天') + '，建议速率 ' + rate },
+      { k: '起始日', v: cellValue('start_date', row, paused) + '，起点体重 ' + cellValue('start_weight', row, paused) },
+    ]) + (extreme ? renderFeedbackBlock({ toast: { msg: verdict, icon: 'danger' }, staticNotice: true }) : renderConclusionBar(verdict)),
+  };
+}
+
+/** #289 自动算（写参带 `profile`）：推荐值＋采纳后写入值两段对照，推荐数与 wizard 页同源 `buildGoalDraft`。 */
+function autoSection(db: DatabaseSync, receipt: CrudReceipt, profile: NutriProfile, paused: boolean): Section {
+  const id = 'sec-auto';
+  const title = '🔁 自动算推荐与采纳对照';
+  const d = buildGoalDraft(db, { profile }), r = d.recommend;
+  if (r === null) return { id, title, html: renderCaliberLine('推荐缺' + d.energy.missing.join('、') + '，不算') };
+  const recOf = (col: string): string => col === 'calorie_goal' ? r.calorieGoal + ' 卡'
+    : col === 'protein_goal' ? r.proteinGoal + ' g'
+    : col === 'carbs_goal' ? r.carbsGoal + ' g'
+    : col === 'fat_goal' ? r.fatGoal + ' g'
+    : col === 'water_goal' ? r.waterGoal + ' ml' : '—';
+  const taken = receipt.writtenFields.flatMap((name) => {
+    const col = PARAM_COLUMN[name];
+    return col === undefined ? [] : [{ k: labelOf(col), r: recOf(col), a: cellValue(col, d.current, paused) }];
+  });
+  return {
+    id,
+    title,
+    html: kvTable('推荐值', [
+      { k: '方向', v: (d.profileLabel ?? profile) + '（' + profile + '）' },
+      { k: '热量与宏量', v: '热量 ' + r.calorieGoal + ' 卡，蛋白 ' + r.proteinGoal + ' g，碳水 ' + r.carbsGoal + ' g，脂肪 ' + r.fatGoal + ' g' },
+      { k: '饮水', v: r.waterGoal + ' ml' },
+      { k: '能耗', v: 'BMR ' + r.bmr + ' 卡，TDEE ' + r.tdee + ' 卡' },
+      { k: '每周速率与自洽', v: '每周 ' + r.weeklyRateKg.toFixed(1) + ' kg/周，宏量换算 ' + r.selfCheck.calculatedKcal + ' 卡 diff ' + (r.selfCheck.diffKcal >= 0 ? '＋' : '') + r.selfCheck.diffKcal + ' 卡' },
+    ]) + renderCaliberLine('推荐依据如下') + r.planReasons.map(renderCaliberLine).join('')
+      + renderDataTable({ columns: [{ key: 'k', label: '字段' }, { key: 'r', label: '推荐值' }, { key: 'a', label: '采纳后写入值' }], rows: taken, caption: '采纳后写入值', emptyText: '库里还没有目标行。' }) + renderCaliberLine('推荐值由档案与最近体重按' + (d.profileLabel ?? profile) + '模板算出，采纳值逐格读库'),
+  };
+}
+
 /** 副题槽（`t425` 裁定 2：结论句走副题）：写库回执的结论句上屏。**数据面一字不动**
  *  （`receipt.summary` 与 envelope 的 `message` 仍是原文），只把并列用的 `·` 换成句读。 */
 function subtitleOf(receipt: CrudReceipt): string {
@@ -192,14 +291,25 @@ function subtitleOf(receipt: CrudReceipt): string {
 }
 
 /** 五条命令共用的写后回执整页。`command` ＝ AI 真跑那条写命令的原文，进「复制日志」第 4 段。 */
-function buildGoalReceiptDoc(db: DatabaseSync, key: string, receipt: CrudReceipt, command: string): string {
+function buildGoalReceiptDoc(db: DatabaseSync, key: string, params: Record<string, unknown>, receipt: CrudReceipt, command: string): string {
   const row = getNutritionGoal(db);
   const paused = getPausedState(db).paused;
+  const startKgRaw = params['startKg'];
+  const startKg = startKgRaw === undefined || startKgRaw === null || startKgRaw === '' ? null : Number(startKgRaw);
+  const draft = buildGoalDraft(db, { weight: { startKg: Number.isFinite(startKg) ? startKg : null } });
   const sections: Section[] = [
     { id: 'sec-op', title: '✅ 操作回执', html: renderKpiGrid(opCards(key, receipt)) },
     changeSection(receipt, row, paused),
     goalSection(row, paused),
   ];
+  if (key === 'calorie.goal.set') sections.push(macroSection(row, draft));
+  if (key === 'calorie.goal.water') sections.push(waterSection(db, receipt, row));
+  if (key === 'calorie.goal.weight') sections.push(rateSection(row, paused, draft));
+  const rawProfile = params['profile'];
+  if (typeof rawProfile === 'string' && isGoalProfile(rawProfile)
+    && (key === 'calorie.goal.set' || key === 'calorie.goal.water' || key === 'calorie.goal.weight')) {
+    sections.push(autoSection(db, receipt, rawProfile, paused));
+  }
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
     data: { ok: true, message: receipt.summary },
@@ -234,5 +344,5 @@ export function goalReceiptDoc(
   key: string, params: Record<string, unknown>, receipt: CrudReceipt, db: DatabaseSync,
 ): string | null {
   if (!GOAL_RECEIPT_KEYS.has(key)) return null;
-  return buildGoalReceiptDoc(db, key, receipt, commandLine(key, params));
+  return buildGoalReceiptDoc(db, key, params, receipt, commandLine(key, params));
 }
