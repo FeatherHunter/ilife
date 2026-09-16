@@ -4,7 +4,7 @@
  * today 可注入（默认 UTC 日，与 T3 todayStr 同口径，便于单测钉死）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { FetchError } from './errors.js';
+import { FetchError } from '../fetch/errors.js';
 
 export type DayStatus = '完成' | '未完成' | '无记录';
 

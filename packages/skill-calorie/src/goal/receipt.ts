@@ -32,8 +32,8 @@ import { renderCaliberLine, renderDataTable, renderKpiGrid, renderTocBlock } fro
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
-import { getNutritionGoal } from '../fetch/nutritionGoal.js';
-import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
+import { getNutritionGoal } from './nutritionGoal.js';
+import type { NutritionGoalRow } from './nutritionGoal.js';
 import { getPausedState } from './goalStore.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';

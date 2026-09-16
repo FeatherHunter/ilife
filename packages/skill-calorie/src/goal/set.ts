@@ -19,9 +19,9 @@
  *      记录的日期」，那是它的怪口径，预检页上要算的是「今天离截止还有几天」）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getNutritionGoal, latestWeightKg } from '../fetch/nutritionGoal.js';
-import type { NutritionGoalRow, NutriProfile } from '../fetch/nutritionGoal.js';
-import { NUTRI_PROFILE_LABELS, NUTRI_PROFILE_WEEKLY_RATE, NUTRI_PROFILES } from '../fetch/nutritionGoal.js';
+import { getNutritionGoal, latestWeightKg } from './nutritionGoal.js';
+import type { NutritionGoalRow, NutriProfile } from './nutritionGoal.js';
+import { NUTRI_PROFILE_LABELS, NUTRI_PROFILE_WEEKLY_RATE, NUTRI_PROFILES } from './nutritionGoal.js';
 import { getProfile } from '../fetch/profile.js';
 import { energyOf, todayISO } from '../analysis/utils.js';
 import type { EnergyResult } from '../analysis/utils.js';

@@ -6,7 +6,7 @@
  * 体重缺省走注入（T5 analysis / T3 weight_log 归属，缺省标记 missing，不静默编造）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { FetchError } from './errors.js';
+import { FetchError } from '../fetch/errors.js';
 
 export interface NutritionGoalRow {
   id: number;

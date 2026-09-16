@@ -1,16 +1,16 @@
 /** #41 · 目标扩展读链 render 数据（goal 11 模式之 expiring/predict/vs_actual）。
  *
  * 旧口径对照：scripts/render_goal_progress.py --mode today/week/weight/expiring/predict/vs_actual
- * 中 today/week/weight 已由既有 goalPlate（config/recommend/weight/progress/status）承接，
+ * 中 today/week/weight 已由既有 goalPlates（config/recommend/weight/progress/status）承接，
  * 本票只补三缺口模式。数据源全复用既有层：
  * expiring=daily_goal.goal_deadline + weightGoalInfo（无截止即 missing）；
  * predict=analysis/series.buildSeries + analysis/simulate.weightTarget（<14 天降级转 missing）；
- * vs_actual=fetch/goalHistory.listCompletedGoals + analysis/trend.buildTrendData。
+ * vs_actual=goal/goalHistory.listCompletedGoals + analysis/trend.buildTrendData。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getNutritionGoal } from '../fetch/nutritionGoal.js';
-import { listCompletedGoals } from '../fetch/goalHistory.js';
-import type { GoalHistory } from '../fetch/goalHistory.js';
+import { getNutritionGoal } from './nutritionGoal.js';
+import { listCompletedGoals } from './goalHistory.js';
+import type { GoalHistory } from './goalHistory.js';
 import { buildSeries } from '../analysis/series.js';
 import { weightTarget } from '../analysis/simulate.js';
 import { buildTrendData } from '../analysis/trend.js';

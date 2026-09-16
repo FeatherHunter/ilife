@@ -1,7 +1,7 @@
 /** #179 · 「看档案」：档案读链取数 ＋ 结果页整页（HELP 一级分组「基础信息」→ 子功能「看档案」）。
  *
  * 取数唯一来源：`fetch/profile.getProfile`（单例 id=1，无行即 missing）＋
- * `fetch/nutritionGoal.getNutritionGoal`（可选）＋ `weight_log` 最新一条（可选）。
+ * `goal/nutritionGoal.getNutritionGoal`（可选）＋ `weight_log` 最新一条（可选）。
  * 原住 `src/render/profilePlate.ts`，#179 搬进本能力目录（同一个取数不留两处）。
  *
  * 目录内共用（`structure.md:94`「只有出这个目录才算对外」）：`profileSnapshot` 那句
@@ -25,8 +25,8 @@ import { renderKpiGrid, renderDisclosure, renderDataTable } from 'base-paint/blo
 import type { SerializableEnvelope } from 'base-paint';
 import { getProfile } from '../fetch/profile.js';
 import type { ProfileRow } from '../fetch/profile.js';
-import { getNutritionGoal } from '../fetch/nutritionGoal.js';
-import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
+import { getNutritionGoal } from '../goal/nutritionGoal.js';
+import type { NutritionGoalRow } from '../goal/nutritionGoal.js';
 import { ACTIVITY_LEVELS } from '../kcal.js';
 import { ACTIVITY_LEVEL_LABELS, TDEE_ACTIVITY_FACTORS, energyOf } from '../analysis/utils.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';

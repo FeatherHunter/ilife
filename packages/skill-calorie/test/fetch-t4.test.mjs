@@ -8,10 +8,10 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { getPausedState, pauseAllGoals, resumeAllGoals } from '../dist/goal/goalStore.js';
-import { listCompletedGoals } from '../dist/fetch/goalHistory.js';
+import { listCompletedGoals } from '../dist/goal/goalHistory.js';
 import {
   getNutritionGoal, setNutritionGoal, recommendNutritionGoal, recommendWaterGoal, updateWaterGoal,
-} from '../dist/fetch/nutritionGoal.js';
+} from '../dist/goal/nutritionGoal.js';
 import {
   validatePlan, writePlan, getPlan, updateConfig, addSession, updateSession, deleteSession,
   copyWeek, deleteWeek, insertWeek, deletePlan, copyPlan, deleteDay,

@@ -4,7 +4,7 @@
  * 五条一律 receipt 形；`affectedRows` 仍由 `dispatchWrite` 统一注入（本件不自报）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getNutritionGoal, setNutritionGoal, updateWaterGoal } from '../fetch/nutritionGoal.js';
+import { getNutritionGoal, setNutritionGoal, updateWaterGoal } from './nutritionGoal.js';
 import { pauseAllGoals, resumeAllGoals, setWeightGoal } from './goalStore.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { fail, needNum, optNum } from '../shared/params.js';
@@ -12,7 +12,7 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { R, out } from '../shared/writeParts.js';
 
 /** `calorie.goal.set` 本次**实际被 SET 的列** → CLI 参数名（正本 §3.4「update 键＝本次实际变更字段」）。
- * 与 `fetch/nutritionGoal.ts` 的两条 UPSERT 同源（#127 已改）：传 `water` 走 6 列
+ * 与 `goal/nutritionGoal.ts` 的两条 UPSERT 同源（#127 已改）：传 `water` 走 6 列
  * （含 `water_goal`），不传则 SQL 里**没有** `water_goal` 列——该列保持原值，
  * **不属本次 SET 的字段**，故不得报 `water`。
  * 记账列 `updated_at` 无 CLI 参数，按 §3.4 不计入摘要。

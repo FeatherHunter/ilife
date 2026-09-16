@@ -32,7 +32,7 @@ import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { emptyGuide } from '../shared/emptyGuide.js';
 import { nowStamp } from '../render/receipt.js';
-import type { DayGoalStatus } from '../fetch/goalHistory.js';
+import type { DayGoalStatus } from '../goal/goalHistory.js';
 import type { GoalProgress } from '../render/goalPlate.js';
 
 /** head 标题（整页模板住 `src/shared/docPage.ts`）＋ envelope 头（值冻结对齐 `cli/keys.ts`）。 */

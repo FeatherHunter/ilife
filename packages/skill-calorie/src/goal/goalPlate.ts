@@ -7,11 +7,11 @@
  * 无目标行即 missing-data（目标分析无目标不返空页）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getNutritionGoal } from '../fetch/nutritionGoal.js';
-import type { NutritionGoalRow } from '../fetch/nutritionGoal.js';
+import { getNutritionGoal } from './nutritionGoal.js';
+import type { NutritionGoalRow } from './nutritionGoal.js';
 import { FetchError } from '../fetch/errors.js';
-import { listCompletedGoals } from '../fetch/goalHistory.js';
-import type { GoalHistory } from '../fetch/goalHistory.js';
+import { listCompletedGoals } from './goalHistory.js';
+import type { GoalHistory } from './goalHistory.js';
 import { buildDeficitData } from '../analysis/deficit.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import { buildTrendData } from '../analysis/trend.js';
@@ -37,7 +37,7 @@ export function buildGoalView(db: DatabaseSync, start: string, end: string): Goa
   const nutrition = getNutritionGoal(db);
   if (!nutrition) throw new CalorieRenderError('missing-data', '未设营养目标（daily_goal#1 缺失，先维护目标）');
   const history = listCompletedGoals(db, 30, end);
-  // #100 · 缺口/趋势空窗的 FetchError 转 missing-data（与 goalPlate.buildGoalProgress 同约）。
+  // #100 · 缺口/趋势空窗的 FetchError 转 missing-data（与 goalPlates.buildGoalProgress 同约）。
   let deficit: DeficitData;
   let trend: TrendData;
   try {

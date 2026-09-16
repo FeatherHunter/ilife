@@ -7,11 +7,11 @@
  * 无目标行即 missing-data（目标分析无目标不返空页，与 T8 goal 同约）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getNutritionGoal, recommendNutritionGoal, recommendWaterGoal } from '../fetch/nutritionGoal.js';
-import type { NutriProfile, NutritionGoalRow, RecommendResult } from '../fetch/nutritionGoal.js';
+import { getNutritionGoal, recommendNutritionGoal, recommendWaterGoal } from '../goal/nutritionGoal.js';
+import type { NutriProfile, NutritionGoalRow, RecommendResult } from '../goal/nutritionGoal.js';
 import { getPausedState } from '../goal/goalStore.js';
-import { listCompletedGoals } from '../fetch/goalHistory.js';
-import type { GoalHistory } from '../fetch/goalHistory.js';
+import { listCompletedGoals } from '../goal/goalHistory.js';
+import type { GoalHistory } from '../goal/goalHistory.js';
 import { buildDeficitData } from '../analysis/deficit.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import { buildTrendData } from '../analysis/trend.js';
