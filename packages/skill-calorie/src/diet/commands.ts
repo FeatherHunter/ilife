@@ -50,7 +50,7 @@ export const DIET_COMMANDS = [
   { kind: 'write', key: 'calorie.product.deprecate', shape: 'receipt', title: '下架食品', wakeWord: '下架食品', run: writeProductDeprecate, example: 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'' },
   { kind: 'write', key: 'calorie.product.import', shape: 'receipt', title: '批量导入食品', wakeWord: '批量导入食品', run: writeProductImport, example: 'calorie-cmd-read calorie.product.import --params \'{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}]}\'' },
   { kind: 'write', key: 'calorie.product.update', shape: 'receipt', title: '改食品', wakeWord: '改食品', run: writeProductUpdate, example: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
-  { kind: 'read', key: 'calorie.today', shape: 'list', title: '今日饮食', wakeWord: '看今日饮食概览', run: viewToday, example: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
+  { kind: 'read', key: 'calorie.today', shape: 'list', title: '今日饮食', wakeWord: '看今日饮食', run: viewToday, example: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
   { kind: 'read', key: 'calorie.view.batch-import-preview', shape: 'stat', title: '批量导入预览', wakeWord: '看批量导入预览', run: viewBatchImportPreview, example: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },
   /* #277 · 「拍营养表」两条词的第一步：识别在模型侧，模型照 `docs/skills/skill-calorie/t276-营养表映射.md`
      那张表把识别读数填成参数递进来，本命令只把「照片 ＋ 识别出的营养 ＋ 补录日期」摆成确认页，**不写库**；

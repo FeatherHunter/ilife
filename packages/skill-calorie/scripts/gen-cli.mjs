@@ -93,7 +93,9 @@ async function loadCapability(name) {
   }
   const [exportName, list] = arrays[0];
   for (const spec of list) {
-    // `wakeWord` **可缺**（缺了速查表退回命令名）；其余五个字段必填。
+    // `wakeWord` **可缺**（缺了速查表退回命令名），但**写了就必须是真词**——生成期由 `wakeWordGate()`
+    // 逐条查「这个词路由回本键」（#343：票面原话「让主张由机器拦，而不是只写在文件头注释里」）；
+    // 其余五个字段必填。
     for (const field of ['kind', 'key', 'shape', 'title', 'example']) {
       if (typeof spec?.[field] !== 'string') throw new Error(name + ' 的声明缺 ' + field + '：' + JSON.stringify(spec));
     }
@@ -129,7 +131,8 @@ async function loadLegacyScene(file) {
   }
   const [exportName, list] = arrays[0];
   for (const spec of list) {
-    // `wakeWord` **可缺**（缺了速查表退回命令名）；其余五个字段必填。
+    // `wakeWord` **可缺**（缺了速查表退回命令名），但**写了就必须是真词**（同上，见 `wakeWordGate()`）；
+    // 其余五个字段必填。
     for (const field of ['kind', 'key', 'shape', 'title', 'example']) {
       if (typeof spec?.[field] !== 'string') throw new Error('legacy/' + file + ' 的声明缺 ' + field + '：' + JSON.stringify(spec));
     }
@@ -646,6 +649,131 @@ function pairMismatches(names, files, cmdDist, routeDist) {
   return bad;
 }
 
+/** #343 · 代表唤醒词门的**登记位**：只登记「修它要动别票的冻结面」的那一类，本票能自己改对的行不登记。
+ *
+ *  纪律（同 `#367` 的登记表）：**只许变短**——登记行换词＝当违规报出；登记行不再违规（修好了／键搬走）
+ *  ＝红，要求删行。这不是「把失败放宽成警告」：违规照红，登记只是把被别票挡住的少数几条挂上名字与主人。 */
+const WAKE_GATE_REGISTERED = [
+  {
+    from: 'photo',
+    key: 'calorie.help.center',
+    wakeWord: '卡路里HELP',
+    owner: '#367 件头记「本门该不该接受它属 HELP 口径问题，归照片／HELP 侧裁定」——裁定未出前不由本票改词。',
+    why:
+      '技能级 HELP 词：只在 `SKILL.md` 正文注册，路由表里没有它的 exec 路由（幽灵词），而本键自己的 wake 词是' +
+      '自造入口词 `看身材照HELP`。两个方向都会弄红别票的冻结面——换词弄红 `#367` ④ 的' +
+      '`photo|calorie.help.center|卡路里HELP` 三元组（漂移即红），换词也弄红 `#285` ⑦ 的「9 个自造入口词在' +
+      'SKILL.md 零命中」；删字段则让 `#285` 速查表那一行退回命令名、同时弄红 `#367` ④（登记词变 undefined）。',
+  },
+];
+
+/** #343 · 代表唤醒词门（生成期，正反一条）：声明里的 `wakeWord` 必须是**能路由回它自己那个键**的真唤醒词。
+ *
+ *  判据（一条，两面都要成立；源＝路由声明——`src/cli/legacy/routes/*.ts` 与各能力 `routes.ts` 的编译产物）：
+ *   · 正向：该词必须真的存在一条 `kind:'exec'` 路由——不存在 ⟺ 幽灵词，用户说它什么也拿不到；
+ *   · 反向：该词必须落在**本键自己的 wake 词集**里——不在 ⟺ 它把人领到别的键（错位／复制粘贴）。
+ *
+ *  为什么**不是**「必须 ∈ `WAKE_ASSETS`（436 条）」：那张表是冻结 SoT 的场景词，各票有意新拟的入口词
+ *  （`list:'new'`／`list:'repair'`，如 `看目标配置`／`看目标推荐`）**故意不写进它**——按 ∈436 判会一次点出
+ *  几十条合法声明（落地即假红）。真问题是「用户说的词到不了这个命令」，不是「词在不在冻结表里」。
+ *
+ *  缺字段（没写 `wakeWord`）：契约**允许缺**（缺了速查表退回键名，见 `src/shared/commandSpec.ts`），
+ *  不是失败，但逐条打 `WAKE-WORD NOENTRY` 读数——有键确实没有 wake 入口词，一刀切禁止会逼人编造产品文案；
+ *  而「写错了」必须大声失败（`WAKE-WORD GATE FAIL`，逐条点名键／词／文件）。
+ *
+ *  门挂 `gen`／`gen:check` 两条生成入口（`--stamp` 只给声明源盖哈希、不是生成，不在此处拦——否则别人窗口里
+ *  一次 `pnpm build` 会被本包一条错声明一并挡死）。下面的纯函数导出给测试件注入合成夹具，做负向对照。 */
+
+/** 纯判据（不打印不抛）：`{ violations, blank, registeredHit, stale }` 四类读数。 */
+export function checkWakeWords({ entries, decls, registered = WAKE_GATE_REGISTERED }) {
+  const wordsOfKey = new Map();     // 键 → 该键自己的 wake 词集（exec 路由）
+  const keysOfWord = new Map();     // 词 → 它实际会把人领到的键（exec 路由）
+  for (const d of decls) {
+    if (d.kind !== 'exec') continue;  // non-exec 记录（bucket／reason）没有 key，不构成入口
+    if (!wordsOfKey.has(d.key)) wordsOfKey.set(d.key, new Set());
+    wordsOfKey.get(d.key).add(d.wakeWord);
+    if (!keysOfWord.has(d.wakeWord)) keysOfWord.set(d.wakeWord, new Set());
+    keysOfWord.get(d.wakeWord).add(d.key);
+  }
+  const violations = [];
+  const blank = [];
+  const registeredHit = [];
+  const used = new Set();
+  for (const e of entries) {
+    if (typeof e.wakeWord !== 'string' || e.wakeWord === '') {
+      blank.push(e);
+      continue;
+    }
+    const own = wordsOfKey.get(e.key);
+    if (own !== undefined && own.has(e.wakeWord)) continue;   // 路由回本键：合格
+    const hit = { entry: e, targets: [...(keysOfWord.get(e.wakeWord) ?? [])], ownWords: own === undefined ? [] : [...own] };
+    const reg = registered.find((r) => r.from === e.from && r.key === e.key && r.wakeWord === e.wakeWord);
+    if (reg !== undefined) {
+      used.add(reg.from + '|' + reg.key + '|' + reg.wakeWord);
+      registeredHit.push({ ...hit, reg });
+      continue;
+    }
+    violations.push(hit);
+  }
+  const stale = [];
+  for (const r of registered) {
+    if (used.has(r.from + '|' + r.key + '|' + r.wakeWord)) continue;
+    const row = entries.find((e) => e.from === r.from && e.key === r.key);
+    stale.push({
+      reg: r,
+      reason: row === undefined
+        ? '该键的声明已不在（搬走／删了）'
+        : '现词「' + String(row.wakeWord) + '」已不违规（修好了，或换了别的词）',
+    });
+  }
+  return { violations, blank, registeredHit, stale, wordsOfKey, keysOfWord, routeHit: [...keysOfWord.keys()].length };
+}
+
+/** 门本体：读路由声明 → 判 → 逐条打印读数 → 返回是否放行（`main()` 里排在新鲜度门／配对门之后）。 */
+async function wakeWordGate(entries, fileOf) {
+  const decls = await loadDecls();
+  const r = checkWakeWords({ entries, decls });
+  const fileOfKey = (e) => fileOf.get(e.key) ?? 'src/' + e.from + '/commands.ts';
+  const withWord = entries.filter((e) => typeof e.wakeWord === 'string' && e.wakeWord !== '').length;
+  console.log(
+    'WAKE-WORD GATE：代表唤醒词 ' + withWord + ' 条逐条比对路由（exec 路由记录 ' +
+      decls.filter((d) => d.kind === 'exec').length + ' 条／词 ' + r.routeHit + ' 个）；缺字段 ' + r.blank.length +
+      ' 条（允许缺，读数见下）；登记 ' + r.registeredHit.length + ' 条（只许变短）。',
+  );
+  for (const b of r.blank) {
+    console.log('WAKE-WORD NOENTRY ' + fileOfKey(b) + ' :: ' + b.key + '（没写代表唤醒词：速查表退回键名）');
+  }
+  for (const h of r.registeredHit) {
+    console.log(
+      'WAKE-WORD REGISTERED ' + fileOfKey(h.entry) + ' :: ' + h.entry.key + ' :: 「' + h.entry.wakeWord + '」→[' +
+        h.targets.join('|') + ']｜owner＝' + h.reg.owner,
+    );
+  }
+  const bad = [];
+  if (r.stale.length) {
+    bad.push('WAKE-WORD GATE FAIL：登记位陈化（登记表只许变短——这些行已不违规，请从 `WAKE_GATE_REGISTERED` 删掉）：');
+    for (const s of r.stale) bad.push('  ← ' + s.reg.from + ' :: ' + s.reg.key + ' :: 「' + s.reg.wakeWord + '」：' + s.reason);
+  }
+  if (r.violations.length) {
+    bad.push('WAKE-WORD GATE FAIL：代表唤醒词路由不回本键（' + r.violations.length + ' 条）——用户说这个词拿不到这条命令：');
+    for (const v of r.violations) {
+      const how = v.targets.length === 0
+        ? '路由表里没有这个词（幽灵词）'
+        : '该词实际路由到 ' + v.targets.join('／');
+      bad.push('  ← ' + fileOfKey(v.entry) + ' :: ' + v.entry.key + ' :: 「' + v.entry.wakeWord + '」（' + how +
+        '）；本键自己的 wake 词集：' + (v.ownWords.length ? '「' + v.ownWords.join('」「') + '」' : '（空——这一键没有 wake 入口词）'));
+    }
+    bad.push('  修法：改成该键自己那条 wake 词（本键词集见上）；本键词集为空就删掉 `wakeWord`（契约允许缺，速查表退回键名）。');
+  }
+  if (bad.length) {
+    for (const l of bad) console.error(l);
+    process.exitCode = 1;
+    return false;
+  }
+  console.log('WAKE-WORD GATE PASS：' + withWord + ' 条代表唤醒词逐条路由回本键（登记 ' + r.registeredHit.length + ' 条，缺字段 ' + r.blank.length + ' 条读数）。');
+  return true;
+}
+
 function sha256(text) {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
@@ -713,6 +841,15 @@ async function main() {
     return;
   }
   const entries = merge(mergeLegacyPartition(legacyParts), capabilities);
+
+  // #343 · 代表唤醒词门：声明里的 `wakeWord` 必须路由回本键（逐条点名键／词／文件）。排在上两道门之后
+  // ——新鲜度／配对门管「读到的是不是现在这份声明」，本门管「这份声明本身对不对」，前者不放行后者不白跑。
+  const fileOf = new Map();
+  for (let i = 0; i < legacyFiles.length; i += 1) {
+    for (const d of legacyParts[i] === null ? [] : legacyParts[i].list) fileOf.set(d.key, 'src/cli/legacy/' + legacyFiles[i]);
+  }
+  for (const cap of capabilities) for (const d of cap.list) fileOf.set(d.key, 'src/' + cap.name + '/commands.ts');
+  if (!(await wakeWordGate(entries, fileOf))) return;
 
   const targets = [
     { path: join(SRC_DIR, 'cli', 'keys.ts'), text: renderKeysTs(entries) },
