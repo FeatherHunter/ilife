@@ -8,12 +8,14 @@
  * 「识别不确定处要标出」＝老实物 `.diff-tag` 那一处（`nutrition_label_wizard.html:214`，
  * 13 个 `.diff-tag.ai` 标在字段标签后）：本页每格都带「识别得到」，被入口点名不确定的格子再加
  * 「要你核对」。不确定的**格子名**由入口给（`uncertain`）——识别在模型侧，「哪几格没把握」是模型
- * 自己才知道的事实，本层不替他猜。
+ * 自己才知道的事实，本层不替他猜。**#617 起那两枚标记改由现成徽章件产出**（见下面 `tagCellHtml()`）：
+ * 单元格里只写读者话，不再手拼标签串。
  *
  * 与姊妹件 `./precheck.ts`（导入预检页）共用的小件住 `./precheckParts.ts`；本件与它都不越过
  * 本包 350 行告警线。
  */
 import { renderCaliberLine, renderDataTable, renderDisclosure, renderKpiGrid, renderListRows, renderTocBlock } from 'base-paint/blocks';
+import { renderStatusBadge } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { DB_FILENAME } from '../paths.js';
@@ -30,6 +32,36 @@ function fieldNumber(v: LabelPrecheckView, key: string): number | undefined {
   const raw = fieldValue(v, key);
   const n = Number(raw);
   return raw === '—' || Number.isNaN(n) ? undefined : n;
+}
+
+/** 「这一格怎么来的」那一列的两句**读者话**：每格都标来源「识别得到」，被入口点名不确定的格子再加
+ *  一句「要你核对」（就是 `v.uncertainCount` 报的那几格）。
+ *
+ *  #617：值**只写读者话**——`renderDataTable` 的单元格是纯文本面（公共层 `cellText` 一律转义），
+ *  把手拼的 `<span class="precheck-tag …">` 塞进去会被原样印在页上（负责人验收抓到的正是这一处：
+ *  「拍营养表记一餐 的表格中有奇怪内容」）。形状改由下面 `tagCellHtml()` 经 `cellHtml` 受信位
+ *  （#567）交给**现成徽章件** `renderStatusBadge` 产出；档位照老实物 `nutrition_label_wizard.html:214`
+ *  的 `.diff-tag` 那一对灰／橙（`.ai` 中性灰＝识别得来、裸 `.diff-tag` 橙＝识别不确定）：
+ *  中性灰走 `empty`、橙走 `warn`（`empty` 当中性档有同包先例：`photo/viewerDoc.ts:152` 的「没核对」）。 */
+const TAG_AI = '识别得到';
+const TAG_CHECK = '要你核对';
+
+/** 那一列的纯文本值：一格一句读者话；不确定的格子是两句话并排（不会落地成字面标签，
+ *  结构与配色由 `tagCellHtml()` 承担）。 */
+function tagWords(uncertain: boolean): string {
+  return uncertain ? TAG_AI + '，' + TAG_CHECK : TAG_AI;
+}
+
+function tagBadges(word: string): string {
+  return renderStatusBadge({ status: word === TAG_CHECK ? 'warn' : 'empty', text: word });
+}
+
+/** #617 · `renderDataTable` 的 `cellHtml` 受信位：只认「这一格怎么来的」那一列，把纯文本值按读者话
+ *  切成徽章结构；别的列返回 `undefined`，走缺省转义文本。⇒ 本页源码里**一个 HTML 字面量都没有**。 */
+function tagCellHtml(columnKey: string, value: unknown): string | undefined {
+  if (columnKey !== 'tag') return undefined;
+  const text = String(value ?? '');
+  return text.split('，').filter((w) => w !== '').map(tagBadges).join('');
 }
 
 /** `calorie.view.label-precheck` · 营养表识别确认页。 */
@@ -79,9 +111,9 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
           label: f.label,
           value: f.value,
           unit: f.unit,
-          tag: '<span class="precheck-tag is-ai">识别得到</span>'
-            + (f.uncertain ? '<span class="precheck-tag is-check">要你核对</span>' : ''),
+          tag: tagWords(f.uncertain),
         })),
+        cellHtml: tagCellHtml,
         caption: '识别结果（照老实物那八个字段，缺的写 —）',
         emptyText: '这次一个营养字段都没识别出来',
       }),

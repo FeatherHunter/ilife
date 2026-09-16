@@ -158,6 +158,13 @@ function assertCompleteDoc(html, what) {
   assert.equal(html.trimEnd().endsWith('</html>'), true, what + '：结尾不是 </html>');
 }
 
+/** 「这一格怎么来的」那一列的格子（列头文本就在 `td` 的 `data-label` 上，故按它取）。
+ *  #617：那一列的**标记是结构不是字符串**——每格是公共层徽章件的 `<span>`，不是印出来的源码。 */
+function tagCells(html) {
+  return [...html.matchAll(/<td class="[^"]*data-table-cell-[a-z]+" data-label="这一格怎么来的">([\s\S]*?)<\/td>/g)]
+    .map((m) => m[1]);
+}
+
 const RUNS = CASES.map((c) => {
   const dir = freshDir('run');
   return { c, dir, r: runOk(dir, c.key, c.params, c.word) };
@@ -270,9 +277,35 @@ for (const [i, label] of [[2, '记一餐'], [3, '补记一餐']]) {
     assert.equal(text.includes('营养表照片'), true, label + ' 缺「营养表照片」一行');
     assert.equal(text.includes('补录日期'), true, label + ' 缺「补录日期」一行');
     assert.equal(text.includes('会写进去的字段'), true, label + ' 缺「会写进去的字段」表');
-    assert.equal(html.includes('precheck-tag'), true, label + ' 缺识别来源标记（老实物 `.diff-tag`）');
+    /* 老实物 `.diff-tag` 那一处：每格都带识别来源标记，#617 起是公共层徽章件的结构。 */
+    assert.equal(tagCells(html).length, 8, label + ' 「这一格怎么来的」列不是 8 格：' + tagCells(html).length);
+    for (const cell of tagCells(html)) {
+      assert.equal(/^<span class="[^"]*ilife-status-badge/.test(cell), true,
+        label + ' 缺识别来源标记（老实物 `.diff-tag`）：' + cell.slice(0, 80));
+    }
     const bad = machineBad(html);
     assert.deepEqual(bad, [], label + ' 可见文本里有机器话：' + bad.join('　'));
+  });
+}
+
+/* #617 · 负责人验收缺陷③：那一列曾在单元格里印出 HTML 标签字面量（`renderDataTable` 的单元格是
+ *  纯文本面，手拼的串被原样印在页上）。本段把它钉死：可见文本里不许有标签／类名，那一列每格都是
+ *  徽章结构，且读者话（识别得到／要你核对）照旧读得到。 */
+for (const [i, label] of [[2, '记一餐'], [3, '补记一餐']]) {
+  const cc = RUNS[i];
+  test('#617 那一列不再印 HTML 字面量，只见读者话与徽章结构 —— ' + label, () => {
+    const html = cc.r.html;
+    const text = visibleText(stripCopyPayload(html));
+    assert.equal(text.includes('precheck-tag'), false, label + ' 可见文本里还印着类名 precheck-tag');
+    assert.equal(text.includes('<span'), false, label + ' 可见文本里还印着标签字面量 <span');
+    assert.equal(html.includes('&lt;span'), false, label + ' 产物里还有转义过的标签字面量 &lt;span');
+    assert.equal(text.includes('识别得到'), true, label + ' 那一列读不到读者话「识别得到」');
+    for (const cell of tagCells(html)) {
+      assert.equal(cell.includes('&lt;'), false, label + ' 那一列有格子印着转义标签：' + cell.slice(0, 80));
+      assert.equal(cell.includes('precheck-tag'), false, label + ' 那一列有格子还带旧类名：' + cell.slice(0, 80));
+    }
+    console.log('READING #617 ' + label + ' 那一列格数=' + tagCells(html).length
+      + ' 可见文本 precheck-tag=0 <span=0 首格=' + tagCells(html)[0]);
   });
 }
 
@@ -284,9 +317,10 @@ test('#277 ② 补记那一支按给定日期，记一餐那一支写「今天�
 });
 
 test('#277 ② 识别不确定的格子有标记，其余没有', () => {
-  /* **钉形状、不钉人话**（`t425` 裁定 11 的教训）：判的是那两颗标记的类名与区块，不是整句文案——
-     文案以后要改，形状不该跟着改。 */
-  const marks = (h) => (h.match(/precheck-tag is-check/g) ?? []).length;
+  /* **钉形状、不钉人话**（`t425` 裁定 11 的教训）：判的是那一列里徽章的**档位与区块**，不是整句
+     文案——文案以后要改，形状不该跟着改（#617 起标记是公共层徽章件的结构：中性灰＝识别得到、
+     橙＝要你核对）。 */
+  const marks = (h) => tagCells(h).filter((c) => c.includes('ilife-status-badge-warn')).length;
   const dir = freshDir('uncertain');
   const r = runOk(dir, 'calorie.view.label-precheck', {
     productName: '酸奶', calories: 120, protein: 6, carbohydrates: 10, fat: 3, uncertain: 'protein,fat',

@@ -32,14 +32,14 @@ export const PRECHECK_BADGE = '预检确认';
 
 /** 页内样式：只服务本类几处形状（挂 `content` 第一项，照 `diet/rankingDocs.ts` 的 `RANK_CSS` 先例）。
  *
- *  `.precheck-tag`＝老实物 `nutrition_label_wizard.html:214` 的 `.diff-tag`（`font-size:10px;
- *  font-weight:600;padding:1px 6px;border-radius:4px;margin-left:6px`）——它标的是「这一格是 AI
- *  抽出来的」；老实物 `.diff-tag.ai` 中性灰、裸 `.diff-tag` 橙色（人工改动），13 处标记全用 `.ai`。
- *  新侧沿用同一对语义：`.is-ai` 灰＝识别得来、`.is-check` 橙＝**识别不确定，要你核对**。 */
+ *  #617：原来这里还有一对 `.precheck-tag`／`.precheck-tag.is-check`（老实物
+ *  `nutrition_label_wizard.html:214` 的 `.diff-tag`：`.ai` 中性灰＝识别得来、裸 `.diff-tag` 橙＝
+ *  要你核对）。那对类名当年是被**手拼成 HTML 字符串塞进 `renderDataTable` 的单元格**的，而单元格是
+ *  纯文本面（公共层 `cellText` 一律转义）⇒ 整串源码被原样印在页上。现在「识别得到／要你核对」
+ *  这两枚标记改走**现成徽章件** `renderStatusBadge`（灰＝`empty`、橙＝`warn`，档位同老实物那对色），
+ *  经 `renderDataTable` 的 `cellHtml` 受信位（#567）贴进单元格（调用点见 `diet/precheckLabel.ts`），
+ *  本件因此**只剩这一条说明用不上的样式**：类名一并撤掉，不留死规则。 */
 export const PRECHECK_CSS = '<style>'
-  + '.precheck-tag{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;'
-  + 'border-radius:4px;margin-left:6px;background:var(--soft);color:var(--fg2)}'
-  + '.precheck-tag.is-check{background:#fff7e6;color:#ad6800}'
   + '.precheck-note{font-size:13px;color:var(--fg2)}'
   + '</style>';
 
