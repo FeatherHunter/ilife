@@ -161,6 +161,8 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:active {
   opacity: .7;
@@ -178,6 +180,8 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:focus-visible {
   outline: 2px solid var(--blue);
@@ -241,6 +245,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-action-btn-primary {
   background: var(--blue);
@@ -281,6 +287,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
 }
 .ilife-copy-btn-primary {
@@ -380,6 +388,8 @@
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-copy-menu-item:hover {
   background: var(--soft);
@@ -637,6 +647,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-icon {
   font-size: 14px;
@@ -759,6 +770,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
   list-style: none;
 }
 .ilife-help-shell-sheet-summary::-webkit-details-marker {
@@ -810,6 +822,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn:active {
   transform: scale(.96);
@@ -844,6 +858,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-count {
   color: var(--fg3);
@@ -942,6 +957,7 @@
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-search-clear:focus-visible {
   outline: 2px solid var(--blue);
@@ -969,6 +985,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-card-copy:active {
   transform: scale(.96);
@@ -1030,6 +1048,7 @@
   transition: opacity .2s ease;
   z-index: 9998;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn-backtop-show {
   opacity: 1;
@@ -1264,6 +1283,11 @@ body {
   color: var(--fg);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.ilife-block-page-shell button,
+.ilife-block-page-shell summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 @media print {
   .ilife-page-printable {
@@ -1908,6 +1932,15 @@ body {
 .pe-lib-nm{font-size:14px;font-weight:700}
 .pe-lib-tags{display:flex;flex-wrap:wrap;gap:4px;margin-left:auto}
 .pe-lib-empty{padding:22px 18px;font-size:13px;color:var(--fg3);text-align:center}
+/* 新建时间段选时段 */
+.pe-slotpick{margin-top:10px;border:1px dashed var(--blue);border-radius:12px;padding:10px 12px;background:var(--soft);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pe-slotpick-t{font-size:12.5px;font-weight:700;color:var(--blue2)}
+.pe-slotpick .pe-slot-set .pe-slot{min-height:40px}
+/* 起止时间两格：跟动作参数同一套输入形状，窄屏自动换行（段头已是 flex-wrap）。 */
+.pe-time{display:inline-flex;align-items:center;gap:4px}
+.pe-time input{min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12.5px;font-family:inherit;color:var(--fg);background:var(--card);font-variant-numeric:tabular-nums}
+.pe-time input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+.pe-time-to{font-size:12px;color:var(--fg3)}
 /* 产物区 */
 .pe-out{margin:18px 0 0}
 .pe-out-t{font-size:13.5px;font-weight:700;margin:0 0 8px}
@@ -1924,7 +1957,7 @@ body {
 .pe-sheet-box{width:100%;max-height:100vh;height:100vh;border-radius:0}
 }
 
-</style><p class="ilife-block-caliber">这份计划是按我们刚才讨论的结果填好的，你看着改。动作结构只在第 1 周改，后面每一周的动作都跟它一样，各周自己填重量、次数与时长。每天最多 4 次训练，每次挑一个时段；有氧只填时长。</p><div id="pe-root"></div><section class="pe-out"><h2 class="pe-out-t">生成的计划，照这张表落库</h2><div id="pe-out-body"><p class="pe-hint">正在生成。这一块由页面按当前计划渲染。</p></div></section><div class="ilife-block ilife-block-pre-block"><pre class="ilife-block-pre-block-code">请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。</pre></div><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-help-copy-prompt" data-t="请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。">复制指令</button></div></div><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" id="ilife-copy-data" data-action-id="ilife-copy-data" data-t="【calorie · 定训练计划】
+</style><p class="ilife-block-caliber">这份计划是按我们刚才讨论的结果填好的，你看着改。动作结构只在第 1 周改，后面每一周的动作都跟它一样，各周自己填时间、重量、次数与时长。每天最多 4 个时间段，新建时挑一个时段，建好后定时间；有氧只填时长。</p><div id="pe-root"></div><section class="pe-out"><h2 class="pe-out-t">生成的计划，照这张表落库</h2><div id="pe-out-body"><p class="pe-hint">正在生成。这一块由页面按当前计划渲染。</p></div></section><div class="ilife-block ilife-block-pre-block"><pre class="ilife-block-pre-block-code">请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。</pre></div><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-help-copy-prompt" data-t="请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。">复制指令</button></div></div><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" id="ilife-copy-data" data-action-id="ilife-copy-data" data-t="【calorie · 定训练计划】
 weeks: 1
 maxSessionsPerDay: 4
 libSize: 1">复制数据</button><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" id="ilife-copy-log" data-action-id="ilife-copy-log" data-t="场景标识
@@ -1936,9 +1969,9 @@ calorie_data.db ｜ 计划编辑器，页内状态，尚未写库
 调用链
 calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot;config&quot;:{&quot;title&quot;:&quot;减脂4周&quot;,&quot;start_date&quot;:&quot;2026-09-07&quot;,&quot;user_level&quot;:&quot;中手&quot;,&quot;available_equipment&quot;:[&quot;瑜伽垫&quot;]},&quot;weeks&quot;:[{&quot;week_number&quot;:1,&quot;days&quot;:[{&quot;day_of_week&quot;:1,&quot;sessions&quot;:[{&quot;session_label&quot;:&quot;上肢&quot;,&quot;movements&quot;:[{&quot;name&quot;:&quot;俯卧撑&quot;,&quot;part&quot;:&quot;胸&quot;,&quot;type&quot;:&quot;力量&quot;,&quot;sets&quot;:[]}]}]}]}]}}&#39;
 时间戳版本
-2026-09-16 00:09:08 · 版本 0.1.0
+2026-09-16 10:09:32 · 版本 0.1.0
 异常
-无">复制日志</button></div></div></section><script type="application/json" id="pe-state">{"title":"减脂4周","startDate":"2026-09-07","slots":["凌晨","上午","下午","晚上"],"maxSessionsPerDay":4,"maxMovesPerSession":6,"libSource":"动作库：本次讨论结果里带的动作（1 件）","lib":[{"name":"俯卧撑","part":"胸","type":"力量","equip":"瑜伽垫","kind":"力量","goal":"","sets":4,"reps":8,"mode":"kg","load":0,"minutes":0}],"weeks":[{"locked":false,"days":[{"sessions":[{"slot":"凌晨","moves":[{"name":"俯卧撑","part":"胸","type":"力量","equip":"瑜伽垫","kind":"力量","goal":"","sets":4,"reps":8,"mode":"kg","load":0,"minutes":0}]}]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]}]}],"wakeWord":"定训练计划","openWeek":0}</script><script>
+无">复制日志</button></div></div></section><script type="application/json" id="pe-state">{"title":"减脂4周","startDate":"2026-09-07","slots":["凌晨","上午","下午","晚上"],"maxSessionsPerDay":4,"maxMovesPerSession":6,"libSource":"动作库：本次讨论结果里带的动作（1 件）","lib":[{"name":"俯卧撑","part":"胸","type":"力量","equip":"瑜伽垫","kind":"力量","goal":"","sets":4,"reps":8,"mode":"kg","load":0,"minutes":0}],"weeks":[{"locked":false,"days":[{"sessions":[{"slot":"凌晨","timeStart":"","timeEnd":"","moves":[{"name":"俯卧撑","part":"胸","type":"力量","equip":"瑜伽垫","kind":"力量","goal":"","sets":4,"reps":8,"mode":"kg","load":0,"minutes":0}]}]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]}]}],"wakeWord":"定训练计划","openWeek":0}</script><script>
 (function(){
   var root = document.getElementById('pe-root');
   if (!root) return;
@@ -1951,6 +1984,7 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
   var week = S.openWeek || 0;
   var daySel = 0;   // 日页签：一次只显示这一天
   var picker = S.openPicker || null;
+  var slotPick = null;   // 新建时间段选时段：null＝没在选，否则＝正在选的那天（0基）
   var filterPart = '全部';
   var query = '';
 
@@ -2020,8 +2054,8 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     return '<div class="pe-empty">'
       + '<div class="pe-empty-ico"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M12 14v4M10 16h4"/></svg></div>'
       + '<p class="pe-empty-t">还没有训练计划</p>'
-      + '<p class="pe-empty-d">先排第 1 周。它就是母版，后面的周都照它走，各周只改重量与次数这类参数。'
-      + '每天可以排 4 次训练，每次挑一个时段。</p>'
+      + '<p class="pe-empty-d">先排第 1 周。它就是母版，后面的周都照它走，各周只改时间、重量与次数这类参数。'
+      + '每天可以排 4 个时间段，新建时挑时段，建好后定时间、加动作。</p>'
       + '<button type="button" class="pe-cta" data-act="start">定一份计划</button>'
       + '</div>';
   }
@@ -2076,9 +2110,23 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     for (i = 0; i < ss.length; i++) out.push(sessionHtml(d, i));
     var full = ss.length >= MAXD;
     out.push('<button type="button" class="pe-add" data-act="add-train" data-d="' + d + '"' + (full || lock() ? ' disabled' : '') + '>'
-      + (lock() ? '训练安排由第 1 周决定，这里只改参数' : (full ? '这天已排满 ' + MAXD + ' 次训练' : '加一次训练')) + '</button>');
-    if (ss.length === 0 && !lock()) out.push('<p class="pe-hint">这天还没排。点「加一次训练」，再挑时段。</p>');
+      + (lock() ? '训练安排由第 1 周决定，这里只改参数' : (full ? '这天已排满 ' + MAXD + ' 个时间段' : '加一次训练')) + '</button>');
+    if (slotPick === d && !full && !lock()) out.push(slotPickHtml(d));
+    if (ss.length === 0 && !lock()) out.push('<p class="pe-hint">这天还没排。点「加一次训练」，先挑时段，再定时间、加动作。</p>');
     return '<div class="pe-day"><div class="pe-day-main">' + out.join('') + '</div></div>';
+  }
+
+  /* 新建时间段先选时段：四个都摆出来，已被占的禁用并标已排；选完才建段，建完定时间、加动作。 */
+  function slotPickHtml(d){
+    var out = [], i, used;
+    for (i = 0; i < SLOTS.length; i++){
+      used = slotUse(d, SLOTS[i], -1) > 0;
+      out.push('<button type="button" class="pe-slot" data-act="pick-slot" data-d="' + d + '" data-slot="' + esc(SLOTS[i]) + '"'
+        + (used ? ' disabled' : '') + '>' + esc(SLOTS[i]) + (used ? '已排' : '') + '</button>');
+    }
+    return '<div class="pe-slotpick"><span class="pe-slotpick-t">新建时间段，选一个时段</span>'
+      + '<span class="pe-slot-set">' + out.join('') + '</span>'
+      + '<button type="button" class="pe-x" data-act="cancel-slot" data-d="' + d + '" aria-label="不建了">✕</button></div>';
   }
 
   function sessionHtml(d, s){
@@ -2094,9 +2142,17 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
       + (lock() || se.moves.length >= MAXM ? ' disabled' : '') + '>'
       + (lock() ? '加动作' : (se.moves.length >= MAXM ? '这一节已满 ' + MAXM + ' 个动作' : '加动作')) + '</button>';
     var del = lock() ? '' : '<button type="button" class="pe-x" data-act="del-train" data-d="' + d + '" data-s="' + s + '" aria-label="删掉这次训练">✕</button>';
+    /* 起止时间两格：它是参数不是结构，锁住的周照样可填（与组数／次数／时长同一口径）；
+       故这里**不跟 disabled**，也没有 data-m（探针只数动作行里的格，见门探针 inputs 注释）。 */
+    var time = '<span class="pe-time"><input type="time" value="' + esc(se.timeStart || '') + '"'
+      + ' data-act="set-tstart" data-d="' + d + '" data-s="' + s + '" aria-label="开始时间">'
+      + '<span class="pe-time-to">到</span>'
+      + '<input type="time" value="' + esc(se.timeEnd || '') + '"'
+      + ' data-act="set-tend" data-d="' + d + '" data-s="' + s + '" aria-label="结束时间"></span>';
     return '<div class="pe-sess' + (lock() ? ' is-locked' : '') + '">'
       + '<div class="pe-sess-head">'
       +   '<span class="pe-slot-set">' + chips.join('') + '</span>'
+      +   time
       +   del
       + '</div>'
       + (moves.length > 0 ? '<ul class="pe-moves">' + moves.join('') + '</ul>' : '<p class="pe-hint">这一节还没有动作。</p>')
@@ -2164,6 +2220,14 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
   }
 
   /* ── 产物：一张规范表 ＋ 一段缩进文本（**不用分隔符**，并列靠换行与缩进） ── */
+  /* 时间上屏：起止都有就连起来，只一边就有哪边说哪边，两边都没有就直说没定（不留空让人猜）。 */
+  function timeText(a, b){
+    a = a || ''; b = b || '';
+    if (a === '' && b === '') return '没定时间';
+    if (a !== '' && b !== '') return a + '到' + b;
+    if (a !== '') return a + '起';
+    return '到' + b;
+  }
   function planRows(){
     var out = [], w, d, s, i, j;
     for (w = 0; w < S.weeks.length; w++){
@@ -2173,7 +2237,8 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
           for (i = 0; i < se.moves.length; i++){
             var mv = se.moves[i];
             out.push({
-              week: w + 1, dow: DOW[d], slot: se.slot, name: mv.name, part: mv.part, type: mv.type,
+              week: w + 1, dow: DOW[d], slot: se.slot, time: timeText(se.timeStart, se.timeEnd),
+              name: mv.name, part: mv.part, type: mv.type,
               amount: mv.kind === '有氧' ? (mv.minutes + ' 分钟')
                 : (mv.sets + ' 组乘 ' + mv.reps + ' 次'),
               load: mv.kind === '有氧' ? '' : (mv.mode === 'rm' ? (mv.load + ' RM') : (mv.load ? (mv.load + ' kg') : '自重')),
@@ -2196,7 +2261,7 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
       var r = rows[i];
       if (r.week !== curWeek){ lines.push('第 ' + r.week + ' 周'); curWeek = r.week; curDay = ''; }
       if (r.dow !== curDay){ lines.push('  ' + r.dow); curDay = r.dow; }
-      lines.push('    ' + r.slot + '　' + r.name + '　' + r.part + '　' + r.type + '　' + r.amount + (r.load ? ('　' + r.load) : ''));
+      lines.push('    ' + r.slot + (r.time === '没定时间' ? '' : (' ' + r.time)) + '　' + r.name + '　' + r.part + '　' + r.type + '　' + r.amount + (r.load ? ('　' + r.load) : ''));
     }
     lines.push('');
     lines.push('请按这份表落库，完成后给我回执 HTML。');
@@ -2211,11 +2276,12 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     for (i = 0; i < rows.length; i++){
       var r = rows[i];
       tr.push('<tr><td>第 ' + r.week + ' 周</td><td>' + esc(r.dow) + '</td><td>' + esc(r.slot) + '</td><td>' + esc(r.name)
-        + '</td><td>' + esc(r.part) + '</td><td>' + esc(r.type) + '</td><td>' + esc(r.amount) + '</td><td>' + esc(r.load) + '</td></tr>');
+        + '</td><td>' + esc(r.part) + '</td><td>' + esc(r.type) + '</td><td>' + esc(r.amount) + '</td><td>' + esc(r.load)
+        + '</td><td>' + esc(r.time) + '</td></tr>');
     }
     out.innerHTML = '<table class="ilife-block-data-table"><caption class="ilife-block-data-table-caption">计划明细（' + rows.length + ' 行）</caption>'
-      + '<thead><tr><th>周次</th><th>星期</th><th>时段</th><th>动作</th><th>部位</th><th>类型</th><th>量</th><th>负重</th></tr></thead>'
-      + '<tbody>' + (tr.length ? tr.join('') : '<tr><td colspan="8">还没有排动作</td></tr>') + '</tbody></table>';
+      + '<thead><tr><th>周次</th><th>星期</th><th>时段</th><th>动作</th><th>部位</th><th>类型</th><th>量</th><th>负重</th><th>时间</th></tr></thead>'
+      + '<tbody>' + (tr.length ? tr.join('') : '<tr><td colspan="9">还没有排动作</td></tr>') + '</tbody></table>';
   }
 
   /* ── 事件：一处委派，零内联处理器 ── */
@@ -2227,15 +2293,23 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     if (act === 'start'){ S.weeks = [ { locked: false, days: blankDays() } ]; setWeeks(4); return; }
     if (act === 'wk-plus'){ setWeeks(S.weeks.length + 1); return; }
     if (act === 'wk-minus'){ setWeeks(S.weeks.length - 1); return; }
-    if (act === 'go-week'){ week = w; picker = null; render(); return; }
-    if (act === 'go-day'){ daySel = d; picker = null; render(); return; }
+    if (act === 'go-week'){ week = w; picker = null; slotPick = null; render(); return; }
+    if (act === 'go-day'){ daySel = d; picker = null; slotPick = null; render(); return; }
     if (act === 'add-train'){
+      if (lock()) return;
       if (day(d).sessions.length >= MAXD) return;
-      var slot = SLOTS[0], k;
-      for (k = 0; k < SLOTS.length; k++) if (slotUse(d, SLOTS[k], -1) === 0){ slot = SLOTS[k]; break; }
-      day(d).sessions.push({ slot: slot, moves: [] });
-      render(); return;
+      slotPick = d; render(); return;
     }
+    /* 新建时间段落子：锁周与满员在上面那颗钮就拦住了，这里再守一次（合成派发点 disabled 钮的旧账 #558 不在本题扩散）。 */
+    if (act === 'pick-slot'){
+      if (lock()) return;
+      var wantSlot = el.getAttribute('data-slot');
+      if (day(d).sessions.length >= MAXD){ slotPick = null; render(); return; }
+      if (slotUse(d, wantSlot, -1) > 0) return;
+      day(d).sessions.push({ slot: wantSlot, timeStart: '', timeEnd: '', moves: [] });
+      slotPick = null; render(); return;
+    }
+    if (act === 'cancel-slot'){ slotPick = null; render(); return; }
     if (act === 'del-train'){ day(d).sessions.splice(s, 1); render(); return; }
     if (act === 'set-slot'){
       var want = el.getAttribute('data-slot');
@@ -2271,6 +2345,15 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     var el = e.target, act = el.getAttribute && el.getAttribute('data-act');
     if (!act) return;
     if (act === 'search'){ query = String(el.value || '').trim().toLowerCase(); render(); return; }
+    /* 起止时间是参数：锁周不拦（与组数／次数同口径），只写回状态并刷新产物，不整页重渲（焦点不丢）。 */
+    if (act === 'set-tstart' || act === 'set-tend'){
+      var td = Number(el.getAttribute('data-d')), ts = Number(el.getAttribute('data-s'));
+      var tse = (day(td).sessions || [])[ts];
+      if (!tse) return;
+      if (act === 'set-tstart') tse.timeStart = String(el.value || '');
+      else tse.timeEnd = String(el.value || '');
+      syncCopy(); return;
+    }
     var d = Number(el.getAttribute('data-d')), s = Number(el.getAttribute('data-s')), m = Number(el.getAttribute('data-m'));
     var mv = (day(d).sessions[s] || { moves: [] }).moves[m];
     if (!mv) return;
