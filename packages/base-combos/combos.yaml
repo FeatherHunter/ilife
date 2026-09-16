@@ -84,6 +84,11 @@ combos:
     shape: receipt
     title: 改运动
     cmd: skill-calorie
+  - key: calorie.goal.exercise
+    skill: calorie
+    shape: receipt
+    title: 定运动目标
+    cmd: skill-calorie
   - key: calorie.goal.pause
     skill: calorie
     shape: receipt

@@ -265,7 +265,9 @@ function scorePlate621() {
 test('#620-6 评分表头数点名后段均值（29-2）', () => {
   const html = visible(buildReportDoc(scorePlate621(), ''));
   assert.ok(html.includes('综合评分（后段均值）'), '表头数没点名窗口');
-  assert.ok(html.includes('后段均值，满分 100'), '仪表标题没点名窗口');
+  /* #625 B团（29-5R）：仪表标题的同括注已摘掉，只结论句保留（分两处改为一处）。 */
+  assert.ok(!html.includes('后段均值，满分 100'), '仪表标题仍在重复结论括注');
+  assert.equal(countSub(html, '综合评分（'), 1, '综合评分括注不止一处');
 });
 
 test('#620-6 趋势 thirds 点名有评分记录（30-1）', () => {

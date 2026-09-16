@@ -3,11 +3,11 @@
  * 权威是声明层：`src/cli/legacy/routes/scene-NN.ts`（未搬迁清单，一场景一件）与各能力
  * `src/<能力>/routes.ts`（已搬迁键，一能力一件）。本件只做「按 `list` 分组、按 `order` 升序」的
  * 排序与拼接，不含任何顺序知识——顺序事实只住声明的 `order` 字段，换文件搬动不会打乱顺序。
- * 本次生成：WAKE_ROUTES 436 条 ＋ NEW_KEY_ROUTES 69 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 506 条（与声明逐条自洽：`pnpm gen:check` 验真）。
+ * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 69 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 507 条（与声明逐条自洽：`pnpm gen:check` 验真）。
  */
 import type { ExecWakeRoute, WakeRoute } from './routeSpec.js';
 
-/** 436 条 SoT 唤醒词路由（exec ／ non-exec 两种记录；顺序与 SoT 逐位对齐） */
+/** 437 条 SoT 唤醒词路由（exec ／ non-exec 两种记录；顺序与 SoT 逐位对齐） */
 export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '看今日主页', scene: '01', kind: 'exec', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home --params \'{"date":"今日","section":"overview"}\'' },
   { wakeWord: '看今日饮食概览', scene: '01', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"今日"}\'' },
@@ -445,6 +445,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '查高热量榜', scene: '10', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"window":"7d"}\'' },
   { wakeWord: '查高碳水榜', scene: '10', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_carb","topN":10,"window":"7d"}\'' },
   { wakeWord: '查高蛋白榜', scene: '10', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_protein","topN":10,"window":"7d"}\'' },
+  { wakeWord: '定运动目标', scene: '06', kind: 'exec', key: 'calorie.goal.exercise', cli: 'calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'' },
 ];
 
 /** 69 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
@@ -525,5 +526,5 @@ export const COVERAGE_REPAIR_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看目标推荐', scene: '06', kind: 'exec', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
 ];
 
-/** 全量路由（436 条 SoT ＋ 69 条新拟 ＋ 1 条覆盖修复） */
+/** 全量路由（437 条 SoT ＋ 69 条新拟 ＋ 1 条覆盖修复） */
 export const ALL_ROUTES: readonly WakeRoute[] = [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES];

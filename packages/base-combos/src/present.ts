@@ -99,6 +99,7 @@ export const PRESENT_KEYS: string[] = [
   'calorie.view.goal-wizard',
   'calorie.view.health',
   'calorie.view.home',
+  'calorie.view.label-precheck',
   'calorie.view.library',
   'calorie.view.lint-health',
   'calorie.view.long-trend',

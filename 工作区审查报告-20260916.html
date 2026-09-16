@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>工作区文件审查报告（2026-09-16）</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#d2d2d7;--blue:#007aff;--red:#c8102e;--orange:#b25e09;--green:#1a7f37}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:960px;margin:32px auto;padding:0 20px 80px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px 28px;margin:20px 0;box-shadow:0 1px 2px rgba(0,0,0,.04),0 12px 36px rgba(0,0,0,.06)}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:20px;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+.meta{color:var(--fg2);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}code{background:#f0f0f2;padding:1px 6px;border-radius:6px;font-family:Consolas,monospace;font-size:13px}
+.badge{display:inline-block;font-size:12px;font-weight:700;color:#fff;border-radius:999px;padding:2px 12px;margin-right:8px}
+.b-red{background:var(--red)}.b-orange{background:var(--orange)}.b-green{background:var(--green)}
+.kpi{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+.kpi div{flex:1;min-width:160px;background:#f8f8fa;border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.kpi b{font-size:22px;display:block}ol.q li{margin:8px 0}
+footer{color:var(--fg2);font-size:13px;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+<div class="card">
+<h1>工作区文件审查报告</h1>
+<div class="meta">审查对象：D:\ilife ｜ 审查日期：2026-09-16 ｜ 方法：第一性原理 + 对抗式审查（源码 / 文档 / 产物三分法，对照 AGENTS.md、并发纪律、.gitignore 自有规则）<br>
+取证手段：<code>git ls-files</code> / <code>git log --diff-filter=A</code> / <code>git check-ignore</code> / 字节级编码核验（已排除控制台乱码误报）</div>
+<div class="kpi">
+<div><b>~140</b>已入库的根目录垃圾文件</div>
+<div><b>4.3MB</b>最大单文件（_r47.txt）</div>
+<div><b>12.4GB</b>.scratch/ 本地黑洞（253,912 文件）</div>
+<div><b>120</b>.changeset 积压未消</div>
+<div><b>144</b>docs/ 下入库的 .log/.ps1</div>
+</div>
+</div>
+
+<div class="card">
+<h2><span class="badge b-red">类别 1</span>百分百垃圾文件（任何世界都不该入库，且已被跟踪）</h2>
+<p><b>污染源头已锁定</b>：全部根目录垃圾均来自同一提交 <code>ed87c79「抢救(防丢)：提交当前目录全部未提交改动，避免丢失」</code>——一次 <code>git add -A</code> 把在途临时文件全扫进库，直接违反并发纪律「只许 <code>git add &lt;自己声明的路径&gt;</code>，提交前用 <code>git diff --cached --name-only</code> 复核」。</p>
+<table>
+<tr><th>文件</th><th>证据</th></tr>
+<tr><td><code>_r*.txt</code> 约 50 个 + <code>_recon_*.txt</code>、<code>_r3-test*.txt</code></td><td>单次探针输出。其中 <code>_r47.txt</code> <b>4.3MB</b>——单个临时文件比多数源码包还大，永久增重仓库</td></tr>
+<tr><td><code>.scratch-t407-*.txt</code>（10 个）、<code>.scratch_t264/_t281/_t369/_t517_*</code></td><td>起了个带点号的名字来躲 <code>.scratch/</code> 忽略规则，本质还是 scratch</td></tr>
+<tr><td><code>.t499-*</code> 约 25 个（含 <code>.t499-bak-*.ts</code>、<code>.t499-head-*.ts</code> 源码备份）</td><td>票号作业副本直接堆根目录</td></tr>
+<tr><td><code>.tmp-394-*</code> 9 个</td><td>临时 patch/verify 脚本（.gitignore 的 <code>.tmp-*/</code> 只匹配目录，根本盖不住它们）</td></tr>
+<tr><td><code>.t512j-commit-msg.txt</code></td><td>commit 信息草稿也入库了</td></tr>
+<tr><td><code>900</code>（7KB）、<code>undefined</code>（72KB）</td><td>文件名本身就是 bug：<code>900</code> 是 viewport 探针 JSON（内容含 <code>"viewport":{"w":1200,"h":900}</code>）；<code>undefined</code> 是 72KB HTML dump，典型 <code>writeFile(name)</code> 传了 <code>undefined</code> 的事故现场</td></tr>
+<tr><td><code>probe.mjs</code></td><td><b>0 字节空文件</b>，空文件也被提交了</td></tr>
+<tr><td><code>_chips.ps1</code>、<code>_count.ps1</code>、<code>_count2.ps1</code>、<code>_extract.ps1</code>、<code>_scan.ps1</code></td><td>根目录一次性统计脚本</td></tr>
+<tr><td><code>_t407_audit/</code> 31 个文件（含 <code>precise.json</code> 725KB、<code>final.json</code> 613KB）</td><td>审计工作副本，住在根目录而非 <code>.scratch/</code></td></tr>
+</table>
+<p><b>本地垃圾</b>（被忽略、未入库，但占磁盘、扰导航）：<code>.scratch/</code> 782 顶层目录 / 253,912 文件 / 约 12.4GB 从未修剪；6 个 <code>.tmp-*</code> 一次性目录（<code>.tmp-115logs</code>、<code>.tmp-clean</code>、<code>.tmp-t123logs</code>、<code>.tmp-t161-scan</code>、<code>.tmp-t86-evidence</code>、<code>.tmp-wayfinder-161</code>）；根 <code>tsconfig.tsbuildinfo</code>（83B，根裸跑 <code>tsc -b</code> 的指纹）；空目录 <code>tools/</code>、<code>scripts/</code>（递归 0 文件，与有实物的 <code>tooling/</code> 三名并存）、<code>.agents/skills/</code>（空骨架占位）。</p>
+</div>
+
+<div class="card">
+<h2><span class="badge b-orange">类别 2</span>位置不合理的文件（内容或有价值，但住错了家）</h2>
+<table>
+<tr><th>文件</th><th>问题与应去之处</th></tr>
+<tr><td><code>fieldLabel.ts</code>（根目录）</td><td>第一性原理铁证：它 <code>import ... from '../render/errors.js'</code>，在根目录下上一级是 <code>D:/</code>，此 import <b>无解</b>，当前位置不可能被编译/引用。应归某 <code>packages/*/src/</code>，或为包内正式件的残留副本</td></tr>
+<tr><td><code>_t407_audit/</code>、<code>.scratch-t*</code>、<code>.t499-*</code>、<code>.tmp-394-*</code>（根目录）</td><td>按 .gitignore 注释「施工作业副本永不入库，权威在 <code>docs/</code> 与票面 <code>.scratch/</code>」，应住 <code>.scratch/&lt;票号&gt;/</code></td></tr>
+<tr><td><code>我的想法.md</code>（根目录，已跟踪）</td><td>产品愿景私记，应去 GitHub Discussion/Issue 或 <code>docs/</code> 下某归属件</td></tr>
+<tr><td><code>docs/agents/t575-替换-证据.md</code>、<code>t576-返修-证据.md</code></td><td>按文档归属纪律（件名＝<code>packages/</code> 下目录名逐字），票证据应去 <code>docs/skills/skill-calorie/</code>；<code>docs/agents/</code> 只住跨件共用纪律/契约</td></tr>
+<tr><td><code>docs/research/publish-020-line.ps1</code>、<code>verify-after-publish-020-line.ps1</code></td><td>可执行脚本住在文档目录，应去 <code>tooling/</code> 或 <code>.scratch/</code></td></tr>
+<tr><td><code>.scratch/t387/run-all.mjs</code>、<code>.scratch/t464/review-probe.mjs</code></td><td>全仓仅有的 2 个被跟踪的 <code>.scratch/</code> 文件——规则自我打架：既然 ignore 就不该强制跟踪，既然权威就不该 ignore，二选一</td></tr>
+<tr><td><code>docs/calorie-architecture.html</code> + <code>docs/research/</code> 下 9 个 <code>decision-*/review-*.html</code></td><td>生成的 HTML 住在文档源码区；若确为有意留存的视觉证据，则存在 <code>.md</code> 与 <code>.html</code> 双份权威打架</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="badge b-green">类别 3</span>明明不合理的文件（违反本仓自己的规则与常识）</h2>
+<ol>
+<li><b>灾难提交 <code>ed87c79</code></b>：<code>git add -A</code> 式「抢救」与并发纪律正面冲突，是全部污染的单点源头。</li>
+<li><b><code>.gitignore</code> 形同虚设</b>：注释写着「施工作业副本永不入库」，库里躺着 140+ 个；规则缺 <code>.scratch-t*</code>、<code>.scratch_t*</code>、<code>.t499-*</code>、<code>.tmp-394-*</code>（文件形态）、<code>_r*</code>、<code>900</code>、<code>undefined</code>、<code>_t407_audit/</code> 的全部覆盖。</li>
+<li><b><code>docs/</code> 成了第二个 <code>.scratch/</code></b>：<code>docs/</code> 下被跟踪了 <b>144 个 <code>*.log</code>/<code>*.ps1</code></b>（<code>t*-gate-runs.log</code> 系列、<code>docs/skills/skill-calorie/</code> 下大量 <code>*.log</code> + <code>t*-run.mjs</code>/<code>probe.mjs</code>/<code>*.patch</code>）。日志是产物不是源码；证据要留也该是固化后的 <code>.md</code>。</li>
+<li><b><code>.changeset/</code> 120 个文件</b>（含中文名）：正常未发布 changeset 是个位数。只写不发、只积不消，变更管理只记账不结账。</li>
+<li><b><code>_r47.txt</code> 4.3MB 单文件入库</b>：一次探针输出超过多数源码包，<code>git clone</code> 的所有后来者永久付费。</li>
+<li><b><code>tools/</code>、<code>scripts/</code>、<code>tooling/</code> 三名并存其二为空</b>：命名空间内耗，新人先猜三选一。</li>
+<li><b>根 <code>tsconfig.tsbuildinfo</code></b>：构建指纹落错地方，顺带证明编译纪律（入口写死 <code>tsc -b &lt;包&gt;</code>）有旁门。</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>处置建议（未动手）</h2>
+<table>
+<tr><th>优先级</th><th>动作</th></tr>
+<tr><td>P0 <code>git rm</code></td><td>第 1 类全部已跟踪根垃圾（含 <code>_t407_audit/</code>、<code>900</code>、<code>undefined</code>、空 <code>probe.mjs</code>）+ 修 <code>.gitignore</code> 补洞。唯 <code>fieldLabel.ts</code> 需先确认包内正式件存在再删；<code>我的想法.md</code> 需指定去处</td></tr>
+<tr><td>P1 搬家</td><td><code>docs/agents/t575*、t576*</code> → <code>docs/skills/skill-calorie/</code>；<code>docs/research/*.ps1</code> → <code>tooling/</code> 或 <code>.scratch/</code>；<code>.scratch</code> 那 2 个被跟踪文件二选一</td></tr>
+<tr><td>P2 本地清淤</td><td><code>.scratch/</code> 12.4GB 定修剪策略（只留近 N 天 / 未关票）；删 6 个 <code>.tmp-*</code> 目录、根 <code>tsconfig.tsbuildinfo</code>、空目录（或补 <code>.gitkeep</code> + 说明）</td></tr>
+<tr><td>P3 消账立规</td><td>120 个 changeset 尽快配版本发布消费掉；<code>docs/</code> 下原始 <code>.log</code> 立规矩（只留固化 <code>.md</code>，<code>.log</code> 进 <code>.scratch</code>）</td></tr>
+</table>
+<ol class="q">
+<li>P0 的 <code>git rm</code> 清单是否全批？<code>fieldLabel.ts</code> 和 <code>我的想法.md</code> 各要什么去处？</li>
+<li><code>.gitignore</code> 补洞方案是否同意？要不要对根目录用白名单式（<code>/*</code> + <code>!</code> 放行十来个合法件）一劳永逸？</li>
+<li><code>.scratch/</code> 12.4GB 修剪线怎么定（近 7 天 / 未关票 / 全删重建）？<code>docs/</code> 下历史 <code>.log</code> 要不要同步立规矩？</li>
+</ol>
+</div>
+
+<footer>本报告为调查结论文件，本身是合法交付物，不属于正文所列垃圾。全文结论均有命令级实证，可复跑验证。</footer>
+</main>
+</body>
+</html>
