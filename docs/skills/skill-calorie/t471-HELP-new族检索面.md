@@ -230,6 +230,9 @@ $ git grep -n "list: 'new'" -- packages/skill-calorie/src | wc -l
 | ⑲ | `node packages/skill-calorie/scripts/gen-cli.mjs` | `de25c232-8d26-40ec-b0fa-e668ca4afd64` | 0 | 三件生成物无 diff |
 | ⑳ | `node packages/skill-calorie/scripts/build-help.mjs` | `56be3ee3-52d1-4b41-84dd-9b76a035a3f6` | 0 | `SKILL.md` 与 HEAD 一致（零 diff） |
 | ㉑ | `git add <5 路径>`／`git diff --cached --name-only`／`git commit -F … -- <5 路径>` | `90d745c4-a244-4490-b8fc-7652b73d5104`／`53974a3f-fd73-4dd3-bd34-172df59bddec` | 0／0 | 提交 `11e1ac03`；暂存区复核只含本席 5 件（见下表） |
+| ㉒ | `node packages/skill-calorie/scripts/gen-cli.mjs --check`（`gen:check`） | `bd89c07e-cca6-4d86-b141-2a4f18c8046e` | 0 | `GEN-CHECK PASS`：键 129（写 47 ＋ 读 82），能力 10 个声明 129 条、未搬迁清单 0 条 |
+| ㉓ | `node packages/skill-calorie/scripts/check-examples.mjs`（`help:examples:check`） | `f9597483-e15e-40d2-a29a-30759fc7fcc6` | 0 | `RESULT: 129/129`、`PASS: SKILL.md 示例逐行可执行` |
+| ㉔ | `node --test packages/skill-calorie/test/help-new-family-471.test.mjs`（提交后复绿） | `09d182e8-ae3e-4dbe-a948-c50321842a2e` | 0 | **8/8**（终局读数） |
 
 坐席外的只读动作（不入门）：`git grep -n "list: 'new'"`（68）、`check-warning-line.mjs`（`RESULT: 91/91`）、
 `node .scratch/t471/analyze.mjs`／`peek.mjs`／`guard-check.mjs`。
