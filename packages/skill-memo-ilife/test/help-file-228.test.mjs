@@ -128,14 +128,13 @@ test('#228 裁决 20 ②：本票载荷只对 A 路合法（B 路校验器 schem
   assert.equal(full.code, 'schema-invalid');
   assert.equal(full.path, '/init_banner/hidden', '首个命中＝闭集外的 hidden');
 
-  // 逐维隔离：证明这是**两处独立分歧**（各自单跑都判 invalid，且指向各自的 path）
-  //   ① 只留闭集键（无 hidden）＋ steps 用本票的对象形 ⇒ 命中 /init_banner/steps/0
+  // 逐维隔离（#644：#242 起 steps 为 string|对象双形态，对象形合法；仅剩 hidden 一处分歧）
+  //   ① 只留闭集键（无 hidden）＋ steps 用本票的对象形 ⇒ 放行（返 null）
   const stepsAsObjects = runB({
     ...DATA,
     init_banner: { title: 'T', subtitle: 'S', button_text: 'B', prompt: 'P', steps: DATA.init_banner.steps },
   });
-  assert.equal(stepsAsObjects?.path, '/init_banner/steps/0');
-  assert.match(stepsAsObjects.message, /期望 string，实际 object/);
+  assert.equal(stepsAsObjects, null, '对象形 steps 在 #242 双形态下必须放行');
   //   ② 只留闭集键（无 hidden）＋ steps 退回 schema 要的 string[] ⇒ **全过**（证明分歧只有那两处）
   const closedOnly = runB({
     ...DATA,
