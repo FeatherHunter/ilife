@@ -145,7 +145,7 @@ test('#108 饮食总览＋餐别分布：区块对照（KPI＋双图＋按日表
     assert.equal(out.data.metrics.totalCalories, 2689);
     assertDoc(out.html, 'view.diet');
     // #496＋#551：页名无日期（H1 逐字「饮食总览」）；窗口不住副题，住页顶窗口条（`diet-window`）。
-    for (const needle of ['2689', '餐别分布', '加餐时段：下午茶、夜宵', '按日汇总', '2026-09-06', '全部记录', '米饭', '复制数据']) {
+    for (const needle of ['2689', '餐别分布', '加餐时段：下午茶和夜宵', '按日汇总', '2026-09-06', '全部记录', '米饭', '复制数据']) {
       assert.ok(out.html.includes(needle), 'view.diet 缺：' + needle);
     }
     assert.ok(out.html.includes('<h1 class="ilife-block-page-shell-title">饮食总览</h1>'), 'view.diet 页名不是无日期的「饮食总览」');

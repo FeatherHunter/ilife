@@ -54,8 +54,8 @@ import type { HealthPlate } from '../analysis/healthPlate.js';
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
-/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
-const DOC_TITLE = '卡路里·饮食';
+/** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）；#591 去 `·`（门禁 R1），取值照同域 ② 类页现行口径（`diet/todayDocs.ts` 的「卡路里饮食」）。 */
+const DOC_TITLE = '卡路里饮食';
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
@@ -70,8 +70,8 @@ function r1(n: number): number {
  *
  *  #496 · 原文案是「窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵」——把源码常量名印给用户看
  *  （`.scratch/t155o/text-review-P0.md` 第 2、62、68 条，四份审查件共 14 席命中）。
- *  现在只留读者用得上的那半句：加餐是哪几顿。 */
-const MEAL_NOTE = '加餐时段：下午茶、夜宵';
+ *  现在只留读者用得上的那半句：加餐是哪几顿（#591：「、」也去掉，两顿用「和」并列）。 */
+const MEAL_NOTE = '加餐时段：下午茶和夜宵';
 
 /* ── #551 · 副题与 caption 一带的形状件（写集只给本件：窗口条＋事实条，字号 12／13，断点 820 照 HELP）── */
 const DIET_SHAPE_CSS = '<style>.diet-window,.diet-facts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:4px 0 12px}'
@@ -241,8 +241,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       }),
     })));
   }
-  /* §五 第 13 行：口径说明行（餐别口径 ＋ 缺值口径各说一次，不带常量名）。 */
-  parts.push(renderCaliberLine(MEAL_NOTE + '；本页缺值一律写成 —，不当成 0 卡。'));
+  /* §五 第 13 行：口径说明行（餐别口径 ＋ 缺值口径各说一次，不带常量名）；#591 · 门禁 R2：两句原由 `；` 串一行，改一条一行（同 #523／#544 口径行做法）。 */
+  parts.push(renderCaliberLine(MEAL_NOTE) + renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
   /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。 */
   parts.push(anchored(LIST_ANCHOR.copy, listPageCopy({
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.diet',
@@ -261,8 +261,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
        单日窗「饮食总览 2026-09-07 ~ 2026-09-07」又长又丑；多日窗同样只说「饮食总览」。 */
     title: '饮食总览',
     /* #496 · 眉标原写命令键「calorie.view.diet · 饮食域」——`t425-融合基准.md:127-132`（裁定 1）
-       定死不上屏，`assembleDocPage` 也已整行挡掉这种写法；这里同时换成样张口径的中文族名。 */
-    eyebrow: '卡路里 · 饮食',
+       定死不上屏；改样张口径的中文族名，#591 再去掉族名里的 `·`（门禁 R1，同 `diet/todayDocs.ts`）。 */
+    eyebrow: '卡路里饮食',
     /* §五 第 3 行：结论句（句内只留合计一句，窗口与五事实明细在页顶形状条；#551 去文字串）。 */
     subtitle: '本窗合计 ' + o.totalCalories + ' 卡',
     content: parts.join(''),
