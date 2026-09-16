@@ -75,11 +75,9 @@ function isoOrToday(value: string): string {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
 
-/** 时段：先认标签里的时段词（真库把时段前缀写在 `session_label` 里，实测值「上午·胸·3 角度」）；
- *  认不出、或那个时段已被同一天前面那次训练占了，就取当天第一个空位；四段占满则回第一个时段。 */
-function slotOf(label: string, used: readonly string[]): string {
-  for (const s of SLOTS) if (label.includes(s) && !used.includes(s)) return s;
-  for (const s of SLOTS) if (!used.includes(s)) return s;
+/** 时段：标签里认出哪个就是哪个（时段是分类签，一天里同一时段可建多段，不做占用分配）。 */
+function slotOf(label: string): string {
+  for (const s of SLOTS) if (label.includes(s)) return s;
   return SLOTS[0];
 }
 
@@ -120,14 +118,12 @@ function timeOf(v: unknown): string {
 
 /** 一次训练（＝库里的一行）：最多 4 段；`is_rest_day` 的那条不进编辑器（页面上「没排训练的那天」就是休息日）。 */
 function sessionsOf(value: unknown): { slot: string; timeStart: string; timeEnd: string; moves: EditorMove[] }[] {
-  const used: string[] = [];
   const out: { slot: string; timeStart: string; timeEnd: string; moves: EditorMove[] }[] = [];
   for (const item of rowsOf(value)) {
     if (out.length >= MAX_SESSIONS_PER_DAY) break;
     if (!isRecord(item)) continue;
     if (item['is_rest_day'] === true) continue;
-    const slot = slotOf(asText(item['session_label']), used);
-    used.push(slot);
+    const slot = slotOf(asText(item['session_label']));
     const moves: EditorMove[] = [];
     for (const m of rowsOf(item['movements'])) {
       const one = moveOf(m);

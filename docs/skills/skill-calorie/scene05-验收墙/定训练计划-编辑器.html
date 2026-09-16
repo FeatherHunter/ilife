@@ -1957,7 +1957,7 @@ body {
 .pe-sheet-box{width:100%;max-height:100vh;height:100vh;border-radius:0}
 }
 
-</style><p class="ilife-block-caliber">这份计划是按我们刚才讨论的结果填好的，你看着改。动作结构只在第 1 周改，后面每一周的动作都跟它一样，各周自己填时间、重量、次数与时长。每天最多 4 个时间段，新建时挑一个时段，建好后定时间；有氧只填时长。</p><div id="pe-root"></div><section class="pe-out"><h2 class="pe-out-t">生成的计划，照这张表落库</h2><div id="pe-out-body"><p class="pe-hint">正在生成。这一块由页面按当前计划渲染。</p></div></section><div class="ilife-block ilife-block-pre-block"><pre class="ilife-block-pre-block-code">请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。</pre></div><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-help-copy-prompt" data-t="请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。">复制指令</button></div></div><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" id="ilife-copy-data" data-action-id="ilife-copy-data" data-t="【calorie · 定训练计划】
+</style><p class="ilife-block-caliber">这份计划是按我们刚才讨论的结果填好的，你看着改。动作结构只在第 1 周改，后面每一周的动作都跟它一样，各周自己填时间、重量、次数与时长。每天最多 4 个时间段，新建时挑一个时段（同一时段可建多段，靠起止时间分），建好后定时间；有氧只填时长。</p><div id="pe-root"></div><section class="pe-out"><h2 class="pe-out-t">生成的计划，照这张表落库</h2><div id="pe-out-body"><p class="pe-hint">正在生成。这一块由页面按当前计划渲染。</p></div></section><div class="ilife-block ilife-block-pre-block"><pre class="ilife-block-pre-block-code">请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。</pre></div><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-help-copy-prompt" data-t="请你加载技能 卡路里，执行唤醒词「定训练计划」。明细见下面的计划表。">复制指令</button></div></div><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" id="ilife-copy-data" data-action-id="ilife-copy-data" data-t="【calorie · 定训练计划】
 weeks: 1
 maxSessionsPerDay: 4
 libSize: 1">复制数据</button><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" id="ilife-copy-log" data-action-id="ilife-copy-log" data-t="场景标识
@@ -1969,7 +1969,7 @@ calorie_data.db ｜ 计划编辑器，页内状态，尚未写库
 调用链
 calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot;config&quot;:{&quot;title&quot;:&quot;减脂4周&quot;,&quot;start_date&quot;:&quot;2026-09-07&quot;,&quot;user_level&quot;:&quot;中手&quot;,&quot;available_equipment&quot;:[&quot;瑜伽垫&quot;]},&quot;weeks&quot;:[{&quot;week_number&quot;:1,&quot;days&quot;:[{&quot;day_of_week&quot;:1,&quot;sessions&quot;:[{&quot;session_label&quot;:&quot;上肢&quot;,&quot;movements&quot;:[{&quot;name&quot;:&quot;俯卧撑&quot;,&quot;part&quot;:&quot;胸&quot;,&quot;type&quot;:&quot;力量&quot;,&quot;sets&quot;:[]}]}]}]}]}}&#39;
 时间戳版本
-2026-09-16 10:09:32 · 版本 0.1.0
+2026-09-16 10:23:33 · 版本 0.1.0
 异常
 无">复制日志</button></div></div></section><script type="application/json" id="pe-state">{"title":"减脂4周","startDate":"2026-09-07","slots":["凌晨","上午","下午","晚上"],"maxSessionsPerDay":4,"maxMovesPerSession":6,"libSource":"动作库：本次讨论结果里带的动作（1 件）","lib":[{"name":"俯卧撑","part":"胸","type":"力量","equip":"瑜伽垫","kind":"力量","goal":"","sets":4,"reps":8,"mode":"kg","load":0,"minutes":0}],"weeks":[{"locked":false,"days":[{"sessions":[{"slot":"凌晨","timeStart":"","timeEnd":"","moves":[{"name":"俯卧撑","part":"胸","type":"力量","equip":"瑜伽垫","kind":"力量","goal":"","sets":4,"reps":8,"mode":"kg","load":0,"minutes":0}]}]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]},{"sessions":[]}]}],"wakeWord":"定训练计划","openWeek":0}</script><script>
 (function(){
@@ -2036,12 +2036,6 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     if (week > S.weeks.length - 1) week = S.weeks.length - 1;
     render();
   }
-  function slotUse(d, slot, skip){
-    var n = 0, ss = day(d).sessions;
-    for (var i = 0; i < ss.length; i++) if (i !== skip && ss[i].slot === slot) n += 1;
-    return n;
-  }
-
   /* ── 渲染 ── */
   function render(){
     root.innerHTML = (S.weeks.length === 0 ? emptyHtml() : setupHtml() + tabsHtml() + weekHtml()) + pickerHtml();
@@ -2116,15 +2110,16 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     return '<div class="pe-day"><div class="pe-day-main">' + out.join('') + '</div></div>';
   }
 
-  /* 新建时间段先选时段：四个都摆出来，已被占的禁用并标已排；选完才建段，建完定时间、加动作。 */
+  /* 新建时间段先选时段：时段是分类签（tab）不是唯一键，一天里同一时段可建多段（靠起止时间区分）——
+     四个都摆出来，一个不禁用；选完建段，建完定时间、加动作。 */
   function slotPickHtml(d){
-    var out = [], i, used;
+    var out = [], i;
     for (i = 0; i < SLOTS.length; i++){
-      used = slotUse(d, SLOTS[i], -1) > 0;
-      out.push('<button type="button" class="pe-slot" data-act="pick-slot" data-d="' + d + '" data-slot="' + esc(SLOTS[i]) + '"'
-        + (used ? ' disabled' : '') + '>' + esc(SLOTS[i]) + (used ? '已排' : '') + '</button>');
+      out.push('<button type="button" class="pe-slot" data-act="pick-slot" data-d="' + d + '" data-slot="' + esc(SLOTS[i]) + '">'
+        + esc(SLOTS[i]) + '</button>');
     }
     return '<div class="pe-slotpick"><span class="pe-slotpick-t">新建时间段，选一个时段</span>'
+      + '<span class="pe-hint">同一时段可以建多段，靠起止时间区分</span>'
       + '<span class="pe-slot-set">' + out.join('') + '</span>'
       + '<button type="button" class="pe-x" data-act="cancel-slot" data-d="' + d + '" aria-label="不建了">✕</button></div>';
   }
@@ -2305,7 +2300,6 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
       if (lock()) return;
       var wantSlot = el.getAttribute('data-slot');
       if (day(d).sessions.length >= MAXD){ slotPick = null; render(); return; }
-      if (slotUse(d, wantSlot, -1) > 0) return;
       day(d).sessions.push({ slot: wantSlot, timeStart: '', timeEnd: '', moves: [] });
       slotPick = null; render(); return;
     }
@@ -2313,7 +2307,6 @@ calorie-cmd-read calorie.view.plan-wizard --params &#39;{&quot;plan&quot;:{&quot
     if (act === 'del-train'){ day(d).sessions.splice(s, 1); render(); return; }
     if (act === 'set-slot'){
       var want = el.getAttribute('data-slot');
-      if (slotUse(d, want, s) > 0) return;
       day(d).sessions[s].slot = want; render(); return;
     }
     if (act === 'add-move'){ picker = { w: week, d: d, s: s }; query = ''; filterPart = '全部'; render(); return; }

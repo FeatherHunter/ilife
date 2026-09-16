@@ -76,12 +76,6 @@ export const PLAN_EDITOR_JS = `
     if (week > S.weeks.length - 1) week = S.weeks.length - 1;
     render();
   }
-  function slotUse(d, slot, skip){
-    var n = 0, ss = day(d).sessions;
-    for (var i = 0; i < ss.length; i++) if (i !== skip && ss[i].slot === slot) n += 1;
-    return n;
-  }
-
   /* ── 渲染 ── */
   function render(){
     root.innerHTML = (S.weeks.length === 0 ? emptyHtml() : setupHtml() + tabsHtml() + weekHtml()) + pickerHtml();
@@ -156,15 +150,16 @@ export const PLAN_EDITOR_JS = `
     return '<div class="pe-day"><div class="pe-day-main">' + out.join('') + '</div></div>';
   }
 
-  /* 新建时间段先选时段：四个都摆出来，已被占的禁用并标已排；选完才建段，建完定时间、加动作。 */
+  /* 新建时间段先选时段：时段是分类签（tab）不是唯一键，一天里同一时段可建多段（靠起止时间区分）——
+     四个都摆出来，一个不禁用；选完建段，建完定时间、加动作。 */
   function slotPickHtml(d){
-    var out = [], i, used;
+    var out = [], i;
     for (i = 0; i < SLOTS.length; i++){
-      used = slotUse(d, SLOTS[i], -1) > 0;
-      out.push('<button type="button" class="pe-slot" data-act="pick-slot" data-d="' + d + '" data-slot="' + esc(SLOTS[i]) + '"'
-        + (used ? ' disabled' : '') + '>' + esc(SLOTS[i]) + (used ? '已排' : '') + '</button>');
+      out.push('<button type="button" class="pe-slot" data-act="pick-slot" data-d="' + d + '" data-slot="' + esc(SLOTS[i]) + '">'
+        + esc(SLOTS[i]) + '</button>');
     }
     return '<div class="pe-slotpick"><span class="pe-slotpick-t">新建时间段，选一个时段</span>'
+      + '<span class="pe-hint">同一时段可以建多段，靠起止时间区分</span>'
       + '<span class="pe-slot-set">' + out.join('') + '</span>'
       + '<button type="button" class="pe-x" data-act="cancel-slot" data-d="' + d + '" aria-label="不建了">✕</button></div>';
   }
@@ -345,7 +340,6 @@ export const PLAN_EDITOR_JS = `
       if (lock()) return;
       var wantSlot = el.getAttribute('data-slot');
       if (day(d).sessions.length >= MAXD){ slotPick = null; render(); return; }
-      if (slotUse(d, wantSlot, -1) > 0) return;
       day(d).sessions.push({ slot: wantSlot, timeStart: '', timeEnd: '', moves: [] });
       slotPick = null; render(); return;
     }
@@ -353,7 +347,6 @@ export const PLAN_EDITOR_JS = `
     if (act === 'del-train'){ day(d).sessions.splice(s, 1); render(); return; }
     if (act === 'set-slot'){
       var want = el.getAttribute('data-slot');
-      if (slotUse(d, want, s) > 0) return;
       day(d).sessions[s].slot = want; render(); return;
     }
     if (act === 'add-move'){ picker = { w: week, d: d, s: s }; query = ''; filterPart = '全部'; render(); return; }

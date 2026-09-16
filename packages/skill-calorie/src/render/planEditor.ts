@@ -10,7 +10,8 @@
  *
  *   ① 周用 TAB 选 → `EditorState.weeks` 是数组，页签数＝它的长度（加周就多一个）；
  *   ② 每天 4 段、每段选时段 → `EditorDay.sessions`（上限 `maxSessionsPerDay`）＋ `EditorSession.slot`
- *      （取值域 `EditorState.slots`：凌晨／上午／下午／晚上，负责人 2026-09-15 定）；
+ *      （取值域 `EditorState.slots`：凌晨／上午／下午／晚上，负责人 2026-09-15 定；
+ *      时段是分类签不是唯一键，同一时段可建多段，靠 `timeStart/timeEnd` 区分）；
  *   ③ 第 2 周起锁动作 → `EditorWeek.locked`：锁住的周页面不许增删段与动作，**只许改参数**；
  *   ④ 零分隔符 → 本件与运行时里**没有一处**拿 `|`／`-`／`·` 拼文案；日期也输出成「2026年9月7日」。
  *
