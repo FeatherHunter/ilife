@@ -1,12 +1,23 @@
-# #344 ③ · 默认钉 LF。windows-latest 的全局 `core.autocrlf=true` 会把 LF 源文件检成 CRLF，而仓内
-# 多条门是按 `\n` 逐字写的（生成物 == 生成器输出／契约文档块逐字节／SKILL.md 注入块／ci.yml 作业名对表／
-# 生成器 `--check`），一被检成 CRLF 就在 Windows 上恒红——这是「checkout 换行」而不是代码缺陷。
-# 显式属性优先于 `core.autocrlf`，故三个平台检出同一份换行。
-#
-# 注：仓内 62 个历史文件（如 `packages/skill-home/src/help/scenarios.yaml`）本身以 CRLF 进库，
-# `eol=lf` 只是「禁止把 LF 转成 CRLF」，**不做** CRLF→LF 的改写，故它们的检出字节与摘要锁（sha256／字节数）不变。
-* text=auto eol=lf
-
 # 行尾声明（help模板源唯一真相源，CRLF 进库；gen 门 fail-closed 双保险）
-# 例外必须排在上面那条之后（同属性后匹配者胜）：HELP 模板的 `\r\n` 是契约的一部分，测试逐字断言。
 packages/base-render/assets/help-template.html text eol=crlf
+
+# ── #344 ③ · Windows 检出换行（只钉「被门按 \n 逐字比对」的那几件，不铺全仓） ──────────────────
+# 病根：windows-latest 的全局 `core.autocrlf=true` 会把 LF 源文件检成 CRLF，而仓内多条门是按 `\n`
+# 逐字写的——生成物 == 生成器输出、契约文档块逐字节、SKILL.md 注入块、ci.yml 作业名对表、生成器
+# `--check`——一被检成 CRLF 就在 Windows 上恒红（linux／macOS 绿）。这是「检出换行」而非代码缺陷，
+# 故在这里**固定检出换行**：显式属性优先于 `core.autocrlf`，三个平台检出同一份 LF。
+#
+# 为什么只列这几件、不写 `* text=auto eol=lf`：仓内有 70 余件历史文件**以 CRLF 进库**
+# （如 `packages/skill-home/src/help/scenarios.yaml`，它的 sha256＋字节数被
+# `packages/skill-home/test/help-assets.test.mjs` 冻结）。`eol=lf` 只「禁止把 LF 转成 CRLF」，
+# 不改写已有 CRLF，故这些件今天不受影响；但 `text` 会让**下一次 `git add`** 把它们整体清洗成 LF，
+# 那会无声改掉冻结摘要。故一律用精确路径，且每条路径都已核对「命中件全部以 LF 进库」。
+#
+# 维护：**新增按 \n 逐字比对源码/生成物/文档的门时，把被比对的件补进本表**（`git ls-files --eol <路径>`
+# 须为 `i/lf`；若命中件里混着 CRLF 进库的，改用精确文件名，别用通配）。
+/.github/workflows/*.yml                                text eol=lf
+/docs/base-paint-contract.md                            text eol=lf
+/packages/*/SKILL.md                                    text eol=lf
+/packages/*/HELP.md                                     text eol=lf
+/packages/skill-home/src/help/helpAssets.ts             text eol=lf
+/packages/skill-schedule/src/help/scenes/help-assets.ts text eol=lf
