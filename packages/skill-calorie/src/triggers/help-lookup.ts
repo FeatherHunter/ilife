@@ -1,5 +1,6 @@
 /** HELP 唤醒词速查台：wake_word/alias → 命中（公共组件 help_template 注入上游口径）。
  * C2 #43 · 记早餐/记午餐/记晚餐别名同走 calorie.diet.add（SoT 零改动，别名唯一上游为本文件 WAKE_TABLE；buildHelpLookup/searchHelp 双注入）。
+ * #291 乙 · ＋看目标推荐/看目标配置/看目标状态三条目标别名（各走自己的目标读命令；SoT 零改动，别名唯一上游仍为本文件 WAKE_TABLE）。
  * C3 #43 · 去legacy首命中：可执行键（calorie-cmd-read calorie.*）排前，知名高频词合成首条保可执行。
  * #180 · 补偿表清空：375 条命令字段已逐字改写成路由层命令，#180 之前那张 legacy key → 可执行 cli 的
  * 替换表（`HELP_EXEC_OVERRIDES`）不再有存在理由，值已清空；命中行的 `cli` 一律取该唤醒词自己的命令字段
@@ -46,8 +47,11 @@ export function buildHelpLookup(triggers: Trigger[]): Record<string, HelpHit[]> 
     }
   }
   // C2 #43 · WAKE_TABLE 别名注入（SoT 零改动）：记早餐/午餐/晚餐同指 diet.add 可执行命中。
+  // #291 乙 · 三条目标别名各走自己的读命令（scene 06，cli 取本表该行；饮食三行形状逐字不变）。
   for (const e of WAKE_TABLE) {
-    (map[e.phrase] ??= []).push({ wake_word: e.phrase, scene: '02', key: 'diet_add_meal', cli: 'calorie-cmd-read calorie.diet.add', desc: '记一餐（别名同走 calorie.diet.add）' });
+    (map[e.phrase] ??= []).push(e.key === 'calorie.diet.add'
+      ? { wake_word: e.phrase, scene: '02', key: 'diet_add_meal', cli: 'calorie-cmd-read calorie.diet.add', desc: '记一餐（别名同走 calorie.diet.add）' }
+      : { wake_word: e.phrase, scene: '06', key: e.key, cli: e.cli, desc: e.phrase + '（别名同走 ' + e.key + '）' });
   }
   return map;
 }
@@ -56,11 +60,15 @@ export function lookupWake(map: Record<string, HelpHit[]>, word: string): HelpHi
   return map[word] ?? [];
 }
 
-/** C2 #43 · 餐别别名 WAKE_TABLE（SoT 不动：TRIGGERS 原文零改动，别名唯一上游为本表；buildHelpLookup/searchHelp 双注入）。 */
+/** C2 #43 · 餐别别名 WAKE_TABLE（SoT 不动：TRIGGERS 原文零改动，别名唯一上游为本表；buildHelpLookup/searchHelp 双注入）。
+ * #291 乙 · ＋三条目标别名（cli 逐字同路由层 `src/goal/routes.ts:34-35,37`；key 取命令键，命中 scene 由注入点按 key 落 06）。 */
 export const WAKE_TABLE: Array<{ phrase: string; key: string; cli: string }> = [
   { phrase: '记早餐', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add' },
   { phrase: '记午餐', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add' },
   { phrase: '记晚餐', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add' },
+  { phrase: '看目标推荐', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
+  { phrase: '看目标配置', key: 'calorie.view.goal-config', cli: 'calorie-cmd-read calorie.view.goal-config' },
+  { phrase: '看目标状态', key: 'calorie.view.goal-status', cli: 'calorie-cmd-read calorie.view.goal-status' },
 ];
 
 export function routeWakeword(phrase: string): { key: string; cli: string } | null {
@@ -129,9 +137,12 @@ export function searchHelp(triggers: Trigger[], q: string): HelpHit[] {
     };
   });
   // C2 #43 · WAKE_TABLE 别名前置（SoT 零改动）：记早餐/午餐/晚餐一律首命中 diet.add。
+  // #291 乙 · 三条目标别名同样前置，各走自己的读命令（饮食三行形状逐字不变）。
   for (const e of [...WAKE_TABLE].reverse()) {
     if (e.phrase.includes(query) || query.includes(e.phrase)) {
-      hits.unshift({ wake_word: e.phrase, scene: '02', key: 'diet_add_meal', cli: 'calorie-cmd-read calorie.diet.add', desc: '记一餐（别名同走 calorie.diet.add）' });
+      hits.unshift(e.key === 'calorie.diet.add'
+        ? { wake_word: e.phrase, scene: '02', key: 'diet_add_meal', cli: 'calorie-cmd-read calorie.diet.add', desc: '记一餐（别名同走 calorie.diet.add）' }
+        : { wake_word: e.phrase, scene: '06', key: e.key, cli: e.cli, desc: e.phrase + '（别名同走 ' + e.key + '）' });
     }
   }
   hits.sort((a, b) => Number(!isExecCli(a.cli)) - Number(!isExecCli(b.cli)));
