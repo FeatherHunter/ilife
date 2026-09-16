@@ -122,10 +122,11 @@ function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): s
       { label: '脂肪', value: fixed1(it.fat) + ' 克' },
       { label: '碳水', value: fixed1(it.carbohydrates) + ' 克' },
     ];
-    /* #581 · 来源行去间隔号：一行一键值（来源一行、更新于另起一行）。 */
+    /* #581 · 来源行去间隔号：一行一键值（来源一行、更新于另起一行）。
+       #587 C项时间到分：屏上取到分（slice 0,16）；复制载荷机器时间保持秒级（copyLog 仍传完整）。 */
     let source = '<div class="food-src">来源：' + escapeHtml(it.source || UNKNOWN_SOURCE) + '</div>';
     if (withUpdatedAt && it.updated_at) {
-      source += '<div class="food-src">更新于 ' + escapeHtml(it.updated_at) + '</div>';
+      source += '<div class="food-src">更新于 ' + escapeHtml(String(it.updated_at).slice(0, 16)) + '</div>';
     }
     const cat = it.category ? '<div class="food-cat">' + escapeHtml(it.category) + '</div>' : '';
     /* #511 · 品牌没填时原样印一个破折号占位，读者在食品名与四个宏量之间单读到一行「—」，

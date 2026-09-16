@@ -256,9 +256,12 @@ function kcalNote(totalCalorie: number | null): string {
     + ' 千卡）不是同一个数——记录里的热量是各条自己报的值。';
 }
 
-/** 配比页结论句（§五 第 3 行，句内含本页读数）：本窗总摄入 ＋ 天数 ＋ 均衡档位。 */
+/** 配比页结论句（§五 第 3 行，句内含本页读数）：本窗总摄入 ＋ 天数 ＋ 均衡档位。
+ *
+ *  #587 裁定4：7507（按每条记录热量合计）与 6832（按营养素折算合计）两数都保留；
+ *  副题注明“热量合计”（本句括号）、环中心保持“折算合计”，消除“打架”观感。不断言口径（不判哪个对）。 */
 function ratioSummary(v: NutritionRatioView, balance: { text: string }): string {
-  return '这 ' + v.days + ' 天共摄入 ' + v.totalCalorie.toLocaleString() + ' 千卡，三大营养素配比' + balance.text + '。';
+  return '这 ' + v.days + ' 天共摄入 ' + v.totalCalorie.toLocaleString() + ' 千卡（热量合计），三大营养素配比' + balance.text + '。';
 }
 
 /** 营养配比区块的开关（`buildNutritionRatioBlock` 的第二参；`#275` 微修按编排者 2026-09-15 指令加）。

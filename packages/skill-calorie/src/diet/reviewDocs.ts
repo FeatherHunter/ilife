@@ -14,7 +14,10 @@
  * 骨架＝`t425-融合基准.md` §五 第 ④ 类；裁定落点：1 页眉只写人话；2 与 2-补 结论句、来源脚注走普通
  * 小字行、不走深底块；3 导航＋口径行＋来源脚注恒出；4 缺值 `—`、零记录仍出完整页；5 单点不成线、
  * 零值不画图元；7 复制区双按钮、日志第 4 段＝本次命令原文。
- */
+ *
+ * #587 裁定5复盘“本周”窗口先验结论：`review.ts:viewDietReview` 经 `shared/params.ts:defaultRange`
+ * → `analysis/series.ts:resolveWindow`（唯一定义地），“本周”＝本周一..锚点日（自然周，与老技能
+ * `--week current` 同义）；定义无误，保持不修（本件不碰取数口径，只在此备注）。 */
 import {
   renderCaliberLine,
   renderChartBlock,

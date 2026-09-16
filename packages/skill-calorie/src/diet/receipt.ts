@@ -355,7 +355,8 @@ function buildDietReceiptDoc(
       },
     }),
     renderCaliberLine('📊 数据来源：本机饮食库 ｜ 本次影响 ' + receipt.affectedRows + ' 行'
-      + ' ｜ 时间 ' + receipt.meta.actionAt),
+      /* #587 裁定3：屏上取到分（slice 0,16＝YYYY-MM-DD HH:MM）；复制载荷机器时间保持秒级精确（copyLog 仍传完整 actionAt）。 */
+      + ' ｜ 时间 ' + receipt.meta.actionAt.slice(0, 16)),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE, title: receipt.scene + '回执', eyebrow: '',
