@@ -162,9 +162,10 @@ test('#272 整改 ③ 三段恒好 100%：文字三段和＝100、三段条宽�
   assert.equal(r.status, 0, '假样例该出页，实测 exit=' + r.status + ' stderr=' + String(r.stderr).slice(-200));
   const html = readFileSync(out, 'utf8');
   const text = visibleText(stripCopyPayload(html));
-  const expect = '蛋白 24%｜碳水 48%｜脂肪 28%';
+  /* #587：#582 已把营养结构三段并列由 `｜` 改空格（`rankingDocs.ts:141 nutriText`），本断言随文案同改。 */
+  const expect = '蛋白 24% 碳水 48% 脂肪 28%';
   assert.ok(text.includes(expect), '营养结构文字不是三段吃余数那一套：' + expect + ' 读不到');
-  const m = /蛋白 (\d+)%｜碳水 (\d+)%｜脂肪 (\d+)%/.exec(text);
+  const m = /蛋白 (\d+)% 碳水 (\d+)% 脂肪 (\d+)%/.exec(text);
   assert.ok(m !== null, '读不到三段文字百分比');
   const [p, c, f] = [Number(m[1]), Number(m[2]), Number(m[3])];
   assert.equal(p + c + f, 100, '三段文字和不等于 100：' + p + '+' + c + '+' + f + '=' + (p + c + f));
