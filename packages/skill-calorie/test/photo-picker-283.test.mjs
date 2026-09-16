@@ -135,16 +135,21 @@ test('① 候选与快照真跑（缩略图＋日期＋标签＋快照＋prompt�
   const html = readFileSync(out, 'utf8');
   const bytes = assertShape(html);
   assert.ok(bytes > 500, '页面过小，不像含内嵌照片：' + bytes);
-  assert.match(html, /#1/, '候选缺 #1');
-  // #474：候选行只留「#编号 标签 · 短日期 · 相对时间」——文件名只在**候选列表之外**
-  // （快照明细表的「文件」列）出现，故这里只对候选列表那一段判。
-  const candList = /<ol>([\s\S]*?)<\/ol>/.exec(html);
-  assert.ok(candList, '候选列表（<ol>）缺失');
-  assert.match(candList[1], /#1 正面 · 09-04/, '候选行缺「#编号 标签 · 短日期」');
-  assert.match(candList[1], /09-04 · \d+ 天前/, '候选行缺相对时间');
+  assert.match(html, /照片 1/, '候选缺「照片 1」');
+  // #474：候选行只留「编号 标签 短日期 相对时间」——文件名只在**候选列表之外**
+  // （快照那一段的键值行）出现，故这里只对候选列表那一段判。
+  // #527：候选从 `<ol>` 换成等高卡片格（事实一项不少，标记形状换了）。
+  const candList = /<h2 class="phu-sec" id="phu-candidates">([\s\S]*?)<h2 class="phu-sec" id="phu-snapshot">/.exec(html);
+  assert.ok(candList, '候选列表（卡片格）缺失');
+  assert.match(candList[1], /照片 1/, '候选行缺编号');
+  assert.match(candList[1], /ilife-block-chip">正面</, '候选行缺标签');
+  assert.match(candList[1], /ilife-block-chip">09-04</, '候选行缺短日期');
+  assert.match(candList[1], /ilife-block-chip">\d+ 天前</, '候选行缺相对时间');
   assert.doesNotMatch(candList[1], /文件存在/, '#474：正常照片不许逐行喊「文件存在」');
   assert.doesNotMatch(candList[1], /2026-09-04_00\d\.png/, '#474：候选行不再抄文件名');
-  assert.match(html, /<figcaption>快照 #1 2026-09-04/, '快照位应留完整日期（删前核对凭据）');
+  // 快照位仍留完整日期与文件名（删前核对凭据）。
+  assert.match(html, /<figure class="phu-card" data-snapshot="1">[\s\S]*?快照 照片 1[\s\S]*?<span class="phu-fv">2026-09-04 08:00:00<\/span>/,
+    '快照位应留完整日期（删前核对凭据）');
   assert.match(html, /<title>/, '文档标题缺失');
   assert.match(html, /删照候选/, '页名缺失');
   assert.match(html, /calorie\.photo\.remove/, 'prompt 缺删除写命令');
@@ -157,7 +162,10 @@ test('① 候选与快照真跑（缩略图＋日期＋标签＋快照＋prompt�
   assert.doesNotMatch(read, /身材照片域/, '#474：内部词「域」须 0 命中');
   assert.doesNotMatch(read, /删照候选 · \d+ 张/, '#474：H1 里的张数重复须删（页名不许再带张数）');
   assert.doesNotMatch(read, /快照明细（只读，删除走写命令）/, '#474：旧表注须 0 命中');
-  assert.match(read, /本页不删任何东西；要删得你复制下面那段指令/, '#474：表注安全感那句缺失');
+  // #527：安全感那句由「本页不删任何东西；要删得你复制下面那段指令」收成两处各说一次——
+  // 眉标「只看不删」＋副标题「点开一张确认，再复制指令让我删」（同一事实不再复读三遍）。
+  assert.match(read, /只看不删/, '#474：安全感那句须在（本页只看不删）');
+  assert.match(read, /先看候选，点开一张确认，再复制指令让我删/, '#474：须说清删除走你复制的指令');
 });
 
 test('② prompt 照抄即跑（抽出即跑：删与标签各一遍）', async () => {
@@ -215,12 +223,12 @@ test('#474 文件找不到才出声：正常行留空、异常行挂徽标、KPI
   const env = runPickerOk(iso, { id: 1 });
   const html = readFileSync(assertOutputOnDisk(env), 'utf8');
   assertShape(html);
-  const candList = /<ol>([\s\S]*?)<\/ol>/.exec(html);
-  assert.ok(candList, '候选列表（<ol>）缺失');
+  const candList = /<h2 class="phu-sec" id="phu-candidates">([\s\S]*?)<h2 class="phu-sec" id="phu-snapshot">/.exec(html);
+  assert.ok(candList, '候选列表（卡片格）缺失');
   assert.equal((candList[1].match(/找不到文件/g) ?? []).length, 1, '异常那张须逐行出声，且只出一次');
   assert.match(candList[1], /status-badge/, '#474：异常行须挂状态徽标（不是一行纯文字）');
   assert.equal((candList[1].match(/文件存在/g) ?? []).length, 0, '正常那张不许喊「文件存在」');
-  assert.match(html, /找不到（删不掉）/, '#474：快照明细的异常状态须写人话');
+  assert.match(html, /文件不在照片目录里（删不掉）/, '#474：快照的异常状态须写人话');
   assert.doesNotMatch(html, /<td[^>]*>存在<\/td>/, '#474：「存在」这种零信息值须删');
   assert.match(html, />能看<\/div>/, '#474：KPI 须说「能看」几张');
   assert.doesNotMatch(readerText(html), /内嵌/, '#474：「内嵌」这种技术词须 0 命中（指令预览块里的机器内容不算可见面）');
@@ -231,10 +239,11 @@ test('⑤ data.output 绝对路径在盘上＋体积 ≤ 上限', async () => {
   const env = runPickerOk(iso, {});
   const out = assertOutputOnDisk(env);
   const html = readFileSync(out, 'utf8');
-  // #474：没给 id 时两处都说人话——空态指到操作（说个 #号），prompt 占位句同指。
+  // #474：没给 id 时两处都说人话——空态指到操作（说个编号），prompt 占位句同指。
+  //  （#527 把票号式的 `#N` 改成「编号 N」：同一件事，读者不用猜 # 是什么。）
   assert.match(html, /还没说要删哪张/, '无 id 时应明示还没选');
-  assert.match(html, /还没选照片：把候选列表里那个 #号说给我/, '缺项时 prompt 应指到步骤（t400 裁定 2）');
-  assert.match(html, /把上面某个 #号说给我（例如 #19）/, '#474：空态须改人话（说个 #号就放大给你看）');
+  assert.match(html, /还没选照片：把候选列表里某张的编号说给我（例如 19）/, '缺项时 prompt 应指到步骤（t400 裁定 2）');
+  assert.match(html, /把上面某张的编号说给我（例如 19）/, '#474：空态须改人话（说个编号就放大给你看）');
   assert.match(html, /<h1[^>]*>删照候选<\/h1>/, '#474：H1 只留页名');
   assert.match(visibleText(html), /本页显示/, '#474：KPI 须说「本页显示」几张');
   assert.match(visibleText(html), /能看/, '#474：KPI 须说「能看」几张');

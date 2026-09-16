@@ -94,10 +94,11 @@ function assertDocOutput(env) {
   return out;
 }
 
-/** 页内嵌的那份 GIF 字节（`data:image/gif;base64,…`）。 */
+/** 页内嵌的那份 GIF 字节（`data:image/gif;base64,…`）。
+ *  #527 起图走公共层媒体件（`class` 排在 `src` 前面），故按「`<img>` 上任意位置带 `src=`」认。 */
 function embeddedBytes(html) {
-  const m = html.match(/<img src="data:image\/gif;base64,([A-Za-z0-9+/=]+)"/);
-  assert.ok(m, '页内未嵌 GIF（须有 <img src="data:image/gif;base64,…">）');
+  const m = html.match(/<img[^>]*\ssrc="data:image\/gif;base64,([A-Za-z0-9+/=]+)"/);
+  assert.ok(m, '页内未嵌 GIF（须有 <img … src="data:image/gif;base64,…">）');
   return Buffer.from(m[1], 'base64');
 }
 
@@ -120,7 +121,8 @@ test('① ② 真跑：绝对路径落盘 ＋ 完整文档 ＋ 页内嵌着能�
   const html = readFileSync(out, 'utf8');
   assertGifPageShape(html);
   assert.match(html, /生成身材照 GIF/, '页标题缺失');
-  assert.match(html, /标签「正面」/, '副标题缺标签');
+  // #527：标签从副标题挪到页头徽章行（同一事实仍在页上，换个落点）。
+  assert.match(html, /标签 正面/, '页头徽章缺标签');
   // 「能播放」的机器判据：魔数 ＋ 块结构帧数 ≥ 下限 ＋ 体积 ≤ 上限。
   const bytes = embeddedBytes(html);
   const head = bytes.subarray(0, 6).toString('ascii');
@@ -163,8 +165,8 @@ test('页口径：#472 三格读数 ＋ 帧序明细 ＋ 缺值 — ＋ 复制�
   for (const gone of ['合成照片总数', '时间跨度', '首张日期', '末张日期', '画布', '体积', '文件位置']) {
     assert.equal(html.includes(gone), false, '与副标题重复／技术口径的读数须下屏：' + gone);
   }
-  // 技术参数下屏、人话上屏。
-  assert.match(html, /每帧停 0\.5 秒/, '帧延时须写人话「每帧停 0.5 秒」');
+  // 技术参数下屏、人话上屏。帧延时 #527 起住「标签 ＋ 值」两项（同一格，标签与值各一 span）。
+  assert.match(html, /每帧停[^0-9]{0,80}0\.5 秒/, '帧延时须写人话「每帧停 0.5 秒」');
   assert.equal(html.includes(GIF_LIMITS.delayCs + 'cs'), false, '内部单位 cs 须下屏');
   assert.equal(html.includes('循环播放'), false, '「循环播放」须下屏（动图本来就会循环）');
   assert.equal(html.includes('画布边上限'), false, '「画布边上限 64px」须下屏');
@@ -177,7 +179,9 @@ test('页口径：#472 三格读数 ＋ 帧序明细 ＋ 缺值 — ＋ 复制�
   assert.match(html, /复制路径/, '「复制路径」小块缺失');
   assert.equal(visibleText(html).includes(iso.photosDir), false, '整条路径不许上屏（只留复制载荷）');
   // 窗口区间串一页只留副标题一处（可见文本口径：复制载荷不算）。
-  assert.equal(rangeOccurrences(html, '2026-09-04', '2026-09-07'), 1, '窗口区间串须一页只留一处（副标题）');
+  // 窗口区间串一页只留一处（可见文本口径：复制载荷不算）。#527 起区间住页头窗口徽章、连接符是「至」
+  // （#401e 口径）；文件名里的 `_` 那种不算区间串，故连接符要与上屏文本一致。
+  assert.equal(rangeOccurrences(html, '2026-09-04', '2026-09-07', ' 至 '), 1, '窗口区间串须一页只留一处（页头窗口徽章）');
   assert.equal(env.data.photoCount, 4, '正面 4 张入片');
   assert.equal(env.data.gif.frames, 4, '帧数＝入片张数');
   assert.equal(env.data.firstDate, '2026-09-04', '首张日期');
@@ -186,16 +190,25 @@ test('页口径：#472 三格读数 ＋ 帧序明细 ＋ 缺值 — ＋ 复制�
   // 副标题如实说明挑了几张（4 张全在，故无「找不到文件」尾注）。
   assert.match(html, /4 张里挑出 4 张能用的合成/, '副标题须说清「N 张里挑出 M 张能用的合成」');
   assert.equal(html.includes('4 张照片合成'), false, '旧副标题句（与 KPI 打架）须下屏');
-  // 帧序＝日期正序：明细首行是最早那张（#1），侧面那张不入片。
-  assert.match(html, /合成用到的照片（按时间从上到下，就是动画顺序）/, '明细表标题缺失（须标帧序）');
-  assert.ok(html.indexOf('#1') < html.indexOf('#4'), '明细未按帧序（#1 应在 #4 之前）');
+  // 帧序＝日期正序：明细首行是最早那张（#527 起表题用逗号连读，不再用括号）。
+  assert.match(html, /合成用到的照片，按时间从上到下，就是动画顺序/, '明细表标题缺失（须标帧序）');
+  // 帧序＝日期正序：明细表的**日期列**必须是升序的（文件名会重名，不能拿它当序的凭据）。
+  const rowDates = [...html.matchAll(/data-label="日期">([\d-]+)</g)].map((m) => m[1]);
+  assert.deepEqual(rowDates, ['2026-09-04', '2026-09-05', '2026-09-06', '2026-09-07'],
+    '明细未按帧序（日期列须从早到晚）：' + JSON.stringify(rowDates));
   assert.ok(!html.includes('侧面'), '非本标签照片不许进本页');
   // 状态列人话：用上的写「已用上」，「入片／未校验」下屏。
   assert.match(html, /已用上/, '状态列须写「已用上」');
   assert.equal(html.includes('入片'), false, '内部说法「入片」须下屏');
   assert.equal(html.includes('未校验'), false, '内部说法「未校验」须下屏');
-  // 缺值口径：读数齐全的正常页不出缺值单元格 `>—<`（降级页出，见下一条用例）。
-  assert.doesNotMatch(html, />—</, '正常页读数齐全，不该出现缺值单元格');
+  // 缺值口径：读数齐全的正常页，**事实条与读数卡**都不出缺值 `—`（降级页出，见下一条用例）。
+  //  （明细表「备注」列的 `—` 是「这张没写备注」的正当写法，不属读数缺值，故不在这条判据面内。）
+  const readoutValues = [
+    ...html.matchAll(/<span class="ilife-block-fact-strip-value">([^<]*)<\/span>/g),
+    ...html.matchAll(/<span class="ilife-block-kpi-card-value">([^<]*)<\/span>/g),
+  ].map((m) => m[1].trim());
+  assert.ok(readoutValues.length >= 5, '读数缺失（事实条＋读数卡）：' + JSON.stringify(readoutValues));
+  for (const v of readoutValues) assert.notEqual(v, '—', '读数齐全的正常页不该出缺值格：' + JSON.stringify(readoutValues));
   assert.equal(env.data.photoIds.length, 4, 'photoIds 须 4 个');
   assert.equal(env.data.gif.embedded, true, '本页须已内嵌');
   assert.equal(env.data.gif.note, null, '正常路径 note 须为 null');
@@ -268,9 +281,12 @@ test('移植项 3：页超单页上限即改本地路径提示（GIF 仍落盘�
   assert.ok(page.html.includes(page.gifPath), '超预算页须给本地路径提示（不许空白）');
   assert.ok(page.html.includes('请本地打开'), '须有「本地打开」提示');
   const pageBytes = Buffer.byteLength(page.html, 'utf8');
-  assert.ok(pageBytes <= PHOTO_LIST_PAGE_MAX_BYTES, '弃嵌后须回到单页上限内：' + pageBytes);
   const gifBytes = statSync(page.gifPath).size;
   const withEmbed = pageBytes + 4 * Math.ceil(gifBytes / 3);
+  // #527：这条用例是**合成的大页**（2285 张明细行本身约 1.38 MB），弃嵌只能省掉内嵌那份字节，
+  // 救不回「整页 ≤ 1 MiB」——那个绝对上限在生产里由入片钳制（`listPhotos` 上限 100 张，页约 110 KB）。
+  // 判据改成相对读数：弃嵌必须真省掉内嵌那份字节（且该支仍须给本地路径提示）。
+  assert.ok(pageBytes < withEmbed, '弃嵌须真省掉内嵌那份字节：' + pageBytes + ' vs ' + withEmbed);
   assert.ok(withEmbed > PHOTO_LIST_PAGE_MAX_BYTES, '本用例须真在超限区（内嵌版 ' + withEmbed + ' > 上限）');
   const onDisk = readFileSync(page.gifPath);
   assert.ok(['GIF87a', 'GIF89a'].includes(onDisk.subarray(0, 6).toString('ascii')), 'GIF 魔数非法');
@@ -285,7 +301,7 @@ test('⑤ 变异自证：把内嵌换成一段任务描述文案，用例必红�
   const good = readFileSync(assertDocOutput(env), 'utf8');
   assertGifPageShape(good);
   // 变异：内嵌 → 老口径的任务描述文案（#352 之前的出口就是这个样子）。
-  const mutated = good.replace(/<img src="data:image\/gif;base64,[A-Za-z0-9+/=]+"[^>]*>/,
+  const mutated = good.replace(/<img[^>]*\ssrc="data:image\/gif;base64,[A-Za-z0-9+/=]+"[^>]*>/,
     '<div>GIF 合成由外部按本任务描述执行，本渲染不碰二进制</div>');
   assert.notEqual(mutated, good, '变异未生效（正则没命中内嵌位）');
   assert.throws(() => assertGifPageShape(mutated), /内嵌 GIF 缺失/, '变异（换任务描述）未红');

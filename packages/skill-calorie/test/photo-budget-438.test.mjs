@@ -122,10 +122,15 @@ function assertBudgetPageShape(html, opts = {}) {
   assert.ok(b.embedded >= 1 && b.skipped >= 1, '提示块读数须两数非零：' + JSON.stringify(b));
   assert.match(html, /想全看：按标签挑，或者按日期挑一段时间/, '提示块须给替代操作（按标签或日期分批看）');
   // 原因须落在**占位块**上：页面别处也会说「太大」，只做全页匹配会把「占位原因换空话」这种改坏放过。
-  const placeholders = [...html.matchAll(/<div class="phu-shot"><div class="phu-miss">([\s\S]*?)<\/div><\/div>/g)];
+  // #526 起占位走公共层同规格媒体占位件（`renderMediaPlaceholder`）：原因与下一步各占一行，
+  // 原因行自己带标记词与文件名（旧形态是 `phu-miss` 里挂徽标 ＋ `<code>`）。
+  const placeholders = [...html.matchAll(/<div class="phu-shot"><figure class="ilife-block ilife-block-media">([\s\S]*?)<\/figure>/g)];
   assert.ok(placeholders.length > 0, '占位态缺失（未显示的张须走占位并写明原因）');
   for (const f of placeholders) {
-    assert.match(f[1], /(原图太大|找不到文件)[\s\S]*超过一页能装的量/, '占位须写明为什么：' + f[1]);
+    assert.match(f[1], /<div class="ilife-block-media-reason">(原图太大|找不到文件)：[^<]+<\/div>/,
+      '占位须写明为什么与哪一份文件：' + f[1].slice(0, 160));
+    assert.match(f[1], /<div class="ilife-block-media-next">[^<]+<\/div>/,
+      '占位须给下一步（只说名字不算说清）：' + f[1].slice(0, 160));
   }
   const okFigures = (html.match(/class="phu-shot"><img /g) ?? []).length;
   assert.equal(okFigures, b.embedded, '读数卡「本页显示 N 张」与实际内嵌 figure 数不符');
@@ -162,7 +167,7 @@ test('① ② ③ ④ ⑥ 真跑：超预算库 → 页 ≤ 1 MiB＋横幅 N／M
   assert.equal(b.embedded, 1, '1 MiB 预算 + 560KB 单张：应只嵌 1 张，实得 ' + b.embedded);
 
   // ③ 占位原因正确：每张没显示的格位都写着「原图太大 ＋ 为什么」。
-  const placeholderFigures = (html.match(/class="phu-shot"><div class="phu-miss">/g) ?? []);
+  const placeholderFigures = (html.match(/class="phu-shot"><figure class="ilife-block ilife-block-media">/g) ?? []);
   assert.equal(placeholderFigures.length, b.skipped, '占位格位数 ≠ 提示块 M');
   assert.match(html, /共找到 4 张/, '读数卡明细须说本窗共找到几张');
   assert.doesNotMatch(html, /1048576|上限/, '提示块不许再印体积上限这类技术细节');
@@ -184,7 +189,7 @@ test('缺失与预算各归各位：坏图明示找不到文件，正常张仍�
   const env = runList(iso, { tag: '正面' });
   const html = readFileSync(assertOutputOnDisk(env), 'utf8');
   assert.match(html, /2026-09-01_001\.png/, '缺失文件名未明示');
-  assert.match(html, /找不到文件<\/span><code>2026-09-01_001\.png<\/code>/, '缺失原因未明示（须写找不到文件＋文件名）');
+  assert.match(html, /<div class="ilife-block-media-reason">找不到文件：2026-09-01_001\.png<\/div>/, '缺失原因未明示（须写找不到文件＋文件名）');
   assert.match(html, /data:image\//, '正常照片应仍内嵌');
   const bytes = Buffer.byteLength(html, 'utf8');
   assert.ok(bytes <= PHOTO_LIST_PAGE_MAX_BYTES, '缺一张后仍须 ≤ 上限：' + bytes);
@@ -199,8 +204,8 @@ test('#438 整改自查：提示块只按预算跳过计数（缺失不进提示
   const env1 = runList(iso1, { tag: '正面' });
   const html1 = readFileSync(assertOutputOnDisk(env1), 'utf8');
   assertNoBudgetBanner(html1);
-  assert.match(html1, /找不到文件<\/span><code>2026-09-01_001\.png<\/code>/, '缺失态须由占位明示（文件名在）');
-  assert.equal((html1.match(/class="phu-shot"><div class="phu-miss">/g) ?? []).length, 1, '缺失那张须走占位');
+  assert.match(html1, /<div class="ilife-block-media-reason">找不到文件：2026-09-01_001\.png<\/div>/, '缺失态须由占位明示（文件名在）');
+  assert.equal((html1.match(/class="phu-shot"><figure class="ilife-block ilife-block-media">/g) ?? []).length, 1, '缺失那张须走占位');
   assert.equal((html1.match(/class="phu-shot"><img /g) ?? []).length, 3, '3 张正常照应全部内嵌');
   assert.equal(env1.data.items.length, 4, '复制数据仍须是库内 4 行');
   assert.ok(Buffer.byteLength(html1, 'utf8') <= PHOTO_LIST_PAGE_MAX_BYTES, '仅缺失时仍须 ≤ 上限');
@@ -215,10 +220,10 @@ test('#438 整改自查：提示块只按预算跳过计数（缺失不进提示
   const b3 = bannerOf(html3);
   assert.equal(b3.embedded, 1, 'N 须＝真内嵌 figure 数 1：' + JSON.stringify(b3));
   assert.equal(b3.skipped, 2, 'M 须＝预算跳过数 2（缺失那张不计入）：' + JSON.stringify(b3));
-  assert.equal((html3.match(/class="phu-shot"><div class="phu-miss">/g) ?? []).length, 3, '占位格位数须＝跳过＋缺失');
-  assert.equal((html3.match(/原图太大<\/span><code>/g) ?? []).length, b3.skipped, '太大占位数 ≠ 提示块 M');
-  assert.equal((html3.match(/找不到文件<\/span><code>/g) ?? []).length, 1, '找不到文件占位数 ≠ 1');
-  assert.match(html3, /找不到文件<\/span><code>2026-09-01_001\.png<\/code>/, '缺失那一张仍未明示');
+  assert.equal((html3.match(/class="phu-shot"><figure class="ilife-block ilife-block-media">/g) ?? []).length, 3, '占位格位数须＝跳过＋缺失');
+  assert.equal((html3.match(/<div class="ilife-block-media-reason">原图太大：/g) ?? []).length, b3.skipped, '太大占位数 ≠ 提示块 M');
+  assert.equal((html3.match(/<div class="ilife-block-media-reason">找不到文件：/g) ?? []).length, 1, '找不到文件占位数 ≠ 1');
+  assert.match(html3, /<div class="ilife-block-media-reason">找不到文件：2026-09-01_001\.png<\/div>/, '缺失那一张仍未明示');
   assert.equal(env3.data.items.length, 4, '复制数据仍须是库内 4 行');
   assert.equal((html3.match(/<tr/g) ?? []).length, 5, '明细表仍须 4 行＋表头');
   assert.ok(Buffer.byteLength(html3, 'utf8') <= PHOTO_LIST_PAGE_MAX_BYTES, '混合场景仍须 ≤ 上限');
@@ -242,7 +247,8 @@ test('⑤ 变异自证：改坏必红、改回必绿（两行机器读数）', a
     assert.match(redLine, /提示块句缺失/, '变异一红的理由不对：' + redLine);
   }
   // 变异二：把占位原因换成空话（没显示但不说为什么）→ 必红（只关体积那条，专打原因）。
-  const vague = good.replace(/超过一页能装的量，没进这一页/g, '这一张没显示');
+  const vague = good.replace(/<div class="ilife-block-media-reason">原图太大：[^<]*<\/div>/g,
+    '<div class="ilife-block-media-reason">这一张没显示</div>');
   assert.notEqual(vague, good, '变异二未生效（占位原因没换掉）');
   try {
     assertBudgetPageShape(vague, { budget: false });

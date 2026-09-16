@@ -247,15 +247,16 @@ test('改照片标签：三态对照（保留／新增／移除）＋变更徽�
   assert.match(text, /改前/, '对照词缺失（改照片标签即改前）');
   assert.match(text, /改后/, '对照词缺失（改照片标签即改后）');
   assert.match(text, /变更回执/, 'op 徽章缺失（update 即变更回执）');
-  assert.match(text, /标签已改好（照片 #1）/, '干完了的人话句缺失');
-  assert.match(text, /照片标签已更新/, '状态卡说明缺失（标签页＝照片标签已更新）');
-  assert.match(text, /照片记录 · 改了标签/, '来源行未换人话（去库表名）');
+  assert.match(text, /改后：正面、侧面（照片编号 1）/, '干完了的人话句缺失');
+  // #528b：状态卡整块撤掉（结果只由上面那一句说），旧说明句须 0 命中。
+  assert.equal(countOf(text, '照片标签已更新'), 0, '#528b：状态卡已撤，旧说明句须 0 命中');
+  assert.equal(countOf(text, '照片记录'), 0, '#528b：来源行已撤（库表名与来源词都不再上屏）');
   // 三态：两列看不出增删，逐标签一行才看得出。
   assert.match(text, /保留/, '三态缺「保留」');
-  assert.match(text, /\+ 侧面/, '三态缺「+ 侧面」（新增）');
-  assert.match(text, /− 晨起/, '三态缺「− 晨起」（移除）');
-  assert.equal(countOf(text, '照片 #1 标签已改为'), 1, '副标题应与回执摘要同源');
-  assert.equal(countOf(text, '对照'), 0, '空列头「对照／标签」未删');
+  assert.match(text, /新增[^]{0,8}侧面/, '三态缺「新增 侧面」');
+  assert.match(text, /移除[^]{0,8}晨起/, '三态缺「移除 晨起」');
+  assert.equal(countOf(text, '改后：正面、侧面'), 1, '结果句一页只留一处（页头不再复述摘要）');
+  assert.equal(countOf(text, '标签对照'), 1, '表题须是「标签对照」一处（旧的空列头「对照／标签」不再上屏）');
 });
 
 test('加照片标签：加前加后对照＋新增态', () => {
@@ -268,7 +269,7 @@ test('加照片标签：加前加后对照＋新增态', () => {
   assertDocTrio(html);
   assert.match(text, /加前/, '对照词缺失（加照片标签即加前）');
   assert.match(text, /加后/, '对照词缺失（加照片标签即加后）');
-  assert.match(text, /\+ 晨起/, '新增态缺失（+ 晨起）');
+  assert.match(text, /新增[^]{0,8}晨起/, '新增态缺失（新增 晨起）');
 });
 
 test('删照片标签：删除前删除后对照＋移除态', () => {
@@ -281,7 +282,7 @@ test('删照片标签：删除前删除后对照＋移除态', () => {
   assertDocTrio(html);
   assert.match(text, /删除前/, '对照词缺失（删照片标签即删除前）');
   assert.match(text, /删除后/, '对照词缺失（删照片标签即删除后）');
-  assert.match(text, /− 晨起/, '移除态缺失（− 晨起）');
+  assert.match(text, /移除[^]{0,8}晨起/, '移除态缺失（移除 晨起）');
 });
 
 test('无变化降级：走提示块（不出「已改好」那句，自相矛盾即红）', () => {
@@ -296,7 +297,7 @@ test('无变化降级：走提示块（不出「已改好」那句，自相矛�
   assert.match(text, /这次没有改动任何东西/, '无变化提示块正文缺失');
   assert.match(text, /标签还是：正面/, '无变化提示块未写清现状');
   assert.equal(countOf(text, '标签已改好'), 0, '无变化却印了「标签已改好」（自相矛盾）');
-  assert.match(text, /无改动/, '状态卡未说「无改动」');
+  assert.equal(countOf(text, '已改动'), 0, '无变化页仍印「已改动」（状态词自相矛盾）');
 });
 
 test('空标签印「无标签」字样（对照空数组即无标签）', () => {

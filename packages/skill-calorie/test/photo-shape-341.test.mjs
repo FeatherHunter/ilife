@@ -145,8 +145,8 @@ test('缺照片时明示哪张', async () => {
   const html = readFileSync(out, 'utf8');
   // #526：没显示的那张在**自己的格位**上写明「哪一份文件 ＋ 为什么」（原来那行 `#id · 文件名 · 徽标`
   // 清单与网格是同一件事说两遍，本票并入网格——信息一条不少：文件名在、原因在、徽标在）。
-  assert.match(html, /<div class="phu-shot"><div class="phu-miss">[\s\S]*?找不到文件<\/span><code>2026-09-04_001\.png<\/code>/,
-    '缺文件那张的格位须明示徽标与文件名');
+  assert.match(html, /<div class="phu-shot"><figure class="ilife-block ilife-block-media">[\s\S]*?<div class="ilife-block-media-reason">找不到文件：2026-09-04_001\.png<\/div>/,
+    '缺文件那张的格位须明示哪一份文件（原因行带标记词与文件名）');
   assert.match(html, /照片记录还在，文件不在照片目录里/, '缺文件那张须写清为什么');
   assert.doesNotMatch(html, /缺失照片/, '重复计数句须下屏（张数已由读数卡说）');
   // 收口：这一格已并入页头的「缺什么」块（读数卡只留「本页显示／最近一张」）——判据不松：

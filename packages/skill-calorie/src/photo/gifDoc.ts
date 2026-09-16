@@ -46,7 +46,7 @@ import { dataCopyArea, notice } from '../shared/copyArea.js';
 import { CALORIE_COPY_ACTION, copyActionHtml } from '../render/copy.js';
 import { GIF_LIMITS, countGifFrames, synthesizeGifFromPhotos } from './gif.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
-import { chipRow, noteSegments, photoUiCss } from './photoUi.js';
+import { chipRow, photoUiCss } from './photoUi.js';
 import type { GifTask, PhotoCard } from './photo.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
@@ -201,7 +201,10 @@ function detailRows(cards: readonly PhotoCard[], s: Synth): Array<Record<string,
     date: c.date,
     time: c.time ?? DASH,
     tag: c.tagList.join(' '),
-    note: c.note === null || c.note === '' ? DASH : noteSegments(c.note),
+    // 备注走**纯文本**：明细表单元格转义后再上屏，喂 `noteSegments()` 那种标记串会被转义两次，
+    // 用户看到的是字面 `<span class="phu-seg">…</span>`（#527 收口实测）。分段那种形状归回执页
+    // （那边是 div 槽，能落标记），这一格只把用户写的备注原样说出来。
+    note: c.note === null || c.note === '' ? DASH : c.note,
     file: c.photoPath,
     // #472 人话：用上的写「已用上」，文件名找不到写「找不到文件」；`fileExists === null`
     // （没配照片目录，压根没核过）单独一档——把它写成「找不到文件」是把没核过的说成没有。
@@ -281,7 +284,7 @@ function contentOf(cards: readonly PhotoCard[], s: Synth, embed: boolean, data: 
     {
       label: '尺寸',
       value: s.width === null || s.height === null ? DASH : s.width + '×' + s.height,
-      ...(s.bytes === null ? {} : { detail: '文件大小 ' + Math.round(s.bytes / 1024) + ' KB' }),
+      ...(s.bytes === null ? {} : { detail: '文件大小 ' + (s.bytes / 1024).toFixed(1) + ' KB' }),
     },
     {
       label: '文件', value: data.gif.fileName ?? DASH,

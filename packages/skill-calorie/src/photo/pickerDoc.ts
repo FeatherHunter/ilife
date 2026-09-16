@@ -88,7 +88,8 @@ function candidateGridHtml(cands: PhotoCard[], photosDir: string | null, today: 
     return '<figure class="phu-card" data-id="' + p.id + '">' + stage
       + '<figcaption class="phu-cap"><div class="phu-cap-no">照片 ' + p.id + bad + '</div>'
       + chipRow([...tags, shortDate(p.date), rel])
-      + '<div class="phu-file"><code>' + escapeHtml(key) + '</code></div>'
+      // #474 口径保留：候选卡不抄文件名（编号／标签／日期／缩略图已够认人）——文件名的落点
+      // 是快照那一段的键值行；这一张看不见图时，文件名由上面占位件的原因行点名。
       + '</figcaption></figure>';
   });
   return '<h2 class="phu-sec" id="phu-candidates">候选照片</h2><div class="phu-grid">' + cards.join('') + '</div>';
