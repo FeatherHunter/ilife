@@ -17,7 +17,7 @@
  * 查询缺参就是缺参，阻断即错误回执，页面只在真取到数（哪怕是零行）时出。
  */
 import {
-  DB_FILENAME, BillFetchError, fetchAll, getById, listByTag, listToday, searchKeyword,
+  DB_FILENAME, BillFetchError, fetchAll, getById, listByTag, listToday, searchKeyword, tagMatch,
 } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
@@ -213,6 +213,24 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
   throw new BillPolicyError('POLICY_BAD_INPUT', '缺槽位 start/end（或 range=week/month，或 category/account/ledger 条件）');
 }
 
+/** #414 · 查欠款行判（**唯一判地**）：借贷分类或带 `#未还` 精确，且未带 `#已还` 精确。
+ *  已还排除的理由：收回／偿还后原记录分类仍是 `借贷/*`（换的只是 tag），不排除就把还清的也算成还欠着。 */
+function isDebtRow(r: BillRow): boolean {
+  return (r.category.startsWith('借贷/') || tagMatch(r.note, '未还')) && !tagMatch(r.note, '已还');
+}
+
+/** #414 · 查待报销行判（**唯一判地**）：带 `#待报销` 精确，且未带 `#已报销` 精确。
+ *  到账后消 `#待报销` 补 `#已报销`（写侧 `scene-reimburse-done.ts`），残留双标也不算等着报销。 */
+function isReimburseRow(r: BillRow): boolean {
+  return tagMatch(r.note, '待报销') && !tagMatch(r.note, '已报销');
+}
+
+/** #414 · 查分期行判（**唯一判地**）：分期分类或带 `#分期`／`#分期中` 精确。
+ *  票面写“分期中”口径，代码旧口径只有 `#分期` 子串；写侧记分期不落 `#tag`（分类是主口径），两串并存。 */
+function isInstallmentRow(r: BillRow): boolean {
+  return r.category.startsWith('分期/') || tagMatch(r.note, '分期') || tagMatch(r.note, '分期中');
+}
+
 /** `bill.record.search`：搜备注（`q` 必给）／查标签（`kind:"tag"` ＋ `tag` 必给，精确匹配）／
  *  查欠款（`kind:"debt"`）／查待报销（`kind:"reimburse"`）／查分期（`kind:"installment"`）。
  *  空查询不返全量：既没 `q` 也没 `kind` → exit 2。 */
@@ -224,34 +242,36 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
   let window: string;
   let label: string;
   if (kind === 'tag') {
-    const tag = params.tag;
-    if (typeof tag !== 'string' || !tag.trim()) {
+    const rawTag = params.tag;
+    if (typeof rawTag !== 'string' || !rawTag.trim()) {
       throw new BillPolicyError('POLICY_BAD_INPUT', '查标签须给 tag');
     }
+    const tag = rawTag.trim();
     records = listByTag(db, tag);
     label = 'tag:' + tag;
     wakeWord = '查标签';
     window = '标签 ' + tag + '（精确匹配）';
   } else if (kind === 'debt') {
-    records = fetchAll(db).filter((r) => r.category.startsWith('借贷/') || r.note.includes('#未还'));
+    records = fetchAll(db).filter(isDebtRow);
     label = 'debt';
     wakeWord = '查欠款';
     window = '还欠着的那些账';
   } else if (kind === 'reimburse') {
-    records = fetchAll(db).filter((r) => r.note.includes('#待报销'));
+    records = fetchAll(db).filter(isReimburseRow);
     label = 'reimburse';
     wakeWord = '查待报销';
     window = '等着报销的那些账';
   } else if (kind === 'installment') {
-    records = fetchAll(db).filter((r) => r.category.startsWith('分期/') || r.note.includes('#分期'));
+    records = fetchAll(db).filter(isInstallmentRow);
     label = 'installment';
     wakeWord = '查分期';
     window = '分期还款的那些账';
   } else {
-    const q = params.q;
-    if (typeof q !== 'string' || !q.trim()) {
+    const rawQ = params.q;
+    if (typeof rawQ !== 'string' || !rawQ.trim()) {
       throw new BillPolicyError('POLICY_BAD_INPUT', '搜备注须给 q');
     }
+    const q = rawQ.trim();
     records = searchKeyword(db, q);
     label = 'search:' + q;
     wakeWord = '搜备注';
