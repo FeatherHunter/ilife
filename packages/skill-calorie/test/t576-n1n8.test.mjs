@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { buildExerciseDoc } from '../dist/render/sportDocs.js';
+import { buildExerciseDoc, buildExerciseGoalDoc } from '../dist/render/sportDocs.js';
 import { buildCardioDoc, buildDistributionDoc, buildStrengthDoc, buildTrendDoc } from '../dist/render/sportPortDocs.js';
 import { buildRecordsDoc } from '../dist/exercise/records.js';
 import { openDb } from '../dist/index.js';
@@ -90,6 +90,14 @@ function distributionView(over = {}) {
     ...over,
   };
 }
+/** 目标两页（23 看今日运动 vs 目标／24 看本周运动 vs 目标）的入参：`buildExerciseGoalDoc` 直接吃这个视图。 */
+function goalView(over = {}) {
+  return {
+    start: '2026-09-15', end: '2026-09-15', days: 1, dailyGoal: 500,
+    goalTotal: 500, actual: 320, pct: 64, gap: -180, achieved: false,
+    ...over,
+  };
+}
 function trendView(over = {}) {
   return {
     start: '2026-09-14', end: '2026-09-15',
@@ -108,13 +116,25 @@ test('t576-N1 读数卡与分布块有可见h2（核心数字／类型消耗分�
   const sum = buildExerciseDoc(summaryView());
   assert.ok(cardOf(sum, 'sec-kpi').includes('<h2') && cardOf(sum, 'sec-kpi').includes('核心数字'), '汇总读数卡缺h2核心数字');
   assert.ok(cardOf(sum, 'sec-dist').includes('<h2') && cardOf(sum, 'sec-dist').includes('类型消耗分布'), '汇总分布块缺h2类型消耗分布');
+  /* #602 补：目标两页（23／24）的读数卡块原先只有裸 KPI 卡格、块内无可见标题——判据单源（t268 §2.6 N1）
+   * 的页枚举漏了这两页，判据件也没盖它们，于是「8/8 全绿」与「两页无题」并存。现把目标两页补进本判据：
+   * 断言①块内有 h2、②题词与页内导航同源（都取 `card()` 的 label），改坏任一处必红。 */
+  for (const [what, v] of [
+    ['今日(23)', goalView()],
+    ['本周(24)', goalView({ start: '2026-09-09', end: '2026-09-15', days: 7, goalTotal: 3500, actual: 2200, pct: 62.9, gap: -1300 })],
+  ]) {
+    const goal = buildExerciseGoalDoc(v);
+    const fig = cardOf(goal, 'sec-figures');
+    assert.ok(/<h2[^>]*>数值对照<\/h2>/.test(fig), `目标页${what}读数卡缺h2数值对照：` + fig.slice(0, 160));
+    assert.equal(new Map(navTexts(goal)).get('sec-figures'), '数值对照', `目标页${what}读数卡题与页内导航不同源`);
+  }
   const dist = buildDistributionDoc(distributionView());
   assert.ok(cardOf(dist, 'sec-figures').includes('<h2>核心数字</h2>'), '分布页读数卡缺h2核心数字');
   assert.ok(cardOf(dist, 'sec-ratio').includes('<h2>分类占比</h2>'), '分布页分布块缺h2分类占比');
   assert.ok(cardOf(buildStrengthDoc(strengthView()), 'sec-figures').includes('<h2>核心数字</h2>'), '力量页缺h2核心数字');
   assert.ok(cardOf(buildCardioDoc(cardioView()), 'sec-figures').includes('<h2>核心数字</h2>'), '有氧页缺h2核心数字');
   assert.ok(cardOf(buildTrendDoc(trendView()), 'sec-figures').includes('<h2>核心数字</h2>'), '趋势页缺h2核心数字');
-  console.log('T576-N1 h2=7/7');
+  console.log('T576-N1 h2=9/9（含#602目标两页2/2）');
 });
 
 test('t576-N2 跨年轴印全年（09-16对09-15不再同形）', () => {
