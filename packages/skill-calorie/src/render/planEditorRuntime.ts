@@ -356,7 +356,7 @@ export const PLAN_EDITOR_JS = `
       slotPick = null; render(); return;
     }
     if (act === 'cancel-slot'){ slotPick = null; render(); return; }
-    if (act === 'del-train'){ day(d).sessions.splice(s, 1); render(); return; }
+    if (act === 'del-train'){ if (lock()) return; day(d).sessions.splice(s, 1); render(); return; }
     if (act === 'set-slot'){
       if (lock()) return;
       var want = el.getAttribute('data-slot');
@@ -372,6 +372,7 @@ export const PLAN_EDITOR_JS = `
     if (act === 'filter-clear'){ filt = { part: null, kind: null, equip: null }; render(); return; }
     if (act === 'pick'){
       if (!picker) return;
+      if (lock()) return;
       var name = el.getAttribute('data-name'), hit = null, i;
       for (i = 0; i < LIB.length; i++) if (LIB[i].name === name) hit = LIB[i];
       if (!hit) return;
@@ -381,7 +382,7 @@ export const PLAN_EDITOR_JS = `
         sets: 4, reps: 8, mode: 'kg', load: 0, minutes: hit.kind === '有氧' ? 30 : 0 });
       picker = null; render(); return;
     }
-    if (act === 'del-move'){ day(d).sessions[s].moves.splice(m, 1); render(); return; }
+    if (act === 'del-move'){ if (lock()) return; day(d).sessions[s].moves.splice(m, 1); render(); return; }
     if (act === 'toggle-mode'){
       var mv = day(d).sessions[s].moves[m];
       mv.mode = mv.mode === 'rm' ? 'kg' : 'rm'; render(); return;
