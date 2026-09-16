@@ -42,9 +42,12 @@ export interface EditorMove {
   readonly minutes: number;
 }
 
-/** 一次训练（＝库里的一行）：一个时段 ＋ 这节课的动作。 */
+/** 一次训练（＝库里的一行）：一个时段 ＋ 起止时间 ＋ 这节课的动作。
+ *  时间对应库 `time_start/time_end`（`HH:MM`），空串＝没定（页面上就是没填的两格）。 */
 export interface EditorSession {
   readonly slot: string;
+  readonly timeStart: string;
+  readonly timeEnd: string;
   readonly moves: readonly EditorMove[];
 }
 

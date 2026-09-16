@@ -113,10 +113,15 @@ function moveOf(raw: unknown): EditorMove | null {
   };
 }
 
+/** 起止时间：库里 `time_start/time_end`（`HH:MM`），脏值按没定处理（页面上就是没填的两格）。 */
+function timeOf(v: unknown): string {
+  return typeof v === 'string' && /^\d{2}:\d{2}$/.test(v) ? v : '';
+}
+
 /** 一次训练（＝库里的一行）：最多 4 段；`is_rest_day` 的那条不进编辑器（页面上「没排训练的那天」就是休息日）。 */
-function sessionsOf(value: unknown): { slot: string; moves: EditorMove[] }[] {
+function sessionsOf(value: unknown): { slot: string; timeStart: string; timeEnd: string; moves: EditorMove[] }[] {
   const used: string[] = [];
-  const out: { slot: string; moves: EditorMove[] }[] = [];
+  const out: { slot: string; timeStart: string; timeEnd: string; moves: EditorMove[] }[] = [];
   for (const item of rowsOf(value)) {
     if (out.length >= MAX_SESSIONS_PER_DAY) break;
     if (!isRecord(item)) continue;
@@ -128,7 +133,7 @@ function sessionsOf(value: unknown): { slot: string; moves: EditorMove[] }[] {
       const one = moveOf(m);
       if (one !== null) moves.push(one);
     }
-    out.push({ slot, moves });
+    out.push({ slot, timeStart: timeOf(item['time_start']), timeEnd: timeOf(item['time_end']), moves });
   }
   return out;
 }

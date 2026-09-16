@@ -1,7 +1,7 @@
 /** T351-v14 · **计划编辑器页面运行时**（唯一产出者；形状见 `./planEditor.ts` 件头）。
  *
- * 这一段是整台编辑器的行为：周页签、每天最多 4 次训练（每次选一个时段）、
- * 第 2 周起锁动作只改参数、按当前状态重写复制指令与产物表。
+ * 这一段是整台编辑器的行为：周页签、每天最多 4 个时间段（点加一次训练先选时段，
+ * 建好后定起止时间）、第 2 周起锁动作只改参数、段内加动作、按当前状态重写复制指令与产物表。
  *
  * 三条硬要求（都会被下一个人问到）：
  *   ① **无模板字符串、无箭头函数**——这段文本要逐字进页面；整段住在一个 TS 模板字符串里，
@@ -24,6 +24,7 @@ export const PLAN_EDITOR_JS = `
   var week = S.openWeek || 0;
   var daySel = 0;   // 日页签：一次只显示这一天
   var picker = S.openPicker || null;
+  var slotPick = null;   // 新建时间段选时段：null＝没在选，否则＝正在选的那天（0基）
   var filterPart = '全部';
   var query = '';
 
@@ -93,8 +94,8 @@ export const PLAN_EDITOR_JS = `
     return '<div class="pe-empty">'
       + '<div class="pe-empty-ico"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M12 14v4M10 16h4"/></svg></div>'
       + '<p class="pe-empty-t">还没有训练计划</p>'
-      + '<p class="pe-empty-d">先排第 1 周。它就是母版，后面的周都照它走，各周只改重量与次数这类参数。'
-      + '每天可以排 4 次训练，每次挑一个时段。</p>'
+      + '<p class="pe-empty-d">先排第 1 周。它就是母版，后面的周都照它走，各周只改时间、重量与次数这类参数。'
+      + '每天可以排 4 个时间段，新建时挑时段，建好后定时间、加动作。</p>'
       + '<button type="button" class="pe-cta" data-act="start">定一份计划</button>'
       + '</div>';
   }
@@ -149,9 +150,23 @@ export const PLAN_EDITOR_JS = `
     for (i = 0; i < ss.length; i++) out.push(sessionHtml(d, i));
     var full = ss.length >= MAXD;
     out.push('<button type="button" class="pe-add" data-act="add-train" data-d="' + d + '"' + (full || lock() ? ' disabled' : '') + '>'
-      + (lock() ? '训练安排由第 1 周决定，这里只改参数' : (full ? '这天已排满 ' + MAXD + ' 次训练' : '加一次训练')) + '</button>');
-    if (ss.length === 0 && !lock()) out.push('<p class="pe-hint">这天还没排。点「加一次训练」，再挑时段。</p>');
+      + (lock() ? '训练安排由第 1 周决定，这里只改参数' : (full ? '这天已排满 ' + MAXD + ' 个时间段' : '加一次训练')) + '</button>');
+    if (slotPick === d && !full && !lock()) out.push(slotPickHtml(d));
+    if (ss.length === 0 && !lock()) out.push('<p class="pe-hint">这天还没排。点「加一次训练」，先挑时段，再定时间、加动作。</p>');
     return '<div class="pe-day"><div class="pe-day-main">' + out.join('') + '</div></div>';
+  }
+
+  /* 新建时间段先选时段：四个都摆出来，已被占的禁用并标已排；选完才建段，建完定时间、加动作。 */
+  function slotPickHtml(d){
+    var out = [], i, used;
+    for (i = 0; i < SLOTS.length; i++){
+      used = slotUse(d, SLOTS[i], -1) > 0;
+      out.push('<button type="button" class="pe-slot" data-act="pick-slot" data-d="' + d + '" data-slot="' + esc(SLOTS[i]) + '"'
+        + (used ? ' disabled' : '') + '>' + esc(SLOTS[i]) + (used ? '已排' : '') + '</button>');
+    }
+    return '<div class="pe-slotpick"><span class="pe-slotpick-t">新建时间段，选一个时段</span>'
+      + '<span class="pe-slot-set">' + out.join('') + '</span>'
+      + '<button type="button" class="pe-x" data-act="cancel-slot" data-d="' + d + '" aria-label="不建了">✕</button></div>';
   }
 
   function sessionHtml(d, s){
@@ -167,9 +182,17 @@ export const PLAN_EDITOR_JS = `
       + (lock() || se.moves.length >= MAXM ? ' disabled' : '') + '>'
       + (lock() ? '加动作' : (se.moves.length >= MAXM ? '这一节已满 ' + MAXM + ' 个动作' : '加动作')) + '</button>';
     var del = lock() ? '' : '<button type="button" class="pe-x" data-act="del-train" data-d="' + d + '" data-s="' + s + '" aria-label="删掉这次训练">✕</button>';
+    /* 起止时间两格：它是参数不是结构，锁住的周照样可填（与组数／次数／时长同一口径）；
+       故这里**不跟 disabled**，也没有 data-m（探针只数动作行里的格，见门探针 inputs 注释）。 */
+    var time = '<span class="pe-time"><input type="time" value="' + esc(se.timeStart || '') + '"'
+      + ' data-act="set-tstart" data-d="' + d + '" data-s="' + s + '" aria-label="开始时间">'
+      + '<span class="pe-time-to">到</span>'
+      + '<input type="time" value="' + esc(se.timeEnd || '') + '"'
+      + ' data-act="set-tend" data-d="' + d + '" data-s="' + s + '" aria-label="结束时间"></span>';
     return '<div class="pe-sess' + (lock() ? ' is-locked' : '') + '">'
       + '<div class="pe-sess-head">'
       +   '<span class="pe-slot-set">' + chips.join('') + '</span>'
+      +   time
       +   del
       + '</div>'
       + (moves.length > 0 ? '<ul class="pe-moves">' + moves.join('') + '</ul>' : '<p class="pe-hint">这一节还没有动作。</p>')
@@ -237,6 +260,14 @@ export const PLAN_EDITOR_JS = `
   }
 
   /* ── 产物：一张规范表 ＋ 一段缩进文本（**不用分隔符**，并列靠换行与缩进） ── */
+  /* 时间上屏：起止都有就连起来，只一边就有哪边说哪边，两边都没有就直说没定（不留空让人猜）。 */
+  function timeText(a, b){
+    a = a || ''; b = b || '';
+    if (a === '' && b === '') return '没定时间';
+    if (a !== '' && b !== '') return a + '到' + b;
+    if (a !== '') return a + '起';
+    return '到' + b;
+  }
   function planRows(){
     var out = [], w, d, s, i, j;
     for (w = 0; w < S.weeks.length; w++){
@@ -246,7 +277,8 @@ export const PLAN_EDITOR_JS = `
           for (i = 0; i < se.moves.length; i++){
             var mv = se.moves[i];
             out.push({
-              week: w + 1, dow: DOW[d], slot: se.slot, name: mv.name, part: mv.part, type: mv.type,
+              week: w + 1, dow: DOW[d], slot: se.slot, time: timeText(se.timeStart, se.timeEnd),
+              name: mv.name, part: mv.part, type: mv.type,
               amount: mv.kind === '有氧' ? (mv.minutes + ' 分钟')
                 : (mv.sets + ' 组乘 ' + mv.reps + ' 次'),
               load: mv.kind === '有氧' ? '' : (mv.mode === 'rm' ? (mv.load + ' RM') : (mv.load ? (mv.load + ' kg') : '自重')),
@@ -269,7 +301,7 @@ export const PLAN_EDITOR_JS = `
       var r = rows[i];
       if (r.week !== curWeek){ lines.push('第 ' + r.week + ' 周'); curWeek = r.week; curDay = ''; }
       if (r.dow !== curDay){ lines.push('  ' + r.dow); curDay = r.dow; }
-      lines.push('    ' + r.slot + '　' + r.name + '　' + r.part + '　' + r.type + '　' + r.amount + (r.load ? ('　' + r.load) : ''));
+      lines.push('    ' + r.slot + (r.time === '没定时间' ? '' : (' ' + r.time)) + '　' + r.name + '　' + r.part + '　' + r.type + '　' + r.amount + (r.load ? ('　' + r.load) : ''));
     }
     lines.push('');
     lines.push('请按这份表落库，完成后给我回执 HTML。');
@@ -284,11 +316,12 @@ export const PLAN_EDITOR_JS = `
     for (i = 0; i < rows.length; i++){
       var r = rows[i];
       tr.push('<tr><td>第 ' + r.week + ' 周</td><td>' + esc(r.dow) + '</td><td>' + esc(r.slot) + '</td><td>' + esc(r.name)
-        + '</td><td>' + esc(r.part) + '</td><td>' + esc(r.type) + '</td><td>' + esc(r.amount) + '</td><td>' + esc(r.load) + '</td></tr>');
+        + '</td><td>' + esc(r.part) + '</td><td>' + esc(r.type) + '</td><td>' + esc(r.amount) + '</td><td>' + esc(r.load)
+        + '</td><td>' + esc(r.time) + '</td></tr>');
     }
     out.innerHTML = '<table class="ilife-block-data-table"><caption class="ilife-block-data-table-caption">计划明细（' + rows.length + ' 行）</caption>'
-      + '<thead><tr><th>周次</th><th>星期</th><th>时段</th><th>动作</th><th>部位</th><th>类型</th><th>量</th><th>负重</th></tr></thead>'
-      + '<tbody>' + (tr.length ? tr.join('') : '<tr><td colspan="8">还没有排动作</td></tr>') + '</tbody></table>';
+      + '<thead><tr><th>周次</th><th>星期</th><th>时段</th><th>动作</th><th>部位</th><th>类型</th><th>量</th><th>负重</th><th>时间</th></tr></thead>'
+      + '<tbody>' + (tr.length ? tr.join('') : '<tr><td colspan="9">还没有排动作</td></tr>') + '</tbody></table>';
   }
 
   /* ── 事件：一处委派，零内联处理器 ── */
@@ -300,15 +333,23 @@ export const PLAN_EDITOR_JS = `
     if (act === 'start'){ S.weeks = [ { locked: false, days: blankDays() } ]; setWeeks(4); return; }
     if (act === 'wk-plus'){ setWeeks(S.weeks.length + 1); return; }
     if (act === 'wk-minus'){ setWeeks(S.weeks.length - 1); return; }
-    if (act === 'go-week'){ week = w; picker = null; render(); return; }
-    if (act === 'go-day'){ daySel = d; picker = null; render(); return; }
+    if (act === 'go-week'){ week = w; picker = null; slotPick = null; render(); return; }
+    if (act === 'go-day'){ daySel = d; picker = null; slotPick = null; render(); return; }
     if (act === 'add-train'){
+      if (lock()) return;
       if (day(d).sessions.length >= MAXD) return;
-      var slot = SLOTS[0], k;
-      for (k = 0; k < SLOTS.length; k++) if (slotUse(d, SLOTS[k], -1) === 0){ slot = SLOTS[k]; break; }
-      day(d).sessions.push({ slot: slot, moves: [] });
-      render(); return;
+      slotPick = d; render(); return;
     }
+    /* 新建时间段落子：锁周与满员在上面那颗钮就拦住了，这里再守一次（合成派发点 disabled 钮的旧账 #558 不在本题扩散）。 */
+    if (act === 'pick-slot'){
+      if (lock()) return;
+      var wantSlot = el.getAttribute('data-slot');
+      if (day(d).sessions.length >= MAXD){ slotPick = null; render(); return; }
+      if (slotUse(d, wantSlot, -1) > 0) return;
+      day(d).sessions.push({ slot: wantSlot, timeStart: '', timeEnd: '', moves: [] });
+      slotPick = null; render(); return;
+    }
+    if (act === 'cancel-slot'){ slotPick = null; render(); return; }
     if (act === 'del-train'){ day(d).sessions.splice(s, 1); render(); return; }
     if (act === 'set-slot'){
       var want = el.getAttribute('data-slot');
@@ -344,6 +385,15 @@ export const PLAN_EDITOR_JS = `
     var el = e.target, act = el.getAttribute && el.getAttribute('data-act');
     if (!act) return;
     if (act === 'search'){ query = String(el.value || '').trim().toLowerCase(); render(); return; }
+    /* 起止时间是参数：锁周不拦（与组数／次数同口径），只写回状态并刷新产物，不整页重渲（焦点不丢）。 */
+    if (act === 'set-tstart' || act === 'set-tend'){
+      var td = Number(el.getAttribute('data-d')), ts = Number(el.getAttribute('data-s'));
+      var tse = (day(td).sessions || [])[ts];
+      if (!tse) return;
+      if (act === 'set-tstart') tse.timeStart = String(el.value || '');
+      else tse.timeEnd = String(el.value || '');
+      syncCopy(); return;
+    }
     var d = Number(el.getAttribute('data-d')), s = Number(el.getAttribute('data-s')), m = Number(el.getAttribute('data-m'));
     var mv = (day(d).sessions[s] || { moves: [] }).moves[m];
     if (!mv) return;

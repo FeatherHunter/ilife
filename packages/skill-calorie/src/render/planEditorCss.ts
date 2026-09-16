@@ -113,6 +113,15 @@ export const PLAN_EDITOR_CSS = `
 .pe-lib-nm{font-size:14px;font-weight:700}
 .pe-lib-tags{display:flex;flex-wrap:wrap;gap:4px;margin-left:auto}
 .pe-lib-empty{padding:22px 18px;font-size:13px;color:var(--fg3);text-align:center}
+/* 新建时间段选时段 */
+.pe-slotpick{margin-top:10px;border:1px dashed var(--blue);border-radius:12px;padding:10px 12px;background:var(--soft);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pe-slotpick-t{font-size:12.5px;font-weight:700;color:var(--blue2)}
+.pe-slotpick .pe-slot-set .pe-slot{min-height:40px}
+/* 起止时间两格：跟动作参数同一套输入形状，窄屏自动换行（段头已是 flex-wrap）。 */
+.pe-time{display:inline-flex;align-items:center;gap:4px}
+.pe-time input{min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12.5px;font-family:inherit;color:var(--fg);background:var(--card);font-variant-numeric:tabular-nums}
+.pe-time input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+.pe-time-to{font-size:12px;color:var(--fg3)}
 /* 产物区 */
 .pe-out{margin:18px 0 0}
 .pe-out-t{font-size:13.5px;font-weight:700;margin:0 0 8px}
