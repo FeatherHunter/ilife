@@ -159,3 +159,45 @@ test('#620-3a TDEE页通用定义只在口径行讲', () => {
   assert.equal(countSub(html, 'Mifflin-St Jeor'), 1, 'Mifflin-St Jeor 讲了不止一次');
   assert.ok(html.includes('系数取档案里的活动量档位'), '口径行被删空');
 });
+
+/* ── #620 增量3b：卡面徽标去重（说明不重复徽标读数） ── */
+
+test('#620-3b TDEE静态缺口卡说明不重复在缺口', () => {
+  const plate = r3aPlate('tdee', {});
+  plate.base.series = [{ date: '2026-09-01', calories: 1600, weightKg: 74.0, protein: null, waterMl: null, exerciseKcal: 0, deficit: null }];
+  const html = visible(buildReportDoc(plate, ''));
+  assert.ok(html.includes('消耗大于摄入'), '事实半句丢失');
+  assert.ok(!html.includes('（在缺口）'), '说明仍在重复徽标词');
+  assert.ok(html.includes('在缺口'), '徽标词丢失');
+});
+
+test('#620-3b BMR概览无徽标行且三天规则只住口径表', () => {
+  const plate = r3aPlate('bmr', {});
+  plate.points = ['2026-09-01', '2026-09-02', '2026-09-03'].map((date) => ({ date, value: 900 }));
+  plate.bmrDanger = {
+    underDays: ['2026-09-01', '2026-09-02', '2026-09-03'].map((date) => ({ date, calories: 900 })),
+    threshold: 1700,
+  };
+  const raw = buildReportDoc(plate, '');
+  const overview = raw.split('id="sec-overview"')[1].split('</section>')[0];
+  assert.ok(!overview.includes('ilife-block-chip'), '概览仍有与徽标同字的徽标行');
+  const html = visible(raw);
+  assert.equal(countSub(html, '达到 3 天即告警'), 1, '三天规则不止一处');
+  assert.ok(!html.includes('3 天及以上即告警'), '表题仍在重复规则');
+});
+
+test('#620-3b 评分分项卡说明不重复徽标读数', () => {
+  const plate = r3aPlate('score', {});
+  plate.scores = ['2026-09-01', '2026-09-02', '2026-09-03'].map((date, i) => ({ date, hits: 3, score: 50 + i, factors: [] }));
+  plate.items = [
+    { key: 'a', label: '蛋白达标', hits: 0, days: 3, rate: 0 },
+    { key: 'b', label: '三餐齐备', hits: 3, days: 3, rate: 100 },
+  ];
+  plate.trend = { earlyAvg: 50, lateAvg: 52, turns: 1, direction: '平稳' };
+  const html = visible(buildReportDoc(plate, ''));
+  assert.ok(html.includes('优先改它'), '最低分项指引丢失');
+  assert.ok(html.includes('继续保持'), '最高分项指引丢失');
+  /* 卡说明不再复述徽标读数（表头／表题的结构词不计在内）。 */
+  assert.ok(!html.includes('命中率 0%'), '最低分项卡仍在重复徽标读数');
+  assert.ok(!html.includes('命中率 100%'), '最高分项卡仍在重复徽标读数');
+});

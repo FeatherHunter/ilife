@@ -83,7 +83,8 @@ export function buildTdeeBlocks(plate: ReportPlate): ReportSection[] {
       { label: '日均摄入', value: fmtInt(intake), unit: '卡', detail: '窗口 ' + plate.base.days + ' 天里 ' + loggedDaysOf(plate) + ' 天有记录' },
       {
         label: '静态缺口', value: fmtInt(gap), unit: '卡',
-        detail: gap === null ? '缺数算不了' : (gap > 0 ? '消耗大于摄入（在缺口）' : '摄入大于消耗（无缺口）'),
+        /* #620 增量3b：`（在缺口）`三字与同卡徽标 `在缺口` 逐字重复，说明只留事实半句。 */
+        detail: gap === null ? '缺数算不了' : (gap > 0 ? '消耗大于摄入' : '摄入大于消耗'),
         /* R-42：徽标写领域词，不用默认成功／警告。 */
         ...(gap === null ? {} : { status: gap > 0 ? 'ok' as const : 'warn' as const, statusText: gap > 0 ? '在缺口' : '无缺口' }),
       },
@@ -154,11 +155,7 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
         ...(under.length === 0 ? {} : { status: (danger ? 'danger' : 'warn') as 'danger' | 'warn', statusText: '低于基础代谢 ' + String(under.length) + ' 天' }),
       },
       { label: '达到基础代谢', value: String(plate.points.filter((x) => x.value !== null).length - under.length), unit: '天', detail: '共 ' + plate.base.days + ' 天窗口，有摄入且不低于基础代谢' },
-    ])
-      + renderChips({ items: [
-        { text: '低于基础代谢 ' + String(under.length) + ' 天' },
-        { text: '告警线 3 天' },
-      ] })),
+    ])),
     sec('sec-danger', '危险信号', danger
       ? renderDataTable({
         columns: [{ key: 't', label: '⚠️ 危险信号' }],
@@ -166,7 +163,9 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
          * 「低于基础代谢」KPI 卡**同一事实写三遍**。改法：正文只留**该怎么办**，
          * 天数与阈值各留在它自己的那一处（结论行讲事实、KPI 卡讲读数）——同一事实一页一处。 */
         rows: [{ t: '连续多日摄入低于基础代谢，长期会压低基础代谢，建议把摄入提到基础代谢之上。' }],
-        caption: '低于基础代谢（3 天及以上即告警）',
+        /* #620 增量3b：`（3 天及以上即告警）` 与口径表 `危险信号判据` 行同规则，
+         * 判据细则只住口径表（R-43），标题只留主题。 */
+        caption: '低于基础代谢',
       })
       : renderEmptyBlock({
         title: '危险信号',

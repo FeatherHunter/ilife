@@ -53,13 +53,14 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
         { label: '最近一天', value: last === undefined ? '—' : String(last.score), detail: last === undefined ? '无可评分日' : last.date },
         {
           label: '最低分项', value: weakest === undefined ? '—' : weakest.label,
-          detail: weakest === undefined ? '' : '命中率 ' + String(weakest.rate) + '%（优先改它）',
+          /* #620 增量3b：`命中率 N%` 与同卡徽标逐字重复，说明只留指引半句，读数由徽标承载一次。 */
+          detail: weakest === undefined ? '' : '优先改它',
           /* R-42：徽标不用默认「成功／警告」，改领域词＋百分数（与值位同源）。 */
           ...(weakest === undefined ? {} : { status: 'warn' as const, statusText: weakest.label + ' ' + String(weakest.rate) + '%' }),
         },
         {
           label: '最高分项', value: strongest === undefined ? '—' : strongest.label,
-          detail: strongest === undefined ? '' : '命中率 ' + String(strongest.rate) + '%',
+          detail: strongest === undefined ? '' : '继续保持',
           ...(strongest === undefined ? {} : { status: 'ok' as const, statusText: strongest.label + ' ' + String(strongest.rate) + '%' }),
         },
       ])),
