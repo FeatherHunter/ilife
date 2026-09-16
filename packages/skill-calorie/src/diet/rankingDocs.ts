@@ -53,10 +53,10 @@ const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
-const DOC_TITLE = '卡路里·饮食';
+const DOC_TITLE = '卡路里 饮食';
 
 /** 人话眉标（裁定 1：这一行写归属，不写命令键）。 */
-const EYEBROW = '饮食 · 排行榜';
+const EYEBROW = '饮食排行榜';
 
 /** 来源脚注上给**读者看**的来源名（库表名只留在复制日志的「来源」段里，那是给复核的人照抄的技术原件）。 */
 const SOURCE = '饮食记录';
@@ -138,7 +138,7 @@ function nutriOf(it: RankItem): { p: number; c: number; f: number } | null {
 
 const nutriText = (it: RankItem): string => {
   const n = nutriOf(it);
-  return n === null ? MISS : '蛋白 ' + n.p + '%｜碳水 ' + n.c + '%｜脂肪 ' + n.f + '%';
+  return n === null ? MISS : '蛋白 ' + n.p + '% 碳水 ' + n.c + '% 脂肪 ' + n.f + '%';
 };
 
 /** 名次写法：前三带金银铜章（老实物桌面圆章／手机左色条那一处信息），其余只给名次数字。 */
@@ -221,7 +221,7 @@ function docCopy(env: SerializableEnvelope, command: string): string {
 /** 结论句（裁定 2：紧跟标题、句内含本页至少一个读数）。 */
 function oneLine(cat: string, r: FoodRanking): string {
   const top = r.items[0];
-  if (top === undefined) return '本窗 ' + r.start + ' ~ ' + r.end + ' 里没有可上榜的食物：' + MISS + '。';
+  if (top === undefined) return '本窗 ' + r.start + ' 至 ' + r.end + ' 里没有可上榜的食物：' + MISS + '。';
   return '本窗 ' + r.items.length + ' 种食物上榜，头名「' + top.foodName + '」：' + headPhrase(top, cat) + '。';
 }
 
@@ -230,8 +230,8 @@ function oneLine(cat: string, r: FoodRanking): string {
 function emptyWindowGuide(start: string, end: string, scope: string): string {
   return emptyGuide({
     icon: '🍽️',
-    text: '本窗 ' + start + ' ~ ' + end + ' 里一条饮食记录都没有，' + scope + '。',
-    hint: '说「记一餐」把吃的那顿记上，榜单就有内容了；补以前的日期就说「补记饮食」。',
+    text: '本窗 ' + start + ' 至 ' + end + ' 里一条饮食记录都没有，' + scope + '。',
+    hint: '说「记一餐」把吃的那顿记上，榜单就有内容了。补以前的日期就说「补记饮食」。',
   });
 }
 
@@ -255,7 +255,7 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
     },
   };
   const kpis = renderKpiGrid([
-    { label: nameOf(cat), value: String(r.items.length), unit: '种', detail: '窗口 ' + r.start + ' ~ ' + r.end },
+    { label: nameOf(cat), value: String(r.items.length), unit: '种', detail: '窗口 ' + r.start + ' 至 ' + r.end },
     {
       label: '头名', value: top === undefined ? MISS : top.foodName,
       detail: top === undefined ? '本窗无上榜食物' : headPhrase(top, cat),
@@ -282,9 +282,10 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
       ? '<section id="sec-empty">' + emptyWindowGuide(r.start, r.end, '这张榜没有可上榜的食物') + '</section>'
       : '<section id="sec-nutri">' + nutriBlock(r.items) + '</section>',
     '<section id="sec-table">' + table + '</section>',
-    renderCaliberLine('口径：表里一行是一种食物，热量、碳水、蛋白都是窗口内同名记录的合计；'
-      + '营养结构按每克蛋白 4 千卡、碳水 4 千卡、脂肪 9 千卡折算成热量占比；'
-      + '零值不画条，缺值一律写 ' + MISS + '；条数＝上榜食物数。'),
+    renderCaliberLine('口径：表里一行是一种食物，热量 碳水和蛋白都是窗口内同名记录的合计。'),
+    renderCaliberLine('营养结构按每克蛋白 4 千卡 碳水 4 千卡 脂肪 9 千卡折算成热量占比。'),
+    renderCaliberLine('零值不画条，缺值一律写 ' + MISS + '。'),
+    renderCaliberLine('条数＝上榜食物数。'),
     docCopy(env, cmd ?? commandLine('calorie.view.ranking', { category: cat })),
     sourceLine({ source: SOURCE, start: r.start, end: r.end, count: r.items.length }),
   ].join('');
@@ -319,7 +320,7 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
     const top = b.items[0];
     return {
       label: nameOf(c), value: top.foodName,
-      detail: headPhrase(top, c) + '｜本窗 ' + b.items.length + ' 种',
+      detail: headPhrase(top, c) + '。本窗 ' + b.items.length + ' 种',
     };
   }));
   const boards = live.map((c) => {
@@ -336,7 +337,7 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
       }),
     });
   }).join('');
-  const head = live.length === 0 ? '' : '；' + nameOf(live[0]) + '的头名「'
+  const head = live.length === 0 ? '' : '，' + nameOf(live[0]) + '的头名「'
     + (a.boards[live[0]] as FoodRanking).items[0].foodName + '」（'
     + headPhrase((a.boards[live[0]] as FoodRanking).items[0], live[0]) + '）';
   const content = [
@@ -349,8 +350,9 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
     windowEmpty
       ? '<section id="sec-empty">' + emptyWindowGuide(a.start, a.end, '五类榜都没有可上榜的食物') + '</section>'
       : '<section id="sec-boards">' + boards + '</section>',
-    renderCaliberLine('口径：五类榜同一个窗口、同一套取数口径；每类榜的列序按榜单类查表，主指标排在食物名之后第一列；'
-      + (empty.length === 0 ? '本窗五类榜都有数据。' : '本窗没有数据的榜不出明细块：' + empty.map(nameOf).join('、') + '。')),
+    renderCaliberLine('口径：五类榜同一个窗口和同一套取数口径。'),
+    renderCaliberLine('每类榜的列序按榜单类查表，主指标排在食物名之后第一列。'),
+    (empty.length === 0 ? renderCaliberLine('本窗五类榜都有数据。') : renderCaliberLine('本窗没有数据的榜不出明细块：' + empty.map(nameOf).join(' ') + '。')),
     docCopy(env, cmd ?? commandLine('calorie.view.ranking', {})),
     sourceLine({ source: SOURCE, start: a.start, end: a.end, count: total }),
   ].join('');
@@ -360,7 +362,7 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
     pageUi: true,
     eyebrow: EYEBROW,
     subtitle: windowEmpty
-      ? '本窗 ' + a.start + ' ~ ' + a.end + ' 五类榜都没有可上榜的食物：' + MISS + '。'
+      ? '本窗 ' + a.start + ' 至 ' + a.end + ' 五类榜都没有可上榜的食物：' + MISS + '。'
       : '五类榜里 ' + a.okCount + ' 类本窗有数据，合计 ' + total + ' 种食物上榜' + head + '。',
     content,
   });
