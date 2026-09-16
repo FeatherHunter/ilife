@@ -139,11 +139,13 @@ function kpiCards(kpi: QueryKpi): readonly KpiCardInput[] {
   ];
 }
 
-/** 通用查询列表页：一整页（页头 ＋ 结果胶囊 ＋ KPI 行 ＋ 数据表或空态 ＋ 复制区）。 */
+/** 通用查询列表页：一整页（页头 ＋ 结果胶囊 ＋ KPI 行 ＋ 数据表或空态 ＋ 复制区）。
+ *  数据表包一层 `.bill-query-wide`：7 列密表在桌面要铺满版心（base 表卡 `max-width:680px` 是给窄表定的，
+ *  判据见 `docPage.ts` 的 P1；空态分支不包——空态没有宽度问题）。 */
 export function queryListDoc(input: QueryListInput): string {
   const table = input.rows.length === 0
     ? renderEmptyBlock({ text: input.emptyText, hint: input.emptyHint })
-    : renderDataTable({ columns: COLUMNS, rows: input.rows, caption: '查到的记录', emptyText: input.emptyText });
+    : '<div class="bill-query-wide">' + renderDataTable({ columns: COLUMNS, rows: input.rows, caption: '查到的记录', emptyText: input.emptyText }) + '</div>';
   const content = [
     renderChips({ items: input.chips.map((text) => ({ text })) }),
     renderKpiGrid(kpiCards(input.kpi)),
