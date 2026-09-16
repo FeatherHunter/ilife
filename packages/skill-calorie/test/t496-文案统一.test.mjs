@@ -96,7 +96,7 @@ const PAGE_CASES = [
     id: '#11 看每日六因素', wake: '看每日六因素', key: 'calorie.view.six-factors',
     params: { date: '今日' },
     gone: ['热量/蛋白/饮水/运动/称重/三餐（无目标项明示'],
-    want: ['六因素＝这 6 项：热量、蛋白、饮水、运动、称重、三餐'],
+    want: ['这 6 项达标了几项（热量按千卡计）'],
   },
   {
     id: '#12 看昨日饮食', wake: '看昨日饮食', key: 'calorie.view.diet',

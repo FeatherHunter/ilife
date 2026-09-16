@@ -332,11 +332,11 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
   const parts: string[] = [
     /* #496 · 原说明是「宏量占比＝蛋白/碳水×4、脂肪×9 除以总热量；微量＝日均 vs 每日推荐」——
        裸公式 ＋「宏量」「微量」「vs」三个内部叫法（审查件第 16 条）。改成读者读得懂的换算规则。 */
-    windowForm(v.start, v.end, '蛋白和碳水每克 4 千卡、脂肪每克 9 千卡，除以总热量得到占比；下面是每天平均摄入和每天推荐量的对比'),
+    windowForm(v.start, v.end, '蛋白和碳水每克 4 千卡，脂肪每克 9 千卡，除以总热量得到占比。下面是每天平均摄入和每天推荐量的对比'),
     renderKpiGrid([
-      { label: '蛋白', value: String(v.proteinG), unit: 'g', detail: v.proteinPct + '%（建议 10~20%）' },
-      { label: '碳水', value: String(v.carbG), unit: 'g', detail: v.carbPct + '%（建议 45~65%）' },
-      { label: '脂肪', value: String(v.fatG), unit: 'g', detail: v.fatPct + '%（建议 20~35%）' },
+      { label: '蛋白', value: String(v.proteinG), unit: 'g', detail: v.proteinPct + '%（建议 10% 至 20%）' },
+      { label: '碳水', value: String(v.carbG), unit: 'g', detail: v.carbPct + '%（建议 45% 至 65%）' },
+      { label: '脂肪', value: String(v.fatG), unit: 'g', detail: v.fatPct + '%（建议 20% 至 35%）' },
       { label: '总摄入', value: String(v.totalCalorie), unit: '卡', detail: v.days + ' 天' },
     ]),
     renderDataTable({
@@ -382,7 +382,7 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
         },
       },
     }));
-    parts.push(renderCaliberLine('环上的数＝蛋白、碳水、脂肪按每克 4／4／9 千卡折算出的热量；它与上方「总摄入」（按每条记录的热量合计）不是同一个数——记录里的热量是各条自己报的值。'));
+    parts.push(renderCaliberLine('环上的数＝蛋白与碳水每克 4 千卡，脂肪每克 9 千卡，折算出的热量合计。它与上方「总摄入」（按每条记录的热量合计）不是同一个数——记录里的热量是各条自己报的值。'));
     charts = true;
   }
   parts.push(renderDisclosure({
@@ -406,12 +406,12 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
     },
   }));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '营养分析 ' + v.start + ' ~ ' + v.end,
-    eyebrow: '卡路里 · 趋势',
+    docTitle: '卡路里 趋势',
+    title: '营养分析 ' + v.start + ' 至 ' + v.end,
+    eyebrow: '趋势分析', /* #591 · 裁定1 页级覆盖：标题两行去 `·`、副题 `、` 串改逗号分句；模块常量 `DOC_TITLE` 与别页一字不碰。 */
     /* #511 · 原副题「配比＋微量＋规则建议（建议阈值见数据层注释，不编造结论）」——「配比／微量／规则建议」
        是内部叫法，括号里那半句还是开发过程说明（审查件第 82 条）⇒ 换成一句「这页有什么」。 */
-    subtitle: '三大营养素比例、其他营养素摄入、以及根据这些数据给出的建议',
+    subtitle: '三大营养素比例与其他营养素摄入，以及据此给出的建议',
     content: parts.join(''),
     charts,
   });
@@ -473,14 +473,14 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: '卡路里 趋势',
     title: '每日六因素 ' + v.date,
-    eyebrow: '卡路里 · 趋势',
+    eyebrow: '趋势分析', /* #591 · 裁定1 页级覆盖：标题两行去 `·`；副题 `、` 枚举撤——模块常量 DOC_TITLE 与别页一字不碰。 */
     /* #511 · 这一句是 #496 补的「六因素是哪六项」（审查件第 85 条），本票只在它后面补一句单位口径
        （审查件第 86 条：全页没有一处说清热量的单位是千卡）。**不往枚举里塞「（千卡）」**：那句话是
        #496 的交付物、被 `test/t496-文案统一.test.mjs` 逐字钉住（该测试件不在本票声明路径内），
-       单位改由**条目名**（`热量（千卡）达标`）与句末这句口径承载——两处合起来读得到单位。 */
-    subtitle: '六因素＝这 6 项：热量、蛋白、饮水、运动、称重、三餐（热量按千卡计）',
+       单位改由**条目名**（`热量（千卡）达标`）与句末这句口径承载——两处合起来读得到单位（#591：`、` 枚举撤）。 */
+    subtitle: '这 6 项达标了几项（热量按千卡计）',
     content: parts.join(''),
     charts: false,
   });
