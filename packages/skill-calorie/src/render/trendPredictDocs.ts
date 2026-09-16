@@ -13,6 +13,7 @@ import {
   renderChips,
   renderConclusionBar,
   renderDataTable,
+  renderDisclosure,
   renderDistributionRows,
   renderKpiGrid,
   renderListRows,
@@ -107,6 +108,28 @@ function deficitStatusChips(rows: DeficitData['series'], targetDef: number): str
   ] });
 }
 
+/** #571 · 缺口族页面侧样式（只本页装配引用，不碰公共层与壳宽）。
+ *
+ *  R-32（明细折叠）：明细表＋徽章列套 B-08 `renderDisclosure`（原生 details，默认闭合，
+ *  双档表高归零、390 页高占比归零，带展开控件；桌面亦折叠，点开即见全表）。冻结
+ *  `analysis-deficit-385` 读的是源码 `<tr>`，折叠不减行，全绿。
+ *  R-30（数值等宽右对齐）：缺口列右对齐＋`tnum`只本表生效（展开态 CDP 390/1440 极差 0）。
+ *  R-31（合计单行）：左列 44px 装不下 4 字（CDP 与双档截图同证折行），本页拓到 64px
+ * （8 的倍数），双档三行单行。
+ *  卡内距 16px（4 的倍数，与 #569 Sim 同形；公共层 14px 归 #567 不动，只改渲染结果）。
+ *  折叠 body 内距 16px（4 的倍数，与卡内距同档）。
+ *  间距 8px/12px/16px/64px 均为 4 或 8 的倍数；字号沿公共层档不动。
+ */
+function t571DeficitCss(): string {
+  return '<style>\n'
+    + '.ilife-block-kpi-card{padding:16px}\n'
+    + '.t571-deficit-table .ilife-block-data-table td.ilife-block-data-table-cell-right{text-align:right;font-variant-numeric:tabular-nums}\n'
+    + '.t571-deficit-detail .ilife-block-disclosure-body{padding:0 16px 16px}\n'
+    + '.t571-deficit-detail details:not([open]) > .ilife-block-disclosure-body{display:none}\n'
+    + '.t571-deficit-totals .ilife-block-list-rows-row{grid-template-columns:64px minmax(0,1fr) auto}\n'
+    + '</style>';
+}
+
 export function buildDeficitDoc(d: DeficitData): string {
   const targetDef = d.target.weeklyDeficitPerDay;
   /* 被删的技术口径改住 HTML 注释（#160 回炉）：算式与常量原印在参数卡说明里，`TDEE`／`KCAL_PER_KG`
@@ -153,6 +176,10 @@ export function buildDeficitDoc(d: DeficitData): string {
   if (d.series.length > 0) {
     const intake = d.series.map((s) => ({ label: s.date.slice(5), value: s.intake }));
     const burn = d.series.map((s) => ({ label: s.date.slice(5), value: s.burn }));
+    /* #571 R-33：橙色虚线进图例——第三序列与 markLine 同值（摄入目标），色由 palette[2]
+     *  自动取橙（与 markLine 缺省色同源，不写色字面量，冻结色字面量仍零命中）；名含
+     *  `摄入目标` 且含目标值，图例即含两词。markLine 保留（线上标签不动），两线重合。 */
+    const targetLine = d.series.map((s) => ({ label: s.date.slice(5), value: d.target.intake }));
     parts.push(pageSection('sec-chart', renderChartBlock({
       kind: 'line',
       /* #160 回炉（用户点名反例①的同形）：旧图题把**画法**写进了标题（「虚线=消耗；水平线=摄入目标 1800 卡」）
@@ -167,6 +194,7 @@ export function buildDeficitDoc(d: DeficitData): string {
           series: [
             { name: '摄入', items: intake },
             { name: '消耗（虚线）', items: burn, dashed: true },
+            { name: '摄入目标 ' + d.target.intake + ' 卡', items: targetLine, dashed: true },
           ],
           /* #385：补刻度值＋数字格式（老侧 `:150-157` 的 format／yMin／yMax；同包先例 `multiTrendPage.ts:261`）；量程不写死。 */
           yTicks: 3, labels: 'select', format: (v: number) => Math.round(v).toLocaleString(), markLine: { value: d.target.intake, label: '摄入目标 ' + d.target.intake + ' 卡' },
@@ -180,25 +208,32 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  留下的五列每列都在变：日期／摄入／消耗／缺口／状态。
    *  `状态` 列仍是**纯文本**：`renderDataTable` 的单元格只收基元（公共层 `cellText`），把徽章放进单元格
    *  要动公共层产出器——本票（裁定 3）不碰 `packages/base-render/**`；状态的**形状**落在表下那排徽章
-   *  （`deficitStatusChips`）与「日均缺口」卡的状态徽章上。 */
-  parts.push(pageSection('sec-detail', renderDataTable({
-    columns: [
-      { key: 'date', label: '日期' },
-      { key: 'intake', label: '摄入', align: 'right' },
-      { key: 'burn', label: '消耗', align: 'right' },
-      { key: 'deficit', label: '缺口', align: 'right' },
-      { key: 'status', label: '状态' },
-    ],
-    rows: shown.map((s) => ({
-      date: s.date + ' ' + s.weekday,
-      intake: s.intake, burn: s.burn,
-      deficit: signed(s.deficit),
-      status: s.deficit >= targetDef ? '✓ 达标' : s.deficit > 0 ? '⚠ 偏低' : '✗ 超量',
-    })),
-    caption: '缺口明细' + (d.series.length > 100 ? '（仅列前 100 条，共 ' + d.series.length + ' 天）' : '（共 ' + d.series.length + ' 天）') +
-      '，其中 ' + d.meta.weekdayCount + ' 天是工作日，' + d.meta.weekendCount + ' 天是周末',
-    emptyText: '这段时间还没有记录，先记一餐或记一次运动再来看',
-  }) + deficitStatusChips(shown, targetDef)));
+   *  （`deficitStatusChips`）与「日均缺口」卡的状态徽章上。
+   *  #571 R-32：表＋徽章列套 B-08 折叠（默认闭合，390 表高归零；桌面本层顶回可见）。
+   *  #571 R-28 冲突记本条尾：`✓ 达标` 等三态文案与徽章 `达标 N 天` 均为冻结
+   *  `analysis-deficit-385` 的 D2 逐字断言，本票不动文案（见证据 §2），只做折叠。 */
+  parts.push(pageSection('sec-detail', '<div class="t571-deficit-detail"><div class="t571-deficit-table">'
+    + renderDisclosure({
+      title: '缺口明细（点击展开）',
+      contentHtml: renderDataTable({
+        columns: [
+          { key: 'date', label: '日期' },
+          { key: 'intake', label: '摄入', align: 'right' },
+          { key: 'burn', label: '消耗', align: 'right' },
+          { key: 'deficit', label: '缺口', align: 'right' },
+          { key: 'status', label: '状态' },
+        ],
+        rows: shown.map((s) => ({
+          date: s.date + ' ' + s.weekday,
+          intake: s.intake, burn: s.burn,
+          deficit: signed(s.deficit),
+          status: s.deficit >= targetDef ? '✓ 达标' : s.deficit > 0 ? '⚠ 偏低' : '✗ 超量',
+        })),
+        caption: '缺口明细' + (d.series.length > 100 ? '（仅列前 100 条，共 ' + d.series.length + ' 天）' : '（共 ' + d.series.length + ' 天）') +
+          '，其中 ' + d.meta.weekdayCount + ' 天是工作日，' + d.meta.weekendCount + ' 天是周末',
+        emptyText: '这段时间还没有记录，先记一餐或记一次运动再来看',
+      }) + deficitStatusChips(shown, targetDef),
+    }) + '</div></div>'));
   /* 三行的右槽原是两个碎片随手拼的（`5 天`／`TDEE×天＋运动`／`周缺口 300 卡`）——连起来读不成句，
    *  中间那个还带常量名式缩写。改：右槽一律写成能独立读的整句。 */
   /* 三行的右槽原是两个碎片随手拼的（`5 天`／`TDEE×天＋运动`／`周缺口 300 卡`）——连起来读不成句，
@@ -207,11 +242,11 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  `overflow:hidden` 的截断线里**（判据 J3 实测：390 档 `合计消耗`／`合计缺口` 两行的值 cw=34／48px，
    *  值被裁得只露半个字）⇒ 右槽只留短注，「消耗＝日常消耗加当天运动」这类口径上移到口径行，
    *  「一周合计」这类事实住结论条与 KPI 卡（同一事实一页一处）。 */
-  parts.push(pageSection('sec-totals', renderListRows({ items: [
+  parts.push(pageSection('sec-totals', '<div class="t571-deficit-totals">' + renderListRows({ items: [
     { left: '合计摄入', main: totals.intake + ' 卡', right: '共 ' + d.meta.days + ' 天有记录' },
     { left: '合计消耗', main: totals.burn + ' 卡', right: '逐日累加' },
     { left: '合计缺口', main: signed(totals.deficit) + ' 卡' },
-  ] })));
+  ] }) + '</div>'));
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.deficit',
@@ -246,7 +281,7 @@ export function buildDeficitDoc(d: DeficitData): string {
      *  `pageChromeCss(<宽>)`——页面级生效、只本页 opt-in（该件自带触屏三件与 ≤820 的页壳／栅格收紧，
      *  见 `./pageChromeCss.ts` 件头）。1440 档从两侧各空 240px 收成各 160px（主列 960→1120）。
      *  不新增公共层件（编排者裁定 3）、不新建形状（基准件 §4.3 具名清单仍为空）。 */
-    content: pageChromeCss(1120) + parts.join(''),
+    content: pageChromeCss(1120) + t571DeficitCss() + parts.join(''),
     charts,
   });
 }
