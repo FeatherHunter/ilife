@@ -42,8 +42,9 @@ export function viewExerciseGoal(params: Record<string, unknown>, db: DatabaseSy
     const metrics = nums({ dailyGoal: v.dailyGoal, goalTotal: v.goalTotal, actual: v.actual, pct: v.pct, gap: v.gap, achieved: v.achieved ? 1 : 0, days: v.days });
     return { data: { metrics }, html: buildExerciseGoalDoc(v) };
   }
-  const windowLabel = optStr(params, 'window') ?? (start === end ? '今日' : '自定义');
-  const wakeWord = windowLabel === '本周' ? '看本周运动（vs 目标）' : '看今日运动（vs 目标）';
+  const windowParam = optStr(params, 'window');
+  const windowLabel = windowParam ?? (start === end ? '今日' : '自定义');
+  const wakeWord = windowParam === undefined || windowParam === 'custom' ? null : windowLabel === '本周' ? '看本周运动（vs 目标）' : '看今日运动（vs 目标）';
   const days = Math.round((Date.parse(end + 'T12:00:00Z') - Date.parse(start + 'T12:00:00Z')) / 86400000) + 1;
   const viewCommand = windowLabel === '本周' || windowLabel === '今日'
     ? commandLine('calorie.view.exercise-goal', { window: windowLabel })

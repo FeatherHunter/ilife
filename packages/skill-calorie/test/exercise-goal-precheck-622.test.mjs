@@ -132,3 +132,18 @@ test('t622 有目标出终页：确认后调写命令写入再出终页（环卡
     assert.ok(typeof metrics.pct === 'number', 't622 ' + word + ' 终页 metrics 应带 pct');
   }
 });
+
+test('t626 自定义窗预检页隐去唤醒词行：start/end 直调无 window 不编唤醒词', () => {
+  const dir = mkDirWithExercise();
+  const r = runCli(dir, VIEW_CMD, { start: '2026-09-08', end: TODAY }, 'precheck-custom');
+  assert.equal(r.status, 0, 't626 自定义窗预检页应 exit 0，实测 ' + r.status + ' ' + r.stderr.slice(-300));
+  assertDocPage(r.file, 't626 自定义窗预检页');
+  const metrics = r.envelope?.data?.metrics ?? null;
+  assert.ok(metrics !== null && typeof metrics === 'object', 't626 自定义窗预检页缺 metrics 结构化断言');
+  assert.equal(metrics.hasGoal, 0, 't626 自定义窗 metrics.hasGoal 应为 0');
+  assert.equal(metrics.precheck, 1, 't626 自定义窗 metrics.precheck 应为 1');
+  assert.ok(r.file.includes('2026-09-08'), 't626 自定义窗应照查询窗显窗口起点');
+  assert.ok(!r.file.includes('唤醒词'), 't626 自定义窗应隐去唤醒词行，实测仍有唤醒词行');
+  assert.ok(!r.file.includes('看今日运动（vs 目标）'), 't626 自定义窗不许误标看今日运动（vs 目标）');
+  assert.ok(!r.file.includes('看本周运动（vs 目标）'), 't626 自定义窗不许误标看本周运动（vs 目标）');
+});

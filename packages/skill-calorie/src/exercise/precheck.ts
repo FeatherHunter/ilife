@@ -34,8 +34,8 @@ const WRITE_EXAMPLE_GOAL = 300;
 
 /** 预检确认页的入参（7 字段，不多于 8 个）。 */
 export interface ExerciseGoalPrecheckView {
-  /** 展开本页的是哪条唤醒词（两条中的一条）。 */
-  readonly wakeWord: string;
+  /** 展开本页的是哪条唤醒词（两条中的一条）；`null` ＝ 自定义窗（start/end 直调、无 window），隐去唤醒词行。 */
+  readonly wakeWord: string | null;
   /** 窗口的读者说法（今日／本周，取调用方传的窗口名）。 */
   readonly windowLabel: string;
   readonly start: string;
@@ -55,7 +55,7 @@ function currentTable(v: ExerciseGoalPrecheckView): string {
       { k: '每日运动消耗目标', v: '未设置' },
       { k: '窗口', v: v.start === v.end ? v.start : v.start + ' ~ ' + v.end },
       { k: '窗口天数', v: String(v.days) + ' 天' },
-      { k: '唤醒词', v: v.wakeWord },
+      ...(v.wakeWord === null ? [] : [{ k: '唤醒词', v: v.wakeWord }]),
     ],
     caption: '改前基准：库内还没有每日运动消耗目标',
   });
@@ -115,7 +115,7 @@ export function buildExerciseGoalPrecheckDoc(v: ExerciseGoalPrecheckView): strin
     },
   };
   const cards: KpiCardInput[] = [
-    { label: '唤醒词', value: v.wakeWord, detail: '先问目标值，确认后再看终页' },
+    ...(v.wakeWord === null ? [] : [{ label: '唤醒词', value: v.wakeWord, detail: '先问目标值，确认后再看终页' } as KpiCardInput]),
     { label: '现值', value: '未设置', detail: '还没设每日运动消耗目标' },
     { label: '窗口', value: v.windowLabel, detail: v.start === v.end ? v.start : v.start + ' ~ ' + v.end },
   ];
