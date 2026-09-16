@@ -149,7 +149,8 @@ export function pageUiCss(input?: PageUiCssInput): string {
     '    content: attr(' + 'data-label);',
     '    flex: 0 0 auto;',
     '    color: var(--fg3);',
-    '    font-size: 11.5px;',
+    // #567 J4（§5.2 次级 12 吸收 12／11.5）。
+    '    font-size: 12px;',
     '    font-weight: 600;',
     '  }',
     '  ' + root + ' .' + p + 'block-data-table:has(td[' + 'data-label]) td.' + p + 'block-data-table-cell-right {',

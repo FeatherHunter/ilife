@@ -76,7 +76,9 @@ export interface ChartCommonOptions {
   readonly emptyText?: string;
   readonly tooltip?: boolean;
   readonly labels?: 'edge' | 'all' | 'none' | 'select';
-  readonly showValues?: boolean | 'edge';
+  /** 数值标签：`true` 全量／`false` 无／`'edge'` 首尾有效点／`'last'` 只标末值（#567）。
+   *  `'last'` 与折线 `highlightLast` 同开时只出一枚（末值文本不双印，见 `charts.ts`）。 */
+  readonly showValues?: boolean | 'edge' | 'last';
   readonly labelRotate?: number;
   readonly yMin?: number;
   readonly yMax?: number;
@@ -106,6 +108,9 @@ export interface LineChartOptions extends ChartCommonOptions {
   readonly fillBetween?: ChartFillBetween;
   readonly highlightPoints?: 'turns' | 'crossings';
   readonly series?: readonly ChartSeries[];
+  /** X 轴标签抽稀（#567）：`labels:'all'` 时每 k 点标一枚（含末点），不给＝全标。
+   *  与折线自动点抽稀解耦：`showDots:true`（显式）画满 N 个顶点，`labelEvery:k` 每 k 点标一次。 */
+  readonly labelEvery?: number;
 }
 
 export interface BarChartOptions extends ChartCommonOptions {
@@ -114,6 +119,10 @@ export interface BarChartOptions extends ChartCommonOptions {
   readonly grouped?: boolean;
   readonly stackMode?: 'percent' | 'absolute';
   readonly segNames?: readonly string[];
+  /** 数值标签按密度抽稀（#567）：相邻标签中心距小于该值（用户单位）时跳过。不给＝全标（默认不变）。 */
+  readonly valueThin?: number;
+  /** Y 轴刻度条数（#567，与折线 `yTicks` 同口径 2–6；不给／`false`＝不画，默认不变）。 */
+  readonly yTicks?: number | false;
 }
 
 export interface DonutChartOptions extends ChartCommonOptions {

@@ -612,6 +612,11 @@ export interface DataTableInput {
   readonly rows: readonly Readonly<Record<string, unknown>>[];
   readonly caption?: string;
   readonly emptyText?: string;
+  /** 单元格 HTML（#567 状态列）：`(列 key, 单元格原值) => 受信 HTML／undefined`。
+   *  返回 `undefined` 即走缺省转义文本；返回字符串即**受信透传、不转义**（与
+   *  `renderDisclosure` 的 `contentHtml` 同口径）——调用方须自行转义插值，
+   *  不得把未转义的用户输入拼进去。返回非字符串非 undefined 即 `bad-input`。 */
+  readonly cellHtml?: (columnKey: string, value: unknown) => string | undefined;
 }
 
 const TABLE_ALIGNS: readonly string[] = ['left', 'center', 'right'];
@@ -633,6 +638,10 @@ export function renderDataTable(input: DataTableInput): string {
     badInput('renderDataTable: input.columns 必须是非空数组');
   }
   if (!Array.isArray(table.rows)) badInput('renderDataTable: input.rows 必须是数组');
+  if (table.cellHtml !== undefined && typeof table.cellHtml !== 'function') {
+    badInput('renderDataTable: input.cellHtml 必须是函数');
+  }
+  const cellHtml = table.cellHtml;
   const columns = table.columns.map((column, i) => {
     const field = 'renderDataTable: input.columns[' + i + ']';
     assertPlainObject(column, field);
@@ -651,16 +660,29 @@ export function renderDataTable(input: DataTableInput): string {
   ).join('') + '</tr></thead>';
   const body = '<tbody>' + table.rows.map((row, ri) => {
     assertPlainObject(row, 'renderDataTable: input.rows[' + ri + ']');
-    return '<tr>' + columns.map((column) =>
+    return '<tr>' + columns.map((column) => {
+      const raw = (row as Readonly<Record<string, unknown>>)[column.key];
+      // #567 `cellHtml`：给了且对本格返回字符串即受信透传（调用方已转义）；
+      // 返回 `undefined` 即走缺省转义文本。不给 `cellHtml` 时本行与改前逐字同。
+      let trusted: string | undefined;
+      if (cellHtml !== undefined) {
+        const out = cellHtml(column.key, raw);
+        if (out !== undefined) {
+          if (typeof out !== 'string') badInput('renderDataTable: input.cellHtml 必须返回 string／undefined');
+          trusted = out;
+        }
+      }
       // t154-r3（负责人第三轮要求 2）：每个数据格带上**列头文本**（`data-label`），窄屏行卡化
       // 时由 CSS 的 `td::before{content:attr(data-label)}` 出「标签 ＋ 值」，列头因此不必再挤在
       // 390px 里。**只加属性**：既有类名、既有结构、既有文本一字不动，桌面档（≥641）没有任何
       // 规则引用它 ⇒ 桌面渲染逐像素不变（自证读数见证据件）。列头文本与 `th` 同源（同一个
       // `column.label`），不存在两处文案漂移。`esc` 已含 `"`（五字符表）⇒ 标签含引号也安全。
-      '<td class="' + blockPart('dataTable', 'cell-' + column.align) + '" data-label="' + esc(column.label) + '">'
-      + cellText((row as Readonly<Record<string, unknown>>)[column.key], 'renderDataTable: input.rows[' + ri + '].' + column.key)
-      + '</td>',
-    ).join('') + '</tr>';
+      const text = trusted === undefined
+        ? cellText(raw, 'renderDataTable: input.rows[' + ri + '].' + column.key)
+        : trusted;
+      return '<td class="' + blockPart('dataTable', 'cell-' + column.align) + '" data-label="' + esc(column.label) + '">'
+        + text + '</td>';
+    }).join('') + '</tr>';
   }).join('') + '</tbody>';
   const caption = optText(table.caption);
   return '<div class="' + blockRoot('dataTable') + '"><table class="' + blockPart('dataTable', 'table') + '">'
@@ -1222,7 +1244,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-page-shell-title {',
     '  margin: 6px 0 0;',
-    '  font-size: 32px;',
+    // #567 J4（§5.2 大数 28 吸收 26／28／32／40）：页标题 32→28。
+    '  font-size: 28px;',
     '  font-weight: 700;',
     '  letter-spacing: -.4px;',
     '  line-height: 1.2;',
@@ -1256,7 +1279,9 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '    padding: 20px 16px 60px;',
     '  }',
     '  .' + p + 'block-page-shell-title {',
-    '    font-size: 26px;',
+    // #567 J4：桌面 32→28 后窄屏 26 按旧收缩比（26／32≈0.81）收到 22（28×0.79），复用 KPI 主数字档，
+    // 不另立一档；仍比正文大 9px，主次不断。
+    '    font-size: 22px;',
     '  }',
     '}',
     // #420 页面级三件的样式随本区落盘（`BLOCK_STYLE_SECTIONS` 由 `test/blocks.test.mjs` 钉死 12 项，
@@ -1268,7 +1293,14 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  margin: 0 0 16px;',
     '}',
     '.' + p + 'block-toc a {',
-    '  padding: 6px 12px;',
+    // #567 D6：页内导航可点高 33.5px＜44px（一页两套触摸档：同页输入框与复制按钮已 44px）。
+    // `min-height:44px`＋纵向居中定死触摸目标（`box-sizing` 显式钉死，免得被页面 `*{}` 改写）；
+    // 纵向内距 6px→8px（4 的倍数；横向 12px 不动；`gap:8px` 已是 4 的倍数）。
+    '  display: inline-flex;',
+    '  align-items: center;',
+    '  box-sizing: border-box;',
+    '  min-height: 44px;',
+    '  padding: 8px 12px;',
     '  border: 1px solid var(--line);',
     '  border-radius: ' + RADIUS_PILL + 'px;',
     '  background: var(--card);',
@@ -1326,7 +1358,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  border-radius: ' + RADIUS_MD + 'px;',
     '  background: var(--card);',
     '  color: var(--blue2);',
-    '  font-size: 14px;',
+    // #567 J4（§5.2 区块标题 15 吸收 14／15）。
+    '  font-size: 15px;',
     '  font-weight: 600;',
     '}',
     // #421 页面融合四件的样式随本区落盘（同 #420 处置：四件都是页面级、不属 12 区块，
@@ -1403,7 +1436,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  gap: 8px;',
     '  padding: 6px 0;',
     '  border-top: 1px solid var(--line);',
-    '  font-size: 14px;',
+    // #567 J4（§5.2 区块标题 15 吸收 14／15；`page-viz-421` 同步改 14→15）。
+    '  font-size: 15px;',
     '}',
     '.' + p + 'block-change-row-label {',
     '  flex: 1;',
@@ -1503,8 +1537,9 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  min-width: 0;',
     '  color: var(--fg);',
     // #154（2026-09-14 交付页返工）③ 主数字收一号：用户原话「内容太大了」。28px → 22px。
-    // 22 是**阶梯里还站得住**的一档：22 − 17（`detail-section-title`／`h2`）＝ 5px ≥ 4px（C1:349
-    // 「相邻级差 ≥4px」）；对 `unit` 13px 仍大 9px ≥ 8px（本尺 B-02「unit 比 value 小 ≥8px」）。
+    // 22 是**阶梯里还站得住**的一档（#567 后 `detail-section-title` 17→18：22 − 18 ＝ 4px ≥ 4px，
+    // C1:349「相邻级差 ≥4px」仍成立；22 本身是 #544 终审既判的整排字号，不动）；对 `unit` 13px
+    // 仍大 9px ≥ 8px（本尺 B-02「unit 比 value 小 ≥8px」）。
     // `overflow-wrap: anywhere` 保留（防长串溢出）——字号小了之后长值折行显著变少。
     '  font-size: 22px;',
     '  font-weight: 700;',
@@ -1568,27 +1603,13 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  border: 1px solid var(--line);',
     '  border-radius: ' + RADIUS_MD + 'px;',
     '  background: var(--card);',
-    // #512（最后一公里）表格「两个角落」：日期列已被上一票收在内容宽（1000／1440 档 116.13px），
-    // 行宽余量**全部**归 auto 的数值列 ⇒ 两列各 420.94px，日期字形右缘到第一个数字左缘 392.93px
-    // 空档（820 档 302.93px）—— 一行只有三个短列，读起来「左一角右一角」。
+    // #512（最后一公里）表格「两个角落」的旧解（已撤，见下）：当时给表卡加宽度上限收中缝；
     // 试过的另一条路（复审也提了）**无效**：`td` 上的 `max-width` 在 `table-layout:auto` 下不生效
-    // —— 候选 A 给数值列 9em 上限后四档列宽一字未变（读数见 `docs/base/base-render/t512-最后一公里-证据.md`），
-    // 上限只加在 `td` 上等于没加。生效的手段是收**表**宽：给表卡一个宽度上限，列宽仍由内容定
-    // （日期列 116.13 不变、数值列各 281.94），中缝 392.93 → 253.93。卡**左对齐**（不居中）：左缘是
-    // 全页的主对齐轴（页面模板／KPI 栅格／图表卡／复制区一律 left=20），收窄的卡仍与它们同线；右缘
-    // 留给空白，不新增对齐轴。
-    // 放**基础规则**（不另开 `@media`）：`max-width` 只在可用宽超过它时才生效，窄屏（≤640 档列宽
-    // 远小于 680）本就不触发 ⇒ 512 档逐值同改前（日期列 178.03／数值列 149.97／150、表宽 478、
-    // 0 折行 0 横滚），#457／#507 的地盘不碰；也免得同一条基础规则被写第二遍（`ui-fix-154` 的
-    // 「基础规则恰 1 条」守卫就是防这个）。
-    '  max-width: 680px;',
-    // t512 收尾（复审 P0）：上限收到 680 后，**其上图表卡宽 780**（820／1000 档）⇒ 表卡左缘与图表同线、
-    // 右缘空出 100px，读成「表格没对上图表」（1440 档容器余量小，反倒看不出）。两条路选**居中**：
-    // 抬上限到与图表同宽会把 #512 刚修掉的「左右两角」退回去（数值列各再摊约 50px），且 #512 机检
-    // 逐值钉死 `max-width: 680px`；居中不动上限，也不动 #154 那条块级外边距 —— `margin` 仍是 `16px 0`，
-    // 居中另起一条（逻辑属性，不占「基础规则恰 1 条」的名额）。
-    // 窄档（512：容器 478 < 680）上限本就不触发 ⇒ 卡满宽、`auto` 边距按 CSS 解成 0，逐值同改前。
-    '  margin-inline: auto;',
+    // （读数见 `docs/base/base-render/t512-最后一公里-证据.md`），上限只加在 `td` 上等于没加。
+    // #567 D1：撤掉 680 上限，表卡吃满内容列（#512 那 398px 窄表是旧约束：行首列收窄＋数值列
+    // 下限已由后票接管列宽分配；上限在时表盒 682 vs 内容列 1080、两侧各空 199px）。
+    // `margin: 16px 0` 不动（#154 块级外边距＋`ui-fix-154` 同值守卫）；居中 `margin-inline:auto`
+    // 随上限一起撤（满宽下无意义）。窄档（≤640 上限本就不触发）逐字不变。
     '}',
     '.' + p + 'block-data-table-table {',
     '  width: 100%;',
@@ -1607,16 +1628,17 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  border-bottom: 1px solid var(--line);',
     '  background-color: transparent;',
     // #507 列头压一档（审查必改 #2）：此前 `th` 取 `--fg2`／12px／600，与数据行 `--fg2`／13px／400
-    // 几乎同色同重 ⇒ 列头「日期」与数据「2026-09-07」分不出主次。改成 `--fg3`／11.5px（列头最浅）
-    // ＋ 数据行的**数值列**取 `--fg`（见下方 `td.…-cell-right` 一条），「列头弱、数据强」的层级才读出来。
-    // #179 那条对比度账**在此改写**：`--fg3`（`#86868b`）压白底 3.62:1 确实不到 AA 4.5:1，
-    // 但 ① `docs/visual-spec-blocks.md:73` 的版式判据要的就是「`th` 最浅灰」；② 列头是**非正文**
-    // 的短标签（`text-transform:uppercase` ＋ 字距），WCAG 对这类文本的最小对比度按 3:1 一档
-    // 仍有富余；③ 原先取 `--fg2` 的代价是整张表分不出主次，比列头略浅更亏。数据行一律不动色。
+    // 几乎同色同重 ⇒ 列头「日期」与数据「2026-09-07」分不出主次。改成 `--fg3`／12px（#567 前是
+    // 11.5px，列头最浅）＋ 数据行的**数值列**取 `--fg`（见下方 `td.…-cell-right` 一条），
+    // 「列头弱、数据强」的层级才读出来。
+    // #572-S3-3（转 #567）：`text-transform: uppercase` 把表头里的单位一并抬大写
+    // （`模拟体重（kg）`→`模拟体重（KG）`、`饮水（ml）`→`饮水（ML）`，1440 档实测）。
+    // 列头层级改由字号／字重／颜色承担（11.5px→12px 仍是最浅 `--fg3`＋600 字重），不再靠大写。
+    // 对比度账（#179）：`--fg3` 压白底 3.62:1，按 WCAG 短标签 3:1 一档仍有富余；数据行一律不动色。
+    // 短英文标签此前靠大写撑出的形态改由既有 `letter-spacing` 保留。
     '  color: var(--fg3);',
-    '  font-size: 11.5px;',
+    '  font-size: 12px;',
     '  font-weight: 600;',
-    '  text-transform: uppercase;',
     '  letter-spacing: .04em;',
     '  white-space: nowrap;',
     '}',
@@ -1829,7 +1851,10 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-list-rows-row {',
     '  display: grid;',
-    '  grid-template-columns: 44px minmax(0, 1fr) auto;',
+    // #567 D2：首轨 44px 定死把「合计摄入」四字硬折两行（1440 与 390 同值）。
+    // `minmax(44px, auto)`：短内容（▲／▼／— 标记）仍是 44px（旧观感不动、跨行最小对齐不动），
+    // 长标签按内容撑开、恒单行。行自身仍是独立栅格（跨行不对齐本就只靠 44px 下限）。
+    '  grid-template-columns: minmax(44px, auto) minmax(0, 1fr) auto;',
     '  gap: 8px;',
     '  align-items: center;',
     '  padding: 10px 14px;',
@@ -1900,7 +1925,9 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-detail-section-title {',
     '  margin: 0;',
-    '  font-size: 17px;',
+    // #567 J4（§5.2 标题 18 吸收 17／18／20／22）：17→18。KPI 主数字 22 不动（#154 用户 verdict＋
+    // #544 终审既判），级差 22−18＝4 仍满足 `ui-fix-154`（≥4px）。
+    '  font-size: 18px;',
     '  font-weight: 600;',
     '}',
     '.' + p + 'block-detail-section-meta {',
@@ -1913,7 +1940,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '.' + p + 'block-detail-section-wake {',
     '  color: var(--fg3);',
     '  font-family: "SF Mono", monospace;',
-    '  font-size: 11.5px;',
+    // #567 J4（§5.2 次级 12 吸收 12／11.5）。
+    '  font-size: 12px;',
     '}',
     '.' + p + 'block-detail-section-dev {',
     '  display: inline-flex;',
@@ -1955,7 +1983,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  align-items: center;',
     '  min-height: 44px;',
     '  padding: 0 14px;',
-    '  font-size: 14px;',
+    // #567 J4（§5.2 区块标题 15 吸收 14／15）。
+    '  font-size: 15px;',
     '  font-weight: 600;',
     '  cursor: pointer;',
     '  list-style: none;',

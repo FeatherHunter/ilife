@@ -234,6 +234,9 @@ function normalizePct(raw: unknown, kind: ChartKind): number {
 
 type LabelsMode = 'edge' | 'all' | 'none' | 'select';
 
+/** 数值标签模式（#567 起含 `'last'`：只标最后一个有效点）。 */
+type ShowValuesMode = boolean | 'edge' | 'last';
+
 interface ResolvedCommon {
   readonly width: number;
   readonly height: number;
@@ -243,7 +246,7 @@ interface ResolvedCommon {
   readonly colors: readonly string[] | undefined;
   readonly format: ((value: number) => string) | undefined;
   readonly labels: LabelsMode;
-  readonly showValues: boolean | 'edge';
+  readonly showValues: ShowValuesMode;
   readonly labelRotate: number;
   readonly yMin: number | undefined;
   readonly yMax: number | undefined;
@@ -256,7 +259,7 @@ interface CommonDefaults {
   readonly width: number;
   readonly height: number;
   readonly labels: LabelsMode;
-  readonly showValues: boolean | 'edge';
+  readonly showValues: ShowValuesMode;
 }
 
 function resolveCommon(raw: unknown, def: CommonDefaults): ResolvedCommon {
@@ -274,7 +277,7 @@ function resolveCommon(raw: unknown, def: CommonDefaults): ResolvedCommon {
       : undefined,
     format: o !== undefined && typeof o.format === 'function' ? o.format : undefined,
     labels: labels === 'all' || labels === 'none' || labels === 'select' || labels === 'edge' ? labels : def.labels,
-    showValues: showValues === true || showValues === false || showValues === 'edge' ? showValues : def.showValues,
+    showValues: showValues === true || showValues === false || showValues === 'edge' || showValues === 'last' ? showValues : def.showValues,
     labelRotate: numOr(o === undefined ? undefined : o.labelRotate, 0),
     yMin: o !== undefined && isNum(o.yMin) ? o.yMin : undefined,
     yMax: o !== undefined && isNum(o.yMax) ? o.yMax : undefined,
@@ -584,11 +587,23 @@ function ticksSvg(frame: Frame, lo: number, hi: number, count: number, format: (
  *
  *  #424 补一条下限（只对 line 的 `'select'`）：**峰值落在端点时首＋峰＋尾去重后只剩 2 个标签**
  *  （单调下降的体重曲线必然如此，峰值就是首日），横轴中段又变成没有时间参照。故去重后不足 3 个、
- *  且点数 ≥3 时，补一个**离首点最远的中间点**——仍满足「首＋峰＋尾」，顺带给出中段参照。 */
-function labelIndexes(mode: LabelsMode, items: readonly ChartItem[], select: 'peak' | 'edge' = 'peak'): readonly number[] {
+ *  且点数 ≥3 时，补一个**离首点最远的中间点**——仍满足「首＋峰＋尾」，顺带给出中段参照。
+ *
+ *  #567 追加 `every`（只对 `'all'`）：每 k 点取一枚（含末点），给「点全画、标签抽稀」用；
+ *  非 `'all'` 或非法 k（非 ≥2 有限数）时忽略（默认行为不变）。 */
+function labelIndexes(mode: LabelsMode, items: readonly ChartItem[], select: 'peak' | 'edge' = 'peak', every?: number): readonly number[] {
   const n = items.length;
   if (mode === 'none' || n === 0) return [];
-  if (mode === 'all') return items.map((_, i) => i);
+  if (mode === 'all') {
+    if (every !== undefined && Number.isFinite(every) && Math.floor(every) >= 2) {
+      const k = Math.floor(every);
+      const picked: number[] = [];
+      for (let i = 0; i < n; i += k) picked.push(i);
+      if (picked[picked.length - 1] !== n - 1) picked.push(n - 1);
+      return picked;
+    }
+    return items.map((_, i) => i);
+  }
   if (mode === 'edge' || (mode === 'select' && select === 'edge')) return n === 1 ? [0] : [0, n - 1];
   let peak = 0;
   let peakValue = -Infinity;
@@ -617,10 +632,11 @@ function xLabelsSvg(
   select: 'peak' | 'edge' = 'peak',
   xOf: (index: number, count: number) => number = (i, n) => xAt(frame, i, n),
   gap?: number,
+  every?: number,
 ): string {
   if (common.labels === 'none') return '';
   const baseY = frame.y1 + (gap ?? (common.compact ? 9 : 12));
-  return labelIndexes(common.labels, items, select).map((i) => {
+  return labelIndexes(common.labels, items, select, every).map((i) => {
     const x = xOf(i, items.length);
     const rotate = common.labelRotate === 0 ? '' : ' transform="rotate(' + common.labelRotate + ' ' + n1(x) + ' ' + n1(baseY) + ')"';
     return '<text class="' + STYLE_PREFIX + 'charts-xlabel" x="' + n1(x) + '" y="' + n1(baseY)
@@ -628,14 +644,16 @@ function xLabelsSvg(
   }).join('');
 }
 
-/** `showValues` 标签集合：`true` 全量（相邻中心距 < 26 单位跳过）／`'edge'` 首尾有效点／`false` 无。 */
-function valueIndexes(mode: boolean | 'edge', frame: Frame, items: readonly ChartItem[]): readonly number[] {
+/** `showValues` 标签集合：`true` 全量（相邻中心距 < 26 单位跳过）／`'edge'` 首尾有效点／
+ *  `'last'` 只标最后一个有效点（#567）／`false` 无。 */
+function valueIndexes(mode: ShowValuesMode, frame: Frame, items: readonly ChartItem[]): readonly number[] {
   if (mode === false) return [];
   const valid: number[] = [];
   items.forEach((item, i) => {
     if (item.value !== null) valid.push(i);
   });
   if (valid.length === 0) return [];
+  if (mode === 'last') return [valid[valid.length - 1]];
   if (mode === 'edge') return valid.length === 1 ? [valid[0]] : [valid[0], valid[valid.length - 1]];
   const out: number[] = [];
   let lastX = -Infinity;
@@ -879,6 +897,9 @@ function renderLine(raw: LineChartInput): ChartOutput {
       ? opts.highlightPoints
       : undefined,
     series: opts !== undefined && Array.isArray(opts.series) ? (opts.series as readonly ChartSeries[]) : undefined,
+    labelEvery: opts !== undefined && isNum(opts.labelEvery) && Math.floor(opts.labelEvery) >= 2
+      ? Math.floor(opts.labelEvery)
+      : undefined,
   };
   const items = normalizeItems(input.items, 'line', true);
   if (items.length === 0) return emptyOutput('line', input.options);
@@ -1144,8 +1165,10 @@ function renderLine(raw: LineChartInput): ChartOutput {
         + '" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
       /* 末值文本受 `showValues`／`labels:'select'` 门控（旧 `charts.js:619-621`）；高亮圈无条件。
        * #424：末值常落在绘图区**右边缘**（末点就在 `frame.x1` 上），`middle` 锚会让文字一半探出图外
-       *  （实测「70.6kg」右半截贴到卡片边）。距边不足 6% 宽时改 `end`／`start` 锚并收进 4 单位。 */
-      if (line.showValues !== false || line.labels === 'select') {
+       *  （实测「70.6kg」右半截贴到卡片边）。距边不足 6% 宽时改 `end`／`start` 锚并收进 4 单位。
+       * #567：`showValues:'last'` 时末值已由上面的数值标签画出（恰一枚），此处只留圈、不再追加文本
+       * （否则同一末值印两遍）。 */
+      if ((line.showValues !== false && line.showValues !== 'last') || line.labels === 'select') {
         const edgeRatio = (p[0] - frame.x0) / frame.w;
         const lastAnchor = edgeRatio > 0.94 ? 'end' : edgeRatio < 0.06 ? 'start' : 'middle';
         const lastX = edgeRatio > 0.94 ? p[0] - 4 : edgeRatio < 0.06 ? p[0] + 4 : p[0];
@@ -1258,7 +1281,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
     + marksSvg
     + valuesSvg
     + markPointSvg
-    + xLabelsSvg(line, frame, items, 'peak', undefined, LINE_LABEL_GAP)
+    + xLabelsSvg(line, frame, items, 'peak', undefined, LINE_LABEL_GAP, line.labelEvery)
     + '</svg></div>';
   return { kind: 'line', html, empty: points === 0, points };
 }
@@ -1286,6 +1309,8 @@ interface ResolvedLineOptions extends ResolvedCommon {
   readonly fillBetween: ChartFillBetween | undefined;
   readonly highlightPoints: 'turns' | 'crossings' | undefined;
   readonly series: readonly ChartSeries[] | undefined;
+  /** X 轴标签抽稀步长（#567）：`labels:'all'` 时每 k 点标一枚（含末点）；非法值＝全标。 */
+  readonly labelEvery: number | undefined;
 }
 
 /* ── bar ──────────────────────────────────────────────────────────────── */
@@ -1337,12 +1362,12 @@ function renderBar(raw: BarChartInput): ChartOutput {
     }, 0)
     : 0;
 
-  const tickN = 0;
-  const frame = makeFrame(common, insetsFor(common, {
-    tickWidth: 0,
-    labelHeight: common.labels === 'none' ? 0 : (common.compact ? 10 : 14),
-    valueHeight: common.compact ? 9 : 12,
-  }));
+  /* #567 柱状 Y 轴刻度（默认不开：`yTicks` 缺省 → 0 条，行为与改前逐字同）；
+   *  数值标签抽稀步长（`valueThin`，用户单位；非法值＝全标）。 */
+  const barTicks = tickCount(opts === undefined ? undefined : opts.yTicks);
+  const valueThin = opts !== undefined && isNum(opts.valueThin) && (opts.valueThin as number) > 0
+    ? (opts.valueThin as number)
+    : undefined;
 
   let lo = 0;
   let hi = 1;
@@ -1366,6 +1391,23 @@ function renderBar(raw: BarChartInput): ChartOutput {
     lo = dlo;
     hi = dhi;
   }
+  /* 刻度留白按移动端字号估（与折线同口径 `LINE_TEXT_MOBILE.tick`）；不开刻度时三项全 0，
+   * 绘图区几何与改前逐字同（`tickN = 0` 旧口径）。 */
+  let tickTextW = 0;
+  if (barTicks >= 2) {
+    for (let i = 0; i < barTicks; i += 1) {
+      const tv = lo + ((hi - lo) * i) / (barTicks - 1);
+      tickTextW = Math.max(tickTextW, textWidthUnits(fmtValue(round2(tv), common.format), LINE_TEXT_MOBILE.tick));
+    }
+  }
+  const frame = makeFrame(common, insetsFor(common, {
+    tickWidth: barTicks === 0 ? 0 : (common.compact ? 16 : 22),
+    labelHeight: common.labels === 'none' ? 0 : (common.compact ? 10 : 14),
+    valueHeight: common.compact ? 9 : 12,
+    minLeft: barTicks === 0 ? 0 : Math.ceil(tickTextW) + 9,
+    minTop: barTicks === 0 ? 0 : LINE_TICK_TOP_MIN,
+  }));
+
   const yZero = yAt(frame, 0, lo, hi);
   const slot = frame.w / items.length;
   const barW = Math.min(slot * (common.compact ? 0.82 : 0.62), 34);
@@ -1422,10 +1464,38 @@ function renderBar(raw: BarChartInput): ChartOutput {
     barsSvg += group + '</g>';
   });
 
-  /* 数值标签：单柱 = 值；stacked = 柱顶合计；grouped = 每子柱顶部 */
+  /* 数值标签：单柱 = 值；stacked = 柱顶合计；grouped = 每子柱顶部。
+   *  #567：`false` 无；`true` 全量（`valueThin` 给正数时按柱中心距抽稀，默认不变）；
+   *  `'edge'` 只标首尾有效点（改前落进全开那支——59 柱 59 枚压字即此 bug）；
+   *  `'last'` 只标末值。抽稀只作用于柱组一级（grouped 整组取舍，不拆组内子柱）。 */
+  const labelSet: ReadonlySet<number> = (() => {
+    if (common.showValues === false) return new Set<number>();
+    if (common.showValues === true && valueThin !== undefined) {
+      const keep = new Set<number>();
+      let lastX = -Infinity;
+      items.forEach((item, i) => {
+        if (item.value === null && !multi) return;
+        const cx = frame.x0 + slot * (i + 0.5);
+        if (cx - lastX < valueThin) return;
+        keep.add(i);
+        lastX = cx;
+      });
+      return keep;
+    }
+    if (common.showValues === true) return new Set(items.map((_, i) => i));
+    /* 多值模式（stacked／grouped）的 `item.value` 为空，`valueIndexes` 按值取会落空——
+     * 按柱组取首末（`'edge'` 首尾组、`'last'` 末组），标签内容仍走各组既有口径（合计／子柱值）。 */
+    if (multi) {
+      if (items.length === 0) return new Set<number>();
+      if (common.showValues === 'last') return new Set([items.length - 1]);
+      return new Set(items.length === 1 ? [0] : [0, items.length - 1]);
+    }
+    return new Set(valueIndexes(common.showValues, frame, items));
+  })();
   let valuesSvg = '';
-  if (common.showValues !== false) {
+  if (labelSet.size > 0) {
     items.forEach((item, i) => {
+      if (!labelSet.has(i)) return;
       const cx = frame.x0 + slot * (i + 0.5);
       if (!multi) {
         const value = item.value as number;
@@ -1463,9 +1533,12 @@ function renderBar(raw: BarChartInput): ChartOutput {
   const html = containerOpen('bar', common, STYLE_PREFIX + 'charts-bar')
     + legendHtml(legendEntries)
     + svgOpen(common)
-    + (common.grid ? gridSvg(frame) : '')
+    /* #567：开 `yTicks` 时网格线与刻度线同条数同位置（折线 #512 口径）；不开时 `tickN = 0`
+     * 回退旧三线口径，几何与改前逐字同。 */
+    + (common.grid ? gridSvg(frame, barTicks) : '')
     + barsSvg
     + valuesSvg
+    + ticksSvg(frame, lo, hi, barTicks, common.format)
     /* t-chartfix：柱标签取柱列中心（与 `barsSvg` 同一 band 标度），不得用点标度。 */
     + xLabelsSvg(common, frame, items, 'edge', (i, n) => frame.x0 + (frame.w / n) * (i + 0.5))
     + '</svg></div>';

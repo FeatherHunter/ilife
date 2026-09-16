@@ -185,7 +185,9 @@ describe('B-03 表格', () => {
     assert.ok(html.includes('<td class="ilife-block-data-table-cell-right" data-label="V">1</td>'), '右对齐+值+标签');
     const css = blocksCss();
     assert.ok(css.includes('tr:last-child td'), '末行无边框规则');
-    assert.ok(css.includes('text-transform: uppercase'), 'th 大写规则');
+    // #567／#572-S3-3：`th` 不得再抬大写（`模拟体重（kg）` 曾被渲染成 `KG`）。
+    // 反向守卫：其它选择器的大写（如眉标）不在此断言范围内，只钉 `th` 这一条。
+    assert.ok(!/block-data-table th\s*\{[^}]*text-transform:\s*uppercase/.test(css), 'th 仍带 text-transform:uppercase');
     assert.ok(css.includes('background-color: transparent'), 'th 透明背景规则');
   });
 

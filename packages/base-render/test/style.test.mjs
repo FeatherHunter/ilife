@@ -568,8 +568,20 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
       '自定义前缀下关键帧名必须机械改写');
   });
 
-  it('T13 零装饰渐变（唯一例外 = 复用的 charts 虚线图例）', () => {
+  it('T12b 页面段字号下限守卫（#567 G-2：t516 §5.2 下限 11px，图表段豁免）', () => {
+    // G-2 登记的落点：页面可自由写 8px 而公共层不管——本断言钉死共享样式**页面段**
+    // （基准量法：整份 CSS 按 charts 起点切出图表段，图表段是 SVG 用户单位，不计入 11px 下限）。
+    // charts 起点取 `chartsCss()` 的逐字节复用（T12 已钉死逐字节相等，故此处不是第二份口径）。
     const css = buildStyleSheet().css;
+    const chartsAt = css.indexOf(chartsCss(STYLE_PREFIX));
+    assert.ok(chartsAt > 0, 'charts 段起点找不到（T12 的逐字节复用被破坏了）');
+    const pageSeg = css.slice(0, chartsAt);
+    const sizes = [...pageSeg.matchAll(/font-size:\s*([\d.]+)px/g)].map((m) => Number(m[1]));
+    assert.ok(sizes.length > 0, '页面段无字号规则（解析异常）');
+    assert.ok(Math.min(...sizes) >= 11, '页面段最小字号跌破 11px 下限：' + Math.min(...sizes));
+  });
+
+  it('T13 零装饰渐变（唯一例外 = 复用的 charts 虚线图例）', () => {    const css = buildStyleSheet().css;
     const chartsText = chartsCss(STYLE_PREFIX);
     const withoutCharts = css.split(chartsText).join('');
     assert.equal((withoutCharts.match(/gradient/gi) ?? []).length, 0, '非 charts 段必须零渐变（视觉尺 H-04）');

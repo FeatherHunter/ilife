@@ -302,7 +302,8 @@ export function pageShapeCss(input?: { readonly prefix?: string }): string {
     '}',
     root + ' .' + p + 'block-fact-strip-value {',
     '  color: var(--fg);',
-    '  font-size: 14px;',
+    // #567 J4（§5.2 区块标题 15 吸收 14／15）。
+    '  font-size: 15px;',
     '  font-weight: 600;',
     '  overflow-wrap: anywhere;',
     '}',
@@ -367,7 +368,8 @@ export function pageShapeCss(input?: { readonly prefix?: string }): string {
     root + ' .' + p + 'block-media-caption {',
     '  margin-top: 8px;',
     '  color: var(--fg);',
-    '  font-size: 14px;',
+    // #567 J4（§5.2 区块标题 15 吸收 14／15）。
+    '  font-size: 15px;',
     '  font-weight: 600;',
     '}',
     root + ' .' + p + 'block-media-note {',
@@ -436,7 +438,8 @@ export function pageShapeCss(input?: { readonly prefix?: string }): string {
     '  flex: 1 1 auto;',
     '  min-width: 0;',
     '  color: var(--fg);',
-    '  font-size: 14px;',
+    // #567 J4（§5.2 区块标题 15 吸收 14／15）。
+    '  font-size: 15px;',
     '  font-weight: 600;',
     '}',
     root + ' .' + p + 'block-timeline-note {',

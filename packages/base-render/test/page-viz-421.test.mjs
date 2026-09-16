@@ -396,7 +396,7 @@ describe('#421 公共层纪律（色值／token 闭集／样式落盘／领域�
       [DIST_ROW, 'grid-template-columns', 'minmax(0, 6em) minmax(0, 1fr) auto'], [DIST_ROW, 'font-size', '13px'],
       [DIST_BAR, 'height', '8px'], [DIST_FILL, 'height', '100%'], [DIST_FILL, 'background', DEFAULT_FILL_VAR],
       [CHIP, 'font-size', '12px'], [CHIP, 'background', 'var(--soft)'],
-      [CHANGE_ROW, 'font-size', '14px'], [CHANGE_LABEL, 'flex', '1'],
+      [CHANGE_ROW, 'font-size', '15px'], [CHANGE_LABEL, 'flex', '1'],
       [CHANGE_OLD, 'text-decoration', 'line-through'], [CHANGE_OLD, 'color', 'var(--fg2)'],
       [CHANGE_ARROW, 'min-width', '1.2em'], [CHANGE_NEW, 'font-weight', '600'],
     ];

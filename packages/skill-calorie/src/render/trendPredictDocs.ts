@@ -87,13 +87,12 @@ function deficitConclusion(d: DeficitData): string {
     : '这段时间平均每天缺口 ' + avg + ' 卡，一周合计 ' + week + ' 卡，还没有形成减重缺口。';
 }
 
-/** 日均消耗的**加法分解改形状**（票面改法要点 ⑥；#516 §3.1 的「堆叠条」＝`renderDistributionRows`）。
- *  卡片 `detail` 那串 `日常消耗 N ＋ 运动 M 卡` 是既有断言的原文（`analysis-deficit-385.test.mjs:192`），
- *  本票一字不改它；分解另落形状：两行「名称 ＋ 占比条 ＋ 数值」，占比＝该项 ÷ 日均消耗。 */
+/** 日均消耗的加法分解改形状（要点 ⑥；`renderDistributionRows`）。KPI `detail` 原文是 385 冻结
+ *  （一字不改）；#567 D5 起值槽只印占比（绝对数只留 detail），同数不两处。 */
 function deficitBurnMix(d: DeficitData): string {
   const burn = d.summary.avgBurn;
   if (burn <= 0) return '';
-  const row = (label: string, value: number) => ({ label, value: value + ' 卡', pct: Math.round((value / burn) * 100) });
+  const row = (label: string, value: number) => ({ label, value: Math.round((value / burn) * 100) + '%', pct: Math.round((value / burn) * 100) });
   return renderDistributionRows({ rows: [row('日常消耗', d.target.tdee), row('运动', d.summary.avgExerciseBurn)] });
 }
 
@@ -165,7 +164,8 @@ export function buildDeficitDoc(d: DeficitData): string {
     renderTocBlock({ items: navItems.map((s) => ({ id: s.id, text: s.text })) }),
     pageSection('sec-params', renderParamForm({
       fields: [{ name: 'start', label: '开始', value: d.meta.start }, { name: 'end', label: '结束', value: d.meta.end }],
-      description: '缺口就是当天消耗减掉当天吃的：正数代表有缺口。消耗算日常消耗加当天运动，摄入只算吃进去的，喝水不算。',
+      /* #567 D4：口径定义只留页脚口径行；参数说明只讲窗口起止（改前与口径行逐句同义）。 */
+      description: '开始和结束是这页统计的窗口，共 ' + d.meta.days + ' 天。',
     })),
     pageSection('sec-overview', renderKpiGrid([
       { label: '日均摄入', value: String(d.summary.avgIntake), unit: '卡', detail: '目标 ' + d.target.intake + ' 卡/天' },

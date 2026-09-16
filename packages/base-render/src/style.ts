@@ -138,7 +138,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  backdrop-filter: blur(20px) saturate(180%);',
     '  color: #f0f0f0;',
     '  box-shadow: 0 10px 32px rgba(0, 0, 0, .32), 0 0 0 .5px rgba(255, 255, 255, .08) inset;',
-    '  font-size: 12.5px;',
+    // #567 J4（§5.2 正文 13 吸收 13／12.5）。
+    '  font-size: 13px;',
     '  line-height: 1.4;',
     '  font-feature-settings: "tnum";',
     '  pointer-events: auto;',
@@ -165,7 +166,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '.' + p + 'toast-icon {',
     '  flex: 0 0 auto;',
     '  padding-top: 1px;',
-    '  font-size: 20px;',
+    // #567 J4（§5.2 标题 18 吸收 17／18／20／22）：装饰字形 20→18。
+    '  font-size: 18px;',
     '  line-height: 1;',
     '}',
     // body 是 toast 的**唯一**内容列（静态产出器与 helpers 运行时同构，见 `controls.ts`
@@ -184,7 +186,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '.' + p + 'toast-title {',
     '  margin-bottom: 2px;',
     '  color: #fff;',
-    '  font-size: 12.5px;',
+    // #567 J4（§5.2 正文 13 吸收 13／12.5）。
+    '  font-size: 13px;',
     '  font-weight: 600;',
     '  line-height: 1.4;',
     '}',
@@ -202,7 +205,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  border-radius: 999px;',
     '  background: rgba(255, 255, 255, .12);',
     '  color: #c8c8cc;',
-    '  font-size: 10px;',
+    // #567 J4（§5.2 下限 11：10／10.5／11 一律抬到 11）。
+    '  font-size: 11px;',
     '  font-weight: 700;',
     '  letter-spacing: .02em;',
     '  line-height: 1.6;',
@@ -225,7 +229,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  border-radius: 8px;',
     '  background: rgba(255, 255, 255, .08);',
     '  color: #c8c8cc;',
-    '  font-size: 10px;',
+    // #567 J4（§5.2 下限 11）。
+    '  font-size: 11px;',
     '  font-weight: 700;',
     '  font-variant-numeric: tabular-nums;',
     '}',
@@ -247,7 +252,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  background: rgba(0, 0, 0, .32);',
     '  color: #aeb0b8;',
     '  font-family: "SF Mono", monospace;',
-    '  font-size: 10.5px;',
+    // #567 J4（§5.2 下限 11）。
+    '  font-size: 11px;',
     '  line-height: 1.5;',
     '  white-space: pre-wrap;',
     '  max-height: 140px;',
@@ -278,7 +284,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  background: rgba(255, 255, 255, .10);',
     '  color: #34c759;',
     '  font-family: inherit;',
-    '  font-size: 10.5px;',
+    // #567 J4（§5.2 下限 11）。
+    '  font-size: 11px;',
     '  font-weight: 500;',
     '  white-space: nowrap;',
     '  cursor: pointer;',
@@ -650,14 +657,16 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  color: var(--fg2);',
     '}',
     '.' + p + 'empty-icon {',
-    '  font-size: 40px;',
+    // #567 J4（§5.2 大数 28 吸收 26／28／32／40）：装饰图标 40→28。
+    '  font-size: 28px;',
     '  line-height: 1.2;',
     '  opacity: .5;',
     '}',
     '.' + p + 'empty-text {',
     '  margin-top: 8px;',
     '  color: var(--fg);',
-    '  font-size: 17px;',
+    // #567 J4（§5.2 标题 18 吸收 17／18／20／22）。
+    '  font-size: 18px;',
     '  font-weight: 600;',
     '}',
     '.' + p + 'empty-hint {',
