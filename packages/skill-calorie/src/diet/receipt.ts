@@ -32,7 +32,8 @@ import { renderCaliberLine, renderChips, renderDataTable, renderKpiGrid, renderT
 import type { KpiCardInput, StatusKind } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
-import { getDailySummary } from '../fetch/diet.js';
+import { getDailySummary, listMeals } from '../fetch/diet.js';
+import type { MealRow } from '../fetch/diet.js';
 import { todayISO } from '../analysis/utils.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
@@ -158,6 +159,29 @@ function paramValue(col: string, params: Record<string, unknown>): string | numb
   return typeof raw === 'number' || typeof raw === 'string' ? raw : null;
 }
 
+/** 新增类回执的「本次结果」列要印**真值**（#591 裁定4：记一餐那张表不许 9 行复读同一个 `—`）。
+ *  单条写入的写口报了 `recordId` 与写入日期 ⇒ 按 `listMeals` 读回那一行，逐字段印库里的值
+ *  （写口填的缺省如克数 100／碳水 0 也是**真写进去的值**，不是编的）；读不回那一行就退本次参数。 */
+const DIET_COL_OF: Readonly<Record<string, keyof MealRow>> = {
+  foodName: 'food_name', calories: 'calories', protein: 'protein', carbs: 'carbs',
+  fat: 'fat', grams: 'grams', note: 'note', date: 'date', time: 'time',
+};
+
+/** 本次真写进去的那一行（按 `recordId` 认行、按回执报的写入日期读回）；多行写入／无 id 即 null。 */
+function writtenRowOf(receipt: CrudReceipt, db: DatabaseSync): MealRow | null {
+  if (receipt.recordId === null) return null;
+  const date = receipt.items.map((it) => it.date).find((d) => typeof d === 'string' && d !== '');
+  if (date === undefined) return null;
+  return listMeals(db, date).find((r) => r.id === receipt.recordId) ?? null;
+}
+
+/** 新增类一行「本次结果」：库里那一行的真值优先，取不到才退本次参数（缺值仍 `—`）。 */
+function createdValueOf(col: string, written: MealRow | null, eff: Record<string, unknown>): string | number | null {
+  const key = DIET_COL_OF[col];
+  if (written !== null && key !== undefined) return written[key];
+  return paramValue(col, eff);
+}
+
 /** 改某日那一族把待改字段放在 `params.fields` 里；摊平后与普通参数同一读法。 */
 function flatParams(params: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -214,8 +238,8 @@ function snapshotTable(receipt: CrudReceipt): string {
   });
 }
 
-/** 📋 字段变更 区块：改类出「改前 → 改后」；删类出被删快照；新增类只摆写入字段名。 */
-function changeSection(receipt: CrudReceipt, params: Record<string, unknown>): Section {
+/** 📋 字段变更 区块：改类出「改前 → 改后」；删类出被删快照；新增类逐字段印本次真值。 */
+function changeSection(receipt: CrudReceipt, params: Record<string, unknown>, db: DatabaseSync): Section {
   const title = '📋 字段变更';
   if (receipt.op === 'delete') return { id: 'sec-change', title, html: snapshotTable(receipt) };
   if (receipt.op === 'update') {
@@ -230,14 +254,16 @@ function changeSection(receipt: CrudReceipt, params: Record<string, unknown>): S
     return { id: 'sec-change', title, html };
   }
   /* 新增类（含批量导入）：**不硬套「改前 → 改后」**（票面专属约束①）——它是新长出来的一条，
-     没有改前可言；老实物 `:351-372` 的 create 分支摆的是新值、箭位藏起来，本支只摆**本次写入的
-     字段名**，值由副题摘要（含食物名）与「📋 复制明细」给：导入成批时逐条值不落在这一张表里。 */
+     没有改前可言；老实物 `:351-372` 的 create 分支摆的是新值、箭位藏起来，本支摆**本次写进去的值**
+     （#591 裁定4：单条写入的那 9 行照库里那一行逐字段印真值，不摆字段名复读同一个缺值符）。
+     多行写入（批量补记／复制）没有单行 id ⇒ 那两页仍按本次参数印，取不到就是 `—`（不编数）。 */
   const eff = flatParams(params);
+  const written = writtenRowOf(receipt, db);
   const html = renderDataTable({
     columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '本次结果' }],
     rows: receipt.writtenFields.map((col) => ({
       k: fieldLabelOf(col),
-      v: cellOf(paramValue(col, eff)),
+      v: cellOf(createdValueOf(col, written, eff)),
     })),
     caption: '新增内容（本次写入的字段）',
     emptyText: '本次没有写入字段——逐条结果（含跳过与失败）见「📋 复制明细」。',
@@ -335,7 +361,7 @@ function buildDietReceiptDoc(
       id: 'sec-op', title: '✅ 操作回执',
       html: renderKpiGrid(statusCards(key, receipt)) + writtenChips(receipt) + batchCountsCard(receipt),
     },
-    changeSection(receipt, params),
+    changeSection(receipt, params, db),
   ];
   if (receipt.op !== 'delete') sections.push(dailySection(db, receiptDate(params)));
   const items = itemsSection(receipt);

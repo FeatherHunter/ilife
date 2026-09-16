@@ -41,17 +41,17 @@ const PAGE_CASES = [
   {
     id: '#3 补记饮食', wake: '补记饮食', key: 'calorie.diet.add',
     params: { foodName: '米饭', calories: 500, protein: 10, time: '12:30:00', date: D },
-    gone: ['记一餐 · 回执'], want: ['补记饮食 · 回执', '已补记：'],
+    gone: ['记一餐 · 回执'], want: ['补记饮食回执', '已补记：'],
   },
   {
     id: '#3b 拍营养表补记一餐', wake: '拍营养表补记一餐', key: 'calorie.diet.add',
     params: { foodName: '米饭', calories: 500, protein: 10, date: D, time: '12:30:00', note: '营养表补记' },
-    gone: ['记一餐 · 回执'], want: ['补记饮食 · 回执', '备注：营养表补记'],
+    gone: ['记一餐 · 回执'], want: ['补记饮食回执', '备注：营养表补记'],
   },
   {
     id: '#3c 记一餐（含备注）', wake: '记一餐（含备注）', key: 'calorie.diet.add',
     params: { foodName: '鸡胸', calories: 200, protein: 35, note: '加了辣酱' },
-    gone: ['记一餐 · 回执'], want: ['记一餐（含备注） · 回执', '备注：加了辣酱'],
+    gone: ['记一餐 · 回执'], want: ['记一餐（含备注）回执', '备注：加了辣酱'],
   },
   {
     id: '#4 批量补记饮食', wake: '批量补记饮食', key: 'calorie.diet.batch',
@@ -84,7 +84,8 @@ const PAGE_CASES = [
     gone: ['目标 —g', '总热量 1,916 蛋白', '· 目标 '],
     want: ['折算合计（千卡）', '每克 4 千卡', '每克 9 千卡'],
     // 目标设没设由库决定：这一条只守「占比 ＋ 目标」这半句的写法（没设明说没设，不许印「—g」）。
-    wantRe: [/占 \d+% · (未设定每天目标|每天目标 [\d.]+ 克)/],
+    // #588 跟改：这一格的中隔号已随「回执／配比页去分隔符」那一波换成逗号（`nutritionPortDocs.ts:242`）。
+    wantRe: [/占 \d+%(，未设定每天目标|，每天目标 [\d.]+ 克)/],
   },
   {
     id: '#9/#10 看营养分析', wake: '看营养分析', key: 'calorie.view.nutrition-analysis',

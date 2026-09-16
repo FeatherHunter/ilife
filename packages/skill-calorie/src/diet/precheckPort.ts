@@ -90,7 +90,7 @@ export function buildImportPrecheckView(db: DatabaseSync, items: unknown): Impor
     const base = { no: i + 1, productName: name, calories, matched: libCal !== null, libCalories: libCal };
     const v = validateRecord(rec);
     if (!v.ok) {
-      rows.push({ ...base, status: 'failed', reason: v.error ?? '记录不合法' });
+      rows.push({ ...base, status: 'failed', reason: humanReason(v.error ?? '记录不合法') });
       return;
     }
     if (checkDuplicate(db, name, brandOfImportRecord(rec))) {
@@ -160,6 +160,29 @@ const LABEL_FIELDS: readonly { key: string; label: string; unit: string; param: 
   { key: 'fiber', label: '膳食纤维 (g)', unit: 'g', param: '' },
   { key: 'sodium', label: '钠 (mg)', unit: 'mg', param: '' },
 ];
+
+/** 失败原因里的库列名 → 页上中文标签（#591 裁定5）。
+ *
+ *  原因文本由 `fetch/validate.ts` 出，印的是库列名（`缺少必填字段: fat`）；页上要的是读者看得懂的
+ *  中文——`LABEL_FIELDS` 那八个标签直接取（「脂肪 (g)」这类），校验器还会用到而标签表里没有的三个
+ *  （`dietary_fiber`／`product_name`／`source`）按同一口径补齐。 */
+const REASON_LABELS: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(LABEL_FIELDS.map((f) => [f.key, f.label])),
+  dietary_fiber: '膳食纤维 (g)',
+  product_name: '食品名',
+  source: '数据来源',
+};
+
+/** 逐行失败原因：只把**字段名那一处**换成中文标签，消息本体的措辞一字不动
+ *  （那几句不住本件，故只按已知的两种形状替换那一个 token；别的写法原样透传）。 */
+function humanReason(error: string): string {
+  const missing = /^缺少必填字段: ([a-z_]+)$/.exec(error);
+  if (missing !== null) return '缺少必填字段: ' + (REASON_LABELS[missing[1]] ?? missing[1]);
+  const head = /^([a-z_]+) (必须)/.exec(error);
+  if (head === null) return error;
+  const label = REASON_LABELS[head[1]];
+  return label === undefined ? error : label + error.slice(head[1].length);
+}
 
 function numOf(o: Record<string, unknown>, ...names: string[]): number | null {
   for (const n of names) {
