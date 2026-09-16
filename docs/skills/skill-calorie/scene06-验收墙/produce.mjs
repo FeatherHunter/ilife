@@ -175,6 +175,21 @@ for (const t of SCENE_06_GOAL) {
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const abs = (f) => join(OUT, f).replace(/\\/g, '/');
 const fileUrl = (f) => 'file:///' + abs(f);
+
+/* 另附三行：自造词只给命令不给产物（#291 乙：无卡；产物验收随 #290）。不进 manifest rows，墙格数不动。 */
+const extra = [
+  { seq: '附1', wake: '看目标推荐', kind: '无产物', cli: `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'`, why: '不出独立产物：#291 乙只给别名不给卡；页面验收随 #290 在办。' },
+  { seq: '附2', wake: '看目标配置', kind: '无产物', cli: 'calorie-cmd-read calorie.view.goal-config', why: '不出独立产物：#291 乙只给别名不给卡；页面验收随 #290 在办。' },
+  { seq: '附3', wake: '看目标状态', kind: '无产物', cli: 'calorie-cmd-read calorie.view.goal-status', why: '不出独立产物：#291 乙只给别名不给卡；页面验收随 #290 在办。' },
+].map((r) => `  <article class="row" id="r${r.seq}">
+    <div class="head"><span class="seq">${r.seq}</span><b>${esc(r.wake)}</b><span class="kind">${esc(r.kind)}</span></div>
+    <div class="prompt"><span class="lbl">用户会说的话</span><pre>说「${esc(r.wake)}」即走本行命令（冻结词表无此词，无 prompt_template 原文）。</pre></div>
+    <dl>
+      <dt>唤醒词</dt><dd><code>${esc(r.wake)}</code></dd>
+      <dt>命令</dt><dd><code>${esc(r.cli)}</code></dd>
+      <dt>产物绝对路径</dt><dd>${esc(r.why)}</dd>
+    </dl>
+  </article>`).join('\n');
 const chain = rows.map((r) => `  <article class="row" id="r${r.seq}">
     <div class="head"><span class="seq">${r.seq}</span><b>${esc(r.wake)}</b><span class="kind">${esc(r.kind)}</span></div>
     <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>${esc(r.prompt || '（该词没有 prompt_template）')}</pre></div>
@@ -189,13 +204,13 @@ const chain = rows.map((r) => `  <article class="row" id="r${r.seq}">
 const notShipped = [
   { what: '暂停所有目标／重启所有目标 的预检确认页', why: '这两条词**无空位**（不带参数），按 2026-09-13 裁定不出预检页，只在写后回执页上出现。' },
   { what: '定营养目标(自动算)／定饮水目标(自动算)／一键定全套目标 的独立回执页', why: '这三条词的命令本身就是预检确认页（先算给我看）；写由后续三条写命令落地，回执挂在那三条词上——不是漏做，见 `SKILL.md:75`。' },
-  { what: '三条自造词：看目标推荐／看目标配置／看目标状态', why: '它们不在场景 06 的 25 条冻结词表里（只在路由层，`src/goal/routes.ts:34-37`），也没有 HELP 卡片；归属与落地是票 #291 在办的事。' },
+  { what: '三条自造词：看目标推荐／看目标配置／看目标状态', why: '它们不在场景 06 的 25 条冻结词表里（只在路由层），也没有 HELP 卡片；#291 已关（乙：查找层别名查得到跑得通，权威词表与快照不动）；三页的产物验收随 #290 在办。本页另附三行只给命令不给产物。' },
   { what: '看目标完成率(按周)／(按月) 的独立页', why: '两条词今天都路由到 `calorie.view.goal-progress`，与「看本周目标」同页（只是窗口参数相同）——产物在，但**屏幕上看不出差别**，这一条该由用户裁：要不要按词出不同的窗口。' },
 ];
 
 writeFileSync(join(OUT, 'manifest.json'), JSON.stringify({
   batch: 'scene06-验收墙',
-  madeAt: '2026-09-15',
+  madeAt: '2026-09-16',
   source: '一次性的临时库（`seedFull` 种子 ＋ `CALORIE_TODAY=2026-09-07`），生产者 `produce.mjs`（本目录，入仓）',
   naming: '发布名 ＝ 清单 rows[].file；结果页 `<唤醒词>.html`、回执页 `<唤醒词>-回执.html`、预检页 `<唤醒词>-预检.html`——名字只在本清单算一处',
   gaps,
@@ -231,10 +246,11 @@ b.bad{color:#c0392b}
 </style></head><body><div class="wrap">
 <h1>场景06「目标管理」链路索引 · ${rows.length} 件</h1>
 <div class="sub">一条一条摆开：<b>用户会说的话（prompt 原文）→ 唤醒词 → 命令 → 产物绝对路径</b>。点「产物绝对路径」那一行即可打开该 HTML（绝对路径链接）。
-写类词走两段：<b>先出预检确认页（过程型）→ 用户确认 → 再出写后回执页（回执型）</b>。<br>
+写类词走两段：<b>先出预检确认页（过程型）→ 用户确认 → 再出写后回执页（回执型）</b>。另附 3 行自造词（只给命令，不出产物）。<br>
 其余入口：<a href="总索引.html">总索引</a> · <a href="手机墙-390.html">手机墙 390</a> · <a href="桌面墙-1280.html">桌面墙 1280</a>。</div>
-<div class="toc"><b>跳到：</b>${rows.map((r) => `<a href="#r${r.seq}">${esc(r.wake)}${r.kind === '过程型' ? '（预检）' : ''}</a>`).join('')}</div>
+<div class="toc"><b>跳到：</b>${rows.map((r) => `<a href="#r${r.seq}">${esc(r.wake)}${r.kind === '过程型' ? '（预检）' : ''}</a>`).join('')}<a href="#r附1">看目标推荐</a><a href="#r附2">看目标配置</a><a href="#r附3">看目标状态</a></div>
 ${chain}
+${extra}
 <div class="note"><h2>本批的缺口（如实记账）</h2>
 <ul>
 ${gaps.length ? gaps.map((g) => `<li>${esc(g)}</li>`).join('\n') : '<li>（无缺口：全部产物都是完整文档）</li>'}

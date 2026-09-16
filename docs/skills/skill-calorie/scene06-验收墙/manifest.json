@@ -1,6 +1,6 @@
 {
   "batch": "scene06-验收墙",
-  "madeAt": "2026-09-15",
+  "madeAt": "2026-09-16",
   "source": "一次性的临时库（`seedFull` 种子 ＋ `CALORIE_TODAY=2026-09-07`），生产者 `produce.mjs`（本目录，入仓）",
   "naming": "发布名 ＝ 清单 rows[].file；结果页 `<唤醒词>.html`、回执页 `<唤醒词>-回执.html`、预检页 `<唤醒词>-预检.html`——名字只在本清单算一处",
   "gaps": [],
@@ -255,7 +255,7 @@
       "key": "calorie.view.goal-weight",
       "cli": "calorie-cmd-read calorie.view.goal-weight --params '{\"window\":\"7d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看体重目标进度」。\n\n我想看体重目标进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 69527,
+      "bytes": 73518,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -495,7 +495,7 @@
       "key": "calorie.view.goal-predict",
       "cli": "calorie-cmd-read calorie.view.goal-predict --params '{\"window\":\"14d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看目标预测达成」。\n\n我想看按当前趋势预测的目标达成日与置信度(体重部分复用对比体重的预测逻辑)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 68392,
+      "bytes": 68457,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -512,7 +512,7 @@
     },
     {
       "what": "三条自造词：看目标推荐／看目标配置／看目标状态",
-      "why": "它们不在场景 06 的 25 条冻结词表里（只在路由层，`src/goal/routes.ts:34-37`），也没有 HELP 卡片；归属与落地是票 #291 在办的事。"
+      "why": "它们不在场景 06 的 25 条冻结词表里（只在路由层），也没有 HELP 卡片；#291 已关（乙：查找层别名查得到跑得通，权威词表与快照不动）；三页的产物验收随 #290 在办。本页另附三行只给命令不给产物。"
     },
     {
       "what": "看目标完成率(按周)／(按月) 的独立页",
