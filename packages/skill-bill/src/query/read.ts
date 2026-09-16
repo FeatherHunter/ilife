@@ -81,6 +81,22 @@ function listOut(input: {
   };
 }
 
+/** today 分支的标题判（**唯一判地**）：recent 不进本支（上游已分流）；
+ *  yesterday→查昨天／显式 date→查某天／无参→查今天（查账单别名同页，无入口标记）。 */
+function todayWakeWord(params: Record<string, unknown>): string {
+  if (params.date === 'yesterday') return '查昨天';
+  if (params.date !== undefined && params.date !== null && params.date !== '') return '查某天';
+  return '查今天';
+}
+
+/** today 分支的空态四句（**唯一判地**）：今天／昨天／某天／最近各一句；
+ *  查某天自指已摘（不说「查某天」，说换个日子再查一次）。 */
+function todayEmpty(params: Record<string, unknown>): { readonly emptyText: string; readonly emptyHint: string } {
+  if (params.date === 'yesterday') return { emptyText: '昨天还没有记录', emptyHint: '要补昨天那笔就说「记支出」。' };
+  if (params.date !== undefined && params.date !== null && params.date !== '') return { emptyText: '这一天没有记录', emptyHint: '要记一笔就说「记支出」；换个日子再查一次。' };
+  return { emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。' };
+}
+
 /** `bill.record.today`：查今天／查昨天／查某天（带 `date`）／查最近（`recent:true` ＋ `limit` 1~200）／查账单。
  *  当日无记录不是故障：照实出一张零行的页（老侧在 stderr 上留的那句 NOTE，本票改由页面上的空态承担）。 */
 export function viewRecordToday(params: Record<string, unknown>, db: BillDb): ViewOut {
@@ -102,11 +118,12 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   }
   const date = params.date === 'yesterday' ? yesterdayStr() : resolveQueryDate(params);
   const records = listToday(db, date);
+  const empty = todayEmpty(params);
   return listOut({
-    key, params, wakeWord: params.date === 'yesterday' ? '查昨天' : '查今天', window: date + ' 这一天', records,
+    key, params, wakeWord: todayWakeWord(params), window: date + ' 这一天', records,
     extra: { date },
-    emptyText: '这一天没有记录',
-    emptyHint: '要记一笔就说「记支出」；换个日子可以说「查某天」。',
+    emptyText: empty.emptyText,
+    emptyHint: empty.emptyHint,
   });
 }
 
