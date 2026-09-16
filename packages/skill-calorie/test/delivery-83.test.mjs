@@ -18,7 +18,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -453,7 +453,12 @@ test('#83 ⑥ 相对 SKILLS_DB_PATH：仍为文件态 exit 0 ＋ 绝对 delivery
 });
 
 test('#83 ⑥ 相对 --html：exit 0 ＋ 绝对 delivery.path（写的就是回传的那个路径）', () => {
-  const dir = mkDb('relout');
+  const dir = realpathSync(mkDb('relout'));
+  // #344 ④ · 上面这一记 realpath **是 macOS 的必需归一，不是放宽断言**：`os.tmpdir()` 在 macOS 返回
+  // `/var/folders/…`，而 `/var` 是指向 `/private/var` 的软链——子进程的 `process.cwd()` 拿到的是
+  // **真实路径** `/private/var/…`，于是它 `resolve('nested/rel.html')` 得到 `/private/var/…`，
+  // 与父进程用 `join(dir, …)` 拼出的 `/var/…` 字符串不等（同一份文件、两个名字）。
+  // 归一后两边比的是同一条真实路径；Linux／Windows 上 `realpathSync` 是恒等变换，断言强度不变。
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.lookup', '--params', JSON.stringify({ q: '看今日主页' }),
     '--html', join('nested', 'rel.html')], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, SKILLS_DB_PATH: dir },

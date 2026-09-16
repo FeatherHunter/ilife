@@ -58,9 +58,28 @@ function mkDir(tag) {
   return mkdtempSync(join(tmpdir(), 't204-' + tag + '-'));
 }
 
+/** #344 ② · 子进程运行时降噪：本 CLI 的 stderr 是**契约面**——首行恒 `ERR <n>: …`（见 ⑤ 的
+ *  `assert.match(r.stderr, /^ERR 5: /)`）。Node 22.13 的 `node:sqlite` 仍是实验特性，**首次加载即往
+ *  stderr 打一行 `ExperimentalWarning: SQLite is an experimental feature…`**，而 24.x 不再打
+ *  （实测：同一条 `require('node:sqlite')`，22.13 有告警、24.19 无）——于是同一条断言只在 22.13 红。
+ *  这不是产品行为差异，是运行时噪声差异：显式关掉「实验特性」这一类告警，让被测运行时在
+ *  22.13 与 24.x 上表现一致（`--disable-warning=ExperimentalWarning` 两个版本都认）。断言一字未改。
+ *  注：`process.on('warning', …)` 在 22.13 上**压不住**这条（实测监听器被调用了，告警照样落 stderr），
+ *  故只能走启动参数。 */
+const RUNTIME_QUIET = '--disable-warning=ExperimentalWarning';
+/** 子进程环境：显式 tmp 库（本用例自己的路径）＋ 运行时降噪（保留调用方已有的 NODE_OPTIONS）。 */
+function childEnvOf(dir) {
+  const prior = process.env.NODE_OPTIONS;
+  return {
+    ...process.env,
+    SKILLS_DB_PATH: dir,
+    NODE_OPTIONS: prior ? prior + ' ' + RUNTIME_QUIET : RUNTIME_QUIET,
+  };
+}
+
 /** 真 spawn（同步）：argv ＋ JSON(stdout) ＋ exit。`tz` 非空时覆写子进程时区。 */
 function run(dir, args, tz) {
-  const childEnv = { ...process.env, SKILLS_DB_PATH: dir };
+  const childEnv = childEnvOf(dir);
   if (tz !== undefined) childEnv.TZ = tz;
   const r = spawnSync(NODE_BIN, [BIN, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: childEnv });
   let env = null;
@@ -71,7 +90,7 @@ function run(dir, args, tz) {
 /** 真 spawn（异步，并发用；`spawnSync` 会把并发串成串行，测不出独占）。 */
 function runAsync(dir, args = [KEY]) {
   return new Promise((resolve) => {
-    const child = spawn(NODE_BIN, [BIN, ...args], { env: { ...process.env, SKILLS_DB_PATH: dir } });
+    const child = spawn(NODE_BIN, [BIN, ...args], { env: childEnvOf(dir) });
     let out = '';
     child.stdout.on('data', (d) => { out += d; });
     child.on('close', (code) => {

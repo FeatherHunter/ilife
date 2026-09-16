@@ -59,6 +59,18 @@ function runOk(dir, params, extraArgs = []) {
   return { env: JSON.parse(String(r.stdout)), stdout: String(r.stdout), stderr: String(r.stderr) };
 }
 
+/** #344 ① · 进程内调 `dispatch` 时，落盘目录来自 `SKILLS_DB_PATH`（`dist/photo/help.js` 的
+ *  `join(resolveDbDir(), …)`）。这条用例必须**自己显式指**本用例的 tmp 目录：不指就等于把「往哪儿落盘」
+ *  交给宿主机的 ambient 值——本机 `SKILLS_DB_PATH` 恰好设了才绿，CI（无该变量）必红
+ *  「SKILLS_DB_PATH 未设置：拒绝隐式落盘」。用后原样恢复，不留痕。 */
+function withDbDir(dir, fn) {
+  const saved = process.env.SKILLS_DB_PATH;
+  process.env.SKILLS_DB_PATH = dir;
+  try { return fn(); } finally {
+    if (saved === undefined) delete process.env.SKILLS_DB_PATH; else process.env.SKILLS_DB_PATH = saved;
+  }
+}
+
 function countOf(text, needle) {
   return text.split(needle).length - 1;
 }
@@ -147,7 +159,9 @@ test('#91 ② mode 显式三态：file／inline／text 同源 436 场景，inlin
   const db = openDb(join(dir, 'calorie_data.db'));
   try {
     const out = {};
-    for (const mode of ['file', 'inline', 'text']) out[mode] = dispatch('calorie.help.center', { mode }, db);
+    for (const mode of ['file', 'inline', 'text']) {
+      out[mode] = withDbDir(dir, () => dispatch('calorie.help.center', { mode }, db));
+    }
 
     assert.equal(out.file.data.mode, 'file');
     assert.equal(out.inline.data.mode, 'inline');

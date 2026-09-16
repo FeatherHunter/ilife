@@ -1,2 +1,12 @@
+# #344 ③ · 默认钉 LF。windows-latest 的全局 `core.autocrlf=true` 会把 LF 源文件检成 CRLF，而仓内
+# 多条门是按 `\n` 逐字写的（生成物 == 生成器输出／契约文档块逐字节／SKILL.md 注入块／ci.yml 作业名对表／
+# 生成器 `--check`），一被检成 CRLF 就在 Windows 上恒红——这是「checkout 换行」而不是代码缺陷。
+# 显式属性优先于 `core.autocrlf`，故三个平台检出同一份换行。
+#
+# 注：仓内 62 个历史文件（如 `packages/skill-home/src/help/scenarios.yaml`）本身以 CRLF 进库，
+# `eol=lf` 只是「禁止把 LF 转成 CRLF」，**不做** CRLF→LF 的改写，故它们的检出字节与摘要锁（sha256／字节数）不变。
+* text=auto eol=lf
+
 # 行尾声明（help模板源唯一真相源，CRLF 进库；gen 门 fail-closed 双保险）
+# 例外必须排在上面那条之后（同属性后匹配者胜）：HELP 模板的 `\r\n` 是契约的一部分，测试逐字断言。
 packages/base-render/assets/help-template.html text eol=crlf

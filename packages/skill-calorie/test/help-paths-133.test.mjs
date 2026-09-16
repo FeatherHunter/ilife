@@ -11,9 +11,9 @@
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, existsSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { HELP_HTML_DIR_NAME, HELP_HTML_EXT, SHEET_FILE_STEM } from '../dist/photo/helpPaths.js';
@@ -74,7 +74,11 @@ test('#133 ⑮ 速查台与 HELP 文件分名：两份产物同时在，互不�
 });
 
 test('#133 ⑭ 相对 SKILLS_DB_PATH 亦回传绝对路径（#83 R-1；#237 起由共用件 resolve(dir) 保证）', () => {
-  const root = tmpDbDir('rel');
+  // #344 ④ · `realpathSync` 是 macOS 的必需归一（不是放宽断言）：`os.tmpdir()` 在 macOS 返回
+  // `/var/folders/…`，而 `/var` 是 `/private/var` 的软链——子进程（`cwd = root`）的 `process.cwd()`
+  // 是**真实路径**，它把相对 `SKILLS_DB_PATH=rel_db` 解析成 `/private/var/…/rel_db`；父进程若用
+  // `/var/…` 拼期望值，两边比的是同一份目录的两个名字。归一后比的仍是「回执 ＝ 产物真实所在」。
+  const root = realpathSync(tmpDbDir('rel'));
   try {
     const relDb = 'rel_db';
     mkdirSync(join(root, relDb), { recursive: true }); // 库目录须先在（否则开库即 ENOENT，测不到落点归一）
@@ -82,7 +86,7 @@ test('#133 ⑭ 相对 SKILLS_DB_PATH 亦回传绝对路径（#83 R-1；#237 起�
     assert.equal(r.status, 0, r.stderr);
     const out = r.env.data.output;
     assert.ok(isAbsolute(out), '相对 SKILLS_DB_PATH 下回执仍须绝对：' + out);
-    assert.equal(dirname(out), join(resolve(root), relDb, HELP_HTML_DIR_NAME));
+    assert.equal(dirname(out), join(root, relDb, HELP_HTML_DIR_NAME));
     assert.ok(existsSync(out), '产物按绝对路径真在盘上');
   } finally {
     rmSync(root, { recursive: true, force: true });
