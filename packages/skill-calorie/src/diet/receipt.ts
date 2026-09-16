@@ -28,7 +28,7 @@
  * 与一句空态说明」，**不编数、也不拿本次参数顶替改前值**。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { renderCaliberLine, renderDataTable, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
+import { renderCaliberLine, renderChips, renderDataTable, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
 import type { KpiCardInput, StatusKind } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
@@ -44,7 +44,7 @@ import { ENTRY_PRECHECK as PRECHECK_ENTRY } from './precheckPort.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·饮食回执';
+const DOC_TITLE = '卡路里饮食回执';
 
 /** 15＋1 条会改数据库的命令（数据位，具名命令集；分派层只认这一个集合，不再写命令名字面量比较）。
  *
@@ -96,7 +96,7 @@ function writtenDetailOf(key: string, op: CrudReceipt['op']): string {
     return op === 'delete' ? '已从饮水记录中删除。' : '已写入饮水记录。说「看今日喝水」可复查。';
   }
   if (op === 'delete') return '已从饮食记录中删除。本页没有撤销按钮。';
-  if (op === 'update') return '已更新饮食记录。要改回去，照「📋 字段变更」里「改前」那一列改；'
+  if (op === 'update') return '已更新饮食记录。要改回去，照「📋 字段变更」里「改前」那一列改。'
     + '那一列没有读数时，本页给不出写前原值。';
   return '已写入饮食记录。说「看今日饮食」可复查。';
 }
@@ -115,10 +115,17 @@ function statusCards(key: string, receipt: CrudReceipt): KpiCardInput[] {
   if (receipt.writtenFields.length > 0) {
     cards.push({
       label: '写入字段', value: receipt.writtenFields.length + ' 项',
-      detail: receipt.writtenFields.map(fieldLabelOf).join('、'),
+      detail: '明细见下方各字段徽章',
     });
   }
   return cards;
+}
+
+/** 写入字段徽章列（#581：顿号并列换公共层 `renderChips` 现成件，一字段一徽章）。
+ *  删类没有写入字段，故不出（调用方只在有字段时调，见 `buildDietReceiptDoc`）。 */
+function writtenChips(receipt: CrudReceipt): string {
+  if (receipt.writtenFields.length === 0) return '';
+  return renderChips({ items: receipt.writtenFields.map((col) => ({ text: fieldLabelOf(col) })) });
 }
 
 /** 批量补记那张读数卡：从本域 `writeDietBatch`（`./log.ts`）自己产出的摘要里读回三个计数。
@@ -135,7 +142,7 @@ function batchCountsCard(receipt: CrudReceipt): string {
     { label: '已在库跳过', value: m[2], unit: '条', detail: '同名同餐的记录不会重复添加' },
     {
       label: '分类失败', value: m[3], unit: '条',
-      detail: '没读出是哪一餐；这些条留在下方明细里，可手动补一次',
+      detail: '没读出是哪一餐。这些条留在下方明细里，可手动补一次',
       status: m[3] === '0' ? 'empty' : 'warn',
     },
   ]);
@@ -211,25 +218,26 @@ function snapshotTable(receipt: CrudReceipt): string {
 function changeSection(receipt: CrudReceipt, params: Record<string, unknown>): Section {
   const title = '📋 字段变更';
   if (receipt.op === 'delete') return { id: 'sec-change', title, html: snapshotTable(receipt) };
-  const written = receipt.writtenFields.map(fieldLabelOf).join('、') || '未设置';
   if (receipt.op === 'update') {
     const html = renderDataTable({
       columns: [{ key: 'k', label: '字段' }, { key: 'before', label: '改前' }, { key: 'after', label: '改后' }],
       rows: changeRowsOf(receipt, params), caption: '改前 → 改后对照',
-      emptyText: '本次回执未带逐字段对照（写入字段：' + written + '）',
-    }) + renderCaliberLine(beforeMissing(receipt)
-      ? '「改前」那一列的原值由写执行那一层回报；当前饮食写口只回报变更字段名，故这一列写 —，不拿新值顶替。'
-      : '「改前」是本次写前那一列的原值。');
+      emptyText: '本次回执未带逐字段对照（写入字段：未设置）',
+    }) + (beforeMissing(receipt)
+      ? renderCaliberLine('「改前」那一列的原值由写执行那一层回报。')
+        + renderCaliberLine('当前饮食写口只回报变更字段名，故这一列写 —，不拿新值顶替。')
+      : renderCaliberLine('「改前」是本次写前那一列的原值。'));
     return { id: 'sec-change', title, html };
   }
   /* 新增类（含批量导入）：**不硬套「改前 → 改后」**（票面专属约束①）——它是新长出来的一条，
      没有改前可言；老实物 `:351-372` 的 create 分支摆的是新值、箭位藏起来，本支只摆**本次写入的
      字段名**，值由副题摘要（含食物名）与「📋 复制明细」给：导入成批时逐条值不落在这一张表里。 */
+  const eff = flatParams(params);
   const html = renderDataTable({
     columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '本次结果' }],
     rows: receipt.writtenFields.map((col) => ({
       k: fieldLabelOf(col),
-      v: '已写入' + (receipt.meta.source.includes('食品库') ? '食品库' : '饮食记录'),
+      v: cellOf(paramValue(col, eff)),
     })),
     caption: '新增内容（本次写入的字段）',
     emptyText: '本次没有写入字段——逐条结果（含跳过与失败）见「📋 复制明细」。',
@@ -266,16 +274,18 @@ function dailySection(db: DatabaseSync, date: string): Section {
     rows: [
       { k: '日期', v: s.date },
       { k: '热量累计', v: s.totals.cal + ' 卡（' + leftText(s.totals.cal, g?.calorie_goal) + '）' },
-      { k: '蛋白累计', v: s.totals.pro + ' g（' + leftText(s.totals.pro, g?.protein_goal) + '）' },
-      { k: '碳水累计', v: s.totals.carbs + ' g（' + leftText(s.totals.carbs, g?.carbs_goal) + '）' },
-      { k: '脂肪累计', v: s.totals.fat + ' g（' + leftText(s.totals.fat, g?.fat_goal) + '）' },
+      { k: '蛋白累计', v: s.totals.pro + ' 克（' + leftText(s.totals.pro, g?.protein_goal) + '）' },
+      { k: '碳水累计', v: s.totals.carbs + ' 克（' + leftText(s.totals.carbs, g?.carbs_goal) + '）' },
+      { k: '脂肪累计', v: s.totals.fat + ' 克（' + leftText(s.totals.fat, g?.fat_goal) + '）' },
       { k: '饮食条数', v: s.entryCount + ' 条' },
       { k: '饮水累计', v: s.waterMl + ' ml' },
     ],
     caption: '今日累计',
-  }) + renderCaliberLine(g === null
-    ? '还没有设过每天的目标，故这里只报累计值；说「定营养目标」之后还会报还剩多少。'
-    : '括号里是相对今天的目标还剩多少；超出目标写「已超」。');
+  }) + (g === null
+    ? renderCaliberLine('还没有设过每天的目标，故这里只报累计值。')
+      + renderCaliberLine('说「定营养目标」之后还会报还剩多少。')
+    : renderCaliberLine('括号里是相对今天的目标还剩多少。')
+      + renderCaliberLine('超出目标写「已超」。'));
   return { id: 'sec-sum', title: '📊 今日累计', html };
 }
 
@@ -323,7 +333,7 @@ function buildDietReceiptDoc(
   const sections: Section[] = [
     {
       id: 'sec-op', title: '✅ 操作回执',
-      html: renderKpiGrid(statusCards(key, receipt)) + batchCountsCard(receipt),
+      html: renderKpiGrid(statusCards(key, receipt)) + writtenChips(receipt) + batchCountsCard(receipt),
     },
     changeSection(receipt, params),
   ];
@@ -348,7 +358,7 @@ function buildDietReceiptDoc(
       + ' ｜ 时间 ' + receipt.meta.actionAt),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE, title: receipt.scene + ' · 回执', eyebrow: '',
+    docTitle: DOC_TITLE, title: receipt.scene + '回执', eyebrow: '',
     pageUi: true,
     subtitle: subtitleOf(receipt), content,
   });
@@ -364,12 +374,16 @@ function subtitleOf(receipt: CrudReceipt): string {
   const batch = BATCH_COUNT_RE.exec(receipt.summary);
   if (batch !== null) return '本次批量补记：' + batch[1] + ' 条已记下';
   return receipt.summary
-    .replace(/ · 硬删除，不可恢复/, '；删了就找不回来')
-    .replace(/（硬删除，不可恢复）/g, '；删了就找不回来')
+    .replace(/ · 硬删除，不可恢复/, '。删了就找不回来')
+    .replace(/（硬删除，不可恢复）/g, '。删了就找不回来')
     .replace(/^已删除饮食 #\d+/, '已删除这条饮食记录')
     .replace(/#\d+/, '')
-    .replace(/(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? a + '（单日）' : all))
-    .replace(/(\d{4}-\d{2}-\d{2})→(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? '同一天（' + a + '）' : all));
+    .replace(/(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? a + '（单日）' : a + '至' + b))
+    .replace(/(\d{4}-\d{2}-\d{2})→(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? '同一天（' + a + '）' : all))
+    /* #581 · 副题是分隔符门禁的管辖面（`audit-separators.mjs`）：数据面原样不动，上屏在这里归一——
+       全角分号改句号、间隔号改逗号、日期区间波浪线改「至」。 */
+    .replace(/；/g, '。')
+    .replace(/ ?· ?/g, '，');
 }
 
 /** 饮食 15＋1 条会改数据库的命令的整页回执端口（分派层只调本函数）。 */
