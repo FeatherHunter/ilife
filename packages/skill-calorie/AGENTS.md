@@ -102,3 +102,12 @@
 - **改了超线件、或新增／删除扫描面内的件，就必须同步这张台账表**，否则本门必红。这是设计行为（#445 要的就是「台账不随实况更新即报警」），不是误报。
 - 复跑：`node packages/skill-calorie/scripts/check-warning-line.mjs`；夹具与变异可用 `--root`／`--agents` 指另一份包根与另一份 AGENTS.md（真实门禁**一律无参运行**，脚本会打印 `SCAN-ROOT:`／`LEDGER:` 两行供认口，剔出的生成物逐条打 `GENERATED-SKIP`）。
 - 测试：`packages/skill-calorie/test/t445-告警线门.test.mjs`（漏报必红／陈化必红／还原必绿／缩面失明／生成物剔除与自证／同步器 `--dry` 不改文件 ＋ `--sync` 回绿）。
+
+## 发布（npm 官方源，交互式 wizard）
+
+- 技能发版脚本：`scripts/wizard-publish.sh` —— 发 `skill-calorie@0.2.3`（硬前提 `base-paint@0.3.2` 已在 registry，第 1 stage 自动查）。
+- 插件发版脚本：`packages/plugin-calorie/scripts/wizard-publish.sh` —— 发 `dsh-calorie@0.2.4`。它住插件自己的目录（发谁的包，脚本就住谁的家）；硬前提是技能已落 registry（插件精确 pin 技能版本，wizard 第 1 stage 自动拦）。
+- 跑法（必须 Git Bash，脚本必须 LF；发布命令绝不重定向输出，否则 stdout 非 TTY 会直接 EOTP —— 见 `SKILLS/npm-publish/SKILL.md` §4；OTP 不进聊天，见该 §4 铁律）：
+  - `"C:\Program Files\Git\bin\bash.exe" D:/ilife/packages/skill-calorie/scripts/wizard-publish.sh`（先跑，人扫码）
+  - `"C:\Program Files\Git\bin\bash.exe" D:/ilife/packages/plugin-calorie/scripts/wizard-publish.sh`（后跑，人扫码）
+- 两脚本只做“前置门＋登录＋打包预检＋发布＋验证”，版本号定死在脚本头（对不上即停，不在脚本里改版本）；发完由编排者收口 G3 安装态断言 ＋ `check-publish --post`。
