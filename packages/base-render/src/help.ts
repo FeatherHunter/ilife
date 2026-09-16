@@ -62,10 +62,12 @@ import type {
   HelpShellInput,
   Scene,
   SceneContact,
+  SceneContactItem,
   SceneData,
   SceneEditableField,
   SceneGroup,
   SceneInitBanner,
+  SceneInitBannerStep,
   SceneMetaBlock,
   SceneRecommendation,
   SceneSubgroup,
@@ -413,7 +415,15 @@ function renderHero(data: SceneData, sceneCount: number): string {
   return parts.join(LF);
 }
 
-/** 首用引导横幅（`init_banner`；`steps` 取新类型 `readonly string[]`，R23）。 */
+/** 单步文案（#242：字符串原样；对象取 `title`＋可选 `desc`，与模板 `st.title`／`st.desc` 同口径）。 */
+function initStepText(step: string | SceneInitBannerStep): string {
+  if (typeof step === 'string') return text(step);
+  const title = text(step.title);
+  const desc = typeof step.desc === 'string' && step.desc !== '' ? text(step.desc) : '';
+  return desc === '' ? title : title + '：' + desc;
+}
+
+/** 首用引导横幅（`init_banner`；`steps` 取 `readonly (string | SceneInitBannerStep)[]`，#242）。 */
 function renderInitBanner(banner: SceneInitBanner): string {
   const parts: string[] = ['<div class="' + cls('init') + '">'];
   parts.push('<p class="' + cls('init-title') + '">' + text(banner.title) + '</p>');
@@ -427,7 +437,7 @@ function renderInitBanner(banner: SceneInitBanner): string {
   const steps = banner.steps;
   if (Array.isArray(steps) && steps.length > 0) {
     parts.push('<ol class="' + cls('init-steps') + '">'
-      + steps.map((step) => '<li class="' + cls('init-step') + '">' + text(step) + '</li>').join('')
+      + steps.map((step) => '<li class="' + cls('init-step') + '">' + initStepText(step) + '</li>').join('')
       + '</ol>');
   }
   parts.push('</div>');
@@ -537,6 +547,16 @@ function renderGroupPage(data: SceneData, group: SceneGroup, index: number, chec
     + '</section>';
 }
 
+/** 联系人值（#242：与模板 `:1819` 同判——`url` 真值＋值以 `http` 开头即 `<a>`，落点皆为 `value`）。 */
+function contactValueHtml(item: SceneContactItem): string {
+  const linkable = Boolean(item.url) && item.value.indexOf('http') === 0;
+  if (linkable) {
+    return '<a class="' + cls('about-value') + '"' + attr('href', item.value)
+      + ' target="_blank" rel="noopener">' + text(item.value) + '</a>';
+  }
+  return '<span class="' + cls('about-value') + '">' + text(item.value) + '</span>';
+}
+
 /** 关于 Tab（联系作者 → 版本 → 其他技能，F3 区块序）。 */
 function renderAboutPage(data: SceneData, checked: boolean): string {
   const parts: string[] = ['<section class="' + cls('page') + '"' + attr('data-page', 'about') + '>'];
@@ -551,7 +571,7 @@ function renderAboutPage(data: SceneData, checked: boolean): string {
     parts.push('<ul class="' + cls('about-list') + '">' + contact.items.map((item) => (
       '<li class="' + cls('about-row') + '">'
       + '<span class="' + cls('about-label') + '">' + text(item.label) + '</span>'
-      + '<span class="' + cls('about-value') + '">' + text(item.value) + '</span>'
+      + contactValueHtml(item)
       + '</li>'
     )).join('') + '</ul>');
     if (typeof contact.copy_all === 'string' && contact.copy_all !== '') {

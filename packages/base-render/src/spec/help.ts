@@ -65,17 +65,25 @@ export interface SceneMetaBlock {
   readonly html: string;
 }
 
+export interface SceneInitBannerStep {
+  readonly title: string;
+  readonly desc?: string;
+}
+
 export interface SceneInitBanner {
   readonly title: string;
   readonly subtitle?: string;
   readonly button_text?: string;
   readonly prompt?: string;
-  readonly steps?: readonly string[];
+  /** 字符串步与对象步皆可（#242：模板读 `st.title`／`st.desc`，老生产路传对象数组）。 */
+  readonly steps?: readonly (string | SceneInitBannerStep)[];
 }
 
 export interface SceneContactItem {
   readonly label: string;
   readonly value: string;
+  /** 可点标记（#242：模板以 `it.url` 真值＋值以 `http` 开头判 `<a>`；生产四家用 `true` 旗标）。 */
+  readonly url?: boolean | string;
 }
 
 export interface SceneContact {
@@ -204,7 +212,20 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
         subtitle: { type: 'string' },
         button_text: { type: 'string' },
         prompt: { type: 'string' },
-        steps: { type: 'array', items: { type: 'string' } },
+        steps: {
+          type: 'array',
+          items: {
+            oneOf: [
+              { type: 'string' },
+              {
+                type: 'object',
+                additionalProperties: false,
+                required: ['title'],
+                properties: { title: { type: 'string' }, desc: { type: 'string' } },
+              },
+            ],
+          },
+        },
       },
     },
     contact: {
@@ -218,7 +239,11 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
             type: 'object',
             additionalProperties: false,
             required: ['label', 'value'],
-            properties: { label: { type: 'string' }, value: { type: 'string' } },
+            properties: {
+              label: { type: 'string' },
+              value: { type: 'string' },
+              url: { oneOf: [{ type: 'boolean' }, { type: 'string' }] },
+            },
           },
         },
         copy_all: { type: 'string' },
