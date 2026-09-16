@@ -263,10 +263,13 @@ const PREDICT_SECTIONS: ReadonlyArray<{ readonly id: string; readonly text: stri
   { id: 'sec-data', text: '数据与日志' },
 ];
 
-/** 导航项（按当页实际出的区块裁掉没有的那几项）＝`renderTocBlock`（J2／J8／J9 三条恒出之一）。 */
-function predictNav(hasTrack: boolean): string {
+/** 导航项（按当页实际出的区块裁掉没有的那几项）＝`renderTocBlock`（J2／J8／J9 三条恒出之一）。
+ *  #570 R-15：轨迹项文本按族给——模拟减重族沿用`模拟轨迹`（缺省），摄入预测族传`摄入预测轨迹`
+ *  （与表注`摄入预测轨迹（共 N 天，每周一点）`前6字一致）；只改文本不改id，有轨迹页仍四项、
+ *  无轨迹页仍三项（J8双向自洽冻结，见R-25冲突点）。 */
+function predictNav(hasTrack: boolean, trackText = '模拟轨迹'): string {
   const items = PREDICT_SECTIONS.filter((s) => hasTrack || s.id !== 'sec-track')
-    .map((s) => ({ id: s.id, text: s.text }));
+    .map((s) => ({ id: s.id, text: s.id === 'sec-track' ? trackText : s.text }));
   return renderTocBlock({ items });
 }
 
@@ -330,6 +333,42 @@ function t569ForecastCss(): string {
   return '<style>\n'
     + '.ilife-block-kpi-card{padding:16px}\n'
     + '.ilife-block-kpi-card-grid > .ilife-block-kpi-card:nth-child(4) .ilife-block-kpi-card-value{font-size:28px;font-weight:800}\n'
+    + '</style>';
+}
+
+/** #570 R-16/R-17/R-20/R-21 · 摄入预测族页面侧样式（只本族四装配引用，不碰公共层与壳宽）。
+ *
+ *  R-20（桌面卡列统一）：公共层桌面档 `repeat(auto-fit,minmax(150px,1fr))` 随卡数变列
+ *  （CDP时点：17/18四卡261px、19两卡534px、20三卡352px），本族一律显式两列，
+ *  卡宽全族约534px（窄档公共层本就是两列，不断点）。
+ *  R-16（窄档三列表堆叠）：三列表套 `.tpd-track-table--cols3` 纯标记（内层字面逐字不动，
+ *  与R-07两列表cols2标记同形）；≤640px每列独占一行、标签左值右（`space-between`＋列隙12px，
+ *  标签与值间隙≥12px≥4px），日期标签重新印出（顶回trackTableCss那条`first-child::before{content:none}`）。
+ *  R-17（桌面列宽按内容）：表卡680上限与居中不动（归#567），内表收为内容宽——外层改
+ *  `display:table`才收缩（普通表width:auto仍铺满，CDP已证）；日期列下限140px；
+ *  数值格不换行＋内距收8px＋`min-width:0`顶回公共层5.5em地板（#507地板为长表设，
+ *  本表内容短，右对齐与tnum保留，只本表生效）；改后比值≤1.6（最长文本含表头，见§6算法说明）。
+ *  R-21（判定卡药丸升格：冻结W6-①要求判定卡无值位元素，故不增值位，只把徽章提到值位字号档22px/700，见§6）。
+ *  间距8px/12px、圆角12px均为4的倍数；窄档标签12px沿公共层档。
+ */
+function t570IntakeCss(): string {
+  return '<style>\n'
+    + 'div.ilife-block-kpi-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}\n'
+    + '.ilife-block-kpi-card-badge .ilife-status-badge{font-size:22px;font-weight:700}\n'
+    + '@media (min-width:641px){\n'
+    + '  .tpd-track-table--cols3 .ilife-block-data-table{display:table;width:auto;margin-inline:auto}\n'
+    + '  .tpd-track-table--cols3 .ilife-block-data-table-table{width:auto;margin-left:auto;margin-right:auto}\n'
+    + '  .tpd-track-table--cols3 .ilife-block-data-table th:first-child,.tpd-track-table--cols3 .ilife-block-data-table td:first-child{min-width:140px}\n'
+    + '  .tpd-track-table--cols3 .ilife-block-data-table th{padding-left:8px;padding-right:8px}\n'
+    + '  .tpd-track-table--cols3 .ilife-block-data-table td{white-space:nowrap}\n'
+    + '}\n'
+    + '.tpd-track-table--cols3 .ilife-block-data-table td.ilife-block-data-table-cell-right{min-width:0;padding-left:8px;padding-right:8px;text-align:right;font-variant-numeric:tabular-nums}\n'
+    + '@media (max-width:640px){\n'
+    + '  .tpd-track-table.tpd-track-table--cols3 .ilife-block-data-table tbody>tr{display:block;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 8px}\n'
+    + '  .tpd-track-table.tpd-track-table--cols3 .ilife-block-data-table tbody>tr>td{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;padding:4px 0;white-space:nowrap}\n'
+    + '  .tpd-track-table.tpd-track-table--cols3 .ilife-block-data-table tbody>tr>td::before{content:attr(data-label);color:var(--fg2);font-size:12px;flex-shrink:0}\n'
+    + '  .tpd-track-table.tpd-track-table--cols3 .ilife-block-data-table tbody>tr>td:first-child::before{content:attr(data-label)}\n'
+    + '}\n'
     + '</style>';
 }
 
@@ -758,6 +797,20 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
   const pts = v.forecast ? v.forecast.points : [];
   const span = spanDaysOf(pts);
   const lastV = pts.length > 0 ? (pts[pts.length - 1] as { value: number }).value : null;
+  /* #570 R-19：自定义入口身份。路由层只注册了四档horizon（order406–409：7/30/90为按当前速率，
+   *  60为自定义），装配层拿不到唤醒词，horizon 60即自定义（注册命令空间内精确成立，非启发）。
+   *  H1含`自定义`且与14–16互异；括号仍全角（W5-③）。结论句不动（取数层口径）。 */
+  const horizon = v.forecast?.horizonDays ?? 0;
+  const isCustom = horizon === 60;
+  /* #570 R-27：结论卡detail原印`N 天后`（与H1/结论句同事实，17页`60 天后`真子串）。
+   *  改互补事实——与目标的差（渲染层派生，R-06 `diffKg`先例；页上别处未印该差值）。
+   *  缺目标时回无数字人话（W6-①硬规矩：非缺值语境不印`—`）。 */
+  const gapDetail = (typeof lastV === 'number' && Number.isFinite(lastV)
+    && typeof v.goal === 'number' && Number.isFinite(v.goal))
+    ? (lastV >= v.goal
+      ? '比目标高 ' + fmtKcal(lastV - v.goal) + ' 卡'
+      : '比目标低 ' + fmtKcal(v.goal - lastV) + ' 卡')
+    : '按当前趋势';
   const parts: string[] = [
     predictChips('摄入预测'),
     /* 结论句只用页里已有的数（末点预测值／目标／窗口天数）。
@@ -767,7 +820,8 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
       ? '这一段的摄入还不够算预测。'
       : '按当前速率，' + span + ' 天后每天大约吃 ' + fmtKcal(lastV) + ' 卡。'
         + (v.goal === null || v.goal === undefined ? '' : '目标 ' + fmtKcal(v.goal) + ' 卡。')),
-    predictNav(pts.length > 0),
+    /* #570 R-15：轨迹项改`摄入预测轨迹`（与表注前6字一致，模拟族仍缺省`模拟轨迹`）。 */
+    predictNav(pts.length > 0, '摄入预测轨迹'),
     pageSection('sec-params', renderParamForm({
       fields: [
         { name: 'start', label: '开始', value: v.start ?? '' },
@@ -783,22 +837,29 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
       { label: '日变化', value: String(v.dailyRate ?? '—'), unit: '卡/天' },
       /* 摄入量是**整数语义**的读数（卡路里不印小数），故这一页的数值不动有效位；
        * 只有外推末值走 `fmtKcal`（它自带两位小数，与同排的整数不齐）。 */
-      { label: '摄入预测', value: fmtKcal(v.forecast?.points[v.forecast.points.length - 1]?.value), unit: '卡', detail: span > 0 ? span + ' 天后' : '按当前趋势' },
+      { label: '摄入预测', value: fmtKcal(v.forecast?.points[v.forecast.points.length - 1]?.value), unit: '卡', detail: gapDetail },
     ])),
   ];
   if (pts.length > 0) {
     const shown = pts.slice(0, 14);
     const cut = pts.length > shown.length ? '（仅列前 14 点，共 ' + pts.length + ' 点）' : '';
     /* W5：摄入轨迹表也套 `.tpd-track-table`（窄档那三条规则对三列表同样只压掉「日期」那半个标签，
-     * 列数多时体重／区间两列的标签仍逐行出现——窄档不叠列、不横滑）。 */
+     * 列数多时体重／区间两列的标签仍逐行出现——窄档不叠列、不横滑）。
+     * #570 R-16/R-17：再套 `.tpd-track-table--cols3` 纯标记（三列表堆叠＋列宽按内容，见`t570IntakeCss`）。 */
     parts.push(trackTableCss());
-    parts.push(pageSection('sec-track', '<div class="tpd-track-table">' + renderDataTable({
+    parts.push(pageSection('sec-track', '<div class="tpd-track-table tpd-track-table--cols3">' + renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
         { key: 'intake', label: '预测摄入', align: 'right' },
         { key: 'band', label: '预计区间', align: 'right' },
       ],
-      rows: shown.map((p) => ({ date: p.date, intake: fmtKcal(p.value), band: fmtKcal(p.lo) + ' 至 ' + fmtKcal(p.hi) })),
+      /* #570 R-18：零宽区间折叠为单值（首行残差为零时`lo/hi`同值）。按**格式化后**字面判等
+       * （裸值差半卡内也会印成同字，判裸值会漏折）；右缘本就共线（右对齐，CDP极差0），折叠后保持。 */
+      rows: shown.map((p) => {
+        const loS = fmtKcal(p.lo);
+        const hiS = fmtKcal(p.hi);
+        return { date: p.date, intake: fmtKcal(p.value), band: loS === hiS ? fmtKcal(p.value) : loS + ' 至 ' + hiS };
+      }),
       caption: '摄入预测轨迹（共 ' + span + ' 天，每周一点' + cut + '）',
       emptyText: '这一段还没有饮食记录，先记一餐再来看',
     }) + '</div>'));
@@ -818,12 +879,16 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
   parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 摄入预测',
-    title: '摄入预测（按当前速率 ' + String(v.forecast?.horizonDays ?? '') + ' 天）',
+    /* #570 R-19：自定义入口 H1 带身份（见函数头 `isCustom`；14–16仍按当前速率）。 */
+    title: isCustom
+      ? '摄入预测（自定义 ' + String(v.forecast?.horizonDays ?? '') + ' 天）'
+      : '摄入预测（按当前速率 ' + String(v.forecast?.horizonDays ?? '') + ' 天）',
     eyebrow: '趋势分析',
     subtitle: null,
     /* #569 R-12/R-13（09–16，含本页 14–16）：结论卡`摄入预测`升档＋卡内距 16px（`t569ForecastCss`）。
-     *  三列表不动（R-16 归 #570）；本改动只增益，#570 可在其上继续。 */
-    content: pageChromeCss(1120) + t569ForecastCss() + parts.join(''),
+     *  三列表不动（R-16 归 #570）；本改动只增益，#570 可在其上继续。
+     * #570 R-16/R-17/R-20/R-21：本族网格两列＋三列表堆叠＋列宽＋徽章升格（`t570IntakeCss`）。 */
+    content: pageChromeCss(1120) + t569ForecastCss() + t570IntakeCss() + parts.join(''),
     charts: false,
   });
 }
@@ -831,6 +896,10 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
 /* ── #383 · 摄入预测(营养目标达成预测)（均值／目标／缺口／是否在轨；只改预测段） ── */
 
 export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
+  /* #570 R-26：`缺口`卡值是相对目标的差（avg−goal），页上别处未点名该口径。detail 补限定词
+   * `相对目标 N 卡`（与该卡数值一一对应；徽标`在轨/偏离`不进detail，W5-①仍绿）。 */
+  const gapBasis = (typeof v.goal === 'number' && Number.isFinite(v.goal))
+    ? '相对目标 ' + fmtKcal(v.goal) + ' 卡' : '相对目标';
   const parts: string[] = [
     predictChips('摄入预测'),
     renderConclusionBar('这段的日均摄入 ' + String(v.avg) + ' 卡，比目标 ' + String(v.goal) + ' 卡' + (v.onTarget ? '守在 ±10% 以内。' : '差了 ' + String(Math.abs(Number(v.gap))) + ' 卡。')),
@@ -840,12 +909,14 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
       ],
-      description: '看每天的摄入能不能守在营养目标上。平均下来差在 10% 以内就算守住了，摄入记录不到 14 天就只说数据不够。',
+      /* #570 R-27：原说明与口径行同义（10%两处、14天两处）。说明只讲做法与缺数分支，
+       * 阈值与判据归口径行（`达标线＝…10%`），两处不再互为子串。 */
+      description: '看每天的摄入能不能守在营养目标上。摄入记录不到 14 天就只说数据不够，够 14 天才给判定。',
     })),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '均值', value: String(v.avg), unit: '卡' },
       { label: '目标', value: String(v.goal), unit: '卡' },
-      { label: '缺口', value: String(v.gap), unit: '卡' },
+      { label: '缺口', value: String(v.gap), unit: '卡', detail: gapBasis },
     ]), verdictCard('是否在轨', v.onTarget
       ? '日均与目标差得不远。'
       : '日均离目标偏开。', v.onTarget, '在轨', '偏离'))),
@@ -867,7 +938,8 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
     title: '摄入预测（营养目标达成预测）',
     eyebrow: '趋势分析',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。 */
+    content: pageChromeCss(1120) + t570IntakeCss() + parts.join(''),
     charts: false,
   });
 }
@@ -875,6 +947,11 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
 /* ── #383 · 摄入预测(卡路里缺口预测)（平均缺口＋每周掉重；只改预测段） ── */
 
 export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
+  /* #570 R-23：缺口取正向表述（结论句本就`+1196`，卡值跟上`+`前缀；量级与整数语义不动）。
+   *  体重侧不跟R-23期望的负号统一（`weeklyLoss`正表掉量是取数层语义，结论句`一周约 1.09 kg`
+   *  亦无符号，翻负会造出页内自相矛盾，见§6），改由口径行写明两族符号语义。 */
+  const deficitSigned = (typeof v.avgDeficit === 'number' && Number.isFinite(v.avgDeficit))
+    ? (v.avgDeficit >= 0 ? '+' : '') + String(v.avgDeficit) : String(v.avgDeficit);
   const parts: string[] = [
     predictChips('摄入预测'),
     renderConclusionBar('这段时间平均每天有 ' + (Number(v.avgDeficit) >= 0 ? '+' : '') + String(v.avgDeficit) + ' 卡缺口，折算下来一周约 ' + fmtRate(v.weeklyLoss) + ' kg。'),
@@ -884,10 +961,13 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
       ],
-      description: '按最近的趋势预测卡路里缺口。缺口就是当天消耗减掉当天吃的，消耗算日常消耗加运动消耗。每 7700 卡大约对应 1 kg。',
+      /* #570 R-27：原说明与口径行同义（缺口定义两处、7700两处）。说明只讲做法，
+       * 定义与折算归口径行，两处不再互为子串。 */
+      description: '按最近的饮食与运动趋势，推后面每天能留出多少缺口，折算一周能掉多少。',
     })),
     pageSection('sec-overview', renderKpiGrid([
-      { label: '平均缺口', value: String(v.avgDeficit), unit: '卡/天', detail: '正数是缺口' },
+      /* #570 R-26：该卡是相对消耗的差（消耗−摄入），detail 补限定词与数值一一对应。 */
+      { label: '平均缺口', value: deficitSigned, unit: '卡/天', detail: '相对消耗，正数是缺口' },
       /* W5：卡内只留一条事实——`健康区间 0.3 到 1.2 kg/周` 已由同页口径行末段承担
        * （「健康区间＝每周掉 0.3 到 1.2 kg」；W6 起同页单位统一成 `kg`，不再有「公斤」那一形态），
        * 卡里再印一遍就是「同一事实在卡内出现两次」，
@@ -903,14 +983,15 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
       },
     },
   })));
-  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 kg｜健康区间＝每周掉 0.3 到 1.2 kg'));
+  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 kg｜健康区间＝每周掉 0.3 到 1.2 kg｜符号＝缺口取正数表缺口，每周掉重取掉量为正，体重速率页另取变化率为负表下降'));
   parts.push(sourceFootnote('饮食记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 摄入预测',
     title: '摄入预测（卡路里缺口预测）',
     eyebrow: '趋势分析',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    /* #570 R-20：本族网格两列（`t570IntakeCss`）。 */
+    content: pageChromeCss(1120) + t570IntakeCss() + parts.join(''),
     charts: false,
   });
 }
@@ -918,6 +999,9 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
 /* ── #383 · 摄入预测(摄入稳定性预测)（均值／波动＋是否稳定；只改预测段） ── */
 
 export function buildCalorieStabilityDoc(v: CalorieStability): string {
+  /* #570 R-24：本页`均值`与缺口页`日均摄入`窗口不同（30天窗 vs 7天窗）而都不带窗口。
+   *  缺口页只读（#571地盘），本页均值卡detail补窗口区间（可达文本含窗口；21侧待#571，见§6）。 */
+  const avgWindow = '日均，窗口 ' + String(v.start ?? '') + ' 至 ' + String(v.end ?? '');
   const parts: string[] = [
     predictChips('摄入预测'),
     renderConclusionBar('日均摄入 ' + String(v.avg) + ' 卡，每天上下波动 ' + String(v.sigma) + ' 卡，' + (v.stable ? '算稳。' : '波动偏大。')),
@@ -927,10 +1011,12 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
         { name: 'start', label: '开始', value: v.start ?? '' },
         { name: 'end', label: '结束', value: v.end ?? '' },
       ],
-      description: '看每天的摄入稳不稳定。每天上下波动不超过 300 卡就算稳，摄入记录不到 14 天就只说数据不够。',
+      /* #570 R-27：原说明与口径行同义（300卡判据两处）。说明只讲做法与缺数分支，
+       * 阈值归口径行（`判据＝…300 卡算稳`），两处不再互为子串。 */
+      description: '看每天的摄入稳不稳定。摄入记录不到 14 天就只说数据不够，够 14 天才给判定。',
     })),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
-      { label: '均值', value: String(v.avg), unit: '卡' },
+      { label: '均值', value: String(v.avg), unit: '卡', detail: avgWindow },
       /* σ 是统计符号，读者认不得：这一格就说「上下波动的幅度」（口径在同页的口径行里）。 */
       { label: '波动', value: String(v.sigma), unit: '卡', detail: '上下波动的幅度' },
     ]), verdictCard('是否稳定', v.stable
@@ -952,7 +1038,8 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
     title: '摄入预测（摄入稳定性预测）',
     eyebrow: '趋势分析',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。 */
+    content: pageChromeCss(1120) + t570IntakeCss() + parts.join(''),
     charts: false,
   });
 }
