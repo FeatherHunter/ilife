@@ -169,8 +169,8 @@ function calibersOf(html) {
  *  `数据来源 · <来源> · 起 → 止 · 共 N 条` 那种 `·` 串（共用层口径统一归 #470）。
  *  仍读「本窗记录数」这一个数——判据覆盖面不变，只是取数位置跟着事实的落点走。 */
 function sourceFootnote(html) {
-  const hit = /<span class="sui-fact-k">记录数<\/span><span class="sui-fact-v">共 (\d+) 条<\/span>/.exec(html);
-  assert.ok(hit !== null, '产物里读不到来源脚注的记录数（键值行）');
+  const hit = /<span class="sui-fact-k">窗口天数<\/span><span class="sui-fact-v">共 (\d+) 天<\/span>/.exec(html);
+  assert.ok(hit !== null, '产物里读不到来源脚注的窗口天数（键值行）');
   assert.ok(html.includes('数据来源'), '产物里读不到来源脚注');
   return { text: hit[0], count: Number(hit[1]) };
 }
@@ -380,7 +380,7 @@ function assertGoalPage(r, what) {
   }
   // 判决胶囊两态：本判据数据下「今日」（2 条共 440 卡 ≥ 300）达成，「本周」同窗也达成。
   assert.ok(/class="[^"]*ilife-block-verdict (ok|no)"/.test(r.file), what + ' 判决胶囊没有档（ok/no）');
-  assert.ok(r.file.includes('共 ' + r.count + ' 条'), what + ' 来源脚注条数口径不是本次窗口的记录数');
+  assert.ok(r.file.includes('共 ' + r.count + ' 天'), what + ' 来源脚注天数口径不是本次窗口的天数');
   assert.ok(r.file.length > 10000, what + ' 产物只有 ' + r.file.length + ' 字符，看着仍像片段');
 }
 
