@@ -1,11 +1,20 @@
 /** T6 #25 · 训记官方动作库只读（老家 xunji_bridge/catalog.py 同契约）。
  * 库缺失/解析失败返回空集不抛错；空集时 verify 报告“无法验证”而非“非法”。
+ *
+ * 预置库（`loadPresetCatalogNames`）：包内 `data/训记官方动作.json` 是训记官方库
+ * （https://github.com/Foveluy/Xunji-movements）的一份**快照**，随包走、不再依赖各机
+ * `~/.minimax` 有没有放那份文件。**未来更新动作库只换这一个 JSON**（格式 `{actions: [...]}` 不变），
+ * 本件一字不用改——读文件是每次调用现读的，不缓存，换文件即生效。
  */
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 
 export const DEFAULT_CATALOG_PATH = join(homedir(), '.minimax', '训记官方动作.json');
+
+/** 预置库路径：包根定位与模板 loader 同法（本文件在 `src/fetch` 或 `dist/fetch`，往上两级都是包根）。 */
+export const PRESET_CATALOG_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data', '训记官方动作.json');
 
 export interface VerifyResult {
   name: string;
@@ -59,4 +68,17 @@ export function verifyMovementName(name: string, catalog?: Set<string>): VerifyR
 export function verifyMany(names: string[], catalog?: Set<string>): VerifyResult[] {
   const cat = catalog ?? loadCatalog();
   return names.map((n) => verifyMovementName(n, cat));
+}
+
+/** 预置动作库名数组（只给名，不给部位/类型——官方库文件里就只有名）。
+ *  缺失/解析失败/空表 → 空数组，调用方退回别的库源（不断链）。 */
+export function loadPresetCatalogNames(path: string = PRESET_CATALOG_PATH): readonly string[] {
+  try {
+    const data = JSON.parse(readFileSync(path, 'utf8'));
+    const actions = Array.isArray(data?.actions) ? data.actions : [];
+    const names = actions.filter((a: unknown): a is string => typeof a === 'string' && a.trim() !== '');
+    return names;
+  } catch {
+    return [];
+  }
 }
