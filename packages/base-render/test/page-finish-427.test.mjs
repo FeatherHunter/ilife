@@ -56,7 +56,7 @@ describe('#427 ① 动作条中档放开（641–820 铺满内容列）', () => 
   });
 });
 
-describe('#427 ② ghost 行窄屏单列（≤640 上下排列，桌面仍两列）', () => {
+describe('#427 ② ghost 行排布（#654 后续撤回窄屏单列：各宽档恒两列并排）', () => {
   it('桌面基座仍两列平分（#247 口径不动）', () => {
     const base = blocksOf(CSS, '.' + P + 'action-row-ghost')[0];
     assert.ok(base !== undefined, '缺 ghost 行基座规则块');
@@ -66,10 +66,16 @@ describe('#427 ② ghost 行窄屏单列（≤640 上下排列，桌面仍两列
     );
   });
 
-  it('≤640 单列（390 两颗各占整行）', () => {
-    const narrow = blocksOf(CSS, '.' + P + 'action-row-ghost')
+  it('#654 后续：**没有任何**把 ghost 行压成单列的覆盖（并排两颗是负责人裁决）', () => {
+    const oneCol = blocksOf(CSS, '.' + P + 'action-row-ghost')
       .filter((b) => declValue(b, 'grid-template-columns') === 'minmax(0, 1fr)');
-    assert.equal(narrow.length, 1, '缺 ghost 行 ≤640 单列规则（须恰 1 条）');
+    assert.equal(oneCol.length, 0,
+      '不许再有 ghost 行单列覆盖（负责人 2026-09-16：底部要并排两颗，与已验收的参考页一致）');
+    // 反向也要有牙：基座规则必须是两列，否则「并排」无从谈起。
+    assert.equal(
+      declValue(blocksOf(CSS, '.' + P + 'action-row-ghost')[0], 'grid-template-columns'),
+      'repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr))',
+    );
   });
 });
 
