@@ -140,7 +140,11 @@ test('T8 四主视图 parity：envelope stat + metrics 全 number + HTML 快照'
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.view.home', '--params', JSON.stringify({ date: d(7) }), '--html', p], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
   assert.equal(r.status, 0);
   const html = readFileSync(p, 'utf8');
-  assert.ok(html.includes('今日总览 ' + d(7)), 'HTML 快照须带基准平移后的当日标题');
+  // #492：标题按窗口词口径（多日窗「近 N 天总览」），日期区间改住副题——两处都断言，
+  // 不用 includes('总览') 这类恒真判据（否则标题接不接窗口词都绿）。
+  assert.ok(html.includes('近 7 天总览'), 'HTML 快照须带窗口词标题（默认窗 7 天 → 近 7 天总览）');
+  assert.equal(html.includes('今日总览 ' + d(7)), false, '标题不再拼日期（区间归副题）');
+  assert.ok(html.includes(d(1) + ' 至 ' + d(7)), '日期区间须住副题');
   assert.match(html, /ilife-page/);
 });
 

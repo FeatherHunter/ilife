@@ -16,8 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import {
-  ACTION_ID_ATTR, COPY_ACTION_IDS, COPY_TEXT_DEFAULTS, DEFAULT_DATA_ATTR, HELP_COPY_ACTIONS,
-  bindCopyAction, buildSharedHelpersJs,
+  ACTION_BAR_DEFAULTS, ACTION_ID_ATTR, COPY_ACTION_IDS, COPY_TEXT_DEFAULTS, DEFAULT_DATA_ATTR,
+  HELP_COPY_ACTIONS, bindCopyAction, buildSharedHelpersJs,
 } from 'base-paint';
 import {
   CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS, COPY_RUNTIME_JS,
@@ -36,14 +36,25 @@ function decodeEntities(s) {
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 }
 
-/** 从渲染产出的 HTML 解析出全部按钮（顺序 = 文档序）：`{ actionId, text }`。 */
+/** 从渲染产出的 HTML 解析出全部按钮（顺序 = 文档序）：`{ actionId, text, disabled }`。
+ *
+ *  `disabled` 是必需的：#336 起「有数据位而无日志位」时 base 侧会自动补一颗**禁用态**复制日志按钮，
+ *  它与数据按钮的区分点正是「无 `data-t` ＋ 带 `disabled`」，不读这两个属性就判不出占位与数据。 */
 function parseButtons(html) {
   return [...html.matchAll(/<button\b[^>]*>/g)].map((m) => {
     const id = /\bdata-action-id="([^"]*)"/.exec(m[0]);
     const t = /\bdata-t="([^"]*)"/.exec(m[0]);
-    return { actionId: id === null ? undefined : decodeEntities(id[1]), text: t === null ? undefined : decodeEntities(t[1]) };
+    return {
+      actionId: id === null ? undefined : decodeEntities(id[1]),
+      text: t === null ? undefined : decodeEntities(t[1]),
+      disabled: /\sdisabled(?=[\s>])/.test(m[0]),
+    };
   });
 }
+
+/** 数据按钮＝带 `data-t` 的按钮；禁用占位＝无 `data-t` 的按钮（#336 口径）。 */
+const dataButtons = (buttons) => buttons.filter((b) => b.text !== undefined);
+const disabledPlaceholders = (buttons) => buttons.filter((b) => b.text === undefined);
 
 /**
  * 契约 §3.3 端到端示例同款 DOM 适配器（`CopyActionHostPort` 三方法），跑在**渲染产出**上。
@@ -124,13 +135,24 @@ test('技能侧零复制实现：copy.ts 不出现 navigator／document／execCo
 
 /* ── ② 渲染产出：按钮带冻结承载属性、零内联脚本 ───────────────────────────── */
 
-test('HELP 速查每行一个复制按钮：ACTION_ID_ATTR ＋ DEFAULT_DATA_ATTR，actionId 取冻结表（红点：自造 id／丢属性）', () => {
+test('HELP 速查每行一个数据复制按钮 ＋ 一颗禁用日志占位：ACTION_ID_ATTR ＋ DEFAULT_DATA_ATTR（红点：自造 id／丢属性／占位数错）', () => {
   const html = HELP_HTML();
   const buttons = parseButtons(html);
-  assert.equal(buttons.length, 2, '两行 → 两个复制按钮');
-  for (const b of buttons) {
+  const data = dataButtons(buttons);
+  const placeholders = disabledPlaceholders(buttons);
+  // 两行 → 两颗数据按钮；#336 起每颗数据按钮各带一颗禁用日志占位（无 data-t、点不动）
+  assert.equal(data.length, 2, '两行 → 两行各一颗数据复制按钮');
+  assert.equal(placeholders.length, 2, '每颗数据按钮各带一颗禁用日志占位');
+  assert.equal(buttons.length, 4, '按钮总数按新口径写死（2 数据 ＋ 2 占位），不用 >= 放过');
+  for (const b of data) {
     assert.equal(b.actionId, HELP_COPY_ACTIONS.prompt.actionId, 'actionId 必须取 HELP_COPY_ACTIONS.prompt（冻结表）');
     assert.equal(typeof b.text, 'string', '复制文本必须在渲染期写入 data-t');
+    assert.equal(b.disabled, false, '数据按钮不得是禁用态');
+  }
+  for (const b of placeholders) {
+    assert.equal(b.actionId, COPY_ACTION_IDS.actionBar.copyLog, '占位 id 必须取冻结表 actionBar.copyLog');
+    assert.equal(b.disabled, true, '占位必须带 disabled（点不动）');
+    assert.equal(b.text, undefined, '占位不得带 data-t（没有复制目标）');
   }
   assert.equal(COPY_BUTTON_ATTRS.actionId, ACTION_ID_ATTR);
   assert.equal(COPY_BUTTON_ATTRS.text, DEFAULT_DATA_ATTR);
@@ -138,10 +160,10 @@ test('HELP 速查每行一个复制按钮：ACTION_ID_ATTR ＋ DEFAULT_DATA_ATTR
   assert.equal(CALORIE_COPY_ACTION.label, HELP_COPY_ACTIONS.prompt.label);
   // 复制文本逐字等于该行 CLI（不做 trim／改写）
   const hits = buildPhotoHelp().slice(0, 2);
-  assert.equal(buttons[0].text, hits[0].exec);
-  assert.equal(buttons[1].text, hits[1].exec);
+  assert.equal(data[0].text, hits[0].exec);
+  assert.equal(data[1].text, hits[1].exec);
   // 页面内同 id 重复是 R27 记账形态（HELP 壳逐卡写同一 actionId）
-  assert.equal(buttons[0].actionId, buttons[1].actionId);
+  assert.equal(data[0].actionId, data[1].actionId);
 });
 
 test('零内联事件处理器 ＋ 运行时恰注入一次（红点：内联 onclick／漏注入运行时）', () => {
@@ -159,21 +181,26 @@ test('唤醒词 HELP 速查（renderHelpLookupHtml）走同一套接线（红点
     { wake_word: '看今日主页', category: '主页', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home', desc: '今日总览' },
   ], '看今日主页');
   const buttons = parseButtons(html);
-  assert.equal(buttons.length, 1);
-  assert.equal(buttons[0].actionId, HELP_COPY_ACTIONS.prompt.actionId);
-  assert.equal(buttons[0].text, 'calorie-cmd-read calorie.view.home');
+  const data = dataButtons(buttons);
+  assert.equal(data.length, 1, '一行 → 一颗数据复制按钮');
+  assert.equal(disabledPlaceholders(buttons).length, 1, '同一行也带一颗禁用日志占位（#336 口径）');
+  assert.equal(data[0].actionId, HELP_COPY_ACTIONS.prompt.actionId);
+  assert.equal(data[0].text, 'calorie-cmd-read calorie.view.home');
   assert.equal((html.match(/\son[a-z]+\s*=/gi) ?? []).length, 0);
   assert.ok(html.includes(COPY_RUNTIME_JS), '同一份运行时');
   assert.match(html, /ilife-page/);
   // 出口接线（`cmd_read.ts:443-456` 仍为内联 HTML）归 #93 的 owner —— 本票只交付可消费的渲染器。
 });
 
-test('copyActionHtml：单按钮走 renderActionBar 产出（不自造按钮 HTML）', () => {
+test('copyActionHtml：单按钮走 renderActionBar 产出（不自造按钮 HTML；数据位带出的禁用日志占位照出）', () => {
   const html = copyActionHtml('TEXT');
   assert.equal(html, '<div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost">'
     + '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" ' + ACTION_ID_ATTR + '="'
     + HELP_COPY_ACTIONS.prompt.actionId + '" ' + DEFAULT_DATA_ATTR + '="TEXT">'
-    + HELP_COPY_ACTIONS.prompt.label + '</button></div></div>');
+    + HELP_COPY_ACTIONS.prompt.label + '</button>'
+    + '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" ' + ACTION_ID_ATTR + '="'
+    + COPY_ACTION_IDS.actionBar.copyLog + '" disabled>'
+    + ACTION_BAR_DEFAULTS.copyLogLabel + '</button></div></div>');
   assert.throws(() => copyActionHtml('T', { actionId: '' }), /bad-input|actionId/, '非法 actionId 由 base-paint 拦');
 });
 
@@ -184,15 +211,21 @@ test('bindCopyAction 端到端：通道 1（clipboard）成功 → 复制文本�
   const writes = [];
   const fake = fakePorts({ writeText: (t) => { writes.push(t); return Promise.resolve(); } });
   const handle = bindCopyAction(host, fake.ports);
-  assert.deepEqual(host.subscriptions(), [HELP_COPY_ACTIONS.prompt.actionId], '只订阅 listActionIds() 列出的 id（去重后 1 个）');
-  assert.equal(host.activate(0), true, '首行按钮必须已订阅');
+  assert.deepEqual(host.subscriptions(), [HELP_COPY_ACTIONS.prompt.actionId, COPY_ACTION_IDS.actionBar.copyLog],
+    '只订阅 listActionIds() 列出的 id（去重后 2 个：数据按钮 ＋ 禁用占位）');
+  assert.equal(host.activate(0), true, '首行数据按钮必须已订阅');
   await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(writes, [buildPhotoHelp()[0].exec], '通道 1 收到逐字 data-t');
   assert.equal(fake.fallbackCalls.length, 0, '通道 1 成功不得触碰通道 2');
   assert.equal(fake.mounted.length, 1, '成功反馈经 ports.toast 挂载');
   assert.ok(fake.mounted[0].includes(COPY_TEXT_DEFAULTS.okMessage));
-  // 第二行按钮（同 id）读到的是**自己**的文本（R27：页面侧按最近激活元素关联）
-  assert.equal(host.activate(1), true);
+  // 禁用日志占位（无 data-t）被订阅但读不出文本 ⇒ 不复制、不出反馈（#336 口径：占位只占格）
+  assert.equal(host.activate(1), true, '占位按钮同样被订阅（不设白名单，S-9）');
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(writes, [buildPhotoHelp()[0].exec], '占位无 data-t → 不产复制');
+  assert.equal(fake.mounted.length, 1, '占位不得产反馈');
+  // 第二行数据按钮（同 id）读到的是**自己**的文本（R27：页面侧按最近激活元素关联）
+  assert.equal(host.activate(2), true, '第二行数据按钮必须已订阅');
   await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(writes, [buildPhotoHelp()[0].exec, buildPhotoHelp()[1].exec]);
   handle.dispose();
