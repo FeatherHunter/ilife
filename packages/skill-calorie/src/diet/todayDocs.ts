@@ -25,10 +25,10 @@ const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
-const DOC_TITLE = '卡路里·饮食';
+const DOC_TITLE = '卡路里饮食';
 
 /** 餐别口径一行（正文里说一次的版本，不带常量名；口径出处见 `render/dietDocs.ts` 的 `MEAL_NOTE`）。 */
-const MEAL_NOTE = '加餐时段：下午茶、夜宵';
+const MEAL_NOTE = '加餐是下午茶和夜宵';
 
 /* ── 今日饮食（today_diet.html 对照：餐次进度＋营养配比＋今日明细） ── */
 
@@ -51,9 +51,9 @@ export interface TodayDietDocInput {
 export function buildTodayNoteEmptyDoc(date: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '今日饮食 · 只看有备注的',
+    title: '今日饮食（只看有备注的）',
     pageUi: true,
-    eyebrow: '卡路里 · 饮食',
+    eyebrow: '卡路里饮食',
     subtitle: MEAL_NOTE,
     content: dietUiCss() + windowStrip(date, date)
       + renderEmptyBlock({
@@ -148,20 +148,23 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
     },
   }, input.command)));
   /* §五 第 13／15 行：口径说明行（图下那一条已在图下说过，这里说缺值口径）＋ 来源脚注一行。 */
-  parts.push(renderCaliberLine(MEAL_NOTE + '；本页缺值一律写成 —，不当成 0 卡。'));
+  parts.push(renderCaliberLine(MEAL_NOTE + '。'));
+  parts.push(renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
   parts.push(sourceLine({ source: '饮食记录', start: o.start, end: o.start, count: meals.length }));
   return assembleDocPage({
     docTitle: DOC_TITLE,
     /* #496 · 页名（唤醒词「看有备注的饮食记录」）承诺看的是有备注的记录，标题原写「今日饮食 〈日期〉」，
        读者看不出这是一张筛过的页（审查件第 67 条）⇒ 这一支把筛选口径写进标题。 */
-    title: '今日饮食' + (onlyNote ? ' · 只看有备注的' : ''),
+    title: '今日饮食' + (onlyNote ? '（只看有备注的）' : ''),
     pageUi: true,
     /* #496 · 眉标原写命令键「calorie.today · 饮食域」（裁定 1 不上屏）⇒ 改中文族名。 */
-    eyebrow: '卡路里 · 饮食',
+    eyebrow: '卡路里饮食',
     /* #496 · 副题原本整句就是常量名那一串；现在只留口径小字（加餐是哪两顿），与「餐别覆盖」卡
-       不再各说一遍。裁定 2：结论句（句内含本页读数）也走这一槽，排在标题下第一行。 */
-    subtitle: '这天记了 ' + meals.length + ' 条、共 ' + o.totalCalories + ' 卡，目标 '
-      + o.calorieGoal + ' 卡（' + MEAL_NOTE + '）。',
+       不再各说一遍。裁定 2：结论句（句内含本页读数）也走这一槽，排在标题下第一行。
+       #580 · 条数／总量／目标三数已在三张 KPI 卡，副题不再复述同一组数，只留一句剩余额度的结论。 */
+    subtitle: (o.calorieGoal - o.totalCalories) >= 0
+      ? '今日还剩 ' + (o.calorieGoal - o.totalCalories) + ' 卡可摄入。'
+      : '今日已超目标 ' + (o.totalCalories - o.calorieGoal) + ' 卡。',
     content: parts.join(''),
     charts,
   });
@@ -226,7 +229,7 @@ export function buildMealDistributionPage(v: MealDistributionView, command?: str
     docTitle: DOC_TITLE,
     title: '餐别分布',
     pageUi: true,
-    eyebrow: '卡路里 · 饮食',
+    eyebrow: '卡路里饮食',
     /* §五 第 3 行：结论句走页头副题槽（#273 的区块不出结论句，它把 `v.oneLine` 交给宿主）。 */
     subtitle: v.oneLine,
     content: dietUiCss() + windowStrip(v.start, v.end, v.days + ' 天') + renderTocBlock({
@@ -256,7 +259,7 @@ export function buildDietOverviewPage(v: DietOverviewView, command?: string): st
     docTitle: DOC_TITLE,
     title: '饮食总览',
     pageUi: true,
-    eyebrow: '卡路里 · 饮食',
+    eyebrow: '卡路里饮食',
     subtitle: '统计到 ' + v.today + ' 的前一天：本周日均 ' + String(v.week.avgCalorie) + ' 卡' + weekDays
       + '，本月累计 ' + v.month.totalCalorie.toLocaleString() + ' 卡。',
     content: dietUiCss() + windowStrip(v.week.start, v.month.end) + renderTocBlock({
