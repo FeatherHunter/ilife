@@ -8,9 +8,10 @@
  * 跑法：`node tooling/run-locked.mjs --ticket 659 -- node packages/skill-memo-ilife/scripts/t659-parity-probe.mjs`
  * 产出：`docs/skills/skill-memo-ilife/t659-对拍读数.json`（机器件）＋ stdout 人读表。
  */
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT, argOf, assertStubIsTheOne, envelope, initOldMemoDb, makeSeam } from '../../../tooling/contract-seam.mjs';
+import { OLD_SKILLS, ROOT, argOf, assertStubIsTheOne, envelope, initOldMemoDb, makeSeam, pythonBin } from '../../../tooling/contract-seam.mjs';
 
 const OUT_DIR = join(ROOT, 'docs', 'skills', 'skill-memo-ilife');
 const WISH = '买跑鞋';
@@ -18,6 +19,9 @@ const DUE = '2026-09-25';
 
 const OLD_ADD = ['add', WISH, '--category', '心愿', '--due', DUE];
 const NEW_ADD = { title: WISH, body: WISH, category: '心愿' };
+/** 老实现的 REQUIRED_SCOPES 五条（`feishu_sync.py:51-61`）＋ 新实现查的那两个短名（`LARK_WISH_SCOPE='task'`）；
+ *  自检的差集门要前五条全绿才继续，新侧只认短名，故布景给全。 */
+const SCOPES_ALL = ['task', 'calendar', 'task:task:write', 'task:tasklist:write', 'calendar:calendar.event:create', 'calendar:calendar.event:update', 'calendar:calendar.event:delete'];
 
 function trace(seam, run) {
   seam.stub.clearCalls();
@@ -36,6 +40,7 @@ function trace(seam, run) {
     callsTotal: calls.length,
     callsHead: calls.map((a) => a.slice(0, 2).join(' ')).slice(0, 20),
     taskCalls: taskCalls.map((a) => ({
+      argv: a,
       op: a.slice(0, 2).join(' '),
       summary: argOf(a, '--summary'), description: argOf(a, '--description'), due: argOf(a, '--due'),
       taskId: argOf(a, '--task-id') || argOf(a, '--task-guid'),
@@ -51,6 +56,7 @@ const SCENARIOS = [
   { id: 'M-E', title: '删一条心愿（远端任务怎么办）', state: {}, seed: 'added', old: ['delete', '1', '-y'], newKey: 'memo.remove', newArgs: (s) => ({ id: s.firstLocalId, confirm: true }) },
   { id: 'M-F', title: '反向对账：飞书那边完成了 → 本地', state: {}, seed: 'done', old: ['sync-from-feishu'], newKey: 'memo.sync', newArgs: {} },
   { id: 'M-G', title: '改期（set-due → 远端 due 跟改）', state: {}, seed: 'added', old: ['set-due', '1', '--due', '2026-10-01'], newKey: 'memo.sync', newArgs: {} },
+  { id: 'M-H', title: '飞书自检（老 `feishu_sync.py check`：真打一遍写操作）', state: { scopes: SCOPES_ALL }, seed: 'none', oldScript: 'feishu_sync.py', old: ['check'], newKey: 'memo.sync', newArgs: {} },
 ];
 
 /** 布景：先记一条（`added`＝远端通了）。新侧 id 从本地文件里现取（形制与老侧不同）。 */
@@ -74,7 +80,10 @@ function runSide(side) {
     const seeded = sc.seed === 'none' ? null : seed(side, s, sc.seed);
     s.stub.setState(sc.state);
     const run = () => (side === 'old'
-      ? s.runOld(sc.old)
+      ? (sc.oldScript
+        // 老实现的常驻诊断入口住在 feishu_sync.py 自己的 main（不是 memo_cli）：照它的既有用法直接跑。
+        ? spawnSync(pythonBin(), [join(OLD_SKILLS, '备忘录', 'script', sc.oldScript), ...sc.old], { cwd: s.stub.dir, env: s.oldEnv, encoding: 'utf8' })
+        : s.runOld(sc.old))
       : s.runNew(sc.newKey, typeof sc.newArgs === 'function' ? sc.newArgs(seeded) : sc.newArgs));
     run.side = side;
     const t = trace(s, run);

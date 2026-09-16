@@ -68,6 +68,11 @@ const SCENARIOS = [
     state: { events: [ORPHAN_MINE, ORPHAN_OTHER] }, seed: 'created',
     old: OLD_RESYNC, new: NEW_SYNC,
   },
+  {
+    id: 'S-J', title: '远端建成了但不给标识（D-11 的两态：写空还是显式标记）',
+    state: { createNoId: true }, seed: 'localOnly',
+    old: OLD_ENSURE, new: NEW_SYNC,
+  },
 ];
 
 /** 布景：把本地那条先种下（`created`＝远端已成；`localOnly`＝远端没成）。 */

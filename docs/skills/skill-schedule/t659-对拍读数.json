@@ -1,14 +1,14 @@
 {
   "ticket": 659,
   "side": "schedule",
-  "at": "2026-09-16T17:26:22.394Z",
+  "at": "2026-09-16T17:30:48.777Z",
   "old": [
     {
       "id": "S-A",
       "side": "old",
       "title": "首跑 · 远端空（合成写的基线）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-wXEYcb",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-Fm1SMc",
       "seeded": null,
       "state": {},
       "exit": 0,
@@ -25,7 +25,7 @@
           "notes": "周会",
           "category": null,
           "feishu_event_id": "fs_evt_1",
-          "last_synced_at": "2026-09-16 17:26:23",
+          "last_synced_at": "2026-09-16 17:30:49",
           "is_active": 1,
           "completion": null,
           "completion_note": null
@@ -55,8 +55,8 @@
         "--version",
         "auth status",
         "calendar +agenda",
-        "calendar +agenda",
         "calendar +search-event",
+        "calendar +agenda",
         "calendar +search-event",
         "calendar +search-event",
         "calendar +search-event",
@@ -79,7 +79,7 @@
       "side": "old",
       "title": "重复调用 · 同三元组（幂等）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-6PigxW",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-Uts7S1",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -99,7 +99,7 @@
           "notes": "周会",
           "category": null,
           "feishu_event_id": "fs_evt_1",
-          "last_synced_at": "2026-09-16 17:26:24",
+          "last_synced_at": "2026-09-16 17:30:50",
           "is_active": 1,
           "completion": null,
           "completion_note": null
@@ -131,7 +131,7 @@
       "side": "old",
       "title": "本地有、远端无 id（缺哪边建哪边）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-rK7VYG",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-l5rIwu",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -151,7 +151,7 @@
           "notes": "周会",
           "category": null,
           "feishu_event_id": "fs_evt_1",
-          "last_synced_at": "2026-09-16 17:26:25",
+          "last_synced_at": "2026-09-16 17:30:51",
           "is_active": 1,
           "completion": null,
           "completion_note": null
@@ -181,8 +181,8 @@
         "--version",
         "auth status",
         "calendar +agenda",
-        "calendar +agenda",
         "calendar +search-event",
+        "calendar +agenda",
         "calendar +search-event",
         "calendar +search-event",
         "calendar +search-event",
@@ -205,7 +205,7 @@
       "side": "old",
       "title": "远端整平台不可用（ensure 路径：降级还是挂住）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-03CNjm",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-Gemwrt",
       "seeded": null,
       "state": {
         "mode": "unavailable"
@@ -229,12 +229,12 @@
         }
       ],
       "remoteAfter": [],
-      "callsTotal": 472,
+      "callsTotal": 470,
       "callsHead": [
         "--version",
         "auth status",
-        "calendar +agenda",
         "calendar +search-event",
+        "calendar +agenda",
         "calendar +search-event",
         "calendar +search-event",
         "calendar +search-event",
@@ -258,7 +258,7 @@
       ],
       "callsRepeat": {
         "of": "calendar +search-event",
-        "times": 469
+        "times": 467
       },
       "creates": []
     },
@@ -267,7 +267,7 @@
       "side": "old",
       "title": "本地无 id ＋ 远端已有同四元组（ensure 路径：远端判重）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-JHLHQq",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-4mogY8",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -297,7 +297,7 @@
           "notes": "周会",
           "category": null,
           "feishu_event_id": "fs_seed_1",
-          "last_synced_at": "2026-09-16 17:26:52",
+          "last_synced_at": "2026-09-16 17:31:18",
           "is_active": 1,
           "completion": null,
           "completion_note": null
@@ -344,7 +344,7 @@
       "side": "old",
       "title": "本地无 id ＋ 远端已有同四元组（重同步路径：远端判重接没接）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-akhcgc",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-gNbb06",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -391,8 +391,8 @@
         "calendar +search-event",
         "calendar +search-event",
         "calendar +search-event",
-        "calendar +agenda",
         "calendar +search-event",
+        "calendar +agenda",
         "calendar +search-event",
         "calendar +search-event",
         "calendar +search-event",
@@ -409,7 +409,7 @@
       "side": "old",
       "title": "远端可探、创建失败（真降级档）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-LjYMpC",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-U9SNzY",
       "seeded": null,
       "state": {
         "createFails": true
@@ -480,7 +480,7 @@
       "side": "old",
       "title": "重同步 · 远端整平台不可用（阻断档）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-y97Elf",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-pLFy9l",
       "seeded": null,
       "state": {
         "mode": "unavailable"
@@ -509,7 +509,7 @@
       "side": "old",
       "title": "远端孤儿：带标记的该清、不带标记的不许动（归属判据）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-0RGFOp",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-6q296n",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -564,8 +564,8 @@
         "calendar +search-event",
         "calendar +search-event",
         "calendar +search-event",
-        "calendar +agenda",
         "calendar +search-event",
+        "calendar +agenda",
         "calendar +search-event",
         "calendar +search-event",
         "calendar +search-event",
@@ -583,6 +583,82 @@
           "start": "2026-09-20T09:00:00+08:00"
         }
       ]
+    },
+    {
+      "id": "S-J",
+      "side": "old",
+      "title": "远端建成了但不给标识（D-11 的两态：写空还是显式标记）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-jAGI0h",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "createNoId": true
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "action": "found",
+        "id": 1,
+        "event": {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "category": null,
+          "feishu_event_id": null,
+          "last_synced_at": null,
+          "is_active": 1,
+          "completion": null,
+          "completion_note": null
+        },
+        "feishu": "unavailable"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"action\": \"found\", \"id\": 1, \"event\": {\"id\": 1, \"date\": \"2026-09-20\", \"time_start\": \"09:00\", \"time_end\": \"10:00\", \"title\": \"晨会\", \"notes\": \"周会\", \"category\": null",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_evt_1"
+      ],
+      "callsTotal": 9,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +create"
+      ],
+      "callsRepeat": {
+        "of": "calendar +create",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "作息管家自动同步 · 周会",
+          "start": "2026-09-20T09:00:00+08:00"
+        }
+      ]
     }
   ],
   "new": [
@@ -591,7 +667,7 @@
       "side": "new",
       "title": "首跑 · 远端空（合成写的基线）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-iXX8kw",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-0QDp18",
       "seeded": null,
       "state": {},
       "exit": 0,
@@ -608,7 +684,7 @@
       },
       "parseErr": null,
       "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已补计划：1\"}}",
-      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-iXX8kw\\db\\schedule_data.db",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-0QDp18\\db\\schedule_data.db",
       "local": [
         {
           "id": 1,
@@ -632,7 +708,7 @@
       "side": "new",
       "title": "重复调用 · 同三元组（幂等）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-aYdeEW",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-RztNWe",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -676,7 +752,7 @@
       "side": "new",
       "title": "本地有、远端无 id（缺哪边建哪边）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-BAIiwG",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-kKDTnz",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -720,7 +796,7 @@
       "side": "new",
       "title": "远端整平台不可用（ensure 路径：降级还是挂住）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-y89q8X",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-ibl3JD",
       "seeded": null,
       "state": {
         "mode": "unavailable"
@@ -739,7 +815,7 @@
       },
       "parseErr": null,
       "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已补计划：1\"}}",
-      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-y89q8X\\db\\schedule_data.db",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-ibl3JD\\db\\schedule_data.db",
       "local": [
         {
           "id": 1,
@@ -763,7 +839,7 @@
       "side": "new",
       "title": "本地无 id ＋ 远端已有同四元组（ensure 路径：远端判重）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-1EdZx9",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-N8WE4b",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -819,7 +895,7 @@
       "side": "new",
       "title": "本地无 id ＋ 远端已有同四元组（重同步路径：远端判重接没接）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-PEXluA",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-dZKbsb",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -891,7 +967,7 @@
       "side": "new",
       "title": "远端可探、创建失败（真降级档）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-R9DK2S",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-tnCgQf",
       "seeded": null,
       "state": {
         "createFails": true
@@ -910,7 +986,7 @@
       },
       "parseErr": null,
       "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已补计划：1\"}}",
-      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-R9DK2S\\db\\schedule_data.db",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-tnCgQf\\db\\schedule_data.db",
       "local": [
         {
           "id": 1,
@@ -934,7 +1010,7 @@
       "side": "new",
       "title": "重同步 · 远端整平台不可用（阻断档）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-yp1Leu",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-scG7x1",
       "seeded": null,
       "state": {
         "mode": "unavailable"
@@ -942,9 +1018,9 @@
       "exit": 4,
       "timedOut": false,
       "receipt": null,
-      "parseErr": "出口 stdout 为空（exit=4，stderr=NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-yp1Leu\\db\\schedule_data.db\nERR 4: lark-cli auth status 失败（未登录？）\n）",
+      "parseErr": "出口 stdout 为空（exit=4，stderr=NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-scG7x1\\db\\schedule_data.db\nERR 4: lark-cli auth status 失败（未登录？）\n）",
       "stdoutHead": "",
-      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-yp1Leu\\db\\schedule_data.db / ERR 4: lark-cli auth status 失败（未登录？）",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-scG7x1\\db\\schedule_data.db / ERR 4: lark-cli auth status 失败（未登录？）",
       "local": [],
       "remoteAfter": [],
       "callsTotal": 2,
@@ -963,7 +1039,7 @@
       "side": "new",
       "title": "远端孤儿：带标记的该清、不带标记的不许动（归属判据）",
       "gate": ".\\lark-cli.CMD",
-      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-52vbed",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-6NCaYY",
       "seeded": {
         "exit": 0,
         "timedOut": false
@@ -1016,6 +1092,69 @@
       "remoteAfter": [
         "fs_orphan_mine",
         "fs_orphan_other",
+        "fs_evt_1"
+      ],
+      "callsTotal": 5,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +create"
+      ],
+      "callsRepeat": {
+        "of": "calendar +create",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "周会",
+          "start": "2026-09-20T09:00:00"
+        }
+      ]
+    },
+    {
+      "id": "S-J",
+      "side": "new",
+      "title": "远端建成了但不给标识（D-11 的两态：写空还是显式标记）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-xRl5a4",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "createNoId": true
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已同步 2026-09-20：新建1 更新0（ou_stub_user）"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已同步 2026-09-20：新建1 更新0（ou_stub_user）\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
         "fs_evt_1"
       ],
       "callsTotal": 5,
