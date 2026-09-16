@@ -3,7 +3,7 @@
  * 根因：旧 `setWeightGoal` 无条件四列 SET（`weight_goal`／`goal_deadline`／`start_weight`／`start_date`），
  * 没传的三列被当成「置空」写进去——`goal_deadline` 一写 null，「看即将到期的目标」当场 exit 4。
  * 修复：按「键在不在」挑列，没传的列**整个列不进 SQL**（同 #127 给营养目标修过的那一类问题；
- * 语义正本 `src/fetch/nutritionGoal.ts:68-89`）。
+ * 语义正本 `src/goal/nutritionGoal.ts:68-89`）。
  *
  * 四条判据（形状沿 `test/goal-wizard-251.test.mjs:29-53` 的临时种子库＋真 CLI，
  * 回执字段对账沿 `test/goal-upsert-127.test.mjs:61-70` 的只读回读）：

@@ -272,7 +272,7 @@ test('#97 · R-1：goal.set 的 writtenFields ＝ 本次实际 SET 列（不传 
     db.prepare("UPDATE daily_goal SET water_goal = 2300, weight_goal = 68.0, goal_deadline = '2026-12-31' WHERE id = 1").run();
   });
 
-  // ① 不传 water：SQL 里没有 water_goal 列（fetch/nutritionGoal.ts:74-77）→ 摘要不得出现 water
+  // ① 不传 water：SQL 里没有 water_goal 列（goal/nutritionGoal.ts:74-77）→ 摘要不得出现 water
   const r1 = run('calorie.goal.set', { calorie: 1750, protein: 140, carbs: 180, fat: 50 }, env);
   assert.equal(r1.status, 0, 'goal.set(no water) exit ' + r1.status + ' stderr=' + (r1.stderr || '').slice(-300));
   const rc1 = JSON.parse(r1.stdout).data.receipt;

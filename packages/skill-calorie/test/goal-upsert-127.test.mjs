@@ -2,7 +2,7 @@
  *
  * 根因：旧 `INSERT OR REPLACE` 整行替换，未传入的列被静默重置为列默认/NULL
  * （water_goal→2000、weight_goal／goal_deadline／goal_paused／start 列／exercise_goal→NULL／0）。
- * 修复：`fetch/nutritionGoal.ts` 改 UPSERT（INSERT … ON CONFLICT(id) DO UPDATE SET <仅传入列>）。
+ * 修复：`goal/nutritionGoal.ts` 改 UPSERT（INSERT … ON CONFLICT(id) DO UPDATE SET <仅传入列>）。
  *
  * 验收（与票面一一对应）：
  * - 只改营养目标后，其余目标列逐列不变（含 goal_paused／start_weight／start_date）；
