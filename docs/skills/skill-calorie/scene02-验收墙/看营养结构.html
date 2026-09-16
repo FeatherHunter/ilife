@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>卡路里·饮食</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>卡路里饮食</title>
 <style>/* base-paint 共享样式资产 · ilife-base · v0.1.0 */
 :root {
   --fg: #1d1d1f;
@@ -46,7 +46,7 @@
   backdrop-filter: blur(20px) saturate(180%);
   color: #f0f0f0;
   box-shadow: 0 10px 32px rgba(0, 0, 0, .32), 0 0 0 .5px rgba(255, 255, 255, .08) inset;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.4;
   font-feature-settings: "tnum";
   pointer-events: auto;
@@ -68,7 +68,7 @@
 .ilife-toast-icon {
   flex: 0 0 auto;
   padding-top: 1px;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 .ilife-toast-body {
@@ -84,7 +84,7 @@
 .ilife-toast-title {
   margin-bottom: 2px;
   color: #fff;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -100,7 +100,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, .12);
   color: #c8c8cc;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .02em;
   line-height: 1.6;
@@ -123,7 +123,7 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, .08);
   color: #c8c8cc;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -145,7 +145,7 @@
   background: rgba(0, 0, 0, .32);
   color: #aeb0b8;
   font-family: "SF Mono", monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.5;
   white-space: pre-wrap;
   max-height: 140px;
@@ -176,7 +176,7 @@
   background: rgba(255, 255, 255, .10);
   color: #34c759;
   font-family: inherit;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -462,14 +462,14 @@
   color: var(--fg2);
 }
 .ilife-empty-icon {
-  font-size: 40px;
+  font-size: 28px;
   line-height: 1.2;
   opacity: .5;
 }
 .ilife-empty-text {
   margin-top: 8px;
   color: var(--fg);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
 }
 .ilife-empty-hint {
@@ -1125,7 +1125,7 @@ body {
 }
 .ilife-block-page-shell-title {
   margin: 6px 0 0;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -.4px;
   line-height: 1.2;
@@ -1147,7 +1147,7 @@ body {
     padding: 20px 16px 60px;
   }
   .ilife-block-page-shell-title {
-    font-size: 26px;
+    font-size: 22px;
   }
 }
 .ilife-block-toc {
@@ -1157,7 +1157,11 @@ body {
   margin: 0 0 16px;
 }
 .ilife-block-toc a {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--card);
@@ -1193,7 +1197,7 @@ body {
   border-radius: 14px;
   background: var(--card);
   color: var(--blue2);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 .ilife-block-mini-bar {
@@ -1262,7 +1266,7 @@ body {
   gap: 8px;
   padding: 6px 0;
   border-top: 1px solid var(--line);
-  font-size: 14px;
+  font-size: 15px;
 }
 .ilife-block-change-row-label {
   flex: 1;
@@ -1371,8 +1375,6 @@ body {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--card);
-  max-width: 680px;
-  margin-inline: auto;
 }
 .ilife-block-data-table-table {
   width: 100%;
@@ -1391,9 +1393,8 @@ body {
   border-bottom: 1px solid var(--line);
   background-color: transparent;
   color: var(--fg3);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: .04em;
   white-space: nowrap;
 }
@@ -1520,7 +1521,7 @@ body {
 }
 .ilife-block-list-rows-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(44px, auto) minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   padding: 10px 14px;
@@ -1585,7 +1586,7 @@ body {
 }
 .ilife-block-detail-section-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
 }
 .ilife-block-detail-section-meta {
@@ -1598,7 +1599,7 @@ body {
 .ilife-block-detail-section-wake {
   color: var(--fg3);
   font-family: "SF Mono", monospace;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .ilife-block-detail-section-dev {
   display: inline-flex;
@@ -1636,7 +1637,7 @@ body {
   align-items: center;
   min-height: 44px;
   padding: 0 14px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   list-style: none;
@@ -1816,11 +1817,367 @@ body {
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{display:inline-block;width:16px;height:2px}
 .legend .b{border-top:2px dashed #ff9500;background:transparent;height:0}
-</style>
+
+/* #525 页面级移动端配方 · 只对根类 .ilife-page-ui 的页面生效 */
+/* ① 图片与矢量图兜底：任何一张图都不许撑破容器（结果型页面的第一类溢出源）。 */
+.ilife-page-ui img,
+.ilife-page-ui svg {
+  max-width: 100%;
+}
+.ilife-page-ui img {
+  height: auto;
+}
+/* ② 复制区债之一（**置灰规则的定义地已上移到 `style.ts` 的 `copyButton` 区**——
+   它对所有页面都成立，不属「移动端配方」，故本件不再重述第二条：同一件事只留一个定义地）。
+   本件只在窄屏把命中高度补齐；宽度档的 44px 由 `ACTION_BAR_DEFAULTS.minHeightPx` 统一给。 */
+/* ③ 页内定位：带 id 的区块被锚点跳转命中时，标题与视口顶留 20px（不贴着边缘）。 */
+.ilife-page-ui .ilife-block-page-shell-body > *[id] {
+  scroll-margin-top: 20px;
+}
+/* ④ 表格：列数极多的表仍可横滑时的兜底（细滚动条＋触屏惯性）。 */
+.ilife-page-ui .ilife-block-data-table {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+/* ⑤ 触摸区：**全宽档**所有页内可点元素命中区 ≥44×44px。
+   #525 收口：这一条原来只在 ≤820 那条媒体查询里，实测 1440 档样板页的页内导航（`a`）
+   只有 27px 高 —— 44px 是**全宽档**口径（与 `.ilife-copy-btn` 同值），故移出媒体查询。
+   只加 `min-height` 与最小内距，不动任何既有选择器的语义。 */
+.ilife-page-ui .ilife-copy-btn,
+.ilife-page-ui .ilife-copy-menu-item,
+.ilife-page-ui .ilife-action-btn,
+.ilife-page-ui .ilife-block-disclosure-summary,
+.ilife-page-ui .ilife-block-param-form-input,
+.ilife-page-ui .ilife-block-toc a {
+  min-height: 44px;
+}
+/* 页内导航按胶囊排（inline 元素上 min-height 不生效，须转 inline-flex）。 */
+.ilife-page-ui .ilife-block-toc a {
+  display: inline-flex;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+/* ⑥ 窄屏（≤640）：安全区留白、字号节奏、读数卡栅格、页内导航横滑、表格卡片化。 */
+@media (max-width: 640px) {
+  /* 安全区：手机横放与「小白条」机型上正文不许贴边；页脚留 60px 与 HELP 640 档逐值同。 */
+  .ilife-page-ui .ilife-block-page-shell {
+    padding: 20px max(16px, env(safe-area-inset-right, 0px))
+      calc(60px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  }
+  /* 字号下限：正文类文本一档不落（表格单元格／口径行／列表行／事实条标签 ≥12px）。 */
+  .ilife-page-ui .ilife-block-caliber,
+  .ilife-page-ui .ilife-block-list-rows-row,
+  .ilife-page-ui .ilife-block-kpi-card-detail {
+    font-size: 12px;
+  }
+  /* 读数卡：两格并排（150px 下限在 358px 可用宽里正好两格，不再被 auto-fit 挤成三格）。 */
+  .ilife-page-ui .ilife-block-kpi-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .ilife-page-ui .ilife-block-kpi-card {
+    padding: 12px;
+  }
+  /* 页内导航：一条横滑的胶囊轨（换行会把标题挤出首屏；横滑不占纵向高度）。 */
+  .ilife-page-ui .ilife-block-toc {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .ilife-page-ui .ilife-block-toc a {
+    flex: 0 0 auto;
+  }
+  /* 表格卡片化：每个数据格带列头文本（`td[data-label]`，由 `renderDataTable` 写入）时，
+     窄屏把「一行多列」摊成「一格两行：列头 ＋ 值」，列头不再挤在 390px 里。
+     属性缺席时本段全部是空选择器 ⇒ 自动退回 #457 的紧凑表形态，不静默出错。 */
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) .ilife-block-data-table-table,
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tbody,
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tr,
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td {
+    display: block;
+    width: auto;
+  }
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) thead {
+    display: none;
+  }
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tr {
+    padding: 4px 0;
+    border-top: 1px solid rgba(210, 210, 215, .6);
+  }
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tr:first-child {
+    border-top: 0;
+  }
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 10px;
+    border-bottom: 0;
+    text-align: left;
+  }
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--fg3);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td.ilife-block-data-table-cell-right {
+    min-width: 0;
+  }
+}
+/* ⑦ ≤400 档：读数卡塌单列（HELP `.ilife-help-shell-grid` 640 档单列的同一条意图，
+   在 400 档执行——本仓页面自有的 400 断点，不新造值）。 */
+@media (max-width: 400px) {
+  .ilife-page-ui .ilife-block-kpi-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* ⑧ 宽屏把可用宽用起来（#525 第二轮；来源＝#525 席位版面档重判里**双方都认的那一条**
+   「1280 档没把宽屏用起来」，以及编排者 2026-09-15 的补记：页面模板 960 在 1280 档左右各空 140px）。
+   口径＝「宽屏不空荡、正文不散」：页面模板从 `blocks.ts` 的 960（那儿是别票写集，本件不改它）
+   放宽到 **1280**，正文收成 **880px 一列**居中，栅格类与真二维数据（读数卡／表／图／键值行／
+   列表行）满铺可用宽。为什么用栅格而不是 12 条 `max-width`：正文类块在各票里长得不一样，
+   靠「不漏掉某个类名」的清单法必然漏（第一版注入候选就漏了无类名的 `section`），
+   栅格是**默认收窄、显式放宽**，漏不掉。
+   `box-sizing: border-box` 是本条的前提：本仓没有 `*{box-sizing}` 全局复位（`blocks.ts` 的
+   pageShell 区注明「不搬 HELP 那一条」），页面模板是 content-box ⇒ 不写它则 `max-width` 只管内容宽、
+   实占 1320（1440 档左右各空 60，不是 80）。 */
+@media (min-width: 1001px) {
+  .ilife-page-ui .ilife-block-page-shell {
+    box-sizing: border-box;
+    max-width: 1280px;
+  }
+  .ilife-page-ui .ilife-block-page-shell-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 880px minmax(0, 1fr);
+  }
+  .ilife-page-ui .ilife-block-page-shell-body > * {
+    grid-column: 2;
+  }
+  /* 宽的走满铺（`:where()` 保零权重，覆盖既有 `auto-fit` 时按「同权重、后出现」取胜） */
+  .ilife-page-ui .ilife-block-page-shell-body > :where(
+    .ilife-block-kpi-card-grid,
+    .ilife-block-data-table,
+    .ilife-block-chart-block,
+    .ilife-block-detail-section,
+    .ilife-block-list-rows
+  ) {
+    grid-column: 1 / -1;
+  }
+  /* 读数卡一行四张：960 档的 `auto-fit minmax(150px,1fr)` 只排得出 2 张，一行两张在宽屏上
+     就是「右半边空着」。四张同高靠既有 `grid-auto-rows: 1fr`（本件不动它）。 */
+  .ilife-page-ui .ilife-block-kpi-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+/* ⑨ 状态字抬到与正文同档（#525 第二轮票面第 3 条：状态类文字在手机档偏小）。
+   390 档的徽章（`block-chip`）与读数卡说明（`block-kpi-card-detail`）都是 12px，与正文差 3px、
+   与读数卡标签 12px 齐平 ⇒ 「状态」看不出是另一类信息。抬到 **13px**：
+   ① 不越过正文 15px（层级仍在，不靠加粗抢戏）；② 高于 #524 基准 §3.2 的 390 档下限 12px 一档；
+   ③ 与 HELP 侧 13px 那一档（`helpShell.ts` 常见档 13）逐值同。 */
+.ilife-page-ui .ilife-block-chip,
+.ilife-page-ui .ilife-block-kpi-card-detail {
+  font-size: 13px;
+}
+/* ⑩ 提示块图标：`⚠️`／`✅` 这类**字形图标**在手机上小且糊（用户裁定第 5 条的同一类债）。
+   根类之下把它换成**带文字的图标位**：字形隐去，底盘保留（`kind` 的语义色仍在），
+   文字用 `font-size:0` 收起后由 `::after` 写一个可读的标签。
+   只改观感：`aria-hidden` 的那颗字形本来就不参与朗读，标签是替代它的可见文字。
+   选择器必须与 `blocks.ts` 640 档那条**同名同层**（`.block-feedback-block-note .…-icon`）：
+   权重都是 3，本条在后 ⇒ 宽窄两档都盖得住（只用两颗类名会在 ≤640 档输给那条媒体查询）。 */
+.ilife-page-ui .ilife-block-feedback-block-note .ilife-block-feedback-block-note-icon {
+  width: auto;
+  min-width: 44px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0;
+  font-weight: 600;
+}
+.ilife-page-ui .ilife-block-feedback-block-note .ilife-block-feedback-block-note-icon::after {
+  font-size: 12px;
+  line-height: 1;
+}
+.ilife-page-ui .ilife-block-feedback-block-note-icon-ok::after {
+  content: "已完成";
+}
+.ilife-page-ui .ilife-block-feedback-block-note-icon-warn::after {
+  content: "注意";
+}
+.ilife-page-ui .ilife-block-feedback-block-note-icon-danger::after {
+  content: "未通过";
+}
+.ilife-page-ui .ilife-block-feedback-block-note-icon-info::after {
+  content: "提示";
+}
+/* #525 页面级形状件三件 */
+/* ① 事实条：一格「标签 ＋ 值」，格与格靠 22px 列距分开（不用任何分隔符字符）。 */
+.ilife-page-ui .ilife-block-fact-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 12px 0 0;
+}
+.ilife-page-ui .ilife-block-fact-strip-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ilife-page-ui .ilife-block-fact-strip-label {
+  color: var(--fg3);
+  font-size: 12px;
+}
+.ilife-page-ui .ilife-block-fact-strip-value {
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ilife-page-ui .ilife-block-fact-strip-value-ok {
+  color: #1f8c3d;
+}
+.ilife-page-ui .ilife-block-fact-strip-value-warn {
+  color: #a25b00;
+}
+.ilife-page-ui .ilife-block-fact-strip-value-danger {
+  color: #a83228;
+}
+/* ② 图片／GIF 容器：比例写在容器上，图按 object-fit 摆；没有图时是人话占位，不出黑底条。 */
+.ilife-page-ui .ilife-block-media {
+  margin: 16px 0;
+}
+.ilife-page-ui .ilife-block-media-frame {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--soft);
+}
+.ilife-page-ui .ilife-block-media-frame-1-1 { aspect-ratio: 1 / 1; }
+.ilife-page-ui .ilife-block-media-frame-3-4 { aspect-ratio: 3 / 4; }
+.ilife-page-ui .ilife-block-media-frame-4-5 { aspect-ratio: 4 / 5; }
+.ilife-page-ui .ilife-block-media-frame-4-3 { aspect-ratio: 4 / 3; }
+.ilife-page-ui .ilife-block-media-frame-9-16 { aspect-ratio: 9 / 16; }
+.ilife-page-ui .ilife-block-media-frame-16-9 { aspect-ratio: 16 / 9; }
+.ilife-page-ui .ilife-block-media-frame-natural {
+  aspect-ratio: auto;
+}
+.ilife-page-ui .ilife-block-media-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+.ilife-page-ui .ilife-block-media-frame-contain .ilife-block-media-img {
+  object-fit: contain;
+}
+.ilife-page-ui .ilife-block-media-frame-cover .ilife-block-media-img {
+  object-fit: cover;
+}
+.ilife-page-ui .ilife-block-media-frame-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 24px 18px;
+  color: var(--fg2);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+.ilife-page-ui .ilife-block-media-caption {
+  margin-top: 8px;
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+}
+.ilife-page-ui .ilife-block-media-note {
+  margin-top: 2px;
+  color: var(--fg2);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+/* ②b 占位件（`renderMediaPlaceholder`）：框体走上面 ② 的同一套规则（同比例／同圆角／同外边距），
+   这里只补框内那两句人话的槽位；只用既有语义词，不新增颜色。 */
+.ilife-page-ui .ilife-block-media-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 18px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.ilife-page-ui .ilife-block-media-reason {
+  color: var(--fg2);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.ilife-page-ui .ilife-block-media-next {
+  color: var(--fg3);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+/* ③ 时间轴条：一条轴线 ＋ 逐条圆点；时间与正文分两槽（不用 · 串）。 */
+.ilife-page-ui .ilife-block-timeline {
+  margin: 16px 0;
+  padding: 4px 0 4px 18px;
+  border-left: 1px solid var(--line);
+  list-style: none;
+}
+.ilife-page-ui .ilife-block-timeline-row {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  align-items: baseline;
+  padding: 6px 0;
+}
+.ilife-page-ui .ilife-block-timeline-dot {
+  position: absolute;
+  left: -23px;
+  top: 13px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.ilife-page-ui .ilife-block-timeline-time {
+  flex: 0 0 auto;
+  color: var(--fg2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.ilife-page-ui .ilife-block-timeline-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+}
+.ilife-page-ui .ilife-block-timeline-note {
+  flex: 1 1 100%;
+  color: var(--fg3);
+  font-size: 12px;
+  line-height: 1.6;
+}</style>
 </head>
 <body>
-<div class="wrap ilife-page">
-<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">饮食复盘 · 饮食</div><div class="type-badge">复盘 · 餐别</div></div><h1 class="ilife-block-page-shell-title">📝 饮食复盘</h1><p class="sub">本窗有记录 7 天：共摄入 7507 卡，日均 1072 卡；蛋白合计 338 克，日均 48.3 克；热量目标 1800 卡，达标 0/7 天。</p><div class="ilife-block-page-shell-body"><style>.dui-window{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 10px}.dui-date{font-size:13px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-variant-numeric:tabular-nums}.dui-arrow{color:var(--fg3);font-size:13px}.dui-chip{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);border-radius:999px;padding:3px 10px}@media (max-width:820px){.dui-window{gap:6px}.dui-date{padding:6px 10px;min-height:32px;display:inline-flex;align-items:center}}</style><div class="dui-window"><span class="dui-date">2026-09-09</span><span class="dui-arrow">→</span><span class="dui-date">2026-09-15</span><span class="dui-chip">7 天有记录</span></div><nav class="ilife-block-toc" aria-label="页内导航"><a href="#rv-kpi">本窗读数</a><a href="#rv-trend">每日热量趋势</a><a href="#rv-top">高频食物 TOP5</a><a href="#rv-meal">按餐汇总</a><a href="#sec-chart">营养配比</a><a href="#rv-copy">复制数据</a></nav><section id="rv-kpi"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">总热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">7507</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">按有记录的 7 天合计</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">日均热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1072</span><span class="ilife-block-kpi-card-unit">卡/天</span></div><div class="ilife-block-kpi-card-detail">按有记录的天算</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">总蛋白</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">338</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">按有记录的 7 天合计</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">日均蛋白</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">48.3</span><span class="ilife-block-kpi-card-unit">克/天</span></div><div class="ilife-block-kpi-card-detail">按有记录的天算</div></div></div></section><section id="rv-trend"><section class="ilife-block ilife-block-chart-block"><h2 class="ilife-block-chart-block-title">每日热量趋势</h2><div class="ilife-block-chart-block-canvas"><div class="ilife-charts ilife-charts-line ilife-charts-anim" data-chart-kind="line"><svg class="ilife-charts-svg" viewBox="0 0 580.0 260.0" preserveAspectRatio="xMidYMid meet" role="img" focusable="false"><line class="ilife-charts-grid" x1="14.0" y1="220.0" x2="566.0" y2="220.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="114.0" x2="566.0" y2="114.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="8.0" x2="566.0" y2="8.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><path class="ilife-charts-line" d="M14.0 84.5L106.0 29.2L198.0 157.3L290.0 110.2L382.0 209.2L474.0 84.5L566.0 29.2" fill="none" stroke="#007aff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path class="ilife-charts-line ilife-charts-avg" d="M14.0 84.5L106.0 56.8L198.0 90.3L290.0 95.3L382.0 118.1L474.0 112.5L566.0 100.6" fill="none" stroke="var(--fg3,#86868b)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/><circle class="ilife-charts-dot" data-s="0" data-i="0" cx="14.0" cy="84.5" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="0"/><circle class="ilife-charts-dot" data-s="0" data-i="1" cx="106.0" cy="29.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="1"/><circle class="ilife-charts-dot" data-s="0" data-i="2" cx="198.0" cy="157.3" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="2"/><circle class="ilife-charts-dot" data-s="0" data-i="3" cx="290.0" cy="110.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="3"/><circle class="ilife-charts-dot" data-s="0" data-i="4" cx="382.0" cy="209.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="4"/><circle class="ilife-charts-dot" data-s="0" data-i="5" cx="474.0" cy="84.5" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="5"/><circle class="ilife-charts-dot" data-s="0" data-i="6" cx="566.0" cy="29.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="6"/><text class="ilife-charts-xlabel" x="14.0" y="254.0" text-anchor="middle" fill="var(--fg3,#86868b)">09-09</text><text class="ilife-charts-xlabel" x="566.0" y="254.0" text-anchor="middle" fill="var(--fg3,#86868b)">09-15</text></svg></div></div></section></section><p class="ilife-block-caliber">每个点 = 有记录的一天；没记录的日子不当 0 算，图上的空档就是那几天没记。</p><section id="rv-top"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">高频食物 TOP5</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-right">排名</th><th scope="col" class="ilife-block-data-table-cell-left">食物</th><th scope="col" class="ilife-block-data-table-cell-right">总热量</th><th scope="col" class="ilife-block-data-table-cell-right">次数</th><th scope="col" class="ilife-block-data-table-cell-right">餐均</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#1</td><td class="ilife-block-data-table-cell-left" data-label="食物">包子</td><td class="ilife-block-data-table-cell-right" data-label="总热量">900 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">300 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#2</td><td class="ilife-block-data-table-cell-left" data-label="食物">燕麦</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1167 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">389 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#3</td><td class="ilife-block-data-table-cell-left" data-label="食物">牛肉饭</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1860 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">620 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#4</td><td class="ilife-block-data-table-cell-left" data-label="食物">米饭</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1500 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">500 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#5</td><td class="ilife-block-data-table-cell-left" data-label="食物">粥</td><td class="ilife-block-data-table-cell-right" data-label="总热量">450 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">150 卡</td></tr></tbody></table></div></section><section id="rv-meal"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">按餐汇总</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">餐别</th><th scope="col" class="ilife-block-data-table-cell-right">天数</th><th scope="col" class="ilife-block-data-table-cell-right">累计热量</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">早餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">2218 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">午餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">1350 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">晚餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">1090 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">加餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">2849 卡</td></tr></tbody></table></div></section><p class="ilife-block-caliber">按餐汇总的「天数」＝那一餐有记录的天数；加餐时段：下午茶、夜宵。</p><section id="sec-kpi"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">蛋白</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">338</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">占 18% · 每天目标 1050 克</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">碳水</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1019</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">占 54% · 每天目标 1400 克</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">脂肪</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">156</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">占 19% · 每天目标 350 克</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">总摄入</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">7507</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">共 7 天 · 均衡</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-ok">✓ 均衡</span></div></div></div></section><section id="sec-chart"><section class="ilife-block ilife-block-chart-block"><h2 class="ilife-block-chart-block-title">热量来源占比（按营养素折算）</h2><div class="ilife-block-chart-block-canvas"><div class="ilife-charts ilife-charts-donut ilife-charts-anim" data-chart-kind="donut"><svg class="ilife-charts-svg" viewBox="0 0 150.0 150.0" preserveAspectRatio="xMidYMid meet" role="img" focusable="false"><circle class="ilife-charts-ring" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="var(--line,#d2d2d7)" stroke-width="16" vector-effect="non-scaling-stroke"/><circle class="ilife-charts-arc" data-i="0" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="#007aff" stroke-width="16" stroke-dasharray="80.82 327.59" stroke-dashoffset="0" transform="rotate(-90 75.0 75.0)" vector-effect="non-scaling-stroke" data-i="0"/><circle class="ilife-charts-arc" data-i="1" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="#34c759" stroke-width="16" stroke-dasharray="243.66 164.75" stroke-dashoffset="-80.82" transform="rotate(-90 75.0 75.0)" vector-effect="non-scaling-stroke" data-i="1"/><circle class="ilife-charts-arc" data-i="2" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="#ff9500" stroke-width="16" stroke-dasharray="83.93 324.48" stroke-dashoffset="-324.48" transform="rotate(-90 75.0 75.0)" vector-effect="non-scaling-stroke" data-i="2"/><text class="ilife-charts-center-label" x="75.0" y="73.0" text-anchor="middle" fill="var(--fg3,#86868b)">折算合计（千卡）</text><text class="ilife-charts-center-value" x="75.0" y="87.0" text-anchor="middle" fill="var(--fg,#1d1d1f)">6832</text></svg><div class="ilife-charts-legend ilife-charts-legend-right"><span class="ilife-charts-legend-item"><span class="ilife-charts-legend-swatch" style="background:#007aff"></span>蛋白（千卡）<span class="ilife-charts-legend-value">1352</span><span class="ilife-charts-legend-pct">20%</span></span><span class="ilife-charts-legend-item"><span class="ilife-charts-legend-swatch" style="background:#34c759"></span>碳水（千卡）<span class="ilife-charts-legend-value">4076</span><span class="ilife-charts-legend-pct">60%</span></span><span class="ilife-charts-legend-item"><span class="ilife-charts-legend-swatch" style="background:#ff9500"></span>脂肪（千卡）<span class="ilife-charts-legend-value">1404</span><span class="ilife-charts-legend-pct">21%</span></span></div></div></div></section></section><div class="ilife-block-dist-row"><span class="ilife-block-dist-row-name">蛋白（推荐 10–20%）</span><span class="ilife-block-dist-row-bar"><span class="ilife-block-dist-row-fill" style="width:18%;background:#5856d6"></span></span><span class="ilife-block-dist-row-val">18%</span></div><div class="ilife-block-dist-row"><span class="ilife-block-dist-row-name">碳水（推荐 45–65%）</span><span class="ilife-block-dist-row-bar"><span class="ilife-block-dist-row-fill" style="width:54%;background:#34c759"></span></span><span class="ilife-block-dist-row-val">54%</span></div><div class="ilife-block-dist-row"><span class="ilife-block-dist-row-name">脂肪（推荐 20–35%）</span><span class="ilife-block-dist-row-bar"><span class="ilife-block-dist-row-fill" style="width:19%;background:#ff9500"></span></span><span class="ilife-block-dist-row-val">19%</span></div><p class="ilife-block-caliber">占比按营养素折算：蛋白和碳水每克 4 千卡、脂肪每克 9 千卡，环上的数就是这三个数折算出来的热量。它与按每条记录的热量合计出来的总摄入（7,507 千卡）不是同一个数——记录里的热量是各条自己报的值。</p><section id="sec-table"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">推荐范围对比（2026-09-09 ~ 2026-09-15；克数均为这 7 天合计）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">营养素</th><th scope="col" class="ilife-block-data-table-cell-right">实际</th><th scope="col" class="ilife-block-data-table-cell-right">下限</th><th scope="col" class="ilife-block-data-table-cell-right">上限</th><th scope="col" class="ilife-block-data-table-cell-right">距范围</th><th scope="col" class="ilife-block-data-table-cell-left">状态</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="营养素">蛋白</td><td class="ilife-block-data-table-cell-right" data-label="实际">338 克（18%）</td><td class="ilife-block-data-table-cell-right" data-label="下限">10%（188 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="上限">20%（375 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="距范围">✓</td><td class="ilife-block-data-table-cell-left" data-label="状态">✓ 在范围内</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="营养素">碳水</td><td class="ilife-block-data-table-cell-right" data-label="实际">1019 克（54%）</td><td class="ilife-block-data-table-cell-right" data-label="下限">45%（845 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="上限">65%（1220 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="距范围">✓</td><td class="ilife-block-data-table-cell-left" data-label="状态">✓ 在范围内</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="营养素">脂肪</td><td class="ilife-block-data-table-cell-right" data-label="实际">156 克（19%）</td><td class="ilife-block-data-table-cell-right" data-label="下限">20%（167 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="上限">35%（292 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="距范围">-11 克</td><td class="ilife-block-data-table-cell-left" data-label="状态">↓ 偏低</td></tr></tbody></table></div></section><p class="ilife-block-caliber">📊 数据来源 · 饮食记录 · 2026-09-09 → 2026-09-15（按营养素折算）</p><section id="rv-copy"><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.diet-review】
+<div class="wrap ilife-page ilife-page-ui">
+<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">饮食复盘饮食</div><div class="type-badge">复盘餐别</div></div><h1 class="ilife-block-page-shell-title">📝 饮食复盘</h1><p class="sub">本窗有记录 7 天：共摄入 7507 卡，日均 1072 卡。蛋白合计 338 克，日均 48.3 克，热量目标 1800 卡，达标 0/7 天。</p><div class="ilife-block-page-shell-body"><style>.dui-window{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 10px}.dui-date{font-size:13px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-variant-numeric:tabular-nums}.dui-arrow{color:var(--fg3);font-size:13px}.dui-chip{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);border-radius:999px;padding:3px 10px}.ilife-block-kpi-card-grid>:last-child:nth-child(odd){grid-column:1/-1}@media (max-width:820px){.dui-window{gap:6px}.dui-date{padding:6px 10px;min-height:32px;display:inline-flex;align-items:center}}</style><div class="dui-window"><span class="dui-date">2026-09-09</span><span class="dui-arrow">→</span><span class="dui-date">2026-09-15</span><span class="dui-chip">7 天有记录</span></div><nav class="ilife-block-toc" aria-label="页内导航"><a href="#rv-kpi">本窗读数</a><a href="#rv-trend">每日热量趋势</a><a href="#rv-top">高频食物 TOP5</a><a href="#rv-meal">按餐汇总</a><a href="#sec-chart">营养配比</a><a href="#rv-copy">复制数据</a></nav><section id="rv-kpi"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">总热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">7507</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">按有记录的 7 天合计</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">日均热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1072</span><span class="ilife-block-kpi-card-unit">卡/天</span></div><div class="ilife-block-kpi-card-detail">按有记录的天算</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">总蛋白</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">338</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">按有记录的 7 天合计</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">日均蛋白</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">48.3</span><span class="ilife-block-kpi-card-unit">克/天</span></div><div class="ilife-block-kpi-card-detail">按有记录的天算</div></div></div></section><section id="rv-trend"><section class="ilife-block ilife-block-chart-block"><h2 class="ilife-block-chart-block-title">每日热量趋势</h2><div class="ilife-block-chart-block-canvas"><div class="ilife-charts ilife-charts-line ilife-charts-anim" data-chart-kind="line"><svg class="ilife-charts-svg" viewBox="0 0 580.0 260.0" preserveAspectRatio="xMidYMid meet" role="img" focusable="false"><line class="ilife-charts-grid" x1="14.0" y1="220.0" x2="566.0" y2="220.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="114.0" x2="566.0" y2="114.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="8.0" x2="566.0" y2="8.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><path class="ilife-charts-line" d="M14.0 84.5L106.0 29.2L198.0 157.3L290.0 110.2L382.0 209.2L474.0 84.5L566.0 29.2" fill="none" stroke="#007aff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path class="ilife-charts-line ilife-charts-avg" d="M14.0 84.5L106.0 56.8L198.0 90.3L290.0 95.3L382.0 118.1L474.0 112.5L566.0 100.6" fill="none" stroke="var(--fg3,#86868b)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/><circle class="ilife-charts-dot" data-s="0" data-i="0" cx="14.0" cy="84.5" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="0"/><circle class="ilife-charts-dot" data-s="0" data-i="1" cx="106.0" cy="29.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="1"/><circle class="ilife-charts-dot" data-s="0" data-i="2" cx="198.0" cy="157.3" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="2"/><circle class="ilife-charts-dot" data-s="0" data-i="3" cx="290.0" cy="110.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="3"/><circle class="ilife-charts-dot" data-s="0" data-i="4" cx="382.0" cy="209.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="4"/><circle class="ilife-charts-dot" data-s="0" data-i="5" cx="474.0" cy="84.5" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="5"/><circle class="ilife-charts-dot" data-s="0" data-i="6" cx="566.0" cy="29.2" r="3.5" fill="var(--card,#ffffff)" stroke="#007aff" stroke-width="1.5" vector-effect="non-scaling-stroke" data-i="6"/><text class="ilife-charts-xlabel" x="14.0" y="254.0" text-anchor="middle" fill="var(--fg3,#86868b)">09-09</text><text class="ilife-charts-xlabel" x="566.0" y="254.0" text-anchor="middle" fill="var(--fg3,#86868b)">09-15</text></svg></div></div></section></section><p class="ilife-block-caliber">每个点 = 有记录的一天。</p><p class="ilife-block-caliber">没记录的日子不当 0 算，图上的空档就是那几天没记。</p><section id="rv-top"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">高频食物 TOP5</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-right">排名</th><th scope="col" class="ilife-block-data-table-cell-left">食物</th><th scope="col" class="ilife-block-data-table-cell-right">总热量</th><th scope="col" class="ilife-block-data-table-cell-right">次数</th><th scope="col" class="ilife-block-data-table-cell-right">餐均</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#1</td><td class="ilife-block-data-table-cell-left" data-label="食物">包子</td><td class="ilife-block-data-table-cell-right" data-label="总热量">900 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">300 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#2</td><td class="ilife-block-data-table-cell-left" data-label="食物">燕麦</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1167 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">389 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#3</td><td class="ilife-block-data-table-cell-left" data-label="食物">牛肉饭</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1860 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">620 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#4</td><td class="ilife-block-data-table-cell-left" data-label="食物">米饭</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1500 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">500 卡</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">#5</td><td class="ilife-block-data-table-cell-left" data-label="食物">粥</td><td class="ilife-block-data-table-cell-right" data-label="总热量">450 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">3 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">150 卡</td></tr></tbody></table></div></section><section id="rv-meal"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">按餐汇总</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">餐别</th><th scope="col" class="ilife-block-data-table-cell-right">天数</th><th scope="col" class="ilife-block-data-table-cell-right">累计热量</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">早餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">2218 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">午餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">1350 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">晚餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">1090 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="餐别">加餐</td><td class="ilife-block-data-table-cell-right" data-label="天数">7 天</td><td class="ilife-block-data-table-cell-right" data-label="累计热量">2849 卡</td></tr></tbody></table></div></section><p class="ilife-block-caliber">按餐汇总的「天数」＝那一餐有记录的天数。</p><p class="ilife-block-caliber">加餐是下午茶和夜宵。</p><section id="sec-kpi"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">蛋白</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">338</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">占 18%，每天目标 1050 克</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">碳水</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1019</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">占 54%，每天目标 1400 克</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">脂肪</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">156</span><span class="ilife-block-kpi-card-unit">克</span></div><div class="ilife-block-kpi-card-detail">占 19%，每天目标 350 克</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">总摄入</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">7507</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">共 7 天，均衡</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-ok">✓ 均衡</span></div></div></div></section><section id="sec-chart"><section class="ilife-block ilife-block-chart-block"><h2 class="ilife-block-chart-block-title">热量来源占比（按营养素折算）</h2><div class="ilife-block-chart-block-canvas"><div class="ilife-charts ilife-charts-donut ilife-charts-anim" data-chart-kind="donut"><svg class="ilife-charts-svg" viewBox="0 0 150.0 150.0" preserveAspectRatio="xMidYMid meet" role="img" focusable="false"><circle class="ilife-charts-ring" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="var(--line,#d2d2d7)" stroke-width="16" vector-effect="non-scaling-stroke"/><circle class="ilife-charts-arc" data-i="0" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="#007aff" stroke-width="16" stroke-dasharray="80.82 327.59" stroke-dashoffset="0" transform="rotate(-90 75.0 75.0)" vector-effect="non-scaling-stroke" data-i="0"/><circle class="ilife-charts-arc" data-i="1" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="#34c759" stroke-width="16" stroke-dasharray="243.66 164.75" stroke-dashoffset="-80.82" transform="rotate(-90 75.0 75.0)" vector-effect="non-scaling-stroke" data-i="1"/><circle class="ilife-charts-arc" data-i="2" cx="75.0" cy="75.0" r="65.0" fill="none" stroke="#ff9500" stroke-width="16" stroke-dasharray="83.93 324.48" stroke-dashoffset="-324.48" transform="rotate(-90 75.0 75.0)" vector-effect="non-scaling-stroke" data-i="2"/><text class="ilife-charts-center-label" x="75.0" y="73.0" text-anchor="middle" fill="var(--fg3,#86868b)">折算合计（千卡）</text><text class="ilife-charts-center-value" x="75.0" y="87.0" text-anchor="middle" fill="var(--fg,#1d1d1f)">6832</text></svg><div class="ilife-charts-legend ilife-charts-legend-right"><span class="ilife-charts-legend-item"><span class="ilife-charts-legend-swatch" style="background:#007aff"></span>蛋白（千卡）<span class="ilife-charts-legend-value">1352</span><span class="ilife-charts-legend-pct">20%</span></span><span class="ilife-charts-legend-item"><span class="ilife-charts-legend-swatch" style="background:#34c759"></span>碳水（千卡）<span class="ilife-charts-legend-value">4076</span><span class="ilife-charts-legend-pct">60%</span></span><span class="ilife-charts-legend-item"><span class="ilife-charts-legend-swatch" style="background:#ff9500"></span>脂肪（千卡）<span class="ilife-charts-legend-value">1404</span><span class="ilife-charts-legend-pct">21%</span></span></div></div></div></section></section><div class="ilife-block-dist-row"><span class="ilife-block-dist-row-name">蛋白（推荐 10–20%）</span><span class="ilife-block-dist-row-bar"><span class="ilife-block-dist-row-fill" style="width:18%;background:#5856d6"></span></span><span class="ilife-block-dist-row-val">18%</span></div><div class="ilife-block-dist-row"><span class="ilife-block-dist-row-name">碳水（推荐 45–65%）</span><span class="ilife-block-dist-row-bar"><span class="ilife-block-dist-row-fill" style="width:54%;background:#34c759"></span></span><span class="ilife-block-dist-row-val">54%</span></div><div class="ilife-block-dist-row"><span class="ilife-block-dist-row-name">脂肪（推荐 20–35%）</span><span class="ilife-block-dist-row-bar"><span class="ilife-block-dist-row-fill" style="width:19%;background:#ff9500"></span></span><span class="ilife-block-dist-row-val">19%</span></div><p class="ilife-block-caliber">占比按营养素折算：蛋白和碳水都是每克 4 千卡，脂肪是每克 9 千卡，环上的数就是这三个数折算出来的热量。它与按每条记录的热量合计出来的总摄入（7,507 千卡）不是同一个数——记录里的热量是各条自己报的值。</p><section id="sec-table"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">推荐范围对比（克数均为这 7 天合计）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">营养素</th><th scope="col" class="ilife-block-data-table-cell-right">实际</th><th scope="col" class="ilife-block-data-table-cell-right">下限</th><th scope="col" class="ilife-block-data-table-cell-right">上限</th><th scope="col" class="ilife-block-data-table-cell-right">距范围</th><th scope="col" class="ilife-block-data-table-cell-left">状态</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="营养素">蛋白</td><td class="ilife-block-data-table-cell-right" data-label="实际">338 克（18%）</td><td class="ilife-block-data-table-cell-right" data-label="下限">10%（188 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="上限">20%（375 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="距范围">✓</td><td class="ilife-block-data-table-cell-left" data-label="状态">✓ 在范围内</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="营养素">碳水</td><td class="ilife-block-data-table-cell-right" data-label="实际">1019 克（54%）</td><td class="ilife-block-data-table-cell-right" data-label="下限">45%（845 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="上限">65%（1220 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="距范围">✓</td><td class="ilife-block-data-table-cell-left" data-label="状态">✓ 在范围内</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="营养素">脂肪</td><td class="ilife-block-data-table-cell-right" data-label="实际">156 克（19%）</td><td class="ilife-block-data-table-cell-right" data-label="下限">20%（167 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="上限">35%（292 克 / 7 天）</td><td class="ilife-block-data-table-cell-right" data-label="距范围">-11 克</td><td class="ilife-block-data-table-cell-left" data-label="状态">↓ 偏低</td></tr></tbody></table></div></section><p class="ilife-block-caliber">📊 数据来源 · 饮食记录 · 2026-09-09 → 2026-09-15（按营养素折算）</p><section id="rv-copy"><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.diet-review】
 loggedDays: 7
 totalCal: 7507
 avgCal: 1072
@@ -1850,7 +2207,7 @@ calorie_data.db ｜ 饮食记录
 调用链
 calorie-cmd-read calorie.view.diet-review --params &#39;{&quot;window&quot;:&quot;7d&quot;}&#39;
 时间戳版本
-2026-09-16 10:10:28 · 版本 0.1.0
+2026-09-16 12:35:48 · 版本 0.1.0
 异常
 无">复制日志</button></div></div></section></section><p class="ilife-block-caliber">📊 数据来源 · 饮食记录 · 饮食专属复盘 · 2026-09-09 → 2026-09-15</p></div></section>
 </div>
