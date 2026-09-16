@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#412 动工前两问 · 答完即开工</title>
+<style>
+:root{--ink:#1f2328;--mut:#59636e;--line:#e3e8ef;--bg:#f6f8fa;--acc:#0969da;--ok:#1a7f37;--okbg:#e9f7ee;--warnbg:#fff8e5;--keybg:#fff3c4}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font:15px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg)}
+.wrap{max-width:760px;margin:0 auto;padding:28px 20px 60px}
+.eyebrow{color:var(--mut);font-size:13px;letter-spacing:.04em}
+h1{font-size:24px;margin:4px 0 6px}.sub{color:var(--mut);font-size:14px;margin:0 0 18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+.card h2{font-size:18px;margin:0 0 8px}
+.rec{display:inline-block;background:var(--okbg);color:var(--ok);border:1px solid #b6e3c3;font-size:13px;border-radius:999px;padding:1px 10px;margin-left:8px;vertical-align:2px}
+.quote{background:#f6f8fa;border-left:4px solid var(--acc);margin:10px 0;padding:8px 12px;font-size:14px}
+ul.tight{margin:8px 0;padding-left:20px}ul.tight li{margin:3px 0}
+.key{background:var(--keybg);border-radius:4px;padding:0 4px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f6f8fa;width:92px}thead th{background:#eef2f7}
+.opt{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:14px}
+.opt.best{border-color:#b6e3c3;background:#f4fbf6}
+.opt .t{font-weight:700}.pro{color:var(--ok)}.con{color:#9a6700}
+.action{background:var(--warnbg);border:1px solid #f0d48a;border-radius:12px;padding:14px 18px;margin-top:18px}
+.action code{background:#fff;border:1px solid #e5cf8d;border-radius:6px;padding:1px 8px}
+footer{color:var(--mut);font-size:13px;margin-top:16px}a{color:var(--acc)}
+</style>
+</head>
+<body><div class="wrap">
+<div class="eyebrow">地图 #403 · #412 查询时间页01（5 词 record.today）</div>
+<h1>动工前两问，答完即开工</h1>
+<p class="sub">骨架票 #411 已关；#412 只动 <code>read.ts</code> 的 today 分支＋判据＋证据。两处未定项在此一次问清，正文已给推荐，<b>你回一句话即可</b>。</p>
+
+<div class="card">
+<h2>Q1：“يوم行”是不是“KPI 行”的笔误？<span class="rec">推荐：是</span></h2>
+<div class="quote">票面内核第二行：“列表页： يوم行＋明细表＋空态（昨天无账的空文案）＋复制区”。</div>
+<ul class="tight">
+<li>骨架票 #411 定死的块序就是四块：<span class="key">KPI 行＋数据表＋空态＋复制区</span>，四条真跑已全绿。</li>
+<li>老模板 <code>query_view.html</code> 里 KPI 行共 <span class="key">6 处</span>（summary／list 族／tag／debt／reimburse／installment），“行”字只可能配 KPI。</li>
+<li><span class="key">يوم</span> 是阿拉伯语“日子／天”——“天行”按上下文只能是 KPI 行，没有第二候选。</li>
+</ul>
+<div class="opt best"><span class="t">A．按 KPI 行做（推荐）</span><br>
+<span class="pro">利：</span>与骨架块序、验收计数（四格 KPI 卡）完全对齐，零返工。<br>
+<span class="con">弊：</span>万一另有所指，需返工约半天——但三条证据同时指向同一答案，概率极低。</div>
+<div class="opt"><span class="t">B．另有所指，你指定</span>——我按你给的定义重报影响清单。</div>
+<p style="font-size:13px;color:var(--mut)">无论选 A 或 B，我都不改票面原文，只在证据里记一笔纠偏。</p>
+</div>
+
+<div class="card">
+<h2>Q2：查账单别名页，标题用“查今天”还是“查账单”？<span class="rec">推荐 A</span></h2>
+<p style="margin:6px 0">前因：SKILL.md 第 51 行（查今天）与第 55 行（查账单）是<span class="key">同一条调用</span>——都是无参 <code>bill-cmd-read bill.record.today</code>。命令层分不出“用户说的是哪一个词”，这是别名，不是两个页面。地图迷雾里“同参不同词走入口标记”正是留待本票定的细则。</p>
+<table>
+<thead><tr><th></th><th>A．别名同页（推荐）</th><th>B．独立标题＋入口标记</th></tr></thead>
+<tr><th>标题效果</th><td>无参调出的页标题一律 <code>查今天</code>；显式 <code>date</code>→<code>查某天</code>，<code>yesterday</code>→<code>查昨天</code>，<code>recent</code>→<code>查最近</code></td><td>用户说“查账单”则标题写 <code>查账单</code>，即使同参</td></tr>
+<tr><th>改动面</th><td>只动 <code>read.ts</code> 一支；<code>commands.ts</code>、路由、SKILL 调用表全不动</td><td>新增可选入参（如 <code>entry</code>）＋路由透参＋SKILL 调用表＋HELP，至少 4 处</td></tr>
+<tr><th>风险</th><td>用户说“查账单”却看到“查今天”——但内容完全一致（同一天的数据）</td><td>新增契约面：老调用（无标记）仍要兜底，多一套分支要测</td></tr>
+</table>
+<div class="opt best"><span class="t">A．别名同页（推荐）</span><br>
+<span class="pro">利：</span>改动最小、契约零新增，本窗可收工；路由层另锁“查账单详情不被吞”，别名语义不受损。<br>
+<span class="con">弊：</span>标题与用户原词差两字——内容、数据、复制日志完全一致，实质影响为零。</div>
+<div class="opt"><span class="t">B．独立标题</span><br>
+<span class="pro">利：</span>标题与原词逐字对应。<br>
+<span class="con">弊：</span>为两个字的标题新增一层契约，本票收不了工，还要改 SKILL/HELP 并补回归。</div>
+</div>
+
+<div class="action"><b>你只需回一句话：</b> <code>Q1 对，Q2 按 A</code>（或把 A/B 换成你的选项）。收到即按影响清单动手：改 <code>read.ts</code> → 真跑 5 词 → 变异自证 → 独立复核 → 收口回写地图。</div>
+<footer>票：<a href="https://github.com/FeatherHunter/ilife/issues/412">#412</a> · 地图：<a href="https://github.com/FeatherHunter/ilife/issues/403">#403</a> · 上一条消息里有完整影响清单与超线预告，本页只收录决策所需。</footer>
+</div></body>
+</html>
