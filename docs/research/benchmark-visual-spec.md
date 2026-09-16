@@ -10,7 +10,7 @@
 
 Short names used below: **B1** = 统一主面板, **B2** = 沉浸主面板v2, **C1** = 设计审查报告.
 
-The directory `D:\2Study\StudyNotes\SKILLS\卡路里\.个人笔记不允许参考` was never read, listed, globbed, grepped or enumerated; every command was scoped to explicit file paths outside it. The OLD tree was treated read-only; the only write was `D:\ilife\.scratch\research\benchmark-visual-spec.md`.
+The directory `D:\2Study\StudyNotes\SKILLS\卡路里\.个人笔记不允许参考` was never read, listed, globbed, grepped or enumerated; every command was scoped to explicit file paths outside it. The OLD tree was treated read-only.
 
 ---
 
@@ -103,7 +103,7 @@ No gradient tokens, no `--purple`, no dark tokens.
 | Role | Value | Where | Line |
 |---|---|---|---|
 | Body (B1) | `-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif` | `body` | B1:47 |
-| Body (B2) | `-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif` | `body` | B2:60 |
+| Body (B2) | same as B1 **plus** `"SF Pro Text"` inserted after `"SF Pro Display"` — the only stack difference | `body` | B2:60 |
 | Mono | `"SF Mono",monospace` | `.log-row .time` (B1:382), `.cmd-row` (B1:449), `.tl-time` (B2:400), `.cmd-text` (B2:576) | — |
 | Body (C1, for comparison) | same as B1 stack | `body` | C1:42 |
 
@@ -201,7 +201,7 @@ B2 adds `"SF Pro Text"`; B1 omits it. Both set `font-feature-settings:"tnum","ss
 | Mobile `.hero-dark h1` ≤640px | 30 | — | — | — | 686 |
 | Mobile `.lead-num` ≤640px | 60 | — | — | — | 692 |
 
-**Hierarchy rule (the binding one, from C1:349):** `56px hero-number > 28px KPI value > 17px section h2 > 15px body > 13px hint`; **each step ≥4px, weight step ≥100.** B1 obeys this exactly. B2 keeps the same *kind* of ladder but at editorial magnitudes (`80 > 30 > 24 > 15 > 13`) and its KPI label drops to 11px (B2:322) — below B1's 13px floor.
+**Hierarchy rule (the binding one, from C1:349):** `56px hero-number > 28px KPI value > 17px section h2 > 15px body > 13px hint`; **each step ≥4px, weight step ≥100.** B1 obeys this exactly. B2 keeps the same *kind* of ladder but at editorial magnitudes (`80 > 30 > 24 > 15 > 13`) and its KPI label drops to 11px (B2:322) — below B1's 13px floor. **Ruling: the label is neither B1's 13px/500 nor B2's 11px — the B-02 KPI card (content pages) ships 12px/600 (`packages/base-render/src/blocks.ts:1675-1679`); the HELP page judges this card N/A and defers to B-02 (`docs/visual-spec-help.md:357`).**
 
 ### 1.5 Spacing
 

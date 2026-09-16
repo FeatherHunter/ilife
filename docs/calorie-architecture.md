@@ -50,12 +50,12 @@
 
 - **单一真相**：技能能力 ＝ 77 个 key 的 envelope。HTML 与面板是同一 envelope 的两种呈现；禁止出现第二真相。
 - **唯一出口**：所有数据操作只经 `calorie-cmd-read`（argv ＋ JSON ＋ exit）。禁止直连数据库；插件禁止 import 技能实现。
-- **envelope 形状**：`{skill, key, shape, version, data}`；`shape ∈ stat/list/detail/analysis/receipt`。
-  - 勘误注记（#92）：上句 `shape` 实为 **6** 个——以 `packages/base-link-core/src/envelope.ts:9-11` 的 `ENVELOPE_SHAPES` 为准（`list`／`detail`／`stat`／`receipt`／`analysis`／`fallback`）；本行原列举漏 `fallback`（降级载荷），属**不完整列举**，不是契约分叉。
+- **envelope 形状**：`{skill, key, shape, version, data}`；`shape` 共 **6** 个——`list`／`detail`／`stat`／`receipt`／`analysis`／`fallback`。
+  - 正本与勘误（#92）：形状名与个数一律以 `packages/base-link-core/src/envelope.ts:9-11` 的 `ENVELOPE_SHAPES` 为准（`fallback`＝降级载荷）；上句旧列举漏 `fallback`，属**不完整列举**，不是契约分叉，该勘误已并入上句。
 - **交付信号（已拍方案 A）**：扩 envelope 增加 `delivery{mode, path?, template?, bytes?}`；stdout 仍保持"一行 JSON"契约。
 - **三态交付**：① 文件态（默认，可写文件系统）② 内联态（无法写文件时 envelope 带 html 片段）③ 文本态（无模板或用户要求时给结构化文本）。三态同源。
 - **回传态（第 4 态）**：中间态页面把用户填写的字段序列化为可粘贴文本，供 AI 再次调用 CLI。依赖共享层控件（复制＋反馈）与复制文本序列化能力。
-- **三层路由**：发现层＝门面文档（其中键表由构建期生成，手改会被覆盖）＋ 插件注册的技能提供方；路由层＝唤醒词表（436 条，逐条 sha 断言）；执行层＝CLI key。点面板不走唤醒词。**补注（#113，不改本行结论）**：路由层＝唤醒词表（436 条 sha 冻结、零改动，作 parity 证据）＋ 路由表 `packages/skill-calorie/src/triggers/routing.ts`（436 条逐条恰落「可执行 341／命中但不执行 95」一桶 ＋ 56/99 无入口键补新拟入口 ＋ 1 条覆盖修复入口，零 py 命令引用；#111 促进 10 词：力量/有氧总览＋筛选×2→strength/cardio，计划复盘系 6 词→review；#112 促进 1 词：看营养素深度→nutrition-detail；#113 促进 4 词：钠糖纤维趋势/综合→nutrition-analysis，每日6因素→six-factors，查卡路里数据→lint-health；#86 新拟 4 词（不动 SoT）：看围度向导→measure-wizard，看体脂向导→composition-wizard，看身材照向导→photo-log-wizard，看GIF规划器→gif-planner）；`exec` 桶不变量＝「在标准种子库＋真实路径替换下实跑 exit 0」（可复跑 smoke `docs/research/t81-exec-smoke.mjs`／快照 `.md`），判据＝「只要存在一条能达成其所述能力的单命令（同 key ＋ 参数，实跑 exit 0）就入 exec」，仅语义上必须多步交互的 5 条 wizard 词留 non-exec。两处同源断言见 `test/calorie-routing-81.test.mjs`，逐条证据见 `docs/research/t81-route-evidence.md`。
+- **三层路由**：发现层＝门面文档（其中键表由构建期生成，手改会被覆盖）＋ 插件注册的技能提供方；路由层＝唤醒词表（436 条，逐条 sha 断言）；执行层＝CLI key。点面板不走唤醒词。**补注（#113，不改本行结论）**：路由层＝唤醒词表（sha 冻结、零改动，作 parity 证据）＋ 路由表 `packages/skill-calorie/src/triggers/routing.ts`（每条唤醒词恰落「有命令可执行／没有命令可执行」一桶；无入口命令由新拟入口补齐、另含覆盖修复入口，零 py 命令引用）；`exec` 桶不变量＝「在标准种子库＋真实路径替换下实跑 exit 0」（可复跑 smoke `docs/research/t81-exec-smoke.mjs`／快照 `.md`），判据＝「只要存在一条能达成其所述能力的单命令（同 key ＋ 参数，实跑 exit 0）就入 exec」，仅语义上必须多步交互的预检确认页词留 non-exec。唤醒词计数与逐词映射见 `docs/research/t81-route-evidence.md`；#111／#112／#113 的促进词与 #86 的新拟入口逐票登记见 `test/calorie-routing-81.test.mjs:26-29`，促进词逐条表见 `docs/research/t63-acceptance-line1.md:101-106`；两处同源断言见 `test/calorie-routing-81.test.mjs`。
 - **HTML-First 铁则**：唤醒词命中且模板清单有对应页 → 必须渲染并打开；无模板才可文字答；渲染失败必须给错误回执，严禁手写 HTML 兜底。
 - **唤醒词可达性**：436 条须逐条落入"可执行／命中但不执行"两桶；后者覆盖明确不做的一批（定时复盘／训记／营养表／落地）。
 - **技能侧保持分层管线**（`cli → fetch → analysis → render`），**不六边形化**；显式化两个接缝：数据接缝（打开库／取数层）与呈现接缝（渲染函数）。
@@ -93,7 +93,7 @@
 ## Further Notes
 
 - **规格来源**：本规格由一次讨论 ＋ 三份独立对抗式审查（依赖／并发、完备性、第一性原理）收敛而成；审查判原工作清单"不是计划"，整改后才成立。
-- **旧基线**：对照物位于独立的 SKILLS 仓（含门面文档、73 个模板、渲染脚本、视觉标杆）；唯一未进版本控制的是两个真实 HELP 实例，已列为冻结项。
+- **旧基线**：对照物位于独立的 SKILLS 仓（含门面文档、73 个模板、渲染脚本、视觉标杆）；两个真实 HELP 实例已冻结入仓（`fixtures/help-instances/`，sha256 自校验），见 `docs/research/t94-freeze-evidence.md`。
 - **验收尺度**：不要求 DOM 同构；HELP 页按视觉标杆逐值验收，内容页按区块级规格验收；证据形态为可复现产物 ＋ 截图 ＋ 交互记录。
 - **遗留待定**：数据库连接未设 busy timeout（并发写会立刻报锁），属一行代码的低成本加固，是否单独立票待定。
 - **可读版本**：同目录下的 HTML 版为同一内容的可读呈现。
