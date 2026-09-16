@@ -132,7 +132,7 @@ function parseCsv(text) {
 /** 某段的期望文本（`scene` 由 envelope 派生；其余取 `LOG_SECTION_SOURCES` 指出的 copyLog 字段）。 */
 function expectedSectionText(section, copyLog, shape) {
   const source = LOG_SECTION_SOURCES[section];
-  if (source === 'envelope') return 'skill-a.skill-a.key（' + shape + '）';
+  if (source === 'envelope') return 'skill-a.key（' + shape + '）';
   return copyLog[source.slice(source.indexOf('.') + 1)];
 }
 
@@ -402,14 +402,30 @@ describe('#77 6 段日志（A3）', () => {
   it('scene 段恒由 envelope 派生，形如 {skill}.{key}（{shape}）', () => {
     const out = buildLogText({ envelope: envelope('receipt', SAMPLES.receipt.data), copyLog: { thinking: 'x' } });
     const scene = out.split(LF)[1];
-    assert.equal(scene, 'skill-a.skill-a.key（receipt）');
+    assert.equal(scene, 'skill-a.key（receipt）');
     assert.equal(LOG_SECTION_SOURCES.scene, 'envelope');
     // 反向鉴别：copyLog 里同名字段不得被当成 scene 源
     const withFake = buildLogText({
       envelope: envelope('receipt', SAMPLES.receipt.data),
       copyLog: { scene: '伪造', envelope: '伪造' },
     });
-    assert.equal(withFake.split(LF)[1], 'skill-a.skill-a.key（receipt）', 'scene 段不得另找数据源');
+    assert.equal(withFake.split(LF)[1], 'skill-a.key（receipt）', 'scene 段不得另找数据源');
+  });
+
+  it('甲幂等（#555）：已带前缀不再重复补，不带前缀仍补足', () => {
+    const withPrefix = buildLogText({ envelope: envelope('receipt', SAMPLES.receipt.data), copyLog: { thinking: 'x' } });
+    assert.equal(withPrefix.split(LF)[1], 'skill-a.key（receipt）');
+    assert.ok(!withPrefix.split(LF)[1].includes('skill-a.skill-a.'), '不得出现双前缀');
+    const bare = buildLogText({
+      envelope: envelope('receipt', SAMPLES.receipt.data, { skill: 'skill-a', key: 'key' }),
+      copyLog: { thinking: 'x' },
+    });
+    assert.equal(bare.split(LF)[1], 'skill-a.key（receipt）');
+    const otherSkill = buildLogText({
+      envelope: envelope('receipt', SAMPLES.receipt.data, { skill: 'skill-b', key: 'skill-a.key' }),
+      copyLog: { thinking: 'x' },
+    });
+    assert.equal(otherSkill.split(LF)[1], 'skill-b.skill-a.key（receipt）');
   });
 
   it('timestampVersion 段取 copyLog.timestamp（不是同名字段）', () => {
@@ -427,7 +443,7 @@ describe('#77 6 段日志（A3）', () => {
     const out = buildLogText({ envelope: envelope('stat', SAMPLES.stat.data), format: 'json', copyLog: { thinking: '只给一段' } });
     const parsed = JSON.parse(out);
     assert.deepEqual(Object.keys(parsed), [...LOG_SECTIONS], '键序恒按 LOG_SECTIONS');
-    assert.equal(parsed.scene, 'skill-a.skill-a.key（stat）');
+    assert.equal(parsed.scene, 'skill-a.key（stat）');
     assert.equal(parsed.thinking, '只给一段');
     for (const section of LOG_SECTIONS) {
       if (section === 'scene' || section === 'thinking') continue;
@@ -882,7 +898,7 @@ describe('#77 三个错误码（A6）', () => {
     assert.equal(lines.length, LOG_SECTIONS.length * 2);
     LOG_SECTIONS.forEach((section, i) => {
       assert.equal(lines[i * 2], LOG_SECTION_TITLES[section]);
-      assert.equal(lines[i * 2 + 1], section === 'scene' ? 'skill-a.skill-a.key（stat）' : LOG_UNKNOWN_PLACEHOLDER);
+      assert.equal(lines[i * 2 + 1], section === 'scene' ? 'skill-a.key（stat）' : LOG_UNKNOWN_PLACEHOLDER);
     });
   });
 

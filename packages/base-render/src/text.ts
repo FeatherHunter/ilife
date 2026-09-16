@@ -293,9 +293,14 @@ function headerLine(envelope: Record<string, unknown>, title: string | undefined
   }
 }
 
-/** `scene` 段：恒由 envelope 派生，形如 `{skill}.{key}（{shape}）`（`contract:595`）。 */
+/** `scene` 段：恒由 envelope 派生（`contract:595`）。
+ * 甲幂等（#555）：`key` 已以 `skill + '.'` 开头不再重复补技能名；
+ * 不带前缀仍补足，两种给法输出同一形状。 */
 function sceneText(envelope: Record<string, unknown>, shape: SerializableShape): string {
-  return fieldText(envelope.skill) + '.' + fieldText(envelope.key) + '（' + shape + '）';
+  const skill = fieldText(envelope.skill);
+  const key = fieldText(envelope.key);
+  const head = skill !== '' && key.indexOf(skill + '.') === 0 ? key : skill + '.' + key;
+  return head + '（' + shape + '）';
 }
 
 /* ── 三种 format 的编码器 ───────────────────────────────────── */
