@@ -62,6 +62,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | `记围度`／`补记围度` | `body_measurements_wizard.html` | 13 围度 3 分组；记录级至少 1 项 |
 | `定训练计划` | `plan_builder_wizard.html` | **可写**：出计划编辑器（可写页）→ 用户改完确认 → 复制命令 → AI 调 `calorie.workout.plan-set` 落库（见下） |
 | `设置档案`／`设活动量`／`改档案` | `calorie.view.profile-wizard`（页面装配在 `src/profile/setup.ts`） | 场景 07 三条写入词共用一页（改前值 ＋ 待写项 ＋ 活动量五档）；改前值取自库内现值，写入仍走 `calorie.profile.set`／`calorie.profile.activity`／`calorie.profile.update` |
+| `定营养目标`／`定营养目标(自动算)`／`定体重目标`／`定体重目标(自动算截止)`／`定体重目标(含起始日)`／`定饮水目标`／`定饮水目标(自动算)`／`一键定全套目标`／`改营养目标`／`改体重目标`／`改饮水目标` | `calorie.view.goal-wizard`（页面装配在 `src/goal/precheck.ts`） | 场景 06 十一条带空位的写词共用一页（库内现值 ＋ 按档案算的推荐值与依据 ＋ 改前→改后对照）；写入仍走 5 条既有写命令；暂停所有目标／重启所有目标无空位不出页 |
 
 | 场景 | 触发 | 行为 | CLI 落点（符号锚，可验） |
 |---|---|---|---|
@@ -487,6 +488,15 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 看体重总览 → `calorie.view.weight --params '{"window":"30d"}'` → 步骤：读 30 天窗口出总览；交付物：体重盘页面（同「量体重」那一页，窗口取 30 天）。
 - 体重复盘（本周） → `calorie.view.weight-review --params '{"window":"本周"}'` → 步骤：读该窗口出复盘；交付物：复盘页（窗口取本周／本月／`90d`／今年／自定义给 `start`＋`end`）。
 - 看里程碑回溯 → `calorie.view.weight-review --params '{"mode":"milestones"}'` → 步骤：读全史里程碑；交付物：里程碑页。
+
+## 场景 06 目标管理常驻规则与工作流指针
+
+- 常驻规则（照做；逐词细节见包外披露真源）：
+  - 写类 11 条带空位先出预检页 `calorie.view.goal-wizard`（`wake`＝本词；自动算与一键类加 `profile`），用户在页上核对后复制 prompt 回给 AI，AI 再调会改数据库的命令；写入仍走 5 条既有写命令，不新增组合写命令。
+  - 暂停所有目标／重启所有目标无空位不出页，直接调写命令，回执带恢复入口提示。
+  - 读类 15 条直接跑读命令出结果页；`看体重目标进度` 查词取 `wake_word` 逐字相等那条（子串搜首命中是邻词，取第二条）。
+  - 交付判据：HTML 落盘、`data.output` 是绝对路径、字节不为 0、文字只概括结论不超过三句话、该缺数据的出可读缺失阻断且不落盘。
+- 逐词工作流（28 条每条从哪一步往下走）：见 `docs/skills/skill-calorie/06-目标管理-工作流程.md`（真源；SKILL.md 只留本节常驻规则＋这一行指针）。
 
 ## 场景 10 分析（拆 A）工作流程（88 条查询命令）
 
