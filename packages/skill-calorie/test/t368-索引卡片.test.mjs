@@ -9,7 +9,7 @@
  * 期望值来源只认两份权威源：`src/body/commands.ts`（键与代表唤醒词）＋生成物注册表 `dist/cli/keys.js`
  * （`CALORIE_COMBOS`）。不拿本实现自己的输出当期望值。
  *
- * 运行：先 `node_modules/.bin/tsc -b packages/skill-calorie`，再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  *      `node --test packages/skill-calorie/test/t368-索引卡片.test.mjs`
  * 末行机器可读摘要：`RESULT: n/m`。
  */

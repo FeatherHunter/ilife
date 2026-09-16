@@ -18,7 +18,7 @@
  * **83 条**；老词表 `SCENE_02_DIET` 的 **70 条**（按 `wake_word` 去重 70）**一条不漏全含在其中**，
  * 多出的 **13 条**见下面 `OLD_TABLE_EXTRA`。本锁锁 83 条。
  *
- * 跑法：`node D:\ilife\node_modules\typescript\bin\tsc -b packages/base-render packages/skill-calorie --force`
+ * 跑法：`node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie --force`
  * 之后 `node --test packages/skill-calorie/test/t279-真出口用例.test.mjs`（约 230 次真出口调用，一分钟上下）。
  *
  * **件名**：`t279-真出口用例.test.mjs`（票面要的 `test/t279-*.test.mjs`）。

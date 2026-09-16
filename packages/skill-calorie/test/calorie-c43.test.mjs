@@ -68,7 +68,8 @@ test('C7 默认目标值1800/2000来源文档一笔', () => {
 });
 
 test('C2 记早餐/午餐/晚餐别名→calorie.diet.add（WAKE_TABLE+现找）', () => {
-  assert.equal(WAKE_TABLE.length, 3);
+  // #291 c6ff7e2 加三行目标别名（看目标推荐/看目标配置/看目标状态），WAKE_TABLE 3→6；饮食三行形状不变。
+  assert.equal(WAKE_TABLE.length, 6);
   for (const phrase of ['记早餐', '记午餐', '记晚餐']) {
     const route = routeWakeword(phrase);
     assert.ok(route, phrase + ' 无路由');
