@@ -65,7 +65,7 @@ const WAKE_TABLE = [
   { n: 2, wake: '定营养目标(自动算)', key: 'calorie.view.goal-wizard', params: { profile: 'cut', wake: '定营养目标(自动算)' } },
   { n: 3, wake: '定体重目标', key: 'calorie.goal.weight', params: { kg: 68 } },
   { n: 4, wake: '定体重目标(自动算截止)', key: 'calorie.goal.weight', params: { kg: 68, deadline: DEADLINE } },
-  { n: 5, wake: '定体重目标(含起始日)', key: 'calorie.goal.weight', params: { kg: 68, startKg: 72, deadline: DEADLINE, startDate: '2026-09-01' } },
+  { n: 5, wake: '定体重目标(含起始日)', key: 'calorie.goal.weight', params: { kg: 68, startKg: 72, deadline: DEADLINE, startDate: DEADLINE } },
   { n: 6, wake: '定饮水目标', key: 'calorie.goal.water', params: { water: 2000 } },
   { n: 7, wake: '定饮水目标(自动算)', key: 'calorie.view.goal-wizard', params: { profile: 'cut', wake: '定饮水目标(自动算)' } },
   { n: 8, wake: '一键定全套目标', key: 'calorie.view.goal-wizard', params: { profile: 'cut', wake: '一键定全套目标' } },
