@@ -13,9 +13,10 @@
  *  老侧没有这一张页（`scenes/write.yaml:228-238` 只有两行文字回执），本页是新设计的。
  */
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderCopyBlock, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderCopyBlock, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
+import { collectMissingTags, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { diffOf, diffTable } from '../shared/diffTable.js';
 import { emptyNote } from '../shared/emptyNote.js';
@@ -38,8 +39,8 @@ const KEY = 'bill.record.update';
 /** 撤销这件事那句说明（采集页与回执页各出一处，同一句话只写在这里一份）。
  *  本轮整改：`软删打标`／`deleted_at`／`NULL`／`物理删` 都是工程话，换成用户说法
  *  （照 `docs/skills/skill-bill/t407-文字审查.md` 第 27、28 条的判法）。 */
-const SOFT_DELETE_NOTE = '撤销只是给这一笔打个标记：数据不删，记录还在库里；'
-  + '撤销过的那一笔不再算进查询和统计，想找回来随时点「恢复」。';
+const SOFT_DELETE_NOTE = '撤销只打标，不删数据，记录还在库里。'
+  + '撤销过的那一笔不算进查询和统计，要回来就说「恢复」。';
 
 /** 一个值的字符串形态（数字写十进制串，其余形态按空串用）。 */
 function textOf(v: unknown): string {
@@ -78,17 +79,26 @@ function blockedCommand(params: Record<string, unknown>, blocked: readonly Block
   return commandLine(KEY, filled);
 }
 
+/** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
+ *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
+function blockedFold(items: readonly BlockedItem[], command: string): string {
+  if (items.length === 0) return '';
+  return renderDisclosure({
+    title: '还缺什么，以及补齐后照抄的那条',
+    contentHtml: blockedBar({ items, command }),
+  });
+}
+
 /** 「照这句跟助手说一遍」那块话：挑哪一条、撤销是什么口径、接下来跟助手说哪句。 */
 function promptOf(input: { readonly id: number | null; readonly deleted: boolean; readonly params: Record<string, unknown> }): string {
   if (input.id === null) {
-    return '这一页先不写库：撤销原先缺「记录编号」就没页可看（原先直接报错），现在改成先列表让用户挑。\n'
-      + '请从上面的候选记录里指定一条（说编号即可），再跟助手说一遍「撤销」。';
+    return '这一页先不写库。从候选里指定一条记录，再跟助手说一遍「撤销」。';
   }
   if (input.deleted) {
     return '记录编号 ' + input.id + ' 那一条已经撤销过，再撤一次无事可做。\n'
       + '要它回到库里就说「恢复」：' + commandLine(KEY, { op: 'restore', id: input.id }) + '。';
   }
-  return '这一条就是这次要撤销的目标；撤销只打标记、不删记录，撤完还能恢复。照这条说：\n'
+  return '这一条就是这次要撤销的目标。撤销只打标记、不删记录，撤完还能恢复。照这条说：\n'
     + commandLine(KEY, input.params);
 }
 
@@ -106,41 +116,43 @@ function collectOf(input: CollectInput): string {
   const probe = id === null ? { ok: true, reason: '', row: null } : readRowById(id);
   const row = probe.row;
   const deleted = row !== null && row.deleted_at !== null && String(row.deleted_at).trim() !== '';
+  /** 副标题只报缺哪一项（不重复「已出采集页，补齐之后跟助手说一遍」那句）。 */
+  const subtitle = blocked.length === 0 ? '' : '缺必需槽位：' + blocked.map((i) => i.label).join('、');
   const middle: string[] = [];
   if (id === null) {
     middle.push(pickerBlock({
       mode: 'undo',
-      hint: '从下面列出的（没撤销过的）记录里挑一条：撤销只是打个标记，随后还能恢复。',
+      hint: '候选只列没撤销过的记录，挑一条即可。',
     }));
   } else if (row !== null && deleted) {
-    middle.push(snapshotTable(row, '这一条记录（已打标撤销 · 只读回显）'));
+    middle.push(snapshotTable(row, '这一条记录　已打标撤销，只读回显'));
     middle.push(emptyNote({
       title: '这一条已经撤销过',
       text: '记录编号 ' + id + ' 在 ' + String(row.deleted_at) + ' 已经撤销过了，这一支不再重复撤销。',
-      next: '要它回到库里就说「恢复」；要撤别的记录就换一个编号。',
+      next: '要它回到库里就说「恢复」。要撤别的记录就换一个编号。',
     }));
   } else if (row === null) {
     middle.push(emptyNote({
       title: '这个编号没有可撤销的记录',
-      text: '记录编号 ' + id + ' 在库里读不到'
-        + (probe.ok ? '（未撤销的那些里没有它）。' : '：' + probe.reason + '。'),
-      next: '请核一下编号（或先说清是哪一笔），再说一遍；候选记录列表在缺编号那一形态里出。',
+      text: '记录编号 ' + id + ' 在库里读不到。' + (probe.ok ? '' : probe.reason + '。'),
+      next: '核一下编号，或先说清是哪一笔。',
     }));
   } else {
-    middle.push(snapshotTable(row, '这一条就是要撤销的记录（只读回显 · 记录编号 ' + row.id + '）'));
-    middle.push(renderCaliberLine('撤销之后这一行只是被打了标：它还在库里，随时可以用「恢复」把它捞回来。'));
+    middle.push(snapshotTable(row, '这一条就是要撤销的记录　只读回显　记录编号 ' + row.id));
   }
   const content = [
     typeBadge({
       kind: '',
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: WAKE }),
+      next: '',
     }),
+    blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
     summaryRow(factsOf(row, params)),
     renderCaliberLine(SOFT_DELETE_NOTE),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。挑好记录后跟助手说一遍才会写。'),
-    blockedBar({ items: blocked, command: blockedCommand(params, blocked) }),
+    collectSectionTitle({ no: 2, title: id === null ? '先挑一条记录' : '核对这一条' }),
+    blockedFold(blocked, blockedCommand(params, blocked)),
     middle.join(''),
     promptCopyArea(promptOf({ id, deleted, params }), '挑好记录后照这句跟助手说一遍'),
     copyArea({
@@ -160,7 +172,7 @@ function collectOf(input: CollectInput): string {
   return pageShell({
     docTitle: DOC_TITLE + '·补齐槽位',
     title: WAKE + ' · ' + (id === null ? '挑一条记录' : '确认撤销'),
-    subtitle: message,
+    subtitle,
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -176,7 +188,7 @@ function collectOf(input: CollectInput): string {
  *  （DOM 实测：本页 4 枚复制按钮＝两组，其余 31 页各 2 枚＝单组）。
  *  改后退出口只留那枚「恢复这一笔」按钮与一句去向说明，不带复制按钮、不带 `data-t`；
  *  恢复指令走下面复制区那颗「复制数据」（复制载荷里仍带可重跑命令，`data-t` 形状不动）。 */
-const RESTORE_EXIT_NOTE = '撤销没删数据，所以出口是「恢复」：点下面那颗「复制数据」，里面带着一句恢复的话。';
+const RESTORE_EXIT_NOTE = '想反悔就用下面那颗「复制数据」，里面带着一句恢复的话。';
 
 function restoreExit(): string {
   return renderCopyBlock({
@@ -206,7 +218,7 @@ function receiptOf(input: ReceiptInput): string {
       kind: '',
       status: 'warn',
       state: '写库成功',
-      next: nextStepOf({ page: 'receipt', exit: true }),
+      next: '这一笔已标记撤销，记录还在。恢复见下方按钮。',
     }),
     renderKpiGrid([
       ...summaryCards(input.facts),
@@ -228,7 +240,7 @@ function receiptOf(input: ReceiptInput): string {
         ],
         caption: '撤销结果',
       })
-      : diffTable({ rows, caption: '改前改后对照（撤销只动「撤销标记」这一项）' }),
+      : diffTable({ rows, caption: '改前改后对照　只动「撤销标记」这一项' }),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,

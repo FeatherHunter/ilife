@@ -13,9 +13,10 @@
  *  没撤销过的记录不进这一格。老侧没有这一张页（`scenes/write.yaml:242-251` 只有两行文字回执）。
  */
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
+import { collectMissingTags, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { emptyNote } from '../shared/emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
@@ -36,9 +37,8 @@ const KEY = 'bill.record.update';
 
 /** 「把标记清掉」那句说明（采集页与回执页各出一处，同一句话只写在这里一份）。
  *  本轮整改：`deleted_at`／`NULL` 是工程话，换成用户说法（照 `docs/skills/skill-bill/t407-文字审查.md` 第 29 条）。 */
-const RESTORE_NOTE = '恢复就是把「已撤销」这个标记清掉。'
-  + '这一笔回到查询和统计里。';
-const RESTORE_SCOPE = '这一格只列已经撤销过的记录，没撤销过的不进来。';
+const RESTORE_NOTE = '恢复就是清掉那个撤销标记，这一笔回到查询和统计里。'
+  + '候选只列已经撤销过的记录，没撤销过的不进来。';
 
 /** 一个值的字符串形态（数字写十进制串，其余形态按空串用）。 */
 function textOf(v: unknown): string {
@@ -77,17 +77,26 @@ function blockedCommand(params: Record<string, unknown>, blocked: readonly Block
   return commandLine(KEY, filled);
 }
 
+/** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
+ *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
+function blockedFold(items: readonly BlockedItem[], command: string): string {
+  if (items.length === 0) return '';
+  return renderDisclosure({
+    title: '还缺什么，以及补齐后照抄的那条',
+    contentHtml: blockedBar({ items, command }),
+  });
+}
+
 /** 「照这句跟助手说一遍」那块话：挑哪一条、恢复是什么口径、接下来跟助手说哪句。 */
 function promptOf(input: { readonly id: number | null; readonly deleted: boolean; readonly params: Record<string, unknown> }): string {
   if (input.id === null) {
-    return '这一页先不写库：恢复原先缺「记录编号」就没页可看（原先直接报错），现在改成先列表让用户挑。\n'
-      + '请从上面的候选记录里指定一条（说编号即可，候选只列已经撤销过的那些），再跟助手说一遍「恢复」。';
+    return '这一页先不写库。从候选里指定一条已经撤销过的记录，再跟助手说一遍「恢复」。';
   }
   if (!input.deleted) {
-    return '记录编号 ' + input.id + ' 那一条没撤销过，没有标记可清：恢复无事可做。\n'
+    return '记录编号 ' + input.id + ' 那一条没撤销过，没有标记可清。\n'
       + '要撤它就说「撤销」：' + commandLine(KEY, { op: 'undo', id: input.id }) + '。';
   }
-  return '这一条就是这次要恢复的目标；恢复只把「已撤销」那个标记清掉，别的项一概不动。照这条说：\n'
+  return '这一条就是这次要恢复的目标。恢复只把撤销标记清掉，别的项一概不动。照这条说：\n'
     + commandLine(KEY, input.params);
 }
 
@@ -108,29 +117,30 @@ function collectOf(input: CollectInput): string {
   const row = probe.row;
   // 撤销标记口径取自 `../shared/recordPicker.ts` 的 `isDeleted`（读一条时一次算好，本件不重判一次）。
   const deleted = probe.deleted;
+  /** 副标题只报缺哪一项（不重复「已出采集页，补齐之后跟助手说一遍」那句）。 */
+  const subtitle = blocked.length === 0 ? '' : '缺必需槽位：' + blocked.map((i) => i.label).join('、');
   const middle: string[] = [];
   if (id === null) {
     middle.push(pickerBlock({
       mode: 'restore',
-      hint: '只列已经撤销过的那些记录：挑一条，把它那个「已撤销」标记清掉。',
+      hint: '候选只列已经撤销过的记录，挑一条即可。',
     }));
   } else if (row !== null && deleted) {
-    middle.push(snapshotTable(row, '这一条就是要恢复的记录（只读回显，记录编号 ' + row.id + '）'));
-    middle.push(renderCaliberLine('它现在带着「已撤销」标记（' + String(row.deleted_at)
-      + '）；恢复之后标记清掉，这一笔回到查询和统计里。'));
+    middle.push(snapshotTable(row, '这一条就是要恢复的记录　只读回显　记录编号 ' + row.id));
+    middle.push(renderCaliberLine('它现在带着撤销标记，' + String(row.deleted_at)
+      + ' 撤销的。恢复之后标记清掉，这一笔回到查询和统计里。'));
   } else if (row === null) {
     middle.push(emptyNote({
       title: '这个编号没有可恢复的记录',
-      text: '记录编号 ' + id + ' 在库里读不到'
-        + (probe.ok ? '（连已经撤销过的那些里也没有它）。' : '：' + probe.reason + '。'),
-      next: '请核一下编号（或先说清是哪一笔），再跟助手说一遍；候选记录列表在缺编号那一形态里出。',
+      text: '记录编号 ' + id + ' 在库里读不到。' + (probe.ok ? '' : probe.reason + '。'),
+      next: '核一下编号，或先说清是哪一笔。',
     }));
   } else {
-    middle.push(snapshotTable(row, '这一条记录（没撤销过，只读回显）'));
+    middle.push(snapshotTable(row, '这一条记录　没撤销过，只读回显'));
     middle.push(emptyNote({
       title: '这一条没撤销过',
-      text: '记录编号 ' + id + ' 没有「已撤销」标记，没有可清的东西。',
-      next: '恢复只对已经撤销过的记录有意义；要撤它就说「撤销」，要改它就说「改记录」。',
+      text: '记录编号 ' + id + ' 没有撤销标记，没有可清的东西。',
+      next: '要撤它就说「撤销」。要改它就说「改记录」。',
     }));
   }
   const content = [
@@ -138,12 +148,14 @@ function collectOf(input: CollectInput): string {
       kind: '',
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: WAKE }),
+      next: '',
     }),
+    blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
     summaryRow(factsOf(row, params)),
-    renderCaliberLine(RESTORE_NOTE) + renderCaliberLine(RESTORE_SCOPE),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。挑好记录后跟助手说一遍才会写。'),
-    blockedBar({ items: blocked, command: blockedCommand(params, blocked) }),
+    renderCaliberLine(RESTORE_NOTE),
+    collectSectionTitle({ no: 2, title: id === null ? '先挑一条记录' : '核对这一条' }),
+    blockedFold(blocked, blockedCommand(params, blocked)),
     middle.join(''),
     promptCopyArea(promptOf({ id, deleted, params }), '挑好记录后照这句跟助手说一遍'),
     copyArea({
@@ -163,7 +175,7 @@ function collectOf(input: CollectInput): string {
   return pageShell({
     docTitle: DOC_TITLE + '·补齐槽位',
     title: WAKE + ' · ' + (id === null ? '挑一条记录' : '确认恢复'),
-    subtitle: message,
+    subtitle,
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -189,7 +201,7 @@ function receiptOf(input: ReceiptInput): string {
       kind: '',
       status: 'ok',
       state: '写库成功',
-      next: nextStepOf({ page: 'receipt', exit: true }),
+      next: '这一笔已恢复正常，撤销见下方按钮。',
     }),
     renderKpiGrid([
       ...summaryCards(input.facts),
@@ -201,7 +213,6 @@ function receiptOf(input: ReceiptInput): string {
         detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
-    renderCaliberLine(RESTORE_NOTE) + renderCaliberLine(RESTORE_SCOPE),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: [
@@ -209,10 +220,10 @@ function receiptOf(input: ReceiptInput): string {
         {
           k: fieldLabelOf('deleted_at') + '现在是什么样',
           v: now === undefined
-            ? '这一页读不回这一条（写库回执以回执为准）'
-            : now === null || String(now).trim() === '' ? '已清掉（这一笔又是正常的了）' : '还带着：' + String(now),
+            ? '这一页读不回这一条，以写库回执为准'
+            : now === null || String(now).trim() === '' ? '已清掉，这一笔已恢复正常' : '还带着：' + String(now),
         },
-        { k: '清掉之后', v: '这一笔回到查询和统计里；想再撤走就说「撤销」' },
+        { k: '清掉之后', v: '这一笔回到查询和统计里。想再撤走就说「撤销」' },
       ],
       caption: '恢复结果',
     }),
