@@ -7,40 +7,52 @@
  * 本件的场景差异（施工图 `docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「拍账单」那一行
  *  ＋第三节「图片识别入口」那一行，缺陷见第四节第 7 条）：
  *   ① **识别在本仓之外办**：本仓不装识别引擎、也不做上传控件（老侧同样没有，只有一行「已收到 N 张账单图片」）。
- *     页上那条通道只做一件事——把「已收到几张图／三要素还缺哪样／补齐后照抄哪条命令」讲清并给成可复制的一段
- *     （`../shared/outsideScan.ts` 的 `imageNote`／`escapeCard`／`escapePrompt`，口径只有那一处定义）；
+ *     页面只讲两件事——已收到几张图、三要素还缺哪样；补齐后照抄哪条口令仍由缺项阻断条给（收在折叠区里）。
  *   ② **文字三要素填空**：金额／分类／时间三格，名字取自 `../shared/outsideScan.ts` 的 `ESCAPE_FIELDS`
- *     （**唯一定义地**），表单、明示表、提示话术三处都引它，本件不另抄一份；
+ *     （**唯一定义地**），明示表与表单两处都引它，本件不另抄一份；
  *   ③ **缺一不许写库**：三要素缺哪样，阻断条就报哪样，缺项时不出可跑的写库指令（不给复制按钮）。
  *     也不替用户猜三要素里缺的值。
+ *
+ * 本轮整改（架构级，派单点名的两页之一；只动本件的可见正文与块序，不动行为判定与信封字段）：
+ *   ① **首屏同形「未给」卡清零**：删结论摘要行那一网格（三要素的「未给」在标签与明示表里各说一次已够）；
+ *   ② **常驻黑清零**（B 席首案）：原先那张深色毛玻璃「已收图片数与识别分工」说明块换成两行浅色口径
+ *     （识别在哪一步办＋已收几张图），不再带「带知道了」关闭按钮，动作只剩复制区；
+ *   ③ **口令原文块折叠**：共用的缺项阻断条整条走 `./collectBody.ts` 的 `collectBlockedFold` 收进折叠区；
+ *   ④ **下半屏三表合并成一张**：原先「三要素明示表 ⟶ 每一步在谁那里办 ⟶ 预填标注」三张逐项重复，
+ *     现在明示表只留`要素／现在`两列（第三列与每行那句「外部识别结果（或用你眼睛看一眼账单）」删），
+ *     分工那句并进口径行，缺项明示表随阻断条折叠——页内表格只剩两张，且互不重复；
+ *   ⑤ 祈使句改陈述；页标题只留唤醒词。形状取 `../shared/collectFrame.ts` 里面向用户的那三种（进度／缺项标签／分段标题）；该件另两种（架头／按钮层级）的固定文案是页面自指话，本席未上屏，作残项报给该件所属窗口。
  *
  * 两个页面级的入参约定（本件读 `params`，不由命令注册表声明）：
  *   `params.images`＝本次交上来的账单图片张数（不给＝0）；`params.imageWhere`＝这些图现在在哪（不给＝「助手那边」）。
  *   本仓不落图片，这两格只用来把「收图」这一步讲清楚。
  *
  * 必有块（逐块在这里落点，核对见证据件第三节）：
- *   采集页＝页头与页面外框、类型徽章 `typeBadge`、结论摘要行 `summaryRow`、口径行、已收图片数说明、
- *     识别外置分工卡、重复检测提示条、预填标注、缺项阻断条、字段卡（文字三要素填空）、复制指令块、
+ *   采集页＝页头与页面外框、类型徽章 `typeBadge`、口径行（识别外置＋已收图片数）、三要素明示表、
+ *     重复检测提示条、预填标注、缺项阻断条（折叠）、字段卡（文字三要素填空）、复制指令块、
  *     动作区（复制数据／复制日志）、错误回执（阻断条内）。
  *   回执页＝页头与页面外框、类型徽章（`ok` 档）、结论摘要行、写入明细表、对账折叠区、退出口、复制区。
  */
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
-import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
-import { ESCAPE_FIELDS, escapeCard, escapePrompt, imageNote } from '../shared/outsideScan.js';
+import { ESCAPE_FIELDS } from '../shared/outsideScan.js';
 import type { PhotoScale } from '../shared/outsideScan.js';
-import { prefillNote, prefillOf } from '../shared/prefillNote.js';
+import { prefillOf } from '../shared/prefillNote.js';
+import { textOf } from '../shared/recentPicks.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { summaryCards, summaryRow } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { summaryCards } from '../shared/summaryRow.js';
+import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
+import { collectBlockedFold, prefillShort } from './collectBody.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
 /** 服务哪条唤醒词（`Scene.wakeWord`）。 */
@@ -60,7 +72,11 @@ const REPLACES: Readonly<Record<string, string>> = {
 const ESCAPE_SLOTS = ESCAPE_FIELDS.map((f) => ({
   name: f.name,
   label: f.label,
-  hint: f.hint,
+  // 提示一律说人话：D 席 D-/-02 与 C 席的括号项都点名 `L1/L2/L3` 与 `（L3 即名目）` 不上屏，
+  // 故这一格由本件给短句；三要素的名字与顺序仍只认 `ESCAPE_FIELDS` 那一处定义。
+  hint: f.name === 'category'
+    ? '三级分类，如 餐饮/外卖/午餐'
+    : f.name === 'amount' ? '支出为负、收入为正，如 -12.5' : '账单上的日期，如 2026-09-14',
   required: true,
 }));
 
@@ -76,6 +92,11 @@ function scaleOf(params: Record<string, unknown>): PhotoScale {
   const n = typeof raw === 'number' ? raw : Number(String(raw ?? '').trim());
   const where = isGiven(params['imageWhere']) ? String(params['imageWhere']) : '助手那边（本仓不存图、也不读图）';
   return { count: Number.isFinite(n) ? n : 0, where };
+}
+
+/** 还没填的三要素（明示表与提示行两处共引这一处判定）。 */
+function missingEscape(params: Record<string, unknown>): readonly { readonly name: string; readonly label: string }[] {
+  return ESCAPE_FIELDS.filter((f) => textOf(params[f.name]) === '');
 }
 
 /** 页面内置 envelope（采集页 `ok:false`、回执页 `ok:true`；两页同一形状）。 */
@@ -97,46 +118,73 @@ function probeOfReceipt(input: ReceiptInput): DuplicateProbe {
   };
 }
 
+/** 回执页那张网格：落值那几格不再缀缺省说法（值已经落库，那句「不填就记到…」在回执页没有动作可做）。 */
+function receiptCardsOf(input: ReceiptInput): ReturnType<typeof summaryCards> {
+  return summaryCards(input.facts).map((c) => (
+    c.value === '未给' || c.detail === undefined || !c.detail.startsWith('不填就记')
+      ? c
+      : { label: c.label, value: c.value }
+  ));
+}
+
+/** 采集页复制 prompt 区那段话：只报缺哪样与去向，不回抄命令原文（口令只有阻断条那一处，给看不给复制）。 */
+function promptOf(labels: readonly string[]): string {
+  return '拍账单：三要素由外部识别给出，还差 ' + labels.length + ' 样：' + labels.join('、')
+    + '。这一页先不写库。补齐后跟助手说一遍「' + WORD + '」。';
+}
+
 /** 过程型采集页：先收三要素（只采集、不写库）。 */
 function collectPhoto(input: CollectInput): string {
   const { params } = input;
   const blocked = blockedItems({ params, missing: input.missing, kind: KIND });
   const message = blockedMessage(input.missing, blocked);
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
-  const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: KIND, today: input.today });
+  const { pick, probe } = valuesOf({ recent: input.recent, params, kind: KIND, today: input.today });
   const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
   const scale = scaleOf(params);
+  const lack = missingEscape(params);
   const envelope = envelopeOf(input.key, false, message);
   const content = [
     typeBadge({
       kind: KIND,
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
+      next: '',
     }),
-    summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。三要素补齐后跟助手说一遍才会写。'),
-    renderCaliberLine('识别口径：图片识别在本仓之外办——本仓不装识别引擎，也不做上传控件；'
-      + '页上只给三要素文字填空，缺哪样报哪样。'),
-    imageNote(scale),
-    escapeCard({ params }),
+    collectProgress({ wakeWord: WORD, missing: blocked.length }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
+    collectSectionTitle({ no: 1, title: '三要素缺哪样' }),
+    renderCaliberLine('三要素由外部识别提供；收图在你交图那头，读图在本仓之外，本仓不存图也不读图。'),
+    renderCaliberLine(scale.count > 0
+      ? '已收 ' + Math.floor(scale.count) + ' 张账单图片，图放在 ' + scale.where + '。'
+      : '这次一张图都没交上来，走三要素文字填空。'),
+    renderDataTable({
+      columns: [{ key: 'field', label: '要素' }, { key: 'now', label: '现在' }],
+      rows: ESCAPE_FIELDS.map((f) => ({
+        field: f.label,
+        now: textOf(params[f.name]) === '' ? '还没填' : textOf(params[f.name]),
+      })),
+      caption: lack.length === 0
+        ? '三样要素都给齐了'
+        : '缺一样就先不写库',
+    }),
     duplicateNote(findDuplicates(input.recent, probe), probe),
-    prefillNote(marks),
-    blockedBar({
+    marks.length === 0 ? '' : renderCaliberLine('预填标注：下面几格已经替你填上，来源写在格子里。'),
+    collectBlockedFold({
       items: blocked,
       command: bp.command,
-      note: '三要素（金额／分类／时间）缺一不许写库，也不替用户猜缺的那一格；'
-        + '补齐之后跟助手说一遍才会写库。',
+      note: '补齐后照上面那条口令跟助手说一遍。',
     }),
+    collectSectionTitle({ no: 2, title: '把三样要素填回来' }),
     fieldCardOf({
-      description: '文字三要素填空：金额、分类、时间。分类要选到最细那一级'
-        + '（如 餐饮/外卖/午餐）。金额带符号，支出为负、收入为正。时间是账单上的日期。',
+      description: '金额、分类、时间三样填回这里，金额带符号（支出为负、收入为正）。',
       slots: ESCAPE_SLOTS,
       params,
-      marks,
+      marks: prefillShort(marks),
       pick,
     }),
-    promptCopyArea(escapePrompt({ params, blocked, scale }), '外部识别后补齐，照这句跟助手说一遍'),
+    promptCopyArea(promptOf(lack.map((f) => f.label)), '这一段就是补齐后要发给助手的话'),
+    collectSectionTitle({ no: 3, title: '补齐了再请助手记' }),
     copyArea({
       data: { envelope },
       log: {
@@ -152,9 +200,9 @@ function collectPhoto(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·补齐三要素',
-    title: WORD + ' · 补齐三要素',
-    subtitle: message,
+    docTitle: DOC_TITLE + '·采集页',
+    title: WORD,
+    subtitle: lack.length === 0 ? '三样要素都给齐了，详见下表。' : '三要素还没齐，详见下表。',
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -175,22 +223,21 @@ function receiptPhoto(input: ReceiptInput): string {
       next: nextStepOf({ page: 'receipt', exit: true }),
     }),
     renderKpiGrid([
-      ...summaryCards(input.facts),
+      ...receiptCardsOf(input),
       receiptStatusCard(input.receipt, input.writtenDetail),
-      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔' },
       {
         label: '写进去的项',
         value: input.receipt.writtenFields.length + ' 项',
-        detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
+        detail: '共 ' + input.receipt.writtenFields.length + ' 项，详见下表。',
       },
     ]),
-    renderCaliberLine('这一条的金额／分类／时间三样都来自本仓之外的识别结果（本仓不存图、不读图）；'
-      + '本页的字段与值都取自库内那一行，不是拿参数顶的。'),
+    renderCaliberLine('三要素来自本仓之外，本仓不存图也不读图。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
-      caption: '写进去的项与值',
+      caption: '这一笔记成什么',
     }),
     reconcileDisclosure(input.receipt),
     input.receipt.recordId === null ? '' : undoExit(input.receipt.recordId),
