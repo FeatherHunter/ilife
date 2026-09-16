@@ -24,6 +24,11 @@
  *   （如 `eyebrow` 改字）→ 本测试变红；
  * - 还原一致：改回 → 全绿。
  *
+ * #501 两条结构化判据（读产物 HTML，不读源码，`assertReceipt` 内 11 页逐页调用）：
+ * ① 对账信息键集 ≥2 且必含「记录编号」；② 复制载荷里的每个数都要在页面上找得到。
+ * 判据②的那一向取舍（票面字面「页面 ⊆ 载荷」实测为红、归 #574）见件尾变异电池注释与
+ * `docs/skills/skill-calorie/t501-回执页判据.md`。
+ *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/weight-receipt-337.test.mjs`
  * （先验形状：先跑 `记体重` 一条，再跑全量；`--test-name-pattern=记体重$` 即单条）。
  */
@@ -97,6 +102,55 @@ function visibleBody(html) {
     .replace(/<[^>]+>/g, ' ');
 }
 
+/** #501 判据①：页尾「对账信息」折叠区的行标签（项列）。折区一度只剩「落库时间」一行、
+ *  「记录编号」整行不摆（#483 对抗审查缺陷 3）——那是靠人工审查发现的，程序看不出来。 */
+function reconcileKeys(html) {
+  const at = html.indexOf('对账信息');
+  if (at < 0) return [];
+  const rest = html.slice(at);
+  const end = rest.indexOf('</details>');
+  const block = end >= 0 ? rest.slice(0, end) : rest;
+  return [...block.matchAll(/data-label="项">([^<]*)<\/td>/g)].map((m) => m[1]);
+}
+
+/** #501 判据①守卫：键集 ≥2 且必含「记录编号」（批量那几页允许值写「本次不适用」，标签仍要在）。 */
+function assertReconcileKeys(html, what) {
+  const keys = reconcileKeys(html);
+  assert.ok(keys.length >= 2, what + ' 对账信息键集 <2：' + JSON.stringify(keys));
+  assert.ok(keys.includes('记录编号'), what + ' 对账信息缺「记录编号」行：' + JSON.stringify(keys));
+}
+
+/** #501 判据②：三格式复制载荷（`data-t`，`data-fmt` 那三颗菜单项）的取数口。
+ *  信封的机器面（`version`／`skill`／`shape`／`key` 与头行 `【skill · key】`）先剥掉——那几个数是
+ *  契约号（`0.1.0`），不是页面上的数，留着会把判据变成永远假红。 */
+function payloadTexts(html) {
+  return [...html.matchAll(/data-fmt="[^"]*"\s+data-t="([^"]*)"/g)]
+    .map((m) => m[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/【[^】]*】/g, ' ')
+      .replace(/"version"\s*:\s*"[^"]*"/g, ' ')
+      .replace(/^\s*version\s*[:：][^\n]*/gim, ' ')
+      .replace(/"skill"\s*:\s*"[^"]*"/g, ' ')
+      .replace(/"shape"\s*:\s*"[^"]*"/g, ' ')
+      .replace(/"key"\s*:\s*"[^"]*"/g, ' '));
+}
+
+/** 字符串里的数值多重集（判据②用）。 */
+function numbersIn(text) {
+  return new Set(text.match(/[0-9]+(?:\.[0-9]+)?/g) ?? []);
+}
+
+/** #501 判据②守卫：**载荷里的每个数都要在页面上找得到**（载荷可以更全，页面不许少认）。
+ *  这一向是能立刻落地的那一向：反过来「页面每个数都在载荷里」当刻为红——载荷只装结论句
+ *  （写页）或聚合读数（读页），不装逐行明细；改载荷口径是共用件的事，`#153` 决议「三通道维持现状、
+ *  逐行明细另开一票（#574）」，不在本票写集。故本票按「载荷 ⊆ 页面」落地，实测读数与转票记录
+ *  见 `docs/skills/skill-calorie/t501-回执页判据.md`。 */
+function assertPayloadNumbersOnPage(html, what) {
+  const pageNums = numbersIn(visibleBody(html));
+  const payloadNums = [...numbersIn(payloadTexts(html).join('\n'))];
+  const extra = payloadNums.filter((n) => !pageNums.has(n));
+  assert.deepEqual(extra, [], what + ' 复制载荷里有页面上没有的数（载荷要更全、但不能多认）：' + JSON.stringify(extra));
+}
+
 /** 11 条共用的完整文档＋交付断言（五连走共用助手，三格式菜单在这里钉）。 */
 function assertReceipt(r, what) {
   assert.equal(r.status, 0, what + ' exit ' + r.status + ' stderr=' + r.stderr.slice(-300));
@@ -109,6 +163,9 @@ function assertReceipt(r, what) {
    * 判据只认**眉标元素**（类名在共享样式段里恒在，拿裸类名当判据会假红，见 #473 的同款写法）。 */
   assert.doesNotMatch(r.file, /<p class="[^"]*page-shell-eyebrow/, what + ' 眉标整行应删（不许再出眉标元素）');
   assert.ok(r.file.includes('对账信息'), what + ' 缺页尾对账折叠区');
+  // #501 判据①②：对账区键集 ≥2 且必含「记录编号」；三格式载荷的数不许比页面多认。
+  assertReconcileKeys(r.file, what);
+  assertPayloadNumbersOnPage(r.file, what);
   assert.deepEqual([...r.file.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     what + ' 的复制数据不是三格式菜单');
   assert.ok(r.file.includes('ilife-copy-log'), what + ' 缺复制日志按钮');
@@ -368,4 +425,31 @@ test('#337 批量删体重', () => {
   assert.ok(!r.file.includes('class="ilife-block-page-shell-subtitle"'), '批量删体重 页头副标题应整行撤掉');
   assert.match(r.envelope.data.message, /2 条/, '批量删摘要不对：' + r.envelope.data.message);
   assert.equal(q1(dir, 'SELECT COUNT(*) AS n FROM weight_log WHERE date BETWEEN ? AND ?', shiftISO(today, -9), shiftISO(today, -8)).n, 0, '按范围未硬删干净');
+});
+
+// ---------------------------------------------------------------- ⑦ #501 判据鉴别力（变异电池）
+
+/* #501 判据缺口：文本审查那两针（对账区键集／载荷数字对账）因两任执行席中断未落成用例。
+ * 本电池给两条守卫各配一次「改坏必红／还原必绿」的字符串级读数，判定权在守卫本身，不动 src。 */
+test('#501 变异电池：去掉「记录编号」行 ⇒ 判据①红；载荷多认一个数 ⇒ 判据②红；还原 ⇒ 两判据绿', () => {
+  const dir = mkDir();
+  const r = runCli(dir, 'calorie.weight.log', { kg: 70.5 }, 'mut-base');
+  assertReceipt(r, '变异电池底页');
+  const clean = r.file;
+  assertReconcileKeys(clean, '变异电池底页');
+  assertPayloadNumbersOnPage(clean, '变异电池底页');
+
+  // 变异①（#483 缺陷 3 的旧形态：折区只剩时间戳，「记录编号」整行不摆）。
+  const mut1 = clean.replace(/>记录编号</, '>落库编号<');
+  assert.notEqual(mut1, clean, '变异①没塞进去');
+  assert.throws(() => assertReconcileKeys(mut1, '变异①'), /缺「记录编号」行/, '变异①（去掉记录编号）未红');
+
+  // 变异②（#483 第 31 条那型：三格式载荷多出页面上没有的数）。
+  const mut2 = clean.replace(/(data-fmt="text"\s+data-t=")/, '$1 99.9 ');
+  assert.notEqual(mut2, clean, '变异②没塞进去');
+  assert.throws(() => assertPayloadNumbersOnPage(mut2, '变异②'), /载荷里有页面上没有的数/, '变异②（载荷多认一个数）未红');
+
+  // 还原一致：底页原样再判一遍。
+  assertReconcileKeys(clean, '变异电池还原');
+  assertPayloadNumbersOnPage(clean, '变异电池还原');
 });
