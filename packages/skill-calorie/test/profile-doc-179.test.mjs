@@ -338,36 +338,59 @@ test('#269／#270 饮食写命令已是完整文档，且四块标题（老实�
  * 的 4 条（记体重／批量补录／改体重／删体重，对应 9 个写唤醒词）切成整页回执
  * （`src/weight/receipt.ts` 三变体：单条／批量／改删），故上条抽样不再含体重键；
  * 本条把体重 4 键的整页与三变体关键字段钉死（不断言＝口径无锚，跳过＝放宽，都不许）。
+ *
+ * #483 口径收窄（有意改，依据 `473dd15`＋件内注释）：批量页删整块「批量计数」表
+ * （`src/weight/logReceipt.ts:11-12` 件头注释「批量计数表整块删（摘要与结论句里已有同样三数）」、
+ * `:267` 注释「#483 删掉上面那张批量计数表」；提交信息「批量页删整块批量计数表」），
+ * 本条不再断言「批量计数」，改钉事实条写入／跳过／失败三数与两条定义。
+ * #505 形状化：单条页眉标「体重 · 写后回执」整族删（`src/weight/plateDocs.ts` 的
+ * `receiptPageOf` 传空眉标），本条不再断言该眉标，改钉页题与结论判语；
+ * 可见副标题三支整行撤（#542），条数住事实条与状态卡。
+ * #483 删类页「删除快照」改「删除前的原值」，本条同步跟改。
  */
 test('#337 场景 03 四条体重写命令已是完整文档（三变体字段齐）', () => {
   const dir = mkDb(true);
   const log = runCli(dir, 'calorie.weight.log', { kg: 70.2, date: '2026-09-06', time: '07:00:00' }, 'w337-log');
   assert.equal(log.status, 0, 'weight.log exit ' + log.status + ' stderr=' + log.stderr.slice(-300));
   assertDocPage(log.file, 'weight.log');
-  for (const needle of ['体重 · 写后回执', '本次体重', '70.2', '2026-09-06', '对账信息']) {
+  for (const needle of ['本次体重', '70.2', '2026-09-06', '写入后的现值', '较上次差值', '距目标差', '备注', '本次记在 2026-09-06 07:00:00。', '对账信息']) {
     assert.ok(log.file.includes(needle), 'weight.log 缺：' + needle);
   }
+  // #483／#505：眉标「体重 · 写后回执」整族删，可见副标题整行撤（#542）。
+  assert.equal(log.file.includes('体重 · 写后回执'), false, 'weight.log 还有已删眉标');
+  assert.equal(log.file.includes('class="ilife-block-page-shell-subtitle"'), false, 'weight.log 副标题应整行撤掉');
   const id = JSON.parse(log.stdout).data.receipt.recordId;
   assert.ok(id > 0, 'weight.log 回执缺记录号');
 
   const batch = runCli(dir, 'calorie.weight.batch', { items: [{ date: '2026-09-04', kg: 70.8 }, { date: '2026-09-05', kg: 70.5 }, { date: 'xx', kg: 1 }] }, 'w337-batch');
   assert.equal(batch.status, 0, 'weight.batch exit ' + batch.status + ' stderr=' + batch.stderr.slice(-300));
   assertDocPage(batch.file, 'weight.batch');
-  for (const needle of ['批量计数', '写入', '跳过', '失败', '逐条明细']) {
+  // #483：批量计数表整块删——旧针 0 命中；三数住事实条，两条定义逐条成行（#505）。
+  assert.equal(batch.file.includes('批量计数'), false, 'weight.batch 还有 #483 已删的批量计数表');
+  for (const needle of ['逐条明细（共 3 条）', '这一次批量的逐条结果都在下表里，有的写进去了，有的跳过了，有的失败，原因各有各的说法。', '跳过＝那天已经记过（不覆盖旧记录）', '失败＝日期格式或体重值不对（原因见下表）']) {
     assert.ok(batch.file.includes(needle), 'weight.batch 缺：' + needle);
   }
+  for (const [k, v] of [['写入', '2 条'], ['跳过', '0 条'], ['失败', '1 条']]) {
+    assert.ok(batch.file.includes('<span class="wui-fact-k">' + k + '</span><span class="wui-fact-v">' + v + '</span>'),
+      'weight.batch 缺事实条「' + k + ' ' + v + '」');
+  }
+  // #542：可见副标题整行撤；机器面摘要三数一字不动。
+  assert.equal(batch.file.includes('class="ilife-block-page-shell-subtitle"'), false, 'weight.batch 副标题应整行撤掉');
+  assert.match(JSON.parse(batch.stdout).data.message, /写入 2，跳过 0，失败 1/, 'weight.batch 摘要三数不对');
 
   const upd = runCli(dir, 'calorie.weight.update', { id, kg: 70 }, 'w337-update');
   assert.equal(upd.status, 0, 'weight.update exit ' + upd.status + ' stderr=' + upd.stderr.slice(-300));
   assertDocPage(upd.file, 'weight.update');
-  for (const needle of ['改前 → 改后', '70.2', '70']) {
+  for (const needle of ['改前 → 改后', '70.2', '70', '本次改动 1 条记录。']) {
     assert.ok(upd.file.includes(needle), 'weight.update 缺：' + needle);
   }
 
   const del = runCli(dir, 'calorie.weight.remove', { id }, 'w337-remove');
   assert.equal(del.status, 0, 'weight.remove exit ' + del.status + ' stderr=' + del.stderr.slice(-300));
   assertDocPage(del.file, 'weight.remove');
-  for (const needle of ['删除快照', '硬删除，不可恢复']) {
+  // #483：可见文本的「删除快照」改「删除前的原值」；「硬删除，不可恢复」住判语（一句，不发数）。
+  assert.equal(del.file.includes('删除快照'), false, 'weight.remove 还有 #483 已删的删除快照字样');
+  for (const needle of ['删除前的原值', '硬删除，不可恢复', '删后最新体重', '本次删掉的记录已经不在库里了，硬删除，不可恢复，要还原请照下表原值重新记一次。']) {
     assert.ok(del.file.includes(needle), 'weight.remove 缺：' + needle);
   }
 });
