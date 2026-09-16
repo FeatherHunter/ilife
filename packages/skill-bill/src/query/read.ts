@@ -21,7 +21,7 @@ import {
 } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
-import { monthRange, needId, resolveQueryDate, resolveRange, weekRange, yesterdayStr } from '../policy/index.js';
+import { needId, normalizeDate, resolveQueryDate, resolveRange, validateCategory, yesterdayStr } from '../policy/index.js';
 import { calcKpi, toBillItem } from '../render/views.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
@@ -127,19 +127,57 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   });
 }
 
-/** `bill.record.range`：查周／查月（`range`）／查区间（`start`＋`end` 同给）／查分类／查账户／查账本（单条件）。
+/** #413 · 区间查的「今天」锚点（与卡路里 #250 同序，种子日期不写死）：
+ *  显式 `today` 参数 ＞ 环境 `BILL_TODAY` ＞ 机器时钟（UTC 日）。
+ *  种子日期只活在参数／环境里，不进源码；测试一律传相对日期。
+ *  分析侧的整周／整月仍是 `../policy` 的 `weekRange／monthRange`（`cmd_read.ts` 在用），
+ *  下面两件是查询侧截到锚点的窗口（未来不计），两处各管一摊。 */
+function rangeAnchor(params: Record<string, unknown>): string {
+  const t = params.today;
+  if (t !== undefined && t !== null && t !== '') return normalizeDate(t, 'today');
+  const pin = process.env['BILL_TODAY'];
+  if (pin !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(pin)) return normalizeDate(pin, 'BILL_TODAY');
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** #413 · 周一..锚点（UTC，周一为第一天；截到锚点，未来不计，与 #250「本周」同义）。 */
+function weekWindowFrom(anchor: string): { start: string; end: string } {
+  const t = Date.parse(anchor + 'T12:00:00Z');
+  const back = (new Date(t).getUTCDay() + 6) % 7;
+  const mon = new Date(t - back * 86400000).toISOString().slice(0, 10);
+  return { start: mon, end: anchor };
+}
+
+/** #413 · 月初..锚点（月初到锚点，未来不计，与 #250「本月」同义）。 */
+function monthWindowFrom(anchor: string): { start: string; end: string } {
+  return { start: anchor.slice(0, 8) + '01', end: anchor };
+}
+
+/** #413 · 单条件取值：缺席→undefined（无此条件）；空串／全空格／非串→阻断 exit 2。
+ *  空值不许悄悄退化成无条件全量（取数层 `fetchAll` 遇空串会忽略该条件，G2-2 穿透）。 */
+function condValue(params: Record<string, unknown>, field: string): string | undefined {
+  const v = params[field];
+  if (v === undefined || v === null) return undefined;
+  if (typeof v !== 'string' || !v.trim()) {
+    throw new BillPolicyError('POLICY_BAD_INPUT', field + ' 不得为空（空查询不返全量）');
+  }
+  return v.trim();
+}
+
+/** `bill.record.range`：查周／查月（`range`＋锚点：周一..锚点／月初..锚点）／
+ *  查区间（`start`＋`end` 同给，缺一即用法错 exit 2）／查分类（三级，无 / 视为 L1）／
+ *  查账户／查账本（只过滤：KPI 照窗内收支、转账除外，余额无关）。
  *  区间查不到记录 → 阻断（exit 4），不返一张空表冒充正常。 */
 export function viewRecordRange(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.record.range';
-  const cond = {
-    category: params.category as string | undefined,
-    account: params.account as string | undefined,
-    ledger: params.ledger as string | undefined,
-  };
+  const rawCategory = condValue(params, 'category');
+  const category = rawCategory === undefined ? undefined : validateCategory(rawCategory);
+  const account = condValue(params, 'account');
+  const ledger = condValue(params, 'ledger');
+  const cond = { category, account, ledger };
   if (params.range === 'week' || params.range === 'month') {
-    const { start, end } = params.range === 'week'
-      ? weekRange()
-      : monthRange(new Date().toISOString().slice(0, 7));
+    const anchor = rangeAnchor(params);
+    const { start, end } = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor);
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
     return listOut({
@@ -160,11 +198,11 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
       emptyHint: '换个起止日期再查一次。',
     });
   }
-  if (params.category !== undefined || params.account !== undefined || params.ledger !== undefined) {
+  if (category !== undefined || account !== undefined || ledger !== undefined) {
     const records = fetchAll(db, cond);
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', '条件无记录（缺失阻断，不返空统计）');
-    const by = params.category !== undefined ? '分类' : params.account !== undefined ? '账户' : '账本';
-    const value = String(params.category ?? params.account ?? params.ledger);
+    const by = category !== undefined ? '分类' : account !== undefined ? '账户' : '账本';
+    const value = String(category ?? account ?? ledger);
     return listOut({
       key, params, wakeWord: '查' + by, window: by + '＝' + value + '（全部时间）', records,
       extra: { start: '', end: '' },
