@@ -382,12 +382,16 @@ function insetsFor(common: ResolvedCommon, opts: {
   minLeft?: number;
   minTop?: number;
   minBottom?: number;
+  minRight?: number;
 }): Insets {
   const padX = common.compact ? 6 : 14;
   const padY = common.compact ? 4 : 8;
   return {
     left: Math.max(padX + opts.tickWidth, opts.minLeft ?? 0),
-    right: padX,
+    /* t512 WaveC：右留白缺省只是 `padX`，横轴标签以 `text-anchor:middle` 居中落在绘图区左右沿上，
+     *  首尾两条各有半个字宽探出绘图区 —— 左侧被 `minLeft`（按移动端字号估的刻度宽）顺带护住，
+     *  右侧无此保护，390px 下 9 条标签的末条顶出 viewBox 右沿约 6px。调用方按需传 `minRight`。 */
+    right: Math.max(padX, opts.minRight ?? 0),
     top: Math.max(padY + (common.showValues === false ? 0 : opts.valueHeight), opts.minTop ?? 0),
     bottom: Math.max(padY + opts.labelHeight, opts.minBottom ?? 0),
   };
@@ -966,6 +970,15 @@ function renderLine(raw: LineChartInput): ChartOutput {
     const tv = lo + ((hi - lo) * i) / (tickN - 1);
     tickTextW = Math.max(tickTextW, textWidthUnits(fmtValue(round2(tv), line.format), LINE_TEXT_MOBILE.tick));
   }
+  /* t512 WaveC：右留白按**移动端字号**估横轴标签半宽（留白是双端共用的用户单位，取最大那一档
+   *  `LINE_TEXT_MOBILE.xlabel`；`textWidthUnits` 的 0.62em 本已偏保守，+1 只收 `n1` 舍入）。
+   *  横轴标签居中落在绘图区沿上，末条的半个字宽要收进 viewBox，右留白不得小于它。 */
+  let xlabelHalfW = 0;
+  if (line.labels !== 'none') {
+    for (const item of items) {
+      xlabelHalfW = Math.max(xlabelHalfW, textWidthUnits(item.label, LINE_TEXT_MOBILE.xlabel) / 2);
+    }
+  }
   const frame = makeFrame(line, insetsFor(line, {
     tickWidth: tickN === 0 ? 0 : (line.compact ? 16 : 22),
     labelHeight: line.labels === 'none' ? 0 : (line.compact ? 10 : 14),
@@ -973,6 +986,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
     minLeft: tickN === 0 ? 0 : Math.ceil(tickTextW) + 9,
     minTop: tickN === 0 ? 0 : LINE_TICK_TOP_MIN,
     minBottom: line.labels === 'none' ? 0 : LINE_BOTTOM_MIN,
+    minRight: line.labels === 'none' ? 0 : Math.ceil(xlabelHalfW) + 1,
   }));
 
   const ownDoms = series.map((s) => {
