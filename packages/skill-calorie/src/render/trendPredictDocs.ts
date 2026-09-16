@@ -276,6 +276,34 @@ function predictChips(pageType: string): string {
   return renderChips({ items: [{ text: '卡路里' }, { text: pageType }, { text: '趋势分析' }] });
 }
 
+/** #568 R-01/R-02/R-04 · 预测体重族页面侧样式（只本族装配引用，不碰公共层与壳宽）。
+ *
+ *  R-01/R-02：区间值与单位成组不跨行——值`nowrap`＋行`nowrap`＋单位不压缩，间隙沿公共层6px（≤8px）。
+ *  源码仍写`至`（冻结`W6-③`锁`66.0 至 66.5`，改`–`即红），单行由版式承担，见§6冲突点。
+ *  R-04页内一半：桌面档（>820）参数表单三列并排，消化多出120px；壳`max-width:1120px`一行不动（归#567）。
+ *  间距取12px/4px（4的倍数），字号沿公共层22px/13px档不动，数值列沿公共层`tnum`右对齐。
+ */
+function t568PredictCss(): string {
+  return '<style>\n'
+    + '.ilife-block-kpi-card-value-row{flex-wrap:nowrap;white-space:nowrap}\n'
+    + '.ilife-block-kpi-card-value{white-space:nowrap;overflow-wrap:normal;word-break:keep-all}\n'
+    + '.ilife-block-kpi-card-unit{flex-shrink:0}\n'
+    + '@media (min-width:821px){\n'
+    + '  .ilife-block-param-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}\n'
+    + '  .ilife-block-param-form-description{grid-column:1/-1;margin:0 0 4px}\n'
+    + '  .ilife-block-param-form-field{margin:0}\n'
+    + '}\n'
+    + '</style>';
+}
+
+/** #568 R-03 · 眉题写族名、chip写页名（eyebrow≠任一chip）。
+ *  预测体重族眉题`预测体重`、模拟减重族眉题`模拟减重`（见各页`eyebrow`），本件只产chip侧：
+ *  第二格为页身份（`7 天`／`自定义目标`／`每天-300卡`），与眉题族名 distinct；第三格域词保留。
+ */
+function t568Chips(pageLabel: string): string {
+  return renderChips({ items: [{ text: '卡路里' }, { text: pageLabel }, { text: '趋势分析' }] });
+}
+
 /** 来源脚注（J9 第三条恒出；同族写法见缺口页与 `diet/sourceStatsDocs.ts`）：走普通小字行，不走深底块。 */
 function sourceFootnote(what: string, start: string, end: string): string {
   return renderCaliberLine('📊 数据来源：本机' + what + '，窗口 ' + start + ' 至 ' + end);
@@ -423,7 +451,8 @@ function withVerdictCard(gridHtml: string, cardHtml: string): string {
 
 export function buildPredictDoc(v: PredictView): string {
   const parts: string[] = [
-    predictChips('体重预测'),
+    /* #568 R-03：眉题写族名（见`eyebrow:预测体重`）、chip写页名（第二格`N 天`），二者 distinct。 */
+    t568Chips(String(v.horizonDays) + ' 天'),
     /* 结论条（J2／J9 三条恒出之一；`t425` 裁定 2：结论句紧跟标题）：只用页里已有的数——
      * `forecastValue` 是**轨迹末点**的值，补了第 horizon 天末点之后它与「N 天后」真正同轴（#455）。
      * W5：末值走 `fmtWeight`（1 位）——与同页「预计区间」两端同一档（视觉抽查 §2.1 缺陷 4）。 */
@@ -474,10 +503,11 @@ export function buildPredictDoc(v: PredictView): string {
     docTitle: '卡路里 体重预测',
     title: '体重预测（' + v.horizonDays + ' 天）',
     /* 眉标只留一个归属词（#516 §3.2 D02）：原来那串 `体重预测 · 趋势分析域` 的 `·` 拆开——
-     * 页型进了页头胶囊，眉标留域；`域` 是仓库里的架构词，不上屏。 */
-    eyebrow: '趋势分析',
+     * 页型进了页头胶囊，眉标留域；`域` 是仓库里的架构词，不上屏。
+     * #568 R-03：眉题改写族名`预测体重`（chip第二格写页名`N 天`，二者 distinct，8/8）。 */
+    eyebrow: '预测体重',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    content: pageChromeCss(1120) + t568PredictCss() + parts.join(''),
     charts: false,
   });
 }
@@ -485,11 +515,21 @@ export function buildPredictDoc(v: PredictView): string {
 /* ── #383 · 预测体重(自定义目标)（weightTarget：预计达成日＋可行性；只改本图会碰到的预测段） ── */
 
 export function buildPredictTargetDoc(v: WeightTarget): string {
+  /* #568 R-06：差异量（还差Xkg）与期限（剩余Y天）取页里已有数（current/target/daysLeft），不新算口径；
+   * 结论第二句不再写判断（`超出健康范围`只留徽标一处），detail改速率事实，与徽标/结论两两不互为子串。 */
+  const diffKg = (typeof v.current === 'number' && typeof v.target === 'number'
+    && Number.isFinite(v.current) && Number.isFinite(v.target))
+    ? (v.current - v.target).toFixed(1) : null;
+  const conclTail = diffKg === null
+    ? '' : '还差 ' + diffKg + ' kg，剩余 ' + String(v.daysLeft) + ' 天。';
+  /* W6-①硬规矩：可见文本里的`—`只许用于真缺值。此处降级视图（rate缺失）不许印`—`（否则完整夹具也被判有`—`），改一句无数字人话。 */
+  const rateText = (typeof v.ratePerWeek === 'number' && Number.isFinite(v.ratePerWeek))
+    ? '当前速率 ' + fmtRate(v.ratePerWeek) + ' kg/周。' : '按窗口内趋势推算。';
   const parts: string[] = [
-    predictChips('体重预测'),
-    /* 结论句只用页里已有的数（`eta`／`target`／`feasible`），不新算任何数。 */
-    renderConclusionBar('按最近的趋势，预计 ' + String(v.eta) + ' 前后达到 ' + String(v.target) + ' kg。'
-      + (v.feasible ? '' : '这个速度超出健康范围，建议调整目标或策略。')),
+    /* #568 R-03：chip第二格写页名`自定义目标`，眉题写族名`预测体重`（见`eyebrow`）。 */
+    t568Chips('自定义目标'),
+    /* 结论句只用页里已有的数（`eta`／`target`／`diff`／`daysLeft`），判断只留徽标（R-06计数==1）。 */
+    renderConclusionBar('按最近的趋势，预计 ' + String(v.eta) + ' 前后达到 ' + String(v.target) + ' kg。' + conclTail),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
@@ -503,9 +543,7 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
       { label: '当前', value: String(v.current), unit: 'kg' },
       { label: '目标', value: String(v.target), unit: 'kg' },
       { label: '预计达成', value: String(v.eta), detail: '剩余 ' + String(v.daysLeft) + ' 天' },
-    ]), verdictCard('可行性', v.feasible
-      ? '照这个速度，这个目标赶得上。'
-      : '照这个速度，这个目标赶得偏快。', v.feasible, '可行', '超范围'))),
+    ]), verdictCard('可行性', rateText, v.feasible, '可行', '超范围'))),
   ];
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
@@ -525,11 +563,13 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
     /* H1（W5：括号统一为全角）**必须带本页自己的参数**：`analysis-accept-386.test.mjs:327` 那条
      * 「页头不是它自己那一页」的断言对 `target:65` 这条词要求「非 window 的数字参数都出现在 H1 里」
      * （同族 01–05／07–17 本就满足：H1 里带天数／卡数）；本页原文不带目标值 ⇒ 补上「65 kg」。
-     * 括号**只换形状不换词**：唤醒词原文与冻结表仍写半角（`routes.ts` 的 `wake_word` 一字未动）。 */
-    title: '预测体重（自定义目标 ' + String(v.target ?? '') + ' kg）',
-    eyebrow: '趋势分析',
+     * 括号**只换形状不换词**：唤醒词原文与冻结表仍写半角（`routes.ts` 的 `wake_word` 一字未动）。
+     * #568 R-05：`65`与`kg`之间用不换行空格（U+00A0），二者不可断（冻结W5-③要求H1纯文本，故不用span，见§6冲突点）。 */
+    title: '预测体重（自定义目标 ' + String(v.target ?? '') + ' kg）',
+    /* #568 R-03：眉题写族名`预测体重`（chip第二格`自定义目标`，二者 distinct）。 */
+    eyebrow: '预测体重',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    content: pageChromeCss(1120) + t568PredictCss() + parts.join(''),
     charts: false,
   });
 }
@@ -539,7 +579,8 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
 export function buildSimCutDoc(v: WeightSimCut): string {
   const pts = v.forecast ? v.forecast.points : [];
   const parts: string[] = [
-    predictChips('模拟减重'),
+    /* #568 R-03（01–08）：chip第二格写页名`每天-N卡`，眉题写族名`模拟减重`（见`eyebrow`）。 */
+    t568Chips('每天-' + String(v.cutKcal) + '卡'),
     /* 结论句只用页里已有的数（`cutKcal`／`weeklyLoss`／`feasible`）。
      * W5：`weeklyLoss` 走 `fmtRate`（2 位）——与第 3 张卡的「每周掉重」同一档。 */
     renderConclusionBar('每天多减 ' + String(v.cutKcal) + ' 卡，一周大约掉 ' + fmtRate(v.weeklyLoss) + ' kg。'
@@ -584,9 +625,10 @@ export function buildSimCutDoc(v: WeightSimCut): string {
   return assembleDocPage({
     docTitle: '卡路里 模拟减重',
     title: '模拟减重（每天-' + String(v.cutKcal) + '卡）',
-    eyebrow: '趋势分析',
+    /* #568 R-03：眉题写族名`模拟减重`（chip第二格页名，二者 distinct）。 */
+    eyebrow: '模拟减重',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    content: pageChromeCss(1120) + t568PredictCss() + parts.join(''),
     charts: false,
   });
 }
