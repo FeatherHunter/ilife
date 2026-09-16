@@ -1,6 +1,6 @@
 ﻿# t343 运行记录导出（对账源，抄自 `.scratch/locks/gate-runs.log` 的 `ticket=343` 行）
 
-本席（#343）窗口内每次持锁运行的 `START`／`RUN` 对子，按时间序原样抄录。
+本席（#343）窗口内每次持锁运行的 `START`／`RUN` 对子，按时间序原样抄录（含总工派单前的两次现场勘查运行，见证据 §九 第 — 行）。
 判定“有没有走包装器”看 `START`／`RUN` 对子；`exit` 预期：红线类（有命中）为 1，绿线类为 0。
 
 ```
@@ -62,5 +62,15 @@ START ticket=343 runId=a086b5a3-e37a-4a0f-827b-e53864e0022b cmd="node --test pac
 RUN ticket=343 runId=a086b5a3-e37a-4a0f-827b-e53864e0022b cmd="node --test packages/skill-calorie/test/wakeword-gate-343.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/help-new-family-471.test.mjs packages/skill-calorie/test/t367-唤醒词门.test.mjs packages/skill-calorie/test/t255-单一来源.test.mjs" waitedMs=1 exit=1 pid=52444 at=2026-09-16T13:41:51.934Z
 START ticket=343 runId=1f4c4c31-0f6f-44d4-a4e2-e9da5534ca67 cmd="node --test packages/skill-calorie/test/*.test.mjs" waitedMs=0 pid=66332 at=2026-09-16T13:42:13.991Z
 RUN ticket=343 runId=1f4c4c31-0f6f-44d4-a4e2-e9da5534ca67 cmd="node --test packages/skill-calorie/test/*.test.mjs" waitedMs=0 exit=1 pid=66332 at=2026-09-16T13:44:15.689Z
+START ticket=343 runId=3aa3c280-4afc-4216-9b1e-2a0a617635a6 cmd="git add packages/skill-calorie/scripts/gen-cli.mjs packages/skill-calorie/scripts/build-help.mjs packages/skill-calorie/SKILL.md packages/skill-calorie/src/diet/commands.ts packages/skill-calorie/src/goal/commands.ts packages/skill-calorie/src/photo/commands.ts packages/skill-calorie/test/wakeword-gate-343.test.mjs docs/skills/skill-calorie/t343-代表词门-证据.md docs/skills/skill-calorie/t343-gate-runs.md" waitedMs=0 pid=28872 at=2026-09-16T13:51:54.834Z
+RUN ticket=343 runId=3aa3c280-4afc-4216-9b1e-2a0a617635a6 cmd="git add packages/skill-calorie/scripts/gen-cli.mjs packages/skill-calorie/scripts/build-help.mjs packages/skill-calorie/SKILL.md packages/skill-calorie/src/diet/commands.ts packages/skill-calorie/src/goal/commands.ts packages/skill-calorie/src/photo/commands.ts packages/skill-calorie/test/wakeword-gate-343.test.mjs docs/skills/skill-calorie/t343-代表词门-证据.md docs/skills/skill-calorie/t343-gate-runs.md" waitedMs=0 exit=0 pid=28872 at=2026-09-16T13:51:54.893Z
+START ticket=343 runId=6919fd8d-d954-4d90-b12c-c0e778c97a03 cmd="git commit -F .scratch/t343/commit-msg.txt" waitedMs=0 pid=40576 at=2026-09-16T13:52:15.545Z
+RUN ticket=343 runId=6919fd8d-d954-4d90-b12c-c0e778c97a03 cmd="git commit -F .scratch/t343/commit-msg.txt" waitedMs=0 exit=0 pid=40576 at=2026-09-16T13:52:15.640Z
+START ticket=343 runId=43417552-3432-4f5a-bf98-644095dbbb73 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 pid=71632 at=2026-09-16T13:52:25.853Z
+RUN ticket=343 runId=43417552-3432-4f5a-bf98-644095dbbb73 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=71632 at=2026-09-16T13:52:26.131Z
+START ticket=343 runId=c28cd9ef-ec0b-43a2-8026-aa1d31b96f43 cmd="node --test packages/skill-calorie/test/wakeword-gate-343.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/help-new-family-471.test.mjs" waitedMs=0 pid=13600 at=2026-09-16T13:52:30.259Z
+RUN ticket=343 runId=c28cd9ef-ec0b-43a2-8026-aa1d31b96f43 cmd="node --test packages/skill-calorie/test/wakeword-gate-343.test.mjs packages/skill-calorie/test/skill-t11.test.mjs packages/skill-calorie/test/help-new-family-471.test.mjs" waitedMs=0 exit=0 pid=13600 at=2026-09-16T13:52:51.027Z
+START ticket=343 runId=5f2d15ab-352f-47a4-ac51-21d77f9ae961 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 pid=70632 at=2026-09-16T13:52:51.115Z
+RUN ticket=343 runId=5f2d15ab-352f-47a4-ac51-21d77f9ae961 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=70632 at=2026-09-16T13:52:51.236Z
 ```
 
