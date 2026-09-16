@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地图 #157 · 待你定的五个问题（详版）</title>
+<style>
+  :root{--bg:#f5f7fb;--card:#fff;--ink:#1b2430;--muted:#5d6b7c;--line:#e3e9f1;
+    --blue:#2563eb;--green:#15803d;--amber:#b45309;--red:#b91c1c;--rec:#f0fdf4;--warn:#fffbeb}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.68}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 16px 70px}
+  header{background:linear-gradient(135deg,#7c2d12,#ea580c);color:#fff;border-radius:14px;padding:22px}
+  header h1{margin:0 0 6px;font-size:22px}
+  header p{margin:4px 0 0;font-size:14px;opacity:.94}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:3px 12px;font-size:13px}
+  table.sum{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0;font-size:13.5px}
+  table.sum th,table.sum td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  table.sum th{background:#f8fafc;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+  table.sum tr:last-child td{border-bottom:0}
+  .n{display:inline-block;background:#1b2430;color:#fff;border-radius:6px;font-size:11.5px;font-weight:700;padding:1px 7px;margin-right:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--amber);border-radius:12px;padding:17px 18px;margin:14px 0}
+  .card.done{border-left-color:var(--green)}
+  h2{margin:0 0 10px;font-size:17.5px}
+  h3{margin:13px 0 5px;font-size:13px;color:var(--muted);letter-spacing:.05em;font-weight:700}
+  p,li{font-size:14.5px;margin:5px 0}
+  ul{margin:5px 0;padding-left:20px}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:12.5px;word-break:break-all}
+  .key{background:#f8fafc;border:1px dashed #94a3b8;border-radius:9px;padding:9px 12px}
+  .key li{font-size:14px}
+  .rec{background:var(--rec);border:1px solid #22c55e;border-radius:9px;padding:11px 13px;margin-top:11px;font-size:14.5px}
+  .rec b{color:var(--green)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+  @media(max-width:660px){.cols{grid-template-columns:1fr}}
+  .pro,.conB{border-radius:9px;padding:9px 12px;font-size:13.5px}
+  .pro{background:#f0fdf4;border:1px solid #86efac}
+  .conB{background:var(--warn);border:1px solid #fcd34d}
+  .pro b{color:var(--green)}.conB b{color:var(--amber)}
+  .opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+  .opt{border:1px solid var(--line);border-radius:9px;padding:5px 13px;font-size:13.5px;background:#f8fafc}
+  .opt.star{border-color:#22c55e;background:var(--rec);font-weight:700}
+  .src{font-size:12.5px;color:var(--muted);margin-top:9px;border-top:1px dashed var(--line);padding-top:7px}
+  .todo{background:#fff;border:1px solid var(--line);border-left:6px solid var(--blue);border-radius:12px;padding:16px 18px;margin:14px 0}
+  footer{background:#1b2430;color:#e2e8f0;border-radius:12px;padding:16px 18px;margin-top:18px;font-size:14px}
+  footer code{background:#334155;color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>地图 #157 · 待你定的五个问题（详版）</h1>
+  <p>每题都是「你不回，机器不能替你定」的。回一句话即可，不必逐条解释。</p>
+  <div class="badges">
+    <span class="badge">机器侧已全绿</span>
+    <span class="badge">#346／348／347／435／550／553／554 已关</span>
+    <span class="badge">本件取代早前的四问版决策单</span>
+  </div>
+</header>
+
+<table class="sum">
+  <tr><th>问题</th><th>一句话是什么</th><th>我的推荐</th></tr>
+  <tr><td><span class="n">1</span>#349 撤销语义</td><td>票面写「可逆」，实现是硬删除＋确认</td><td>接受现状，即关票</td></tr>
+  <tr><td><span class="n">2</span>#350 外部 5 条</td><td>落地×3／训记×2 维持不做，签一句改规格</td><td>签（签了才改地图）</td></tr>
+  <tr><td><span class="n">3</span>#562 写词族键分歧</td><td>同一批词在文档与路由指向不同命令</td><td>以路由（预检键）为权威</td></tr>
+  <tr><td><span class="n">4</span>#555 公共层契约矛盾</td><td>「场景标识」拼两遍技能名，是 bug 还是契约</td><td>甲 · 算式幂等</td></tr>
+  <tr><td><span class="n">5</span>order 27「看构建向导」</td><td>它跟 186 共用一把键，现在也拿到编辑器页</td><td>暂时共用，另开一票</td></tr>
+</table>
+
+<!-- 1 -->
+<section class="card">
+  <h2><span class="n">1</span>#349 撤销语义：接受「硬删除＋确认」吗？</h2>
+  <h3>前因后果</h3>
+  <p>这张票的验收目标写的是「撤销语义以<strong>可逆</strong>、有回执为准」，但实际实现是<strong>硬删除</strong>：删某天、撤销整份都不可恢复；裸调不带确认直接拒写；删完再读会说「无训练计划」。</p>
+  <h3>关键信息</h3>
+  <div class="key"><ul>
+    <li>证据链已全绿：5 条变更类逐条走「过程页 → 写命令 → 结果型页落盘＋回执绝对路径＋落库断言」，变异探针 GREEN 5/5。</li>
+    <li>关票前只剩两句确认：① 本问；② 测试口径以根 <code>test/</code> 为准（票面写的 <code>packages/…</code> 路径不存在）。</li>
+    <li>材料：<code>docs/skills/skill-calorie/t349-close-ready-20260914.md</code> §3。</li>
+  </ul></div>
+  <div class="rec"><b>推荐：接受「硬删除＋确认＋回执」，即关票。</b>「确认」这一步就是防误触的口子；真要做回收站，那是新功能，值得单独排期，不该堵住收口。</div>
+  <div class="cols">
+    <div class="pro"><b>接受 · 利：</b>#349 当场可关，语义与实现一致。<b>弊：</b>误删找不回来（靠确认那一关拦）。</div>
+    <div class="conB"><b>坚持可逆 · 利：</b>误删可恢复。<b>弊：</b>另开一票做软删＋恢复链，收口继续等。</div>
+  </div>
+  <div class="opts"><span class="opt star">A 接受即关（推荐）</span><span class="opt">B 坚持可逆，另开票</span></div>
+</section>
+
+<!-- 2 -->
+<section class="card">
+  <h2><span class="n">2</span>#350 外部 5 条：签「维持不做」吗？</h2>
+  <h3>前因后果</h3>
+  <p>「落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩」（order 196–200）的老实现要调<strong>外部程序</strong>推送与回写（<code>sync_plan.py</code> 四步、<code>xunji_bridge</code>），而新仓<strong>一条公开的推送或拉取命令都没有</strong>——单命令跑不通。方案已写好，只等你签：维持不做、改 HELP 文案、在地图 Destination 加一句限定。</p>
+  <h3>关键信息</h3>
+  <div class="key"><ul>
+    <li>材料：<code>t350-external-five-verdict.md</code> §4.1 改规格建议句、§4.2 五条 HELP 逐条「现状 → 建议」、§五 Destination 限定句。</li>
+    <li>签后口径：终审时这 5 条<strong>只验「命中＋文案」，不验执行</strong>。</li>
+    <li>附带两条建议（本票不做）：《训记推送公开接口立项》、《落地本地部分先行（补计划＋记心愿走公开命令）》。</li>
+  </ul></div>
+  <div class="rec"><b>推荐：签。</b>诚实封口，往后没人会照 HELP 文案去跑一条注定跑不通的链；将来真要做，走立项票重启即可。</div>
+  <div class="cols">
+    <div class="pro"><b>签 · 利：</b>#350 当场可关；HELP 不再说「推日历／推训记」。<b>弊：</b>地图 Destination 收窄一句。</div>
+    <div class="conB"><b>不签 · 利：</b>留着「以后真做」的余地。<b>弊：</b>票悬空，HELP 差文继续误导。</div>
+  </div>
+  <div class="opts"><span class="opt star">A 签（推荐）</span><span class="opt">B 不签</span><span class="opt">C 要改（指出改哪句）</span></div>
+</section>
+
+<!-- 3 -->
+<section class="card">
+  <h2><span class="n">3</span>#562 写词族键分歧：以哪一处为权威？</h2>
+  <h3>前因后果</h3>
+  <p>抽查 27 条可执行唤醒词里 SKILL.md 有代表词行的 13 条，其中 <strong>10 条两处指向不同命令</strong>：SKILL.md 那 10 行印的是<strong>写命令</strong>键（如「复制训练计划」→ <code>calorie.workout.plan-copy</code>），而路由登记的是<strong>预检</strong>键（<code>calorie.view.plan-write-preview</code>）。两处各自自洽，但同一条词只读一处会走到不同命令。</p>
+  <h3>关键信息</h3>
+  <div class="key"><ul>
+    <li>地图那条链是「说唤醒词 →（写类先出过程型页）→ 复制 prompt → AI 用命令执行」——按它写词应当<strong>先落预检页</strong>，即<strong>预检键才是对的</strong>。</li>
+    <li>写命令另有「确认…」那族词登记着（<code>routes.generated.ts:510–519</code>）；SKILL.md 那 10 行读起来像「说这个词就会直接执行」。</li>
+    <li>涉事两处：<code>SKILL.md:200–209</code>、<code>routes.generated.ts:198–207</code>（生成物，只经 <code>pnpm gen</code> 改）。</li>
+  </ul></div>
+  <div class="rec"><b>推荐：以路由（预检键）为权威</b>，把 SKILL.md 那 10 行改齐。运行时行为一字不动，收口零风险。</div>
+  <div class="cols">
+    <div class="pro"><b>路由为准 · 利：</b>与地图链、运行时、整链测试三方一致，只改文档字。<b>弊：</b>改 SKILL.md 10 行＋重跑生成链。</div>
+    <div class="conB"><b>维持现状＋加口径句 · 利：</b>SKILL.md 字面不动。<b>弊：</b>下一个人仍会照 SKILL.md 直接跑写命令，跳过预检页与人工确认。</div>
+  </div>
+  <div class="opts"><span class="opt star">A 预检键为准（推荐）</span><span class="opt">B 维持现状，两处各加口径句</span></div>
+</section>
+
+<!-- 4 -->
+<section class="card">
+  <h2><span class="n">4</span>#555 公共层契约矛盾：三选一（甲／乙／丙）</h2>
+  <h3>前因后果</h3>
+  <p>「复制日志」第 1 段「场景标识」的算式把技能名拼了两遍（<code>calorie.calorie.view.plan</code>），可<strong>公共层自己的冻结测试</strong>五处偏偏把这个双前缀钉成了期望值；兄弟技能 <code>skill-bill</code> 又写着相反的约定（交给信封的 key <strong>不带</strong>技能前缀）。所以它到底是 bug 还是契约，本仓今天答不出来。</p>
+  <h3>关键信息</h3>
+  <div class="key"><ul>
+    <li>三处出处：算式 <code>base-render/src/text.ts:298</code>；冻结测试 <code>base-render/test/text.test.mjs</code> 五处期望 <code>skill-a.skill-a.key</code>；相反约定 <code>skill-bill/src/shared/pageIdentity.ts:10</code>。</li>
+    <li>实测后果：四个场景 <strong>102 份</strong>产物带出<strong>不存在的命令键</strong>（体重 49／健身计划 27／目标 18／主页 8）；这段不上屏，机检与肉眼都照不到。</li>
+    <li>卡路里侧 78 处装配位：带前缀 50／不带前缀 0／动态 28 ⇒「不带前缀」这条约定在卡路里早已事实上失效。</li>
+    <li>卡路里侧已用<strong>自己的漏斗归一</strong>修好（#550，公共层零改动）；本问定的是<strong>公共层契约本身</strong>，影响别的技能。</li>
+  </ul></div>
+  <div class="rec"><b>推荐：甲 · 算式幂等</b>（key 已带 <code>skill.</code> 前缀就不再补）。现存那 50 处「带前缀」写法天然变正确，调用方不必人人记得剥前缀。</div>
+  <div class="cols">
+    <div class="pro"><b>甲 幂等 · 利：</b>两种写法都对，改动最小、最不容易再犯。<b>弊：</b>改公共层语义＋改它 5 处冻结期望值（那正是把缺陷钉成契约的地方）。</div>
+    <div class="conB"><b>乙 调用方先剥 · 利：</b>与 skill-bill 一致，公共层语义不动。<b>弊：</b>卡路里 50 处要改，还得加一条能抓住后来者的门。<br><b>丙 直接用 key · 利：</b>最简单无歧义。<b>弊：</b>调用方给短键时，场景标识会丢掉技能名。</div>
+  </div>
+  <div class="opts"><span class="opt star">甲 算式幂等（推荐）</span><span class="opt">乙 调用方必须先剥</span><span class="opt">丙 算式直接用 key</span></div>
+  <div class="src">无论选哪条，都要把它在仓里写死存档，并把另两条明确废掉——不然下一批人还会撞。</div>
+</section>
+
+<!-- 5 -->
+<section class="card">
+  <h2><span class="n">5</span>order 27「看构建向导」怎么落？</h2>
+  <h3>前因后果</h3>
+  <p>order 27 与 186 共用同一把键（<code>calorie.view.plan-wizard</code>）。186 换装成可写编辑器后，<strong>27 也拿到了编辑器页</strong>。可 27 是「看」字辈的词，页却是可写编辑器，词面与页名错位。本次没动它——改词面＝改唤醒词表＝改需求。</p>
+  <h3>关键信息</h3>
+  <div class="key"><ul>
+    <li>三个去处：暂时共用（零改动）／另开词改名（动唤醒词表）／留旧页（旧向导已下线，<code>ilw-</code> 标记归零，复活它＝养两套代码，最贵）。</li>
+  </ul></div>
+  <div class="rec"><b>推荐：暂时共用，收口后另开一票改名或下线。</b>本轮一行不改，先让 #351 关；词面错位记进新票，不会丢。</div>
+  <div class="cols">
+    <div class="pro"><b>暂时共用 · 利：</b>零改动，收口最快。<b>弊：</b>短时间内「看构建向导」叫出编辑器，名实不符。</div>
+    <div class="conB"><b>另开词／留旧页 · 利：</b>名实相符。<b>弊：</b>前者改需求表，后者养两套页，都拖收口。</div>
+  </div>
+  <div class="opts"><span class="opt star">A 暂时共用＋另开票（推荐）</span><span class="opt">B 另开词改名</span><span class="opt">C 留旧页</span></div>
+</section>
+
+<!-- 附 -->
+<section class="todo">
+  <h2>另有一件要你动手（不是决策）</h2>
+  <p><code>docs/skills/skill-calorie/scene05-验收墙/逐格缺陷清单.md</code>：37 格里<strong>第 11 格已签</strong>（「认可，不改」），<strong>其余 36 格两列仍是空的</strong>。滚两张墙（<code>手机墙-390.html</code>／<code>桌面墙-1280.html</code>）逐格填；看完没缺陷也算结论，但要写明看了哪些格。</p>
+  <p class="src" style="border:0;padding:0;margin-top:8px">不用你定的：#557／#558（S3 记账）、#563（纯文档）、#168（常开，只作对账证据）——各自票里办，不挡收口。</p>
+</section>
+
+<footer>
+  怎么回：对话正文里按题号回一行即可 —— 例：<code>1：A ／ 2：签 ／ 3：A ／ 4：甲 ／ 5：A</code>。
+  你回完这五句、再填完 36 格，我就同步地图（Destination 限定句＋Decisions 补本轮换装 gist＋进度到 100%）并关 #157。
+</footer>
+
+</div>
+</body>
+</html>

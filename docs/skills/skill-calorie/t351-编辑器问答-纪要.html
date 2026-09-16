@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>编辑器问答纪要 · 定训练计划可写页</title>
+<style>
+  :root{--bg:#f4f6fa;--card:#fff;--ink:#1d2733;--muted:#5b6b7c;--line:#e2e8f0;
+    --green:#15803d;--rec:#ecfdf5;--amber:#b45309;--open:#fffbeb}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.65}
+  .wrap{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+  header.hero{background:linear-gradient(135deg,#065f46,#10b981);color:#fff;border-radius:14px;padding:22px}
+  header.hero h1{margin:0 0 6px;font-size:22px}
+  header.hero p{margin:4px 0 0;opacity:.92;font-size:14px}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0;border-left:6px solid #10b981}
+  .card.open{border-left-color:var(--amber)}
+  .card h2{margin:0 0 4px;font-size:17px}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:1px 8px;margin-left:8px;vertical-align:middle}
+  .done{background:#dcfce7;color:var(--green);border:1px solid #86efac}
+  .wait{background:#fef3c7;color:var(--amber);border:1px solid #fcd34d}
+  .sec h3{margin:12px 0 4px;font-size:13px;color:var(--muted);letter-spacing:.05em}
+  .sec p,.sec li{font-size:14.5px;margin:4px 0}
+  .sec ul{margin:4px 0;padding-left:20px}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:12.5px;word-break:break-all}
+  .key{background:#f8fafc;border:1px dashed #94a3b8;border-radius:8px;padding:8px 12px;font-size:14px}
+  .rec{background:var(--rec);border:1px solid #10b981;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:14.5px}
+  .rec b{color:var(--green)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+  @media(max-width:640px){.cols{grid-template-columns:1fr}}
+  .pro,.conB{border-radius:8px;padding:8px 12px;font-size:13.5px}
+  .pro{background:#ecfdf5;border:1px solid #6ee7b7}
+  .conB{background:var(--open);border:1px solid #fcd34d}
+  .opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .opt{border:1px solid var(--line);border-radius:8px;padding:4px 12px;font-size:13.5px;background:#f8fafc}
+  .opt.star{border-color:#10b981;background:var(--rec);font-weight:700}
+  .cm{font-size:12.5px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>编辑器问答纪要 · 定训练计划可写页</h1>
+  <p>第 11 格六轮问答全落地，门全绿，第 11 格你已签字认可（清单"不改"）。本单只记问答，不重复裁定单。</p>
+  <div class="badges">
+    <span class="badge">跑批 66/66＋探针 29/29</span>
+    <span class="badge">契约门 18/18</span>
+    <span class="badge">真机自证 16/16＋12/12</span>
+    <span class="badge">台账 91/91</span>
+    <span class="badge">第 11 格已认可</span>
+  </div>
+</header>
+
+<section class="card">
+  <h2>第 1 问 · 每天 4 个时间段＋定时间<span class="tag done">已做</span></h2>
+  <div class="sec">
+    <h3>问</h3><p>每天下面新建时间段（最多 4 个），新建时选凌晨／上午／下午／晚上，建好后设时间，段内加动作。</p>
+    <h3>关键信息</h3><div class="key">库里 <code>time_start/time_end</code> 早就有，写链读页都认，只是页上没处填——这次是补页面，不动库。时间定为<strong>参数</strong>口径：第 2 周起锁住的周也能改（只锁增删段／增删动作／换时段）。</div>
+    <h3>结论</h3><p>新建走"选时段"一步；产物表末尾加"时间"列，复制指令带"上午 06:30到07:30"，AI 照此落库。</p>
+    <div class="cm">提交 e656ee6</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>第 2 问 · 库里存了哪些参数<span class="tag done">事实</span></h2>
+  <div class="sec">
+    <h3>答</h3><p><code>workout_plan_config</code>：标题／版本／说明／总周数／起日；<code>workout_plans</code> 每行：周／星期／段序号／时段名／起止时间／是否休息／总组数／动作 JSON（名／部位／类型／备注／每组次数负重单位）。</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>第 3 问 · 两个时间段能否同为上午<span class="tag done">已做</span></h2>
+  <div class="sec">
+    <h3>问</h3><p>凌晨上午下午晚上是不是类似 tab？允许两个时间段都是上午吗？</p>
+    <h3>关键信息</h3><div class="key">之前把时段当唯一键（占位禁用），与你的 tab 理解冲突。时段只是分类签，同 tab 靠起止时间区分（如上午 06:30 练胸、09:00 跑步）。</div>
+    <div class="rec"><b>定案：拆掉占用禁用。</b>同一时段可建多段，段头 chips 可切到已用时段，上限 4 不变。</div>
+    <div class="cm">提交 9ef6d54</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>第 4 问 · 动作库预置进 SKILL<span class="tag done">已做</span></h2>
+  <div class="sec">
+    <h3>问</h3><p>老目录找到训记动作库，预置进 SKILL；更新逻辑以后再加。</p>
+    <h3>关键信息</h3><div class="key">文件：<code>2026\健身\训记官方动作.json</code>，1092 个互不相同的名（来源 Xunji-movements）。<b>椭圆机、爬楼机不在官方库里</b>——所以预置库只管"从库里选"，校验口径维持现状，否则现有页凭空变红。</div>
+    <h3>结论</h3><p>落 <code>packages/skill-calorie/data/训记官方动作.json</code>（逐字节一致）；读法只住 <code>fetch/xunji-catalog.ts</code>；用户传 <code>catalog</code> 优先，缺文件兜底不断链。未来更新只换这一件，代码不动。</p>
+    <div class="cm">提交 180ce2a</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>第 5 问 · 分类三连问<span class="tag done">已做</span></h2>
+  <div class="sec">
+    <h3>问</h3><p>为什么只有"胸"？俯卧撑为什么有分类？→ 定：全部从库里查，不存在库外动作。</p>
+    <h3>关键信息</h3><div class="key">胶囊＝库里真实存在的部位值。预置库名只有名→全进"未分类"；"胸"来自计划自带的俯卧撑。仅库之后，"胸"胶囊消失（只剩全部／未分类），已排好的段不受影响。</div>
+    <h3>结论</h3><p>选择层只装库内 1092 个（有测试钉住"爬楼机不进选择层"）。</p>
+    <div class="cm">提交 6cf6e24</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>第 6 问 · 标签能不能当筛选<span class="tag done">已做</span></h2>
+  <div class="sec">
+    <h3>问</h3><p>标签是所有动作的总和，能否按力量、杠铃过滤？</p>
+    <h3>结论</h3><p>选择层改成三档：部位＋类型＋器材，跨档叠加（杠铃→167 行），点已选中即松开，"全部"复位，搜索可叠加。类型档目前只有"力量"，富化后自动长出来。</p>
+    <div class="cm">提交 671d506</div>
+  </div>
+</section>
+
+<section class="card open">
+  <h2>待定 · 部位类型何时富化<span class="tag wait">等你一句</span></h2>
+  <div class="sec">
+    <h3>背景</h3><p>库名无部位／类型是全部／未分类的根因。两条路：</p>
+    <div class="rec"><b>推荐 A：更新逻辑时一起富化。</b>换库文件时把部位类型一起带上，一劳永逸。</div>
+    <div class="cols">
+      <div class="pro"><b>A 富化 · 利：</b>权威准确，一次到位。<b>弊：</b>要等更新逻辑。</div>
+      <div class="conB"><b>B 启发式顶着 · 利：</b>当天可见。<b>弊：</b>规则我拍，难免错几个。</div>
+    </div>
+    <div class="opts"><span class="opt star">A 等富化（推荐）</span><span class="opt">B 先启发式</span><span class="opt">C 我有部位表，指给你</span></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>第 11 格验收<span class="tag done">已签字</span></h2>
+  <div class="sec">
+    <p>你认可本页 → 清单第 11 格记"负责人认可，无缺陷／不改"（提交 0223c04）。其余 36 格＋四处裁定见 <code>t351-待裁四问-决策单.html</code>。</p>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
