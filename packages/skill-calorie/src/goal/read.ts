@@ -7,6 +7,8 @@
  * #254 · `view.goal`／`view.goal-vs-actual`／`view.goal-expiring` 三处的 `html:` 改走
  * `./resultDocs.ts`（片段 → 整页）；三条命令的取数、参数与退出码一字未动。
  * #290 · `view.goal-config`／`view.goal-status` 两处的 `html:` 改走 `./resultDocs.ts::buildGoalConfigDoc／buildGoalStatusDoc`（取数、参数与退出码一字未动；旧片段保留）。
+ * #589 · `view.goal-recommend` 的 `html:` 改走本目录姊妹件 `./goalRecommendDoc.ts::buildGoalRecommendDoc`
+ * （片段 → 整页；取数、参数、`metrics` 与退出码一字未动，旧 `renderGoalRecommendHtml` 片段按票面留在 `../render/html.ts`，只出台账不删）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from './goalExtraPlate.js';
@@ -14,14 +16,12 @@ import { buildGoalConfig, buildGoalRecommend, buildGoalStatus, buildGoalWeight }
 import { buildGoalPredictDoc } from '../render/trendDocs.js';
 import { buildGoalView } from './goalPlate.js';
 import { CalorieRenderError } from '../render/errors.js';
-import {
-  renderGoalRecommendHtml,
-} from '../render/html.js';
 import { dayField, defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { TRIGGERS } from '../triggers/index.js';
 import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
 import { buildGoalPrecheckDoc } from './precheck.js';
+import { buildGoalRecommendDoc } from './goalRecommendDoc.js';
 import { buildGoalConfigDoc, buildGoalDoc, buildGoalExpiringDoc, buildGoalStatusDoc, buildGoalVsActualDoc } from './resultDocs.js';
 import { buildGoalWeightDoc } from './goalWeightDoc.js';
 import { buildGoalDraft, isGoalProfile } from './set.js';
@@ -57,7 +57,10 @@ export function viewGoalConfig(params: Record<string, unknown>, db: DatabaseSync
   return { data: { metrics }, html: buildGoalConfigDoc(g, metrics, command) };
 }
 
-/** `calorie.view.goal-recommend` · 目标推荐（按档案算的推荐值与依据）。 */
+/** `calorie.view.goal-recommend` · 目标推荐（按档案算的推荐值与依据）。
+ * #589 整页化：装配改走本目录姊妹件 `./goalRecommendDoc.ts::buildGoalRecommendDoc`
+ * （取数、参数、`metrics` 与退出码一字未动；`command` 按本次 `profile` 现拼，供复制日志照抄重跑；
+ * 旧 `renderGoalRecommendHtml` 片段按票面留在 `../render/html.ts`，本票不删）。 */
 export function viewGoalRecommend(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const profile = optStr(params, 'profile') ?? 'cut';
   if (!['cut', 'maintain', 'bulk'].includes(profile)) fail(2, 'profile 非法（cut/maintain/bulk）：' + profile);
@@ -68,7 +71,8 @@ export function viewGoalRecommend(params: Record<string, unknown>, db: DatabaseS
     weeklyRateKg: g.recommend.weeklyRateKg, weightKg: g.recommend.basis.weightKg,
     recommendedWaterMl: g.water.recommendedWaterMl, mlPerKg: g.water.mlPerKg,
   });
-  return { data: { metrics }, html: renderGoalRecommendHtml(g) };
+  const command = 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"' + profile + '"}\'';
+  return { data: { metrics }, html: buildGoalRecommendDoc(g, metrics, command) };
 }
 
 /** `calorie.view.goal-status` · 目标状态（暂停态 ＋ 热量／饮水目标）。

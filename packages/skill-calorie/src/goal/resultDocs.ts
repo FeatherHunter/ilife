@@ -22,6 +22,11 @@
  * 旧片段渲染件按票面留在 `src/render/html.ts`，本票不删。
  *
  * 对外 5 个名字（票面「对外不超过 5 个名字」；#290 两页整页化与 #254 同一套装配件，取数与 metrics 原样透传）。
+ *
+ * **#589**：目标推荐页（`calorie.view.goal-recommend`）整页化时复用本件那套——`cardOf`／`section`／
+ * `tailOf` 三个小件因此带上 `export`（缺省行为一字未动：`simpleGoalDoc` 仍按原样传 `'目标表'`）。
+ * 它们**只在 `goal/` 目录内被 `goalRecommendDoc.ts` 用**，按铁律五「目录内互相用的不算对外面」，
+ * 本件对外仍是 5 个名字（上面那五个 `build*Doc`）。
  */
 import type { DataTextInput } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
@@ -43,8 +48,9 @@ function num(v: number | null | undefined, unit: string): string {
   return v === null || v === undefined ? '—' : v + ' ' + unit;
 }
 
-/** 一张读数卡：值缺则只出「—」（单位槽跟着一起不出，免得出现「— 卡」）。 */
-function cardOf(label: string, value: number | null | undefined, unit: string, detail?: string):
+/** 一张读数卡：值缺则只出「—」（单位槽跟着一起不出，免得出现「— 卡」）。
+ *  #589 起对 `goal/` 目录内另导出（目标推荐页同形；目录外不消费）。 */
+export function cardOf(label: string, value: number | null | undefined, unit: string, detail?: string):
 { label: string; value: string; unit?: string; detail?: string } {
   if (value === null || value === undefined) return { label, value: '—' };
   const valueText = String(value);
@@ -53,8 +59,9 @@ function cardOf(label: string, value: number | null | undefined, unit: string, d
     : { label, value: valueText, unit, detail };
 }
 
-/** 区块外壳：锚点 `id` 与页内导航同源（导航项按同一份清单生成，不留指向不存在锚点的项）。 */
-function section(id: string, html: string): string {
+/** 区块外壳：锚点 `id` 与页内导航同源（导航项按同一份清单生成，不留指向不存在锚点的项）。
+ *  #589 起对 `goal/` 目录内另导出（目标推荐页同形；目录外不消费）。 */
+export function section(id: string, html: string): string {
   return '<section id="' + id + '">' + html + '</section>';
 }
 
@@ -89,8 +96,9 @@ function copyBlockOf(key: string, metrics: Record<string, number>, command: stri
   });
 }
 
-/** 页面装配的三条共用尾巴：口径行 ＋ 复制区（#561：来源脚注那条尾巴已按用户裁决整条撤）。 */
-function tailOf(key: string, metrics: Record<string, number>, command: string, source: string, calibers: readonly string[]): string {
+/** 页面装配的三条共用尾巴：口径行 ＋ 复制区（#561：来源脚注那条尾巴已按用户裁决整条撤）。
+ *  #589 起对 `goal/` 目录内另导出（目标推荐页同形：`source` 由调用方给，目录外不消费）。 */
+export function tailOf(key: string, metrics: Record<string, number>, command: string, source: string, calibers: readonly string[]): string {
   return calibers.map((line) => renderCaliberLine(line)).join('')
     + copyBlockOf(key, metrics, command, source);
 }

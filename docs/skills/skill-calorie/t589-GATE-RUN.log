@@ -1,0 +1,18 @@
+# #589 持锁运行记录导出（对账源）
+# 来源：.scratch/locks/gate-runs.log（未受版本控制）；提取口径：含 ticket=589 且时刻 ≥ 2026-09-16T04:55
+# 04:49–04:50 那两条 ticket=589 的 .scratch/589/probe-baseline.mjs 是**调查席**跑的数基线，不属本席窗口，故未收。
+# 本文件逐字复制 START／RUN 两类行，不改一个字符。
+START ticket=589 runId=227ed538-8d5f-4070-9809-60ac40d4ba67 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=30032 pid=51600 at=2026-09-16T04:55:54.884Z
+RUN ticket=589 runId=227ed538-8d5f-4070-9809-60ac40d4ba67 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=30032 exit=0 pid=51600 at=2026-09-16T04:55:57.750Z
+START ticket=589 runId=1c0689c4-ffa8-4f0b-8151-c282d53f9692 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=1 pid=68816 at=2026-09-16T04:58:53.551Z
+RUN ticket=589 runId=1c0689c4-ffa8-4f0b-8151-c282d53f9692 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=1 exit=0 pid=68816 at=2026-09-16T04:58:56.369Z
+START ticket=589 runId=d1bc7e49-d633-4e86-8e45-243d0142add3 cmd="node --test packages/skill-calorie/test/goal-recommend-589.test.mjs" waitedMs=130140 pid=30280 at=2026-09-16T05:04:06.675Z
+RUN ticket=589 runId=d1bc7e49-d633-4e86-8e45-243d0142add3 cmd="node --test packages/skill-calorie/test/goal-recommend-589.test.mjs" waitedMs=130140 exit=1 pid=30280 at=2026-09-16T05:04:06.863Z
+START ticket=589 runId=eea421ea-934f-4621-adaa-fe49a3ec7e9c cmd="node --test packages/skill-calorie/test/goal-recommend-589.test.mjs" waitedMs=270164 pid=48208 at=2026-09-16T05:08:52.261Z
+RUN ticket=589 runId=eea421ea-934f-4621-adaa-fe49a3ec7e9c cmd="node --test packages/skill-calorie/test/goal-recommend-589.test.mjs" waitedMs=270164 exit=1 pid=48208 at=2026-09-16T05:09:36.000Z
+START ticket=589 runId=fe8ff5dd-fc3e-4fd9-b42b-458ffccd606e cmd="node --test packages/skill-calorie/test/goal-recommend-589.test.mjs" waitedMs=80057 pid=59300 at=2026-09-16T05:12:05.736Z
+RUN ticket=589 runId=fe8ff5dd-fc3e-4fd9-b42b-458ffccd606e cmd="node --test packages/skill-calorie/test/goal-recommend-589.test.mjs" waitedMs=80057 exit=1 pid=59300 at=2026-09-16T05:12:10.831Z
+START ticket=589 runId=f36c8b64-fcc4-4c2d-b469-99299f9757bf cmd="node .scratch/t589/final-locked.mjs" waitedMs=50032 pid=55520 at=2026-09-16T05:14:04.447Z
+RUN ticket=589 runId=f36c8b64-fcc4-4c2d-b469-99299f9757bf cmd="node .scratch/t589/final-locked.mjs" waitedMs=50032 exit=0 pid=55520 at=2026-09-16T05:14:47.899Z
+START ticket=589 runId=fa3e71c7-b8e5-449c-89f7-7f7904dc5ec3 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=20015 pid=4760 at=2026-09-16T05:15:59.318Z
+RUN ticket=589 runId=fa3e71c7-b8e5-449c-89f7-7f7904dc5ec3 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=20015 exit=1 pid=4760 at=2026-09-16T05:15:59.446Z
