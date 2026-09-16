@@ -53,7 +53,11 @@ export const DIET_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 41, wakeWord: '校验批量导入', scene: '02', kind: 'exec', key: 'calorie.view.batch-import-preview', cli: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}],"entry":"validate"}\'' },
   { list: 'wake', order: 42, wakeWord: '看食品来源统计', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
   { list: 'wake', order: 43, wakeWord: '看营养结构', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\'' },
-  { list: 'wake', order: 44, wakeWord: '看今日营养', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日"}\'' },
+  /* #630 · 「看今日营养」与「看饮食复盘」跑同一条命令、参数一字不差（都是 `{"window":"今日"}`），
+     命令这一层分不出进来的是哪条 ⇒ 沿 #511 的 `entry` 标记由入口把 `entry:"today-nutrition"` 带进去，
+     页头按它出「今日营养」那一支（终审D2：题名／眉标／副题与唤醒词对齐）；不给标记的是默认「饮食复盘」
+     叫法，行为与从前一字不差。标记名不上屏、不写库。 */
+  { list: 'wake', order: 44, wakeWord: '看今日营养', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日","entry":"today-nutrition"}\'' },
   { list: 'wake', order: 46, wakeWord: '看营养素深度', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 47, wakeWord: '看高热量榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\'' },
   { list: 'wake', order: 48, wakeWord: '看低热量榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"low_calorie","topN":10,"window":"7d"}\'' },

@@ -53,7 +53,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '校验批量导入', scene: '02', kind: 'exec', key: 'calorie.view.batch-import-preview', cli: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}],"entry":"validate"}\'' },
   { wakeWord: '看食品来源统计', scene: '02', kind: 'exec', key: 'calorie.view.source-stats', cli: 'calorie-cmd-read calorie.view.source-stats' },
   { wakeWord: '看营养结构', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"7d"}\'' },
-  { wakeWord: '看今日营养', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日"}\'' },
+  { wakeWord: '看今日营养', scene: '02', kind: 'exec', key: 'calorie.view.diet-review', cli: 'calorie-cmd-read calorie.view.diet-review --params \'{"window":"今日","entry":"today-nutrition"}\'' },
   { wakeWord: '看饮食总览', scene: '02', kind: 'exec', key: 'calorie.view.diet', cli: 'calorie-cmd-read calorie.view.diet --params \'{"window":"7d","entry":"overview"}\'' },
   { wakeWord: '看营养素深度', scene: '02', kind: 'exec', key: 'calorie.view.nutrition-detail', cli: 'calorie-cmd-read calorie.view.nutrition-detail --params \'{"window":"7d"}\'' },
   { wakeWord: '看高热量榜', scene: '02', kind: 'exec', key: 'calorie.view.ranking', cli: 'calorie-cmd-read calorie.view.ranking --params \'{"category":"high_calorie","topN":10,"window":"7d"}\'' },

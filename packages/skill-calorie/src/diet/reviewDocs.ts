@@ -2,6 +2,8 @@
  *
  * 谁在用（写得出哪两个在用）：① `./review.ts` —— `calorie.view.diet-review` 八个唤醒词全出这张页
  * （复盘 6 条＋#275 交过来的「看营养结构」「看今日营养」，后两条由 `buildNutritionRatioBlock` 承载）；
+ * #630 · 其中「看今日营养」那一支带 `entry:"today-nutrition"`（路由入口给），本件只按它换页头三件
+ * （题名／眉标／副题对上唤醒词，沿 #511 同源入口页的做法），正文区块与取数一字不动；
  * ② `#271`（`calorie.view.diet` 的唯一作者）—— 餐别 5 条的区块由本件的 `buildMealDistributionBlock`
  * 交付，集成在它那一边。
  *
@@ -47,6 +49,13 @@ const REVIEW_BADGE = '复盘餐别';
 const REVIEW_META_LEFT = '饮食复盘饮食';
 const MEAL_NOTE = '加餐是下午茶和夜宵';
 
+/** 同源入口页的入口标记（#630）：`calorie.view.diet-review` 底下「看今日营养」与「看饮食复盘」
+ *  在命令面上完全同形（都是 `{"window":"今日"}`），命令这一层分不出进来的是哪条词 ⇒ 由入口
+ * （`./routes.ts` 的 order 44 记录）把标记带进命令，页头按它出「今日营养」那一支。
+ *  做法沿 #511 的 `ENTRY_DETAIL`／`ENTRY_DRINK`：标记名绝不上屏、不写库、不进复制度量；
+ *  不给标记（含未知值）＝其余 7 条词从前的行为，一字不差。 */
+export const ENTRY_TODAY_NUTRITION = 'today-nutrition';
+
 /** 一位小数（老脚本 `round(x, 1)` 的同款口径；只此一处，两个页面都吃它）。 */
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -78,12 +87,14 @@ function docCopy(key: string, metrics: Record<string, number | null | undefined>
 }
 
 /** 复盘页入参：`r === null` ＝**窗口为空**那一态（裁定 4，仍出完整页，故起止日必给）；`nutrition`＝
- *  #275 交的 `buildNutritionRatioBlock` 产物（集成在调用点做，本件不引它的取数层）；`command`＝命令原文。 */
+ *  #275 交的 `buildNutritionRatioBlock` 产物（集成在调用点做，本件不引它的取数层）；`command`＝命令原文；
+ *  `entry`＝入口标记（#630：`ENTRY_TODAY_NUTRITION` 那一支出「今日营养」页头，其余缺省「饮食复盘」）。 */
 export interface DietReviewExtra {
   readonly start: string;
   readonly end: string;
   readonly nutrition?: string | null;
   readonly command?: string;
+  readonly entry?: string;
 }
 
 /** 本窗蛋白合计与日均：口径只在这里取一次（老实物「总蛋白／日均蛋白」两张卡都吃它）。 */
@@ -207,15 +218,22 @@ export function buildDietReviewDoc(r: DietReview | null, top5: FoodRanking | nul
   const summary = reviewSummary(r, t, r === null ? { total: 0, avg: null } : proteinTotals(r));
   const start = r === null ? extra.start : r.start;
   const end = r === null ? extra.end : r.end;
+  /* #630 · 终审D2：唤醒词「看今日营养」上屏题名须与唤醒词对齐。`entry` 只换页头三件
+     （题名／眉标／副题，沿 #511 同源入口页的做法），徽章／导航／正文区块／复制区／来源脚注不动；
+     不给标记（含未知值）＝其余 7 条词从前的行为，一字不差。 */
+  const today = extra.entry === ENTRY_TODAY_NUTRITION;
+  const headTitle = today ? '📝 今日营养' : '📝 饮食复盘';
+  const headMetaLeft = today ? '看今日营养（饮食）' : REVIEW_META_LEFT;
+  const headSummary = today ? '今日营养：' + summary : summary;
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '📝 饮食复盘',
+    title: headTitle,
     pageUi: true,
     eyebrow: EYEBROW,
-    subtitle: summary,
-    metaLeft: REVIEW_META_LEFT,
+    subtitle: headSummary,
+    metaLeft: headMetaLeft,
     badge: REVIEW_BADGE,
-    summary,
+    summary: headSummary,
     content: dietUiCss() + windowStrip(start, end, r === null ? '' : r.loggedDays + ' 天有记录')
       + renderTocBlock({ items: nav }) + reviewBody(r, top5, extra),
     charts: r !== null && t !== null && t.daily.length >= 2,

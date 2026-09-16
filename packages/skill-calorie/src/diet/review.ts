@@ -6,6 +6,9 @@
  *     `render/analysisPlate.ts`（复盘盘）＋ `diet/dietEngine.ts`（高频 TOP5）＋ `diet/nutritionPort.ts`
  *     （#275 的营养配比视图），装配走 `./reviewDocs.ts`；营养那一段**集成 #275 交的具名区块**
  *     `buildNutritionRatioBlock`（本件不重写一份配比页）。
+ *     #630 · 其中「看今日营养」那一条路由带 `entry:"today-nutrition"`（与「看饮食复盘」
+ *     同参数 `{"window":"今日"}` 的同源入口，沿 #511 的标记做法），本件只把它透传给装配层取页头，
+ *     取数口径一字不动。
  *   · `buildMealDistributionView`（**交 #271 调**：餐别 5 条的页在 `calorie.view.diet` 那边）——
  *     取数按老脚本 `render_meal_distribution.py` 的口径（最近 N 天逐日取行、按餐别时间窗归四桶、
  *     加餐＝下午茶＋夜宵），装配在 `./reviewDocs.ts` 的 `buildMealDistributionBlock`。
@@ -23,7 +26,7 @@ import { buildDietReviewDoc, mealParamOf } from './reviewDocs.js';
 import type { MealDistributionItem, MealDistributionSlice, MealDistributionView } from './reviewDocs.js';
 import { CalorieRenderError } from '../render/errors.js';
 import type { ViewOut } from '../shared/commandSpec.js';
-import { daysIn, defaultRange, nums } from '../shared/params.js';
+import { daysIn, defaultRange, nums, optStr } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
 
 /** 一位小数（老脚本 `round(x, 1)` 的同款口径；只此一处，两侧视图都吃它）。 */
@@ -56,12 +59,15 @@ function loadReview(db: DatabaseSync, start: string, end: string): {
 /** `calorie.view.diet-review` · 饮食复盘（八个唤醒词共这一张页）。
  *
  * 页面内容：老实物 `diet_review.html` 的四张读数卡＋每日热量趋势＋高频食物 TOP5 ＋按餐汇总，
- * 后接 #275 交的营养配比区块（「看营养结构」「看今日营养」两条词读到的就是那一段）。 */
+ * 后接 #275 交的营养配比区块（「看营养结构」「看今日营养」两条词读到的就是那一段）。
+ * #630 · 「看今日营养」那一支另带 `entry:"today-nutrition"`（路由入口给，见 `./routes.ts` 的 order 44），
+ * 本函数只把它透传给 `./reviewDocs.ts` 取页头（题名／眉标／副题对上唤醒词），取数与正文区块不动。 */
 export function viewDietReview(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   /* 复制日志第 4 段「调用链」＝本次命令原文（含 `--params`），照抄可重跑（裁定 7）；
      命令原文由共用件 `commandLine()` 派生，页面件不自己拼。 */
   const command = commandLine('calorie.view.diet-review', params);
+  const entry = optStr(params, 'entry');
   const loaded = loadReview(db, start, end);
   const r = loaded.r;
   // #108 · 复盘全文档（趋势折线＋配比环＋高频 TOP5＋按餐汇总；TOP5 取数失败即空态，不编数）。
@@ -69,7 +75,7 @@ export function viewDietReview(params: Record<string, unknown>, db: DatabaseSync
   const top5 = fr.status === 'ok' ? (fr.data ?? null) : null;
   if (r === null || loaded.ratio === null) {
     // 窗口为空那一态（裁定 4）：整页仍是完整页，只是没有读数。
-    return { data: { metrics: {} }, html: buildDietReviewDoc(null, top5, { start, end, command }) };
+    return { data: { metrics: {} }, html: buildDietReviewDoc(null, top5, { start, end, command, entry }) };
   }
   /* #275 交过来的两个具名区块之一：**在这里集成**（取数仍是 #275 的 `buildNutritionRatioView`，
      本件只把它接进复盘页；配比页那支 `buildNutritionRatioDoc` 与本页无关）。 */
@@ -83,7 +89,7 @@ export function viewDietReview(params: Record<string, unknown>, db: DatabaseSync
   });
   return {
     data: { metrics },
-    html: buildDietReviewDoc(r, top5, { start, end, nutrition, command }),
+    html: buildDietReviewDoc(r, top5, { start, end, nutrition, command, entry }),
   };
 }
 
