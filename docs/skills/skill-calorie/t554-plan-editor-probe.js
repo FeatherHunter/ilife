@@ -6,9 +6,12 @@
  * 计算样式（nowrap／overflow-x）、滚动条占位、一次只渲一天、锁周禁用真伪、参数输入框个数与坐标，
  * 以及「在锁周改有氧时长，值到底写进了哪一行」。
  *
- * 件内两处读数与 T554 的判据直接挂钩，别删：
+ * 件内四处读数与判据直接挂钩，别删：
  *   · `day3Inputs` 每格都带 `d／s／m`（null ＝ 缺坐标）⇒ C3.4 的坐标面；
- *   · `cardioEdit.beforeOrigin／afterOrigin` ⇒ X1 的「另一行逐字不动」。
+ *   · `day3Inputs` 每格另带 `posD／posS／posM`（该格在页内实际位置：日页签 d／段序号／动作序号）⇒ C3.4 的「坐标对」面（T557 加固：只验齐不验对的盲区）；
+ *   · `day3Inputs` 每格带 `disabled` ⇒ C3.4 的「能填」面（T557 加固：全 disabled 也全绿的盲区）；
+ *   · `cardioEdit.beforeSentinel／afterSentinel`（当周周一凌晨爬楼机，回落 (0,0,0) 真正写脏的那一行）⇒ X1 的哨兵（T557 加固：原哨兵指成第 1 周那行恒真）；
+ *   · `cardioEdit.beforeOrigin／afterOrigin`（第 1 周同名行）只作对照读数，不计分。
  */
 (function () {
   var R = { state: (window.__RV || {}).name || '?', viewport: window.innerWidth, ok: false, facts: {}, errors: [] };
@@ -39,10 +42,23 @@
     return null;
   }
   function inputs(scope) {
+    var dayD = null;
+    var onTab = q('.pe-daytab.is-on');
+    if (onTab) dayD = onTab.getAttribute('data-d');
+    var sessList = qa('.pe-sess');
     return qa((scope || '') + '.pe-move input[data-act]').map(function (e) {
+      var sessEl = e.closest ? e.closest('.pe-sess') : null;
+      var posS = sessEl ? sessList.indexOf(sessEl) : -1;
+      var moveEl = e.closest ? e.closest('.pe-move') : null;
+      var posM = -1;
+      if (sessEl && moveEl) {
+        var movesInSess = Array.prototype.slice.call(sessEl.querySelectorAll('.pe-move'));
+        posM = movesInSess.indexOf(moveEl);
+      }
       return {
         act: e.getAttribute('data-act'), d: e.getAttribute('data-d'), s: e.getAttribute('data-s'), m: e.getAttribute('data-m'),
         disabled: e.disabled, value: e.value,
+        posD: dayD, posS: posS < 0 ? null : String(posS), posM: posM < 0 ? null : String(posM),
       };
     });
   }
@@ -108,15 +124,19 @@
     /* ── g. 锁周改有氧时长：值写进了哪一行？（表里逐行对账） ── */
     var minIn = q('.pe-move input[data-act="set-min"]');
     if (minIn) {
+      var sentinelWeek = txt(q('.pe-week-t')) || '第 3 周';
       var edit = {
         html: minIn.outerHTML,
         onDayTab: tabName(q('.pe-daytab.is-on')),
+        sentinelWeek: sentinelWeek,
+        beforeSentinel: row(sentinelWeek, '周一', '爬楼机'),
         beforeOrigin: row('第 1 周', '周一', '爬楼机'),
         beforeTarget: row('第 3 周', '周四', '椭圆机') || row('第 2 周', '周四', '椭圆机') || row('第 1 周', '周四', '椭圆机'),
         tableBefore: rows(),
       };
       minIn.value = '77';
       minIn.dispatchEvent(new Event('input', { bubbles: true }));
+      edit.afterSentinel = row(sentinelWeek, '周一', '爬楼机');
       edit.afterOrigin = row('第 1 周', '周一', '爬楼机');
       edit.afterTarget = row('第 3 周', '周四', '椭圆机') || row('第 2 周', '周四', '椭圆机') || row('第 1 周', '周四', '椭圆机');
       edit.inputStillShows = minIn.value;

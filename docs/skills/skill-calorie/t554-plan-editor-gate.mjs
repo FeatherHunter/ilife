@@ -27,6 +27,16 @@
  *   · `C3.4` 补两条更强的要求（原来只数四个 `data-act`）：锁周参数格**一格纯文本都不许有**，
  *     且**每一格都必须带齐 data-d／data-s／data-m**（S1-② 那条数据风险的 DOM 面判据）。
  *   · `X1` 的读数里点名「被静默改脏的那一行」改前改后，把「只有那一行变」写成机器读数。
+ *
+ * 与 T554 相比的 T557 三处加固（票 #557，判据只增不减，红集只大不小）：
+ *   · `X1` 哨兵改当周行：原 `originStill` 指「第 1 周 周一 凌晨 爬楼机」，真缺陷回落 (0,0,0) 取的是
+ *     当前周（锁周＝第 3 周），故恒真无分辨力；现改读探针 `beforeSentinel／afterSentinel`（当周周一凌晨那行），
+ *     第 1 周那行只留作对照读数。摘坐标必红（见 T557 证据）。
+ *   · `C3.4` 补「能填」与「对位」：原只验坐标齐（非 null）与无纯文本；现再要求每格 `disabled === false`
+ *    （全 disabled 也全绿的盲区），且每格坐标与页内实际位置一致（`d＝posD 且 s＝posS 且 m＝posM`，
+ *     形似但错位如 data-d 恒 "1" 的盲区）；并把备注④升为计分条 `X3`（计数 18→19）。
+ *   · `C3.5` 口径对齐：`structLocked` 纳入时段面（含 `slotDis` 全禁用），与「结构禁＝增删训练段／增删动作／换时段」
+ *     的注释口径一致（选边＝纳入时段面；若摘时段 disabled 则本条变红，原来全绿）。读数里留选边说明。
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -230,24 +240,37 @@ ck(gate, 'C3.3', '§1③ 第 2 周起删训练／删动作控件不出现（0 �
 const lockedInputs = r03?.day3Inputs || [];
 const lockedByAct = lockedInputs.map((i) => i.act);
 /* T554 改点（判据加强，不放松）：① 锁周里**一个纯文本参数行都不许有**（原 S1-① 就长那样）；
- * ② 每一格都必须带齐坐标 data-d／data-s／data-m（原 S1-② 那一格就是缺坐标，写值落到别的行）。 */
+ * ② 每一格都必须带齐坐标 data-d／data-s／data-m（原 S1-② 那一格就是缺坐标，写值落到别的行）。
+ * T557 加固（只增不减）：③ 每一格都必须能填（disabled === false，全 disabled 也全绿的盲区）；
+ * ④ 每一格坐标必须与页内实际位置一致（d＝posD 且 s＝posS 且 m＝posM，形似但错位如 data-d 恒 "1" 的盲区）。 */
 const lockedNoAt = lockedInputs.filter((i) => i.d === null || i.s === null || i.m === null);
 const lockedPlainRows = (r03?.day3Plain || []).length;
-ck(gate, 'C3.4', '§1③ 第 2 周起「参数全放开」（组数／次数／重量／时长都有可填的格）＋ 无纯文本参数行 ＋ 每格坐标齐全',
+const lockedDisabled = lockedInputs.filter((i) => i.disabled !== false);
+const lockedMisplaced = lockedInputs.filter((i) => i.d === null || i.s === null || i.m === null
+  || i.posD === null || i.posD === undefined || i.posS === null || i.posS === undefined || i.posM === null || i.posM === undefined
+  || String(i.d) !== String(i.posD) || String(i.s) !== String(i.posS) || String(i.m) !== String(i.posM));
+ck(gate, 'C3.4', '§1③ 第 2 周起「参数全放开」（组数／次数／重量／时长都有可填的格）＋ 无纯文本参数行 ＋ 每格坐标齐全 ＋ 每格能填 ＋ 每格坐标对位（T557 加固）',
   lockedByAct.includes('set-sets') && lockedByAct.includes('set-reps') && lockedByAct.includes('set-load') && lockedByAct.includes('set-min')
-  && lockedPlainRows === 0 && lockedNoAt.length === 0,
+  && lockedPlainRows === 0 && lockedNoAt.length === 0 && lockedDisabled.length === 0 && lockedMisplaced.length === 0,
   `锁周周四动作=${JSON.stringify(r03?.day3MoveNames)} 可填格=${JSON.stringify(lockedByAct)} 纯文本参数行=${JSON.stringify(r03?.day3Plain)}`
-  + ` RM/kg 切换钮=${r03?.day3ModeBtns} 个 缺坐标的格=${JSON.stringify(lockedNoAt.map((i) => i.act))}`);
+  + ` RM/kg 切换钮=${r03?.day3ModeBtns} 个 缺坐标的格=${JSON.stringify(lockedNoAt.map((i) => i.act))}`
+  + ` 不可填的格=${JSON.stringify(lockedDisabled.map((i) => i.act))} 错位的格=${JSON.stringify(lockedMisplaced.map((i) => i.act + ':' + i.d + ',' + i.s + ',' + i.m + '≠' + i.posD + ',' + i.posS + ',' + i.posM))}`);
 const actsOf = (r) => (r?.day3Inputs || []).map((i) => i.act);
 const STR = ['set-sets', 'set-reps', 'set-load'];
 const hasAll = (r, list) => list.every((a) => actsOf(r).includes(a));
-const structLocked = (r) => r?.addTrain?.disabled === true && r?.addMove?.disabled === true && r?.delMove === 0 && r?.delTrain === 0;
+/* T557 选边：结构禁纳入时段面。口径＝增删训练段／增删动作／换时段三者全禁才算结构禁真；
+ * 时段面读数 slotDis（如 8/8 全禁用）已在 C3.3 打印，本条把它并进断言（原来摘时段 disabled 全绿）。 */
+const slotLocked = (r) => {
+  const m = /^(\d+)\/(\d+)$/.exec(String(r?.slotDis || ''));
+  return m !== null && Number(m[2]) > 0 && m[1] === m[2];
+};
+const structLocked = (r) => r?.addTrain?.disabled === true && r?.addMove?.disabled === true && r?.delMove === 0 && r?.delTrain === 0 && slotLocked(r) === true;
 const lockWkParams = hasAll(r03, STR) && actsOf(r03).includes('set-min');   // 锁周参数全开？
 const openWkParams = hasAll(r05, STR) && actsOf(r05).includes('set-min');   // 解锁周参数全开？
-ck(gate, 'C3.5', '§1③ 机制自证（T554 改点）：「结构禁」与「参数开」是两套开关——locked:true 态＝结构禁真且参数开真（三句同真）；locked:false 态＝结构禁假且参数开真',
+ck(gate, 'C3.5', '§1③ 机制自证（T554 改点＋T557 选边纳入时段面）：「结构禁」与「参数开」是两套开关——locked:true 态＝结构禁真（含时段全禁）且参数开真；locked:false 态＝结构禁假且参数开真',
   structLocked(r03) === true && lockWkParams === true && structLocked(r05) === false && openWkParams === true,
-  `locked:true 态＝结构禁 ${structLocked(r03)}／参数开 ${lockWkParams}（可填格 ${JSON.stringify(actsOf(r03))}）；`
-  + ` locked:false 态＝结构禁 ${structLocked(r05)}／参数开 ${openWkParams}（尾周可填格 ${JSON.stringify(actsOf(r05))}、加训练 disabled=${r05?.addTrain?.disabled}、删动作 ${r05?.delMove} 个）`);
+  `选边＝结构禁纳入时段面（slotDis 全禁用才算禁真）；locked:true 态＝结构禁 ${structLocked(r03)}（时段 ${r03?.slotDis}）／参数开 ${lockWkParams}（可填格 ${JSON.stringify(actsOf(r03))}）；`
+  + ` locked:false 态＝结构禁 ${structLocked(r05)}（时段 ${r05?.slotDis}）／参数开 ${openWkParams}（尾周可填格 ${JSON.stringify(actsOf(r05))}、加训练 disabled=${r05?.addTrain?.disabled}、删动作 ${r05?.delMove} 个）`);
 
 const cal = caliber02 || '';
 ck(gate, 'C4.1', '§1④ 口径行是「按讨论结果填好、你看着改」的口吻，不是从零填',
@@ -273,28 +296,33 @@ function tableDiff(before, after) {
 }
 const ce = r03?.cardioEdit;
 const ceDiff = tableDiff(ce?.tableBefore, ce?.tableAfter);
-/* T554：落库面读数——「被静默改脏的那一行」逐字点名（改前／改后／整表行数），配合 ceDiff 长度＝1 一起判。 */
-const originAfter = ce?.afterOrigin;
-const originStill = originAfter && originAfter.name === '爬楼机' && originAfter.amount === '30 分钟';
-ck(gate, 'X1', '自设探针（S1-② 的反面）：锁周改「周四 椭圆机」的时长，计划表里必须只有那一行跟着变、且变成 77 分钟；另一行逐字不动',
-  ceDiff.length === 1 && ceDiff[0].row.startsWith('第 3 周 | 周四 | 晚上 | 椭圆机') && ceDiff[0].to === '77 分钟' && originStill === true,
+/* T557：哨兵改当周行。回落 (0,0,0) 取的是当前周（锁周＝第 3 周），故被静默改脏的是当周周一凌晨那行；
+ * 原断言指成第 1 周那行恒真无分辨力。现计分看 sentinel（当周），第 1 周那行只留作对照读数。 */
+const sentinelAfter = ce?.afterSentinel;
+const sentinelStill = sentinelAfter && sentinelAfter.name === '爬楼机' && sentinelAfter.amount === '30 分钟';
+ck(gate, 'X1', '自设探针（S1-② 的反面，T557 哨兵改当周行）：锁周改「周四 椭圆机」的时长，计划表里必须只有那一行跟着变、且变成 77 分钟；当周哨兵行逐字不动',
+  ceDiff.length === 1 && ceDiff[0].row.startsWith('第 3 周 | 周四 | 晚上 | 椭圆机') && ceDiff[0].to === '77 分钟' && sentinelStill === true,
   `输入框=${ce?.html}；写 77 分钟后表里变动的行=${JSON.stringify(ceDiff)}；输入框自己仍显示 ${ce?.inputStillShows}；`
-  + `目标行=${JSON.stringify(ce?.afterTarget)}；另一行（第 1 周 周一 凌晨 爬楼机）改前=${JSON.stringify(ce?.beforeOrigin)} 改后=${JSON.stringify(originAfter)}；`
+  + `目标行=${JSON.stringify(ce?.afterTarget)}；哨兵行（${ce?.sentinelWeek || '第 3 周'} 周一 凌晨 爬楼机）改前=${JSON.stringify(ce?.beforeSentinel)} 改后=${JSON.stringify(sentinelAfter)}；`
+  + `对照行（第 1 周 周一 凌晨 爬楼机）改前=${JSON.stringify(ce?.beforeOrigin)} 改后=${JSON.stringify(ce?.afterOrigin)}；`
   + `整表行数 ${ce?.tableBefore?.length} → ${ce?.tableAfter?.length}`);
 ck(gate, 'X2', '自设探针（正向对照）：母版周力量参数真能写（证明探针这条写路是通的，免得假红）',
   /组乘/.test(String(r02?.strengthEdit?.before?.amount)) && String(r02?.strengthEdit?.after?.amount || '').startsWith('9 组乘'),
   `${r02?.strengthEdit?.name}（${r02?.strengthEdit?.dayTab}）改前=${r02?.strengthEdit?.before?.amount} 改后=${r02?.strengthEdit?.after?.amount}`);
-/* T554：落库面读数（不计分）——锁周力量参数那一半，与 X1 同一个 tableDiff 算法。 */
+/* T557：备注④升为计分条 X3（S1-① 的另一半，与 X1 同一个 tableDiff 算法）。 */
 const se3 = r03?.strengthEdit;
 const se3Diff = tableDiff(se3?.tableBefore, se3?.tableAfter);
+const se3MasterSame = JSON.stringify(se3?.before) === JSON.stringify(se3?.after);
+ck(gate, 'X3', '自设探针（S1-① 的另一半，T557 由备注④升计分）：锁周改「周四 史密斯机深蹲」的组数，计划表里必须只有那一行跟着变、且变成 9 组；母版周同名行逐字不动',
+  se3Diff.length === 1 && se3Diff[0].row.startsWith('第 3 周 | 周四 | 上午 | 史密斯机深蹲') && String(se3Diff[0].to || '').startsWith('9 组乘') && se3MasterSame === true,
+  `第 3 周 周四 的「${se3?.name}」把组数 5 改 9 —— 整表变动行＝${JSON.stringify(se3Diff)}；`
+  + `被点那格坐标＝${se3?.html}；同名动作在母版周的读数（改前／改后，应原样不动）＝${JSON.stringify(se3?.before)} → ${JSON.stringify(se3?.after)}；`
+  + `整表行数 ${se3?.tableBefore?.length} → ${se3?.tableAfter?.length}`);
 const notes = [
   `备注①：锁周「加一次训练」只靠 disabled 挡住；往这颗 disabled 钮上合成派发一次 click，训练段数 ${r03?.syntheticAddTrain?.before} → ${r03?.syntheticAddTrain?.after}（委派处理器里没有 lock 守卫）。真实指针／键盘都点不到 disabled 钮，故只作 S3 记账。`,
-  `备注②：锁周时段胶囊 ${r03?.slotDis} 全禁用（结构面收紧，与 §1③「不能加训练段」一致）；本件只读不判审美。`,
+  `备注②：锁周时段胶囊 ${r03?.slotDis} 全禁用（结构面收紧，与 §1③「不能加训练段」一致）；T557 已把此时段面并进 C3.5 的结构禁（选边＝纳入时段面）。`,
   `备注③：全部 disabled 控件的 data-act＝${JSON.stringify(r03?.disabledActs)}。`,
-  /* T554 落库面读数（**不计分**，与 X1 同一个 tableDiff 算出来）：S1-① 修好之后，锁周的力量参数
-   * 也成了可填的格——这一步把「改它也只有那一行变」写成机器读数，补 X1（有氧）之外的另一半。 */
-  `备注④（落库面，S1-① 的另一半，不计分）：${se3?.week} ${se3?.dayTab} 的「${se3?.name}」把组数 5 改 9 —— 整表变动行＝${JSON.stringify(se3Diff)}；`
-  + `被点那格坐标＝${se3?.html}；同名动作在母版周的读数（改前／改后，应原样不动）＝${JSON.stringify(se3?.before)} → ${JSON.stringify(se3?.after)}。`,
+  `备注④（T557 已升为计分条 X3，本条只留指针不计分）：锁周力量写回的「只有那一行变」见 X3 读数；原不计分附件内容与 X3 同源。`,
 ];
 
 /* ── 7. 打印 ───────────────────────────────────────────────────────────── */
