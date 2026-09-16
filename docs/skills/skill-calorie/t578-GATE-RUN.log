@@ -1,5 +1,5 @@
 # #578 门禁运行记录导出（源：.scratch/locks/gate-runs.log，只筛 ticket=578 的行，逐行原样）
-# 导出时刻：2026-09-16T04:01:01.773Z　条目数：33
+# 导出时刻：2026-09-16T04:09:38.112Z　条目数：47
 
 START ticket=578 runId=c0619fe6-2532-4b90-9b71-c44dbbdf1ee0 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10005 pid=8760 at=2026-09-16T03:41:20.125Z
 RUN ticket=578 runId=c0619fe6-2532-4b90-9b71-c44dbbdf1ee0 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=10005 exit=0 pid=8760 at=2026-09-16T03:41:20.228Z
@@ -34,3 +34,17 @@ RUN ticket=578 runId=21153d52-0acc-49de-93d2-460ae410d549 cmd="node --test packa
 START ticket=578 runId=754ac706-aa86-4acc-a876-cf1efe75dbe6 cmd="node .scratch/t578/gate.mjs" waitedMs=10008 pid=48152 at=2026-09-16T03:59:44.290Z
 RUN ticket=578 runId=754ac706-aa86-4acc-a876-cf1efe75dbe6 cmd="node .scratch/t578/gate.mjs" waitedMs=10008 exit=0 pid=48152 at=2026-09-16T04:00:31.089Z
 START ticket=578 runId=37b5906a-25c5-4470-9781-4d6fad590adb cmd="node .scratch/t578/export-runs.mjs" waitedMs=10002 pid=39884 at=2026-09-16T04:01:01.688Z
+RUN ticket=578 runId=37b5906a-25c5-4470-9781-4d6fad590adb cmd="node .scratch/t578/export-runs.mjs" waitedMs=10002 exit=0 pid=39884 at=2026-09-16T04:01:01.784Z
+START ticket=578 runId=f8feff00-c2a5-4b26-85f1-7b2059234853 cmd="git add packages/skill-calorie/src/exercise/receipt.ts packages/skill-calorie/src/exercise/sportUi.ts packages/skill-calorie/test/exercise-text-shape-t578.test.mjs" waitedMs=10009 pid=66704 at=2026-09-16T04:02:35.298Z
+RUN ticket=578 runId=f8feff00-c2a5-4b26-85f1-7b2059234853 cmd="git add packages/skill-calorie/src/exercise/receipt.ts packages/skill-calorie/src/exercise/sportUi.ts packages/skill-calorie/test/exercise-text-shape-t578.test.mjs" waitedMs=10009 exit=0 pid=66704 at=2026-09-16T04:02:35.345Z
+START ticket=578 runId=f7393126-41a4-48f1-9c04-d008ab54e551 cmd="git diff --cached --name-only" waitedMs=0 pid=33268 at=2026-09-16T04:02:35.401Z
+RUN ticket=578 runId=f7393126-41a4-48f1-9c04-d008ab54e551 cmd="git diff --cached --name-only" waitedMs=0 exit=0 pid=33268 at=2026-09-16T04:02:35.446Z
+START ticket=578 runId=4f755a52-6181-4f5f-b5a2-2373f68e29be cmd="git commit -m 修复(578)：记族回执副标题去记录值与汇总数去重空值改空白区间收箭头 -- packages/skill-calorie/src/exercise/receipt.ts packages/skill-calorie/src/exercise/sportUi.ts packages/skill-calorie/test/exercise-text-shape-t578.test.mjs" waitedMs=20029 pid=43960 at=2026-09-16T04:03:04.612Z
+RUN ticket=578 runId=4f755a52-6181-4f5f-b5a2-2373f68e29be cmd="git commit -m 修复(578)：记族回执副标题去记录值与汇总数去重空值改空白区间收箭头 -- packages/skill-calorie/src/exercise/receipt.ts packages/skill-calorie/src/exercise/sportUi.ts packages/skill-calorie/test/exercise-text-shape-t578.test.mjs" waitedMs=20029 exit=0 pid=43960 at=2026-09-16T04:03:04.687Z
+START ticket=578 runId=eb8eb9d2-fbfe-4a72-9b6d-2647359fcf33 cmd="git add docs/skills/skill-calorie/t578-证据.md docs/skills/skill-calorie/t578-GATE-RUN.log" waitedMs=30022 pid=69952 at=2026-09-16T04:05:57.591Z
+RUN ticket=578 runId=eb8eb9d2-fbfe-4a72-9b6d-2647359fcf33 cmd="git add docs/skills/skill-calorie/t578-证据.md docs/skills/skill-calorie/t578-GATE-RUN.log" waitedMs=30022 exit=0 pid=69952 at=2026-09-16T04:05:57.643Z
+START ticket=578 runId=6d33b239-ee3f-4426-88d7-0e5f7c10cbb8 cmd="git diff --cached --name-only" waitedMs=100076 pid=49332 at=2026-09-16T04:07:44.009Z
+RUN ticket=578 runId=6d33b239-ee3f-4426-88d7-0e5f7c10cbb8 cmd="git diff --cached --name-only" waitedMs=100076 exit=0 pid=49332 at=2026-09-16T04:07:44.067Z
+START ticket=578 runId=260514a0-ba27-4209-9620-bf6aaba57def cmd="git commit -m 文档(578)：记族13页文案债证据与门禁对账 -- docs/skills/skill-calorie/t578-证据.md docs/skills/skill-calorie/t578-GATE-RUN.log" waitedMs=80066 pid=69800 at=2026-09-16T04:09:08.809Z
+RUN ticket=578 runId=260514a0-ba27-4209-9620-bf6aaba57def cmd="git commit -m 文档(578)：记族13页文案债证据与门禁对账 -- docs/skills/skill-calorie/t578-证据.md docs/skills/skill-calorie/t578-GATE-RUN.log" waitedMs=80066 exit=0 pid=69800 at=2026-09-16T04:09:08.886Z
+START ticket=578 runId=f66b9e41-259f-4f59-8a9b-45682510115e cmd="node .scratch/t578/export-runs.mjs" waitedMs=20011 pid=7128 at=2026-09-16T04:09:38.043Z
