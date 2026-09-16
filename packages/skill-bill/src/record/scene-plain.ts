@@ -7,23 +7,32 @@
  *  块序列照代表页（`t407-代表-记支出-采集页.html`／`-回执页.html`）同一套积木，只换本场景的差异。
  * 待哪一族窗口来填：基础收支族（本件＝那一族的交付）。
  *
- * 本件的场景差异（施工图 `docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「记一笔」那一行）：
+ * 本件的场景差异（施工图 `t407-页面块清单-16词.md` 第二节「记一笔」那一行）：
  *   ① **方向按金额符号判**：没有 preset，支出负数、收入正数都由金额本身说；
  *     徽章那句「按金额符号判支出／收入」走 `../shared/typeBadge.ts`（`kind` 给空串时的缺省那句话）；
  *   ② **分类两侧都给**：一条历史都没有时，分类候选不偏向支出或收入（`../shared/photoEscape.ts` 的 `valuesOf`，`kind` 给空串）；
  *   ③ **符号与方向不符要当面问清**：`kind` 空时本件不替用户定方向——给成什么符号就记什么方向，
  *     这句话写在口径行里，结论摘要行的方向也照实报。
  *
+ * 本轮整改（架构级，派单点名的两页之一；只动本件的可见正文与块序，不动行为判定与信封字段）：
+ *   ① **首屏同形「未给」卡清零**：删结论摘要行那一网格（金额／分类／账户／账本／时间五张同形「未给」卡）；
+ *   ② **口令原文块折叠**：共用的缺项阻断条整条走 `./collectBody.ts` 的 `collectBlockedFold` 收进折叠区，
+ *      首屏只留进度与缺项标签两处形状；
+ *   ③ **下半屏逐项重复合并**：缺项明示表随阻断条一并折叠（它与缺项标签说的是同一件事），
+ *      页内表格只剩「预填标注」一张；
+ *   ④ 写库口径四遍并一句、方向三句并一句（`方向按金额符号判，不改符号。`）；祈使句改陈述；
+ *   ⑤ 页标题只留唤醒词；回执页落值那几格不再缀「不填就记到…」。形状取 `../shared/collectFrame.ts` 里面向用户的那三种（进度／缺项标签／分段标题）；该件另两种（架头／按钮层级）的固定文案是页面自指话，本席未上屏，作残项报给该件所属窗口。
+ *
  * 必有块（逐块在这里落点，核对见证据件第三节）：
- *   采集页＝页头与页面外框、类型徽章 `typeBadge`、结论摘要行 `summaryRow`、口径行、重复检测提示条、
+ *   采集页＝页头与页面外框、类型徽章 `typeBadge`、口径行、重复检测提示条、
  *     预填标注、缺项阻断条、字段卡（三级分类＋心法）、空态 `emptyNote`、复制指令块、动作区（复制数据／复制日志）、
  *     错误回执（阻断条内）。
  *   回执页＝页头与页面外框、类型徽章（`ok` 档）、结论摘要行、写入明细表、对账折叠区、退出口、复制区。
  */
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
-import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
-import { collectButtonHint, collectFrameHead, collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
+import { blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
@@ -31,12 +40,13 @@ import { emptyNote } from '../shared/emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
-import { prefillNote, prefillOf } from '../shared/prefillNote.js';
+import { prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { summaryCards, summaryRow } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { summaryCards } from '../shared/summaryRow.js';
+import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
+import { collectBlockedFold, prefillShort } from './collectBody.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
 /** 服务哪条唤醒词（`Scene.wakeWord`）。 */
@@ -70,21 +80,36 @@ function probeOfReceipt(input: ReceiptInput): DuplicateProbe {
   };
 }
 
+/** 回执页那张网格：落值那几格不再缀缺省说法（值已经落库，那句「不填就记到…」在回执页没有动作可做）。 */
+function receiptCardsOf(input: ReceiptInput): ReturnType<typeof summaryCards> {
+  return summaryCards(input.facts).map((c) => (
+    c.value === '未给' || c.detail === undefined || !c.detail.startsWith('不填就记')
+      ? c
+      : { label: c.label, value: c.value }
+  ));
+}
+
+/** 采集页复制 prompt 区那段话：只报缺项与去向，不回抄命令原文（口令只有阻断条那一处，给看不给复制）。 */
+function promptOf(wakeWord: string, labels: readonly string[]): string {
+  return '这一笔还差 ' + labels.length + ' 项：' + labels.join('、')
+    + '。这一页先不写库。补齐后跟助手说一遍「' + wakeWord + '」。';
+}
+
 /** 过程型采集页：缺项时出这一页（只采集、不写库）。 */
 function collectPlain(input: CollectInput): string {
   const { params } = input;
   const blocked = blockedItems({ params, missing: input.missing, kind: KIND });
   const message = blockedMessage(input.missing, blocked);
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
-  const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: KIND, today: input.today });
+  const { pick, probe } = valuesOf({ recent: input.recent, params, kind: KIND, today: input.today });
   const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
   const envelope = envelopeOf(input.key, false, message);
   const empties: string[] = [];
   if (pick.account.length === 0) {
     empties.push(emptyNote({
       title: '没有可选的历史账户',
-      text: '库里还没有带账户的记录，账户这一格没有候选可以挑。',
-      next: '账户留空即落默认账户；想选就先给一笔带账户的记录（例如 支付宝）。',
+      text: '库里还没有带账户的记录，账户这一格现在是空的。',
+      next: '账户为空就记到默认账户。',
     }));
   }
   const content = [
@@ -92,38 +117,30 @@ function collectPlain(input: CollectInput): string {
       kind: KIND,
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
+      next: '',
     }),
-    collectFrameHead({ wakeWord: WORD }),
     collectProgress({ wakeWord: WORD, missing: blocked.length }),
     collectMissingTags({ labels: blocked.map((i) => i.label) }),
     collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
-    summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
-    renderCaliberLine('方向：这一条方向按金额符号判——支出记负数、收入记正数。'
-      + '给什么符号就记什么方向，这一页不替你改符号。'),
-    renderCaliberLine('认不得型名的时候，这一页也照实报，不猜是哪一型。'),
+    renderCaliberLine('方向按金额符号判，不改符号。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
-    prefillNote(marks),
-    blockedBar({
+    marks.length === 0 ? '' : renderCaliberLine('预填标注：下面几格已经替你填上，来源写在格子里。'),
+    collectBlockedFold({
       items: blocked,
       command: bp.command,
-      note: '金额与分类补齐之后跟助手说一遍才会写库；分类候选取自近期记录，'
-        + '一条历史都没有时支出侧与收入侧的一级名目都给。',
+      note: '补齐后照上面那条口令跟助手说一遍。',
     }),
     empties.join(''),
     collectSectionTitle({ no: 2, title: '把缺的格逐格补齐' }),
     fieldCardOf({
-      description: '填好必需项再说一遍。这一页先不写库。分类要选到最细那一级'
-        + '（最细一级即名目，如 餐饮/外卖/午餐）。金额带符号，符号即方向。',
+      description: '补齐必需项即可继续。金额带符号，符号即方向。',
       slots: input.slots,
       params,
-      marks,
+      marks: prefillShort(marks),
       pick,
     }),
-    promptCopyArea(bp.prompt, '补齐后照这句跟助手说一遍'),
+    promptCopyArea(promptOf(WORD, blocked.map((i) => i.label)), '这一段就是补齐后要发给助手的话'),
     collectSectionTitle({ no: 3, title: '补齐了再请助手记' }),
-    collectButtonHint({ wakeWord: WORD }),
     copyArea({
       data: { envelope },
       log: {
@@ -139,9 +156,9 @@ function collectPlain(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·补齐槽位',
-    title: WORD + ' · 补齐槽位',
-    subtitle: message,
+    docTitle: DOC_TITLE + '·采集页',
+    title: WORD,
+    subtitle: '缺 ' + blocked.length + ' 项，详见下表。',
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -162,21 +179,20 @@ function receiptPlain(input: ReceiptInput): string {
       next: nextStepOf({ page: 'receipt', exit: true }),
     }),
     renderKpiGrid([
-      ...summaryCards(input.facts),
+      ...receiptCardsOf(input),
       receiptStatusCard(input.receipt, input.writtenDetail),
-      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔' },
       {
         label: '写进去的项',
         value: input.receipt.writtenFields.length + ' 项',
-        detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
+        detail: '共 ' + input.receipt.writtenFields.length + ' 项，详见下表。',
       },
     ]),
-    renderCaliberLine('方向由金额符号定：负数记支出、正数记收入。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
-      caption: '写进去的项与值',
+      caption: '这一笔记成什么',
     }),
     reconcileDisclosure(input.receipt),
     input.receipt.recordId === null ? '' : undoExit(input.receipt.recordId),

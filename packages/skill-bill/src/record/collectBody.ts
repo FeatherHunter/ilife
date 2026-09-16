@@ -1,47 +1,53 @@
-/** 通用采集页装配体（**本票的通用形态**）：有阻断项时出这一页（**只采集、不写库**）。
+/** 基础收支族的通用采集页装配体（**记支出那一张**）：有阻断项时出这一页（**只采集、不写库**）。
  *
- * 谁在用（本票实数）：
- *   ① `src/record/scene-*.ts` 的 16 件场景件都指它——`Scene.collect` 这一格现在是本件；
- *   ② `src/record/collect.ts`——分派位只取件、不自己装配，故不直接引本件。
- *  后续三族窗口填各自那张页时，把**那件场景件**的 `collect` 换成自己的装配体即可，本件一行不动。
+ * 谁在用（本票实数）：`src/record/scene-expense.ts` 这一件——`Scene.collect` 就是本件。
+ *  其余族的场景件各自有装配体（收入／拍账单／批量录入在各自件里，借贷与修正族在它们自己那几件里），
+ *  故本件只服务记支出这一条唤醒词。
+ *  本件另对外给一件：`collectBlockedFold`——本族五张采集页共用的缺项阻断摆法（口令原文块折叠）。
  *
- * 信息层次（施工图第一节的页面积木按序拼，一件不自造）：
- *   类型徽章 → 结论摘要行 → 复制日志那行「写库：未发生」→ 重复检测提示条 → 预填标注 → 缺项阻断条
- *   → 选择器空态 → 采集表单 → 复制 prompt 区 → 复制区（共十块）。
- *  复制 prompt 区那段话里**没有可跑的写库指令**（写库指令只在缺项阻断条里、且不给复制按钮）——
- *  这就是「缺项即不出复制指令」那条口径；本页**不写库**：写库那一半在 `src/record/write.ts`，
- *  落点是结果型回执整页（`./receiptBody.ts`）。
+ * 信息层次（照派单的架构级整改重排；形状取 `../shared/collectFrame.ts` 里面向用户的那三种——
+ *   进度／缺项标签／分段标题，本件不另造形状；该件另两种（架头／按钮层级）的固定文案是页面自指话，
+ *   上屏就是把开发话给用户看，本席未上屏，作残项报给该件所属窗口）：
+ *   类型徽章（唤醒词＋口径＋状态徽章，不再缀祈使句）→ 进度 → 缺项标签 →
+ *   第 1 段（现状一行＋重复检测条＋预填标注＋缺项阻断折叠区＋空态）→
+ *   第 2 段（字段卡＋复制给助手）→ 第 3 段（按钮层级一行）→ 复制区。
  *
- * 本轮整改（根因二）：类型徽章原先是「动作 · 金额符号 · 命令名 · 槽位状态 · 写库状态」一行拼出来的串，
- *  现在改成若干枚独立形状（唤醒词标签／页面状态徽章／下一步动作），命令名不上屏；页标题也补上唤醒词。
+ * 本轮改动（只动本件的可见正文与块序，不动行为判定与信封字段）：
+ *   ① **首屏同形「未给」卡清零**：删结论摘要行那一网格——采集页的金额／分类／账户／账本／时间五格
+ *      在本页都还没有值，五张同形「未给」卡只是把「还缺什么」说五遍；事实由缺项标签＋缺项表＋字段卡承担。
+ *      摘要行的取值口径（`summaryRow.ts`）一字未动，回执页照旧引它。
+ *   ② **写库四遍并一句**：原先「写库：还没发生——…」「这一页先不写库；补齐之后…」「填好必需项再说一遍…」
+ *      「这一笔还差 N 项…」四处复读，现只留一行陈述（徽章「还没写库」＋本行）与复制 prompt 区那一段。
+ *   ③ **祈使改陈述**：页内不再出现「照上面那句跟助手说一遍」这类祈使（复制区按钮与它的提示照旧）。
+ *   ④ 页标题只留唤醒词（页型由架头那两枚徽章说）；副标题改成缺项计数（信封里的 `message` 一字未动）。
+ *
+ * 本页**不写库**：写库那一半在 `src/record/write.ts`，落点是结果型回执整页（`./receiptBody.ts`）。
  */
-import { renderCaliberLine, renderParamForm } from 'base-paint/blocks';
+import { renderCaliberLine, renderDisclosure, renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { BillRow } from '../fetch/db.js';
 import { ALL_L1, EXPENSE_L1 } from '../policy/category.js';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
-import { collectButtonHint, collectFrameHead, collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
+import type { BlockedItem } from '../shared/blockedSlots.js';
+import { collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
 import { emptyNote } from '../shared/emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
-import { prefillHint, prefillNote, prefillOf } from '../shared/prefillNote.js';
+import { prefillHint, prefillOf } from '../shared/prefillNote.js';
 import type { PrefillMark } from '../shared/prefillNote.js';
 import { optionsFor, pickOf as pickValues, textOf } from '../shared/recentPicks.js';
-import { summaryRow } from '../shared/summaryRow.js';
-import type { SummaryFacts } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { typeBadge, wakeWordOf } from '../shared/typeBadge.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput } from './scene.js';
 import { isGiven } from './slots.js';
 import type { RecordSlot } from './slots.js';
 
 /** 三枚选择器的候选（**转发到共用位 `src/shared/recentPicks.ts`，本件不另写一份取数**）：
- *  通用采集页的 `kind` 只有「支出」与「其余」两档，支出落支出侧名单、其余两侧都给。
- *  本次整改把原先住在本件的 `PICK_LIMIT`／`textOf`／`distinct`／`optionsFor` 一并交出，只留这一行转发。 */
+ *  通用采集页的 `kind` 只有「支出」与「其余」两档，支出落支出侧名单、其余两侧都给。 */
 function pickOf(recent: readonly BillRow[], kind: string): Record<string, readonly string[]> {
   return pickValues(recent, kind === 'expense' ? EXPENSE_L1 : ALL_L1);
 }
@@ -53,6 +59,7 @@ function formFields(input: {
   readonly marks: readonly PrefillMark[];
   readonly pick: Record<string, readonly string[]>;
 }): ParamFieldInput[] {
+  const shortMarks = prefillShort(input.marks);
   return input.slots.map((s) => {
     const mark = input.marks.find((m) => m.name === s.name);
     const value = isGiven(input.params[s.name]) ? String(input.params[s.name]) : (mark?.value ?? '');
@@ -60,7 +67,7 @@ function formFields(input: {
     return {
       name: s.name,
       label: s.label,
-      hint: prefillHint(input.marks, s.name) ?? s.hint,
+      hint: prefillHint(shortMarks, s.name) ?? s.hint,
       ...(options === undefined ? {} : { options }),
       ...(s.required ? { required: true } : {}),
       ...(value === '' ? {} : { value }),
@@ -68,17 +75,16 @@ function formFields(input: {
   });
 }
 
-/** 复制 prompt 区那段 prompt：说清缺什么、这一页先不写库、补齐后照哪句跟助手说。
- *  **不给可跑的写库指令**（那条在缺项阻断条里、且不给复制按钮）——缺项即不出复制指令。
- *  本轮整改：缺项清单写中文名（库列名不上屏），`重跑同一条命令` 换「跟助手说一遍」。 */
+/** 复制 prompt 区那段 prompt：说清缺什么、这一页先不写库、补齐后跟助手说哪条词。
+ *  **不给可跑的写库指令**（那条只在缺项阻断条里、且不给复制按钮）——缺项即不出复制指令；
+ *  本轮整改：缺项清单只列中文名，括号里的「没给」复读删掉，祈使句改陈述，命令原文不回抄一遍
+ *  （口令只有阻断条那一处，复制区这一段是给人看的话）。 */
 function promptOf(
   wakeWord: string,
-  command: string,
   blocked: readonly { readonly label: string; readonly name: string; readonly why: string }[],
 ): string {
-  return '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.why + '）').join('、')
-    + '。\n这一页先不写库；补齐之后跟助手说一遍「' + wakeWord + '」，照这条说：' + command + '。';
+  return '这一笔还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join('、')
+    + '。这一页先不写库。补齐后跟助手说一遍「' + wakeWord + '」。';
 }
 
 /** 缺项时那条写库指令原文：缺的值留成尖括号占位符，**只给看不给复制**（复制按钮在阻断条里被拿掉）。 */
@@ -92,7 +98,50 @@ function commandLineOf(
   return commandLine(key, filled);
 }
 
-/** 通用采集页整页：十块按序拼（见文件头信息层次）。 */
+/** 副标题：只报缺几项，明细在下表（信封里的 `message` 一字未动，照旧是那句完整口径）。 */
+function subtitleOf(missing: number, blocked: number): string {
+  if (missing === 0) return '这一笔还差 ' + blocked + ' 项，详见下表。';
+  return '缺 ' + blocked + ' 项，详见下表。';
+}
+
+/** 预填标注的「来源」串收短（**本族五页共用这一处**）：只把括号里的附注去掉，两类来源的区分一字不动
+ *  （`来自记录编号 N（最近一笔）`→`来自记录编号 N`、`缺省值（库里还没有可用的账户，留空＝落库默认）`→`缺省值`）。
+ *  为什么要收：这一句会作为字段卡的提示上屏，390 宽下原来那串长文被输入框裁掉后半截（E 席基线
+ *  n1 记的「账户 placeholder 后半框内半藏」），收短之后整句进得了框；口径条文仍在
+ *  `../shared/prefillNote.ts` 那一处，本件只做展示用的收笔，不另立第二份来源说法。 */
+export function prefillShort(marks: readonly PrefillMark[]): readonly PrefillMark[] {
+  return marks.map((m) => ({ ...m, from: m.from.replace(/（[^）]*）/g, '') }));
+}
+
+/** 采集页的缺项阻断块（**折叠形**，本族五页共用这一处摆法）：共用的阻断条——「还缺什么」错误回执、
+ *  缺项明示表、写库口令原文、置灰的写库按钮——整条收进折叠区，首屏只留缺项标签与进度两处形状承担提示。
+ *  派单的架构级整改要的就是这一条（口令原文块整条可见 → 折叠）。
+ *
+ *  **判定与文案仍是 `../shared/blockedSlots.ts` 那一份**：本件只把共用件的产出换个位置摆，不另写第二份缺项口径，
+ *  也不改阻断行为（写库那一半照旧由 `src/record/write.ts` 拦）。折叠区里那枚置灰按钮不带 `data-t`，
+ *  折叠与否都点不动（`packages/base-render/src/controls.ts` 的点击委派读到空 `data-t` 即早退）。
+ *
+ *  谁在用（本族五件，指名）：`scene-expense`（经本件 `collectBody`）、`scene-income`、`scene-photo`、
+ *  `scene-batch`、`scene-plain`——五张采集页同一摆法，改一处五页同时改。 */
+export function collectBlockedFold(input: {
+  readonly items: readonly BlockedItem[];
+  /** 写库口令原文（补齐后照抄重跑那条）；带尖括号占位符。 */
+  readonly command: string;
+  /** 补齐之后会发生什么（不给＝走共用件那句缺省口径）。 */
+  readonly note?: string;
+}): string {
+  if (input.items.length === 0) return '';
+  return renderDisclosure({
+    title: '还缺什么，以及补齐后照抄的那条',
+    contentHtml: blockedBar({
+      items: input.items,
+      command: input.command,
+      ...(input.note === undefined ? {} : { note: input.note }),
+    }),
+  });
+}
+
+/** 通用采集页整页：三段按序拼（见文件头信息层次）。 */
 export function collectBody(input: CollectInput): string {
   const { key, params, slots, missing } = input;
   const kind = textOf(params.kind);
@@ -111,20 +160,13 @@ export function collectBody(input: CollectInput): string {
     date: textOf(params.time) === '' ? input.today : textOf(params.time),
     account: textOf(params.account),
   };
-  const facts: SummaryFacts = {
-    amount: probe.amount,
-    category: probe.category,
-    account: textOf(params.account),
-    ledger: textOf(params.ledger),
-    time: textOf(params.time),
-  };
   const pick = pickOf(input.recent, kind);
   const empties: string[] = [];
   if (pick.account.length === 0) {
     empties.push(emptyNote({
       title: '没有可选的历史账户',
-      text: '库里还没有带账户的记录，账户这一格没有候选可以挑。',
-      next: '账户留空就记到默认账户；想选就先给一笔带账户的记录（例如 支付宝）。',
+      text: '库里还没有带账户的记录，账户这一格现在是空的。',
+      next: '账户为空就记到默认账户。',
     }));
   }
   const content = [
@@ -132,26 +174,29 @@ export function collectBody(input: CollectInput): string {
       kind,
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord }),
+      // 下一步那句话由本页的进度与按钮层级两处说出来，这里不再缀一行祈使（下一句见 collectProgress）。
+      next: '',
     }),
-    collectFrameHead({ wakeWord }),
     collectProgress({ wakeWord, missing: blocked.length }),
     collectMissingTags({ labels: blocked.map((i) => i.label) }),
     collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
-    summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
-    prefillNote(prefill),
-    blockedBar({ items: blocked, command: commandLineOf(key, params, blocked) }),
+    prefill.length === 0 ? '' : renderCaliberLine('预填标注：下面几格已经替你填上，来源写在格子里。'),
+    collectBlockedFold({
+      items: blocked,
+      command: commandLineOf(key, params, blocked),
+      // 状态那一句与补齐后的去向都收在这一行里（阻断条自带的口径行位）：首屏不再多一行灰字压标题，
+      // 「写库：还没发生」仍在本页（页断言逐字钉着它），只是随阻断条一起收进折叠区。
+      note: '写库：还没发生，本页只采集。补齐后照上面那条口令跟助手说一遍。',
+    }),
     empties.join(''),
     collectSectionTitle({ no: 2, title: '把缺的格逐格补齐' }),
     renderParamForm({
-      description: '填好必需项再说一遍。这一页先不写库。分类／账户／账本三格是选择器，候选取自近期记录。',
+      description: '补齐必需项即可继续。',
       fields: formFields({ slots, params, marks: prefill, pick }),
     }),
-    promptCopyArea(promptOf(wakeWord, commandLine(key, params), blocked), null),
+    promptCopyArea(promptOf(wakeWord, blocked), '这一段就是补齐后要发给助手的话'),
     collectSectionTitle({ no: 3, title: '补齐了再请助手记' }),
-    collectButtonHint({ wakeWord }),
     copyArea({
       data: { envelope },
       log: {
@@ -169,9 +214,9 @@ export function collectBody(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·补齐槽位',
-    title: wakeWord + ' · 补齐槽位',
-    subtitle: message,
+    docTitle: DOC_TITLE + '·采集页',
+    title: wakeWord,
+    subtitle: subtitleOf(missing.length, blocked.length),
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,

@@ -11,18 +11,28 @@
  *   ② **分类落收入侧**：一条历史都没有时，分类候选退到收入 L1 名单——侧别判定住在
  *     `../shared/photoEscape.ts` 的件内判定 `categorySideOf`（不外给），取值口径住在
  *     `../shared/recentPicks.ts`，本件经 `valuesOf` 的 `pick` 拿到；
- *   ③ 标题与话术按收入说：徽章那句「收入（金额取正数）」仍走 `typeBadge`（方向取自 `DIRECTION`，本件不抄第二份）。
+ *   ③ 标题与话术按收入说：徽章那句由 `typeBadge` 按 `DIRECTION` 出（本件不抄第二份）。
+ *
+ * 本轮整改（架构级：只动本件的可见正文与块序，不动行为判定与信封字段）：
+ *   ① 采集页**首屏同形「未给」卡清零**（删结论摘要行那一网格，事实改由缺项标签＋缺项表＋字段卡承担）；
+ *   ② 采集页写库口径四遍并一句、方向三句并一句（`金额取正数，负数不写库。`）；祈使句改陈述；
+ *   ③ 页标题只留唤醒词（页型进架头那两枚徽章；原先那句「补齐收入槽位」缺唤醒词，HELP 索引命不中）；
+ *   ④ 形状取 `../shared/collectFrame.ts` 里面向用户的那三种（进度／缺项标签／分段标题）；架头与按钮层级
+ *     两句的固定文案是页面自指话，本席未上屏，作残项报给该件所属窗口；
+ *   ⑤ 回执页：落值那三格不再缀「不填就记到…」（值已落库，那句话在回执页没有动作可做）；
+ *      `写进去的项` 那一格的顿号枚举并成一句，明细仍在下表。
  *
  * 必有块（逐块在这里落点，核对见证据件第三节）：
- *   采集页＝页头与页面外框、类型徽章 `typeBadge`、结论摘要行 `summaryRow`、口径行、重复检测提示条、
+ *   采集页＝页头与页面外框、类型徽章 `typeBadge`、口径行、重复检测提示条、
  *     预填标注、缺项阻断条、字段卡（三级分类＋心法）、空态 `emptyNote`、复制指令块、动作区（复制数据／复制日志）、
  *     错误回执（阻断条内）。
  *   回执页＝页头与页面外框、类型徽章（`ok` 档）、结论摘要行、写入明细表、对账折叠区、退出口、复制区。
  */
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
-import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
-import { collectButtonHint, collectFrameHead, collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
+import { blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { collectBlockedFold, prefillShort } from './collectBody.js';
+import { collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
@@ -30,10 +40,10 @@ import { emptyNote } from '../shared/emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
-import { prefillNote, prefillOf } from '../shared/prefillNote.js';
+import { prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { summaryCards, summaryRow } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { summaryCards } from '../shared/summaryRow.js';
+import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
@@ -66,21 +76,36 @@ function probeOfReceipt(input: ReceiptInput): DuplicateProbe {
   };
 }
 
+/** 回执页那张网格：落值那几格不再缀缺省说法（值已经落库，那句「不填就记到…」在回执页没有动作可做）。 */
+function receiptCardsOf(input: ReceiptInput): ReturnType<typeof summaryCards> {
+  return summaryCards(input.facts).map((c) => (
+    c.value === '未给' || c.detail === undefined || !c.detail.startsWith('不填就记')
+      ? c
+      : { label: c.label, value: c.value }
+  ));
+}
+
+/** 采集页复制 prompt 区那段话：只报缺项与去向，不回抄命令原文（口令只有阻断条那一处，给看不给复制）。 */
+function promptOf(wakeWord: string, labels: readonly string[]): string {
+  return '这一笔还差 ' + labels.length + ' 项：' + labels.join('、')
+    + '。这一页先不写库。补齐后跟助手说一遍「' + wakeWord + '」。';
+}
+
 /** 过程型采集页：缺字段时出这一页（只采集、不写库）。 */
 function collectIncome(input: CollectInput): string {
   const { params } = input;
   const blocked = blockedItems({ params, missing: input.missing, kind: 'income' });
   const message = blockedMessage(input.missing, blocked);
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
-  const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: 'income', today: input.today });
+  const { pick, probe } = valuesOf({ recent: input.recent, params, kind: 'income', today: input.today });
   const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
   const envelope = envelopeOf(input.key, false, message);
   const empties: string[] = [];
   if (pick.account.length === 0) {
     empties.push(emptyNote({
       title: '没有可选的历史账户',
-      text: '库里还没有带账户的记录，账户这一格没有候选可以挑。',
-      next: '账户留空即落默认账户；想选就先给一笔带账户的记录（例如 支付宝）。',
+      text: '库里还没有带账户的记录，账户这一格现在是空的。',
+      next: '账户为空就记到默认账户。',
     }));
   }
   const content = [
@@ -88,35 +113,30 @@ function collectIncome(input: CollectInput): string {
       kind: 'income',
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf('income') }),
+      next: '',
     }),
-    collectFrameHead({ wakeWord: WORD }),
     collectProgress({ wakeWord: WORD, missing: blocked.length }),
     collectMissingTags({ labels: blocked.map((i) => i.label) }),
     collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
-    summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
-    renderCaliberLine('方向口径：收入取正数——金额符号即方向；给成负数会被拦在这一页，不进写库那一步。'),
+    renderCaliberLine('收入记正数，负数会被拦在这一页。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
-    prefillNote(marks),
-    blockedBar({
+    marks.length === 0 ? '' : renderCaliberLine('预填标注：下面几格已经替你填上，来源写在格子里。'),
+    collectBlockedFold({
       items: blocked,
       command: bp.command,
-      note: '收入这几格补齐之后跟助手说一遍才会写库；分类候选取自近期记录，一条历史都没有时给收入侧的一级名目。',
+      note: '补齐后照上面那条口令跟助手说一遍。',
     }),
     empties.join(''),
     collectSectionTitle({ no: 2, title: '把缺的格逐格补齐' }),
     fieldCardOf({
-      description: '填好必需项再说一遍。这一页先不写库。分类要选到最细那一级'
-        + '（收入侧一级名目：工资／奖金／兼职／投资／其他收入／退款）。金额取正数。',
+      description: '补齐必需项即可继续。分类落收入侧的一级名目。',
       slots: input.slots,
       params,
-      marks,
+      marks: prefillShort(marks),
       pick,
     }),
-    promptCopyArea(bp.prompt, '补齐后照这句跟助手说一遍'),
+    promptCopyArea(promptOf(WORD, blocked.map((i) => i.label)), '这一段就是补齐后要发给助手的话'),
     collectSectionTitle({ no: 3, title: '补齐了再请助手记' }),
-    collectButtonHint({ wakeWord: WORD }),
     copyArea({
       data: { envelope },
       log: {
@@ -132,9 +152,9 @@ function collectIncome(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·补齐收入槽位',
-    title: '补齐收入槽位',
-    subtitle: message,
+    docTitle: DOC_TITLE + '·采集页',
+    title: WORD,
+    subtitle: '缺 ' + blocked.length + ' 项，详见下表。',
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -155,22 +175,21 @@ function receiptIncome(input: ReceiptInput): string {
       next: nextStepOf({ page: 'receipt', exit: true }),
     }),
     renderKpiGrid([
-      ...summaryCards(input.facts),
+      ...receiptCardsOf(input),
       receiptStatusCard(input.receipt, input.writtenDetail),
-      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔' },
       {
         label: '写进去的项',
         value: input.receipt.writtenFields.length + ' 项',
-        detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
+        detail: '共 ' + input.receipt.writtenFields.length + ' 项，详见下表。',
       },
     ]),
-    renderCaliberLine('这一条记在收入侧：金额是正数、分类一级取自收入名单；'
-      + '本页的字段与值都取自库内那一行，不是拿参数顶的。'),
+    renderCaliberLine('收入侧，正数。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
-      caption: '写进去的项与值',
+      caption: '这一笔记成什么',
     }),
     reconcileDisclosure(input.receipt),
     input.receipt.recordId === null ? '' : undoExit(input.receipt.recordId),
@@ -191,7 +210,7 @@ function receiptIncome(input: ReceiptInput): string {
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + '·写库回执',
-    title: '记收入 · 回执',
+    title: WORD + ' · 回执',
     subtitle: input.receipt.summary,
     slot: 'receipt',
     page: 'receipt',
