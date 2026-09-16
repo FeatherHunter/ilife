@@ -17,7 +17,8 @@
  * 形状依据：`docs/skills/skill-calorie/t516-场景10-视觉整改基准.md` §3.1 的六种形状词表（页面本地
  * 不许自造第七种）＋ §一 J2／J8／J9（结论条／页内导航／口径行＋来源脚注三条恒出）。
  */
-import { renderCaliberLine, renderChartBlock, renderChips, renderDataTable, renderTocBlock } from 'base-paint/blocks';
+import { renderCaliberLine, renderChartBlock, renderChips, renderDataTable, renderDisclosure, renderTocBlock } from 'base-paint/blocks';
+import type { DataTableInput } from 'base-paint/blocks';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
 import type { ReportPlate } from './reportPlate.js';
@@ -176,7 +177,8 @@ export function lineOf(
   });
 }
 
-/** 逐日明细表（日期 ＋ 一列数值 ＋ 可选附加列）：表题与单位由形态给。 */
+/** 逐日明细表（日期 ＋ 一列数值 ＋ 可选附加列）：表题与单位由形态给。
+ *  行数超过阈值时走 `foldedTable`（#620 增量2：长表折叠，首屏 10 行＋其余折叠）。 */
 export function tableOf(
   points: readonly { readonly date: string; readonly value: number | null }[],
   valueLabel: string,
@@ -193,7 +195,37 @@ export function tableOf(
     for (const e of extra ?? []) row[e.label] = e.values[i] ?? null;
     return row;
   });
-  return renderDataTable({ columns, rows, caption, emptyText: '这段时间还没有逐日记录' });
+  return foldedTable({ columns, rows, caption, emptyText: '这段时间还没有逐日记录' });
+}
+
+/** 长表折叠（#620 增量2）：逐日明细类长表在 390 档卡片化后逐行重复列标签
+ *  （墙 D-4：24 页标签 193 行／页高 7525px，30 页 128 行／5673px）。
+ *
+ *  行数超过阈值时首屏只出前 10 行，其余行进原生折叠区（`renderDisclosure`，
+ *  与 `t272-排行榜页` 同形状）；短表原样直出（与改前逐字节相同）；
+ *  折叠态全部行仍在 HTML 里，数据一条不少，只是首屏不展开。
+ *  阈值口径：卡片化后每行约 3 个标签，12 行即 36 行标签已占一屏，
+ *  故 12 行以上折叠、首屏留 10 行。 */
+const FOLD_THRESHOLD = 12;
+const FOLD_HEAD = 10;
+
+export function foldedTable(input: DataTableInput): string {
+  const rows = input.rows;
+  if (rows.length <= FOLD_THRESHOLD) return renderDataTable(input);
+  const rest = rows.length - FOLD_HEAD;
+  const head = renderDataTable({
+    columns: input.columns, rows: rows.slice(0, FOLD_HEAD),
+    caption: input.caption, emptyText: input.emptyText, cellHtml: input.cellHtml,
+  });
+  const tail = renderDataTable({
+    columns: input.columns, rows: rows.slice(FOLD_HEAD),
+    caption: input.caption === undefined ? '续表' : input.caption + '（续）',
+    emptyText: input.emptyText, cellHtml: input.cellHtml,
+  });
+  return head + renderDisclosure({
+    title: '其余 ' + String(rest) + ' 行（共 ' + String(rows.length) + ' 行）',
+    contentHtml: tail,
+  });
 }
 
 /** 键值两列表（口径说明／计算假设／分项表共用一份，不各写一遍）。

@@ -19,7 +19,7 @@
  * ⑤ 判据 R1 销账：评分页「综合评分」卡说明 `0–100 · N 天有记录` 的 `·` 串改逗号分句。
  */
 import { renderChartBlock, renderChips, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
-import { fmt, kvTable, lineOf, sec } from './reportDocParts.js';
+import { fmt, foldedTable, kvTable, lineOf, sec } from './reportDocParts.js';
 import type { ReportSection } from './reportDocParts.js';
 import { scoreSeries } from './reportDocScoreSeries.js';
 import type { ReportPlate } from './reportPlate.js';
@@ -73,7 +73,7 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
       rows: plate.items.map((i) => ({ label: i.label, hits: i.hits, days: i.days, rate: i.rate + '%' })),
       caption: '分项分数表（按命中率升序，最低分项在首位）',
     })),
-    sec('sec-history', '评分历史', renderDataTable({
+    sec('sec-history', '评分历史', foldedTable({
       columns: [{ key: 'date', label: '日期' }, { key: 'score', label: '当日评分', align: 'right' }],
       rows: scores.map((d) => ({ date: d.date, score: d.score })),
       caption: '评分历史',
@@ -101,7 +101,7 @@ export function buildTrendBlocks(plate: ReportPlate): ReportSection[] {
       { label: '拐点数', value: t === null ? '—' : String(t.turns), detail: '序列里方向反转的次数' },
     ])),
     sec('sec-chart', '评分走势', scoreSeries(plate)),
-    sec('sec-history', '评分序列', renderDataTable({
+    sec('sec-history', '评分序列', foldedTable({
       columns: [{ key: 'date', label: '日期' }, { key: 'score', label: '评分', align: 'right' }],
       rows: plate.scores.map((d) => ({ date: d.date, score: d.score })),
       caption: '评分序列',

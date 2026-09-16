@@ -22,7 +22,7 @@
  *    同族先例＝缺口页的 `deficitStatusChips`），BMR 页在概览下补一行低于基础代谢的天数。
  */
 import { renderChips, renderDataTable, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
-import { fmt, fmtInt, kvTable, lineOf, sec, tableOf } from './reportDocParts.js';
+import { fmt, fmtInt, foldedTable, kvTable, lineOf, sec, tableOf } from './reportDocParts.js';
 import type { ReportSection } from './reportDocParts.js';
 import type { ReportPlate } from './reportPlate.js';
 
@@ -173,7 +173,7 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
         text: '窗口内没有低于基础代谢的日子（告警线是连续 3 天及以上）',
       })),
     sec('sec-chart', '每日摄入', lineOf(plate.points, '每日摄入（水平线为基础代谢 ' + fmtInt(th, ' 卡') + '）', { target: th })),
-    sec('sec-days', '低于基础代谢的日期', renderDataTable({
+    sec('sec-days', '低于基础代谢的日期', foldedTable({
       columns: [
         { key: 'date', label: '低于基础代谢的日期' },
         { key: 'cal', label: '当日摄入（卡）', align: 'right' },

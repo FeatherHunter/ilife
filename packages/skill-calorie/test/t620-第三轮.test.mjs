@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { weightSimTarget, calorieGoalEta, calorieDeficitEta, calorieStability } from '../dist/analysis/simulate2.js';
 import { buildSimTargetDoc, buildCalorieGoalDoc, buildCalorieDeficitDoc, buildCalorieStabilityDoc } from '../dist/render/trendPredictDocs.js';
+import { foldedTable, tableOf } from '../dist/analysis/reportDocParts.js';
 
 function series90() {
   const out = [];
@@ -77,4 +78,43 @@ test('#620-5 19缺口预测：小节标题数==导航项数且逐字一致', () 
 
 test('#620-5 20稳定性：小节标题数==导航项数且逐字一致', () => {
   assertHeadingsEqNav(buildCalorieStabilityDoc(calorieStability(series90(), '摄入预测')), 'buildCalorieStabilityDoc');
+});
+
+/* ── #620 增量2：长表折叠（首屏 10 行＋其余折叠；短表原样，数据一条不少） ── */
+
+const FOLD_COLS = [{ key: 'date', label: '日期' }, { key: 'value', label: '值', align: 'right' }];
+const foldRows = (n) => Array.from({ length: n }, (_, i) => ({ date: '2026-09-' + String(i + 1).padStart(2, '0'), value: i }));
+
+test('#620-2 短表12行原样直出无折叠', () => {
+  const html = foldedTable({ columns: FOLD_COLS, rows: foldRows(12), caption: '逐日明细' });
+  assert.ok(!html.includes('<details'), '12行短表不应折叠');
+});
+
+test('#620-2 长表13行首屏10行其余3行折叠', () => {
+  const html = foldedTable({ columns: FOLD_COLS, rows: foldRows(13), caption: '逐日明细' });
+  assert.ok(html.includes('<details'), '13行应折叠');
+  assert.ok(html.includes('其余 3 行（共 13 行）'), '折叠标题不明：' + html.slice(html.indexOf('<summary'), html.indexOf('<summary') + 120));
+  for (const r of foldRows(13)) assert.ok(html.includes(r.date), '折叠丢数据：' + r.date);
+});
+
+test('#620-2 长表60行数据一条不少', () => {
+  const html = foldedTable({ columns: FOLD_COLS, rows: foldRows(60), caption: '逐日体重与 BMI', emptyText: '无记录' });
+  assert.ok(html.includes('其余 50 行（共 60 行）'), '折叠标题不明');
+  for (const r of foldRows(60)) assert.ok(html.includes(r.date), '折叠丢数据：' + r.date);
+  assert.ok(html.includes('逐日体重与 BMI（续）'), '续表题不明');
+});
+
+test('#620-2 空表走空态无折叠', () => {
+  const html = foldedTable({ columns: FOLD_COLS, rows: [], caption: '逐日明细', emptyText: '无记录' });
+  assert.ok(!html.includes('<details'), '空表不应折叠');
+  assert.ok(html.includes('无记录'), '空态文案丢失');
+});
+
+test('#620-2 tableOf长表30行折叠且短表不折', () => {
+  const pts = (n) => Array.from({ length: n }, (_, i) => ({ date: '2026-09-' + String(i + 1).padStart(2, '0'), value: 68 }));
+  const longHtml = tableOf(pts(30), '蛋白（g）', '每日蛋白量');
+  assert.ok(longHtml.includes('<details'), '30行应折叠');
+  assert.ok(longHtml.includes('其余 20 行（共 30 行）'), '折叠标题不明');
+  const shortHtml = tableOf(pts(5), '蛋白（g）', '每日蛋白量');
+  assert.ok(!shortHtml.includes('<details'), '5行不应折叠');
 });

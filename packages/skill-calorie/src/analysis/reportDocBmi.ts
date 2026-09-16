@@ -17,7 +17,7 @@
  */
 import { renderChips, renderDataTable, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
 import { bmiBandOf, BMI_BANDS } from './reportPlate.js';
-import { fmt, lineOf, sec } from './reportDocParts.js';
+import { fmt, foldedTable, lineOf, sec } from './reportDocParts.js';
 import type { ReportSection } from './reportDocParts.js';
 import type { ReportPlate } from './reportPlate.js';
 
@@ -81,7 +81,7 @@ export function buildBmiBlocks(plate: ReportPlate): ReportSection[] {
       /* 徽章列（#516 §3.1 的第二种形状）：与上表「当前落在」那一列同源同值，
        * 把「落在哪一档」从表内的一个勾变成一行扫得动的标签。 */
       + renderChips({ items: [{ text: '当前分级 ' + band }, { text: '分级线共 ' + String(BMI_BANDS.length) + ' 档' }] })),
-    sec('sec-detail', '逐日明细', renderDataTable({
+    sec('sec-detail', '逐日明细', foldedTable({
       columns: [
         { key: 'date', label: '日期' },
         { key: 'kg', label: '体重（kg）', align: 'right' },
