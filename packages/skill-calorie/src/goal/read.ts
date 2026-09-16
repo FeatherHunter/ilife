@@ -6,6 +6,7 @@
  * 取数与装配住目标目录（`goal/goalPlate.ts`／`goalPlates.ts`／`goalExtraPlate.ts`）与 `render/trendDocs.ts`，本件只做入口。
  * #254 · `view.goal`／`view.goal-vs-actual`／`view.goal-expiring` 三处的 `html:` 改走
  * `./resultDocs.ts`（片段 → 整页）；三条命令的取数、参数与退出码一字未动。
+ * #290 · `view.goal-config`／`view.goal-status` 两处的 `html:` 改走 `./resultDocs.ts::buildGoalConfigDoc／buildGoalStatusDoc`（取数、参数与退出码一字未动；旧片段保留）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from './goalExtraPlate.js';
@@ -14,14 +15,14 @@ import { buildGoalPredictDoc } from '../render/trendDocs.js';
 import { buildGoalView } from './goalPlate.js';
 import { CalorieRenderError } from '../render/errors.js';
 import {
-  renderGoalConfigHtml, renderGoalRecommendHtml, renderGoalStatusHtml,
+  renderGoalRecommendHtml,
 } from '../render/html.js';
 import { dayField, defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { TRIGGERS } from '../triggers/index.js';
 import { execCliFor, routeWakeword } from '../triggers/help-lookup.js';
 import { buildGoalPrecheckDoc } from './precheck.js';
-import { buildGoalDoc, buildGoalExpiringDoc, buildGoalVsActualDoc } from './resultDocs.js';
+import { buildGoalConfigDoc, buildGoalDoc, buildGoalExpiringDoc, buildGoalStatusDoc, buildGoalVsActualDoc } from './resultDocs.js';
 import { buildGoalWeightDoc } from './goalWeightDoc.js';
 import { buildGoalDraft, isGoalProfile } from './set.js';
 
@@ -43,7 +44,8 @@ export function viewGoal(params: Record<string, unknown>, db: DatabaseSync): Vie
   return { data: { metrics }, html: buildGoalDoc(v, metrics, command) };
 }
 
-/** `calorie.view.goal-config` · 目标配置（四项目标现值 ＋ 宏量自洽 ＋ 暂停态）。 */
+/** `calorie.view.goal-config` · 目标配置（四项目标现值 ＋ 宏量自洽 ＋ 暂停态）。
+ * #290 整页化：装配改走 `./resultDocs.ts::buildGoalConfigDoc`（取数、参数与退出码一字未动；旧片段保留）。 */
 export function viewGoalConfig(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const g = buildGoalConfig(db);
   const metrics = nums({
@@ -51,7 +53,8 @@ export function viewGoalConfig(params: Record<string, unknown>, db: DatabaseSync
     carbs_goal: g.nutrition.carbs_goal, fat_goal: g.nutrition.fat_goal, water_goal: g.nutrition.water_goal,
     diffKcal: g.diffKcal, consistent: g.consistent ? 1 : 0, paused: g.paused ? 1 : 0,
   });
-  return { data: { metrics }, html: renderGoalConfigHtml(g) };
+  const command = 'calorie-cmd-read calorie.view.goal-config';
+  return { data: { metrics }, html: buildGoalConfigDoc(g, metrics, command) };
 }
 
 /** `calorie.view.goal-recommend` · 目标推荐（按档案算的推荐值与依据）。 */
@@ -68,11 +71,13 @@ export function viewGoalRecommend(params: Record<string, unknown>, db: DatabaseS
   return { data: { metrics }, html: renderGoalRecommendHtml(g) };
 }
 
-/** `calorie.view.goal-status` · 目标状态（暂停态 ＋ 热量／饮水目标）。 */
+/** `calorie.view.goal-status` · 目标状态（暂停态 ＋ 热量／饮水目标）。
+ * #290 整页化：装配改走 `./resultDocs.ts::buildGoalStatusDoc`（取数、参数与退出码一字未动；旧片段保留）。 */
 export function viewGoalStatus(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const g = buildGoalStatus(db);
   const metrics = nums({ paused: g.paused ? 1 : 0, calorie_goal: g.nutrition.calorie_goal, water_goal: g.nutrition.water_goal });
-  return { data: { metrics }, html: renderGoalStatusHtml(g) };
+  const command = 'calorie-cmd-read calorie.view.goal-status';
+  return { data: { metrics }, html: buildGoalStatusDoc(g, metrics, command) };
 }
 
 /** `calorie.view.goal-expiring` · 即将到期的目标（默认 14 天内）。
