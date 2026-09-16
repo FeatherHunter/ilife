@@ -50,6 +50,12 @@ const DESKTOP_CSS = [
   '@media (min-width:1200px) {',
   '  .ilife-block-page-shell { max-width: 1120px; }',
   '  .ilife-block-page-shell .ilife-block-kpi-card-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }',
+  /* t403-P1：桌面端数据表与内容列同宽（只 1200px 以上生效，手机端不动）。
+   *  为什么落在本件：公共层 `base-paint` 的 `.ilife-block-data-table` 锁 `max-width:680px` 居中，
+   *  1120 版心下右约 40% 留白、密集页被迫折行（t403 视觉验收 D1）；base 包只建议不动，唯一的落点
+   *  就是本件拼 `sharedCssText` 的这一处（与上面 D1 同一条路）。查询域列表／详情与写入域回执
+   *  同走本件，两域的表同宽；`≤640px` 行卡化那档一行不动。 */
+  '  .ilife-block-page-shell .ilife-block-data-table { max-width: none; }',
   '}',
 ].join('\n');
 
@@ -70,10 +76,31 @@ const TOAST_CSS = [
   '.ilife-toast-lines { line-height: 1.6; }',
 ].join('\n');
 
+/** 查询详情移动版式（t403-P2：只 640px 以下生效，桌面端不动）。
+ *
+ *  为什么落在本件：详情字段表（字段／值两列）在窄屏行卡化时会逐行重复表头标签
+ *  （t403 视觉验收 D2）；`renderDataTable` 的 `data-label` 恒取列头、无逐行标签选项，
+ *  base 包只建议不动；本页 body 后也不加样式块（机审「本页样式块／内联样式」两列要保持 0），
+ *  唯一的落点就是本件拼 `sharedCssText` 的这一处（与上面 D1／TOAST 同一条路）。
+ *  桌面端（≥641px）只见表格、移动端（≤640px）只见键值列表——两者由 `display` 切换，
+ *  每端恰出一套（读屏器同 CSS 一起切，不存在两套同读）；打印走桌面那一套。 */
+const KV_CSS = [
+  '/* t403-P2：详情键值列表（桌面藏，移动端替表格） */',
+  '.ilife-query-kv-list { display: none; }',
+  '@media (max-width:640px) {',
+  '  .ilife-query-kv-table { display: none; }',
+  '  .ilife-query-kv-list { display: block; margin: 16px 0; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }',
+  '  .ilife-query-kv-list > div { display: flex; align-items: baseline; justify-content: space-between; gap: 2px 10px; padding: 8px 12px; border-top: 1px solid rgba(210, 210, 215, .6); }',
+  '  .ilife-query-kv-list > div:first-child { border-top: 0; }',
+  '  .ilife-query-kv-list dt { flex: none; color: var(--fg3); font-size: 11.5px; font-weight: 600; }',
+  '  .ilife-query-kv-list dd { margin: 0; color: var(--fg); font-size: 12px; text-align: right; overflow-wrap: anywhere; }',
+  '}',
+].join('\n');
+
 /** 整页装配：区块 HTML ＋ 标题三件套 → 完整文档。 */
 export function assembleDocPage(input: DocPageInput): string {
   const assets = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + '\n' + DESKTOP_CSS + '\n' + TOAST_CSS,
+    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + '\n' + DESKTOP_CSS + '\n' + TOAST_CSS + '\n' + KV_CSS,
     sharedHelpersJs: buildSharedHelpersJs(),
   };
   const body = renderPageShell({

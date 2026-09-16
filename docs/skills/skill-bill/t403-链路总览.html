@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>t403 查询域 17 条唤醒词链路总览</title>
+<style>
+:root{--ink:#1b1f24;--sub:#5b6672;--line:#dfe4ea;--bg:#f6f8fa;--card:#fff;--hl:#0b6bcb;}
+*{box-sizing:border-box;}body{margin:0;padding:28px 22px 64px;background:var(--bg);color:var(--ink);font:15px/1.65 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;}
+h1{font-size:22px;margin:0 0 6px;}h2{font-size:17px;margin:30px 0 10px;padding-left:9px;border-left:4px solid var(--hl);}
+p{margin:8px 0;}.lead{color:var(--sub);margin-bottom:18px;}.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:14px 0;}
+code{font-family:Consolas,monospace;background:#eef2f6;border-radius:3px;padding:1px 4px;font-size:13px;}
+.tw{overflow-x:auto;border-radius:8px;}table{border-collapse:collapse;width:100%;min-width:1500px;background:var(--card);font-size:13.5px;}
+th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top;text-align:left;}th{background:#eaf0f6;white-space:nowrap;}
+tr:nth-child(even) td{background:#fbfcfe;}td.wake{white-space:nowrap;font-weight:600;}td.cmd code{font-size:12.5px;}
+td.pg a{display:inline-block;text-decoration:none;color:var(--hl);border-bottom:1px solid var(--hl);}
+.path{display:block;margin-top:4px;color:var(--sub);font:11.5px/1.5 Consolas,monospace;word-break:break-all;}
+.foot{color:var(--sub);font-size:13px;margin-top:26px;border-top:1px solid var(--line);padding-top:12px;}
+</style>
+</head>
+<body>
+<h1>t403 查询域 17 条唤醒词链路总览</h1>
+<p class="lead">一句话链路：<strong>用户说的话（含唤醒词）</strong> → <strong>唤醒词</strong>（最长匹配） → <strong>命令</strong>（唯一出口 <code>bill-cmd-read</code>） → <strong>结果型 HTML</strong>（落盘，点右列链接即开）。查询域<strong>没有过程型采集页</strong>：缺参即阻断（exit 2／4，不出页）；只有真取到数（含零行空态）才出结果型页。下表 18 行＝17 词＋1 附带空态。</p>
+<h2>一、过程型 vs 结果型（本图只有后者）</h2>
+<div class="card">
+<p><strong>过程型采集页</strong>是写入域的概念（t407：缺槽位时出采集页，建表不写行）。本图查询域不存在这一支——<code>src/query/read.ts</code> 头注释写明“查询缺参就是缺参，阻断即错误回执，页面只在真取到数时出”。</p>
+<p><strong>结果型页</strong>本图有三样：①列表页（16 词：时间页 5＋区间页 6＋条件页 5，经 <code>queryListDoc</code>：结果胶囊＋KPI 行＋数据表／空态＋复制区）；②详情页（查账单详情，经 <code>queryDetailDoc</code>：结果胶囊＋金额卡＋状态卡＋字段表＋复制区）；③空态页（零行走 <code>renderEmptyBlock</code>，附带第 18 行）。阻断（空查询／空区间／无此号）不出静态产物，由 t417 程序锁逐条断言。</p>
+</div>
+<h2>二、17 词链路表（点右列标题即开产物）</h2>
+<div class="tw"><table>
+<caption>prompt → 唤醒词 → 命令 → HTML 绝对路径（18 行）</caption>
+<thead><tr><th>序</th><th>唤醒词</th><th>用户说的话（prompt）</th><th>命令</th><th>HTML 绝对路径（可点）</th><th>页型</th></tr></thead>
+<tbody>
+    <tr><td>1</td><td class="wake">查今天</td><td>帮我查今天的账</td><td class="cmd"><code>bill.record.today</code><br><code>bill-cmd-read bill.record.today --params '{}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w01-%E6%9F%A5%E4%BB%8A%E5%A4%A9.html">查今天</a><span class="path">D:\ilife\.scratch\t403-query-wall\w01-查今天.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>2</td><td class="wake">查昨天</td><td>查昨天花了多少钱</td><td class="cmd"><code>bill.record.today</code><br><code>bill-cmd-read bill.record.today --params '{&quot;date&quot;:&quot;yesterday&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w02-%E6%9F%A5%E6%98%A8%E5%A4%A9.html">查昨天</a><span class="path">D:\ilife\.scratch\t403-query-wall\w02-查昨天.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>3</td><td class="wake">查某天</td><td>查某天，2026-09-06 的账</td><td class="cmd"><code>bill.record.today</code><br><code>bill-cmd-read bill.record.today --params '{&quot;date&quot;:&quot;2026-09-06&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w03-%E6%9F%A5%E6%9F%90%E5%A4%A9.html">查某天</a><span class="path">D:\ilife\.scratch\t403-query-wall\w03-查某天.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>4</td><td class="wake">查最近</td><td>查最近 3 笔记录</td><td class="cmd"><code>bill.record.today</code><br><code>bill-cmd-read bill.record.today --params '{&quot;recent&quot;:true,&quot;limit&quot;:3}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w04-%E6%9F%A5%E6%9C%80%E8%BF%91.html">查最近</a><span class="path">D:\ilife\.scratch\t403-query-wall\w04-查最近.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>5</td><td class="wake">查账单</td><td>查账单，今天的</td><td class="cmd"><code>bill.record.today</code><br><code>bill-cmd-read bill.record.today --params '{}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w05-%E6%9F%A5%E8%B4%A6%E5%8D%95.html">查账单（别名，同查今天页）</a><span class="path">D:\ilife\.scratch\t403-query-wall\w05-查账单.html</span></td><td>结果型·列表页（别名）</td></tr>
+    <tr><td>6</td><td class="wake">查周</td><td>查周，本周的账</td><td class="cmd"><code>bill.record.range</code><br><code>bill-cmd-read bill.record.range --params '{&quot;range&quot;:&quot;week&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w06-%E6%9F%A5%E5%91%A8.html">查周</a><span class="path">D:\ilife\.scratch\t403-query-wall\w06-查周.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>7</td><td class="wake">查月</td><td>查月，本月汇总</td><td class="cmd"><code>bill.record.range</code><br><code>bill-cmd-read bill.record.range --params '{&quot;range&quot;:&quot;month&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w07-%E6%9F%A5%E6%9C%88.html">查月</a><span class="path">D:\ilife\.scratch\t403-query-wall\w07-查月.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>8</td><td class="wake">查区间</td><td>查区间，9 月 3 日到 9 月 6 日</td><td class="cmd"><code>bill.record.range</code><br><code>bill-cmd-read bill.record.range --params '{&quot;start&quot;:&quot;2026-09-03&quot;,&quot;end&quot;:&quot;2026-09-06&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w08-%E6%9F%A5%E5%8C%BA%E9%97%B4.html">查区间</a><span class="path">D:\ilife\.scratch\t403-query-wall\w08-查区间.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>9</td><td class="wake">查分类</td><td>查分类，餐饮花了多少</td><td class="cmd"><code>bill.record.range</code><br><code>bill-cmd-read bill.record.range --params '{&quot;category&quot;:&quot;餐饮&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w09-%E6%9F%A5%E5%88%86%E7%B1%BB.html">查分类</a><span class="path">D:\ilife\.scratch\t403-query-wall\w09-查分类.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>10</td><td class="wake">查账户</td><td>查账户，支付宝的账</td><td class="cmd"><code>bill.record.range</code><br><code>bill-cmd-read bill.record.range --params '{&quot;account&quot;:&quot;支付宝&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w10-%E6%9F%A5%E8%B4%A6%E6%88%B7.html">查账户</a><span class="path">D:\ilife\.scratch\t403-query-wall\w10-查账户.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>11</td><td class="wake">查账本</td><td>查账本，旅行账本</td><td class="cmd"><code>bill.record.range</code><br><code>bill-cmd-read bill.record.range --params '{&quot;ledger&quot;:&quot;旅行&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w11-%E6%9F%A5%E8%B4%A6%E6%9C%AC.html">查账本</a><span class="path">D:\ilife\.scratch\t403-query-wall\w11-查账本.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>12</td><td class="wake">搜备注</td><td>搜备注，午饭</td><td class="cmd"><code>bill.record.search</code><br><code>bill-cmd-read bill.record.search --params '{&quot;q&quot;:&quot;午饭&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w12-%E6%90%9C%E5%A4%87%E6%B3%A8.html">搜备注</a><span class="path">D:\ilife\.scratch\t403-query-wall\w12-搜备注.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>13</td><td class="wake">查标签</td><td>查标签，旅行计划</td><td class="cmd"><code>bill.record.search</code><br><code>bill-cmd-read bill.record.search --params '{&quot;kind&quot;:&quot;tag&quot;,&quot;tag&quot;:&quot;旅行计划&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w13-%E6%9F%A5%E6%A0%87%E7%AD%BE.html">查标签</a><span class="path">D:\ilife\.scratch\t403-query-wall\w13-查标签.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>14</td><td class="wake">查欠款</td><td>查欠款，还欠着哪些</td><td class="cmd"><code>bill.record.search</code><br><code>bill-cmd-read bill.record.search --params '{&quot;kind&quot;:&quot;debt&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w14-%E6%9F%A5%E6%AC%A0%E6%AC%BE.html">查欠款</a><span class="path">D:\ilife\.scratch\t403-query-wall\w14-查欠款.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>15</td><td class="wake">查待报销</td><td>查待报销的账</td><td class="cmd"><code>bill.record.search</code><br><code>bill-cmd-read bill.record.search --params '{&quot;kind&quot;:&quot;reimburse&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w15-%E6%9F%A5%E5%BE%85%E6%8A%A5%E9%94%80.html">查待报销</a><span class="path">D:\ilife\.scratch\t403-query-wall\w15-查待报销.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>16</td><td class="wake">查分期</td><td>查分期的账</td><td class="cmd"><code>bill.record.search</code><br><code>bill-cmd-read bill.record.search --params '{&quot;kind&quot;:&quot;installment&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w16-%E6%9F%A5%E5%88%86%E6%9C%9F.html">查分期</a><span class="path">D:\ilife\.scratch\t403-query-wall\w16-查分期.html</span></td><td>结果型·列表页</td></tr>
+    <tr><td>17</td><td class="wake">查账单详情</td><td>查账单详情，编号 1</td><td class="cmd"><code>bill.record.detail</code><br><code>bill-cmd-read bill.record.detail --params '{&quot;id&quot;:1}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w17-%E6%9F%A5%E8%B4%A6%E5%8D%95%E8%AF%A6%E6%83%85.html">查账单详情</a><span class="path">D:\ilife\.scratch\t403-query-wall\w17-查账单详情.html</span></td><td>结果型·详情页</td></tr>
+    <tr><td>18</td><td class="wake">查某天</td><td>查某天，2020-01-01（无记录）</td><td class="cmd"><code>bill.record.today</code><br><code>bill-cmd-read bill.record.today --params '{&quot;date&quot;:&quot;2020-01-01&quot;}'</code></td><td class="pg"><a href="file:///D:/ilife/.scratch/t403-query-wall/w00-%E7%A9%BA%E6%80%81-%E6%9F%A5%E6%9F%90%E5%A4%A9%E6%97%A0%E8%AE%B0%E5%BD%95.html">空态示例：查某天无记录</a><span class="path">D:\ilife\.scratch\t403-query-wall\w00-空态-查某天无记录.html</span></td><td>结果型·空态页</td></tr>
+</tbody></table></div>
+<h2>三、有意不出产物及其原因</h2>
+<div class="card"><ul>
+<li><strong>过程型采集页（缺槽位时的人机采集页）</strong>：查询域没有这一型：缺参即阻断走错误回执（exit 2／4），只有真取到数（含零行）才出结果型页。过程型是写入域的概念（t407 采集页），本图 17 词全部是结果型。</li>
+<li><strong>阻断回执（空查询 exit 2／空区间 exit 4／无此号 exit 4）</strong>：有意不出静态产物：阻断即 stderr＋exit 码，由 t417 程序锁逐条断言（5 条阻断），墙上只收结果型页。</li>
+<li><strong>其余 5 域（分析／目标／账户／联动／开始使用）61 词</strong>：归各自 map（雾区），不在本图 17 词范围内。</li>
+</ul></div>
+<p class="foot">种子 8 笔（今天 2／昨天 1／09-06 2／借贷 1／待报销 1／分期 1），查周／查月用相对锚点天然命中；查区间用 09-03~09-06 固定窗 5 笔。复跑：<code>node .scratch/t403-query-wall/gen.mjs</code>（DB 落系统临时目录，HTML 落 <code>D:\ilife\.scratch\t403-query-wall</code>）。</p>
+</body>
+</html>

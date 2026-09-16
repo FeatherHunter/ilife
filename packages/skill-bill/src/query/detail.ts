@@ -8,7 +8,9 @@
  *   - **留**：复制数据／日志两条通道（老页动作区）＋ 页头三件套；
  *   - **舍**：KPI 四格（单条笔数恒 1 是废话，支出／收入／净额三格对单条互斥其二为零）＋
  *     七列表格（币种／创建时间／软删态三列无处可放）；
- *   - **改**：金额卡＋状态卡（两格）＋ 字段／值两列竖表（10 行，币种与两时间列首次可见）。
+ *   - **改**：金额卡＋状态卡（两格）＋ 字段明细（10 行，币种与两时间列首次可见）——
+ *     桌面端是字段／值两列竖表，移动端是同一数据源派生的键值列表（t403-P2：窄屏行卡化会逐行
+ *     重复表头标签，键值列表每行即「字段名＋值」，两套显隐见 `../shared/docPage.js` 的 KV_CSS）。
  *
  * 分工：取数与阻断在 `read.ts`（含删态读 `includeDeleted`），本件只做**整页装配**；
  *   载荷那一份（`detailEnvelope`）由调用方拼好传进来，本件不重拼（形状与载荷成对，见 `./list.js:173-175`）。
@@ -16,6 +18,7 @@
 import { renderChips, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
+import { escapeHtml } from '../render/html.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
@@ -98,13 +101,25 @@ function detailRows(row: BillRow, deleted: boolean): readonly Record<string, unk
   ];
 }
 
+/** 移动端键值列表（与字段表**同一数据源派生、只转形状**：字段名与值只在 `detailRows` 定义一处，
+ *  本件不重写第二份）。桌面端藏、窄屏替表格（显隐见 `../shared/docPage.js` 的 KV_CSS，每端恰出一套）；
+ *  转义与表格单元格同口径（`../render/html.js` 的 `escapeHtml`，与 `renderDataTable` 的单元格同为五字符）。 */
+function kvList(rows: readonly Record<string, unknown>[]): string {
+  return '<dl class="ilife-query-kv-list">' + rows.map((r) =>
+    '<div><dt>' + escapeHtml(String(r.field)) + '</dt><dd>' + escapeHtml(String(r.value)) + '</dd></div>',
+  ).join('') + '</dl>';
+}
+
 /** 查询详情页：一整页（页头 ＋ 结果胶囊 ＋ 金额卡＋状态卡 ＋ 字段表 ＋ 复制区）。 */
 export function queryDetailDoc(input: QueryDetailInput): string {
   const deleted = input.row.deleted_at !== null && input.row.deleted_at !== '';
+  const rows = detailRows(input.row, deleted);
   const content = [
     renderChips({ items: input.chips.map((text) => ({ text })) }),
     renderKpiGrid(detailCards(input.row, deleted)),
-    renderDataTable({ columns: DETAIL_COLUMNS, rows: detailRows(input.row, deleted), caption: '字段明细' }),
+    '<div class="ilife-query-kv-table">'
+    + renderDataTable({ columns: DETAIL_COLUMNS, rows, caption: '字段明细' }) + '</div>',
+    kvList(rows),
     copyArea({
       data: { envelope: input.envelope, title: input.wakeWord },
       log: {
