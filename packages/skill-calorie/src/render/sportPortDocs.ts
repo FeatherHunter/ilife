@@ -383,7 +383,11 @@ export function buildStrengthDoc(v: StrengthView): string {
     });
   }
   const trail = v.trail.filter((p) => p.volumeKg !== null);
-  const trailItems = trail.map((p) => ({ label: p.date.slice(5), value: Number(fmtNum(p.volumeKg)) }));
+  // #623：轨迹轴按轨迹自身首末年派生 crossYear（与周柱按页窗口派生不同：轨迹只看近 10 个训练日，
+  // 页窗口跨年而轨迹同年时不许补年份，反之页窗口同年而轨迹跨年仍补全年；与 axisDateLabel 同一口径）。
+  const trailCrossYear = trail.length > 0
+    && trail[0].date.slice(0, 4) !== trail[trail.length - 1].date.slice(0, 4);
+  const trailItems = trail.map((p) => ({ label: axisDateLabel(trailCrossYear)(p.date), value: Number(fmtNum(p.volumeKg)) }));
   const charts = trailItems.length > 0;
   if (charts) {
     cards.push({
@@ -903,13 +907,15 @@ export function buildTrendDoc(v: TrendView): string {
         },
       }), burnItems),
     });
+    // #623：周柱轴按页窗口首末年派生 crossYear（与 sec-line 同一个 axisDate：周起点可能落在窗口外，
+    // 仍按窗口派生；与轨迹按自身首末派生不同；与 axisDateLabel 同一口径：跨年印全年、同年只印月日）。
     cards.push({
       id: 'sec-weekly',
       label: '每周频次',
       html: renderChartBlock({
         kind: 'bar',
         title: '每周运动频次',
-        input: { items: v.weekly.map((w) => ({ label: w.weekStart.slice(5) + '周', value: w.sessions })) },
+        input: { items: v.weekly.map((w) => ({ label: axisDate(w.weekStart) + '周', value: w.sessions })) },
       }),
     });
     cards.push({

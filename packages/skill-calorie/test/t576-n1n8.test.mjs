@@ -299,3 +299,72 @@ test('t576-N8 眉标对齐H1＋距离统一km＋34卡题单刻度说法', () => 
   assert.ok(!tr.includes('两套刻度'), '趋势卡题仍称两套刻度');
   console.log('T576-N8 eyebrow=2/2 km=1 nok2=1');
 });
+
+test('t623-剩余轴：周柱与轨迹跨年补年份', () => {
+  /* #623（#615 scope-out 的三处之二）：趋势周柱 sec-weekly 按页窗口首末年派生 crossYear、
+   * 力量轨迹 sec-chart 按轨迹首末日期派生 crossYear，都与 axisDateLabel 同一口径
+   * （跨年印全年 YYYY-MM-DD、同年仍只印 MM-DD）。跨年两处一次判完、实读都进同一条消息。 */
+  const crossTrend = buildTrendDoc(trendView({
+    start: '2025-12-29', end: '2026-01-11',
+    days: [
+      { date: '2025-12-29', minutes: 90, burned: 800, sessions: 1 },
+      { date: '2026-01-11', minutes: 100, burned: 900, sessions: 1 },
+    ],
+    weekly: [
+      { weekStart: '2025-12-29', sessions: 3, burned: 2400 },
+      { weekStart: '2026-01-05', sessions: 2, burned: 1800 },
+    ],
+    activeDays: 2, totalMinutes: 190, totalBurned: 1700,
+    peak: { date: '2026-01-11', burned: 900 },
+  }));
+  const weeklyCross = axisLabelsOf(cardOf(crossTrend, 'sec-weekly'));
+  /* 轨迹跨年但页窗口同年：按轨迹首末派生则印全年，若误套页窗口则仍只印月日。 */
+  const crossStrength = buildStrengthDoc(strengthView({
+    start: '2026-09-09', end: '2026-09-15',
+    trail: [
+      { date: '2025-12-31', volumeKg: 600 },
+      { date: '2026-01-02', volumeKg: 620 },
+    ],
+  }));
+  const trailCross = axisLabelsOf(cardOf(crossStrength, 'sec-chart'));
+  const wantWeekly = ['2025-12-29周', '2026-01-05周'];
+  const wantTrail = ['2025-12-31', '2026-01-02'];
+  assert.ok(wantWeekly.every((t) => weeklyCross.includes(t)) && wantTrail.every((t) => trailCross.includes(t)),
+    '剩余轴仍只印月日 — 周柱(sec-weekly)=' + JSON.stringify(weeklyCross)
+      + ' 轨迹(sec-chart)=' + JSON.stringify(trailCross));
+  /* 同年仍只印月日，且不许多印年份。 */
+  const weeklySame = axisLabelsOf(cardOf(buildTrendDoc(trendView()), 'sec-weekly'));
+  assert.ok(weeklySame.includes('09-08周'), '周柱同年轴标签丢失：' + JSON.stringify(weeklySame));
+  assert.ok(!weeklySame.some((t) => /^\d{4}-\d\d-\d\d/.test(t.replace(/周$/, ''))),
+    '周柱同年轴多印了年份：' + JSON.stringify(weeklySame));
+  const trailSame = axisLabelsOf(cardOf(buildStrengthDoc(strengthView()), 'sec-chart'));
+  assert.ok(trailSame.includes('09-14'), '轨迹同年轴标签丢失：' + JSON.stringify(trailSame));
+  assert.ok(!trailSame.some((t) => /^\d{4}-\d\d-\d\d$/.test(t)),
+    '轨迹同年轴多印了年份：' + JSON.stringify(trailSame));
+  /* 页窗口跨年而轨迹同年：轨迹仍只印月日（不套用页窗口起止年）。 */
+  const winCrossTrailSame = buildStrengthDoc(strengthView({
+    start: '2025-12-29', end: '2026-01-11',
+    trail: [
+      { date: '2026-01-02', volumeKg: 600 },
+      { date: '2026-01-05', volumeKg: 620 },
+    ],
+  }));
+  const winCrossLabels = axisLabelsOf(cardOf(winCrossTrailSame, 'sec-chart'));
+  assert.ok(winCrossLabels.includes('01-02') && winCrossLabels.includes('01-05'),
+    '轨迹同年轴标签丢失（窗口跨年）：' + JSON.stringify(winCrossLabels));
+  assert.ok(!winCrossLabels.some((t) => /^\d{4}-\d\d-\d\d$/.test(t)),
+    '轨迹误套页窗口多印了年份：' + JSON.stringify(winCrossLabels));
+  console.log('T623 weeklyCross=' + weeklyCross.join('|') + ' trailCross=' + trailCross.join('|')
+    + ' weeklySame=' + weeklySame.join('|') + ' trailSame=' + trailSame.join('|')
+    + ' winCross=' + winCrossLabels.join('|'));
+});
+
+test('t623-分布守卫：sec-chart无日期不断言年份', () => {
+  /* #623（三处之三）：分布 sec-chart 标签是分类名、无日期，不改形状，
+   * 只加一条无日期守卫、不断言年份（若有人能给出可复现的跨年窗＋读数证明它有日期误读，另开票）。 */
+  const distChart = cardOf(buildDistributionDoc(distributionView()), 'sec-chart');
+  const distLabels = [...distChart.matchAll(/charts-xlabel[^>]*>([^<]+)</g)].map((m) => m[1]);
+  assert.ok(!distLabels.some((t) => /\d\d-\d\d/.test(t)),
+    '分布sec-chart出现日期误读：' + JSON.stringify(distLabels));
+  console.log('T623-dist distLabels=' + distLabels.join('|'));
+});
