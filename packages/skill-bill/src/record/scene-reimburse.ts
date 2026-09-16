@@ -18,9 +18,11 @@
  *     重复检测提示条、预填标注、缺项阻断条、字段卡（三级分类＋心法）、空态、复制指令块、动作区、错误回执。
  *   回执页＝页头与页面外框、类型徽章（`ok` 档）、**打标说明条**、结论摘要行、写入明细表、对账折叠区、退出口、复制区。
  */
-import { renderCaliberLine, renderDataTable, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
-import type { SerializableEnvelope, ToastInput } from 'base-paint';
+import { renderCaliberLine, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
+import type { SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import type { BlockedItem } from '../shared/blockedSlots.js';
+import { collectMissingTags, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
@@ -30,8 +32,8 @@ import { pageShell } from '../shared/pageShell.js';
 import { blockedPromptOf, fieldCardOf, valuesOf } from '../shared/photoEscape.js';
 import { prefillNote, prefillOf } from '../shared/prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { summaryCards, summaryRow } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { summaryCards } from '../shared/summaryRow.js';
+import { typeBadge, wakeWordOf } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
@@ -67,36 +69,26 @@ function probeOfReceipt(input: ReceiptInput): DuplicateProbe {
   };
 }
 
-/** 打标提示条（采集页那一块）：报「这一笔落库时要在备注里带 `#待报销`」＋ 标签怎么流转。**独立一块**。 */
-function tagNote(): string {
-  const toast: ToastInput = {
-    msg: '这一笔落库时要在备注里带上 ' + TAG,
-    detail: '报销是「先垫后补」：垫付这一步记成支出并打 ' + TAG + '，之后「报销到账」按这个标签把原垫付那一笔找出来。',
-    icon: 'warn',
-    badge: { text: '打标流转', type: 'warn' },
-    lines: [
-      '打标这一步：本页落库时由备注那一格带 ' + TAG,
-      '之后找它：走「报销到账」那条唤醒词，按 ' + TAG + ' 检索，不按金额猜',
-      '标签与备注同一格：' + TAG + ' 写在备注里（如「机场往返 ' + TAG + '」）',
-    ],
-  };
-  return renderFeedbackBlock({ title: '打标提示条（这一笔带 ' + TAG + '）', toast });
+/** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
+ *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
+function blockedFold(items: readonly BlockedItem[], command: string, note: string): string {
+  if (items.length === 0) return '';
+  return renderDisclosure({
+    title: '还缺什么，以及补齐后照抄的那条',
+    contentHtml: blockedBar({ items, command, note }),
+  });
 }
 
-/** 来源提示条（采集页那一块）：报「这一笔是从哪来的」＋ 与打标提示**各占独立一块**。 */
-function sourceNote(): string {
-  const toast: ToastInput = {
-    msg: '来源提示：这一笔是你先垫出去的钱',
-    detail: '金额取负数（支出型）——钱从你的账户出；报销到账是另一笔（钱回到账户），两条记录不合并。',
-    icon: 'info',
-    badge: { text: '来源', type: 'warn' },
-    lines: [
-      '钱的方向：这一步是出（负数）',
-      '与「报销到账」的分工：那一条是进（正数）＋ 带 ' + TAG,
-      '两块提示各占一格：这一块说来源，上一块说打标，不共容器（老侧两提示共一个容器互相覆盖，本件修掉）',
-    ],
-  };
-  return renderFeedbackBlock({ title: '来源提示条（与打标提示各占独立一块）', toast });
+/** 打标与来源合成一块浅色静态提示（白底页流里不再横插两张深色毛玻璃卡；标题只留一层、两行说全）。 */
+function markNote(): string {
+  return renderFeedbackBlock({
+    toast: {
+      msg: '垫付这一步记支出，备注带上 ' + TAG,
+      detail: '到账另记一笔收入，按 ' + TAG + ' 找这一笔，不按金额猜。',
+      icon: 'info',
+    },
+    staticNotice: true,
+  });
 }
 
 /** 过程型采集页：缺字段时出这一页（只采集、不写库）。 */
@@ -104,6 +96,8 @@ function collectReimburse(input: CollectInput): string {
   const { params } = input;
   const blocked = blockedItems({ params, missing: input.missing, kind: 'reimburse' });
   const message = blockedMessage(input.missing, blocked);
+  /** 副标题只报计数（进度形状）；缺项明细在进度行、标签组与阻断表明细三处形状里。 */
+  const subtitle = wakeWordOf('reimburse') + '还差 ' + blocked.length + ' 项';
   const marks = prefillOf({ params, recent: input.recent, today: input.today });
   const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: 'reimburse', today: input.today });
   const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: REPLACES });
@@ -120,25 +114,23 @@ function collectReimburse(input: CollectInput): string {
     typeBadge({
       kind: 'reimburse',
       status: 'danger',
-      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库（打 ' + TAG + '）',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf('reimburse') }),
+      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+      next: '',
     }),
-    summaryRow(facts),
-    renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
-    tagNote(),
-    sourceNote(),
+    blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
+    renderKpiGrid(summaryCards(facts)),
+    markNote(),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     prefillNote(marks),
-    blockedBar({
-      items: blocked,
-      command: bp.command,
-      note: '报销这几格补齐之后跟助手说一遍才会写库；'
-        + '备注里带上 ' + TAG + ' 才算打了标，之后「报销到账」按它找这一笔。',
-    }),
+    blockedFold(
+      blocked,
+      bp.command,
+      '备注里带上 ' + TAG + ' 才算打了标，之后「报销到账」按它找这一笔。',
+    ),
     empties.join(''),
     fieldCardOf({
-      description: '填好必需项再说一遍。这一页先不写库。金额取负数（垫付出去的钱）。'
-        + '备注那格写清垫了什么，并带上 ' + TAG + '。',
+      description: '补齐必需项即可继续。金额取负数，备注那格写清垫了什么并带上 ' + TAG + '。',
       slots: input.slots,
       params,
       marks,
@@ -160,9 +152,9 @@ function collectReimburse(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·补齐报销槽位',
-    title: '补齐报销槽位',
-    subtitle: message,
+    docTitle: DOC_TITLE + '·记报销',
+    title: '记一笔报销',
+    subtitle,
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -175,25 +167,21 @@ function collectReimburse(input: CollectInput): string {
 function receiptReimburse(input: ReceiptInput): string {
   const probe = probeOfReceipt(input);
   const envelope = envelopeOf(input.key, true, input.receipt.summary);
-  const toast: ToastInput = {
-    msg: '这一笔已按报销打标：备注里带 ' + TAG,
-    detail: '记的是垫付那一步（支出）。「报销到账」那一条是另一笔（收入 ＋ 消标），两条记录不合并。',
-    icon: 'ok',
-    badge: { text: '打标结果', type: 'ok' },
-    lines: [
-      '标签：' + TAG + '（写在备注里，跟着这一行走）',
-      '怎么找回来：走「报销到账」，按 ' + TAG + ' 检索',
-      '别按金额猜：同一天可能有好几笔同额垫付，标签才是准的',
-    ],
-  };
   const content = [
     typeBadge({
       kind: 'reimburse',
       status: 'ok',
       state: '写库成功',
-      next: nextStepOf({ page: 'receipt', exit: true }),
+      next: '这一笔已记下，撤销见下方按钮。',
     }),
-    renderFeedbackBlock({ title: '打标说明', toast }),
+    renderFeedbackBlock({
+      toast: {
+        msg: '这一笔已按报销打标，备注里带 ' + TAG,
+        detail: '「报销到账」按这个标签找它，不按金额猜。',
+        icon: 'ok',
+      },
+      staticNotice: true,
+    }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(input.receipt, input.writtenDetail),
@@ -204,8 +192,7 @@ function receiptReimburse(input: ReceiptInput): string {
         detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
-    renderCaliberLine('这一条记在支出侧（垫付那一步）：金额是负数；'
-      + '报销到账是另一笔（正数），按备注里的 ' + TAG + ' 对上。'),
+    renderCaliberLine('这一条记在支出侧，金额是负数。报销到账是另一笔，按备注里的 ' + TAG + ' 对上。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],

@@ -16,21 +16,21 @@
  *   少了它就不出可复制的写库指令。这一格是页面侧的闸门，写库那一半的闸门在 `src/record/write.ts`
  *   （公共件，本窗不许改；见交付回执的遗留一条）。
  */
-import { renderToast } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderChips, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
 import { candidatePick } from '../shared/candidatePick.js';
 import type { CandidateItem } from '../shared/candidatePick.js';
+import { collectMissingTags } from '../shared/collectFrame.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { flowSteps } from '../shared/flowSteps.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { money2, summaryCards, summaryRow } from '../shared/summaryRow.js';
+import { money2, summaryCards } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { typeBadge, wakeWordOf } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
@@ -60,6 +60,21 @@ function amountOf(v: unknown): number | null {
 function idOf(v: unknown): number | null {
   const n = amountOf(v);
   return n !== null && Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
+ *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
+function blockedFold(items: readonly BlockedItem[], command: string): string {
+  if (items.length === 0) return '';
+  return renderDisclosure({
+    title: '还缺什么，以及补齐后照抄的那条',
+    contentHtml: blockedBar({ items, command }),
+  });
+}
+
+/** 分类路径换成面包屑形状（`/` 不再进正文，见 D-/-01）。 */
+function crumbOf(category: string): string {
+  return category.split('/').join(' › ');
 }
 
 /** 候选：近期支出记录（老侧 `pool`＝金额为负），每条一句「为什么是它」。 */
@@ -93,6 +108,8 @@ function collectPage(input: CollectInput): string {
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
     + (extra.length === 0 ? '' : '；本型另需：' + extra.map((i) => i.label).join('、'));
+  /** 副标题只报计数（进度形状）；缺项明细在进度行、标签组与阻断表明细三处形状里。 */
+  const subtitle = wakeWordOf(KIND) + '还差 ' + blocked.length + ' 项';
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: sceneKeyOf(key),
     data: { ok: false, message },
@@ -109,68 +126,83 @@ function collectPage(input: CollectInput): string {
   const over = amount !== null && original !== null && amount > -original.amount;
   const filled: Record<string, unknown> = { ...params };
   for (const b of blocked) filled[b.name] = '<' + b.label + '>';
-  const prompt = (blocked.length === 0 ? '照下面这个口径写两笔，写之前先核一眼原支出。' : '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.name + '：' + i.why + '）').join('、') + '。')
-    + '\n请加载「饼干记账」技能，帮我记一笔退款（唤醒词：记退款）：\n'
-    + '原支出：' + (source === null ? '<原支出编号>' : '#' + source + '（' + (original === null ? '近期记录里没读到' : original.category + ' ' + money2(original.amount) + ' ' + original.time) + '）') + '\n'
-    + '退款额：' + money2(amount) + '（收入正数）\n'
-    + '分类：' + CATEGORY + '；到账账户：' + (facts.account || '<到账账户>') + '；账本：' + (facts.ledger || '<账本>') + '\n'
-    + '请照这个口径写两笔并配对标签：① 记一笔收入，分类「' + CATEGORY + '」，备注写「#退款 原支出:#' + (source ?? '<原支出编号>') + '」；'
-    + '② 原支出 #' + (source ?? '<原支出编号>') + ' 的备注追加「#已退款」，金额不动。';
+  // 缺项逐项一行（一行一件事），不带库列名、不用顿号连写。
+  const lackLines = blocked.map((i) => i.label + '：' + (i.why === '没给' ? '没给' : i.why)).join('\n');
+  const prompt = (blocked.length === 0
+    ? '照下面这个口径写两笔，复制前先核一眼原支出。'
+    : '这一笔还差 ' + blocked.length + ' 项，逐项补齐：\n' + lackLines)
+    + '\n请加载「饼干记账」技能，帮我记一笔退款。\n唤醒词：记退款\n'
+    + '原支出：' + (source === null
+      ? '<原支出编号>'
+      : '#' + source + '　' + (original === null
+        ? '近期记录里没读到'
+        : original.category + '　' + money2(original.amount) + '　' + original.time)) + '\n'
+    + '退款额：' + money2(amount) + '　收入记正数\n'
+    + '分类：' + CATEGORY + '\n'
+    + '到账账户：' + (facts.account || '<到账账户>') + '\n'
+    + '账本：' + (facts.ledger || '<账本>') + '\n'
+    + '请办两件：\n'
+    + '① 记一笔收入，分类「' + CATEGORY + '」，备注写「#退款 原支出 #' + (source ?? '<原支出编号>') + '」\n'
+    + '② 原支出 #' + (source ?? '<原支出编号>') + ' 的备注追加「#已退款」，金额不动';
   const content = [
     typeBadge({
       kind: KIND,
       status: blocked.length > 0 ? 'danger' : 'warn',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
+      next: '',
     }),
-    summaryRow(facts),
-    renderCaliberLine('退款照收入口径写正数、落「' + CATEGORY + '」；原支出那一笔只追加 #已退款，金额不动（两笔成对，可核）。'),
+    renderKpiGrid(summaryCards(facts)),
+    renderChips({
+      items: [
+        { text: '退款记正数' },
+        { text: '分类 ' + crumbOf(CATEGORY) },
+        { text: '原支出只加 #已退款' },
+        { text: '金额不动' },
+      ],
+    }),
     renderKpiGrid([
-      { label: '退款额', value: money2(amount), detail: '收入记正数，归在「' + CATEGORY + '」下面' },
+      { label: '退款额', value: money2(amount), detail: '收入记正数，归在「' + crumbOf(CATEGORY) + '」下面' },
       {
         label: '原支出',
         value: original === null ? '未认准' : money2(original.amount),
         detail: original === null
-          ? (source === null ? '还没认准是哪一笔（候选里点一行）' : '#' + source + '（近期记录里没读到原支出）')
+          ? (source === null ? '还没认准是哪一笔，候选里点一行' : '#' + source + '近期记录里没读到原支出')
           : '#' + source + '　' + original.category + '　' + original.time,
       },
       {
         label: '净差',
         value: diff === null ? '未算' : money2(diff),
-        detail: diff === null ? '认准原支出后这里出净差' : (diff === 0 ? '全额退，未产生差额' : '退款额与原支出不等，差额照记'),
+        detail: diff === null
+          ? '认准原支出后这里出净差'
+          : (diff === 0
+            ? '全额退，未产生差额'
+            : (over ? '退款额超过原支出，超出部分照记、不阻断' : '退款额低于原支出，差额照记、不阻断')),
       },
     ]),
-    renderToast({
-      msg: over ? '超支警示：退款额超过原支出' : '超支警示：还没比出来',
-      detail: over
-        ? '原支出 ' + money2(original === null ? null : original.amount) + '，这笔退了 ' + money2(amount) + '；超出部分照记、不阻断，可继续。'
-        : '认准原支出之后这一格才算得出超没超；就算超了也照记、不阻断，可继续。',
-      badge: { text: '超支警示', type: 'warn' },
-    }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
     flowSteps({
       steps: [
         {
           title: '原记账',
-          note: '退的是哪一笔：从候选里挑一行。候选只列金额为负的记录，每条给一句「为什么是它」。',
+          note: '候选只列支出记录，每条附一句「为什么是它」。',
           done: source !== null,
-          state: source === null ? '还没认准是哪一笔' : '已认准 #' + source,
+          state: source === null ? '未认准' : '已认准 #' + source,
           html: candidatePick({
             name: SOURCE_NAME,
             label: SOURCE_LABEL,
             candidates,
             selectedId: source,
-            hint: '拿不准就别选：这一格没有候选时，让助手先查那笔原支出，不拿最近一笔顶替。',
+            hint: '从候选选原支出，未认准不代选。',
           }),
         },
         {
-          title: '退款（这一步）',
-          note: '退款额写正数（收入口径）；分类固定「' + CATEGORY + '」，别写成原支出那个分类。',
+          title: '退款这一步',
+          note: '退款额写正数。分类固定为「' + crumbOf(CATEGORY) + '」。',
           done: amount !== null && textOf(params.category) !== '',
           fields: slots.map((s) => ({
             name: s.name,
-            label: s.name === 'amount' ? '退款额' : s.name === 'category' ? '分类（固定）' : s.label,
-            hint: s.hint,
+            label: s.name === 'amount' ? '退款额' : s.name === 'category' ? '分类' : s.label,
+            hint: s.name === 'category' ? '固定为 ' + crumbOf(CATEGORY) : s.hint,
             ...(s.required ? { required: true } : {}),
             value: s.name === 'category' && textOf(params.category) === '' ? CATEGORY : textOf(params[s.name]),
           })),
@@ -178,14 +210,14 @@ function collectPage(input: CollectInput): string {
         {
           title: '结果',
           note: source === null
-            ? '认准原支出之后：那一笔的备注追加 #已退款（金额不动），两笔成对入库；「看退款」按 #退款 与 #已退款 聚合。'
-            : '原支出 #' + source + ' 的备注追加 #已退款（金额不动）；两笔成对入库；「看退款」按 #退款 与 #已退款 聚合。',
+            ? '认准原支出后：那一笔的备注追加 #已退款，金额不动。「看退款」按 #退款 与 #已退款 聚合。'
+            : '原支出 #' + source + ' 的备注追加 #已退款，金额不动。「看退款」按 #退款 与 #已退款 聚合。',
           done: blocked.length === 0,
-          state: blocked.length === 0 ? '可以复制' : '还差 ' + blocked.length + ' 项',
+          state: blocked.length === 0 ? '可复制' : '还差 ' + blocked.length + ' 项',
         },
       ],
     }),
-    blockedBar({ items: blocked, command: commandLine(key, filled) }),
+    blockedFold(blocked, commandLine(key, filled)),
     copyArea({
       prompt: { text: prompt, label: blocked.length === 0 ? '照这个口径写两笔，点这颗复制' : '补齐后照这句跟助手说一遍' },
       data: { envelope },
@@ -202,7 +234,7 @@ function collectPage(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·记退款', title: '记一笔退款', subtitle: message,
+    docTitle: DOC_TITLE + '·记退款', title: '记一笔退款', subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }
@@ -220,24 +252,21 @@ function receiptPage(input: ReceiptInput): string {
       kind: KIND,
       status: 'ok',
       state: '写库成功',
-      next: nextStepOf({ page: 'receipt', exit: true }),
+      next: '这一笔已记下，撤销见下方按钮。',
     }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
       { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
-      { label: '配对标签', value: source === null ? '#退款' : '#退款 → #已退款', detail: '两笔成对：这一笔打 #退款，原支出追加 #已退款' },
+      { label: '配对标签', value: source === null ? '#退款' : '#退款 → #已退款', detail: '原支出只动标签，金额不动' },
     ]),
-    renderToast({
-      msg: '退款标签流转：这一笔打 #退款',
-      lines: [
-        '这一笔记在「' + CATEGORY + '」，金额 ' + money2(input.facts.amount) + '（收入记正数）',
-        source === null
-          ? '原支出：#原支出编号 没随这次写库给到，配对要在下一次带上（这一笔仍已落库）'
-          : '原支出 #' + source + '：备注追加 #已退款，金额不动',
-        '看退款按 #退款 与 #已退款 两处标签聚合；撤销走本页退出口。',
-      ],
-      badge: { text: '标签流转', type: 'ok' },
+    renderFeedbackBlock({
+      toast: {
+        msg: '这一笔打 #退款' + (source === null ? '，原支出这次没给到' : '，原支出 #' + source + ' 追加 #已退款'),
+        detail: '「看退款」按 #退款 与 #已退款 聚合。撤销见下方按钮。',
+        icon: 'ok',
+      },
+      staticNotice: true,
     }),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],

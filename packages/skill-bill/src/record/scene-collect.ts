@@ -12,21 +12,21 @@
  * 缺项阻断：槽位表缺的（分类／金额）走共用位 `blockedItems`；本型自己多要一格**借出记录编号**，
  *   少了它就不出可复制的写库指令（页面侧闸门；写库那一半的闸门在 `src/record/write.ts`，公共件，本窗不许改）。
  */
-import { renderToast } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderChips, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
 import { candidatePick } from '../shared/candidatePick.js';
 import type { CandidateItem } from '../shared/candidatePick.js';
+import { collectMissingTags, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { flowSteps } from '../shared/flowSteps.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { money2, summaryCards, summaryRow } from '../shared/summaryRow.js';
+import { money2, summaryCards } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { typeBadge, wakeWordOf } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
@@ -62,6 +62,21 @@ function idOf(v: unknown): number | null {
   return n !== null && Number.isInteger(n) && n > 0 ? n : null;
 }
 
+/** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
+ *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
+function blockedFold(items: readonly BlockedItem[], command: string): string {
+  if (items.length === 0) return '';
+  return renderDisclosure({
+    title: '还缺什么，以及补齐后照抄的那条',
+    contentHtml: blockedBar({ items, command }),
+  });
+}
+
+/** 分类路径换成面包屑形状（`/` 不再进正文，见 D-/-01）。 */
+function crumbOf(category: string): string {
+  return category.split('/').join(' › ');
+}
+
 /** 候选：带 `#借出` 且还带 `#未还` 的记录（老侧 `pool` 同一条件）——已还的不列。 */
 function unpaidLendsOf(recent: CollectInput['recent'], amount: number | null): CandidateItem[] {
   const out: CandidateItem[] = [];
@@ -70,10 +85,10 @@ function unpaidLendsOf(recent: CollectInput['recent'], amount: number | null): C
     const same = amount !== null && Math.abs(Math.abs(r.amount) - amount) <= 0.005;
     out.push({
       id: r.id,
-      label: r.category + ' · ' + r.note.replace(/#/g, ''),
+      label: r.category + '　' + r.note.replace(/#/g, ''),
       amount: money2(r.amount),
       time: r.time,
-      why: (same ? '还带 ' + TAG_UNPAID + ' 且金额与收回额一致' : '还带 ' + TAG_UNPAID + ' · 金额与收回额不符'),
+      why: same ? '还带 ' + TAG_UNPAID + '，金额与收回额一致' : '还带 ' + TAG_UNPAID + '，金额与收回额不符',
     });
     if (out.length >= CAND_MAX) break;
   }
@@ -93,6 +108,8 @@ function collectPage(input: CollectInput): string {
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
     + (extra.length === 0 ? '' : '；本型另需：' + extra.map((i) => i.label).join('、'));
+  /** 副标题只报计数（进度形状）；缺项明细在进度行、标签组与阻断表明细三处形状里。 */
+  const subtitle = wakeWordOf(KIND) + '还差 ' + blocked.length + ' 项';
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: sceneKeyOf(key),
     data: { ok: false, message },
@@ -108,75 +125,89 @@ function collectPage(input: CollectInput): string {
   const diff = amount === null || original === null ? null : Math.round((amount - Math.abs(original.amount)) * 100) / 100;
   const filled: Record<string, unknown> = { ...params };
   for (const b of blocked) filled[b.name] = '<' + b.label + '>';
-  const prompt = (blocked.length === 0 ? '照下面这个口径记这一笔收回，并把原记录的标签换过来。' : '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.name + '：' + i.why + '）').join('、') + '。')
-    + '\n请加载「饼干记账」技能，帮我记一笔收回（唤醒词：记收回）：\n'
-    + '借出记录：' + (source === null ? '<借出记录编号>' : '#' + source + '（' + (original === null ? '近期记录里没读到' : original.category + ' ' + money2(original.amount) + ' ' + original.time) + '）') + '\n'
-    + '收回金额：' + money2(amount) + '（收入正数）\n'
-    + '分类：「' + CATEGORY + '」；账户：' + (facts.account || '<钱回到哪张卡>') + '；账本：' + (facts.ledger || '<账本>') + '\n'
-    + '请照这个口径办两件：① 记一笔收入，分类「' + CATEGORY + '」，备注写「' + TAG_COLLECT + ' 原记录:#' + (source ?? '<借出记录编号>') + '」；'
-    + '② 原记录 #' + (source ?? '<借出记录编号>') + ' 的备注把 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动。';
+  // 缺项逐项一行（一行一件事），不带库列名、不用顿号连写。
+  const lackLines = blocked.map((i) => i.label + '：' + (i.why === '没给' ? '没给' : i.why)).join('\n');
+  const prompt = (blocked.length === 0
+    ? '照下面这个口径记这一笔收回，并把原记录的标签换过来。'
+    : '这一笔还差 ' + blocked.length + ' 项，逐项补齐：\n' + lackLines)
+    + '\n请加载「饼干记账」技能，帮我记一笔收回。\n唤醒词：记收回\n'
+    + '借出记录：' + (source === null
+      ? '<借出记录编号>'
+      : '#' + source + '　' + (original === null
+        ? '近期记录里没读到'
+        : original.category + '　' + money2(original.amount) + '　' + original.time)) + '\n'
+    + '收回金额：' + money2(amount) + '　收入记正数\n'
+    + '分类：' + CATEGORY + '\n'
+    + '账户：' + (facts.account || '<钱回到哪张卡>') + '\n'
+    + '账本：' + (facts.ledger || '<账本>') + '\n'
+    + '请办两件：\n'
+    + '① 记一笔收入，分类「' + CATEGORY + '」，备注写「' + TAG_COLLECT + ' 原记录 #' + (source ?? '<借出记录编号>') + '」\n'
+    + '② 原记录 #' + (source ?? '<借出记录编号>') + ' 的备注把 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动';
   const content = [
     typeBadge({
       kind: KIND,
       status: blocked.length > 0 ? 'danger' : 'warn',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
+      next: '',
     }),
-    summaryRow(facts),
-    renderCaliberLine('收回照收入口径写正数、落「' + CATEGORY + '」；原记录只动标签：' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动。'),
+    renderKpiGrid(summaryCards(facts)),
+    renderChips({
+      items: [
+        { text: '收回记正数' },
+        { text: '分类 ' + crumbOf(CATEGORY) },
+        { text: '原记录 ' + TAG_UNPAID + ' 换 ' + TAG_PAID },
+        { text: '金额不动' },
+      ],
+    }),
     renderKpiGrid([
-      { label: '收回金额', value: money2(amount), detail: '收入记正数，归在「' + CATEGORY + '」下面' },
+      { label: '收回金额', value: money2(amount), detail: '收入记正数，归在「' + crumbOf(CATEGORY) + '」下面' },
       {
         label: '借出原记录',
         value: original === null ? '未认准' : money2(original.amount),
         detail: original === null
-          ? (source === null ? '还没认准是哪一笔（候选里点一行）' : '#' + source + '（近期记录里没读到借出记录）')
-          : '#' + source + ' · ' + original.category + ' · ' + original.time,
+          ? (source === null ? '还没认准是哪一笔，候选里点一行' : '#' + source + '近期记录里没读到借出记录')
+          : '#' + source + '　' + original.category + '　' + original.time,
       },
       {
         label: '未收净差',
         value: diff === null ? '未算' : money2(diff),
-        detail: diff === null ? '认准借出记录后这里出净差' : (diff === 0 ? '全额收回，未留尾' : '收回额与借出额不等，尾差照记'),
+        detail: diff === null
+          ? '认准借出记录后这里出净差'
+          : (diff === 0 ? '全额收回，未留尾' : '收回额与借出额不等，尾差照记、不阻断'),
       },
     ]),
-    renderToast({
-      msg: '超支警示：收回额与借出额比一比',
-      detail: '收多了（利息／补偿）或收少了（抹零）都照记、不阻断，可继续；尾差在「未收净差」那一格里。',
-      badge: { text: '超支警示', type: 'warn' },
+    renderFeedbackBlock({
+      toast: {
+        msg: '按标签销账，不按金额猜',
+        detail: '候选只列带 ' + TAG_LEND + ' 且还带 ' + TAG_UNPAID + ' 的记录，一条都没有就直接反问。',
+        icon: 'info',
+      },
+      staticNotice: true,
     }),
-    renderToast({
-      msg: '打标说明：' + TAG_UNPAID + ' 靠标签流转，不按金额猜',
-      lines: [
-        '原记录备注把 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '（金额不动，不删原记录）；这一笔补 ' + TAG_COLLECT + '。',
-        '候选只列带 ' + TAG_LEND + ' 且还带 ' + TAG_UNPAID + ' 的记录；一条都没有就反问用户。',
-        '「查欠款」看的是还带 ' + TAG_UNPAID + ' 的那几笔，「看借贷」看这一笔与 ' + TAG_PAID + '。',
-      ],
-      badge: { text: '打标说明', type: 'warn' },
-    }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
     flowSteps({
       steps: [
         {
           title: '借出记录',
-          note: '销哪一笔的 ' + TAG_UNPAID + '：从候选里挑一行；候选只列带 ' + TAG_LEND + ' 且还带 ' + TAG_UNPAID + ' 的记录。',
+          note: '候选只列带 ' + TAG_LEND + ' 且还带 ' + TAG_UNPAID + ' 的记录。',
           done: source !== null,
-          state: source === null ? '还没认准是哪一笔' : '已认准 #' + source,
+          state: source === null ? '未认准' : '已认准 #' + source,
           html: candidatePick({
             name: SOURCE_NAME,
             label: SOURCE_LABEL,
             candidates,
             selectedId: source,
-            hint: '这一格要的是还没还回来的那笔借出；拿不准就让助手先查「查欠款」。',
+            hint: '要的是还没还回来的那笔借出，未认准不代选。',
           }),
         },
         {
-          title: '收回（这一步）',
-          note: '收回额写正数（收入口径）；分类固定「' + CATEGORY + '」。',
+          title: '收回这一步',
+          note: '收回额写正数。分类固定为「' + crumbOf(CATEGORY) + '」。',
           done: amount !== null && textOf(params.category) !== '',
           fields: slots.map((s) => ({
             name: s.name,
-            label: s.name === 'amount' ? '收回金额' : s.name === 'category' ? '分类（固定）' : s.label,
-            hint: s.hint,
+            label: s.name === 'amount' ? '收回金额' : s.name === 'category' ? '分类' : s.label,
+            hint: s.name === 'category' ? '固定为 ' + crumbOf(CATEGORY) : s.hint,
             ...(s.required ? { required: true } : {}),
             value: s.name === 'category' && textOf(params.category) === '' ? CATEGORY : textOf(params[s.name]),
           })),
@@ -184,14 +215,14 @@ function collectPage(input: CollectInput): string {
         {
           title: '结果',
           note: source === null
-            ? '认准原记录之后：把它的 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '（金额不动），这一笔补 ' + TAG_COLLECT + '。'
-            : '原记录 #' + source + '：' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '（金额不动）；这一笔补 ' + TAG_COLLECT + '。',
+            ? '认准原记录后：把它的 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动。这一笔补 ' + TAG_COLLECT + '。'
+            : '原记录 #' + source + ' 的 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动。这一笔补 ' + TAG_COLLECT + '。',
           done: blocked.length === 0,
-          state: blocked.length === 0 ? '可以复制' : '还差 ' + blocked.length + ' 项',
+          state: blocked.length === 0 ? '可复制' : '还差 ' + blocked.length + ' 项',
         },
       ],
     }),
-    blockedBar({ items: blocked, command: commandLine(key, filled) }),
+    blockedFold(blocked, commandLine(key, filled)),
     copyArea({
       prompt: { text: prompt, label: blocked.length === 0 ? '照这个口径写两笔，点这颗复制' : '补齐后照这句跟助手说一遍' },
       data: { envelope },
@@ -208,7 +239,7 @@ function collectPage(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·记收回', title: '记一笔收回', subtitle: message,
+    docTitle: DOC_TITLE + '·记收回', title: '记一笔收回', subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }
@@ -226,7 +257,7 @@ function receiptPage(input: ReceiptInput): string {
       kind: KIND,
       status: 'ok',
       state: '写库成功',
-      next: nextStepOf({ page: 'receipt', exit: true }),
+      next: '这一笔已记下，撤销见下方按钮。',
     }),
     renderKpiGrid([
       ...summaryCards(input.facts),
@@ -238,16 +269,13 @@ function receiptPage(input: ReceiptInput): string {
         detail: '原记录只动标签，金额不动',
       },
     ]),
-    renderToast({
-      msg: '标签流转：这一笔打 ' + TAG_COLLECT + '，原记录换成 ' + TAG_PAID,
-      lines: [
-        '标签是备注里的记号，给助手用来找借贷关系；这一笔记在「' + CATEGORY + '」，金额 ' + money2(input.facts.amount) + '（收入记正数）',
-        source === null
-          ? '原记录这次没说清是哪一笔，消标下次补上（这一笔仍已落库）'
-          : '原记录 #' + source + '：备注把 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动',
-        '「查欠款」按 ' + TAG_UNPAID + ' 数，这一笔写完之后它就少一笔；撤销走本页退出口。',
-      ],
-      badge: { text: '标签流转', type: 'ok' },
+    renderFeedbackBlock({
+      toast: {
+        msg: '这一笔打 ' + TAG_COLLECT + (source === null ? '，原记录这次没给到' : '，原记录 #' + source + ' 换成 ' + TAG_PAID),
+        detail: '「查欠款」按 ' + TAG_UNPAID + ' 数，写完少一笔。撤销见下方按钮。',
+        icon: 'ok',
+      },
+      staticNotice: true,
     }),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],

@@ -14,22 +14,22 @@
  *   少了或反了都不出可复制的写库指令（页面侧闸门；写库那一半的闸门在 `src/record/write.ts`，公共件，本窗不许改）。
  * 期限那一格只在借贷两型出（施工图第四节点名要修老侧 `#deadlineWrap` 的无条件建点）。
  */
-import { renderToast } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderChips, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
 import type { BlockedItem } from '../shared/blockedSlots.js';
 import { candidateRows } from '../shared/candidatePick.js';
 import type { CandidateItem } from '../shared/candidatePick.js';
+import { collectMissingTags } from '../shared/collectFrame.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { flowSteps } from '../shared/flowSteps.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import { receiptStatusCard, reconcileDisclosure } from '../shared/receiptParts.js';
-import { money2, summaryCards, summaryRow } from '../shared/summaryRow.js';
+import { money2, summaryCards } from '../shared/summaryRow.js';
 import type { SummaryFacts } from '../shared/summaryRow.js';
-import { nextStepOf, typeBadge, wakeWordOf } from '../shared/typeBadge.js';
+import { typeBadge, wakeWordOf } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
@@ -60,6 +60,21 @@ function amountOf(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
+ *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
+function blockedFold(items: readonly BlockedItem[], command: string): string {
+  if (items.length === 0) return '';
+  return renderDisclosure({
+    title: '还缺什么，以及补齐后照抄的那条',
+    contentHtml: blockedBar({ items, command }),
+  });
+}
+
+/** 分类路径换成面包屑形状（`/` 不再进正文，见 D-/-01）。 */
+function crumbOf(category: string): string {
+  return category.split('/').join(' › ');
+}
+
 /** 候选：备注里同时带 `#借入` 与 `#未还` 的记录（老侧 `scripts/render_write.py` 同一条件）。 */
 function unpaidBorrowsOf(recent: CollectInput['recent']): CandidateItem[] {
   const out: CandidateItem[] = [];
@@ -67,10 +82,10 @@ function unpaidBorrowsOf(recent: CollectInput['recent']): CandidateItem[] {
     if (!r.note.includes(TAG_BORROW) || !r.note.includes(TAG_UNPAID)) continue;
     out.push({
       id: r.id,
-      label: r.category + ' · ' + r.note.replace(/#/g, ''),
+      label: r.category + '　' + r.note.replace(/#/g, ''),
       amount: money2(r.amount),
       time: r.time,
-      why: '还带 ' + TAG_UNPAID + '：这一笔还没还回去（已还过的不列在这里）',
+      why: '还带 ' + TAG_UNPAID + '，这一笔还没还回去（已还过的不列在这里）',
     });
     if (out.length >= CAND_MAX) break;
   }
@@ -92,25 +107,27 @@ function stepsOf(input: {
     steps: [
       {
         title: '向谁借',
-        note: '对象与期限是借贷这一族的必需格：对象没给不许写库；期限只在这一族里有。',
+        note: '对象必填，期限可后补。',
         done: who !== '',
-        state: who === '' ? '还没给对象' : '向 ' + who + ' 借' + (due === '' ? '' : '，期限 ' + due),
+        state: who === '' ? '未给对象' : '向 ' + who + ' 借' + (due === '' ? '' : '，期限 ' + due),
         fields: [
-          { name: WHO_NAME, label: WHO_LABEL, hint: '向谁借（实名的写称呼也行，如 小李）', required: true, ...(who === '' ? {} : { value: who }) },
-          { name: DUE_NAME, label: DUE_LABEL, hint: '说好什么时候还（如 2026-12-31 或 下月底）', ...(due === '' ? {} : { value: due }) },
+          { name: WHO_NAME, label: WHO_LABEL, hint: '实名的写称呼也行，如 小李', required: true, ...(who === '' ? {} : { value: who }) },
+          { name: DUE_NAME, label: DUE_LABEL, hint: '说好什么时候还，如 2026-12-31 或 下月底', ...(due === '' ? {} : { value: due }) },
         ],
         html: unpaid.length === 0
           ? ''
           : candidateRows(unpaid),
       },
       {
-        title: '借入（这一步）',
-        note: '金额写正数（钱进来）、分类「' + CATEGORY + '」、账本「' + LEDGER + '」；账户是钱进哪张卡。',
+        title: '借入这一步',
+        note: '借入记正数。账本固定「' + LEDGER + '」。',
         done: amount !== null && textOf(params.category) !== '',
         fields: input.slots.map((s) => ({
           name: s.name,
-          label: s.name === 'amount' ? '借入金额（正数）' : s.name === 'category' ? '分类（固定）' : s.label,
-          hint: s.name === 'ledger' ? '账本固定「' + LEDGER + '」，跨账本要在备注里说明' : s.hint,
+          label: s.name === 'amount' ? '借入金额' : s.name === 'category' ? '分类' : s.label,
+          hint: s.name === 'amount' ? '正数＝钱进账户'
+            : s.name === 'category' ? '固定为 ' + crumbOf(CATEGORY)
+              : s.name === 'ledger' ? '账本固定「' + LEDGER + '」，跨账本要在备注里说明' : s.hint,
           ...(s.required ? { required: true } : {}),
           value: s.name === 'category' && textOf(params.category) === ''
             ? CATEGORY
@@ -119,23 +136,21 @@ function stepsOf(input: {
       },
       {
         title: '结果',
-        note: '备注写「' + TAG_BORROW + ' 向' + (who === '' ? '（对象）' : who) + '借 ' + TAG_UNPAID + '」；'
-          + '还回去的时候走「记偿还」，把 ' + TAG_UNPAID + ' 换成 #已还（金额不动）。',
+        note: '备注写「' + TAG_BORROW + ' 向' + (who === '' ? '对象' : who) + '借 ' + TAG_UNPAID + '」。'
+          + '还回去的时候走「记偿还」，把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。',
         done: blockedCount === 0,
-        state: blockedCount === 0 ? '可以复制' : '还差 ' + blockedCount + ' 项',
+        state: blockedCount === 0 ? '可复制' : '还差 ' + blockedCount + ' 项',
       },
     ],
   });
 }
 
 /** 可选项那一行（第 3 轮返工 C2）：账户／账本／时间三格原先各占一张同形卡，现并成一行口径。
- *  三格的标签、值与说明句都取自 `summaryCards`（摘要行那一处定义），本件不另抄一遍字面量。
+ *  三格的标签与值都取自 `summaryCards`（摘要行那一处定义），本件不另抄一遍字面量；
+ *  「不填就记到…」那三句缺省说明不进这一行（D-（）-02：括号里的第二件事不跟主句挤一处）。
  *  位置：必需项（借入金额／分类／向谁借）之后——先看要补什么，再看不补也成的几项。 */
-function optionalLineOf(cards: readonly KpiCardInput[]): string {
-  return cards
-    .slice(2)
-    .map((c) => c.label + ' ' + c.value + (c.detail === undefined ? '' : '（' + c.detail + '）'))
-    .join('，') + '。';
+function optionalChipsOf(cards: readonly KpiCardInput[]): string {
+  return renderChips({ items: cards.slice(2).map((c) => ({ text: c.label + ' ' + c.value })) });
 }
 
 /** 采集页正文：摘要行 ＋ 借贷口径三格卡 ＋ 流程三段式 ＋ 阻断条 ＋ 两段复制区。 */
@@ -153,6 +168,8 @@ function collectPage(input: CollectInput): string {
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
     + (extra.length === 0 ? '' : '；本型另需：' + extra.map((i) => i.label).join('、'));
+  /** 副标题只报计数（进度形状）；缺项明细在进度行、标签组与阻断表明细三处形状里。 */
+  const subtitle = wakeWordOf(KIND) + '还差 ' + blocked.length + ' 项';
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: sceneKeyOf(key),
     data: { ok: false, message },
@@ -167,45 +184,50 @@ function collectPage(input: CollectInput): string {
   const unpaid = unpaidBorrowsOf(input.recent);
   const filled: Record<string, unknown> = { ...params };
   for (const b of blocked) filled[b.name] = '<' + b.label + '>';
-  const prompt = (blocked.length === 0 ? '照下面这个口径记这一笔借入，并留意同一人名下还没还回去的那几笔。' : '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.name + '：' + i.why + '）').join('、') + '。')
-    + '\n请加载「饼干记账」技能，帮我记一笔借入（唤醒词：记借入）：\n'
-    + '向谁借：' + (who || '<向谁借>') + '；期限：' + (due || '<期限>') + '\n'
-    + '借入金额：' + money2(amount) + '（收入取正数）\n'
-    + '分类：「' + CATEGORY + '」；账本：「' + LEDGER + '」；账户：' + (facts.account || '<钱进哪张卡>') + '\n'
-    + '备注请写：「' + TAG_BORROW + ' 向' + (who || '（对象）') + '借 ' + TAG_UNPAID + '」，'
-    + '还回去的时候走「记偿还」把 ' + TAG_UNPAID + ' 换成 #已还。';
+  // 缺项逐项一行（一行一件事），不带库列名、不用顿号连写。
+  const lackLines = blocked.map((i) => i.label + '：' + (i.why === '没给' ? '没给' : i.why)).join('\n');
+  const prompt = (blocked.length === 0
+    ? '照下面这个口径记这一笔借入，并留意同一人名下还没还回去的那几笔。'
+    : '这一笔还差 ' + blocked.length + ' 项，逐项补齐：\n' + lackLines)
+    + '\n请加载「饼干记账」技能，帮我记一笔借入。\n唤醒词：记借入\n'
+    + '向谁借：' + (who || '<向谁借>') + '\n'
+    + '期限：' + (due || '<期限>') + '\n'
+    + '借入金额：' + money2(amount) + '　正数＝钱进来\n'
+    + '分类：' + CATEGORY + '\n'
+    + '账户：' + (facts.account || '<钱进哪张卡>') + '\n'
+    + '账本：' + LEDGER + '\n'
+    + '备注请写：「' + TAG_BORROW + ' 向' + (who || '对象') + '借 ' + TAG_UNPAID + '」\n'
+    + '还回去的时候走「记偿还」，把 ' + TAG_UNPAID + ' 换成 #已还';
   const cards = summaryCards(facts); // 0 金额／1 分类／2 账户／3 账本／4 时间（顺序见 `summaryCards`）
   const content = [
     typeBadge({
       kind: KIND,
       status: blocked.length > 0 ? 'danger' : 'warn',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
-      next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf(KIND) }),
+      next: '',
     }),
     // 第 3 轮返工（上级裁定第 2 条，本页**只动这一刀**）：首屏原先 8 张同形卡（摘要行 5 张 ＋ 本型 3 张，
     //  其中「金额」与「借入金额」还是同一件事）把行动点挤到中段。改法＝必需项置顶（借入金额／分类／向谁借
-    //  三张先出）＋ 可选项折叠（账户／账本／时间并成一行口径，不再各占一张卡）。页骨、块序一处不动。
+    //  三张先出）＋ 可选项折叠（账户／账本／时间并成一行徽章，不再各占一张卡）。页骨、块序一处不动。
     renderKpiGrid([
-      { label: '借入金额', value: money2(amount), detail: '收入记正数，归在「' + CATEGORY + '」下面' },
+      { label: '借入金额', value: money2(amount), detail: '收入记正数，归在「' + crumbOf(CATEGORY) + '」下面' },
       cards[1], // 分类（必需项，取值与说明仍走摘要行那一处定义）
-      { label: '向谁借', value: who === '' ? '未给' : who, detail: due === '' ? '期限还没给（可后补）' : '期限 ' + due },
+      { label: '向谁借', value: who === '' ? '未给' : who, detail: due === '' ? '期限还没给，可后补' : '期限 ' + due },
       { label: '同人未还', value: unpaid.length + ' 笔', detail: unpaid.length === 0 ? '这个人名下没有还没还回去的借入' : '只列带 ' + TAG_UNPAID + ' 的借入记录' },
     ]),
-    summaryRow(facts, { cards: false }),
-    renderCaliberLine(optionalLineOf(cards)),
+    optionalChipsOf(cards),
     renderCaliberLine('标签流转：这一笔写「' + TAG_BORROW + ' #向（对象）借 ' + TAG_UNPAID + '」，还回去时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。'),
-    renderToast({
-      msg: '标签是备注里的记号，给助手用来找借贷关系：' + TAG_BORROW + '、' + TAG_UNPAID,
-      lines: [
-        '这一笔打 ' + TAG_BORROW + '与 ' + TAG_UNPAID + '，对象写进备注（#向' + (who || '（对象）') + '借）。',
-        '偿还的时候走「记偿还」：原记录 ' + TAG_UNPAID + ' 换成 #已还，金额不动。',
-        '「查欠款」与「看借贷」按这两个标签数，不按金额猜。',
-      ],
-      badge: { text: '借贷流转', type: 'warn' },
+    renderFeedbackBlock({
+      toast: {
+        msg: unpaid.length === 0 ? '同一个人名下没有还没还回去的借入' : '同一个人名下还有 ' + unpaid.length + ' 笔没还回去',
+        detail: '「查欠款」与「看借贷」按 ' + TAG_BORROW + ' 与 ' + TAG_UNPAID + ' 数，不按金额猜。',
+        icon: 'info',
+      },
+      staticNotice: true,
     }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
     stepsOf({ params, slots, who, due, amount, unpaid, blockedCount: blocked.length }),
-    blockedBar({ items: blocked, command: commandLine(key, filled) }),
+    blockedFold(blocked, commandLine(key, filled)),
     copyArea({
       prompt: { text: prompt, label: blocked.length === 0 ? '照这个口径记一笔，点这颗复制' : '补齐后照这句跟助手说一遍' },
       data: { envelope },
@@ -222,7 +244,7 @@ function collectPage(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·记借入', title: '记一笔借入', subtitle: message,
+    docTitle: DOC_TITLE + '·记借入', title: '记一笔借入', subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }
@@ -240,22 +262,22 @@ function receiptPage(input: ReceiptInput): string {
       kind: KIND,
       status: 'ok',
       state: '写库成功',
-      next: nextStepOf({ page: 'receipt', exit: true }),
+      next: '这一笔已记下，撤销见下方按钮。',
     }),
     renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
       { label: '记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
-      { label: '标签', value: TAG_BORROW + '、' + TAG_UNPAID, detail: who === '' ? '标签是备注里的记号，给助手用来找这笔借贷；对象没随这次写库给到' : '标签是备注里的记号，给助手用来找这笔借贷；备注里的对象：#向' + who + '借' },
+      { label: '标签', value: TAG_BORROW + '　' + TAG_UNPAID, detail: '标签见备注，助手按它找这笔借贷' },
     ]),
-    renderToast({
-      msg: '标签流转：这一笔打 ' + TAG_BORROW + '与 ' + TAG_UNPAID,
-      lines: [
-        '这一笔记在「' + CATEGORY + '」，账本「' + LEDGER + '」，金额 ' + money2(input.facts.amount) + '（收入记正数）',
-        who === '' ? '对象：这次没给到（这一笔仍已落库，补对象走「改记录」）' : '对象写进备注：#向' + who + '借',
-        '还回去的时候走「记偿还」把 ' + TAG_UNPAID + ' 换成 #已还。撤销走本页退出口。',
-      ],
-      badge: { text: '借贷流转', type: 'ok' },
+    renderFeedbackBlock({
+      toast: {
+        msg: '这一笔打 ' + TAG_BORROW + ' 与 ' + TAG_UNPAID
+          + (who === '' ? '，对象这次没给到' : '，对象 #向' + who + '借'),
+        detail: '还回去走「记偿还」把 ' + TAG_UNPAID + ' 换成 #已还。撤销见下方按钮。',
+        icon: 'ok',
+      },
+      staticNotice: true,
     }),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
