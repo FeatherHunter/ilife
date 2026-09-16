@@ -19,7 +19,7 @@
  *     - 「有数 46 天 · 数列合计 32123 卡」→ `factStrip()`（若干「标签 ＋ 值」，各自成形）；
  *     - 「消耗＝卡；时长＝分钟；距离＝km」→ `capsStrip()`（并列小胶囊）；
  *     - 口径行里「A；B；C」→ 每条一个 `renderCaliberLine`（公共层既有件，本件不重造）。
- *   **允许保留的分隔符**（不是正文串）：日期区间里的 `~`；复制载荷与命令原文（机器面）。
+ *   **允许保留的分隔符**（不是正文串）：日期区间里的 `→`（`~` 不上屏，区间拼法收口到 `rangeText()`）；复制载荷与命令原文（机器面）。
  *   **删符号不等于删事实**——每条事实都要有去处（换形状，不是丢）。
  *
  * ── 显示层取整（本件第 5 个对外名字）──
@@ -236,6 +236,13 @@ export function fieldsBlock(labels: readonly string[], filled?: number): string 
 export function detailTableWanted(op: string, n: number, isBatch: boolean, isCopy: boolean): boolean {
   if (n === 0) return false;
   return op === 'delete' ? n >= 2 : (isBatch || isCopy);
+}
+
+/** 区间一行（来源卡窗口值）：起止同日只写一日，不展成 `A → A`；起止不同写 `A → B`。
+ *  人话区间一律用 `→`——`~` 不上屏（#578：区间写法收口到这一处，调用方不再手拼）。 */
+export function rangeText(start: string, end: string): string {
+  if (end === '' || start === end) return start;
+  return start + ' → ' + end;
 }
 
 /** 回执副标题收成**一句结论**（#543 视觉复评 P1-A 第 2 条）：写命令摘要里第一个顶层 `：`

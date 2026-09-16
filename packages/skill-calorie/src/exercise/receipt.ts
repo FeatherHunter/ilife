@@ -8,6 +8,12 @@
  * 明细标题不再带条数、写入字段名由 `，` 串改并列小胶囊；共用件只读不碰。
  * 页头写人话：`<title>` 与眉标里不出现命令键、票号与工序词。
  *
+ * #578 P1 文案债重做（副标题去记录值／汇总数出口带口径／占位符去 `—`／区间收 `→`／明细单题）：
+ * 副标题只留短结论（记录号／日期／条数由操作头／计数卡各说一遍）；当日累计条数带
+ * `（当天）` 与计数卡区分；明细备注空即空白格（改前旧空值印 `（空）`）；来源窗口走
+ * `sportUi.rangeText`（同日不展区间）；明细表不再复述折叠标题；删多条的删除方式落
+ * 计数卡（副标题不再背括号）；口径行增行条对 `影响行数`／计数卡 `条` 同数两名。
+ *
  * 对外 2 件（铁律五）：① `buildExerciseReceiptDoc`——三条写命令共用的整页装配；
  * ② `ExerciseReceiptDetail`——随行明细载荷（单条行／批量行／改前改后对／复制计数／撤销指令）。
  * 取数不自算口径：当日累计走 `EX_ALIVE`；软删除措辞由写命令的摘要单源带出（页上只说一次）。
@@ -30,7 +36,7 @@ import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { fieldLabel } from '../shared/fieldLabel.js';
 import { EXERCISE_DOMAIN } from './fieldLabels.js';
 import type { ExerciseRow } from './exerciseStore.js';
-import { detailTableWanted, exerciseUiCss, factStrip, fieldsBlock, fmtNum, inlineShaped, receiptSource, shapedConclusion } from './sportUi.js';
+import { detailTableWanted, exerciseUiCss, factStrip, fieldsBlock, fmtNum, inlineShaped, rangeText, receiptSource } from './sportUi.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -60,22 +66,17 @@ function label(col: string): string {
   return fieldLabel(EXERCISE_DOMAIN, col);
 }
 
-/** 摘要里的字段键也换掉＋行文整形：`·`／`；` 改 `，`，≥6 位小数收到 1 位（只改页上这句，信封原样不动）。 */
-function labelSummary(summary: string): string {
-  const shaped = inlineShaped(summary.replace(/[A-Za-z][A-Za-z0-9_]*/g, (token) => label(token)));
-  return shaped.replace(/\d+\.\d{6,}/g, (m) => fmtNum(Number(m)));
-}
-
-/** 给人看的格值：没有值写短横 `—`（#543 视觉复评 P1-B 第 3 条：空值在表里与快照里同一种待遇）。 */
+/** 给人看的格值：没有值写 `（空）`（#578：`—` 是无信息量空值行，不再上屏；
+ *  明细表备注格另走 `detailCell` 的空白格，改前旧空值才印 `（空）`）。 */
 function cellText(v: unknown, unit?: string): string {
   const s = v === null || v === undefined ? '' : String(v).trim();
-  return s === '' ? '—' : (unit === undefined || unit === '' ? s : s + ' ' + unit);
+  return s === '' ? '（空）' : (unit === undefined || unit === '' ? s : s + ' ' + unit);
 }
 
-/** 数值格走显示层取整（`sportUi.fmtNum`）：库内浮点原值不上屏；空仍写「未设置」。 */
+/** 数值格走显示层取整（`sportUi.fmtNum`）：库内浮点原值不上屏；空印 `（空）`（#578 同上）。 */
 function numText(v: unknown, digits: number, unit: string): string {
   const t = v === null || v === undefined ? '' : String(v).trim();
-  return t === '' ? '未设置' : fmtNum(Number(t), digits) + ' ' + unit;
+  return t === '' ? '（空）' : fmtNum(Number(t), digits) + ' ' + unit;
 }
 
 function rowText(row: ExerciseRow, col: string): string {
@@ -102,6 +103,18 @@ function hasValue(row: ExerciseRow, col: string): boolean {
   return true;
 }
 
+/** 明细表里的格值：空即空白格（#578：备注没有就不占位，不印 `—`；
+ *  改前旧空值才印 `（空）`，那一支走 `cellText`）。 */
+function detailCell(v: unknown): string {
+  const s = v === null || v === undefined ? '' : String(v).trim();
+  return s;
+}
+
+/** 明细表里的数值格：空即空白格（同上；`未设置` 不再上屏）。 */
+function detailNum(v: unknown, digits: number, unit: string): string {
+  const t = v === null || v === undefined ? '' : String(v).trim();
+  return t === '' ? '' : fmtNum(Number(t), digits) + ' ' + unit;
+}
 /** 页内一张卡（`id` 即页内导航的锚点，导航项按同一份清单生成）；卡外壳＝锚点 id ＋ 区块 HTML。 */
 interface Card { readonly id: string; readonly label: string; readonly html: string }
 
@@ -179,16 +192,17 @@ function detailCard(rows: readonly ExerciseRow[]): Card | null {
   return {
     id: 'sec-detail',
     label: '逐条明细',
+    // #578 明细卡层级：折叠标题是这一卡唯一的题，表不再复述同一标题
+    // （`caption` 省略，列头即表的题）；空备注即空白格，不占位。
     html: renderDisclosure({ title: '逐条明细', contentHtml: renderDataTable({
       columns: DETAIL_COLUMNS.map((label) => ({ key: label, label })),
       rows: rows.map((r) => ({
-        日期: cellText(r['date']),
-        类型: cellText(r['exercise_type']),
-        时长: rowText(r, 'duration_minutes'),
-        消耗: rowText(r, 'calories_burned'),
-        备注: cellText(r['note']),
+        日期: detailCell(r['date']),
+        类型: detailCell(r['exercise_type']),
+        时长: detailNum(r['duration_minutes'], 0, '分钟'),
+        消耗: detailNum(r['calories_burned'], 1, '卡'),
+        备注: detailCell(r['note']),
       })),
-      caption: '逐条明细',
       }), open: true }),
   };
 }
@@ -227,24 +241,28 @@ function dayCard(db: DatabaseSync, date: string): Card | null {
     label: '当日累计',
     html: '<p class="sui-fields-k">当日累计（写后现值）</p>' + factStrip([
       { k: '记录日期', v: date },
-      { k: '运动条数', v: String(r.n) + ' 条' },
+      // #578：条数带 `（当天）`——计数卡那处 `N 条` 说的是本次，
+      // 同屏两处同数不再裸奔（机读 dup 口径逐字比，见 t578 判据②）。
+      { k: '运动条数', v: String(r.n) + ' 条（当天）' },
       { k: '消耗累计', v: fmtNum(r.kcal) + ' 卡' },
       { k: '时长累计', v: fmtNum(r.mins, 0) + ' 分钟' },
     ]),
   };
 }
 
-/** 来源卡（#543 形状化）：题「数据来源」＋ 键值行「来源／窗口／记录数」。不再产 `·` 串
- *  （`sourceLine.ts` 是跨场景共用位，共用层口径统一归 #470）；来源名取人话，机器值仍在复制日志里。
+/** 来源卡（#543 形状化）：题「数据来源」＋ 键值行「来源／窗口」。
+ *  #578：`记录数` 一格整格撤——它恒等于计数卡那个数（`Math.max(rows, pairs)` 两边同源），
+ *  同一批条数在两卡各说一遍正是要收的重复陈述；条数只由计数卡说，窗口只由这一卡说。
+ *  来源名取人话，机器值仍在复制日志里。空窗（无日期）整卡不出。
  *  补题的理由（视觉复评 P1-A 第 2 条）：这一卡原来无题，紧跟当日累计卡，`数据来源 运动记录`
  *  读起来像当日累计的一个字段。 */
-function sourceCard(receipt: CrudReceipt, dates: readonly string[], count: number, fallback: string): Card | null {
+function sourceCard(receipt: CrudReceipt, dates: readonly string[], fallback: string): Card | null {
   const window = dates.length > 0 ? [...dates].sort() : (fallback === '' ? [] : [fallback]);
   if (window.length === 0) return null;
   const s = receiptSource(receipt.meta.source);
   const facts = [
-    { k: '窗口', v: (window[0] ?? '') + ' → ' + (window[window.length - 1] ?? '') },
-    { k: '记录数', v: '共 ' + count + ' 条' },
+    // #578：窗口走区间单源 `rangeText`——同日只写一日（不再展成 `A → A`），跨日写 `A → B`（`~` 不上屏）。
+    { k: '窗口', v: rangeText(window[0] ?? '', window[window.length - 1] ?? '') },
   ];
   return {
     id: 'sec-source',
@@ -258,13 +276,11 @@ function sourceCard(receipt: CrudReceipt, dates: readonly string[], count: numbe
  *  `total_changes` 库口径词改人话；首条保留 `口径：` 前缀（回归判据读它）。 */
 function caliberLines(hasDay: boolean): string[] {
   const lines = ['口径：影响行数＝本次写库实际改动的行数'];
+  // #578：读数卡 `影响行数 N 行` 与计数卡 `N 条` 同数两名——两处题都被既有关票判据
+  // 钉死（`>影响行数</div>`／`新增条数` 等），数与题都不动，只增一句口径把同一件事说清。
+  lines.push('影响行数的「行」与计数卡的「条」是同一件事：本次写库实际改动的行数');
   if (hasDay) {
     lines.push('当日累计只算未删除的行，软删除的行不计');
-    // r8 的 P1-2：同屏「运动条数 N 条（当天现存）」与来源卡「记录数 共 1 条（本次写入的条数）」
-    // 两个数、同一天，没有一句交代，读者会以为页面自相矛盾。两个数的口径都被判据钉着
-    // （`exercise-summary-goal-fusion-452` 钉「记录数＝共 N 条」，`#543` 判据钉当日累计那一行），
-    // 故这里**不改数、只补一句口径**把两者的区别说清——口径行的存在意义就是干这个的。
-    lines.push('数据来源的「记录数」是本次写入的条数，不是当天存量的「运动条数」');
   }
   lines.push('时长按分钟记，消耗按卡记');
   return lines;
@@ -296,32 +312,35 @@ function statusWordOf(receipt: CrudReceipt): string {
   return receipt.noChange ? '无改动' : '成功';
 }
 
+/** 删类后果句的内文（单源原文去括号＋行文整形）：单条落变更卡首行，多条落计数卡，
+ *  副标题不再背它（#578：副标题只留短结论）。判据钉死的连片指标（`，`）原样保留。 */
+function consequenceInner(receipt: CrudReceipt): string {
+  const found = String(receipt.summary).match(/（[^（）]*）/g) ?? [];
+  const last = found.length === 0 ? '' : String(found[found.length - 1]);
+  // 行文整形走形状单源 `sportUi.inlineShaped`（`；`／`·` → 行文逗号）：本件另写一套标点会让同一句走两套符号。
+  return inlineShaped(last.replace(/^（/, '').replace(/）$/, ''));
+}
+
 /** 删类后果句落成**一条键值行**（r6 的 P2-2）：值＝单源原文逐字。
  *  **为什么不拆成三条**（r7 P1-3 的建议）：判据④ 钉的是 `行保留，已从查询与统计中排除，暂无恢复入口`
  *  这串**连片后缀**必须逐字出现在同一条值里（本席实测：把它拆进两枚值 ⇒ `删页缺单源派生的软删除措辞`
  *  当场红）。故这里保留一条键值行：形状由「键＋值」给，长句不再裸横铺在副标题上；
- *  值内那个 `，` 是**判据钉死的连片指标**，不是本席拿标点顶设计。删多条（删某日／批量删）仍留在副标题。 */
+ *  值内那个 `，` 是**判据钉死的连片指标**，不是本席拿标点顶设计。删多条（删某日／批量删）落计数卡。 */
 function consequenceFacts(receipt: CrudReceipt): string {
-  const found = String(receipt.summary).match(/（[^（）]*）/g) ?? [];
-  const last = found.length === 0 ? '' : String(found[found.length - 1]);
-  // 行文整形与 `labelSummary` 同一套（`；`／`·` → 行文逗号）：本件另写会让同一句在页头与这里走两套标点。
-  const inner = inlineShaped(last.replace(/^（/, '').replace(/）$/, ''));
+  const inner = consequenceInner(receipt);
   return inner === '' ? '' : factStrip([{ k: '删除方式', v: inner }]);
 }
 
-/** 页头副标题怎么取（r6 的 P1-3／P2-2 ＋ r7 的 P1-1／P2-7）：默认仍是「一句结论」
- *  （`shapedConclusion`：顶层 `：` 之后那截记录值由下方计数卡／明细卡逐条说）。
- *  两处例外：**删单条**／**改单条**——括号里那个限定词（`（时长）`）正是下方「改前 → 改后对照」卡
- *  唯一的内容（r7 P2-7），删类的括号段则已下放成键值行（r6 P2-2）；副标题只留「谁」。
- *  动作词一律不在这里说（徽章已说，r7 P1-1）。**改单条要按 `pairs` 判行数**：改类的
- *  `detail.rows` 是空的（数据在 `pairs` 里），按 `rows.length` 判会恒不命中。 */
-function headlineOf(receipt: CrudReceipt, op: ReceiptOp, single: boolean): string {
-  const shaped = labelSummary(receipt.summary);
-  if (single && (op === 'delete' || op === 'update')) {
-    const paren = shaped.indexOf('（');
-    return paren === -1 ? shaped : shaped.slice(0, paren).trim();
-  }
-  return shapedConclusion(shaped);
+/** 页头副标题（#578：只留短结论，不复述记录值）——记录号／日期／条数／区间由操作头／
+ *  计数卡／来源卡各说一遍，副标题再说一遍就是复述；括号后果句由删除方式卡说。
+ *  无改动那一态副标题即 `无改动`（与状态卡同词：这一页的结论本来就是这一句）。 */
+function subtitleFor(receipt: CrudReceipt, op: ReceiptOp, isBatch: boolean, isCopy: boolean): string {
+  if (receipt.noChange) return '无改动';
+  if (isCopy) return '复制完成';
+  if (isBatch) return '批量记运动';
+  if (op === 'update') return '已更新运动';
+  if (op === 'delete') return '已删除运动';
+  return '已记运动';
 }
 
 /** 三条写命令共用的写后回执整页：四态头 ＋ 计数／变更／明细／当日累计 ＋ 来源 ＋ 对账 ＋ 复制区。
@@ -351,14 +370,20 @@ export function buildExerciseReceiptDoc(
   ])].filter((d) => d !== '');
 
   // ① 计数卡：四种写的数都在这一张。#543：新增单条原先误印删除计数，改新增条数。
+  // #578：目标日期没有就不摆这一行（不印 `未设置`）；删多条的删除方式落这一张
+  // （副标题不再背括号，单条仍在变更卡首行——一页只一位说话人）。
+  const delWay = op === 'delete' && rows.length > 1 ? consequenceInner(receipt) : '';
   const countRows: (readonly [string, string])[] = isBatch
     ? [['写入', rows.length + ' 条'], ['跳过', '0 条'], ['失败', '0 条']]
     : isCopy
-      ? [['复制', rows.length + ' 条'], ['跳过', String(detail.skipped ?? 0) + ' 条'], ['目标日期', target === '' ? '未设置' : target]]
+      ? (target === ''
+        ? [['复制', rows.length + ' 条'], ['跳过', String(detail.skipped ?? 0) + ' 条']]
+        : [['复制', rows.length + ' 条'], ['跳过', String(detail.skipped ?? 0) + ' 条'], ['目标日期', target]])
       : op === 'update' ? [['命中条数', pairs.length + ' 条']]
-        : op === 'delete' ? [['删除条数', rows.length + ' 条']]
+        : op === 'delete'
+          ? (delWay === '' ? [['删除条数', rows.length + ' 条']] : [['删除条数', rows.length + ' 条'], ['删除方式', delWay]])
           : [['新增条数', rows.length + ' 条']];
-  // 题只说「这张表是哪一档计数」：三件事由表行自陈，软删除那句只在副标题说一次（不再复述）。
+  // 题只说「这张表是哪一档计数」：三件事由表行自陈，软删除那句只在删除卡说一次（不再复述）。
   const countCaption = isBatch ? '批量计数'
     : isCopy ? '复制结果'
       : op === 'update' ? '命中记录' : op === 'delete' ? '删除结果' : '新增结果';
@@ -367,11 +392,11 @@ export function buildExerciseReceiptDoc(
   const change = changeCard(op, rows, pairs, receipt);
   const detailRows = detailCard(detailTableWanted(op, rows.length, isBatch, isCopy) ? rows : []);
   const day = dayCard(db, detail.targetDate ?? (dates.length === 1 ? (dates[0] ?? '') : ''));
-  const source = sourceCard(receipt, dates, Math.max(rows.length, pairs.length), target);
+  const source = sourceCard(receipt, dates, target);
 
   // 状态卡判空：没有写入、没有改动、也不是「无改动」这一态时，整块 KPI 不出现（不留空壳）。
-  // 注：#543 视觉复评 P1-A 第 4 条剩下的那处（KPI「影响行数」与计数卡「X 条数」同数两名）本票不动——
-  // 两张卡的题都被本族三件既有关票判据钉死，动它要同时改那三件的断言＝降覆盖面（见证据件 §六第 6 条）。
+  // 注：KPI「影响行数」与计数卡「X 条数」同数两名——两张卡的题都被本族三件既有关票判据钉死，
+  // 数与题都不动（见 `caliberLines` 增的那句口径：只解释，不改数）。
   //
   // #543 视觉复评 r6 的 P1-3／P1-4 两处（都以这一段为落点）：
   //  · P1-4「状态」卡主值三页逐字都是「已改动」，而记页是**新增**、删页是**删除**——主值与徽章打架。
@@ -428,9 +453,9 @@ export function buildExerciseReceiptDoc(
     // 唤醒词而不是场景名：批量补记／复制昨日／删某日的场景名与「记运动」同源，用场景名会让同一张 h1 落到八页上。
     title: wake + '回执',
     eyebrow: '运动写后回执',
-    // 副标题只留一句结论（`：` 之后那截记录值下方明细说过了）；括号里的后果句整段保留。
-    // 副标题只留一句结论（`：` 之后那截记录值下方明细说过了）；删单条／改单条再收成「谁」那一句。
-    subtitle: headlineOf(receipt, op, Math.max(rows.length, pairs.length) === 1),
+    // #578：副标题只留短结论（见 `subtitleFor`）——记录号／日期／条数／区间与括号后果句
+    // 由操作头／计数卡／来源卡／删除方式卡各说一遍，副标题不再复述。
+    subtitle: subtitleFor(receipt, op, isBatch, isCopy),
     content,
     // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），
     // 打印规则（隐藏页内导航与区块复制区、具名页 `@page printable`）见 `base-render/src/blocks.ts`。
