@@ -17,7 +17,7 @@
  * 查询缺参就是缺参，阻断即错误回执，页面只在真取到数（哪怕是零行）时出。
  */
 import {
-  DB_FILENAME, BillFetchError, fetchAll, getById, listByTag, listToday, searchKeyword, tagMatch,
+  DB_FILENAME, BillFetchError, fetchAll, listByTag, listToday, searchKeyword, tagMatch,
 } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
@@ -26,6 +26,7 @@ import { calcKpi, toBillItem } from '../render/views.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { detailEnvelope, listEnvelope, queryListDoc } from './list.js';
+import { queryDetailDoc } from './detail.js';
 import type { QueryDetailData, QueryListData, QueryTableRow } from './list.js';
 
 /** 本次数据来源（复制日志第 3 段）：库文件名逐字取本包常量，共用件不取本包文件名。 */
@@ -284,25 +285,26 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
   });
 }
 
-/** `bill.record.detail`：查账单详情（`id` 必给）。查无此号由取数层抛（exit 4）。
- *  本票先借用列表页那种版式（单条也出一行）；详情页的专属版式是 #415 那张票的事。
- *  载荷那一份照搬迁前的形状（`item` 走 `toBillItem`），页面那一份是文本化的表格行。 */
+/** `bill.record.detail`：查账单详情（`id` 必给，#415 专属版式）。
+ *  取数含软删行（`fetchAll includeDeleted` 经取数公开接口，不另写比对）：真无此号才抛
+ *  `BILL_RECORD_NOT_FOUND`（exit 4），已撤销走整页＋已撤销徽，不冒充正常。
+ *  载荷 `item` 照搬迁前形状（`toBillItem` 8 字段）原样保留，另加 `created_at／deleted_at`
+ *  两列（加法式，旧 8 字段一字不动）；页面字段表 10 列全交代，见 `./detail.js`。 */
 export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.record.detail';
-  const row = getById(db, needId(params));
-  const data: QueryDetailData = { item: { ...toBillItem(row) } };
+  const id = needId(params);
+  const row = fetchAll(db, { includeDeleted: true }).find((r) => r.id === id);
+  if (!row) throw new BillFetchError('BILL_RECORD_NOT_FOUND', '无此账单：' + id);
+  const data: QueryDetailData = { item: { ...toBillItem(row), created_at: row.created_at, deleted_at: row.deleted_at } };
+  const deleted = row.deleted_at !== null && row.deleted_at !== '';
   return {
     data,
-    html: queryListDoc({
+    html: queryDetailDoc({
       key,
       params,
-      shape: 'detail',
       wakeWord: '查账单详情',
-      window: '记录编号 ' + row.id + ' · ' + row.time,
-      rows: [tableRow(row)],
-      kpi: calcKpi([row]),
-      emptyText: '这一条不在库里',
-      emptyHint: '先「查最近」，从列表里挑一条再查详情。',
+      window: '记录编号 ' + row.id + ' · ' + row.time + (deleted ? ' · 已撤销' : ''),
+      row,
       envelope: detailEnvelope(key, data),
       source: SOURCE_QUERY,
       actionAt: actionStamp(),
