@@ -692,6 +692,18 @@ export function buildDistributionDoc(v: DistributionView): string {
 
 /* ── 运动复盘（exercise_recap.html 对照：#454 融合版式：一句话结论＋类型分布＋高频徽章＋每日消耗） ── */
 
+/** 折线横轴日期的上屏口径（#615）：与汇总族（`sportDocs.ts` 的 `buildExerciseDoc`）**同一口径**——
+ *  窗口**跨年**时印全年 `YYYY-MM-DD`，同年仍只印 `MM-DD`。
+ *
+ *  为什么必须补：跨年窗的左端 `09-08` 排在右端 `09-07` 前头，两条标签同形（都只是月日），读者按字面
+ *  读成「起点比终点晚一天」——#577 的 N2 判据当时只枚举了汇总页，趋势族（`buildTrendDoc` 的每日折线）
+ *  与复盘族（`buildRecapDoc` 的每日消耗趋势）漏在判据面外（与 N1 漏目标两页 23／24 同型）。
+ *  同年窗**不许**补年份：本族一半的图是「本周」「本月」短窗，补年份只会把轴挤满，是另一处走样。
+ *  两族同住本件，故这一处改、两族受益（#268 终审席 K4 那条日期标尺逐字复用图上标签，跟着一起变）。 */
+function axisDateLabel(crossYear: boolean): (date: string) => string {
+  return (date: string): string => (crossYear ? date : date.slice(5));
+}
+
 /** 复盘页的来源句（读者话；库表名不上屏）。 */
 const RECAP_SOURCE = '运动记录（本窗未删除的行）';
 
@@ -746,8 +758,10 @@ export function buildRecapDoc(v: RecapView): string {
   );
   if (hasRows) {
     // 类型分布条：条色只走 `categoryColor()` 的 hex；占比按次数（与结论句同一口径）。
+    // #615：折线轴标签走窗口口径（跨年印全年），不再对日期一律 `slice(5)`。
+    const axisDate = axisDateLabel(v.start.slice(0, 4) !== v.end.slice(0, 4));
     const dailyItems = v.daily.map((d) => ({
-      label: d.date.slice(5),
+      label: axisDate(d.date),
       value: d.burned === null ? null : Number(fmtNum(d.burned, 0)),
     }));
     cards.push({
@@ -859,12 +873,14 @@ export function buildTrendDoc(v: TrendView): string {
     // 每日消耗折线：消耗实线（共享刻度）＋时长虚线（`ownScale` 独立归一，不另出第二套刻度）；
     // 没有记录的日子当场是 `null`（不是 0），点自然断开——「空缺断点不断 0」由数据结构保证。
     // #544：图表入参过显示层取整（空值仍 `null`，不断 0 口径不动）。
+    // #615：两条序列的轴标签走窗口口径（跨年印全年），否则跨年窗左端 `09-08` 与右端 `09-07` 同形。
+    const axisDate = axisDateLabel(v.start.slice(0, 4) !== v.end.slice(0, 4));
     const burnItems = v.days.map((d) => ({
-      label: d.date.slice(5),
+      label: axisDate(d.date),
       value: d.burned === null ? null : Number(fmtNum(d.burned, 0)),
     }));
     const minItems = v.days.map((d) => ({
-      label: d.date.slice(5),
+      label: axisDate(d.date),
       value: d.minutes === null ? null : Number(fmtNum(d.minutes, 0)),
     }));
     cards.push({

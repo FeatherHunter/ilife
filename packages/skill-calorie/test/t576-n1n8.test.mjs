@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { buildExerciseDoc, buildExerciseGoalDoc } from '../dist/render/sportDocs.js';
-import { buildCardioDoc, buildDistributionDoc, buildStrengthDoc, buildTrendDoc } from '../dist/render/sportPortDocs.js';
+import { buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildStrengthDoc, buildTrendDoc } from '../dist/render/sportPortDocs.js';
 import { buildRecordsDoc } from '../dist/exercise/records.js';
 import { openDb } from '../dist/index.js';
 
@@ -112,6 +112,22 @@ function trendView(over = {}) {
   };
 }
 
+/** 运动复盘页（39 看运动复盘）的入参：`buildRecapDoc` 直接吃这个视图。 */
+function recapView(over = {}) {
+  return {
+    start: '2026-09-09', end: '2026-09-15', sessions: 2, totalMinutes: 60, totalBurned: 620,
+    activeDays: 2, days: 7,
+    byCategory: [{ category: '有氧', sessions: 2, burned: 620 }],
+    top5: [{ type: '慢跑', sessions: 2, burned: 620 }],
+    daily: [
+      { date: '2026-09-14', burned: 320 },
+      { date: '2026-09-15', burned: 300 },
+    ],
+    summary: '本窗共运动 2 天、2 次、累计消耗 620 卡',
+    ...over,
+  };
+}
+
 test('t576-N1 读数卡与分布块有可见h2（核心数字／类型消耗分布／分类占比／指标）', () => {
   const sum = buildExerciseDoc(summaryView());
   assert.ok(cardOf(sum, 'sec-kpi').includes('<h2') && cardOf(sum, 'sec-kpi').includes('核心数字'), '汇总读数卡缺h2核心数字');
@@ -151,6 +167,54 @@ test('t576-N2 跨年轴印全年（09-16对09-15不再同形）', () => {
   const labels2 = [...same.matchAll(/charts-xlabel[^>]*>([^<]+)</g)].map((m) => m[1]).filter((t) => /\d\d-\d\d/.test(t));
   assert.ok(labels2.length >= 2, '同年轴标签丢失');
   console.log('T576-N2 cross=' + labels.join('|'));
+});
+
+/** 折线／柱图横轴刻度标签（`charts-xlabel` 里带数字的那几条）。 */
+function axisLabelsOf(html) {
+  return [...html.matchAll(/charts-xlabel[^>]*>([^<]+)</g)].map((m) => m[1]).filter((t) => /\d/.test(t));
+}
+
+test('t576-N2b 跨年轴印全年：趋势族(sec-line)与复盘族(sec-daily)同口径', () => {
+  /* #615 缺陷（#577 的 N2 判据枚举只盖汇总页，与 N1 漏 23／24 同型）：跨年窗下趋势族与复盘族
+   * 仍只印 `MM-DD`，左端 `09-08` 排在右端 `09-07` 前头也读不出来，读者读成「起点比终点晚一天」。
+   * 本判据把两族钉在同一口径：跨年窗轴标签必须含全年（`YYYY-MM-DD`），同年窗仍印 `MM-DD`。 */
+  const crossTrend = buildTrendDoc(trendView({
+    start: '2025-09-16', end: '2026-09-15',
+    days: [
+      { date: '2025-09-16', minutes: 90, burned: 800, sessions: 1 },
+      { date: '2026-09-15', minutes: 100, burned: 900, sessions: 1 },
+    ],
+    weekly: [{ weekStart: '2025-09-15', sessions: 1, burned: 800 }],
+    activeDays: 2, totalMinutes: 190, totalBurned: 1700,
+    peak: { date: '2026-09-15', burned: 900 },
+  }));
+  const trendCross = axisLabelsOf(cardOf(crossTrend, 'sec-line'));
+
+  const crossRecap = buildRecapDoc(recapView({
+    start: '2025-09-16', end: '2026-09-15', days: 365,
+    daily: [
+      { date: '2025-09-16', burned: 800 },
+      { date: '2026-09-15', burned: 900 },
+    ],
+  }));
+  const recapCross = axisLabelsOf(cardOf(crossRecap, 'sec-daily'));
+  /* 两族一次判完、两族的实读都进同一条消息：红读数必须同时点名两族（修好一族不算数）。 */
+  const want = ['2025-09-16', '2026-09-15'];
+  assert.ok(want.every((t) => trendCross.includes(t) && recapCross.includes(t)),
+    '跨年轴仍只印MM-DD — 趋势族(sec-line)=' + JSON.stringify(trendCross)
+      + ' 复盘族(sec-daily)=' + JSON.stringify(recapCross));
+
+  const trendSame = axisLabelsOf(cardOf(buildTrendDoc(trendView()), 'sec-line'));
+  assert.ok(trendSame.includes('09-14') && trendSame.includes('09-15'),
+    '趋势族同年轴标签丢失：' + JSON.stringify(trendSame));
+  const recapSame = axisLabelsOf(cardOf(buildRecapDoc(recapView()), 'sec-daily'));
+  assert.ok(recapSame.some((t) => /^\d\d-\d\d$/.test(t)),
+    '复盘族同年轴标签丢失：' + JSON.stringify(recapSame));
+  /* 同年两族不得擅自补年份：补了就是另一处走样（口径是「跨年才补」）。 */
+  assert.ok(!trendSame.some((t) => /^\d{4}-\d\d-\d\d$/.test(t)), '趋势族同年轴多印了年份：' + JSON.stringify(trendSame));
+  assert.ok(!recapSame.some((t) => /^\d{4}-\d\d-\d\d$/.test(t)), '复盘族同年轴多印了年份：' + JSON.stringify(recapSame));
+  console.log('T576-N2b trendCross=' + trendCross.join('|') + ' recapCross=' + recapCross.join('|')
+    + ' trendSame=' + trendSame.join('|') + ' recapSame=' + recapSame.join('|'));
 });
 
 test('t576-N3 页19类稀疏窗折线有数据圆点（查空已补）', () => {
