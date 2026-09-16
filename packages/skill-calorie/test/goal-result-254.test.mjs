@@ -2,13 +2,16 @@
  *
  * 判据（票面「产物＝完整文档」的统一口径 ＋ 验收命令那一条）：
  *   ① 4 件逐件真跑（临时种子库 ＋ 真 CLI）：`calorie.view.goal` 的 7 天／30 天两窗、
- *      `calorie.view.goal-vs-actual` 30 天窗、`calorie.view.goal-expiring` 无参；
+ *      `calorie.view.goal-vs-actual` 30 天窗、`calorie.view.goal-expiring`（#590 起传显式 `today`
+ *      把读数钉住，理由见 `CASES` 上方）；
  *   ② 每件 exit 0、`data.output` 是绝对路径且该文件真的在盘上；
  *   ③ 每件产物以 `<!doctype html>` 起、含 `<meta charset=`、含 `<style`、含 `ilife-page`
  *      （改前 4 件这三条全为假：字节 1779／1779／1357／1203，产物以 `<section class="ilife-page" …>` 起头）；
- *   ④ 每件的 `data.metrics` 与**改前**逐字段相同（取数口径一个字不许变）——「改前」值是实施席
- *      在改代码之前用真 CLI 跑出来的读数（`.scratch/t254/before.js`）。这条是**反向锁**：
- *      正文换版式换出花来也不许动一个数，动了就红。
+ *   ④ 每件的 `data.metrics` 与本件 `CASES` 的冻结表逐字段相同。**#590 重冻**：这张表由「#254 当时
+ *      用真 CLI 跑出来的读数（`.scratch/t254/before.js`）」改成「**当刻口径**的读数」——票面判「甲」：
+ *      漂移是共享取数（档案 TDEE）已提交变更所致，不是回归，出处逐条写在 `CASES` 上方；#254 原表
+ *      （10841／1549／20276／2.63／676）随成因提交作废，不再是对的期望值。判据形态不变，仍是
+ *      **反向锁**：正文换版式换出花来也不许动一个数，动了就红。
  *   ⑤ 可见文本里不出现内部词（命令键／snake_case／库表名那一类，走仓内 `visible-text-probe.mjs` 同一判据）。
  *
  * **反向对照（复核席点名要的那一条）**：只有正向断言时，实现缺失也可能白过。本件另加两发——
@@ -39,14 +42,30 @@ const DB_FILENAME = 'calorie_data.db';
 const FRAGMENT_HEAD = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:goal" '
   + 'style="background:#16181d;color:#e6edf3"><div class="ilife-block-kpiCard-grid">热量目标 1800 卡</div></section>';
 
-/** 4 件实跑产物：`metrics` 是**改代码之前**用真 CLI 跑出来的读数，逐字段冻结。 */
+/** 4 件实跑产物：`metrics` 是**当刻口径**下用真 CLI 跑出来的读数（临时库 ＋ `seedFull` ＋
+ *  `CALORIE_TODAY=SEED_TODAY`），逐字段冻结。**#590 重冻的逐条出处**：
+ *
+ *  ① `goal-7d`／`goal-30d` 的 `weeklyDeficit`／`avgDeficit`／`predictedLossKg` —— 出处＝**成因提交
+ *     `7831393`**（#518 W2，逐字：「#463 档案 TDEE：`series.ts::loadProfileTdee` 改读最近一次称重，
+ *     无记录回退 70.0（逐字不变）」）。该件改前恒用 `70.0` 常量，本仓种子库的最近一次称重是
+ *     `2026-09-08 70.6kg`（`docs/research/t81-seed.mjs`）⇒ 消耗类数值随真实体重上抬：10841→10886、
+ *     1549→1555、20276→20357、676→679、2.63→2.64。**回退口径没变**：临时库里清空 `weight_log`
+ *     后读数逐字回到 #254 原表（10841／1549／20276／676／2.63），即「档案无体重记录时与改前相同」
+ *     这句自述成立（读数见 `docs/skills/skill-calorie/t589-重冻-证据.md` §二）。
+ *  ② `expiring` 的 `daysLeft` —— 出处＝**日期推导**：`goal_deadline='2026-12-31'`（种子库
+ *     `daily_goal`，`docs/research/t81-seed.mjs:52`）减「今天」，而本命令的「今天」**只认入参
+ *     `today`**（`buildGoalExpiringView`，`src/goal/goalExtraPlate.ts:42`：`today ?? new Date()`；
+ *     它**不读** `CALORIE_TODAY`）⇒ 无参时读数随机器钟天天漂（#254 冻的 107 就是 2026-09-15 的机器钟）。
+ *     故本件**必须传显式 `today`** 把它钉死：`2026-12-31 − 2026-09-07 = 115` 天，同族先例逐字照
+ *     `goal-result-290.test.mjs:45`（那张单子也把无参随机器钟那一支单列成断言，见该件 `:204`；
+ *     `goal-weight-deadline-548.test.mjs:124` 同口径）。 */
 const CASES = [
   {
     name: 'goal-7d', key: 'calorie.view.goal', params: { window: '7d' },
     metaLeft: '看目标完成度 · 目标管理',
     metrics: {
       calorie_goal: 1800, protein_goal: 150, carbs_goal: 200, fat_goal: 50, water_goal: 2000,
-      completionPct: 0, weeklyDeficit: 10841, predictedLossKg: 1.41, avgDeficit: 1549,
+      completionPct: 0, weeklyDeficit: 10886, predictedLossKg: 1.41, avgDeficit: 1555,
       avgIntake: 477, trendAvg: 477, completedCount: 0, incompleteCount: 9,
     },
   },
@@ -55,7 +74,7 @@ const CASES = [
     metaLeft: '看目标完成度 · 目标管理',
     metrics: {
       calorie_goal: 1800, protein_goal: 150, carbs_goal: 200, fat_goal: 50, water_goal: 2000,
-      completionPct: 0, weeklyDeficit: 20276, predictedLossKg: 2.63, avgDeficit: 676,
+      completionPct: 0, weeklyDeficit: 20357, predictedLossKg: 2.64, avgDeficit: 679,
       avgIntake: 158, trendAvg: 158, completedCount: 0, incompleteCount: 9,
     },
   },
@@ -65,9 +84,9 @@ const CASES = [
     metrics: { completedCount: 0, incompleteCount: 9, completionPct: 0, trendAvg: 158, calorieGoal: 1800 },
   },
   {
-    name: 'expiring', key: 'calorie.view.goal-expiring', params: {},
+    name: 'expiring', key: 'calorie.view.goal-expiring', params: { today: SEED_TODAY },
     metaLeft: '看即将到期的目标 · 目标管理',
-    metrics: { daysLeft: 107, withinDays: 14, expiring: 0, weightGoal: 68, calorieGoal: 1800 },
+    metrics: { daysLeft: 115, withinDays: 14, expiring: 0, weightGoal: 68, calorieGoal: 1800 },
   },
 ];
 
