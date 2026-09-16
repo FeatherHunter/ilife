@@ -9,16 +9,18 @@ import type { DatabaseSync } from 'node:sqlite';
 import { buildGifPlannerView, buildPhotoLogWizardView } from '../render/wizardPort.js';
 import { buildGifPlannerDoc, buildPhotoLogWizardDoc } from '../render/wizardPortDocs.js';
 import { nums } from '../shared/params.js';
+import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { photoDir } from './dir.js';
 
-/** `calorie.view.photo-log-wizard` · 身材照向导：待存文件数与标签是否已给。 */
+/** `calorie.view.photo-log-wizard` · 身材照向导：待存文件数与标签是否已给。
+ *  #654：复制日志第 4 段的命令原文由命令层共用件 `commandLine()` 派生（含本次 `--params`），页面件不自己拼。 */
 export function viewPhotoLogWizard(params: Record<string, unknown>): ViewOut {
   const v = buildPhotoLogWizardView(params);
   const metrics = nums({
     fileCount: v.srcPaths.length, hasTag: v.tag ? 1 : 0,
   });
-  return { data: { metrics }, html: buildPhotoLogWizardDoc(v) };
+  return { data: { metrics }, html: buildPhotoLogWizardDoc(v, commandLine('calorie.view.photo-log-wizard', params)) };
 }
 
 /** `calorie.view.gif-planner` · GIF规划器：候选张数／已选／缺失／裁剪项。 */
@@ -29,5 +31,5 @@ export function viewGifPlanner(params: Record<string, unknown>, db: DatabaseSync
     photoCount: v.photos.length, selectedCount: v.selectedIds.length,
     missingCount: v.missingIds.length, cropCount: v.photos.filter((p) => p.crop).length,
   });
-  return { data: { metrics }, html: buildGifPlannerDoc(v) };
+  return { data: { metrics }, html: buildGifPlannerDoc(v, commandLine('calorie.view.gif-planner', params)) };
 }

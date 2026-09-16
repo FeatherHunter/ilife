@@ -11,6 +11,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { getPhotoRow, listPhotos } from './photos.js';
 import { toCard, type PhotoCard } from './photo.js';
 import { dayField } from '../shared/params.js';
+import { commandLine } from '../shared/writeParts.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { buildPhotoPickerDoc } from './pickerDoc.js';
 import { photoDir } from './dir.js';
@@ -151,6 +152,7 @@ export function viewPhotoPicker(params: Record<string, unknown>, db: DatabaseSyn
   }));
   return {
     data: { items, total: fullCount, selectedId: id },
-    html: buildPhotoPickerDoc(view, dir ?? null),
+    // #654：复制日志第 4 段的命令原文由命令层共用件 `commandLine()` 派生（含本次 `--params`），页面件不自己拼。
+    html: buildPhotoPickerDoc(view, dir ?? null, commandLine('calorie.view.photo-picker', params)),
   };
 }

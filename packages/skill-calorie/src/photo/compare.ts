@@ -11,6 +11,7 @@ import { buildPhotoCompareDoc } from './compareDoc.js';
 import { buildPhotoGifPage } from './gifDoc.js';
 import { getPhotoRow, type PhotoRow } from './photos.js';
 import { dayField, fail, needStr, optNum, optStr } from '../shared/params.js';
+import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { photoDir } from './dir.js';
 
@@ -27,7 +28,8 @@ export function viewPhotoCompare(params: Record<string, unknown>, db: DatabaseSy
   const dir = photoDir(params);
   const c = buildCompareData(db, id1 as number, id2 as number, dir ?? null);
   const items = [c.photo1, c.photo2].map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: p.tagList }));
-  return { data: { items, total: 2 }, html: buildPhotoCompareDoc(c, dir ?? null) };
+  // #654：复制日志第 4 段的命令原文由命令层共用件 `commandLine()` 派生（含本次 `--params`），页面件不自己拼。
+  return { data: { items, total: 2 }, html: buildPhotoCompareDoc(c, dir ?? null, commandLine('calorie.photo.compare', params)) };
 }
 
 /** `calorie.photo.gif` · 生成身材照GIF：规划（`buildGifTask`，入参口径不变）→ 合成落盘 → 整页文档。
@@ -49,6 +51,6 @@ export function viewPhotoGif(params: Record<string, unknown>, db: DatabaseSync):
     .map((id) => getPhotoRow(db, id))
     .filter((r): r is PhotoRow => r !== null)
     .map((r) => toCard(r, dir));
-  const page = buildPhotoGifPage({ task: gif, photosDir: dir, cards });
+  const page = buildPhotoGifPage({ task: gif, photosDir: dir, cards, command: commandLine('calorie.photo.gif', params) });
   return { data: { ...page.copyData }, html: page.html };
 }

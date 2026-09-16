@@ -24,6 +24,7 @@ import { HELP_HTML_DIR_NAME, SHEET_FILE_STEM } from './helpPaths.js';
 import { buildPhotoHelpDoc } from './helpDoc.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { fail, optStr } from '../shared/params.js';
+import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 
 /** #91 · 全量速查台的信封载荷：**10 分组索引**（不把 1 MB 产物塞进 envelope）。
@@ -71,9 +72,10 @@ export function viewPhotoHelpCenter(params: Record<string, unknown>): ViewOut {
     // #245：给这支**自己的主体**（与主 HELP 分名）⇒ 它这才吃复用窗口，且不与主 HELP／业务命令互相顶掉。
     // #488：装配改走整页件 `photo/helpDoc.ts`（改前是 `render/html.ts:215` 的老片段——
     // 无 doctype／无样式段／裸 `<pre>`，三档横向溢出 +844／+1636／+964）。信封与落点**一字不动**。
+    // #654：复制日志第 4 段的命令原文由命令层共用件 `commandLine()` 派生（含本次 `--params`），页面件不自己拼。
     return {
       data: { items, total: items.length },
-      html: buildPhotoHelpDoc(hits, q),
+      html: buildPhotoHelpDoc(hits, commandLine('calorie.help.center', params), q),
       target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: PHOTO_HELP_FILE_STEM },
     };
   }

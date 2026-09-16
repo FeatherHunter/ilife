@@ -273,7 +273,11 @@ test('移植项 3：页超单页上限即改本地路径提示（GIF 仍落盘�
     task: 'generate_gif', tag: '正面', dateFrom: '2026-09-01', dateTo: '2026-09-30',
     photoCount: n, photoIds: cards.map((c) => c.id), firstDate: '2026-09-01', lastDate: '2026-09-30', note: 'x',
   };
-  const page = buildPhotoGifPage({ task, photosDir, cards });
+  // #654：渲染件多了必填的 `command`（复制日志第 4 段的命令原文）——直调本件时照命令层同形给一条。
+  const page = buildPhotoGifPage({
+    task, photosDir, cards,
+    command: "calorie-cmd-read calorie.photo.gif --params '" + JSON.stringify({ tag: '正面', days: 365 }) + "'",
+  });
   assert.equal(page.frames, n, '帧数须＝入片张数');
   assert.equal(page.embedded, false, '超单页上限须不内嵌');
   assert.ok(page.reason !== null && /单页超上限/.test(page.reason), '须给不内嵌原因：' + String(page.reason));

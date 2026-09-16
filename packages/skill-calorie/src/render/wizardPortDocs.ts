@@ -15,17 +15,24 @@
  * 值先以只读一行上屏、点开哪一行才出哪一行的输入（形状与样式住姊妹件 `photo/wizardUi.ts`），
  * 三档层级与块间分割由本件与本族页内件定；两页一并补上 `pageUi: true`（#525 的页面级移动端配方，
  * 本族另外七页都在用、只有本件两页漏了——`renderFactStrip` 的形状样式与宽屏 1280 版式都挂在它下面）。
+ *
+ * **#654（读页复制日志 · 本席位）**：两页底部 ghost 行补回**真**「复制日志」——本件两页以前只有
+ * `dataCopyArea`（只出数据那颗），日志那颗靠公共层 #336 兜底补的禁用占位（#654 已撤那条兜底路径）。
+ * 现在两页自己给：`copyArea({ data, log })` 双位齐全，第 4 段＝本次命令原文（命令层 `photo/wizard.ts`
+ * 传 `commandLine()`）。预检页那颗 prompt（「给 AI 的指令」）与两页可见文本一字未改。
  */
 import { renderEmptyBlock, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
+import type { SerializableEnvelope } from 'base-paint';
 import type {
   GifPlannerView,
   PhotoLogWizardView,
 } from './wizardPort.js';
 import { PHOTO_LOG_TAGS, transitionText } from './wizardPort.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { dataCopyArea, promptCopyArea } from '../shared/copyArea.js';
+import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
+import { nowStamp } from './receipt.js';
 import { chipRow, photoPickRows, photoUiCss } from '../photo/photoUi.js';
 import { editRows, noticeBar, wizardUiCss } from '../photo/wizardUi.js';
 
@@ -38,6 +45,25 @@ const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里 配置向导';
 
 /* ── 身体两页已迁出（#353）：记围度／记体脂文档原样迁入 src/body/wizardDocs.ts，本件只留身材照／GIF。 */
+
+/* ── #654 · 复制区（两页共用口径） ── */
+
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
+ *  两页分开命名：预检页**不读库**（只核对待登记的值），规划器读的是照片记录。 */
+const LOG_SOURCE_LOG = 'calorie.photo.add 入参（纯核对，不读库）';
+const LOG_SOURCE_PLANNER = 'body_photos（本窗候选照片）';
+
+/** 复制区（#654）：三格式数据 ＋ 复制日志六段（口径与 `photo/galleryDoc.ts` 的 `copyAreaOf` 同形：
+ *  `log` 位收 `LogTextInput`＝`{ envelope, copyLog }`，给错形状那颗按钮就落成点不动的死按钮）。 */
+function copyAreaOf(envelope: SerializableEnvelope, command: string, source: string): string {
+  return copyArea({
+    data: { envelope },
+    log: {
+      envelope,
+      copyLog: copyLog({ command, source, actionAt: nowStamp(), version: DOC_VERSION }),
+    },
+  });
+}
 
 /** #474（审查整改 1）· 下拉候选项：**`value` 是机器真值**（`loop` 的 `0/1/3/5`、`transition` 的
  *  `cut/fade/dissolve`，与 `wizardPort.ts` 的校验口径同源），`label` 才是给人看的中文词。
@@ -75,7 +101,12 @@ function paramRow(field: ParamFieldInput): string {
 
 /* ── 3. 记身材照 wizard（纯配置） ── */
 
-export function buildPhotoLogWizardDoc(v: PhotoLogWizardView): string {
+/** #654：`command`＝本次命令原文（命令层 `photo/wizard.ts` 的 `commandLine()` 派生），进复制日志第 4 段。 */
+export function buildPhotoLogWizardDoc(v: PhotoLogWizardView, command: string): string {
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.photo-log-wizard',
+    data: { metrics: metricsOf({ fileCount: v.srcPaths.length, hasTag: v.tag ? 1 : 0 }) },
+  };
   const content = [
     // 页内样式进 parts 第一项（`assembleDocPage` 没有页内 CSS 入口，同 `photoUi.ts` 的处置）。
     // #655：本件两页的确认清单**样式**另住姊妹件 `photo/wizardUi.ts` —— 那份样式只服务这两页，
@@ -119,12 +150,7 @@ export function buildPhotoLogWizardDoc(v: PhotoLogWizardView): string {
     // #474：段前一句引导——复制区里是给 AI 的英文命令，先说清「整段复制粘过去就行」。
     '<p>下面这段是给 AI 的指令：整段复制粘过去就行，英文命令不用看懂。</p>',
     promptCopyArea(v.prompt, '给 AI 的指令（复制这一段）'),
-    dataCopyArea('复制数据', {
-      envelope: {
-        version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.photo-log-wizard',
-        data: { metrics: metricsOf({ fileCount: v.srcPaths.length, hasTag: v.tag ? 1 : 0 }) },
-      },
-    }),
+    copyAreaOf(envelope, command, LOG_SOURCE_LOG),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -253,9 +279,20 @@ function gifForm(v: GifPlannerView): string {
   ].join('');
 }
 
-export function buildGifPlannerDoc(v: GifPlannerView): string {
+/** #654：`command`＝本次命令原文（命令层 `photo/wizard.ts` 的 `commandLine()` 派生），进复制日志第 4 段。 */
+export function buildGifPlannerDoc(v: GifPlannerView, command: string): string {
   // 本轮照片里文件找不到的张数（与候选行「会跳过」徽标同一口径）；不是框选缺 ID，两者分开命名。
   const notFound = v.photos.filter((p) => p.fileExists === false).length;
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.gif-planner',
+    data: {
+      metrics: metricsOf({
+        photoCount: v.photos.length, selectedCount: v.selectedIds.length,
+        missingCount: v.missingIds.length,
+        cropCount: v.photos.filter((p) => p.crop).length,
+      }),
+    },
+  };
   const content = [
     // 页内样式进 parts 第一项（`assembleDocPage` 没有页内 CSS 入口，同 `photoUi.ts` 的处置）。
     // #655：本件两页的确认清单**样式**另住姊妹件 `photo/wizardUi.ts`（同上页那一段的理由）。
@@ -292,18 +329,7 @@ export function buildGifPlannerDoc(v: GifPlannerView): string {
     '<p class="phu-note">下面每项都已填好常用值，点开哪一项就改哪一项。改完把下面那段指令复制给 AI。</p>',
     gifForm(v),
     promptCopyArea(v.prompt, '复制指令（给 AI 的那段）'),
-    dataCopyArea('复制数据', {
-      envelope: {
-        version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.gif-planner',
-        data: {
-          metrics: metricsOf({
-            photoCount: v.photos.length, selectedCount: v.selectedIds.length,
-            missingCount: v.missingIds.length,
-            cropCount: v.photos.filter((p) => p.crop).length,
-          }),
-        },
-      },
-    }),
+    copyAreaOf(envelope, command, LOG_SOURCE_PLANNER),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,

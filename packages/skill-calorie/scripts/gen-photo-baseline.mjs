@@ -50,16 +50,16 @@ process.env['CALORIE_TODAY'] = PIN_TODAY;
 /* ── 基线清单（`--write` 回写本块；`--check` 逐键比对） ── */
 // BASELINE-BEGIN
 const BASELINE = {
-  "calorie.help.center": "a23974ecb2ccc10fd9dcd9f262622724cfa029b25b6a0973881156b6a1281d56",
-  "calorie.photo.add": "52df4850e9db6c2de0007d5e2345886a62cb9547bbcba87082b025ec51f064ed",
-  "calorie.photo.compare": "05f6b6cbb2cfdeb16c94ae15ae17f66eee1e7454012871dd69a3ad7a67d24335",
-  "calorie.photo.detail": "4d83afc3f9578a47e2a53529130681b2d00577849933bf4353aa9741db749b3c",
-  "calorie.photo.gif": "98c8d586e9e3a367a073362ae85aca23420bb8a42e0c0817fc73a0dd21d2205d",
-  "calorie.photo.list": "994e65f62a18d746b11ebbdb659593079369c2e3521bec445e69beb0f1dad2e8",
-  "calorie.photo.remove": "1b0337465ec38a8737748d77444ae3a29bd785e7ba797dd0a18d76821dcb9e89",
-  "calorie.photo.tag": "ea86c9971929728598168bfa945c70dd86ecf267d12d82147e4292bcc487fa1c",
-  "calorie.view.gif-planner": "91414360f7e04ca069dc9e41a8be2b6e422fb8349870bb8c41302e3b198d90fd",
-  "calorie.view.photo-log-wizard": "82187ba62eae25e27cc79f70f466534a6a2d3cf162e4b1ccf8ef6d0ddba9f56b"
+  "calorie.help.center": "42a598f10d4c2387bd1ca0b440f118cf33b98584082eed35a984b649640f4ad0",
+  "calorie.photo.add": "f2497c30f6647d1b50700531512f966baa466e1f8f20ebaef007959ac5c930c2",
+  "calorie.photo.compare": "97101ddd4007e2aa4900ee82ab928bc2fadbfea2ffd0d8bf0194a5c0cc50a7e8",
+  "calorie.photo.detail": "a65b12dc43a98144f70f4805fd50f081539f00ca33b05d8f657283e13a3882e2",
+  "calorie.photo.gif": "7e8ca4f99daf65c3063ae09fafde5f78e0e2500d1a31e32dffa823a8df2b4a56",
+  "calorie.photo.list": "e90fdbd664eeee597f8b34072b6d42669856fcab0b7153c9781c52d63cc1d76f",
+  "calorie.photo.remove": "b0d3dcbd6b8f960f264753f8101b32e0fd0641222d86d75c2960986cc4a69193",
+  "calorie.photo.tag": "47255622415633abbefb914783c8a0430099490342164592bc139d16d0a7b0e4",
+  "calorie.view.gif-planner": "d64455597afd95616c9975f5830c14ba3f39f13376924b977cd76faf1708e464",
+  "calorie.view.photo-log-wizard": "47079bf5a20ae281721d59c2f39c8860f588736dd3788fa88e848814b756e6dc"
 };
 // BASELINE-END
 

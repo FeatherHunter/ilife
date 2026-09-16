@@ -28,13 +28,21 @@
  *   ⑤ **收口（本席位）**：逐张的复制按钮撤掉（一页 44 颗药丸按钮压过图注，其中 22 颗是公共层自动补的
  *      禁用「复制日志」）；表的 `caption` 槽在公共层窄屏行卡化里被挤成 32px 竖排（`dom.mjs` 实测），
  *      改成「照片清单」小节标题 ＋ 表下「按时间倒序」口径行。取值口径与体积退让一行未改。
+ *
+ * **#654（读页复制日志 · 本席位）**：底部 ghost 行补回**真**「复制日志」——本页以前只有
+ * `dataCopyArea`（只出数据那颗），日志那颗靠公共层 #336 的兜底补，那颗是点不动的禁用占位
+ * （#654 已撤掉那条兜底路径，见 `base-render/src/controls.ts` 的 `renderActionBar`）。
+ * 现在本页**自己给**：`copyArea({ data, log })` 双位齐全，日志第 4 段＝本次命令原文（`commandLine()`
+ * 由命令层 `gallery.ts` 传入），第 3／5 段＝来源与渲染时刻。可见面一字未改（日志只住复制载荷）。
  */
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import { renderMediaPlaceholder } from 'base-paint';
+import type { SerializableEnvelope } from 'base-paint';
 import { escapeHtml } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea, notice } from '../shared/copyArea.js';
+import { copyArea, copyLog, notice } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import { todayISO } from '../analysis/utils.js';
 import type { GalleryData, PhotoCard } from './photo.js';
 import { embedPhotos, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
@@ -50,6 +58,10 @@ const DOC_TITLE = '卡路里 身材照片';
 
 /** 本页小节标题的类名（#467 先例：KPI 区那把尺，同 `viewerDoc`／`compareDoc`，不新造样式）。 */
 const H2_CLASS = 'ilife-block-kpi-card-title';
+
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
+ *  同族先例：`weight/review.ts` 的 `weight_log（体重复盘）`、`diet/libraryDocs.ts` 的 `食品库（在架食品）`。 */
+const LOG_SOURCE = 'body_photos（本窗照片记录）';
 
 /** 单页体积上限（字节）：本票首定，供 281／282／352 复用（见 t341 文档）。
  *  实测 2 张小图约 60KB（含 ~60KB 文档壳）；1 MiB 直嵌仅容 3~4 张 200KB 实拍。
@@ -212,11 +224,38 @@ function detailTable(g: GalleryData, skipReason: ReadonlyMap<string, string>): s
     + renderCaliberLine('按时间倒序') + '</section>';
 }
 
+/** 复制区（#654）：**双位齐全**——数据那颗走三格式菜单（`buildDataText` 三份），日志那颗走
+ *  `buildLogText` 六段。两段一起由 `shared/copyArea.ts` 的 `copyArea` 收口，本件只给载荷：
+ *   · 数据位：本窗逐张（`photoPath` 照旧全量，不随体积退让截断——t438 口径）；
+ *   · 日志位：第 3 段＝`calorie_data.db ｜ 来源`，第 4 段＝**本次命令原文**（`commandLine()` 由命令层给，
+ *     照抄可重跑），第 5 段＝渲染时刻（`nowStamp()`，只读页没有「写库时刻」可用）。
+ *  **形状别写错**：`log` 位收 `LogTextInput`＝`{ envelope, copyLog }`，不是整段文本、也不是 `copyLog()`
+ *  的返回值——给错形状日志文本接不上，那颗按钮就落成点不动的死按钮（本仓不留死按钮）。 */
+function copyAreaOf(g: GalleryData, command: string): string {
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.photo.list',
+    data: {
+      items: g.photos.map((p) => ({
+        id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists,
+      })),
+      total: g.totalCount,
+    },
+  };
+  return copyArea({
+    data: { envelope },
+    log: {
+      envelope,
+      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+    },
+  });
+}
+
 function contentOf(
   g: GalleryData,
   embeds: PhotoEmbed[],
   skipReason: ReadonlyMap<string, string>,
   today: string,
+  command: string,
 ): string {
   const byName = new Map(embeds.map((e) => [e.fileName, e]));
   const embeddedCount = embeds.filter((e) => e.dataUri !== null).length;
@@ -233,22 +272,15 @@ function contentOf(
   }).join('') + '</div>');
   parts.push(detailTable(g, skipReason));
   parts.push('<div class="phu-scroll-hint">表格宽，手机上按住左右滑可以看全</div>');
-  const items = g.photos.map((p) => ({
-    id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists,
-  }));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.photo.list',
-      data: { items, total: g.totalCount },
-    },
-  }));
+  parts.push(copyAreaOf(g, command));
   return parts.join('');
 }
 
 /** 看身材照整页：完整文档（doctype 起、charset、版面、复制区）＋按预算内嵌＋缺失明示。
  *  #472：眉标（内部命令名＋内部词「域」）整行去掉；相对天数按当刻「今天」现算（`todayISO()`）。
- *  #526：标题去掉 `·`（张数改由身份徽章之外的读数卡说），副标题并入身份徽章行。 */
-export function buildPhotoListDoc(g: GalleryData, photosDir?: string | null): string {
+ *  #526：标题去掉 `·`（张数改由身份徽章之外的读数卡说），副标题并入身份徽章行。
+ *  #654：`command`＝本次命令原文（命令层 `gallery.ts` 的 `commandLine()` 派生），进复制日志第 4 段。 */
+export function buildPhotoListDoc(g: GalleryData, photosDir: string | null | undefined, command: string): string {
   const today = todayISO();
   const shell = (content: string): string => assembleDocPage({
     docTitle: DOC_TITLE,
@@ -262,9 +294,9 @@ export function buildPhotoListDoc(g: GalleryData, photosDir?: string | null): st
     pageUi: true,
   });
   // 两步：先算**不含任何内嵌字节**的页面底子，再把剩下的预算按顺序分给逐张照片。
-  const baseBytes = Buffer.byteLength(shell(contentOf(g, embedPhotos(null, g.photos), new Map(), today)), 'utf8');
+  const baseBytes = Buffer.byteLength(shell(contentOf(g, embedPhotos(null, g.photos), new Map(), today, command)), 'utf8');
   const picks = embedPhotosWithinBudget(photosDir ?? null, g.photos, baseBytes, PHOTO_LIST_PAGE_MAX_BYTES);
-  let html = shell(contentOf(g, picks.embeds, picks.skipReason, today));
+  let html = shell(contentOf(g, picks.embeds, picks.skipReason, today, command));
   // 兜底：底子或版面开销估偏时，逐张收回最大的内嵌（最多 3 轮）直到回到上限内。
   for (let round = 0; round < 3 && Buffer.byteLength(html, 'utf8') > PHOTO_LIST_PAGE_MAX_BYTES; round += 1) {
     const rest = picks.embeds.filter((e) => e.dataUri !== null && !picks.skipReason.has(e.fileName))
@@ -272,7 +304,7 @@ export function buildPhotoListDoc(g: GalleryData, photosDir?: string | null): st
     if (rest.length === 0) break;
     const victim = rest[0] as PhotoEmbed;
     picks.skipReason.set(victim.fileName, '体积预算未内嵌');
-    html = shell(contentOf(g, picks.embeds, picks.skipReason, today));
+    html = shell(contentOf(g, picks.embeds, picks.skipReason, today, command));
   }
   return html;
 }

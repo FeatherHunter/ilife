@@ -38,11 +38,19 @@
  * （`calorie.help.lookup`）与两条既有测试（`render-t10`／`render-copy-90`）直调。
  * 信封与落点也不动：`data` 仍是 `{items,total}`，落点仍是
  * `<库目录>/calorie_html/卡路里_照片HELP_<TS>.html`（#245 复用窗口靠主体名认人）。
+ *
+ * **#654（读页复制日志 · 本席位）**：页尾复制区补回**真**「复制日志」（09-15／09-16 两态同一支装配，
+ * 两态一起有）——改前那一格只有 `dataCopyArea`（只出数据那颗），日志那颗靠公共层 #336 兜底补的
+ * 禁用占位（#654 已撤那条兜底路径）。现在本页自己给：`copyArea({ data, log })` 双位齐全，第 4 段＝
+ * 本次命令原文（命令层 `photo/help.ts` 传 `commandLine('calorie.help.center', params)`）。
+ * **行内那十颗**分发按钮一字未动，也不受兜底撤除影响（它们本来就手写、不经过 `renderActionBar`）。
  */
 import { escapeHtml } from 'base-paint';
+import type { SerializableEnvelope } from 'base-paint';
 import { renderChips, renderEmptyBlock, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea } from '../shared/copyArea.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import { CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS } from '../render/copy.js';
 import {
   PHOTO_HELP_SAY_LABEL, PHOTO_HELP_SECTIONS, photoHelpAnchorOf, photoHelpKeysBySection,
@@ -59,18 +67,27 @@ const DOC_SKILL = 'calorie';
  *  判据工具 `audit-separators.mjs` 的 R1（并列分隔符债），浏览器标签页上也照着它读。 */
 const DOC_TITLE = '卡路里 HELP 照片';
 
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）：
+ *  本页的数不来自库表，是**本域命令目录**（`helpLookup.ts` 的照片 10 键命中表）。 */
+const LOG_SOURCE = '照片 10 键命令表（现找命中，不读库）';
+
 /** 行内可复制载荷按钮：一行的动作，**屏上只有这一颗按钮，原文只住它的 `data-t`**。
  *
  *  为什么手写这一颗（而不是走 `renderPreBlock`／`renderCopyBlock`）：
  *  ① `renderPreBlock` 必带一格 `<pre>`（`command` 非空即渲染，空串抛 `bad-input`），而那一格
  *     除了「点下面按钮复制…」这类**每行都要重复一遍**的提示之外没有别的内容可放——原文住属性、
  *     不住屏（`#529` 硬要求），一句提示重复 10 行正是用户第 4 条点名的冗余；
- *  ② `renderCopyBlock` 在有数据位、没有日志位时会**自动补一颗禁用的「复制日志」**（#336），
- *     行内按钮数与页内 `actionId` 集都会被它改掉（页尾复制区才是那颗按钮的落点）。
+ *  ② 行内这颗的 id 是**本族冻结的「复制指令」**（`CALORIE_COPY_ACTION`），页尾复制区那颗是**页级**
+ *     双位（数据三格式菜单 ＋ 日志）；走 `renderCopyBlock` 会把行内 id 换成页级的数据 id，两处
+ *     语义就混了（既有测试 `photo-helpdoc-488` 钉的正是行内取冻结的「复制指令」id）。
  *  故本页只保留按钮本身：id／文案取冻结表 `CALORIE_COPY_ACTION`，承载属性名取
  *  `COPY_BUTTON_ATTRS`（两者都读冻结常量，本件不出现第二个字面量），类名与
  *  `renderPreBlock` 产的按钮逐字同值（`.ilife-copy-btn.ilife-copy-btn-ghost`），
- *  点一下仍由页面运行时的 `[data-action-id]` 委派读 `data-t` 复制。 */
+ *  点一下仍由页面运行时的 `[data-action-id]` 委派读 `data-t` 复制。
+ *
+ *  （#654 补记：这条手写的第二个理由原文写的是「`renderCopyBlock` 在有数据位、没有日志位时会自动
+ *  补一颗禁用日志」——那条公共层兜底已被 #654 撤掉，理由②因此改写为上面的 id 语义那条；本颗按钮
+ *  的产物一字未变。） */
 function copyButtonHtml(exec: string): string {
   return '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" '
     + COPY_BUTTON_ATTRS.actionId + '="' + escapeHtml(CALORIE_COPY_ACTION.actionId) + '" '
@@ -150,8 +167,9 @@ function subtitleOf(asked: boolean, query: string): string {
     : '照片这一类能做的事，一条一条列在下面';
 }
 
-/** 整页装配：`query` 空串＝全量那一态（命中＝全 10 键），非空＝现找那一态。 */
-export function buildPhotoHelpDoc(hits: readonly PhotoHelpHit[], query?: string): string {
+/** 整页装配：`query` 空串＝全量那一态（命中＝全 10 键），非空＝现找那一态。
+ *  #654：`command`＝本次命令原文（命令层 `photo/help.ts` 的 `commandLine()` 派生），进复制日志第 4 段。 */
+export function buildPhotoHelpDoc(hits: readonly PhotoHelpHit[], command: string, query?: string): string {
   const asked = typeof query === 'string' && query !== '';
   const n = hits.length;
   const parts: string[] = [kpiHtml(hits)];
@@ -163,10 +181,17 @@ export function buildPhotoHelpDoc(hits: readonly PhotoHelpHit[], query?: string)
       + escapeHtml(photoHelpRowsLead(CALORIE_COPY_ACTION.label)) + '</p>');
     parts.push(sectionsHtml(hits));
   }
-  parts.push('<div class="ilife-helpdoc-copy">' + dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.help.center',
-      data: copyDataOf(hits),
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.help.center',
+    data: copyDataOf(hits),
+  };
+  parts.push('<div class="ilife-helpdoc-copy">' + copyArea({
+    data: { envelope },
+    log: {
+      envelope,
+      copyLog: copyLog({
+        command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION,
+      }),
     },
   }) + '</div>');
   return assembleDocPage({

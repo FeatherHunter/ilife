@@ -8,6 +8,7 @@ import { buildGalleryData, buildViewerData } from './photo.js';
 import { buildPhotoListDoc } from './galleryDoc.js';
 import { buildPhotoViewerDoc } from './viewerDoc.js';
 import { dayField, fail } from '../shared/params.js';
+import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { photoDir } from './dir.js';
 
@@ -25,7 +26,11 @@ export function viewPhotoList(params: Record<string, unknown>, db: DatabaseSync)
   const items = g.photos.map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: p.tagList, fileExists: p.fileExists }));
   // #341 · 看身材照出口＝完整文档（doctype 起、charset、版面、复制区）＋内嵌照片：
   // 取数仍走 buildGalleryData，呈现改走本能力内 galleryDoc（html.ts 只读，不碰）。
-  return { data: { items, total: g.totalCount }, html: buildPhotoListDoc(g, dir ?? null) };
+  // #654：复制日志第 4 段的命令原文由命令层共用件 `commandLine()` 派生（含本次 `--params`），页面件不自己拼。
+  return {
+    data: { items, total: g.totalCount },
+    html: buildPhotoListDoc(g, dir ?? null, commandLine('calorie.photo.list', params)),
+  };
 }
 
 /** `calorie.photo.detail` · 查身材照：`id` 须为整数，查不到即 missing-data。
@@ -38,5 +43,9 @@ export function viewPhotoDetail(params: Record<string, unknown>, db: DatabaseSyn
   if (typeof id !== 'number' || !Number.isInteger(id)) fail(2, '缺参数 id（整数照片 id）');
   const dir = photoDir(params);
   const v = buildViewerData(db, id as number, dir ?? null);
-  return { data: { item: { id: v.photo.id, date: v.photo.date, photoPath: v.photo.photoPath, tagList: v.photo.tagList } }, html: buildPhotoViewerDoc(v, dir ?? null) };
+  // #654：同上——复制日志第 4 段的命令原文（含本次 `--params`）由命令层派生。
+  return {
+    data: { item: { id: v.photo.id, date: v.photo.date, photoPath: v.photo.photoPath, tagList: v.photo.tagList } },
+    html: buildPhotoViewerDoc(v, dir ?? null, commandLine('calorie.photo.detail', params)),
+  };
 }

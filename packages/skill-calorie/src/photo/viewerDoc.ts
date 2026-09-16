@@ -20,13 +20,20 @@
  *      「这张图太大放不下（超过 1 MB）…」两句同一件事、以及六列单行表（一张照片用六列表，
  *      窄屏被备注列撑爆）；改由一句结论条（多大／放没放进本页）＋键值行（文件／备注）承担；
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px），键值行窄屏塌纵向。
+ *
+ * **#654（读页复制日志 · 本席位）**：底部 ghost 行补回**真**「复制日志」——本页以前只有
+ * `dataCopyArea`（只出数据那颗），日志那颗靠公共层 #336 兜底补的禁用占位（#654 已撤那条兜底路径）。
+ * 现在本页自己给：`copyArea({ data, log })` 双位齐全，第 4 段＝本次命令原文（命令层 `gallery.ts` 传
+ * `commandLine()`）。页内那两个动作按钮（删这张／回画廊）一字未动。
  */
 import { escapeHtml, renderStatusBadge } from 'base-paint';
+import type { SerializableEnvelope } from 'base-paint';
 import { renderMediaPlaceholder } from 'base-paint';
 import { renderConclusionBar } from 'base-paint/blocks';
 import { COPY_ACTION_IDS, renderActionBar } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea } from '../shared/copyArea.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import { CALORIE_COPY_ACTION } from '../render/copy.js';
 import { todayISO } from '../analysis/utils.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
@@ -44,6 +51,9 @@ const DOC_TITLE = '卡路里 身材照片';
 
 /** 本页小节标题的类名（#467 先例：KPI 区那把尺，不新造样式）。 */
 const H2_CLASS = 'ilife-block-kpi-card-title';
+
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。 */
+const LOG_SOURCE = 'body_photos（单张照片记录）';
 
 /** 删这张照片那两句（人话＋安全感）：全页「不可恢复」只说这一次，说成「找不回来」。 */
 const DELETE_HEADING = '删掉这张照片';
@@ -160,8 +170,12 @@ function infoHtml(p: PhotoCard, e: PhotoEmbed, shown: boolean): string {
 
 /** 删这张照片 ＋ 回画廊（#526）：两句人话 ＋ 一条动作行（两颗复制按钮，命令住 `data-t`，
  *  可见面上不出现命令原文）。actionId 取**冻结表**：删那条走 `CALORIE_COPY_ACTION`（「复制指令」
- *  的既有 id），回画廊那条借冻结的日志位 id——同一次渲染内两颗 id 必须不同，
- *  「复制回画廊指令」这个标签由本页给。 */
+ *  的既有 id），回画廊那条借冻结的**数据位** id——同一次渲染内两颗 id 必须不同，
+ *  「复制回画廊指令」这个标签由本页给。
+ *  #654：回画廊那颗原来借的是**日志位** id（`ilife-copy-log`）；页尾复制区现在有了一颗**真**日志按钮
+ *  （公共层 `renderActionBar` 的冻结位就是 `ilife-copy-log`），两颗同 id 会让「同一次渲染内 id 唯一」
+ *  这条判据与运行时按 id 的委派都分不清谁是谁，故改借**数据位** id——本页真正的数据那颗是三格式菜单的
+ *  开合器（不写 `data-action-id`），这一位在本页是空的。 */
 function actionHtml(p: PhotoCard): string {
   const tag = p.tagList[0] ?? '';
   const backParams = tag ? '{"tag": "' + tag + '"}' : '{}';
@@ -171,12 +185,33 @@ function actionHtml(p: PhotoCard): string {
     + '<p class="phu-act-s">' + DELETE_SAFETY + '</p>'
     + renderActionBar({
       copyData: { actionId: CALORIE_COPY_ACTION.actionId, label: '复制删除指令', text: delCmd },
-      copyLog: { actionId: COPY_ACTION_IDS.actionBar.copyLog, label: '复制回画廊指令', text: backCmd },
+      copyLog: { actionId: COPY_ACTION_IDS.actionBar.copyData, label: '复制回画廊指令', text: backCmd },
     })
     + '<p class="phu-note">' + DELETE_HINT + '</p></section>';
 }
 
-function contentOf(v: ViewerData, e: PhotoEmbed, dropped: boolean): string {
+/** 复制区（#654）：三格式数据 ＋ 复制日志六段（口径与 `galleryDoc.copyAreaOf` 同形：
+ *  `log` 位收 `LogTextInput`＝`{ envelope, copyLog }`，给错形状那颗按钮就落成点不动的死按钮）。 */
+function copyAreaOf(v: ViewerData, command: string): string {
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'detail', key: 'calorie.photo.detail',
+    data: {
+      item: {
+        id: v.photo.id, date: v.photo.date, photoPath: v.photo.photoPath,
+        tagList: [...v.photo.tagList], fileExists: v.photo.fileExists, prevId: v.prevId, nextId: v.nextId,
+      },
+    },
+  };
+  return copyArea({
+    data: { envelope },
+    log: {
+      envelope,
+      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+    },
+  });
+}
+
+function contentOf(v: ViewerData, e: PhotoEmbed, dropped: boolean, command: string): string {
   const p = v.photo;
   const today = todayISO();
   const shown = !dropped && e.dataUri !== null;
@@ -191,14 +226,7 @@ function contentOf(v: ViewerData, e: PhotoEmbed, dropped: boolean): string {
   parts.push(figureHtml(p, e, dropped));
   parts.push(infoHtml(p, e, shown));
   parts.push(actionHtml(p));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'detail', key: 'calorie.photo.detail',
-      data: {
-        item: { id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists, prevId: v.prevId, nextId: v.nextId },
-      },
-    },
-  }));
+  parts.push(copyAreaOf(v, command));
   return parts.join('');
 }
 
@@ -219,14 +247,15 @@ function shellOf(v: ViewerData, content: string): string {
   });
 }
 
-/** 单张整页：完整文档（doctype 起、charset、版面、复制区）＋大图内嵌＋翻页链＋这张照片的信息。 */
-export function buildPhotoViewerDoc(v: ViewerData, photosDir?: string | null): string {
+/** 单张整页：完整文档（doctype 起、charset、版面、复制区）＋大图内嵌＋翻页链＋这张照片的信息。
+ *  #654：`command`＝本次命令原文（命令层 `gallery.ts` 的 `commandLine()` 派生），进复制日志第 4 段。 */
+export function buildPhotoViewerDoc(v: ViewerData, photosDir: string | null | undefined, command: string): string {
   const e = embedPhoto(photosDir ?? null, v.photo.photoPath);
   let dropped = false;
-  let html = shellOf(v, contentOf(v, e, dropped));
+  let html = shellOf(v, contentOf(v, e, dropped, command));
   if (Buffer.byteLength(html, 'utf8') > PHOTO_LIST_PAGE_MAX_BYTES && e.dataUri !== null) {
     dropped = true;
-    html = shellOf(v, contentOf(v, e, dropped));
+    html = shellOf(v, contentOf(v, e, dropped, command));
   }
   return html;
 }

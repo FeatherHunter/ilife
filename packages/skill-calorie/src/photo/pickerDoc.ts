@@ -17,11 +17,18 @@
  *      页字节因此**真有上限**（#527 当时只给单张 400 KB 上限，整页仍可被多张累加撑破，见 #461）；
  *      页内导航（`renderTocBlock`）给长页两条锚点；
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px，表头 ≥12px）。
+ *
+ * **#654（读页复制日志 · 本席位）**：底部 ghost 行补回**真**「复制日志」（09-08 全窗与 09-14 快照两态
+ * 同一支装配，两态一起有）——本页以前只有 `dataCopyArea`（只出数据那颗），日志那颗靠公共层 #336 兜底
+ * 补的禁用占位（#654 已撤那条兜底路径）。现在本页自己给：`copyArea({ data, log })` 双位齐全，
+ * 第 4 段＝本次命令原文（命令层 `picker.ts` 传 `commandLine()`）。prompt 那颗与取值口径一字未动。
  */
 import { renderDataTable, renderEmptyBlock, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
 import { escapeHtml, renderMediaPlaceholder, renderStatusBadge } from 'base-paint';
+import type { SerializableEnvelope } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea, notice, promptCopyArea } from '../shared/copyArea.js';
+import { copyArea, copyLog, notice, promptCopyArea } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import { todayISO } from '../analysis/utils.js';
 import { embedPhoto, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
@@ -36,6 +43,9 @@ const DOC_SKILL = 'calorie';
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
  *  #527：`·` 是符号顶替版面（题名不是并列语义），改空格。 */
 const DOC_TITLE = '卡路里 身材照片';
+
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。 */
+const LOG_SOURCE = 'body_photos（候选窗照片，本页只读不删）';
 
 /** 逐张内嵌的**大小上限**：#527 首定。超过它的候选**不内嵌字节**、改出同规格占位件——
  *  这是呈现层的退让（页面字节有界），不改 `photoThumb` 的 `PHOTO_EMBED_MAX_BYTES`（那是能力上限），
@@ -133,11 +143,34 @@ function snapshotHtml(sel: PhotoCard | null, e: PhotoEmbed | null, snapInlined: 
     + '</figcaption></figure>';
 }
 
+/** 复制区（#654）：prompt 那颗照旧（`promptCopyArea` 在前面），这里出**数据 ＋ 日志**双位：
+ *  数据＝候选全量（照旧不随预算截断），日志＝六段（`log` 位收 `LogTextInput`＝`{ envelope, copyLog }`，
+ *  给错形状那颗按钮就落成点不动的死按钮）。 */
+function copyAreaOf(v: PhotoPickerView, command: string): string {
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.photo-picker',
+    data: {
+      items: v.candidates.map((p) => ({
+        id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists,
+      })),
+      total: v.fullCount,
+    },
+  };
+  return copyArea({
+    data: { envelope },
+    log: {
+      envelope,
+      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+    },
+  });
+}
+
 /** 删照候选整页：完整文档（doctype 起、charset、版面、复制区）＋候选卡网格＋快照＋prompt。
  *  **#461：整页预算**——底子先算（不含任何候选内嵌字节，快照那一份按固定开销计入），
  *  再照 #438 的 `embedPhotosWithinBudget(…, PHOTO_LIST_PAGE_MAX_BYTES)` 逐张试嵌，
- *  兜底最多三轮逐张收回最大的内嵌；口径与 `galleryDoc.buildPhotoListDoc` 一致，不另起一套。 */
-export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null): string {
+ *  兜底最多三轮逐张收回最大的内嵌；口径与 `galleryDoc.buildPhotoListDoc` 一致，不另起一套。
+ *  #654：`command`＝本次命令原文（命令层 `picker.ts` 的 `commandLine()` 派生），进复制日志第 4 段。 */
+export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null, command: string): string {
   const today = todayISO();
   // 快照那一张先读（它要进预算：它是本页「放大给你看」的价值核心，#461 不许削）。
   const snap = v.selected === null ? null : embedPhoto(photosDir, v.selected.photoPath);
@@ -189,15 +222,7 @@ export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null
       parts.push(renderEmptyBlock({ text: '已选照片 ' + v.selected.id + ' 不在当前候选窗内（快照照常显示，候选按筛选条件列出）' }));
     }
     parts.push(promptCopyArea(v.prompt));
-    parts.push(dataCopyArea('复制数据', {
-      envelope: {
-        version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.photo-picker',
-        data: {
-          items: v.candidates.map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists })),
-          total: v.fullCount,
-        },
-      },
-    }));
+    parts.push(copyAreaOf(v, command));
     return parts.join('');
   };
   const baseBytes = Buffer.byteLength(shell(contentOf([], new Map())), 'utf8') + snapBytes;

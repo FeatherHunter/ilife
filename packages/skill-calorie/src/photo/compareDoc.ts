@@ -24,11 +24,18 @@
  *      （不印零信息列）；备注改由每张卡片自己的形状承载，一条信息不丢；
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px），卡片宽屏并排、
  *      窄屏自动上下排列（可压窄的 flex 项，`min-width:0`）。
+ *
+ * **#654（读页复制日志 · 本席位）**：底部 ghost 行补回**真**「复制日志」——本页以前只有
+ * `dataCopyArea`（只出数据那颗），日志那颗靠公共层 #336 兜底补的禁用占位（#654 已撤那条兜底路径）。
+ * 现在本页自己给：`copyArea({ data, log })` 双位齐全，第 4 段＝本次命令原文（命令层 `compare.ts` 传
+ * `commandLine()`）。取值口径与体积退让行为一行未改。
  */
 import { escapeHtml, renderMediaPlaceholder } from 'base-paint';
+import type { SerializableEnvelope } from 'base-paint';
 import { renderConclusionBar, renderDataTable } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea, notice } from '../shared/copyArea.js';
+import { copyArea, copyLog, notice } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import { todayISO } from '../analysis/utils.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { embedPhotos, type PhotoEmbed } from './photoThumb.js';
@@ -45,6 +52,9 @@ const DOC_TITLE = '卡路里 身材照片';
 
 /** 本页小节标题的类名（#467 先例那把尺，不新造样式）。 */
 const H2_CLASS = 'ilife-block-kpi-card-title';
+
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。 */
+const LOG_SOURCE = 'body_photos（两张照片记录）';
 
 /** 标签不一样时给读者的判语与建议（#473 那句人话的语义，#526 收成**一条结论条**：
  *  原来同一件事在 KPI 卡、提醒行两处各说一遍；括号里那对 `正面／侧面` 改由卡片自己的徽章说）。 */
@@ -148,7 +158,28 @@ function recordTable(c: CompareData, dropped: ReadonlySet<string>): string {
     + renderDataTable({ columns, rows, emptyText: '无对照明细' }) + '</section>';
 }
 
-function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: ReadonlySet<string>): string {
+/** 复制区（#654）：三格式数据 ＋ 复制日志六段（口径与 `galleryDoc.copyAreaOf` 同形：
+ *  `log` 位收 `LogTextInput`＝`{ envelope, copyLog }`，给错形状那颗按钮就落成点不动的死按钮）。 */
+function copyAreaOf(c: CompareData, command: string): string {
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.photo.compare',
+    data: {
+      items: [c.photo1, c.photo2].map((p) => ({
+        id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists,
+      })),
+      total: 2,
+    },
+  };
+  return copyArea({
+    data: { envelope },
+    log: {
+      envelope,
+      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+    },
+  });
+}
+
+function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: ReadonlySet<string>, command: string): string {
   const byName = new Map(embeds.map((e) => [e.fileName, e]));
   const today = todayISO();
   const parts: string[] = [photoUiCss()];
@@ -164,15 +195,7 @@ function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: Reado
     cardHtml(p, byName.get(fileKeyOf(p.photoPath)), dropped.has(fileKeyOf(p.photoPath)), today, dropped.size > 0),
   ).join('') + '</div>');
   parts.push(recordTable(c, dropped));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.photo.compare',
-      data: {
-        items: [c.photo1, c.photo2].map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists })),
-        total: 2,
-      },
-    },
-  }));
+  parts.push(copyAreaOf(c, command));
   return parts.join('');
 }
 
@@ -192,19 +215,20 @@ function shellOf(c: CompareData, content: string): string {
   });
 }
 
-/** 对比整页：完整文档（doctype 起、charset、版面、复制区）＋双卡内嵌＋体积让位提示块。 */
-export function buildPhotoCompareDoc(c: CompareData, photosDir?: string | null): string {
+/** 对比整页：完整文档（doctype 起、charset、版面、复制区）＋双卡内嵌＋体积让位提示块。
+ *  #654：`command`＝本次命令原文（命令层 `compare.ts` 的 `commandLine()` 派生），进复制日志第 4 段。 */
+export function buildPhotoCompareDoc(c: CompareData, photosDir: string | null | undefined, command: string): string {
   const embeds = embedPhotos(photosDir ?? null, [c.photo1, c.photo2]);
   // 超预算即逐张弃最大者（最多两轮），提示块报「哪张没显示／为什么」＋替代操作。
   const dropped = new Set<string>();
-  let html = shellOf(c, contentOf(c, embeds, dropped));
+  let html = shellOf(c, contentOf(c, embeds, dropped, command));
   for (let round = 0; round < 2; round += 1) {
     if (Buffer.byteLength(html, 'utf8') <= PHOTO_LIST_PAGE_MAX_BYTES) break;
     const rest = embeds.filter((e) => e.dataUri !== null && !dropped.has(e.fileName))
       .sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0));
     if (rest.length === 0) break;
     dropped.add((rest[0] as PhotoEmbed).fileName);
-    html = shellOf(c, contentOf(c, embeds, dropped));
+    html = shellOf(c, contentOf(c, embeds, dropped, command));
   }
   return html;
 }

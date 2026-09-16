@@ -36,13 +36,20 @@
  *   ③ **GIF 舞台**：裸 `<img>`＋内联样式改 `renderMediaFigure`（明确宽高比／`max-width`
  *      ／`object-fit`／像素锐边），没图可显时出人话占位而不是空白；
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px，表头 ≥12px）。
+ *
+ * **#654（读页复制日志 · 本席位）**：底部 ghost 行补回**真**「复制日志」——本页以前只有
+ * `dataCopyArea`（只出数据那颗），日志那颗靠公共层 #336 兜底补的禁用占位（#654 已撤那条兜底路径）。
+ * 现在本页自己给：`copyArea({ data, log })` 双位齐全，第 4 段＝本次命令原文（`GifPageInput.command`
+ * 由命令层 `compare.ts` 传 `commandLine()`）。取值口径、体积退让与 GIF 字节一行未改。
  */
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { escapeHtml, renderFactStrip, renderMediaFigure } from 'base-paint';
+import type { SerializableEnvelope } from 'base-paint';
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea, notice } from '../shared/copyArea.js';
+import { copyArea, copyLog, notice } from '../shared/copyArea.js';
+import { nowStamp } from '../render/receipt.js';
 import { CALORIE_COPY_ACTION, copyActionHtml } from '../render/copy.js';
 import { GIF_LIMITS, countGifFrames, synthesizeGifFromPhotos } from './gif.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
@@ -63,6 +70,10 @@ const GIF_SUB_DIR = 'gifs';
 /** 可见文本缺值一律 `—`（t400 裁定 3）；复制数据保留原始空值。 */
 const DASH = '—';
 
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）：
+ *  本页读的是照片记录（帧序来源）、写的是照片目录下的 `gifs/`（那一份 .gif），两处都点名。 */
+const LOG_SOURCE = 'body_photos＋gifs/（合成 GIF 落盘）';
+
 export interface GifPageInput {
   /** `buildGifTask` 的规划结果（标签／窗口／入片 id 与首末日期口径不变）。 */
   readonly task: GifTask;
@@ -70,6 +81,10 @@ export interface GifPageInput {
   readonly photosDir: string | null;
   /** 计划内照片（本件按拍摄日期正序重排成帧序）。 */
   readonly cards: readonly PhotoCard[];
+  /** 本次命令原文（命令层 `commandLine()` 派生，含本次 `--params`）：进复制日志第 4 段，照抄可重跑。
+   *  #654 起**必填**——本页以前只有数据那颗按钮，日志那颗靠公共层兜底补禁用占位；现在本页自己给，
+   *  不给命令原文就编不出一条能重跑的命令（宁可编译期就红，也不在页面里塞一条假原文）。 */
+  readonly command: string;
 }
 
 export interface GifPageResult {
@@ -271,10 +286,25 @@ function outputFacts(s: Synth): string {
   });
 }
 
+/** 复制区（#654）：三格式数据 ＋ 复制日志六段（口径与 `galleryDoc.copyAreaOf` 同形：
+ *  `log` 位收 `LogTextInput`＝`{ envelope, copyLog }`，给错形状那颗按钮就落成点不动的死按钮）。 */
+function copyAreaOf(data: GifPageData, command: string): string {
+  const envelope: SerializableEnvelope = {
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'analysis', key: 'calorie.photo.gif', data,
+  };
+  return copyArea({
+    data: { envelope },
+    log: {
+      envelope,
+      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+    },
+  });
+}
+
 /** 三格 KPI ＋ 文件块（#527）：一张卡一件事——「合成」只说帧数，「尺寸」只说边长，
  *  「文件」只说文件名；每帧停多久撤到卡下的事实条（卡片明细槽吃纯文本、形状落不进去）。
  *  上限（`GIF_LIMITS.maxEdge`／`maxBytes`）是能力边界、不是用户读数，下屏。 */
-function contentOf(cards: readonly PhotoCard[], s: Synth, embed: boolean, data: GifPageData): string {
+function contentOf(cards: readonly PhotoCard[], s: Synth, embed: boolean, data: GifPageData, command: string): string {
   const parts: string[] = [photoUiCss()];
   parts.push(renderKpiGrid([
     {
@@ -311,9 +341,7 @@ function contentOf(cards: readonly PhotoCard[], s: Synth, embed: boolean, data: 
     emptyText: '无入片明细',
   }));
   parts.push('<div class="phu-scroll-hint">表格宽，手机上按住左右滑可以看全</div>');
-  parts.push(dataCopyArea('复制数据', {
-    envelope: { version: DOC_VERSION, skill: DOC_SKILL, shape: 'analysis', key: 'calorie.photo.gif', data },
-  }));
+  parts.push(copyAreaOf(data, command));
   return parts.join('');
 }
 
@@ -346,7 +374,7 @@ export function buildPhotoGifPage(input: GifPageInput): GifPageResult {
   const ordered = byFrameOrder(input.cards);
   const s = synthOf(input.task, ordered, input.photosDir);
   const render = (embed: boolean, note: string | null): string =>
-    shellOf(input.task, s, contentOf(ordered, s, embed, pageDataOf(input.task, s, embed, note)));
+    shellOf(input.task, s, contentOf(ordered, s, embed, pageDataOf(input.task, s, embed, note), input.command));
   let embed = s.path !== null;
   let note = s.reason;
   let html = render(embed, note);
