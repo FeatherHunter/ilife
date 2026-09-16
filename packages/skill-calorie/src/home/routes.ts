@@ -50,7 +50,6 @@ export const HOME_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 220, wakeWord: '看饮水目标进度', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"今日"}\'' },
   { list: 'wake', order: 224, wakeWord: '看目标完成率(按周)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 225, wakeWord: '看目标完成率(按月)', scene: '06', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"7d"}\'' },
-  { list: 'wake', order: 372, wakeWord: '我的减肥策略对吗', scene: '10', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"30d"}\'' },
   { list: 'wake', order: 429, wakeWord: '查运动分布', scene: '10', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"7d"}\'' },
   { list: 'wake', order: 430, wakeWord: '查运动贡献', scene: '10', kind: 'exec', key: 'calorie.view.exercise', cli: 'calorie-cmd-read calorie.view.exercise --params \'{"window":"7d"}\'' },
 ];

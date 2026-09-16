@@ -128,6 +128,12 @@ export const ANALYSIS_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 369, wakeWord: '为什么我没瘦', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"why_not_losing","window":"30d"}\'' },
   { list: 'wake', order: 370, wakeWord: '为什么我瘦太快', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"why_losing_fast","window":"30d"}\'' },
   { list: 'wake', order: 371, wakeWord: '我的减重速度合理吗', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"rate_reasonable","window":"30d"}\'' },
+  // #531 接法归位：这一条原住 `home/routes.ts`（当刻接的是 `calorie.view.goal-progress`），
+  // 但它声明的 `data_fields` 是 findings／confidence／degraded／insight、要答的是「缺口是否合理 ＋
+  // 蛋白是否足够 ＋ 运动是否有贡献」；`calorie.view.anomaly --kind=strategy_check`
+  // （`analysis/anomaly/overall.ts` 的 `diagStrategyCheck`）正是这三答。位次（order 372）不动，
+  // 只换住处 —— 路由记录归它 `key` 的拥有者（本件头注释的口径）。
+  { list: 'wake', order: 372, wakeWord: '我的减肥策略对吗', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"strategy_check","window":"30d"}\'' },
   { list: 'wake', order: 374, wakeWord: '我这个月做得好的', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"month_highlights","window":"30d"}\'' },
   { list: 'wake', order: 375, wakeWord: '我这个月需要改的', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"month_improve","window":"30d"}\'' },
   { list: 'wake', order: 376, wakeWord: '综合健康评估', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"overall","window":"30d"}\'' },

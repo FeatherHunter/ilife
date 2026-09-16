@@ -381,7 +381,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '为什么我没瘦', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"why_not_losing","window":"30d"}\'' },
   { wakeWord: '为什么我瘦太快', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"why_losing_fast","window":"30d"}\'' },
   { wakeWord: '我的减重速度合理吗', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"rate_reasonable","window":"30d"}\'' },
-  { wakeWord: '我的减肥策略对吗', scene: '10', kind: 'exec', key: 'calorie.view.goal-progress', cli: 'calorie-cmd-read calorie.view.goal-progress --params \'{"window":"30d"}\'' },
+  { wakeWord: '我的减肥策略对吗', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"strategy_check","window":"30d"}\'' },
   { wakeWord: '我距离目标还差什么', scene: '10', kind: 'exec', key: 'calorie.view.goal-weight', cli: 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"7d"}\'' },
   { wakeWord: '我这个月做得好的', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"month_highlights","window":"30d"}\'' },
   { wakeWord: '我这个月需要改的', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"month_improve","window":"30d"}\'' },
