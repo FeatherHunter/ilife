@@ -110,13 +110,13 @@ function tocOf(cards: readonly Card[]): string {
 /** 页内一张卡（锚点 id ＋ 区块 HTML）——页内导航与正文都吃它。 */
 function card(id: string, label: string, html: string): Card { return { id, label, html }; }
 
-/** 来源脚注（#523 形状化）：键值行「数据来源／窗口／记录数」，三个独立文本节点，
- *  不再产 `数据来源 · <来源> · 起 → 止 · 共 N 条` 那种 `·` 串（口径统一归 #470）。 */
-function footFacts(source: string, start: string, end: string, count: number): string {
+/** 来源脚注（#523 形状化 ＋ #460 诚实口径）：键值行「数据来源／窗口／窗口天数」，
+ *  `·` 串已去（口径归 #470）；取数面无条数字段，天数不再冒充条数，第三格如实报天。 */
+function footFacts(source: string, start: string, end: string, days: number): string {
   return factStrip([
     { k: '数据来源', v: source },
     { k: '窗口', v: start + ' → ' + end },
-    { k: '记录数', v: '共 ' + fmtNum(count, 0) + ' 条' },
+    { k: '窗口天数', v: '共 ' + fmtNum(days, 0) + ' 天' },
   ]);
 }
 
@@ -274,7 +274,7 @@ function summaryCards(v: ExerciseView): Card[] {
 function summaryEnvelope(v: ExerciseView): SerializableEnvelope {
   const r = v.review;
   return {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise',
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: '运动汇总',
     data: {
       metrics: metricsOf({
         totalBurned: r.totalBurned, totalMinutes: r.totalMinutes, sessions: r.sessions,
@@ -384,7 +384,7 @@ function goalCalibers(v: ExerciseGoalPageInput, goalTotal: number | null): strin
 
 function goalEnvelope(v: ExerciseGoalPageInput): SerializableEnvelope {
   return {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.exercise-goal',
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: '运动目标',
     data: {
       metrics: metricsOf({
         dailyGoal: v.dailyGoal, goalTotal: v.goalTotal, actual: v.actual,
