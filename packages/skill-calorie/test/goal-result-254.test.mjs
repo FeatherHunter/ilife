@@ -13,6 +13,9 @@
  *      （10841／1549／20276／2.63／676）随成因提交作废，不再是对的期望值。判据形态不变，仍是
  *      **反向锁**：正文换版式换出花来也不许动一个数，动了就红。
  *   ⑤ 可见文本里不出现内部词（命令键／snake_case／库表名那一类，走仓内 `visible-text-probe.mjs` 同一判据）。
+ *   ⑥ **无参随机器钟的形态断言（#609 补，#591 票面点名）**：`calorie.view.goal-expiring` 不传入参 `today`
+ *      时，`daysLeft` 必须＝**截止日 − 机器今天**（值不冻：它一天掉 1，冻住明天就红）。算式与「今天」的
+ *      出处逐条写在测试体内；同族先例 `goal-result-290.test.mjs:204`（那边只判「与 115 不等」）。
  *
  * **反向对照（复核席点名要的那一条）**：只有正向断言时，实现缺失也可能白过。本件另加两发——
  *   · 拿改前那个片段形状（`<section class="ilife-page" …>`）打同一条判据 ⇒ **必须抛**；
@@ -38,6 +41,10 @@ const ROOT = join(HERE, '..', '..', '..');
 const BIN = join(ROOT, 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js');
 const DB_FILENAME = 'calorie_data.db';
 
+/** 种子的体重目标截止日（`docs/research/t81-seed.mjs:52` 的 `daily_goal.goal_deadline`，逐字 `'2026-12-31'`）：
+ *  无参「随机器钟」那条断言要拿它减机器今天。 */
+const SEED_DEADLINE = '2026-12-31';
+
 /** 改前那一版的片段形状（复核报告 §2.2 的产物头）；用来证明四断言咬得住片段。 */
 const FRAGMENT_HEAD = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:goal" '
   + 'style="background:#16181d;color:#e6edf3"><div class="ilife-block-kpiCard-grid">热量目标 1800 卡</div></section>';
@@ -58,7 +65,8 @@ const FRAGMENT_HEAD = '<section class="ilife-page" data-skill="calorie" data-slo
  *     它**不读** `CALORIE_TODAY`）⇒ 无参时读数随机器钟天天漂（#254 冻的 107 就是 2026-09-15 的机器钟）。
  *     故本件**必须传显式 `today`** 把它钉死：`2026-12-31 − 2026-09-07 = 115` 天，同族先例逐字照
  *     `goal-result-290.test.mjs:45`（那张单子也把无参随机器钟那一支单列成断言，见该件 `:204`；
- *     `goal-weight-deadline-548.test.mjs:124` 同口径）。 */
+ *     `goal-weight-deadline-548.test.mjs:124` 同口径）。钉住之后**无参那一支就没有断言守着**，
+ *     故 #609 另加一条只判形态的断言（见下「⑥ 无参随机器钟」）。 */
 const CASES = [
   {
     name: 'goal-7d', key: 'calorie.view.goal', params: { window: '7d' },
@@ -177,4 +185,32 @@ test('#254 反向对照：判据咬得住片段、认得整页，metrics 对照�
   assert.equal(wide.status, 0, '30 天窗应 exit 0');
   assert.throws(() => assert.deepEqual(wide.env?.data?.metrics, CASES[0].metrics, '错配对照'),
     /错配对照/, '两份不同的 metrics 竟然判等 —— 第 ④ 条恒真，白过');
+});
+
+test('#254 ⑥ 无参随机器钟：daysLeft ＝ 截止日 − 机器今天（值不冻，只判形态）', () => {
+  const tpl = mkTemplate();
+  /* 同一件命令，**不传** `today`（主测 `CASES.expiring` 传的是 `SEED_TODAY`）：这条要的就是
+   * 「无参 ⇒ 取机器钟」那一支。出处：`src/goal/goalExtraPlate.ts:42` 逐字
+   * `const t = today ?? new Date().toISOString().slice(0, 10);`——本命令的「今天」只认入参 `today`，
+   * **不读** `CALORIE_TODAY`（同仓另注：`goal-weight-deadline-548.test.mjs:124`）。 */
+  const r = runCli(tpl, 'expiring-machine-clock', 'calorie.view.goal-expiring', {});
+  assert.equal(r.status, 0, '无参 expiring 应 exit 0，实测 ' + r.status + '（stderr：' + r.stderr.slice(0, 200) + '）');
+  /* 期望值＝**形态**（不写死数字）：截止日取种子库那一条（`SEED_DEADLINE`，出处见其定义处），
+   * 机器今天取与实现同一套 ISO 日期（`src/goal/goalExtraPlate.ts:42`），差值算式同实现
+   * `:49`：`Math.round((Date.parse(截止日 + 'T12:00:00Z') − Date.parse(今天 + 'T12:00:00Z')) / 86400000)`。 */
+  const machineToday = new Date().toISOString().slice(0, 10);
+  const expectedDaysLeft = Math.round(
+    (Date.parse(SEED_DEADLINE + 'T12:00:00Z') - Date.parse(machineToday + 'T12:00:00Z')) / 86400000);
+  assert.equal(r.env?.data?.metrics?.daysLeft, expectedDaysLeft,
+    '无参 daysLeft 应＝截止日 ' + SEED_DEADLINE + ' − 机器今天 ' + machineToday
+    + '（＝' + expectedDaysLeft + '），实测 ' + JSON.stringify(r.env?.data?.metrics?.daysLeft));
+  /* 反向对照：同一支命令**传**显式 `today: SEED_TODAY` 必须给出 115（`2026-12-31 − 2026-09-07`，
+   * 主测那张冻结表的出处），证明上面那条不是恒真式（两支的读数各按各的「今天」算）。 */
+  const pinned = runCli(tpl, 'expiring-pinned-again', 'calorie.view.goal-expiring', { today: SEED_TODAY });
+  assert.equal(pinned.status, 0, '显式 today 那一支应 exit 0');
+  assert.equal(pinned.env?.data?.metrics?.daysLeft, 115, '显式 today = SEED_TODAY 时 daysLeft 应为 115（日期推导）');
+  if (machineToday !== SEED_TODAY) {
+    assert.notEqual(r.env?.data?.metrics?.daysLeft, pinned.env?.data?.metrics?.daysLeft,
+      '机器今天 ≠ 2026-09-07 时，两支读数不该相等（否则「随机器钟」这句名不副实）');
+  }
 });

@@ -98,6 +98,12 @@ export function seedFull(db) {
   }
   // 体重：2025-09-07 ~ 2026-09-07 逐日（覆盖 FX-81-7 家族的两期对比锚点：一年前／半年前／三月前、
   // 「最近 30 天 vs 之前 30 天」，以及 ≥14 天能力 view.predict／view.goal-predict／view.weight-compare）。
+  // **互链（#591／#609 重冻第二批）**：下面这条式子（`75.0 − i×0.012`，最近一次称重＝**70.6kg**）是
+  // 「档案 TDEE」的体重入参——`src/analysis/series.ts::loadProfileTdee` 自提交 `7831393`（#518 W2，
+  // #463 候选 A）起改读**最近一次称重**（无记录才回退 70.0）。**改这条式子会令这些冻结值再红**：
+  // `test/396-gap-caliber.test.mjs`（缺口 1696／消耗 2885）、`test/566-result-title.test.mjs`
+  // （10886／1555／20357／679／2.64）、`test/goal-result-254.test.mjs`（同五值）——三件都按当刻口径
+  // 重冻过，重冻逐条出处见 `docs/skills/skill-calorie/t591-重冻二批-证据.md`。
   for (let i = 0; i < 367; i++) {
     const d = new Date(Date.parse('2025-09-07T12:00:00Z') + i * 86400000).toISOString().slice(0, 10);
     const w = Math.round((75.0 - i * 0.012) * 10) / 10;
