@@ -178,7 +178,7 @@ test('#271 餐别支／总览支：调用点给了取数才换页，区块走 #2
       start: '2026-09-01', end: '2026-09-07', days: 7, meal: 'all', mealLabel: '全部餐别',
       items: [{ date: '2026-09-07', time: '08:10', meal: '早餐', food: '燕麦粥', grams: 60, cal: 320, protein: 12 }],
       total: 1, totalCal: 320, avg: 46,
-      oneLine: '最近 7 天共 1 餐；早餐热量占比最高（100%）。',
+      oneLine: '最近 7 天共 1 餐。早餐热量占比最高（100%）。',
       dist: [{ label: '早餐', count: 1, cal: 320, pct: 100 }],
     },
   }));

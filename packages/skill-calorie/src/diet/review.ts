@@ -153,10 +153,12 @@ export function buildMealDistributionView(
     : [];
   const mealLabel = meal === 'all' ? '全部餐别' : meal;
   const top = dist.length > 0 ? dist.reduce((a, b) => (b.pct > a.pct ? b : a), dist[0] as MealDistributionSlice) : null;
+  /* #591 · 门禁 R2：这一句原来把「几餐」与「谁占比最高」用 `；` 串成一行（`audit-separators.mjs` 判债），
+     拆成两句（同一件事仍在一行副题里，事实一条不减）。 */
   const oneLine = meal === 'all'
     ? (selected.length === 0
       ? '最近 ' + days + ' 天没有饮食记录。'
-      : '最近 ' + days + ' 天共 ' + selected.length + ' 餐；' + (top as MealDistributionSlice).label
+      : '最近 ' + days + ' 天共 ' + selected.length + ' 餐。' + (top as MealDistributionSlice).label
         + '热量占比最高（' + (top as MealDistributionSlice).pct + '%）。')
     : '最近 ' + days + ' 天' + mealLabel + '：' + selected.length + ' 餐，日均 ' + avg + ' 卡。';
   return { start, end, days, meal, mealLabel, items: selected, total: selected.length, totalCal, avg, oneLine, dist };

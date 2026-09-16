@@ -253,7 +253,7 @@ test('#273 ⑤ 餐别取数：四餐一桶不漏 ＋ 与老脚本同口径的读
   assert.deepEqual(ALL.dist.map((s) => [s.label, s.count, s.cal, s.pct]),
     [['早餐', 4, 989, 29.6], ['午餐', 4, 1750, 52.4], ['晚餐', 1, 500, 15], ['加餐', 1, 100, 3]],
     '四桶读数与老脚本口径不一致：' + JSON.stringify(ALL.dist));
-  assert.equal(ALL.oneLine, '最近 7 天共 10 餐；午餐热量占比最高（52.4%）。', '结论句与老脚本那句不同');
+  assert.equal(ALL.oneLine, '最近 7 天共 10 餐。午餐热量占比最高（52.4%）。', '结论句与老脚本那句不同');
   assert.equal(BREAKFAST.total, 4, '早餐支的餐数不是 4');
   assert.equal(BREAKFAST.totalCal, 989, '早餐支的累计热量不是 989');
   assert.equal(BREAKFAST.avg, 141.3, '早餐支的日均不是 141.3');
