@@ -12,6 +12,7 @@ import type { SerializableEnvelope } from 'base-paint';
 import { renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { pairStrip, weightUiCss, windowStrip } from '../weight/weightUi.js';
 import { nums } from '../shared/params.js';
 import type { GoalWeight } from '../render/goalPlate.js';
 import { nowStamp } from '../render/receipt.js';
@@ -32,17 +33,18 @@ function gapOf(g: GoalWeight): number | null {
   return Math.round((g.latestKg - g.weightGoal) * 100) / 100;
 }
 
-/** 结论句（一句话；只用入参已有的起止日期，不编新日期）。 */
+/** 结论句（一句话；只用入参已有的起止日期，不编新日期）。
+ * #545（并入 #436）：结论块标题已是「结论」，句首不再加「结论：」前缀。 */
 export function goalWeightSummary(g: GoalWeight): string {
   const gap = gapOf(g);
   const head = '目标 ' + fmtKg(g.weightGoal) + ' vs 最新 ' + fmtKg(g.latestKg);
   const tail = '（本窗 ' + g.start + ' ~ ' + g.end + ' 净变化 ' + fmtSigned(g.deltaKg) + '，有记录 ' + g.loggedDays + ' 天）';
   if (gap === null) {
-    if (g.weightGoal === null) return '结论：' + head + '，未定体重目标（先「定体重目标」）' + tail + '。';
-    return '结论：' + head + '，本窗无体重记录' + tail + '。';
+    if (g.weightGoal === null) return head + '，未定体重目标（先「定体重目标」）' + tail + '。';
+    return head + '，本窗无体重记录' + tail + '。';
   }
-  if (gap <= 0) return '结论：' + head + '，已达标' + tail + '。';
-  return '结论：' + head + '，还差 ' + gap + ' kg' + tail + '。';
+  if (gap <= 0) return head + '，已达标' + tail + '。';
+  return head + '，还差 ' + gap + ' kg' + tail + '。';
 }
 
 /** 体重目标整页（KPI 四格＋数据表＋复制双钮＋结论；`command` 为可照抄重跑的命令原文）。 */
@@ -52,7 +54,14 @@ export function buildGoalWeightDoc(g: GoalWeight, command: string): string {
   const gapDetail = gap === null
     ? (g.weightGoal === null ? '未定体重目标' : '本窗无体重记录')
     : '目标 ' + g.weightGoal + ' kg';
-  const parts: string[] = [renderKpiGrid([
+  const parts: string[] = [
+    // #545（#340 打回批第 ⑧ 项）：副标题那句 `·` 串整行撤，三件事各进形状放正文首件——
+    // 目标与最新走两端值（`pairStrip`，中缝沿原串写 `vs`），窗口走窗口条（`windowStrip`，
+    // 日期块＋箭头、窄卡不断散）。`weightUiCss()` 按口径放 parts 第一项（只读引用，不搬家）。
+    weightUiCss(),
+    pairStrip('目标 ' + fmtKg(g.weightGoal), '最新 ' + fmtKg(g.latestKg), 'vs')
+    + windowStrip(g.start, g.end),
+    renderKpiGrid([
     {
       label: '体重目标', value: g.weightGoal === null ? '—' : String(g.weightGoal),
       ...(g.weightGoal === null ? {} : { unit: 'kg' }),
@@ -61,7 +70,7 @@ export function buildGoalWeightDoc(g: GoalWeight, command: string): string {
     {
       label: '最新体重', value: g.latestKg === null ? '—' : String(g.latestKg),
       ...(g.latestKg === null ? {} : { unit: 'kg' }),
-      detail: g.start + ' ~ ' + g.end,
+      // #545：窗口已住正文首件 `windowStrip()`，卡片 `detail` 不再复读日期区间（窄卡会从日期中间断开）。
     },
     { label: '净变化', value: fmtSigned(g.deltaKg), detail: '有记录 ' + g.loggedDays + ' 天' },
     { label: '距目标', value: gapValue, detail: gapDetail },
@@ -102,7 +111,8 @@ export function buildGoalWeightDoc(g: GoalWeight, command: string): string {
     docTitle: DOC_TITLE,
     title: '体重目标',
     eyebrow: 'calorie.view.goal-weight · 目标管理域',
-    subtitle: '目标 ' + fmtKg(g.weightGoal) + ' vs 最新 ' + fmtKg(g.latestKg) + ' · ' + g.start + ' ~ ' + g.end,
+    // #545：副标题整行撤（目标／最新／窗口已是正文首件形状，副标题再写一遍是冗余）。传空串即整段省略。
+    subtitle: '',
     content: parts.join(''),
     charts: false,
   });
