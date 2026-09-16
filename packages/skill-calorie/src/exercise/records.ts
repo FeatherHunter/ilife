@@ -258,7 +258,7 @@ function figureCard(v: RecordsView): Card {
   return {
     id: 'sec-figures',
     label: '指标',
-    html: renderKpiGrid([
+    html: '<h2 style="margin:0;font-size:15px;font-weight:700">指标</h2>' + renderKpiGrid([
       { label: '记录数', value: String(v.sessions), unit: '条' },
       { label: '总消耗', value: fmtNum(v.totalBurned), unit: '卡' },
       { label: '总时长', value: v.totalMinutes === null ? '—' : fmtNum(v.totalMinutes, 0), unit: '分钟' },

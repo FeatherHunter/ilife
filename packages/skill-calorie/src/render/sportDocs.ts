@@ -148,11 +148,11 @@ function pageBody(cards: readonly Card[], caliber: readonly string[], source: st
 function summaryKpi(v: ExerciseView): KpiCardInput[] {
   const r = v.review;
   return [
-    { label: '总消耗', value: fmtNum(r.totalBurned), unit: '卡' },
+    { label: '总消耗', value: fmtNum(r.totalBurned, 0), unit: '卡' },
     { label: '总时长', value: fmtNum(r.totalMinutes, 0), unit: '分钟',
       detail: '每次平均 ' + fmtNum(r.totalMinutes / Math.max(1, r.sessions), 0) + ' 分钟' },
     { label: '次数', value: String(r.sessions), unit: '次', detail: '活跃 ' + r.activeDays + ' 天' },
-    { label: '日均', value: fmtNum(v.avgBurnedPerLoggedDay), unit: '卡', detail: '按有记录的天数算' },
+    { label: '日均', value: fmtNum(v.avgBurnedPerLoggedDay, 0), unit: '卡', detail: '按有记录的天数算' },
   ];
 }
 
@@ -180,7 +180,7 @@ function truncation(days: number): { visible: boolean; note: string } {
 function seriesCard(v: ExerciseView): Card | null {
   if (v.series.length === 0) return null;
   const rows = v.series.map((d: DaySeries) => ({
-    date: d.date, burn: d.exerciseKcal === null ? '—' : fmtNum(d.exerciseKcal, 1) + ' 卡',
+    date: d.date, burn: d.exerciseKcal === null ? '—' : fmtNum(d.exerciseKcal, 0) + ' 卡',
   }));
   const cut = truncation(rows.length);
   const table = renderDataTable({
@@ -189,8 +189,8 @@ function seriesCard(v: ExerciseView): Card | null {
     caption: '按日消耗',
     emptyText: '本窗无按日消耗',
   });  return {
-    id: 'sec-series', label: '逐日明细',
-    html: table + (cut.note === '' ? '' : '<p class="sui-note">' + escapeHtml(cut.note) + '</p>'),
+    id: 'sec-series', label: '按日消耗',
+    html: (cut.note === '' ? '' : '<p class="sui-note">' + escapeHtml(cut.note) + '</p>') + table,
   };
 }
 
@@ -213,7 +213,7 @@ function typeCard(v: ExerciseView): Card | null {
       ],
       rows: byType.map((t) => ({
         type: t.type, cat: inferCategory(t.type), sessions: t.sessions + ' 次',
-        burned: fmtNum(t.burned) + ' 卡', minutes: fmtNum(t.minutes, 0) + ' 分钟',
+        burned: fmtNum(t.burned, 0) + ' 卡', minutes: fmtNum(t.minutes, 0) + ' 分钟',
       })),
       caption: '按类型明细（共 ' + byType.length + ' 类）',
       emptyText: '本窗无类型明细',
@@ -225,15 +225,15 @@ function typeCard(v: ExerciseView): Card | null {
  *  四格 KPI ／ 每日消耗折线 ／ 类型消耗分布 ／ 逐日明细 ／ 按类型明细 ／ 按分类汇总，逐块判空。 */
 function summaryCards(v: ExerciseView): Card[] {
   const r = v.review;
-  const cards: Card[] = [{ id: 'sec-kpi', label: '核心数字', html: renderKpiGrid(summaryKpi(v)) }];
+  const cards: Card[] = [{ id: 'sec-kpi', label: '核心数字', html: '<h2 style="margin:0;font-size:15px;font-weight:700">核心数字</h2>' + renderKpiGrid(summaryKpi(v)) }];
   const logged = v.series.filter((d: DaySeries) => d.exerciseKcal !== null);
   if (logged.length > 0) {
     cards.push(card('sec-trend', '每日消耗', renderChartBlock({
       kind: 'line',
       title: '每日消耗',
       input: {
-        items: v.series.map((d: DaySeries) => ({ label: d.date.slice(5), value: d.exerciseKcal })),
-        options: { markLine: { value: v.avgBurnedPerLoggedDay ?? undefined, label: '日均' } },
+        items: v.series.map((d: DaySeries) => ({ label: (v.start.slice(0, 4) !== v.end.slice(0, 4) ? d.date : d.date.slice(5)), value: d.exerciseKcal })),
+        options: { markLine: { value: v.avgBurnedPerLoggedDay ?? undefined, label: '日均' }, showDots: true },
       },
     })));
   }
@@ -245,10 +245,10 @@ function summaryCards(v: ExerciseView): Card[] {
     const distNote = r.byType.length > DIST_TOP
       ? '<p class="sui-note">' + escapeHtml('只列消耗最高的 ' + DIST_TOP + ' 类，逐类消耗见下方按类型明细表') + '</p>'
       : '';
-    cards.push(card('sec-dist', '类型消耗分布', renderDistributionRows({
+    cards.push(card('sec-dist', '类型消耗分布', '<h2 style="margin:0;font-size:15px;font-weight:700">类型消耗分布</h2>' + renderDistributionRows({
       rows: top.map((t) => ({
         label: t.type,
-        value: fmtNum(t.burned) + ' 卡',
+        value: fmtNum(t.burned, 0) + ' 卡',
         pct: max === 0 ? 0 : Math.max(0, Math.min(100, (t.burned / max) * 100)),
       })),
     }) + distNote));
@@ -262,7 +262,7 @@ function summaryCards(v: ExerciseView): Card[] {
     cards.push(card('sec-cat', '按分类汇总', renderDisclosure({
       title: '按分类汇总（共 ' + cats.length + ' 类）',
       contentHtml: renderListRows({
-        items: cats.map(([cat, s]) => ({ left: cat, main: s.sessions + ' 次', right: fmtNum(s.burned) + ' 卡' })),
+        items: cats.map(([cat, s]) => ({ left: cat, main: s.sessions + ' 次', right: fmtNum(s.burned, 0) + ' 卡' })),
       }),
     })));
   }

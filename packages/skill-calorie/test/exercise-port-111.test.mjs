@@ -251,7 +251,7 @@ test('#111 有氧总览：按类型聚合＋配速＋逐条记录', () => {
     assert.equal(out.data.metrics.totalDistanceKm, 23);
     assert.equal(out.data.metrics.avgPaceMinPerKm, 4.78);
     assertDoc(out.html, 'exercise-cardio');
-    for (const needle of ['有氧训练总览', '2026-09-05 ~ 2026-09-07', '4.78 分/公里', '跑步', '骑行', '按类型聚合', '逐条记录', '复制数据']) {
+    for (const needle of ['有氧训练总览', '2026-09-05 ~ 2026-09-07', '4.8 分/km', '跑步', '骑行', '按类型聚合', '逐条记录', '复制数据']) {
       assert.ok(out.html.includes(needle), 'cardio 缺：' + needle);
     }
     // #475 补硬（③）：题面一处 ＋ 窗口一处（与 ② 同两条口径）。

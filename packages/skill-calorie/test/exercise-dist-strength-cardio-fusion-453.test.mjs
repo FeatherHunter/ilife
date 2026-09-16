@@ -67,8 +67,8 @@ const WINDOW = { window: '7d' };
  *  实测撞 `exercise-accept-267.test.mjs:528` 的「眉标＝它自己那一族」钉子（那件不在本票写集），已回退。 */
 const EYEBROW = {
   distribution: '运动类型分布',
-  strength: '运动力量总览',
-  cardio: '运动有氧总览',
+  strength: '力量训练总览',
+  cardio: '有氧训练总览',
 };
 /** 四类色（**只在本测试里当期望值**；实现侧一律走 `categoryColor()`，不写第二份色表）。 */
 const HEX = { strength: '#5856d6', cardio: '#0071e3', flex: '#34c759', daily: '#ff9500' };

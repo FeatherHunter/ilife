@@ -179,7 +179,7 @@ function detailCard(rows: readonly ExerciseRow[]): Card | null {
   return {
     id: 'sec-detail',
     label: '逐条明细',
-    html: renderDataTable({
+    html: renderDisclosure({ title: '逐条明细', contentHtml: renderDataTable({
       columns: DETAIL_COLUMNS.map((label) => ({ key: label, label })),
       rows: rows.map((r) => ({
         日期: cellText(r['date']),
@@ -189,7 +189,7 @@ function detailCard(rows: readonly ExerciseRow[]): Card | null {
         备注: cellText(r['note']),
       })),
       caption: '逐条明细',
-    }),
+      }), open: true }),
   };
 }
 

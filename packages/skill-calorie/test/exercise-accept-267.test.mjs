@@ -92,8 +92,8 @@ const EYEBROW_OF_KEY = new Map([
   // #544（类型分布／力量／有氧／趋势／复盘五族）：眉标去 `·`——`·` 是分隔符债，探针节点级必须为 0；
   // 类别「运动」与页族名都还在，只是不拿符号串。
   ['calorie.view.exercise-distribution', '运动类型分布'],
-  ['calorie.view.exercise-strength', '运动力量总览'],
-  ['calorie.view.exercise-cardio', '运动有氧总览'],
+  ['calorie.view.exercise-strength', '力量训练总览'],
+  ['calorie.view.exercise-cardio', '有氧训练总览'],
   ['calorie.view.exercise-trend', '运动趋势'],
   ['calorie.view.exercise-recap', '运动复盘'],
 ]);
@@ -116,8 +116,8 @@ const PAGE_OF_TEMPLATE = new Map([
   ['templates/exercise_distribution.html', { eyebrow: '运动类型分布', copyPage: '运动类型分布' }],
   ['templates/exercise_trend.html', { eyebrow: '运动趋势', copyPage: '运动趋势' }],
   ['templates/exercise_recap.html', { eyebrow: '运动复盘', copyPage: '运动复盘' }],
-  ['templates/exercise_strength.html', { eyebrow: '运动力量总览', copyPage: '力量训练总览' }],
-  ['templates/exercise_cardio.html', { eyebrow: '运动有氧总览', copyPage: '有氧训练总览' }],
+  ['templates/exercise_strength.html', { eyebrow: '力量训练总览', copyPage: '力量训练总览' }],
+  ['templates/exercise_cardio.html', { eyebrow: '有氧训练总览', copyPage: '有氧训练总览' }],
 ]);
 
 /** 票面第三组：曾经指错页的**读类词**——按**模板件名**派生（分布／趋势／复盘三件下的全部词）。

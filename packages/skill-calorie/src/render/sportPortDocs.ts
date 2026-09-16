@@ -72,7 +72,7 @@ function fmt(n: number | null | undefined): string {
 
 function fmtPace(p: number | null | undefined): string {
   if (p === null || p === undefined) return '—';
-  return fmtNum(p, 1) + ' 分/公里';
+  return fmtNum(p, 1) + ' 分/km';
 }
 
 /** 逐条记录表（100 条截断明示，沿 R3 口径；备注仅展示，不做筛选维度）。 */
@@ -110,7 +110,7 @@ function windowCard(start: string, end: string, description: string): Card {
 /** 数值格的人话写法：缺值一律「—」（不空着、也不编 0）；`unit` 空串即不带单位。
  *  #544：显示层取整走 `sportUi.fmtNum()`（整数不带小数点；库内浮点尘不上屏）。
  *  计数类单位（次／组／条／个／分钟／空串）取 0 位小数，量值类（卡／kg／km／公里）取 1 位。 */
-const INT_UNITS: ReadonlySet<string> = new Set(['', '次', '组', '条', '个', '分钟']);
+const INT_UNITS: ReadonlySet<string> = new Set(['', '次', '组', '条', '个', '分钟', '卡']);
 function numUnit(v: number | null | undefined, unit: string): string {
   if (v === null || v === undefined) return '—';
   const n = fmtNum(v, INT_UNITS.has(unit) ? 0 : 1);
@@ -349,7 +349,7 @@ export function buildStrengthDoc(v: StrengthView): string {
     windowCard(v.start, v.end, '只数分类为力量的记录。库内分类实填优先，缺失按名推断。配速与时长口径不在此页'),
     {
       id: 'sec-figures',
-      label: '核心数字',
+      label: '核心数字', head: '核心数字',
       // #544：主角（总重量）排首卡吃 28px；窗口与口径事实住窗口条与口径行，卡里只报数。
       html: renderKpiGrid([
         { label: '总重量', value: numUnit(v.totalVolumeKg, 'kg') },
@@ -433,7 +433,7 @@ export function buildStrengthDoc(v: StrengthView): string {
     // #544 视觉第 1 轮：眉标曾试改成与 H1 逐字一致（`力量训练总览`），实测撞 `exercise-accept-267.test.mjs:528`
     // 的「眉标＝它自己那一族」钉子（`'力量训练总览' !== '运动力量总览'`）——那件不在本票写集，故**回退**，
     // 两处命名并存记进证据件 §八（转票处置，本票不自行放宽别席判据）。
-    eyebrow: '运动力量总览',
+    eyebrow: '力量训练总览',
     subtitle: '按动作聚合＋重量轨迹（缺值显「—」，不编数）',
     content: exerciseUiCss() + S544_CSS
       + windowStrip(v.start, v.end, windowDays(v.start, v.end) + ' 天')
@@ -455,8 +455,8 @@ const CARDIO_SOURCE = '运动记录（本窗未删除的有氧行）';
 /** 有氧页口径行（#544：一条事实一行；第一条保留 `口径：` 前缀，回归判据读它）。 */
 const CARDIO_CALIBERS: readonly string[] = [
   '口径：次数＝本窗记录条数',
-  '时长＝分钟，距离＝公里',
-  '步速＝分钟÷公里，没有距离就不算步速',
+  '时长＝分钟，距离＝km',
+  '步速＝分钟÷km，没有距离就不算步速',
   '缺一格显「—」，不空着也不编 0',
 ];
 
@@ -466,11 +466,11 @@ export function buildCardioDoc(v: CardioView): string {
     windowCard(v.start, v.end, '只数分类为有氧的记录。库内分类实填优先，缺失按名推断。柔韧与日常不在此页'),
     {
       id: 'sec-figures',
-      label: '核心数字',
+      label: '核心数字', head: '核心数字',
       // #544：主角（总时长）排首卡吃 28px；窗口与口径事实住窗口条与口径行，卡里只报数。
       html: renderKpiGrid([
         { label: '总时长', value: numUnit(v.totalMinutes, '分钟') },
-        { label: '总距离', value: numUnit(v.totalDistanceKm, '公里') },
+        { label: '总距离', value: numUnit(v.totalDistanceKm, 'km') },
         { label: '次数', value: String(v.sessions), unit: '次' },
         { label: '平均步速', value: fmtPace(v.avgPaceMinPerKm) },
       ]),
@@ -500,7 +500,7 @@ export function buildCardioDoc(v: CardioView): string {
     });
     cards.push({
       id: 'sec-chart',
-      label: '类型图',
+      label: '按类型次数',
       html: renderChartBlock({
         kind: 'bar',
         title: '按类型次数',
@@ -541,7 +541,7 @@ export function buildCardioDoc(v: CardioView): string {
     docTitle: '卡路里 有氧训练总览',
     title: '有氧训练总览',
     // #544 视觉第 1 轮：同力量页，眉标与 H1 并存两名是既成钉子（`exercise-accept-267.test.mjs:528`），本票回退。
-    eyebrow: '运动有氧总览',
+    eyebrow: '有氧训练总览',
     subtitle: '按类型聚合＋步速（没有距离就不算步速，缺值显「—」）',
     content: exerciseUiCss() + S544_CSS
       + windowStrip(v.start, v.end, windowDays(v.start, v.end) + ' 天')
@@ -584,7 +584,7 @@ export function buildDistributionDoc(v: DistributionView): string {
     windowCard(v.start, v.end, '分类先看库内填写，四类之外归入其他。占比按该类热量占本窗合计'),
     {
       id: 'sec-figures',
-      label: '核心数字',
+      label: '核心数字', head: '核心数字',
       // #544：主角（总消耗）排首卡吃 28px；窗口天数住窗口条胶囊，会话卡只报活跃天数。
       html: renderKpiGrid([
         { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
@@ -601,7 +601,7 @@ export function buildDistributionDoc(v: DistributionView): string {
     // 分类占比：迷你条与数字同格；条色走 `categoryColor()` 的 hex（四类色不在此处另写一份）。
     cards.push({
       id: 'sec-ratio',
-      label: '分类占比',
+      label: '分类占比', head: '分类占比',
       html: renderDistributionRows({
         rows: v.buckets.map((b) => ({
           label: b.category,
@@ -643,11 +643,11 @@ export function buildDistributionDoc(v: DistributionView): string {
     });
     cards.push({
       id: 'sec-chart',
-      label: '分类图',
+      label: '按分类热量分布',
       html: renderChartBlock({
         kind: 'bar',
         title: '按分类热量分布',
-        input: { items: v.buckets.map((b) => ({ label: b.category, value: Number(fmtNum(b.burned)) })) },
+        input: { items: v.buckets.map((b) => ({ label: b.category, value: Number(fmtNum(b.burned, 0)) })) },
       }),
     });
     cards.push({
@@ -748,7 +748,7 @@ export function buildRecapDoc(v: RecapView): string {
     // 类型分布条：条色只走 `categoryColor()` 的 hex；占比按次数（与结论句同一口径）。
     const dailyItems = v.daily.map((d) => ({
       label: d.date.slice(5),
-      value: d.burned === null ? null : Number(fmtNum(d.burned)),
+      value: d.burned === null ? null : Number(fmtNum(d.burned, 0)),
     }));
     cards.push({
       id: 'sec-category',
@@ -757,7 +757,7 @@ export function buildRecapDoc(v: RecapView): string {
       html: renderDistributionRows({
         rows: v.byCategory.map((b) => ({
           label: b.category,
-          value: b.sessions + ' 次 ' + fmtNum(b.burned) + ' 卡',
+          value: b.sessions + ' 次 ' + fmtNum(b.burned, 0) + ' 卡',
           pct: Math.round((b.sessions / v.sessions) * 1000) / 10,
           ...colorOf(b.category),
         })),
@@ -841,7 +841,7 @@ export function buildTrendDoc(v: TrendView): string {
     windowCard(v.start, v.end, '按天看这段的走势。只说天数时默认三十天，这里按起止日期定窗'),
     {
       id: 'sec-figures',
-      label: '核心数字',
+      label: '核心数字', head: '核心数字',
       // #544：主角（总消耗）排首卡吃 28px；窗口住窗口条胶囊，只留峰值那一处点睛。
       html: renderKpiGrid([
         { label: '总消耗', value: numUnit(v.totalBurned, '卡') },
@@ -856,12 +856,12 @@ export function buildTrendDoc(v: TrendView): string {
     },
   ];
   if (hasRows) {
-    // 每日消耗折线：消耗实线（共享刻度）＋时长虚线（`ownScale` 独立刻度，两套刻度互不压平）；
+    // 每日消耗折线：消耗实线（共享刻度）＋时长虚线（`ownScale` 独立归一，不另出第二套刻度）；
     // 没有记录的日子当场是 `null`（不是 0），点自然断开——「空缺断点不断 0」由数据结构保证。
     // #544：图表入参过显示层取整（空值仍 `null`，不断 0 口径不动）。
     const burnItems = v.days.map((d) => ({
       label: d.date.slice(5),
-      value: d.burned === null ? null : Number(fmtNum(d.burned)),
+      value: d.burned === null ? null : Number(fmtNum(d.burned, 0)),
     }));
     const minItems = v.days.map((d) => ({
       label: d.date.slice(5),
@@ -873,7 +873,7 @@ export function buildTrendDoc(v: TrendView): string {
       // #268 K4：长窗（≥45 天）在折线卡下方补一条日期轴（只出窗口内部日期，短窗不出）。
       html: withXRuler(renderChartBlock({
         kind: 'line',
-        title: '每日消耗与时长（消耗实线，时长虚线，两套刻度）',
+        title: '每日消耗与时长（消耗实线，时长虚线）',
         input: {
           items: burnItems,
           options: {
