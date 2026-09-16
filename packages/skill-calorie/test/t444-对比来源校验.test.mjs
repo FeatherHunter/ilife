@@ -13,7 +13,7 @@
  *   把 `compare.ts` 的 `assertSourceFilter` 那一行删掉 → 本文件「未知来源」两条必红；还原 → 必绿。
  * 围度去处：`body_measurements` 表无来源列、`compareMeasurements` 不收来源，
  *   对比围度命令多传 `source` 原样忽略（本文件锁 exit 0 且与不传逐字节相同）。
- * 运行：先 `npx tsc -b packages/skill-calorie`，再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  *   `node --test packages/skill-calorie/test/t444-对比来源校验.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（spawn 的 `SKILLS_DB_PATH` 只指该 tmp 目录）。
  */

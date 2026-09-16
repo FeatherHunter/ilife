@@ -25,7 +25,7 @@
  * 负向对照（源码级变异，持锁另做，两行机器读数见 `docs/skills/skill-calorie/t365-整页证据.md`）：
  *   M1 把 `cli/write.ts:84` 那条链里的 `bodyReceiptDoc(...)` 摘掉（端口退回片段）→ 六项读数必红；
  *   还原 ⇒ 必绿。本文件另在**行为层**钉住同一条（组装口缺席即落回 `receiptHtml` 的 `op=` 片段）。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
  *   `node --test packages/skill-calorie/test/t365-七条写词整页.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库一个字节不动。
  */

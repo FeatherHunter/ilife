@@ -14,7 +14,7 @@
  *  ③ `hasAnyDietRow` 的**定义只剩一处**（铁律二「概念唯一」）：`diet/nutritionPort.ts`。
  *
  * 跑法：`node --test packages/skill-calorie/test/t271-总览接线与两态.test.mjs`
- * （先 `npx tsc -b packages/skill-calorie`）。库与产物都落系统 tmp，收尾自证不落仓内件。
+ * （先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。库与产物都落系统 tmp，收尾自证不落仓内件。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

@@ -10,7 +10,7 @@
  *   ③ **分派面不动别的格**：`dietReceiptDoc` 对**其余会改数据库的命令一律返回 null**，
  *      调用方（`src/cli/write.ts`）原样放行 ⇒ 别的写命令产物不变（逐字节快照见 `t270-快照比对.mjs`）。
  *
- * 跑法：`node --test packages/skill-calorie/test/t270-回执四块.test.mjs`（先 `npx tsc -b packages/skill-calorie`）。
+ * 跑法：`node --test packages/skill-calorie/test/t270-回执四块.test.mjs`（先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

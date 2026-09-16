@@ -25,7 +25,7 @@
  *   M2 复制 payload 把空写成「—」→ 载荷断言必红；还原 → 必绿。
  *   M3（#443）把载荷断言改回全文 `JSON.stringify.includes('—')` → R1 备注「—」必红；还原 → 必绿。
  *   M4（#443）删掉全空行真出口新用例 → 用例计数减 1（红）；还原 → 计数复原（绿）。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
  *   那条会重注入他席 SKILL.md），再 `node --test packages/skill-calorie/test/t361-measure-full-table.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库只读对账见证据。
  */

@@ -7,7 +7,7 @@
  * 页面读数一律走 CLI 真出口（`SKILLS_DB_PATH` 指 mkdtemp，真实库零写入），比对对象＝**同一 tmp 库的查库值**。
  * 「互异」两读都覆盖：冻结种子里 `10`／`12` 各出现两次，故「逐位对上」按槽位判（串位必红）；
  * 另加一组两两不同的种子判严格「互异」。
- * 运行：先 `npx tsc -b`（包内编译；本票不走 `pnpm --filter skill-calorie build`，那条会顺带重注入
+ * 运行：先 `node node_modules/typescript/bin/tsc -b`（包内编译；本票不走 `pnpm --filter skill-calorie build`，那条会顺带重注入
  * 别席在途的 `SKILL.md`），再 `node --test packages/skill-calorie/test/t359-seven-point.test.mjs`。
  */
 import { strict as assert } from 'node:assert';

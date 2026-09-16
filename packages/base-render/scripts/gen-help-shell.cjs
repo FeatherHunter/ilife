@@ -210,7 +210,7 @@ const T = [];
 T.push('/** #136 · help模板 base 侧等价锁（机器生成，哈希常量禁手填）。');
 T.push(' * 锁三面：① PREFIX/SUFFIX 值与源切分逐字节一致（改模板即红）；');
 T.push(' * ② 固定夹具渲染输出逐字节一致（渲染逻辑漂移即红）；③ 源可复现（源切分即得常量）；');
-T.push(' * 运行：先 `npx tsc -b packages/base-render`，');
+T.push(' * 运行：先 `node node_modules/typescript/bin/tsc -b packages/base-render`，');
 T.push(' * 再 `node --test packages/base-render/test/help-shell-136.test.mjs`。');
 T.push(' */');
 T.push("import { strict as assert } from 'node:assert';");

@@ -8,7 +8,7 @@
  *   ③ 结论条只用页里已有的数 ④ 徽章列／状态徽章／堆叠条接上 ⑤ 可见文本零并列分隔符
  *   ⑥ 宽屏页宽由包内既有页面壳件给（本票「宽屏余量」裁定 (a)）
  *
- * 运行：先 pnpm build（或 npx tsc -b），再 node packages/skill-calorie/test/analysis-shape-520.test.mjs
+ * 运行：先 pnpm build（或 node node_modules/typescript/bin/tsc -b），再 node packages/skill-calorie/test/analysis-shape-520.test.mjs
  */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';

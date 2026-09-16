@@ -15,7 +15,7 @@
  *   ④ 判据 ①②（跑命令看剥标签后的可见文本）：围度看页与对比围度页都「肩围出现、旧词零次」。
  * 负向对照（源码级变异，持锁另做，机器读数见证据）：
  *   M3 把唯一来源里 `shoulder_cm` 的中文名改回旧词 → 判据 ①② 同时变红；还原 → 同时变绿。
- * 运行：先 `npx tsc -b packages/skill-calorie`，再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  *   `node --test packages/skill-calorie/test/t440-部位名单一来源.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库只读对账见证据。
  */

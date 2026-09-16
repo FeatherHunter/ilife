@@ -11,7 +11,7 @@
  *  ④ 两态：库为空仍出完整页（既有设计行为）；一条都进不了库时出**空态句 ＋ 引导句**。
  *  ⑤ 变异钩：把产物改坏一处，同一段断言必红（证明断言不是永真）。
  *
- * 跑法：`npx tsc -b packages/skill-calorie` 之后
+ * 跑法：`node node_modules/typescript/bin/tsc -b packages/skill-calorie` 之后
  * `node --test packages/skill-calorie/test/t277-预检确认页.test.mjs`
  */
 import { strict as assert } from 'node:assert';

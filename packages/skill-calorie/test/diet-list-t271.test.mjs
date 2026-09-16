@@ -8,7 +8,7 @@
  *      2-补（结论与来源不走深底块）／3（导航＋口径行＋脚注恒出）／4（缺值 `—`）／5（零值不画柱身、
  *      单点不成线）／7（日志第 4 段＝本次命令原文）。
  *
- *  先编译：`npx tsc -b packages/base-render packages/skill-calorie`。
+ *  先编译：`node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie`。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

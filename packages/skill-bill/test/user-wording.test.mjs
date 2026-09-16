@@ -5,7 +5,7 @@
 //   变异 B 把 `typeBadge.ts` 的四枚形状退回一行 `·` 串（那正是本轮要治的病），同样**全绿**。
 // 本件逐条钉：① 映射表里的中文名与「不上屏的那几个标识」；② 徽章那四枚形状各自的承载与「容器上不许有 `·`」。
 //
-// 跑法：`npx tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
+// 跑法：`node node_modules/typescript/bin/tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { statusNoteOf, wakeWordOf, fieldLabelOf, nextStepOf, badgeTextOf } from '../dist/shared/userWording.js';

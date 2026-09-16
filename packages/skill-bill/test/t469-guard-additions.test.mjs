@@ -1,7 +1,7 @@
 // t469 护栏补齐：#407 自查漏钉的 4 条判定逐条钉住，断言只钉现有行为。
 //
 // 红线：不为断言好写改页面可见行为。若现有行为本身有误另开票，本票只加断言。
-// 跑法：`npx tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
+// 跑法：`node node_modules/typescript/bin/tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
 // 本件只加不断言旧件一行不动；全套测试只涨不跌。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';

@@ -13,7 +13,7 @@
  *     文件名**不得**再出现 `身材照`；速查台须显式 `mode` 且独立命名；
  *  ④ 并发两次调用 → 落点永不相同；同秒时后到者 `_2` 递补（`wx` 独占，#128 语义未被本改动破坏）。
  *
- * 运行：先 `npx tsc -b packages/skill-calorie`，再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  * `node --test packages/skill-calorie/test/help-delivery-139.test.mjs`
  */
 import { strict as assert } from 'node:assert';

@@ -25,7 +25,7 @@
  *   `t365-七条写词整页.test.mjs` 的 `sectionRows()` 同一判据），**断言意图一字不变**：
  *   删前值逐格、标签序与格数照旧、两处（回执 `items[0].detail` 与落盘页）仍逐格同源。
  *   其余 5 条用例（裁定 2×2／全填／软删语义／接通面）本票一行未动。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
  *   `node --test packages/skill-calorie/test/t364-删除取快照.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库一个字节不动。
  */

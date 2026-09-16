@@ -8,7 +8,7 @@
 //   `installmentPreview.ts`（尾差对齐末期、日期回退月末、先校验再算、超 24 期折起来）、
 //   `outsideScan.ts`（三要素表、收图数说明、缺失与齐全两态那段话）。
 //
-// 跑法：`npx tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
+// 跑法：`node node_modules/typescript/bin/tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';

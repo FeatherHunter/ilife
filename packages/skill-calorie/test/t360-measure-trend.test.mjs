@@ -14,7 +14,7 @@
  * 负向对照（源码级变异，持锁另做，机器读数见证据）：
  *   把 `latestMeasurementMetric` 改回固定首项（`return MEASUREMENT_FIELDS[0]`）→ 本件「腰围趋势」／「趋势点 3」必红；
  *   还原 → 本件必绿。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
  *   那条会重注入他席 SKILL.md），再 `node --test packages/skill-calorie/test/t360-measure-trend.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去）， shapes 与 t359 同。
  */

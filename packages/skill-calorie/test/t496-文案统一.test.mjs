@@ -15,7 +15,7 @@
  * **变异自证**：把产物里的中文标签换回 `text`（模拟「改坏了」）→ ① 必红；原样 → 必绿。
  *
  * 跑法：`node --test packages/skill-calorie/test/t496-文案统一.test.mjs`
- *（先 `npx tsc -b packages/skill-calorie`）。
+ *（先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

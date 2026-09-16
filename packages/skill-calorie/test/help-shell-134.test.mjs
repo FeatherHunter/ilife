@@ -8,7 +8,7 @@
  *  ③ token 覆盖序：壳 :root 在前、共享 token A 组 :root 在后（以后加载覆盖为准）。
  * 另锁：接线转发一致（renderHelpFileHtml ≡ renderHelpShellHtml）＋缺分组抛 missing-data
  * ＋小于号转义（容器内无原生 </script>，parse 后逐字）。
- * 运行：先 `npx tsc -b packages/skill-calorie`，
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，
  * 再 `node --test packages/skill-calorie/test/help-shell-134.test.mjs`
  */
 import { strict as assert } from 'node:assert';

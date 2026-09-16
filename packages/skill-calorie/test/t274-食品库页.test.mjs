@@ -21,7 +21,7 @@
  *   去重＝条幅＋三读数＋重复组表＋处理建议＋来源脚注；
  *   三页恒出：眉标（唤醒词 · 饮食 ＋ 徽章）／标题／结论句／页内导航／读数／口径行／
  *   复制区**双按钮**（日志第 4 段＝命令原文）／来源脚注（`t425` 裁定 1／2／3／7／10）。
- * 运行：先 `npx tsc -b packages/base-render packages/skill-calorie`（本仓多席并发，别的席在途件报错与本件无关），再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie`（本仓多席并发，别的席在途件报错与本件无关），再
  *   `node --test packages/skill-calorie/test/t274-食品库页.test.mjs`
  *   （件名 2026-09-15 由 `diet-library-t274.test.mjs` 改成 `t274-` 前缀，测试内容不动；
  *   可复跑取证脚本＝`docs/skills/skill-calorie/t274-真跑.mjs`）

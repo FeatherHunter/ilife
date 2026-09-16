@@ -21,7 +21,7 @@
  *   命令串**逐字手写**在下面的 `WANT_*` 常量里；属性表 `PART_RANGE`／`CALIPER_ATTR`／`BF_ATTR` 手抄自老正本；
  *   体脂率手算基准 12.02 ＝ `docs/skills/skill-calorie/t357-皮褶换算证据.md` §四 C1（Python decimal 与老 `jp7()` 两源一致）。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库一个字节不动。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
  *   `node --test packages/skill-calorie/test/t366-复制执行闭环.test.mjs`。
  */
 import { strict as assert } from 'node:assert';

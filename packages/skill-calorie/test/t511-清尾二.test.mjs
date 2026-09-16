@@ -13,7 +13,7 @@
  *  ④ **变异自证**：把新句改回旧写法（`≥25 克/天`→`≥25g/天`、`常吃榜`→`常吃`、`营养素明细`→`营养素深度`），
  *     同一段断言必须红；原样必绿。
  *
- * 跑法：`node --test packages/skill-calorie/test/t511-清尾二.test.mjs`（先 `npx tsc -b packages/skill-calorie`）。
+ * 跑法：`node --test packages/skill-calorie/test/t511-清尾二.test.mjs`（先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

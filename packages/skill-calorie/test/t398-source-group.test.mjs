@@ -13,7 +13,7 @@
  * 负向对照（源码级变异，持锁另做，机器读数见证据）：
  *   M1 把 `listCompositions` 的 `source === 'all'` 判断去掉（退回「按字面来源过滤」）→ 本文件必红；还原 → 必绿。
  *   M2 把 `trendCompositionBySource` 的 `GROUP BY source, date` 退回 `GROUP BY date`（混源成一条线）→ 必红；还原 → 必绿。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`，
  *   那条会重注入他席在途的 `SKILL.md`），再
  *   `node --test packages/skill-calorie/test/t398-source-group.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去）。

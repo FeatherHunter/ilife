@@ -17,7 +17,7 @@
  * 数据面：临时库（`mkdtemp`）＋ `docs/research/t81-seed.mjs` 的 `seedFull()`，`CALORIE_TODAY` 钉
  * `SEED_TODAY`。种子 `daily_goal#1`＝1800／150／200／50、饮水 2000、体重目标 68、截止 2026-12-31。
  *
- * 运行：先 `npx tsc -b packages/skill-calorie`（用例吃 dist），再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（用例吃 dist），再
  * node --test packages/skill-calorie/test/goal-receipt-253.test.mjs
  */
 import { strict as assert } from 'node:assert';

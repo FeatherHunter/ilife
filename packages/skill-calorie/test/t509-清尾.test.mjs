@@ -15,7 +15,7 @@
  * **变异自证**：把新句改回旧写法（`食品库中无此食物`→`—`）、把标题改回旧写法（`拍照记一餐`→
  * `记一餐（含备注）`），同一段断言必须红；原样必绿。
  *
- * 跑法：`node --test packages/skill-calorie/test/t509-清尾.test.mjs`（先 `npx tsc -b packages/skill-calorie`）。
+ * 跑法：`node --test packages/skill-calorie/test/t509-清尾.test.mjs`（先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

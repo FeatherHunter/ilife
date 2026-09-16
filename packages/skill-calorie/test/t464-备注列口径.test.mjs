@@ -17,7 +17,7 @@
  *      （两行机器读数见 `docs/skills/skill-calorie/t464-备注列口径证据.md`）。
  * 不许动：其它列／页口径、唤醒词与命令名、`body_fat_pct`、真库零写入（本文件一切
  * 数据走 mkdtemp tmp 库，`SKILLS_DB_PATH` 指过去；页面落盘在 tmp 目录内）。
- * 运行：先 `npx tsc -b packages/skill-calorie`，再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  *   `node --test packages/skill-calorie/test/t464-备注列口径.test.mjs`。
  */
 import { strict as assert } from 'node:assert';

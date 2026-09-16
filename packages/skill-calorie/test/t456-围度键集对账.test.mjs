@@ -10,7 +10,7 @@
  * 负向对照（源码级变异，持锁另做，机器读数见证据）：
  *   M1 在 `MEASUREMENT_FIELDS` 侧加一个假第 14 键 → 本断言必红并点名差集；还原 → 必绿。
  *   M2 在 `WAIST_DIVERGENCE_ORDER` 侧删一个键 → 本断言必红；还原 → 必绿。
- * 运行：先 `npx tsc -b packages/skill-calorie`，再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  *   `node --test packages/skill-calorie/test/t456-围度键集对账.test.mjs`。
  * 真库零写入：纯内存集合断言，不开库、不读库、不写库。
  */

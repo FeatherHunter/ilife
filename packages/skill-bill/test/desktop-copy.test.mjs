@@ -1,6 +1,6 @@
 // t407 整改（二）的护栏：D1 桌面端 CSS 与 D2 复制区去重各自钉住，改坏一处就要红。
 //
-// 跑法：`npx tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
+// 跑法：`node node_modules/typescript/bin/tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { assembleDocPage } from '../dist/shared/docPage.js';

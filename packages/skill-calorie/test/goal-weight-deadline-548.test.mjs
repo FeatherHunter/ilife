@@ -16,7 +16,7 @@
  * 口径注：`affectedRows` 走 SQLite `total_changes()` 增量——只算「行」不算「列」，
  * 只改 `weight_goal` 也报 1；这里不拿它当「改了几个字段」的判据（字段多少看 `writtenFields`）。
  *
- * 运行：先 `npx tsc -b packages/skill-calorie`，再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  * node --test packages/skill-calorie/test/goal-weight-deadline-548.test.mjs
  */
 import { strict as assert } from 'node:assert';

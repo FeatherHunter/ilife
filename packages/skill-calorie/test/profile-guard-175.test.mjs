@@ -9,7 +9,7 @@
  * ② 能力接缝：`updateProfile(db, …)` 直接调用在空库上抛错，且**不建行**。
  * 反面（防回退）：空库先「设置档案」再「改档案」必须照常成功；空库「设置档案」仍能建行。
  *
- * 运行：先 npx tsc -b，再 node --test packages/skill-calorie/test/profile-guard-175.test.mjs
+ * 运行：先 node node_modules/typescript/bin/tsc -b，再 node --test packages/skill-calorie/test/profile-guard-175.test.mjs
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

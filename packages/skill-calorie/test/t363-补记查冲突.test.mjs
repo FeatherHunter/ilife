@@ -16,7 +16,7 @@
  * 负向对照（源码级变异，持锁另做，两行机器读数见 `docs/skills/skill-calorie/t363-冲突证据.md`）：
  *   M1 把 `body/log.ts` 的写前查同日短路（`existing` 恒空）→ 「同日必有冲突段」判据必红；还原 ⇒ 必绿。
  *   M2 把既有值取错列（`body_fat_pct` → `caliper_chest_mm`）→ 「逐字等于查库值」判据必红；还原 ⇒ 必绿。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
  *   `node --test packages/skill-calorie/test/t363-补记查冲突.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去），真库一个字节不动。
  */

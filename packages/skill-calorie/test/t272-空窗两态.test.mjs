@@ -14,7 +14,7 @@
  *     第三段吃余数 ⇒ 文字三段和恒 100、三段条宽和恒 100；退回「各段各自四舍五入」即红。
  *
  * 跑法：`node --test packages/skill-calorie/test/t272-空窗两态.test.mjs`
- * （先 `npx tsc -b packages/skill-calorie`）。
+ * （先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
  * 变异自证（改坏 → 必红 → 逐文件还原 → 必绿）的可复跑脚本：
  * `node docs/skills/skill-calorie/t272-整改-run.mjs`。
  */

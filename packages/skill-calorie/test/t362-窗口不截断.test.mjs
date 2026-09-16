@@ -15,7 +15,7 @@
  *   M1 把 `body/view.ts` 的默认窗写死 90 天 → 本文件第一条判据读数由 9 变 4 ⇒ 必红；还原 ⇒ 必绿。
  *   M2 把复制 payload 的原始行改写成可见文本（写 `—`）→ 载荷断言必红；还原 ⇒ 必绿。
  *   M3 去掉 `source=all` 的「来源不可直接对比」提示句 → 组数判据必红；还原 ⇒ 必绿。
- * 运行：先 `npx tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
+ * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本票不走 `pnpm --filter skill-calorie build`），再
  *   `node --test packages/skill-calorie/test/t362-窗口不截断.test.mjs`。
  * 真库零写入：一切数据走 mkdtemp tmp 库（`SKILLS_DB_PATH` 指过去）；页面落盘在 tmp 目录内。
  */
