@@ -10,22 +10,24 @@
  * 表单＝renderParamForm 预填值（B-09 静态 label＋input，零 JS；无 select 控件，
  * 来源/性别等以下拉候选写进 hint，B7 边界）。
  * 本层不做取数（数据由 render/wizardPort.ts 备齐），空库不返空页（recent 为空即空态行）。
+ *
+ * #655（负责人验收打回「两页很丑陋」）把这两页从「名＋空框＋灰示例」的三层空表单改成**确认清单**：
+ * 值先以只读一行上屏、点开哪一行才出哪一行的输入（形状与样式住姊妹件 `photo/wizardUi.ts`），
+ * 三档层级与块间分割由本件与本族页内件定；两页一并补上 `pageUi: true`（#525 的页面级移动端配方，
+ * 本族另外七页都在用、只有本件两页漏了——`renderFactStrip` 的形状样式与宽屏 1280 版式都挂在它下面）。
  */
-import {
-  renderDisclosure,
-  renderEmptyBlock,
-  renderKpiGrid,
-  renderParamForm,
-} from 'base-paint/blocks';
+import { renderEmptyBlock, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
+import type { ParamFieldInput } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
 import type {
   GifPlannerView,
   PhotoLogWizardView,
 } from './wizardPort.js';
-import { PHOTO_LOG_TAGS } from './wizardPort.js';
+import { PHOTO_LOG_TAGS, transitionText } from './wizardPort.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea, promptCopyArea } from '../shared/copyArea.js';
 import { chipRow, photoPickRows, photoUiCss } from '../photo/photoUi.js';
+import { editRows, noticeBar, wizardUiCss } from '../photo/wizardUi.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -53,39 +55,67 @@ const TRANSITION_OPTIONS = [
 /** #474（审查整改 3c）· 表单上方那句显著的话：本层表单是零 JS 静态预览——**改了不会自动生效**
  *  （上面那段给 AI 的指令与页上的读数都是按当刻参数生成的，输入框只当"看到的值"）。
  *  不禁用控件（禁用会让人以为"根本不能改"），只把这件事说明白；真接线属公共层另一张票。
- *  #527：句中的 `；` 是并列语义，拆成两句（同一件事一页一处，符号不再顶版面）。 */
-function formNoticeHtml(): string {
-  return '<p><strong>这些是 AI 已经用的值。改了不会自动生效——要改就直接跟 AI 说一句。</strong></p>';
+ *  #527：句中的 `；` 是并列语义，拆成两句（同一件事一页一处，符号不再顶版面）。
+ *  #655：这句的**措辞一字不动**（票面点名要留的就是它），只换承载它的形状——原来用 `<strong>`
+ *  当标题使，视觉重量压过字段；现走 `noticeBar()` 的浅底提示条（13px／不上粗体）。 */
+const FORM_NOTICE = '这些是 AI 已经用的值。改了不会自动生效——要改就直接跟 AI 说一句。';
+
+/** 块标题行（#655）：标题 15/600 在左，右侧一句辅助档小字（不上加粗）；不给小字就只出标题。
+ *  `.phu-sec`（标题档）住 `photo/photoUi.ts`，`.phu-sechead` 一族住 `photo/wizardUi.ts`。 */
+function sectionHead(title: string, hint?: string): string {
+  return '<div class="phu-sechead"><h2 class="phu-sec">' + title + '</h2>'
+    + (hint === undefined ? '' : '<span class="phu-sechead-s">' + hint + '</span>') + '</div>';
+}
+
+/** 一行参数（#655）：确认清单的每行只装**一个**字段——值住行上的只读一行，输入框住展开后的编辑体。
+ *  一行一个 `renderParamForm` 调用：`min／max／step／options` 的落位口径全归公共层，本层不重写。 */
+function paramRow(field: ParamFieldInput): string {
+  return renderParamForm({ fields: [field] });
 }
 
 /* ── 3. 记身材照 wizard（纯配置） ── */
 
 export function buildPhotoLogWizardDoc(v: PhotoLogWizardView): string {
   const content = [
-    renderKpiGrid([
-      // #474（审查整改 2）：`最多 20 张` 与照片路径字段名里的上限重复 → 这一格明细只报数，不再重复限制。
-      { label: '照片', value: String(v.srcPaths.length), unit: '张', detail: '每张一行路径' },
-      // #474：tag 格的「同一类用同一 tag」是操作指南不是数字 → 删（折叠标题里已说清怎么填）。
-      { label: '标签', value: v.tag ?? '未填' },
+    // 页内样式进 parts 第一项（`assembleDocPage` 没有页内 CSS 入口，同 `photoUi.ts` 的处置）。
+    // #655：本件两页的确认清单**样式**另住姊妹件 `photo/wizardUi.ts` —— 那份样式只服务这两页，
+    //  并进 `photoUiCss()` 会让读侧族七页的产物字节跟着变（等于本票顺手动了别人的页）。
+    photoUiCss(), wizardUiCss(),
+    // #655 缺陷 2：这页的定位是「确认 AI 已经用好的值」，改前三个空框一个字的值都看不见
+    //（读数卡只说「0 张／未填」）。现改成**确认清单**：值先只读一行，点开哪一行才出哪一行的输入。
+    //  原来那两张读数卡（照片 N 张／标签 X）不再单出——同一件事由清单的行名与值行角标承载，
+    //  读数一个不丢（张数落 `badge`、标签落它自己那一行的值位）。
+    sectionHead('要登记的三个值', '点开哪一项就改哪一项'),
+    // #655 缺陷 3：提示句从加粗标题降成浅底条，位置仍在字段之前（#474 的判据不变）。
+    noticeBar(FORM_NOTICE),
+    editRows([
+      {
+        k: '照片文件路径', v: v.srcPaths.join('\n'),
+        // 张数是原来读数卡那一格要说的数字 → 改住值行角标（同一件事换形状，不丢读数）。
+        ...(v.srcPaths.length > 0 ? { badge: v.srcPaths.length + ' 张' } : {}),
+        bodyHtml: paramRow({
+          name: 'srcPaths',
+          label: '照片文件路径（最多 20 张。如 D:\\照片\\正面1.jpg，多张换行或逗号分隔）',
+          value: v.srcPaths.join('\n'), hint: '每行 1 个', required: true,
+        }),
+      },
+      {
+        k: '标签', v: v.tag ?? '', emptyText: '还没填',
+        bodyHtml: paramRow({
+          name: 'tag', label: '标签（最多 20 个字）', value: v.tag ?? '', hint: '如：正面', required: true,
+        }),
+      },
+      {
+        k: '备注', v: v.note ?? '', emptyText: '没填（这栏可以不填）',
+        bodyHtml: paramRow({
+          name: 'note', label: '备注', value: v.note ?? '', hint: '如：早上空腹 / 减脂期第 30 天',
+        }),
+      },
     ]),
-    renderDisclosure({
-      // #474：小标题由操作说明改人话（「常用 tag／8 个／其一」三个词说同一件事）。
-      title: '常用标签（点一个填上去）',
-      // #530：8 个词原来拿 `·` 串成一行（探针 R1/R3 命中）→ 改走本域徽章列 `chipRow`
-      //（`renderChips` 一词一徽，测试只要求 8 个词可见，不断言分隔符）。
-      contentHtml: chipRow([...PHOTO_LOG_TAGS]),
-    }),
-    formNoticeHtml(),
-    renderParamForm({
-      // #474：原说明逐字复述三个字段名（百分百冗余）→ 改成一句「这页是干什么的」。
-      description: '照片在你手机或电脑上，这里只登记路径与标签，不会动照片本身',
-      fields: [
-        // #474：示例改成 Windows 真路径，限制并进字段名（原 hint 只在空栏可见，填过就再也看不到）。
-        { name: 'srcPaths', label: '照片文件路径（最多 20 张。如 D:\\照片\\正面1.jpg，多张换行或逗号分隔）', value: v.srcPaths.join('\n'), hint: '每行 1 个', required: true },
-        { name: 'tag', label: '标签（最多 20 个字）', value: v.tag ?? '', hint: '如：正面', required: true },
-        { name: 'note', label: '备注', value: v.note ?? '', hint: '如：早上空腹 / 减脂期第 30 天' },
-      ],
-    }),
+    // #655 缺陷 7：常用标签原来是首屏第一个块（折叠着也占掉一行）——现在**下移**到这里，
+    //  紧跟三个值之后；8 个词仍逐字可见（本票只改它住哪，不改它说什么）。
+    sectionHead('常用标签（点一个填上去）'),
+    chipRow([...PHOTO_LOG_TAGS]),
     // #474：段前一句引导——复制区里是给 AI 的英文命令，先说清「整段复制粘过去就行」。
     '<p>下面这段是给 AI 的指令：整段复制粘过去就行，英文命令不用看懂。</p>',
     promptCopyArea(v.prompt, '给 AI 的指令（复制这一段）'),
@@ -104,6 +134,9 @@ export function buildPhotoLogWizardDoc(v: PhotoLogWizardView): string {
     eyebrow: '只登记路径',
     subtitle: '先核对要登记的照片与标签，再复制指令给 AI。照片本身不会被动。',
     content,
+    // #525 页面级移动端配方：本族另外七页都在用，只有本件两页漏了（`renderFactStrip` 的形状
+    // 样式与宽屏 1280 版式都挂在根类下，不启用则一条都命中不到）。本票补上，与全族同值。
+    pageUi: true,
   });
 }
 
@@ -144,25 +177,80 @@ function gifCandidates(v: GifPlannerView): string {
 
 /** #474：预填过的字段看不见 placeholder——限制与单位一律进字段名（固定小字），
  *  只有**空字段**才留 hint（那时它显示得出来）；下拉不再给「选一个」占位：
- *  **当刻值那一条恒 `selected`**（#527 第 5 条：下拉显示当前值，不显示「选一个」）。 */
+ *  **当刻值那一条恒 `selected`**（#527 第 5 条：下拉显示当前值，不显示「选一个」）。
+ *
+ *  #655 缺陷 8：改前把九项默认值全画成输入框，看着像要用户逐个核对的表单 —— 改成三组
+ *  **只读键值行**（`editRows`）：值先以当刻值上屏，只展开「要改的那一项」。
+ *  分组按**变化频率**切（照片选择／播放／画面与文件），块与块之间由 `.phu-sechead` 分割。 */
 function gifForm(v: GifPlannerView): string {
-  return renderParamForm({
-    description: '选要进 GIF 的照片，再调快慢与大小。下面每项都已填好常用值，只改你要改的',
-    fields: [
-      { name: 'tag', label: '标签（留空就是全部标签）', value: v.tag ?? '', hint: '如：正面' },
-      { name: 'photoIds', label: '框选照片编号（逗号分隔，留空就是全部）', value: v.selectedIds.join(','), hint: '如 12,15,22' },
-      // #474（审查整改 3a）：`crops` 那一栏**真撤掉**——先前只换了字段名，`name="crops"` 仍在盘上，
-      //  是个带名字却没人接线的空框（看着能填、填了不进指令）。裁剪由表单上方那句话承接：
-      //  要裁就在对话里说一句。`crops` 键本身仍在 `wizardPort.ts` 的入参白名单与 prompt 复刻里（机器面原样）。
-      { name: 'duration', label: '每帧多久（毫秒，50 到 5000）', value: String(v.duration), min: 50, max: 5000, step: 50 },
-      { name: 'loop', label: '循环', value: String(v.loop), options: LOOP_OPTIONS },
-      { name: 'width', label: '宽（像素，100 到 2000）', value: String(v.width), min: 100, max: 2000, step: 1 },
-      { name: 'height', label: '高（像素，100 到 2000）', value: String(v.height), min: 100, max: 2000, step: 1 },
-      { name: 'watermark', label: '水印文字（可选）', value: v.watermark ?? '', hint: '右下角，如：减脂 30 天' },
-      { name: 'transition', label: '切换效果', value: v.transition, options: TRANSITION_OPTIONS },
-      { name: 'output', label: '输出文件名（可选）', value: v.output ?? '', hint: '如：front_30days.gif' },
-    ],
-  });
+  const all = v.photos.length > 0 && v.selectedIds.length === v.photos.length;
+  const picked = v.selectedIds.length === 0 ? ''
+    : (all ? '全部 ' : '') + v.selectedIds.length + ' 张';
+  return [
+    sectionHead('选哪些照片', '点开哪一项就改哪一项'),
+    editRows([
+      {
+        k: '标签', v: v.tag ?? '', emptyText: '全部标签',
+        bodyHtml: paramRow({ name: 'tag', label: '标签（留空就是全部标签）', value: v.tag ?? '', hint: '如：正面' }),
+      },
+      {
+        k: '框选照片编号', v: picked, emptyText: '没框选任何一张',
+        // #474（审查整改 3a）的口径照旧：`crops` 那一栏**真撤掉**（`name="crops"` 不留空框），
+        //  要裁就在对话里说一句；`crops` 键本身仍在 `wizardPort.ts` 的入参允许清单与 prompt 复刻里。
+        bodyHtml: paramRow({
+          name: 'photoIds', label: '框选照片编号（逗号分隔，留空就是全部）',
+          value: v.selectedIds.join(','), hint: '如 12,15,22',
+        }),
+      },
+    ]),
+    sectionHead('播放'),
+    editRows([
+      {
+        k: '每帧多久', v: v.duration + ' 毫秒',
+        bodyHtml: paramRow({
+          name: 'duration', label: '每帧多久（毫秒，50 到 5000）',
+          value: String(v.duration), min: 50, max: 5000, step: 50,
+        }),
+      },
+      {
+        k: '循环', v: loopText(v.loop),
+        bodyHtml: paramRow({ name: 'loop', label: '循环', value: String(v.loop), options: LOOP_OPTIONS }),
+      },
+      {
+        k: '切换效果', v: transitionText(v.transition),
+        bodyHtml: paramRow({
+          name: 'transition', label: '切换效果', value: v.transition, options: TRANSITION_OPTIONS,
+        }),
+      },
+    ]),
+    sectionHead('画面与文件'),
+    editRows([
+      {
+        k: '宽', v: v.width + ' 像素',
+        bodyHtml: paramRow({
+          name: 'width', label: '宽（像素，100 到 2000）', value: String(v.width), min: 100, max: 2000, step: 1,
+        }),
+      },
+      {
+        k: '高', v: v.height + ' 像素',
+        bodyHtml: paramRow({
+          name: 'height', label: '高（像素，100 到 2000）', value: String(v.height), min: 100, max: 2000, step: 1,
+        }),
+      },
+      {
+        k: '水印文字', v: v.watermark ?? '', emptyText: '没填',
+        bodyHtml: paramRow({
+          name: 'watermark', label: '水印文字（可选）', value: v.watermark ?? '', hint: '右下角，如：减脂 30 天',
+        }),
+      },
+      {
+        k: '输出文件名', v: v.output ?? '', emptyText: '没填',
+        bodyHtml: paramRow({
+          name: 'output', label: '输出文件名（可选）', value: v.output ?? '', hint: '如：front_30days.gif',
+        }),
+      },
+    ]),
+  ].join('');
 }
 
 export function buildGifPlannerDoc(v: GifPlannerView): string {
@@ -170,7 +258,8 @@ export function buildGifPlannerDoc(v: GifPlannerView): string {
   const notFound = v.photos.filter((p) => p.fileExists === false).length;
   const content = [
     // 页内样式进 parts 第一项（`assembleDocPage` 没有页内 CSS 入口，同 `photoUi.ts` 的处置）。
-    photoUiCss(),
+    // #655：本件两页的确认清单**样式**另住姊妹件 `photo/wizardUi.ts`（同上页那一段的理由）。
+    photoUiCss(), wizardUiCss(),
     // 身份行（#527）：`标签 正面 · 近 N 天` 那样的 `·` 串改徽章列——同一件事换形状，不是删字符。
     chipRow([
       v.tag === null || v.tag === '' ? '全部标签' : '标签 ' + v.tag,
@@ -194,8 +283,13 @@ export function buildGifPlannerDoc(v: GifPlannerView): string {
       { label: 'GIF 输出', value: v.width + '×' + v.height },
     ]),
     outputFacts(v),
+    // #655：候选清单原来直接跟在事实条后头、与下方参数区连成一片 → 补一条块标题（15/600）分开两块。
+    sectionHead('会进 GIF 的照片'),
     gifCandidates(v),
-    formNoticeHtml(),
+    noticeBar(FORM_NOTICE),
+    // #655 缺陷 3：表单说明原是一段 13px 灰字，与新提示条抢同一格 → 收成一条 12px 辅助行。
+    //  `；` 是并列语义，拆成两句（`audit-separators.mjs` 的 R2 节点级判据：#527 起本仓不许拿它串行）。
+    '<p class="phu-note">下面每项都已填好常用值，点开哪一项就改哪一项。改完把下面那段指令复制给 AI。</p>',
     gifForm(v),
     promptCopyArea(v.prompt, '复制指令（给 AI 的那段）'),
     dataCopyArea('复制数据', {
@@ -219,5 +313,8 @@ export function buildGifPlannerDoc(v: GifPlannerView): string {
     eyebrow: '',
     subtitle: '先看会进 GIF 的照片，再定快慢与尺寸。改哪项直接跟 AI 说一句。',
     content,
+    // #525 页面级移动端配方：本族另外七页都在用，只有本件两页漏了（`renderFactStrip` 的形状
+    // 样式与宽屏 1280 版式都挂在根类下，不启用则一条都命中不到）。本票补上，与全族同值。
+    pageUi: true,
   });
 }
