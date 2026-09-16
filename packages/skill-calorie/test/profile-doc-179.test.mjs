@@ -193,6 +193,20 @@ test('#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，�
     ['ilife-help-copy-prompt', 'ilife-copy-log'], '预检确认页按钮不对');
   assert.ok(w.file.includes('calorie-cmd-read calorie.view.profile-wizard'), '预检确认页日志缺命令原文');
   assert.ok(w.file.includes('calorie_data.db ｜ user_profile'), '预检确认页日志第 3 段缺库表名');
+
+  /* #494 变异自证（改坏必红／还原必绿）：本页原来多一颗**禁用态**「复制日志」——公共层
+   * `controls.ts:1389-1396` 的 #336 兜底（「数据位在场、日志位缺席」）补在 prompt 那颗旁边，
+   * 于是 `data-action-id` 三处（prompt／disabled log／真 log）。实施把指令那颗改挂日志位
+   * （`src/profile/setup.ts` 的 `copyZone()`），兜底不再触发。下面把那一颗原样加回，看上面那条判据红。 */
+  const copyIds = (html) => [...html.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]);
+  const DUP = '<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost"'
+    + ' data-action-id="ilife-copy-log" disabled>复制日志</button>';
+  const mut = w.file.replace(/(<button[^>]*data-action-id="ilife-help-copy-prompt"[^>]*>)/, '$1' + DUP);
+  assert.notEqual(mut, w.file, '变异（加回重复按钮）没塞进去');
+  assert.throws(() => assert.deepEqual(copyIds(mut), ['ilife-help-copy-prompt', 'ilife-copy-log'],
+    '预检确认页按钮不对'), /预检确认页按钮不对/, '变异（加回重复按钮）未红');
+  assert.deepEqual(copyIds(w.file), ['ilife-help-copy-prompt', 'ilife-copy-log'],
+    '还原后应回绿（prompt ＋ 日志各一颗）');
 });
 
 /** 取复制菜单三项的 `data-t`（键 → 文本）。页内只有一处菜单，故直接扫描 `data-fmt="键"` 后的属性。 */

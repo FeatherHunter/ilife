@@ -25,7 +25,8 @@
  * 未知参数抛 `bad-input`（与 `render/wizardPort.ts` 同字面「不支持字段: 」，出口 exit 2）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
+import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm, renderPreBlock } from 'base-paint/blocks';
+import { renderActionBar } from 'base-paint';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt } from '../render/receipt.js';
@@ -36,6 +37,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { nowStamp } from '../render/receipt.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { CALORIE_COPY_ACTION } from '../render/copy.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { activityLabel, fieldLabel, genderLabel, localizeEnums } from './labels.js';
 import { profileSnapshot, PROFILE_SOURCE } from './view.js';
@@ -273,9 +275,37 @@ function formOf(v: ProfileSettingView, fields: readonly { camel: string; label: 
   });
 }
 
-/** ② 写前页整页：三条写入词各自的字段与槽位 ＋ 改前→改后对照 ＋ 复制 prompt。
+/** 本页唯一的复制区（#239 三样一个区）：指令块 ＋ 三颗按钮——复制指令／复制数据（三格式菜单）／复制日志。
  *
- *  复制区（#239）：prompt／数据／日志三样一个 `copyArea` 出——指令块与三个按钮一个叫法
+ *  **指令那一颗为什么不走 `copyArea` 的 `prompt` 位**（#494）：那一路是共用件 `promptCopyArea`，
+ *  它把 prompt 挂在 `renderActionBar` 的**数据位**上；公共层 `controls.ts:1389-1396` 的 #336 兜底
+ *  （「数据位在场、日志位缺席」）随即补一颗**禁用态「复制日志」**，一页于是有两颗同名按钮
+ *  （实测 `data-action-id` 三处：prompt／disabled log／真 log，#494 报的正是这一条）。
+ *  本页把指令挂**日志位**（日志位单独给一颗，不触发兜底）：actionId 与文案仍取冻结表
+ *  `CALORIE_COPY_ACTION`（`../render/copy.js`，概念唯一出处，不另造名字），按下的仍是 prompt 原文；
+ *  同款做法见目标预检页 `src/goal/precheck.ts` 的 `copyZone()`（那页的注释记了同一处兜底）。
+ *  数据位与日志位合成**一个** `copyArea`（两者都在场，兜底同样不触发）。 */
+function copyZone(v: ProfileSettingView, envelope: SerializableEnvelope): string {
+  const instruction = renderPreBlock({ command: v.prompt })
+    + renderActionBar({
+      copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: CALORIE_COPY_ACTION.label, text: v.prompt },
+    });
+  return instruction + copyArea({
+    // 粘贴出去的页名写中文（#238 清单 13 条 / 票面裁定 3）：内部命令名对用户没有意义。
+    data: { envelope, title: '【calorie · 档案预检】' },
+    log: {
+      envelope,
+      copyLog: copyLog({
+        command: 'calorie-cmd-read ' + WIZARD_KEY, source: PROFILE_SOURCE,
+        actionAt: nowStamp(), version: DOC_VERSION,
+      }),
+    },
+  });
+}
+
+/** ② 写前页整页：三条写入词各自的字段与槽位 ＋ 改前→改后对照 ＋ 复制指令。
+ *
+ *  复制区（#239）：指令／数据／日志三样一个区——指令块与三个按钮一个叫法
  *  （复制指令／复制数据／复制日志），不再给按钮配一个同名大标题（#238 清单 9 条）。
  *  数据区多接一颗「复制日志」（日志里写的是产出本页那条命令，本页不写库）。 */
 export function buildProfileSettingDoc(v: ProfileSettingView): string {
@@ -325,18 +355,7 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
       contentHtml: formOf(v, UPDATE_FIELDS), open: openFor(v, UPDATE_WORD),
     }),
     renderDisclosure({ title: '设活动量 5 档（系数与预计每日消耗）', contentHtml: activityTable(v), open: openFor(v, ACTIVITY_WORD) }),
-    copyArea({
-      prompt: { text: v.prompt, label: null },
-      // 粘贴出去的页名写中文（#238 清单 13 条 / 票面裁定 3）：内部命令名对用户没有意义。
-      data: { envelope, title: '【calorie · 档案预检】' },
-      log: {
-        envelope,
-        copyLog: copyLog({
-          command: 'calorie-cmd-read ' + WIZARD_KEY, source: PROFILE_SOURCE,
-          actionAt: nowStamp(), version: DOC_VERSION,
-        }),
-      },
-    }),
+    copyZone(v, envelope),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
