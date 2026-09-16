@@ -7,6 +7,7 @@
  *     不许再当读数卡的卡标签（票面改法点名要写「未匹配」）。
  *  ② **同形页按唤醒词出对应标题**：01／02／03／05／06 五页各自的标题与其唤醒词对得上，
  *     且（把时间戳抹平之后）**两两不再逐字节相同**——这正是审查件第 21／27 条点的「三页逐字节相同」。
+ *     页题逐字＝当刻实现的 `receipt.scene + '回执'`（**#581 去分隔符后不再以 ` · 回执` 收尾**），取法见 `titleOf`。
  *     05／06 的另一处差异＝副题的「来源：营养表照片」（编排者裁定 3：两条拍营养表的词一起做）。
  *  ③ **`source` 参数的三条硬要求**（编排者裁定 4）：未知参数不报错；参数名绝不上屏；
  *     复制日志里的**命令原文**必须带全它（照抄可重跑）。
@@ -53,13 +54,14 @@ const PREVIEW_WANT = [
   '食品库里没有这些食物', '想收进库里就说「存食品 粥」',
 ];
 
-/** 五页回执：标题要与各自唤醒词对得上（票面判据 1 ＋ 编排者裁定 3）。 */
+/** 五页回执：标题要与各自唤醒词对得上（票面判据 1 ＋ 编排者裁定 3）。
+ *  `title` 逐字等于当刻实现「`receipt.scene + '回执'`」（#581 去分隔符后不再有 ` · `）。 */
 const RECEIPT_CASES = [
-  { page: '01', wake: '记一餐', params: { foodName: '鸡胸', calories: 200, protein: 35 }, title: '记一餐 · 回执', must: (t) => t.includes('记一餐') },
-  { page: '02', wake: '记一餐（含备注）', params: { foodName: '鸡胸', calories: 200, protein: 35, note: '加了辣酱' }, title: '记一餐（含备注） · 回执', must: (t) => t.includes('备注') },
-  { page: '03', wake: '补记饮食', params: { foodName: '米饭', calories: 500, protein: 10, time: '12:30:00', date: D }, title: '补记饮食 · 回执', must: (t) => t.includes('补记') },
-  { page: '05', wake: '拍营养表记一餐', params: { foodName: '鸡胸', calories: 200, protein: 35, note: '营养表识别', source: 'photo' }, title: '拍照记一餐 · 回执', must: (t) => t.includes('拍照') },
-  { page: '06', wake: '拍营养表补记一餐', params: { foodName: '米饭', calories: 500, protein: 10, date: D, time: '12:30:00', note: '营养表补记', source: 'photo' }, title: '拍照补记一餐 · 回执', must: (t) => t.includes('拍照') },
+  { page: '01', wake: '记一餐', params: { foodName: '鸡胸', calories: 200, protein: 35 }, title: '记一餐回执', must: (t) => t.includes('记一餐') },
+  { page: '02', wake: '记一餐（含备注）', params: { foodName: '鸡胸', calories: 200, protein: 35, note: '加了辣酱' }, title: '记一餐（含备注）回执', must: (t) => t.includes('备注') },
+  { page: '03', wake: '补记饮食', params: { foodName: '米饭', calories: 500, protein: 10, time: '12:30:00', date: D }, title: '补记饮食回执', must: (t) => t.includes('补记') },
+  { page: '05', wake: '拍营养表记一餐', params: { foodName: '鸡胸', calories: 200, protein: 35, note: '营养表识别', source: 'photo' }, title: '拍照记一餐回执', must: (t) => t.includes('拍照') },
+  { page: '06', wake: '拍营养表补记一餐', params: { foodName: '米饭', calories: 500, protein: 10, date: D, time: '12:30:00', note: '营养表补记', source: 'photo' }, title: '拍照补记一餐回执', must: (t) => t.includes('拍照') },
 ];
 
 function freshDb() {
@@ -103,9 +105,17 @@ function readings(html) {
   };
 }
 
-/** 页面的内容标题（最大那一个字）：回执页的标题以 `· 回执` 收尾，按它取，不按行号猜。 */
-function titleOf(text) {
-  return text.split('\n').map((l) => l.trim()).find((l) => l.endsWith('· 回执')) ?? '';
+/** 页面的内容标题：取页框的 `<h1>` 那一格（`assembleDocPage({ title })` 的落点，
+ *  `src/shared/docPage.ts` → `packages/base-render/src/blocks.ts` 的 `pageShell`），不按行号猜。
+ *
+ *  **#581 收尾跟改**：`#581` 去分隔符把页题从「`scene · 回执`」改成 `receipt.scene + '回执'`
+ *  （`src/diet/receipt.ts:388` 的 `title:` 一位，`scene` 与 `回执` 之间**不再有 `· `**）⇒ 旧口径
+ *  「以 `· 回执` 收尾」在当刻产物里一条都扫不到，取回空串，②／④ 两条成了必红。
+ *  也不能退化成「哪行以 `回执` 收尾就取哪行」：本页的区块标题与页内导航项都叫 `✅ 操作回执`
+ *  （各一次，恒两条命中），先命中的那条不是页题。故只认 `<h1>` 这一格。 */
+function titleOf(html) {
+  const m = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(html);
+  return m === null ? '' : visibleText(m[1]).trim();
 }
 
 /* 时间戳抹平：回执页天生带写库时刻，比较「逐字节相同」前先把它抹掉（否则比较永假）。 */
@@ -131,7 +141,7 @@ for (const { c, r } of PREVIEW_RUNS) {
 
 test('#509 ② 五页回执标题按唤醒词对上 ＋ 两两不再逐字节相同', () => {
   for (const { c, r } of RECEIPT_RUNS) {
-    const first = titleOf(r.text);
+    const first = titleOf(r.html);
     console.log('READING #509 标题 ' + c.page + ' 唤醒词「' + c.wake + '」→ 标题「' + first + '」');
     assert.equal(first, c.title, c.page + ' 的标题与唤醒词对不上');
     assert.equal(c.must(first), true, c.page + ' 的标题看不出「' + c.wake + '」');
@@ -169,8 +179,8 @@ test('#509 ④ 变异自证：新句改回旧写法 / 标题改回旧写法，�
   assert.equal(badPreview.lines.includes('—'), true, '改坏之后应能读到单独成行的「—」');
 
   const badReceipt = readings(receipt.html.replace('拍照记一餐', '记一餐（含备注）'));
-  const badFirst = titleOf(badReceipt.text);
-  const goodFirst = titleOf(receipt.text);
-  assert.equal(goodFirst, '拍照记一餐 · 回执', '原样产物该读到新标题');
+  const badFirst = titleOf(badReceipt.html);
+  const goodFirst = titleOf(receipt.html);
+  assert.equal(goodFirst, '拍照记一餐回执', '原样产物该读到新标题');
   assert.notEqual(badFirst, goodFirst, '把标题改回旧写法之后读数没变——② 的断言是永真的');
 });
