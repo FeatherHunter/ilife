@@ -47,6 +47,13 @@ const TOPIC_OF: Record<ReportKind, string> = {
   water: '水分摄入', score: '综合评分', trend: '健康趋势', compare: '两期对比',
 };
 
+/** #573 R-61 · 报告族页面侧对齐（8 形态共用底座，只此一行，不碰分片与公共层）。
+ *  表卡 `max-width:680px` 不动（归 #567），只把居中归位为左缘对齐（与 KPI 网格左缘共线）；
+ *  窄档上限不触发，无变化。 */
+function reportAlignCss(): string {
+  return '<style>\n/* #573 R-61：报告表左缘归位（页面侧） */\n.ilife-block-page-shell .ilife-block-data-table{margin-left:0;margin-right:auto}\n</style>';
+}
+
 /** 缺项清单上屏口径：`missing` 里本用 `、` 连接（判据 R5 的债）⇒ 改空格分隔。 */
 const missText = (missing: readonly string[]): string => missing.join(' ');
 
@@ -69,6 +76,7 @@ export function buildReportDoc(plate: ReportPlate, command: string): string {
     eyebrow: '',
     subtitle: null,
     content: pageChromeCss(1120)
+      + reportAlignCss()
       + reportChips(TOPIC_OF[kind])
       + renderConclusionBar(conclusionOf(plate))
       + navOf(sections)
