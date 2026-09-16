@@ -726,6 +726,21 @@ function resolveLineSeries(raw: unknown, mainItems: readonly ChartItem[], line: 
   });
 }
 
+/** 跨空档桥接段（#458）：相邻实测点之间隔着至少一个空档时，把两端点直连为一段
+ *  （`M端点L端点`，只用实测点坐标，空档点不参与）；首末空档无对端可接，不出段。 */
+function bridgePath(pts: readonly Pt[]): string {
+  let d = '';
+  let prev = -1;
+  for (let i = 0; i < pts.length; i += 1) {
+    if (pts[i][2]) continue;
+    if (prev >= 0 && i - prev > 1) {
+      d += 'M' + n1(pts[prev][0]) + ' ' + n1(pts[prev][1]) + 'L' + n1(pts[i][0]) + ' ' + n1(pts[i][1]);
+    }
+    prev = i;
+  }
+  return d;
+}
+
 function polyPath(pts: readonly Pt[], connect: boolean): string {
   if (connect) {
     const valid = pts.filter((p) => !p[2]);
@@ -886,6 +901,11 @@ function renderLine(raw: LineChartInput): ChartOutput {
     areaOpacity: numOr(opts === undefined ? undefined : opts.areaOpacity, 0.12),
     yTicks: opts === undefined || opts.yTicks === undefined ? false : opts.yTicks,
     connectNulls: opts !== undefined && opts.connectNulls === true,
+    /* #458：显式 gapStyle 优先；未给时由 connectNulls 回落（true→connect，否则→break），
+     *  缺省产出与改前逐字节相同。 */
+    gapStyle: opts !== undefined && (opts.gapStyle === 'break' || opts.gapStyle === 'connect' || opts.gapStyle === 'dashed')
+      ? opts.gapStyle
+      : (opts !== undefined && opts.connectNulls === true ? 'connect' : 'break'),
     legend: opts !== undefined && opts.legend === true,
     highlightLast: opts !== undefined && opts.highlightLast === true,
     avgLine: opts !== undefined && isNum(opts.avgLine) ? opts.avgLine : undefined,
@@ -1067,19 +1087,31 @@ function renderLine(raw: LineChartInput): ChartOutput {
      *  猜——调用方自己的虚线末位序列从此不再被误判。 */
     const isAvg = s.avg;
     const color = s.color ?? line.color ?? CHART_PALETTE[si % CHART_PALETTE.length];
+    /* #458：连通标志由 gapStyle 统一给（connect 档等价旧 connectNulls:true，其余断开）；
+     *  dashed 档实线走断开，桥接段另出一条同色虚线（均线序列不参与桥接）。 */
+    const connect = line.gapStyle === 'connect';
     if (s.area && !isAvg) {
-      const d = areaPath(pts, line.connectNulls, frame.y1, s.smooth && !line.step, line.step);
+      const d = areaPath(pts, connect, frame.y1, s.smooth && !line.step, line.step);
       if (d !== '') {
         pathsSvg += '<path class="' + STYLE_PREFIX + 'charts-area" d="' + d + '" fill="' + esc(color)
           + '" fill-opacity="' + line.areaOpacity + '" stroke="none"/>';
       }
     }
-    const d = line.step ? stepPath(pts, line.connectNulls) : s.smooth ? smoothPath(pts, line.connectNulls) : polyPath(pts, line.connectNulls);
+    const d = line.step ? stepPath(pts, connect) : s.smooth ? smoothPath(pts, connect) : polyPath(pts, connect);
     if (d !== '') {
       pathsSvg += '<path class="' + STYLE_PREFIX + 'charts-line' + (isAvg ? ' ' + STYLE_PREFIX + 'charts-avg' : '')
         + '" d="' + d + '" fill="none" stroke="' + esc(color)
         + '" stroke-width="' + line.lineWidth + '" stroke-linejoin="round" stroke-linecap="round"'
         + (s.dashed ? ' stroke-dasharray="6 5"' : '') + ' vector-effect="non-scaling-stroke"/>';
+    }
+    if (line.gapStyle === 'dashed' && !isAvg) {
+      const b = bridgePath(pts);
+      if (b !== '') {
+        pathsSvg += '<path class="' + STYLE_PREFIX + 'charts-line ' + STYLE_PREFIX + 'charts-line-bridge'
+          + '" d="' + b + '" fill="none" stroke="' + esc(color)
+          + '" stroke-width="' + line.lineWidth + '" stroke-linejoin="round" stroke-linecap="round"'
+          + ' stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
+      }
     }
     /* 图例条目（#424 起均线条目也算一条）：均线是引擎注入的序列（`avg: true`），名字按窗口生成、
      *  进图例；调用方自己的**虚线序列**（配对页 cross 轴那条）不进图例——那是调用方图例的事。 */
@@ -1300,6 +1332,8 @@ interface ResolvedLineOptions extends ResolvedCommon {
   readonly areaOpacity: number;
   readonly yTicks: number | false;
   readonly connectNulls: boolean;
+  /** 跨空档形态（#458，解析后恒有值，缺省 'break'）。 */
+  readonly gapStyle: 'break' | 'connect' | 'dashed';
   readonly legend: boolean;
   readonly highlightLast: boolean;
   readonly avgLine: number | undefined;

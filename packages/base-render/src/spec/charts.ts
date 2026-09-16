@@ -99,6 +99,10 @@ export interface LineChartOptions extends ChartCommonOptions {
   readonly areaOpacity?: number;
   readonly yTicks?: number | false;
   readonly connectNulls?: boolean;
+  /** 跨空档形态（#458）：`'break'` 缺口处断开（缺省，与今天一致）／`'connect'` 跨空直连
+   *  （等价 `connectNulls: true`）／`'dashed'` 实线只连两侧都有记录的相邻点、跨空档段另出
+   *  同色虚线桥接。显式给定时优先于 `connectNulls`；三档一律不把 `null` 当 0。 */
+  readonly gapStyle?: 'break' | 'connect' | 'dashed';
   readonly legend?: boolean;
   readonly highlightLast?: boolean;
   readonly avgLine?: number;
