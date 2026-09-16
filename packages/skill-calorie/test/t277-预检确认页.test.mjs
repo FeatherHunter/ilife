@@ -182,7 +182,9 @@ for (const { c, r } of RUNS) {
 test('#277 ② 页头按唤醒词对上 ＋ 四条词两两不撞', () => {
   for (const { c, r } of RUNS) {
     const text = visibleText(stripCopyPayload(r.html));
-    assert.equal(text.includes(c.wake + ' · 饮食'), true, c.word + ' 的眉标读不到「' + c.wake + ' · 饮食」');
+    /* #581 · 眉标去“ · 饮食”，只留唤醒词（`src/diet/precheck.ts:33-35`／`precheckLabel.ts:159`）。 */
+    assert.equal(text.includes(c.wake), true, c.word + ' 的眉标读不到「' + c.wake + '」');
+    assert.equal(text.includes('· 饮食'), false, c.word + ' 的眉标仍有间隔号「· 饮食」');
     assert.equal(text.includes(c.title), true, c.word + ' 的内容标题读不到「' + c.title + '」');
     assert.equal(text.includes('预检确认'), true, c.word + ' 的类型徽章读不到「预检确认」');
   }
@@ -244,6 +246,11 @@ test('#277 ② 校验形态与预览形态各自认自己的读数', () => {
   }
   for (const col of ['食品库里有同名的', '食品库里没有的', '合计热量', '会新增', '会跳过', '会失败']) {
     assert.equal(preview.includes(col), true, '预览形态缺「' + col + '」');
+  }
+  /* #581 · 副题只留结论一句（三计数由「这次的处置」读数卡说，不再顿号并列）。 */
+  for (const [label, text] of [['预览形态', preview], ['校验形态', validate]]) {
+    assert.ok(/食品库对照＋合计试算：共 \d+ 条，合计 \d+ 卡。/.test(text),
+      label + '的副题不是一句话结论');
   }
 });
 

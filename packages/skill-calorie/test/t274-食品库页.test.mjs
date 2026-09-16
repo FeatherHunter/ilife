@@ -135,7 +135,9 @@ function decodeEntities(html) {
 function assertSkeleton(html, what, summaryNeedle) {
   assert.ok(html.includes('class="meta-bar"'), what + ' 缺眉标行（§五 第 1 行）');
   const metaLeft = html.match(/class="left">([^<]*)</);
-  assert.ok(metaLeft && metaLeft[1].includes(' · 饮食'), what + ' 眉标须是「命令名 · 人话归属」：' + metaLeft?.[1]);
+  /* #581 · 眉标去“ · 饮食”，只留唤醒词（本族四页 `metaLeft` 同改）。 */
+  assert.ok(metaLeft && metaLeft[1].trim() !== '', what + ' 眉标须是唤醒词');
+  assert.equal(metaLeft[1].includes('·'), false, what + ' 眉标不得含间隔号：' + metaLeft?.[1]);
   assert.ok(/class="type-badge">食品库</.test(html), what + ' 缺类型徽章');
   assert.ok(html.includes('ilife-block-page-shell-title'), what + ' 缺内容标题（§五 第 2 行）');
   const sub = html.match(/<p class="sub">([^<]*)</);
@@ -178,7 +180,7 @@ function assertFoodGrid(html, what) {
     assert.ok(html.includes(needle), what + ' 卡缺：' + needle);
   }
   assert.ok(/food-macro-value">\d+ 卡</.test(html), what + ' 热量未取整（老实物 toFixed(0)）');
-  assert.ok(/food-macro-value">\d+\.\d g</.test(html), what + ' 三大营养素未留一位小数（老实物 toFixed(1)）');
+  assert.ok(/food-macro-value">\d+\.\d 克</.test(html), what + ' 三大营养素未留一位小数（老实物 toFixed(1)）');
   assert.equal(html.includes('<table'), false, what + ' 卡片格页不该有表（裁定 10）');
 }
 
@@ -206,22 +208,25 @@ test('#274 查食品：搜索框＋匹配数＋卡片格（老实物零 table）
     const out = dispatch('calorie.view.search', { keyword: '鸡胸' }, db);
     assertDoc(out.html, '查食品');
     const h = out.html;
-    assert.ok(h.includes('<title>卡路里 · 食物热量查询</title>'), 'head 标题照老实物');
+    assert.ok(h.includes('<title>卡路里食物热量查询</title>'), 'head 标题照老实物（#581 去间隔号）');
     assert.ok(h.includes('🍱 食物热量查询'), 'h1 照老实物：🍱 食物热量查询');
     assertSkeleton(h, '查食品', '找到 1 条');
     // 搜索框（老实物 `.search-box`：关键词框＋占位提示）与匹配数（老实物 `.count`）
     assert.ok(h.includes('name="keyword"'), '缺关键词框');
     assert.ok(h.includes('value="鸡胸"'), '关键词框未回填');
-    assert.ok(h.includes('输入食物关键词，如 牛肉 / 鸡胸 / 可乐'), '缺老实物的占位提示');
+    assert.ok(h.includes('输入食物关键词，如鸡胸'), '缺老实物的占位提示（#581 只留一例）');
     assert.ok(h.includes('匹配') && h.includes('1 条'), '缺匹配数');
     // 卡片格：类别标签＋食品名＋品牌＋四宏量＋来源·更新于
     assertFoodGrid(h, '查食品');
     assert.ok(h.includes('class="food-cat">蛋白类<'), '缺类别标签（老实物 `.cat`）');
     assert.ok(h.includes('class="food-name">鸡胸肉<'), '缺食品名');
     assert.ok(h.includes('class="food-brand">测试<'), '缺品牌');
-    assert.ok(h.includes('165 卡') && h.includes('31.0 g') && h.includes('3.6 g') && h.includes('0.0 g'),
-      '四宏量取值未照老实物（热量取整／营养素一位小数）');
-    assert.ok(/来源：包装 · 更新于 /.test(h), '来源行缺「更新于」（初始渲染带 updated_at）');
+    assert.ok(h.includes('165 卡') && h.includes('31.0 克') && h.includes('3.6 克') && h.includes('0.0 克'),
+      '四宏量取值未照老实物（热量取整／营养素一位小数，单位「克」）');
+    /* #581 · 来源行去间隔号：一行一键值（来源一行、更新于另起一行）。 */
+    assert.ok(h.includes('来源：包装'), '来源行缺「来源」');
+    assert.ok(h.includes('更新于 '), '来源行缺「更新于」');
+    assert.equal(h.includes(' · 更新于 '), false, '来源行仍有间隔号');
     assert.deepEqual(out.data.metrics, { total: 1, limit: 20 }, '读数：命中 1 条');
     // 复制区双按钮 ＋ 日志第 4 段＝命令原文
     assertLogCallChain(h, 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'', '查食品');
@@ -235,7 +240,7 @@ test('#274 食品库：按分类出卡片格＋读数；同走老实物 food_sea
     assertDoc(all.html, '食品库全量');
     // 老技能把「查食品（按分类）」也接 food_search.html（场景登记 html_template）⇒ 页题与查食品同字。
     assert.ok(all.html.includes('🍱 食物热量查询'), '缺页题（老实物 food_search 的 h1）');
-    assert.ok(all.html.includes('<title>卡路里 · 食物热量查询</title>'), 'head 标题照老实物');
+    assert.ok(all.html.includes('<title>卡路里食物热量查询</title>'), 'head 标题照老实物（#581 去间隔号）');
     assertSkeleton(all.html, '食品库全量', '共 5 条');
     assertFoodGrid(all.html, '食品库全量');
     assert.ok(all.html.includes('米饭') && all.html.includes('鸡胸肉'), '全量缺种子行');
@@ -295,7 +300,7 @@ test('#274 去重：条幅＋三读数＋重复组表＋处理建议＋来源脚
     assertDoc(out.html, '去重报告');
     const h = out.html;
     assert.ok(h.includes('📦 食品库去重'), '缺页题');
-    assert.ok(h.includes('<title>卡路里 · 食品库去重</title>'), 'head 标题照老实物');
+    assert.ok(h.includes('<title>卡路里食品库去重</title>'), 'head 标题照老实物（#581 去间隔号）');
     assertSkeleton(h, '去重报告', '1 组重复');
     assert.ok(h.includes('⚠ 发现 1 组重复') && h.includes('可合并的重复食品'), '缺条幅读数（老实物 banner.warn）');
     for (const needle of ['重复组', '可合并的重复食品', '库内食品']) {
@@ -327,6 +332,10 @@ test('#274 来源统计：搬成姊妹件后补齐的 ⑤ 类四行骨架 ＋ �
     // 编排者 2026-09-15 裁定 (b) 搬出 #275 件后，本票补齐的四行骨架
     assertSkeleton(h, '来源统计', '来自 4 个来源');
     assert.ok(h.includes('📦 食品来源统计'), '标题照老实物 h1（含 emoji）');
+    /* #581 · 表题只留题名，下架口径与「未知」口径各走一条口径行。 */
+    assert.ok(h.includes('按来源分组统计'), '来源统计缺新表题');
+    assert.ok(h.includes('已下架的食品不算进这张表。'), '来源统计缺下架口径行');
+    assert.ok(h.includes('没填来源的归到「未知」。'), '来源统计缺「未知」口径行');
     assertLogCallChain(h, 'calorie-cmd-read calorie.view.source-stats', '来源统计');
   } finally { db.close(); }
 });
@@ -435,8 +444,11 @@ test('#274 库非空但本次零命中：出完整页 ＋ 空态句 ＋ 引导�
     assert.ok(html.includes('ilife-block-empty'), what + ' 缺空态块（裁定 4 澄清：窗口为空出完整页）');
     // 空态句与引导句逐字（老实物 :99 的 text／hint 两个人话版本，测试件钉本文）。
     assert.ok(html.includes('没有找到匹配的食品'), what + ' 缺空态句');
-    assert.ok(html.includes('换个关键词或分类试试；库里还没有的话，说「存食品」就能加进第一条。'),
-      what + ' 缺引导句');
+    /* #581 · 引导句拆成两句（分号改句号）。 */
+    assert.ok(html.includes('换个关键词或分类试试。'),
+      what + ' 缺引导句第一句');
+    assert.ok(html.includes('库里还没有的话，说「存食品」就能加进第一条。'),
+      what + ' 缺引导句第二句');
     // 结论句仍报本次读数（0 条）与库内总数，读数卡也仍在。
     assert.ok(html.includes(summary), what + ' 结论句未报本次读数：' + summary);
     assert.ok(html.includes('ilife-block-kpi-card'), what + ' 零命中页仍要有读数卡');
@@ -460,12 +472,17 @@ test('#274 口径说明行文案有断言的读数（复核席变异-丙的盲�
       ['食品库（关键词零命中）', dispatch('calorie.view.search', { keyword: '螺蛳粉' }, db).html],
     ];
     for (const [what, html] of 食品页) {
-      assert.ok(html.includes('营养值都是每 100 克；只列没有下架的食品。'),
-        what + ' 缺口径说明行原文（食品两页同一句）');
+      /* #581 · 口径行一条一行（两条口径行，老话拆成两句）。 */
+      assert.ok(html.includes('营养值都是每 100 克。'),
+        what + ' 缺口径说明行第一句（食品两页同一句拆出来的第一行）');
+      assert.ok(html.includes('只列没有下架的食品。'),
+        what + ' 缺口径说明行第二句');
     }
     const dedupe = dispatch('calorie.view.dedupe', {}, db).html;
-    assert.ok(dedupe.includes('判定标准：名称和品牌都一样的算重复；已下架的食品不算，也不会出现在这张表里。'),
-      '去重页缺口径说明行原文');
+    assert.ok(dedupe.includes('判定标准：名称和品牌都一样的算重复。'),
+      '去重页缺口径说明行第一句');
+    assert.ok(dedupe.includes('已下架的食品不算，也不会出现在这张表里。'),
+      '去重页缺口径说明行第二句');
     // 口径行恒走公共层构件（裁定 3）：四页都要有这个类名。
     for (const [what, html] of [...食品页, ['去重', dedupe]]) {
       assert.ok(html.includes('ilife-block-caliber'), what + ' 口径行走的不是公共层构件');
