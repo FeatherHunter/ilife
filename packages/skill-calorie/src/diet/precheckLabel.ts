@@ -153,6 +153,7 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '📷 营养表识别确认',
+    pageUi: true,
     eyebrow: '',
     subtitle: null,
     metaLeft: (backfill ? '拍营养表补记一餐' : '拍营养表记一餐') + ' · 饮食',

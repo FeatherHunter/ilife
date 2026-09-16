@@ -205,6 +205,7 @@ export function buildDietReviewDoc(r: DietReview | null, top5: FoodRanking | nul
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '📝 饮食复盘',
+    pageUi: true,
     eyebrow: EYEBROW,
     subtitle: summary,
     metaLeft: REVIEW_META_LEFT,

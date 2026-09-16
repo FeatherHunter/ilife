@@ -104,6 +104,7 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '📦 食品来源统计',
+    pageUi: true,
     eyebrow: '',
     subtitle: null,
     metaLeft: '看食品来源统计 · 饮食',

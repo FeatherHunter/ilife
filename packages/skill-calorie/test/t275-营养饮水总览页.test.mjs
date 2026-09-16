@@ -94,7 +94,7 @@ const WORDS = [
   {
     id: '看营养结构', key: 'calorie.view.diet-review', params: { window: '7d' }, frame: 'host', owner: '#273',
     old: 'nutrition_ratio.html',
-    blocks: ['热量来源占比（按营养素折算）', '推荐范围对比（' + WEEK + '；克数均为这 7 天合计）',
+    blocks: ['热量来源占比（按营养素折算）', '推荐范围对比（克数均为这 7 天合计）',
       '折算合计（千卡）', '推荐 10–20%', '推荐 45–65%', '推荐 20–35%', '距范围', '✓ 在范围内', '✓ 均衡'],
     cols: ['营养素', '实际', '下限', '上限', '距范围', '状态'],
     anchors: ['sec-kpi', 'sec-chart', 'sec-table'],
@@ -103,7 +103,7 @@ const WORDS = [
   {
     id: '看今日营养', key: 'calorie.view.diet-review', params: { window: '今日' }, frame: 'host', owner: '#273',
     old: 'nutrition_ratio.html',
-    blocks: ['热量来源占比（按营养素折算）', '推荐范围对比（' + D + ' ~ ' + D + '；克数均为这 1 天合计）', '折算合计（千卡）', '✓ 均衡'],
+    blocks: ['热量来源占比（按营养素折算）', '推荐范围对比（克数均为这 1 天合计）', '折算合计（千卡）', '✓ 均衡'],
     cols: ['营养素', '实际', '下限', '上限', '距范围', '状态'],
     anchors: ['sec-kpi', 'sec-chart', 'sec-table'],
     footnote: '📊 数据来源 · 饮食记录 · ' + D + ' → ' + D,
@@ -112,9 +112,9 @@ const WORDS = [
     id: '看今日喝水', key: 'calorie.view.today-water', params: { date: D, entry: 'drink' }, frame: 'own',
     old: 'today_water.html',
     title: '💧 今日喝水',
-    head: ['今日喝水 · 饮食', '营养 · 饮水 · 总览'],
+    head: ['今日喝水（饮食）', '营养饮水总览'],
     nav: ['今日读数', '今日进度', '本周 7 天', '今日每杯'],
-    blocks: ['今日进度', '本周 7 天（2026-09-01 ~ ' + D + '）', '今日每杯（共 1 杯）', '目标', '已完成目标(100%)'],
+    blocks: ['今日进度', '本周 7 天', '今日每杯（共 1 杯）', '目标', '已完成目标(100%)'],
     cols: ['时间', '饮水量ml'],
     summary: '今天喝了 2,000 ml（目标的 100%），正好完成目标。',
     footnote: '📊 数据来源 · 饮水记录 · ' + D,
@@ -149,25 +149,25 @@ const OWN_PAGES = [
     id: '查营养配比', key: 'calorie.view.nutrition-ratio', params: { window: '7d' }, frame: 'own', deep: 0,
     old: 'nutrition_ratio.html',
     title: '🥗 营养配比',
-    head: ['查营养配比 · 饮食', '营养 · 饮水 · 总览'],
+    head: ['查营养配比（饮食）', '营养饮水总览'],
     nav: ['配比读数', '热量来源占比', '推荐范围对比'],
-    blocks: ['热量来源占比（按营养素折算）', '推荐范围对比（' + WEEK + '；克数均为这 7 天合计）',
+    blocks: ['热量来源占比（按营养素折算）', '推荐范围对比（克数均为这 7 天合计）',
       '折算合计（千卡）', '蛋白（千卡）', '碳水（千卡）', '脂肪（千卡）', '距范围', '✓ 在范围内', '✓ 均衡',
       '推荐 10–20%', '推荐 45–65%', '推荐 20–35%'],
     cols: ['营养素', '实际', '下限', '上限', '距范围', '状态'],
-    summary: '这 7 天共摄入 3,339 千卡；三大营养素配比均衡（蛋白 13% · 碳水 64% · 脂肪 11%）。',
+    summary: '这 7 天共摄入 3,339 千卡，三大营养素配比均衡。',
     footnote: '📊 数据来源 · 饮食记录 · ' + WEEK_ARROW,
   },
   {
     id: '看营养素深度', key: 'calorie.view.nutrition-detail', params: { window: '7d' }, frame: 'own', deep: 1,
     old: 'nutrition_detail.html',
     title: '🧪 营养素深度',
-    head: ['看营养素深度 · 饮食', '营养 · 饮水 · 总览'],
+    head: ['看营养素深度（饮食）', '营养饮水总览'],
     nav: ['读数', '逐项明细'],
     blocks: ['匹配餐数', '缺数据食物', '覆盖营养素', '膳食纤维', '钠', '糖',
       '累计（7 天）', '每天平均', '每天推荐', '完成度', '缺数据食物（共 5 种，未计入）', '建议用「存食品」补录'],
     cols: ['营养素', '累计（7 天）', '每天平均', '每天推荐', '完成度', '状态'],
-    summary: '「看营养素深度」本窗匹配到 4 餐；膳食纤维日均 0 克、钠日均 1.1 毫克、糖日均 0 克；'
+    summary: '「看营养素深度」本窗匹配到 4 餐。膳食纤维日均 0 克，钠日均 1.1 毫克，糖日均 0 克。'
       + '另有 5 种食物在食品库查不到营养值，未计入。',
     footnote: '📊 数据来源 · 饮食记录 × 食品库 · ' + WEEK_ARROW,
   },
@@ -175,11 +175,11 @@ const OWN_PAGES = [
     id: '看营养素明细', key: 'calorie.view.nutrition-detail', params: { window: '7d', entry: 'detail' }, frame: 'own', deep: 1,
     old: 'nutrition_detail.html',
     title: '🧪 营养素明细',
-    head: ['看营养素明细 · 饮食', '营养 · 饮水 · 总览'],
+    head: ['看营养素明细（饮食）', '营养饮水总览'],
     nav: ['读数', '逐项明细'],
     blocks: ['匹配餐数', '缺数据食物', '累计（7 天）', '缺数据食物（共 5 种，未计入）'],
     cols: ['营养素', '累计（7 天）', '每天平均', '每天推荐', '完成度', '状态'],
-    summary: '「看营养素明细」本窗匹配到 4 餐；膳食纤维日均 0 克、钠日均 1.1 毫克、糖日均 0 克；'
+    summary: '「看营养素明细」本窗匹配到 4 餐。膳食纤维日均 0 克，钠日均 1.1 毫克，糖日均 0 克。'
       + '另有 5 种食物在食品库查不到营养值，未计入。',
     footnote: '📊 数据来源 · 饮食记录 × 食品库 · ' + WEEK_ARROW,
   },
@@ -358,7 +358,7 @@ for (const { w, html } of ALL_RUNS.filter((r) => r.w.frame === 'own')) {
 test('#275 ④ 配比块／饮水页的来源脚注逐字取老实物的句子', () => {
   const ratio = byId('看营养结构');
   assert.ok(ratio.text.includes('📊 数据来源 · 饮食记录 · ' + WEEK_ARROW), '配比块来源脚注不是老实物那句');
-  assert.ok(ratio.text.includes('占比按营养素折算：蛋白和碳水每克 4 千卡、脂肪每克 9 千卡'),
+  assert.ok(ratio.text.includes('占比按营养素折算：蛋白和碳水都是每克 4 千卡，脂肪是每克 9 千卡'),
     '配比块缺折算口径句（老实物图例那一层的意思要用话说出来）');
   const water = byId('看今日喝水');
   assert.ok(water.text.includes('📊 数据来源 · 饮水记录 · ' + D), '饮水页来源脚注不是老实物那句');
@@ -452,7 +452,7 @@ test('#275 ⑦ 交 #273 的 buildNutritionRatioBlock：一段一锚点 ＋ 逐�
     assert.ok(RATIO_BLOCK.includes('<section id="' + id + '">'), '区块缺锚点 ' + id);
   }
   for (const b of ['<div class="ilife-block-kpi-card-grid">', 'ilife-block-dist-row', 'ilife-block-data-table',
-    '推荐范围对比（' + WEEK + '；克数均为这 7 天合计）', '📊 数据来源 · 饮食记录 · ']) {
+    '推荐范围对比（克数均为这 7 天合计）', '📊 数据来源 · 饮食记录 · ']) {
     assert.ok(RATIO_BLOCK.includes(b), '区块缺块：「' + b + '」');
   }
   /* 区块不是页面：不夹 doctype／head／整页壳（集成归 #273）。 */
@@ -511,7 +511,7 @@ test('#275 ⑦ 交 #271 的 buildDietOverviewBlock：本周／本月两段 ＋ �
     '总览区块的日志第 4 段不是给进来的命令原文');
   /* 不含今日：本月段以昨日收口；本周段在「今天正是本周第一天」时出空态句（老脚本 `days=0` 那一支，
      2026-09-07 是周一——这正是老实物那句「累计从明天起算」该出现的场合）。 */
-  assert.ok(OVERVIEW_BLOCK.includes('2026-09-01 ~ 2026-09-06'), '本月段不是到昨日收口');
+  assert.ok(OVERVIEW_BLOCK.includes('2026-09-01 至 2026-09-06'), '本月段不是到昨日收口');
   assert.ok(OVERVIEW_BLOCK.includes('窗口还没有自然日（今天正是窗口首日），累计从明天起算'),
     '本周落在窗口首日时该出空态句（老脚本 days=0 那一支）');
   for (const b of ['总热量', '日均热量', '总蛋白', '有记录天数']) {

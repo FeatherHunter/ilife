@@ -52,6 +52,7 @@ export function buildTodayNoteEmptyDoc(date: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '今日饮食 · 只看有备注的',
+    pageUi: true,
     eyebrow: '卡路里 · 饮食',
     subtitle: MEAL_NOTE,
     content: dietUiCss() + windowStrip(date, date)
@@ -154,6 +155,7 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
     /* #496 · 页名（唤醒词「看有备注的饮食记录」）承诺看的是有备注的记录，标题原写「今日饮食 〈日期〉」，
        读者看不出这是一张筛过的页（审查件第 67 条）⇒ 这一支把筛选口径写进标题。 */
     title: '今日饮食' + (onlyNote ? ' · 只看有备注的' : ''),
+    pageUi: true,
     /* #496 · 眉标原写命令键「calorie.today · 饮食域」（裁定 1 不上屏）⇒ 改中文族名。 */
     eyebrow: '卡路里 · 饮食',
     /* #496 · 副题原本整句就是常量名那一串；现在只留口径小字（加餐是哪两顿），与「餐别覆盖」卡
@@ -223,6 +225,7 @@ export function buildMealDistributionPage(v: MealDistributionView, command?: str
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '餐别分布',
+    pageUi: true,
     eyebrow: '卡路里 · 饮食',
     /* §五 第 3 行：结论句走页头副题槽（#273 的区块不出结论句，它把 `v.oneLine` 交给宿主）。 */
     subtitle: v.oneLine,
@@ -252,6 +255,7 @@ export function buildDietOverviewPage(v: DietOverviewView, command?: string): st
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '饮食总览',
+    pageUi: true,
     eyebrow: '卡路里 · 饮食',
     subtitle: '统计到 ' + v.today + ' 的前一天：本周日均 ' + String(v.week.avgCalorie) + ' 卡' + weekDays
       + '，本月累计 ' + v.month.totalCalorie.toLocaleString() + ' 卡。',

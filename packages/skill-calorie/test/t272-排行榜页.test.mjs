@@ -31,6 +31,7 @@ const CLI = join(ROOT, 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js'
 
 const { openDb } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'index.js')).href);
 const { seedFull, SEED_TODAY } = await import(pathToFileURL(join(ROOT, 'docs', 'research', 't81-seed.mjs')).href);
+const { rankShortName } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'diet', 'dietEngine.js')).href);
 
 const D = SEED_TODAY;               // 2026-09-01（种子周的锚点）
 const WEEK = '2026-09-01 ~ 2026-09-07';
@@ -80,8 +81,8 @@ for (const { c, status, stderr, html, text } of PAGES) {
     assert.equal(status, 0, c.id + ' 真出口 exit=' + status + ' stderr=' + String(stderr).slice(-300));
     assert.deepEqual(thsOf(html), c.cols, c.id + ' 表头列序不是这一类的那一套：' + thsOf(html).join('｜'));
     assert.equal(new Set(c.cols).size, c.cols.length, c.id + ' 同名列出现两次');
-    /* 表题收成「榜单明细」（区间不住表题，住正文首件窗口条）。 */
-    assert.ok(html.includes('榜单明细'), c.id + ' 表题不是「榜单明细」');
+    /* 表题用引擎短名（去日期，区间住正文首件窗口条）。 */
+    assert.ok(html.includes(rankShortName(c.params.category)), c.id + ' 表题不是引擎短名');
     assert.ok(html.includes('dui-window'), c.id + ' 正文首件缺窗口条');
     for (const d of WEEK.split(' ~ ')) assert.ok(html.includes(d), c.id + ' 窗口条缺日期 ' + d);
   });

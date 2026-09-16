@@ -46,7 +46,7 @@ export function viewNutritionRatio(params: Record<string, unknown>, db: Database
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
         key: 'calorie.view.nutrition-ratio',
-        metaLeft: '查营养配比 · 饮食',
+        metaLeft: '查营养配比（饮食）',
         title: '🥗 营养配比',
         blockTitle: '配比读数',
         emptyText: '这段日子（' + start + ' ~ ' + end + '）一条饮食记录也没有，配比算不出来（不编数）。',
@@ -82,7 +82,7 @@ export function viewNutritionDetail(params: Record<string, unknown>, db: Databas
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
         key: 'calorie.view.nutrition-detail',
-        metaLeft: (detail ? '看营养素明细' : '看营养素深度') + ' · 饮食',
+        metaLeft: (detail ? '看营养素明细' : '看营养素深度') + '（饮食）',
         title: detail ? '🧪 营养素明细' : '🧪 营养素深度',
         blockTitle: '逐项明细',
         emptyText: '这段日子（' + start + ' ~ ' + end + '）一条饮食记录也没有，营养素合计算不出来（不编数）。',

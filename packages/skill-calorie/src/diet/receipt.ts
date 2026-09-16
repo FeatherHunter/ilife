@@ -349,6 +349,7 @@ function buildDietReceiptDoc(
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE, title: receipt.scene + ' · 回执', eyebrow: '',
+    pageUi: true,
     subtitle: subtitleOf(receipt), content,
   });
 }

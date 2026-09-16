@@ -218,6 +218,7 @@ export function buildSearchDoc(s: ProductSearch, command: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE_SEARCH,
     title: '🍱 食物热量查询',
+    pageUi: true,
     eyebrow: '',
     subtitle: null,
     metaLeft: '查食品 · 饮食',
@@ -274,6 +275,7 @@ export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number, command
   return assembleDocPage({
     docTitle: DOC_TITLE_SEARCH,
     title: '🍱 食物热量查询',
+    pageUi: true,
     eyebrow: '',
     subtitle: null,
     metaLeft: '查食品库 · 饮食',
@@ -370,6 +372,7 @@ export function buildDedupeDoc(v: DedupeView, command: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE_DEDUPE,
     title: '📦 食品库去重',
+    pageUi: true,
     eyebrow: '',
     subtitle: null,
     metaLeft: '看食品库（去重） · 饮食',

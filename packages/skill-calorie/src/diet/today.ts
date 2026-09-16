@@ -74,7 +74,7 @@ export function viewTodayWater(params: Record<string, unknown>, db: DatabaseSync
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
         key: 'calorie.view.today-water',
-        metaLeft: name + ' · 饮食',
+        metaLeft: name + '（饮食）',
         title: '💧 ' + name,
         blockTitle: '今日读数',
         emptyText: '这一段（' + weekStart + ' ~ ' + date + '）没有饮水记录，进度与每杯都还是空的。',

@@ -194,6 +194,7 @@ export function buildImportPrecheckDoc(
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: copy.title,
+    pageUi: true,
     eyebrow: '',
     subtitle: null,
     metaLeft: copy.metaLeft,

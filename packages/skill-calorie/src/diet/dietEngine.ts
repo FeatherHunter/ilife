@@ -111,6 +111,12 @@ const RANK_TITLES: Record<string, string> = {
   high_protein: '💪 高蛋白榜',
 };
 
+/** 表题短名（去日期）：页题用 `rankingDocs.ts` 的 `RANK_ZH`，表题用这份引擎名。
+ *  两处名字各有归属（`RANK_TITLES` 的统一见 #511），本函数只去掉日期区间，不改名。 */
+export function rankShortName(category: string): string {
+  return RANK_TITLES[category] ?? '📋 食物榜';
+}
+
 function isWaterFood(name: string): boolean {
   return name.toLowerCase().includes('water') || name === '💧水';
 }

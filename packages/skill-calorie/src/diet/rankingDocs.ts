@@ -45,6 +45,7 @@ import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { nowStamp } from '../render/receipt.js';
 import type { FoodRanking, RankItem } from './dietEngine.js';
+import { rankShortName } from './dietEngine.js';
 import type { AllRankings } from './rankingPlate.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
@@ -264,7 +265,7 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   const table = renderDataTable({
     columns: columnsOf(cat),
     rows: r.items.map((it) => rowOf(it, cat)),
-    caption: '榜单明细',
+    caption: rankShortName(cat),
     emptyText: '本窗没有可上榜的食物（记一餐之后再看这张榜）',
   });
   const content = [
@@ -290,6 +291,7 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '排行 ' + nameOf(cat),
+    pageUi: true,
     eyebrow: EYEBROW,
     subtitle: oneLine(cat, r),
     content,
@@ -329,7 +331,7 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
       contentHtml: renderDataTable({
         columns: columnsOf(c),
         rows: b.items.map((it) => rowOf(it, c)),
-        caption: '榜单明细',
+        caption: rankShortName(c),
         emptyText: '本窗没有可上榜的食物（记一餐之后再看这张榜）',
       }),
     });
@@ -355,6 +357,7 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
     title: '全部排行',
+    pageUi: true,
     eyebrow: EYEBROW,
     subtitle: windowEmpty
       ? '本窗 ' + a.start + ' ~ ' + a.end + ' 五类榜都没有可上榜的食物：' + MISS + '。'
