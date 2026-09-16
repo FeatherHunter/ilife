@@ -4,6 +4,7 @@
  * 两处对不上处置见证据件 docs/skills/skill-calorie/t336-波动-证据.md。
  */
 import { strict as assert } from 'node:assert';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -69,7 +70,10 @@ test('#336 5 条全有命令：窗口与唤醒词语义一致＋页脚只留人�
   const db = tmpDb();
   seedVol(db);
   const cases = [
-    ['看体重稳不稳（增强版）', { window: '30d' }],
+    // #490 就地摆正：这一条原来只给 `window: '30d'` 不钉「今天」，窗口按**当刻**倒推 30 天，
+    // 与种子库那 30 天史（2026-07-20~2026-08-18）不重叠 ⇒ `points` 为 0、本用例恒红（与 #490 无关的旧红）。
+    // 五个用例的窗口语义本来就要求钉同一枚锚点（同文件其余四条都已钉），照钉。
+    ['看体重稳不稳（增强版）', { window: '30d', today: '2026-08-18' }],
     ['看本月波动', { window: '本月', today: '2026-08-18' }],
     ['看最近 90 天波动', { window: '90d', today: '2026-08-18' }],
     ['看最近 180 天波动', { window: '180d', today: '2026-08-18' }],
@@ -246,5 +250,46 @@ test('#542 页题去时间：窗口退出 H1，改住正文首件窗口条（#34
     assert.equal(html.split('class="wui-window"').length - 1, 1, name + ' 窗口条不是恰 1 条');
     assert.ok(html.includes('2026-07-20') && html.includes('2026-08-18'), name + ' 窗口条缺两枚日期块');
   }
+  db.close();
+});
+
+/* #490：第 34 条「看波动异常点」原先与第 5 条「看体重稳不稳（增强版）」的 cli 逐字相同
+ * （都不带 `view`），两条词出**逐字节相同**的页（实测 sha 6853d76ee585b21b／88472 B）；
+ * 只看异常点那一支的三句可见文案只在直调用例里被覆盖，交付页上看不到。本条按**路由表**取参数
+ * （路由丢了 `view` 即红），比两份正文的 sha（先经 `bodyText` 削掉标签与机器面）。 */
+test('#490 第 34 条按路由出「只看异常点」页，与第 5 条不再逐字相同', async () => {
+  const { ALL_ROUTES } = await import('../dist/triggers/routes.generated.js');
+  const of = (wake) => ALL_ROUTES.find((r) => r.wakeWord === wake);
+  const a = of('看波动异常点');
+  const b = of('看体重稳不稳（增强版）');
+  assert.ok(a && b, '路由表里缺这两条词（看波动异常点／看体重稳不稳（增强版））');
+  const parsed = (cli) => {
+    const m = /^calorie-cmd-read (\S+)(?: --params '(.*)')?$/.exec(String(cli));
+    assert.ok(m, '路由 cli 形态不对：' + cli);
+    return { key: m[1], params: m[2] ? JSON.parse(m[2]) : {} };
+  };
+  const pa = parsed(a.cli);
+  const pb = parsed(b.cli);
+  assert.equal(pa.key, 'calorie.view.volatility', '第 34 条键不对：' + a.cli);
+  assert.equal(pb.key, 'calorie.view.volatility', '第 5 条键不对：' + b.cli);
+  // 判据①（参数面）：两条词的出页参数必须已经不同，且第 34 条带只看异常点读法。
+  assert.equal(pa.params.view, 'anomalies-only', '第 34 条没带只看异常点读法：' + a.cli);
+  assert.notDeepEqual(pa.params, pb.params, '第 34 条与第 5 条的出页参数仍逐字相同：' + a.cli);
+  // 判据①（产页面）＋ 判据②（只看异常点那一支的页顶提示上屏）。
+  const db = tmpDb();
+  seedVol(db);
+  const page = (p) => viewVolatility({ ...p, today: '2026-08-18' }, db).html;
+  const pageA = page(pa.params);
+  const pageB = page(pb.params);
+  const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
+  assert.notEqual(sha(bodyText(pageA)), sha(bodyText(pageB)), '第 34 条与第 5 条的正文 sha 仍相同');
+  assert.ok(pageA.includes('只看异常点'), '第 34 条页缺「只看异常点」那一支的页顶提示');
+  assert.ok(!pageA.includes('每天离平均线多远'), '第 34 条页不该再出整图的曲线段');
+  assert.ok(pageB.includes('每天离平均线多远'), '第 5 条页应仍出整图的曲线段');
+  // 变异自证（改坏必红）：把第 34 条的 `view` 摘掉，两份正文立刻回到**逐字相同**那副样子
+  // —— 本判据的鉴别力就在这一个参数上（#490 的缺陷形态即「路由没传 view」）。
+  const { view: _dropped, ...noView } = pa.params;
+  assert.equal(sha(bodyText(page(noView))), sha(bodyText(pageB)),
+    '摘掉 view 后两份正文应逐字相同（判据的鉴别力自证）');
   db.close();
 });

@@ -37,7 +37,10 @@ export const WEIGHT_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 107, wakeWord: '看本月波动', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"本月"}\'' },
   { list: 'wake', order: 108, wakeWord: '看最近 90 天波动', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"90d"}\'' },
   { list: 'wake', order: 109, wakeWord: '看最近 180 天波动', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"180d"}\'' },
-  { list: 'wake', order: 110, wakeWord: '看波动异常点', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d"}\'' },
+  // #490：第 34 条「看波动异常点」必须走**只看异常点**那一支（`view=anomalies-only`，读法见
+  // `volatility.ts` 的 `parseVolatilityView`）——不传 view 时与第 5 条「看体重稳不稳（增强版）」
+  // 的 cli 逐字相同、出页逐字节相同（实测 sha 6853d76ee585b21b / 88472 B）。
+  { list: 'wake', order: 110, wakeWord: '看波动异常点', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d","view":"anomalies-only"}\'' },
   { list: 'wake', order: 111, wakeWord: '看「有备注」的体重记录', scene: '03', kind: 'exec', key: 'calorie.view.weight-history', cli: 'calorie-cmd-read calorie.view.weight-history --params \'{"window":"30d","noteOnly":true}\'' },
   { list: 'wake', order: 112, wakeWord: '对比体重：最近 30 天 vs 之前 30 天', scene: '03', kind: 'exec', key: 'calorie.view.weight-compare', cli: 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\'' },
   { list: 'wake', order: 113, wakeWord: '对比体重：自定义两段时间', scene: '03', kind: 'exec', key: 'calorie.view.weight-compare', cli: 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>","compareWindow":"custom","compareStart":"<对比开始日期>","compareEnd":"<对比结束日期>"}\'' },

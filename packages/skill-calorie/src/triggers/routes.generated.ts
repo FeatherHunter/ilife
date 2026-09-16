@@ -119,7 +119,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '看本月波动', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"本月"}\'' },
   { wakeWord: '看最近 90 天波动', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"90d"}\'' },
   { wakeWord: '看最近 180 天波动', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"180d"}\'' },
-  { wakeWord: '看波动异常点', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d"}\'' },
+  { wakeWord: '看波动异常点', scene: '03', kind: 'exec', key: 'calorie.view.volatility', cli: 'calorie-cmd-read calorie.view.volatility --params \'{"window":"7d","view":"anomalies-only"}\'' },
   { wakeWord: '看「有备注」的体重记录', scene: '03', kind: 'exec', key: 'calorie.view.weight-history', cli: 'calorie-cmd-read calorie.view.weight-history --params \'{"window":"30d","noteOnly":true}\'' },
   { wakeWord: '对比体重：最近 30 天 vs 之前 30 天', scene: '03', kind: 'exec', key: 'calorie.view.weight-compare', cli: 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\'' },
   { wakeWord: '对比体重：自定义两段时间', scene: '03', kind: 'exec', key: 'calorie.view.weight-compare', cli: 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>","compareWindow":"custom","compareStart":"<对比开始日期>","compareEnd":"<对比结束日期>"}\'' },
