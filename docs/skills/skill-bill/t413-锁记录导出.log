@@ -1,0 +1,14 @@
+START ticket=413 runId=284dcf32-1c96-42e6-a506-3e0be8a87107 cmd="gh issue edit 413 --add-assignee" waitedMs=0 pid=45620 at=2026-09-16T01:50:12.884Z
+RUN ticket=413 runId=284dcf32-1c96-42e6-a506-3e0be8a87107 cmd="gh issue edit 413 --add-assignee" waitedMs=0 exit=1 pid=45620 at=2026-09-16T01:50:12.938Z
+START ticket=413 runId=ad487106-3045-43ce-9283-c9dbfe021458 cmd="gh issue edit 413 --add-assignee" waitedMs=0 pid=67492 at=2026-09-16T01:50:16.753Z
+RUN ticket=413 runId=ad487106-3045-43ce-9283-c9dbfe021458 cmd="gh issue edit 413 --add-assignee" waitedMs=0 exit=1 pid=67492 at=2026-09-16T01:50:16.812Z
+START ticket=413 runId=3fff9885-4069-4cf9-890e-5ecea5c8b9d6 cmd="pwsh -File .scratch\\t413\\window-1.ps1" waitedMs=1 pid=70812 at=2026-09-16T01:52:27.002Z
+RUN ticket=413 runId=3fff9885-4069-4cf9-890e-5ecea5c8b9d6 cmd="pwsh -File .scratch\\t413\\window-1.ps1" waitedMs=1 exit=0 pid=70812 at=2026-09-16T01:52:42.977Z
+START ticket=413 runId=71c8df4d-d2de-40e4-92c5-ad372fecb608 cmd="pwsh -File .scratch\\t413\\window-c1.ps1" waitedMs=0 pid=25292 at=2026-09-16T01:53:01.865Z
+RUN ticket=413 runId=71c8df4d-d2de-40e4-92c5-ad372fecb608 cmd="pwsh -File .scratch\\t413\\window-c1.ps1" waitedMs=0 exit=0 pid=25292 at=2026-09-16T01:53:04.843Z
+START ticket=413 runId=4a4bc0ab-7893-49ee-bc77-53fa1b5e939b cmd="pwsh -File .scratch\\t413\\window-c2.ps1" waitedMs=0 pid=38272 at=2026-09-16T01:53:18.502Z
+RUN ticket=413 runId=4a4bc0ab-7893-49ee-bc77-53fa1b5e939b cmd="pwsh -File .scratch\\t413\\window-c2.ps1" waitedMs=0 exit=0 pid=38272 at=2026-09-16T01:53:21.110Z
+START ticket=413 runId=ed48f3c4-29dc-41df-833b-c6451e3cae8e cmd="pwsh -File .scratch\\t413\\window-3.ps1" waitedMs=1 pid=63728 at=2026-09-16T01:53:39.991Z
+RUN ticket=413 runId=ed48f3c4-29dc-41df-833b-c6451e3cae8e cmd="pwsh -File .scratch\\t413\\window-3.ps1" waitedMs=1 exit=0 pid=63728 at=2026-09-16T01:53:56.368Z
+START ticket=413 runId=37a7732e-c552-41bf-a52a-0b339cc6da95 cmd="pwsh -File .scratch\\t413\\window-4.ps1" waitedMs=1 pid=42696 at=2026-09-16T01:54:09.018Z
+RUN ticket=413 runId=37a7732e-c552-41bf-a52a-0b339cc6da95 cmd="pwsh -File .scratch\\t413\\window-4.ps1" waitedMs=1 exit=0 pid=42696 at=2026-09-16T01:54:21.399Z
