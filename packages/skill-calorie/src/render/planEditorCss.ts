@@ -90,7 +90,6 @@ export const PLAN_EDITOR_CSS = `
 .pe-param-u{color:var(--fg3)}
 .pe-mode{min-height:38px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--blue);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .pe-lockico{display:inline-flex;align-items:center;color:var(--fg3)}
-.pe-plain{font-size:12.5px;color:var(--fg2);font-variant-numeric:tabular-nums}
 .pe-add{min-height:44px;width:100%;border:1px dashed var(--line);border-radius:10px;background:transparent;color:var(--blue);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .pe-add:hover:not(:disabled){border-color:var(--blue);background:var(--soft)}
 .pe-add:disabled{color:var(--fg3);cursor:not-allowed;border-style:solid}

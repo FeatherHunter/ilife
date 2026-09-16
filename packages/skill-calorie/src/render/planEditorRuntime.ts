@@ -47,7 +47,6 @@ export const PLAN_EDITOR_JS = `
   function lock(){ return S.weeks[week].locked; }
   function days(){ return S.weeks[week].days; }
   function day(d){ return days()[d]; }
-  function isFirstWeek(){ return week === 0; }
   function trainCount(){
     var n = 0;
     for (var w = 0; w < S.weeks.length; w++) for (var d = 0; d < 7; d++)
@@ -359,6 +358,7 @@ export const PLAN_EDITOR_JS = `
     if (act === 'cancel-slot'){ slotPick = null; render(); return; }
     if (act === 'del-train'){ day(d).sessions.splice(s, 1); render(); return; }
     if (act === 'set-slot'){
+      if (lock()) return;
       var want = el.getAttribute('data-slot');
       day(d).sessions[s].slot = want; render(); return;
     }
