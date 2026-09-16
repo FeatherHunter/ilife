@@ -308,7 +308,8 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
       })),
       {
         label: '总摄入', value: String(v.totalCalorie), unit: '卡',
-        detail: '共 ' + v.days + ' 天 · ' + balance.text,
+        /* #587 门禁收口：`·` 并列改逗号（R1），形状仍走 KPI 卡现成件。 */
+        detail: '共 ' + v.days + ' 天，' + balance.text,
         status: balance.status,
         statusText: balance.badge,
       },
@@ -435,11 +436,12 @@ export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string):
  *  会把两页里含「营养素深度」「营养素明细」的行剔掉再比剩余正文：只改页题那一支会判「正文一模一样」
  *  （#511 审查件第 80 条的原意就是两条词各自站得住，不只是标题不同）。 */
 function detailCaliber(detail: boolean): string {
+  /* #587 门禁收口：`、`／`；`并列改逗号句号（R5／R2），形状仍走口径行现成件；两支仍各写一句（t511 ② 正文差异不断言口径）。 */
   return detail
-    ? renderCaliberLine('这张表把每项营养素的摄入量、每天平均、每天推荐量、完成度、状态并排列出；'
-      + '完成度＝每天平均摄入 ÷ 每天推荐量。食品库里查不到营养值的食物不进合计。')
-    : renderCaliberLine('看的是微量营养素摄入水平：膳食纤维越高越好，钠和糖越低越好；'
-      + '「每天平均」＝整窗累计 ÷ 天数，不是某一天的值。');
+    ? renderCaliberLine('这张表把每项营养素的摄入量，每天平均，每天推荐量，完成度和状态并排列出。'
+      + '完成度是每天平均摄入除以每天推荐量。食品库里查不到营养值的食物不进合计。')
+    : renderCaliberLine('看的是微量营养素摄入水平：膳食纤维越高越好，钠和糖越低越好。'
+      + '「每天平均」是整窗累计除以天数，不是某一天的值。');
 }
 
 /** 营养素深度结论句（§五 第 3 行）：匹配餐数 ＋ 三项日均 ＋ 缺数据食物数。
@@ -466,7 +468,7 @@ export function buildNutritionDetailBlock(v: NutritionDetailView): string {
     anchored('sec-kpi', renderKpiGrid([
       { label: '匹配餐数', value: String(v.matchedMeals), unit: '餐', detail: v.start + ' 至 ' + v.end },
       { label: '缺数据食物', value: String(v.missingFoods.length), unit: '种', detail: '未计入合计' },
-      { label: '覆盖营养素', value: String(v.items.length), unit: '项', detail: '膳食纤维、钠、糖（每天推荐量固定，不随饮食变化）' },
+      { label: '覆盖营养素', value: String(v.items.length), unit: '项', detail: '膳食纤维 钠 糖（每天推荐量固定，不随饮食变化）' },
     ])),
     anchored('sec-table', renderDataTable({
       columns: [
