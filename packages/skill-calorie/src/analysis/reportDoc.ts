@@ -163,7 +163,7 @@ function avgCalories(plate: ReportPlate): number | null {
   return acc.n === 0 ? null : Math.round((acc.sum / acc.n) * 10) / 10;
 }
 
-/** 蛋白／水分两页同构的结论句（单位随页切；`达标` 与 `达成` 两个词是两张页原本的叫法，不合并）。 */
+/** 蛋白／水分两页同构的结论句（单位随页切；R-39／R-46：两页统一用「达标」）。 */
 function trackedConclusion(plate: ReportPlate, name: string, unit: string): string {
   const f = plate.fourPiece;
   if (f === null) return '这段时间没有' + name + '记录';
@@ -193,7 +193,8 @@ function calibersOf(plate: ReportPlate): string[] {
     case 'tdee':
       return ['总消耗＝基础代谢 × 活动系数｜系数取档案里的活动量档位｜静态缺口＝每日总消耗减日均摄入，运动消耗另计'];
     case 'bmr':
-      return ['基础代谢按 Mifflin-St Jeor 算式，身高体重年龄性别四项齐备才算｜危险信号判定：窗口内摄入低于基础代谢的天数达到 3 天即告警'];
+      /* R-43：判据细则只住口径表，页脚只留算式与指引（两处不互为子串；保留竖线分段）。 */
+      return ['基础代谢按 Mifflin-St Jeor 算式｜四项齐备才算，危险信号见上方判据表'];
     case 'protein':
     case 'water': return ['达标判定＝当天记录值达到目标值｜目标取目标设置里那一项｜没有设目标时不判达标'];
     case 'score':

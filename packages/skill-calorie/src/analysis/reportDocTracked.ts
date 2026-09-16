@@ -30,29 +30,30 @@ import type { ReportPlate } from './reportPlate.js';
 const missText = (missing: readonly string[]): string => missing.join(' ');
 
 /** 目标追踪族（蛋白／水分）：两页同构，只换单位与目标源。
- *  达标率／达成率两个词是两张页原本的叫法（蛋白＝达标率、水分＝达成率），不合并成一个词。 */
+ *  R-39／R-46：两页统一用「达标」（蛋白／水分同词），不再各叫各的。 */
 export function buildTrackedBlocks(plate: ReportPlate): ReportSection[] {
   const f = plate.fourPiece;
   const isProtein = plate.base.kind === 'protein';
   const which = isProtein
-    ? { unit: 'g', label: '蛋白', line: '每日蛋白量', value: '蛋白g', rate: '达标率', hitWord: '达标' }
-    : { unit: 'ml', label: '饮水', line: '每日饮水量', value: '饮水ml', rate: '达成率', hitWord: '达成' };
+    ? { unit: 'g', label: '蛋白', line: '每日蛋白量', value: '蛋白（g）', rate: '达标率', hitWord: '达标' }
+    : { unit: 'ml', label: '饮水', line: '每日饮水量', value: '饮水（ml）', rate: '达标率', hitWord: '达标' };
   if (f === null) {
     return [sec('sec-overview', '概览', renderEmptyBlock({
       title: which.line,
       text: '这段窗口里没有' + which.label + '记录，先记一次再来看',
     }))];
   }
-  const rate = f.hitRate === null
-    ? { label: which.rate, value: '—', detail: '还没有设' + which.label + '目标（先去定目标）' }
-    : { label: which.rate, value: String(f.hitRate) + '%', detail: f.hitDays + ' / ' + f.loggedDays + ' 天' + which.hitWord };
+  const rateDetail = f.hitRate === null
+    ? '还没有设' + which.label + '目标（先去定目标）'
+    : '达标率 ' + String(f.hitRate) + '%，共 ' + f.loggedDays + ' 天有记录';
   const missed = f.target === null ? 0 : f.loggedDays - f.hitDays;
   return [
     sec('sec-overview', '概览', renderKpiGrid([
       { label: '日均' + which.label, value: fmt(f.avg), unit: which.unit, detail: '有记录 ' + f.loggedDays + ' 天' },
       { label: '目标', value: fmt(f.target), unit: f.target === null ? '' : which.unit, detail: f.target === null ? '未设目标' : '来自目标设置' },
-      { label: which.hitWord + '天数', value: String(f.hitDays), unit: '天', detail: f.target === null ? '未设目标，无从判定' : '共 ' + f.loggedDays + ' 天有记录' },
-      rate,
+      /* R-45：达标天数与达标率是同一事实两卡 ⇒ 合并进一卡（值位达标天数，说明带达标率），空出的一卡给有记录天数。 */
+      { label: which.hitWord + '天数', value: String(f.hitDays), unit: '天', detail: f.target === null ? '未设目标，无从判定' : rateDetail },
+      { label: '有记录天数', value: String(f.loggedDays), unit: '天', detail: '窗口共 ' + plate.base.days + ' 天' },
     ])),
     sec('sec-chart', which.line, lineOf(plate.points, which.line + '（虚线为目标）', { target: plate.target })),
     sec('sec-detail', '逐日明细',
@@ -83,7 +84,8 @@ export function buildTdeeBlocks(plate: ReportPlate): ReportSection[] {
       {
         label: '静态缺口', value: fmtInt(gap), unit: '卡',
         detail: gap === null ? '缺数算不了' : (gap > 0 ? '消耗大于摄入（在缺口）' : '摄入大于消耗（无缺口）'),
-        ...(gap === null ? {} : { status: gap > 0 ? 'ok' as const : 'warn' as const }),
+        /* R-42：徽标写领域词，不用默认成功／警告。 */
+        ...(gap === null ? {} : { status: gap > 0 ? 'ok' as const : 'warn' as const, statusText: gap > 0 ? '在缺口' : '无缺口' }),
       },
       {
         label: '活动量系数', value: p.activityFactor === null ? '—' : String(p.activityFactor),
@@ -148,9 +150,10 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
       {
         label: '低于基础代谢', value: String(under.length), unit: '天',
         detail: under.length === 0 ? '窗口内没有低于基础代谢的日子' : '阈值为 ' + fmtInt(th, ' 卡'),
-        ...(under.length === 0 ? {} : { status: (danger ? 'danger' : 'warn') as 'danger' | 'warn' }),
+        /* R-42：徽标写领域词＋天数，不用默认失败／警告。 */
+        ...(under.length === 0 ? {} : { status: (danger ? 'danger' : 'warn') as 'danger' | 'warn', statusText: '低于基础代谢 ' + String(under.length) + ' 天' }),
       },
-      { label: '有摄入记录', value: String(plate.points.filter((x) => x.value !== null).length), unit: '天', detail: '共 ' + plate.base.days + ' 天窗口' },
+      { label: '达到基础代谢', value: String(plate.points.filter((x) => x.value !== null).length - under.length), unit: '天', detail: '共 ' + plate.base.days + ' 天窗口，有摄入且不低于基础代谢' },
     ])
       + renderChips({ items: [
         { text: '低于基础代谢 ' + String(under.length) + ' 天' },
@@ -163,7 +166,7 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
          * 「低于基础代谢」KPI 卡**同一事实写三遍**。改法：正文只留**该怎么办**，
          * 天数与阈值各留在它自己的那一处（结论行讲事实、KPI 卡讲读数）——同一事实一页一处。 */
         rows: [{ t: '连续多日摄入低于基础代谢，长期会压低基础代谢，建议把摄入提到基础代谢之上。' }],
-        caption: '低于基础代谢（老侧口径：3 天及以上即告警）',
+        caption: '低于基础代谢（3 天及以上即告警）',
       })
       : renderEmptyBlock({
         title: '危险信号',
@@ -173,7 +176,7 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
     sec('sec-days', '低于基础代谢的日期', renderDataTable({
       columns: [
         { key: 'date', label: '低于基础代谢的日期' },
-        { key: 'cal', label: '当日摄入卡', align: 'right' },
+        { key: 'cal', label: '当日摄入（卡）', align: 'right' },
         { key: 'gap', label: '距基础代谢', align: 'right' },
       ],
       rows: under.map((u) => ({ date: u.date, cal: u.calories, gap: th === null ? null : Math.round(u.calories - th) + ' 卡' })),
@@ -186,7 +189,7 @@ export function buildBmrBlocks(plate: ReportPlate): ReportSection[] {
       { k: '年龄', v: fmt(p.age, ' 岁') },
       { k: '性别', v: p.genderLabel },
       { k: '活动量档位', v: p.activityLabel + (p.activityFactor === null ? '' : '（系数 ' + String(p.activityFactor) + '）') },
-      { k: '危险信号判据', v: '窗口内摄入低于基础代谢的天数达到 3 天即告警（老侧口径）' },
+      { k: '危险信号判据', v: '窗口内摄入低于基础代谢的天数达到 3 天即告警' },
     ])),
   ];
 }

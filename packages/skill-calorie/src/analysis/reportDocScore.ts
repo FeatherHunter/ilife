@@ -49,17 +49,18 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
         },
       })
       + renderKpiGrid([
-        { label: '综合评分', value: avg === null ? '—' : String(avg), detail: '满分 100 分，' + scores.length + ' 天有记录' },
+        /* R-49：综合评分读数由仪表承载（值文本「N 分」），KPI 不再另起一卡印同一数（同一事实一页一处）。 */
         { label: '最近一天', value: last === undefined ? '—' : String(last.score), detail: last === undefined ? '无可评分日' : last.date },
         {
           label: '最低分项', value: weakest === undefined ? '—' : weakest.label,
           detail: weakest === undefined ? '' : '命中率 ' + String(weakest.rate) + '%（优先改它）',
-          ...(weakest === undefined ? {} : { status: 'warn' as const }),
+          /* R-42：徽标不用默认「成功／警告」，改领域词＋百分数（与值位同源）。 */
+          ...(weakest === undefined ? {} : { status: 'warn' as const, statusText: weakest.label + ' ' + String(weakest.rate) + '%' }),
         },
         {
           label: '最高分项', value: strongest === undefined ? '—' : strongest.label,
           detail: strongest === undefined ? '' : '命中率 ' + String(strongest.rate) + '%',
-          ...(strongest === undefined ? {} : { status: 'ok' as const }),
+          ...(strongest === undefined ? {} : { status: 'ok' as const, statusText: strongest.label + ' ' + String(strongest.rate) + '%' }),
         },
       ])),
     sec('sec-items', '分项分数', renderDataTable({
@@ -90,7 +91,10 @@ export function buildTrendBlocks(plate: ReportPlate): ReportSection[] {
       {
         label: '变化方向', value: dir,
         detail: t === null ? '' : '前段 ' + fmt(t.earlyAvg) + ' 到后段 ' + fmt(t.lateAvg),
-        ...(t === null ? {} : { status: (dir === '上升' ? 'ok' : dir === '下降' ? 'warn' : 'empty') as 'ok' | 'warn' | 'empty' }),
+        /* R-40／R-42：平稳也挂徽标但写领域词「平稳」（empty＋显式文案，不落默认「无数据」）；上升／下降同理。 */
+        ...(t === null ? {} : dir === '平稳'
+          ? { status: 'empty' as const, statusText: '平稳' }
+          : { status: (dir === '上升' ? 'ok' : 'warn') as 'ok' | 'warn', statusText: dir }),
       },
       { label: '前段均分', value: t === null ? '—' : fmt(t.earlyAvg), detail: '窗口前 1/3 天的评分均值' },
       { label: '后段均分', value: t === null ? '—' : fmt(t.lateAvg), detail: '窗口后 1/3 天的评分均值' },
@@ -112,27 +116,48 @@ export function buildTrendBlocks(plate: ReportPlate): ReportSection[] {
   ];
 }
 
-/** 对比形态：full 五维小倍数图（裁决 5 A 方案）＋ 逐项 Δ 表 ＋ 前 3 项变化量。 */
+/** 对比形态：full 五维小倍数图（裁决 5 A 方案）＋ 逐项 Δ 表 ＋ 前 3 项变化量。
+ *
+ *  R-52：日均类读数统一 1 位小数。 */
+function fmt1(v: number | null): string | null {
+  if (v === null) return null;
+  return (Math.round(v * 10) / 10).toFixed(1);
+}
 export function buildCompareBlocks(plate: ReportPlate): ReportSection[] {
   const c = plate.compare;
   if (c === null) return [];
+  const signed1 = (v: number): string => (v > 0 ? '+' : '') + (Math.round(v * 10) / 10).toFixed(1);
   const topRows = c.top.map((t) => ({
     label: t.label,
-    delta: (t.delta > 0 ? '+' : '') + String(t.delta) + ' ' + t.unit,
+    delta: signed1(t.delta) + ' ' + t.unit,
     dir: t.delta > 0 ? '上升' : t.delta < 0 ? '下降' : '持平',
   }));
   const dirCount = (want: string): number => c.rows.filter((r) => r.delta !== null
     && (r.delta > 0 ? '上升' : r.delta < 0 ? '下降' : '持平') === want).length;
+  /* R-50／R-52：KPI 位给真读数（本期／对比期日均读数，1 位小数），窗口区间下沉到结论条与页头。 */
+  const rowOf = (label: string): { cur: number | null; prev: number | null } | null => {
+    const r = c.rows.find((x) => x.label === label);
+    return r === undefined ? null : { cur: r.cur, prev: r.prev };
+  };
+  const intake = rowOf('日均摄入') ?? rowOf(c.rows[0]?.label ?? '');
+  const weight = rowOf('日均体重') ?? rowOf(c.rows[1]?.label ?? c.rows[0]?.label ?? '');
   return [
     sec('sec-overview', '概览', renderKpiGrid([
-      /* 判据 R6：区间写「至」，不拿 `~` 顶替。 */
-      { label: '本期', value: c.cur.start + ' 至 ' + c.cur.end, detail: '主窗口，共 ' + String(plate.base.days) + ' 天' },
-      { label: '对比期', value: c.prev.start + ' 至 ' + c.prev.end, detail: '紧邻主窗口之前的等长窗口' },
+      /* R-50／R-41：日期区间不住 KPI（结论条与页头左格已有；KPI 内长日期在 390 档折断），这两卡给读数。 */
+      {
+        label: '本期日均摄入', value: intake === null || intake.cur === null ? '—' : fmt1(intake.cur) ?? '—',
+        detail: intake === null ? '两期都有数据的项还不够' : '对比期 ' + (fmt1(intake.prev) ?? '—') + '（同口径）',
+      },
+      {
+        label: '本期日均体重', value: weight === null || weight.cur === null ? '—' : fmt1(weight.cur) ?? '—',
+        detail: weight === null ? '两期都有数据的项还不够' : '对比期 ' + (fmt1(weight.prev) ?? '—') + '（同口径）',
+      },
       { label: '记录天数', value: String(plate.base.days), unit: '天', detail: '本期窗口长度' },
       {
         label: '前 3 项变化量', value: topRows.length === 0 ? '—' : topRows[0].delta,
         detail: topRows.length === 0 ? '两期都有数据的项还不够' : '变化最大的是 ' + topRows[0].label,
-        ...(topRows.length === 0 ? {} : { status: (topRows[0].dir === '下降' ? 'warn' : 'ok') as 'warn' | 'ok' }),
+        /* R-42：徽标写领域词＋读数，不用默认成功／警告。 */
+        ...(topRows.length === 0 ? {} : { status: (topRows[0].dir === '下降' ? 'warn' : 'ok') as 'warn' | 'ok', statusText: topRows[0].dir + ' ' + topRows[0].delta }),
       },
     ])),
     sec('sec-delta', '逐项变化量',
@@ -142,14 +167,12 @@ export function buildCompareBlocks(plate: ReportPlate): ReportSection[] {
           { key: 'cur', label: '本期', align: 'right' },
           { key: 'prev', label: '对比期', align: 'right' },
           { key: 'delta', label: '变化量 Δ', align: 'right' },
-          { key: 'dir', label: '方向' },
         ],
         rows: c.rows.map((r) => ({
           item: r.label,
-          cur: r.cur,
-          prev: r.prev,
-          delta: r.delta === null ? null : (r.delta > 0 ? '+' : '') + String(r.delta),
-          dir: r.delta === null ? null : r.delta > 0 ? '上升' : r.delta < 0 ? '下降' : '持平',
+          cur: r.cur === null ? null : fmt1(r.cur),
+          prev: r.prev === null ? null : fmt1(r.prev),
+          delta: r.delta === null ? null : signed1(r.delta),
         })),
         caption: '两期变化量（逐项 Δ 表）',
         emptyText: '两期都有数据的项还不够，算不出 Δ',
@@ -162,8 +185,8 @@ export function buildCompareBlocks(plate: ReportPlate): ReportSection[] {
         { text: '持平 ' + String(dirCount('持平')) + ' 项' },
       ] })),
     sec('sec-top', '前 3 项变化量', renderDataTable({
-      columns: [{ key: 'label', label: '前 3 项变化量' }, { key: 'delta', label: 'Δ', align: 'right' }, { key: 'dir', label: '方向' }],
-      rows: topRows,
+      columns: [{ key: 'label', label: '前 3 项变化量' }, { key: 'delta', label: 'Δ', align: 'right' }],
+      rows: topRows.map((t) => ({ label: t.label, delta: t.delta })),
       caption: '前 3 项变化量（按 |Δ| 降序）',
       emptyText: '两期都有数据的项还不够，算不出 Δ',
     })),

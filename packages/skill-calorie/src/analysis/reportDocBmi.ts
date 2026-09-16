@@ -74,9 +74,9 @@ export function buildBmiBlocks(plate: ReportPlate): ReportSection[] {
         rows: BMI_BANDS.map((b) => ({
           band: b.label,
           range: b.hi === null ? '≥ ' + String(b.lo) : String(b.lo) + ' – ' + String(b.hi),
-          now: band === b.label ? '✔' : '',
+          now: band === b.label ? '✔' : '—',
         })),
-        caption: 'BMI 分级（页面文案口径）',
+        caption: 'BMI 分级（中国标准）',
       })
       /* 徽章列（#516 §3.1 的第二种形状）：与上表「当前落在」那一列同源同值，
        * 把「落在哪一档」从表内的一个勾变成一行扫得动的标签。 */
@@ -84,7 +84,7 @@ export function buildBmiBlocks(plate: ReportPlate): ReportSection[] {
     sec('sec-detail', '逐日明细', renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
-        { key: 'kg', label: '体重kg', align: 'right' },
+        { key: 'kg', label: '体重（kg）', align: 'right' },
         { key: 'bmi', label: 'BMI', align: 'right' },
       ],
       rows: pts.map((p) => ({ date: p.date, kg: p.kg, bmi: p.bmi === null ? null : p.bmi })),
@@ -94,7 +94,7 @@ export function buildBmiBlocks(plate: ReportPlate): ReportSection[] {
     sec('sec-milestone', '分类里程碑', renderDataTable({
       columns: [{ key: 'm', label: '分类里程碑' }],
       rows: milestones.map((m) => ({ m })),
-      caption: milestones.length === 0 ? '分类里程碑' : '分类里程碑（from → to）',
+      caption: milestones.length === 0 ? '分类里程碑' : '分类里程碑（起 → 止）',
       emptyText: '窗口内 BMI 没有跨过分级线',
     })),
   ];

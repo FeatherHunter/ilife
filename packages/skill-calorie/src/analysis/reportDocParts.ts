@@ -66,7 +66,7 @@ export function reportChips(topic: string): string {
 /** 来源脚注（J9 第三条恒出；同族写法见缺口页与 `diet/sourceStatsDocs.ts`）：走普通小字行，不走深底块。
  *  区间写「至」（#516 判据 R6：`~` 顶替「至」判债）。 */
 export function sourceFootnoteOf(plate: ReportPlate): string {
-  return renderCaliberLine('📊 数据来源：本机' + plate.base.start + ' 至 ' + plate.base.end + ' 的体重与饮食记录');
+  return renderCaliberLine('📊 数据来源：本机 ' + plate.base.start + ' 至 ' + plate.base.end + ' 的体重与饮食记录');
 }
 
 export function fmt(v: number | null | undefined, unit = ''): string {
@@ -147,9 +147,16 @@ export function lineOf(
   const lo = Math.min(...values, ...(target === null ? [] : [target]));
   const hi = Math.max(...values, ...(target === null ? [] : [target]));
   const pad = Math.max((hi - lo) * 0.12, hi === lo ? Math.max(Math.abs(hi) * 0.05, 1) : 0);
-  const yMin = Math.max(0, Math.floor(lo - pad));
+  let yMin = Math.max(0, Math.floor(lo - pad));
   let yMax = Math.ceil(hi + pad);
   if ((yMax - yMin) % 2 !== 0) yMax += 1;
+  /* R-54：小跨度序列（如 BMI 25.5→24.5）在取整后只占图高一半 ⇒ 按数据跨度收敛到 ≥60%。 */
+  if (hi > lo && (hi - lo) / (yMax - yMin) < 0.6) {
+    const mid = (hi + lo) / 2;
+    const half = ((hi - lo) * 1.667) / 2;
+    yMin = Math.max(0, Math.round((mid - half) * 10) / 10);
+    yMax = Math.round((mid + half) * 10) / 10;
+  }
   return renderChartBlock({
     kind: 'line',
     title: shownTitle,
