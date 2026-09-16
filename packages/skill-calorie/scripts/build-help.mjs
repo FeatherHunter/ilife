@@ -19,8 +19,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CALORIE_COMBOS, isCalorieWriteKey } from '../dist/cli/keys.js';
-import { ALL_ROUTES } from '../dist/triggers/routing.js';
+import { ALL_ROUTES, NEW_KEY_ROUTES, COVERAGE_REPAIR_ROUTES } from '../dist/triggers/routing.js';
 import { SCENE_02_DIET } from '../dist/triggers/scene-02-diet.js';
+import { SCENE_06_GOAL } from '../dist/triggers/scene-06-goal.js';
 import { WAKE_GROUPS } from '../dist/triggers/wake-assets.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
@@ -480,6 +481,180 @@ export function dietRepresentatives(routes = ALL_ROUTES, frozen = SCENE_02_DIET.
   return m;
 }
 
+/* ── 场景 06 目标管理：代表唤醒词从路由层派生（#255 单一来源） ──────────────────────────
+ *
+ * 权威＝路由层（`src/triggers/routing.ts` 的 `ALL_ROUTES`，场景 06 的 exec 项 29 条＝
+ * 冻结 25 条 `SCENE_06_GOAL` ＋ 新拟 3 条 `NEW_KEY_ROUTES` ＋ 修复 1 条 `COVERAGE_REPAIR_ROUTES`）；
+ * 本文件不存第二份目标唤醒词。`REPR`（`gen-cli.mjs` 按声明生成）只留兜底：目标键一律走本派生，
+ * 非目标键仍走 `REPR`，无词的键才退回命令名（条数自述，见 `buildHelpBlock`）。
+ * 目标新词优先：同一键有新拟／修复词时取它（如 `看目标预检`），否则取冻结首词（如 `看目标完成度`）。
+ * 目标缺项即硬失败（`checkGoalCoverage` 抛），其余各域只报不拦（`buildMissingReport`）。 */
+export const GOAL_READ_KEYS = [
+  'calorie.view.goal',
+  'calorie.view.goal-config',
+  'calorie.view.goal-expiring',
+  'calorie.view.goal-predict',
+  'calorie.view.goal-recommend',
+  'calorie.view.goal-status',
+  'calorie.view.goal-vs-actual',
+  'calorie.view.goal-weight',
+  'calorie.view.goal-wizard',
+];
+/** 目标管理一族（硬失败的范围）：写 5 ＋ 读 10（含场景 01 代管的 `view.goal-progress`）。 */
+export const GOAL_FAMILY_KEYS = [
+  'calorie.goal.pause',
+  'calorie.goal.resume',
+  'calorie.goal.set',
+  'calorie.goal.water',
+  'calorie.goal.weight',
+  'calorie.view.goal',
+  'calorie.view.goal-config',
+  'calorie.view.goal-expiring',
+  'calorie.view.goal-predict',
+  'calorie.view.goal-progress',
+  'calorie.view.goal-recommend',
+  'calorie.view.goal-status',
+  'calorie.view.goal-vs-actual',
+  'calorie.view.goal-weight',
+  'calorie.view.goal-wizard',
+];
+
+/** 目标场景 06 的新拟／修复唤醒词（按路由层 `NEW`＋`REPAIR` 顺序，场景 06 且可执行）。 */
+export function goalNewRoutes({ newRoutes = NEW_KEY_ROUTES, repairRoutes = COVERAGE_REPAIR_ROUTES } = {}) {
+  return [...newRoutes, ...repairRoutes].filter((r) => r.scene === '06' && r.kind === 'exec');
+}
+
+/** 目标各键的代表唤醒词（源＝路由层场景 06：新词优先，否则冻结首词；缺的键此处无行）。 */
+export function goalRepresentatives({
+  routes = ALL_ROUTES,
+  newRoutes = NEW_KEY_ROUTES,
+  repairRoutes = COVERAGE_REPAIR_ROUTES,
+  frozen = SCENE_06_GOAL.map((t) => t.wake_word),
+} = {}) {
+  const newFirst = new Map();
+  for (const r of [...newRoutes, ...repairRoutes]) {
+    if (r.scene !== '06' || r.kind !== 'exec' || newFirst.has(r.key)) continue;
+    newFirst.set(r.key, r.wakeWord);
+  }
+  const frozenSet = new Set(frozen);
+  const frozenFirst = new Map();
+  for (const r of routes) {
+    if (r.kind !== 'exec' || !frozenSet.has(r.wakeWord) || frozenFirst.has(r.key)) continue;
+    frozenFirst.set(r.key, r.wakeWord);
+  }
+  const m = new Map();
+  for (const k of GOAL_READ_KEYS) {
+    if (newFirst.has(k)) m.set(k, newFirst.get(k));
+    else if (frozenFirst.has(k)) m.set(k, frozenFirst.get(k));
+  }
+  return m;
+}
+
+/** 目标管理一族双向覆盖检查（缺项即红）：① 29 个目标唤醒词人人有 exec 路由；
+ *  ② 15 个目标键个个有目标唤醒词；③ 9 个展示代表词人人路由回同键；④ 9 个代表词互不重复。
+ *  任一条不过即抛（构建期硬失败，不静默退回命令名）。 */
+export function checkGoalCoverage({
+  routes = ALL_ROUTES,
+  newRoutes = NEW_KEY_ROUTES,
+  repairRoutes = COVERAGE_REPAIR_ROUTES,
+  frozen = SCENE_06_GOAL.map((t) => t.wake_word),
+  familyKeys = GOAL_FAMILY_KEYS,
+  displayKeys = GOAL_READ_KEYS,
+} = {}) {
+  const execByWake = new Map();
+  for (const r of routes) {
+    if (r.kind !== 'exec' || execByWake.has(r.wakeWord)) continue;
+    execByWake.set(r.wakeWord, r);
+  }
+  const goalWakes = [...frozen, ...goalNewRoutes({ newRoutes, repairRoutes }).map((r) => r.wakeWord)];
+  const missingWakes = goalWakes.filter((w) => {
+    const r = execByWake.get(w);
+    return r === undefined || r.scene !== '06';
+  });
+  if (missingWakes.length > 0) {
+    throw new Error('目标管理缺唤醒词路由：[' + missingWakes.join('、') + ']（场景 06 该词无可执行路由）');
+  }
+  const keysWithGoalWake = new Set();
+  for (const r of routes) {
+    if (r.kind !== 'exec' || r.scene !== '06') continue;
+    keysWithGoalWake.add(r.key);
+  }
+  const missingKeys = familyKeys.filter((k) => !keysWithGoalWake.has(k));
+  if (missingKeys.length > 0) {
+    throw new Error('目标管理缺键覆盖：[' + missingKeys.join('、') + ']（场景 06 无指向该键的唤醒词）');
+  }
+  const reps = goalRepresentatives({ routes, newRoutes, repairRoutes, frozen });
+  const noRep = displayKeys.filter((k) => !reps.has(k));
+  if (noRep.length > 0) {
+    throw new Error('目标管理缺代表词：[' + noRep.join('、') + ']（路由层场景 06 无该键的首词）');
+  }
+  const unbound = [];
+  for (const k of displayKeys) {
+    const wake = reps.get(k);
+    const hits = routes.filter((r) => r.kind === 'exec' && r.wakeWord === wake);
+    if (!hits.some((r) => r.key === k)) {
+      unbound.push(wake + '→' + k + '（路由实际→[' + hits.map((r) => r.key).join('|') + ']）');
+    }
+  }
+  if (unbound.length > 0) {
+    throw new Error('目标管理代表词未路由回同键：[' + unbound.join('；') + ']');
+  }
+  const seen = new Map();
+  const dupes = [];
+  for (const k of displayKeys) {
+    const w = reps.get(k);
+    if (seen.has(w)) dupes.push(w + '（' + seen.get(w) + '／' + k + '）');
+    else seen.set(w, k);
+  }
+  if (dupes.length > 0) {
+    throw new Error('目标管理代表词重复：一词占两行：[' + dupes.join('；') + ']');
+  }
+  return { wakes: goalWakes.length, keys: familyKeys.length, reps: reps.size };
+}
+
+/** 全量缺失清单（先报不拦：目标族之外的键缺词／错配只列不抛；目标族由上者硬失败）。
+ *  返回 `{ noWake, mismatched, duplicated }`：首列退回命令名的键、代表词与路由全局首词不一致的键、
+ *  同一代表词占两行的组。 */
+export function buildMissingReport({
+  routes = ALL_ROUTES,
+  combos = CALORIE_COMBOS,
+  repr = REPR,
+  diet = dietRepresentatives(),
+  goal = goalRepresentatives(),
+} = {}) {
+  const globalFirst = new Map();
+  for (const r of routes) {
+    if (r.kind !== 'exec' || globalFirst.has(r.key)) continue;
+    globalFirst.set(r.key, r.wakeWord);
+  }
+  const wakeOf = (k) => {
+    if (diet.has(k)) return diet.get(k);
+    if (goal.has(k)) return goal.get(k);
+    if (repr[k] !== undefined) return repr[k];
+    return k;
+  };
+  const noWake = [];
+  const mismatched = [];
+  for (const k of Object.keys(combos).sort()) {
+    const shown = wakeOf(k);
+    if (shown === k && !globalFirst.has(k)) noWake.push(k);
+    else if (shown === k && globalFirst.has(k)) mismatched.push(k + '（首列命令名，路由有词「' + globalFirst.get(k) + '」）');
+    else if (globalFirst.has(k) && globalFirst.get(k) !== shown && !diet.has(k) && !goal.has(k)) {
+      mismatched.push(k + '（表「' + shown + '」≠路由首词「' + globalFirst.get(k) + '」）');
+    }
+  }
+  const byWake = new Map();
+  for (const k of Object.keys(combos).sort()) {
+    const w = wakeOf(k);
+    if (w === k) continue;
+    if (!byWake.has(w)) byWake.set(w, []);
+    byWake.get(w).push(k);
+  }
+  const duplicated = [...byWake.entries()].filter(([, v]) => v.length > 1)
+    .map(([w, v]) => w + '→[' + v.join('|') + ']');
+  return { noWake, mismatched, duplicated };
+}
+
 /** #338 · 声明里的工作流程名只许取 `BODY_HELP_FLOWS` 里的取值：名字写错即抛（不静默少一列）。
  *  一个键可以服务多条流程（`calorie.view.weight-history`＝明细／曲线／备注），故值是「／」连的一份表。 */
 function flowFor(key) {
@@ -496,9 +671,12 @@ function flowFor(key) {
 export function buildHelpBlock() {
   const keys = Object.keys(CALORIE_COMBOS).sort();
   const diet = dietRepresentatives();
-  const src = { diet: 0, declared: 0, none: 0 };
+  const goal = goalRepresentatives();
+  checkGoalCoverage();
+  const src = { diet: 0, goal: 0, declared: 0, none: 0 };
   const wakeOf = (k) => {
     if (diet.has(k)) { src.diet += 1; return diet.get(k); }
+    if (goal.has(k)) { src.goal += 1; return goal.get(k); }
     if (REPR[k] !== undefined) { src.declared += 1; return REPR[k]; }
     src.none += 1; return k;         // 只为页面服务、没有唤醒词的命令：首列列命令名自身（条数写进下面那句自述）
   };
@@ -509,8 +687,9 @@ export function buildHelpBlock() {
       + ' | \u0060' + exampleFor(k) + '\u0060 |');
   }
   lines.push('');
-  lines.push('「唤醒词」列是这条命令的代表词，三个来源逐条自述：饮食场景的命令取它自己那条词（源＝路由层，'
-    + src.diet + ' 条）；其余取命令声明里的代表词（`gen-cli.mjs` 写 `REPR` 表，' + src.declared + ' 条）；'
+  lines.push('「唤醒词」列是这条命令的代表词，四个来源逐条自述：饮食场景的命令取它自己那条词（源＝路由层，'
+    + src.diet + ' 条）；目标管理场景 06 的命令取它自己那条词（源＝路由层场景 06，新词优先否则冻结首词，'
+    + src.goal + ' 条，缺项构建期硬失败）；其余取命令声明里的代表词（`gen-cli.mjs` 写 `REPR` 表，' + src.declared + ' 条）；'
     + '只为页面服务、没有唤醒词的命令列命令名自身（' + src.none + ' 条）。本生成器不另存第二份唤醒词。'
     + '「预检页」列是该写命令**先出的预检确认页命令**（查询命令与「读—确认—写」那一类留空，事实出处＝'
     + '`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`）；「流程」列是它服务的工作流程名。'
@@ -541,6 +720,15 @@ function runMain() {
   const next = renderSkillMd(readFileSync(skillPath, 'utf8'));
   writeFileSync(skillPath, next);
   console.log('HELP 已注入：' + skillPath);
+  // #255 · 缺失清单落盘＋控制台打印（先报不拦：目标族已由上者硬失败，此处只列其余各域）。
+  const report = buildMissingReport();
+  const outPath = join(pkgDir, 'dist', 'help-missing.json');
+  writeFileSync(outPath, JSON.stringify({ at: new Date().toISOString(), ...report }, null, 2));
+  console.log('MISSING noWake=' + report.noWake.length + ' mismatched=' + report.mismatched.length
+    + ' duplicated=' + report.duplicated.length + ' → ' + outPath);
+  for (const l of report.noWake) console.log('MISSING-NO-WAKE ' + l);
+  for (const l of report.mismatched) console.log('MISSING-MISMATCH ' + l);
+  for (const l of report.duplicated) console.log('MISSING-DUPE ' + l);
 }
 
 // 只在**作为脚本运行**时写盘（照 packages/base-combos/scripts/build-help.mjs 同形，#80 已落地）。
