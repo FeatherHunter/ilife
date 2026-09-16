@@ -233,7 +233,7 @@ function collectPage(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·报销到账', title: '记一笔报销到账', subtitle,
+    docTitle: DOC_TITLE + '·报销到账', title: wakeWordOf(KIND), subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }

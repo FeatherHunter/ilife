@@ -36,7 +36,7 @@ function slot(name: string, hint: string, required: boolean): RecordSlot {
 /** 两条写命令的槽位表。提示句都是**用户说法**：`缺省＝…` 这类口径词不上屏（本轮整改）。 */
 export const RECORD_SLOTS: Record<string, readonly RecordSlot[]> = {
   'bill.record.add': [
-    slot('category', '三级分类，如 餐饮/外卖/午餐；要选到最细那一级', true),
+    slot('category', '三级分类，如 餐饮/外卖/午餐。要选到最细那一级', true),
     slot('amount', '支出记负数、收入记正数，如 -12.5', true),
     slot('time', '不填就记成今天 12:00:00', false),
     slot('account', '不填就记到默认账户', false),

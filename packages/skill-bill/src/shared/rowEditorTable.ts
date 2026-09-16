@@ -109,7 +109,7 @@ function totalLine(input: RowEditorInput): string {
   }
   const label = input.totalLabel ?? '合计';
   return label + ' ' + input.rows.length + ' 行，其中 ' + counted + ' 行有金额，合计 ' + sum.toFixed(2)
-    + (counted === input.rows.length ? '' : '（解析不出数的格没算进合计）');
+    + (counted === input.rows.length ? '' : '（没算进去的格是数字写不清的）');
 }
 
 /** 逐行可编辑表整块：逐行一张小表单 ＋ 缺项逐行标红 ＋ 合计行；零行只出空态。 */
@@ -133,6 +133,6 @@ export function rowEditorTable(input: RowEditorInput): string {
   return rows.join('') + reds.join('') + renderCaliberLine(
     missing.length === 0
       ? '每行的必需格都齐了：' + totalLine(input)
-      : '有 ' + missing.length + ' 行缺必需格（缺项那几行不给复制指令）：' + totalLine(input),
+      : '有 ' + missing.length + ' 行缺必需格（缺的那几行先不给复制，补齐再说）：' + totalLine(input),
   );
 }

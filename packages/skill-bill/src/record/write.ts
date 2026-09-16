@@ -175,7 +175,7 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): Wri
   return finish({
     db, key, params, op: 'add', row: r, fields: ADD_FIELDS, before, noChange: false,
     summary: `已记录：${r.category} ${r.amount.toFixed(2)}${extra}（记录编号 ${r.id}，这一页可以复制）`,
-    writtenDetail: '已写进记账库',
+    writtenDetail: '这一笔已记进账本',
     detail: rowDetail(r),
   });
 }
@@ -218,7 +218,7 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): 
   return finish({
     db, key, params, op: 'update', row: r, fields, before, noChange,
     summary: `已修改：${r.id}（改了 ${fields.map((f) => fieldLabelOf(f)).join('、')}）`,
-    writtenDetail: '已改记账库里那一条',
+    writtenDetail: '这一条已改好',
     detail: [
       { k: fieldLabelOf('id'), v: String(r.id) },
       ...fields.map((f) => ({ k: fieldLabelOf(f), v: String(patch[f]) })),

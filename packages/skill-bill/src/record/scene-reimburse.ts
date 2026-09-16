@@ -153,7 +153,7 @@ function collectReimburse(input: CollectInput): string {
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + '·记报销',
-    title: '记一笔报销',
+    title: WORD,
     subtitle,
     slot: 'collect',
     page: 'collect',

@@ -58,12 +58,20 @@ function optionOf(item: CandidateItem): string {
 
 /** 依据徽标：逐条候选一句「为什么是它」。**空依据抛错**——不写依据的候选等于让人猜。
  *  徽标只写「第几条 ＋ 依据」：分类／账户／金额那一份已经在上面那张表里逐列列过，
- *  这里再抄一遍就是同一件事在页上印两遍（本轮整改；表内文字是数据，徽标是文案）。 */
+ *  这里再抄一遍就是同一件事在页上印两遍（本轮整改；表内文字是数据，徽标是文案）。
+ *  依据逐字相同的候选只说一遍（一行口径）：撤销／改记录的候选依据只与过筛条件有关、
+ *  与行无关，逐条徽标就是同一句印 N 遍（t410 终审 n29）。恢复的依据逐条不同（各行撤销时间不同），照旧逐条徽标。 */
 function whyBadges(items: readonly CandidateItem[]): string {
-  const lines = items.map((it, i) => {
-    if (typeof it.why !== 'string' || it.why.trim() === '') {
+  for (let i = 0; i < items.length; i += 1) {
+    if (typeof items[i]?.why !== 'string' || (items[i]?.why ?? '').trim() === '') {
       throw new Error('candidatePick: 第 ' + (i + 1) + ' 条候选没有写「为什么是它」');
     }
+  }
+  const first = (items[0]?.why ?? '').trim();
+  if (items.length > 1 && items.every((it) => it.why.trim() === first)) {
+    return renderCaliberLine('以下 ' + items.length + ' 条候选依据相同：' + first + '。');
+  }
+  const lines = items.map((it) => {
     return renderStatusBadge({ status: 'warn', text: badgeTextOf('候选 #' + it.id + '：' + it.why) });
   });
   return lines.join('');
@@ -92,7 +100,8 @@ export function candidateEmpty(input: { readonly label: string; readonly what?: 
 }
 
 /** 记录列表（含依据徽标）：一条候选一行，零行返回空串（空态由 `candidatePick` 出）。
- *  表头 `资金`（金额）与列名照用户说法；`为什么是它` 那一列里的分隔符改顿号。 */
+ *  表头 `资金`（金额）与列名照用户说法。「为什么是它」只出下面的依据徽标（带候选编号），
+ *  不再另占表的一列——同页同句印两遍，且五列表在手机端被压成单字串（t410 终审 n29）。 */
 export function candidateRows(items: readonly CandidateItem[]): string {
   if (items.length === 0) return '';
   return renderDataTable({
@@ -101,9 +110,8 @@ export function candidateRows(items: readonly CandidateItem[]): string {
       { key: 'label', label: '是哪一笔' },
       { key: 'amount', label: '金额', align: 'right' },
       { key: 'time', label: '时间' },
-      { key: 'why', label: '为什么是它' },
     ],
-    rows: items.map((it) => ({ id: it.id, label: it.label, amount: it.amount, time: it.time, why: it.why })),
+    rows: items.map((it) => ({ id: it.id, label: it.label, amount: it.amount, time: it.time })),
     caption: '可选的记录（共 ' + items.length + ' 条）',
   }) + whyBadges(items);
 }

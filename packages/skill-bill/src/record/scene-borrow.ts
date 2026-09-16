@@ -244,7 +244,7 @@ function collectPage(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·记借入', title: '记一笔借入', subtitle,
+    docTitle: DOC_TITLE + '·记借入', title: wakeWordOf(KIND), subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }

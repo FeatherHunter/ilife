@@ -234,7 +234,7 @@ function collectPage(input: CollectInput): string {
     }),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·记退款', title: '记一笔退款', subtitle,
+    docTitle: DOC_TITLE + '·记退款', title: wakeWordOf(KIND), subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }
