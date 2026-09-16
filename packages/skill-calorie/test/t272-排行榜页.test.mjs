@@ -34,7 +34,7 @@ const { seedFull, SEED_TODAY } = await import(pathToFileURL(join(ROOT, 'docs', '
 const { rankShortName } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'diet', 'dietEngine.js')).href);
 
 const D = SEED_TODAY;               // 2026-09-01（种子周的锚点）
-const WEEK = '2026-09-01 ~ 2026-09-07';
+const WEEK = '2026-09-01 至 2026-09-07';
 
 /** 种子库（`t81-seed`，碳水写对）：一条命令一个库，跑完即弃。 */
 function freshDb() {
@@ -84,7 +84,7 @@ for (const { c, status, stderr, html, text } of PAGES) {
     /* 表题用引擎短名（去日期，区间住正文首件窗口条）。 */
     assert.ok(html.includes(rankShortName(c.params.category)), c.id + ' 表题不是引擎短名');
     assert.ok(html.includes('dui-window'), c.id + ' 正文首件缺窗口条');
-    for (const d of WEEK.split(' ~ ')) assert.ok(html.includes(d), c.id + ' 窗口条缺日期 ' + d);
+    for (const d of WEEK.split(' 至 ')) assert.ok(html.includes(d), c.id + ' 窗口条缺日期 ' + d);
   });
 }
 
@@ -130,7 +130,8 @@ test('#272 ④ 全榜页：五类榜全景 ＋ 无数据榜不出折叠块、读
   assert.equal((two.match(/<details/g) ?? []).length, 3, '空的榜也出了折叠块：' + (two.match(/<details/g) ?? []).length);
   assert.ok(twoText.includes('低热量榜'), '空榜的榜名该留在读数卡上');
   assert.ok(twoText.includes('本窗无数据'), '空榜读数卡没写「本窗无数据」');
-  assert.ok(twoText.includes('本窗没有数据的榜不出明细块：低热量榜、常吃榜'), '口径行没点名空榜：' + twoText.split('\n').find((l) => l.startsWith('口径')));
+  assert.ok(twoText.includes('本窗没有数据的榜不出明细块：低热量榜 常吃榜'), '口径行没点名空榜：' + twoText.split('\n').find((l) => l.startsWith('口径')));
+  assert.ok(twoText.includes('低热量榜') && twoText.includes('常吃榜'), '口径行缺空榜名逐行：' + twoText.split('\n').filter((l) => l.startsWith('口径')).join(' ／ '));
 });
 
 for (const { c, html, text } of PAGES) {
@@ -196,8 +197,8 @@ test('#272 ⑨ 窗口：30 天／本月／自定义各自落到对的窗口', ()
   const custom = renderOk(dir, 'calorie.view.ranking', { category: 'high_calorie', topN: 10, window: 'custom', start: '2026-09-01', end: '2026-09-02' }, '自定义两天');
   const d30 = renderOk(dir, 'calorie.view.ranking', { category: 'high_calorie', topN: 10, window: '30d' }, '最近 30 天');
   const month = renderOk(dir, 'calorie.view.ranking', { category: 'high_calorie', topN: 10, window: '本月' }, '本月');
-  assert.ok(textOfHtml(custom).includes('2026-09-01 ~ 2026-09-02'), '自定义窗口没按给定区间出页');
-  assert.ok(textOfHtml(d30).includes('2026-08-09 ~ 2026-09-07'), '30 天窗口不对：' + linesOf(d30)[2]);
+  assert.ok(textOfHtml(custom).includes('2026-09-01 至 2026-09-02'), '自定义窗口没按给定区间出页');
+  assert.ok(textOfHtml(d30).includes('2026-08-09 至 2026-09-07'), '30 天窗口不对：' + linesOf(d30)[2]);
   assert.ok(textOfHtml(month).includes(WEEK), '本月窗口不对：' + linesOf(month)[2]);
   /* 三条窗口出的页必须互不相同（窗口真是参数，不是一个常量句）。 */
   assert.notEqual(custom, d30);
