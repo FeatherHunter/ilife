@@ -163,6 +163,12 @@
     .sheet-mask{left:0;right:0;top:0;bottom:0;border-radius:0}
     .sheet{left:0;right:0;bottom:0;border-radius:22px 22px 0 0}
   }
+  /* ===== #642 小触摸目标：命中区扩到 ≥44×44（视觉尺寸一字不动）=====
+     覆盖层挂在按钮自己的 ::after 上（绝对定位不参与布局，不吃独立点击事件）——命中的仍是按钮本体，
+     故 [data-c] 点击委派与 .mini 卡片点击口径不变；三处图标键本已 position:absolute，只补 ::after，不再重复给 relative。 */
+  .mini .copy-btn,.init-banner .copy-btn,.copy-btn.a-copy{position:relative}
+  .mini .copy-btn::after,.init-banner .copy-btn::after,.copy-btn.a-copy::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max(100%,44px);height:max(100%,44px)}
+  .ib-close::after,.s-clear::after,.sheet .s-close::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max(100%,44px);height:max(100%,44px)}
 </style>
 </head>
 <body>
