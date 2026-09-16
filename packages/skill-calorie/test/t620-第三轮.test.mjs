@@ -248,3 +248,59 @@ test('#620-3b 评分分项卡说明不重复徽标读数', () => {
   assert.ok(!html.includes('命中率 0%'), '最低分项卡仍在重复徽标读数');
   assert.ok(!html.includes('命中率 100%'), '最高分项卡仍在重复徽标读数');
 });
+
+/* ── #620 增量6：数值自证（表头数标窗口／同列同档）＋ 24-5 冻结钉 ── */
+
+function scorePlate621() {
+  const plate = r3aPlate('score', {});
+  plate.scores = ['2026-09-01', '2026-09-02', '2026-09-03'].map((date, i) => ({ date, hits: 3, score: 50 + i, factors: [] }));
+  plate.items = [
+    { key: 'a', label: '蛋白达标', hits: 0, days: 3, rate: 0 },
+    { key: 'b', label: '三餐齐备', hits: 3, days: 3, rate: 100 },
+  ];
+  plate.trend = { earlyAvg: 50, lateAvg: 52, turns: 1, direction: '平稳' };
+  return plate;
+}
+
+test('#620-6 评分表头数点名后段均值（29-2）', () => {
+  const html = visible(buildReportDoc(scorePlate621(), ''));
+  assert.ok(html.includes('综合评分（后段均值）'), '表头数没点名窗口');
+  assert.ok(html.includes('后段均值，满分 100'), '仪表标题没点名窗口');
+});
+
+test('#620-6 趋势 thirds 点名有评分记录（30-1）', () => {
+  const plate = r3aPlate('trend', {});
+  plate.scores = ['2026-09-01', '2026-09-02', '2026-09-03'].map((date, i) => ({ date, hits: 3, score: 50 + i, factors: [] }));
+  plate.trend = { earlyAvg: 50, lateAvg: 52, turns: 1, direction: '平稳' };
+  const html = visible(buildReportDoc(plate, ''));
+  assert.ok(html.includes('有评分记录的日子按天三等分'), '口径没点名可评分集合');
+  assert.ok(html.includes('有评分记录的前 1/3'), '前段卡没点名可评分集合');
+  assert.ok(!html.includes('把窗口按天三等分'), '旧窗口口径仍在');
+});
+
+test('#620-6 BMI 明细同列统一 1 位（24-3）', () => {
+  const plate = r3aPlate('bmi', {});
+  plate.bandPoints = [
+    { date: '2026-09-01', kg: 78, bmi: 25.5 },
+    { date: '2026-09-02', kg: 77.9, bmi: 25 },
+  ];
+  const html = buildReportDoc(plate, '');
+  const cells = [...html.matchAll(/data-label="[^"]*">([^<]*)</g)].map((m) => m[1]).filter((s) => /^\d+\.\d+$/.test(s));
+  assert.ok(cells.length >= 4, '明细数值格不足：' + JSON.stringify(cells));
+  const dens = new Set(cells.map((s) => s.split('.')[1].length));
+  assert.equal(dens.size, 1, '同列小数位不统一：' + [...cells].join('/'));
+  assert.ok(html.includes('>78.0<') && html.includes('>25.0<'), '整数没补位：' + [...cells].join('/'));
+});
+
+test('#620-6 命中率列统一 1 位（29-3）', () => {
+  const html = visible(buildReportDoc(scorePlate621(), ''));
+  assert.ok(html.includes('0.0%') && html.includes('100.0%'), '整数率没补位');
+  assert.ok(!html.includes('率 0%') && !html.includes('率 100%'), '仍有整数率写法');
+});
+
+test('#620-S3 BMI 分级表题冻结现况（24-5，t572:110 钉死）', () => {
+  const plate = r3aPlate('bmi', {});
+  plate.bandPoints = [{ date: '2026-09-01', kg: 78, bmi: 25.5 }];
+  const html = buildReportDoc(plate, '');
+  assert.ok(html.includes('BMI 分级（中国标准）'), '冻结表题被改（t572 钉死，改即红）');
+});

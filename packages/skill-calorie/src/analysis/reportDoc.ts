@@ -127,7 +127,7 @@ function conclusionOf(plate: ReportPlate): string {
       const avg = plate.trend === null ? null : plate.trend.lateAvg;
       return avg === null
         ? '这段时间算不出综合评分'
-        : '综合评分 ' + String(avg) + ' 分（满分 100，六因素等距折算）';
+        : '综合评分（后段均值）' + String(avg) + ' 分（满分 100，六因素等距折算）';
     }
     case 'trend': {
       const t = plate.trend;
@@ -211,7 +211,9 @@ function calibersOf(plate: ReportPlate): string[] {
     case 'score':
       return ['分项命中率＝该项命中天数 ÷ 有记录天数｜综合评分＝六因素命中数与项数之比折算成 0–100 分，不另算第二套权重'];
     case 'trend':
-      return ['前段与后段＝把窗口按天三等分后取首段与末段｜变化量超过 1 分才算上升或下降，其余记平稳'];
+      /* #620 增量6：前段／后段取的是有评分记录的日子（缺记录日不参与），不是窗口天数；
+       * 点名口径，卡面 70.1／69.3 按可评分序列复现时才对得上（30-1）。 */
+      return ['前段与后段＝把有评分记录的日子按天三等分后取首段与末段｜变化量超过 1 分才算上升或下降，其余记平稳'];
     case 'compare':
       /* #620 增量3a：原第一条（变化量／对比期）与 `sec-caliber口径说明` kvTable 的
        * `对比期怎么取`／`变化量 Δ` 两行同义重复，删口径行这一条留表；

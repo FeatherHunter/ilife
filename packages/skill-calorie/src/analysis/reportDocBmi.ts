@@ -87,7 +87,12 @@ export function buildBmiBlocks(plate: ReportPlate): ReportSection[] {
         { key: 'kg', label: '体重（kg）', align: 'right' },
         { key: 'bmi', label: 'BMI', align: 'right' },
       ],
-      rows: pts.map((p) => ({ date: p.date, kg: p.kg, bmi: p.bmi === null ? null : p.bmi })),
+      /* #620 增量6：同列小数位统一 1 位（整数补 `.0`，与预测族轨迹列同口径；只改显示，分级判定仍走原值）。 */
+      rows: pts.map((p) => ({
+        date: p.date,
+        kg: (Math.round(p.kg * 10) / 10).toFixed(1),
+        bmi: p.bmi === null ? null : (Math.round(p.bmi * 10) / 10).toFixed(1),
+      })),
       caption: '逐日体重与 BMI',
       emptyText: '这段时间还没有称重记录',
     })),

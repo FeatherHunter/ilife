@@ -35,7 +35,8 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
     sec('sec-overview', '概览',
       renderChartBlock({
         kind: 'gauge',
-        title: '综合评分（满分 100，六因素等距折算）',
+        /* #620 增量6：表头数（后段均值）与全窗表可推均值天然不同（不同窗口），标题点名窗口以自证。 */
+        title: '综合评分（后段均值，满分 100，六因素等距折算）',
         input: {
           pct: avg === null ? 0 : Math.max(0, Math.min(100, avg)),
           /* #519 W5（视觉席 D5）：仪表盘原来印两行——`70%`（值）＋ `70`（label），同页 KPI 又写
@@ -55,13 +56,13 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
           label: '最低分项', value: weakest === undefined ? '—' : weakest.label,
           /* #620 增量3b：`命中率 N%` 与同卡徽标逐字重复，说明只留指引半句，读数由徽标承载一次。 */
           detail: weakest === undefined ? '' : '优先改它',
-          /* R-42：徽标不用默认「成功／警告」，改领域词＋百分数（与值位同源）。 */
-          ...(weakest === undefined ? {} : { status: 'warn' as const, statusText: weakest.label + ' ' + String(weakest.rate) + '%' }),
+          /* R-42：徽标不用默认「成功／警告」，改领域词＋百分数（与值位同源；小数位与表同档 1 位）。 */
+          ...(weakest === undefined ? {} : { status: 'warn' as const, statusText: weakest.label + ' ' + weakest.rate.toFixed(1) + '%' }),
         },
         {
           label: '最高分项', value: strongest === undefined ? '—' : strongest.label,
           detail: strongest === undefined ? '' : '继续保持',
-          ...(strongest === undefined ? {} : { status: 'ok' as const, statusText: strongest.label + ' ' + String(strongest.rate) + '%' }),
+          ...(strongest === undefined ? {} : { status: 'ok' as const, statusText: strongest.label + ' ' + strongest.rate.toFixed(1) + '%' }),
         },
       ])),
     sec('sec-items', '分项分数', renderDataTable({
@@ -71,7 +72,8 @@ export function buildScoreBlocks(plate: ReportPlate): ReportSection[] {
         { key: 'days', label: '有记录天数', align: 'right' },
         { key: 'rate', label: '命中率', align: 'right' },
       ],
-      rows: plate.items.map((i) => ({ label: i.label, hits: i.hits, days: i.days, rate: i.rate + '%' })),
+      /* #620 增量6：命中率列小数位统一 1 位（整数补 `.0`；徽标与表同档）。 */
+      rows: plate.items.map((i) => ({ label: i.label, hits: i.hits, days: i.days, rate: i.rate.toFixed(1) + '%' })),
       caption: '分项分数表（按命中率升序，最低分项在首位）',
     })),
     sec('sec-history', '评分历史', foldedTable({
@@ -97,8 +99,8 @@ export function buildTrendBlocks(plate: ReportPlate): ReportSection[] {
           ? { status: 'empty' as const, statusText: '平稳' }
           : { status: (dir === '上升' ? 'ok' : 'warn') as 'ok' | 'warn', statusText: dir }),
       },
-      { label: '前段均分', value: t === null ? '—' : fmt(t.earlyAvg), detail: '窗口前 1/3 天的评分均值' },
-      { label: '后段均分', value: t === null ? '—' : fmt(t.lateAvg), detail: '窗口后 1/3 天的评分均值' },
+      { label: '前段均分', value: t === null ? '—' : fmt(t.earlyAvg), detail: '有评分记录的前 1/3 天的均值' },
+      { label: '后段均分', value: t === null ? '—' : fmt(t.lateAvg), detail: '有评分记录的后 1/3 天的均值' },
       { label: '拐点数', value: t === null ? '—' : String(t.turns), detail: '序列里方向反转的次数' },
     ])),
     sec('sec-chart', '评分走势', scoreSeries(plate)),
