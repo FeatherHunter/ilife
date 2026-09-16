@@ -18,7 +18,7 @@
  * 用法：
  *   node docs/skills/skill-bill/t407-v8-style-audit.mjs --dir docs/skills/skill-bill
  *   node docs/skills/skill-bill/t407-v8-style-audit.mjs --dir <不存在的目录>     → 反例，exit 1 并点名缺件
- * 退出码：0 全绿（无分隔符懒政、无英文裸词、无重复句、32 份齐）；1 有命中或缺件；2 用法错。
+ * 退出码：0 全绿（无分隔符懒政、无英文裸词、无重复句、区外零命令名、区外零库列名、32 份齐）；1 有命中或缺件；2 用法错。
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -171,6 +171,25 @@ for (const f of FILES) {
     .map((s) => ({ line: s, rest: s.replace(ASCII_OK, '').replace(FIXTURE_DATA, '') }))
     .filter((x) => /[A-Za-z]/.test(x.rest))
     .map((x) => x.line);
+  // 区外内部话（R4 口径，对账 `t407-对账-区外内部话判据.md` §四②）：命令名**逐词列举**
+  // 三族（连字符族与带点族一处不漏）＋**按容器判**（复制载荷区＝`<pre>` 块与 `data-t` 属性值，
+  // 命令名只许住载荷区）＋**反向判**（载荷区外可见正文出现库列名也算）。属性／脚本／样式／
+  // 标题／注释一律不算上屏。上一版 `grep bill.` 只罩带点族（漏 `bill-cmd-read` 53 处），故改此列。
+  const CMD_FAMILIES = ['bill-cmd-read', 'bill.record.add', 'bill.record.update'];
+  const DB_COLS = ['category', 'amount', 'source_id', 'who', 'user_id', 'created_at',
+    'refund', 'lend', 'borrow', 'expense', 'income'];
+  const nonPayloadText = html
+    .replace(/<pre[\s\S]*?<\/pre>/gi, '\n')
+    .replace(/data-t="[\s\S]*?"/g, '')
+    .replace(/<title>[\s\S]*?<\/title>/gi, '\n')
+    .replace(/<style[\s\S]*?<\/style>/gi, '\n')
+    .replace(/<script[\s\S]*?<\/script>/gi, '\n')
+    .replace(/<!--[\s\S]*?-->/g, '\n')
+    .replace(/<[^>]+>/g, '\n');
+  const hitToken = (tok) => nonPayloadText.split('\n')
+    .map((s) => s.trim()).filter((s) => s.includes(tok));
+  const cmdHits = CMD_FAMILIES.flatMap((c) => hitToken(c).map((s) => c + ' :: ' + s.slice(0, 80)));
+  const colHits = DB_COLS.flatMap((c) => hitToken(c).map((s) => c + ' :: ' + s.slice(0, 80)));
   rows.push({
     file: f,
     // 公共层（head 里那份共享样式表）
@@ -206,6 +225,10 @@ for (const f of FILES) {
     semiPayload: sepPos.filter((s) => (s.ch === '；' || s.ch === ';') && PAYLOAD_POS.test(s.cls)).length,
     ascii: asciiBad.length,
     asciiLines: asciiBad,
+    r4cmd: cmdHits.length,
+    r4cmdLines: cmdHits,
+    r4col: colHits.length,
+    r4colLines: colHits,
     dupes: dupes.length,
     dupeLines: dupes,
   });
@@ -232,6 +255,8 @@ const bad = {
   本页缺触屏三件: rows.filter((r) => !r.tap).map((r) => r.file),
   有分隔符懒政: rows.filter((r) => r.design > 0).map((r) => r.file + '(' + r.design + ')'),
   有英文裸词: rows.filter((r) => r.ascii > 0).map((r) => r.file + '(' + r.ascii + ')'),
+  区外命令名R4: rows.filter((r) => r.r4cmd > 0).map((r) => r.file + '(' + r.r4cmd + ')'),
+  区外库列名R4: rows.filter((r) => r.r4col > 0).map((r) => r.file + '(' + r.r4col + ')'),
   有重复句: rows.filter((r) => r.dupes > 0).map((r) => r.file + '(' + r.dupes + ')'),
 };
 console.log('\n===== 逐条汇总（共 ' + rows.length + ' 份）=====');
@@ -283,17 +308,23 @@ for (const r of rows.filter((x) => x.ascii > 0)) {
     + r.asciiLines.filter((l) => /^[A-Za-z_]+(、[A-Za-z_]+)+$/.test(l)).length + ' 行]');
   for (const l of r.asciiLines) console.log('      ' + l);
 }
+console.log('\n区外内部话R4逐行（命令名三族＋库列名反向判，只列有问题的）：');
+for (const r of rows.filter((x) => x.r4cmd > 0 || x.r4col > 0)) {
+  console.log('  [' + r.file + ' 命令名 ' + r.r4cmd + ' 处／库列名 ' + r.r4col + ' 处]');
+  for (const l of [...r.r4cmdLines, ...r.r4colLines]) console.log('      ' + l);
+}
 console.log('\n重复句逐行（只列有问题的）：');
 for (const r of rows.filter((x) => x.dupes > 0)) {
   console.log('  [' + r.file + ']');
   for (const l of r.dupeLines) console.log('      ' + l);
 }
 
-// 红的判据＝**版式位**上的分隔符懒政（`·`／`|` 当版式用）＋英文裸词＋重复句＋清单缺件。
+// 红的判据＝**版式位**上的分隔符懒政（`·`／`|` 当版式用）＋英文裸词＋重复句＋清单缺件
+// ＋区外内部话R4（命令名三族区外出现／库列名区外出现）。
 // `；`／`;` 不进红的判据：本域大量是正经的句末分号，拿它判红会把每页都判红、等于没判。
 // 「本页缺820断点／缺触摸目标」也不进：本域 32 页都不自带样式，那件事由共享样式表负责（见上面「共享层」）。
 const failed = missing.length > 0 || bad.有分隔符懒政.length > 0 || bad.有英文裸词.length > 0
-  || bad.有重复句.length > 0;
+  || bad.有重复句.length > 0 || bad.区外命令名R4.length > 0 || bad.区外库列名R4.length > 0;
 if (missing.length > 0) {
   console.log('\n清单点名缺件 ' + missing.length + ' 份 → ' + missing.join('、'));
 }
