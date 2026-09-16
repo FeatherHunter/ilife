@@ -291,14 +291,14 @@ function sigmaChart(o: VolatilityV2): string {
 /** 页脚数据来源行（§5.5：哪张库／哪个窗口／多少条；有缺口当场注明，缺的天不补 0）。
  *  形态走公共层 #420 的浅色口径行 `renderCaliberLine`：页脚来源是「口径行」不是提示，
  *  故不用深色 toast 卡（#340 裁定）。
- *  #485：句式与全族统一（`口径.md` §3.1）——全角冒号、库表名进括号、三段用 `｜` 分、末段恒为「共 N 条」；
+ *  #485：句式与全族统一（`口径.md` §3.1）——全角冒号、库表名进括号、三段用 `｜` 分、末段恒报量（条数位「共 N 条」／天数位「共 N 天有记录」，#588）；
  *  「体重记录」是读者话（`weight_log` 只留在括号里的库表名与复制日志第 4 段）。 */
 function sourceLine(o: VolatilityV2, start: string, end: string): string {
   const gap = o.days - o.warnDays;
   // #485 对抗审查整改（裁定 F）：页脚只留人话来源——库表名（`calorie_data.db`／`weight_log`）退出可见面，
   // 机器面照旧住复制日志第 4 段（`COPY_SOURCE`，那两句是两处字符串，别合并）。
   return renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 ' + start + ' ~ ' + end
-    + ' ｜ 共 ' + o.warnDays + ' 条'
+    + ' ｜ 共 ' + o.warnDays + ' 天有记录'
     + (gap > 0 ? ' ｜ 缺 ' + gap + ' 天没记' : ''));
 }
 
@@ -318,8 +318,8 @@ function premiseNotice(o: VolatilityV2): string | null {
   if (o.sigmaTrend.length === 0) {
     return notice({
       title: '记录太少', icon: 'warn',
-      msg: '本窗只有 ' + o.warnDays + ' 条记录，少于 ' + SAMPLE_MIN
-        + ' 条：曲线与异常表照常给，但这张波动曲线画不出来，两条线用兜底值读，当参考值看。',
+      msg: '本窗只有 ' + o.warnDays + ' 天有记录，少于 ' + SAMPLE_MIN
+        + ' 天：曲线与异常表照常给，但这张波动曲线画不出来，两条线用兜底值读，当参考值看。',
     });
   }
   return null;
@@ -340,7 +340,7 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
    *  `assembleDocPage` 没有页内 CSS 入口，故由整页装配把它带进来）。空态那一页同样先带它。 */
   const parts: string[] = [weightUiCss()];
   if (o.points.length > 0) {
-    parts.push(windowStrip(v.start, v.end, '共 ' + o.warnDays + ' 条'));
+    parts.push(windowStrip(v.start, v.end, '共 ' + o.warnDays + ' 天有记录'));
   }
   if (o.points.length === 0) {
     // 数据型空态（§5.6）：页照常是一张完整的页——标题、空态句、页脚来源行、复制区都在。
