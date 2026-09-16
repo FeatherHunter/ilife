@@ -137,7 +137,7 @@ test('#112 营养配比：3 维 KPI＋热量占比 donut＋推荐范围对比', 
     assert.equal(out.data.metrics.targetCarbG, 400);
     assert.equal(out.data.metrics.targetFatG, 100);
     assertDoc(out.html, 'nutrition-ratio');
-    for (const needle of ['营养配比 2026-09-05 ~ 2026-09-06', '热量来源占比', '推荐范围对比', '↑ 偏高', '复制数据']) {
+    for (const needle of ['营养配比', '热量来源占比', '推荐范围对比', '↑ 偏高', '复制数据']) {
       assert.ok(out.html.includes(needle), 'ratio 缺：' + needle);
     }
     assert.ok(out.html.includes('proteinPct'), 'ratio 复制文本缺指标');
@@ -159,7 +159,7 @@ test('#112 营养素深度：纤维/钠/糖明细＋缺数据盒（精确名匹�
     assert.equal(out.data.metrics.sodiumAvg, 66.5);
     assert.equal(out.data.metrics.sugarAvg, 6.9);
     assertDoc(out.html, 'nutrition-detail');
-    for (const needle of ['营养素深度 2026-09-05 ~ 2026-09-06', '膳食纤维', '缺数据食物', '米饭团', '复制数据']) {
+    for (const needle of ['营养素深度', '膳食纤维', '缺数据食物', '米饭团', '复制数据']) {
       assert.ok(out.html.includes(needle), 'detail 缺：' + needle);
     }
   } finally {
@@ -193,7 +193,7 @@ test('#112 今日饮水：进度＋7 天窗＋每杯明细', () => {
     assert.equal(out.data.metrics.remainMl, 1200);
     assert.equal(out.data.metrics.cups, 2);
     assertDoc(out.html, 'today-water');
-    for (const needle of ['今日饮水 2026-09-07', '还差 1200 ml', '本周 7 天', '今日每杯', '复制数据']) {
+    for (const needle of ['今日饮水', '还差 1200 ml', '本周 7 天', '今日每杯', '复制数据']) {
       assert.ok(out.html.includes(needle), 'water 缺：' + needle);
     }
   } finally {

@@ -111,7 +111,7 @@ const WORDS = [
   {
     id: '看今日喝水', key: 'calorie.view.today-water', params: { date: D, entry: 'drink' }, frame: 'own',
     old: 'today_water.html',
-    title: '💧 今日喝水 ' + D,
+    title: '💧 今日喝水',
     head: ['今日喝水 · 饮食', '营养 · 饮水 · 总览'],
     nav: ['今日读数', '今日进度', '本周 7 天', '今日每杯'],
     blocks: ['今日进度', '本周 7 天（2026-09-01 ~ ' + D + '）', '今日每杯（共 1 杯）', '目标', '已完成目标(100%)'],
@@ -148,7 +148,7 @@ const OWN_PAGES = [
   {
     id: '查营养配比', key: 'calorie.view.nutrition-ratio', params: { window: '7d' }, frame: 'own', deep: 0,
     old: 'nutrition_ratio.html',
-    title: '🥗 营养配比 ' + WEEK,
+    title: '🥗 营养配比',
     head: ['查营养配比 · 饮食', '营养 · 饮水 · 总览'],
     nav: ['配比读数', '热量来源占比', '推荐范围对比'],
     blocks: ['热量来源占比（按营养素折算）', '推荐范围对比（' + WEEK + '；克数均为这 7 天合计）',
@@ -161,7 +161,7 @@ const OWN_PAGES = [
   {
     id: '看营养素深度', key: 'calorie.view.nutrition-detail', params: { window: '7d' }, frame: 'own', deep: 1,
     old: 'nutrition_detail.html',
-    title: '🧪 营养素深度 ' + WEEK,
+    title: '🧪 营养素深度',
     head: ['看营养素深度 · 饮食', '营养 · 饮水 · 总览'],
     nav: ['读数', '逐项明细'],
     blocks: ['匹配餐数', '缺数据食物', '覆盖营养素', '膳食纤维', '钠', '糖',
@@ -174,7 +174,7 @@ const OWN_PAGES = [
   {
     id: '看营养素明细', key: 'calorie.view.nutrition-detail', params: { window: '7d', entry: 'detail' }, frame: 'own', deep: 1,
     old: 'nutrition_detail.html',
-    title: '🧪 营养素明细 ' + WEEK,
+    title: '🧪 营养素明细',
     head: ['看营养素明细 · 饮食', '营养 · 饮水 · 总览'],
     nav: ['读数', '逐项明细'],
     blocks: ['匹配餐数', '缺数据食物', '累计（7 天）', '缺数据食物（共 5 种，未计入）'],

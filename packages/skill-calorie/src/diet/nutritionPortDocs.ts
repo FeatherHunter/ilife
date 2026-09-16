@@ -52,6 +52,7 @@ import {
   renderTocBlock,
 } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { dietUiCss, windowStrip } from './dietUi.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
 import { nowStamp } from '../render/receipt.js';
@@ -396,6 +397,8 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
 export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string): string {
   const balance = BALANCE[v.balance];
   const body = [
+    dietUiCss(),
+    windowStrip(v.start, v.end, v.days + ' 天'),
     renderTocBlock({ items: [
       { id: 'sec-kpi', text: '配比读数' },
       { id: 'sec-chart', text: '热量来源占比' },
@@ -407,7 +410,7 @@ export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string):
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '🥗 营养配比 ' + v.start + ' ~ ' + v.end,
+    title: '🥗 营养配比',
     /* #496 · 原副题「3 维宏量营养素 ⚠ 失衡」把引擎里的叫法（3 维／宏量营养素）带给读者
        （审查件第 75 条）；#275 起这一槽改承载**结论句**（§五 第 3 行：句内含本页读数）。 */
     eyebrow: EYEBROW,
@@ -525,6 +528,8 @@ export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string, 
     sugarPct: v.items[2]?.pct,
   }));
   const body = [
+    dietUiCss(),
+    windowStrip(v.start, v.end, v.days + ' 天'),
     renderTocBlock({ items: [
       { id: 'sec-kpi', text: '读数' },
       { id: 'sec-table', text: '逐项明细' },
@@ -535,7 +540,7 @@ export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string, 
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: (detail ? '🧪 营养素明细 ' : '🧪 营养素深度 ') + v.start + ' ~ ' + v.end,
+    title: detail ? '🧪 营养素明细' : '🧪 营养素深度',
     /* #496 · 眉标原写「看营养素深度 · 区间 · N 天」——把唤醒词与窗口区间印了一遍（审查件第 80 条）。
        #275 起眉标只留「唤醒词 · 饮食」（§五 第 1 行），§五 第 3 行的结论句改由副标题槽承载。 */
     eyebrow: EYEBROW,
@@ -646,6 +651,8 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
     todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
   }));
   const body = [
+    dietUiCss(),
+    windowStrip(v.date, v.date, v.cups.length + ' 杯'),
     renderTocBlock({ items: [
       { id: 'sec-kpi', text: '今日读数' },
       { id: 'sec-ring', text: '今日进度' },
@@ -657,7 +664,7 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '💧 ' + name + ' ' + v.date,
+    title: '💧 ' + name,
     /* #496 · 眉标原写「<日期> · 饮水 #1」——把日期又抄一遍、`#1` 是内部形态号。
        #275 起眉标只留「唤醒词 · 饮食」（§五 第 1 行），结论句改由副标题槽承载（第 3 行）。 */
     eyebrow: EYEBROW,

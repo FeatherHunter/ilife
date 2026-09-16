@@ -38,6 +38,7 @@ import { CHART_PALETTE, escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import type { DataTableColumn } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
+import { dietUiCss, windowStrip } from './dietUi.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { emptyGuide } from '../shared/emptyGuide.js';
 import { sourceLine } from '../shared/sourceLine.js';
@@ -263,11 +264,13 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   const table = renderDataTable({
     columns: columnsOf(cat),
     rows: r.items.map((it) => rowOf(it, cat)),
-    caption: r.title,
+    caption: '榜单明细',
     emptyText: '本窗没有可上榜的食物（记一餐之后再看这张榜）',
   });
   const content = [
     RANK_CSS,
+    dietUiCss(),
+    windowStrip(r.start, r.end, r.items.length + ' 种'),
     tocOf([
       { id: 'sec-kpi', text: '上榜速览' },
       emptyWindow ? { id: 'sec-empty', text: '本窗没有记录' } : { id: 'sec-nutri', text: '营养结构' },
@@ -286,7 +289,7 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '排行 ' + nameOf(cat) + ' ' + r.start + ' ~ ' + r.end,
+    title: '排行 ' + nameOf(cat),
     eyebrow: EYEBROW,
     subtitle: oneLine(cat, r),
     content,
@@ -326,7 +329,7 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
       contentHtml: renderDataTable({
         columns: columnsOf(c),
         rows: b.items.map((it) => rowOf(it, c)),
-        caption: b.title,
+        caption: '榜单明细',
         emptyText: '本窗没有可上榜的食物（记一餐之后再看这张榜）',
       }),
     });
@@ -335,6 +338,8 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
     + (a.boards[live[0]] as FoodRanking).items[0].foodName + '」（'
     + headPhrase((a.boards[live[0]] as FoodRanking).items[0], live[0]) + '）';
   const content = [
+    dietUiCss(),
+    windowStrip(a.start, a.end, total + ' 种'),
     tocOf(windowEmpty
       ? [{ id: 'sec-kpi', text: '五类榜速览' }, { id: 'sec-empty', text: '本窗没有记录' }]
       : [{ id: 'sec-kpi', text: '五类榜速览' }, { id: 'sec-boards', text: '逐榜明细' }]),
@@ -349,7 +354,7 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '全部排行 ' + a.start + ' ~ ' + a.end,
+    title: '全部排行',
     eyebrow: EYEBROW,
     subtitle: windowEmpty
       ? '本窗 ' + a.start + ' ~ ' + a.end + ' 五类榜都没有可上榜的食物：' + MISS + '。'

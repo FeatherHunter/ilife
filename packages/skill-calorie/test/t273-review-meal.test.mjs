@@ -113,11 +113,13 @@ for (const { p, html, bytes, out } of RUNS) {
     assert.ok(html.includes('<style>'), p.id + ' 缺样式段');
     assert.ok(html.includes('ilife-page'), p.id + ' 缺整页根类');
     assert.ok(!html.includes('<!--'), p.id + ' 产物里还有 HTML 注释残留');
-    /* 老实物那一页的块，一个不少。 */
-    for (const b of ['📝 饮食复盘 ' + p.span, '总热量', '日均热量', '总蛋白', '日均蛋白', '高频食物 TOP5（' + p.span + '）',
+    /* 页题与表题都是短名（区间不住标题，住正文首件窗口条）；其余老实物的块，一个不少。 */
+    for (const b of ['📝 饮食复盘', '总热量', '日均热量', '总蛋白', '日均蛋白', '高频食物 TOP5',
       '按餐汇总', '📊 数据来源 · 饮食记录 · 饮食专属复盘 · ' + p.span.replace(' ~ ', ' → ')]) {
       assert.ok(visible(html).includes(b), p.id + ' 缺老实物那一块：「' + b + '」');
     }
+    assert.ok(html.includes('dui-window'), p.id + ' 正文首件缺窗口条');
+    for (const d of p.span.split(' ~ ')) assert.ok(html.includes(d), p.id + ' 窗口条缺日期 ' + d);
     assert.deepEqual(thsOf(html).slice(0, 5), ['排名', '食物', '总热量', '次数', '餐均'], p.id + ' 高频 TOP5 表列与老实物不一致');
     /* 裁定 5：单点不成线 —— 只有一天有记录的两条词不出趋势图（锚点仍在，落一句说明）。 */
     const chartTitle = '<h2 class="ilife-block-chart-block-title">每日热量趋势</h2>';
@@ -236,7 +238,7 @@ test('#273 ⑤ 餐别 5 条逐条真出口：路由带 `meal` ⇒ 出餐别分�
     assert.ok(r.html.startsWith('<!doctype html>') && r.html.includes('<meta charset="utf-8">'), m.word + ' 产物不是完整文档');
     assert.ok(r.html.includes('<section id="md-kpi">'), m.word + ' 没出本区块的读数卡锚点 md-kpi');
     assert.ok(r.html.includes('<section id="md-table">'), m.word + ' 没出本区块的明细锚点 md-table');
-    assert.ok(visible(r.html).includes('明细（2026-09-01 ~ 2026-09-07 · 共 ' + m.n + ' 条）'),
+    assert.ok(visible(r.html).includes('明细（共 ' + m.n + ' 条）'),
       m.word + ' 明细条数不是种子库那 ' + m.n + ' 条：' + visible(r.html).slice(0, 200));
     /* 四桶占比只有「全部餐别」那一支出（老实物 `view === 'all'` 才显示 distSection）。 */
     assert.equal(r.html.includes('<section id="md-dist">'), m.meal === 'all', m.word + ' 的四桶占比出／不出与老实物不一致');
@@ -268,7 +270,7 @@ test('#273 ⑤ 餐别取数：四餐一桶不漏 ＋ 与老脚本同口径的读
 
 test('#273 ⑤ 餐别区块对得上 meal_distribution.html ＋ 区外不夹整页（页头／页脚一概不进块）', () => {
   const text = visibleText(ALL_BLOCK);
-  for (const b of ['餐数', '日均热量', '餐别热量占比', '最高占比', '午餐 52.4%', '明细（2026-09-01 ~ 2026-09-07 · 共 10 条）',
+  for (const b of ['餐数', '日均热量', '餐别热量占比', '最高占比', '午餐 52.4%', '明细（共 10 条）',
     '📊 数据来源 · 饮食记录 · 餐别时间窗推断 · 2026-09-01 → 2026-09-07', '加餐时段：下午茶、夜宵']) {
     assert.ok(text.includes(b), '餐别区块缺老实物那一块：「' + b + '」');
   }
@@ -292,7 +294,7 @@ test('#273 ⑤ 餐别区块对得上 meal_distribution.html ＋ 区外不夹整�
 test('#273 ⑤ 单餐别支与空态支：缺值 `—`、空态句 ＋ 引导句（裁定 4）', () => {
   const text = visibleText(SINGLE_BLOCK);
   assert.ok(text.includes('早餐'), '单餐别区块缺餐别名');
-  assert.ok(text.includes('明细（2026-09-01 ~ 2026-09-07 · 共 4 条）'), '早餐支的明细条数不对：' + text.slice(0, 200));
+  assert.ok(text.includes('明细（共 4 条）'), '早餐支的明细条数不对：' + text.slice(0, 200));
   /* 加餐在 09-01~09-04 零记录：整段仍出完整区块，值位写 `—`、空态句后接引导句。 */
   const empty = visibleText(SNACK_BLOCK);
   assert.equal(SNACK_EMPTY.total, 0, '这一段不该有加餐记录');

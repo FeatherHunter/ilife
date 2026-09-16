@@ -144,15 +144,13 @@ test('#108 饮食总览＋餐别分布：区块对照（KPI＋双图＋按日表
     const out = dispatch('calorie.view.diet', { start: '2026-09-05', end: '2026-09-07', date: '2026-09-07' }, db);
     assert.equal(out.data.metrics.totalCalories, 2689);
     assertDoc(out.html, 'view.diet');
-    // #496：口径行原写「窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵」（常量名上屏），现换成
-    // 「加餐时段：下午茶、夜宵」；明细折叠区的标题原写「窗口明细」，现写「全部记录」。
-    // 用户缺陷（2026-09-15）：页名不再带窗口日期（窗口归副题那一行），故锁无日期的页名＋副题仍带窗口。
+    // #496＋#551：页名无日期（H1 逐字「饮食总览」）；窗口不住副题，住页顶窗口条（`diet-window`）。
     for (const needle of ['2689', '餐别分布', '加餐时段：下午茶、夜宵', '按日汇总', '2026-09-06', '全部记录', '米饭', '复制数据']) {
       assert.ok(out.html.includes(needle), 'view.diet 缺：' + needle);
     }
     assert.ok(out.html.includes('<h1 class="ilife-block-page-shell-title">饮食总览</h1>'), 'view.diet 页名不是无日期的「饮食总览」');
     assert.ok(!out.html.includes('饮食总览 2026-09-05'), 'view.diet 页名又带回窗口日期');
-    assert.ok(out.html.includes('窗口 2026-09-05 ~ 2026-09-07'), 'view.diet 副题丢了窗口（页名去日期后窗口只剩这一处）');
+    assert.ok(out.html.includes('diet-window'), 'view.diet 正文首件缺窗口条');
     // 复制文本为 stat 投影（含 totalCalories），动作 id 走冻结缺省
     assert.ok(out.html.includes('totalCalories'), 'view.diet 复制文本缺指标');
     assert.ok(out.html.includes('data-action-id') || out.html.includes('data-copy'), 'view.diet 复制按钮缺绑定属性');
@@ -168,7 +166,7 @@ test('#108 今日饮食：明细表＋配比环＋餐别图', () => {
     assert.equal(out.data.total, 4);
     assertDoc(out.html, 'today');
     // #496：那张图画的是四餐的卡数、也没有百分比，标题「餐别热量占比」名实不符 ⇒ 改「各餐热量（卡）」。
-    for (const needle of ['今日饮食 2026-09-07', '今日明细', '鸡胸', '营养配比', '各餐热量（卡）']) {
+    for (const needle of ['今日饮食', '今日明细', '鸡胸', '营养配比', '各餐热量（卡）']) {
       assert.ok(out.html.includes(needle), 'today 缺：' + needle);
     }
   } finally {
@@ -182,7 +180,7 @@ test('#108 饮食复盘：趋势折线＋配比环＋TOP5＋按餐汇总', () =>
     const out = dispatch('calorie.view.diet-review', { start: '2026-09-05', end: '2026-09-07' }, db);
     assert.ok(out.data.metrics.loggedDays >= 2);
     assertDoc(out.html, 'diet-review');
-    for (const needle of ['饮食复盘 2026-09-05 ~ 2026-09-07', '每日热量趋势', '营养配比', '高频食物 TOP5', '米饭', '按餐汇总', '早餐']) {
+    for (const needle of ['饮食复盘', '每日热量趋势', '营养配比', '高频食物 TOP5', '米饭', '按餐汇总', '早餐']) {
       assert.ok(out.html.includes(needle), 'diet-review 缺：' + needle);
     }
   } finally {
@@ -195,7 +193,9 @@ test('#108 食品排行：单榜表＋复制榜单／全榜五折叠', () => {
   try {
     const one = dispatch('calorie.view.ranking', { start: '2026-09-05', end: '2026-09-07', category: 'high_calorie', topN: 5 }, db);
     assertDoc(one.html, 'ranking-one');
-    for (const needle of ['热量炸弹榜', '米饭', '复制榜单', '餐均']) {
+    /* 表题收成「榜单明细」（D1）：引擎侧 `RANK_TITLES` 的「热量炸弹榜」不再上屏，
+       页名以文档侧 `RANK_ZH` 为准（两套榜名统一归收口票）。 */
+    for (const needle of ['高热量榜', '米饭', '复制榜单', '餐均']) {
       assert.ok(one.html.includes(needle), 'ranking 单榜缺：' + needle);
     }
     const all = dispatch('calorie.view.ranking', { start: '2026-09-05', end: '2026-09-07', topN: 5 }, db);

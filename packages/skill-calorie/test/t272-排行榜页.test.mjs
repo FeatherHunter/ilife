@@ -80,8 +80,10 @@ for (const { c, status, stderr, html, text } of PAGES) {
     assert.equal(status, 0, c.id + ' 真出口 exit=' + status + ' stderr=' + String(stderr).slice(-300));
     assert.deepEqual(thsOf(html), c.cols, c.id + ' 表头列序不是这一类的那一套：' + thsOf(html).join('｜'));
     assert.equal(new Set(c.cols).size, c.cols.length, c.id + ' 同名列出现两次');
-    /* 老实物「一张表一族」：五类榜表题都是本榜的老名字（逐字带榜名）。 */
-    assert.ok(html.includes('（' + WEEK + '）'), c.id + ' 表题缺窗口区间');
+    /* 表题收成「榜单明细」（区间不住表题，住正文首件窗口条）。 */
+    assert.ok(html.includes('榜单明细'), c.id + ' 表题不是「榜单明细」');
+    assert.ok(html.includes('dui-window'), c.id + ' 正文首件缺窗口条');
+    for (const d of WEEK.split(' ~ ')) assert.ok(html.includes(d), c.id + ' 窗口条缺日期 ' + d);
   });
 }
 
@@ -91,8 +93,8 @@ test('#272 ② 名次前三金银铜章 ＋ 手机端左色条只有一处', () 
   assert.ok(!html.includes('🥇 4'), '第 4 名也带了奖章');
   assert.ok(html.includes('.ilife-block-rank-row.r1::before{background:#f5b301}'), '左色条金档样式不在产物里');
   assert.ok(html.includes('.ilife-block-rank-row.r3::before{background:#c77b3f}'), '左色条铜档样式不在产物里');
-  const css = html.split('<style>').pop().split('</style>')[0];
-  assert.equal((css.match(/#f5b301/g) ?? []).length, 1, '金色值在页内样式段出现不止一次（颜色不是单源）');
+  /* 金色值全页恰好一次（单源）；页内新增样式段后不再假定「最后一个 <style>」就是榜单那段。 */
+  assert.equal((html.match(/#f5b301/g) ?? []).length, 1, '金色值出现不是恰好一次（颜色不是单源）');
 });
 
 test('#272 ③ 营养结构：三段堆叠条 ＋ 文字百分比；零值不画条写 —', () => {

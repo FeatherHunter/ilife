@@ -5,6 +5,7 @@
  */
 import { renderCaliberLine, renderChartBlock, renderEmptyBlock, renderKpiGrid, renderDataTable, renderTocBlock } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
+import { dietUiCss, windowStrip } from './dietUi.js';
 import { copyArea, copyLog, dataCopyArea } from '../shared/copyArea.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { nowStamp } from '../render/receipt.js';
@@ -50,13 +51,14 @@ export interface TodayDietDocInput {
 export function buildTodayNoteEmptyDoc(date: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '今日饮食 ' + date + ' · 只看有备注的',
+    title: '今日饮食 · 只看有备注的',
     eyebrow: '卡路里 · 饮食',
     subtitle: MEAL_NOTE,
-    content: renderEmptyBlock({
-      title: '今天没有带备注的记录',
-      text: '记的时候带一句备注（例如「午餐 鸡胸 150 克 备注：煎的，少油」），这一页就会出现它。',
-    }),
+    content: dietUiCss() + windowStrip(date, date)
+      + renderEmptyBlock({
+        title: '今天没有带备注的记录',
+        text: '记的时候带一句备注（例如「午餐 鸡胸 150 克 备注：煎的，少油」），这一页就会出现它。',
+      }),
     charts: false,
   });
 }
@@ -74,7 +76,7 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
   /* §五 第 4 行：页内导航（只列真会出的区块——点不到的项就是死链接）。 */
   const distChart = dist.totalCalories > 0;
   const macroChart = macro !== null && Boolean(macro.protein || macro.carb || macro.fat);
-  const parts: string[] = [renderTocBlock({
+  const parts: string[] = [dietUiCss(), windowStrip(o.start, o.start, meals.length + ' 条'), renderTocBlock({
     items: [
       { id: 'td-kpi', text: '读数' },
       ...(distChart ? [{ id: 'td-dist', text: '各餐热量' }] : []),
@@ -130,7 +132,7 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
       grams: m.grams, cal: m.calories, pro: m.protein, carbs: m.carbs, fat: m.fat,
       note: noteOf(m.note),
     })),
-    caption: '今日明细（' + o.start + '，共 ' + meals.length + ' 条）',
+    caption: '今日明细（共 ' + meals.length + ' 条）',
     emptyText: onlyNote ? '今天没有带备注的记录' : '本日无明细',
   })));
   /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。 */
@@ -151,7 +153,7 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
     docTitle: DOC_TITLE,
     /* #496 · 页名（唤醒词「看有备注的饮食记录」）承诺看的是有备注的记录，标题原写「今日饮食 〈日期〉」，
        读者看不出这是一张筛过的页（审查件第 67 条）⇒ 这一支把筛选口径写进标题。 */
-    title: '今日饮食 ' + o.start + (onlyNote ? ' · 只看有备注的' : ''),
+    title: '今日饮食' + (onlyNote ? ' · 只看有备注的' : ''),
     /* #496 · 眉标原写命令键「calorie.today · 饮食域」（裁定 1 不上屏）⇒ 改中文族名。 */
     eyebrow: '卡路里 · 饮食',
     /* #496 · 副题原本整句就是常量名那一串；现在只留口径小字（加餐是哪两顿），与「餐别覆盖」卡
@@ -220,11 +222,11 @@ export function listPageCopy(envelope: DataTextInput['envelope'], command?: stri
 export function buildMealDistributionPage(v: MealDistributionView, command?: string): string {
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '餐别分布 ' + v.start + ' ~ ' + v.end,
+    title: '餐别分布',
     eyebrow: '卡路里 · 饮食',
     /* §五 第 3 行：结论句走页头副题槽（#273 的区块不出结论句，它把 `v.oneLine` 交给宿主）。 */
     subtitle: v.oneLine,
-    content: renderTocBlock({
+    content: dietUiCss() + windowStrip(v.start, v.end, v.days + ' 天') + renderTocBlock({
       items: [
         { id: 'md-kpi', text: '读数' },
         ...(v.meal === 'all' && v.total > 0 ? [{ id: 'md-dist', text: '餐别热量占比' }] : []),
@@ -249,11 +251,11 @@ export function buildDietOverviewPage(v: DietOverviewView, command?: string): st
     : '';
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '饮食总览 ' + v.week.start + ' ~ ' + v.month.end,
+    title: '饮食总览',
     eyebrow: '卡路里 · 饮食',
     subtitle: '统计到 ' + v.today + ' 的前一天：本周日均 ' + String(v.week.avgCalorie) + ' 卡' + weekDays
       + '，本月累计 ' + v.month.totalCalorie.toLocaleString() + ' 卡。',
-    content: renderTocBlock({
+    content: dietUiCss() + windowStrip(v.week.start, v.month.end) + renderTocBlock({
       items: [{ id: 'sec-week', text: '本周累计' }, { id: 'sec-month', text: '本月累计' }],
     }) + buildDietOverviewBlock(v, command),
     charts: true,

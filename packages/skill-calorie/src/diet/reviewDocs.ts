@@ -25,6 +25,7 @@ import {
   renderTocBlock,
 } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
+import { dietUiCss, windowStrip } from './dietUi.js';
 import { copyArea, copyLog, dataCopyArea } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -157,7 +158,7 @@ function reviewBody(r: DietReview | null, top5: FoodRanking | null, extra: DietR
     rows: top.slice(0, 5).map((it) => ({
       rank: '#' + it.rank, food: it.foodName, cal: it.totalCal + ' 卡', cnt: it.cnt + ' 次', avg: it.avgCalPerMeal + ' 卡',
     })),
-    caption: '高频食物 TOP5（' + r.start + ' ~ ' + r.end + '）',
+    caption: '高频食物 TOP5',
     emptyText: '本窗无高频食物',
   })));
   parts.push(anchored('rv-meal', renderDataTable({
@@ -199,15 +200,18 @@ export function buildDietReviewDoc(r: DietReview | null, top5: FoodRanking | nul
       { id: 'rv-copy', text: '复制数据' },
     ];
   const summary = reviewSummary(r, t, r === null ? { total: 0, avg: null } : proteinTotals(r));
+  const start = r === null ? extra.start : r.start;
+  const end = r === null ? extra.end : r.end;
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    title: '📝 饮食复盘 ' + (r === null ? extra.start : r.start) + ' ~ ' + (r === null ? extra.end : r.end),
+    title: '📝 饮食复盘',
     eyebrow: EYEBROW,
     subtitle: summary,
     metaLeft: REVIEW_META_LEFT,
     badge: REVIEW_BADGE,
     summary,
-    content: renderTocBlock({ items: nav }) + reviewBody(r, top5, extra),
+    content: dietUiCss() + windowStrip(start, end, r === null ? '' : r.loggedDays + ' 天有记录')
+      + renderTocBlock({ items: nav }) + reviewBody(r, top5, extra),
     charts: r !== null && t !== null && t.daily.length >= 2,
   });
 }
@@ -337,7 +341,7 @@ export function buildMealDistributionBlock(v: MealDistributionView, command?: st
         date: it.date, time: it.time, meal: it.meal, food: it.food,
         grams: it.grams + ' 克', cal: it.cal + ' 卡', protein: it.protein + ' 克',
       })),
-      caption: '明细（' + v.start + ' ~ ' + v.end + ' · 共 ' + v.items.length + ' 条）',
+      caption: '明细（共 ' + v.items.length + ' 条）',
       emptyText: '这一段没有' + v.mealLabel + '的记录',
     })));
   }
