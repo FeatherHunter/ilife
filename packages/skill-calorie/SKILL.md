@@ -30,7 +30,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 契约：P9 冻结 argv+JSON+exit；缺 key exit 2、未知 key exit 3、取数/缺失 exit 4、envelope/渲染/落盘 exit 5、预检 exit 1。
 - stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；HTML 默认落 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`（同秒冲突自动加 `_2`/`_3`），落点回传在 envelope `data.output`（**恒绝对路径**，相对 `SKILLS_DB_PATH`／`--html` 亦按 cwd 归一后回传）；`--html <路径>` 显式覆盖任意路径（**唯一落点参数**：老技能的 `--output` 别名已按 #245 删除，给了即 exit 2，与其余五家同形）。
 - 预检：engines>=22.13 + SKILLS_DB_PATH 必设（无默认值）；照片存在位需 CALORIE_PHOTOS_DIR，否则记 null 不断言。
-- 写链（#40）：46 写键（diet/water/weight/exercise/photo/product/profile/goal/body/workout）同出口可执行，一律 `receipt` 形（`ok/message` + T10 `receipt` 回执）；缺参 exit 2、缺失阻断 exit 4；训记同步与 mmx vision 两步向导无独立写键（二期，见 triggers 旧链）。
+- 写链（#40）：47 写键（diet/water/weight/exercise/photo/product/profile/goal/body/workout）同出口可执行，一律 `receipt` 形（`ok/message` + T10 `receipt` 回执）；缺参 exit 2、缺失阻断 exit 4；训记同步与 mmx vision 两步向导无独立写键（二期，见 triggers 旧链）。
 
 ## envelope 全字段
 
@@ -68,7 +68,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 |---|---|---|---|
 | 1 主动填 | 配置型词命中但**没给数据**（`记体脂` 类先问测量方式） | 出空 wizard（不传预填）→ 用户填 → 复制 prompt → AI 调写键 | 空参被拦：无围度项 → `bad-input` exit 2（`fetch/body.ts` `validateMeasurementInput` 的 `fail('围度','empty',…)` → `cli/write.ts` `dispatchWrite` 的 `ValidationError` 分支） |
 | 2 预填 verify ⭐ | 同一类词**给了数据** | 出预填 wizard → 用户核对 → 复制 prompt → AI 调写键 | 预填键限白名单：非 `MEASURE_CAMEL` 字段即 `fail(2,'不支持字段: ')`（`cli/write.ts` `MEASURE_CAMEL` 白名单循环）；皮褶钳缺 `bodyFatPct` 即 `fail(2,…)`；计划类先跑 `calorie.view.plan-wizard` 纯校验（`render/planPlate.ts` `buildPlanWizardView` → `fetch/plan.ts` `validatePlan`，返 `dryRun:true`／`checkedSessions:N`（输入含 N 个会话的已检查计数；≠通过数：坏计划也计 N，通过与否看 `errorCount`，只校验不写库）） |
-| 3 直接录 | 用户**明确**说「直接录」「我信你」 | 跳过 wizard，直接调写键，回 `receipt` 形 | 35 写键一律 `receipt`（`cli/write.ts` 模块头契约 ＋ `out()` 组装 `{ok,message,receipt}`） |
+| 3 直接录 | 用户**明确**说「直接录」「我信你」 | 跳过 wizard，直接调写键，回 `receipt` 形 | 47 写键一律 `receipt`（`cli/write.ts` 模块头契约 ＋ `out()` 组装 `{ok,message,receipt}`） |
 
 - **页面已落地（#86 四页 ＋ #179 档案预检页 ＋ #251 目标预检页）**：verify 页**存在**，配置型 wizard 词命中即先出页，不再走文字 verify：`calorie.view.measure-wizard`（记围度／补记围度；场景 1 空页／场景 2 预填）／`calorie.view.composition-wizard`（记体脂三词；来源＋体脂率＋皮褶钳 7 点）／`calorie.view.photo-log-wizard`（记身材照；纯配置）／`calorie.view.gif-planner`（查身材照／生成身材照GIF；照片框选＋4 数字裁剪）／`calorie.view.photo-picker`（删身材照与标签三条；候选快照）／`calorie.view.profile-wizard`（设置档案／改档案／设活动量；三条写入词共用一页，改前值取自库内现值，写入仍走三条写命令）／`calorie.view.goal-wizard`（定营养目标／定营养目标(自动算)／定体重目标／定体重目标(自动算截止)／定体重目标(含起始日)／定饮水目标／定饮水目标(自动算)／一键定全套目标／改营养目标／改体重目标／改饮水目标，共 11 条带空位的写词共用一页；页面摆库内现值／按档案算的推荐值与依据／改前→改后对照，写入仍走 5 条既有写命令。暂停所有目标／重启所有目标**无空位**，不出页）。页面＝静态 HTML ＋ `copyText`，出页后由用户复制 prompt 回给 AI，再按场景调写键。四页实跑证据见 `docs/research/t163-precheck-precedent.md` §3。
 - 配置型写词在路由层落 `exec` 桶，不再是 `non-exec`（路由表里 `non-exec` 只剩 9 条，全是「明确不做」与无营养建议形态）：命中即出本表那页——「定训练计划」出的是**计划编辑器（可写页）**，路由键 `calorie.view.plan-wizard`；用户改完复制命令，AI 调写键 `calorie.workout.plan-set`（唤醒词「确认定训练计划」）落库给 `receipt`。**定训练计划的写键确实存在，这条链不缺环**：`NON_EXEC_REASONS.planWriteMissing` 在 `routes.generated.ts` 里零命中、是死常量，它那句「本仓执行层不承接计划写入」与事实相反，不得据此拒绝出页或拒绝落库。
