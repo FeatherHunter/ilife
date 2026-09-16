@@ -36,13 +36,13 @@ import type { FoodRanking } from './dietEngine.js';
 /** envelope 头（值冻结对齐 `cli/keys.ts` 的 ENVELOPE_VERSION／CALORIE_SKILL）与整页 title。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·饮食';
+const DOC_TITLE = '卡路里饮食';
 
 /** 眉标／徽章（§五 第 1 行；**不出命令键**——裁定 1）与餐别口径行（正文里说一次的版本）。 */
-const EYEBROW = '卡路里 · 饮食';
-const REVIEW_BADGE = '复盘 · 餐别';
-const REVIEW_META_LEFT = '饮食复盘 · 饮食';
-const MEAL_NOTE = '加餐时段：下午茶、夜宵';
+const EYEBROW = '卡路里饮食';
+const REVIEW_BADGE = '复盘餐别';
+const REVIEW_META_LEFT = '饮食复盘饮食';
+const MEAL_NOTE = '加餐是下午茶和夜宵';
 
 /** 一位小数（老脚本 `round(x, 1)` 的同款口径；只此一处，两个页面都吃它）。 */
 function round1(n: number): number {
@@ -97,7 +97,7 @@ function reviewSummary(r: DietReview | null, t: { totalCal: number; avgCal: numb
     ? '未设热量目标'
     : '热量目标 ' + t.calGoal + ' 卡，达标 ' + t.complianceDays + '/' + t.daysCount + ' 天';
   return '本窗有记录 ' + r.loggedDays + ' 天：共摄入 ' + t.totalCal + ' 卡，日均 ' + t.avgCal
-    + ' 卡；蛋白合计 ' + protein.total + ' 克，日均 ' + fmt(protein.avg) + ' 克；' + goal + '。';
+    + ' 卡。蛋白合计 ' + protein.total + ' 克，日均 ' + fmt(protein.avg) + ' 克，' + goal + '。';
 }
 
 /** 复盘页正文（不含页头与导航）：读数卡四张 → 趋势图 → 高频 TOP5 → 按餐汇总 → 营养区块 →
@@ -117,7 +117,7 @@ function reviewBody(r: DietReview | null, top5: FoodRanking | null, extra: DietR
     /* 裁定 4 空窗：整页仍是完整页——空态句 ＋ 一句「怎么记第一条」的引导句。 */
     parts.push(anchored('rv-empty', renderEmptyBlock({
       title: '本窗读数',
-      text: '这段日子（' + start + ' ~ ' + end + '）一条饮食记录也没有。'
+      text: '这段日子（' + start + ' 至 ' + end + '）一条饮食记录也没有。'
         + '要让它有内容，先用「记一餐」把其中一天吃的东西记上（可带日期与时间），再来复盘。',
     })));
     parts.push(renderCaliberLine('📊 数据来源 · 饮食记录 · 饮食专属复盘 · ' + start + ' → ' + end));
@@ -140,7 +140,8 @@ function reviewBody(r: DietReview | null, top5: FoodRanking | null, extra: DietR
         options: { avgLine: t.avgCal },
       },
     })));
-    parts.push(renderCaliberLine('每个点 = 有记录的一天；没记录的日子不当 0 算，图上的空档就是那几天没记。'));
+    parts.push(renderCaliberLine('每个点 = 有记录的一天。'));
+    parts.push(renderCaliberLine('没记录的日子不当 0 算，图上的空档就是那几天没记。'));
   } else if (t) {
     // 裁定 5：单点不成线 —— 只有一天有记录时不画半截线，改出说明句（锚点照旧，页内导航不指空）。
     parts.push(anchored('rv-trend', renderCaliberLine('本窗只有 1 天有记录，连不成趋势线，这里只把那一天的量写出来：'
@@ -172,7 +173,8 @@ function reviewBody(r: DietReview | null, top5: FoodRanking | null, extra: DietR
     caption: '按餐汇总',
     emptyText: '本窗无按餐汇总',
   })));
-  parts.push(renderCaliberLine('按餐汇总的「天数」＝那一餐有记录的天数；' + MEAL_NOTE + '。'));
+  parts.push(renderCaliberLine('按餐汇总的「天数」＝那一餐有记录的天数。'));
+  parts.push(renderCaliberLine(MEAL_NOTE + '。'));
   /* 营养配比（#275 交的具名区块）：本页八个唤醒词共出一页，「看营养结构」「看今日营养」读到的就是这一段。 */
   if (typeof extra.nutrition === 'string' && extra.nutrition !== '') parts.push(extra.nutrition);
   parts.push(anchored('rv-copy', docCopy('calorie.view.diet-review', {
@@ -292,13 +294,13 @@ const MEAL_COLORS: Record<string, string> = { 早餐: '#ff9500', 午餐: '#0071e
 export function buildMealDistributionBlock(v: MealDistributionView, command?: string): string {
   const parts: string[] = [];
   parts.push(anchored('md-kpi', renderKpiGrid([
-    { label: '餐数', value: String(v.total), unit: '餐', detail: v.start + ' ~ ' + v.end + '（' + v.days + ' 天）' },
+    { label: '餐数', value: String(v.total), unit: '餐', detail: v.start + ' 至 ' + v.end + '（' + v.days + ' 天）' },
     {
       label: '日均热量',
       /* 裁定 4：这一支一段记录都没有时值位写 `—`，不写 0（0 是「那天真吃了 0 卡」的意思）。 */
       value: v.total > 0 ? String(v.avg) : '—',
       ...(v.total > 0 ? { unit: '卡' } : {}),
-      detail: v.total > 0 ? '按窗口 ' + v.days + ' 天算 · ' + v.mealLabel : '这一段没有' + v.mealLabel + '的记录',
+      detail: v.total > 0 ? '按窗口 ' + v.days + ' 天算（' + v.mealLabel + '）' : '这一段没有' + v.mealLabel + '的记录',
     },
   ])));
   if (v.meal === 'all' && v.total > 0) {
@@ -315,16 +317,17 @@ export function buildMealDistributionBlock(v: MealDistributionView, command?: st
     })));
     parts.push(renderDistributionRows({
       rows: v.dist.map((s) => ({
-        label: s.label, value: s.count + ' 餐 · ' + s.cal + ' 卡 · ' + s.pct + '%', pct: s.pct, color: MEAL_COLORS[s.label],
+        label: s.label, value: '共 ' + s.cal + ' 卡，占 ' + s.pct + '%', pct: s.pct, color: MEAL_COLORS[s.label],
       })),
     }));
-    parts.push(renderCaliberLine('占比按各餐热量在四餐合计里的份额算；' + MEAL_NOTE + '。'));
+    parts.push(renderCaliberLine('占比按各餐热量在四餐合计里的份额算。'));
+    parts.push(renderCaliberLine(MEAL_NOTE + '。'));
   }
   if (v.items.length === 0) {
     // 裁定 4 空窗：整段仍出完整区块——空态句 ＋ 一句「怎么记第一条」的引导句。
     parts.push(anchored('md-table', renderEmptyBlock({
       title: '明细',
-      text: '这一段（' + v.start + ' ~ ' + v.end + '）没有' + v.mealLabel + '的记录。'
+      text: '这一段（' + v.start + ' 至 ' + v.end + '）没有' + v.mealLabel + '的记录。'
         + '要让它有内容，用「记一餐」把那一顿记上（时间落在这一餐的时段里，就会归到这一支）。',
     })));
   } else {
