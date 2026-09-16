@@ -2,7 +2,7 @@
   "batch": "scene06-验收墙",
   "madeAt": "2026-09-16",
   "source": "一次性的临时库（`seedFull` 种子 ＋ `CALORIE_TODAY=2026-09-07`），生产者 `produce.mjs`（本目录，入仓）",
-  "naming": "发布名 ＝ 清单 rows[].file；结果页 `<唤醒词>.html`、回执页 `<唤醒词>-回执.html`、预检页 `<唤醒词>-预检.html`——名字只在本清单算一处",
+  "naming": "发布名 ＝ 清单 rows[].file；结果页 `<唤醒词>.html`、回执页 `<唤醒词>-回执.html`、预检页 `<唤醒词>-预检.html`、自造词结果页 `<唤醒词>.html`——名字只在本清单算一处",
   "gaps": [],
   "rows": [
     {
@@ -15,7 +15,7 @@
       "key": "calorie.goal.set",
       "cli": "calorie-cmd-read calorie.goal.set --params '{\"calorie\":1800,\"protein\":150,\"carbs\":200,\"fat\":50,\"water\":2000}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定营养目标」。\n\n我想设每日 4 大宏量营养目标(热量/蛋白/碳水/脂肪)+ 饮水目标。若热量明显低于我的基础代谢(BMR),请提示我注意。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标数值(请按实际替换,不知道的可以空着):\n热量(卡):____\n蛋白(g):____\n碳水(g):____\n脂肪(g):____\n饮水(ml):____",
-      "bytes": 86957,
+      "bytes": 88418,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -30,7 +30,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"定营养目标\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定营养目标」。\n\n我想设每日 4 大宏量营养目标(热量/蛋白/碳水/脂肪)+ 饮水目标。若热量明显低于我的基础代谢(BMR),请提示我注意。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标数值(请按实际替换,不知道的可以空着):\n热量(卡):____\n蛋白(g):____\n碳水(g):____\n脂肪(g):____\n饮水(ml):____",
-      "bytes": 74743,
+      "bytes": 74766,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -45,7 +45,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"定营养目标(自动算)\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定营养目标(自动算)」。\n\n想根据我的档案(身高/体重/年龄/活动量)+ 目标方向自动算出 4 项营养目标。若我未提供方向或档案信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标方向(减脂 / 维持 / 增肌):____",
-      "bytes": 74747,
+      "bytes": 74770,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -60,7 +60,7 @@
       "key": "calorie.goal.weight",
       "cli": "calorie-cmd-read calorie.goal.weight --params '{\"kg\":68}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定体重目标」。\n\n我想设定体重目标(目标 kg + 可选截止日期)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n截止日期(选填):____",
-      "bytes": 85560,
+      "bytes": 86815,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -75,7 +75,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"定体重目标\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定体重目标」。\n\n我想设定体重目标(目标 kg + 可选截止日期)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n截止日期(选填):____",
-      "bytes": 74279,
+      "bytes": 74302,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -90,7 +90,7 @@
       "key": "calorie.goal.weight",
       "cli": "calorie-cmd-read calorie.goal.weight --params '{\"kg\":68,\"deadline\":\"2026-09-19\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定体重目标(自动算截止)」。\n\n我想设定体重目标(目标 kg + 期望每周减重速率),由你自动推算合理截止日期,并校验速率是否合理(不超安全范围)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n期望每周减重速率(kg/周):____",
-      "bytes": 85964,
+      "bytes": 87535,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -105,7 +105,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"定体重目标(自动算截止)\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定体重目标(自动算截止)」。\n\n我想设定体重目标(目标 kg + 期望每周减重速率),由你自动推算合理截止日期,并校验速率是否合理(不超安全范围)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n期望每周减重速率(kg/周):____",
-      "bytes": 74721,
+      "bytes": 74744,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -120,7 +120,7 @@
       "key": "calorie.goal.weight",
       "cli": "calorie-cmd-read calorie.goal.weight --params '{\"kg\":68,\"startKg\":72,\"deadline\":\"2026-09-19\",\"startDate\":\"2026-09-01\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定体重目标(含起始日)」。\n\n我想完整设定体重目标:目标 kg + 起始日 + 截止日 + 起点体重。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n起始日:____\n截止日期:____\n起点体重(kg):____",
-      "bytes": 86637,
+      "bytes": 88218,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -135,7 +135,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"定体重目标(含起始日)\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定体重目标(含起始日)」。\n\n我想完整设定体重目标:目标 kg + 起始日 + 截止日 + 起点体重。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n起始日:____\n截止日期:____\n起点体重(kg):____",
-      "bytes": 74682,
+      "bytes": 74705,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -150,7 +150,7 @@
       "key": "calorie.goal.water",
       "cli": "calorie-cmd-read calorie.goal.water --params '{\"water\":2000}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定饮水目标」。\n\n我想设定每天饮水目标(ml)。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的饮水目标(ml):____",
-      "bytes": 85469,
+      "bytes": 86611,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -165,7 +165,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"定饮水目标\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定饮水目标」。\n\n我想设定每天饮水目标(ml)。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的饮水目标(ml):____",
-      "bytes": 74270,
+      "bytes": 74293,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -180,7 +180,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"定饮水目标(自动算)\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「定饮水目标(自动算)」。\n\n想按我的体重(ml/kg)自动推算饮水目标推荐值,并和旧目标对比。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重(kg,选填,默认取最新记录):____",
-      "bytes": 74516,
+      "bytes": 74539,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -195,7 +195,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"一键定全套目标\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「一键定全套目标」。\n\n想一键设定 3 类目标(营养 + 体重 + 饮水),基于我的档案自动计算,先给我看结果,等我确认后再采纳。若我的档案(身高/年龄/活动量)未设置、无体重记录或信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(营养／体重／饮水三类目标的推荐值与依据),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标方向(减脂 / 维持 / 增肌):____\n我的体重目标(kg,选填):____\n截止日期(选填):____",
-      "bytes": 75088,
+      "bytes": 75111,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -210,7 +210,7 @@
       "key": "calorie.view.goal-progress",
       "cli": "calorie-cmd-read calorie.view.goal-progress --params '{\"window\":\"今日\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看今日目标」。\n\n我想看今日 5 项目标完成度(热量/蛋白/碳水/脂肪/饮水)。体重是累计目标,若我想看,请引导我到「看体重目标进度」。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 73782,
+      "bytes": 73805,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -225,7 +225,7 @@
       "key": "calorie.view.goal-progress",
       "cli": "calorie-cmd-read calorie.view.goal-progress --params '{\"window\":\"本周\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看本周目标」。\n\n我想看本周目标完成情况(热量/蛋白/碳水/脂肪/饮水)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 73782,
+      "bytes": 73805,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -240,7 +240,7 @@
       "key": "calorie.view.goal-progress",
       "cli": "calorie-cmd-read calorie.view.goal-progress --params '{\"window\":\"7d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看营养目标进度」。\n\n我想看 4 项营养目标(热量/蛋白/碳水/脂肪)的完成进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 81729,
+      "bytes": 81752,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -255,7 +255,7 @@
       "key": "calorie.view.goal-weight",
       "cli": "calorie-cmd-read calorie.view.goal-weight --params '{\"window\":\"7d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看体重目标进度」。\n\n我想看体重目标进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 73518,
+      "bytes": 73541,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -270,7 +270,7 @@
       "key": "calorie.view.goal-progress",
       "cli": "calorie-cmd-read calorie.view.goal-progress --params '{\"window\":\"今日\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看饮水目标进度」。\n\n我想看今日饮水进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 73782,
+      "bytes": 73805,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -285,7 +285,7 @@
       "key": "calorie.view.goal-vs-actual",
       "cli": "calorie-cmd-read calorie.view.goal-vs-actual --params '{\"window\":\"30d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看目标对比实际」。\n\n我想看热量目标线 vs 实际摄入线的对比与偏差分析,默认最近 30 天(可自定义时间窗口)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间窗口(天,选填,默认 30):____",
-      "bytes": 83410,
+      "bytes": 83770,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -300,7 +300,7 @@
       "key": "calorie.view.goal",
       "cli": "calorie-cmd-read calorie.view.goal --params '{\"window\":\"7d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看目标完成度」。\n\n我想看全部目标完成度汇总(热量/蛋白/碳水/脂肪/饮水)和总评分。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 74122,
+      "bytes": 74145,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -315,7 +315,7 @@
       "key": "calorie.view.goal-expiring",
       "cli": "calorie-cmd-read calorie.view.goal-expiring",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看即将到期的目标」。\n\n我想看即将到期的体重目标(默认 14 天内到期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n到期窗口(天,选填,默认 14):____",
-      "bytes": 71130,
+      "bytes": 71629,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -330,7 +330,7 @@
       "key": "calorie.view.goal-progress",
       "cli": "calorie-cmd-read calorie.view.goal-progress --params '{\"window\":\"7d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看目标完成率(按周)」。\n\n我想看本周(7 天)每日目标完成率 + 达标天数(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 81729,
+      "bytes": 81752,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -345,7 +345,7 @@
       "key": "calorie.view.goal-progress",
       "cli": "calorie-cmd-read calorie.view.goal-progress --params '{\"window\":\"7d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看目标完成率(按月)」。\n\n我想看本月(30 天)每日目标完成率 + 达标天数(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 81729,
+      "bytes": 81752,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -360,7 +360,7 @@
       "key": "calorie.goal.set",
       "cli": "calorie-cmd-read calorie.goal.set --params '{\"calorie\":1800,\"protein\":150,\"carbs\":200,\"fat\":50}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「改营养目标」。\n\n我想修改营养目标(热量/蛋白/碳水/脂肪/饮水),可同时改多项,并预估修改后的影响(热量缺口/预算变化)。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n热量(卡)新目标值:____\n蛋白(g)新目标值:____\n碳水(g)新目标值:____\n脂肪(g)新目标值:____\n饮水(ml)新目标值:____",
-      "bytes": 86685,
+      "bytes": 88146,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -375,7 +375,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"改营养目标\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「改营养目标」。\n\n我想修改营养目标(热量/蛋白/碳水/脂肪/饮水),可同时改多项,并预估修改后的影响(热量缺口/预算变化)。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n热量(卡)新目标值:____\n蛋白(g)新目标值:____\n碳水(g)新目标值:____\n脂肪(g)新目标值:____\n饮水(ml)新目标值:____",
-      "bytes": 74913,
+      "bytes": 74936,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -390,7 +390,7 @@
       "key": "calorie.goal.weight",
       "cli": "calorie-cmd-read calorie.goal.weight --params '{\"kg\":67.5}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「改体重目标」。\n\n我想修改体重目标值或截止日期,并给出新的建议减重速率。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n体重目标(kg):____\n截止日期:____",
-      "bytes": 85646,
+      "bytes": 87228,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -405,7 +405,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"改体重目标\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「改体重目标」。\n\n我想修改体重目标值或截止日期,并给出新的建议减重速率。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n体重目标(kg):____\n截止日期:____",
-      "bytes": 74528,
+      "bytes": 74551,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -420,7 +420,7 @@
       "key": "calorie.goal.water",
       "cli": "calorie-cmd-read calorie.goal.water --params '{\"water\":2200}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「改饮水目标」。\n\n我想单独修改饮水目标,其他营养目标保持不变。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n饮水目标(ml):____",
-      "bytes": 85519,
+      "bytes": 86661,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -435,7 +435,7 @@
       "key": "calorie.view.goal-wizard",
       "cli": "calorie-cmd-read calorie.view.goal-wizard --params '{\"wake\":\"改饮水目标\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「改饮水目标」。\n\n我想单独修改饮水目标,其他营养目标保持不变。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n饮水目标(ml):____",
-      "bytes": 74316,
+      "bytes": 74339,
       "template": "doc-shell",
       "complete": true,
       "check": "预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。"
@@ -450,7 +450,7 @@
       "key": "calorie.goal.pause",
       "cli": "calorie-cmd-read calorie.goal.pause",
       "prompt": "请你加载技能 卡路里,执行唤醒词「暂停所有目标」。\n\n我想临时冻结全部目标(营养 + 体重 + 饮水),记录照常,仅目标暂停,并提示恢复入口。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 85699,
+      "bytes": 85720,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -465,7 +465,7 @@
       "key": "calorie.goal.resume",
       "cli": "calorie-cmd-read calorie.goal.resume",
       "prompt": "请你加载技能 卡路里,执行唤醒词「重启所有目标」。\n\n我想从暂停恢复全部目标(营养 + 体重 + 饮水)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 85637,
+      "bytes": 85658,
       "template": "doc-shell",
       "complete": true,
       "check": "写入回执：落库了什么、改前→改后对照是否与预检页一致；有没有把内部函数名印上屏。"
@@ -480,7 +480,7 @@
       "key": "calorie.view.goal",
       "cli": "calorie-cmd-read calorie.view.goal --params '{\"window\":\"30d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看目标历史完成」。\n\n我想看历史目标达成情况,含每日达成列表与完成/未完成天数统计(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n回看天数(选填,默认 30):____",
-      "bytes": 74116,
+      "bytes": 74139,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -495,7 +495,22 @@
       "key": "calorie.view.goal-predict",
       "cli": "calorie-cmd-read calorie.view.goal-predict --params '{\"window\":\"14d\"}'",
       "prompt": "请你加载技能 卡路里,执行唤醒词「看目标预测达成」。\n\n我想看按当前趋势预测的目标达成日与置信度(体重部分复用对比体重的预测逻辑)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
-      "bytes": 68457,
+      "bytes": 68480,
+      "template": "doc-shell",
+      "complete": true,
+      "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
+    },
+    {
+      "seq": 34,
+      "family": "自造词结果页（路由层 1 条）",
+      "kind": "结果型",
+      "wake": "看目标推荐",
+      "title": "看目标推荐 · 结果型",
+      "file": "看目标推荐.html",
+      "key": "calorie.view.goal-recommend",
+      "cli": "calorie-cmd-read calorie.view.goal-recommend --params '{\"profile\":\"cut\"}'",
+      "prompt": null,
+      "bytes": 73285,
       "template": "doc-shell",
       "complete": true,
       "check": "数值与老技能实物对得上吗（预期值给出处）；版面有没有塌列／挤／被藏起来的横滚。"
@@ -511,8 +526,8 @@
       "why": "这三条词的命令本身就是预检确认页（先算给我看）；写由后续三条写命令落地，回执挂在那三条词上——不是漏做，见 `SKILL.md:75`。"
     },
     {
-      "what": "三条自造词：看目标推荐／看目标配置／看目标状态",
-      "why": "它们不在场景 06 的 25 条冻结词表里（只在路由层），也没有 HELP 卡片；#291 已关（乙：查找层别名查得到跑得通，权威词表与快照不动）；三页的产物验收随 #290 在办。本页另附三行只给命令不给产物。"
+      "what": "看目标配置／看目标状态 的产物页（本批不出）",
+      "why": "两条自造词不在场景 06 的 25 条冻结词表里（只在路由层别名表 `src/goal/routes.ts:34-35`），也没有 HELP 卡片（#291 乙：查找层别名查得到跑得通，权威词表与快照不动）；它们的整页装配件随 #290 落地（本席实跑：两条都是 `doc-shell` 完整文档），产物验收挂 #290 自己的件——按 #611 的范围本批只收「看目标推荐」一行；链路索引另附 2 行只给命令不给产物。"
     },
     {
       "what": "看目标完成率(按周)／(按月) 的独立页",

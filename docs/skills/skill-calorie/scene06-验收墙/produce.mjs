@@ -11,7 +11,8 @@
  *     `docs/agents/视觉验收墙.md` §6 骨架）；产物名＝清单 `rows[].file`，**名字只在本文件算一处**。
  *
  * 用法：
- *   node produce.mjs                 # 全量出（33 件产物 ＋ manifest.json ＋ 链路索引.html）
+ *   node produce.mjs                 # 全量出（34 件产物 ＝ 25 条冻结词的 33 件 ＋ 自造词「看目标推荐」1 件，
+ *                                    #  外加 manifest.json ＋ 链路索引.html ＋ 逐格缺陷清单.md）
  *   node produce.mjs --only 定营养    # 只跑名字里含该串的词（冒烟用）
  *
  * 库：一次性的临时目录（`mkdtemp`），跑完即弃——写类命令写的是这份临时库，**不碰真库**。
@@ -114,6 +115,12 @@ const CHECK = {
   过程型: '预检确认页：现值与推荐值是否摆清、缺项有没有编数字、页面是不是静态无脚本、确认那一步写得清不清楚。',
 };
 
+/** 墙自检实读（重出后按 `node gen-wall.mjs …` 正例与反例各跑一遍抄回；**只此一处**，别处不许再写这两个数）。 */
+const WALL_SELFCHECK = {
+  positive: '正例 `node gen-wall.mjs . 手机墙-390.html 390 820` → **34 格；链接 105 条（手机墙-390.html 69 ＋ 总索引.html 36）；缺失 0 -> 可发，exit 0**；桌面端 `node gen-wall.mjs . 桌面墙-1280.html 1280 860` 同样 **34 格；链接 105 条（桌面墙-1280.html 69 ＋ 总索引.html 36）；缺失 0 -> 可发，exit 0**',
+  negative: '反例（清单里塞不存在文件：把「看今日目标」的 `file` 改成 `故意写的不存在页.html`，再跑 `node gen-wall.mjs --check .`）→ **33 格；链接 174 条；缺失 1 -> 不可发，exit 1**，并点名 `清单点名却没有文件：14 看今日目标 -> 故意写的不存在页.html`；从备份按字节还原 manifest.json（复原后与变异前逐字节一致）再跑 `--check` → **34 格；链接 174 条；缺失 0 -> 可发，exit 0**',
+};
+
 const rows = [];
 const problems = [];
 const gaps = [];
@@ -171,17 +178,48 @@ for (const t of SCENE_06_GOAL) {
   }
 }
 
+/* 自造词（不在场景 06 的 25 条冻结词表里，只在路由层别名表 `src/goal/routes.ts:37`）：
+ * 「看目标推荐」的整页装配件随 #589 落地，本批按同一把尺子把它收进 rows —— 发布名 `看目标推荐.html`，
+ * 墙格数随清单一起从 33 长到 34。命令照抄路由层原文（`--params '{"profile":"cut"}'`），不另拟。
+ * `--only` 冒烟时不跑（冒烟只出被点名的词）。 */
+const SELF_MADE_DOC = {
+  wake: '看目标推荐',
+  key: 'calorie.view.goal-recommend',
+  params: '{"profile":"cut"}',
+  file: '看目标推荐.html',
+  family: '自造词结果页（路由层 1 条）',
+};
+if (!only) {
+  const r = run(SELF_MADE_DOC.key, SELF_MADE_DOC.params);
+  if (!r.ok) problems.push(`${SELF_MADE_DOC.wake}（自造词产物）：${r.err}`);
+  else {
+    const complete = /^<!doctype html>/i.test(r.html.trim());
+    const template = (r.env.delivery && r.env.delivery.template) || '（回执未给 delivery.template）';
+    copyFileSync(r.env.data.output, join(OUT, SELF_MADE_DOC.file));
+    if (!complete) gaps.push(`${SELF_MADE_DOC.wake}（${SELF_MADE_DOC.file}）：模板=${template}、${r.bytes} 字节 —— **不是完整文档**（片段直出）`);
+    seq += 1;
+    rows.push({
+      seq, family: SELF_MADE_DOC.family, kind: complete ? '结果型' : '结果型·片段', wake: SELF_MADE_DOC.wake,
+      title: `${SELF_MADE_DOC.wake} · ${complete ? '结果型' : '结果型（片段，未整页）'}`, file: SELF_MADE_DOC.file,
+      key: SELF_MADE_DOC.key,
+      cli: `calorie-cmd-read ${SELF_MADE_DOC.key} --params '${SELF_MADE_DOC.params}'`,
+      prompt: null, bytes: r.bytes, template, complete, check: CHECK['结果型'],
+    });
+  }
+}
+
 /* 链路索引：prompt → 唤醒词 → 命令 → 绝对产物路径（点路径即开该 HTML）。 */
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const abs = (f) => join(OUT, f).replace(/\\/g, '/');
 const fileUrl = (f) => 'file:///' + abs(f);
 
-/* 另附三行：自造词只给命令不给产物（#291 乙：无卡；产物验收随 #290）。不进 manifest rows，墙格数不动。 */
-const extra = [
-  { seq: '附1', wake: '看目标推荐', kind: '无产物', cli: `calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'`, why: '不出独立产物：#291 乙只给别名不给卡；页面验收随 #290 在办。' },
-  { seq: '附2', wake: '看目标配置', kind: '无产物', cli: 'calorie-cmd-read calorie.view.goal-config', why: '不出独立产物：#291 乙只给别名不给卡；页面验收随 #290 在办。' },
-  { seq: '附3', wake: '看目标状态', kind: '无产物', cli: 'calorie-cmd-read calorie.view.goal-status', why: '不出独立产物：#291 乙只给别名不给卡；页面验收随 #290 在办。' },
-].map((r) => `  <article class="row" id="r${r.seq}">
+/* 另附两行：另两条自造词只给命令不给产物（本批按 #611 的范围只收「看目标推荐」进 rows）。
+ * 不进 manifest rows，墙格数不动。 */
+const EXTRA_SELF_MADE = [
+  { seq: '附1', wake: '看目标配置', kind: '本批无产物页', cli: 'calorie-cmd-read calorie.view.goal-config', why: '本批不出产物页：该词不在场景 06 的 25 条冻结词表里（只在路由层别名表 `src/goal/routes.ts:34`），也没有 HELP 卡片（#291 乙：查找层别名查得到跑得通）；它的整页装配件随 #290 落地（本席实跑为 `doc-shell` 完整文档），产物验收挂 #290 自己的件——按 #611 的范围本批只收「看目标推荐」一行。' },
+  { seq: '附2', wake: '看目标状态', kind: '本批无产物页', cli: 'calorie-cmd-read calorie.view.goal-status', why: '本批不出产物页：同上（路由层别名 `src/goal/routes.ts:35`，不在 25 条冻结词表里、也没有 HELP 卡片）；整页装配件随 #290 落地（本席实跑为 `doc-shell` 完整文档），产物验收挂 #290 自己的件。' },
+];
+const extra = EXTRA_SELF_MADE.map((r) => `  <article class="row" id="r${r.seq}">
     <div class="head"><span class="seq">${r.seq}</span><b>${esc(r.wake)}</b><span class="kind">${esc(r.kind)}</span></div>
     <div class="prompt"><span class="lbl">用户会说的话</span><pre>说「${esc(r.wake)}」即走本行命令（冻结词表无此词，无 prompt_template 原文）。</pre></div>
     <dl>
@@ -192,7 +230,7 @@ const extra = [
   </article>`).join('\n');
 const chain = rows.map((r) => `  <article class="row" id="r${r.seq}">
     <div class="head"><span class="seq">${r.seq}</span><b>${esc(r.wake)}</b><span class="kind">${esc(r.kind)}</span></div>
-    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>${esc(r.prompt || '（该词没有 prompt_template）')}</pre></div>
+    <div class="prompt"><span class="lbl">用户会说的话（prompt 原文）</span><pre>${esc(r.prompt || `说「${r.wake}」即走本行命令（自造词：不在场景 06 的 25 条冻结词表里，没有 prompt_template 原文）。`)}</pre></div>
     <dl>
       <dt>唤醒词</dt><dd><code>${esc(r.wake)}</code></dd>
       <dt>命令</dt><dd><code>${esc(r.cli)}</code></dd>
@@ -204,7 +242,7 @@ const chain = rows.map((r) => `  <article class="row" id="r${r.seq}">
 const notShipped = [
   { what: '暂停所有目标／重启所有目标 的预检确认页', why: '这两条词**无空位**（不带参数），按 2026-09-13 裁定不出预检页，只在写后回执页上出现。' },
   { what: '定营养目标(自动算)／定饮水目标(自动算)／一键定全套目标 的独立回执页', why: '这三条词的命令本身就是预检确认页（先算给我看）；写由后续三条写命令落地，回执挂在那三条词上——不是漏做，见 `SKILL.md:75`。' },
-  { what: '三条自造词：看目标推荐／看目标配置／看目标状态', why: '它们不在场景 06 的 25 条冻结词表里（只在路由层），也没有 HELP 卡片；#291 已关（乙：查找层别名查得到跑得通，权威词表与快照不动）；三页的产物验收随 #290 在办。本页另附三行只给命令不给产物。' },
+  { what: '看目标配置／看目标状态 的产物页（本批不出）', why: '两条自造词不在场景 06 的 25 条冻结词表里（只在路由层别名表 `src/goal/routes.ts:34-35`），也没有 HELP 卡片（#291 乙：查找层别名查得到跑得通，权威词表与快照不动）；它们的整页装配件随 #290 落地（本席实跑：两条都是 `doc-shell` 完整文档），产物验收挂 #290 自己的件——按 #611 的范围本批只收「看目标推荐」一行；链路索引另附 2 行只给命令不给产物。' },
   { what: '看目标完成率(按周)／(按月) 的独立页', why: '两条词今天都路由到 `calorie.view.goal-progress`，与「看本周目标」同页（只是窗口参数相同）——产物在，但**屏幕上看不出差别**，这一条该由用户裁：要不要按词出不同的窗口。' },
 ];
 
@@ -212,7 +250,7 @@ writeFileSync(join(OUT, 'manifest.json'), JSON.stringify({
   batch: 'scene06-验收墙',
   madeAt: '2026-09-16',
   source: '一次性的临时库（`seedFull` 种子 ＋ `CALORIE_TODAY=2026-09-07`），生产者 `produce.mjs`（本目录，入仓）',
-  naming: '发布名 ＝ 清单 rows[].file；结果页 `<唤醒词>.html`、回执页 `<唤醒词>-回执.html`、预检页 `<唤醒词>-预检.html`——名字只在本清单算一处',
+  naming: '发布名 ＝ 清单 rows[].file；结果页 `<唤醒词>.html`、回执页 `<唤醒词>-回执.html`、预检页 `<唤醒词>-预检.html`、自造词结果页 `<唤醒词>.html`——名字只在本清单算一处',
   gaps,
   rows, notShipped,
 }, null, 2) + '\n', 'utf8');
@@ -246,9 +284,9 @@ b.bad{color:#c0392b}
 </style></head><body><div class="wrap">
 <h1>场景06「目标管理」链路索引 · ${rows.length} 件</h1>
 <div class="sub">一条一条摆开：<b>用户会说的话（prompt 原文）→ 唤醒词 → 命令 → 产物绝对路径</b>。点「产物绝对路径」那一行即可打开该 HTML（绝对路径链接）。
-写类词走两段：<b>先出预检确认页（过程型）→ 用户确认 → 再出写后回执页（回执型）</b>。另附 3 行自造词（只给命令，不出产物）。<br>
+写类词走两段：<b>先出预检确认页（过程型）→ 用户确认 → 再出写后回执页（回执型）</b>。<b>第 34 行是自造词「看目标推荐」</b>（不在 25 条冻结词表里，产物照出）；另附 2 行自造词只给命令、不出产物（原因见页尾）。<br>
 其余入口：<a href="总索引.html">总索引</a> · <a href="手机墙-390.html">手机墙 390</a> · <a href="桌面墙-1280.html">桌面墙 1280</a>。</div>
-<div class="toc"><b>跳到：</b>${rows.map((r) => `<a href="#r${r.seq}">${esc(r.wake)}${r.kind === '过程型' ? '（预检）' : ''}</a>`).join('')}<a href="#r附1">看目标推荐</a><a href="#r附2">看目标配置</a><a href="#r附3">看目标状态</a></div>
+<div class="toc"><b>跳到：</b>${rows.map((r) => `<a href="#r${r.seq}">${esc(r.wake)}${r.kind === '过程型' ? '（预检）' : ''}</a>`).join('')}${EXTRA_SELF_MADE.map((r) => `<a href="#r${r.seq}">${esc(r.wake)}</a>`).join('')}</div>
 ${chain}
 ${extra}
 <div class="note"><h2>本批的缺口（如实记账）</h2>
@@ -272,17 +310,21 @@ for (const r of rows) {
 }
 const dupLines = [...sameBytes.values()].filter((g) => g.length > 1)
   .map((g) => `  - ${g.length} 条词的产物**逐字节相同**（${g[0].split('·')[0].trim().length} 字节量级）：${g.join('、')}`);
+/** 片段件（清单里 complete=false 的那些）与自造词那一格的格号——清单是唯一出处，别处不许再算。 */
+const fragments = rows.filter((r) => !r.complete);
+const selfSeq = (rows.find((r) => r.file === SELF_MADE_DOC.file) || {}).seq ?? rows.length;
 
-const checklist = `# 场景06 目标管理 · 逐格缺陷清单（33 格）
+const checklist = `# 场景06 目标管理 · 逐格缺陷清单（${rows.length} 格）
 
 - 批次：\`docs/skills/skill-calorie/scene06-验收墙/\`（生产者 \`produce.mjs\`，墙 \`gen-wall.mjs\`，清单 \`manifest.json\`）
 - 口径出处：仓规 \`docs/agents/视觉验收墙.md\`（§3 收口七步／§4 完成判据／§6.2 骨架／§7 坑）
-- 墙：\`手机墙-390.html\`（33 格 × 390 宽 × 3 列，看塌列）、\`桌面墙-1280.html\`（33 格 × 1280 宽 × 1 列，缩 0.469 显示，看排布）
+- 墙：\`手机墙-390.html\`（${rows.length} 格 × 390 宽 × 3 列，看塌列）、\`桌面墙-1280.html\`（${rows.length} 格 × 1280 宽 × 1 列，缩 0.469 显示，看排布）
 - 细看入口：\`总索引.html\`（按页面族分组）／\`链路索引.html\`（prompt → 唤醒词 → 命令 → 绝对路径，可点开）
-- 自检读数：正例 \`node gen-wall.mjs . 手机墙-390.html 390 820\` → **33 格；链接 101 条；缺失 0 -> 可发，exit 0**；
-  反例（把清单里「看今日目标」的 file 改成 \`故意写的不存在页.html\` 再跑 \`--check\`）→ **缺失 1 -> 不可发，exit 1 并点名那一份**；还原后复跑 exit 0。
+- 墙格数 ＝ 清单行数 ＝ ${rows.length}（生成器自检按清单点名逐件查盘，少一件即点名并 exit 1）。
+- 自检读数：${WALL_SELFCHECK.positive}；
+  ${WALL_SELFCHECK.negative}。
 - 数据来源：一次性临时库（\`seedFull\` 种子 ＋ \`CALORIE_TODAY=2026-09-07\`）；写类命令写的是这份临时库，**没碰真库**。
-- 唤醒词与命令：逐条取 \`src/triggers/scene-06-goal.ts\` 的 25 条冻结词表原文（跑它自己的 \`main_prompt.cli\`，不另拟命令）。
+- 唤醒词与命令：前 33 格逐条取 \`src/triggers/scene-06-goal.ts\` 的 25 条冻结词表原文（跑它自己的 \`main_prompt.cli\`，不另拟命令）；第 34 格是自造词「看目标推荐」，命令取路由层别名表 \`src/goal/routes.ts:37\` 原文。
 
 ## 一、机器读数逐格（生产者出，不靠人眼）
 
@@ -292,12 +334,13 @@ ${rows.map((r) => `| ${r.seq} | ${r.wake} | ${r.kind} | \`${r.template}\` | ${r.
 
 ## 二、初筛发现的缺陷（机器可见 ＋ 本席抽查，逐条给证据）
 
-1. **写后回执页整页缺位**（10 件，格 1／4／6／8／10／24／26／28／30／31）：模板 \`receipt\`、206–275 字节，双击打开只有一段裸区块——没有 \`<!doctype html>\`、没有 charset、没有样式、没有页框。地图 #153 的目的地口径是「产物＝完整文档」，这 10 件当场不达标。
-2. **回执把内部词印上屏**：回执正文里写着 \`op=update · id=1\`（\`定营养目标-回执.html\` 逐字如此）。这正是墙存在的理由那一类缺陷（判据抓不到、人一眼看见）。
-3. **结果页还剩 4 件是片段**（模板 \`fragment\`）：看目标对比实际（1357 B）／看目标完成度（1779 B）／看即将到期的目标（1204 B）／看目标历史完成（1779 B）——走的是旧片段渲染件，不是整页装配。
-4. **同一个页面顶着多条词**（屏幕上看不出差别）：
-${dupLines.join('\n')}
-5. **写入缺陷（本席复跑出来的，非本批产物本身的问题）**：\`定体重目标\`／\`改体重目标\` 只给 \`kg\`、不给截止日时，会把 \`daily_goal.goal_deadline\` **抹成 NULL**；紧接着念「看即将到期的目标」→ **exit 4「无到期目标（daily_goal.goal_deadline 缺失）」**。复跑读数：种子库 \`goal_deadline=2026-12-31\` → 跑 \`calorie.goal.weight {"kg":68}\` → \`goal_deadline=null\` → \`calorie.view.goal-expiring\` exit 4 → 带截止日写回后 exit 0。本批产物之所以有这一页，是因为生产者按种子表补了截止日（见 \`produce.mjs\` 的 \`SUBST_OVERRIDE\`）。
+1. **片段件**：${fragments.length
+  ? fragments.map((r) => `格 ${r.seq} ${r.wake}（${r.file}，${r.bytes} B，模板 \`${r.template}\`）不是完整文档`).join('；') + ' —— 双击打开只有裸区块，地图 #153 的目的地口径「产物＝完整文档」当场不达标。'
+  : `本轮实读 **0 件**——${rows.length} 件产物逐件是完整文档（模板 \`doc-shell\`，见一段「完整文档？」列全为「是」）。`}
+2. **同一个页面顶着多条词**（屏幕上看不出差别）：
+${dupLines.length ? dupLines.join('\n') : '  - （无：没有两条词的产物逐字节相同）'}
+3. **写入缺陷（产品侧行为，留档 ＋ 本轮复跑复核）**：首轮记过一条——\`定体重目标\`／\`改体重目标\` 只给 \`kg\`、不给截止日时会把 \`daily_goal.goal_deadline\` **抹成 NULL**，紧接着念「看即将到期的目标」→ **exit 4「无到期目标（daily_goal.goal_deadline 缺失）」**。**本轮（#611 重出时）同一套复跑已不复现**：种子库 \`goal_deadline=2026-12-31\` → \`calorie.goal.weight {"kg":68}\` exit 0 → 写后 \`goal_deadline\` 仍 \`2026-12-31\` → \`calorie.view.goal-expiring\` **exit 0**；带截止日写回（\`{"kg":68,"deadline":"2026-09-19"}\`）后也 exit 0。本批产物那一页（格 21）仍按种子表补截止日（见 \`produce.mjs\` 的 \`SUBST_OVERRIDE\`），产物本身与这条产品侧行为无关。
+4. **历次重出留档**（旧读数，**现状以一段与本轮重出记为准**）：首轮（2026-09-15）有三处当场不达标——10 件写后回执页是 \`receipt\` 片段（206–275 字节，没有 \`<!doctype html>\`／charset／样式／页框）；回执正文把内部词 \`op=update · id=1\` 印上屏；4 件结果页（看目标对比实际 1357 B／看目标完成度 1779 B／看即将到期的目标 1204 B／看目标历史完成 1779 B）是 \`fragment\` 片段。这三处已由 \`056f116\`／\`af1280d\` 两轮修掉，本轮实读 0 片段、回执页均 85 KB 量级。
 
 ## 三、待你看（墙上看得出、判据抓不到的那一类）
 
@@ -305,10 +348,11 @@ ${dupLines.join('\n')}
 
 | 格 | 该确认什么 | 你的结论 |
 |---|---|---|
-| 全部 33 格 | 双端各滚一遍，逐格比对 | （待填） |
-| 1／4／6／8／10／24／26／28／30／31 | 回执片段：裸区块＋\`op=update · id=1\` 印上屏，能不能接受 | （待填） |
+| 全部 ${rows.length} 格 | 双端各滚一遍，逐格比对 | （待填） |
+| ${selfSeq}（看目标推荐，自造词） | 这一页与格 3「定营养目标(自动算)」的预检页内容有重叠（都摆推荐值与依据）：肉眼分不分得出差别；自造词该不该与冻结词同墙并收 | （待填） |
+| 1／4／6／8／10／24／26／28／30／31 | 回执页：内部词（\`op=\`／函数名）还有没有印上屏 | （待填） |
 | 14／15／18／22／23 | 判据：同页多词（逐字节相同）该不该按词出不同内容 | （待填） |
-| 19／20／21／32 | 4 件片段结果页：要不要现在就整页化 | （待填） |
+| 19／20／21／32 | 曾是片段的 4 件结果页，整页化后还有没有版面问题 | （待填） |
 
 ## 四、本批的缺口（清单 \`gaps\` 段同源）
 

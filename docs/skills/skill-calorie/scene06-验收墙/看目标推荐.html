@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>卡路里 目标回执</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卡路里·目标管理</title>
 <style>/* base-paint 共享样式资产 · ilife-base · v0.1.0 */
 :root {
   --fg: #1d1d1f;
@@ -1808,388 +1808,71 @@ body {
   white-space: pre-wrap;
   overflow-x: auto;
 }
-/* #525 页面级移动端配方 · 只对根类 .ilife-page-ui 的页面生效 */
-/* ① 图片与矢量图兜底：任何一张图都不许撑破容器（结果型页面的第一类溢出源）。 */
-.ilife-page-ui img,
-.ilife-page-ui svg {
-  max-width: 100%;
-}
-.ilife-page-ui img {
-  height: auto;
-}
-/* ② 复制区债之一（**置灰规则的定义地已上移到 `style.ts` 的 `copyButton` 区**——
-   它对所有页面都成立，不属「移动端配方」，故本件不再重述第二条：同一件事只留一个定义地）。
-   本件只在窄屏把命中高度补齐；宽度档的 44px 由 `ACTION_BAR_DEFAULTS.minHeightPx` 统一给。 */
-/* ③ 页内定位：带 id 的区块被锚点跳转命中时，标题与视口顶留 20px（不贴着边缘）。 */
-.ilife-page-ui .ilife-block-page-shell-body > *[id] {
-  scroll-margin-top: 20px;
-}
-/* ④ 表格：列数极多的表仍可横滑时的兜底（细滚动条＋触屏惯性）。 */
-.ilife-page-ui .ilife-block-data-table {
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-}
-/* ⑤ 触摸区：**全宽档**所有页内可点元素命中区 ≥44×44px。
-   #525 收口：这一条原来只在 ≤820 那条媒体查询里，实测 1440 档样板页的页内导航（`a`）
-   只有 27px 高 —— 44px 是**全宽档**口径（与 `.ilife-copy-btn` 同值），故移出媒体查询。
-   只加 `min-height` 与最小内距，不动任何既有选择器的语义。 */
-.ilife-page-ui .ilife-copy-btn,
-.ilife-page-ui .ilife-copy-menu-item,
-.ilife-page-ui .ilife-action-btn,
-.ilife-page-ui .ilife-block-disclosure-summary,
-.ilife-page-ui .ilife-block-param-form-input,
-.ilife-page-ui .ilife-block-toc a {
-  min-height: 44px;
-}
-/* 页内导航按胶囊排（inline 元素上 min-height 不生效，须转 inline-flex）。 */
-.ilife-page-ui .ilife-block-toc a {
-  display: inline-flex;
-  align-items: center;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-/* ⑥ 窄屏（≤640）：安全区留白、字号节奏、读数卡栅格、页内导航横滑、表格卡片化。 */
-@media (max-width: 640px) {
-  /* 安全区：手机横放与「小白条」机型上正文不许贴边；页脚留 60px 与 HELP 640 档逐值同。 */
-  .ilife-page-ui .ilife-block-page-shell {
-    padding: 20px max(16px, env(safe-area-inset-right, 0px))
-      calc(60px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
-  }
-  /* 字号下限：正文类文本一档不落（表格单元格／口径行／列表行／事实条标签 ≥12px）。 */
-  .ilife-page-ui .ilife-block-caliber,
-  .ilife-page-ui .ilife-block-list-rows-row,
-  .ilife-page-ui .ilife-block-kpi-card-detail {
-    font-size: 12px;
-  }
-  /* 读数卡：两格并排（150px 下限在 358px 可用宽里正好两格，不再被 auto-fit 挤成三格）。 */
-  .ilife-page-ui .ilife-block-kpi-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .ilife-page-ui .ilife-block-kpi-card {
-    padding: 12px;
-  }
-  /* 页内导航：一条横滑的胶囊轨（换行会把标题挤出首屏；横滑不占纵向高度）。 */
-  .ilife-page-ui .ilife-block-toc {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-  }
-  .ilife-page-ui .ilife-block-toc a {
-    flex: 0 0 auto;
-  }
-  /* 表格卡片化：每个数据格带列头文本（`td[data-label]`，由 `renderDataTable` 写入）时，
-     窄屏把「一行多列」摊成「一格两行：列头 ＋ 值」，列头不再挤在 390px 里。
-     属性缺席时本段全部是空选择器 ⇒ 自动退回 #457 的紧凑表形态，不静默出错。 */
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) .ilife-block-data-table-table,
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tbody,
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tr,
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td {
-    display: block;
-    width: auto;
-  }
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) thead {
-    display: none;
-  }
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tr {
-    padding: 4px 0;
-    border-top: 1px solid rgba(210, 210, 215, .6);
-  }
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) tr:first-child {
-    border-top: 0;
-  }
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 3px 10px;
-    border-bottom: 0;
-    text-align: left;
-  }
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td::before {
-    content: attr(data-label);
-    flex: 0 0 auto;
-    color: var(--fg3);
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .ilife-page-ui .ilife-block-data-table:has(td[data-label]) td.ilife-block-data-table-cell-right {
-    min-width: 0;
-  }
-}
-/* ⑦ ≤400 档：读数卡塌单列（HELP `.ilife-help-shell-grid` 640 档单列的同一条意图，
-   在 400 档执行——本仓页面自有的 400 断点，不新造值）。 */
-@media (max-width: 400px) {
-  .ilife-page-ui .ilife-block-kpi-card-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-/* ⑧ 宽屏把可用宽用起来（#525 第二轮；来源＝#525 席位版面档重判里**双方都认的那一条**
-   「1280 档没把宽屏用起来」，以及编排者 2026-09-15 的补记：页面模板 960 在 1280 档左右各空 140px）。
-   口径＝「宽屏不空荡、正文不散」：页面模板从 `blocks.ts` 的 960（那儿是别票写集，本件不改它）
-   放宽到 **1280**，正文收成 **880px 一列**居中，栅格类与真二维数据（读数卡／表／图／键值行／
-   列表行）满铺可用宽。为什么用栅格而不是 12 条 `max-width`：正文类块在各票里长得不一样，
-   靠「不漏掉某个类名」的清单法必然漏（第一版注入候选就漏了无类名的 `section`），
-   栅格是**默认收窄、显式放宽**，漏不掉。
-   `box-sizing: border-box` 是本条的前提：本仓没有 `*{box-sizing}` 全局复位（`blocks.ts` 的
-   pageShell 区注明「不搬 HELP 那一条」），页面模板是 content-box ⇒ 不写它则 `max-width` 只管内容宽、
-   实占 1320（1440 档左右各空 60，不是 80）。 */
-@media (min-width: 1001px) {
-  .ilife-page-ui .ilife-block-page-shell {
-    box-sizing: border-box;
-    max-width: 1280px;
-  }
-  .ilife-page-ui .ilife-block-page-shell-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 880px minmax(0, 1fr);
-  }
-  .ilife-page-ui .ilife-block-page-shell-body > * {
-    grid-column: 2;
-  }
-  /* 宽的走满铺（`:where()` 保零权重，覆盖既有 `auto-fit` 时按「同权重、后出现」取胜） */
-  .ilife-page-ui .ilife-block-page-shell-body > :where(
-    .ilife-block-kpi-card-grid,
-    .ilife-block-data-table,
-    .ilife-block-chart-block,
-    .ilife-block-detail-section,
-    .ilife-block-list-rows
-  ) {
-    grid-column: 1 / -1;
-  }
-  /* 读数卡一行四张：960 档的 `auto-fit minmax(150px,1fr)` 只排得出 2 张，一行两张在宽屏上
-     就是「右半边空着」。四张同高靠既有 `grid-auto-rows: 1fr`（本件不动它）。 */
-  .ilife-page-ui .ilife-block-kpi-card-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-/* ⑨ 状态字抬到与正文同档（#525 第二轮票面第 3 条：状态类文字在手机档偏小）。
-   390 档的徽章（`block-chip`）与读数卡说明（`block-kpi-card-detail`）都是 12px，与正文差 3px、
-   与读数卡标签 12px 齐平 ⇒ 「状态」看不出是另一类信息。抬到 **13px**：
-   ① 不越过正文 15px（层级仍在，不靠加粗抢戏）；② 高于 #524 基准 §3.2 的 390 档下限 12px 一档；
-   ③ 与 HELP 侧 13px 那一档（`helpShell.ts` 常见档 13）逐值同。 */
-.ilife-page-ui .ilife-block-chip,
-.ilife-page-ui .ilife-block-kpi-card-detail {
-  font-size: 13px;
-}
-/* ⑩ 提示块图标：`⚠️`／`✅` 这类**字形图标**在手机上小且糊（用户裁定第 5 条的同一类债）。
-   根类之下把它换成**带文字的图标位**：字形隐去，底盘保留（`kind` 的语义色仍在），
-   文字用 `font-size:0` 收起后由 `::after` 写一个可读的标签。
-   只改观感：`aria-hidden` 的那颗字形本来就不参与朗读，标签是替代它的可见文字。
-   选择器必须与 `blocks.ts` 640 档那条**同名同层**（`.block-feedback-block-note .…-icon`）：
-   权重都是 3，本条在后 ⇒ 宽窄两档都盖得住（只用两颗类名会在 ≤640 档输给那条媒体查询）。 */
-.ilife-page-ui .ilife-block-feedback-block-note .ilife-block-feedback-block-note-icon {
-  width: auto;
-  min-width: 44px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 0;
-  font-weight: 600;
-}
-.ilife-page-ui .ilife-block-feedback-block-note .ilife-block-feedback-block-note-icon::after {
-  font-size: 12px;
-  line-height: 1;
-}
-.ilife-page-ui .ilife-block-feedback-block-note-icon-ok::after {
-  content: "已完成";
-}
-.ilife-page-ui .ilife-block-feedback-block-note-icon-warn::after {
-  content: "注意";
-}
-.ilife-page-ui .ilife-block-feedback-block-note-icon-danger::after {
-  content: "未通过";
-}
-.ilife-page-ui .ilife-block-feedback-block-note-icon-info::after {
-  content: "提示";
-}
-/* #525 页面级形状件三件 */
-/* ① 事实条：一格「标签 ＋ 值」，格与格靠 22px 列距分开（不用任何分隔符字符）。 */
-.ilife-page-ui .ilife-block-fact-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 22px;
-  margin: 12px 0 0;
-}
-.ilife-page-ui .ilife-block-fact-strip-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.ilife-page-ui .ilife-block-fact-strip-label {
-  color: var(--fg3);
-  font-size: 12px;
-}
-.ilife-page-ui .ilife-block-fact-strip-value {
-  color: var(--fg);
-  font-size: 15px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.ilife-page-ui .ilife-block-fact-strip-value-ok {
-  color: #1f8c3d;
-}
-.ilife-page-ui .ilife-block-fact-strip-value-warn {
-  color: #a25b00;
-}
-.ilife-page-ui .ilife-block-fact-strip-value-danger {
-  color: #a83228;
-}
-/* ② 图片／GIF 容器：比例写在容器上，图按 object-fit 摆；没有图时是人话占位，不出黑底条。 */
-.ilife-page-ui .ilife-block-media {
-  margin: 16px 0;
-}
-.ilife-page-ui .ilife-block-media-frame {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--soft);
-}
-.ilife-page-ui .ilife-block-media-frame-1-1 { aspect-ratio: 1 / 1; }
-.ilife-page-ui .ilife-block-media-frame-3-4 { aspect-ratio: 3 / 4; }
-.ilife-page-ui .ilife-block-media-frame-4-5 { aspect-ratio: 4 / 5; }
-.ilife-page-ui .ilife-block-media-frame-4-3 { aspect-ratio: 4 / 3; }
-.ilife-page-ui .ilife-block-media-frame-9-16 { aspect-ratio: 9 / 16; }
-.ilife-page-ui .ilife-block-media-frame-16-9 { aspect-ratio: 16 / 9; }
-.ilife-page-ui .ilife-block-media-frame-natural {
-  aspect-ratio: auto;
-}
-.ilife-page-ui .ilife-block-media-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-}
-.ilife-page-ui .ilife-block-media-frame-contain .ilife-block-media-img {
-  object-fit: contain;
-}
-.ilife-page-ui .ilife-block-media-frame-cover .ilife-block-media-img {
-  object-fit: cover;
-}
-.ilife-page-ui .ilife-block-media-frame-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  height: 100%;
-  padding: 24px 18px;
-  color: var(--fg2);
-  font-size: 13px;
-  line-height: 1.6;
-  text-align: center;
-}
-.ilife-page-ui .ilife-block-media-caption {
-  margin-top: 8px;
-  color: var(--fg);
-  font-size: 15px;
-  font-weight: 600;
-}
-.ilife-page-ui .ilife-block-media-note {
-  margin-top: 2px;
-  color: var(--fg2);
-  font-size: 12px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-/* ②b 占位件（`renderMediaPlaceholder`）：框体走上面 ② 的同一套规则（同比例／同圆角／同外边距），
-   这里只补框内那两句人话的槽位；只用既有语义词，不新增颜色。 */
-.ilife-page-ui .ilife-block-media-empty {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  box-sizing: border-box;
-  height: 100%;
-  padding: 0 18px;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-.ilife-page-ui .ilife-block-media-reason {
-  color: var(--fg2);
-  font-size: 13px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-.ilife-page-ui .ilife-block-media-next {
-  color: var(--fg3);
-  font-size: 12px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-/* ③ 时间轴条：一条轴线 ＋ 逐条圆点；时间与正文分两槽（不用 · 串）。 */
-.ilife-page-ui .ilife-block-timeline {
-  margin: 16px 0;
-  padding: 4px 0 4px 18px;
-  border-left: 1px solid var(--line);
-  list-style: none;
-}
-.ilife-page-ui .ilife-block-timeline-row {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  align-items: baseline;
-  padding: 6px 0;
-}
-.ilife-page-ui .ilife-block-timeline-dot {
-  position: absolute;
-  left: -23px;
-  top: 13px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--blue);
-}
-.ilife-page-ui .ilife-block-timeline-time {
-  flex: 0 0 auto;
-  color: var(--fg2);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-.ilife-page-ui .ilife-block-timeline-main {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--fg);
-  font-size: 15px;
-  font-weight: 600;
-}
-.ilife-page-ui .ilife-block-timeline-note {
-  flex: 1 1 100%;
-  color: var(--fg3);
-  font-size: 12px;
-  line-height: 1.6;
-}</style>
+.meta-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.meta-bar .left{font-size:12px;color:var(--fg2)}
+.type-badge{font-size:11px;padding:3px 10px;border-radius:6px;background:var(--soft);color:var(--fg2);font-weight:600;white-space:nowrap}
+.ilife-block-page-shell-title{font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-.02em;margin-bottom:4px;text-wrap:balance}
+.sub{font-size:14px;color:var(--fg3);margin-bottom:24px}
+.legend{font-size:12px;color:var(--fg2);margin-top:10px;display:flex;gap:16px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:16px;height:2px}
+.legend .b{border-top:2px dashed #ff9500;background:transparent;height:0}
+</style>
 </head>
 <body>
-<div class="wrap ilife-page ilife-page-ui">
-<section class="ilife-block ilife-block-page-shell"><p class="ilife-block-page-shell-eyebrow">目标管理</p><h1 class="ilife-block-page-shell-title">定营养目标</h1><p class="ilife-block-page-shell-subtitle">已定营养目标：1800 卡，蛋白 150，碳水 200，脂肪 50，饮水 2000，宏量自洽</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-op">✅ 操作回执</a><a href="#sec-change">📋 字段变更</a><a href="#sec-goal">📊 库里现在的目标</a><a href="#sec-macro">🧮 宏量合计与换算</a></nav><section id="sec-op"><h2>✅ 操作回执</h2><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">状态</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">已改动</span></div><div class="ilife-block-kpi-card-detail">已写入每天的目标。说「看今日目标进度」可复查。</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">影响行数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1 行</span></div><div class="ilife-block-kpi-card-detail">本次写入的行数</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">写入字段</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">4 项</span></div><div class="ilife-block-kpi-card-detail">热量(卡)、蛋白(g)、碳水(g)、脂肪(g)</div></div></div></section><section id="sec-change"><h2>📋 字段变更</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">改前 → 改后对照</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">字段</th><th scope="col" class="ilife-block-data-table-cell-left">改前</th><th scope="col" class="ilife-block-data-table-cell-left">改后</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="字段">热量(卡)</td><td class="ilife-block-data-table-cell-left" data-label="改前">—</td><td class="ilife-block-data-table-cell-left" data-label="改后">1800 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="字段">蛋白(g)</td><td class="ilife-block-data-table-cell-left" data-label="改前">—</td><td class="ilife-block-data-table-cell-left" data-label="改后">150 g</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="字段">碳水(g)</td><td class="ilife-block-data-table-cell-left" data-label="改前">—</td><td class="ilife-block-data-table-cell-left" data-label="改后">200 g</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="字段">脂肪(g)</td><td class="ilife-block-data-table-cell-left" data-label="改前">—</td><td class="ilife-block-data-table-cell-left" data-label="改后">50 g</td></tr></tbody></table></div><p class="ilife-block-caliber">「改前」那一列的原值由写执行那一层回报；当前目标写口只回报变更字段名，故这一列写 —，不拿新值顶替。</p></section><section id="sec-goal"><h2>📊 库里现在的目标</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">库里现在的目标</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项</th><th scope="col" class="ilife-block-data-table-cell-left">值</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项">热量(卡)</td><td class="ilife-block-data-table-cell-left" data-label="值">1800 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">蛋白(g)</td><td class="ilife-block-data-table-cell-left" data-label="值">150 g</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">碳水(g)</td><td class="ilife-block-data-table-cell-left" data-label="值">200 g</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">脂肪(g)</td><td class="ilife-block-data-table-cell-left" data-label="值">50 g</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">饮水(ml)</td><td class="ilife-block-data-table-cell-left" data-label="值">2000 ml</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">体重目标(kg)</td><td class="ilife-block-data-table-cell-left" data-label="值">68 kg</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">截止日期</td><td class="ilife-block-data-table-cell-left" data-label="值">2026-09-19</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">起点体重(kg)</td><td class="ilife-block-data-table-cell-left" data-label="值">72 kg</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">起始日</td><td class="ilife-block-data-table-cell-left" data-label="值">2026-09-01</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">目标状态</td><td class="ilife-block-data-table-cell-left" data-label="值">正常（未暂停）</td></tr></tbody></table></div><p class="ilife-block-caliber">这一块逐格读自库内，与上面「改后」同源；没设过的格子写 —。</p></section><section id="sec-macro"><h2>🧮 宏量合计与换算</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">宏量合计与换算</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项</th><th scope="col" class="ilife-block-data-table-cell-left">值</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项">热量目标</td><td class="ilife-block-data-table-cell-left" data-label="值">1800 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">宏量合计与换算</td><td class="ilife-block-data-table-cell-left" data-label="值">合计 1850 卡，宏量换算 1850 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">diff 与自洽</td><td class="ilife-block-data-table-cell-left" data-label="值">diff ＋50 卡，一致</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">基础代谢 BMR</td><td class="ilife-block-data-table-cell-left" data-label="值">BMR 1655 卡</td></tr></tbody></table></div><p class="ilife-block-conclusion">✅ BMR 安全确认 热量 1800 卡不低于基础代谢 1655 卡</p><p class="ilife-block-caliber">换算式 蛋白 150×4＋碳水 200×4＋脂肪 50×9＝1850 卡，公式照老技能 nutrition_goal.py:84-85</p></section><details class="ilife-block ilife-block-disclosure"><summary class="ilife-block-disclosure-summary">对账信息</summary><div class="ilife-block-disclosure-body"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项</th><th scope="col" class="ilife-block-data-table-cell-left">值</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项">记录编号</td><td class="ilife-block-data-table-cell-left" data-label="值">1</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">写入时间</td><td class="ilife-block-data-table-cell-left" data-label="值">2026-09-16 13:50:01</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">回执格式</td><td class="ilife-block-data-table-cell-left" data-label="值">v1（写库回执）</td></tr></tbody></table></div></div></details><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · 定营养目标】
-ok: true
-message: 已定营养目标：1800 卡·蛋白 150·碳水 200·脂肪 50·饮水 2000 · 宏量自洽"><span class="ilife-copy-menu-label">纯文本</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
+<div class="wrap ilife-page">
+<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">看目标推荐 · 目标管理</div><div class="type-badge">目标推荐</div></div><h1 class="ilife-block-page-shell-title">🎯 目标推荐</h1><p class="sub">结论：减脂档按体重 70.6 kg 算出每日热量目标 2064 卡（蛋白 141 g／碳水 246 g／脂肪 57 g），饮水推荐 2471 ml，宏量折算 2061 卡、与热量目标差 -3 卡。</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-readings">读数</a><a href="#sec-calc">算法口径</a><a href="#sec-basis">计算依据</a></nav><section id="sec-readings"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">方案</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">减脂</span></div><div class="ilife-block-kpi-card-detail">按档案与目标方向算</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">热量目标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">2064</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">每周 0.5 kg</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">蛋白目标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">141</span><span class="ilife-block-kpi-card-unit">g</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">碳水目标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">246</span><span class="ilife-block-kpi-card-unit">g</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">脂肪目标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">57</span><span class="ilife-block-kpi-card-unit">g</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">饮水目标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">2471</span><span class="ilife-block-kpi-card-unit">ml</span></div><div class="ilife-block-kpi-card-detail">体重 70.6 kg × 35 ml/kg（夏季偏高）</div></div></div></section><section id="sec-calc"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">这一版推荐是按什么算出来的</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项目</th><th scope="col" class="ilife-block-data-table-cell-right">读数</th><th scope="col" class="ilife-block-data-table-cell-left">说明</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项目">基础代谢</td><td class="ilife-block-data-table-cell-right" data-label="读数">1654 卡</td><td class="ilife-block-data-table-cell-left" data-label="说明">按身高／体重／年龄／性别算</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">每日基准消耗</td><td class="ilife-block-data-table-cell-right" data-label="读数">2564 卡</td><td class="ilife-block-data-table-cell-left" data-label="说明">基础代谢 × 活动量系数</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">体重</td><td class="ilife-block-data-table-cell-right" data-label="读数">70.6 kg</td><td class="ilife-block-data-table-cell-left" data-label="说明">取最新一条体重记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">宏量折算热量</td><td class="ilife-block-data-table-cell-right" data-label="读数">2061 卡</td><td class="ilife-block-data-table-cell-left" data-label="说明">蛋白×4 ＋ 碳水×4 ＋ 脂肪×9</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">与热量目标差</td><td class="ilife-block-data-table-cell-right" data-label="读数">-3 卡</td><td class="ilife-block-data-table-cell-left" data-label="说明">50 卡以内算自洽</td></tr></tbody></table></div></section><section id="sec-basis"><details class="ilife-block ilife-block-disclosure" open><summary class="ilife-block-disclosure-summary">计算依据</summary><div class="ilife-block-disclosure-body"><p class="ilife-block-caliber">减脂模板：日常消耗 2564 卡 × 热量调整 -500 卡 → 每日 2064 卡</p><p class="ilife-block-caliber">蛋白 141 g（体重 70.6 kg × 2 g/kg）</p><p class="ilife-block-caliber">脂肪 57 g（占热量 25%）· 碳水 246 g（余量）</p><p class="ilife-block-caliber">饮水 2471 ml（体重 × 35 ml/kg）</p><p class="ilife-block-caliber">预计每周减重速率 0.5 kg（Δ2064 - 日常消耗 2564）</p></div></details></section><p class="ilife-block-caliber">体重取最新一条记录，身高／年龄／性别取自档案；缺一样先补档案与体重记录，再看这一页。</p><p class="ilife-block-caliber">这一页只算不写：采纳要走「定营养目标」「定饮水目标」这类写命令，写前还会出一张预检页。</p><p class="ilife-block-caliber">宏量折算按蛋白 4 卡／碳水 4 卡／脂肪 9 卡，差值在 50 卡以内算自洽。</p><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.goal-recommend】
+calorieGoal: 2064
+proteinGoal: 141
+carbsGoal: 246
+fatGoal: 57
+waterGoal: 2471
+tdee: 2564
+bmr: 1654
+weeklyRateKg: 0.5
+weightKg: 70.6
+recommendedWaterMl: 2471
+mlPerKg: 35"><span class="ilife-copy-menu-label">纯文本</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
   &quot;version&quot;: &quot;0.1.0&quot;,
   &quot;skill&quot;: &quot;calorie&quot;,
-  &quot;shape&quot;: &quot;receipt&quot;,
-  &quot;key&quot;: &quot;定营养目标&quot;,
+  &quot;shape&quot;: &quot;stat&quot;,
+  &quot;key&quot;: &quot;calorie.view.goal-recommend&quot;,
   &quot;data&quot;: {
-    &quot;ok&quot;: true,
-    &quot;message&quot;: &quot;已定营养目标：1800 卡·蛋白 150·碳水 200·脂肪 50·饮水 2000 · 宏量自洽&quot;
+    &quot;metrics&quot;: {
+      &quot;calorieGoal&quot;: 2064,
+      &quot;proteinGoal&quot;: 141,
+      &quot;carbsGoal&quot;: 246,
+      &quot;fatGoal&quot;: 57,
+      &quot;waterGoal&quot;: 2471,
+      &quot;tdee&quot;: 2564,
+      &quot;bmr&quot;: 1654,
+      &quot;weeklyRateKg&quot;: 0.5,
+      &quot;weightKg&quot;: 70.6,
+      &quot;recommendedWaterMl&quot;: 2471,
+      &quot;mlPerKg&quot;: 35
+    }
   }
 }"><span class="ilife-copy-menu-label">JSON</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="csv" data-t="section,row
-status,ok: true
-message,message: 已定营养目标：1800 卡·蛋白 150·碳水 200·脂肪 50·饮水 2000 · 宏量自洽"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
-calorie.定营养目标（receipt）
+metrics,calorieGoal: 2064
+metrics,proteinGoal: 141
+metrics,carbsGoal: 246
+metrics,fatGoal: 57
+metrics,waterGoal: 2471
+metrics,tdee: 2564
+metrics,bmr: 1654
+metrics,weeklyRateKg: 0.5
+metrics,weightKg: 70.6
+metrics,recommendedWaterMl: 2471
+metrics,mlPerKg: 35"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
+calorie.view.goal-recommend（stat）
 AI 思考链
 本页由本地 CLI 渲染，无 AI 链
 数据结构
-calorie_data.db ｜ daily_goal (写库回执)
+calorie_data.db ｜ calorie_data.db ｜ 档案＋体重记录＋营养目标表
 调用链
-calorie-cmd-read calorie.goal.set --params &#39;{&quot;calorie&quot;:1800,&quot;protein&quot;:150,&quot;carbs&quot;:200,&quot;fat&quot;:50}&#39; ｜ id=1 | 日期 2026-09-16 13:50:01 | 影响 1 行 | 字段 calorie,protein,carbs,fat
+calorie-cmd-read calorie.view.goal-recommend --params &#39;{&quot;profile&quot;:&quot;cut&quot;}&#39;
 时间戳版本
-2026-09-16 13:50:01 · 版本 0.1.0
+2026-09-16 13:50:04 · 版本 0.1.0
 异常
 无">复制日志</button></div></div></section></div></section>
 </div>

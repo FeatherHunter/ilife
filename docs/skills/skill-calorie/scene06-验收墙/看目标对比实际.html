@@ -46,7 +46,7 @@
   backdrop-filter: blur(20px) saturate(180%);
   color: #f0f0f0;
   box-shadow: 0 10px 32px rgba(0, 0, 0, .32), 0 0 0 .5px rgba(255, 255, 255, .08) inset;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.4;
   font-feature-settings: "tnum";
   pointer-events: auto;
@@ -68,7 +68,7 @@
 .ilife-toast-icon {
   flex: 0 0 auto;
   padding-top: 1px;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 .ilife-toast-body {
@@ -84,7 +84,7 @@
 .ilife-toast-title {
   margin-bottom: 2px;
   color: #fff;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -100,7 +100,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, .12);
   color: #c8c8cc;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .02em;
   line-height: 1.6;
@@ -123,7 +123,7 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, .08);
   color: #c8c8cc;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -145,7 +145,7 @@
   background: rgba(0, 0, 0, .32);
   color: #aeb0b8;
   font-family: "SF Mono", monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.5;
   white-space: pre-wrap;
   max-height: 140px;
@@ -176,7 +176,7 @@
   background: rgba(255, 255, 255, .10);
   color: #34c759;
   font-family: inherit;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -462,14 +462,14 @@
   color: var(--fg2);
 }
 .ilife-empty-icon {
-  font-size: 40px;
+  font-size: 28px;
   line-height: 1.2;
   opacity: .5;
 }
 .ilife-empty-text {
   margin-top: 8px;
   color: var(--fg);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
 }
 .ilife-empty-hint {
@@ -1125,7 +1125,7 @@ body {
 }
 .ilife-block-page-shell-title {
   margin: 6px 0 0;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -.4px;
   line-height: 1.2;
@@ -1147,7 +1147,7 @@ body {
     padding: 20px 16px 60px;
   }
   .ilife-block-page-shell-title {
-    font-size: 26px;
+    font-size: 22px;
   }
 }
 .ilife-block-toc {
@@ -1157,7 +1157,11 @@ body {
   margin: 0 0 16px;
 }
 .ilife-block-toc a {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--card);
@@ -1193,7 +1197,7 @@ body {
   border-radius: 14px;
   background: var(--card);
   color: var(--blue2);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 .ilife-block-mini-bar {
@@ -1262,7 +1266,7 @@ body {
   gap: 8px;
   padding: 6px 0;
   border-top: 1px solid var(--line);
-  font-size: 14px;
+  font-size: 15px;
 }
 .ilife-block-change-row-label {
   flex: 1;
@@ -1371,8 +1375,6 @@ body {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--card);
-  max-width: 680px;
-  margin-inline: auto;
 }
 .ilife-block-data-table-table {
   width: 100%;
@@ -1391,9 +1393,8 @@ body {
   border-bottom: 1px solid var(--line);
   background-color: transparent;
   color: var(--fg3);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: .04em;
   white-space: nowrap;
 }
@@ -1520,7 +1521,7 @@ body {
 }
 .ilife-block-list-rows-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(44px, auto) minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   padding: 10px 14px;
@@ -1585,7 +1586,7 @@ body {
 }
 .ilife-block-detail-section-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
 }
 .ilife-block-detail-section-meta {
@@ -1598,7 +1599,7 @@ body {
 .ilife-block-detail-section-wake {
   color: var(--fg3);
   font-family: "SF Mono", monospace;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .ilife-block-detail-section-dev {
   display: inline-flex;
@@ -1636,7 +1637,7 @@ body {
   align-items: center;
   min-height: 44px;
   padding: 0 14px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   list-style: none;
@@ -1820,7 +1821,7 @@ body {
 </head>
 <body>
 <div class="wrap ilife-page">
-<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">看目标对比实际 · 目标管理 · 窗口 2026-08-09 至 2026-09-07</div><div class="type-badge">目标对比实际</div></div><h1 class="ilife-block-page-shell-title">🎯 目标对比实际</h1><p class="sub">结论：热量目标 1800 卡，最近 30 天里有记录 9 天、达标 0 天（完成率 0%），本窗日均摄入 158 卡。</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-readings">读数</a><a href="#sec-days">逐日达成</a><a href="#sec-trend">摄入走向</a></nav><section id="sec-readings"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">热量目标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1800</span><span class="ilife-block-kpi-card-unit">卡</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">达标天数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">天</span></div><div class="ilife-block-kpi-card-detail">近 30 天里有记录 9 天</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">完成率</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">%</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">本窗日均摄入</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">158</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">2026-08-09 至 2026-09-07</div></div></div></section><section id="sec-days"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">最近 30 天逐日达成（达标线是当天摄入落在目标热量的 80% 到 120% 之间）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">日期</th><th scope="col" class="ilife-block-data-table-cell-right">摄入</th><th scope="col" class="ilife-block-data-table-cell-right">目标</th><th scope="col" class="ilife-block-data-table-cell-right">达成</th><th scope="col" class="ilife-block-data-table-cell-left">状态</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-09</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-10</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-11</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-12</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-13</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-14</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-15</td><td class="ilife-block-data-table-cell-right" data-label="摄入">150 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">8.3 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-16</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-17</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-18</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-19</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-20</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-21</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-22</td><td class="ilife-block-data-table-cell-right" data-label="摄入">300 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">16.7 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-23</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-24</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-25</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-26</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-27</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-28</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-29</td><td class="ilife-block-data-table-cell-right" data-label="摄入">550 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">30.6 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-30</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-31</td><td class="ilife-block-data-table-cell-right" data-label="摄入">389 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">21.6 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-01</td><td class="ilife-block-data-table-cell-right" data-label="摄入">150 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">8.3 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-02</td><td class="ilife-block-data-table-cell-right" data-label="摄入">500 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">27.8 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-03</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-04</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-05</td><td class="ilife-block-data-table-cell-right" data-label="摄入">650 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">36.1 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-06</td><td class="ilife-block-data-table-cell-right" data-label="摄入">850 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">47.2 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-07</td><td class="ilife-block-data-table-cell-right" data-label="摄入">1189 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">66.1 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr></tbody></table></div></section><section id="sec-trend"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">摄入走向（本窗 2026-08-09 至 2026-09-07）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项目</th><th scope="col" class="ilife-block-data-table-cell-right">读数</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项目">窗口日均</td><td class="ilife-block-data-table-cell-right" data-label="读数">158 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">工作日平均</td><td class="ilife-block-data-table-cell-right" data-label="读数">106.1 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">周末平均</td><td class="ilife-block-data-table-cell-right" data-label="读数">277.78 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">窗口前半段</td><td class="ilife-block-data-table-cell-right" data-label="读数">0 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">窗口后半段</td><td class="ilife-block-data-table-cell-right" data-label="读数">1189 卡</td></tr></tbody></table></div></section><p class="ilife-block-caliber">达标线是当天摄入落在热量目标的 80% 到 120% 之间，没记录的日期不计入达标也不计入未达标。</p><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.goal-vs-actual】
+<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">看目标对比实际 · 目标管理 · 窗口 2026-08-09 至 2026-09-07</div><div class="type-badge">目标对比实际</div></div><h1 class="ilife-block-page-shell-title">🎯 目标对比实际</h1><p class="sub">结论：热量目标 1800 卡，最近 30 天里有记录 9 天、达标 0 天（完成率 0%），本窗日均摄入 158 卡。</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-readings">读数</a><a href="#sec-days">逐日达成</a><a href="#sec-trend">摄入走向</a></nav><section id="sec-readings"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">热量目标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1800</span><span class="ilife-block-kpi-card-unit">卡</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">达标天数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">天</span></div><div class="ilife-block-kpi-card-detail">近 30 天里有记录 9 天</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">完成率</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">%</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">本窗日均摄入</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">158</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">2026-08-09 至 2026-09-07</div></div></div></section><section id="sec-days"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">最近 30 天逐日达成（达标线是当天摄入落在目标热量的 80% 到 120% 之间）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">日期</th><th scope="col" class="ilife-block-data-table-cell-right">摄入</th><th scope="col" class="ilife-block-data-table-cell-right">目标</th><th scope="col" class="ilife-block-data-table-cell-right">达成</th><th scope="col" class="ilife-block-data-table-cell-left">状态</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-09</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-10</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-11</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-12</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-13</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-14</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-15</td><td class="ilife-block-data-table-cell-right" data-label="摄入">150 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">8.3 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-16</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-17</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-18</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-19</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-20</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-21</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-22</td><td class="ilife-block-data-table-cell-right" data-label="摄入">300 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">16.7 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-23</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-24</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-25</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-26</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-27</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-28</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-29</td><td class="ilife-block-data-table-cell-right" data-label="摄入">550 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">30.6 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-30</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-08-31</td><td class="ilife-block-data-table-cell-right" data-label="摄入">389 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">21.6 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-01</td><td class="ilife-block-data-table-cell-right" data-label="摄入">150 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">8.3 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-02</td><td class="ilife-block-data-table-cell-right" data-label="摄入">500 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">27.8 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-03</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-04</td><td class="ilife-block-data-table-cell-right" data-label="摄入">—</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">—</td><td class="ilife-block-data-table-cell-left" data-label="状态">无记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-05</td><td class="ilife-block-data-table-cell-right" data-label="摄入">650 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">36.1 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-06</td><td class="ilife-block-data-table-cell-right" data-label="摄入">850 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">47.2 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="日期">2026-09-07</td><td class="ilife-block-data-table-cell-right" data-label="摄入">1189 卡</td><td class="ilife-block-data-table-cell-right" data-label="目标">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="达成">66.1 %</td><td class="ilife-block-data-table-cell-left" data-label="状态">未完成</td></tr></tbody></table></div></section><section id="sec-trend"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">摄入走向（本窗 2026-08-09 至 2026-09-07）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项目</th><th scope="col" class="ilife-block-data-table-cell-right">读数</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项目">窗口日均</td><td class="ilife-block-data-table-cell-right" data-label="读数">158 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">工作日平均</td><td class="ilife-block-data-table-cell-right" data-label="读数">106.1 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">周末平均</td><td class="ilife-block-data-table-cell-right" data-label="读数">277.78 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">窗口前半段</td><td class="ilife-block-data-table-cell-right" data-label="读数">0 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">窗口后半段</td><td class="ilife-block-data-table-cell-right" data-label="读数">1189 卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项目">平均偏差</td><td class="ilife-block-data-table-cell-right" data-label="读数">-70.81 %</td></tr></tbody></table></div></section><p class="ilife-block-caliber">达标线是当天摄入落在热量目标的 80% 到 120% 之间，没记录的日期不计入达标也不计入未达标。</p><p class="ilife-block-caliber">平均偏差是有记录那几天达成率偏离 100% 的均值，正数代表平均超目标；老技能同式，缺项时不算。</p><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.goal-vs-actual】
 completedCount: 0
 incompleteCount: 9
 completionPct: 0
@@ -1853,7 +1854,7 @@ calorie_data.db ｜ calorie_data.db ｜ 目标表与饮食记录
 调用链
 calorie-cmd-read calorie.view.goal-vs-actual --params &#39;{&quot;start&quot;:&quot;2026-08-09&quot;,&quot;end&quot;:&quot;2026-09-07&quot;,&quot;historyDays&quot;:30}&#39;
 时间戳版本
-2026-09-16 11:16:59 · 版本 0.1.0
+2026-09-16 13:50:00 · 版本 0.1.0
 异常
 无">复制日志</button></div></div></section></div></section>
 </div>
