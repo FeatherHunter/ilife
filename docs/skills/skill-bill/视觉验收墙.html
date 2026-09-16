@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>查询页视觉验收墙 · 终审100/100</title>
+<style>
+:root{--ink:#1f2328;--mut:#59636e;--line:#e3e8ef;--bg:#f6f8fa;--acc:#0969da;--ok:#1a7f37;--okbg:#e9f7ee}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font:15px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg)}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--mut);font-size:13px}.h1{font-size:26px;margin:4px 0 6px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+.badge{display:inline-block;border-radius:999px;padding:2px 12px;font-size:13px;border:1px solid var(--line);background:#fff}
+.badge.ok{background:var(--okbg);color:var(--ok);border-color:#b6e3c3;font-weight:700}
+.meta{color:var(--mut);font-size:13px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:16px 0}
+.card h2{font-size:18px;margin:0 0 4px}.look{color:var(--mut);font-size:14px;margin:0 0 10px}
+.shots{display:flex;gap:12px;align-items:flex-start}
+.shots figure{margin:0;min-width:0}.shots .d{flex:3}.shots .m{flex:1;max-width:220px}
+.shots img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block;background:#fff}
+.shots figcaption{font-size:12px;color:var(--mut);margin-top:4px}
+a{color:var(--acc)}.open{display:inline-block;margin:2px 0 10px;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left}th{background:#f6f8fa}
+ul.tight{margin:8px 0;padding-left:20px}ul.tight li{margin:3px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.two{grid-template-columns:1fr}.shots{flex-direction:column}.shots .m{max-width:100%}}
+.foot{background:#fff8e5;border:1px solid #f0d48a;border-radius:12px;padding:14px 18px;margin-top:18px}
+code{background:#f6f8fa;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:13px}
+</style>
+</head>
+<body><div class="wrap">
+<div class="eyebrow">地图 #403 · #417 查询页打磨</div>
+<div class="h1">视觉验收墙</div>
+<div class="badges"><span class="badge ok">终审 100 / 100 PASS</span><span class="badge">7 页样张</span><span class="badge">9 张双视口截图</span><span class="badge">全量 274/274</span></div>
+<p class="meta">提交 <code>2323f3f</code>（打磨）＋<code>f326b8b</code>（本墙）；证据 <code>t417-HTML打磨.md</code>。样张双击即开，截图为终版渲染实拍。</p>
+
+<div class="card"><h2>查今天 <span style="color:var(--mut);font-weight:400;font-size:14px">bill.record.today</span></h2>
+<p class="look">看：胶囊<code>共 2 笔</code>、笔数裸数 2、<code>本页…合计</code></p>
+<a class="open" href="验收墙/p1-today.html">打开样张 →</a>
+<div class="shots"><figure class="d"><img src="验收墙/p1-today.html-d36166f5-shot-1280x720-fullpage.png" alt="查今天桌面"><figcaption>桌面 1280</figcaption></figure>
+<figure class="m"><img src="验收墙/p1-today.html-d36166f5-shot-390x720-fullpage.png" alt="查今天手机"><figcaption>手机 390：KPI 2×2、表转行卡</figcaption></figure></div></div>
+
+<div class="card"><h2>查某天空态 <span style="color:var(--mut);font-weight:400;font-size:14px">total=0</span></h2>
+<p class="look">看：空态句＋两句 hint（无 <code>；</code>）、胶囊<code>共 0 笔</code></p>
+<a class="open" href="验收墙/p2-empty.html">打开样张 →</a>
+<div class="shots"><figure class="d"><img src="验收墙/p2-empty.html-c9b04dbf-shot-1280x720-fullpage.png" alt="空态桌面"><figcaption>桌面 1280</figcaption></figure>
+<figure class="m"><img src="验收墙/p2-empty.html-c9b04dbf-shot-390x720-fullpage.png" alt="空态手机"><figcaption>手机 390</figcaption></figure></div></div>
+
+<div class="card"><h2>查区间 <span style="color:var(--mut);font-weight:400;font-size:14px">8 行表</span></h2>
+<p class="look">看：8 行长表、KPI 四格、副标题无 <code>·</code></p>
+<a class="open" href="验收墙/p3-range.html">打开样张 →</a>
+<div class="shots"><figure class="d"><img src="验收墙/p3-range.html-e9fbcb4a-shot-1280x720-fullpage.png" alt="查区间桌面"><figcaption>桌面 1280（手机同行卡机制，见上）</figcaption></figure></div></div>
+
+<div class="card"><h2>搜备注与查最近</h2>
+<p class="look">看：单行命中／倒序 5 笔（与查区间同版式）</p>
+<p><a class="open" href="验收墙/p4-search.html">搜备注样张 →</a>　<a class="open" href="验收墙/p5-recent.html">查最近样张 →</a></p>
+<div class="shots"><figure class="d"><img src="验收墙/p4-search.html-6ed8babb-shot-1280x720-fullpage.png" alt="搜备注桌面"><figcaption>搜备注桌面 1280</figcaption></figure></div></div>
+
+<div class="card"><h2>查账单详情 <span style="color:var(--mut);font-weight:400;font-size:14px">bill.record.detail</span></h2>
+<p class="look">看：胶囊<code>记录编号 1</code>、表题<code>字段明细</code>、状态无第三遍</p>
+<a class="open" href="验收墙/p6-detail.html">打开样张 →</a>
+<div class="shots"><figure class="d"><img src="验收墙/p6-detail.html-59446b75-shot-1280x720-fullpage.png" alt="详情桌面"><figcaption>桌面 1280</figcaption></figure>
+<figure class="m"><img src="验收墙/p6-detail.html-59446b75-shot-390x720-fullpage.png" alt="详情手机"><figcaption>手机 390</figcaption></figure></div></div>
+
+<div class="card"><h2>详情已撤销</h2>
+<p class="look">看：胶囊<code>已撤销</code>＋ danger 徽、删除时间原值</p>
+<a class="open" href="验收墙/p7-detail-deleted.html">打开样张 →</a>
+<div class="shots"><figure class="d"><img src="验收墙/p7-detail-deleted.html-2ab728ad-shot-1280x720-fullpage.png" alt="已撤销桌面"><figcaption>桌面 1280</figcaption></figure></div></div>
+
+<div class="card"><h2>终审打分 100/100</h2>
+<table><tr><th>项</th><th>分</th></tr>
+<tr><td>布局层级</td><td>20</td></tr><tr><td>文案零冗余、无版式位分隔符</td><td>25</td></tr>
+<tr><td>卡表可读</td><td>20</td></tr><tr><td>空态引导</td><td>10</td></tr>
+<tr><td>移动适配（与 HELP 同源断点）</td><td>15</td></tr><tr><td>操作可发现</td><td>10</td></tr></table></div>
+
+<div class="two">
+<div class="card"><h2>改了 5 条</h2>
+<ul class="tight"><li>结果胶囊行，副标题去 <code>·</code></li><li>笔数去单位</li><li><code>这一段</code>→<code>本页</code>合计</li><li>正常态删第三遍</li><li>表题改名、hint 去 <code>；</code></li></ul></div>
+<div class="card"><h2>没动（判据冻结）</h2>
+<ul class="tight"><li>复制日志 <code>｜·</code>（机器载荷，只在按钮属性里）</li><li>H1／徽章／KPI 格数／空态四句</li><li>金额半角负号（与载荷同字）</li></ul></div>
+</div>
+
+<div class="foot"><b>请你确认：</b>回一个字「过」——我关 #417、地图推 100%。有刺眼处：指哪张图哪一行，我改完重截再审。</div>
+</div></body>
+</html>
