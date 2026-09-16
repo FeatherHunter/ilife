@@ -234,6 +234,47 @@ test('#474 文件找不到才出声：正常行留空、异常行挂徽标、KPI
   assert.doesNotMatch(readerText(html), /内嵌/, '#474：「内嵌」这种技术词须 0 命中（指令预览块里的机器内容不算可见面）');
 });
 
+/** #461 夹具：4 张各 ~390 KB（两张就顶破 1 MiB 单页上限；逐张都远小于旧口径的单张 400 KB 上限）。 */
+function seedOverBudgetIso() {
+  const root = mkdtempSync(join(tmpdir(), 't283-big-'));
+  const dbDir = join(root, 'db');
+  const photosDir = join(root, 'photos');
+  const srcDir = join(root, 'src');
+  for (const d of [dbDir, photosDir, srcDir]) mkdirSync(d, { recursive: true });
+  const seed = Buffer.from(TINY_PNG_B64, 'base64');
+  const fat = Buffer.concat([seed, Buffer.alloc(390 * 1024 - seed.length, 0x20)]);
+  const srcs = ['a', 'b', 'c', 'd'].map((n) => {
+    const p = join(srcDir, n + '.png');
+    writeFileSync(p, fat);
+    return p;
+  });
+  const db = openDb(join(dbDir, 'calorie_data.db'));
+  srcs.forEach((p, i) => {
+    addPhotos(db, photosDir, { srcPaths: [p], tag: '正面', today: '2026-09-0' + String(4 + i), nowTime: '08:00:00' });
+  });
+  db.close();
+  return { root, dbDir, photosDir };
+}
+
+test('⑤b 超预算候选：整页仍 ≤ 单页上限（#461 整页预算＋退让）', () => {
+  const iso = seedOverBudgetIso();
+  const env = runPickerOk(iso, { days: 36500 });
+  const out = assertOutputOnDisk(env);
+  const html = readFileSync(out, 'utf8');
+  const bytes = Buffer.byteLength(html, 'utf8');
+  // 旧口径（只有逐张 400 KB 上限）在这一批上实测 1,157,410 B —— 本判据当时必红。
+  assert.ok(bytes <= PHOTO_LIST_PAGE_MAX_BYTES,
+    '整页超上限（' + bytes + ' > ' + PHOTO_LIST_PAGE_MAX_BYTES + '）——整页预算没生效');
+  const m = /还有 (\d+) 张没进这一页/.exec(html);
+  assert.ok(m !== null, '退让不许静默：缺「还有 N 张没进这一页」提示');
+  assert.ok(Number(m[1]) >= 1, '提示块张数须 ≥1，实得 ' + String(m[1]));
+  assert.match(html, /这一页装不下这么多图：2026-09-0\d_001\.png/, '退让那张须在自己的格位上点名文件与原因');
+  assert.match(html, /想全看：先按编号挑着删/, '提示块须给替代操作');
+  assert.equal(env.data.items.length, 4, '复制数据仍须是全量候选行（实得 ' + env.data.items.length + '）');
+  assert.match(html, /复制 prompt（必走）/, 'prompt 面仍在（#461 不许削）');
+  assert.match(html, /<h2 class="phu-sec" id="phu-candidates">/, '候选分节标题仍在');
+});
+
 test('⑤ data.output 绝对路径在盘上＋体积 ≤ 上限', async () => {
   const iso = seedIso();
   const env = runPickerOk(iso, {});

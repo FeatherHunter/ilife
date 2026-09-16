@@ -11,17 +11,20 @@
  *      快照的六列小表改**键值行**（一行一件事，窄屏塌成上下两行）；
  *   ② **文案去冗余**：`#19` 这种票号式内部写法出页面（改「照片 19」），`；` 串的
  *      安全感说明拆两句；`本页不删任何东西` 与眉标的「只看不删」不再重复第三遍；
- *   ③ **大页呈现**：候选图逐张**带大小上限内嵌**（`PICKER_INLINE_MAX_BYTES`）——
- *      超过上限的那张在自己的格位上出**同规格占位件**（写明哪一份文件、为什么、下一步），
- *      页字节因此有界；页内导航（`renderTocBlock`）给长页两条锚点；
+ *   ③ **大页呈现（#461 起改口径）**：候选的「嵌不嵌」由**整页预算**定——照 #438 的
+ *      `embedPhotosWithinBudget(…, PHOTO_LIST_PAGE_MAX_BYTES)` 逐张试嵌 ＋ 最多三轮退让，
+ *      没进这一页的那张在自己的格位上出**同规格占位件**（写明哪一份文件、为什么、下一步），
+ *      页字节因此**真有上限**（#527 当时只给单张 400 KB 上限，整页仍可被多张累加撑破，见 #461）；
+ *      页内导航（`renderTocBlock`）给长页两条锚点；
  *   ④ **手机端**：本族页内样式住 `photoUi.ts`（断点 820／640，触摸区 ≥44px，表头 ≥12px）。
  */
 import { renderDataTable, renderEmptyBlock, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
 import { escapeHtml, renderMediaPlaceholder, renderStatusBadge } from 'base-paint';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dataCopyArea, promptCopyArea } from '../shared/copyArea.js';
+import { dataCopyArea, notice, promptCopyArea } from '../shared/copyArea.js';
 import { todayISO } from '../analysis/utils.js';
-import { embedPhoto, embedPhotos, type PhotoEmbed } from './photoThumb.js';
+import { embedPhoto, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
+import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { chipRow, factRows, photoUiCss } from './photoUi.js';
 import type { PhotoCard } from './photo.js';
 import type { PhotoPickerView } from './picker.js';
@@ -58,27 +61,29 @@ function shortDate(date: string): string {
   return m ? m[1] + '-' + m[2] : date;
 }
 
-/** 候选卡网格（#527）：与画廊同一张等高卡（`.phu-card`＋`.phu-shot`）。
- *  图能内嵌就内嵌；读不到或超过 `PICKER_INLINE_MAX_BYTES` 的那张，在自己的格位上出
- *  **同规格占位件**——写明哪一份文件、为什么没放上来、下一步做什么（不静默、不留白框、不印原因码）。 */
-function candidateGridHtml(cands: PhotoCard[], photosDir: string | null, today: string): string {
-  const embeds = embedPhotos(photosDir, cands);
+/** 候选卡网格（#527 形状／#461 预算）：与画廊同一张等高卡（`.phu-card`＋`.phu-shot`）。
+ *  嵌不嵌由**整页预算**先定好（`buildPhotoPickerDoc` 里跑 `embedPhotosWithinBudget`），本件只做呈现：
+ *  拿到字节就上图，没拿到就在自己的格位上出**同规格占位件**——写明哪一份文件、为什么、下一步
+ *  （不静默、不留白框、不印原因码）。 */
+function candidateGridHtml(
+  cands: PhotoCard[], embeds: readonly PhotoEmbed[], skipReason: ReadonlyMap<string, string>, today: string,
+): string {
   const byName = new Map(embeds.map((e) => [e.fileName, e]));
   const cards = cands.map((p) => {
     const key = p.photoPath.split('/').pop()?.split('\\').pop() ?? p.photoPath;
     const e: PhotoEmbed | undefined = byName.get(key);
-    const tooBig = e !== undefined && e.dataUri !== null && (e.bytes ?? 0) > PICKER_INLINE_MAX_BYTES;
-    const shown = e?.dataUri != null && !tooBig;
+    const shown = e?.dataUri != null;
     const stage = shown
       ? '<div class="phu-shot"><img src="' + (e as PhotoEmbed).dataUri + '" alt="身材照 ' + p.id
         + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
       : '<div class="phu-shot">' + renderMediaPlaceholder({
         alt: '身材照 ' + p.id,
         ratio: '4-5',
-        reason: tooBig
-          ? ('这张原图太大，没放进这一页：' + key)
+        // 两种「没上图」分开说：预算没排上（#461）说页面放不下，其余按读文件的失败原因说。
+        reason: skipReason.has(key)
+          ? ('这一页装不下这么多图：' + key)
           : ('照片没放进这一页：' + key + '（' + (e?.missing ?? '未知原因') + '）'),
-        next: tooBig ? '想先看它：按文件名自己打开，确认过再按下面的编号让我删' : '把文件放回照片目录再跑一次',
+        next: skipReason.has(key) ? '想先看它：按文件名自己打开，确认过再按下面的编号让我删' : '把文件放回照片目录再跑一次',
       }) + '</div>';
     const tags = p.tagList.length > 0 ? [...p.tagList] : ['无标签'];
     const rel = relTime(p.date, today);
@@ -95,22 +100,21 @@ function candidateGridHtml(cands: PhotoCard[], photosDir: string | null, today: 
   return '<h2 class="phu-sec" id="phu-candidates">候选照片</h2><div class="phu-grid">' + cards.join('') + '</div>';
 }
 
-/** 单张快照（#527）：大图 ＋ **键值行**的明细（原来六列小表；只读：选中与复制在此页，删除走写命令）。 */
-function snapshotHtml(sel: PhotoCard | null, photosDir: string | null, today: string): string {
+/** 单张快照（#527）：大图 ＋ **键值行**的明细（原来六列小表；只读：选中与复制在此页，删除走写命令）。
+ *  #461：这一张的字节由调用方先算好（`snapInlined` 与预算里那份**同一个判据**），本件不再自己读文件。 */
+function snapshotHtml(sel: PhotoCard | null, e: PhotoEmbed | null, snapInlined: boolean, today: string): string {
   if (!sel) {
     return '<h2 class="phu-sec" id="phu-snapshot">快照</h2>'
       + renderEmptyBlock({ text: '还没说要删哪张：把上面某张的编号说给我（例如 19），我放大给你看' });
   }
-  const e = embedPhoto(photosDir, sel.photoPath);
-  const big = e.dataUri !== null && (e.bytes ?? 0) <= PICKER_INLINE_MAX_BYTES;
   // #484：快照是「放大给你看」的那一张（页内文案就这么写的），故不跟着候选缩略图一起收小。
-  const stage = big
-    ? '<div class="phu-snap"><img src="' + e.dataUri + '" alt="快照' + sel.id
+  const stage = snapInlined
+    ? '<div class="phu-snap"><img src="' + (e?.dataUri ?? '') + '" alt="快照' + sel.id
       + '" style="max-width:100%;max-height:60vh;width:100%;height:auto;object-fit:contain" /></div>'
     : renderMediaPlaceholder({
       alt: '快照 ' + sel.id,
       ratio: '4-5',
-      reason: '这一张放不进页面：' + e.fileName + '（' + (e.missing ?? '原图太大') + '）',
+      reason: '这一张放不进页面：' + (e?.fileName ?? sel.photoPath) + '（' + (e?.missing ?? '原图太大') + '）',
       next: '想删它：按文件名自己打开最后确认一次，再复制下面的指令',
     });
   const rel = relTime(sel.date, today);
@@ -129,49 +133,82 @@ function snapshotHtml(sel: PhotoCard | null, photosDir: string | null, today: st
     + '</figcaption></figure>';
 }
 
-/** 删照候选整页：完整文档（doctype 起、charset、版面、复制区）＋候选卡网格＋快照＋prompt。 */
+/** 删照候选整页：完整文档（doctype 起、charset、版面、复制区）＋候选卡网格＋快照＋prompt。
+ *  **#461：整页预算**——底子先算（不含任何候选内嵌字节，快照那一份按固定开销计入），
+ *  再照 #438 的 `embedPhotosWithinBudget(…, PHOTO_LIST_PAGE_MAX_BYTES)` 逐张试嵌，
+ *  兜底最多三轮逐张收回最大的内嵌；口径与 `galleryDoc.buildPhotoListDoc` 一致，不另起一套。 */
 export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null): string {
   const today = todayISO();
-  const embeds = embedPhotos(photosDir, v.candidates);
-  const okCount = embeds.filter((e) => e.dataUri !== null).length;
-  const cantSee = v.candidates.length - okCount;
-  const parts: string[] = [photoUiCss()];
-  parts.push(chipRow(['本页列 ' + v.candidates.length + ' 张', v.truncated ? '库里还有 ' + (v.fullCount - v.candidates.length) + ' 张' : '']));
-  parts.push(renderTocBlock({ items: v.selected === null
-    ? [{ id: 'phu-candidates', text: '候选照片' }]
-    : [{ id: 'phu-candidates', text: '候选照片' }, { id: 'phu-snapshot', text: '快照' }] }));
-  parts.push(renderKpiGrid([
-    { label: '本页显示', value: String(v.candidates.length), unit: '张', detail: v.truncated ? '库里还有 ' + (v.fullCount - v.candidates.length) + ' 张没列出来' : '全部列出来了' },
-    { label: '已选', value: v.selected ? '照片 ' + v.selected.id : '未选', detail: v.selected ? (v.selectedInList ? '在候选窗内' : '不在当前候选窗内') : '先选再看快照' },
-    cantSee > 0
-      ? { label: '能看', value: String(okCount), unit: '张', detail: cantSee + ' 张文件找不到', status: 'warn', statusText: '缺文件' }
-      : { label: '能看', value: String(okCount), unit: '张', detail: '全部都能看' },
-  ]));
-  parts.push(candidateGridHtml(v.candidates, photosDir, today));
-  parts.push(snapshotHtml(v.selected, photosDir, today));
-  if (v.selected && !v.selectedInList) {
-    parts.push(renderEmptyBlock({ text: '已选照片 ' + v.selected.id + ' 不在当前候选窗内（快照照常显示，候选按筛选条件列出）' }));
-  }
-  parts.push(promptCopyArea(v.prompt));
-  parts.push(dataCopyArea('复制数据', {
-    envelope: {
-      version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.photo-picker',
-      data: {
-        items: v.candidates.map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists })),
-        total: v.fullCount,
-      },
-    },
-  }));
-  return assembleDocPage({
+  // 快照那一张先读（它要进预算：它是本页「放大给你看」的价值核心，#461 不许削）。
+  const snap = v.selected === null ? null : embedPhoto(photosDir, v.selected.photoPath);
+  // **只有真会上页的字节才算进底子**：超过单张上限（`PICKER_INLINE_MAX_BYTES`）的那张仍按 #527 口径
+  // 走占位，它的字节不许计入——否则一张 3 MB 原图会把整页预算吃光，候选一张都嵌不进来
+  //（本席位首版即栽在此处：09-14 变成「一张图都看不见」）。
+  const snapInlined = snap !== null && snap.dataUri !== null && (snap.bytes ?? 0) <= PICKER_INLINE_MAX_BYTES;
+  const snapBytes = snapInlined ? Buffer.byteLength(snap?.dataUri ?? '', 'utf8') : 0;
+  const shell = (content: string): string => assembleDocPage({
     docTitle: DOC_TITLE,
     title: '删照候选',
     // #530：眉标原来是 `删照片 · 只看不删`（探针 R1 命中：`·` 串两件事）→ 改括号式。
     eyebrow: '删照片（只看不删）',
     subtitle: '先看候选，点开一张确认，再复制指令让我删',
-    content: parts.join(''),
+    content,
     // #527 收口：本页原先漏了 `pageUi` 位（同 `gifDoc`）⇒ 公共层媒体件的规则整段没进页，
     //  超预算候选走的 `renderMediaPlaceholder`（公共件）因此没有框体样式。家族其余页都接了，
     //  本页补齐后与它们同档。
     pageUi: true,
   });
+  const contentOf = (embeds: readonly PhotoEmbed[], skipReason: ReadonlyMap<string, string>): string => {
+    const okCount = embeds.filter((e) => e.dataUri !== null).length;
+    const cantSee = v.candidates.length - okCount;
+    const missCount = v.candidates.filter((p) => p.fileExists === false).length;
+    const budgetCount = cantSee - missCount;
+    const parts: string[] = [photoUiCss()];
+    parts.push(chipRow(['本页列 ' + v.candidates.length + ' 张', v.truncated ? '库里还有 ' + (v.fullCount - v.candidates.length) + ' 张' : '']));
+    parts.push(renderTocBlock({ items: v.selected === null
+      ? [{ id: 'phu-candidates', text: '候选照片' }]
+      : [{ id: 'phu-candidates', text: '候选照片' }, { id: 'phu-snapshot', text: '快照' }] }));
+    parts.push(renderKpiGrid([
+      { label: '本页显示', value: String(v.candidates.length), unit: '张', detail: v.truncated ? '库里还有 ' + (v.fullCount - v.candidates.length) + ' 张没列出来' : '全部列出来了' },
+      { label: '已选', value: v.selected ? '照片 ' + v.selected.id : '未选', detail: v.selected ? (v.selectedInList ? '在候选窗内' : '不在当前候选窗内') : '先选再看快照' },
+      cantSee > 0
+        ? { label: '能看', value: String(okCount), unit: '张', detail: missCount > 0 ? missCount + ' 张文件找不到' : '还有几张放不下', status: 'warn', statusText: '有看不见的' }
+        : { label: '能看', value: String(okCount), unit: '张', detail: '全部都能看' },
+    ]));
+    // 页顶提示块（#438 口径：计数一处说 ＋ 给替代操作；本页的替代操作是「按编号挑着删」）。
+    // 「这一页放不下」的件数只在这里说一次——读数卡的说明栏只说文件缺失那一档（同一事实一页一处）。
+    if (budgetCount > 0) {
+      parts.push(notice({
+        msg: '还有 ' + budgetCount + ' 张没进这一页',
+        detail: '一页装不下这么多图。想全看：先按编号挑着删，删完再跑一次这一页',
+      }));
+    }
+    parts.push(candidateGridHtml(v.candidates, embeds, skipReason, today));
+    parts.push(snapshotHtml(v.selected, snap, snapInlined, today));
+    if (v.selected && !v.selectedInList) {
+      parts.push(renderEmptyBlock({ text: '已选照片 ' + v.selected.id + ' 不在当前候选窗内（快照照常显示，候选按筛选条件列出）' }));
+    }
+    parts.push(promptCopyArea(v.prompt));
+    parts.push(dataCopyArea('复制数据', {
+      envelope: {
+        version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.photo-picker',
+        data: {
+          items: v.candidates.map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: [...p.tagList], fileExists: p.fileExists })),
+          total: v.fullCount,
+        },
+      },
+    }));
+    return parts.join('');
+  };
+  const baseBytes = Buffer.byteLength(shell(contentOf([], new Map())), 'utf8') + snapBytes;
+  const picks = embedPhotosWithinBudget(photosDir, v.candidates, baseBytes, PHOTO_LIST_PAGE_MAX_BYTES);
+  let html = shell(contentOf(picks.embeds, picks.skipReason));
+  for (let round = 0; round < 3 && Buffer.byteLength(html, 'utf8') > PHOTO_LIST_PAGE_MAX_BYTES; round += 1) {
+    const rest = picks.embeds.filter((e) => e.dataUri !== null && !picks.skipReason.has(e.fileName))
+      .sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0));
+    if (rest.length === 0) break;
+    picks.skipReason.set((rest[0] as PhotoEmbed).fileName, '体积预算未内嵌');
+    html = shell(contentOf(picks.embeds, picks.skipReason));
+  }
+  return html;
 }
