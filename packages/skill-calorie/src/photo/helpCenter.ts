@@ -49,7 +49,7 @@ import type {
 } from 'base-paint';
 import { TRIGGERS } from '../triggers/index.js';
 import type { SceneTrigger, Trigger } from '../triggers/index.js';
-import { routesFor } from '../triggers/routing.js';
+import { NEW_KEY_ROUTES, routesFor } from '../triggers/routing.js';
 import { COPY_RUNTIME_JS } from '../render/copy.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { CALORIE_TEMPLATES, loadTemplate } from '../render/templates.js';
@@ -394,6 +394,59 @@ export function helpViewEntriesMetaBlock(
   return { id: HELP_VIEW_ENTRIES_META_ID, title: HELP_VIEW_ENTRIES_META_TITLE, html: renderViewEntriesHtml(entries) };
 }
 
+/* ── #471 · 新词别名节（`list:'new'` 族 → 命令） ──────────────────────────────────
+ *
+ * 背景（票 #471 裁定 B）：速查台的**场景取数面**只收 `SceneTrigger`（判据 `isSceneTrigger`），
+ * `list:'new'` 族不在其中——这批词能跑（路由层 `ALL_ROUTES` 收它们），但问 HELP 问不到。
+ * B 案**不动取数面**（`groups` 仍是同一批场景，条数不变），另起这一节把族里的词按「词 → 命令」列出。
+ *
+ * 派生判据（防陈化，票面「计数一律派生」）：本节内容**全部**来自生成物 `NEW_KEY_ROUTES`
+ * （`pnpm gen` 从各能力件 `src/<能力>/routes.ts` 的 `list:'new'` 逐条派生，头注自带同一个条数）
+ * ——词面／命令名／CLI 逐条投影，**本件不写一条词、不写一个条数**；节标题里的条数也是
+ * `aliases.length` 现算。声明件增删一条，本节与标题跟着变（测试件逐词对声明件复核）。
+ *
+ * 三态同源：`file`／`inline` 走 `meta_blocks`（与「看板页入口」同一处理方式），`text` 走文本段。
+ * 文本段**只发「词 · 命令名」不发 CLI**：text 态的尖括号集恒 `{<N>}` 是 #88 D-3 的冻结断言，
+ * 而新词里 `存身材照` 一族的 CLI 自带 `<照片路径>`／`<日期>` 这类占位符，发 CLI 会破那条断言。
+ */
+
+export const HELP_NEW_ALIASES_META_ID = 'new-word-aliases';
+export const HELP_NEW_ALIASES_META_TITLE = '新词别名';
+
+export interface HelpNewAlias {
+  /** 词（＝声明件的 `wakeWord`）。 */
+  readonly wakeWord: string;
+  /** 注册表命令名（＝声明件的 `key`）。 */
+  readonly key: string;
+  /** 可执行 CLI 全文（＝声明件的 `cli`）。 */
+  readonly cli: string;
+}
+
+/** 节标题：条数**现算**（不嵌死；两个面同一个函数，免得两处各写一个数）。 */
+export function newAliasesTitle(count: number): string {
+  return HELP_NEW_ALIASES_META_TITLE + '（' + String(count) + ' 条）';
+}
+
+/** `NEW_KEY_ROUTES` → 新词别名行（顺序＝生成物序＝声明件的 `(list, order)` 序；逐条派生）。 */
+export function buildHelpNewAliases(): HelpNewAlias[] {
+  return NEW_KEY_ROUTES.map((route) => ({ wakeWord: route.wakeWord, key: route.key, cli: route.cli }));
+}
+
+/** 新词别名块 HTML（`meta_blocks[].html` **原样透传** ⇒ 本函数自负转义）。 */
+export function renderNewAliasesHtml(aliases: readonly HelpNewAlias[] = buildHelpNewAliases()): string {
+  const items = aliases.map((alias) => '<li data-new-alias="' + escapeHtml(alias.wakeWord) + '">'
+    + '<b>' + escapeHtml(alias.wakeWord) + '</b> <code>' + escapeHtml(alias.key) + '</code><br>'
+    + '<code style="white-space:pre-wrap;word-break:break-all">' + escapeHtml(alias.cli) + '</code></li>');
+  return '<ol class="new-aliases">' + items.join(LF) + '</ol>';
+}
+
+/** 速查台「新词别名」块（`meta_blocks` 槽位；`id` 恒本模块常量，`title` 带派生条数）。 */
+export function helpNewAliasesMetaBlock(
+  aliases: readonly HelpNewAlias[] = buildHelpNewAliases(),
+): SceneMetaBlock {
+  return { id: HELP_NEW_ALIASES_META_ID, title: newAliasesTitle(aliases.length), html: renderNewAliasesHtml(aliases) };
+}
+
 /* ── S2 · 壳落地：三态同源（file／inline／text），恒走 `renderHelpShell` ───────── */
 
 /** 交付形态（P-5：默认 `file`；`inline` 供宿主页面内嵌；`text` 为纯文本索引接缝）。 */
@@ -472,8 +525,13 @@ function inlineFragment(html: string, assets: TemplateAssets): string {
  * 末尾追加同一份「看板页入口」（#107）：与 `file`／`inline` 的 `meta_blocks` 块**同源同序**，
  * 使三态在内容上仍是一份数据换三个载体。入口行缩进 2 空格（场景行恒 4 空格，
  * `help-center-91` 的 `textSceneIds` 只认 4 空格行，故不污染 436 条场景序）。
+ * #471：同一段再追加「新词别名」节（同样是 2 空格缩进），只发「词 · 命令名」不发 CLI（见该节件头）。
  */
-function renderTextIndex(data: SceneData, entries: readonly HelpViewEntry[]): string {
+function renderTextIndex(
+  data: SceneData,
+  entries: readonly HelpViewEntry[],
+  aliases: readonly HelpNewAlias[],
+): string {
   const lines: string[] = [data.skill_name + ' ' + data.title];
   if (typeof data.subtitle === 'string') lines.push(data.subtitle);
   for (const group of data.groups) {
@@ -489,6 +547,9 @@ function renderTextIndex(data: SceneData, entries: readonly HelpViewEntry[]): st
   lines.push('');
   lines.push('[' + HELP_VIEW_ENTRIES_META_TITLE + ']');
   for (const entry of entries) lines.push('  ' + entry.title + ' · ' + entry.cli);
+  lines.push('');
+  lines.push('[' + newAliasesTitle(aliases.length) + ']');
+  for (const alias of aliases) lines.push('  ' + alias.wakeWord + ' · ' + alias.key);
   return lines.join(LF) + LF;
 }
 
@@ -500,7 +561,8 @@ function renderTextIndex(data: SceneData, entries: readonly HelpViewEntry[]): st
  *
  * 三态**都先过 `renderHelpShell`**（同一 schema 校验与同一填充器），故不存在第二套数据路径。
  * #107：三态各自**同一份**「看板页入口」（6 件模板派生）——`file`／`inline` 走 `meta_blocks`，
- * `text` 走文本段；签名与三态语义不变。
+ * `text` 走文本段；#471：再各加**同一份**「新词别名」节（`NEW_KEY_ROUTES` 派生），落点同前一条。
+ * 签名与三态语义不变。
  */
 export function renderHelpCenterHtml(opts: HelpCenterRenderOptions = {}): HelpCenterRenderResult {
   const mode: HelpCenterMode = opts.mode === undefined ? 'file' : opts.mode;
@@ -511,13 +573,18 @@ export function renderHelpCenterHtml(opts: HelpCenterRenderOptions = {}): HelpCe
     opts.updatedAt === undefined ? {} : { updatedAt: opts.updatedAt },
   );
   const entries = buildHelpViewEntries();
+  const aliases = buildHelpNewAliases();
   const sceneData: SceneData = {
     ...baseData,
-    meta_blocks: [...(baseData.meta_blocks ?? []), helpViewEntriesMetaBlock(entries)],
+    meta_blocks: [
+      ...(baseData.meta_blocks ?? []),
+      helpViewEntriesMetaBlock(entries),
+      helpNewAliasesMetaBlock(aliases),
+    ],
   };
   const assets = helpCenterAssets();
   const output = renderHelpShell({ sceneData, assets, strict: opts.strict === true });
   if (mode === 'file') return { mode, html: output.html, report: output.report };
   if (mode === 'inline') return { mode, html: inlineFragment(output.html, assets), report: output.report };
-  return { mode, html: renderTextIndex(sceneData, entries), report: output.report };
+  return { mode, html: renderTextIndex(sceneData, entries, aliases), report: output.report };
 }

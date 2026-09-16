@@ -5,8 +5,12 @@
  * #180 · 补偿表清空：375 条命令字段已逐字改写成路由层命令，#180 之前那张 legacy key → 可执行 cli 的
  * 替换表（`HELP_EXEC_OVERRIDES`）不再有存在理由，值已清空；命中行的 `cli` 一律取该唤醒词自己的命令字段
  * （`buildHelpLookup` 与 `searchHelp` 同源），不再有第二处字面。
+ * #471 · ＋`list:'new'` 族登记（派生表 `NEW_WORD_TABLE`，见该表件头）：这一族词此前进不了速查面
+ * （`TRIGGERS` 里没有它们），问 `calorie.help.lookup` 要么 `exit 4`、要么被「含目标就合成」的兜底
+ * 顶成**别的**写词。登记后逐词命中自己的键；兜底同时收窄（`isRegisteredQuery`，宁缺勿错）。
  */
 import type { HelpHit, Trigger } from './types.js';
+import { NEW_KEY_ROUTES } from './routes.generated.js';
 
 /** 分类 → 场景编号（复盘并入 10-分析；食品库/综合在 SoT 中为空） */
 export const CATEGORY_SCENE: Record<string, string> = {
@@ -53,6 +57,8 @@ export function buildHelpLookup(triggers: Trigger[]): Record<string, HelpHit[]> 
       ? { wake_word: e.phrase, scene: '02', key: 'diet_add_meal', cli: 'calorie-cmd-read calorie.diet.add', desc: '记一餐（别名同走 calorie.diet.add）' }
       : { wake_word: e.phrase, scene: '06', key: e.key, cli: e.cli, desc: e.phrase + '（别名同走 ' + e.key + '）' });
   }
+  // #471 · 新词别名注入（派生表；SoT 零改动）：`list:'new'` 族的词各指**自己**那条命令与键。
+  for (const e of NEW_WORD_TABLE) (map[e.phrase] ??= []).push(newWordHit(e));
   return map;
 }
 
@@ -70,6 +76,38 @@ export const WAKE_TABLE: Array<{ phrase: string; key: string; cli: string }> = [
   { phrase: '看目标配置', key: 'calorie.view.goal-config', cli: 'calorie-cmd-read calorie.view.goal-config' },
   { phrase: '看目标状态', key: 'calorie.view.goal-status', cli: 'calorie-cmd-read calorie.view.goal-status' },
 ];
+
+/** #471 · `list:'new'` 族别名（**派生表**：词／键／CLI／场景全部投影声明件，本表不写一条词、不写一个条数）。
+ *
+ * 唯一上游：各能力件 `src/<能力>/routes.ts` 里 `list:'new'` 的逐条记录，经 `pnpm gen` 落到生成物
+ * `src/triggers/routes.generated.ts` 的 `NEW_KEY_ROUTES`（头注自带同一个条数）。改声明件即改本表。
+ *
+ * 与 `WAKE_TABLE` 的分工：`WAKE_TABLE` 是**手写**表（6 行，两个既有测试件钉死行数，本票一行不动）；
+ * 本表是**派生**表，只收 `WAKE_TABLE` 未登记的词——已登记的那两条（`看目标配置`／`看目标状态`）
+ * 已经各指自己的键与 CLI，这里不重复登记（免得同一个词出现两条同义命中行）。
+ *
+ * 为什么不并进 `TRIGGERS`／`buildHelpSceneData`：那是全部 10 个场景共用的速查台**场景取数面**
+ * （判据 `isSceneTrigger`），`new` 族不是速查台场景；本票只把它们登记进**查找面**。
+ */
+export const NEW_WORD_TABLE: Array<{ phrase: string; key: string; cli: string; scene: string }> =
+  NEW_KEY_ROUTES.filter((route) => !WAKE_TABLE.some((e) => e.phrase === route.wakeWord))
+    .map((route) => ({ phrase: route.wakeWord, key: route.key, cli: route.cli, scene: route.scene }));
+
+/** 新词别名行 → 命中行（`buildHelpLookup` 与 `searchHelp` 同一处形状，不写第二遍）。 */
+function newWordHit(e: { phrase: string; key: string; cli: string; scene: string }): HelpHit {
+  return { wake_word: e.phrase, scene: e.scene, key: e.key, cli: e.cli, desc: e.phrase + '（新词别名 → ' + e.key + '）' };
+}
+
+/** #471 · 「这条查询已经被别名表认领」：词面等于某条登记词，或**含**某条登记整词。
+ *
+ * 用途＝把「含『目标』就合成 `定营养目标`」那条兜底（C3 #43）收窄到不误伤：像 `看运动目标`／
+ * `看目标配置`／`看目标状态`／`看目标预检` 这种**整词已登记**的查询（以及 `看目标配置表` 这种
+ * 含已登记整词的查询），一律不给兜底答案——宁缺勿错（宁可无命中、`exit 4`，也不给一条别的写命令）。
+ * 两条别名表都算认领（手写 `WAKE_TABLE` ＋ 派生 `NEW_WORD_TABLE`），故「登不登记」只改这两张表。
+ */
+function isRegisteredQuery(query: string): boolean {
+  return [...WAKE_TABLE, ...NEW_WORD_TABLE].some((e) => e.phrase === query || query.includes(e.phrase));
+}
 
 export function routeWakeword(phrase: string): { key: string; cli: string } | null {
   const hit = WAKE_TABLE.find((e) => e.phrase === String(phrase ?? '').trim());
@@ -112,7 +150,9 @@ function frozenCli(triggers: Trigger[], wakeWord: string): string | null {
   return t ? t.main_prompt.cli : null;
 }
 
-/** C3 #43 · 别名感知 + 可执行排前 + 知名高频词合成首条（唯一搜索入口，cmd_read 同逻辑）。 */
+/** C3 #43 · 别名感知 + 可执行排前 + 知名高频词合成首条（唯一搜索入口，cmd_read 同逻辑）。
+ *  #471 · 别名两表（手写 `WAKE_TABLE` ＋ 派生 `NEW_WORD_TABLE`）：新词表只做整词前置，兜底按
+ *  `isRegisteredQuery` 让位——「已登记的词不许被兜底顶成别的命令」。 */
 export function searchHelp(triggers: Trigger[], q: string): HelpHit[] {
   const query = String(q ?? '').trim();
   if (!query) return [];
@@ -145,6 +185,12 @@ export function searchHelp(triggers: Trigger[], q: string): HelpHit[] {
         : { wake_word: e.phrase, scene: '06', key: e.key, cli: e.cli, desc: e.phrase + '（别名同走 ' + e.key + '）' });
     }
   }
+  // #471 · 新词别名前置：**只认整词相等**（子串扩散会让 `看`／`运动` 这类模糊查询被远端新词抢首条，
+  // 与「宁缺勿错」相悖）；模糊面照旧归上面那三段（词／分类／说明／键／别名）。整词登记后，
+  // 这四个词（`看运动目标`／`看目标配置`／`看目标状态`／`看目标预检`）命中自己的键，不再落到写词。
+  for (const e of [...NEW_WORD_TABLE].reverse()) {
+    if (e.phrase === query) hits.unshift(newWordHit(e));
+  }
   hits.sort((a, b) => Number(!isExecCli(a.cli)) - Number(!isExecCli(b.cli)));
   // C2 别名经 WAKE_TABLE 已为可执行，保首条即 diet.add（排序稳定，可执行内保原序）。
   const wakeFirst = WAKE_TABLE.some((e) => e.phrase.includes(query) || query.includes(e.phrase));
@@ -175,7 +221,9 @@ export function searchHelp(triggers: Trigger[], q: string): HelpHit[] {
           desc: '减肥首选：今日目标进度（可执行）',
         });
       }
-    } else if (query.includes('目标')) {
+    } else if (query.includes('目标') && !isRegisteredQuery(query)) {
+      // #471 · 收窄：整词已登记（或含登记整词）的查询不许被这条兜底顶掉——`看运动目标` 问的
+      // 是运动目标盘，给「定营养目标」是答错题；这种情况宁缺勿错（登记面已给对的那条）。
       hits.unshift({
         wake_word: '定营养目标',
         scene: '06',
