@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { weightSimTarget, calorieGoalEta, calorieDeficitEta, calorieStability } from '../dist/analysis/simulate2.js';
 import { buildSimTargetDoc, buildCalorieGoalDoc, buildCalorieDeficitDoc, buildCalorieStabilityDoc } from '../dist/render/trendPredictDocs.js';
 import { foldedTable, tableOf } from '../dist/analysis/reportDocParts.js';
+import { lineOf } from '../dist/analysis/reportDocParts.js';
 import { buildReportDoc } from '../dist/analysis/reportDoc.js';
 
 function series90() {
@@ -184,6 +185,52 @@ test('#620-3b BMR概览无徽标行且三天规则只住口径表', () => {
   const html = visible(raw);
   assert.equal(countSub(html, '达到 3 天即告警'), 1, '三天规则不止一处');
   assert.ok(!html.includes('3 天及以上即告警'), '表题仍在重复规则');
+});
+
+/* ── #620 增量3c：目标来源只住口径行（27-5／28 同类） ── */
+
+function trackedPlate(target, avg = 1600) {
+  const plate = r3aPlate('protein', {});
+  plate.points = ['2026-09-01', '2026-09-02', '2026-09-03'].map((date) => ({ date, value: 120 }));
+  plate.target = target;
+  plate.fourPiece = { avg, target, hitDays: 1, loggedDays: 3, hitRate: 33.3 };
+  return plate;
+}
+
+test('#620-3c 已设目标时目标来源只在口径行讲', () => {
+  const html = visible(buildReportDoc(trackedPlate(150), ''));
+  assert.equal(countSub(html, '目标设置'), 1, '目标设置讲了不止一次');
+  assert.ok(!html.includes('没有设目标'), '已设目标页出现永不触发的条件句');
+});
+
+test('#620-3c 未设目标时条件句出现且来源仍 single', () => {
+  const plate = trackedPlate(null);
+  plate.fourPiece = { avg: 120, target: null, hitDays: 0, loggedDays: 3, hitRate: null };
+  const html = visible(buildReportDoc(plate, ''));
+  assert.ok(html.includes('没有设目标时不判达标'), '未设目标页丢了条件句');
+  assert.equal(countSub(html, '目标设置'), 1, '目标设置讲了不止一次');
+});
+
+/* ── #620 S3 机制钉（D-9／D-12：不是缺陷，是有意行为，钉住不许悄悄改） ── */
+
+test('#620-S3 恒定序列加远目标仍须画出目标线（D-9）', () => {
+  const pts = Array.from({ length: 30 }, (_, i) => ({ date: '2026-09-' + String(i + 1).padStart(2, '0'), value: 68 }));
+  const html = lineOf(pts, '每日蛋白量（虚线为目标）', { target: 150 });
+  const ticks = [...html.matchAll(/charts-tick[^>]*>([^<]*)</g)].map((m) => m[1]);
+  assert.deepEqual(ticks, ['58', '109', '160'], '恒定68＋目标150 的域变了（58/109/160 是含目标的必然结果）：' + JSON.stringify(ticks));
+  assert.ok(html.includes('markline'), '目标线被收敛掉了（缺口故事没法讲）');
+});
+
+test('#620-S3 趋势序列纵向占比不低于六成（D-12）', () => {
+  const pts = Array.from({ length: 60 }, (_, i) => {
+    const d = new Date(Date.parse('2026-07-18T12:00:00Z') + i * 86400000);
+    return { date: d.toISOString().slice(0, 10), value: 50 + Math.round((33 * i) / 59) };
+  });
+  const html = lineOf(pts, '评分序列（满分 100 分）', { format: (v) => String(Math.round(v)) });
+  const ticks = [...html.matchAll(/charts-tick[^>]*>([^<]*)</g)].map((m) => Number(m[1])).slice(0, 3);
+  assert.equal(ticks.length, 3, '应有 3 条刻度：' + JSON.stringify(ticks));
+  const occupancy = 33 / (Math.max(...ticks) - Math.min(...ticks));
+  assert.ok(occupancy >= 0.6, '数据纵向占比低于六成：' + occupancy.toFixed(2));
 });
 
 test('#620-3b 评分分项卡说明不重复徽标读数', () => {

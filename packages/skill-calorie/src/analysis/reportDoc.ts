@@ -199,7 +199,15 @@ function calibersOf(plate: ReportPlate): string[] {
       /* R-43：判据细则只住口径表，页脚只留算式与指引（两处不互为子串；保留竖线分段）。 */
       return ['基础代谢按 Mifflin-St Jeor 算式｜四项齐备才算，危险信号见上方判据表'];
     case 'protein':
-    case 'water': return ['达标判定＝当天记录值达到目标值｜目标取目标设置里那一项｜没有设目标时不判达标'];
+    case 'water': {
+      /* #620 增量3c：`目标取目标设置里那一项` 与目标卡说明 `来自目标设置` 同一事实两处，
+       * 来源只住口径行（卡上那句已删）；`没有设目标时不判达标` 在已设目标时是永不触发的条件句，
+       * 只在未设目标时出现（两段不断 span 结构）。 */
+      const noGoal = plate.fourPiece === null || plate.fourPiece.target === null;
+      return noGoal
+        ? ['达标判定＝当天记录值达到目标值｜目标取目标设置里那一项', '没有设目标时不判达标']
+        : ['达标判定＝当天记录值达到目标值｜目标取目标设置里那一项'];
+    }
     case 'score':
       return ['分项命中率＝该项命中天数 ÷ 有记录天数｜综合评分＝六因素命中数与项数之比折算成 0–100 分，不另算第二套权重'];
     case 'trend':

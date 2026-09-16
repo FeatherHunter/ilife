@@ -50,7 +50,9 @@ export function buildTrackedBlocks(plate: ReportPlate): ReportSection[] {
   return [
     sec('sec-overview', '概览', renderKpiGrid([
       { label: '日均' + which.label, value: fmt(f.avg), unit: which.unit, detail: '有记录 ' + f.loggedDays + ' 天' },
-      { label: '目标', value: fmt(f.target), unit: f.target === null ? '' : which.unit, detail: f.target === null ? '未设目标' : '来自目标设置' },
+      /* #620 增量3c：`来自目标设置` 与口径行 `目标取目标设置里那一项` 同一事实两处，
+       * 来源只住口径行；卡上只留 `未设目标` 这一态（空串是既有形态，见评分族弱项卡）。 */
+      { label: '目标', value: fmt(f.target), unit: f.target === null ? '' : which.unit, detail: f.target === null ? '未设目标' : '' },
       /* R-45：达标天数与达标率是同一事实两卡 ⇒ 合并进一卡（值位达标天数，说明带达标率），空出的一卡给有记录天数。 */
       { label: which.hitWord + '天数', value: String(f.hitDays), unit: '天', detail: f.target === null ? '未设目标，无从判定' : rateDetail },
       { label: '有记录天数', value: String(f.loggedDays), unit: '天', detail: '窗口共 ' + plate.base.days + ' 天' },
