@@ -28,6 +28,7 @@ import { DOC_SKILL, DOC_TITLE, DOC_VERSION, fmt, humanText, techNoteHtml } from 
 import type { DeficitData } from '../analysis/deficit.js';
 import type { PredictView } from './insightPlate.js';
 import type { WeightTarget } from '../analysis/simulate.js';
+import { HEALTHY_RATE } from '../analysis/simulate.js';
 import type {
   CalorieDeficitEta, CalorieForecast, CalorieGoalEta, CalorieStability,
   WeightSimCut, WeightSimTarget,
@@ -801,13 +802,16 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
     && Number.isFinite(v.neededDeficit) && Number.isFinite(v.daysTarget))
     ? String(v.daysTarget) + ' 天合计约 ' + String(v.neededDeficit * v.daysTarget) + ' 卡。'
     : '缺口按窗口内趋势另算。';
+  /* #620 增量1：结论与徽标按 `weeklyRate` 分偏慢/偏快（`feasible`只保兼容）。慢速（<0.5）说“偏慢”，快速（>1.0）说“超出/偏快”，口径唯一处 `HEALTHY_RATE`。 */
+  const weeklyRateNum = typeof v.weeklyRate === 'number' ? v.weeklyRate : NaN;
+  const slowTarget = Number.isFinite(weeklyRateNum) && weeklyRateNum < HEALTHY_RATE[0];
   const parts: string[] = [
     /* #569 R-03 同形延伸（10–13）：眉题写族名`模拟减重`、chip 写页名（与 H1 同 spaced 形态），
      *  二者 distinct（改前眉题`趋势分析`与第三格同字，R-03 的 01–08 范围未含 10–13）。 */
     t568Chips(String(v.daysTarget) + ' 天减 ' + String(v.targetLoss) + ' kg'),
-    /* 结论句只用页里已有的数（`daysTarget`／`targetLoss`／`neededDeficit`／`feasible`）。 */
+    /* 结论句只用页里已有的数（`daysTarget`／`targetLoss`／`neededDeficit`／`feasible`＋`weeklyRate`判方向）。 */
     renderConclusionBar('要在 ' + String(v.daysTarget) + ' 天里减掉 ' + String(v.targetLoss) + ' kg，每天大约要留出 ' + String(v.neededDeficit) + ' 卡缺口。'
-      + (v.feasible ? '这个速度在健康范围内。' : '这个速度超出健康范围，建议拉长时间或降低目标。')),
+      + (v.feasible ? '这个速度在健康范围内。' : slowTarget ? '这个速度偏慢，建议缩短时间或提高目标。' : '这个速度超出健康范围，建议拉长时间或降低目标。')),
     predictNav(pts.length > 0),
     pageSection('sec-params', renderParamForm({
       fields: [
@@ -830,7 +834,7 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
       { label: '每周掉重', value: fmtRate(v.weeklyRate), unit: 'kg/周' },
     ]), verdictCard('可行性', v.feasible
       ? '这个期限赶得上。'
-      : '这个期限赶得偏快。', v.feasible, '可行', '超范围')), secTitle('sec-overview')),
+      : slowTarget ? '这个期限赶得偏慢。' : '这个期限赶得偏快。', v.feasible, '可行', '超范围')), secTitle('sec-overview')),
   ];
   /* #569 R-07：两列表传 `restoreHead`（同 cut 页）。 */
   if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg', true), secTitle('sec-track')));

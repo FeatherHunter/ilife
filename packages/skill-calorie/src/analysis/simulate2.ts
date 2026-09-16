@@ -64,6 +64,8 @@ export function weightSimTarget(series: DaySeries[], targetKg: number, days: num
   const weeklyRate = targetKg / (days / 7);
   const neededDeficit = round((targetKg * KCAL_PER_KG) / days);
   const feasible = HEALTHY_RATE[0] <= weeklyRate && weeklyRate <= HEALTHY_RATE[1];
+  /* #620 增量1：`feasible`二值丢方向——0.47<0.5偏慢会被说成“偏快/超出”。方向由 `weeklyRate` 当场判定，`feasible`布尔原样保留（冻结的 metrics 1/0 不断）。 */
+  const slow = weeklyRate < HEALTHY_RATE[0];
   const last = series[series.length - 1] as DaySeries;
   const pts: SimPoint[] = [{ date: last.date, value: round2(current) }];
   for (let d = 7; d <= days; d += 7) {
@@ -83,7 +85,7 @@ export function weightSimTarget(series: DaySeries[], targetKg: number, days: num
     weeklyRate: round2(weeklyRate), neededDeficit, feasible,
     assumption: days + ' 天减 ' + targetKg + ' kg = 每周 ' + weeklyRate.toFixed(2) + ' kg,需日均缺口 ' + neededDeficit + ' 卡(≈ 每天少吃 2 碗米饭 + 30 分钟快走)',
     forecast: { label: title, horizonDays: days, points: pts },
-    insight: '所需日均缺口 ' + neededDeficit + ' 卡,速率 ' + weeklyRate.toFixed(2) + ' kg/周' + (feasible ? '(可行,在健康范围内)。' : '(⚠️ 不可行:超出每周 0.5-1.0 kg 安全范围,拉长时间或降低目标)。'),
+    insight: '所需日均缺口 ' + neededDeficit + ' 卡,速率 ' + weeklyRate.toFixed(2) + ' kg/周' + (feasible ? '(可行,在健康范围内)。' : slow ? '(⚠️ 不可行:每周仅 ' + weeklyRate.toFixed(2) + ' kg,偏慢,缩短时间或提高目标)。' : '(⚠️ 不可行:超出每周 0.5-1.0 kg 安全范围,拉长时间或降低目标)。'),
   };
 }
 
