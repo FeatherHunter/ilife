@@ -249,7 +249,8 @@ export interface TocBlockInput {
 }
 
 /** #420-1 页内导航区块（`<nav aria-label="页内导航">` ＋ 逐项 `<a href="#id">`）。
- *  空列表＝不出这一块（与「没内容不留空块」同口径，返回空串）；非数组／项缺 `id`／`text` → `bad-input`。 */
+ *  空列表＝不出这一块（与「没内容不留空块」同口径，返回空串）；缺失（`undefined`）→ `bad-input`
+ *  （非数组即拒）；项缺 `id`／`text` → `bad-input`。 */
 export function renderTocBlock(input: TocBlockInput): string {
   assertPlainObject(input, 'renderTocBlock: input');
   assertNoInlineHandler(input, 'renderTocBlock: input');
@@ -375,7 +376,10 @@ function isRgbFunction(raw: string): boolean {
 /** 色值入参（#421／#431）：`undefined` 透传（缺省色走样式段的冻结 token）；清单内的写法**逐字透传**
  *  （裸 token 名 `--x` 包成 `var(--x)`）。允许清单＝`#rgb`／`#rrggbb`／`rgb()`／`rgba()`／
  *  `var(--<冻结 token 名>)`／CSS 具名色；**清单外一律 `bad-input`**——`;`／`expression(`／`url(` 这类
- *  注入形态在这一步挡住，不让 `;` 穿进内联声明列表（审查 S3-6）。 */
+ *  注入形态在这一步挡住，不让 `;` 穿进内联声明列表（审查 S3-6）。
+ *  迁移提示（#441 实测）：生产侧显式传色 3 处（`diet/nutritionPortDocs.ts:339` 一处带 3 个 `#rrggbb` 值、
+ *  `render/sportPortDocs.ts:609／775` 两处经 `categoryColor()` 取 4 个 `#rrggbb` 值），均属允许形态，
+ *  无须改动；其余生产调用不传色，走缺省冻结 token；新增写法先对清单，清单外改走冻结 token 或具名色。 */
 function optColor(value: unknown, field: string): string | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== 'string' || value.trim() === '') badInput(field + ' 必须是非空字符串（冻结 token 名或色值）');
@@ -454,7 +458,8 @@ export interface DistributionRowsInput {
 }
 
 /** #421-2 分布条行：`名称 ｜ 条 ｜ 数值` 一格三栏，逐行拼出（行即件，不另加容器类）。
- *  `rows: []` ＝ 空串（与「没内容不留空块」同口径）；行内校验逐条 fail-fast。 */
+ *  `rows: []` ＝ 空串（与「没内容不留空块」同口径）；缺失（`undefined`）→ `bad-input`（非数组即拒）；
+ *  行内校验逐条 fail-fast。 */
 export function renderDistributionRows(input: DistributionRowsInput): string {
   assertPlainObject(input, 'renderDistributionRows: input');
   assertNoInlineHandler(input, 'renderDistributionRows: input');
@@ -491,7 +496,7 @@ export interface ChipsInput {
 }
 
 /** #421-3 徽章（并列小标签，如分类／标签这类短词并排）：逐项 `<span class="ilife-block-chip">`。
- *  项即件（不另加容器类）；`items: []` ＝ 空串。 */
+ *  项即件（不另加容器类）；`items: []` ＝ 空串；缺失（`undefined`）→ `bad-input`（非数组即拒）。 */
 export function renderChips(input: ChipsInput): string {
   assertPlainObject(input, 'renderChips: input');
   assertNoInlineHandler(input, 'renderChips: input');
@@ -523,7 +528,7 @@ export interface ChangeRowsInput {
 
 /** #421-4 字段变更行（回执页「改前 → 改后」对照）：`字段名 ｜ 改前 ｜ 箭头 ｜ 改后`。
  *  `arrow: false` 只把字形藏起来、不删栏位（与老技能同一手法：左右栏靠箭位对齐）；
- *  `rows: []` ＝ 空串。 */
+ *  `rows: []` ＝ 空串；缺失（`undefined`）→ `bad-input`（非数组即拒）。 */
 export function renderChangeRows(input: ChangeRowsInput): string {
   assertPlainObject(input, 'renderChangeRows: input');
   assertNoInlineHandler(input, 'renderChangeRows: input');
