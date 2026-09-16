@@ -160,10 +160,14 @@ test('T4 · 变异电池：十一个锚点各自改坏必红（点名规则）�
   }
 });
 
-test('T5 · 真基线（31 页产物）改前必红：RESULT 0/31、FAIL、exit 1', { skip: !existsSync(PRODUCTS) }, () => {
+test('T5 · 真基线（31 页产物）识别力：有违规必红，已清零则绿', { skip: !existsSync(PRODUCTS) }, () => {
+  // 编排者2026-09-16裁决（#572）：原“改前必红RESULT 0/31”前提过期（产物已清零）。
+  // 识别力历史证明见版本史（曾红现绿）；当刻识别力由T4变异电池承担。
   const r = run(['--dir', PRODUCTS, '--quiet']);
-  assert.equal(summaryOf(r), 'RESULT: 0/31', r.stdout);
-  assert.equal(verdictOf(r), 'FAIL');
+  const m = /RESULT: (\d+)\/(\d+)/.exec(summaryOf(r));
+  assert.ok(m, '读不到 RESULT 摘要：' + r.stdout);
+  if (m[1] === m[2]) return; // 基线已清零：绿即对
+  assert.equal(verdictOf(r), 'FAIL'); // 有违规：必须红
   assert.equal(r.status, 1);
 });
 
