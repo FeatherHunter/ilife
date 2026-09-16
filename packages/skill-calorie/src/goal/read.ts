@@ -119,14 +119,21 @@ export function viewGoalWizard(params: Record<string, unknown>, db: DatabaseSync
     throw new CalorieRenderError('bad-input', 'profile 非法（cut/maintain/bulk）: ' + profileRaw);
   }
   const wakeWord = optStr(params, 'wake') ?? null;
+  // #252 · 暂停/重启不出预检页（没有可确认的内容），直接用法阻断，不落盘。
+  if (wakeWord === '暂停所有目标' || wakeWord === '重启所有目标') {
+    throw new CalorieRenderError('bad-input', '暂停／重启不出预检页（没有可确认的内容，直接跑写命令）');
+  }
   const draft = buildGoalDraft(db, { profile: profileRaw === undefined ? null : profileRaw });
+  // #252 · 改类词空库阻断：无目标行时 exit4 不落盘；定类空库 exit0 照常出页。
+  if ((wakeWord === '改营养目标' || wakeWord === '改体重目标' || wakeWord === '改饮水目标') && draft.current === null) {
+    throw new CalorieRenderError('missing-data', '尚无目标（先定目标，再改目标）');
+  }
   const hit = wakeWord === null ? null : TRIGGERS.find((t) => t.wake_word === wakeWord) ?? null;
   const v = {
     wakeWord,
     draft,
     prompt: hit !== null && 'prompt_template' in hit ? String(hit.prompt_template ?? '') : '',
-    // 该写词要跑的命令：先取它的可执行路由；三条自动算词今天还没有可执行路由，
-    // 回落它自己的 `main_prompt.cli`（那串「先算 → 确认后写」的两段式）——执行接线归 #252。
+    // 该写词要跑的命令：先取它的可执行路由；3 条已有 exec 路由（`src/goal/routes.ts`），此处回落值与路由层逐字同。
     command: (wakeWord === null ? '' : routeWakeword(wakeWord)?.cli ?? '')
       || (hit !== null && 'main_prompt' in hit ? hit.main_prompt.cli : '')
       || execCliFor(null, 'calorie-cmd-read calorie.view.goal-wizard'),
