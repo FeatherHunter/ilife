@@ -6,17 +6,17 @@
 - `:1699` `'采集'` `#e7f8ee/#1a7a3a`；`:1700` `'查看'` `#e8f2ff/#0a63ce`；`:1701` `'结果'` `#e8f2ff/#0a63ce`；
 - `:1702` `'向导'` `#e2f7f5/#00897b`；`:1703` `'批量'` `#f3e9fb/#8e3fc9`；`:1704` `'校验'` `#e8f2ff/#0a63ce`；
 - `:1705` `'选择'` `#e8f2ff/#0a63ce`；`:1706` `'过程'` `#e2f7f5/#00897b`；`:1707` `'回执'` `#e8f2ff/#0a63ce`；`:1708` `'录入'` `#e7f8ee/#1a7a3a`
-- 词表：**采集／查看／结果／向导／批量／校验／选择／过程／回执／录入**（10 个）。渲染入口 `:1710-1723` `typeBadgeHTML`，调用点 `:1727` `(s.types || []).forEach(function(t){ h += typeBadgeHTML(t); });`。
+- 渲染入口 `:1710-1723` `typeBadgeHTML`，调用点 `:1727` `(s.types || []).forEach(function(t){ h += typeBadgeHTML(t); });`。
 - 与 HEAD 对照（`base-render/**` 现有未提交改动）：`git show HEAD:packages/base-render/assets/help-template.html` 的 `TYPE_DEFAULT` 段与工作区此表逐字相同（同为 10 词、同配色），本结论不依赖未提交改动。
 
 ## 2 生成物 `packages/base-render/src/helpShell.ts`：同表、逐字一致
 - 表落在 `:45` 的 `HELP_SHELL_SUFFIX` 字面量内：`var TYPE_DEFAULT = {\r\n  '采集':  {bg:'#e7f8ee', fg:'#1a7a3a'},\r\n` … `'录入':  {bg:'#e7f8ee', fg:'#1a7a3a'}\r\n};`——10 个键、键名与配色值与源模板**逐字相同**，与源模板**一致**。
 - 机制：`:3` 注明「来源：`packages/base-render/assets/help-template.html`（help模板唯一真相源…）」；`packages/base-render/scripts/gen-help-shell.cjs:1,15` 由源模板生成；`packages/base-render/test/help-shell-136.test.mjs:56-61` 断言源切分与 `HELP_SHELL_SUFFIX` 哈希相等。
 
-## 3 兜底行为：表外词静默退到「查看」蓝底（文字照显示，不报错、不隐藏）
+## 3 兜底行为：表外词静默退色（文字照显示，配色落「查看」蓝底）
 - `:1714` 逐字 `    var d = TYPE_DEFAULT[text] || TYPE_DEFAULT['查看'];`（元素为 `{text,bg,fg}` 对象形态）
 - `:1719` 逐字 `    var d2 = TYPE_DEFAULT[text] || TYPE_DEFAULT['查看'];`（元素为字符串形态）
-- `:1722` 逐字 `  return '<span class="type-badge" style="background:' + esc(bg) + ';color:' + esc(fg) + '">' + esc(text) + '</span>';`——表外词配色退成 `#e8f2ff/#0a63ce`（`'查看'` 的值），无异常、无校验、无「不显示」分支。
+- `:1722` 逐字 `  return '<span class="type-badge" style="background:' + esc(bg) + ';color:' + esc(fg) + '">' + esc(text) + '</span>';`——表外词配色静默退色为 `#e8f2ff/#0a63ce`（`'查看'` 的值）；两形态共用这一个 return 出口，徽章照常产出。
 
 ## 4 账单断言 `packages/skill-bill/scripts/gen-wake-assets.mjs:90-125`
 - `:98-99` 逐字 `/** 形状断言（fail-closed）：数量、字段齐、id 唯一、types 非空且用老词。 */`、`function assertShape(groups) {`。
@@ -31,5 +31,5 @@
 - 对模板 10 词表：**3/3 全在表内**；对账单 5 词断言：**对不上**（`结果`、`过程` 在断言表外）。
 
 ## 6 结论
-- 居家生成器的断言用**模板配色表（10 词，`help-template.html:1699-1708`）**：采集／查看／结果／向导／批量／校验／选择／过程／回执／录入。
-- 理由：模板真正认的就是这 10 个，表外词不报错、只静默退到「查看」蓝底，「模板只认 5 个」不成立；10 词是账单 5 词的超集，用它既不会把模板已有能力当违规，也不会把卡路里式的 `结果`／`过程` 误判为表外。
+- 居家生成器的断言用**模板配色表（10 词，`help-template.html:1699-1708`）**：见 §1 词表。
+- 理由：模板真正认的就是这 10 个，表外词静默退色（配色落「查看」蓝底），「模板只认 5 个」不成立；10 词是账单 5 词的超集，用它既不会把模板已有能力当违规，也不会把卡路里式的 `结果`／`过程` 误判为表外。

@@ -1,9 +1,6 @@
 # t184 · 饼干记账 HELP 交付实现逐件读懂 → 居家照抄清单
 
-> 票：`#184`（地图 `#143`→`#183` 票 1，research）。
-> 只读调查：**未改任何源码**、未 `git add`／未提交、未动 GitHub issue。
-> 事实出处一律「仓内路径:行号」，写法照 `docs/agents/wording.md`（共享 help 模板，不写「壳」；`home.help.lookup` 这类叫「命令」，不叫「键」）。
-> 本票**不出决定**：命名落盘管线的归属（自持还是收成共用位）是票 4（`#187`）的事；内容骨架与英文域名的定案在票 2（`#185`）。
+> 票：`#184`（地图 `#143`→`#183` 票 1，research）；只读调查，**未改任何源码**／未 `git add`／未提交／未动 GitHub issue；事实出处一律「仓内路径:行号」，写法照 `docs/agents/wording.md`（共享 help 模板，不写「壳」；`home.help.lookup` 这类叫「命令」，不叫「键」）；本票**不出决定**——命名落盘管线的归属（自持还是收成共用位）归票 4（`#187`），内容骨架与英文域名的定案归票 2（`#185`）。
 
 ## 0. 样板地图（bill 侧的八个件是哪些提交落的）
 
@@ -25,7 +22,7 @@
 |---|---|---|---|---|
 | 1 | `packages/skill-bill/src/render/helpFile.ts`（182 行） | 内容资产＋派生 → 五个必填字段＋三块可选内容的全量 HELP JSON → `base-paint/help-shell` 全页 HTML（零 IO、零落盘） | **照抄形状，改常量与文案** | 接线做法照抄：`import { renderHelpShellHtml } from 'base-paint/help-shell'`（:19）；派生而不是写死数字的做法照抄（`deriveSummaryLine` :100-103、`buildMetaBlocks` :106-111、`buildHelpIndex` :172-181）。必须换的常量：`HELP_FILE_STEM`（:24）、`HELP_FILE_SKILL_NAME`（:26）、`HELP_FILE_TITLE`（:27）、`HELP_FILE_VERSION`（:29，语义是技能数据世代不是 npm 版本）、`HELP_INIT_SCENE_ID`（:31）、`HELP_CONTACT` 三项（:46-53）
 | 2 | `packages/skill-bill/src/render/helpPaths.ts`（55 行） | 命名与落点通式（零 IO，只出初候选）：目录名／文件名主体／本地时间戳／`_N` 递补式 | **照抄通式，换常量** | `HELP_HTML_DIR_NAME`（:22）＝居家的 `home_manager_html`（老口径，见 `docs/skills/skill-home/map-183-body.md:3`、`:22`）；文件名主体换成 `居家管家_HELP`；时间戳与通式（:31-49）逐字照抄。`LOOKUP_FILE_STEM`（:28）是 bill 自造的速查支名字（老技能没有这一支），居家要不要分名、叫什么是票 4 的事 |
-| 3 | `packages/skill-bill/src/output.ts`（86 行） | HTML 产物唯一落盘点：`flag:'wx'` 独占创建 ＋ `EEXIST` 递补 `_N` ＋ 绝对路径回执；`explicit` 覆盖写 | **照抄** | 这是 `#128` 的修法（:8-14 的因果）：判存＋写两步没有独占性，多进程同秒会交叉覆盖。`nextExclusiveCandidate`（:27-39）／`writeFileExclusiveWithRetry`（:42-58）／`deliverHtml`（:72-86）三块可直接照抄，只把注释里的技能名改掉 |
+| 3 | `packages/skill-bill/src/output.ts`（86 行） | HTML 产物唯一落盘点：`flag:'wx'` 独占创建 ＋ `EEXIST` 递补 `_N` ＋ 绝对路径回执；`explicit` 覆盖写 | **照抄** | **⚠️ 过期横幅（本票之后）**：独占写不再照抄——`#237` 已把它收拢为共用件 `base-paint/save-html` 的 `saveHtmlFile`（独占创建／同秒递补／撞名策略／绝对路径回执都在该件；五家在用，全仓零家自持），居家照抄的落点是它（居家侧已接线，`packages/skill-home/src/help/output.ts:24`），裁决与取舍见 `docs/skills/skill-home/map-183-body.md:96`。以下原文保留作历史：这是 `#128` 的修法（:8-14 的因果）：判存＋写两步没有独占性，多进程同秒会交叉覆盖。`nextExclusiveCandidate`（:27-39）／`writeFileExclusiveWithRetry`（:42-58）／`deliverHtml`（:72-86）三块可直接照抄，只把注释里的技能名改掉 |
 | 4 | `packages/skill-bill/src/triggers/wake-assets.ts`（986 行，**生成物**） | 内容资产 typed const：域→二级组→场景三层，74 场景逐字；并派生扁平表、id 索引、4 条 HELP 短语 | **内容全换；落点不照抄** | 派生段照抄（`WAKE_ASSETS` :968-970、`SCENE_BY_ID` :973-975、`WAKE_ASSET_TOTAL` :978、`HELP_WAKE_WORDS` 从口径层 `WAKE_TABLE` 派生 :984-986）。落点 `src/triggers/` 是**工种名**，且这份早于 `docs/agents/structure.md` 立规（该文件晚于 `fe1117e` 才提交）——居家不该照搬这个目录名（铁律四，见第 2 节） |
 | 5 | `packages/skill-bill/scripts/gen-wake-assets.mjs`（254 行） | 机器生成资产：读仓外事实源 → 逐字 `JSON.stringify` → 落盘；`--check` 只比对；形状断言 fail-closed | **做法照抄，读取段要重写** | 照抄：`--check` 分支（:243-249）、形状断言（:99-118）、新增条目段（:34-84）、`renderFile` 的「头＋JSON 中段＋尾」（:136-222）、用法注释（:7-13）。**要重写**：bill 的事实源是老实物 HTML 里的 `<script id="help-data">` payload（:25-31 的 `DEFAULT_SRC`／`DATA_OPEN`）；居家老家的事实源是 `references/scenarios.yaml`（`map-183-body.md:23`），读取与形状断言都得按 YAML 重写 |
 | 6 | `packages/skill-bill/src/cli/cmd_read.ts`（526 行） | 唯一出口。`bill.help.lookup` 的三个分支：缺省＝HELP 文件、`mode:"lookup"`＝速查表、`q`＝现找；**全部在开库之前分派** | **必须照抄这段形状** | `dispatchHelp`（:69-111）、`helpInitialized`（:84-86，用「DB 文件是否存在」判初始化）、main 里的路由（:493-495「HELP 在开库之前分派」）、交付分支（:498-510：本键产物 vs 其它命令的收据页）、退出码映射（:512-521 渲染失败 exit 5）、回执顶层追加 `delivery`（:522-523）。**居家现状相反**：`home.help.lookup` 是 `dispatch` 里的一个 `case`（`packages/skill-home/src/cli/cmd_read.ts:674-678`），而 `dispatch` 第一行就 `openHomeDb`（:56）→ `new DatabaseSync` ＋ `CREATE TABLE IF NOT EXISTS`（`src/fetch/db.ts:54-70`）＝看帮助会把库建出来并跑 DDL |
@@ -76,7 +73,7 @@
 10. **看帮助不许把库建出来**：bill 靠「在开库之前分派」（`cmd_read.ts:493-495`）＋「用 DB 文件是否存在判初始化」（:84-86），用例断言产物目录里 0 个 `.db`（`help-delivery-144.test.mjs:94-95`）。居家现状会建库（`skill-home/src/cli/cmd_read.ts:56` ＋ `src/fetch/db.ts:54-70`），且 `resolveDbPath` 自己会 `mkdirSync`（`skill-home/src/fetch/paths.ts:20-23`）——照抄前先把这条摆正。
 11. **计数一律派生，不写第二份数字**：`helpFile.ts:99-103`（域数／场景数／版本一处算、两处用）、:172-181（域级索引计数）；`wake-assets.ts:977-978` 注释写明「单源不复写第二遍数」。
 12. **三块可选内容的字段一律带着、显隐走 `hidden`**：`helpFile.ts:11-17`、:115-130；模板运行时读 `meta_blocks`／`init_banner`／`version`（`help-template.html:1650-1654`），横幅显隐判 `INIT_BANNER.hidden`（:1775）。payload 形状不随状态变，下游才敢断言同一组字段。
-13. **徽章类型词只认 5 个**：`采集／查看／选择／向导／回执`（`help-template.html:1698` 的 `TYPE_DEFAULT`；生成器断言同表，`gen-wake-assets.mjs:109-115`）。居家若要用表外的词＝要改共享模板（公共层变更，另立票）。
+13. **徽章类型词只认 10 个**：`采集／查看／结果／向导／批量／校验／选择／过程／回执／录入`（`help-template.html:1719-1730` 的 `TYPE_DEFAULT`，同 `t186-template-contract.md:42`；记账生成器只断言老实物用到的 5 个，`gen-wake-assets.mjs:109-115`）。居家若要用表外的词＝要改共享模板（公共层变更，另立票）。
 14. **`tooling/check-boundaries.mjs` 不改就红**：`skill-home` 现在 `SKILLS_BASE_FROZEN` 名单里（:37），一 import `base-paint` 就被依赖闭包与源码两道断言拦下（:39-60）。
 15. **根 `pnpm test` 会顺手改写其他技能的 `SKILL.md`**：地图已记这条已知问题（`map-183-body.md:33`），跑完 `git checkout` 还原，别把别人的文件混进提交。
 16. **包内 `test` 脚本盖不到新用例**：`packages/skill-home/package.json` 的 `scripts.test` 只跑 `../../test/scaffold.test.mjs`，而 bill 是 `node --test test/*.test.mjs`。根 `pnpm test` 的 glob 已含 `packages/skill-home/test/*.test.mjs`，但「包里绿」不能当门用——要么改包内脚本，要么把门写成根命令。

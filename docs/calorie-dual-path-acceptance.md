@@ -19,7 +19,7 @@
 | 双过 | 两条腿**都**取得达标证据才算成；任一缺失按**阻断**记。 |
 | 点亮 | 面板界面上出现内容。**"有字但字是报错"不算点亮**（§2.3）。 |
 | 严口径真调用 | 第三方平台会话里，**AI 自己**读 SKILL.md、自己执行 CLI 并交付产物；"人手动跑命令"只作旁证。 |
-| 空库同文 | 两路都报同一个错误、文本一致——只能证明"错误同文"，**不能**当数值一致的证据。 |
+| 空库同文 | 两路都报同一个错误、文本一致。取证禁令正本见 §9 第 4 条。 |
 | HITL-0 | 用维护者当天**真实记录**的数据取证（不造假、不改系统时钟、不用副本顶替）。 |
 
 ## 2 腿 1 · DSH 路
@@ -34,7 +34,7 @@
 
 - **判据**：DSH 任一 agent 会话的技能目录里出现 `skill-calorie`（名 + 介绍），可按需读全文并调用 CLI。
 - **取证**：真机 agent 会话的一句话确认（HITL）+ 回路测试 `packages/plugin-calorie/test/skills-provider.test.mjs`。
-- **现状**：代码已提交（`d5d3864`），**待发版**（`skill-calorie 0.1.2` + `dsh-calorie 0.1.7`）与真机确认（票 #56）。
+- **现状**：代码已提交（`d5d3864`），**待发版**（版本不冻在本文，取证当刻读盘查：`node -p "require('skill-calorie/package.json').version"`、`node -p "require('dsh-calorie/package.json').version"`）与真机确认（票 #56）。
 
 ### 2.3 面板数 = 直读（**点亮与"数一致"合并为一条腿**）
 
@@ -70,14 +70,14 @@
 ### 3.3 版本钉死登记
 
 - **判据**：证据记录里登记 `skills` 版本、`skill-calorie@x.y.z`、opencode 版本、`git rev-parse --short HEAD`。
-- **口径**：运行时包版本钉到**精确版本**（`npx -p skill-calorie@0.1.2 calorie-cmd-read …`，不用 `^`）；安装器同样钉精确版本，不用 `@latest`。npm 生态没有"@SHA 引用"的概念，**精确版本 + 登记 commit SHA** 即最强钉法（取代地图雾里的"未 @SHA 钉死"）。
+- **口径**：运行时包版本钉到**精确版本**（`npx -p skill-calorie@<version> calorie-cmd-read …`，其中 `<version>` 取证当刻读盘查得：`node -p "require('skill-calorie/package.json').version"`，不用 `^`）；安装器同样钉精确版本，不用 `@latest`。npm 生态没有"@SHA 引用"的概念，**精确版本 + 登记 commit SHA** 即最强钉法（取代地图雾里的"未 @SHA 钉死"）。
 
 ## 4 数据口径
 
 - **必须非空真实数据**：走 **HITL-0**——维护者当天用卡路里技能真实记一餐。
 - **不允许**：改系统时钟（会波及全机，不可逆）；用副本+哨兵**顶替**真机证据。
 - **允许**：副本+哨兵用于**脚本复现**（`demo-panel-vs-direct.mjs` 需要能反复跑），但必须在证据里标注"合成/副本"，且不得替代真机那一份。
-- **理由**：真库最新数据 2026-08-19，而面板只读今天 → 不造今日数据，两路只能同报 `ERR4`（空库同文）。
+- **理由**：真库最新数据 2026-08-19，而面板只读今天 → 不造今日数据，两路只能同报 `ERR4`（空库同文；禁令正本见 §9 第 4 条）。
 
 ## 5 判定三分
 
@@ -85,14 +85,15 @@
 | --- | --- | --- |
 | 两侧逐字段全等 + `entryCount > 0` + 直读 `exit=0` | **过** | 记入证据表 |
 | 两路都成功但字段有差异 | **挂（缺陷）** | 开修复票；不得用"差不多"顶替 |
-| 任一路 `exit≠0` / 缺参数 / 缺 env / 缺 DB | **阻断（缺证据）** | 本次**没有**取得证据；不得用"空库同文"顶替 |
+| 任一路 `exit≠0` / 缺参数 / 缺 env / 缺 DB | **阻断（缺证据）** | 本次**没有**取得证据；不得用"空库同文"顶替（正本见 §9 第 4 条） |
 
 ## 6 范围与边界
 
 - **本图只负责"技能能被正确找到并调用"**（发现性与链路），不承担本体图的功能完备性。
 - 与 MAP1 的关系：**不建原生阻塞边**。#81（唤醒词可达性）、#82（SKILL.md 门面）、#95（打包与模板装载）只作"完成后回归一次"的项——本图在乎的是"能否在 opencode 与 DSH 中正确找到技能"，不是 MAP1 的功能是否正常。
 - **面板按日参数化、面板增删改** → 全面面板图 #65，本图不改面板代码。
-- **模板资产边界（2026-09-08 实测；2026-09-09 由 #95 返修就地更正——原陈述已成假，勿再引用）**：#95 之后 `packages/skill-calorie/src/render/templates.ts` 是**运行时读盘 loader**（`readFileSync` ＋ `fileURLToPath`），6 个 `packages/skill-calorie/templates/*.html` **随包发布**（`package.json` 的 `files` 含 `templates/*.html`），并由 publish 门在安装态逐件断言可读（`node tooling/check-publish.mjs --fresh-tmp --only skill-calorie`）。仍未变的只有一点：`src/render/html.ts` 的 `pageShell` **尚未**消费该 loader（HTML 仍以代码生成）。模板接线的落点：6 模板补 `<!--INJECT-DATA-->`／自带容器 ＋ 并入 HELP 重建 = **#107**（`docs/base-paint-contract.md` §4.4／§6.1；本票不接线、不发布 base-paint）。
+- **模板资产边界（#95 返修后的正述）**：`packages/skill-calorie/src/render/templates.ts` 是**运行时读盘 loader**（`readFileSync` ＋ `fileURLToPath`），6 个 `packages/skill-calorie/templates/*.html` **随包发布**（`package.json` 的 `files` 含 `templates/*.html`），并由 publish 门在安装态逐件断言可读（`node tooling/check-publish.mjs --fresh-tmp --only skill-calorie`）。
+- **模板接线现状（#107）**：`src/photo/helpCenter.ts` 的"看板页入口"段逐件经该 loader 真读盘渲染——模板改一个字、速查台产物即变（`docs/research/t107-merge-into-help.md`）；剩下那半边未做：`<!--INJECT-DATA-->`／自带容器没补，`src/render/html.ts` 的 `pageShell` 仍以代码生成 HTML（模板属 `legacy`，`docs/base-paint-contract.md` §4.4／§6.1；本票不接线、不发布 base-paint）。
 - **已知残余（不在本图修）**：线上 URL 安装不含 `dist`（gitignored），运行时走 npm 包；本地路径安装会拷走 `dist/node_modules`（#47 遗留）。本图验收只要求"官方推荐的安装路径能用"，残余记在此处备查。
 
 ## 7 证据归档清单

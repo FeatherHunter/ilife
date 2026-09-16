@@ -15,7 +15,7 @@
 
 ## ① 必须含三件（A1，缺一即不断链）
 
-1. **加 skill 依赖**：`dsh-calorie` dependencies 追加 `skill-calorie: ^0.1.0`（正式版号）；`dsh-life-pack: workspace:*` 同步改为 `^0.1.0`。
+1. **加 skill 依赖**：`dsh-calorie` dependencies 追加 `skill-calorie: 0.2.3`（正式版号，精确 pin）；`dsh-life-pack: workspace:*` 同步改为 `^0.2.0`。
    pnpm 机制坑（本票 CI 实证）：pnpm v9+ 起 range 默认走 registry（`prefer-workspace-packages` 已被移除，
    `.npmrc` 的 `link-workspace-packages` 亦不生效），`^` 会直接把锁文件写成 registry 地址——CI 供应链策略
    （`MINIMUM_RELEASE_AGE_VIOLATION`＋`TARBALL_URL_MISMATCH`）必红，且破坏单仓 dev 环。
@@ -30,7 +30,7 @@
 
 ## 版本范围策略（B②）：同版本 `^` ＋契约测试＋changeset 联动，不用 exact
 
-- 单品声明 skill **同版本 `^`**（如 `skill-calorie ^0.1.0` 配 `dsh-calorie ^0.1.0`），随行升级不锁死。
+- 单品声明 skill **精确 pin**（实测 `dsh-calorie@0.2.4` 声明 `skill-calorie: 0.2.3`；总管 `dsh-life-pack` 走同版本线 `^0.2.0`），升级随 changeset 全链联动。
 - 不用 exact：exact 会逼 13 包锁步重发（任一 patch 即全链发版）；`^` 的漂移风险由**烟囱契约测试**在 CI 即拦
   （每单品 spawn 契约键断言 envelope `key/skill/shape/data` 全字段，见 `packages/plugin-calorie/test/smoke.test.mjs`）。
 - changeset 全链联动：一次变更同时列单品＋skill（如 `.changeset/skill-landing-48-calorie.md`），`updateInternalDependencies` 自动带补丁位。
@@ -44,13 +44,13 @@
 
 | 包 | 本地 | registry | 动作 |
 | --- | --- | --- | --- |
-| `skill-calorie` | 0.1.0＋三件 | 0.1.0（含 `base-paint: workspace:^0.1.0`） | 重发 **0.1.1**（patch） |
-| `dsh-calorie` | 0.1.0＋三件 | 0.1.0（无 skill 声明） | 重发 **0.1.1**（patch） |
+| `skill-calorie` | 0.2.3＋三件 | 0.2.3（含 `base-paint: ^0.3.0`） | 重发 **0.2.3**（minor） |
+| `dsh-calorie` | 0.2.4＋三件 | 0.2.4（`dsh-life-pack: ^0.2.0`＋`skill-calorie: 0.2.3`） | 重发 **0.2.4**（minor） |
 | `dsh-life-pack` | 0.1.0 未动 | 0.1.0 干净 | 不动，仅复核在位 |
 | `base-paint` | 0.1.0（devDep 去 workspace 化，零运行时影响） | 0.1.0 干净 | 不动，仅复核在位 |
 
-复制到其余 5 对时（待办，不在本票）：`dsh-chef/dsh-bill-ilife/dsh-home-ilife/dsh-memo-ilife/dsh-schedule-ilife`、
-`skill-chef/skill-bill/skill-home/skill-memo-ilife/skill-schedule`、`base-combos` 共 11 包同法重发 **0.1.1**；
+复制到其余 5 对时（#50 已落盘，不在本票）：`dsh-chef/dsh-bill-ilife/dsh-home-ilife/dsh-memo-ilife/dsh-schedule-ilife`、
+`skill-chef/skill-bill/skill-home/skill-memo-ilife/skill-schedule`、`base-combos` 共 11 包同法处理：5 对 10 包已重发 **0.2.0**，`base-combos` 随 base-* 三包 lockstep 抬 **0.3.2**（未发布）；
 `base-link-core/ilife-skills` 干净不动。17 包总数不变（本票动 2 发 2）。
 发布流：`pnpm publish:plan --live` 按 `tooling/publish-chain.mjs` 依赖序执行（publish-all 已删，此为重建流程）；
 发布后 `check-publish.mjs --post` 做 registry 侧复核。
@@ -61,12 +61,12 @@
 - G2 `--tarball`：`npm pack --dry-run` 清单断言（上文 files 同步）。
 - G3 `--fresh-tmp`：打实包 → fresh tmp `npm install` → 安装态断言（cliPath 落 `node_modules/<skill>` 内＋SKILL 直执行＋面板路 `readViaCli` 双路打通）。
 - `--post`：`npm view <pkg>@<ver> dependencies` 复核零 `workspace:`（带重试，应对复制延迟）。
-- 样板期 `--only dsh-calorie,skill-calorie,dsh-life-pack,base-paint`；复制后去掉跑全量。
+- 样板期 `--only dsh-calorie,skill-calorie,dsh-life-pack,base-paint`；复制后去掉跑全量。现状态（2026-09-17 实测）：**尚未去掉**——仓根 `publish:pre`／`publish:tarball`／`publish:fresh`／`publish:plan` 四条脚本与 CI `publish-gates` 仍带此 `--only`（模板资产门另用 `--only skill-calorie`）。
 
 ## 复制清单（其余 5 对逐项照抄卡路里样板）
 
-- [ ] 5 单品 package.json：`dsh-life-pack ^0.1.0`＋`skill-X ^0.1.0`；5 skill＋base-combos 去 `workspace:`；5 skill 补 `./package.json` 导出
-- [ ] 5 桥 `cliPath` 按包名解析（同 `resolveSkillCli`，仅包名常量不同）＋ `SKILL_CLI_REL` 导出
-- [ ] 5 烟囱：安装布局断言＋契约键 envelope 测试（help 键各包自定，须空库安全）
+- [x] 5 单品 package.json：`dsh-life-pack ^0.2.0`＋`skill-X 0.2.0`（精确 pin）；5 skill＋base-combos 去 `workspace:`；5 skill 补 `./package.json` 导出（#50 已发：5 对 **0.2.0**，`base-combos` 抬 **0.3.2** 未发）
+- [x] 5 桥 `cliPath` 按包名解析（同 `resolveSkillCli`，仅包名常量不同）＋ `SKILL_CLI_REL` 导出（#50 已发 **0.2.0**）
+- [x] 5 烟囱：安装布局断言＋契约键 envelope 测试（help 键各包自定，须空库安全）（#50 已发 **0.2.0**）
 - [ ] 去掉门禁/脚本/CI 中的 `--only`，跑全量 13 包；changeset 追加 11 包 patch
 - [ ] 全链 `pnpm publish:plan --live`＋`--post` 复核

@@ -1,9 +1,9 @@
 ## Question
 
-把老内容骨架与新表**逐条对账**，产出可入库的骨架清单：
+把老骨架与新表**逐条对账**，产出可入库的骨架清单：
 
 - 老：`D:\2Study\StudyNotes\SKILLS\私家大厨\references\scenarios.yaml`（页面真渲染的层是 **33 个一级分组（唤醒词组）／48 张场景卡**；「域」层在源头只写了一半——`domain:` 只出现 13 次，由 `html.template` 目录名反推出完整的 **10 域**：做菜／查看／搜索筛选／修改／历史／采购／录入／派生／开始使用／数据管理）。
-- 新：`packages/skill-chef/src/policy/wakewords.ts` 的 `WAKE_TABLE`（37 条唤醒词／8 条命令）与 `packages/skill-chef/SKILL.md` 的 HELP-AUTO 区。
+- 新：`packages/skill-chef/src/policy/wakewords.ts` 的 `WAKE_TABLE`（37 条唤醒词／8 条命令）与 `packages/skill-chef/SKILL.md` 的 HELP-AUTO 区（`packages/skill-chef/SKILL.md:61-103`，即 `<!-- HELP-AUTO-START -->`／`<!-- HELP-AUTO-END -->` 两标记之间构建期注入的「联动速查」唤醒词表；勿手改）。
 
 要回答：
 
@@ -16,8 +16,8 @@
 
 产出：`docs/skills/skill-chef/t<本票>-content-reconcile.md`（逐条对账表 ＋ 可入库骨架的机器可读清单草案）。
 
-票 5（内容资产入库）照它做；票 6 的能力目录名也取自这份对照表。
+票 5（内容资产入库）照它做。
 
-## 进度：0%
+## 进度：对账已产出并 6/6 打勾
 
-下一步：research 子代理已派，报告回来即贴票面并关票。
+状态见 issue #210（已关）；六个问题的打勾读数见 `docs/skills/skill-chef/t2-verify.md` §七。

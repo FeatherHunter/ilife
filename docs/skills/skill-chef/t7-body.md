@@ -4,12 +4,12 @@
 
 **用户 2026-09-12 已定的四项**（不再改，直接照用）：
 
-- 落盘目录＝`<SKILLS_DB_PATH>/cook_html/help/`（把老目录 `CookHub/` 换成 `cook_html/`，`help/` 子目录保留；与 `calorie_html/`／`biscuit_accountant_html/`／`home_manager_html/` 同形）。实机展开为 `D:\2Study\StudyNotes\.db\cook_html\help\`；
+- 落盘目录＝`<SKILLS_DB_PATH>/cook_html/help/`（把老目录 `CookHub/` 换成 `cook_html/`，`help/` 子目录保留；与 `calorie_html/`／`biscuit_accountant_html/`／`home_manager_html/` 同形）；
 - 文件名主体＝`私家大厨_HELP`；
 - 时间戳通式＝`YYYYMMDD_HHMMSS` ＋ 同秒 `_N` 递补、**绝不覆盖**（**`_N` 从 1 起步**，照老家 `align_08.py:52-65`，不照抄 bill 的 `_2`）；
 - **缺省＝HELP 文件**（对 AI 说「私家大厨help」就落盘＋回执绝对路径）。
 
-**落盘动作不再自持**：用户 2026-09-12 裁 **乙**，命名与落盘收成共用位，走 **`saveHtmlFile({ dir, stem, html, onExists? })`**（票 13 `#237`）。本票**只给自己的三个值**——目录／文件名主体／自家渲染好的整页；**不许在 `skill-chef` 里再留一份同逻辑的落盘件**。
+**落盘统一走共用件 `saveHtmlFile`**：用户 2026-09-12 裁 **乙**，命名与落盘归共用位——时间戳通式、同秒递补、独占写、绝对路径回执全由 **`saveHtmlFile({ dir, stem, html, onExists? })`**（`base-paint/save-html`，票 13 `#237`）钉死；正本只此一处，本包调用它。本票只出三个值：**目录**（本件 `:7` 的「落盘目录」条）、**文件名主体**（本件 `:8` 的「文件名主体」条）、自家渲染好的整页。
 
 要做的事：
 
@@ -19,13 +19,13 @@
 - 速查支走显式参数（产物名与参数名见下）；
 - 端到端验收要过测试隔离守卫 `assertWritablePath`（非 tmp 路径写库须 `CHEF_FORCE_PROD=1`，见 `src/fetch/paths.ts`）。
 
-**速查支的产物名与参数名**：老家没有这一支（老技能只有一个 HELP），卡路里给了 `卡路里_速查台_<TS>.html`、记账给了 `饼干记账_速查表_<TS>.html`。**本票自裁**，照 `onExists` 与命名通式对齐即可（票 4 不再裁这一项）。
+**速查支的产物名与参数名**：老家没有这一支（老技能只有一个 HELP），卡路里给了 `卡路里_速查台_<TS>.html`、记账给了 `饼干记账_速查表_<TS>.html`。**本票自裁**，照 `onExists` 与命名通式对齐即可（票 4 不再裁这一项）。**触发词与分名**：速查支**没有自己的唤醒词**——4 条 help 唤醒词（私家大厨HELP／菜谱HELP／查帮助／能做什么，`src/policy/wakewords.ts:13-16`）一概走缺省支，速查支只认显式参数 `{"mode":"lookup"}`（`q` 与 `mode` 互斥）；两支产物的**文件名主体互斥**（HELP＝`私家大厨_HELP`、速查＝`私家大厨_速查表`，`src/help/manifest.ts:21`／`:25`）——一个主体只对应一支产物，别让用户按一个名字打开到另一个东西。
 
-**结构按新代码架构规则**：第一步「影响清单」与第二步「结构设计」先报用户点头；被碰到的旧件就地摆正；交付时报第五步「交付对账」；超告警线当场报。
+**结构按新代码架构规则**：第一步「影响清单」与第二步「结构设计」先报用户点头；交付时报第五步「交付对账」；超告警线当场报。
 
-⚠️ **本票会碰到两个已超线件**（用户 2026-09-12 定案 350 ＋ LF 口径，实测值）：`src/cli/cmd_read.ts` **LF 388**、`src/fetch/db.ts` **LF 451**。开工前须当场报「已超线，需要根据规则进行重构。」并给拆法或说明本次为什么先不拆。告警线要写进 `packages/skill-chef/AGENTS.md`（该文件今天不存在）。
+⚠️ **本票会碰到两个已挂号超线的件**：`src/cli/cmd_read.ts`、`src/fetch/db.ts`（用户 2026-09-12 定案 350 ＋ LF 口径；告警线出处与逐件挂号表见包内规矩 `packages/skill-chef/AGENTS.md` 的「文件行数告警线」节，该文件已落盘）。**行数开工重数**、不冻在本文；开工前当场重数，超线即报「已超线，需要根据规则进行重构。」，后接为什么超 ＋ 拆法或本次先不拆的说明。
 
-顺带摆正：`packages/skill-chef/scripts/build-help.mjs:13` 从 `CHEF_KEY_SHAPES` 派生命令名，`:17` 却把「8 联动」写死——同一个数字的第二份拷贝（铁律二），本次必动这个文件，顺手改成派生。另注意该脚本从 `../dist/index.js` 导入，**必须先 build 才能跑**。
+顺带摆正：**另票**（不属本票）——`packages/skill-chef/scripts/build-help.mjs` 的「8 联动」已改成按 `CHEF_KEY_SHAPES` 派生，本票不再顺手改这一件。
 
 ## 进度：0%
 

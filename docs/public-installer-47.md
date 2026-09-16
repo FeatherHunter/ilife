@@ -19,7 +19,7 @@ npx skills@latest add FeatherHunter/ilife
 - 样板：只给 `packages/skill-calorie/SKILL.md` 加了头（`name: skill-calorie`）+
   末尾「公共安装器运行时」小节；现有布局、base 三件套、依赖一律没动。
 - 本仓库 `dist/` 不进 git：装完目录里只有 SKILL.md + 源码 + 模板，
-  没有可执行文件；运行时走 npm（`skill-calorie@0.2.0` 已发布）。
+  没有可执行文件；运行时走 npm（`skill-calorie@0.2.3` 已发布）。
   「不走 npm」的只是 skill 发现这一步。
 
 ## 常用变体
@@ -35,7 +35,7 @@ npx skills@latest list -a opencode --json                     # 查已装
 - `-g/--global`：装到用户级；默认项目级，落到 `<项目>/.agents/skills/<name>/`
  （OpenCode 与 Codex 共用此目录，锁文件区分 agent）。
 - `--copy`：拷贝代替 symlink（Windows 无开发者模式时 symlink 会失败，CLI 自动回退 copy）。
-- 分支验证期：`npx skills@latest add https://github.com/FeatherHunter/ilife/tree/feat/47-public-installer -l`。
+- 分支验证行——历史（已合入）：`npx skills@latest add https://github.com/FeatherHunter/ilife/tree/feat/47-public-installer -l`（合入提交 `2ae99fc0`；该分支已删，现按仓库 master 路径用，见本文首那条命令）。
 
 ## 验证证据（本机隔离实测，用户真实配置零触碰）
 
@@ -51,9 +51,10 @@ npx skills@latest list -a opencode --json                     # 查已装
    - 同命令加 `--html <tmp>/home.html` → exit 0，落盘 2488 字节，头为 `<section class="ilife-page" data-skill="calorie" …>`。
 5. 回归：`test/skills-export-47.test.mjs` 钉死导出头（frontmatter name=目录名、description 非空、HELP 标记块仍在、运行时小节存在；仅静态导出头，真跑/落点/端到端不在单测覆盖，见测试头注记）。
 
-## 版本钉死登记（随 0.1.1 重发同步；现为 0.2.0）
+## 版本钉死登记（随 0.1.1 重发同步；现为 0.2.3）
 
 - 三处版本硬编码已随 `0.1.1` 同步改完（SKILL.md 运行时小节、本文档发现小节、测试版本断言）；阻塞小节保留 0.1.0 历史记录备查。`#123` 发版窗口已把同一三处硬编码同步升到 `0.2.0`（`packages/skill-calorie/SKILL.md`、本文档发现小节、`test/skills-export-47.test.mjs`）。
+- 本次改写当刻实测：`packages/skill-calorie/package.json` 的 `version` 是 `0.2.3`，npm 官方源同读数（`npm view skill-calorie version` → `0.2.3`）；同一三处硬编码现均为 `0.2.3`（`packages/skill-calorie/SKILL.md` 运行时小节、本文档发现小节、`test/skills-export-47.test.mjs` 的 `NPM_PIN`）。上一段的 `0.1.1` 与 `0.2.0` 是历史登记，保留不回改。
 
 ## 已发布包阻塞（发版流修，不在本票硬上）
 
