@@ -73,3 +73,30 @@ test('b1 缺失阻断照旧：无目标且无记录即抛、不编页', () => {
   assert.throws(() => run(db, { start: '2026-09-01', end: '2026-09-07' }), /无体重目标且窗口无体重记录/);
   db.close();
 });
+
+/** #545 · 48 页副标题撤行入形状＋结论去「结论：」前缀。
+ * 判据：① 无 `class="ilife-block-page-shell-subtitle"` 元素（样式段里的类名不算）；
+ * ② 三件事仍在形状里（两端值 `wui-pair` 含「目标 65 kg」／「最新 69 kg」，窗口条 `wui-window`
+ * 日期块含起止日期）；③ 最新体重卡 `detail` 不再复读日期区间（窄卡不断散）；
+ * ④ 结论块正文无「结论：」前缀，但结论事实（还差 4 kg）仍在；⑤ 机器面不动（metrics 四项同值）。
+ */
+test('#545 副标题撤行入形状＋结论去前缀，事实与机器面不动', () => {
+  const db = tmpDb();
+  seedMain(db);
+  const r = run(db, { start: '2026-08-09', end: '2026-09-07' });
+  assert.ok(!r.html.includes('class="ilife-block-page-shell-subtitle"'), '副标题元素应整行撤掉');
+  assert.ok(r.html.includes('wui-pair'), '目标与最新应进两端值形状');
+  assert.ok(r.html.includes('目标 65 kg'), '两端值里应有目标 65 kg');
+  assert.ok(r.html.includes('最新 69 kg'), '两端值里应有最新 69 kg');
+  assert.ok(r.html.includes('wui-window'), '窗口应进窗口条形状');
+  assert.ok(r.html.includes('wui-date'), '窗口条应有日期块');
+  assert.ok(r.html.includes('2026-08-09') && r.html.includes('2026-09-07'), '窗口起止日期应在形状里');
+  assert.ok(!r.html.includes('<div class="ilife-block-kpi-card-detail">2026-08-09 ~ 2026-09-07</div>'),
+    '最新体重卡 detail 不应再复读日期区间');
+  assert.ok(!r.html.includes('结论：'), '结论块正文不应再带「结论：」前缀');
+  assert.ok(r.html.includes('还差 4 kg'), '结论事实（还差 4 kg）仍应在');
+  assert.equal(r.data.metrics.weightGoal, 65, '机器面 weightGoal 不动');
+  assert.equal(r.data.metrics.latestKg, 69, '机器面 latestKg 不动');
+  assert.equal(r.data.metrics.loggedDays, 4, '机器面 loggedDays 不动');
+  db.close();
+});
