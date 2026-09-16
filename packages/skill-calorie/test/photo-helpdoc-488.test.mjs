@@ -1,8 +1,15 @@
 /** #488 · 身材照片 HELP 整页（`calorie.help.center` 的 q 支）的机器面验收：真跑 CLI，对产物判五条——
  *  ① 完整文档四件（doctype ＋ charset ＋ viewport ＋ `<style>` ＋ `<script>`）；② 元素面零裸 `<pre>`，
- *  每条命中一个 `renderPreBlock` 命令块（`ilife-block-pre-block-code`）；③ 页尾复制区在且可点；
- *  ④ 命中数／命中项四字段／落点与产物族不回归；⑤ 命令块样式段里 `white-space: pre-wrap` ＋
- *  `overflow-x: auto` 在位（裸 `<pre>` 正是不中这两条、#484 量到 +844／+1636／+964 的来源）。
+ *  每条命中一个**行内载荷按钮**（#529 起是手写复制胶囊，不再是 `renderPreBlock` 的命令块）；
+ *  ③ 页尾复制区在且可点（#654 起是**双位**：数据三格式菜单 ＋ 日志）；④ 命中数／命中项四字段／
+ *  落点与产物族不回归；⑤ 公共层的命令块样式里 `white-space: pre-wrap` ＋ `overflow-x: auto` 在位
+ *  （裸 `<pre>` 正是不中这两条、#484 量到 +844／+1636／+964 的来源）。
+ *
+ *  **#654／#664 口径变更（本条不是放宽，是换对象）**：②③ 原先数 `renderPreBlock` 的区块类名
+ *  （`ilife-block-pre-block`／`-code`）与「加一颗页尾数据按钮」，而本页在 #529 就把行内那件改成
+ *  **手写复制胶囊**（原文只住 `data-t`，见 `src/photo/helpDoc.ts` 的 `copyButtonHtml`）；
+ *  页尾复制区在 #654 又变成双位（数据开合器不写 `data-action-id`，日志那颗占冻结的 `ilife-copy-log`）。
+ *  故本条按**当刻实现**换对象计数，条数闸门（每条命中恰一颗、页内零裸 `<pre>`）一字不动。
  *
  *  **三档横向溢出本身**（390／768／1440 的 `docScrollWidth − innerWidth`）是版面事实、住真浏览器：
  *  读数工具是 `packages/skill-calorie/scripts/measure-responsive.mjs`，本票读数（改前 → 改后）见
@@ -19,7 +26,9 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, isAbsolute, join } from 'node:path';
 import { test } from 'node:test';
-import { buildPhotoHelp, lookupPhotoHelp } from '../dist/render/index.js';
+import { COPY_ACTION_IDS } from 'base-paint';
+import { CALORIE_COPY_ACTION, buildPhotoHelp, lookupPhotoHelp } from '../dist/render/index.js';
+import { photoHelpRowsLead } from '../dist/photo/helpDocContent.js';
 
 const BIN = join(import.meta.dirname, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
@@ -33,6 +42,7 @@ const COPY_BLOCK = 'ilife-block-copy-block';
 const COPY_AREA_BUTTON = 'data-action-id="ilife-copy-log"';
 const ROW_RE = /<li [^>]*data-help-row="[^"]*"[^>]*>/g;
 const FROZEN_BUTTON_ID = 'ilife-help-copy-prompt';
+const ROW_PAYLOAD_RE = /<button[^>]*data-action-id="ilife-help-copy-prompt"[^>]*>/g;
 const DASH = '—';
 
 /** 真跑一条命令（与判据同一把尺），回产物 HTML、落点文件名与信封。 */
@@ -82,13 +92,15 @@ function decodeEntities(s) {
 }
 
 /* #529 新增的两个读数面（唤醒词徽章与清单读法）取「只数文本节点」的口径：
- *  `renderChips` 的徽章类名与 `renderPreBlock` 的代码格类名都在这里各写一份——改类名即红，
- *  不让测试依赖网页里别处的同名子串。 */
+ *  `renderChips` 的徽章类名在这里写一份——改类名即红，不让测试依赖网页里别处的同名子串。
+ *  （原另有 `PRE_CODE_RE`／`PAYLOAD_HINT` 两条读数，读的是行内那格提示文本；行内在 #529 改成
+ *  手写胶囊、那格随折叠块一起撤了，两条读数一并退休。） */
 const CHIP_OPEN = '<span class="ilife-block-chip">';
-const PRE_CODE_RE = /<pre class="ilife-block-pre-block-code">([^<]*)<\/pre>/g;
 const SAY_TAG = '说这句';
-const ROWS_LEAD = '每条点开都有一句原文，按一下按钮就复制走，粘给我就能用';
-const PAYLOAD_HINT = '点下面按钮复制，发给我就能用。原文是给 AI 读的，你不用看懂';
+/** 清单读法那一句**不手抄**：按当刻实现派生（`photoHelpRowsLead(按钮文案)`），文案改一次这里跟一次——
+ *  原先这里写死的是 #529 中间态那句，实现改过之后它恒 0 命中（读数从「恰一处」变成「0 处」），
+ *  这正是本条要治的陈旧钉法。 */
+const ROWS_LEAD = photoHelpRowsLead(CALORIE_COPY_ACTION.label);
 
 /* ── 五条闸门（各是独立函数：变异自证直接喂改坏的文本给它们） ─────────────── */
 
@@ -109,28 +121,41 @@ function assertFullDoc(html, label) {
   assert.equal((html.match(/<script[\s\S]*?<\/script>/gi) ?? []).length, 1, label + '：脚本段应有且只有一段（页面运行时）');
 }
 
-/** ②③ 行与命令块：行数＝命中数，命令块走 `renderPreBlock` 的类名，页内零裸 `<pre>`，复制区在。
+/** ②③ 行与载荷：行数＝命中数，**每条命中恰一颗行内载荷按钮**（口径见件头：按当刻手写胶囊数，
+ *  不再数 `renderPreBlock` 的区块类名），页内零裸 `<pre>`，页尾复制区（双位）在且两颗都是活的。
  *
- *  **#529 口径变更**：命令块从「正文平铺」改成「折叠块里的可复制载荷」（`renderDisclosure`），
- *  故类名从 `<pre class="…">` 的标签面改成**命令块元素**计数（展开才看得见，机器面一样数得到）；
- *  条数闸门与改前一致（每条命中恰一个命令块）。 */
+ *  行内那颗的 id 取冻结的「复制指令」；页尾那颗日志取冻结的 `ilife-copy-log`；页尾**数据那颗**是
+ *  三格式菜单的**开合器**——按契约它不写 `data-action-id`（`COPY_MENU_OPEN_ATTR`），故 `buttonsOf`
+ *  的口径里只有「行内 hits 颗 ＋ 页尾日志 1 颗」。 */
+function rowPayloadsOf(html) {
+  return faceOf(html).match(ROW_PAYLOAD_RE) ?? [];
+}
 function preBlocksOf(html) {
-  return faceOf(html).match(/<div class="ilife-block ilife-block-pre-block">/g) ?? [];
+  return faceOf(html).match(new RegExp('<div class="ilife-block ilife-block-pre-block">', 'g')) ?? [];
+}
+function preCodesOf(html) {
+  return faceOf(html).match(new RegExp('<pre class="' + PRE_CLASS + '">', 'g')) ?? [];
 }
 function assertRows(html, hits, label) {
   const el = faceOf(html);
   assert.equal(rowsOf(html), hits, label + '：页内命中行数 ≠ 命中数');
   assert.deepEqual(barePresOf(html), [], label + '：出现裸 `<pre>`（无类名 → 不中 pre-wrap／overflow-x，窄屏必溢出）');
-  assert.equal(preBlocksOf(html).length, hits, label + '：命令块数 ≠ 命中数');
-  assert.equal((el.match(new RegExp('<pre class="' + PRE_CLASS + '">', 'g')) ?? []).length, hits,
-    label + '：带类名的 `<pre>` 数 ≠ 命中数');
+  assert.equal(rowPayloadsOf(html).length, hits, label + '：行内载荷按钮数 ≠ 命中数');
+  // 反向：本页行内已改手写胶囊，`renderPreBlock` 的区块与代码格**一个都不许有**（换对象，不是放宽）。
+  assert.equal(preBlocksOf(html).length + preCodesOf(html).length, 0,
+    label + '：不许再出现 renderPreBlock 的区块／代码格（行内已改手写胶囊）');
   assert.ok(el.includes(COPY_BLOCK), label + '：页尾复制区（' + COPY_BLOCK + '）不在');
-  assert.ok(el.includes(COPY_AREA_BUTTON), label + '：复制区没有可点的复制按钮');
+  assert.ok(el.includes(COPY_AREA_BUTTON), label + '：复制区没有可点的复制日志按钮');
   const buttons = buttonsOf(html);
-  assert.equal(buttons.length, hits + 1, label + '：复制按钮应为「每条命中一颗 ＋ 复制区一颗」');
+  assert.equal(buttons.length, hits + 1, label + '：复制按钮应为「每条命中一颗 ＋ 页尾日志一颗」');
   for (let i = 0; i < hits; i += 1) {
     assert.equal(buttons[i].actionId, FROZEN_BUTTON_ID, label + '：第 ' + (i + 1) + ' 颗按钮的 actionId 未取冻结表');
+    assert.ok(buttons[i].text !== '', label + '：第 ' + (i + 1) + ' 颗行内载荷没带 data-t（点不动的死按钮）');
   }
+  assert.equal(buttons[hits].actionId, COPY_ACTION_IDS.actionBar.copyLog,
+    label + '：页尾那颗应是冻结的复制日志（#654：有数据位、无日志位时不再补禁用占位）');
+  assert.ok(buttons[hits].text !== '', label + '：页尾复制日志的载荷空了（死按钮）');
+  assert.equal(/\sdisabled(?=[\s>])/.test(el), false, label + '：页内不许出现任何禁用态（点不动的假控件）');
 }
 
 /** ④ 页面与取数同源：每条命中的可复制内容逐字等于该行的 exec（顺序同源）。 */
@@ -214,11 +239,11 @@ function assertOncePerPage(html, hits, label) {
   assert.equal((el.match(/class="ilife-helpdoc-lead"/g) ?? []).length, 1, label + '：清单读法应恰一处');
   assert.equal(vis.split(ROWS_LEAD).length - 1, 1, label + '：清单读法在可见文本里出现了不止一次');
   assert.equal(vis.split(SAY_TAG).length - 1, hits, label + '：每行应恰有一枚「' + SAY_TAG + '」标签（行数 ' + hits + '）');
-  const hints = [...el.matchAll(PRE_CODE_RE)].map((m) => decodeEntities(m[1]));
-  assert.equal(hints.length, hits, label + '：命令块的格子数 ≠ 行数');
-  for (const one of hints) {
-    assert.equal(one, PAYLOAD_HINT, label + '：命令块格子里的话不是那一句（改前是逐条原文，机上不许回屏）');
-  }
+  // 行内载荷：每行恰一颗、且颗颗带 `data-t`（#529 起原文只住属性；「一页一处」的口径落在**按钮颗数**上，
+  // 而不是老实现那格重复十遍的提示文本——那格随折叠块一起撤了）。
+  assert.equal(rowPayloadsOf(el).length, hits, label + '：行内载荷按钮数 ≠ 行数');
+  assert.equal(rowPayloadsOf(el).filter((t) => !/data-t="[^"]+"/.test(t)).length, 0,
+    label + '：有行内载荷按钮没带 data-t（点一下复制到空文本的死按钮）');
 }
 
 /** ⑤ 不溢出的机器面：公共层命令块样式（`white-space: pre-wrap` ＋ `overflow-x: auto`）在位。
@@ -310,9 +335,10 @@ test('④ 变异自证：八类改坏都必红、改回必绿', () => {
   const oneRowLess = html.replace(/<li data-help-row[\s\S]*?<\/li>/, '');
   assert.notEqual(oneRowLess, html, '变异一未生效（没删掉那行）');
   mustThrow('删一行', () => assertRows(oneRowLess, hits, '变异一'));
-  // 变异二：命令块退回裸 `<pre>` → 裸 pre 闸门必红。
-  const barePre = html.replace(new RegExp('<pre class="' + PRE_CLASS + '"', 'g'), '<pre');
-  assert.notEqual(barePre, html, '变异二未生效（命令块没退回裸 pre）');
+  // 变异二：往页里塞一段**裸 `<pre>`**（无类名 → 不中 pre-wrap／overflow-x，窄屏必溢出）→ 裸 pre 闸门必红。
+  //（原变异是「把命令块退回裸 pre」——本页行内已改手写胶囊、页内一个 `<pre>` 都没有，故改成塞进去。）
+  const barePre = html.replace('<div class="ilife-helpdoc-copy">', '<div class="ilife-helpdoc-copy"><pre>raw-command</pre>');
+  assert.notEqual(barePre, html, '变异二未生效（裸 pre 没塞进去）');
   mustThrow('裸 pre', () => assertRows(barePre, hits, '变异二'));
   // 变异三：摘掉 doctype → 完整文档闸门必红。
   const noDoctype = html.replace('<!doctype html>', '');
@@ -323,8 +349,9 @@ test('④ 变异自证：八类改坏都必红、改回必绿', () => {
   assert.notEqual(looseWrap, html, '变异四未生效（pre-wrap 没摘掉）');
   mustThrow('命令块不折行', () => assertPreRules(looseWrap, '变异四'));
   // 变异五（#529 新牙口）：把命令原文塞回**可见文本** → 原文不上屏闸门必红。
-  const leaked = html.replace('<div class="ilife-block-disclosure-body">',
-    '<div class="ilife-block-disclosure-body"><span>' + expected[0].exec.replace(/&/g, '&amp;') + '</span>');
+  //（原落点是行内折叠体的正文；本页折叠体已撤，故改成塞进页尾复制区那一块。）
+  const leaked = html.replace('<div class="ilife-helpdoc-copy">',
+    '<div class="ilife-helpdoc-copy"><span>' + expected[0].exec.replace(/&/g, '&amp;') + '</span>');
   assert.notEqual(leaked, html, '变异五未生效（原文没塞回正文）');
   mustThrow('原文回屏', () => assertPayloadOffScreen(leaked, expected, '变异五'));
   // 变异六（#529 新牙口）：把命令键印成文本节点 → 标识符不上屏闸门必红。
@@ -349,5 +376,6 @@ test('④ 变异自证：八类改坏都必红、改回必绿', () => {
   assertKeysOnlyAsAttribute(html, expected, '原产物');
   assertOncePerPage(html, hits, '原产物');
   assertPreRules(html, '原产物');
-  console.log('MUTATION-GREEN #488 改回必绿：各条闸门全过（命中数=' + hits + '，页内命令块=' + hits + '，复制按钮=' + (hits + 1) + '）');
+  console.log('MUTATION-GREEN #488 改回必绿：各条闸门全过（命中数=' + hits + '，行内载荷=' + hits
+    + '，复制按钮=' + (hits + 1) + '，页内禁用态=0）');
 });

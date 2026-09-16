@@ -14,6 +14,11 @@
  *
  * **变异自证**：把产物里的中文标签换回 `text`（模拟「改坏了」）→ ① 必红；原样 → 必绿。
  *
+ * **#664（本席位）口径对齐（换对象，不放宽）**：① 的「双按钮」原来写成 `日志按钮数 >= 1`（写页必须有），
+ * 而公共层 #336 那条「有数据位、无日志位就补一颗禁用占位」的兜底已被 #654 撤掉：当刻**只有真接线的页**
+ * 才出那颗日志。故本条改成**逐页写死期望颗数**（有数据位就该是 1 颗真日志；0 颗＝接线缺口，
+ * 当刻两页在册——见 `LOG_GAP_IDS`），并**不许**退回「0 或 1 都行」这种放宽写法。
+ *
  * 跑法：`node --test packages/skill-calorie/test/t496-文案统一.test.mjs`
  *（先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
  */
@@ -170,6 +175,11 @@ function readings(c) {
 const READ_RUNS = PAGE_CASES.map((c) => ({ c, r: readings(c) }));
 const WRITE_RUNS = STATUS_CASES.map((c) => ({ c, r: readings(c) }));
 
+/** 复制日志**接线缺口**（#664 登记，属饮食族欠账、不在本票写集）：这两页的复制区当刻只出数据那颗
+ *  （装配件走 `dataCopyArea` 而不是 `copyArea({data, log})`，没有命令原文可填第 4 段）。
+ *  **钉缺口的写法**：期望写死 0；哪天接线补上，本条即红，届时把该 id 从这里摘掉即可。 */
+const LOG_GAP_IDS = new Set(['#9/#10 看营养分析', '#11 看每日六因素']);
+
 for (const { c, r } of [...READ_RUNS, ...WRITE_RUNS]) {
   test('#496 ① 复制区逐页：中文菜单 ≫ 双按钮 ≫ 无同名标题 —— ' + c.id + '（' + c.key + '）', () => {
     console.log('READING #496 复制区 ' + c.id + ' 标签=' + JSON.stringify(r.labels.map((x) => x.label))
@@ -180,12 +190,29 @@ for (const { c, r } of [...READ_RUNS, ...WRITE_RUNS]) {
       assert.equal(r.logButtons.length, 0, c.id + ' 空态页不该出复制日志按钮');
       return;
     }
+    const checkCopy = (html) => {
+      const logN = (html.match(/<button[^>]*data-action-id="ilife-copy-log"[^>]*>/g) ?? []).length;
+      const menuN = (html.match(/data-fmt-open="1"/g) ?? []).length;
+      const wantLog = LOG_GAP_IDS.has(c.id) ? 0 : 1;
+      assert.equal(menuN, 1, c.id + ' 复制区应有且只有一颗「复制数据」三格式菜单开合器');
+      assert.equal(logN, wantLog, c.id + ' 复制区「复制日志」按钮数 ≠ ' + wantLog
+        + (wantLog === 1 ? '（有数据位就该出那颗真日志；0 颗＝接线掉了）' : '（当刻接线缺口：只出数据一颗）'));
+      assert.equal(/class="[^"]*copy-btn[^"]*"[^>]*disabled/.test(html), false,
+        c.id + '：复制按钮不许是禁用态（点不动的假控件＝#654 撤掉的那套）');
+    };
     assert.deepEqual(r.labels, [
       { key: 'text', label: '纯文本' }, { key: 'json', label: 'JSON' }, { key: 'csv', label: 'CSV' },
     ], c.id + ' 复制菜单的可见标签不是三个中文格式名（机器面 data-fmt 键值仍须是 text/json/csv）');
     assert.ok(r.nDataMenu >= 1, c.id + ' 复制区没有「复制数据」三格式菜单开合器');
     assert.equal(r.sameTitle, false, c.id + ' 出了与复制按钮同名的标题');
-    assert.ok(r.logButtons.length >= 1, c.id + ' 复制区没有「复制日志」按钮（写页必须有）');
+    checkCopy(r.html);
+    // 变异两向：把日志那颗从产物里摘掉 ⇒ 上面这条必红（接线的页 1→0）；原产物再判一次必绿。
+    if (!LOG_GAP_IDS.has(c.id)) {
+      const noLog = r.html.replace(/<button[^>]*data-action-id="ilife-copy-log"[^>]*>[\s\S]*?<\/button>/, '');
+      assert.notEqual(noLog, r.html, c.id + ' 变异未生效（日志那颗没摘掉）');
+      assert.throws(() => checkCopy(noLog), /按钮数 ≠ 1/, c.id + ' 变异未红：摘掉日志后判据应当红');
+      checkCopy(r.html);
+    }
   });
 }
 
