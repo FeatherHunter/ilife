@@ -34,6 +34,6 @@ export const GOAL_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 373, wakeWord: '我距离目标还差什么', scene: '10', kind: 'exec', key: 'calorie.view.goal-weight', cli: 'calorie-cmd-read calorie.view.goal-weight --params \'{"window":"7d"}\'' },
   { list: 'new', order: 4, wakeWord: '看目标配置', scene: '06', kind: 'exec', key: 'calorie.view.goal-config', cli: 'calorie-cmd-read calorie.view.goal-config' },
   { list: 'new', order: 5, wakeWord: '看目标状态', scene: '06', kind: 'exec', key: 'calorie.view.goal-status', cli: 'calorie-cmd-read calorie.view.goal-status' },
-  { list: 'new', order: 57, wakeWord: '看目标预检', scene: '06', kind: 'exec', key: 'calorie.view.goal-wizard', cli: 'calorie-cmd-read calorie.view.goal-wizard' },
+  { list: 'new', order: 56, wakeWord: '看目标预检', scene: '06', kind: 'exec', key: 'calorie.view.goal-wizard', cli: 'calorie-cmd-read calorie.view.goal-wizard' },
   { list: 'repair', order: 0, wakeWord: '看目标推荐', scene: '06', kind: 'exec', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
 ];

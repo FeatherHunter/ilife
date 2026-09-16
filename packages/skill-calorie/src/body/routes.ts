@@ -23,6 +23,6 @@ export const BODY_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 249, wakeWord: '删围度', scene: '08', kind: 'exec', key: 'calorie.body.measure-remove', cli: 'calorie-cmd-read calorie.body.measure-remove --params \'{"id":1}\'' },
   { list: 'new', order: 24, wakeWord: '看体成分', scene: '08', kind: 'exec', key: 'calorie.view.body-composition', cli: 'calorie-cmd-read calorie.view.body-composition' },
   { list: 'new', order: 25, wakeWord: '看围度记录', scene: '08', kind: 'exec', key: 'calorie.view.body-measure', cli: 'calorie-cmd-read calorie.view.body-measure' },
-  { list: 'new', order: 52, wakeWord: '看围度向导', scene: '08', kind: 'exec', key: 'calorie.view.measure-wizard', cli: 'calorie-cmd-read calorie.view.measure-wizard' },
-  { list: 'new', order: 53, wakeWord: '看体脂向导', scene: '08', kind: 'exec', key: 'calorie.view.composition-wizard', cli: 'calorie-cmd-read calorie.view.composition-wizard' },
+  { list: 'new', order: 51, wakeWord: '看围度向导', scene: '08', kind: 'exec', key: 'calorie.view.measure-wizard', cli: 'calorie-cmd-read calorie.view.measure-wizard' },
+  { list: 'new', order: 52, wakeWord: '看体脂向导', scene: '08', kind: 'exec', key: 'calorie.view.composition-wizard', cli: 'calorie-cmd-read calorie.view.composition-wizard' },
 ];

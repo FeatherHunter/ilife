@@ -26,7 +26,7 @@ export const PHOTO_ROUTES: readonly RouteDecl[] = [
   { list: 'new', order: 15, wakeWord: '对比身材照', scene: '09', kind: 'exec', key: 'calorie.photo.compare', cli: 'calorie-cmd-read calorie.photo.compare --params \'{"id1":1,"id2":2}\'' },
   { list: 'new', order: 16, wakeWord: '做身材照GIF', scene: '09', kind: 'exec', key: 'calorie.photo.gif', cli: 'calorie-cmd-read calorie.photo.gif --params \'{"tag":"正面"}\'' },
   { list: 'new', order: 17, wakeWord: '看身材照HELP', scene: '09', kind: 'exec', key: 'calorie.help.center', cli: 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'' },
-  { list: 'new', order: 54, wakeWord: '看身材照向导', scene: '09', kind: 'exec', key: 'calorie.view.photo-log-wizard', cli: 'calorie-cmd-read calorie.view.photo-log-wizard' },
-  { list: 'new', order: 55, wakeWord: '看GIF规划器', scene: '09', kind: 'exec', key: 'calorie.view.gif-planner', cli: 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'' },
-  { list: 'new', order: 68, wakeWord: '选身材照', scene: '09', kind: 'exec', key: 'calorie.view.photo-picker', cli: 'calorie-cmd-read calorie.view.photo-picker' },
+  { list: 'new', order: 53, wakeWord: '看身材照向导', scene: '09', kind: 'exec', key: 'calorie.view.photo-log-wizard', cli: 'calorie-cmd-read calorie.view.photo-log-wizard' },
+  { list: 'new', order: 54, wakeWord: '看GIF规划器', scene: '09', kind: 'exec', key: 'calorie.view.gif-planner', cli: 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'' },
+  { list: 'new', order: 67, wakeWord: '选身材照', scene: '09', kind: 'exec', key: 'calorie.view.photo-picker', cli: 'calorie-cmd-read calorie.view.photo-picker' },
 ];

@@ -3,7 +3,7 @@
  * 权威是声明层：`src/cli/legacy/routes/scene-NN.ts`（未搬迁清单，一场景一件）与各能力
  * `src/<能力>/routes.ts`（已搬迁键，一能力一件）。本件只做「按 `list` 分组、按 `order` 升序」的
  * 排序与拼接，不含任何顺序知识——顺序事实只住声明的 `order` 字段，换文件搬动不会打乱顺序。
- * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 69 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 507 条（与声明逐条自洽：`pnpm gen:check` 验真）。
+ * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 68 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 506 条（与声明逐条自洽：`pnpm gen:check` 验真）。
  */
 import type { ExecWakeRoute, WakeRoute } from './routeSpec.js';
 
@@ -448,7 +448,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '定运动目标', scene: '06', kind: 'exec', key: 'calorie.goal.exercise', cli: 'calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'' },
 ];
 
-/** 69 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
+/** 68 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
 export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '存身材照', scene: '09', kind: 'exec', key: 'calorie.photo.add', cli: 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'' },
   { wakeWord: '移除身材照', scene: '09', kind: 'exec', key: 'calorie.photo.remove', cli: 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'' },
@@ -477,7 +477,6 @@ export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看体成分', scene: '08', kind: 'exec', key: 'calorie.view.body-composition', cli: 'calorie-cmd-read calorie.view.body-composition' },
   { wakeWord: '看围度记录', scene: '08', kind: 'exec', key: 'calorie.view.body-measure', cli: 'calorie-cmd-read calorie.view.body-measure' },
   { wakeWord: '看训练计划', scene: '05', kind: 'exec', key: 'calorie.view.plan', cli: 'calorie-cmd-read calorie.view.plan' },
-  { wakeWord: '看构建向导', scene: '05', kind: 'exec', key: 'calorie.view.plan-wizard', cli: 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\'' },
   { wakeWord: '看运动目标', scene: '04', kind: 'exec', key: 'calorie.view.exercise-goal', cli: 'calorie-cmd-read calorie.view.exercise-goal' },
   { wakeWord: '看体重预测', scene: '10', kind: 'exec', key: 'calorie.view.predict', cli: 'calorie-cmd-read calorie.view.predict --params \'{"horizonDays":7,"window":"14d"}\'' },
   { wakeWord: '看异常诊断', scene: '10', kind: 'exec', key: 'calorie.view.anomaly', cli: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"diet_over","window":"7d"}\'' },
@@ -526,5 +525,5 @@ export const COVERAGE_REPAIR_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看目标推荐', scene: '06', kind: 'exec', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
 ];
 
-/** 全量路由（437 条 SoT ＋ 69 条新拟 ＋ 1 条覆盖修复） */
+/** 全量路由（437 条 SoT ＋ 68 条新拟 ＋ 1 条覆盖修复） */
 export const ALL_ROUTES: readonly WakeRoute[] = [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES];
