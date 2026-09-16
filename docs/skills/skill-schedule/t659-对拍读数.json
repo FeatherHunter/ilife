@@ -1,0 +1,1042 @@
+{
+  "ticket": 659,
+  "side": "schedule",
+  "at": "2026-09-16T17:26:22.394Z",
+  "old": [
+    {
+      "id": "S-A",
+      "side": "old",
+      "title": "首跑 · 远端空（合成写的基线）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-wXEYcb",
+      "seeded": null,
+      "state": {},
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "action": "created",
+        "id": 1,
+        "event": {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "category": null,
+          "feishu_event_id": "fs_evt_1",
+          "last_synced_at": "2026-09-16 17:26:23",
+          "is_active": 1,
+          "completion": null,
+          "completion_note": null
+        },
+        "feishu": "created_feishu"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"action\": \"created\", \"id\": 1, \"event\": {\"id\": 1, \"date\": \"2026-09-20\", \"time_start\": \"09:00\", \"time_end\": \"10:00\", \"title\": \"晨会\", \"notes\": \"周会\", \"category\": nu",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": "fs_evt_1",
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_evt_1"
+      ],
+      "callsTotal": 9,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +create"
+      ],
+      "callsRepeat": {
+        "of": "calendar +create",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "作息管家自动同步 · 周会",
+          "start": "2026-09-20T09:00:00+08:00"
+        }
+      ]
+    },
+    {
+      "id": "S-B",
+      "side": "old",
+      "title": "重复调用 · 同三元组（幂等）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-6PigxW",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {},
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "action": "found",
+        "id": 1,
+        "event": {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "category": null,
+          "feishu_event_id": "fs_evt_1",
+          "last_synced_at": "2026-09-16 17:26:24",
+          "is_active": 1,
+          "completion": null,
+          "completion_note": null
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"action\": \"found\", \"id\": 1, \"event\": {\"id\": 1, \"date\": \"2026-09-20\", \"time_start\": \"09:00\", \"time_end\": \"10:00\", \"title\": \"晨会\", \"notes\": \"周会\", \"category\": null",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": "fs_evt_1",
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 0,
+      "callsHead": [],
+      "callsRepeat": null,
+      "creates": []
+    },
+    {
+      "id": "S-C",
+      "side": "old",
+      "title": "本地有、远端无 id（缺哪边建哪边）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-rK7VYG",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {},
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "action": "found",
+        "id": 1,
+        "event": {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "category": null,
+          "feishu_event_id": "fs_evt_1",
+          "last_synced_at": "2026-09-16 17:26:25",
+          "is_active": 1,
+          "completion": null,
+          "completion_note": null
+        },
+        "feishu": "created_feishu"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"action\": \"found\", \"id\": 1, \"event\": {\"id\": 1, \"date\": \"2026-09-20\", \"time_start\": \"09:00\", \"time_end\": \"10:00\", \"title\": \"晨会\", \"notes\": \"周会\", \"category\": null",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": "fs_evt_1",
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_evt_1"
+      ],
+      "callsTotal": 9,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +create"
+      ],
+      "callsRepeat": {
+        "of": "calendar +create",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "作息管家自动同步 · 周会",
+          "start": "2026-09-20T09:00:00+08:00"
+        }
+      ]
+    },
+    {
+      "id": "S-D",
+      "side": "old",
+      "title": "远端整平台不可用（ensure 路径：降级还是挂住）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-03CNjm",
+      "seeded": null,
+      "state": {
+        "mode": "unavailable"
+      },
+      "exit": null,
+      "timedOut": true,
+      "receipt": null,
+      "parseErr": "出口 stdout 为空（exit=null，stderr=）",
+      "stdoutHead": "",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 472,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event"
+      ],
+      "callsRepeat": {
+        "of": "calendar +search-event",
+        "times": 469
+      },
+      "creates": []
+    },
+    {
+      "id": "S-E",
+      "side": "old",
+      "title": "本地无 id ＋ 远端已有同四元组（ensure 路径：远端判重）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-JHLHQq",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "events": [
+          {
+            "event_id": "fs_seed_1",
+            "summary": "晨会",
+            "description": "作息管家自动同步",
+            "start": "2026-09-20T09:00:00+08:00",
+            "end": "2026-09-20T10:00:00+08:00"
+          }
+        ]
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "action": "found",
+        "id": 1,
+        "event": {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "category": null,
+          "feishu_event_id": "fs_seed_1",
+          "last_synced_at": "2026-09-16 17:26:52",
+          "is_active": 1,
+          "completion": null,
+          "completion_note": null
+        },
+        "feishu": "found_feishu"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"action\": \"found\", \"id\": 1, \"event\": {\"id\": 1, \"date\": \"2026-09-20\", \"time_start\": \"09:00\", \"time_end\": \"10:00\", \"title\": \"晨会\", \"notes\": \"周会\", \"category\": null",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": "fs_seed_1",
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_seed_1"
+      ],
+      "callsTotal": 8,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event"
+      ],
+      "callsRepeat": {
+        "of": "calendar +search-event",
+        "times": 4
+      },
+      "creates": []
+    },
+    {
+      "id": "S-F",
+      "side": "old",
+      "title": "本地无 id ＋ 远端已有同四元组（重同步路径：远端判重接没接）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-akhcgc",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "events": [
+          {
+            "event_id": "fs_seed_1",
+            "summary": "晨会",
+            "description": "作息管家自动同步",
+            "start": "2026-09-20T09:00:00+08:00",
+            "end": "2026-09-20T10:00:00+08:00"
+          }
+        ]
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": null,
+      "parseErr": "出口回执非 JSON：🔄 重同步 2026-09-20 到飞书日历 ...\r\n  飞书探测：✅ 全可用\r\n    路径：.\\lark-cli.CMD\r\n    版本：1.0.59-stub\r\n\r\n  [Phase 0] 反向对账:把飞书侧存在但 DB 缺 ID 的事件关联起来\r\n  → 对账:发现 1 条可回填\r\n       DB #  1 \"晨会\"  ←  飞书 fs_seed_1...\r\n  ? 是否回填这些 feishu_event_id? [Y/n]:      ✓ DB #1 → fs_seed_1\r\n  是否更新飞书事件「晨会」？[Y/n] [Y/n]: \r\n  ✅ 完成\r\n ",
+      "stdoutHead": "🔄 重同步 2026-09-20 到飞书日历 ...\r",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": "fs_seed_1",
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_seed_1"
+      ],
+      "callsTotal": 14,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +update"
+      ],
+      "callsRepeat": {
+        "of": "calendar +update",
+        "times": 1
+      },
+      "creates": []
+    },
+    {
+      "id": "S-G",
+      "side": "old",
+      "title": "远端可探、创建失败（真降级档）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-LjYMpC",
+      "seeded": null,
+      "state": {
+        "createFails": true
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "action": "created",
+        "id": 1,
+        "event": {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "category": null,
+          "feishu_event_id": null,
+          "last_synced_at": null,
+          "is_active": 1,
+          "completion": null,
+          "completion_note": null
+        },
+        "feishu": "unavailable"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"action\": \"created\", \"id\": 1, \"event\": {\"id\": 1, \"date\": \"2026-09-20\", \"time_start\": \"09:00\", \"time_end\": \"10:00\", \"title\": \"晨会\", \"notes\": \"周会\", \"category\": nu",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 9,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +create"
+      ],
+      "callsRepeat": {
+        "of": "calendar +create",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "作息管家自动同步 · 周会",
+          "start": "2026-09-20T09:00:00+08:00"
+        }
+      ]
+    },
+    {
+      "id": "S-H",
+      "side": "old",
+      "title": "重同步 · 远端整平台不可用（阻断档）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-y97Elf",
+      "seeded": null,
+      "state": {
+        "mode": "unavailable"
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": null,
+      "parseErr": "出口回执非 JSON：❌ 飞书不可用:partial\r\n   auth status 失败：lark-cli 无输出（exit=3）\r\nargs: auth status\r\nstderr: stub-lark: 挡板 unavailable 模式：远端平台不可用",
+      "stdoutHead": "❌ 飞书不可用:partial\r",
+      "stderrHead": "",
+      "local": [],
+      "remoteAfter": [],
+      "callsTotal": 2,
+      "callsHead": [
+        "--version",
+        "auth status"
+      ],
+      "callsRepeat": {
+        "of": "auth status",
+        "times": 1
+      },
+      "creates": []
+    },
+    {
+      "id": "S-I",
+      "side": "old",
+      "title": "远端孤儿：带标记的该清、不带标记的不许动（归属判据）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-old-0RGFOp",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "events": [
+          {
+            "event_id": "fs_orphan_mine",
+            "summary": "我建的孤儿",
+            "description": "作息管家自动同步",
+            "start": "2026-09-20T14:00:00+08:00",
+            "end": "2026-09-20T15:00:00+08:00"
+          },
+          {
+            "event_id": "fs_orphan_other",
+            "summary": "别人建的",
+            "description": "手建的，不归它管",
+            "start": "2026-09-20T16:00:00+08:00",
+            "end": "2026-09-20T17:00:00+08:00"
+          }
+        ]
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": null,
+      "parseErr": "出口回执非 JSON：🔄 重同步 2026-09-20 到飞书日历 ...\r\n  飞书探测：✅ 全可用\r\n    路径：.\\lark-cli.CMD\r\n    版本：1.0.59-stub\r\n\r\n  [Phase 0] 反向对账:把飞书侧存在但 DB 缺 ID 的事件关联起来\r\n  → 对账:DB 端无缺 ID 的事件\r\n  是否创建飞书事件「晨会」？[Y/n] [Y/n]:   是否删除飞书事件「我建的孤儿」？[Y/n] [Y/n]: \r\n  ✅ 完成\r\n     created=1  updated=0  deleted=1  skipped=0  errors=0",
+      "stdoutHead": "🔄 重同步 2026-09-20 到飞书日历 ...\r",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": "fs_evt_1",
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_orphan_other",
+        "fs_evt_2"
+      ],
+      "callsTotal": 15,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +search-event",
+        "calendar +create",
+        "calendar events"
+      ],
+      "callsRepeat": {
+        "of": "calendar events",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "周会 | 作息管家自动同步",
+          "start": "2026-09-20T09:00:00+08:00"
+        }
+      ]
+    }
+  ],
+  "new": [
+    {
+      "id": "S-A",
+      "side": "new",
+      "title": "首跑 · 远端空（合成写的基线）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-iXX8kw",
+      "seeded": null,
+      "state": {},
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已补计划：1"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已补计划：1\"}}",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-iXX8kw\\db\\schedule_data.db",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 0,
+      "callsHead": [],
+      "callsRepeat": null,
+      "creates": []
+    },
+    {
+      "id": "S-B",
+      "side": "new",
+      "title": "重复调用 · 同三元组（幂等）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-aYdeEW",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {},
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已存在（幂等未重复）：1"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已存在（幂等未重复）：1\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 0,
+      "callsHead": [],
+      "callsRepeat": null,
+      "creates": []
+    },
+    {
+      "id": "S-C",
+      "side": "new",
+      "title": "本地有、远端无 id（缺哪边建哪边）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-BAIiwG",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {},
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已存在（幂等未重复）：1"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已存在（幂等未重复）：1\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 0,
+      "callsHead": [],
+      "callsRepeat": null,
+      "creates": []
+    },
+    {
+      "id": "S-D",
+      "side": "new",
+      "title": "远端整平台不可用（ensure 路径：降级还是挂住）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-y89q8X",
+      "seeded": null,
+      "state": {
+        "mode": "unavailable"
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已补计划：1"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已补计划：1\"}}",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-y89q8X\\db\\schedule_data.db",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 0,
+      "callsHead": [],
+      "callsRepeat": null,
+      "creates": []
+    },
+    {
+      "id": "S-E",
+      "side": "new",
+      "title": "本地无 id ＋ 远端已有同四元组（ensure 路径：远端判重）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-1EdZx9",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "events": [
+          {
+            "event_id": "fs_seed_1",
+            "summary": "晨会",
+            "description": "作息管家自动同步",
+            "start": "2026-09-20T09:00:00+08:00",
+            "end": "2026-09-20T10:00:00+08:00"
+          }
+        ]
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已存在（幂等未重复）：1"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已存在（幂等未重复）：1\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_seed_1"
+      ],
+      "callsTotal": 0,
+      "callsHead": [],
+      "callsRepeat": null,
+      "creates": []
+    },
+    {
+      "id": "S-F",
+      "side": "new",
+      "title": "本地无 id ＋ 远端已有同四元组（重同步路径：远端判重接没接）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-PEXluA",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "events": [
+          {
+            "event_id": "fs_seed_1",
+            "summary": "晨会",
+            "description": "作息管家自动同步",
+            "start": "2026-09-20T09:00:00+08:00",
+            "end": "2026-09-20T10:00:00+08:00"
+          }
+        ]
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已同步 2026-09-20：新建1 更新0（ou_stub_user）"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已同步 2026-09-20：新建1 更新0（ou_stub_user）\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_seed_1",
+        "fs_evt_1"
+      ],
+      "callsTotal": 5,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +create"
+      ],
+      "callsRepeat": {
+        "of": "calendar +create",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "周会",
+          "start": "2026-09-20T09:00:00"
+        }
+      ]
+    },
+    {
+      "id": "S-G",
+      "side": "new",
+      "title": "远端可探、创建失败（真降级档）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-R9DK2S",
+      "seeded": null,
+      "state": {
+        "createFails": true
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已补计划：1"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已补计划：1\"}}",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-R9DK2S\\db\\schedule_data.db",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [],
+      "callsTotal": 0,
+      "callsHead": [],
+      "callsRepeat": null,
+      "creates": []
+    },
+    {
+      "id": "S-H",
+      "side": "new",
+      "title": "重同步 · 远端整平台不可用（阻断档）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-yp1Leu",
+      "seeded": null,
+      "state": {
+        "mode": "unavailable"
+      },
+      "exit": 4,
+      "timedOut": false,
+      "receipt": null,
+      "parseErr": "出口 stdout 为空（exit=4，stderr=NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-yp1Leu\\db\\schedule_data.db\nERR 4: lark-cli auth status 失败（未登录？）\n）",
+      "stdoutHead": "",
+      "stderrHead": "NOTE: 作息 DB 已初始化：C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-yp1Leu\\db\\schedule_data.db / ERR 4: lark-cli auth status 失败（未登录？）",
+      "local": [],
+      "remoteAfter": [],
+      "callsTotal": 2,
+      "callsHead": [
+        "--version",
+        "auth status"
+      ],
+      "callsRepeat": {
+        "of": "auth status",
+        "times": 1
+      },
+      "creates": []
+    },
+    {
+      "id": "S-I",
+      "side": "new",
+      "title": "远端孤儿：带标记的该清、不带标记的不许动（归属判据）",
+      "gate": ".\\lark-cli.CMD",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659-new-52vbed",
+      "seeded": {
+        "exit": 0,
+        "timedOut": false
+      },
+      "state": {
+        "events": [
+          {
+            "event_id": "fs_orphan_mine",
+            "summary": "我建的孤儿",
+            "description": "作息管家自动同步",
+            "start": "2026-09-20T14:00:00+08:00",
+            "end": "2026-09-20T15:00:00+08:00"
+          },
+          {
+            "event_id": "fs_orphan_other",
+            "summary": "别人建的",
+            "description": "手建的，不归它管",
+            "start": "2026-09-20T16:00:00+08:00",
+            "end": "2026-09-20T17:00:00+08:00"
+          }
+        ]
+      },
+      "exit": 0,
+      "timedOut": false,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "schedule",
+        "shape": "receipt",
+        "key": "schedule.plan.write",
+        "data": {
+          "ok": true,
+          "message": "已同步 2026-09-20：新建1 更新0（ou_stub_user）"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"schedule\",\"shape\":\"receipt\",\"key\":\"schedule.plan.write\",\"data\":{\"ok\":true,\"message\":\"已同步 2026-09-20：新建1 更新0（ou_stub_user）\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "date": "2026-09-20",
+          "time_start": "09:00",
+          "time_end": "10:00",
+          "title": "晨会",
+          "notes": "周会",
+          "feishu_event_id": null,
+          "is_active": 1
+        }
+      ],
+      "remoteAfter": [
+        "fs_orphan_mine",
+        "fs_orphan_other",
+        "fs_evt_1"
+      ],
+      "callsTotal": 5,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "calendar +agenda",
+        "calendar +search-event",
+        "calendar +create"
+      ],
+      "callsRepeat": {
+        "of": "calendar +create",
+        "times": 1
+      },
+      "creates": [
+        {
+          "summary": "晨会",
+          "description": "周会",
+          "start": "2026-09-20T09:00:00"
+        }
+      ]
+    }
+  ]
+}

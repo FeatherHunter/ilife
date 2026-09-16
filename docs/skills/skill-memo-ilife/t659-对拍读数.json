@@ -1,0 +1,689 @@
+{
+  "ticket": 659,
+  "side": "memo",
+  "at": "2026-09-16T17:21:42.644Z",
+  "old": [
+    {
+      "id": "M-A",
+      "side": "old",
+      "title": "记一条心愿（含到期日）· 远端空",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-aa9cNb\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-aa9cNb",
+      "seeded": null,
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "status": "ok",
+        "data": {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "sub_category": null,
+          "due": "2026-09-25",
+          "feishu_sync": {
+            "synced": true,
+            "task_guid": "tk_1"
+          }
+        },
+        "message": "笔记已添加"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"status\": \"ok\", \"data\": {\"id\": 1, \"content\": \"买跑鞋\", \"category\": \"心愿\", \"sub_category\": null, \"due\": \"2026-09-25\", \"feishu_sync\": {\"synced\": true, \"task_guid\": \"tk_1\"}}, \"message\": \"笔记已添加\"}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "due": "2026-09-25",
+          "feishu_task_guid": "tk_1"
+        }
+      ],
+      "callsTotal": 3,
+      "callsHead": [
+        "task +search",
+        "auth status",
+        "task +create"
+      ],
+      "taskCalls": [
+        {
+          "op": "task +search",
+          "due": "2026-09-25,2026-09-25"
+        },
+        {
+          "op": "task +create",
+          "summary": "买跑鞋",
+          "description": "原备忘 #1",
+          "due": "2026-09-25"
+        }
+      ]
+    },
+    {
+      "id": "M-B",
+      "side": "old",
+      "title": "再记一条同题同到期日（本地／远端各自判重）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-p5vlH6\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-p5vlH6",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "1",
+        "remoteTasks": [
+          "tk_1"
+        ]
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "status": "ok",
+        "data": {
+          "id": 2,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "sub_category": null,
+          "due": "2026-09-25",
+          "feishu_sync": {
+            "synced": true,
+            "task_guid": "tk_1"
+          }
+        },
+        "message": "笔记已添加"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"status\": \"ok\", \"data\": {\"id\": 2, \"content\": \"买跑鞋\", \"category\": \"心愿\", \"sub_category\": null, \"due\": \"2026-09-25\", \"feishu_sync\": {\"synced\": true, \"task_guid\": \"tk_1\"}}, \"message\": \"笔记已添加\"}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "due": "2026-09-25",
+          "feishu_task_guid": "tk_1"
+        },
+        {
+          "id": 2,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "due": "2026-09-25",
+          "feishu_task_guid": "tk_1"
+        }
+      ],
+      "callsTotal": 1,
+      "callsHead": [
+        "task +search"
+      ],
+      "taskCalls": [
+        {
+          "op": "task +search",
+          "due": "2026-09-25,2026-09-25"
+        }
+      ]
+    },
+    {
+      "id": "M-C",
+      "side": "old",
+      "title": "远端不可用（本地照落与否）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-p7ALUr\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-p7ALUr",
+      "seeded": null,
+      "state": {
+        "mode": "unavailable"
+      },
+      "exit": 0,
+      "receipt": {
+        "status": "ok",
+        "data": {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "sub_category": null,
+          "due": "2026-09-25",
+          "feishu_sync": {
+            "synced": false,
+            "error": "无法从 lark-cli auth 读取 user open_id（请先 lark-cli auth login）"
+          }
+        },
+        "message": "笔记已添加"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"status\": \"ok\", \"data\": {\"id\": 1, \"content\": \"买跑鞋\", \"category\": \"心愿\", \"sub_category\": null, \"due\": \"2026-09-25\", \"feishu_sync\": {\"synced\": false, \"error\": \"无法从 lark-cli auth 读取 user open_id（请先 lark-cli auth login）\"}}, \"",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "due": "2026-09-25",
+          "feishu_task_guid": null
+        }
+      ],
+      "callsTotal": 2,
+      "callsHead": [
+        "task +search",
+        "auth status"
+      ],
+      "taskCalls": [
+        {
+          "op": "task +search",
+          "due": "2026-09-25,2026-09-25"
+        }
+      ]
+    },
+    {
+      "id": "M-D",
+      "side": "old",
+      "title": "远端可探、创建失败",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-SxiKc5\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-SxiKc5",
+      "seeded": null,
+      "state": {
+        "createFails": true
+      },
+      "exit": 0,
+      "receipt": {
+        "status": "ok",
+        "data": {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "sub_category": null,
+          "due": "2026-09-25",
+          "feishu_sync": {
+            "synced": false,
+            "error": "stub-lark: 挡板 createFails：远端创建失败"
+          }
+        },
+        "message": "笔记已添加"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"status\": \"ok\", \"data\": {\"id\": 1, \"content\": \"买跑鞋\", \"category\": \"心愿\", \"sub_category\": null, \"due\": \"2026-09-25\", \"feishu_sync\": {\"synced\": false, \"error\": \"stub-lark: 挡板 createFails：远端创建失败\"}}, \"message\": \"笔记已添加\"}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "due": "2026-09-25",
+          "feishu_task_guid": null
+        }
+      ],
+      "callsTotal": 3,
+      "callsHead": [
+        "task +search",
+        "auth status",
+        "task +create"
+      ],
+      "taskCalls": [
+        {
+          "op": "task +search",
+          "due": "2026-09-25,2026-09-25"
+        },
+        {
+          "op": "task +create",
+          "summary": "买跑鞋",
+          "description": "原备忘 #1",
+          "due": "2026-09-25"
+        }
+      ]
+    },
+    {
+      "id": "M-E",
+      "side": "old",
+      "title": "删一条心愿（远端任务怎么办）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-mCoeWG\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-mCoeWG",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "1",
+        "remoteTasks": [
+          "tk_1"
+        ]
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "status": "ok",
+        "data": {
+          "deleted_notes": [
+            1
+          ],
+          "deleted_reminders": [],
+          "feishu_sync": [
+            {
+              "memo_id": 1,
+              "task_guid": "tk_1",
+              "synced": true,
+              "error": null
+            }
+          ]
+        },
+        "message": "已删除 1 个笔记"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"status\": \"ok\", \"data\": {\"deleted_notes\": [1], \"deleted_reminders\": [], \"feishu_sync\": [{\"memo_id\": 1, \"task_guid\": \"tk_1\", \"synced\": true, \"error\": null}]}, \"message\": \"已删除 1 个笔记\"}",
+      "stderrHead": "",
+      "local": [],
+      "callsTotal": 1,
+      "callsHead": [
+        "task +complete"
+      ],
+      "taskCalls": [
+        {
+          "op": "task +complete",
+          "taskId": "tk_1"
+        }
+      ]
+    },
+    {
+      "id": "M-F",
+      "side": "old",
+      "title": "反向对账：飞书那边完成了 → 本地",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-ohCMTd\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-ohCMTd",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "1",
+        "remoteTasks": [
+          "tk_1"
+        ]
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "status": "ok",
+        "data": {
+          "backfilled": 0,
+          "scanned_done": 1,
+          "synced": 1,
+          "scanned_pending": 0,
+          "due_added": 0,
+          "due_overridden": 0,
+          "due_removed": 0,
+          "skipped_no_memo_id": 0,
+          "skipped_already_done": 0,
+          "skipped_no_local_note": 0,
+          "errors": []
+        },
+        "message": "双向同步完成: 补建=0 | done扫到=1, 反向同步=1, 跳过(无本地note)=0 | pending扫到=0, due新增=0, due覆盖=0, due清除=0 | 错误=0"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"status\": \"ok\", \"data\": {\"backfilled\": 0, \"scanned_done\": 1, \"synced\": 1, \"scanned_pending\": 0, \"due_added\": 0, \"due_overridden\": 0, \"due_removed\": 0, \"skipped_no_memo_id\": 0, \"skipped_already_done\": 0, \"skipped_no_loca",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 2,
+          "content": "买跑鞋",
+          "category": "打卡",
+          "due": null,
+          "feishu_task_guid": null
+        }
+      ],
+      "callsTotal": 2,
+      "callsHead": [
+        "task +get-related-tasks",
+        "task +complete"
+      ],
+      "taskCalls": [
+        {
+          "op": "task +get-related-tasks"
+        },
+        {
+          "op": "task +complete",
+          "taskId": "tk_1"
+        }
+      ]
+    },
+    {
+      "id": "M-G",
+      "side": "old",
+      "title": "改期（set-due → 远端 due 跟改）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-Ekc1Dq\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-old-Ekc1Dq",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "1",
+        "remoteTasks": [
+          "tk_1"
+        ]
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "status": "ok",
+        "data": {
+          "requested": 1,
+          "updated": 1,
+          "skipped_not_wish": 0,
+          "skipped_not_found": 0,
+          "feishu_synced": 1,
+          "errors": []
+        },
+        "message": "排期完成: 本地更新=1, 飞书同步=1, 错误=0"
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"status\": \"ok\", \"data\": {\"requested\": 1, \"updated\": 1, \"skipped_not_wish\": 0, \"skipped_not_found\": 0, \"feishu_synced\": 1, \"errors\": []}, \"message\": \"排期完成: 本地更新=1, 飞书同步=1, 错误=0\"}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": 1,
+          "content": "买跑鞋",
+          "category": "心愿",
+          "due": "2026-10-01",
+          "feishu_task_guid": "tk_1"
+        }
+      ],
+      "callsTotal": 1,
+      "callsHead": [
+        "task +update"
+      ],
+      "taskCalls": [
+        {
+          "op": "task +update",
+          "due": "2026-10-01",
+          "taskId": "tk_1"
+        }
+      ]
+    }
+  ],
+  "new": [
+    {
+      "id": "M-A",
+      "side": "new",
+      "title": "记一条心愿（含到期日）· 远端空",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-DTTRNg\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-DTTRNg",
+      "seeded": null,
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "memo",
+        "shape": "receipt",
+        "key": "memo.create",
+        "data": {
+          "ok": true,
+          "message": "已记一条：mmu4db9yt54"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"memo\",\"shape\":\"receipt\",\"key\":\"memo.create\",\"data\":{\"ok\":true,\"message\":\"已记一条：mmu4db9yt54\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": "mmu4db9yt54",
+          "title": "买跑鞋",
+          "body": "买跑鞋",
+          "category": "心愿",
+          "sub": null,
+          "createdAt": "2026-09-16T17:21:46.037Z",
+          "updatedAt": "2026-09-16T17:21:46.037Z",
+          "remindAt": null,
+          "done": false
+        }
+      ],
+      "callsTotal": 0,
+      "callsHead": [],
+      "taskCalls": []
+    },
+    {
+      "id": "M-B",
+      "side": "new",
+      "title": "再记一条同题同到期日（本地／远端各自判重）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-NY6SzZ\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-NY6SzZ",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "mmu4dba2y64",
+        "remoteTasks": []
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "memo",
+        "shape": "receipt",
+        "key": "memo.create",
+        "data": {
+          "ok": true,
+          "message": "已记一条：mmu4dba505s"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"memo\",\"shape\":\"receipt\",\"key\":\"memo.create\",\"data\":{\"ok\":true,\"message\":\"已记一条：mmu4dba505s\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": "mmu4dba2y64",
+          "title": "买跑鞋",
+          "body": "买跑鞋",
+          "category": "心愿",
+          "sub": null,
+          "createdAt": "2026-09-16T17:21:46.186Z",
+          "updatedAt": "2026-09-16T17:21:46.186Z",
+          "remindAt": null,
+          "done": false
+        },
+        {
+          "id": "mmu4dba505s",
+          "title": "买跑鞋",
+          "body": "买跑鞋",
+          "category": "心愿",
+          "sub": null,
+          "createdAt": "2026-09-16T17:21:46.260Z",
+          "updatedAt": "2026-09-16T17:21:46.260Z",
+          "remindAt": null,
+          "done": false
+        }
+      ],
+      "callsTotal": 0,
+      "callsHead": [],
+      "taskCalls": []
+    },
+    {
+      "id": "M-C",
+      "side": "new",
+      "title": "远端不可用（本地照落与否）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-MMeEYe\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-MMeEYe",
+      "seeded": null,
+      "state": {
+        "mode": "unavailable"
+      },
+      "exit": 0,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "memo",
+        "shape": "receipt",
+        "key": "memo.create",
+        "data": {
+          "ok": true,
+          "message": "已记一条：mmu4dba9h80"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"memo\",\"shape\":\"receipt\",\"key\":\"memo.create\",\"data\":{\"ok\":true,\"message\":\"已记一条：mmu4dba9h80\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": "mmu4dba9h80",
+          "title": "买跑鞋",
+          "body": "买跑鞋",
+          "category": "心愿",
+          "sub": null,
+          "createdAt": "2026-09-16T17:21:46.421Z",
+          "updatedAt": "2026-09-16T17:21:46.421Z",
+          "remindAt": null,
+          "done": false
+        }
+      ],
+      "callsTotal": 0,
+      "callsHead": [],
+      "taskCalls": []
+    },
+    {
+      "id": "M-D",
+      "side": "new",
+      "title": "远端可探、创建失败",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-F7j4rm\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-F7j4rm",
+      "seeded": null,
+      "state": {
+        "createFails": true
+      },
+      "exit": 0,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "memo",
+        "shape": "receipt",
+        "key": "memo.create",
+        "data": {
+          "ok": true,
+          "message": "已记一条：mmu4dbadqhx"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"memo\",\"shape\":\"receipt\",\"key\":\"memo.create\",\"data\":{\"ok\":true,\"message\":\"已记一条：mmu4dbadqhx\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": "mmu4dbadqhx",
+          "title": "买跑鞋",
+          "body": "买跑鞋",
+          "category": "心愿",
+          "sub": null,
+          "createdAt": "2026-09-16T17:21:46.574Z",
+          "updatedAt": "2026-09-16T17:21:46.574Z",
+          "remindAt": null,
+          "done": false
+        }
+      ],
+      "callsTotal": 0,
+      "callsHead": [],
+      "taskCalls": []
+    },
+    {
+      "id": "M-E",
+      "side": "new",
+      "title": "删一条心愿（远端任务怎么办）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-8hP86W\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-8hP86W",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "mmu4dbai2h7",
+        "remoteTasks": []
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "memo",
+        "shape": "receipt",
+        "key": "memo.remove",
+        "data": {
+          "ok": true,
+          "message": "已删除：mmu4dbai2h7"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"memo\",\"shape\":\"receipt\",\"key\":\"memo.remove\",\"data\":{\"ok\":true,\"message\":\"已删除：mmu4dbai2h7\"}}",
+      "stderrHead": "",
+      "local": [],
+      "callsTotal": 0,
+      "callsHead": [],
+      "taskCalls": []
+    },
+    {
+      "id": "M-F",
+      "side": "new",
+      "title": "反向对账：飞书那边完成了 → 本地",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-a9viTR\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-a9viTR",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "mmu4dbaoc43",
+        "remoteTasks": []
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "memo",
+        "shape": "receipt",
+        "key": "memo.sync",
+        "data": {
+          "ok": true,
+          "message": "飞书就绪：ou_stub_user（同步执行归 M7 端到端）"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"memo\",\"shape\":\"receipt\",\"key\":\"memo.sync\",\"data\":{\"ok\":true,\"message\":\"飞书就绪：ou_stub_user（同步执行归 M7 端到端）\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": "mmu4dbaoc43",
+          "title": "买跑鞋",
+          "body": "买跑鞋",
+          "category": "心愿",
+          "sub": null,
+          "createdAt": "2026-09-16T17:21:46.956Z",
+          "updatedAt": "2026-09-16T17:21:46.956Z",
+          "remindAt": null,
+          "done": false
+        }
+      ],
+      "callsTotal": 3,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "auth check"
+      ],
+      "taskCalls": []
+    },
+    {
+      "id": "M-G",
+      "side": "new",
+      "title": "改期（set-due → 远端 due 跟改）",
+      "gate": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-rKqIqa\\appdata\\npm\\lark-cli.cmd",
+      "dir": "C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t659m-new-rKqIqa",
+      "seeded": {
+        "exit": 0,
+        "firstLocalId": "mmu4dbb1ixb",
+        "remoteTasks": []
+      },
+      "state": {},
+      "exit": 0,
+      "receipt": {
+        "version": "0.1.0",
+        "skill": "memo",
+        "shape": "receipt",
+        "key": "memo.sync",
+        "data": {
+          "ok": true,
+          "message": "飞书就绪：ou_stub_user（同步执行归 M7 端到端）"
+        }
+      },
+      "parseErr": null,
+      "stdoutHead": "{\"version\":\"0.1.0\",\"skill\":\"memo\",\"shape\":\"receipt\",\"key\":\"memo.sync\",\"data\":{\"ok\":true,\"message\":\"飞书就绪：ou_stub_user（同步执行归 M7 端到端）\"}}",
+      "stderrHead": "",
+      "local": [
+        {
+          "id": "mmu4dbb1ixb",
+          "title": "买跑鞋",
+          "body": "买跑鞋",
+          "category": "心愿",
+          "sub": null,
+          "createdAt": "2026-09-16T17:21:47.430Z",
+          "updatedAt": "2026-09-16T17:21:47.430Z",
+          "remindAt": null,
+          "done": false
+        }
+      ],
+      "callsTotal": 3,
+      "callsHead": [
+        "--version",
+        "auth status",
+        "auth check"
+      ],
+      "taskCalls": []
+    }
+  ]
+}
