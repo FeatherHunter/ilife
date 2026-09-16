@@ -78,7 +78,6 @@ const REPR = {
   'calorie.workout.plan-update-day': '改某天训练',
   'calorie.workout.plan-update-movement': '改动作',
   'calorie.help.center': '卡路里HELP',
-  'calorie.help.lookup': '看今日主页',
   'calorie.history': '查热量历史',
   'calorie.photo.compare': '对比两张照片',
   'calorie.photo.detail': '查身材照',

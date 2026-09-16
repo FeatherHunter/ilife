@@ -426,7 +426,7 @@ export const ANALYSIS_COMMANDS = [
   { kind: 'read', key: 'calorie.view.six-factors', shape: 'stat', title: '每日六因素', wakeWord: '看每日六因素', run: viewSixFactors, example: 'calorie-cmd-read calorie.view.six-factors --params \'{"date":"今日"}\'' },
   { kind: 'read', key: 'calorie.view.predict', shape: 'stat', title: '体重预测', run: viewPredict, example: 'calorie-cmd-read calorie.view.predict --params \'{"horizonDays":7,"window":"14d"}\'' },
   { kind: 'read', key: 'calorie.view.anomaly', shape: 'stat', title: '异常诊断', run: viewAnomaly, example: 'calorie-cmd-read calorie.view.anomaly --params \'{"kind":"weight_volatility","window":"90d"}\'' },
-  { kind: 'read', key: 'calorie.help.lookup', shape: 'list', title: '唤醒词HELP', wakeWord: '看今日主页', run: viewHelpLookup, example: 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'' },
+  { kind: 'read', key: 'calorie.help.lookup', shape: 'list', title: '唤醒词HELP', run: viewHelpLookup, example: 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'' },
   { kind: 'read', key: 'calorie.history', shape: 'list', title: '热量历史', wakeWord: '查热量历史', run: viewHistory, example: 'calorie-cmd-read calorie.history --params \'{"days":7}\'' },
   { kind: 'read', key: 'calorie.view.multi-trend', shape: 'stat', title: '多指标趋势', wakeWord: '看整体趋势(含目标对比)', run: viewMultiTrend, example: 'calorie-cmd-read calorie.view.multi-trend --params \'{"window":"90d","compare":"target"}\'' },
   // #384 · 报告族 8 条（冻结表 order 331–338 由 non-exec 转 exec）。一词一条命令；
