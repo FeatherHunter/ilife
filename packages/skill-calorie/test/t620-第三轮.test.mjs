@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { weightSimTarget, calorieGoalEta, calorieDeficitEta, calorieStability } from '../dist/analysis/simulate2.js';
 import { buildSimTargetDoc, buildCalorieGoalDoc, buildCalorieDeficitDoc, buildCalorieStabilityDoc } from '../dist/render/trendPredictDocs.js';
 import { foldedTable, tableOf } from '../dist/analysis/reportDocParts.js';
+import { buildReportDoc } from '../dist/analysis/reportDoc.js';
 
 function series90() {
   const out = [];
@@ -117,4 +118,44 @@ test('#620-2 tableOf长表30行折叠且短表不折', () => {
   assert.ok(longHtml.includes('其余 20 行（共 30 行）'), '折叠标题不明');
   const shortHtml = tableOf(pts(5), '蛋白（g）', '每日蛋白量');
   assert.ok(!shortHtml.includes('<details'), '5行不应折叠');
+});
+
+/* ── #620 增量3a：口径层去重（口径表与口径行同一事实只讲一次） ── */
+
+const R3A_PROFILE = {
+  heightCm: 175, age: 30, gender: 'male', genderLabel: '男',
+  activityLevel: 'moderate', activityLabel: '中等', activityFactor: 1.55,
+  bmr: 1700, tdee: 2635, missing: [],
+};
+function r3aPlate(kind, over = {}) {
+  return {
+    base: { kind, start: '2026-09-01', end: '2026-09-03', days: 3, series: [], profile: R3A_PROFILE, ...over },
+    points: [], target: null, bandPoints: [], fourPiece: null, items: [], scores: [],
+    trend: null, bmrDanger: null, compare: null,
+  };
+}
+const countSub = (hay, needle) => hay.split(needle).length - 1;
+
+test('#620-3a 趋势页三等分只讲一次', () => {
+  const plate = r3aPlate('trend', {});
+  plate.trend = { earlyAvg: 50, lateAvg: 52, turns: 1, direction: '平稳' };
+  const html2 = visible(buildReportDoc(plate, ''));
+  assert.equal(countSub(html2, '三等分'), 1, '三等分讲了不止一次');
+});
+
+test('#620-3a 对比页最后一次称重只讲一次', () => {
+  const plate = r3aPlate('compare', {});
+  plate.compare = {
+    cur: { start: '2026-09-01', end: '2026-09-03' }, prev: { start: '2026-08-29', end: '2026-08-31' },
+    rows: [], top: [],
+  };
+  const html = visible(buildReportDoc(plate, ''));
+  assert.equal(countSub(html, '最后一次称重'), 1, '最后一次称重讲了不止一次');
+});
+
+test('#620-3a TDEE页通用定义只在口径行讲', () => {
+  const html = visible(buildReportDoc(r3aPlate('tdee', {}), ''));
+  assert.ok(!html.includes('缺口口径'), '口径表仍在重复静态缺口定义');
+  assert.equal(countSub(html, 'Mifflin-St Jeor'), 1, 'Mifflin-St Jeor 讲了不止一次');
+  assert.ok(html.includes('系数取档案里的活动量档位'), '口径行被删空');
 });

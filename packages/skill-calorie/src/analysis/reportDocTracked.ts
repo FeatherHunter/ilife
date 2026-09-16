@@ -93,14 +93,14 @@ export function buildTdeeBlocks(plate: ReportPlate): ReportSection[] {
       },
     ])),
     sec('sec-caliber', '计算口径', kvTable('计算口径' + (p.missing.length === 0 ? '' : '（缺：' + missText(p.missing) + '）'), [
-      { k: '公式', v: 'Mifflin-St Jeor：基础代谢 × 活动系数' },
+      /* #620 增量3a：`公式`／`缺口口径`两行是通用定义，与底座口径行三段同义重复
+       * （且 `Mifflin-St Jeor` 之名由口径行第一段承担，384 钉住它）；
+       * 删表里这两行留口径行，表里只留带本页取值的行（基础代谢／活动系数／身高／年龄／性别）。 */
       { k: '基础代谢', v: fmtInt(p.bmr, ' 卡') },
       { k: '活动系数', v: p.activityFactor === null ? '—' : String(p.activityFactor) + '（' + p.activityLabel + '）' },
-      /* #516 §3.2 D09：三件事不再拿斜杠串进一格，一条一行。 */
       { k: '身高', v: fmt(p.heightCm, ' cm') },
       { k: '年龄', v: fmt(p.age, ' 岁') },
       { k: '性别', v: p.genderLabel },
-      { k: '缺口口径', v: '静态缺口 ＝ 每日总消耗 − 日均摄入（运动消耗另计，不含在内）' },
     ])),
     sec('sec-chart', '总消耗曲线', tdeeCurve(plate)),
   ];
