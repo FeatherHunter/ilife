@@ -188,7 +188,7 @@ function receiptPlain(input: ReceiptInput): string {
         detail: '共 ' + input.receipt.writtenFields.length + ' 项，详见下表。',
       },
     ]),
-    duplicateNote(findDuplicates(input.recent, probe), probe),
+    duplicateNote(findDuplicates(input.recent, probe), probe, 'static'),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,

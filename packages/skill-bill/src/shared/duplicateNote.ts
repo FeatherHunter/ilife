@@ -73,20 +73,43 @@ export function findDuplicates(recent: readonly BillRow[], probe: DuplicateProbe
 /** 提示条：撞上了才出（`hits` 为空返回空串）。逐条一句话说全：编号／时刻／分类／金额／账户，
  *  键名齐、顿号逗号断句，不拿裸空格拼字段（t410 round2：n26 弹窗整改）。
  *
+ *  形态按页分（回执页不许出弹窗）：
+ *   - 采集页（缺省 `toast`）：写库前预警，深色卡＋关闭按钮，徽章与标题齐出；
+ *   - 回执页（传 `'static'`）：写库已成，重复信息只是补充说明，出浅色静态横幅
+ *     （`staticNotice`：无关闭按钮、不进 toast 栈；静态形态不出徽章，故不传 `badge`）。
+ *
  *  本轮整改（照 `docs/skills/skill-bill/t407-文字审查.md` 第 48、49 条）：提示行与副行都是**版式位**，
  *  行内不再拿 `·` 当版式——逐条那几行改「一句话说全」，标题里那句「黄条：提示，不阻断」是实现说明，删。
  *  t410 round2 补：标题「像不像重复」与首句「看着像重复」同义反复，标题改用户动作「先核一眼再定」；
- *  徽章「疑似重复」不动（`test/record-write.test.mjs` 三处钉住）；明细行不用 `·`（同文件第 309 行反向钉）。
+ *  回执页转静态后徽章不再出现（`test/record-write.test.mjs` 对应针脚同步改认「看着像重复」）；
+ *  明细行不用 `·`（同文件第 309 行反向钉）。
  */
-export function duplicateNote(hits: readonly DuplicateHit[], probe: DuplicateProbe): string {
+export function duplicateNote(
+  hits: readonly DuplicateHit[],
+  probe: DuplicateProbe,
+  mode: 'toast' | 'static' = 'toast',
+): string {
   if (hits.length === 0) return '';
   const lines = hits.map((h) => '记录编号 ' + h.id + '（' + h.time + '）：' + h.category
     + '，' + money2(h.amount) + '，账户' + (h.account === '' ? '没设置' : h.account)
     + (h.sameAccount ? '（同一个账户）' : ''));
+  const detail = '对的是 ' + probe.date.slice(0, 10) + ' 这一天，金额 ' + money2(probe.amount)
+    + '，分类 ' + probe.category.trim();
+  if (mode === 'static') {
+    return renderFeedbackBlock({
+      title: '先核一眼再定',
+      toast: {
+        msg: '看着像重复：同一天、同金额、同分类，已经有 ' + hits.length + ' 笔了',
+        detail,
+        icon: 'warn',
+        lines,
+      },
+      staticNotice: true,
+    });
+  }
   const toast: ToastInput = {
     msg: '看着像重复：同一天、同金额、同分类，已经有 ' + hits.length + ' 笔了',
-    detail: '对的是 ' + probe.date.slice(0, 10) + ' 这一天，金额 ' + money2(probe.amount)
-      + '，分类 ' + probe.category.trim(),
+    detail,
     icon: 'warn',
     badge: { text: '疑似重复', type: 'warn' },
     lines,

@@ -81,7 +81,7 @@ export function receiptBody(input: ReceiptInput): string {
         detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
       },
     ]),
-    duplicateNote(findDuplicates(input.recent, probe), probe),
+    duplicateNote(findDuplicates(input.recent, probe), probe, 'static'),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,

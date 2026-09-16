@@ -233,7 +233,7 @@ function receiptPhoto(input: ReceiptInput): string {
       },
     ]),
     renderCaliberLine('三要素来自本仓之外，本仓不存图也不读图。'),
-    duplicateNote(findDuplicates(input.recent, probe), probe),
+    duplicateNote(findDuplicates(input.recent, probe), probe, 'static'),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,

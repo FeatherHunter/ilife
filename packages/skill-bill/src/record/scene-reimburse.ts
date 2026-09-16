@@ -193,7 +193,7 @@ function receiptReimburse(input: ReceiptInput): string {
       },
     ]),
     renderCaliberLine('这一条记在支出侧，金额是负数。报销到账是另一笔，按备注里的 ' + TAG + ' 对上。'),
-    duplicateNote(findDuplicates(input.recent, probe), probe),
+    duplicateNote(findDuplicates(input.recent, probe), probe, 'static'),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,

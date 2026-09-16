@@ -185,7 +185,7 @@ function receiptIncome(input: ReceiptInput): string {
       },
     ]),
     renderCaliberLine('收入侧，正数。'),
-    duplicateNote(findDuplicates(input.recent, probe), probe),
+    duplicateNote(findDuplicates(input.recent, probe), probe, 'static'),
     renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,

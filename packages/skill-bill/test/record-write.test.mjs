@@ -304,14 +304,14 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(h.status, 0, 'stderr=' + h.stderr);
     assert.equal(envOf(h).data.ok, true, JSON.stringify(envOf(h).data));
     const hitText = pageOf(hit);
-    assert.ok(hitText.includes('疑似重复'), '同日同额同分类须报疑似重复');
+    assert.ok(hitText.includes('看着像重复'), '同日同额同分类须报重复');
     assert.ok(hitText.includes('记录编号 1'), '提示条须报出撞上的是哪几笔');
     assert.ok(!hitText.includes('记录编号 ' + envOf(h).data.receipt.recordId + ' · ' + '2026-09-14 13:00:00'),
       '本次自己那条不进提示条');
     const other = join(H2, 'dup-miss.html');
     const m = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-15 13:00:00","account":"支付宝"}', '--html', other]);
     assert.equal(m.status, 0, 'stderr=' + m.stderr);
-    assert.ok(!pageOf(other).includes('疑似重复'), '换一天不该报重复');
+    assert.ok(!pageOf(other).includes('看着像重复'), '换一天不该报重复');
   });
 
   it('分类未给 ⇒ 不出重复检测提示条（同日同额也不报，宁可漏提示不误报）', () => {
@@ -323,7 +323,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const text = pageOf(file);
     assert.ok(text.includes('还缺什么'), '这一页仍出「还缺什么」那一块');
     assert.ok(!/记录编号 1\b/.test(text), '提示条里不得列出同日同额的旧记录');
-    assert.ok(!text.includes('疑似重复'), '分类未给时不得出重复那一块');
+    assert.ok(!text.includes('看着像重复'), '分类未给时不得出重复那一块');
   });
 
   it('方向不符（记支出给正数）⇒ 阻断、不写库、栏上写清方向', () => {
@@ -346,7 +346,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const env = envOf(r);
     assert.equal(env.data.ok, true);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '想反悔', '对账信息', '疑似重复', '复制数据', '复制日志', '记支出', '金额取负数']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '想反悔', '对账信息', '看着像重复', '复制数据', '复制日志', '记支出', '金额取负数']) {
       assert.ok(text.includes(needle), '回执页缺：' + needle);
     }
     // 选页那两枚标记分家：data-shape 是信封形状契约（两页同为 receipt），data-page 才是哪一张页。
