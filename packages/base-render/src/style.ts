@@ -317,15 +317,17 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  gap: 8px;',
     '  box-sizing: border-box;',
     '  margin: 12px 0;',
-    // 旧层冻结值（旧 `base.css:81-91`）。它只在**窄档**用得上：窄屏内容列本来就不到 520px，这条不生效；
-    // 桌面档由下方那条媒体查询放开到内容列宽（#238 用户 2026-09-13 二次裁定）。
+    // 旧层冻结值（旧 `base.css:81-91`）。≤552 的窄档内容列不到 520px 时这条不生效；
+    // 553–820 的内容列已超 520px（820 实测内容列 780px），须由下方 641 档放开（#427 实测）。
     '  max-width: 520px;',
     '}',
-    // #238（用户 2026-09-13 二次裁定「两个按钮平分宽度」）：桌面档**铺满内容列**，动作条里的整行
+    // #238（用户 2026-09-13 二次裁定「两个按钮平分宽度」）＋ #427 中档修正：
+    // 桌面与中档**铺满内容列**，动作条里的整行
     // （`.action-row-ghost` 的 `repeat(2, minmax(0, 1fr))`）随之按内容列平分——两颗按钮各占一半。
-    // 断点用样式表里既有的移动档分界 `TOAST_DEFAULTS.mobileMaxPx`（与 #249 那两处同源），
-    // 故 ≤820 的窄档逐像素不动。
-    '@media (min-width: ' + (TOAST_DEFAULTS.mobileMaxPx + 1) + 'px) {',
+    // 放开位取 641（`blocks.ts:1899` 与 `helpShell` 640 档同源的桌面侧补集，不新增断点值；
+    // 原 821 位在 641–820 留出 260px 空白，KPI 栅格同档已铺满 780px，见 #427 缺口 1），
+    // 故 ≤640 的窄档逐像素不动、≥641 与改前 821 档同为 `max-width: none`（≥821 零变）。
+    '@media (min-width: 641px) {',
     '  .' + p + 'action-bar {',
     '    max-width: none;',
     '  }',
@@ -347,6 +349,14 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',
     '  .' + p + 'action-row-ghost {',
     '    position: relative;',
+    '  }',
+    '}',
+    // #427 窄屏单列（≤640）：390 内容宽 358 时两列各 175px，12px 小字贴边且不堆叠；
+    // 单列后两颗各占整行上下排列，桌面（≥641）仍两列平分（#247 口径不动）。
+    // 断点取既有 640 档（`helpShell`／`blocks.ts` 同值，不新增断点值）。
+    '@media (max-width: 640px) {',
+    '  .' + p + 'action-row-ghost {',
+    '    grid-template-columns: minmax(0, 1fr);',
     '  }',
     '}',
     '.' + p + 'action-btn {',
@@ -541,8 +551,8 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '}',
     '.' + p + 'copy-menu-item {',
     // #152 返修：补最小高——老仓 `.fmt-item` 只写 `padding:10px 12px` ＋ 13px 字，算出来 37px，
-    // 低于本仓同区复制按钮的冻结最小值（`spec/controls.ts:297` 的 40px）。40 不另写一个数，
-    // 引用同一个定义地；窄屏那档仍由下面的 `min-height:44px` 抬起（老仓 `.fmt-item` 是 36px）。
+    // 低于本仓同区复制按钮的冻结最小值（`spec/controls.ts:308` 的 44px，#525 由 40 改到 44）。44 不另写一个数，
+    // 引用同一个定义地；窄屏那档仍由下面的 `min-height:44px` 托底（老仓 `.fmt-item` 是 36px）。
     '  min-height: ' + ACTION_BAR_DEFAULTS.minHeightPx + 'px;',
     '  display: flex;',
     '  justify-content: space-between;',

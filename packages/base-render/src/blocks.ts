@@ -1750,13 +1750,13 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 15px;',
     '  font-weight: 700;',
     '}',
-    // #507 窄屏档（审查必改 #4）：`auto-fit minmax(150px,1fr)` 只在容器有效宽 ≥474px 时排 3 列
+    // #507 窄屏档（审查必改 #4）＋ #427 收窄为单列：`auto-fit minmax(150px,1fr)` 只在容器有效宽 ≥474px 时排 3 列
     // （3×150 ＋ 2×12 间隙），而手机端页面模板 `padding:20px 16px`（见本区 ≤640px 段）——
     // 512 视口下栅格有效宽仅 480px ⇒ 正好卡在 3 列下沿，第 4 张卡单独占一行、宽度只有前三张的
     // 1/3（`grid-auto-rows:1fr` 又让它与前三张**等高**），看着像漏了一张。
-    // 本条只加**窄屏一档**：≤640px 显式 2 列 ⇒ 4 张卡排成整齐 2×2；`minmax(0,1fr)` 里的 0
-    // 是下限（不是 `auto` 那种取内容最小宽），长值卡不会被撑破。桌面档一行不动
-    // （桌面列数上限是另一票的事，本票不碰）。断点取本文件既有先例：`dataTable` 与 `pageShell`
+    // #427（#507§8 三条窄屏归 #427，同一段代码）：≤640 显式单列 ⇒ 390 每张占整行上下排列；
+    // `minmax(0,1fr)` 的 0 是下限（不是 `auto` 那种取内容最小宽），长值卡不会被撑破。
+    // 桌面档一行不动（桌面列数上限 #507 的 1024 三列帽另管）。断点取本文件既有先例：`dataTable` 与 `pageShell`
     // 两处都是 `@media (max-width: 640px)`。
     // 选择器是 `.ilife-block-page-shell .ilife-block-kpi-card-grid`（基础类名前挂一个祖先类），
     // **不是**同名再写一条：① 网格落在页面模板正文里（`renderKpiGrid` 的唯一用法），该祖先恒成立；
@@ -1764,7 +1764,7 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // 判账，同名再起一条会被数成 2 条而红；`dataTable` 区那条同名 640px 规则是历史写法，本票不动它。
     '@media (max-width: 640px) {',
     '  .' + p + 'block-page-shell .' + p + 'block-kpi-card-grid {',
-    '    grid-template-columns: repeat(2, minmax(0, 1fr));',
+    '    grid-template-columns: minmax(0, 1fr);',
     '  }',
     '}',
   ].join(LF),
