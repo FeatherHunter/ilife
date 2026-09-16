@@ -120,6 +120,7 @@ function runlogWindow() {
     [/t619-变异\.mjs/, '⑥ 变异自证'],
     [/t619\/mutation\.mjs/, '⑥b 变异自证（草稿版，读数与 ⑥ 逐字相同）'],
     [/t619\/commit\.mjs/, '⑪ 提交'],
+    [/\.scratch\/conv\/commit-acceptance\.mjs/, '他席：交付验收包刷新席的提交运行（同票号、非本席）'],
   ];
   const SINCE = '2026-09-16T12:14';
   const mine = readFileSync('.scratch/locks/gate-runs.log', 'utf8').split('\n')
