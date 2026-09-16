@@ -158,7 +158,7 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
   });
   return { data: { metrics }, html: buildViewDietDoc({
     overview: o, dist, distDate: date as string, days: o.series,
-    meals: mealSlice, mealTotal, mealsTruncated: mealTotal > MEAL_CAP,
+    meals: mealSlice, mealTotal, mealsTruncated: mealTotal > MEAL_CAP, command,
     /* 只在给了 `meal` 时带上这一个位：`buildViewDietDoc` 一见它就整页换餐别分布页
        （`render/dietDocs.ts`），并带上本次命令原文供复制区用。 */
     ...(mealView === undefined

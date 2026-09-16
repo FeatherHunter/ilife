@@ -1,0 +1,5 @@
+runId=2f1d2d8e-0606-4a54-b886-c05f25f97476 exit=0
+✔ #399 饮食页复制日志是活按钮：带 data-t 且无 disabled (1108.3612ms)
+✔ #399 点复制日志拿到六段日志，第 4 段＝本页命令原文 (1143.1498ms)
+✔ #399 对照：直调 buildViewDietDoc 不给 command 时日志按钮不许是活的（不断言 CLI，只守不变量） (6.5369ms)
+ℹ tests 3 / pass 3 / fail 0
