@@ -50,16 +50,16 @@ process.env['CALORIE_TODAY'] = PIN_TODAY;
 /* ── 基线清单（`--write` 回写本块；`--check` 逐键比对） ── */
 // BASELINE-BEGIN
 const BASELINE = {
-  "calorie.help.center": "3e712ecd9f09ae9037a0fbba31e16f147e1aae131030908806f0c21044186890",
-  "calorie.photo.add": "474166c7a68754ad0c83a676ca5791b8f7d1caea2715e4fbf4b4d6c535877c34",
-  "calorie.photo.compare": "92ebea0b7da475542241bdd005f04fb8c6c633dca3ed16ae3bb127ad0f5b34c1",
-  "calorie.photo.detail": "82424434082a1ff3570e50a6707ee6242030da6c6a7b24c59a81760ec7455c7e",
-  "calorie.photo.gif": "59c5cafddd8cafa345270d0b46028a10bc8722a4abbeb87496d652a2fe43a79e",
-  "calorie.photo.list": "4882b0e45638c59c6abe425dbd6be2a5f60a4842ea11aa6e75458f5f8f8410db",
-  "calorie.photo.remove": "693d13117c72adbc7cc0127cd0b81d24c88b09d8c20443e1a31edbcb281709a9",
-  "calorie.photo.tag": "493cc1f69009999925b190ea1e1f919b8f30cfc79ff400a1607093bdd2b7ecde",
-  "calorie.view.gif-planner": "f4f03a1622bc18b99110a43594d8c75313f2e6928462d8cb19121de7904c1eff",
-  "calorie.view.photo-log-wizard": "37a3d32a4631027727babe43b9d957809c51ea2039a6bc6518b725af26e8a4ee"
+  "calorie.help.center": "a23974ecb2ccc10fd9dcd9f262622724cfa029b25b6a0973881156b6a1281d56",
+  "calorie.photo.add": "52df4850e9db6c2de0007d5e2345886a62cb9547bbcba87082b025ec51f064ed",
+  "calorie.photo.compare": "05f6b6cbb2cfdeb16c94ae15ae17f66eee1e7454012871dd69a3ad7a67d24335",
+  "calorie.photo.detail": "4d83afc3f9578a47e2a53529130681b2d00577849933bf4353aa9741db749b3c",
+  "calorie.photo.gif": "98c8d586e9e3a367a073362ae85aca23420bb8a42e0c0817fc73a0dd21d2205d",
+  "calorie.photo.list": "994e65f62a18d746b11ebbdb659593079369c2e3521bec445e69beb0f1dad2e8",
+  "calorie.photo.remove": "1b0337465ec38a8737748d77444ae3a29bd785e7ba797dd0a18d76821dcb9e89",
+  "calorie.photo.tag": "ea86c9971929728598168bfa945c70dd86ecf267d12d82147e4292bcc487fa1c",
+  "calorie.view.gif-planner": "91414360f7e04ca069dc9e41a8be2b6e422fb8349870bb8c41302e3b198d90fd",
+  "calorie.view.photo-log-wizard": "82187ba62eae25e27cc79f70f466534a6a2d3cf162e4b1ccf8ef6d0ddba9f56b"
 };
 // BASELINE-END
 
