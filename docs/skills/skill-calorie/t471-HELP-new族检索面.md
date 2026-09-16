@@ -9,6 +9,8 @@
 那条兜底收窄到不误伤。**68 词逐词 `calorie.help.lookup` 由改前 `{"0":5,"4":63}` 变成改后 `{"0":68}`，
 且 68/68 首条都是自己那条命令。**
 
+提交：`11e1ac03`（本席 5 件：`helpCenter.ts`／`help-lookup.ts`／新测试件／本件／`packages/skill-calorie/AGENTS.md`）。
+
 ## 一、条数一律派生（票面「69 这个数不许手写」）
 
 票面写「69 条」，**当刻声明件里是 68 条**——票面成文后 #426／#446 各清了若干条（票面「遗留出口」已预告这个飘）。
@@ -227,7 +229,7 @@ $ git grep -n "list: 'new'" -- packages/skill-calorie/src | wc -l
 | ⑱ | `node .scratch/t471/probe.mjs`（终读数） | `696d326f-8c1d-4609-b4dc-80a90479234a` | 0 | 68 词 `{"0":68}`；text 68/68；file 节 1 处 |
 | ⑲ | `node packages/skill-calorie/scripts/gen-cli.mjs` | `de25c232-8d26-40ec-b0fa-e668ca4afd64` | 0 | 三件生成物无 diff |
 | ⑳ | `node packages/skill-calorie/scripts/build-help.mjs` | `56be3ee3-52d1-4b41-84dd-9b76a035a3f6` | 0 | `SKILL.md` 与 HEAD 一致（零 diff） |
-| ㉑ | `git add … ` ／ `git diff --cached --name-only` ／ `git commit -F … -- <路径>` | 见回执与 `gate-runs.log` | 0 | 只含本席声明件（逐件复核） |
+| ㉑ | `git add <5 路径>`／`git diff --cached --name-only`／`git commit -F … -- <5 路径>` | `90d745c4-a244-4490-b8fc-7652b73d5104`／`53974a3f-fd73-4dd3-bd34-172df59bddec` | 0／0 | 提交 `11e1ac03`；暂存区复核只含本席 5 件（见下表） |
 
 坐席外的只读动作（不入门）：`git grep -n "list: 'new'"`（68）、`check-warning-line.mjs`（`RESULT: 91/91`）、
 `node .scratch/t471/analyze.mjs`／`peek.mjs`／`guard-check.mjs`。
