@@ -168,5 +168,9 @@ export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null
     eyebrow: '删照片（只看不删）',
     subtitle: '先看候选，点开一张确认，再复制指令让我删',
     content: parts.join(''),
+    // #527 收口：本页原先漏了 `pageUi` 位（同 `gifDoc`）⇒ 公共层媒体件的规则整段没进页，
+    //  超预算候选走的 `renderMediaPlaceholder`（公共件）因此没有框体样式。家族其余页都接了，
+    //  本页补齐后与它们同档。
+    pageUi: true,
   });
 }

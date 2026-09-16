@@ -104,13 +104,40 @@ function imgTags(html) {
   return elementFace(html).match(/<img[^>]*>/g) ?? [];
 }
 
-/** ① 每张 `<img>` 带宽度约束：`max-width:100%` 或 `width:min(…)` 二者至少一条。 */
+/** 页内样式段文本：判据按它认 CSS 侧的约束（#526／#527 起，家族的图约束改住类名规则）。 */
+function styleText(html) {
+  return (String(html).match(/<style[^>]*>[\s\S]*?<\/style>/gi) ?? []).join('\n');
+}
+
+/** 取一条选择器规则的规则体（`selectorPattern` 是正则源码，如 `\\.phu-shot`；找不到返 null）。
+ *  CSS 有两种写法（共享层带缩进、家族层压缩成一行），故选择器与 `{` 之间的空白按 `\\s*` 吃。 */
+function ruleBody(css, selectorPattern) {
+  const m = new RegExp(selectorPattern + '\\s*\\{([^}]*)\\}').exec(css);
+  return m === null ? null : m[1];
+}
+
+/** 一张 `<img>` 的宽度约束：**内联有**，或**它挂的类在页内样式里有一条带宽度上限的规则**。
+ *  #526／#527 起家族的图改走公共层媒体件（`class="ilife-block-media-img"` ＋ 共享规则
+ *  `width:100%;max-width:100%`），故「只认内联」是旧形态的锚。两条都不成立才算没有约束。 */
+function hasWidthBound(tag, css) {
+  if (/style="[^"]*(max-width|width):/.test(tag)) return true;
+  const cls = /class="([^"]*)"/.exec(tag);
+  if (cls === null) return false;
+  return cls[1].split(/\s+/).filter((c) => c !== '').some((c) => {
+    const body = ruleBody(css, '\\.' + c);
+    return body !== null && /(max-width|width)\s*:/.test(body);
+  });
+}
+
+/** ① 每张 `<img>` 带宽度约束：内联的 `max-width:100%`／`width:min(…)`，或类名规则里的宽度上限。 */
 function assertImgsConstrained(html, label) {
   const tags = imgTags(html);
   assert.ok(tags.length > 0, label + '：产物页里一张 `<img>` 都没有，判据无从落地');
+  const css = styleText(html);
   for (const t of tags) {
-    assert.match(t, /style="[^"]*(max-width:100%|width:min\()/,
-      label + '：这张 `<img>` 没有宽度约束（天然像素直接上屏）：' + t.slice(0, 120));
+    assert.ok(hasWidthBound(t, css),
+      label + '：这张 `<img>` 既没有内联宽度约束，挂的类也没有带宽度上限的页内规则（天然像素直接上屏）：'
+      + t.slice(0, 120));
   }
   return tags.length;
 }
@@ -143,15 +170,25 @@ function assertNavTouchTarget(html) {
   }
 }
 
-/** ④ GIF 舞台：宽度取 `min(320px,100%)`（64×64 的 GIF 不再只占 16% 屏），并保持像素质感。 */
+/** ④ GIF 舞台：`data-gif-stage` 锚在，舞台上挂的类**绑着两条规则**——宽度上限（64×64 的 GIF 不再
+ *  只占 16% 屏）与 `image-rendering:pixelated`（放大后锐边）。#527 起这两条住类名规则
+ *  （`photoUi.ts` 的 `.phu-gif-stage` 一族），判据跟着改认「锚 ＋ 类 ＋ 两条规则」，不认内联写法：
+ *  改前只写内联 `max-width` 不挂类 ⇒ 判据照样红（那正是漏掉像素质感的那个缺陷）。 */
 function assertGifStage(html) {
-  const stage = /<div data-gif-stage>[\s\S]*?<\/div>/.exec(elementFace(html));
-  assert.ok(stage, 'GIF 页缺舞台（`<div data-gif-stage>`）');
+  const stage = /<div data-gif-stage[^>]*>[\s\S]*?<\/div>/.exec(elementFace(html));
+  assert.ok(stage, 'GIF 页缺舞台锚（`<div data-gif-stage …>`）');
   const tags = stage[0].match(/<img[^>]*>/g) ?? [];
   assert.equal(tags.length, 1, 'GIF 舞台应有且只有一张图，实得 ' + tags.length);
-  assert.match(tags[0], /style="[^"]*width:min\(320px,100%\)/, 'GIF 图缺 `width:min(320px,100%)` 约束：' + tags[0]);
-  assert.match(tags[0], /height:auto/, 'GIF 图缺 `height:auto`（要按比例算高）');
-  assert.match(tags[0], /image-rendering:pixelated/, 'GIF 图缺 `image-rendering:pixelated`（放大后要锐边）');
+  const cls = /class="([^"]*)"/.exec(stage[0]);
+  assert.ok(cls !== null, 'GIF 舞台没挂类名（宽度上限与像素质感两条规则按类名绑定，不挂＝规则全死）');
+  const names = cls[1].split(/\s+/).filter((c) => c !== '');
+  const css = styleText(html);
+  assert.ok(names.some((c) => /max-width/.test(ruleBody(css, '\\.' + c) ?? '')),
+    'GIF 舞台的类没有宽度上限规则（64×64 方帧会被放大到无上限）：' + cls[1]);
+  assert.ok(names.some((c) => /image-rendering:pixelated/.test(
+    ruleBody(css, '\\.' + c + '\\s+\\.ilife-block-media-img') ?? '')),
+  'GIF 舞台的类没绑上 `image-rendering:pixelated`（放大后糊成一片）：' + cls[1]);
+  assert.ok(hasWidthBound(tags[0], css), 'GIF 图缺宽度约束：' + tags[0]);
 }
 
 test('① 六张带图页的每张 `<img>` 都带宽度约束', async () => {
@@ -186,16 +223,24 @@ test('④ GIF 舞台带宽度约束（`width:min(320px,100%)`）', async () => {
   assertGifStage(p.gif);
 });
 
-test('⑤ 本票定的三个图上限（候选缩略 160px／快照 60vh／回执 240px）与对比卡的可折行', async () => {
+test('⑤ 本票定的图上限（候选缩略格位／快照 60vh／回执 240px）与对比卡的可折行', async () => {
   const p = allPages();
-  const picker = elementFace(p.picker);
-  assert.equal((picker.match(/max-height:160px/g) ?? []).length, 4, '候选缩略图上限（4 张）不符');
-  assert.equal((picker.match(/max-height:60vh/g) ?? []).length, 1, '快照上限（1 张）不符');
-  assert.match(picker, /<figure data-snapshot="2">[\s\S]*?max-height:60vh/, '快照缺 60vh 上限');
+  const pickerFace = elementFace(p.picker);
+  const pickerCss = styleText(p.picker);
+  // 候选缩略（4 张）：#527 起走家族的**等高卡格位**（每张住 `.phu-shot` 框里，框定比例、图铺满裁切），
+  //  逐张不再写内联 `max-height:160px`；判据改认「4 张都在格位里 ＋ 格位那条规则在」，不放宽成「有图就算」。
+  assert.equal((pickerFace.match(/class="phu-shot"/g) ?? []).length, 4, '候选缩略格位（4 张）不符');
+  assert.match(ruleBody(pickerCss, '\\.phu-shot') ?? '', /aspect-ratio/, '候选格位缺比例（图会按天然像素撑破）');
+  assert.match(ruleBody(pickerCss, '\\.phu-shot img') ?? '', /width:100%/, '候选格位里的图缺宽度约束');
+  // 快照：60vh 上限 ＋ `data-snapshot` 锚（这一张仍是内联，判据不动）
+  assert.equal((pickerFace.match(/max-height:60vh/g) ?? []).length, 1, '快照上限（1 张）不符');
+  assert.match(pickerFace, /<figure[^>]*data-snapshot="2"[^>]*>[\s\S]*?max-height:60vh/, '快照缺 60vh 上限');
   assert.equal((elementFace(p.add).match(/max-height:240px/g) ?? []).length, 1, '存照回执的图上限不符');
   assert.equal((elementFace(p.remove).match(/max-height:240px/g) ?? []).length, 1, '删照回执的图上限不符');
   const compare = elementFace(p.compare);
-  assert.match(compare, /style="display:flex;flex-wrap:wrap;gap:12px"/, '对比页两卡缺可折行容器（窄屏排不上下）');
+  // 对比两卡：可折行容器同样改住类名规则（`.phu-compare` 的 `flex-wrap`）；两张卡的可压窄约束仍在内联。
+  assert.match(ruleBody(styleText(p.compare), '\\.phu-compare') ?? '', /flex-wrap/,
+    '对比页缺可折行容器（窄屏排不上下）');
   assert.equal((compare.match(/style="flex:1 1 240px;min-width:0"/g) ?? []).length, 2,
     '对比页两张卡缺可压窄的 flex 约束（缺 min-width:0 时 flex 项压不窄，窄屏照样撑破）');
 });
@@ -254,9 +299,9 @@ test('⑦ 变异自证：改坏必红、改回必绿（两行机器读数）', a
   } catch (e) {
     red.push('触摸区=' + String(e.message).split('\n')[0]);
   }
-  // 变异四：GIF 舞台退回裸图（64×64 原样占 16% 屏）→ ④ 必红。
-  const rawGif = p.gif.replace(/ style="width:min\(320px,100%\);height:auto;image-rendering:pixelated"/, '');
-  assert.notEqual(rawGif, p.gif, '变异四未生效（GIF 舞台约束没摘掉）');
+  // 变异四：把 GIF 舞台的**类名**摘掉（宽度上限与像素质感两条规则因此全死）→ ④ 必红。
+  const rawGif = p.gif.replace(/<div data-gif-stage class="[^"]*">/, '<div data-gif-stage>');
+  assert.notEqual(rawGif, p.gif, '变异四未生效（GIF 舞台的类名没摘掉）');
   try {
     assertGifStage(rawGif);
     assert.fail('变异四（GIF 舞台退回裸图）未红');

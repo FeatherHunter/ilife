@@ -168,9 +168,12 @@ function stageHtml(s: Synth, embed: boolean): string {
   if (s.path !== null && embed) {
     const uri = 'data:image/gif;base64,' + Buffer.from(readFileSync(s.path)).toString('base64');
     // #484 口径：舞台宽度**有上限**（合成的是小方帧，不给上限放大会只占一小块屏）；窄屏随容器收。
-    //  宽度约束写在舞台的内联样式上（`#484` 的机器面判据按内联属性认宽度约束，媒体件自己只兜 CSS）。
+    //  #527 收口：宽度上限与像素质感**两条都归类名**（`photoUi.ts` 的 `.phu-gif-stage` 一族：
+    //  `max-width:300px` ＋ `.phu-gif-stage .ilife-block-media-img{image-rendering:pixelated}`）。
+    //  改前只写内联样式、不挂类名 ⇒ 那两条规则全死：像素质感失效（64×64 方帧放大后糊成一片），
+    //  宽度上限还在两处各写一遍。
     //  `data-gif-stage` 是 `photo-responsive-484` 与判分脚本认的锚。
-    return '<div data-gif-stage style="max-width:300px">' + renderMediaFigure({
+    return '<div data-gif-stage class="phu-gif-stage">' + renderMediaFigure({
       src: uri,
       alt: '身材变化 GIF',
       ratio: '1-1',
@@ -327,6 +330,11 @@ function shellOf(task: GifTask, s: Synth, content: string): string {
     subtitle: null,
     content: chipRow(['标签 ' + task.tag, task.photoCount + ' 张照片', span]) + '<p>' + escapeHtml(picked) + '</p>' + content,
     charts: false,
+    // #527 收口：本页原先漏了 `pageUi` 位 ⇒ 公共层媒体件那套规则（`.ilife-block-media-img` 的
+    //  `width:100%;max-width:100%`、`.ilife-block-media-frame-1-1` 的比例框）整段没进页，
+    //  舞台上的图因此按天然像素上屏、方框没有比例。家族其余五页（画廊／详情／对比／候选回执／HELP）
+    //  都接了这一位，本页与候选页补齐后与它们同档。
+    pageUi: true,
   });
 }
 
