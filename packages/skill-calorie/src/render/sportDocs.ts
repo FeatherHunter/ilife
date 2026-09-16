@@ -351,7 +351,7 @@ function verdictPill(v: ExerciseGoalPageInput): string {
 }
 
 /** 目标页数值四格（本页「目标／实际／完成度／差额」唯一的落点：环只给一眼的完成度，逐项对照全在这里）。
- *  #523 返修：判决只住胶囊一处（窗口条后的状态徽标与环心判语两处已撤，不再一页三遍）。 */
+ *  #523 返修：判决只住胶囊一处（窗口条后的状态徽标与环心判语两处已撤，不再一页三遍）；**#602 补题**：本块原只有裸 KPI 卡格、块内无可见标题（终审 #268 §2.6 N1 的页枚举漏了 23／24 两页），现照同件 `sec-kpi`／`sec-dist` 同形，把题作为 `<section>` 首个子节点补上——题词与页内导航同源（都取 `card()` 的 label「数值对照」，两处不会走散），风格同档（15px／700）。 */
 function goalFigures(v: ExerciseGoalPageInput, goalTotal: number): string {
   return renderKpiGrid([
     { label: '目标', value: fmtNum(goalTotal, 0), unit: '卡' },
@@ -419,7 +419,7 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
   const goalTotal = v.goalTotal;
   const cards: Card[] = [
     card('sec-ring', '目标环', ringCard(v, v.pct)),
-    card('sec-figures', '数值对照', goalFigures(v, goalTotal)),
+    card('sec-figures', '数值对照', '<h2 style="margin:0;font-size:15px;font-weight:700">数值对照</h2>' + goalFigures(v, goalTotal)),
   ];
   const source = footFacts(SOURCE_GOAL, v.start, v.end, v.days);
   return assembleDocPage({
