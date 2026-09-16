@@ -22,6 +22,7 @@
 import { renderCaliberLine, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { collectButtonHint, collectFrameHead, collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
@@ -89,6 +90,10 @@ function collectIncome(input: CollectInput): string {
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord: wakeWordOf('income') }),
     }),
+    collectFrameHead({ wakeWord: WORD }),
+    collectProgress({ wakeWord: WORD, missing: blocked.length }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
+    collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
     summaryRow(facts),
     renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
     renderCaliberLine('方向口径：收入取正数——金额符号即方向；给成负数会被拦在这一页，不进写库那一步。'),
@@ -100,6 +105,7 @@ function collectIncome(input: CollectInput): string {
       note: '收入这几格补齐之后跟助手说一遍才会写库；分类候选取自近期记录，一条历史都没有时给收入侧的一级名目。',
     }),
     empties.join(''),
+    collectSectionTitle({ no: 2, title: '把缺的格逐格补齐' }),
     fieldCardOf({
       description: '填好必需项再说一遍。这一页先不写库。分类要选到最细那一级'
         + '（收入侧一级名目：工资／奖金／兼职／投资／其他收入／退款）。金额取正数。',
@@ -109,6 +115,8 @@ function collectIncome(input: CollectInput): string {
       pick,
     }),
     promptCopyArea(bp.prompt, '补齐后照这句跟助手说一遍'),
+    collectSectionTitle({ no: 3, title: '补齐了再请助手记' }),
+    collectButtonHint({ wakeWord: WORD }),
     copyArea({
       data: { envelope },
       log: {

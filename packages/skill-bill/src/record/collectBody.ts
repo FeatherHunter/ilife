@@ -21,6 +21,7 @@ import type { SerializableEnvelope } from 'base-paint';
 import type { BillRow } from '../fetch/db.js';
 import { ALL_L1, EXPENSE_L1 } from '../policy/category.js';
 import { blockedBar, blockedItems, blockedMessage } from '../shared/blockedSlots.js';
+import { collectButtonHint, collectFrameHead, collectMissingTags, collectProgress, collectSectionTitle } from '../shared/collectFrame.js';
 import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
@@ -133,17 +134,24 @@ export function collectBody(input: CollectInput): string {
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
       next: nextStepOf({ page: 'collect', missing: blocked.length, wakeWord }),
     }),
+    collectFrameHead({ wakeWord }),
+    collectProgress({ wakeWord, missing: blocked.length }),
+    collectMissingTags({ labels: blocked.map((i) => i.label) }),
+    collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
     summaryRow(facts),
     renderCaliberLine('写库：还没发生——这一页先不写库，只采集。补齐之后跟助手说一遍才会写。'),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     prefillNote(prefill),
     blockedBar({ items: blocked, command: commandLineOf(key, params, blocked) }),
     empties.join(''),
+    collectSectionTitle({ no: 2, title: '把缺的格逐格补齐' }),
     renderParamForm({
       description: '填好必需项再说一遍。这一页先不写库。分类／账户／账本三格是选择器，候选取自近期记录。',
       fields: formFields({ slots, params, marks: prefill, pick }),
     }),
     promptCopyArea(promptOf(wakeWord, commandLine(key, params), blocked), null),
+    collectSectionTitle({ no: 3, title: '补齐了再请助手记' }),
+    collectButtonHint({ wakeWord }),
     copyArea({
       data: { envelope },
       log: {
