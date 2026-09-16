@@ -1,0 +1,77 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>场景06 目标管理 · 用户验收页（#257）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f}
+.wrap{padding:26px 22px 70px;max-width:1080px}
+h1{font-size:22px;margin-bottom:6px}h2{font-size:16px;margin:24px 0 10px}
+.sub{color:#6e6e73;font-size:13px;line-height:1.8;margin-bottom:14px}.sub b{color:#1d1d1f}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:12.5px;line-height:1.7}
+th,td{border:1px solid #d2d2d7;padding:7px 9px;vertical-align:top;text-align:left}
+th{background:#f5f5f7}code{font-size:11.5px;word-break:break-all}
+.badge{display:inline-block;background:#1d1d1f;color:#fff;border-radius:6px;font-size:11px;padding:1px 7px;margin-right:6px}
+.note{background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:14px 16px;margin-top:14px;font-size:13px;line-height:1.9}
+.note ul{margin:6px 0 0 20px}
+</style></head><body><div class="wrap">
+<h1>场景06「目标管理」用户验收页 · #257</h1>
+<div class="sub">范围：<b>25 条冻结词 ＋ 3 条自造别名 ＝ 28 条</b>（真源 <code>docs/skills/skill-calorie/06-目标管理-工作流程.md</code> 28 行，命令照抄即跑）。
+工作树在途新增第 26 条「定运动目标」（<code>scene-06-goal.ts</code> 未提交，别席在飞）<b>不在本次验收范围</b>。
+验收墙对照：<code>docs/skills/skill-calorie/scene06-验收墙/链路索引.html</code>（34 件产物，prompt 原文 → 命令 → 绝对路径）。
+本页即交付物（B 段实跑记录区见 §4）。</div>
+
+<h2>一、装机复核（A 段已跑，GATE-RUN runId <code>280f870b</code>，ticket=257，exit 0）</h2>
+<table><tr><th>检查</th><th>读数</th></tr>
+<tr><td>技能发现位形态</td><td><code>C:\Users\辰辰洋洋\.agents\skills\skill-calorie</code> ＝ <b>Junction → <code>D:\ilife\packages\skill-calorie</code></b>，经链接读版本 <b>0.2.3</b></td></tr>
+<tr><td>正文一致性</td><td><code>SKILL.md</code> 76298 B，链接侧与仓库侧 sha12 同为 <code>46fbbfaff6e9</code>（逐字节相同）；<code>dist/cli/cmd_read.js</code> 8747 B，两边 sha12 同为 <code>c7fba3692ab6</code></td></tr>
+<tr><td>dist 指纹</td><td><code>dist/cli/cmd_read.js</code> 与 <code>dist/index.js</code> 与 #611/#256 复核构建一致；<code>dist/triggers/scene-06-goal.js</code> 已含在途第 26 条（26 词，sha12 <code>b4ff9d69bb30</code>，旧行一字未动，只增 order 25 一行）</td></tr>
+<tr><td>经链接真跑 3/3</td><td>拷贝库上跑 <code>goal-status</code>（70578 B）／<code>goal-wizard{profile:cut}</code>（76940 B）／<code>goal-recommend{profile:cut}</code>（73285 B，与验收墙同字节），exit 0 且均为完整文档</td></tr>
+<tr><td>在途 dist 复绿</td><td><code>goal-lock-256.test.mjs</code> 在当刻 dist 下重跑 <b>7/7</b>（GATE-RUN runId <code>e3e0e16a</code>，28/28 真出口＋8 档不同形＋三组数值＋四态阻断＋灵敏度 10 红＋真库 sha 同值）</td></tr>
+</table>
+
+<h2>二、数据安全基线（A 段已取，全程零写活库：哈希直读文件字节，行数只查文件拷贝）</h2>
+<table><tr><th>项</th><th>读数</th></tr>
+<tr><td>活库文件</td><td><code>D:\2Study\StudyNotes\.db\calorie_data.db</code> · sha256 <code>D40D58F5…A1083</code>（全值见票面）· 3072000 B · 跑后复核一致</td></tr>
+<tr><td>逐表行数（11 表，共 11047 行）</td><td>body_composition 0／body_measurements 1／body_photos 22／daily_goal 1／exercise_log 8297／food_log 564／nutrition_products 1931／user_profile 1／weight_log 129／workout_plan_config 1／workout_plans 100</td></tr>
+<tr><td>完整性</td><td>拷贝库 <code>PRAGMA integrity_check</code> ＝ ok</td></tr>
+</table>
+<div class="note">B 段跑后对照（未执行，流程留档）：逐表行数全等 ＋ <code>integrity_check</code> ＋ 活库 sha；写命令必改 <code>updated_at</code> 时间戳一处，照 #152 法子定向 UPDATE 还原＋逻辑转储证零变化。</div>
+
+<h2>三、28 条验收表（B 段操作步骤；<code>&lt;日期&gt;</code> 换目标行现有 deadline，写值一律先读现值回填）</h2>
+<table><tr><th>#</th><th>唤醒词</th><th>命令（照抄即跑）</th><th>流程</th></tr>
+<tr><td>1</td><td>定营养目标</td><td><code>calorie-cmd-read calorie.goal.set --params '{"calorie":1800,"protein":150,"carbs":200,"fat":50,"water":2000}'</code></td><td><span class="badge">写类两段</span>先预检 <code>goal-wizard{"wake":"定营养目标"}</code> → 确认 → 写 → 回执页</td></tr>
+<tr><td>2</td><td>定营养目标(自动算)</td><td><code>calorie-cmd-read calorie.view.goal-wizard --params '{"profile":"cut","wake":"定营养目标(自动算)"}'</code></td><td><span class="badge">写类两段</span>本行即预检页 → 确认 → <code>goal.set</code> → 回执页</td></tr>
+<tr><td>3</td><td>定体重目标</td><td><code>calorie-cmd-read calorie.goal.weight --params '{"kg":68}'</code></td><td><span class="badge">写类两段</span>先预检 → 确认 → 写 → 回执页</td></tr>
+<tr><td>4</td><td>定体重目标(自动算截止)</td><td><code>calorie-cmd-read calorie.goal.weight --params '{"kg":68,"deadline":"&lt;日期&gt;"}'</code></td><td><span class="badge">写类两段</span>先预检 → 确认 → 写 → 回执页</td></tr>
+<tr><td>5</td><td>定体重目标(含起始日)</td><td><code>calorie-cmd-read calorie.goal.weight --params '{"kg":68,"startKg":72,"deadline":"&lt;日期&gt;","startDate":"&lt;日期&gt;"}'</code></td><td><span class="badge">写类两段</span>先预检 → 确认 → 写 → 回执页</td></tr>
+<tr><td>6</td><td>定饮水目标</td><td><code>calorie-cmd-read calorie.goal.water --params '{"water":2000}'</code></td><td><span class="badge">写类两段</span>先预检 → 确认 → 写 → 回执页</td></tr>
+<tr><td>7</td><td>定饮水目标(自动算)</td><td><code>calorie-cmd-read calorie.view.goal-wizard --params '{"profile":"cut","wake":"定饮水目标(自动算)"}'</code></td><td><span class="badge">写类两段</span>本行即预检页 → 确认 → <code>goal.water</code> → 回执页</td></tr>
+<tr><td>8</td><td>一键定全套目标</td><td><code>calorie-cmd-read calorie.view.goal-wizard --params '{"profile":"cut","wake":"一键定全套目标"}'</code></td><td><span class="badge">写类两段</span>本行即预检页 → 确认 → set＋weight＋water 逐项 → 各回执页</td></tr>
+<tr><td>9</td><td>看今日目标</td><td><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>10</td><td>看本周目标</td><td><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"本周"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>11</td><td>看营养目标进度</td><td><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"7d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>12</td><td>看体重目标进度</td><td><code>calorie-cmd-read calorie.view.goal-weight --params '{"window":"7d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>13</td><td>看饮水目标进度</td><td><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"今日"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>14</td><td>看目标对比实际</td><td><code>calorie-cmd-read calorie.view.goal-vs-actual --params '{"window":"30d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>15</td><td>看目标完成度</td><td><code>calorie-cmd-read calorie.view.goal --params '{"window":"7d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>16</td><td>看即将到期的目标</td><td><code>calorie-cmd-read calorie.view.goal-expiring</code></td><td><span class="badge">读类直出</span>结果页（默认 14 天窗）</td></tr>
+<tr><td>17</td><td>看目标完成率(按周)</td><td><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"7d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>18</td><td>看目标完成率(按月)</td><td><code>calorie-cmd-read calorie.view.goal-progress --params '{"window":"7d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>19</td><td>改营养目标</td><td><code>calorie-cmd-read calorie.goal.set --params '{"calorie":1800,"protein":150,"carbs":200,"fat":50}'</code></td><td><span class="badge">写类两段</span>先预检 → 确认 → 写 → 回执页（含改前→改后；无目标行 exit 4）</td></tr>
+<tr><td>20</td><td>改体重目标</td><td><code>calorie-cmd-read calorie.goal.weight --params '{"kg":67.5}'</code></td><td><span class="badge">写类两段</span>先预检 → 确认 → 写 → 回执页（无目标行 exit 4）</td></tr>
+<tr><td>21</td><td>改饮水目标</td><td><code>calorie-cmd-read calorie.goal.water --params '{"water":2200}'</code></td><td><span class="badge">写类两段</span>先预检 → 确认 → 写 → 回执页（无目标行 exit 4）</td></tr>
+<tr><td>22</td><td>暂停所有目标</td><td><code>calorie-cmd-read calorie.goal.pause</code></td><td><span class="badge">写类直写</span>无预检页 → 回执页（带恢复入口提示）</td></tr>
+<tr><td>23</td><td>重启所有目标</td><td><code>calorie-cmd-read calorie.goal.resume</code></td><td><span class="badge">写类直写</span>无预检页 → 回执页</td></tr>
+<tr><td>24</td><td>看目标历史完成</td><td><code>calorie-cmd-read calorie.view.goal --params '{"window":"30d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>25</td><td>看目标预测达成</td><td><code>calorie-cmd-read calorie.view.goal-predict --params '{"window":"14d"}'</code></td><td><span class="badge">读类直出</span>结果页</td></tr>
+<tr><td>26</td><td>看目标推荐</td><td><code>calorie-cmd-read calorie.view.goal-recommend --params '{"profile":"cut"}'</code></td><td><span class="badge">读类直出</span>结果页（自造别名）</td></tr>
+<tr><td>27</td><td>看目标配置</td><td><code>calorie-cmd-read calorie.view.goal-config</code></td><td><span class="badge">读类直出</span>结果页（自造别名）</td></tr>
+<tr><td>28</td><td>看目标状态</td><td><code>calorie-cmd-read calorie.view.goal-status</code></td><td><span class="badge">读类直出</span>结果页（自造别名）</td></tr>
+</table>
+<div class="note">B 段交付判据（票面）：① HTML 落盘、<code>data.output</code> 绝对路径 ② 字节非 0 ③ 文字回复只概括结论不超三句 ④ 缺数据走可读阻断且不落盘（算完成）。写命令数值一律先读现值回填，不编新数。</div>
+
+<h2>四、B 段执行状态</h2>
+<div class="note" id="b-status"><ul>
+<li>2026-09-16：A 段完成（装机复核＋基线＋本页）。B 段（全新空白 session 用户实跑 28 条＋肉眼签字）<b>经负责人明确豁免</b>，见 #257 票面评论（负责人原话「我计划不进行人工测试，直接算完成」）。</li>
+<li>代收依据：锁票 28/28 在途 dist 下复绿（7/7）＋验收墙 34 件完整文档＋装机 3/3＋基线 integrity ok。日后若补跑，按 §3 逐条执行并把「跑通／未跑通／用户原话」记入本区。</li>
+</ul></div>
+</div></body></html>
