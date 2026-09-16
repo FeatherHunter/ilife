@@ -349,11 +349,16 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
     parts.push(renderEmptyBlock({ title: '热量来源占比', text: '本窗总热量为 0，占比画不出来（不编数）' }));
   }
   // 推荐范围对比（下限/上限按总热量占比换算：蛋白/碳水 4kcal/g · 脂肪 9kcal/g；沿老模板）。
+  // #631 · 距范围列与状态列同口径（t605 D3）：三态判定一律按占比 pct（与状态列同一谓词），
+  // 不按克数比（克数经 round 取整，边界上会与 pct 判定分家）；符号统一为 ↓/✓/↑，与状态列同符号系，
+  // 差值取到侧界的绝对克数（下限侧 minG-g／上限侧 g-maxG），数字本身不动（minG/maxG/g/pct 算式不变）。
   const rows = macros.map((m) => {
     const minG = Math.round((v.totalCalorie * m.range.min) / 100 / m.perG);
     const maxG = Math.round((v.totalCalorie * m.range.max) / 100 / m.perG);
-    const inRange = m.pct >= m.range.min && m.pct <= m.range.max;
-    const gap = m.g > maxG ? '+' + (m.g - maxG) + ' 克' : (m.g < minG ? '-' + (minG - m.g) + ' 克' : '✓');
+    const below = m.pct < m.range.min;
+    const above = m.pct > m.range.max;
+    const inRange = !below && !above;
+    const gap = above ? '↑ ' + (m.g - maxG) + ' 克' : (below ? '↓ ' + (minG - m.g) + ' 克' : '✓');
     /* #511 · 下限／上限两列原写 `10%（48g）`——`g` 是英文缩写，且括号里的克数是**整窗合计**、
        读者会当成一天的量（审查件第 78 条）。单位改「克」，并把「这一列是几天合计」写进格子；
        表题再补一句同口径，免得逐格都读一遍才知道分母。 */
@@ -364,7 +369,7 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
       lower: m.range.min + '%（' + minG + span + '）',
       upper: m.range.max + '%（' + maxG + span + '）',
       gap,
-      status: inRange ? '✓ 在范围内' : (m.pct < m.range.min ? '↓ 偏低' : '↑ 偏高'),
+      status: inRange ? '✓ 在范围内' : (below ? '↓ 偏低' : '↑ 偏高'),
     };
   });
   parts.push(anchored('sec-table', renderDataTable({
