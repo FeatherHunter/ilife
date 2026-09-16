@@ -1,0 +1,30 @@
+START ticket=616 runId=t616r-envprobe cmd="node .scratch/t616r/env-probe.mjs" waitedMs=0 pid=59820 at=2026-09-16T06:28:11.461Z
+RUN ticket=616 runId=t616r-envprobe cmd="node .scratch/t616r/env-probe.mjs" waitedMs=0 exit=1 pid=59820 at=2026-09-16T06:28:12.371Z
+START ticket=616 runId=t616r-envprobe2 cmd="node .scratch/t616r/env-probe.mjs" waitedMs=0 pid=69964 at=2026-09-16T06:28:24.954Z
+RUN ticket=616 runId=t616r-envprobe2 cmd="node .scratch/t616r/env-probe.mjs" waitedMs=0 exit=0 pid=69964 at=2026-09-16T06:28:26.702Z
+START ticket=616 runId=t616r-acc cmd="node .scratch/t616r/acc.mjs" waitedMs=0 pid=69740 at=2026-09-16T06:29:20.950Z
+RUN ticket=616 runId=t616r-acc cmd="node .scratch/t616r/acc.mjs" waitedMs=0 exit=1 pid=69740 at=2026-09-16T06:29:25.228Z
+START ticket=616 runId=t616r-acc2 cmd="node .scratch/t616r/acc.mjs" waitedMs=0 pid=53412 at=2026-09-16T06:29:33.130Z
+RUN ticket=616 runId=t616r-acc2 cmd="node .scratch/t616r/acc.mjs" waitedMs=0 exit=0 pid=53412 at=2026-09-16T06:29:37.332Z
+START ticket=616 runId=t616r-trio cmd="node --test packages/skill-calorie/test/t511-清尾二.test.mjs packages/skill-calorie/test/render-t9.test.mjs packages/skill-calorie/test/trend-misc-port-113.test.mjs" waitedMs=0 pid=53580 at=2026-09-16T06:29:42.155Z
+RUN ticket=616 runId=t616r-trio cmd="node --test packages/skill-calorie/test/t511-清尾二.test.mjs packages/skill-calorie/test/render-t9.test.mjs packages/skill-calorie/test/trend-misc-port-113.test.mjs" waitedMs=0 exit=0 pid=53580 at=2026-09-16T06:30:01.050Z
+START ticket=616 runId=t616r-analysis cmd="node --test packages/skill-calorie/test/analysis-*.test.mjs" waitedMs=0 pid=40616 at=2026-09-16T06:30:39.903Z
+RUN ticket=616 runId=t616r-analysis cmd="node --test packages/skill-calorie/test/analysis-*.test.mjs" waitedMs=0 exit=1 pid=40616 at=2026-09-16T06:31:00.321Z
+START ticket=616 runId=t616r-newprobe cmd="node .scratch/t616r/newprobe.mjs" waitedMs=30003 pid=18632 at=2026-09-16T06:31:09.921Z
+RUN ticket=616 runId=t616r-newprobe cmd="node .scratch/t616r/newprobe.mjs" waitedMs=30003 exit=1 pid=18632 at=2026-09-16T06:31:13.181Z
+START ticket=616 runId=t616r-analysis2 cmd="node --test packages/skill-calorie/test/analysis-*.test.mjs" waitedMs=0 pid=59772 at=2026-09-16T06:31:18.413Z
+RUN ticket=616 runId=t616r-analysis2 cmd="node --test packages/skill-calorie/test/analysis-*.test.mjs" waitedMs=0 exit=1 pid=59772 at=2026-09-16T06:31:39.028Z
+START ticket=616 runId=t616r-rt cmd="node .scratch/t616r/rt.mjs" waitedMs=80007 pid=60280 at=2026-09-16T06:33:42.984Z
+RUN ticket=616 runId=t616r-rt cmd="node .scratch/t616r/rt.mjs" waitedMs=80007 exit=0 pid=60280 at=2026-09-16T06:34:46.028Z
+START ticket=616 runId=t616r-384 cmd="node --test packages/skill-calorie/test/analysis-report-384.test.mjs" waitedMs=40005 pid=55128 at=2026-09-16T06:36:04.056Z
+RUN ticket=616 runId=t616r-384 cmd="node --test packages/skill-calorie/test/analysis-report-384.test.mjs" waitedMs=40005 exit=0 pid=55128 at=2026-09-16T06:36:15.437Z
+START ticket=616 runId=t616r-mut cmd="node .scratch/t616r/mut.mjs" waitedMs=60004 pid=32192 at=2026-09-16T06:36:16.358Z
+RUN ticket=616 runId=t616r-mut cmd="node .scratch/t616r/mut.mjs" waitedMs=60004 exit=0 pid=32192 at=2026-09-16T06:36:36.573Z
+START ticket=616 runId=t616r-warnline cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 pid=41400 at=2026-09-16T06:36:36.951Z
+RUN ticket=616 runId=t616r-warnline cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=41400 at=2026-09-16T06:36:37.076Z
+START ticket=616 runId=t616r-newprobe2 cmd="node .scratch/t616r/newprobe.mjs" waitedMs=0 pid=65896 at=2026-09-16T06:36:42.358Z
+RUN ticket=616 runId=t616r-newprobe2 cmd="node .scratch/t616r/newprobe.mjs" waitedMs=0 exit=0 pid=65896 at=2026-09-16T06:36:46.604Z
+START ticket=616 runId=t616r-gate83 cmd="node .scratch/t616r/gate83.mjs" waitedMs=10001 pid=67728 at=2026-09-16T06:38:15.756Z
+RUN ticket=616 runId=t616r-gate83 cmd="node .scratch/t616r/gate83.mjs" waitedMs=10001 exit=1 pid=67728 at=2026-09-16T06:38:15.833Z
+START ticket=616 runId=t616r-gate83b cmd="node .scratch/t616r/gate83.mjs" waitedMs=0 pid=62736 at=2026-09-16T06:38:22.542Z
+RUN ticket=616 runId=t616r-gate83b cmd="node .scratch/t616r/gate83.mjs" waitedMs=0 exit=0 pid=62736 at=2026-09-16T06:38:47.960Z
