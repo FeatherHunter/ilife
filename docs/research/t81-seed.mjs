@@ -109,10 +109,12 @@ export function seedFull(db) {
     const w = Math.round((75.0 - i * 0.012) * 10) / 10;
     db.prepare('INSERT INTO weight_log (date, time, weight_kg, height_cm, bmi) VALUES (?, ?, ?, 175, 22.9)').run(d, '07:00:00', w);
   }
-  for (const [d, pct] of [['2026-09-05', 19.5], ['2026-09-06', 19.2], ['2026-09-07', 18.9]]) {
+  // #559：对比段 2026-08-23~08-29 补体脂行（与 PLACEHOLDER_SUBSTITUTIONS 登记的 <对比开始日期>/<对比结束日期> 对齐）。
+  for (const [d, pct] of [['2026-08-23', 20.3], ['2026-08-29', 20.0], ['2026-09-05', 19.5], ['2026-09-06', 19.2], ['2026-09-07', 18.9]]) {
     db.prepare('INSERT INTO body_composition (date, source, body_fat_pct, caliper_chest_mm, caliper_abdominal_mm, caliper_thigh_mm, caliper_tricep_mm, caliper_subscapular_mm, caliper_suprailiac_mm, caliper_midaxillary_mm) VALUES (?, ?, ?, 10, 12, 14, 11, 13, 12, 10)').run(d, 'home_caliper', pct);
   }
-  for (const [d, waist, hip] of [['2026-09-05', 85, 95], ['2026-09-06', 84.5, 94.5], ['2026-09-07', 84, 94]]) {
+  // #559：对比段 2026-08-23~08-29 补围度行（同上）。
+  for (const [d, waist, hip] of [['2026-08-23', 86.5, 96.5], ['2026-08-29', 86, 96], ['2026-09-01', 85.5, 95.5], ['2026-09-05', 85, 95], ['2026-09-06', 84.5, 94.5], ['2026-09-07', 84, 94]]) {
     db.prepare('INSERT INTO body_measurements (date, waist_cm, hip_cm) VALUES (?, ?, ?)').run(d, waist, hip);
   }
   db.prepare("INSERT OR REPLACE INTO workout_plan_config (id, title, version, description, total_weeks, start_date) VALUES (1, 'seed计划', 'v1', 'desc', 4, '2026-09-01')").run();

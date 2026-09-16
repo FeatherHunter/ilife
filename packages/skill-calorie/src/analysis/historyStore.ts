@@ -3,6 +3,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { getNutritionGoal } from '../goal/nutritionGoal.js';
+import { todayISO } from './utils.js';
 
 export interface DayIntake {
   date: string;
@@ -26,8 +27,10 @@ function fmtDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** 最近 N 天每日摄入（food_log 按 date 聚合倒序）；空库返回空 rows，调用方阻断提示，不返“正常空数据”。 */
-export function getCalorieHistory(db: DatabaseSync, days = 7, now = new Date()): CalorieHistory {
+/** 最近 N 天每日摄入（food_log 按 date 聚合倒序）；空库返回空 rows，调用方阻断提示，不返“正常空数据”。
+ * #559：默认 `now` 经 `todayISO()` 派生（#250 唯一出处），`CALORIE_TODAY` 钉住时窗口跟钉住；
+ * 未设该变量时按包内 UTC 日口径（与 T3/T4 同；与原来按机器本地日历在午夜边界可能差一天，口径以 UTC 日为准）。显式 `now` 照旧优先。 */
+export function getCalorieHistory(db: DatabaseSync, days = 7, now = new Date(todayISO() + 'T12:00:00')): CalorieHistory {
   const start = new Date(now);
   start.setDate(start.getDate() - days);
   const rows = db
