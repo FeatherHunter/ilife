@@ -212,7 +212,7 @@
   margin: 12px 0;
   max-width: 520px;
 }
-@media (min-width: 821px) {
+@media (min-width: 641px) {
   .ilife-action-bar {
     max-width: none;
   }
@@ -228,6 +228,11 @@
 @media (max-width: 820px) {
   .ilife-action-row-ghost {
     position: relative;
+  }
+}
+@media (max-width: 640px) {
+  .ilife-action-row-ghost {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .ilife-action-btn {
@@ -1200,6 +1205,65 @@ body {
   font-size: 15px;
   font-weight: 600;
 }
+.ilife-block-op-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+.ilife-block-op-head-ok {
+  border-left-color: var(--ok);
+}
+.ilife-block-op-head-warn {
+  border-left-color: #a25b00;
+}
+.ilife-block-op-head-danger {
+  border-left-color: #a83228;
+}
+.ilife-block-op-head-empty {
+  border-left-color: var(--fg2);
+}
+.ilife-block-op-head-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--soft);
+  color: var(--fg);
+  font-size: 20px;
+  line-height: 1;
+}
+.ilife-block-op-head-title {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  color: var(--fg);
+  font-size: 18px;
+  font-weight: 700;
+}
+.ilife-block-op-head-id {
+  flex: 1 0 100%;
+  margin: 0;
+  color: var(--fg2);
+  font-size: 13px;
+}
+.ilife-block-op-head-time {
+  flex: 1 0 100%;
+  margin: 0;
+  color: var(--fg2);
+  font-size: 12px;
+}
+.ilife-block-op-head-time::before {
+  content: "写入时间 ";
+}
 .ilife-block-mini-bar {
   display: inline-block;
   overflow: hidden;
@@ -1317,7 +1381,14 @@ body {
   gap: 12px;
   margin: 16px 0;
 }
+@media (min-width: 1024px) {
+  .ilife-block-page-shell .ilife-block-kpi-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 .ilife-block-kpi-card {
+  display: flex;
+  flex-direction: column;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -1356,7 +1427,28 @@ body {
   overflow-wrap: anywhere;
 }
 .ilife-block-kpi-card-badge {
+  margin-top: auto;
+  padding-top: 8px;
+}
+.ilife-block-kpi-card-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
   margin-top: 8px;
+  overflow: hidden;
+}
+.ilife-block-kpi-card-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+.ilife-block-kpi-card-bar-high {
+  background: #34c759;
+}
+.ilife-block-kpi-card-bar-mid {
+  background: #ff9500;
+}
+.ilife-block-kpi-card-bar-low {
+  background: #ff3b30;
 }
 .ilife-block-kpi-card-title {
   margin: 0 0 8px;
@@ -1365,7 +1457,7 @@ body {
 }
 @media (max-width: 640px) {
   .ilife-block-page-shell .ilife-block-kpi-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 /* block-data-table */
@@ -1388,6 +1480,18 @@ body {
   font-weight: 600;
   text-align: left;
 }
+.ilife-block-data-table-row-marker {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--blue2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
 .ilife-block-data-table th {
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
@@ -1406,6 +1510,9 @@ body {
 }
 .ilife-block-data-table tr:last-child td {
   border-bottom: none;
+}
+.ilife-block-data-table tbody tr:nth-child(even) td {
+  background-color: var(--bg);
 }
 .ilife-block-data-table-cell-left {
   text-align: left;
@@ -1654,6 +1761,11 @@ body {
 }
 .ilife-block-disclosure[open] > .ilife-block-disclosure-summary::before {
   transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ilife-block-disclosure-summary::before {
+    transition: none;
+  }
 }
 .ilife-block-disclosure-body {
   padding: 0 14px 14px;
@@ -2210,7 +2322,7 @@ calorie_data.db ｜ calorie_data.db ｜ 饮水记录
 调用链
 calorie-cmd-read calorie.view.today-water --params &#39;{&quot;date&quot;:&quot;今日&quot;,&quot;entry&quot;:&quot;drink&quot;}&#39;
 时间戳版本
-2026-09-16 14:51:48 · 版本 0.1.0
+2026-09-16 20:14:36 · 版本 0.1.0
 异常
 无">复制日志</button></div></div></section></div></section>
 </div>
