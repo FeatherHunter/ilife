@@ -3,13 +3,13 @@
  * #318 · 从 `src/cli/cmd_read.ts` 的 `case 'calorie.view.goal*'` 逐条搬出：逻辑一字未动，
  * 只换住处（分派层改走 `src/cli/registry.ts` 查表 ⇒ `commands.ts` 的 `run`）。
  * 读命令一律经共用位取口径（`shared/params.ts` 的 `defaultRange`／`nums`／`optNum`／`optStr`），
- * 取数与装配仍住原处（`render/goal.ts`／`goalPlate.ts`／`goalExtra.ts`／`trendDocs.ts`），本件只做入口。
+ * 取数与装配住目标目录（`goal/goalPlate.ts`／`goalPlates.ts`／`goalExtraPlate.ts`）与 `render/trendDocs.ts`，本件只做入口。
  * #254 · `view.goal`／`view.goal-vs-actual`／`view.goal-expiring` 三处的 `html:` 改走
  * `./resultDocs.ts`（片段 → 整页）；三条命令的取数、参数与退出码一字未动。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from './goalExtraPlate.js';
-import { buildGoalConfig, buildGoalRecommend, buildGoalStatus, buildGoalWeight } from '../render/goalPlate.js';
+import { buildGoalConfig, buildGoalRecommend, buildGoalStatus, buildGoalWeight } from './goalPlates.js';
 import { buildGoalPredictDoc } from '../render/trendDocs.js';
 import { buildGoalView } from './goalPlate.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -143,7 +143,7 @@ export function viewGoalWizard(params: Record<string, unknown>, db: DatabaseSync
 
 /** `calorie.view.goal-weight` · 体重目标（当前体重 vs 目标体重 ＋ 达成差值／有记录天数）。
  *
- *  **原样搬来**：算式仍走 `render/goalPlate.ts::buildGoalWeight`、窗口口径仍走共用位
+ *  **原样搬来**：算式仍走 `goal/goalPlates.ts::buildGoalWeight`、窗口口径仍走共用位
  *  `defaultRange`／`nums`，本件只承接那一层转调（分派层改走 `cli/registry.ts` 查表 ⇒
  *  `commands.ts` 的 `run`）。
  *  它与本能力既有八条同族（键族 `calorie.view.goal*`），且与写命令 `calorie.goal.weight`

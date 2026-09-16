@@ -7,11 +7,11 @@
  * 无目标行即 missing-data（目标分析无目标不返空页，与 T8 goal 同约）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { getNutritionGoal, recommendNutritionGoal, recommendWaterGoal } from '../goal/nutritionGoal.js';
-import type { NutriProfile, NutritionGoalRow, RecommendResult } from '../goal/nutritionGoal.js';
-import { getPausedState } from '../goal/goalStore.js';
-import { listCompletedGoals } from '../goal/goalHistory.js';
-import type { GoalHistory } from '../goal/goalHistory.js';
+import { getNutritionGoal, recommendNutritionGoal, recommendWaterGoal } from './nutritionGoal.js';
+import type { NutriProfile, NutritionGoalRow, RecommendResult } from './nutritionGoal.js';
+import { getPausedState } from './goalStore.js';
+import { listCompletedGoals } from './goalHistory.js';
+import type { GoalHistory } from './goalHistory.js';
 import { buildDeficitData } from '../analysis/deficit.js';
 import type { DeficitData } from '../analysis/deficit.js';
 import { buildTrendData } from '../analysis/trend.js';
@@ -19,7 +19,7 @@ import type { TrendData } from '../analysis/trend.js';
 import { buildSeries, seriesCount, seriesDelta } from '../analysis/series.js';
 import { FetchError } from '../fetch/errors.js';
 import { round2 } from '../kcal.js';
-import { CalorieRenderError } from './errors.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {

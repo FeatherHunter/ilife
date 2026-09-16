@@ -5,7 +5,7 @@
  * `data-slot="ilife:calorie:goal-weight"` 全仓零嵌入引用——是面向用户的整页，
  * 不是嵌入片段。故按 `src/weight/compare.ts` 同形补齐 KPI／表／复制（含新 base
  * 双钮：`copyArea` 数据＋日志，与 `src/render/workoutPlanDocs.ts` 的 `dualCopy` 同形）／结论。
- * 取数仍走 `render/goalPlate.ts::buildGoalWeight`（零新口径）；旧 `renderGoalWeightHtml`
+ * 取数仍走 `goal/goalPlates.ts::buildGoalWeight`（零新口径）；旧 `renderGoalWeightHtml`
  * 片段保留不动（`src/render/html.ts` 他票在途，不碰）。
  */
 import type { SerializableEnvelope } from 'base-paint';
@@ -14,7 +14,7 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { pairStrip, weightUiCss, windowStrip } from '../weight/weightUi.js';
 import { nums } from '../shared/params.js';
-import type { GoalWeight } from '../render/goalPlate.js';
+import type { GoalWeight } from './goalPlates.js';
 import { nowStamp } from '../render/receipt.js';
 
 /** envelope 头（值冻结对齐 `cli/keys.ts`，与各 `*Docs.ts` 同值；标题取目标管理域）。 */

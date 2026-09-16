@@ -9,8 +9,9 @@ export { buildExerciseView } from '../home/exercise.js';
 export type { ExerciseView } from '../home/exercise.js';
 export { buildGoalView } from '../goal/goalPlate.js';
 export type { GoalView } from '../goal/goalPlate.js';
-export { buildGoalConfig, buildGoalRecommend, buildGoalProgress, buildGoalStatus, buildGoalWeight } from './goalPlate.js';
-export type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
+// #288 · 目标五盘已收进能力目录 `src/goal/goalPlates.ts`（纯搬迁）；本汇总出口按原样转出，调用方导入面不变。
+export { buildGoalConfig, buildGoalRecommend, buildGoalProgress, buildGoalStatus, buildGoalWeight } from '../goal/goalPlates.js';
+export type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from '../goal/goalPlates.js';
 export { COMBINED_PAIRS, buildCombinedAnalysis, buildDeficitPlate, buildDietReview, buildTrendPlate } from './analysisPlate.js';
 export type { CombinedAnalysis, DietReview, ReviewMealSlice } from './analysisPlate.js';
 export { buildHealthPlate } from '../analysis/healthPlate.js';

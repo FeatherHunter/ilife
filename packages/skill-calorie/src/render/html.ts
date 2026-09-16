@@ -20,7 +20,7 @@ import { GIF_PASSTHROUGH_NOTE } from '../photo/photo.js';
 import type { CrudReceipt, ErrorReceipt } from './receipt.js';
 import type { PhotoHelpHit } from '../photo/helpLookup.js';
 import { copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
-import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from './goalPlate.js';
+import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from '../goal/goalPlates.js';
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
 import type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
 import type { ExerciseGoalView, PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
