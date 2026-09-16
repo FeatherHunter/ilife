@@ -38,7 +38,7 @@
 | **B-11** | 复制区 | `#104` 具名 ＋ 冻结控件 `actionBar`／`copyText` | `packages/base-render/src/spec/controls.ts:254-285,649-695` |
 | **B-12** | 反馈区（toast ＋ 错误回执） | 旧共享层 `toast`／`errorReceipt`；HELP 复制反馈载体 | `packages/base-render/src/spec/controls.ts:186-240,318-331` |
 
-**覆盖自检：12/12**（上表 B-01 … B-12 各恰一条）。
+**覆盖自检：12/12**（上表 B-01 … B-12 各恰一条）。终版出处：`packages/base-render/src/blocks.ts:10`（DB-1 清单裁定行）。
 
 ---
 
@@ -149,7 +149,7 @@
 
 - **类名命名空间**：`ilife-action-bar`／`ilife-action-row`／`ilife-copy-btn`／`ilife-copy-menu-wrap`／`ilife-copy-menu`／`ilife-copy-menu-item`／`ilife-copy-menu-label`／`ilife-copy-menu-hint`（引用 §3 `STYLE_PREFIX` ＋ `CONTROL_STYLE_SECTIONS` 的 `actionBar`／`copyButton` 两区；菜单与按钮**同属 `copyButton` 区**，不新增第 9 个区）。
 - **必需属性**：每个复制按钮**必带** `ACTION_ID_ATTR`（`data-action-id`）与文本属性 `DEFAULT_DATA_ATTR`（`data-t`）——两者是**两个不同属性**，不得混用（§3 注释）；actionId 取 `COPY_ACTION_IDS.actionBar`（复制数据／日志）或 HELP 三目标 `HELP_COPY_ACTIONS`（§3）。
-  **三格式形态的例外（#247，2026-09-12 用户裁定「取老仓原样」）**：**数据位恒出菜单**：卡路里侧 `copyArea` 给了 `data` 就出菜单（不声明也是），base-paint 侧 **数据位恒出菜单**：卡路里侧 `copyArea` 给了 `data` 就出菜单（不声明也是），base-paint 侧 `CopyButtonInput.formats` 给了就出菜单——开合器按钮**两个属性都不带**（挂 `data-fmt-open="1"` 作开合标记，点击的效果是开合菜单），菜单三项各带 `data-fmt="<键>"`（键取 `COPY_FORMATS`）＋ 自己的 `data-t`（该格式已序列化文本），`data-action-id` **留空**。理由与唯一性口径见 `docs/base-paint-contract.md` §3.3「三格式菜单的例外」。
+  **三格式形态的例外（#247，2026-09-12 用户裁定「取老仓原样」）**：**数据位恒出菜单**：卡路里侧 `copyArea` 给了 `data` 就出菜单（不声明也是），base-paint 侧 `CopyButtonInput.formats` 给了就出菜单——开合器按钮**两个属性都不带**（挂 `data-fmt-open="1"` 作开合标记，点击的效果是开合菜单），菜单三项各带 `data-fmt="<键>"`（键取 `COPY_FORMATS`）＋ 自己的 `data-t`（该格式已序列化文本），`data-action-id` **留空**。理由与唯一性口径见 `docs/base-paint-contract.md` §3.3「三格式菜单的例外」。
 - **数值规格**：按钮最小高度、字号、字重、ghost 描边透明度取 `ACTION_BAR_DEFAULTS`（§3，**不复述**）；ghost 按钮独立成行。
   **那一行怎么分（#247 用户 2026-09-12 返修，硬规则）**：同行的复制按钮**一行平分整行**——ghost 行取 `grid-template-columns: repeat(evenRowPairs, minmax(0, 1fr))`（两列等宽，列数取冻结 `ACTION_BAR_DEFAULTS.evenRowPairs`），每颗按钮铺满自己那一格 ⇒ **宽高一致**。禁「一颗铺满一行、一颗缩成内容宽」的一胖一瘦（返修前实测：复制日志 520px／复制数据 92.6px）。
   **菜单（#247，逐值取老仓 `.fmt-menu`）**：浮层 `bottom:calc(100% + 8px); right:0; min-width:200px; max-width:calc(100vw - 32px); padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.14)`；圆角 **14px**（老仓 12px，见下「偏离」）；项 `padding:10px 12px; border-radius:8px; font-size:13px`、hover 取 `--soft`；用途提示 `11px` ＋ `--fg3`。**窄屏（≤820px）菜单项抬到 44px；菜单宽度取 `calc(100vw - 32px)`、右缘贴那颗按钮**（`left:auto; right:0`）——老仓那句「右对齐视口内,手机不超界」的落法。
@@ -199,7 +199,7 @@
 
 | # | 项 | 状况 | 处置（R35 落法） |
 |---|---|---|---|
-| **CB-1** | 12 个区块的**类名命名空间** | 冻结闭集 `CONTROL_STYLE_SECTIONS` 只有 8 个（`toast`／`actionBar`／`copyButton`／`statusBadge`／`emptyState`／`errorReceipt`／`charts`／`helpShell`），而 12 区块中 B-01～B-09 大多没有专属区 | **缺口 → 移交 `#104`**：本尺**不自造第二份闭集**（§5 DB-2 移交）；`#75`／`#104` 联合裁定登记方式，**不得**改写控件闭集 |
+| **CB-1** | 12 个区块的**类名命名空间** | 冻结闭集 `CONTROL_STYLE_SECTIONS` 只有 8 个（`toast`／`actionBar`／`copyButton`／`statusBadge`／`emptyState`／`errorReceipt`／`charts`／`helpShell`），而 12 区块中 B-01～B-09 大多没有专属区 | **缺口 → 移交 `#104`**：本尺**不自造第二份闭集**（§5 DB-2 移交）；`#75`／`#104` 联合裁定登记方式，**不得**改写控件闭集。（#104 已落定，清单以 `blocks.ts` 为准） |
 | **CB-2** | 软描边 token（列表分隔线／表格 td 下边框） | 冻结 11 token 只有实色 `--line`，无 `--lineS` 等价物 | **已定**：`--line` ＋ alpha 派生（DB-5 推荐 a），不动冻结表 |
 | **CB-3** | 圆角集 | 冻结表零圆角 token | **已定**：局部 **CSS 常量**收敛到 `{8,14,20,999,50%}`，**不新增 token 名**（HELP 尺 D-5） |
 | **CB-4** | 控件 vs 区块粒度重叠 | `emptyState`／`actionBar`／`copyText` 既是冻结控件，又被区块「空态／复制」组合 | **已定**：按 FX-9 分层（控件＝原子冻结／区块＝组合不重定义）；区块清单终审仍移交 `#104`（DB-1） |
@@ -213,8 +213,8 @@
 
 | # | 问题 | 选项 | 推荐 | 裁定（R35） |
 |---|---|---|---|---|
-| **DB-1** | 12 区块清单是否就取本尺拟定的 12 个？ | (a) 取本尺 12 个；(b) `#104` 另定 | **(a)**：每条都有证据出处；改名需保留锚点语义 | **移交 `#104`**：清单**暂定**，最终以 `#104` 为准（接口 owner） |
-| **DB-2** | 区块类名命名空间怎么登记？ | (a) 新增「区块样式区」闭集（不改控件闭集）；(b) 扩写 `CONTROL_STYLE_SECTIONS`；(c) 区块不登记，只用 `ilife-` 前缀 | **(a)**：控件闭集已冻结，扩写属破坏性变更；完全自由则失去可断言性 | **移交 `#104`**：新增闭集属契约面，**本尺不得自造第二份闭集** |
+| **DB-1** | 12 区块清单是否就取本尺拟定的 12 个？ | (a) 取本尺 12 个；(b) `#104` 另定 | **(a)**：每条都有证据出处；改名需保留锚点语义 | **移交 `#104`**：清单**暂定**，最终以 `#104` 为准（接口 owner）。（#104 已落定，清单以 `blocks.ts` 为准） |
+| **DB-2** | 区块类名命名空间怎么登记？ | (a) 新增「区块样式区」闭集（不改控件闭集）；(b) 扩写 `CONTROL_STYLE_SECTIONS`；(c) 区块不登记，只用 `ilife-` 前缀 | **(a)**：控件闭集已冻结，扩写属破坏性变更；完全自由则失去可断言性 | **移交 `#104`**：新增闭集属契约面，**本尺不得自造第二份闭集**。（#104 已落定，清单以 `blocks.ts` 为准） |
 | **DB-3** | 表格是否强制语义标签？ | (a) 强制 `<table>/<th>/<td>`；(b) 允许 div 栅格 | **(a)**：无障碍刚需，且让「th 透明背景／td 末行无边框」可机判 | **已定**：强制语义标签（取 a） |
 | **DB-4** | 折叠是否强制原生 `<details>`？ | (a) 原生；(b) 自绘 ＋ `aria-expanded` | **(a)**：键盘可达免费获得；旧版已有 50ms 兜底经验 | **已定**：强制原生（取 a） |
 | **DB-5** | 软描边用什么值？ | (a) `--line` ＋ alpha 派生；(b) 新增 token（须改冻结表）；(c) 沿用实色 | **(a)**：不动冻结表；`--lineS` 类语义由 `#75` 落 | **已定**：`--line` ＋ alpha 派生（取 a） |
@@ -256,7 +256,7 @@
 
 ## 7. 已知限制
 
-1. **12 个区块的清单是拟定的**（`#104` 票面未枚举），已在 §5 DB-1 请求确认；本尺的锚点语义不依赖具体名字。
+1. **12 个区块的清单是拟定的**（`#104` 票面未枚举），已在 §5 DB-1 请求确认；本尺的锚点语义不依赖具体名字。（#104 已落定，清单以 `blocks.ts` 为准）
 2. **本尺不提供像素基线**：不做 DOM 同构、不做截图 diff；判据是「锚点 ＋ computed 值」。
 3. **区块级数值规格有意保持「引用」而非「新写」**：避免与 `docs/visual-spec-help.md` 和冻结常量形成三份真相；若 `#104` 确需区块级独立数值，须先在 §5 DB-9 拍板。
-4. **命名空间缺口（CB-1）已移交 `#104`**：`#104` 未落定前，区块类名可用 `ilife-` 前缀做**临时**锚点，但**不得**据本尺新增第二份样式区闭集。
+4. **命名空间缺口（CB-1）已移交 `#104`**：`#104` 未落定前，区块类名可用 `ilife-` 前缀做**临时**锚点，但**不得**据本尺新增第二份样式区闭集。（#104 已落定，清单以 `blocks.ts` 为准）

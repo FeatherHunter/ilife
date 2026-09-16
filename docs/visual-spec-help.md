@@ -79,9 +79,9 @@
 
 ### H-04 零渐变
 
-- **规格值**：最终 CSS 中 `linear-gradient`／`radial-gradient` 命中数 = 0（B1 本身零渐变，这是它被选为标杆的理由之一）。
+- **规格值**：**只判 HELP 页自身 CSS 区**——该区内 `linear-gradient`／`radial-gradient` 命中数 = 0；charts 区按其例外处理（图例虚线的 `repeating-linear-gradient` 属冻结图表资产，依 D-10）（B1 本身零渐变，这是它被选为标杆的理由之一）。
 - **证据**：`benchmark-visual-spec.md:824`（§5 第 4 条）；B1 零渐变的事实 `benchmark-visual-spec.md:97`、`benchmark-visual-spec.md:763`；AI 味黑名单 `benchmark-visual-spec.md:968`。
-- **可断言形式**：最终 CSS 文本 grep 两个关键字 → 0。
+- **可断言形式**：对 `buildStyleSheet().css` 按 CSS 区分别 grep 两个关键字——HELP 页自身 CSS 区（排除 `/* charts */` 区）命中 → 0；全量命中可 > 0（落在 charts 区，按 D-10 例外，不判红）。
 - **旧版实测**：F1 `:24`／F2 `:25` hero `background: linear-gradient(135deg,#fafbfc,#f0f4f8)` → **旧版差异（OLD-DEVIATION）**，新版须删。
 - **级别**：C。
 - **裁定**：已定（编排者 R35）——零渐变基准取 B1，旧版 hero 渐变属新版改进项。
@@ -194,7 +194,7 @@
 
 - **规格值**：每行恰一个行内复制按钮（行右端）＋ 区块底部恰一个「复制全部」胶囊；成功反馈**双通道**——按钮变绿进入 `copied` 态并跑 450ms 弹簧动画，**同时**底部居中胶囊 toast 出现并自动消失。
 - **证据**：`benchmark-visual-spec.md:845`（§5 第 16 条）；按钮与胶囊原值 `benchmark-visual-spec.md:641-648`；`copySuccess` 关键帧 `benchmark-visual-spec.md:284-287`；toast 1800ms `benchmark-visual-spec.md:696`；按钮复原 2000ms `benchmark-visual-spec.md:885`。
-- **可断言形式**：每个命令行有且仅有一个复制按钮；区块底部「复制全部」计数 = 1；点击后 ① 按钮类名含 `copied` 且背景为成功色 ② 动画时长 450ms ③ toast 出现并在规格时长后消失 ④ 按钮在规格时长后复原。
+- **可断言形式**：每个命令行有且仅有一个复制按钮；区块底部「复制全部」计数 = 1；点击后 ① 按钮类名含 `copied` 且背景为成功色 ② 弹簧动画时长 450ms（CSS 逐字 `transition: transform .45s …`）③ 按钮 `copied` 态在 450ms 后回落（`HELP_COPY_COPIED_MS = 450`；页面侧 1ms 轮询实测存活 456.0–460.5ms，判定窗口 440–520ms）④ toast 出现并存活 4500ms（冻结 `TOAST_DEFAULTS.timeoutMs`）后消失。
 - **旧版实测**：F2 `:444` 每张场景卡一个复制按钮 ✔；「复制全部」**不存在**（F1 `:487` 注释：`copyAll` 已于 v2.4.10 删除）；toast 时长 **4500ms**（F2 `:409`）、按钮复原 **2000ms**（F2 `:376`）、450ms 弹簧动画逐字命中（F1 `:179,181-185`／F2 `:223,225-229`）。
 - **冲突**：B1 要求 1800ms，冻结 `TOAST_DEFAULTS.timeoutMs` 与旧版实测都是 4500ms → §4 冲突 **C-6**；「复制全部」胶囊与冻结的三复制目标（指令／唤醒词／参数）语义重叠 → 冲突 **C-8**；决策 **D-7**／**D-8**。
 - **级别**：B（`#89` 票面点名）。
@@ -206,6 +206,7 @@
 - **证据**：`benchmark-visual-spec.md:846`（§5 第 17 条）；A 系表规格 `benchmark-visual-spec.md:707-718`。
 - **可断言形式**：`th` computed `text-transform:uppercase`、`font-size ∈ [11.5px,12px]`、`font-weight:600`、`background-color:transparent`、`border-bottom:1px` 硬描边；`td` `padding ∈ [12px,14px]`、`border-bottom:1px` 软描边；`tr:last-child td{border-bottom:none}`；表格祖先含卡片容器。
 - **旧版实测**：F1／F2 `<table>` 命中 **0** → **旧版差异（OLD-DEVIATION）**：全新组件（区块尺 **B-03**）。
+- **适用范围**：**HELP 页不判**（旧版两实例 `<table>` 命中 0）——转由 `docs/visual-spec-blocks.md` 的 **B-03 表格区块**判。
 - **级别**：A。
 - **裁定**：已定（编排者 R35）——表格规格按 B1；旧版无表格属新增能力，非缺陷。
 
@@ -240,15 +241,7 @@
 
 ### 2.1 覆盖自检（20/20，互不重复）
 
-| 尺条 | §5 序号 | 尺条 | §5 序号 | 尺条 | §5 序号 | 尺条 | §5 序号 |
-|---|---|---|---|---|---|---|---|
-| H-01 | 1 | H-06 | 6 | H-11 | 11 | H-16 | 16 |
-| H-02 | 2 | H-07 | 7 | H-12 | 12 | H-17 | 17 |
-| H-03 | 3 | H-08 | 8 | H-13 | 13 | H-18 | 18 |
-| H-04 | 4 | H-09 | 9 | H-14 | 14 | H-19 | 19 |
-| H-05 | 5 | H-10 | 10 | H-15 | 15 | H-20 | 20 |
-
-**20 条齐、编号一一对应、无重复**（`benchmark-visual-spec.md:819-849`）。
+**20 条齐、无重复**（见 §2 各 H 标题）；与 `benchmark-visual-spec.md:819-849` 的 §5 第 1–20 条编号一一对应。
 
 ---
 
@@ -353,7 +346,7 @@
 | H-08 | 旧版实例 `<h1>` 含 emoji | 0 | F1／F2 均含 | OLD-DEVIATION |
 | H-09 | 旧版实例容器内距 | `32px 20px 80px` | `0 12px 40px` | OLD-DEVIATION |
 | H-12 | 旧版实例断点 | 640／400 | 600／601–900 | OLD-DEVIATION |
-| H-16 | 旧版实例 toast 时长 | 1800ms（B1） | 4500ms | OLD-DEVIATION（＝冻结值，见 C-6） |
+| H-16 | 旧版实例 toast 时长 | 4500ms（B1 原值已按 D-7 作废） | 4500ms | OLD-DEVIATION（＝冻结值，见 C-6） |
 | H-16 | 旧版实例「复制全部」 | ≥1 | 0 | OLD-DEVIATION |
 | H-16 | 旧版实例 450ms 弹簧动画 | 逐字 | 逐字命中 | PASS |
 | H-17 | 旧版实例表格 | ≥1 | 0 | OLD-DEVIATION |

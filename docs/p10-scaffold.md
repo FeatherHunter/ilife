@@ -15,7 +15,7 @@
 | packages/plugin-bill-ilife | dsh-bill-ilife | ilife:cookie / 95 | skill-bill → packages/skill-bill/dist/cli/cmd_read.js |
 | packages/plugin-manager | dsh-life-pack | 无自有槽位（6 tab 只导航） | 不依赖单品、不 import 单品 |
 
-依赖方向：6 单品 `dependencies: { "dsh-life-pack": "workspace:*" }`（硬依赖，非 peer）；
+依赖方向：6 单品 `dependencies: { "dsh-life-pack": "^0.2.0" }`（硬依赖，非 peer；插件依赖同范围 `^0.2.0`，技能包按已发布版号精确 pin；实测 `packages/plugin-*/package.json:28-29`）；
 总管零单品依赖。单品内保留总管依赖只作本地开发兜底（P1 #2），不作为单 add 即激活的依据。
 
 注：`dsh-bill-ilife` 供 `ilife:cookie` 槽（P3 定案 95 为 cookie，技能包沿用 bill 命名，映射在此钉死）。
@@ -72,7 +72,7 @@ profile 解析不到它（负向断言覆盖）。亦不许单卸总管（`dsh p
 
 ## Deferred（第二阶段，不在本票分支验收）
 
-- 最小 UI 6 项可用性（点得开）：待六技能实现齐（#14/#15/#17/#18/#19，#16 已关仍等其余），本票仅留原生组件存根与导航。
-- #13 六条验收（装得上/叫得动/点得开/配得通/测得过/分得清）：待 #11 全关 + #9 收口后统一验收。
-- `dsh-chef` 真实取数：待 skill-chef 落包（#18），当前桥缺席阻断（`missing-cli`），模板/HELP/DB 键全待技能侧。
-- 真机挂载实测（无覆盖/无抖动/无静默 no-op）归 #4，待本脚手架合入后在主检出装机验证。
+- 最小 UI 6 项可用性（点得开）：原计划待六技能实现齐（#14/#15/#17/#18/#19，#16 已关仍等其余；现状见本行末），本票仅留原生组件存根与导航。现状：六技能包与六份插件客户端产物均已在盘（实测依据 `packages/skill-memo-ilife/package.json:3`、`packages/skill-calorie/package.json:3`、`packages/skill-schedule/package.json:3`、`packages/skill-home/package.json:3`、`packages/skill-chef/package.json:3`、`packages/skill-bill/package.json:3`，六件 `packages/skill-*/dist/cli/cmd_read.js` 与六件 `packages/plugin-*/dist/client.js` 均在盘）。
+- #13 六条验收（装得上/叫得动/点得开/配得通/测得过/分得清）：待 #11 全关 + #9 收口后统一验收。现状：装得上与边界两面已有测试门在册（实测依据 `test/plugin-p10-install.test.mjs:23` 双含正向／`:31` 单加负向、`test/plugin-p10-boundaries.test.mjs:38` 总管依赖口径／`:39` 技能精确 pin）。
+- `dsh-chef` 真实取数：原计划待 skill-chef 落包（#18；现状见本行末），当前桥缺席阻断（`missing-cli`），模板/HELP/DB 键全待技能侧。现状：skill-chef 已在盘（实测依据 `packages/skill-chef/package.json:3` 版本 0.2.0、`:13` 导出 `./cli`、`:22` 出口 `chef-cmd-read`），桥指向的 CLI 产物、8 件模板与 HELP／DB 两面的装配均在盘（实测依据 `packages/skill-chef/dist/cli/cmd_read.js`、`packages/skill-chef/templates/recipe_view.html`、`packages/skill-chef/src/help/helpFile.ts:153`、`packages/skill-chef/src/fetch/db.ts:51`），插件已精确 pin `skill-chef: 0.2.0`（实测依据 `packages/plugin-chef/package.json:29`、`packages/plugin-chef/src/bridge.ts:16`）。
+- 真机挂载实测（无覆盖/无抖动/无静默 no-op）归 #4，待本脚手架合入后在主检出装机验证。现状：未做——脚手架尚未合入主检出，无实测依据（归 #4）。

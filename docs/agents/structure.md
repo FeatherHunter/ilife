@@ -54,7 +54,7 @@
 
 **只做汇总的能力另有一条**：一个能力如果只是把别家的结果拼起来，它不许重算别家的口径，只许调别人的公开接口。
 
-- 判据：数得出一个文件对外给的东西有几个；**「对外给」只数出了本能力目录的名字**（同份写代码第三步：目录内互相用的不算，盘上 `export` 的 raw 数不算，零跨目录引用的导出不算）；验收以能力门（`src/<能力>/index.ts`）的对外面为准，子目录分发器（如 `anomaly/index.ts`）不是能力门；过渡期旧共用 barrel 对新家内部件的深路径直引用记搬迁债务、不算新违规。删掉一个转发函数，外面说不出少了什么，那它就是白占一层；对汇总能力，问一句「删掉它，别家会不会各算一遍」——会，说明它在干活；不会，说明它在抄。
+- 判据：数得出一个文件对外给的东西有几个。**「对外给」只数出了本能力目录的名字**（同份写代码第三步：目录内互相用的不算，盘上 `export` 的 raw 数不算，零跨目录引用的导出不算）。验收以能力门（`src/<能力>/index.ts`）的对外面为准，子目录分发器（如 `anomaly/index.ts`）不是能力门。过渡期旧共用 barrel 对新家内部件的深路径直引用记搬迁债务、不算新违规（到期即删）。删掉一个转发函数，外面说不出少了什么，那它就是白占一层；对汇总能力，问一句「删掉它，别家会不会各算一遍」——会，说明它在干活；不会，说明它在抄。
 - 违反的样子：一个接口二十个字段；一个文件导出九个平级函数；一层只做转发的包装；汇总能力在自家目录里把别家的公式又写了一遍。
 
 ## 结构标准
@@ -62,7 +62,7 @@
 标准随包不同，按各包自己的情况定；与铁律冲突时铁律胜。
 
 - **能力目录**：`src/` 下第一层必须是能力名，不能是工种名。
-- **能力内部**：按这个能力自己的活分，一层到两层即可。分层依据是**变化频率**——同一批改动一起改的东西放近，不同批改动改的东西分开。内部每一层只许往下用，不许反向。
+- **能力内部**：按这个能力自己的活分，一层到两层即可。分层依据是**变化频率**——同一批改动一起改的东西放近，不同批改动改的东西分开。内部每一层只许往下用。
 - **依赖方向**：能力只往下用东西，不许反向。共用位里不许出现任何一个能力的名字。
 - **共用件**：能力之间要共用的东西放共用位，并且写得出**哪两个能力在用**。写不出来的，留在那个能力的目录里。**共用位是从第二个用法里长出来的，不是预先设计的。**
 - **就地摆正**：旧代码与新规矩不一致时，在本次改动里把它摆正，不另开票，也不顺手扩大范围。
@@ -92,7 +92,7 @@
 - 跨能力引用写对方的公开接口。
 - 常量与类型只写一处，别处引用。
 - **只有出这个目录才算对外**：目录内互相用的东西不必对外给，接口自然就小。
-- 旧代码与新规矩不一致时，在本次改动里就地摆正。
+- 旧代码与新规矩不一致时，按结构标准就地摆正。
 
 ### 第四步 · 超线报警
 
@@ -118,8 +118,6 @@
 
 铁律取自已成规模的 TypeScript 项目的公开规矩，按本仓情况裁过。
 
-- **VS Code**（[copilot-instructions](https://github.com/microsoft/vscode/blob/main/.github/copilot-instructions.md)）：干活的能力按 `contrib/<能力>/` 一能力一目录；不许用别的组件的存储键去改那个组件，必须造出正确的接口；依赖方向单向；不需要跨组件共用的类型和函数不对外导出。它的能力内部按**运行环境**分层（`browser/`／`common/`／`node/`），那是它跑三种环境才需要的，只有一种环境的包不必抄。
-- **bulletproof-react**（[project-structure](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md)）：跨功能互相 import 不是好主意；依赖单向（共用 → 功能 → 应用）；共用件与功能**并列**，不在功能里面。
-- **Node.js 最佳实践**（[按组件组织](https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/projectstructre/breakintcomponents.md)、[分层](https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/projectstructre/createlayers.md)）：组件之间**不共享文件**，只经公开接口消费；组件内部按关注点分层。
+- 出处：**VS Code**（[copilot-instructions](https://github.com/microsoft/vscode/blob/main/.github/copilot-instructions.md)）、**bulletproof-react**（[project-structure](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md)）、**Node.js 最佳实践**（[按组件组织](https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/projectstructre/breakintcomponents.md)、[分层](https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/projectstructre/createlayers.md)）。
 
 **没有取的**：代码风格（缩进、引号、异步写法、注释格式）、测试断言的形状、运行时模式（依赖注入、配置分离、日志与错误处理）、构建发布口径——那些属于别的题材。
