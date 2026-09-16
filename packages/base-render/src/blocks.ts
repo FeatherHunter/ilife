@@ -377,8 +377,8 @@ function isRgbFunction(raw: string): boolean {
  *  （裸 token 名 `--x` 包成 `var(--x)`）。允许清单＝`#rgb`／`#rrggbb`／`rgb()`／`rgba()`／
  *  `var(--<冻结 token 名>)`／CSS 具名色；**清单外一律 `bad-input`**——`;`／`expression(`／`url(` 这类
  *  注入形态在这一步挡住，不让 `;` 穿进内联声明列表（审查 S3-6）。
- *  迁移提示（#441 实测）：生产侧显式传色 3 处（`diet/nutritionPortDocs.ts:339` 一处带 3 个 `#rrggbb` 值、
- *  `render/sportPortDocs.ts:609／775` 两处经 `categoryColor()` 取 4 个 `#rrggbb` 值），均属允许形态，
+ *  迁移提示（#441 实测，复核 D1 补第 4 处）：生产侧显式传色 4 处（`diet/nutritionPortDocs.ts:339` 一处带 3 个 `#rrggbb` 值、
+ *  `render/sportPortDocs.ts:609／775` 两处经 `categoryColor()` 取 4 个 `#rrggbb` 值，`diet/reviewDocs.ts:339-341` 一处经 `MEAL_COLORS` 由 `diet/todayDocs.ts:242` 进入生产），均属允许形态，
  *  无须改动；其余生产调用不传色，走缺省冻结 token；新增写法先对清单，清单外改走冻结 token 或具名色。 */
 function optColor(value: unknown, field: string): string | undefined {
   if (value === undefined) return undefined;
