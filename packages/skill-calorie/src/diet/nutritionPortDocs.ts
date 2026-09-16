@@ -284,6 +284,14 @@ interface NutritionRatioBlockOptions {
   readonly copy?: boolean;
   /** 区块自带那一节的日志第 4 段＝本次命令原文（含 `--params`）。不给＝那一节整节不出。 */
   readonly command?: string;
+  /** #647 · 名称栏形状开关：`true` ＝ 图例条（分布行）名称栏**只出短名**（蛋白／碳水／脂肪），
+   *  推荐范围归下面那张「推荐范围对比」表承担（该表本页恒出，范围一个字不少）；缺省 `false` ＝
+   *  老写法「蛋白（推荐 10–20%）」。
+   *
+   *  **缺省位是给老调用点留的**：`calorie.view.diet-review` 那一族（复盘 8 词，经 `diet/review.ts`）
+   *  不传这一位 ⇒ 产物逐字节不变。公共层那口窄槽（`minmax(0, 6em)`＝13px 下 78px ＋ `nowrap`）
+   *  一个字不碰——形状裁定＝短名化（#646 拍板），10 页铺开归 #648。 */
+  readonly shortNames?: boolean;
 }
 
 /** 营养配比区块（**服务 `calorie.view.diet-review`**，作者＝#273：「看营养结构」按老 SKILL 也出这张页，
@@ -338,7 +346,11 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
        刻度按占位是文字 —— 公共层的条只收一个 `pct`，硬塞两个刻度会变成假读数，故不塞）。 */
     parts.push(renderDistributionRows({
       rows: macros.map((m) => ({
-        label: m.name + '（推荐 ' + m.range.min + '–' + m.range.max + '%）',
+        /* #647 · 名称栏形状（见 `NutritionRatioBlockOptions.shortNames`）：短名化那一位打开时只出短名，
+           范围交给紧跟着的那张对比表；老写法原样保留，供未开这一位的宿主页逐字节不变。 */
+        label: opts?.shortNames === true
+          ? m.name
+          : m.name + '（推荐 ' + m.range.min + '–' + m.range.max + '%）',
         value: m.pct + '%',
         pct: m.pct,
         color: m.color,
@@ -414,8 +426,12 @@ export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string):
       { id: 'sec-table', text: '推荐范围对比' },
     ] }),
     /* 末尾那一节复制区由**区块**出（把本次命令原文交给它）——页脚不再另出一节 ⇒ 一张页只有一个复制区。
-       命令原文只在这一处给，页头与区块不可能各编一条。 */
-    buildNutritionRatioBlock(v, command === undefined ? undefined : { command }),
+       命令原文只在这一处给，页头与区块不可能各编一条。
+       #647 · 本页（查营养配比）开短名化：图例条名称栏只出短名，范围由下面那张对比表承担。
+       同区块的另一族调用点（`diet/review.ts` 的复盘页）不传这一位 ⇒ 仍走老写法、产物逐字节不变。 */
+    buildNutritionRatioBlock(v, command === undefined
+      ? { shortNames: true }
+      : { command, shortNames: true }),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
