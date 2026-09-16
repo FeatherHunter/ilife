@@ -104,7 +104,7 @@ test('#228 init_banner：键常在、显隐只走 hidden、prompt 单源取 memo
     ['版本与依赖检测', 'SQLite + FTS5 全文搜索', '安装并授权(核心联动)', 'SKILLS_DB_PATH / MEMO_MEDIA_DIR', '建表 + 提醒调度', '初始化报告页']);
 });
 
-test('#228 裁决 20 ①：6 条步骤的 title／desc 文案逐条出现在渲染出的 HTML 里', () => {
+test('#228 裁决 20 ①（载荷级·#243 改名）：6 条步骤的 title／desc 文案逐条出现在整页 HTML 的载荷段里（恒真说明：不能证明已渲染，渲染证明见 #243）', () => {
   const misses = [];
   for (const st of DATA.init_banner.steps) {
     for (const field of ['title', 'desc']) {
