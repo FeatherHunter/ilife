@@ -73,7 +73,7 @@
 | `scripts/check-warning-line.mjs` | — | 356 | 已超线，需要根据规则进行重构。超因：（**#445 引入**）本件由 80 行的「`REQUIRED` 硬清单存在性」扩成「扫描面 ＋ 台账逐件对账 ＋ 生成物按生成器声明剔除 ＋ 仓内同步器（`--sync`／`--sync --dry`）」，判据由 4 条涨到 9 条、另加两条自证；本次先不拆：拆分不在 #445 写集，拆法＝按判据族切姊妹件（① 扫描面遍历与生成物剔除 ② 台账解析与逐件对账 ③ 同步器与同步断言 ④ 主入口与报告），出口留本件薄转出。 |
 | `src/photo/photo.ts` | — | 355 | 已超线，需要根据规则进行重构。超因：（**#476 引入，越过 350**）这一件同时住着三组活——照片行的写口与卡片映射（`toCard`／`addPhotos`／`deletePhoto`／`updateTag`／`tagAdd`／`tagRemove` 等）＋四条读口的取数（`buildGalleryData`／`buildCompareData`／`buildViewerData`／`buildGifTask`）＋三条写后回执的数据面（`buildAddReceipt`／`buildDeleteReceipt`／`buildTagReceipt`）；#476 为「失败张逐张上页」在 `buildAddReceipt` 里补了缺源复算与逐条 items（＋件头与函数注释），LF 328→355。本次先不拆：拆分不在 #476 写集（本票只许动 `photo/receipt.ts`／`photo/photo.ts`／`store.ts` 三件的文本与装配），拆法＝按场景把这一件切两件姊妹件：①「读口取数」（看身材照／对比两张照片／查身材照／生成身材照GIF 四个 `build*Data` 搬去与同族的 `gallery.ts`／`gif.ts`／`compare.ts` 并排）②「回执数据面」（三条 `build*Receipt` 随 `store.ts`／`manage.ts` 的写口族走）；照片卡类型 `PhotoCard` 与 `toCard` 提为两族共用的卡件；出口经 `photo/index.ts` 薄转出；待收口票认领。 |
 | `src/home/homeDocs.ts` | — | 334 | **停留告警线（LF=350，未越线）**。超因（**#401 引入**）：本件同时住着主页族的整页装配（KPI／折线／按日表／结论条／复制区接线）＋按窗口分视图的页名与口径；本次先不拆：拆分不在 #401 写集，拆法＝把「结论条与复制区接线」与「页头/页名派生」切成同目录姊妹件，出口经本件薄转出；待收口票认领。 |
-| `scripts/gen-photo-baseline.mjs` | — | 283 | 已超线，需要根据规则进行重构。超因与拆法待补（本行由 `--sync` 自动补出，请补写超因与拆法）。 |
+| `scripts/gen-photo-baseline.mjs` | — | 289 | 已超线，需要根据规则进行重构。超因与拆法待补（本行由 `--sync` 自动补出，请补写超因与拆法）。 |
 | `src/render/wizardPort.ts` | 457 | 277 | 「#354 挂号原文」超因：预检确认页装配与结果型页面装配同处一处；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。**#445 当场实测已落回 350 以内，挂号行保留（457 是历史事实、不回改），本行不再触发第四步。** |
 <!-- warning-line-ledger:end -->
 
