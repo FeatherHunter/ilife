@@ -168,6 +168,23 @@ describe('B-02 KPI 卡', () => {
     assertBadInput(() => renderKpiGrid([]), '空数组');
   });
 
+  it('#513 grid 标题位：不给＝零变（裸 grid 根、无标题类）；给＝标题 h2＋原 grid 串', () => {
+    const bare = renderKpiGrid([{ label: 'A', value: '1' }]);
+    assert.ok(!bare.includes('kpi-card-title'), '无标题');
+    assert.ok(bare.startsWith('<div class="ilife-block-kpi-card-grid">'), '仍是裸 grid 根');
+    const titled = renderKpiGrid([{ label: 'A', value: '1' }], { title: '今日速览' });
+    assert.ok(titled.includes('<h2 class="ilife-block-kpi-card-title">今日速览</h2>'), '标题 h2');
+    assert.ok(titled.endsWith(bare), '标题后即原 grid 串（页面手写形一致）');
+    assert.ok(renderKpiGrid([{ label: 'A', value: '1' }], {}).startsWith('<div'), '空 opts 零变');
+    assert.ok(!renderKpiGrid([{ label: 'A', value: '1' }], { title: '' }).includes('kpi-card-title'), '空串零渲染');
+    assert.ok(renderKpiGrid([{ label: 'A', value: '1' }], { title: 'a&b' }).includes('a&amp;b'), '标题转义');
+  });
+
+  it('#513 grid 标题位非法入参 → bad-input（非对象 opts／on* 字段）', () => {
+    assertBadInput(() => renderKpiGrid([{ label: 'A', value: '1' }], 't'), 'opts 非对象');
+    assertBadInput(() => renderKpiGrid([{ label: 'A', value: '1' }], { title: 't', onclick: 'x' }), 'on* 字段');
+  });
+
   it('缺 label／value → bad-input；五字符转义', () => {
     assertBadInput(() => renderKpiCard({ value: '1' }), '缺 label');
     const html = renderKpiCard({ label: 'a&b', value: '<1>' });
@@ -228,6 +245,23 @@ describe('B-03 表格', () => {
     assertBadInput(() => renderDataTable({ columns: [{ key: 'k', label: 'L', align: 'up' }], rows: [] }), '非法对齐');
     assertBadInput(() => renderDataTable({ columns, rows: [{ k: {}, v: 1 }] }), '对象单元格');
     assert.ok(renderDataTable({ columns, rows: [{ k: null, v: 2 }] }).includes('<td class="ilife-block-data-table-cell-left" data-label="K"></td>'), 'null 置空（标签仍在）');
+  });
+
+  it('#513 不给 marker＝零变：无徽标类，首格与基线串逐字一致', () => {
+    const html = renderDataTable({ columns, rows: [{ k: 'a', v: 1 }] });
+    assert.ok(!html.includes('row-marker'), '无徽标');
+    assert.ok(html.includes('<td class="ilife-block-data-table-cell-left" data-label="K">a</td>'), '首格基线逐字');
+  });
+
+  it('#513 给 marker：只进首格、转义；次格不动；空串视同缺省；非串 → bad-input', () => {
+    const html = renderDataTable({ columns, rows: [{ k: 'a', v: 1, marker: '今日' }] });
+    assert.ok(html.includes('<td class="ilife-block-data-table-cell-left" data-label="K"><span class="ilife-block-data-table-row-marker">今日</span>a</td>'), '徽标位');
+    assert.ok(html.includes('<td class="ilife-block-data-table-cell-right" data-label="V">1</td>'), '次格不动');
+    const xss = renderDataTable({ columns, rows: [{ k: 'a', v: 1, marker: '<b>&' }] });
+    assert.ok(xss.includes('&lt;b&gt;&amp;') && !xss.includes('<b>'), '徽标转义');
+    assert.ok(!renderDataTable({ columns, rows: [{ k: 'a', v: 1, marker: '' }] }).includes('row-marker'), '空串零渲染');
+    assertBadInput(() => renderDataTable({ columns, rows: [{ k: 'a', v: 1, marker: 7 }] }), '数字 marker');
+    assertBadInput(() => renderDataTable({ columns, rows: [{ k: 'a', v: 1, marker: {} }] }), '对象 marker');
   });
 });
 
@@ -569,5 +603,39 @@ describe('#434 操作卡头部／结论条（公共层 pageShell 区）', () => 
     const css = blocksCss();
     assert.ok(css.includes('.ilife-block-conclusion {'), '缺结论条规则');
     assert.ok(css.includes('border-left: 3px solid var(--blue)'), '结论条左 3px 主色边不得丢');
+  });
+});
+
+describe('#513 三槽 CSS 落点（既有区内加规则，不新增区、不新增 token）', () => {
+  it('卡片纵向 flex 列＋徽章 margin-top:auto（贴底），8px 最小间距保留', () => {
+    const css = blocksCss();
+    assert.equal(css.split('.ilife-block-kpi-card-badge {').length - 1, 1, '徽章基座规则恰 1 条');
+    assert.ok(css.includes('flex-direction: column'), '卡片纵向');
+    const badgeBlock = css.slice(css.indexOf('.ilife-block-kpi-card-badge {'));
+    const badge = badgeBlock.slice(0, badgeBlock.indexOf('}') + 1);
+    assert.ok(badge.includes('margin-top: auto'), '徽章吃余量贴底');
+    assert.ok(badge.includes('padding-top: 8px'), '最小间距保留');
+    assert.ok(!badge.includes('margin-top: 8px'), '旧顶距已替换');
+  });
+
+  it('行徽标规则在 dataTable 区：只走冻结 token', () => {
+    const css = blocksCss();
+    assert.ok(css.includes('.ilife-block-data-table-row-marker {'), '行徽标规则');
+    const markerBlock = css.slice(css.indexOf('.ilife-block-data-table-row-marker {'));
+    const rule = markerBlock.slice(0, markerBlock.indexOf('}') + 1);
+    assert.ok(rule.includes('var(--soft)') && rule.includes('var(--blue2)'), '只走冻结 token');
+    assert.ok(rule.includes('white-space: nowrap'), '徽标不断行');
+  });
+
+  it('三族段标题同字号同字重：kpi-card-title 与 chart／copy 的 title 同档', () => {
+    const css = blocksCss();
+    const sizeOf = (cls) => {
+      const m = new RegExp('\\.' + cls + ' \\{[^}]*font-size:\\s*([^;]+);[^}]*font-weight:\\s*([^;]+);').exec(css);
+      assert.ok(m, '缺标题规则：' + cls);
+      return m[1].trim() + '/' + m[2].trim();
+    };
+    assert.equal(sizeOf('ilife-block-kpi-card-title'), '15px/700', 'kpi 标题档');
+    assert.equal(sizeOf('ilife-block-kpi-card-title'), sizeOf('ilife-block-chart-block-title'), '与图表标题同档');
+    assert.equal(sizeOf('ilife-block-kpi-card-title'), sizeOf('ilife-block-copy-block-title'), '与复制区标题同档');
   });
 });

@@ -613,11 +613,27 @@ export function renderKpiCard(input: KpiCardInput): string {
   return parts.join('');
 }
 
+/** B-02 伴生布局的标题选项（#513 段标题槽）：只 `title` 一位，与 `renderChartBlock`／`copyArea`
+ *  的 `title` 位同形（非空字符串 ⇒ 段标题 h2；缺省／空串 ⇒ 零渲染）。 */
+export interface KpiGridOptions {
+  readonly title?: string;
+}
+
 /** B-02 伴生布局：KPI 卡网格（不是第 13 个区块，无独立样式区，用 `kpiCard` 区）。 */
-export function renderKpiGrid(cards: readonly KpiCardInput[]): string {
+export function renderKpiGrid(cards: readonly KpiCardInput[], opts?: KpiGridOptions): string {
   if (!Array.isArray(cards) || cards.length === 0) badInput('renderKpiGrid: cards 必须是非空数组');
-  return '<div class="' + blockPart('kpiCard', 'grid') + '">'
+  if (opts !== undefined) {
+    assertPlainObject(opts, 'renderKpiGrid: opts');
+    assertNoInlineHandler(opts, 'renderKpiGrid: opts');
+  }
+  const grid = '<div class="' + blockPart('kpiCard', 'grid') + '">'
     + cards.map((card) => renderKpiCard(card)).join('') + '</div>';
+  // #513：不给 title 即返回原 grid 串（与改前逐字节同）；给了即标题 h2 ＋原 grid
+  // （与页面当刻手写形一致，页面票后迁可逐字节对）。标题类复用 #507 已落盘的 `kpi-card-title`
+  //（15px／700），不新增类名、不新增样式区。
+  const title = opts === undefined ? undefined : optText(opts.title);
+  if (title === undefined) return grid;
+  return '<h2 class="' + blockPart('kpiCard', 'title') + '">' + esc(title) + '</h2>' + grid;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -632,9 +648,14 @@ export interface DataTableColumn {
   readonly align?: DataTableAlign;
 }
 
+/** 表格行（#513 行标记槽）：单元格映射＋可选 `marker`（非空字符串 ⇒ 首格前插行徽标；
+ *  缺省／空串 ⇒ 不产出。非字符串非 undefined 即 `bad-input`）。列 key 叫 `marker` 的表不受影响——
+ *  全仓既有调用点无此列键（#513 实施时 grep 实测），见证据件。 */
+export type DataTableRow = Readonly<Record<string, unknown> & { marker?: unknown }>;
+
 export interface DataTableInput {
   readonly columns: readonly DataTableColumn[];
-  readonly rows: readonly Readonly<Record<string, unknown>>[];
+  readonly rows: readonly DataTableRow[];
   readonly caption?: string;
   readonly emptyText?: string;
   /** 单元格 HTML（#567 状态列）：`(列 key, 单元格原值) => 受信 HTML／undefined`。
@@ -685,7 +706,14 @@ export function renderDataTable(input: DataTableInput): string {
   ).join('') + '</tr></thead>';
   const body = '<tbody>' + table.rows.map((row, ri) => {
     assertPlainObject(row, 'renderDataTable: input.rows[' + ri + ']');
-    return '<tr>' + columns.map((column) => {
+    // #513 行标记槽：可选 `marker`（非空字符串 ⇒ 首格前插行徽标；缺省／空串 ⇒ 零渲染，
+    // 本行与改前逐字节同）；非字符串非 undefined 即 `bad-input`（与 `cellText` 同严格）。
+    const rawMarker = (row as DataTableRow).marker;
+    if (rawMarker !== undefined && typeof rawMarker !== 'string') {
+      badInput('renderDataTable: input.rows[' + ri + '].marker 必须是非空字符串／undefined');
+    }
+    const marker = rawMarker === undefined ? undefined : optText(rawMarker);
+    return '<tr>' + columns.map((column, ci) => {
       const raw = (row as Readonly<Record<string, unknown>>)[column.key];
       // #567 `cellHtml`：给了且对本格返回字符串即受信透传（调用方已转义）；
       // 返回 `undefined` 即走缺省转义文本。不给 `cellHtml` 时本行与改前逐字同。
@@ -705,8 +733,12 @@ export function renderDataTable(input: DataTableInput): string {
       const text = trusted === undefined
         ? cellText(raw, 'renderDataTable: input.rows[' + ri + '].' + column.key)
         : trusted;
-      return '<td class="' + blockPart('dataTable', 'cell-' + column.align) + '" data-label="' + esc(column.label) + '">'
-        + text + '</td>';
+      const open = '<td class="' + blockPart('dataTable', 'cell-' + column.align) + '" data-label="' + esc(column.label) + '">';
+      // #513：行标记只进首格（转义后前插；`cellHtml` 受信透传不受影响）。
+      const head = ci === 0 && marker !== undefined
+        ? '<span class="' + blockPart('dataTable', 'row-marker') + '">' + esc(marker) + '</span>'
+        : '';
+      return open + head + text + '</td>';
     }).join('') + '</tr>';
   }).join('') + '</tbody>';
   const caption = optText(table.caption);
@@ -1620,7 +1652,11 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  gap: 12px;',
     '  margin: 16px 0;',
     '}',
+    // #513 徽章贴底：卡片改纵向 flex 列（子元素仍纵向满宽，`align-items` 缺省 `stretch`、
+    // 无子元素设交叉轴尺寸 ⇒ 视觉同块流），余量由徽章的 `margin-top: auto` 吃掉（见下）。
     '.' + p + 'block-kpi-card {',
+    '  display: flex;',
+    '  flex-direction: column;',
     '  padding: 14px;',
     '  border: 1px solid var(--line);',
     '  border-radius: ' + RADIUS_MD + 'px;',
@@ -1665,8 +1701,11 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 12px;',
     '  overflow-wrap: anywhere;',
     '}',
+    // #513（续）：`margin-top: auto` 把徽章压到底；`padding-top: 8px` 保住改前 8px 最小间距
+    // （最高卡无余量时徽章位置与改前一致，只动有余量的短卡——正是要修的那几张）。
     '.' + p + 'block-kpi-card-badge {',
-    '  margin-top: 8px;',
+    '  margin-top: auto;',
+    '  padding-top: 8px;',
     '}',
     // #418 条位：detail 之后 badge 之前产条（见 renderKpiCard）。色值单源（甲路）：
     // 三档各一处字面量，源 spec/charts.ts CHART_PALETTE[1..3]，与状态徽章底色同值。
@@ -1750,6 +1789,22 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 13px;',
     '  font-weight: 600;',
     '  text-align: left;',
+    '}',
+    // #513 行标记槽：首格前插的行徽标（`renderDataTable` 的 `rows[i].marker`）。行内小徽标：
+    // 色走冻结 token（底 `--soft`＋字 `--blue2`，与 `block-chip` 同口径，不新增 token；
+    // 12px 小字对比度约 5.4:1，#179 口径达 AA）；`white-space: nowrap` 保徽标不断行；
+    // 只吃内容宽，不改窄屏档位（横溢口径见证据件）。
+    '.' + p + 'block-data-table-row-marker {',
+    '  display: inline-block;',
+    '  margin-right: 6px;',
+    '  padding: 1px 7px;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--soft);',
+    '  color: var(--blue2);',
+    '  font-size: 12px;',
+    '  font-weight: 600;',
+    '  white-space: nowrap;',
+    '  vertical-align: baseline;',
     '}',
     '.' + p + 'block-data-table th {',
     '  padding: 10px 14px;',
