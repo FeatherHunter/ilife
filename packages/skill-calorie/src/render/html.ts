@@ -375,7 +375,7 @@ export function renderHealthHtml(h: HealthPlate): string {
 export function renderRankingHtml(r: FoodRanking): string {
   const items = r.items
     .slice(0, 10)
-    .map((it) => kpi('#' + it.rank + ' ' + it.foodName, it.totalCal + ' 卡', it.cnt + ' 次·均 ' + it.avgCalPerMeal + ' 卡/餐'))
+    .map((it) => kpi('#' + it.rank + ' ' + it.foodName, it.totalCal + ' 卡', it.cnt + ' 次·均 ' + it.avgCalPerMeal + ' 卡'))
     .join('');
   const body =
     '<div class="' + cx('section') + '"><h2>' + escapeHtml(r.title) + '</h2>' +
