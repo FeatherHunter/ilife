@@ -21,7 +21,7 @@
  * `metrics` 对象既进信封 `data.metrics` 又进复制载荷，两处不会走散（票面「取数口径一个字不许变」）。
  * 旧片段渲染件按票面留在 `src/render/html.ts`，本票不删。
  *
- * 对外 3 个名字（票面「对外不超过 5 个名字」）。
+ * 对外 5 个名字（票面「对外不超过 5 个名字」；#290 两页整页化与 #254 同一套装配件，取数与 metrics 原样透传）。
  */
 import type { DataTextInput } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderKpiGrid, renderTocBlock } from 'base-paint/blocks';
@@ -30,6 +30,7 @@ import { nowStamp } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import type { GoalExpiringView, GoalVsActualView } from './goalExtraPlate.js';
+import type { GoalConfig, GoalStatus } from './goalPlates.js';
 import type { GoalView } from './goalPlate.js';
 
 /** 信封头（值冻结对齐 `cli/keys.ts`，与各 `*Docs.ts` 同值；标题取目标管理域）。 */
@@ -174,6 +175,8 @@ export function buildGoalDoc(v: GoalView, metrics: Record<string, number>, comma
 
 export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string, number>, command: string): string {
   const recorded = v.completedCount + v.incompleteCount;
+  const devs = v.history.goalHistory.filter((d) => d.status !== '无记录' && typeof d.pct === 'number');
+  const meanDev = devs.length === 0 ? null : Math.round((devs.reduce((a, d) => a + (d.pct as number), 0) / devs.length - 100) * 100) / 100;
   const pct = v.completionPct === null ? '—' : v.completionPct + '%';
   const t = v.trend.summary;
   const body = [
@@ -215,12 +218,14 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
         { item: '周末平均', reading: num(t.weekendAvg, '卡') },
         { item: '窗口前半段', reading: num(t.startAvg, '卡') },
         { item: '窗口后半段', reading: num(t.endAvg, '卡') },
+        { item: '平均偏差', reading: meanDev === null ? '—' : meanDev + ' %' },
       ],
       caption: '摄入走向（本窗 ' + v.start + ' 至 ' + v.end + '）',
       emptyText: '窗口里没有饮食记录',
     })),
     tailOf('calorie.view.goal-vs-actual', metrics, command, '目标表与饮食记录',
-      ['达标线是当天摄入落在热量目标的 80% 到 120% 之间，没记录的日期不计入达标也不计入未达标。']),
+      ['达标线是当天摄入落在热量目标的 80% 到 120% 之间，没记录的日期不计入达标也不计入未达标。',
+        '平均偏差是有记录那几天达成率偏离 100% 的均值，正数代表平均超目标；老技能同式，缺项时不算。']),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -237,6 +242,14 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
   });
 }
 
+/** 紧迫度（呈现层派生，不动取数：已过期／3 天内高／落提醒窗中／窗外低；老技能另按需算速率分档，需当前体重，口径差见本页口径行）。 */
+function urgencyOf(v: GoalExpiringView): string {
+  if (v.daysLeft < 0) return '已过期';
+  if (v.daysLeft <= 3) return '高';
+  if (v.daysLeft <= v.withinDays) return '中';
+  return '低';
+}
+
 /* ── ③ 即将到期目标（`calorie.view.goal-expiring`：截止日 ＋ 剩余天数两态） ─────────────────── */
 
 export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string, number>, command: string): string {
@@ -248,6 +261,7 @@ export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string
     ] }),
     section('sec-readings', renderKpiGrid([
       { label: '目标截止日', value: v.deadline, detail: state },
+      { label: '紧迫度', value: urgencyOf(v), detail: '剩余 ' + v.daysLeft + ' 天／窗口 ' + v.withinDays + ' 天' },
       cardOf('剩余天数', v.daysLeft, '天', '提醒窗口 ' + v.withinDays + ' 天'),
       cardOf('体重目标', v.weightGoal, 'kg'),
       cardOf('热量目标', v.calorieGoal, '卡'),
@@ -269,7 +283,8 @@ export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string
       emptyText: '没有设过带截止日的目标',
     })),
     tailOf('calorie.view.goal-expiring', metrics, command, '目标表与体重目标',
-      ['即将到期是指剩余天数落进你设的提醒窗口内，窗口默认 14 天。', '截止日与体重目标都要先设过才有这一页，缺一样就先补齐再来看。']),
+      ['即将到期是指剩余天数落进你设的提醒窗口内，窗口默认 14 天。', '截止日与体重目标都要先设过才有这一页，缺一样就先补齐再来看。',
+        '紧迫度只按剩余天数分档（3 天内高／落窗中／窗外低）；老技能另按需算速率分档，需当前体重，取数口径另开票裁。']),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -283,4 +298,36 @@ export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string
     content: body,
     charts: false,
   });
+}
+
+/* ── ④ 目标配置／⑤ 目标状态（#290：两条悬空视图整页化） ── */
+/** 两页共用装配：读数卡＋明细表＋口径复制尾（与 #254 三页同一套 `tailOf`／`section`／`cardOf`／`num`）。 */
+function simpleGoalDoc(key: string, title: string, badge: string, metaLeft: string, summary: string, cards: { label: string; value: string; unit?: string; detail?: string }[], caption: string, rows: { item: string; reading: string; note: string }[], metrics: Record<string, number>, command: string, calibers: readonly string[]): string {
+  const body = [
+    renderTocBlock({ items: [{ id: 'sec-readings', text: '读数' }, { id: 'sec-detail', text: '明细' }] }),
+    section('sec-readings', renderKpiGrid(cards)),
+    section('sec-detail', renderDataTable({ columns: [{ key: 'item', label: '项目' }, { key: 'reading', label: '读数', align: 'right' }, { key: 'note', label: '说明' }], rows, caption, emptyText: '暂无明细' })),
+    tailOf(key, metrics, command, '目标表', calibers),
+  ].join('');
+  return assembleDocPage({ docTitle: DOC_TITLE, title, eyebrow: '', subtitle: null, metaLeft, badge, summary, content: body, charts: false });
+}
+
+export function buildGoalConfigDoc(g: GoalConfig, metrics: Record<string, number>, command: string): string {
+  const n = g.nutrition;
+  return simpleGoalDoc('calorie.view.goal-config', '⚙️ 目标配置', '目标配置', '看目标配置 · 目标管理',
+    '结论：热量目标 ' + n.calorie_goal + ' 卡（蛋白 ' + num(n.protein_goal, 'g') + '／碳水 ' + num(n.carbs_goal, 'g') + '／脂肪 ' + num(n.fat_goal, 'g') + '，饮水 ' + num(n.water_goal, 'ml') + '），宏量' + (g.consistent ? '自洽（差 ' + g.diffKcal + ' 卡）。' : '偏差 ' + g.diffKcal + ' 卡，建议复核。') + '目标' + (g.paused ? '已暂停。' : '进行中。'),
+    [cardOf('热量目标', n.calorie_goal, '卡'), cardOf('蛋白目标', n.protein_goal, 'g'), cardOf('碳水目标', n.carbs_goal, 'g'), cardOf('脂肪目标', n.fat_goal, 'g'), cardOf('饮水目标', n.water_goal, 'ml'), { label: '状态', value: g.paused ? '已暂停' : '进行中', detail: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '目标进行中' }],
+    '宏量与热量目标对得上对不上',
+    [{ item: '宏量折算热量', reading: num(n.calorie_goal + g.diffKcal, '卡'), note: '蛋白×4＋碳水×4＋脂肪×9' }, { item: '与热量目标差', reading: (g.diffKcal >= 0 ? '+' : '') + g.diffKcal + ' 卡', note: g.consistent ? '50 卡以内算自洽' : '超出 50 卡，建议复核' }, { item: '暂停态', reading: g.paused ? '已暂停' : '进行中', note: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '记录与目标照常' }],
+    metrics, command, ['宏量折算按蛋白 4 卡／碳水 4 卡／脂肪 9 卡，差值在 50 卡以内算自洽。', '暂停只停目标判定，记录照常。']);
+}
+
+export function buildGoalStatusDoc(g: GoalStatus, metrics: Record<string, number>, command: string): string {
+  const n = g.nutrition;
+  return simpleGoalDoc('calorie.view.goal-status', '⏸️ 目标状态', '目标状态', '看目标状态 · 目标管理',
+    '结论：目标' + (g.paused ? '已暂停' + (g.pausedAt === null ? '。' : '（' + g.pausedAt + '起）。') : '进行中。') + '热量目标 ' + n.calorie_goal + ' 卡，饮水目标 ' + num(n.water_goal, 'ml') + '。',
+    [{ label: '状态', value: g.paused ? '已暂停' : '进行中', detail: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '目标进行中' }, cardOf('热量目标', n.calorie_goal, '卡'), cardOf('饮水目标', n.water_goal, 'ml'), { label: '暂停时间', value: g.pausedAt ?? '—', detail: g.paused ? '恢复后清零' : '未暂停过' }],
+    '目标当前是什么状态',
+    [{ item: '暂停态', reading: g.paused ? '已暂停' : '进行中', note: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '记录与目标照常' }, { item: '热量目标', reading: num(n.calorie_goal, '卡'), note: '取自营养目标' }, { item: '饮水目标', reading: num(n.water_goal, 'ml'), note: '取自营养目标' }, { item: '恢复入口', reading: '说「重启所有目标」', note: '恢复后目标继续判定，记录不断' }],
+    metrics, command, ['暂停只停目标判定，记录照常。', '说「重启所有目标」即恢复进行中。']);
 }
