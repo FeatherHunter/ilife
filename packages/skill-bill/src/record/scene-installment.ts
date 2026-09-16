@@ -150,9 +150,9 @@ function collectPage(input: CollectInput): string {
         { text: '合计等于总价' },
       ],
     }),
-    collectSectionTitle({ no: 2, title: '分期参数只回显' }),
+    collectSectionTitle({ no: 2, title: '分期参数只供核对' }),
     renderParamForm({
-      description: '参数只回显，改值重说。',
+      description: '参数只供核对，改值重说。',
       fields: [
         { name: TOTAL_NAME, label: TOTAL_LABEL, readonly: true, value: total, hint: '总价，如 1200' },
         { name: PERIODS_NAME, label: PERIODS_LABEL, readonly: true, value: periods, hint: '分几期，如 12' },
