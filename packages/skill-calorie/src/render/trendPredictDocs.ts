@@ -296,9 +296,47 @@ function t568PredictCss(): string {
     + '</style>';
 }
 
+/** #569 R-07/R-12/R-13 · 模拟减重族页面侧样式（只本族三装配引用，不碰公共层）。
+ *
+ *  R-07（取报告第二档：恢复表头＋列式对齐）：两列轨迹表（日期／模拟体重）在 ≤640px
+ *  把公共层行卡化逐条顶回表形态。外层另套 `.tpd-track-table--cols2` 纯标记——内层
+ *  `<div class="tpd-track-table">` 保持逐字（W6-②守卫认领该字面），三列表（摄入预测
+ *  14–16，#570 地盘）不套、维持现状。`td::before{content:none}` 后 390 档标签零残留，
+ *  数值列回 `text-align:right`（等宽栈与 `tnum` 由公共层基规则承担），右缘共线。
+ *  R-12：结论卡值升档 `28px/800`（公共层 `22px/700`；22→28 级差 6≥4，28 为 4 的倍数）。
+ *  模拟页结论卡＝网格第 3 格（每周掉重）；判定卡无值位故选不中。参数卡留公共层档。
+ *  R-13：卡内距页侧覆盖 `16px`（公共层 `14px` 归 #567 不动，只改渲染结果）。
+ *  间距 8px/12px/16px 均为 4 的倍数；字号 28 与单位 13 差 15≥8。
+ */
+function t569SimCss(): string {
+  return '<style>\n'
+    + '.ilife-block-kpi-card{padding:16px}\n'
+    + '.ilife-block-kpi-card-grid > .ilife-block-kpi-card:nth-child(3) .ilife-block-kpi-card-value{font-size:28px;font-weight:800}\n'
+    + '@media (max-width:640px){\n'
+    + '  .tpd-track-table--cols2 .ilife-block-data-table-table{display:table;width:100%}\n'
+    + '  .tpd-track-table--cols2 .ilife-block-data-table thead{display:table-header-group}\n'
+    + '  .tpd-track-table--cols2 .ilife-block-data-table tbody{display:table-row-group}\n'
+    + '  .tpd-track-table--cols2 .ilife-block-data-table tr{display:table-row;padding:0;border-top:0}\n'
+    + '  .tpd-track-table--cols2 .ilife-block-data-table td{display:table-cell;white-space:nowrap;padding:8px 12px;border-bottom:1px solid var(--line)}\n'
+    + '  .tpd-track-table--cols2 .ilife-block-data-table td::before{content:none}\n'
+    + '  .tpd-track-table--cols2 .ilife-block-data-table-table td.ilife-block-data-table-cell-right{text-align:right;min-width:0}\n'
+    + '}\n'
+    + '</style>';
+}
+
+/** #569 R-12/R-13 · 摄入预测页（14–16，#570 地盘，本票只增益）页面侧样式。
+ *  结论卡＝网格第 4 格（摄入预测）；卡内距同 16px。R-07 不动三列表（R-16 归 #570）。 */
+function t569ForecastCss(): string {
+  return '<style>\n'
+    + '.ilife-block-kpi-card{padding:16px}\n'
+    + '.ilife-block-kpi-card-grid > .ilife-block-kpi-card:nth-child(4) .ilife-block-kpi-card-value{font-size:28px;font-weight:800}\n'
+    + '</style>';
+}
+
 /** #568 R-03 · 眉题写族名、chip写页名（eyebrow≠任一chip）。
  *  预测体重族眉题`预测体重`、模拟减重族眉题`模拟减重`（见各页`eyebrow`），本件只产chip侧：
  *  第二格为页身份（`7 天`／`自定义目标`／`每天-300卡`），与眉题族名 distinct；第三格域词保留。
+ *  #569 R-10：模拟减重族第二格改留空格形态（`每天 -300 卡`／`30 天减 2 kg`），仍与眉题 distinct。
  */
 function t568Chips(pageLabel: string): string {
   return renderChips({ items: [{ text: '卡路里' }, { text: pageLabel }, { text: '趋势分析' }] });
@@ -358,17 +396,21 @@ function fmtKcal(n: number | null | undefined): string {
 /** 轨迹表的公共装配（有表的页共用）：列与表题同源，表题按**实际覆盖天数**写实（#455）。
  *  **W5**：① 值走 `fmtWeight`（1 位）——同列有效位一致（视觉抽查 §2.2 缺陷 5）；
  *  ② 外层套 `.tpd-track-table` 一个**纯标记类**（公共层产出器不吃额外入参，故只能在外层套），
- *  供本页族窄档那条规则定位——窄档「一行两行」的标签噪声缓解见件头下方 `trackTableCss`。 */
-function trackTable(points: ReadonlyArray<{ date: string; value: number }>, what: string, unit: string): string {
+ *  供本页族窄档那条规则定位——窄档「一行两行」的标签噪声缓解见件头下方 `trackTableCss`。
+ *  **#569 R-07**：两列模拟表（`restoreHead=true`）再套一层 `.tpd-track-table--cols2`
+ *  纯标记（内层字面逐字不动，W6-②守卫），供 `t569SimCss` 窄档恢复表头＋列式对齐；
+ *  三列表（摄入预测）传缺省，维持行卡化（R-16 归 #570）。 */
+function trackTable(points: ReadonlyArray<{ date: string; value: number }>, what: string, unit: string, restoreHead = false): string {
   const span = spanDaysOf(points);
   const shown = points.slice(0, 14);
   const truncated = points.length > shown.length ? '（仅列前 14 点，共 ' + points.length + ' 点）' : '';
-  return '<div class="tpd-track-table">' + renderDataTable({
+  const table = '<div class="tpd-track-table">' + renderDataTable({
     columns: [{ key: 'date', label: '日期' }, { key: 'weight', label: what + '（' + unit + '）', align: 'right' }],
     rows: shown.map((p) => ({ date: p.date, weight: fmtWeight(p.value) })),
     caption: '模拟轨迹（共 ' + span + ' 天，每周一点' + truncated + '）',
     emptyText: '这一段还没有体重记录，先称一次体重再来看',
   }) + '</div>';
+  return restoreHead ? '<div class="tpd-track-table--cols2">' + table + '</div>' : table;
 }
 
 /** 轨迹表的**窄档**样式（#518 W5 · 只做页面侧，逐条都住本页族自己的 `<style>` 段里）。
@@ -578,13 +620,18 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
 
 export function buildSimCutDoc(v: WeightSimCut): string {
   const pts = v.forecast ? v.forecast.points : [];
+  /* #569 R-09：判断只留徽标一处（`超范围`／`可行`）。结论只留两主数（前半句式冻结 W5-②
+   *  `/一周大约掉 (\d+\.\d+) kg/` 不动）；判定卡 detail 改互补事实——`newDeficit`（每天总缺口）
+   *  页上别处未用，不与徽标同词（W5-①），无 `—`（W6-①-c），缺数时 fallback 无数字人话。 */
+  const totalGap = (typeof v.newDeficit === 'number' && Number.isFinite(v.newDeficit))
+    ? '每天总缺口约 ' + String(v.newDeficit) + ' 卡。' : '缺口按窗口内趋势另算。';
   const parts: string[] = [
-    /* #568 R-03（01–08）：chip第二格写页名`每天-N卡`，眉题写族名`模拟减重`（见`eyebrow`）。 */
-    t568Chips('每天-' + String(v.cutKcal) + '卡'),
-    /* 结论句只用页里已有的数（`cutKcal`／`weeklyLoss`／`feasible`）。
+    /* #568 R-03（01–08）：chip第二格写页名`每天-N卡`，眉题写族名`模拟减重`（见`eyebrow`）。
+     *  #569 R-10：页名留半角空格（`每天 -300 卡`），与正文同一间距规则（数字与单位间留空格）。 */
+    t568Chips('每天 -' + String(v.cutKcal) + ' 卡'),
+    /* 结论句只用页里已有的数（`cutKcal`／`weeklyLoss`）。
      * W5：`weeklyLoss` 走 `fmtRate`（2 位）——与第 3 张卡的「每周掉重」同一档。 */
-    renderConclusionBar('每天多减 ' + String(v.cutKcal) + ' 卡，一周大约掉 ' + fmtRate(v.weeklyLoss) + ' kg。'
-      + (v.feasible ? '这个速度在健康范围内。' : '这个速度超出健康范围，建议减量。')),
+    renderConclusionBar('每天多减 ' + String(v.cutKcal ?? '') + ' 卡，一周大约掉 ' + fmtRate(v.weeklyLoss) + ' kg。'),
     predictNav(pts.length > 0),
     pageSection('sec-params', renderParamForm({
       fields: [
@@ -602,13 +649,13 @@ export function buildSimCutDoc(v: WeightSimCut): string {
       { label: '每天多减', value: String(v.cutKcal), unit: '卡' },
       /* W5：值走 `fmtRate`（2 位，kg/周 的语义档）——原写法把上游 `round2` 的尾零吃掉，
        * 会出现 `1.4` 与同族 `1.36` 两种写法；`安全区间 0.5 到 1.0 kg/周`这份事实已由
-       * 同页口径行末段承担（「安全区间＝每周掉 0.5 到 1.0 kg」），卡内不再印第二遍。 */
+       * 同页口径行末段承担（「安全区间＝每周掉 0.5 到 1.0 kg」），卡内不再印第二遍。
+       * #569 R-12：本卡为结论卡（字号由 `t569SimCss` 升档，不改此处）。 */
       { label: '每周掉重', value: fmtRate(v.weeklyLoss), unit: 'kg/周' },
-    ]), verdictCard('可行性', v.feasible
-      ? '这个减量落在安全区间里。'
-      : '这个减量超出安全区间。', v.feasible, '可行', '超范围'))),
+    ]), verdictCard('可行性', totalGap, v.feasible, '可行', '超范围'))),
   ];
-  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg')));
+  /* #569 R-07：两列表传 `restoreHead`（窄档恢复表头＋列式对齐，见 `t569SimCss`）。 */
+  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg', true)));
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
@@ -624,11 +671,13 @@ export function buildSimCutDoc(v: WeightSimCut): string {
   parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 模拟减重',
-    title: '模拟减重（每天-' + String(v.cutKcal) + '卡）',
+    /* #569 R-10：主标与正文同一间距规则（数字与单位间留半角空格）：`每天 -300 卡`。
+     *  唤醒词原文（`模拟减重(每天-300卡)`）住 routes.ts 冻结不动；括号仍全角（W5-③）。 */
+    title: '模拟减重（每天 -' + String(v.cutKcal) + ' 卡）',
     /* #568 R-03：眉题写族名`模拟减重`（chip第二格页名，二者 distinct）。 */
     eyebrow: '模拟减重',
     subtitle: null,
-    content: pageChromeCss(1120) + t568PredictCss() + parts.join(''),
+    content: pageChromeCss(1120) + t568PredictCss() + t569SimCss() + parts.join(''),
     charts: false,
   });
 }
@@ -637,8 +686,17 @@ export function buildSimCutDoc(v: WeightSimCut): string {
 
 export function buildSimTargetDoc(v: WeightSimTarget): string {
   const pts = v.forecast ? v.forecast.points : [];
+  /* #569 R-11：`所需缺口`卡 detail 原与结论条同前缀（`要在 X 天里减掉 Y kg`）。
+   *  改总量互补——`neededDeficit×daysTarget`（渲染层派生，R-06 `diffKg` 先例；
+   *  该视图无“当前缺口”字段，报告的“如…”例无数组成）。无 `—`（W6-①-c）。 */
+  const periodTotal = (typeof v.neededDeficit === 'number' && typeof v.daysTarget === 'number'
+    && Number.isFinite(v.neededDeficit) && Number.isFinite(v.daysTarget))
+    ? String(v.daysTarget) + ' 天合计约 ' + String(v.neededDeficit * v.daysTarget) + ' 卡。'
+    : '缺口按窗口内趋势另算。';
   const parts: string[] = [
-    predictChips('模拟减重'),
+    /* #569 R-03 同形延伸（10–13）：眉题写族名`模拟减重`、chip 写页名（与 H1 同 spaced 形态），
+     *  二者 distinct（改前眉题`趋势分析`与第三格同字，R-03 的 01–08 范围未含 10–13）。 */
+    t568Chips(String(v.daysTarget) + ' 天减 ' + String(v.targetLoss) + ' kg'),
     /* 结论句只用页里已有的数（`daysTarget`／`targetLoss`／`neededDeficit`／`feasible`）。 */
     renderConclusionBar('要在 ' + String(v.daysTarget) + ' 天里减掉 ' + String(v.targetLoss) + ' kg，每天大约要留出 ' + String(v.neededDeficit) + ' 卡缺口。'
       + (v.feasible ? '这个速度在健康范围内。' : '这个速度超出健康范围，建议拉长时间或降低目标。')),
@@ -656,14 +714,18 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
     trackTableCss(),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
       { label: '当前', value: String(v.current), unit: 'kg' },
-      { label: '所需缺口', value: String(v.neededDeficit), unit: '卡/天', detail: '要在 ' + String(v.daysTarget) + ' 天里减掉 ' + String(v.targetLoss) + ' kg' },
+      /* #569 R-11：detail 改总量互补（见本函数头注释）。
+       *  #569 R-12：本页结论卡为第 3 格`每周掉重`（报告点名的模拟页结论数量级即 kg/周），
+       *  由 `t569SimCss` 统一升档。 */
+      { label: '所需缺口', value: String(v.neededDeficit), unit: '卡/天', detail: periodTotal },
       /* W5：值走 `fmtRate`（2 位）——与结论句及同页轨迹同一语义档；「安全区间」那半句已住口径行，卡内不重印。 */
       { label: '每周掉重', value: fmtRate(v.weeklyRate), unit: 'kg/周' },
     ]), verdictCard('可行性', v.feasible
       ? '这个期限赶得上。'
       : '这个期限赶得偏快。', v.feasible, '可行', '超范围'))),
   ];
-  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg')));
+  /* #569 R-07：两列表传 `restoreHead`（同 cut 页）。 */
+  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg', true)));
   parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
@@ -679,10 +741,13 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
   parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
     docTitle: '卡路里 模拟减重',
-    title: '模拟减重（' + String(v.daysTarget) + '天减' + String(v.targetLoss) + 'kg）',
-    eyebrow: '趋势分析',
+    /* #569 R-10：主标与正文同一间距规则（数字与单位间留半角空格）：`30 天减 2 kg`。
+     *  唤醒词原文住 routes.ts 冻结不动；括号仍全角（W5-③）；目标/天数仍在 H1（386:327）。 */
+    title: '模拟减重（' + String(v.daysTarget) + ' 天减 ' + String(v.targetLoss) + ' kg）',
+    /* #569 R-03 同形延伸：眉题写族名`模拟减重`（chip 第二格为页名，二者 distinct）。 */
+    eyebrow: '模拟减重',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    content: pageChromeCss(1120) + t569SimCss() + parts.join(''),
     charts: false,
   });
 }
@@ -756,7 +821,9 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
     title: '摄入预测（按当前速率 ' + String(v.forecast?.horizonDays ?? '') + ' 天）',
     eyebrow: '趋势分析',
     subtitle: null,
-    content: pageChromeCss(1120) + parts.join(''),
+    /* #569 R-12/R-13（09–16，含本页 14–16）：结论卡`摄入预测`升档＋卡内距 16px（`t569ForecastCss`）。
+     *  三列表不动（R-16 归 #570）；本改动只增益，#570 可在其上继续。 */
+    content: pageChromeCss(1120) + t569ForecastCss() + parts.join(''),
     charts: false,
   });
 }
