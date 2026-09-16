@@ -74,18 +74,8 @@ export function exerciseUiCss(): string {
     //    取值紧跟在键后、三页取值起点落在同一条竖轴，行分隔线仍铺满卡片；字号从 14px 收回 13px 档
     //    （本页少一档字号）。只在本页样式段加规则，不碰共享层源码。──
     + '.ilife-page .ilife-block-change-row{font-size:13px}'
-    // ── 页头第三行（r7 的 P2-5）：操作头的时间那行**没有键**（上一行是「记录号 #8414」），
-    //    读者分不清它是写入时间、记录日期还是当前时间，而同一个值在对账抽屉里叫「写入时间」。
-    //    页级件按 CSS 内容补键（**不碰共用层 op-head 件的源码**；同值同词，不是新事实）。
-    //    `content` 只进渲染层，不上屏到可见文本探针的「机器词」面。──
-    + '.ilife-page .ilife-block-op-head-time::before{content:"写入时间 ";color:var(--fg2)}'
-    // ── 页头「操作头」三行排成两行（r8 的 P2-3）：共用件把图标／徽章／`<h2>` 各摆一行，
-    //    一枚 54×32.8 的胶囊独占整行、右侧 900px 全空，标题前空出 51.5px 的带子。
-    //    页级件改成流式（图标＋徽章＋标题同排，记录号／写入时间各起一行）——`<h2>` 恢复 `inline-flex`，
-    //    三件基线对齐。**不碰共用件 `shared/operationHead.ts` 的源码**。──
-    + '.ilife-page .ilife-block-op-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}'
-    + '.ilife-page .ilife-block-op-head-title{display:inline-flex;align-items:center;margin:0}'
-    + '.ilife-page .ilife-block-op-head-id,.ilife-page .ilife-block-op-head-time{flex:1 0 100%;margin:0}'
+    // ── 操作卡头部版式（#434 已迁回公共层 `blocks.ts` pageShell 区）：本件不再保留
+    //    `.ilife-block-op-head*` 任何一条页级覆盖（概念唯一，公共层是唯一落点）。──
     // ── 字段块自成一组（r8 的 P2-4 的同源病）：题／栅格／收口句之间 4—12px，与同级区块的 16px 不一致，
     //    读起来像「贴住上一张卡」。题上行距归零、三件之间统一 8px。──
     + '.ilife-page .sui-fields-k{margin-top:0}'

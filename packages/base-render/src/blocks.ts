@@ -1362,6 +1362,87 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 15px;',
     '  font-weight: 600;',
     '}',
+    // #434 操作卡头部（#422 共用件 `operationHead()` 的根类＋四色档＋四子件；样式落本区，不新增区）。
+    // 形态对齐老实物 `crud_receipt` 的 `id-card` 左色条（样张 `t156-样张-写后回执.html:153-160`：
+    // `border-left:4px solid` 随 op 切）：基规则出卡片＋ 4px 左条（缺省中性 `var(--line)`），
+    // 四色档只改 `border-left-color`。版式把页级四条覆盖收编（`sportUi.ts` 的 `.ilife-page …`
+    // 四条本票删除后落点）：图标＋徽章＋标题同排，记录号／时刻行各占整行（`flex:1 0 100%`）。
+    // 内距取同族卡片档 14px（`kpiCard`／`chartBlock`／`detailSection` 同值），样张的 18px 20px
+    // 是 throwaway 密度不照搬；块级 `margin:16px 0` 取 #154 同族值（与 #457 相邻兄弟规则折叠恒 16）。
+    '.' + p + 'block-op-head {',
+    '  display: flex;',
+    '  flex-wrap: wrap;',
+    '  align-items: center;',
+    '  gap: 8px 12px;',
+    '  margin: 16px 0;',
+    '  padding: 14px;',
+    '  border: 1px solid var(--line);',
+    '  border-left: 4px solid var(--line);',
+    '  border-radius: ' + RADIUS_MD + 'px;',
+    '  background: var(--card);',
+    '}',
+    // 四色档（`OPERATION_TONES` ok／warn／danger／empty 的样式落点；只改左条色）。
+    // 色值口径：ok 取冻结 token `var(--ok)`（值 `#34c759`，与样张 `opColors` 同值）；
+    // 冻结表无 warn／danger 灯位，故 warn／danger 取同仓状态徽章同源 D-5 常量
+    // （`src/style.ts` statusBadge 区 warn `#a25b00`／danger `#a83228`，不新增 token 名）；
+    // empty 取冻结 `var(--fg2)`（与 empty 徽章字色同值，中性）。
+    // 样张的 `#0071e3` 在 H-01 禁色表内（`test/style.test.mjs:241`），一律不用；
+    // 色条是非文本，不套 #179 的文本对比度档。
+    '.' + p + 'block-op-head-ok {',
+    '  border-left-color: var(--ok);',
+    '}',
+    '.' + p + 'block-op-head-warn {',
+    '  border-left-color: #a25b00;',
+    '}',
+    '.' + p + 'block-op-head-danger {',
+    '  border-left-color: #a83228;',
+    '}',
+    '.' + p + 'block-op-head-empty {',
+    '  border-left-color: var(--fg2);',
+    '}',
+    // 子件四条（`operationHead()` 的 `-icon`／`-title`／`-id`／`-time`）。
+    // 图标 40px 中性盒（样张 12px 圆角按 D-5 收进闭集取 14；底色取中性 `var(--soft)`，
+    // 色档由左条＋徽章承担，图标不跟色）；标题 18px／700 取 `detail-section-title` 档
+    // （#567 J4 标题 18 吸收 17／18／20／22）；记录号 13px 取 `--fg2`；时刻行 12px 取
+    // `--fg2`（#179：12px 小字须 4.5:1，`--fg3` 3.62:1 不用）。
+    // 时刻行首的「写入时间 」键（`sportUi.ts` 迁回）：`actionAt` 即写入时间
+    // （`body/receipt.ts:162` 同值同词 `{ k: '写入时间', v: actionAt }`），CSS 内容只进
+    // 渲染层；第二消费族出现时提到调用方文案面并删此条（过渡债务，本票如实记）。
+    '.' + p + 'block-op-head-icon {',
+    '  display: inline-flex;',
+    '  align-items: center;',
+    '  justify-content: center;',
+    '  width: 40px;',
+    '  height: 40px;',
+    '  border-radius: ' + RADIUS_MD + 'px;',
+    '  background: var(--soft);',
+    '  color: var(--fg);',
+    '  font-size: 20px;',
+    '  line-height: 1;',
+    '}',
+    '.' + p + 'block-op-head-title {',
+    '  display: inline-flex;',
+    '  align-items: center;',
+    '  margin: 0;',
+    '  color: var(--fg);',
+    '  font-size: 18px;',
+    '  font-weight: 700;',
+    '}',
+    '.' + p + 'block-op-head-id {',
+    '  flex: 1 0 100%;',
+    '  margin: 0;',
+    '  color: var(--fg2);',
+    '  font-size: 13px;',
+    '}',
+    '.' + p + 'block-op-head-time {',
+    '  flex: 1 0 100%;',
+    '  margin: 0;',
+    '  color: var(--fg2);',
+    '  font-size: 12px;',
+    '}',
+    '.' + p + 'block-op-head-time::before {',
+    '  content: "写入时间 ";',
+    '}',
     // #421 页面融合四件的样式随本区落盘（同 #420 处置：四件都是页面级、不属 12 区块，
     // `BLOCK_STYLE_SECTIONS` 由 `test/blocks.test.mjs` 钉死 12 项，故不新增样式区、不新增 token）。
     // **色值口径（#431 定稿）**：区块自身不写死任何色值字面量——样式里只出现冻结 token。不给 `color`

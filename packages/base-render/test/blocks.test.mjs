@@ -509,3 +509,40 @@ describe('端到端（108–113 的执行前置证明）：12 区块组装内容
     assert.ok(out.report.bytes > 0, '产物面 bytes');
   });
 });
+
+describe('#434 操作卡头部／结论条（公共层 pageShell 区）', () => {
+  it('BLOCK_STYLE_SECTIONS 仍 12 项且不新增区', () => {
+    assert.equal(BLOCK_STYLE_SECTIONS.length, 12);
+    for (const name of ['opHead', 'op-head', 'conclusion']) {
+      assert.ok(!BLOCK_STYLE_SECTIONS.includes(name), '不得新增样式区：' + name);
+    }
+  });
+
+  it('操作卡头部基规则＋四色档＋子件规则齐备', () => {
+    const css = blocksCss();
+    assert.ok(css.includes('.ilife-block-op-head {'), '缺基规则');
+    for (const tone of ['ok', 'warn', 'danger', 'empty']) {
+      assert.ok(css.includes('.ilife-block-op-head-' + tone + ' {'), '缺色档：' + tone);
+    }
+    for (const part of ['icon', 'title', 'id', 'time']) {
+      assert.ok(css.includes('.ilife-block-op-head-' + part + ' {'), '缺子件：' + part);
+    }
+    assert.ok(css.includes('border-left: 4px solid'), '左色条形态不对（crud_receipt id-card 4px）');
+  });
+
+  it('四色档色值口径（冻结 token＋D-5 常量，不碰 H-01 禁色）', () => {
+    const css = blocksCss();
+    assert.ok(css.includes('border-left-color: var(--ok)'), 'ok 档须走冻结 token --ok');
+    assert.ok(css.includes('#a25b00'), 'warn 档须用状态徽章同源 D-5 常量');
+    assert.ok(css.includes('#a83228'), 'danger 档须用状态徽章同源 D-5 常量');
+    for (const bad of ['#0a84ff', '#af52de', '#ff375f', '#0071e3']) {
+      assert.ok(!css.includes(bad), 'H-01 禁色：' + bad);
+    }
+  });
+
+  it('结论条保留 #507 既有形态（不对齐样张 one-line）', () => {
+    const css = blocksCss();
+    assert.ok(css.includes('.ilife-block-conclusion {'), '缺结论条规则');
+    assert.ok(css.includes('border-left: 3px solid var(--blue)'), '结论条左 3px 主色边不得丢');
+  });
+});
