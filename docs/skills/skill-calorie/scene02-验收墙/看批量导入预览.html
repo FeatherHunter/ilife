@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>卡路里·趋势</title>
+<title>卡路里·饮食</title>
 <style>/* base-paint 共享样式资产 · ilife-base · v0.1.0 */
 :root {
   --fg: #1d1d1f;
@@ -161,6 +161,8 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:active {
   opacity: .7;
@@ -178,6 +180,8 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:focus-visible {
   outline: 2px solid var(--blue);
@@ -241,6 +245,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-action-btn-primary {
   background: var(--blue);
@@ -281,6 +287,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
 }
 .ilife-copy-btn-primary {
@@ -380,6 +388,8 @@
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-copy-menu-item:hover {
   background: var(--soft);
@@ -637,6 +647,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-icon {
   font-size: 14px;
@@ -759,6 +770,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
   list-style: none;
 }
 .ilife-help-shell-sheet-summary::-webkit-details-marker {
@@ -810,6 +822,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn:active {
   transform: scale(.96);
@@ -844,6 +858,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-count {
   color: var(--fg3);
@@ -942,6 +957,7 @@
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-search-clear:focus-visible {
   outline: 2px solid var(--blue);
@@ -969,6 +985,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-card-copy:active {
   transform: scale(.96);
@@ -1030,6 +1048,7 @@
   transition: opacity .2s ease;
   z-index: 9998;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn-backtop-show {
   opacity: 1;
@@ -1264,6 +1283,11 @@ body {
   color: var(--fg);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.ilife-block-page-shell button,
+.ilife-block-page-shell summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 @media print {
   .ilife-page-printable {
@@ -1782,11 +1806,21 @@ body {
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-x: auto;
-}</style>
+}
+.meta-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.meta-bar .left{font-size:12px;color:var(--fg2)}
+.type-badge{font-size:11px;padding:3px 10px;border-radius:6px;background:var(--soft);color:var(--fg2);font-weight:600;white-space:nowrap}
+.ilife-block-page-shell-title{font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-.02em;margin-bottom:4px;text-wrap:balance}
+.sub{font-size:14px;color:var(--fg3);margin-bottom:24px}
+.legend{font-size:12px;color:var(--fg2);margin-top:10px;display:flex;gap:16px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:16px;height:2px}
+.legend .b{border-top:2px dashed #ff9500;background:transparent;height:0}
+</style>
 </head>
 <body>
 <div class="wrap ilife-page">
-<section class="ilife-block ilife-block-page-shell"><p class="ilife-block-page-shell-eyebrow">卡路里 · 趋势</p><h1 class="ilife-block-page-shell-title">批量导入预览</h1><p class="ilife-block-page-shell-subtitle">食品库对照＋合计试算（只预览，不写库；确认之后再写入）</p><div class="ilife-block-page-shell-body"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">待导入</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1</span><span class="ilife-block-kpi-card-unit">条</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">食品库里有同名的</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">条</span></div><div class="ilife-block-kpi-card-detail">可以直接导入</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">食品库里没有的</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1</span><span class="ilife-block-kpi-card-unit">种</span></div><div class="ilife-block-kpi-card-detail">建议先「存食品」再导入</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">合计热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">150</span><span class="ilife-block-kpi-card-unit">卡</span></div></div></div><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">逐条预览（仅预览，不写库）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">食物</th><th scope="col" class="ilife-block-data-table-cell-right">这一条的热量（卡）</th><th scope="col" class="ilife-block-data-table-cell-right">食品库里的热量（卡）</th><th scope="col" class="ilife-block-data-table-cell-left">是否已匹配</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="食物">粥</td><td class="ilife-block-data-table-cell-right" data-label="这一条的热量（卡）">150</td><td class="ilife-block-data-table-cell-right" data-label="食品库里的热量（卡）">食品库中无此食物</td><td class="ilife-block-data-table-cell-left" data-label="是否已匹配">未匹配</td></tr></tbody></table></div><details class="ilife-block ilife-block-disclosure"><summary class="ilife-block-disclosure-summary">食品库里没有这些食物（共 1 种）</summary><div class="ilife-block-disclosure-body"><div class="ilife-block ilife-block-list-rows" role="list"><div class="ilife-block-list-rows-row"><span class="ilife-block-list-rows-left">粥</span><span class="ilife-block-list-rows-main">不在食品库里，本次预览用的是你给的热量</span><span class="ilife-block-list-rows-right">想收进库里就说「存食品 粥」</span></div></div></div></details><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.batch-import-preview】
+<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">看批量导入预览 · 饮食</div><div class="type-badge">预检确认</div></div><h1 class="ilife-block-page-shell-title">📥 批量导入预览</h1><p class="sub">食品库对照＋合计试算：共 1 条，可新增 0 条、跳过 0 条、失败 1 条，合计 150 卡。</p><div class="ilife-block-page-shell-body"><style>.precheck-tag{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;margin-left:6px;background:var(--soft);color:var(--fg2)}.precheck-tag.is-check{background:#fff7e6;color:#ad6800}.precheck-note{font-size:13px;color:var(--fg2)}</style><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-read">读数</a><a href="#sec-plan">这次的处置</a><a href="#sec-rows">逐条结果</a><a href="#sec-missing">食品库里没有的</a><a href="#sec-empty">这次进不了库</a><a href="#sec-write">确认后操作</a></nav><section id="sec-read"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">待导入</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1</span><span class="ilife-block-kpi-card-unit">条</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">食品库里有同名的</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">条</span></div><div class="ilife-block-kpi-card-detail">可以直接导入</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">食品库里没有的</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1</span><span class="ilife-block-kpi-card-unit">种</span></div><div class="ilife-block-kpi-card-detail">建议先「存食品」再导入</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">合计热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">150</span><span class="ilife-block-kpi-card-unit">卡</span></div></div></div></section><section id="sec-plan"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">会新增</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">条</span></div><div class="ilife-block-kpi-card-detail">食品库里还没有这些名字</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">会跳过</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">0</span><span class="ilife-block-kpi-card-unit">条</span></div><div class="ilife-block-kpi-card-detail">食品库里已有同名，不覆盖</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">会失败</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1</span><span class="ilife-block-kpi-card-unit">条</span></div><div class="ilife-block-kpi-card-detail">校验没过的行</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div></div></section><section id="sec-rows"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">逐条预览（仅预览，不写库）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-right">第几条</th><th scope="col" class="ilife-block-data-table-cell-left">食品</th><th scope="col" class="ilife-block-data-table-cell-right">这一条的热量（卡）</th><th scope="col" class="ilife-block-data-table-cell-right">食品库里的热量（卡）</th><th scope="col" class="ilife-block-data-table-cell-left">是否已匹配</th><th scope="col" class="ilife-block-data-table-cell-left">会不会进库</th><th scope="col" class="ilife-block-data-table-cell-left">原因</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-right" data-label="第几条">1</td><td class="ilife-block-data-table-cell-left" data-label="食品">粥</td><td class="ilife-block-data-table-cell-right" data-label="这一条的热量（卡）">150</td><td class="ilife-block-data-table-cell-right" data-label="食品库里的热量（卡）">食品库中无此食物</td><td class="ilife-block-data-table-cell-left" data-label="是否已匹配">未匹配</td><td class="ilife-block-data-table-cell-left" data-label="会不会进库">会失败</td><td class="ilife-block-data-table-cell-left" data-label="原因">缺少必填字段: fat</td></tr></tbody></table></div></section><section id="sec-missing"><details class="ilife-block ilife-block-disclosure"><summary class="ilife-block-disclosure-summary">食品库里没有这些食物（共 1 种）</summary><div class="ilife-block-disclosure-body"><div class="ilife-block ilife-block-list-rows" role="list"><div class="ilife-block-list-rows-row"><span class="ilife-block-list-rows-left">粥</span><span class="ilife-block-list-rows-main">不在食品库里，本次预览用的是你给的热量</span><span class="ilife-block-list-rows-right">想收进库里就说「存食品 粥」</span></div></div></div></details></section><section id="sec-empty"><section class="ilife-block ilife-block-empty-block"><h2 class="ilife-block-empty-block-title">这次一条都进不了食品库</h2><div class="ilife-empty"><div class="ilife-empty-text">这 1 条里没有一条能写进去（失败 1 条）。把「原因」那一列点到的字段补齐，再说一次「批量导入食品」；想先建库，就先说「存食品」把要用的食物一条条收进库里。</div></div></section></section><section id="sec-write"><details class="ilife-block ilife-block-disclosure"><summary class="ilife-block-disclosure-summary">确认后操作（这一步不写库）</summary><div class="ilife-block-disclosure-body"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">这一页会写进去的字段与取值（食品名与热量按你给的条目照抄）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">会写进去的字段</th><th scope="col" class="ilife-block-data-table-cell-left">这一条写什么</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="会写进去的字段">食品名</td><td class="ilife-block-data-table-cell-left" data-label="这一条写什么">（本次没有可导入的行）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="会写进去的字段">热量</td><td class="ilife-block-data-table-cell-left" data-label="这一条写什么">150 卡（本次条目的热量合计）</td></tr></tbody></table></div><p class="precheck-note">确认无误之后，要跑的那条命令在下方「复制日志」的第 4 段里，照抄即可重跑。</p></div></details></section><p class="ilife-block-caliber">「会新增／会跳过／会失败」是照现在的规则算出来的结果，不是已经写进去了；这一页只预览，不写库。</p><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.batch-import-preview】
 total: 1
 matched: 0
 missing: 1
@@ -1807,7 +1841,18 @@ totalCalorie: 150"><span class="ilife-copy-menu-label">纯文本</span></button>
 metrics,total: 1
 metrics,matched: 0
 metrics,missing: 1
-metrics,totalCalorie: 150"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" disabled>复制日志</button></div></div></section></div></section>
+metrics,totalCalorie: 150"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
+calorie.view.batch-import-preview（stat）
+AI 思考链
+本页由本地 CLI 渲染，无 AI 链
+数据结构
+calorie_data.db ｜ calorie_data.db ｜ 食品库（在架食品）＋本次给的条目
+调用链
+calorie-cmd-read calorie.view.batch-import-preview --params &#39;{&quot;items&quot;:[{&quot;foodName&quot;:&quot;粥&quot;,&quot;calories&quot;:150,&quot;protein&quot;:3,&quot;date&quot;:&quot;2026-09-14&quot;}]}&#39; ｜ 确认后执行 calorie-cmd-read calorie.product.import --params &#39;{&quot;items&quot;:[{&quot;calories&quot;:150,&quot;protein&quot;:3,&quot;date&quot;:&quot;2026-09-14&quot;,&quot;productName&quot;:&quot;粥&quot;}]}&#39;
+时间戳版本
+2026-09-16 10:10:40 · 版本 0.1.0
+异常
+无">复制日志</button></div></div></section><p class="ilife-block-caliber">📊 数据来源：本机食品库 · 本次 1 条条目逐条对照在架食品</p></div></section>
 </div>
 <script>(function () {
   'use strict';
@@ -2112,7 +2157,7 @@ metrics,totalCalorie: 150"><span class="ilife-copy-menu-label">CSV</span></butto
   /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，
      文本取同卡 `<pre class="prompt">` 的**原文**（＝该卡 prompt 逐字，与 F3 卡面同源）；
      读不到 <pre> 才回落同卡 Sheet 内 prompt 按钮的 data-t，两者都无才跳过
-     （#88 S5／B 段红队 S3-a：真实壳恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
+     （#88 S5／B 段红队 S3-a：真实help模板恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
   function injectCardCopy(cards) {
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
@@ -2187,7 +2232,7 @@ metrics,totalCalorie: 150"><span class="ilife-copy-menu-label">CSV</span></butto
   }
 
   /* 复制按钮文本同步：prompt 目标（卡头 ＋ Sheet 内）＝ 预览文本；params 目标＝label: value 行，
-     无字段时回落该卡 CLI 文本（与冻结壳 paramsText 同口径）。 */
+     无字段时回落该卡 CLI 文本（与冻结help模板 paramsText 同口径）。 */
   function syncCopyText(card, text, lines) {
     var buttons = allOf(card, "[" + ACTION_ATTR + "]");
     for (var i = 0; i < buttons.length; i++) {

@@ -161,6 +161,8 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:active {
   opacity: .7;
@@ -178,6 +180,8 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:focus-visible {
   outline: 2px solid var(--blue);
@@ -241,6 +245,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-action-btn-primary {
   background: var(--blue);
@@ -281,6 +287,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
 }
 .ilife-copy-btn-primary {
@@ -380,6 +388,8 @@
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-copy-menu-item:hover {
   background: var(--soft);
@@ -637,6 +647,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-icon {
   font-size: 14px;
@@ -759,6 +770,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
   list-style: none;
 }
 .ilife-help-shell-sheet-summary::-webkit-details-marker {
@@ -810,6 +822,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn:active {
   transform: scale(.96);
@@ -844,6 +858,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-count {
   color: var(--fg3);
@@ -942,6 +957,7 @@
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-search-clear:focus-visible {
   outline: 2px solid var(--blue);
@@ -969,6 +985,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-card-copy:active {
   transform: scale(.96);
@@ -1030,6 +1048,7 @@
   transition: opacity .2s ease;
   z-index: 9998;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn-backtop-show {
   opacity: 1;
@@ -1264,6 +1283,11 @@ body {
   color: var(--fg);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.ilife-block-page-shell button,
+.ilife-block-page-shell summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 @media print {
   .ilife-page-printable {
@@ -1786,7 +1810,7 @@ body {
 </head>
 <body>
 <div class="wrap ilife-page">
-<section class="ilife-block ilife-block-page-shell"><h1 class="ilife-block-page-shell-title">改饮食记录 · 回执</h1><p class="ilife-block-page-shell-subtitle">已更新饮食 （grams）</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-op">✅ 操作回执</a><a href="#sec-change">📋 字段变更</a><a href="#sec-sum">📊 今日累计</a><a href="#sec-items">📋 复制明细</a></nav><section id="sec-op"><h2>✅ 操作回执</h2><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">状态</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">修改成功</span></div><div class="ilife-block-kpi-card-detail">已更新饮食记录。要改回去，照「📋 字段变更」里「改前」那一列改；那一列没有读数时，本页给不出写前原值。</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">已改动</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">影响行数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1 行</span></div><div class="ilife-block-kpi-card-detail">本次写入的行数</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">写入字段</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1 项</span></div><div class="ilife-block-kpi-card-detail">克数</div></div></div></section><section id="sec-change"><h2>📋 字段变更</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">改前 → 改后对照</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">字段</th><th scope="col" class="ilife-block-data-table-cell-left">改前</th><th scope="col" class="ilife-block-data-table-cell-left">改后</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="字段">克数</td><td class="ilife-block-data-table-cell-left" data-label="改前">—</td><td class="ilife-block-data-table-cell-left" data-label="改后">150</td></tr></tbody></table></div><p class="ilife-block-caliber">「改前」那一列的原值由写执行那一层回报；当前饮食写口只回报变更字段名，故这一列写 —，不拿新值顶替。</p></section><section id="sec-sum"><h2>📊 今日累计</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">今日累计</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项</th><th scope="col" class="ilife-block-data-table-cell-left">值</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项">日期</td><td class="ilife-block-data-table-cell-left" data-label="值">2026-09-15</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">热量累计</td><td class="ilife-block-data-table-cell-left" data-label="值">834 卡（未设目标）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">蛋白累计</td><td class="ilife-block-data-table-cell-left" data-label="值">93 g（未设目标）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">碳水累计</td><td class="ilife-block-data-table-cell-left" data-label="值">49 g（未设目标）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">脂肪累计</td><td class="ilife-block-data-table-cell-left" data-label="值">28 g（未设目标）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">饮食条数</td><td class="ilife-block-data-table-cell-left" data-label="值">4 条</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">饮水累计</td><td class="ilife-block-data-table-cell-left" data-label="值">1200 ml</td></tr></tbody></table></div><p class="ilife-block-caliber">还没有设过每天的目标，故这里只报累计值；说「定营养目标」之后还会报还剩多少。</p></section><section id="sec-items"><h2>📋 复制明细</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">本次逐条明细（共 1 条）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">时间</th><th scope="col" class="ilife-block-data-table-cell-left">内容</th><th scope="col" class="ilife-block-data-table-cell-left">状态</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="时间">—</td><td class="ilife-block-data-table-cell-left" data-label="内容">grams</td><td class="ilife-block-data-table-cell-left" data-label="状态">已更新（编号 1）</td></tr></tbody></table></div></section><details class="ilife-block ilife-block-disclosure"><summary class="ilife-block-disclosure-summary">对账信息</summary><div class="ilife-block-disclosure-body"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项</th><th scope="col" class="ilife-block-data-table-cell-left">值</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项">记录编号</td><td class="ilife-block-data-table-cell-left" data-label="值">1</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">写入时间</td><td class="ilife-block-data-table-cell-left" data-label="值">2026-09-15 21:51:27</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">回执格式</td><td class="ilife-block-data-table-cell-left" data-label="值">v1（写库回执）</td></tr></tbody></table></div></div></details><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · 改饮食记录】
+<section class="ilife-block ilife-block-page-shell"><h1 class="ilife-block-page-shell-title">改饮食记录 · 回执</h1><p class="ilife-block-page-shell-subtitle">已更新饮食 （grams）</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-op">✅ 操作回执</a><a href="#sec-change">📋 字段变更</a><a href="#sec-sum">📊 今日累计</a><a href="#sec-items">📋 复制明细</a></nav><section id="sec-op"><h2>✅ 操作回执</h2><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">状态</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">修改成功</span></div><div class="ilife-block-kpi-card-detail">已更新饮食记录。要改回去，照「📋 字段变更」里「改前」那一列改；那一列没有读数时，本页给不出写前原值。</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">已改动</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">影响行数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1 行</span></div><div class="ilife-block-kpi-card-detail">本次写入的行数</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">写入字段</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1 项</span></div><div class="ilife-block-kpi-card-detail">克数</div></div></div></section><section id="sec-change"><h2>📋 字段变更</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">改前 → 改后对照</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">字段</th><th scope="col" class="ilife-block-data-table-cell-left">改前</th><th scope="col" class="ilife-block-data-table-cell-left">改后</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="字段">克数</td><td class="ilife-block-data-table-cell-left" data-label="改前">—</td><td class="ilife-block-data-table-cell-left" data-label="改后">150</td></tr></tbody></table></div><p class="ilife-block-caliber">「改前」那一列的原值由写执行那一层回报；当前饮食写口只回报变更字段名，故这一列写 —，不拿新值顶替。</p></section><section id="sec-sum"><h2>📊 今日累计</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">今日累计</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项</th><th scope="col" class="ilife-block-data-table-cell-left">值</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项">日期</td><td class="ilife-block-data-table-cell-left" data-label="值">2026-09-15</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">热量累计</td><td class="ilife-block-data-table-cell-left" data-label="值">1239 卡（还剩 561）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">蛋白累计</td><td class="ilife-block-data-table-cell-left" data-label="值">61 g（还剩 89）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">碳水累计</td><td class="ilife-block-data-table-cell-left" data-label="值">178 g（还剩 22）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">脂肪累计</td><td class="ilife-block-data-table-cell-left" data-label="值">18 g（还剩 32）</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">饮食条数</td><td class="ilife-block-data-table-cell-left" data-label="值">4 条</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">饮水累计</td><td class="ilife-block-data-table-cell-left" data-label="值">1200 ml</td></tr></tbody></table></div><p class="ilife-block-caliber">括号里是相对今天的目标还剩多少；超出目标写「已超」。</p></section><section id="sec-items"><h2>📋 复制明细</h2><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">本次逐条明细（共 1 条）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">时间</th><th scope="col" class="ilife-block-data-table-cell-left">内容</th><th scope="col" class="ilife-block-data-table-cell-left">状态</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="时间">—</td><td class="ilife-block-data-table-cell-left" data-label="内容">grams</td><td class="ilife-block-data-table-cell-left" data-label="状态">已更新（编号 1）</td></tr></tbody></table></div></section><details class="ilife-block ilife-block-disclosure"><summary class="ilife-block-disclosure-summary">对账信息</summary><div class="ilife-block-disclosure-body"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">项</th><th scope="col" class="ilife-block-data-table-cell-left">值</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="项">记录编号</td><td class="ilife-block-data-table-cell-left" data-label="值">1</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">写入时间</td><td class="ilife-block-data-table-cell-left" data-label="值">2026-09-16 10:10:21</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="项">回执格式</td><td class="ilife-block-data-table-cell-left" data-label="值">v1（写库回执）</td></tr></tbody></table></div></div></details><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · 改饮食记录】
 ok: true
 message: 已更新饮食 #1（grams）"><span class="ilife-copy-menu-label">纯文本</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
   &quot;version&quot;: &quot;0.1.0&quot;,
@@ -1806,11 +1830,11 @@ AI 思考链
 数据结构
 calorie_data.db ｜ food_log (写库回执)
 调用链
-calorie-cmd-read calorie.diet.update --params &#39;{&quot;id&quot;:1,&quot;grams&quot;:150}&#39; ｜ id=1 | 日期 2026-09-15 21:51:27 | 影响 1 行 | 字段 grams
+calorie-cmd-read calorie.diet.update --params &#39;{&quot;id&quot;:1,&quot;grams&quot;:150}&#39; ｜ id=1 | 日期 2026-09-16 10:10:21 | 影响 1 行 | 字段 grams
 时间戳版本
-2026-09-15 21:51:27 · 版本 0.1.0
+2026-09-16 10:10:21 · 版本 0.1.0
 异常
-无">复制日志</button></div></div></section><p class="ilife-block-caliber"><span>📊 数据来源：本机饮食库</span> <span>本次影响 1 行</span> <span>时间 2026-09-15 21:51:27</span></p></div></section>
+无">复制日志</button></div></div></section><p class="ilife-block-caliber"><span>📊 数据来源：本机饮食库</span> <span>本次影响 1 行</span> <span>时间 2026-09-16 10:10:21</span></p></div></section>
 </div>
 <script>(function () {
   'use strict';
@@ -2115,7 +2139,7 @@ calorie-cmd-read calorie.diet.update --params &#39;{&quot;id&quot;:1,&quot;grams
   /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，
      文本取同卡 `<pre class="prompt">` 的**原文**（＝该卡 prompt 逐字，与 F3 卡面同源）；
      读不到 <pre> 才回落同卡 Sheet 内 prompt 按钮的 data-t，两者都无才跳过
-     （#88 S5／B 段红队 S3-a：真实壳恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
+     （#88 S5／B 段红队 S3-a：真实help模板恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
   function injectCardCopy(cards) {
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
@@ -2190,7 +2214,7 @@ calorie-cmd-read calorie.diet.update --params &#39;{&quot;id&quot;:1,&quot;grams
   }
 
   /* 复制按钮文本同步：prompt 目标（卡头 ＋ Sheet 内）＝ 预览文本；params 目标＝label: value 行，
-     无字段时回落该卡 CLI 文本（与冻结壳 paramsText 同口径）。 */
+     无字段时回落该卡 CLI 文本（与冻结help模板 paramsText 同口径）。 */
   function syncCopyText(card, text, lines) {
     var buttons = allOf(card, "[" + ACTION_ATTR + "]");
     for (var i = 0; i < buttons.length; i++) {

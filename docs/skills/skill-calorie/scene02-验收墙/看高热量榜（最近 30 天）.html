@@ -161,6 +161,8 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:active {
   opacity: .7;
@@ -178,6 +180,8 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:focus-visible {
   outline: 2px solid var(--blue);
@@ -241,6 +245,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-action-btn-primary {
   background: var(--blue);
@@ -281,6 +287,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
 }
 .ilife-copy-btn-primary {
@@ -380,6 +388,8 @@
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-copy-menu-item:hover {
   background: var(--soft);
@@ -637,6 +647,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-icon {
   font-size: 14px;
@@ -759,6 +770,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
   list-style: none;
 }
 .ilife-help-shell-sheet-summary::-webkit-details-marker {
@@ -810,6 +822,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn:active {
   transform: scale(.96);
@@ -844,6 +858,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-count {
   color: var(--fg3);
@@ -942,6 +957,7 @@
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-search-clear:focus-visible {
   outline: 2px solid var(--blue);
@@ -969,6 +985,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-card-copy:active {
   transform: scale(.96);
@@ -1030,6 +1048,7 @@
   transition: opacity .2s ease;
   z-index: 9998;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn-backtop-show {
   opacity: 1;
@@ -1264,6 +1283,11 @@ body {
   color: var(--fg);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.ilife-block-page-shell button,
+.ilife-block-page-shell summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 @media print {
   .ilife-page-printable {
@@ -1786,16 +1810,18 @@ body {
 </head>
 <body>
 <div class="wrap ilife-page">
-<section class="ilife-block ilife-block-page-shell"><p class="ilife-block-page-shell-eyebrow">饮食 · 排行榜</p><h1 class="ilife-block-page-shell-title">排行 高热量榜 2026-08-17 ~ 2026-09-15</h1><p class="ilife-block-page-shell-subtitle">本窗 8 种食物上榜，头名「鸡胸肉」：总热量 5352 卡，共 24 次。</p><div class="ilife-block-page-shell-body"><style>.ilife-block-rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);position:relative}.ilife-block-rank-row:last-child{border-bottom:none}.ilife-block-rank-no{flex:0 0 2.4em;text-align:right;color:var(--fg2);font-size:13px}.ilife-block-rank-name{flex:1 1 auto;min-width:0;word-break:break-all;font-weight:600}.ilife-block-rank-bar{flex:0 0 120px;display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--bg)}.ilife-block-rank-seg{height:100%}.ilife-block-rank-pct{flex:0 0 auto;font-size:12px;color:var(--fg2)}.ilife-block-rank-h2{font-size:14px;font-weight:600;margin:0 0 4px}.ilife-block-rank-row.r1,.ilife-block-rank-row.r2,.ilife-block-rank-row.r3{padding-left:10px}.ilife-block-rank-row.r1::before,.ilife-block-rank-row.r2::before,.ilife-block-rank-row.r3::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px}.ilife-block-rank-row.r1::before{background:#f5b301}.ilife-block-rank-row.r2::before{background:#a8a8ad}.ilife-block-rank-row.r3::before{background:#c77b3f}@media (max-width:820px){.ilife-block-rank-bar{flex-basis:72px}.ilife-block-rank-pct{font-size:11px}}</style><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-kpi">上榜速览</a><a href="#sec-nutri">营养结构</a><a href="#sec-table">榜单明细</a></nav><section id="sec-kpi"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">高热量榜</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">8</span><span class="ilife-block-kpi-card-unit">种</span></div><div class="ilife-block-kpi-card-detail">窗口 2026-08-17 ~ 2026-09-15</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">头名</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">鸡胸肉</span></div><div class="ilife-block-kpi-card-detail">总热量 5352 卡，共 24 次</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">上榜总热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">17856</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">前 8 名合计</div></div></div></section><section id="sec-nutri"><h2 class="ilife-block-rank-h2">营养结构（按热量占比）</h2><div class="ilife-block-rank-row r1"><span class="ilife-block-rank-no">🥇 1</span><span class="ilife-block-rank-name">鸡胸肉</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 80%｜碳水 0%｜脂肪 20%"><span class="ilife-block-rank-seg" style="width:80%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:0%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:20%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 80%｜碳水 0%｜脂肪 20%</span></div><div class="ilife-block-rank-row r2"><span class="ilife-block-rank-no">🥈 2</span><span class="ilife-block-rank-name">米饭</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 9%｜碳水 87%｜脂肪 4%"><span class="ilife-block-rank-seg" style="width:9%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:87%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:4%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 9%｜碳水 87%｜脂肪 4%</span></div><div class="ilife-block-rank-row r3"><span class="ilife-block-rank-no">🥉 3</span><span class="ilife-block-rank-name">燕麦片</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 14%｜碳水 70%｜脂肪 16%"><span class="ilife-block-rank-seg" style="width:14%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:70%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:16%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 14%｜碳水 70%｜脂肪 16%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">4</span><span class="ilife-block-rank-name">牛油果</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 4%｜碳水 20%｜脂肪 76%"><span class="ilife-block-rank-seg" style="width:4%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:20%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:76%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 4%｜碳水 20%｜脂肪 76%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">5</span><span class="ilife-block-rank-name">全麦面包</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 14%｜碳水 77%｜脂肪 9%"><span class="ilife-block-rank-seg" style="width:14%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:77%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:9%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 14%｜碳水 77%｜脂肪 9%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">6</span><span class="ilife-block-rank-name">伊利纯牛奶</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 22%｜碳水 23%｜脂肪 55%"><span class="ilife-block-rank-seg" style="width:22%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:23%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:55%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 22%｜碳水 23%｜脂肪 55%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">7</span><span class="ilife-block-rank-name">西兰花</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 26%｜碳水 65%｜脂肪 9%"><span class="ilife-block-rank-seg" style="width:26%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:65%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:9%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 26%｜碳水 65%｜脂肪 9%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">8</span><span class="ilife-block-rank-name">💧水</span><span class="ilife-block-rank-pct">—</span></div></section><section id="sec-table"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">🔥 热量炸弹榜（2026-08-17 ~ 2026-09-15）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-right">排名</th><th scope="col" class="ilife-block-data-table-cell-left">食物</th><th scope="col" class="ilife-block-data-table-cell-right">总热量</th><th scope="col" class="ilife-block-data-table-cell-right">次数</th><th scope="col" class="ilife-block-data-table-cell-right">餐均</th><th scope="col" class="ilife-block-data-table-cell-left">营养结构</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-right" data-label="排名">🥇 1</td><td class="ilife-block-data-table-cell-left" data-label="食物">鸡胸肉</td><td class="ilife-block-data-table-cell-right" data-label="总热量">5352 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">24 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">223 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 80%｜碳水 0%｜脂肪 20%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">🥈 2</td><td class="ilife-block-data-table-cell-left" data-label="食物">米饭</td><td class="ilife-block-data-table-cell-right" data-label="总热量">3654 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">18 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">203 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 9%｜碳水 87%｜脂肪 4%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">🥉 3</td><td class="ilife-block-data-table-cell-left" data-label="食物">燕麦片</td><td class="ilife-block-data-table-cell-right" data-label="总热量">2736 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">228 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 14%｜碳水 70%｜脂肪 16%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">4</td><td class="ilife-block-data-table-cell-left" data-label="食物">牛油果</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1920 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">160 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 4%｜碳水 20%｜脂肪 76%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">5</td><td class="ilife-block-data-table-cell-left" data-label="食物">全麦面包</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1908 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">9 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">212 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 14%｜碳水 77%｜脂肪 9%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">6</td><td class="ilife-block-data-table-cell-left" data-label="食物">伊利纯牛奶</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1215 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">9 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">135 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 22%｜碳水 23%｜脂肪 55%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">7</td><td class="ilife-block-data-table-cell-left" data-label="食物">西兰花</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1071 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">18 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">59 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 26%｜碳水 65%｜脂肪 9%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">8</td><td class="ilife-block-data-table-cell-left" data-label="食物">💧水</td><td class="ilife-block-data-table-cell-right" data-label="总热量">0 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">5 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">0 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">—</td></tr></tbody></table></div></section><p class="ilife-block-caliber">口径：表里一行是一种食物，热量、碳水、蛋白都是窗口内同名记录的合计；营养结构按每克蛋白 4 千卡、碳水 4 千卡、脂肪 9 千卡折算成热量占比；零值不画条，缺值一律写 —；条数＝上榜食物数。</p><section class="ilife-block ilife-block-copy-block"><h2 class="ilife-block-copy-block-title">复制榜单</h2><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.ranking】
-{&quot;rank&quot;:1,&quot;foodName&quot;:&quot;鸡胸肉&quot;,&quot;totalCal&quot;:5352,&quot;cnt&quot;:24,&quot;avgCalPerMeal&quot;:223}
-{&quot;rank&quot;:2,&quot;foodName&quot;:&quot;米饭&quot;,&quot;totalCal&quot;:3654,&quot;cnt&quot;:18,&quot;avgCalPerMeal&quot;:203}
-{&quot;rank&quot;:3,&quot;foodName&quot;:&quot;燕麦片&quot;,&quot;totalCal&quot;:2736,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:228}
-{&quot;rank&quot;:4,&quot;foodName&quot;:&quot;牛油果&quot;,&quot;totalCal&quot;:1920,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:160}
-{&quot;rank&quot;:5,&quot;foodName&quot;:&quot;全麦面包&quot;,&quot;totalCal&quot;:1908,&quot;cnt&quot;:9,&quot;avgCalPerMeal&quot;:212}
-{&quot;rank&quot;:6,&quot;foodName&quot;:&quot;伊利纯牛奶&quot;,&quot;totalCal&quot;:1215,&quot;cnt&quot;:9,&quot;avgCalPerMeal&quot;:135}
-{&quot;rank&quot;:7,&quot;foodName&quot;:&quot;西兰花&quot;,&quot;totalCal&quot;:1071,&quot;cnt&quot;:18,&quot;avgCalPerMeal&quot;:59}
-{&quot;rank&quot;:8,&quot;foodName&quot;:&quot;💧水&quot;,&quot;totalCal&quot;:0,&quot;cnt&quot;:5,&quot;avgCalPerMeal&quot;:0}
-total: 8"><span class="ilife-copy-menu-label">纯文本</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
+<section class="ilife-block ilife-block-page-shell"><p class="ilife-block-page-shell-eyebrow">饮食 · 排行榜</p><h1 class="ilife-block-page-shell-title">排行 高热量榜</h1><p class="ilife-block-page-shell-subtitle">本窗 10 种食物上榜，头名「牛肉饭」：总热量 7440 卡，共 12 次。</p><div class="ilife-block-page-shell-body"><style>.ilife-block-rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);position:relative}.ilife-block-rank-row:last-child{border-bottom:none}.ilife-block-rank-no{flex:0 0 2.4em;text-align:right;color:var(--fg2);font-size:13px}.ilife-block-rank-name{flex:1 1 auto;min-width:0;word-break:break-all;font-weight:600}.ilife-block-rank-bar{flex:0 0 120px;display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--bg)}.ilife-block-rank-seg{height:100%}.ilife-block-rank-pct{flex:0 0 auto;font-size:12px;color:var(--fg2)}.ilife-block-rank-h2{font-size:14px;font-weight:600;margin:0 0 4px}.ilife-block-rank-row.r1,.ilife-block-rank-row.r2,.ilife-block-rank-row.r3{padding-left:10px}.ilife-block-rank-row.r1::before,.ilife-block-rank-row.r2::before,.ilife-block-rank-row.r3::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px}.ilife-block-rank-row.r1::before{background:#f5b301}.ilife-block-rank-row.r2::before{background:#a8a8ad}.ilife-block-rank-row.r3::before{background:#c77b3f}@media (max-width:820px){.ilife-block-rank-bar{flex-basis:72px}.ilife-block-rank-pct{font-size:11px}}</style><style>.dui-window{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 10px}.dui-date{font-size:13px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-variant-numeric:tabular-nums}.dui-arrow{color:var(--fg3);font-size:13px}.dui-chip{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);border-radius:999px;padding:3px 10px}@media (max-width:820px){.dui-window{gap:6px}.dui-date{padding:6px 10px;min-height:32px;display:inline-flex;align-items:center}}</style><div class="dui-window"><span class="dui-date">2026-08-17</span><span class="dui-arrow">→</span><span class="dui-date">2026-09-15</span><span class="dui-chip">10 种</span></div><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-kpi">上榜速览</a><a href="#sec-nutri">营养结构</a><a href="#sec-table">榜单明细</a></nav><section id="sec-kpi"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">高热量榜</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">10</span><span class="ilife-block-kpi-card-unit">种</span></div><div class="ilife-block-kpi-card-detail">窗口 2026-08-17 ~ 2026-09-15</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">头名</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">牛肉饭</span></div><div class="ilife-block-kpi-card-detail">总热量 7440 卡，共 12 次</div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">上榜总热量</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">30948</span><span class="ilife-block-kpi-card-unit">卡</span></div><div class="ilife-block-kpi-card-detail">前 10 名合计</div></div></div></section><section id="sec-nutri"><h2 class="ilife-block-rank-h2">营养结构（按热量占比）</h2><div class="ilife-block-rank-row r1"><span class="ilife-block-rank-no">🥇 1</span><span class="ilife-block-rank-name">牛肉饭</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 20%｜碳水 51%｜脂肪 29%"><span class="ilife-block-rank-seg" style="width:20%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:51%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:29%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 20%｜碳水 51%｜脂肪 29%</span></div><div class="ilife-block-rank-row r2"><span class="ilife-block-rank-no">🥈 2</span><span class="ilife-block-rank-name">米饭</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 10%｜碳水 79%｜脂肪 11%"><span class="ilife-block-rank-seg" style="width:10%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:79%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:11%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 10%｜碳水 79%｜脂肪 11%</span></div><div class="ilife-block-rank-row r3"><span class="ilife-block-rank-no">🥉 3</span><span class="ilife-block-rank-name">燕麦</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 14%｜碳水 70%｜脂肪 16%"><span class="ilife-block-rank-seg" style="width:14%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:70%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:16%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 14%｜碳水 70%｜脂肪 16%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">4</span><span class="ilife-block-rank-name">包子</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 12%｜碳水 72%｜脂肪 16%"><span class="ilife-block-rank-seg" style="width:12%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:72%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:16%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 12%｜碳水 72%｜脂肪 16%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">5</span><span class="ilife-block-rank-name">鸡胸</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 76%｜碳水 4%｜脂肪 20%"><span class="ilife-block-rank-seg" style="width:76%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:4%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:20%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 76%｜碳水 4%｜脂肪 20%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">6</span><span class="ilife-block-rank-name">粥</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 8%｜碳水 80%｜脂肪 12%"><span class="ilife-block-rank-seg" style="width:8%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:80%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:12%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 8%｜碳水 80%｜脂肪 12%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">7</span><span class="ilife-block-rank-name">煎蛋</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 27%｜碳水 3%｜脂肪 70%"><span class="ilife-block-rank-seg" style="width:27%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:3%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:70%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 27%｜碳水 3%｜脂肪 70%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">8</span><span class="ilife-block-rank-name">酸奶</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 21%｜碳水 51%｜脂肪 28%"><span class="ilife-block-rank-seg" style="width:21%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:51%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:28%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 21%｜碳水 51%｜脂肪 28%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">9</span><span class="ilife-block-rank-name">苹果</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 4%｜碳水 96%｜脂肪 0%"><span class="ilife-block-rank-seg" style="width:4%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:96%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:0%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 4%｜碳水 96%｜脂肪 0%</span></div><div class="ilife-block-rank-row"><span class="ilife-block-rank-no">10</span><span class="ilife-block-rank-name">豆浆</span><span class="ilife-block-rank-bar" role="img" aria-label="蛋白 29%｜碳水 39%｜脂肪 32%"><span class="ilife-block-rank-seg" style="width:29%;background:#007aff"></span><span class="ilife-block-rank-seg" style="width:39%;background:#34c759"></span><span class="ilife-block-rank-seg" style="width:32%;background:#ff9500"></span></span><span class="ilife-block-rank-pct">蛋白 29%｜碳水 39%｜脂肪 32%</span></div></section><section id="sec-table"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">榜单明细</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-right">排名</th><th scope="col" class="ilife-block-data-table-cell-left">食物</th><th scope="col" class="ilife-block-data-table-cell-right">总热量</th><th scope="col" class="ilife-block-data-table-cell-right">次数</th><th scope="col" class="ilife-block-data-table-cell-right">餐均</th><th scope="col" class="ilife-block-data-table-cell-left">营养结构</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-right" data-label="排名">🥇 1</td><td class="ilife-block-data-table-cell-left" data-label="食物">牛肉饭</td><td class="ilife-block-data-table-cell-right" data-label="总热量">7440 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">620 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 20%｜碳水 51%｜脂肪 29%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">🥈 2</td><td class="ilife-block-data-table-cell-left" data-label="食物">米饭</td><td class="ilife-block-data-table-cell-right" data-label="总热量">6000 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">500 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 10%｜碳水 79%｜脂肪 11%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">🥉 3</td><td class="ilife-block-data-table-cell-left" data-label="食物">燕麦</td><td class="ilife-block-data-table-cell-right" data-label="总热量">4668 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">389 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 14%｜碳水 70%｜脂肪 16%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">4</td><td class="ilife-block-data-table-cell-left" data-label="食物">包子</td><td class="ilife-block-data-table-cell-right" data-label="总热量">3600 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">300 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 12%｜碳水 72%｜脂肪 16%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">5</td><td class="ilife-block-data-table-cell-left" data-label="食物">鸡胸</td><td class="ilife-block-data-table-cell-right" data-label="总热量">2400 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">200 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 76%｜碳水 4%｜脂肪 20%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">6</td><td class="ilife-block-data-table-cell-left" data-label="食物">粥</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1800 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">150 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 8%｜碳水 80%｜脂肪 12%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">7</td><td class="ilife-block-data-table-cell-left" data-label="食物">煎蛋</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1440 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">120 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 27%｜碳水 3%｜脂肪 70%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">8</td><td class="ilife-block-data-table-cell-left" data-label="食物">酸奶</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1320 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">110 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 21%｜碳水 51%｜脂肪 28%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">9</td><td class="ilife-block-data-table-cell-left" data-label="食物">苹果</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1200 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">100 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 4%｜碳水 96%｜脂肪 0%</td></tr><tr><td class="ilife-block-data-table-cell-right" data-label="排名">10</td><td class="ilife-block-data-table-cell-left" data-label="食物">豆浆</td><td class="ilife-block-data-table-cell-right" data-label="总热量">1080 卡</td><td class="ilife-block-data-table-cell-right" data-label="次数">12 次</td><td class="ilife-block-data-table-cell-right" data-label="餐均">90 卡/餐</td><td class="ilife-block-data-table-cell-left" data-label="营养结构">蛋白 29%｜碳水 39%｜脂肪 32%</td></tr></tbody></table></div></section><p class="ilife-block-caliber">口径：表里一行是一种食物，热量、碳水、蛋白都是窗口内同名记录的合计；营养结构按每克蛋白 4 千卡、碳水 4 千卡、脂肪 9 千卡折算成热量占比；零值不画条，缺值一律写 —；条数＝上榜食物数。</p><section class="ilife-block ilife-block-copy-block"><h2 class="ilife-block-copy-block-title">复制榜单</h2><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.ranking】
+{&quot;rank&quot;:1,&quot;foodName&quot;:&quot;牛肉饭&quot;,&quot;totalCal&quot;:7440,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:620}
+{&quot;rank&quot;:2,&quot;foodName&quot;:&quot;米饭&quot;,&quot;totalCal&quot;:6000,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:500}
+{&quot;rank&quot;:3,&quot;foodName&quot;:&quot;燕麦&quot;,&quot;totalCal&quot;:4668,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:389}
+{&quot;rank&quot;:4,&quot;foodName&quot;:&quot;包子&quot;,&quot;totalCal&quot;:3600,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:300}
+{&quot;rank&quot;:5,&quot;foodName&quot;:&quot;鸡胸&quot;,&quot;totalCal&quot;:2400,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:200}
+{&quot;rank&quot;:6,&quot;foodName&quot;:&quot;粥&quot;,&quot;totalCal&quot;:1800,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:150}
+{&quot;rank&quot;:7,&quot;foodName&quot;:&quot;煎蛋&quot;,&quot;totalCal&quot;:1440,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:120}
+{&quot;rank&quot;:8,&quot;foodName&quot;:&quot;酸奶&quot;,&quot;totalCal&quot;:1320,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:110}
+{&quot;rank&quot;:9,&quot;foodName&quot;:&quot;苹果&quot;,&quot;totalCal&quot;:1200,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:100}
+{&quot;rank&quot;:10,&quot;foodName&quot;:&quot;豆浆&quot;,&quot;totalCal&quot;:1080,&quot;cnt&quot;:12,&quot;avgCalPerMeal&quot;:90}
+total: 10"><span class="ilife-copy-menu-label">纯文本</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
   &quot;version&quot;: &quot;0.1.0&quot;,
   &quot;skill&quot;: &quot;calorie&quot;,
   &quot;shape&quot;: &quot;list&quot;,
@@ -1804,73 +1830,89 @@ total: 8"><span class="ilife-copy-menu-label">纯文本</span></button><button t
     &quot;items&quot;: [
       {
         &quot;rank&quot;: 1,
-        &quot;foodName&quot;: &quot;鸡胸肉&quot;,
-        &quot;totalCal&quot;: 5352,
-        &quot;cnt&quot;: 24,
-        &quot;avgCalPerMeal&quot;: 223
+        &quot;foodName&quot;: &quot;牛肉饭&quot;,
+        &quot;totalCal&quot;: 7440,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 620
       },
       {
         &quot;rank&quot;: 2,
         &quot;foodName&quot;: &quot;米饭&quot;,
-        &quot;totalCal&quot;: 3654,
-        &quot;cnt&quot;: 18,
-        &quot;avgCalPerMeal&quot;: 203
+        &quot;totalCal&quot;: 6000,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 500
       },
       {
         &quot;rank&quot;: 3,
-        &quot;foodName&quot;: &quot;燕麦片&quot;,
-        &quot;totalCal&quot;: 2736,
+        &quot;foodName&quot;: &quot;燕麦&quot;,
+        &quot;totalCal&quot;: 4668,
         &quot;cnt&quot;: 12,
-        &quot;avgCalPerMeal&quot;: 228
+        &quot;avgCalPerMeal&quot;: 389
       },
       {
         &quot;rank&quot;: 4,
-        &quot;foodName&quot;: &quot;牛油果&quot;,
-        &quot;totalCal&quot;: 1920,
+        &quot;foodName&quot;: &quot;包子&quot;,
+        &quot;totalCal&quot;: 3600,
         &quot;cnt&quot;: 12,
-        &quot;avgCalPerMeal&quot;: 160
+        &quot;avgCalPerMeal&quot;: 300
       },
       {
         &quot;rank&quot;: 5,
-        &quot;foodName&quot;: &quot;全麦面包&quot;,
-        &quot;totalCal&quot;: 1908,
-        &quot;cnt&quot;: 9,
-        &quot;avgCalPerMeal&quot;: 212
+        &quot;foodName&quot;: &quot;鸡胸&quot;,
+        &quot;totalCal&quot;: 2400,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 200
       },
       {
         &quot;rank&quot;: 6,
-        &quot;foodName&quot;: &quot;伊利纯牛奶&quot;,
-        &quot;totalCal&quot;: 1215,
-        &quot;cnt&quot;: 9,
-        &quot;avgCalPerMeal&quot;: 135
+        &quot;foodName&quot;: &quot;粥&quot;,
+        &quot;totalCal&quot;: 1800,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 150
       },
       {
         &quot;rank&quot;: 7,
-        &quot;foodName&quot;: &quot;西兰花&quot;,
-        &quot;totalCal&quot;: 1071,
-        &quot;cnt&quot;: 18,
-        &quot;avgCalPerMeal&quot;: 59
+        &quot;foodName&quot;: &quot;煎蛋&quot;,
+        &quot;totalCal&quot;: 1440,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 120
       },
       {
         &quot;rank&quot;: 8,
-        &quot;foodName&quot;: &quot;💧水&quot;,
-        &quot;totalCal&quot;: 0,
-        &quot;cnt&quot;: 5,
-        &quot;avgCalPerMeal&quot;: 0
+        &quot;foodName&quot;: &quot;酸奶&quot;,
+        &quot;totalCal&quot;: 1320,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 110
+      },
+      {
+        &quot;rank&quot;: 9,
+        &quot;foodName&quot;: &quot;苹果&quot;,
+        &quot;totalCal&quot;: 1200,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 100
+      },
+      {
+        &quot;rank&quot;: 10,
+        &quot;foodName&quot;: &quot;豆浆&quot;,
+        &quot;totalCal&quot;: 1080,
+        &quot;cnt&quot;: 12,
+        &quot;avgCalPerMeal&quot;: 90
       }
     ],
-    &quot;total&quot;: 8
+    &quot;total&quot;: 10
   }
 }"><span class="ilife-copy-menu-label">JSON</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="csv" data-t="section,row
-items,&quot;{&quot;&quot;rank&quot;&quot;:1,&quot;&quot;foodName&quot;&quot;:&quot;&quot;鸡胸肉&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:5352,&quot;&quot;cnt&quot;&quot;:24,&quot;&quot;avgCalPerMeal&quot;&quot;:223}&quot;
-items,&quot;{&quot;&quot;rank&quot;&quot;:2,&quot;&quot;foodName&quot;&quot;:&quot;&quot;米饭&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:3654,&quot;&quot;cnt&quot;&quot;:18,&quot;&quot;avgCalPerMeal&quot;&quot;:203}&quot;
-items,&quot;{&quot;&quot;rank&quot;&quot;:3,&quot;&quot;foodName&quot;&quot;:&quot;&quot;燕麦片&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:2736,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:228}&quot;
-items,&quot;{&quot;&quot;rank&quot;&quot;:4,&quot;&quot;foodName&quot;&quot;:&quot;&quot;牛油果&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1920,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:160}&quot;
-items,&quot;{&quot;&quot;rank&quot;&quot;:5,&quot;&quot;foodName&quot;&quot;:&quot;&quot;全麦面包&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1908,&quot;&quot;cnt&quot;&quot;:9,&quot;&quot;avgCalPerMeal&quot;&quot;:212}&quot;
-items,&quot;{&quot;&quot;rank&quot;&quot;:6,&quot;&quot;foodName&quot;&quot;:&quot;&quot;伊利纯牛奶&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1215,&quot;&quot;cnt&quot;&quot;:9,&quot;&quot;avgCalPerMeal&quot;&quot;:135}&quot;
-items,&quot;{&quot;&quot;rank&quot;&quot;:7,&quot;&quot;foodName&quot;&quot;:&quot;&quot;西兰花&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1071,&quot;&quot;cnt&quot;&quot;:18,&quot;&quot;avgCalPerMeal&quot;&quot;:59}&quot;
-items,&quot;{&quot;&quot;rank&quot;&quot;:8,&quot;&quot;foodName&quot;&quot;:&quot;&quot;💧水&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:0,&quot;&quot;cnt&quot;&quot;:5,&quot;&quot;avgCalPerMeal&quot;&quot;:0}&quot;
-total,total: 8"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
+items,&quot;{&quot;&quot;rank&quot;&quot;:1,&quot;&quot;foodName&quot;&quot;:&quot;&quot;牛肉饭&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:7440,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:620}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:2,&quot;&quot;foodName&quot;&quot;:&quot;&quot;米饭&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:6000,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:500}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:3,&quot;&quot;foodName&quot;&quot;:&quot;&quot;燕麦&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:4668,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:389}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:4,&quot;&quot;foodName&quot;&quot;:&quot;&quot;包子&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:3600,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:300}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:5,&quot;&quot;foodName&quot;&quot;:&quot;&quot;鸡胸&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:2400,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:200}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:6,&quot;&quot;foodName&quot;&quot;:&quot;&quot;粥&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1800,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:150}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:7,&quot;&quot;foodName&quot;&quot;:&quot;&quot;煎蛋&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1440,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:120}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:8,&quot;&quot;foodName&quot;&quot;:&quot;&quot;酸奶&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1320,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:110}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:9,&quot;&quot;foodName&quot;&quot;:&quot;&quot;苹果&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1200,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:100}&quot;
+items,&quot;{&quot;&quot;rank&quot;&quot;:10,&quot;&quot;foodName&quot;&quot;:&quot;&quot;豆浆&quot;&quot;,&quot;&quot;totalCal&quot;&quot;:1080,&quot;&quot;cnt&quot;&quot;:12,&quot;&quot;avgCalPerMeal&quot;&quot;:90}&quot;
+total,total: 10"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
 calorie.view.ranking（list）
 AI 思考链
 本页由本地 CLI 渲染，无 AI 链
@@ -1879,9 +1921,9 @@ calorie_data.db ｜ 饮食记录
 调用链
 calorie-cmd-read calorie.view.ranking --params &#39;{&quot;category&quot;:&quot;high_calorie&quot;,&quot;topN&quot;:10,&quot;window&quot;:&quot;30d&quot;}&#39;
 时间戳版本
-2026-09-15 21:51:36 · 版本 0.1.0
+2026-09-16 10:10:31 · 版本 0.1.0
 异常
-无">复制日志</button></div></div></section><p class="ilife-block-caliber">数据来源 · 饮食记录 · 2026-08-17 → 2026-09-15 · 共 8 条</p></div></section>
+无">复制日志</button></div></div></section><p class="ilife-block-caliber">数据来源 · 饮食记录 · 2026-08-17 → 2026-09-15 · 共 10 条</p></div></section>
 </div>
 <script>(function () {
   'use strict';
@@ -2186,7 +2228,7 @@ calorie-cmd-read calorie.view.ranking --params &#39;{&quot;category&quot;:&quot;
   /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，
      文本取同卡 `<pre class="prompt">` 的**原文**（＝该卡 prompt 逐字，与 F3 卡面同源）；
      读不到 <pre> 才回落同卡 Sheet 内 prompt 按钮的 data-t，两者都无才跳过
-     （#88 S5／B 段红队 S3-a：真实壳恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
+     （#88 S5／B 段红队 S3-a：真实help模板恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
   function injectCardCopy(cards) {
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
@@ -2261,7 +2303,7 @@ calorie-cmd-read calorie.view.ranking --params &#39;{&quot;category&quot;:&quot;
   }
 
   /* 复制按钮文本同步：prompt 目标（卡头 ＋ Sheet 内）＝ 预览文本；params 目标＝label: value 行，
-     无字段时回落该卡 CLI 文本（与冻结壳 paramsText 同口径）。 */
+     无字段时回落该卡 CLI 文本（与冻结help模板 paramsText 同口径）。 */
   function syncCopyText(card, text, lines) {
     var buttons = allOf(card, "[" + ACTION_ATTR + "]");
     for (var i = 0; i < buttons.length; i++) {

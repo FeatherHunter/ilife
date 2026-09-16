@@ -161,6 +161,8 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:active {
   opacity: .7;
@@ -178,6 +180,8 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:focus-visible {
   outline: 2px solid var(--blue);
@@ -241,6 +245,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-action-btn-primary {
   background: var(--blue);
@@ -281,6 +287,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
 }
 .ilife-copy-btn-primary {
@@ -380,6 +388,8 @@
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-copy-menu-item:hover {
   background: var(--soft);
@@ -637,6 +647,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-icon {
   font-size: 14px;
@@ -759,6 +770,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
   list-style: none;
 }
 .ilife-help-shell-sheet-summary::-webkit-details-marker {
@@ -810,6 +822,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn:active {
   transform: scale(.96);
@@ -844,6 +858,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-count {
   color: var(--fg3);
@@ -942,6 +957,7 @@
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-search-clear:focus-visible {
   outline: 2px solid var(--blue);
@@ -969,6 +985,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-card-copy:active {
   transform: scale(.96);
@@ -1030,6 +1048,7 @@
   transition: opacity .2s ease;
   z-index: 9998;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn-backtop-show {
   opacity: 1;
@@ -1264,6 +1283,11 @@ body {
   color: var(--fg);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.ilife-block-page-shell button,
+.ilife-block-page-shell summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 @media print {
   .ilife-page-printable {
@@ -1796,8 +1820,8 @@ body {
 </head>
 <body>
 <div class="wrap ilife-page">
-<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">看食品来源统计 · 饮食</div><div class="type-badge">食品库</div></div><h1 class="ilife-block-page-shell-title">📦 食品来源统计</h1><p class="sub">食品库 9 条在架食品来自 1 个来源，最多的是「未知」（9 条 · 100%）。</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-count">读数</a><a href="#sec-chart">按来源分组</a><a href="#sec-table">来源明细</a></nav><section id="sec-count"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">来源数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1</span><span class="ilife-block-kpi-card-unit">个</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">食品总数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">9</span><span class="ilife-block-kpi-card-unit">条</span></div><div class="ilife-block-kpi-card-detail">数据范围：全部在架食品</div></div></div></section><section id="sec-chart"><section class="ilife-block ilife-block-chart-block"><h2 class="ilife-block-chart-block-title">按来源分组</h2><div class="ilife-block-chart-block-canvas"><div class="ilife-charts ilife-charts-bar ilife-charts-anim" data-chart-kind="bar"><svg class="ilife-charts-svg" viewBox="0 0 320.0 170.0" preserveAspectRatio="xMidYMid meet" role="img" focusable="false"><line class="ilife-charts-grid" x1="14.0" y1="148.0" x2="306.0" y2="148.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="84.0" x2="306.0" y2="84.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="20.0" x2="306.0" y2="20.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><rect class="ilife-charts-bar" data-i="0" x="143.0" y="20.0" width="34.0" height="128.0" rx="2" fill="var(--blue,#007aff)" data-i="0"/><text class="ilife-charts-value" x="160.0" y="17.0" text-anchor="middle" fill="var(--fg3,#86868b)">9</text><text class="ilife-charts-xlabel" x="160.0" y="160.0" text-anchor="middle" fill="var(--fg3,#86868b)">未知</text></svg></div></div></section></section><section id="sec-table"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">按来源统计（已下架的食品不算；没填来源的归到「未知」）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">来源</th><th scope="col" class="ilife-block-data-table-cell-right">条数</th><th scope="col" class="ilife-block-data-table-cell-right">占比%</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="来源">未知</td><td class="ilife-block-data-table-cell-right" data-label="条数">9</td><td class="ilife-block-data-table-cell-right" data-label="占比%">100</td></tr></tbody></table></div></section><p class="ilife-block-caliber">占比是这一来源的条数 ÷ 在架食品总数，保留一位小数。</p><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.source-stats】
-total: 9
+<section class="ilife-block ilife-block-page-shell"><div class="meta-bar"><div class="left">看食品来源统计 · 饮食</div><div class="type-badge">食品库</div></div><h1 class="ilife-block-page-shell-title">📦 食品来源统计</h1><p class="sub">食品库 10 条在架食品来自 1 个来源，最多的是「测试」（10 条 · 100%）。</p><div class="ilife-block-page-shell-body"><nav class="ilife-block-toc" aria-label="页内导航"><a href="#sec-count">读数</a><a href="#sec-chart">按来源分组</a><a href="#sec-table">来源明细</a></nav><section id="sec-count"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">来源数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">1</span><span class="ilife-block-kpi-card-unit">个</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">食品总数</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">10</span><span class="ilife-block-kpi-card-unit">条</span></div><div class="ilife-block-kpi-card-detail">数据范围：全部在架食品</div></div></div></section><section id="sec-chart"><section class="ilife-block ilife-block-chart-block"><h2 class="ilife-block-chart-block-title">按来源分组</h2><div class="ilife-block-chart-block-canvas"><div class="ilife-charts ilife-charts-bar ilife-charts-anim" data-chart-kind="bar"><svg class="ilife-charts-svg" viewBox="0 0 320.0 170.0" preserveAspectRatio="xMidYMid meet" role="img" focusable="false"><line class="ilife-charts-grid" x1="14.0" y1="148.0" x2="306.0" y2="148.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="84.0" x2="306.0" y2="84.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><line class="ilife-charts-grid" x1="14.0" y1="20.0" x2="306.0" y2="20.0" stroke="var(--line,#d2d2d7)" stroke-width="1" vector-effect="non-scaling-stroke"/><rect class="ilife-charts-bar" data-i="0" x="143.0" y="20.0" width="34.0" height="128.0" rx="2" fill="var(--blue,#007aff)" data-i="0"/><text class="ilife-charts-value" x="160.0" y="17.0" text-anchor="middle" fill="var(--fg3,#86868b)">10</text><text class="ilife-charts-xlabel" x="160.0" y="160.0" text-anchor="middle" fill="var(--fg3,#86868b)">测试</text></svg></div></div></section></section><section id="sec-table"><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">按来源统计（已下架的食品不算；没填来源的归到「未知」）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">来源</th><th scope="col" class="ilife-block-data-table-cell-right">条数</th><th scope="col" class="ilife-block-data-table-cell-right">占比%</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="来源">测试</td><td class="ilife-block-data-table-cell-right" data-label="条数">10</td><td class="ilife-block-data-table-cell-right" data-label="占比%">100</td></tr></tbody></table></div></section><p class="ilife-block-caliber">占比是这一来源的条数 ÷ 在架食品总数，保留一位小数。</p><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.source-stats】
+total: 10
 sources: 1"><span class="ilife-copy-menu-label">纯文本</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
   &quot;version&quot;: &quot;0.1.0&quot;,
   &quot;skill&quot;: &quot;calorie&quot;,
@@ -1805,12 +1829,12 @@ sources: 1"><span class="ilife-copy-menu-label">纯文本</span></button><button
   &quot;key&quot;: &quot;calorie.view.source-stats&quot;,
   &quot;data&quot;: {
     &quot;metrics&quot;: {
-      &quot;total&quot;: 9,
+      &quot;total&quot;: 10,
       &quot;sources&quot;: 1
     }
   }
 }"><span class="ilife-copy-menu-label">JSON</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="csv" data-t="section,row
-metrics,total: 9
+metrics,total: 10
 metrics,sources: 1"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" data-t="场景标识
 calorie.view.source-stats（stat）
 AI 思考链
@@ -1820,9 +1844,9 @@ calorie_data.db ｜ calorie_data.db ｜ 食品库（在架食品）
 调用链
 calorie-cmd-read calorie.view.source-stats
 时间戳版本
-2026-09-15 21:51:33 · 版本 0.1.0
+2026-09-16 10:10:28 · 版本 0.1.0
 异常
-无">复制日志</button></div></div></section><p class="ilife-block-caliber">📊 数据来源：本机食品库 · 在架食品共 9 条</p></div></section>
+无">复制日志</button></div></div></section><p class="ilife-block-caliber">📊 数据来源：本机食品库 · 在架食品共 10 条</p></div></section>
 </div>
 <script>(function () {
   'use strict';
@@ -2127,7 +2151,7 @@ calorie-cmd-read calorie.view.source-stats
   /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，
      文本取同卡 `<pre class="prompt">` 的**原文**（＝该卡 prompt 逐字，与 F3 卡面同源）；
      读不到 <pre> 才回落同卡 Sheet 内 prompt 按钮的 data-t，两者都无才跳过
-     （#88 S5／B 段红队 S3-a：真实壳恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
+     （#88 S5／B 段红队 S3-a：真实help模板恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
   function injectCardCopy(cards) {
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
@@ -2202,7 +2226,7 @@ calorie-cmd-read calorie.view.source-stats
   }
 
   /* 复制按钮文本同步：prompt 目标（卡头 ＋ Sheet 内）＝ 预览文本；params 目标＝label: value 行，
-     无字段时回落该卡 CLI 文本（与冻结壳 paramsText 同口径）。 */
+     无字段时回落该卡 CLI 文本（与冻结help模板 paramsText 同口径）。 */
   function syncCopyText(card, text, lines) {
     var buttons = allOf(card, "[" + ACTION_ATTR + "]");
     for (var i = 0; i < buttons.length; i++) {

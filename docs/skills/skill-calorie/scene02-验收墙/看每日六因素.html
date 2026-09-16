@@ -161,6 +161,8 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:active {
   opacity: .7;
@@ -178,6 +180,8 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-toast-act:focus-visible {
   outline: 2px solid var(--blue);
@@ -241,6 +245,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-action-btn-primary {
   background: var(--blue);
@@ -281,6 +287,8 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
 }
 .ilife-copy-btn-primary {
@@ -380,6 +388,8 @@
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-copy-menu-item:hover {
   background: var(--soft);
@@ -637,6 +647,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-icon {
   font-size: 14px;
@@ -759,6 +770,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
   list-style: none;
 }
 .ilife-help-shell-sheet-summary::-webkit-details-marker {
@@ -810,6 +822,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn:active {
   transform: scale(.96);
@@ -844,6 +858,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-count {
   color: var(--fg3);
@@ -942,6 +957,7 @@
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-tab-search-clear:focus-visible {
   outline: 2px solid var(--blue);
@@ -969,6 +985,8 @@
   line-height: 1;
   transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ilife-help-shell-card-copy:active {
   transform: scale(.96);
@@ -1030,6 +1048,7 @@
   transition: opacity .2s ease;
   z-index: 9998;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .ilife-help-shell-btn-backtop-show {
   opacity: 1;
@@ -1264,6 +1283,11 @@ body {
   color: var(--fg);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.ilife-block-page-shell button,
+.ilife-block-page-shell summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 @media print {
   .ilife-page-printable {
@@ -1786,13 +1810,13 @@ body {
 </head>
 <body>
 <div class="wrap ilife-page">
-<section class="ilife-block ilife-block-page-shell"><p class="ilife-block-page-shell-eyebrow">卡路里 · 趋势</p><h1 class="ilife-block-page-shell-title">每日六因素 2026-09-15</h1><p class="ilife-block-page-shell-subtitle">六因素＝这 6 项：热量、蛋白、饮水、运动、称重、三餐（热量按千卡计）</p><div class="ilife-block-page-shell-body"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">热量（千卡）达标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">没有设热量目标，所以判不了达标。要设请说“定营养目标”</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">蛋白达标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">没有设蛋白目标，所以判不了达标。要设请说“定营养目标”</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">饮水达标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">没有设饮水目标，所以判不了达标。要设请说“定饮水目标”</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">当日运动</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">当日无运动记录</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">当日称重</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">当日未称重</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">三餐齐备</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✓</span></div><div class="ilife-block-kpi-card-detail">4 餐记录</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-ok">成功</span></div></div></div><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">六因素明细（2026-09-15，得分 1/6）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">因素</th><th scope="col" class="ilife-block-data-table-cell-left">达标</th><th scope="col" class="ilife-block-data-table-cell-left">依据</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="因素">热量（千卡）达标</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">没有设热量目标，所以判不了达标。要设请说“定营养目标”</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">蛋白达标</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">没有设蛋白目标，所以判不了达标。要设请说“定营养目标”</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">饮水达标</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">没有设饮水目标，所以判不了达标。要设请说“定饮水目标”</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">当日运动</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">当日无运动记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">当日称重</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">当日未称重</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">三餐齐备</td><td class="ilife-block-data-table-cell-left" data-label="达标">✓</td><td class="ilife-block-data-table-cell-left" data-label="依据">4 餐记录</td></tr></tbody></table></div><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.six-factors】
-score: 1
-calorie: 0
+<section class="ilife-block ilife-block-page-shell"><p class="ilife-block-page-shell-eyebrow">卡路里 · 趋势</p><h1 class="ilife-block-page-shell-title">每日六因素 2026-09-15</h1><p class="ilife-block-page-shell-subtitle">六因素＝这 6 项：热量、蛋白、饮水、运动、称重、三餐（热量按千卡计）</p><div class="ilife-block-page-shell-body"><div class="ilife-block-kpi-card-grid"><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">热量（千卡）达标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✓</span></div><div class="ilife-block-kpi-card-detail">1239 / 1800卡</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-ok">成功</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">蛋白达标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">61 / 150g</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">饮水达标</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">1200 / 2000ml</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">当日运动</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✗</span></div><div class="ilife-block-kpi-card-detail">当日无运动记录</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-warn">警告</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">当日称重</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✓</span></div><div class="ilife-block-kpi-card-detail">已称重</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-ok">成功</span></div></div><div class="ilife-block ilife-block-kpi-card"><div class="ilife-block-kpi-card-label">三餐齐备</div><div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">✓</span></div><div class="ilife-block-kpi-card-detail">4 餐记录</div><div class="ilife-block-kpi-card-badge"><span class="ilife-status-badge ilife-status-badge-ok">成功</span></div></div></div><div class="ilife-block ilife-block-data-table"><table class="ilife-block-data-table-table"><caption class="ilife-block-data-table-caption">六因素明细（2026-09-15，得分 3/6）</caption><thead><tr><th scope="col" class="ilife-block-data-table-cell-left">因素</th><th scope="col" class="ilife-block-data-table-cell-left">达标</th><th scope="col" class="ilife-block-data-table-cell-left">依据</th></tr></thead><tbody><tr><td class="ilife-block-data-table-cell-left" data-label="因素">热量（千卡）达标</td><td class="ilife-block-data-table-cell-left" data-label="达标">✓</td><td class="ilife-block-data-table-cell-left" data-label="依据">1239 / 1800卡</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">蛋白达标</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">61 / 150g</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">饮水达标</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">1200 / 2000ml</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">当日运动</td><td class="ilife-block-data-table-cell-left" data-label="达标">✗</td><td class="ilife-block-data-table-cell-left" data-label="依据">当日无运动记录</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">当日称重</td><td class="ilife-block-data-table-cell-left" data-label="达标">✓</td><td class="ilife-block-data-table-cell-left" data-label="依据">已称重</td></tr><tr><td class="ilife-block-data-table-cell-left" data-label="因素">三餐齐备</td><td class="ilife-block-data-table-cell-left" data-label="达标">✓</td><td class="ilife-block-data-table-cell-left" data-label="依据">4 餐记录</td></tr></tbody></table></div><section class="ilife-block ilife-block-copy-block"><div class="ilife-action-bar"><div class="ilife-action-row ilife-action-row-ghost"><div class="ilife-copy-menu-wrap"><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button><div class="ilife-copy-menu" role="menu"><button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t="【calorie · calorie.view.six-factors】
+score: 3
+calorie: 1
 protein: 0
 water: 0
 exercise: 0
-weigh: 0
+weigh: 1
 meals: 1"><span class="ilife-copy-menu-label">纯文本</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t="{
   &quot;version&quot;: &quot;0.1.0&quot;,
   &quot;skill&quot;: &quot;calorie&quot;,
@@ -1800,22 +1824,22 @@ meals: 1"><span class="ilife-copy-menu-label">纯文本</span></button><button t
   &quot;key&quot;: &quot;calorie.view.six-factors&quot;,
   &quot;data&quot;: {
     &quot;metrics&quot;: {
-      &quot;score&quot;: 1,
-      &quot;calorie&quot;: 0,
+      &quot;score&quot;: 3,
+      &quot;calorie&quot;: 1,
       &quot;protein&quot;: 0,
       &quot;water&quot;: 0,
       &quot;exercise&quot;: 0,
-      &quot;weigh&quot;: 0,
+      &quot;weigh&quot;: 1,
       &quot;meals&quot;: 1
     }
   }
 }"><span class="ilife-copy-menu-label">JSON</span></button><button type="button" class="ilife-copy-menu-item" data-fmt="csv" data-t="section,row
-metrics,score: 1
-metrics,calorie: 0
+metrics,score: 3
+metrics,calorie: 1
 metrics,protein: 0
 metrics,water: 0
 metrics,exercise: 0
-metrics,weigh: 0
+metrics,weigh: 1
 metrics,meals: 1"><span class="ilife-copy-menu-label">CSV</span></button></div></div><button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="ilife-copy-log" disabled>复制日志</button></div></div></section></div></section>
 </div>
 <script>(function () {
@@ -2121,7 +2145,7 @@ metrics,meals: 1"><span class="ilife-copy-menu-label">CSV</span></button></div><
   /* 卡级复制按钮（#88 R1-1）：卡头注入 1 个按钮——actionId／文案恒读冻结常量，
      文本取同卡 `<pre class="prompt">` 的**原文**（＝该卡 prompt 逐字，与 F3 卡面同源）；
      读不到 <pre> 才回落同卡 Sheet 内 prompt 按钮的 data-t，两者都无才跳过
-     （#88 S5／B 段红队 S3-a：真实壳恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
+     （#88 S5／B 段红队 S3-a：真实help模板恒有 <pre>，故 436/436 恒有按钮，不静默丢卡）→ 复用既有委派。 */
   function injectCardCopy(cards) {
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
@@ -2196,7 +2220,7 @@ metrics,meals: 1"><span class="ilife-copy-menu-label">CSV</span></button></div><
   }
 
   /* 复制按钮文本同步：prompt 目标（卡头 ＋ Sheet 内）＝ 预览文本；params 目标＝label: value 行，
-     无字段时回落该卡 CLI 文本（与冻结壳 paramsText 同口径）。 */
+     无字段时回落该卡 CLI 文本（与冻结help模板 paramsText 同口径）。 */
   function syncCopyText(card, text, lines) {
     var buttons = allOf(card, "[" + ACTION_ATTR + "]");
     for (var i = 0; i < buttons.length; i++) {
