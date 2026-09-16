@@ -155,9 +155,9 @@ test('#519 ③ 形状件接上：徽章列／状态徽章／键值表／空态�
   for (const kind of ['bmi', 'tdee', 'bmr', 'score', 'trend', 'compare']) {
     assert.ok(countIn(built[kind], 'ilife-status-badge') >= 1, KIND_LABELS[kind] + ' 有状态处没挂状态徽章');
   }
-  // 状态维度改走徽章列：蛋白／水分两页的「达标／未达标天数」
+  // 状态维度改走徽章列：蛋白／水分两页的「达标／未达标天数」（R-39／R-46：两页统一用「达标」）
   const water = [...built.water.matchAll(/ilife-block-chip">([^<]*)</g)].map((m) => m[1]);
-  assert.ok(water.includes('达成 2 天') && water.includes('未达成 1 天'), '水分页缺达标天数徽章：' + water.join('|'));
+  assert.ok(water.includes('达标 2 天') && water.includes('未达标 1 天'), '水分页缺达标天数徽章：' + water.join('|'));
   // 键值表：TDEE 页的身份三件事一条一行（#516 §3.2 D09）
   assert.ok(domOf(built.tdee).includes('>身高<') && domOf(built.tdee).includes('>年龄<') && domOf(built.tdee).includes('>性别<'),
     'TDEE 页的身份三件事没有拆成键值行');

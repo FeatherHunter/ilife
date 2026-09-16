@@ -65,7 +65,7 @@ const CASES = [
   {
     word: '看水分摄入报告', key: 'calorie.report.water', kind: 'water', title: '水分摄入报告', params: {},
     metrics: ['avgWater', 'waterGoal', 'hitDays', 'hitRate'],
-    html: ['每日饮水量', '达成率'],
+    html: ['每日饮水量', '达标率'],
   },
   {
     word: '看综合评分', key: 'calorie.report.score', kind: 'score', title: '综合评分', params: {},
@@ -254,9 +254,10 @@ test('#384f 日均总消耗两期同源真体重：Δ 随窗口变，不再是�
     assert.equal(env.data.metrics.deltaTdee, expected,
       win + ' Δ 不等于「本期总消耗 − 对比期（真体重）总消耗」：deltaTdee=' + env.data.metrics.deltaTdee + ' 期望=' + expected);
     assert.notEqual(env.data.metrics.deltaTdee, 79, win + ' 仍是以 70 kg 常量算出的恒定 Δ=+79');
-    // 表与投影同一份读数：表格单元格对得上 metrics，方向也随 Δ 同号
+    // 表与投影同一份读数：表格单元格对得上 metrics；R-51 撤方向列后方向只由 Δ 符号编码（+＝上升／-＝下降／0＝持平）。
     assert.equal(Number(cells[3]), env.data.metrics.deltaTdee, win + ' 逐项 Δ 表与 metrics.deltaTdee 不一致：' + JSON.stringify(cells));
-    assert.equal(cells[4], expected > 0 ? '上升' : expected < 0 ? '下降' : '持平', win + ' 方向与 Δ 不同号：' + JSON.stringify(cells));
+    assert.equal(cells.length, 4, win + ' 逐项 Δ 表应为4格（项／本期／对比期／Δ，R-51撤方向列）：' + JSON.stringify(cells));
+    assert.equal(Number(cells[3]) > 0 ? '上升' : Number(cells[3]) < 0 ? '下降' : '持平', expected > 0 ? '上升' : expected < 0 ? '下降' : '持平', win + ' Δ符号与期望方向不同号：' + JSON.stringify(cells));
     seen.push(env.data.metrics.deltaTdee);
     rowsOf[win] = { cells, prevTdee, curTdee, expected, prevStart, prevEnd };
   }
