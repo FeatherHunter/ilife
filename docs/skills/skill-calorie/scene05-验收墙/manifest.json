@@ -4,10 +4,10 @@
   "source": "场景05 全量重跑批：`docs/skills/skill-calorie/t351-v7-run-176-207.mjs`（入仓跑批件）持锁跑出的 `.scratch/t157-filt/products/`（37 份 HTML ＋ `detail.json` 读数，66/66 ＋判据 29/29 全绿，runId t157-filt-batch；186 格动作库件数＝1092）。前五批 `.scratch/t157-final/products/`、`.scratch/t157-slot-time/products/`、`.scratch/t157-slot-tab/products/`、`.scratch/t157-lib/products/` 与 `.scratch/t157-libonly/products/`（逐条实跑证据见 `docs/skills/skill-calorie/t351-v19-evidence.md`，门禁读数见同目录 `t351-v19-gate-runs.md`）。本次刷新事由：编辑器动作库预置训记官方库（包内 `data/训记官方动作.json`，1092 名），选择层仅装库内动作且支持三档筛选；其余 36 格与上一批仅页脚时间戳不同。",
   "naming": "发布名 ＝ 清单 rows[].file，**全仓只在本清单算一处**；规则＝唤醒词 ＋ `.html`，同一条词有过程页与回执页两份时用 `-预检`／`-回执` 后缀（照 `scene06-验收墙` 的既有样子）。**唯一例外**：order 186「定训练计划」那一格换装成**计划编辑器（可写页）**后不再有「预检确认」这一步，发布名取 `定训练计划-编辑器.html`（后缀按它**是什么页**给：编辑器）。rows[].src ＝ 该件在原批目录里的文件名；`gen-wall.mjs --stage` 只读这两个字段复制，别处不许再拼名字",
   "counts": {
-    "executableWakeWords": 30,
-    "products": 43,
-    "rows": 43,
-    "nonExec": 2
+    "executableWakeWords": 32,
+    "products": 45,
+    "rows": 45,
+    "nonExec": 0
   },
   "rows": [
     {
@@ -521,13 +521,33 @@
       "src": "land-result.html",
       "key": "calorie.workout.land",
       "check": "结果页：四步结局四行读得顺吗；重复跑口径三行与四步结局不重复吗；新增更新合计与远端拉到对得上吗；390 宽下两表卡片化后项与值还成对吗。"
+    },
+    {
+      "seq": 44,
+      "order": 197,
+      "family": "批量落地（order 197-198）",
+      "kind": "过程型",
+      "wake": "落地到本周末",
+      "title": "落地到本周末 · 过程页",
+      "file": "落地到本周末-过程.html",
+      "src": "land-weekend-process.html",
+      "key": "calorie.workout.land-weekend",
+      "check": "过程页：可复制实跑指令在首位吗；逐天待落地表（日期／训练段／动作）与待推送待回写天数成对吗；本地已读与远端未调用两行分得清吗；390 宽下长表卡片化后日期与段还成对吗。"
+    },
+    {
+      "seq": 45,
+      "order": 197,
+      "family": "批量落地（order 197-198）",
+      "kind": "结果型",
+      "wake": "落地到本周末",
+      "title": "落地到本周末 · 结果页",
+      "file": "落地到本周末-结果.html",
+      "src": "land-weekend-result.html",
+      "key": "calorie.workout.land-weekend",
+      "check": "结果页：逐天结局表（日期／结局／说明）读得顺吗；推送回写天数合计与逐天行对得上吗；重复跑口径三行与逐天结局不重复吗；390 宽下两表卡片化后项与值还成对吗。"
     }
   ],
   "notShipped": [
-    {
-      "what": "外部两条：落地到本周末／落地到本月底（order 197-198）",
-      "why": "T351-v19 那轮是外部五条（order 196-200）；#614 起其中 order 199 同步到训记与 order 200 拉训记实绩两条转入可执行（routes.ts exec，命令 calorie.workout.xunji-push 与 calorie.workout.xunji-backfill），产物见本册 seq 38-41；#612 起其中 order 196 落地训练转入可执行（routes.ts exec，命令 calorie.workout.land），产物见本册 seq 42-43。剩下这两条仍记 kind:non-exec、bucket:out-of-scope（归 #613，本票不碰）：执行面在外部 App（跨天批量），卡路里这侧的执行层不承接。T351-v19 原文见 git 历史。"
-    },
     {
       "what": "撤销后读验证（order 195 的 read-after-delete 一步）",
       "why": "那一步**不是页面**，是机检读数：撤销后念「看计划」再读一次，得 `exit=4` ＋ stderr 命中「无训练计划」（恢复缺失阻断）——它**没有可上屏的 HTML**，所以本轮照旧只把读数落进批次的 `detail.json`（`steps` 里那条 `撤销后读验证`），不产页面；批脚本一度产出的 `order195-verify.html` 已按陈旧件处理，不进这一册。本轮读数与逐条现场见 `docs/skills/skill-calorie/t351-v19-evidence.md` §三「口径两条」；本轮产物原批目录：`.scratch/t157-final/products/`。"
@@ -546,5 +566,10 @@
     "ticket": 612,
     "madeAt": "2026-09-17",
     "source": "本票跑批 .scratch/t612/wall-batch.mjs（真 CLI 实跑：过程页走 dryRun 真进程，零子进程；结果页走四路挡板成功读数，页上标数据来源挡板）持锁跑出的 .scratch/t612/products/ 两份，发布名复制进本目录（副本与原批逐字节一致，复制后未改字节）。vision 终审 95 分（90 分可交），缺陷清单见 t593-H1 证据件。"
+  },
+  "h2": {
+    "ticket": 613,
+    "madeAt": "2026-09-17",
+    "source": "本票跑批 .scratch/t613/wall-batch.mjs（真 CLI 实跑：过程页走 dryRun 真进程，零子进程；结果页走四路挡板成功读数＋单日链逐天子进程，页上标数据来源挡板）持锁跑出的 .scratch/t613/products/ 两份，发布名复制进本目录（副本与原批逐字节一致，复制后未改字节）。vision 终审 94 分（90 分可交），缺陷清单见 t593-H2 证据件。"
   }
 }
