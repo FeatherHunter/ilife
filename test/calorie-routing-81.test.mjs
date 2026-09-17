@@ -240,7 +240,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
-      507, // #251 +1（看目标预检）＋ #348 +5（训练计划确认执行入口）＋ 他席在途新键 +5（#383 时点值，见 D2⑤）＋ #283 +1（删照候选 order=68）＋ #651 +1（卡路里HELP 新拟入口 order=68）
+      507, // #251 +1（看目标预检）＋ #348 +5（训练计划确认执行入口）＋ 他席在途新键 +5（#383 时点值，见 D2⑤）＋ #283 +1（删照候选 order=67）＋ #651 +1（卡路里HELP 新拟入口 order=68）
     );
     for (const w of new Set(WAKE_ROUTES.map((r) => r.wakeWord))) {
       assert.ok(routesFor(w).length >= 1, w);
@@ -296,8 +296,8 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       assert.match(r.cli, /^calorie-cmd-read calorie\./);
       assert.equal(/python/i.test(r.cli), false);
     }
-    assert.equal(newKeys.size, 69); // #383 时点值：63＋他席在途新键 5（见 D2⑤；以主人版为准重改）＋ #283 +1。
-    assert.equal(newWords.size, 69); // 同上（新拟唤醒词与键一一对应）。
+    assert.equal(newKeys.size, 68); // #651 起：条数 69 ≠ 互异键数 68——`calorie.help.center` 一键占两条（order17＋order68），故互异键比条数少 1；与 #283 时点 69 相比另少 1 系他席在途（有条新拟记录被移走／改列，票号待主人认领），非本票所动，本票只 +1 条目、+0 互异键。
+    assert.equal(newWords.size, 69); // 词仍互异（#651 的词是新词），条数＝词数＝69。
     assert.deepEqual([...dupKeys].sort(), ['calorie.help.center'],
       '新拟键重复集合走散（#651 例外只许 help.center 一键两条，多一键即红）');
   });
