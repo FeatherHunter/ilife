@@ -11,7 +11,9 @@
  * 计划复盘＝`view.exercise-review`；安全检查＝`view.contraindication`；
  * 落地训练（读侧进度）＝`view.process-progress`。
  * 「定训练计划」有写键（过程页出可写编辑器，用户复制命令后由下方 `workout.plan-*` 那一族写声明落库）；
- * 「落地训练」「同步到训记」本场景无写键（理由逐字住 `routes.ts`）。
+ * 「落地训练」本场景无写键（理由逐字住 `routes.ts`）；「同步到训记」「拉训记实绩」两条是训记模块
+ * 对外命令的薄包装（`xunjiPush.ts`／`xunjiBackfill.ts`：审计／调用／过程页／结果页收进同一命令），
+ * 写键形（`workout.xunji-*`），`dryRun` 转预演过程页。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewPlanEditor } from '../render/planEditorPort.js';
@@ -19,6 +21,8 @@ import { viewContraindication } from './contraindication.js';
 import { viewPlan, viewPlanVsActual, viewPlanWritePreview } from './plan.js';
 import { viewProcessProgress } from './progress.js';
 import { viewExerciseReview } from './review.js';
+import { writeXunjiBackfill } from './xunjiBackfill.js';
+import { writeXunjiPush } from './xunjiPush.js';
 import {
   writePlanAddMovement,
   writePlanCopy,
@@ -50,4 +54,6 @@ export const WORKOUT_COMMANDS = [
   { kind: 'write', key: 'calorie.workout.plan-delete-day', shape: 'receipt', title: '删某天训练', wakeWord: '确认删某天训练', run: writePlanDeleteDay, example: 'calorie-cmd-read calorie.workout.plan-delete-day --params \'{"week":1,"dayOfWeek":3}\'' },
   { kind: 'write', key: 'calorie.workout.plan-update-movement', shape: 'receipt', title: '改动作', wakeWord: '确认改动作', run: writePlanUpdateMovement, example: 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
   { kind: 'write', key: 'calorie.workout.plan-delete', shape: 'receipt', title: '撤销训练计划', wakeWord: '确认撤销训练计划', run: writePlanDelete, example: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
+  { kind: 'write', key: 'calorie.workout.xunji-push', shape: 'receipt', title: '同步到训记', wakeWord: '同步到训记', run: writeXunjiPush, example: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'' },
+  { kind: 'write', key: 'calorie.workout.xunji-backfill', shape: 'receipt', title: '拉训记实绩', wakeWord: '拉训记实绩', run: writeXunjiBackfill, example: 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1,"dryRun":true}\'' },
 ] satisfies readonly CommandSpec[];

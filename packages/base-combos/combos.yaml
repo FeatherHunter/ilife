@@ -239,6 +239,16 @@ combos:
     shape: receipt
     title: 改动作
     cmd: skill-calorie
+  - key: calorie.workout.xunji-backfill
+    skill: calorie
+    shape: receipt
+    title: 拉训记实绩
+    cmd: skill-calorie
+  - key: calorie.workout.xunji-push
+    skill: calorie
+    shape: receipt
+    title: 同步到训记
+    cmd: skill-calorie
   - key: calorie.help.center
     skill: calorie
     shape: list

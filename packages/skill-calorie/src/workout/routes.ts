@@ -4,7 +4,8 @@
  * 搬迁口径与场景分片同：由 `.scratch/t313b1/dump-routes.mjs` 机械搬出，语义不动；`order` 仍是原列表内
  * 0 基位次（顺序权威，生成器按 `(list, order)` 复原三个列表）。键集搬家后本件跟着走，顺序不受影响。
  * 那 23 条「命中但不执行」的记录**理由文本逐字不动**（`legacy-chain`／`out-of-scope` 是今天的形态，
- * 翻案另开票；本票只换住处）。
+ * 翻案另开票；本票只换住处）——#614 起其中 order 199／200（同步到训记／拉训记实绩）转入可执行，
+ * 剩下 21 条的理由文本仍逐字不动（另三条落地 order 196–198 归 #612／#613，不碰）。
  */
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
@@ -32,8 +33,8 @@ export const WORKOUT_ROUTES: readonly RouteDecl[] = [
   { list: 'wake', order: 196, wakeWord: '落地训练', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
   { list: 'wake', order: 197, wakeWord: '落地到本周末', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
   { list: 'wake', order: 198, wakeWord: '落地到本月底', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
-  { list: 'wake', order: 199, wakeWord: '同步到训记', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：训记）；词只保证命中与文案，执行层不承接（t71 O3 同项）。' },
-  { list: 'wake', order: 200, wakeWord: '拉训记实绩', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：训记）；词只保证命中与文案，执行层不承接（t71 O3 同项）。' },
+  { list: 'wake', order: 199, wakeWord: '同步到训记', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-push', cli: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'' },
+  { list: 'wake', order: 200, wakeWord: '拉训记实绩', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-backfill', cli: 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1,"dryRun":true}\'' },
   { list: 'wake', order: 201, wakeWord: '计划复盘（本周）', scene: '05', kind: 'exec', key: 'calorie.view.exercise-review', cli: 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本周"}\'' },
   { list: 'wake', order: 202, wakeWord: '计划复盘（本月）', scene: '05', kind: 'exec', key: 'calorie.view.exercise-review', cli: 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本月"}\'' },
   { list: 'wake', order: 203, wakeWord: '计划复盘（全部）', scene: '05', kind: 'exec', key: 'calorie.view.exercise-review', cli: 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"custom","start":"<开始日期>","end":"<结束日期>"}\'' },

@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 47 ＋ 读 82 ＝ 129 条。
+ * registry 合法键表：写 49 ＋ 读 82 ＝ 131 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -67,6 +67,8 @@ export const CALORIE_WRITE_COMBOS = {
   'calorie.workout.plan-update': { shape: 'receipt' as EnvelopeShape, title: '改训练计划' },
   'calorie.workout.plan-update-day': { shape: 'receipt' as EnvelopeShape, title: '改某天训练' },
   'calorie.workout.plan-update-movement': { shape: 'receipt' as EnvelopeShape, title: '改动作' },
+  'calorie.workout.xunji-backfill': { shape: 'receipt' as EnvelopeShape, title: '拉训记实绩' },
+  'calorie.workout.xunji-push': { shape: 'receipt' as EnvelopeShape, title: '同步到训记' },
 } as const;
 
 export type CalorieWriteKey = keyof typeof CALORIE_WRITE_COMBOS;
