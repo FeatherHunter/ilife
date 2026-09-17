@@ -15,9 +15,9 @@
  * ② 外部调用无保护 → 跑道预检＋限时＋失败进码；③ 回执渲染器不调外部 → 调用与回执收进同一命令。
  * 审计（动作名校验）不在本链：推送前不校验、原样上报（沿 `#607 §八·7`，审计由薄命令层做）。
  *
- * R3 落点（过渡债务收口，详见证据件）：本件的作息桥与备忘桥（`landPlanStep`／`landWishStep`）
- * 即 `run-sync` 缺省跳过两步的真实现形状（`RunSyncDeps.plan`／`wish` 同形：天数组进、结局出），
- * 后手票注入 `xunji` 编排即插即用，本件已在宿主链里先跑通。
+ * R3 占位（过渡债务，详见证据件 §九）：作息桥与备忘桥（`landPlanStep`／`landWishStep`）
+ * 与 `run-sync` 缺省跳过两步的注入缝（`RunSyncDeps.plan`／`wish`）同形，但恒 `skipped`
+ *（与 #610 缺省同义：未接入，真实现归 #613）；本宿主第二／三步走真合成写，不走此桥。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { todayISO } from '../analysis/utils.js';
@@ -37,21 +37,20 @@ const LAND_WAKE = '落地训练';
 /** R3 桥结局（与 `xunji/run-sync.ts#RunSyncStepResult` 同形，不直引 `xunji` 件，运行时零耦合）。 */
 export interface LandBridgeResult {
   readonly ok: boolean;
+  readonly skipped?: boolean;
   readonly code?: 1 | 2 | 3;
   readonly error?: string;
   readonly note?: string;
 }
 
-/** R3 作息桥：天数组进、结局出（`run-sync` 的 `plan` 缝同形；本宿主第二步即调它）。 */
+/** R3 作息桥（占位：与 #610 缺省同义恒 `skipped`，真实现归 #613；本宿主第二步走真合成写，不走此桥）。 */
 export async function landPlanStep(dates: readonly string[]): Promise<LandBridgeResult> {
-  void dates;
-  return { ok: true, note: '宿主链内已逐段经合成写，见本命令第二步读数' };
+  return { ok: true, skipped: true, note: '占位未接入：作息合成写真实现归 #613（' + dates.length + ' 天）' };
 }
 
-/** R3 备忘桥：天数组进、结局出（`run-sync` 的 `wish` 缝同形；本宿主第三步即调它）。 */
+/** R3 备忘桥（占位：同上；本宿主第三步走真合成写，不走此桥）。 */
 export async function landWishStep(dates: readonly string[]): Promise<LandBridgeResult> {
-  void dates;
-  return { ok: true, note: '宿主链内已逐段经合成写，见本命令第三步读数' };
+  return { ok: true, skipped: true, note: '占位未接入：备忘合成写真实现归 #613（' + dates.length + ' 天）' };
 }
 
 /** `dryRun` 参数：缺省 false；非布尔即用法错（exit 2，不调外部）。 */

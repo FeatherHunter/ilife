@@ -264,4 +264,14 @@ describe('#612 落地训练', () => {
     assert.equal(broken.code, 4);
     assert.match(broken.stderr, /挡板数据不是合法 JSON/);
   });
+
+  it('⑤ R3 双桥恒 skip（占位：与 #610 缺省同义，真实现归 #613）', async () => {
+    const { landPlanStep, landWishStep } = await import('../dist/workout/land.js');
+    const p = await landPlanStep(['2026-09-07']);
+    const w = await landWishStep(['2026-09-07']);
+    assert.equal(p.ok, true);
+    assert.equal(p.skipped, true);
+    assert.equal(w.ok, true);
+    assert.equal(w.skipped, true);
+  });
 });
