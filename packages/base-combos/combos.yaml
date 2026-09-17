@@ -189,6 +189,11 @@ combos:
     shape: receipt
     title: 改体重
     cmd: skill-calorie
+  - key: calorie.workout.land
+    skill: calorie
+    shape: receipt
+    title: 落地训练
+    cmd: skill-calorie
   - key: calorie.workout.plan-add-movement
     skill: calorie
     shape: receipt

@@ -205,7 +205,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '删某天训练', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"delete-day","week":1,"dayOfWeek":3}\'' },
   { wakeWord: '改动作', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"update-movement","oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
   { wakeWord: '撤销训练计划', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"delete"}\'' },
-  { wakeWord: '落地训练', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
+  { wakeWord: '落地训练', scene: '05', kind: 'exec', key: 'calorie.workout.land', cli: 'calorie-cmd-read calorie.workout.land --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { wakeWord: '落地到本周末', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
   { wakeWord: '落地到本月底', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
   { wakeWord: '同步到训记', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-push', cli: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'' },

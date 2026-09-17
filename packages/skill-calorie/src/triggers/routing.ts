@@ -210,10 +210,10 @@ export const T71_DIFFS: readonly T71Diff[] = [
   },
   {
     id: 'M8',
-    wakeWords: ['落地训练', '落地到本周末', '落地到本月底'],
+    wakeWords: ['落地到本周末', '落地到本月底'],
     spec: 'docs/calorie-architecture.md:60「落地」',
     t71: 'docs/research/t71-old-baseline-inventory.md:203 M8 需移植项（process_progress.html）',
-    note: '差异：按规格 :60 入「明确不做」；按 t71 属 M8「需移植」，不在 O1–O4 之内。',
+    note: 't71 时点三词（落地训练／落地到本周末／落地到本月底，M8「需移植」）；#612 起其中「落地训练」已转入 exec（`src/workout/routes.ts` order 196，命令 `calorie.workout.land`），现状以路由层为准，本登记只存档剩余两词。',
   },
 ];
 
