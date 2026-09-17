@@ -214,16 +214,17 @@ describe('#607 推送链', () => {
     assert.equal(run.data.error_type, 'auth');
   });
 
-  it('③ 服务端 401：不重试（恰 1 次），退 2（★修掉老实况退 3）', async () => {
+  it('③ 服务端 401：不重试（恰 1 次），退 3（老实况：调用侧只看 err 即 EXIT_API，#595 §八·2）', async () => {
     const stub = stubTransport([{ status: 401, body: { success: false, error: 'apikey invalid' } }]);
     const sleeps = [];
     const run = await runMod.runXunjiCommand(['upsert', '--json', '[]'], {
       transport: stub.transport, key: 'REDACTED', sleep: async (ms) => { sleeps.push(ms); }, rateLimitPath: null,
     });
-    assert.equal(run.code, 2, JSON.stringify(run.data));
+    assert.equal(run.code, 3, JSON.stringify(run.data));
     assert.equal(stub.count(), 1);
     assert.deepEqual(sleeps, []);
     assert.equal(run.data.error_type, 'auth');
+    assert.equal(run.data.code, 401);
   });
 
   it('③ validation／vip 不重试：400 与仅VIP 各恰 1 次，退 3', async () => {
@@ -289,13 +290,16 @@ describe('#607 推送链', () => {
     assert.match(run.stderr, /无训练计划/);
   });
 
-  it('退出码映射表：auth 归 2，其余接口错归 3；表内 11 行逐位可查', () => {
-    assert.equal(exitMod.exitForErrorKind('auth'), 2);
+  it('退出码映射表：本地缺 KEY（auth 无状态码）退 2，服务端 401／403 与其余接口错退 3；表内 11 行逐位可查', () => {
+    assert.equal(exitMod.exitForFailure({ error_type: 'auth', code: null }), 2);
+    assert.equal(exitMod.exitForFailure({ error_type: 'auth', code: 401 }), 3);
+    assert.equal(exitMod.exitForFailure({ error_type: 'auth', code: 403 }), 3);
     for (const k of ['rate_limit', 'vip_required', 'validation', 'server', 'network', 'unknown']) {
-      assert.equal(exitMod.exitForErrorKind(k), 3, k);
+      assert.equal(exitMod.exitForFailure({ error_type: k, code: 500 }), 3, k);
     }
     assert.equal(exitMod.PUSH_EXIT_TABLE.length, 11);
     assert.ok(exitMod.PUSH_EXIT_TABLE.every((r) => [0, 1, 2, 3, 4].includes(r.code)));
+    assert.equal(exitMod.PUSH_EXIT_TABLE.find((r) => r.event.startsWith('服务端 401')).code, 3);
   });
 
   it('CLI：upsert --dry-run 无网退 0；push-plan 坏日期退 1（子进程级）', () => {

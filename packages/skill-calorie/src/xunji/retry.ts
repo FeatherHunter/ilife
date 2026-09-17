@@ -1,7 +1,9 @@
 /** 训记错误分类 ＋ 退避重试（老 `xunji_bridge/errors.py` 的分类要点与重试口径，代码新写）。
  *
  * 分类（只读参照 `errors.py:39-46` 的 7 类 ＋ `:128-180` 的判定序；本件只收推送链用得到的分支）：
- * - `auth`：HTTP 401／403，或正文含 apikey 缺失／无效（老 `:142-148`）；
+ * - `auth`：HTTP 401／403，或正文含 apikey 缺失／无效（老 `:142-148`）。
+ *   注意：此 `auth` 盖两支——本地缺 KEY（无 HTTP 状态码）与服务端 401／403（有状态码）；
+ *   退出码由 `exitMap.ts#exitForFailure` 按有无状态码分流（2 vs 3，老实况，#595 §八·2）；
  * - `vip_required`：正文含 仅VIP／vip required（老 `:135-140`）；
  * - `rate_limit`：HTTP 429，或正文含 too frequent／frequent（老 `:151-157`），缺省 45 秒；
  * - `validation`：HTTP 400（老 `:160-165`）；

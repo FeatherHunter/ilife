@@ -18,7 +18,7 @@ import { pushDayPlan } from './push.js';
 import type { XunjiResItem } from './request.js';
 import { upsertTrains } from './upsert.js';
 import type { UpsertTransport } from './upsert.js';
-import { exitForErrorKind } from './exitMap.js';
+import { exitForFailure } from './exitMap.js';
 
 /** 一次子命令调用的读数：退出码 ＋ 人话 ＋ 机器读数（＋ 命令行入口要打的那句）。 */
 export interface XunjiRun {
@@ -128,7 +128,7 @@ async function runUpsert(sub: XunjiSubcommand, values: Readonly<Record<string, s
   const line = outcome.failure.message;
   return {
     subcommand: 'upsert',
-    code: exitForErrorKind(outcome.failure.error_type),
+    code: exitForFailure(outcome.failure),
     message: line,
     data: { err: true, ...outcome.failure, attempts: outcome.attempts },
     stderr: line,
