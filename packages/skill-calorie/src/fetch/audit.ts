@@ -1,8 +1,10 @@
 /** T6 #25 · 训练计划动作名审计（老家 audit_plan_names.py 同契约）。
  * 输出统一 { status, data, message } 三段式；exit 映射由 CLI 负责。
+ * #606：库面与动作名校验搬进训记模块，本件改走它的能力门——**默认读包内预置快照**（不再隐式读
+ * 各机 `~/.minimax` 那份：那句「这台机器放没放库」的口径与编辑器库面分叉，见 #593 R3）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { loadCatalog, suggestSimilar } from './xunji-catalog.js';
+import { verifyMovements } from '../xunji/index.js';
 
 export type AuditStatus = 'ok' | 'warn' | 'fail';
 
@@ -43,24 +45,25 @@ export function auditPlanNames(
   db: DatabaseSync,
   opts: { catalogPath?: string; catalog?: Set<string>; withSuggestions?: boolean } = {},
 ): AuditReport {
-  const catalog = opts.catalog ?? loadCatalog(opts.catalogPath);
-  if (catalog.size === 0) {
-    return { status: 'fail', data: null, message: '训记动作库加载失败' };
+  // 库面两档与训记模块同一份（`catalogPath`／`catalog` 都是它的入参；缺省＝包内预置快照）。
+  const report = verifyMovements(collectPlanNames(db), opts);
+  if (!report.catalog_loaded) {
+    return { status: 'fail', data: null, message: '训记动作库加载失败：' + String(report.catalog_error) };
   }
-  const planNames = collectPlanNames(db);
-  const inCatalog = planNames.filter((n) => catalog.has(n)).sort();
-  const notInCatalog = planNames.filter((n) => !catalog.has(n)).sort();
+  const inCatalog = report.results.filter((r) => r.valid === true).map((r) => r.name).sort();
+  const notInCatalog = report.results.filter((r) => r.valid === false).map((r) => r.name).sort();
   const data: AuditReport['data'] = {
-    total: planNames.length,
+    total: report.total,
     in_catalog: inCatalog,
     not_in_catalog: notInCatalog,
     catalog_loaded: true,
   };
   if (opts.withSuggestions && notInCatalog.length > 0) {
-    data.suggestions = Object.fromEntries(notInCatalog.map((n) => [n, suggestSimilar(n, catalog)]));
+    const byName = new Map(report.results.map((r) => [r.name, r.suggestions]));
+    data.suggestions = Object.fromEntries(notInCatalog.map((n) => [n, [...(byName.get(n) ?? [])]]));
   }
   if (notInCatalog.length === 0) {
-    return { status: 'ok', data, message: `全部 ${planNames.length} 个动作名均在库` };
+    return { status: 'ok', data, message: `全部 ${report.total} 个动作名均在库` };
   }
   return { status: 'warn', data, message: `${notInCatalog.length} 个动作名不在库: ${notInCatalog.join('、')}` };
 }

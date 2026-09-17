@@ -36,7 +36,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { fail, nums } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
-import { loadPresetCatalogNames } from '../fetch/index.js';
+import { readMovementCatalog } from '../xunji/index.js';
 import { WIZARD_WAKE_WORD } from '../workout/precheckPrompt.js';
 import { inferEquipment } from '../workout/planStore.js';
 import type { EditorDay, EditorMove, EditorState, EditorWeek } from './planEditor.js';
@@ -155,7 +155,7 @@ function weeksOf(plan: Record<string, unknown>): EditorWeek[] {
 
 /** 动作库（选择层「从库里选」那一半）：只装库里的动作，库外动作不进选择层。
  *  库面两档：用户传了 `catalog` 参数就用它的；没传就用包内预置训记官方库
- *  （`data/训记官方动作.json`，读法见 `fetch/xunji-catalog.ts` 的 `loadPresetCatalogNames`）；
+ *  （`src/xunji/data/训记官方动作.json`，读法住训记模块的能力门 `xunji/index.ts` 的 `readMovementCatalog`）；
  *  两者都没有就空库。页面**不内嵌全库**（对齐记录 B3 的后半句——预置库落地后
  *  参数只作覆盖用；D1 的格式问题随预置文件一并落定：名数组）。
  *  预置库名只有名、没有部位/类型，一律按力量默认参数进选择层（与原来 `catalog` 参数同口）。
@@ -207,7 +207,8 @@ export function editorStateFromPlan(plan: unknown, opts: { catalog?: readonly st
   // 库面两档（只管「从库里选」，校验读数仍只吃用户传的 catalog，见 viewPlanEditor）：
   // 用户显式传了 catalog 就用它的；没传就读包内预置训记官方库；预置库也缺就空库。
   const userCatalog = opts.catalog;
-  const presetNames = userCatalog === undefined ? loadPresetCatalogNames() : [];
+  // 没传 catalog 就读包内预置快照（读法住训记模块的能力门）；库读不出（缺文件／空库）→ 空库兜底，不断链。
+  const presetNames = userCatalog === undefined ? readMovementCatalog().names : [];
   const { lib, libSource } = userCatalog !== undefined
     ? libOf(userCatalog, false)
     : (presetNames.length > 0 ? libOf(presetNames, true) : libOf(undefined, false));

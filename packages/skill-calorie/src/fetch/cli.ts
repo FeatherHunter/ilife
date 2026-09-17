@@ -3,6 +3,7 @@
  * 用法：node dist/fetch/cli.js <import|validate|dedupe|export|history|audit|catalog-verify> ...
  * 运维定位（C1 #43）：本 CLI 仅运维（导入/校验/去重/导出/历史/审计/目录核验），不承载业务读写；
  * 业务唯一出口为 calorie-cmd-read（dist/cli/cmd_read.js），业务读写一律走该出口。
+ * #606：`audit`／`catalog-verify` 的库面改走训记模块的能力门（缺省＝包内预置快照，`--catalog` 是显式覆盖）。
  */
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
@@ -14,7 +15,7 @@ import { dedupeReport, exportBySource, importProducts, validateFile } from './ba
 import type { DuplicatePolicy } from './batch.js';
 import { getCalorieHistory } from '../analysis/historyStore.js';
 import { auditPlanNames } from './audit.js';
-import { loadCatalog, verifyMovementName } from './xunji-catalog.js';
+import { verifyMovements } from '../xunji/index.js';
 
 const flag = (name: string): string | undefined => {
   const i = process.argv.indexOf(name);
@@ -142,8 +143,9 @@ function cmdAudit(dbFlag?: string): number {
   const db = openTarget(dbFlag, false);
   try {
     const catFlag = flag('--catalog');
+    // #606：库面走训记模块（缺省＝包内预置快照；`--catalog` 是显式覆盖）。
     const rep = auditPlanNames(db, {
-      catalog: catFlag ? loadCatalog(catFlag) : undefined,
+      catalogPath: catFlag,
       withSuggestions: has('--fix-suggestions'),
     });
     console.log(JSON.stringify(rep, null, 2));
@@ -161,8 +163,11 @@ function cmdCatalogVerify(name: string): number {
     return 1;
   }
   const catFlag = flag('--catalog');
-  console.log(JSON.stringify(verifyMovementName(name, catFlag ? loadCatalog(catFlag) : undefined), null, 2));
-  return 0;
+  const report = verifyMovements([name], catFlag === undefined ? {} : { catalogPath: catFlag });
+  console.log(JSON.stringify(report.results[0], null, 2));
+  // #606 口径：库读不出＝无法验证（不是「不合法」）；不在库＝校验失败。老实现这里恒退 0，是缺陷不照抄。
+  if (!report.catalog_loaded) return 1;
+  return report.invalid_count > 0 ? 4 : 0;
 }
 
 async function main(): Promise<number> {

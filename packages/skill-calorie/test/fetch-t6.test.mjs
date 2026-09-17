@@ -17,12 +17,10 @@ import {
   weightSeries,
   readSkill,
   requireOk,
-  loadCatalog,
-  verifyMovementName,
-  suggestSimilar,
   collectPlanNames,
   auditPlanNames,
 } from '../dist/fetch/index.js';
+import { readMovementCatalog, verifyMovements } from '../dist/xunji/index.js';
 import { openDb } from '../dist/index.js';
 
 // DSH 宿主下 process.execPath 可能指向宿主二进制而非 node，此时回退 PATH 查 node
@@ -117,17 +115,21 @@ test('cross-skill：缺失/超时/坏 JSON 一律阻断，永不空数组当正�
   assert.deepEqual(ok.data, [{ x: 1 }]);
 });
 
-test('catalog：缺失→空集→无法验证；命中/落榜/建议', () => {
-  assert.equal(loadCatalog(join(tmpdir(), 't25-no-such.json')).size, 0);
-  const v = verifyMovementName('深蹲', new Set());
+test('catalog：缺失→无法验证；命中/落榜/建议（库面住 `src/xunji/`，#606）', () => {
+  const missing = readMovementCatalog(join(tmpdir(), 't25-no-such.json'));
+  assert.equal(missing.loaded, false);
+  assert.deepEqual(missing.names, []);
+  assert.match(String(missing.reason), /读不到/);
+  const v = verifyMovements(['深蹲'], { catalog: new Set() }).results[0];
   assert.equal(v.valid, null);
   const f = tmp('cat.json');
   writeFileSync(f, JSON.stringify({ actions: ['杠铃深蹲', '平板卧推'] }));
-  const cat = loadCatalog(f);
-  assert.equal(verifyMovementName('杠铃深蹲', cat).valid, true);
-  const bad = verifyMovementName('深蹲', cat);
+  const report = verifyMovements(['杠铃深蹲', '深蹲'], { catalogPath: f });
+  assert.equal(report.catalog_loaded, true);
+  assert.equal(report.results[0].valid, true);
+  const bad = report.results[1];
   assert.equal(bad.valid, false);
-  assert.deepEqual(suggestSimilar('深蹲', cat), ['杠铃深蹲']);
+  assert.deepEqual(bad.suggestions, ['杠铃深蹲']);
 });
 
 test('audit：ok/warn/fail 三段式 + 建议', () => {
