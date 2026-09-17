@@ -19,7 +19,8 @@
     "dist",
     "SKILL.md",
     "workflows/*.md",
-    "templates/*.html"
+    "templates/*.html",
+    "src/xunji/data/训记官方动作.json"
   ],
   "dependencies": {
     "base-paint": "^0.3.0"

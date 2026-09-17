@@ -152,6 +152,12 @@ function gateTarball() {
         else ok(s + ' tarball 含全部 ' + names.length + ' 件模板');
       }
     }
+    // #601：预置动作库按源布局随包发（tsc 不复制资源，同 templates 机制；
+    // .npmignore 无覆盖已查——仓根与包下均无 .npmignore）。缺即安装态读不到，exit 1 点名。
+    if (s === 'skill-calorie') {
+      if (!out.includes('src/xunji/data/训记官方动作.json')) fail(s + ' tarball 缺 src/xunji/data/训记官方动作.json（预置动作库未随包发，#601）');
+      else ok(s + ' tarball 含 src/xunji/data/训记官方动作.json（预置动作库随包发，#601）');
+    }
   }
   for (const p of PLUGINS.filter(inScope)) {
     const out = packDryRun(p);
