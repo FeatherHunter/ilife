@@ -26,6 +26,11 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 - 健康分：工作≤8h 满分、超 1.5 倍 0 分；其余达目标满分、0.8/0.5 分档衰减；7 维取均（创作不参评）。异常：环比 ±20% 红、±10% 黄。
 - 坏输入与缺失一律阻断（exit 2/4），不返空数组冒充正常；飞书同步须 lark-cli 四门全绿。
 
+## 批量补计划（多天，#599）
+
+- 单天 `op=ensure` 按 `date+time_start+time_end` 三元组幂等（`title` 只展示）；多天批量把每天的对象装进 `dates[]`，逐天走同一条单天合成写（本地幂等＋远端查一趟再判），回执 `items[]` 逐天分字段、失败逐条前缀日期点名且退出码非 0。`op=sync` 整天口径不动。
+- 照抄即跑（2 天示例；7 天同形，只是数组更长）：`schedule-cmd-read schedule.plan.write --params '{"op":"ensure","dates":[{"date":"2026-09-21","time_start":"09:00","time_end":"10:00","title":"晨会"},{"date":"2026-09-22","time_start":"09:00","time_end":"10:00","title":"晨会"}]}'`
+
 ## 联动速查（构建期注入，勿手改）
 
 <!-- HELP-AUTO-START -->
@@ -69,7 +74,7 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 | 规划明天 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"preview"}'` |
 | 规划一天 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"preview"}'` |
 | 讨论计划 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"preview"}'` |
-| 补计划 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"ensure"}'` |
+| 补计划 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"ensure","date":"2026-09-01","time_start":"09:00","time_end":"10:00","title":"晨会"}'` |
 | 改计划 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"update","id":1}'` |
 | 删计划 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"deactivate","id":1}'` |
 | 复盘今日 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"review","granularity":"day"}'` |
