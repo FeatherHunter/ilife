@@ -58,7 +58,7 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '规划明天', key: 'schedule.plan.write', preset: { op: 'preview' } },
   { phrase: '规划一天', key: 'schedule.plan.write', preset: { op: 'preview' } },
   { phrase: '讨论计划', key: 'schedule.plan.write', preset: { op: 'preview' } },
-  { phrase: '补计划', key: 'schedule.plan.write', preset: { op: 'ensure' } },
+  { phrase: '补计划', key: 'schedule.plan.write', preset: { op: 'ensure' }, needs: ['date', 'time_start', 'time_end', 'title'] },
   { phrase: '改计划', key: 'schedule.plan.write', preset: { op: 'update' }, needs: ['id'] },
   { phrase: '删计划', key: 'schedule.plan.write', preset: { op: 'deactivate' }, needs: ['id'] },
   { phrase: '复盘今日', key: 'schedule.plan.write', preset: { op: 'review', granularity: 'day' } },

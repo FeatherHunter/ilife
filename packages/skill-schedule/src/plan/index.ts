@@ -10,7 +10,7 @@ import { getPlanEventsRange, SchedulePolicyError } from '../fetch/index.js';
 import { resolveDateParam, resolveRangeParam, VALID_COMPLETIONS, type PlanWriteOp } from '../policy/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
 import { buildReceipt } from './receipt.js';
-import { runEnsure } from './ensure.js';
+import { runEnsure, runEnsureBatch } from './ensure.js';
 import { runPreview, runUpsert } from './upsert.js';
 import { runUpdate, runDeactivate } from './single.js';
 import { runSync } from './sync.js';
@@ -43,7 +43,8 @@ export function runPlanOp(op: PlanWriteOp, ctx: PlanOpCtx): PlanOpResult {
   switch (op) {
     case 'preview': return runPreview(ctx);
     case 'upsert': return runUpsert(ctx);
-    case 'ensure': return runEnsure(ctx);
+    // #599：同 op 内分流——带 `dates[]` 走多天批量（逐天复用 runEnsure），否则单天；`sync` 口径不动。
+    case 'ensure': return ctx.params.dates !== undefined ? runEnsureBatch(ctx) : runEnsure(ctx);
     case 'update': return runUpdate(ctx);
     case 'deactivate': return runDeactivate(ctx);
     case 'review': return runReview(ctx);

@@ -82,6 +82,41 @@ export function validateEnsureInput(params: Record<string, unknown>): PlanEventI
   return { date, ...validateEvent(params, -1) };
 }
 
+// #599 补计划多天批量：`dates[]` 每条自带 date（三元组 + title），逐条走单天合成写。
+// 形如票面推荐的 dates[] 一支（起止区间那一支不做）：单复数与只读侧同形（`date` 单天／`dates` 多天），
+// 元素是对象（写侧每天要完整三元组），与只读 `dates:string[]` 按 key 分流，不共用校验。
+export interface EnsureBatchItem extends PlanEventInput {
+  date: string;
+}
+
+export function validateEnsureBatchInput(params: Record<string, unknown>): { items: EnsureBatchItem[] } {
+  const raw = params.dates;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new SchedulePolicyError('POLICY_BAD_INPUT', 'ensure 批量须给非空 dates 数组（每条含 date/time_start/time_end/title）');
+  }
+  if (params.date !== undefined) {
+    throw new SchedulePolicyError('POLICY_BAD_INPUT', 'date 与 dates 不可同给（单天走 date，多天走 dates[]）');
+  }
+  return {
+    items: raw.map((e, i) => {
+      try {
+        if (typeof e !== 'object' || e === null || Array.isArray(e)) {
+          throw new SchedulePolicyError('POLICY_BAD_INPUT', 'dates[' + i + '] 须为对象');
+        }
+        const o = e as Record<string, unknown>;
+        const date = normalizeDate(o.date, 'dates[' + i + '].date');
+        return { date, ...validateEvent(o, i) };
+      } catch (err) {
+        if (err instanceof SchedulePolicyError) {
+          if (err.message.startsWith('dates[' + i + ']')) throw err;
+          throw new SchedulePolicyError(err.code, 'dates[' + i + ']：' + err.message);
+        }
+        throw err;
+      }
+    }),
+  };
+}
+
 // #18 改计划：id + 至少一字段；completion 须 6 态之一。
 export function validateUpdateInput(params: Record<string, unknown>): { id: number; patch: Record<string, unknown> } {
   const id = params.id;

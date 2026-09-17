@@ -12,7 +12,10 @@ function exampleParams(e: { key: ScheduleKey; needs?: string[]; preset?: Record<
       p[n] = n === 'id' ? 1
         : n === 'start' || n === 'end' || n === 'date' ? '2026-09-01'
           : n === 'dates' ? ['2026-09-21', '2026-09-22']
-            : '<值>';
+            : n === 'time_start' ? '09:00'
+              : n === 'time_end' ? '10:00'
+                : n === 'title' ? '晨会'
+                  : '<值>';
     }
   }
   const keys = Object.keys(p);
