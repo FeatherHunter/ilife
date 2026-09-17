@@ -71,9 +71,9 @@ function copyBlock(key: string, params: Record<string, unknown>, receipt: CrudRe
   });
 }
 
-/** 实跑命令原文（过程页首位可复制 prompt：照抄即跑同一天）。 */
+/** 实跑命令原文（过程页首位可复制 prompt：照抄即跑同一天，单引号包 JSON 照本仓一贯口径）。 */
 export function landRealCommand(date: string): string {
-  return 'calorie-cmd-read calorie.workout.land --params ' + JSON.stringify(JSON.stringify({ date }));
+  return 'calorie-cmd-read calorie.workout.land --params \'{"date":"' + date + '"}\'';
 }
 
 /** 过程页（`dryRun`）：可复制 prompt 先出 ＋ 四步预告；远端未调用写在页头。 */
@@ -142,12 +142,10 @@ export function buildLandResultPage(input: {
   sessions: readonly PlanSessionRow[]; steps: readonly LandStepRead[];
   message: string; receipt: CrudReceipt; stubbed: boolean;
 }): string {
-  const { key, params, date, sessions, steps, receipt, stubbed } = input;
+  const { key, params, date, steps, receipt, stubbed } = input;
   const find = (name: string): LandStepRead | null => steps.find((s) => s.step === name) ?? null;
   const plan = find('补计划');
   const wish = find('记心愿');
-  const push = find('推送');
-  const back = find('回写');
   const content = [
     renderKpiGrid([
       { label: '日期', value: date, detail: '落地哪一天的计划' },
@@ -162,12 +160,12 @@ export function buildLandResultPage(input: {
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: [
-        { k: '推送', v: push === null ? '未跑' : push.local + '，' + push.remote },
-        { k: '回写', v: back === null ? '未跑' : back.local + '，' + back.remote },
-        { k: '计划段', v: sessions.length + ' 段全部走完四步' },
+        { k: '重复补计划', v: '按日期加时段加标题认同一条，重复跑不翻倍' },
+        { k: '重复记心愿', v: '同文同排期日认同一条，重复跑不翻倍' },
+        { k: '重复回写', v: '按单号加类型加序号三列认同一行，重复拉只更新不翻倍' },
         ...(stubbed ? [{ k: '数据来源', v: '本地挡板（未调远端）' }] : []),
       ],
-      caption: '本地成远端没成分得清',
+      caption: '重复跑口径',
     }),
     copyBlock(key, params, receipt, '训练计划（workout_plans）＋ 四步读数'),
   ].join('');

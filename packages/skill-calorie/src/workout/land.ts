@@ -129,6 +129,7 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
     steps.push({ step: '补计划', code: 0, local: '空天无段可写', remote: '未调用', detail: '' });
   }
   let wishOk = 0;
+  let wishStubbed = false;
   for (let i = 0; i < sessions.length; i++) {
     const s = sessions[i] as PlanSessionRow;
     const content = landTitleOf(s, i);
@@ -139,11 +140,12 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
       failStep('记心愿', call.code === 2 ? 2 : 4, '第 ' + (wishOk + 1) + ' 段 ' + why, call.stderr);
     }
     wishOk += 1;
+    wishStubbed = wishStubbed || call.stubbed;
   }
   steps.push({
     step: '记心愿', code: 0,
     local: sessions.length === 0 ? '空天无段可记' : '已记 ' + wishOk + ' 条',
-    remote: sessions.length === 0 ? '未调用' : '两侧已对齐', detail: '',
+    remote: sessions.length === 0 ? '未调用' : (wishStubbed ? '挡板未调远端' : '两侧已对齐'), detail: '',
   });
   const push = invokeLandPush(date, '推送');
   if (push.code !== 0) {
