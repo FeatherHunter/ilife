@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>爱生活设置面 · 决策问答（map #671）</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --card2:#1d2129; --line:#2a2f3a;
+    --ink:#e8eaee; --dim:#9aa3b2; --faint:#6c7484;
+    --accent:#7c9cff; --ok:#4ec9a0; --warn:#f0b45a; --bad:#f2708a; --key:#c084fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 72px}
+
+  header.top{position:sticky;top:0;z-index:10;background:rgba(15,17,21,.92);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .top-in{max-width:920px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top-in h1{margin:0;font-size:16px;font-weight:650;letter-spacing:.2px}
+  .top-in .meta{color:var(--faint);font-size:12px}
+  .chips{margin-left:auto;display:flex;gap:6px}
+  .chip{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+  .chip.key{border-color:#5a4a86;color:var(--key);background:rgba(192,132,252,.08)}
+  .chip.bad{border-color:#7a3346;color:var(--bad);background:rgba(242,112,138,.08)}
+
+  h2.sec{margin:38px 0 4px;font-size:14px;font-weight:650;color:var(--dim);
+    letter-spacing:.4px;display:flex;align-items:center;gap:10px}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+  .lede{color:var(--dim);font-size:13.5px;margin:6px 0 18px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);
+    border-radius:12px;padding:14px 16px 15px;margin:12px 0}
+  .card.is-key{border-left-color:var(--key)}
+  .card.is-bad{border-left-color:var(--bad)}
+  .q{display:flex;align-items:baseline;gap:9px;margin:0 0 7px}
+  .q .n{font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--faint);
+    padding-top:3px;min-width:26px}
+  .q .t{font-size:15.5px;font-weight:650;margin:0}
+  .tag{font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid;margin-left:auto;
+    white-space:nowrap;font-weight:600}
+  .tag.key{border-color:#5a4a86;color:var(--key);background:rgba(192,132,252,.1)}
+  .tag.bad{border-color:#7a3346;color:var(--bad);background:rgba(242,112,138,.1)}
+
+  .why{margin:0 0 10px;color:var(--dim);font-size:13.5px}
+  .why b{color:#c9d0da;font-weight:600}
+  .rec{display:flex;gap:9px;align-items:flex-start;background:var(--card2);
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:14px}
+  .rec .mk{color:var(--ok);font-weight:700;flex:none}
+  .rec strong{color:#eaf7f2}
+  .pros{margin:9px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+  .pros div{font-size:13px;color:var(--dim)}
+  .pros .h{display:block;font-size:11px;letter-spacing:.3px;margin-bottom:2px;font-weight:600}
+  .pros .plus .h{color:var(--ok)} .pros .minus .h{color:var(--warn)}
+  .pros b{color:#c9d0da;font-weight:600}
+  .evi{margin:9px 0 0;padding-top:8px;border-top:1px dashed var(--line);
+    font-size:12.5px;color:var(--faint)}
+  .evi b{color:#9aa3b2}
+  code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:#12151b;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#cfd6e2}
+  mark{background:rgba(240,180,90,.16);color:var(--warn);border-radius:3px;padding:0 4px}
+
+  .unlock{background:linear-gradient(180deg,rgba(192,132,252,.07),transparent);
+    border:1px solid #3a3350;border-radius:12px;padding:14px 16px;margin-top:12px}
+  .unlock h3{margin:0 0 8px;font-size:13.5px;color:var(--key);font-weight:650}
+  .unlock ul{margin:0;padding-left:18px;color:var(--dim);font-size:13.5px}
+  .unlock li{margin:4px 0}
+  .unlock b{color:#c9d0da}
+
+  .reply{margin-top:26px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .reply .hd{padding:10px 16px;background:var(--card2);border-bottom:1px solid var(--line);
+    font-size:13px;color:var(--dim);font-weight:600}
+  .reply pre{margin:0;padding:14px 16px;overflow:auto;color:#cfd6e2;
+    font:12.5px/1.75 ui-monospace,SFMono-Regular,Menlo,monospace}
+  footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
+    color:var(--faint);font-size:12px}
+  footer a{color:var(--accent);text-decoration:none}
+  @media (max-width:640px){ .pros{grid-template-columns:1fr} .top-in h1{font-size:14px} }
+</style>
+</head>
+<body>
+
+<header class="top"><div class="top-in">
+  <h1>爱生活设置面 · 决策问答</h1>
+  <span class="meta">map <a href="https://github.com/FeatherHunter/ilife/issues/671" style="color:var(--accent);text-decoration:none">#671</a> · 2026-09-17</span>
+  <span class="chips"><span class="chip">16 题</span><span class="chip key">3 题关键</span><span class="chip bad">1 题阻塞</span></span>
+</div></header>
+
+<div class="wrap">
+
+  <p class="lede">这 16 题是我在动实施票之前必须问你的。<mark>每题都给了推荐答案与利弊</mark>；同意的写「同意」，不同意的只改那一题即可。</p>
+
+  <h2 class="sec">一 · 范围与目的地</h2>
+
+  <div class="card">
+    <div class="q"><span class="n">Q1</span><p class="t">本图是交货还是只出规格？</p></div>
+    <p class="why"><b>前因：</b>map 上「三块面板做成成品」这句是我替你填的，你原话只是「要求<em>开发</em>…面板」。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(c) 交货，但每块面板到 95% 停住，你看过一遍才收尾</strong>（另两个选项：只出规格／交货不设闸门）。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>交付物真实可用；95% 的闸门挡住「看起来做完了被当成做完了」——这个仓里你的「肉眼不通过」打回批是真实发生过的。</div>
+      <div class="minus"><span class="h">弊</span>比只出规格慢；你要真的花时间看三块面板。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q2</span><p class="t">「只配置、不干活」的边界画在哪？</p></div>
+    <p class="why"><b>前因：</b>你第 3 条说设置页不做使用功能；可卡路里设置页现在印着 <code>卡路里 total 1234 · 今日 2026-09-17</code> 这段业务读数。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(c) 只留「配置有没有生效」的读数</strong>：生效的库路径／库文件在不在／版本行／值来自文件还是环境；删掉 <code>total</code> 这类业务数字。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>读数只剩一个用处——判断你刚配的值生效了没有，正好服务「配置」这件事。</div>
+      <div class="minus"><span class="h">弊</span>少一个「顺手看一眼今天吃了多少」的位置（那本该在边栏技能功能页）。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q3</span><p class="t">第 6 条（头脑风暴）的产物放哪？</p></div>
+    <p class="why"><b>前因：</b>你第 6 条要我头脑风暴面板还能加什么，但本图已经有 9 张票了。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(b) 本图只出清单，你点头后另开一张图</strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>守住你「要少不要庞大」的要求；头脑风暴大多数是「加新东西」，混进来会把本图边界冲掉。</div>
+      <div class="minus"><span class="h">弊</span>想加的东西要多等一轮。</div>
+    </div>
+  </div>
+
+  <h2 class="sec">二 · 装与更新（你第 1 条）</h2>
+
+  <div class="card is-key">
+    <div class="q"><span class="n">Q4</span><p class="t">装与更新落在哪一半？</p><span class="tag key">关键</span></div>
+    <p class="why"><b>前因：</b>缺席的页签现在只有一行可复制的命令文本，点不动；总管宿主半是空实现、客户端没有 RPC。更新包能给出「查状态／查新版／装更新」三个电话，但它一次只管一个包，六个单品要各自接线。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(a) 总管统管，外加 (d) 市场入口作补充</strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利 (a)</span>只改 <code>plugin-manager</code> 一个包，六单品零改动；<b>且不触发已冻结的「总管不 import 单品」断言</b>——那条正则只拦六个单品包名，<code>dsh-plugin-update</code> 不在集合里。</div>
+      <div class="minus"><span class="h">弊 (a)</span>总管要新加一条依赖并真的装上（它现在连 <code>dependencies</code> 字段都没有）。</div>
+      <div class="plus"><span class="h">利 (d)</span>能覆盖「别的插件」的更新，顺手给个「打开插件市场」。</div>
+      <div class="minus"><span class="h">弊 (d)</span>不能跳到某个包；桌面宿主下重启指引得写死「重启 DSH Desktop」。</div>
+    </div>
+    <p class="evi"><b>另两条为什么不推荐：</b>(b) 单品自管最贴边界字面，但记账／大厨／居家／作息四家连宿主电话表都没有，要先补；(c) 混合 <mark>只提示、不提供安装能力</mark>，只满足你要求的一半，不可单独选。</p>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q5</span><p class="t">检查更新的粗细？</p></div>
+    <p class="why"><b>前因：</b>更新包一次只管一个包，而爱生活总管要管七家（自己 ＋ 六个单品）。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(a) 一个按钮一次查七家</strong>，结果按家列出（另一选项：逐家各一颗按钮）。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>符合「总管」的身份；六张设置页不用各长一颗按钮。</div>
+      <div class="minus"><span class="h">弊</span>七次网络请求（可并发）＋ 要多设计一个汇总区。</div>
+    </div>
+  </div>
+
+  <div class="card is-bad">
+    <div class="q"><span class="n">Q14</span><p class="t">大厨这一格装不上，怎么办？</p><span class="tag bad">阻塞级</span></div>
+    <p class="why"><b>前因：</b>我自己复验过——<code>npm view skill-chef versions</code> 只有 <code>["0.1.0"]</code>，而 <code>dsh-chef@0.2.0</code> 精确 pin 了 <code>skill-chef: "0.2.0"</code>。所以「大厨」这格今天<mark>从 npm 装一定失败</mark>，你第 1 条在这格上是卡着的。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(b) ＋ (c)：面板诚实报错（人话原因 ＋ 可复制手工命令），真正修好走发版窗口、另开票</strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>守住本图边界；「装不上要说人话」本来就在「缺席即装」那张票的验收里。</div>
+      <div class="minus"><span class="h">弊</span>修好之前，「大厨」格一直装不上。</div>
+    </div>
+    <p class="evi"><b>另一条路 (a)：</b>本图连发版一起做（把 <code>skill-chef@0.2.0</code> 发上 npm，或把 pin 降回已发布的 0.1.0 再发一版 <code>dsh-chef</code>）——修得快，但发版动作会把整张图拖住。</p>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q13</span><p class="t">版本行显示几个版本？</p></div>
+    <p class="why"><b>前因：</b>截图里每页底部是 <code>dsh-memo-ilife 0.2.0 · skill-memo-ilife 0.2.0</code> 两个版本；但技能包是插件包<b>精确 pin 的传递依赖</b>，两者不能各自升级。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(a) 照现状显示两个</strong>；更好的是 <strong>(c) 技能那行加一句「随插件」标注</strong>。同时定死一条：检查更新只查插件包。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>两个版本号能帮你判断「技能内容对不对」，是真实信息。</div>
+      <div class="minus"><span class="h">弊</span>不标注的话，用户会以为这两个能分开升。</div>
+    </div>
+  </div>
+
+  <h2 class="sec">三 · 配置面（你第 2、3 条）</h2>
+
+  <div class="card is-key">
+    <div class="q"><span class="n">Q16</span><p class="t">配置存在哪一层？</p><span class="tag key">关键</span></div>
+    <p class="why"><b>前因：</b>调查查清了：DSH 只覆写 profile 目录里它自己那几个文件，<b>其余文件 DSH 不读不写不删</b>；官方另有 <code>ctx.settings</code>（落 <code>$DSH_HOME/settings.yaml</code>）与 <code>ctx.storage</code>；但技能<b>既被面板调、也被模型在 shell 里直接调</b>。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(c) <code>$DSH_HOME/ilife/</code>，六个技能各一个 JSON</strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>唯一真相是<b>技能自己也能读的普通文件</b>，两条调用路都拿得到；<code>SKILLS_DB_PATH</code> 与训记密钥本质是<b>机器级</b>的东西，切 profile 不丢；与 <code>$DSH_HOME/integrations/&lt;插件名&gt;/</code> 是同族惯例，不发明新地方。</div>
+      <div class="minus"><span class="h">弊</span>要自己处理并发写与原子替换，不享受 DSH 官方检查点回滚。</div>
+    </div>
+    <p class="evi"><b>为什么不选官方那两个：</b><code>ctx.settings</code>／<code>ctx.storage</code> 是 DSH 自己的文件，<mark>技能 CLI 自己读不了</mark>——走它们只有「面板调用」那条路拿得到配置。</p>
+  </div>
+
+  <div class="card is-key">
+    <div class="q"><span class="n">Q6</span><p class="t">配置的读取优先级？</p><span class="tag key">关键</span></div>
+    <p class="why"><b>前因：</b>已关的 #55 报的正是「终端里设了 <code>SKILLS_DB_PATH</code>，面板依然报缺」——终端的环境变量活在那个终端进程里，由快捷方式启动的 Desktop 进程继承不到。这就是你要的这个面板要解的根问题。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(a) 配置文件 ＞ 进程环境变量 ＞ 报错</strong>（面板里配的说了算），<b>但留一个例外清单</b>：五个测试哨兵 <code>CALORIE_FORCE_PROD</code>／<code>HOME_FORCE_PROD</code>／<code>CHEF_FORCE_PROD</code>／<code>BILL_FORCE_PROD</code>／<code>SCHEDULE_FORCE_PROD</code> 永远环境优先，面板不许写它们。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>面板说了算，正好解掉 #55。</div>
+      <div class="minus"><span class="h">弊</span>想在终端临时盖一个值做调试时，得去改文件。</div>
+    </div>
+    <p class="evi"><b>哨兵为什么必须例外：</b>那几个变量一旦被设成 1，<mark>生产库会被当测试库写</mark>——这是数据安全，不是偏好。</p>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q7</span><p class="t">配置什么时候生效？</p></div>
+    <p class="why"><b>前因：</b>面板与技能之间每次调用现 spawn，没有任何长连接，所以「重启」是白让用户等。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(a) 保存即生效，不用重启宿主</strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>改完马上能验；少一次无谓重启。</div>
+      <div class="minus"><span class="h">弊</span>无——但有一条硬前提，见下。</div>
+    </div>
+    <p class="evi"><b>硬前提：</b>训记 KEY 现在写的是用户级环境，只对那一次子进程生效、对已运行的宿主无效；而且官方 <code>scrubbedParentEnv()</code> 会<b>剔除名字里带 <code>KEY</code>／<code>PASSWORD</code>／<code>SECRET</code>／<code>TOKEN</code> 的变量</b>——所以训记 KEY <mark>必须改走 spawn 时显式并入 env</mark>，才谈得上「保存即生效」。</p>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q8</span><p class="t">下面这些逐项进不进设置页？</p></div>
+    <p class="why"><b>前因：</b>调查列出卡路里 11 项、记账 5 项「适合在设置页配」；另有一批有争议的项要逐条裁。</p>
+    <div class="rec"><span class="mk">➡</span><div><strong>进（11 项）</strong>：库文件名、HTML 产物目录、照片目录＋GIF 子目录、训记 KEY、训记接口地址与限频窗口、训记三份状态文件落点、外部调用限时与回写天数、记账缺省账户／账本／币种／分类树、备份目录；<code>SKILLS_DB_PATH</code> 见 Q9。<br><strong>不进（2 类）</strong>：<code>CALORIE_TODAY</code>／<code>BILL_TODAY</code>（钉日期的测试变量，我们做基线要用）；档案／目标／预算／训练计划的具体数值（那是<em>数据</em>，技能功能页管）。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>一屏能配完；把「库文件名／HTML 目录／限时／回写天数」收进一条默认收起的<b>「高级」折叠组</b>，首页不会一屏全是输入框。</div>
+      <div class="minus"><span class="h">弊</span>训记那三项会让卡路里页变长，必须分组，否则页面会显得堆。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q9</span><p class="t"><code>SKILLS_DB_PATH</code> 这种全局值放哪一层？</p></div>
+    <p class="why"><b>前因：</b>六个技能读的是<b>同一个</b>环境变量；而总管那张卡现在只有一行「总开关」，正缺一块总设置区。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(a) 在总管面板加一个「总设置区」，放一份，六个技能共用</strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>配一次六家一致；正好补上总管卡缺的那块。技能页仍可<b>只读显示</b>它的值从哪来。</div>
+      <div class="minus"><span class="h">弊</span>分开放的话你会配六遍、还可能配不一致，然后报出「memo DB 目录不存在」这种错——这就是要避免的。</div>
+    </div>
+  </div>
+
+  <h2 class="sec">四 · 面板外壳与验收（你第 4、5 条）</h2>
+
+  <div class="card">
+    <div class="q"><span class="n">Q10</span><p class="t">右上角的星和气泡指向哪个仓？</p></div>
+    <p class="why"><b>前因：</b>你给的第二张图是 deck 界面的截图，那家的星指向 deck 自己的仓；但这一块是<b>爱生活自己的面板</b>。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(a) 本仓 <code>FeatherHunter/ilife</code></strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>反馈落在对的仓，issue 直接进你这个需求池；「引流到其他技能」是底部那张卡的事。</div>
+      <div class="minus"><span class="h">弊</span>你若想让星都集中到 deck（旗舰仓），就得选 (b)。<mark>这一条我拿不准你的真实意图，请明示。</mark></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q11</span><p class="t">底部引流卡的四行数据从哪来？</p></div>
+    <p class="why"><b>前因：</b>四行内容要照第三张图；四个仓库地址已查实，都是 <code>github.com/FeatherHunter/…</code>。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(c) 写死，但集中在 <code>nav.ts</code> 一张表里</strong>（改文案不碰组件）。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>离线可用、少一个失败面、改一处即改四行。</div>
+      <div class="minus"><span class="h">弊</span>仍要发版才能改文案（远端拉可以随时改，但会多一个联网失败面）。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q15</span><p class="t">「34 款配色」照抄还是改数？</p></div>
+    <p class="why"><b>前因：</b>截图写「34 款长时间编程护眼配色」，但那个包现已到 <b>38 款</b>。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(c) 不写数字</strong>（「多款长时间编程护眼配色，一键换上」）。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>数字还会继续变，不写就不过期；写错最伤推荐位的可信度。</div>
+      <div class="minus"><span class="h">弊</span>与截图不完全逐字一致。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="q"><span class="n">Q12</span><p class="t">谁跑验收读数？</p></div>
+    <p class="why"><b>前因：</b>这个仓有「用户亲自在全新空白 session 跑 ＋ 肉眼终审」的先例，也有 <code>vision_router</code> 逐页打分 ≥90 的尺。</p>
+    <div class="rec"><span class="mk">➡</span><div>选 <strong>(c) 你亲自跑 ＋ 机器视觉评分 ≥90</strong>。</div></div>
+    <div class="pros">
+      <div class="plus"><span class="h">利</span>你不用只凭感觉说「不行」，有分数兜底。</div>
+      <div class="minus"><span class="h">弊</span>你要真的跑一遍（三块面板）。</div>
+    </div>
+  </div>
+
+  <div class="unlock">
+    <h3>答完会解锁什么</h3>
+    <ul>
+      <li><b>Q16 一定，</b>就轮到第二轮那题：配置怎么同时喂给「面板 spawn 的那条路」和「模型直接在 shell 里调技能 CLI 的那条路」——官方口子是 <code>ctx.shellEnv.register</code>，要不要一起用。</li>
+      <li><b>Q4 一定，</b>就轮到我问缺席卡长什么样（一句人话＋「装上」按钮，还是以复制命令为主）以及装完要不要提示重启。</li>
+      <li><b>Q3 一点头，</b>头脑风暴的清单我会单独出一份，不塞进这张图。</li>
+    </ul>
+  </div>
+
+  <div class="reply">
+    <div class="hd">回我时可以直接套这段（改哪条写哪条，其余写「同意」）</div>
+<pre>Q1  同意 / 改：
+Q2  同意 / 改：
+Q3  同意 / 改：
+Q4  同意 / 改：
+Q5  同意 / 改：
+Q6  同意 / 改：
+Q7  同意 / 改：
+Q8  同意 / 改：
+Q9  同意 / 改：
+Q10 同意 / 改：      ← 这条我拿不准你的意图，请一定回
+Q11 同意 / 改：
+Q12 同意 / 改：
+Q13 同意 / 改：
+Q14 同意 / 改：
+Q15 同意 / 改：
+Q16 同意 / 改：</pre>
+  </div>
+
+  <footer>
+    map <a href="https://github.com/FeatherHunter/ilife/issues/671">#671 爱生活设置面：总管、卡路里、记账三块配置面板做成成品</a>　·　
+    依据：<code>docs/research/</code> 下四份（调查 #672／#673 ＋ 事实 t674／t675）　·　
+    三题关键：<b>Q4 装与更新落点</b>、<b>Q6 配置优先级</b>、<b>Q16 配置落点</b>
+  </footer>
+
+</div>
+</body>
+</html>
