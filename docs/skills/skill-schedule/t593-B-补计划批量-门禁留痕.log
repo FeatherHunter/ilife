@@ -1,0 +1,24 @@
+﻿START ticket=599 runId=8da4758d-08fc-4ebb-af0a-2069fe7e4726 cmd="node node_modules/typescript/bin/tsc -b packages/skill-schedule" waitedMs=0 pid=56428 at=2026-09-17T02:23:44.687Z
+RUN ticket=599 runId=8da4758d-08fc-4ebb-af0a-2069fe7e4726 cmd="node node_modules/typescript/bin/tsc -b packages/skill-schedule" waitedMs=0 exit=0 pid=56428 at=2026-09-17T02:23:45.402Z
+START ticket=599 runId=ced00219-3e28-469a-81d7-c7ace0aa2f56 cmd="node node_modules/typescript/bin/tsc -b packages/skill-schedule" waitedMs=0 pid=31044 at=2026-09-17T02:23:50.359Z
+RUN ticket=599 runId=ced00219-3e28-469a-81d7-c7ace0aa2f56 cmd="node node_modules/typescript/bin/tsc -b packages/skill-schedule" waitedMs=0 exit=0 pid=31044 at=2026-09-17T02:23:50.468Z
+START ticket=599 runId=fad0ca17-0f3b-4062-b860-422878f42ba4 cmd="node packages/skill-schedule/scripts/build-help.mjs" waitedMs=0 pid=43712 at=2026-09-17T02:23:53.128Z
+RUN ticket=599 runId=fad0ca17-0f3b-4062-b860-422878f42ba4 cmd="node packages/skill-schedule/scripts/build-help.mjs" waitedMs=0 exit=0 pid=43712 at=2026-09-17T02:23:53.208Z
+START ticket=599 runId=5b935295-f631-40db-8ba2-33223698db74 cmd="node --test packages/skill-schedule/test/plan-ensure-batch-599.test.mjs" waitedMs=1 pid=2512 at=2026-09-17T02:24:30.946Z
+RUN ticket=599 runId=5b935295-f631-40db-8ba2-33223698db74 cmd="node --test packages/skill-schedule/test/plan-ensure-batch-599.test.mjs" waitedMs=1 exit=0 pid=2512 at=2026-09-17T02:24:43.615Z
+START ticket=599 runId=bcd7a68f-b598-417e-abe7-16fd8b8459fc cmd="node --test packages/skill-schedule/test/plan-feishu-660.test.mjs packages/skill-schedule/test/plan-overview-660.test.mjs packages/skill-schedule/test/cli.test.mjs packages/skill-schedule/test/skill.test.mjs packages/skill-schedule/test/policy.test.mjs" waitedMs=0 pid=40924 at=2026-09-17T02:24:48.095Z
+RUN ticket=599 runId=bcd7a68f-b598-417e-abe7-16fd8b8459fc cmd="node --test packages/skill-schedule/test/plan-feishu-660.test.mjs packages/skill-schedule/test/plan-overview-660.test.mjs packages/skill-schedule/test/cli.test.mjs packages/skill-schedule/test/skill.test.mjs packages/skill-schedule/test/policy.test.mjs" waitedMs=0 exit=0 pid=40924 at=2026-09-17T02:25:00.072Z
+START ticket=599 runId=bc001d50-1fe7-4634-87bb-fa0a706b6278 cmd="pnpm gen:check" waitedMs=1 pid=50216 at=2026-09-17T02:25:03.439Z
+RUN ticket=599 runId=bc001d50-1fe7-4634-87bb-fa0a706b6278 cmd="pnpm gen:check" waitedMs=1 exit=0 pid=50216 at=2026-09-17T02:25:04.741Z
+START ticket=599 runId=d6b1b228-ff81-454a-abe4-2287ecd951cb cmd="node .scratch/t599/mutate-599.mjs" waitedMs=0 pid=70696 at=2026-09-17T02:25:19.643Z
+RUN ticket=599 runId=d6b1b228-ff81-454a-abe4-2287ecd951cb cmd="node .scratch/t599/mutate-599.mjs" waitedMs=0 exit=1 pid=70696 at=2026-09-17T02:25:45.298Z
+START ticket=599 runId=96242abf-71e9-420e-ace7-92507a0f3638 cmd="node --test packages/skill-schedule/test/plan-ensure-batch-599.test.mjs" waitedMs=0 pid=39724 at=2026-09-17T02:25:56.526Z
+RUN ticket=599 runId=96242abf-71e9-420e-ace7-92507a0f3638 cmd="node --test packages/skill-schedule/test/plan-ensure-batch-599.test.mjs" waitedMs=0 exit=1 pid=39724 at=2026-09-17T02:26:09.017Z
+START ticket=599 runId=3d140aef-b507-4909-b59f-0c90ff40d33d cmd="node node_modules/typescript/bin/tsc -b --force packages/skill-schedule" waitedMs=0 pid=32960 at=2026-09-17T02:26:21.725Z
+RUN ticket=599 runId=3d140aef-b507-4909-b59f-0c90ff40d33d cmd="node node_modules/typescript/bin/tsc -b --force packages/skill-schedule" waitedMs=0 exit=0 pid=32960 at=2026-09-17T02:26:22.603Z
+START ticket=599 runId=f0bcdb83-2c75-45cf-99cc-12284c84eb04 cmd="node --test packages/skill-schedule/test/plan-ensure-batch-599.test.mjs" waitedMs=0 pid=42880 at=2026-09-17T02:26:26.201Z
+RUN ticket=599 runId=f0bcdb83-2c75-45cf-99cc-12284c84eb04 cmd="node --test packages/skill-schedule/test/plan-ensure-batch-599.test.mjs" waitedMs=0 exit=0 pid=42880 at=2026-09-17T02:26:39.432Z
+START ticket=599 runId=b4e43977-ef79-47a7-8206-e3c8e7a0b917 cmd="node .scratch/t599/mutate-599.mjs" waitedMs=0 pid=36668 at=2026-09-17T02:26:47.548Z
+RUN ticket=599 runId=b4e43977-ef79-47a7-8206-e3c8e7a0b917 cmd="node .scratch/t599/mutate-599.mjs" waitedMs=0 exit=0 pid=36668 at=2026-09-17T02:27:14.773Z
+START ticket=599 runId=13295cf2-f8fd-46c7-af52-025a8c8a7e88 cmd="node --test packages/skill-schedule/test/*.test.mjs" waitedMs=0 pid=62004 at=2026-09-17T02:27:36.992Z
+RUN ticket=599 runId=13295cf2-f8fd-46c7-af52-025a8c8a7e88 cmd="node --test packages/skill-schedule/test/*.test.mjs" waitedMs=0 exit=0 pid=62004 at=2026-09-17T02:27:50.578Z
