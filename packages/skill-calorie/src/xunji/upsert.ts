@@ -10,34 +10,23 @@
  * - 重试 `max_retries=2`（老 `:135`），`auth／vip／validation` 不重试（见 `retry.ts`）；
  * - 响应 `gzip` 由运行时自动解（Node 全局 fetch 缺省解压；老 `:112-114` 手工解是 urllib 才要的）。
  *
- * KEY 口径（只读参照 `auth.py:35-55`；**实现归 #610 的 `key.ts`**，本件只给缺省读法＋注入缝）：
+ * KEY 口径（只读参照 `auth.py:35-55`；**定义住 `key.ts`**，本件只薄转出保既有引用不断）：
  * - 缺省读环境变量：`XUNJI_TRAINS_KEY` 优先，空时回退 `XUNJI_API_KEY`（老 `get_key` 同序）；
- * - 调用方可显式传 `key` 或换 `readKey`（测试挡板从这里进；真 KEY 永不进仓）；
- * - `#610` 落 `key.ts` 后，本件缺省读法改走能力门（见证据件偏离清单）。
+ * - 调用方可显式传 `key` 或换 `readKey`（测试挡板从这里进；真 KEY 永不进仓）。
  */
 
 import { randomUUID } from 'node:crypto';
 import { buildUpsertPayload } from './request.js';
 import type { XunjiResItem } from './request.js';
+import { XUNJI_KEY_ENV, readKeyFromEnv } from './key.js';
 import { classifyStatusBody, classifyThrown, retryWithBackoff, softFailureOf } from './retry.js';
 import type { XunjiCallOutcome, XunjiFailure } from './retry.js';
 
+/** KEY 两名＋缺省读法薄转出（定义见 `key.ts`；`fetch.ts` 经由本件不断）。 */
+export { XUNJI_KEY_ENV, readKeyFromEnv };
+
 /** upsert 接口地址（老 `upsert.py:53-54` 同值；全模块只此一处）。 */
 export const XUNJI_UPSERT_ENDPOINT = 'https://trains.xunjiapp.cn/api_upsert_trains_for_llm_v2';
-
-/** KEY 环境变量两名（老 `auth.py:35-36` 同名同序；读取实现归 #610，本件只读）。 */
-export const XUNJI_KEY_ENV = {
-  primary: 'XUNJI_TRAINS_KEY',
-  legacy: 'XUNJI_API_KEY',
-} as const;
-
-/** 缺省 KEY 读法（老 `get_key`，`auth.py:47-55`；空串当没配；回写链 `fetch.ts` 共用此口径）。 */
-export function readKeyFromEnv(): string | null {
-  const primary = (process.env[XUNJI_KEY_ENV.primary] ?? '').trim();
-  if (primary !== '') return primary;
-  const legacy = (process.env[XUNJI_KEY_ENV.legacy] ?? '').trim();
-  return legacy !== '' ? legacy : null;
-}
 
 /** 最小传输面（只取“状态＋正文”；全局 fetch 与测试挡板都包得住）。 */
 export interface UpsertTransport {

@@ -94,7 +94,7 @@ describe('#607 推送链', () => {
     );
   });
 
-  it('声明翻位：upsert／push-plan 已实现且无归属票，其余三条仍点名（#608 落 fetch／backfill 后随动）', () => {
+  it('声明翻位：upsert／push-plan 已实现且无归属票，其余两条仍点名（#610 落 key 后随动）', () => {
     const byName = Object.fromEntries(mod.XUNJI_SUBCOMMANDS.map((s) => [s.name, s]));
     for (const n of ['upsert', 'push-plan']) {
       assert.equal(byName[n].state, 'implemented', n);
@@ -103,7 +103,7 @@ describe('#607 推送链', () => {
     const declared = Object.fromEntries(
       mod.XUNJI_SUBCOMMANDS.filter((s) => s.state === 'declared').map((s) => [s.name, s.ownerTicket]),
     );
-    assert.deepEqual(declared, { 'overlay-plan': '#610', key: '#610', 'run-sync': '#610' });
+    assert.deepEqual(declared, { 'overlay-plan': '#610', 'run-sync': '#610' });
   });
 
   it('① 请求形状逐字段：POST 地址／头／包体五键／res[] 原样（不转时间戳／不校验动作库）', async () => {

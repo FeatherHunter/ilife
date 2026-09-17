@@ -4,8 +4,8 @@
  * （子命令／参数／退出码／用法示例逐条对照）＋ `#595` 契约证据件。
  *
  * 本件只放**声明**：每条的名字／一句话职责／用法／参数／会走的退出码／用法示例／实现状态／归属票。
- * 实现住各自的家（`verify` 见 #606、`upsert`／`push-plan` 见 #607、`fetch`／`backfill` 见 #608；
- * 其余三条按票面只留位，调用即明确拒绝，见 `run.ts`）。
+ * 实现住各自的家（`verify` 见 #606、`upsert`／`push-plan` 见 #607、`fetch`／`backfill` 见 #608、
+ * `key` 见 #610；其余两条按票面只留位，调用即明确拒绝，见 `run.ts`）。
  *
  * 为什么这件不叫 `commands.ts`：`scripts/gen-cli.mjs:80-104` 把 `src/<能力>/commands.ts` 当**卡路里命令**
  * 的权威声明读（六字段：kind／key／shape／title／example／run），且根测试 `test/calorie-routing-81.test.mjs:122-126`
@@ -148,10 +148,10 @@ export const XUNJI_SUBCOMMANDS: readonly XunjiSubcommand[] = [
       { flag: '<KEY 值>', value: 'KEY 值', required: false, note: '只有 `key set` 要给（不回显、不进仓）' },
       { flag: '--legacy', value: '', required: false, note: '操作兼容名 XUNJI_API_KEY（默认操作 XUNJI_TRAINS_KEY）' },
     ],
-    exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.error],
+    exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.error, XUNJI_EXIT_CODES.auth],
     example: 'python scripts/xunji_bridge.py key status',
-    state: 'declared',
-    ownerTicket: '#610',
+    state: 'implemented',
+    ownerTicket: null,
   },
   {
     name: 'run-sync',

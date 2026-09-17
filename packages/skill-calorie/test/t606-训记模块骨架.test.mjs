@@ -7,6 +7,7 @@
  * #607 随动：`upsert`／`push-plan` 已实现（state 翻位），“未实现的七条”收成五条，
  * 分派改异步（推送链调网，调用方一律 await）。
  * #608 随动：`fetch`／`backfill` 已实现，“未实现的五条”收成三条（只剩 #610 的三条）。
+ * #610 随动：`key` 已实现，“未实现的三条”收成两条（只剩 overlay-plan／run-sync）。
  */
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,14 +25,13 @@ const CLI = join(PKG, 'dist', 'xunji', 'cli.js');
 
 /** 老 8 条子命令（逐字，顺序照老 CLI 的装配顺序）。 */
 const EIGHT = ['verify', 'fetch', 'upsert', 'push-plan', 'overlay-plan', 'backfill', 'key', 'run-sync'];
-/** 未实现只剩三条（#610）；fetch／backfill 归 #608（已实现，见 IMPLEMENTED）。 */
+/** 未实现只剩两条（#610 的 overlay-plan／run-sync；key 已实现）；fetch／backfill 归 #608（已实现，见 IMPLEMENTED）。 */
 const OWNERS = {
   'overlay-plan': '#610',
-  key: '#610',
   'run-sync': '#610',
 };
-/** 已实现的（verify #606；upsert／push-plan #607；fetch／backfill #608）。 */
-const IMPLEMENTED = ['verify', 'upsert', 'push-plan', 'fetch', 'backfill'];
+/** 已实现的（verify #606；upsert／push-plan #607；fetch／backfill #608；key #610）。 */
+const IMPLEMENTED = ['verify', 'upsert', 'push-plan', 'fetch', 'backfill', 'key'];
 
 const tmp = (name) => join(mkdtempSync(join(tmpdir(), 't606-')), name);
 
@@ -183,10 +183,9 @@ describe('#606 训记模块骨架', () => {
     assert.match(verifyNoName.stderr, /缺参数：<动作名>/);
   });
 
-  it('未实现的三条：明确拒绝（非 0 ＋ 点名归属票），不吐任何成功形态的读数', () => {
+  it('未实现的两条：明确拒绝（非 0 ＋ 点名归属票），不吐任何成功形态的读数', () => {
     const argv = {
       'overlay-plan': ['overlay-plan', '--date', '2026-07-13'],
-      key: ['key', 'status'],
       'run-sync': ['run-sync', '--days', '2'],
     };
     for (const [name, args] of Object.entries(argv)) {

@@ -126,7 +126,7 @@ describe('#608 回写链', () => {
     );
   });
 
-  it('声明翻位：fetch／backfill 已实现且无归属票，其余三条仍点名 #610', () => {
+  it('声明翻位：fetch／backfill 已实现且无归属票，其余两条仍点名 #610', () => {
     const byName = Object.fromEntries(mod.XUNJI_SUBCOMMANDS.map((s) => [s.name, s]));
     for (const n of ['fetch', 'backfill']) {
       assert.equal(byName[n].state, 'implemented', n);
@@ -135,7 +135,7 @@ describe('#608 回写链', () => {
     const declared = Object.fromEntries(
       mod.XUNJI_SUBCOMMANDS.filter((s) => s.state === 'declared').map((s) => [s.name, s.ownerTicket]),
     );
-    assert.deepEqual(declared, { 'overlay-plan': '#610', key: '#610', 'run-sync': '#610' });
+    assert.deepEqual(declared, { 'overlay-plan': '#610', 'run-sync': '#610' });
   });
 
   it('行映射：只收 done 组；范围次数取最大；lbs 换算；热量＝容量×0.08；分类推断', () => {
