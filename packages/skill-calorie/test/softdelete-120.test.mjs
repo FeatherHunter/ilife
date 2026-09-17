@@ -166,7 +166,8 @@ test('120 · analysis 11 处查询逐处排除软删行（每处唯一可观测�
   assert.equal(after.dietDef, 0, 'diet.ts:162 · dietDeficitAnalysis.avgExerciseBurn');
   assert.equal(after.cross, '其中力量消耗 0 卡、有氧消耗 0 卡', 'cross.ts:108,109 · 力量/有氧分层');
   assert.equal(after.rows, 0, 'anomaly/common.ts:84 · exerciseRows');
-  assert.equal(after.c5, '数据不足(需至少 2 个月有运动记录)', 'weightCompare3.ts:68 · scenarioC5 只剩 1 个月');
+  /* #481 起 c5 缺数改人话（含实际月数，种子固定只剩 1 个月故可钉死）。 */
+  assert.equal(after.c5, '至少要有两个月的运动记录才能比（当前只有 1 个月）', 'weightCompare3.ts:85 · scenarioC5 只剩 1 个月');
 });
 
 test('120 · 过度过滤护栏：is_deleted 为 NULL 的活行仍计入（谓词必须 COALESCE）', () => {

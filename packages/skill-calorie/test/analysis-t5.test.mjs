@@ -165,11 +165,13 @@ test('weightCompare：17 场景分发', () => {
   assert.equal(runScenario(db, 'b1', {}, today).segA.label, '目标体重');
   assert.equal(runScenario(db, 'd4', {}, today).segA.label, '工作日');
   assert.throws(() => runScenario(db, 'zz', {}, today), /未知场景/);
-  assert.throws(() => runScenario(db, 'a2', {}, today), /startA/);
+  assert.throws(() => runScenario(db, 'a2', {}, today), /自定义两段时间需要四个月日期/);
   const e3 = runScenario(db, 'e3', { delta: 5 }, today);
-  assert.equal(e3.segA.label, '减重 5kg 那天');
-  assert.ok(e3.extraRows.some((r) => r.label === '体重轨迹' && Array.isArray(r.spark)));
-  assert.throws(() => runScenario(db, 'e3', { delta: 50 }, today), /未达成/);
+  /* e3 段标签带单位与空格（`减重 5 kg 那天`；唤醒词侧紧凑形 `减重 5kg` 是输入面，不管）。 */
+  assert.equal(e3.segA.label, '减重 5 kg 那天');
+  assert.ok(e3.extraRows.some((r) => r.label === '体重变化曲线' && Array.isArray(r.spark)));
+  /* #481 起 e3 未达成改人话（含已减读数，不再是裸 `未达成`）。 */
+  assert.throws(() => runScenario(db, 'e3', { delta: 50 }, today), /还没减到 50 kg/);
   db.close();
 });
 
@@ -178,14 +180,16 @@ test('weightCompare：平台期/极端月/同期', () => {
   for (let i = 1; i <= 14; i++) db.prepare('INSERT INTO weight_log (date, weight_kg) VALUES (?, 80)').run('2026-08-' + String(i).padStart(2, '0'));
   db.prepare("INSERT INTO weight_log (date, weight_kg) VALUES ('2026-09-01', 78)").run();
   const b8 = runScenario(db, 'b8');
-  assert.equal(b8.segA.label, '平台期首日');
-  assert.ok(b8.extraRows.some((r) => r.label === '第几次平台期'));
+  /* #481 缺陷 12：段标签行话 `平台期首日` ⇒ 人话 `平台期第一天`（唤醒词侧两者仍互为别名）。 */
+  assert.equal(b8.segA.label, '平台期第一天');
+  assert.ok(b8.extraRows.some((r) => r.label === '这是第几次平台期'));
   db.prepare("INSERT INTO exercise_log (date, exercise_type, calories_burned) VALUES ('2026-07-05', '跑步', 1000)").run();
   db.prepare("INSERT INTO exercise_log (date, exercise_type, calories_burned) VALUES ('2026-07-06', '跑步', 1000)").run();
   db.prepare("INSERT INTO exercise_log (date, exercise_type, calories_burned) VALUES ('2026-08-05', '跑步', 100)").run();
   for (let i = 1; i <= 10; i++) db.prepare('INSERT INTO weight_log (date, weight_kg) VALUES (?, ?)').run('2026-07-' + String(i).padStart(2, '0'), 82 - i * 0.1);
   const c5 = runScenario(db, 'c5');
-  assert.ok(c5.extraRows.some((r) => r.label === '睡眠数据' && r.value.includes('缺失')));
+  /* #481 起睡眠行去行话（`睡眠数据` ⇒ `睡眠`；默认不读外部库，值恒 `没有记录`）。 */
+  assert.ok(c5.extraRows.some((r) => r.label === '睡眠' && r.value === '没有记录'));
   db.prepare("INSERT INTO weight_log (date, weight_kg) VALUES ('2025-09-03', 85)").run();
   const a6 = runScenario(db, 'a6', {}, '2026-09-03');
   assert.equal(a6.tolerance.hit, true);
@@ -229,7 +233,8 @@ test('simulate：外推+模拟+摄入', () => {
   assert.ok(t.eta !== undefined);
   const sc = weightSimCut(s, 300, 'T');
   assert.equal(sc.degraded, false);
-  assert.equal(sc.forecast.points.length, 13);
+  /* #455 路线 A：90 天非整周补末点 ⇒ 1（当天）＋ 12（整周）＋ 1（第 90 天）＝ 14。 */
+  assert.equal(sc.forecast.points.length, 14);
   const g = calorieGoalEta(s, 'T');
   assert.equal(g.degraded, false);
   const de = calorieDeficitEta(s, 'T');

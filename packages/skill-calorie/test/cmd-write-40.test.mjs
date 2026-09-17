@@ -136,7 +136,8 @@ test('体重记/改/删/批量 + 缺身高仍记（C5 #43）', () => {
   assert.equal(l.data.receipt.recordId, 2);
   assert.match(l.data.message, /70.2 kg/);
   const u = runWrite(dir, 'calorie.weight.update', { id: 2, kg: 70 });
-  assert.match(u.data.message, /70.2→70 kg/);
+  /* #340 起回执改前→改后带单位与空格（全仓同形 `70.2 kg → 70 kg`）；点转义（`70x2` 不得蒙混）。 */
+  assert.match(u.data.message, /70\.2 kg → 70 kg/);
   const ud = runWrite(dir, 'calorie.weight.update', { date: '2026-09-06', note: '晨起' });
   assert.match(ud.data.message, /1 条/);
   const bt = runWrite(dir, 'calorie.weight.batch', { items: [{ date: '2026-09-04', kg: 70.8 }, { date: '2026-09-05', kg: 70.5 }, { date: 'xx', kg: 1 }] });
