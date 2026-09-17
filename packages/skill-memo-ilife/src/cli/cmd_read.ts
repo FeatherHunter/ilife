@@ -6,17 +6,30 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { Envelope } from 'base-link-core';
 import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
-import { openMemoDb, listNotes, getNote, searchNotes, updateNote, MemoFetchError } from '../fetch/index.js';
-import { normalizeTop, normalizeSub, normalizeRemindAt, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
+import {
+  openMemoDb,
+  closeMemoDb,
+  listNotes,
+  getNote,
+  searchNotes,
+  abandonReminder,
+  checkDueReminders,
+  listCompletedReminders,
+  listReminderRows,
+  countReminderRowsOfNote,
+  MemoFetchError,
+} from '../fetch/index.js';
+import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
 // #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
-import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes } from '../wish/index.js';
+// #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）。
+import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish } from '../wish/index.js';
 import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
 import { HELP_HTML_DIR_NAME, HELP_FILE_STEM, LOOKUP_FILE_STEM } from '../help/manifest.js';
 import { MemoPolicyError } from '../fetch/errors.js';
-import type { MemoDb, MemoNote } from '../fetch/db.js';
+import type { MemoDb, NotePatch } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -105,10 +118,10 @@ function deliverMemoHtml(input: {
   });
 }
 
-/** 初始化状态：memo 库**目录**存在＝已初始化（票 6 V4）。只 `stat`、不建目录；
- *  判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
+/** 初始化状态：memo 老库文件存在＝已初始化（老 `_help_initialized`，新仓直连老库）。只 `stat`、
+ *  不建文件；判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
 function helpInitialized(dbPath: string): boolean {
-  try { return existsSync(join(dbPath, 'memo')); } catch { return false; }
+  try { return existsSync(join(dbPath, 'memo.db')); } catch { return false; }
 }
 
 /** 速查支的 `list` 载荷：一行一唤醒词（短语／key／形状／调用形／一句话），全从 `WAKE_TABLE` 派生。 */
@@ -165,12 +178,9 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
 interface DispatchOut { readonly data: unknown; readonly exit: number }
 function ok(data: unknown): DispatchOut { return { data, exit: 0 }; }
 
-function asIds(value: unknown): string[] {
-  if (!Array.isArray(value) || value.length === 0) fail(2, 'ids 须为非空字符串数组');
-  return value.map((v) => {
-    if (typeof v !== 'string' || v.length === 0) fail(2, 'ids 里每一项都须是非空字符串');
-    return v;
-  });
+function asIds(value: unknown): number[] {
+  if (!Array.isArray(value) || value.length === 0) fail(2, 'ids 须为非空数组');
+  return value.map((v) => needId(v, 'ids'));
 }
 
 function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): DispatchOut {
@@ -182,13 +192,23 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
       const hit = items.filter((n) => dueMatches(n, params));
       return ok({ items: hit, total: hit.length });
     }
-    case 'memo.detail': return ok({ item: getNote(db, needStr(params, 'id')) });
+    case 'memo.detail': return ok({ item: getNote(db, needId(params.id, '详情')) });
     case 'memo.create': {
       const c = crudCreate(params);
       const top = normalizeTop(params.category);
       const sub = normalizeSub(params.sub);
-      const remindAt = params.remindAt !== undefined ? normalizeRemindAt(params.remindAt) : null;
-      const r = ensureWish(db, { title: c.title, body: c.body, category: top, sub, remindAt, due: params.due });
+      const media = params.media !== undefined ? normalizeMediaPath(params.media) : null;
+      const r = ensureWish(db, {
+        title: c.title,
+        body: c.body,
+        category: top,
+        sub,
+        media,
+        remindAt: params.remindAt,
+        repeatType: params.repeatType,
+        repeatRule: params.repeatRule,
+        due: params.due,
+      });
       return { data: r.receipt, exit: r.exit };
     }
     case 'memo.update': {
@@ -198,35 +218,63 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
         return { data: r.receipt, exit: r.exit };
       }
       const id = crudUpdate(params).id;
-      const patch: Partial<MemoNote> = {};
+      // 完成心愿走原子转换（老 `complete-wish`：删心愿 ＋ 生成打卡；`content` 即打卡内容，缺省拷贝心愿原文）。
+      if (params.done === true) {
+        const r = completeWish(db, { id, content: params.content });
+        return { data: r.receipt, exit: r.exit };
+      }
+      if (params.done !== undefined) fail(2, 'done 只认 true（完成心愿）；改字段另给参数');
+      const patch: NotePatch = {};
       if (params.title !== undefined || params.body !== undefined) {
-        const c = crudCreate({ title: params.title || getNote(db, id).title, body: params.body || '' });
-        patch.title = c.title; if (params.body !== undefined) patch.body = c.body;
+        const t = typeof params.title === 'string' ? params.title.trim() : '';
+        const b = typeof params.body === 'string' ? params.body.trim() : '';
+        if (!t && !b) fail(2, '正文不可改成空');
+        patch.content = b !== '' ? b : t !== '' ? t : getNote(db, id).content;
       }
       if (params.category !== undefined) patch.category = normalizeTop(params.category);
-      if (params.sub !== undefined) patch.sub = normalizeSub(params.sub);
-      if (params.remindAt !== undefined) patch.remindAt = normalizeRemindAt(params.remindAt);
-      if (params.done !== undefined) patch.done = params.done === true;
+      if (params.sub !== undefined) patch.sub_category = normalizeSub(params.sub);
+      if (params.media !== undefined) patch.media_path = normalizeMediaPath(params.media);
+      if (params.reminderId !== undefined) patch.reminder_id = needId(params.reminderId, '关联提醒');
+      // 老实现没有「改提醒时间」这一路：提醒时间定盘即不可改，错了废弃重建，大声失败不静默。
+      if (params.remindAt !== undefined) fail(2, '提醒时间不可改（废弃旧提醒、重建一条）');
       if (params.due !== undefined) patch.due = dueForCategory(patch.category ?? getNote(db, id).category, params.due);
+      if (Object.keys(patch).length === 0) fail(2, '至少需要提供一个更新字段：content/category/sub/media/reminderId/due');
       const r = updateWish(db, { id, patch });
       return { data: r.receipt, exit: r.exit };
     }
     case 'memo.remove': {
+      // 废弃提醒（老 `dismiss`）：按提醒 id 标 dismissed，笔记保留。
       if (params.mode === 'abandon') {
-        const id = needStr(params, 'id');
-        updateNote(db, id, { remindAt: null });
-        return ok({ ok: true, message: '已废弃提醒（笔记保留）：' + id });
+        const rid = needId(params.id, '废弃提醒');
+        abandonReminder(db, rid);
+        return ok({ ok: true, message: '提醒已废弃（笔记保留）：' + rid });
       }
       const r = crudRemove(params);
+      // 老 `delete`：有关联提醒必须显式级联（`--with-reminders`），否则大声失败；
+      // 有未触发提醒时的二次确认是交互动作，出口非交互，改显式参数一次讲清。
+      const related = countReminderRowsOfNote(db, r.id);
+      if (related > 0 && params.withReminders !== true) {
+        fail(2, '笔记 ' + r.id + ' 关联 ' + related + ' 个提醒，请加 withReminders:true 级联删除（提醒不会被自动删除）');
+      }
       // #661 · C 口径：默认照老「远端标完成」，显式 `purge:true` 才连飞书任务一起删（两种语义用参数讲清）。
       const w = removeWish(db, r.id, params.purge === true);
       return { data: w.receipt, exit: w.exit };
     }
     case 'memo.remind': {
-      const items = listNotes(db).filter((n) => n.remindAt);
-      const done = params.done === true;
-      const out = items.filter((n) => (n.done === true) === done);
-      return ok({ items: out, total: out.length });
+      // 到期判定（老 `due`）：读＋写 notified，定时壳不搬。
+      if (params.mode === 'due' || params.due === true) {
+        const items = checkDueReminders(db);
+        return ok({ items, total: items.length });
+      }
+      // 已完成视图（老 `completed`）；`done:true` 是它的兼容写法。
+      if (params.mode === 'done' || params.done === true) {
+        const items = listCompletedReminders(db);
+        return ok({ items, total: items.length });
+      }
+      const status = params.status === undefined ? 'active' : String(params.status);
+      if (status !== 'active' && status !== 'dismissed') fail(2, 'status 只认 active/dismissed');
+      const items = listReminderRows(db, status);
+      return ok({ items, total: items.length });
     }
     case 'memo.wish': {
       const items = listNotes(db).filter((n) => n.category === '心愿').filter((n) => dueMatches(n, params));
@@ -286,9 +334,27 @@ async function main() {
   // #661：合成写「最终没达成」时回执照打、退出码在写完回执之后落实（分字段是回执的本分，不能因为非 0 就吞掉）。
   let writeExit = 0;
   try {
-    // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余 10 键照旧走 dispatch（内部开库）。
+    // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余 10 键照旧走 dispatch。
+    // #665：开的是老库文件（直连，不建库）；用完即关，失败也关。
     const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
-    const out = help === null ? dispatch(o.key, params, openMemoDb(join(dbPath, 'memo'))) : { data: help.data, exit: 0 };
+    let db: MemoDb | null = null;
+    let out: { data: unknown; exit: number };
+    try {
+      if (help === null) {
+        db = openMemoDb(dbPath);
+        out = dispatch(o.key, params, db);
+      } else {
+        out = { data: help.data, exit: 0 };
+      }
+    } finally {
+      if (db) {
+        try {
+          closeMemoDb(db);
+        } catch {
+          // 关库失败不掩盖主流程结果。
+        }
+      }
+    }
     writeExit = out.exit;
     env = buildMemoEnvelope(o.key, out.data);
     const built = env;

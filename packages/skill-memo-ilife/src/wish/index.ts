@@ -4,5 +4,7 @@ export { WISH_DUE_LABEL, normalizeDue, dueForCategory, dueMatches } from './due.
 export type { DueFilter } from './due.js';
 export { ensureWish, updateWish, removeWish, setWishDue } from './ensure.js';
 export type { WishReceipt, WishBatchReceipt, WishWriteResult } from './ensure.js';
+export { completeWish } from './complete.js';
+export type { CompleteWishInput } from './complete.js';
 export { reconcileWishes } from './reconcile.js';
 export type { ReconcileCounters, ReconcileReceipt } from './reconcile.js';

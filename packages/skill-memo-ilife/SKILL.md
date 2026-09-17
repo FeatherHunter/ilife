@@ -35,8 +35,8 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 看备忘 | memo.detail | detail | `memo-cmd-read memo.detail --params '{"id":"<id>"}'` |
 | 看提醒 | memo.remind | list | `memo-cmd-read memo.remind` |
 | 查提醒 | memo.remind | list | `memo-cmd-read memo.remind` |
-| 设提醒 | memo.create | receipt | `memo-cmd-read memo.create --params '{"remindAt":"2026-10-01"}'` |
-| 记提醒 | memo.create | receipt | `memo-cmd-read memo.create --params '{"remindAt":"2026-10-01"}'` |
+| 设提醒 | memo.create | receipt | `memo-cmd-read memo.create --params '{"remindAt":"2026-10-01 09:00"}'` |
+| 记提醒 | memo.create | receipt | `memo-cmd-read memo.create --params '{"remindAt":"2026-10-01 09:00"}'` |
 | 废弃提醒 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"mode":"abandon"}'` |
 | 完成心愿 | memo.update | receipt | `memo-cmd-read memo.update --params '{"done":true}'` |
 | 心愿排期 | memo.wish | list | `memo-cmd-read memo.wish` |

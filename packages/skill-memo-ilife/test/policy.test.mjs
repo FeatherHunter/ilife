@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { routeWakeword, normalizeTop, normalizeSub, MEMO_DEFAULT_TOP, routeRemind, normalizeRemindAt, routeWish, WISH_SYNC_OPS, crudCreate, crudUpdate, crudRemove, MemoPolicyError } from '../dist/index.js';
+import { routeWakeword, normalizeTop, normalizeSub, MEMO_DEFAULT_TOP, routeRemind, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule, routeWish, WISH_SYNC_OPS, crudCreate, crudUpdate, crudRemove, MemoPolicyError } from '../dist/index.js';
 
 describe('memo 口径层', () => {
   it('9 查询唤醒词路由', () => {
@@ -34,18 +34,25 @@ describe('memo 口径层', () => {
     assert.equal(normalizeSub('  '), null);
     assert.equal(normalizeSub('跑步'), '跑步');
   });
-  it('提醒：四向+日期校验+废弃留笔记', () => {
+  it('提醒：四向+时间校验+重复口径（老 `_validate_*`）', () => {
     assert.equal(routeRemind('set').key, 'memo.create');
     assert.deepEqual(routeRemind('abandon'), { key: 'memo.remove', mode: 'abandon' });
-    assert.equal(normalizeRemindAt('2026-10-01'), '2026-10-01');
+    assert.equal(normalizeRemindAt('2026-10-01 09:00'), '2026-10-01 09:00');
+    assert.throws(() => normalizeRemindAt('2026-10-01'), (e) => e.code === 'POLICY_BAD_REMINDER');
     assert.throws(() => normalizeRemindAt('明天'), (e) => e.code === 'POLICY_BAD_REMINDER');
+    assert.equal(normalizeRepeatType(undefined), '一次性');
+    assert.equal(normalizeRepeatRule('每天', '09:00', null), '09:00');
+    assert.equal(normalizeRepeatRule('一次性', undefined, '2026-10-01 09:00'), null);
+    assert.throws(() => normalizeRepeatRule('每周', '09:00', null), (e) => e.code === 'POLICY_BAD_REMINDER');
+    assert.throws(() => normalizeRepeatRule('一次性', undefined, null), (e) => e.code === 'POLICY_BAD_REMINDER');
   });
   it('心愿与 CRUD 政策', () => {
     assert.equal(routeWish('plan').key, 'memo.wish');
     assert.equal(WISH_SYNC_OPS.length, 5);
     assert.throws(() => crudCreate({}), (e) => e.code === 'POLICY_BAD_INPUT');
     assert.throws(() => crudUpdate({}), (e) => e.code === 'POLICY_BAD_INPUT');
-    assert.throws(() => crudRemove({ id: 'n1' }), (e) => e.code === 'POLICY_BAD_INPUT');
-    assert.deepEqual(crudRemove({ id: 'n1', confirm: true }), { id: 'n1' });
+    assert.throws(() => crudRemove({ id: 15 }), (e) => e.code === 'POLICY_BAD_INPUT');
+    assert.deepEqual(crudRemove({ id: 15, confirm: true }), { id: 15 });
+    assert.deepEqual(crudRemove({ id: '16', confirm: true }), { id: 16 });
   });
 });

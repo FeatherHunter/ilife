@@ -1,12 +1,12 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, chmodSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync, readFileSync, readdirSync, chmodSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseRegistryKey, ENVELOPE_SHAPES, createEnvelope, createRegistry } from '../packages/base-link-core/dist/index.js';
 import { MEMO_KEY_SHAPES } from '../packages/skill-memo-ilife/dist/render/index.js';
+import { mkMemoDb, seedNote } from '../packages/skill-memo-ilife/test/helpers/memo-sqlite.mjs';
 import { VIEW_KEYS, viewShapeFor } from '../packages/skill-calorie/dist/render/index.js';
 import { PRESENT_KEYS } from '../packages/base-combos/dist/index.js';
 import { combosKeys, renderPresent } from '../packages/base-combos/scripts/gen-present.mjs';
@@ -67,11 +67,10 @@ function makeFakeCli(dir) {
 }
 
 before(() => {
-  DB = mkdtempSync(join(tmpdir(), 'p8-'));
-  mkdirSync(join(DB, 'memo'));
-  const note = (id, title, body, category) => ({ id, title, body, category, sub: null, createdAt: '2026-09-01', updatedAt: '2026-09-02' });
-  writeFileSync(join(DB, 'memo', 'n1.json'), JSON.stringify(note('n1', '去医院', '今天去医院复查', '备忘')));
-  writeFileSync(join(DB, 'memo', 'n2.json'), JSON.stringify(note('n2', '跑步', '今天跑了 5 公里', '打卡')));
+  // #665 DB 对齐：种子库是直连的 `memo.db`（老表形状），不再是 JSON 目录。
+  DB = mkMemoDb('p8-');
+  seedNote(DB, { content: '今天去医院复查', category: '备忘' });
+  seedNote(DB, { content: '今天跑步5公里', category: '打卡' });
   LARK = makeFakeCli(DB);
 });
 
@@ -88,11 +87,11 @@ describe('P8 combos 真相源与 HELP 注入', () => {
   });
   it('memo 十键取数全通（skilllink spawn 出口，tmp 隔离）', () => {
     assert.equal(read('memo.search', { q: '跑步' }).shape, 'list');
-    assert.equal(read('memo.detail', { id: 'n1' }).shape, 'detail');
+    assert.equal(read('memo.detail', { id: 1 }).shape, 'detail');
     const c = read('memo.create', { title: '买奶', category: '备忘' });
-    const id = c.data.message.replace('已记一条：', '');
-    assert.ok(id.length > 0);
-    assert.equal(read('memo.update', { id, done: true }).shape, 'receipt');
+    const id = Number(c.data.message.replace('已记一条：', ''));
+    assert.ok(id > 0);
+    assert.equal(read('memo.update', { id, body: '买牛奶' }).shape, 'receipt');
     assert.equal(read('memo.remove', { id, confirm: true }).shape, 'receipt');
     assert.equal(read('memo.remind').shape, 'list');
     assert.equal(read('memo.wish').shape, 'list');

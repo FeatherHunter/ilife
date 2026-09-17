@@ -24,20 +24,21 @@ function hitOf(found: readonly { summary: string; guid: string }[], title: strin
 
 /** 远端已有一条同键任务就复用它（不重复建）；没有就建一条。两种情况都把标识回写本地。
  *  老实现只在 `if due_iso:` 里查重（feishu_sync.py:312）——无排期的心愿完全不查重，同内容再记一次就再建一个任务；
- *  契约要求两侧一律判重，故此处不设这个前提（偏离 D-16）。 */
+ *  契约要求两侧一律判重，故此处不设这个前提（偏离 D-16）。自然键的标题位取 `content`（老 `add_wish_sync`
+ *  拿正文建任务，`content[:200]` 截断口径见 `taskTitle`）。 */
 export function ensureRemoteWish(db: MemoDb, cli: string, assignee: string, note: MemoNote): RemoteWishRef {
-  const existing = hitOf(searchTasks(cli, { summary: note.title, due: note.due ?? null }), note.title);
+  const existing = hitOf(searchTasks(cli, { summary: note.content, due: note.due ?? null }), note.content);
   if (existing) {
-    updateNote(db, note.id, { feishuTaskGuid: existing });
+    updateNote(db, note.id, { feishu_task_guid: existing });
     return { remote: 'existing', remoteId: existing };
   }
   const guid = createTask(cli, {
-    summary: note.title,
+    summary: note.content,
     description: ownershipMark(note.id),
     assignee,
     due: note.due ?? null,
   });
-  updateNote(db, note.id, { feishuTaskGuid: guid });
+  updateNote(db, note.id, { feishu_task_guid: guid });
   return { remote: 'created', remoteId: guid };
 }
 

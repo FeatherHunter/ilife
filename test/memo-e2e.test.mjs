@@ -1,11 +1,11 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, chmodSync, statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync, readdirSync, chmodSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHelpLookup, routeWakeword } from '../packages/skill-memo-ilife/dist/index.js';
+import { mkMemoDb, seedNote } from '../packages/skill-memo-ilife/test/helpers/memo-sqlite.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'tooling/skilllink.mjs');
@@ -24,9 +24,6 @@ function nodeBin() {
 const NODE = nodeBin();
 function run(args, envExtra) {
   return spawnSync(NODE, [cli, ...args], { cwd: root, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB, ...(envExtra || {}) } });
-}
-function note(id, title, body, category) {
-  return { id, title, body, category, sub: null, createdAt: '2026-09-01', updatedAt: '2026-09-02' };
 }
 
 // fake lark-cli（sync 全链路用；posix shebang / win .cmd 转调）。
@@ -56,10 +53,10 @@ function makeFakeCli(dir) {
 }
 
 before(() => {
-  DB = mkdtempSync(join(tmpdir(), 'memoe2e-'));
-  mkdirSync(join(DB, 'memo'));
-  writeFileSync(join(DB, 'memo', 'n1.json'), JSON.stringify(note('n1', '去医院', '今天去医院复查', '备忘')));
-  writeFileSync(join(DB, 'memo', 'n2.json'), JSON.stringify(note('n2', '跑步', '今天跑了 5 公里', '打卡')));
+  // #665 DB 对齐：种子库是直连的 `memo.db`（老表形状），不再是 JSON 目录。
+  DB = mkMemoDb('memoe2e-');
+  seedNote(DB, { content: '今天去医院复查', category: '备忘' });
+  seedNote(DB, { content: '今天跑步5公里', category: '打卡' });
   process.env.LARK_CLI_PATH = makeFakeCli(DB);
 });
 
@@ -75,7 +72,7 @@ function read(key, params) {
 describe('备忘录联动端到端 M7', () => {
   it('读键全链路（registry→spawn 出口→envelope）', () => {
     assert.equal(read('memo.search', { q: '跑步' }).shape, 'list');
-    assert.equal(read('memo.detail', { id: 'n1' }).shape, 'detail');
+    assert.equal(read('memo.detail', { id: 1 }).shape, 'detail');
     assert.equal(read('memo.remind').data.total, 0);
     assert.equal(read('memo.wish').shape, 'list');
     assert.equal(read('memo.stats').data.metrics.count, 2);
@@ -83,11 +80,27 @@ describe('备忘录联动端到端 M7', () => {
   });
   it('写键闭环（建→改→删）', () => {
     const c = read('memo.create', { title: '买奶', category: '备忘' });
-    const id = c.data.message.replace('已记一条：', '');
-    assert.ok(id.length > 0);
-    assert.equal(read('memo.update', { id, done: true }).shape, 'receipt');
+    const id = Number(c.data.message.replace('已记一条：', ''));
+    assert.ok(id > 0);
+    assert.equal(read('memo.update', { id, body: '买牛奶' }).shape, 'receipt');
     assert.equal(read('memo.remove', { id, confirm: true }).shape, 'receipt');
     assert.equal(read('memo.batch').shape, 'receipt');
+  });
+  it('完成心愿走原子转换（建侧降级故无远端对象可标，完成即达成）', () => {
+    // mini 挡板的 `task +create` 不回标识（只回空 items）：建心愿本地照落、退出码非 0；
+    // skilllink 非 0 时不透传子进程 stdout（只看退出码），id 改走 memo.search 取。
+    const c = run(['read', 'memo.create', '--params', JSON.stringify({ title: '学游泳', category: '心愿' })]);
+    assert.equal(c.status, 4, 'stderr=' + c.stderr);
+    const found = read('memo.search', { q: '学游泳' });
+    assert.equal(found.data.total, 1);
+    const id = found.data.items[0].id;
+    // 本地无远端标识 ⇒ 完成只做本地原子转换即达成（不碰远端，exit 0）。
+    const w = read('memo.update', { id, done: true, content: '第一次下水' });
+    assert.match(w.data.message, /已完成，打卡/);
+    assert.equal(read('memo.search', { q: '学游泳' }).data.total, 0);
+    const checkin = read('memo.search', { q: '第一次下水' });
+    assert.equal(checkin.data.total, 1);
+    assert.equal(checkin.data.items[0].category, '打卡');
   });
   it('HELP 现找一句可执行（框架 6 条第 2 条）', () => {
     const hit = buildHelpLookup().find((h) => h.phrase === '查打卡');

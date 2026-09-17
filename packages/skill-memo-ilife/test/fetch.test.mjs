@@ -1,18 +1,28 @@
-import { describe, it, before } from 'node:test';
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, chmodSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { openMemoDb, listNotes, getNote, searchNotes, findLarkCli, larkVersion, authOpenId, checkScope, larkReady, MemoFetchError } from '../dist/index.js';
+import { join } from 'node:path';
+import {
+  openMemoDb,
+  closeMemoDb,
+  listNotes,
+  getNote,
+  searchNotes,
+  findLarkCli,
+  larkVersion,
+  authOpenId,
+  checkScope,
+  larkReady,
+  MemoFetchError,
+} from '../dist/index.js';
+import { mkMemoDb, seedNote } from './helpers/memo-sqlite.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
 let db = null;
+let n1 = 0;
+let n2 = 0;
+let n3 = 0;
 const OLD_ENV = process.env.LARK_CLI_PATH;
-
-function note(id, title, body, category, sub) {
-  return { id, title, body, category, sub: sub || null, createdAt: '2026-09-01', updatedAt: '2026-09-02' };
-}
 
 // fake lark-cli：posix 用 shebang 脚本，win 用 .cmd 转调同目录 mjs（均走 PATH 之 node）。
 function makeFakeCli(dir) {
@@ -38,25 +48,29 @@ function makeFakeCli(dir) {
 }
 
 before(() => {
-  const tmp = mkdtempSync(join(tmpdir(), 'memo-'));
-  const dir = join(tmp, 'memo');
-  mkdirSync(dir);
-  writeFileSync(join(dir, 'n1.json'), JSON.stringify(note('n1', '去医院', '今天去医院复查', '备忘', null)));
-  writeFileSync(join(dir, 'n2.json'), JSON.stringify(note('n2', '跑步', '今天跑了 5 公里', '打卡', '跑步')));
-  writeFileSync(join(dir, 'n3.json'), JSON.stringify(note('n3', '学吉他', '心愿：学会一首歌', '心愿', null)));
+  const dir = mkMemoDb('memo-fetch-');
+  n1 = seedNote(dir, { content: '今天去医院复查', category: '备忘' });
+  n2 = seedNote(dir, { content: '今天跑步5公里', category: '打卡', sub: '跑步' });
+  n3 = seedNote(dir, { content: '心愿：学会一首歌', category: '心愿' });
   db = openMemoDb(dir);
-  process.env.LARK_CLI_PATH = makeFakeCli(tmp);
+  process.env.LARK_CLI_PATH = makeFakeCli(mkdtempSync(join(tmpdir(), 'memo-fake-')));
+});
+
+after(() => {
+  if (db) closeMemoDb(db);
+  process.env.LARK_CLI_PATH = OLD_ENV;
 });
 
 describe('memo 取数层', () => {
   it('列/取/搜（CJK 子串+分类过滤）', () => {
     assert.equal(listNotes(db).length, 3);
-    assert.equal(getNote(db, 'n2').sub, '跑步');
-    assert.deepEqual(searchNotes(db, '跑步').map((n) => n.id), ['n2']);
-    assert.deepEqual(searchNotes(db, '医院', { category: '备忘' }).map((n) => n.id), ['n1']);
+    assert.equal(getNote(db, n2).sub_category, '跑步');
+    assert.deepEqual(searchNotes(db, '跑步').map((n) => n.id), [n2]);
+    assert.deepEqual(searchNotes(db, '医院', { category: '备忘' }).map((n) => n.id), [n1]);
   });
   it('坏输入 throw 不返空', () => {
-    assert.throws(() => getNote(db, 'nope'), (e) => e instanceof MemoFetchError && e.code === 'MEMO_NOTE_NOT_FOUND');
+    assert.throws(() => getNote(db, 999999), (e) => e instanceof MemoFetchError && e.code === 'MEMO_NOTE_NOT_FOUND');
+    assert.throws(() => getNote(db, 'nope'), (e) => e.code === 'MEMO_NOTE_NOT_FOUND');
     assert.throws(() => searchNotes(db, '  '), (e) => e.code === 'MEMO_BAD_QUERY');
     assert.throws(() => openMemoDb(join(tmpdir(), 'memo-nope-xyz')), (e) => e.code === 'MEMO_DB_MISSING');
   });

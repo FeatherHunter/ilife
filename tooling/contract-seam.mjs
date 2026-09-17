@@ -17,7 +17,7 @@
  *     它让老进程**自己报出**解析到的路径，证明这一跑没碰真飞书。
  */
 import { spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -43,6 +43,46 @@ export const KINDS = {
     db: 'memo.db',
   },
 };
+
+/** 备忘录测试库 DDL：逐字 mirror 老 `script/init.sql` 的两张业务表（`notes`＋`reminders`＋索引）。
+ *  FTS 虚表与触发器不 mirror——老家 #180 已停用 FTS 查询路径，且触发器写 `notes_fts`，
+ *  测试库不需要全文副表。这是仓内**唯一一份**测试 DDL 定义（备忘包 helper 与本件接缝共用）。 */
+export const MEMO_TEST_SCHEMA_DDL = `
+CREATE TABLE IF NOT EXISTS notes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    content     TEXT NOT NULL,
+    summary     TEXT,
+    category    TEXT DEFAULT '备忘',
+    sub_category TEXT,
+    media_path  TEXT,
+    reminder_id INTEGER,
+    feishu_task_guid TEXT,
+    due TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS reminders (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    note_id     INTEGER NOT NULL,
+    remind_at   TEXT,
+    repeat_type TEXT DEFAULT 'none',
+    repeat_rule TEXT,
+    status      TEXT DEFAULT 'active',
+    notified_at TEXT,
+    content     TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE NO ACTION
+);
+CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category);
+CREATE INDEX IF NOT EXISTS idx_reminders_status_remind ON reminders(status, remind_at);
+`;
+
+/** 测试布景：在 `file` 建一份空备忘库（只建表，不写行）。这是**布景**，不是被测行为。 */
+export function initMemoTestDb(file) {
+  const db = new DatabaseSync(file);
+  try { db.exec(MEMO_TEST_SCHEMA_DDL); } finally { db.close(); }
+  return file;
+}
 
 export function nodeBin() { return process.execPath; }
 export function pythonBin() {
@@ -92,8 +132,9 @@ export function makeSeam(kind, { prefix = 'seam-', state = {}, withDb = true, ti
   const dbPath = join(dir, 'db');
   if (withDb) {
     mkdirSync(dbPath, { recursive: true });
-    // 新备忘的「库」是 `<SKILLS_DB_PATH>/memo/` 下的 JSON 笔记目录（`packages/skill-memo-ilife/src/cli/cmd_read.ts:264`）。
-    if (K.skill === 'memo') mkdirSync(join(dbPath, 'memo'), { recursive: true });
+    // 新备忘直连老库文件（#665 DB 对齐）：接缝库也是 `memo.db`，表与老 `init.sql` 同形；
+    // 旧 JSON 笔记目录（`<SKILLS_DB_PATH>/memo/`）已退役，此处不再建它。
+    if (K.skill === 'memo') initMemoTestDb(join(dbPath, 'memo.db'));
   }
   const stub = makeLarkStub(join(dir, 'stub'), state);
   const appdata = join(dir, 'appdata');
@@ -146,10 +187,8 @@ export function localRows(K, dbPath, branch) {
   if (branch === 'old') {
     return sqliteRows(join(dbPath, K.db), 'SELECT id, content, category, due, feishu_task_guid FROM notes ORDER BY id');
   }
-  const memoDir = join(dbPath, 'memo');
-  if (!existsSync(memoDir)) return [];
-  return readdirSync(memoDir).filter((f) => f.endsWith('.json')).sort()
-    .map((f) => JSON.parse(readFileSync(join(memoDir, f), 'utf8')));
+  // 新备忘（#665 DB 对齐后）：与老侧同一只 `memo.db`、同一张表读行；JSON 目录已退役。
+  return sqliteRows(join(dbPath, K.db), 'SELECT id, content, category, due, feishu_task_guid FROM notes ORDER BY id');
 }
 
 function sqliteRows(file, sql) {

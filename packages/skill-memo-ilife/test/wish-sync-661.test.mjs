@@ -1,5 +1,7 @@
 /**
  * #661 · 备忘侧：排期日期（`due`）＋ 心愿飞书层五操作 ＋ 反向对账 —— 合成写接缝常驻用例
+ *（#665 DB 对齐版：本地库是直连的 `memo.db`，行是老 `notes` 表形状；`title/body` 双参数收敛到
+ * `content` 单列——正文优先、标题补位；D-24 回摆：对账步 2 走老 `complete-wish` 原子转换）。
  *
  * 判据与接缝见 `docs/agents/合成写判据.md`：**一个接缝**（技能统一出口，spawn 包内 `dist/cli/cmd_read.js`）
  * ＋ **两个注入点**（临时数据目录 `SKILLS_DB_PATH`／可替换的远端挡板 `LARK_CLI_PATH` →
@@ -7,16 +9,17 @@
  * **出口回执**、**本地库行**、**远端挡板收到的调用**。
  *
  * 读数与老实现不变量（`docs/skills/skill-memo-ilife/t659-不变量清单.md` 的 M-01～M-13）逐条对上；
- * 有意偏离（D-21～D-27）另立读数，两行机器读数见
- * `docs/skills/skill-memo-ilife/t658-A-心愿排期移植-证据.md`。
+ * 有意偏离（D-21～D-27，D-24 回摆待签）另立读数，两行机器读数见
+ * `docs/skills/skill-memo-ilife/t658-C-向导与页面-证据.md`。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { argOf, envelope, fourReadings, makeSeam } from '../../../tooling/contract-seam.mjs';
 
 const WISH = '买跑鞋';
+const BODY = '跑马拉松用';
 const DUE = '2026-09-25';
-const CREATE = { title: WISH, body: '跑马拉松用', category: '心愿', due: DUE };
+const CREATE = { title: WISH, body: BODY, category: '心愿', due: DUE };
 const STAT_KEYS = [
   'backfilled', 'scannedDone', 'synced', 'scannedPending', 'dueAdded', 'dueOverridden', 'dueRemoved',
   'skippedNoMark', 'skippedAlreadyDone', 'skippedNoLocalNote', 'errors',
@@ -32,7 +35,8 @@ function run(s, key, params) {
   try { env = envelope(r); } catch (e) { why = e.message; }
   return { r, env, why, exit: r.status, argv: s.calls().map((c) => c.argv), rows: s.localNew() };
 }
-const rowOf = (rows, title) => rows.find((n) => n.title === title);
+// 本地行是老 `notes` 表形状：正文只认 `content` 一列。
+const rowOf = (rows, content) => rows.find((n) => n.content === content);
 const opCalls = (argv, op) => argv.filter((a) => a[1] === op);
 /** 远端真删那条：走**原生 resource** `task tasks delete`（短路里没有 `+delete`，见挡板与 taskWrite.ts 的注释）。 */
 const deleteCalls = (argv) => argv.filter((a) => a[0] === 'task' && a[1] === 'tasks' && a[2] === 'delete');
@@ -46,17 +50,17 @@ test('#661 T1 记一条心愿：本地落 ＋ 远端建（带排期日期／归�
   assert.equal(x.env.data.local, 'created');
   assert.equal(x.env.data.remote, 'created');
 
-  const row = rowOf(x.rows, WISH);
+  const row = rowOf(x.rows, BODY);
   assert.equal(row.category, '心愿');
   assert.equal(row.due, DUE, 'M-02：排期日期落本地');
-  assert.equal(row.feishuTaskGuid, x.env.data.remoteId, 'M-06：远端标识回写本地');
+  assert.equal(row.feishu_task_guid, x.env.data.remoteId, 'M-06：远端标识回写本地');
 
   const create = opCalls(x.argv, '+create')[0];
   assert.ok(create, '远端必须收到一次 task +create');
-  assert.equal(argOf(create, '--summary'), WISH);
+  assert.equal(argOf(create, '--summary'), BODY, '题文双参数收敛到 content 单列（正文优先）');
   assert.equal(argOf(create, '--due'), DUE);
   assert.equal(argOf(create, '--assignee'), 'ou_stub_user');
-  assert.equal(argOf(create, '--description'), '原备忘 #' + row.id, 'M-05：归属标记逐字');
+  assert.equal(argOf(create, '--description'), '原备忘 #' + row.id, 'M-05：归属标记逐字（数字 id，老口径）');
   assert.equal(s.remote().tasks.length, 1);
 });
 
@@ -72,7 +76,7 @@ test('#661 T2 四条读数模板 · 心愿 memo.create（本地侧／远端侧�
       远端侧: env && env.data ? env.data.remote : undefined,
       远端标识: env && env.data ? env.data.remoteId : undefined,
     }),
-    marker: (argv) => { const d = argOf(argv, '--description'); return d && /^原备忘 #m[A-Za-z0-9]+$/.test(d) ? d : null; },
+    marker: (argv) => { const d = argOf(argv, '--description'); return d && /^原备忘 #\d+$/.test(d) ? d : null; },
     reportedOff: (off) => !!(off.env && off.env.data && off.env.data.remote === 'unavailable'),
   });
   console.log('#661 四条读数：' + verdicts.map((v) => v.id + '=' + v.verdict + '(' + JSON.stringify(v.reading) + ')').join(' | '));
@@ -82,14 +86,14 @@ test('#661 T2 四条读数模板 · 心愿 memo.create（本地侧／远端侧�
 
 /* ─────────────── 二、两侧各自判重 ─────────────── */
 
-test('#661 T3 M-04 建前查重（远端侧自然键）：远端已有同题同排期 → 复用标识、不重复建', () => {
-  const s = seam('t661-c-', { tasks: [{ guid: 'tk_seed', summary: WISH, description: '原备忘 #seed', due: DUE, completed_at: '' }] });
+test('#661 T3 M-04 建前查重（远端侧自然键）：远端已有同文同排期 → 复用标识、不重复建', () => {
+  const s = seam('t661-c-', { tasks: [{ guid: 'tk_seed', summary: BODY, description: '原备忘 #seed', due: DUE, completed_at: '' }] });
   const x = run(s, 'memo.create', CREATE);
   assert.equal(x.exit, 0, String(x.r.stderr));
   assert.equal(opCalls(x.argv, '+create').length, 0, '远端已有一条就不该再建');
   assert.equal(x.env.data.remote, 'existing');
   assert.equal(x.env.data.remoteId, 'tk_seed');
-  assert.equal(rowOf(x.rows, WISH).feishuTaskGuid, 'tk_seed');
+  assert.equal(rowOf(x.rows, BODY).feishu_task_guid, 'tk_seed');
   assert.equal(s.remote().tasks.length, 1);
 });
 
@@ -106,33 +110,28 @@ test('#661 T9 偏离 D-22：无排期日期的心愿也查重（老实现只在�
   assert.equal(s.remote().tasks.length, 1);
 });
 
-test('#661 T10 偏离 D-21：长标题的查重键与写入键同为 200 字截断', () => {
+test('#661 T10 偏离 D-21：长正文的查重键与写入键同为 200 字截断', () => {
   const s = seam('t661-j-');
   const long = 'x'.repeat(260);
   const input = { title: long, body: long, category: '心愿', due: DUE };
   assert.equal(run(s, 'memo.create', input).exit, 0);
   const again = run(s, 'memo.create', input);
-  assert.equal(opCalls(again.argv, '+create').length, 0, '长标题心愿也要查得中（老实现比不中，必重复建）');
+  assert.equal(opCalls(again.argv, '+create').length, 0, '长正文心愿也要查得中（老实现比不中，必重复建）');
   assert.equal(s.remote().tasks.length, 1);
   assert.equal(s.remote().tasks[0].summary.length, 200);
 });
 
-/* ─────────────── 三、心愿飞书层五操作 ─────────────── */
+/* ─────────────── 三、心愿飞书层五操作 ＋ 完成原子转换 ─────────────── */
 
-test('#661 T4 五操作：建／改题／标完成／改期／清期（清期走接口的显式空值通道）', () => {
+test('#661 T4 五操作：建／改题／改期／清期（清期走接口的显式空值通道）＋完成转打卡', () => {
   const s = seam('t661-d-');
   assert.equal(run(s, 'memo.create', CREATE).exit, 0);
-  const id = rowOf(s.localNew(), WISH).id;
+  const id = rowOf(s.localNew(), BODY).id;
 
   const retitled = run(s, 'memo.update', { id, title: '买越野跑鞋' });
   assert.equal(retitled.exit, 0, String(retitled.r.stderr));
   assert.equal(argOf(opCalls(retitled.argv, '+update')[0], '--summary'), '买越野跑鞋');
   assert.equal(retitled.env.data.remote, 'synced');
-
-  const completed = run(s, 'memo.update', { id, done: true });
-  assert.equal(completed.exit, 0, String(completed.r.stderr));
-  assert.equal(opCalls(completed.argv, '+complete').length, 1);
-  assert.equal(rowOf(s.localNew(), '买越野跑鞋').done, true);
 
   const moved = run(s, 'memo.update', { id, due: '2026-10-01' });
   assert.equal(moved.exit, 0, String(moved.r.stderr));
@@ -147,13 +146,21 @@ test('#661 T4 五操作：建／改题／标完成／改期／清期（清期走
   assert.equal(argOf(patch, '--due'), undefined, '不得拿常规 --due 参数表达清空');
   assert.equal(rowOf(s.localNew(), '买越野跑鞋').due, null);
   assert.equal(String(s.remote().tasks[0].due), '', '远端 due 同步清空');
+
+  // 完成是原子转换（老 `complete-wish`）：删心愿 ＋ 生成打卡 ＋ 远端标完成。
+  const completed = run(s, 'memo.update', { id, done: true, content: '首跑5公里' });
+  assert.equal(completed.exit, 0, String(completed.r.stderr));
+  assert.equal(opCalls(completed.argv, '+complete').length, 1);
+  assert.equal(rowOf(s.localNew(), '买越野跑鞋'), undefined, '心愿已删');
+  const checkin = rowOf(s.localNew(), '首跑5公里');
+  assert.equal(checkin.category, '打卡');
 });
 
 test('#661 T5 批量排期：一批 id ＋ 一个日期；非心愿逐条记账、不静默吞', () => {
   const s = seam('t661-e-');
   assert.equal(run(s, 'memo.create', CREATE).exit, 0);
   assert.equal(run(s, 'memo.create', { title: '买菜', body: '买菜', category: '备忘' }).exit, 0);
-  const wish = rowOf(s.localNew(), WISH);
+  const wish = rowOf(s.localNew(), BODY);
   const plain = rowOf(s.localNew(), '买菜');
 
   const x = run(s, 'memo.update', { ids: [wish.id, plain.id], due: '2026-10-05' });
@@ -163,7 +170,7 @@ test('#661 T5 批量排期：一批 id ＋ 一个日期；非心愿逐条记账�
   assert.equal(x.env.data.remote, 'partial');
   assert.equal(x.exit, 4, '有一条没做成就不能报成');
   assert.equal(argOf(opCalls(x.argv, '+update')[0], '--due'), '2026-10-05');
-  assert.equal(rowOf(x.rows, WISH).due, '2026-10-05');
+  assert.equal(rowOf(x.rows, BODY).due, '2026-10-05');
   assert.equal(rowOf(x.rows, '买菜').due, null, '排期日期只对心愿生效');
 });
 
@@ -171,7 +178,7 @@ test('#661 T6 删心愿 · C 口径：默认照老标完成；显式 purge 才�
   // 默认：本地删掉，飞书那条留成「已完成」终态（与老实现一致）。
   const s = seam('t661-f-');
   assert.equal(run(s, 'memo.create', CREATE).exit, 0);
-  const id = rowOf(s.localNew(), WISH).id;
+  const id = rowOf(s.localNew(), BODY).id;
   const x = run(s, 'memo.remove', { id, confirm: true });
   assert.equal(x.exit, 0, String(x.r.stderr));
   assert.equal(opCalls(x.argv, '+complete').length, 1, '默认＝远端标完成（老口径）');
@@ -183,12 +190,12 @@ test('#661 T6 删心愿 · C 口径：默认照老标完成；显式 purge 才�
   // 显式 purge：真删（原生 resource `task tasks delete --task-guid <guid>`，不是短路 `+delete`）。
   const s2 = seam('t661-f2-');
   assert.equal(run(s2, 'memo.create', CREATE).exit, 0);
-  const row2 = rowOf(s2.localNew(), WISH);
+  const row2 = rowOf(s2.localNew(), BODY);
   const y = run(s2, 'memo.remove', { id: row2.id, confirm: true, purge: true });
   assert.equal(y.exit, 0, String(y.r.stderr));
   const del = deleteCalls(y.argv)[0];
   assert.ok(del, 'purge 要打远端真删');
-  assert.equal(argOf(del, '--task-guid'), row2.feishuTaskGuid, '--task-guid 传的是远端标识');
+  assert.equal(argOf(del, '--task-guid'), row2.feishu_task_guid, '--task-guid 传的是远端标识');
   assert.equal(opCalls(y.argv, '+complete').length, 0, 'purge 那支不再标完成');
   assert.equal(s2.remote().tasks.length, 0, '远端任务被清掉');
   assert.equal(s2.localNew().length, 0);
@@ -197,14 +204,14 @@ test('#661 T6 删心愿 · C 口径：默认照老标完成；显式 purge 才�
   const s3 = seam('t661-f3-');
   assert.equal(run(s3, 'memo.create', CREATE).exit, 0);
   s3.stub.setState({ tasks: [] });
-  const z = run(s3, 'memo.remove', { id: rowOf(s3.localNew(), WISH).id, confirm: true, purge: true });
+  const z = run(s3, 'memo.remove', { id: rowOf(s3.localNew(), BODY).id, confirm: true, purge: true });
   assert.equal(z.exit, 0, String(z.r.stderr));
   assert.equal(s3.localNew().length, 0);
 });
 
 /* ─────────────── 四、反向对账三步 ＋ 11 项统计 ─────────────── */
 
-test('#661 T7 M-09 反向对账三步：本地补建／远端完成→本地／远端改期→本地（含 11 项统计）', () => {
+test('#661 T7 M-09 反向对账三步：本地补建／远端完成→本地原子转换／远端改期→本地（含 11 项统计）', () => {
   const s = seam('t661-g-');
   // 布景：远端不可用时记一条 → 本地有、远端无（步 1 的对象）。
   s.stub.setState({ mode: 'unavailable' });
@@ -212,35 +219,39 @@ test('#661 T7 M-09 反向对账三步：本地补建／远端完成→本地／�
   assert.equal(made.exit, 4, '远端不可用：本地照落，但这一趟没达成');
   assert.equal(made.env.data.remote, 'unavailable');
   assert.equal(made.env.data.local, 'created');
-  const id = rowOf(made.rows, WISH).id;
-  assert.equal(rowOf(made.rows, WISH).feishuTaskGuid, null);
+  const id = rowOf(made.rows, BODY).id;
+  assert.equal(rowOf(made.rows, BODY).feishu_task_guid, null);
 
   // 步 1：本地缺标识 → 补建远端任务并回写标识。
   s.stub.setState({ mode: 'normal' });
   let x = run(s, 'memo.sync', {});
   assert.equal(x.exit, 0, String(x.r.stderr));
   assert.equal(x.env.data.backfilled, 1);
-  const guid = rowOf(s.localNew(), WISH).feishuTaskGuid;
+  const guid = rowOf(s.localNew(), BODY).feishu_task_guid;
   assert.ok(guid, '补建后标识必须回写本地');
   assert.equal(s.remote().tasks.length, 1);
 
-  // 步 2：远端完成 → 本地完成。
+  // 步 2：远端完成 → 本地原子转换（D-24 回摆待签：删心愿 ＋ 生成打卡，老 `complete-wish` 原文）。
   s.stub.setState({ tasks: s.remote().tasks.map((t) => ({ ...t, completed_at: '2026-09-18T03:00:00.000Z' })) });
   x = run(s, 'memo.sync', {});
   assert.equal(x.exit, 0, String(x.r.stderr));
   assert.equal(x.env.data.scannedDone, 1);
   assert.equal(x.env.data.synced, 1);
-  assert.equal(rowOf(s.localNew(), WISH).done, true);
-  // 偏离 D-24：对账只把心愿标完成——老实现是删掉心愿并生成打卡记录（那是完成向导的事，不在这条链上）。
-  assert.equal(rowOf(s.localNew(), WISH).category, '心愿', 'D-24：远端完成 → 本地只标完成，不转打卡');
+  assert.equal(s.localNew().find((n) => n.content === BODY && n.category === '心愿'), undefined, 'D-24 回摆：心愿已删，不再是标完成');
+  const checkin = s.localNew().find((n) => n.category === '打卡');
+  assert.equal(checkin.content, BODY, 'D-24 回摆：打卡已生成（拷贝心愿原文）');
 
-  // 步 3：远端改排期 → 本地跟着改（对账时远端优先）。
-  s.stub.setState({ tasks: [{ guid, summary: WISH, description: '原备忘 #' + id, due: '2026-11-11', completed_at: '' }] });
-  x = run(s, 'memo.sync', {});
+  // 步 3：远端改排期 → 本地跟着改（对账时远端优先）。另起一条心愿，避免步 2 已删无对象。
+  const s2 = seam('t661-g3-');
+  assert.equal(run(s2, 'memo.create', CREATE).exit, 0);
+  const id2 = rowOf(s2.localNew(), BODY).id;
+  const guid2 = rowOf(s2.localNew(), BODY).feishu_task_guid;
+  s2.stub.setState({ tasks: [{ guid: guid2, summary: BODY, description: '原备忘 #' + id2, due: '2026-11-11', completed_at: '' }] });
+  x = run(s2, 'memo.sync', {});
   assert.equal(x.exit, 0, String(x.r.stderr));
   assert.equal(x.env.data.scannedPending, 1);
   assert.equal(x.env.data.dueOverridden, 1);
-  assert.equal(rowOf(s.localNew(), WISH).due, '2026-11-11');
+  assert.equal(rowOf(s2.localNew(), BODY).due, '2026-11-11');
 
   for (const k of STAT_KEYS) assert.ok(k in x.env.data, '回执缺统计项：' + k);
   assert.equal(Object.keys(x.env.data).filter((k) => STAT_KEYS.includes(k)).length, 11);
@@ -276,7 +287,7 @@ test('#661 T11 排期日期只对心愿生效；检索能按排期日期过滤',
   assert.equal(scheduled.env.data.total, 1);
   const exact = run(s, 'memo.search', { due: DUE });
   assert.equal(exact.env.data.total, 1);
-  assert.equal(exact.env.data.items[0].title, WISH);
+  assert.equal(exact.env.data.items[0].content, BODY);
   assert.equal(run(s, 'memo.search', { dueBefore: '2026-09-30' }).env.data.total, 1);
   assert.equal(run(s, 'memo.search', { dueAfter: '2026-09-30' }).env.data.total, 0);
   assert.equal(run(s, 'memo.search', { due: '2026-01-01' }).env.data.total, 0);

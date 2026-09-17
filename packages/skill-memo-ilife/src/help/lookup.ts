@@ -7,7 +7,7 @@ export interface HelpHit { phrase: string; key: MemoKey; shape: string; cli: str
 function exampleParams(e: { needs?: string[]; preset?: Record<string, unknown> }): string {
   const p: Record<string, unknown> = { ...(e.preset || {}) };
   for (const n of e.needs || []) {
-    if (p[n] === undefined) p[n] = n === 'id' ? '<id>' : n === 'timeRange' ? '2026-09' : n === 'remindAt' ? '2026-10-01' : '<值>';
+    if (p[n] === undefined) p[n] = n === 'id' ? '<id>' : n === 'timeRange' ? '2026-09' : n === 'remindAt' ? '2026-10-01 09:00' : '<值>';
   }
   const keys = Object.keys(p);
   return keys.length ? ' --params \'' + JSON.stringify(p) + '\'' : '';

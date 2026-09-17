@@ -1,11 +1,14 @@
-// 心愿类·反向对账三步（#661）：① 本地有远端无 → 补建；② 远端完成 → 本地完成；③ 远端改期 → 本地。
+// 心愿类·反向对账三步（#661，#665 回归老口径）：① 本地有远端无 → 补建；② 远端完成 → 本地完成；
+// ③ 远端改期 → 本地。
 // 老家对照 `sync_from_feishu`（feishu_sync.py:535-718）：三步同函数体、单点失败收进 `errors` 并继续，
 // 但对外层调用要能看出「这一趟有没有全成」——故 ok＝errors 为空，非空即退出码非零。
 // 冲突口径照老实现原话（`feishu_sync.py:540`）：**写入时本地是真相源，对账时远端优先**（用户主动触发对账即视同远端说了算）。
-// 与老实现的两处差异：① 老 `list` 失败返回 `[]`（`:466`）会把「读不到」装成「远端没有」，此处上抛后收进 errors；
-// ② 老步 2 走本地 `complete-wish`（删心愿 ＋ 生成打卡），本仓只把心愿标完成——转打卡是完成向导的事，不在这条链上。
+// 与老实现的一处差异：老 `list` 失败返回 `[]`（`:466`）会把「读不到」装成「远端没有」，此处上抛后收进 errors。
+// D-24 回摆（待签）：#661 曾把步 2 改为只标完成（`done` 列），DB 对齐后那一列不存在——
+// 老权威要求步 2 走本地 `complete-wish`（删心愿 ＋ 生成打卡，`feishu_sync.py:648-655`），此处照老执行。
 import { listNotes, updateNote, type MemoDb } from '../fetch/db.js';
 import { listRelatedTasks, taskDueDate } from '../fetch/tasks.js';
+import { completeWish } from './complete.js';
 import { openGate } from './gate.js';
 import { ownerIdOf } from './mark.js';
 import { ensureRemoteWish } from './taskSync.js';
@@ -57,7 +60,7 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
   let backfilled = 0;
   // 步 1：本地有、远端无（本地缺标识那一批）→ 建远端任务并回写标识。
   for (const note of listNotes(db)) {
-    if (note.category !== WISH_TOP || note.feishuTaskGuid) continue;
+    if (note.category !== WISH_TOP || note.feishu_task_guid) continue;
     try {
       ensureRemoteWish(db, gate.cli, gate.openId, note);
       backfilled += 1;
@@ -88,17 +91,24 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
   let skippedNoMark = 0; let skippedAlreadyDone = 0; let skippedNoLocalNote = 0;
 
   // 反查口径：正则反查出本地 id，再拿 `id ＋ 远端标识` **双向校验**（老 `feishu_sync.py:633`／`:674`）。
-  const localOf = (mark: string, guid: string) => listNotes(db).find((n) => n.id === mark && (n.feishuTaskGuid ?? null) === guid) ?? null;
+  const localOf = (mark: number | null, guid: string) => mark === null
+    ? null
+    : (listNotes(db).find((n) => n.id === mark && (n.feishu_task_guid ?? null) === guid) ?? null);
 
-  // 步 2：远端完成 → 本地完成。
+  // 步 2：远端完成 → 本地完成（老 `complete-wish`：删心愿 ＋ 生成打卡；D-24 回摆待签）。
   for (const t of doneTasks) {
     const mark = ownerIdOf(t.description);
-    if (!mark) { skippedNoMark += 1; continue; }
+    if (mark === null) { skippedNoMark += 1; continue; }
     const row = localOf(mark, t.guid);
     if (!row) { skippedNoLocalNote += 1; continue; }
-    if (row.category !== WISH_TOP || row.done === true) { skippedAlreadyDone += 1; continue; }
-    updateNote(db, row.id, { done: true });
-    synced += 1;
+    if (row.category !== WISH_TOP) { skippedAlreadyDone += 1; continue; }
+    try {
+      const r = completeWish(db, { id: row.id });
+      synced += 1;
+      if (r.exit !== 0) errors.push('完成同步 id=' + row.id + '：' + r.receipt.message);
+    } catch (e) {
+      errors.push('完成同步 id=' + row.id + '：' + textOf(e));
+    }
   }
 
   // 步 3：远端改期 → 本地（仅未完成的任务；四象限按「远端优先」落地，比较结果只认日期）。

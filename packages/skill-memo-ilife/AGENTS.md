@@ -12,6 +12,12 @@
 
 口径出处：**用户答复**（私家大厨那张图的 Q4b，逐字「`350 ＋ LF 口径，写进packages/skill-chef/AGENTS.md`」，载 `docs/skills/skill-chef/map-chef-body.md:197`／`:212`）。兄弟件 `packages/skill-chef/AGENTS.md` **已按 #214 落盘**——本条是与它同数、同落点的约定。`structure.md` 要求这条数字写在各包自己的地方。
 
+## 数据库结构（负责人裁定 2026-09-17）
+
+- **新备忘录的数据库结构必须和老备忘录完全一致**，以老库 `script/init.sql` 为准（`notes`＋`reminders` 两张业务表及全部字段语义）；**老备忘录才是正确的，新备忘录当前模型是残次品**。
+- 凡新仓模型与老库不一致处，一律按老库补齐，不另行取舍；涉及已交付实现返修或规格变更的，先回对应票据（规格 #657、地图 #658）。
+- **连接口径**：新仓直连老库文件（`$SKILLS_DB_PATH/memo.db`，SQLite，WAL，外键开），**连接层禁 DDL**（不建表、不改表、不建索引，只做增删改查）；测试一律用**临时拷贝**跑，绝不连活库写。
+
 ## 发布（npm 官方源，交互式 wizard）
 
 - 技能发版脚本：`scripts/wizard-publish.sh` —— 发 `skill-memo-ilife@0.2.0`（硬前提 `base-paint@0.3.2` 已在 registry，第 1 stage 自动查）。

@@ -11,7 +11,8 @@ export function escapeHtml(s: string): string {
 
 function itemHtml(n: Record<string, unknown>): string {
   const id = escapeHtml(String(n.id ?? ''));
-  const content = escapeHtml(String(n.title ?? n.body ?? ''));
+  // 老权威：笔记正文只有 `content` 一列（`summary` 是短摘要位，不在列表行里冒充正文）。
+  const content = escapeHtml(String(n.content ?? ''));
   const cat = escapeHtml(String(n.category ?? ''));
   return '<div class="item"><div class="item-head"><span class="id">' + id + '</span><span class="badge">' + cat + '</span></div><div class="content">' + content + '</div></div>';
 }
