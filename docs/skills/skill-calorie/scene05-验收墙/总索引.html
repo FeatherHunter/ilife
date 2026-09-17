@@ -1,5 +1,5 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>场景05 验收总索引（41 件）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>场景05 验收总索引（43 件）</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f}
@@ -21,8 +21,8 @@ code{font-size:11.5px;color:#6e6e73;word-break:break-all}
 .note{margin-top:28px;background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:16px 18px}
 .note ul{margin:8px 0 0 20px;font-size:13px;line-height:1.9;color:#3a3a3c}
 </style></head><body><div class="wrap">
-<h1>场景05「健身计划 · 29 条唤醒词」验收总索引</h1>
-<div class="sub">41 件产物按页面族分组，每份一张卡（念哪句话／命令键／文件／该确认什么）。
+<h1>场景05「健身计划 · 30 条唤醒词」验收总索引</h1>
+<div class="sub">43 件产物按页面族分组，每份一张卡（念哪句话／命令键／文件／该确认什么）。
 手机墙 <b>390 宽 × 3 列</b>看塌列，桌面墙 <b>1280 宽 × 1 列</b>看排布；两张墙、本索引与产物**同目录**，
 格数 ＝ 本索引卡的件数 ＝ 清单 <code>manifest.json</code> 的条目数（少任何一件，生成器自检点名并 exit 1）。
 本页：<a href="手机墙-390.html">手机墙-390.html</a> · <a href="桌面墙-1280.html">桌面墙-1280.html</a></div>
@@ -331,10 +331,27 @@ code{font-size:11.5px;color:#6e6e73;word-break:break-all}
         <dt>该确认什么</dt><dd>结果页：逐天回写结局表（日期／拉取／新增／更新）在 390 宽下挤不挤；新增更新合计与逐天行对得上吗。</dd></dl>
     </div>
   </div>
+  <h2>落地训练（order 196）（2 件）</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-head"><span class="seq">42</span><a href="落地训练-过程.html">落地训练 · 过程页</a><span class="kind">过程型</span></div>
+      <dl><dt>念这句</dt><dd>落地训练</dd>
+        <dt>命令键</dt><dd><code>calorie.workout.land</code></dd>
+        <dt>文件</dt><dd><code>落地训练-过程.html</code></dd>
+        <dt>该确认什么</dt><dd>过程页：可复制实跑指令在首位吗；待写日历段与待记心愿两表成对吗；本地已读与远端未调用两行分得清吗；390 宽下两表卡片化后段与时间还成对吗。</dd></dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="seq">43</span><a href="落地训练-结果.html">落地训练 · 结果页</a><span class="kind">结果型</span></div>
+      <dl><dt>念这句</dt><dd>落地训练</dd>
+        <dt>命令键</dt><dd><code>calorie.workout.land</code></dd>
+        <dt>文件</dt><dd><code>落地训练-结果.html</code></dd>
+        <dt>该确认什么</dt><dd>结果页：四步结局四行读得顺吗；重复跑口径三行与四步结局不重复吗；新增更新合计与远端拉到对得上吗；390 宽下两表卡片化后项与值还成对吗。</dd></dl>
+    </div>
+  </div>
 <div class="note">
   <h2>有意不出产物及其原因</h2>
   <ul>
-      <li><b>外部三条：落地训练／落地到本周末／落地到本月底（order 196-198）</b>：T351-v19 那轮是外部五条（order 196-200）；#614 起其中 order 199 同步到训记与 order 200 拉训记实绩两条转入可执行（routes.ts exec，命令 calorie.workout.xunji-push 与 calorie.workout.xunji-backfill），产物见本册 seq 38-41。剩下这三条仍记 kind:non-exec、bucket:out-of-scope（归 #612 与 #613，本票不碰）：执行面在外部 App（补计划到日历、记心愿），卡路里这侧的执行层不承接。T351-v19 原文见 git 历史。</li>
+      <li><b>外部两条：落地到本周末／落地到本月底（order 197-198）</b>：T351-v19 那轮是外部五条（order 196-200）；#614 起其中 order 199 同步到训记与 order 200 拉训记实绩两条转入可执行（routes.ts exec，命令 calorie.workout.xunji-push 与 calorie.workout.xunji-backfill），产物见本册 seq 38-41；#612 起其中 order 196 落地训练转入可执行（routes.ts exec，命令 calorie.workout.land），产物见本册 seq 42-43。剩下这两条仍记 kind:non-exec、bucket:out-of-scope（归 #613，本票不碰）：执行面在外部 App（跨天批量），卡路里这侧的执行层不承接。T351-v19 原文见 git 历史。</li>
       <li><b>撤销后读验证（order 195 的 read-after-delete 一步）</b>：那一步**不是页面**，是机检读数：撤销后念「看计划」再读一次，得 `exit=4` ＋ stderr 命中「无训练计划」（恢复缺失阻断）——它**没有可上屏的 HTML**，所以本轮照旧只把读数落进批次的 `detail.json`（`steps` 里那条 `撤销后读验证`），不产页面；批脚本一度产出的 `order195-verify.html` 已按陈旧件处理，不进这一册。本轮读数与逐条现场见 `docs/skills/skill-calorie/t351-v19-evidence.md` §三「口径两条」；本轮产物原批目录：`.scratch/t157-final/products/`。</li>
       <li><b>order 176–207 的中间产物：`dbs/`（隔离库）与 `detail.json`（逐条读数）</b>：它们留在**本轮**的原批目录 `.scratch/t157-final/products/`（`dbs/` 隔离库 ＋ `detail.json` 逐条读数），是**出页依据与判据读数**，不是给人看的页面——墙上没有可看的渲染，故不入这一册。要看机器读数去 `.scratch/t157-final/products/detail.json`（`steps` 43 条 ＋ `checks` 29 条）；要看逐条实跑证据去 `docs/skills/skill-calorie/t351-v19-evidence.md`。</li>
   </ul>
