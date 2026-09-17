@@ -24,7 +24,7 @@ const PKGS = ['skill-calorie', 'skill-home'];
 // skill-home@0.1.0 虽已发布到 npm（2026-09-07），但依赖里 `base-link-core: workspace:^0.1.0`
 // 未改写 ⇒ 新装必 EUNSUPPORTEDPROTOCOL，故不钉版本，一律走「本仓构建产物」那条路
 //（缘由见 docs/public-installer-47.md「已发布包阻塞」）。
-const NPM_PIN = { 'skill-calorie': '@0.3.0' };
+const NPM_PIN = { 'skill-calorie': '@0.2.4' };
 
 // 最小 frontmatter 解析（无依赖）：文件须以 --- 开头，第二个 --- 前为 key: value 行。
 function parseFrontmatter(text) {
@@ -58,7 +58,7 @@ describe('#47 skills-cli 导出头（卡路里样板 + 居家第二包）', () =
     it(pkg + '：公共安装器运行时小节存在', () => {
       const text = readFileSync(join(ROOT, 'packages', pkg, 'SKILL.md'), 'utf8');
       assert.ok(text.includes('## 公共安装器运行时'), '须含运行时小节（dist 不进 git，运行时走 npm）');
-      // 版本钉死 @0.3.0 为硬编码（已随本批发版窗口同步）
+      // 版本钉死 @0.2.4 为硬编码（已随本批发版窗口同步）
       // （SKILL.md/docs/测试三处联动，登记见 docs/public-installer-47.md「版本钉死登记」）。
       // 仅「已发布且装得上」的包有版本号可钉；其余（如 skill-home：已发布但 workspace: 未改写）改钉「本仓构建产物」那句。
       const pin = NPM_PIN[pkg];

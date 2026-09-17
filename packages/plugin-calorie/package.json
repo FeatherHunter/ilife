@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "dsh-life-pack": "^0.2.0",
-    "skill-calorie": "0.3.0"
+    "skill-calorie": "0.2.4"
   },
   "dsh": {
     "bundle": {
