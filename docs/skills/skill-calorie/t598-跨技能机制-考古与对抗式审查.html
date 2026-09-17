@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#598 调查：当初设计过跨技能交互机制吗？它还有效吗？</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --ink:#15181c; --muted:#6a737d;
+  --line:#e3e6ea; --blue:#1257c7; --green:#0f7a52; --amber:#a86a10; --red:#b3261e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.75 system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:28px 18px 72px}
+.top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.b-blue{background:#e4edfc;color:#123f8f}
+.b-green{background:#e2f3ea;color:#0b5c3e}
+.b-amber{background:#fdf0dc;color:#8a5609}
+.b-red{background:#fce8e6;color:#8c1d17}
+h1{font-size:25px;line-height:1.35;margin:10px 0 6px}
+h2{font-size:18px;margin:0 0 10px}
+h3{font-size:15px;margin:18px 0 6px;color:#2c333a}
+p{margin:8px 0}
+.sub{color:var(--muted);font-size:13px;margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:18px 20px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.lead{border-left:5px solid var(--blue)}
+.verdict{background:#f0f4fb;border:1px solid #c9d9f2;border-radius:12px;padding:14px 16px;margin:12px 0}
+.verdict ol{margin:8px 0 0;padding-left:22px}
+.verdict li{margin:6px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f1f3f5;font-weight:700}
+td.ok{background:#f2faf6}
+td.gone{background:#fdf1f0}
+td.half{background:#fdf8ee}
+code{background:#eef1f5;padding:1px 6px;border-radius:6px;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+pre{background:#1d2126;color:#e6e9ee;border-radius:10px;padding:12px 14px;
+  overflow-x:auto;font:12.5px/1.6 Consolas,"Cascadia Mono",monospace;margin:10px 0}
+pre .g{color:#7ee2a8} pre .r{color:#ff9a92}
+.kv{display:grid;grid-template-columns:112px 1fr;gap:5px 14px;font-size:14px;margin:10px 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+@media(max-width:640px){.kv{grid-template-columns:1fr}table{font-size:13px}}
+.tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:12px;font-weight:700}
+.t-keep{background:#e2f3ea;color:#0b5c3e}
+.t-lost{background:#fce8e6;color:#8c1d17}
+.t-half{background:#fdf0dc;color:#8a5609}
+.attack{border-left:4px solid var(--red);background:#fffafa;border-radius:0 10px 10px 0;
+  padding:12px 14px;margin:12px 0}
+.attack h3{margin:0 0 6px;color:var(--red)}
+.fix{border-left:4px solid var(--amber);background:#fffdf7;border-radius:0 10px 10px 0;
+  padding:12px 14px;margin:12px 0}
+.next{border:1px solid #c2dbff;background:#f2f7ff}
+.q{font-weight:700;color:var(--blue)}
+.rec{color:var(--green);font-weight:700}
+footer{color:var(--muted);font-size:12.5px;margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+.warn{background:#fff8e6;border:1px solid #e6cf9a;border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top">
+  <span class="badge b-blue">investigation</span>
+  <span class="badge b-green">#593 map · #598 grilling</span>
+  <span class="badge b-amber">未定夺 · 未写 issue 正文</span>
+</div>
+<h1>当初设计过「技能之间怎么互相调」吗？<br>—— 有，而且比新仓今天保留的多得多</h1>
+<p class="sub">全部结论带 <code>文件:行号</code> 出处；含三条真调用读数。先看结论，再看证据，最后是审查与下一轮问题。</p>
+
+<div class="card lead">
+<h2>结论摘要（三句）</h2>
+<div class="verdict">
+<ol>
+<li><b>设计过。</b>老家有一整个 Base Skill「技能互联」（Skill Link），2026-08-11～08-13 用户逐条拍板定稿：注册表 + 各技能域声明 + 命令真身 + 36 场景组合表 + 硬校验门 + 总览页，<b>七个部件齐全</b>。</li>
+<li><b>新仓只搬了三分之一。</b>需求语义表搬来了（30 场景）、契约底座搬来了（envelope + registry）；<b>供给侧声明、给 AI 的执行流程、跨技能硬门三件整体丢失</b>，编排器则从「Base 技能的命令」降级成「仓内 tooling 脚本」，不进任何发布物。</li>
+<li><b><code>readSkill</code> 不是新发明，是老 <code>skilllink-read</code> 的 CLI 契约逐字移植</b>（<code>--skill/--domain/--from/--to</code> + <code>{ok,skill,domain,data}</code>）。它落地时老机制已被 P 系列换成「命令键」制；而老世界里真正的调用者是 <b>AI 照 SKILL.md 走四步</b>——那份 SKILL.md 从没搬过来。<b>所以它天生没有调用者。</b></li>
+</ol>
+</div>
+</div>
+
+<div class="card">
+<h2>一 · 老家那套机制长什么样</h2>
+<p>它不是某个函数，而是一个<b>基础技能</b>。逐字自述（<code>SKILLS/技能互联/SKILL.md</code>）：</p>
+<pre>中文名：技能互联 · 英文名：Skill Link · 命令：`skilllink-read`
+跨技能数据契约层。与公共组件平级：公共组件管渲染层（HTML 长什么样），本技能管数据层（技能之间怎么拿数据）。
+<b>执行者 = AI</b>：用户复制 prompt → AI 执行；AI 读契约 → 调 skilllink-read → 理解/合并 → 注入 HTML</pre>
+
+<h3>七个部件，各住一处</h3>
+<table>
+<tr><th>部件</th><th>家</th><th>语义</th></tr>
+<tr><td>需求语义</td><td><code>技能互联/references/combos.yaml</code>（36 场景 × 11 字段）</td><td>做什么 / 怎么合并</td></tr>
+<tr><td>实现声明</td><td><code>&lt;技能&gt;/PUBLIC_DOMAINS.py</code>（域 + 字段清单 + <code>fetch(start,end)</code>）</td><td>我能提供什么域</td></tr>
+<tr><td>指针</td><td><code>技能互联/skill_registry.yaml</code>（技能名 → 路径 + 模块）</td><td>谁接入了</td></tr>
+<tr><td>命令真身</td><td><code>技能互联/skilllink.py</code>（同进程 import 对方 <code>PUBLIC_DOMAINS</code> 并调 <code>fetch</code>）</td><td>怎么调</td></tr>
+<tr><td>硬门</td><td><code>check_public_contract.py</code> 进各技能 pytest（双向：登记↔注册表）</td><td>两件事都兑现才算接入</td></tr>
+<tr><td>执行者</td><td>AI（照 SKILL.md 的四步）</td><td>谁合并</td></tr>
+<tr><td>渲染</td><td>公共组件（注入管线 + 控件库）</td><td>HTML 长什么样</td></tr>
+</table>
+
+<p>两代共享的同一条设计原则，逐字（老 <code>references/combos.yaml:2</code>）：</p>
+<pre>principle: 联动 = 唤醒词级组合。AI 分别查两个技能 → 对话层合并 → 出一个 HTML。<b>不发明接口、不跨库直连。</b></pre>
+
+<p>老家的域声明真身（<code>SKILLS/作息管家/PUBLIC_DOMAINS.py</code>）——注意 <code>fields</code>，这是新仓丢掉的关键物：</p>
+<pre>PUBLIC_DOMAINS = {
+  "sleep": {
+    "name": "睡眠",
+    "desc": "每日睡眠时长（主睡眠段 · 分钟）",
+    "fields": [
+      {"name": "date",      "type": "date",   "unit": "",     "desc": "日期（YYYY-MM-DD）"},
+      {"name": "sleep_min", "type": "number", "unit": "分钟", "desc": "当日主睡眠总时长"},
+    ],
+    "fetch": fetch_sleep,
+  },
+}</pre>
+</div>
+
+<div class="card">
+<h2>二 · 新仓搬到了什么，丢了什么</h2>
+<table>
+<tr><th>老部件</th><th>新仓对应物</th><th>状态</th></tr>
+<tr><td class="ok">需求语义（36 场景 × 11 字段）</td>
+    <td><code>base-combos/combos.yaml</code> 的 <code>scenarios</code> 段（30 条；字段 <code>external_ww→external_ref</code>、<code>calorie_side→calorie_ref</code> 改名，仍是 11 个）</td>
+    <td><span class="tag t-keep">搬来了</span></td></tr>
+<tr><td class="ok">信封格式</td>
+    <td><code>base-link-core</code> 的 <code>Envelope</code>（6 形状）；<b>但字段全换</b>（老 <code>status/data.meta/scene</code> → 新 <code>version/skill/shape/key/data</code>）</td>
+    <td><span class="tag t-keep">搬来了</span></td></tr>
+<tr><td class="ok">命名空间 + 电话本</td>
+    <td><code>base-link-core/registry.ts</code> 的 <code>skill.combo</code> 点号键</td>
+    <td><span class="tag t-keep">搬来了</span></td></tr>
+<tr><td class="gone">供给侧声明（域 + 字段 + fetch）</td>
+    <td><b>无对应物</b>。新仓没有任何「技能声明自己对外能提供什么」的机制；改用「命令键 + 形状」代替</td>
+    <td><span class="tag t-lost">整体丢失</span></td></tr>
+<tr><td class="gone">执行者指令（给 AI 的四步流程）</td>
+    <td><b>无对应物</b>。<code>skilllink</code> 在所有 <code>SKILL.md</code> 里只出现一次，且是括注「key 字符串 skilllink 登记时冻结」，不是指令</td>
+    <td><span class="tag t-lost">整体丢失</span></td></tr>
+<tr><td class="gone">跨技能硬门</td>
+    <td><b>无对应物</b>。新仓的门只查「combos.yaml 自洽」，不查「场景要的能力存不存在」</td>
+    <td><span class="tag t-lost">整体丢失</span></td></tr>
+<tr><td class="half">命令真身（runner，同进程调 fetch）</td>
+    <td><code>base-link-core/runner.ts</code> 的 <code>runCombo</code>（改成依赖注入）；<b>全仓 0 消费者</b>，唯一调用点在 <code>test/link-core.test.mjs:56-62</code></td>
+    <td><span class="tag t-half">变成死码</span></td></tr>
+<tr><td class="half">命令真身（可执行的编排器）</td>
+    <td><code>tooling/skilllink.mjs</code>——从「Base 技能的命令」降级为仓内脚本；<code>tooling/</code> 不进任何包的 <code>files</code>，<code>base-combos</code> 的 <code>files:["dist"]</code> 也不含 <code>combos.yaml</code>/<code>HELP.md</code></td>
+    <td><span class="tag t-half">不进发布物</span></td></tr>
+</table>
+
+<div class="warn"><b>装机态的直接后果</b>：装到机器上的 <code>base-combos</code> 只有 <code>dist/</code>，里面唯一运行时导出是 <code>comboEnvelope</code>——而它返回的是 <code>{items:[]}</code> 空列表桩（<code>src/index.ts:8</code> 自述「骨架占位…真实载荷 P7/skilllink 落包」）。30 条场景、15 条通道、6 条降级，一条都没进发布物。</div>
+</div>
+
+<div class="card">
+<h2>三 · 三条真调用读数（本次实测）</h2>
+<pre>$ node tooling/skilllink.mjs read calorie.today
+STEP 1/4 读表 … STEP 4/4 合并渲染结果页
+{"version":"0.1.0","skill":"calorie","shape":"list","key":"calorie.today",
+ "data":{"items":[{"id":3099,"date":"2026-09-16","food_name":"鸡胸","calories":200,…}],
+         "total":1,"output":"…\\calorie_html\\今日饮食_20260916_215907.html"}}      <span class="g">exit 0</span>
+
+$ node tooling/skilllink.mjs read memo.stats
+STEP 3/4 取数（技能出口 packages/skill-memo-ilife）
+ERR 4: 取数失败：出口非 0（4）：memo DB 目录不存在：…\\.db\\memo                     <span class="r">exit 4</span>
+
+$ node tooling/skilllink.mjs read schedule.plan.write
+STEP 2/4 registry 解析 + envelope 全字段
+ERR 3: key 对不上 registry：未知 registry key：schedule.plan.write                <span class="r">exit 3</span></pre>
+<p><b>读数一（重要纠偏）</b>：<code>skilllink</code> 这条路的<b>传输层是通的</b>——读表 → registry 解析 → spawn 别家技能出口 → 回执校验 → 错误码传播，四步全对，并且拿到了真实数据、真落了结果页。<b>#598 票面「一条路都跑不通」应改成「路通、数据/登记不通」</b>：跨进程调别家出口这件事本身没问题。</p>
+<p><b>读数二</b>：跨到 memo 时死在数据层（那家库目录不存在），错误被如实传成 exit 4、不返空——这正是设计要的行为。</p>
+<p><b>读数三</b>：<code>schedule.*</code> 一条都没登记 → exit 3。<b>30 条场景点名的 5 家外部技能（饼干记账／作息管家／居家管家／备忘录／私家大厨）里，可用的取数命令登记数是 0</b>：<code>combos</code> 段 141 键 = calorie 129 + memo 11 + home 1，而 home 那 1 条是 <code>home.help.lookup</code>（HELP 命令，不是取数命令）。</p>
+<div class="warn"><b>副作用披露（我做过的写操作）</b>：读数一那次调用让 calorie 的出口按设计落了结果页 <code>…\calorie_html\今日饮食_20260916_215907.html</code>；这是该命令的正常产物。另有一路调查子席误跑了 <code>gen-present.mjs</code>（该脚本没有 <code>isMain</code> 守卫，import 即写盘），它当场把 <code>present.ts</code> 多写了一键，已还原，<code>git status</code> 对两个 base 包为空。<b>没有做任何 git 写操作。</b></div>
+</div>
+
+<div class="card">
+<h2>四 · 顺带实测到的一处红</h2>
+<p>「唯一真相源」与它的生成物<b>现在对不上</b>：</p>
+<pre>combos 段键数（生成器输入）: 141
+盘上 present.ts 键数:        140
+逐字节相等:                  false
+生成器有、盘上无: [ 'calorie.goal.exercise' ]</pre>
+<p>而 <code>test/combos-p8.test.mjs:115-120</code> 的断言正是「<code>present.ts</code> 逐字节等于生成器输出」。<b>⇒ 这道门在 HEAD 上不成立</b>（成因像是提交 <code>b5211e9b</code>「代提交在途…定运动目标…」只带了 <code>keys.ts</code> 与 <code>combos.yaml</code>、没带重生成的 <code>present.ts</code>）。</p>
+<p>附带一条设计观察：这四个「YAML」其实不是被 YAML 解析器读的——仓里有<b>四份各自手写的逐行解析器</b>（<code>skilllink.mjs</code> / <code>check-combos.mjs</code> / <code>gen-present.mjs</code> / <code>build-help.mjs</code>），严格度各不相同（<code>skilllink</code> 遇到冻结格式外的行会大声失败，<code>check-combos</code> 宽松些）。所以这文件既不是干净的机器注册表，也不是纯文档。</p>
+</div>
+
+<div class="card">
+<h2>五 · 对抗式审查：这套设计有效吗</h2>
+<p>下面五条是对<b>老设计</b>的攻击（不是对新仓搬漏的攻击）。每条都指向「为什么它到今天也没承载过一条真实联动」。</p>
+
+<div class="attack">
+<h3>攻击 1 · 「AI 是执行者」这半边，在新仓已被规范禁止</h3>
+<p>老设计把合并与出页交给 AI（<code>merge_logic</code>／<code>present</code> 是散文）。新仓 <code>docs/calorie-architecture.md:59</code> 的 HTML-First 铁则写死「渲染失败必须给错误回执，<b>严禁手写 HTML 兜底</b>」，且页面必须是渲染纯函数的产物。</p>
+<p><b>⇒ 不是没接线，是产出侧没有合法路径。</b>AI 就算把两家数据都取到了，也不许自己拼那一页。</p>
+</div>
+
+<div class="attack">
+<h3>攻击 2 · 负载契约是「渲染契约」，不是「互通契约」</h3>
+<p>新 envelope 的载荷是 <code>items: unknown[]</code>／<code>metrics: Record&lt;string,number&gt;</code>／<code>item: Record&lt;string,unknown&gt;</code>（<code>packages/base-link-core/src/envelope.ts:13-20</code>）——<b>没有 schema、没有字段清单、没有类型</b>。它保证得了「任何技能的结果长得一样」，保证不了「两家数据能对齐」。</p>
+<p>要程序化合并，必须先知道「哪一列是日期、哪一列是睡眠分钟」——这正是老设计有（<code>fields</code>）、新设计丢了的那个东西。</p>
+<p><b>⇒ 这是根本缺陷</b>：合并只能由 LLM 读散文做，于是<b>永远测不了</b>，也永远进不了「唯一出口」那条链。</p>
+</div>
+
+<div class="attack">
+<h3>攻击 3 · 需求侧 ↔ 供给侧的连接，两代都没机器化</h3>
+<p>场景指向对方能力的方式，老新两代都是<b>唤醒词</b>：老 <code>external_ww: 查分类（餐饮 · 本月）</code>；新 <code>external_ref: 查分类（餐饮本月）</code>。不是域名，不是命令键。</p>
+<p>于是「这个场景要的那条能力到底存不存在」从来没有一道门能查。老家的 <code>check_public_contract</code> 只查「登记 ↔ 文件」存在性，<b>不查场景引用</b>。</p>
+<p><b>⇒ 36 场景（新仓 30）是一份文档，不是契约。</b></p>
+</div>
+
+<div class="attack">
+<h3>攻击 4 · 那道「强制依赖 + 进 pytest」的硬门，量的是宣言卫生，不是联动能力</h3>
+<p>老家 6 个目标技能里，<code>skill_registry.yaml</code> 实际<b>只登记了 1 个</b>（作息管家）；卡路里被明确从登记里移除（自述理由：消费方不需要提供方注册表）。而硬门照样全绿。</p>
+<p><b>⇒ 「有校验器」不等于「有联动能力」。这道门可以全绿而 36 条场景一条都跑不了。</b></p>
+</div>
+
+<div class="attack">
+<h3>攻击 5 · 真正跑通的那条路，恰好绕开了这套机制</h3>
+<p>老家唯一跑通过跨技能的真实功能是「落地训练」= <code>sync_plan.py</code>。它调兄弟技能的方式（<code>sync_plan.py:172</code>／<code>:243</code>）逐字是：</p>
+<pre>run([sys.executable, str(SCHEDULE_CLI), "ensure-plan-event", 日期, "--time-start", …, "--category", "运动"])
+run([sys.executable, str(MEMO_CLI), "add", 内容, "--category", "心愿", "--due", 日期])</pre>
+<p>即：<b>卡路里自己的脚本，子进程直调兄弟技能的命令行脚本，读 stdout 的 JSON</b>。全程不碰 <code>skilllink</code>、不碰 <code>PUBLIC_DOMAINS</code>、不碰组合表。</p>
+<p>更早的自述也印证了这点——它是为了取代「每次 AI 手拼三个工具的 CLI」才写出来的（<code>sync_plan.py:13-15</code>）。</p>
+<p><b>⇒ 这套 Base 机制从来没有承载过任何一条真实联动。唯一跑通的先例，是它想取代的那个「手拼外部 CLI」，只是被藏进了一个脚本里。</b></p>
+</div>
+
+<div class="fix">
+<h3>反向证据（别把话说满）</h3>
+<p>主机侧我实测到：新仓 <code>skilllink</code> 的<b>传输与契约层是好的</b>（读数一）。也就是说这套设计里「统一出口 + 统一信封 + 电话本」这三件是真值钱的、且今天真的能用。<b>塌的是它上面那一层</b>——合并与出页。</p>
+</div>
+</div>
+
+<div class="card">
+<h2>六 · 这张图把 #598 的三选项改成了什么</h2>
+<table>
+<tr><th>原选项</th><th>新信息下的判读</th></tr>
+<tr><td><b>1 修框架</b><br>让 <code>readSkill</code> 与 envelope／<code>skilllink</code> 同形</td>
+    <td class="gone"><b>打不到靶。</b><code>readSkill</code> 是上一代契约的遗骸；改成命令键制之后它仍然没有调用者——因为老机制的调用者是 <b>AI 照 SKILL.md 走四步</b>，而那份指令与供给侧声明都不在仓里。修形不产生调用者。</td></tr>
+<tr><td><b>2 走 CLI 直调</b><br>落地链直接调对方命令行</td>
+    <td class="ok"><b>唯一有真实先例的一条</b>（老 <code>sync_plan.py</code>），且新仓的跨进程传输已实测通（读数一）。<br>但要补两点：(a) 它只解决「取数」，<b>不解决「合并出页」</b>；(b) 五条链要的对方命令（作息 <code>ensure</code>、备忘录 <code>create</code>）今天还没在对方技能落地（#599／#600）。</td></tr>
+<tr><td><b>3 两者分工</b><br>同进程走框架、跨进程走 CLI</td>
+    <td class="half"><b>老设计其实就是这个形状</b>（需求语义与实现声明分家）。但它要成立，得先把<b>供给侧声明</b>重新设计出来——今天没有这个东西。</td></tr>
+</table>
+<p>换句话说：<b>#598 真正要定的不是「修框架还是走 CLI」，而是「合并与出页这一步怎么办」。</b>三选项都在回答怎么<b>取数</b>；而三选项里没有一个在回答怎么<b>出那一页</b>——那才是老机制塌掉的地方，也正是落地链第 3／4 步（训记）之外还剩下的真空。</p>
+</div>
+
+<div class="card">
+<h2>六 · 消费者普查（独立子席实测，与本席核对一致）</h2>
+<p>全仓 <code>.ts</code>／<code>.mjs</code>（排除 <code>node_modules</code>／<code>dist</code>）实测，数字与本席一手核对逐条吻合：</p>
+<table>
+<tr><th>查什么</th><th>读数</th><th>含义</th></tr>
+<tr><td><code>readSkill</code> 真调用点</td><td>生产代码 <b>0</b>；测试 4 处（<code>test/fetch-t6.test.mjs:104/108/110/112</code>）<br><span style="color:#6a737d">另有 2 个同名无关函数（读 SKILL.md 正文），不算调用点</span></td><td>遗骸</td></tr>
+<tr><td><code>tooling/skilllink.mjs</code> 的生产调用</td><td><b>0 处 spawn、0 处 import</b>；6 个技能只在注释里提「退出码对齐 skilllink 冻结」。入口只有 <code>package.json:16</code> 的 npm script <code>doctor</code>，CI 在 <code>.github/workflows/ci.yml:45</code> 跑 <code>pnpm doctor</code></td><td><b><code>read</code> 子命令没有任何生产驱动者</b>——连仓内都没有，只有测试</td></tr>
+<tr><td>按包名 import <code>base-combos</code></td><td><b>全仓 0 处</b>（<code>from 'base-combos'</code>／<code>require</code>／<code>import()</code> 皆无）</td><td>它的运行期消费者只有它自己；活着的只有 <code>skilllink.mjs:66</code> 直接读 yaml ＋ 几道门</td></tr>
+<tr><td>跨包调用</td><td>插件包 → 技能包 <b>6 处</b>（<code>plugin-*/src/bridge.ts:80/91/187</code> spawn 各技能 <code>dist/cli/cmd_read.js</code>）；<b>技能包 → 技能包 0 处</b></td><td>跨进程 spawn 别家出口这条形状<b>已经在生产里活着</b>，只是调用者住在插件层、一家只调一个</td></tr>
+<tr><td><code>combos:</code> 段</td><td><b>141 条</b>，<code>cmd:</code> 141/141 全覆盖；去重值 3 个：<code>skill-calorie</code>×129／<code>skill-memo-ilife</code>×11／<code>skill-home</code>×1。前缀：calorie 129／memo 11／home 1／<b>bill 0／schedule 0／chef 0</b></td><td>与第四节一致</td></tr>
+<tr><td>6 个技能出口的「跨技能」分支</td><td><b>0 处</b>（argv 一律 <code>&lt;pkg&gt;-cmd-read &lt;命令&gt; [--params] [--html] [--timeout]</code>，退出码 0/1/2/3/4/5）</td><td>今天<b>没有任何一个技能能调另一个技能</b>——按构造就不行</td></tr>
+</table>
+<div class="fix">
+<h3>这四条给 Q1 加了一个先例</h3>
+<p>「由一个住在技能之外的调用者，spawn 各技能自己的出口」这条形状，<b>已经在本仓生产环境里跑着</b>——就是 6 个插件的桥（<code>bridge.ts</code>）。它不是待设计的东西，是既有事实。</p>
+<p>差别只在：插件桥一家只 spawn 一家、只为一个面板取数；而联动要的是<b>一个调用者 spawn 两家、并把结果合成一页</b>。所以 Q1 的 (b) 与 (c) 事实上是「把插件桥那条既有形状，从一家扩到两家，并把合并放进去」——(b) 放在卡路里的宿主命令里，(c) 放在一层通用编排里。</p>
+</div>
+
+<div class="attack">
+<h3>又一条精度：主办这套机制的技能，是唯一「不真用它」的那一家</h3>
+<p>五家技能包的 <code>src/render/envelope.ts</code> 都<b>运行期</b>引契约库：</p>
+<pre>import { createEnvelope, parseEnvelope, parseRegistryKey, … } from 'base-link-core';
+   → skill-bill ✓  skill-chef ✓  skill-home ✓  skill-memo-ilife ✓  skill-schedule ✓</pre>
+<p><b><code>skill-calorie</code> 是唯一全包零运行期消费的一家</b>——它 9 处提到 <code>base-link-core</code>，<b>全是 <code>import type</code></b>（另 2 处是注释）。而且它自持一份正则副本，并明写为什么（<code>src/cli/keys.ts:19</code>）：</p>
+<pre>/** registry 合法键正则（与 base-link-core registry.KEY_RE 同值，<b>本地拷贝不运行时 import</b>）。 */</pre>
+<p>于是多出<b>第三、第四条「不同形」</b>：</p>
+<table>
+<tr><th>#</th><th>不同形</th><th>出处</th></tr>
+<tr><td>1</td><td>argv：<code>--skill/--domain/--from/--to</code> vs <code>read &lt;命令&gt; --params</code></td><td><code>cross-skill.ts:42</code> vs <code>skilllink.mjs:184-192</code></td></tr>
+<tr><td>2</td><td>输出：<code>{ok, skill, domain, data}</code> vs envelope 五字段（无 <code>ok</code>）</td><td><code>cross-skill.ts:50</code> vs <code>envelope.ts:104</code></td></tr>
+<tr><td>3</td><td><b>命令名的拼法</b>：包内是下划线 <code>calorie.view_home</code>，注册表是点号 <code>calorie.view.home</code></td><td><code>fetch/shapes.ts:12</code>（<code>`${skill}.${domain}_${op}`</code>）vs <code>combos.yaml</code>；<code>combos.yaml:714</code> 亲口承认下划线名<b>「非法 registry 名」</b>（下划线过不了 <code>registry.ts:6</code> 的正则）</td></tr>
+<tr><td>4</td><td><b>对契约库的依赖</b>：5 家运行期引，卡路里只 <code>import type</code> ＋ 本地拷贝正则</td><td>各 <code>src/render/envelope.ts:2-3</code> vs <code>skill-calorie/src/cli/keys.ts:19</code></td></tr>
+</table>
+<p><b>⇒ 这条直接改判 Q1 选项 1。</b>「修框架让 <code>readSkill</code> 与 envelope／<code>skilllink</code> 同形」不是改一个文件的事：它要先把卡路里包变成契约库的运行期消费者（今天它刻意不消费），再把包内那套下划线命令名与注册表的点号命令名合成一套。这不是「修形」，是<b>让主办技能改宗</b>。</p>
+</div>
+</div>
+
+<div class="card next">
+<h2>七 · 重算后的前沿（原来那三问已被这批信息重塑）</h2>
+<p>你上轮还没回 Q1／Q2／Q3。这批信息把它们的题面改了，所以我不沿用旧题号，重开三个：</p>
+<p><span class="q">❓ Q1 · 合并与出页这一步，走哪条？</span>三条候选：(a) <b>不合并</b>——每条链只调对方取数、把两页各自落盘，合并留给用户看（最省，但「联动」名不副实）；(b) <b>宿主命令自己合并</b>——落在卡路里包的宿主命令里，由它调两家、自己渲染成一页（对得上老 <code>sync_plan.py</code> 的形状，也符合新仓「页面必须由命令渲染」）；(c) <b>恢复一层通用编排</b>——把 <code>skilllink</code> 那层重新设计成能合并的。</p>
+<p><span class="rec">➡️ 我推荐 (b)</span>：它是唯一既符合老先例、又符合新仓 HTML-First 铁则、还不需要先造一套通用机制的路；代价是每个联动各写一次合并（先接受这个重复）。</p>
+<p><span class="q">❓ Q2 · 那 30 条场景（含 6 个 L6 空位）在新仓是什么身份？</span>(a) <b>降级为纯文档</b>——承认它是给人 AI 读的需求说明，不再假装是注册表；(b) <b>当未完成的规格</b>——逐条标出「取哪条命令、谁合并、出哪一页」，做成可执行清单；(c) <b>暂时封存</b>，本图只做落地链要用的那 2 条。</p>
+<p><span class="rec">➡️ 我推荐 (a)+(c)</span>：本图只认领落地链要用的那几条，其余明确降级为文档，避免「36 条都算欠债」这种永远还不完的账。</p>
+<p><span class="q">❓ Q3 · 已经实测到的两处红（<code>present.ts</code> 与生成器不等；跨技能硬门在新仓不存在）要不要进本票？</span>(a) 进本票一起收；(b) 另开票，本票只做裁定。</p>
+<p><span class="rec">➡️ 我推荐 (b)</span>：它们是独立缺陷，塞进本票会让「裁定」变成「改代码」，与票面「裁定之前不许改 <code>packages/**</code>」冲突。</p>
+<p style="margin-top:14px">调查分工交代：本文全部关键结论（含三条真调用读数、第四节那处红、第六节全部计数）都由本席一手核对；另有两路子席独立复核（设计面还原、全仓消费者普查），读数<b>逐条吻合</b>，第六节即其结论并已折入。若后续再有推翻上面任何一条的读数，我会当场报出来。</p>
+</div>
+
+<footer>
+证据锚点（本次一手核对）：<code>SKILLS\技能互联\{SKILL.md,skilllink.py,skill_registry.yaml,references\combos.yaml}</code> ·
+<code>SKILLS\作息管家\PUBLIC_DOMAINS.py</code> · <code>SKILLS\卡路里\scripts\sync_plan.py:13-15,96-111,172,243</code> ·
+<code>packages/base-link-core/src/{envelope,registry,runner,index}.ts</code> · <code>packages/base-combos/{combos.yaml,package.json,HELP.md}</code> ·
+<code>tooling/{skilllink,check-combos}.mjs</code> · <code>docs/calorie-architecture.md:59,78</code> ·
+<code>test/combos-p8.test.mjs:115-120</code> · 设计票 #6／#7／#9／#10／#25／#36／#37。
+本次新增的只读核对脚本：<code>.scratch/t598-audit/present-equality-check.mjs</code>。
+</footer>
+
+</div>
+</body>
+</html>

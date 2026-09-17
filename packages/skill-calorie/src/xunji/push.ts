@@ -21,7 +21,7 @@ import { createRateLimiter } from './rateLimit.js';
 import type { RateLimiterDeps } from './rateLimit.js';
 import { upsertTrains } from './upsert.js';
 import type { UpsertOptions, UpsertOutcome } from './upsert.js';
-import type { PlanSessionRow } from '../workout/planStore.js';
+import type { PlanSessionRow } from '../workout/index.js';
 
 /** `pushDayPlan` 要的 session 形状（`planSource.ts` 给的就是这形；`movements` 缺时当空表）。 */
 export type PushSession = Pick<PlanSessionRow, 'session_label' | 'movements'>;

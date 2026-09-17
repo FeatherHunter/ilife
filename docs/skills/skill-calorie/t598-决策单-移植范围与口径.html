@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#598 决策单 · 移植范围与口径（八问）</title>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#fff;--ink:#14171a;--muted:#68727d;--line:#e2e6ea;
+  --blue:#1257c7;--green:#0d6e49;--amber:#9a6209;--red:#a52218;--violet:#6b3fa0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.7 system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:940px;margin:0 auto;padding:26px 18px 64px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.b{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.b1{background:#e4edfc;color:#123f8f}
+.b2{background:#e2f3ea;color:#0b5c3e}
+.b3{background:#fdeadd;color:#8a4409}
+h1{font-size:24px;line-height:1.35;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+h2{font-size:17px;margin:0 0 8px}
+h3{font-size:14px;margin:14px 0 5px;color:#39414a}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin:13px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:9px 0}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:#f1f3f5}
+code{background:#eef1f5;padding:1px 5px;border-radius:5px;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+.fact{background:#f7f9fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;
+  padding:9px 12px;margin:9px 0;font-size:13.5px}
+.fact .t{font-weight:700;color:var(--blue);display:block;margin-bottom:2px}
+.pick{background:#f0faf4;border:1px solid #b7e0c8;border-radius:12px;padding:11px 13px;margin:10px 0}
+.pick .hd{font-weight:700;color:var(--green);font-size:14.5px;margin-bottom:3px}
+.opt{border-left:3px solid var(--line);padding:5px 0 5px 10px;margin:8px 0}
+.opt.mine{border-left-color:var(--green);background:#fafdfb;border-radius:0 8px 8px 0}
+.opt .n{font-weight:700}
+.opt .d{color:var(--muted);font-size:13px;display:block;margin-top:1px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+@media(max-width:660px){.cols{grid-template-columns:1fr}}
+.pro,.con{border-radius:10px;padding:9px 11px;font-size:13px}
+.pro{background:#e9f7ef}.con{background:#fdf3e3}
+.pro b{color:#0b5c3e}.con b{color:#8a5609}
+.done{background:#eef7f2;border:1px solid #c9e4d6}
+.done table{margin:6px 0}
+.tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:12px;font-weight:700;white-space:nowrap}
+.t-keep{background:#e2f3ea;color:#0b5c3e}
+.t-tbd{background:#fdf0dc;color:#8a5609}
+.t-out{background:#f2f3f5;color:#5c646c}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:8px 0 2px}
+.hint{background:#fff8e6;border:1px solid #e6cf9a;border-radius:10px;
+  padding:9px 12px;font-size:13px;margin:9px 0}
+footer{color:var(--muted);font-size:12.5px;margin-top:20px;padding-top:12px;border-top:1px solid var(--line)}
+.q{color:var(--blue);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="badges">
+  <span class="b b1">#598 · grilling</span>
+  <span class="b b2">#593 map</span>
+  <span class="b b3">未定夺 · 未写 issue 正文</span>
+</div>
+<h1>决策单 · 移植范围与口径</h1>
+<p class="sub">上半页：已定的五条（契约）。下半页：这轮要定的八问 ＋ 一张可直划的范围清单。</p>
+
+<div class="card done">
+<h2>已定（契约五问）</h2>
+<table>
+<tr><th style="width:26%">问</th><th>结论</th></tr>
+<tr><td>契约单位</td><td><b>「ensure 型合成写」</b>：被调方一条命令把一条业务事实对齐到「本地库 ＋ 它的外部平台」两侧；两侧各按自然键判重；远端 id 回写本地；回执分字段报两侧状态</td></tr>
+<tr><td>判重归谁</td><td><b>两侧各自判重，责任全在被调方</b>；调用方<b>永不碰</b>对方的库与第三方平台</td></tr>
+<tr><td>部分失败</td><td><b>回执分字段 ＋ 退出码非 0</b>（两者都要）</td></tr>
+<tr><td>远端 id 落位</td><td>算契约的一部分</td></tr>
+<tr><td>#598 范围</td><td>只定契约形状、不管具体命令，与 #599／#600 并行</td></tr>
+</table>
+<div class="fact" style="border-left-color:var(--green)">
+  <span class="t" style="color:var(--green)">追加一条（本轮新证据）→ 已答的「远端 id 落位」要扩成两件</span>
+  ① 远端 id <b>存回本地</b>（幂等锚、改删目标）；② 远端对象上带<b>可反查的归属锚</b>（归属判断、反向关联）。<br>
+  老代码两家都用这手法：作息把 <code>"作息管家自动同步"</code> 前缀放进飞书日程描述（<code>schedule_db.py:1137</code>），diff 靠它决定「这条远端日程是不是我管的、敢不敢删」；备忘把 <code>"原备忘 #&lt;id&gt;"</code> 放进飞书任务描述（<code>feishu_sync.py:329</code>），反向对账用正则从飞书<b>反查</b>本地 id。<b>新仓两边都丢了。</b>
+</div>
+</div>
+
+<div class="card">
+<h2>这轮要定的八问 · 摘要</h2>
+<table>
+<tr><th style="width:20%">问</th><th style="width:30%">我的推荐</th><th>一句话理由</th></tr>
+<tr><td><b>Q1</b> 范围划到哪</td><td style="background:#f0faf4"><b style="color:#0d6e49">按下面两张清单，你直接删行</b></td><td>抽象选项不如逐块可划；清单即未来规格的「范围」节</td></tr>
+<tr><td><b>Q2</b> 三处冲突以谁为准</td><td style="background:#f0faf4"><b style="color:#0d6e49">拆开：降级照老、报告照新、写形态统一</b></td><td>三件性质不同，混着谈会把两个都对的选择谈死一个</td></tr>
+<tr><td><b>Q3</b> 「逻辑一致」判据</td><td style="background:#f0faf4"><b style="color:#0d6e49">不变量清单为主 ＋ 老 py 测试为辅</b></td><td>是你懂 80% 架构能亲自逐条过的形态</td></tr>
+<tr><td><b>Q4</b> 切到哪</td><td style="background:#f0faf4"><b style="color:#0d6e49">新开一张图</b></td><td>地基与「让某一步能跑」不该同票</td></tr>
+<tr><td><b>Q5</b> 辅助件要不要全搬</td><td style="background:#f0faf4"><b style="color:#0d6e49">全搬</b>（已出 scope 的除外）</td><td>漏掉它们＝固化成今天这个病</td></tr>
+<tr><td><b>Q6</b> 飞书层移植深度</td><td style="background:#f0faf4"><b style="color:#0d6e49">完整移植</b></td><td>这是「底层封装到位」最实的地方</td></tr>
+<tr><td><b>Q7</b> 老代码结构缺陷</td><td style="background:#f0faf4"><b style="color:#0d6e49">修正 ＋ 逐条登记「有意偏离」</b></td><td>唯一能同时满足「逻辑一致」与「不照抄旧坑」</td></tr>
+<tr><td><b>Q8</b> 补不补老没有的新能力</td><td style="background:#f0faf4"><b style="color:#0d6e49">补两处（task 删除、create 幂等键）</b></td><td>这两处是老代码缺陷，照抄就做不到「不产生重复」</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Q2 · 三处冲突以谁为准</h2>
+<h3>前因后果</h3>
+<p>你上次答「<b>拆开</b>：降级语义照老、报告语义照新」。这条在调查里被证实是对的——老代码几乎全走「降级继续」，唯一「远端不可用即阻断」的入口只有 <code>cmd_feishu_resync</code>。但本轮又挖出<b>第三处</b>冲突，需要你补一刀。</p>
+<table>
+<tr><th style="width:22%">冲突</th><th>老口径</th><th>新仓／迁移件口径</th></tr>
+<tr><td>① 远端不可用</td><td><b>降级继续</b>：本地照样成，返 <code>None</code>，不抛错</td><td><b>阻断</b>：四门全绿才同步，否则 exit 4（迁移件 <code>schedule-migration-split.md:41</code> 已冻）</td></tr>
+<tr><td>② 本地成、远端没成</td><td>回执分字段 <code>feishu_sync:{synced:false}</code>，<b>退出码仍 0</b></td><td><b>退出码非 0</b>（你已定）</td></tr>
+<tr><td>③ <b>新增</b>：写 op 的形态</td><td><b>不统一</b>：<code>ensure-plan-event</code> ＝合成写；<code>upsert-plan-events</code>／<code>update-event</code>／<code>deactivate-event</code> ＝ 本地写 ＋ <b>询问后</b>同步（<code>_maybe_sync_after_write</code> 88 行 ＋ <code>ask_callback</code>）</td><td>已定「ensure 型合成写」，但其余 op 未定</td></tr>
+</table>
+<div class="cols">
+<div class="pro"><b>统一到合成写（推荐）利：</b>契约只写一套；调用方不必先判断「该用哪个 op」；正好消灭我们想消灭的那种不确定</div>
+<div class="con"><b>弊：</b><code>upsert</code>（整日覆盖）语义上确实和 <code>ensure</code>（同段跳过）不同——统一时要明确「覆盖 vs 跳过」谁说话，不能糊</div>
+</div>
+<div class="pick">
+  <div class="hd">➡️ 推荐</div>
+  ① <b>降级照老</b>：远端不可用不拦住本地写（本地那条日程该落还得落）；② <b>报告照新</b>：最终没达成要非 0；③ <b>写 op 全部统一成合成写</b>，并在口径里写死「覆盖 vs 跳过」由哪个参数表达。
+</div>
+</div>
+
+<div class="card">
+<h2>Q3 · 「逻辑一致」用什么判据验</h2>
+<div class="fact">
+  <span class="t">为什么这问必须先定</span>
+  「逻辑一致」是句空话，除非它有一个可机器跑、或可比对的判据。而老代码本身有结构缺陷（<code>cmd_help</code> 两份同名定义、<code>_iso_to_hhmm</code> 两份副本、<code>feishu_sync.py:931-1005</code> 一段死代码残块、<code>ensure_plan_event:1118</code> 的短路是死代码因为 <code>FeishuStatus</code> 对象恒真）——<b>逐字对拍会把缺陷一起搬</b>。
+</div>
+<div class="opt mine"><span class="n">(c) 不变量清单为主 ★推荐</span><span class="d">把老脚本行为逐条写成断言：幂等键（本地侧／远端侧各是什么）／查重字段／失败行为／id 回写／归属锚／远端不可用时降级还是阻断。新实现逐条过。</span></div>
+<div class="opt"><span class="n">(a) 老 py 测试逐条翻成 TS 测试</span><span class="d">老仓 tests/ 作息约 35 件、备忘约 35 件。</span></div>
+<div class="opt"><span class="n">(b) 行为对拍</span><span class="d">同输入跑老脚本与新命令，比结构化输出。</span></div>
+<div class="cols">
+<div class="pro"><b>选 (c) 利：</b>正是<b>你懂 80% 架构</b>能亲自逐条过的形态；天然变成交付物（老→新 逐条对照表）；不受老代码结构缺陷干扰</div>
+<div class="con"><b>选 (c) 弊：</b>清单要人写，写漏一条就漏一条；覆盖面依赖写的人的判断</div>
+</div>
+<div class="pick"><div class="hd">➡️ 推荐 (c) 为主 ＋ (a) 为补</div>(b) 最硬但要搭 Python↔TS 对拍台，成本高；(a) 增量最便宜，适合当第二道网。</div>
+</div>
+
+<div class="card">
+<h2>Q1 · 范围划到哪（＋ 请你直接删行）</h2>
+<div class="hint"><b>怎么用：</b>下面两张表里，<b>你删掉哪一行，哪一行就不搬</b>。删完的版本我就当作范围定了，直接写成规格的「范围」节。</div>
+<div class="legend">
+  <span><span class="tag t-keep">搬</span> 我建议搬</span>
+  <span><span class="tag t-tbd">待你定</span> 不在落地链上，要你划</span>
+  <span><span class="tag t-out">不搬</span> 我已判不该搬（你可以推翻）</span>
+</div>
+
+<h3>作息管家（老 plan＋飞书相关约 120 个函数，其中飞书层约 32）</h3>
+<table>
+<tr><th style="width:20%">块</th><th>内容</th><th style="width:13%">建议</th></tr>
+<tr><td>飞书底座</td><td><code>find_lark_cli</code>／<code>_run_lark</code>／<code>_run_lark_json</code>／<code>FeishuStatus</code>／<code>is_feishu_available</code>（三档＋300s 缓存）／<code>_probe_calendar_writable</code></td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>飞书四条动作</td><td><code>create_event</code>／<code>update_event</code>／<code>delete_event</code>／<code>search_events</code>（<b>三阶段合并拉取</b>＋并发＋6 小时切片规避 20 条上限＋<code>events get</code> 补 description）</td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>配对与对账</td><td><code>PlanEvent</code>／<code>diff_and_sync</code>／<code>_diff_and_sync_impl</code>（326 行三阶段）／<code>_compose_description</code>／<code>_reconcile_feishu_ids</code>／<code>_cleanup_old_event_in_slot</code></td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>plan 本地写</td><td><code>ensure_plan_event</code>／<code>upsert_plan_events</code>／<code>update_plan_event</code>／<code>deactivate_plan_event</code>／<code>set_feishu_event_id</code>／<code>search_plan_event</code></td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>plan 读与校验</td><td><code>list_plan_events</code>／<code>get_plan_events_range</code>／<code>get_plan_event</code>／<code>validate_24h_coverage</code>／<code>normalize_time</code>／<code>_normalize_date</code></td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>数据迁移</td><td><code>migrate_plan_to_events.py</code> 全 6 个（旧 24 小时格 → 事件行，幂等）</td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>旧版 24 小时格</td><td><code>upsert_plan</code>／<code>_read_plan_dict</code>／<code>get_plan</code>／<code>get_plans</code>／<code>cmd_upsert_plan</code></td><td><span class="tag t-out">不搬</span></td></tr>
+<tr><td>写后询问式同步</td><td><code>_maybe_sync_after_write</code>（88 行＋<code>ask_callback</code>）</td><td><span class="tag t-out">不搬</span></td></tr>
+<tr><td>商量计划域</td><td><code>plan_scenarios.py</code> 全 9 个（<code>fit_events</code>／<code>fit_rate</code>／<code>build_history_habits</code>／<code>cmd_plan_result</code>）＋<code>render-plans-preview</code>（161 行）</td><td><span class="tag t-tbd">待你定</span></td></tr>
+<tr><td>plan 页面交付</td><td><code>render_plan_receipt</code>／<code>_add</code>／<code>_write</code> 三款 ＋ <code>render-plans-review</code></td><td><span class="tag t-tbd">待你定</span></td></tr>
+</table>
+
+<h3>备忘录（96 个顶层定义，心愿＋飞书相关约 30）</h3>
+<table>
+<tr><th style="width:20%">块</th><th>内容</th><th style="width:13%">建议</th></tr>
+<tr><td><code>due</code>（排期日期）</td><td>DDL 补列 ＋ <code>add --due</code>（<b>仅 <code>category=心愿</code> 生效，非心愿静默忽略</b>）＋ <code>set_due</code> 批量 ＋ <code>search --due</code> 过滤 ＋ 用户语言固定为「排期日期」</td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>心愿飞书层</td><td><code>add_wish_sync</code>（<code>task +create --summary … --description "原备忘 #&lt;id&gt;" --assignee … [--due] [--tasklist-id]</code>）／<code>update_wish_sync</code>／<code>complete_wish_sync</code>／<code>update_due_sync</code>／<code>clear_due_sync</code>（走 <code>--data '{"due":null}'</code>）／<code>_search_feishu_task_by_due_and_summary</code></td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>反向对账</td><td><code>sync_from_feishu</code>（184 行三步：本地→飞书补建／飞书 done→本地完成／飞书 due→本地）＋ <code>_backfill_local_wishes</code>／<code>_list_all_tasks</code>／<code>_get_task_detail</code>／<code>_parse_feishu_due</code></td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>飞书底座</td><td><code>_get_user_open_id</code>／<code>_find_lark_cli</code>／<code>is_feishu_available</code>／<code>_run_lark</code>／<code>_traceback_guard</code>／<code>check_permissions</code>／<code>get_granted_scopes</code></td><td><span class="tag t-keep">搬</span></td></tr>
+<tr><td>授权向导</td><td><code>scripts/feishu_auth_helper.py</code> 4 个（<code>init_app</code>／<code>generate_qr</code>／<code>poll_auth</code>／<code>check_status</code>）</td><td><span class="tag t-tbd">待你定</span></td></tr>
+<tr><td>飞书自检</td><td><code>_sentinel_task</code>／<code>_sentinel_calendar</code>／<code>run_sentinel_write_test</code> ＋ <code>check</code> 子命令<br><span style="color:#a52218">注意：<code>_sentinel_task</code> 每跑一次会在飞书留一个真任务且无删除路径</span></td><td><span class="tag t-tbd">待你定</span></td></tr>
+<tr><td>三个向导域</td><td><code>wish_batch_plan</code>／<code>wish_complete</code>／<code>batch_update_category</code> ＋ 对应 <code>render_*</code>（新仓现在是 <code>memo.batch</code> 占位桩）</td><td><span class="tag t-tbd">待你定</span></td></tr>
+<tr><td>提醒域</td><td><code>add_reminder</code>／<code>list_due_reminders</code>(222 行)／<code>dismiss_reminder</code>／<code>completed_reminders</code>(121 行)／<code>list_reminders</code>／<code>_validate_repeat_rule</code><br><span style="color:#68727d">迁移件只说过 <code>reminder_scheduler</code> 不迁，<b>没说提醒域</b></span></td><td><span class="tag t-tbd">待你定</span></td></tr>
+<tr><td>页面交付</td><td><code>memo_render.py</code> 的 <code>render_query</code>／<code>render_sync_report</code>／<code>render_wish_plan</code>／<code>render_wish_complete</code>／<code>render_change_category</code></td><td><span class="tag t-tbd">待你定</span></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Q6 · 飞书层移植深度（这问最影响工作量与价值）</h2>
+<div class="fact">
+  <span class="t">新仓今天有一个「老设计专门规避过」的漏读缺陷</span>
+  老 <code>search_events</code> ＝ 三阶段合并（<code>+agenda</code> ＋ <b>6 小时切片</b> <code>+search-event</code> ＋ 逐条 <code>events get</code> 补描述）＋ 并发。新仓 ＝ 单次 <code>+search-event</code>。<br>
+  ⇒ <b>一天超过 20 条事件时会漏读</b>；漏读在 <code>op=sync</code> 里的后果是「以为远端没有 → 重复建」。今天看不出来，只是因为新仓把查询返回值丢了。
+</div>
+<div class="opt mine"><span class="n">(a) 完整移植 ★推荐</span><span class="d">三阶段合并拉取（含切片规避 20 条上限）＋ 远端查重 ＋ 归属标记 ＋ 孤儿清理 ＋ 反向对账 ＋ 同槽清理兜底</span></div>
+<div class="opt"><span class="n">(b) 按新仓现状简化</span><span class="d">只补「能建、能查、能写回 id」的最小面</span></div>
+<div class="cols">
+<div class="pro"><b>选 (a) 利：</b>这是「底层封装到位」最实的地方；也是老设计里最值钱的资产（三阶段配对、切片、归属锚都是为真实使用打磨出来的）</div>
+<div class="con"><b>选 (a) 弊：</b>工作量大头在这里（单 <code>_diff_and_sync_impl</code> 就 326 行）</div>
+</div>
+<div class="pick"><div class="hd">➡️ 推荐 (a)</div>选 (b) 等于把上面那个漏读缺陷<b>固化</b>下来，将来还要再拆一遍已长出来的东西。</div>
+</div>
+
+<div class="card">
+<h2>Q7 · 老代码的结构缺陷怎么处理</h2>
+<div class="fact">
+  <span class="t">实测到的缺陷（不是推测）</span>
+  <code>ensure_plan_event:1118</code> 的「飞书不可用就跳过」是<b>死代码</b>（<code>FeishuStatus</code> 对象恒真，实际靠 <code>except Exception</code> 兜）｜<code>cmd_help</code> 在 <code>schedule_cli.py</code> 有<b>两份同名定义</b>（后者覆盖前者）｜<code>_iso_to_hhmm</code> <b>两份副本</b>｜<code>feishu_sync.py:931-1005</code> 一段<b>死代码残块</b>｜<code>create_event</code> <b>无幂等键</b>
+</div>
+<div class="opt"><span class="n">(a) 照搬</span><span class="d">"逻辑一致"字面执行</span></div>
+<div class="opt mine"><span class="n">(b) 修正 ＋ 逐条登记「有意偏离清单」★推荐</span><span class="d">偏离清单本身就是验收物，交你过</span></div>
+<div class="pick"><div class="hd">➡️ 推荐 (b)</div>这是唯一能同时满足「逻辑一致」与地图已定的「旧坑不照抄」的做法。</div>
+</div>
+
+<div class="card">
+<h2>Q8 · 补不补老代码没有的新能力</h2>
+<table>
+<tr><th style="width:30%">新能力</th><th>老状态</th><th>为什么可能需要</th></tr>
+<tr><td>飞书 task <b>删除</b></td><td>老只有「标完成」，<b>从不删 task</b>（<code>feishu_sync.py</code> 全库无 task delete；唯一 delete 在日历域）</td><td>删了本地心愿，飞书任务会一直留着</td></tr>
+<tr><td><code>create_event</code> 的<b>幂等键</b></td><td>老<b>无键</b>，重复调用重复建</td><td>你已定「两侧各按自然键判重」——这处没键，那条就落不了地</td></tr>
+</table>
+<div class="opt mine"><span class="n">(b) 两处都补，登记进「有意偏离清单」★推荐</span></div>
+<div class="pick"><div class="hd">➡️ 推荐 (b)</div>这两处不是口径选择，是<b>老代码的缺陷</b>；照抄会让「重复调用不产生重复远端对象」这条基本要求做不到——而那条恰恰是你已定的。</div>
+</div>
+
+<div class="card">
+<h2>Q4 · 切到哪 · Q5 · 辅助件</h2>
+<div class="opt mine"><span class="n">Q4 推荐：新开一张图（map）★</span><span class="d">专做「老底层 → 新 TS 的移植」，两技能各一张或合成一张。理由：#599／#600 的票面是「让某一步能跑」（小），你现在要的是<b>地基</b>；地基塞进那两张票会让它们膨胀到无法验收，也排不出「先地基后上层」的依赖。</span></div>
+<div class="opt mine"><span class="n">Q5 推荐：辅助件全搬 ★</span><span class="d">除已出 scope 的 <code>reminder_scheduler.py</code>（迁移件 <code>memo-migration-split.md:34</code> 已定不迁）外全搬。理由：反向对账与清理正是「建了改不了、删不了、对不上账」的解药；漏掉它们就是今天这个病。</span></div>
+</div>
+
+<div class="card">
+<h2>你回什么</h2>
+<ol>
+  <li><b>两张清单直接删行</b>（删掉的＝不搬），其余默认按我的建议；</li>
+  <li>Q2：第三处冲突（写 op 形态）要不要统一成合成写；</li>
+  <li>Q3 判据、Q6 飞书层深度、Q7 旧缺陷处理、Q8 要不要补新能力 —— 各一个选项即可；</li>
+  <li>Q4 切票（新开图要不要）与 Q5（辅助件全搬）如无异议，默认按推荐。</li>
+</ol>
+<p style="margin-bottom:0">你确认后我做三件：更新 #598 正文（按进度契约）／把结论写成裁定件与「有意偏离清单」的骨架／按 Q4 的裁决切票或开图。</p>
+</div>
+
+<footer>
+本单只放拍板信息。证据与逐函数明细在 <code>docs/skills/skill-calorie/t598-跨技能机制-考古与对抗式审查.html</code>；老代码函数清单来自两路只读调查（作息 <code>schedule_cli.py</code> 3236 行＋<code>schedule_db.py</code>＋<code>feishu_sync.py</code> 共 128 个顶层定义；备忘 96 个顶层定义）。全程未做 git 写操作。
+</footer>
+
+</div>
+</body>
+</html>

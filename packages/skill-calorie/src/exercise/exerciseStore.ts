@@ -290,3 +290,16 @@ export function listWindow(db: DatabaseSync, start: string, end: string): Exerci
     'SELECT * FROM exercise_log WHERE date BETWEEN ? AND ? AND COALESCE(is_deleted, 0) = 0 ORDER BY date, time',
   ).all(start, end) as ExerciseRow[];
 }
+
+/** R2 收口（#613）：训记回写桥（唯一缝合点，定义仍各归本件，门只转出这一件）。
+ *
+ * 训记回写（`src/xunji/rows.ts`／`store.ts`）是 `addRecord` 与三个纯函数
+ * （`convertLoadKg`／`estimateCaloriesFromTraining`／`inferCategory`）的第二个用法
+ * （第一个是运动域自己）。按铁律一只走运动门：门转出本桥一件（门面仍四件，不多于五个），
+ * 回写侧只认桥成员，不深引本件其他出口。 */
+export const exerciseBackfillBridge = {
+  convertLoadKg,
+  estimateCaloriesFromTraining,
+  inferCategory,
+  addRecord,
+};

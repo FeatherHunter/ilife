@@ -37,6 +37,8 @@ export { buildBodyCompositionView, buildBodyCompositionCompare, buildBodyMeasure
 export type { BodyCompositionView, BodyMeasureView } from '../body/bodyPlate.js';
 export { buildPlanView, buildPlanWizardView, buildExerciseGoalView, buildPlanVsActualView } from './planPlate.js';
 export type { PlanView, PlanWizardView, ExerciseGoalView, PlanVsActualView } from './planPlate.js';
+// R1 收口（#613）：`weekOfDate` 经此门转出（训记取数口改走门，不深引 `planPlate.ts` 内部件）。
+export { weekOfDate } from './planPlate.js';
 export { buildGoalExpiringView, buildGoalPredictView, buildGoalVsActualView } from '../goal/goalExtraPlate.js';
 export type { GoalExpiringView, GoalPredictView, GoalVsActualView } from '../goal/goalExtraPlate.js';
 export { buildPredictView, buildAnomalyView, buildContraView, buildDedupeView } from './insightPlate.js';

@@ -10,12 +10,12 @@
  * - 行级失败记 `errors` 不中断整体（老 `:128-131`）；游标级异常向上抛，
  *   调用方回滚（老 `:87-88`）。
  *
- * INSERT 复用运动域自己的写入路径（`exerciseStore.addRecord`，本票补上 `xunji` 两列的那条）；
- * 跨能力引用是过渡债务 R2（见证据件；收口前认领，不在本票重构别家门）。
+ * INSERT 经运动门回写桥（R2 收口 #613：`exercise/index.js#exerciseBackfillBridge.addRecord`，
+ * 本件不深引 `exerciseStore.ts` 内部件）；
  */
 
 import type { DatabaseSync } from 'node:sqlite';
-import { addRecord } from '../exercise/exerciseStore.js';
+import { exerciseBackfillBridge } from '../exercise/index.js';
 import type { XunjiBackfillRow } from './rows.js';
 
 /** 幂等键三列（库列名；唯一定义地，别处引用——文档写两列处是错的）。 */
@@ -62,7 +62,7 @@ export function upsertXunjiRows(db: DatabaseSync, rows: readonly XunjiBackfillRo
         );
         updated += 1;
       } else {
-        addRecord(db, {
+        exerciseBackfillBridge.addRecord(db, {
           date: row.date, exerciseType: row.exerciseType, caloriesBurned: row.caloriesBurned,
           reps: row.reps, category: row.category, difficulty: row.difficulty,
           setIndex: row.setIndex, loadKg: row.loadKg, isBackfill: true,

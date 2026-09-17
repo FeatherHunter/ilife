@@ -48,6 +48,8 @@ export const PRESENT_KEYS: string[] = [
   'calorie.workout.plan-update',
   'calorie.workout.plan-update-day',
   'calorie.workout.plan-update-movement',
+  'calorie.workout.xunji-backfill',
+  'calorie.workout.xunji-push',
   'calorie.help.center',
   'calorie.help.lookup',
   'calorie.history',

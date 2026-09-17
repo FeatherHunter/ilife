@@ -15,12 +15,15 @@
  * ② 外部调用无保护 → 跑道预检＋限时＋失败进码；③ 回执渲染器不调外部 → 调用与回执收进同一命令。
  * 审计（动作名校验）不在本链：推送前不校验、原样上报（沿 `#607 §八·7`，审计由薄命令层做）。
  *
- * R3 占位（过渡债务，详见证据件 §九）：作息桥与备忘桥（`landPlanStep`／`landWishStep`）
- * 与 `run-sync` 缺省跳过两步的注入缝（`RunSyncDeps.plan`／`wish`）同形，但恒 `skipped`
- *（与 #610 缺省同义：未接入，真实现归 #613）；本宿主第二／三步走真合成写，不走此桥。
+ * R3 真实现（#613 收口：作息桥与备忘桥缺省走真合成写，可注入 `RunSyncDeps.plan`／`wish`
+ * 同形函数；本宿主第二／三步走同跑道同口径，定义共用 `landPages.ts` 三函数与 `landRunner.ts`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { todayISO } from '../analysis/utils.js';
+import { DB_FILENAME, resolveDbDir } from '../paths.js';
+import { openDbReadOnly } from '../db/readonly.js';
 import { weekOfDate } from '../render/planPlate.js';
 import { dayField, fail } from '../shared/params.js';
 import { R, provided } from '../shared/writeParts.js';
@@ -43,14 +46,127 @@ export interface LandBridgeResult {
   readonly note?: string;
 }
 
-/** R3 作息桥（占位：与 #610 缺省同义恒 `skipped`，真实现归 #613；本宿主第二步走真合成写，不走此桥）。 */
-export async function landPlanStep(dates: readonly string[]): Promise<LandBridgeResult> {
-  return { ok: true, skipped: true, note: '占位未接入：作息合成写真实现归 #613（' + dates.length + ' 天）' };
+/** R3 双桥的注入缝（与 `xunji/run-sync.ts#RunSyncDeps.plan`／`wish` 同形：天数组进、结局出；
+ * 调用方可注入同形函数；`dbFile` 只给测试换库文件，生产走 `SKILLS_DB_PATH`，不许打生产库）。 */
+export interface LandBridgeDeps {
+  readonly plan?: (dates: readonly string[]) => Promise<LandBridgeResult>;
+  readonly wish?: (dates: readonly string[]) => Promise<LandBridgeResult>;
+  readonly dbFile?: string;
 }
 
-/** R3 备忘桥（占位：同上；本宿主第三步走真合成写，不走此桥）。 */
-export async function landWishStep(dates: readonly string[]): Promise<LandBridgeResult> {
-  return { ok: true, skipped: true, note: '占位未接入：备忘合成写真实现归 #613（' + dates.length + ' 天）' };
+/** 只读打开计划库（与 `xunji/planSource.ts` 同法；打不开即回原因，不抛）。 */
+function openPlanDb(dbFile: string | undefined): { db: DatabaseSync | null; reason: string | null } {
+  let file: string;
+  try {
+    file = dbFile ?? join(resolveDbDir(), DB_FILENAME);
+  } catch (e) {
+    return { db: null, reason: e instanceof Error ? e.message : String(e) };
+  }
+  if (!existsSync(file)) {
+    return { db: null, reason: '卡路里库文件不在（' + file + '）：先确认 SKILLS_DB_PATH 指对，再看库在不在' };
+  }
+  try {
+    return { db: openDbReadOnly(file) as unknown as DatabaseSync, reason: null };
+  } catch (e) {
+    return { db: null, reason: '读训练计划失败：' + (e instanceof Error ? e.message : String(e)) };
+  }
+}
+
+function closeQuietly(db: { close: () => void } | null): void {
+  if (db === null) return;
+  try {
+    db.close();
+  } catch {
+    /* 关库失败不掩盖桥结论 */
+  }
+}
+
+/** R3 作息桥真实现（缺省：读计划 → 按天拼合成写条目 → 作息批量；返回结局，不 `fail`，调用方按码点名）。 */
+async function defaultLandPlan(dates: readonly string[], dbFile?: string): Promise<LandBridgeResult> {
+  if (dates.length === 0) return { ok: true, note: '无日期' };
+  const opened = openPlanDb(dbFile);
+  if (opened.db === null) return { ok: false, code: 1, error: opened.reason ?? '打不开库' };
+  const db = opened.db;
+  try {
+    const plan = getPlan(db);
+    if (!plan.config && plan.sessions.length === 0) {
+      return { ok: false, code: 1, error: '无训练计划（先定训练计划）' };
+    }
+    const start = plan.config?.start_date ?? null;
+    if (!start) return { ok: false, code: 1, error: '计划缺开始日期，无法定位周次' };
+    const items: { date: string; time_start: string; time_end: string; title: string; notes: string }[] = [];
+    for (const date of dates) {
+      const { week, dow } = weekOfDate(start, date);
+      plan.sessions
+        .filter((s) => s.week_number === week && s.day_of_week === dow)
+        .forEach((s, i) => {
+          const { ts, te } = landSpanOf(s, i);
+          items.push({ date, time_start: ts, time_end: te, title: landTitleOf(s, i), notes: landNotesOf(s) });
+        });
+    }
+    if (items.length === 0) return { ok: true, note: '空天无段可写（' + dates.length + ' 天）' };
+    const call = invokeSchedule(items, '补计划');
+    if (call.code !== 0) {
+      const d = call.data as { errors?: unknown } | null;
+      const errs = typeof d === 'object' && d !== null && Array.isArray(d.errors)
+        ? (d.errors as string[]).join('、') : '';
+      return { ok: false, code: call.code === 2 ? 1 : 3, error: '补计划：' + (errs !== '' ? errs : '作息合成写没达成') };
+    }
+    return { ok: true, note: '已写 ' + items.length + ' 段（' + dates.length + ' 天）' + (call.stubbed ? '（挡板）' : '') };
+  } finally {
+    closeQuietly(db);
+  }
+}
+
+/** R3 备忘桥真实现（缺省：读计划 → 逐段记心愿；第几天第几段点名，返回结局，不 `fail`）。 */
+async function defaultLandWish(dates: readonly string[], dbFile?: string): Promise<LandBridgeResult> {
+  if (dates.length === 0) return { ok: true, note: '无日期' };
+  const opened = openPlanDb(dbFile);
+  if (opened.db === null) return { ok: false, code: 1, error: opened.reason ?? '打不开库' };
+  const db = opened.db;
+  try {
+    const plan = getPlan(db);
+    if (!plan.config && plan.sessions.length === 0) {
+      return { ok: false, code: 1, error: '无训练计划（先定训练计划）' };
+    }
+    const start = plan.config?.start_date ?? null;
+    if (!start) return { ok: false, code: 1, error: '计划缺开始日期，无法定位周次' };
+    let wrote = 0;
+    let stubbed = false;
+    for (const date of dates) {
+      const { week, dow } = weekOfDate(start, date);
+      const sessions = plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
+      for (let i = 0; i < sessions.length; i++) {
+        const s = sessions[i] as PlanSessionRow;
+        const content = landTitleOf(s, i);
+        const call = invokeMemo({ title: content, body: content, category: '心愿', due: date }, '记心愿');
+        if (call.code !== 0) {
+          const d = call.data as { message?: unknown } | null;
+          const why = typeof d === 'object' && d !== null && typeof d.message === 'string'
+            ? d.message : '备忘合成写没达成';
+          return { ok: false, code: call.code === 2 ? 1 : 3, error: '记心愿第 ' + (wrote + 1) + ' 段 ' + why };
+        }
+        wrote += 1;
+        stubbed = stubbed || call.stubbed;
+      }
+    }
+    if (wrote === 0) return { ok: true, note: '空天无段可记（' + dates.length + ' 天）' };
+    return { ok: true, note: '已记 ' + wrote + ' 条（' + dates.length + ' 天）' + (stubbed ? '（挡板）' : '') };
+  } finally {
+    closeQuietly(db);
+  }
+}
+
+/** R3 作息桥（真实现；可注入 `RunSyncDeps.plan` 同形函数；本宿主第二步走同跑道同口径）。 */
+export async function landPlanStep(dates: readonly string[], deps: LandBridgeDeps = {}): Promise<LandBridgeResult> {
+  if (deps.plan !== undefined) return deps.plan(dates);
+  return defaultLandPlan(dates, deps.dbFile);
+}
+
+/** R3 备忘桥（真实现；可注入 `RunSyncDeps.wish` 同形函数；本宿主第三步走同跑道同口径）。 */
+export async function landWishStep(dates: readonly string[], deps: LandBridgeDeps = {}): Promise<LandBridgeResult> {
+  if (deps.wish !== undefined) return deps.wish(dates);
+  return defaultLandWish(dates, deps.dbFile);
 }
 
 /** `dryRun` 参数：缺省 false；非布尔即用法错（exit 2，不调外部）。 */

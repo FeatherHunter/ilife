@@ -1,0 +1,248 @@
+﻿[
+    {
+        "number":  4,
+        "title":  "P3 定槽位分配表真机验证",
+        "labels":  "wayfinder:task",
+        "parent":  "1"
+    },
+    {
+        "number":  11,
+        "title":  "P10 装7插件与总管",
+        "labels":  "wayfinder:task",
+        "parent":  "1"
+    },
+    {
+        "number":  13,
+        "title":  "P12 收框架6条验收",
+        "labels":  "wayfinder:task",
+        "parent":  "1"
+    },
+    {
+        "number":  51,
+        "title":  "HELP转义修复（cmd_read内联与kpi双重转义）",
+        "labels":  "wayfinder:task",
+        "parent":  "1"
+    },
+    {
+        "number":  52,
+        "title":  "HELP整页壳试点（卡路里）",
+        "labels":  "wayfinder:task",
+        "parent":  "1"
+    },
+    {
+        "number":  53,
+        "title":  "脏manifest批量重发（触发：#50关闭）",
+        "labels":  "wayfinder:task",
+        "parent":  "1"
+    },
+    {
+        "number":  55,
+        "title":  "技能设置页可配环境变量与参数（每技能独立落盘）",
+        "labels":  "wayfinder:task",
+        "parent":  "1"
+    },
+    {
+        "number":  280,
+        "title":  "卡路里场景 02 饮食：端到端验收（用户亲自在全新空白 session 跑）",
+        "labels":  "wayfinder:task",
+        "parent":  "155"
+    },
+    {
+        "number":  630,
+        "title":  "D2 场景02页归属整理：看今日营养题名与唤醒词对齐（终审D2）",
+        "labels":  "wayfinder:task",
+        "parent":  "155"
+    },
+    {
+        "number":  631,
+        "title":  "D3 推荐范围差距算式与符号口径（终审D3）",
+        "labels":  "wayfinder:task",
+        "parent":  "155"
+    },
+    {
+        "number":  632,
+        "title":  "D4 榜单餐均列单位去重（终审D4·低优可捎带）",
+        "labels":  "wayfinder:task",
+        "parent":  "155"
+    },
+    {
+        "number":  633,
+        "title":  "D5 种子食品来源名用户可读化（终审D5·低优可捎带）",
+        "labels":  "wayfinder:task",
+        "parent":  "155"
+    },
+    {
+        "number":  268,
+        "title":  "卡路里场景 04 运动：端到端验收（用户亲自在全新空白 session 跑）",
+        "labels":  "wayfinder:task",
+        "parent":  "156"
+    },
+    {
+        "number":  577,
+        "title":  "卡路里场景04运动·终审N1–N8页级项合一票（实施已落t576，待重墙签字）",
+        "labels":  "wayfinder:task",
+        "parent":  "156"
+    },
+    {
+        "number":  168,
+        "title":  "卡路里场景 05 健身计划：公共层提取与边界（防幻觉词对账）",
+        "labels":  "wayfinder:grilling",
+        "parent":  "157"
+    },
+    {
+        "number":  287,
+        "title":  "场景 09：真机端到端 ＋ 肉眼终审",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  437,
+        "title":  "场景 09：HELP 双生 prompt 合并口径（wake-assets 与 scene-09 分叉）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  442,
+        "title":  "卡路里：照片页「只许内嵌图片」判据收成共用 helper（补 detail／compare／gif 三页 ＋ render-t10:111 同类互斥）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  446,
+        "title":  "场景 09：路由表里的 9 条自造词清理（须先冻结其它线＋重排序号＋同步 r81 计数与 t81-exec-smoke）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  447,
+        "title":  "卡路里：help:examples:check 解析口径停在 4 列（#338 加了「流程」列之后恒 0 行、CI 恒红）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  461,
+        "title":  "场景 09：删照候选页体积退让（候选页 18.8 MB 超 1 MiB，比照 #438 口径）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  473,
+        "title":  "场景 09：查身材照详情与对比两张照片 文本精简·人话改写·展示升级（B 组）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  476,
+        "title":  "场景 09：写后回执七页 文本精简·人话改写·展示升级（含失败张可见）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  479,
+        "title":  "场景 09：证据件陈化对齐（文本改造后旧口径描述与盘上实现对齐）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  484,
+        "title":  "场景 09：十页响应式适配（手机/平板/桌面三档横向溢出归零，图片与 GIF 优先）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  488,
+        "title":  "场景 09：看身材照HELP（q 支）走老渲染器——无 doctype/无样式/裸 pre 三档溢出（改为整页装配）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  492,
+        "title":  "卡路里：两条陈旧断言清理（render-copy-90 的禁用复制日志按钮／cmd-read-t11 的总览标题）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  493,
+        "title":  "场景 09：十页基线重落（本轮文本/响应式/HELP 改造后，含钉死\"今天\"）",
+        "labels":  "wayfinder:task",
+        "parent":  "159"
+    },
+    {
+        "number":  598,
+        "title":  "跨技能调用怎么走：readSkill 与 skilllink 两处不同形、口径与 envelope 不一致（今天一条路都跑不通）",
+        "labels":  "wayfinder:grilling",
+        "parent":  "593"
+    },
+    {
+        "number":  599,
+        "title":  "作息管家：补计划那一步要能按天批量与进飞书（合成为一条命令）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  600,
+        "title":  "备忘录：记心愿那一步补 due／飞书任务／查重（HELP 广告与实装不符）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  601,
+        "title":  "卡路里：预置动作库没进 package.json 的 files（安装态会读到空库）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  606,
+        "title":  "训记模块骨架：单开 src/xunji/ 目录＋8 子命令对外面定形＋动作库归位",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  607,
+        "title":  "训记推送链：push-plan／upsert（接口形状＋限频＋重试＋退出码映射）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  608,
+        "title":  "训记回写链：fetch／backfill（范围口径＋三列幂等键＋exercise_log 写入路径）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  610,
+        "title":  "训记密钥与编排：key／run-sync／overlay-plan（两处老缺陷必修）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  612,
+        "title":  "落地训练宿主命令：四步链跑通（过程页→执行→结果页＋回执）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  613,
+        "title":  "落地到本周末／本月底：批量（天数自算＋逐天循环＋逐天读数）",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  614,
+        "title":  "同步到训记／拉训记实绩两条薄命令＋五条路由转 exec＋墙随动",
+        "labels":  "wayfinder:task",
+        "parent":  "593"
+    },
+    {
+        "number":  433,
+        "title":  "饼干记账＋卡路里：回执页共用件提升到公共层（base-paint，合并已落地的两份）",
+        "labels":  "wayfinder:task",
+        "parent":  "634"
+    },
+    {
+        "number":  70,
+        "title":  "拍卡路里「全面面板」的定义",
+        "labels":  "wayfinder:grilling",
+        "parent":  "65"
+    }
+]

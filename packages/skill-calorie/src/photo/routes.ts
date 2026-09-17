@@ -29,4 +29,9 @@ export const PHOTO_ROUTES: readonly RouteDecl[] = [
   { list: 'new', order: 53, wakeWord: '看身材照向导', scene: '09', kind: 'exec', key: 'calorie.view.photo-log-wizard', cli: 'calorie-cmd-read calorie.view.photo-log-wizard' },
   { list: 'new', order: 54, wakeWord: '看GIF规划器', scene: '09', kind: 'exec', key: 'calorie.view.gif-planner', cli: 'calorie-cmd-read calorie.view.gif-planner --params \'{"tag":"正面"}\'' },
   { list: 'new', order: 67, wakeWord: '选身材照', scene: '09', kind: 'exec', key: 'calorie.view.photo-picker', cli: 'calorie-cmd-read calorie.view.photo-picker' },
+  /* #651 · `calorie.help.center` 的第二条新拟入口：代表唤醒词「卡路里HELP」（门面层）也得是
+     机器路由上真能到达本命令的词（#343 门判据），与 order 17 的照片侧入口词「看身材照HELP」
+     同键同参（首条仍是 order 17，`EXEC_ROUTE_BY_KEY` 与依赖首条的门不动）。末尾追加，
+     不碰既有 order（`new` 表要求 0..n 连续，中间插入会逼全表重排）。 */
+  { list: 'new', order: 68, wakeWord: '卡路里HELP', scene: '09', kind: 'exec', key: 'calorie.help.center', cli: 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'' },
 ];

@@ -9,10 +9,11 @@
  * - 分类走动作名推断（`exerciseStore.inferCategory`，即老 `_infer_category`）。
  *
  * 本件是纯函数：不读库、不调网、不读时钟——同输入必得同输出（挡板断言直接调它）。
- * 跨能力引用（`exerciseStore` 三件）是过渡债务 R2（见证据件；收口前认领，不在本票重构别家门）。
+ * 跨能力引用走运动门（R2 收口 #613：`exercise/index.js#exerciseBackfillBridge` 唯一缝合点，
+ * 定义仍在 `exerciseStore.ts`，本件不深引对方内部件）。
  */
 
-import { convertLoadKg, estimateCaloriesFromTraining, inferCategory } from '../exercise/exerciseStore.js';
+import { exerciseBackfillBridge } from '../exercise/index.js';
 
 /** 回写一行（`store.ts` 落库的输入形状；`setIndex` 缺时为 null）。 */
 export interface XunjiBackfillRow {
@@ -71,7 +72,7 @@ export function xunjiResponseToRows(response: unknown): XunjiBackfillRow[] {
       for (const s of asList(move.sets)) {
         const set = asRecord(s);
         if (set.done !== true) continue;
-        const load = convertLoadKg(set.weight ?? '0', set.unit ?? 'kg');
+        const load = exerciseBackfillBridge.convertLoadKg(set.weight ?? '0', set.unit ?? 'kg');
         const reps = parseSetReps(set.reps ?? 0);
         rows.push({
           date: datestr,
@@ -79,8 +80,8 @@ export function xunjiResponseToRows(response: unknown): XunjiBackfillRow[] {
           reps,
           setIndex: parseSetIndex(set.index),
           loadKg: load,
-          caloriesBurned: estimateCaloriesFromTraining(load * reps),
-          category: inferCategory(name),
+          caloriesBurned: exerciseBackfillBridge.estimateCaloriesFromTraining(load * reps),
+          category: exerciseBackfillBridge.inferCategory(name),
           difficulty,
           xunjiLocalid: localid,
           xunjiTitle: title,

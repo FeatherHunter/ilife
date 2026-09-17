@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#598 跨技能调用怎么走 · 第一轮三问</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1a1d21;--muted:#66707a;--line:#e6e9ee;--blue:#1668dc;--green:#12805c;--amber:#b7791f;--red:#c4320a;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:28px 18px 60px}
+.top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.b-grill{background:#e8f0fe;color:#174ea6}.b-map{background:#e6f4ea;color:#137333}.b-noclose{background:#fce8e6;color:#a50e0e}
+h1{font-size:24px;margin:8px 0 4px}.sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card h2{font-size:17px;margin:0 0 8px}.card h2 .q{color:var(--blue)}
+.kv{display:grid;grid-template-columns:86px 1fr;gap:6px 12px;font-size:14px;margin:10px 0}
+.kv dt{color:var(--muted);white-space:nowrap}.kv dd{margin:0}
+.fact{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+.fact code{background:#eef2f7;padding:1px 6px;border-radius:6px;font-family:Consolas,monospace;font-size:12.5px}
+.rec{border-left:4px solid var(--green);background:#f0faf4;border-radius:0 10px 10px 0;padding:10px 12px;margin:12px 0;font-size:14px}
+.rec b{color:var(--green)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+@media(max-width:640px){.cols{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+.pro,.con{border-radius:10px;padding:10px 12px;font-size:13.5px}
+.pro{background:#e6f4ea}.con{background:#fef7e0}
+.pro b{color:#137333}.con b{color:#885500}
+.opts{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+.opts th,.opts td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.opts th{background:#f1f3f4}
+.next{border:1px solid #c2dbff;background:#f0f6ff}
+footer{color:var(--muted);font-size:12.5px;margin-top:18px}
+a{color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><span class="badge b-grill">grill-with-docs · 第 1 轮</span><span class="badge b-map">map #593 · grilling #598</span><span class="badge b-noclose">未定夺 · 不写 issue 正文</span></div>
+<h1>#598 跨技能调用怎么走：第一轮三问</h1>
+<p class="sub">目标 / 边界 / 风险先定 → 下一轮再烤选项权衡与决策。看完直接回 Q1 / Q2 / Q3 即可。</p>
+
+<div class="card">
+<h2>背景：为什么今天一条路都跑不通</h2>
+<dl class="kv">
+<dt>要保的链</dt><dd>「落地」链 Step1（补计划→作息）、Step2（记心愿→备忘录）都要调别的技能，调不通则 #599 / #600 / #612 全被堵。</dd>
+<dt>两处不同形</dt><dd>调用方 <code>readSkill</code> 要 <code>--skill/--domain/--from/--to</code>、回 <code>{ok, data}</code>；被调方 <code>skilllink read</code> / <code>cmd_read</code> 要 <code>read &lt;skill.combo&gt; --params JSON</code>、回 <code>envelope{version,skill,shape,key,data}</code>（无 <code>ok</code>）。对上了才通，现在对不上。</dd>
+<dt>无配置位</dt><dd><code>readSkill.command</code> 缺省即阻断，全仓 0 调用点；<code>combos.yaml</code> 156 键中 <code>schedule.*</code> / <code>memo.*</code> 为 0，被调方无 key 可挂。</dd>
+</dl>
+<div class="fact">术语统一：下文 <b>A = 同进程调 readSkill() 函数</b>，<b>B = 跨进程调对方 cmd_read / skilllink read</b>。不再混叫「跨技能调用」。</div>
+</div>
+
+<div class="card">
+<h2><span class="q">Q1 · 目标定到哪</span> — 只保落地链，还是把全仓口径一次定死？</h2>
+<dl class="kv"><dt>前因</dt><dd>票面目标是「定卡路里调别的技能这条路怎么走」，但 #593 只急需 Step1 / Step2 跑通。</dd>
+<dt>后果</dt><dd>定小＝#598 快关、通用债后移；定大＝一次改框架＋配置位＋combos 口径，#599 / #600 要等。</dd></dl>
+<table class="opts"><tr><th>选项</th><th>含义</th></tr>
+<tr><td>A. 只定落地链</td><td>只裁 Step1 / Step2 走 A 还是 B；通用口径只写边界与例外</td></tr>
+<tr><td>B. 一次定全仓</td><td>连 <code>readSkill</code> 改形、配置位归属、combos 准入一起定死</td></tr></table>
+<div class="rec"><b>➡️ 推荐 A（只定落地链）。</b>落地链等不起框架重构；通用口径本轮只留接口（谁配、配在哪），实现后移。</div>
+<div class="cols"><div class="pro"><b>选 A 利：</b>快，能解 #612 阻塞；改动面小，易验收。<br><b>弊：</b>通用债还在，需另开票。</div>
+<div class="con"><b>选 B 利：</b>一次干净。<br><b>弊：</b>战线拉长，落地链被拖；一次改对的风险高。</div></div>
+</div>
+
+<div class="card">
+<h2><span class="q">Q2 · 边界是读还是写</span> — 本票管不管写操作？</h2>
+<dl class="kv"><dt>前因</dt><dd><code>readSkill</code> 头注写死「只读」；但 Step1（作息 <code>ensure</code>）/ Step2（备忘录 <code>create</code>）都是<b>写</b>。</dd>
+<dt>后果</dt><dd>若只定读，修好 A 也救不了 Step1 / Step2；若读写一次定，则写只能走 B，选项 1（修框架）自然出局一半。</dd></dl>
+<table class="opts"><tr><th>选项</th><th>含义</th></tr>
+<tr><td>A. 只定读</td><td>写另开票；本票结论与 Step1 / Step2 脱钩</td></tr>
+<tr><td>B. 读＋写一次定</td><td>明写：读可二选一，写只能走 B</td></tr></table>
+<div class="rec"><b>➡️ 推荐 B（读＋写一次定）。</b>否则本票定了也堵不住 #599 / #600 的真需求，等于白定。</div>
+<div class="cols"><div class="pro"><b>选 B 利：</b>结论直接可用，#599 / #600 不用返工。<br><b>弊：</b>本票要多写一条写口径。</div>
+<div class="con"><b>选 A 利：</b>票面小。<br><b>弊：</b>Step1 / Step2 仍无路可走，#598 形同虚设。</div></div>
+</div>
+
+<div class="card">
+<h2><span class="q">Q3 · 风险哪条必须当门</span> — 验收门槛卡多严？</h2>
+<dl class="kv"><dt>前因</dt><dd>三条风险：a) 无配置位即阻断；b) argv / 输出不同形；c) combos 无 <code>schedule.*</code> 可调。</dd>
+<dt>后果</dt><dd>门槛决定 #598 关票标准：a+b 不解则一步都走不通；c 可留给 #599 / #600 配 key 时收。</dd></dl>
+<table class="opts"><tr><th>选项</th><th>含义</th></tr>
+<tr><td>A. a+b 当门</td><td>真调用读数＋改坏必红 / 还原必绿只验 a、b；c 只定归属</td></tr>
+<tr><td>B. 全当门</td><td>c 也要在本票配出 key 并跑通</td></tr></table>
+<div class="rec"><b>➡️ 推荐 A（a+b 当门，c 放行）。</b>a、b 是今天跑不通的根因；c 是执行层加 key，不必堵在本票。</div>
+<div class="cols"><div class="pro"><b>选 A 利：</b>关票快，#599 / #600 接得住。<br><b>弊：</b>本票看不到端到端 key。</div>
+<div class="con"><b>选 B 利：</b>一次看到头。<br><b>弊：</b>把执行票的工作前移，本票变大。</div></div>
+</div>
+
+<div class="card next">
+<h2>下一步</h2>
+<div style="font-size:14px">你回 <b>Q1 / Q2 / Q3</b>（各选 A 或 B，或改写）→ 我重算前沿，下一轮只烤<b>选项权衡（修框架 / 走 CLI 直调 / 两者分工）与决策</b>。在你点头前，不改 issue 正文、不落码。</div>
+</div>
+
+<footer>证据锚点：<code>packages/skill-calorie/src/fetch/cross-skill.ts:37-42</code> · <code>packages/base-link-core/src/envelope.ts:104</code> · <code>tooling/skilllink.mjs:131,184-205</code> · <code>packages/base-combos/combos.yaml</code>（156 键，schedule/memo 为 0）。精简版，只含拍板信息；全量行号在 #598 票面。</footer>
+</div>
+</body>
+</html>

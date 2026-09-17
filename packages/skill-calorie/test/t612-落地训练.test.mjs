@@ -265,13 +265,21 @@ describe('#612 落地训练', () => {
     assert.match(broken.stderr, /挡板数据不是合法 JSON/);
   });
 
-  it('⑤ R3 双桥恒 skip（占位：与 #610 缺省同义，真实现归 #613）', async () => {
+  it('⑤ R3 双桥真实现（#613 收口：缺省走真合成写，不再恒 skip；行为矩阵见 t613 ⑤）', async () => {
     const { landPlanStep, landWishStep } = await import('../dist/workout/land.js');
-    const p = await landPlanStep(['2026-09-07']);
-    const w = await landWishStep(['2026-09-07']);
+    const dir = tmp('bridge');
+    const db = openDb(join(dir, 'calorie_data.db'));
+    seedPlan(db);
+    db.close();
+    const file = join(dir, 'calorie_data.db');
+    process.env.SKILLS_DB_PATH = dir;
+    process.env.CALORIE_LAND_SCHEDULE_STUB = JSON.stringify(SCHED_OK);
+    process.env.CALORIE_LAND_MEMO_STUB = JSON.stringify(MEMO_OK);
+    const p = await landPlanStep(['2026-09-07'], { dbFile: file });
+    const w = await landWishStep(['2026-09-07'], { dbFile: file });
     assert.equal(p.ok, true);
-    assert.equal(p.skipped, true);
+    assert.equal(p.skipped, undefined);
     assert.equal(w.ok, true);
-    assert.equal(w.skipped, true);
+    assert.equal(w.skipped, undefined);
   });
 });

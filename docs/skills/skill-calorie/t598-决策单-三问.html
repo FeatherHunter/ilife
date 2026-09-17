@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#598 决策单：三问，等你定夺</title>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#fff;--ink:#14171a;--muted:#68727d;--line:#e2e6ea;
+  --blue:#1257c7;--green:#0d6e49;--amber:#9a6209;--red:#a52218;--violet:#6b3fa0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.7 system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:26px 18px 64px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.b{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.b1{background:#e4edfc;color:#123f8f}
+.b2{background:#e2f3ea;color:#0b5c3e}
+.b3{background:#fdeadd;color:#8a4409}
+h1{font-size:24px;line-height:1.35;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin:13px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+h2{font-size:17px;margin:0 0 8px}
+h3{font-size:14px;margin:14px 0 5px;color:#39414a}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:9px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f1f3f5}
+code{background:#eef1f5;padding:1px 5px;border-radius:5px;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+.pick{background:#f0faf4;border:1px solid #b7e0c8;border-radius:12px;padding:12px 14px;margin:11px 0}
+.pick .hd{font-weight:700;color:var(--green);font-size:15px;margin-bottom:4px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+@media(max-width:660px){.cols{grid-template-columns:1fr}}
+.pro,.con{border-radius:10px;padding:10px 12px;font-size:13.5px}
+.pro{background:#e9f7ef}.con{background:#fdf3e3}
+.pro b{color:#0b5c3e}.con b{color:#8a5609}
+.fact{background:#f7f9fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;
+  padding:10px 13px;margin:10px 0;font-size:13.5px}
+.fact .t{font-weight:700;color:var(--blue);display:block;margin-bottom:3px}
+.big{font-size:19px;font-weight:800;color:var(--red)}
+.opt{border-left:3px solid var(--line);padding:6px 0 6px 11px;margin:9px 0}
+.opt.mine{border-left-color:var(--green);background:#fafdfb;border-radius:0 8px 8px 0}
+.opt .n{font-weight:700}
+.opt .d{color:var(--muted);font-size:13px;display:block;margin-top:1px}
+.foot{background:#f2f7ff;border:1px solid #c2dbff}
+.vs{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px;margin:8px 0}
+.vs dt{color:var(--muted);white-space:nowrap}
+.vs dd{margin:0}
+@media(max-width:660px){.vs{grid-template-columns:1fr}}
+footer{color:var(--muted);font-size:12.5px;margin-top:20px;padding-top:12px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="badges">
+  <span class="b b1">#598 · wayfinder:grilling</span>
+  <span class="b b2">#593 map</span>
+  <span class="b b3">未定夺 · 未写 issue 正文</span>
+</div>
+<h1>决策单：三问，等你定夺</h1>
+<p class="sub">先看「裁完解锁什么」与摘要表；三张卡片是逐问的前因后果／关键数字／选项利弊／我的推荐。</p>
+
+<div class="card">
+<h2>这份决策单要裁什么</h2>
+<dl class="vs">
+  <dt>裁什么</dt><dd>卡路里调别的技能「这条路怎么走」，以及那条路上「合并与出页」这一步落在哪。<b>不裁怎么取数</b>——那是既有形状，且已实测可用。</dd>
+  <dt>裁完解锁</dt><dd>#612 落地训练宿主命令、#613 批量、#614 训记与路由转 exec；同时给 #599（作息补计划）／#600（备忘录记心愿）定调用形状。</dd>
+  <dt>裁之前</dt><dd>不动 <code>packages/**</code>；不写 issue 正文。三问答完我再按进度契约更新 #598 正文并落裁定件。</dd>
+</dl>
+</div>
+
+<div class="card">
+<h2>先把一个前提纠正掉（它改变了三问的重心）</h2>
+<div class="fact">
+  <span class="t">票面说「今天一条路都跑不通」——实测改判</span>
+  路是通的，缺的是<b>路尽头那一步</b>。三条真调用读数：
+</div>
+<table>
+<tr><th>命令</th><th>读数</th><th>说明</th></tr>
+<tr><td><code>skilllink read calorie.today</code></td><td style="color:#0d6e49;font-weight:700">exit 0</td><td>读表 → 解析 → spawn 出口 → 回执校验 → 渲染落页，<b>四步全对，拿到真数据</b></td></tr>
+<tr><td><code>skilllink read memo.stats</code></td><td style="color:#9a6209;font-weight:700">exit 4</td><td>跨到别家出口成功，死在数据层（那家库目录不存在）；错误如实传、不返空</td></tr>
+<tr><td><code>skilllink read schedule.plan.write</code></td><td style="color:#a52218;font-weight:700">exit 3</td><td>未登记 → 未知命令键</td></tr>
+</table>
+<div class="fact" style="border-left-color:var(--red)">
+  <span class="t" style="color:var(--red)">所以真正的空位不是「取数」，是「合并与出页」</span>
+  老设计塌掉的正是这一步：它把合并交给 AI（场景表里的合并口径是散文），而新仓的 HTML-First 铁则写死「<b>严禁手写 HTML 兜底</b>」（<code>docs/calorie-architecture.md:59</code>）。<br>
+  ⇒ <b>原三选项都在答「怎么取数」，没有一个在答「怎么出那一页」。</b>本决策单按后者重开三问。
+</div>
+</div>
+
+<div class="card">
+<h2>摘要表（一眼抓重点）</h2>
+<table>
+<tr><th style="width:22%">问</th><th style="width:24%">我的推荐</th><th>一句话理由</th><th style="width:20%">代价</th></tr>
+<tr>
+  <td><b>Q1</b> 合并与出页走哪条</td>
+  <td style="background:#f0faf4"><b style="color:#0d6e49">(b) 宿主命令自己合并</b></td>
+  <td>唯一同时满足「老先例」「新仓 HTML-First 铁则」「不用先造通用机制」的一条</td>
+  <td>每个联动各写一次合并，先接受这份重复</td>
+</tr>
+<tr>
+  <td><b>Q2</b> 那 30 条场景什么身份</td>
+  <td style="background:#f0faf4"><b style="color:#0d6e49">(a)+(c) 降级为文档 ＋ 本图只认领几条</b></td>
+  <td>供给侧登记数是 0，硬把它当契约会变成永远还不完的账</td>
+  <td>放弃「跨技能面全打通」这个说法</td>
+</tr>
+<tr>
+  <td><b>Q3</b> 实测到的两处红进不进本票</td>
+  <td style="background:#f0faf4"><b style="color:#0d6e49">(b) 另开票</b></td>
+  <td>票面明写「裁定之前不许改 <code>packages/**</code>」；收红＝把裁定票变成改码票</td>
+  <td>多一张票、红留几天</td>
+</tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Q1 · 合并与出页这一步，走哪条</h2>
+<h3>前因后果</h3>
+<p>步骤本身是既成的：一条联动要先拿到对方的数据。而这一步已实测可用。真正无处安放的是<b>拿到之后</b>——两家数据怎么合成一页、由谁渲染。</p>
+<p>老机制把这件事交给 AI（<code>SKILLS/技能互联/SKILL.md</code> 自述「<b>执行者 = AI</b>：读契约 → 调命令 → 理解/合并 → 注入 HTML」）。新仓把这条路封了：页面必须是命令渲染的产物，AI 不许手写。</p>
+<h3>关键数字（供决策）</h3>
+<ul>
+  <li>「一个调用者 spawn 各技能出口」这条形状<b>已经在生产里活着</b>：6 个插件的桥 <code>plugin-*/src/bridge.ts</code>，一家只 spawn 一家。</li>
+  <li>唯一跑通过的真实联动是老王牌 <code>sync_plan.py</code>——它就是「卡路里自己的脚本，子进程直调兄弟技能的命令行」（<code>:172</code>／<code>:243</code>）。</li>
+  <li>技能包 → 技能包调用：<b>0 处</b>；6 个技能的出口里「跨技能」分支：<b>0 处</b>。</li>
+</ul>
+<h3>选项与利弊</h3>
+<div class="opt"><span class="n">(a) 不合并</span><span class="d">每条链只调对方取数，两页各自落盘，合并留给用户看。</span></div>
+<div class="opt mine"><span class="n">(b) 宿主命令自己合并 ★我的推荐</span><span class="d">落在卡路里包的宿主命令里：它调两家、自己渲染成一页。</span></div>
+<div class="opt"><span class="n">(c) 恢复一层通用编排</span><span class="d">把 <code>skilllink</code> 那层重新设计成能合并的通用件。</span></div>
+<div class="cols">
+<div class="pro"><b>选 (b) 利：</b>符合老先例（<code>sync_plan.py</code> 同形）；符合新仓 HTML-First 铁则；页面仍由命令渲染，可测；不必先造通用机制，今天就能开工</div>
+<div class="con"><b>选 (b) 弊：</b>每个联动各写一次合并逻辑，重复；若将来联动变多，这份重复会成为新债</div>
+</div>
+<div class="cols">
+<div class="pro"><b>(a) 利：</b>最省，改动最小<br><b>(c) 利：</b>一次做对，后续联动只加配置</div>
+<div class="con"><b>(a) 弊：</b>「联动」名不副实，用户要自己看两页对照<br><b>(c) 弊：</b>要先设计「可合并的负载契约」——而今天的负载是 <code>items: unknown[]</code>、没有字段清单，这一步是重新设计，不是接线</div>
+</div>
+<div class="pick">
+  <div class="hd">➡️ 推荐 (b)：宿主命令自己合并</div>
+  它与本仓已经在跑的那条形状同源（插件桥 = 一个调用者 spawn 出口），只是从「一家」扩到「两家」，并把合并塞进命令里。<b>先接受按联动各写一次合并</b>——等真的出现第三个、第四个联动，再把它提成共用件；共用位是从第二个用法里长出来的，不是预先设计的。
+</div>
+</div>
+
+<div class="card">
+<h2>Q2 · 那 30 条场景（含 6 个空位）在新仓是什么身份</h2>
+<h3>前因后果</h3>
+<p>老家把跨技能需求写成一张表：36 条场景 × 11 字段（唤醒词／对方技能／要向对方要什么／自己出什么／怎么合／怎么呈现／保留或降级）。新仓逐字搬来了 30 条 ＋ 6 个空位。</p>
+<p>但这张表<b>从来没有被任何代码执行过</b>：它只被校验器读过字段格式，被渲染成一份不发布的静态文档。表里指向对方能力的方式是<b>唤醒词</b>（<code>external_ref: 查分类（餐饮本月）</code>），不是命令键——所以「这条场景要的能力到底存不存在」从来没有门能查。</p>
+<h3>关键数字（供决策）</h3>
+<ul>
+  <li>30 条场景点名 5 家外部技能（饼干记账／作息管家／居家管家／备忘录／私家大厨）；这 5 家的<b>可用取数命令登记数 = 0</b>（备忘录有 11 条但场景要的不是那些；居家那 1 条是 HELP 命令，不是取数命令）。</li>
+  <li>跨技能硬门在新仓<b>不存在</b>（老家那道的实测结论是：6 个目标技能只登记了 1 个，门照样全绿）。</li>
+</ul>
+<h3>选项与利弊</h3>
+<div class="opt mine"><span class="n">(a) 降级为纯文档 ★推荐的一半</span><span class="d">承认它是给人/AI 读的需求说明，不再假装是注册表。</span></div>
+<div class="opt"><span class="n">(b) 当未完成规格</span><span class="d">逐条标出「取哪条命令、谁合并、出哪一页」，做成可执行清单。</span></div>
+<div class="opt mine"><span class="n">(c) 本图只认领落地链要用的那几条 ★推荐的一半</span><span class="d">本图（#593）只对落地链涉及的场景负责，其余明确不认领。</span></div>
+<div class="cols">
+<div class="pro"><b>选 (a)+(c) 利：</b>本图目的明确、能收口；避免「36 条都算欠债」这种永远还不完的账；将来真要做某条联动时，再把它单独翻成一张票</div>
+<div class="con"><b>选 (a)+(c) 弊：</b>放弃「跨技能面全打通」这个说法；表里那些场景在可预见期内都不会跑起来</div>
+</div>
+<div class="cols">
+<div class="pro"><b>(b) 利：</b>一次性把 30 条都变成可执行的，最彻底</div>
+<div class="con"><b>(b) 弊：</b>要先把 5 家外部技能的取数命令全部落地（含 #599／#600 之外的三家，今天没有票），本图会从「裁定」膨胀成多图工程</div>
+</div>
+<div class="pick">
+  <div class="hd">➡️ 推荐 (a)+(c)</div>
+  本图只对落地链要用的那几条负责，其余明确降级为文档。<b>关键在「明确」二字</b>：把「不认领」写进票面和地图，别让它以雾的形态继续挂着。
+</div>
+</div>
+
+<div class="card">
+<h2>Q3 · 已实测到的两处红，进不进本票</h2>
+<h3>前因后果</h3>
+<p>调查途中实测到两处与本题直接相关的现役缺陷。它们不改「选哪条路」的结论，但会让裁定交付时难看。</p>
+<h3>两处红（都是实测读数，不是推测）</h3>
+<table>
+<tr><th>红</th><th>读数</th><th>影响</th></tr>
+<tr>
+  <td>「唯一真相源」与它的生成物不等</td>
+  <td><code>combos:</code> 段 141 键 vs 盘上 <code>present.ts</code> 140 键，差 <code>calorie.goal.exercise</code></td>
+  <td><code>test/combos-p8.test.mjs:115-120</code> 的逐字节断言在 HEAD 上不成立</td>
+</tr>
+<tr>
+  <td>跨技能硬门在新仓不存在</td>
+  <td>全仓 0 处</td>
+  <td>「场景要的能力存不存在」没有任何门能查</td>
+</tr>
+</table>
+<h3>选项与利弊</h3>
+<div class="opt"><span class="n">(a) 进本票一起收</span><span class="d">裁定与修红同批交付。</span></div>
+<div class="opt mine"><span class="n">(b) 另开票 ★我的推荐</span><span class="d">本票只做裁定；两处红各开一张小票，进地图。</span></div>
+<div class="cols">
+<div class="pro"><b>选 (b) 利：</b>守住票面自己定的规矩「裁定之前不许改 <code>packages/**</code>」；裁定票保持单一目的，容易被你验收；红有独立票据可追</div>
+<div class="con"><b>选 (b) 弊：</b>多两张票；红会多留几天</div>
+</div>
+<div class="cols">
+<div class="pro"><b>(a) 利：</b>一次收干净</div>
+<div class="con"><b>(a) 弊：</b>把「裁定」变成「改码」，与票面禁令冲突；且改 <code>present.ts</code> 要走生成器重跑与快照连带，会牵进无关面</div>
+</div>
+<div class="pick">
+  <div class="hd">➡️ 推荐 (b)</div>
+  本票的目的是「定夺怎么走」，不是「顺手修红」。<b>两处红都改不了 Q1／Q2 的答案</b>，所以它们不值得占用裁定票的验收口。
+</div>
+</div>
+
+<div class="card foot">
+<h2>你回什么 · 之后我做什么</h2>
+<p>按 <b>Q1 / Q2 / Q3</b> 各回一个选项即可（也可改写、或提出选项外的第四条）。三问互相独立，可以混着答。</p>
+<p>你确认后我做三件：</p>
+<ol>
+  <li>按进度契约更新 #598 正文（<code>## 进度：N%</code> ＋ 下一步；未确认不进 95%）；</li>
+  <li>把结论写成裁定件（票面指定路径 <code>docs/skills/skill-calorie/t593-A-跨技能调用-裁定.md</code>），含验收命令与「改坏必红／还原必绿」两行；</li>
+  <li>Q3 若裁 (b)：把两处红各开一张票，挂到地图 #593 上。</li>
+</ol>
+<p style="margin-bottom:0">若三问都齐、我们的理解也对上了，我会提醒你跑一次 <code>/to-spec</code>，把结论固化成规格单并挂成 #593 的 subissue。</p>
+</div>
+
+<footer>
+依据：本次调查全文 <code>docs/skills/skill-calorie/t598-跨技能机制-考古与对抗式审查.html</code>（含七节证据、三条真调用读数、五条对抗式审查）。<br>
+本单只放拍板信息；证据行号与命令原文在那份文件里。全程未做 git 写操作。
+</footer>
+
+</div>
+</body>
+</html>

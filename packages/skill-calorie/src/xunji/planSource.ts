@@ -7,9 +7,9 @@
  * - 日期 →（周，日）走 `render/planPlate.ts` 的 `weekOfDate`（新仓口径；老 `calc_plan_week` 的
  *   “超总周数循环”不照抄——新仓 `buildPlanView`（`planPlate.ts:61-76`）同样不过滤循环周，
  *   对不上就当这天没排练）；
- * - 会读 `workout_plans` 全表再按（周，日）过滤（`planStore.getPlan`；跨能力引用走仓内先例：
- *   `render/planPlate.ts:10` 与 `render/exercisePort.ts:12` 同样直引它，`workout/write.ts:12`
- *   同样直引 `planPlate.weekOfDate`——计划读写面在新仓本就互引，本件沿既有先例，不另起共用位）；
+ * - 会读 `workout_plans` 全表再按（周，日）过滤（`workout` 门的 `getPlan` 只读口；
+ *   R1 收口 #613：跨能力引用一律走能力门 `workout/index.js#getPlan` 与
+ *   `render/index.js#weekOfDate`，不深引对方内部件）；
  * - 存在性预检：`SKILLS_DB_PATH` 未设／库文件不在／打开失败一律回 `found: false` 带人话原因，
  *   不抛错（调用方按退出码 1 报；“失败不许静默吞”）；
  * - “无任何计划”（无配置且无会话）与“计划缺开始日期”同样回 `found: false`；
@@ -21,8 +21,8 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { DB_FILENAME, resolveDbDir } from '../paths.js';
 import { openDbReadOnly } from '../db/readonly.js';
-import { getPlan } from '../workout/planStore.js';
-import { weekOfDate } from '../render/planPlate.js';
+import { getPlan } from '../workout/index.js';
+import { weekOfDate } from '../render/index.js';
 import type { PushSession } from './push.js';
 
 /** 取数结局：`found: true` 即有明确答案（含“这天没排练”的空表）；否则看 `reason` 报 1。 */

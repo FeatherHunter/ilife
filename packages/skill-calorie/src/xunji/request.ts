@@ -12,7 +12,7 @@
  * 本件是纯函数：不读库、不调网、不读时钟——同输入必得同输出（挡板断言直接调它）。
  */
 
-import type { PlanMovement, PlanSessionRow } from '../workout/planStore.js';
+import type { PlanMovement, PlanSessionRow } from '../workout/index.js';
 
 /** 训记 `res[]` 里一条 set 的形状（上报口径，老 `push.py:95-100`）。 */
 export interface XunjiSet {

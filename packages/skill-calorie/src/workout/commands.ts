@@ -12,7 +12,8 @@
  * 落地训练（读侧进度）＝`view.process-progress`。
  * 「定训练计划」有写键（过程页出可写编辑器，用户复制命令后由下方 `workout.plan-*` 那一族写声明落库）；
  * 「落地训练」#612 起有写键 `workout.land`（读计划→补计划→记心愿→推送→回写收进同一命令，
- * `dryRun` 转预演过程页）；「同步到训记」「拉训记实绩」两条是训记模块
+ * `dryRun` 转预演过程页）；「落地到本周末」／「落地到本月底」#613 起有写键
+ * `workout.land-weekend`／`workout.land-monthend`（天数自算＋逐天复用单日链，`dryRun` 同形）；「同步到训记」「拉训记实绩」两条是训记模块
  * 对外命令的薄包装（`xunjiPush.ts`／`xunjiBackfill.ts`：审计／调用／过程页／结果页收进同一命令），
  * 写键形（`workout.xunji-*`），`dryRun` 转预演过程页。
  */
@@ -23,6 +24,7 @@ import { viewPlan, viewPlanVsActual, viewPlanWritePreview } from './plan.js';
 import { viewProcessProgress } from './progress.js';
 import { viewExerciseReview } from './review.js';
 import { writeLand } from './land.js';
+import { writeLandMonthend, writeLandWeekend } from './landBatch.js';
 import { writeXunjiBackfill } from './xunjiBackfill.js';
 import { writeXunjiPush } from './xunjiPush.js';
 import {
@@ -57,6 +59,8 @@ export const WORKOUT_COMMANDS = [
   { kind: 'write', key: 'calorie.workout.plan-update-movement', shape: 'receipt', title: '改动作', wakeWord: '确认改动作', run: writePlanUpdateMovement, example: 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
   { kind: 'write', key: 'calorie.workout.plan-delete', shape: 'receipt', title: '撤销训练计划', wakeWord: '确认撤销训练计划', run: writePlanDelete, example: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
   { kind: 'write', key: 'calorie.workout.land', shape: 'receipt', title: '落地训练', wakeWord: '落地训练', run: writeLand, example: 'calorie-cmd-read calorie.workout.land --params \'{"date":"2026-09-07","dryRun":true}\'' },
+  { kind: 'write', key: 'calorie.workout.land-weekend', shape: 'receipt', title: '落地到本周末', wakeWord: '落地到本周末', run: writeLandWeekend, example: 'calorie-cmd-read calorie.workout.land-weekend --params \'{"date":"2026-09-07","dryRun":true}\'' },
+  { kind: 'write', key: 'calorie.workout.land-monthend', shape: 'receipt', title: '落地到本月底', wakeWord: '落地到本月底', run: writeLandMonthend, example: 'calorie-cmd-read calorie.workout.land-monthend --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'write', key: 'calorie.workout.xunji-push', shape: 'receipt', title: '同步到训记', wakeWord: '同步到训记', run: writeXunjiPush, example: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'write', key: 'calorie.workout.xunji-backfill', shape: 'receipt', title: '拉训记实绩', wakeWord: '拉训记实绩', run: writeXunjiBackfill, example: 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1,"dryRun":true}\'' },
 ] satisfies readonly CommandSpec[];

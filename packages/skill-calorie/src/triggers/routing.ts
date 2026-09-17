@@ -210,10 +210,10 @@ export const T71_DIFFS: readonly T71Diff[] = [
   },
   {
     id: 'M8',
-    wakeWords: ['落地到本周末', '落地到本月底'],
+    wakeWords: [],
     spec: 'docs/calorie-architecture.md:60「落地」',
     t71: 'docs/research/t71-old-baseline-inventory.md:203 M8 需移植项（process_progress.html）',
-    note: 't71 时点三词（落地训练／落地到本周末／落地到本月底，M8「需移植」）；#612 起其中「落地训练」已转入 exec（`src/workout/routes.ts` order 196，命令 `calorie.workout.land`），现状以路由层为准，本登记只存档剩余两词。',
+    note: 't71 时点三词（落地训练／落地到本周末／落地到本月底，M8「需移植」）；#612 起其中「落地训练」已转入 exec（`src/workout/routes.ts` order 196，命令 `calorie.workout.land`）；#613 起剩余两词亦转入 exec（`src/workout/routes.ts` order 197–198，命令 `calorie.workout.land-weekend`／`calorie.workout.land-monthend`），现状以路由层为准，本登记只存档 t71 时点口径。',
   },
 ];
 
