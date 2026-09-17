@@ -7,7 +7,7 @@
  * **出口回执**、**本地库行**、**远端挡板收到的调用**。
  *
  * 读数与老实现不变量（`docs/skills/skill-memo-ilife/t659-不变量清单.md` 的 M-01～M-13）逐条对上；
- * 有意偏离（D-15／D-16／D-06 等）另立读数，两行机器读数见
+ * 有意偏离（D-21～D-27）另立读数，两行机器读数见
  * `docs/skills/skill-memo-ilife/t658-A-心愿排期移植-证据.md`。
  */
 import { test } from 'node:test';
@@ -34,6 +34,8 @@ function run(s, key, params) {
 }
 const rowOf = (rows, title) => rows.find((n) => n.title === title);
 const opCalls = (argv, op) => argv.filter((a) => a[1] === op);
+/** 远端真删那条：走**原生 resource** `task tasks delete`（短路里没有 `+delete`，见挡板与 taskWrite.ts 的注释）。 */
+const deleteCalls = (argv) => argv.filter((a) => a[0] === 'task' && a[1] === 'tasks' && a[2] === 'delete');
 
 /* ─────────────── 一、记一条心愿 ＝ 一条命令做两侧 ─────────────── */
 
@@ -91,7 +93,7 @@ test('#661 T3 M-04 建前查重（远端侧自然键）：远端已有同题同�
   assert.equal(s.remote().tasks.length, 1);
 });
 
-test('#661 T9 偏离 D-16：无排期日期的心愿也查重（老实现只在有 due 时查）', () => {
+test('#661 T9 偏离 D-22：无排期日期的心愿也查重（老实现只在有 due 时查）', () => {
   const s = seam('t661-i-');
   const input = { title: '学琴', body: '学琴', category: '心愿' };
   assert.equal(run(s, 'memo.create', input).exit, 0);
@@ -104,7 +106,7 @@ test('#661 T9 偏离 D-16：无排期日期的心愿也查重（老实现只在�
   assert.equal(s.remote().tasks.length, 1);
 });
 
-test('#661 T10 偏离 D-15：长标题的查重键与写入键同为 200 字截断', () => {
+test('#661 T10 偏离 D-21：长标题的查重键与写入键同为 200 字截断', () => {
   const s = seam('t661-j-');
   const long = 'x'.repeat(260);
   const input = { title: long, body: long, category: '心愿', due: DUE };
@@ -165,25 +167,39 @@ test('#661 T5 批量排期：一批 id ＋ 一个日期；非心愿逐条记账�
   assert.equal(rowOf(x.rows, '买菜').due, null, '排期日期只对心愿生效');
 });
 
-test('#661 T6 D-06 删心愿＝两侧都确保没有（远端真删除，不是只标完成）', () => {
+test('#661 T6 删心愿 · C 口径：默认照老标完成；显式 purge 才真删（D-23）', () => {
+  // 默认：本地删掉，飞书那条留成「已完成」终态（与老实现一致）。
   const s = seam('t661-f-');
   assert.equal(run(s, 'memo.create', CREATE).exit, 0);
   const id = rowOf(s.localNew(), WISH).id;
-
   const x = run(s, 'memo.remove', { id, confirm: true });
   assert.equal(x.exit, 0, String(x.r.stderr));
-  assert.equal(opCalls(x.argv, '+delete').length, 1, '远端要收到删除（老实现只发 +complete）');
-  assert.equal(opCalls(x.argv, '+complete').length, 0, '不再是「标完成留终态」那套');
-  assert.equal(s.remote().tasks.length, 0, '远端任务被清掉');
-  assert.equal(s.localNew().length, 0);
+  assert.equal(opCalls(x.argv, '+complete').length, 1, '默认＝远端标完成（老口径）');
+  assert.equal(deleteCalls(x.argv).length, 0, '默认不碰远端任务本体');
+  assert.equal(s.remote().tasks.length, 1, '默认：远端任务留着（已完成终态）');
+  assert.ok(s.remote().tasks[0].completed_at.length > 0, '留着的那条状态是「已完成」');
+  assert.equal(s.localNew().length, 0, '本地照样删掉');
 
-  // 远端早被手工删过（挡板里已无这条）→ 本地那条仍删得掉，不留删不掉的账。
+  // 显式 purge：真删（原生 resource `task tasks delete --task-guid <guid>`，不是短路 `+delete`）。
   const s2 = seam('t661-f2-');
   assert.equal(run(s2, 'memo.create', CREATE).exit, 0);
-  s2.stub.setState({ tasks: [] });
-  const y = run(s2, 'memo.remove', { id: rowOf(s2.localNew(), WISH).id, confirm: true });
+  const row2 = rowOf(s2.localNew(), WISH);
+  const y = run(s2, 'memo.remove', { id: row2.id, confirm: true, purge: true });
   assert.equal(y.exit, 0, String(y.r.stderr));
+  const del = deleteCalls(y.argv)[0];
+  assert.ok(del, 'purge 要打远端真删');
+  assert.equal(argOf(del, '--task-guid'), row2.feishuTaskGuid, '--task-guid 传的是远端标识');
+  assert.equal(opCalls(y.argv, '+complete').length, 0, 'purge 那支不再标完成');
+  assert.equal(s2.remote().tasks.length, 0, '远端任务被清掉');
   assert.equal(s2.localNew().length, 0);
+
+  // 远端早被手工删过（挡板里已无这条）→ purge 仍删得掉本地，不留删不掉的账。
+  const s3 = seam('t661-f3-');
+  assert.equal(run(s3, 'memo.create', CREATE).exit, 0);
+  s3.stub.setState({ tasks: [] });
+  const z = run(s3, 'memo.remove', { id: rowOf(s3.localNew(), WISH).id, confirm: true, purge: true });
+  assert.equal(z.exit, 0, String(z.r.stderr));
+  assert.equal(s3.localNew().length, 0);
 });
 
 /* ─────────────── 四、反向对账三步 ＋ 11 项统计 ─────────────── */
@@ -215,8 +231,8 @@ test('#661 T7 M-09 反向对账三步：本地补建／远端完成→本地／�
   assert.equal(x.env.data.scannedDone, 1);
   assert.equal(x.env.data.synced, 1);
   assert.equal(rowOf(s.localNew(), WISH).done, true);
-  // 偏离 D-18：对账只把心愿标完成——老实现是删掉心愿并生成打卡记录（那是完成向导的事，不在这条链上）。
-  assert.equal(rowOf(s.localNew(), WISH).category, '心愿', 'D-18：远端完成 → 本地只标完成，不转打卡');
+  // 偏离 D-24：对账只把心愿标完成——老实现是删掉心愿并生成打卡记录（那是完成向导的事，不在这条链上）。
+  assert.equal(rowOf(s.localNew(), WISH).category, '心愿', 'D-24：远端完成 → 本地只标完成，不转打卡');
 
   // 步 3：远端改排期 → 本地跟着改（对账时远端优先）。
   s.stub.setState({ tasks: [{ guid, summary: WISH, description: '原备忘 #' + id, due: '2026-11-11', completed_at: '' }] });

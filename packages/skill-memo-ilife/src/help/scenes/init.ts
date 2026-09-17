@@ -8,7 +8,7 @@
  *   ① 老实物契约载荷 `备忘录_HELP_20260820_162453.html`（老 `script/memo_render.py:527-599` 的产出，逐字零改写）；
  *   ② 老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0，不写死第四份副本，裁决 9）。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           清洗后 30 条 sha256＝ada2433dab16349ac130527b9a875adf57b2904fd3afd63f79801d17169786a4
+ *           清洗后 30 条 sha256＝444f64515150e55bae81a49f11663b02a89697a5d6cc1ba5e0e3b6102bc94613
  *
  * 与老骨架的**有意偏离**（逐条对账见 `docs/skills/skill-memo-ilife/t227-assets-report.md`）：
  *   1. 二级组 id 老 0 起 → 新 1 起（票 6 V8=A）；

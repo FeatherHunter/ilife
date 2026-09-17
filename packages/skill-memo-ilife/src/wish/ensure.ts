@@ -125,9 +125,11 @@ export function updateWish(db: MemoDb, input: WishUpdateInput): WishWriteResult 
   }
 }
 
-/** 删一条。心愿若在飞书有任务，**先删远端、删干净了才删本地**——老实现先删本地再标远端完成，
- *  远端一失败就再也补不回来（`memo_cli.py:407` → `:417`），那条路径不照抄。 */
-export function removeWish(db: MemoDb, id: string): WishWriteResult {
+/** 删一条。心愿若在飞书有任务：**默认只标完成**（照老口径，飞书留「已完成」终态）；
+ *  调用方显式带 `purge` 才真删远端任务（`task tasks delete`，见 `taskRemove.ts`）。
+ *  两条路都是**先动远端、成了才删本地**——老实现先删本地再动远端（`memo_cli.py:407` → `:417`），
+ *  远端一失败就再也补不回来，那条顺序不照抄；本侧的代价是远端不可用时删不掉，重试即可。 */
+export function removeWish(db: MemoDb, id: string, purge = false): WishWriteResult {
   const note = getNote(db, id);
   const guid = note.feishuTaskGuid ?? null;
   if (note.category !== WISH_TOP || !guid) {
@@ -139,12 +141,20 @@ export function removeWish(db: MemoDb, id: string): WishWriteResult {
     return { receipt: { ok: false, message: '本地未删（远端没成：' + gate.why + '）：' + id, local: 'unchanged', remote: 'unavailable', remoteId: guid }, exit: 4 };
   }
   try {
-    deleteRemoteWish(gate.cli, guid);
+    if (purge) deleteRemoteWish(gate.cli, guid);
+    else completeRemoteWish(gate.cli, guid);
   } catch (e) {
     return { receipt: { ok: false, message: '本地未删（远端没成：' + textOf(e) + '）：' + id, local: 'unchanged', remote: 'failed', remoteId: guid }, exit: 4 };
   }
   removeNote(db, id, true);
-  return { receipt: { ok: true, message: '已删除：' + id, local: 'removed', remote: 'synced', remoteId: guid }, exit: 0 };
+  return {
+    receipt: {
+      ok: true,
+      message: (purge ? '已删除（远端任务一并删除）：' : '已删除（远端任务标为完成）：') + id,
+      local: 'removed', remote: 'synced', remoteId: guid,
+    },
+    exit: 0,
+  };
 }
 
 export interface WishSetDueInput {

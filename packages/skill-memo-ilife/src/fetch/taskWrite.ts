@@ -65,7 +65,11 @@ export function completeTask(cli: string, taskId: string): void {
   mustRun(cli, ['task', '+complete', '--task-id', taskId], 'task +complete');
 }
 
-/** D-06：删心愿要能连带删掉飞书任务（老实现只有标完成）。 */
+/** 删任务。**短路里没有 `+delete`**（本机 lark-cli 1.0.82 的 `task --help` 逐行核对：`+create／+update／
+ *  +complete／+reopen／+search／+get-related-tasks…` 一族里没有它），真形状是**原生 resource**：
+ *  `task tasks delete --task-guid <guid>`（`lark-cli schema task.tasks.delete` 的必填参数就是 `task_guid`）。
+ *  该命令在 lark-cli 里标 `high-risk-write`，必须带 `--yes` 才会执行；本函数只在调用方**显式要求**
+ *  「彻底删除」时才被调到（见 `src/wish/ensure.ts` 的 purge 分支），默认那条路走的是标完成。 */
 export function deleteTask(cli: string, taskId: string): void {
-  mustRun(cli, ['task', '+delete', '--task-id', taskId], 'task +delete');
+  mustRun(cli, ['task', 'tasks', 'delete', '--task-guid', taskId, '--yes'], 'task tasks delete');
 }

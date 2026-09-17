@@ -218,7 +218,8 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
         return ok({ ok: true, message: '已废弃提醒（笔记保留）：' + id });
       }
       const r = crudRemove(params);
-      const w = removeWish(db, r.id);
+      // #661 · C 口径：默认照老「远端标完成」，显式 `purge:true` 才连飞书任务一起删（两种语义用参数讲清）。
+      const w = removeWish(db, r.id, params.purge === true);
       return { data: w.receipt, exit: w.exit };
     }
     case 'memo.remind': {

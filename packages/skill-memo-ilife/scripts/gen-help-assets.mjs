@@ -41,7 +41,7 @@ const ANCHOR = 'window.__DATA__ = ';
 /** 摘要锁（fail-closed）：① 老实物文件字节；② 老 30 条老骨架 canonical；③ 清洗后 30 条 canonical。 */
 const SOURCE_SHA256 = '8a25dd587d6b96ae2b56a16a17812def84d819dafefa4daa134e1c01b68efd8a';
 const LEGACY_DIGEST = '0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c';
-const ASSET_DIGEST = 'ada2433dab16349ac130527b9a875adf57b2904fd3afd63f79801d17169786a4';
+const ASSET_DIGEST = '444f64515150e55bae81a49f11663b02a89697a5d6cc1ba5e0e3b6102bc94613';
 
 /** 声明 2 · `prompt_template` 清洗表：`[场景 id, 老片段(逐字), 新片段, 类]`。
  *  类 `CLI` ＝ 用户 U6 的命令去化：`--html` 6 个场景 ＋ 子命令名 4 个场景 ＋ `-c` 1 个场景，**并集 8**；
@@ -65,7 +65,7 @@ const PROMPT_EDITS = [
   ['memo_remind_with_note', 'Cron 到点触发推送。', '到点自动推送提醒。', 'DB'],
   ['memo_add_wish', '飞书任务清单: _____________ (选填,tasklist GUID,留空=我的任务)', '飞书任务清单: _____________ (选填,留空=我的任务)', 'DB'],
   ['memo_add_wish', 'AI 创建心愿 note,自动建飞书 task 并写回 task_guid。', 'AI 创建心愿笔记,自动建飞书任务并建立关联。', 'DB'],
-  ['memo_delete_wish', '若有飞书 task,会自动标完成。', '若有飞书任务,会一并删除。', 'DB'],
+  ['memo_delete_wish', '若有飞书 task,会自动标完成。', '若有飞书任务,会自动标完成(想连它一起删掉时说「彻底删除」)。', 'DB'],
   ['memo_update_wish', '飞书 task 标题同步更新。', '飞书任务标题同步更新。', 'DB'],
   ['memo_add_mood', 'AI 创建情绪日记 note。', 'AI 创建一条情绪日记。', 'DB'],
   ['memo_add_checkin', 'AI 创建打卡 note。', 'AI 创建一条打卡记录。', 'DB'],

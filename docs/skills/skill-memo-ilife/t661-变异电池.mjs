@@ -32,6 +32,7 @@ const FILES = {
   ensure: join(PKG, 'src', 'wish', 'ensure.ts'),
   reconcile: join(PKG, 'src', 'wish', 'reconcile.ts'),
   tasks: join(PKG, 'src', 'fetch', 'tasks.ts'),
+  cli: join(PKG, 'src', 'cli', 'cmd_read.ts'),
   helpSync: join(PKG, 'src', 'help', 'scenes', 'sync.ts'),
 };
 const sha = (p) => createHash('sha256').update(readFileSync(p)).digest('hex').slice(0, 16);
@@ -113,24 +114,24 @@ try {
     'const existing = hitOf(searchTasks(cli, { summary: note.title, due: note.due ?? null }), note.title);',
     'const existing: string | null = null;', '#661 T2',
     { rel: 'dist/wish/taskSync.js', broken: 'const existing = null;', fixed: 'searchTasks(cli' });
-  round('MUT-B', '「删心愿只标完成」（老行为 D-06／D-17）→ 删心愿读数', 'ensure',
-    'deleteRemoteWish(gate.cli, guid);', 'completeRemoteWish(gate.cli, guid);', '#661 T6',
-    { rel: 'dist/wish/ensure.js', broken: 'completeRemoteWish(gate.cli, guid);', fixed: 'deleteRemoteWish(gate.cli, guid);' });
-  round('MUT-C', '偏离 D-15：查重键用未截断全文（老行为）→ 长标题读数', 'tasks',
+  round('MUT-B', '「purge 参数被忽略：默认也真删」（C 口径被改坏）→ 删心愿读数', 'cli',
+    'removeWish(db, r.id, params.purge === true)', 'removeWish(db, r.id, true)', '#661 T6',
+    { rel: 'dist/cli/cmd_read.js', broken: 'removeWish(db, r.id, true)', fixed: 'params.purge === true' });
+  round('MUT-C', '偏离 D-21：查重键用未截断全文（老行为）→ 长标题读数', 'tasks',
     "'--query', taskTitle(query.summary)", "'--query', query.summary", '#661 T10',
     { rel: 'dist/fetch/tasks.js', broken: "'--query', query.summary", fixed: 'taskTitle(query.summary)' });
-  round('MUT-D', '偏离 D-16：只在有排期日期时查重（老行为）→ 无排期查重读数', 'taskSync',
+  round('MUT-D', '偏离 D-22：只在有排期日期时查重（老行为）→ 无排期查重读数', 'taskSync',
     '  const existing = hitOf(searchTasks(cli, { summary: note.title, due: note.due ?? null }), note.title);',
     '  const existing: string | null = note.due ? hitOf(searchTasks(cli, { summary: note.title, due: note.due }), note.title) : null;',
     '#661 T9',
     { rel: 'dist/wish/taskSync.js', broken: 'note.due ? hitOf', fixed: 'const existing = hitOf' });
-  round('MUT-E', '偏离 D-18：对账步 2 把心愿转打卡（老行为会删心愿并生成打卡）→ 对账读数', 'reconcile',
+  round('MUT-E', '偏离 D-24：对账步 2 把心愿转打卡（老行为会删心愿并生成打卡）→ 对账读数', 'reconcile',
     '    updateNote(db, row.id, { done: true });', "    updateNote(db, row.id, { done: true, category: '打卡' });", '#661 T7',
     { rel: 'dist/wish/reconcile.js', broken: "category: '打卡'", fixed: 'updateNote(db, row.id, { done: true });' });
-  round('MUT-F', '偏离 D-19：远端不可用时退出码照老口径写 0 → 降级读数（退出码那一格）', 'ensure',
+  round('MUT-F', '偏离 D-25：远端不可用时退出码照老口径写 0 → 降级读数（退出码那一格）', 'ensure',
     "remote: 'unavailable', remoteId: note.feishuTaskGuid ?? null },\n      exit: 4,",
     "remote: 'unavailable', remoteId: note.feishuTaskGuid ?? null },\n      exit: 0,", '#661 T7', null);
-  round('MUT-H', '偏离 D-20：本地侧建前不判重（老行为：直插 INSERT）→ 幂等读数（本地那一格）', 'ensure',
+  round('MUT-H', '偏离 D-26：本地侧建前不判重（老行为：直插 INSERT）→ 幂等读数（本地那一格）', 'ensure',
     '  const found = localWishRow(db, input.title, due);', '  const found: MemoNote | null = null;', '#661 T2',
     { rel: 'dist/wish/ensure.js', broken: 'const found = null;', fixed: 'localWishRow(db, input.title, due)' });
   round('MUT-G', 'HELP 生成物门：手改产物一个字节 → --check 必须红（#227 那道锁的复用）', 'helpSync',
