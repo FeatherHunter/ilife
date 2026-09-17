@@ -41,6 +41,10 @@ const SOFT_EXCLUDED_TAG = '软删除：行保留，已从查询与统计中排�
 /** #120：软删运动与体脂/围度/下架食品同款措辞（口径收敛后二者同值）。 */
 const SOFT_TAG = SOFT_EXCLUDED_TAG;
 const HARD_TAG = '硬删除，不可恢复';
+/** #650 · 产品下架当刻人话（饮食线文本波次起与共享词条分家）：回执摘要里的稳定括号段
+ * （品名逐条变，不断言它）。牙齿：摘要改回旧词条即红（旧句不含本段）；本段亦不断言
+ * 可恢复（`promisesRecovery` 另钉，全仓 0 个恢复入口）。 */
+const PRODUCT_DEPRECATE_TAG = '（不再出现在搜索和统计里；暂时无法恢复）';
 
 /** 「承诺可恢复」检测：剔除「不可恢复」后仍出现「可恢复」即视为说谎。 */
 function promisesRecovery(text) {
@@ -535,6 +539,23 @@ test('落库 · 目标 set/water/weight/pause/resume：daily_goal#1 逐列回读
   });
 });
 
+// ---------------------------------------------------------------- 定运动目标（1 条会改数据库的命令，#650 补）
+
+test('落库 · 定运动目标 exercise：daily_goal#1 exercise_goal 单列回读', () => {
+  const dir = mkEmpty();
+  runWrite(dir, 'calorie.goal.exercise', { goal: 300 });
+  withRead(dir, 'calorie.goal.exercise', (db) => {
+    const row = q1(db, 'SELECT exercise_goal FROM daily_goal WHERE id = 1');
+    assert.ok(row, 'goal.exercise 未落 daily_goal#1');
+    assert.equal(row.exercise_goal, 300, 'goal.exercise 的 goal 未落库');
+  });
+
+  runWrite(dir, 'calorie.goal.exercise', { goal: 500 });
+  withRead(dir, 'calorie.goal.exercise', (db) => {
+    assert.equal(q1(db, 'SELECT exercise_goal FROM daily_goal WHERE id = 1').exercise_goal, 500, 'goal.exercise 改值未落库');
+  });
+});
+
 // ---------------------------------------------------------------- 体脂/围度（4 键）
 
 test('落库 · 体脂 composition-add/remove：软删行保留', () => {
@@ -609,7 +630,7 @@ const DELETE_CASES = [
     seed: (dir) => runWrite(dir, 'calorie.body.measure-add', { waistCm: 85, date: '2026-09-06' }).data.receipt.recordId,
   },
   {
-    key: 'calorie.product.deprecate', kind: 'soft', table: 'nutrition_products', flag: 'is_deprecated', statusBase: '已下架', tag: SOFT_EXCLUDED_TAG, op: 'update',
+    key: 'calorie.product.deprecate', kind: 'soft', table: 'nutrition_products', flag: 'is_deprecated', statusBase: '已下架', tag: PRODUCT_DEPRECATE_TAG, op: 'update',
     seed: (dir) => runWrite(dir, 'calorie.product.add', { productName: '燕麦片', brand: 'X牌', calories: 389, protein: 13, fat: 7, carbohydrates: 66, sodium: 5 }).data.receipt.recordId,
   },
   {
@@ -724,7 +745,7 @@ test('口径 · 删除回执可恢复性：文案与库内语义一致（软删�
     const dm = runWrite(dir, 'calorie.body.measure-remove', { id: m.data.receipt.recordId });
     assert.ok(dm.data.message.includes(SOFT_EXCLUDED_TAG), 'body.measure-remove 文案缺 ' + SOFT_EXCLUDED_TAG + '：' + dm.data.message);
     const p = runWrite(dir, 'calorie.product.deprecate', { id: 1 });
-    assert.ok(p.data.message.includes(SOFT_EXCLUDED_TAG), 'product.deprecate 文案缺 ' + SOFT_EXCLUDED_TAG + '：' + p.data.message);
+    assert.ok(p.data.message.includes(PRODUCT_DEPRECATE_TAG), 'product.deprecate 文案缺 ' + PRODUCT_DEPRECATE_TAG + '：' + p.data.message);
     withRead(dir, 'calorie.product.deprecate', (db) => assert.equal(q1(db, 'SELECT is_deprecated FROM nutrition_products WHERE id = 1').is_deprecated, 1));
   }
   // 硬删：饮食四路
@@ -913,6 +934,119 @@ test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete
     withRead(dir, 'calorie.workout.plan-delete', (db) => {
       assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plan_config').n, 0, 'plan-delete 未删配置');
       assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plans').n, 0, 'plan-delete 未删会话行');
+    });
+  }
+});
+
+// ---------------------------------------------------------------- 落地训练族（5 条会改数据库的命令，#650 补）
+//
+// 挡板下零本地写：四条腿（作息合成写／备忘合成写／训记推送／训记回写）一律走环境变量挡板短路，
+// 真写发生在外部子进程与远端；挡板短路后父进程只读计划＋组回执，本地库一字不动。
+// 故回查断言钉「挡板路径零本地写 ＋ 回执成功」：跑前快照三张表行数，跑后逐行比对；
+// 日后若给任一条加本地写，本断言即红（改断言须写明新增了哪一列，不得删块）。
+const LAND_SCHED_OK = { code: 0, data: { ok: true, message: '批量补计划', achieved: true, errors: [] } };
+const LAND_MEMO_OK = { code: 0, data: { ok: true, message: '已记一条：1', local: 'created', remote: 'synced' } };
+/** 推送／回写挡板读数（单日链缝与 xunji 直调缝同形：同一训记接口的两条进线，共用一份成功读数）。 */
+const PUSH_OK_DATA = { date: '2026-09-07', session_count: 1, ok_count: 1, fail_count: 0, verify_note: '挡板', results: [{ session_label: '上肢', ok: true, verified: false, resp: { dry_run: false } }] };
+const BACKFILL_OK_DATA = { end_date: '2026-09-07', days: 1, total_inserted: 2, total_updated: 0, results: [{ date: '2026-09-07', fetch_ok: true, trains_count: 2, inserted: 2, updated: 0, skipped_empty: false }] };
+const LAND_PUSH_OK = { code: 0, data: PUSH_OK_DATA };
+const LAND_BACKFILL_OK = { code: 0, data: BACKFILL_OK_DATA };
+const X_PUSH_OK = { code: 0, data: PUSH_OK_DATA };
+const X_BACKFILL_OK = { code: 0, data: BACKFILL_OK_DATA };
+
+/** 落地四路挡板（跑道环境变量缝；生产调用方永远不设）。 */
+const LAND_STUBS = {
+  CALORIE_LAND_SCHEDULE_STUB: JSON.stringify(LAND_SCHED_OK),
+  CALORIE_LAND_MEMO_STUB: JSON.stringify(LAND_MEMO_OK),
+  CALORIE_LAND_PUSH_STUB: JSON.stringify(LAND_PUSH_OK),
+  CALORIE_LAND_BACKFILL_STUB: JSON.stringify(LAND_BACKFILL_OK),
+};
+
+/** 本地库快照（JSON 定序）：三张相关表逐行（改值／增删都看得见）＋其余表行数（表外写也看得见）。
+ * 跑前直读、跑后经 `withRead` 重算比对。 */
+function snapJson(db) {
+  const all = (sql) => db.prepare(sql).all();
+  return JSON.stringify({
+    cfg: all('SELECT * FROM workout_plan_config ORDER BY id'),
+    plans: all('SELECT * FROM workout_plans ORDER BY week_number, day_of_week, session_index'),
+    ex: all('SELECT * FROM exercise_log ORDER BY id'),
+    rest: {
+      food: q1(db, 'SELECT COUNT(*) AS n FROM food_log').n,
+      weight: q1(db, 'SELECT COUNT(*) AS n FROM weight_log').n,
+      products: q1(db, 'SELECT COUNT(*) AS n FROM nutrition_products').n,
+      comp: q1(db, 'SELECT COUNT(*) AS n FROM body_composition').n,
+      measure: q1(db, 'SELECT COUNT(*) AS n FROM body_measurements').n,
+      photos: q1(db, 'SELECT COUNT(*) AS n FROM body_photos').n,
+      goal: q1(db, 'SELECT COUNT(*) AS n FROM daily_goal').n,
+      profile: q1(db, 'SELECT COUNT(*) AS n FROM user_profile').n,
+    },
+  });
+}
+
+/** 跑前快照（直读，不经 `withRead`：经它会计入覆盖门读数，掏空跑后块即不红，自毁 S4(3)。#650 规格评审注记）。 */
+function snapLocal(dir) {
+  const db = openDbReadOnly(join(dir, 'calorie_data.db'));
+  try {
+    return snapJson(db);
+  } finally {
+    db.close();
+  }
+}
+
+test('落库 · 落地训练族 5 条命令：挡板路径零本地写 ＋ 回执成功', () => {
+  // land：单日四步（非预演，四挡板全绿；T2 计划 2026-09-07 周一有上肢 1 段）
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const before = snapLocal(dir);
+    const a = runWrite(dir, 'calorie.workout.land', { date: '2026-09-07' }, LAND_STUBS);
+    assert.match(a.data.message, /已落地 2026-09-07/, 'land 回执非成功形：' + a.data.message);
+    withRead(dir, 'calorie.workout.land', (db) => {
+      assert.deepEqual(snapJson(db), before, 'land 挡板路径改了本地库');
+    });
+  }
+  // land-weekend：周一锚点 → 周一至周日逐天复用单日链（子进程透传环境，挡板逐天生效）
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const before = snapLocal(dir);
+    const a = runWrite(dir, 'calorie.workout.land-weekend', { date: '2026-09-07' }, LAND_STUBS);
+    assert.match(a.data.message, /已批量/, 'land-weekend 回执非成功形：' + a.data.message);
+    withRead(dir, 'calorie.workout.land-weekend', (db) => {
+      assert.deepEqual(snapJson(db), before, 'land-weekend 挡板路径改了本地库');
+    });
+  }
+  // land-monthend：月末锚点 → 只跑 1 天（`t613` 同形，避免整月子进程拖慢本门）
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const before = snapLocal(dir);
+    const a = runWrite(dir, 'calorie.workout.land-monthend', { date: '2026-09-30' }, LAND_STUBS);
+    assert.match(a.data.message, /已批量/, 'land-monthend 回执非成功形：' + a.data.message);
+    withRead(dir, 'calorie.workout.land-monthend', (db) => {
+      assert.deepEqual(snapJson(db), before, 'land-monthend 挡板路径改了本地库');
+    });
+  }
+  // xunji-push：训记推送薄包装（挡板短路，不起子进程）
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const before = snapLocal(dir);
+    const a = runWrite(dir, 'calorie.workout.xunji-push', { date: '2026-09-07' }, { CALORIE_XUNJI_STUB: JSON.stringify(X_PUSH_OK) });
+    assert.match(a.data.message, /已同步 2026-09-07/, 'xunji-push 回执非成功形：' + a.data.message);
+    withRead(dir, 'calorie.workout.xunji-push', (db) => {
+      assert.deepEqual(snapJson(db), before, 'xunji-push 挡板路径改了本地库');
+    });
+  }
+  // xunji-backfill：拉取回写薄包装（挡板短路，真回写发生在外部子进程）
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const before = snapLocal(dir);
+    const a = runWrite(dir, 'calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, { CALORIE_XUNJI_STUB: JSON.stringify(X_BACKFILL_OK) });
+    assert.match(a.data.message, /已拉训记实绩并回写/, 'xunji-backfill 回执非成功形：' + a.data.message);
+    withRead(dir, 'calorie.workout.xunji-backfill', (db) => {
+      assert.deepEqual(snapJson(db), before, 'xunji-backfill 挡板路径改了本地库');
     });
   }
 });
