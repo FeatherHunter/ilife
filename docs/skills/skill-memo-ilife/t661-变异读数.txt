@@ -1,0 +1,8 @@
+MUT-A 「建前不查重」（老行为）→ 幂等读数　改坏必红＝true（产物含改坏行为=true／回到正确行为=true） exit=1 pass=0 fail=1 红在『重复调用不重复写 未达标：{"本地位数":"1→1","远端重复建":1}』　还原必绿＝true（sha一致=true exit=0 pass=1 fail=0）
+MUT-B 「删心愿只标完成」（老行为 D-06／D-17）→ 删心愿读数　改坏必红＝true（产物含改坏行为=true／回到正确行为=true） exit=1 pass=0 fail=1 红在『远端要收到删除（老实现只发 +complete）』　还原必绿＝true（sha一致=true exit=0 pass=1 fail=0）
+MUT-C 偏离 D-15：查重键用未截断全文（老行为）→ 长标题读数　改坏必红＝true（产物含改坏行为=true／回到正确行为=true） exit=1 pass=0 fail=1 红在『长标题心愿也要查得中（老实现比不中，必重复建）』　还原必绿＝true（sha一致=true exit=0 pass=1 fail=0）
+MUT-D 偏离 D-16：只在有排期日期时查重（老行为）→ 无排期查重读数　改坏必红＝true（产物含改坏行为=true／回到正确行为=true） exit=1 pass=0 fail=1 红在『Expected values to be strictly equal:』　还原必绿＝true（sha一致=true exit=0 pass=1 fail=0）
+MUT-E 偏离 D-18：对账步 2 把心愿转打卡（老行为会删心愿并生成打卡）→ 对账读数　改坏必红＝true（产物含改坏行为=true／回到正确行为=true） exit=1 pass=0 fail=1 红在『D-18：远端完成 → 本地只标完成，不转打卡』　还原必绿＝true（sha一致=true exit=0 pass=1 fail=0）
+MUT-F 偏离 D-19：远端不可用时退出码照老口径写 0 → 降级读数（退出码那一格）　改坏必红＝true（产物断言=略：锚点行在产物里不唯一，红绿由用例自身承担） exit=1 pass=0 fail=1 红在『远端不可用：本地照落，但这一趟没达成』　还原必绿＝true（sha一致=true exit=0 pass=1 fail=0）
+MUT-H 偏离 D-20：本地侧建前不判重（老行为：直插 INSERT）→ 幂等读数（本地那一格）　改坏必红＝true（产物含改坏行为=true／回到正确行为=true） exit=1 pass=0 fail=1 红在『重复调用不重复写 未达标：{"本地位数":"1→2","远端重复建":0}』　还原必绿＝true（sha一致=true exit=0 pass=1 fail=0）
+MUT-G HELP 生成物门：手改产物一个字节 → --check 必须红（#227 那道锁的复用）　改坏必红＝true（产物含改坏行为=true／回到正确行为=true） exit=1 红在『D:\ilife\packages\skill-memo-ilife\src\help\scenes\sync.ts 与生成结果不一致（禁手改；重跑不带 --check 即覆盖）』　还原必绿＝true（sha一致=true exit=0）

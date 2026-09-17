@@ -1,0 +1,47 @@
+# #661 门禁运行留痕（由 .scratch/locks/gate-runs.log 导出，协议 §2.3 第 4 条）
+# 导出时刻：
+2026-09-17T08:17:33.0786308+08:00
+# 口径：只导出 ticket=661 的条目；RUN 行的 exit 是那次运行的退出码（0 才可作门禁证据）
+# 外层的 START/RUN 成对出现；窗口内直调的编译／用例由窗口脚本日志共同承担（docs/skills/skill-memo-ilife/t661-变异电池.mjs）
+START ticket=661 runId=46bb6c09-fb13-423f-a8a1-784ff62f8ab9 cmd="node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife" waitedMs=0 pid=68812 at=2026-09-17T00:04:32.538Z
+RUN ticket=661 runId=46bb6c09-fb13-423f-a8a1-784ff62f8ab9 cmd="node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife" waitedMs=0 exit=0 pid=68812 at=2026-09-17T00:04:35.569Z
+START ticket=661 runId=23d8a084-423f-4b4f-b75c-bb6fb78d3510 cmd="node --test packages/skill-memo-ilife/test/cli.test.mjs packages/skill-memo-ilife/test/policy.test.mjs packages/skill-memo-ilife/test/render.test.mjs test/memo-e2e.test.mjs test/combos-p8.test.mjs" waitedMs=0 pid=66228 at=2026-09-17T00:04:41.494Z
+RUN ticket=661 runId=23d8a084-423f-4b4f-b75c-bb6fb78d3510 cmd="node --test packages/skill-memo-ilife/test/cli.test.mjs packages/skill-memo-ilife/test/policy.test.mjs packages/skill-memo-ilife/test/render.test.mjs test/memo-e2e.test.mjs test/combos-p8.test.mjs" waitedMs=0 exit=1 pid=66228 at=2026-09-17T00:04:47.219Z
+START ticket=661 runId=2f2c7eea-83d9-4219-8a9f-7806fcf8f37a cmd="node --test packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 pid=62472 at=2026-09-17T00:06:00.833Z
+RUN ticket=661 runId=2f2c7eea-83d9-4219-8a9f-7806fcf8f37a cmd="node --test packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 exit=1 pid=62472 at=2026-09-17T00:06:12.918Z
+START ticket=661 runId=2fd86983-887a-445e-8fff-33f5ee70eedc cmd="node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife" waitedMs=1 pid=42572 at=2026-09-17T00:06:28.279Z
+RUN ticket=661 runId=2fd86983-887a-445e-8fff-33f5ee70eedc cmd="node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife" waitedMs=1 exit=0 pid=42572 at=2026-09-17T00:06:28.937Z
+START ticket=661 runId=c7aed92b-4483-4c77-beb7-50614746ec87 cmd="node --test packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 pid=56064 at=2026-09-17T00:06:29.002Z
+RUN ticket=661 runId=c7aed92b-4483-4c77-beb7-50614746ec87 cmd="node --test packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 exit=0 pid=56064 at=2026-09-17T00:06:40.863Z
+START ticket=661 runId=f18d2b11-cd41-4e41-a1e8-24bfec65a25e cmd="node --test packages/skill-memo-ilife/test/cli.test.mjs packages/skill-memo-ilife/test/policy.test.mjs packages/skill-memo-ilife/test/render.test.mjs packages/skill-memo-ilife/test/fetch.test.mjs packages/skill-memo-ilife/test/skill.test.mjs test/memo-e2e.test.mjs test/combos-p8.test.mjs test/combos-42.test.mjs test/synthetic-write-659.test.mjs test/memo-split.test.mjs packages/plugin-memo-ilife/test/smoke.test.mjs packages/plugin-memo-ilife/test/skills-provider.test.mjs" waitedMs=0 pid=11012 at=2026-09-17T00:06:48.781Z
+RUN ticket=661 runId=f18d2b11-cd41-4e41-a1e8-24bfec65a25e cmd="node --test packages/skill-memo-ilife/test/cli.test.mjs packages/skill-memo-ilife/test/policy.test.mjs packages/skill-memo-ilife/test/render.test.mjs packages/skill-memo-ilife/test/fetch.test.mjs packages/skill-memo-ilife/test/skill.test.mjs test/memo-e2e.test.mjs test/combos-p8.test.mjs test/combos-42.test.mjs test/synthetic-write-659.test.mjs test/memo-split.test.mjs packages/plugin-memo-ilife/test/smoke.test.mjs packages/plugin-memo-ilife/test/skills-provider.test.mjs" waitedMs=0 exit=0 pid=11012 at=2026-09-17T00:06:56.373Z
+START ticket=661 runId=dd1eeaca-51dd-428a-ad80-3cc6b089fb76 cmd="node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife" waitedMs=0 pid=66012 at=2026-09-17T00:08:21.445Z
+RUN ticket=661 runId=dd1eeaca-51dd-428a-ad80-3cc6b089fb76 cmd="node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife" waitedMs=0 exit=0 pid=66012 at=2026-09-17T00:08:22.085Z
+START ticket=661 runId=259e5f46-9461-4dcb-b5fc-5fab3c413d0c cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 pid=30388 at=2026-09-17T00:08:22.148Z
+RUN ticket=661 runId=259e5f46-9461-4dcb-b5fc-5fab3c413d0c cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 exit=0 pid=30388 at=2026-09-17T00:08:22.296Z
+START ticket=661 runId=bd500138-7d7c-4e0a-8e3c-9890588d68e3 cmd="node --test packages/skill-memo-ilife/test/help-file-228.test.mjs packages/skill-memo-ilife/test/cli-help-229.test.mjs packages/skill-memo-ilife/test/cli-help-230.test.mjs packages/skill-memo-ilife/test/help-dom-243.test.mjs packages/skill-memo-ilife/test/help-reuse-245.test.mjs" waitedMs=0 pid=69596 at=2026-09-17T00:08:29.504Z
+RUN ticket=661 runId=bd500138-7d7c-4e0a-8e3c-9890588d68e3 cmd="node --test packages/skill-memo-ilife/test/help-file-228.test.mjs packages/skill-memo-ilife/test/cli-help-229.test.mjs packages/skill-memo-ilife/test/cli-help-230.test.mjs packages/skill-memo-ilife/test/help-dom-243.test.mjs packages/skill-memo-ilife/test/help-reuse-245.test.mjs" waitedMs=0 exit=0 pid=69596 at=2026-09-17T00:08:32.859Z
+START ticket=661 runId=b2bcd51e-8e89-40b7-b54a-ac69630bb5d8 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 pid=56188 at=2026-09-17T00:08:55.283Z
+RUN ticket=661 runId=b2bcd51e-8e89-40b7-b54a-ac69630bb5d8 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 exit=1 pid=56188 at=2026-09-17T00:09:00.762Z
+START ticket=661 runId=de0ddf82-43da-4566-9c84-006e29355cc9 cmd="node --test --test-name-pattern \"#661 T2\" packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 pid=54848 at=2026-09-17T00:09:08.750Z
+RUN ticket=661 runId=de0ddf82-43da-4566-9c84-006e29355cc9 cmd="node --test --test-name-pattern \"#661 T2\" packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 exit=0 pid=54848 at=2026-09-17T00:09:09.938Z
+START ticket=661 runId=d8343b14-06b6-4cc0-9871-ec826e853907 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 pid=67628 at=2026-09-17T00:09:32.745Z
+RUN ticket=661 runId=d8343b14-06b6-4cc0-9871-ec826e853907 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 exit=1 pid=67628 at=2026-09-17T00:09:38.239Z
+START ticket=661 runId=608b6ecc-fcfd-4f54-ad31-efc706e53a42 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 pid=71904 at=2026-09-17T00:10:02.806Z
+RUN ticket=661 runId=608b6ecc-fcfd-4f54-ad31-efc706e53a42 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 exit=0 pid=71904 at=2026-09-17T00:10:10.122Z
+START ticket=661 runId=ae6aacd9-57cc-4e63-8459-bd602157f682 cmd="pnpm test" waitedMs=0 pid=61528 at=2026-09-17T00:10:17.314Z
+RUN ticket=661 runId=ae6aacd9-57cc-4e63-8459-bd602157f682 cmd="pnpm test" waitedMs=0 exit=1 pid=61528 at=2026-09-17T00:12:48.080Z
+START ticket=661 runId=70c3635e-5024-495d-bcb8-69a20a72e3f6 cmd="pnpm gen:check" waitedMs=0 pid=51572 at=2026-09-17T00:13:18.839Z
+RUN ticket=661 runId=70c3635e-5024-495d-bcb8-69a20a72e3f6 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=51572 at=2026-09-17T00:13:19.928Z
+START ticket=661 runId=31a4479f-508a-4748-99de-e82761d31d00 cmd="pnpm boundaries" waitedMs=0 pid=43444 at=2026-09-17T00:13:19.991Z
+RUN ticket=661 runId=31a4479f-508a-4748-99de-e82761d31d00 cmd="pnpm boundaries" waitedMs=0 exit=0 pid=43444 at=2026-09-17T00:13:21.011Z
+START ticket=661 runId=b70bc02b-a131-4aed-b537-8050861a0ef4 cmd="pnpm doctor" waitedMs=1 pid=63324 at=2026-09-17T00:13:21.077Z
+RUN ticket=661 runId=b70bc02b-a131-4aed-b537-8050861a0ef4 cmd="pnpm doctor" waitedMs=1 exit=0 pid=63324 at=2026-09-17T00:13:22.040Z
+START ticket=661 runId=08550e18-8f10-42a7-a54e-51403887bc30 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 pid=69600 at=2026-09-17T00:14:45.919Z
+RUN ticket=661 runId=08550e18-8f10-42a7-a54e-51403887bc30 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 exit=1 pid=69600 at=2026-09-17T00:15:04.340Z
+START ticket=661 runId=0ef75cca-63c6-4016-87cf-f54a2517cec5 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 pid=45760 at=2026-09-17T00:15:24.454Z
+RUN ticket=661 runId=0ef75cca-63c6-4016-87cf-f54a2517cec5 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 exit=1 pid=45760 at=2026-09-17T00:15:48.778Z
+START ticket=661 runId=a1be2c1e-e6a8-4351-8d00-e3e6951391b4 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 pid=53392 at=2026-09-17T00:16:05.936Z
+RUN ticket=661 runId=a1be2c1e-e6a8-4351-8d00-e3e6951391b4 cmd="node .scratch/t661/mutation-round.mjs" waitedMs=0 exit=0 pid=53392 at=2026-09-17T00:16:30.391Z
+START ticket=661 runId=a0e70e1e-7335-44d0-9ce4-81d818addd26 cmd="node --test packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 pid=61400 at=2026-09-17T00:16:35.770Z
+RUN ticket=661 runId=a0e70e1e-7335-44d0-9ce4-81d818addd26 cmd="node --test packages/skill-memo-ilife/test/wish-sync-661.test.mjs" waitedMs=0 exit=0 pid=61400 at=2026-09-17T00:16:47.661Z
