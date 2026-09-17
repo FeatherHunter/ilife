@@ -3,7 +3,7 @@
  * 权威是声明层：`src/cli/legacy/routes/scene-NN.ts`（未搬迁清单，一场景一件）与各能力
  * `src/<能力>/routes.ts`（已搬迁键，一能力一件）。本件只做「按 `list` 分组、按 `order` 升序」的
  * 排序与拼接，不含任何顺序知识——顺序事实只住声明的 `order` 字段，换文件搬动不会打乱顺序。
- * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 68 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 506 条（与声明逐条自洽：`pnpm gen:check` 验真）。
+ * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 69 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 507 条（与声明逐条自洽：`pnpm gen:check` 验真）。
  */
 import type { ExecWakeRoute, WakeRoute } from './routeSpec.js';
 
@@ -206,8 +206,8 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '改动作', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"update-movement","oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
   { wakeWord: '撤销训练计划', scene: '05', kind: 'exec', key: 'calorie.view.plan-write-preview', cli: 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"delete"}\'' },
   { wakeWord: '落地训练', scene: '05', kind: 'exec', key: 'calorie.workout.land', cli: 'calorie-cmd-read calorie.workout.land --params \'{"date":"2026-09-07","dryRun":true}\'' },
-  { wakeWord: '落地到本周末', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
-  { wakeWord: '落地到本月底', scene: '05', kind: 'non-exec', bucket: 'out-of-scope', reason: '明确不做（架构规格 docs/calorie-architecture.md:60：落地）；词只保证命中与文案，执行层不承接（t71 属 M8 需移植项、非 O1–O4，差异见 T71_DIFFS）。' },
+  { wakeWord: '落地到本周末', scene: '05', kind: 'exec', key: 'calorie.workout.land-weekend', cli: 'calorie-cmd-read calorie.workout.land-weekend --params \'{"date":"2026-09-07","dryRun":true}\'' },
+  { wakeWord: '落地到本月底', scene: '05', kind: 'exec', key: 'calorie.workout.land-monthend', cli: 'calorie-cmd-read calorie.workout.land-monthend --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { wakeWord: '同步到训记', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-push', cli: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { wakeWord: '拉训记实绩', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-backfill', cli: 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1,"dryRun":true}\'' },
   { wakeWord: '计划复盘（本周）', scene: '05', kind: 'exec', key: 'calorie.view.exercise-review', cli: 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本周"}\'' },
@@ -448,7 +448,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '定运动目标', scene: '06', kind: 'exec', key: 'calorie.goal.exercise', cli: 'calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'' },
 ];
 
-/** 68 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
+/** 69 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
 export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '存身材照', scene: '09', kind: 'exec', key: 'calorie.photo.add', cli: 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'' },
   { wakeWord: '移除身材照', scene: '09', kind: 'exec', key: 'calorie.photo.remove', cli: 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'' },
@@ -518,6 +518,7 @@ export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '确认改动作', scene: '05', kind: 'exec', key: 'calorie.workout.plan-update-movement', cli: 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
   { wakeWord: '确认撤销训练计划', scene: '05', kind: 'exec', key: 'calorie.workout.plan-delete', cli: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
   { wakeWord: '选身材照', scene: '09', kind: 'exec', key: 'calorie.view.photo-picker', cli: 'calorie-cmd-read calorie.view.photo-picker' },
+  { wakeWord: '卡路里HELP', scene: '09', kind: 'exec', key: 'calorie.help.center', cli: 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'' },
 ];
 
 /** 1 条覆盖修复入口（FX-81-5：键失去唯一可跑入口时补的单命令入口） */
@@ -525,5 +526,5 @@ export const COVERAGE_REPAIR_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看目标推荐', scene: '06', kind: 'exec', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
 ];
 
-/** 全量路由（437 条 SoT ＋ 68 条新拟 ＋ 1 条覆盖修复） */
+/** 全量路由（437 条 SoT ＋ 69 条新拟 ＋ 1 条覆盖修复） */
 export const ALL_ROUTES: readonly WakeRoute[] = [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES];

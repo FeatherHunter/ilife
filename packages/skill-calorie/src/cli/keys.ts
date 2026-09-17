@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 50 ＋ 读 82 ＝ 132 条。
+ * registry 合法键表：写 52 ＋ 读 82 ＝ 134 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
  * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
  *
@@ -58,6 +58,8 @@ export const CALORIE_WRITE_COMBOS = {
   'calorie.weight.remove': { shape: 'receipt' as EnvelopeShape, title: '删体重' },
   'calorie.weight.update': { shape: 'receipt' as EnvelopeShape, title: '改体重' },
   'calorie.workout.land': { shape: 'receipt' as EnvelopeShape, title: '落地训练' },
+  'calorie.workout.land-monthend': { shape: 'receipt' as EnvelopeShape, title: '落地到本月底' },
+  'calorie.workout.land-weekend': { shape: 'receipt' as EnvelopeShape, title: '落地到本周末' },
   'calorie.workout.plan-add-movement': { shape: 'receipt' as EnvelopeShape, title: '加训练动作' },
   'calorie.workout.plan-copy': { shape: 'receipt' as EnvelopeShape, title: '复制训练计划' },
   'calorie.workout.plan-delete': { shape: 'receipt' as EnvelopeShape, title: '撤销训练计划' },

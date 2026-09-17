@@ -194,6 +194,16 @@ combos:
     shape: receipt
     title: 落地训练
     cmd: skill-calorie
+  - key: calorie.workout.land-monthend
+    skill: calorie
+    shape: receipt
+    title: 落地到本月底
+    cmd: skill-calorie
+  - key: calorie.workout.land-weekend
+    skill: calorie
+    shape: receipt
+    title: 落地到本周末
+    cmd: skill-calorie
   - key: calorie.workout.plan-add-movement
     skill: calorie
     shape: receipt

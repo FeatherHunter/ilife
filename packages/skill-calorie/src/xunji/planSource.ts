@@ -4,8 +4,8 @@
  * - 只读打开（`db/readonly.ts` 的 `openDbReadOnly`：不建表、不迁移；与 `cli/cmd_read.ts:97` 同法）；
  * - 库路径＝`SKILLS_DB_PATH` 下的 `calorie_data.db`（`paths.ts` 的 `resolveDbDir`＋`DB_FILENAME`；
  *   不用 `resolveDbPath`——它会 `mkdir`，只读口不许有落盘副作用）；
- * - 日期 →（周，日）走 `render/planPlate.ts` 的 `weekOfDate`（新仓口径；老 `calc_plan_week` 的
- *   “超总周数循环”不照抄——新仓 `buildPlanView`（`planPlate.ts:61-76`）同样不过滤循环周，
+ * - 日期 →（周，日）走渲染门的 `weekOfDate`（新仓口径；老 `calc_plan_week` 的
+ *   “超总周数循环”不照抄——新仓 `buildPlanView` 同样不过滤循环周，
  *   对不上就当这天没排练）；
  * - 会读 `workout_plans` 全表再按（周，日）过滤（`workout` 门的 `getPlan` 只读口；
  *   R1 收口 #613：跨能力引用一律走能力门 `workout/index.js#getPlan` 与

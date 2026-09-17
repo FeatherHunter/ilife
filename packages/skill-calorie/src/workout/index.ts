@@ -28,12 +28,21 @@ export { getPlan } from './planStore.js';
 export type { PlanConfigRow, PlanMovement, PlanSessionRow } from './planStore.js';
 
 /** 键 → 声明。类型写成 `CommandSpec`（读＋写的联合），`kind` 判别式才能把两支分别窄化——
- * 若让 `Map` 从 `WORKOUT_COMMANDS` 自己推断，它会被下面那句收窄连累而只剩读支，写入口反而编不过。 */
-const BY_KEY = new Map<string, CommandSpec>(WORKOUT_COMMANDS.map((c) => [c.key, c]));
+ * 若让 `Map` 从 `WORKOUT_COMMANDS` 自己推断，它会被下面那句收窄连累而只剩读支，写入口反而编不过。
+ *
+ * R4 破环（#613）：表延迟到首次调用建（不用顶层 `new Map`）。训记取数口经本门读计划
+ * （`xunji/planSource.ts`），而本门经 `xunjiPush.ts` 反引训记门——门级互引在 ESM
+ * 求值期即闭环（`gen` 以 `commands.ts` 先入即爆 `WORKOUT_COMMANDS` TDZ）。
+ * 本门只在调用时碰声明绑定，环上各件顶层亦只定义不用，环求值安全；调用时环早已解开。 */
+let byKey: Map<string, CommandSpec> | null = null;
+function byKeyMap(): Map<string, CommandSpec> {
+  if (byKey === null) byKey = new Map<string, CommandSpec>(WORKOUT_COMMANDS.map((c) => [c.key, c]));
+  return byKey;
+}
 
 /** 读命令入口：命中即走它的处理函数；键不属健身计划（或其实是写键）即抛——**不猜**。 */
 export function runWorkoutView(key: string, params: Record<string, unknown>, db: DatabaseSync): ViewOut {
-  const spec = BY_KEY.get(key);
+  const spec = byKeyMap().get(key);
   if (!spec || spec.kind !== 'read') {
     throw new CalorieRenderError('bad-input', '不是健身计划的读命令：' + key);
   }
@@ -42,7 +51,7 @@ export function runWorkoutView(key: string, params: Record<string, unknown>, db:
 
 /** 写命令入口：命中即走它的处理函数；键不属健身计划（或其实是读键）即抛——**不猜**。 */
 export function runWorkoutWrite(key: string, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
-  const spec = BY_KEY.get(key);
+  const spec = byKeyMap().get(key);
   if (!spec || spec.kind !== 'write') {
     throw new CalorieRenderError('bad-input', '不是健身计划的写命令：' + key);
   }
