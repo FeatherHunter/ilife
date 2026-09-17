@@ -95,8 +95,8 @@ export const XUNJI_SUBCOMMANDS: readonly XunjiSubcommand[] = [
     ],
     exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.error, XUNJI_EXIT_CODES.auth, XUNJI_EXIT_CODES.api],
     example: `python scripts/xunji_bridge.py upsert --json '[{"datestr":"2026-07-13","localid":0,"title":"胸","start":0,"end":0,"movements":[]}]' --dry-run`,
-    state: 'declared',
-    ownerTicket: '#607',
+    state: 'implemented',
+    ownerTicket: null,
   },
   {
     name: 'push-plan',
@@ -108,8 +108,8 @@ export const XUNJI_SUBCOMMANDS: readonly XunjiSubcommand[] = [
     ],
     exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.auth, XUNJI_EXIT_CODES.api],
     example: 'python scripts/xunji_bridge.py push-plan --date 2026-07-13 --dry-run',
-    state: 'declared',
-    ownerTicket: '#607',
+    state: 'implemented',
+    ownerTicket: null,
   },
   {
     name: 'overlay-plan',

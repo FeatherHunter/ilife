@@ -2,7 +2,10 @@
  *
  * 四条票面点名的用例：`src/xunji/` 目录存在、8 条对外名齐、动作库 1092 条可读、缺文件不抛错；
  * 另加对抗用例：声明必须完整（每条有点名的归属票）、声明要有牙（缺参报用法错）、
- * 未实现的七条必须明确拒绝且点名归属票、库读不出退非 0（不照抄老实现退 0）、能力门对外恰五件。
+ * 未实现的五条必须明确拒绝且点名归属票、库读不出退非 0（不照抄老实现退 0）、能力门对外恰五件。
+ *
+ * #607 随动：`upsert`／`push-plan` 已实现（state 翻位），“未实现的七条”收成五条，
+ * 分派改异步（推送链调网，调用方一律 await）。
  */
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,16 +23,16 @@ const CLI = join(PKG, 'dist', 'xunji', 'cli.js');
 
 /** 老 8 条子命令（逐字，顺序照老 CLI 的装配顺序）。 */
 const EIGHT = ['verify', 'fetch', 'upsert', 'push-plan', 'overlay-plan', 'backfill', 'key', 'run-sync'];
-/** 本票只落 verify；其余七条各自点名归属票（票面「其余六条」按 8−verify 实为七条，见证据件 §五）。 */
+/** 本票只落 verify；#607 落 upsert／push-plan；其余五条各自点名归属票。 */
 const OWNERS = {
   fetch: '#608',
-  upsert: '#607',
-  'push-plan': '#607',
   'overlay-plan': '#610',
   backfill: '#608',
   key: '#610',
   'run-sync': '#610',
 };
+/** #607 已实现的（verify #606；upsert／push-plan #607）。 */
+const IMPLEMENTED = ['verify', 'upsert', 'push-plan'];
 
 const tmp = (name) => join(mkdtempSync(join(tmpdir(), 't606-')), name);
 
@@ -82,12 +85,14 @@ describe('#606 训记模块骨架', () => {
     }
   });
 
-  it('实现状态与归属票对得上：verify 已实现，其余七条逐条点名归属票', () => {
+  it('实现状态与归属票对得上：verify（#606）与 upsert／push-plan（#607）已实现，其余五条逐条点名归属票', () => {
     const byName = Object.fromEntries(mod.XUNJI_SUBCOMMANDS.map((s) => [s.name, s]));
-    assert.equal(byName.verify.state, 'implemented');
-    assert.equal(byName.verify.ownerTicket, null);
+    for (const n of IMPLEMENTED) {
+      assert.equal(byName[n].state, 'implemented', n);
+      assert.equal(byName[n].ownerTicket, null, n);
+    }
     const declared = mod.XUNJI_SUBCOMMANDS.filter((s) => s.state === 'declared').map((s) => s.name);
-    assert.deepEqual(declared, EIGHT.filter((n) => n !== 'verify'));
+    assert.deepEqual(declared, EIGHT.filter((n) => !IMPLEMENTED.includes(n)));
     for (const [name, ticket] of Object.entries(OWNERS)) {
       assert.equal(byName[name].ownerTicket, ticket, name + ' 的归属票不对');
     }
@@ -179,11 +184,9 @@ describe('#606 训记模块骨架', () => {
     assert.match(verifyNoName.stderr, /缺参数：<动作名>/);
   });
 
-  it('未实现的七条：明确拒绝（非 0 ＋ 点名归属票），不吐任何成功形态的读数', () => {
+  it('未实现的五条：明确拒绝（非 0 ＋ 点名归属票），不吐任何成功形态的读数', () => {
     const argv = {
       fetch: ['fetch', '--date', '2026-07-13'],
-      upsert: ['upsert', '--json', '[{"datestr":"2026-07-13","localid":0,"movements":[]}]'],
-      'push-plan': ['push-plan', '--date', '2026-07-13', '--dry-run'],
       'overlay-plan': ['overlay-plan', '--date', '2026-07-13'],
       backfill: ['backfill', '--date', '2026-07-13'],
       key: ['key', 'status'],
@@ -199,11 +202,11 @@ describe('#606 训记模块骨架', () => {
     }
   });
 
-  it('分派函数与命令行入口同一口径（runXunjiCommand 是门里那件）', () => {
-    assert.equal(mod.runXunjiCommand(['verify', '杠铃深蹲']).code, 0);
-    assert.equal(mod.runXunjiCommand(['verify', '深蹲']).code, 4);
-    assert.equal(mod.runXunjiCommand(['push-plan', '--date', '2026-07-13']).code, 1);
-    assert.equal(mod.runXunjiCommand([]).code, 1);
+  it('分派函数与命令行入口同一口径（runXunjiCommand 是门里那件；#607 起异步，调用方 await）', async () => {
+    assert.equal((await mod.runXunjiCommand(['verify', '杠铃深蹲'])).code, 0);
+    assert.equal((await mod.runXunjiCommand(['verify', '深蹲'])).code, 4);
+    assert.equal((await mod.runXunjiCommand(['overlay-plan', '--date', '2026-07-13'])).code, 1);
+    assert.equal((await mod.runXunjiCommand([])).code, 1);
   });
 
   it('零深引：别的能力只用能力门，不深引模块内部件', () => {

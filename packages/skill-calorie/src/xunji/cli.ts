@@ -8,7 +8,7 @@
  */
 import { runXunjiCommand } from './run.js';
 
-const run = runXunjiCommand(process.argv.slice(2));
+const run = await runXunjiCommand(process.argv.slice(2));
 if (run.stderr !== null) console.error(run.stderr);
 process.stdout.write(JSON.stringify(run.data ?? { message: run.message }, null, 2) + '\n');
 process.exitCode = run.code;
