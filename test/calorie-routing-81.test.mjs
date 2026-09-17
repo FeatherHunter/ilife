@@ -97,12 +97,13 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     // 相对 #383 时点值 390／46 的 +29：本图 #335 六条（期间复盘 order131–136）＋ 本图 #334 八条（锚点对比 order121–128）
     // ＋ 他席在途十五条（看整体趋势组 order339–353 等，声明住未提交的 `src/analysis/routes.ts`，票号待主人认领）。
     // #614 起：exec 421 ＝ 419 ＋ 训记 2 条（order199–200）；非 exec 15；out-of-scope 6（8 − 训记 2 条）。
-    assert.deepEqual(buckets, { exec: 421, 'non-exec': 15 });
+    // #612 起：exec 422 ＝ 421 ＋ 落地训练 1 条（order196）；非 exec 14；out-of-scope 5（6 − 落地训练 1 条）。
+    assert.deepEqual(buckets, { exec: 422, 'non-exec': 14 });
     assert.deepEqual(routingSummary(), {
       total: 436,
-      exec: 421,
-      nonExec: 15,
-      outOfScope: 6,
+      exec: 422,
+      nonExec: 14,
+      outOfScope: 5,
       legacyChain: 9,
       newEntries: 69,
       repairEntries: 1,
@@ -234,7 +235,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
         `${r.wakeWord} cli 键 token 与 key 不一致：${r.cli}`,
       );
     }
-    assert.equal(EXEC_ROUTES.length, 421, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入 ＋ #346 看今天练什么转入 ＋ #347 读筛选 7 条转入 ＋ #348 写创建类 5 条转入 ＋ #333 页面① 4 条转入 ＋ #335 页面③ 6 条转入 ＋ #334 页面② 8 条锚点对比转入 ＋ #376 整体趋势目标对比 1 条 ＋ #383 预测模拟 15 条 ＋ #614 训记 2 条转入 ＋ 他席在途若干）');
+    assert.equal(EXEC_ROUTES.length, 422, 'FX-81-7 结构式判据覆盖面（全 exec 记录，#252 目标管理 3 条自动算词转入 ＋ #346 看今天练什么转入 ＋ #347 读筛选 7 条转入 ＋ #348 写创建类 5 条转入 ＋ #333 页面① 4 条转入 ＋ #335 页面③ 6 条转入 ＋ #334 页面② 8 条锚点对比转入 ＋ #376 整体趋势目标对比 1 条 ＋ #383 预测模拟 15 条 ＋ #614 训记 2 条转入 ＋ #612 落地训练 1 条转入 ＋ 他席在途若干）');
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
@@ -323,7 +324,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
   it('FX-81-5 不变量：exec ⟺ 实跑 exit 0（快照逐条 0 ＋ 已登记的数据依赖失败单列 ＋ 需参数键必须带 --params）', () => {
     const md = readFileSync(SMOKE_MD, 'utf8');
     const execAll = allExec();
-    assert.equal(execAll.length, 491, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec；#346 +1：看今天练什么转入 exec；#347 +7：读筛选 7 条转入 exec；#348 +5：写创建类 5 条转入 exec ＋ 5 条确认执行新拟入口；#333 +4：页面① 4 条由 non-exec 转入 exec；#335 +6：页面③ 6 条由 non-exec 转入 exec；#334 +8：页面② 8 条锚点对比由 non-exec 转入 exec；#376 +1：整体趋势目标对比转入 exec；#383 +15：预测模拟 order398–412 转入 exec；#614 +2：训记 order199–200 转入 exec；他席在途若干 ＋新拟入口）');
+    assert.equal(execAll.length, 492, 'exec 桶记录数（#113 +12：促进 4＋新拟 8；#86 +4：wizard 4 键新拟；#179 +1：档案预检页；#251 +1：目标预检页；#252 +3：目标管理 3 条自动算词由 non-exec 转入 exec；#346 +1：看今天练什么转入 exec；#347 +7：读筛选 7 条转入 exec；#348 +5：写创建类 5 条转入 exec ＋ 5 条确认执行新拟入口；#333 +4：页面① 4 条由 non-exec 转入 exec；#335 +6：页面③ 6 条由 non-exec 转入 exec；#334 +8：页面② 8 条锚点对比由 non-exec 转入 exec；#376 +1：整体趋势目标对比转入 exec；#383 +15：预测模拟 order398–412 转入 exec；#614 +2：训记 order199–200 转入 exec；#612 +1：落地训练 order196 转入 exec；他席在途若干 ＋新拟入口）');
     // ① 快照汇总：非零只许是**已登记的数据依赖失败**（用户 2026-09-11 裁定取甲：把「命令坏了」与
     // 「数据依赖的失败」分开统计；判据是快照自己 :7-9 写的「数据依赖失败（空库 exit 4）不算 cli 缺陷」，
     // 改断言＝把断言对齐判据）。
@@ -396,13 +397,15 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     // 2026-09-14T10:5xZ 实测 **139**（原 115）：随 exec 桶扩充而变大——#334/#335 体重两条线 ＋ 他席在途新转 exec 的词。
     // 本数是**派生读数**（＝exec 记录里键落在「裸跑失败」集合内的条数），不写死结构性名单。
     // #614 起 141（139 ＋ 训记 2 键：无参裸跑走实分支，无 KEY 即 exit 3，cli 须带 --params）。
-    assert.equal(checked, 141, '需参数键的 exec 记录数（结构性断言覆盖面）');
+    // #612 起 142（141 ＋ 落地训练 1 键：无参裸跑走实分支，无合成写挡板即远端没成 exit 4，cli 须带 --params）。
+    assert.equal(checked, 142, '需参数键的 exec 记录数（结构性断言覆盖面）');
   });
 
   it('A7 明确不做桶按架构规格 :60 建立，t71 差异逐条登记（两处出处）', () => {
     // #383 时点值：8＝10－拍营养表记一餐／补记一餐 2 条转入 exec（营养表票在途，D2④同源；名单与 T71_DIFFS 不动，归主人，以主人版为准重改）。
     // #614 起：6＝8－同步到训记／拉训记实绩 2 条转入 exec（本票只动这两条；营养表 2 条仍归主人）。
-    assert.equal(OUT_OF_SCOPE_ROUTES.length, 6);
+    // #612 起：5＝6－落地训练 1 条转入 exec（本票只动这一条；批量两条仍归 #613）。
+    assert.equal(OUT_OF_SCOPE_ROUTES.length, 5);
     const oos = new Set(OUT_OF_SCOPE_ROUTES.map((r) => r.wakeWord));
     for (const r of OUT_OF_SCOPE_ROUTES) {
       assert.equal(r.kind, 'non-exec');
@@ -417,7 +420,6 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       '查定时复盘',
       '落地到本月底',
       '落地到本周末',
-      '落地训练',
     ].sort());
     assert.deepEqual(
       T71_DIFFS.map((d) => d.id),
@@ -430,7 +432,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       assert.match(d.t71, /t71-old-baseline-inventory\.md:\d+/);
     }
     const m8 = T71_DIFFS.find((d) => d.id === 'M8');
-    assert.deepEqual(m8.wakeWords, ['落地训练', '落地到本周末', '落地到本月底']);
+    assert.deepEqual(m8.wakeWords, ['落地到本周末', '落地到本月底']);
     assert.match(m8.note, /需移植/);
     const o2 = T71_DIFFS.find((d) => d.id === 'O2');
     assert.deepEqual(o2.wakeWords, []);
