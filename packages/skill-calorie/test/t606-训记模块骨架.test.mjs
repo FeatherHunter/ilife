@@ -6,6 +6,7 @@
  *
  * #607 随动：`upsert`／`push-plan` 已实现（state 翻位），“未实现的七条”收成五条，
  * 分派改异步（推送链调网，调用方一律 await）。
+ * #608 随动：`fetch`／`backfill` 已实现，“未实现的五条”收成三条（只剩 #610 的三条）。
  */
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,16 +24,14 @@ const CLI = join(PKG, 'dist', 'xunji', 'cli.js');
 
 /** 老 8 条子命令（逐字，顺序照老 CLI 的装配顺序）。 */
 const EIGHT = ['verify', 'fetch', 'upsert', 'push-plan', 'overlay-plan', 'backfill', 'key', 'run-sync'];
-/** 本票只落 verify；#607 落 upsert／push-plan；其余五条各自点名归属票。 */
+/** 未实现只剩三条（#610）；fetch／backfill 归 #608（已实现，见 IMPLEMENTED）。 */
 const OWNERS = {
-  fetch: '#608',
   'overlay-plan': '#610',
-  backfill: '#608',
   key: '#610',
   'run-sync': '#610',
 };
-/** #607 已实现的（verify #606；upsert／push-plan #607）。 */
-const IMPLEMENTED = ['verify', 'upsert', 'push-plan'];
+/** 已实现的（verify #606；upsert／push-plan #607；fetch／backfill #608）。 */
+const IMPLEMENTED = ['verify', 'upsert', 'push-plan', 'fetch', 'backfill'];
 
 const tmp = (name) => join(mkdtempSync(join(tmpdir(), 't606-')), name);
 
@@ -85,7 +84,7 @@ describe('#606 训记模块骨架', () => {
     }
   });
 
-  it('实现状态与归属票对得上：verify（#606）与 upsert／push-plan（#607）已实现，其余五条逐条点名归属票', () => {
+  it('实现状态与归属票对得上：verify（#606）／upsert／push-plan（#607）／fetch／backfill（#608）已实现，其余三条逐条点名归属票', () => {
     const byName = Object.fromEntries(mod.XUNJI_SUBCOMMANDS.map((s) => [s.name, s]));
     for (const n of IMPLEMENTED) {
       assert.equal(byName[n].state, 'implemented', n);
@@ -184,11 +183,9 @@ describe('#606 训记模块骨架', () => {
     assert.match(verifyNoName.stderr, /缺参数：<动作名>/);
   });
 
-  it('未实现的五条：明确拒绝（非 0 ＋ 点名归属票），不吐任何成功形态的读数', () => {
+  it('未实现的三条：明确拒绝（非 0 ＋ 点名归属票），不吐任何成功形态的读数', () => {
     const argv = {
-      fetch: ['fetch', '--date', '2026-07-13'],
       'overlay-plan': ['overlay-plan', '--date', '2026-07-13'],
-      backfill: ['backfill', '--date', '2026-07-13'],
       key: ['key', 'status'],
       'run-sync': ['run-sync', '--days', '2'],
     };

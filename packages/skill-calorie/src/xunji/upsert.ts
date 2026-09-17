@@ -31,8 +31,8 @@ export const XUNJI_KEY_ENV = {
   legacy: 'XUNJI_API_KEY',
 } as const;
 
-/** 缺省 KEY 读法（老 `get_key`，`auth.py:47-55`；空串当没配）。 */
-function readKeyFromEnv(): string | null {
+/** 缺省 KEY 读法（老 `get_key`，`auth.py:47-55`；空串当没配；回写链 `fetch.ts` 共用此口径）。 */
+export function readKeyFromEnv(): string | null {
   const primary = (process.env[XUNJI_KEY_ENV.primary] ?? '').trim();
   if (primary !== '') return primary;
   const legacy = (process.env[XUNJI_KEY_ENV.legacy] ?? '').trim();

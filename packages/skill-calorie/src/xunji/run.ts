@@ -1,13 +1,15 @@
 /** 训记模块的子命令**分派**：把一条 argv 按声明分派到实现（对外面见 `subcommands.ts`）。
  *
- * #606 骨架只有 `verify` 有实现；#607 起 `upsert`／`push-plan` 真跑，
- * 其余五条**只有声明**——调用它们一律**明确拒绝**（非 0 退出 ＋ 点名归属票），
- * 不返回任何成功形态的读数。「留位」不等于「留一个假实现」。
+ * #606 骨架只有 `verify` 有实现；#607 起 `upsert`／`push-plan` 真跑；
+ * #608 起 `fetch`／`backfill` 真跑；其余三条**只有声明**——调用它们一律**明确拒绝**
+ * （非 0 退出 ＋ 点名归属票），不返回任何成功形态的读数。「留位」不等于「留一个假实现」。
  *
  * 解析走**声明**（`parseSubcommandArgs`）：声明外的参数一律不认。
- * 分派是异步的（推送链调网；`verify` 同样走 async 形状，调用方一律 `await`）。
+ * 分派是异步的（推送／回写链调网调库；`verify` 同样走 async 形状，调用方一律 `await`）。
  */
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import type { DatabaseSync } from 'node:sqlite';
 import { XUNJI_EXIT_CODES, XUNJI_SUBCOMMANDS, findSubcommand, parseSubcommandArgs } from './subcommands.js';
 import type { XunjiSubcommand } from './subcommands.js';
 import { verifyMovements } from './catalog.js';
@@ -18,6 +20,10 @@ import { pushDayPlan } from './push.js';
 import type { XunjiResItem } from './request.js';
 import { upsertTrains } from './upsert.js';
 import type { UpsertTransport } from './upsert.js';
+import { fetchTrains, parseTrains } from './fetch.js';
+import type { FetchOutcome } from './fetch.js';
+import { BACKFILL_DEFAULT_DAYS, backfillRange } from './backfill.js';
+import { DB_FILENAME, resolveDbDir } from '../paths.js';
 import { exitForFailure } from './exitMap.js';
 
 /** 一次子命令调用的读数：退出码 ＋ 人话 ＋ 机器读数（＋ 命令行入口要打的那句）。 */
@@ -52,6 +58,16 @@ export interface XunjiCommandDeps {
   readonly timeoutMs?: number;
   /** upsert 重试次数（缺省 2）。 */
   readonly maxRetries?: number;
+  /** 拉取限频总开关（`fetch --respect-rate-limit` 或回写链显式打开；缺省 false）。 */
+  readonly respectRateLimit?: boolean;
+  /** 拉取限频状态文件（缺省读侧 `xunji_bridge_rate.json`；传 null 即不守不记）。 */
+  readonly fetchRateLimitPath?: string | null;
+  /** 回写库文件（缺省 `SKILLS_DB_PATH/calorie_data.db`；测试传 tmp）。 */
+  readonly dbFile?: string;
+  /** 回写开库（缺省 `openDb`；测试给挡板，**不许碰生产库**）。 */
+  readonly openDb?: (dbFile: string) => DatabaseSync;
+  /** 回写拉取（缺省真拉取；测试给挡板，**不许打真接口**）。 */
+  readonly fetchDay?: (dateStr: string) => Promise<FetchOutcome>;
 }
 
 const NAMES = XUNJI_SUBCOMMANDS.map((s) => s.name).join('|');
@@ -180,6 +196,115 @@ async function runPushPlan(sub: XunjiSubcommand, values: Readonly<Record<string,
   };
 }
 
+/** `fetch` 的真实现（老 `__main__.py:71-94` 的退出口径：鉴权错→2，接口错→3）。 */
+async function runFetch(sub: XunjiSubcommand, values: Readonly<Record<string, string | boolean | readonly string[]>>, deps: XunjiCommandDeps): Promise<XunjiRun> {
+  const date = values['--date'];
+  if (typeof date !== 'string') return refusal(sub, '缺参数：--date', { usage: sub.usage });
+  const bad = dateProblem(date);
+  if (bad !== null) return refusal(sub, bad, { usage: sub.usage });
+  const full = values['--full'] === true;
+  const raw = values['--raw'] === true;
+  const outcome = await fetchTrains(date, {
+    includeFullData: full,
+    key: deps.key,
+    readKey: deps.readKey,
+    transport: deps.transport,
+    timeoutMs: deps.timeoutMs,
+    maxRetries: deps.maxRetries,
+    sleep: deps.sleep,
+    respectRateLimit: values['--respect-rate-limit'] === true || deps.respectRateLimit === true,
+    now: deps.now,
+    rateLimitPath: deps.fetchRateLimitPath,
+  });
+  if (outcome.ok) {
+    if (raw) {
+      return {
+        subcommand: 'fetch', code: XUNJI_EXIT_CODES.ok,
+        message: '拉取成功（原始 JSON）：' + date,
+        data: withAttempts(outcome.response, outcome.attempts), stderr: null,
+      };
+    }
+    const trains = parseTrains(outcome.response);
+    return {
+      subcommand: 'fetch', code: XUNJI_EXIT_CODES.ok,
+      message: '拉取成功：' + date + ' ' + trains.length + ' 条训练',
+      data: { date, trains_count: trains.length, trains }, stderr: null,
+    };
+  }
+  const line = '拉取失败（没拉到）：' + outcome.failure.message;
+  return {
+    subcommand: 'fetch',
+    code: exitForFailure(outcome.failure),
+    message: line,
+    data: { err: true, ...outcome.failure, attempts: outcome.attempts },
+    stderr: line,
+  };
+}
+
+/** `backfill` 的真实现（老 `__main__.py:97-111` 的形状，退出补上写库失败那支）。
+ *
+ * 退出口径（修掉老「写库失败仍退 0」）：「没拉到」按拉取失败分类走 2／3；
+ * 「拉到了没写进」走 3；用法错（坏日期／坏天数／库指不对）走 1。
+ */
+async function runBackfill(sub: XunjiSubcommand, values: Readonly<Record<string, string | boolean | readonly string[]>>, deps: XunjiCommandDeps): Promise<XunjiRun> {
+  const endRaw = values['--date'];
+  const endStr = typeof endRaw === 'string' ? endRaw : null;
+  if (endStr !== null) {
+    const bad = dateProblem(endStr);
+    if (bad !== null) return refusal(sub, bad, { usage: sub.usage });
+  }
+  let days = BACKFILL_DEFAULT_DAYS;
+  if (values['--days'] !== undefined) {
+    const n = Number(values['--days']);
+    if (!Number.isInteger(n) || n < 1) {
+      return refusal(sub, '天数须为 ≥1 整数（实际：' + String(values['--days']) + '）', { usage: sub.usage });
+    }
+    days = n;
+  }
+  let dbFile = deps.dbFile;
+  if (dbFile === undefined) {
+    try {
+      dbFile = join(resolveDbDir(), DB_FILENAME);
+    } catch (e) {
+      return refusal(sub, e instanceof Error ? e.message : String(e), { usage: sub.usage });
+    }
+  }
+  const result = await backfillRange(endStr, days, {
+    fetchDay: deps.fetchDay,
+    openDb: deps.openDb,
+    dbFile,
+    fetchOpts: {
+      key: deps.key,
+      readKey: deps.readKey,
+      transport: deps.transport,
+      timeoutMs: deps.timeoutMs,
+      maxRetries: deps.maxRetries,
+      sleep: deps.sleep,
+      respectRateLimit: deps.respectRateLimit,
+      now: deps.now,
+      rateLimitPath: deps.fetchRateLimitPath,
+    },
+  });
+  for (const r of result.results) {
+    if (r.fetch_ok === false && r.failure !== null) {
+      const line = '回写失败（没拉到）：' + r.date + ' ' + r.failure.message;
+      return { subcommand: 'backfill', code: exitForFailure(r.failure), message: line, data: result, stderr: line };
+    }
+  }
+  for (const r of result.results) {
+    if (r.err !== null) {
+      const line = '回写失败（拉到了没写进）：' + r.date + ' ' + r.err;
+      return { subcommand: 'backfill', code: XUNJI_EXIT_CODES.api, message: line, data: result, stderr: line };
+    }
+  }
+  const figured = result.days > 1 ? result.end_date + ' 往前 ' + result.days + ' 天' : result.end_date;
+  return {
+    subcommand: 'backfill', code: XUNJI_EXIT_CODES.ok,
+    message: '回写成功：' + figured + ' 新增 ' + result.total_inserted + '，更新 ' + result.total_updated,
+    data: result, stderr: null,
+  };
+}
+
 /** 跑一条子命令（argv 不含程序名）。返回读数；命令行入口（`cli.ts`）负责打印与退出码。 */
 export async function runXunjiCommand(argv: readonly string[], deps: XunjiCommandDeps = {}): Promise<XunjiRun> {
   const head = argv[0];
@@ -208,6 +333,8 @@ export async function runXunjiCommand(argv: readonly string[], deps: XunjiComman
   }
   if (sub.name === 'upsert') return runUpsert(sub, parsed.values, deps);
   if (sub.name === 'push-plan') return runPushPlan(sub, parsed.values, deps);
+  if (sub.name === 'fetch') return runFetch(sub, parsed.values, deps);
+  if (sub.name === 'backfill') return runBackfill(sub, parsed.values, deps);
   // 声明说已实现却没接上实现＝代码缺陷，直接抛（不许静默当成功）。
   throw new Error('子命令已声明实现但没有分派路径：' + sub.name);
 }

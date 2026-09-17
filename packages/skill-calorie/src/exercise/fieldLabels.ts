@@ -10,8 +10,10 @@
  *   ② **库列名**——字段变更卡按行键逐个摆（`exercise_log` 的列），如 `duration_minutes`／`calories_burned`。
  * 同一个字段的两套键给同一个中文（`minutes` 与 `duration_minutes` 都是「时长」），免得两张卡两种说法。
  *
- * 不登记的键：选择器类（`id`／`from`／`to`／`items`／`copyFrom`）不进 `writtenFields`、也不进变更卡；
- * 同步列的 `xunji_localid`／`xunji_title` 没有任何命令能写、变更卡也就摆不出来（没有中文名就不编）。
+ * 不登记的键：选择器类（`id`／`from`／`to`／`items`／`copyFrom`）不进 `writtenFields`、也不进变更卡。
+ *
+ * 同步列的 `xunji_localid`／`xunji_title`（#608 登记：回写链补上写入路径后，
+ * 这两列有了落库来源，变更卡摆得出来，故给中文名）。
  */
 import { registerFieldLabels } from '../shared/fieldLabel.js';
 
@@ -28,6 +30,7 @@ export const EXERCISE_FIELD_LABELS: Readonly<Record<string, string>> = Object.fr
   exercise_type: '运动类型', duration_minutes: '时长', calories_burned: '消耗', distance_km: '距离',
   avg_heart_rate: '平均心率', max_heart_rate: '最高心率', load_kg: '重量', set_index: '组号',
   is_backfill: '补录', is_deleted: '删除标记',
+  xunji_localid: '训记单号', xunji_title: '训记标题',
 });
 
 registerFieldLabels(EXERCISE_DOMAIN, EXERCISE_FIELD_LABELS);

@@ -160,19 +160,22 @@ export interface ExerciseRecordInput {
   distance?: number | null; heartRate?: number | null; maxHeartRate?: number | null;
   steps?: number | null; setIndex?: number | null; loadKg?: number | null;
   isBackfill?: boolean;
+  /** 训记同步列（#608 补写入路径：此前有列无写入口；缺省 null）。 */
+  xunjiLocalid?: string | null; xunjiTitle?: string | null;
 }
 
 export type ExerciseRow = Record<string, unknown>;
 
-const LIVE_COLS = 'date, time, exercise_type, duration_minutes, calories_burned, note, reps, category, difficulty, distance_km, avg_heart_rate, set_index, load_kg, steps, max_heart_rate, is_backfill';
+const LIVE_COLS = 'date, time, exercise_type, duration_minutes, calories_burned, note, reps, category, difficulty, distance_km, avg_heart_rate, set_index, load_kg, steps, max_heart_rate, is_backfill, xunji_localid, xunji_title';
 
 export function addRecord(db: DatabaseSync, input: ExerciseRecordInput): { id: number; record: ExerciseRow } {
   const time = parseTimeStr(input.timeStr);
-  const info = db.prepare(`INSERT INTO exercise_log (${LIVE_COLS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+  const info = db.prepare(`INSERT INTO exercise_log (${LIVE_COLS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     input.date, time, input.exerciseType, input.minutes ?? null, input.caloriesBurned,
     input.note ?? '', input.reps ?? null, input.category ?? null, input.difficulty ?? null,
     input.distance ?? null, input.heartRate ?? null, input.setIndex ?? null, input.loadKg ?? null,
-    input.steps ?? null, input.maxHeartRate ?? null, input.isBackfill ? 1 : 0);
+    input.steps ?? null, input.maxHeartRate ?? null, input.isBackfill ? 1 : 0,
+    input.xunjiLocalid ?? null, input.xunjiTitle ?? null);
   const id = Number(info.lastInsertRowid);
   return {
     id,
@@ -183,6 +186,7 @@ export function addRecord(db: DatabaseSync, input: ExerciseRecordInput): { id: n
       avg_heart_rate: input.heartRate ?? null, max_heart_rate: input.maxHeartRate ?? null,
       steps: input.steps ?? null, set_index: input.setIndex ?? null, load_kg: input.loadKg ?? null,
       is_backfill: input.isBackfill ? 1 : 0,
+      xunji_localid: input.xunjiLocalid ?? null, xunji_title: input.xunjiTitle ?? null,
     },
   };
 }
