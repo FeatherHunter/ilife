@@ -1,6 +1,6 @@
-/** #654 · 照片族「读页／过程页／HELP 两页」的**复制日志真接线**（十页：09-01 画廊／09-02·09-03 单图
+/** #654 · 照片族「读页／过程页」的**复制日志真接线**（八页：09-01 画廊／09-02·09-03 单图
  *  两态／09-04 对比／09-05 GIF 结果页／09-06 预检确认页／09-07 GIF 规划器／09-08·09-14 删照候选两态／
- *  09-15·09-16 HELP 两态）。
+ *  09-08·09-14 删照候选两态）。
  *
  * 治的病：这些页以前只有 `dataCopyArea('复制数据', …)`（只出数据那颗按钮），底部第二格由公共层
  * #336 兜底补一颗**点不动的禁用「复制日志」**；#654 撤掉那条兜底路径之后，页面若不自己给日志，
@@ -116,13 +116,11 @@ const PAGES = [
   { seq: '09-07', what: '生成身材照GIF（前置规划页）', key: 'calorie.view.gif-planner', shape: 'stat', params: { tag: '正面', start: '2026-09-01', end: '2026-09-07' } },
   { seq: '09-08', what: '删身材照（候选页·全窗）', key: 'calorie.view.photo-picker', shape: 'list', params: {} },
   { seq: '09-14', what: '删身材照（候选快照）', key: 'calorie.view.photo-picker', shape: 'list', params: { id: 1 } },
-  { seq: '09-15', what: '看身材照HELP（现找）', key: 'calorie.help.center', shape: 'list', params: { q: '记身材照' } },
-  { seq: '09-16', what: '看身材照HELP（全量）', key: 'calorie.help.center', shape: 'list', params: { q: '' } },
 ];
 
 function render(iso, page) {
-  // `--html <逐行独占路径>`：**明说落哪就落哪**，不吃 HELP 那支的复用窗口（`calorie.help.center` 同一主体
-  // 一天内只留一份——09-15／09-16 两态同主体，不给 `--html` 时第二次会复用第一份产物，读到的就不是本态）。
+  // `--html <逐行独占路径>`：明说落哪就落哪。
+  // （#652 删单后 HELP 两态已移除，无复用窗口纠缠。）
   const outDir = join(iso.root, 'out');
   mkdirSync(outDir, { recursive: true });
   const out = join(outDir, page.seq + '-' + page.key + '.html');
@@ -260,7 +258,7 @@ test('#654 ①② 十页底部两胶囊＋日志七段（逐页真跑 CLI）', (
   }
   // 值随页不同：每页的场景标识归属本页自己的命令键（逐页断言在 `assertLogPayload` 里），
   // 调用链**逐行各一**（同一份常量抄八遍会在这里红）；场景标识的**不同值个数**＝表里不同命令键的个数
-  // （删照候选两态、单图两态、HELP 两态各自共用同一个键，这是设计而不是退化）。
+  // （删照候选两态、单图两态各自共用同一个键，这是设计而不是退化）。
   const distinctKeys = new Set(PAGES.map((p) => p.key)).size;
   assert.equal(new Set(sceneIds).size, distinctKeys,
     '场景标识的不同值个数应等于不同命令键个数（' + distinctKeys + '）：' + sceneIds.join(' ｜ '));

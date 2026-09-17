@@ -27,8 +27,8 @@ import {
 } from 'base-paint';
 import {
   CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS, COPY_RUNTIME_JS,
-  buildPhotoHelp, copyActionHtml, copyRuntimeScriptHtml,
-  renderHelpLookupHtml, renderPhotoHelpHtml,
+  copyActionHtml, copyRuntimeScriptHtml,
+  renderHelpLookupHtml,
 } from '../dist/render/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -113,7 +113,13 @@ function fakePorts(clipboard) {
   };
 }
 
-const HELP_HTML = () => renderPhotoHelpHtml(buildPhotoHelp().slice(0, 2), '记身材照');
+/** 拷贝通道夹具：两行统一 lookup 合成行（内容任意，通道只管逐字搬运；
+ * 照片 HELP 数据源已随 #652 删单移除，同文件 194 行即此做法）。 */
+const HELP_ROWS = [
+  { wake_word: '看今日主页', category: '主页', key: 'calorie.view.home', cli: 'calorie-cmd-read calorie.view.home', desc: '今日总览' },
+  { wake_word: '记一餐', category: '饮食', key: 'calorie.diet.add', cli: 'calorie-cmd-read calorie.diet.add', desc: '记一餐' },
+];
+const HELP_HTML = () => renderHelpLookupHtml(HELP_ROWS, '看今日主页');
 
 /* ── ① 接线同源：页面运行时恒是 base-paint 唯一产出者 ─────────────────────── */
 
@@ -167,9 +173,8 @@ test('HELP 速查每行恰一颗真胶囊、页内 0 颗禁用假控件（红点
   assert.equal(CALORIE_COPY_ACTION.actionId, HELP_COPY_ACTIONS.prompt.actionId);
   assert.equal(CALORIE_COPY_ACTION.label, HELP_COPY_ACTIONS.prompt.label);
   // 复制文本逐字等于该行 CLI（不做 trim／改写）
-  const hits = buildPhotoHelp().slice(0, 2);
-  assert.equal(data[0].text, hits[0].exec);
-  assert.equal(data[1].text, hits[1].exec);
+  assert.equal(data[0].text, HELP_ROWS[0].cli);
+  assert.equal(data[1].text, HELP_ROWS[1].cli);
   // 页面内同 id 重复是 R27 记账形态（HELP 壳逐卡写同一 actionId）
   assert.equal(data[0].actionId, data[1].actionId);
   // 变异两向：把 #336 那颗禁用占位塞回第一行后面 ⇒ 上面的判据必红（红点＝假控件回潮）；摘掉再绿。
@@ -238,14 +243,14 @@ test('bindCopyAction 端到端：通道 1（clipboard）成功 → 复制文本�
     '只订阅 listActionIds() 列出的 id（去重后 1 个：两行共用冻结 id）');
   assert.equal(host.activate(0), true, '首行数据按钮必须已订阅');
   await new Promise((r) => setTimeout(r, 0));
-  assert.deepEqual(writes, [buildPhotoHelp()[0].exec], '通道 1 收到逐字 data-t');
+  assert.deepEqual(writes, [HELP_ROWS[0].cli], '通道 1 收到逐字 data-t');
   assert.equal(fake.fallbackCalls.length, 0, '通道 1 成功不得触碰通道 2');
   assert.equal(fake.mounted.length, 1, '成功反馈经 ports.toast 挂载');
   assert.ok(fake.mounted[0].includes(COPY_TEXT_DEFAULTS.okMessage));
   // 第二行按钮（同 id）读到的是**自己**的文本（R27：页面侧按最近激活元素关联）
   assert.equal(host.activate(1), true, '第二行数据按钮必须已订阅');
   await new Promise((r) => setTimeout(r, 0));
-  assert.deepEqual(writes, [buildPhotoHelp()[0].exec, buildPhotoHelp()[1].exec]);
+  assert.deepEqual(writes, [HELP_ROWS[0].cli, HELP_ROWS[1].cli]);
   handle.dispose();
   handle.dispose();
   assert.equal(host.activate(0), false, 'dispose 后解绑且幂等');
@@ -257,7 +262,7 @@ test('bindCopyAction 端到端：通道 1 失败 → 降级通道 2（fallback�
   const handle = bindCopyAction(host, fake.ports);
   host.activate(0);
   await new Promise((r) => setTimeout(r, 0));
-  assert.deepEqual(fake.fallbackCalls, [buildPhotoHelp()[0].exec], '通道 1 reject → 通道 2 收到同一文本');
+  assert.deepEqual(fake.fallbackCalls, [HELP_ROWS[0].cli], '通道 1 reject → 通道 2 收到同一文本');
   assert.equal(fake.mounted.length, 1, '降级成功仍出反馈');
   assert.ok(fake.mounted[0].includes(COPY_TEXT_DEFAULTS.okMessage));
   handle.dispose();
@@ -302,17 +307,12 @@ test('冻结表与既有 actionBar／errorReceipt id 不撞名（页面内唯一
 
 /* ── ④ 出口接线：CLI 写盘的 HTML 带按钮 ＋ 运行时（红点：接线只落在 render 层未到出口） ── */
 
-test('calorie.help.center --html 落盘产物含复制按钮 ＋ 页面运行时（红点：照片 HELP 落点漏接线）', () => {
+test('calorie.help.center q 支已下线：exit 2＋指路 lookup（红点：q 支回潮）', () => {
   const dir = mkdtempSync(join(tmpdir(), 't90-cli2-'));
-  const out = join(dir, 'photo-help.html');
-  const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.center', '--params', JSON.stringify({ q: '记身材照' }), '--html', out],
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.center', '--params', JSON.stringify({ q: '记身材照' })],
     { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
-  assert.equal(r.status, 0, 'exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-400));
-  const html = readFileSync(out, 'utf8');
-  const buttons = parseButtons(html);
-  assert.ok(buttons.length >= 1, '产物至少一个复制按钮');
-  assert.equal(buttons[0].actionId, HELP_COPY_ACTIONS.prompt.actionId);
-  assert.equal(buttons[0].text, buildPhotoHelp().find((h) => h.wakeWord === '记身材照').exec, 'data-t 逐字等于该行 CLI');
-  assert.ok(html.includes(COPY_RUNTIME_JS), '产物必须带页面运行时');
-  assert.equal((html.match(/\son[a-z]+\s*=/gi) ?? []).length, 0, '产物零内联事件处理器');
+  assert.equal(r.status, 2, 'exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-400));
+  assert.match(String(r.stderr), /下线/);
+  assert.match(String(r.stderr), /calorie\.help\.lookup/);
+  assert.equal(String(r.stdout), '', 'stdout 纯净');
 });

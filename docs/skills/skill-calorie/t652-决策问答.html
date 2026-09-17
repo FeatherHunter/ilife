@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#652 决策问答（5 个待拍板）</title>
+<style>
+:root{--red:#c0392b;--amber:#b7791f;--green:#1e8449;--ink:#222;--mut:#666;--line:#e3e3e3;--bg:#fafafa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);font-size:13px;margin-bottom:16px}
+.status{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.pill{background:#fff;border:1px solid var(--line);border-radius:20px;padding:3px 12px;font-size:13px}
+.pill b{font-weight:700}.ok{color:var(--green)}.warn{color:var(--amber)}
+.card{background:#fff;border:1px solid var(--line);border-left:6px solid var(--amber);border-radius:10px;padding:16px 18px;margin-bottom:16px}
+.card.block{border-left-color:var(--red)}
+.card h2{font-size:17px;margin:0 0 2px}.card h2 .no{display:inline-block;min-width:34px}
+.badge{display:inline-block;font-size:12px;border-radius:4px;padding:1px 8px;margin-left:8px;vertical-align:2px}
+.badge.wait{background:#fdebd0;color:#935116}.badge.block{background:#fadbd8;color:#922b21}
+.sec{margin:10px 0}.sec h3{font-size:13px;color:var(--mut);margin:0 0 4px;letter-spacing:.1em}
+.rec{background:#eafaf1;border:1px solid #a9dfbf;border-radius:8px;padding:10px 12px;margin-top:10px}
+.rec b{color:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{background:#f4f4f4;width:50%}.pro th{background:#eafaf1}.con th{background:#fadbd8}
+code{background:#f1f1f1;border-radius:4px;padding:0 5px;font-size:13px}
+.foot{color:var(--mut);font-size:13px;margin-top:8px}
+a{color:#1a5fb4}
+</style>
+</head>
+<body><div class="wrap">
+<h1>#652 HELP 两门红 · 决策问答</h1>
+<div class="sub">实施提交 <code>d13120b1</code> · 进度 95%（待确认，不关单）· 标签 bug＋ready-for-agent</div>
+<div class="status">
+<span class="pill">票面两门 <b class="ok">12/12 绿</b></span>
+<span class="pill">扩大横扫 <b>77/79</b>（2 处他席红）</span>
+<span class="pill">t445＋343 门 <b class="ok">14/14</b></span>
+<span class="pill">台账门 <b class="ok">91/91</b></span>
+<span class="pill">证据件 <b>t652-HELP两门红.md</b></span>
+</div>
+
+<div class="card block">
+<h2><span class="no">D1</span>photo-helpdoc 是废弃还是活的？<span class="badge block">阻塞一切·待决策</span></h2>
+<div class="sec"><h3>前因后果</h3>
+维护者看到 <code>photo-helpdoc</code> 之名像在做已废弃功能；但 48 小时内有 5 笔在途投资全压在这上面：#651 <b>今天</b>刚给 <code>calorie.help.center</code> 加第二个入口词、#664 <b>昨天</b>刚把 488 测试按新实现重写（带八类变异牙齿）、#645 派生化 88、#654／#471 动 HELP 检索复制区、<code>helpCenter.ts</code> 今日还有改动。判废弃＝同时宣判三席两天工作作废。</div>
+<div class="sec"><h3>关键信息</h3>
+命令 <code>calorie.help.center</code> 存在且两度真跑落盘成功；场景侧本来就零 HELP（488③断言即此，非新事）；<code>wake-assets</code> 里那个 goal 词是场景 06 的、与照片 HELP 无关、删不得。</div>
+<div class="rec"><b>推荐：判活的</b>（最多把 488 头注“身材照片 HELP 整页”改成 <code>calorie.help.center</code> 的 q 支，一行注释正名）。<br>
+<table class="pro con"><tr><th>利</th><th>弊</th></tr>
+<tr><td>不浪费在途工作；验收已绿零成本</td><td>HELP 双轨 confusion 留存（可另票治名，不管实现）</td></tr></table>
+若判废弃：改走删单——删 488 测试＋<code>helpDoc.ts</code> 一家＋回退 HELP 系数字重冻，保留 goal 词。</div>
+</div>
+
+<div class="card">
+<h2><span class="no">D2</span>头注「禁手改」例外特批一次？<span class="badge wait">待决策</span></h2>
+<div class="sec"><h3>前因后果</h3>
+<code>wake-assets.ts</code> 头注禁手改，但仓内无此件生成器（<code>scripts/_triggers.py</code> 不存在）；本票走逐字搬运把场景句拷进 <code>goal_1</code> 末。</div>
+<div class="sec"><h3>关键信息</h3>
+程序化验证 <code>PROMPT_EQUAL／TITLE_EQUAL／WAKE_EQUAL=true</code>；+10 行；派生量自动跟进；多重集已对账。</div>
+<div class="rec"><b>推荐：特批</b>，附三条件锁死先例适用范围（逐字搬运＋程序等值验证＋证据留痕）。<br>
+<table><tr><th>利</th><th>弊</th></tr>
+<tr><td>门禁复绿，无行为增量</td><td>开先例（用三条件约束，不扩散）</td></tr></table></div>
+</div>
+
+<div class="card">
+<h2><span class="no">D3</span>uniqueCli 取 390（+10 不代钉）？<span class="badge wait">待决策</span></h2>
+<div class="sec"><h3>前因后果</h3>
+fa17ba8f 把 106①总数钉弄红后，同文件后续断言再没跑过；他席 09-17 新 CLI 把去重推到 400，而 FROZEN 停在 389（#613 系遮蔽下盲写、从未验证）。</div>
+<div class="sec"><h3>关键信息</h3>
+400 条清单已比对：<code>goal.exercise</code> 全局唯一（本票 +1 实锤）；389 从未经绿验证；断言文案已写明 400 系他席在途。</div>
+<div class="rec"><b>推荐：取 390，不代钉 +10。</b><br>
+<table><tr><th>利</th><th>弊</th></tr>
+<tr><td>诚实：不断他人之牙、不白wash</td><td>106①保持红（有主红，非本票红，需 R1 票接）</td></tr></table></div>
+</div>
+
+<div class="card">
+<h2><span class="no">D4</span>106③＋t367③归他席，并立 3 张后继票？<span class="badge wait">待决策</span></h2>
+<div class="sec"><h3>前因后果</h3>
+三处红点逐条第一断言定属，无一在本票因果链上：106③（148≠130）、t367③（剩 12 词）、D3 的 +10（R1）。</div>
+<div class="sec"><h3>关键信息</h3>
+106③＝外部包 <code>base-paint→0.3.2</code> 发版归位 vs 冻结 130；t367＝#471 别名词 2＋workout 确认词 10（本票词已出名单 13→12）。后继票草稿：R1 uniqueCli＋碰撞行重钉归属／R2 surface 重冻或包版本回 pin／R3 12 词注册认领。</div>
+<div class="rec"><b>推荐：同意归属并立票</b>（R1 建议 #159 收口编排者派单，跨多票）。<br>
+<table><tr><th>利</th><th>弊</th></tr>
+<tr><td>红点有主；本票关单条件齐备</td><td>+3 个 triage 对象</td></tr></table></div>
+</div>
+
+<div class="card">
+<h2><span class="no">D5</span>#652 是否关单（100%）？<span class="badge wait">待决策</span></h2>
+<div class="sec"><h3>前因后果</h3>
+票面验收（两门 exit 0 有牙齿）两次复绿；交付物（证据件）齐；不许动全部遵守。进度契约：95% 未确认不得 close。</div>
+<div class="rec"><b>推荐：D1–D4 确认后即 100% 关单；任一未决则保持 95%。</b><br>
+<table><tr><th>利</th><th>弊</th></tr>
+<tr><td>完结有验收、无烂尾</td><td>无（等确认是契约要求）</td></tr></table></div>
+</div>
+
+<div class="foot">依据：正文 §诊断／§实施／§核验＋证据件 <code>docs/skills/skill-calorie/t652-HELP两门红.md</code>。本页只收敛决策，不含推导过程。</div>
+</div></body>
+</html>

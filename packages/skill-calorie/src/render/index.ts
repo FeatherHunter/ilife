@@ -100,11 +100,9 @@ export {
 export type {
   PhotoCard, GalleryFilter, GalleryData, CompareData, ViewerData, GifTask, AddedPhoto,
 } from '../photo/photo.js';
-export { buildPhotoHelp, lookupPhotoHelp, PHOTO_HELP_MODULE } from '../photo/helpLookup.js';
-export type { PhotoHelpHit } from '../photo/helpLookup.js';
 export {
   photoCardHtml, renderPhotoReceiptHtml, renderGalleryHtml, renderCompareHtml,
-  renderViewerHtml, renderGifHtml, renderPhotoHelpHtml, renderHelpLookupHtml, renderErrorHtml,
+  renderViewerHtml, renderGifHtml, renderHelpLookupHtml, renderErrorHtml,
 } from './html.js';
 export type { HelpLookupHit } from './html.js';
 export { CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS, COPY_RUNTIME_JS, copyActionHtml, copyRuntimeScriptHtml } from './copy.js';

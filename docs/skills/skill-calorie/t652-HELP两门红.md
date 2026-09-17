@@ -52,3 +52,13 @@ fa17ba8f 把 106①的总数钉弄红（09-16）后，该文件后续断言再�
 
 - 场景词（`list:'wake'` 进场景件）**进**冻结资产，本票即例；别名词（`list:'new'`／`'repair'`）**故意不进**（#343 教义不变）。以后加场景词的票自带重冻，别名票不碰。
 - photo 半边：#664 的换对象修法予以认可（变异两向＋反证齐，仅 `ROWS_LEAD` 一处由锁文本降为锁出现恰一次，注释里如实写明）。
+
+## 六、删单：照片 HELP q 支退役（维护者裁定，执行中）
+
+- 依据：第一性原理复核——照片页 10 键 ⊆ 统一 HELP（程序化验证 `MISSING=[]`），可执行通道两边都有，差集只剩表现层（过滤视图＋约 30 句手写人话＋窄屏版式）；`t652-删单总览.html` 有全景图。
+- 删（src 5＋测 1）：`photo/helpLookup.ts`、`helpDoc.ts`、`helpDocContent.ts`、`helpDocCss.ts`、`render/html.ts` 的旧 `renderPhotoHelpHtml`（#488 切走后零 src 调用方）＋`photo-helpdoc-488.test.mjs`。
+- 改：`photo/help.ts` 摘 q 支（`q`／`keyword` 进来 exit 2 指路 lookup，缺省／mode 不动）；`render/index.ts` 撤 3 导出＋1 类型；8 测试件手术（t11／91②③b／345／90／t10／skill-t11／654 两行／245：摘 q 段落或换数据源；90-305 与 91④改作 exit 2 指路断言）。
+- 不动：路由 17／68（跟来即见 exit 2 指路，t651 今日件零损）；生成物与 gen；缺省／mode 全家；t367／343；wake 半边（d13120b1）。
+- 验收：构建绿＋q 真跑 exit 2＋lookup 出照片命中＋相关门绿（已知他席红除外）。
+- 遗留注记（有意不管，零行为）：`output.ts` 的 `PHOTO_HELP_FILE_STEM` 死常量与复用名单项；`helpFile.ts:65` 指向已删文件的注释；`gen-cli.mjs` 与 `wakeword-gate-343` 头注里陈旧的 436 字样（他席文件中）。
+- 过程注记：本轮撞上三处通道转码坑——pwsh 写文件必转 CRLF（以字节脚本量出 HEAD 为 LF 后改走 edit／行拼接通道，落盘后逐次验行尾）；pwsh 双引号内反引号变反斜杠、裸双引号被吃（内联 `node -e` 改走文件脚本；`--params` 改走单引号字面量）。教训已记，通道选用规则：内容写操作一律走文件工具，pwsh 只跑命令不写内容。

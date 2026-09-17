@@ -8,7 +8,7 @@
  * T9 模板：目标五盘/组合分析/缺口/饮食复盘/健康盘/排行/食品库。
  * T10 模板：photoCardHtml（照片卡）/ renderPhotoReceiptHtml（CRUD 收据）/ renderGalleryHtml（画廊）/
  * renderCompareHtml（对比）/ renderViewerHtml（单图）/ renderGifHtml（动图规划，只 render 任务描述不嵌 GIF）/
- * renderPhotoHelpHtml（HELP 速查）/ renderErrorHtml（失败收据）。缺失由数据层抛，本层不返空。
+ * renderErrorHtml（失败收据）。缺失由数据层抛，本层不返空。
  * 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64。
  */
 import { cx, escapeHtml, token } from 'base-paint';
@@ -18,7 +18,6 @@ import type { GoalView } from '../goal/goalPlate.js';
 import type { CompareData, GalleryData, GifTask, PhotoCard, ViewerData } from '../photo/photo.js';
 import { GIF_PASSTHROUGH_NOTE } from '../photo/photo.js';
 import type { CrudReceipt, ErrorReceipt } from './receipt.js';
-import type { PhotoHelpHit } from '../photo/helpLookup.js';
 import { copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
 import type { GoalConfig, GoalProgress, GoalRecommend, GoalStatus, GoalWeight } from '../goal/goalPlates.js';
 import type { WeightCompareView, WeightDashboard, WeightHistoryView, WeightReviewView, VolatilityView } from '../weight/plate.js';
@@ -211,16 +210,6 @@ function helpRowHtml(head: string, desc: string, cli: string): string {
     copyActionHtml(cli) + '</div>';
 }
 
-/** #90：HELP 页的复制接线 = 每行复制按钮（渲染期写入 `ACTION_ID_ATTR`／`DEFAULT_DATA_ATTR`）
- *  ＋ 页尾注入页面侧运行时（`buildSharedHelpersJs()` 产出，双通道 ＋ toast）。 */
-export function renderPhotoHelpHtml(hits: PhotoHelpHit[], query?: string): string {
-  const rows = hits.map((h) => helpRowHtml(
-    '<b>' + escapeHtml(h.wakeWord) + '</b> <span style="color:' + token('muted') + '">' + escapeHtml(h.key) + '</span>',
-    h.desc, h.exec,
-  )).join('');
-  const body = (query ? '<div>查询：' + escapeHtml(query) + ' · 命中 ' + hits.length + ' 条</div>' : '<div>共 ' + hits.length + ' 条</div>') + rows;
-  return pageShell('calorie', 'ilife:calorie:photo:help', '身材照片 HELP 速查', body) + copyRuntimeScriptHtml();
-}
 
 /** #90：唤醒词 HELP 速查列表（原 `cmd_read` 内联 HTML 收编）——同一套复制接线。 */
 export function renderHelpLookupHtml(hits: readonly HelpLookupHit[], query: string): string {

@@ -1,6 +1,6 @@
 /** T11 #30 · 唯一出口 cmd_read 全票 parity 抽查（沿 T8/T9 范式：tmp 隔离，真实 DB 零触碰）。
  * 覆盖 T2（唤醒词 HELP 现找）+ T6（history）+ T8（四主视图）+ T9（目标分析盘 12 键抽查）
- * + T10（照片画廊/对比/单图/动图/HELP）+ CLI 契约（argv+JSON+exit：缺 key 2/未知 3/缺失 4/预检 1）+ envelope 全字段 + --html 落盘。
+ * + T10（照片画廊/对比/单图/动图）+ CLI 契约（argv+JSON+exit：缺 key 2/未知 3/缺失 4/预检 1）+ envelope 全字段 + --html 落盘。
  * 运行：先 pnpm build，再 node --test packages/skill-calorie/test/cmd-read-t11.test.mjs
  */
 import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from './declared.mjs';
@@ -13,7 +13,6 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { CALORIE_COMBOS, calorieShapeFor } from '../dist/cli/keys.js';
-import { buildPhotoHelp, lookupPhotoHelp } from '../dist/render/index.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -213,8 +212,6 @@ test('T10 照片 parity：画廊/单图/对比/动图/HELP + 只内嵌图片', a
   const gif = runOk(dir, 'calorie.photo.gif', { tag: '正面' }, envExtra);
   assert.equal(gif.shape, 'analysis');
   assert.match(gif.data.summary, /GIF/);
-  const help = runOk(dir, 'calorie.help.center', { q: '记身材照' }, envExtra);
-  assert.ok(help.data.total >= 3);
   const p = join(dir, 'gallery.html');
   const r = run(BIN, 'calorie.photo.list', { tag: '正面' }, envExtra, p);
   assert.equal(r.status, 0);
@@ -229,8 +226,6 @@ test('T10 照片 parity：画廊/单图/对比/动图/HELP + 只内嵌图片', a
   const dataUris = [...html.matchAll(/data:([^;,)"'\s]*)/gi)].map((m) => m[1].toLowerCase());
   assert.ok(dataUris.some((m) => m.startsWith('image/')), '画廊页应内嵌照片，缺 data:image/…');
   assert.deepEqual(dataUris.filter((m) => !m.startsWith('image/')), [], '页面只许内嵌图片，发现非图片 data URI');
-  assert.throws(() => lookupPhotoHelp(''), /必填/);
-  assert.equal(buildPhotoHelp().length, 10);
 });
 
 test('T2+T6 parity：唤醒词 HELP 现找 + 热量历史 + CLI 契约', () => {

@@ -4,8 +4,8 @@
  * `packages/skill-calorie/src/triggers/scene-09-photo.ts`；另一处双生
  * `src/triggers/wake-assets.ts` 一眼不碰（机器生成头注禁手改，且
  * `wake-assets-133.test.mjs` 把全量 prompt 指纹钉死，手改即红）。
- * 用户 HELP 活路（照片速查 `calorie.help.center` 的 q 全表／唤醒词速查
- * `calorie.help.lookup`）全部同源于 SCENE_09_PHOTO，本测试真跑这两条交付命令。
+ * 用户 HELP 活路（唤醒词速查 `calorie.help.lookup`）同源于 SCENE_09_PHOTO，本测试真跑该交付命令
+ * （照片速查 q 支已随 #652 删单下线）。
  *
  * 隔离：每用例新鲜临时库＋新鲜照片目录（`SKILLS_DB_PATH`／`CALORIE_PHOTOS_DIR`
  * 指向 tmp），真实库零触碰。二进制真跑（独立进程，非就地分派）。
@@ -31,7 +31,6 @@ import { join } from 'node:path';
 import { SCENE_09_PHOTO } from '../dist/triggers/scene-09-photo.js';
 import { TRIGGERS, searchHelp } from '../dist/triggers/index.js';
 import { PHOTO_COMMANDS } from '../dist/photo/commands.js';
-import { buildPhotoHelp } from '../dist/render/index.js';
 import { buildPhotoLogWizardPrompt } from '../dist/render/wizardPort.js';
 import { buildPhotoPickerPrompt } from '../dist/photo/picker.js';
 import { openDb } from '../dist/index.js';
@@ -158,21 +157,14 @@ const CMD_KEYS = new Set(PHOTO_COMMANDS.map((c) => c.key));
 const CMD_BY_KEY = new Map(PHOTO_COMMANDS.map((c) => [c.key, c]));
 
 describe('#345 身材照片入口与流程', () => {
-  it('① 真跑 HELP 交付命令，产物 10 场景逐条匹配逐字唤醒词', () => {
+  it('① 唤醒词速查含 10 场景且产物逐字命中（照片速查 q 支已随 #652 删单下线）', () => {
     const iso = seedIso();
-    // 照片速查全表：calorie.help.center q="" → 10 行。
-    const photo = runBin(iso, ['calorie.help.center', '--params', '{"q":""}']);
-    assert.equal(photo?.data?.items?.length, 10, '照片速查全表非 10 行');
-    assert.deepEqual(photo.data.items.map((h) => h.key), SCENE_KEYS);
-    const photoHtml = deliveredHtml(photo);
     // 唤醒词速查：calorie.help.lookup q=身材照 → 含 10 场景。
     const lookup = runBin(iso, ['calorie.help.lookup', '--params', '{"q":"身材照"}']);
     const byKey = new Map((lookup?.data?.items ?? []).map((h) => [h.key, h]));
     const lookupHtml = unescapeHtml(deliveredHtml(lookup));
     for (const key of SCENE_KEYS) {
       const s = sceneOf(key);
-      assert.ok(photoHtml.includes(s.wake_word), '照片速查产物缺逐字唤醒词：' + s.wake_word);
-      assert.ok(photoHtml.includes(key), '照片速查产物缺场景标识：' + key);
       const hit = byKey.get(key);
       assert.ok(hit, '唤醒词速查无命中：' + key);
       assert.ok(lookupHtml.includes(s.wake_word), '速查产物缺逐字唤醒词：' + key);
@@ -181,14 +173,11 @@ describe('#345 身材照片入口与流程', () => {
   });
 
   it('② 每条场景引用的命令 ∈ commands.ts 命令集', () => {
-    const helpRows = new Map(buildPhotoHelp().map((h) => [h.key, h]));
     for (const key of SCENE_KEYS) {
       const s = sceneOf(key);
       assert.equal(s.main_prompt.cli, s.data_source, 'cli 与 data_source 分叉：' + key);
       const { key: cmd, params } = parseCli(s.main_prompt.cli);
       assert.ok(CMD_KEYS.has(cmd), '引用了不存在的命令：' + cmd + '（场景 ' + key + '）');
-      assert.ok(helpRows.get(key), '照片 HELP 缺行：' + key);
-      assert.equal(helpRows.get(key).legacyCli, s.main_prompt.cli, 'HELP 行与场景命令行不同源：' + key);
       void params;
     }
   });

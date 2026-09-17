@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#652 删单总览：照片 HELP q 支退役</title>
+<style>
+:root{--red:#c0392b;--amber:#b7791f;--green:#1e8449;--ink:#222;--mut:#666;--line:#e3e3e3;--bg:#fafafa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;margin:0}.sub{color:var(--mut);font-size:13px;margin:2px 0 16px}
+h2{font-size:17px;margin:26px 0 8px}
+.tag{display:inline-block;font-size:12px;border-radius:4px;padding:1px 8px;margin-right:6px;vertical-align:2px}
+.del{background:#fadbd8;color:#922b21}.mod{background:#fef9e7;color:#935116;border:1px solid #f5d547}.keep{background:#eafaf1;color:#1e8449}
+table{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{background:#f4f4f4}td.f{font-family:Consolas,monospace;font-size:13px;white-space:nowrap}
+.map{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.map ul{margin:6px 0;padding-left:22px}.map li{margin:3px 0}
+.map .cmd{font-weight:700}code{background:#f1f1f1;border-radius:4px;padding:0 5px;font-size:13px}
+.rec{background:#fff;border:1px solid var(--line);border-left:6px solid var(--red);border-radius:10px;padding:16px 18px;margin-top:8px}
+.rec b.g{color:var(--green)}
+.procon td{width:50%}.procon th{background:#f4f4f4}
+.foot{color:var(--mut);font-size:13px;margin-top:14px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>#652 删单总览：摘 <code>calorie.help.center</code> 的 q 支</h1>
+<div class="sub">一句话：照片专属 HELP 页退役。统一检索（<code>calorie.help.lookup</code>）接管入口；缺省大文件＋速查台不动；<code>wake-assets</code> 的 goal 词与此无关、保留。</div>
+
+<h2>一、全景：谁走谁留</h2>
+<div class="map">
+<span class="cmd">calorie.help.center</span>（键保留，缺省／mode 照常）
+<ul>
+<li>无参 → 全量 HELP 大文件 <span class="tag keep">留</span></li>
+<li><code>mode=file/inline/text</code> → 速查台 <span class="tag keep">留</span></li>
+<li><code>q=…</code> → 照片过滤页 <span class="tag del">删</span>（改走 exit 2 指路 lookup）
+<ul><li>取数 <code>helpLookup.ts</code> <span class="tag del">删</span>（照片 10 键映射＋现找函数；调用方仅 help.ts＋测试）</li>
+<li>装配 <code>helpDoc.ts</code>／文案 <code>helpDocContent.ts</code>／样式 <code>helpDocCss.ts</code> <span class="tag del">删</span>（调用链 help.ts→helpDoc→内容＋样式，闭环无外溢）</li>
+<li>旧 fragment 渲染器 <code>renderPhotoHelpHtml</code>（html.ts:216） <span class="tag del">删</span>（#488 切走后零 src 调用方，只剩测试在测它；类型 <code>PhotoHelpHit</code> 随文件走）</li></ul></li>
+<li>入口词 order 17 看身材照HELP／order 68 卡路里HELP <span class="tag keep">不动</span>（q 进来撞 exit 2 指路本身就是迁移；t651 今日件零损，免生成物同步）</li>
+</ul>
+</div>
+
+<h2>二、删改清单（逐件一句话）</h2>
+<table>
+<tr><th>件</th><th>动作</th><th>是什么／为什么可动</th></tr>
+<tr><td class="f">photo/helpLookup.ts</td><td><span class="tag del">删</span></td><td>照片 10 键 exec 映射＋现找；消费方仅 q 支＋测试</td></tr>
+<tr><td class="f">photo/helpDoc.ts</td><td><span class="tag del">删</span></td><td>q 页整页装配；唯一调用 help.ts:78</td></tr>
+<tr><td class="f">photo/helpDocContent.ts</td><td><span class="tag del">删</span></td><td>页上人话文案；唯一消费者 helpDoc.ts</td></tr>
+<tr><td class="f">photo/helpDocCss.ts</td><td><span class="tag del">删</span></td><td>页内样式；唯一消费者 helpDoc.ts</td></tr>
+<tr><td class="f">render/html.ts:216</td><td><span class="tag del">删函数</span></td><td>旧 fragment 渲染器；已死的代码＋活的测试，本次连测试一起送走</td></tr>
+<tr><td class="f">photo/help.ts</td><td><span class="tag mod">改</span></td><td>摘 60–81 行 q 支＋3 个 import＋头注；缺省／mode 原样</td></tr>
+<tr><td class="f">render/index.ts</td><td><span class="tag mod">改</span></td><td>撤 3 导出＋1 类型（103–104 行；107 行旧渲染器同步摘）</td></tr>
+<tr><td class="f">photo/routes.ts 起</td><td><span class="tag keep">不动</span></td><td>orders 17／68 原样保留（跟来即见 exit 2 指路）；t651、生成物、gen 全免</td></tr>
+<tr><td class="f">test 8 件</td><td><span class="tag mod">改／删</span></td><td>删 488（整件主题即 q 页）；t11／91②／345／90／t10／skill-t11／654（2 行）／245 摘 q 段落或换数据源；90-305 与 91④改作 exit 2 指路断言</td></tr>
+<tr><td class="f">缺省／mode 全家</td><td><span class="tag keep">不动</span></td><td>83／139／88／91①①b／106／134／delivery／publish-smoke；t367／343（词保留）；goal 词</td></tr>
+</table>
+
+<h2>三、拍板问题</h2>
+<div class="rec">
+<b>Q1：按上表全量删（落 #652 名下、证据追记，不另开票）？</b><br>
+<b class="g">推荐：干。</b>
+<table class="procon"><tr><th>利</th><th>弊</th></tr>
+<tr><td>照片专线一次清干净；q 进来 exit 2 指路、不留黑洞；路由零触碰</td><td>一次碰 8 个测试件；diff 看着大但全是删除（零新逻辑）</td></tr></table>
+验收：构建绿＋q 真跑 exit 2＋lookup 出照片命中＋相关门绿（已知他席红除外）。
+</div>
+
+<div class="foot">验收口径变更记录：#652 photo 半边（两门之一）连带作废，wake 半边（d13120b1）不受影响。落盘位置：<code>docs/skills/skill-calorie/</code>，与 t652 证据件同目录。</div>
+</div></body>
+</html>

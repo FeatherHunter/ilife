@@ -1,4 +1,4 @@
-/** #91 · `calorie.help.center` 承载**全量速查台**（裁决 Q9）＋ 照片 10 键兼容 ＋ envelope 新契约（Q8 无 `status`）。
+/** #91 · `calorie.help.center` 承载**全量速查台**（裁决 Q9）＋ envelope 新契约（Q8 无 `status`）。
  *
  * 本文件锁四件事（逐条对票面验收）：
  *  ① 缺省语义（#139 改判，见下）：默认（无参）＝「卡路里help」的交付物＝老实物同款 HELP 文件
@@ -6,15 +6,10 @@
  *     三态同源（同一 437 场景，顺序一致）：`file` 产物＝完整 HTML 文档，`inline` 产物＝片段，`text` 产物＝纯文本索引。
  *     改判依据：地图 #131 目的地（Q2「整个卡路里只有一个 HELP」＋ Q17「比对以老实物为准」）优先于旧地图 Q9
  *     口径；速查台本体（#88／#106／#107）内容与三态语义一字未动，只是不再占缺省位。
- *  ② 照片 10 键不回归：`q` 非空＝现找（3 命中）、`q:""`＝全量 10 键，`data` 键集恒 `items/total`（＋落点），
- *     落盘产物仍带复制按钮与页面运行时（#90 接线未被本票破坏）。
- *     **#488 口径变更（2026-09-15）**：该支产物由**片段**切成**整页**（`assembleDocPage`：doctype ＋
- *     样式段 ＋ 脚本段），页尾多一颗复制区按钮——故下文「按钮数＝命中数」改成「命中数 ＋ 复制区那一颗」，
- *     「页里没有 `<!DOCTYPE`」改成「页是完整文档」。改前那两条锁的是老片段形状（#341 起整页化是既定方向，
- *     见 `docs/skills/skill-calorie/t341-页面形状.md`），本票按新口径改写并留负向牙齿。
+ *  ② 照片 10 键（#652 删单已下线，测试整节删除；`q` 进来 exit 2 指路 lookup，见 ④）。
  *  ③ envelope 全字段＝`version/skill/shape/key/data`（**无 `status`**，Q8），`data` 只回索引＋落点＋字节数，
  *     不把 1 MB 产物塞进 envelope（`inline` 片段亦不入 envelope）。
- *  ④ 参数纪律：`q` 与 `mode` 互斥（exit 2）、`mode` 非法／非字符串 exit 2（D6 显式且被校验）。
+ *  ④ 参数纪律：`q` 进来即 exit 2 下线指路、`mode` 非法／非字符串 exit 2（D6 显式且被校验）。
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/help-center-91.test.mjs`
  */
@@ -27,7 +22,6 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { dispatch } from '../dist/cli/cmd_read.js';
-import { buildPhotoHelp, lookupPhotoHelp } from '../dist/render/index.js';
 import { buildHelpSceneData, COPY_RUNTIME_JS } from '../dist/render/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -217,50 +211,18 @@ test('#91 ②b mode=text 走 CLI：data.text 与落盘产物逐字一致，stdou
 
 /* ── ③ 照片 10 键兼容（既有两条测试的语义，逐条复证） ─────────────────────────── */
 
-test('#91 ③ 照片 10 键兼容：q 现找／q:"" 全量，data 键集与产物接线不回归', () => {
-  const dir = mkEnv();
-  assert.equal(buildPhotoHelp().length, 10, '照片全量 10 键（与 cmd-read-t11:191 同断言）');
-  assert.throws(() => lookupPhotoHelp(''), /必填/);
-
-  const lookup = runOk(dir, { q: '记身材照' });
-  assert.ok(lookup.env.data.total >= 3, 'q 现找命中 ≥3（与 cmd-read-t11:183 同口径）');
-  assert.deepEqual(Object.keys(lookup.env.data), ['items', 'total', 'output'], '照片路径 data 键集不回归（output 由出口追加）');
-  assert.deepEqual(Object.keys(lookup.env.data.items[0]), ['wakeWord', 'key', 'desc', 'exec']);
-  const photoHtml = readFileSync(lookup.env.data.output, 'utf8');
-  // #488 口径变更：该产物已是整页（改前是片段），页尾多一颗复制区按钮。
-  // 新口径＝「每条命中一颗可复制命令块按钮 ＋ 复制区一颗」；负向牙齿见下两行（摘掉一行命中即不等）。
-  const buttonCount = (html) => countOf(html, 'data-action-id="');
-  const expectedButtons = lookup.env.data.total + 1;
-  assert.equal(buttonCount(photoHtml), expectedButtons, '每条命中一颗复制按钮 ＋ 复制区一颗');
-  const oneRowLess = photoHtml.replace(/<li data-help-row[\s\S]*?<\/li>/, '');
-  assert.notEqual(oneRowLess, photoHtml, '负向自查未生效（没摘掉命中行）');
-  assert.notEqual(buttonCount(oneRowLess), expectedButtons, '负向牙齿失效：摘掉一行命中后按钮数竟然不变');
-  assert.ok(photoHtml.includes(COPY_RUNTIME_JS), '页面运行时仍在（#90 接线）');
-  const exec = buildPhotoHelp().find((h) => h.wakeWord === '记身材照').exec;
-  assert.ok(decodeEntities(photoHtml).includes(exec), 'data-t 逐字等于该行 CLI');
-  // #488 口径变更：改前这里断言「照片页仍是片段（`<!DOCTYPE` 计数 0）」；整页装配后反了过来。
-  assert.ok(photoHtml.startsWith('<!doctype html>'), '#488：照片页应是整页（改前断言它「仍是片段」）');
-  assert.match(photoHtml, /<style[\s\S]*?<\/style>/i, '#488：整页须带样式段');
-  assert.match(photoHtml, /<script[\s\S]*?<\/script>/i, '#488：整页须带脚本段');
-
-  const all = runOk(dir, { q: '' });
-  assert.equal(all.env.data.total, 10, 'q:"" ＝照片全量 10 键');
-  assert.equal('mode' in all.env.data, false, '照片路径不引入新字段');
-
-  // 默认（无 q）已改判全量速查台（Q9）：items 是分组，不是照片命中
-  const bare = runOk(dir, undefined);
-  assert.equal(bare.env.data.items[0].wakeWord, undefined);
-  assert.equal(typeof bare.env.data.items[0].label, 'string');
-});
 
 /* ── ④ 参数纪律（D6：mode 显式且被校验） ─────────────────────────────────────── */
 
-test('#91 ④ q 与 mode 互斥、mode 非法／非字符串一律 exit 2', () => {
+test('#91 ④ q 支已下线、mode 非法／非字符串一律 exit 2', () => {
   const dir = mkEnv();
+  const qx = run(dir, { q: '记身材照' });
+  assert.equal(qx.status, 2, 'q 支已下线');
+  assert.match(String(qx.stderr), /下线/);
+  assert.equal(String(qx.stdout), '', 'stdout 纯净');
   const both = run(dir, { q: '记身材照', mode: 'file' });
-  assert.equal(both.status, 2, 'q+mode 互斥');
-  assert.match(String(both.stderr), /互斥/);
-  assert.equal(String(both.stdout), '', 'stdout 纯净');
+  assert.equal(both.status, 2, 'q+mode 同走下线');
+  assert.match(String(both.stderr), /下线/);
 
   const bogus = run(dir, { mode: 'bogus' });
   assert.equal(bogus.status, 2, '未知 mode');
