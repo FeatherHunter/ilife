@@ -36,3 +36,6 @@ export { listRelatedTasks, searchTasks, taskDueDate } from './tasks.js';
 export type { RemoteTask } from './tasks.js';
 export { createTask, updateTask, clearTaskDue, completeTask, deleteTask, taskTitle, TASK_TITLE_MAX } from './taskWrite.js';
 export type { CreateTaskInput } from './taskWrite.js';
+// #666：飞书任务域自检 sentinel（D-03 任务半场）——显式诊断才跑，本地零写。
+export { runSentinel, SENTINEL_PREFIX } from './sentinel.js';
+export type { SentinelReceipt, SentinelStep } from './sentinel.js';

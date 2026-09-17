@@ -27,8 +27,8 @@ const WISH_TOP = '心愿';
 export interface WishReceipt {
   readonly ok: boolean;
   readonly message: string;
-  /** 本地侧做了什么。 */
-  readonly local: 'created' | 'existing' | 'updated' | 'unchanged' | 'removed';
+  /** 本地侧做了什么（`checked`＝自检 #666：只验远端，本地零写）。 */
+  readonly local: 'created' | 'existing' | 'updated' | 'unchanged' | 'removed' | 'checked';
   /** 远端侧做了什么。 */
   readonly remote: 'created' | 'existing' | 'synced' | 'partial' | 'unavailable' | 'failed' | 'not-applicable';
   /** 远端标识（回写本地的那一格）。 */

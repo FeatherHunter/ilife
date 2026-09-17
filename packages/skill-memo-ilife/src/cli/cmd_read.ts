@@ -24,6 +24,7 @@ import {
   authQr,
   authPoll,
   authStatus,
+  runSentinel,
   MemoFetchError,
 } from '../fetch/index.js';
 import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
@@ -402,6 +403,7 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
     }
     case 'memo.auth': {
       // #665 飞书授权引导（三步非阻塞，Q4 批新增 key）：init／qr／poll＋status 诊断。
+      // #666 自检 sentinel：step:'diag'（显式诊断，D-03 任务半场）。
       const step = params.step === undefined ? 'status' : String(params.step);
       if (step === 'init') {
         const brand = params.brand === undefined ? 'feishu' : String(params.brand);
@@ -427,7 +429,12 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
       if (step === 'status') {
         return ok({ ok: true, message: '授权状态', step: 'status', ...authStatus() });
       }
-      fail(2, 'step 只认 init/qr/poll/status');
+      if (step === 'diag') {
+        // #666 自检 sentinel（D-03 任务半场）：显式才跑；默认四步不碰它，零写。
+        const r = runSentinel(params.dryRun === true ? { dryRun: true } : undefined);
+        return { data: r.receipt, exit: r.exit };
+      }
+      fail(2, 'step 只认 init/qr/poll/status/diag');
       return ok(null);
     }
     case 'memo.stats': {
