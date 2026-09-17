@@ -182,10 +182,10 @@ export const T71_DIFFS: readonly T71Diff[] = [
   },
   {
     id: 'O3',
-    wakeWords: ['同步到训记', '拉训记实绩'],
+    wakeWords: [],
     spec: 'docs/calorie-architecture.md:60「训记」',
     t71: 'docs/research/t71-old-baseline-inventory.md:743 O3（训记同步）',
-    note: '同项。',
+    note: 't71 时点同项（当时两词：同步到训记／拉训记实绩）；#614 起这两条已转入 exec（`src/workout/routes.ts` order 199–200，命令 `calorie.workout.xunji-push`／`calorie.workout.xunji-backfill`），现状以路由层为准，本登记只存档 t71 时点口径。',
   },
   {
     id: 'O4',
