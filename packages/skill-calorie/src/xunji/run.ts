@@ -1,7 +1,7 @@
 /** 训记模块的子命令**分派**：把一条 argv 按声明分派到实现（对外面见 `subcommands.ts`）。
  *
  * #606 骨架只有 `verify` 有实现；#607 起 `upsert`／`push-plan` 真跑；
- * #608 起 `fetch`／`backfill` 真跑；#610 起 `key` 真跑；其余两条**只有声明**——调用它们一律**明确拒绝**
+ * #608 起 `fetch`／`backfill` 真跑；#610 起 `key`／`overlay-plan` 真跑；其余一条**只有声明**——调用它们一律**明确拒绝**
  * （非 0 退出 ＋ 点名归属票），不返回任何成功形态的读数。「留位」不等于「留一个假实现」。
  *
  * 解析走**声明**（`parseSubcommandArgs`）：声明外的参数一律不认。
@@ -24,6 +24,7 @@ import { fetchTrains, parseTrains } from './fetch.js';
 import type { FetchOutcome } from './fetch.js';
 import { BACKFILL_DEFAULT_DAYS, backfillRange } from './backfill.js';
 import { runKeyCommand, type KeyStoreDeps } from './key.js';
+import { runOverlayPlanCommand, type OverlayDeps } from './overlay-plan.js';
 import { DB_FILENAME, resolveDbDir } from '../paths.js';
 import { exitForFailure } from './exitMap.js';
 
@@ -69,8 +70,9 @@ export interface XunjiCommandDeps {
   readonly openDb?: (dbFile: string) => DatabaseSync;
   /** 回写拉取（缺省真拉取；测试给挡板，**不许打真接口**）。 */
   readonly fetchDay?: (dateStr: string) => Promise<FetchOutcome>;
-  /** KEY 存取面（`key set／clear／status` 的写入与状态；缺省真环境＋真 PowerShell）。 */
+  /** KEY 存取面（`key set／clear／status`；缺省真环境＋真 PowerShell）＋ 叠加取数面（缺省真拉取＋真 upsert）。 */
   readonly keyStore?: KeyStoreDeps;
+  readonly overlay?: OverlayDeps;
 }
 
 const NAMES = XUNJI_SUBCOMMANDS.map((s) => s.name).join('|');
@@ -334,6 +336,7 @@ export async function runXunjiCommand(argv: readonly string[], deps: XunjiComman
   if (sub.name === 'fetch') return runFetch(sub, parsed.values, deps);
   if (sub.name === 'backfill') return runBackfill(sub, parsed.values, deps);
   if (sub.name === 'key') return runKeyCommand(sub, parsed.values, deps.keyStore);
+  if (sub.name === 'overlay-plan') return runOverlayPlanCommand(sub, parsed.values, deps.overlay);
   // 声明说已实现却没接上实现＝代码缺陷，直接抛（不许静默当成功）。
   throw new Error('子命令已声明实现但没有分派路径：' + sub.name);
 }
