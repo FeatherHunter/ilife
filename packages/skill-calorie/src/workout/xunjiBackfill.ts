@@ -25,6 +25,7 @@ import { dayField, fail, optInt } from '../shared/params.js';
 import { R, commandLine, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
+import type { XunjiCall } from './xunjiRunner.js';
 
 export const XUNJI_BACKFILL_KEY = 'calorie.workout.xunji-backfill';
 const XUNJI_BACKFILL_WAKE = '拉训记实绩';
@@ -95,6 +96,34 @@ function copyBlock(key: string, params: Record<string, unknown>, receipt: CrudRe
   });
 }
 
+/** 失败天点名（读数可解析时）：「没拉到」与「拉到了没写进」是两种失败，文案分得清（`#608 §三·5`）。 */
+function dayFailures(data: unknown): string[] {
+  const o = data as { results?: unknown } | null;
+  if (typeof o !== 'object' || o === null || !Array.isArray(o.results)) return [];
+  const out: string[] = [];
+  for (const r of o.results as unknown[]) {
+    const d = r as { date?: unknown; fetch_ok?: unknown; err?: unknown } | null;
+    if (typeof d !== 'object' || d === null || typeof d.date !== 'string') continue;
+    if (d.fetch_ok === false) out.push(d.date + '没拉到');
+    else if (typeof d.err === 'string' && d.err !== '') out.push(d.date + '拉到了没写进');
+  }
+  return out;
+}
+
+/** 回写失败：本地缺 KEY 点名没调远端（exit 3），其余按天点名失败分类（exit 4）。 */
+function failBackfill(end: string, days: number, call: XunjiCall): never {
+  if (call.code === 2) {
+    fail(3, '拉训记实绩失败（' + end + ' 往前 ' + days + ' 天）：本地缺 KEY（没调远端）：先看训记 KEY 状态再重试');
+  }
+  const named = dayFailures(call.data);
+  fail(
+    xunjiExitToCmd(call.code),
+    '拉训记实绩失败（' + end + ' 往前 ' + days + ' 天）'
+      + (named.length === 0 ? '' : '：' + named.join('、')) + '：稍后重试'
+      + (call.stderr === '' ? '' : '（' + call.stderr + '）'),
+  );
+}
+
 /** `calorie.workout.xunji-backfill` · 拉训记实绩（拉取 → 回写 → 回执同一命令）。 */
 export function writeXunjiBackfill(params: Record<string, unknown>, _db: DatabaseSync): WriteOut {
   const end = dayField(params, 'date') ?? todayISO();
@@ -110,12 +139,7 @@ export function writeXunjiBackfill(params: Record<string, unknown>, _db: Databas
     return { data: { ok: true, message, receipt }, html };
   }
   const call = invokeXunji(['backfill', '--date', end, '--days', String(days)], '拉训记实绩');
-  if (call.code !== 0) {
-    const reason = call.code === 2
-      ? '本地缺 KEY（没调远端）：先看训记 KEY 状态再重试'
-      : '远端拉取或写库失败（没拉到／拉到了没写进）：稍后重试，运动记录以本次回执为准';
-    fail(xunjiExitToCmd(call.code), '拉训记实绩失败（' + end + ' 往前 ' + days + ' 天）：' + reason);
-  }
+  if (call.code !== 0) failBackfill(end, days, call);
   const summary = asBackfillSummary(call.data, '拉训记实绩');
   const message = '已拉训记实绩并回写：' + summary.end_date + ' 往前 ' + summary.days + ' 天，新增 '
     + summary.total_inserted + '，更新 ' + summary.total_updated;
@@ -140,7 +164,7 @@ function backfillProcessPage(params: Record<string, unknown>, end: string, days:
       columns: [{ key: 'step', label: '步骤' }, { key: 'does', label: '会做什么' }],
       rows: [
         { step: '拉取', does: '按天拉训记训练数据（只读训记，不改本仓）' },
-        { step: '转行', does: '已完成标记才转行；范围次数取大，缺单位自动换算' },
+        { step: '转行', does: '已完成标记才转行。范围次数取大，缺单位自动换算' },
         { step: '回写', does: '显式事务落运动记录，失败整天回滚' },
       ],
       caption: '实跑三步预告',

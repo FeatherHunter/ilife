@@ -1,0 +1,299 @@
+/** #614 · 同步到训记／拉训记实绩两条薄命令（训记对外命令的薄包装 ＋ 过程页／结果页）。
+ *
+ * 一律挡板：**不许打真实训记接口**（真机联调另票）。外调跑道（`invokeXunji`）平时 spawn 真子进程，
+ * 本件用两档挡板：① `CALORIE_XUNJI_STUB`（跑道内短路，不起子进程）；② 真子进程的 `--dry-run`
+ * （只转换不调网）。`fail()` 即 `process.exit`，失败路径一律走真子进程断言（in-process 调会自杀）。
+ *
+ * 票面验收（各有独立用例）：
+ * ① 两条各走通一遍挡板（push dryRun 真子进程 ＋ backfill dryRun ＋ stub 结果页两张）；
+ * ② 真出口读数：真 CLI 落盘，`data.output` 绝对路径存在；
+ * ③ 任一步失败非 0 点名（用法 2／本地缺 KEY 3／远端失败 4，stderr 点名步骤与分类）；
+ * ④ 本地成远端没成分得清（页上两行分开写；无 KEY 即使子进程退 3 也判本地缺 KEY，`attempts: 0` 作证）。
+ */
+import { describe, it, before, afterEach } from 'node:test';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, isAbsolute } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { DatabaseSync } from 'node:sqlite';
+
+const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
+const HERE = dirname(fileURLToPath(import.meta.url));
+const PKG = join(HERE, '..');
+const CLI = join(PKG, 'dist', 'cli', 'cmd_read.js');
+
+const tmp = (name) => {
+  const dir = join(mkdtempSync(join(tmpdir(), 't614-')), name);
+  mkdirSync(dir, { recursive: true });
+  return dir;
+};
+
+/** 种子计划（同 `docs/research/t81-seed.mjs` 的训练计划两段：周1周三 下肢［深蹲］／周2周一 上肢［硬拉］）。 */
+function seedPlan(db) {
+  db.exec('CREATE TABLE IF NOT EXISTS workout_plan_config (id INTEGER PRIMARY KEY, title TEXT, version TEXT, description TEXT, total_weeks INTEGER, start_date TEXT)');
+  db.exec('CREATE TABLE IF NOT EXISTS workout_plans (week_number INTEGER, day_of_week INTEGER, session_index INTEGER, session_label TEXT, time_start TEXT, time_end TEXT, is_rest_day INTEGER, total_sets INTEGER, movements TEXT)');
+  db.prepare("INSERT OR REPLACE INTO workout_plan_config (id, title, version, description, total_weeks, start_date) VALUES (1, 'seed计划', 'v1', 'desc', 4, '2026-09-01')").run();
+  db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (2, 1, 1, ?, ?)').run('上肢', JSON.stringify([{ name: '硬拉', part: '背', type: '力量', sets: [] }]));
+  db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (1, 3, 1, ?, ?)').run('下肢', JSON.stringify([{ name: '深蹲', part: '腿', type: '力量', sets: [] }]));
+}
+
+function cli(key, params, env = {}) {
+  try {
+    const stdout = execFileSync(NODE_BIN, [CLI, key, '--params', JSON.stringify(params)], {
+      encoding: 'utf8', stdio: 'pipe', env: { ...process.env, ...env },
+    });
+    return { code: 0, stdout, stderr: '' };
+  } catch (e) {
+    return { code: e.status ?? 1, stdout: String(e.stdout ?? ''), stderr: String(e.stderr ?? '') };
+  }
+}
+
+const VERIFY_NOTE = '响应里 verified=True 的表示训记已显式回执；verified=False 的实际可能已写入，'
+  + '但训记 v2 接口响应缺陷导致 trains 为空——用 fetch --full 二次确认（归 #608）';
+
+const PUSH_OK_STUB = {
+  code: 0,
+  data: {
+    date: '2026-09-07', session_count: 1, ok_count: 1, fail_count: 0, verify_note: VERIFY_NOTE,
+    results: [{ session_label: '上肢', client_request_id: '2026-09-07_上肢_ab12cd34', ok: true, verified: false, resp: { dry_run: false } }],
+  },
+};
+
+const BACKFILL_OK_STUB = {
+  code: 0,
+  data: {
+    end_date: '2026-09-07', days: 1, total_inserted: 2, total_updated: 0,
+    results: [{
+      date: '2026-09-07', fetch_ok: true, trains_count: 2, inserted: 2, updated: 0,
+      skipped_empty: false, body_weight_kg: 70.5, errors: [], err: null, failure: null,
+    }],
+  },
+};
+
+const PUSH_NOKEY_STUB = {
+  code: 3,
+  data: {
+    date: '2026-09-07', session_count: 1, ok_count: 0, fail_count: 1, verify_note: VERIFY_NOTE,
+    results: [{
+      session_label: '上肢', client_request_id: '2026-09-07_上肢_ab12cd34', ok: false, verified: false,
+      resp: { err: true, error_type: 'auth', message: '未配置训记 KEY', retry_after: null, raw_body: null, code: null, attempts: 0 },
+    }],
+  },
+};
+
+let dispatchWrite = null;
+let openDb = null;
+const savedEnv = {};
+for (const k of ['SKILLS_DB_PATH', 'CALORIE_XUNJI_STUB']) savedEnv[k] = process.env[k];
+
+before(async () => {
+  assert.ok(existsSync(CLI), '缺编译产物：' + CLI + '（先跑 tsc -b packages/skill-calorie）');
+  ({ dispatchWrite } = await import('../dist/cli/write.js'));
+  ({ openDb } = await import('../dist/index.js'));
+});
+
+afterEach(() => {
+  for (const k of ['SKILLS_DB_PATH', 'CALORIE_XUNJI_STUB']) {
+    if (savedEnv[k] === undefined) delete process.env[k];
+    else process.env[k] = savedEnv[k];
+  }
+});
+
+function seedDir() {
+  const dir = tmp('db');
+  const db = openDb(join(dir, 'calorie_data.db'));
+  seedPlan(db);
+  return { dir, db };
+}
+
+describe('#614 同步与拉取', () => {
+  it('①a push dryRun 走通（真子进程转换）：审计＋待推送段＋远端未调用', () => {
+    const { dir, db } = seedDir();
+    try {
+      process.env.SKILLS_DB_PATH = dir;
+      const out = dispatchWrite('calorie.workout.xunji-push', { date: '2026-09-07', dryRun: true }, db);
+      assert.equal(out.data.ok, true);
+      assert.match(out.data.message, /预演：2026-09-07 1 段待推送（远端未调用）/);
+      assert.equal(out.data.receipt.op, 'create');
+      assert.match(out.html, /过程页/);
+      assert.match(out.html, /硬拉/);
+      assert.match(out.html, /训记可识别/);
+      assert.match(out.html, /远端.*未调用/);
+      assert.match(out.html, /ilife-page/);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('①b push dryRun 空天走通（这天没排练，段数 0，仍 exit 0 口径）', () => {
+    const { dir, db } = seedDir();
+    try {
+      process.env.SKILLS_DB_PATH = dir;
+      const out = dispatchWrite('calorie.workout.xunji-push', { date: '2026-09-04', dryRun: true }, db);
+      assert.equal(out.data.ok, true);
+      assert.match(out.data.message, /0 段待推送/);
+      assert.match(out.html, /空天/);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('①c push dryRun 审计只提示不拦推（深蹲不在库：不通过＋建议名＋仍出页）', () => {
+    const { dir, db } = seedDir();
+    try {
+      process.env.SKILLS_DB_PATH = dir;
+      const out = dispatchWrite('calorie.workout.xunji-push', { date: '2026-09-02', dryRun: true }, db);
+      assert.equal(out.data.ok, true);
+      assert.match(out.html, /深蹲/);
+      assert.match(out.html, /训记不识别（仍会原样推送）/);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('①d backfill dryRun 走通（不调子进程）：区间＋三步预告＋幂等口径', () => {
+    const { dir, db } = seedDir();
+    try {
+      const out = dispatchWrite('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1, dryRun: true }, db);
+      assert.equal(out.data.ok, true);
+      assert.match(out.data.message, /预演：从训记拉 2026-09-07 往前 1 天/);
+      assert.equal(out.data.receipt.op, 'update');
+      assert.match(out.html, /过程页/);
+      assert.match(out.html, /三步预告/);
+      assert.match(out.html, /重复拉取/);
+      assert.match(out.html, /ilife-page/);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('①e push 结果页走通（挡板成功）：逐段结局＋本地远端分清', () => {
+    const { dir, db } = seedDir();
+    try {
+      process.env.CALORIE_XUNJI_STUB = JSON.stringify(PUSH_OK_STUB);
+      const out = dispatchWrite('calorie.workout.xunji-push', { date: '2026-09-07' }, db);
+      assert.equal(out.data.ok, true);
+      assert.match(out.data.message, /已同步 2026-09-07.*1 段成功/);
+      assert.match(out.html, /结果页/);
+      assert.match(out.html, /逐段推送结局/);
+      assert.match(out.html, /训记落笔 1 段/);
+      assert.match(out.html, /本地挡板/);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('①f backfill 结果页走通（挡板成功）：逐天结局＋新增更新合计', () => {
+    const { dir, db } = seedDir();
+    try {
+      process.env.CALORIE_XUNJI_STUB = JSON.stringify(BACKFILL_OK_STUB);
+      const out = dispatchWrite('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, db);
+      assert.equal(out.data.ok, true);
+      assert.match(out.data.message, /新增 2，更新 0/);
+      assert.match(out.html, /结果页/);
+      assert.match(out.html, /逐天回写结局/);
+      assert.match(out.html, /2 条训练/);
+      assert.match(out.html, /本地挡板/);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('② 真出口读数：真 CLI 落盘，回执绝对路径存在（两条 dryRun 各一次）', () => {
+    const { dir, db } = seedDir();
+    db.close();
+    const a = cli('calorie.workout.xunji-push', { date: '2026-09-07', dryRun: true }, { SKILLS_DB_PATH: dir });
+    assert.equal(a.code, 0, a.stderr.slice(-400));
+    const enva = JSON.parse(a.stdout);
+    assert.equal(enva.key, 'calorie.workout.xunji-push');
+    assert.ok(isAbsolute(enva.data.output), '回执路径须为绝对路径：' + enva.data.output);
+    assert.ok(existsSync(enva.data.output), '回执页未落盘：' + enva.data.output);
+    assert.match(readFileSync(enva.data.output, 'utf8'), /ilife-page/);
+    const b = cli('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1, dryRun: true }, { SKILLS_DB_PATH: dir });
+    assert.equal(b.code, 0, b.stderr.slice(-400));
+    const envb = JSON.parse(b.stdout);
+    assert.ok(isAbsolute(envb.data.output) && existsSync(envb.data.output), '回执页未落盘');
+  });
+
+  it('③a 用法错 exit 2 点名（坏 days／非布尔 dryRun）＋ 现实非法日期 exit 4（子进程点名）', () => {
+    const { dir, db } = seedDir();
+    db.close();
+    assert.equal(cli('calorie.workout.xunji-backfill', { days: 0 }, { SKILLS_DB_PATH: dir }).code, 2);
+    assert.equal(cli('calorie.workout.xunji-push', { dryRun: 'yes' }, { SKILLS_DB_PATH: dir }).code, 2);
+    // 形状过（YYYY-MM-DD）但不是真实日历日：父进程放行，子进程现实校验拦下并点名（仍非 0）。
+    const bad = cli('calorie.workout.xunji-push', { date: '2026-13-40' }, { SKILLS_DB_PATH: dir });
+    assert.equal(bad.code, 4);
+  });
+
+  it('③b 无计划 exit 4 点名（空库，不调外部）', () => {
+    const dir = tmp('empty');
+    openDb(join(dir, 'calorie_data.db')).close();
+    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07', dryRun: true }, { SKILLS_DB_PATH: dir });
+    assert.equal(r.code, 4);
+    assert.match(r.stderr, /无训练计划/);
+  });
+
+  it('③c 本地缺 KEY exit 3 点名没调远端（真子进程无 KEY：push 退 3 也判本地）', () => {
+    const { dir, db } = seedDir();
+    db.close();
+    const noKey = { SKILLS_DB_PATH: dir, XUNJI_TRAINS_KEY: '', XUNJI_API_KEY: '' };
+    const a = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, noKey);
+    assert.equal(a.code, 3, a.stderr.slice(-300));
+    assert.match(a.stderr, /本地缺 KEY（没调远端）/);
+    const b = cli('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, noKey);
+    assert.equal(b.code, 3, b.stderr.slice(-300));
+    assert.match(b.stderr, /本地缺 KEY（没调远端）/);
+  });
+
+  it('③d 挡板远端失败 exit 4 点名段数（push fail_count 走远端档）', () => {
+    const { dir, db } = seedDir();
+    db.close();
+    const stub = {
+      code: 3,
+      data: {
+        date: '2026-09-07', session_count: 2, ok_count: 1, fail_count: 1, verify_note: VERIFY_NOTE,
+        results: [
+          { session_label: '上肢', ok: true, verified: false, resp: {} },
+          { session_label: '下肢', ok: false, verified: false, resp: { err: true, error_type: 'server', code: 500, attempts: 3 } },
+        ],
+      },
+    };
+    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, {
+      SKILLS_DB_PATH: dir, CALORIE_XUNJI_STUB: JSON.stringify(stub),
+    });
+    assert.equal(r.code, 4, r.stderr.slice(-300));
+    assert.match(r.stderr, /远端推送失败/);
+  });
+
+  it('③e 挡板无 KEY 退 3 数据也判本地（push fail 全是 attempts 0 鉴权错）', () => {
+    const { dir, db } = seedDir();
+    db.close();
+    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, {
+      SKILLS_DB_PATH: dir, CALORIE_XUNJI_STUB: JSON.stringify(PUSH_NOKEY_STUB),
+    });
+    assert.equal(r.code, 3, r.stderr.slice(-300));
+    assert.match(r.stderr, /本地缺 KEY（没调远端）/);
+  });
+
+  it('③f 坏挡板 exit 4（挡板坏了不许当成功跑）', () => {
+    const { dir, db } = seedDir();
+    db.close();
+    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, {
+      SKILLS_DB_PATH: dir, CALORIE_XUNJI_STUB: '{坏json',
+    });
+    assert.equal(r.code, 4);
+    assert.match(r.stderr, /挡板数据不是合法 JSON/);
+  });
+
+  it('④ 码翻译表：2→3，其余→4（跑道纯函数，无外部）', async () => {
+    const { xunjiExitToCmd, XUNJI_STUB_ENV, XUNJI_SPAWN_TIMEOUT_MS } = await import('../dist/workout/xunjiRunner.js');
+    assert.equal(xunjiExitToCmd(1), 4);
+    assert.equal(xunjiExitToCmd(2), 3);
+    assert.equal(xunjiExitToCmd(3), 4);
+    assert.equal(xunjiExitToCmd(4), 4);
+    assert.equal(XUNJI_STUB_ENV, 'CALORIE_XUNJI_STUB');
+    assert.ok(XUNJI_SPAWN_TIMEOUT_MS >= 60000);
+  });
+});

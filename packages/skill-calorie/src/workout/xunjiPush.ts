@@ -28,6 +28,7 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
 import type { PlanSessionRow } from './planStore.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
+import type { XunjiCall } from './xunjiRunner.js';
 
 export const XUNJI_PUSH_KEY = 'calorie.workout.xunji-push';
 const XUNJI_PUSH_WAKE = '同步到训记';
@@ -119,6 +120,37 @@ function auditRows(audit: MovementVerifyReport | null): { movement: string; verd
   }));
 }
 
+/** 失败读数里分本地／远端：`push-plan` 无 KEY 退 3（`fail_count` 路径，见 `run.ts:191-194`），
+ * 但逐段 `attempts: 0` ＋ 鉴权错证明没调网——这支走 key 档（exit 3），其余一律远端失败（exit 4）。 */
+function localNoKey(data: unknown): boolean {
+  const o = data as { fail_count?: unknown; results?: unknown } | null;
+  if (typeof o !== 'object' || o === null || typeof o.fail_count !== 'number' || o.fail_count <= 0) return false;
+  if (!Array.isArray(o.results) || o.results.length === 0) return false;
+  return (o.results as unknown[]).every((r) => {
+    const rr = r as { ok?: unknown; resp?: unknown } | null;
+    if (typeof rr !== 'object' || rr === null || rr.ok !== false) return false;
+    const resp = rr.resp as { err?: unknown; error_type?: unknown; code?: unknown; attempts?: unknown } | null;
+    return typeof resp === 'object' && resp !== null && resp.err === true
+      && resp.error_type === 'auth' && (resp.code === null || resp.code === undefined) && resp.attempts === 0;
+  });
+}
+
+/** 推送失败：本地缺 KEY 点名没调远端（exit 3），远端失败点名段数与子进程尾行（exit 4）。 */
+function failPush(date: string, call: XunjiCall): never {
+  if (call.code === 2 || localNoKey(call.data)) {
+    fail(3, '同步到训记失败（' + date + '）：本地缺 KEY（没调远端）：先看训记 KEY 状态再重试');
+  }
+  const o = call.data as { ok_count?: unknown; fail_count?: unknown; session_count?: unknown } | null;
+  const counts = typeof o === 'object' && o !== null
+    && typeof o.ok_count === 'number' && typeof o.fail_count === 'number' && typeof o.session_count === 'number'
+    ? '成功 ' + o.ok_count + '／失败 ' + o.fail_count + '（共 ' + o.session_count + ' 段）' : '（读数缺段数）';
+  fail(
+    xunjiExitToCmd(call.code),
+    '同步到训记失败（' + date + '）：远端推送失败' + counts + '：稍后重试，远端是否落笔以训记 App 为准'
+      + (call.stderr === '' ? '' : '（' + call.stderr + '）'),
+  );
+}
+
 /** `calorie.workout.xunji-push` · 同步到训记（审计 → 推送 → 回执同一命令）。 */
 export function writeXunjiPush(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const date = dayField(params, 'date') ?? todayISO();
@@ -128,12 +160,7 @@ export function writeXunjiPush(params: Record<string, unknown>, db: DatabaseSync
   const invalid = audit === null ? 0 : audit.invalid_count;
   const argv = dryRun ? ['push-plan', '--date', date, '--dry-run'] : ['push-plan', '--date', date];
   const call = invokeXunji(argv, '同步到训记');
-  if (call.code !== 0) {
-    const reason = call.code === 2
-      ? '本地缺 KEY（没调远端）：先看训记 KEY 状态再重试'
-      : '远端推送失败（训记接口报错或写库失败）：稍后重试，远端是否落笔以训记 App 为准';
-    fail(xunjiExitToCmd(call.code), '同步到训记失败（' + date + '）：' + reason);
-  }
+  if (call.code !== 0) failPush(date, call);
   const summary = asPushSummary(call.data, '同步到训记');
   const message = dryRun
     ? '预演：' + date + ' ' + summary.session_count + ' 段待推送（远端未调用）'
@@ -154,15 +181,22 @@ function pushProcessPage(
   audit: MovementVerifyReport | null, summary: PushPlanSummary, receipt: CrudReceipt, stubbed: boolean,
 ): string {
   const message = '预演：' + date + ' ' + summary.session_count + ' 段待推送（远端未调用）';
-  const auditText = audit === null
-    ? '当天无动作可审'
-    : '通过 ' + audit.valid_count + '／不通过 ' + audit.invalid_count + '（共 ' + audit.total + '）'
-      + (audit.catalog_loaded ? '' : '；动作库读不出，本次无法验证');
+  const auditOk = audit === null ? 0 : audit.valid_count;
+  const auditBad = audit === null ? 0 : audit.invalid_count;
+  const auditTotal = audit === null ? 0 : audit.total;
   const content = [
     renderKpiGrid([
       { label: '日期', value: date, detail: '推送哪一天的计划' },
       { label: '待推送段', value: sessions.length + ' 段', detail: sessions.map((s) => s.session_label).join('、') || '当天没排练（空天）' },
-      { label: '动作审计', value: auditText, detail: '不通过的动作仍会原样推送，建议名见下表' },
+      {
+        label: '动作审计',
+        value: audit === null ? '当天无动作可审' : '通过 ' + auditOk + ' 个',
+        detail: audit === null
+          ? '段内没有动作名'
+          : (audit.catalog_loaded
+            ? '不通过 ' + auditBad + ' 个，共 ' + auditTotal + ' 个。不通过的动作仍会原样推送，建议名见下表'
+            : '动作库读不出，本次无法验证。不通过的动作仍会原样推送，建议名见下表'),
+      },
     ]),
     renderDataTable({
       columns: [{ key: 'movement', label: '动作' }, { key: 'verdict', label: '审计结论' }, { key: 'suggest', label: '建议名' }],
@@ -207,11 +241,15 @@ function pushResultPage(
   const content = [
     renderKpiGrid([
       { label: '日期', value: date, detail: '推送哪一天的计划' },
-      { label: '推送', value: '成功 ' + summary.ok_count + '／失败 ' + summary.fail_count, detail: '共 ' + summary.session_count + ' 段' },
+      {
+        label: '推送',
+        value: '成功 ' + summary.ok_count + ' 段',
+        detail: '失败 ' + summary.fail_count + ' 段，共 ' + summary.session_count + ' 段',
+      },
       {
         label: '动作审计',
         value: audit === null ? '当天无动作可审' : '不通过 ' + invalid + ' 个',
-        detail: audit === null ? '段内没有动作名' : '审计只提示，不拦推；建议名见过程页',
+        detail: audit === null ? '段内没有动作名' : '审计只提示，不拦推。建议名见过程页',
       },
     ]),
     renderDataTable({
