@@ -99,7 +99,10 @@ test('#86 围度 wizard：场景1空页＋场景2预填＋recent＋白名单', (
     assert.equal(empty.data.metrics.filledCount, 0);
     assert.equal(empty.data.metrics.hasRecent, 1);
     assert.ok(empty.html.includes('2026-09-07'), '空页应带最近一次日期');
-    assert.ok(empty.html.includes('复制 prompt'), '空页应带复制区');
+    // #649（#538 新措辞）：复制区标题已由「复制 prompt」改「复制指令」，且「复制指令」四字也落在
+    // 公共层运行时脚本里（`var COPY_LABEL`），断标题会不断牙；改断空态 prompt 首句（data-t 唯一一处，
+    // 摘复制区／改首句两向各自必红）。
+    assert.ok(empty.html.includes('还没量任何一项'), '空页应带复制区');
     assertDoc(empty.html, 'measure-wizard 空页');
     const pre = dispatch('calorie.view.measure-wizard', { date: '2026-09-07', chestCm: 95, waistCm: 80, note: '早上空腹' }, db);
     assert.equal(pre.data.metrics.filledCount, 2);
@@ -133,7 +136,9 @@ test('#86 体脂 wizard：来源＋体脂率＋皮褶7点＋换算未移植口�
   const { db } = mkWizardDb();
   try {
     const bare = dispatch('calorie.view.composition-wizard', {}, db);
-    assert.ok(bare.html.includes('请选来源'), '空页 prompt 应先要来源');
+    // #649（#538 新措辞）：占位首句已由「请选来源」改「请先选来源。本页按默认的……」
+    //（「先」字隔断，旧子串恒为假；新句在 data-t 唯一一处，两向必红）。
+    assert.ok(bare.html.includes('请先选来源'), '空页 prompt 应先要来源');
     assertDoc(bare.html, 'composition-wizard 空页');
     const v = dispatch('calorie.view.composition-wizard', {
       date: '2026-09-07', source: '健身房', bodyFatPct: 18.5, age: 30, sex: '男', note: 'InBody',
@@ -148,10 +153,14 @@ test('#86 体脂 wizard：来源＋体脂率＋皮褶7点＋换算未移植口�
     }, db);
     assert.equal(cal.data.metrics.caliperCount, 7);
     assert.equal(cal.data.metrics.sum7, 82);
-    assert.ok(cal.html.includes('7 处总和:82 mm'), '皮褶总和应进 prompt');
+    // #649（#538 新措辞）：总和行已由半角 `7 处总和:82 mm` 改全角＋中文单位
+    // `7 处总和：82 毫米`（新 preview 逐字）；旧串恒为假，新串在核对清单唯一一处。
+    assert.ok(cal.html.includes('7 处总和：82 毫米'), '皮褶总和应进 prompt');
     assert.throws(() => dispatch('calorie.view.composition-wizard', { source: '火星测', bodyFatPct: 18 }, db), /source 非法/, '非法来源应拦');
     const over = dispatch('calorie.view.composition-wizard', { source: 'gym', bodyFatPct: 99 }, db);
-    assert.ok(over.html.includes('(0, 60)'), '体脂率越界应在 prompt 标异常');
+    // #649（#538 新措辞）：越界句已由 `(0, 60)` 改人话「体脂率要在 0 到 60 之间……请核对」
+    //（`bfRangeText` 旧串已下屏；新句在 data-t 唯一一处，改区间／撤清单即红）。
+    assert.ok(over.html.includes('体脂率要在 0 到 60 之间'), '体脂率越界应在 prompt 标异常');
     assert.throws(() => dispatch('calorie.view.composition-wizard', { source: 'gym', bodyFatPct: 18, xx: 1 }, db), /不支持字段/, '未知字段应拦');
   } finally {
     db.close();
