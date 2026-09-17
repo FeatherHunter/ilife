@@ -259,7 +259,7 @@ describe('#613 批量落地', () => {
     assert.match(r.stderr, /失败在第 3 天 2026-09-09/);
   });
 
-  it('③c 真 CLI 用法错 exit 2（非布尔 dryRun）＋ 空库 exit 4', () => {
+  it('③c 真 CLI 用法错 exit 2（非布尔 dryRun）＋ 空库 exit 4 ＋ 缺开始日期 exit 4', () => {
     const { dir, db } = seedDir();
     db.close();
     assert.equal(cli('calorie.workout.land-weekend', { dryRun: 'yes' }, { SKILLS_DB_PATH: dir }).code, 2);
@@ -268,6 +268,14 @@ describe('#613 批量落地', () => {
     const r = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { SKILLS_DB_PATH: empty });
     assert.equal(r.code, 4);
     assert.match(r.stderr, /无训练计划/);
+    const nostart = tmp('nostart');
+    const ndb = openDb(join(nostart, 'calorie_data.db'));
+    seedPlan(ndb);
+    ndb.prepare("UPDATE workout_plan_config SET start_date = '' WHERE id = 1").run();
+    ndb.close();
+    const n = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { SKILLS_DB_PATH: nostart });
+    assert.equal(n.code, 4);
+    assert.match(n.stderr, /缺开始日期/);
   });
 
   it('⑤a R3 作息桥真实现（挡板成功）：不再恒 skip，真写段', async () => {

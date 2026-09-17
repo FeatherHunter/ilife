@@ -235,6 +235,7 @@ function writeLandBatch(
   const scopeLabel = LAND_BATCH_SCOPE_LABEL[scope];
   const plan = getPlan(db);
   if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划（先定训练计划）');
+  if (plan.sessions.length > 0 && !plan.config?.start_date) fail(4, '计划缺开始日期，无法定位周次');
   if (dryRun) {
     const perDay = dates.map((date) => ({ date, sessions: daySessionsOf(plan, date) }));
     const segs = perDay.reduce((n, d) => n + d.sessions.length, 0);
