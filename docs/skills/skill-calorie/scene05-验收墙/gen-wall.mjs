@@ -144,8 +144,10 @@ ${cells}
   return { name: out, html };
 }
 
-/** ③ 出索引：按页面族分组、每份一张卡，末尾列清「有意不出产物及其原因」（做法 §3-4）。 */
-function buildIndex(dir, rows, notShipped) {
+/** ③ 出索引：按页面族分组、每份一张卡，末尾列清「有意不出产物及其原因」（做法 §3-4）。
+ * `#614：标题里的可执行唤醒词数走清单 counts.executableWakeWords（此前写死的 27 随本册扩到 29）。 */
+function buildIndex(dir, rows, notShipped, counts) {
+  const words = counts && Number.isInteger(counts.executableWakeWords) ? counts.executableWakeWords : rows.length;
   const families = [...new Set(rows.map((r) => r.family || '未分组'))];
   const groups = families.map((f) => {
     const mine = rows.filter((r) => (r.family || '未分组') === f);
@@ -193,7 +195,7 @@ code{font-size:11.5px;color:#6e6e73;word-break:break-all}
 .note{margin-top:28px;background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:16px 18px}
 .note ul{margin:8px 0 0 20px;font-size:13px;line-height:1.9;color:#3a3a3c}
 </style></head><body><div class="wrap">
-<h1>场景05「健身计划 · 27 条唤醒词」验收总索引</h1>
+<h1>场景05「健身计划 · ${words} 条唤醒词」验收总索引</h1>
 <div class="sub">${rows.length} 件产物按页面族分组，每份一张卡（念哪句话／命令键／文件／该确认什么）。
 手机墙 <b>390 宽 × 3 列</b>看塌列，桌面墙 <b>1280 宽 × 1 列</b>看排布；两张墙、本索引与产物**同目录**，
 格数 ＝ 本索引卡的件数 ＝ 清单 <code>manifest.json</code> 的条目数（少任何一件，生成器自检点名并 exit 1）。
@@ -256,11 +258,11 @@ if (mode === 'stage') {
   const src = resolve(argv[1]), dst = resolve(argv[2]);
   if (src === dst) die(2, '--stage 的源目录不能就是产物目录本身');
   const rows = stage(src, dst);
-  const { notShipped } = loadManifest(dst);
+  const { mf, notShipped } = loadManifest(dst);
   const pages = [
     buildWall(dst, rows, WALL_MOBILE, 390, 820),
     buildWall(dst, rows, WALL_DESKTOP, 1280, 860),
-    buildIndex(dst, rows, notShipped),
+    buildIndex(dst, rows, notShipped, mf.counts),
   ];
   console.log(`墙与索引已重出：${join(dst, WALL_MOBILE)} / ${WALL_DESKTOP} / ${INDEX}`);
   selfCheck(dst, rows, pages);
@@ -274,9 +276,9 @@ if (mode === 'stage') {
   const w = Number(argOf(2, 390));
   const h = Number(argOf(3, 820));
   if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) die(2, `宽高必须是正数：${w}×${h}`);
-  const { rows, notShipped } = loadManifest(dir);
+  const { mf, rows, notShipped } = loadManifest(dir);
   const wall = buildWall(dir, rows, out, w, h);
-  buildIndex(dir, rows, notShipped);
+  buildIndex(dir, rows, notShipped, mf.counts);
   console.log(`出墙：${join(dir, out)}（${rows.length} 格 × ${w} 宽${w <= 500 ? '' : '，按比例缩显示'}）`);
   selfCheck(dir, rows, [wall, ...pagesOnDisk(dir).filter((p) => p.name === INDEX)]);
 }
