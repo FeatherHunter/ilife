@@ -2,12 +2,12 @@
  *
  * 判据先行（开工前实测，必须红）：这 10 条运动命令里有 4 条的代表唤醒词是 #111 那批新拟入口
  * （`看运动分类占比`／`看运动消耗趋势`／`看运动复盘` 三条用了新拟词，`-goal` 一条**没有**这个字段、
- * 速查表退回列命令键 `calorie.view.exercise-goal`），**不在**冻结的 436 条唤醒词表里；于是同一个场景
+ * 速查表退回列命令键 `calorie.view.exercise-goal`），**不在**冻结的 437 条唤醒词表里；于是同一个场景
  * HELP 两边列出的词不一样：场景页列 39 条真词，速查台列 3 个用户不会说的新拟词 ＋ 1 个命令键
  * → 第 1、2、3 件断言当刻必红（先红读数见证据件 §判据先行）。
  *
  * 四件断言：
- *  1. `src/exercise/commands.ts` 每条声明都有代表唤醒词，且都在 436 条词表里
+ *  1. `src/exercise/commands.ts` 每条声明都有代表唤醒词，且都在 437 条词表里
  *     （`src/triggers/wake-assets.ts` 的 `WAKE_ASSETS`，用户看的 HELP 场景页同源）；
  *  2. 重生成的 `SKILL.md` 速查表里，每条运动命令那一行列的正是它声明的代表唤醒词；
  *  3. **HELP 两边不打架**（判据重心）：对每条运动命令，速查台列的词
@@ -116,9 +116,9 @@ process.on('exit', (code) => {
   writeSync(1, 'RESULT: ' + RESULT.passed + '/' + RESULT.total + ' 通过' + tail + ' exit=' + code + '\n');
 });
 
-check('运动每条命令的代表唤醒词都在 436 条词表里', () => {
+check('运动每条命令的代表唤醒词都在 437 条词表里', () => {
   const words = new Set(WAKE_ASSETS.map((s) => s.wake_word));
-  assert.equal(WAKE_ASSETS.length, 436, '冻结词表条数应为 436');
+  assert.equal(WAKE_ASSETS.length, 437, '冻结词表条数应为 437');
   assert.ok(EXERCISE_COMMANDS.length >= 9, '运动命令声明少于票面口径 9 条：' + EXERCISE_COMMANDS.length);
   const blank = EXERCISE_COMMANDS.filter((c) => typeof c.wakeWord !== 'string' || c.wakeWord === '');
   assert.deepEqual(blank.map((c) => c.key), [], '这些命令没有代表唤醒词（速查表会退回列命令名）');

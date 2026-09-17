@@ -75,16 +75,19 @@ const flowOf = (sceneId) => {
  * #614 起：带可执行 CLI 429 ／ non-exec 7（order199–200 训记两条转入 exec）／ 唯一 CLI 386（两条新 CLI 不撞既有）。
  * #612 起：带可执行 CLI 430 ／ non-exec 6（order196 落地训练转入 exec）／ 唯一 CLI 387（新 CLI 不撞既有）。
  * #613 起：带可执行 CLI 432 ／ non-exec 4（order197–198 批量两条转入 exec）／ 唯一 CLI 389（两条新 CLI 不撞既有）。
+ * #652 起：场景 437 ／ exec 433（#621 定运动目标转入 exec）／ non-exec 4 不变；唯一 CLI 390（389＋定运动目标，
+ *   新 CLI 全局唯一已验；当刻实测去重后为 400，另 +10 系他席在途新 CLI——fa17ba8f 把本文件①总数钉红后、
+ *   后续断言（含本行）再没跑过，旧数失察，本票只认领 +1，不代钉那 +10）。
  */
 const FROZEN = Object.freeze({
   /** 速查台场景总数（`TRIGGERS` 条数）。 */
-  scenes: 436,
+  scenes: 437,
   /** 路由层 exec 命中的场景数（＝卡片 `editable_fields` 发出的行数）。 */
-  execScenes: 432,
+  execScenes: 433,
   /** 无任何 exec 路由的场景数（out-of-scope ＋ legacy-chain）。 */
   nonExecScenes: 4,
   /** 各 exec 场景的可执行 CLI **去重后**条数（同一条命令服务多个词）。 */
-  uniqueCli: 389,
+  uniqueCli: 390,
 });
 
 /** 场景卡片段（`data-scene-id="<id>"` 起、到下一张卡或分组收尾为止）。 */
@@ -102,9 +105,9 @@ const decodeEntities = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'")
 /* ── ① 口径：逐场景 CLI 恒取路由层 exec ──────────────────────────── */
 
 test('① exec 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由（红点：helpSceneCli 改回 main_prompt.cli 原文）', () => {
-  assert.equal(scenes.length, FROZEN.scenes, '场景总数＝实况 436（改口径＝改上面 FROZEN 那一行）');
+  assert.equal(scenes.length, FROZEN.scenes, '场景总数＝实况 437（改口径＝改上面 FROZEN 那一行）');
   const withCli = scenes.filter((s) => helpSceneCli(s.wake_word) !== null);
-  assert.equal(withCli.length, FROZEN.execScenes, 'exec 场景数＝实况 432');
+  assert.equal(withCli.length, FROZEN.execScenes, 'exec 场景数＝实况 433');
   assert.equal(scenes.length - withCli.length, FROZEN.nonExecScenes, 'non-exec 场景数＝实况 4');
   for (const scene of withCli) {
     const expected = routeCli(scene.wake_word);
@@ -118,7 +121,7 @@ test('① exec 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由（�
   // 改坏即红：把 `cliText(scene)` 从 `scene.id` 改成 CLI → 下一条用例的 id 唯一性断言先红。
   const cliValues = withCli.map((s) => helpSceneCli(s.wake_word));
   const uniq = new Set(cliValues);
-  assert.equal(uniq.size, FROZEN.uniqueCli, '唯一 CLI 条数＝实况 389');
+  assert.equal(uniq.size, FROZEN.uniqueCli, '唯一 CLI 条数＝实况 390（389＋定运动目标；若实测 400 系他席在途 CLI，见 FROZEN 上 #652 注）');
   assert.ok(uniq.size < cliValues.length, '唯一 CLI 数必须小于场景数（否则 id 冲突论证无据）');
   const byCli = new Map();
   for (const cli of cliValues) byCli.set(cli, (byCli.get(cli) ?? 0) + 1);
@@ -155,7 +158,7 @@ test('② 数据层：exec 场景的 `editable_fields` 形状固定（命令＋�
   const withField = scenes.filter((s) => Array.isArray(s.editable_fields) && s.editable_fields.length > 0);
   const execScenes = scenes.filter((s) => helpSceneCli(s.wake_word) !== null);
   assert.equal(withField.length, execScenes.length, '发字段的场景数 == exec 场景数');
-  assert.equal(withField.length, FROZEN.execScenes, '发字段的场景数＝实况 432（＝exec 场景数）');
+  assert.equal(withField.length, FROZEN.execScenes, '发字段的场景数＝实况 433（＝exec 场景数）');
   for (const scene of withField) {
     // #368：三行＝命令（注册表命令名）＋工作流程（子功能名）＋可执行命令（CLI 全文，恒末行）。
     // legacy 22 条没有子功能名（F3 恒把它们收在「既有唤醒词」下）⇒ 不发「工作流程」行，只有两行。
@@ -191,7 +194,7 @@ test('② 数据层：exec 场景的 `editable_fields` 形状固定（命令＋�
 
 test('② 渲染层：exec 场景各一条 `data-field="cli"`（file／inline），落在场景卡内的 Sheet 里（红点：字段发到卡外／不发）', () => {
   const execCount = scenes.filter((s) => helpSceneCli(s.wake_word) !== null).length;
-  assert.equal(execCount, FROZEN.execScenes, '渲染面的基数＝实况 432');
+  assert.equal(execCount, FROZEN.execScenes, '渲染面的基数＝实况 433');
   assert.equal(scenes.length - execCount, FROZEN.nonExecScenes, '不发字段的场景数＝实况 4');
   const flowCount = scenes.filter((s) => (s.editable_fields ?? []).some((f) => f.name === HELP_FLOW_FIELD_NAME)).length;
   for (const [label, html] of [['file', file.html], ['inline', inline.html]]) {
@@ -213,12 +216,12 @@ test('② 渲染层：exec 场景各一条 `data-field="cli"`（file／inline）
     '命令行须在 Sheet 内');
 });
 
-test('② 卡面 `cliText` 不动：436 条 `<code class="…-cli">` 逐字 = Scene.id（红点：把 CLI 塞进 id）', () => {
+test('② 卡面 `cliText` 不动：437 条 `<code class="…-cli">` 逐字 = Scene.id（红点：把 CLI 塞进 id）', () => {
   const cardClis = [...file.html.matchAll(/<code class="ilife-help-shell-cli">([^<]*)<\/code>/g)]
     .map((m) => decodeEntities(m[1]));
-  assert.equal(cardClis.length, FROZEN.scenes, '卡面条数＝实况 436');
+  assert.equal(cardClis.length, FROZEN.scenes, '卡面条数＝实况 437');
   assert.deepEqual(cardClis, scenes.map((s) => s.id), '卡面 CLI 文本恒 = Scene.id（壳冻结面 R32）');
-  assert.equal(new Set(cardClis).size, FROZEN.scenes, 'id 仍全局唯一（436/436）');
+  assert.equal(new Set(cardClis).size, FROZEN.scenes, 'id 仍全局唯一（437/437）');
   // 卡面文本不得是 exec CLI：那会撞 duplicate-id（唯一 CLI 384 < 场景 436，43 行落在 30 组碰撞里）
   assert.equal(cardClis.some((c) => c.startsWith('calorie-cmd-read ')), false);
   assert.ok(FROZEN.uniqueCli < FROZEN.scenes, '前置：唯一 CLI 数确实小于场景数（否则本用例无鉴别力）');
@@ -264,7 +267,7 @@ test('③ 冻结面恒 130 条／`Scene` 属性集不变（红点：往 Scene �
 test('④ text 态不含命令行（纯文本索引；#88 D-3 锁尖括号集恒 {<N>}）（红点：把 CLI 写进 text）', () => {
   assert.equal(count(text.html, HELP_CLI_FIELD_LABEL), 0, 'text 态不发命令行');
   const sceneLines = text.html.split('\n').filter((line) => line.startsWith('    '));
-  assert.equal(sceneLines.length, 436);
+  assert.equal(sceneLines.length, 437);
   assert.equal(sceneLines.some((line) => line.includes('calorie-cmd-read')), false,
     'text 态场景行仍是 `唤醒词 · id`（不得追加第三段 CLI）');
   assert.deepEqual([...new Set([...text.html.matchAll(/<[^<>]*>/g)].map((m) => m[0]))], ['<N>'],

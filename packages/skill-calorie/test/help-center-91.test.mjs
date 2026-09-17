@@ -3,7 +3,7 @@
  * 本文件锁四件事（逐条对票面验收）：
  *  ① 缺省语义（#139 改判，见下）：默认（无参）＝「卡路里help」的交付物＝老实物同款 HELP 文件
  *     （`卡路里_HELP_<TS>.html`，V4 三级目录壳）；速查台改由**显式** `mode:'file'` 取得。
- *     三态同源（同一 436 场景，顺序一致）：`file` 产物＝完整 HTML 文档，`inline` 产物＝片段，`text` 产物＝纯文本索引。
+ *     三态同源（同一 437 场景，顺序一致）：`file` 产物＝完整 HTML 文档，`inline` 产物＝片段，`text` 产物＝纯文本索引。
  *     改判依据：地图 #131 目的地（Q2「整个卡路里只有一个 HELP」＋ Q17「比对以老实物为准」）优先于旧地图 Q9
  *     口径；速查台本体（#88／#106／#107）内容与三态语义一字未动，只是不再占缺省位。
  *  ② 照片 10 键不回归：`q` 非空＝现找（3 命中）、`q:""`＝全量 10 键，`data` 键集恒 `items/total`（＋落点），
@@ -109,9 +109,9 @@ test('#91 ① 缺省（无参）＝HELP 文件：envelope 索引不变 ＋ 落 �
   assert.equal(d.mode, 'file', '缺省交付形态＝file');
   assert.equal(d.total, 10, 'items＝10 分组');
   assert.equal(d.items.length, 10);
-  assert.equal(d.sceneTotal, 436, '全量口径：436 场景');
+  assert.equal(d.sceneTotal, 437, '全量口径：437 场景');
   assert.equal(d.subgroupTotal, 54, '全量口径：54 子功能');
-  assert.equal(d.items.reduce((n, it) => n + it.sceneCount, 0), 436, '分组 sceneCount 求和＝436');
+  assert.equal(d.items.reduce((n, it) => n + it.sceneCount, 0), 437, '分组 sceneCount 求和＝437');
   assert.deepEqual(Object.keys(d.items[0]), ['id', 'icon', 'label', 'subgroupCount', 'sceneCount']);
   assert.equal(d.items[0].label, '主页', 'F3 逐字分组 label');
 
@@ -128,16 +128,16 @@ test('#91 ①b 速查台＝显式 mode file：完整文档落盘 ＋ 独立命�
   const r = runOk(dir, { mode: 'file' });
   const d = r.env.data;
   assert.equal(d.mode, 'file');
-  assert.equal(d.sceneTotal, 436);
+  assert.equal(d.sceneTotal, 437);
 
   const html = readFileSync(d.output, 'utf8');
   assert.equal(statSync(d.output).size, d.bytes, 'data.bytes ＝ 落盘字节数');
   assert.equal(Buffer.byteLength(html, 'utf8'), d.bytes);
   assert.ok(html.startsWith('<!DOCTYPE html>'), 'file 态＝完整文档');
   assert.ok(html.includes('<meta charset="utf-8">'));
-  assert.equal(countOf(html, 'data-scene-id="'), 436);
+  assert.equal(countOf(html, 'data-scene-id="'), 437);
   assert.equal(countOf(html, 'data-subgroup-id="'), 54);
-  assert.equal(countOf(html, 'data-action-id="'), 1308, '复制按钮 1308（#88/#90 接线保持）');
+  assert.equal(countOf(html, 'data-action-id="'), 1311, '复制按钮 1311（#88/#90 接线保持，每卡 3）');
   assert.match(basename(d.output), /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/, '#139 速查台独立命名');
   assert.ok(d.bytes > 900_000, 'file 产物量级（≠ 旧 10 键片段 31KB），实际 ' + d.bytes + ' B');
 
@@ -154,7 +154,7 @@ test('#91 ①b 速查台＝显式 mode file：完整文档落盘 ＋ 独立命�
 
 /* ── ② 三态（显式 mode，D6）＋ 三态同源 ＋ inline/text 不入 envelope ───────────── */
 
-test('#91 ② mode 显式三态：file／inline／text 同源 436 场景，inline 片段与 text 文本不入 envelope', () => {
+test('#91 ② mode 显式三态：file／inline／text 同源 437 场景，inline 片段与 text 文本不入 envelope', () => {
   const dir = mkEnv();
   const db = openDb(join(dir, 'calorie_data.db'));
   try {
@@ -167,10 +167,10 @@ test('#91 ② mode 显式三态：file／inline／text 同源 436 场景，inlin
     assert.equal(out.inline.data.mode, 'inline');
     assert.equal(out.text.data.mode, 'text');
 
-    // 三态同源：同一 436 场景、同一顺序
+    // 三态同源：同一 437 场景、同一顺序
     const fileIds = htmlSceneIds(out.file.html);
     const inlineIds = htmlSceneIds(out.inline.html);
-    assert.equal(fileIds.length, 436);
+    assert.equal(fileIds.length, 437);
     assert.deepEqual(fileIds, SCENE_IDS, 'file 态场景 id 序 ＝ 模块级 SceneData 序');
     assert.deepEqual(inlineIds, fileIds, 'inline 与 file 场景 id 序逐字相同');
     const textIds = textSceneIds(out.text.html);

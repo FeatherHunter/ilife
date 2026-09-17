@@ -105,16 +105,16 @@ test('#134 ⑤ token 覆盖序：壳 :root 在前，共享 token A 组在后', (
   assert.ok(html.includes('--fg:#1d1d1f'), '壳主文字 token 须在');
 });
 
-test('#134 ⑥ 数据契约：5 键＋10组/54子组/436场景＋subtitle 分钟', () => {
+test('#134 ⑥ 数据契约：5 键＋10组/54子组/437场景＋subtitle 分钟', () => {
   const data = buildHelpFileData(D0);
   const back = parseHelpData(renderHelpShellHtml(data));
   assert.deepEqual(Object.keys(back).sort(), ['contact', 'groups', 'skill_name', 'subtitle', 'title']);
-  assert.equal(back.subtitle, '10 分类 · 436 场景 · 更新于 2026-09-06 22:07');
+  assert.equal(back.subtitle, '10 分类 · 437 场景 · 更新于 2026-09-06 22:07');
   assert.equal(back.groups.length, 10);
   assert.equal(back.groups.reduce((n, g) => n + g.subgroups.length, 0), 54);
   assert.equal(
     back.groups.reduce((n, g) => n + g.subgroups.reduce((a, s) => a + s.scenes.length, 0), 0),
-    436,
+    437,
   );
 });
 

@@ -6,7 +6,7 @@
  *   ① WAKE_TABLE 6 行，三条新行 key／cli 逐字同路由层（`src/goal/routes.ts:34-35,37`）；
  *   ② 三词 `lookupWake`／`searchHelp` 首命中都是可执行 cli（逐字等于路由层那串）；
  *   ③ 三词走 `calorie.help.lookup` 真出口，首条即该串；
- *   ④ SoT 零改动（`TRIGGERS.length === 436`）＋饮食三别名回归（仍首命中 diet.add）；
+ *   ④ SoT 437（`TRIGGERS.length === 437`，#621 定运动目标转入；本票仍只许加别名）＋饮食三别名回归（仍首命中 diet.add）；
  *   ⑤ 三条 view 命令在 seedFull 临时库真出口 exit 0（seed 照抄 `goal-wizard-251.test.mjs:29-39`）。
  *
  * 运行（持锁，票 291）：
@@ -115,8 +115,8 @@ test('#291 乙④ 三词 calorie.help.lookup 真出口首条即该串', () => {
   }
 });
 
-test('#291 乙⑤ SoT 零改动（436）＋饮食三别名回归（仍首命中 diet.add）', () => {
-  assert.equal(TRIGGERS.length, 436, 'SoT 条数漂移：本票不许动冻结词表');
+test('#291 乙⑤ SoT（437：#621 定运动目标转入）＋饮食三别名回归（仍首命中 diet.add）', () => {
+  assert.equal(TRIGGERS.length, 437, 'SoT 条数漂移：本票只许加别名，不许动场景词表（#621 加一词除外，见票面）');
   for (const phrase of ['记早餐', '记午餐', '记晚餐']) {
     assert.equal(routeWakeword(phrase).key, 'calorie.diet.add');
     const hits = lookupWake(HELP_LOOKUP, phrase);

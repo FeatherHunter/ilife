@@ -2,7 +2,7 @@
  *
  * 三条守卫（#88 验收原文 ＋ 返修单 R1-2）：
  *  ① 占位符 **6/6 冻结标记逐个 0 残留** ＋ 泛化 `<!--[A-Z0-9-]+-->` 残留 0 ＋ `report.markers` 六键；
- *  ② **id 唯一**（数据层 436/436 ＋ HTML 层 ＋ 人为重复抛 `duplicate-id`）；
+ *  ② **id 唯一**（数据层 437/437 ＋ HTML 层 ＋ 人为重复抛 `duplicate-id`）；
  *  ③ **copyText 单实现**（`COPY_RUNTIME_JS === buildSharedHelpersJs()`；剥掉 helpers 块后全文
  *     `navigator.clipboard`／`execCommand`／`onclick=` 命中 0；技能侧 src 零复制实现）。
  *
@@ -41,7 +41,7 @@ const stripHelpers = (html) => html.split('<script>' + COPY_RUNTIME_JS + '</scri
 
 /* ── S1 数据模型（A1） ─────────────────────────────────────────── */
 
-test('A1 10 分组／54 子功能／436 场景（红点：分组或子功能聚合逻辑改坏）', () => {
+test('A1 10 分组／54 子功能／437 场景（红点：分组或子功能聚合逻辑改坏）', () => {
   assert.equal(sceneData.groups.length, 10);
   assert.equal(sceneData.groups.reduce((n, g) => n + g.subgroups.length, 0), 54);
   // 条数派生（#645：手写 436 随词表增删必陈化；投影丢条由本断言捕获，SoT 收缩由 t291 的绝对钉守）。
@@ -136,7 +136,7 @@ test('R-cond-7 id 轴子集：F3 十 id ⊆ SoT CATEGORIES 十三 id（红点：
   assert.equal(categories.size, 13);
 });
 
-test('R1-12 436 条 prompt_template 无 </script>／<!--（红点：数据里注入破壳串）', () => {
+test('R1-12 437 条 prompt_template 无 </script>／<!--（红点：数据里注入破壳串）', () => {
   for (const scene of flat(sceneData)) {
     assert.ok(!scene.prompt_template.includes('</script>'));
     assert.ok(!scene.prompt_template.includes('<!--'));
@@ -206,7 +206,7 @@ test('A2 复用冻结面 130 条 implemented／0 pending（红点：base-render 
   assert.equal(SPEC_FROZEN_SURFACE.filter((entry) => entry.status === 'implemented').length, SPEC_FROZEN_SURFACE.length);
 });
 
-test('A2 file 态：完整文档 ＋ 436 卡／54 子功能／1308 复制按钮（红点：壳结构改动）', () => {
+test('A2 file 态：完整文档 ＋ 437 卡／54 子功能／1311 复制按钮（红点：壳结构改动）', () => {
   assert.match(file.html, /^<!DOCTYPE html>/);
   assert.match(file.html, /<meta charset="utf-8">/);
   assert.match(file.html, /<\/html>\s*$/);
@@ -230,7 +230,7 @@ test('P-5 inline 态：只取 <section> 片段 ＋ <style> 落点钉死（红点
   assert.ok(inline.html.trimEnd().endsWith('</script>'), 'helpers 必须在片段最后');
 });
 
-test('三态同源：file／inline 的 436 个 data-scene-id 逐字同序；text 覆盖同一 436 个 id（红点：三态各派生一份数据）', () => {
+test('三态同源：file／inline 的 437 个 data-scene-id 逐字同序；text 覆盖同一 437 个 id（红点：三态各派生一份数据）', () => {
   const ids = (html) => [...html.matchAll(/data-scene-id="([^"]*)"/g)].map((m) => m[1]);
   assert.deepEqual(ids(inline.html), ids(file.html));
   assert.equal(ids(file.html).length, flat(sceneData).length);
@@ -274,7 +274,7 @@ test('守卫① report.markers 六键（计数与 filled 口径钉死）（红�
   }
 });
 
-test('守卫② id 唯一：数据层 436/436 ＋ 子功能 54/54（红点：id 派生规则碰撞）', () => {
+test('守卫② id 唯一：数据层 437/437 ＋ 子功能 54/54（红点：id 派生规则碰撞）', () => {
   const ids = flat(sceneData).map((s) => s.id);
   assert.equal(new Set(ids).size, ids.length);
   const subgroupIds = sceneData.groups.flatMap((g) => g.subgroups.map((s) => s.id));
@@ -282,7 +282,7 @@ test('守卫② id 唯一：数据层 436/436 ＋ 子功能 54/54（红点：id 
   assert.ok(subgroupIds.every((id, i, all) => all.indexOf(id) === i));
 });
 
-test('守卫② id 唯一：HTML 层 data-scene-id 436/436 ＋ 元素 id 全唯一（红点：壳内 id 派生用数据里的重复值）', () => {
+test('守卫② id 唯一：HTML 层 data-scene-id 437/437 ＋ 元素 id 全唯一（红点：壳内 id 派生用数据里的重复值）', () => {
   const sceneIds = [...file.html.matchAll(/data-scene-id="([^"]*)"/g)].map((m) => m[1]);
   assert.equal(sceneIds.length, flat(sceneData).length);
   assert.equal(new Set(sceneIds).size, sceneIds.length);

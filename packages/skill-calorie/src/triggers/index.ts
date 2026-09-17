@@ -1,4 +1,4 @@
-/** 卡路里唤醒词路由总表：10 场景（SoT 436 唤醒词全量，顺序按场景 01→10，场景内保 SoT 序）。 */
+/** 卡路里唤醒词路由总表：10 场景（SoT 437 唤醒词全量，顺序按场景 01→10，场景内保 SoT 序）。 */
 import { SCENE_01_HOME } from './scene-01-home.js';
 import { SCENE_02_DIET } from './scene-02-diet.js';
 import { SCENE_03_WEIGHT } from './scene-03-weight.js';

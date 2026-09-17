@@ -2429,6 +2429,16 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "types": [
               "回执"
             ]
+          },
+          {
+            "id": "goal_set_exercise",
+            "title": "定运动目标",
+            "wake_word": "定运动目标",
+            "status": "",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定运动目标」。\n\n我想设定每天运动消耗目标(卡)。请先出预检确认页给我看(运动目标现值、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的运动目标(卡):____",
+            "types": [
+              "回执"
+            ]
           }
         ]
       },

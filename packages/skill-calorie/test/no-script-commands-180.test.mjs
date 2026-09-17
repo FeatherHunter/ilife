@@ -76,7 +76,7 @@ test('#180 场景数据的三个字段里不得再出现脚本命令（今天必
     }
   }
   // 解析到的条目数先钉住：格式走样导致空转时，上面那份账就成了假账。
-  assert.equal(records, 436, '场景数据条目数（10 文件逐行解析所得）');
+  assert.equal(records, 437, '场景数据条目数（10 文件逐行解析所得）');
   if (hits.length === 0) return;
   const byField = (field) => hits.filter((h) => h.field === field).length;
   const sceneLines = [...perScene].map(([scene, n]) => `${scene} ${n}`).join('、');

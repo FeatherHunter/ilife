@@ -1,6 +1,6 @@
 /** T2-① #133 · 唤醒词资产清单断言（`src/triggers/wake-assets.ts`）。
  *
- * 覆盖任务四项：总数 436／分组 10／≥6 条 wake_word 逐字／HELP 不在资产内（元词豁免）。
+ * 覆盖任务四项：总数 437／分组 10／≥6 条 wake_word 逐字／HELP 不在资产内（元词豁免）。
  * 加固：prompt 全量指纹（逐字证据）、legacy 三源一致、verdict 辨析（23＝理由码闭集）。
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/wake-assets-133.test.mjs`
  */
@@ -32,11 +32,11 @@ const SPOT = [
 ];
 
 describe('T2-① #133 唤醒词资产清单', () => {
-  it('总数 436（扁平／总量常量／id 索引／分组求和四口径一致）', () => {
-    assert.equal(WAKE_ASSETS.length, 436);
-    assert.equal(WAKE_ASSET_TOTAL, 436);
-    assert.equal(Object.keys(SCENE_BY_ID).length, 436);
-    assert.equal(flatSubgroups.reduce((n, s) => n + s.scenes.length, 0), 436);
+  it('总数 437（扁平／总量常量／id 索引／分组求和四口径一致）', () => {
+    assert.equal(WAKE_ASSETS.length, 437);
+    assert.equal(WAKE_ASSET_TOTAL, 437);
+    assert.equal(Object.keys(SCENE_BY_ID).length, 437);
+    assert.equal(flatSubgroups.reduce((n, s) => n + s.scenes.length, 0), 437);
   });
 
   it('分组 10（id／label／icon 逐字＝实物，子组 54）', () => {
@@ -67,9 +67,9 @@ describe('T2-① #133 唤醒词资产清单', () => {
 
   it('prompt 全量指纹（逐字证据：总字符＋sha256）', () => {
     const concat = WAKE_ASSETS.map((s) => s.prompt_template).join('');
-    assert.equal(concat.length, 48357);
+    assert.equal(concat.length, 48488);
     assert.equal(createHash('sha256').update(concat, 'utf8').digest('hex'),
-      '1d6f805421c070babc4f9b8a38d6e5dc62d017d2b0e91a3ee6ae8507fd6b7c06');
+      '4f4ed7c9a89b5cec20b39aeb003b80f7156c2351c24485ae75946eda5844cd33');
   });
 
   it('legacy 三源一致（资产无 types 22 条 ＝ 新家无 key 22 条，逐词相等）', () => {

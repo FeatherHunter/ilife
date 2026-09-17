@@ -8,7 +8,7 @@
  *     落 `<SKILLS_DB_PATH>/calorie_html/`、`data.output` 为绝对路径且与 `delivery.path` 同值、
  *     字节＝落盘大小、stdout 恒一行 JSON（P9）；
  *  ② 壳＝老实物同款 V4 三级目录（`<title>卡路里 · 唤醒词速查台</title>` ＋ `id="help-data"`，
- *     载荷 10 分类／436 场景（老实物 `:195` 口径）；
+ *     载荷 10 分类／437 场景（老实物 `:195` 口径＋#652 定运动目标一词）；
  *  ③ 反向锁（防退回孤岛／串产物）：缺省产物**不是**速查台（无 `id="ilife-help-shell"`），
  *     文件名**不得**再出现 `身材照`；速查台须显式 `mode` 且独立命名；
  *  ④ 并发两次调用 → 落点永不相同；同秒时后到者 `_2` 递补（`wx` 独占，#128 语义未被本改动破坏）。
@@ -92,7 +92,7 @@ test('#139 ① 缺省＝「卡路里help」HELP 文件：卡路里_HELP_<TS>.htm
   assert.equal(r.env.shape, 'list');
   assert.equal(r.stdout.trim().split('\n').length, 1, 'P9：stdout 恒一行 JSON');
   assert.equal(d.mode, 'file');
-  assert.equal(d.sceneTotal, 436, '全量口径：436 场景');
+  assert.equal(d.sceneTotal, 437, '全量口径：437 场景');
 
   const out = d.output;
   assert.ok(isAbsolute(out), 'data.output 须绝对路径：' + out);
@@ -109,7 +109,7 @@ test('#139 ① 缺省＝「卡路里help」HELP 文件：卡路里_HELP_<TS>.htm
   assert.equal(d.bytes, Buffer.byteLength(html, 'utf8'));
 });
 
-test('#139 ② 壳＝老实物同款 V4 三级目录（10 分类／436 场景）', () => {
+test('#139 ② 壳＝老实物同款 V4 三级目录（10 分类／437 场景）', () => {
   const dir = mkDir('shell');
   const r = runOk(dir, undefined);
   const html = readFileSync(r.env.data.output, 'utf8');
@@ -124,7 +124,7 @@ test('#139 ② 壳＝老实物同款 V4 三级目录（10 分类／436 场景）
   assert.equal(data.groups.length, 10, '10 分类');
   const scenes = data.groups.reduce(
     (n, g) => n + g.subgroups.reduce((m, s) => m + s.scenes.length, 0), 0);
-  assert.equal(scenes, 436, '436 场景（老实物全表）');
+  assert.equal(scenes, 437, '437 场景（老实物全表＋#652 定运动目标一词）');
   assert.ok(r.env.data.bytes > 200_000 && r.env.data.bytes < 400_000,
     '量级对齐老实物 303KB，实际 ' + r.env.data.bytes + ' B');
 });
