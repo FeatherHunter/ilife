@@ -3,7 +3,9 @@ export class MemoFetchError extends Error {
   readonly code:
     | 'MEMO_DB_MISSING' | 'MEMO_DB_UNREADABLE' | 'MEMO_NOTE_CORRUPT'
     | 'MEMO_NOTE_NOT_FOUND' | 'MEMO_BAD_QUERY'
-    | 'LARK_UNAVAILABLE' | 'LARK_NOT_LOGGED_IN' | 'LARK_DENIED' | 'LARK_TIMEOUT' | 'LARK_BAD_RESPONSE';
+    | 'LARK_UNAVAILABLE' | 'LARK_NOT_LOGGED_IN' | 'LARK_DENIED' | 'LARK_TIMEOUT' | 'LARK_BAD_RESPONSE'
+    /** #661：远端调用到了但那一趟没成（非 0 退出／回执缺标识）——与「连不上」分开记，回执里才分得出 unavailable 与 failed。 */
+    | 'LARK_TASK_FAILED';
   constructor(code: MemoFetchError['code'], message: string, options?: { cause?: unknown }) {
     super(message, options);
     this.name = 'MemoFetchError';

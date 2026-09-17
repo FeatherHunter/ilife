@@ -6,8 +6,10 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { Envelope } from 'base-link-core';
 import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
-import { openMemoDb, listNotes, getNote, searchNotes, addNote, updateNote, removeNote, larkReady, MemoFetchError } from '../fetch/index.js';
+import { openMemoDb, listNotes, getNote, searchNotes, updateNote, MemoFetchError } from '../fetch/index.js';
 import { normalizeTop, normalizeSub, normalizeRemindAt, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
+// #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
+import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes } from '../wish/index.js';
 import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
@@ -157,24 +159,44 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
 }
 
 // 十一键分发：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
-function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): unknown {
+// #661：写命令分两支——心愿分类走「合成写」（本地 ＋ 飞书任务一次成；回执分字段；最终没达成时退出码非 0），
+// 其它分类照旧只落本地（回执里 `remote` 那一格如实写「不适用」，不假装同步过）。
+// 返回 `{data, exit}`：`exit` 非 0 时回执照打（分字段是回执的本分），退出码在 main 里落实。
+interface DispatchOut { readonly data: unknown; readonly exit: number }
+function ok(data: unknown): DispatchOut { return { data, exit: 0 }; }
+
+function asIds(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length === 0) fail(2, 'ids 须为非空字符串数组');
+  return value.map((v) => {
+    if (typeof v !== 'string' || v.length === 0) fail(2, 'ids 里每一项都须是非空字符串');
+    return v;
+  });
+}
+
+function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): DispatchOut {
   switch (key) {
     case 'memo.search': {
       const items = params.q !== undefined
         ? searchNotes(db, String(params.q), { category: params.category as string | undefined, sub: params.sub as string | undefined })
         : listNotes(db).filter((n) => (params.category === undefined || n.category === params.category));
-      return { items, total: items.length };
+      const hit = items.filter((n) => dueMatches(n, params));
+      return ok({ items: hit, total: hit.length });
     }
-    case 'memo.detail': return { item: getNote(db, needStr(params, 'id')) };
+    case 'memo.detail': return ok({ item: getNote(db, needStr(params, 'id')) });
     case 'memo.create': {
       const c = crudCreate(params);
       const top = normalizeTop(params.category);
       const sub = normalizeSub(params.sub);
       const remindAt = params.remindAt !== undefined ? normalizeRemindAt(params.remindAt) : null;
-      const n = addNote(db, { title: c.title, body: c.body, category: top, sub, remindAt });
-      return { ok: true, message: '已记一条：' + n.id };
+      const r = ensureWish(db, { title: c.title, body: c.body, category: top, sub, remindAt, due: params.due });
+      return { data: r.receipt, exit: r.exit };
     }
     case 'memo.update': {
+      // 批量排期（老 `set-due`）：一批 id ＋ 一个排期日期（空值＝清期），走心愿那条合成写。
+      if (params.ids !== undefined) {
+        const r = setWishDue(db, { ids: asIds(params.ids), due: params.due });
+        return { data: r.receipt, exit: r.exit };
+      }
       const id = crudUpdate(params).id;
       const patch: Partial<MemoNote> = {};
       if (params.title !== undefined || params.body !== undefined) {
@@ -185,46 +207,48 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): unk
       if (params.sub !== undefined) patch.sub = normalizeSub(params.sub);
       if (params.remindAt !== undefined) patch.remindAt = normalizeRemindAt(params.remindAt);
       if (params.done !== undefined) patch.done = params.done === true;
-      const n = updateNote(db, id, patch);
-      return { ok: true, message: '已更新：' + n.id };
+      if (params.due !== undefined) patch.due = dueForCategory(patch.category ?? getNote(db, id).category, params.due);
+      const r = updateWish(db, { id, patch });
+      return { data: r.receipt, exit: r.exit };
     }
     case 'memo.remove': {
       if (params.mode === 'abandon') {
         const id = needStr(params, 'id');
         updateNote(db, id, { remindAt: null });
-        return { ok: true, message: '已废弃提醒（笔记保留）：' + id };
+        return ok({ ok: true, message: '已废弃提醒（笔记保留）：' + id });
       }
       const r = crudRemove(params);
-      removeNote(db, r.id, true);
-      return { ok: true, message: '已删除：' + r.id };
+      const w = removeWish(db, r.id);
+      return { data: w.receipt, exit: w.exit };
     }
     case 'memo.remind': {
       const items = listNotes(db).filter((n) => n.remindAt);
       const done = params.done === true;
       const out = items.filter((n) => (n.done === true) === done);
-      return { items: out, total: out.length };
+      return ok({ items: out, total: out.length });
     }
     case 'memo.wish': {
-      const items = listNotes(db).filter((n) => n.category === '心愿');
-      return { items, total: items.length };
+      const items = listNotes(db).filter((n) => n.category === '心愿').filter((n) => dueMatches(n, params));
+      return ok({ items, total: items.length });
     }
     case 'memo.sync': {
-      const gate = larkReady();
-      return { ok: true, message: '飞书就绪：' + gate.openId + '（同步执行归 M7 端到端）' };
+      // #661：反向对账三步（本地缺标识补建／远端完成→本地／远端改期→本地），回执带 11 项统计。
+      const r = reconcileWishes(db);
+      return { data: r.receipt, exit: r.exit };
     }
-    case 'memo.batch': return { ok: true, message: '批量改分类向导须交互确认（M5 只登记意图）' };
+    case 'memo.batch': return ok({ ok: true, message: '批量改分类向导须交互确认（M5 只登记意图）' });
     case 'memo.stats': {
       const all = listNotes(db);
       const metrics: Record<string, number> = { count: all.length };
       for (const n of all) metrics['cat.' + n.category] = (metrics['cat.' + n.category] || 0) + 1;
-      return { metrics };
+      return ok({ metrics });
     }
     // #229：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
     // 照 skill-bill/src/cli/cmd_read.ts:449-451 的同一道内部断言——防的是「改回无条件开库」这个静默回退。
     case 'memo.help.lookup':
       fail(1, '内部错误：memo.help.lookup 须走 dispatchHelp（开库之前）');
-      return null;
-    default: fail(3, '未知 memo key：' + key); return null;
+      return ok(null);
+    default: fail(3, '未知 memo key：' + key); return ok(null);
   }
 }
 
@@ -258,10 +282,14 @@ async function main() {
   timer.unref();
   let env: Envelope | null = null;
   let delivery: HtmlReceipt | undefined;
+  // #661：合成写「最终没达成」时回执照打、退出码在写完回执之后落实（分字段是回执的本分，不能因为非 0 就吞掉）。
+  let writeExit = 0;
   try {
     // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余 10 键照旧走 dispatch（内部开库）。
     const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
-    env = buildMemoEnvelope(o.key, help ? help.data : dispatch(o.key, params, openMemoDb(join(dbPath, 'memo'))));
+    const out = help === null ? dispatch(o.key, params, openMemoDb(join(dbPath, 'memo'))) : { data: help.data, exit: 0 };
+    writeExit = out.exit;
+    env = buildMemoEnvelope(o.key, out.data);
     const built = env;
     // B4 既有语义：`--html <路径>` 逐字写用户给的路径，内容仍是本包的 envelope 片段（`renderEnvelopeHtml`）。
     const sectionHtml = (): string => {
@@ -290,6 +318,11 @@ async function main() {
   } finally { clearTimeout(timer); }
   // #83／#144 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，envelope 既有五字段一字不改、序不变。
   process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
+  // #661：本地那一侧成了、远端那一侧没成 ⇒ 回执已分字段写明，退出码仍要如实反映「这一趟没达成」（契约 A3／A6）。
+  if (writeExit !== 0) {
+    console.error('ERR ' + writeExit + ': 合成写没达成（本地侧已落，远端侧见回执 remote 那一格）');
+    process.exit(writeExit);
+  }
 }
 
 await main();

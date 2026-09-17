@@ -38,6 +38,19 @@ function inRange(v, start, end) {
   const d = day(v);
   return d !== '' && d >= day(start) && d <= day(end);
 }
+/**
+ * 时刻粒度的窗口判定（两端闭）。`+search-event` 的分片是 **6 小时窗口**，只按日期比会把一整天的都算进来，
+ * 于是「分片规避单次返回上限」那条读数会假绿（每片都回全天）。抠不出时刻者退回日期粒度（老侧仍照旧）。
+ */
+function inWindow(v, start, end) {
+  const s = String(v || '');
+  const t = Date.parse(s.replace(' ', 'T'));
+  if (!s || Number.isNaN(t)) return inRange(v, start, end);
+  const ta = start ? Date.parse(String(start)) : NaN;
+  const tb = end ? Date.parse(String(end)) : NaN;
+  if (Number.isNaN(ta) || Number.isNaN(tb)) return inRange(v, start, end);
+  return t >= ta && t <= tb;
+}
 
 trace();
 const state = readState();
@@ -61,7 +74,7 @@ if (argv[0] === 'auth' && argv[1] === 'check') {
 // ── 日历域（作息管家）────────────────────────────────────────────────────────
 if (argv[0] === 'calendar' && argv[1] === '+agenda') {
   const items = (state.events || [])
-    .filter((e) => inRange(e.start, flag('--start') || '0000-01-01', flag('--end') || '9999-12-31'))
+    .filter((e) => inWindow(e.start, flag('--start') || '0000-01-01', flag('--end') || '9999-12-31'))
     .map((e) => ({
       event_id: e.event_id, summary: e.summary, description: e.description || '',
       start_time: { datetime: e.start }, end_time: { datetime: e.end },
@@ -71,7 +84,7 @@ if (argv[0] === 'calendar' && argv[1] === '+agenda') {
 if (argv[0] === 'calendar' && argv[1] === '+search-event') {
   const hit = (state.events || [])
     .filter((e) => e.indexed !== false)
-    .filter((e) => inRange(e.start, flag('--start') || '0000-01-01', flag('--end') || '9999-12-31'))
+    .filter((e) => inWindow(e.start, flag('--start') || '0000-01-01', flag('--end') || '9999-12-31'))
     .slice(0, state.searchCap === undefined ? 20 : state.searchCap)
     .map((e) => ({
       event_id: e.event_id, summary: e.summary,
@@ -106,6 +119,21 @@ if (argv[0] === 'calendar' && argv[1] === '+update') {
   }
   writeState(s);
   say({ ok: true, data: { event_id: id, summary: ev.summary, description: ev.description, start_time: { datetime: ev.start }, end_time: { datetime: ev.end } } });
+}
+if (argv[0] === 'calendar' && argv[1] === 'events' && argv[2] === 'get') {
+  // 三阶段拉取的阶段 3 靠它单条补 description（`+search-event` 不返回描述）。
+  const s = readState();
+  const ev = (s.events || []).find((e) => e.event_id === flag('--event-id'));
+  if (!ev) die('无此 event：' + flag('--event-id'), 4);
+  say({
+    ok: true,
+    data: {
+      event: {
+        event_id: ev.event_id, summary: ev.summary, description: ev.description || '',
+        start_time: { datetime: ev.start }, end_time: { datetime: ev.end },
+      },
+    },
+  });
 }
 if (argv[0] === 'calendar' && argv[1] === 'events' && argv[2] === 'delete') {
   const s = readState();
@@ -179,6 +207,17 @@ if (argv[0] === 'task' && argv[1] === '+complete') {
   t.completed_at = new Date().toISOString();
   writeState(s);
   say({ ok: true, data: { task: { guid: t.guid, completed_at: t.completed_at } } });
+}
+// #661：task 域的删除。老实现自认「task 无 +delete shortcut」（feishu_sync.py:834）⇒ 这条**没有老形状可照**，
+// 按 +create／+update／+complete 这一族的既有形状给：`task +delete --task-id <guid>`（`--task-guid` 也认，
+// 与 `tasks get` 的取参写法一致）。删一个不在的对象按幂等处理（返回 deleted:0，不报错）。
+if (argv[0] === 'task' && argv[1] === '+delete') {
+  const s = readState();
+  const id = flag('--task-id') || flag('--task-guid');
+  const before = (s.tasks || []).length;
+  s.tasks = (s.tasks || []).filter((t) => t.guid !== id);
+  writeState(s);
+  say({ ok: true, data: { task_id: id, deleted: before - s.tasks.length } });
 }
 if (argv[0] === 'task' && argv[1] === 'tasklists' && argv[2] === 'list') {
   say({ ok: true, data: { items: [{ name: 'stub 清单', guid: 'tl_stub' }] } });

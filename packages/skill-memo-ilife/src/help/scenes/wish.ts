@@ -8,7 +8,7 @@
  *   ① 老实物契约载荷 `备忘录_HELP_20260820_162453.html`（老 `script/memo_render.py:527-599` 的产出，逐字零改写）；
  *   ② 老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0，不写死第四份副本，裁决 9）。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           清洗后 30 条 sha256＝7c72fb924f8457e2130ebb0b331ae583c3aaaa64f4a04c27cf01da581c325827
+ *           清洗后 30 条 sha256＝ada2433dab16349ac130527b9a875adf57b2904fd3afd63f79801d17169786a4
  *
  * 与老骨架的**有意偏离**（逐条对账见 `docs/skills/skill-memo-ilife/t227-assets-report.md`）：
  *   1. 二级组 id 老 0 起 → 新 1 起（票 6 V8=A）；
@@ -79,7 +79,7 @@ export const MEMO_HELP_WISH = {
           title: "删心愿(自动心愿分类过滤)",
           wake_word: "删心愿",
           status: "",
-          prompt_template: "请帮我删除心愿(唤醒词:删心愿 · 子唤醒词自动带心愿过滤):\n\n请按以下格式填写你的参数:\n\n  心愿 ID: _____________ (数字,如 15)\n\n期望效果:\n  AI 删除这条心愿;若有飞书任务,会自动标完成。",
+          prompt_template: "请帮我删除心愿(唤醒词:删心愿 · 子唤醒词自动带心愿过滤):\n\n请按以下格式填写你的参数:\n\n  心愿 ID: _____________ (数字,如 15)\n\n期望效果:\n  AI 删除这条心愿;若有飞书任务,会一并删除。",
           types: ["采集", "回执"],
           editable_fields: [
             { name: "id", label: "笔记 ID", value: "", hint: "心愿 ID", required: false },

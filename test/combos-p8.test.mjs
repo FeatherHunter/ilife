@@ -41,12 +41,15 @@ function read(key, params) {
 }
 
 // fake lark-cli（sync 全绿用；与 memo-e2e 同构）+ tmp 种子（真实 DB 零触碰）。
+// #661：`memo.sync` 已是真反向对账（要拉远端任务列表），挡板得答任务域那条读命令——
+// 答空列表＝「远端一条任务都没有」，对账应全 0 且全成（errors 为空 ⇒ 退出码 0）。
 function makeFakeCli(dir) {
   const logic = [
     'const a = process.argv.slice(2);',
     "if (a[0] === '--version') { console.log('lark-cli 9.9.9-fake'); }",
     "else if (a[0] === 'auth' && a[1] === 'status') { console.log(JSON.stringify({ identities: { user: { openId: 'ou_fake' } } })); }",
     "else if (a[0] === 'auth' && a[1] === 'check') { process.exit(a[3] === 'task' ? 0 : 1); }",
+    "else if (a[0] === 'task') { console.log(JSON.stringify({ ok: true, data: { items: [] } })); }",
     'else { console.error(\'unknown\'); process.exit(2); }',
     '',
   ].join('\n');

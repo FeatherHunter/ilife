@@ -13,6 +13,10 @@ export interface MemoNote {
   updatedAt: string;
   remindAt?: string | null;
   done?: boolean;
+  /** #661 · 排期日期（老库列名 `due`，`init.sql:13`）：**仅心愿生效**，其它分类静默置空。 */
+  due?: string | null;
+  /** #661 · 飞书任务标识（老库列名 `feishu_task_guid`，`init.sql:12`）：远端标识回写本地的那一格。 */
+  feishuTaskGuid?: string | null;
 }
 
 export interface MemoDb { dir: string; }
@@ -53,10 +57,10 @@ export function listNotes(db: MemoDb): MemoNote[] {
 function stamp(): string { return new Date().toISOString(); }
 
 // 新增：id 唯一（m+36进制时间+随机），写盘即读回校验；失败 throw 不谎报回执。
-export function addNote(db: MemoDb, input: { title: string; body: string; category: string; sub?: string | null; remindAt?: string | null }): MemoNote {
+export function addNote(db: MemoDb, input: { title: string; body: string; category: string; sub?: string | null; remindAt?: string | null; due?: string | null; feishuTaskGuid?: string | null }): MemoNote {
   const id = 'm' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
   const now = stamp();
-  const note: MemoNote = { id, title: input.title, body: input.body, category: input.category, sub: input.sub ?? null, createdAt: now, updatedAt: now, remindAt: input.remindAt ?? null, done: false };
+  const note: MemoNote = { id, title: input.title, body: input.body, category: input.category, sub: input.sub ?? null, createdAt: now, updatedAt: now, remindAt: input.remindAt ?? null, due: input.due ?? null, feishuTaskGuid: input.feishuTaskGuid ?? null, done: false };
   const p = join(db.dir, id + '.json');
   try { writeFileSync(p, JSON.stringify(note, null, 2), 'utf8'); }
   catch (e) { throw new MemoFetchError('MEMO_DB_UNREADABLE', '笔记写盘失败：' + id); }
