@@ -9,6 +9,7 @@
  * #608 随动：`fetch`／`backfill` 已实现，“未实现的五条”收成三条（只剩 #610 的三条）。
  * #610 随动：`key` 已实现，“未实现的三条”收成两条（只剩 overlay-plan／run-sync）。
  * #610 二轮：`overlay-plan` 已实现，只剩 run-sync 一条。
+ * #610 三轮：`run-sync` 已实现，八条全实现（declared 为空）。
  */
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,12 +27,10 @@ const CLI = join(PKG, 'dist', 'xunji', 'cli.js');
 
 /** 老 8 条子命令（逐字，顺序照老 CLI 的装配顺序）。 */
 const EIGHT = ['verify', 'fetch', 'upsert', 'push-plan', 'overlay-plan', 'backfill', 'key', 'run-sync'];
-/** 未实现只剩一条（#610 的 run-sync；key／overlay-plan 已实现）。 */
-const OWNERS = {
-  'run-sync': '#610',
-};
-/** 已实现的（verify #606；upsert／push-plan #607；fetch／backfill #608；key／overlay-plan #610）。 */
-const IMPLEMENTED = ['verify', 'upsert', 'push-plan', 'fetch', 'backfill', 'key', 'overlay-plan'];
+/** 未实现零条（#610 三条全落：key／overlay-plan／run-sync 均已实现）。 */
+const OWNERS = {};
+/** 已实现的全部八条（verify #606；upsert／push-plan #607；fetch／backfill #608；key／overlay-plan／run-sync #610）。 */
+const IMPLEMENTED = ['verify', 'upsert', 'push-plan', 'fetch', 'backfill', 'key', 'overlay-plan', 'run-sync'];
 
 const tmp = (name) => join(mkdtempSync(join(tmpdir(), 't606-')), name);
 
@@ -183,24 +182,15 @@ describe('#606 训记模块骨架', () => {
     assert.match(verifyNoName.stderr, /缺参数：<动作名>/);
   });
 
-  it('未实现的一条：明确拒绝（非 0 ＋ 点名归属票），不吐任何成功形态的读数', () => {
-    const argv = {
-      'run-sync': ['run-sync', '--days', '2'],
-    };
-    for (const [name, args] of Object.entries(argv)) {
-      const run = xunji(...args);
-      assert.equal(run.code, 1, name + ' 未实现却退 ' + run.code);
-      assert.ok(run.stderr.includes('未实现：' + name + '（归 ' + OWNERS[name] + '）'), run.stderr);
-      const data = JSON.parse(run.stdout);
-      assert.equal(data.owner_ticket, OWNERS[name]);
-      assert.ok(!('ok' in data) && !('results' in data) && !('err' in data), name + ' 吐了成功形态的读数');
-    }
+  it('八条全实现：declared 为空，不再有“未实现”的明确拒绝', () => {
+    const declared = mod.XUNJI_SUBCOMMANDS.filter((s) => s.state === 'declared').map((s) => s.name);
+    assert.deepEqual(declared, []);
   });
 
   it('分派函数与命令行入口同一口径（runXunjiCommand 是门里那件；#607 起异步，调用方 await）', async () => {
     assert.equal((await mod.runXunjiCommand(['verify', '杠铃深蹲'])).code, 0);
     assert.equal((await mod.runXunjiCommand(['verify', '深蹲'])).code, 4);
-    assert.equal((await mod.runXunjiCommand(['run-sync', '--days', '2'])).code, 1);
+    assert.equal((await mod.runXunjiCommand(['run-sync', '--days', '0'])).code, 1);
     assert.equal((await mod.runXunjiCommand([])).code, 1);
   });
 

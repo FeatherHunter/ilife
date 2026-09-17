@@ -5,7 +5,7 @@
  *
  * 本件只放**声明**：每条的名字／一句话职责／用法／参数／会走的退出码／用法示例／实现状态／归属票。
  * 实现住各自的家（`verify` 见 #606、`upsert`／`push-plan` 见 #607、`fetch`／`backfill` 见 #608、
- * `key` 见 #610；`overlay-plan` 见 #610；其余一条（`run-sync`）按票面只留位，调用即明确拒绝，见 `run.ts`）。
+ * `key` 见 #610；`overlay-plan` 见 #610；`run-sync` 见 #610（八条全实现，无留位）。
  *
  * 为什么这件不叫 `commands.ts`：`scripts/gen-cli.mjs:80-104` 把 `src/<能力>/commands.ts` 当**卡路里命令**
  * 的权威声明读（六字段：kind／key／shape／title／example／run），且根测试 `test/calorie-routing-81.test.mjs:122-126`
@@ -162,10 +162,10 @@ export const XUNJI_SUBCOMMANDS: readonly XunjiSubcommand[] = [
       { flag: '--start-offset', value: 'N', required: false, note: '起始日偏移（0＝今天）' },
       { flag: '--dry-run', value: '', required: false, note: '只建状态文件，不实际跑' },
     ],
-    exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.api],
+    exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.error, XUNJI_EXIT_CODES.auth, XUNJI_EXIT_CODES.api],
     example: 'python scripts/xunji_bridge.py run-sync --days 3 --dry-run',
-    state: 'declared',
-    ownerTicket: '#610',
+    state: 'implemented',
+    ownerTicket: null,
   },
 ];
 
