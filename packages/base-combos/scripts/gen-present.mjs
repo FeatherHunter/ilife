@@ -4,7 +4,7 @@
 // 加注册条目只改 yaml，本文件与输出文件一律不手改（输出头有 @generated）。
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const yamlPath = join(pkgDir, 'combos.yaml');
@@ -37,8 +37,17 @@ export function renderPresent(keys) {
   return lines.join('\n');
 }
 
-const text = readFileSync(yamlPath, 'utf8');
-const keys = combosKeys(text);
-if (!keys.length) { console.error('ERR: combos.yaml combos 段为空'); process.exit(1); }
-writeFileSync(outPath, renderPresent(keys));
-console.log('present 已生成：' + keys.length + ' 键 → ' + outPath);
+// 直接执行才写盘：import 只用纯函数（测试断言"盘上 == 生成输出"是真门，不再边导入边覆盖）。
+function runMain() {
+  const text = readFileSync(yamlPath, 'utf8');
+  const keys = combosKeys(text);
+  if (!keys.length) { console.error('ERR: combos.yaml combos 段为空'); process.exit(1); }
+  writeFileSync(outPath, renderPresent(keys));
+  console.log('present 已生成：' + keys.length + ' 条命令 → ' + outPath);
+}
+
+const isMain = (() => {
+  try { return process.argv[1] ? pathToFileURL(process.argv[1]).href === import.meta.url : false; }
+  catch { return false; }
+})();
+if (isMain) runMain();
