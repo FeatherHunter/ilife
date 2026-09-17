@@ -16,8 +16,9 @@ export type { AddInput, CompareKind } from './record.js';
 export {
   VALID_COMPLETIONS, validateEvent, assertCoverage24h,
   validateUpsertInput, validateEnsureInput, validateUpdateInput,
-  parsePlanOp, parseRecordOp,
+  parsePlanOp, parseRecordOp, parseFeishuMode, parsePlanView,
+  PLAN_WRITE_OPS_OVERWRITE, PLAN_WRITE_OPS_FILL,
 } from './plan.js';
-export type { PlanEventInput, PlanWriteOp, RecordWriteOp } from './plan.js';
+export type { PlanEventInput, PlanWriteOp, RecordWriteOp, PlanFeishuMode, PlanView } from './plan.js';
 export { routeWakeword, WAKE_TABLE } from './wakewords.js';
 export type { ScheduleKey, WakeRoute, WakeEntry } from './wakewords.js';

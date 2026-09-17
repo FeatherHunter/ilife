@@ -4,7 +4,8 @@ export class ScheduleFetchError extends Error {
     | 'SCHEDULE_DB_MISSING' | 'SCHEDULE_DB_UNREADABLE' | 'SCHEDULE_RECORD_CORRUPT'
     | 'SCHEDULE_RECORD_NOT_FOUND' | 'SCHEDULE_PLAN_NOT_FOUND' | 'SCHEDULE_BAD_QUERY'
     | 'SCHEDULE_EMPTY_RANGE'
-    | 'LARK_UNAVAILABLE' | 'LARK_NOT_LOGGED_IN' | 'LARK_DENIED' | 'LARK_TIMEOUT' | 'LARK_BAD_RESPONSE';
+    | 'LARK_UNAVAILABLE' | 'LARK_NOT_LOGGED_IN' | 'LARK_DENIED' | 'LARK_TIMEOUT' | 'LARK_BAD_RESPONSE'
+    | 'LARK_NO_EVENT_ID';
   constructor(code: ScheduleFetchError['code'], message: string, options?: { cause?: unknown }) {
     super(message, options);
     this.name = 'ScheduleFetchError';

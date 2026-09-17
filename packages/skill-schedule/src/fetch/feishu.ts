@@ -1,6 +1,8 @@
-// 取数层·飞书同步点：lark-cli 四门（存在+版本+登录+日历写权限），缺失即 throw。
-// 老家对照 scripts/feishu_sync.py：7 条子命令（--version/auth status/calendar +create/+update/+search-event/+agenda/events delete）。
-// 超时 15/30/60 三档；本模块不直连 DB（diff 编排在 cli 层）。
+// 取数层·飞书平台层：lark-cli 四门（存在+版本+登录+日历写权限）＋ 日历域六条子命令封装。
+// 老家对照 scripts/feishu_sync.py：`--version`／`auth status`／`calendar +agenda`／`+search-event`／
+// `+create`／`+update`／`events get`／`events delete`。超时 15/30/60 三档。
+// 本文件只做「平台怎么调、回什么形状」；三阶段合并拉取、判重、归属清理等编排住 src/plan（能力目录）。
+// 本模块不直连 DB。缺依赖即 throw（不返空，避免把「读不到」伪装成「远端没有」）。
 import { accessSync, constants } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -10,6 +12,12 @@ export const LARK_TIMEOUT_SHORT_MS = 15000;
 export const LARK_TIMEOUT_NORMAL_MS = 30000;
 export const LARK_TIMEOUT_LONG_MS = 60000;
 export const LARK_CALENDAR_SCOPE = 'calendar';
+/** 日历域一律走主日历（老家每条子命令都带 `--calendar-id primary`）。 */
+export const LARK_CALENDAR_ID = 'primary';
+/** 归属锚：写进远端事件描述的前缀（口径唯一处）。判断「这条远端对象是不是我管的」只看它。老出处 `schedule_db.py:1137`。 */
+export const FEISHU_OWNER_MARK = '作息管家自动同步';
+/** 自检留下的远端对象前缀（D-03：用户可据此识别并手工清掉；默认不跑，只走显式 op=check）。 */
+export const FEISHU_SENTINEL_MARK = '[作息管家测试]';
 
 // 跨平台定位：显式覆盖 → Windows npm 全局 → where/which → 固定路径；找不到返 null。
 export function findLarkCli(): string | null {
@@ -99,35 +107,142 @@ export function larkReady(): LarkReady {
   return { cliPath: cli, version, openId };
 }
 
-export interface FeishuEvent { eventId?: string; summary?: string; start?: string; end?: string; raw: unknown; }
+// ── 归属锚的读写（唯一口径处）────────────────────────────────────────────────
+export function composeFeishuDescription(notes?: string | null): string {
+  const n = typeof notes === 'string' ? notes.trim() : '';
+  return n ? FEISHU_OWNER_MARK + ' · ' + n : FEISHU_OWNER_MARK;
+}
 
-function mustJson(cli: string, args: string[], what: string): unknown {
+export function isOwnedDescription(description: unknown): boolean {
+  return typeof description === 'string' && description.includes(FEISHU_OWNER_MARK);
+}
+
+// ── 事件形状（平台回包 → 中性结构）──────────────────────────────────────────
+export interface LarkEvent {
+  eventId: string;
+  summary: string;
+  /** ISO 8601，形如 `2026-09-20T09:00:00+08:00`。 */
+  start: string;
+  end: string;
+  description: string;
+  /** 判「这条远端对象是不是我管的」的唯一依据＝描述里的归属锚。 */
+  owned: boolean;
+}
+
+function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
+
+function eventOf(raw: Record<string, unknown>): LarkEvent {
+  const desc = str(raw.description);
+  return {
+    eventId: str(raw.event_id),
+    summary: str(raw.summary),
+    start: str((raw.start_time as Record<string, unknown> | undefined)?.datetime),
+    end: str((raw.end_time as Record<string, unknown> | undefined)?.datetime),
+    description: desc,
+    owned: isOwnedDescription(desc),
+  };
+}
+
+function searchItemOf(raw: Record<string, unknown>): LarkEvent {
+  // `+search-event` 不返回 description（老家注释 `feishu_sync.py:414`），故owned 当刻一律 false，
+  // 由阶段 3 单条补齐后再判。
+  return {
+    eventId: str(raw.event_id),
+    summary: str(raw.summary),
+    start: str((raw.start as Record<string, unknown> | undefined)?.date_time),
+    end: str((raw.end as Record<string, unknown> | undefined)?.date_time),
+    description: '',
+    owned: false,
+  };
+}
+
+function mustJson(cli: string, args: string[], what: string): Record<string, unknown> {
   const r = runLark(cli, args, LARK_TIMEOUT_LONG_MS);
   if (!r.ok) throw new ScheduleFetchError('LARK_BAD_RESPONSE', '飞书' + what + '失败：' + r.stderr.slice(0, 200));
-  try { return JSON.parse(r.stdout); }
+  try { return JSON.parse(r.stdout) as Record<string, unknown>; }
   catch { throw new ScheduleFetchError('LARK_BAD_RESPONSE', '飞书' + what + '返回非 JSON'); }
 }
 
-export function searchFeishuEvents(cli: string, start: string, end: string): unknown {
-  return mustJson(cli, ['calendar', '+search-event', '--start', start, '--end', end], '查询');
+/** 阶段 1 甲路：`+agenda`（带 description，但有索引延迟）。 */
+export function larkAgenda(cli: string, startISO: string, endISO: string): LarkEvent[] {
+  const j = mustJson(cli, ['calendar', '+agenda', '--calendar-id', LARK_CALENDAR_ID, '--start', startISO, '--end', endISO], '议程拉取');
+  const payload = j.data;
+  if (!Array.isArray(payload)) return [];
+  return payload.map((it) => eventOf(it as Record<string, unknown>)).filter((e) => e.eventId !== '');
 }
 
-export function createFeishuEvent(cli: string, start: string, end: string, summary: string, description: string): unknown {
-  return mustJson(
+/** 阶段 1 乙路：`+search-event` 单窗（索引最新，但无 description、单次有返回上限）。 */
+export function larkSearchEvents(cli: string, startISO: string, endISO: string): LarkEvent[] {
+  const j = mustJson(cli, ['calendar', '+search-event', '--calendar-id', LARK_CALENDAR_ID, '--start', startISO, '--end', endISO], '检索');
+  const data = j.data as Record<string, unknown> | undefined;
+  const items = data && Array.isArray(data.items) ? data.items : [];
+  return items.map((it) => searchItemOf(it as Record<string, unknown>)).filter((e) => e.eventId !== '');
+}
+
+/** 阶段 3：单条 `events get`（补 description）。读不到返 null，不抛。 */
+export function larkGetEvent(cli: string, eventId: string): LarkEvent | null {
+  let j: Record<string, unknown>;
+  try {
+    j = mustJson(cli, ['calendar', 'events', 'get', '--calendar-id', LARK_CALENDAR_ID, '--event-id', eventId], '单条读取');
+  } catch { return null; }
+  const data = j.data as Record<string, unknown> | undefined;
+  const ev = data?.event as Record<string, unknown> | undefined;
+  if (!ev) return null;
+  const out = eventOf(ev);
+  return { ...out, eventId: out.eventId || eventId };
+}
+
+/** 建远端对象：拿不到标识即 throw（D-11：绝不「建了却把空标识写回本地」）。 */
+export function larkCreateEvent(cli: string, startISO: string, endISO: string, summary: string, description: string): LarkEvent {
+  const args = [
+    'calendar', '+create', '--calendar-id', LARK_CALENDAR_ID,
+    '--start', startISO, '--end', endISO, '--summary', summary,
+  ];
+  if (description) args.push('--description', description);
+  const j = mustJson(cli, args, '创建');
+  const data = (j.data || {}) as Record<string, unknown>;
+  const id = str(data.event_id);
+  if (!id) {
+    throw new ScheduleFetchError('LARK_NO_EVENT_ID', '飞书建事件成功但没给出标识（不写空标识回本地）：' + JSON.stringify(j).slice(0, 200));
+  }
+  return {
+    eventId: id,
+    summary: str(data.summary) || summary,
+    start: str((data.start_time as Record<string, unknown> | undefined)?.datetime) || startISO,
+    end: str((data.end_time as Record<string, unknown> | undefined)?.datetime) || endISO,
+    description: str(data.description) || description,
+    owned: isOwnedDescription(str(data.description) || description),
+  };
+}
+
+/** 改远端对象：`--start`/`--end` 互锁（给一个必须给另一个，由调用方保证）。 */
+export function larkUpdateEvent(
+  cli: string, eventId: string,
+  patch: { start?: string; end?: string; summary?: string; description?: string },
+): LarkEvent {
+  const args = ['calendar', '+update', '--calendar-id', LARK_CALENDAR_ID, '--event-id', eventId];
+  if (patch.start !== undefined && patch.end !== undefined) args.push('--start', patch.start, '--end', patch.end);
+  if (patch.summary !== undefined) args.push('--summary', patch.summary);
+  if (patch.description !== undefined) args.push('--description', patch.description);
+  const j = mustJson(cli, args, '更新');
+  const data = (j.data || {}) as Record<string, unknown>;
+  const desc = str(data.description) || patch.description || '';
+  return {
+    eventId,
+    summary: str(data.summary) || patch.summary || '',
+    start: str((data.start_time as Record<string, unknown> | undefined)?.datetime) || patch.start || '',
+    end: str((data.end_time as Record<string, unknown> | undefined)?.datetime) || patch.end || '',
+    description: desc,
+    owned: isOwnedDescription(desc),
+  };
+}
+
+/** 删远端对象：失败即 throw（同槽清理与孤儿清理都靠它，不许静默）。 */
+export function larkDeleteEvent(cli: string, eventId: string, calendarId: string = LARK_CALENDAR_ID): void {
+  const r = runLark(
     cli,
-    ['calendar', '+create', '--start', start, '--end', end, '--summary', summary, '--description', description],
-    '创建',
+    ['calendar', 'events', 'delete', '--calendar-id', calendarId, '--event-id', eventId],
+    LARK_TIMEOUT_LONG_MS,
   );
-}
-
-export function updateFeishuEvent(cli: string, eventId: string, start: string, end: string, summary: string): unknown {
-  return mustJson(
-    cli,
-    ['calendar', '+update', '--event-id', eventId, '--start', start, '--end', end, '--summary', summary],
-    '更新',
-  );
-}
-
-export function deleteFeishuEvent(cli: string, calendarId: string, eventId: string): unknown {
-  return mustJson(cli, ['calendar', 'events', 'delete', '--calendar-id', calendarId, '--event-id', eventId], '删除');
+  if (!r.ok) throw new ScheduleFetchError('LARK_BAD_RESPONSE', '飞书删除失败：' + eventId + ' ' + r.stderr.slice(0, 200));
 }

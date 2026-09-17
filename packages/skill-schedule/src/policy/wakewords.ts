@@ -47,9 +47,9 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '跨月对比', key: 'schedule.record.compare', preset: { kind: 'months' } },
   { phrase: '类别深挖', key: 'schedule.record.compare', preset: { kind: 'category' } },
   { phrase: '异常检测', key: 'schedule.record.compare', preset: { kind: 'anomaly' } },
-  // plan.today（#12/#15/#16：查日程 + 概览 + 多日）。
-  { phrase: '查多日计划', key: 'schedule.plan.today' },
-  { phrase: '24h 概览', key: 'schedule.plan.today' },
+  // plan.today（#12/#15/#16：查日程 + 概览 + 多日）。后两条走 24h 聚合视图（分桶），#12 走全字段 list。
+  { phrase: '查多日计划', key: 'schedule.plan.today', preset: { view: 'aggregate' }, needs: ['dates'] },
+  { phrase: '24h 概览', key: 'schedule.plan.today', preset: { view: 'aggregate' } },
   { phrase: '查日程', key: 'schedule.plan.today' },
   { phrase: '看日程', key: 'schedule.plan.today' },
   // plan.write（#13/#14/#17/#18/#19/#20/#21 + 复盘 4 粒度）。

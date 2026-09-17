@@ -123,15 +123,43 @@ export function validateUpdateInput(params: Record<string, unknown>): { id: numb
   return { id: id as number, patch };
 }
 
-export type PlanWriteOp = 'preview' | 'upsert' | 'ensure' | 'update' | 'deactivate' | 'review' | 'sync';
+export type PlanWriteOp = 'preview' | 'upsert' | 'ensure' | 'update' | 'deactivate' | 'review' | 'sync' | 'check';
 
 export function parsePlanOp(params: Record<string, unknown>): PlanWriteOp {
   const op = params.op === undefined ? 'preview' : params.op;
-  const ops: PlanWriteOp[] = ['preview', 'upsert', 'ensure', 'update', 'deactivate', 'review', 'sync'];
+  const ops: PlanWriteOp[] = ['preview', 'upsert', 'ensure', 'update', 'deactivate', 'review', 'sync', 'check'];
   if (typeof op !== 'string' || !ops.includes(op as PlanWriteOp)) {
     throw new SchedulePolicyError('POLICY_BAD_INPUT', 'op 非法（期望 ' + ops.join('/') + '）：' + JSON.stringify(op));
   }
   return op as PlanWriteOp;
+}
+
+/** 写命令的两档语义（S-13）：`upsert`＝整段覆盖，`ensure`＝缺则补。 */
+export const PLAN_WRITE_OPS_OVERWRITE: PlanWriteOp[] = ['upsert'];
+export const PLAN_WRITE_OPS_FILL: PlanWriteOp[] = ['ensure'];
+
+/** 远端开关（合成写的参数面）：`ensure`（缺省）＝把这条事实对齐到两侧；`skip`＝这一趟只要本地。 */
+export type PlanFeishuMode = 'ensure' | 'skip';
+
+export function parseFeishuMode(params: Record<string, unknown>): PlanFeishuMode {
+  const v = params.feishu;
+  if (v === undefined || v === null) return 'ensure';
+  if (v !== 'ensure' && v !== 'skip') {
+    throw new SchedulePolicyError('POLICY_BAD_INPUT', 'feishu 非法（期望 ensure/skip）：' + JSON.stringify(v));
+  }
+  return v;
+}
+
+/** 日程查询的两种视图：`list`（缺省，全字段）与 `aggregate`（24h 聚合视图，丢 notes／同步态／ID）。 */
+export type PlanView = 'list' | 'aggregate';
+
+export function parsePlanView(params: Record<string, unknown>): PlanView {
+  const v = params.view;
+  if (v === undefined || v === null) return 'list';
+  if (v !== 'list' && v !== 'aggregate') {
+    throw new SchedulePolicyError('POLICY_BAD_INPUT', 'view 非法（期望 list/aggregate）：' + JSON.stringify(v));
+  }
+  return v;
 }
 
 export type RecordWriteOp = 'add' | 'amend' | 'summary';

@@ -8,7 +8,11 @@ function exampleParams(e: { key: ScheduleKey; needs?: string[]; preset?: Record<
   const p: Record<string, unknown> = { ...(e.preset || {}) };
   for (const n of e.needs || []) {
     if (p[n] === undefined) {
-      p[n] = n === 'id' ? 1 : n === 'start' || n === 'end' ? '2026-09-01' : n === 'date' ? '2026-09-01' : '<值>';
+      // 示例要**照抄即能跑**：每个槽位给一个真能过校验的样例值（数组槽位给数组，别给 "<值>"）。
+      p[n] = n === 'id' ? 1
+        : n === 'start' || n === 'end' || n === 'date' ? '2026-09-01'
+          : n === 'dates' ? ['2026-09-21', '2026-09-22']
+            : '<值>';
     }
   }
   const keys = Object.keys(p);

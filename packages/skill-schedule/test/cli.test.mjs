@@ -32,7 +32,7 @@ before(() => {
   assert.equal(run(['schedule.record.write', '--params', P({ op: 'add', date: '2026-09-06', time_start: '09:00', time_end: '10:00', activity: '调优', category: '工作.AI调优' })]).status, 0);
   assert.equal(run(['schedule.record.write', '--params', P({ op: 'add', date: '2026-09-07', time_start: '07:00', time_end: '08:00', activity: '跑步', category: '健康.运动' })]).status, 0);
   assert.equal(run(['schedule.record.write', '--params', P({ op: 'add', date: '2026-08-06', time_start: '09:00', time_end: '10:00', activity: '调优', category: '工作.AI调优' })]).status, 0);
-  assert.equal(run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-06', time_start: '09:00', time_end: '10:00', title: '晨会' })]).status, 0);
+  assert.equal(run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-06', time_start: '09:00', time_end: '10:00', title: '晨会', feishu: 'skip' })]).status, 0);
 });
 
 describe('作息唯一出口 cmd_read（8 键全票）', () => {
@@ -84,23 +84,35 @@ describe('作息唯一出口 cmd_read（8 键全票）', () => {
     assert.equal(m.status, 0);
   });
   it('plan.write：preview/upsert/ensure 幂等/update/deactivate/review', () => {
+    // #660 起写 op 统一成合成写（本地 ＋ 远端一条命令）：本用例只判本地那一半，故显式 `feishu:'skip'`；
+    // 合成写的四条读数与退出码语义见 `test/plan-feishu-660.test.mjs`（打挡板）。
     const ev = (s, e, title) => ({ time_start: s, time_end: e, title });
     const pv = run(['schedule.plan.write', '--params', P({ op: 'preview', date: '2026-09-09', events: [ev('00:00', '12:00', '上'), ev('12:00', '23:59', '下')] })]);
     assert.equal(pv.status, 0);
     assert.match(JSON.parse(pv.stdout).data.message, /预览通过/);
     assert.equal(run(['schedule.plan.write', '--params', P({ op: 'preview', date: '2026-09-09', events: [ev('01:00', '12:00', '上')] })]).status, 2);
-    const up = run(['schedule.plan.write', '--params', P({ op: 'upsert', date: '2026-09-09', events: [ev('00:00', '12:00', '上'), ev('12:00', '23:59', '下')] })]);
+    const up = run(['schedule.plan.write', '--params', P({ op: 'upsert', date: '2026-09-09', events: [ev('00:00', '12:00', '上'), ev('12:00', '23:59', '下')], feishu: 'skip' })]);
     assert.equal(up.status, 0);
-    const en = run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-10', time_start: '09:00', time_end: '10:00', title: '补' })]);
+    const en = run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-10', time_start: '09:00', time_end: '10:00', title: '补', feishu: 'skip' })]);
     assert.match(JSON.parse(en.stdout).data.message, /已补计划/);
-    const en2 = run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-10', time_start: '09:00', time_end: '10:00', title: '补' })]);
+    const en2 = run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-10', time_start: '09:00', time_end: '10:00', title: '补', feishu: 'skip' })]);
     assert.match(JSON.parse(en2.stdout).data.message, /幂等/);
     const id = JSON.parse(run(['schedule.plan.today', '--params', P({ date: '2026-09-09' })]).stdout).data.items[0].id;
-    assert.equal(run(['schedule.plan.write', '--params', P({ op: 'update', id, completion: '已完成' })]).status, 0);
-    assert.equal(run(['schedule.plan.write', '--params', P({ op: 'deactivate', id })]).status, 0);
+    assert.equal(run(['schedule.plan.write', '--params', P({ op: 'update', id, completion: '已完成', feishu: 'skip' })]).status, 0);
+    assert.equal(run(['schedule.plan.write', '--params', P({ op: 'deactivate', id, feishu: 'skip' })]).status, 0);
     const rv = run(['schedule.plan.write', '--params', P({ op: 'review', date: '2026-09-09' })]);
     assert.equal(rv.status, 0);
     assert.match(JSON.parse(rv.stdout).data.message, /已复盘/);
+  });
+  it('#660 退出码：远端不在场时本地照写、回执分字段、退出码非 0（降级那一条）', () => {
+    const r = run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-11', time_start: '09:00', time_end: '10:00', title: '降级读' })],
+      { LARK_CLI_PATH: join(DB, 'no-lark-cli') });
+    assert.equal(r.status, 4, '本地成了但远端没成 ⇒ 退出码非 0');
+    const d = JSON.parse(r.stdout).data;
+    assert.equal(d.local, 'created');
+    assert.equal(d.remote, 'unavailable');
+    assert.equal(d.remoteId, null);
+    assert.equal(d.achieved, false);
   });
   it('help.lookup：全表 + 现找 + 空结果指引 + 飞书缺失阻断', () => {
     // #203：缺省（不给参）改走「HELP 文件交付」支（见 test/help-delivery-203.test.mjs）；

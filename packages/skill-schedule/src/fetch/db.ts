@@ -321,6 +321,18 @@ export function getPlanEventsRange(handle: ScheduleDb, start: string, end: strin
   }
 }
 
+// 某日的首建／末改时间（24h 聚合视图随附；照老家 `_read_plan_dict` 的 MIN(created_at)/MAX(updated_at)，含已软删的行）。
+export function getPlanTimestamps(handle: ScheduleDb, date: string): { createdAt: string | null; updatedAt: string | null } {
+  try {
+    const r = handle.db.prepare(
+      'SELECT MIN(created_at) AS c, MAX(updated_at) AS u FROM schedule_plans WHERE date = ?',
+    ).get(date) as { c: string | null; u: string | null };
+    return { createdAt: r?.c ?? null, updatedAt: r?.u ?? null };
+  } catch (e) {
+    throw new ScheduleFetchError('SCHEDULE_DB_UNREADABLE', '日程时间戳读取失败：' + date, { cause: e });
+  }
+}
+
 export function getPlanEvent(handle: ScheduleDb, id: number): PlanEvent {
   if (!Number.isInteger(id) || id <= 0) {
     throw new ScheduleFetchError('SCHEDULE_PLAN_NOT_FOUND', '日程事件 id 非法：' + String(id));

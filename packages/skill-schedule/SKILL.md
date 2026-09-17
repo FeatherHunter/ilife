@@ -60,8 +60,8 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 | 跨月对比 | schedule.record.compare | analysis | `schedule-cmd-read schedule.record.compare --params '{"kind":"months"}'` |
 | 类别深挖 | schedule.record.compare | analysis | `schedule-cmd-read schedule.record.compare --params '{"kind":"category"}'` |
 | 异常检测 | schedule.record.compare | analysis | `schedule-cmd-read schedule.record.compare --params '{"kind":"anomaly"}'` |
-| 查多日计划 | schedule.plan.today | list | `schedule-cmd-read schedule.plan.today` |
-| 24h 概览 | schedule.plan.today | list | `schedule-cmd-read schedule.plan.today` |
+| 查多日计划 | schedule.plan.today | list | `schedule-cmd-read schedule.plan.today --params '{"view":"aggregate","dates":["2026-09-21","2026-09-22"]}'` |
+| 24h 概览 | schedule.plan.today | list | `schedule-cmd-read schedule.plan.today --params '{"view":"aggregate"}'` |
 | 查日程 | schedule.plan.today | list | `schedule-cmd-read schedule.plan.today` |
 | 看日程 | schedule.plan.today | list | `schedule-cmd-read schedule.plan.today` |
 | 商量计划 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"preview"}'` |

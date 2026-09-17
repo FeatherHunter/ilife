@@ -9,6 +9,10 @@
  *
  * 本件的写法是**清单驱动**的：每条读数按「已达标」或「已登记缺口（点名属主票）」两态断言。
  * 于是两头都有机器读数——把已达标的改坏会红；把缺口悄悄修好而不动登记，同样会红（逼着收口）。
+ *
+ * #660 收口（2026-09-17）：作息侧挂账的四处缺口已落地——T4 登记表四条全转 `pass`，
+ * T3 的「调用留痕应为空」改成「必须碰远端且标识回写」，T6（D-12 远端判重）与 T7（D-11 不写空标识）
+ * 改成已修态。改坏任一处即红，这就是本件的收口动作。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -57,17 +61,23 @@ test('#659 T3 接缝自证 · 三条痕迹（回执／本地库行／远端收�
   assert.equal(env.key, 'schedule.plan.write');
   assert.equal(env.shape, 'receipt');
   assert.deepEqual(s.localNew().map((x) => [x.date, x.time_start, x.time_end]), [[D, '09:00', '10:00']]);
-  assert.equal(s.calls().length, 0, '本实现这条路径还没接远端：调用留痕应为空（缺口读数之一，见 T4）');
+  // #660 收口：这条路径已接上远端（原缺口读数「调用留痕应为空」随该票作废）——
+  // 现在这一跑要能在远端建对象、并把标识回写本地库里，三条痕迹才都算「当场可读」。
+  const calls = s.calls().map((c) => c.argv);
+  assert.ok(calls.length > 0, '合成写必须碰远端（一条命令把两侧对齐）');
+  assert.equal(calls.filter((a) => a[1] === '+create').length, 1, '首跑在远端建且只建一个');
+  assert.match(String(s.localNew()[0].feishu_event_id), /^fs_evt_/, '远端标识已回写本地');
 });
 
 /* ─────────────── 二、四条读数模板（每条能力逐条读） ─────────────── */
 
-/** 登记表：本能力四条读数当刻该是什么态。改坏→红；缺口被修好而没动登记→也红（这就是收口动作）。 */
+/** 登记表：本能力四条读数当刻该是什么态。改坏→红；缺口被修好而没动登记→也红（这就是收口动作）。
+ *  #660 收口：四条全部达标（本地 ＋ 远端一次成；三格齐；远端不可用即降级且标 `unavailable`；远端对象带归属锚）。 */
 const REGISTERED = {
   idempotent: { state: 'pass' },
-  receipt: { state: 'gap', owner: '#660', why: '回执只有一个 message 字符串，本地侧／远端侧／远端标识三格读不到' },
-  degrade: { state: 'gap', owner: '#660', why: '这条路径不碰远端，回执也就无从标明远端侧没成' },
-  ownership: { state: 'gap', owner: '#660', why: '远端对象上还没有归属标记（这条路径根本没建远端对象）' },
+  receipt: { state: 'pass' },
+  degrade: { state: 'pass' },
+  ownership: { state: 'pass' },
 };
 
 test('#659 T4 四条读数模板 · 作息 plan.write op=ensure', () => {
@@ -96,7 +106,7 @@ test('#659 T4 四条读数模板 · 作息 plan.write op=ensure', () => {
       `#659 读数「${v.name}」当刻=${v.verdict}，登记表说=${reg.state}` + (reg.owner ? `（属主 ${reg.owner}：${reg.why}）` : ''));
   }
   assert.equal(verdicts.length, 4, '四条读数一条都不能少');
-  assert.equal(Object.values(got).filter((x) => x === 'pass').length, 1, '当刻达标 1 条、缺口 3 条（照登记表）');
+  assert.equal(Object.values(got).filter((x) => x === 'pass').length, 4, '当刻四条全达标（#660 收口）');
 });
 
 /* ─────────────── 三、偏离清单的机器读数（不搬的四类：缺席面） ─────────────── */
@@ -128,14 +138,14 @@ test('#659 T5 偏离 D-01／D-02／D-04／D-07／D-08／D-09／D-10 · 不搬的
   assert.equal(/cmd_help|_iso_to_hhmm/.test(text), false, '老那两处重名／重复副本不该照抄回来');
 });
 
-test('#659 T6 偏离 D-12 · 远端判重接没接（改坏＝现状：查询结果被丢弃仍重复建）', () => {
+test('#659 T6 偏离 D-12 · 远端判重接上了（改坏＝原地重复建）', () => {
   const s = makeSeam('schedule', {
     prefix: 't659t-',
     state: { events: [{ event_id: 'fs_seed', summary: '晨会', description: '作息管家自动同步', start: D + 'T09:00:00+08:00', end: D + 'T10:00:00+08:00' }] },
   });
-  // 布景：本地有这条、但没有远端标识（远端查不到就用不了）→ 唯一出路是查远端。
-  s.stub.setState({ createFails: true, mode: 'normal' });
-  assert.equal(s.runNew('schedule.plan.write', ENSURE).status, 0);
+  // 布景：本地先有这条但**没有远端标识**（种子这一跑显式只做本地），而远端已有同四元组那条。
+  // 于是唯一出路是查远端：查到 → 回填标识、不重复建；查不到 → 建第二条（那就是 D-12 的老毛病）。
+  assert.equal(s.runNew('schedule.plan.write', { ...ENSURE, feishu: 'skip' }).status, 0);
   s.stub.setState({ createFails: false, mode: 'normal' });
   s.stub.clearCalls();
   const r = s.runNew('schedule.plan.write', { op: 'sync', date: D });
@@ -145,14 +155,15 @@ test('#659 T6 偏离 D-12 · 远端判重接没接（改坏＝现状：查询结
   const creates = calls.filter((a) => a[1] === '+create');
   console.log('#659 D-12 读数：查了远端=' + searched + ' 仍建=' + creates.length + ' 本地标识=' + JSON.stringify(s.localNew().map((x) => x.feishu_event_id)));
   assert.equal(searched, true, '这条路必须先查远端（老实现这一步在）');
-  assert.equal(creates.length, 1, '现状：查询结果被丢弃 → 远端已有同四元组仍重复建。修好（接上判重）即转 0 条 → 本行必须随 #660 一起改登记');
+  // #660 收口：查询结果不再被丢弃——远端已有同四元组即「认出来 ＋ 回填标识」，不重复建。
+  assert.equal(creates.length, 0, '远端已有同四元组 → 不重复建（D-12 已修；改坏＝回到 1 条即红）');
+  assert.equal(s.localNew()[0].feishu_event_id, 'fs_seed', '反向对账把远端标识回填本地（阶段 0）');
 });
 
-test('#659 T7 偏离 D-11 · 取不到远端标识仍写空（改坏＝现状）', () => {
+test('#659 T7 偏离 D-11 · 取不到远端标识不再写空（显式降级标记 ＋ 非 0 退出）', () => {
   const s = makeSeam('schedule', { prefix: 't659t-', state: { createNoId: true } });
-  // 布景：本地先有这条、但远端没成（远端标识为空）→ 重同步时必然要走「建远端对象」那一支。
-  s.stub.setState({ createFails: true, mode: 'normal' });
-  assert.equal(s.runNew('schedule.plan.write', ENSURE).status, 0);
+  // 本地那条先用「只做本地」档种下：合成写现在默认要碰远端，种子这一跑显式声明不过去。
+  assert.equal(s.runNew('schedule.plan.write', { ...ENSURE, feishu: 'skip' }).status, 0);
   s.stub.setState({ createFails: false, createNoId: true, mode: 'normal' });
   s.stub.clearCalls();
   const r = s.runNew('schedule.plan.write', { op: 'sync', date: D });
@@ -160,5 +171,8 @@ test('#659 T7 偏离 D-11 · 取不到远端标识仍写空（改坏＝现状）
   console.log('#659 D-11 读数：远端建了=' + s.calls().filter((c) => c.argv[1] === '+create').length
     + ' 本地标识=' + JSON.stringify(rows.map((x) => x.feishu_event_id)) + ' 退出码=' + r.status);
   assert.equal(s.calls().filter((c) => c.argv[1] === '+create').length, 1, '这一跑确实建了远端对象');
-  assert.equal(rows[0].feishu_event_id, null, '现状：拿不到远端标识仍写空。修好（显式报错或降级标记）即转非空／非 0 退出 → 随 #660 改登记');
+  // #660 收口：拿不到标识就**不写**（老实现写空，下一轮还会重复建），且回执如实标远端没成。
+  assert.equal(rows[0].feishu_event_id, null, '拿不到远端标识就不写回本地（不写空冒充成功）');
+  assert.equal(envelope(r).data.remote, 'unavailable', '回执如实标远端没成（不谎报成功）');
+  assert.equal(r.status, 4, '没达成 ⇒ 退出码非 0');
 });

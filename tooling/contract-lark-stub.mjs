@@ -73,7 +73,9 @@ if (argv[0] === 'auth' && argv[1] === 'check') {
 
 // ── 日历域（作息管家）────────────────────────────────────────────────────────
 if (argv[0] === 'calendar' && argv[1] === '+agenda') {
+  // `agendaIndexed:false` ＝ 摆「+agenda 有索引延迟、刚建的还读不到」那一档（真实平台的既有行为）。
   const items = (state.events || [])
+    .filter((e) => e.agendaIndexed !== false)
     .filter((e) => inWindow(e.start, flag('--start') || '0000-01-01', flag('--end') || '9999-12-31'))
     .map((e) => ({
       event_id: e.event_id, summary: e.summary, description: e.description || '',
@@ -82,6 +84,7 @@ if (argv[0] === 'calendar' && argv[1] === '+agenda') {
   say({ ok: true, data: items });
 }
 if (argv[0] === 'calendar' && argv[1] === '+search-event') {
+  if (state.searchFails) die('挡板 searchFails：检索失败（远端一抖那一档）', 4);
   const hit = (state.events || [])
     .filter((e) => e.indexed !== false)
     .filter((e) => inWindow(e.start, flag('--start') || '0000-01-01', flag('--end') || '9999-12-31'))
@@ -136,6 +139,7 @@ if (argv[0] === 'calendar' && argv[1] === 'events' && argv[2] === 'get') {
   });
 }
 if (argv[0] === 'calendar' && argv[1] === 'events' && argv[2] === 'delete') {
+  if (state.deleteFails) die('挡板 deleteFails：远端删除失败', 4);
   const s = readState();
   const id = flag('--event-id');
   s.events = (s.events || []).filter((e) => e.event_id !== id);
@@ -208,16 +212,19 @@ if (argv[0] === 'task' && argv[1] === '+complete') {
   writeState(s);
   say({ ok: true, data: { task: { guid: t.guid, completed_at: t.completed_at } } });
 }
-// #661：task 域的删除。老实现自认「task 无 +delete shortcut」（feishu_sync.py:834）⇒ 这条**没有老形状可照**，
-// 按 +create／+update／+complete 这一族的既有形状给：`task +delete --task-id <guid>`（`--task-guid` 也认，
-// 与 `tasks get` 的取参写法一致）。删一个不在的对象按幂等处理（返回 deleted:0，不报错）。
-if (argv[0] === 'task' && argv[1] === '+delete') {
+// #661：task 域的真删。**短路里没有 `+delete`**（本机 lark-cli 1.0.82 的 `task --help` 逐行核对过），
+// 真形状是原生 resource：`task tasks delete --task-guid <guid>`，且它在 lark-cli 里标 `high-risk-write`
+// （不带 `--yes` 服务端不会执行）——挡板照这条真形状认，**不许自造 `+<verb>`**（老 `feishu_sync.py:834`
+// 说的「task 无 +delete shortcut」一直是对的；当年缺的不是接口，是没走原生 resource 这条路）。
+// 删一个不在的对象按幂等处理（返回 deleted:0，不报错）。
+if (argv[0] === 'task' && argv[1] === 'tasks' && argv[2] === 'delete') {
   const s = readState();
-  const id = flag('--task-id') || flag('--task-guid');
+  const id = flag('--task-guid') || flag('--task-id');
+  if (argv.indexOf('--yes') < 0) die('high-risk-write 需 --yes：task tasks delete', 1);
   const before = (s.tasks || []).length;
   s.tasks = (s.tasks || []).filter((t) => t.guid !== id);
   writeState(s);
-  say({ ok: true, data: { task_id: id, deleted: before - s.tasks.length } });
+  say({ ok: true, data: { task_guid: id, deleted: before - s.tasks.length } });
 }
 if (argv[0] === 'task' && argv[1] === 'tasklists' && argv[2] === 'list') {
   say({ ok: true, data: { items: [{ name: 'stub 清单', guid: 'tl_stub' }] } });
