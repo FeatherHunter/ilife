@@ -4,7 +4,8 @@ import { WAKE_TOPS } from './category.js';
 
 export type MemoKey =
   | 'memo.search' | 'memo.detail' | 'memo.create' | 'memo.update' | 'memo.remove'
-  | 'memo.remind' | 'memo.wish' | 'memo.sync' | 'memo.batch' | 'memo.stats';
+  | 'memo.remind' | 'memo.wish' | 'memo.sync' | 'memo.batch' | 'memo.stats'
+  | 'memo.auth';
 
 export interface WakeRoute { key: MemoKey; params: Record<string, unknown>; }
 export interface WakeEntry { phrase: string; key: MemoKey; needs?: string[]; preset?: Record<string, unknown>; }
@@ -25,6 +26,7 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '废弃提醒', key: 'memo.remove', preset: { mode: 'abandon' } },
   { phrase: '完成心愿', key: 'memo.update', preset: { done: true } },
   { phrase: '心愿排期', key: 'memo.wish' },
+  { phrase: '飞书授权', key: 'memo.auth' },
   { phrase: '记一条', key: 'memo.create' },
   { phrase: '添加笔记', key: 'memo.create' },
 ];

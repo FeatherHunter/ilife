@@ -160,7 +160,12 @@ export function makeSeam(kind, { prefix = 'seam-', state = {}, withDb = true, ti
   return {
     kind, K, dir, dbPath, stub, bin, oldEnv, newEnv,
     runOld: (args, opts) => spawnSync(pythonBin(), [K.oldScript, ...args], { cwd: stub.dir, env: oldEnv, encoding: 'utf8', timeout: (opts && opts.timeoutMs) || timeoutMs }),
-    runNew: (key, params, opts) => spawnSync(nodeBin(), [bin, key, '--params', JSON.stringify(params ?? {})], { env: newEnv, encoding: 'utf8', timeout: (opts && opts.timeoutMs) || timeoutMs }),
+    runNew: (key, params, opts) => {
+      const argv = [bin, key, '--params', JSON.stringify(params ?? {})];
+      if (opts && opts.html) argv.push('--html', opts.html);
+      if (opts && opts.extraEnv) return spawnSync(nodeBin(), argv, { env: { ...newEnv, ...opts.extraEnv }, encoding: 'utf8', timeout: (opts && opts.timeoutMs) || timeoutMs });
+      return spawnSync(nodeBin(), argv, { env: newEnv, encoding: 'utf8', timeout: (opts && opts.timeoutMs) || timeoutMs });
+    },
     calls: stub.calls,
     remote: stub.state,
     setRemote: stub.setState,

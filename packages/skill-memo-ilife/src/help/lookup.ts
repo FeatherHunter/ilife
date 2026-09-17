@@ -24,9 +24,10 @@ const DESCS: Record<string, string> = {
   'memo.sync': '飞书同步（须 lark 四门全绿）',
   'memo.batch': '批量改分类向导',
   'memo.stats': '聚合统计',
+  'memo.auth': '飞书授权引导（三步非阻塞：init/qr/poll）',
 };
 
-// 全量速查表（28 短语：16 显式 + 12 子唤醒词）。
+// 全量速查表（29 短语：17 显式 + 12 子唤醒词）。
 export function buildHelpLookup(): HelpHit[] {
   return WAKE_TABLE.map((e) => ({
     phrase: e.phrase,

@@ -31,7 +31,7 @@
       "package": "packages/skill-memo-ilife"
     }
   ],
-  "artifactCount": 186,
+  "artifactCount": 187,
   "artifacts": {
     "bill/escape": {
       "src": "packages/skill-bill/src/render/html.ts",
@@ -813,6 +813,12 @@
       "sha256": "3594e88378d2a5d6ea656964d657940c",
       "text": "&amp;&lt;&gt;&quot;&#39;`~ 中文 🍣\n第二行"
     },
+    "memo/frag/memo.auth": {
+      "src": "packages/skill-memo-ilife/src/render/envelope.ts",
+      "bytes": 108,
+      "sha256": "1b9efce059d42285f35a0371867800e8",
+      "text": "<section data-skill=\"memo\" data-shape=\"receipt\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
+    },
     "memo/frag/memo.batch": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 108,
@@ -828,20 +834,20 @@
     "memo/frag/memo.detail": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 227,
-      "sha256": "dbc6c1901f726a684ff228c64f24be0a",
-      "text": "<section data-skill=\"memo\" data-shape=\"detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+      "sha256": "1a5bb448e6eec510163fe7ca42ebc6d6",
+      "text": "<section data-skill=\"memo\" data-shape=\"detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
     "memo/frag/memo.help.lookup": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 389,
-      "sha256": "caac0cf65ed2952f204e40e7b4fb679e",
-      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+      "sha256": "7e51ee0e89a060057459219d8ece2c38",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
     "memo/frag/memo.remind": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 389,
-      "sha256": "caac0cf65ed2952f204e40e7b4fb679e",
-      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+      "sha256": "7e51ee0e89a060057459219d8ece2c38",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
     "memo/frag/memo.remove": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
@@ -852,8 +858,8 @@
     "memo/frag/memo.search": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 389,
-      "sha256": "caac0cf65ed2952f204e40e7b4fb679e",
-      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+      "sha256": "7e51ee0e89a060057459219d8ece2c38",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
     "memo/frag/memo.stats": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
@@ -876,14 +882,14 @@
     "memo/frag/memo.wish": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 389,
-      "sha256": "caac0cf65ed2952f204e40e7b4fb679e",
-      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+      "sha256": "7e51ee0e89a060057459219d8ece2c38",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
     "memo/keys": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
-      "bytes": 270,
-      "sha256": "0f61ef54cd11c4d8f57b50271b4df322",
-      "text": "[[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.detail\",\"detail\"],[\"memo.help.lookup\",\"list\"],[\"memo.remind\",\"list\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.stats\",\"stat\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
+      "bytes": 294,
+      "sha256": "b240d47e8c0c84909d660e66619dd16e",
+      "text": "[[\"memo.auth\",\"receipt\"],[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.detail\",\"detail\"],[\"memo.help.lookup\",\"list\"],[\"memo.remind\",\"list\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.stats\",\"stat\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
     },
     "memo/shape-throw": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
@@ -900,8 +906,8 @@
     "memo/shape/detail": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
       "bytes": 227,
-      "sha256": "dbc6c1901f726a684ff228c64f24be0a",
-      "text": "<section data-skill=\"memo\" data-shape=\"detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+      "sha256": "1a5bb448e6eec510163fe7ca42ebc6d6",
+      "text": "<section data-skill=\"memo\" data-shape=\"detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
     "memo/shape/fallback": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
@@ -912,8 +918,8 @@
     "memo/shape/list": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
       "bytes": 389,
-      "sha256": "caac0cf65ed2952f204e40e7b4fb679e",
-      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">标题&lt;&amp;&gt;</div></div></section>"
+      "sha256": "7e51ee0e89a060057459219d8ece2c38",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
     "memo/shape/list-empty": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
@@ -941,38 +947,38 @@
     },
     "memo/tpl/change_category": {
       "src": "packages/skill-memo-ilife/templates/change_category.html",
-      "bytes": 12784,
-      "sha256": "d92f75d3d8c9c061c2dd61d9cacd802b",
+      "bytes": 22239,
+      "sha256": "8c9ca2ed25a9368c521cb94ceb16776b",
       "textOmitted": true
     },
     "memo/tpl/init_report": {
       "src": "packages/skill-memo-ilife/templates/init_report.html",
-      "bytes": 11526,
-      "sha256": "f0c3e678ed82a9f7b995ad80c77d7fa1",
+      "bytes": 20981,
+      "sha256": "86fa9833929d9912824345a93e58a317",
       "textOmitted": true
     },
     "memo/tpl/memo_query": {
       "src": "packages/skill-memo-ilife/templates/memo_query.html",
-      "bytes": 13115,
-      "sha256": "9f03b3ff9749d0b31521aec99959bfbc",
+      "bytes": 22570,
+      "sha256": "95ef02f3b603fbd106dc750c9c9ad89a",
       "textOmitted": true
     },
     "memo/tpl/sync_report": {
       "src": "packages/skill-memo-ilife/templates/sync_report.html",
-      "bytes": 18341,
-      "sha256": "9dc46dfb804c8c7246681ba7f88f6646",
+      "bytes": 27796,
+      "sha256": "14886a2d5aaac000edf97361571f9784",
       "textOmitted": true
     },
     "memo/tpl/wish_complete": {
       "src": "packages/skill-memo-ilife/templates/wish_complete.html",
-      "bytes": 11894,
-      "sha256": "9fe46179baba495f6a8ea27acace2b60",
+      "bytes": 21349,
+      "sha256": "7ea495c29785c8be4aae95a2ecf63e6b",
       "textOmitted": true
     },
     "memo/tpl/wish_plan": {
       "src": "packages/skill-memo-ilife/templates/wish_plan.html",
-      "bytes": 12541,
-      "sha256": "e4f8dd5207924a622434d4ca05c714bd",
+      "bytes": 21996,
+      "sha256": "7837da407b32a9c7c9252e9db470b09b",
       "textOmitted": true
     },
     "schedule/escape": {

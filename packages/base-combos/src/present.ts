@@ -17,6 +17,7 @@ export const PRESENT_KEYS: string[] = [
   'calorie.exercise.add',
   'calorie.exercise.remove',
   'calorie.exercise.update',
+  'calorie.goal.exercise',
   'calorie.goal.pause',
   'calorie.goal.resume',
   'calorie.goal.set',
@@ -141,4 +142,5 @@ export const PRESENT_KEYS: string[] = [
   'memo.batch',
   'memo.stats',
   'memo.help.lookup',
+  'memo.auth',
 ];

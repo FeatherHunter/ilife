@@ -45,7 +45,7 @@ export const SKILLS = [
   { id: 'chef', dir: 'skill-chef', prefix: 'CHEF', camel: 'Chef', fill: 'fillTemplate' },
   { id: 'home', dir: 'skill-home', prefix: 'HOME', camel: 'Home', fill: 'fillTemplate' },
   { id: 'schedule', dir: 'skill-schedule', prefix: 'SCHEDULE', camel: 'Schedule', fill: 'fillTemplate' },
-  { id: 'memo', dir: 'skill-memo-ilife', prefix: 'MEMO', camel: 'Memo', fill: 'fillSharedMarkers' },
+  { id: 'memo', dir: 'skill-memo-ilife', prefix: 'MEMO', camel: 'Memo', fill: 'fillTemplate' },
 ];
 
 /** base-paint 命名空间标记：出现即说明 base-* 资产渗入（影响面断言）。 */

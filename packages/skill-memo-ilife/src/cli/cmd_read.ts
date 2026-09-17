@@ -17,13 +17,20 @@ import {
   listCompletedReminders,
   listReminderRows,
   countReminderRowsOfNote,
+  collectBatchItems,
+  countNotesByCategory,
+  applyBatchCategory,
+  authInit,
+  authQr,
+  authPoll,
+  authStatus,
   MemoFetchError,
 } from '../fetch/index.js';
 import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
 // #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
-// #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）。
-import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish } from '../wish/index.js';
-import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, MemoRenderError } from '../render/index.js';
+// #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）；排期／完成向导收集走 `wizards`。
+import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish, planWizard, completeWizard } from '../wish/index.js';
+import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, changeCategorySnapshot, syncSnapshot, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
@@ -171,17 +178,23 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   };
 }
 
-// 十一键分发：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
+// 十一键分发（#665 起十二键，加 memo.auth）：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
 // #661：写命令分两支——心愿分类走「合成写」（本地 ＋ 飞书任务一次成；回执分字段；最终没达成时退出码非 0），
 // 其它分类照旧只落本地（回执里 `remote` 那一格如实写「不适用」，不假装同步过）。
-// 返回 `{data, exit}`：`exit` 非 0 时回执照打（分字段是回执的本分），退出码在 main 里落实。
-interface DispatchOut { readonly data: unknown; readonly exit: number }
+// #665：向导三条（排期／完成／批量改分类）与同步报告各出一张整页，随 `deliver` 出交付。
+// 返回 `{data, exit, deliver?}`：`exit` 非 0 时回执照打（分字段是回执的本分），退出码在 main 里落实。
+interface PageDeliver { readonly html: string; readonly stem: string }
+interface DispatchOut { readonly data: unknown; readonly exit: number; readonly deliver?: PageDeliver }
 function ok(data: unknown): DispatchOut { return { data, exit: 0 }; }
 
 function asIds(value: unknown): number[] {
   if (!Array.isArray(value) || value.length === 0) fail(2, 'ids 须为非空数组');
   return value.map((v) => needId(v, 'ids'));
 }
+
+// 快照函数吃纯记录（跨 JSON 边界）：各域条目在此处一次转成记录形。
+type PageRow = Record<string, unknown>;
+const toRows = (xs: readonly object[]): PageRow[] => xs.map((x) => ({ ...(x as PageRow) }));
 
 function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): DispatchOut {
   switch (key) {
@@ -277,15 +290,146 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
       return ok({ items, total: items.length });
     }
     case 'memo.wish': {
+      // #665 向导：`wizard: plan` 出排期向导页（默认全勾选），`wizard: complete` 出完成向导页（默认不勾选）；
+      // 不带即老形状（只回列表，#661 行为）。
+      if (params.wizard === 'plan' || params.wizard === 'complete') {
+        if (params.wizard === 'plan') {
+          const w = planWizard(db, { ids: params.ids, all: params.all, suggestDue: params.suggestDue });
+          const snap = wishPlanSnapshot(toRows(w.items), w.suggestDue, w.includeAll);
+          const message = '找到 ' + w.items.length + ' 个心愿' + (w.includeAll ? '（含已排期）' : '（仅未排期）');
+          const payload = pageEnvelope({
+            commandCn: '心愿排期', wakeWord: '心愿排期', sceneId: 'wish-batch-plan',
+            title: snap.title, summary: snap.summary, sections: snap.sections,
+            copyLog: {
+              thinking: '过程型向导 · 只读收集心愿列表，勾选＋填排期后复制指令回 AI（HTML 不写库）',
+              data_structure: "notes 表（category='心愿'）· id/content/category/sub_category/due/feishu_task_guid",
+              call_chain: 'memo.wish wizard:plan → render_wish_plan → 共享 filler',
+              exception: '无',
+            },
+            extra: { items: w.items, suggest_due: w.suggestDue, all: w.includeAll },
+            message,
+          });
+          return {
+            data: { items: w.items, total: w.items.length, suggestDue: w.suggestDue, all: w.includeAll },
+            exit: 0,
+            deliver: { html: fillMemoPage('wish_plan', payload), stem: '心愿排期向导' },
+          };
+        }
+        const w = completeWizard(db, { ids: params.ids, onlyOverdue: params.onlyOverdue, all: params.all, content: params.content });
+        const snap = wishCompleteSnapshot(toRows(w.items));
+        const message = '找到 ' + w.items.length + ' 个心愿' + (w.onlyOverdue ? '（仅未排期＋已过期）' : '');
+        const payload = pageEnvelope({
+          commandCn: '心愿完成', wakeWord: '完成心愿', sceneId: 'wish-complete',
+          title: snap.title, summary: snap.summary, sections: snap.sections,
+          copyLog: {
+            thinking: '过程型向导 · 勾选＋填打卡内容后复制指令回 AI（completeWish 原子转换）',
+            data_structure: "notes 表（category='心愿'）· id/content/due/feishu_task_guid",
+            call_chain: 'memo.wish wizard:complete → render_wish_complete → 共享 filler',
+            exception: '无',
+          },
+          extra: { items: w.items, default_content: w.defaultContent, only_overdue: w.onlyOverdue },
+          message,
+        });
+        return {
+          data: { items: w.items, total: w.items.length, defaultContent: w.defaultContent, onlyOverdue: w.onlyOverdue },
+          exit: 0,
+          deliver: { html: fillMemoPage('wish_complete', payload), stem: '心愿完成向导' },
+        };
+      }
       const items = listNotes(db).filter((n) => n.category === '心愿').filter((n) => dueMatches(n, params));
       return ok({ items, total: items.length });
     }
     case 'memo.sync': {
       // #661：反向对账三步（本地缺标识补建／远端完成→本地／远端改期→本地），回执带 11 项统计。
+      // #665：同步报告页随行（#661 遗留 HELP 承诺，出页归这一支）。
       const r = reconcileWishes(db);
-      return { data: r.receipt, exit: r.exit };
+      const snap = syncSnapshot(r.receipt);
+      const payload = pageEnvelope({
+        commandCn: '备忘录同步', wakeWord: '备忘录同步', sceneId: 'sync-from-feishu',
+        title: snap.title, summary: snap.summary, sections: snap.sections,
+        copyLog: {
+          thinking: '双向对账 · 飞书 done/due 反向同步到本机（只读扫描 ＋ 有变更才写）',
+          data_structure: 'reconcile 11 项统计（backfilled/synced/due_*/skipped_*/errors）',
+          call_chain: 'memo.sync → reconcileWishes → render_sync_report → 共享 filler',
+          exception: r.receipt.errors.length ? r.receipt.errors.join('; ') : '无',
+        },
+        extra: { ...r.receipt },
+        message: r.receipt.message,
+      });
+      return { data: r.receipt, exit: r.exit, deliver: { html: fillMemoPage('sync_report', payload), stem: '同步报告' } };
     }
-    case 'memo.batch': return ok({ ok: true, message: '批量改分类向导须交互确认（M5 只登记意图）' });
+    case 'memo.batch': {
+      // #665 批量改分类：不带目标分类即收集（出向导页）；带目标分类＋ids 即执行。
+      const from = params.fromCategory !== undefined ? normalizeTop(params.fromCategory) : null;
+      const to = params.toCategory !== undefined ? normalizeTop(params.toCategory) : null;
+      if (from !== null && to !== null && from === to) fail(2, '原分类与目标分类相同：' + from);
+      // 执行（老 `update-category` 逐条）：目标分类＋一批 id；只给目标分类不给 id 即收集预览。
+      if (params.ids !== undefined) {
+        if (to === null) fail(2, '执行改分类须给 toCategory（只收集不执行时别给 ids）');
+        const r = applyBatchCategory(db, asIds(params.ids), to);
+        const doneAll = r.errors.length === 0;
+        return {
+          data: {
+            ok: doneAll,
+            message: '改分类完成：更新=' + r.updated + '，跳过=' + r.skipped,
+            updated: r.updated,
+            skipped: r.skipped,
+            errors: r.errors,
+          },
+          exit: doneAll ? 0 : 4,
+        };
+      }
+      const items = collectBatchItems(db, from);
+      const snap = changeCategorySnapshot(toRows(items), from, to);
+      const message = "原分类 '" + (from ?? '<全部>') + "' 下 " + items.length + ' 条笔记';
+      const payload = pageEnvelope({
+        commandCn: '批量改分类', wakeWord: '备忘改分类', sceneId: 'batch-update-category',
+        title: snap.title, summary: snap.summary, sections: snap.sections,
+        copyLog: {
+          thinking: '过程型向导 · 勾选后复制改分类指令回 AI（只改顶层分类，sub_category 不动）',
+          data_structure: 'notes 表 · id/content/category/sub_category/media_path/due',
+          call_chain: 'memo.batch → render_change_category → 共享 filler',
+          exception: '无',
+        },
+        extra: { items, from_category: from, to_category: to, target_conflict_count: to ? countNotesByCategory(db, to) : 0 },
+        message,
+      });
+      return {
+        data: { ok: true, message, items, total: items.length, fromCategory: from, toCategory: to },
+        exit: 0,
+        deliver: { html: fillMemoPage('change_category', payload), stem: '批量改分类' },
+      };
+    }
+    case 'memo.auth': {
+      // #665 飞书授权引导（三步非阻塞，Q4 批新增 key）：init／qr／poll＋status 诊断。
+      const step = params.step === undefined ? 'status' : String(params.step);
+      if (step === 'init') {
+        const brand = params.brand === undefined ? 'feishu' : String(params.brand);
+        return ok({
+          ok: true,
+          message: '授权已发起：在浏览器打开链接或扫码，完成后调 step poll 续轮询',
+          step: 'init',
+          ...authInit(brand),
+        });
+      }
+      if (step === 'qr') {
+        if (typeof params.url !== 'string' || params.url.length === 0) fail(2, 'qr 须给 url（init 回的 verification_url）');
+        const qrPath = authQr(params.url as string, params.outDir === undefined ? undefined : String(params.outDir));
+        return ok({ ok: true, message: '二维码已生成', step: 'qr', qrPath });
+      }
+      if (step === 'poll') {
+        if (typeof params.deviceCode !== 'string' || (params.deviceCode as string).length === 0) {
+          fail(2, 'poll 须给 deviceCode（init 回的 device_code，过期请重走 init）');
+        }
+        const domain = params.domain === undefined ? 'task' : String(params.domain);
+        return ok({ ok: true, message: '授权续轮询完成', step: 'poll', ...authPoll(params.deviceCode as string, domain) });
+      }
+      if (step === 'status') {
+        return ok({ ok: true, message: '授权状态', step: 'status', ...authStatus() });
+      }
+      fail(2, 'step 只认 init/qr/poll/status');
+      return ok(null);
+    }
     case 'memo.stats': {
       const all = listNotes(db);
       const metrics: Record<string, number> = { count: all.length };
@@ -334,11 +478,11 @@ async function main() {
   // #661：合成写「最终没达成」时回执照打、退出码在写完回执之后落实（分字段是回执的本分，不能因为非 0 就吞掉）。
   let writeExit = 0;
   try {
-    // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余 10 键照旧走 dispatch。
+    // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余键照旧走 dispatch。
     // #665：开的是老库文件（直连，不建库）；用完即关，失败也关。
     const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
     let db: MemoDb | null = null;
-    let out: { data: unknown; exit: number };
+    let out: DispatchOut;
     try {
       if (help === null) {
         db = openMemoDb(dbPath);
@@ -369,6 +513,9 @@ async function main() {
       const html = help.deliver.html ?? sectionHtml();
       if (help.deliver.html !== undefined) assertHtmlSize(html);
       delivery = deliverMemoHtml({ explicit: o.html, landing: help.deliver.landing, html, window: help.deliver.window });
+    } else if (out.deliver !== undefined) {
+      // #665 整页交付：缺省落 `memo_html/<页名>.html`（独占递补），显式 `--html` 逐字覆盖写。
+      delivery = deliverMemoHtml({ explicit: o.html, landing: landingOf(dbPath, out.deliver.stem), html: out.deliver.html });
     } else if (o.html) {
       delivery = deliverMemoHtml({ explicit: o.html, html: sectionHtml() });
     }

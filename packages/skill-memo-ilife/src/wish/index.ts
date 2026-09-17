@@ -6,5 +6,7 @@ export { ensureWish, updateWish, removeWish, setWishDue } from './ensure.js';
 export type { WishReceipt, WishBatchReceipt, WishWriteResult } from './ensure.js';
 export { completeWish } from './complete.js';
 export type { CompleteWishInput } from './complete.js';
+export { planWizard, completeWizard } from './wizards.js';
+export type { PlanWizardItem, PlanWizardInput, CompleteWizardItem, CompleteWizardInput } from './wizards.js';
 export { reconcileWishes } from './reconcile.js';
 export type { ReconcileCounters, ReconcileReceipt } from './reconcile.js';

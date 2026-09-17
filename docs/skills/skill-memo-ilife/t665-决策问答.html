@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#665 决策问答 · 备忘侧向导／提醒域＋页面交付</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f;line-height:1.65;max-width:760px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:22px;letter-spacing:-.01em;margin-bottom:6px}
+.sub{color:#6e6e73;font-size:13px;margin-bottom:16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{font-size:12px;font-weight:700;padding:3px 11px;border-radius:999px;background:#eef5ff;color:#0a63d6}
+.chip.done{background:#ecfff2;color:#178a3a}
+.chip.todo{background:#fff7e8;color:#b25b00}
+.card{background:#fff;border-radius:14px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:5px solid #0a63d6}
+.card.ok{border-left-color:#34c759}
+.card.ask{border-left-color:#ff9500}
+.card h2{font-size:16px;margin-bottom:6px}
+.card h2 .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:2px}
+.tag.yes{background:#ecfff2;color:#178a3a}
+.tag.no{background:#fff7e8;color:#b25b00}
+.card p{font-size:14px;color:#3a3a3c;margin:6px 0}
+.card .why{font-size:13px;color:#6e6e73}
+.rec{margin-top:10px;background:#f2f9ff;border-radius:10px;padding:10px 12px;font-size:14px}
+.rec b{color:#0a63d6}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.cols div{font-size:13px;border-radius:10px;padding:8px 10px}
+.pro{background:#ecfff2}.con{background:#fff5f5}
+.cols h3{font-size:12px;margin-bottom:4px}
+.pro h3{color:#178a3a}.con h3{color:#c7254e}
+ul{margin:4px 0 4px 18px;font-size:13px}
+.kv{font-size:13px;color:#6e6e73;margin-top:6px}
+.kv code{background:#f0f0f2;padding:1px 6px;border-radius:6px;font-size:12px}
+.foot{margin-top:20px;font-size:13px;color:#6e6e73}
+@media(max-width:560px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>#665 决策问答</h1>
+<p class="sub">备忘侧：向导／提醒域 ＋ 页面交付（地图 #658 · 规格 #657）· 数据层对齐已提交 <code>0656b1ed</code></p>
+<div class="chips"><span class="chip">进度 55%</span><span class="chip done">数据层对齐落地</span><span class="chip todo">向导／授权／页面待实施</span></div>
+
+<div class="card ok"><h2>Q1 数据库必须和老库一致吗？<span class="tag yes">已决 · 全搬</span></h2>
+<p class="why">前因：新仓用 JSON 文件，老库是 SQLite 且存着真实数据，两边根本连的不是同一个库。</p>
+<p>结论：新仓直连老 <code>memo.db</code>，老表原样，连接层禁 DDL，测试只用临时库。已记入备忘 AGENTS.md，提交已入仓。</p></div>
+
+<div class="card ok"><h2>Q2 授权引导归哪张票？<span class="tag yes">已决 · 归 #665</span></h2>
+<p class="why">前因：#665 与 #666 票面都有授权引导，重叠会双交付。</p>
+<p>结论：授权归 #665，#666 只做自检 sentinel，已在 #666 留言说明。</p></div>
+
+<div class="card ok"><h2>Q3 快照迁移是否在本票内做？<span class="tag yes">已决 · 本票内迁</span></h2>
+<p class="why">前因：六张页一旦接共享渲染层，快照门必红一次（产物逐字节比对＋禁共享层标记渗入），须显式改白名单并重写快照——这是个审查动作。</p>
+<p class="kv">关键信息：当前 7 件已红（仅 <code>content</code> 列切换，无标记渗入）；重写后即绿，证据逐件说明。</p>
+<div class="rec"><b>结论（已批）：同意。</b>票面验收本来就要求快照全绿，不迁过不了；现在迁还能和模板迁移合并只红一次。</div>
+<div class="cols"><div class="pro"><h3>利</h3><ul><li>一次红一次绿，验收无挂账</li><li>审查留痕，后人可查</li></ul></div>
+<div class="con"><h3>弊</h3><ul><li>并行 session 当天会看到一次快照红（有说明，不误报）</li></ul></div></div></div>
+
+<div class="card ok"><h2>Q4 授权命令面：新增还是寄生？<span class="tag yes">已决 · 新增 memo.auth</span></h2>
+<p class="why">前因：授权三步（init／qr／poll）要挂在出口上。寄生是塞进 <code>memo.sync</code> 加参数，新 key 是单立 <code>memo.auth</code>（要动三处登记＋HELP 生成链）。</p>
+<p class="kv">关键信息：寄生零登记成本但语义别扭；新 key 语义一次讲清，成本是多一次生成链重出（与 Q3 同一次验证即可覆盖）。</p>
+<div class="rec"><b>结论（已批）：新增 <code>memo.auth</code>。</b>授权和同步是两件事，硬塞在一起以后难讲清楚；登记成本是一次性的。</div>
+<div class="cols"><div class="pro"><h3>新增 · 利</h3><ul><li>语义干净，HELP 可独立说明</li><li>以后自检／诊断有地方挂</li></ul></div>
+<div class="con"><h3>新增 · 弊</h3><ul><li>多动三处登记，快照 key 表＋1（证据里一行）</li></ul></div></div></div>
+
+<div class="card ask"><h2>D-24 回摆待签<span class="tag no">验收时确认</span></h2>
+<p class="why">前因：#661 曾把对账步 2 改为“只标完成”（当时有 <code>done</code> 列）；DB 对齐后那列不存在，老原文是删心愿＋转打卡。</p>
+<p>现状：已按老原文实现（用例 T7 覆盖）。验收时点个头即转正，不同意则我改回。</p></div>
+
+<p class="foot">下一步：你回 Q3／Q4（不同意的才说，默认按推荐走）→ 我做完向导、授权、页面交付后一次性提验收。</p>
+</body>
+</html>

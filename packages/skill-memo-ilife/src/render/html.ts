@@ -48,16 +48,3 @@ export function assertHtmlSize(html: string, max = MEMO_HTML_MAX_BYTES): void {
     throw new MemoRenderError('MEMO_HTML_TOO_LARGE', 'HTML 超体积：' + estimateBytes(html) + ' > ' + max);
   }
 }
-
-// 共享标记填充（老家 _inject 对应）：两标记各恰出现 1 次，否则 throw；init/HELP 模板不在此（M6）。
-export const SHARED_CSS_MARKER = '<!--SHARED-CSS-->';
-export const SHARED_HELPERS_MARKER = '<!--SHARED-HELPERS-->';
-
-export function fillSharedMarkers(template: string, css: string, helpers: string): string {
-  for (const m of [SHARED_CSS_MARKER, SHARED_HELPERS_MARKER]) {
-    if (template.split(m).length - 1 !== 1) {
-      throw new MemoRenderError('MEMO_MARKER_INVALID', '标记须恰出现 1 次：' + m);
-    }
-  }
-  return template.split(SHARED_CSS_MARKER).join(css).split(SHARED_HELPERS_MARKER).join(helpers);
-}

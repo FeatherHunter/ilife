@@ -21,10 +21,12 @@ export function normalizeTop(top: unknown): MemoTop {
   return top as MemoTop;
 }
 
-// sub 自由文本：空串/空白归一为 null（AI 推断不出维度时不追问）。
+// sub 自由文本：空串/空白归一为 null（AI 推断不出维度时不追问）；`"null"` 类字面也归 null
+// （老 `update_sub_category` 清除口径：""／"null"／"NULL"／"None" 皆为清除）。
 export function normalizeSub(sub: unknown): string | null {
   if (sub === undefined || sub === null) return null;
   if (typeof sub !== 'string') throw new MemoPolicyError('POLICY_BAD_CATEGORY', '子分类须为文本');
   const t = sub.trim();
-  return t.length === 0 ? null : t;
+  if (t.length === 0 || t === 'null' || t === 'NULL' || t === 'None') return null;
+  return t;
 }

@@ -42,7 +42,8 @@ export interface LarkRunDenied { ok: false; exit: number | null; stderr: string;
 
 // 调 lark-cli：超时/缺失 throw；非 0 退出返 ok:false（供 scope 判定），不抛。
 // Windows 的 lark-cli 本体即 .cmd（老家实证 %APPDATA%/npm/lark-cli.cmd），直 spawn 报 EINVAL，故经 cmd.exe /c 中转。
-export function runLark(cli: string, args: string[], timeoutMs = LARK_DEFAULT_TIMEOUT_MS): LarkRunOk | LarkRunDenied {
+// `cwd` 可选（授权 QR 那条要进目录执行，老 `feishu_auth_helper.py` 同形）。
+export function runLark(cli: string, args: string[], timeoutMs = LARK_DEFAULT_TIMEOUT_MS, cwd?: string): LarkRunOk | LarkRunDenied {
   let file = cli;
   let argv = args;
   if (process.platform === 'win32' && /\.cmd$/i.test(cli)) {
@@ -50,7 +51,7 @@ export function runLark(cli: string, args: string[], timeoutMs = LARK_DEFAULT_TI
     argv = ['/d', '/s', '/c', cli, ...args];
   }
   try {
-    const out = execFileSync(file, argv, { stdio: 'pipe', encoding: 'utf8', timeout: timeoutMs });
+    const out = execFileSync(file, argv, { cwd, stdio: 'pipe', encoding: 'utf8', timeout: timeoutMs });
     return { ok: true, stdout: out };
   } catch (e) {
     const err = e as { code?: unknown; status?: number | null; stderr?: unknown; message?: string };

@@ -1,0 +1,15 @@
+MUT-1 改坏=红
+MUT-1 产物残留检查=干净
+MUT-1 还原=绿
+MUT-2 改坏=红
+MUT-2 产物残留检查=干净
+MUT-2 还原=绿
+MUT-3 改坏=红
+MUT-3 还原=绿
+MUT-4 改坏=红
+MUT-4 还原=绿
+MUT-5 改坏=红
+MUT-5 还原=绿
+MUT-6 改坏=红
+MUT-6 还原=绿
+MUTATION RESULT: PASS
