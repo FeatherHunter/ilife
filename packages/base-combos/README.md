@@ -2,6 +2,8 @@
 
 一句话：本包不画页面，只管“哪条命令走哪条取数通道、长什么样”——`combos.yaml` 是唯一真相源。
 
+本包不含画图组件；画图去 `base-paint`（`packages/base-render/README.md` 的组件目录）。
+
 ## 速查
 
 | 我要 | 调谁／看哪 |

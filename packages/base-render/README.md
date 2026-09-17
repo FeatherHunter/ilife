@@ -11,6 +11,8 @@
 
 ## 组件目录（发现口）
 
+**包名说明**：目录叫 `packages/base-render`，npm 包名叫 `base-paint`——是同一个包，下文均用包名，引用时照抄即可。
+
 本节回答“该调谁”。help 铁律见上，一字未动。机读正身在 `src/spec/`（冻结签名）＋契约正本 `../../docs/base-paint-contract.md`；行为示例看 `test/`。
 
 ### 速查三问
