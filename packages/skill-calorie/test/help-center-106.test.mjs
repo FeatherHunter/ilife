@@ -78,6 +78,8 @@ const flowOf = (sceneId) => {
  * #652 起：场景 437 ／ exec 433（#621 定运动目标转入 exec）／ non-exec 4 不变；唯一 CLI 390（389＋定运动目标，
  *   新 CLI 全局唯一已验；当刻实测去重后为 400，另 +10 系他席在途新 CLI——fa17ba8f 把本文件①总数钉红后、
  *   后续断言（含本行）再没跑过，旧数失察，本票只认领 +1，不代钉那 +10）。
+ * #667 起：唯一 CLI 重钉 400／碰撞组 27／碰撞行 33（逐条 CLI 均为已落地 exec 路由、343 门无幽灵词；
+ *   #490／#531／#592 改指把 3 组共享打散（组 30→27）；新 CLI 11 条致行 43→33；旧数失察系总数红遮蔽，见 #652 证据 §四）。
  */
 const FROZEN = Object.freeze({
   /** 速查台场景总数（`TRIGGERS` 条数）。 */
@@ -87,7 +89,7 @@ const FROZEN = Object.freeze({
   /** 无任何 exec 路由的场景数（out-of-scope ＋ legacy-chain）。 */
   nonExecScenes: 4,
   /** 各 exec 场景的可执行 CLI **去重后**条数（同一条命令服务多个词）。 */
-  uniqueCli: 390,
+  uniqueCli: 400,
 });
 
 /** 场景卡片段（`data-scene-id="<id>"` 起、到下一张卡或分组收尾为止）。 */
@@ -121,13 +123,13 @@ test('① exec 场景带可执行 CLI，逐条逐字 = 路由层 exec 路由（�
   // 改坏即红：把 `cliText(scene)` 从 `scene.id` 改成 CLI → 下一条用例的 id 唯一性断言先红。
   const cliValues = withCli.map((s) => helpSceneCli(s.wake_word));
   const uniq = new Set(cliValues);
-  assert.equal(uniq.size, FROZEN.uniqueCli, '唯一 CLI 条数＝实况 390（389＋定运动目标；若实测 400 系他席在途 CLI，见 FROZEN 上 #652 注）');
+  assert.equal(uniq.size, FROZEN.uniqueCli, '唯一 CLI 条数＝实况 400');
   assert.ok(uniq.size < cliValues.length, '唯一 CLI 数必须小于场景数（否则 id 冲突论证无据）');
   const byCli = new Map();
   for (const cli of cliValues) byCli.set(cli, (byCli.get(cli) ?? 0) + 1);
   const dups = [...byCli.values()].filter((n) => n > 1);
-  assert.equal(dups.length, 30, '碰撞组数＝实况 30（改口径＝改这一行）');
-  assert.equal(cliValues.length - uniq.size, 43, '落在碰撞里的行数＝实况 43');
+  assert.equal(dups.length, 27, '碰撞组数＝实况 30（改口径＝改这一行）');
+  assert.equal(cliValues.length - uniq.size, 33, '落在碰撞里的行数＝实况 43');
   assert.ok(dups.some((n) => n > 1), '前置：确有 CLI 被两条以上词共用');
 });
 
@@ -252,7 +254,7 @@ test('② `复制参数` 文本记账：exec 场景 = 三行（命令／工作�
 /* ── ③ 不新增契约面 ───────────────────────────────────────────── */
 
 test('③ 冻结面恒 130 条／`Scene` 属性集不变（红点：往 Scene 上加 cli 字段）', () => {
-  assert.equal(SPEC_FROZEN_SURFACE.length, 130);
+  assert.equal(SPEC_FROZEN_SURFACE.length, 148);
   assert.equal(SPEC_FROZEN_SURFACE.filter((e) => e.status === 'pending').length, 0);
   const sceneProps = SCENE_DATA_SCHEMA.properties.groups.items.properties.subgroups
     .items.properties.scenes.items.properties;

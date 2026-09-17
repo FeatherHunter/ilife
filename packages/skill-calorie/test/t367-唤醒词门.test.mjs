@@ -47,7 +47,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = join(HERE, '..', 'src');
 const DIST = join(HERE, '..', 'dist');
 
-/** 唤醒词表（唯一事实源：用户看的 HELP 场景页同源的 436 条资产）。 */
+/** 唤醒词表（唯一事实源：用户看的 HELP 场景页同源的 437 条资产）。 */
 const TABLE = new Set(WAKE_ASSETS.map((s) => s.wake_word));
 
 /** 各能力目录（判据：目录里有 `commands.ts`——命令事实的唯一住处，见 `docs/agents/命令登记纪律.md` 形状一）。 */
@@ -81,6 +81,8 @@ const REGISTERED_BY_DIR = {
   goal: { owner: '目标域自己的图（场景 06）', rows: [
     ['calorie.view.goal-status', '看目标状态'],
     ['calorie.view.goal-wizard', '看目标预检'],
+    ['calorie.view.goal-config', '看目标配置'],
+    ['calorie.view.goal-recommend', '看目标推荐'],
   ] },
   // `calorie.help.center` 的「卡路里HELP」是老技能 `SKILL.md` 正文注册的**技能级 HELP 词**
   // （不在 436 场景词表内，出处见 `t450-词表订正.md` §一）——「本门该不该接受它」属 HELP 口径问题，
@@ -97,6 +99,16 @@ const REGISTERED_BY_DIR = {
   ] },
   workout: { owner: '训练计划域自己的图（场景 05）', rows: [
     ['calorie.view.process-progress', '看落地训练进度'],
+    ['calorie.workout.plan-set', '确认定训练计划'],
+    ['calorie.workout.plan-copy', '确认复制训练计划'],
+    ['calorie.workout.plan-set-week', '确认定一周计划'],
+    ['calorie.workout.plan-add-movement', '确认加训练动作'],
+    ['calorie.workout.plan-set-rest', '确认定休息日'],
+    ['calorie.workout.plan-update', '确认改训练计划'],
+    ['calorie.workout.plan-update-day', '确认改某天训练'],
+    ['calorie.workout.plan-delete-day', '确认删某天训练'],
+    ['calorie.workout.plan-update-movement', '确认改动作'],
+    ['calorie.workout.plan-delete', '确认撤销训练计划'],
   ] },
 };
 const REGISTERED_OFF_TABLE = Object.entries(REGISTERED_BY_DIR)
@@ -205,7 +217,7 @@ check('② 声明与注册表的配对集合双向差集为空', () => {
   assert.deepEqual(regOnly, [], '注册表里有声明没有的配对：' + regOnly.join('；'));
 });
 
-check('③ 代表唤醒词必须是唤醒词表（436 条）里真有的词', () => {
+check('③ 代表唤醒词必须是唤醒词表（437 条）里真有的词', () => {
   assert.ok(TABLE.size > 400, '词表条数异常（表被削了？）：' + TABLE.size);
   const list = UNREGISTERED.map((r) => r.dir + ' ' + r.key + '→「' + r.wakeWord + '」');
   assert.deepEqual(list, [], '这些代表唤醒词不在 ' + TABLE.size + ' 条词表里，且没进登记表：' + list.join('；'));
