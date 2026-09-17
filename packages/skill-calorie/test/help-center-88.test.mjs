@@ -44,8 +44,8 @@ const stripHelpers = (html) => html.split('<script>' + COPY_RUNTIME_JS + '</scri
 test('A1 10 分组／54 子功能／436 场景（红点：分组或子功能聚合逻辑改坏）', () => {
   assert.equal(sceneData.groups.length, 10);
   assert.equal(sceneData.groups.reduce((n, g) => n + g.subgroups.length, 0), 54);
-  assert.equal(flat(sceneData).length, 436);
-  assert.equal(TRIGGERS.length, 436, 'SoT 条数漂移：数据模型必须随 TRIGGERS 重算');
+  // 条数派生（#645：手写 436 随词表增删必陈化；投影丢条由本断言捕获，SoT 收缩由 t291 的绝对钉守）。
+  assert.equal(flat(sceneData).length, TRIGGERS.length, '投影不得丢条：场景数必须随 TRIGGERS 重算');
 });
 
 test('A1 分组序／label／图标逐字 = F3 十组（红点：HELP_GROUPS 任一项改动）', () => {
@@ -73,7 +73,14 @@ test('A1 types 直方图 329/79/6/22 ＋ 恒发 SceneTypeBadge{text,bg,fg}（红
     acc[key] = (acc[key] ?? 0) + 1;
     return acc;
   }, {});
-  assert.deepEqual(hist, { 结果: 329, 回执: 79, 过程: 6, '(none)': 22 });
+  // 直方图期望派生（#645）：从 SoT 现算——新场景按 output_type 分档＋legacy 无 types 计 (none)；整档错配仍必红。
+  const expectedHist = {};
+  for (const t of TRIGGERS) {
+    const badge = 'output_type' in t ? HELP_TYPE_BADGES[t.output_type] : undefined;
+    const sortKey = badge === undefined ? '(none)' : badge.text;
+    expectedHist[sortKey] = (expectedHist[sortKey] ?? 0) + 1;
+  }
+  assert.deepEqual(hist, expectedHist);
   for (const scene of flat(sceneData)) {
     for (const badge of scene.types ?? []) {
       assert.equal(typeof badge, 'object', 'types 元素必须是对象（字符串会走 CSS 默认色）');
@@ -97,14 +104,14 @@ test('A1 顶层键 = F3 键集（skill_name/title/subtitle/contact/groups）（�
   assert.deepEqual(Object.keys(sceneData), ['skill_name', 'title', 'subtitle', 'contact', 'groups']);
   assert.equal(sceneData.skill_name, HELP_SKILL_NAME);
   assert.equal(sceneData.title, HELP_TITLE);
-  assert.equal(sceneData.subtitle, '10 分类 · 436 场景 · 更新于 ' + updatedAt);
+  assert.equal(sceneData.subtitle, sceneData.groups.length + ' 分类 · ' + flat(sceneData).length + ' 场景 · 更新于 ' + updatedAt);
   assert.deepEqual(sceneData.contact.items.map((i) => i.label), ['GitHub', 'Issues']);
 });
 
 test('P-2 updatedAt 显式参数：缺省无时间戳且两次调用逐字相同（红点：改用 Date.now()）', () => {
   const a = buildHelpSceneData();
   const b = buildHelpSceneData();
-  assert.equal(a.subtitle, '10 分类 · 436 场景');
+  assert.equal(a.subtitle, a.groups.length + ' 分类 · ' + flat(a).length + ' 场景');
   assert.equal(JSON.stringify(a), JSON.stringify(b));
   assert.equal(count(JSON.stringify(a), '更新于'), 0);
   assert.equal(count(JSON.stringify(buildHelpSceneData({ updatedAt })), '更新于'), 1);
@@ -157,7 +164,13 @@ test('D-1 三档徽章色**逐条**映射 = F3 TYPE_DEFAULT（红点：互换 re
       hist[badge.text] = (hist[badge.text] ?? 0) + 1;
     }
   }
-  assert.deepEqual(hist, { 结果: 329, 回执: 79, 过程: 6 }, '三档文本的条数必须逐档对上（防整档错配）');
+  // 三档条数派生（#645）：从 SoT output_type 现算；互换配色在上逐条 bg/fg 处红，整档错配在这里红。
+  const expectedTypeHist = {};
+  for (const t of TRIGGERS.filter((t) => 'output_type' in t)) {
+    const text = HELP_TYPE_BADGES[t.output_type].text;
+    expectedTypeHist[text] = (expectedTypeHist[text] ?? 0) + 1;
+  }
+  assert.deepEqual(hist, expectedTypeHist, '三档文本的条数必须逐档对上（防整档错配）');
   // 徽章对象必须**恒等于** `HELP_TYPE_BADGES[output_type]`（防「换键不换色」／文本与色错配）。
   for (const scene of flat(sceneData)) {
     if (scene.types === undefined) continue;
@@ -188,18 +201,21 @@ test('D-3 text 态裸 `<N>` = legacy CLI 原文（逐字保留、非 HTML；红�
 /* ── S2 壳落地（A2） ───────────────────────────────────────────── */
 
 test('A2 复用冻结面 130 条 implemented／0 pending（红点：base-render 新增契约面）', () => {
-  assert.equal(SPEC_FROZEN_SURFACE.length, 130);
+  // 总数不写死（#645：base 侧 #525 已 130→148；总数由 base 自家签名测试锁，本处只守零 pending 且全 implemented）。
   assert.equal(SPEC_FROZEN_SURFACE.filter((entry) => entry.status === 'pending').length, 0);
-  assert.equal(SPEC_FROZEN_SURFACE.filter((entry) => entry.status === 'implemented').length, 130);
+  assert.equal(SPEC_FROZEN_SURFACE.filter((entry) => entry.status === 'implemented').length, SPEC_FROZEN_SURFACE.length);
 });
 
 test('A2 file 态：完整文档 ＋ 436 卡／54 子功能／1308 复制按钮（红点：壳结构改动）', () => {
   assert.match(file.html, /^<!DOCTYPE html>/);
   assert.match(file.html, /<meta charset="utf-8">/);
   assert.match(file.html, /<\/html>\s*$/);
-  assert.equal(count(file.html, 'data-scene-id='), 436);
-  assert.equal(count(file.html, 'data-subgroup-id='), 54);
-  assert.equal(count(file.html, 'data-action-id='), 1308);
+  // 卡数／子功能数／复制按钮数派生（#645）：按钮恒每卡 3（HELP_COPY_TARGETS prompt／wakeWord／params）。
+  const expectedScenes = flat(sceneData).length;
+  const expectedSubgroups = sceneData.groups.reduce((n, g) => n + g.subgroups.length, 0);
+  assert.equal(count(file.html, 'data-scene-id='), expectedScenes);
+  assert.equal(count(file.html, 'data-subgroup-id='), expectedSubgroups);
+  assert.equal(count(file.html, 'data-action-id='), expectedScenes * 3);
   assert.equal(file.mode, 'file');
 });
 
@@ -217,7 +233,7 @@ test('P-5 inline 态：只取 <section> 片段 ＋ <style> 落点钉死（红点
 test('三态同源：file／inline 的 436 个 data-scene-id 逐字同序；text 覆盖同一 436 个 id（红点：三态各派生一份数据）', () => {
   const ids = (html) => [...html.matchAll(/data-scene-id="([^"]*)"/g)].map((m) => m[1]);
   assert.deepEqual(ids(inline.html), ids(file.html));
-  assert.equal(ids(file.html).length, 436);
+  assert.equal(ids(file.html).length, flat(sceneData).length);
   for (const scene of flat(sceneData)) assert.ok(text.html.includes(scene.id), 'text 缺场景：' + scene.id);
   assert.ok(!/<(section|style|script|div|article|details|span|button)\b/.test(text.html));
   assert.deepEqual([...HELP_CENTER_MODES], ['file', 'inline', 'text']);
@@ -260,16 +276,16 @@ test('守卫① report.markers 六键（计数与 filled 口径钉死）（红�
 
 test('守卫② id 唯一：数据层 436/436 ＋ 子功能 54/54（红点：id 派生规则碰撞）', () => {
   const ids = flat(sceneData).map((s) => s.id);
-  assert.equal(new Set(ids).size, 436);
+  assert.equal(new Set(ids).size, ids.length);
   const subgroupIds = sceneData.groups.flatMap((g) => g.subgroups.map((s) => s.id));
-  assert.equal(new Set(subgroupIds).size, 54);
+  assert.equal(new Set(subgroupIds).size, subgroupIds.length);
   assert.ok(subgroupIds.every((id, i, all) => all.indexOf(id) === i));
 });
 
 test('守卫② id 唯一：HTML 层 data-scene-id 436/436 ＋ 元素 id 全唯一（红点：壳内 id 派生用数据里的重复值）', () => {
   const sceneIds = [...file.html.matchAll(/data-scene-id="([^"]*)"/g)].map((m) => m[1]);
-  assert.equal(sceneIds.length, 436);
-  assert.equal(new Set(sceneIds).size, 436);
+  assert.equal(sceneIds.length, flat(sceneData).length);
+  assert.equal(new Set(sceneIds).size, sceneIds.length);
   const elementIds = [...file.html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
   assert.ok(elementIds.length > 0);
   assert.equal(new Set(elementIds).size, elementIds.length, 'HTML id 重复：'

@@ -1,8 +1,8 @@
 /** #88 · HELP 速查台（取 F3 并回补 F1／F2 独有能力）· 数据模型 ＋ 壳落地。
  *
  * 三条口径（逐条对齐 `docs/research/t88-plan.md` v2 ＋ `.scratch/orchestrator/t88-acceptance.md`）：
- *  1. **运行期派生，不做 codegen**：唯一权威是 `TRIGGERS`（436 条，`triggers/index.ts:48`），
- *     本模块只把它**投影**成 `SceneData`（10 分组／54 子功能／436 场景），落盘 JSON 会构成
+ *  1. **运行期派生，不做 codegen**：唯一权威是 `TRIGGERS`（条数随声明派生，不写死，`triggers/index.ts:48`），
+ *     本模块只把它**投影**成 `SceneData`（10 分组／54 子功能／场景数现算＝`TRIGGERS.length`），落盘 JSON 会构成
  *     第二真相源，故不产。
  *  2. **零 base-render 改动**：壳恒走 `renderHelpShell`（`base-render/src/help.ts:675`，冻结签名），
  *     本模块只提供 `sceneData` ＋ `assets`，不新增契约面、不自造第二份模板／样式／运行时。
@@ -13,7 +13,7 @@
  *
  * 逐场景 CLI 形态文本（Q11／R17／R32）：壳的 `cliText(scene) = scene.id`（`help.ts:391-393`）恒读
  * `Scene.id`，故 **id 就是卡面展示面**：
- *  - 414 条新场景取 `key`（＝真实键，与 F3 逐字相等）；
+ *  - 新场景取 `key`（＝真实键，与 F3 逐字相等；条数随 `TRIGGERS` 派生，不写死）；
  *  - **22 条 legacy 取 `main_prompt.cli` 原文**（R1-7 解耦）：F3 的 `legacy_{wake_word}` 会让卡面
  *    显示并复制一条**不存在的命令**（`help.ts` 侧无该键），差异已登记台账 **L-19**。
  *
@@ -220,7 +220,7 @@ function compareKey(a: readonly [number, number, string], b: readonly [number, n
   return a[2] < b[2] ? -1 : a[2] > b[2] ? 1 : 0;
 }
 
-/** 运行期派生：`TRIGGERS` → `SceneData`（10 分组／54 子功能／436 场景）。
+/** 运行期派生：`TRIGGERS` → `SceneData`（10 分组／54 子功能／场景数现算，不写死）。
  *
  * 纯函数、零 I/O、零缓存；两次同参调用逐字相等（P-2 口径）。
  */
@@ -524,7 +524,7 @@ function inlineFragment(html: string, assets: TemplateAssets): string {
  *
  * 末尾追加同一份「看板页入口」（#107）：与 `file`／`inline` 的 `meta_blocks` 块**同源同序**，
  * 使三态在内容上仍是一份数据换三个载体。入口行缩进 2 空格（场景行恒 4 空格，
- * `help-center-91` 的 `textSceneIds` 只认 4 空格行，故不污染 436 条场景序）。
+ * `help-center-91` 的 `textSceneIds` 只认 4 空格行，故不污染场景序（条数随派生）。
  * #471：同一段再追加「新词别名」节（同样是 2 空格缩进），只发「词 · 命令名」不发 CLI（见该节件头）。
  */
 function renderTextIndex(
