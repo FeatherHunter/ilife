@@ -15,7 +15,6 @@ import {
   viewWeightReview,
 } from '../dist/weight/review.js';
 import { WEIGHT_ROUTES } from '../dist/weight/routes.js';
-import { ROUTES_SCENE_03 } from '../dist/cli/legacy/routes/scene-03.js';
 import { SCENE_03_WEIGHT } from '../dist/triggers/scene-03-weight.js';
 import { configTestBase } from './helpers/config-test.mjs';
 
@@ -353,7 +352,7 @@ test('#482 零差值写法：单点窗口的期间变化写「0 kg」不写「0.
   db.close();
 });
 
-test('#335 原子改动：路由声明 6 条 exec（order 131–136）＋场景分片恰删 6 条', () => {
+test('#335 原子改动：路由声明 6 条 exec（order 131–136）', () => {
   const mine = WEIGHT_ROUTES.filter((r) => r.key === 'calorie.view.weight-review' && r.list === 'wake' && typeof r.order === 'number' && r.order >= 131 && r.order <= 136);
   assert.equal(mine.length, 6);
   assert.deepEqual(mine.map((r) => r.order), [131, 132, 133, 134, 135, 136]);
@@ -363,8 +362,9 @@ test('#335 原子改动：路由声明 6 条 exec（order 131–136）＋场景�
     assert.ok(!('bucket' in r) && !('reason' in r), r.wakeWord + ' 不得留 bucket/reason');
     assert.match(r.cli, /^calorie-cmd-read calorie\.view\.weight-review/);
   }
-  const legacyWords = new Set(ROUTES_SCENE_03.map((r) => r.wakeWord));
+  // 老住处那一片（`src/cli/legacy/routes/scene-03.ts`）连同整个容器已在 #708 退役；
+  // 「这 6 条已搬进本能力目录、老路一条不留」由下面这条覆盖：本能力目录里这 6 条**恰各一条**。
   for (const w of ['体重复盘（本周）', '体重复盘（本月）', '体重复盘（最近 90 天）', '体重复盘（今年）', '体重复盘（自定义时间）', '看里程碑回溯']) {
-    assert.ok(!legacyWords.has(w), '场景分片应已删：' + w);
+    assert.equal(WEIGHT_ROUTES.filter((r) => r.wakeWord === w).length, 1, '本能力目录里该唤醒词不是恰一条：' + w);
   }
 });

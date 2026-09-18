@@ -14,7 +14,7 @@ import { KEYS } from '../dist/fetch/shapes.js';
 import {
   buildHomeData, buildDietOverview, buildMealDistribution,
   buildExerciseView, buildGoalView,
-  renderHomeHtml, renderDietHtml, renderExerciseHtml, renderGoalHtml,
+  renderHomeHtml,
   VIEW_KEYS, viewShapeFor, CalorieRenderError,
 } from '../dist/render/index.js';
 import { configTestBase } from './helpers/config-test.mjs';
@@ -114,11 +114,8 @@ test('饮食：总览数列=series 和 + 餐别窗口跟 MEAL_WINDOWS + HTML 快
   assert.ok(Math.abs(pctSum - 100) < 0.05, 'pct 求和 ' + pctSum);
   // 水行不计入分布
   assert.equal(dist.totalCalories, 389 + 200 + 100 + 500 + 150);
-  const html = renderDietHtml(o, dist);
-  assert.match(html, /饮食总览/);
-  assert.match(html, /餐别分布/);
-  assert.match(html, /MEAL_WINDOWS/);
-  assert.match(html, /加餐=下午茶\+夜宵/);
+  // #708 · 原先这里还有三条「打 `renderDietHtml` 输出」的断言（饮食总览／餐别分布／MEAL_WINDOWS 字样）：
+  // 那个函数生产零调用方，已随 #708 删除，断言一并摘掉；上面这些**取数与分布**断言逐条留下。
   db.close();
 });
 
@@ -130,10 +127,8 @@ test('运动：T7 复核 + T5 数列 + HTML 快照', () => {
   assert.equal(v.review.sessions, 2);
   assert.equal(v.totalBurnedSeries, 620);
   assert.equal(v.activeDays, 2);
-  const html = renderExerciseHtml(v);
-  assert.match(html, /运动 2026-09-06 ~ 2026-09-07/);
-  assert.match(html, /总消耗/);
-  assert.match(html, /ilife-page/);
+  // #708 · 原先这里还有三条「打 `renderExerciseHtml` 输出」的断言（页头日期／总消耗／整页类名）；
+  // 那个函数生产零调用方已随 #708 删除，断言一并摘掉；上面四条**取数**断言逐条留下。
   db.close();
 });
 
@@ -145,10 +140,9 @@ test('目标分析：T4 目标 + T7 缺口趋势 + HTML 快照', () => {
   assert.ok(v.history.goalHistory.length > 0);
   assert.ok(typeof v.deficit.summary.avgDeficit === 'number');
   assert.ok(typeof v.trend.summary.avg === 'number');
-  const html = renderGoalHtml(v);
-  assert.match(html, /目标分析/);
-  assert.match(html, /热量目标/);
-  assert.match(html, /周缺口/);
+  // #708 · 原先这里还有三条「打 `renderGoalHtml` 输出」的断言（目标分析／热量目标／周缺口）；
+  // 那个函数生产零调用方已随 #708 删除（连带它把 `calorie_goal` 这类常量名印给用户看那处漏网文案），
+  // 断言一并摘掉；上面四条**取数**断言逐条留下。
   db.close();
 });
 

@@ -28,7 +28,7 @@ import { buildGoalDraft, isGoalProfile } from './set.js';
 
 /** `calorie.view.goal` · 目标分析（完成度 ＋ 缺口 ＋ 趋势 ＋ 历史）。
  * #254 整页化：页面装配改走 `./resultDocs.ts::buildGoalDoc`（取数口径一行不动；
- * 旧 `renderGoalHtml` 片段按票面留在 `../render/html.ts`，本票不删）。 */
+ * 旧的 `renderGoalHtml` 片段已在 #708 随「生产零调用方」那一批删除）。 */
 export function viewGoal(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const v = buildGoalView(db, start, end);

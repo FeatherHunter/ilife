@@ -2,13 +2,11 @@
 // #295 · 命令汇总位的生成器（地图 #293 第二级）：把「一条命令的事实」从各能力的权威声明
 // 确定性地派生成四件生成物，配 `pnpm gen:check`（生成物 ≠ 生成器输出即红）。
 //
-// 输入（**两个权威源，一个键恰住一处**）：
-//   ① 已搬迁的能力：`src/<能力>/commands.ts` 导出的唯一一个声明数组（编译后 `dist/<能力>/commands.js`）；
-//   ② 未搬迁的命令：`src/cli/legacy/scene-NN.ts` 各导出它自己那一段（`#313` 起按场景分区；
-//      此前是单一清单 `src/cli/legacyCommands.ts`）。扫描口径＝**按文件名升序**（确定性），
-//      所以「删一个场景的清单」只动它自己那个文件，与别的场景零交集。
+// 输入（**一个权威源，一个键恰住一处**）：`src/<能力>/commands.ts` 导出的唯一一个声明数组
+//   （编译后 `dist/<能力>/commands.js`）。#708 之前还有第二处输入——未搬迁清单的场景分区
+//   `src/cli/legacy/scene-NN.ts`；92 条命令全部搬进能力目录之后那一整层容器已退役（ADR-0002），
+//   生成器不再扫它，也不再需要「跨场景同键即抛」那个守卫（同键守卫由下面的 `merge()` 承担）。
 //   扫描顺序不影响产物：`merge()` 最后按键排序（写键在前、读键在后），故与写入次序无关。
-// 一条命令的事实（键／形状／标题／代表唤醒词／工作流程名／可执行示例）全在两处声明里，没有第三处。
 // 输出（每个文件头一句「本文件由 scripts/gen-cli.mjs 生成，勿手改」）：
 //   ① `src/cli/keys.ts`（导出名不变，调用方导入面不动）；
 //   ② `src/cli/registry.ts`（一能力一行，由扫描得出，人工不必再碰）；
@@ -73,9 +71,6 @@ const PRECHECK_END = '// -- GEN-CLI-END 预检页表';
  * `pnpm gen:check` 在仓外沙箱跑时随 dist 一起被复制）。 */
 const STAMP = join(DIST_DIR, '.gen-inputs.json');
 const STAMP_VERSION = 2;
-/** `src/cli/legacy/` 里**不是**场景分片的文件：`index.ts` 是汇总（不声明命令）、`types.ts` 只给声明形状。
- * 两者都不该被当成声明源读——汇总若也算输入，就成了「第三处清单」。 */
-const LEGACY_NON_SCENE = new Set(['index.ts', 'types.ts']);
 
 /** 读一个能力目录的声明：扫 `src/*&#47;commands.ts` 定名，引编译后模块取那个唯一的数组导出。 */
 async function loadCapability(name) {
@@ -108,73 +103,6 @@ async function loadCapability(name) {
   return { name, exportName, list };
 }
 
-/** 扫未搬迁清单的分区目录 `src/cli/legacy/*.ts`：**按文件名升序**（确定性；`types.ts` 只给类型，不导出数组）。
- * 一个场景一个文件，故「搬走一个场景的清单」只动它自己那个文件。 */
-function scanLegacySceneNames() {
-  const dir = join(SRC_DIR, 'cli', 'legacy');
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir, { withFileTypes: true })
-    .filter((d) => d.isFile() && d.name.endsWith('.ts'))
-    .map((d) => d.name)
-    .sort();
-}
-
-/** 读未搬迁清单的一个场景分区：引编译后模块，取它唯一那个声明数组导出（形状同 `loadCapability`）。 */
-async function loadLegacyScene(file) {
-  const distPath = join(DIST_DIR, 'cli', 'legacy', file.replace(/\.ts$/, '.js'));
-  if (!existsSync(distPath)) {
-    throw new Error('缺 ' + relative(REPO_ROOT, distPath) + '：生成器读编译后的声明模块，请先 `pnpm build`');
-  }
-  const mod = await import(pathToFileURL(distPath).href);
-  const arrays = Object.entries(mod).filter(([, v]) => Array.isArray(v));
-  if (arrays.length === 0) return null; // `types.ts` 这类只给类型的文件：不算声明源
-  if (arrays.length !== 1) {
-    throw new Error(
-      'src/cli/legacy/' + file + ' 必须恰好导出一个声明数组，实得 ' + arrays.length +
-        ' 个（' + arrays.map(([k]) => k).join('／') + '）',
-    );
-  }
-  const [exportName, list] = arrays[0];
-  for (const spec of list) {
-    // `wakeWord` **可缺**（缺了速查表退回命令名），但**写了就必须是真词**（同上，见 `wakeWordGate()`）；
-    // 其余五个字段必填。
-    for (const field of ['kind', 'key', 'title', 'example']) {
-      if (typeof spec?.[field] !== 'string') throw new Error('legacy/' + file + ' 的声明缺 ' + field + '：' + JSON.stringify(spec));
-    }
-    if (spec.kind === 'read' && typeof spec.shape !== 'string') {
-      throw new Error('legacy/' + file + ' 的读声明缺 shape：' + JSON.stringify(spec));
-    }
-  }
-  return { name: 'legacy/' + file, exportName, list };
-}
-
-/** 未搬迁清单的声明源（文件名升序，跳过 `index.ts`／`types.ts`）；`--stamp` 与陈旧守卫都按这份算。 */
-function legacySources() {
-  return scanLegacySceneNames()
-    .filter((f) => !LEGACY_NON_SCENE.has(f))
-    .map((f) => join(SRC_DIR, 'cli', 'legacy', f));
-}
-
-/** 合流未搬迁清单的 10 个场景分区：**两个文件声明同一个键即抛**（分区后同场景／跨场景都拦）。
- * 导出给 `test/legacy-partition-313.test.mjs` 与证据脚本复用——它们要能的正是**同一个守卫**，
- * 而不是各自重写一份「跨场景不许重复」的判断（铁律二：判断只写一处）。 */
-export function mergeLegacyPartition(parts) {
-  const out = [];
-  const seen = new Map();
-  for (const part of parts) {
-    if (part === null) continue;
-    for (const decl of part.list) {
-      const earlier = seen.get(decl.key);
-      if (earlier !== undefined) {
-        throw new Error('命令键重复登记：' + decl.key + '（' + earlier + ' 与 ' + part.name + ' 都声明了它）');
-      }
-      seen.set(decl.key, part.name);
-      out.push(decl);
-    }
-  }
-  return out;
-}
-
 /** 扫 `src/<能力>/commands.ts`：能力名升序（确定性排序的第一半）。 */
 function scanCapabilityNames() {
   return readdirSync(SRC_DIR, { withFileTypes: true })
@@ -184,8 +112,8 @@ function scanCapabilityNames() {
     .sort();
 }
 
-/** 两个权威源合流：同键两个人声明即抛（只在代码缺陷时触发）。 */
-function merge(legacy, capabilities) {
+/** 两个声明源合流（能力目录 ＋ 路由声明）：同键两个人声明即抛（只在代码缺陷时触发）。 */
+function merge(capabilities) {
   const out = new Map();
   const put = (decl, from) => {
     if (out.has(decl.key)) throw new Error('命令键重复登记：' + decl.key + '（又见 ' + from + '）');
@@ -203,7 +131,6 @@ function merge(legacy, capabilities) {
       from,
     });
   };
-  for (const decl of legacy) put(decl, 'legacy scene 分区');
   for (const cap of capabilities) for (const decl of cap.list) put(decl, cap.name);
   const all = [...out.values()];
   // 确定性排序：写键在前、读键在后，各按**键名码点升序**。
@@ -224,8 +151,7 @@ function renderKeysTs(entries) {
   L.push('/** ' + BANNER);
   L.push(' *');
   L.push(' * registry 合法键表：写 ' + writes.length + ' ＋ 读 ' + reads.length + ' ＝ ' + entries.length + ' 条。');
-  L.push(' * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单');
-  L.push(' * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。');
+  L.push(' * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）；本文件只是那处的派生，不手改。');
   L.push(' *');
   L.push(' * 键序＝写键（键名升序）在前、读键（键名升序）在后（确定性排序，见生成器）。');
   L.push(' * 背景照旧：VIEW_KEYS/PHOTO_VIEW_KEYS 用下划线键，过不了 link-core registry（KEY_RE 只许');
@@ -359,7 +285,7 @@ function renderFlowBlock(entries) {
  * 是同一文件里第二处「一条命令的事实」。现在逐键从声明的 `example` 字段生成，加一条命令不必碰 `build-help.mjs`。 */
 function renderExampleBlock(entries) {
   const L = [EXAMPLE_START];
-  L.push('// 每键一行「照抄即能跑」的示例：住声明的 `example` 字段（各能力 `commands.ts`／`legacyCommands.ts`）。');
+  L.push('// 每键一行「照抄即能跑」的示例：住声明的 `example` 字段（各能力 `commands.ts`）。');
   L.push('// 无 `--params` 的写法照抄即 exit 2／4——所以新键必须自带可执行示例（#99 生成期结构断言的来意）。');
   L.push('const EXAMPLES = {');
   for (const e of entries) L.push('  ' + q(e.key) + ': ' + q(e.example) + ',');
@@ -407,13 +333,11 @@ function replaceBlock(text, start, end, block, path) {
   return text.slice(0, si) + block + text.slice(ei + end.length);
 }
 
-/** 生成器的输入（声明源）：未搬迁清单的场景分区（`src/cli/legacy/*.ts`，文件名升序）
- * ＋ 每个能力目录的声明 ＋ 路由声明（`src/cli/legacy/routes/*.ts` 与各能力 `routes.ts`——它们住
- * 子目录／不在命令声明扫描面内，必须**显式**纳入，否则「改了路由声明没 build」会被直接放行）。
+/** 生成器的输入（声明源）：每个能力目录的声明 ＋ 路由声明（各能力 `src/<能力>/routes.ts`——
+ * 它们不在命令声明扫描面内，必须**显式**纳入，否则「改了路由声明没 build」会被直接放行）。
  * 印记与判陈旧都以它们为准。 */
 function declarationSources(names) {
   return [
-    ...legacySources(),
     ...names.map((n) => join(SRC_DIR, n, 'commands.ts')),
     ...routeDeclarationSources(),
   ];
@@ -623,7 +547,6 @@ function srcFactsJson(src) {
 function pairMismatches(names, files, cmdDist, routeDist) {
   const bad = [];
   const jobs = [
-    ...legacySources().map((src) => ({ src, kind: 'command' })),
     ...names.map((n) => ({ src: join(SRC_DIR, n, 'commands.ts'), kind: 'command' })),
     ...routeDeclarationSources().map((src) => ({ src, kind: 'route' })),
   ];
@@ -676,7 +599,7 @@ const WAKE_GATE_REGISTERED = [
 
 /** #343 · 代表唤醒词门（生成期，正反一条）：声明里的 `wakeWord` 必须是**能路由回它自己那个键**的真唤醒词。
  *
- *  判据（一条，两面都要成立；源＝路由声明——`src/cli/legacy/routes/*.ts` 与各能力 `routes.ts` 的编译产物）：
+ *  判据（一条，两面都要成立；源＝路由声明——各能力 `routes.ts` 的编译产物）：
  *   · 正向：该词必须真的存在一条 `kind:'exec'` 路由——不存在 ⟺ 幽灵词，用户说它什么也拿不到；
  *   · 反向：该词必须落在**本键自己的 wake 词集**里——不在 ⟺ 它把人领到别的键（错位／复制粘贴）。
  *
@@ -814,21 +737,10 @@ async function main() {
   }
   const capabilities = [];
   for (const name of names) capabilities.push(await loadCapability(name));
-  // 未搬迁清单的场景分区：按文件名升序读，两个文件声明同一个键即抛（`mergeLegacyPartition`）。
-  const legacyParts = [];
-  const legacyFiles = [];
-  for (const file of scanLegacySceneNames()) {
-    if (LEGACY_NON_SCENE.has(file)) continue;
-    legacyFiles.push(file);
-    legacyParts.push(await loadLegacyScene(file));
-  }
   // #325 · 现场配对门（不经过印记）：源事实 ↔ dist 编译事实逐件比对。`--stamp` 重签过的自洽假 pair
   // 在这里现形（报 GEN-PAIR FAIL，不与 GEN-STALE 混用一个名，方便证据里点名）。
   const cmdDist = new Map();
   for (const cap of capabilities) cmdDist.set(cap.name + '/commands.ts', normFacts(cap.list));
-  for (let i = 0; i < legacyFiles.length; i += 1) {
-    cmdDist.set('cli/legacy/' + legacyFiles[i], normFacts(legacyParts[i] === null ? [] : legacyParts[i].list));
-  }
   const routeDist = new Map();
   for (const d of await loadDecls()) {
     const key = d.__src.replace(/^packages\/skill-calorie\/src\//, '');
@@ -847,14 +759,11 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  const entries = merge(mergeLegacyPartition(legacyParts), capabilities);
+  const entries = merge(capabilities);
 
   // #343 · 代表唤醒词门：声明里的 `wakeWord` 必须路由回本键（逐条点名键／词／文件）。排在上两道门之后
   // ——新鲜度／配对门管「读到的是不是现在这份声明」，本门管「这份声明本身对不对」，前者不放行后者不白跑。
   const fileOf = new Map();
-  for (let i = 0; i < legacyFiles.length; i += 1) {
-    for (const d of legacyParts[i] === null ? [] : legacyParts[i].list) fileOf.set(d.key, 'src/cli/legacy/' + legacyFiles[i]);
-  }
   for (const cap of capabilities) for (const d of cap.list) fileOf.set(d.key, 'src/' + cap.name + '/commands.ts');
   if (!(await wakeWordGate(entries, fileOf))) return;
 
@@ -887,16 +796,14 @@ async function main() {
         BUILD_HELP,
       ),
     },
-    // 路由声明（`src/cli/legacy/routes/*.ts` ＋ 各能力 `routes.ts`）派生件：与上面同批写盘／比对。
+    // 路由声明（各能力 `routes.ts`）派生件：与上面同批写盘／比对。
     { path: join(SRC_DIR, 'triggers', 'routes.generated.ts'), text: await renderRoutesGenerated() },
   ];
 
-  const declared = entries.filter((e) => e.from !== 'legacy scene 分区').length;
   const summary =
     '键 ' + entries.length + '（写 ' + entries.filter((e) => e.kind === 'write').length +
     ' ＋ 读 ' + entries.filter((e) => e.kind === 'read').length + '）；能力 ' + capabilities.length +
-    ' 个（' + capabilities.map((c) => c.name).join('／') + '）声明 ' + declared + ' 条，未搬迁清单 ' +
-    (entries.length - declared) + ' 条';
+    ' 个（' + capabilities.map((c) => c.name).join('／') + '）声明 ' + entries.length + ' 条（一条命令一个定义地）';
 
   if (!CHECK) {
     for (const t of targets) writeFileSync(t.path, t.text);
@@ -925,7 +832,7 @@ async function main() {
   if (bad.length) {
     console.error('GEN-CHECK FAIL：' + summary);
     for (const b of bad) console.error('  ' + b);
-    console.error('  生成物是派生件：手改无效。跑 `pnpm gen` 重生成，或改权威声明（各能力 commands.ts ／ legacyCommands.ts）。');
+    console.error('  生成物是派生件：手改无效。跑 `pnpm gen` 重生成，或改权威声明（各能力 `commands.ts`）。');
     process.exitCode = 1;
     return;
   }
@@ -934,7 +841,7 @@ async function main() {
 }
 
 /** 直接跑：`node scripts/gen-cli.mjs`（`pnpm gen`／`gen:check`）或 `--stamp`（`pnpm build` 调）。
- * 被 `import` 时**不跑**——测试要引本模块的守卫（`mergeLegacyPartition`）做靶向断言，
+ * 被 `import` 时**不跑**——外部（复核脚本一类）要引本模块的纯函数做靶向断言，
  * 不能因为 import 就顺手重跑一遍生成（那会让「跑测试」变成「跑生成」，判定不再干净）。 */
 const RUN_AS_SCRIPT = process.argv[1] !== undefined && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 if (RUN_AS_SCRIPT) await main();

@@ -3,8 +3,8 @@
  * 红线：样式常量一律走 token()/cx()（base-paint 唯一真相源），本包不自带颜色/圆角/字号常量；
  * 转义走 base-paint escapeHtml；数值序列化前已在数据层 round2，模板不再做数学
  * （bar 宽度的 0..100 钳位为纯展示裁剪；照片层数值在本层不做数学）。
- * T8 四模板（总览已迁 `src/home/homeDocs.ts`，#370 纯搬迁）：renderDietHtml（饮食：总览+餐别分布）/
- * renderExerciseHtml（运动）/ renderGoalHtml（目标分析）。
+ * T8 四模板（总览已迁 `src/home/homeDocs.ts`，#370 纯搬迁；**饮食／运动／目标分析三条老模板已在
+ *  #708 删除**——它们生产零调用方，唯一消费者是 `test/render-t8.test.mjs` 的直调，删除后生产零变化）。
  * T9 模板：目标五盘/组合分析/缺口/饮食复盘/健康盘/排行/食品库。
  * T10 模板：photoCardHtml（照片卡）/ renderPhotoReceiptHtml（CRUD 收据）/ renderGalleryHtml（画廊）/
  * renderCompareHtml（对比）/ renderViewerHtml（单图）/ renderGifHtml（动图规划，只 render 任务描述不嵌 GIF）/
@@ -12,9 +12,6 @@
  * 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64。
  */
 import { cx, escapeHtml, token } from 'base-paint';
-import type { DietOverview, MealDistribution } from './diet.js';
-import type { ExerciseView } from '../home/exercise.js';
-import type { GoalView } from '../goal/goalPlate.js';
 import type { CompareData, GalleryData, GifTask, PhotoCard, ViewerData } from '../photo/photo.js';
 import { GIF_PASSTHROUGH_NOTE } from '../photo/photo.js';
 import type { CrudReceipt, ErrorReceipt } from './receipt.js';
@@ -67,54 +64,6 @@ function bar(label: string, pct: number | null): string {
 function fmt(n: number | null | undefined, suffix = ''): string {
   if (n === null || n === undefined) return '—';
   return String(n) + suffix;
-}
-
-export function renderDietHtml(o: DietOverview, dist: MealDistribution): string {
-  const slices = dist.slices
-    .map((s) => kpi(s.meal, s.calories + ' 卡', s.count + ' 餐 · ' + s.pct + '%'))
-    .join('');
-  const body =
-    '<div class="' + cx('section') + '"><h2>饮食总览 ' + escapeHtml(o.start) + ' ~ ' + escapeHtml(o.end) + '</h2>' +
-    '<div class="' + cx('grid') + '">' +
-    kpi('累计', o.totalCalories + ' 卡', o.loggedDays + '/' + o.days + '天有记录') +
-    kpi('日均', fmt(o.avgCalories, ' 卡')) +
-    kpi('目标', o.calorieGoal + ' 卡') +
-    kpi('趋势', o.trend.summary.trend, '均值 ' + o.trend.summary.avg + ' 卡') +
-    '</div></div>' +
-    '<div class="' + cx('section') + '"><h2>餐别分布 ' + escapeHtml(dist.date) + '（窗口跟 MEAL_WINDOWS）</h2>' +
-    '<div class="' + cx('grid') + '">' + slices + '</div>' +
-    '<div style="color:' + token('muted') + '">合计 ' + dist.totalCalories + ' 卡 · 加餐=下午茶+夜宵</div></div>';
-  return pageShell('calorie', 'ilife:calorie:diet', '饮食 ' + o.start + ' ~ ' + o.end, body);
-}
-
-export function renderExerciseHtml(v: ExerciseView): string {
-  const types = v.review.byType
-    .slice(0, 4)
-    .map((t) => kpi(t.type, t.burned + ' 卡', t.sessions + ' 次 · ' + t.minutes + ' 分钟'))
-    .join('');
-  const body =
-    '<div class="' + cx('grid') + '">' +
-    kpi('总消耗', v.review.totalBurned + ' 卡', v.start + ' ~ ' + v.end) +
-    kpi('总时长', v.review.totalMinutes + ' 分钟') +
-    kpi('次数', v.review.sessions + ' 次', '活跃 ' + v.review.activeDays + ' 天') +
-    kpi('数列活跃天', v.activeDays + ' 天', '数列合计 ' + v.totalBurnedSeries + ' 卡') +
-    '</div>' + (types ? '<div class="' + cx('section') + '"><h2>TOP 类型</h2><div class="' + cx('grid') + '">' + types + '</div></div>' : '');
-  return pageShell('calorie', 'ilife:calorie:exercise', '运动 ' + v.start + ' ~ ' + v.end, body);
-}
-
-export function renderGoalHtml(v: GoalView): string {
-  const n = v.nutrition;
-  const body =
-    '<div class="' + cx('grid') + '">' +
-    kpi('热量目标', n.calorie_goal + ' 卡') +
-    kpi('蛋白目标', fmt(n.protein_goal, ' g')) +
-    kpi('饮水目标', fmt(n.water_goal, ' ml')) +
-    kpi('30d完成', v.history.completedCount + '/' + (v.history.completedCount + v.history.incompleteCount), fmt(v.completionPct, '%')) +
-    kpi('周缺口', v.deficit.summary.weeklyDeficit + ' 卡', '预计 ' + v.deficit.summary.predictedLossKg + ' kg') +
-    kpi('缺口趋势', v.deficit.summary.trend) +
-    '</div>' +
-    bar('目标完成率', v.completionPct);
-  return pageShell('calorie', 'ilife:calorie:goal', '目标分析 ' + v.start + ' ~ ' + v.end, body);
 }
 
 function tagChips(tags: string[]): string {

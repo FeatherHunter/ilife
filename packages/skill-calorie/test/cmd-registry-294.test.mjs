@@ -35,7 +35,7 @@ import { CALORIE_COMBOS, CALORIE_WRITE_COMBOS, isCalorieWriteKey } from '../dist
 import { WEIGHT_COMMANDS } from '../dist/weight/index.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
-import { DECLARED_CAPABILITY_KEYS, DECLARED_KEYS, LEGACY_COMMANDS } from './declared.mjs';
+import { DECLARED_CAPABILITY_KEYS, DECLARED_KEYS } from './declared.mjs';
 import { configTestBase } from './helpers/config-test.mjs';
 
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
@@ -43,6 +43,24 @@ process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI_DIR = join(HERE, '..', 'src', 'cli');
+
+/** 能力目录的声明**定义地**：扫 `src/<能力>/commands.ts` 里 `key: 'calorie.*'` 的字面量。
+ *  返回的数组**保留重复项**——「一个键恰住一处」这条判据要数出现次数，去重就读不出来。
+ *  #708 起这是「一条命令的事实住在哪」这一问的唯一读法：未搬迁清单那一半已随容器退役（ADR-0002）。 */
+function capabilityDeclarationSites() {
+  const srcDir = join(HERE, '..', 'src');
+  const dirs = readdirSync(srcDir, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && existsSync(join(srcDir, e.name, 'commands.ts')))
+    .map((e) => e.name)
+    .sort();
+  const out = [];
+  for (const d of dirs) {
+    for (const m of readFileSync(join(srcDir, d, 'commands.ts'), 'utf8').matchAll(/key: '([^']+)'/g)) {
+      if (m[1].startsWith('calorie.')) out.push(m[1]);
+    }
+  }
+  return out;
+}
 
 /* ── 冻结基线（只许变短） ─────────────────────────────────────────────────────────────── */
 
@@ -212,15 +230,25 @@ test('#294 新路：注册表命中的体重键走能力目录（读＋写）', 
   }
 });
 
-test('#320 老路已无活口：未搬迁清单是空集，注册表键集即全量声明', () => {
-  // 原 #294 的这条活证取样 `calorie.view.body-composition`（现住 `src/body/commands.ts:25`）与
-  // `calorie.water.log`（现住 `src/diet/commands.ts:61`）——两键当刻都已在注册表里，
-  // 「未命中注册表的老键」这个前提早已不成立；#320 搬走最后一条（`calorie.view.goal-weight`）后，
-  // 老路的活口是**空集**：下一条断言就是它的机比判据。
-  assert.deepEqual(LEGACY_COMMANDS.map((d) => d.key), [],
-    '未搬迁清单不再是空集（老路又长出了活口）：' + LEGACY_COMMANDS.map((d) => d.key).join('、'));
+test('#708 老路已无活口：未搬迁清单与它的容器都不在，注册表键集即全量声明', () => {
+  // 原 #294 的这条活证取样 `calorie.view.body-composition`（现住 `src/body/commands.ts`）与
+  // `calorie.water.log`（现住 `src/diet/commands.ts`）——两键当刻都已在注册表里，
+  // 「未命中注册表的老键」这个前提早已不成立；#320 搬走最后一条（`calorie.view.goal-weight`）后活口是空集，
+  // #708 把容器本身也删了。判据随之升级：**数组为空是「清单还在」，目录不存在才是「清单不在」**——
+  // 老路要长回活口只有两条路：`src/cli/legacy/` 这个容器回来、或那份冻结键集夹具回来。两条都钉住。
+  const legacyDir = join(HERE, '..', 'src', 'cli', 'legacy');
+  assert.equal(existsSync(legacyDir), false, '老路又长出了活口：src/cli/legacy/ 回来了（' + legacyDir + '）');
+  assert.equal(existsSync(join(HERE, 'legacy-frozen-295.mjs')), false,
+    '棘轮没退干净：冻结键集夹具 test/legacy-frozen-295.mjs 回来了');
+  // 单源自证（#708 · 原先那条「两份权威源之和 == 全量声明」随退役塌成同值，改钉**定义地**这一面）：
+  // 一条命令的键在能力目录的声明里**恰出现一次**，且这批定义地之集恰为生成物注册表的键集。
   assert.deepEqual([...Object.keys(REGISTRY)].sort(), [...DECLARED_KEYS].sort(),
-    '注册表键集 != 全量声明（101 键闭环破了：有键住在两处，或某个声明没有定义地）');
+    '注册表键集 != 测试侧对账面（test/declared.mjs 应恰为生成物注册表的键集）');
+  const sites = capabilityDeclarationSites();
+  const twice = [...new Set(sites.filter((k, i) => sites.indexOf(k) !== i))].sort();
+  assert.deepEqual(twice, [], '有键住在两个定义地（一个键恰住一处）：' + twice.join('、'));
+  assert.deepEqual([...new Set(sites)].sort(), [...Object.keys(REGISTRY)].sort(),
+    '能力目录的定义地之集 != 注册表键集（有键没有定义地，或有定义地没进生成物）');
 
   // 两个「前任老键」照旧真跑一遍——它们当刻走的已是注册表那条路（新路不许断）。
   const db = mkDb();
@@ -280,14 +308,8 @@ test('#294 对账：注册表每条声明与 cli/keys.ts 的登记逐条一致',
   assert.deepEqual(missingInRegistry, [],
     '注册表缺了体重声明的键（生成物落后于权威源？）：' + missingInRegistry.join('、'));
   // ② 定义地：注册表里的每个键都能在某个能力目录的 `commands.ts` 里找到（不许有只活在生成物里的键）。
-  const srcDir = join(HERE, '..', 'src');
-  const capabilityDirs = readdirSync(srcDir, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && existsSync(join(srcDir, e.name, 'commands.ts')))
-    .map((e) => e.name)
-    .sort();
-  const declaredByCapabilities = new Set(capabilityDirs.flatMap((d) =>
-    [...readFileSync(join(srcDir, d, 'commands.ts'), 'utf8').matchAll(/key: '([^']+)'/g)]
-      .map((m) => m[1]).filter((k) => k.startsWith('calorie.'))));
+  //    #708 起收集口径收在一处（`capabilityDeclarationSites()`）——本件里两处要问同一个问题，只读一处。
+  const declaredByCapabilities = new Set(capabilityDeclarationSites());
   const withoutSite = [...registryKeys].filter((k) => !declaredByCapabilities.has(k));
   assert.deepEqual(withoutSite, [], '注册表的键在各能力目录的声明里找不到定义地：' + withoutSite.join('、'));
   // ③ 计数不手写：两边都从权威声明算出来（加／删一条命令时本行不动，见 test/declared.mjs）；

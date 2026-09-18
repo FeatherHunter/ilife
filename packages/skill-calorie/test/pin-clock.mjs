@@ -16,7 +16,7 @@
  * 替换对象与写法是同一套（只换 `Date` 一个内建、只改无参构造与 `now()`）。
  *
  * 本件**不是测试件**（不匹配 `test/*.test.mjs`，不进 `pnpm test` 的 glob），与同目录
- * `declared.mjs`／`legacy-frozen-295.mjs` 同列。
+ * `declared.mjs` 同列。
  */
 
 /** 钉住的时刻取当日 12:00Z：UTC 日与本地日（-12..+11）都落在同一天，避免时区把锚点挪一天。 */

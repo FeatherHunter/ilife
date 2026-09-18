@@ -22,7 +22,6 @@ import { test } from 'node:test';
 import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES, operationHead } from '../dist/shared/operationHead.js';
 import { fieldLabel, registerFieldLabels } from '../dist/shared/fieldLabel.js';
 import { sourceLine } from '../dist/shared/sourceLine.js';
-import { conclusionLine } from '../dist/shared/conclusionLine.js';
 import { emptyGuide } from '../dist/shared/emptyGuide.js';
 import { EXERCISE_CATEGORY_COLORS, categoryColor } from '../dist/exercise/categoryColors.js';
 import { configTestBase } from './helpers/config-test.mjs';
@@ -36,13 +35,13 @@ const PACKAGES = join(PKG, '..');
 const SKILL_SRC = join(PKG, 'src');
 const BASE_SRC = join(PACKAGES, 'base-render', 'src');
 
-/** 本票自己交付的六件（相对 `packages/`）：断言只钉在这几件上，
- *  免得别席在途件（同一棵树里同时改别的目录）把本票判据带红——那是归因问题，不是本票缺陷。 */
+/** 本票自己交付的五件（相对 `packages/`）：断言只钉在这几件上，
+ *  免得别席在途件（同一棵树里同时改别的目录）把本票判据带红——那是归因问题，不是本票缺陷。
+ *  （第六件 `shared/conclusionLine.ts` 已在 #708 撤件——产出与公共层 `renderConclusionBar` 逐字节相同。） */
 const MY_PATHS = [
   'skill-calorie/src/shared/operationHead.ts',
   'skill-calorie/src/shared/fieldLabel.ts',
   'skill-calorie/src/shared/sourceLine.ts',
-  'skill-calorie/src/shared/conclusionLine.ts',
   'skill-calorie/src/shared/emptyGuide.ts',
   'skill-calorie/src/exercise/categoryColors.ts',
 ];
@@ -156,15 +155,6 @@ test('来源脚注：读页与回执页共用的一句「数据来源 · 起 →
   assert.throws(() => sourceLine({ source: 'x', start: '', end: 'y', count: 1 }), '缺起止即报错，不编默认值');
 });
 
-test('一句话结论条：只定形状与类名，文案全由调用方给', () => {
-  const html = conclusionLine('本周练 6 次、消耗 1360 卡。');
-  assert.ok(html.includes('ilife-block-conclusion'), '缺结论条类名：' + html);
-  assert.ok(html.includes('本周练 6 次、消耗 1360 卡。'), '缺调用方给的结论句');
-  assert.ok(conclusionLine('<b>x</b>').includes('&lt;b&gt;'), '结论句里的尖括号须转义');
-  assert.throws(() => conclusionLine(''), '空结论须报错（本件不给默认文案）');
-  assert.throws(() => conclusionLine('   '), '空白结论须报错');
-});
-
 test('空态指引：图标＋原因＋下一句能说的话，文案由调用方给', () => {
   const html = emptyGuide({
     icon: '🏋️', text: '暂无力量训练记录', hint: '说「记力量训练」记下第一条',
@@ -245,8 +235,16 @@ test('概念读数：结论条／徽章／空态各有几条定义地', () => {
   const conclusionHelpers = filesMatching(skill, /(?:function|const)\s+\w*[Cc]onclusion\w*\s*[(=]/);
   result('概念-结论条-结论helper定义文件数', conclusionHelpers.length, conclusionHelpers);
   const conclusionLineDefs = filesMatching(skill, /(?:function|const)\s+conclusionLine\s*[(=]/);
-  result('概念-结论条-conclusionLine定义地数', conclusionLineDefs.length, conclusionLineDefs);
-  assert.deepEqual(conclusionLineDefs, ['skill-calorie/src/shared/conclusionLine.ts'], 'conclusionLine 须只在一处');
+  result('概念-结论条-技能层conclusionLine定义地数', conclusionLineDefs.length, conclusionLineDefs);
+  // #708 · 方向调转（门留着，牙口换一面）：技能层那件 `shared/conclusionLine.ts` 已撤件——它的产出与公共层
+  // `base-render/src/blocks.ts` 的 `renderConclusionBar` 逐字节相同，留着就是第二份定义。
+  // 于是这条门不再钉「技能层那一件」，改钉**技能层零命中 ＋ 正本恰在公共层一处**。
+  assert.deepEqual(conclusionLineDefs, [],
+    '技能层不许再出现 conclusionLine 的实现（正本是公共层 renderConclusionBar）：' + conclusionLineDefs.join('、'));
+  const conclusionBarDefs = filesMatching(walkSources(), /(?:function|const)\s+renderConclusionBar\s*[(=]/);
+  result('概念-结论条-结论条正本（renderConclusionBar）定义地', conclusionBarDefs.length, conclusionBarDefs);
+  assert.deepEqual(conclusionBarDefs, ['base-render/src/blocks.ts'],
+    '结论条的正本必须恰在公共层一处：' + conclusionBarDefs.join('、'));
 
   const badgeDefs = filesMatching(skill, /(?:function|const)\s+\w*[Bb]adge\w*\s*[(=]/);
   result('概念-徽章-技能层本地badge定义文件数', badgeDefs.length, badgeDefs);

@@ -1,8 +1,7 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
  * registry 合法键表：写 52 ＋ 读 82 ＝ 134 条。
- * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）或未搬迁清单
- * （`src/cli/legacyCommands.ts`）；本文件只是那两处的派生，不手改。
+ * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）；本文件只是那处的派生，不手改。
  *
  * 键序＝写键（键名升序）在前、读键（键名升序）在后（确定性排序，见生成器）。
  * 背景照旧：VIEW_KEYS/PHOTO_VIEW_KEYS 用下划线键，过不了 link-core registry（KEY_RE 只许

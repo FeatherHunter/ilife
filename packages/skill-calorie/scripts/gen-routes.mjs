@@ -1,6 +1,6 @@
 /** #313 B 段 · 路由生成器：声明层（编译后）→ `src/triggers/routes.generated.ts`。
  *
- * 读**编译后**的声明模块（`dist/cli/legacy/routes/scene-NN.js`、`dist/<能力>/routes.js`），按 `list` 分组、
+ * 读**编译后**的声明模块（各能力 `dist/<能力>/routes.js`），按 `list` 分组、
  * 按 `order` 升序排出三个列表与 `ALL_ROUTES`。跑法：
  *   - 单独跑：`node packages/skill-calorie/scripts/gen-routes.mjs`（本件自足，不依赖 `gen-cli.mjs`）；
  *   - 由 `scripts/gen-cli.mjs` 引：`pnpm gen` 写盘、`pnpm gen:check` 比对；声明源同时进内容印记
@@ -21,10 +21,7 @@ const PKG_DIR = join(HERE, '..');
 const SRC_DIR = join(PKG_DIR, 'src');
 const DIST_DIR = join(PKG_DIR, 'dist');
 const REPO_ROOT = join(PKG_DIR, '..', '..');
-const ROUTE_DIR = join(SRC_DIR, 'cli', 'legacy', 'routes');
 const OUT = join(SRC_DIR, 'triggers', 'routes.generated.ts');
-/** 汇总件（`LEGACY_ROUTES` ＝ 10 片拼接）：它不含新记录，生成器读叶子件、不读它（读了会把每条记两遍）。 */
-const AGGREGATOR = join(ROUTE_DIR, 'index.ts');
 
 const LISTS = ['wake', 'new', 'repair'];
 /** 三个列表的产物名与类型（`new`／`repair` 全是 exec，故标 `ExecWakeRoute[]`）。 */
@@ -43,16 +40,11 @@ const sha256 = (text) => createHash('sha256').update(text, 'utf8').digest('hex')
 /** 单引号字面量（与仓内既有生成器同款：先转义反斜杠，再转义单引号）。 */
 const q = (s) => "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 
-/** 声明源清单：`src/cli/legacy/routes/*.ts`（含汇总件——它也要进印记）＋ 各能力 `src/<能力>/routes.ts`。
+/** 声明源清单：各能力 `src/<能力>/routes.ts`（#708 起这是**唯一**一处路由声明面——
+ * 未搬迁清单的 `src/cli/legacy/routes/*.ts` 随容器退役，ADR-0002）。
  * 生成与内容印记共用这一份清单，不许各算一套。 */
 export function routeDeclarationSources() {
   const out = [];
-  if (existsSync(ROUTE_DIR)) {
-    for (const d of readdirSync(ROUTE_DIR, { withFileTypes: true })) {
-      if (d.isFile() && d.name.endsWith('.ts')) out.push(join(ROUTE_DIR, d.name));
-    }
-  }
-  out.sort();
   for (const d of readdirSync(SRC_DIR, { withFileTypes: true })) {
     if (!d.isDirectory()) continue;
     const p = join(SRC_DIR, d.name, 'routes.ts');
@@ -66,13 +58,12 @@ function distOf(src) {
   return join(DIST_DIR, relative(SRC_DIR, src).replace(/\\/g, '/').replace(/\.ts$/, '.js'));
 }
 
-/** 读编译后的声明件：叶子件必须**恰好导出一个**声明数组（汇总件跳过）。
+/** 读编译后的声明件：每件必须**恰好导出一个**声明数组。
  * #325 起导出给 `gen-cli.mjs` 的配对门复用：现场比对“源的事实 ↔ 编译的事实”必须读同一份加载逻辑，
  * 不许在检查侧另写一份（一个概念一个定义地）。 */
 export async function loadDecls() {
   const decls = [];
   for (const src of routeDeclarationSources()) {
-    if (src === AGGREGATOR) continue;
     const distPath = distOf(src);
     if (!existsSync(distPath)) {
       throw new Error('缺 ' + rel(distPath) + '（源：' + rel(src) + '）：生成器读编译后的声明模块，请先 `pnpm build`');
@@ -121,7 +112,7 @@ function groupDecls(decls) {
     pairOwner.set(pair, d.__src);
     // **重复词组必须整组同迁**（同一 `wakeWord` 的多条记录留在同一件里）：同一件内的重复是冻结 SoT 的
     // 既成事实——如 `记身材照` 在 `list=wake` 内合法出现 3 次（order 250/251/252，同住
-    // `src/cli/legacy/routes/scene-09.ts`）——下面的守卫只拦「同一词组被拆到两件」；把一个词组搬散，
+    // `src/photo/routes.ts`）——下面的守卫只拦「同一词组被拆到两件」；把一个词组搬散，
     // 判据不变、按整组搬即可（否则它会在这里假红）。
     const wordKey = d.list + '\u0000' + d.wakeWord;
     const files = wordFiles.get(wordKey) ?? new Set();
@@ -206,8 +197,8 @@ export async function renderRoutesGenerated() {
   const out = [];
   out.push('/** ' + '本文件由 `scripts/gen-routes.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。');
   out.push(' *');
-  out.push(' * 权威是声明层：`src/cli/legacy/routes/scene-NN.ts`（未搬迁清单，一场景一件）与各能力');
-  out.push(' * `src/<能力>/routes.ts`（已搬迁键，一能力一件）。本件只做「按 `list` 分组、按 `order` 升序」的');
+  out.push(' * 权威是声明层：各能力 `src/<能力>/routes.ts`（一能力一件，一条命令一个定义地）。');
+  out.push(' * 本件只做「按 `list` 分组、按 `order` 升序」的');
   out.push(' * 排序与拼接，不含任何顺序知识——顺序事实只住声明的 `order` 字段，换文件搬动不会打乱顺序。');
   out.push(
     ' * 本次生成：' + LISTS.map((l) => CONST_NAME[l] + ' ' + byList.get(l).length + ' 条').join(' ＋ ') +

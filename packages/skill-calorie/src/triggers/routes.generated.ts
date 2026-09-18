@@ -1,7 +1,7 @@
 /** 本文件由 `scripts/gen-routes.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * 权威是声明层：`src/cli/legacy/routes/scene-NN.ts`（未搬迁清单，一场景一件）与各能力
- * `src/<能力>/routes.ts`（已搬迁键，一能力一件）。本件只做「按 `list` 分组、按 `order` 升序」的
+ * 权威是声明层：各能力 `src/<能力>/routes.ts`（一能力一件，一条命令一个定义地）。
+ * 本件只做「按 `list` 分组、按 `order` 升序」的
  * 排序与拼接，不含任何顺序知识——顺序事实只住声明的 `order` 字段，换文件搬动不会打乱顺序。
  * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 69 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 507 条（与声明逐条自洽：`pnpm gen:check` 验真）。
  */

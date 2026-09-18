@@ -3,7 +3,7 @@
  * 本件只放类型与声明形状，不含任何记录数据：
  *   - 路由记录类型（`RouteKey`／`SceneNo`／`NonExecBucket`／`ExecWakeRoute`／`NonExecWakeRoute`／`WakeRoute`）
  *     —— 与 #81 裁定 D-1～D-4 的运行时事实逐字一致（原住 `src/triggers/routing.ts`）。
- *   - 声明形状 `RouteDecl` —— 各声明件（`src/cli/legacy/routes-scene-NN.ts`、`src/<能力>/routes.ts`）
+ *   - 声明形状 `RouteDecl` —— 各声明件（`src/<能力>/routes.ts`）
  *     写出的记录形状；比运行时记录多两个字段：它属于哪个列表（`list`）与它在原列表内的 0 基位次（`order`）。
  *
  * 顺序权威（#313 硬约束）：`WAKE_ROUTES[i].wakeWord` 必须与 SoT 逐位对齐（断言见
@@ -14,8 +14,8 @@
  * `src/triggers/routes.generated.ts` 由声明派生，`src/triggers/routing.ts` 只留逻辑与类型再导出。
  *
  * 记账（#313 生成器席落实）：`scripts/gen-cli.mjs` 的 `declarationSources()` 必须**显式**纳入
- * `src/cli/legacy/routes/*.ts` 与 `src/weight/routes.ts`——它们住 `src/cli/legacy/routes/` 子目录，
- * 不在命令声明扫描面内，若不入印记则「改了声明没重建」会被直接放行（假绿）。
+ * 各能力 `src/<能力>/routes.ts`——它们不在命令声明扫描面内，若不入印记则「改了声明没重建」
+ * 会被直接放行（假绿）。
  */
 
 import type { CalorieComboKey, CalorieWriteKey } from '../cli/keys.js';

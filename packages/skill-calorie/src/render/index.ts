@@ -20,7 +20,8 @@ export { RANK_CATEGORIES, buildAllRankings, buildFoodRankingPlate } from '../die
 export type { AllRankings, RankCategory } from '../diet/rankingPlate.js';
 export { buildProductLibrary, buildProductSearch, buildProductStats } from '../diet/libraryPlate.js';
 export type { ProductLibrary, ProductSearch, ProductStats } from '../diet/libraryPlate.js';
-export { renderDietHtml, renderExerciseHtml, renderGoalHtml } from './html.js';
+// #708 · 三个老模板转出（`renderDietHtml`／`renderExerciseHtml`／`renderGoalHtml`）随函数一起退役：
+// 它们生产零调用方，唯一消费者是一件测试的直调（见 `src/render/html.ts` 件头）。
 // #370 · 主页装配已归位 `src/home/homeDocs.ts`（纯搬迁）；本 barrel 按原样转出，调用方导入面不变
 // （同本文件 `buildHomeData` 转出 `../home/home.js` 的先例）。
 export { renderHomeHtml } from '../home/homeDocs.js';

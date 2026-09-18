@@ -11,14 +11,6 @@
 import { renderCaliberLine } from 'base-paint/blocks';
 import { CalorieRenderError } from '../render/errors.js';
 
-/** 来源脚注入参：`source` 不给／空串即只印窗口与条数（老件缺来源时的那种写法）。 */
-export interface SourceLineInput {
-  readonly source: string;
-  readonly start: string;
-  readonly end: string;
-  readonly count: number;
-}
-
 function reqText(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new CalorieRenderError('bad-input', field + ' 必须是非空字符串（本件不给默认窗口）');
@@ -26,12 +18,14 @@ function reqText(value: unknown, field: string): string {
   return value;
 }
 
-/** 来源脚注：`数据来源 · 来源 · 起 → 止 · 共 N 条`。 */
-export function sourceLine(input: SourceLineInput): string {
+/** 来源脚注：`数据来源 · 来源 · 起 → 止 · 共 N 条`。
+ *  入参形状**内联在签名里**（#708 收掉原来那个零 import 的 `SourceLineInput` 导出名）：
+ *  `source` 不给／空串即只印窗口与条数（老件缺来源时的那种写法）。 */
+export function sourceLine(input: { readonly source: string; readonly start: string; readonly end: string; readonly count: number }): string {
   if (input === null || typeof input !== 'object' || Array.isArray(input)) {
     throw new CalorieRenderError('bad-input', 'sourceLine: input 必须是对象');
   }
-  const line = input as SourceLineInput;
+  const line = input;
   const start = reqText(line.start, 'sourceLine: input.start');
   const end = reqText(line.end, 'sourceLine: input.end');
   if (!Number.isInteger(line.count) || line.count < 0) {

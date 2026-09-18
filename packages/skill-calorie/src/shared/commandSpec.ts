@@ -42,8 +42,7 @@ export interface ReadCommandSpec {
   readonly key: string;
   readonly shape: EnvelopeShape;
   readonly title: string;
-  /** 代表唤醒词（生成 SKILL.md 速查表的 `REPR` 用）；**可缺**——缺了速查表退回命令名本身
-   *  （与 `cli/legacy/types.ts` 的 `LegacyCommandDecl.wakeWord?` 同口径）；
+  /** 代表唤醒词（生成 SKILL.md 速查表的 `REPR` 用）；**可缺**——缺了速查表退回命令名本身；
    *  给定时必须是 `TRIGGERS` 里真实存在的唤醒词。 */
   readonly wakeWord?: string;
   /** #338 · 这条命令服务的**工作流程名**（零条或多条），取值是一张**封闭**表：帮助面场景 03 的

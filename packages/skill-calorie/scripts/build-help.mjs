@@ -157,7 +157,7 @@ const REPR = {
 export const BODY_HELP_FLOWS = ['量体重', '改体重记录', '看体重明细', '看体重曲线', '看体重稳不稳', '看体重备注', '对比体重', '体重复盘'];
 
 // -- GEN-CLI-START EXAMPLE 表（由 packages/skill-calorie/scripts/gen-cli.mjs 生成，勿手改）
-// 每键一行「照抄即能跑」的示例：住声明的 `example` 字段（各能力 `commands.ts`／`legacyCommands.ts`）。
+// 每键一行「照抄即能跑」的示例：住声明的 `example` 字段（各能力 `commands.ts`）。
 // 无 `--params` 的写法照抄即 exit 2／4——所以新键必须自带可执行示例（#99 生成期结构断言的来意）。
 const EXAMPLES = {
   'calorie.body.composition-add': 'calorie-cmd-read calorie.body.composition-add --params \'{"source":"gym","bodyFatPct":18.5}\'',
