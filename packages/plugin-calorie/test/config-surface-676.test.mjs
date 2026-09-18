@@ -62,9 +62,18 @@ describe('#676 卡路里设置页 · 配置面', () => {
       assert.equal(CONFIG_STEM, 'calorie');
     });
 
-    it('页面每一行都有对应的技能键，且技能每一个键都有对应行（一处不少、一处不多）', () => {
-      const pageKeys = CONFIG_ITEMS.map((i) => i.key).sort();
-      assert.deepEqual(pageKeys, flattenKeys(CALORIE_CONFIG_DEFAULTS));
+    it('页面每一行都有对应的技能键，且技能每一个键都有对应行（一处不少、一处不多；页外键除外）', () => {
+      /* 页外键（**显式例外，只此一处**）：配置表里可以有不上设置页的键——它们不是页面清单的一部分，
+       * 而是部署参数。出处两条一起看：
+       *   ① 用户裁决三批的清单＝11 项；t692 明判「训记 CLI 入口」属「包内固定、不上设置页」的三项之一，
+       *      故给它加页面行会同时破 t692 与已批清单；
+       *   ② 技能侧 `xunji.cli` 正是这条入口（空串＝包内编译产物＝生产行为，见 `skill-calorie/src/config.ts`
+       *      默认值表的「页外键」注），测试要把训记外调指到 fixture 时才填它。
+       * 本条断言的用意是防「页面与技能键集**悄悄**走散」：把例外写成显式一行，走散就还是必红。 */
+      const PAGE_EXTERNAL = ['xunji.cli'];
+      const pageKeys = CONFIG_ITEMS.map((i) => i.key).filter((k) => !PAGE_EXTERNAL.includes(k)).sort();
+      const skillKeys = flattenKeys(CALORIE_CONFIG_DEFAULTS).filter((k) => !PAGE_EXTERNAL.includes(k));
+      assert.deepEqual(pageKeys, skillKeys);
     });
 
     it('每行的控件种类与技能默认值类型一致', () => {
