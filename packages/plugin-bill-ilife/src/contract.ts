@@ -14,6 +14,11 @@ export const RPC_ENDPOINT_READ = 'read' as const;
 export const RPC_ENDPOINT_CONFIG_GET = 'config.get' as const;
 export const RPC_ENDPOINT_CONFIG_SAVE = 'config.save' as const;
 export const RPC_ENDPOINT_CONFIG_RESET = 'config.reset' as const;
+/** #706 配置体检端点：只读一次，回一份报告（判据由技能侧出，本包只透传，不重写一个字）。
+ *
+ * 端点名与技能侧那条只读命令同名（`<技能>.config.check`）；报告形状的唯一真相在技能侧
+ * `packages/skill-<技能>/src/health.ts`，面板侧镜像在 `packages/plugin-manager/src/health-contract.ts`。 */
+export const RPC_ENDPOINT_CONFIG_CHECK = 'config.check' as const;
 
 /** 读请求载荷：与技能 CLI 的 key/params 同形（见 skill-bill SKILL.md）。 */
 export interface ReadPayload {

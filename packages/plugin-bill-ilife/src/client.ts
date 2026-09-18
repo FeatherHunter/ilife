@@ -395,6 +395,9 @@ export function apply(ctx: ClientCtx): void {
         id: PLUGIN,
         order: SLOT_ORDER,
         label: () => SLOT_TITLE,
+        // #706：本包自己那条 RPC 通道交给总管（各家都写这一格），总管据此调配置体检——
+        // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
+        channel: RPC_CHANNEL,
       },
       () => React.createElement(BillConfig, { getCall }),
     ),

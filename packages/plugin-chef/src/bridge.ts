@@ -126,6 +126,8 @@ export function readViaCli(key: string, params: Record<string, unknown> = {}): u
 export const CONFIG_READ_KEY = 'chef.config.read' as const;
 export const CONFIG_WRITE_KEY = 'chef.config.write' as const;
 export const CONFIG_RESET_KEY = 'chef.config.reset' as const;
+/** #706 配置体检：只读一条，回一份报告（判据由技能侧出，本包只透传，不重写一个字）。 */
+export const CONFIG_CHECK_KEY = 'chef.config.check' as const;
 
 /** 设置页整面：文件在哪、数据在哪、当前值、是不是这次新建的（取自技能 `chef.config.read`）。 */
 export function readConfigSurface(): ConfigSurfaceReply {
@@ -140,4 +142,10 @@ export function writeConfigValues(values: Record<string, unknown>): { path: stri
 /** 重置为默认（技能侧先另存 `<配置目录>/chef.yaml.bak`）。 */
 export function resetConfigToDefaults(): { path: string; backupPath: string | null } {
   return readViaCli(CONFIG_RESET_KEY, {}) as { path: string; backupPath: string | null };
+}
+
+/** 配置体检（#706）：只读一份报告，面板侧**不校验也不重写**——形状的唯一真相在技能侧
+ *  `packages/skill-chef/src/health.ts`，认形状是面板的事（`packages/plugin-manager/src/health-contract.ts`）。 */
+export function readConfigHealth(): unknown {
+  return readViaCli(CONFIG_CHECK_KEY, {});
 }

@@ -8,12 +8,16 @@
  * #232：`inject` 加 `skills`，`apply` 注册**打包技能提供方**（见 skill-provider.ts）——
  * DSH 里的 agent 由此知道有 `skill-memo-ilife` 这个技能（名＋介绍，可按需读全文调 CLI）。
  * 提供方是宿主按名去重的单例：重装配时退让（照 #56 卡路里／#150 记账／#218 大厨样板），他错重抛。
+ *
+ * #696：本包**已有**通道与 `/api/ilife-memo` 路由（早于本票），所以这里不另起第二条通道，
+ * 只在端点分发里加三个配置端点分支（`config.get`／`config.save`／`config.reset`）；
+ * 既有取数端点与路由注册一行未动。
  */
 import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
-import { RPC_CHANNEL, RPC_ENDPOINT_READ, ok, fail, parseReadPayload } from './contract.js';
+import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
 import type { RpcResult } from './contract.js';
-import { SkillBridgeError, readViaCli } from './bridge.js';
-import type { HostCtx, RpcHandler } from './dsh-ctx.js';
+import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth } from './bridge.js';
+import type { HostCtx, HostConnectionFace, RpcHandler } from './dsh-ctx.js';
 
 export const name = 'dsh-memo-ilife';
 export const inject: readonly string[] = ['connection', 'webServer', 'skills'];
@@ -24,14 +28,31 @@ interface HostLogger {
   error?(...args: unknown[]): void;
 }
 
-/** RPC 处理函数：endpoint 分发 → 载荷校验 → readViaCli → 信封包装（companion rpc.ts 同形）。 */
+/** RPC 处理函数：endpoint 分发 → 载荷校验 → bridge → 信封包装（companion rpc.ts 同形）。
+ *
+ * 既有取数端点 `read` 一行未动；#696 起多三个配置端点（`config.get`／`config.save`／`config.reset`）：
+ * 设置页只经它们读改自家配置，不 spawn 技能进程，也不直读磁盘（client 侧禁 node）。 */
 const handleMemoRpc: RpcHandler = async (endpoint, payload): Promise<RpcResult> => {
-  if (endpoint !== RPC_ENDPOINT_READ) return fail('bad-request', `未知端点：${String(endpoint)}`);
-  const parsed = parseReadPayload(payload ?? {});
-  if (!parsed) return fail('bad-request', '载荷须为 {key: string, params: object}');
   try {
-    return ok(readViaCli(parsed.key, parsed.params));
+    if (endpoint === RPC_ENDPOINT_READ) {
+      const parsed = parseReadPayload(payload ?? {});
+      if (!parsed) return fail('bad-request', '载荷须为 {key: string, params: object}');
+      return ok(readViaCli(parsed.key, parsed.params));
+    }
+    if (endpoint === RPC_ENDPOINT_CONFIG_GET) return ok(readConfigSurface());
+    if (endpoint === RPC_ENDPOINT_CONFIG_SAVE) {
+      const parsed = parseSavePayload(payload ?? {});
+      if (!parsed) return fail('bad-request', '载荷须为 {values: object}');
+      return ok(writeConfigValues(parsed.values));
+    }
+    if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(resetConfigToDefaults());
+    // #706 配置体检：只读一次，把技能侧那份报告原样交回面板（本包不校验、不重写）。
+    if (endpoint === RPC_ENDPOINT_CONFIG_CHECK) return ok(readConfigHealth());
+    return fail('bad-request', `未知端点：${String(endpoint)}`);
   } catch (e) {
+    // 配置面的报错也走这条：技能侧 cli/config.ts 把 base-link-core 的
+    // ConfigError 报文原样交出来（已带行号与文件名），readViaCli 把它带在
+    // fetch-failed 的报文里，页面照原样给用户看。
     if (e instanceof SkillBridgeError) return fail(e.code, e.message);
     return fail('internal', e instanceof Error ? e.message : String(e));
   }
@@ -56,9 +77,8 @@ export function apply(ctx: HostCtx): void {
   // webServer.register 注册前缀路由，而那个 Context 没有 webServer 注入 → 装配期必抛
   // cannot get property "webServer" without inject（实测：给本插件加 webServer 声明也无效）。
   // 参考实现：@xmanrui/dsh-im 的 plugin-src/management-rpc.mjs（上游 503a24a 的改道）。
-  const conn = ctx.connection as unknown as {
-    fetch: { register: (options: Record<string, unknown>) => () => void };
-  };
+  // #696：注册面改用镜像里的具名类型（等价于原先就地写的匿名结构，行为一字未变）。
+  const conn = ctx.connection as unknown as HostConnectionFace;
   const reply = (rpcId: string, result: unknown) => Response.json({ type: 'server-response', rpcId, result });
   try {
     const dispose = conn.fetch.register({
@@ -93,11 +113,11 @@ export function apply(ctx: HostCtx): void {
 
 export { SKILL, SLOT_ID, SLOT_ORDER, SLOT_TITLE, PLUGIN, MANAGER_PLUGIN, slotDescriptor, TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
 export type { SlotDescriptor, TabsPort } from './slot.js';
-export { SETTINGS_OWNER, SETTINGS_SLOT, SETTING_ROWS } from './settings.js';
-export type { SettingRow } from './settings.js';
-export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli } from './bridge.js';
-export { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, ok, fail, parseReadPayload } from './contract.js';
-export type { ReadPayload, RpcError, RpcResult } from './contract.js';
+export { SETTINGS_OWNER, SETTINGS_SLOT, CONFIG_STEM, CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
+export type { ConfigItem, ConfigTier, ConfigControl } from './settings.js';
+export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth, CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, CONFIG_CHECK_KEY } from './bridge.js';
+export { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, DEFAULT_READ_KEY, ok, fail, parseReadPayload, parseSavePayload, isRpcResult } from './contract.js';
+export type { ReadPayload, SavePayload, ConfigSurfaceReply, RpcError, RpcResult } from './contract.js';
 // 宿主**不**导出 `./client.js` 的值也不引用它的类型（#218 拆雷）：客户端产物是 **loader 工厂包**
 // （`window.__ModuleLoader__.load({id, factory})` 的 CJS，由 tsdown 打），不是 ESM 模块——
 // 宿主 `export … from './client.js'` 会让插件树在启动期报

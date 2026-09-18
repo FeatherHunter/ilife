@@ -12,6 +12,11 @@ export const RPC_CHANNEL = '/ilife-home-ilife' as const;
 export const RPC_ENDPOINT_CONFIG_GET = 'config.get' as const;
 export const RPC_ENDPOINT_CONFIG_SAVE = 'config.save' as const;
 export const RPC_ENDPOINT_CONFIG_RESET = 'config.reset' as const;
+/** #706 配置体检端点：只读一次，回一份报告（判据由技能侧出，本包只透传，不重写一个字）。
+ *
+ * 端点名与技能侧那条只读命令同名（`<技能>.config.check`）；报告形状的唯一真相在技能侧
+ * `packages/skill-<技能>/src/health.ts`，面板侧镜像在 `packages/plugin-manager/src/health-contract.ts`。 */
+export const RPC_ENDPOINT_CONFIG_CHECK = 'config.check' as const;
 
 /** 保存载荷：一份键值（键路径 → 值）。缺项由技能侧按默认值补齐，故只收用户真改的那些。 */
 export interface SavePayload {
