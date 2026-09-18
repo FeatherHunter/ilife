@@ -1,4 +1,4 @@
-﻿# #714 持锁运行记录导出件（协议 §2.3 第 4 条：对账源必须可追踪）。
+# #714 持锁运行记录导出件（协议 §2.3 第 4 条：对账源必须可追踪）。
 # 原文住 .scratch/locks/gate-runs.log（未受版本控制），这里抄录 ticket=714 的条目。
 # START=抢到锁；RUN=命令结束（exit 见末段）。waitedMs=在锁外等了多少毫秒（可复核当时锁是否为空）。
 START ticket=714 runId=bb53fa14-47a8-47b9-a3a2-71face8b7858 cmd="node .scratch/714/seq.mjs open .scratch/714/steps-open.json" waitedMs=80051 pid=42796 at=2026-09-18T15:58:07.863Z
@@ -27,3 +27,22 @@ START ticket=714 runId=9c4a52a7-c41d-4614-8d13-deb3ec858f52 cmd="node .scratch/7
 RUN ticket=714 runId=9c4a52a7-c41d-4614-8d13-deb3ec858f52 cmd="node .scratch/714/seq.mjs G .scratch/714/steps-G.json" waitedMs=200174 exit=1 pid=44068 at=2026-09-18T16:09:17.117Z
 START ticket=714 runId=c6b2e43b-8a19-41b6-91f6-0dfed4ffa311 cmd="node .scratch/714/seq.mjs H .scratch/714/steps-H.json" waitedMs=0 pid=9828 at=2026-09-18T16:09:51.442Z
 RUN ticket=714 runId=c6b2e43b-8a19-41b6-91f6-0dfed4ffa311 cmd="node .scratch/714/seq.mjs H .scratch/714/steps-H.json" waitedMs=0 exit=0 pid=9828 at=2026-09-18T16:09:52.280Z
+START ticket=714 runId=6076f1c6-7362-49ff-a37a-e35b8fc20edc cmd="node .scratch/714/seq.mjs I .scratch/714/steps-I.json" waitedMs=0 pid=47740 at=2026-09-18T16:12:19.998Z
+RUN ticket=714 runId=6076f1c6-7362-49ff-a37a-e35b8fc20edc cmd="node .scratch/714/seq.mjs I .scratch/714/steps-I.json" waitedMs=0 exit=0 pid=47740 at=2026-09-18T16:12:20.168Z
+START ticket=714 runId=c37ed2f3-8ea0-4534-981e-0090ea07402c cmd="node .scratch/714/seq.mjs J .scratch/714/steps-J.json" waitedMs=30033 pid=43292 at=2026-09-18T16:15:33.075Z
+RUN ticket=714 runId=c37ed2f3-8ea0-4534-981e-0090ea07402c cmd="node .scratch/714/seq.mjs J .scratch/714/steps-J.json" waitedMs=30033 exit=1 pid=43292 at=2026-09-18T16:15:33.166Z
+START ticket=714 runId=42799d4c-a851-4ea5-b437-7ccf2b6a93ae cmd="node .scratch/714/seq.mjs J .scratch/714/steps-J.json" waitedMs=0 pid=27924 at=2026-09-18T16:15:39.537Z
+RUN ticket=714 runId=42799d4c-a851-4ea5-b437-7ccf2b6a93ae cmd="node .scratch/714/seq.mjs J .scratch/714/steps-J.json" waitedMs=0 exit=1 pid=27924 at=2026-09-18T16:15:39.599Z
+START ticket=714 runId=dfe6017e-7207-4670-b629-16ec60c81c93 cmd="node .scratch/714/seq.mjs J .scratch/714/steps-J.json" waitedMs=0 pid=9824 at=2026-09-18T16:15:57.177Z
+RUN ticket=714 runId=dfe6017e-7207-4670-b629-16ec60c81c93 cmd="node .scratch/714/seq.mjs J .scratch/714/steps-J.json" waitedMs=0 exit=0 pid=9824 at=2026-09-18T16:15:57.301Z
+START ticket=714 runId=03de230a-1360-47f4-a5b9-3688b649f952 cmd="node docs/skills/skill-calorie/t714-regen.mjs --out .scratch/t714/归档冒烟产物 --baseline .scratch/t714/归档冒烟.json" waitedMs=40042 pid=30512 at=2026-09-18T16:20:24.156Z
+START ticket=714 runId=ab0ff556-b872-4491-9c7e-cbafed7a697b cmd="node .scratch/714/seq.mjs K .scratch/714/steps-K.json" waitedMs=0 pid=43960 at=2026-09-18T16:20:45.475Z
+RUN ticket=714 runId=ab0ff556-b872-4491-9c7e-cbafed7a697b cmd="node .scratch/714/seq.mjs K .scratch/714/steps-K.json" waitedMs=0 exit=0 pid=43960 at=2026-09-18T16:20:45.669Z
+START ticket=714 runId=31aea8f4-088f-4567-800d-2abe339b2e61 cmd="node .scratch/714/seq.mjs L .scratch/714/steps-L.json" waitedMs=1 pid=8212 at=2026-09-18T16:21:19.496Z
+RUN ticket=714 runId=31aea8f4-088f-4567-800d-2abe339b2e61 cmd="node .scratch/714/seq.mjs L .scratch/714/steps-L.json" waitedMs=1 exit=0 pid=8212 at=2026-09-18T16:21:19.628Z
+START ticket=714 runId=3841fedd-715d-404b-9153-d9a6b78cd9ce cmd="node .scratch/714/seq.mjs N .scratch/714/steps-N.json" waitedMs=110087 pid=39332 at=2026-09-18T16:25:26.991Z
+RUN ticket=714 runId=3841fedd-715d-404b-9153-d9a6b78cd9ce cmd="node .scratch/714/seq.mjs N .scratch/714/steps-N.json" waitedMs=110087 exit=1 pid=39332 at=2026-09-18T16:25:28.989Z
+START ticket=714 runId=f10b0e68-9e99-41c8-a4c6-60e26b3e32c2 cmd="node .scratch/714/seq.mjs O .scratch/714/steps-O.json" waitedMs=1 pid=23952 at=2026-09-18T16:26:05.080Z
+RUN ticket=714 runId=f10b0e68-9e99-41c8-a4c6-60e26b3e32c2 cmd="node .scratch/714/seq.mjs O .scratch/714/steps-O.json" waitedMs=1 exit=1 pid=23952 at=2026-09-18T16:26:05.446Z
+START ticket=714 runId=e00b2d32-2beb-4fb2-aba6-2e16742ee94c cmd="node .scratch/714/seq.mjs P .scratch/714/steps-P.json" waitedMs=0 pid=29112 at=2026-09-18T16:26:14.815Z
+RUN ticket=714 runId=e00b2d32-2beb-4fb2-aba6-2e16742ee94c cmd="node .scratch/714/seq.mjs P .scratch/714/steps-P.json" waitedMs=0 exit=1 pid=29112 at=2026-09-18T16:26:16.686Z
