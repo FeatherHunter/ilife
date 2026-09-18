@@ -86,8 +86,25 @@ export interface ClientCtx {
 
 export type RpcHandler = (endpoint: string, payload: unknown, signal?: AbortSignal) => Promise<unknown>;
 
+/** 宿主侧精确 fetch 路由（#80 迁到 DSH 公开的 /api 载体，样板 `packages/plugin-calorie/src/index.ts:56-80`）。
+ *
+ * 出处：`connection.fetch.register(route)`（`@deepseek-ai/dsh-client-connection/lib/index.js:548-551`、
+ * `:587-601`）→ 路由形状 `{path, methods, requestBody, fetch}`（`assertFetchRoute` `:696-700`
+ * 只校验 path 能切出端点、methods 非空且不重复）；路径须能按 `/api` 前缀切出单段端点，
+ * 故用 `/api/<单段通道名>`。旧写法 `connection.rpc.handle()` 会以 connection 的 Context 调
+ * webServer 注册（`:618`），本包的上下文没有 webServer 注入（#80 实测），故不用。
+ */
+export interface FetchRoute {
+  readonly path: string;
+  readonly methods: readonly string[];
+  readonly requestBody: 'buffered' | 'stream';
+  fetch(request: Request): Promise<Response>;
+}
+
 export interface HostCtx {
-  readonly connection: { readonly rpc: { handle(channel: string, handler: RpcHandler): () => void } };
+  readonly connection: { readonly fetch: { register(route: FetchRoute): () => void } };
   effect(callback: () => ((() => void) | void), label?: string): () => void;
+  /** 宿主服务的取用口（桌面服务与子进程口子按名现取；取不到返回 undefined）。 */
+  get?(name: string): unknown;
   readonly logger?: unknown;
 }

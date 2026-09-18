@@ -40,7 +40,10 @@
     "build:host": "tsc -b",
     "build:client": "tsdown",
     "typecheck": "tsc -p tsconfig.client.json",
-    "test": "node --test test/smoke.test.mjs"
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "dsh-plugin-update": "^0.1.1"
   },
   "devDependencies": {
     "@types/react": "19.2.18",

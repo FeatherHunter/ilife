@@ -8,6 +8,7 @@
     "src"
   ],
   "exclude": [
-    "src/client.ts"
+    "src/client.ts",
+    "src/update-panel.ts"
   ]
 }

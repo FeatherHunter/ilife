@@ -4,8 +4,8 @@
  * - 本文件经 tsdown 打成 loader 工厂包（browser/CJS + 注册包裹），classic 执行
  *   只注册，副作用全在 factory 内；传递闭包禁 node 内建与 ESM 语法（回路
  *   test/client-bundle-48.test.mjs 看门）。
- * - inject 短名 ['slots']（总管机制范围无 RPC，不声明 connection，不碰 sidebar）；
- *   apply 只注册一处 DSH设置面板槽（kind list，id 必填）。
+ * - inject 短名 ['slots','connection']：本包现在有 RPC（装与更新的能力由宿主半提供，
+ *   电话名与轮询间隔由宿主转交，面板不写死），读了 ctx.connection 就必须声明 'connection'（#48 血例）。
  * - 爱生活页签条走 slot 驱动（settings-plugins 先例，禁纯 useState 手画 tab）：
  *   section 声明 children 爱生活页签槽，各技能往里注册自家技能设置页；
  *   tab 行从 ledger 投影（entries+getVersion+subscribe），面板用 props.renderSlot
@@ -20,6 +20,8 @@
 import * as React from 'react';
 import { MANAGER_TABS, MANAGER_VERSION, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
+import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './update-panel.js';
+import type { CallFace } from './update-client.js';
 import type {
   ClientCtx,
   ConfigTabRow,
@@ -27,7 +29,7 @@ import type {
   SlotLedgerEntry,
 } from './dsh-ctx.js';
 
-export const inject = ['slots'];
+export const inject = ['slots', 'connection'];
 
 /** 爱生活页签槽（总管声明的 children，技能设置页注册进来；单段名，避开官方 settings.* 前缀）。 */
 export const CONFIG_TAB_SLOT = 'ilife.config-tab' as const;
@@ -142,16 +144,8 @@ const S = {
   } as React.CSSProperties,
 };
 
-/** 缺席卡：未安装技能的占位（样式化推荐安装；只读文本，不做假导航）。 */
-function AbsentCard(props: { tab: ManagerTab }): React.ReactElement {
-  const reco = recoFor(props.tab);
-  return React.createElement(
-    'div',
-    { style: S.reco },
-    React.createElement('div', null, reco.hint),
-    React.createElement('code', { style: S.cmd }, reco.installCmd),
-  );
-}
+/** 缺席卡的画法与流程住 `update-panel.ts`（票 #678：一句人话 ＋「装上」按钮 ＋ 可复制命令），
+ *  `recoFor` 的补装命令仍是卡里那条辅助展示（B11 口径不变）。 */
 
 /** 标签解析（resolveSlotLabel 同形：thunk 跟活，无则空字串；见 slots lib:27-29）。 */
 function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
@@ -237,12 +231,13 @@ function MorePluginsCard(): React.ReactElement {
   );
 }
 
-/** 爱生活面板：总设置区 + 爱生活页签条（slot 驱动）+ 技能设置页投影/缺席文案。 */
-function LifePackSection(props: LifePackSectionProps): React.ReactElement {
+/** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
+function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace | null }): React.ReactElement {
   const tabsId = React.useId();
   const tabRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const rows: ConfigTabRow[] = props.useTabs((value) => value);
   const present = new Set(rows.map((r) => r.id));
+  const face = useUpdateRows(props.getCall);
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
   const [visitedIds, setVisitedIds] = React.useState<ReadonlySet<string>>(() => new Set());
   const active = MANAGER_TABS.some((t) => t.plugin === activeId)
@@ -257,6 +252,9 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
   function labelFor(tab: ManagerTab): string {
     const row = rows.find((r) => r.id === tab.plugin);
     return row && row.label.length > 0 ? row.label : tab.title;
+  }
+  function targetForTab(tab: ManagerTab) {
+    return face.targets.find((t) => t.packageName === tab.plugin) ?? null;
   }
   function onTabKeyDown(event: React.KeyboardEvent, index: number): void {
     let nextIndex: number | undefined;
@@ -279,7 +277,13 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
       'div',
       { style: S.headRow },
       React.createElement('div', { style: S.head }, '爱生活'),
-      React.createElement(PanelActions, null),
+      // 三件并排：本票的「检查更新」在左，隔壁票（#679）的星与气泡在右，整组靠右（窄窗口折行）。
+      React.createElement(
+        'div',
+        { style: S.headActions },
+        React.createElement(CheckUpdateButton, { face }),
+        React.createElement(PanelActions, null),
+      ),
     ),
     React.createElement(
       'div',
@@ -287,6 +291,7 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
       React.createElement('div', null, '总开关 · 开关（缺省启用，只读）'),
       React.createElement('div', null, '总管 dsh-life-pack · ' + MANAGER_VERSION),
     ),
+    React.createElement(UpdateResults, { face }),
     React.createElement(
       'div',
       { role: 'tablist', 'aria-label': '爱生活技能页签', style: S.tablist },
@@ -330,7 +335,11 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
         },
         present.has(tab.plugin)
           ? (props.renderSlot(CONFIG_TAB_SLOT, {}, { only: tab.plugin }) as React.ReactNode)
-          : React.createElement(AbsentCard, { tab }),
+          : React.createElement(AbsentCard, {
+              target: targetForTab(tab),
+              fallbackCommand: recoFor(tab).installCmd,
+              face,
+            }),
       );
     }),
     React.createElement(MorePluginsCard, null),
@@ -338,6 +347,8 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
 }
 
 export function apply(ctx: ClientCtx): void {
+  // 调用口取用器：每次取数时现取（connection 后到也不永久缺席），透传给面板组件。
+  const getCall = (): CallFace | null => (ctx.connection?.rpc?.call as CallFace | undefined) ?? null;
   // ledger 观测源（settings-plugins:1744-1767 同形；无 locale 面声明，故只订 ledger）。
   let tabsVersion = -1;
   let tabs: ConfigTabRow[] = [];
@@ -373,7 +384,7 @@ export function apply(ctx: ClientCtx): void {
         inject: sectionInjected,
         children: { 'ilife.config-tab': { kind: 'list', scope: 'root' } },
       },
-      LifePackSection,
+      (props: LifePackSectionProps) => React.createElement(LifePackSection, { ...props, getCall }),
     ),
   );
 }
