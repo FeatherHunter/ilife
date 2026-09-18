@@ -17,12 +17,16 @@ import type { ConfigRecord } from 'base-link-core';
 /** 配置文件主体名：`<配置目录>/calorie.yaml`。 */
 export const CALORIE_CONFIG_STEM = 'calorie' as const;
 
-/** 卡路里那份配置表：键即设置页的行，一层嵌套（子集支持范围见 base-link-core README）。 */
+/** 卡路里那份配置表：键即设置页的行，一层嵌套（子集支持范围见 base-link-core README）。
+ *
+ * ⚠️ `xunji.cli` 是**页外键**（t692 裁定：训记 CLI 入口属「包内固定、不上设置页」的三项之一）：
+ * 它进这张表是为了让测试把训记那条外调指到一个 fixture 脚本——等价于原 `CALORIE_XUNJI_STUB`
+ * 那条环境变量缝，但入口是**配置**这条唯一真相。空串＝包内编译产物，即生产行为，页面上没有它的行。 */
 export const CALORIE_CONFIG_DEFAULTS = {
   db: { dir: '', name: 'calorie_data.db' },
   html: { dir: 'calorie_html' },
   photos: { dir: '', gifs: 'gifs' },
-  xunji: { key: '', stateDir: '', catalog: '', backfillDays: 1 },
+  xunji: { key: '', cli: '', stateDir: '', catalog: '', backfillDays: 1 },
   land: { scheduleCli: '', memoCli: '', xunjiSeconds: 300, landSeconds: 60 },
 };
 

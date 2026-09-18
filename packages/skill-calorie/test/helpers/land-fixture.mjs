@@ -1,19 +1,23 @@
 #!/usr/bin/env node
 /**
- * #676 · 落地训练测试的**跨技能出口 fixture**（替代退役的 `CALORIE_LAND_*_STUB` 环境变量）。
+ * #676 · 落地训练／训记外调的**统一 fixture**（替代退役的 `CALORIE_LAND_*_STUB`／`CALORIE_XUNJI_STUB`）。
  *
- * 为什么需要它：落地训练会把「补计划」（作息）与「记心愿」（备忘）调到**别的技能**去。测试里那两处
- * 绝不能真调（会写用户的真作息／真备忘库），原先是四个环境变量短路；配置文件成为唯一真相后，
- * 短路口换成**配置里的两个跨技能出口**：`land.scheduleCli`／`land.memoCli` 指向本件。
+ * 为什么需要它：落地训练会往外调三处——「补计划」（作息技能）、「记心愿」（备忘技能）、
+ * 以及训记模块自己的命令行入口（推送＋回写）。测试里这三处绝不能真调（会写用户的真作息／真备忘库、
+ * 会打真训记接口），原先是六个环境变量短路；配置文件成为唯一真相后，短路口换成**配置里的三个出口**：
+ * `land.scheduleCli`／`land.memoCli`／`xunji.cli` 都指向本件。
+ *
+ * 两种身份（按 `argv[0]` 判）：
+ *   ① **跨技能出口**（argv[0] 是对方的能力键，如 `schedule.plan.write`）——stdout 打一行
+ *      `{"data": <回执>}`（`landRunner.invokeOther` 只认这一位），按 code 退出；
+ *   ② **训记入口**（argv[0] 是训记子命令，如 `push-plan`）——stdout 打**回执本身**
+ *      （真入口 `xunji/cli.ts` 打的就是 `run.data` 的 JSON），按 code 退出。
  *
  * 用法（测试侧）：
- *   ① `calorieConfigDir(dir, { land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE } })`；
- *   ② 子进程环境里给 `T676_LAND_FIXTURE`：JSON `{ "<对方 key>": { code, data } }`，
+ *   ① `calorieConfigDir(dir, { land: { scheduleCli: F, memoCli: F }, xunji: { cli: F } })`；
+ *   ② 子进程环境里给 `T676_LAND_FIXTURE`：JSON `{ "<argv[0]>": { code, data } }`，
  *      缺省＝全部成功（`code: 0`，`data` 取下面 `DEFAULT_DATA`）。
- *
- * 出口形状与真出口同形（`invokeOther` 只认 stdout 的 `{data: …}` 与退出码）：打一行
- * `{"data": <回执>}`，按 `code` 退出。`T676_LAND_FIXTURE_LOG` 给了路径就往那里**追加**一行
- * `{"key":…,"params":…}`（测试断言「调了什么、调了几次」用）。
+ *   `T676_LAND_FIXTURE_LOG` 给了路径就往那里**追加**一行 `{"key":…,"params":…}`（断言「调了什么」用）。
  *
  * 本件不是测试件（不匹配 `test/*.test.mjs`），与同目录 `pin-clock.mjs` 同列。
  */
@@ -25,14 +29,27 @@ const at = process.argv.indexOf('--params');
 if (at >= 0 && typeof process.argv[at + 1] === 'string') {
   try { params = JSON.parse(process.argv[at + 1]); } catch { params = { raw: process.argv[at + 1] }; }
 }
+/** 训记子命令的其余实参也要留痕（如 `--date`／`--days`）。 */
+const rest = process.argv.slice(3);
 
-/** 缺省回执（与 `t612`／`t613` 原来的挡板数据同形：作息 `achieved:true`、备忘 `remote:'synced'`）。 */
+/** 缺省回执（与 `t612`／`t613`／`t614` 原来的挡板数据同形）。 */
 const DEFAULT_DATA = {
   'schedule.plan.write': {
     ok: true, message: '批量补计划', op: 'ensure', local: 'created',
     remote: 'found_feishu', remoteId: 'fs_1', achieved: true, errors: [], notes: [],
   },
   'memo.create': { ok: true, message: '已记一条：1', local: 'created', remote: 'synced', remoteId: 'task_1' },
+  'push-plan': {
+    date: '2026-09-07', session_count: 1, ok_count: 1, fail_count: 0, verify_note: 'fixture',
+    results: [{ session_label: '上肢', client_request_id: '2026-09-07_上肢_ab12cd34', ok: true, verified: false, resp: { dry_run: false } }],
+  },
+  backfill: {
+    end_date: '2026-09-07', days: 1, total_inserted: 2, total_updated: 0,
+    results: [{
+      date: '2026-09-07', fetch_ok: true, trains_count: 2, inserted: 2, updated: 0,
+      skipped_empty: false, body_weight_kg: 70.5, errors: [], err: null, failure: null,
+    }],
+  },
 };
 
 const table = (() => {
@@ -43,11 +60,25 @@ const table = (() => {
 
 const log = process.env.T676_LAND_FIXTURE_LOG;
 if (log !== undefined && log !== '') {
-  appendFileSync(log, JSON.stringify({ key, params }) + '\n', 'utf8');
+  appendFileSync(log, JSON.stringify({ key, params, rest }) + '\n', 'utf8');
 }
 
+/** 训记子命令（身份②）：argv 首位不是点式能力键就是训记那两条。 */
+const isXunjiEntry = !key.includes('.');
+
 const hit = table[key];
-const code = typeof hit?.code === 'number' ? hit.code : 0;
-const data = hit?.data !== undefined ? hit.data : (DEFAULT_DATA[key] ?? { ok: true, message: 'fixture 默认回执' });
-process.stdout.write(JSON.stringify({ data }) + '\n');
+/** 按日期指定失败（替代退役的 `CALORIE_LAND_BATCH_FAIL_DATE`：逐天链里某天要红时用）。 */
+const failDate = process.env.T676_LAND_FIXTURE_FAIL_DATE;
+const dateArg = (() => {
+  const i = process.argv.indexOf('--date');
+  return i >= 0 ? process.argv[i + 1] : undefined;
+})();
+const forced = failDate !== undefined && failDate !== '' && failDate === dateArg;
+const code = forced ? 4 : (typeof hit?.code === 'number' ? hit.code : 0);
+const data = forced
+  ? (DEFAULT_DATA[key] && key === 'push-plan'
+    ? { ...DEFAULT_DATA['push-plan'], ok_count: 0, fail_count: 1, results: [{ session_label: '上肢', ok: false, verified: false, resp: { err: true, error_type: 'server', code: 500, attempts: 3 } }] }
+    : { ok: false, message: 'fixture 指定失败：' + String(dateArg) })
+  : (hit?.data !== undefined ? hit.data : (DEFAULT_DATA[key] ?? { ok: true, message: 'fixture 默认回执' }));
+process.stdout.write((isXunjiEntry ? JSON.stringify(data, null, 2) : JSON.stringify({ data })) + '\n');
 process.exit(code);

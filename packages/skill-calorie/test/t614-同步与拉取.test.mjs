@@ -103,6 +103,17 @@ function seedDir() {
   return { dir, db };
 }
 
+/** 跨技能出口＋训记入口都指向 fixture（见 `helpers/land-fixture.mjs` 件头）。 */
+const LAND_FIXTURE = join(HERE, 'helpers', 'land-fixture.mjs');
+
+/** 一份「库目录 ＋ 三处外调都指向 fixture」的配置目录。 */
+function cfg(dir) {
+  return calorieConfigDir(dir, {
+    land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
+    xunji: { cli: LAND_FIXTURE },
+  });
+}
+
 describe('#614 同步与拉取', () => {
   it('①a push dryRun 走通（真子进程转换）：审计＋待推送段＋远端未调用', () => {
     const { dir, db } = seedDir();
@@ -164,20 +175,29 @@ describe('#614 同步与拉取', () => {
     }
   });
 
-  it('①e push 没配 KEY 即停（真出口结果页不可达）：exit 3 ＋ 点名本地缺 KEY', () => {
+  it('①e push 结果页走通（fixture 回执）：逐段结局＋本地远端分清', () => {
     const { dir, db } = seedDir();
     db.close();
-    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
-    assert.equal(r.code, 3, r.stderr.slice(-300));
-    assert.match(r.stderr, /本地缺 KEY（没调远端）/);
+    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    assert.equal(r.code, 0, r.stderr.slice(-400));
+    const out = JSON.parse(r.stdout).data;
+    assert.match(out.message, /已同步 2026-09-07.*1 段成功/);
+    assert.match(readFileSync(out.output, 'utf8'), /结果页/);
+    assert.match(readFileSync(out.output, 'utf8'), /逐段推送结局/);
+    assert.match(readFileSync(out.output, 'utf8'), /训记落笔 1 段/);
   });
 
-  it('①f backfill 没配 KEY 即停（真出口结果页不可达）：exit 3 ＋ 点名本地缺 KEY', () => {
+  it('①f backfill 结果页走通（fixture 回执）：逐天结局＋新增更新合计', () => {
     const { dir, db } = seedDir();
     db.close();
-    const r = cli('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
-    assert.equal(r.code, 3, r.stderr.slice(-300));
-    assert.match(r.stderr, /本地缺 KEY（没调远端）/);
+    const r = cli('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    assert.equal(r.code, 0, r.stderr.slice(-400));
+    const out = JSON.parse(r.stdout).data;
+    assert.match(out.message, /新增 2，更新 0/);
+    const html = readFileSync(out.output, 'utf8');
+    assert.match(html, /结果页/);
+    assert.match(html, /逐天回写结局/);
+    assert.match(html, /2 条训练/);
   });
 
   it('② 真出口读数：真 CLI 落盘，回执绝对路径存在（两条 dryRun 各一次）', () => {
@@ -226,15 +246,27 @@ describe('#614 同步与拉取', () => {
     assert.match(b.stderr, /本地缺 KEY（没调远端）/);
   });
 
-  it('③d 远端失败形不可再复现（无挡板出口）：只留「没配 KEY 不许当真调远端」这一条', () => {
+  it('③d fixture 远端失败 exit 4 点名段数（push fail_count 走远端档）', () => {
     const { dir, db } = seedDir();
     db.close();
-    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
-    assert.equal(r.code, 3, r.stderr.slice(-300));
-    assert.match(r.stderr, /本地缺 KEY（没调远端）/);
+    const fail = {
+      code: 3,
+      data: {
+        date: '2026-09-07', session_count: 2, ok_count: 1, fail_count: 1, verify_note: VERIFY_NOTE,
+        results: [
+          { session_label: '上肢', ok: true, verified: false, resp: {} },
+          { session_label: '下肢', ok: false, verified: false, resp: { err: true, error_type: 'server', code: 500, attempts: 3 } },
+        ],
+      },
+    };
+    const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, {
+      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE: JSON.stringify({ 'push-plan': fail }),
+    });
+    assert.equal(r.code, 4, r.stderr.slice(-300));
+    assert.match(r.stderr, /远端推送失败/);
   });
 
-  it('③e 无 KEY 退 3 数据也判本地（push 全 attempts 0 鉴权错）', () => {
+  it('③e 无 KEY 退 3 数据也判本地（push 全 attempts 0 鉴权错；训记入口仍走真子进程）', () => {
     const { dir, db } = seedDir();
     db.close();
     const r = cli('calorie.workout.xunji-push', { date: '2026-09-07' }, {

@@ -12,8 +12,9 @@
  *    页上读数一律来自本次调用的 stdout JSON，不读外部预制的 `--results-json`。
  *
  * 挡板缝（#676 已退役）：原先由环境变量 `CALORIE_XUNJI_STUB` 短路，现已删除（配置文件是唯一真相）。
- * 测试要挡板时把**跨技能出口**（配置里的 `land.scheduleCli`／`memoCli`）指到一个 fixture 脚本，
- * 让它吐出原来挡板吐的那份回执；训记这两条走的是包内训记模块的命令行入口，本票不给它配出口。
+ * 测试要挡板时把两个**跨技能出口**（配置里的 `land.scheduleCli`／`memoCli`）与**训记入口**
+ * （配置里的 `xunji.cli`，见 `config.ts` 的「页外键」注）指到同一个 fixture 脚本，让它吐出原来挡板吐的
+ * 那份回执——三条外调各留一个配置口，不再有读环境变量的隐式缝。
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -44,8 +45,16 @@ export interface XunjiCall {
   readonly stubbed: boolean;
 }
 
-/** 训记 CLI 入口（编译产物；不存在＝环境没建好，先拦，不起子进程）。 */
+/** 训记 CLI 入口：配置 `xunji.cli` 非空即用它（测试指到 fixture 脚本用），空串＝包内编译产物。
+ *  两条都要存在性预检（不存在＝环境没建好，先拦，不起子进程）。 */
 export function xunjiCliPath(): string {
+  const configured = loadCalorieConfig().values.xunji.cli;
+  if (configured !== '') {
+    if (!existsSync(configured)) {
+      fail(4, '训记入口不在（' + configured + '）：配置项 xunji.cli 指向的文件不存在');
+    }
+    return configured as string;
+  }
   const here = dirname(fileURLToPath(import.meta.url));
   const cli = join(here, '..', 'xunji', 'cli.js');
   if (!existsSync(cli)) fail(4, '训记入口不在（' + cli + '）：先跑 pnpm build 再调本命令');

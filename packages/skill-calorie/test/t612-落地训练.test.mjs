@@ -76,9 +76,13 @@ before(async () => {
   ({ openDb } = await import('../dist/index.js'));
 });
 
-/** 一份「库目录 ＋ 两个跨技能出口都指向 fixture」的配置目录；`responses` 决定 fixture 吐什么。 */
+/** 一份「库目录 ＋ 三处外调（跨技能两出口／训记入口）都指向 fixture」的配置目录；`responses` 决定 fixture 吐什么。 */
 function cfg(dir, responses = {}) {
-  return calorieConfigDir(dir, { land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE } }) && dir;
+  if (Object.keys(responses).length > 0) process.env.T676_LAND_FIXTURE = JSON.stringify(responses);
+  return calorieConfigDir(dir, {
+    land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
+    xunji: { cli: LAND_FIXTURE },
+  }) && dir;
 }
 
 /** 交给子进程的 fixture 行为表（JSON 串）。 */
@@ -126,21 +130,29 @@ describe('#612 落地训练', () => {
     }
   });
 
-  it('①c 前两步真调到两个跨技能出口（fixture 留痕）→ 第三步缺 KEY 即停并点名', () => {
+  it('①c 四步走通（三处外调全走 fixture）：四步结局＋本地远端分清＋调用面留痕', () => {
     const { dir, db } = seedDir();
     db.close();
     const log = join(dir, 'fixture-calls.jsonl');
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
       ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE_LOG: log,
     });
-    assert.equal(r.code, 3, r.stderr.slice(-400));
-    assert.match(r.stderr, /失败在推送/);
+    assert.equal(r.code, 0, r.stderr.slice(-400));
+    const out = JSON.parse(r.stdout).data;
+    assert.match(out.message, /已落地 2026-09-07/);
+    const html = readFileSync(out.output, 'utf8');
+    assert.match(html, /结果页/);
+    assert.match(html, /四步结局/);
+    assert.match(html, /补计划/);
+    assert.match(html, /记心愿/);
+    assert.match(html, /训记落笔 1 段/);
+    // 调用面：补计划＋记心愿＋推送＋回写，各一次、按序（训记两条走配置里的 `xunji.cli`）。
     const calls = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
-    assert.deepEqual(calls.map((c) => c.key), ['schedule.plan.write', 'memo.create'], '补计划＋记心愿各调一次、按序');
-    assert.equal(calls[0].params.op, 'ensure');
+    assert.deepEqual(calls.map((c) => c.key), ['schedule.plan.write', 'memo.create', 'push-plan', 'backfill']);
     assert.equal(calls[0].params.dates.length, 1, '当天 1 段 → 批量一条');
     assert.equal(calls[1].params.category, '心愿');
-    assert.equal(calls[1].params.due, '2026-09-07');
+    assert.equal(calls[2].rest.join(' '), '--date 2026-09-07');
+    assert.equal(calls[3].rest.join(' '), '--date 2026-09-07 --days 1', '回写单日与落地天数同源');
   });
 
   it('② 真出口读数：真 CLI 落盘，回执绝对路径存在（dryRun）', () => {
@@ -189,11 +201,14 @@ describe('#612 落地训练', () => {
     assert.match(r.stderr, /失败在补计划/);
   });
 
-  it('③e 推送缺 KEY exit 3 点名没调远端（真出口：逐段 attempts 0）', () => {
+  it('③e 推送缺 KEY exit 3 点名没调远端（不配 `xunji.cli`：真入口无 KEY 即判本地）', () => {
     const { dir, db } = seedDir();
     db.close();
+    // 这一条要的就是真入口那一支：出口只配跨技能两处，训记入口留空（＝包内真入口）。
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE: JSON.stringify({}),
+      ILIFE_CONFIG_DIR: calorieConfigDir(dir, {
+        land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
+      }),
     });
     assert.equal(r.code, 3, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在推送/);
@@ -204,14 +219,23 @@ describe('#612 落地训练', () => {
     const { dir, db } = seedDir();
     db.close();
     const log = join(dir, 'fixture-calls.jsonl');
+    const pushFail = {
+      code: 3,
+      data: {
+        date: '2026-09-07', session_count: 1, ok_count: 0, fail_count: 1, verify_note: 'fixture',
+        results: [{ session_label: '上肢', ok: false, verified: false, resp: { err: true, error_type: 'server', code: 500, attempts: 3 } }],
+      },
+    };
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE: JSON.stringify({}), T676_LAND_FIXTURE_LOG: log,
+      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE: JSON.stringify({ 'push-plan': pushFail }), T676_LAND_FIXTURE_LOG: log,
     });
-    assert.equal(r.code, 3, r.stderr.slice(-300));
+    assert.equal(r.code, 4, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在推送/);
+    assert.match(r.stderr, /远端推送失败|成功 0 段/, '远端档要点出段数');
     assert.ok(!/失败在回写/.test(r.stderr), '第一个失败步之后不许再报后面的步');
-    // 跨技能那两步各自只调一次（推送一失败即停，没有重试与回冲）。
-    assert.equal(readFileSync(log, 'utf8').trim().split('\n').length, 2);
+    // 补计划／记心愿／推送各调一次；回写一次都没有（推送一失败即停）。
+    assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l).key),
+      ['schedule.plan.write', 'memo.create', 'push-plan']);
   });
 
   it('⑤ R3 双桥真实现（#613 收口：缺省走真合成写，不再恒 skip；行为矩阵见 t613 ⑤）', async () => {

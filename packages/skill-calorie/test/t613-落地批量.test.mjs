@@ -96,9 +96,12 @@ function seedFile() {
   return file;
 }
 
-/** 一份「库目录 ＋ 两个跨技能出口都指向 fixture」的配置目录。 */
+/** 一份「库目录 ＋ 三处外调（跨技能两出口／训记入口）都指向 fixture」的配置目录。 */
 function cfg(dir) {
-  return calorieConfigDir(dir, { land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE } }) && dir;
+  return calorieConfigDir(dir, {
+    land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
+    xunji: { cli: LAND_FIXTURE },
+  }) && dir;
 }
 
 let dispatchWrite = null;
@@ -222,22 +225,34 @@ describe('#613 批量落地', () => {
     assert.match(readFileSync(env.data.output, 'utf8'), /ilife-page/);
   });
 
-  it('④d 真出口实跑：第 1 天就停在「推送缺 KEY」，逐天读取不虚报后面的天', () => {
+  it('④d 真出口实跑 7 天（三处外调全走 fixture）：推送 7 天 回写 7 天', () => {
     const { dir, db } = seedDir();
     db.close();
     const a = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfg(dir) });
-    assert.notEqual(a.code, 0, '没配 KEY 不许报成功');
-    assert.match(a.stderr, /失败在第 1 天 2026-09-07/);
-    assert.match(a.stderr, /推送/);
+    assert.equal(a.code, 0, a.stderr.slice(-500));
+    const env = JSON.parse(a.stdout);
+    assert.match(env.data.message, /共 7 天 推送 7 天 回写 7 天/);
+    assert.ok(existsSync(env.data.output), '回执页未落盘：' + env.data.output);
+    assert.match(readFileSync(env.data.output, 'utf8'), /逐天结局/);
   });
 
-  it('③b 真 CLI 首日失败 → exit 非 0 且点名第 1 天日期（fail-fast，不再往下跑）', () => {
+  it('④e 真出口实跑月末 1 天（09-30）：推送 1 天 回写 1 天', () => {
     const { dir, db } = seedDir();
     db.close();
-    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    const a = cli('calorie.workout.land-monthend', { date: '2026-09-30' }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    assert.equal(a.code, 0, a.stderr.slice(-500));
+    const env = JSON.parse(a.stdout);
+    assert.match(env.data.message, /共 1 天 推送 1 天 回写 1 天/);
+  });
+
+  it('③b 真 CLI 第 3 天失败 → exit 非 0 且点名第 3 天日期（fail-fast，前两天计入）', () => {
+    const { dir, db } = seedDir();
+    db.close();
+    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, {
+      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE_FAIL_DATE: '2026-09-09',
+    });
     assert.notEqual(r.code, 0, r.stderr.slice(-300));
-    assert.match(r.stderr, /失败在第 1 天 2026-09-07/);
-    assert.ok(!/失败在第 2 天/.test(r.stderr), '首日之后不许继续跑');
+    assert.match(r.stderr, /失败在第 3 天 2026-09-09/);
   });
 
   it('③c 真 CLI 用法错 exit 2（非布尔 dryRun）＋ 空库 exit 4 ＋ 缺开始日期 exit 4', () => {
