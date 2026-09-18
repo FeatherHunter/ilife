@@ -12,10 +12,13 @@
  *   按 `{only}` 投影（一次只挂载一个）+ visited 缓存；ledger 无某技能=缺席，
  *   显示推荐安装只读文本（不返空冒充）。
  * - 组件 React.createElement 手写（禁 JSX），无数据轮询、无 document/window/process。
+ * - 面板外壳两处（票 #679）：标题行右上角两个入口（星／气泡，悬停出说明文字，
+ *   窄窗口折到标题下方）；页签面板之后是底部「作者其他插件」引流卡（四行，点开新窗口）。
+ *   文案与网址都取自 nav.ts 的两张静态表，本文件只画不算。
  */
 
 import * as React from 'react';
-import { MANAGER_TABS, MANAGER_VERSION, recoFor } from './nav.js';
+import { MANAGER_TABS, MANAGER_VERSION, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
 import type {
   ClientCtx,
@@ -31,7 +34,34 @@ export const CONFIG_TAB_SLOT = 'ilife.config-tab' as const;
 
 /** 总管视觉（内联 style；颜色走 DSH 主题别名，深浅主题自适应，写死值只做回退；与技能面板同语言）。 */
 const S = {
-  head: { fontSize: 15, fontWeight: 700, margin: '2px 0 8px', color: 'var(--dsw-alias-label-primary, inherit)' } as React.CSSProperties,
+  headRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    margin: '2px 0 8px',
+  } as React.CSSProperties,
+  head: { fontSize: 15, fontWeight: 700, flex: '0 0 auto', color: 'var(--dsw-alias-label-primary, inherit)' } as React.CSSProperties,
+  headActions: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 2,
+    marginLeft: 'auto',
+    flex: '0 0 auto',
+  } as React.CSSProperties,
+  iconLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    border: '1px solid transparent',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    textDecoration: 'none',
+    fontSize: 14,
+    lineHeight: 1,
+  } as React.CSSProperties,
   meta: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12, lineHeight: 1.7, marginBottom: 10 } as React.CSSProperties,
   tablist: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 } as React.CSSProperties,
   tab: {
@@ -68,6 +98,48 @@ const S = {
     fontSize: 12,
     userSelect: 'all',
   } as React.CSSProperties,
+  moreCard: {
+    marginTop: 16,
+    padding: '10px 12px',
+    borderRadius: 10,
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+  } as React.CSSProperties,
+  moreTitle: {
+    fontSize: 13,
+    fontWeight: 700,
+    marginBottom: 4,
+    color: 'var(--dsw-alias-label-primary, inherit)',
+  } as React.CSSProperties,
+  moreRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '2px 8px',
+    padding: '7px 4px',
+    textDecoration: 'none',
+    color: 'inherit',
+  } as React.CSSProperties,
+  morePkg: {
+    flex: '0 1 auto',
+    minWidth: 0,
+    overflowWrap: 'anywhere',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: 12,
+    fontWeight: 650,
+  } as React.CSSProperties,
+  moreDesc: {
+    flex: '1 1 180px',
+    minWidth: 0,
+    fontSize: 11.5,
+    lineHeight: 1.6,
+    color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
+  } as React.CSSProperties,
+  moreIcon: {
+    flex: '0 0 auto',
+    marginLeft: 'auto',
+    display: 'inline-flex',
+    color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
+  } as React.CSSProperties,
 };
 
 /** 缺席卡：未安装技能的占位（样式化推荐安装；只读文本，不做假导航）。 */
@@ -85,6 +157,84 @@ function AbsentCard(props: { tab: ManagerTab }): React.ReactElement {
 function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
   if (typeof label === 'function') return label();
   return label ?? '';
+}
+
+/** 外链图标（行尾那个；纯装饰，语义在链接自己的 aria-label／文字上）。 */
+function ExternalIcon(): React.ReactElement {
+  return React.createElement(
+    'svg',
+    {
+      viewBox: '0 0 24 24',
+      width: 13,
+      height: 13,
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 1.9,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      'aria-hidden': 'true',
+      focusable: 'false',
+    },
+    React.createElement('path', { d: 'M13.5 4.5H19.5V10.5' }),
+    React.createElement('path', { d: 'M19.5 4.5L11 13' }),
+    React.createElement('path', { d: 'M18 14.5V18A2 2 0 0 1 16 20H6A2 2 0 0 1 4 18V8A2 2 0 0 1 6 6H9.5' }),
+  );
+}
+
+/** 标题行右上角两件：星（去本仓点 Star）＋ 气泡（去本仓开 issue），悬停出说明文字。
+ *
+ * 三件并排里的第三件「检查更新」住隔壁票（#678）：本票只留位子——它就接在本组件之前，
+ * 不画一个点了没反应的假按钮。窄窗口靠 headRow 的 flexWrap 折到标题下方，
+ * 标题与两件都是 flex:'0 0 auto'，谁也不挤谁。
+ */
+function PanelActions(): React.ReactElement {
+  return React.createElement(
+    'div',
+    { style: S.headActions },
+    PANEL_LINKS.map((link) =>
+      React.createElement(
+        'a',
+        {
+          key: link.key,
+          href: link.url,
+          target: '_blank',
+          rel: 'noreferrer',
+          title: link.tip,
+          'aria-label': link.tip,
+          style: S.iconLink,
+        },
+        React.createElement('span', { 'aria-hidden': 'true' }, link.glyph),
+      ),
+    ),
+  );
+}
+
+/** 底部「作者其他插件」引流卡：四行（包名 ＋ 一句说明 ＋ 行尾外链图标），点开新窗口。
+ *
+ * 卡片在页签面板之后，六页签切换它都在（它不属于任何一个页签）。
+ */
+function MorePluginsCard(): React.ReactElement {
+  return React.createElement(
+    'div',
+    { style: S.moreCard },
+    React.createElement('div', { style: S.moreTitle }, '作者其他插件'),
+    MORE_PLUGINS.map((row) =>
+      React.createElement(
+        'a',
+        {
+          key: row.pkg,
+          href: row.url,
+          target: '_blank',
+          rel: 'noreferrer',
+          title: row.pkg + ' 的 GitHub 仓库',
+          style: S.moreRow,
+        },
+        React.createElement('span', { style: S.morePkg }, row.pkg),
+        React.createElement('span', { style: S.moreDesc }, row.desc),
+        React.createElement('span', { style: S.moreIcon }, React.createElement(ExternalIcon, null)),
+      ),
+    ),
+  );
 }
 
 /** 爱生活面板：总设置区 + 爱生活页签条（slot 驱动）+ 技能设置页投影/缺席文案。 */
@@ -125,7 +275,12 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
   return React.createElement(
     'div',
     null,
-    React.createElement('div', { style: S.head }, '爱生活'),
+    React.createElement(
+      'div',
+      { style: S.headRow },
+      React.createElement('div', { style: S.head }, '爱生活'),
+      React.createElement(PanelActions, null),
+    ),
     React.createElement(
       'div',
       { style: S.meta },
@@ -178,6 +333,7 @@ function LifePackSection(props: LifePackSectionProps): React.ReactElement {
           : React.createElement(AbsentCard, { tab }),
       );
     }),
+    React.createElement(MorePluginsCard, null),
   );
 }
 

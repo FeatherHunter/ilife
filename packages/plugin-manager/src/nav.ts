@@ -6,6 +6,10 @@
  * 子页不占栏：卡路里 diet/exercise/goal 等 ilife:calorie:* 后缀只在单品
  * 主面板内导航，绝不在此表另起 tab 行。
  * 60 deck:map 为 matt 探针已占位，本表不动它。
+ *
+ * 面板外壳的两张文案表也在本文件（票 #679）：右上角两个入口 PANEL_LINKS、
+ * 底部「作者其他插件」卡 MORE_PLUGINS。文案与网址集中在这里，
+ * 组件只负责画——改文案不碰组件（map #671 的 Q11 决议）。
  */
 
 export interface ManagerTab {
@@ -74,3 +78,55 @@ export function openManagerTab(port: HasTabsPort, slotId: string, sessionId?: st
   if (!port.hasTabs()) return;
   port.openTab({ type: slotId, path: slotId }, sessionId ? { sessionId } : undefined);
 }
+
+/** 面板右上角一个入口：图标 ＋ 悬停说明 ＋ 目标网址。 */
+export interface PanelLinkRow {
+  readonly key: 'star' | 'feedback';
+  /** 图标字形（照参照实现 dsh-mattpocock-skills-deck，星星只留 ⭐、反馈只留 💬）。 */
+  readonly glyph: string;
+  /** 鼠标悬停给出的说明文字。 */
+  readonly tip: string;
+  readonly url: string;
+}
+
+/** 面板右上角两个入口：星（去本仓点 star）＋ 气泡（去本仓开 issue）。
+ *
+ * 两处都指本仓 FeatherHunter/ilife——这是 map #671 裁定过的（「星与气泡指向哪个仓」
+ * 一问：反馈要落在本仓的需求池，「引流到作者其他技能」是底部那张卡的事）。
+ * 三件并排里的第三件「检查更新」住隔壁票（#678），本表不管它。
+ */
+export const PANEL_LINKS: readonly PanelLinkRow[] = [
+  { key: 'star', glyph: '⭐', tip: '去 GitHub 点 Star', url: 'https://github.com/FeatherHunter/ilife' },
+  { key: 'feedback', glyph: '💬', tip: '反馈问题', url: 'https://github.com/FeatherHunter/ilife/issues/new' },
+];
+
+/** 底部「作者其他插件」卡里的一行：包名 ＋ 一句说明 ＋ 行尾外链图标指向的仓库。 */
+export interface MorePluginRow {
+  readonly pkg: string;
+  readonly desc: string;
+  readonly url: string;
+}
+
+/** 「作者其他插件」四行（文案逐字照用户截图；只收真实存在的仓库，网址已逐个验真）。 */
+export const MORE_PLUGINS: readonly MorePluginRow[] = [
+  {
+    pkg: 'dsh-mattpocock-skills-deck',
+    desc: '本面板自己：装好就有 25 个工程技能在右侧直接用',
+    url: 'https://github.com/FeatherHunter/dsh-mattpocock-skills-deck',
+  },
+  {
+    pkg: 'dsh-opencode-palette',
+    desc: '34 款长时间编程护眼配色，一键换上',
+    url: 'https://github.com/FeatherHunter/dsh-opencode-palette',
+  },
+  {
+    pkg: 'dsh-prompt',
+    desc: '24 条常用提示模板随手点，不用来回复制粘贴',
+    url: 'https://github.com/FeatherHunter/dsh-prompt',
+  },
+  {
+    pkg: 'dsh-im-companion',
+    desc: '聊天机器人的伴侣插件：扫码或填凭据就把飞书、微信等 9 路聊天接进来',
+    url: 'https://github.com/FeatherHunter/dsh-im-companion',
+  },
+];
