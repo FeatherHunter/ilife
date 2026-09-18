@@ -8,6 +8,10 @@ import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { findLarkCli, runLark } from './feishu.js';
 import { MemoFetchError } from './errors.js';
+import { loadMemoConfig } from '../config.js';
+
+/** 授权二维码的默认目录名（老 `DEFAULT_QR_DIR` 的目录段）：`<系统临时目录>/memo_feishu_qr`。 */
+export const DEFAULT_QR_DIR_NAME = 'memo_feishu_qr';
 
 function runJson(cli: string, args: string[], what: string, cwd?: string): unknown {
   let r;
@@ -39,7 +43,8 @@ export function authInit(brand = 'feishu'): Record<string, unknown> {
   return r as Record<string, unknown>;
 }
 
-/** Step 2：扫码地址转 PNG 二维码。`outDir` 缺省走通用临时目录（老 `DEFAULT_QR_DIR`，不绑定用户机器）。
+/** Step 2：扫码地址转 PNG 二维码。`outDir` 缺省＝配置项 `lark.qrDir`，空串再用通用临时目录下的
+ *  `memo_feishu_qr`（老 `DEFAULT_QR_DIR`，不绑定用户机器；#695 起这一档可配）。
  *  lark-cli 要求 `--output` 是相对路径（老原文），此处进目录执行、回绝对路径。 */
 export function authQr(verificationUrl: string, outDir?: string): string {
   if (typeof verificationUrl !== 'string' || verificationUrl.length === 0) {
@@ -47,7 +52,8 @@ export function authQr(verificationUrl: string, outDir?: string): string {
   }
   const cli = findLarkCli();
   if (!cli) throw new MemoFetchError('LARK_UNAVAILABLE', 'lark-cli 未找到：缺失阻断取数');
-  const dir = outDir === undefined ? join(tmpdir(), 'memo_feishu_qr') : outDir;
+  const configured = loadMemoConfig().values.lark.qrDir;
+  const dir = outDir !== undefined ? outDir : (configured === '' ? join(tmpdir(), DEFAULT_QR_DIR_NAME) : configured);
   mkdirSync(dir, { recursive: true });
   const name = 'feishu_qr_' + Date.now() + '.png';
   const r = runLark(cli, ['auth', 'qrcode', verificationUrl, '--output', name], 30000, dir);

@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { initMemoTestDb } from '../../../tooling/contract-seam.mjs';
 import { PLUGIN, PLUGIN_VERSION, SKILL_VERSION } from '../dist/slot.js';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
 const requirePkg = createRequire(import.meta.url);
@@ -43,19 +44,22 @@ describe('dsh-memo-ilife 烟囱', () => {
   // Windows 并行 spawn 配额抖动（沿 #41 调查结论，见 test/combos-42.test.mjs）：满载时子进程偶发 exit 0 配空白
   // stdout——产品侧不可能态（出口必出一行 envelope JSON）。仅此签名即时重跑一次；仍坏/他错即真红，不断言放水。
   // memo 无 help 键（10 联动键见 SKILL.md）：取 memo.search 无参直读作空库安全契约键；memo 取数层 openMemoDb
-  // 要求 memo 子目录在位（缺目录即 exit 4 阻断），故空库须先建 memo/ 空目录再 spawn。
+  // 要求库文件在位（缺即 exit 4 阻断），故空库须先建出 `<配置目录>/data/memo.db`。
+  // #695：技能侧不再读环境变量 `SKILLS_DB_PATH`（配置走 `~/.ilife/memo.yaml`），测试隔离改用它唯一的口子
+  // `ILIFE_CONFIG_DIR`（缺了技能直接报错，不许落到真实家目录）；默认 `db.dir` 空串 ⇒ 库目录＝`<配置目录>/data`。
   function emptyMemoDb() {
-    const db = mkdtempSync(join(tmpdir(), 'memo-smoke-'));
-    mkdirSync(join(db, 'memo'));
-    return db;
+    const cfg = mkdtempSync(join(tmpdir(), 'memo-smoke-'));
+    mkdirSync(join(cfg, 'data'), { recursive: true });
+    initMemoTestDb(join(cfg, 'data', 'memo.db'));
+    return cfg;
   }
-  function spawnCliOnce(args, db) {
-    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db } });
+  function spawnCliOnce(args, cfg) {
+    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: cfg } });
   }
   function spawnCli(args) {
-    const db = emptyMemoDb();
-    let r = spawnCliOnce(args, db);
-    if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, db);
+    const cfg = emptyMemoDb();
+    let r = spawnCliOnce(args, cfg);
+    if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, cfg);
     return r;
   }
   it('#50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全）', () => {
@@ -69,7 +73,7 @@ describe('dsh-memo-ilife 烟囱', () => {
     assert.equal(env.data.total, 0);
   });
   it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
-    process.env.SKILLS_DB_PATH = emptyMemoDb();
+    process.env.ILIFE_CONFIG_DIR = emptyMemoDb();
     let data;
     try {
       data = readViaCli('memo.search');

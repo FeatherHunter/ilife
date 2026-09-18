@@ -1,4 +1,5 @@
 export { MemoFetchError, MemoPolicyError } from './errors.js';
+export { DEFAULT_DB_FILENAME, dbFilename, resolveDbDir, resolveDbPath } from './paths.js';
 export {
   openMemoDb,
   closeMemoDb,

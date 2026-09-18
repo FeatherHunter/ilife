@@ -35,7 +35,9 @@ import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fi
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
-import { HELP_HTML_DIR_NAME, HELP_FILE_STEM, LOOKUP_FILE_STEM } from '../help/manifest.js';
+import { helpHtmlDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
+import { resolveDbDir, dbFilename, resolveDbPath } from '../fetch/paths.js';
+import { isConfigKey, runConfigKey } from './config.js';
 import { MemoPolicyError } from '../fetch/errors.js';
 import type { MemoDb, NotePatch } from '../fetch/db.js';
 
@@ -44,12 +46,9 @@ const DEFAULT_TIMEOUT_MS = 30000;
 function fail(code: number, msg: string): never { console.error('ERR ' + code + ': ' + msg); process.exit(code); }
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
 
-function preflight() {
+function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
-  const p = process.env.SKILLS_DB_PATH;
-  if (!p) fail(1, 'SKILLS_DB_PATH 未设置（无默认值，必设）');
-  return p;
 }
 
 function needStr(params: Record<string, unknown>, name: string): string {
@@ -88,9 +87,10 @@ interface MemoHelpDispatch { readonly data: unknown; readonly deliver?: MemoDeli
  *  （exit 2），与其余四家同档：坏参绝不静默当 0。 */
 const helpReuseWindow = helpReuseWindowOf((m) => fail(2, m));
 
-/** 缺省交付的落点意图：`<SKILLS_DB_PATH>/<memo_html>/〈主体〉`（目录名与主体是备忘录自己的三个值）。 */
+/** 缺省交付的落点意图：`<库目录>/<memo_html>/〈主体〉`（目录名与主体是备忘录自己的三个值，
+ *  #695 起从配置文件取：`html.dir`／`files.help`／`files.lookup`，默认逐字等于老常量）。 */
 function landingOf(dbPath: string, stem: string): HtmlLanding {
-  return { dir: join(resolve(dbPath), HELP_HTML_DIR_NAME), stem };
+  return { dir: join(resolve(dbPath), helpHtmlDirName()), stem };
 }
 
 /** 交付一次 HELP 产物（本包**唯一落盘点**）：
@@ -129,7 +129,7 @@ function deliverMemoHtml(input: {
 /** 初始化状态：memo 老库文件存在＝已初始化（老 `_help_initialized`，新仓直连老库）。只 `stat`、
  *  不建文件；判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
 function helpInitialized(dbPath: string): boolean {
-  try { return existsSync(join(dbPath, 'memo.db')); } catch { return false; }
+  try { return existsSync(join(dbPath, dbFilename())); } catch { return false; }
 }
 
 /** 速查支的 `list` 载荷：一行一唤醒词（短语／key／形状／调用形／一句话），全从 `WAKE_TABLE` 派生。 */
@@ -162,7 +162,7 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
     const items = buildLookupItems();
     return {
       data: { items, total: items.length, mode: 'lookup' },
-      deliver: { landing: landingOf(dbPath, LOOKUP_FILE_STEM), window },
+      deliver: { landing: landingOf(dbPath, lookupFileStem()), window },
     };
   }
 
@@ -175,7 +175,7 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   // 索引载荷（`list` 形）：一行一域，计数全派生；`memo.help.lookup`＝HELP 文件的交付索引。
   return {
     data: { ...buildHelpSceneIndex(), mode: HELP_MODE_FILE },
-    deliver: { html, landing: landingOf(dbPath, HELP_FILE_STEM), window },
+    deliver: { html, landing: landingOf(dbPath, helpFileStem()), window },
   };
 }
 
@@ -469,12 +469,23 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：memo-cmd-read <memo.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
-  const dbPath = preflight();
   let params = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
+  // #695：三个配置 key（`memo.config.read/write/reset`）在库目录预检与形状表之前拦下——
+  // 读写配置不该要求库已配，它们也不进 `MEMO_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
+  if (isConfigKey(o.key)) {
+    process.stdout.write(runConfigKey(o.key, params) + '\n');
+    return;
+  }
+  preflight();
+  // 读配置算库目录：配置件的报错本身就是人话（带行号与文件名），归「预检」那一档原样交回
+  // （不能让它裸抛——那会吐一整段 node 崩溃栈，用户看不到「该在哪配」）。
+  let dbPath = '';
+  try { dbPath = resolveDbDir(); }
+  catch (e) { fail(1, e instanceof Error ? e.message : String(e)); }
   let shape = null;
   try { shape = memoShapeFor(o.key); } catch (e) { fail(3, (e as Error).message); }
   void shape;
@@ -534,7 +545,8 @@ async function main() {
     if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
       fail(5, '落盘失败：' + ((e as Error).message || String(e)));
     }
-    if ((e as Error).message?.includes('SKILLS_DB_PATH')) fail(1, (e as Error).message);
+    // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
+    if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally { clearTimeout(timer); }
   // #83／#144 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，envelope 既有五字段一字不改、序不变。

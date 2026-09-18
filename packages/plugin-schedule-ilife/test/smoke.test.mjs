@@ -42,13 +42,15 @@ describe('dsh-schedule-ilife 烟囱', () => {
   });
   // Windows 并行 spawn 配额抖动（沿 #41 调查结论，见 test/combos-42.test.mjs）：满载时子进程偶发 exit 0 配空白
   // stdout——产品侧不可能态（出口必出一行 envelope JSON）。仅此签名即时重跑一次；仍坏/他错即真红，不断言放水。
-  function spawnCliOnce(args, db) {
-    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db } });
+  // #695：技能侧不再读环境变量 `SKILLS_DB_PATH`（配置走 `~/.ilife/schedule.yaml`），测试隔离改用它唯一的口子
+  // `ILIFE_CONFIG_DIR`（缺了技能直接报错，不许落到真实家目录）。
+  function spawnCliOnce(args, cfg) {
+    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: cfg } });
   }
   function spawnCli(args) {
-    const db = mkdtempSync(join(tmpdir(), 'schedule-smoke-'));
-    let r = spawnCliOnce(args, db);
-    if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, db);
+    const cfg = mkdtempSync(join(tmpdir(), 'schedule-smoke-'));
+    let r = spawnCliOnce(args, cfg);
+    if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, cfg);
     return r;
   }
   it('#50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全）', () => {
@@ -61,8 +63,8 @@ describe('dsh-schedule-ilife 烟囱', () => {
     assert.ok(env.data && env.data.total >= 1);
   });
   it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
-    const db = mkdtempSync(join(tmpdir(), 'schedule-smoke-'));
-    process.env.SKILLS_DB_PATH = db;
+    const cfg = mkdtempSync(join(tmpdir(), 'schedule-smoke-'));
+    process.env.ILIFE_CONFIG_DIR = cfg;
     let data;
     try {
       data = readViaCli('schedule.help.lookup');

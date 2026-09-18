@@ -2,25 +2,26 @@
 // 老家对照 script/feishu_sync.py：auth status 为身份真值源；auth check --scope 判授权；task 域同步心愿。
 import { accessSync, constants } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { MemoFetchError } from './errors.js';
+import { loadMemoConfig } from '../config.js';
 
 export const LARK_DEFAULT_TIMEOUT_MS = 30000;
 export const LARK_WISH_SCOPE = 'task';
 
-// 跨平台定位：显式覆盖 → Windows npm 全局 → where/which → 固定路径；找不到返 null（不抛，larkReady 抛）。
+// 跨平台定位：**配置项 `lark.cliPath`（显式覆盖）** → Windows npm 全局 → where/which → 固定路径；找不到返 null
+// （不抛，larkReady 抛）。#695：原来这里读环境变量 `LARK_CLI_PATH` 与 `APPDATA`，按用户裁决**环境变量读取全删**——
+// 显式值改从配置文件取（空串＝没有显式值，走兜底探测），`%APPDATA%` 那一档改由 `os.homedir()` 派生（win32 才用）。
 export function findLarkCli(): string | null {
-  const over = process.env.LARK_CLI_PATH;
+  const over = loadMemoConfig().values.lark.cliPath;
   if (over) {
     try { accessSync(over, constants.X_OK); return over; }
-    catch { throw new MemoFetchError('LARK_UNAVAILABLE', 'LARK_CLI_PATH 不可用：' + over); }
+    catch { throw new MemoFetchError('LARK_UNAVAILABLE', 'lark.cliPath 不可用：' + over + '（这一项住 ~/.ilife/memo.yaml，改完保存即生效）'); }
   }
   if (process.platform === 'win32') {
-    const appdata = process.env.APPDATA;
-    if (appdata) {
-      const cand = join(appdata, 'npm', 'lark-cli.cmd');
-      try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
-    }
+    const cand = join(homedir(), 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
+    try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
     try {
       const out = execFileSync('where', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' }).split(/\r?\n/)[0].trim();
       if (out) return out;

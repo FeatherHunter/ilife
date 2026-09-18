@@ -8,6 +8,7 @@ import { accessSync, constants, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { MemoFetchError } from './errors.js';
+import { dbFilename } from './paths.js';
 
 /** 老 `notes` 行（`init.sql` 逐列：id 自增整数／content 正文／summary 短摘要／category／sub_category／
  *  media_path 附件相对路径／reminder_id 打卡追溯来源／feishu_task_guid 远端标识回写／due 排期日期／
@@ -45,10 +46,10 @@ export interface MemoDb {
   readonly conn: DatabaseSync;
 }
 
-// 老定位规则（`memo_cli.py:47-59`）：环境变量 `SKILLS_DB_PATH` 下的 `memo.db`。
-// 新仓预检已要求 `SKILLS_DB_PATH` 必设（缺即 exit 1），此处不再做 `D:/.db` fallback，不静默换库。
+// 老定位规则（`memo_cli.py:47-59`）：库目录下的 `memo.db`。库目录从哪来见 `./paths.js`
+// （#695 起＝配置文件的唯一真相，环境变量 `SKILLS_DB_PATH` 已删）；此处不再做 `D:/.db` fallback，不静默换库。
 export function memoDbFile(dbDir: string): string {
-  return join(dbDir, 'memo.db');
+  return join(dbDir, dbFilename());
 }
 
 /** 打开老库文件：不存在／不是文件／不可读即抛（调用方阻断取数）。成功则开连接＋外键，不做别的。 */
