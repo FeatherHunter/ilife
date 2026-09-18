@@ -15,7 +15,7 @@
  *      计划与完成数写成两张带进度条的卡，周次写成表里的一列。
  *   ⑥ 截图审查：见证据件。
  *
- * 取数仍住 `./exercisePort.ts` 的 `buildReviewView`（本件不碰库）；页内样式住 `./reviewDocsCss.ts`。
+ * 取数仍住 `../render/exercisePort.ts` 的 `buildReviewView`（本件不碰库）；页内样式住 `./reviewDocsCss.ts`。
  * 页面上不出现的词：「会话」是内部概念，用户看不懂（负责人 2026-09-14 点名）。
  */
 import { buildDataText, buildLogText } from 'base-paint';
@@ -30,8 +30,8 @@ import { shiftISODate } from '../analysis/utils.js';
 import { copyLog } from '../shared/copyArea.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { sceneEnvelope } from '../shared/sceneEnvelope.js';
-import type { PlannedSession, ReviewView } from './exercisePort.js';
-import { nowStamp } from './receipt.js';
+import type { PlannedSession, ReviewView } from '../render/exercisePort.js';
+import { nowStamp } from '../render/receipt.js';
 import { reviewViewCss } from './reviewDocsCss.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */

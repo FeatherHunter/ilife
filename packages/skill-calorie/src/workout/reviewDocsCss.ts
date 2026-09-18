@@ -32,7 +32,7 @@
  * 打印：热力图与明细表都是内容，照常印；日期格的底色来自 CSS 类，浏览器默认不打印背景色，
  * 故格内文字本身写全状态词（「完成／未完成／未排训练」），黑白打印也读得出。
  */
-import { pageChromeCss } from './pageChromeCss.js';
+import { pageChromeCss } from '../render/pageChromeCss.js';
 
 /** 卡片底：白底 ＋ 1px 细线 ＋ 16 圆角 ＋ 冻结阴影（全页三处卡共用，一处定义）。 */
 const CARD = 'background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)';
