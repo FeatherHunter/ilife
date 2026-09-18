@@ -15,12 +15,12 @@ import { MORE_PLUGINS, PANEL_LINKS } from '../dist/nav.js';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
 
-/** 四行文案（用户截图逐字；包名与仓库一一对应）。 */
+/** 四行文案（用户 2026-09-18 拍板：不写数字，且第一行不用自指「本面板自己」；包名与仓库一一对应）。 */
 const EXPECT_MORE = [
-  ['dsh-mattpocock-skills-deck', '本面板自己：装好就有 25 个工程技能在右侧直接用'],
-  ['dsh-opencode-palette', '34 款长时间编程护眼配色，一键换上'],
-  ['dsh-prompt', '24 条常用提示模板随手点，不用来回复制粘贴'],
-  ['dsh-im-companion', '聊天机器人的伴侣插件：扫码或填凭据就把飞书、微信等 9 路聊天接进来'],
+  ['dsh-mattpocock-skills-deck', '工程技能面板：装好就能在右侧直接用'],
+  ['dsh-opencode-palette', '多款长时间编程护眼配色，一键换上'],
+  ['dsh-prompt', '常用提示模板随手点，不用来回复制粘贴'],
+  ['dsh-im-companion', '聊天机器人的伴侣插件：扫码或填凭据就把飞书、微信等聊天接进来'],
 ];
 
 describe('票 #679 面板头部与底部', () => {
@@ -36,7 +36,7 @@ describe('票 #679 面板头部与底部', () => {
     }
   });
 
-  it('底部四行：包名与文案逐字照截图', () => {
+  it('底部四行：包名与文案（不写数字、不自指，用户 2026-09-18 定的口径）', () => {
     assert.deepEqual(
       MORE_PLUGINS.map((row) => [row.pkg, row.desc]),
       EXPECT_MORE,

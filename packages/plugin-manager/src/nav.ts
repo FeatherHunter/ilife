@@ -107,26 +107,31 @@ export interface MorePluginRow {
   readonly url: string;
 }
 
-/** 「作者其他插件」四行（文案逐字照用户截图；只收真实存在的仓库，网址已逐个验真）。 */
+/** 「作者其他插件」四行：包名 ＋ 一句说明 ＋ 仓库地址。
+ *
+ * 文案口径（用户 2026-09-18 拍板）：**不写数字**——数字会过期（用户截图里的「34 款」实测已到 38 款），
+ * 写错最伤推荐位的可信度；第一行也不用 deck 自己面板里的自指「本面板自己」，改成不自指的说法。
+ * 只收真实存在的仓库，网址已逐个验真。第一行的说明描述的是 deck 那个包（工程技能面板），不是爱生活面板。
+ */
 export const MORE_PLUGINS: readonly MorePluginRow[] = [
   {
     pkg: 'dsh-mattpocock-skills-deck',
-    desc: '本面板自己：装好就有 25 个工程技能在右侧直接用',
+    desc: '工程技能面板：装好就能在右侧直接用',
     url: 'https://github.com/FeatherHunter/dsh-mattpocock-skills-deck',
   },
   {
     pkg: 'dsh-opencode-palette',
-    desc: '34 款长时间编程护眼配色，一键换上',
+    desc: '多款长时间编程护眼配色，一键换上',
     url: 'https://github.com/FeatherHunter/dsh-opencode-palette',
   },
   {
     pkg: 'dsh-prompt',
-    desc: '24 条常用提示模板随手点，不用来回复制粘贴',
+    desc: '常用提示模板随手点，不用来回复制粘贴',
     url: 'https://github.com/FeatherHunter/dsh-prompt',
   },
   {
     pkg: 'dsh-im-companion',
-    desc: '聊天机器人的伴侣插件：扫码或填凭据就把飞书、微信等 9 路聊天接进来',
+    desc: '聊天机器人的伴侣插件：扫码或填凭据就把飞书、微信等聊天接进来',
     url: 'https://github.com/FeatherHunter/dsh-im-companion',
   },
 ];
