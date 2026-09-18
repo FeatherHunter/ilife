@@ -9,7 +9,7 @@
 // ⑥ 产物目录 `.db` 数＝0（看帮助不建库）；⑦ `delivery` 只追加、`q` 支无 `delivery`、复用窗口回同一路径；
 // ⑧ `--html <路径>` 仍出分节页。
 //
-// 纪律：**只经真 spawn**（`dist/cli/cmd_read.js` ＋ 临时 `SKILLS_DB_PATH`），不直接调模块——
+// 纪律：**只经真 spawn**（`dist/cli/cmd_read.js` ＋ 临时 `ILIFE_CONFIG_DIR`），不直接调模块——
 // 课（#139）：模块级测试全绿 ≠ 用户拿到东西。落点值／名字通式在本文件里**写死逐字**（不从
 // `dist/help/manifest.js` 取），否则改实现点会同时改期望值，锁就变成同义反复、变异自证也测不出来。
 import { test } from 'node:test';
@@ -36,8 +36,10 @@ const NAME_RE = /^(.+)_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
 const TITLE = '居家管家 · 使用手册(HELP)';
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'home191-' + tag + '-'));
-const htmlDirOf = (dir) => join(dir, HELP_HTML_DIR);
-const envOf = (dir) => ({ ...process.env, SKILLS_DB_PATH: dir });
+// #695：落点由配置文件决定 —— `dir` 是**配置目录**，数据目录＝`<dir>/data/`，产物落数据目录下那一层。
+const dataDirOf = (dir) => join(dir, 'data');
+const htmlDirOf = (dir) => join(dataDirOf(dir), HELP_HTML_DIR);
+const envOf = (dir) => ({ ...process.env, ILIFE_CONFIG_DIR: dir });
 
 function run(dir, args = [KEY], envExtra) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
@@ -101,8 +103,8 @@ test('① 缺省＝HELP 文件：名字通式逐字（主体／时间戳／父�
 
   assert.equal(r.env.key, KEY);
   assert.ok(HELP_NAME_RE.test(basename(out)), '文件名通式逐字：' + basename(out));
-  assert.equal(basename(dirname(out)), HELP_HTML_DIR, '落 <SKILLS_DB_PATH>/' + HELP_HTML_DIR + '/');
-  assert.equal(dirname(out), htmlDirOf(dir), '父目录＝SKILLS_DB_PATH 下那一层（不多不少）');
+  assert.equal(basename(dirname(out)), HELP_HTML_DIR, '落 <数据目录>/' + HELP_HTML_DIR + '/');
+  assert.equal(dirname(out), htmlDirOf(dir), '父目录＝数据目录下那一层（不多不少）');
   assert.ok(out.startsWith(dir), 'delivery.path 为绝对路径：' + out);
   assert.ok(existsSync(out), '回执路径真的存在');
   assert.equal(r.env.delivery.mode, 'file');
@@ -270,30 +272,32 @@ test('⑤ 退出码矩阵：正例 0；参数错 2；落盘失败 5——失败�
 
 test('⑤b 写失败（落点被同名**文件**占位）⇒ exit 5 且 stdout 空（不静默降级）', () => {
   const dir = mkDir('blocked');
-  writeFileSync(join(dir, HELP_HTML_DIR), 'x'); // 落点子目录被同名文件占位
+  mkdirSync(dataDirOf(dir), { recursive: true }); // 配置目录下 `data/` 由配置件首次读时建；这里先占位
+  writeFileSync(join(dataDirOf(dir), HELP_HTML_DIR), 'x'); // 落点子目录被同名文件占位
   const r = run(dir, undefined);
   assert.equal(r.status, 5, '落盘真失败 ⇒ exit 5（stderr：' + r.stderr + '）');
   assert.equal(r.stdout, '', '失败时 stdout 空：不把失败伪装成成功');
   assert.match(r.stderr, /ERR 5/);
-  assert.equal(readFileSync(join(dir, HELP_HTML_DIR), 'utf8'), 'x', '占位文件原样未动');
+  assert.equal(readFileSync(join(dataDirOf(dir), HELP_HTML_DIR), 'utf8'), 'x', '占位文件原样未动');
 });
 
-test('⑥ 看帮助不建库：产物目录与 `SKILLS_DB_PATH` 下 `.db` 数＝0', () => {
+test('⑥ 看帮助不建库：产物目录与数据目录下 `.db` 数＝0', () => {
   const dir = mkDir('nodb');
   const r = runOk(dir, undefined);
   assert.ok(existsSync(r.env.delivery.path));
-  assert.equal(dbCountOf(dir), 0, '根目录不得出现 .db：' + JSON.stringify(listOf(dir)));
+  assert.equal(dbCountOf(dir), 0, '配置目录不得出现 .db：' + JSON.stringify(listOf(dir)));
+  assert.equal(dbCountOf(dataDirOf(dir)), 0, '数据目录不得出现 .db：' + JSON.stringify(listOf(dataDirOf(dir))));
   assert.ok(existsSync(htmlDirOf(dir)), '产物目录须存在（目录不在＝「0 个 .db」是缺席式空绿）：' + htmlDirOf(dir));
   assert.equal(dbCountOf(htmlDirOf(dir)), 0, '产物目录不得出现 .db：' + JSON.stringify(listOf(htmlDirOf(dir))));
-  assert.equal(existsSync(join(dir, 'home.db')), false, '看帮助不把居家库建出来');
+  assert.equal(existsSync(join(dataDirOf(dir), 'home.db')), false, '看帮助不把居家库建出来');
 
   const lookDir = mkDir('nodb-lookup');
   runOk(lookDir, [KEY, '--params', '{"mode":"lookup"}']);
-  assert.equal(dbCountOf(lookDir), 0, 'lookup 支同样不建库：' + JSON.stringify(listOf(lookDir)));
+  assert.equal(dbCountOf(dataDirOf(lookDir)), 0, 'lookup 支同样不建库：' + JSON.stringify(listOf(dataDirOf(lookDir))));
 
   const qDir = mkDir('nodb-q');
   runOk(qDir, [KEY, '--params', '{"q":"查物品"}']);
-  assert.equal(dbCountOf(qDir), 0, 'q 支同样不建库：' + JSON.stringify(listOf(qDir)));
+  assert.equal(dbCountOf(dataDirOf(qDir)), 0, 'q 支同样不建库：' + JSON.stringify(listOf(dataDirOf(qDir))));
 });
 
 test('⑧ `--html <路径>` 支仍出分节页（所有 key 通用的出口，不许被顺手砍）', () => {

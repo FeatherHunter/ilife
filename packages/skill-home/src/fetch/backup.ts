@@ -12,10 +12,12 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync,
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { closeHomeDb, openHomeDb } from './db.js';
 import { HomeFetchError, HomePolicyError } from './errors.js';
-import { DB_FILENAME, resolveDbDir, resolveDbPath } from './paths.js';
+import { dbFilename, resolveDbDir, resolveDbPath } from './paths.js';
+import { loadHomeConfig } from '../config.js';
 import { zipRead, zipWrite, type ZipEntry } from './archive.js';
 
-const BACKUP_DIR_NAME = 'backups';   // 老家 ops.py:26 同值
+/** 备份目录名的默认值：＝改造前的代码常量 `BACKUP_DIR_NAME`（配置项 `backup.dir` 空串即用它）。 */
+export const DEFAULT_BACKUP_DIR_NAME = 'backups';   // 老家 ops.py:26 同值
 const BACKUP_KEEP_N = 5;             // 老家 ops.py:25 同值
 const BACKUP_PREFIX = 'home_backup_';
 const EXPORT_SCHEMA_VERSION = 1;
@@ -100,9 +102,15 @@ function daysBetween(from: Date, to = new Date()): number {
   return Math.floor((to.getTime() - from.getTime()) / 86400000);
 }
 
+/** 备份目录名：配置 `backup.dir`，空串＝默认（`backups`）。 */
+export function backupDirName(): string {
+  const dir = loadHomeConfig().values.backup.dir;
+  return dir === '' ? DEFAULT_BACKUP_DIR_NAME : dir;
+}
+
 /** 备份目录（库目录下 `backups/`）——设置页「备份目录」那一项的取值口；只算路径，不建目录。 */
 export function resolveBackupDir(): string {
-  return join(resolveDbDir(), BACKUP_DIR_NAME);
+  return join(resolveDbDir(), backupDirName());
 }
 
 function backupFiles(dir: string): string[] {
@@ -162,9 +170,10 @@ export function createBackup(opts: { keepN?: number } = {}): BackupResult {
   }
 
   const created = nowStr();
-  const manifest = { schema_version: EXPORT_SCHEMA_VERSION, created_at: created, db_filename: DB_FILENAME, items };
+  const dbName = dbFilename();
+  const manifest = { schema_version: EXPORT_SCHEMA_VERSION, created_at: created, db_filename: dbName, items };
   const entries: ZipEntry[] = [
-    { name: DB_FILENAME, data: dbBytes },
+    { name: dbName, data: dbBytes },
     { name: 'manifest.json', data: Buffer.from(JSON.stringify(manifest, null, 1) + '\n', 'utf8') },
   ];
   try { writeFileSync(target, zipWrite(entries)); }
@@ -213,8 +222,9 @@ export function restoreBackup(file: string, opts: { keepN?: number; dryRun?: boo
   let dbBytes: Buffer;
   try {
     entries = zipRead(readFileSync(src));
-    const hit = entries.find((e) => e.name === DB_FILENAME);
-    if (!hit) throw new Error('备份内未找到 ' + DB_FILENAME);
+    const dbName = dbFilename();
+    const hit = entries.find((e) => e.name === dbName);
+    if (!hit) throw new Error('备份内未找到 ' + dbName);
     dbBytes = hit.data;
   } catch (e) {
     throw new HomePolicyError('POLICY_BAD_INPUT', '备份文件无效：' + src + '（' + (e as Error).message + '）');

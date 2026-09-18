@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
-let DB = '';
+// #695：落点改由配置文件决定 —— `ILIFE_CONFIG_DIR` 指向独占临时目录，数据目录＝`<它>/data/`。
+let CFG = '';
+const dataDir = () => join(CFG, 'data');
 
 function nodeBin() {
   const cands = [process.env.npm_node_execpath, 'node', process.execPath].filter(Boolean);
@@ -22,12 +24,12 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) } });
 }
 const P = (o) => JSON.stringify(o);
 
 before(() => {
-  DB = mkdtempSync(join(tmpdir(), 'homecli-'));
+  CFG = mkdtempSync(join(tmpdir(), 'homecli-'));
   // 种子：分类取首个 + 录两件 + 购物/家人/保修前置
   const probe = run(['home.stats.overview']);
   assert.equal(probe.status, 0);
@@ -97,15 +99,18 @@ describe('居家唯一出口 cmd_read（21 键全票）', () => {
     const q = run(['home.help.lookup', '--params', P({ q: '帮我查物品牛奶' })]);
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'home.item.search'));
   });
-  it('契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；--html 落盘', () => {
+  it('契约：未知 key 3 且 stdout 空；坏参 2；测试缺隔离 1；--html 落盘', () => {
     const k = run(['home.nope']);
     assert.equal(k.status, 3);
     assert.equal(k.stdout, '');
     assert.equal(run(['home.item.search', '--params', '[]']).status, 2);
     assert.equal(run(['home.item.search', '--timeout', 'abc']).status, 2);
     assert.equal(run(['nope']).status, 3);
-    assert.equal(run(['home.item.search'], { SKILLS_DB_PATH: '' }).status, 1);
-    const p = join(DB, 'out.html');
+    // #695：写库开关没了，「忘了配」改成响亮失败——配置件在测试运行器里缺 `ILIFE_CONFIG_DIR` 即抛。
+    const nope = run(['home.item.search'], { ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: 'child-v8' });
+    assert.equal(nope.status, 1, '测试进程缺隔离 ⇒ exit 1（stderr：' + nope.stderr + '）');
+    assert.match(nope.stderr, /测试缺隔离/);
+    const p = join(dataDir(), 'out.html');
     const r = run(['home.item.search', '--params', P({ name: '牛奶' }), '--html', p]);
     assert.equal(r.status, 0);
     assert.match(readFileSync(p, 'utf8'), /<section/);

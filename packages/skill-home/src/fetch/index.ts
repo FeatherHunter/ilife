@@ -6,7 +6,7 @@ export {
   listCategories, getCategoryById, encryptPassword, decryptPassword, assertMasterKey,
 } from './db.js';
 export type { HomeItem, HomeLocation, HomeDb, SearchFilter } from './db.js';
-export { resolveDbDir, resolveDbPath, assertWritablePath, DB_FILENAME } from './paths.js';
+export { resolveDbDir, resolveDbPath, dbFilename, DEFAULT_DB_FILENAME } from './paths.js';
 // #707：备份导出／导入恢复（HELP SM8-3／SM8-4）的落点。
 export { resolveBackupDir, createBackup, listBackups, restoreBackup, exportData } from './backup.js';
 export {

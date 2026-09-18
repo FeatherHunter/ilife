@@ -6,7 +6,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   HomeFetchError, HomePolicyError,
-  resolveDbDir, resolveDbPath, DB_FILENAME, openHomeDb, closeHomeDb,
+  resolveDbDir, resolveDbPath, dbFilename, openHomeDb, closeHomeDb,
   addItem, getItemById, listLocationsByItem, listTagsByItem, searchItems, updateItem,
   adjustQuantity, setLocationStatus, moveLocation, setItemTags, listAllTags, mergeTags,
   listCategories, getCategoryById, encryptPassword, decryptPassword, assertMasterKey,
@@ -34,7 +34,8 @@ import {
 } from '../render/index.js';
 import { buildHelpLookup, buildHomeHelpFileData, renderHomeHelpHtml, deliverHomeHelp } from '../help/index.js';
 import type { HomeHtmlDelivery } from '../help/index.js';
-import { HELP_FILE_STEM, HELP_HTML_DIR_NAME, LOOKUP_FILE_STEM } from '../help/manifest.js';
+import { helpDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
+import { isConfigKey, runConfigKey } from './config.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -43,12 +44,9 @@ function fail(code: number, msg: string): never { console.error('ERR ' + code + 
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
 function note(msg: string): void { console.error('NOTE: ' + msg); }
 
-function preflight(): string {
+function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
-  const p = process.env.SKILLS_DB_PATH;
-  if (!p) fail(1, 'SKILLS_DB_PATH 未设置（无默认值，必设）');
-  return p;
 }
 
 function asInt(v: unknown, field: string): number | undefined {
@@ -59,7 +57,7 @@ function asInt(v: unknown, field: string): number | undefined {
 
 /* ── #190 · 「居家管家HELP」的交付装配（**在开库之前**走，照 skill-bill/src/cli/cmd_read.ts:69-111）────
  *
- * 缺省（无 `mode`、无 `q`）＝ 老实物同款 HELP 文件：`<SKILLS_DB_PATH>/home_manager_html/
+ * 缺省（无 `mode`、无 `q`）＝ 老实物同款 HELP 文件：`<配置项 db.dir 给的数据目录>/home_manager_html/
  * 居家管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`，独占落盘 ＋ **绝对路径**回执（`delivery` 顶层追加）。
  * 显式 `mode:"lookup"` ＝ 全量速查表产物（主体 `居家管家_速查表`，与 HELP 文件**分名**）。
  * 显式 `q` ＝ 现找：只回命中（stdout），语义与本键今天一字不变；三支互斥，非法 `mode` ⇒ `fail(2)`。
@@ -72,8 +70,8 @@ function asInt(v: unknown, field: string): number | undefined {
  *
  * 全程**不开库**：初始化状态＝「DB 文件**存在**」（判据由 `buildHomeHelpFileData` 吃 `dbPath` 现算，
  * 见 `src/help/helpFile.ts` 件头），免得「看帮助」把居家库 `new DatabaseSync` 出来并跑 DDL 自愈。
- * ⚠️ 算这条路径**不许**走 `src/fetch/paths.ts:20-23` 的 `resolveDbPath()`——它自带 `mkdirSync`
- * ⇒「判一下」就把目录建出来。这里只用只读出口 `resolveDbDir()`（纯取 `SKILLS_DB_PATH`）＋ `DB_FILENAME` 拼。
+ * ⚠️ 算这条路径**不许**走 `src/fetch/paths.ts` 的 `resolveDbPath()`——它自带 `mkdirSync`
+ * ⇒「判一下」就把目录建出来。这里只用只读出口 `resolveDbDir()`（配置项 `db.dir`，空串＝数据目录）＋ `dbFilename()` 拼。
  */
 interface DeliverIntent {
   readonly html?: string;
@@ -100,17 +98,17 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const reuseMs = helpWindowOrFail(params);
   const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
   if (q !== undefined) return { data: buildHelpItems(all, q) };
-  const targetDir = join(dbDir, HELP_HTML_DIR_NAME);
+  const targetDir = join(dbDir, helpDirName());
   if (mode === 'lookup') {
     return {
       data: buildHelpItems(all, undefined),
-      deliver: { targetDir, stem: LOOKUP_FILE_STEM, reuseMs },
+      deliver: { targetDir, stem: lookupFileStem(), reuseMs },
     };
   }
-  const html = renderHomeHelpHtml(buildHomeHelpFileData(now, { dbPath: join(dbDir, DB_FILENAME) }));
+  const html = renderHomeHelpHtml(buildHomeHelpFileData(now, { dbPath: join(dbDir, dbFilename()) }));
   return {
     data: buildHelpItems(all, undefined),
-    deliver: { html, targetDir, stem: HELP_FILE_STEM, reuseMs },
+    deliver: { html, targetDir, stem: helpFileStem(), reuseMs },
   };
 }
 
@@ -810,12 +808,18 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：home-cmd-read <home.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
-  preflight();
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
+  // #695：三个配置 key（`home.config.read/write/reset`）在库目录预检与形状表之前拦下——
+  // 读写配置不该要求库已配，它们也不进 `HOME_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
+  if (isConfigKey(o.key)) {
+    process.stdout.write(runConfigKey(o.key, params) + '\n');
+    return;
+  }
+  preflight();
   try { homeShapeFor(o.key as HomeKey); } catch (e) { fail(3, (e as Error).message); }
   const key = o.key as string;
   const timer = setTimeout(() => {
@@ -862,6 +866,9 @@ async function main() {
     if (e instanceof HomePolicyError) fail(2, (e as Error).message);
     if (e instanceof HomeFetchError) fail(4, (e as Error).message);
     if (e instanceof HomeRenderError) fail(5, (e as Error).message);
+    // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
+    // #695：这一档也接住「测试缺隔离」——跑在测试运行器里却没设 `ILIFE_CONFIG_DIR` 时响亮失败。
+    if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
     fail(4, '取数失败：' + (e as Error).message);
   }
 }

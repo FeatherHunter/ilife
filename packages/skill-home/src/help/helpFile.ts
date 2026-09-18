@@ -102,7 +102,7 @@ interface HomeHelpInitBanner {
  *  `dbPath`／`fileExists` 为什么必须由调用方给：见件头「只读页不建库」。
  *  `fileExists` 与 `existsSync` 参数同形（`no side effect` 的只读判据）。 */
 interface HomeHelpFileOptions {
-  /** DB **文件**路径（调用方从 `SKILLS_DB_PATH` 解析后传入；缺位／为空 ⇒ 横幅照显）。
+  /** DB **文件**路径（调用方按配置项 `db.dir`（空串＝数据目录）＋库文件名解析后传入；缺位／为空 ⇒ 横幅照显）。
    *  ⚠️ 不要传 `resolveDbPath()` 的返回值——那一步会 `mkdirSync`。 */
   readonly dbPath?: string;
   /** 库文件存在判据（可注入；缺省 `existsSync`；抛异常一律当「不存在」）。 */
