@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#701 待定两件：餐别边界 · 汇总层正本</title>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#fff;--ink:#14171a;--muted:#68727d;--line:#e2e6ea;
+  --blue:#1257c7;--green:#0d6e49;--amber:#9a6209;--red:#a52218;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.7 system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:940px;margin:0 auto;padding:26px 18px 64px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.b{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.b1{background:#e4edfc;color:#123f8f}
+.b2{background:#fdeadd;color:#8a4409}
+.b3{background:#fbe6e3;color:#8f1c12}
+h1{font-size:24px;line-height:1.35;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin:13px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+h2{font-size:17px;margin:0 0 8px}
+h3{font-size:14px;margin:14px 0 5px;color:#39414a}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:9px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f1f3f5}
+code{background:#eef1f5;padding:1px 5px;border-radius:5px;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+.pick{background:#f0faf4;border:1px solid #b7e0c8;border-radius:12px;padding:12px 14px;margin:11px 0}
+.pick .hd{font-weight:700;color:var(--green);font-size:15px;margin-bottom:4px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+@media(max-width:680px){.cols{grid-template-columns:1fr}}
+.pro,.con{border-radius:10px;padding:10px 12px;font-size:13.5px}
+.pro{background:#e9f7ef}.con{background:#fdf3e3}
+.pro b{color:#0b5c3e}.con b{color:#8a5609}
+.fact{background:#f7f9fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;
+  padding:10px 13px;margin:10px 0;font-size:13.5px}
+.fact .t{font-weight:700;color:var(--blue);display:block;margin-bottom:3px}
+.warn{border-left-color:var(--red);background:#fdf6f5}
+.warn .t{color:var(--red)}
+.big{font-size:19px;font-weight:800;color:var(--red)}
+.opt{border-left:3px solid var(--line);padding:6px 0 6px 11px;margin:9px 0}
+.opt .n{font-weight:700}
+.opt .d{color:var(--muted);font-size:13px;display:block;margin-top:1px}
+footer{color:var(--muted);font-size:12.5px;margin-top:20px;padding-top:12px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="badges">
+  <span class="b b1">#701 · wayfinder:grilling</span>
+  <span class="b b2">已裁定 · 2026-09-18</span>
+  <span class="b b3">已收口 · 实施见 #717</span>
+</div>
+<h1>取证留档（已裁定）：餐别边界 · 汇总层正本</h1>
+<p class="sub">这两件已于 2026-09-18 裁定，结论见 <code>t701-决策单-第一轮.html</code>（定案总表）；本页保留当时的取证细节。</p>
+
+<div class="card">
+<h2>速览</h2>
+<table>
+<tr><th style="width:24%">要你定</th><th style="width:22%">我的推荐</th><th>一句话理由</th></tr>
+<tr>
+  <td><a href="#q1" style="color:var(--blue)">一 · 四桶餐别取哪套边界</a></td>
+  <td><b style="color:var(--green)">取甲</b></td>
+  <td>甲有完整证据链（常量正本 ＋ 测试钉死 ＋ 与老家逐字一致）；乙无注释、无测试，是漏检出来的分叉。<b>代价：一张页的读数会变</b>。</td>
+</tr>
+<tr>
+  <td><a href="#q2" style="color:var(--blue)">二 · 汇总层五项改调哪个正本</a></td>
+  <td><b style="color:var(--green)">全部改调正本</b></td>
+  <td>铁律五：只做汇总的能力不许重算别家的口径。其中 <b>2 项会改用户可见读数</b>，已单独标出。</td>
+</tr>
+</table>
+</div>
+
+<div class="card" id="q1">
+<h2>问题一 · 四桶餐别取哪套边界</h2>
+
+<h3>前因</h3>
+<p style="margin:2px 0">「餐别」（早餐／午餐／晚餐／加餐）这个分桶，今天在包里是<b>两套算法同时在跑</b>，所以同一条饮食记录会在两张页面上落进不同的桶。</p>
+<div class="fact warn">
+  <span class="t">这不是理论洁癖，是已经在发生</span>
+  拿真库数过：<code>food_log</code> 非水行 503 条里，<span class="big">113 条（22.5%）</span>正好落在两套边界的分歧带。举例：<b>14:30</b> 那条，甲判「加餐」、乙判「午餐」；<b>21:30</b> 那条，甲判「晚餐」、乙判「加餐/夜宵」。
+</div>
+
+<h3>两套边界</h3>
+<div class="cols">
+  <div class="pro">
+    <b>口径甲 · <code>fetch/diet.ts:16-29</code></b><br>
+    边界 6 / 10 / 14 / 18 / 22<br>
+    四桶＝早[6,10) 午[10,14) 晚[18,22) 加餐[14,18)∪[22,24)∪[0,6)
+  </div>
+  <div class="con">
+    <b>口径乙 · <code>analysis/anomaly/common.ts:66-73</code></b><br>
+    边界 &lt;10 / &lt;15 / &lt;21<br>
+    第四桶叫「加餐/夜宵」
+  </div>
+</div>
+
+<div class="fact">
+  <span class="t">关键信息 · 证据全在甲那边</span>
+  ① 甲是<b>写入侧删除窗的同一份常量</b>（删一餐用的就是它）；<br>
+  ② 有测试钉死：<code>test/render-t9.test.mjs:84</code>「死规矩：餐别窗口跟 diet.ts（15 点＝下午茶，老家旧口径作废）」＋ <code>test/fetch.test.mjs:31-36</code> 六条断言；<br>
+  ③ 证据件 <code>docs/research/t68-parity-gaps.md:145</code> 判甲与老家 <code>diet.py</code> 逐字一致；<br>
+  ④ 乙<b>没有任何注释、没有任何测试</b>——那份证据件当年判边界时<b>根本没看这个文件</b>，所以是漏检，不是「有意保留另一套」。
+</div>
+<div class="fact warn">
+  <span class="t">顺带查出一处自相矛盾（在甲内部）</span>
+  <code>MEAL_WINDOWS.夜宵 = [0,6]</code>，但 <code>inferMealType('22:30')</code> 会返「夜宵」。结果 22:30 的记录<b>既不落在「删夜宵」窗里、也不落在「删加餐」窗里</b>（实库 <code>[22,24)</code> 有 30 条）。无论你怎么裁，这一处都得一起修。
+</div>
+
+<h3>两个选项</h3>
+<div class="opt">
+  <span class="n">A · 取甲</span>
+  <span class="d">把乙改成调甲，全包只剩一套边界。</span>
+</div>
+<div class="opt">
+  <span class="n">B · 不裁行为，只分家命名</span>
+  <span class="d">承认两者是不同口径，给乙加注释、起一个能区分的名字，归一处退到行为变更票。</span>
+</div>
+
+<div class="pick">
+  <div class="hd">✅ 已裁：A · 取甲</div>
+  <div class="cols" style="margin-top:8px">
+    <div class="pro"><b>利</b><br>消掉一个<b>正在产出的</b>两个结果；甲的每一处都有出处，乙一处都没有；顺带把「22:30 两边不落窗」修掉。</div>
+    <div class="con"><b>弊</b><br>会改「诊断饮食结构问题」那张页上的<b>餐次分布读数</b>——是修 bug，但用户看得见；而那张页<b>今天零测试覆盖</b>（全仓搜「餐次分布较合理／夜宵·加餐占比／diet_structure」零命中）。</div>
+  </div>
+  <p style="margin:10px 0 0;font-size:13.5px">兜底：若你判「先不改行为」，就选 B —— 至少让分叉<b>显形</b>（有名字、有注释），不再藏着；但它会把「同一件事两个结果」留在盘上。</p>
+</div>
+</div>
+
+<div class="card" id="q2">
+<h2>问题二 · 汇总层五项各自改调哪个正本</h2>
+
+<h3>前因</h3>
+<p style="margin:2px 0">结构纪律的铁律五有一条专给汇总层：<b>「只做汇总的能力不许重算别家的口径，只许调别人的公开接口。」</b><code>analysis/</code> 就是那个汇总层（HELP 场景 10「分析」）。下面五项，每一项是「它在自家目录里又把别家的公式写了一遍」——要你定的是<b>每一处改成调谁</b>。</p>
+
+<h3>五项 · 逐项</h3>
+<table>
+<tr><th style="width:17%">项</th><th style="width:34%">关键信息</th><th style="width:29%">推荐</th><th>代价</th></tr>
+<tr>
+  <td><b>宏量配比</b><br><span style="color:var(--muted);font-size:12px">重算了两遍</span></td>
+  <td>正本 <code>diet/nutritionPort.ts:99-101</code>；<code>analysis/review.ts</code> 那处<b>生产不可达</b>；<code>analysis/anomaly/diet.ts:56-62</code> 生产可达</td>
+  <td>可达那处改调正本；不可达那处<b>登记、去留另开票</b></td>
+  <td>正本把<b>取数与算法捆在一起</b>（要 db），而这条诊断走的是不传 db 那支 ⇒ 要么把纯算式提为 <code>diet</code> 门上的出口（排 #703 之后），要么改诊断的入参约定</td>
+</tr>
+<tr>
+  <td><b>营养参考区间</b><br><span style="color:var(--muted);font-size:12px">两套数</span></td>
+  <td>正本＝<b>10-20／45-65／20-35</b>（旧脚本 range 表逐字）；孤儿＝<b>15-30／40-60／20-35</b>，只出现在一处，且<b>不只用来说、还用来判</b>（拿它算哪个维度失衡）</td>
+  <td><b>取正本</b></td>
+  <td><b style="color:var(--red)">用户可见</b>：「诊断营养不均衡」的<b>判据与结论</b>会变</td>
+</tr>
+<tr>
+  <td><b>健康速率阈值</b><br><span style="color:var(--muted);font-size:12px">三处字面</span></td>
+  <td>正本 <code>analysis/simulate.ts:13</code>（<code>[0.5, 1.0] kg/周</code>，已有 5 处读者）；<code>anomaly/overall.ts</code> 与 <code>anomaly/weight.ts:92</code> 写字面，且<b>符号约定不一致</b>——一处用正幅度、一处用带符号（那份文件自己写着「待口径裁决」）</td>
+  <td>两处改调 <code>simulate.ts:13</code>，符号统一为<b>正幅度</b></td>
+  <td><b style="color:var(--red)">用户可见</b>：可能翻「偏快／健康范围／偏慢」的判决</td>
+</tr>
+<tr>
+  <td><b>21 行抄件</b></td>
+  <td><code>analysis/anomaly/overall.ts:10-30</code> 与 <code>overall2.ts:4-24</code> <b>逐字相同</b>，两件都在用</td>
+  <td><b>合并</b>：公共件留一件，另一件 import（同时改 <code>anomaly/index.ts:14-15</code> 两行）</td>
+  <td>零行为变更（逐字相同）</td>
+</tr>
+<tr>
+  <td><b>逐日 BMR</b></td>
+  <td>票面原话「接线不是一行了事」<b>已被推翻</b>：<code>analysis/utils.ts:105 energyOf</code> 已支持按次传体重，档案侧也已带活动量</td>
+  <td><b>接正本</b></td>
+  <td>真正费工的另有其处：取值时点（KPI 卡吃「窗口末次称重」单值、曲线是逐日值）／断点条件／性别归一 —— 三处要写进实施票的判据</td>
+</tr>
+</table>
+
+<div class="fact warn">
+  <span class="t">两项会改用户可见读数，请单独看一眼</span>
+  「营养参考区间」与「健康速率阈值」这两项，改完页面上的<b>数字和结论会变</b>——它们是修 bug（取有出处的那一套），但用户看得见。另外三项要么零行为变更、要么只是结构接线。
+</div>
+
+<div class="pick">
+  <div class="hd">✅ 已裁：五项全部改调正本</div>
+  理由是一条铁律而不是偏好：汇总层重算别家的账，迟早会和正本走散——上面「营养参考区间」那一项<b>已经走散了</b>（两套数同时在盘上）。五项里四项可以立刻排期；「宏量配比」那一项因为要动 <code>diet</code> 的公开面，排在 #703 之后。
+</div>
+</div>
+
+<footer>
+  票：<a href="https://github.com/FeatherHunter/ilife/issues/701">FeatherHunter/ilife#701</a> · 地图：<a href="https://github.com/FeatherHunter/ilife/issues/699">#699</a> · 另见 <code>t701-决策单-第一轮.html</code>（五处裁定的定案单）<br>
+  事实来源：三席只读复核 ＋ 两席对抗式审查（红队打推理／反证席按真库打事实），2026-09-18。
+</footer>
+
+</div>
+</body>
+</html>

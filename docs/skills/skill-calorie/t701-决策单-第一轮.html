@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#701 定案总表：一条规则 ＋ 三处内容裁定</title>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#fff;--ink:#14171a;--muted:#68727d;--line:#e2e6ea;
+  --blue:#1257c7;--green:#0d6e49;--amber:#9a6209;--red:#a52218;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.7 system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:26px 18px 64px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.b{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.b1{background:#e4edfc;color:#123f8f}
+.b2{background:#e2f3ea;color:#0b5c3e}
+.b3{background:#fdeadd;color:#8a4409}
+.b4{background:#fbe6e3;color:#8f1c12}
+h1{font-size:24px;line-height:1.35;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin:13px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+h2{font-size:17px;margin:0 0 8px}
+h3{font-size:14px;margin:14px 0 5px;color:#39414a}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:9px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f1f3f5}
+code{background:#eef1f5;padding:1px 5px;border-radius:5px;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+.rule{background:#14171a;color:#fff;border-radius:14px;padding:16px 18px;margin:12px 0;font-size:15px}
+.rule b{color:#7ee2a8}
+.pick{background:#f0faf4;border:1px solid #b7e0c8;border-radius:12px;padding:12px 14px;margin:11px 0}
+.pick .hd{font-weight:700;color:var(--green);font-size:15px;margin-bottom:4px}
+.fact{background:#f7f9fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;
+  padding:10px 13px;margin:10px 0;font-size:13.5px}
+.fact .t{font-weight:700;color:var(--blue);display:block;margin-bottom:3px}
+.warn{border-left-color:var(--red);background:#fdf6f5}
+.warn .t{color:var(--red)}
+.big{font-size:19px;font-weight:800;color:var(--red)}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:700;margin-right:6px}
+.tg{background:#e2f3ea;color:#0b5c3e}
+.ta{background:#fdeadd;color:#8a4409}
+footer{color:var(--muted);font-size:12.5px;margin-top:20px;padding-top:12px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="badges">
+  <span class="b b1">#701 · wayfinder:grilling</span>
+  <span class="b b2">#699 map · 卡路里包结构整改</span>
+  <span class="b b3">已全部裁定 · 票面 100% · 已关闭 · 实施见 #717</span>
+</div>
+<h1>定案总表：一条规则 ＋ 三处内容裁定</h1>
+<p class="sub">本页取代前两份（第一轮决策单、待定两件）成为唯一口径；票面正文与地图 #699 已按此对齐。</p>
+
+<div class="card">
+<h2>一 · 一条规则定住处</h2>
+<div class="rule">
+按<b>「谁在用」</b>定，不按「谁定义的」定。<br>
+写得出<b>两个以上能力</b>在用的口径 → 进共用位 <code>src/shared/</code>（共用件必须零依赖、不出现任何能力名）；<br>
+只有<b>一个能力</b>在用的 → 留该能力目录，走该能力的门。
+</div>
+<p style="margin:2px 0 0;font-size:13.5px">五处口径<b>没有一处是单能力自用</b> ⇒ <b>全部落在共用位这一侧</b>。这条规则替掉了前后两种切法（「有无主人」切不出东西；「住处合法性」只能排序、定不了住处）。</p>
+<div class="fact">
+  <span class="t">它顺手解掉三件事</span>
+  <b>①</b> 共用位不加任何能力门上的名字 ⇒ <b>方向与 #703 不冲突</b>（只要让 <code>src/index.ts</code> 上已有的名字从新家再转出，<code>402 → N</code> 的名单不变）；<br>
+  <b>②</b> 不必建 <code>analysis → fetch</code> 的边——<code>fetch</code> 今天已经依赖 <code>analysis</code>（<code>fetch/cli.ts:16</code>、<code>fetch/index.ts:22-23</code>），直接调会<b>成环</b>；<br>
+  <b>③</b> <code>shared/params.ts:14</code>「共用位里出现能力名」那条既有违规，因时钟搬进共用位，头一个 import 就地变成同层引用。
+</div>
+</div>
+
+<div class="card">
+<h2>二 · 逐处落点 ＋「今天是否在产出两个结果」</h2>
+<table>
+<tr><th style="width:16%">口径</th><th style="width:22%">住处</th><th style="width:20%">今天两个结果？</th><th>要改的件（择要）</th></tr>
+<tr>
+  <td><b>四桶餐别</b></td>
+  <td>共用位（<code>fetch/diet.ts:16-29</code> 的时间窗与归桶迁入）</td>
+  <td><b style="color:var(--red)">是</b>——实库 <span class="big">22.5%</span>（113／503 条）落在两套边界的分歧带</td>
+  <td><code>analysis/anomaly/common.ts:66-73</code> 的<b>自写边界删除</b>；<code>render/diet.ts:10</code>、<code>render/analysisPlate.ts:11</code>、<code>render/dietDocs.ts:36</code>、<code>diet/review.ts:19</code>、<code>diet/todayDocs.ts:12</code>、<code>diet/edit.ts:10</code> 改引用</td>
+</tr>
+<tr>
+  <td><b>营养参考区间</b></td>
+  <td>共用位（<code>diet/nutritionPort.ts:81-85</code> 迁入）</td>
+  <td><b style="color:var(--red)">是</b>——一套上屏、另一套进判据</td>
+  <td><code>analysis/anomaly/diet.ts:63</code>、<code>render/trendMiscPortDocs.ts:349-351</code>、<code>render/trendMiscPort.ts:181-183</code></td>
+</tr>
+<tr>
+  <td><b>「今天」</b></td>
+  <td>共用位（<code>analysis/utils.ts:135</code> 迁入）</td>
+  <td>是，<b>但只在钉住日期时</b>（生产两条路同值）</td>
+  <td><code>fetch/diet.ts:48</code>、<code>exercise/exerciseStore.ts:11</code>、<code>weight/records.ts:18</code>、<code>diet/log.ts:134-149</code>、<code>shared/params.ts:14</code></td>
+</tr>
+<tr>
+  <td><b>软删谓词</b></td>
+  <td>共用位（<code>analysis/utils.ts:15,27</code> 迁入）</td>
+  <td>否（真库零 NULL），但<b>无约束兜底</b></td>
+  <td><code>fetch/body.ts</code>、<code>diet/precheckPort.ts</code>、<code>render/trendMiscPort.ts</code>、<code>exercise/exerciseStore.ts</code>、<code>exercise/edit.ts</code></td>
+</tr>
+<tr>
+  <td><b>窗内天数</b></td>
+  <td>共用位（已在 <code>shared/params.ts:148</code>）</td>
+  <td><b>根本不是两个结果</b>——是两个概念共用一个名字</td>
+  <td><code>diet/nutritionPort.ts:37</code> 的 <code>daysBetween</code> <b>改名</b>；<code>render/sportDocs.ts:91</code>、<code>render/sportPortDocs.ts:121</code> 改调；<code>spanDaysOf</code> <b>保持不加 1</b></td>
+</tr>
+<tr>
+  <td><code>KCAL_PER_KG</code></td>
+  <td>共用位</td>
+  <td>否</td>
+  <td><code>analysis/simulate.ts:12</code>、<code>goal/set.ts:33</code>、<code>diet/dietEngine.ts:185</code>、<code>weight/figures.ts:155</code> ＋ 11 处上屏文案</td>
+</tr>
+</table>
+</div>
+
+<div class="card">
+<h2>三 · 内容三裁（住处推不出，必须人来定）</h2>
+<table>
+<tr><th style="width:22%">要裁的</th><th style="width:44%">裁定</th><th>代价</th></tr>
+<tr>
+  <td><b>餐别取哪套边界</b></td>
+  <td><span class="tag tg">取甲</span>6／10／14／18／22。证据全在甲：写入侧删除窗的<b>同一份常量</b> ＋ <code>test/render-t9.test.mjs:84</code>「死规矩：餐别窗口跟 diet.ts」＋ <code>test/fetch.test.mjs:31-36</code> 六条断言 ＋ <code>t68-parity-gaps.md:145</code> 判与老家 <code>diet.py</code> 逐字一致。乙<b>无注释、无测试</b></td>
+  <td>「诊断饮食结构问题」页的餐次分布读数会变（修 bug，但用户可见）；该页今天<b>零测试覆盖</b></td>
+</tr>
+<tr>
+  <td><b>营养参考区间<br>取哪套数</b></td>
+  <td><span class="tag tg">取正本</span>10-20／45-65／20-35（旧脚本 range 表逐字）。孤儿那套 15-30／40-60／20-35 只出现在一处、无出处</td>
+  <td>「诊断营养不均衡」的<b>判据与结论</b>会变</td>
+</tr>
+<tr>
+  <td><b>窗内天数</b></td>
+  <td><span class="tag tg">分家命名</span>不合并</td>
+  <td>无行为变更</td>
+</tr>
+</table>
+</div>
+
+<div class="card">
+<h2>四 · 排序（按「活 × 用户可见 × 修复成本」）</h2>
+<table>
+<tr><th style="width:8%">顺位</th><th style="width:46%">做什么</th><th>为什么这个顺位</th></tr>
+<tr><td><b>1</b></td><td><b>餐别</b>：删掉那份自写边界，改读同一处</td><td>唯一<b>无条件</b>在产出的用户可见分歧；修复成本最低</td></tr>
+<tr><td><b>2</b></td><td><b>营养参考区间</b>：取正本，范围值进共用位</td><td>两套数同时在盘上，且那套孤儿数进判据</td></tr>
+<tr><td><b>3</b></td><td><b>时钟 ＋ 软删谓词一起进共用位</b></td><td>不是两件事，是同一个病：<code>analysis/utils.ts:23-25</code> 的「fetch 不反向依赖 analysis」逼出了 3 份 <code>todayStr</code> 与 29 处内联谓词。一起治，<code>fetch</code> 才读得到同一份</td></tr>
+<tr><td><b>4</b></td><td>其余（7700、抄件合并、速率阈值统一、逐日 BMR 接正本、窗内天数改名）</td><td>今天都不产出两个结果；按能力分批</td></tr>
+<tr><td><b>5</b></td><td><b>机器门</b>：必须有</td><td>餐别那处今天零测试覆盖，改错了没有任何断言拦</td></tr>
+</table>
+<div class="pick">
+  <div class="hd">如果只能做一件事：做餐别</div>
+  它是唯一「不设任何环境变量、普通用户当场就会看到两个结果」的分歧，而修它只需一个函数体改读已有的名字。
+</div>
+</div>
+
+<div class="card">
+<h2>五 · 与谁排窗 · 一行级改动的去向</h2>
+<div class="fact warn">
+  <span class="t">#704 已开工</span>
+  台账当刻记着：<code>src/workout/planEditorRuntime.ts</code>「<b>#704 已在场</b>（纯搬迁，按归属律自 <code>src/render/</code> 迁入能力目录，判据＝8 条分支路径产物逐字节相同）」。⇒ 本票落在 <code>src/render/**</code> 的改动要与 #704 <b>排窗</b>。同件多票还有 <code>trendPredictDocs.ts</code>（本票＋#700＋#702＋#704）与 <code>render/html.ts</code>（本票＋#705）。
+</div>
+<div class="pick" style="background:#f7f9fb;border-color:#c9d6e4">
+  <div class="hd" style="color:var(--blue)">那两处一行级改动（已并入 #717 第 3 批第一条）</div>
+  <ul style="margin:6px 0 0;padding-left:20px;font-size:13.5px">
+    <li>删 <code>weightCompare.ts:9</code> 与 <code>weightCompare2.ts:4</code> 两个未使用的 <code>todayISO</code> import（零风险）。</li>
+    <li><code>goalHistory.ts:28</code> 与 <code>:38</code> 的默认参数 <b>成对</b>处理（单删必红）。</li>
+    <li><b>不做</b>：<code>render/sportDocs.ts:91</code>（撞 #704）、餐别与「今天」的签名改造（入实施票）。</li>
+  </ul>
+</div>
+<div class="pick" style="background:#fffbf3;border-color:#f0d9ae">
+  <div class="hd">✅ 已定：走 B —— 并进规格单</div>
+  上面那两处「当场部分」不在裁定票里做——它们都属于「今天」那一批（<code>weightCompare.ts:9</code> 引的就是 <code>todayISO</code>／<code>shiftISODate</code>；<code>goalHistory.ts:28</code> 与 <code>:32</code> 是那一批要收掉的副本），当场做等于同一批文件碰两次。已并入 <b>#717 的第 3 批第一条</b>。<b>本票按 100% 收口并关闭；关闭不替代任何实施，实施进度看 #717。</b>
+</div>
+</div>
+
+<footer>
+  票：<a href="https://github.com/FeatherHunter/ilife/issues/701">FeatherHunter/ilife#701</a>（正文 <code>## 进度：100%</code>，票已关闭）· 地图：<a href="https://github.com/FeatherHunter/ilife/issues/699">#699</a>（Decisions so far 已按本页改写）<br>
+  事实来源：三席只读复核 ＋ 两席对抗式审查（红队打推理／反证席按真库打事实），2026-09-18。取证细节留档见 <code>t701-决策单-待定两件.html</code>。
+</footer>
+
+</div>
+</body>
+</html>
