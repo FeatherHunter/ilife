@@ -184,28 +184,33 @@ finish() {
 }
 
 # ──────────────────────────────────────────────────────────────────────────
-
-# ──────────────────────────────────────────────────────────────────────────
-# STAGES — 发布 base-paint 0.3.3（#693 HELP 复制提示修复；版本号已定死，只走交互式认证）。
-# 前置已做完（票 #711）：三包版本锁步 0.3.3 并提交（86b00f66）；publish:pre／publish:plan 各 PASS；
-#   npm pack 实测 base-paint 94 件、含 dist/helpShell.js 且含修复行；base-render 全包 751/751 绿。
-# ⚠ 内容范围（发布前必读）：0.3.2 之后 base-render 另有 21 个非本席提交
-#   （#642／#242／#427／#507／#512／#513／#458／#418／#654／#555／#508／#441／#430／#434／#656…），
-#   它们没有各自的 changeset 记账，本次会随 0.3.3 一并发出。
-# 你（人）只做两件事：登录扫码 → 发 base-paint 时扫码。
+# STAGES — 发布 base-paint（版本号从本包 package.json 读，脚本不写死；只走交互式认证）。
+# 发版前自己确认三件事：
+#   1. 三包版本锁步：`base-link-core`／`base-render`／`base-combos` 的 `version` 逐字相等（CI 有断言）。
+#   2. 内容范围：这一版相对**线上那一版**带走了哪些提交——
+#        git log <线上版本发布点>..HEAD --oneline -- packages/base-render
+#      本仓 changeset 记账长期欠账（清淤见 #713）：`package.json` 的版本号只标水位、不代表内容范围，
+#      内容里若有非补丁级改动，就在 CHANGELOG 里逐条列名，别让版本号掩盖它。
+#   3. 本包门禁：`node --test "packages/base-render/test/*.test.mjs"` 全绿；`gen-help-shell --check` 不漂移。
+# 你（人）只做两件事：登录扫码 → 发布扫码（2FA 走浏览器审批；OTP 不进聊天）。
 # ──────────────────────────────────────────────────────────────────────────
 
 TOTAL_STAGES=4
 
 REG="https://registry.npmjs.org"
 ROOT="/d/ilife"
-WANT="0.3.3"
 PKG="base-paint"
 DIR="packages/base-render"
 
 cd "$ROOT"
 
-banner "发布 $PKG $WANT（#693 修复 ＋ 已入仓的同批改动）"
+WANT=$(cd "$ROOT/$DIR" && node -p "require('./package.json').version")
+if [[ -z "$WANT" || "$WANT" == "undefined" ]]; then
+  warn "读不到 $DIR/package.json 的 version —— 停下来找编排者"
+  exit 1
+fi
+
+banner "发布 $PKG $WANT（版本取自 $DIR/package.json）"
 
 # ── Stage 1：预检（自动，失败即停）──────────────────────────────────────
 stage "1/4 · 预检（自动，失败即停）"
