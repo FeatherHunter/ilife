@@ -60,6 +60,11 @@ export const HEALTH_STYLE = {
   error: { color: STATUS_COLOR.red, fontSize: 12, lineHeight: 1.7, marginTop: 6 } as React.CSSProperties,
 } as const;
 
+/** 值得一眼看见的那两档（档位名与整行文字都上色；绿行保持淡）。 */
+function isAttention(status: HealthStatus): boolean {
+  return status === 'red' || status === 'yellow';
+}
+
 /** 一盏灯：一家一名一档（数到几个红黄绿）。点一下把面板切到那家的页签。 */
 export interface HealthLightRow {
   readonly id: string;
@@ -206,7 +211,21 @@ export function HealthTable(props: {
           report.items.map((item) =>
             React.createElement(
               'div',
-              { key: item.id, style: { padding: '7px 0', borderTop: '1px solid ' + BORDER, fontSize: 12.5, lineHeight: 1.7 } },
+              {
+                key: item.id,
+                // 红黄两档整行上底：扫一眼先看见「要处理的」，绿行留白（票面验收：正常的收成一行）。
+                style: {
+                  padding: '7px 8px',
+                  margin: '2px 0',
+                  borderTop: '1px solid ' + BORDER,
+                  borderRadius: 6,
+                  fontSize: 12.5,
+                  lineHeight: 1.7,
+                  background: isAttention(item.status)
+                    ? 'color-mix(in srgb, ' + STATUS_COLOR[item.status] + ' 14%, transparent)'
+                    : 'transparent',
+                },
+              },
               React.createElement(
                 'div',
                 { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 } },
@@ -216,10 +235,12 @@ export function HealthTable(props: {
                   },
                 }),
                 React.createElement('span', { style: { fontWeight: 650, color: INK } }, item.title),
-                React.createElement('span', { style: { color: INK_DIM } }, STATUS_LABEL[item.status]),
+                React.createElement('span', {
+                  style: { color: isAttention(item.status) ? STATUS_COLOR[item.status] : INK_DIM, fontWeight: 700 },
+                }, STATUS_LABEL[item.status]),
                 item.source ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source) : null,
               ),
-              React.createElement('div', { style: { color: item.status === 'green' ? INK_DIM : INK } }, item.message),
+              React.createElement('div', { style: { color: isAttention(item.status) ? INK : INK_DIM } }, item.message),
               item.action.length > 0
                 ? React.createElement('div', { style: { color: INK_DIM } }, '去哪修：' + item.action)
                 : null,
