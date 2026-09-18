@@ -74,10 +74,16 @@
   <p class="sub">大厨、居家、备忘录、作息四家的技能设置页做成真能配的页（照卡路里样板）。本单只列<b>我拍不了、需要你定夺</b>的四件，每件给前因、关键读数、选项与建议。</p>
 
   <div class="strip">
-    <span class="chip ok">#696 <b>已认领</b></span>
-    <span class="chip ok">阻塞边 #676 <b>已关</b>·前沿已开</span>
-    <span class="chip warn">进度 <b>0%</b>·未动工</span>
-    <span class="chip bad">在途别席 <b>3 处</b>会撞车</span>
+    <span class="chip ok">四问已拍：<b>A A A A</b></span>
+    <span class="chip ok">前提变化：#695 已落<b>技能侧配置面</b> ⇒ 决策一自动消失</span>
+    <span class="chip">#696 <b>已认领</b>·施工中</span>
+    <span class="chip warn">本票只做<b>插件侧</b></span>
+  </div>
+
+  <h2>裁决与前提变化（2026-09-18 收回）</h2>
+  <div class="card">
+    <p class="why" style="margin:0 0 8px">四个问题都按建议拍下：<b>①插件侧经技能 CLI 操作配置</b>（配置的存与生效全程走技能侧那套，插件不装依赖、不碰边界门）；<b>②备忘录附件目录照 #712 的真目录语义出这一行</b>；<b>③四页行表照 24 行铺</b>（与技能侧 <code>*_CONFIG_DEFAULTS</code> 的键数逐家吻合：5／6／8／5）；<b>④验收用渲染台 ＋ 截图 ＋ vision 逐页打分</b>，真机三连读数走探针。</p>
+    <p class="why" style="margin:0">一条前提变化：施工开始前，隔壁票 <b>#695 已把四家的技能侧配置面落好</b>（<code>src/config.ts</code> 的默认值表 ＋ <code>src/cli/config.ts</code> 的三个 key ＋ <code>cmd_read.ts</code> 预检前拦截）。所以本票的「决策一」不再是问题——**技能侧一个文件都不碰**，本票只做插件侧；键名以技能侧现有值为准（<code>db.dir</code>／<code>db.name</code>／<code>html.dir</code>／<code>files.help</code>／<code>files.lookup</code>／<code>backup.dir</code>／<code>media.dir</code>／<code>lark.cliPath</code>／<code>lark.qrDir</code>）。</p>
   </div>
 
   <h2>一分钟看懂</h2>
@@ -100,7 +106,7 @@
     </table>
   </div>
 
-  <h2>决策一：四家技能侧的「配置面」归谁做</h2>
+  <h2>决策一：四家技能侧的「配置面」归谁做 <span class="pill no">已消失</span></h2>
   <div class="card q">
     <h3>前因</h3>
     <p class="why">票面「交付物路径」只列了四个插件包的 <code>src/</code>；「不许动」写着不许改这四家的技能侧取数（那是隔壁票 #695 的地盘）。可是验收第 1 条要的是<b>改得动</b>：用户改一项、保存、宿主重启后仍在。</p>
