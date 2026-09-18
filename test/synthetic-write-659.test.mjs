@@ -3,7 +3,9 @@
  *
  * 本件是**常驻用例**，判据与接缝见 `docs/agents/合成写判据.md`：
  *   - 一个接缝：技能的统一出口（命令行边界，spawn 包内 `dist/cli/cmd_read.js`）。
- *   - 两个注入点：临时数据目录（`SKILLS_DB_PATH`）＋ 可替换的远端平台挡板（`LARK_CLI_PATH` → `tooling/contract-lark-stub.mjs`）。
+ *   - 两个注入点（#695 起都走**配置文件**）：临时数据目录写配置项 `db.dir` ＋ 可替换的远端平台挡板
+ *     写配置项 `lark.cliPath`（挡板本体仍是 `tooling/contract-lark-stub.mjs`）；两者都住
+ *     `ILIFE_CONFIG_DIR` 指的那条独占临时配置目录——**测试隔离的唯一口子**，缺了即响亮失败。
  *   - 一次对拍（老实现 ↔ 新实现）**不进本件**：那是 `packages/skill-schedule` 与 `packages/skill-memo-ilife` 的
  *     `scripts/t659-parity-probe.mjs` 一次性取证，读数落在各自技能文档目录的 `t659-对拍读数.json`。本件只跑新实现，绝不碰真飞书。
  *
@@ -18,7 +20,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT, argOf, assertStubIsTheOne, envelope, fourReadings, makeSeam } from '../tooling/contract-seam.mjs';
+import { ROOT, argOf, assertStubIsTheOne, envelope, fourReadings } from '../tooling/contract-seam.mjs';
+// #695：接缝件（`tooling/contract-seam.mjs`）的两个注入点仍是**改造前**的环境变量口径
+// （`SKILLS_DB_PATH`／`LARK_CLI_PATH`），而技能侧已改读配置文件且删掉环境变量读取；
+// 把接缝件那两个点挪到配置文件上的接头件住 `packages/skill-schedule/test/helpers/config-seam.mjs`——
+// 它把 `db.dir` 指到接缝自己的临时目录、`lark.cliPath` 指到接缝造的远端挡板，并叫 `ILIFE_CONFIG_DIR`
+// 指向一条独占临时配置目录（测试隔离的唯一口子）。接缝件本身本票不动，故这里换用那个接头件。
+import { makeScheduleSeam } from '../packages/skill-schedule/test/helpers/config-seam.mjs';
 
 const D = '2026-09-20';
 const ENSURE = { op: 'ensure', date: D, time_start: '09:00', time_end: '10:00', title: '晨会', notes: '周会' };
@@ -27,13 +35,13 @@ const PKG = join(ROOT, 'packages', 'skill-schedule');
 /* ─────────────── 一、接缝自证（这两条绿了，后面的读数才算数） ─────────────── */
 
 test('#659 T1 接缝自证 · 远端挡板：老实现的查找链被喂成挡板，且前置门不是空门', () => {
-  const s = makeSeam('schedule', { prefix: 't659t-' });
+  const s = makeScheduleSeam({ prefix: 't659t-' });
   const got = assertStubIsTheOne(s);
   assert.ok(got.length > 0);
   assert.ok(got.toLowerCase().includes('lark-cli'), '解析到的不是 lark-cli：' + got);
   // 空门反证：把挡板从两条查找链上都撤掉（PATH 无落点、当前目录无 shim、%APPDATA%\npm 无门面）
   // → 老实现自己找不到 lark-cli，前置门必须拦（它不是空门，是因为有挡板才放行）。
-  const blind = makeSeam('schedule', { prefix: 't659t-blind-' });
+  const blind = makeScheduleSeam({ prefix: 't659t-blind-' });
   rmSync(join(blind.stub.dir, 'lark-cli.cmd'), { force: true });
   rmSync(join(blind.stub.dir, 'lark-cli'), { force: true });
   rmSync(join(blind.dir, 'appdata', 'npm', 'lark-cli.cmd'), { force: true });
@@ -42,19 +50,23 @@ test('#659 T1 接缝自证 · 远端挡板：老实现的查找链被喂成挡�
   assert.throws(() => assertStubIsTheOne(blind), /前置门未过/);
 });
 
-test('#659 T2 接缝自证 · 临时数据目录：SKILLS_DB_PATH 未设即拒，且两代互不串库', () => {
-  const a = makeSeam('schedule', { prefix: 't659t-a-' });
-  const b = makeSeam('schedule', { prefix: 't659t-b-' });
+test('#659 T2 接缝自证 · 隔离：测试进程缺 ILIFE_CONFIG_DIR 即响亮失败，且两代互不串库', () => {
+  // 两条接缝各有自己的库落点（接头件逐条把配置项 `db.dir` 指到该接缝的临时目录），互不串库。
+  const a = makeScheduleSeam({ prefix: 't659t-a-' });
+  const b = makeScheduleSeam({ prefix: 't659t-b-' });
   assert.notEqual(a.dbPath, b.dbPath);
-  const noDb = makeSeam('schedule', { prefix: 't659t-nodb-', withDb: false });
-  const r = noDb.runNew('schedule.plan.write', ENSURE);
-  assert.equal(r.status, 1, '未设 SKILLS_DB_PATH 必须预检失败（无默认值）');
-  assert.match(String(r.stderr), /SKILLS_DB_PATH/);
-  assert.equal(existsSync(join(noDb.dbPath, 'schedule_data.db')), false, '预检失败时不该落库');
+  // #695 的替代护栏：跑在 node 测试运行器里却没设 `ILIFE_CONFIG_DIR` ⇒ 配置件直接抛
+  // `CONFIG_TEST_ISOLATION_MISSING`（预检档 exit 1），报文点名它——绝不静默落到真实家目录。
+  const noCfg = makeScheduleSeam({ prefix: 't659t-nocfg-', withDb: false });
+  const r = noCfg.runNew('schedule.plan.write', ENSURE, { extraEnv: { ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: '1' } });
+  assert.equal(r.status, 1, '测试进程缺隔离必须预检失败（无默认值可用）：' + String(r.stderr).slice(0, 200));
+  assert.match(String(r.stderr), /测试缺隔离/, '报文要点明「测试缺隔离」：' + String(r.stderr).slice(0, 200));
+  assert.match(String(r.stderr), /ILIFE_CONFIG_DIR/, '报文要点名该设哪个变量：' + String(r.stderr).slice(0, 200));
+  assert.equal(existsSync(join(noCfg.dbPath, 'schedule_data.db')), false, '预检失败时不该落库');
 });
 
 test('#659 T3 接缝自证 · 三条痕迹（回执／本地库行／远端收到的调用）当场可读', () => {
-  const s = makeSeam('schedule', { prefix: 't659t-' });
+  const s = makeScheduleSeam({ prefix: 't659t-' });
   const r = s.runNew('schedule.plan.write', ENSURE);
   assert.equal(r.status, 0, String(r.stderr).slice(0, 300));
   const env = envelope(r);
@@ -81,7 +93,7 @@ const REGISTERED = {
 };
 
 test('#659 T4 四条读数模板 · 作息 plan.write op=ensure', () => {
-  const s = makeSeam('schedule', { prefix: 't659t-' });
+  const s = makeScheduleSeam({ prefix: 't659t-' });
   const verdicts = fourReadings({
     seam: s,
     whatObject: '飞书日历事件',
@@ -113,7 +125,7 @@ test('#659 T4 四条读数模板 · 作息 plan.write op=ensure', () => {
 
 test('#659 T5 偏离 D-01／D-02／D-04／D-07／D-08／D-09／D-10 · 不搬的那些在盘上确实缺席', () => {
   // D-01 坏入口 upsert-plan：不是合法写 op（老入口必抛 OperationalError 被吞，不搬）。
-  const s = makeSeam('schedule', { prefix: 't659t-' });
+  const s = makeScheduleSeam({ prefix: 't659t-' });
   const bad = s.runNew('schedule.plan.write', { op: 'upsert-plan', date: D, events: [] });
   assert.notEqual(bad.status, 0, 'upsert-plan 不该是合法 op（搬回来必红）');
   assert.equal(String(bad.stdout).trim(), '');
@@ -139,7 +151,7 @@ test('#659 T5 偏离 D-01／D-02／D-04／D-07／D-08／D-09／D-10 · 不搬的
 });
 
 test('#659 T6 偏离 D-12 · 远端判重接上了（改坏＝原地重复建）', () => {
-  const s = makeSeam('schedule', {
+  const s = makeScheduleSeam({
     prefix: 't659t-',
     state: { events: [{ event_id: 'fs_seed', summary: '晨会', description: '作息管家自动同步', start: D + 'T09:00:00+08:00', end: D + 'T10:00:00+08:00' }] },
   });
@@ -161,7 +173,7 @@ test('#659 T6 偏离 D-12 · 远端判重接上了（改坏＝原地重复建）
 });
 
 test('#659 T7 偏离 D-11 · 取不到远端标识不再写空（显式降级标记 ＋ 非 0 退出）', () => {
-  const s = makeSeam('schedule', { prefix: 't659t-', state: { createNoId: true } });
+  const s = makeScheduleSeam({ prefix: 't659t-', state: { createNoId: true } });
   // 本地那条先用「只做本地」档种下：合成写现在默认要碰远端，种子这一跑显式声明不过去。
   assert.equal(s.runNew('schedule.plan.write', { ...ENSURE, feishu: 'skip' }).status, 0);
   s.stub.setState({ createFails: false, createNoId: true, mode: 'normal' });

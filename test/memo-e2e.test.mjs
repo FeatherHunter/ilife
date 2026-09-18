@@ -6,10 +6,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHelpLookup, routeWakeword } from '../packages/skill-memo-ilife/dist/index.js';
 import { mkMemoDb, seedNote } from '../packages/skill-memo-ilife/test/helpers/memo-sqlite.mjs';
+import { mkMemoConfig } from '../packages/skill-memo-ilife/test/helpers/config-base.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'tooling/skilllink.mjs');
 let DB = '';
+let CFG = '';
 
 function nodeBin() {
   const cands = [process.env.npm_node_execpath, 'node', process.execPath].filter(Boolean);
@@ -22,8 +24,11 @@ function nodeBin() {
   return process.execPath;
 }
 const NODE = nodeBin();
+// #695：两个注入点都改成**配置文件**——库目录写 `db.dir`、假 lark 的路径写 `lark.cliPath`
+// （两者都住 `CFG`／`memo.yaml`）。测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`：
+// 跑在 node 测试运行器里却没设它时，公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`（响亮失败）。
 function run(args, envExtra) {
-  return spawnSync(NODE, [cli, ...args], { cwd: root, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB, ...(envExtra || {}) } });
+  return spawnSync(NODE, [cli, ...args], { cwd: root, encoding: 'utf8', env: { ...process.env, ...(envExtra || {}) } });
 }
 
 // fake lark-cli（sync 全链路用；posix shebang / win .cmd 转调）。
@@ -57,7 +62,11 @@ before(() => {
   DB = mkMemoDb('memoe2e-');
   seedNote(DB, { content: '今天去医院复查', category: '备忘' });
   seedNote(DB, { content: '今天跑步5公里', category: '打卡' });
-  process.env.LARK_CLI_PATH = makeFakeCli(DB);
+  // #695 起配置文件的唯一真相是 `<ILIFE_CONFIG_DIR>/memo.yaml`（环境变量读取已删）：
+  // 库目录用配置项 `db.dir` 指回种子库那本 `memo.db`（该件本就拿 `DB` 当库目录，路径断言不动）；
+  // 假 lark 走配置项 `lark.cliPath`（原来那一格是环境变量 `LARK_CLI_PATH`）。
+  CFG = mkMemoConfig({ db: { dir: DB }, lark: { cliPath: makeFakeCli(DB) } }, 'memoe2e-cfg-');
+  process.env.ILIFE_CONFIG_DIR = CFG; // 本进程这一格给子进程继承（`run()` 是 `{...process.env}`）
 });
 
 function read(key, params) {

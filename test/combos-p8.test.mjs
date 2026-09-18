@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { parseRegistryKey, ENVELOPE_SHAPES, createEnvelope, createRegistry } from '../packages/base-link-core/dist/index.js';
 import { MEMO_KEY_SHAPES } from '../packages/skill-memo-ilife/dist/render/index.js';
 import { mkMemoDb, seedNote } from '../packages/skill-memo-ilife/test/helpers/memo-sqlite.mjs';
+import { mkMemoConfig } from '../packages/skill-memo-ilife/test/helpers/config-base.mjs';
 import { VIEW_KEYS, viewShapeFor } from '../packages/skill-calorie/dist/render/index.js';
 import { PRESENT_KEYS } from '../packages/base-combos/dist/index.js';
 import { combosKeys, renderPresent } from '../packages/base-combos/scripts/gen-present.mjs';
@@ -17,6 +18,7 @@ const skilllink = join(root, 'tooling/skilllink.mjs');
 const yamlPath = join(root, 'packages/base-combos/combos.yaml');
 let DB = '';
 let LARK = '';
+let CFG = '';
 
 function nodeBin() {
   const cands = [process.env.npm_node_execpath, 'node', process.execPath].filter(Boolean);
@@ -29,7 +31,10 @@ function nodeBin() {
   return process.execPath;
 }
 const NODE = nodeBin();
-const env = () => ({ ...process.env, SKILLS_DB_PATH: DB, LARK_CLI_PATH: LARK });
+// #695：备忘录侧的隔离改成**配置文件**——库目录写 `db.dir`、假 lark 的路径写 `lark.cliPath`，
+// 两者都住 `CFG`／`memo.yaml`；子进程那一格只剩 `ILIFE_CONFIG_DIR`（测试隔离的唯一口子，
+// 缺了跑在测试运行器里的子进程直接响亮失败，不会落到真实家目录）。
+const env = () => ({ ...process.env, ILIFE_CONFIG_DIR: CFG });
 function run(args) { return spawnSync(NODE, args, { cwd: root, encoding: 'utf8', env: env() }); }
 function read(key, params) {
   const a = params === undefined ? [key] : [key, '--params', JSON.stringify(params)];
@@ -72,6 +77,9 @@ before(() => {
   seedNote(DB, { content: '今天去医院复查', category: '备忘' });
   seedNote(DB, { content: '今天跑步5公里', category: '打卡' });
   LARK = makeFakeCli(DB);
+  // #695：备忘录侧的两个注入点落进配置文件（`db.dir` 指回种子库那本 `memo.db`，`lark.cliPath` 指假 lark）；
+  // 卡路里侧本席不动（它在途归 #718），只是同一个 `ILIFE_CONFIG_DIR` 也给它一份独占临时配置目录。
+  CFG = mkMemoConfig({ db: { dir: DB }, lark: { cliPath: LARK } }, 'p8-cfg-');
 });
 
 describe('P8 combos 真相源与 HELP 注入', () => {
