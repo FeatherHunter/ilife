@@ -1,8 +1,14 @@
-/** T5 #24 · 诊断公共件（对照老家 anomaly.py 顶部 helpers）。 */
+/** T5 #24 · 诊断公共件（对照老家 anomaly.py 顶部 helpers）。
+ *
+ * #717 批①·餐别归一：本件原来自写一套小时边界（10／15／21），与共用位正本
+ * （早 6-10／午 10-14／下午茶 14-18／晚 18-22／夜宵 22-6）在 14:30／21:30／22:30
+ * 这类时刻给出不同餐别——同一条记录在「餐别分布」页与「诊断饮食结构问题」页被算进不同的餐。
+ * 现在归桶只走 `shared/meal.ts` 的 `mealBucketOf`，本件不再出现任何字面小时数。 */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../../fetch/errors.js';
 import { seriesAvg, seriesDelta } from '../series.js';
 import { EX_ALIVE } from '../utils.js';
+import { mealBucketOf } from '../../shared/meal.js';
 import type { DaySeries } from '../series.js';
 
 export const MIN_DAYS = 7;
@@ -58,19 +64,21 @@ export function topFoods(db: DatabaseSync, start: string, end: string, col = 'ca
   return raw.map((r) => ({ food: r.n, total: round1(r.total ?? 0), times: r.times }));
 }
 
+/** 餐次结构（四桶次数与占比）：早餐／午餐／晚餐／加餐夜宵。
+ *
+ *  归桶**只走共用位**（#717 批①）：本件不再写小时边界，`加餐/夜宵` 这一桶＝
+ *  `mealBucketOf` 判成「加餐」的行（下午茶 ＋ 夜宵），与「餐别分布」页那一桶同一条判据、
+ *  同一批行——两个页面对同一天给出同样的餐次统计。 */
 export function mealStructure(db: DatabaseSync, start: string, end: string): Record<string, { times: number; share: number }> {
   const raw = db.prepare(
     "SELECT time AS t FROM food_log WHERE date BETWEEN ? AND ? AND food_name != '💧水'",
   ).all(start, end) as unknown as Array<{ t: string | null }>;
-  const rows: Array<[string | null]> = raw.map((r) => [r.t]);
   const buckets: Record<string, number> = { '早餐': 0, '午餐': 0, '晚餐': 0, '加餐/夜宵': 0 };
-  for (const r of rows) {
-    const h = parseInt(String(r[0] ?? '12:00').split(':')[0] as string, 10);
-    if (Number.isNaN(h)) continue;
-    if (h < 10) buckets['早餐'] = (buckets['早餐'] as number) + 1;
-    else if (h < 15) buckets['午餐'] = (buckets['午餐'] as number) + 1;
-    else if (h < 21) buckets['晚餐'] = (buckets['晚餐'] as number) + 1;
-    else buckets['加餐/夜宵'] = (buckets['加餐/夜宵'] as number) + 1;
+  for (const r of raw) {
+    const b = mealBucketOf(r.t);
+    if (b === null) continue;
+    const key = b === '加餐' ? '加餐/夜宵' : b;
+    buckets[key] = (buckets[key] as number) + 1;
   }
   const total = Object.values(buckets).reduce((a, b) => a + b, 0) || 1;
   const out: Record<string, { times: number; share: number }> = {};

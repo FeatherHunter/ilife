@@ -16,7 +16,8 @@
  * 一条声明住 `./commands.ts`；对外只经 `./index.ts`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { inferMealType, listMeals, WATER_NAME } from '../fetch/diet.js';
+import { listMeals, WATER_NAME } from '../fetch/diet.js';
+import { MEAL_BUCKETS, mealBucketOf } from '../shared/meal.js';
 import { shiftISODate } from '../analysis/utils.js';
 import { dietFoodRanking } from './dietEngine.js';
 import { buildDietReview } from '../render/analysisPlate.js';
@@ -102,21 +103,6 @@ export function viewDietReview(params: Record<string, unknown>, db: DatabaseSync
  * 餐别分布取数（**交 #271 调**；老脚本 render_meal_distribution.py 的口径）
  * ══════════════════════════════════════════════════════════════ */
 
-/** 四桶（老脚本 `MEAL_LABELS` 的值域；加餐＝下午茶＋夜宵）。 */
-const MEAL_BUCKETS = ['早餐', '午餐', '晚餐', '加餐'] as const;
-
-/** 单条归桶：与 `render/diet.ts:44` 的 `bucketOf` 同源口径（下午茶／夜宵并入加餐）。
- *
- *  与老脚本的一处差异（照实记）：老脚本把时间读不出来／落在窗口外的行归给加餐，
- *  本仓按既有口径不入桶，明细那一格写 `—`（裁定 4 的缺值口径）。 */
-function bucketOf(time: string | null): string {
-  if (!time) return '—';
-  const m = inferMealType(time);
-  if (m === '早餐' || m === '午餐' || m === '晚餐') return m;
-  if (m === '下午茶' || m === '夜宵') return '加餐';
-  return '—';
-}
-
 /** 餐别页取数（**#271 调**；`mealRaw` 收**未解析的参数值**）。
  *
  *  - **参数缺失／未知值一律按用法错走**（`bad-input` ⇒ exit 2，`mealParamOf` 判别），
@@ -140,7 +126,7 @@ export function buildMealDistributionView(
       items.push({
         date: r.date,
         time: String(r.time ?? '').slice(0, 5),
-        meal: bucketOf(r.time),
+        meal: mealBucketOf(r.time) ?? '—',
         food: r.food_name,
         grams: r.grams,
         cal: round1(r.calories),

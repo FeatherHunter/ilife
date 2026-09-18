@@ -4,11 +4,13 @@
  * 组合相关走 analyzePair（11 配对原样，pair 非法即 bad-input）；缺口/趋势为 T7 薄壳
  * （buildDeficitData/buildTrendData，不自算）；饮食复盘三件套为 T5 口径
  * （dietCalorieTrend/dietMacroRatio/dietDeficitAnalysis，rejection 即阻断）。
- * 餐别窗口跟 diet.ts：复盘附带按餐桶汇总，归类走 inferMealType（与 MEAL_WINDOWS
- * 同源），加餐 = 下午茶 + 夜宵；窗口存在性先断言（老家旧口径作废）。
+ * 餐别（#717 批① 收口）：窗口、归属、四桶只有一处定义，住共用位 `shared/meal.ts`。
+ * 复盘附带按餐桶汇总，归类走 `mealBucketOf`（加餐 = 下午茶 + 夜宵），桶名走 `MEAL_BUCKETS`。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { MEAL_WINDOWS, inferMealType, listMeals } from '../fetch/diet.js';
+import { listMeals } from '../fetch/diet.js';
+import { MEAL_BUCKETS, mealBucketOf } from '../shared/meal.js';
+import type { MealBucket } from '../shared/meal.js';
 import { buildSeries, resolveWindow, seriesCount } from '../analysis/series.js';
 import type { DaySeries } from '../analysis/series.js';
 import { analyzePair, PAIRS } from '../analysis/cross.js';
@@ -23,8 +25,6 @@ import type { AnalysisResult } from '../analysis/result.js';
 import { FetchError } from '../fetch/errors.js';
 import { round2 } from '../kcal.js';
 import { CalorieRenderError } from './errors.js';
-import { MEAL_BUCKETS } from './diet.js';
-import type { MealBucket } from './diet.js';
 
 export const COMBINED_PAIRS = Object.keys(PAIRS);
 
@@ -111,20 +111,6 @@ export function buildTrendPlate(db: DatabaseSync, start: string, end: string): T
   }
 }
 
-function assertMealWindows(): void {
-  for (const k of ['早餐', '午餐', '下午茶', '晚餐', '夜宵', '加餐']) {
-    if (!MEAL_WINDOWS[k]) throw new CalorieRenderError('missing-data', 'MEAL_WINDOWS 缺餐别: ' + k);
-  }
-}
-
-function bucketOf(time: string | null): MealBucket | '其他' {
-  if (!time) return '其他';
-  const m = inferMealType(time);
-  if (m === '早餐' || m === '午餐' || m === '晚餐') return m;
-  if (m === '下午茶' || m === '夜宵') return '加餐';
-  return '其他';
-}
-
 export interface ReviewMealSlice {
   meal: MealBucket;
   days: number;
@@ -146,7 +132,6 @@ export function buildDietReview(db: DatabaseSync, start: string, end: string): D
   assertDate(start);
   assertDate(end);
   if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
-  assertMealWindows();
   const trend = dietCalorieTrend(db, start, end);
   const macro = dietMacroRatio(db, start, end);
   const deficit = dietDeficitAnalysis(db, start, end);
@@ -165,8 +150,8 @@ export function buildDietReview(db: DatabaseSync, start: string, end: string): D
       continue;
     }
     for (const r of rows) {
-      const b = bucketOf(r.time);
-      if (b === '其他') continue;
+      const b = mealBucketOf(r.time);
+      if (b === null) continue;
       let e = agg.get(b);
       if (!e) {
         e = { days: new Set<string>(), total: 0 };

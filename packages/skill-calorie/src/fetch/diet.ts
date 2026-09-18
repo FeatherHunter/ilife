@@ -7,26 +7,19 @@ import type { DatabaseSync } from 'node:sqlite';
 import { sql } from './db.js';
 import type { SQLInputValue } from './db.js';
 import { FetchError } from './errors.js';
+/* #717 批①·餐别归一：时间窗、归属、四桶的正本上移共用位 `../shared/meal.js`（零依赖）。
+   本件原先自己写着一份 `MEAL_WINDOWS` ＋ `inferMealType`，而 `analysis/anomaly/common.ts`
+   另写了一套小时边界（10／15／21）——同一条记录在两个页面上被算进不同的餐。正本只留一处：
+   本件按原导出名**薄转出**（包对外的名字一个不少），实现与边界都在共用位。 */
+import { MEAL_NAMES, MEAL_WINDOWS, inferMealType } from '../shared/meal.js';
+import type { MealName } from '../shared/meal.js';
 
 export const WATER_NAME = '💧水';
-export const MEALS = ['早餐', '午餐', '下午茶', '晚餐', '夜宵'] as const;
-export type MealName = (typeof MEALS)[number];
+/** 写入口的 `--meal` 值域（＝五类餐名，来自共用位正本；`MEALS`／`MealName` 两个对外名字照旧转出）。 */
+export const MEALS: readonly MealName[] = MEAL_NAMES;
 
-/** 餐别时间窗（deleteMealsByType 口径，与 inferMealType 同源）。加餐 = 下午茶 + 夜宵。 */
-export const MEAL_WINDOWS: Record<string, [number, number] | [number, number, number, number]> = {
-  早餐: [6, 10], 午餐: [10, 14], 下午茶: [14, 18], 晚餐: [18, 22], 夜宵: [0, 6],
-  加餐: [14, 22, 0, 6],
-};
-
-export function inferMealType(timeStr: string): string {
-  const hour = parseInt(String(timeStr).split(':')[0], 10);
-  if (Number.isNaN(hour)) return '其他';
-  if (hour >= 6 && hour < 10) return '早餐';
-  if (hour >= 10 && hour < 14) return '午餐';
-  if (hour >= 14 && hour < 18) return '下午茶';
-  if (hour >= 18 && hour < 22) return '晚餐';
-  return '夜宵';
-}
+export { MEAL_WINDOWS, inferMealType };
+export type { MealName };
 
 export interface MealRow {
   id: number; date: string; time: string | null; food_name: string;
@@ -81,8 +74,8 @@ export function addMeal(db: DatabaseSync, input: MealInput): AddMealResult {
   if (calories < 0 || protein < 0 || carbs < 0 || fat < 0 || grams <= 0) {
     throw new FetchError('营养值不能为负，克数必须为正');
   }
-  if (input.mealOverride !== undefined && !(MEALS as readonly string[]).includes(input.mealOverride)) {
-    throw new FetchError(`--meal 必须是以下值之一：${MEALS.join('、')}`);
+  if (input.mealOverride !== undefined && !(MEAL_NAMES as readonly string[]).includes(input.mealOverride)) {
+    throw new FetchError(`--meal 必须是以下值之一：${MEAL_NAMES.join('、')}`);
   }
   const today = input.date ?? todayStr();
   const now = input.time ?? nowStr();
@@ -274,8 +267,10 @@ export function deleteMealsByRange(db: DatabaseSync, startDate: string, endDate:
 }
 
 export function deleteMealsByType(db: DatabaseSync, targetDate: string, mealType: string) {
-  const w = MEAL_WINDOWS[mealType];
-  if (!w) throw new FetchError(`餐别必须是 ${Object.keys(MEAL_WINDOWS).join('/')} 之一`);
+  /* #717 批①·餐别归一的连带修：窗口取自共用位正本 `MEAL_WINDOWS`，**夜宵改跨零点**
+     （`[22, 30)`）——22:00 之后的记录归成夜宵、此前却不落进夜宵窗，删「夜宵」删不掉它。 */
+  const w = MEAL_WINDOWS[mealType as keyof typeof MEAL_WINDOWS];
+  if (!w || w.length === 0) throw new FetchError(`餐别必须是 ${Object.keys(MEAL_WINDOWS).join('/')} 之一`);
   const hourExpr = "CAST(strftime('%H', time) AS INT)";
   const where = w.length === 4
     ? `date = ? AND food_name != ? AND ((${hourExpr} >= ? AND ${hourExpr} < ?) OR (${hourExpr} >= ? AND ${hourExpr} < ?))`
