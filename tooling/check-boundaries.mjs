@@ -18,12 +18,18 @@ const combos = pkg('base-combos');
 assert(combos.dependencies?.['base-link-core'] !== undefined, 'combos 强依赖 link-core');
 const present = readFileSync(join(root, 'packages/base-combos/src/present.ts'), 'utf8');
 assert(!present.includes('base-paint') && !/from\s+['"].*(?:render|paint)/.test(present), 'present 只许字符串级引用，禁 import render');
-const tsFiles = readdirSync(join(root, 'packages/base-link-core/src'));
-const coreSrc = tsFiles.map((f) => readFileSync(join(root, 'packages/base-link-core/src', f), 'utf8')).join('\n');
+// #694：`src/` 下新增了能力子目录（`config/`），扁平 `readdirSync` ＋ `readFileSync` 会把子目录当文件读、
+// 直接抛 EISDIR 崩掉整道门 ⇒ 改走下面那个递归列 `.ts` 的 walkSrc（函数声明，已提升）。
+const coreSrc = walkSrc(join(root, 'packages/base-link-core/src'))
+  .map((f) => readFileSync(f, 'utf8')).join('\n');
 assert(!/from\s+['"](?:@[A-Za-z_]+\/|base-|skill-|plugin-|dsh-)/.test(coreSrc), 'link-core 源码不引用任何 workspace 包');
 // 装配归一：注册原语只许住 render
+// ⚠ 同一条坑：#694 之后 `base-link-core/src` 与 `base-combos/src` 下都可能有子目录，
+//   下面两处 `readdirSync` 也只许看文件、不许把子目录名当文件名读。
+const srcEntries = (d) => readdirSync(join(root, 'packages', d), { withFileTypes: true })
+  .filter((e) => e.isFile()).map((e) => e.name);
 const grepHit = ['base-link-core/src', 'base-combos/src'].some((d) =>
-  readdirSync(join(root, 'packages', d)).some((f) =>
+  srcEntries(d).some((f) =>
     /registerTab|openTab|mountInjector/.test(readFileSync(join(root, 'packages', d, f), 'utf8'))));
 assert(!grepHit, '装配 owner 归一 render（link-core/combos 无自装配）');
 
