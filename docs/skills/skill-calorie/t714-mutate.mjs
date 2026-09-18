@@ -31,7 +31,9 @@ function repoRoot(start) {
 }
 const ROOT = repoRoot(HERE);
 const TARGET = join(ROOT, 'packages/skill-calorie/src/workout/reviewDocs.ts');
-const BACKUP = join(HERE, 'mut-backup', 'workout__reviewDocs.ts');
+/** 留底目录**锚在仓库根下**，不锚 `HERE`：入仓副本住 `docs/skills/skill-calorie/`，
+ *  锚 `HERE` 会往 `docs/` 里落 `mut-backup/`（本窗归档时发现并改掉；两种住法解析出来是同一个目录）。 */
+const BACKUP = join(ROOT, '.scratch/t714/mut-backup/workout__reviewDocs.ts');
 /** 锚点取**落进产物的那一段标记本身**，不取光秃秃的词：`每日完成情况` 这句在件里出现两次
  *  （件头 JSDoc 一次、热力图那一节的 `<h2>` 一次），只按词命中会撞上注释那一次 ⇒
  *  本窗实测第一次跑就报「锚点命中数 2（期望 1）」。带上 `</h2>` 才是唯一且**必然上屏**的那一处。 */

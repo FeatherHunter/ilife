@@ -29,7 +29,9 @@ function repoRoot(start) {
   throw new Error('找不到仓库根（往上没有 pnpm-workspace.yaml）：' + start);
 }
 const ROOT = repoRoot(HERE);
-const SNAP = join(HERE, 'post-state');
+/** 留底目录**锚在仓库根下**，不锚 `HERE`：入仓副本住 `docs/skills/skill-calorie/`，
+ *  锚 `HERE` 会往 `docs/` 里落 `post-state/`（本窗归档时发现并改掉；两种住法解析出来是同一个目录）。 */
+const SNAP = join(ROOT, '.scratch/t714/post-state');
 /** 搬迁写集里的三个件：两个搬走件 ＋ 一个调用方。 */
 const FILES = [
   'packages/skill-calorie/src/render/reviewDocs.ts',

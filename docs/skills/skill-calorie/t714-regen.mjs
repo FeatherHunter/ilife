@@ -54,7 +54,11 @@ const FAKE_NOW_ISO = TODAY + 'T12:00:00';
 const argOf = (name, dflt) => { const i = process.argv.indexOf(name); return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : dflt; };
 const OUT_DIR = join(ROOT, argOf('--out', '.scratch/714/产物'));
 const BASE_JSON = join(ROOT, argOf('--baseline', '.scratch/714/基线.json'));
-const TMP = join(HERE, 'tmp-out');
+const TMP = join(ROOT, '.scratch/t714/tmp-out');
+/** 本票的工作目录**锚在仓库根下**，不锚在 `HERE`：入仓副本住 `docs/skills/skill-calorie/`，
+ *  锚 `HERE` 的话它一跑就往 `docs/` 里落 `db1`／`cfg1`／`tmp-out`（本窗归档时发现并改掉）。
+ *  两种住法解析出来的目录本来就是同一个（当窗副本的 `HERE` 就是 `.scratch/714`），故这处改动不改任何读数。 */
+const WORK = join(ROOT, '.scratch/t714');
 
 if (/\s/.test(FREEZE_CJS)) {
   console.log('FAIL 冻结件路径含空白（' + FREEZE_CJS + '）：NODE_OPTIONS 传不了，钉不上钟');
@@ -130,8 +134,8 @@ function seedSparse(db) {
   }
 }
 
-const DB_DIR = [null, join(HERE, 'db1'), join(HERE, 'db2')];
-const CFG_DIR = [null, join(HERE, 'cfg1'), join(HERE, 'cfg2')];
+const DB_DIR = [null, join(WORK, 'db1'), join(WORK, 'db2')];
+const CFG_DIR = [null, join(WORK, 'cfg1'), join(WORK, 'cfg2')];
 rmSync(DB_DIR[1], { recursive: true, force: true });
 rmSync(DB_DIR[2], { recursive: true, force: true });
 rmSync(CFG_DIR[1], { recursive: true, force: true });
