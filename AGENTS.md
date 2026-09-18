@@ -16,6 +16,10 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 写文件名、写卡路里命令与页面组件、写 issue 时：禁用黑话，一律用规范词。见 `docs/agents/wording.md`。
 
+### 术语纪律
+
+任何名词都可以直接用计算机领域的专业术语（必要时附英文原词）；**禁止自造中文简称、比喻与黑话**。读的人要能靠术语本身查到定义——查不到，就说明这个词用错了。指代一个具体的变量、机制或数据结构时，先写它**是什么、干什么**，再决定要不要给它起名字。见 `docs/agents/wording.md`。
+
 ### 会话纪律
 
 提问一律写在对话正文里：**禁止**用弹窗／问卷工具（含 `ask_user_question`）把问题甩给用户点选。
