@@ -25,6 +25,10 @@ export interface SlotsRegisterOptions {
   readonly order?: number;
   readonly label?: string | (() => string);
   readonly locale?: string;
+  /** 本包自己那条 RPC 通道（单段，例 `/ilife-home-ilife`）：注册方写进来，读方（总管）据此**通用地**
+   *  调它，不必在源码里写死任何一家的通道名（#706 配置体检要走它；格与出处照
+   *  `packages/plugin-manager/src/dsh-ctx.ts:19-21`）。 */
+  readonly channel?: string;
   readonly inject?: () => Record<string, unknown>;
 }
 
