@@ -1,0 +1,20 @@
+本票声明的运行条目（从 .scratch/locks/gate-runs.log 导出；协议 §2.3 第 4 条）
+RUN ticket=703 runId=98927b78-6c17-49e5-9f2c-5be1c79b9e38 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=10488 at=2026-09-18T13:30:33.569Z
+RUN ticket=703 runId=fe4e76c6-5267-49e9-b841-4f39f5321b22 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=41172 at=2026-09-18T13:30:33.732Z
+RUN ticket=703 runId=686ae5ae-4f94-4fb1-9316-43690e95bd36 cmd="node tooling/check-boundaries.mjs" waitedMs=1 exit=0 pid=33628 at=2026-09-18T13:30:33.889Z
+RUN ticket=703 runId=a2dd301d-c9ed-41cf-8fd9-10a693f3d529 cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie" waitedMs=0 exit=0 pid=40648 at=2026-09-18T13:31:42.099Z
+RUN ticket=703 runId=d55732e6-77a9-4b3b-b724-7e844929f9ef cmd="node .scratch/t703/run-target-tests.mjs" waitedMs=0 exit=1 pid=37840 at=2026-09-18T13:32:10.703Z
+RUN ticket=703 runId=92b9fbfd-c32c-4dd2-8051-6f89f8f9dfe1 cmd="node .scratch/t703/run-target-tests.mjs base" waitedMs=0 exit=1 pid=19872 at=2026-09-18T13:33:08.597Z
+RUN ticket=703 runId=6407c37a-1e35-4e18-baca-2cfb223f8b2e cmd="node node_modules/typescript/bin/tsc -b packages/skill-calorie --force" waitedMs=0 exit=0 pid=39040 at=2026-09-18T13:34:02.943Z
+RUN ticket=703 runId=533695a5-9b8d-4434-89ec-ed807ad5f81f cmd="node .scratch/t703/run-target-tests.mjs base2" waitedMs=0 exit=1 pid=36664 at=2026-09-18T13:34:30.572Z
+RUN ticket=703 runId=3ad4c10e-ef9a-41f8-bdd2-4f263483e5e4 cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=2 pid=40708 at=2026-09-18T13:35:36.913Z
+RUN ticket=703 runId=be0950f4-f69c-4d6c-9444-46fbc1f35311 cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=2 pid=648 at=2026-09-18T13:36:06.499Z
+RUN ticket=703 runId=a2f57516-40aa-4f3a-8b41-da47cfbeec98 cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=3 pid=6404 at=2026-09-18T13:36:18.734Z
+RUN ticket=703 runId=a2f2d2ba-e35c-4907-aeeb-9a4f9261ba86 cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=3 pid=42444 at=2026-09-18T13:36:36.333Z
+RUN ticket=703 runId=ab71ad4a-5a4a-4c20-8f0f-bcc4a3bd12c1 cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=1 pid=2420 at=2026-09-18T13:37:33.041Z
+RUN ticket=703 runId=10becbbb-aac6-4a87-ab31-349607b07cb7 cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=2 pid=29916 at=2026-09-18T13:38:25.969Z
+RUN ticket=703 runId=3a3ae2ce-712e-4add-b1f7-527bc5e9f04f cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=1 pid=30676 at=2026-09-18T13:39:09.147Z
+RUN ticket=703 runId=76e24998-b96d-4c81-a0b5-1fe92b3ed3ef cmd="node .scratch/t703/window-deliver.mjs --commit" waitedMs=0 exit=0 pid=29012 at=2026-09-18T13:40:17.200Z
+RUN ticket=703 runId=7c6060f0-256d-4cde-9019-960359bd1c0b cmd="node .scratch/t703/window-c.mjs" waitedMs=0 exit=1 pid=2816 at=2026-09-18T13:42:54.783Z
+RUN ticket=703 runId=34b29ac7-0c9a-4c35-b68c-3a102b0476fd cmd="node .scratch/t703/window-d1.mjs" waitedMs=0 exit=0 pid=25064 at=2026-09-18T13:46:35.201Z
+RUN ticket=703 runId=4325e7b0-caf7-4988-8913-f7367538735a cmd="node .scratch/t703/window-e2.mjs" waitedMs=0 exit=0 pid=40856 at=2026-09-18T13:59:08.777Z
