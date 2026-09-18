@@ -1,4 +1,4 @@
-/** dsh-home-ilife 取数桥（P10 脚手架：纯 CLI 单轨）。
+/** dsh-home-ilife 取数桥（P10 脚手架：纯 CLI 单轨；#696 起兼设置页的配置读写口）。
  *
  * 面板与跨技能只经 host.call 触发本桥，本桥只经 spawn 调技能包唯一出口
  * packages/skill-home/dist/cli/cmd_read.js（argv+JSON+exit，stdout 纯 envelope JSON 一行）。
@@ -11,6 +11,7 @@ import { accessSync, constants } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { ConfigSurfaceReply } from './contract.js';
 
 export const SKILL_PACKAGE = 'skill-home' as const;
 export const SKILL_CLI = 'packages/skill-home/dist/cli/cmd_read.js' as const;
@@ -72,13 +73,31 @@ export function requestViaHost(host: { call(method: string, args: unknown): Prom
   return host.call(HOST_CALL_METHOD, { key, params });
 }
 
+/** spawn 超时毫秒：子进程超期未退即杀掉，转 fetch-failed，绝不无限挂起。
+ * #48 真机根因：Desktop 宿主的 process.execPath 是 Electron 二进制，直 spawn 会起 GUI 子进程永不退出。 */
+export const SPAWN_TIMEOUT_MS = 20_000 as const;
+
+/** node 可执行体解析（纯函数，execPath 可注入单测）。
+ * execPath 是 node 即直用；否则（Electron 宿主）沿用该二进制但加官方 ELECTRON_RUN_AS_NODE 语义当 node 用。
+ * #696：本文件原先是 `spawnSync(process.execPath, …)` 且不传 env —— 桌面宿主里那会起一个 GUI 子进程，
+ * 配置读写与取数都拿不到回执。照卡路里／记账／大厨三家补齐。 */
+export function resolveNodeBin(execPath: string = process.execPath): { readonly bin: string; readonly extraEnv: Record<string, string> } {
+  if (/(^|[\\/])node(\.exe)?$/i.test(execPath)) return { bin: execPath, extraEnv: {} };
+  return { bin: execPath, extraEnv: { ELECTRON_RUN_AS_NODE: '1' } };
+}
+
 /** 同步取数：spawn 技能 cmd_read，返回 envelope data（缺失阻断）。 */
 export function readViaCli(key: string, params: Record<string, unknown> = {}): unknown {
   const bin = cliPath();
   assertCliPresent(bin);
-  const node = process.execPath;
-  const r = spawnSync(node, [bin, key, '--params', JSON.stringify(params)], { encoding: 'utf8' });
-  if (r.error) throw new SkillBridgeError('fetch-failed', '出口 spawn 失败：' + (r.error as Error).message);
+  const { bin: node, extraEnv } = resolveNodeBin();
+  const r = spawnSync(node, [bin, key, '--params', JSON.stringify(params)], { encoding: 'utf8', timeout: SPAWN_TIMEOUT_MS, env: { ...process.env, ...extraEnv } });
+  if (r.error) {
+    if ((r.error as NodeJS.ErrnoException)?.code === 'ETIMEDOUT') {
+      throw new SkillBridgeError('fetch-failed', '出口超 ' + String(SPAWN_TIMEOUT_MS / 1000) + 's 未退，已杀掉（宿主非 node 时见 resolveNodeBin）');
+    }
+    throw new SkillBridgeError('fetch-failed', '出口 spawn 失败：' + (r.error as Error).message);
+  }
   if (r.status !== 0) {
     const tail = String(r.stderr ?? '').trim().split('\n').pop() ?? '';
     throw new SkillBridgeError('fetch-failed', '出口非 0（' + String(r.status) + '）：' + tail);
@@ -92,4 +111,34 @@ export function readViaCli(key: string, params: Record<string, unknown> = {}): u
   if (!env || env.key !== key) throw new SkillBridgeError('key-mismatch', '出口回执 key 不符');
   if (env.data === null || env.data === undefined) throw new SkillBridgeError('fetch-failed', '缺失阻断取数，不返空：' + key);
   return env.data;
+}
+
+/** 设置页的三个配置 key。
+ *
+ * **唯一定义地是技能侧** `packages/skill-home/src/cli/config.ts` 的 `CONFIG_KEYS`
+ * （那里写了「插件侧镜像同值」）；本处只是镜像，值改一处要两处一起改，
+ * 对齐由 `test/config-surface-696.test.mjs` 锁死。
+ *
+ * 为什么走 CLI 而不在插件里读盘：单品插件的冻结边界是「只读消费技能 dist／CLI，纯 CLI 单轨」
+ * （`test/plugin-p10-boundaries.test.mjs`：单品不 import `base-*`、不 import `skill-*`，
+ * 必须经 host.call 与 spawn 到 cmd_read）。配置文件的读写实现住技能的 `src/config.ts`，
+ * 插件只经这三个 key 取用——同一份实现不抄第二处。
+ */
+export const CONFIG_READ_KEY = 'home.config.read' as const;
+export const CONFIG_WRITE_KEY = 'home.config.write' as const;
+export const CONFIG_RESET_KEY = 'home.config.reset' as const;
+
+/** 设置页整面：文件在哪、数据在哪、当前值、是不是这次新建的（取自技能 `home.config.read`）。 */
+export function readConfigSurface(): ConfigSurfaceReply {
+  return readViaCli(CONFIG_READ_KEY, {}) as ConfigSurfaceReply;
+}
+
+/** 保存一份配置（技能侧按键覆盖，组里没给的子项保留现值；写出去的是完整一份）。 */
+export function writeConfigValues(values: Record<string, unknown>): { path: string; values: Record<string, unknown> } {
+  return readViaCli(CONFIG_WRITE_KEY, { values }) as { path: string; values: Record<string, unknown> };
+}
+
+/** 重置为默认（技能侧先另存 `<配置目录>/home.yaml.bak`）。 */
+export function resetConfigToDefaults(): { path: string; backupPath: string | null } {
+  return readViaCli(CONFIG_RESET_KEY, {}) as { path: string; backupPath: string | null };
 }
