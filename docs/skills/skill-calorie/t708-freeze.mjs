@@ -1,0 +1,21 @@
+/**
+ * #708 重出器的时钟冻结件（进程外预载，不进产物）。
+ *
+ * 为什么需要它：只读页的复制日志第 5 段走 `src/render/receipt.ts` 的 `nowStamp()`——
+ * 那是 `new Date()` 的直接调用，没有注入口。同一份源码连出两遍，只要跨过 1 秒，
+ * 产物 sha256 必不相同 ⇒「逐页逐字节相同」这条判据按字面就不可满足：红是假红、绿也可能是假绿。
+ *
+ * 处置：**不动源码**，在进程外把时钟冻住（`node --import …`），判据保持字面口径不放宽。
+ * 先例＝`docs/skills/skill-calorie/t704-freeze.mjs`（#704 具名那一条）。
+ * 用法：node --import .scratch/t708/freeze.mjs packages/skill-calorie/dist/cli/cmd_read.js …
+ */
+const FIXED = new Date(2026, 8, 18, 12, 0, 0).getTime(); // 2026-09-18 12:00:00 本地时
+const RealDate = Date;
+class FrozenDate extends RealDate {
+  constructor(...args) {
+    if (args.length === 0) super(FIXED);
+    else super(...args);
+  }
+  static now() { return FIXED; }
+}
+globalThis.Date = FrozenDate;
