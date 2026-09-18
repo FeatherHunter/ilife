@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#693 决策简报：HELP 复制提示修复</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--fg:#1d1d1f;--fg2:#5f6368;--fg3:#8b8f95;--bg:#f5f6f8;--card:#fff;--line:#e3e5e9;--blue:#0071e3;--ok:#1c8b3f;--okbg:#eaf7ee;--warn:#a86200;--warnbg:#fff6e6;--mute:#6b7076;--mutbg:#f0f1f3}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);line-height:1.65;font-size:15px;padding:32px 20px 72px}
+  main{max-width:900px;margin:0 auto}
+  h1{font-size:26px;line-height:1.3;letter-spacing:-.3px}
+  h2{font-size:19px;margin:0 0 12px}
+  h3{font-size:15px;margin:18px 0 6px}
+  p{margin:8px 0}
+  .sub{color:var(--fg2);font-size:13px;margin-top:6px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:14px}
+  .v{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fafbfc}
+  .v b{display:block;font-size:13px;margin-bottom:2px}
+  .v span{font-size:12.5px;color:var(--fg2)}
+  .ok{color:var(--ok);font-weight:700}
+  .warn{color:var(--warn);font-weight:700}
+  .mute{color:var(--mute);font-weight:700}
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;vertical-align:middle}
+  .b-ok{background:var(--okbg);color:var(--ok)}
+  .b-warn{background:var(--warnbg);color:var(--warn)}
+  .b-mute{background:var(--mutbg);color:var(--mute)}
+  .q{border-left:4px solid var(--blue);background:#f7fbff;border-radius:8px;padding:12px 14px;margin:14px 0}
+  .q b{font-size:15px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#fafbfc;font-size:12.5px;color:var(--fg2);font-weight:600}
+  td.h{width:96px;color:var(--fg2)}
+  ul{margin:8px 0 8px 20px}
+  li{margin:4px 0}
+  .rec{background:var(--okbg);border:1px solid #cfe9d7;border-radius:10px;padding:12px 14px;margin:12px 0}
+  .rec b{color:var(--ok)}
+  details{margin:10px 0;border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fcfcfd}
+  summary{cursor:pointer;font-size:13.5px;color:var(--fg2);font-weight:600}
+  details[open] summary{margin-bottom:8px}
+  .shots{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+  figure{flex:1 1 320px;margin:0}
+  figure img{width:100%;border:1px solid var(--line);border-radius:10px;display:block}
+  figcaption{font-size:12px;color:var(--fg3);margin-top:6px}
+  .todo{counter-reset:step;list-style:none;margin-left:0}
+  .todo li{counter-increment:step;position:relative;padding-left:34px;margin:10px 0}
+  .todo li::before{content:counter(step);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  footer{color:var(--fg3);font-size:12px;text-align:center;margin-top:22px;line-height:1.8}
+  code{background:#f0f1f3;border-radius:5px;padding:1px 6px;font-size:12.5px;font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+<main>
+
+  <h1>#693 决策简报：HELP 复制按钮不弹提示</h1>
+  <p class="sub">一句话：<b>故障已修完并验证通过</b>；下面只有两个决定要你拍板。</p>
+
+  <section>
+    <h2>一分钟看懂现状</h2>
+    <div class="verdict">
+      <div class="v"><b>你的 HELP 故障</b><span class="ok">已修 ✅</span><br><span>真浏览器点过，提示悬浮在底部</span></div>
+      <div class="v"><b>独立复核</b><span class="ok">通过 ✅</span><br><span>另请一个席位重跑＋挑刺</span></div>
+      <div class="v"><b>仓库流程检查</b><span class="ok">通过 ✅</span><br><span>改了我报表口径之后</span></div>
+      <div class="v"><b>别家的 53 条红测试</b><span class="warn">与我无关 ⚠️</span><br><span>不在 HELP 这条线上</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>前因后果（为什么会有这一堆事）</h2>
+    <h3>故障本身：一行代码</h3>
+    <p>HELP 页面点「复制」后，提示条本该浮在屏幕底部。实际上定位样式按 <code>.hm-toast-stack</code> 这个<b>类名</b>下发，而运行时建这个容器时只写了 <b>id</b>，两边对不上——定位从未生效，提示被排到页面最末尾：短页看不见，长页滚到底只露一点黑边。<b>修法＝补上那个类名（一行）</b>，另留一个 id 做兼容。</p>
+    <div class="shots">
+      <figure><img src="t693-复现-长页-修前.png" alt="修前：滚到底只露一点黑边"><figcaption>修前（滚到底）：提示卡被底部导航栏盖住，只剩一点黑边</figcaption></figure>
+      <figure><img src="t693-复现-长页-修后.png" alt="修后：提示悬浮在底部"><figcaption>修后（同一页）：提示完整浮在底部、压过导航栏</figcaption></figure>
+    </div>
+
+    <h3>那"别的东西"是什么</h3>
+    <table>
+      <tr><th style="width:150px">三样东西</th><th>它是什么</th><th style="width:210px">和这次修复的关系</th></tr>
+      <tr><td><b>① 锁 ＋ 账本 ＋ 查账</b></td><td>多个 AI 共用同一个文件夹：编译/测试/提交前先排队拿锁；工具顺带记账（票号、命令、成功失败、时间）；有个工具拿我的报告和账本对一遍。</td><td>只查「你说跑过，是否真跑过、是否绿的」，<b>不查代码对不对</b>。这次判我不过，是因为我圈的时间范围太宽、里面 7 条开发期跑红的没点名。</td></tr>
+      <tr><td><b>② 独立复核</b></td><td>按你的要求请另一个席位审这次改动：自己重跑测试、用真 Chrome 量提示的位置、还自造一个变异验证我的测试不是空转。</td><td><b>结论通过</b>；它只挑了报告形式问题，同时把①的噪音放大了。</td></tr>
+      <tr><td><b>③ 别人的红测试</b></td><td>我跑了一次全仓测试（3405 例，53 条红），只为证明我这行没弄坏别处。</td><td><b>无关</b>：53 条没有一条在 HELP / 提示栈这条线上。</td></tr>
+    </table>
+    <p class="sub">本次真正改动的文件只有 4 个：共享 HELP 模板 1 行、由它自动生成的两份产物、1 个新测试。其余都是解释与证据文档。</p>
+  </section>
+
+  <section>
+    <h2>要你拍板的两个决定</h2>
+
+    <div class="q">
+      <b>决定 1 ｜ 要不要给仓库的「查账规矩」降级，并删掉一条陈旧测试？</b>
+      <p class="sub">这是本次唯一需要你改规则的地方；不改也能过，只是以后每张票你都会再读到今天这种噪音。</p>
+    </div>
+
+    <h3>为什么会有这条规矩</h3>
+    <ul>
+      <li>多人（多 AI）同改一个文件夹 → 必须排队拿锁，否则互相踩坏。</li>
+      <li>账本记下每次运行 → 事后能核对「AI 说跑了，是真跑了还是嘴上说说」。</li>
+      <li>查账工具要求：我圈的那段时间里，<b>每一条</b>运行都要在报告里点名，且点名的必须是成功的。干活时跑红很正常（调试、故意变异），这条就变得很折磨人。</li>
+    </ul>
+
+    <table>
+      <tr><th style="width:130px">方案</th><th>好处</th><th>代价 / 风险</th></tr>
+      <tr><td><b>A. 保持原样</b></td><td>规矩最紧，能最大限度抓住「马虎」。</td><td>每张票都要写大量声明；你每次都要读这类噪音；<b>防不了造假</b>（日志和工具同在一台机器上，能改）。</td></tr>
+      <tr><td><b>B. 降级（推荐）</b></td><td>只对账「我明确声明为验收证据」的那几条命令；锁与账本原样保留。你只看到几条关键的，核对方式不变。</td><td>开发期那些红的运行不再逐条点名（会改为在证据里列一段说明）。风险极低：真正要防的是「声称跑过却没跑」。</td></tr>
+      <tr><td><b>C. 删掉整套</b></td><td>报告最短。</td><td>锁一撤，多个 AI 同时编译/提交就会真的互相踩坏文件——<b>不建议</b>。</td></tr>
+    </table>
+
+    <h3>顺带要删的那条陈旧测试</h3>
+    <p>base-render 里有一条测试，一半在断言「备忘录那 6 个页面模板<b>还没</b>按新规矩改」——可另一张票（#665）早已把它们改完了。它现在是<b>把昨天的待办当成今天的规矩</b>，永远红；另一半（6 个模板填完不残留标记）已由备忘录自己的测试逐字覆盖。实测：拿现在盘上的 6 个模板原样直接填 → <b>6/6 成功、零残留、零报错</b>。</p>
+    <p class="sub">同一组里还有一条「53 个页面填完不残留标记」，<b>要保留</b>——记账家那 16 个页面只有它覆盖。</p>
+
+    <div class="rec">
+      <b>➡️ 推荐：选 B ＋ 删那条陈旧测试。</b><br>
+      理由：省掉的是纯报表工作（你我都受益），留下的是真正防踩坏的锁与账本；风险是"少了一层形式核对"，而那一层本来就防不了造假。<br>
+      具体动作：改 <code>docs/subagent-concurrency-protocol.md</code> 里那两段（查账窗口、报表写法），删 <code>template.test.mjs</code> 里那一条子例；各开一张小票，改完给你看 diff。
+    </div>
+
+    <div class="q">
+      <b>决定 2 ｜ 现在验收：点一下那份 HELP，确认手感对不对？</b>
+      <p class="sub">文件已随消息送达：<code>卡路里_HELP_20260918_191530.html</code>（302&nbsp;KB，真卡路里内容，含修复）。</p>
+    </div>
+    <ul>
+      <li><b>怎么做</b>：打开它 → 点任意卡片上的「复制」按钮 → 看屏幕底部是否出现深色提示条，且不被底部导航栏压住。</li>
+      <li><b>如果对</b>：票可以关（我会记 100% 并关闭）。</li>
+      <li><b>如果不对</b>：把机型/浏览器和看到的样子发我，我按真机场景再查一轮。</li>
+    </ul>
+    <p class="sub"><b>另外可选</b>：如果你希望「从技能里生成 HELP」也自动带上修复，需要给 <code>base-paint</code> 发一个补丁版本（装在你机器上的那份还是旧的、旧 HELP 文件也不会自己变好）。这属于发版线，本票不做——需要就单独说。</p>
+  </section>
+
+  <section>
+    <h2>你只要做两件事</h2>
+    <ol class="todo">
+      <li>点开那份 HELP，点一次「复制」，看底部有没有出现提示条。</li>
+      <li>回一句：决定 1 选 A / B / C（推荐 B），以及那条陈旧测试删不删（推荐删）。</li>
+    </ol>
+    <details>
+      <summary>展开：本次的判据读数（想核就看，不核也行）</summary>
+      <ul>
+        <li>新增回归测试 6 条全绿；把修复拿掉再跑 → 红 3 条（证明测试真能抓到），还原后 6 条全绿。</li>
+        <li>仓库流程检查（无任何放宽）：匹配 7/7、无遗漏；源码与产物指纹一致。</li>
+        <li>六家技能共用同一套 HELP 模板：消费面测试 40/40 绿。</li>
+        <li>全仓 3405 例中 53 条红，全部在别家在途的面上；本票的 6 条在全量里同样绿。</li>
+      </ul>
+    </details>
+  </section>
+
+  <footer>
+    票：#693（仓库 FeatherHunter/ilife）· 提交：<code>760e5b88</code>（修复）＋ <code>52fc942a</code>（复核收口）<br>
+    本文件：<code>D:\ilife\docs\base\base-render\t693-决策简报.html</code> · 2026-09-18
+  </footer>
+
+</main>
+</body>
+</html>
