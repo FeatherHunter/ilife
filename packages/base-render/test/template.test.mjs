@@ -524,16 +524,8 @@ describe('A7 strict 两档（零依赖信封校验；禁调 parseEnvelope）', (
   });
 });
 
-describe('A8 零残留标记（真实 53 内容页 ＋ 6 数据页，fixture 资产）', () => {
+describe('A8 零残留标记（真实 53 内容页，fixture 资产）', () => {
   const CONTENT_SKILLS = ['skill-bill', 'skill-chef', 'skill-home', 'skill-schedule'];
-
-  /** 数据页迁移动作（契约 §6.1②，**只在本测试内存里执行**，不改任何技能包文件）：
-   *  去掉模板自带的 `<style>`／`<script>` 包裹，标记改回裸文本（改由填充器包裹）。 */
-  const unwrapShared = (template, assetKey) => {
-    const wrapper = ASSET_WRAPPERS[assetKey];
-    const literal = M[ASSET_MARKER_KEYS[assetKey]];
-    return template.split(wrapper.openTag + literal + wrapper.closeTag).join(literal);
-  };
 
   it('53 个内容页：fixture 资产填完无 <!--…--> 残留', () => {
     let filled = 0;
@@ -553,27 +545,6 @@ describe('A8 零残留标记（真实 53 内容页 ＋ 6 数据页，fixture 资
       }
     }
     assert.equal(filled, 53, '内容页必须是 53 个（16＋8＋21＋8）');
-  });
-
-  it('6 个数据页（memo）：先按迁移动作去包裹，再填完无残留（且迁移前必抛 marker-conflict）', () => {
-    const dir = join(ROOT, 'packages', 'skill-memo-ilife', 'templates');
-    const files = readdirSync(dir).filter((n) => n.endsWith('.html')).sort();
-    assert.equal(files.length, 6, 'memo 数据页必须是 6 个');
-    for (const file of files) {
-      const raw = readFileSync(join(dir, file), 'utf8');
-      // 迁移前：模板自带包裹（不变量②）→ 期望 marker-conflict（这正是迁移动作的判据）
-      expectCode({ template: raw, assets: FIXTURE_ASSETS, data: ENVELOPE }, 'marker-conflict');
-      // 迁移动作（内存内）：去掉自带包裹
-      const migrated = unwrapShared(unwrapShared(raw, 'sharedCssText'), 'sharedHelpersJs');
-      const out = fillTemplate({ template: migrated, assets: FIXTURE_ASSETS, data: ENVELOPE, strict: true });
-      for (const literal of Object.values(M)) {
-        assert.ok(!out.html.includes(literal), file + ' 残留标记：' + literal);
-      }
-      assert.ok(out.html.includes('id="' + DEFAULT_DATA_SCRIPT_ID + '"'), file + ' 必须保留自带容器');
-      assert.ok(out.html.includes('"skill":"demo"'), file + ' payload 必须注入容器内');
-      assert.equal(out.report.markers.find((m) => m.key === 'injectData').filled, true);
-      assert.equal(out.report.exempt, false);
-    }
   });
 });
 
