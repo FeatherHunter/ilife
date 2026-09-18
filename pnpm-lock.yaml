@@ -35,7 +35,7 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.2.0
+        specifier: ^0.2.2
         version: link:../plugin-manager
       skill-bill:
         specifier: 0.2.0
@@ -54,7 +54,7 @@ importers:
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.2.0
+        specifier: ^0.2.2
         version: link:../plugin-manager
       skill-calorie:
         specifier: 0.2.4
@@ -73,7 +73,7 @@ importers:
   packages/plugin-chef:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.2.0
+        specifier: ^0.2.2
         version: link:../plugin-manager
       skill-chef:
         specifier: 0.2.0
@@ -92,7 +92,7 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.2.0
+        specifier: ^0.2.2
         version: link:../plugin-manager
       skill-home:
         specifier: 0.2.0
@@ -127,7 +127,7 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.2.0
+        specifier: ^0.2.2
         version: link:../plugin-manager
       skill-memo-ilife:
         specifier: 0.2.0
@@ -146,7 +146,7 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.2.0
+        specifier: ^0.2.2
         version: link:../plugin-manager
       skill-schedule:
         specifier: 0.2.0
@@ -173,13 +173,12 @@ importers:
 
   packages/skill-calorie:
     dependencies:
+      base-link-core:
+        specifier: ^0.3.0
+        version: link:../base-link-core
       base-paint:
         specifier: ^0.3.0
         version: link:../base-render
-    devDependencies:
-      base-link-core:
-        specifier: ^0.1.0
-        version: 0.1.0
 
   packages/skill-chef:
     dependencies:
@@ -575,10 +574,6 @@ packages:
   array-union@2.1.0:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
-
-  base-link-core@0.1.0:
-    resolution: {integrity: sha512-a+U8OhjGeSHFrf17Ox3/5DS0SDNeQGN7kS6ppNEj7HWd7ZaFk2pCxrF+wF098/ywG9/7Rbc8OVgamph+uYGU+Q==}
-    engines: {node: '>=22.13'}
 
   better-path-resolve@1.0.0:
     resolution: {integrity: sha512-pbnl5XzGBdrFU/wT4jqmJVPn2B6UHPBOhzMQkY/SPUPB6QtUXtmBHBIwCbXJol93mOpGMnQyP/+BB19q04xj7g==}
@@ -1332,8 +1327,6 @@ snapshots:
   argparse@2.0.1: {}
 
   array-union@2.1.0: {}
-
-  base-link-core@0.1.0: {}
 
   better-path-resolve@1.0.0:
     dependencies:
