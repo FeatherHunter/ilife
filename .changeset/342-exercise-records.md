@@ -1,5 +1,5 @@
 ---
-"calorie": patch
+"skill-calorie": patch
 ---
 
 feat(342): 新增运动记录级明细命令 `calorie.view.exercise-records`

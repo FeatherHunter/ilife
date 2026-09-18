@@ -1,5 +1,5 @@
 ---
-"calorie": patch
+"skill-calorie": patch
 ---
 
 feat(265): 7 条运动读类词归位各自专页
