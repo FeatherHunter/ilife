@@ -6,7 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildStrengthView } from '../render/exercisePort.js';
-import { buildStrengthDoc } from '../render/sportPortDocs.js';
+import { buildStrengthDoc } from './sportPortDocs.js';
 import { defaultRange, nums } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 

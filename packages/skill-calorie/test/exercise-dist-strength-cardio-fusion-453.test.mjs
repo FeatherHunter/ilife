@@ -35,7 +35,7 @@ import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
-import { buildCardioDoc, buildDistributionDoc, buildStrengthDoc } from '../dist/render/sportPortDocs.js';
+import { buildCardioDoc, buildDistributionDoc, buildStrengthDoc } from '../dist/exercise/sportPortDocs.js';
 import { assertDocPage } from './doc-page-assert.mjs';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。

@@ -4,7 +4,7 @@
  * `inferCategory`**（旧模板按入库 category 过滤，本层沿旧口径；view.exercise 的纯
  * 推断口径不动，两处差异见证据 R2）。
  * 缺失阻断不返空：窗内无行即 `missing-data`（G5 #100 口径）；日期非法即 `bad-input`。
- * 本层只做取数＋聚合，不组 HTML（组装归 `render/sportPortDocs.ts`）。
+ * 本层只做取数＋聚合，不组 HTML（组装归 `src/exercise/sportPortDocs.ts`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { inferCategory, listWindow } from '../exercise/exerciseStore.js';

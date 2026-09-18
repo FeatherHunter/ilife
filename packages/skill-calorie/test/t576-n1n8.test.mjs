@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { buildExerciseDoc, buildExerciseGoalDoc } from '../dist/render/sportDocs.js';
-import { buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildStrengthDoc, buildTrendDoc } from '../dist/render/sportPortDocs.js';
+import { buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildStrengthDoc, buildTrendDoc } from '../dist/exercise/sportPortDocs.js';
 import { buildRecordsDoc } from '../dist/exercise/records.js';
 import { openDb } from '../dist/index.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';

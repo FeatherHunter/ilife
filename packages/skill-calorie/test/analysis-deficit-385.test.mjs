@@ -36,7 +36,7 @@
  *      改前＝两态（按缺口正负给「缺口／盈余」）。本票按老侧补第三态。
  *   D3 老侧 `tfoot` 合计行（总摄入／总消耗／总缺口）：改前本页无合计块（B-03 表格块无 footer 槽，
  *      不改公共层）→ 改用 B-05 行列表补「合计摄入／合计消耗／合计缺口」三行（仓内既有先例
- *      `src/render/sportPortDocs.ts` 的「摄入合计／TDEE 合计」同款）。
+ *      `src/exercise/sportPortDocs.ts` 的「摄入合计／TDEE 合计」同款）。
  *   D4 老侧每行摄入／消耗用专色 `--intake`／`--burn`、缺口三态用 `.deficit-pos/neg/zero`：
  *      **不移植**（本仓零命中，且技能侧颜色字面量必须为 0、样式一律走 base-paint）→ 记偏离。
  *   D5 老侧图表缺 Y 轴刻度值（`calorie_deficit.html:149` 自注该偏离）：**不是公共层能力缺口**——

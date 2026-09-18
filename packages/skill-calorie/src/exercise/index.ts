@@ -8,7 +8,7 @@
  *   ② `exerciseBackfillBridge`——训记回写桥（R2 收口：回写侧经此门，不深引 `exerciseStore.ts` 内部件）。
  *
  * 域内的取数与页面装配（`exercise/exerciseStore.ts`／`home/exercise.ts`／`render/exercisePort.ts`／
- * `render/sportDocs.ts`／`render/sportPortDocs.ts`）**仍住原处**：它们是既有的取数与移植层，
+ * `render/sportDocs.ts`／`src/exercise/sportPortDocs.ts`）**仍住原处**：它们是既有的取数与移植层，
  * 别的场景（01／05／10）也在用，搬进来会连带改它们的调用方（本票车道外，见证据 §偏离 1）。
  * 本目录只搬**命令声明与分派**，处理逻辑一律经那些件已公开的接口调用（铁律一）。
  */

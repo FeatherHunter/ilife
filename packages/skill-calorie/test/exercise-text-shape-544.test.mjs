@@ -8,7 +8,7 @@
  *
  * 覆盖的五支（本票 9 页只有这五种页形，复盘五窗同版，其余只是窗口不同）：
  *   ① 类型分布 `buildDistributionDoc` ② 力量 `buildStrengthDoc` ③ 有氧 `buildCardioDoc`
- *   ④ 复盘 `buildRecapDoc` ⑤ 趋势 `buildTrendDoc`（全在 `src/render/sportPortDocs.ts`）。
+ *   ④ 复盘 `buildRecapDoc` ⑤ 趋势 `buildTrendDoc`（全在 `src/exercise/sportPortDocs.ts`）。
  *
  * 变异自证（本件末节，读数逐条打 `T544-MUT`）：往产物里塞一处 `·`／一处 `；` 并列 ⇒ 守卫**必红**；
  * 逐文件还原 ⇒ **必绿**。两行都**先 `pnpm build` 再跑**（判据读 `dist/`，不编译则读数无效）。
@@ -23,7 +23,7 @@ import {
   buildRecapDoc,
   buildStrengthDoc,
   buildTrendDoc,
-} from '../dist/render/sportPortDocs.js';
+} from '../dist/exercise/sportPortDocs.js';
 import { configTestBase } from './helpers/config-test.mjs';
 
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。

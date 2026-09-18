@@ -48,7 +48,7 @@ import { exerciseUiCss, factStrip, fmtNum, windowStrip } from '../exercise/sport
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, dataCopyArea } from '../shared/copyArea.js';
 import { emptyGuide } from '../shared/emptyGuide.js';
-import { nowStamp } from './receipt.js';
+import { nowStamp } from '../render/receipt.js';
 import type {
   CardioView,
   DistributionView,
@@ -56,7 +56,7 @@ import type {
   ReviewView,
   StrengthView,
   TrendView,
-} from './exercisePort.js';
+} from '../render/exercisePort.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';

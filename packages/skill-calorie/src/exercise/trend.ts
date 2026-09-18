@@ -6,7 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildTrendView } from '../render/exercisePort.js';
-import { buildTrendDoc } from '../render/sportPortDocs.js';
+import { buildTrendDoc } from './sportPortDocs.js';
 import { defaultRange, nums } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 

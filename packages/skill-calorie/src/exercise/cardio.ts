@@ -6,7 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { buildCardioView } from '../render/exercisePort.js';
-import { buildCardioDoc } from '../render/sportPortDocs.js';
+import { buildCardioDoc } from './sportPortDocs.js';
 import { defaultRange, nums } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 
